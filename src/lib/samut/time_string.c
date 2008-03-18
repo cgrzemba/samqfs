@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -679,17 +679,25 @@ StrToMinutes(
 	}
 
 	/*
-	 * Account for leap year(s).
+	 * The leap year count is incremented each time we pass
+	 * through a leap year and the month of February.
+	 * If the current year is a leap year and the duration
+	 * is longer than a year and the current month is either
+	 * January or February then increment the count.
+	 * We pass through the extra day in the current year.
+	 * If the target year is a leap year and the current
+	 * month is March or later then increment the count
+	 * as we pass through the extra day in the target year.
 	 */
-	for (i = curr_year; i <= (years + curr_year); i++) {
-		if (leap_year(i) && (curr_month > 2)) {
+	for (i = curr_year; i < (years + curr_year); i++) {
+		int target_year;
+
+		target_year = i + 1;
+
+		if ((leap_year(i) && (curr_month <= 1)) ||
+		    (leap_year(target_year) && (curr_month > 1))) {
 			leap++;
 		}
-	}
-
-	if (leap && leap_year(curr_year) && (curr_month > 2) &&
-	    !leap_year(years + curr_year)) {
-			leap--;
 	}
 
 	/*
@@ -838,8 +846,11 @@ MinToStr(
 		if (hour == 24) {
 			hour = 0;
 			day++;
-			if ((leap_year(year) && day == 366) ||
-			    (!leap_year(year) && day == 365)) {
+			if ((day == 366) ||
+			    ((day == 365) &&
+			    (!leap_year(year - 1) &&
+			    (!leap_year(year) && (chgmonth >= 2)) ||
+			    (leap_year(year - 1) && (chgmonth >= 2))))) {
 				day = 0;
 				year++;
 			}
@@ -848,8 +859,11 @@ MinToStr(
 		if (chour == 24) {
 			chour = 0;
 			cday++;
-			if ((leap_year(year) && cday == 366) ||
-			    (!leap_year(year) && cday == 365)) {
+			if ((cday == 366) ||
+			    ((cday == 365) &&
+			    (!leap_year(year - 1) &&
+			    (!leap_year(year) && (chgmonth >= 2)) ||
+			    (leap_year(year - 1) && (chgmonth >= 2))))) {
 				cday = 0;
 				cyear++;
 			}
