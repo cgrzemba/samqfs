@@ -1,0 +1,84 @@
+.\" $Revision: 1.13 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH samquotastat 1M "23 Apr 2003"
+.SH NAME
+samquotastat \- Reports on active and inactive file system quotas
+.SH SYNOPSIS
+\fBsamquotastat\fR
+\%[\fB\-a\fR]
+\%[\fB\-g\fR]
+\%[\fB\-h\fR]
+\%[\fB\-u\fR]
+\%\fIfile\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.PP
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+The \fBsamquotastat\fR command reports whether user, group, or admin set quotas
+are enabled on the file system that contains \fIfile\fR.
+If only the \fIfile\fR argument is specified, output is generated as if
+the \%\fB-a\fR, \%\fB-g\fR, and \%\fB-u\fR arguments had all been specified.
+This command accepts the following arguments:
+.TP 10
+\%\fB\-a\fR
+Generates information on admin set quotas.
+.TP
+\%\fB\-g\fR
+Generates information on group quotas.
+.TP
+\%\fB\-h\fR
+Generates a brief usage summary.
+.TP
+\%\fB\-u\fR
+Generates information on user quotas.
+.TP
+\%\fIfile\fR
+Specify either a specific file name, a path to a file,
+or the file system mount point.
+If a file name or path to a file is specified,
+the command generates the report for the
+file system in which the file resides.
+.SH EXAMPLES
+.nf
+.ft CO
+server% samquotastat /qfs1
+admin quota enabled
+group quota enabled
+user quota disabled
+.ft
+.fi
+.SH EXIT STATUS
+This command exits with a status of zero if any queried quota types are enabled.
+.SH SEE ALSO
+\fBsquota\fR(1).
+.PP
+\fBsamquota\fR(1M), \fBsamfsck\fR(1M).
+.SH NOTES

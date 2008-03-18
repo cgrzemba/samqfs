@@ -1,0 +1,311 @@
+#!/bin/csh
+#
+# $Revision: 1.5 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+################################################################################
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.  No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)   operation of any of the software script(s) shall be
+#       uninterrupted or error free, or
+#
+# (ii)  functions contained in the software script(s) shall operate
+#       in the combinations which may be selected for use by
+#       Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#       issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+################################################################################
+#
+# Synopsis: proc-csd - take nightly samfsdumps
+#
+#	For each active samfs file system, this script will take a samfsdump
+#	of the file system. This script is controlled by it's entry in the
+#	crontab; thus the specific time that this script is invoked can
+#	be modified to conform to site specific requirements.
+#
+#	The script will save three days of dumps per file system under the ufs
+#	file system that was defined at install time. It will save all the
+#	dumps under the samfs filesystem that was specified at install time
+#	to store the dump files. (i.e if /samqfs1 was specified as the samfs
+#	file system to store the dumps, the dump files would be saved under
+#	this directory in /samqfs1/csd/year/month/file_system_day. The year
+#	would be the year the dumps was taken, the month would be the month
+#	in which the dump was taken and the file_system_day would be the
+#	name of the actual samfs file system append with the day the dump
+#	was taken.
+#
+#	This script currently uses the /etc/vfstab to find the samfs file
+#	systems to dump. If the file system is commented out in this file
+#	we echo a message to the message file that it was commented out and
+#	the dump file will be zero length. Also, if any errors occur during
+#	the dump of the file system, they will be captured in the message
+#	file for the file system in the day file.
+#
+################################################################################
+#
+# When            Who           Comments
+# ----            ---           --------
+#            2003 dcrouse       Initial Version
+# July 1st,  2004 jleach        Included PS Header & changes to support common
+#                               source'd in site-tools-PARAMS
+# July 22nd, 2004 jdp           Cleaning up to run with the new SAMPM package
+##############################################################################
+#
+
+#
+#	Obtain the site specific parameters
+#
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+set year=`date +%Y`
+set month=`date +%b`
+set day=`date +%d`
+set num = 0
+set fs = 0
+set dir = 0
+set fstmp = 1
+set comment = "#"
+#
+#    Make sure the csd tree is correct in the ufs file system
+#
+if ( ! -d $UFS_PATH/csd ) then
+	mkdir  $UFS_PATH/csd
+	chmod 775 $UFS_PATH/csd
+endif
+
+set SAM_MNT = `mount | grep $SAM_BASEDIR`
+if ( X$SAM_MNT = X ) then
+
+	/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+
+The SAM-FS file system - $SAM_BASEDIR - is not mounted. Unable to take
+samfsdumps until file system is mounted.
+EOF
+	exit 1
+endif
+
+#
+#	Make sure the csd tree is correct under the samfs filesystem
+#
+if ( ! -d $SAM_PATH ) then
+      mkdir  $SAM_PATH
+      chmod 775 $SAM_PATH
+endif
+if ( ! -d $SAM_PATH/$year ) then
+      mkdir  $SAM_PATH/$year
+      chmod 775 $SAM_PATH/$year
+endif
+if ( ! -d $SAM_PATH/$year/$month ) then
+      mkdir  $SAM_PATH/$year/$month
+      chmod 775 $SAM_PATH/$year/$month
+endif
+
+echo   Start of daily samfs file systems samfsdumps
+#
+#	make list of samfs file system names
+#
+set fspar = (`grep samfs /etc/vfstab | awk '{print $1}'`)
+
+foreach dir (`grep samfs /etc/vfstab | awk '{print $3}'`)
+	@ num++
+	set fs = $fspar[$num]
+	set fstmp = `echo $fs | cut -c1`
+	if ($fstmp == $comment) then
+		set fs = `echo $fs | cut -f2 -d'#'`
+#		echo File system $fs is commented out in /etc/vfstab, skipping
+		echo File system $fs is commented out > $SAM_PATH"/"$year"/"$month"/"$fs"_dump_messages_day"$day"
+		touch "$SAM_PATH"/"$year"/"$month"/"$fs"_full_csd_dump_day"$day"
+		continue
+	endif
+#	echo $fs
+#	echo $dir
+	#
+	# Save three days in UFS on this host
+	#
+	cd $UFS_PATH/csd
+	if ( -f "$fs"_full_csd_dump_1.Z  ) then
+		\rm "$fs"_full_csd_dump_2.Z
+		mv "$fs"_full_csd_dump_1.Z  "$fs"_full_csd_dump_2.Z
+	endif
+
+	if ( -f "$fs"_full_csd_dump_today ) then
+		compress "$fs"_full_csd_dump_today
+		mv "$fs"_full_csd_dump_today.Z "$fs"_full_csd_dump_1.Z
+	endif
+
+	#
+	# Check if script has already run today
+	#
+	# if ( -f "$fs"_full_csd_dump_today ) then
+	#	echo SCRIPT HAS ALREADY RUN TODAY
+	#   exit
+	# endif
+
+	#
+	# Take the csd for $dir directory
+	#
+    cd "$dir" >& /dev/null
+    echo Take a samfsdump of "$dir" file system
+
+	$SAM_SBIN/samfsdump  -T -f "$UFS_PATH"/csd/"$fs"_full_csd_dump_today >& "$SAM_PATH"/"$year"/"$month"/"$fs"_dump_messages_day"$day"
+
+	#
+	# Try to validate that the dump is valid
+	#
+	$SAM_BIN/samfsrestore -t "$UFS_PATH"/csd/"$fs"_full_csd_dump_today >& /dev/null
+    if ( $status != 0 ) then
+        touch "$SAM_PATH"/"$year"/"$month"/"$fs"_dump_FAILED_day"$day"
+	else
+		touch "$SAM_PATH"/"$year"/"$month"/"$fs"_dump_OK_day"$day"
+	endif
+	#
+	# copy to filesystem so that SAM will archive copy for the day.
+	#
+	cp "$UFS_PATH"/csd/"$fs"_full_csd_dump_today "$SAM_PATH"/"$year"/"$month"/"$fs"_full_csd_dump_day"$day"
+
+end
+
+#
+#	NOTE THAT THE FOLLOWING LINES WERE ALL COMMENTED OUT WHEN THE
+#	CLEAN UP AND PACKAGING WAS DONE
+#
+
+#
+#	##################################################################
+#	##################################################################
+#
+#
+#	make copies of file system csd's on different system(s) using the LAN
+#
+#
+#
+#	          remove yesterday's files for $HOST
+##
+#       \rm       "$ALT_PATH"/"$HOST"_*day*
+#	cp      "$CATALOG"/"$ROBOT"				"$ALT_PATH"/"$HOST"_catalog_"$ROBOT"_day"$day"
+#
+#set num = 1
+#foreach dir (`grep samfs /etc/vfstab | awk '{print $3}'`)
+#	set fspar = (`grep samfs /etc/vfstab | awk '{print $1}'`)
+#	set fs = $fspar[$num]
+#	echo $fs
+#	echo $dir
+#	cp      "$UFS_PATH"/csd/"$fs"_full_csd_dump_today       "$ALT_PATH"/"$HOST"_"$fs"_full_csd_dump_day"$day"
+#	@ num++
+#end
+#
+###################################################################
+###################################################################
+#
+#	build a temp window of files
+#
+###################################################################
+###################################################################
+#
+#
+#       move files to temp files
+#
+#
+#set max_days = $WINDOW_DAYS
+#set deep = 14
+#set num = 1
+#set loop = 0
+##
+##       make sure the sam tree is ready
+#
+#if ( ! -d $WINDOW ) then
+#      mkdir  $WINDOW
+#      chmod 775 $WINDOW
+#endif
+##
+###################################################################
+###################################################################
+#
+#echo   Start  of sam file systems samdump files
+##
+#       make list of file system names
+#
+#
+#foreach dir (`grep samfs /etc/vfstab | awk '{print $3}'`)
+#	set fspar = (`grep samfs /etc/vfstab | awk '{print $1}'`)
+#        set fs = $fspar[$num]
+#        echo $fs
+#        echo $dir
+##
+##       Save N days in a sam file system for on this file system
+##
+#	set loop = 0
+#	set days = $WINDOW_DAYS
+##
+#	set max_days = 14
+#	set deep = 14
+#	@ num++
+#	cd $WINDOW
+##
+#
+#	while ( $loop <= $max_days )
+#		cd $WINDOW
+#		if ( -f "$fs"_full_csd_dump_$days.Z  ) then
+#					\rm "$fs"_full_csd_dump_$days.Z
+#					mv "$fs"_full_csd_dump_$deep.Z  "$fs"_full_csd_dump_$days.Z
+#		else
+#					mv "$fs"_full_csd_dump_$deep.Z  "$fs"_full_csd_dump_$days.Z
+#		endif
+#		if ($deep == 1 ) then
+#			break
+#		endif
+#		@ days--
+#		@ deep--
+#		@ loop++
+#		echo $days $loop
+#	end
+#	cp      "$UFS_PATH"/csd/"$fs"_full_csd_dump_today       "$WINDOW"/"$fs"_full_csd_dump_today
+#	compress   "$WINDOW"/"$fs"_full_csd_dump_today
+#	mv    "$WINDOW"/"$fs"_full_csd_dump_today.Z         "$WINDOW"/"$fs"_full_csd_dump_1.Z
+#
+#	if ($day == 01 ) then
+#        cp "$UFS_PATH"/csd/"$fs"_full_csd_dump_today           "$SAM_PATH"/"$year"/"$month"/"$fs"_full_csd_dump_day$day
+#	endif
+#	if ($day == 15 ) then
+#        cp "$UFS_PATH"/csd/"$fs"_full_csd_dump_today           "$SAM_PATH"/"$year"/"$month"/"$fs"_full_csd_dump_day$day
+#	endif
+#end
+
+exit 0

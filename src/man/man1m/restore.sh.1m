@@ -1,0 +1,76 @@
+.\" $Revision: 1.16 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH restore.sh 1M "24 Apr 2002"
+.SH NAME
+restore.sh \- Restores files online
+.SH SYNOPSIS
+.B restore.sh
+\fIlog_file\fR
+\fImount_point\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The
+.B restore.sh
+script restores files to their online or partially
+online status.  This script should be used after performing a file system
+restore using the \fBsamfsrestore\fR(1M) command.
+.PP
+This script accepts the following arguments:
+.TP 10
+\fIlog_file\fR
+Specify the name of the log file that was created by
+the \fBsamfsrestore\fR(1M) command.
+.TP
+\fImount_point\fR
+Specify the mount point of the file system being restored.
+.SH USAGE
+Step 1.  Recreate or restore the file system.
+.br
+You can do this by using 
+the \fBsamfsrestore\fR(1M) command with its \%\fB-g\fR option.
+This creates a log file.
+.PP
+Step 2.  Run the \fBrestore.sh\fR script.
+.br
+The first argument is the log file created in the 
+previous step, and the second argument is the file system mount point.
+This script stages back the files that were previously online or partially
+online at the time the \&\fB.inodes\fR copy or \fBsamfsdump\fR(1M) was created.
+.SH FILES
+The \fBrestore.sh\fR script resides in the following location:
+.PP
+.B /opt/SUNWsamfs/examples/restore.sh
+.SH SEE ALSO
+\fISun QFS, Sun SAM-FS, and Sun SAM-QFS Disaster Recovery Guide\fR.
+.PP
+\fBsamfsdump\fR(1M),
+\fBsamfsrestore\fR(1M).
+

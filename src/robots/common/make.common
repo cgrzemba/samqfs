@@ -1,0 +1,42 @@
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+WHOH = ${WHOAMI}.h
+
+misc.o:	     misc.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c
+down.o:	     down.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c
+drive.o:     drive.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c
+drive1.o:    drive1.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c
+work_cmds.o:  work_cmds.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c
+chk_drives.o: chk_drives.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c
+common_scsi.o: common_scsi.c common.h ${WHOH}
+	${CC} -c ${CFLAGS} -I`/bin/pwd` -DWHO='"${WHOH}"' ../common/$*.c

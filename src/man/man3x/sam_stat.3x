@@ -1,0 +1,88 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_stat 3X "05 Nov 2001"
+.SH NAME
+sam_stat, sam_lstat \- Gets file status over a network connection
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamrpc -l nsl [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/stat.h"
+#include "/opt/SUNWsamfs/include/samrpc.h"
+.ft
+.fi
+.LP
+.BI "int sam_stat(const char *" "path" ,
+.BI "struct sam_stat *" "buf" );
+.LP
+.BI "int sam_lstat(const char *" "path" ,
+.BI "struct sam_stat *" "buf" );
+.SH DESCRIPTION
+These are the \%RPC-based versions of
+.BR sam_stat (3)
+and
+.BR sam_lstat (3).
+.PP
+.BR sam_stat (3X)
+and
+.BR sam_lstat (3X)
+get file status by sending a request to the Sun
+StorEdge \%SAM-FS or Sun \%SAM-QFS RPC server, \fBsam-rpcd\fR.
+.PP
+If the server machine is different from the local machine, \fIpath\fR must
+be an absolute path.  If the server machine is the local machine, \fIpath\fR
+may be an absolute path or relative to the user's current working directory.
+.PP
+A call to
+.BR sam_initrpc (3X)
+must be issued before these calls.
+.SH "RETURN VALUES"
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\fIerrno\fR
+is set to indicate the error.
+.SH ERRORS
+.PP
+.TP 20
+.SB EDESTADDRREQ
+.B sam_initrpc
+was not successfully called, as required, before making this call.
+.TP 20
+.SB EINVAL
+\fIpath\fR is not an absolute pathname and the server (SAMHOST) machine
+is not the same as the local machine.
+.SH "SEE ALSO"
+.BR sam_lstat (3),
+.BR sam_stat (3).
+.PP
+.BR sam_closerpc (3X),
+.BR sam_initrpc (3X).

@@ -1,0 +1,183 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_stage 3 "01 Oct 2004"
+.SH NAME
+sam_stage \- Sets stage attributes on a file
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsam [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/lib.h"
+.ft
+.fi
+.LP
+.BI "int sam_stage(const char *" "path" ,
+.BI "const char *" "ops" );
+.SH DESCRIPTION
+.PP
+.B sam_stage(\|)
+sets stage attributes on a file or directory using
+a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+system call. 
+.I path
+is the file on which to set the attributes.
+.I ops
+is the character string of options, for example:  \fBdn\fR.
+Individual options are described below.
+.SH OPTIONS
+.TP
+.B a
+Sets the associative staging attribute on the file or directory.  
+Associative staging is activated when a regular file that has the
+associative staging attribute set is staged.  All files in
+the same directory that have the associative staging attribute set are
+staged. If a symbolic link has the associative staging
+attribute set, the file pointed to by the symbolic link is staged.
+Not valid with stage never attribute \fB-n\fR.
+.TP
+.B d
+Return the stage attributes on the file to the default, i.e. stage automatically
+as needed.  When this option is specified attributes are reset to the default.
+If it is used, it should be the first character in the string.
+.TP
+.B i
+Specifies that the file be staged immediately.
+.TP
+.B n
+Specifies that the file never be automatically staged.  The file will
+be read directly from the archive media.  
+The mmap function is not supported if the sam_stage \fIn\fR attribute is set.
+The sam_stage \fIn\fR attribute is not valid with the associative staging
+attribute \fIa\fR.
+The sam_stage \fIn\fR attribute is not valid with either of the
+checksum \fIg\fP (\fIgenerate\fP) or \fIu\fP (\fIuse\fP) attributes.
+(See \fBssum\fR(1)
+or
+.BR sam_ssum (3)).
+The stage \fB-n\fR attribute is not supported on
+Sun \%SAM-QFS shared file system clients; the entire file is
+staged when accessed on a client.
+.TP
+.B p
+Stage the partial blocks back online.
+.TP
+.B s
+Disable associative staging for the current stage.  This is only useful with
+the \fBi\fR option.  This causes only the named file to be staged, not other
+files in the same directory with the associative attribute set.
+.TP
+.B w
+Wait for the file to be staged back on-line before completing.  Not valid with
+\fBd\fR or \fBn\fR.
+.TP
+.B 1, 2, 3, 4
+Stage in the archive copy specified by the option.
+.SH "RETURN VALUES"
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_stage(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB EINVAL
+An invalid option was specified
+.TP
+.SB EPERM
+Not the owner or super-user.
+.TP
+.SB ENXIO
+No archive copy exists, or the specified archive copy does not exist.
+.TP
+.SB EFAULT
+.I path
+or
+.I ops
+points to an illegal address.
+.TP
+.SB EINTR
+A signal was caught during the
+.B sam_stage(\|)
+function.
+.TP
+.SB ELOOP
+Too many symbolic links were encountered in translating
+.IR path .
+.TP
+.SB EMULTIHOP
+Components of \f2path\f1 require hopping to multiple
+remote machines
+and the file system does not allow it.
+.TP
+.SB ENAMETOOLONG
+The length of the
+.I path
+argument exceeds {\f4PATH_MAX\f1}, or the
+length of a \f2path\f1 component exceeds {\f4NAME_MAX\f1} while
+{\f4_POSIX_NO_TRUNC\f1} is in effect.
+.TP
+.SB ENOENT
+The named file does not exist or is the null pathname.
+.TP
+.SB ENOLINK
+.I path
+points to a remote machine and the link
+to that machine is no longer active.
+.TP
+.SB ENOTDIR
+A component of the path prefix is not a directory.
+.TP
+.SB ENOTSUP
+License does not support option.
+.SH NOTE
+If the application writes (see
+.BR  write (2))
+to a file or
+the application mmaps (see
+.BR mmap(2))
+a file with prot set to PROT_WRITE,
+the file is staged in and the application waits until the stage has
+completed. The \fBstage \-n\fR attribute is ignored and the file is completely
+staged back online.
+.SH "SEE ALSO"
+.BR stage (1),
+.BR ssum (1).
+.PP
+.BR sam-stagealld (1M),
+.BR mount_samfs (1M).
+.PP
+.BR mmap (2),
+.BR write (2).
+.PP
+.BR sam_ssum (3).

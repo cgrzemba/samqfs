@@ -1,0 +1,163 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mcst - media changer tape st.conf lookup.
+#
+# $Revision: 1.6 $
+
+
+# Location of tape st.conf.
+STCONF=/kernel/drv/st.conf
+STCONF_CHANGES=$SAMFS_EXAMPLES/st.conf_changes
+
+
+# Device st.conf Warning Record.
+stconf_vendor_warn=""	# vendor product needing an entry in st.conf.
+stconf_product_warn=""	# vendor product needing an entry in st.conf.
+
+
+#----- stconf_find - search st.conf for vendor and product.
+#      Given device inquiry vendor and product, search st.conf for
+#      a list device or build a st.conf warning list. 
+function stconf_find {
+	vendor="$1"
+	product="$2"
+
+	logit "stconf_find encoded vendor=<$vendor> product=<$product>"
+
+	vendor_search=`decode "$vendor"`	# 8 vendor chars.
+	product_search=`plain_text "$product"`	# trim space product chars.
+
+	logit "stconf_find decoded vendor=<$vendor_search>"\
+		"product=<$product_search>"
+
+	found=0
+	found_tp_cfg=0
+	exec 5<$STCONF
+	while read -5u line; do
+		# remove leading comment.
+		line=${line###*}	
+		[ -z "$line" ] && continue
+		logit "stconf_find $line"
+
+		out=`echo "$line" | grep "tape-config-list"`
+		out=${out###*}
+		if [ -n "$out" ]; then
+			found_tp_cfg=1
+		fi
+
+
+		# Parse supported st.conf vendor and product strings.
+		stconf_vendor=`echo "$line" | cut -d"\"" -f1`
+		stconf_product=`echo "$line" | cut -d"\"" -f1`
+
+		# find st tape shortest st.conf vendor and product
+		# strings in current hw vendor and product strings. 
+		# The actual hw vendor and product strings are shorter
+		# than the ones found in st.conf.
+		vout=`echo "$vendor_search" | grep "^$stconf_vendor"`
+		pout=`echo "$product_search" | grep "^$stconf_product"`
+
+		if [ $found_tp_cfg -eq 1 ]; then
+			if [[ -n "$vout" ]] && [[ -n "$pout" ]]; then
+				logit "stconf_find found"
+				found=1
+				break
+			fi
+		fi
+	done 
+	exec 5<&-
+
+	if [ $found -eq 0 ]; then
+		match=0
+		index=1
+		for vv in $stconf_vendor_warn; do
+			pp=`echo $stconf_product_warn | cut -d" " -f$index`
+			if [[ "$vv" = "$vendor" ]] && \
+			   [[ "$pp" = "$product" ]]; then
+				match=1
+				
+			fi
+			
+			index=`expr "$index" + 1`
+		done
+
+		if [ $match -eq 0 ]; then
+			logit "stconf_find adding warning for"\
+				"$vendor $product"
+			stconf_vendor_warn="$stconf_vendor_warn $vendor"
+			stconf_product_warn="$stconf_product_warn $product"
+		fi
+	fi
+}
+
+
+#----- stconf_lookup - lookup st.conf vendor+product.
+#      Given device vendor and product, find out if it is listed in st.conf.
+function stconf_lookup {
+	vendor="$1"
+	model="$2"
+
+	logit "stconf_lookup vendor=<$vendor> product=<$model>"
+
+	count=1
+	for i in $vendor; do
+		j=`echo $model | cut -d" " -f$count`
+		logit "stconf_lookup count=$count vendor=<$i> product=<$j>"
+		stconf_find "$i" "$j"
+		count=`expr "$count" + 1`
+	done
+}
+
+
+#----- stconf_show_warnings - show devices not in st.conf.
+#      Given vendor product array of records, display the records.  
+function stconf_show_warnings {
+
+	logit "stconf_show_warnings vendor warn=<$stconf_vendor_warn>"\
+		"product warn=<$stconf_product_warn>"
+
+	if [ -n "$stconf_vendor_warn" ]; then
+		echo
+		echo "$STCONF_CHANGES contains tape-config-list"
+		echo "properties required in $STCONF for the following devices:"
+	fi
+
+	index=1
+	for vv in $stconf_vendor_warn; do
+		pp=`echo $stconf_product_warn | cut -d" " -f$index`
+
+		vv=`plain_text "$vv"`
+		pp=`plain_text "$pp"`
+
+		echo
+		echo "Add \"$vv\" \"$pp\" properties to tape-config-list in $STCONF"
+
+		index=`expr "$index" + 1`
+	done
+}

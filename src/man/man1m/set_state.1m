@@ -1,0 +1,93 @@
+.\" $Revision: 1.16 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH set_state 1M "01 Aug  2006"
+.SH NAME
+set_state \- Set device state
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/set_state
+[
+.B -w
+]
+.I state
+.I eq
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B set_state
+will change the state of a removable media device \fIeq\fP to \fIstate\fP.
+If
+.B \-w
+is specified,
+the command will wait for the operation to complete before
+terminating. Note:
+.B set_state
+cannot be used to change a file system partition's allocation state.
+.LP
+The valid states are:
+.TP 8
+.B on
+The device is usable by Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems.
+A device moving to the \fBon\fP
+state will be unloaded if there is media mounted.
+.TP
+.B idle
+The device will not be selected for use by either Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+ file systems.  Any existing activity
+will be allowed to complete.  Once there is no more activity, the device will
+be placed in the \fBoff\fP state.
+.TP
+.B unavail
+The device is unavailable for use by Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems
+and most Sun StorEdge \%SAM-FS and Sun \%SAM-QFS commands.
+The only valid commands for a device in this state are
+.BR load (1M),
+.BR unload (1M),
+and
+.BR set_state (1M).
+A device moving to the \fBunavail\fP state will be unloaded
+if there is media mounted.
+.TP
+.B off
+The device is unusable by Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+A device moving to the \fBoff\fP
+state from \fBon\fP, \fBidle\fP or \fBunavail\fP will
+be unloaded if there is media mounted. The only state a \fBdown\fP
+device may be moved to is \fBoff\fP.
+.LP
+.SH FILES
+.PD 0
+.TP 20
+.B mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+.SH SEE ALSO
+.BR load (1M),
+.BR unload (1M),
+.BR mcf (4),
+.BR sam-robotsd (1M)

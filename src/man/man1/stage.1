@@ -1,0 +1,162 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH stage 1 "23 Feb 2006"
+.SH NAME
+stage \- Set staging attributes and copy off-line files to disk
+.na
+.SH SYNOPSIS
+.B stage
+.RB [ \-a ]
+.RB [ \-c
+.IR n ]
+.RB [ \-d ]
+.RB [ \-f ]
+.RB [ \-w ]
+.RB [ \-n ]
+.RB [ \-p ]
+.RB [ \-V ]
+.RB [ \-x ]
+.IR filename .\|.\|.\|
+.LP
+.B stage
+.RB [ \-a ]
+.RB [ \-c
+.IR n ]
+.RB [ \-d ]
+.RB [ \-f ]
+.RB [ \-w ]
+.RB [ \-n ]
+.RB [ \-p ]
+.RB [ \-V ]
+.RB [ \-x ]
+.B \-r
+.IR dirname .\|.\|.\|\|  [ filename .\|.\|.\|]
+.ad b
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+.B stage
+sets staging attributes on a directory or file,
+transfers one or more off-line files from the archive media to magnetic disk, or
+cancels a pending or active stage request.
+By default,
+staging is automatically done when the file is accessed.
+If none of the \fB\-a\fP, \fB\-d\fP, \fB\-n\fP, or \fB\-x\fP
+options is specified,
+staging is initiated.
+.LP
+When stage attributes are set on a directory, files or directories
+subsequently created in that directory inherit those attributes.
+.LP
+Stage attributes may be set only by the owner of the file or the
+superuser.  Staging can be initiated or canceled either by the owner,
+superuser, or other user with read or execute permission.
+.SH OPTIONS
+.TP
+.B \-a
+Set the associative staging attribute on the file or directory.
+Associative staging is activated when a regular file that has the
+associative staging attribute set is staged.  All files in
+the same directory that have the associative staging attribute set are
+staged. If a symbolic link has the associative staging
+attribute set, the file pointed to by the symbolic link is staged.
+Not valid with stage never attribute \fB-n\fR.
+.TP
+.BI \-c " n"
+Stage from the archive copy number
+.IR n .
+.TP
+.B \-d
+Returns staging attributes on the file to the default.  When this
+option is specified the attributes are first reset to the
+default, then other attribute-setting options are processed.  The only action
+taken is that attributes are reset.
+.TP
+.B \-f
+Do not report errors.
+.TP
+.B \-w
+Wait for each file to be staged back on-line before completing.
+Not valid with \fB\-d\fP, or \fB\-n\fP.
+.sp
+Note that when staging many files at once
+(such as with \fBstage -r -w .\fP)
+the "-w" option causes each file to be completely staged before the stage
+request for the next file is issued.  This does not allow the system to
+sort the stage requests in the order that the files are archived on the
+media.  In order to get the best performance in this situation, do the
+following:
+.sp
+  stage -r .
+  stage -r -w .
+.TP
+.B \-n
+Specifies that the file never be automatically staged. The file will
+be read directly from the archive media.
+The mmap function is not supported if the stage \fB-n\fR attribute is set.
+The stage \fB-n\fR attribute is not valid with the associative staging
+attribute \fB-a\fR.
+The stage \fB-n\fR attribute is not valid with either of the checksum
+\fIgenerate\fP or \fIuse\fP attributes (\fBssum \-g\fP or \fBssum \-u\fP).
+The stage \fB-n\fR attribute is not supported on a
+Sun \%SAM-QFS shared file system client; the entire file is
+staged when accessed on a client.
+.TP
+.B \-p
+Specifies that the offline regular file's partial blocks be staged.
+.TP
+.B \-r
+Recursively performs the operation (staging or setting staging attributes)
+on any files contained in the specified
+\fIdirname\fP or its subdirectories.
+.TP
+.B \-V
+Turns on verbose display.  A message will be displayed for each file
+on which a stage will be attempted.
+.TP
+.B \-x
+Cancel a pending or active stage request for the named file(s).
+.SH NOTE
+If the application writes (see
+.BR write (2))
+to a file or
+the application mmaps (see
+.BR mmap (2))
+a file with prot set to PROT_WRITE,
+the file is staged in and the application waits until the stage has
+completed. The \fBstage \-n\fR attribute is ignored and the file is completely
+staged back online.
+.SH SEE ALSO
+.BR release (1),
+.BR archive (1),
+.BR ssum (1),
+.BR mount_samfs(1M),
+.BR mmap (2),
+.BR write (2)

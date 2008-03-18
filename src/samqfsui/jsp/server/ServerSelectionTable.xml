@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: ServerSelectionTable.xml,v 1.25 2008/03/17 14:40:39 am143972 Exp $ -->
+
+<table>
+    <actions>
+        <cc name="AddButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="dynamic" value="true" />
+            <attribute name="disabled" value="true" />
+            <attribute name="defaultValue" value="ServerSelection.button.add" />
+            <attribute name="onClick"
+                value="
+                    launchPopup(
+                        '/server/AddServer',
+                        'addserver',
+                        '',
+                        SIZE_NORMAL);
+                    return false;"/>
+        </cc>
+
+        <cc name="RemoveButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="dynamic" value="true" />
+            <attribute name="disabled" value="true" />
+            <attribute name="defaultValue"
+                value="ServerSelection.button.remove" />
+            <attribute name="onClick"
+                value="if (!showConfirmMsg(1)) return false;"/>
+        </cc>
+        
+        <cc name="ViewConfigButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="dynamic" value="true" />
+            <attribute name="disabled" value="true" />
+            <attribute name="onClick"
+                value="return createURL(this, 'serverinfo');" />
+            <attribute name="defaultValue"
+                value="ServerSelection.button.viewconfig" />
+        </cc>
+    </actions>
+   
+    <column name="NameColumn" sortname="NameText" extrahtml="nowrap">
+        <cc name="ServerHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+            <attribute name="title" value="node.filesystem.fs.tooltip"/>
+            <attribute name="submitFormData" value="true"/>
+            <attribute name="onClick"
+                value="return createURL(this, 'fs');" />
+        <cc name="NameText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        </cc>
+        <cc name="HiddenInfo"
+            tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    </column>
+
+    <column name="FaultsColumn" sortname="Alarm" extrahtml="nowrap">
+        <cc name="AlarmHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+            <attribute name="title" value="node.admin.fault.tooltip"/>
+            <attribute name="submitFormData" value="true"/>
+            <cc name="Alarm" tagclass="com.sun.web.ui.taglib.alarm.CCAlarmTag"/>
+            <attribute name="onClick"
+                value="return createURL(this, 'alarm');" />
+            <cc name="AccessDeniedText"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        </cc>
+    </column>
+
+    <column name="VersionColumn" sortname="VersionText"
+        extrahtml="nowrap='nowrap' align='center'">
+        <cc name="VersionHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+            <attribute name="submitFormData" value="true"/>
+            <attribute name="title" value="node.server.versionhighlight.tooltip"/>
+            <cc name="VersionText"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        </cc>
+    </column>
+    
+    <column name="ArchColumn" sortname="ArchText"
+        extrahtml="nowrap='nowrap' align='center'">
+        <cc name="ArchText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </column>
+  
+    <column name="DiskCacheColumn" extrahtml="align='right'">
+        <cc name="DiskCacheHref"
+            tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+            <attribute name="submitFormData" value="true"/>
+            <attribute name="onClick"
+                value="return createURL(this, 'fs');" />
+            <attribute name="title" value="node.filesystem.fs.tooltip"/>
+            <cc name="DiskCacheText"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        </cc>
+    </column>
+    <column name="MediaCapacityColumn" extrahtml="align='right'">
+        <cc name="MediaCapacityHref"
+            tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+            <attribute name="submitFormData" value="true"/>
+            <attribute name="onClick"
+                value="return createURL(this, 'lib');" />
+            <attribute name="title" value="node.storage.library.tooltip"/>
+            <cc name="MediaCapacityText"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        </cc>
+    </column>
+</table>

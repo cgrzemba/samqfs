@@ -1,0 +1,201 @@
+#!/bin/csh
+#
+# $Revision: 1.5 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#################################################################################
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.  No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)   operation of any of the software script(s) shall be
+#       uninterrupted or error free, or
+#
+# (ii)  functions contained in the software script(s) shall operate
+#       in the combinations which may be selected for use by
+#       Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#       issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+################################################################################
+# Change history (most recent first)
+#
+# When            Who           Comments
+# ----            ---           --------
+#		    2003  dcrouse		Initial Version
+# July 1st, 2004  jleach        Included PS Header
+# July 26th,2004  jdp		    Cleaning up to run with the new SAMPM package
+##############################################################################
+#
+# Synopsis: This script will take system information of user, system, and
+#	wait I/O time and compare them to a threshold. If the threshold is
+#	exceeded, it will echo out a WARNING to a log file that is placed in
+#	the samfs file system under csd/year/month and the file will be tagged
+#	with the date of when the script was run.
+#
+#       Process to enable system activity reporting:
+#
+#	Modify /etc/init.d/perf to enable system activity data gathering
+#       vi /etc/init.d/perf
+#		remove the # on every command line starting at the first
+#		"if" command using "vi" as the editor.
+#
+#
+#	Edit crontab entries for user sys,
+#		MUST USE: "crontab -e sys" as the editor
+#			remove the # on the three "sa" crontab commands
+#			so they will run
+#			This will modify /var/spool/cron/crontabs/sys
+#
+#       The system will log in binary file accounting information in directory
+#                       /var/adm/sa. There is another script to move these
+#			accounting files to /sam for safe keeping.
+#
+#
+#
+#
+#   Obtain the site specific parameters
+#
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+
+set SAM_MNT = `mount | grep $SAM_BASEDIR`
+if ( X$SAM_MNT = X ) then
+
+	/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+
+The SAM-FS file system - $SAM_BASEDIR - is not mounted. Unable to save
+system reports until file system is mounted.
+EOF
+	exit 1
+endif
+
+set error = 0
+set user_max = 30
+set sys_max = 30
+set wio_max = 40
+set day = `date +%d`
+set month = `date +%B`
+set year = `date +%Y`
+set host = `/usr/ucb/hostname`
+set outfile = /var/tmp/sampm_system_report_$month$day$year
+\rm -f $outfile
+
+#
+#   Make sure the csd tree is correct under the samfs filesystem
+#
+if ( ! -d $SAM_PATH ) then
+	mkdir  $SAM_PATH
+	chmod 775 $SAM_PATH
+endif
+if ( ! -d $SAM_PATH/$year ) then
+	mkdir  $SAM_PATH/$year
+	chmod 775 $SAM_PATH/$year
+endif
+if ( ! -d $SAM_PATH/$year/$month ) then
+	mkdir  $SAM_PATH/$year/$month
+	chmod 775 $SAM_PATH/$year/$month
+endif
+
+if ( ! -e /var/tmp/sampm_sys_count ) then
+	set sys_err_count = 0
+else
+	set sys_err_count = (`cat /var/tmp/sampm_sys_count`)
+	\rm /var/tmp/sampm_sys_count
+endif
+
+echo  SYSTEM REPORT FOR HOST - $host   $month-$day, $year > $outfile
+echo "" >> $outfile
+sar -f /var/adm/sa/sa$day | grep Average > /var/tmp/sampm_ave_time
+set user = `awk '{print $2 }' /var/tmp/sampm_ave_time`
+echo Average user time - $user >> $outfile
+set sys = `awk '{print $3 }' /var/tmp/sampm_ave_time`
+echo Average system time - $sys >> $outfile
+set wio = `awk '{print $4 }' /var/tmp/sampm_ave_time`
+echo Average IO wait time - $wio >> $outfile
+echo "" >> $outfile
+echo "System information for HOST - $host" >> $outfile
+if ($user >= $user_max) then
+	echo "" >> $outfile
+	echo "WARNING: User time exceeds thresold of $user_max percent" >> $outfile
+	echo "         The daily avearage user time was $user percent" >> $outfile
+	set error = 1
+endif
+if ($sys >= $sys_max) then
+	echo "" >> $outfile
+	echo "WARNING: System time exceeds thresold of $sys_max percent" >> $outfile
+	echo "         The daily average system time wasis $sys percent" >> $outfile
+	set error = 1
+endif
+if ($wio >= $wio_max) then
+	echo "" >> $outfile
+	echo "WARNING: WaitIO time exceeds thresold of $wio_max percent" >> $outfile
+	echo "         The daily average wait IO time was $wio percent" >> $outfile
+	set error = 1
+endif
+
+\rm /var/tmp/sampm_ave_time
+
+if ($error == 1) then
+	@ sys_err_count++
+	cat $outfile | /usr/ucb/mail -s "SAM-FS NEEDS HELP" root
+	cat $outfile | /usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1
+	cat $outfile | /usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1a
+	if ($sys_err_count >= $sys_max2) then
+		cat $outfile | /usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact2
+	endif
+	if ($sys_err_count >= $sys_max3) then
+		cat $outfile | /usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact3
+	endif
+	if ($sys_err_count >= $sys_max4) then
+		cat $outfile | /usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact4
+	endif
+
+	echo $sys_err_count > /var/tmp/sampm_sys_count
+	exit 1
+endif
+
+echo "" >> $outfile
+echo "No issues were found for $host" >> $outfile
+echo "" >> $outfile
+
+cp $outfile "$SAM_PATH"/"$year"/"$month"/".
+
+set sys_err_count = 0
+echo $sys_err_count > /var/tmp/sampm_sys_count
+
+exit 0

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: LibraryTable.xml,v 1.5 2008/03/17 14:40:38 am143972 Exp $ -->
+
+<table>
+<column name="LibraryNameColumn" extrahtml="nowrap">
+    <cc name="LibraryNameText"
+	tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="LibraryTypeColumn" extrahtml="nowrap">
+    <cc name="LibraryTypeText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="LibraryStateColumn" extrahtml="nowrap">
+    <cc name="LibraryStateText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="LibraryLogColumn" extrahtml="nowrap">
+    <cc name="LibraryLogHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick"
+            value="
+                launchPopup(
+                    '/admin/ShowLog',
+                    'showconfig',
+                    getServerName(),
+                    SIZE_LARGE,
+                    '&amp;SAMQFS_PATH_NAME=' + getPathFromHref(this));
+                return false;
+            "/>
+        <cc name="LibraryLogText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        <cc name="LogPath"
+            tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+    </cc>
+</column>
+
+<column name="LibraryStatusColumn">
+    <cc name="LibraryStatusText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false"/>
+    </cc>
+</column>
+
+<column name="LibraryActivityColumn">
+    <cc name="LibraryActivityText"
+	tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false"/>
+    </cc>
+</column>
+
+</table>

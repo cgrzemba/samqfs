@@ -1,0 +1,72 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH auditslot 1M "3 Apr 2000"
+.SH NAME
+auditslot \- Audit slots in a robot
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/auditslot
+[
+.B \-e
+]
+.IR eq : slot [: partition ]
+[
+.IR eq : slot [: partition ]...]
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B auditslot
+will send a request to the robot specified by the equipment identifier
+\fIeq\fP
+to audit the media in the specified
+\fIslot\fP.
+The \fIslot\fPs must be in use and occupied (that is, the media cannot be 
+mounted in a drive).
+If \fIslot\fP contains a two-sided optical cartridge, then both sides will
+be audited.
+.SH OPTIONS
+.TP
+.B \-e
+If \fIslot\fP is tape, skip to EOD and update space available. 
+\fBCaution:\fP Skip to EOD is not interruptible and 
+under certain conditions can take hours to complete.
+.LP
+.SH FILES
+.PD 0
+.TP 20
+.B mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun StorEdge
+QFS environments
+.PD
+.SH SEE ALSO
+.BR export (1M),
+.BR import (1M),
+.BR move (1M),
+.BR mcf (4),
+.BR sam-robotsd (1M)

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: SharedFSDetailsPropertySheet.xml,v 1.6 2008/03/17 14:40:34 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="generalSection">
+        <property required="false">
+            &lt;table>
+              &lt;tr> 
+                &lt;td>
+                  &lt;table>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="typeLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.fsType" />
+                            </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="15" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="typeValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="mountLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.mountPoint" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="15" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="mountValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="stateLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.state" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="15" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="stateValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                  &lt;/table>
+                &lt;/td>
+
+                &lt;td>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="25" />
+                    </cc>
+                &lt;/td>
+
+                &lt;td >
+                  &lt;table>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="capLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.capacity" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="15" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="capValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="freespaceLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.freeSpace" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="15" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="freespaceValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="consumedLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.consumedSpace" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="15" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="consumedValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                  &lt;/table>
+                &lt;/td>
+              &lt;/tr>
+            &lt;/table>
+        </property>
+    </section>
+
+    <section name="samfsSection" >
+        <property required="false">
+            &lt;table>
+              &lt;tr> 
+                &lt;td>
+                  &lt;table>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="eqLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.eq" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="5" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="eqValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="dauLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.dau" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="5" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="dauValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                  &lt;/table>
+                &lt;/td>
+
+                &lt;td>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="50" />
+                    </cc>
+                &lt;/td>
+
+                &lt;td>
+                  &lt;table>
+                    &lt;tr>
+                      &lt;td valign="top">
+                        <cc name="createdateLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.createdDate" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="5" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td valign="top">
+                        <cc name="createdateValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                      &lt;td>
+                        <cc name="metadataPlacementLabel"
+                            tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                            <attribute name="defaultValue"
+                                value="FSDetails.label.metadataPlacement" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td>
+                        <cc name="spacer"
+                            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                            <attribute name="width" value="5" />
+                        </cc>
+                      &lt;/td>
+                      &lt;td valign="top">
+                        <cc name="metadataPlacementValue"
+                            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                      &lt;/td>
+                    &lt;/tr>
+                  &lt;/table>
+                &lt;/td>
+              &lt;/tr>
+            &lt;/table>
+        </property>
+    </section>
+
+    <section name="sharedSection" >
+        <property required="false">
+            &lt;table>
+            &lt;tr> 
+                &lt;td>
+                    &lt;table>
+                    &lt;tr>
+
+                        &lt;td>
+                            <cc name="sharedFSTypeLabel"
+                                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                                <attribute name="defaultValue"
+                                    value="SharedFSDetails.label.sharedType" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="spacer"
+                                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                                <attribute name="width" value="5" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="sharedFSTypeValue"
+                                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                        &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                        &lt;td>
+                            <cc name="shareLabel"
+                                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                                <attribute name="defaultValue"
+                                    value="FSDetails.label.sharedStatus" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="spacer"
+                                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                                <attribute name="width" value="5" />
+                             </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="shareValue"
+                                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                        &lt;/td>
+                    &lt;/tr>
+                    &lt;/table>
+                &lt;/td>
+                &lt;td>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="55" />
+                    </cc>
+                &lt;/td>
+
+                &lt;td>
+                    &lt;table>
+                    &lt;tr>
+                        &lt;td>
+                            <cc name="serverLabel"
+                                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                                <attribute name="defaultValue"
+                                    value="FSDetails.label.server" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="spacer"
+                                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                                <attribute name="width" value="5" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="serverValue"
+                                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                        &lt;/td>
+                    &lt;/tr>
+                    &lt;tr>
+                        &lt;td>
+                            <cc name="failoverStatusLabel"
+                                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                                <attribute name="defaultValue"
+                                    value="SharedFSDetails.label.failoverStatus" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="spacer"
+                                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                                <attribute name="width" value="5" />
+                            </cc>
+                        &lt;/td>
+                        &lt;td>
+                            <cc name="failoverStatusValue"
+                                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                        &lt;/td>
+                    &lt;/tr>
+                    &lt;/table>
+                &lt;/td>
+                &lt;td>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="55" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;/table>
+        </property>
+   </section>
+</propertysheet>

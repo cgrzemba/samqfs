@@ -1,0 +1,118 @@
+." $Revision: 1.16 $ 
+.ds ]W Sun Microsystems 
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH scsi_trace_decode 1M  "26 Jan 1998"
+.SH NAME
+scsi_trace_decode \- Decodes files produced by enabling the \fBtrace_scsi\fR option
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/tools/scsi_trace_decode\fR
+\%\fB-f\ \fItrace_file\fR
+[\fIeq_id\fR]
+.SH AVAILABILITY
+\fBSUNWsamtp\fR
+.SH DESCRIPTION
+The \fBscsi_trace_decode\fR command decodes the raw SCSI trace file
+produced when the \fBdebug trace_scsi\fR option
+in the \fBdefaults.conf\fR file
+is enabled.  
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB-f\ \fItrace_file\fR
+Specifies the trace file.  Enter a full path name for the trace file.
+Typically, the trace file is \fB/tmp/sam_scsi_trace_\fIml_eq_id\fR,
+where \fIml_eq_id\fR is the Equipment Ordinal of the library
+that contains the devices being traced.
+.sp
+For example, assume that you have two libraries.
+Their Equipment Ordinals are 20 and 50.
+Each library has two tape drives, and their Equipment Ordinals
+are 21, 22, 51, and 52.
+You could specify that trace information for devices 20, 21, and 22 go
+to file \fB/tmp/sam_scsi_trace_20\fR and that trace information for
+devices 50, 51, and 52 go to file \fB/tmp/sam_scsi_trace_50\fR.
+.TP
+\fIeq_id\fR
+Shows entries in \fItrace_file\fR for the device identified
+by Equipment Ordinal \fIeq_id\fR only.
+The default is to show entries for all Equipment Ordinals in this trace file.
+.SH EXAMPLE OUTPUT
+.ft CO
+.nf
+  eq41 Issue 09:22:45 8   cdb: 1b 00 00 00  00 00 00 00  00 00 0000
+       Load unload
+
+  eq41 Reply 09:22:45 8   cdb: 1b 00 00 00  00 00 00 00  00 00 00 00
+       Load unload
+       sense: 71 00 04 00  00 00 00 48  00 00 00 00  44 00 f4 03  0e 16 00 41
+               Sense key 04, ASC 44, ASCQ 00
+               Internal target failure
+.fi
+.ft
+.PP
+The various components of the preceding output are as follows:
+.TP 10
+\fBOutput\fR
+\fBMeaning\fR
+.TP
+\fBeq41\fR
+The equipment number involved in the command or completion.
+.TP
+\fBIssue\fR
+The scsi command has been issued.
+.TP
+\fBReply\fR
+The command completed.  Completion status is shown.
+.TP
+\fB09:22:45\fR
+The time of day when the command was sent or received.
+.TP
+\fB8\fR
+The file descriptor upon which the command was issued.
+Not useful for \%non-Sun Microsystems analysts.
+.TP
+\fBcdb\fR
+The cdb (command descriptor block): the scsi command issued.
+.TP
+\fBsense\fR
+The sense data.
+If the command erred, then sense data is obtained and displayed.
+If the command did not err, then this field is all zero.
+.TP
+\fBSense key \&.\&.\&.\fR
+Decoded sense data, showing the sense key, additional
+sense code, and additional sense code qualifier.
+These values define the error that occurred.
+.TP
+\fBInternal target failure\fR
+The ASCII representation of the ASC, ASCQ information.
+.fi
+.ft
+.SH SEE ALSO
+.BR defaults.conf (4)

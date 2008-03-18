@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: RegistrationPropertySheet.xml,v 1.5 2008/03/17 14:40:29 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="accountInfo" defaultValue="registration.accountInfo">      
+        <property required="false">
+            <fieldhelp name="noAccountHelp"
+                defaultValue="registration.accountInfo.noaccount.helptext"/>
+        </property>
+        <property required="true">
+            <label name="unameLabel" 
+                defaultValue="registration.accountInfo.onlineAccountName"/>
+            <cc name="unameValue"
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+        </property>
+        <property required="true">
+            <label name="pwdLabel" defaultValue="common.label.password"/>
+            <cc name="pwdValue"
+                tagclass="com.sun.web.ui.taglib.html.CCPasswordTag"/>
+        </property> 
+    </section>
+
+    <section name="contactInfo" defaultValue="registration.contactInfo">      
+        <property required="false">
+            <fieldhelp name="contactHelp"
+                defaultValue="registration.contactInfo.helptext"/>
+        </property>
+        <property required="true">
+            <label name="contactNameLabel" 
+                defaultValue="registration.contactInfo.contactName"/>
+            <cc name="contactNameValue"
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+        </property>
+        <property required="true">
+            <label name="contactEmailLabel"
+                defaultValue="registration.contactInfo.contactEmail"/>
+            <cc name="emailValue"
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+        </property> 
+    </section>
+    
+    <section name="connectionsettings"
+        defaultValue="registration.connection.settings">
+
+        <property required="false" span="true">
+            <label name="connectionTypeLabel"
+                defaultValue="registration.connection.typeLabel"/>
+            <cc name="connectionTypeRadioButton"
+                tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag">
+                <option label="registration.connection.typeDirectLabel" value="direct"/>
+                <option label="registration.connection.typeUseproxyLabel" value="proxy"/>
+                <attribute name="onClick" value="javascript: 
+                
+                if (this.value=='proxy') {
+                    ccSetTextFieldDisabled('Registration.proxyHostnameValue', 'Form', false);
+                    ccSetTextFieldDisabled('Registration.proxyPortValue', 'Form', false); 
+                    ccSetCheckBoxDisabled('Registration.proxyAuthValue', 'Form', 0); 
+                    return true;
+                } else {
+                    ccSetTextFieldDisabled('Registration.proxyHostnameValue', 'Form', true);
+                    ccSetTextFieldDisabled('Registration.proxyPortValue', 'Form', true); 
+                    document.Form['Registration.proxyAuthValue'].checked = false;
+                    ccSetCheckBoxDisabled('Registration.proxyAuthValue', 'Form', 1); 
+                    ccSetTextFieldDisabled('Registration.proxyUnameValue', 'Form', true);
+                    ccSetTextFieldDisabled('Registration.proxyPwd', 'Form', true);
+
+                    return true;
+                }" />
+            </cc>
+
+            <ccgroup>
+                <property>
+                    <label name="proxyHostnameLabel" 
+                        defaultValue="registration.connection.proxyHostnameLabel"/>
+                    <cc name="proxyHostnameValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                        <attribute name="disabled" value="true" />
+                        <attribute name="dynamic" value="true" />
+                    </cc>
+                </property>
+                <property>
+                    <label name="proxyPortLabel"
+                        defaultValue="registration.connection.proxyPortLabel"/>
+                    <cc name="proxyPortValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                        <attribute name="disabled" value="true" />
+                        <attribute name="dynamic" value="true" />
+                    </cc>
+                    &lt;br />&lt;br />&lt;br />
+                </property>
+                
+                <property>
+                    <ccgroup>
+                        <property span="true">
+                            <cc name="proxyAuthValue" 
+                                tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                                <attribute name="label" 
+                                    value="registration.connection.enableProxyAuth"/>
+                                <attribute name="dynamic" value="true" />
+                                <attribute name="disabled" value="true" />
+                                <attribute name="onClick" value="javascript: 
+                                if (document.Form['Registration.proxyAuthValue'].checked == true) {
+                                ccSetTextFieldDisabled('Registration.proxyUnameValue', 'Form', false);
+                                ccSetTextFieldDisabled('Registration.proxyPwd', 'Form', false);
+                                } else {
+                                ccSetTextFieldDisabled('Registration.proxyUnameValue', 'Form', true);
+                                ccSetTextFieldDisabled('Registration.proxyPwd', 'Form', true);
+                                }
+                                "/>
+                            </cc>
+                        </property>
+                        <property required="false">
+                            <label name="proxyUnameLabel"
+                                defaultValue="common.label.userName"/>
+                            <cc name="proxyUnameValue"
+                                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                                <attribute name="disabled" value="true"/>
+                                <attribute name="dynamic" value="true"/>
+                            </cc>
+                        </property>        
+                        <property required="false">
+                            <label name="pwdLabel"
+                                defaultValue="common.label.password"/>
+                            <cc name="proxyPwd"
+                                tagclass="com.sun.web.ui.taglib.html.CCPasswordTag" >
+                                <attribute name="disabled" value="true" />
+                                <attribute name="dynamic" value="true" />
+                            </cc>
+                        </property>        
+                    </ccgroup>
+                </property>
+            </ccgroup>
+        </property>
+    </section>    
+
+    <section name="purpose" defaultValue="registration.purpose.statementLabel">        
+        <property required="true">
+            <cc name="purposeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCTextAreaTag" >
+                <attribute name="rows" value="8" />
+                <attribute name="cols" value="100" />
+                <attribute name="readOnly" value="true" />
+            </cc>
+        </property>        
+    </section>
+    
+</propertysheet>

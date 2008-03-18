@@ -1,0 +1,114 @@
+<%--
+/*
+ *    SAM-QFS_notice_begin
+ *
+ * CDDL HEADER START
+ *
+ * The contents of this file are subject to the terms of the
+ * Common Development and Distribution License (the "License")
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+ * or http://www.opensolaris.org/os/licensing.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each
+ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+ * If applicable, add the following below this CDDL HEADER, with the
+ * fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ */
+/*
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Use is subject to license terms.
+ *
+ *    SAM-QFS_notice_end
+ */
+
+// ident	$Id: RunSAMExplorer.jsp,v 1.5 2008/03/17 14:40:29 am143972 Exp $
+--%>
+<%@ page language="java" %>
+<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
+<%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
+
+<jato:useViewBean
+    className="com.sun.netstorage.samqfs.web.admin.RunSAMExplorerViewBean">
+
+<script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
+<script language="javascript" src="/samqfsui/js/samqfsui.js"></script>
+<script language="javascript"
+    src="/samqfsui/js/admin/RunSAMExplorer.js">
+</script>
+
+<!-- Define the resource bundle, html, head, meta, stylesheet and body tags -->
+<cc:header
+    pageTitle="RunSAMExplorer.pageTitle"
+    copyrightYear="2006"
+    baseName="com.sun.netstorage.samqfs.web.resources.Resources" 
+    onLoad="initializePopup(this);"
+    bundleID="samBundle">
+
+<!-- Masthead -->
+<cc:secondarymasthead name="SecondaryMasthead" bundleID="samBundle" />
+
+<jato:form name="RunSAMExplorerForm" method="post">
+
+<cc:alertinline name="Alert" bundleID="samBundle" />
+
+<cc:pagetitle
+    name="PageTitle"
+    bundleID="samBundle"
+    pageTitleText="RunSAMExplorer.pageTitle"
+    showPageTitleSeparator="true"
+    showPageButtonsTop="false"
+    showPageButtonsBottom="true">
+      
+    <br />
+
+    <table>
+    <tr>
+        <td rowspan="3">
+            <cc:spacer name="Spacer" width="10" height="5" />
+        </td>
+        <td colspan="2">
+            <cc:text
+                name="StaticText"
+                defaultValue="RunSAMExplorer.text1"
+                bundleID="samBundle" />
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <cc:spacer name="Spacer" width="5" height="5" />
+        </td>
+        <td>
+            <cc:radiobutton
+                name="RadioButton"
+                bundleID="samBundle"
+                styleLevel="3" />
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <cc:text
+                name="StaticText"
+                defaultValue="RunSAMExplorer.text2"
+                bundleID="samBundle" />
+            <cc:spacer name="Spacer" width="5" height="5" />
+            <cc:textfield name="TextField" defaultValue="500" />
+        </td>
+    </tr>
+    </table>
+
+</cc:pagetitle>
+
+<cc:hidden name="ErrorMessage" />
+<cc:hidden name="ConfirmMessage" />
+
+</jato:form>
+</body>
+</cc:header>
+</jato:useViewBean> 

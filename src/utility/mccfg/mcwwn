@@ -1,0 +1,192 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mcwwn - media changer world wide name added to samst.conf
+#
+# $Revision: 1.6 $
+
+
+# Location of samst.conf
+SFILE=/kernel/drv/samst.conf
+
+
+#----- get_mc_wwn - get media changers world wide names.
+#      Given cfgadm and luxamd, parse media changer wwns.
+function get_mc_wwn {
+
+	logit "get_mc_wwn"
+	
+	channels=""
+	ids=""
+	wwns=""
+
+	cfgadm -la > $TMPFILE
+
+	exec 4<$TMPFILE
+	count=0
+	while read -4u line; do
+		out=`echo $line | grep "fc-fabric"`
+		if [ -n "$out" ]; then
+			chn=`echo $line | cut -d":" -f1`
+			channels="$channels $chn"
+		fi
+
+		out=`echo $line | grep "med-changer"`
+		if [ -n "$out" ]; then
+			id=`echo $line | cut -d":" -f1`
+			ids="$ids $id"
+
+			wwn=`echo $line | cut -d":" -f3`
+			wwn=`echo $wwn | cut -d" " -f1`
+			wwns="$wwns $wwn"
+			count=`expr "$count" + 1`
+		fi
+	done
+	exec 4<&-
+
+	logit "get_mc_wwn try cfgadm search with luxadm verification"
+	wwn_list=""
+	index=0
+	while [ $index -lt $count ]; do
+		index=`expr "$index" + 1`
+		id=`echo $ids | cut -d" " -f$index`
+		wwn=`echo $wwns | cut -d" " -f$index`
+
+		out=`luxadm -e dump_map /dev/cfg/$id 2>&1 | grep $wwn`
+		if [ -n "$out" ]; then
+			wwn_list="$wwn_list $wwn"
+		fi
+	done
+	logit "get_mc_wwn wwn_list=$wwn_list"
+
+	logit "get_mc_wwn 2nd try cfgadm channel with luxadm mc search"
+	chn_list=""
+	for chn in $channels; do
+		
+		out=`luxadm -e dump_map /dev/cfg/$chn 2>&1 | 
+			grep "Medium changer device"`
+		if [ -n "$out" ]; then
+			wwn=`echo $out | cut -d" " -f4`
+			chn_list="$chn_list $wwn"
+		fi
+	done
+	logit "get_mc_wwn chn_list=$chn_list"
+
+
+	logit "get_mc_wwn merge cfgadm and luxadm media changer searches"
+	wwn_list="$wwn_list $chn_list"
+
+	rm -f $TMPFILE
+	touch $TMPFILE
+	for wwn in $wwn_list; do
+		echo "$wwn" >> $TMPFILE
+	done 
+	wwn_list=`sort -u $TMPFILE`
+
+	# remove newlines
+	tmp=""
+	for ii in $wwn_list; do
+		tmp="$tmp $ii"
+	done
+	wwn_list="$tmp"
+
+	logit "get_mc_wwn $wwn_list"
+
+	echo "$wwn_list"
+}
+
+
+#----- add_mc_wwn_samst - add media changer world wide name to samst.conf
+#      Given list of media changer world wide names, add the list to 
+#      /kernel/drv/samst.conf.
+function add_mc_wwn_samst {
+	mc_wwn="$1"
+
+	logit "add_mc_wwn_samst $mc_wwn"
+
+	# check for driver config file
+	if [ ! -f "$SFILE" ]; then
+		query_user "Create $SFILE"
+		if [ $? -ne 0 ]; then
+			return 1
+		fi
+		touch $SFILE
+	fi
+
+	# add mc wwns to driver config file
+	added_device=0
+	for wwn in $mc_wwn; do
+		out=`grep $wwn $SFILE`
+		out=${out###*} # remove comment
+		if [ -z "$out" ]; then
+			# get mc lun
+			get_user_input "media changer WWN $wwn with LUN" \
+				"0" "number"
+			lun="$userInput"
+
+			# commit
+			query_user "Commit media changer WWN $wwn to $SFILE"
+			if [ $? -eq 0 ]; then
+				echo "name=\"samst\" parent=\"fp\" lun=$lun"\
+					" fc-port-wwn=\"$wwn\";" >> $SFILE
+				added_device=1
+			fi
+		else
+			out="Please verify the WWN $wwn entry already in"
+			logit "add_mc_wwn_samst $out"
+			echo
+			echo "$out"
+			echo "$SFILE is for an attached media changer.\n"
+		fi
+	done
+
+	if [ $added_device -eq 1 ]; then
+		# load driver into system and attach to all possible
+		# device instances
+		query_user "Load samst driver into system and attach"\
+			"to all designated device instances"
+		if [ $? -eq 0 ]; then
+			devfsadm -i samst
+			rval=$?
+			logit "add_mc_wwn_samst devfsadm -i samst rval=$rval"
+		fi
+	fi
+
+	return 0
+}
+
+
+#----- mcwwn_cfg - media changer world wide name configuration.
+#      Given host system, add all media changer wwn names to samst.conf.
+function mcwwn_cfg {
+
+	logit "mcwwn_cfg"
+	mc_wwn=`get_mc_wwn`
+	add_mc_wwn_samst "$mc_wwn"	
+	return $?
+}

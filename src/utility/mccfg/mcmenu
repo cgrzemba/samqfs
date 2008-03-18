@@ -1,0 +1,178 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mcmenu - media changer(s) mcf menu.
+#
+# $Revision: 1.5 $
+
+
+# Global variables.
+eq_ordinal=80	# mcf robot equipment ordinal. 
+family_set=""	# mcf robot family set.
+catalog=""	# mcf robot catalog filename.
+userInput=""	# variable were user input is stored.
+
+
+#----- is_yes - is the returned response a yes.
+#      Given ckyorn response, determine if it is a yes. A zero is
+#      returned for success. 
+function is_yes {
+
+	param=`echo "$1" | tr -s "yes" "YES" | tr -d "ES"`
+	if [ "$param" = "Y" ]; then
+		return 0 # yes
+	fi
+	return 1 # not yes
+}
+
+
+#----- query_user - query the user in a common format.
+#      Given a prompt, return zero for yes and non-zero for no.
+function query_user {
+	query="$@"
+
+	response=`/bin/ckyorn -Q -d y -p "$query"`
+	is_yes "$response"
+	return $?
+}
+
+
+#----- is_number - is the parameter a decimal number.
+#      Given a text string, determine if the text string is a
+#      decimal number. Return 0 for success.
+function is_number {
+	num="$1"
+
+	if [ -z "$num" ]; then
+		return 1
+	fi
+
+	letter=`echo $num | grep '[^0-9]'`
+	if [ -n "$letter" ]; then
+		return 1
+	fi
+
+	return 0
+}
+
+
+#----- get_user_input - get user input.
+#      Given a prompt, default userInput variable value, and an
+#      optional number flag, display the prompt and default value
+#      to get user input which is stored in the userInput variable.
+function get_user_input {
+	message="$1"
+	userInput="$2"
+	number="$3"
+
+	logit "get_user_input $message $userInput $number"
+
+	query_user "Use $message $userInput"
+	if [ $? -ne 0 ]; then
+		userInput=""
+		while [ -z "$userInput" ]; do
+			read userInput?"Please enter $message: "
+
+			# check for valid decimal number
+			if [[ -n "$userInput" ]] && [[ -n "$number" ]]; then
+				is_number "$userInput"
+				if [ $? -ne 0 ]; then
+					userInput=""
+				fi
+			fi
+
+			# double check choice 
+			if [ -n "$userInput" ]; then
+			  	query_user "Is $message $userInput correct: "
+			  	if [ $? -ne 0 ]; then
+				  	userInput=""
+			  	fi
+			fi
+		done
+	fi
+
+	logit "get_user_input $userInput"
+}
+
+
+#----- get_eq_ordinal - get robot equipment ordinal number.
+#      Given a prompt and current robot equipment ordinal number, get a new
+#      eq ordinal number from the user or the user approves the default.
+function get_eq_ordinal {
+
+	get_user_input "$1 equipment ordinal" "$eq_ordinal" "number"
+	eq_ordinal=$userInput
+}
+
+
+#----- next_eq_ordinal - next robot equipment ordinal number.
+#      Given the current robot eq ordinal number, increment the
+#      eq ordinal number to a modulus 10 decimal number for a
+#      cleaner looking mcf. 
+function next_eq_ordinal {
+
+	eq_ordinal=$mc_eq_ordinal
+	val=`expr "$eq_ordinal" % 10`
+	while [ $val -ne 0 ]; do
+		eq_ordinal=`expr "$eq_ordinal" + 1`
+		val=`expr "$eq_ordinal" % 10`
+	done
+}
+
+
+#----- get_family_set - get robot mcf family set.
+#      Given a robot inquiry product string, allow the user to 
+#      approve it for mcf use or allow a change. 
+function get_family_set {
+
+	family_set=`eprint "$1"`
+	get_user_input "$2 family set" "$family_set"
+	family_set="$userInput"
+	logit "get_family_set family_set=$family_set"
+}
+
+
+#----- get_catalog - get robot mcf catalog filename.
+#      Given robot mcf family set name in the catalog filename, allow
+#      the user to approve it for mcf use or allow a change.
+function get_catalog {
+
+	catalog=/var/opt/SUNWsamfs/catalog/$family_set
+	get_user_input "media changer catalog" "$catalog"
+	catalog="$userInput"
+	logit "get_catalog $catalog"
+}
+
+
+#----- get_historian - get historian catalog filename.
+#      Given mcf, set historian catalog filename.
+function get_historian {
+
+	get_user_input "media changer historian" "$MCFHIST"
+	logit "get_historian $userInput"
+}

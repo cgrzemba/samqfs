@@ -1,0 +1,81 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_mig_stage_write 3 "05 Nov 2001"
+.SH NAME
+sam_mig_stage_write \- Stages data from foreign data migration program
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamut [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/mig.h"
+.ft
+.fi
+.LP
+.BI "int sam_mig_stage_write(tp_stage_t *" "stage_req" ,
+.BI "char *" "buffer" ,
+.BI "int " "len" ,
+.BI "offset_t " "offset" );
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+.B sam_mig_stage_write(\|)
+passes data from the foreign data migration program
+to the file system for the stage associated with \fIstage_req\fR
+(see \fBsam_mig_stage_file\fR(3)).
+\fIstage_req\fR
+is the number of this stage request.  \fIbuffer\fR is a pointer
+to the data that needs to be transferred.
+\fIlen\fR is the number of bytes of data to transfer.
+\fIoffset\fR is the offset from the beginning of this stage request.
+This is not the offset from the beginning of the file (keep in mind 
+stage_never).
+.SH "RETURN VALUES"
+.B sam_mig_stage_write
+returns the actual number of bytes written.
+Otherwise, a value of \-1 is returned.
+If an error is returned,
+.B sam_mig_stage_end
+should still be called.
+The only function allowed on
+.I stage_req
+after an error is \fBsam_mig_stage_end\fR.
+.SH FILES
+.TP 20
+.B /opt/SUNWsamfs/migkit/mig_cd.c
+The example Migration Toolkit program
+.TP 20
+.B /etc/opt/SUNWsamfs/mcf
+The configuration file for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+.SH "SEE ALSO"
+.BR sam_mig_stage_end (3),
+.BR sam_mig_stage_file (3)
+.BR

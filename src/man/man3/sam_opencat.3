@@ -1,0 +1,127 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_opencat 3 "05 Nov 2001"
+.SH NAME
+sam_opencat \- Accesses an automated library's catalog to read entries
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsam [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/catalog.h"
+.ft
+.fi
+.LP
+.BI "int sam_opencat(const char *" "path",
+.BI "struct sam_cat_tbl *" "buf" ,
+.BI "size_t " "bufsize" );
+.SH AVAILABILITY
+32-bit programs only
+.SH DESCRIPTION
+.B sam_opencat(\|)
+initiates access to the automated library catalog pointed to by
+.IR path .
+The string which
+.IR path
+points to is limited to 127 characters.
+It returns a
+.B sam_cat_tbl
+structure in the area pointed to by
+.I buf .
+.I bufsize
+is the length of the user's buffer to which
+.I buf
+points.  This should be equal to or greater than sizeof(struct sam_cat_tbl).
+.PP
+The user may have access to at most MAX_CAT catalogs at any one time.
+.PP
+The contents of a
+.B sam_cat_tbl
+structure include the following members:
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+/\(** catalog table \(**/
+time_t	audit_time;	/\(** Audit time \(**/
+int	version;	/\(** Catalog version number \(**/
+int	count;	/\(** Number of slots \(**/
+char	media[4];	/\(** Media type, if entire catalog is one \(**/
+.ft 1
+.fi
+.RE
+.PP
+Following the call to
+.B sam_opencat(\|),
+entries in the library catalog are obtained using
+.B sam_getcatalog(\|).
+.PP
+.SH "RETURN VALUES"
+Upon successful completion, a catalog "handle" is returned, which is an
+integer equal to or greater than zero.
+.PP
+This "handle" is used on subsequent calls to
+.B sam_getcatalog(\|)
+to specify the catalog to access, and is also used by
+.B sam_closecat(\|)
+to deallocate the "handle" and end access to the catalog.
+.PP
+If the call to
+.B sam_opencat(\|)
+fails, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_opencat(\|)
+fails if one or more of the following error conditions are true:
+.TP 20
+.SB EMFILE
+The user already has access to MAX_CAT catalogs , or the process has too many
+open files.
+.TP
+.SB EINVAL
+.I bufsize
+is set to an invalid value, or either
+.I path
+or
+.I buf
+is a null pointer.
+.TP
+.SB ER_UNABLE_TO_INIT_CATALOG
+This process was unable to initialize the catalog data.
+.TP
+.SB ENOENT
+There is no active catalog file with the name given.
+.SH "SEE ALSO"
+.BR sam_closecat (3),
+.BR sam_getcatalog (3)

@@ -1,0 +1,71 @@
+.\" $Revision: 1.5 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH nrecycler.cmd 4 "12 Jan 2004"
+.SH NAME
+nrecycler.cmd \- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS \%sam-nrecycler commands file
+.SH SYNOPSIS
+.B /etc/opt/SUNWsamfs/nrecycler.cmd
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+Commands for controlling 
+.BR sam-nrecycler (1M)
+are read from
+.BR /etc/opt/SUNWsamfs/nrecycler.cmd .
+These commands are given one per line.  
+.br
+.TP
+.BI "logfile = " filename
+Set the name of the
+log file to
+.IR filename.
+.SH SAMFSDUMP DEFINITIONS SECTION
+The \fBsamfsdumps\fR and \fBendsamfsdumps\fR directives delimit this
+section of the \fBnrecycler.cmd\fR file.
+.PP
+The samfsdump definitions section defines the SAM-FS dump files for
+archiver retention capabilities.
+Each line specifies the path to a directory containing SAM-FS dump files.
+The user is responsible for making sure the list of directories is complete
+and all SAM-FS dumps files are contained in the directory list.
+The nrecycler cannot validate the SAM-FS dump file list.
+.SH EXAMPLE
+
+The following is an example \fB/etc/opt/SUNWsamfs/nrecycler.cmd\fP file:
+
+.ft CO
+.nf
+    samfsdumps
+    /samdumps
+    endsamfsdumps
+.fi
+.ft
+
+.SH SEE ALSO
+.BR sam-nrecycler (1M).

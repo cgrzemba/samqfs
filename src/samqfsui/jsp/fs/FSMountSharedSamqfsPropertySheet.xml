@@ -1,0 +1,777 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FSMountSharedSamqfsPropertySheet.xml,v 1.21 2008/03/17 14:40:33 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="basic" defaultValue="FSMountParams.section1">        
+        <property
+		alertMsg="FSMountParams.error.hwm" 
+		checkFunction="checkHWMValue">
+            <label name="hwmLabel" defaultValue="FSMountParams.psheet1"/>
+            <cc name="hwmValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >  
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit16"/> 
+	    </cc>
+	</property>        
+
+        <property
+		alertMsg="FSMountParams.error.lwm" 
+		checkFunction="checkLWMValue">
+            <label name="lwmLabel" defaultValue="FSMountParams.psheet2"/>
+            <cc name="lwmValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit17"/> 
+	    </cc>
+        </property>
+        <property
+		alertMsg="FSMountParams.error.stripe" 
+		checkFunction="checkStripeValue">
+            <label name="stripeLabel" defaultValue="FSMountParams.psheet3"/>
+            <cc name="stripeValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit8"/> 
+	    </cc>
+        </property>
+        <property>
+            <label name="traceLabel" defaultValue="FSMountParams.psheet4"/>
+            <cc name="traceValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes" />
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+        </property>
+   </section>
+
+    <section name="sharedSAMQFS" defaultValue="FSMountParamsMore.section6">
+	<property>
+	    <label name="label" defaultValue="FSMountParamsMore.psheet25"/>
+            <cc name="mountBackgroundValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes" />
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.mountretries" 
+		checkFunction="checkRetriesValue">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet26" />
+            <cc name="mountretriesValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="5"/>
+		<attribute name="MaxLength" value="5"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit9"/> 
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.metarefresh" 
+		checkFunction="checkmetarefreshValue">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet27"/>
+	    <cc name="metarefreshValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="5"/>
+		<attribute name="MaxLength" value="5"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit10"/> 
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.miniblock"
+                checkFunction="checkMiniblockValue">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet28"/>
+	    <cc name="minblockValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="7"/>
+		<attribute name="MaxLength" value="7"/>
+	    </cc>
+            <cc name="minblockUnit" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+                <option label="FSMountParamsMore.size2" value="kb" />
+                <option label="FSMountParamsMore.size3" value="mb" />
+                <option label="FSMountParamsMore.size4" value="gb" />
+            </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit11"/> 
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.maxblock"
+                checkFunction="checkMaxblockValue">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet29"/>
+	    <cc name="maxblockValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="7"/>
+		<attribute name="MaxLength" value="7"/>
+	    </cc>
+            <cc name="maxblockUnit" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+                <option label="FSMountParamsMore.size2" value="kb" />
+                <option label="FSMountParamsMore.size3" value="mb" />
+                <option label="FSMountParamsMore.size4" value="gb" />
+            </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit14"/> 
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.readlease" 
+		checkFunction="checkReadLeaseValue ">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet30"/>
+	    <cc name="readleaseValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit12"/> 
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.writelease" 
+		checkFunction="checkWriteLeaseValue ">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet31"/>
+	    <cc name="writeleaseValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit12"/> 
+	    </cc>
+	</property>
+	<property
+		alertMsg="FSMountParams.error.appendlease" 
+		checkFunction="checkAppendLeaseValue ">
+	    <label name="label" defaultValue="FSMountParamsMore.psheet32"/>
+	    <cc name="appendleaseValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit12"/> 
+	    </cc>
+	</property>
+	<property name="prop_maxstream"
+	    alertMsg="FSMountParams.error.maxstream"
+	    checkFunction="checkMaxStreamValue" >
+	    <label name="label" defaultValue="FSMountParamsMore.psheet33"/>
+	    <cc name="maxstreamValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="4"/>
+		<attribute name="MaxLength" value="4"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit13"/> 
+	    </cc>
+	</property>
+        <property name="prop_minpool"
+		alertMsg="FSMountParams.error.minpool"
+            checkFunction="checkMinPoolValue" >
+	    <label name="label" defaultValue="FSMountParamsMore.psheet35"/>
+	    <cc name="minPoolValue"
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="4"/>
+		<attribute name="maxLength" value="4"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit19"/> 
+	    </cc>
+	</property>
+	<property>
+	    <label name="label" defaultValue="FSMountParamsMore.psheet34"/>
+            <cc name="multihostValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes" />
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+	</property>
+        <property>
+            <label name="syncLabel" 
+		defaultValue="FSMountParamsMore.psheet15"/>
+            <cc name="syncValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes"/>
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+        </property>
+        
+        <property>
+            <label name="cattrLabel" 
+		defaultValue="FSMountParamsMore.label.cattr"/>
+            <cc name="cattrValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes"/>
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+        </property>
+
+        <property
+	    alertMsg="FSMountParams.error.metadata"
+	    checkFunction="checkMetadataValue" >
+            <label name="metastripeLabel" 
+		defaultValue="FSMountParamsMore.psheet16"/>
+            <cc name="metastripeValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit8"/> 
+	    </cc>
+        </property>
+        
+        <property
+	    alertMsg="FSMountParams.error.lease_timeo"
+            checkFunction="checkLeaseTimeoValue">
+            <label name="leaseTimeoLabel" 
+		defaultValue="FSMountParamsMore.label.lease_timeo"/>
+            <cc name="leaseTimeoValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="3"/>
+		<attribute name="MaxLength" value="3"/>
+	    </cc>
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue"
+                    value="FSMountParamsMore.unit18"/> 
+	    </cc>
+        </property>
+	   
+    </section>
+
+    <section name="archiveprop" defaultValue="FSMountParamsMore.section2"> 
+	<subsection name="release" defaultValue="FSMountParamsMore.label1">
+        <property span="true">
+	    <cc name="releasenotes" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue"
+		value="FSMountParamsMore.releasenotes" />
+	    </cc>
+        </property>
+        <property span="true">
+            <cc name="spacer" 
+                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                <attribute name="Height" value="5"/>
+                <attribute name="Width" value="1"/>
+            </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.maxpartial"
+	    checkFunction="checkMaxPartValue" >
+            <label name="maxpartLabel" 
+                defaultValue="FSMountParamsMore.psheet2"/>
+            <cc name="maxpartValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                <attribute name="size" value="12"/>
+                <attribute name="MaxLength" value="10"/>
+            </cc>
+            <cc name="maxpartUnit" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+                <option label="FSMountParamsMore.size2" value="kb" />
+                <option label="FSMountParamsMore.size3" value="mb" />
+                <option label="FSMountParamsMore.size4" value="gb" />
+            </cc>
+            <cc name="unit" 
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                <attribute name="defaultValue" 
+				value="FSMountParamsMore.unit15"/>
+            </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.part"
+	    checkFunction="checkPartReleaseValue" >
+            <label name="partreleaseLabel" 
+                        defaultValue="FSMountParamsMore.psheet1"/>
+            <cc name="partreleaseValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                <attribute name="size" value="12"/>
+                <attribute name="MaxLength" value="5"/>
+            </cc>
+            <cc name="partreleaseUnit" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+                <option label="FSMountParamsMore.size2" value="kb" />
+                <option label="FSMountParamsMore.size3" value="mb" />
+                <option label="FSMountParamsMore.size4" value="gb" />
+            </cc>
+            <cc name="unit" 
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                <attribute name="defaultValue" value="FSMountParamsMore.unit1"/>
+            </cc>
+        </property>        
+        <property span="true">
+            <cc name="bigspacer" 
+                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                <attribute name="Height" value="10"/>
+                <attribute name="Width" value="1"/>
+            </cc>
+        </property>
+	</subsection>
+
+	<subsection name="stage" defaultValue="FSMountParamsMore.label2">
+        <property span="true">
+	    <cc name="stagenotes" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue"
+		value="FSMountParamsMore.stagenotes" />
+	    </cc>
+        </property>
+        <property span="true">
+            <cc name="spacer" 
+                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                <attribute name="Height" value="5"/>
+                <attribute name="Width" value="1"/>
+            </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.partstage"
+	    checkFunction="checkPartStageValue" >
+            <label name="partstageLabel" 
+                defaultValue="FSMountParamsMore.psheet3"/>
+            <cc name="partstageValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                <attribute name="size" value="12"/>
+                <attribute name="MaxLength" value="10"/>
+            </cc>
+            <cc name="partstageUnit" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+                <option label="FSMountParamsMore.size2" value="kb" />
+                <option label="FSMountParamsMore.size3" value="mb" />
+                <option label="FSMountParamsMore.size4" value="gb" />
+            </cc>
+            <cc name="unit" 
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                <attribute name="defaultValue" value="FSMountParamsMore.unit2"/>
+            </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.stageretries"
+	    checkFunction="checkStageRetriesValue" >
+            <label name="stageretriesLabel" 
+                defaultValue="FSMountParamsMore.psheet4"/>
+            <cc name="stageretriesValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                <attribute name="size" value="2"/>
+                <attribute name="MaxLength" value="2"/>
+            </cc>
+            <cc name="unit" 
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                <attribute name="defaultValue" value="FSMountParamsMore.unit3"/>
+ 
+            </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.stagewindow"
+	    checkFunction="checkStageWindowValue" >
+            <label name="stagewindowLabel" 
+                defaultValue="FSMountParamsMore.psheet5"/>
+            <cc name="stagewindowValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                <attribute name="size" value="12"/>
+                <attribute name="MaxLength" value="5"/>
+            </cc>
+            <cc name="stagewindowUnit" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+                <option label="FSMountParamsMore.size2" value="kb" />
+                <option label="FSMountParamsMore.size3" value="mb" />
+                <option label="FSMountParamsMore.size4" value="gb" />
+            </cc>
+            <cc name="unit" 
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                <attribute name="defaultValue" value="FSMountParamsMore.unit4"/>
+            </cc>
+        </property>
+        <property span="true">
+            <cc name="bigspacer" 
+                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                <attribute name="Height" value="10"/>
+                <attribute name="Width" value="1"/>
+            </cc>
+        </property>
+	</subsection>
+	<subsection name="archive" defaultValue="FSMountParamsMore.label3">
+        <property span="true">
+	    <cc name="archivenotes" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue"
+		value="FSMountParamsMore.archivenotes" />
+	    </cc>
+        </property>
+        <property span="true">
+            <cc name="spacer" 
+                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                <attribute name="Height" value="5"/>
+                <attribute name="Width" value="1"/>
+            </cc>
+        </property>
+        <property>
+            <label name="questionLabel" 
+                defaultValue="FSMountParamsMore.psheet6" 
+		addColon="false" />
+            <cc name="questionValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+                <attribute name="layout" value="horizontal" />
+                <option label="FSMountParams.trace1" value="yes"/>
+                <option label="FSMountParams.trace2" value="no"/>
+            </cc>
+        </property>
+	</subsection>
+   </section>
+ 
+    <section name="generalfs" defaultValue="FSMountParamsMore.section3">
+        <property>
+            <label name="mountreadonlyLabel" 
+		defaultValue="FSMountParamsMore.psheet7"/>
+            <cc name="mountreadonlyValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes"/>
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+        </property>        
+        <property>
+            <label name="nouidLabel" 
+		defaultValue="FSMountParamsMore.psheet8"/>
+            <cc name="nouidValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes"/>
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+        </property>
+        <property>
+            <label name="quickwriteLabel" 
+		defaultValue="FSMountParamsMore.psheet9"/>
+            <cc name="quickwriteValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes"/>
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+        </property>
+   </section>
+
+
+    <section name="perform" defaultValue="FSMountParamsMore.section4">
+        <property
+	    alertMsg="FSMountParams.error.readahead"
+	    checkFunction="checkReadaheadValue" >
+            <label name="readaheadLabel" 
+		defaultValue="FSMountParamsMore.psheet10"/>
+            <cc name="readaheadValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="11"/>
+	    </cc>
+	    <cc name="readaheadUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+		<option label="FSMountParamsMore.size4" value="gb" />
+	    </cc>	
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit5"/> 
+	    </cc>
+        </property>        
+
+        <property
+	    alertMsg="FSMountParams.error.writebehind"
+	    checkFunction="checkWritebehindValue" >
+            <label name="writebehindLabel" 
+		defaultValue="FSMountParamsMore.psheet11"/>
+            <cc name="writebehindValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="11"/>
+	    </cc>
+	    <cc name="writebehindUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+		<option label="FSMountParamsMore.size4" value="gb" />
+	    </cc>	
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit.writebehind"/> 
+	    </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.writethrottle"
+	    checkFunction="checkWritethrottleValue" >
+            <label name="writethroLabel" 
+		defaultValue="FSMountParamsMore.psheet12"/>
+            <cc name="writethroValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="6"/>
+	    </cc>
+	    <cc name="writethroUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+	    </cc>	
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit6"/> 
+	    </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.flushbehind"
+	    checkFunction="checkFlushBehindValue" >
+            <label name="flushbehindLabel" 
+		defaultValue="FSMountParamsMore.psheet13"/>
+            <cc name="flushbehindValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="7"/>
+	    </cc>
+	    <cc name="flushbehindUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+	    </cc>	
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit7"/> 
+	    </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.stageflush"
+	    checkFunction="checkStageFlushValue" >
+            <label name="stageflushLabel" 
+		defaultValue="FSMountParamsMore.psheet14"/>
+            <cc name="stageflushValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="7"/>
+	    </cc>
+	    <cc name="stageflushUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+	    </cc>	
+	    <cc name="unit" 
+		tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+		<attribute name="defaultValue" value="FSMountParamsMore.unit7"/> 
+	    </cc>
+        </property>        
+
+        <property>
+            <label name="softwareLabel" 
+		defaultValue="FSMountParamsMore.psheet17"/>
+            <cc name="softwareValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace3" value="on"/>
+		<option label="FSMountParams.trace4" value="off"/>
+	    </cc>
+	</property>
+        <property>
+            <label name="forceLabel" 
+		defaultValue="FSMountParamsMore.psheet18"/>
+            <cc name="forceValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<attribute name="onClick" value="disableIOParams(this.value)" />
+		<option label="FSMountParams.trace3" value="on"/>
+		<option label="FSMountParams.trace4" value="off"/>
+	    </cc>
+	</property>
+        <property>
+            <label name="forceNFSAsyncLabel" 
+		defaultValue="FSMountParamsMore.label.force_nfs_async"/>
+            <cc name="forceNFSAsyncValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace3" value="on"/>
+		<option label="FSMountParams.trace4" value="off"/>
+	    </cc>
+	</property>
+   </section>
+
+    <section name="directio" defaultValue="FSMountParamsMore.section5">
+        <property
+	    alertMsg="FSMountParams.error.consecread"
+	    checkFunction="checkConsecreadValue" >
+            <label name="consecreadLabel" 
+		defaultValue="FSMountParamsMore.psheet19"/>
+            <cc name="consecreadValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="10"/>
+                <attribute name="dynamic" value="true" />
+	    </cc>
+        </property>        
+        <property
+	    alertMsg="FSMountParams.error.wellreadmin"
+	    checkFunction="checkWellreadminValue" >
+            <label name="wellreadminLabel" 
+		defaultValue="FSMountParamsMore.psheet20"/>
+            <cc name="wellreadminValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="9"/>
+                <attribute name="dynamic" value="true" />
+	    </cc>
+	    <cc name="wellreadminUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
+                <attribute name="dynamic" value="true" />
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+		<option label="FSMountParamsMore.size4" value="gb" />
+		<option label="FSMountParamsMore.size5" value="tb" />
+	    </cc>	
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.misreadmin"
+	    checkFunction="checkMisreadminValue" >
+            <label name="misreadminLabel" 
+		defaultValue="FSMountParamsMore.psheet21"/>
+            <cc name="misreadminValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="15"/>
+                <attribute name="dynamic" value="true" />
+	    </cc>
+	    <cc name="misreadminUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
+                <attribute name="dynamic" value="true" />
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+		<option label="FSMountParamsMore.size4" value="gb" />
+		<option label="FSMountParamsMore.size5" value="tb" />
+	    </cc>	
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.consecwrite"
+	    checkFunction="checkConsecwriteValue" >
+            <label name="consecwriteLabel" 
+		defaultValue="FSMountParamsMore.psheet22"/>
+            <cc name="consecwriteValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="10"/>
+                <attribute name="dynamic" value="true" />
+	    </cc>
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.wellwritemin"
+	    checkFunction="checkWellwriteminValue" >
+            <label name="wellwriteminLabel" 
+		defaultValue="FSMountParamsMore.psheet23"/>
+            <cc name="wellwriteminValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="9"/>
+                <attribute name="dynamic" value="true" />
+	    </cc>
+	    <cc name="wellwriteminUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
+                <attribute name="dynamic" value="true" />
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+		<option label="FSMountParamsMore.size4" value="gb" />
+		<option label="FSMountParamsMore.size5" value="tb" />
+	    </cc>	
+        </property>
+        <property
+	    alertMsg="FSMountParams.error.miswritemin"
+	    checkFunction="checkMiswriteminValue" >
+            <label name="miswriteminLabel" 
+		defaultValue="FSMountParamsMore.psheet24"/>
+            <cc name="miswriteminValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+		<attribute name="size" value="12"/>
+		<attribute name="MaxLength" value="9"/>
+                <attribute name="dynamic" value="true" />
+	    </cc>
+	    <cc name="miswriteminUnit" 
+		tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
+                <attribute name="dynamic" value="true" />
+		<option label="FSMountParamsMore.size2" value="kb" />
+		<option label="FSMountParamsMore.size3" value="mb" />
+		<option label="FSMountParamsMore.size4" value="gb" />
+		<option label="FSMountParamsMore.size5" value="tb" />
+	    </cc>	
+        </property>
+        <property>
+            <label name="dioszeroLabel" 
+		defaultValue="FSMountParamsMore.label.dioszero"/>
+            <cc name="dioszeroValue" 
+		tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+                <attribute name="dynamic" value="true" />
+		<attribute name="layout" value="horizontal" />
+		<option label="FSMountParams.trace1" value="yes"/>
+		<option label="FSMountParams.trace2" value="no"/>
+	    </cc>
+	</property>
+	</section>
+
+    <section name="unsupported" defaultValue="FSMountParamsMore.unsupported">
+        <property>
+            <cc name="unsupportedMountOptions"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        </property>
+    </section>
+</propertysheet>
+

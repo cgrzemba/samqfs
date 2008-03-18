@@ -1,0 +1,236 @@
+." $Revision: 1.51 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH sammkfs 1M  "21 Feb 2008"
+.SH NAME
+sammkfs, samfsinfo \- Constructs or displays information for a Sun StorEdge QFS, Sun StorEdge \%SAM-FS, or Sun \%SAM-QFS file system
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sammkfs\fR
+\%[\fB\-a\ \fIallocation_unit\fR]
+\%[\fB\-i\ \fIinodes\fR]
+\%[\fB\-S\fR]
+\%[\fB\-V\fR]
+\fIfs_name\fR
+.PP
+\fB/opt/SUNWsamfs/sbin/samfsinfo\fR
+\fIfs_name\fR
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsammkfs\fR command
+creates a Sun StorEdge QFS, Sun StorEdge \%SAM-FS, or Sun \%SAM-QFS
+file system from the disk partitions
+that belong to the family set \fIfs_name\fR, where
+\fIfs_name\fR
+is the family set name as defined in the \fBmcf\fR file.
+Up to 252 disk partitions can be specified in the \fBmcf\fR
+file for a Sun StorEdge QFS, Sun StorEdge \%SAM-FS,
+or Sun \%SAM-QFS file system.
+The \fBsammkfs\fR command can also be used to recreate a file system after
+a disaster.
+.PP
+The \fBsammkfs\fR command creates a version 2 file system that is backwards
+compatible with previous releases.  After an on-line grow operation
+(\fBsamu\fR command \fBadd eq\fR), the file system version
+is changed to 2A and it is no longer backwards compatible with previous
+releases.
+
+The \fBsammkfs\fR command aligns the block allocation bit maps and
+round robins them on the metadata devices for improved performance.
+This behavior is  backwards compatible with previous releases.
+The option feature \fBAligned Maps\fR is set.
+.PP
+The \fBsamfsinfo\fR command displays the structure of an
+existing Sun StorEdge QFS, Sun StorEdge \%SAM-FS,
+or Sun \%SAM-QFS file system.
+The output is similar to that obtained
+by using the \fB\-V\fR option to the \fBsammkfs\fR command.
+.SH OPTIONS
+These commands accept the following options:
+.TP 10
+\fB\-a\ \fIallocation_unit\fR
+Specifies the disk allocation unit (DAU).  The DAU is the basic unit
+of online storage.  When you specify a DAU size, you specify the
+number of \%1024-byte (1 kilobyte) blocks to be allocated for a file.
+.sp
+The DAU size you can specify depends on the type of file system being
+initialized, as follows:
+.sp
+.RS 10
+.TP 3
+\(bu
+The Sun StorEdge \%SAM-FS file system is an \fBms\fR file system.
+The disk devices in it are all \fBmd\fR devices.
+Both data and metadata are written to the \fBmd\fR devices.
+The \fIallocation_unit\fR specifies the DAU to be
+used for the \fBmd\fR devices.  Possible \fIallocation_unit\fR
+specifications are \fB16\fR, \fB32\fR, or \fB64\fR (the default).
+.TP 3
+\(bu
+The Sun StorEdge QFS and Sun \%SAM-QFS file systems are \fBma\fR file systems.
+The metadata in these file systems is written to \fBmm\fR devices.
+The disk devices in these file systems are specified as
+either \fBmd\fR, \fBmr\fR, or \fBg\fIXXX\fR devices, as follows:
+.sp
+.RS 3
+.TP 3
+-
+For the \fBmd\fR devices, possible \fIallocation_unit\fR
+specifications are \fB16\fR, \fB32\fR, or \fB64\fR (the default).
+A single file system cannot have \fBmd\fR devices mixed among
+the \fBmr\fR and \fBg\fIXXX\fR devices.
+.TP
+-
+For \fBmr\fR devices, the DAU is fully adjustable.
+Specify an \fIallocation_unit\fR that is a multiple of 8 in the
+following range for \fBmr\fR devices:
+8\ \(<=\ \fIallocation_unit\fR\ \(<=\ 65528.  The default is \fB64\fR.
+.TP 3
+-
+For \fBg\fIXXX\fR devices, which specify striped groups, the
+DAU is fully adjustable.
+If the file system contains striped groups,
+the minimum unit of disk space allocated
+is the DAU multiplied by the number of members in the striped group.
+Specify an \fIallocation_unit\fR that
+is a multiple of 8 in the following range for \fBg\fIXXX\fR devices:
+8\ \(<=\ \fIallocation_unit\fR\ \(<=\ 65528.  The default is \fB256\fR.
+.RE
+.RE
+.PP
+.RS 13
+You can mix \fBmr\fR and \fBg\fIXXX\fR devices
+in a single Sun StorEdge QFS or Sun StorEdge \%SAM-QFS file system.
+If these device types are mixed, the \fIallocation_unit\fR specified is
+used for both device types.  If no \fIallocation_unit\fR is specified,
+the DAU size used for each type of device is \fB256\fR.
+.RE
+.RE
+.PP
+.TP 10
+\fB\-i\ \fIinodes\fR
+Specifies the number of inodes to be allocated for this file system.
+This is the total number of user inodes that can be
+used for the life of this file system. In Sun StorEdge QFS,
+Sun Storedge \%SAM-FS, and
+Sun \%SAM-QFS version 2 superblock file systems, a number of
+inodes are reserved for file system usage, and are unavailable to the
+user. This number is in addition to the specified number of user inodes.
+The actual number of inodes available vary from that specified, due to
+rounding to metadata DAU size.
+.sp
+NOTE:  By specifying this
+option, you eliminate the possibility of ever
+increasing the number of inodes for the file system.
+Therefore, Sun does not recommend the use of this option.
+.sp
+When this option is specified, later use
+of the \fBsamgrowfs\fR(1M) command increases the size of
+the file system, but it cannot increase the number of allowable
+inodes.
+For more information on enlarging file systems, see the WARNINGS section
+of this man page and the \fBsamgrowfs\fR(1M) man page.
+.TP 10
+\fB\-S\fR
+Indicates that this file system is shared.
+In order to mount the file system as a Sun StorEdge QFS shared file system,
+you must also create a \fBhosts.\fIfs_name\fR configuration file.
+For more information on this configuration file and other
+aspects of the Sun QFS shared file system,
+see the \fISun StorEdge QFS and Sun StorEdge \%SAM-FS File System
+Administration Guide\fR.  For information on configuring a hosts
+file, see the \fBhosts.fs\fR(4) man page.
+.TP 10
+\fB\-V\fR
+Writes configuration information to standard output but does not
+execute the \fBsammkfs\fR command.
+This information can be used to create a new file system.
+.sp
+The \fBsamfsinfo\fR command should be used to generate
+configuration information for an existing file system.
+.SH EXAMPLES
+Example 1.  The following command creates a Sun \%SAM-QFS
+file system with a DAU
+size of 128 kilobytes:
+.PP
+.ft CO
+server#  sammkfs -a 128 samfs1
+.ft
+.PP
+.SH FILES
+.TP 25
+\fB/etc/opt/SUNWsamfs/mcf\fR
+The configuration file for a Sun StorEdge QFS, Sun StorEdge \%SAM-FS,
+or Sun \%SAM-QFS file system
+.SH WARNINGS
+As with creating any
+type of file system, if you specify the wrong partition names,
+you risk
+damaging user or system data.  Be sure to specify partitions that
+are otherwise unused on your system.  Do not use overlapping partitions.
+.PP
+With Sun StorEdge \%SAM-FS 4.1 and greater \fIAND\fR Solaris 64bit kernels which support
+large disk devices (greater than 1 TB), it is possible to have partitions
+that are greater than 1 TB. Note that these file systems are not usable
+on Solaris systems that do not support large disk devices.
+.SH SEE ALSO
+\fBdd\fR(1M),
+\fBsamgrowfs\fR(1M),
+\fBundamage\fR(1M).
+.PP
+\fBmcf\fR(4).
+.PP
+\fISun StorEdge QFS and Sun StorEdge \%SAM-FS File System Administration
+Guide\fR.
+.PP
+\fISun StorEdge \%SAM-FS Storage and Archive Management Guide\fR.
+.SH WARNINGS
+Be careful when using the \%\fB\-i\ \fIinodes\fR option for this command.
+By using this option, you dictate the maximum number of inodes allowed
+for the life of this file system.  This eliminates the possibility
+of ever using the \fBsamgrowfs\fR(1M) command to increase the number
+of files in this file system.  After a file system is made
+with \fB\-i\fR specified, the \fBsamgrowfs\fR(1M) command can only be
+used to increase the size of the file system in terms of bytes.
+.SH NOTES
+\fIData alignment\fR refers to matching the allocation unit of the RAID
+controller with the \fIallocation_unit\fR of the file system.
+A mismatched
+alignment causes a \%read-modify-write operation for I/O that is less
+than the block size.
+The optimal alignment formula is as follows:
+.PP
+\fIallocation_unit\fR = \fIRAID_stripe_width\fR * \fInumber_of_data_disks\fR
+.PP
+For example, if a \%RAID-5 unit has a total of 8 disks with 1 of
+the 8 being the parity disk, the number of data disks is 7.
+If the RAID stripe width is 64 kilobytes,
+then the optimal \fIallocation_unit\fR is 64 * 7 = 448.

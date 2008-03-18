@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FSSummaryTable.xml,v 1.47 2008/03/17 14:40:33 am143972 Exp $ -->
+
+<table>
+<actions>
+    <cc name="SamQFSWizardNewFSButton"
+        tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+    </cc>
+    <cc name="ViewPolicyButton" 
+	tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+    </cc>
+    <cc name="ViewFilesButton" 
+	tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+    </cc>
+    <cc name="SamQFSWizardNewPolicyButton" 
+	tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+    </cc>
+    <cc name="ActionMenu"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="commandChild" value="ActionMenuHref" />
+        <attribute name="escape" value="false"/>
+        <attribute name="onChange"
+            value="
+                if (!handleDropDownOnChange(this)) {
+                    return false;
+                } " />
+
+        <option label="FSSummary.actionMenu.defaultOption"
+            value="0" disabled="false" />
+        <option label="FSSummary.actionMenu.editMountOptions"
+            value="1" disabled="true" />
+        <option label="FSSummary.actionMenu.checkfs"
+            value="2" disabled="true" />
+        <option label="FSSummary.actionMenu.mount"
+            value="3" disabled="true" />
+        <option label="FSSummary.actionMenu.unmount"
+            value="4" disabled="true" />
+        <option label="FSSummary.GrowFSButton"
+            value="5" disabled="true" />
+        <option label="FSSummary.actionMenu.delete"
+            value="6" disabled="true" />
+        <option label="FSSummary.actionMenu.archiveactivities"
+            value="7" disabled="true" />
+        <option label="FSSummary.actionMenu.scheduleDump"
+            value="8" disabled="true" />
+    </cc>
+</actions>
+
+<filters>
+    <cc name="FilterMenu"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <attribute name="commandChild" value="FilterMenuHref" />
+        <attribute name="escape" value="false" />
+        <option label="FSSummary.filterOption.qfs" value="0" />
+        <option label="FSSummary.filterOption.ufs" value="1" />
+        <option label="FSSummary.filterOption.vxfs" value="2" />
+        <option label="FSSummary.filterOption.nfsshared" value="3" />
+    </cc>
+</filters>
+
+<column name="fsName" sortname="fsNameText" extrahtml="valign='center'">
+    <cc name="Href" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <cc name="fsNameText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+    <cc name="FSHiddenField"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    <cc name="HiddenDynamicButtons"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    <cc name="HiddenDynamicMenuOptions"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+</column>
+
+<column name="mountPoint" sortname="mountPointText" extrahtml="valign='center'">
+    <cc name="mountPointText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="type" sortname="typeText"
+    extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="typeText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="nfsShared" sortname="nfsSharedText"
+    extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="nfsSharedText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="usage" sortname="usageText"
+    extrahtml="align='left' nowrap='nowrap' valign='center'">
+    <cc name="UsageBarImage" tagclass="com.sun.web.ui.taglib.html.CCImageTag">
+        <attribute name="hspace" value="20" />
+    </cc>
+    <cc name="capacityText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="usageText" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="highWaterMark" sortname="highWaterMarkText"
+    extrahtml="align='center' valign='center'">
+    <cc name="highWaterMarkText"    
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="dumpScheduled" sortname="dumpScheduledText"
+    extrahtml="align='center' valign='center'">
+    <cc name="dumpScheduledText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false" />
+    </cc>
+</column>
+
+</table>

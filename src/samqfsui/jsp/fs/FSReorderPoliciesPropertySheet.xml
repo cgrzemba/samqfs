@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FSReorderPoliciesPropertySheet.xml,v 1.10 2008/03/17 14:40:33 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="reorder" defaultValue="">        
+
+    <property span="true">
+	&lt;table border="0">
+	&lt;tr>
+	&lt;td valign="center" rowspan="2" colspan="1">
+        <cc name="saveType"
+            tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+            <option label="" value="reorder" />
+            <option label="" value="savefile" />
+            <attribute name="styleLevel" value="3" />
+            <attribute name="elementId" value="saveTypeRadio"/>
+            <attribute name="onClick" value="
+                if (this.id == 'saveTypeRadio') {
+                    ccSetTextFieldDisabled(
+                        'FSReorderPolicies.fileLocation',
+                        'FSReorderPoliciesForm',
+                        true);
+                } else if (this.id=='saveTypeRadio2') {
+                    ccSetTextFieldDisabled(
+                        'FSReorderPolicies.fileLocation',
+                        'FSReorderPoliciesForm',
+                        false);
+                    fileLocationTextFieldBox.focus(); 
+                }"
+            />
+        </cc>
+	&lt;/td>
+	&lt;td valign="center" align="left" rowspan="1" colspan="1">
+	<cc name="reorderText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+            <attribute name="defaultValue"
+                value="FSReorderPolicies.reorderCriteria"/>
+	</cc>
+	&lt;/td>
+	&lt;/tr>
+
+	&lt;tr>
+        &lt;td>
+	<cc name="saveToFile" 
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >   
+            <attribute name="defaultValue"
+                value="FSReorderPolicies.saveInDirectory"/>   
+        </cc>
+	<cc name="fileLocation"
+            tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+            <attribute name="onKeyPress"
+                value="if (event.keyCode == 13) return false" />
+            <attribute name="elementId" value="fileLocationTextFieldBox"/>
+            <attribute name="disabled" value="true" />
+            <attribute name="dynamic" value="true" />
+            <attribute name="maxLength" value="127" />
+	</cc>
+	 &lt;/td>
+	&lt;/tr>
+	&lt;/table>
+	
+    </property>
+	
+    </section>
+</propertysheet>

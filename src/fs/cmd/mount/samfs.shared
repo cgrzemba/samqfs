@@ -1,0 +1,185 @@
+#!/sbin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+# $Revision: 1.14 $
+
+[ ! -d /usr/bin ] && exit
+
+#
+# Wait up to this long for clients of a metadata server to unmount.
+# A no-op for unshared FSes and shared FS non-metadata servers.
+#
+WAIT4CLIENTS=30
+#
+# In order to speed things up (since each can wait for some time),
+# async unmount commands are put in a /bin/sh script along a 'wait',
+# and the script is executed.
+#
+TMPEXFILE=/tmp/`basename $0`.$$
+
+#
+# Start/stop processes required for samfs shared file system.
+#
+
+case "$1" in
+'start')
+	#
+	# Read /etc/vfstab, mounting appropriate shared samfs filesystems:
+	#
+	start_daemon=0
+	exec < /etc/vfstab
+	while  read special fsckdev mountp fstype fsckpass automnt mntopts
+	do
+		if [ x`echo $special | cut -c1` = "x#" ]; then
+			continue
+		fi
+		if [ x"$fstype" != "xsamfs" ]; then
+			# ignore different fstypes
+			continue
+		fi
+		# There are SAM-QFS filesystems on this machine.
+		if [ $start_daemon -eq 0 ]
+		then
+			start_daemon=1
+		fi
+		if [ x"$automnt" != "xyes" ]; then
+			continue
+		fi
+		# Skip entries that have don't the "shared" option.
+		g=`/usr/bin/grep '\<shared\>' << EOF
+			$mntopts
+		EOF`
+		if [ -z "$g" ]; then
+			continue
+		fi
+		echo "mounting samfs $special "
+		/sbin/mount $special
+		#
+		# The mount command starts sam-fsd, so we shouldn't do
+		# it again.
+		#
+		start_daemon=2
+	done
+	# If there are sam-fs filesystems, and this is a cluster node, and
+	# we didn't issue a mount command above (which would start sam-fsd),
+	# then execute 'samd config' to start it.
+	/usr/sbin/clinfo > /dev/null 2>&1
+	if [ $? -eq 0 ]
+	then
+		# Cluster s/w running
+		if [ $start_daemon -eq 1 ]
+		then
+			# Fire up samd config
+			/opt/SUNWsamfs/sbin/samd config
+		fi
+	fi
+	;;
+
+'stop')
+	#
+	# Read /etc/mnttab in reverse order
+	#
+	termprocs=1
+	killprocs=1
+	#
+	# Try to kick everyone off the mounted FSes nicely.
+	# fuser sends only the pids to stdout; the rest goes to stderr.
+	#
+	/usr/bin/tail -r /etc/mnttab |
+		while read dev mountp fstype mode dummy
+		do
+			if [ x"$fstype" != "xsamfs" ]; then
+				continue		# ignore non-QFS FSes
+			fi
+			if [ ${termprocs} ]; then
+				procs=`/usr/sbin/fuser -c $mountp 2> /dev/null`
+				if [ ! -z "${procs}" ] ; then
+					/bin/kill -TERM ${procs}
+				fi
+			fi
+		done
+
+	sleep 5
+
+	#
+	# Not so nicely.
+	#
+	/usr/bin/tail -r /etc/mnttab |
+		while read dev mountp fstype mode dummy
+		do
+			if [ x"$fstype" != "xsamfs" ]; then
+				continue		# ignore non-QFS FSes
+			fi
+			if [ ${killprocs} ]; then
+				/usr/sbin/fuser -c -k $mountp > /dev/null 2>&1
+			fi
+		done
+
+	#
+	# Unmount.  Sort on the second field (mount point)
+	# in reversed order, so that nested mounts unmount
+	# deepest first.  Use the "device" so that even if
+	# the mount point becomes inaccessible, the umount
+	# is still done.
+	#
+	/usr/bin/tail -r /etc/mnttab | /bin/sort -r -t'	' -k 2 |
+		while read dev mountp fstype mode dummy
+		do
+			if [ x"$fstype" != "xsamfs" ]; then
+				continue		# ignore non-QFS FSes
+			fi
+			echo "unmounting $mountp"
+			/sbin/umount $dev
+		done
+	#
+	# Get those that have to be forced.  Fire them up
+	# in parallel; wait for them all to finish.
+	#
+	rm -f $TMPEXFILE
+	/usr/bin/tail -r /etc/mnttab | /bin/sort -r -t'	' -k 2 |
+		while read dev mountp fstype mode dummy
+		do
+			if [ x"$fstype" != "xsamfs" ]; then
+				continue		# ignore non-QFS FSes
+			fi
+			echo "echo unmounting $mountp" >> $TMPEXFILE
+			echo /sbin/umount -f \
+				-o await_clients=$WAIT4CLIENTS \
+				$dev '&' >> $TMPEXFILE
+		done
+		echo wait >> $TMPEXFILE
+		/bin/sh $TMPEXFILE
+		rm -f $TMPEXFILE
+	;;
+
+*)
+	echo "Usage: $0 { start | stop }"
+	exit 1
+	;;
+esac
+exit 0

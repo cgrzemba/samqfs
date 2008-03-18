@@ -1,0 +1,177 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_move 3 "05 Nov 2001"
+.SH NAME
+sam_move \- Move media in a robotic media changer
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_move(ushort_t " "eq_ord" ,
+.BI "uint_t " "src_ea" ,
+.BI "uint_t " "dest_ea" ,
+.BI "int " "wait_response" );
+.SH DESCRIPTION
+.PP
+.B sam_move(\|)
+requests that the media in the source element address
+.I src_ea
+be moved to the destination element address
+.I dest_ea
+in the robotic media changer at equipment ordinal
+.I eq_ord.
+The source element address
+.I src_ea
+must be in use and occupied (that is, the media is not mounted).  The
+destination element address
+.I dest_ea
+must not be occupied or in use.  Some robotic media changers do not support
+moving media between storage element addresses.
+.PP
+The call will return immediately after issuing the command if
+zero is specified for
+.I wait_response
+value.  Other values for
+.I wait_response
+will give undefined results.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_move(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB ER_DEVICE_NOT_READY
+The specified
+.I eq_ord
+device is not ready.
+.TP
+.SB ER_DEVICE_USE_BY_ANOTHER
+The specified
+.I eq_ord
+device is busy and is being used by another process.
+.TP
+.SB ER_FIFO_PATH_LENGTH
+The path and filename for the FIFO pipe is too long.
+.TP
+.SB ER_NO_EQUIP_ORDINAL
+.I eq_ord
+is not a defined equipment ordinal in this configuration.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_RESPONSE_FIFO
+Unable to create the response FIFO pipe.
+.TP
+.SB ER_NO_STAT_ROBOT_CATALOG
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+cannot be accessed for status.
+.TP
+.SB ER_NOT_VALID_DEST_SLOT_NO
+The specified destination element address
+.I dest_ea
+is not valid for
+.I eq_ord
+device.
+.TP
+.SB ER_NOT_VALID_SLOT_NUMBER
+The specified source element address
+.I src_ea
+is not valid for
+.I eq_ord
+device.
+.TP
+.SB ER_OPERATOR_NOT_PRIV
+Operator does not have permission to move removable media.
+.TP
+.SB ER_ROBOT_CATALOG_MISSING
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+is missing and a full audit is required.
+.TP
+.SB ER_ROBOT_DEVICE_REQUIRED
+Equipment ordinal
+.I eq_ord
+is not defined as a robotic device.
+.TP
+.SB ER_ROBOT_NO_MOVE_SUPPORT
+Robotic media changer at equipment ordinal
+.I eq_ord
+does not support movement of media between element addresses.
+.TP
+.SB ER_DST_SLOT_IS_OCCUPIED
+.I dest_ea
+already contains removable media.
+.TP
+.SB ER_SLOT_NOT_OCCUPIED
+.I ea
+does not contain any removable media.
+.TP
+.SB ER_DST_SLOT_NOT_AVAIL_MOVE
+.I dest_ea
+is not available for the move.
+.TP
+.SB ER_SRC_SLOT_NOT_AVAIL_MOVE
+.I src_ea
+is not available for the move.
+.TP
+.SB ER_UNABLE_TO_MAP_CATALOG
+The catalog for the removable media changer at equipment ordinal
+.I eq_ord
+is unable to be mapped into memory.
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS
+.SH SEE ALSO
+.BR export (1M),
+.BR import (1M),
+.BR sam-robotsd (1M).
+.PP
+.BR sam_export (3),
+.BR sam_import (3).
+.PP
+.BR mcf (4).

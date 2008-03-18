@@ -1,0 +1,128 @@
+.\" $Revision: 1.19 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH ssum 1 "21 Aug 2002"
+.SH NAME
+ssum \- Set file checksum attributes
+.SH SYNOPSIS
+.na
+.B ssum
+.RB [ \-d ]
+.RB [ \-e ]
+.RB [ \-f ]
+.RB [ \-g ]
+.RB [ \-u ]
+.IR filename .\|.\|.\|
+.LP
+.B ssum
+.RB [ \-d ]
+.RB [ \-e ]
+.RB [ \-f ]
+.RB [ \-g ]
+.RB [ \-u ]
+.B \-r
+.IR dirname .\|.\|.\|\|[ filename .\|.\|.\|]
+.ad b
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B ssum
+sets the checksum attributes on one or more files.
+If the \fIgenerate\fP
+attribute is set (\fB\-g\fP), a 128-bit value is generated when the
+file is archived.  When the file is subsequently staged, the checksum is again
+generated and is compared against the value generated at archive time if
+the \fIuse\fP attribute is set (\fB\-u\fP).
+By default,
+no checksum value is generated or used when archiving or staging a file.
+.LP
+The \fIgenerate\fP attribute must be set on a file
+before any archive copy has been made.  Likewise, the selected algorithm cannot
+be changed after an archive copy has been made.
+.LP
+Direct access (\fBstage \-n\fR) and partial
+release (\fBrelease \-p\fR)
+are not allowed on a file that has either of the checksum \fIgenerate\fP or
+\fIuse\fP attributes set.  Also, it is not valid to specify that a file
+never be archived (\fBarchive \-n\fP) as well as specify that a checksum
+be generated and/or used.
+Therefore, when a direct access, partial release, or archive never
+attribute is set on a file, attempting to set the checksum \fIgenerate\fP
+or \fIuse\fP attribute on the file will result in an error and the attributes
+will be unchanged.  Similarly, when either the checksum \fIgenerate\fP or
+\fIuse\fP attribute is set on a file, attempting to set a direct
+access, partial release, or archive never attribute on the file will result
+in an error and the attributes will be unchanged.
+.LP
+A file that has the checksum \fIuse\fP attribute set cannot be memory mapped.
+The file also must be completely staged to the disk before access is allowed
+to the file's data.  This means that accessing the first byte of offline
+data in an archived file that
+has this attribute set will be slower than accessing the
+same archived file when it does not have this attribute set.
+This also means that staging will operate the same way as for staging
+with the \fB\-w\fP option for a file with the \fIuse\fP attribute not set.
+.SH OPTIONS
+.TP
+.B \-d
+Return the file's checksum attributes to the default, which turns off
+checksumming.
+Using the -d option will not reset the 'checksum valid' flag if
+a valid checksum has been generated for a file. The -d option
+deletes the checksum attributes, if no valid checksum has been
+generated.
+.TP
+.B \-e
+Set data verification for the file or directory specified.
+This forces the generation and use of checksums for
+archiving and staging, and prevents the release of the
+file until all archive copies have been created and their
+checksums verified. A file with only one archive copy will never be
+released. Only a superuser can set this attribute on a file.
+.sp
+Files created in directories with the -e flag set inherit it.
+.TP
+.B \-f
+Do not report errors.
+.TP
+.B \-r
+Recursively set the attributes for any files
+contained in the specified \fIdirname\fP and its subdirectories.
+.TP
+.B \-g
+Generate a checksum value for the file when archiving.
+.TP
+.B \-u
+Use the checksum value for the file when staging.  The \fIgenerate\fP
+attribute must have been previously set, or must be set simultaneously.
+.RE
+.SH SEE ALSO
+.BR stage (1),
+.BR release (1),
+.BR archive (1),
+.BR sls (1)

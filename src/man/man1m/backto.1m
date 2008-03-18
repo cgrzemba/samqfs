@@ -1,0 +1,62 @@
+.\" $Revision: 1.7 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH backto 1M "28 Jul 2005"
+.SH NAME
+backto \- Restores configuration files to an existing release's condition
+.SH SYNOPSIS
+.B backto \fIlevel\fR
+.SH AVAILABILITY
+\fBSUNWsamfsr\fR
+.PP
+\fBSUNWqfsr\fR
+.SH DESCRIPTION
+The Sun \%SAM-FS and Sun \%SAM-QFS upgrade process moves
+certain files, for example license files, to new locations.
+If you revert to a previous release, use the \fBbackto\fR script 
+to restore these files to their previous locations and formats.
+Run this script before you remove the current release package.
+.PP
+This command accepts the following options:
+.PP
+.TP 10
+\fIlevel\fR
+\fBMeaning\fR
+.TP
+\fB4.2\fR
+Use this argument to revert to the 4.2 releases.
+.TP
+\fB4.3\fR
+Use this argument to revert to the 4.3 releases.
+.PP
+Because some files have paths or arguments added that do not work
+on earlier systems, these files are not moved directly.  For such
+files, either go back to the previous version of the file
+or edit the most current release's version of the file
+to remove path changes and new features.

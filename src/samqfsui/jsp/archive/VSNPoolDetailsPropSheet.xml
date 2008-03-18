@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: VSNPoolDetailsPropSheet.xml,v 1.8 2008/03/17 14:40:31 am143972 Exp $ -->
+
+<propertysheet>
+		<section name="vsnDetailsSection" defaultValue="">	
+        <property span="true" required="false">
+            <label name="vsnPoolName" defaultValue="VSNPoolDetails.vsnPoolName"/>
+		<cc name="vsnPoolNameText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+        
+		<property span="true" required="false">
+            <label name="mediaType" defaultValue="VSNPoolDetails.mediaType"/>
+		<cc name="mediaTypeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+		
+		<property span="true" required="false">
+            <label name="spaceAvailable" defaultValue="VSNPoolDetails.spaceAvailable"/>
+		<cc name="spaceAvailableText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+		
+		<property span="true" required="false">
+            <label name="regexp" defaultValue="VSNPoolDetails.regexp"/>
+		<cc name="regexpText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+		</section>
+
+		
+</propertysheet>

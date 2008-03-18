@@ -1,0 +1,115 @@
+<?xml version='1.0'?> 
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: sample_storagetier.xml,v 1.8 2008/03/17 14:44:04 am143972 Exp $ -->
+
+<MetricReport name="StorageTierUse" isSample="true">
+<filesystem name="qfs1">
+<date val="1160398800">
+<diskCache>204482048</diskCache><diskArchive>0</diskArchive><tapeArchive>0</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1160485200">
+<diskCache>300000000</diskCache><diskArchive>204482048</diskArchive><tapeArchive>0</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1160571600">
+<diskCache>354086314</diskCache><diskArchive>300000000</diskArchive><tapeArchive>0</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1160658000">
+<diskCache>409041657</diskCache><diskArchive>354086314</diskArchive><tapeArchive>204482048</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1160744400">
+<diskCache>857066682</diskCache><diskArchive>409041657</diskArchive><tapeArchive>300000000</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1160830800">
+<diskCache>949078410</diskCache><diskArchive>949078410</diskArchive><tapeArchive>300000000</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1160917200">
+<diskCache>2287722241</diskCache><diskArchive>2287722241</diskArchive><tapeArchive>409041657</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161003600">
+<diskCache>3802643126</diskCache><diskArchive>3802643126</diskArchive><tapeArchive>867567888</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161090000">
+<diskCache>5297532521</diskCache><diskArchive>5297532521</diskArchive><tapeArchive>958353303</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161176400">
+<diskCache>6775102773</diskCache><diskArchive>10349028679</diskArchive><tapeArchive>10349028679</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161349200">
+<diskCache>8315669725</diskCache><diskArchive>10349028679</diskArchive><tapeArchive>48085729453</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161435600">
+<diskCache>9810109742</diskCache><diskArchive>10349028679</diskArchive><tapeArchive>48085729453</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161522000">
+<diskCache>11302043153</diskCache><diskArchive>12349028679</diskArchive><tapeArchive>58534493367</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161608400">
+<diskCache>12730998458</diskCache><diskArchive>12949028679</diskArchive><tapeArchive>64563563535</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161694800">
+<diskCache>14139323826</diskCache><diskArchive>15853449336</diskArchive><tapeArchive>73454354353</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161781200">
+<diskCache>15526508169</diskCache><diskArchive>17853449336</diskArchive><tapeArchive>87568768967</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161867600">
+<diskCache>16971241473</diskCache><diskArchive>26853449336</diskArchive><tapeArchive>98098757575</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1161954000">
+<diskCache>18495285764</diskCache><diskArchive>36853449336</diskArchive><tapeArchive>143536364630</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162040400">
+<diskCache>19223372037</diskCache><diskArchive>42233720377</diskArchive><tapeArchive>222854629510</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162126800">
+<diskCache>19664477494</diskCache><diskArchive>48534493367</diskArchive><tapeArchive>264536365650</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162213200">
+<diskCache>19664477944</diskCache><diskArchive>48534493367</diskArchive><tapeArchive>345678933333</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162386000">
+<diskCache>19646477344</diskCache><diskArchive>48534493367</diskArchive><tapeArchive>356755646460</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162472400">
+<diskCache>19644778544</diskCache><diskArchive>58534493367</diskArchive><tapeArchive>454565060870</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162558800">
+<diskCache>19644737744</diskCache><diskArchive>58534493867</diskArchive><tapeArchive>467889698907</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162645200">
+<diskCache>19644774914</diskCache><diskArchive>58534497367</diskArchive><tapeArchive>567868696796</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162731600">
+<diskCache>19644774994</diskCache><diskArchive>58534493367</diskArchive><tapeArchive>600000000000</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+<date val="1162818000">
+<diskCache>19844774941</diskCache><diskArchive>58534493367</diskArchive><tapeArchive>676573534533</tapeArchive><honeycombArchive>0</honeycombArchive>
+</date>
+</filesystem>
+</MetricReport>

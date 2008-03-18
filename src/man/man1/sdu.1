@@ -1,0 +1,145 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH sdu 1 "8 Jul 2002"
+.SH NAME
+sdu \- Summarizes disk usage
+.SH SYNOPSIS
+\fBsdu\fR
+\%[\fB\-a\fR]
+\%[\fB\-b\fR]
+\%[\fB\-c\fR]
+\%[\fB\-D\fR]
+\%[\fB\-h\fR]
+\%[\fB\-\-help\fR]
+\%[\fB\-k\fR]
+\%[\fB\-l\fR]
+\%[\fB\-L\fR]
+\%[\fB\-m\fR]
+\%[\fB\-s\fR]
+\%[\fB\-S\fR]
+\%[\fB\-\-version\fR]
+\%[\fB\-x\fR]
+\%[\fIfile\fR .\|.\|.\|\fR]
+.SH DESCRIPTION
+This man page describes the GNU version of the \fBdu\fR(1) command
+as enhanced by Sun Microsystems for the
+Sun StorEdge \%SAM-FS file system.
+The \fBsdu\fR command
+displays the amount of disk space used by each \fIfile\fR
+argument.  If \fIfile\fR is a directory, the command returns disk
+space information for each subdirectory of \fIfile\fR.
+If \fIfile\fR is a removable media file, the command returns 0
+for the size of that file.
+.PP
+By default, the space is
+returned in 1K blocks, but if the \fBPOSIXLY_CORRECT\fR environment
+variable is set, \%512-byte blocks are reported.
+The \fBsdu\fR command
+displays actual disk blocks for online Sun StorEdge \%SAM-FS
+files.  It also displays an estimate of disk
+blocks (based on file size) for offline Sun StorEdge \%SAM-FS
+files.
+To get actual disk block usage for both online and offline
+files, use the \fBdu\fR(1) command.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB\-a\fR
+Displays counts for all files, not just directories.
+Equivalent to specifying \fB\-\-all\fR.
+.TP
+\fB\-b\fR
+Displays sizes in bytes.
+Equivalent to specifying \fB\-\-bytes\fR.
+.TP
+\fB\-c\fR
+Writes a grand total of all of the arguments after all
+arguments have been processed.  This can be used to determine
+the disk usage of a directory with some files excluded.
+Equivalent to specifying \fB\-\-total\fR.
+.TP
+\fB\-D\fR
+Dereferences symbolic links that are command line arguments.  Does not
+affect other symbolic links.  This is helpful for determining the disk
+usage of directories like \fB/usr/tmp\fR if they are symbolic links.
+Equivalent to specifying \%\fB\-\-dereference-args\fR.
+.TP
+\fB\-h
+Displays sizes in \%human-readable format.  For example, 1K, 234M, 2G.
+Equivalent to specifying \%\fB\-\-human-readable\fR.
+.TP
+\fB\-\-help\fR
+Writes a usage message to standard output and exits successfully.
+.TP
+\fB\-k\fR
+Displays sizes in kilobytes.
+This overrides the environment variable \fBPOSIXLY_CORRECT\fR.
+Equivalent to specifying \fB\-\-kilobytes\fR.
+.TP
+\fB\-l\fR
+Counts the size of all files, even if they have appeared already in
+another hard link.
+Equivalent to specifying \fB\-\-count-links\fR.
+.TP
+\fB\-L\fR
+Dereferences symbolic links.  That is, the command shows the
+disk space used by the file or directory that the link points
+to instead of the space used by the link.
+Equivalent to specifying \fB\-\-dereference\fR.
+.TP
+\fB\-m\fR
+Uses 1024-kilobyte blocks, not 512, regardless of
+the \fBPOSIXLY_CORRECT\fR environment variable setting.
+Equivalent to specifying \fB\-\-megabytes\fR.
+.TP
+\fB\-s\fR
+Displays only a total for each argument.
+Equivalent to specifying \fB\-\-summarize\fR.
+.TP
+\fB\-S\fR
+Counts the size of each directory separately, not including the sizes
+of subdirectories.
+Equivalent to specifying \%\fB\-\-separate-dirs\fR.
+.TP
+\fB\-\-version\fR
+Displays version information on standard output then exits successfully.
+.TP
+\fB\-x\fR
+Skips directories that are on different file systems from the one that
+the \fIfile\fR being processed is on.
+Equivalent to specifying \%\fB\-\-one-file-system\fR.
+.TP
+\fIfile\fR
+Specifies the file or the path to the file being analyzed.
+The size is written.  If no \fIfile\fR is specified,
+the current directory is used.  If more than one \fIfile\fR
+is specified, separate each with a space character.
+
+

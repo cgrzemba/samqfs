@@ -1,0 +1,179 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_export 3 "05 Nov 2001"
+.SH NAME
+sam_export \- Exports media from the removable media robotic device
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_export(ushort_t " "eq_ord" ,
+.BI "char *" "vsn" ,
+.BI "uint_t " "ea" ,
+.BI "int " "wait_response" ,
+.BI "int " "one_step" );
+.SH DESCRIPTION
+.PP
+.B sam_export(\|)
+requests the robotic media changer to place the selected media that belongs
+in
+.I ea
+or is labeled with
+.I vsn
+into the mail-slot of the media changer.  Either the
+.I vsn
+or the
+.I ea
+must be specified.  The
+.I vsn
+should be set to a NULL pointer if
+.I ea
+is specified.  The
+.I ea
+should be set to
+.B ROBOT_NO_SLOT
+if the
+.I vsn
+is specified.
+.PP
+The call will return immediately after issuing the command if zero is
+specified for
+.I wait_response
+value.  Other values for
+.I wait_response
+will give undefined results.
+.PP
+For network-controlled media changers such as the GRAU using the GRAU ACT
+interface, IBM 3494, or Sony libraries using PSC, this interface only
+removes the entry from the catalog.  Physical removal and addition of media
+within these media changers is performed by utilities supplied by GRAU, IBM,
+and Sony. For STK network-controlled media changers using ACSLS, 
+this interface removes the entry from the catalog only if zero is 
+specified for 
+.I one_step
+value. Other values for
+.I one_step
+will cause the physical removal of media and also remove the media from
+the catalog.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_export(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB ER_FIFO_PATH_LENGTH
+The path and filename for the FIFO pipe is too long.
+.TP
+.SB ER_NO_EQUIP_ORDINAL
+.I eq_ord
+is not a defined equiptment ordinal in this configuration.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master
+shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+file systems are mounted.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master
+shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+file systems are mounted.
+.TP
+.SB ER_NO_RESPONSE_FIFO
+Unable to create the response FIFO pipe.
+.TP
+.SB ER_NO_STAT_ROBOT_CATALOG
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+cannot be accessed for status.
+.TP
+.SB ER_NOT_VALID_SLOT_NUMBER
+.I ea
+is not a valid element address in the robot at equipment ordinal
+.I eq_ord
+.TP
+.SB ER_OPERATOR_NOT_PRIV
+Operator does not have permission to export removable media.
+.TP
+.SB ER_ROBOT_CATALOG_MISSING
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+is missing and a full audit is required.
+.TP
+.SB ER_ROBOT_DEVICE_REQUIRED
+Equipment ordinal
+.I eq_ord
+is not defined as a robotic device.
+.TP
+.SB ER_SLOT_NOT_OCCUPIED
+.I ea
+does not contain any removable media.
+.TP
+.SB ER_SLOT_OR_VSN_REQUIRED
+Either
+.I ea
+or
+.I vsn
+must be specified
+.TP
+.SB ER_UNABLE_TO_MAP_CATALOG
+The catalog for the removable media changer at equipment ordinal
+.I eq_ord
+is unable to be mapped into memory.
+.TP
+.SB ER_VSN_NOT_FOUND_IN_ROBOT
+.I vsn
+specified cannot be found in the specified robot at equipment ordinal
+.I eq_ord
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+.SH SEE ALSO
+.BR build_cat (1M),
+.BR dump_cat (1M),
+.BR export (1M),
+.BR import (1M),
+.BR sam-robotsd (1M).
+.PP
+.BR sam_import (3).
+.PP
+.BR mcf (4).

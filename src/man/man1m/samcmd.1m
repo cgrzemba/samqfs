@@ -1,0 +1,138 @@
+'\" t
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samcmd 1M "19 Feb 2002"
+.SH NAME
+samcmd \- Executes Sun StorEdge \%SAM-FS and Sun \%SAM-QFS operator utility commands
+.SH SYNOPSIS
+.BI samcmd " command"
+.SH AVAILABILITY
+.LP
+SUNWqfs
+.br
+SUNWsamfs
+.SH DESCRIPTION
+\f3samcmd\f1 executes a single Sun StorEdge \%SAM-FS or Sun \%SAM-QFS operator 
+utility command.
+Its purpose is to provide shell script access to the commands
+and displays available in
+.BR samu (1M).
+.LP
+.B samcmd
+uses the first argument as the \fBsamu\fR command or display name.  Succeeding
+arguments are the arguments for that \fBsamu\fR command.
+.SH COMMANDS
+The syntax for the commands is identical to that shown in the COMMANDS
+section of
+.BR samu (1M).
+Note that the colon (:) hot key is not required for samcmd to distinguish 
+commands from displays.
+.SH DISPLAYS
+.B samcmd
+can produce displays on standard output similar to those displayed by
+.BR samu .
+While for 
+.B samu 
+the information is paged to display a screen at a time if there is more
+than one screen of information available,
+.B samcmd
+produces the entire amount of information for a given display.
+Hence there is no need for equivalents of the control-f, control-b,
+control-d, and control-u hotkeys.
+Note that the formatting of the information may be slightly different on the 
+.B samcmd
+output file than on the
+.B samu
+display.  Since the format of the display control (single letter)
+commands can be modified by other hotkeys under
+.BR samu ,
+some equivalents are provided for
+.B samcmd
+as follows:
+
+.TS
+tab (#) ;
+ l l .
+ Display#Arguments
+
+a#filesystem
+n#mediatype
+p#mediatype 
+r#mediatype
+u#mediatype [path]
+v#eq [sort] [I | I I] 
+w#mediatype [path]
+.TE
+.fi
+.sp
+The sort selections for the v display are:
+1 slot, 2 count, 3 usage, 4 VSN, 5 access time, 6 barcode, 7 label time.
+Specifying a single I for the v display shows a two-line display with
+the barcode, blocksize, etc. in the second line.  Specifying two I's
+for the v display shows a two-line display with the archiver volume
+reservation information in the second line.
+
+.SH EXAMPLES
+The following example loads a cartridge from slot 2 in automated library 30:
+.ft CO
+.nf
+
+      samcmd load 30:2
+.fi
+.ft
+.LP
+The following example produces a detailed archiver display for filesystem
+samfs3 on standard output:
+.ft CO
+.nf
+
+      samcmd a samfs3
+.fi
+.ft
+.LP
+The following example produces a display, on standard output, of the
+staging queue restricted to stages from media type "lt", showing the
+full paths of the files to be staged. 
+.ft CO
+.nf
+
+      samcmd u lt path
+.fi
+.ft
+.LP
+The following example produces a display of automated library 50's
+catalog, with the archiver volume reservation information, on standard output:
+.ft CO
+.nf
+
+      samcmd v 50 I I
+.fi
+.ft
+.SH SEE ALSO
+.BR samu (1M)

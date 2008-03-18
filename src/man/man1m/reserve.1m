@@ -1,0 +1,85 @@
+.\" $Revision: 1.13 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH reserve 1M "19 Sep 2000"
+.SH NAME
+reserve \- Reserve a volume for archiving.
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/reserve 
+.IB mediatype . vsn
+.br
+.IB asname / owner / fsname
+.BI [ time ]
+.br
+.B /opt/SUNWsamfs/sbin/reserve 
+.IB eq : slot "[:" partition ]
+.br
+.IB asname / owner / fsname
+.BI [ time ]
+.br
+.br
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B reserve
+assigns the volume for archival of specific files.
+.LP
+Normally, the archiver performs reservation of volumes.  This command is
+provided to pre-reserve a volume.
+.LP
+The volume is determined by the specifier
+.IB mediatype . vsn
+, or
+.IB eq : slot "[:" partition ]
+.LP
+The reservation is specified by the fields
+.BR asname ", " owner ", and " fsname
+These fields may be empty depending on the options in the archiver command file.
+.LP
+.I time
+is the time the volume is reserved.  If not specified, the reserve time
+is set to the present time.  Several formats are allowed for
+.IR time .
+Examples are:
+.LP
+"2000-09-19";
+"2000-07-04 20:31";  23:05;  "Mar 23";
+"Mar 23 1994"; "Mar 23 1994 23:05"; "23 Mar"; "23 Mar 1994"; "23 Mar
+1994 23:05".
+.LP
+Month names may be abbreviated or spelled out in full.
+Time-of-day is given in 24-hour format.  Years must use all four
+digits.  If the \fItime\fP contains blanks, the entire time must be
+enclosed in quotation marks.
+.LP
+.PD
+.SH SEE ALSO
+.BR archiver (1M),
+.BR archiver.cmd (1M),
+.BR unreserve (1M)

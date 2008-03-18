@@ -1,0 +1,245 @@
+'\" t
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH samgetmap 1M "26 Feb 2001"
+.SH NAME
+samgetmap \- Obtains disk file storage information
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/tools/samgetmap\fR
+\%[\fB\-a \fIallocsize\fR]
+\%[\fB\-c\fR]
+\%[\fB\-f\fR]
+\%[\fB\-h\fR]
+\%[\fB\-l \fIsetlen\fR]
+\%[\fB\-m \fIminalloc\fR]
+\%[\fB\-n \fInbytes\fR]
+\%[\fB\-s \fIstartaddr\fR]
+\%[\fB\-u\fR]
+\%[\fB\-w\fR]
+\%[\fB\-M\fR]
+\%[\fB\-U\fR]
+\%[\fB\-V\fR]
+\fIfile\fR
+.SH AVAILABILITY
+\fBSun Microsystems Internal\fR
+.SH DESCRIPTION
+The \fBsamgetmap\fR command
+provides a test interface to the SANergy File Map API routines.
+The \fBsamgetmap\fR command must be run as root.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB\-a \fIallocsize\fR
+Requests allocation of \fIallocsize\fR bytes of storage to \fIfile\fR
+through the \fBFS_SetFileSizes\fR request.
+The \fIallocsize\fR must be an integer in the following range:
+.sp
+0 \(<= \fIallocsize\fR < 2**31
+.sp
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-c\fR
+Requests a canonical map.
+\fBFS_M_FLAG_CANONICAL\fR is set for the \fBFS_GetLockedMap\fR request.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-f\fR
+Requests a non-sparse allocation map.
+\fBFS_M_FLAG_NO_HOLE\fR is set for the \fBFS_GetLockedMap\fR request.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-h\fR
+Causes \fBsamgetmap\fR to write a short usage message to \fBstdout\fR.
+.TP
+\fB\-l \fIsetlen\fR
+Sets the file length to \fIsetlen\fR bytes.
+.TP
+\fB\-m \fIminalloc\fR
+Uses \fBFS_SetFileSizes\fR to
+request the allocation of \fIminalloc\fR bytes of storage for \fIfile\fR.
+\fIminalloc\fR must be an integer in the following range:
+.sp
+-1 \(<= \fIminalloc\fR \(<= \fIallocsize\fR
+.sp
+If \fIminalloc\fR is within this range and the allocation request
+partially succeeds, such that \fIminalloc\fR or more bytes are
+allocated but fewer than \fIallocsize\fR bytes are allocated,
+a unique error code is returned to indicate partial success.
+For more information, see the OPERATIONS section of this man page.
+.sp
+\fIsamgetmap\fR's behavior is undefined if \fIminalloc\fR
+is less than \fB-1\fR or greater than \fIallocsize\fR.
+For more information on \fIallocsize\fR, see the \fB\-a\fR option.
+.TP
+\fB\-n \fInbytes\fR
+Specifies that the allocation map returned by
+the \fBFS_GetLockedMap\fR call return information about the
+location of at least \fInbytes\fR of data.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-s \fIstartaddr\fR
+Requests that the allocation map returned by the \fBFS_GetLockedMap\fR
+request return the information about \fIfile\fR's storage beginning at
+byte \fIstartaddr\fR in the file.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-u\fR
+Sets \fBFS_M_FLAG_UNLOCKED\fR in the call to \fBFS_GetLockedMap\fR.
+\fIfile\fR is not locked by the \fBFS_GetLockedMap\fR call.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-w\fR
+Sets \fBFS_M_FLAG_WAIT\fR for the call to \fBFS_GetLockedMap\fR.
+If the file is online, this option has no effect.
+If the file is offline, the file is staged in before
+the file's map is returned.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-M\fR
+Prevents the call to \fBFS_GetLockedMap\fR from being made.
+For more information, see the OPERATIONS section
+of this man page.
+.TP
+\fB\-U\fR
+Prevents the call to \fBFS_UnlockMap\fR from being made, leaving
+the file locked (unless the \fB-u\fR option is also specified).
+For more information, see the OPERATIONS section
+of this man page.
+.sp
+NOTE:  Use of this option makes it impossible to unmount the file
+system that
+\fIfile\fR resides in until the file is somehow unlocked (see also
+\fBsamunhold\fR(1M) to remove all file locks (holds) on a file system).
+Specifying the \fB\-u\fR and \fB\-U\fR options together on the
+command line insures that the
+file is unlocked upon exit from \fBsamgetmap\fR.
+.TP
+\fB-V\fR
+Report the value returned by the FS_GetVersion(), added to the
+SANergy 2.2 API, which indicates the library revision value.
+Present valid values are 220 (for SANergy 2.2),
+and 230 (for SANergy 2.3/3.1).
+.TP
+\fIfile\fR
+Specifies the file for which disk storage information is requested.
+.PP
+The \fBsamgetmap\fR command
+should not be executed if SANergy File Sharing
+is running on the file system.
+Specifically, the administrator
+should ensure that the following conditions are true:
+.TP 2
+\(bu
+There are no SANergy applications running on any
+client, possibly including the server itself.
+.TP
+\(bu
+The file system in question is not fused on any SANergy clients.
+.PP
+.SH OPERATIONS
+The \fBsamgetmap\fR program operates as follows:
+.TP 3
+1.
+The program calls the \fBAFS_GetCookies\fR routine
+to obtain two cookies, one for the file system
+that \fIfile\fR resides on (a volume cookie)
+and the other for \fIfile\fR itself (a file cookie).
+.TP
+2.
+The program calls \fBFS_GetLockedMap\fR, using the cookies
+obtained by \fBFS_GetCookies\fR.
+This call is not made if the \fB-M\fR option is present.
+The parameters to this call can be specified or modified by the
+command line options \fB\-s\fR, \fB\-n\fR, \fB\-c\fR,
+\fB\-f\fR, \fB\-u\fR, and \fB\-w\fR.
+.TP
+3.
+The program calls \fBFS_SetFileSizes\fR.
+The parameters to this call can be specified or modified by the
+command line options \fB\-a\fR, \fB\-l\fR, and \fB\-m\fR.
+.TP
+4.
+The program calls \fBFS_UnlockMap\fR.
+This call is not made if the \fB\-U\fR option is present on
+the command line.
+.PP
+The result of each call is written in a message to \fBstdout\fR.
+.SH EXAMPLES
+The following example shows how to use \fBsamgetmap\fR:
+.PP
+.nf
+.ft CO
+ceres# samgetmap /qfs1/foo
+AFS_GetCookies("/qfs1/foo", &vc, &fc) = 0 (FS_E_SUCCESS (OK))
+
+Volcookie:
+          0  0  0 20 73 56 6d 43          0  b  0  0 3a 94 44 4d
+          0  1  5  6  0  0  0  0          0  0  3  0  2 ed a0  0
+
+Filecookie:
+          0  0  0 10 73 46 6d 43          0  0  0  7  0  0  0  1
+          0  0  0  0  0  0  0  0          0  0  0  0  0  0  0  0
+
+FS_GetLockedMap(&vc, &fc, 0, -1, 0, ffbaf448, ffbaf340)  = 0 (FS_E_SUCCESS
+(OK))
+returned buflen = 88
+msgLen       = 88
+vendorStatus = 0
+fileSize     = 16384000
+allocation   = 16416768
+nExtents     = 1
+extentType   = 2        (SIMPLE)
+
+sExtent[0]
+        volumeOrdinal = 1
+        blockOffset   = 20
+        nBlocks = 7d40
+
+FS_SetFileSizes(&vc, &fc, 0, ffffffffffffffff, ffffffffffffffff, ffffffffff
+ffffff)  = 0 (FS_E_SUCCESS (OK))
+FS_UnlockMap(&vc, &fc) = 0 (FS_E_SUCCESS (OK))
+.ft
+.fi
+.SH NOTES
+The \fBsamgetmap\fR command typically issues holds (locks) to \fIfile\fR.
+This can interfere with the operation of SANergy File Sharing,
+possibly causing file system corruption.
+.SH SEE ALSO
+\fBsamgetvol\fR(1M),
+\fBsamunhold\fR(1M).
+

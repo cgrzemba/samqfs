@@ -1,0 +1,79 @@
+#!/bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+# $Revision: 1.7 $
+
+#
+# sampkgchk is a script called by ChkFs to verify that all necessary
+# packages are installed. A user could of installed just the root
+# portion of the SAM-FS or QFS packages and then did a mount. This script
+# will verify that the usr package has been installed and will also
+# verify that the root and usr packages are the same version.
+#
+
+if [ -d /var/sadm/pkg/SUNWsamfsr ]; then
+	VERSION=`pkgparam SUNWsamfsr VERSION  | sed -e s/VERSION=// | cut -f1 -d,`
+
+	if [ ! -d /var/sadm/pkg/SUNWsamfsu ]; then
+		echo "FATAL ERROR: The package SUNWsamfsu is not installed"
+		echo "You must install SUNWsamfsu in order for SAM-FS/QFS to run"
+		echo "correctly"
+		exit 1
+	fi
+	VERSIONU=`pkgparam SUNWsamfsu VERSION | sed -e s/VERSION=// | cut -f1 -d,`
+
+	if [ $VERSION != $VERSIONU ]; then
+		echo "FATAL ERROR: SUNWsamfsr and SUNWsamfsu are incompatible"
+		echo "SUNWsamfsr version - $VERSION  SUNWsamfsu version - $VERSIONU"
+		echo "You must install the same version of SUNWsamfsr and SUNWsamfsu"
+		echo "packages"
+		exit 1
+	fi
+
+elif [ -d /var/sadm/pkg/SUNWqfsr ]; then
+	VERSION=`pkgparam SUNWqfsr VERSION | sed -e s/VERSION=// | cut -f1 -d,`
+
+	if [ ! -d /var/sadm/pkg/SUNWqfsu ]; then
+		echo "FATAL ERROR: The package SUNWqfsu is not installed"
+		echo "You must install SUNWqfsu in order for QFS to run correctly"
+		exit 1
+	fi
+	VERSIONU=`pkgparam SUNWqfsu VERSION | sed -e s/VERSION=// | cut -f1 -d,`
+
+	if [ $VERSION != $VERSIONU ]; then
+		echo "FATAL ERROR: SUNWqfsr and SUNWqfsu are incompatible"
+		echo "SUNWqfsr version - $VERSION  SUNWqfsu version - $VERSIONU"
+		echo "You must install the same version of SUNWqfsr and SUNWqfsu"
+		echo "packages"
+		exit 1
+	fi
+fi
+
+if [ -f /etc/opt/SUNWsamfs/remote_install ]; then
+    /opt/SUNWsamfs/sbin/samsyschk
+fi

@@ -1,0 +1,198 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH release 1 "1 Oct 2004"
+.SH NAME
+release \- Releases disk space and sets release attributes
+.SH SYNOPSIS
+\fBrelease\fR
+[\fB\-a\fR]
+[\fB\-d\fR]
+[\fB\-f\fR]
+[\fB\-n\fR]
+[\fB\-p\fR]
+[\fB\-s\ \fIpartial_size\fR]
+[\fB\-V\fR]
+\fIfilename\fR \.\|.\|.\|
+.PP
+\fBrelease\fR
+[\fB\-a\fR]
+[\fB\-d\fR]
+[\fB\-f\fR]
+[\fB\-n\fR]
+[\fB\-p\fR]
+[\fB\-s\ \fIpartial_size\fR]
+[\fB\-V\fR]
+.if n \.br
+\%\fB\-r\ \fIdirname\fR\ \.\|.\|.\|\|
+[\fIfilename\fR \.\|.\|.\|]
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The \fBrelease\fR command
+sets release attributes for a file and releases the disk space
+associated with
+one or more files. 
+At least one archive image must exist for each file before its disk
+space is released.  By default, the
+releaser daemon automatically drops disk space when the file system's
+high water mark is reached.
+.PP
+Files that are symbolic links are silently ignored.
+.PP
+If the \fB\-a\fR, \fB\-d\fR, \fB\-n\fR, \fB\-p\fR, or \fB\-s\fR
+options are specified, only the attribute is set;
+the disk space is not released, however if the partial attribute is
+reset, all blocks are released for an offline regular file.
+.PP
+When release attributes are set on a directory, files and directories
+subsequently created in that directory inherit those attributes.
+.SH OPTIONS
+This command accepts the following arguments:
+.TP 10
+.B \-a
+Sets the attribute that specifies that a file's disk space
+be released when at least one archive copy of the file exists.
+This option cannot be specified on the command line in conjunction with
+the \fB\-n\fR option.
+.TP
+.B \-d
+Resets the release attributes on the file to the default attributes.
+When this option is specified, attributes are first
+reset to the default, and then all other attribute-setting options
+are processed.
+.sp
+If the \fIpartial\fR attribute is reset, all
+blocks are released for an offline regular file. If the partial blocks
+are to be retained, specify the \fB\-p\fR or \fB\-s\fR option with
+the \fB\-d\fR option.
+.TP
+\fB\-f\fR
+Suppresses error messages. 
+.TP
+\fB\-n\fR
+Specifies that the disk space for this file never be released.
+Only a superuser can set this attribute on a file.
+This option cannot be specified on the command line in conjunction
+with the \fB\-a\fR option.
+.TP
+\fB\-p\fR
+Sets the partial release attribute on the file
+so that when the file's disk
+space is released, the first portion of that disk space is retained
+on the disk.
+.sp
+By default, the minimum size of the portion retained on disk is
+controlled by the \fB\-o\ partial=\fIn\fBk\fR option on the
+\fBmount_samfs\fR(1M) command.  This amount
+can be adjusted by using the \fB\-s\fR option on the \fBrelease\fR command.
+.sp
+NOTE: Even through only a portion of the file is retained on disk,
+the amount of disk space consumed is equal to one DAU. So, for
+example, if the partial size is set to 16K and the DAU size is 256K,
+even though only 16K of data remains after a partial release, the actual
+disk space used is 256K.
+.sp
+If this option is specified for an offline file,
+the partial blocks are not on the disk, and the entire file is
+be staged if accessed.  You can use the \fBstage\fR(1)
+command's \fB\-p\fR option to stage the partial blocks to the disk.
+.sp
+This option cannot be specified under the following circumstances:
+.RS 10
+.TP 2
+\(bu
+This option cannot be specified for a file that has
+either the checksum-generate or checksum-use attributes set.
+These attributes are set by using the \fBssum\fR(1)
+command's \fB\-g\fR or \fB\-u\fR options, respectively.
+.TP
+\(bu
+The \fBstage\fR(1) command's \fB\-n\fR option
+enables the never-stage attribute.
+.sp
+For more information on the \fBstage\fR(1) command,
+see the \fBstage\fR(1) man page.
+.RE
+.TP 10
+\fB\-s\ \fIpartial_size\fR
+Specifies the number of kilobytes to be retained on disk when a file
+with the partial-release attribute is released.
+When the file's disk space is released, the first \fIpartial_size\fR
+kilobytes of that disk space are retained.
+.sp
+By default, the minimum \fIpartial_size\fR is 8 kilobytes,
+and the maximum \fIpartial_size\fR is 16 kilobytes or whatever the
+\fB\-o\ maxpartial=\fImaxpartial\fR
+setting is for this file system as specified on the \fBmount\fR(1M)
+command.  For more information on the \fBmount\fR(1M) command,
+see the \fBmount_samfs\fR(1M) man page.
+.sp
+This option cannot be specified under the following circumstances:
+.RS 10
+.TP 2
+\(bu
+This option cannot be specified for a file that has
+either the checksum-generate or checksum-use attributes set.
+These attributes are set by using the \fBssum\fR(1)
+command's \fB\-g\fR or \fB\-u\fR options, respectively.
+.TP
+\(bu
+The \fBstage\fR(1) command's \fB\-n\fR option
+enables the never-stage attribute.
+.RE
+.TP 10
+\fB\-r\fR
+Recursively releases disk space or sets release attributes for files
+contained in the specified \fIdirname\fR and its subdirectories.
+More than one \fIdirname\fR can be specified.
+.sp
+Symbolic links that are encountered when this option is in effect are 
+not traversed.
+.sp
+If used in conjunction with other command line options,
+the \fB\-r\ \fIdirname\fR
+option must be specified prior to any individual files listed (using
+the \fIfilename\fR argument), but it must be specified after any other
+individual options.
+.TP
+\fB\-V\fR
+Enables a detailed, verbose display.
+A message is displayed for each file for which release is attempted.
+.TP
+\fIfilename\fR
+Specifies one or more file names.  If the \fB\-r\ \fIdirname\fR option
+is also specified, \fIfilename\fR arguments must appear after all
+\fIdirname\fR specifications.
+.SH SEE ALSO
+\fBarchive\fR(1),
+\fBssum\fR(1),
+\fBstage\fR(1).
+.PP
+\fBmount_samfs\fR(1M).

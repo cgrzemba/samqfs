@@ -1,0 +1,124 @@
+.\" $Revision: 1.6 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+'\" !tbl | mmdoc
+.TH qfs_listio 3 "10 Feb 2005"
+.SH NAME
+qfs_lio_read, qfs_lio_write, qfs_lio_poll, qfs_lio_wait \- Issues list I/O or waits for listio.
+.SH SYNOPSIS
+\fBcc\fR [\fIflag\fR \&.\&.\&.] \fIfile\fR \&.\&.\&.
+\fB-L/opt/SUNWsamfs/lib\fR
+\fB-R/opt/SUNWsamfs/lib\fR
+\fB-lsam [\fIlibrary\fR \&.\&.\&.]
+.PP
+\fB#include "/opt/SUNWsamfs/include/listio.h"\fR
+.PP
+\fBint qfs_lio_init(qfs_lio_handle_t *\fIhdl\fB);\fR
+.PP
+\fBint qfs_lio_read(int \fIfd\fB,\fR
+\fBint \fImem_list_count\fB, void **\fImem_addr\fB, size_t *\fImem_count\fB,\fR
+\fBint \fIfile_list_count\fB, offset_t *\fIfile_off\fB, offset_t *\fIfile_len\fB,\fR
+\fBqfs_lio_handle_t *\fIhdl\fB);\fR
+.PP
+\fBint qfs_lio_write(int \fIfd\fB,\fR
+\fBint \fImem_list_count\fB, void **\fImem_addr\fB, size_t *\fImem_count\fB,\fR
+\fBint \fIfile_list_count\fB, offset_t *\fIfile_off\fB, offset_t *\fIfile_len\fB,\fR
+\fBqfs_lio_handle_t *\fIhdl\fB);\fR
+.PP
+\fBint qfs_lio_wait(qfs_lio_handle_t *\fIhdl\fB);\fR
+.SH AVAILABILITY
+.nf
+\fBSUNWqfs\fR
+\fBSUNWsamfs\fR
+.fi
+.SH DESCRIPTION
+The \fBqfs_lio_read(\|)\fR
+function issues a listio read for an open file descriptor.
+.PP
+The \fBqfs_lio_write(\|)\fR
+function issues a listio write for an open file descriptor.
+.PP
+The \fBqfs_lio_init(\|)\fR
+must be used to initialize a handle object before passing it to
+one of the other interfaces.
+.PP
+The \fBqfs_lio_wait(\|)\fR
+can be issued to wait until all I/O in the listio call has completed.
+.SH ARGUMENTS
+These functions accept the following arguments:
+.TP 10
+\fIfd\fR
+issues I/O for a file using a Sun StorEdge \%QFS or
+Sun \%SAM-FS ioctl call.
+.TP
+\fImem_list_count\fR
+is the number of elements in the \fImem_addr\fR and \fImem_count\fR arrays.
+.TP
+\fImem_addr\fR, \fImem_count\fR
+are arrays describing a list of memory regions.
+.TP
+\fIfile_list_count\fR
+is the number of elements in the \fIfile_off\fR and \fIfile_len\fR arrays.
+.TP
+\fIfile_off\fR, \fIfile_len\fR
+are arrays describing a list of file regions.
+.TP
+\fIhdl\fR
+points to an opaque value that is used to indicate the status of
+an asynchronous list I/O request.
+If \fIhdl\fR is non-null, the function returns when all I/O has issued.
+If \fIhdl\fR is NULL, the function returns when all I/O has been completed.
+.SH "RETURN VALUES"
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+The \fBqfs_lio_read(\|)\fR, \fBqfs_lio_write(\|)\fR, and
+\fBqfs_lio_wait(\|)\fR fails if one or more of the following are true:
+.TP 20
+.SB EINVAL
+An invalid option was specified, or the file is not a regular file.
+.TP
+.SB EPERM
+Not the owner or super-user.
+.TP
+.SB EFAULT
+\fImem_addr\fR, \fImem_count\fR, \fIfile_off\fR, or \fIfile_len\fR
+points to an illegal address.
+.TP
+.SB EINTR
+A signal was caught during the
+.B qfs_lio(\|)
+function.
+.SH "SEE ALSO"
+.BR setfa (1),
+.BR sam_setfa (3),
+.BR directio (3C),

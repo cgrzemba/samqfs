@@ -1,0 +1,118 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mccfg - media changer configuration.
+#
+# $Revision: 1.7 $
+
+
+# Program title.
+TITLE="mccfg version 1.2"
+echo "$TITLE"
+echo
+
+
+# SAM-FS paths.
+SAMFS_OPT=/opt/SUNWsamfs
+SAMFS_ETC=/etc/opt/SUNWsamfs
+SAMFS_VAR=/var/opt/SUNWsamfs
+SAMFS_SBIN=/opt/SUNWsamfs/tools/mccfg-src
+SAMFS_LOG=$SAMFS_VAR/log
+SAMFS_EXAMPLES=$SAMFS_OPT/examples
+
+
+# Path.
+export PATH=$SAMFS_SBIN:.:/bin:/sbin:/usr/bin:/usr/sbin:$PATH
+
+
+# Temporary Data File.
+name=`basename $0`
+TMPFILE="/tmp/$name$$"    # temp data file.
+TMPFILE2="/tmp/$name2$$"  # second temp data file.
+
+
+#----- cleanup - Cleanup temporary files.
+#      Given a script signal, remove temporary files and exit.
+function cleanup {
+
+	rm -f $TMPFILE $TMPFILE2
+	exit 0
+}
+trap cleanup INT TERM EXIT
+
+
+# Source supporting script functions.
+. $SAMFS_SBIN/mclog	# logfile routines.
+. $SAMFS_SBIN/mcedstr	# encode decode scsiid strings.
+. $SAMFS_SBIN/mcprobe	# robot and tape drive probe.
+. $SAMFS_SBIN/mcwwn	# add robot wwn to samst.conf.
+. $SAMFS_SBIN/mcmenu	# simple ascii mcf cfg menu.
+. $SAMFS_SBIN/mcinq	# inquiry.conf device alias lookup.
+. $SAMFS_SBIN/mcst	# st.conf device alias lookup.
+
+
+# Logfile location.
+echo "Logfile $LOGFILE"
+
+
+#
+# Main.
+logit "$TITLE"
+
+
+# Menu choices.
+CHOICE_SAMSTCONF="Add media changer WWN to $SFILE"
+CHOICE_MCF="Add media changer and tape drives to $MCFLOC"
+CHOICE_QUIT="Quit"
+
+
+# Menu loop.
+done=0
+while [ $done -eq 0 ]; do
+	echo
+	echo "Select SAM-FS configuration activity:"
+	PS3="Pick one of the above: "
+	select choice in "$CHOICE_SAMSTCONF" "$CHOICE_MCF" "$CHOICE_QUIT"
+	do case $choice in
+		$CHOICE_SAMSTCONF)
+			mcwwn_cfg	# samst robot WWN configuration.
+			break;;
+		$CHOICE_MCF)
+			auto_cfg	# correlates robots with tape drives.
+			break;;
+		$CHOICE_QUIT)
+			done=1		# finished.
+			break;;
+		esac
+	done
+
+done
+
+
+# Done.
+exit 0

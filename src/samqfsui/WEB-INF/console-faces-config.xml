@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE faces-config PUBLIC
+  "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.0//EN"
+  "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: console-faces-config.xml,v 1.5 2008/03/17 14:40:23 am143972 Exp $ -->
+
+
+<!-- Managed bean descriptions for console applications
+     that want to use the default bean implementations. 
+     If you want to supply alternative data in lieu of 
+     supplying it in app.xml you can do so by supplying 
+     managed-property entries for the properties you 
+     want to change, In that case use a separate 
+     faces configuration file and do not include this one
+     in your application -->
+
+<faces-config>
+
+    <managed-bean>
+        <description>
+	    Backing bean for the console masthead.
+	    In order to override the default properties of this
+	    bean custom values should be supplied as managed properties. 
+	</description>
+        <managed-bean-name>mastheadBean</managed-bean-name>
+        <managed-bean-class>com.sun.web.common.ConsoleMastheadBean
+            </managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+    <managed-bean>
+        <description>
+	    Backing bean for the console version page.
+	    In order to override the default properties of this
+	    bean custom values should be supplied managed property
+	    values. 
+	</description>
+        <managed-bean-name>versionBean</managed-bean-name>
+        <managed-bean-class>com.sun.web.common.ConsoleVersionBean
+            </managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+    <managed-bean>
+        <description>
+	    Backing bean for the console help.
+	    In order to override the default properties of this
+	    bean custom values should be supplied as
+	    managed property values.
+	</description>
+        <managed-bean-name>JavaHelpBean</managed-bean-name>
+        <managed-bean-class>com.sun.web.common.ConsoleHelpBean
+            </managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+</faces-config>

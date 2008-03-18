@@ -1,0 +1,74 @@
+.\" $Revision: 1.13 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samchaid 1 "19 Oct 2001"
+.SH NAME
+samchaid \- change file admin set ID attribute
+.na
+.SH SYNOPSIS
+.B samchaid
+[
+.B \-fhR
+]
+.RB aid
+.IR filename .\|.\|.\|
+.ad b
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.PP
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+.B samchaid
+sets the admin set ID attribute of files and directories.
+.LP
+If a directory's admin set ID is set, files and directories
+subsequently created in that directory inherit that admin ID.
+Only the superuser may set the admin ID.
+.na
+.SH OPTIONS
+.TP
+.B \-f
+Force.
+Do not report errors.
+.TP
+.B \-h
+If the file is a symbolic link,
+change the admin set ID of the symbolic link.
+Without this option,
+the group of the file referenced by the symbolic link is changed.
+.TP
+.B \-R
+Recursive.
+samchaid descends through any directories and subdirectories,
+setting the specified admin set ID as it proceeds.
+When a symbolic link is encountered,
+the admin set ID of the target file is changed
+(unless the -h option is specified),
+but no recursion takes place.
+.SH SEE ALSO
+.BR samquota (1),
+.BR sls (1)

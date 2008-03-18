@@ -1,0 +1,92 @@
+# $Revision: 1.9 $
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+
+ifneq ($(KERNELRELEASE),)
+
+# removed -DSAM_TRACE
+EXTRA_CFLAGS = $(OSFLAGS) -D__KERNEL__ -DMODULE -DMODVERSION -D_KERNEL -I$(SRC_TOP)/include -I$(SRC_TOP)/src/fs/include -I$(SRC_TOP)/src/fs/include/$(OBJ_DIR) -I$(SRC_TOP)/include/pub/$(OBJ_DIR) $(OTHERFLAGS)
+EXTRA_CFLAGS += -D_LONG_LONG_ALIGNMENT=0 -D_LONG_LONG_ALIGNMENT_32=0
+
+CFLAGS_clmisc.o = $(EXTRA_CFLAGS) -I/usr/include -D_UNISTD_H=1
+CFLAGS_mount.o = $(EXTRA_CFLAGS) -I/usr/include -D_UNISTD_H=1
+CFLAGS_common_subr.o = $(EXTRA_CFLAGS) -I/usr/include -D_UNISTD_H=1
+
+obj-m := SUNWqfs.o
+SUNWqfs-objs    := clcall.o client.o clmisc.o clcomm.o \
+	creclaim.o ctrunc.o map.o  psyscall.o rwio.o \
+	stage.o syscall.o trace.o thread.o \
+	mount.o iput.o scd.o \
+	bio_linux.o cvnops_linux.o clvnops_linux.o \
+	getdents_linux.o iget_linux.o init_linux.o \
+	linux_subs.o samsys_linux.o vfsops_linux.o \
+	setdau.o extent.o 
+
+else
+
+KERNELVER = $(shell uname -r)
+KERNEL_SRC = /lib/modules/$(shell uname -r)/build
+CC = gcc
+#CFLAGS = -Wall
+
+SRC_DIR = $(shell pwd)
+export SRC_DIR
+
+DEPTH = ../../../
+
+include $(DEPTH)/mk/common.mk
+
+SRC_TOP = $(shell cd $(DEPTH); pwd)
+export SRC_TOP
+
+export OBJ_DIR
+export OSFLAGS
+OTHERFLAGS = $(DEPCFLAGS)
+export OTHERFLAGS
+
+all: modules
+
+
+clean:
+	rm -rf $(OBJ_DIR)
+#	$(MAKE) -C $(KERNEL_SRC) SUBDIRS=$(SRC_DIR) clean
+
+modules:
+	@mkdir -p $(OBJ_DIR)
+	@cp -uaf *.c $(OBJ_DIR)
+	@cp -uaf Makefile.kbuild $(OBJ_DIR)/Makefile
+	@cp -uaf ../lib/extent.c $(OBJ_DIR)
+	@cp -uaf ../lib/setdau.c $(OBJ_DIR)
+	@cd $(OBJ_DIR); $(MAKE) -C $(KERNEL_SRC) SUBDIRS=$(SRC_DIR)/$(OBJ_DIR) modules
+
+
+install:
+
+endif
+
+

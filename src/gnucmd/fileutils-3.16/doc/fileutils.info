@@ -1,0 +1,3379 @@
+This is Info file fileutils.info, produced by Makeinfo version 1.67
+from the input file fileutils.texi.
+
+START-INFO-DIR-ENTRY
+* File utilities: (fileutils).  GNU file utilities.
+* chgrp: (fileutils)chgrp invocation.           Change file groups.
+* chown: (fileutils)chown invocation.           Change file owners/groups.
+* chmod: (fileutils)chmod invocation.           Change file permissions.
+* cp: (fileutils)cp invocation.                 Copy files.
+* dd: (fileutils)dd invocation.                 Copy and convert a file.
+* df: (fileutils)df invocation.                 Report filesystem disk usage.
+* dir: (fileutils)dir invocation.               List directories briefly.
+* dircolors: (fileutils)dircolors invocation.   Color setup for ls.
+* du: (fileutils)du invocation.                 Report on disk usage.
+* install: (fileutils)install invocation.       Copy and change attributes.
+* ln: (fileutils)ln invocation.                 Make links between files.
+* ls: (fileutils)ls invocation.                 List directory contents.
+* mkdir: (fileutils)mkdir invocation.           Create directories.
+* mkfifo: (fileutils)mkfifo invocation.         Create FIFOs: (named pipes).
+* mknod: (fileutils)mknod invocation.           Create special files.
+* mv: (fileutils)mv invocation.                 Rename files.
+* rm: (fileutils)rm invocation.                 Remove files.
+* rmdir: (fileutils)rmdir invocation.           Remove empty directories.
+* sync: (fileutils)sync invocation.             Synchronize memory and disk.
+* touch: (fileutils)touch invocation.           Change file timestamps.
+* vdir: (fileutils)vdir invocation.             List directories verbosely.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU set of file utilities.
+
+   Copyright (C) 1994, 95, 96 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: fileutils.info,  Node: Top,  Next: Introduction,  Up: (dir)
+
+GNU file utilities
+******************
+
+   This manual minimally documents version 3.16 of the GNU file
+utilities.
+
+* Menu:
+
+* Introduction::                Caveats, overview, and authors.
+* Common options::              Common options.
+* File permissions::            Access modes.
+* Date input formats::          Specifying date strings.
+* Directory listing::           ls dir vdir d v dircolors
+* Basic operations::            cp dd install mv rm
+* Special file types::          ln mkdir rmdir mkfifo mknod
+* Changing file attributes::    chgrp chmod chown touch
+* Disk usage::                  df du sync
+* Index::                       General index.
+
+
+File: fileutils.info,  Node: Introduction,  Next: Common options,  Prev: Top,  Up: Top
+
+Introduction
+************
+
+   This manual is incomplete: No attempt is made to explain basic file
+concepts in a way suitable for novices.  Thus, if you are interested,
+please get involved in improving this manual.  The entire GNU community
+will benefit.
+
+   The GNU file utilities are mostly compatible with the POSIX.2
+standard.
+
+   Please report bugs to `fileutils-bugs@gnu.ai.mit.edu'.  Remember to
+include the version number, machine architecture, input files, and any
+other information needed to reproduce the bug: your input, what you
+expected, what you got, and why it is wrong.  Diffs are welcome, but
+please include a description of the problem as well, since this is
+sometimes difficult to infer. *Note Bugs: (gcc)Bugs.
+
+   This manual is based on the Unix man pages in the distribution, which
+were originally written by David MacKenzie and updated by Jim Meyering.
+Franc,ois Pinard did the initial conversion to Texinfo format.  Karl
+Berry did the indexing, some reorganization, and editing of the results.
+Richard Stallman contributed his usual invaluable insights to the
+overall process.
+
+
+File: fileutils.info,  Node: Common options,  Next: File permissions,  Prev: Introduction,  Up: Top
+
+Common options
+**************
+
+   Certain options are available in all of these programs (in fact,
+every GNU program should accept them).  Rather than writing identical
+descriptions for each of the programs, they are described here.
+
+`--help'
+     Print a usage message listing all available options, then exit
+     successfully.
+
+`--version'
+     Print the version number, then exit successfully.
+
+* Menu:
+
+* Backup options::              -b -S -V, in some programs.
+
+
+File: fileutils.info,  Node: Backup options,  Up: Common options
+
+Backup options
+==============
+
+   Some GNU programs (at least `cp', `install', `ln', and `mv')
+optionally make backups of files before writing new versions.  These
+options control the details of these backups.  The options are also
+briefly mentioned in the descriptions of the particular programs.
+
+`-b'
+`--backup'
+     Make backups of files that are about to be overwritten or removed.
+     Without this option, the original versions are destroyed.
+
+`-S SUFFIX'
+`--suffix=SUFFIX'
+     Append SUFFIX to each backup file made with `-b'.  If this option
+     is not specified, the value of the `SIMPLE_BACKUP_SUFFIX'
+     environment variable is used.  And if `SIMPLE_BACKUP_SUFFIX' is not
+     set, the default is `~', just as in Emacs.
+
+`-V METHOD'
+`--version-control=METHOD'
+     Use METHOD to determine the type of backups made with `-b'.  If
+     this option is not specified, the value of the `VERSION_CONTROL'
+     environment variable is used.  And if `VERSION_CONTROL' is not set,
+     the default backup type is `existing'.
+
+     This option corresponds to the Emacs variable `version-control';
+     the same values for METHOD are accepted as in Emacs.  This options
+     also more descriptive name.  The valid METHODs (unique
+     abbreviations are accepted):
+
+    `t'
+    `numbered'
+          Always make numbered backups.
+
+    `nil'
+    `existing'
+          Make numbered backups of files that already have them, simple
+          backups of the others.
+
+    `never'
+    `simple'
+          Always make simple backups.
+
+
+File: fileutils.info,  Node: File permissions,  Next: Date input formats,  Prev: Common options,  Up: Top
+
+File permissions
+****************
+
+   Each file has a set of "permissions" that control the kinds of
+access that users have to that file.  The permissions for a file are
+also called its "access mode".  They can be represented either in
+symbolic form or as an octal number.
+
+* Menu:
+
+* Mode Structure::              Structure of file permissions.
+* Symbolic Modes::              Mnemonic permissions representation.
+* Numeric Modes::               Permissions as octal numbers.
+
+
+File: fileutils.info,  Node: Mode Structure,  Next: Symbolic Modes,  Up: File permissions
+
+Structure of File Permissions
+=============================
+
+   There are three kinds of permissions that a user can have for a file:
+
+  1. permission to read the file.  For directories, this means
+     permission to list the contents of the directory.
+
+  2. permission to write to (change) the file.  For directories, this
+     means permission to create and remove files in the directory.
+
+  3. permission to execute the file (run it as a program).  For
+     directories, this means permission to access files in the
+     directory.
+
+   There are three categories of users who may have different
+permissions to perform any of the above operations on a file:
+
+  1. the file's owner;
+
+  2. other users who are in the file's group;
+
+  3. everyone else.
+
+   Files are given an owner and group when they are created.  Usually
+the owner is the current user and the group is the group of the
+directory the file is in, but this varies with the operating system, the
+filesystem the file is created on, and the way the file is created.  You
+can change the owner and group of a file by using the `chown' and
+`chgrp' commands.
+
+   In addition to the three sets of three permissions listed above, a
+file's permissions have three special components, which affect only
+executable files (programs) and, on some systems, directories:
+
+  1. set the process's effective user ID to that of the file upon
+     execution (called the "setuid bit").  No effect on directories.
+
+  2. set the process's effective group ID to that of the file upon
+     execution (called the "setgid bit").  For directories on some
+     systems, put files created in the directory into the same group as
+     the directory, no matter what group the user who creates them is
+     in.
+
+  3. save the program's text image on the swap device so it will load
+     more quickly when run (called the "sticky bit").  For directories
+     on some systems, prevent users from removing files that they do
+     not own in the directory; this is called making the directory
+     "append-only".
+
+
+File: fileutils.info,  Node: Symbolic Modes,  Next: Numeric Modes,  Prev: Mode Structure,  Up: File permissions
+
+Symbolic Modes
+==============
+
+   "Symbolic modes" represent changes to files' permissions as
+operations on single-character symbols.  They allow you to modify either
+all or selected parts of files' permissions, optionally based on their
+previous values, and perhaps on the current `umask' as well (*note
+Umask and Protection::.).
+
+   The format of symbolic modes is:
+
+     [ugoa...][[+-=][rwxXstugo...]...][,...]
+
+   The following sections describe the operators and other details of
+symbolic modes.
+
+* Menu:
+
+* Setting Permissions::          Basic operations on permissions.
+* Copying Permissions::          Copying existing permissions.
+* Changing Special Permissions:: Special permissions.
+* Conditional Executability::    Conditionally affecting executability.
+* Multiple Changes::             Making multiple changes.
+* Umask and Protection::              The effect of the umask.
+
+
+File: fileutils.info,  Node: Setting Permissions,  Next: Copying Permissions,  Up: Symbolic Modes
+
+Setting Permissions
+-------------------
+
+   The basic symbolic operations on a file's permissions are adding,
+removing, and setting the permission that certain users have to read,
+write, and execute the file.  These operations have the following
+format:
+
+     USERS OPERATION PERMISSIONS
+
+The spaces between the three parts above are shown for readability only;
+symbolic modes can not contain spaces.
+
+   The USERS part tells which users' access to the file is changed.  It
+consists of one or more of the following letters (or it can be empty;
+*note Umask and Protection::., for a description of what happens then).
+When more than one of these letters is given, the order that they are
+in does not matter.
+
+`u'
+     the user who owns the file;
+
+`g'
+     other users who are in the file's group;
+
+`o'
+     all other users;
+
+`a'
+     all users; the same as `ugo'.
+
+   The OPERATION part tells how to change the affected users' access to
+the file, and is one of the following symbols:
+
+`+'
+     to add the PERMISSIONS to whatever permissions the USERS already
+     have for the file;
+
+`-'
+     to remove the PERMISSIONS from whatever permissions the USERS
+     already have for the file;
+
+`='
+     to make the PERMISSIONS the only permissions that the USERS have
+     for the file.
+
+   The PERMISSIONS part tells what kind of access to the file should be
+changed; it is zero or more of the following letters.  As with the
+USERS part, the order does not matter when more than one letter is
+given.  Omitting the PERMISSIONS part is useful only with the `='
+operation, where it gives the specified USERS no access at all to the
+file.
+
+`r'
+     the permission the USERS have to read the file;
+
+`w'
+     the permission the USERS have to write to the file;
+
+`x'
+     the permission the USERS have to execute the file.
+
+   For example, to give everyone permission to read and write a file,
+but not to execute it, use:
+
+     a=rw
+
+   To remove write permission for from all users other than the file's
+owner, use:
+
+     go-w
+
+The above command does not affect the access that the owner of the file
+has to it, nor does it affect whether other users can read or execute
+the file.
+
+   To give everyone except a file's owner no permission to do anything
+with that file, use the mode below.  Other users could still remove the
+file, if they have write permission on the directory it is in.
+
+     go=
+
+Another way to specify the same thing is:
+
+     og-rxw
+
+
+File: fileutils.info,  Node: Copying Permissions,  Next: Changing Special Permissions,  Prev: Setting Permissions,  Up: Symbolic Modes
+
+Copying Existing Permissions
+----------------------------
+
+   You can base a file's permissions on its existing permissions.  To do
+this, instead of using `r', `w', or `x' after the operator, you use the
+letter `u', `g', or `o'.  For example, the mode
+     o+g
+
+adds the permissions for users who are in a file's group to the
+permissions that other users have for the file.  Thus, if the file
+started out as mode 664 (`rw-rw-r--'), the above mode would change it
+to mode 666 (`rw-rw-rw-').  If the file had started out as mode 741
+(`rwxr----x'), the above mode would change it to mode 745
+(`rwxr--r-x').  The `-' and `=' operations work analogously.
+
+
+File: fileutils.info,  Node: Changing Special Permissions,  Next: Conditional Executability,  Prev: Copying Permissions,  Up: Symbolic Modes
+
+Changing Special Permissions
+----------------------------
+
+   In addition to changing a file's read, write, and execute
+permissions, you can change its special permissions.  *Note Mode
+Structure::, for a summary of these permissions.
+
+   To change a file's permission to set the user ID on execution, use
+`u' in the USERS part of the symbolic mode and `s' in the PERMISSIONS
+part.
+
+   To change a file's permission to set the group ID on execution, use
+`g' in the USERS part of the symbolic mode and `s' in the PERMISSIONS
+part.
+
+   To change a file's permission to stay permanently on the swap device,
+use `o' in the USERS part of the symbolic mode and `t' in the
+PERMISSIONS part.
+
+   For example, to add set user ID permission to a program, you can use
+the mode:
+
+     u+s
+
+   To remove both set user ID and set group ID permission from it, you
+can use the mode:
+
+     ug-s
+
+   To cause a program to be saved on the swap device, you can use the
+mode:
+
+     o+t
+
+   Remember that the special permissions only affect files that are
+executable, plus, on some systems, directories (on which they have
+different meanings; *note Mode Structure::.).  Using `a' in the USERS
+part of a symbolic mode does not cause the special permissions to be
+affected; thus,
+
+     a+s
+
+has *no effect*.  You must use `u', `g', and `o' explicitly to affect
+the special permissions.  Also, the combinations `u+t', `g+t', and
+`o+s' have no effect.
+
+   The `=' operator is not very useful with special permissions; for
+example, the mode:
+
+     o=t
+
+does cause the file to be saved on the swap device, but it also removes
+all read, write, and execute permissions that users not in the file's
+group might have had for it.
+
+
+File: fileutils.info,  Node: Conditional Executability,  Next: Multiple Changes,  Prev: Changing Special Permissions,  Up: Symbolic Modes
+
+Conditional Executability
+-------------------------
+
+   There is one more special type of symbolic permission: if you use
+`X' instead of `x', execute permission is affected only if the file
+already had execute permission or is a directory.  It affects
+directories' execute permission even if they did not initially have any
+execute permissions set.
+
+   For example, this mode:
+
+     a+X
+
+gives all users permission to execute files (or search directories) if
+anyone could before.
+
+
+File: fileutils.info,  Node: Multiple Changes,  Next: Umask and Protection,  Prev: Conditional Executability,  Up: Symbolic Modes
+
+Making Multiple Changes
+-----------------------
+
+   The format of symbolic modes is actually more complex than described
+above (*note Setting Permissions::.).  It provides two ways to make
+multiple changes to files' permissions.
+
+   The first way is to specify multiple OPERATION and PERMISSIONS parts
+after a USERS part in the symbolic mode.
+
+   For example, the mode:
+
+     og+rX-w
+
+gives users other than the owner of the file read permission and, if it
+is a directory or if someone already had execute permission to it,
+gives them execute permission; and it also denies them write permission
+to it file.  It does not affect the permission that the owner of the
+file has for it.  The above mode is equivalent to the two modes:
+
+     og+rX
+     og-w
+
+   The second way to make multiple changes is to specify more than one
+simple symbolic mode, separated by commas.  For example, the mode:
+
+     a+r,go-w
+
+gives everyone permission to read the file and removes write permission
+on it for all users except its owner.  Another example:
+
+     u=rwx,g=rx,o=
+
+sets all of the non-special permissions for the file explicitly.  (It
+gives users who are not in the file's group no permission at all for
+it.)
+
+   The two methods can be combined.  The mode:
+
+     a+r,g+x-w
+
+gives all users permission to read the file, and gives users who are in
+the file's group permission to execute it, as well, but not permission
+to write to it.  The above mode could be written in several different
+ways; another is:
+
+     u+r,g+rx,o+r,g-w
+
+
+File: fileutils.info,  Node: Umask and Protection,  Prev: Multiple Changes,  Up: Symbolic Modes
+
+The Umask and Protection
+------------------------
+
+   If the USERS part of a symbolic mode is omitted, it defaults to `a'
+(affect all users), except that any permissions that are *set* in the
+system variable `umask' are *not affected*.  The value of `umask' can
+be set using the `umask' command.  Its default value varies from system
+to system.
+
+   Omitting the USERS part of a symbolic mode is generally not useful
+with operations other than `+'.  It is useful with `+' because it
+allows you to use `umask' as an easily customizable protection against
+giving away more permission to files than you intended to.
+
+   As an example, if `umask' has the value 2, which removes write
+permission for users who are not in the file's group, then the mode:
+
+     +w
+
+adds permission to write to the file to its owner and to other users who
+are in the file's group, but *not* to other users.  In contrast, the
+mode:
+
+     a+w
+
+ignores `umask', and *does* give write permission for the file to all
+users.
+
+
+File: fileutils.info,  Node: Numeric Modes,  Prev: Symbolic Modes,  Up: File permissions
+
+Numeric Modes
+=============
+
+   File permissions are stored internally as 16 bit integers.  As an
+alternative to giving a symbolic mode, you can give an octal (base 8)
+number that corresponds to the internal representation of the new mode.
+This number is always interpreted in octal; you do not have to add a
+leading 0, as you do in C.  Mode 0055 is the same as mode 55.
+
+   A numeric mode is usually shorter than the corresponding symbolic
+mode, but it is limited in that it can not take into account a file's
+previous permissions; it can only set them absolutely.
+
+   The permissions granted to the user, to other users in the file's
+group, and to other users not in the file's group are each stored as
+three bits, which are represented as one octal digit.  The three special
+permissions are also each stored as one bit, and they are as a group
+represented as another octal digit.  Here is how the bits are arranged
+in the 16 bit integer, starting with the lowest valued bit:
+
+     Value in  Corresponding
+     Mode      Permission
+     
+               Other users not in the file's group:
+        1      Execute
+        2      Write
+        4      Read
+     
+               Other users in the file's group:
+       10      Execute
+       20      Write
+       40      Read
+     
+               The file's owner:
+      100      Execute
+      200      Write
+      400      Read
+     
+               Special permissions:
+     1000      Save text image on swap device
+     2000      Set group ID on execution
+     4000      Set user ID on execution
+
+   For example, numeric mode 4755 corresponds to symbolic mode
+`u=rwxs,go=rx', and numeric mode 664 corresponds to symbolic mode
+`ug=rw,o=r'.  Numeric mode 0 corresponds to symbolic mode `ugo='.
+
+
+File: fileutils.info,  Node: Date input formats,  Next: Directory listing,  Prev: File permissions,  Up: Top
+
+Date input formats
+******************
+
+     Our units of temporal measurement, from seconds on up to months,
+     are so complicated, asymmetrical and disjunctive so as to make
+     coherent mental reckoning in time all but impossible.  Indeed, had
+     some tyrannical god contrived to enslave our minds to time, to
+     make it all but impossible for us to escape subjection to sodden
+     routines and unpleasant surprises, he could hardly have done
+     better than handing down our present system.  It is like a set of
+     trapezoidal building blocks, with no vertical or horizontal
+     surfaces, like a language in which the simplest thought demands
+     ornate constructions, useless particles and lengthy
+     circumlocutions.  Unlike the more successful patterns of language
+     and science, which enable us to face experience boldly or at least
+     level-headedly, our system of temporal calculation silently and
+     persistently encourages our terror of time.
+
+     ...  It is as though architects had to measure length in feet,
+     width in meters and height in ells; as though basic instruction
+     manuals demanded a knowledge of five different languages.  It is
+     no wonder then that we often look into our own immediate past or
+     future, last Tuesday or a week from Sunday, with feelings of
+     helpless confusion.  ...
+
+     -- Robert Grudin, `Time and the Art of Living'.
+
+   This section describes the textual date representations that GNU
+programs accept.  These are the strings you, as a user, can supply as
+arguments to the various programs.  The C interface (via the `getdate'
+function) is not described here.
+
+   Although the date syntax here can represent any possible time since
+zero A.D., computer integers are not big enough for such a
+(comparatively) long time.  The earliest date semantically allowed on
+Unix systems is midnight, 1 January 1970 UCT.
+
+* Menu:
+
+* General date syntax::            Common rules.
+* Calendar date item::             19 Dec 1994.
+* Time of day item::               9:20pm.
+* Timezone item::                  EST, DST, BST, UCT, AHST, ...
+* Day of week item::               Monday and others.
+* Relative item in date strings::  next tuesday, 2 years ago.
+* Pure numbers in date strings::   19931219, 1440.
+* Authors of getdate::             Bellovin, Salz, Berets, et al.
+
+
+File: fileutils.info,  Node: General date syntax,  Next: Calendar date item,  Up: Date input formats
+
+General date syntax
+===================
+
+   A "date" is a string, possibly empty, containing many items
+separated by whitespace.  The whitespace may be omitted when no
+ambiguity arises.  The empty string means the beginning of today (i.e.,
+midnight).  Order of the items is immaterial.  A date string may contain
+many flavors of items:
+
+   * calendar date items
+
+   * time of the day items
+
+   * time zone items
+
+   * day of the week items
+
+   * relative items
+
+   * pure numbers.
+
+We describe each of these item types in turn, below.
+
+   A few numbers may be written out in words in most contexts.  This is
+most useful for specifying day of the week items or relative items (see
+below).  Here is the list: `first' for 1, `next' for 2, `third' for 3,
+`fourth' for 4, `fifth' for 5, `sixth' for 6, `seventh' for 7, `eighth'
+for 8, `ninth' for 9, `tenth' for 10, `eleventh' for 11 and `twelfth'
+for 12.  Also, `last' means exactly -1.
+
+   When a month is written this way, it is still considered to be
+written numerically, instead of being "spelled in full"; this changes
+the allowed strings.
+
+   Alphabetic case is completely ignored in dates.  Comments may be
+introduced between round parentheses, as long as included parentheses
+are properly nested.  Hyphens not followed by a digit are currently
+ignored.  Leading zeros on numbers are ignored.
+
+
+File: fileutils.info,  Node: Calendar date item,  Next: Time of day item,  Prev: General date syntax,  Up: Date input formats
+
+Calendar date item
+==================
+
+   A "calendar date item" specifies a day of the year.  It is specified
+differently, depending on whether the month is specified numerically or
+literally.  All these strings specify the same calendar date:
+
+     1970-09-17           # ISO 8601.
+     70-9-17              # This century assumed by default.
+     70-09-17             # Leading zeros are ignored.
+     9/17/72              # Common U.S. writing.
+     24 September 1972
+     24 Sept 72           # September has a special abbreviation.
+     24 Sep 72            # Three-letter abbreviations always allowed.
+     Sep 24, 1972
+     24-sep-72
+     24sep72
+
+   The year can also be omitted.  In this case, the last specified year
+is used, or the current year if none.  For example:
+
+     9/17
+     sep 17
+
+   Here are the rules.
+
+   For numeric months, the ISO 8601 format `YEAR-MONTH-DAY' is allowed,
+where YEAR is any positive number, MONTH is a number between 01 and 12,
+and DAY is a number between 01 and 31.  A leading zero must be present
+if a number is less than ten.  If YEAR is less than 100, then 1900 is
+added to it to force a date in this century.  The construct
+`MONTH/DAY/YEAR', popular in the United States, is accepted.  Also
+`MONTH/DAY', omitting the year.
+
+   Literal months may be spelled out in full: `January', `February',
+`March', `April', `May', `June', `July', `August', `September',
+`October', `November' or `December'.  Literal months may be abbreviated
+to their first three letters, possibly followed by an abbreviating dot.
+It is also permitted to write `Sept' instead of `September'.
+
+   When months are written literally, the calendar date may be given as
+any of the following:
+
+     DAY MONTH YEAR
+     DAY MONTH
+     MONTH DAY YEAR
+     DAY-MONTH-YEAR
+
+   Or, omitting the year:
+
+     MONTH DAY
+
+
+File: fileutils.info,  Node: Time of day item,  Next: Timezone item,  Prev: Calendar date item,  Up: Date input formats
+
+Time of day item
+================
+
+   A "time of day item" in date strings specifies the time on a given
+day.  Here are some examples, all of which represent the same time:
+
+     20:02:0
+     20:02
+     8:02pm
+     20:02-0500      # In EST (Eastern U.S. Standard Time).
+
+   More generally, the time of the day may be given as
+`HOUR:MINUTE:SECOND', where HOUR is a number between 0 and 23, MINUTE
+is a number between 0 and 59, and SECOND is a number between 0 and 59.
+Alternatively, `:SECOND' can be omitted, in which case it is taken to
+be zero.
+
+   If the time is followed by `am' or `pm' (or `a.m.' or `p.m.'), HOUR
+is restricted to run from 1 to 12, and `:MINUTE' may be omitted (taken
+to be zero).  `am' indicates the first half of the day, `pm' indicates
+the second half of the day.  In this notation, 12 is the predecessor of
+1: midnight is `12am' while noon is `12pm'.
+
+   The time may alternatively be followed by a timezone correction,
+expressed as `SHHMM', where S is `+' or `-', HH is a number of zone
+hours and MM is a number of zone minutes.  When a timezone correction
+is given this way, it forces interpretation of the time in UTC,
+overriding any previous specification for the timezone or the local
+timezone.  The MINUTE part of the time of the day may not be elided
+when a timezone correction is used.  This is the only way to specify a
+timezone correction by fractional parts of an hour.
+
+   Either `am'/`pm' or a timezone correction may be specified, but not
+both.
+
+
+File: fileutils.info,  Node: Timezone item,  Next: Day of week item,  Prev: Time of day item,  Up: Date input formats
+
+Timezone item
+=============
+
+   A "timezone item" specifies an international timezone, indicated by
+a small set of letters.  Any included period is ignored.  Military
+timezone designations use a single letter.  Currently, only integral
+zone hours may be represented in a timezone item.  See the previous
+section for a finer control over the timezone correction.
+
+   Here are many non-daylight-savings-time timezones, indexed by the
+zone hour value.
+
++000
+     `GMT' for Greenwich Mean, `UT' or `UTC' for Universal
+     (Coordinated), `WET' for Western European and `Z' for militaries.
+
++100
+     `WAT' for West Africa and `A' for militaries.
+
++200
+     `AT' for Azores and `B' for militaries.
+
++300
+     `C' for militaries.
+
++400
+     `AST' for Atlantic Standard and `D' for militaries.
+
++500
+     `E' for militaries and `EST' for Eastern Standard.
+
++600
+     `CST' for Central Standard and `F' for militaries.
+
++700
+     `G' for militaries and `MST' for Mountain Standard.
+
++800
+     `H' for militaries and `PST' for Pacific Standard.
+
++900
+     `I' for militaries and `YST' for Yukon Standard.
+
++1000
+     `AHST' for Alaska-Hawaii Standard, `CAT' for Central Alaska, `HST'
+     for Hawaii Standard and `K' for militaries.
+
++1100
+     `L' for militaries and `NT' for Nome.
+
++1200
+     `IDLW' for International Date Line West and `M' for militaries.
+
+-100
+     `CET' for Central European, `FWT' for French Winter, `MET' for
+     Middle European, `MEWT' for Middle European Winter, `N' for
+     militaries and `SWT' for Swedish Winter.
+
+-200
+     `EET' for Eastern European, USSR Zone 1 and `O' for militaries.
+
+-300
+     `BT' for Baghdad, USSR Zone 2 and `P' for militaries.
+
+-400
+     `Q' for militaries and `ZP4' for USSR Zone 3.
+
+-500
+     `R' for militaries and `ZP5' for USSR Zone 4.
+
+-600
+     `S' for militaries and `ZP6' for USSR Zone 5.
+
+-700
+     `T' for militaries and `WAST' for West Australian Standard.
+
+-800
+     `CCT' for China Coast, USSR Zone 7 and `U' for militaries.
+
+-900
+     `JST' for Japan Standard, USSR Zone 8 and `V' for militaries.
+
+-1000
+     `EAST' for East Australian Standard, `GST' for Guam Standard, USSR
+     Zone 9 and `W' for militaries.
+
+-1100
+     `X' for militaries.
+
+-1200
+     `IDLE' for International Date Line East, `NZST' for New Zealand
+     Standard, `NZT' for New Zealand and `Y' for militaries.
+
+   Here are many DST timezones, indexed by the zone hour value.  Also,
+by following a non-DST timezone by the string `DST' in a separate word
+(that is, separated by some whitespace), the corresponding DST timezone
+may be specified.
+
+0
+     `BST' for British Summer.
+
++400
+     `ADT' for Atlantic Daylight.
+
++500
+     `EDT' for Eastern Daylight.
+
++600
+     `CDT' for Central Daylight.
+
++700
+     `MDT' for Mountain Daylight.
+
++800
+     `PDT' for Pacific Daylight.
+
++900
+     `YDT' for Yukon Daylight.
+
++1000
+     `HDT' for Hawaii Daylight.
+
+-100
+     `MEST' for Middle European Summer, `MESZ' for Middle European
+     Summer, `SST' for Swedish Summer and `FST' for French Summer.
+
+-700
+     `WADT' for West Australian Daylight.
+
+-1000
+     `EADT' for Eastern Australian Daylight.
+
+-1200
+     `NZDT' for New Zealand Daylight.
+
+
+File: fileutils.info,  Node: Day of week item,  Next: Relative item in date strings,  Prev: Timezone item,  Up: Date input formats
+
+Day of week item
+================
+
+   The explicit mention of a day of the week will forward the date
+(only if necessary) to reach that day of the week in the future.
+
+   Days of the week may be spelled out in full: `Sunday', `Monday',
+`Tuesday', `Wednesday', `Thursday', `Friday' or `Saturday'.  Days may
+be abbreviated to their first three letters, optionally followed by a
+period.  The special abbreviations `Tues' for `Tuesday', `Wednes' for
+`Wednesday' and `Thur' or `Thurs' for `Thursday' are also allowed.
+
+   A number may precede a day of the week item to move forward
+supplementary weeks.  It is best used in expression like `third
+monday'.  In this context, `last DAY' or `next DAY' is also acceptable;
+they move one week before or after the day that DAY by itself would
+represent.
+
+   A comma following a day of the week item is ignored.
+
+
+File: fileutils.info,  Node: Relative item in date strings,  Next: Pure numbers in date strings,  Prev: Day of week item,  Up: Date input formats
+
+Relative item in date strings
+=============================
+
+   "Relative items" adjust a date (or the current date if none) forward
+or backward.  The effects of relative items accumulate.  Here are some
+examples:
+
+     1 year
+     1 year ago
+     3 years
+     2 days
+
+   The unit of time displacement may be selected by the string `year'
+or `month' for moving by whole years or months.  These are fuzzy units,
+as years and months are not all of equal duration.  More precise units
+are `fortnight' which is worth 14 days, `week' worth 7 days, `day'
+worth 24 hours, `hour' worth 60 minutes, `minute' or `min' worth 60
+seconds, and `second' or `sec' worth one second.  An `s' suffix on
+these units is accepted and ignored.
+
+   The unit of time may be preceded by a multiplier, given as an
+optionally signed number.  Unsigned numbers are taken as positively
+signed.  No number at all implies 1 for a multiplier.  Following a
+relative item by the string `ago' is equivalent to preceding the unit
+by a multiplicator with value -1.
+
+   The string `tomorrow' is worth one day in the future (equivalent to
+`day'), the string `yesterday' is worth one day in the past (equivalent
+to `day ago').
+
+   The strings `now' or `today' are relative items corresponding to
+zero-valued time displacement, these strings come from the fact a
+zero-valued time displacement represents the current time when not
+otherwise change by previous items.  They may be used to stress other
+items, like in `12:00 today'.  The string `this' also has the meaning
+of a zero-valued time displacement, but is preferred in date strings
+like `this thursday'.
+
+   When a relative item makes the resulting date to cross the boundary
+between DST and non-DST (or vice-versa), the hour is adjusted according
+to the local time.
+
+
+File: fileutils.info,  Node: Pure numbers in date strings,  Next: Authors of getdate,  Prev: Relative item in date strings,  Up: Date input formats
+
+Pure numbers in date strings
+============================
+
+   The precise intepretation of a pure decimal number is dependent of
+the context in the date string.
+
+   If the decimal number is of the form YYYYMMDD and no other calendar
+date item (*note Calendar date item::.) appears before it in the date
+string, then YYYY is read as the year, MM as the month number and DD as
+the day of the month, for the specified calendar date.
+
+   If the decimal number is of the form HHMM and no other time of day
+item appears before it in the date string, then HH is read as the hour
+of the day and MM as the minute of the hour, for the specified time of
+the day.  MM can also be omitted.
+
+   If both a calendar date and a time of day appear to the left of a
+number in the date string, but no relative item, then the number
+overrides the year.
+
+
+File: fileutils.info,  Node: Authors of getdate,  Prev: Pure numbers in date strings,  Up: Date input formats
+
+Authors of `getdate'
+====================
+
+   `getdate' was originally implemented by Steven M. Bellovin
+(`smb@research.att.com') while at the University of North Carolina at
+Chapel Hill.  The code was later tweaked by a couple of people on
+Usenet, then completely overhauled by Rich $alz (`rsalz@bbn.com') and
+Jim Berets (`jberets@bbn.com') in August, 1990.  Various revisions for
+the GNU system were made by David MacKenzie, Jim Meyering, and others.
+
+   This chapter was originally produced by Franc,ois Pinard
+(`pinard@iro.umontreal.ca') from the `getdate.y' source code, and then
+edited by K. Berry (`kb@cs.umb.edu').
+
+
+File: fileutils.info,  Node: Directory listing,  Next: Basic operations,  Prev: Date input formats,  Up: Top
+
+Directory listing
+*****************
+
+   This chapter describes the `ls' command and its variants `dir' and
+`vdir', which list information about files.
+
+* Menu:
+
+* ls invocation::               List directory contents.
+* dir invocation::              Briefly ls.
+* vdir invocation::             Verbosely ls.
+* dircolors invocation::        Color setup for ls, etc.
+
+
+File: fileutils.info,  Node: ls invocation,  Next: dir invocation,  Up: Directory listing
+
+`ls': List directory contents
+=============================
+
+   The `ls' program lists information about files (of any type,
+including directories).  Options and file arguments can be intermixed
+arbitrarily, as usual.
+
+   For non-option command-line arguments that are directories, by
+default `ls' lists the contents of directories, not recursively, and
+omitting files with names beginning with `.'.  For other non-option
+arguments, by default `ls' lists just the file name.  If no non-option
+arguments are specified, `ls' lists the contents of the current
+directory.
+
+   By default, the output is sorted alphabetically.  If standard output
+is a terminal, the output is in columns (sorted vertically); otherwise,
+they are listed one per line.
+
+   Because `ls' is such a fundamental program, it has accumulated many
+options over the years.  They are described in the subsections below;
+within each section, options are listed alphabetically (ignoring case).
+The division of options into the subsections is not absolute, since some
+options affect more than one aspect of `ls''s operation.
+
+   The `-g' option is accepted but ignored, for compatibility with
+Unix.  Also see *Note Common options::.
+
+* Menu:
+
+* Which files are listed::
+* What information is listed::
+* Sorting the output::
+* General output formatting::
+* Formatting the file names::
+
+
+File: fileutils.info,  Node: Which files are listed,  Next: What information is listed,  Up: ls invocation
+
+Which files are listed
+----------------------
+
+   These options determine which files `ls' lists information for.  By
+default, any files and the contents of any directories on the command
+line are shown.
+
+`-a'
+`--all'
+     List all files in directories, including files that start with `.'.
+
+`-A'
+`--almost-all'
+     List all files in directories except for `.' and `..'.
+
+`-B'
+`--ignore-backups'
+     Do not list files that end with `~', unless they are given on the
+     command line.
+
+`-d'
+`--directory'
+     List just the names of directories, as with other types of files,
+     rather than listing their contents.
+
+`-I'
+`--ignore'
+     Do not list files whose names match the shell pattern (not regular
+     expression) PATTERN unless they are given on the command line.  As
+     in the shell, an initial `.' in a file name does not match a
+     wildcard at the start of PATTERN.
+
+`-L'
+`--dereference'
+     In a long listing, show file information (e.g., times and
+     permissions) for the referents of symbolic links rather than for
+     the symbolic links themselves.
+
+`-R'
+`--recursive'
+     List the contents of all directories recursively.
+
+
+File: fileutils.info,  Node: What information is listed,  Next: Sorting the output,  Prev: Which files are listed,  Up: ls invocation
+
+What information is listed
+--------------------------
+
+   These options affect the information that `ls' displays.  By
+default, only file names are shown.
+
+`-D'
+`--dired'
+     With the long listing (`-l') format, print an additional line after
+     the main output:
+
+          //DIRED// BEG1 END1 BEG2 END2 ...
+
+     The BEGN and ENDN are unsigned integers which record the byte
+     position of the beginning and end of each file name in the output.
+     This makes it easy for Emacs to find the names, even when they
+     contain unusual characters such as space or newline, without fancy
+     searching.
+
+     If directories are being listed recursively (`-R'), output a
+     similar line after each subdirectory:
+          //SUBDIRED// BEG1 END1 ...
+
+`-G'
+`--no-group'
+     Inhibit display of group information in a long format directory
+     listing.  (This is the default in some non-GNU versions of `ls',
+     so we provide this option for compatibility.)
+
+`-i'
+`--inode'
+     Print the inode number (also called the file serial number and
+     index number) of each file to the left of the file name.  (This
+     number uniquely identifies each file within a particular
+     filesystem.)
+
+`-l'
+`--format=long'
+`--format=verbose'
+     In addition to the name of each file, print the file type,
+     permissions, number of hard links, owner name, group name, size in
+     bytes, and timestamp (by default, the modification time).  For
+     files with a time more than six months old or more than one hour
+     into the future, the timestamp contains the year instead of the
+     time of day.
+
+     For each directory that is listed, preface the files with a line
+     `total BLOCKS', where BLOCKS is the total disk space used by all
+     files in that directory.  By default, 1024-byte blocks are used;
+     if the environment variable `POSIXLY_CORRECT' is set, 512-byte
+     blocks are used (unless the `-k' option is given).  The BLOCKS
+     computed counts each hard link separately; this is arguably a
+     deficiency.
+
+     The permissions listed are similar to symbolic mode specifications
+     (*note Symbolic Modes::.).  But `ls' combines multiple bits into
+     the third character of each set of permissions as follows:
+    `s'
+          If the setuid or setgid bit and the corresponding executable
+          bit are both set.
+
+    `S'
+          If the setuid or setgid bit is set but the corresponding
+          executable bit is not set.
+
+    `t'
+          If the sticky bit and the other-executable bit are both set.
+
+    `T'
+          If the sticky bit is set but the other-executable bit is not
+          set.
+
+    `x'
+          If the executable bit is set and none of the above apply.
+
+    `-'
+          Otherwise.
+
+`-o'
+     Produce long format directory listings, but don't display group
+     information.  It is equivalent to using `--format=long' with
+     `--no-group' .  This option is provided for compatibility with
+     other versions of `ls'.
+
+`-s'
+`--size'
+     Print the size of each file in 1024-byte blocks to the left of the
+     file name.  If the environment variable `POSIXLY_CORRECT' is set,
+     512-byte blocks are used instead, unless the `-k' option is given
+     (*note General output formatting::.).
+
+     For files that are NFS-mounted from an HP-UX system to a BSD
+     system, this option reports sizes that are half the correct
+     values.  On HP-UX systems, it reports sizes that are twice the
+     correct values for files that are NFS-mounted from BSD systems.
+     This is due to a flaw in HP-UX; it also affects the HP-UX `ls'
+     program.
+
+
+File: fileutils.info,  Node: Sorting the output,  Next: General output formatting,  Prev: What information is listed,  Up: ls invocation
+
+Sorting the output
+------------------
+
+   These options change the order in which `ls' sorts the information
+it outputs.  By default, sorting is done by character code (e.g., ASCII
+order).
+
+`-c'
+`--time=ctime'
+`--time=status'
+     Sort according to the status change time (the `ctime' in the
+     inode).  If the long listing format (`-l') is being used, print the
+     status change time instead of the modification time.
+
+`-f'
+     Primarily, like `-U'--do not sort; list the files in whatever
+     order they are stored in the directory.  But also enable `-a' (list
+     all files) and disable `-l', `--color', and `-s' (if they were
+     specified before the `-f').
+
+`-r'
+`--reverse'
+     Reverse whatever the sorting method is--e.g., list files in reverse
+     alphabetical order, youngest first, smallest first, or whatever.
+
+`-S'
+`--sort=size'
+     Sort by file size, largest first.
+
+`-t'
+`--sort=time'
+     Sort by modification time (the `mtime' in the inode), newest first.
+
+`-u'
+`--time=atime'
+`--time=access'
+`--time=use'
+     Sort by access time (the `atime' in the inode).  If the long
+     listing format is being used, print the last access time.
+
+`-U'
+`--sort=none'
+     Do not sort; list the files in whatever order they are stored in
+     the directory.  (Do not do any of the other unrelated things that
+     `-f' does.)  This is especially useful when listing very large
+     directories, since not doing any sorting can be noticeably faster.
+
+`-X'
+`--sort=extension'
+     Sort directory contents alphabetically by file extension
+     (characters after the last `.'); files with no extension are
+     sorted first.
+
+
+File: fileutils.info,  Node: General output formatting,  Next: Formatting the file names,  Prev: Sorting the output,  Up: ls invocation
+
+General output formatting
+-------------------------
+
+   These options affect the appearance of the overall output.
+
+`-1'
+`--format=single-column'
+     List one file per line.  This is the default for `ls' when standard
+     output is not a terminal.
+
+`-C'
+`--format=vertical'
+     List files in columns, sorted vertically.  This is the default for
+     `ls' if standard output is a terminal.  It is always the default
+     for the `dir' and `d' programs.
+
+`--color [=WHEN]'
+     Specify whether to use color for distinguishing file types.  WHEN
+     may be omitted, or one of:
+        * none Do not use color at all.  This is the default.
+
+        * auto Only use color if standard output is a terminal.
+
+        * always Always use color.  Specifying `--color' and no WHEN is
+     equivalent to `--color=always'.
+
+`-F'
+`--classify'
+     Append a character to each file name indicating the file type.
+     Also, for regular files that are executable, append `*'.  The file
+     type indicators are `/' for directories, `@' for symbolic links,
+     `|' for FIFOs, `=' for sockets, and nothing for regular files.
+
+`--full-time'
+     List times in full, rather than using the standard abbreviation
+     heuristics.  The format is the same as `date''s default; it's not
+     possible to change this, but you can extract out the date string
+     with `cut' and then pass the result to `date -d'.  *Note `date'
+     invocation: (sh-utils)date invocation.
+
+     This is most useful because the time output includes the seconds.
+     (Unix filesystems store file timestamps only to the nearest
+     second, so this option shows all the information there is.)  For
+     example, this can help when you have a Makefile that is not
+     regenerating files properly.
+
+`-k'
+`--kilobytes'
+     If file sizes are being listed, print them in kilobytes.  This
+     overrides the environment variable `POSIXLY_CORRECT'.
+
+`-m'
+`--format=commas'
+     List files horizontally, with as many as will fit on each line,
+     separated by `, ' (a comma and a space).
+
+`-n'
+`--numeric-uid-gid'
+     List the numeric UID and GID instead of the names.
+
+`-p'
+     Append a character to each file name indicating the file type.
+     This is like `-F', except that executables are not marked.
+
+`-x FORMAT'
+`--format=across'
+`--format=horizontal'
+     List the files in columns, sorted horizontally.
+
+`-T COLS'
+`--tabsize=COLS'
+     Assume that each tabstop is COLS columns wide.  The default is 8.
+     `ls' uses tabs where possible in the output, for efficiency.  If
+     COLS is zero, do not use tabs at all.
+
+`-w'
+`--width=COLS'
+     Assume the screen is COLS columns wide.  The default is taken from
+     the terminal settings if possible; otherwise the environment
+     variable `COLUMNS' is used if it is set; otherwise the default is
+     80.
+
+
+File: fileutils.info,  Node: Formatting the file names,  Prev: General output formatting,  Up: ls invocation
+
+Formatting the file names
+-------------------------
+
+   These options change how file names themselves are printed.
+
+`-b'
+`--escape'
+     Quote nongraphic characters in file names using alphabetic and
+     octal backslash sequences like those used in C.
+
+`-N'
+`--literal'
+     Do not quote file names.
+
+`-q'
+`--hide-control-chars'
+     Print question marks instead of nongraphic characters in file
+     names.  This is the default.
+
+`-Q'
+`--quote-name'
+     Enclose file names in double quotes and quote nongraphic
+     characters as in C.
+
+
+File: fileutils.info,  Node: dir invocation,  Next: vdir invocation,  Prev: ls invocation,  Up: Directory listing
+
+`dir': Briefly list directory contents
+======================================
+
+   `dir' (also installed as `d') is equivalent to `ls -C'; that is,
+files are by default listed in columns, sorted vertically.
+
+   *Note `ls': ls invocation.
+
+
+File: fileutils.info,  Node: vdir invocation,  Next: dircolors invocation,  Prev: dir invocation,  Up: Directory listing
+
+`vdir': Verbosely list directory contents
+=========================================
+
+   `vdir' (also installed as `v')is equivalent to `ls -l'; that is,
+files are by default listed in long format.
+
+
+File: fileutils.info,  Node: dircolors invocation,  Prev: vdir invocation,  Up: Directory listing
+
+`dircolors': Color setup for `ls'
+=================================
+
+   `dircolors' outputs a sequence of shell commands to set up the
+terminal for color output from `ls' (and `dir', etc.).  Typical usage:
+
+     eval `dircolors [OPTION]... [FILE]`
+
+   If FILE is specified, `dircolors' reads it to determine which colors
+to use for which file types and extensions.  Otherwise, a precompiled
+database is used.  For details on the format of these files, run
+`dircolors --print-database'.
+
+   The output is a shell command to set the `LS_COLORS' environment
+variable.  You can specify the shell syntax to use on the command line,
+or `dircolors' will guess it from the value of the `SHELL' environment
+variable.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-b'
+`--sh'
+`--bourne-shell'
+     Output Bourne shell commands.  This is the default if the `SHELL'
+     environment variable is set and does not end with `csh' or `tcsh'.
+
+`-c'
+`--csh'
+`--c-shell'
+     Output C shell commands.  This is the default if `SHELL' ends with
+     `csh' or `tcsh'.
+
+`-p'
+`--print-database'
+     Print the (compiled-in) default color configuration database.  This
+     output is itself a valid configuration file, and is fairly
+     descriptive of the possibilities.
+
+
+File: fileutils.info,  Node: Basic operations,  Next: Special file types,  Prev: Directory listing,  Up: Top
+
+Basic operations
+****************
+
+   This chapter describes the commands for basic file manipulation:
+copying, moving (renaming), and deleting (removing).
+
+* Menu:
+
+* cp invocation::               Copy files.
+* dd invocation::               Convert and copy a file.
+* install invocation::          Copy files and set attributes.
+* mv invocation::               Move (rename) files.
+* rm invocation::               Remove files or directories.
+
+
+File: fileutils.info,  Node: cp invocation,  Next: dd invocation,  Up: Basic operations
+
+`cp': Copy files and directories
+================================
+
+   `cp' copies files (or, optionally, directories).  The copy is
+completely independent of the original.  You can either copy one file to
+another, or copy arbitrarily many files to a destination directory.
+Synopsis:
+
+     cp [OPTION]... SOURCE DEST
+     cp [OPTION]... SOURCE... DIRECTORY
+
+   If the last argument names an existing directory, `cp' copies each
+SOURCE file into that directory (retaining the same name).  Otherwise,
+if only two files are given, it copies the first onto the second.  It
+is an error if the last argument is not a directory and more than two
+non-option arguments are given.
+
+   Generally, files are written just as they are read.  For exceptions,
+see the `--sparse' option below.
+
+   By default, `cp' does not copy directories (see `-r' below).
+
+   `cp' generally refuses to copy a file onto itself, with the
+following exception: if `--force --backup' is specified with SOURCE and
+DEST identical, and referring to a regular file, `cp' will make a
+backup file, either regular or numbered, as specified in the usual ways
+(*note Backup options::.).  This is useful when you simply want to make
+a backup of an existing file before changing it.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-a'
+`--archive'
+     Preserve as much as possible of the structure and attributes of the
+     original files in the copy (but do not preserve directory
+     structure).  Equivalent to `-dpR'.
+
+`-b'
+`--backup'
+     Make backups of files that are about to be overwritten or removed.
+     *Note Backup options::.
+
+`-d'
+`--no-dereference'
+     Copy symbolic links as symbolic links rather than copying the
+     files that they point to, and preserve hard links between source
+     files in the copies.
+
+`-f'
+`--force'
+     Remove existing destination files.
+
+`-i'
+`--interactive'
+     Prompt whether to overwrite existing regular destination files.
+
+`-l'
+`--link'
+     Make hard links instead of copies of non-directories.
+
+`-p'
+`--preserve'
+     Preserve the original files' owner, group, permissions, and
+     timestamps.
+
+`-P'
+`--parents'
+     Form the name of each destination file by appending to the target
+     directory a slash and the specified name of the source file.  The
+     last argument given to `cp' must be the name of an existing
+     directory.  For example, the command:
+
+          cp --parents a/b/c existing_dir
+
+     copies the file `a/b/c' to `existing_dir/a/b/c', creating any
+     missing intermediate directories.
+
+`-r'
+     Copy directories recursively, copying any non-directories and
+     non-symbolic links (that is, FIFOs and special files) as if they
+     were regular files.  This means trying to read the data in each
+     source file and writing it to the destination.  Thus, with this
+     option, `cp' may well hang indefinitely reading a FIFO, unless
+     something else happens to be writing it.
+
+`-R'
+`--recursive'
+     Copy directories recursively, preserving non-directories (see `-r'
+     just above).
+
+`--sparse=WHEN'
+     A "sparse file" contains "holes"--a sequence of zero bytes that
+     does not occupy any physical disk blocks; the `read' system call
+     reads these as zeroes.  This can both save considerable disk space
+     and increase speed, since many binary files contain lots of
+     consecutive zero bytes.  By default, `cp' detects holes in input
+     source files via a crude heuristic and makes the corresponding
+     output file sparse as well.
+
+     The WHEN value can be one of the following:
+    `auto'
+          The default behavior: the output file is sparse if the input
+          file is sparse.
+
+    `always'
+          Always make the output file sparse.  This is useful when the
+          input file resides on a filesystem that does not support
+          sparse files (the most notable example is `efs' filesystems
+          in SGI IRIX 5.3 and earlier), but the output file is on
+          another type of filesystem.
+
+    `never'
+          Never make the output file sparse.  If you find an
+          application for this option, let us know.
+
+`-s'
+`--symbolic-link'
+     Make symbolic links instead of copies of non-directories.  All
+     source file names must be absolute (starting with `/') unless the
+     destination files are in the current directory.  This option merely
+     results in an error message on systems that do not support
+     symbolic links.
+
+`-S SUFFIX'
+`--suffix=SUFFIX'
+     Append SUFFIX to each backup file made with `-b'.  *Note Backup
+     options::.
+
+`-u'
+`--update'
+     Do not copy a nondirectory that has an existing destination with
+     the same or newer modification time.
+
+`-v'
+`--verbose'
+     Print the name of each file before copying it.
+
+`-V METHOD'
+`--version-control=METHOD'
+     Change the type of backups made with `-b'.  The METHOD argument
+     can be `numbered' (or `t'), `existing' (or `nil'), or `never' (or
+     `simple').  *Note Backup options::.
+
+`-x'
+`--one-file-system'
+     Skip subdirectories that are on different filesystems from the one
+     that the copy started on.
+
+
+File: fileutils.info,  Node: dd invocation,  Next: install invocation,  Prev: cp invocation,  Up: Basic operations
+
+`dd': Convert and copy a file
+=============================
+
+   `dd' copies a file (from standard input to standard output, by
+default) with a changeable I/O blocksize, while optionally performing
+conversions on it.  Synopsis:
+
+     dd [OPTION]...
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+   The numeric-valued options below (BYTES and BLOCKS) can be followed
+by a multiplier: `b'=512, `c'=1, `k'=1024, `w'=2, `xM'=M.
+
+`if=FILE'
+     Read from FILE instead of standard input.
+
+`of=FILE'
+     Write to FILE instead of standard output.  Unless `conv=notrunc'
+     is given, `dd' truncates FILE to zero bytes (or the size specified
+     with `seek=').
+
+`ibs=BYTES'
+     Read BYTES bytes at a time.
+
+`obs=BYTES'
+     Write BYTES bytes at a time.
+
+`bs=BYTES'
+     Both read and write BYTES bytes at a time.  This overrides `ibs'
+     and `obs'.
+
+`cbs=BYTES'
+     Convert BYTES bytes at a time.
+
+`skip=BLOCKS'
+     Skip BLOCKS `ibs'-byte blocks in the input file before copying.
+
+`seek=BLOCKS'
+     Skip BLOCKS `obs'-byte blocks in the output file before copying.
+
+`count=BLOCKS'
+     Copy BLOCKS `obs'-byte blocks from the input file, instead of
+     everything until the end of the file.
+
+`conv=CONVERSION[,CONVERSION]...'
+     Convert the file as specified by the CONVERSION argument(s).  (No
+     spaces around any comma(s).)
+
+     Conversions:
+
+    `ascii'
+          Convert EBCDIC to ASCII.
+
+    `ebcdic'
+          Convert ASCII to EBCDIC.
+
+    `ibm'
+          Convert ASCII to alternate EBCDIC.
+
+    `block'
+          For each line in the input, output `cbs' bytes, replacing the
+          input newline with a space and padding with spaces as
+          necessary.
+
+    `unblock'
+          Replace trailing spaces in each `cbs'-sized input block with a
+          newline.
+
+    `lcase'
+          Change uppercase letters to lowercase.
+
+    `ucase'
+          Change lowercase letters to uppercase.
+
+    `swab'
+          Swap every pair of input bytes.  GNU `dd', unlike others,
+          works when an odd number of bytes are read--the last byte is
+          simply copied (since there is nothing to swap it with).
+
+    `noerror'
+          Continue after read errors.
+
+    `notrunc'
+          Do not truncate the output file.
+
+    `sync'
+          Pad every input block to size of `ibs' with trailing zero
+          bytes.
+
+
+File: fileutils.info,  Node: install invocation,  Next: mv invocation,  Prev: dd invocation,  Up: Basic operations
+
+`install': Copy files and set attributes
+========================================
+
+   `install' copies files while setting their permission modes and, if
+possible, their owner and group.  Synopses:
+
+     install [OPTION]... SOURCE DEST
+     install [OPTION]... SOURCE... DIRECTORY
+     install -d [OPTION]... DIRECTORY...
+
+   In the first of these, the SOURCE file is copied to the DEST target
+file.  In the second, each of the SOURCE files are copied to the
+destination DIRECTORY.  In the last, each DIRECTORY (and any missing
+parent directories) is created.
+
+   `install' is similar to `cp', but allows you to control the
+attributes of destination files.  It is typically used in Makefiles to
+copy programs into their destination directories.  It refuses to copy
+files onto themselves.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-b'
+`--backup'
+     Make backups of files that are about to be overwritten or removed.
+     *Note Backup options::.
+
+`-c'
+     Ignored; for compatibility with old Unix versions of `install'.
+
+`-d'
+`--directory'
+     Create each given directory and any missing parent directories,
+     setting the owner, group and mode as given on the command line or
+     to the defaults.  It also gives any parent directories it creates
+     those attributes.  (This is different from the SunOS 4.x
+     `install', which gives directories that it creates the default
+     attributes.)
+
+`-g GROUP'
+`--group=GROUP'
+     Set the group ownership of installed files or directories to
+     GROUP. The default is the process's current group.  GROUP may be
+     either a group name or a numeric group id.
+
+`-m MODE'
+`--mode=MODE'
+     Set the permissions for the installed file or directory to MODE,
+     which can be either an octal number, or a symbolic mode as in
+     `chmod', with 0 as the point of departure (*note File
+     permissions::.).  The default mode is 0755--read, write, and
+     execute for the owner, and read and execute for group and other.
+
+`-o OWNER'
+`--owner=OWNER'
+     If `install' has appropriate privileges (is run as root), set the
+     ownership of installed files or directories to OWNER. The default
+     is `root'.  OWNER may be either a user name or a numeric user ID.
+
+`-s'
+`--strip'
+     Strip the symbol tables from installed binary executables.
+
+`-S SUFFIX'
+`--suffix=SUFFIX'
+     Append SUFFIX to each backup file made with `-b'.  *Note Backup
+     options::.
+
+`-V METHOD'
+`--version-control=METHOD'
+     Change the type of backups made with `-b'.  The METHOD argument
+     can be `numbered' (or `t'), `existing' (or `nil'), or `never' (or
+     `simple').  *Note Backup options::.
+
+
+File: fileutils.info,  Node: mv invocation,  Next: rm invocation,  Prev: install invocation,  Up: Basic operations
+
+`mv': Move (rename) files
+=========================
+
+   `mv' moves or renames files (or directories).  Synopsis:
+
+     mv [OPTION]... SOURCE DEST
+     mv [OPTION]... SOURCE... DIRECTORY
+
+   If the last argument names an existing directory, `mv' moves each
+other given file into a file with the same name in that directory.
+Otherwise, if only two files are given, it renames the first as the
+second.  It is an error if the last argument is not a directory and
+more than two files are given.
+
+   `mv' can move only regular files across filesystems.
+
+   If a destination file exists but is normally unwritable, standard
+input is a terminal, and the `-f' or `--force' option is not given,
+`mv' prompts the user for whether to replace the file.  (You might own
+the file, or have write permission on its directory.)  If the response
+does not begin with `y' or `Y', the file is skipped.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-b'
+`--backup'
+     Make backups of files that are about to be overwritten or removed.
+     *Note Backup options::.
+
+`-f'
+`--force'
+     Remove existing destination files and never prompt the user.
+
+`-i'
+`--interactive'
+     Prompt whether to overwrite each existing destination file,
+     regardless of its permissions.  If the response does not begin
+     with `y' or `Y', the file is skipped.
+
+`-u'
+`--update'
+     Do not move a nondirectory that has an existing destination with
+     the same or newer modification time.
+
+`-v'
+`--verbose'
+     Print the name of each file before moving it.
+
+`-S SUFFIX'
+`--suffix=SUFFIX'
+     Append SUFFIX to each backup file made with `-b'.  *Note Backup
+     options::.
+
+`-V METHOD'
+`--version-control=METHOD'
+     Change the type of backups made with `-b'.  The METHOD argument
+     can be `numbered' (or `t'), `existing' (or `nil'), or `never' (or
+     `simple').  *Note Backup options::.
+
+
+File: fileutils.info,  Node: rm invocation,  Prev: mv invocation,  Up: Basic operations
+
+`rm': Remove files or directories
+=================================
+
+   `rm' removes each given FILE.  By default, it does not remove
+directories.  Synopsis:
+
+     rm [OPTION]... [FILE]...
+
+   If a file is unwritable, standard input is a terminal, and the `-f'
+or `--force' option is not given, or the `-i' or `--interactive' option
+*is* given, `rm' prompts the user for whether to remove the file.  If
+the response does not begin with `y' or `Y', the file is skipped.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-d'
+`--directory'
+     Remove directories with `unlink' instead of `rmdir', and don't
+     require a directory to be empty before trying to unlink it.  Only
+     works if you have appropriate privileges.  Because unlinking a
+     directory causes any files in the deleted directory to become
+     unreferenced, it is wise to `fsck' the filesystem after doing this.
+
+`-f'
+`--force'
+     Ignore nonexistent files and never prompt the user.
+
+`-i'
+`--interactive'
+     Prompt whether to remove each file.  If the response does not begin
+     with `y' or `Y', the file is skipped.
+
+`-r'
+`-R'
+`--recursive'
+     Remove the contents of directories recursively.
+
+`-v'
+`--verbose'
+     Print the name of each file before removing it.
+
+   One common question is how to remove files whose names being with a
+`-'.  GNU `rm', like every program that uses the `getopt' function to
+parse its arguments, lets you use the `--' option to indicate that all
+following arguments are non-options.  To remove a file called `-f' in
+the current directory, you could type either:
+
+     rm -- -f
+
+or:
+
+     rm ./-f
+
+   The Unix `rm' program's use of a single `-' for this purpose
+predates the development of the getopt standard syntax.
+
+
+File: fileutils.info,  Node: Special file types,  Next: Changing file attributes,  Prev: Basic operations,  Up: Top
+
+Special file types
+******************
+
+   This chapter describes commands which create special types of files
+(and `rmdir', which removes directories, one special file type).
+
+   Although Unix-like operating systems have markedly fewer special file
+types than others, not *everything* can be treated only as the
+undifferentiated byte stream of "normal files".  For example, when a
+file is created or removed, the system must record this information,
+which it does in a "directory"--a special type of file.  Although you
+can read directories as normal files, if you're curious, in order for
+the system to do its job it must impose a structure, a certain order,
+on the bytes of the file.  Thus it is a "special" type of file.
+
+   Besides directories, other special file types include named pipes
+(FIFOs), symbolic links, sockets, and so-called "special files".
+
+* Menu:
+
+* ln invocation::               Make links between files.
+* mkdir invocation::            Make directories.
+* mkfifo invocation::           Make FIFOs (named pipes).
+* mknod invocation::            Make block or character special files.
+* rmdir invocation::            Remove empty directories.
+
+
+File: fileutils.info,  Node: ln invocation,  Next: mkdir invocation,  Up: Special file types
+
+`ln': Make links between files
+==============================
+
+   `ln' makes links between files.  By default, it makes hard links;
+with the `-s' option, it makes symbolic (or "soft") links.  Synopses:
+
+     ln [OPTION]... SOURCE [DEST]
+     ln [OPTION]... SOURCE... DIRECTORY
+
+   If the last argument names an existing directory, `ln' links each
+SOURCE file into a file with the same name in that directory.  (But see
+the description of the `--no-dereference' option below.) If only one
+file is given, it links that file into the current directory.
+Otherwise, if only two files are given, it links the first onto the
+second.  It is an error if the last argument is not a directory and more
+than two files are given.  By default, it does not remove existing
+files.
+
+   A "hard link" is another name for an existing file; the link and the
+original are indistinguishable.  (Technically speaking, they share the
+same inode, and the inode contains all the information about a
+file--indeed, it is not incorrect to say that the inode *is* the file.)
+On all existing implementations, you cannot make a hard links to
+directories, and hard links cannot cross filesystem boundaries.  (These
+restrictions are not mandated by POSIX, however.)
+
+   "Symbolic links" ("symlinks" for short), on the other hand, are a
+special file type (which not all kernels support; in particular, system
+V release 3 (and older) systems lack symlinks) in which the link file
+actually refers to a different file, by name.  When most operations
+(opening, reading, writing, and so on) are passed the symbolic link
+file, the kernel automatically "dereferences" the link and operates on
+the target of the link.  But some operations (e.g., removing) work on
+the link file itself, rather than on its target.  *Note Symbolic Links:
+(library)Symbolic Links.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-b'
+`--backup'
+     Make backups of files that are about to be overwritten or removed.
+     *Note Backup options::.
+
+`-d'
+`-F'
+`--directory'
+     Allow the super-user to make hard links to directories.
+
+`-f'
+`--force'
+     Remove existing destination files.
+
+`-i'
+`--interactive'
+     Prompt whether to remove existing destination files.
+
+`-n'
+`--no-dereference'
+     When given an explicit destination that is a symlink to a
+     directory, treat that destination as if it were a normal file.
+
+     When the destination is an actual directory (not a symlink to one),
+     there is no ambiguity.  The link is created in that directory.
+     But when the specified destination is a symlink to a directory,
+     there are two ways to treat the user's request.  `ln' can treat
+     the destination just as it would a normal directory and create the
+     link in it.  On the other hand, the destination can be viewed as a
+     non-directory--as the symlink itself.  In that case, `ln' must
+     delete or backup that symlink before creating the new link.  The
+     default is to treat a destination that is a symlink to a directory
+     just like a directory.
+
+`-s'
+`--symbolic'
+     Make symbolic links instead of hard links.  This option merely
+     produces an error message on systems that do not support symbolic
+     links.
+
+`-v'
+`--verbose'
+     Print the name of each file before linking it.
+
+`-S SUFFIX'
+`--suffix=SUFFIX'
+     Append SUFFIX to each backup file made with `-b'.  *Note Backup
+     options::.
+
+`-V METHOD'
+`--version-control=METHOD'
+     Change the type of backups made with `-b'.  The METHOD argument
+     can be `numbered' (or `t'), `existing' (or `nil'), or `never' (or
+     `simple').  *Note Backup options::.
+
+
+File: fileutils.info,  Node: mkdir invocation,  Next: mkfifo invocation,  Prev: ln invocation,  Up: Special file types
+
+`mkdir': Make directories
+=========================
+
+   `mkdir' creates directories with the specified names.  Synopsis:
+
+     mkdir [OPTION]... NAME...
+
+   It is not an error if a NAME is already a directory; `mkdir' simply
+proceeds.  But if a NAME is an existing file and is anything but a
+directory, `mkdir' complains.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-m MODE'
+`--mode=MODE'
+     Set the mode of created directories to MODE, which is symbolic as
+     in `chmod' and uses 0777 (read, write and execute allowed for
+     everyone) minus the bits set in the umask for the point of the
+     departure.  *Note File permissions::.
+
+`-p'
+`--parents'
+     Make any missing parent directories for each argument.  The mode
+     for parent directories is set to the umask modified by `u+wx'.
+     Ignore arguments corresponding to existing directories.
+
+`--verbose'
+     Print a message for each created directory.  This is most useful
+     with `--parents'.
+
+
+File: fileutils.info,  Node: mkfifo invocation,  Next: mknod invocation,  Prev: mkdir invocation,  Up: Special file types
+
+`mkfifo': Make FIFOs (named pipes)
+==================================
+
+   `mkfifo' creates FIFOs (also called "named pipes") with the
+specified names.  Synopsis:
+
+     mkfifo [OPTION] NAME...
+
+   A "FIFO" is a special file type that permits independent processes
+to communicate.  One process opens the FIFO file for writing, and
+another for reading, after which data can flow as with the usual
+anonymous pipe in shells or elsewhere.
+
+   The program accepts the following option.  Also see *Note Common
+options::.
+
+`-m MODE'
+`--mode=MODE'
+     Set the mode of created FIFOs to MODE, which is symbolic as in
+     `chmod' and uses 0666 (read and write allowed for everyone) minus
+     the bits set in the umask for the point of departure.  *Note File
+     permissions::.
+
+
+File: fileutils.info,  Node: mknod invocation,  Next: rmdir invocation,  Prev: mkfifo invocation,  Up: Special file types
+
+`mknod': Make block or character special files
+==============================================
+
+   `mknod' creates a FIFO, character special file, or block special
+file with the specified name.  Synopsis:
+
+     mknod [OPTION]... NAME TYPE [MAJOR MINOR]
+
+   Unlike the phrase "special file type" above, the term "special file"
+has a technical meaning on Unix: something that can generate or receive
+data.  Usually this corresponds to a physical piece of hardware, e.g.,
+a printer or a disk.  (These files are typically created at
+system-configuration time.)  The `mknod' command is what creates files
+of this type.  Such devices can be read either a character at a time or
+a "block" (many characters) at a time, hence we say there are "block
+special" files and "character special" files.
+
+   The arguments after NAME specify the type of file to make:
+
+`p'
+     for a FIFO
+
+`b'
+     for a block (buffered) special file
+
+`c'
+     for a character (buffered) special file
+
+`u'
+     for a character (unbuffered) special file
+
+   When making a block or character special file, the major and minor
+device numbers must be given after the file type.
+
+   The program accepts the following option.  Also see *Note Common
+options::.
+
+`-m MODE'
+`--mode=MODE'
+     Set the mode of created files to MODE, which is symbolic as in
+     `chmod' and uses 0666 minus the bits set in the umask as the point
+     of departure.  *Note File permissions::.
+
+
+File: fileutils.info,  Node: rmdir invocation,  Prev: mknod invocation,  Up: Special file types
+
+`rmdir': Remove empty directories
+=================================
+
+   `rmdir' removes empty directories.  Synopsis:
+
+     rmdir [OPTION]... DIRECTORY...
+
+   If any DIRECTORY argument does not refer to an existing empty
+directory, it is an error.
+
+   The program accepts the following option.  Also see *Note Common
+options::.
+
+`-p'
+`--parents'
+     Remove any parent directories that become empty after an argument
+     DIRECTORY is removed.
+
+   *Note rm invocation::, for how to remove non-empty directories
+(recursively).
+
+
+File: fileutils.info,  Node: Changing file attributes,  Next: Disk usage,  Prev: Special file types,  Up: Top
+
+Changing file attributes
+************************
+
+   A file is not merely its contents, a name, and a file type (*note
+Special file types::.).  A file also has an owner (a userid), a group
+(a group id), permissions (what the owner can do with the file, what
+people in the group can do, and what everyone else can do), various
+timestamps, and other information.  Collectively, we call these a file's
+"attributes".
+
+   These commands change file attributes.
+
+* Menu:
+
+* chown invocation::            Change file owners and groups.
+* chgrp invocation::            Change file groups.
+* chmod invocation::            Change access permissions.
+* touch invocation::            Change file timestamps.
+
+
+File: fileutils.info,  Node: chown invocation,  Next: chgrp invocation,  Up: Changing file attributes
+
+`chown': Change file owner and group
+====================================
+
+   `chown' changes the user and/or group ownership of each given file.
+Synopsis:
+
+     chown [OPTION]... NEW-OWNER FILE...
+
+   The first non-option argument, NEW-OWNER, specifies the new owner
+and/or group, as follows (with no embedded white space):
+
+     [OWNER] [ [:.] [GROUP] ]
+
+   Specifically:
+
+OWNER
+     If only an OWNER (a user name or numeric user id) is given, that
+     user is made the owner of each given file, and the files' group is
+     not changed.
+
+OWNER`.'GROUP
+OWNER`:'GROUP
+     If the OWNER is followed by a colon or dot and a GROUP (a group
+     name or numeric group id), with no spaces between them, the group
+     ownership of the files is changed as well (to GROUP).
+
+OWNER`.'
+OWNER`:'
+     If a colon or dot but no group name follows OWNER, that user is
+     made the owner of the files and the group of the files is changed
+     to OWNER's login group.
+
+`.'GROUP
+`:'GROUP
+     If the colon or dot and following GROUP are given, but the owner
+     is omitted, only the group of the files is changed; in this case,
+     `chown' performs the same function as `chgrp'.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-c'
+`--changes'
+     Verbosely describe the action for each FILE whose ownership
+     actually changes.
+
+`-f'
+`--silent'
+`--quiet'
+     Do not print error messages about files whose ownership cannot be
+     changed.
+
+`-h'
+`--no-dereference'
+     Act on symbolic links themselves instead of what they point to.
+     Only available if the `lchown' system call is provided.
+
+`-v'
+`--verbose'
+     Verbosely describe the action (or non-action) taken for every FILE.
+
+`-R'
+`--recursive'
+     Recursively change ownership of directories and their contents.
+
+
+File: fileutils.info,  Node: chgrp invocation,  Next: chmod invocation,  Prev: chown invocation,  Up: Changing file attributes
+
+`chgrp': Change group ownership
+===============================
+
+   `chgrp' changes the group ownership of each given FILE to GROUP,
+which can be either a group name or a numeric group id.  Synopsis:
+
+     chgrp [OPTION]... GROUP FILE...
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-c'
+`--changes'
+     Verbosely describe the action for each FILE whose group actually
+     changes.
+
+`-f'
+`--silent'
+`--quiet'
+     Do not print error messages about files whose group cannot be
+     changed.
+
+`-f'
+`--no-dereference'
+     Act on symbolic links themselves instead of what they point to.
+     Only available if the `lchown' system call is provided.
+
+`-v'
+`--verbose'
+     Verbosely describe the action or non-action taken for every FILE.
+
+`-R'
+`--recursive'
+     Recursively change the group ownership of directories and their
+     contents.
+
+
+File: fileutils.info,  Node: chmod invocation,  Next: touch invocation,  Prev: chgrp invocation,  Up: Changing file attributes
+
+`chmod': Change access permissions
+==================================
+
+   `chmod' changes the access permissions of the named files.  Synopsis:
+
+     chmod [OPTION]... MODE FILE...
+
+   `chmod' never changes the permissions of symbolic links, since the
+`chmod' system call cannot change their permissions.  This is not a
+problem since the permissions of symbolic links are never used.
+However, for each symbolic link listed on the command line, `chmod'
+changes the permissions of the pointed-to file.  In contrast, `chmod'
+ignores symbolic links encountered during recursive directory
+traversals.
+
+   The first non-option argument, MODE, specifies the new permissions.
+See the section below for details.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-c'
+`--changes'
+     Verbosely describe the action for each FILE whose permissions
+     actually changes.
+
+`-f'
+`--silent'
+`--quiet'
+     Do not print error messages about files whose permissions cannot be
+     changed.
+
+`-v'
+`--verbose'
+     Verbosely describe the action or non-action taken for every FILE.
+
+`-R'
+`--recursive'
+     Recursively change permissions of directories and their contents.
+
+
+File: fileutils.info,  Node: touch invocation,  Prev: chmod invocation,  Up: Changing file attributes
+
+`touch': Change file timestamps
+===============================
+
+   `touch' changes the access and/or modification times of the
+specified files.  Synopsis:
+
+     touch [OPTION]... FILE...
+
+   If the first FILE would be a valid argument to the `-t' option and
+no timestamp is given with any of the `-d', `-r', or `-t' options and
+the `--' argument is not given, that argument is interpreted as the
+time for the other files instead of as a file name.
+
+   Any FILE that does not exist is created empty.
+
+   If changing both the access and modification times to the current
+time, `touch' can change the timestamps for files that the user running
+it does not own but has write permission for.  Otherwise, the user must
+own the files.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-a'
+`--time=atime'
+`--time=access'
+`--time=use'
+     Change the access time only.
+
+`-c'
+`--no-create'
+     Do not create files that do not exist.
+
+`-d'
+`--date=time'
+     Use TIME instead of the current time.  It can contain month names,
+     timezones, `am' and `pm', etc.  *Note Date input formats::.
+
+`-f'
+     Ignored; for compatibility with BSD versions of `touch'.
+
+`-m'
+`--time=mtime'
+`--time=modify'
+     Change the modification time only.
+
+`-r FILE'
+`--reference=FILE'
+     Use the times of the reference FILE instead of the current time.
+
+`-t MMDDhhmm[[CC]YY][.ss]'
+     Use the argument (months, days, hours, minutes, optional century
+     and years, optional seconds) instead of the current time.
+
+
+File: fileutils.info,  Node: Disk usage,  Next: Index,  Prev: Changing file attributes,  Up: Top
+
+Disk usage
+**********
+
+   No disk can hold an infinite amount of data.  These commands report
+on how much disk storage is in use or available.  (This has nothing
+much to do with how much *main memory*, i.e., RAM, a program is using
+when it runs; for that, you want `ps' or `pstat' or `swap' or some such
+command.)
+
+* Menu:
+
+* df invocation::               Report filesystem disk space usage.
+* du invocation::               Estimate file space usage.
+* sync invocation::             Synchronize memory and disk.
+
+
+File: fileutils.info,  Node: df invocation,  Next: du invocation,  Up: Disk usage
+
+`df': Report filesystem disk space usage
+========================================
+
+   `df' reports the amount of disk space used and available on
+filesystems.  Synopsis:
+
+     df [OPTION]... [FILE]...
+
+   With no arguments, `df' reports the space used and available on all
+currently mounted filesystems (of all types).  Otherwise, `df' reports
+on the filesystem containing each argument FILE.
+
+   Disk space is shown in 1024-byte blocks by default, unless the
+environment variable `POSIXLY_CORRECT' is set, in which case 512-byte
+blocks are used (unless the `-k' option is given).
+
+   If an argument FILE is a disk device file containing a mounted
+filesystem, `df' shows the space available on that filesystem rather
+than on the filesystem containing the device node (i.e., the root
+filesystem).  GNU `df' does not attempt to determine the disk usage on
+unmounted filesystems, because on most kinds of systems doing so
+requires extremely nonportable intimate knowledge of filesystem
+structures.
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-a'
+`--all'
+     Include in the listing filesystems that have a size of 0 blocks,
+     which are omitted by default.  Such filesystems are typically
+     special-purpose pseudo-filesystems, such as automounter entries.
+     Also, filesystems of type "ignore" or "auto", supported by some
+     operating systems, are only included if this option is specified.
+
+`-h'
+`--human-readable'
+     Append a size letter such as `M' for megabytes to each size.
+
+`-i'
+`--inodes'
+     List inode usage information instead of block usage.  An inode
+     (short for index node) is contains information about a file such
+     as its owner, permissions, timestamps, and location on the disk.
+
+`-k'
+`--kilobytes'
+     Print sizes in 1024-byte blocks.  This overrides the environment
+     variable `POSIXLY_CORRECT'.
+
+`-m'
+`--megabytes'
+     Print sizes in megabyte (that 1,048,576 bytes) blocks.
+
+`--no-sync'
+     Do not invoke the `sync' system call before getting any usage data.
+     This may make `df' run significantly faster on systems with many
+     disks, but on some systems (notably SunOS) the results may be
+     slightly out of date.  This is the default.
+
+`-P'
+`--portability'
+     Use the POSIX output format.  This is like the default format
+     except that the information about each filesystem is always
+     printed on exactly one line; a mount device is never put on a line
+     by itself.  This means that if the mount device name is more than
+     20 characters long (e.g., for some network mounts), the columns
+     are misaligned.
+
+`--sync'
+     Invoke the `sync' system call before getting any usage data.  On
+     some systems (notably SunOS), doing this yields more up to date
+     results, but in general this option makes `df' much slower,
+     especially when there are many or very busy filesystems.
+
+`-t FSTYPE'
+`--type=FSTYPE'
+     Limit the listing to filesystems of type FSTYPE.  Multiple
+     filesystem types can be specified by giving multiple `-t' options.
+     By default, nothing is omitted.
+
+`-T'
+`--print-type'
+     Print each filesystem's type.  The types printed here are the same
+     ones you can include or exclude with `-t' and `-x'.  The particular
+     types printed are whatever is supported by the system.  Here are
+     some of the common names (this list is certainly not exhaustive):
+
+    `nfs'
+          An NFS filesystem, i.e., one mounted over a network from
+          another machine.  This is the one type name which seems to be
+          used uniformly by all systems.
+
+    `4.2, ufs, efs...'
+          A filesystem on a locally-mounted hard disk.  (The system
+          might even support more than one type here; Linux does.)
+
+    `hsfs, cdfs'
+          A filesystem on a CD-ROM drive.  HP-UX uses `cdfs', most other
+          systems use `hsfs' (`hs' for `High Sierra').
+
+    `pcfs'
+          An MS-DOS filesystem, usually on a diskette.
+
+`-x FSTYPE'
+`--exclude-type=FSTYPE'
+     Limit the listing to filesystems not of type FSTYPE.  Multiple
+     filesystem types can be eliminated by giving multiple `-x'
+     options.  By default, no filesystem types are omitted.
+
+`-v'
+     Ignored; for compatibility with System V versions of `df'.
+
+
+File: fileutils.info,  Node: du invocation,  Next: sync invocation,  Prev: df invocation,  Up: Disk usage
+
+`du': Estimate file space usage
+===============================
+
+   `du' reports the amount of disk space used by the specified files
+and for each subdirectory (of directory arguments).  Synopsis:
+
+     du [OPTION]... [FILE]...
+
+   With no arguments, `du' reports the disk space for the current
+directory.  The output is in 1024-byte units by default, unless the
+environment variable `POSIXLY_CORRECT' is set, in which case 512-byte
+blocks are used (unless `-k' is specified).
+
+   The program accepts the following options.  Also see *Note Common
+options::.
+
+`-a'
+`--all'
+     Show counts for all files, not just directories.
+
+`-b'
+`--bytes'
+     Print sizes in bytes, instead of kilobytes.
+
+`-c'
+`--total'
+     Print a grand total of all arguments after all arguments have been
+     processed.  This can be used to find out the total disk usage of a
+     given set of files or directories.
+
+`-D'
+`--dereference-args'
+     Dereference symbolic links that are command line arguments.  Does
+     not affect other symbolic links.  This is helpful for finding out
+     the disk usage of directories, such as `/usr/tmp', which are often
+     symbolic links.
+
+`-h'
+`--human-readable'
+     Append a size letter, such as `M' for megabytes, to each size.
+
+`-k'
+`--kilobytes'
+     Print sizes in kilobytes.  This overrides the environment variable
+     `POSIXLY_CORRECT'.
+
+`-l'
+`--count-links'
+     Count the size of all files, even if they have appeared already
+     (as a hard link).
+
+`-L'
+`--dereference'
+     Dereference symbolic links (show the disk space used by the file
+     or directory that the link points to instead of the space used by
+     the link).
+
+`-m'
+`--megabytes'
+     Print sizes in megabyte (that 1,048,576 bytes) blocks.
+
+`-s'
+`--summarize'
+     Display only a total for each argument.
+
+`-S'
+`--separate-dirs'
+     Report the size of each directory separately, not including the
+     sizes of subdirectories.
+
+`-x'
+`--one-file-system'
+     Skip directories that are on different filesystems from the one
+     that the argument being processed is on.
+
+   On BSD systems, `du' reports sizes that are half the correct values
+for files that are NFS-mounted from HP-UX systems.  On HP-UX systems,
+it reports sizes that are twice the correct values for files that are
+NFS-mounted from BSD systems.  This is due to a flaw in HP-UX; it also
+affects the HP-UX `du' program.
+
+
+File: fileutils.info,  Node: sync invocation,  Prev: du invocation,  Up: Disk usage
+
+`sync': Synchronize data on disk with memory
+============================================
+
+   `sync' writes any data buffered in memory out to disk.  This can
+include (but is not limited to) modified superblocks, modified inodes,
+and delayed reads and writes.  This must be implemented by the kernel;
+The `sync' program does nothing but exercise the `sync' system call.
+
+   The kernel keeps data in memory to avoid doing (relatively slow) disk
+reads and writes.  This improves performance, but if the computer
+crashes, data may be lost or the filesystem corrupted as a result.
+`sync' ensures everything in memory is written to disk.
+
+   Any arguments are ignored, except for a lone `--help' or `--version'
+(*note Common options::.).
+
+
+File: fileutils.info,  Node: Index,  Prev: Disk usage,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* - and Unix rm:                         rm invocation.
+* -, removing files beginning with:      rm invocation.
+* -1:                                    General output formatting.
+* -a <1>:                                du invocation.
+* -a <2>:                                df invocation.
+* -a <3>:                                touch invocation.
+* -a:                                    cp invocation.
+* -A:                                    Which files are listed.
+* -a:                                    Which files are listed.
+* -all <1>:                              du invocation.
+* -all <2>:                              df invocation.
+* -all:                                  Which files are listed.
+* -almost-all:                           Which files are listed.
+* -archive:                              cp invocation.
+* -b <1>:                                du invocation.
+* -b <2>:                                ln invocation.
+* -b <3>:                                mv invocation.
+* -b <4>:                                install invocation.
+* -b <5>:                                cp invocation.
+* -b <6>:                                dircolors invocation.
+* -b:                                    Formatting the file names.
+* -B:                                    Which files are listed.
+* -b:                                    Backup options.
+* -backup <1>:                           ln invocation.
+* -backup <2>:                           mv invocation.
+* -backup <3>:                           install invocation.
+* -backup <4>:                           cp invocation.
+* -backup:                               Backup options.
+* -bourne-shell:                         dircolors invocation.
+* -bytes:                                du invocation.
+* -c <1>:                                du invocation.
+* -c <2>:                                touch invocation.
+* -c <3>:                                chmod invocation.
+* -c <4>:                                chgrp invocation.
+* -c <5>:                                chown invocation.
+* -c <6>:                                install invocation.
+* -c:                                    dircolors invocation.
+* -C:                                    General output formatting.
+* -c:                                    Sorting the output.
+* -c-shell:                              dircolors invocation.
+* -changes <1>:                          chmod invocation.
+* -changes <2>:                          chgrp invocation.
+* -changes:                              chown invocation.
+* -classify:                             General output formatting.
+* -color:                                General output formatting.
+* -count-links:                          du invocation.
+* -csh:                                  dircolors invocation.
+* -D:                                    du invocation.
+* -d <1>:                                touch invocation.
+* -d <2>:                                ln invocation.
+* -d <3>:                                rm invocation.
+* -d <4>:                                install invocation.
+* -d:                                    cp invocation.
+* -D:                                    What information is listed.
+* -d:                                    Which files are listed.
+* -date:                                 touch invocation.
+* -dereference <1>:                      du invocation.
+* -dereference:                          Which files are listed.
+* -dereference-args:                     du invocation.
+* -directory <1>:                        ln invocation.
+* -directory <2>:                        rm invocation.
+* -directory <3>:                        install invocation.
+* -directory:                            Which files are listed.
+* -dired:                                What information is listed.
+* -escape:                               Formatting the file names.
+* -exclude-type:                         df invocation.
+* -f <1>:                                touch invocation.
+* -f <2>:                                chmod invocation.
+* -f <3>:                                chgrp invocation.
+* -f <4>:                                chown invocation.
+* -f:                                    ln invocation.
+* -F:                                    ln invocation.
+* -f <1>:                                rm invocation.
+* -f <2>:                                mv invocation.
+* -f:                                    cp invocation.
+* -F:                                    General output formatting.
+* -f:                                    Sorting the output.
+* -force <1>:                            ln invocation.
+* -force <2>:                            rm invocation.
+* -force <3>:                            mv invocation.
+* -force:                                cp invocation.
+* -format <1>:                           General output formatting.
+* -format:                               What information is listed.
+* -full-time:                            General output formatting.
+* -g:                                    install invocation.
+* -G:                                    What information is listed.
+* -g (ignored):                          ls invocation.
+* -group:                                install invocation.
+* -h <1>:                                du invocation.
+* -h <2>:                                df invocation.
+* -h:                                    chown invocation.
+* -help:                                 Common options.
+* -hide-control-chars:                   Formatting the file names.
+* -human-readable <1>:                   du invocation.
+* -human-readable:                       df invocation.
+* -i <1>:                                df invocation.
+* -i <2>:                                ln invocation.
+* -i <3>:                                rm invocation.
+* -i <4>:                                mv invocation.
+* -i <5>:                                cp invocation.
+* -i:                                    What information is listed.
+* -I:                                    Which files are listed.
+* -ignore-backups:                       Which files are listed.
+* -ignore=PATTERN:                       Which files are listed.
+* -inode:                                What information is listed.
+* -inodes:                               df invocation.
+* -interactive <1>:                      ln invocation.
+* -interactive <2>:                      rm invocation.
+* -interactive <3>:                      mv invocation.
+* -interactive:                          cp invocation.
+* -k <1>:                                du invocation.
+* -k <2>:                                df invocation.
+* -k:                                    General output formatting.
+* -kilobytes <1>:                        du invocation.
+* -kilobytes <2>:                        df invocation.
+* -kilobytes:                            General output formatting.
+* -L:                                    du invocation.
+* -l <1>:                                du invocation.
+* -l <2>:                                cp invocation.
+* -l:                                    What information is listed.
+* -L:                                    Which files are listed.
+* -link:                                 cp invocation.
+* -literal:                              Formatting the file names.
+* -m <1>:                                du invocation.
+* -m <2>:                                df invocation.
+* -m <3>:                                touch invocation.
+* -m <4>:                                mknod invocation.
+* -m <5>:                                mkfifo invocation.
+* -m <6>:                                mkdir invocation.
+* -m <7>:                                install invocation.
+* -m:                                    General output formatting.
+* -megabytes <1>:                        du invocation.
+* -megabytes:                            df invocation.
+* -mode <1>:                             mknod invocation.
+* -mode <2>:                             mkfifo invocation.
+* -mode <3>:                             mkdir invocation.
+* -mode:                                 install invocation.
+* -n:                                    ln invocation.
+* -N:                                    Formatting the file names.
+* -n:                                    General output formatting.
+* -no-create:                            touch invocation.
+* -no-dereference <1>:                   chgrp invocation.
+* -no-dereference <2>:                   chown invocation.
+* -no-dereference <3>:                   ln invocation.
+* -no-dereference:                       cp invocation.
+* -no-group:                             What information is listed.
+* -no-sync:                              df invocation.
+* -numeric-uid-gid:                      General output formatting.
+* -o <1>:                                install invocation.
+* -o:                                    What information is listed.
+* -one-file-system <1>:                  du invocation.
+* -one-file-system:                      cp invocation.
+* -owner:                                install invocation.
+* -P:                                    df invocation.
+* -p <1>:                                rmdir invocation.
+* -p:                                    mkdir invocation.
+* -P:                                    cp invocation.
+* -p <1>:                                cp invocation.
+* -p:                                    dircolors invocation.
+* -parents <1>:                          rmdir invocation.
+* -parents <2>:                          mkdir invocation.
+* -parents:                              cp invocation.
+* -portability:                          df invocation.
+* -preserve:                             cp invocation.
+* -print-database:                       dircolors invocation.
+* -print-type:                           df invocation.
+* -Q:                                    Formatting the file names.
+* -q:                                    Formatting the file names.
+* -quiet <1>:                            chmod invocation.
+* -quiet <2>:                            chgrp invocation.
+* -quiet:                                chown invocation.
+* -quote-name:                           Formatting the file names.
+* -r:                                    touch invocation.
+* -R <1>:                                chmod invocation.
+* -R <2>:                                chgrp invocation.
+* -R <3>:                                chown invocation.
+* -R:                                    rm invocation.
+* -r:                                    rm invocation.
+* -R:                                    cp invocation.
+* -r:                                    Sorting the output.
+* -R:                                    Which files are listed.
+* -recursive <1>:                        chmod invocation.
+* -recursive <2>:                        chgrp invocation.
+* -recursive <3>:                        chown invocation.
+* -recursive <4>:                        rm invocation.
+* -recursive <5>:                        cp invocation.
+* -recursive:                            Which files are listed.
+* -reference:                            touch invocation.
+* -reverse:                              Sorting the output.
+* -S:                                    du invocation.
+* -s:                                    du invocation.
+* -S:                                    ln invocation.
+* -s:                                    ln invocation.
+* -S <1>:                                mv invocation.
+* -S:                                    install invocation.
+* -s:                                    install invocation.
+* -S:                                    cp invocation.
+* -s:                                    cp invocation.
+* -S:                                    Sorting the output.
+* -s:                                    What information is listed.
+* -S:                                    Backup options.
+* -separate-dirs:                        du invocation.
+* -sh:                                   dircolors invocation.
+* -silent <1>:                           chmod invocation.
+* -silent <2>:                           chgrp invocation.
+* -silent:                               chown invocation.
+* -size:                                 What information is listed.
+* -sort:                                 Sorting the output.
+* -sparse=WHEN:                          cp invocation.
+* -strip:                                install invocation.
+* -suffix <1>:                           ln invocation.
+* -suffix <2>:                           mv invocation.
+* -suffix <3>:                           install invocation.
+* -suffix <4>:                           cp invocation.
+* -suffix:                               Backup options.
+* -summarize:                            du invocation.
+* -symbolic:                             ln invocation.
+* -symbolic-link:                        cp invocation.
+* -sync:                                 df invocation.
+* -T:                                    df invocation.
+* -t:                                    df invocation.
+* -T:                                    General output formatting.
+* -t:                                    Sorting the output.
+* -tabsize:                              General output formatting.
+* -time <1>:                             touch invocation.
+* -time:                                 Sorting the output.
+* -total:                                du invocation.
+* -type:                                 df invocation.
+* -u <1>:                                mv invocation.
+* -u:                                    cp invocation.
+* -U:                                    Sorting the output.
+* -u:                                    Sorting the output.
+* -update <1>:                           mv invocation.
+* -update:                               cp invocation.
+* -v <1>:                                chmod invocation.
+* -v <2>:                                chgrp invocation.
+* -v:                                    chown invocation.
+* -V:                                    ln invocation.
+* -v <1>:                                ln invocation.
+* -v:                                    rm invocation.
+* -V:                                    mv invocation.
+* -v:                                    mv invocation.
+* -V <1>:                                install invocation.
+* -V:                                    cp invocation.
+* -v:                                    cp invocation.
+* -V:                                    Backup options.
+* -verbose <1>:                          chmod invocation.
+* -verbose <2>:                          chgrp invocation.
+* -verbose <3>:                          chown invocation.
+* -verbose <4>:                          mkdir invocation.
+* -verbose <5>:                          ln invocation.
+* -verbose <6>:                          rm invocation.
+* -verbose <7>:                          mv invocation.
+* -verbose:                              cp invocation.
+* -version:                              Common options.
+* -version-control <1>:                  ln invocation.
+* -version-control <2>:                  mv invocation.
+* -version-control <3>:                  install invocation.
+* -version-control <4>:                  cp invocation.
+* -version-control:                      Backup options.
+* -w:                                    General output formatting.
+* -width:                                General output formatting.
+* -x <1>:                                du invocation.
+* -x <2>:                                df invocation.
+* -x <3>:                                cp invocation.
+* -x:                                    General output formatting.
+* -X:                                    Sorting the output.
+* 4.2 filesystem type:                   df invocation.
+* abbreviations for months:              Calendar date item.
+* access permissions, changing:          chmod invocation.
+* access time, changing:                 touch invocation.
+* access time, sorting files by:         Sorting the output.
+* across, listing files:                 General output formatting.
+* adding permissions:                    Setting Permissions.
+* ago in date strings:                   Relative item in date strings.
+* Alaska-Hawaii Time:                    Timezone item.
+* alternate ebcdic, converting to:       dd invocation.
+* always color option:                   General output formatting.
+* am in date strings:                    Time of day item.
+* append-only directories:               Mode Structure.
+* appropriate privileges:                install invocation.
+* ascii, converting to:                  dd invocation.
+* atime, changing:                       touch invocation.
+* atime, sorting files by:               Sorting the output.
+* Atlantic Standard Time:                Timezone item.
+* attributes, file:                      Changing file attributes.
+* authors of getdate:                    Authors of getdate.
+* auto color option:                     General output formatting.
+* automounter filesystems:               df invocation.
+* Azores Time:                           Timezone item.
+* b for block special file:              mknod invocation.
+* backslash sequences for file names:    Formatting the file names.
+* backup files, ignoring:                Which files are listed.
+* backup files, type made:               Backup options.
+* backup options:                        Backup options.
+* backup suffix:                         Backup options.
+* backups, making <1>:                   ln invocation.
+* backups, making <2>:                   mv invocation.
+* backups, making <3>:                   install invocation.
+* backups, making <4>:                   cp invocation.
+* backups, making:                       Backup options.
+* backups, making only:                  cp invocation.
+* Baghdad Time:                          Timezone item.
+* beginning of time, for Unix:           Date input formats.
+* Bellovin, Steven M.:                   Authors of getdate.
+* Berets, Jim:                           Authors of getdate.
+* Berry, K.:                             Authors of getdate.
+* block (space-padding):                 dd invocation.
+* block size:                            dd invocation.
+* block size of conversion:              dd invocation.
+* block size of input:                   dd invocation.
+* block size of output:                  dd invocation.
+* block special files:                   mknod invocation.
+* block special files, creating:         mknod invocation.
+* Bourne shell syntax for color setup:   dircolors invocation.
+* bs:                                    dd invocation.
+* BSD touch compatibility:               touch invocation.
+* buffered character file:               mknod invocation.
+* bugs, reporting:                       Introduction.
+* byte-swapping:                         dd invocation.
+* c for character special file:          mknod invocation.
+* C shell syntax for color setup:        dircolors invocation.
+* calendar date item:                    Calendar date item.
+* case, ignored in dates:                General date syntax.
+* cbs:                                   dd invocation.
+* CD-ROM filesystem type:                df invocation.
+* cdfs filesystem type:                  df invocation.
+* Central Alaska Time:                   Timezone item.
+* Central European Time:                 Timezone item.
+* Central Standard Time:                 Timezone item.
+* changed files, verbosely describing:   chgrp invocation.
+* changed owners, verbosely describing:  chown invocation.
+* changing access permissions:           chmod invocation.
+* changing file attributes:              Changing file attributes.
+* changing file ownership:               chown invocation.
+* changing file timestamps:              touch invocation.
+* changing group ownership <1>:          chgrp invocation.
+* changing group ownership:              chown invocation.
+* changing special permissions:          Changing Special Permissions.
+* character special files:               mknod invocation.
+* character special files, creating:     mknod invocation.
+* chgrp:                                 chgrp invocation.
+* China Coast Time:                      Timezone item.
+* chmod:                                 chmod invocation.
+* chown:                                 chown invocation.
+* color database, printing:              dircolors invocation.
+* color setup:                           dircolors invocation.
+* color, distinguishing file types with: General output formatting.
+* COLUMNS:                               General output formatting.
+* commas, outputting between files:      General output formatting.
+* comments, in dates:                    General date syntax.
+* common options:                        Common options.
+* conditional executability:             Conditional Executability.
+* conv:                                  dd invocation.
+* converstion block size:                dd invocation.
+* converting while copying a file:       dd invocation.
+* copying directories recursively:       cp invocation.
+* copying existing permissions:          Copying Permissions.
+* copying files and directories:         cp invocation.
+* copying files and setting attributes:  install invocation.
+* count:                                 dd invocation.
+* cp:                                    cp invocation.
+* crashes and corruption:                sync invocation.
+* creating directories:                  mkdir invocation.
+* creating FIFOs (named pipes):          mkfifo invocation.
+* creating links (hard or soft):         ln invocation.
+* csh syntax for color setup:            dircolors invocation.
+* ctime, sorting by:                     Sorting the output.
+* database for color setup, printing:    dircolors invocation.
+* date format, ISO 8601:                 Calendar date item.
+* date input formats:                    Date input formats.
+* day in date strings:                   Relative item in date strings.
+* day of week item:                      Day of week item.
+* daylight savings time:                 Timezone item.
+* dd:                                    dd invocation.
+* dereferencing symbolic links:          ln invocation.
+* device file, disk:                     df invocation.
+* df:                                    df invocation.
+* dir:                                   dir invocation.
+* dircolors:                             dircolors invocation.
+* directories, copying:                  cp invocation.
+* directories, copying recursively:      cp invocation.
+* directories, creating:                 mkdir invocation.
+* directories, creating with given attributes: install invocation.
+* directories, removing (recursively):   rm invocation.
+* directories, removing empty:           rmdir invocation.
+* directories, removing with unlink:     rm invocation.
+* directory listing:                     ls invocation.
+* directory listing, brief:              dir invocation.
+* directory listing, recursive:          Which files are listed.
+* directory listing, verbose:            vdir invocation.
+* directory order, listing by:           Sorting the output.
+* dired Emacs mode support:              What information is listed.
+* disk device file:                      df invocation.
+* disk usage:                            Disk usage.
+* disk usage by filesystem:              df invocation.
+* disk usage for files:                  du invocation.
+* diskette filesystem:                   df invocation.
+* displacement of dates:                 Relative item in date strings.
+* DOS filesystem:                        df invocation.
+* du:                                    du invocation.
+* East Australian Standard Time:         Timezone item.
+* Eastern European Time:                 Timezone item.
+* Eastern Standard Time:                 Timezone item.
+* ebcdic, converting to:                 dd invocation.
+* efs filesystem type:                   df invocation.
+* empty files, creating:                 touch invocation.
+* epoch, for Unix:                       Date input formats.
+* error messages, omitting <1>:          chmod invocation.
+* error messages, omitting <2>:          chgrp invocation.
+* error messages, omitting:              chown invocation.
+* executables and file type, marking:    General output formatting.
+* execute permission:                    Mode Structure.
+* execute permission, symbolic:          Setting Permissions.
+* existing backup method:                Backup options.
+* extension, sorting files by:           Sorting the output.
+* FIFOs, creating:                       mkfifo invocation.
+* file attributes, changing:             Changing file attributes.
+* file information, preserving:          cp invocation.
+* file ownership, changing:              chown invocation.
+* file permissions:                      File permissions.
+* file permissions, numeric:             Numeric Modes.
+* file space usage:                      du invocation.
+* file timestamps, changing:             touch invocation.
+* file type and executables, marking:    General output formatting.
+* file type, marking:                    General output formatting.
+* file types:                            Special file types.
+* file types, special:                   Special file types.
+* file utilities:                        Top.
+* files beginning with -, removing:      rm invocation.
+* files, copying:                        cp invocation.
+* filesystem disk usage:                 df invocation.
+* filesystem space, retrieving current data more slowly: df invocation.
+* filesystem space, retrieving old data more quickly: df invocation.
+* filesystem types, limiting output to certain: df invocation.
+* filesystem types, printing:            df invocation.
+* filesystems and hard links:            ln invocation.
+* filesystems, omitting copying to different: cp invocation.
+* first in date strings:                 General date syntax.
+* fortnight in date strings:             Relative item in date strings.
+* French Winter Time:                    Timezone item.
+* fsck:                                  rm invocation.
+* general date syntax:                   General date syntax.
+* getdate:                               Date input formats.
+* giving away permissions:               Umask and Protection.
+* grand total of disk space:             du invocation.
+* Greenwich Mean Time:                   Timezone item.
+* group owner, default:                  Mode Structure.
+* group ownership of installed files, setting: install invocation.
+* group ownership, changing:             chgrp invocation.
+* group ownerships, changing:            chown invocation.
+* group, permissions for:                Setting Permissions.
+* Guam Standard Time:                    Timezone item.
+* hard links to directories:             ln invocation.
+* hard links, counting in du:            du invocation.
+* hard links, creating:                  ln invocation.
+* hard links, preserving:                cp invocation.
+* Hawaii Standard Time:                  Timezone item.
+* help, online:                          Common options.
+* High Sierra filesystem:                df invocation.
+* history:                               Introduction.
+* holes, copying files with:             cp invocation.
+* horizontal, listing files:             General output formatting.
+* hour in date strings:                  Relative item in date strings.
+* hsfs filesystem type:                  df invocation.
+* human-readable df output <1>:          du invocation.
+* human-readable df output:              df invocation.
+* ibs:                                   dd invocation.
+* if:                                    dd invocation.
+* ignore filesystems:                    df invocation.
+* inode number, printing:                What information is listed.
+* inode usage:                           df invocation.
+* inodes, written buffered:              sync invocation.
+* input block size:                      dd invocation.
+* install:                               install invocation.
+* International Date Line East:          Timezone item.
+* International Date Line West:          Timezone item.
+* introduction:                          Introduction.
+* ISO 8601 date format:                  Calendar date item.
+* items in date strings:                 General date syntax.
+* Japan Standard Time:                   Timezone item.
+* kilobytes for filesystem sizes:        df invocation.
+* last DAY:                              Day of week item.
+* last in date strings:                  General date syntax.
+* lcase, converting to:                  dd invocation.
+* lchown <1>:                            chgrp invocation.
+* lchown:                                chown invocation.
+* leading directories, creating missing: install invocation.
+* links, creating:                       ln invocation.
+* Linux filesystem types:                df invocation.
+* ln:                                    ln invocation.
+* local filesystem types:                df invocation.
+* long ls format:                        What information is listed.
+* ls:                                    ls invocation.
+* LS_COLORS:                             dircolors invocation.
+* MacKenzie, David:                      Authors of getdate.
+* Makefiles, installing programs in:     install invocation.
+* manipulating files:                    Basic operations.
+* megabytes for filesystem sizes <1>:    du invocation.
+* megabytes for filesystem sizes:        df invocation.
+* Meyering, Jim:                         Authors of getdate.
+* Middle European Time:                  Timezone item.
+* Middle European Winter Time:           Timezone item.
+* midnight in date strings:              Time of day item.
+* minute in date strings:                Relative item in date strings.
+* minutes, timezone correction by:       Time of day item.
+* mkdir:                                 mkdir invocation.
+* mkfifo:                                mkfifo invocation.
+* mknod:                                 mknod invocation.
+* modes and umask:                       Umask and Protection.
+* modes of created directories, setting: mkdir invocation.
+* modes of created FIFOs, setting:       mkfifo invocation.
+* modification time, sorting files by:   Sorting the output.
+* modify time, changing:                 touch invocation.
+* month in date strings:                 Relative item in date strings.
+* month names in date strings:           Calendar date item.
+* months, written-out:                   General date syntax.
+* Mountain Standard Time:                Timezone item.
+* MS-DOS filesystem:                     df invocation.
+* mtime, changing:                       touch invocation.
+* multiple changes to permissions:       Multiple Changes.
+* multipliers after numbers:             dd invocation.
+* mv:                                    mv invocation.
+* named pipes, creating:                 mkfifo invocation.
+* New Zealand Standard Time:             Timezone item.
+* newer files, copying only:             cp invocation.
+* newer files, moving only:              mv invocation.
+* next DAY:                              Day of week item.
+* next in date strings:                  General date syntax.
+* NFS filesystem type:                   df invocation.
+* NFS mounts from BSD to HP-UX <1>:      du invocation.
+* NFS mounts from BSD to HP-UX:          What information is listed.
+* noerror:                               dd invocation.
+* Nome Standard Time:                    Timezone item.
+* non-directories, copying as special files: cp invocation.
+* none color option:                     General output formatting.
+* none, sorting option for ls:           Sorting the output.
+* noon in date strings:                  Time of day item.
+* notrunc:                               dd invocation.
+* now in date strings:                   Relative item in date strings.
+* numbered backup method:                Backup options.
+* numbers, written-out:                  General date syntax.
+* numeric modes:                         Numeric Modes.
+* numeric uid and gid:                   General output formatting.
+* obs:                                   dd invocation.
+* octal numbers for file modes:          Numeric Modes.
+* of:                                    dd invocation.
+* one filesystem, restricting du to:     du invocation.
+* one-line output format:                df invocation.
+* ordinal numbers:                       General date syntax.
+* other permissions:                     Setting Permissions.
+* output block size:                     dd invocation.
+* output format, portable:               df invocation.
+* owner of file, permissions for:        Setting Permissions.
+* owner, default:                        Mode Structure.
+* ownership of installed files, setting: install invocation.
+* p for FIFO file:                       mknod invocation.
+* Pacific Standard Time:                 Timezone item.
+* parent directories and cp:             cp invocation.
+* parent directories, creating:          mkdir invocation.
+* parent directories, creating missing:  install invocation.
+* parent directories, removing:          rmdir invocation.
+* PC filesystem:                         df invocation.
+* pcfs:                                  df invocation.
+* permissions of files:                  File permissions.
+* permissions of installed files, setting: install invocation.
+* permissions, changing access:          chmod invocation.
+* permissions, copying existing:         Copying Permissions.
+* permissions, for changing file timestamps: touch invocation.
+* permissions, output by ls:             What information is listed.
+* Pinard, F.:                            Authors of getdate.
+* pm in date strings:                    Time of day item.
+* portable output format:                df invocation.
+* POSIX output format:                   df invocation.
+* POSIX.2:                               Introduction.
+* POSIXLY_CORRECT:                       df invocation.
+* POSIXLY_CORRECT, overridden by df -k:  df invocation.
+* POSIXLY_CORRECT, overridden by du -k:  du invocation.
+* POSIXLY_CORRECT, overridden by ls -k:  General output formatting.
+* POSIXLY_CORRECT, overrides ls -s:      What information is listed.
+* printing color database:               dircolors invocation.
+* prompting, and ln:                     ln invocation.
+* prompting, and mv:                     mv invocation.
+* prompting, and rm:                     rm invocation.
+* prompts, forcing:                      mv invocation.
+* prompts, omitting:                     mv invocation.
+* pure numbers in date strings:          Pure numbers in date strings.
+* read errors, ignoring:                 dd invocation.
+* read permission:                       Mode Structure.
+* read permission, symbolic:             Setting Permissions.
+* read system call, and holes:           cp invocation.
+* recursive directory listing:           Which files are listed.
+* recursively changing access permissions: chmod invocation.
+* recursively changing file ownership:   chown invocation.
+* recursively changing group ownership:  chgrp invocation.
+* recursively copying directories:       cp invocation.
+* relative items in date strings:        Relative item in date strings.
+* removing empty directories:            rmdir invocation.
+* removing files or directories:         rm invocation.
+* removing permissions:                  Setting Permissions.
+* reverse sorting:                       Sorting the output.
+* rm:                                    rm invocation.
+* rmdir:                                 rmdir invocation.
+* root as default owner:                 install invocation.
+* Salz, Rich:                            Authors of getdate.
+* seek:                                  dd invocation.
+* self-backups:                          cp invocation.
+* setgid:                                Mode Structure.
+* setting permissions:                   Setting Permissions.
+* setuid:                                Mode Structure.
+* setup for color:                       dircolors invocation.
+* sh syntax for color setup:             dircolors invocation.
+* SHELL environment variable, and color: dircolors invocation.
+* simple backup method:                  Backup options.
+* SIMPLE_BACKUP_SUFFIX:                  Backup options.
+* single-column output of files:         General output formatting.
+* size of files, reporting:              What information is listed.
+* size of files, sorting files by:       Sorting the output.
+* skip:                                  dd invocation.
+* sorting ls output:                     Sorting the output.
+* sparse files, copying:                 cp invocation.
+* special file types:                    Special file types.
+* special files:                         mknod invocation.
+* status time, sorting by:               Sorting the output.
+* sticky:                                Mode Structure.
+* stripping symbol table information:    install invocation.
+* subtracting permissions:               Setting Permissions.
+* superblock, writing:                   sync invocation.
+* swab (byte-swapping):                  dd invocation.
+* swap space, saving text image in:      Mode Structure.
+* Swedish Winter Time:                   Timezone item.
+* symbol table information, stripping:   install invocation.
+* symbolic (soft) links, creating:       ln invocation.
+* symbolic links, changing group:        chgrp invocation.
+* symbolic links, changing owner:        chown invocation.
+* symbolic links, copying:               cp invocation.
+* symbolic links, copying with:          cp invocation.
+* symbolic links, dereferencing:         Which files are listed.
+* symbolic links, permissions of:        chmod invocation.
+* symbolic modes:                        Symbolic Modes.
+* sync:                                  sync invocation.
+* sync (padding with nulls):             dd invocation.
+* synchronize disk and memory:           sync invocation.
+* terminal, using color iff:             General output formatting.
+* text image, saving in swap space:      Mode Structure.
+* this in date strings:                  Relative item in date strings.
+* time:                                  touch invocation.
+* time of day item:                      Time of day item.
+* timestamps, changing file:             touch invocation.
+* timezone correction:                   Time of day item.
+* timezone item:                         Timezone item.
+* today in date strings:                 Relative item in date strings.
+* tomorrow in date strings:              Relative item in date strings.
+* touch:                                 touch invocation.
+* truncating output file, avoiding:      dd invocation.
+* u for unbuffered character special file: mknod invocation.
+* ucase, converting to:                  dd invocation.
+* ufs filesystem type:                   df invocation.
+* umask and modes:                       Umask and Protection.
+* unblock:                               dd invocation.
+* unbuffered character special file:     mknod invocation.
+* Universal Coordinated Time:            Timezone item.
+* unlink:                                rm invocation.
+* unsorted directory listing:            Sorting the output.
+* use time, changing:                    touch invocation.
+* use time, sorting files by:            Sorting the output.
+* USSR Zone:                             Timezone item.
+* utilities for file handling:           Top.
+* vdir:                                  vdir invocation.
+* verbose ls format:                     What information is listed.
+* version number, finding:               Common options.
+* version-control Emacs variable:        Backup options.
+* VERSION_CONTROL:                       Backup options.
+* vertical sorted files in columns:      General output formatting.
+* week in date strings:                  Relative item in date strings.
+* West African Time:                     Timezone item.
+* West Australian Standard Time:         Timezone item.
+* Western European Time:                 Timezone item.
+* write permission:                      Mode Structure.
+* write permission, symbolic:            Setting Permissions.
+* year in date strings:                  Relative item in date strings.
+* yesterday in date strings:             Relative item in date strings.
+* Yukon Standard Time:                   Timezone item.
+
+
+
+Tag Table:
+Node: Top2475
+Node: Introduction3200
+Node: Common options4392
+Node: Backup options4964
+Node: File permissions6561
+Node: Mode Structure7148
+Node: Symbolic Modes9281
+Node: Setting Permissions10284
+Node: Copying Permissions12826
+Node: Changing Special Permissions13615
+Node: Conditional Executability15456
+Node: Multiple Changes16078
+Node: Umask and Protection17731
+Node: Numeric Modes18825
+Node: Date input formats20660
+Node: General date syntax23115
+Node: Calendar date item24566
+Node: Time of day item26521
+Node: Timezone item28129
+Node: Day of week item31420
+Node: Relative item in date strings32404
+Node: Pure numbers in date strings34335
+Node: Authors of getdate35319
+Node: Directory listing36056
+Node: ls invocation36534
+Node: Which files are listed37974
+Node: What information is listed39236
+Node: Sorting the output42973
+Node: General output formatting44749
+Node: Formatting the file names47707
+Node: dir invocation48360
+Node: vdir invocation48715
+Node: dircolors invocation49037
+Node: Basic operations50422
+Node: cp invocation50979
+Node: dd invocation56193
+Node: install invocation58675
+Node: mv invocation61462
+Node: rm invocation63475
+Node: Special file types65328
+Node: ln invocation66612
+Node: mkdir invocation70342
+Node: mkfifo invocation71465
+Node: mknod invocation72359
+Node: rmdir invocation73915
+Node: Changing file attributes74541
+Node: chown invocation75352
+Node: chgrp invocation77261
+Node: chmod invocation78269
+Node: touch invocation79586
+Node: Disk usage81213
+Node: df invocation81826
+Node: du invocation86174
+Node: sync invocation88663
+Node: Index89484
+
+End Tag Table

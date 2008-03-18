@@ -1,0 +1,34 @@
+#    SAM-QFS_notice_begin
+#
+#      Solaris 2.x Sun Storage & Archiving Management File System
+#
+#      Copyright (c) 2007 Sun Microsystems, Inc.
+#      All Rights Reserved.
+#
+#      Government Rights Notice
+#      Use, duplication, or disclosure by the U.S. Government is
+#      subject to restrictions set forth in the Sun Microsystems,
+#      Inc. license agreements and as provided in DFARS 227.7202-1(a)
+#      and 227.7202-3(a) (1995), DRAS 252.227-7013(c)(ii) (OCT 1988),
+#      FAR 12.212(a)(1995), FAR 52.227-19, or FAR 52.227-14 (ALT III),
+#      as applicable.  Sun Microsystems, Inc.
+#
+#    SAM-QFS_notice_end
+
+SRCS = samrpc.c samfs_clnt.c sam_attrtoa.c
+
+INCLUDE = /opt/SUNWsamfs/include
+CFLAGS = -I${INCLUDE}
+
+LIBOBJS = ${SRCS:.c=.o} ../xdr/sam_xdr.o
+
+all: libsamrpc.a .WAIT libsamrpc.so
+
+libsamrpc.a: ${LIBOBJS}
+	@ar ruc libsamrpc.a ${LIBOBJS}
+
+libsamrpc.so: ${LIBOBJS}
+	@${CC} -G -o libsamrpc.so ${LIBOBJS}
+
+clean:
+	@-rm -f *.o *.a *.so *~ *.bak *.ln

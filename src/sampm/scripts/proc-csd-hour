@@ -1,0 +1,170 @@
+#! /bin/csh
+#
+# $Revision: 1.5 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+################################################################################
+#
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.  No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)   operation of any of the software script(s) shall be
+#       uninterrupted or error free, or
+#
+# (ii)  functions contained in the software script(s) shall operate
+#       in the combinations which may be selected for use by
+#       Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#       issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+################################################################################
+#
+# Synopsis: proc-csd-hour	Script to take samfsdumps on an hourly basis
+#							Dumps are deposited into the csd directory
+#							csd - control store data
+#
+#	For each active samfs file system, this script will take a samfsdump of
+#	the file system. This script is controlled by an entry in the crontab;
+#	thus the specific time that this script is invoked can be modified to
+#	conform to site specific requirements.
+#
+#	This script will save 12 hours of dumps per filesystem into the UFS
+#	file system's designated control storage directory. During the busy
+#	part of the day it will take a dump every hour and at non peak hours
+#	it takes one every 3 hours for a total of 12 dumps per day.
+#
+#   This script currently uses the /etc/vfstab to find the samfs file
+#   systems to dump. If the file system is commented out in this file
+#   we skip taking any dumps of the file system. Also, if any errors occur
+#	during the dump of the file system, they will be captured in the message
+#   file for the file system in the associated hour file.
+#
+################################################################################
+#
+# When            Who           Comments
+# ----            ---           --------
+# 2003            dcrouse       Initial Version
+# July 1st,  2004 jleach        Included PS Header & changes to support common
+#                               source'd in site-tools-PARAMS
+# July 23rd, 2004 jdp           Cleaning up to run with the new SAMPM package
+##############################################################################
+#
+#	Obtain the site specific parameters
+#
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+set year=`date +%Y`
+set month=`date +%b`
+set day=`date +%d`
+set num = 0
+set fs = 0
+set dir = 0
+set fstmp = 1
+set comment = "#"
+#
+#    Make sure the csd tree is correct in the ufs file system
+#
+if ( ! -d $UFS_PATH/csd ) then
+        mkdir  $UFS_PATH/csd
+        chmod 775 $UFS_PATH/csd
+endif
+#
+#
+#
+echo   Start of hourly samfs file systems samdumps
+#
+#       make list of file system names
+#
+set fspar = (`grep  "samfs" /etc/vfstab | awk '{print $1}'`)
+
+foreach dir (`grep "samfs" /etc/vfstab | awk '{print $3}'`)
+	@ num++
+	set fs = ($fspar[$num])
+	set fstmp = `echo $fs | cut -c1`
+#	echo $fstmp
+	if ($fstmp == $comment) then
+		set fs = `echo $fs | cut -f2 -d'#'`
+		echo File system $fs is commented out in /etc/vfstab, skipping
+		continue
+	endif
+#	echo $fs
+#	echo $dir
+#
+#       Save  inodes every hour in UFS on this host
+#
+#
+	cd $UFS_PATH/csd
+	mv -f "$fs"_cycle_10.Z "$fs"_cycle_11.Z >& /dev/null
+	mv -f "$fs"_message_10 "$fs"_message_11 >& /dev/null
+	mv -f "$fs"_cycle_9.Z  "$fs"_cycle_10.Z >& /dev/null
+	mv -f "$fs"_message_9 "$fs"_message_10 >& /dev/null
+	mv -f "$fs"_cycle_8.Z  "$fs"_cycle_9.Z >& /dev/null
+	mv -f "$fs"_message_8  "$fs"_message_9 >& /dev/null
+	mv -f "$fs"_cycle_7.Z  "$fs"_cycle_8.Z >& /dev/null
+	mv -f "$fs"_message_7  "$fs"_message_8 >& /dev/null
+	mv -f "$fs"_cycle_6.Z  "$fs"_cycle_7.Z >& /dev/null
+	mv -f "$fs"_message_6  "$fs"_message_7 >& /dev/null
+	mv -f "$fs"_cycle_5.Z  "$fs"_cycle_6.Z >& /dev/null
+	mv -f "$fs"_message_5  "$fs"_message_6 >& /dev/null
+	mv -f "$fs"_cycle_4.Z  "$fs"_cycle_5.Z >& /dev/null
+	mv -f "$fs"_message_4  "$fs"_message_5 >& /dev/null
+	mv -f "$fs"_cycle_3.Z  "$fs"_cycle_4.Z >& /dev/null
+	mv -f "$fs"_message_3  "$fs"_message_4 >& /dev/null
+	mv -f "$fs"_cycle_2.Z  "$fs"_cycle_3.Z >& /dev/null
+	mv -f "$fs"_message_2  "$fs"_message_3 >& /dev/null
+	mv -f "$fs"_cycle_1.Z  "$fs"_cycle_2.Z >& /dev/null
+	mv -f "$fs"_message_1  "$fs"_message_2 >& /dev/null
+
+	if ( -f "$fs"_cycle_0 ) then
+		compress "$fs"_cycle_0
+		mv -f "$fs"_cycle_0.Z "$fs"_cycle_1.Z >& /dev/null
+		mv -f "$fs"_message_0  "$fs"_message_1 >& /dev/null
+	endif
+#
+#   Take the csd for $dir directory
+#
+	cd "$dir"
+	echo   Take a samfsdump of "$dir" file system
+
+	## JL $SAM_SBIN/samfsdump  -f "$UFS_PATH"/csd/"$fs"_cycle_0 >& /sam/file
+	## jdp $SAM_SBIN/samfsdump  -f "$UFS_PATH"/csd/"$fs"_cycle_0 >& /$SAM_BASEDIR/file
+	$SAM_SBIN/samfsdump  -f "$UFS_PATH"/csd/"$fs"_cycle_0 >& "$UFS_PATH"/csd/"$fs"_message_0
+
+end
+
+exit 0

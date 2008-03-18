@@ -1,0 +1,191 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_devstat 3 "05 Nov 2001"
+.SH NAME
+sam_devstat, sam_ndevstat \- Gets device status
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsam [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/devstat.h"
+.ft
+.fi
+.LP
+.BI "int sam_devstat(ushort_t " "eq" ,
+.BI "struct sam_devstat *" "buf" ,
+.BI "size_t " "bufsize" );
+.LP
+.BI "int sam_ndevstat(ushort_t " "eq" ,
+.BI "struct sam_ndevstat *" "buf" ,
+.BI "size_t " "bufsize" );
+.SH DESCRIPTION
+.B sam_devstat(\|) and sam_ndevstat(\|)
+obtain information about the device identified by the equipment number,
+.IR eq .
+.PP
+.I buf
+is a pointer to a
+.B sam_devstat(\|) or sam_ndevstat(\|)
+structure into which information
+is placed concerning the device.
+.PP
+.I bufsize
+is the length of the user's buffer to which
+.I buf   
+points.  This should be equal to or greater
+than \fBsizeof(struct sam_devstat)\fR
+or \fBsizeof(struct sam_ndevstat)\fR.
+.PP
+The contents of the structure pointed to by
+.I buf
+include the following members for 
+.B sam_devstat(\|)
+:
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+u_short	type;	/\(** Media type \(**/
+char	name[32];	/\(** Device name \(**/
+char	vsn[32];	/\(** VSN of mounted volume, 31 characters \(**/
+dstate_t	state;	/\(** State - on/ro/idle/off/down \(**/
+uint_t	status;	/\(** Device status \(**/
+uint_t	space;	/\(** Space left on device \(**/
+uint_t	capacity;	/\(** Capacity in blocks \(**/
+
+.ft 1
+.fi
+.RE
+The contents of the structure pointed to by
+.I buf
+include the following members for 
+.B sam_ndevstat(\|)
+:
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+u_short	type;	/\(** Media type \(**/
+char	name[128];	/\(** Device name \(**/
+char	vsn[32];	/\(** VSN of mounted volume, 31 characters \(**/
+dstate_t	state;	/\(** State - on/ro/idle/off/down \(**/
+uint_t	status;	/\(** Device status \(**/
+uint_t	space;	/\(** Space left on device \(**/
+uint_t	capacity;	/\(** Capacity in blocks \(**/
+
+.ft 1
+.fi
+.RE
+.PP
+.TP 10
+.B type
+The type of the media.  Masks for interpreting media type are defined in
+devstat.h.
+.TP
+.B name
+The name of the device, such as \fB/dev/rmt/3cbn\fR.
+.TP
+.B vsn
+The VSN of the mounted volume, if any.  This is a \%null-terminated string with
+a maximum of 31 characters.
+.TP
+.B state
+The state of the device.  This field is an enumerated type defined in devstat.h.
+.TP
+.B status
+The status of the device.  Status bits are defined in the file devstat.h.  Also,
+the library routine
+.BR sam_devstr (3)
+is available to translate the numeric status field into a character string as
+displayed in the Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS graphical user interfaces
+and in the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS administrative tool
+.BR samu (1M).
+.TP
+.B space
+The space left on the device, in blocks.
+.TP
+.B capacity
+The capacity of the device, in blocks.
+.SH "RETURN VALUES"
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_devstat(\|) or sam_ndevsat(\|)
+fail if one or more of the following are true:
+.TP 20
+.SB ENODEV
+The equipment number supplied is not a valid number, or no device is
+configured with that equipment number.
+.TP
+.SB EACCES
+The program does not have permission to access the
+Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+shared memory segment.
+.TP
+.SB EINVAL
+The size of the Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS shared memory segment is incorrect.
+You may need to recompile your program with the current version of
+the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS software.
+.TP
+.SB ENOENT
+Access to the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+shared memory segment has failed;
+possibly Sun StorEdge \%SAM-FS or Sun \%SAM-QFS is not running.
+.TP
+.SB EMFILE
+The Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS shared memory segment could not be accessed
+because the number
+of shared memory segments attached to the calling process would exceed the
+\%system-imposed limit.
+.TP
+.SB ENOMEM
+The available data space is not large enough to accommodate access to the
+Sun StorEdge \%SAM-FS or Sun \%SAM-QFS shared memory segment.
+.TP
+.SB E2BIG
+For 
+.B sam_devstat(\|)
+only.  The name field of the device was too long
+to fit in the name field of the \fBsam_dev\fR structure.  Use 
+.B sam_ndevstat(\|).
+.SH "SEE ALSO"
+.BR samu (1M).
+.PP
+.BR sam_devstr (3).

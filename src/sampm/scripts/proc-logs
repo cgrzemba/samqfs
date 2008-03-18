@@ -1,0 +1,234 @@
+#!/bin/csh
+#
+# $Revision: 1.5 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#################################################################################
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.  No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)   operation of any of the software script(s) shall be
+#       uninterrupted or error free, or
+#
+# (ii)  functions contained in the software script(s) shall operate
+#       in the combinations which may be selected for use by
+#       Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#       issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+################################################################################
+#
+# Synopsis: proc-logs	Script to save off system files & maintain a long
+#			history of logs from the system at certain intervals based on
+#			on the cron tab entry when this script is run
+#
+#	This script will pull the different logs listed below into a tmp directory
+#	and then tar them up and compress them. The tar compressed file is then
+#	saved to samfs file system that contains the csd directory. The files
+#	are saved in the csd/year/month directory and the file contains the day
+#	the logs were gathered. Thus it is easy to identify the information from
+#	a specfic date.
+#
+#	The information that is pulled is the following:
+#
+#		- archiver log file. The script access the archiver.cmd file to
+#		pull for the name of the archivers log file. The file is moved
+#		from its location to the tmp directory. Thus the file is non-existent
+#		at this point. Archiver must recreate this file for writing any
+#		new log entries.  (NOTE) this script will only support one global
+#		logfile. It is not set up to support one log file per file system.
+#
+#		- devlog log files. The script will go to the /var/opt/SUNWsamfs/devlog
+#		directory and move all log files for each device to the tmp directory.
+#		Thus there are no log files left in this directory after this script
+#		is run. The device code must recreate the device logs when it logs
+#		any new entries after this script is run.
+#
+#		- The system activity reporter is run to gather the activities
+#		of the system to this point. The output from sar is captured in
+#		the tmp directory. The sar program must be activated in order to
+#		obtain any information. It is set up during the initial setup to
+#		run, thus information should be obtained.
+#
+#		- robots catalog log file. The script will obtain the configured
+#		robot's log file from the path and file name specified in the
+#		site-tools-PARAMS file. The varaible CATALOG and ROBOT must be set
+#		to the directory and filename of where the catalog's log file is
+#		kept. This file is only copied to the tmp directory.
+#
+#		- The output from the archiver command is captured to the tmp
+#		directory. This gives information about the archiver.
+#
+#		- A copy of the /var/adm/messages file is captured in the tmp
+#		directory
+#
+#		- A copy of the /var/adm/sam-log file is captured in the tmp directory
+#
+#		Once all the above information is captured in the tmp directory, the
+#		script will tar up the information and then compress it. Once this
+#		is done the tar.Z file is moved to the correct csd/year/month
+#		directory so that it can be saved on tape.
+#
+################################################################################
+# Change history (most recent first)
+#
+# When            Who           Comments
+# ----            ---           --------
+# 2003            dcrouse       Initial Version
+# July 1st, 2004 jleach         Included PS Header & changes to support common
+#                               source'd in site-tools-PARAMS
+# July 30th, 2004 jdp           Clean up for installing into sampm package
+##############################################################################
+#
+
+# READ in the common site-tools parameters
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+
+set SAM_MNT = `mount | grep $SAM_BASEDIR`
+if ( X$SAM_MNT = X ) then
+
+	/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+
+The SAM-FS file system - $SAM_BASEDIR - is not mounted. Unable to save
+log files until file system is mounted.
+EOF
+	exit 1
+endif
+
+set year=`date +%Y`
+set month=`date +%b`
+set day=`date +%d`
+
+#
+#    Make sure the tmp tree is correct for "SAM" logs and its empty
+#
+if ( ! -d $TMP_DIR ) then
+      mkdir $TMP_DIR
+      chmod 775 $TMP_DIR
+else
+	\rm ${TMP_DIR}/*
+endif
+#
+#	make sure the sam tree is ready
+#
+if ( ! -d $SAM_PATH ) then
+      mkdir  $SAM_PATH
+      chmod 775 $SAM_PATH
+endif
+if ( ! -d $SAM_PATH/$year ) then
+      mkdir  $SAM_PATH/$year
+      chmod 775 $SAM_PATH/$year
+endif
+if ( ! -d $SAM_PATH/$year/$month ) then
+      mkdir  $SAM_PATH/$year/$month
+      chmod 775 $SAM_PATH/$year/$month
+endif
+#
+#	move files to temp files
+#
+if ( -e $SAM_ETC/archiver.cmd ) then
+	set ARCHIVE_LOG = `grep logfile $SAM_ETC/archiver.cmd | cut -f2 -d=`
+	if (X$ARCHIVE_LOG != X) then
+		set LOG_NAME = `basename $ARCHIVE_LOG`
+		set LOG_DIR = `dirname $ARCHIVE_LOG`
+		mv -f $LOG_DIR/$LOG_NAME  $TMP_DIR/tmp.$LOG_NAME
+    endif
+endif
+
+if ( -e $SAM_ETC/stager.cmd ) then
+	set STAGER_LOG + `grep logfile $SAM_ETC/stager.cmd | cut -f2 -d=`
+	if (X$STAGER_LOG != X) then
+		set LOG_NAME = `basename $STAGER_LOG`
+		set LOG_DIR = `dirname $STAGER_LOG`
+		mv -f $LOG_DIR/$LOG_NAME  $TMP_DIR/tmp.$LOG_NAME
+	endif
+endif
+
+#
+#     Move to take devlog's
+#
+cd $DEVLOG
+foreach DEV_FILE (`ls $DEVLOG`)
+	mv -f $DEV_FILE $TMP_DIR/devlog_eq${DEV_FILE}_day$day
+end
+#
+#	Wait for things to restart on new files
+#
+sleep   60
+#
+#	Move to /tmp/logs to tar up the day and compress
+#
+sar		>				   $TMP_DIR/sar_results_day$day
+/usr/platform/`uname -i`/sbin/prtdiag -v >  $TMP_DIR/prtdiag_results_day$day
+cp $CATALOG$ROBOT                  $TMP_DIR/catalog_day$day
+archiver -A >                      $TMP_DIR/vsn_media_report_day$day
+#
+cp /var/adm/messages         $TMP_DIR/messages_day$day
+cp /var/adm/sam-log          $TMP_DIR/sam-log_day$day
+#
+#	Move to "SAM" for safe keeping
+#
+#cp $TMP_DIR/sar_results_day$day  $SAM_PATH/$year/$month/sar_results_day$day
+#cp $TMP_DIR/prtdiag_results_day$day $SAM_PATH/$year/$month/prtdiag_results_day$day
+#cp $TMP_DIR/vsn_media_report_day$day $SAM_PATH/$year/$month/vsn_media_report_day$day
+#cp $TMP_DIR/catalog_day$day $SAM_PATH/$year/$month/catalog_day$day
+#cp $TMP_DIR/archive.log_day$day $SAM_PATH/$year/$month/archive.log_day$day
+#cp /var/adm/messages $SAM_PATH/$year/$month/messages_day$day
+#cp /var/adm/sam-log $SAM_PATH/$year/$month/sam-log_day$day
+
+##############################################################################
+#
+#	build tar file to transmit and remove extra files
+#
+cd $TMP_DIR
+tar cvf logs.tar  *$day
+compress logs.tar
+mv logs.tar.Z $SAM_PATH/$year/$month/logs-$month$day.tar.Z
+
+#
+#       Now send the compressed tar ball of logs to ODS
+#
+#ftp -nvd  gatekeeper << EOF
+#user conoco@ovationdata.com sexisfun
+#binary on
+#put logs.tar.Z  binary_log-$month$day
+#quit
+#EOF
+
+exit 0

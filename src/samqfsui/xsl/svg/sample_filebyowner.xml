@@ -1,0 +1,83 @@
+<?xml version='1.0'?> 
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: sample_filebyowner.xml,v 1.8 2008/03/17 14:44:04 am143972 Exp $ -->
+
+<MetricReport name="Top10Users" isSample="true">
+<filesystem name="samfs1">
+<date val="1162818000">
+<id val="0"><name>root</name><numFiles>665718</numFiles><numBytes>41717953</numBytes><numOnlineBytes>41717953</numOnlineBytes></id>
+<id val="111111"><name>joe</name><numFiles>213844</numFiles><numBytes>320719763928</numBytes><numOnlineBytes>320719763928</numOnlineBytes></id>
+<id val="142663"><name>frank</name><numFiles>240707</numFiles><numBytes>116865948556</numBytes><numOnlineBytes>116865948556</numOnlineBytes></id>
+<id val="120940"><name>jack</name><numFiles>449207</numFiles><numBytes>15789111</numBytes><numOnlineBytes>15789111</numOnlineBytes></id>
+<id val="222222"><name>sue</name><numFiles>160306</numFiles><numBytes>5672545</numBytes><numOnlineBytes>5672545</numOnlineBytes></id>
+<id val="333333"><name>greg</name><numFiles>90869</numFiles><numBytes>5123493</numBytes><numOnlineBytes>5123493</numOnlineBytes></id>
+<id val="121282"><name>tom</name><numFiles>69488</numFiles><numBytes>4771240</numBytes><numOnlineBytes>4771240</numOnlineBytes></id>
+<id val="125738"><name>bill</name><numFiles>98775</numFiles><numBytes>4436752</numBytes><numOnlineBytes>4436752</numOnlineBytes></id>
+<id val="125177"><name>john</name><numFiles>85247</numFiles><numBytes>4400443</numBytes><numOnlineBytes>4400443</numOnlineBytes></id>
+<id val="444444"><name>mary</name><numFiles>81848</numFiles><numBytes>3745548</numBytes><numOnlineBytes>3745548</numOnlineBytes></id>
+</date>
+<date val="1162731600">
+<id val="0"><name>root</name><numFiles>665718</numFiles><numBytes>41717953</numBytes><numOnlineBytes>41717953</numOnlineBytes></id>
+<id val="111111"><name>joe</name><numFiles>213844</numFiles><numBytes>392719763928</numBytes><numOnlineBytes>392719763928</numOnlineBytes></id>
+<id val="142663"><name>frank</name><numFiles>240707</numFiles><numBytes>116865948556</numBytes><numOnlineBytes>116865948556</numOnlineBytes></id>
+<id val="120940"><name>jack</name><numFiles>449207</numFiles><numBytes>15789111</numBytes><numOnlineBytes>15789111</numOnlineBytes></id>
+<id val="222222"><name>sue</name><numFiles>160306</numFiles><numBytes>5672545</numBytes><numOnlineBytes>5672545</numOnlineBytes></id>
+<id val="333333"><name>greg</name><numFiles>90869</numFiles><numBytes>5123493</numBytes><numOnlineBytes>5123493</numOnlineBytes></id>
+<id val="121282"><name>tom</name><numFiles>69488</numFiles><numBytes>4771240</numBytes><numOnlineBytes>4771240</numOnlineBytes></id>
+<id val="125738"><name>bill</name><numFiles>98775</numFiles><numBytes>4436752</numBytes><numOnlineBytes>4436752</numOnlineBytes></id>
+<id val="125177"><name>john</name><numFiles>85247</numFiles><numBytes>4400443</numBytes><numOnlineBytes>4400443</numOnlineBytes></id>
+<id val="444444"><name>mary</name><numFiles>81848</numFiles><numBytes>3745548</numBytes><numOnlineBytes>3745548</numOnlineBytes></id>
+</date>
+<date val="1162558800">
+<id val="0"><name>root</name><numFiles>665718</numFiles><numBytes>41717953</numBytes><numOnlineBytes>41717953</numOnlineBytes></id>
+<id val="111111"><name>joe</name><numFiles>213844</numFiles><numBytes>3920719763928</numBytes><numOnlineBytes>3920719763928</numOnlineBytes></id>
+<id val="142663"><name>frank</name><numFiles>240707</numFiles><numBytes>116865948556</numBytes><numOnlineBytes>116865948556</numOnlineBytes></id>
+<id val="120940"><name>jack</name><numFiles>4467207</numFiles><numBytes>1588789111</numBytes><numOnlineBytes>1555789111</numOnlineBytes></id>
+<id val="222222"><name>sue</name><numFiles>160306</numFiles><numBytes>5672545</numBytes><numOnlineBytes>5672545</numOnlineBytes></id>
+<id val="333333"><name>greg</name><numFiles>90869</numFiles><numBytes>5123493</numBytes><numOnlineBytes>5123493</numOnlineBytes></id>
+<id val="121282"><name>tom</name><numFiles>69488</numFiles><numBytes>4771240</numBytes><numOnlineBytes>4771240</numOnlineBytes></id>
+<id val="125738"><name>bill</name><numFiles>98775</numFiles><numBytes>4436752</numBytes><numOnlineBytes>4436752</numOnlineBytes></id>
+<id val="125177"><name>john</name><numFiles>85247</numFiles><numBytes>4400443</numBytes><numOnlineBytes>4400443</numOnlineBytes></id>
+<id val="444444"><name>mary</name><numFiles>81848</numFiles><numBytes>3745548</numBytes><numOnlineBytes>3745548</numOnlineBytes></id>
+</date>
+<date val="1162645200">
+<id val="0"><name>root</name><numFiles>665718</numFiles><numBytes>41717953</numBytes><numOnlineBytes>41717953</numOnlineBytes></id>
+<id val="111111"><name>joe</name><numFiles>213844</numFiles><numBytes>3919763928</numBytes><numOnlineBytes>3919763928</numOnlineBytes></id>
+<id val="142663"><name>frank</name><numFiles>240707</numFiles><numBytes>116868556</numBytes><numOnlineBytes>116868556</numOnlineBytes></id>
+<id val="120940"><name>jack</name><numFiles>449207</numFiles><numBytes>15789111</numBytes><numOnlineBytes>15789111</numOnlineBytes></id>
+<id val="222222"><name>sue</name><numFiles>160306</numFiles><numBytes>5672545</numBytes><numOnlineBytes>5672545</numOnlineBytes></id>
+<id val="333333"><name>greg</name><numFiles>90869</numFiles><numBytes>5123493</numBytes><numOnlineBytes>5123493</numOnlineBytes></id>
+<id val="121282"><name>tom</name><numFiles>69488</numFiles><numBytes>477871240</numBytes><numOnlineBytes>477871240</numOnlineBytes></id>
+<id val="125738"><name>bill</name><numFiles>98775</numFiles><numBytes>4436752</numBytes><numOnlineBytes>4436752</numOnlineBytes></id>
+<id val="125177"><name>john</name><numFiles>85247</numFiles><numBytes>4400443</numBytes><numOnlineBytes>4400443</numOnlineBytes></id>
+<id val="444444"><name>mary</name><numFiles>81848</numFiles><numBytes>374511548</numBytes><numOnlineBytes>374551148</numOnlineBytes></id>
+</date>
+</filesystem>
+</MetricReport>
+

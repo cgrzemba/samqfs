@@ -1,0 +1,124 @@
+#!/bin/sh
+# chkconfig: 2345 25 60
+# description: start handled by inittab, stop checks for systems to umount before stopping
+#
+### BEGIN INIT INFO
+# Provides:       samfs.shared
+# Required-Start: $network
+# Required-Stop:
+# X-UnitedLinux-Should-Start:
+# X-UnitedLinux-Should-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop: 0 1 6
+# Description:   umount samfs filesystems when switching to a runlevel without networking.
+### END INIT INFO
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+# $Revision: 1.9 $
+
+#
+# Start/stop processes required for samfs shared file system.
+#
+
+if [ -f /etc/rc.status ]; then
+	. /etc/rc.status
+else
+	function rc_reset () { return; }
+	function rc_status () { return; }
+fi
+
+rc_reset
+case "$1" in
+'start')
+	# make sure stop gets run for reboot/halt
+	touch /var/lock/subsys/samfs.shared
+	rc_status -v
+	;;
+
+'stop')
+	echo -n "Unmounting samfs filesystems: "
+	rm -f /var/lock/subsys/samfs.shared
+	termprocs=1
+	killprocs=1
+	#
+	# Try to kick everyone off the mounted FSes nicely.
+	#
+	exec < /proc/mounts
+	while read dev mountp fstype mode notused dontcare
+	do
+		if [ x"$fstype" != "xsamfs" ]; then
+			continue			# ignore non-QFS FSes
+		fi
+		if [ ${termprocs} ]; then
+			echo fuser -TERM -k $mountp
+			fuser -TERM -k $mountp
+		fi
+	done
+
+	sleep 5
+
+	#
+	# Not so nicely.
+	#
+	exec < /proc/mounts
+	while read dev mountp fstype mode notused dontcare
+	do
+		if [ x"$fstype" != "xsamfs" ]; then
+			continue			# ignore non-QFS FSes
+		fi
+		if [ ${killprocs} ]; then
+			echo fuser -KILL -k $mountp
+			fuser -KILL -k $mountp
+		fi
+	done
+
+	#
+	# Unmount.  Sort on the second field (mount point)
+	# in reversed order, so that nested mounts unmount
+	# deepest first. (use tac instead of cat if the
+	# order out of mtab matters, shouldn't since your
+	# sorting again anyway
+	#
+	cat /proc/mounts | /bin/sort -r -t'	' -k 2 |
+		while read dev mountp fstype mode dummy
+		do
+			if [ x"$fstype" != "xsamfs" ]; then
+				continue		# ignore non-QFS FSes
+			fi
+			echo "unmounting $mountp"
+			/bin/umount $mountp
+		done
+	rc_status -v
+	;;
+
+*)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+	;;
+esac
+exit 0

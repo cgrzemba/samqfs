@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE pagetitle SYSTEM "tags/dtd/pagetitle.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FSMountPageTitle.xml,v 1.7 2008/03/17 14:40:33 am143972 Exp $ -->
+
+<pagetitle >
+  <pagebuttons>
+    <cc name="SaveButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+      <!-- See the CCButton class for button types. -->
+      <attribute name="type" value="primary"/>
+      <attribute name="defaultValue" value="FSMountParams.PageButton0" />
+      <attribute name="onClick" 
+                 value="javascript: if (ps_CheckRequiredFields) 
+                       return ps_CheckRequiredFields(); else return true;" />
+    </cc>
+    <cc name="ResetButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+      <!-- See the CCButton class for button types. -->
+      <attribute name="type" value="secondary"/>
+      <attribute name="defaultValue" value="FSMountParams.PageButton1" />
+      <attribute name="onClick" value="resetPage(); return false"/>
+    </cc>
+    <cc name="CancelButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+      <!-- See the CCButton class for button types. -->
+      <attribute name="type" value="secondary"/>
+      <attribute name="defaultValue" value="FSMountParams.PageButton2" />
+    </cc>
+  </pagebuttons>
+</pagetitle>

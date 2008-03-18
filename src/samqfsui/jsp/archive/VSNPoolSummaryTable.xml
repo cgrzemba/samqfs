@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: VSNPoolSummaryTable.xml,v 1.15 2008/03/17 14:40:31 am143972 Exp $ -->
+
+<table>
+<actions>
+  <cc name="New" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <attribute name="dynamic" value="true" />
+    <attribute name="disabled" value="true" />
+    <attribute name="OnClick" value="return launchNewPoolPopup(this);"/>
+  </cc>
+  <cc name="Edit" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <attribute name="dynamic" value="true" />
+    <attribute name="disabled" value="true" />
+    <attribute name="OnClick" value="return launchEditPoolPopup(this);"/>
+  </cc>
+
+  <cc name="Delete" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <attribute name="dynamic" value="true" />
+    <attribute name="disabled" value="true" />
+    <attribute name="OnClick"
+	value="return handleDeletePoolButton(this);" />
+  </cc>
+</actions>
+
+<column name="VSNPoolName" sortname="VSNPoolNameText" extrahtml="nowrap">
+  <cc name="VSNPoolHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+    <attribute name="submitFormData" value="true"/>
+    <cc name="VSNPoolNameText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+  </cc>
+  <cc name="VSNPoolHiddenField" 
+	tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+</column>
+
+<column name="MediaType" sortname="MediaTypeText" extrahtml="nowrap">
+  <cc name="MediaTypeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+  <cc name="HiddenStatus" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+  <cc name="MediaTypeHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="Members" sortname="MembersText" extrahtml="nowrap">
+  <cc name="MembersText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="FreeSpace" sortname="FreeSpaceText" 
+    extrahtml="nowrap='nowrap' align='right'">
+    <cc name="FreeSpaceText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/> 
+</column>
+
+</table>

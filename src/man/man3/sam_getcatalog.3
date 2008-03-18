@@ -1,0 +1,139 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_getcatalog 3 "05 Nov 2001"
+.SH NAME
+sam_getcatalog \- Gets catalog entries
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsam [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/catalog.h"
+.ft
+.fi
+.LP
+.BI "int sam_getcatalog(int " "cat_handle" ,
+.BI "uint " "start_entry" ,
+.BI "uint " "end_entry" ,
+.BI "struct sam_cat_ent *" "buf" ,
+.BI "size_t " "entbufsize" );
+.SH AVAILABILITY
+32-bit programs only
+.SH DESCRIPTION
+.B sam_getcatalog(\|)
+obtains a range of entries from the catalog of an automated library or the 
+historian.  The catalog from which entries will be obtained is indicated by
+.IR cat_handle .
+.IR cat_handle
+is similar to a file descriptor, and is returned from a previous call to
+.B sam_opencat(\|).
+The range of entries is indicated by
+.IR start_entry
+and
+.IR end_entry .
+.IR start_entry
+must be less than or equal to
+.IR end_entry ,
+and must be in the range of valid slot numbers for the automated library (or historian).
+.I buf
+is a pointer to an array of
+.B sam_cat_ent
+structures, into which the catalog entry information is placed.  This
+array should be large enough to hold the number of entries requested.
+.I entbufsize
+is the size of a single
+.B sam_cat_ent
+structure, usually indicated by sizeof(struct sam_cat_ent).
+.PP
+The contents of a
+.B sam_cat_ent
+structure include the following members:
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+/\(** catalog table entry \(**/
+uint_t	type;	/\(** OBSOLETE \(**/
+uint_t	status;	/\(** Catalog entry status \(**/
+char	media[4];	/\(** Media type \(**/
+char	vsn[32];	/\(** VSN \(**/
+int	access;	/\(** Count of accesses \(**/
+uint_t	capacity;	/\(** Capacity of volume \(**/
+uint_t	space;	/\(** Space left on volume \(**/
+int	ptoc_fwa;	/\(** First word address of PTOC \(**/
+int	reserved[3];	/\(** Reserved space \(**/
+time_t	modification_time;	/\(** Last modification time \(**/
+time_t	mount_time;	/\(** Last mount time \(**/
+uchar_t	bar_code[BARCODE_LEN + 1];	/\(** Bar code (zero filled) \(**/
+.ft 1
+.fi
+.RE
+.PP
+.SH "RETURN VALUES"
+Upon successful completion the number of catalog entries obtained is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_getcatalog(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB EBADF
+The catalog handle provided is invalid.
+.TP
+.SB EFAULT
+.B buf
+is an invalid address.
+.TP
+.SB EOVERFLOW
+The catalog library software returned more information than was requested.
+.TP
+.SB ENOENT
+This is no longer an active catalog.
+.TP
+.SB EINVAL
+The buffer size provided is invalid, or
+.B start_entry
+or
+.B end_entry
+is invalid.  (Either
+.B start_entry
+is less than zero,
+.B end_entry
+is greater than the number of entries in the catalog, or
+.B start_entry
+is greater than
+.BR end_entry .)
+.SH "SEE ALSO"
+.BR sam_closecat (3),
+.BR sam_opencat (3).

@@ -1,0 +1,193 @@
+.\" $Revision: 1.20 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH samfsconfig 1M "27 Apr 2005"
+.SH NAME
+samfsconfig \- Recovers configuration information
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/samfsconfig\fR
+\%[\fB\-b\fR]
+\%[\fB\-d\fR]
+\%[\fB\-h\fR]
+\%[\fB\-s\fR]
+\%[\fB\-v\fR]
+\fIdevice\fR
+\%[\fIdevice\fR]
+\&...
+.SH AVAILABILITY
+.nf
+\fBSUNWqfs\fR
+\fBSUNWsamfs\fR
+.fi
+.SH DESCRIPTION
+The \fBsamfsconfig\fR utility
+opens the \fIdevice\fR(s) listed on the command line,
+attempts to read the Sun StorEdge \%QFS file system
+superblock on each,
+and generates output in a format similar to an
+editable \fBmcf\fR(4) file.
+A \fISun StorEdge \%QFS file system superblock\fR is a record that
+the \fBsammkfs\fR(1M) utility writes to the beginning of every
+device in a Sun StorEdge \%QFS file system.
+This record identifies the devices to the file system.
+.PP
+By default, the output is written to \fBstdout\fR, but the
+output can be redirected to a file and edited
+to regenerate the file system portions of the \fBmcf\fR file
+in the event of a system reconfiguration or disaster.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB\-b\fR
+Lists the size of the associated partition,
+according to its superblock,
+in an extra output column.
+This may be useful when multiple disk partitions of different
+sizes start at the same offset.
+.TP
+\fB\-d\fR
+Generates detailed information about all the
+Sun StorEdge \%QFS
+superblocks found,
+including the content of each superblock.
+.TP
+\fB\-h\fR
+Generates a usage message and exits.
+.TP
+\fB\-s\fR
+Print the host file contents of QFS shared filesystems.
+.TP
+\fB\-v\fR
+Generates messages regarding the disposition of each \fIdevice\fR.
+.TP
+\fIdevice\fR
+One or more \fIdevice\fR identifiers from which
+configuration information is to be
+recovered.
+Use a space character to separate multiple \fIdevice\fR
+identifiers on the command line.
+.sp
+It can be desireable to save a list of \fIdevice\fR identifiers to a file
+and use this file for command line input to the program.
+.PP
+The \fBsamfsconfig\fR utility
+generates information about all the
+Sun StorEdge \%QFS file systems
+and file system components it finds.
+It flags irregularities as follows:
+.TP 2
+\(bu
+It prefixes any incomplete file system components with
+a pound sign (\fB#\fR) to indicate problems.
+.TP
+\(bu
+It prefixes any duplicate devices discovered with a \%greater-than
+sign (\fB>\fR).
+This is common if, for instance, multiple paths exist or whole disk
+partitions are specified on the command line.
+.SH EXAMPLES
+Example 1.
+.PP
+.nf
+.ft CO
+ceres# samfsconfig /dev/dsk/*
+
+#
+# Family Set 'samfs2' Created Thu Jun 29 11:55:45 2000
+#
+# Missing slices
+# Ordinal 3
+# /dev/dsk/c3t0d0s5    44    md   samfs2  -
+# Ordinal 4
+# /dev/dsk/c3t0d0s6    45    md   samfs2  -
+# Ordinal 6
+# /dev/dsk/c3t1d0s5    47    md   samfs2  -
+# Ordinal 7
+# /dev/dsk/c3t1d0s6    48    md   samfs2  -
+
+.fi
+.ft
+.PP
+Example 2.
+Another example, this from a saved list of devices:
+.PP
+.ft CO
+.nf
+ceres# samfsconfig -v `cat /tmp/dev_files`
+Device '/dev/dsk/c1t0d0s0' has a QFS superblock.
+Device '/dev/dsk/c1t0d0s1' has a QFS superblock.
+Couldn't open '/dev/dsk/c1t0d0s3';  errno=5.
+Device '/dev/dsk/c1t2d0s0' has a QFS superblock.
+Device '/dev/dsk/c1t2d0s1' has a QFS superblock.
+Device '/dev/dsk/c1t4d0s0' has a QFS superblock.
+Device '/dev/dsk/c1t4d0s1' has a QFS superblock.
+Couldn't open '/dev/dsk/c1t4d0s3';  errno=5.
+Couldn't open '/dev/dsk/c1t4d0s4';  errno=5.
+Couldn't open '/dev/dsk/c1t4d0s5';  errno=5.
+Device '/dev/dsk/c2t7d0s0' has a QFS superblock.
+Device '/dev/dsk/c2t7d0s6' has a QFS superblock.
+Device '/dev/dsk/c3t0d0s3' has a QFS superblock.
+9 QFS devices found.
+
+#
+# Family Set 'samfs1' Created Tue Aug  1 16:57:24 2000
+#
+# Missing slices
+# Ordinal 2
+# /dev/dsk/c1t4d0s1    23    mr   samfs1  -
+
+#
+# Family Set 'qfs1' Created Thu Aug 10 19:04:56 2000
+#
+# Missing slices
+# Ordinal 0
+# /dev/dsk/c1t4d0s0    11    mm   qfs1  -
+
+#
+# Family Set 'samfs1' Created Wed Feb 21 20:21:04 2001
+#
+samfs1 ma 10 samfs1
+/dev/dsk/c2t7d0s0    11    mm   samfs1  -
+/dev/dsk/c2t7d0s6    12    mr   samfs1  -
+
+#
+# Family Set 'qfs1' Created Thu Feb 22 12:49:10 2001
+#
+qfs1 ma 20 qfs1
+/dev/dsk/c3t0d0s3    21    mm   qfs1  -
+/dev/dsk/c1t0d0s0    24    g0   qfs1  -
+/dev/dsk/c1t0d0s1    25    g0   qfs1  -
+/dev/dsk/c1t2d0s0    26    g2   qfs1  -
+/dev/dsk/c1t2d0s1    27    g2   qfs1  -
+.fi
+.ft
+.SH SEE ALSO
+\fBsammkfs\fR(1M)
+.PP
+\fBmcf\fR(4)

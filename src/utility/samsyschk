@@ -1,0 +1,280 @@
+#!/bin/sh
+# $Revision: 1.16 $
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+INSLOG=/tmp/SAM_install.log
+
+if [ ! -f /etc/opt/SUNWsamfs/remote_install ]; then
+#	echo "Executing an initial devfsadm for samaio"
+#	/usr/sbin/devfsadm -i samaio >>/dev/null 2>&1
+#	echo "A remote_install was not performed"
+	exit 0
+fi
+
+echo "Remote install was performed. Performing initial system checks"
+echo "and system configurations that cannot be done when doing a"
+echo "remote installation."
+echo ""
+
+ERREXIT=0
+echo "Checking for mounted samfs file systems."
+echo ""
+/usr/sbin/mount -p | /usr/bin/awk '{print $4}' | /usr/bin/grep samfs >/dev/null
+if [ $? = 0 ]; then
+    echo "The following samfs filesystems are still mounted from"
+	echo "previous installation. These need to be unmounted prior"
+	echo "starting the system. Unable to cleanly start the system"
+	echo "until these filesystems have been unmounted"
+	echo ""
+    /usr/sbin/mount -p | /usr/bin/grep " samfs "
+    echo ""
+    ERREXIT=1
+fi
+
+if [ `ps -e | grep  sam-amld | wc -l` -ne 0 ]; then
+    echo "The sam-amld process is still running. The system was not"
+	echo "shutdown cleanly from a prior installation before the remote"
+	echo "installation was performed"
+	echo ""
+	echo "Make sure no \"sam-\" process are running. If unable to resolve"
+	echo "the issues, a reboot of the system maybe required in order to"
+	echo "guarantee a clean startup"
+    echo ""
+    ERREXIT=1
+fi
+
+if [ $ERREXIT = 1 ]; then
+	echo "Aborting samsyschk"
+	echo ""
+	exit 1
+fi
+
+
+# Get Solaris revision
+RELEASE=`grep Solaris /etc/release`
+RELREV=`echo $RELEASE | sed -e "s/^.*Sol/Sol/" | cut -f2 -d' '`
+
+if [ $RELREV -eq 10 ]; then
+	service_state=`/usr/bin/svcs -H -o state fsmgmt`
+	if [ X$service_state = Xonline ]; then
+		echo "ALL" > /opt/SUNWsamfs/.fsmgmtd
+	fi
+fi
+
+# Remove the fsmgmtd from the inittab file and stop process if running
+/opt/SUNWsamfs/sbin/fsmadm config -n
+
+# Remove any dangling cron jobs created by the Filesystem Manager
+if [ -f /opt/SUNWsamfs/sbin/fsmupd ]; then
+	/opt/SUNWsamfs/sbin/fsmupd -r
+fi
+
+echo "Removing samst driver in case it has already been installed"
+echo ""
+/usr/sbin/rem_drv samst 2>/dev/null
+
+echo "Removing samioc driver in case it has already been installed"
+echo ""
+/usr/sbin/rem_drv samioc 2>/dev/null
+
+echo "Removing samaio driver in case it has already been installed"
+echo ""
+/usr/sbin/rem_drv samaio 2>/dev/null
+
+echo "Validate that samst, samfs or samioc modules are not loaded."
+echo "If any are loaded, we will try to unload them"
+echo "Current modinfo showing any modules loaded"
+modinfo | grep samst
+modinfo | grep samfs
+modinfo | grep samaio
+modinfo | grep samioc
+echo ""
+
+#
+# Unload modules.  The samioc module is automatically unloaded when
+# samfs unloads, but we'll also include it in this list.
+#
+for SAMTYPE in samst samfs samaio samioc
+do
+    modid=`/usr/sbin/modinfo | /usr/bin/grep $SAMTYPE | cut -c0-4`
+    if [ "$modid" -ne "" ] ; then
+		echo "... unloading $SAMTYPE - module $modid"
+		/usr/sbin/modunload -i $modid >/dev/null &2>1  ||  {
+            sleep 2
+            /usr/sbin/modunload -i $modid >/dev/null &2>1  ||  {
+				sleep 2
+				/usr/sbin/modunload -i $modid  ||  {
+                    echo ""
+					echo "module $SAMTYPE; modid - $modid"
+					echo "will not unload cleanly; verify which process"
+					echo "is still using it and resolve the dependency."
+					echo "Make sure no \"sam-\" process are running"
+					echo ""
+					echo "Aborting samsyschk script"
+					echo ""
+					exit 1
+				}
+            }
+		}
+    fi
+done
+echo " "
+
+/bin/rm -f /opt/SUNWsamfs/man/windex
+
+#
+# Set forceload for all supported OS levels for 4.1 release and newer
+#
+cp /etc/system /etc/system.SUNWsamfs
+echo '* BEGIN SUNWsamfs file system addition' >> /etc/system
+echo '* DO NOT EDIT above line or the next 2 lines  below...' >> /etc/system
+echo 'forceload: fs/samfs' >> /etc/system
+echo '* END SUNWsamfs file system addition' >> /etc/system
+
+#
+# Set the user scripts to the correct administrator group
+#
+GROUPADM=bin
+if [ -f /opt/SUNWsamfs/.samgroup ]; then
+	GROUPADM=`cat $PKG_INSTALL_ROOT/opt/SUNWsamfs/.samgroup`
+fi
+echo ""
+echo "Setting administrator scripts to be executable by $GROUPADM"
+echo ""
+/opt/SUNWsamfs/sbin/set_admin $GROUPADM
+echo ""
+
+/bin/rm -f $INSLOG
+/bin/sync
+
+#
+# Add the samioc driver
+#
+echo "Adding samioc driver."
+echo ""
+/usr/sbin/add_drv -m '* 0666 root sys' samioc >> $INSLOG 2>&1
+if [ $? -eq 1 ]; then
+	echo "add_drv returned an error adding driver samioc. See $INSLOG"
+	echo "for the additional messages. After resolving any issues, run"
+	echo "\"/usr/sbin/add_drv samioc\" to add the samioc driver."
+	echo " "
+fi
+
+# Add samaio driver.
+echo ""
+echo "Adding samaio driver"
+/usr/sbin/add_drv -m '* 0666 root sys' samaio >>$INSLOG 2>&1
+if [ $? -eq 1 ]; then
+	echo "add_drv returned an error."
+	echo "See $INSLOG for the additional messages."
+	echo ""
+	echo "Once issue is resolved, run \"/usr/sbin/add_drv samaio\" to"
+	echo "add the samaio driver."
+#	echo "add the samaio driver, followed by \"/usr/sbin/devfsadm -i samaio\""
+#	echo "to build samaio devices."
+	echo ""
+fi
+
+# Build samaio devices
+
+#echo Building samaio devices
+#echo "Issuing /usr/sbin/devfsadm -i samaio >> $INSLOG 2>&1"
+#/usr/sbin/devfsadm -i samaio >>$INSLOG 2>&1
+
+#
+# Only do the samst for SAM packages
+#
+if [ -d /var/sadm/pkg/SUNWsamfsr ]; then
+	echo "Configuring devices.  Please wait, this may take a while."
+	echo ""
+	echo "Adding samst driver"
+	/usr/sbin/add_drv samst >> $INSLOG 2>&1
+	if [ $? -eq 1 ]; then
+		echo "add_drv returned an error. This can occur if there are no tape"
+		echo "or optical devices connected to the system or the driver is"
+		echo "already installed. See $INSLOG for the additional messages."
+		echo "Once issue is resolved, run \"/usr/sbin/devfsadm -i samst\""
+		echo "to build samst devices. Look at $INSLOG for error messages"
+		echo " "
+	else
+		# Build samst devices
+		echo "Building samst devices"
+		if [ ! -f /opt/SUNWsamfs/sbin/samdev ]; then
+			echo "Issuing /usr/sbin/devfsadm -i samst >> $INSLOG 2>&1"
+			/usr/sbin/devfsadm -i samst >>$INSLOG 2>&1
+		else
+			echo "Issuing /opt/SUNWsamfs/sbin/samdev >> $INSLOG 2>&1"
+			/opt/SUNWsamfs/sbin/samdev >> $INSLOG 2>&1
+		fi
+	fi
+fi
+
+if [ -f /etc/sysevent/config/SUNW,SUNWsamfs,sysevent.conf ]; then
+	echo "Restarting the sysevent daemon" >> $INSLOG 2>&1
+	pkill -HUP syseventd >> $INSLOG 2>&1
+fi
+
+/bin/sync
+/bin/sleep 5
+echo "Configuring manpages"
+/bin/catman -w -M /opt/SUNWsamfs/man
+/bin/sync
+
+MGMMODE=`cat /opt/SUNWsamfs/.fsmgmtd`
+FSMADM_CLIENTS=`cat /opt/SUNWsamfs/.fsmgmtd_clients`
+if [ X$MGMMODE != XOFF ]; then
+	echo ""
+	echo "Starting SAM-QFS Manager daemon"
+
+	if [ X$MGMMODE = XALL ]; then
+		/opt/SUNWsamfs/sbin/fsmadm config -a
+	else
+		/opt/SUNWsamfs/sbin/fsmadm config -b
+		/opt/SUNWsamfs/sbin/fsmadm start
+	fi
+
+	/opt/SUNWsamfs/sbin/fsmadm add "$FSMADM_CLIENTS"
+	echo "The following hosts can manage this SAM-FS/QFS server via
+	the SAM-QFS Manager:"
+	/opt/SUNWsamfs/sbin/fsmadm list
+
+	echo ""
+	echo "The fsmgmtd daemon is started. Please check the"
+	echo "log files for any errors that were detected during startup."
+	echo ""
+fi
+
+# Restore cron jobs managed by the Filesystem Manager and perform any
+# Filesystem Manager update tasks
+if [ -f /opt/SUNWsamfs/sbin/fsmupd ]; then
+	/opt/SUNWsamfs/sbin/fsmupd -i
+	/opt/SUNWsamfs/sbin/fsmupd -u
+fi
+
+echo "Completed with remote post install setup"
+rm /etc/opt/SUNWsamfs/remote_install

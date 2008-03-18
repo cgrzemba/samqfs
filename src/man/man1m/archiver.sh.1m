@@ -1,0 +1,87 @@
+.\" $Revision: 1.8 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH archiver.sh 1M "12 Jan 2004"
+.na
+.nh
+.SH NAME
+archiver.sh \- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS archiver exception notification script
+.SH SYNOPSIS
+.B /etc/opt/SUNWsamfs/scripts/archiver.sh
+\fIprg_name\fR
+\fIpid\fR
+\fIseverity\fR
+\fImsg_no\fR
+\fImsg\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The archiver executes the
+.B /etc/opt/SUNWsamfs/scripts/archiver.sh
+script when it encounters abnormal
+or exceptional events.  You can substitute a \%site-specific
+version of this script by using the archiver's \fBnotify\fR
+directive in the \fBarchiver.cmd\fR(4) file.
+.PP
+For all events, the
+.B /etc/opt/SUNWsamfs/scripts/archiver.sh
+script logs events to
+.B syslog
+using the
+.B /usr/bin/logger
+command.  In addition,
+the 
+\fBemerg\fR, \fBalert\fR, \fBcrit\fR, and \fBerr\fR
+keywords generate email to the root account, echoing the message
+string.
+.SH OPTIONS
+The archiver executes
+.B /etc/opt/SUNWsamfs/scripts/archiver.sh
+and any scripts defined by the user through the \fBnotify\fR directive
+with the following arguments:
+.TP 10
+\fIprg_name\fR
+The name of the program that is calling this script.
+.TP
+\fIpid\fR
+The process ID of the program that is calling this script.
+.TP
+\fIseverity\fR
+A keyword that identifies the severity and the
+.B syslog
+level of the event.  The keywords are as follows:
+\fBemerg\fR, \fBalert\fR, \fBcrit\fR, \fBerr\fR, \fBwarning\fR,
+\fBnotice\fR, \fBinfo\fR, and \fBdebug\fR.
+.TP
+\fImsg_no\fR
+The message number as found in the message catalog.
+.TP
+\fImsg\fR
+The text of the translated message string.
+.SH SEE ALSO
+.BR archiver (1M),
+.BR archiver.cmd (4)

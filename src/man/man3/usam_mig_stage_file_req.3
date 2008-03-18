@@ -1,0 +1,81 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH usam_mig_stage_file_req 3 "05 Nov 2001"
+.SH NAME
+usam_mig_stage_file_req \- Stages request from the foreign data migration program
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamut [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/mig.h"
+.ft
+.fi
+.LP
+.BI "int usam_mig_stage_file_req(\|)";
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+.PP
+.B usam_mig_stage_file_req(\|)
+is the stage request routine for the Sun StorEdge \%SAM-FS Migration Toolkit.
+The foreign data migration program 
+adds this stage request to an internally-generated worklist
+being maintained by third party API.
+This worklist should be processed by a thread
+started by \fBusam_mig_initialize(\|)\fR.
+This worklist is processed by a program
+started with \fBusam_mig_initialize()\fR.
+The thread finds and positions the media to stage the file through
+\fBstage_api\fR.
+.SH "RETURN VALUES"
+A successful stage request returns a value of 0.
+Otherwise, a value of 1 is returned and
+\f4errno\fP
+is passed to the file system.
+.SH ERRORS
+.PP
+.B usam_mig_stage_file_req(\|)
+fails if the following is true:
+.TP 20
+.SB EEXIST
+This is a duplicate stage request for a file.
+.SH FILES
+.TP 20
+.B /opt/SUNWsamfs/migkit/mig_cd.c
+The example Migration Toolkit program.
+.TP 20
+.B /etc/opt/SUNWsamfs/mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+.SH "SEE ALSO"
+.BR sam_migd (3).
+.PP
+.BR mcf (4).

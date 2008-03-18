@@ -1,0 +1,203 @@
+.\" $Revision: 1.22 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH archive 1 "03 Feb 2006"
+.SH NAME
+archive \- Sets archive attributes and schedules files for immediate archiving
+.SH SYNOPSIS
+\fBarchive\fR
+[\fB\-C\fR]
+[\fB\-I\fR]
+[\fB\-d\fR]
+[\fB\-f\fR]
+[\fB\-n\fR]
+[\fB\-w\fR]
+[\fB\-W\fR]
+[\fB\-c\ \fIcopy_no\fR]
+\fIfilename\fR\ .\|.\|.\|
+.PP
+\fBarchive\fR
+[\fB\-C\fR]
+[\fB\-I\fR]
+[\fB\-d\fR]
+[\fB\-f\fR]
+[\fB\-n\fR]
+[\fB\-w\fR]
+[\fB\-W\fR]
+[\fB\-c\ \fIcopy_no\fR]
+\fB\-r\fI dirname\fR .\|.\|.\|\|[\fIfilename .\|.\|.\|\fR]
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The \fBarchive\fR command
+sets archive attributes on files and directories.  It also
+specifies archiving for one or more files. 
+.PP
+By default, a file is archived some time after its creation.
+Your site's default archiving operation is configured by the
+system administrator.  If neither the \fB\-d\fR nor the \fB\-n\fR
+options are specified, files are marked to be archived immediately.
+.PP
+When archive attributes are set on a directory, all files or directories
+subsequently created in that directory inherit those attributes.
+.SH OPTIONS
+This command accepts the following arguments:
+.TP 10
+\fB\-C\fR
+Specifies concurrent archiving, which means that a file can be 
+archived even if opened for write.
+The archive time is regulated by the modification time.
+By default, archiving is disallowed
+while a file is opened for write.
+Note that NFS files are not opened and
+are concurrently archived by default.
+.sp
+Concurrent archiving is useful for databases, however caution
+is advised because archiving can occur while the file is being
+modified.  This can result in wasted media.
+.TP 10
+\fB\-I\fR
+Support inconsistent archive copies. This means that an archive copy
+can be created even if the file is modified while it is being copied
+to the media. 
+By default, the archive copy is disallowed if the file is inconsistent,
+that is, if the file is modified while it was being copied to the media.
+Note, the file cannot be staged if the copy is marked
+inconsistent; however, after a samfsrestore, the inconsistent flag is removed
+from the archive copy and the file can be staged.
+.sp
+Inconsistent archiving is useful for databases, however caution
+is advised because it a file can be staged from an inconsistent copy
+after the file is restored using samfsrestore.
+.TP
+\fB\-d\fR
+Resets the archive attributes on a file to the default attributes.
+When this option is specified,
+attributes are first reset to the default,
+and then all other attribute-setting options are processed.
+The only action taken is that attributes are reset.
+No archiving is performed.
+.TP
+\fB\-f\fR
+Suppresses error messages. 
+.TP
+\fB\-n\fR
+Disables archiving for a file.  This option specifies that a file
+never be archived.
+Only a superuser can set this attribute on a file.
+When this option is specified, the only
+action taken is that the attribute is set.
+.sp
+This option cannot be specified for a file that
+has either the checksum generate or checksum use
+attributes set.  These attributes are set by using
+the \fBssum\fR(1) command's \fB\-g\fR
+and \fB\-u\fR options, respectively.
+For more information on \fBssum\fR(1),
+see the \fBssum\fR(1) man page.
+.sp
+If the archiver file system examination method has been set to
+.BR scandirs ,
+setting this option on a directory will prevent the archiver from examining
+the directory, and all of its subdirectories.  This behavior should only be
+used for directory trees that have all archive copies made for all files.
+And, no changes should be made to any of the subdirectories or files.
+.TP
+\fB\-w\fR
+Waits for a file to have at least 1 archive copy before completing.
+This option cannot be specified on the command line in
+conjunction with the \fB-W\fP, \fB\-d\fP, or \fB\-n\fP options.
+Note that it may take a long time for a file to be archived.
+.sp
+Note that when archiving many files at once
+(such as with \fBarchive -r -w .\fP)
+the "-w" option causes each file to be completely archived before the archive
+request for the next file is issued. In order to get the best performance 
+in this situation, do the following:
+.sp
+  archive -r .
+  archive -r -w .
+.TP
+\fB\-W\fR
+Waits for a file to have all its required archive copies before completing.
+This option cannot be specified on the command line in
+conjunction with the \fB-w\fP, \fB\-d\fP, or \fB\-n\fP options.
+Note that it may take a long time for a file to be archived.
+.sp
+Note that when archiving many files at once
+(such as with \fBarchive -r -W .\fP)
+the "-W" option causes each file to be completely archived before the archive
+request for the next file is issued. In order to get the best performance 
+in this situation, do the following:
+.sp
+  archive -r .
+  archive -r -W .
+.TP
+\fB\-c\ \fIcopy_no\fR
+Specify \fB1\fR, \fB2\fR, \fB3\fR, or \fB4\fR for \fIcopy_no\fR.
+If one or more \fB\-c\fR options are
+specified, only those archive copies (copies 1, 2, 3, or 4)
+are affected.
+The \fB\-c\fR option may only be used with the \fB\-w\fR and \fB\-r\fR
+options.
+
+If used without any other options (or just the \fB\-r\fR option), archive copy
+\fIcopy_no\fR will be made immediately.
+
+If used with the \fB\-w\fR option, (with or without the \fB\-r\fR option),
+the command will wait for the archive copy \fIcopy_no\fR to be made.
+.TP
+\fB\-r \fIdirname\fR \ .\|.\|.\|
+Recursively archives or sets attributes for files
+contained in the specified \fIdirname\fR and its subdirectories.
+More than one \fIdirname\fR can be specified.
+.sp
+If used in conjunction with other command line options,
+the \fB\-r \fIdirname\fR option must be specified prior to
+any individual files
+listed (using the \fIfilename\fR argument),
+but it must be specified after any other individual options.
+.TP
+\fIfilename\fR \ .\|.\|.\|
+Specifies one or more file names.
+If the \fB\-r \fIdirname\fR option is also specified,
+individual \fIfilename\fR arguments must appear after
+all \fIdirname\fR specifications.
+.SH EXAMPLES
+The following command resets all attributes to the default
+settings on all files in the current directory and all files
+in subdirectories beneath:
+.PP
+.ft CO
+archive -d -r .
+.ft
+.SH SEE ALSO
+\fBssum\fR(1),
+\fBstage\fB(1),
+\fBrelease\fB(1).

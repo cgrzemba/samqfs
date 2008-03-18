@@ -1,0 +1,60 @@
+<?xml version='1.0'?> 
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: mediaReport.xml,v 1.9 2008/03/17 14:44:02 am143972 Exp $ -->
+
+<report name="media" time="1160773789" desc="SAMPLE">
+<media>
+<vsnSummary>
+    <vsn type="dk" count="2" capacity="0" free="0"/>
+    <vsn type="li" count="6" capacity="829770752" free="419430400"/>
+</vsnSummary>
+<pools>
+    <pool name="myPool" type="li" count="4" free="722812928"/>
+</pools>
+<copyUtilization>
+    <copy name="samfs2.1" type="li" capacity="102629376" free="98208768" usage="4"/>
+    <copy name="samfs1.2" type="li" capacity="727318528" free="722812928" usage="0"/>
+    <copy name="samfs1.1" type="li" capacity="102629376" free="102629376" usage="0"/>
+    <copy name="cFiles.1" type="li" capacity="102452224" free="102452224" usage="0"/>
+    <copy name="cFiles.2" type="li" capacity="0" free="0" usage="0"/>
+</copyUtilization>
+<errorVsns>
+    <vsn name="FOCUS" type="li" status="268451840"/>
+    <vsn name="AC6613" type="li" status="268435456"/>
+</errorVsns>
+<accessedVsns>
+</accessedVsns>
+<blankVsns>
+    <vsn name="FOCUS" type="li"/>
+    <vsn name="AC6617" type="li"/>
+    <vsn name="CLNI01" type="li"/>
+    <vsn name="AC6616" type="li"/>
+</blankVsns>
+</media>
+</report>

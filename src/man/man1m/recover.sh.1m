@@ -1,0 +1,154 @@
+.\" $Revision: 1.16 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH recover.sh 1M "14 Jan 2004"
+.SH NAME
+recover.sh \- Recovers files archived after last \fBsamfsdump\fR(1M) was taken
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/examples/recover.sh\fR
+\fB/\fImount_point\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBrecover.sh\fR script
+recovers files using the information in the
+archiver log.  This script can be useful in a disaster recovery situation when a file
+system has been lost and is recovered from a saved \fBsamfsdump\fR(1M) file.
+If files were archived for the first time after the dump was taken,
+there is no record of them in the dump.  This script can be used to reload
+those files from the archive copy by using the \fBstar\fR(1M) program.
+.SH USAGE
+.TP 10
+Step 1.
+Edit the archiver log file and extract the relevant portion.
+.sp
+In this editing session, you should eliminate entries for second,
+third, or fourth archive
+copies from this file because otherwise the files are recovered multiple
+times, which wastes time.  You should also eliminate directory entries.
+Directory entries are noted by a \fBd\fR in field 12 of the archiver log.
+.sp
+After the file is edited, save the edited file to a temporary file.  For
+example, save this file to \fB/tmp/arlog.in\fR.
+.TP
+Step 2.
+Copy the script from its default location to a temporary location.
+.sp
+Use a command such as the following to copy the script to a temporary
+location:
+.sp
+.nf
+.ft CO
+server# \fBcp /opt/SUNWsamfs/examples/recover.sh /tmp/recover.sh\fR
+.ft
+.fi
+.TP   
+\fRStep 3.\fR
+Edit a working copy of the script and modify it for your site.
+.sp
+Edit the copy and change the value of \fBBLK_SIZE\fR from \fB128\fR to
+the block size in kilobytes for the VSNs in question.
+.TP
+Step 4.
+Run the \fBrecover.sh\fR script.
+.sp
+This creates a new script to actually do the work of 
+recovering the files.
+In the following example, the Sun StorEdge \%SAM-FS mount point is \fB/sam1\fR.
+.sp
+.ft CO
+.nf
+server# \fB/tmp/recover.sh /sam1 < /tmp/arlog.in > /tmp/recover.out\fR
+.ft
+.fi
+.sp
+\fRIf you have multiple drives and want to recover from more than one
+VSN at a time, you can split this script into pieces first.  The following
+line appears at the end of the work for each VSN:
+.sp
+"#  ----------- end of files for vsn " XXX " ---------"
+.sp
+The \fBXXX\fR is replaced with the VSN's bar code label.
+.TP
+Step 5.
+Create a temporary directory to which the recovered files can be written.
+.sp
+Create this directory in a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system.
+Although
+this could be your mount point, it is probably better to recover to a
+temporary directory in the Sun
+StorEdge \%SAM-FS or Sun \%SAM-QFS file system first, 
+and then move the files to 
+their final location after recovery is complete and everything looks as
+expected.
+For example:
+.sp
+.ft CO
+server# \fBmkdir /sam1/recover\fR
+.ft
+.TP
+\fRStep 6.
+Change to the temporary directory to receive the recovered files.
+.sp
+Use the \fBcd\fR(1) command to change to the
+directory in which you want the files recovered.
+.sp
+.nf
+.ft CO
+server# \fBcd /sam1/recover\fR
+server# \fBsh -x /tmp/recover.out\fR
+.ft
+.fi
+.TP
+\fRStep 7.
+Run the \fBrecover.out\fR script.
+.sp
+The \fB/tmp/recover.out\fR shell script is created in the previous step.  It
+can be used to recover all the files listed in the \fB/tmp/arlog.in\fR file.
+.sp
+Run the \fBrecover.out\fR script.  If you have split the scripts, you may have
+to run it multiple times.
+.SH WARNINGS
+Improper use of this script can damage user or system data.
+Please refer to the \fISun QFS, Sun \%SAM-FS, and Sun \%SAM-QFS Disaster
+Recovery Guide\fR or contact technical support before using this script.
+.SH NOTES
+If used with the \%SAM-Remote clients or server,
+the recovery must be performed on the server
+to which the tape library is attached.
+.PP
+Do not run multiple recovery scripts at the same time.
+.SH FILES
+This script resides in the following location:
+.PP
+.B /opt/SUNWsamfs/examples/recover.sh
+.SH SEE ALSO
+\fBarchiver\fR(1M),
+\fBrequest\fR(1M),
+\fBstar\fR(1M).

@@ -1,0 +1,53 @@
+.\" $Revision: 1.8 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH sam-rftd 1M "04 AUG 2003"
+.SH NAME
+sam-rftd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file transfer server process (was sam-ftpd)
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sam-rftd\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsam-rftd\fR process is the file transfer server process for
+transferring Sun StorEdge \%SAM-FS or Sun StorEdge \%SAM-QFS files to and from a remote network site.
+The \fBsam-rftd\fR process is initiated
+by the \fBsam-fsd\fR daemon.
+.PP
+By default, the file transfer daemon uses the default behaviors described
+on the \fBrft.cmd\fR(4) man page.
+.SH FILES
+If the daemon's command file is present
+in \fB/etc/opt/SUNWsamfs/rft.cmd\fR,
+the \fBsam-rftd\fR process reads that file.
+.SH SEE ALSO
+\fBsam-fsd\fR(1M).
+.PP
+\fBrft.cmd\fR(4).
+

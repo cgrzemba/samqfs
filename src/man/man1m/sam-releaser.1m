@@ -1,0 +1,387 @@
+.\" $Revision: 1.21 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam-releaser 1M "08 Nov 2004"
+.SH NAME
+sam-releaser \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS disk space releaser process
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sam-releaser\fR 
+\fIfile_system\fR
+\fIlow_water_mark\fR
+\fIweight_size\fR
+[\fIweight_age\fR]
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The \fBsam-releaser\fR process controls the activities of the
+Sun StorEdge \%SAM-FS and Sun \%SAM-QFS releaser.
+The releaser makes disk cache available
+by identifying archived files and releasing their disk cache copy.
+This process is started automatically by the file system when disk cache
+utilization reaches the \%high-water mark.
+.PP
+If the releaser command file is present
+in \fB/etc/opt/SUNWsamfs/releaser.cmd\fR,
+the \fBsam-releaser\fR process reads that file.
+Directives in the \fBreleaser.cmd\fR file are
+overridden by the equivalent command-line arguments, if present.
+For more information on the releaser command file, see
+the \fBreleaser.cmd\fR(4) man page.
+.SH OPTIONS
+This command accepts the following arguments:
+.TP 12
+\fIfile_system\fR
+This is the file system whose disk space is to be released.
+The argument may be either the name of the file system, or its mount_point.
+The releaser attempts to release the disk space of archived
+files on the file system mounted on the mount_point 
+until \fIlow_water_mark\fR is reached.  
+.TP
+\fIlow_water_mark\fR
+A percentage of the file system that is allowed to be 
+completely occupied with files at all times.
+Specify an integer number that is at least \fB0\fR
+but no more than \fB100\fR.
+The releaser attempts to release disk space until the file
+system is at or below this threshold.
+.TP
+\fIweight_size\fR
+A weighting factor that is used to
+prioritize release candidates.
+Specify a floating-point value that is at least
+\fB0.0\fR but no more than \fB1.0\fR.
+For more information on \fIweight_size\fR, see
+the PRIORITY WEIGHTS section of this man page.
+.TP
+\fIweight_age\fR
+A weighting factor that is used to
+prioritize release candidates.
+Specify a floating-point value that is at least
+\fB0.0\fR but no more than \fB1.0\fR.
+For more information on \fIweight_age\fR, see
+the PRIORITY WEIGHTS section of this man page.
+.SH ALGORITHM
+The releaser reads the Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS \fB.inodes\fR file and builds
+an ordered list of the files that can be released.
+The position of each file on the
+list depends on a priority calculated for each inode by the 
+releaser (see the PRIORITY WEIGHTS section of this man page.)
+Only the top \fIlist_size\fR (default 10,000) files are kept on the list.
+See \fBreleaser.cmd\fR(4) for a description of \fIlist_size\fR.
+.PP
+Starting with the file with the numerically largest priority, the disk
+space used by each file is released until the \fIlow_water_mark\fR has
+been reached.  If the list is exhausted before the \fIlow_water_mark\fR
+is reached, the process is repeated.   If, while repeating the process,
+no files are found that can be released, the releaser stops.
+If the file system is still above high-water mark, the file system
+restarts the releaser.
+.SH PRIORITY WEIGHTS
+Each inode is assigned a priority based on its size and age.  
+The size of the file (expressed in units of 4-kilobyte blocks)
+is multiplied by the \fIweight_size\fR parameter.
+This result is added to the priority
+calculated for the age of the file to form the file's final priority.
+.PP
+The releaser can use one of the following two methods for determining the
+contribution of the age of a file to the file's release priority:
+.TP 2
+\(bu
+The first method is to take the most recent of the file's access,
+modification, and residence-change age and multiply by \fIweight_age\fR.
+.TP
+\(bu
+The second method allows specification of weights for each of the
+access, modification, and residence-change times.  These are specified
+by the \fBweight_age_access=\fIfloat\fR,
+\fBweight_age_modify=\fIfloat\fR, and
+\fBweight_age_residence=\fIfloat\fR directives,
+respectively, in the \fBreleaser.cmd\fR file.
+The sum of the
+product of the weight and corresponding age is the contribution of the
+age to the file's priority.  To specify any of these priority weights,
+you must use the \fBreleaser.cmd\fR file.  For information on the
+\fBreleaser.cmd\fR file, see the \fBreleaser.cmd\fR(4) man page.
+.PP
+For both methods, the ages are expressed in minutes.
+.SH LOG
+Within the \fBreleaser.cmd\fR file,
+you can specify a log file for each Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS file system.
+If the \fBreleaser.cmd\fR file does not exist, or
+if no \fBlogfile=\fIfilename\fR directive exists in the file,
+no logging occurs. 
+For more information on the \fBlogfile=\fIfilename\fR directive,
+see the \fBreleaser.cmd\fR(4) man page.
+.PP
+The releaser creates the log file (if it does not exist) and
+appends the following to it for each run:
+.ft CO
+.nf
+
+     Releaser begins at Tue Sep 29 15:31:15 1998
+     inode pathname          /sam1/.inodes
+     low-water mark          40%
+     list_size               10000
+     weight_size             1
+     weight_age              0.5
+     fs equipment ordinal    1
+     family-set name         samfs1
+     started by sam-fsd?     no
+     release files?          no
+     release rearch files?   yes
+     display_all_candidates? no
+     ---before scan---
+     blocks_now_free:     117312
+     lwm_blocks:          233750
+     ---scanning---
+     64122.5 (R: Tue Sep 29 11:33:21 CDT 1998) 237 min, 64004 blks S0 /sam1/250m
+     5131.5 (R: Tue Sep 22 17:39:47 CDT 1998) 9951 min, 156 blks S0 /sam1/filecq
+     5095.5 (R: Tue Sep 22 17:39:49 CDT 1998) 9951 min, 120 blks S0 /sam1/filecu
+     5062 (R: Tue Sep 22 18:38:50 CDT 1998) 9892 min, 116 blks S0 /sam1/filebz
+     5039.5 (R: Tue Sep 22 17:40:01 CDT 1998) 9951 min, 64 blks S0 /sam1/filedi
+     5036.5 (R: Tue Sep 22 17:37:34 CDT 1998) 9953 min, 60 blks S0 /sam1/fileio
+     5035.5 (R: Tue Sep 22 17:40:13 CDT 1998) 9951 min, 60 blks S0 /sam1/filedw
+     5032.5 (R: Tue Sep 22 17:38:08 CDT 1998) 9953 min, 56 blks S0 /sam1/filejq
+     5031.5 (R: Tue Sep 22 17:39:56 CDT 1998) 9951 min, 56 blks S0 /sam1/fileda
+     5024.5 (R: Tue Sep 22 17:38:00 CDT 1998) 9953 min, 48 blks S0 /sam1/filejh
+     5024 (R: Tue Sep 22 17:38:22 CDT 1998) 9952 min, 48 blks S0 /sam1/fileka
+     5023.5 (R: Tue Sep 22 17:40:07 CDT 1998) 9951 min, 48 blks S0 /sam1/filedn
+     5019 (R: Tue Sep 22 17:40:44 CDT 1998) 9950 min, 44 blks S0 /sam1/filefk
+     5015 (R: Tue Sep 22 17:40:28 CDT 1998) 9950 min, 40 blks S0 /sam1/fileep
+     5011.5 (R: Tue Sep 22 17:40:14 CDT 1998) 9951 min, 36 blks S0 /sam1/filedx
+     5011.5 (R: Tue Sep 22 17:39:58 CDT 1998) 9951 min, 36 blks S0 /sam1/filede
+     5011 (R: Tue Sep 22 17:41:07 CDT 1998) 9950 min, 36 blks S0 /sam1/filegk
+     5007.5 (R: Tue Sep 22 17:39:51 CDT 1998) 9951 min, 32 blks S0 /sam1/filecw
+     5007 (R: Tue Sep 22 17:41:10 CDT 1998) 9950 min, 32 blks S0 /sam1/filegr
+     5007 (R: Tue Sep 22 17:40:42 CDT 1998) 9950 min, 32 blks S0 /sam1/filefg
+     5007 (R: Tue Sep 22 17:40:30 CDT 1998) 9950 min, 32 blks S0 /sam1/filees
+     5004.5 (R: Tue Sep 22 17:38:14 CDT 1998) 9953 min, 28 blks S0 /sam1/filejv
+     5004 (R: Tue Sep 22 17:38:57 CDT 1998) 9952 min, 28 blks S0 /sam1/filelm
+     5002 (R: Tue Sep 22 18:38:54 CDT 1998) 9892 min, 56 blks S0 /sam1/filecd
+     4996.5 (R: Tue Sep 22 17:38:06 CDT 1998) 9953 min, 20 blks S0 /sam1/filejp
+     4995.5 (R: Tue Sep 22 17:39:57 CDT 1998) 9951 min, 20 blks S0 /sam1/filedc
+     4992.5 (R: Tue Sep 22 17:37:24 CDT 1998) 9953 min, 16 blks S0 /sam1/fileig
+     4992 (R: Tue Sep 22 17:39:06 CDT 1998) 9952 min, 16 blks S0 /sam1/filelv
+     4986 (R: Tue Sep 22 18:38:50 CDT 1998) 9892 min, 40 blks S0 /sam1/fileca
+     4982 (R: Tue Sep 22 17:36:54 CDT 1998) 9954 min, 5 blks S0 /sam1/filehk
+     4981 (R: Tue Sep 22 17:41:09 CDT 1998) 9950 min, 6 blks S0 /sam1/filegn
+     4980.5 (R: Tue Sep 22 17:40:15 CDT 1998) 9951 min, 5 blks S0 /sam1/filedz
+     ---after scan---
+     blocks_now_free:       0
+     blocks_freed:          65452
+     lwm_blocks:            233750
+     archnodrop: 0
+     already_offline: 647
+     damaged: 0
+     extension_inode: 0
+     negative_age: 0
+     nodrop: 0
+     not_regular: 7
+     number_in_list: 32
+     rearch: 1	
+     released_files: 32
+     too_new_residence_time: 0
+     too_small: 1
+     total_candidates: 32
+     total_inodes: 704
+     wrong_inode_number: 14
+     zero_arch_status: 3
+     zero_inode_number: 0
+     zero_mode: 0
+     CPU time: 0 seconds.
+     Elapsed time: 1 seconds.
+     
+     
+     Releaser ends at Tue Sep 29 15:31:16 1998
+.fi
+.ft
+.PP
+The first block of lines shows the arguments with which the releaser
+was invoked, the name of the \fB.inodes\fR file, the low-water mark,
+the size and age weight parameters, the equipment ordinal of the
+file system, the family set name of the file system, whether the releaser
+was started by \fBsam-fsd\fR or by the command line, whether files
+should be released, and whether each inode should be logged as
+encountered.
+.PP
+The second block of lines begins
+with the heading \fB---before scan---\fR.
+It shows the number of blocks
+currently free in the cache and the number that would be free if the
+file system were exactly at the low-water mark.  The goal of
+the releaser is to increase \fBblocks_now_free\fR so that it is equal
+to or larger than \fBlwm_blocks\fR.
+.PP
+The third block of lines begins with the heading \fB---scanning---\fR.
+This block lists the files released by the releaser and contains
+information for each file in separate fields.  The fields are as follows:
+.TP 15
+\fBField Number\fR
+\fBContent\fR
+.TP
+1
+This field contains the release priority.
+.TP
+2
+This field contains the date and time in the following format:
+\fB(\fItag\fB: \fIdate_and_time\fB)\fR.
+.br
+The \fItag\fR is either \fBA\fR for access, \fBM\fR for modify,
+or \fBR\fR for residency, depending on if the \fIdate\fR that
+follows represents the access, modify or residency time.
+.br
+The \fIdate_and_time\fP is the most recent of the
+three dates listed.
+.TP
+3
+This field contains the age and size of the file.
+The age of the file is expressed in minutes.
+The size of the file is expressed in blocks.
+These two figures are multiplied by their respective
+weights and the sum taken to yield the release priority.
+.TP
+4
+This field contains an \fBS\fR followed by the segment number.
+This is the number of the segment that was released.
+.TP
+5
+This field contains the full path name of the released file.
+.PP
+Note that if the \fBweight_age_access=\fIfloat\fR,
+\fBweight_age_modify=\fIfloat\fR or
+\fBweight_age_residence=\fIfloat\fR directives are specified in the
+\fBreleaser.cmd\fR file, these lines show only
+the priority, size, and pathname.
+.PP
+The fourth block of lines begins with the heading \fB---after scan---\fR.
+This block shows the statistics accumulated by the releaser
+during the previous scan pass are shown.  These statistics are as follows:
+.TP 20
+\fBStatistic\fR
+\fBMeaning\fR
+.TP
+\fBarchnodrop\fR
+The number of inodes marked \fBarchnodrop\fR.
+These files are never released because the archiver
+is trying to keep them in cache.
+.TP
+\fBalready_offline\fR
+The number of inodes that were offline.
+.TP
+\fBdamaged\fR
+The number of inodes marked as damaged.
+.TP
+\fBextension_inode\fR
+The number of extension inodes found.  Used by volume overflow.
+.TP
+\fBnegative_age\fR
+The number of inodes that had an age in the future.
+This is usually caused by personal computers with incorrect clock
+settings acting as NFS clients.
+.TP
+\fBnodrop\fR
+The number of inodes marked with \fBrelease -n\fR.
+For more information on marking files as never release,
+see the \fBrelease\fR(1) man page.
+.TP
+\fBnot_regular
+The number of inodes that were not regular files.
+.TP
+\fBnumber_in_list\fR
+The number of inodes that were on the releaser's candidate list when
+the releaser was finished scanning.
+.TP
+\fBrearch\fR
+The number of files with a copy marked for rearchiving.
+.TP
+\fBreleased_files\fR
+The number of files released.
+.TP
+\fBtoo_new_residence_time\fR
+The number of inodes whose residence-change time was
+within minimum residence age
+of the current time as specified on
+the \fBmin_residence_age=\fItime\fR directive
+in the \fBreleaser.cmd\fR file.
+.TP
+\fBtoo_small\fR
+The number of files that were too small to be released.
+.TP
+\fBtotal_candidates\fR
+The number of inodes found that were viable candidates for releasing.
+.TP
+\fBtotal_inodes\fR
+The total number of inodes scanned.
+.TP
+\fBwrong_inode_number\fR
+The number of inodes whose inode number did not match their offset in
+the inode file.
+This is usually not a concern, but
+you should run \fBsamfsck\fR(1M) to rescue any orphan inodes.
+If you have already run \fBsamfsck\fR(1M) and this field remains
+nonzero, no further action is required.
+For more information on the \fBsamfsck\fR(1M) command,
+see the samfsck(1M) man page.
+.TP
+\fBzero_arch_status\fR
+The number of inodes that had no archive copies.
+.TP
+\fBzero_inode_number\fR
+The number of inodes that had zero as their inode number.
+.TP
+\fBzero_mode\fR
+The number of inodes that were unused.
+.TP
+\fBCPU time\fR
+The number of CPU seconds used in the current scan.
+.TP
+\fBElapsed time\fR
+The number of wall-clock seconds used in the current scan.
+.SH NOTES
+When a file is created, the residency age is set to the creation time.
+The residency age of a file must be at least the value set by the
+\fBmin_residence_age=\fItime\fR directive before the file
+is considered for release.
+This is to prevent a file which was
+recently staged in from being released.
+The default \fItime\fR is 10 minutes.
+.PP
+If the releaser selects a file as a release candidate, and
+immediately thereafter the file is accessed, the file might still be
+released by the file system even though the file has been recently
+accessed.  This can happen because the file system only prohibits release
+of a file that is currently in use.  It does not check the access age of
+the file again when it is released.
+.SH SEE ALSO
+\fBrelease\fR(1).
+.PP
+\fBmount_samfs\fR(1M),
+\fBsamfsck\fR(1M).
+.PP
+\fBreleaser.cmd\fR(4).

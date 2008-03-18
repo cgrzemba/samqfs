@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: AllJobsTable.xml,v 1.12 2008/03/17 14:40:35 am143972 Exp $ -->
+
+<table>
+<actions>
+  <cc name="Button0" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <attribute name="dynamic" value="true" />
+    <attribute name="disabled" value="true" />
+    <attribute name="onClick"
+        value="if (!showConfirmMsg(1)) return false;"/>
+  </cc>
+</actions>
+
+<filters>
+    <cc name="FilterMenu" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+	<attribute name="commandChild" value="FilterMenuHref" />
+        <attribute name="escape" value="false" />
+        <option label="Jobs.filterOptions1" value="1" />
+        <option label="Jobs.filterOptions5" value="5" />
+        <option label="Jobs.filterOptions2" value="2" />
+        <option label="Jobs.filterOptions3" value="3" />
+        <option label="Jobs.filterOptions4" value="4" />
+        <option label="Jobs.filterOptions6" value="6" />
+        <option label="Jobs.filterOptions7" value="7" />
+        <option label="Jobs.filterOptions.dump" value="dump" />
+        <option label="Jobs.filterOptions.dumpEnable" value="dumpEnable" />
+        <option label="Jobs.filterOptions.restoreSearch" value="restoreSearch" />
+        <option label="Jobs.filterOptions.restore" value="restore" />
+    </cc>
+</filters>
+
+<column name="Col0" sortname="Text0" extrahtml="nowrap">
+  <cc name="JobIdHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+    <attribute name="submitFormData" value="true"/>
+    <cc name="Text0" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+      	
+  </cc>
+
+  <cc name="JobHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+
+</column>
+
+<column name="Col1" sortname="Text1" extrahtml="nowrap">
+  <cc name="Text1" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+
+  <cc name="JobHiddenType" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+</column>
+
+<column name="Col2" sortname="Text2" extrahtml="nowrap">
+  <cc name="Text2" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="Col3">
+    <cc name="Text3" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/> 
+</column>
+
+<column name="Col4" sortname="Text4" extrahtml="nowrap">
+  <cc name="Text4" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+</table>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: VSNDetailsPropertySheet.xml,v 1.10 2008/03/17 14:40:37 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="basic" defaultValue="VSNDetails.sectiontitle1">
+
+        <property required="false">
+            <label name="slotLabel" defaultValue="VSNDetails.psheet1"
+                Id="slotId" labelFor="slotValue"/>
+            <cc name="slotValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>        
+
+        <property required="false">
+            <label name="vsnLabel" defaultValue="VSNDetails.psheet2"
+                Id="vsnId" labelFor="vsnValue"/>
+            <cc name="vsnValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="barcodeLabel" defaultValue="VSNDetails.psheet3"
+                Id="barcodeId" labelFor="barcodeValue"/>
+            <cc name="barcodeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="capacityLabel" defaultValue="VSNDetails.psheet4"
+                Id="capacityId" labelFor="capacityValue"/>
+            <cc name="capacityValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="freespaceLabel" defaultValue="VSNDetails.psheet5"
+                Id="freespaceId" labelFor="freespaceValue"/>
+            <cc name="freespaceValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="spaceconsumedLabel" defaultValue="VSNDetails.psheet6"
+                Id="spaceconsumedId" labelFor="spaceconsumedValue"/>
+            <cc name="spaceconsumedValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="blocksizeLabel" defaultValue="VSNDetails.psheet7"
+                Id="blocksizeId" labelFor="blocksizeValue"/>
+            <cc name="blocksizeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="accesscountLabel" defaultValue="VSNDetails.psheet8"
+                Id="accesscountId" labelFor="accesscountValue"/>
+            <cc name="accesscountValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="labeltimeLabel" defaultValue="VSNDetails.psheet9"
+                Id="labeltimeId" labelFor="labeltimeValue"/>
+            <cc name="labeltimeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="mounttimeLabel" defaultValue="VSNDetails.psheet10"
+                Id="mounttimeId" labelFor="mounttimeValue"/>
+            <cc name="mounttimeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="moditimeLabel" defaultValue="VSNDetails.psheet11"
+                Id="moditimeId" labelFor="moditimeValue"/>
+            <cc name="moditimeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="reservationLabel" defaultValue="VSNDetails.psheet12"
+                Id="reservationId" labelFor="reservationValue"/>
+            <cc name="reservationValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="timeLabel" defaultValue="VSNDetails.psheet13"
+                Id="timeId" labelFor="timeValue"/>
+            <cc name="timeValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="reservedLabel" defaultValue="VSNDetails.psheet14"
+                Id="reservedId" labelFor="reservedValue"/>
+            <cc name="reservedValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="assocLibLabel" defaultValue="VSNDetails.psheet15"
+                Id="assocLibId" labelFor="assocLibValue"/>
+            <cc name="assocLibValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+   </section>
+
+   <section name="attribute" defaultValue="VSNDetails.sectiontitle2" >
+
+        <property required="false">
+            <label name="damagedLabel" defaultValue="EditVSN.damagemedia"
+                Id="damagedId" labelFor="damagedValue"/>
+            <cc name="damagedValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="duplicateLabel" defaultValue="EditVSN.duplicatevsn"
+                Id="duplicateId" labelFor="duplicateValue"/>
+            <cc name="duplicateValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="readonlyLabel" defaultValue="EditVSN.readonly"
+                Id="readonlyId" labelFor="readonlyValue"/>
+            <cc name="readonlyValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="writeprotectLabel"
+                defaultValue="EditVSN.writeprotected"
+                Id="writeprotectId" labelFor="writeprotectValue"/>
+            <cc name="writeprotectValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="foreignLabel" defaultValue="EditVSN.foreignmedia"
+                Id="foreignId" labelFor="foreignValue"/>
+            <cc name="foreignValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="recycleLabel" defaultValue="EditVSN.recycle"
+                Id="recycleId" labelFor="recycleValue"/>
+            <cc name="recycleValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="fullLabel" defaultValue="EditVSN.volumefull"
+                Id="fullId" labelFor="fullValue"/>
+            <cc name="fullValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+
+        <property required="false">
+            <label name="unavailableLabel" defaultValue="EditVSN.unavailable"
+                Id="unavailableId" labelFor="unavailableValue"/>
+            <cc name="unavailableValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+        
+        <property required="false">
+            <label name="needAuditLabel" defaultValue="EditVSN.needaudit"
+                Id="needAuditId" labelFor="needAuditValue"/>
+            <cc name="needAuditValue"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+        </property>
+        
+   </section>
+</propertysheet>

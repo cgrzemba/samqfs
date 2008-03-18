@@ -1,0 +1,206 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH squota 1 "3 Dec 2002"
+.SH NAME
+squota \- Reports quota information
+.SH SYNOPSIS
+\fBsquota\fR
+\%[\fB\-a\fR]
+\%[\fB\-g\fR]
+\%[\fB\-h\fR]
+\%[\fB\-k\fR]
+\%[\fB\-u\fR]
+\%[\fB\-O\fR]
+\%[\fIfile\fR]
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.PP
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+The \fBsquota\fR command displays file, block, and quota usage statistics.
+.PP
+Only a superuser can change
+quotas (see \fBsamquota\fR(1M)).
+.PP
+By default, \fBsquota\fR(1)
+writes the user's applicable group ID and user ID quotas and usages on
+all mounted Sun StorEdge QFS and Sun StorEdge \%SAM-FS file systems to
+\fBstdout\fR.
+.PP
+An admin set quota applies to a set of files and directories.  
+Typically an admin set quota could be set for a large project that involves
+users from several groups and spans several files and directories.
+The admin set IDs must be assigned using the \fBsamchaid\fR(1M) command.
+The \fBsamchaid\fR(1M) command allows a system administrator
+to assign files and directories to individual admin sets.
+Admin set IDs are not tied to any set of permissions
+associated with the user.  That is, a user can have a set of
+directories and files on one Sun StorEdge QFS or Sun StorEdge \%SAM-FS
+file system with a particular
+admin set ID, and the same user can have another set of directories and files
+on another file system (or even the same one) with a completely
+different admin set ID.
+A writable file is therefore used as a surrogate to determine that a user
+has permission to view an admin set's quota values.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\%\fB\-a\fR
+Returns admin set quota statistics.
+.TP
+\%\fB\-g\fR
+Returns group quota statistics.
+.TP
+\%\fB\-h\fR
+Prints a brief usage summary and exits.
+.TP
+\%\fB\-k\fR
+Display all storage units (block quantities) in units
+of \%1024-byte blocks.
+When specified, all block counts are returned in units of \%1024-byte blocks.
+.TP
+\%\fB\-u\fR
+Returns user quota statistics.
+.TP
+\%\fB\-O\fR
+Returns online statistics only.  The default is to return total statistics
+as well as online statistics.
+.TP
+\%\fIfile\fR
+Return the quota information pertaining to \fIfile\fR.
+If \fIfile\fR is writeable by the user issuing the command,
+information about the applicable
+user, group, and admin set IDs is returned.
+If \fIfile\fR is not writeable by the user issuing the command,
+information about the
+quotas for the user's GID and UID on the filesystem that
+\fIfile\fR resides on is returned.
+.PP
+.SH EXAMPLES
+Example 1.  The following example is from a system upon which \fB/qfs1\fR
+is a mounted Sun QFS file system with group and admin set quotas enabled:
+.PP
+.ft CO
+.nf
+server% squota
+                                    Limits
+        Type    ID    In Use     Soft     Hard
+/qfs1
+Files  group   101         1     1000     1200
+Blocks group   101         8    20000    30000
+Grace period                    3d
+No user quota entry.
+.ft
+.fi
+.PP
+Example 2.  The following example is from the same system:
+.PP
+.ft CO
+.nf
+server% squota /qfs1/george
+                                    Limits
+        Type    ID    In Use     Soft     Hard
+/qfs1/george
+Files  admin    12         4        0        0
+Blocks admin    12      6824        0        0
+Grace period                    0s
+---> Infinite quotas in effect.
+/qfs1/george
+Files  group   101         1     1000     1200
+Blocks group   101         8    20000    30000
+Grace period                    3d
+No user quota entry.
+.fi
+.ft
+.PP
+Example 3.  The following example is from a Sun
+StorEdge \%SAM-FS file system:
+.PP
+.ft CO
+.nf
+server% squota /sam1/adams
+                                 Online Limits                Total Limits
+        Type    ID    In Use     Soft     Hard    In Use     Soft     Hard
+/sam1/adams
+Files  admin    12         4        0        0         4        0        0
+Blocks admin    12      6824        0        0      3950        0        0
+Grace period                    0s
+---> Infinite quotas in effect.
+/sam1/adams
+Files  group   101         1     1000     1200         1        0        0
+Blocks group   101         8    20000    30000         8   100000   120000
+Grace period                    3d
+/sam6
+Files   user   130        11       15     2000        11       15     6000
+Blocks  user   130       320      400   200000       560*     500   700000
+Grace period                    0s                          0s
+---> Total soft limits under enforcement (since 18h10m1s ago)
+.fi
+.ft
+.SH EXIT STATUS
+This command returns the following:
+.TP 3
+\(bu
+0 on successful completion.
+.TP
+\(bu
+1 on a usage or argument error.
+.TP
+\(bu
+10 on an execution error.
+.SH FILES
+.TP 20
+\fIfilesytem\fB/\&.quota_a\fR
+Admin set quota information
+.TP
+\fIfilesystem\fB/\&.quota_g\fR
+Group quota information
+.TP
+\fIfilesystem\fB/\&.quota_u\fR
+User quota information
+.SH SEE ALSO
+\fBsamquota\fR(1M)
+.PP
+\fBsamfsck\fR(1M)
+.PP
+\fBpasswd\fR(4) - User ID information
+.PP
+\fBgroup\fR(4) - Group ID information
+.PP
+.SH DIAGNOSTICS
+.TP
+\fBNo user quota entry.\fR
+User quotas are not active on the file system.
+.TP
+\fBNo group quota entry.\fR
+Group quotas are not active on the file system.
+.TP
+\fBNo admin quota entry.\fR
+Admin set quotas are not active on the file system.

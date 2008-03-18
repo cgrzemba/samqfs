@@ -1,0 +1,524 @@
+.\" $Revision: 1.21 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH intro_libsam 3 "15 May 2007"
+.SH NAME
+\fBintro_libsam\fR, \fBintro_libsamrpc\fR \- Introduces the Sun StorageTek QFS and Sun StorageTek \%SAM-FS Application Programmer Interface (API) routines
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The Sun StorageTek QFS and Sun StorageTek \%SAM-FS
+API allows a Sun StorageTek QFS, Sun StorageTek \%SAM-FS, or Sun \%SAM-QFS
+file to be requested from within an
+application program.  The aplication program can reside either on the
+machine upon which the Sun StorageTek QFS, Sun StorageTek \%SAM-FS, or Sun \%SAM-QFS
+file system is running
+or on another machine on the network.
+This man page provides an introduction to the API routines.
+.PP
+The following topics are presented:
+.TP 2
+\(bu
+API overview
+.TP
+\(bu
+API library routines
+.TP
+\(bu
+Using \fBlibsam\fR
+.TP
+\(bu
+Using \fBlibsamrpc\fR
+.SH API OVERVIEW
+When a request is made, the process or program making the request is
+the client process or program, running on the client machine.  The
+requests are received and processed by the server, running on the
+server, or host, machine.  For the API routines, the server machine
+is always the machine upon which the Sun StorageTek QFS, Sun StorageTek \%SAM-FS,
+or Sun \%SAM-QFS file
+system is running.
+.PP
+In the simplest case, the client and server machines are the same,
+and no network communication is necessary.  In other cases, however, 
+the application programmer needs to allow for the client program to
+run on a machine where the Sun StorageTek QFS, Sun StorageTek \%SAM-FS,
+or Sun \%SAM-QFS
+file system
+is not running.  In this
+case, networked library calls from \fBlibsamrpc\fR must be used.
+.PP
+The two API libraries available with the Sun StorageTek QFS,
+Sun StorageTek \%SAM-FS,
+and Sun \%SAM-QFS
+file systems are as follows:
+.TP 2
+\(bu
+\fBlibsam\fR.  The library calls in \fBlibsam\fR do not perform network
+communication.  They only make local requests.  In this case, each
+library call makes a system call, and the server is the local operating
+system.
+.TP
+\(bu
+\fBlibsamrpc\fR.  The library calls in \fBlibsamrpc\fR use
+Remote Procedure Calls
+(RPCs) to communicate with a special server process, \fBsam-rpcd\fR.
+Because
+of the RPC mechanism, the client and server can exist on the same
+machine or on different machines in the network.  The server process
+always runs on the machine upon which the Sun StorageTek QFS,
+Sun StorageTek \%SAM-FS, or Sun \%SAM-QFS file system is running.
+.PP
+Both \fBlibsam\fR and \fBlibsamrpc\fR are released in shared
+object (\fB.so\fR) and
+archive (\fB.a\fR) format for Solaris platforms.  \fBlibsam.so\fR
+and \fBlibsam.a\fR are
+installed in \fB/opt/SUNWsamfs/lib\fR.  \fBlibsamrpc.so\fR
+and \fBlibsamrpc.a\fR are
+installed in \fB/opt/SUNWsamfs/client/lib\fR, with symbolic
+links to them
+in \fB/opt/SUNWsamfs/lib\fR.
+.SH API LIBRARY ROUTINES
+The library calls for the Sun StorageTek QFS, Sun StorageTek \%SAM-FS, and
+Sun \%SAM-QFS software
+are supported in \fBlibsam\fR, and a subset is
+supported in \fBlibsamrpc\fR.
+.PP
+Table 1 lists the API library routines and
+indicates the environments in which they are supported.
+In addition, table 1 indicates the libraries in which they
+are included:
+.PP
+\fBTable 1.  Library routine availability\fR
+.TP 15
+\fBRoutine\fR
+\fBDescription\fR
+.TP
+\fBsam_advise\fR
+Sets file attributes.
+.br
+Availability:  Sun StorageTek QFS, Sun StorageTek \%SAM-FS, and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_archive\fR
+Sets archive attributes on a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR and \fBlibsamrpc\fR.
+.TP
+\fBsam_rearchive\fR
+Sets rearchive attributes on a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_exarchive\fR
+Exchanges archive copies of a file or directory.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_unarchive\fR
+Removes archive copies for a file or directory.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_unrearch\fR
+Removes rearchive attributes on a file or directory.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_damage\fR
+Sets damaged attribute on a file or directory.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_undamage\fR
+Clears damaged and stale status of a file or directory.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_cancelstage\fR
+Cancels a pending or in-progress stage on a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_closecat\fR
+Ends access to the catalog for an automated library.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_closerpc\fR
+Closes down the RPC connection.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsamrpc\fR.
+.TP
+\fBsam_devstat\fR, \fBsam_ndevstat\fR
+Gets device status.  \fBsam_ndevstat\fR accepts a longer device name.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_devstr\fR
+Translates numeric device status into a character string.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_getcatalog\fR
+Obtains a range of entries from the catalog for an automated library.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_initrpc\fR
+Initializes the RPC connection.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsamrpc\fR.
+.TP
+\fBsam_opencat\fR
+Accesses the VSN catalog for an automated library.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_readrminfo\fR
+Gets information for a removable media file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_release\fR
+Releases and sets release attributes on a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR and \fBlibsamrpc\fR.
+.TP
+\fBsam_request\fR
+Creates a removable media file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_restore_copy\fR
+Creates an archive copy for a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_restore_file\fR
+Creates an offline file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_segment\fR
+Sets segment attributes on a file or directory.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR and \fBlibsamrpc\fR.
+.TP
+\fBsam_segment_stat\fR
+Obtains file information and follows symbolic links to
+a segmented file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_setfa\fR
+Sets file attributes.
+.br
+Availability:  Sun StorageTek QFS, Sun StorageTek \%SAM-FS, and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR and \fBlibsamrpc\fR.
+.TP
+\fBsam_ssum\fR
+Sets checksum attributes on a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.TP
+\fBsam_stage\fR
+Stages and sets stage attributes on a file.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR and \fBlibsamrpc\fR.
+.TP
+\fBsam_stat\fR, \fBsam_lstat\fR
+\fBsam_stat\fR obtains file information and follows symbolic links to
+the file.
+\fBsam_lstat\fR obtains file information, and if that file is a link,
+it returns information about the link.
+.br
+Availability:  Sun StorageTek QFS, Sun StorageTek \%SAM-FS,
+and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR and \fBlibsamrpc\fR.
+.TP
+\fBsam_vsn_stat\fR, \fBsam_segment_vsn_stat\fR
+Obtain VSN status for a file or a file's data segment that overflows VSNs.
+.br
+Availability:  Sun StorageTek \%SAM-FS and Sun \%SAM-QFS environments.
+.br
+Libraries:  \fBlibsam\fR.
+.PP
+All APIs in \fBlibsam\fR, except for \fBsam_closecat\fR,
+\fBsam_getcatalog\fR, and \fBsam_opencat\fR, are available for use
+with 64-bit programs.
+Sun Microsystems, Inc. does not support a 64-bit version of \fBlibsamrpc\fR.
+.PP
+For more details about each library routine, see the
+individual corresponding man page for that routine.
+Library routines contained in \fBlibsam\fR are found
+in section 3 of the online man pages.  Library routines contained
+in \fBlibsamrpc\fR are found in section 3X of the online man pages.
+.SH USING libsam
+No special initialization or configuration is required prior to using
+the API library routines in \fBlibsam\fR.
+The application program must be linked with \fBlibsam\fR, however.
+For information on the
+routines, see the individual \fBlibsam\fR man pages,
+all of which are listed in the \fBSEE ALSO\fR section of this man page.
+.SH USING libsamrpc
+The source code for \fBlibsamrpc\fR is included in the release for
+customers who wish to write and run application programs on platforms
+that do not run the Solaris operating system.  In these cases, the
+library must be ported to the client machine.  The source code is
+located in \fB/opt/SUNWsamfs/client/src\fR.  Example application
+programs are located in \fB/opt/SUNWsamfs/client/examples\fR.
+.SS Specifying the Server Machine
+A call to \fBsam_initrpc\fR is required before any other RPC client
+API calls can be executed successfully.  Only one \fBsam_initrpc\fR
+call is required, followed by any number of other client API calls
+(other than \fBsam_closerpc\fR).  The \fBsam_initrpc\fR call accepts
+one argument:  a pointer to a character string that
+specifies the name of the server machine.  If this pointer
+is \fBNULL\fR, \fBsam_initrpc\fR checks for an environment variable
+named \fBSAMHOST\fR.  If this environment variable is set, that name
+is used for the server machine.  If there is no \fBSAMHOST\fR
+environment variable, the default server name \fBsamhost\fR is used.
+.PP
+In summary, the name of the server machine can be specified in any of
+three ways, which are checked by \fBsam_initrpc\fR in the following order:
+.TP 3
+1.
+As an argument to the \fBsam_initrpc\fR call.
+.TP
+2.
+As the environment variable \fBSAMHOST\fR.
+.TP
+3.
+By accepting the default server name, \fBsamhost\fR.
+.SS RPC Server Process
+The RPC API server process receives and processes requests from
+the client.  This server process, \fB/opt/SUNWsamfs/sbin/sam-rpcd\fR,
+must be run on the same machine as the file system.  The \fBsam-rpcd\fR
+daemon must be running for client requests to execute successfully.
+.PP
+The \fBsam-rpcd\fR daemon is started automatically by \fBsam-amld\fR
+if the appropriate entry is made in the \fBdefaults.conf\fR file.
+For information on editing the \fBdefaults.conf\fR file,
+see \fBConfiguring the API\fR later in this man page.
+.PP
+The \fBsam-rpcd\fR daemon can also be started manually.
+It should be run as superuser.
+The \fBsam-rpcd\fR command accepts no arguments.
+.PP
+The \fBsam-rpcd\fR daemon services the requests it receives by making the
+appropriate system call on the server machine and then returning the
+output or result to the client.  For more information on this daemon,
+see the \fBsam-rpcd\fR(1M) man page.
+.SS Configuring the API
+The following steps describe setting up the API server and clients.
+These steps assume that your software is properly configured and running.
+.PP
+\fIStep 1: Configure the API Server\fR
+.PP
+For the server portion of the API to run successfully, the following
+conditions must be present:
+.TP 2
+\(bu
+The RPC program name and number pair must be known on the server machine
+.TP
+\(bu
+The RPC program name and number pair must be the same as the pair used
+on the API client machines.
+.PP
+Make an entry for the RPC program name and number.  The RPC program number
+is a number chosen by you.
+The RPC program name is \fBsamfs\fR.  The name and
+number pair must be the same on the server and all clients.
+The \fB/etc/nsswitch.conf\fR file determines where you should specify
+the RPC program name and number pair.  For more information on this, see
+the \fBnsswitch.conf\fR(4) man page.
+.PP
+In \fB/etc/rpc\fR (or the NIS database), add the following line:
+.PP
+.ft CO
+samfs		150005
+.ft
+.PP
+In \fB/etc/services\fR (or the NIS database), add the following line:
+.PP
+.ft CO
+samfs		5012/tcp	# Sun StorageTek \%SAM-FS API
+.ft
+.PP
+The API server is started automatically by the \fBsam-amld\fR daemon
+if the following entry is made in the \fBdefaults.conf\fR file
+(note that changes to the \fBdefaults.conf\fR file do not take effect
+until the next time the \fBsam-amld\fR daemon is initialized):
+.PP
+.ft CO
+samrpc = on
+.ft
+.PP
+The \fBsam-rpcd\fR daemon is not automatically started if no entry
+for it appears in the \fBdefaults.conf\fR file or if the following
+entry appears in the file:
+.PP
+.ft CO
+samrpc = off
+.ft
+.PP
+For more information about the \fBdefaults.conf\fR file, see
+the \fBdefaults.conf\fR(4) man page.
+.PP
+\fIStep 2:  Configure the API Client Machines\fR
+.PP
+The following two configuration components must be present on the
+client machine for
+the RPC communication to be successful:
+.TP 2
+\(bu
+The name of the server machine.
+.TP
+\(bu
+The RPC program name and number pair.
+.PP
+Make an entry for the RPC program name and number on all client machines,
+as you did on the API server machine previously.  Again, the RPC program
+name must be \fBsamfs\fR.  The RPC program number is a number chosen by you,
+but it must be the same on the server and client machines.
+.PP
+In \fB/etc/rpc\fR (or the NIS database), add the following line:
+.PP
+.ft CO
+samfs		150005
+.ft
+.PP
+The host name of the server machine must be known on the client machine.
+For default cases, the host name samhost must be listed as an alias for
+the Sun StorageTek \%SAM-FS and Sun \%SAM-QFS file system server machine.
+For more information, see
+the \fBsam_initrpc\fR(3X) man page.
+.SS Authentication and \fBlibsamrpc\fR
+Authentication information is generated at the time of
+the \fBsam-initrpc\fR call.
+This information consists of the user identification (\fBuid\fR) and
+group identification (\fBgid\fR) of the calling process.  It is
+associated with the connection made to the RPC server process.
+.PP
+Subsequent \fBlibsamrpc\fR calls have this information associated.  When the
+request is received by the RPC server process on the server machine,
+the uid and gid information is used.  File access and operations are
+granted or denied based on this information.
+.PP
+It is important that the server machine have a common \fBuid\fR
+and \fBgid\fR space with the client machines.
+.SH SEE ALSO
+\fBsam_advise\fR(3),
+\fBsam_archive\fR(3),
+\fBsam_rearch\fR(3),
+\fBsam_exarchive\fR(3),
+\fBsam_unarchive\fR(3),
+\fBsam_unrearch\fR(3),
+\fBsam_damage\fR(3),
+\fBsam_undamage\fR(3),
+\fBsam_cancelstage\fR(3),
+\fBsam_closecat\fR(3),
+\fBsam_devstat\fR(3),
+\fBsam_devstr\fR(3),
+\fBsam_getcatalog\fR(3),
+\fBsam_lstat\fR(3),
+\fBsam_ndevstat\fR(3),
+\fBsam_opencat\fR(3),
+\fBsam_readrminfo\fR(3),
+\fBsam_release\fR(3),
+\fBsam_request\fR(3),
+\fBsam_restore_copy\fR(3),
+\fBsam_restore_file\fR(3),
+\fBsam_segment\fR(3),
+\fBsam_setfa\fR(3),
+\fBsam_ssum\fR(3),
+\fBsam_stage\fR(3),
+\fBsam_stat\fR(3).
+.PP
+\fBsam_archive\fR(3X),
+\fBsam_closerpc\fR(3X),
+\fBsam_initrpc\fR(3X),
+\fBsam_lstat\fR(3X),
+\fBsam_release\fR(3X),
+\fBsam_stage\fR(3X),
+\fBsam_stat\fR(3X).
+

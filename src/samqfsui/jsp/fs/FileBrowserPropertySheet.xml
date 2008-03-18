@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FileBrowserPropertySheet.xml,v 1.5 2008/03/17 14:40:33 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="BrowseCriteria" defaultValue="">
+        <property>
+            &lt;table>
+            &lt;tr>
+                &lt;td colspan='4' nowrap='nowrap'>
+                    <cc name="pathLabel"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="fs.filebrowser.currentdir"/>
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="BasePath"
+                        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                        <attribute name="escape" value="false" />
+                        <attribute name="onChange"
+                            value="handlePathMenuChange(this)"/>
+                        <attribute name="commandChild"
+                            value="BasePathMenuHref" />
+                        <attribute name="type" value="jump" />
+                    </cc>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="5" />
+                    </cc>
+                    <cc name="Dir" 
+                        tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                        <attribute name="maxLength" value="150" />
+                        <attribute name="size" value="60" />
+                        <attribute name="onKeyPress"
+                            value="if (event.keyCode == 13) {
+                                       handleEnterBasePath(this);
+                                       return false;
+                                   }" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="filterLabel"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="fs.filebrowser.filter"/>
+                    </cc>
+                &lt;/td>
+                &lt;td colspan='4' nowrap='nowrap'>
+                    <cc name="FilterCriteria" 
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                    </cc>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="5" />
+                    </cc>
+                    <cc name="ChangeFilter" 
+                        tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
+                        <attribute name="defaultValue"
+                            value="fs.filebrowser.changefilter" />
+                        <attribute name="type" value="secondary" />
+                        <attribute name="bundleID" value="samBundle" />
+                        <attribute name="onClick"
+                            value="return launchFilterPopup(this);" />
+                    </cc>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="10" />
+                    </cc>
+                    <cc name="maxLabel"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="fs.filebrowser.maxentries"/>
+                    </cc>
+                    <cc name="Entries" 
+                        tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+                        <attribute name="maxLength" value="4" />
+                        <attribute name="size" value="6" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Apply" 
+                        tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
+                        <attribute name="defaultValue"
+                            value="fs.filebrowser.apply" />
+                        <attribute name="type" value="primary" />
+                        <attribute name="bundleID" value="samBundle" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;/table>
+        </property>
+    </section>   
+</propertysheet>

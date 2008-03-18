@@ -1,0 +1,96 @@
+/*
+ *    SAM-QFS_notice_begin
+ *
+ * CDDL HEADER START
+ *
+ * The contents of this file are subject to the terms of the
+ * Common Development and Distribution License (the "License")
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+ * or http://www.opensolaris.org/os/licensing.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each
+ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+ * If applicable, add the following below this CDDL HEADER, with the
+ * fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ */
+/*
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Use is subject to license terms.
+ *
+ *    SAM-QFS_notice_end
+ */
+
+// ident	$Id: css_master.css,v 1.3 2008/03/17 14:40:24 am143972 Exp $
+
+/* GLOBAL STYLES */
+BODY, TH, TD, P, DIV, SPAN, INPUT, SELECT, TEXTAREA, FORM, B, STRONG, I, U, H1, H2, H3, H4, H5, H6, DL, DD, DT, UL, LI, OL, OPTION, OPTGROUP, A {font-family:sans-serif;font-size:12px}
+BODY {color:#333;background-color:red;margin:0px}
+H1, H2, H3, H4, H5, H6 {font-weight:bold}
+H1 {font-size:18px}
+H2 {font-size:15px}
+H5, H6 {font-size:11px}
+a:link, a:visited {color:#003399;text-decoration:none}
+a:hover {color:#003399;text-decoration:underline}
+.ConMgn {margin:0px 10px}
+.hidden {display:none}
+.float {float:left}
+/*---*/
+
+
+/* TASKS PAGE */
+/* [css_ie55up.css: no overwrite classes for this component] */
+body#TskPge {background-color: #B6C6D6;}
+td.TskPgeTpBx {background-image:url('/samqfsui/images/s-curve.gif');background-position:bottom left;background-repeat:repeat-x}
+td.TskPgeTpBx h1 {color:#4B5E6A}
+td.TskPgeTskLftTd {border-top: 1px solid #AEB3B8; border-bottom: 1px solid #AEB3B8; border-left: 1px solid #AEB3B8;}
+td.TskPgeTskCntrTd {border-top: 1px solid #AABCC8; border-bottom: 1px solid #AABCC8;}
+td.TskPgeTskRghtTd {background-color: #99B3C0; border-top: 1px solid #AABCC8; border-bottom: 1px solid #AABCC8; border-right: 1px solid #AABCC8;}
+td.TskPgeBckgrTd {background-image:url('/samqfsui/images/gradation-grey.gif'); background-color: #9AB2BF;}
+a.TskPgeTxtBg, a.TskPgeTxtBgOvr {border-left: 1px solid #AABCC8;}
+a.TskPgeTxtBg {color:#333333 !important; background-image: url('/samqfsui/images/grad1.gif'); background-color: #E2E7EA;}
+a.TskPgeTxtBgOvr { color:#FFF !important; background-image: url('/samqfsui/images/grad2.gif'); background-color: #4581B3;}
+div.TskPgeFllPge {background-color:#B6C6D6; background-image: url('/samqfsui/images/bkgrnd.gif'); }
+div.TskPgeInfPnl {border: 1px solid #AABCC8; background-color: #F4F6F7;}
+span.TskPgeHdr {color:#666666;}
+span.TskPgeTskLftBtm {background-image: url('/samqfsui/images/left_bottom.gif'); }     
+span.TskPgeTskLftTp {background-image: url('/samqfsui/images/left_top.gif'); }             
+span.TskPgeTskRghtBtm {background-image: url('/samqfsui/images/right_bottom.gif');}     
+span.TskPgeTskRghtTp {background-image: url('/samqfsui/images/right_top.gif');} 
+span.TskPgeTskRghtBrdr {background-color: #AABCC8;}
+span.TskPgeSbHdr {color: #4B5E6A;}
+
+/*<<<<<<<<<<<<<<<<<<<<------------>>>>>>>>>>>>>>>>>>>>*/
+body#TskPge {padding:0px;}
+body#TskPge table {empty-cells: show;}
+body#TskPge td a span {font-size: 11px;} 
+table.TskPgeBtmSpc {margin-bottom:5px;}
+tr.TskPgeBtmTr {height:220px;}
+td.TskPgeTpBx h1 {font-size:18px; margin: 20px 0px 0px 0px; margin-top: 20px; padding: 0px; font-weight: bold;}
+td.TskPgeBtmPdng {padding-bottom: 5px;}
+td.TskPgeBckgrTd {background-repeat:repeat-x; background-position:right top;}
+a.TskPgeTxtBg, a.TskPgeTxtBgOvr {display: block; position: relative; width: 100%; min-height:21px; font-family:, sans-serif, Arial, Helvetica;background-repeat:repeat-x; background-position: right top;}
+a.TskPgeTxtBg {text-decoration: none;}
+a.TskPgeTxtBgOvr {text-decoration: none !important;}
+div.TskPgeFllPge {width: 100%; background-repeat:repeat-x; background-position: right top;}
+div.TskPgeInfPnl {position:absolute; display: none; height: 200px; width: 100px;overflow:auto;z-index:2;}
+div.TskPgeInfPnl div {float: right;}
+div.TskPgeInfPnl p {margin: 16px 18px}
+span.TskPgeHdr {font-size:12px; font-weight: bold;}
+span.TskPgeSbHdr {font-size: 13px; font-weight: bold; padding-bottom: 5px; padding-top: 20px; display: block}
+span.TskPgeTskPdng {font-size:11px;padding: 0px 7px; display: block; padding-top: 4px; padding-bottom: 3px;}
+span.TskPgeTskLftBtm, span.TskPgeTskLftTp, span.TskPgeTskRghtBtm, span.TskPgeTskRghtTp {position: absolute; width: 8px; height: 11px;cursor: pointer; background-position: top left; background-repeat: no-repeat;}
+span.TskPgeTskLftBtm {bottom: -1px; left: -1px; }     
+span.TskPgeTskLftTp {top: -1px; left: -1px;}             
+span.TskPgeTskRghtBtm {bottom: -1px; right: 0px;z-index:1;}     
+span.TskPgeTskRghtTp {position: absolute; top: -1px; right: 0px;_right:-1px; z-index:1;} 
+span.TskPgeTskRghtBrdr {display: block; position: absolute; height: 100%; right: 0px; width: 1px; cursor: pointer;}
+
+body.DefBdy {background-color: #B6C6D6}
+td.contentCell {vertical-align: top}

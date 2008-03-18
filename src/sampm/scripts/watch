@@ -1,0 +1,451 @@
+#!/bin/csh
+#
+# $Revision: 1.5 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#################################################################################
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.  No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)   operation of any of the software script(s) shall be
+#       uninterrupted or error free, or
+#
+# (ii)  functions contained in the software script(s) shall operate
+#       in the combinations which may be selected for use by
+#       Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#       issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+################################################################################
+#
+# Synopsis:
+#
+#	watch - Take action in the event of a problem with
+#		    a samfs file system  -- send message to:
+#							- log it in system root
+#                           - first site admin, and one additional
+#                           - supervisor,        (after 5)
+#                           - Dept manager,      (after 10)
+#                           - IT manager,        (after 20)
+#                           - HIGHEST....        (after 40)
+#
+#	- The contact emails are defined at install time.
+#	- The number of minutes to wait on a outstanding load request for a vsn
+#	is defined at install time. The escallations are one level for each
+#	additional 5 minutes.
+#	- The high water mark notification is done the first time it is detected
+#	and is not user modifiable.
+#	- The number of file systems that will be monitored must be supplied
+#	by the customer at install time.
+#
+#	There are two events that can trigger the above eamils. The first
+#	is an outstanding tape load request for more than a designated wait
+#	time. The wait time is set up at install time by the customer. This
+#	time is the cut off time when emails will start to be sent. Once
+#	the threshold is passed the first contact point is emailed and then
+#	with each five minute increment more an additional person is emailed
+#	as well as those already sent mail indicating an issue with the loading
+#	of a vsn.
+#
+#	The second event that can trigger the emails to be sent out is if a
+#	file system exceeds its high water mark. The first 5 times that the
+#	script is run it will send an email to the first point of contact.
+#	the 6-10 times that the script is run and the high water mark is still
+#	exceeded, it will send to the first point and the second point. This
+#	process continues to the defined highest point of contact after each
+#	5 interations. A file /var/tmp/sampm_watch_count contains the error
+#	counts for each file system that is being tracked. Each time the
+#	script is executed and the file system's high water mark is exceeded,
+#	the count is incremented in the file.
+#
+#	One note on this script is that if the number of file systems is changed
+#	in the /etc/vfstab then the tracking will be off and an invalid email
+#	could be sent about	a file system that is not at a particular error level.
+#	of times that this script was run
+#
+#
+################################################################################
+# Change history (most recent first)
+#
+# When            Who           Comments
+# ----            ---           --------
+#			 2003 dcrouse		Initial Version
+# July 1st,  2004 jleach        Included PS Header & changes to support common
+#								source'd in site-tools-PARAMS
+# July 26th, 2004 jdp			Cleaning up to run with the new SAMPM package
+##############################################################################
+#
+# Obtain the site specific parameters
+#
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+set comment = "#"
+set hour = `date +%k`
+set min = `date +%M`
+#
+# EMAIL contanct names defined in site-tools-PARAMS
+#
+
+if ( ! -d /var/sadm/pkg/SUNWsamfsu ) then
+	/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+The SUNWsamfs package is not installed. Unable to execute the cron job watch
+if this package is not installed. Please install the SUNWsamfsr and
+SUNWsamfsu packages. If unable please edit the crontab to disable the
+watch command from being executed.
+EOF
+	exit 1
+endif
+
+############################################################################
+#		code set up do not change
+############################################################################
+if ( ! -e /var/tmp/sampm_watch_counts ) then
+	set count = 0
+	while ( $count < $num_filesystems )
+		echo 0 >> /var/tmp/sampm_watch_counts
+		@ count++
+	end
+endif
+set fs_err_count = (`cat /var/tmp/sampm_watch_counts`)
+#echo fs_err_count = $fs_err_count
+\rm /var/tmp/sampm_watch_counts
+#
+############################################################################
+############################################################################
+#			CHECK FOR OUTSTANDING TAPE REQUESTS	EXCEEDING MAX WAIT TIME
+############################################################################
+############################################################################
+#
+set WAIT_TIME = $waittime
+set WAIT_LIST = 0
+set LONG_WAIT = 0
+set VSN_LEVEL = 0
+if ($tape_type != none) then
+	set WAIT_LIST = `samcmd p | grep $tape_type | awk '{print $7} ' | tr -d : `
+#	echo vsn list - $WAIT_LIST
+	foreach VSN_W (`echo $WAIT_LIST`)
+#		echo vsn wait time - $VSN_W
+		if ( $VSN_W > $waittime ) then
+			if ($LONG_WAIT == 0) then
+				set LONG_WAIT = 7
+			endif
+			if ($VSN_W > $waittime_cont4 && $VSN_LEVEL < 4) then
+				set VSN_LEVEL = 4
+				set WAIT_TIME = $waittime_cont4
+			else if ($VSN_W > $waittime_cont3 && $VSN_LEVEL < 3) then
+				set VSN_LEVEL = 3
+				set WAIT_TIME = $waittime_cont3
+			else if ($VSN_W > $waittime_cont2 && $VSN_LEVEL < 2) then
+				set VSN_LEVEL = 2
+				set WAIT_TIME = $waittime_cont2
+			else if ($VSN_LEVEL < 1) then
+				set VSN_LEVEL = 1
+				set WAIT_TIME = $waittime
+			endif
+		endif
+#		echo long wait - $LONG_WAIT
+#		echo message level - $VSN_LEVEL
+	end
+	if ($LONG_WAIT == 7) then
+############################################################################
+#
+#   Send messages to root to keep a log of messages sent
+#
+############################################################################
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" root <<EOF
+
+There is one or more tape request outstanding for more than $WAIT_TIME minutes
+
+This HELP was requested at `date`  !
+EOF
+
+############################################################################
+#
+#   Send message to contact one
+#
+############################################################################
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+
+There is one or more tape requests outstanding for more than $WAIT_TIME minutes
+
+This HELP was requested at `date`  !
+EOF
+
+############################################################################
+#
+#   Send message to contact one a
+#
+############################################################################
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1a <<EOF
+
+There is one or more tape requests outstanding for more than $WAIT_TIME minutes
+
+This HELP was requested at `date`  !
+EOF
+
+############################################################################
+#
+#   Send message to contact two
+#
+############################################################################
+if ($VSN_LEVEL >= 2) then
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact2 <<EOF
+
+There is one or more tape requests outstanding for more than $WAIT_TIME minutes
+
+This HELP was requested at `date`  !
+EOF
+endif
+
+############################################################################
+#
+#   Send message to contact three
+#
+############################################################################
+if ($VSN_LEVEL >= 3) then
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact3 <<EOF
+
+There is one or more tape requests outstanding for more than $WAIT_TIME minutes
+
+This HELP was requested at `date`  !
+EOF
+endif
+
+############################################################################
+#
+#   Send message to contact four
+#
+############################################################################
+if ($VSN_LEVEL >= 4) then
+/usr/ucb/mail -s "SAM-FS NEEDS HELP"  $contact4 <<EOF
+
+There is one or more tape requests outstanding for more than $WAIT_TIME minutes
+
+This HELP was requested at `date`  !
+EOF
+endif
+
+############################################################################
+#
+#   Additional emails can be generated if necessary. Add the same lines
+#   as above with additional contacts at this point.
+#
+############################################################################
+
+	else
+		if ( $hour == $watch_hour && $min > $watch_min ) then
+			echo "There are no tapes with outstanding load requests greater than $WAIT_TIME minutes"
+		endif
+	endif
+endif
+#
+############################################################################
+############################################################################
+#			loop through SAM-FS's
+############################################################################
+############################################################################
+#
+#	Check if file system is above the high water mark
+#   Start  of sam file systems samdump files
+#
+#       make list of file system names
+#
+set REAL = 0
+set WANT = 0
+set fs_index = 0
+set num = 0
+set fspar = (`grep  "samfs" /etc/vfstab | awk '{print $1}'`)
+foreach dir (`grep "samfs" /etc/vfstab | awk '{print $3}'`)
+	@ num++
+	@ fs_index++
+    set fs = ($fspar[$num])
+    set fstmp = `echo $fs | cut -c1`
+#   echo $fstmp
+    if ($fstmp == $comment) then
+		set fs = `echo $fs | cut -f2 -d'#'`
+		echo File system $fs is commented out in /etc/vfstab, skipping
+		echo 0 >> /var/tmp/sampm_watch_counts
+        continue
+    endif
+#    echo $fs
+#    echo $dir
+
+	set REAL = `df -k | awk '{print $5, $1, $6}' | grep $fs	| awk '{print $1}' | tr -d "%" `
+	set WANT = `samcmd N $dir | grep high | awk '{print $4}' | tr -d "%" `
+
+#	echo DIR = $dir
+#	echo REAL = $REAL
+#	echo WANT = $WANT
+#	echo LONG_WAIT = $LONG_WAIT
+
+#	echo $fs_index
+	set err_count = $fs_err_count[$fs_index]
+#	echo $err_count
+	if ($REAL > $WANT) then
+		@ err_count++
+#		echo $err_count
+############################################################################
+#
+#	Send messages to root to keep a log of messages sent
+#
+############################################################################
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" root <<EOF
+	the root message....
+SAM-FS file system -- $dir -- is over the high water mark for some reason,
+Actual - $REAL  Desire - $WANT, please investigate. Error count = $err_count
+
+This HELP was requested at `date`  !
+EOF
+
+############################################################################
+#
+#	Send message to contact one
+#
+############################################################################
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+SAM-FS file system -- $dir -- is over the high water mark for some reason,
+Actual - $REAL	Desire - $WANT, please investigate.
+
+This HELP was requested at `date`  !
+EOF
+
+############################################################################
+#
+#	Send message to contact one a
+#
+############################################################################
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1a <<EOF
+SAM-FS file system -- $dir -- is over the high water mark for some reason,
+Actual - $REAL	Desire - $WANT, please investigate.
+
+This HELP was requested at `date`  !
+EOF
+
+############################################################################
+#
+#	Send message to contact two
+#
+############################################################################
+if ($err_count >= $max_cnt2) then
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact2 <<EOF
+SAM-FS file system -- $dir -- is over the high water mark for some reason,
+Actual - $REAL	Desire - $WANT, please investigate.
+
+This HELP was requested at `date`  !
+EOF
+endif
+
+############################################################################
+#
+#	Send message to contact three
+#
+############################################################################
+if ($err_count >= $max_cnt3) then
+/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact3 <<EOF
+SAM-FS file system -- $dir -- is over the high water mark for some reason,
+Actual - $REAL	Desire - $WANT, please investigate.
+
+This HELP was requested at `date`  !
+EOF
+endif
+
+############################################################################
+#
+#	Send message to contact four
+#
+############################################################################
+if ($err_count >= $max_cnt4) then
+/usr/ucb/mail -s "SAM-FS NEEDS HELP"  $contact4 <<EOF
+SAM-FS file system -- $dir -- is over the high water mark for some reason,
+Actual - $REAL	Desire - $WANT, please investigate.
+
+This HELP was requested at `date`  !
+EOF
+endif
+
+############################################################################
+#
+#	Additional emails can be generated if necessary. Add the same lines
+#	as above with additional contacts at this point.
+#
+############################################################################
+
+	else		# File system is below high water mark
+
+############################################################################
+#
+#	Send "all is well" message
+#
+#        After you are comfortable the script is properly
+#        monitoring your system  -- make comments of ( put # in column 1)  
+#        on the next code bracket.
+#
+############################################################################
+		if ( $hour == $watch_hour && $min > $watch_min ) then
+
+/usr/ucb/mail -s "SAM-FS --$dir-- ALL IS WELL" root  <<EOF
+SAM-FS file system $dir --- ALL is well as of `date`
+EOF
+
+############################################################################
+
+/usr/ucb/mail -s "SAM-FS --$dir-- ALL IS WELL" $contact1  <<EOF
+SAM-FS file system $dir --- ALL is well as of `date`
+EOF
+
+############################################################################
+
+#/usr/ucb/mail -s "SAM-FS --$dir-- ALL IS WELL" $contact1a  <<EOF
+#SAM-FS file system $dir --- ALL is well as of `date`
+#EOF
+
+############################################################################
+		endif
+#		Reset err_count for the file system
+		set err_count = 0
+	endif
+
+	echo $err_count >>/var/tmp/sampm_watch_counts
+end
+
+################################################################################
+#####                      end of script                                   #####
+################################################################################
+################################################################################
+
+exit 0

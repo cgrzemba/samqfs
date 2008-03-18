@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: EditVSNPropertySheet.xml,v 1.10 2008/03/17 14:40:36 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="editvsn" defaultValue="">
+
+    <property span="true">
+        <cc name="damagedValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.damagemedia"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="duplicateValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.duplicatevsn"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="readonlyValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.readonly"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="writeprotectedValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.writeprotected"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="foreignValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.foreignmedia"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="recycleValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.recycle"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="fullValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.volumefull"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <cc name="unavailableValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.unavailable"/>
+        </cc>
+    </property>
+    
+    <property span="true">
+        <cc name="needAuditValue"
+            tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+            <attribute name="label" value="EditVSN.needaudit"/>
+        </cc>
+    </property>
+
+    </section>
+</propertysheet>

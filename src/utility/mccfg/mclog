@@ -1,0 +1,89 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mclog - media changer logfile routines.
+#
+# $Revision: 1.5 $
+
+
+# Program logging.
+LOGGING_ON=1				# turn logging on.
+LOGGING_OFF=0				# turn logging off.
+LOGGING=$LOGGING_ON			# current logging test variable.
+
+
+# Create logfile when sourced.
+name=`basename $0`			# program name.
+LOGFILE="$SAMFS_LOG/$name.log"		# logfile name.
+if [ ! -d $SAMFS_LOG ]; then		# directory exists?
+	mkdir -p $SAMFS_LOG		# create logfile directory.
+	chmod -R a+rwx $SAMFS_LOG	# change permissions.
+fi
+if [ ! -f $LOGFILE ]; then		# logfile exists?
+	touch $LOGFILE			# create the logfile.
+	chmod -R a+rw $LOGFILE		# change permissions.
+fi
+
+
+#----- set_logging_on - Turn logging on.
+#      Given log state variable, set it to on.
+function set_logging_on {
+
+	logit "set_logging_on"
+	LOGGING=$LOGGING_ON
+}
+
+
+#----- set_logging_off - Turn logging off.
+#      Given log state variable, set it to off.
+function set_logging_off {
+
+	logit "set_logging_off"
+	LOGGING=$LOGGING_OFF
+}
+
+
+#----- logit - Write to a log file if logging is turned on.
+#      Given log entry as a text string, write entry to log file.
+function logit {
+	logit_str="$@"
+
+	if [ $LOGGING -eq 1 ]; then
+		timestamp=`date '+%m/%d/%y %H:%M:%S'`
+		echo "$timestamp $logit_str" >> $LOGFILE
+	fi
+}
+
+
+#----- set_logfile - Set the log file name to a user defined log file name.
+#      Given user defined log file name, set log file name.
+function set_logfile {
+
+	logit "set_logfile $1"
+	LOGFILE="$1"
+}

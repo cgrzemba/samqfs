@@ -1,0 +1,149 @@
+.\" $Revision: 1.27 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH stager.cmd 4 "03 Apr 2006"
+.SH NAME
+stager.cmd \- Defines Sun StorEdge \%SAM-FS or Sun \%SAM-QFS stager directives
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/stager.cmd\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+Directives for controlling the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS stager
+are read from
+\fB/etc/opt/SUNWsamfs/stager.cmd\fR.
+In the \fBstager.cmd\fR file, each directive must appear on its own line.
+Each directive has the following format:
+.PP
+\fIkeyword\fR \fB=\fR \fIvalue\fR
+.PP
+Comment lines can appear in the \fBstager.cmd\fR file.
+A pound sign (\fB#\fR) in column 1 indicates a comment line.
+.PP
+The \fBstager.cmd\fR file accepts the following directives:
+.TP 10
+\fBdrives =\fR \fIlibrary\fR \fIcount\fR
+Sets the number of drives to use for staging
+on media library \fIlibrary\fR to a number specified
+by \fIcount\fR.
+The default value is the actual number of drives in \fIlibrary\fR.
+.sp
+The \fIlibrary\fR specified must be the family set name
+of a media library as defined in the \fBmcf\fR file.
+If this directive is specified, the stager uses only \fIcount\fR
+number of drives in the media library
+to stage archive copies.
+This directive prevents the stager from using all
+drives in a media library and possibly interfering with archiving.
+.sp
+For example, the following directive specifies that 3 drives
+should be used for staging in an ADIC/Grau media library.
+.sp
+.ft CO
+drives = gr50 3
+.ft
+.TP
+\fBbufsize =\fR \fImedia\fR \fIbuffer_size\fR [ \fBlock\fR ]
+Sets the stage buffer size for a specific media type.
+.sp
+For \fImedia\fR, specify a media type from the \fBmcf\fR(4) man page.
+.sp
+For \fIbuffer_size\fR, specify an integer value in the
+range \fB2\fR \(<= \fIbuffer_size\fR \(<= \fB1024\fR.
+The default is \fB4\fR.
+The \fIbuffer_size\fR specified is multiplied by the default block
+size for \fImedia\fR.
+For more information on default block sizes, see the
+\fIdev_\fBblksize\fR description on the \fBdefaults.conf\fR(4) man
+page.
+.sp
+If \fBlock\fR is specified, the stager locks the stage buffer
+in memory.  If the stage buffer is locked, system CPU time can be
+reduced.
+.TP
+\fBlogfile =\fR \fIfilename\fR [\fIevent\fR]
+Sets the name of the stager log file to \fIfilename\fR,
+specified as an absolute pathname.
+By default, no log file is written.
+\fIevent\fR is start, finish, cancel, error, or all.  The default
+is finish, cancel, and error.
+.sp
+The stager log file contains a line for each file staged.
+The line
+contains the event type, date, time, media, VSN,
+inode generation number of the file,
+position and offset of where the file is stored,
+name of the file, copy number, user id, group id, requestor's user id,
+equipment ordinal of the drive upon which the file was staged,
+and the type of stage, 'V' for data verify and '-' for others.
+.TP
+\fBmaxactive =\fR \fInumber\fR
+Sets the maximum number of stage requests that can
+be active at one time in the stager to an integer \fInumber\fR.
+The minimum \fInumber\fR is \fB1\fR.
+The default \fInumber\fR is \fB4000\fR.
+The maximum \fInumber\fR is \fB500000\fR.
+.sp
+The number of outstanding stage requests has a direct impact on incore inode
+usage, since each request requires an incore inode for the duration of the
+stage.
+Sites may wish to increase the default number of incore inodes if they
+greatly increase the maximum number of stage requests.
+This can be done by setting \fBninodes\fR in the \fB/etc/system\fR file,
+as shown in the following example.
+.sp
+set samfs:ninodes=100000
+.sp
+For more information on \fBninodes\fR, see the
+\fISun StorEdge QFS Configuration and Administration Guide\fR.
+.SH EXAMPLES
+The following is an example \fB/etc/opt/SUNWsamfs/stager.cmd\fR file:
+.PP
+.ft CO
+.nf
+logfile = /var/opt/SUNWsamfs/log/stager
+drives= hp30 1
+.fi
+.ft
+.PP
+The results of the stager's operations are
+found in \fB/var/opt/SUNWsamfs/log/stager\fR.
+For the media library specified as \fBhp30\fR,
+the stager is allowed to use only 1 drive
+for staging files.
+.SH FILES
+The following files are used by the stager:
+.TP 30
+\fB/etc/opt/SUNWsamfs/stager.cmd\fR
+Stager command file.
+.SH SEE ALSO
+\fBsam-stagerd\fR(1M).
+.PP
+\fBdefaults.conf\fR(4),
+\fBmcf\fR(4).

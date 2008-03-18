@@ -1,0 +1,351 @@
+<!DOCTYPE web-app PUBLIC
+  "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+  "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: web.xml,v 1.12 2008/03/17 14:40:23 am143972 Exp $ -->
+
+<web-app>
+
+    <!-- JSF configuration files -->
+    <context-param>
+        <param-name>javax.faces.CONFIG_FILES</param-name>
+        <param-value>/WEB-INF/faces-config.xml,/WEB-INF/console-faces-config.xml</param-value>
+    </context-param>
+    <context-param>
+        <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+        <param-value>server</param-value>
+    </context-param>
+
+    <!-- Add one context param like this per module -->
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.fs.*:moduleURL</param-name>
+        <param-value>../fs</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.archive.*:moduleURL</param-name>
+        <param-value>../archive</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.media.*:moduleURL</param-name>
+        <param-value>../media</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.alarms.*:moduleURL</param-name>
+        <param-value>../alarms</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.jobs.*:moduleURL</param-name>
+        <param-value>../jobs</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.admin.*:moduleURL</param-name>
+        <param-value>../admin</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.util.*:moduleURL</param-name>
+        <param-value>../util</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.server.*:moduleURL</param-name>
+        <param-value>../server</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.wizard.*:moduleURL</param-name>
+        <param-value>../wizard</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>jato:com.sun.netstorage.samqfs.web.monitoring.*:moduleURL</param-name>
+        <param-value>../monitoring</param-value>
+    </context-param>
+
+    <!-- CONSOLE FILTER CONFIGURATION -->
+    <!-- All management web applications must define this filter. -->
+    <!-- Add ignore path parameter values for URI's for which the -->
+    <!-- filter should pass through without making security checks. -->
+    <!-- Paths can end with the "*" wildcard indicator. -->
+    <filter>
+        <filter-name>AppSessionManagerFilter</filter-name>
+        <filter-class>
+            com.sun.management.services.session.AppSessionManagerFilter
+        </filter-class>
+
+        <!-- ADD URI PATHS TO IGNORE WHEN USING THE SECURE PORT -->
+        <init-param>
+            <param-name>ignore-paths-https</param-name>
+            <param-value>
+                /images/*
+                /help/*
+                /html/*
+                /jsp/*
+                /js/*
+            </param-value>
+        </init-param>
+
+        <!-- ADD URI PATHS TO IGNORE WHEN USING THE NON-SECURE PORT -->
+        <init-param>
+            <param-name>ignore-paths-http</param-name>
+            <param-value>
+                /images/*
+                /help/*
+                /html/*
+                /jsp/*
+                /js/*
+            </param-value>
+         </init-param>
+     </filter>
+     <filter-mapping>
+         <filter-name>AppSessionManagerFilter</filter-name>
+         <url-pattern>/*</url-pattern>
+     </filter-mapping>
+
+    <!-- Sun (TM) Java Web Console Registration Servlet   -->
+    <!-- The registration servlet executes within a web app when the app  -->
+    <!-- loads as the web server starts. The servlet reads the web app's   -->
+    <!-- app.xml file and saves registration information in the registration  --> 
+    <!-- service. The console Launch page uses the registration service to  -->
+    <!-- determine the registered web applications that can be  -->
+    <!-- launched and executed within the console instance.  -->
+    <servlet>
+        <servlet-name>Registrar</servlet-name>
+        <servlet-class>com.sun.management.services.registration.servlet.WebConsoleRegistrarServlet
+        </servlet-class>
+        <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <!-- Internal common component servlets required for some complex tags -->
+    <servlet>
+        <servlet-name>BadgingServlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.badging.BadgingServlet
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>DateTimeServlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.datetime.DateTimeServlet
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>HelpServlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.help.HelpServlet
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>Help2Servlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.help2.Help2Servlet
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>TableServlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.table.TableServlet
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>TopologyServlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.topology.CCTopologyServlet
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>VersionServlet</servlet-name>
+        <servlet-class>
+            com.sun.web.ui.servlet.version.VersionServlet
+        </servlet-class>
+    </servlet>
+    <!-- CONSOLE COMMON COMPONENT SERVLET CONFIG DEFINITIONS -->
+    <!-- Internal common component servlets required for JSF components -->
+    <servlet>
+        <servlet-name>FacesServlet</servlet-name>
+        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet>
+        <servlet-name>ThemeServlet</servlet-name>
+        <servlet-class>com.sun.web.ui.theme.ThemeServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <!-- Application specific servlets -->
+    <servlet>
+        <servlet-name>FSServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.fs.FSServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ArchiveServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.archive.ArchiveServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>MediaServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.media.MediaServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AlarmsServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.alarms.AlarmsServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>JobsServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.jobs.JobsServlet</servlet-class> </servlet>
+    <servlet>
+        <servlet-name>AdminServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.admin.AdminServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UtilServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.util.UtilServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ServerServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.server.ServerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>WizardServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.wizard.WizardServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>MonitoringServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.monitoring.MonitoringServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RemoteFileChooserServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserServlet</servlet-class>
+    </servlet>
+
+    <!-- The mapping for the registration servlet  -->
+    <servlet-mapping>
+        <servlet-name>Registrar</servlet-name>
+        <url-pattern>/Registrar</url-pattern>
+    </servlet-mapping>
+
+    <!-- Internal common component servlet mappings for some complex tags -->
+    <servlet-mapping>
+        <servlet-name>BadgingServlet</servlet-name>
+        <url-pattern>/badging/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DateTimeServlet</servlet-name>
+        <url-pattern>/datetime/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>HelpServlet</servlet-name>
+        <url-pattern>/cchelp/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Help2Servlet</servlet-name>
+        <url-pattern>/cchelp2/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>TableServlet</servlet-name>
+        <url-pattern>/table/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>TopologyServlet</servlet-name>
+        <url-pattern>/ccTopologyImage</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VersionServlet</servlet-name>
+        <url-pattern>/ccversion/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- CONSOLE COMMON COMPONENT SERVLET MAPPINGS -->
+    <!-- Internal common component servlet mappings for JSF components -->
+    <servlet-mapping>
+        <servlet-name>FacesServlet</servlet-name>
+        <url-pattern>/faces/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ThemeServlet</servlet-name>
+        <url-pattern>/theme/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Application specific mappings -->
+    <servlet-mapping>
+        <servlet-name>FSServlet</servlet-name>
+        <url-pattern>/fs/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ArchiveServlet</servlet-name>
+        <url-pattern>/archive/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>MediaServlet</servlet-name>
+        <url-pattern>/media/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AlarmsServlet</servlet-name>
+        <url-pattern>/alarms/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>JobsServlet</servlet-name>
+        <url-pattern>/jobs/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AdminServlet</servlet-name>
+        <url-pattern>/admin/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UtilServlet</servlet-name>
+        <url-pattern>/util/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ServerServlet</servlet-name>
+        <url-pattern>/server/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>WizardServlet</servlet-name>
+        <url-pattern>/wizard/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>MonitoringServlet</servlet-name>
+        <url-pattern>/monitoring/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoteFileChooserServlet</servlet-name>
+        <url-pattern>/remotefilechooser/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- The taglibs are only specified once -->
+    <taglib>
+        <taglib-uri>/WEB-INF/tld/com_sun_web_ui/cc.tld</taglib-uri>
+        <taglib-location>/WEB-INF/tld/com_sun_web_ui/cc.tld</taglib-location>
+    </taglib>
+    <taglib>
+        <taglib-uri>/WEB-INF/tld/com_iplanet_jato/jato.tld</taglib-uri>
+        <taglib-location>/WEB-INF/tld/com_iplanet_jato/jato.tld</taglib-location>
+    </taglib>
+
+    <taglib>
+        <taglib-uri>samqfs.tld</taglib-uri>
+        <taglib-location>/WEB-INF/tld/com_sun_netstorage_samqfs_web_ui/samqfs.tld</taglib-location>
+    </taglib>
+
+</web-app>

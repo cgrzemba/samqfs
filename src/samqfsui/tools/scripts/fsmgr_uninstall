@@ -1,0 +1,615 @@
+#! /bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#  ident	$Id: fsmgr_uninstall,v 1.13 2008/03/17 14:44:00 am143972 Exp $
+#
+#  This program uninstalls the SUNWfsmgrr & SUNWfsmgru package
+#  along with all other necessary applications such as JATO/Lockhart/J2SE.
+#
+#  Note: This script is explicitly used by File System Manager 2.1
+#        only (English only).
+#
+#
+
+############################################
+#
+# Global variables
+#
+############################################
+#
+
+APP_NAME="File System Manager"
+APP_MAJOR_VERSION="5"
+APP_MINOR_VERSION="0"
+
+EXIT_STATUS=""
+AUTH_PREFIX=com.sun.netstorage.fsmgr
+TMPDIR=/tmp/File_System_Manager
+SOLREV=""
+ADMINFILE=${TMPDIR}/admin.SUNWfsmgr
+MY_LOG="/var/tmp/fsmgr.setup.log"
+DATE="`date +%m.%d.%Y.%H:%M`"
+
+R_PACKAGE_EXIST=0
+U_PACKAGE_EXIST=0
+OLD_R_PACKAGE_EXIST=0
+OLD_U_PACKAGE_EXIST=0
+
+
+EXIT_CODE_SUCCESS="0"
+EXIT_CODE_SYNTAX_ERROR="1"
+EXIT_CODE_NOT_SUPERUSER="2"
+EXIT_CODE_ABORT_BY_USER="3"
+EXIT_CODE_CREATE_LOG_FAIL="4"
+EXIT_CODE_CREATE_TMPDIR_FAIL="5"
+EXIT_CODE_ADMIN_FILE_INEXIST="6"
+
+EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE="50"
+EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE="51"
+
+
+prepare_log_file()
+{
+    if [ -f ${MY_LOG} ]; then
+	/usr/bin/rm -rf ${MY_LOG}
+    fi
+
+    # Create the log file.  The file name has a timestamp in it.
+    /usr/bin/touch ${MY_LOG}.${DATE}
+    /usr/bin/chmod 666 ${MY_LOG}.${DATE}
+
+    if [ ! -f ${MY_LOG}.${DATE} ]; then
+        # Unable to create install log
+        EXIT_STATUS=${EXIT_CODE_CREATE_LOG_FAIL}
+	do_exit
+    else
+        # Create a soft link, so ui_report script can always grab the
+        # latest log file.
+        /usr/bin/ln -s ${MY_LOG}.${DATE} ${MY_LOG}
+	/usr/bin/chmod 666 ${MY_LOG}
+    fi
+
+    echo "This log file is created on : " > ${MY_LOG}
+    /usr/bin/date >> ${MY_LOG}
+    echo "=========================================================\n\n" \
+			>> ${MY_LOG}
+}
+
+show_syntax()
+{
+    echo "Syntax: fsmgr_uninstall"
+    echo "        This script is designed to uninstall ${APP_NAME} ${APP_MAJOR_VERSION}.${APP_MINOR_VERSION}."
+    echo "        No parameter is needed for this script."
+    echo ""
+}
+
+show_separator()
+{
+    echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n" \
+				>> ${MY_LOG}
+}
+
+generate_admin_file()
+{
+    echo "Start generating $ADMINFILE ..." >> ${MY_LOG}
+
+    /usr/bin/mkdir -p ${TMPDIR}
+    echo "basedir=default" > $ADMINFILE
+    echo "mail=" >> $ADMINFILE
+    echo "runlevel=nocheck" >> $ADMINFILE
+    echo "conflict=nocheck" >> $ADMINFILE
+    echo "setuid=nocheck" >> $ADMINFILE
+    echo "action=nocheck" >> $ADMINFILE
+    echo "partial=nocheck" >> $ADMINFILE
+    echo "instance=quit" >> $ADMINFILE
+    echo "idepend=quit" >> $ADMINFILE
+    echo "rdepend=nocheck" >> $ADMINFILE
+    echo "space=quit" >> $ADMINFILE
+
+    echo "Content of $ADMINFILE" >> ${MY_LOG}
+    show_separator
+    /usr/bin/cat $ADMINFILE >> ${MY_LOG}
+    show_separator
+
+    echo "End of $ADMINFILE\n" >> ${MY_LOG}
+}
+
+show_contact_support() 
+{
+    echo "Please email ${MY_LOG}.${DATE} to Sun's product support team."
+}
+
+show_env_value()
+{
+    echo "Printing system environment variables, including mount pts" \
+                                >> ${MY_LOG}
+    show_separator
+    /usr/bin/env >> ${MY_LOG}
+
+    echo "\n\nIssuing /usr/sbin/mount\n" >> ${MY_LOG}
+    /usr/sbin/mount >> ${MY_LOG}
+    show_separator
+}
+
+show_remove_varsadm_message()
+{
+    echo "Please remove /var/sadm/samqfsui/ directory manually.\n"
+}
+
+do_exit()
+{
+    # print environment variables to log file
+    show_env_value >> ${MY_LOG}
+
+    DIR=`/usr/bin/pwd`
+
+    echo "Entering do_exit().  Exit Status: $EXIT_STATUS" >> ${MY_LOG}
+    echo "Current Directory Location: ${DIR}" >> ${MY_LOG}
+
+    case $EXIT_STATUS in
+
+        $EXIT_CODE_SUCCESS )
+            show_remove_varsadm_message
+            exit 0
+            ;;
+
+        $EXIT_CODE_SYNTAX_ERROR )
+            exit 1
+            ;;
+
+        $EXIT_CODE_NOT_SUPERUSER )
+            (echo "Root privilege is required to run \c"
+             echo "this installer.") | tee -a ${MY_LOG}
+            exit 2
+            ;;
+
+        $EXIT_CODE_ABORT_BY_USER )
+            echo "Program aborted by user." |tee -a ${MY_LOG}
+            exit 3
+            ;;
+
+        $EXIT_CODE_CREATE_LOG_FAIL )
+            echo "Failed to create ${MY_LOG}."
+            show_contact_support
+            exit 4
+            ;;
+
+        $EXIT_CODE_CREATE_TMPDIR_FAIL )
+            echo "Failed to create ${TMPDIR}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 5
+            ;;
+
+        $EXIT_CODE_ADMIN_FILE_INEXIST )
+            echo "Failed to create ${ADMINFILE}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 6
+            ;;
+
+        $EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE )
+            (echo "Uninstall failed."
+             echo "Failed to remove SUNWfsmgrr package.") | tee -a ${MY_LOG}
+            show_contact_support
+            exit 50
+            ;;
+
+        $EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE )
+            (echo "Uninstall failed."
+             echo "Failed to remove SUNWfsmgru package.") | tee -a ${MY_LOG}
+            show_contact_support
+            exit 51
+            ;;
+
+
+        * )
+            echo "Unknown error occurred. Program terminated."
+            show_contact_support
+            exit 999
+            ;;
+    esac
+}
+
+#
+# Check if user is a superuser.
+#
+check_su()
+{
+    id=`/bin/id | awk -F"(" '{print $1}' | awk -F"=" '{print $2}'`
+
+    if [ "${id}" != "0" ]; then
+        EXIT_STATUS=$EXIT_CODE_NOT_SUPERUSER
+        do_exit
+    fi
+}
+
+check_if_packages_exist() {
+
+   ######################################################################
+    ## Check all possible packages if they are installed ##
+
+    /usr/bin/pkginfo SUNWfsmgrr > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWfsmgrr exists
+        R_PACKAGE_EXIST=1
+    fi
+
+    /usr/bin/pkginfo SUNWfsmgru > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWfsmgru exists
+        U_PACKAGE_EXIST=1
+    fi
+
+    /usr/bin/pkginfo SUNWsamqfsuir > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWsamqfsuir exists
+        OLD_R_PACKAGE_EXIST=1
+    fi
+
+    /usr/bin/pkginfo SUNWsamqfsuiu > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWsamqfsuiu exists
+        OLD_U_PACKAGE_EXIST=1
+    fi
+
+
+    #######################################################################
+}
+
+remove_old_users()
+{
+    sCheck=`grep "^SAMadmin:" /etc/passwd`
+    if [ -z "$sCheck" ]; then
+        echo "SAMadmin role does not exist." >> ${MY_LOG}
+    else
+        echo "SAMadmin role is no longer used.  Removing SAMadmin ..." \
+            |tee -a ${MY_LOG}
+        /usr/sbin/roledel SAMadmin
+        if [ $? -eq 0 ]; then
+            echo "SAMadmin has been removed successfully!" \
+                |tee -a ${MY_LOG}
+        else
+            echo "Failed to remove SAMadmin!" |tee -a ${MY_LOG}
+            # TODO: Exit?
+        fi
+    fi
+
+    sCheck=`grep "^samadmin:" /etc/passwd`
+    if [ -z "$sCheck" ]; then
+        echo "samadmin user does not exist." >> ${MY_LOG}
+    else
+        echo "samadmin user is no longer used.  Removing samadmin ..." \
+            |tee -a ${MY_LOG}
+        /usr/sbin/userdel samadmin
+        if [ $? -eq 0 ]; then
+            echo "samadmin has been removed successfully!" \
+                |tee -a ${MY_LOG}
+        else
+            echo "Failed to remove samadmin!" |tee -a ${MY_LOG}
+            # TODO: Exit?
+        fi
+    fi
+
+    sCheck=`grep "^samuser:" /etc/passwd`
+    if [ -z "$sCheck" ]; then
+        echo "samuser user does not exist." >> ${MY_LOG}
+    else
+        echo "samuser user is no longer used.  Removing samuser ..." \
+            |tee -a ${MY_LOG}
+        /usr/sbin/userdel samuser
+        if [ $? -eq 0 ]; then
+            echo "samuser has been removed successfully!" \
+                |tee -a ${MY_LOG}
+        else
+            echo "Failed to remove samuser!" |tee -a ${MY_LOG}
+            # TODO: Exit?
+        fi
+    fi
+}
+
+prompt_remove_users() {
+
+    M="Do you want to remove the users and roles that were added by the ${APP_NAME}"
+    m_ans=`/bin/ckyorn -Q -d "yes" -p "${M}?"`
+
+    if [ "${m_ans}" = "y" -o "${m_ans}" = "yes" -o "${m_ans}" = "Y" -o "${m_ans}" = "YES" ]; then
+        remove_users
+    fi
+}
+
+remove_users() {
+
+    # Remove old role/user acc
+    remove_old_users
+
+    # Remove permissions in /etc/security/auth_attr
+    echo "Start taking out entries in /etc/security/auth_attr..." \
+                                >> ${MY_LOG}
+
+    /usr/bin/grep -v "com.sun.netstorage.fsmgr" \
+        /etc/security/auth_attr > /tmp/auth_attr.fsmgr.1
+    /usr/bin/grep -v "com.sun.netstorage.samqfs" \
+        /tmp/auth_attr.fsmgr.1 > /tmp/auth_attr.fsmgr.2
+    /usr/bin/grep -v "SAM-FS/QFS UI Authorizations" \
+        /tmp/auth_attr.fsmgr.2 > /tmp/auth_attr.fsmgr.3
+    /usr/bin/grep -v "File System Manager Authorizations" \
+        /tmp/auth_attr.fsmgr.3 > /tmp/auth_attr.fsmgr.4
+    /usr/bin/mv /tmp/auth_attr.fsmgr.4 /etc/security/auth_attr
+
+    echo "Done taking out entries in /etc/security/auth_attr" >> ${MY_LOG}
+
+    echo "Start taking out entries in /etc/user_attr..." >> ${MY_LOG}
+    /usr/bin/grep -v samadmin /etc/user_attr > /tmp/user_attr.fsmgr.3
+    /usr/bin/grep -v root /tmp/user_attr.fsmgr.3 > /tmp/user_attr.fsmgr.1
+
+    myString=`/usr/bin/cat /etc/user_attr |grep root`
+
+    touch /tmp/user_attr.fsmgr.2
+
+    flag=0
+    authflag=0
+
+    echo ${myString} | tr ':' '\n' | while read field;
+    do
+        ## root
+        ## auths=solaris.*,solaris.grant;profile=abc;roles=myRole
+
+        str=`echo ${field} |grep auths=`
+
+        if [ ! "a${str}" = "a" ]; then
+            echo ${str} | tr ';' '\n' | while read field2;
+            ## auths=solaris.*,solaris.grant
+            ## profile=abc
+            ## roles=myRole
+            do
+                if [ `echo ${field2} | cut -c1-6` = "auths=" ]; then
+                    if [ ${flag} -eq 0 ]; then
+                        echo ":auths=\c" >> /tmp/user_attr.fsmgr.2
+                    else
+                        echo ";auths=\c" >> /tmp/user_attr.fsmgr.2
+                    fi
+
+                    str3=`echo ${field2} | cut -f2 -d'='`
+                    echo ${str3} | tr ',' '\n' | while read field3
+                    do
+                        exist=`echo ${field3} | grep com.sun.netstorage.fsmgr.\*`
+                        if [ "a${exist}" = "a" ]; then
+                             if [ ${authflag} -eq 0 ]; then
+                                 echo "${field3}\c" >> /tmp/user_attr.fsmgr.2
+                             else
+                                 echo ",${field3}\c" >> /tmp/user_attr.fsmgr.2
+                             fi
+                        fi
+                        authflag=1
+                    done
+                else
+                    if [ ${flag} -eq 0 ]; then
+                        echo ":${field2}\c" >> /tmp/user_attr.fsmgr.2
+                    else
+                        echo ";${field2}\c" >> /tmp/user_attr.fsmgr.2
+                    fi
+                fi
+                flag=1
+            done
+        else
+            str2=`cat /tmp/user_attr.fsmgr.2`
+            if [ a${str2} = "a" ]; then
+                echo "${field}\c" >> /tmp/user_attr.fsmgr.2
+            else
+                echo ":${field}\c" >> /tmp/user_attr.fsmgr.2
+            fi
+        fi
+    done
+
+    echo "" >> /tmp/user_attr.fsmgr.2
+    cat /tmp/user_attr.fsmgr.2 >> /tmp/user_attr.fsmgr.1
+    /usr/bin/mv /tmp/user_attr.fsmgr.1 /etc/user_attr
+
+    /usr/bin/rm -f /tmp/auth_attr.fsmgr*
+    /usr/bin/rm -f /tmp/user_attr.fsmgr*
+
+}
+
+show_log_file_location() {
+
+    echo "\nInstall/Uninstall log file named ${MY_LOG}.${DATE} is created.\n\n" 
+}
+
+show_complete_uninstall_message() {
+
+    echo "\nUninstall completed successfully." | tee -a ${MY_LOG}
+}
+
+check_os() {
+    UNAME=`uname -r`
+    SOLREV=`case $UNAME in	\
+	5.6) echo 6;;		\
+	5.7) echo 7;;		\
+	5.8) echo 8;;		\
+	5.9) echo 9;;		\
+	5.10) echo 10;;		\
+	5.11) echo 11;;		\
+    esac`
+
+    echo "Start checking OS and architecture: " >> ${MY_LOG}
+    /usr/bin/cat /etc/release >> ${MY_LOG}
+    /usr/bin/uname -a >> ${MY_LOG}
+    /usr/bin/uname -p >> ${MY_LOG}
+}
+
+uninstall()
+{
+    # First prompt the user if they really want to uninstall the GUI
+
+    M="Are you sure you want to uninstall ${APP_NAME} [n]"
+    m_ans=`/bin/ckyorn -Q -d "no" -W 80 -p "${M}?"`
+
+    if [ "${m_ans}" = "y" -o "${m_ans}" = "yes" -o "${m_ans}" = "Y" -o "${m_ans}" = "YES" ]; then
+        echo "Uninstall ${APP_NAME}: YES" >> ${MY_LOG}
+        continue
+    else
+        echo "Uninstall ${APP_NAME}: NO" >> ${MY_LOG}
+        (echo "\nAbort uninstalling ${APP_NAME}."
+        echo "No change is made to the host.") | tee -a ${MY_LOG}
+        EXIT_STATUS=${EXIT_CODE_ABORT_BY_USER}
+        do_exit
+    fi
+
+    # Check OS first
+    check_os
+
+    HAS_ERROR="no"
+
+    # generate the admin file
+    generate_admin_file
+
+    # remove all File System Manager packages if they exist, including 4.3
+    # or prior packages if they exist
+
+    if [ ${OLD_U_PACKAGE_EXIST} -eq 1 ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWsamqfsuiu
+
+        if [ $? -ne 0 ]; then
+             # error to remove SUNWsamqfsuiu package
+             echo "Failed to remove SUNWsamqfsuiu"  >> ${MY_LOG}
+             EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE}
+             HAS_ERROR="yes"
+        else
+             echo "SUNWsamqfsuiu has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWsamqfsuiu package is not installed in the host." \
+                                                >> ${MY_LOG}
+    fi
+
+    if [ ${OLD_R_PACKAGE_EXIST} -eq 1 ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWsamqfsuir
+
+        if [ $? -ne 0 ]; then
+            # error to remove SUNWsamqfsuir package
+            echo "Failed to remove SUNWsamqfsuir"  >> ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE}
+            HAS_ERROR="yes"
+        else
+            echo "SUNWsamqfsuir has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWsamqfsuir package is not installed in the host." \
+                                                        >> ${MY_LOG}
+    fi
+
+
+    if [ ${U_PACKAGE_EXIST} -eq 1 ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWfsmgru
+
+        if [ $? -ne 0 ]; then
+             # error to remove SUNWfsmgru package
+             echo "Failed to remove SUNWfsmgru"  >> ${MY_LOG}
+             EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE}
+             HAS_ERROR="yes"
+        else
+             echo "SUNWfsmgru has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWfsmgru package is not installed in the host." \
+                                                | tee -a ${MY_LOG}
+    fi
+
+    if [ ${R_PACKAGE_EXIST} -eq 1 ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWfsmgrr
+
+        if [ $? -ne 0 ]; then
+            # error to remove SUNWfsmgrr package
+            echo "Failed to remove SUNWfsmgrr"  >> ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE}
+            HAS_ERROR="yes"
+        else
+            echo "SUNWfsmgrr has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWfsmgrr package is not installed in the host." \
+                                                        | tee -a ${MY_LOG}
+    fi
+
+    if [ ${HAS_ERROR} = "yes" ]; then
+        do_exit
+    fi
+
+    if [ ${SOLREV} -lt 10 ]; then
+        /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            P="Do you want to uninstall Sun(TM) Web Console?"
+            P="$P WARNING: Uninstalling Sun(TM) Web Console will cause other"
+            P="$P applications that are registered in the console unusable."
+            REPLY=`/bin/ckyorn -Q -d "no" -p "${P}"`
+
+            if [ "$REPLY" = "y" -o "$REPLY" = "yes" -o \
+                "$REPLY" = "Y" -o "$REPLY" = "YES" ]; then
+                echo "Remove Sun Web Console? YES!" >> ${MY_LOG}
+                V="Start removing Sun(TM) Web Console and supporting application...\n"
+                echo $V | tee -a ${MY_LOG}
+                # Remove Sun(TM) Web Console and the supporting applications
+                /usr/lib/webconsole/setup -u | tee -a ${MY_LOG}
+
+                if [ $? -eq 0 ]; then
+                    echo "Sun Web Console has been uninstalled successfully!" \
+                                                    >> ${MY_LOG}
+                else
+                    echo "Failed to uninstall Sun Web Console!" >> ${MY_LOG}
+                    # TODO: Exit?
+                fi
+            else
+                echo "Remove Sun Web Console? NO!" >> ${MY_LOG}
+            fi
+        else
+            echo "Sun(TM) Web Console is not installed in the host." \
+                                                    | tee -a ${MY_LOG}
+        fi
+    fi
+
+    # Remove tmp directory
+    /usr/bin/rm -rf ${TMPDIR}
+}
+
+echo ""
+check_su
+prepare_log_file
+
+case $# in
+    0 )	check_if_packages_exist
+        uninstall
+        prompt_remove_users
+	show_complete_uninstall_message
+	show_log_file_location
+	EXIT_STATUS=${EXIT_CODE_SUCCESS}
+        do_exit
+        ;;
+    * ) show_syntax | tee -a ${MY_LOG}
+	EXIT_STATUS=${EXIT_CODE_SYNTAX_ERROR}
+        do_exit
+        ;;
+esac

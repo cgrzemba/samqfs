@@ -1,0 +1,792 @@
+." $Revision: 1.32 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.\"
+.na
+.nh
+.TH sls 1  "07 Feb 2007"
+.SH NAME
+sls \- Lists directory content
+.SH SYNOPSIS
+\fBsls\fR
+\%[\fB\-abcdf\fR]
+\%[\fB\-\-full\-time\fR]
+\%[\fB\-g\fR]
+\%[\fB\-\-help\fR]
+\%[\fB\-iklmnpqrstu\fR]
+\%[\fB\-\-version\fR]
+\%[\fB\-w \fIcols\fR]
+\%[\fB\-x\fR]
+\%[\fB\-ABCDFG\fR]
+\%[\fB\-I \fIpattern\fR]
+\%[\fB\-KLNQRS\fR]
+\%[\fB\-T \fIcols\fR]
+\%[\fB\-UX12\fR]
+\%[\fIfile\fR \&.\&.\&.]
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+This \fBman\fR(1) page describes the Sun Microsystems extensions to the
+GNU version of the \fBls\fR(1) command.
+Sun Microsystems modified the \fBls\fR(1)command and added the following
+features
+to support Sun StorEdge \%SAM-FS and Sun StorEdge QFS software:
+.TP 2
+\(bu
+\fB\-D\fR, which lists a detailed description of each file.
+.TP
+\(bu
+\fB\-2\fR, which lists two lines of output for each file.
+.TP
+\(bu
+\fB\-K\fR, which lists all segments of a segmented file.
+.PP
+The \fBsls\fR command generates information for each
+given \fIfile\fR or directory path.
+Directory contents are sorted alphabetically.
+By default, if standard output is a terminal,
+files are listed in columns, sorted vertically.
+Otherwise they are listed one per line.
+.PP
+The \fBsls\fR command also accepts verbose,
+multicharacter equivalents of many single-character options.
+These multicharacter options are not listed in the SYNOPSIS section of
+this man page, but they are noted in the option descriptions.
+.SH OPTIONS
+The \fBsls\fR(1) command accepts the following options:
+.TP 5
+\fB\-a\fR
+Lists all files in directories.  Includes all files that start with
+a period (\fB\&.\fR).
+Equivalent to specifying \fB\-\-all\fR.
+.TP
+\fB\-b\fR
+Quotes nongraphic characters in file names using alphabetic and octal
+backslash sequences like those used in C.
+Equivalent to specifying \fB\-\-escape\fR.
+.TP
+\fB\-c\fR
+Sorts directory contents according to the file status change times
+instead of the modification times.  If the long listing format is being
+used, it generates the status change time instead of the modification time.
+Equivalent to specifying \fB\-\-time=ctime\fR
+and \fB\-\-time=status\fR.
+.TP
+\fB\-d\fR
+Lists directories like other files rather than listing their contents.
+Equivalent to specifying \fB\-\-directory\fR.
+.TP
+\fB\-f\fR
+Does not sort directory contents.  Lists them in whatever order they are
+stored on the disk.  The same as specifying both \fB\-a\fR
+and \fB\-U\fR and disabling \fB\-l\fR, \fB\-s\fR, and \fB\-t.
+.TP
+\fB\-\-full\-time\fR
+Lists times in full, rather than using the standard abbreviation
+heuristics.
+.TP
+\fB\-g\fR
+Ignored.  For UNIX compatibility.
+.TP
+\fB\-\-help\fR
+Writes a usage message to standard output and exits successfully.
+.TP
+\fB\-i\fR
+Prints the inode number of each file to the left of the file name.
+If \fB\-2\fR is also specified, the inode number of the directory
+is printed on the second line.
+If \fB\-D\fR is also specified, the inode numbers are printed.
+Equivalent to specifying \fB\-\-inode\fR.
+.TP
+\fB\-k\fR
+If file sizes are being listed, prints them in kilobytes.
+This overrides the \fBPOSIXLY_CORRECT\fR environment variable.
+Equivalent to specifying \fB\-\-kilobytes\fR.
+.TP
+\fB\-l\fR
+In addition to the name of each file, prints the file type,
+permissions, number of hard links, owner name, group name, size in
+bytes, and timestamp (the modification time unless other times are
+selected).  For files with a time that is more than 6 months old or
+more than 1 hour into the future, the timestamp contains the year
+instead of the time of day.
+Equivalent to specifying \fB\-\-format=long\fR
+and \fB\-\-format=verbose\fR.
+.TP
+\fB\-m\fR
+Lists files horizontally, with as many as fit on each line,
+separated by commas.
+Equivalent to specifying \fB\-\-format=commas\fR.
+.TP
+\fB\-n\fR
+Lists the numeric UID and GID instead of the names.
+Equivalent to specifying \%\fB\-\-numeric\-uid\-gid\fR.
+.TP
+\fB\-p\fR
+Appends a character that indicates the file type to each file name.
+.TP
+\fB\-q\fR
+Prints question marks instead of nongraphic characters in file names.
+Equivalent to specifying \%\fB\-\-hide\-control\-chars\fR.
+.TP
+\fB\-r\fR
+Sorts directory contents in reverse order.
+Equivalent to specifying \fB\-\-reverse\fR.
+.TP
+\fB\-s\fR
+Prints the size of each file in \%1-kilobyte blocks
+to the left of the file name.
+If the \fBPOSIXLY_CORRECT\fR environment variable is
+set, \%512-byte blocks are used instead.
+Equivalent to specifying \fB\-\-size\fR.
+.TP
+\fB\-t\fR
+Sorts directory contents by timestamp instead of alphabetically.
+The newest files are listed first.
+Equivalent to specifying \fB\-\-sort=time\fR.
+.TP
+\fB\-u\fR
+Sorts the directory contents according to the files' last access time
+instead of the modification time.  If the long listing format is being
+used, prints the last access time instead of the modification time.
+Equivalent to specifying \fB\-\-time=atime\fR,
+\fB\-\-time=access\fR, and \fB\-\-time=use\fR.
+.TP
+\fB\-\-version\fR
+Writes version information to standard output and exits successfully.
+.TP 5
+\fB\-w\fI cols\fR
+Assumes the screen is \fIcols\fR columns wide.
+The default is taken from either the terminal driver (if
+possible) or the \fBCOLUMNS\fR environment variable (if set).
+Otherwise the default is \fB80\fR.
+Equivalent to specifying \fB\-\-width \fIcols\fR.
+.TP
+\fB\-x\fR
+Lists the files in columns, sorted horizontally.
+Equivalent to specifying \fB\-\-format=across\fR
+and \fB\-\-format=horizontal\fR.
+.TP
+\fB\-A\fR
+Lists all files in directories, except for those beginning
+with a period (\fB\&.\fR) or two periods (\fB\&.\&.\fR).
+Equivalent to specifying \fB\-\-almost\-all\fR.
+.TP
+\fB\-B\fR
+In the output, suppresses files that end with a
+tilde (\s+1\fB~\fR\s-1) unless they are specified on the command line.
+Equivalent to specifying \fB\-\-ignore\-backups\fR.
+.TP
+\fB\-C\fR
+Lists files in columns, sorted vertically.
+Equivalent to specifying \fB\-\-format=vertical\fR.
+.TP
+\fB\-D\fR
+Uses the long-line format (\fB\-l\fR) and lists a detailed
+description for each file.
+Additional lines are listed with the file
+attributes, archive copies, and the times.
+For removable media files, the output shows the media type, blocksize,
+the VSN(s), the sizes,  and position(s).
+.RS 5
+.PP
+Example:
+.PP
+.nf
+.ft CO
+server# sls -D mickey.gif
+mickey.gif:
+  mode: -rw-r--r--  links:   1  owner: root      group: other
+  length:    319279  admin id:      7  inode: 1407.5
+  offline;  archdone;  stage -n;
+  copy 1: ---- May 21 10:29     1e4b1.1    lt DLT001
+  access:      May 21 09:25     modification: May 21 09:25
+  changed:     May 21 09:26     attributes:   May 21 10:44
+  creation:    May 21 09:25     residence:    May 21 10:44
+.fi
+.ft
+.PP
+The first line indicates the file's mode or permissions, the number of
+links to the file, the owner
+(or user) of the file, and the group
+to which the owner belongs.
+.PP
+The second line indicates the file's length in bytes,
+the administrative ID number (see \fBsamchaid(1M)\fR), and
+the inode number plus generation number.
+.PP
+The third line shows the file states and attributes.
+Possible file states, which are set by the system, are as follows:
+.TP 10
+\fBState\fR
+\fBMeaning\fR
+.TP
+\fBdamaged\fR
+The file is damaged.
+.TP
+\fBoffline\fR
+The file is offline.
+.TP
+\fBarchdone\fR
+Indicates that the archiver has completed processing the
+file.  There is no more work that the archiver can do on a file.
+Note that \fBarchdone\fR does not indicate that the file has
+been archived.
+.PP
+Possible file attributes, which are set by the user, are as follows:
+.TP 15
+\fBAttribute\fR
+\fBMeaning\fR
+.TP
+\fBarchive \-n\fR
+The file is marked never archive (superuser only).
+.TP
+\fBarchive \-C\fR
+The file is marked for concurrent archiving.
+.TP
+\fBrelease \-n\fR
+The file is marked for never release.
+.TP
+\fBrelease \-a\fR
+This file is marked for release as soon as 1 copy is made.
+.TP
+\fBrelease \-p\fR
+The file is marked for partial release.
+\fBpartial=\fIn\fBk\fR indicates that the first \fIn\fR
+kilobytes of disk space are retained in disk cache for this file.
+\fBoffline\fR/\fBonline\fR indicates the first \fIn\fR kilobytes
+of disk space are offline/online.
+.TP
+\fBstage \-n\fR
+The file is marked never stage.
+.TP
+\fBstage \-a\fR
+The file is marked for associative staging.
+.TP
+\fBsetfa \-D\fR
+The file is marked for direct I/O.
+.TP
+\fBsetfa \-g\fIn\fR
+The file is marked for allocation on stripe group \fIn\fR.
+.TP
+\fBsetfa \-s\fIm\fR
+The file is marked for allocation with a stripe width of \fIm\fR.
+.TP
+\fBsegment \fIn\fBm\fR \fBstage_ahead\fR \fIx\fR
+The file is marked for segment access.
+\fBsegment=\fIn\fBm\fR indicates \fIn\fR megabytes is the segment size.
+\fBstage_ahead=\fIx\fR indicates \fIx\fR segments will be staged ahead of
+the current segment.
+.PP
+The next line appears only for a segment index.
+The line is as follows:
+.PP
+.ft CO
+segments \fIn
+.ft CO
+, offline \fIo
+.ft CO
+, archdone \fIa
+.ft CO
+, damaged \fId\fR
+.PP
+In this line, \fIn\fR is the number of data segments; \fIo\fR is
+the number of data segments offline; \fIa\fR is the number of data
+segments that have met their archiving requirements; and \fId\fR
+is the number of data segments that are damaged.
+.PP
+The archive copy line is displayed only if there is an active
+or stale copy.
+An example of archive copy line output is as follows:
+.PP
+.ft CO
+copy 1: ---- Sep 11 10:43    3498f.1    mo OPT001
+.ft
+.PP
+\fRThe first field indicates the archive copy number.
+.PP
+The second field consists of four dashes, as follows:
+.TP 2
+\(bu
+Dash 1 indicates a stale or active entry, as follows:
+.RS 2
+.TP 8
+\fBContent\fR
+\fBMeaning\fR
+.TP
+\fBS\fR
+The archive copy is stale.
+This means that the file has been modified, and this
+archive copy is for a previous version of the file.
+.TP
+\fBU\fR
+The copy has been unarchived.
+.TP
+\fB\-\fR
+The archive copy is active and valid.
+.RE
+.TP 2
+\(bu
+Dash 2 indicates the archive status, as follows:
+.RS 2
+.TP 8
+\fBContent\fR
+\fBMeaning\fR
+.TP
+\fBr\fR
+The archiver will rearchive this copy.
+.TP
+\fB\-\fR
+This archive copy will not be rearchived.
+.RE
+.TP 2
+\(bu
+Dash 3 is unused.
+.TP
+\(bu
+Dash 4 indicates either a damaged or undamaged status, as
+follows:
+.RS 2
+.TP 8
+\fBContent\fR
+\fBMeaning\fR
+.TP
+\fBD\fR
+The archive copy is damaged.
+This archive copy will not be staged.
+.TP
+\fB\-\fR
+The archive copy is not damaged.
+It is a candidate for staging.
+.RE
+.PP
+The third field shows the date and time when the archive copy was
+written to the media.
+.LP
+The fourth field contains two hex numbers separated by a period (\fB.\fR).
+The first hex number, \fB3498f\fR, is the position of the beginning of the
+archive file on the media.
+For disk archive copies the first number is an index to the file path (see
+below).
+The second hex number is the file byte offset divided by 512
+of this copy on the archive file.
+In this example, \fB1\fR means that
+this is the first file on the archive file
+because it is offset by 512 bytes, which is the length of
+the \fBtar\fR(1) header.
+.PP
+The last two fields indicate the media type and the volume serial
+name on which the archive copy resides.
+.PP
+For media type \fBdk\fR (disk archiving) the volume serial name is the disk
+volume as defined in \fBdiskvols.conf\fR(4), and there is an additional field
+which is the path to the archived tar file.  This path is relative to
+the pathname for the disk volume as specified in the \fBdiskvols.conf\fR file.
+.PP
+For media type \fBcb\fR (Sun StorageTek 5800 Storage System disk archiving)
+the volume serial name is the disk volume as defined in \fBdiskvols.conf\fR(4),
+and there is an additional field which is the metadata string for the archived
+tar file.
+.PP
+Various times are displayed for the file as follows:
+.PP
+.TP 20
+\fBTime Type\fR
+\fBMeaning\fR
+.TP
+\fBaccess\fR
+Time the file was last accessed.
+.TP
+\fBmodification\fR
+Time the file was last modified.
+.TP
+\fBchanged\fR
+Time the information in the inode was last changed.
+.TP
+\fBattributes\fR
+Time that Sun StorEdge \%SAM-FS or Sun StorEdge QFS
+file system attributes were last changed.
+.TP
+\fBcreation\fR
+Time the file was created.
+.TP
+\fBresidence\fR
+Time the file changed from offline to online or vice versa.
+.PP
+The WORM feature changes the meaning of some of the timing attributes
+for a file.  In addition, information regarding retention duration,
+state, and period (the latter in YYYYy DDd HHh MMm format) is available.
+The changes to original time attributes and the retention attributes are
+as follows:
+.PP
+.TP 20
+\fBTime Type\fR
+\fBMeaning\fR
+.TP
+\fBmodification\fR
+Start time for the retention period.
+.TP
+\fBchanged\fR
+Time the retention period was last changed.
+.TP
+\fBattributes\fR
+The date the retention period will expire.
+.TP
+\fBretention\fR
+The retention state of the file, active or over.
+.TP
+\fBretention-period\fR
+The time supplied when the retention period was set on the file.
+.PP
+Directories are handled differently as retention periods are the
+default period for files and subdirectories contained in that directory.
+Unlike files, retention periods on directories can be shortened.
+Setting the WORM flag on a directory should be a reasonably rare
+occurance as the WORM feature is inherited from the parent.  When
+the WORM flag is set on a directory only the state is changed to
+"worm-capable" indicating the directory can contain retained files.
+.LP
+The checksum attributes are displayed on the line as follows.
+.PP
+.ft CO
+.nf
+\fBchecksum: -g -u -a 1 0xec02591b41dca8aa 0x2cdc5977fdd5bbc4\fR
+.fi
+.ft
+.PP
+The previous line is displayed for a file with any of the possible checksum
+attributes set.  If \fB-g\fR is set, the file
+is marked for generating a checksum. If \fB-u\fR is set, the file
+is marked for verifying the checksum.
+The \fB-a\fR precedes the numeric algorithm indicator which
+specifies which algorithm is used when generating the checksum value.
+If two hex numbers appear, there is a valid checksum and
+the checksum value is the 2 hex numbers.
+.LP
+For a removable media file, the following lines are displayed:
+.LP
+.ft CO
+iotype: blockio  media: lt  vsns: 1 blocksize: 262144
+section 0:  104071168       a358.0    CFX808
+.ft
+.PP
+The first line shows the I/O type (always blockio), the media type, number
+of volumes, and blocksize.  The second and following lines show the section
+length, position and offset, and VSN for each volume.  There will only be one
+section line except in the case of volume overflow.  The blocksize will
+be zero until the first time the volume is loaded, at which time it will
+be filled in with the correct value.
+.PP
+The \fB\-D\fR option is equivalent to
+specifying \fB\-\-format=detailed\fR.
+.RE
+.RE
+.TP 5
+\fB\-F\fR
+Suffixes each file name with a character that indicates the file type.
+For regular files that are executable, the suffix is an asterisk
+(\fB*\fR).
+For directories, the suffix is a slash (\fB/\fR).
+For symbolic links, the suffix is an at sign (\fB@\fR).
+For FIFOs, the suffix is a pipe symbol (\fB|\fR).
+For sockets, the suffix is an equal sign (\fB=\fR).
+There is no suffix for regular files.
+Equivalent to specifying \fB\-\-classify\fR.
+.TP
+\fB\-G\fR
+Suppresses group information in a long format directory listing.
+Equivalent to specifying \fB\-\-no\-group\fR.
+.TP 5
+\fB\-I\fI pattern\fR
+Suppresses files whose names match the shell pattern \fIpattern\fR
+unless they are specified on the command line.
+As in the shell, an initial period (\fB.\fR) in a file name
+does not match a wildcard at the start of \fIpattern\fR.
+Equivalent to specifying \fB\-\-ignore \fIpattern\fR.
+.TP
+\fB\-K\fR
+Lists all segments for a segmented file.
+Must be specified in conjunction with the \fB\-2\fR or \fB\-D\fR options.
+.TP
+\fB\-L\fR
+Lists the files linked to by symbolic links instead of listing the
+content of the links.
+Equivalent to specifying \fB\-\-dereference\fR.
+.TP
+\fB\-N\fR
+Does not quote file names.
+Equivalent to specifying \fB\-\-literal\fR.
+.TP
+\fB\-Q\fR
+Encloses file names in double quotes and quotes nongraphic characters as
+in C.
+Equivalent to specifying \fB\-\-quote\-name\fR.
+.TP
+\fB\-R\fR
+Lists the content of all directories recursively.
+Equivalent to specifying \fB\-\-recursive\fR.
+.TP
+\fB\-S\fR
+Sorts directory content by file size instead of alphabetically.
+The largest files are listed first.
+Equivalent to specifying \fB\-\-sort=size\fR.
+.TP 5
+\fB\-T\fI cols\fR
+Assumes that each tab stop is \fIcols\fR columns wide.
+The default is \fB8\fR.
+Equivalent to specifying \fB\-\-tabsize \fIcols\fR.
+.TP
+\fB\-U\fR
+Does not sort directory content.  Content is listed
+in the order it is stored in on the disk.
+Equivalent to specifying \fB\-\-sort=none\fR.
+.TP
+\fB\-X\fR
+Sorts directory content alphabetically by file extension according
+to the characters after the last period (\fB\&.\fR).
+Files with no extension are sorted first.
+Equivalent to specifying \fB\-\-sort=extension\fR.
+.TP
+\fB\-1\fR
+Lists one line per file.
+Equivalent to specifying \fB\-\-format=single\-column\fR.
+.TP
+\fB\-2\fR
+Lists two lines per file.
+The first line is identical to that obtained when you specify
+long format output using the \fB\-l\fR option.
+The second line lists the file
+attributes, media requirements, and the creation time.
+Removable media files show the media type and the VSN.
+Nonchecksum file attributes are formatted as a string of ten characters.
+.RS 5
+.PP
+The file attributes in the second line are indicated by their position,
+as follows:
+.PP
+\(bu Position 1 - Offline/damaged status
+.RS
+.TP 4
+\fBO\fR
+The file is offline.
+.TP
+\fBP\fR
+The file is offline with partial online.
+.TP
+\fBE\fR
+The file is damaged.
+.TP
+\fB\-\fR
+The file is online.
+.RE
+.PP
+\(bu Position 2-4 - Archiver attributes
+.RS
+.TP 4
+\fBn\fR
+Never archive the file.
+.TP
+\fBa\fR
+Archive the file immediately after creation or modification
+(see \fBarchive\fR(1) to set).
+Ignore archive set age times.
+This attribute remains set until a different archive command
+is issued for the file (see \fBarchive\fR(1)).
+.TP
+\fBr\fR
+The file is scheduled to be re-archived on a different volume.
+This attribute is set by the recycler.
+.TP
+\fB\-\fR
+The attribute is not set.
+.RE
+.PP
+\(bu Position 5-7 - Releaser attributes
+.RS
+.TP 4
+\fBn\fR
+Never release the file (only the superuser can set this).
+.TP
+\fBa\fR
+Release as soon as 1 copy is archived.
+.TP
+\fBp\fR
+Partially release the file.
+The first portion is left on disk after release.
+.TP
+\fB\-\fR
+The attribute is not set.
+.RE
+.PP
+\(bu Position 8-9 - Stage attributes
+.RS
+.TP 4
+\fBn\fR
+Direct access to removable media (never stage on read).
+.TP
+\fBa\fR
+Associatively stage this file.
+.TP
+\fB\-\fR
+The attribute is not set.
+.RE
+.PP
+\(bu Position 10 - Not used.  Always a dash (\fB\-\fR).
+.PP
+\(bu Position 11 - Blank space.
+.PP
+\(bu Position 12-14 - Checksum attributes.  Set by the \fBssum\fR(1)
+command.
+.RS
+.TP 4
+\fBg\fR
+Generate a checksum value when archiving.
+.TP
+\fBu\fR
+Checksum the file when staging.
+.TP
+\fBv\fR
+A valid checksum exists.
+.TP
+\fB\-\fR
+The attribute is not set.
+.RE
+.PP
+\(bu Position 15-16 - Not used.  Always a dash (\-).
+.PP
+\(bu Position 17 - Blank space.
+.PP
+\(bu Position 18 - Segment attributes.
+.RS
+.TP 4
+\fBs\fR
+The segment attribute is set.
+.TP
+\fB\-\fR
+The attribute is not set.
+.RE
+.PP
+\(bu Position 19 - Index and segment attributes.
+.RS
+These attributes
+do not appear if the segment attribute (position 17) is not set.
+.TP 4
+\fBS\fR
+This is a data segment.
+.TP
+\fBI\fR
+This is an index for a file segment.
+Four additional numbers contained within braces (\fB{}\fP) are written,
+as follows:  \fB{\fIn\fB, \fIo\fB, \fIa\fB, \fId\fB}\fR.
+The numbers within the braces indicate the following:
+.RS
+.TP 4
+\fIn\fR
+The number of data segments in the segmented file.
+.TP
+\fIo\fR
+The number of data segments which are offline.
+.TP
+\fIa\fR
+The number of data segments which are archdone.
+.TP
+\fId\fR
+The number of data segments which are damaged.
+.RE
+.TP
+\fB\-\fR
+The attribute is not set.
+.RE
+.sp
+.LP
+.PP
+The next four fields indicate the media type for archive copies 1-4, if
+present.
+.PP
+Example 1.  The \fBsls \-2\fR
+command generates the following output for a nonsegmented file:
+.PP
+.nf
+.ft CO
+-rwxrwxrwx   1 smith  dev    10876  May  16 09:42  myfile
+O----apn-- g-v-- -- lt
+.ft
+.fi
+.PP
+The preceding output shows that the file is offline
+and has the partial release,
+release after archive, and never stage attributes set.  It also has the
+checksum generate attribute set, and a valid checksum value exists for
+the file.  The file has copy 1 archived on \fBlt\fR (digital linear tape).
+.PP
+Example 2.  The \fBsls \-2\fR
+command generates the following output for a segmented file:
+.PP
+.nf
+.ft CO
+-rwxrwxrwx   1 abc  dev    10876  May 16\09:42  yourfile
+---------- ----- sI {5,0,0,0} lt
+.ft
+.fi
+.RE
+.PP
+.TP 5
+\fIfile\fR \&.\&.\&.
+Specifies a \fIfile\fR name or full path name.
+.SH EXAMPLES
+The following output is obtained from specifying \%\fBsls\ -D\fR for a file archived
+to disk:
+.PP
+.ft CO
+.nf
+/sam1/testdir0/filea:
+  mode: -rw-r-----  links:   1  owner: root      group: other
+  length:    306581  admin id:      0  inode:    11748.11
+  copy 1: ---- Oct 31 13:52        15.0    dk disk01
+  access:      Oct 31 13:50  modification: Oct 31 13:50
+  changed:     Oct 31 13:50  attributes:   Oct 31 13:50
+  creation:    Oct 31 13:50  residence:    Oct 31 13:50
+.fi
+.fT
+.SH BUGS
+On BSD systems, the \fB\-s\fR
+option reports sizes that are half the correct values for files that
+are NFS-mounted from HP-UX systems.  On HP-UX systems, it reports
+sizes that are twice the correct values for files that are NFS-mounted
+from BSD systems.  This is due to a flaw in HP-UX; it also affects the
+HP-UX \fBls\fR(1) program.
+.SH SEE ALSO
+\fBarchive\fR(1),
+\fBls\fR(1),
+\fBrelease\fR(1),
+\fBsamchaid\fR(1M),
+\fBssum\fR(1),
+\fBstage\fR(1),
+\fBtar\fR(1).
+

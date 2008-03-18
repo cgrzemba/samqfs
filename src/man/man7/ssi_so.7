@@ -1,0 +1,53 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH ssi_so 7 "12 Jan 2004"
+.SH NAME
+ssi_so \- The StorageTek (STK) ACSAPI client daemon.
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.LP
+.SH DESCRIPTION
+\fBssi_so\fP is a shared object version of the SSI daemon supplied
+by STK.  This daemon is the interface that \fIsamfs\fP uses
+(see
+.BR stk (7))
+to communicate with the ACSLM.  
+.LP
+The ssi needs a number of parameters set to communicate with
+the ACSLM.  These parameters are set through shell environment variables.
+To allow the most flexibility in setting these variables, a shell script
+(\fB/etc/opt/SUNWsamfs/scripts/ssi.sh\fR)
+is used by the stk daemon (see
+.BR sam-stkd (1M)),
+to start a \fBssi_so\fR daemon.  In general, most sites should not need to
+change the variables within this script.
+.SH SEE ALSO
+.BR sam-robotsd (1M).
+.PP
+.BR stk (7).

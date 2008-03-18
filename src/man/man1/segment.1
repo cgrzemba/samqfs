@@ -1,0 +1,160 @@
+.\" $Revision: 1.20 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH segment 1 "29 Apr 2004"
+.SH NAME
+segment \- Sets segment file attributes
+.SH SYNOPSIS
+\fBsegment\fR
+\%\fR[\fB\-d\fR]
+\%\fR[\fB\-f\fR]
+\%\fR[\fB\-s\ \fIstage_ahead\fR]
+\%\fR[\fB\-V\fR]
+\%\fB\-l\ \fIsegment_size\fR
+\fIfilename\fR .\|.\|.\|
+.PP
+\fBsegment\fR
+\%\fR[\fB\-d\fR]
+\%\fR[\fB\-f\fR]
+\%\fR[\fB\-s\ \fIstage_ahead\fR]
+\%\fR[\fB\-V\fR]
+\%\fB\-l\ \fIsegment_size\fR
+\%\fB\-r\ \fIdirname\fR .\|.\|.\|\| [ \fIfilename\fR .\|.\|.\|]
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsegment\fR command sets the segment attribute for an existing file.
+At a minimum, the \%\fB\-l\ \fIsegment_size\fR and the \fIfilename\fR
+must be specified.
+If a file is segmented,
+it is archived to and staged from its volumes
+in \fIsegment_size\fP chunks.
+.PP
+When file attributes are set on a directory, files and directories
+subsequently created in that directory inherit those attributes.
+.PP
+The \fBsegment\fR command is not supported in
+Sun StorEdge SAM-QFS shared file systems.
+.SH OPTIONS
+.TP 10
+.B \-d
+Returns the segment attributes on the file to the default.
+When \fB\-d\fP is specified, attributes are first
+reset to the default, then other attribute-setting options
+are processed.  It not possible to reset a file that has
+already been segmented.
+.TP
+.B \-f
+Suppresses errors.
+.TP
+\%\fB\-l\ \fIsegment_size\fR
+Specifies the segment size.  The \fIsegment_size\fR must be an integer
+and must be greater than or equal to one megabyte.
+The integer specified must be followed by \fBk\fR (for
+kilobytes), \fBm\fR (for megabytes), or \fBg\fR (for gigabytes).
+For example:
+.sp
+\fB\-l 1024k\fR
+.sp
+This segment size specifies the size at which the file is segmented
+on the file system for archiving and staging.
+A file is segmented when it reaches the specified segment size.
+If a file has already been segmented, the segment size cannot be changed.
+A pre-existing file cannot be segmented if it exceeds the
+specified segment size.
+.sp
+.TP
+.BI \-s " stage_ahead"
+Specifies the number of segments to stage ahead when staging a
+segmented file.
+This means when an offline segment is read, in
+addition to staging the current segment, the
+next
+.I stage_ahead
+segments are also staged. The default value of
+.I stage_ahead
+is zero, which means there is no stage read ahead. The maximum
+.I stage_ahead
+value is 255.
+.TP
+.B \-r
+Recursively sets the \fBsegment\fR file attribute for all files
+contained in the specified \fIdirname\fP or its subdirectories.
+.TP
+.B \-V
+Enables the verbose display.  Displays a message for each file on
+which attributes are set.
+.SH NOTES
+The file system disables quotas at mount time if any of the
+following files in the file system's root directory are segmented:
+.TP 3
+\(bu
+\&\fB.quota_a\fR
+.TP
+\(bu
+\&\fB.quota_g\fR
+.TP
+\(bu
+\&\fB.quota_u\fR
+.PP
+The \%\fB\-drives\fR directive in the \fBarchiver.cmd\fR file
+specifies the number of drives to use for archiving and staging.
+.PP
+The mmap function cannot be carried out on a segmented file.
+Because of this, a segmented file cannot be an executable binary.
+.PP
+Segmentation of files is not supported on a Sun StorEdge SAM-QFS
+shared file system.
+.PP
+A segmented
+file is automatically striped across several volumes when it is
+archived if the following conditions are in effect:
+.TP 3
+\(bu
+More than one drive is available.
+.TP
+\(bu
+The \fB\-drives\fR directive is in effect.
+.PP
+A segmented
+file is automatically striped from several volumes when it is
+staged if the following conditions are in effect:
+.TP 3
+\(bu
+The file was archived as striped.
+.TP
+\(bu
+More than one drive is available.
+.TP
+\(bu
+The \fB\-drives\fR directive is in effect.
+.SH SEE ALSO
+.BR stage (1),
+.BR archive (1),
+.BR archiver.cmd (4)

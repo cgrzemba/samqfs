@@ -1,0 +1,131 @@
+#!/bin/sh -x
+# $Revision: 1.3 $
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+
+#  set of test cases for chmed.  Run while watching the samu "v" display.
+#  you'll need to modify the VOLUME=xxx statements below to set up
+#  a valid media-type/vsn and slot/eq.
+
+test_em()
+{
+	./chmed -time "Jun 1" ${VOLUME};
+	./chmed -time "Jan 1 10:47" ${VOLUME};
+	./chmed -time "Jun 1 10:47" ${VOLUME};
+	./chmed -time "Jan 1 1994" ${VOLUME};
+	./chmed -time "Jan 1" ${VOLUME};
+	
+	./chmed -space 2 ${VOLUME};
+	./chmed -capacity 100 ${VOLUME};
+	./chmed -capacity 10 ${VOLUME};
+	./chmed -capacity 1 ${VOLUME};
+	./chmed -space 0 ${VOLUME};
+
+	./chmed -capacity 0x100000000 ${VOLUME};
+	./chmed -space    0x100000000 ${VOLUME};
+	./chmed -space    0x80000000 ${VOLUME};
+
+	./chmed -capacity 0x1000000000 ${VOLUME};
+	./chmed -space    0x80000000 ${VOLUME};
+	./chmed -space    0x800000000 ${VOLUME};
+
+	./chmed -capacity 10000 ${VOLUME};
+	./chmed -space    10000 ${VOLUME};
+
+	./chmed -count 0 ${VOLUME};
+	./chmed -count 10 ${VOLUME};
+	./chmed -count 100 ${VOLUME};
+	./chmed -count 1000 ${VOLUME};
+	./chmed -count 10000000 ${VOLUME};
+	./chmed -count 0 ${VOLUME};
+	
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -A ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -l ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -E ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -o ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -C ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -b ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -W ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -R ${VOLUME};
+	./chmed +AilEoCbWRc ${VOLUME};  ./chmed -c ${VOLUME};
+	
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +A ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +l ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +E ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +o ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +C ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +b ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +W ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +R ${VOLUME};
+	./chmed -AlEoCbWRc ${VOLUME}; ./chmed +c ${VOLUME};
+	./chmed +ilo ${VOLUME}
+	./chmed -c ${VOLUME}
+}
+
+#  test by mt.vsn
+VOLUME="mo.OPT06a"
+test_em
+
+#  test by eq:slot
+VOLUME="50:16:2"
+test_em
+./chmed -i ${VOLUME}; ./chmed +i ${VOLUME}
+
+#  set VSN tests
+./chmed -vsn mo MO $VOLUME
+./chmed -vsn mo OPT00b $VOLUME
+
+#  various failures
+./chmed -v 001200 -m d2 -R
+./chmed -
+./chmed -Z
+./chmed - - - - - - - - -
+./chmed -capacity 100 1 40
+./chmed -capacity 100 1x:40
+./chmed -capacity 100 1:40x
+./chmed -capacity 100 1:40x0
+./chmed -capacity 100 -1:0
+./chmed -capacity 100 1:0
+./chmed -capacity 100 1:-1
+
+fail_em()
+{
+./chmed -capacity non-numeric ${VOLUME};
+./chmed -space non-numeric ${VOLUME};
+./chmed -time bad-time ${VOLUME};
+./chmed -count non-numeric ${VOLUME};
+./chmed -Q ${VOLUME};
+}
+
+#  test by mt.vsn
+VOLUME="mo.OPT06b"
+fail_em
+
+#  test by eq:slot:part
+VOLUME="50:6:1"
+fail_em
+

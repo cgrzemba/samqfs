@@ -1,0 +1,130 @@
+#!/bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#  ident        $Id: ui_tracelevel,v 1.10 2008/03/17 14:44:00 am143972 Exp $
+#
+#  This script allows the user to set the trace level of SAM-QFS Manager 1.1
+#
+
+ECHO=/usr/bin/echo
+BIN_DIR=/usr/sbin
+SMREG=${BIN_DIR}/smreg
+SMCWEBSERVER=${BIN_DIR}/smcwebserver
+PACKAGE_PATH=com.sun.netstorage.samqfs.web
+LOG_DIR=/var/log/webconsole
+TRACE_NAME=samqfsui.trace
+PIDFILE=/var/run/smcwebserver.pid
+TRACELEVEL=
+
+show_syntax()
+{
+    $ECHO "Syntax: ui_tracelevel [trace_level]"
+    $ECHO " "
+    $ECHO "        trace_level 1 - Trace important messages only"
+    $ECHO "                    2 - Trace moderate important message, include"
+    $ECHO "                        messages in trace level 1"
+    $ECHO "                    3 - Trace all messages"
+    $ECHO "                    off - Turn off tracing"
+    $ECHO " "
+    $ECHO "        e.g. ui_tracelevel 2"
+    $ECHO "        e.g. ui_tracelevel off"
+    $ECHO " "
+
+    show_current_level
+    $ECHO " "
+}
+
+set_tracelevel()
+{
+    $ECHO "Setting trace level to ${TRACELEVEL}..."
+    ${SMREG} add --properties ${PACKAGE_PATH}.tracedevice=${LOG_DIR}/${TRACE_NAME} ${PACKAGE_PATH}.tracelevel=${TRACELEVEL}
+
+}
+
+turn_tracing_off()
+{
+    $ECHO "Turning off tracing..."
+    ${SMREG} remove --properties ${PACKAGE_PATH}.tracedevice ${PACKAGE_PATH}.tracelevel
+
+}
+
+perform_action()
+{
+    if [ ! $TRACELEVEL = "off" ]; then
+	set_tracelevel
+    else
+	turn_tracing_off
+    fi
+}
+
+show_current_level()
+{
+    /usr/bin/rm -f /tmp/tracelevel.tmp
+
+    # show current tracing level
+    /usr/sbin/smreg list |grep com.sun.netstorage.samqfs.web.tracelevel > \
+                        /tmp/tracelevel.tmp
+
+    if [ -s /tmp/tracelevel.tmp ]; then
+        t=`cat /tmp/tracelevel.tmp`
+        tracelevel=`echo $t | awk -F=  '{print $2}'`
+        echo "Current Trace Level: $tracelevel"
+    else
+        echo "Current Trace Level: off"
+    fi
+
+    /usr/bin/rm -f /tmp/tracelevel.tmp
+}
+
+check_valid_trace_value()
+{
+    ERR_MSG="Invalid trace level value detected."
+    # check if the trace_value is in range of 1 to 3
+    if [ ! $TRACELEVEL = "off" ]; then
+	if [ $TRACELEVEL -lt 1 -o $TRACELEVEL -gt 3 ]; then
+	    $ECHO "$ERR_MSG"
+            show_syntax
+            exit 0
+	fi
+    fi
+
+    show_current_level
+}
+
+# Check the syntax and perform the appropriate task
+case "$#" in
+    1 ) TRACELEVEL=$1
+        check_valid_trace_value
+	perform_action
+	exit 1
+        ;;
+    * ) $ECHO "Syntax Error"
+        show_syntax
+	exit 0
+        ;;
+esac

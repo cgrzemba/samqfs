@@ -1,0 +1,223 @@
+#!/bin/sh
+
+
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#  ident	$Id: renew,v 1.4 2008/03/17 14:44:00 am143972 Exp $
+#
+#  This script updates the fsmgr.jar file, files in js/jsp/html/images/help
+#  directory.  This is a shortcut for developers to update their files in
+#  the develepment stage.  Please forward all the comments or report bugs to
+#  Ronald So (x28739) ronald.so@sun.com.
+#
+#  Note: This script is explicitly used by File System Manager only (English)
+#
+#
+
+BIN_DIR=/usr/sbin
+SMREG=${BIN_DIR}/smreg
+SMCWEBSERVER=${BIN_DIR}/smcwebserver
+PACKAGE_PATH=com.sun.netstorage.samqfs.web
+REMOVE_APP_NAME=fsmgrAdmin_2.2
+JNI_JAR_NAME=fsmgmtjni.jar
+#WORKSPACE=/net/clarity/export/ws6/ronaldso/samqfs_46
+I386=SunOS_5.10_i386_DEBUG
+SPARC=SunOS_5.10_sparc_DEBUG
+
+DEPLOY=/opt/SUNWfsmgr/samqfsui
+
+FLAG_JAR=0
+FLAG_JSP=0
+FLAG_JS=0
+FLAG_OTHER=0
+
+#
+# Check if user is a superuser.
+#
+check_su()
+{
+    id=`/bin/id | awk -F"(" '{print $1}' | awk -F"=" '{print $2}'`
+
+    if [ "${id}" != "0" ]; then
+        echo "You need to be super-user to run this script!"
+        exit 1
+    fi
+}
+
+copy_jar() {
+
+    echo "Copy over new JAR file...\c"
+    /usr/bin/cp ${WORKSPACE}/sam-qfs/src/samqfsui/obj/${PLATFORM}/WEB-INF/lib/fsmgr.jar /opt/SUNWfsmgr/samqfsui/WEB-INF/lib
+    echo "done!"
+}
+
+copy_jsp() {
+    echo "Copying JSP files to ${DEPLOY}/jsp ...\c"
+    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/jsp/* ${DEPLOY}/jsp
+    echo "done!"
+}
+
+copy_js() {
+    echo "Copying JS files to ${DEPLOY}/js ...\c"
+    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/js/* ${DEPLOY}/js
+    echo "done!"
+}
+
+copy_others() {
+    echo "Copying HTML files, Online help files and images...\c"
+    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/html/* ${DEPLOY}/html
+    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/images/* ${DEPLOY}/images
+    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/help/4u4/html/en/help \
+        ${DEPLOY}/html/en
+    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/app.xml ${DEPLOY}/app.xml
+    echo "done!"
+}
+
+renew_app() {
+
+    # Remove pre-compiled JSP files
+    echo "Removing pre-compiled JSP files ...\c"
+    /usr/bin/rm -rf /var/opt/webconsole/work/com_sun_web_console/\
+	localhost/samqfsui
+    echo "done"
+
+    if [ $FLAG_JAR -eq 1 ]; then
+        ${SMCWEBSERVER} stop
+
+        ## un-register JNI JAR file
+        ${SMREG} remove -l -s ${REMOVE_APP_NAME} ${JNI_JAR_NAME}
+        ${SMREG} remove -a ${REMOVE_APP_NAME}
+
+        INSTALL_DIR=/opt/SUNWfsmgr
+        APP_NAME=samqfsui
+        WEB_INF_DIR=${INSTALL_DIR}/${APP_NAME}/WEB-INF
+        LIB_DIR=${WEB_INF_DIR}/lib
+        REGISTER_DIR=/usr/share/webconsole/${APP_NAME}
+        TLD_DIR=${REGISTER_DIR}/WEB-INF/tld/com_sun_netstorage_samqfs_web_ui
+
+        ${SMREG} add -a ${INSTALL_DIR}/${APP_NAME}
+        ${SMREG} add -l -s ${REMOVE_APP_NAME} ${LIB_DIR}/${JNI_JAR_NAME}
+
+        cd /
+        ${SMCWEBSERVER} start
+    fi
+}
+
+show_syntax() {
+
+    echo "\nSyntax: renew architecture {target(s)}"
+    echo "\n\tarchitecture={i386|sparc}"
+    echo "\n\ttarget={jsp|js|jar|other}\n"
+
+    echo "e.g. renew i386          -> update all files includes all four"
+    echo "                            targets on a Solaris 10 i386 platform"
+    echo "e.g. renew sparc jar jsp -> update the JAR file and all JSP files"
+    echo "                            on a S10 sparc platform\n\n"
+}
+
+# Check the syntax and perform the appropriate task
+echo ""
+
+check_su
+
+if [ "x${WORKSPACE}" = "x" ]; then
+    echo "Please set WORKSPACE variable to your tree location!"
+    echo "e.g. /net/clarity.east/export/ws6/ronaldso/samqfs_46 (without sam-qfs)\n"
+    exit 1
+fi
+
+
+if [ $# -lt 1 ]; then
+    show_syntax
+    exit 1
+fi
+
+if [ $1 = "sparc" ]; then
+    PLATFORM=$SPARC
+elif [ $1 = "i386" ]; then
+    PLATFORM=$I386
+else
+    echo "Invalid system architecture specified! ($1) architecture unknown"
+    echo "arch={sparc|i386}"
+    echo ""
+    exit 1
+fi
+
+if [ $# -eq 1 ]; then
+    FLAG_JAR=1
+    FLAG_JSP=1
+    FLAG_JS=1
+    FLAG_OTHER=1
+else
+    LOOP=1
+    for param in $*
+    do
+        if [ $LOOP -gt 1 ]; then
+            if [ $param = "jsp" ]; then
+                FLAG_JSP=1
+            elif [ $param = "jar" ]; then
+                FLAG_JAR=1
+            elif [ $param = "js" ]; then
+                FLAG_JS=1
+            elif [ $param = "other" ]; then
+                FLAG_OTHER=1
+            else
+                echo "Invalid flag ($param) specified!"
+                exit 1
+            fi
+        fi
+
+        LOOP=`expr $LOOP + 1`
+    done
+fi
+
+if [ $FLAG_JAR -eq 1 ]; then
+    copy_jar
+else
+    DEPLOY=/var/opt/webconsole/webapps/samqfsui
+fi
+
+if [ $FLAG_JS -eq 1 ]; then
+    copy_js
+fi
+
+if [ $FLAG_JSP -eq 1 ]; then
+    copy_jsp
+fi
+
+if [ $FLAG_OTHER -eq 1 ]; then
+    copy_others
+fi
+
+echo ""
+
+renew_app
+
+echo ""
+
+exit 0

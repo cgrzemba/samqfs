@@ -1,0 +1,92 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH dump_cat 1M "27 Sept 2000"
+.SH NAME
+dump_cat \- Dumps the media changer catalog file in text format
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/dump_cat
+[
+.B \-n
+] |
+[
+.B \-o
+]
+[
+.B \-V
+]
+.I catalog
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B dump_cat
+writes a readable form of the \fIcatalog\fP specified on the
+command line to standard output.
+See
+.BR build_cat (1M)
+for the format of the output.
+.SH OPTIONS
+.TP 10
+.B \-n
+Outputs the count of entries in the catalog.
+.TP
+.B \-o
+Lists media that is no longer present in the catalog; i.e., the in-use
+flag is not set but there is an entry present.
+.TP
+.B \-V
+Verbose, lists flags and label times as comments.  Lists volume
+reservations as comments that may be used to build a ReservedVSNs file.
+.SH EXAMPLES
+The following is a sample \fBdump_cat\fR listing:
+.PP
+.ft CO
+.nf
+# audit_time Wed Dec 31 18:00:00 1969
+# version 410  count 32 mediatype 
+# Index  VSN     Barcode  Type   PTOC Access Capacity  Space Status    Sector Label time  Slot Part Modification time Mount time Reserved Time Archive-Set/Owner/File System Volume Location
+#   ---status---  ---label time----  --last mod time--  ----mount time---
+#
+  0 004974 004974 sg       0    3 19915760 19915760 0x6a000200 131072 0x3f
+8aec0f     0   0          0 0x3fdf5a79          0 // NO_INFORMATION
+#   -il-o-b-----  10/13/03 13:16:47  12/31/69 18:00:00  12/16/03 13:18:17
+  1 000120 000120 sg     0x4    4 19915760 19915760 0x6a000200 262144 0x3f
+d0ae8e     1   0 0x3fdf51c0 0x3fdf51be          0 // "1440 Northland Drive, Shelf 15"
+#   -il-o-b-----  12/05/03 10:13:02  12/16/03 12:41:04  12/16/03 12:41:02
+ 14 000139 000139 sg    0x20    2 19915760 19915760 0x7a000200 131072 0x3f
+8aec20    14   0 0x3fdf51ea 0x3fdf51e7          0 // "vsn 000139 arset.0 from /samfs1"
+#   -ilEo-b-----  10/13/03 13:17:04  12/16/03 12:41:46  12/16/03 12:41:43
+ 15 700178 700178 sg   0x804    3 19915760 19382920 0x7a000a00 262144 0x3f
+d4f746    15   0 0x3fdf5317 0x3fdf5213          0 // NO_INFORMATION
+.PP
+.ft
+.fi
+.SH SEE ALSO
+.BR build_cat (1M),
+.BR sam-robotsd (1M).

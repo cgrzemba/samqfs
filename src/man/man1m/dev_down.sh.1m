@@ -1,0 +1,105 @@
+.\" $Revision: 1.8 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH dev_down.sh 1M "14 JAN 2004"
+.na
+.nh
+.SH NAME
+dev_down.sh \- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS device down notification script
+.SH SYNOPSIS
+.B /etc/opt/SUNWsamfs/scripts/dev_down.sh
+\fIprg_name\fR
+\fIpid\fR
+\fIlog_level\fR
+\fImsg_no\fR
+\fIeq\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The
+.B /etc/opt/SUNWsamfs/scripts/dev_down.sh
+script can be executed by the \fBsam-robotsd\fR(1M) daemon
+when a device is marked \fBdown\fR or \fBoff\fR.
+.PP
+To enable this feature, copy \fB/opt/SUNWsamfs/examples/dev_down.sh\fR
+to \fB/etc/opt/SUNWsamfs/scripts/dev_down.sh\fR and
+modify it to take the desired action for your installation.
+.PP
+As released, the \fB/opt/SUNWsamfs/examples/dev_down.sh\fR
+script sends email to root with the relevant information.
+.SH OPTIONS
+This script accepts the following arguments:
+.TP 10
+\fIprg_name\fR
+The name of the program that is calling this script.
+.TP
+\fIpid\fR
+The process ID of the program that is calling this script.
+.TP
+\fIlog_level\fR
+Log priority level.
+An integer number such
+that \fB0\fR\ \(<=\ \fIlog_level\fR\ \(<=\ \fB7\fR.
+\fB0\fR is highest priority, and \fB7\fR is lowest priority.
+.TP
+\fImsg_no\fR
+The message number as found in the message catalog.
+.TP
+\fIeq\fR
+The Equipment Ordinal of the device.
+.SH EXAMPLE
+.PP
+The following is an example \fB/etc/opt/SUNWsamfs/scripts/dev_down.sh\fP file:
+.PP
+.ft CO
+.nf
+ #!/bin/sh
+ #
+
+ #   /etc/opt/SUNWsamfs/scripts/dev_down.sh - Take action in the
+ #       event a device is marked down by the SAM software.
+ #
+ #   arguments:  $1: caller
+ #                   $2: caller's pid
+ #                   $3: logging level
+ #                   $4: message catalog number
+ #                   $5: device identifier
+ #
+ # Change the email address on the following line to send
+ # email to the appropriate recipient.
+ /usr/ucb/mail -s "Sun StorEdge SAM-FS Device downed" root <<EOF
+ `date`
+ Sun StorEdge SAM-FS has marked the device $5,
+ as down or off.  Check device log.
+ EOF
+.fi 
+.ft
+.PP
+The example sends email to root to report that a device has been
+marked \fBdown\fR or \fBoff\fR.
+.SH SEE ALSO
+.BR sam-robotsd (1M).

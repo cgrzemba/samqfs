@@ -1,0 +1,94 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mcedstr - media changer encode decode scsiid strings.
+#
+# $Revision: 1.6 $
+
+
+#----- trim - trim leading spaces.
+function trim {
+
+	echo "$@" | sed -e "s/^ *//g"
+}
+
+
+#----- encode - encode blank spaces in a string with %%20 and % as %%25.
+function encode {
+
+	out=`echo "$1" | sed -e "s/%/%%25/g"`
+	echo "$out" | sed -e "s/ /%%20/g"
+}
+
+
+#----- decode - decode string patterns %%20 as ' ' and %%25 as %.
+function decode {
+
+	out=`echo "$1" | sed -e "s/%%20/ /g"`
+	echo "$out" | sed -e "s/%%25/%/g"
+}
+
+
+#----- truncate_encode - remove string trailing encoded %%20 characters.
+function truncate_encode {
+
+	out=`decode "$1"`
+	out=`echo "$out" | sed -e "s/ *$//g"`
+	out=`encode "$out"`
+	echo "$out"
+}
+
+
+#----- underbar_encode - replace encoded %%25 characters with % and
+#      %%20 characters with underbars.
+function underbar_encode {
+
+	out=`echo "$1" | sed -e "s/%%25/%/g"`
+	echo "$out" | sed -e "s/%%20/_/g"
+}
+
+
+#----- eprint - encode print.
+#      Given encoded string, truncate trailing string encoded %%20 
+#      characters and replace remaining encoded %%20 characters with underbars.
+function eprint {
+
+	out=`truncate_encode "$@"`
+	out=`underbar_encode "$out"`
+	echo "$out"
+}
+
+
+#----- plain_text - get plain text from encode string.
+#      Given encoded string, truncate encoded %%20 characters and replace
+#      remaining encoded %%20 characters with ' ' characters.
+function plain_text {
+
+	out=`truncate_encode "$1"`
+	decode "$out"
+}

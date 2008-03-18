@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: TapeCopyOptionsPropertySheet.xml,v 1.11 2008/03/17 14:40:31 am143972 Exp $                                                                -->
+
+<propertysheet>
+
+<!-- Archive Organization Section -->
+<section name="organization" defaultValue="archive.section.organization.title">
+
+<property span="true">
+
+&lt;table style="width:100%">
+&lt;tr> &lt;td style="width:25%">
+  <cc name="mediaTypeLabel" 
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.mediatype"/>
+  </cc>
+
+&lt;/td> &lt;td colspan="3">
+  <cc name="mediaType"
+      tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td colspan="4">
+  <cc name="reserveByLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.reserveby"/>
+  </cc>
+  <cc name="rmPolicy"
+      tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+      <attribute name="label" value="archiving.reservation.method.policy"/>
+  </cc>
+  <cc name="rmFileSystem"
+      tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+      <attribute name="label" value="archiving.reservation.method.fs"/>
+  </cc>
+  <cc name="rmAttribute"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td>
+  <cc name="sortMethodLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.sortmethod"/>
+      <attribute name="elementName" value="sortMethod"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="sortMethod"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="unarchiveTimeRefLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.unarchivetime"/>
+      <attribute name="elementName" value="unarchiveTimeRef"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="unarchiveTimeRef"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+
+&lt;tr> &lt;td colspan="2" nowrap="nowrap">
+  <cc name="fillVSNsLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.fillvsns"/>
+      <attribute name="elementName" value="fillVSNs"/>
+  </cc>
+  <cc name="fillVSNs"
+      tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+      <attribute name="dynamic" value="true"/>
+      <attribute name="onClick"
+        value="ccSetCheckBoxDisabled(this.name, this.form.name, !this.checked)"/>
+  </cc>
+
+&lt;/td> &lt;td colspan="2" nowrap="nowrap">
+  <cc name="joinMethodLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.joinmethod"/>
+      <attribute name="elementName" value="joinMethod"/>
+  </cc>
+  <cc name="joinMethod"
+      tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+      <attribute name="dynamic" value="true"/>
+      <attribute name="onClick"
+        value="ccSetCheckBoxDisabled(this.name, this.form.name, !this.checked)"/>
+  </cc>
+
+&lt;/td> &lt;/tr> &lt;/table>
+
+</property>
+ 
+</section>
+
+<!-- Tuning Archive Media Writes Section -->
+<section name="tuning" defaultValue="archive.section.tuning.title">
+
+<property span="true">
+
+&lt;table>
+&lt;tr> &lt;td>
+  <cc name="drivesToUseLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.drivestouse"/>
+      <attribute name="elementName" value="drivesToUse"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="drivesToUse"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td>
+  <cc name="minOverflowLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.minoverflow"/>
+      <attribute name="elementName" value="minOverflow"/>
+  </cc>
+
+&lt;/td> &lt;td nowrap>
+  <cc name="minOverflow"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="minOverflowUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td style="padding-left:20px">
+  <cc name="maxSizePerDriveLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.maxsizeperdrive"/>
+      <attribute name="elementName" value="maxSizePerDrive"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="maxSizePerDrive"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="maxSizePerDriveUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;td>
+  <cc name="maxSizeForArchiveLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.maxsizearchive"/>
+      <attribute name="elementName" value="maxSizeForArchive"/>
+  </cc>
+
+&lt;/td> &lt;td nowrap>
+  <cc name="maxSizeForArchive"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="maxSizeForArchiveUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td style="padding-left:20px" valign="top">
+  <cc name="multiDriveTriggerLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.multidrivetrigger"/>
+      <attribute name="elementName" value="multiDriveTrigger"/>
+  </cc>
+
+&lt;/td> &lt;td valign="top">
+  <cc name="multiDriveTrigger"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="multiDriveTriggerUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;td valign="top">
+  <cc name="bufferSizeLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.buffersize"/>
+      <attribute name="elementName" value="bufferSize"/>
+  </cc>
+
+&lt;/td> &lt;td valign="top">
+  <cc name="bufferSize"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <fieldhelp name="bufferLockHelp"
+             defaultValue="archiving.bufferlock.help" />
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td colspan="2"> &lt;/td> &lt;td colspan="2">
+  <cc name="lockBuffer"
+      tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+      <attribute name="label" value="archiving.lockbuffer"/>
+  </cc>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td>
+  <cc name="offlineMethodLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.offlinemethod"/>
+      <attribute name="elementName" value="offlineMethod"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="offlineMethod"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+ 
+</section>
+
+<!-- Archive Work Queue Management -->
+<section name="queue" defaultValue="archive.section.queue.title">
+
+<property span="true">
+&lt;table style="width:100%">
+&lt;tr> &lt;td style="width:50%">
+  <cc name="startAgeLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.startage"/>
+      <attribute name="elementName" value="startAge"/>
+  </cc>
+
+&lt;/td> &lt;td style="width:50%" nowrap="nowrap">
+  <cc name="startAge" 
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="startAgeUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td style="width:50%">
+  <cc name="startCountLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.startcount"/>
+      <attribute name="elementName" value="startCount"/>
+  </cc>
+
+&lt;/td> &lt;td style="width:50%">
+  <cc name="startCount" 
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td style="width:50%" nowrap="nowrap">
+  <cc name="startSizeLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.startsize"/>
+      <attribute name="elementName" value="startSize"/>
+  </cc>
+
+&lt;/td> &lt;td style="width:50%">
+  <cc name="startSize" 
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="startSizeUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+
+</section>
+
+<!-- Archive Policy Based Recycling -->
+<section name="recycling" defaultValue="archive.section.recycling.title">
+ 
+<property span="true">
+
+&lt;table>
+&lt;tr> &lt;td style="width:25%">
+  <cc name="disableRecyclerLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.disablerecycler"/>
+      <attribute name="elementName" value="disableRecycler"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="disableRecycler"
+      tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+
+&lt;/td> &lt;td>
+  <cc name="emailAddressLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.emailaddress"/>
+      <attribute name="elementName" value="emailAddress"/>
+  </cc>
+
+&lt;/td> &lt;td style="width:25%"> 
+  <cc name="emailAddress"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+      <attribute name="maxLength" value="31"/>
+  </cc>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td>
+  <cc name="highWaterMarkLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.highwatermark"/>
+      <attribute name="elementName" value="highWaterMark"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="highWaterMark"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td>
+  <cc name="minGainLabel" 
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.mingain"/>
+      <attribute name="elementName" value="minGain"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="minGain"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;/tr>
+
+&lt;tr> &lt;td>
+  <cc name="recycleSizeLabel" 
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.recyclesize"/>
+      <attribute name="elementName" value="recycleSize"/>
+  </cc>
+
+&lt;/td> &lt;td nowrap>
+  <cc name="recycleSize"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+  <cc name="recycleSizeUnit"
+      tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;td>
+  <cc name="maxVSNCountLabel"
+      tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+      <attribute name="defaultValue" value="archiving.maxvsncount"/>
+      <attribute name="elementName" value="maxVSNCount"/>
+  </cc>
+
+&lt;/td> &lt;td>
+  <cc name="maxVSNCount"
+      tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+
+</section>
+
+</propertysheet>
+ 

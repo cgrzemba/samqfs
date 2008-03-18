@@ -1,0 +1,149 @@
+'\" t
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_restore_file 3 "28 Jan 2002"
+.SH NAME
+sam_restore_file \- Creates an offline Sun StorEdge \%SAM-FS file.
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamut [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/stat.h"
+.ft
+.fi
+.LP
+.BI "int sam_restore_file(const char *" "path" ,
+.BI "struct sam_stat *" "buf" ,
+.BI "size_t " "bufsize" );
+.SH DESCRIPTION
+.B sam_restore_file(\|)
+creates an offline file in a Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS file system.
+.B sam_restore_file(\|)
+creates an offline file using information supplied by the user and
+obtained from a source such as the \fBarchiver.log\fR file.
+The file must not exist.
+.PP
+Note that the program calling this function is responsible for creating all
+directories in the path
+.I before
+calling the function.
+.PP
+.I path
+is the pathname to the file to be created.
+It may be an absolute or relative pathname but must be no longer
+than \fBPATH_MAX\fR (see the
+.B /usr/include/limits.h file).
+.PP
+.I buf
+is a \fBsam_stat\fR(3) structure (see \fBsam_stat\fR(3)).
+.PP
+.I bufsize
+is the size of the \fBsam_stat\fR(3) structure (see \fBsam_stat\fR(3)).
+.PP
+The following members in the \fBsam_stat\fR(3)
+structure must exist.  All other fields are ignored.
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+ulong_t      st_mode      /\(** File mode (see mknod(2)) \(**/
+ulong_t      st_uid       /\(** User ID of the file's owner \(**/
+ulong_t      st_gid       /\(** Group ID of the file's owner \(**/
+u_longlong_t st_size      /\(** File size in bytes \(**/
+ulong_t      st_atime     /\(** Time of last access      \(**/
+ulong_t      st_ctime     /\(** Time of last file status change \(**/
+ulong_t      st_mtime     /\(** Time of last data modification  \(**/
+.ft 1
+.fi
+.RE
+.PP
+The following members in the sam_copy_s structure must exist for
+all copies, if any. All other fields are ignored.
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+char         media[4];    /\(** Two character media type. \(**/
+long_long    position;    /\(** Position of the file on the media. \(**/
+time_t       creation_time; /\(** Time the archive copy was created \(**/
+char         vsn[32];     /\(** Volume serial name of the media \(**/
+.ft 1
+.fi
+.RE
+.PP
+.TP 10
+.B position
+The position of the file recorded on the media.
+.TP
+.B creation_time
+This is the time that the archive was made.  If
+.B creation_time
+is zero, it will be
+set to the value of \fBtime()\fR.
+.TP
+.B vsn
+The volume serial name of the cartridge where the file resides.
+.TP
+.B media
+The two character media type. See \fBmcf\fR(4). For example, the media
+type for DLT tape is \f4lt\fP.
+.SH "RETURN VALUES"
+Upon succesful creation of a file a value of 0 is returned.
+Otherwise, a negative value is returned and
+\f4errno\fP
+is set to indicate the error.
+The possible return values are:
+.nf
+.TS
+tab (%) ;
+ l l .
+-1%user is not root
+-2%invalid media type
+-3%invalid VSN
+-5%file does not exist
+-6%restore failed for some other reason
+.TE
+.fi
+.ft 3
+.SH FILES
+.TP 20
+.TP
+.B /etc/opt/SUNWsamfs/mcf
+The configuration file for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems.
+.SH "SEE ALSO"
+.BR sam_stat (3).
+
+

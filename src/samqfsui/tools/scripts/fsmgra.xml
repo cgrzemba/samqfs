@@ -1,0 +1,93 @@
+<?xml version='1.0'?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+
+<!--
+	$Id: fsmgra.xml,v 1.4 2008/03/17 14:44:00 am143972 Exp $
+
+	Service manifest for the File System Manager portal agent service.
+-->
+
+<service_bundle type='manifest' name='SUNWfsmgrr:fsmgra'>
+
+<service
+	name='application/management/fsmgra'
+	type='service'
+	version='1'>
+
+	<create_default_instance enabled='false' />
+
+	<single_instance/>
+
+	<!-- service model is set to default, i.e. contract services -->
+
+	<!-- dependent on network and filesystem (/opt, /usr, /var -->
+
+	<dependency
+		name='filesystem'
+		grouping='require_all'
+		restart_on='none'
+		type='service'>
+		<service_fmri value='svc:/system/filesystem/local' />
+	</dependency>
+
+	<dependency
+		name='network'
+		grouping='require_all'
+		restart_on='none'
+		type='service'>
+		<service_fmri value='svc:/network/initial' />
+	</dependency>
+
+	<exec_method
+		type='method'
+		name='start'
+		exec='/opt/SUNWfsmgr/agent/bin/fsmgra start'
+		timeout_seconds='60' >
+	</exec_method>
+
+	<exec_method
+		type='method'
+		name='stop'
+		exec='/opt/SUNWfsmgr/bin/fsmgr agent stop'
+		timeout_seconds='60' />
+
+	<stability value='Unstable' />
+
+	<template>
+		<common_name>
+			<loctext xml:lang='C'>
+File System Manager Portal Agent, file system information data collector for the portal.
+			</loctext>
+		</common_name>
+		<!-- <documentation> -->
+			<!-- any man page available -->
+		<!-- </documentation> -->
+	</template>
+</service>
+
+</service_bundle>

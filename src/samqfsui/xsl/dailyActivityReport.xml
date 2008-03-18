@@ -1,0 +1,81 @@
+<?xml version='1.0'?>
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: dailyActivityReport.xml,v 1.4 2008/03/17 14:44:02 am143972 Exp $ -->
+
+<report name="Sample Report - Daily Archive and Media Activity" host="archi" time="1114103101" desc="SAMPLE">
+  <dailyActivity>
+    <write numBytes="1234386757" seconds="2334"/>
+    <read numBytes="9012325675" seconds="64688"/>
+    <vsns>
+      <vsn name="950001" mounts="24"/>
+      <vsn name="950002"/>
+      <vsn name="950003"/>
+      <vsn name="950004" mounts="20"/>
+      <vsn name="950005"/>
+      <vsn name="950006"/>
+      <vsn name="950007" mounts="2"/>
+      <vsn name="950008"/>
+      <vsn name="950009"/>
+      <vsn name="950010"/>
+      <vsn name="950011" mounts="4"/>
+      <vsn name="950012"/>
+      <vsn name="950013"/>
+      <vsn name="950014"/>
+      <vsn name="950015"/>
+      <vsn name="950016"/>
+      <vsn name="950017"/>
+      <vsn name="950018"/>
+      <vsn name="950019"/>
+      <vsn name="950020"/>
+      <vsn name="960001"/>
+      <vsn name="960002"/>
+      <vsn name="960003"/>
+      <vsn name="960004"/>
+      <vsn name="960005"/>
+      <vsn name="960006"/>
+      <vsn name="960007"/>
+      <vsn name="960008"/>
+      <vsn name="960009"/>
+      <vsn name="960010"/>
+      <vsn name="960012"/>
+      <vsn name="960013"/>
+      <vsn name="960014"/>
+      <vsn name="960015"/>
+      <vsn name="960016"/>
+      <vsn name="960017"/>
+      <vsn name="960018"/>
+      <vsn name="960019"/>
+      <vsn name="960020"/>
+    </vsns>
+    <archive numFiles="212121"/>
+    <stage numFiles="2121"/>
+    <release numFiles="121" runCount="1"/>
+    <recycle numFiles="0"/>
+  </dailyActivity>
+</report>

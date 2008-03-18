@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: ServerConfigurationPropertySheet.xml,v 1.7 2008/03/17 14:40:29 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="general"
+        defaultValue="ServerConfiguration.pageTitle.general">
+        <property>
+            &lt;table>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.serverName" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="NameValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.serverID" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="IDValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.serverOS" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="OSValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.machine" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="MachineValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.cpus" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="CPUValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.memory" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="MemoryValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td valign='top' nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.arch" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td valign='top' nowrap='nowrap'>
+                    <cc name="ArchValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td valign='top' nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="ServerConfiguration.IPAddress" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="IPAddressValue"
+                        tagclass=
+                            "com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                        <attribute name="escape" value="false" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                &lt;/td>
+                &lt;td>
+                &lt;/td>
+                &lt;td>
+                &lt;/td>
+            &lt;/tr>
+            &lt;/table>
+        </property>
+    </section>
+
+    <section name="cluster"
+        defaultValue="ServerConfiguration.pageTitle.cluster">
+        <property span="true">
+        <cc name="clusterTable"
+            tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+            <attribute name="title" value="ServerConfiguration.cluster.title"/>
+            <attribute name="showAdvancedSortIcon" value="false" />
+            <attribute name="showPaginationControls" value="false" />
+            <attribute name="showLowerActions" value="false" />
+            <attribute name="showPaginationIcon" value="false" />
+            <attribute name="showSelectionIcons" value="false" />
+            <attribute name="showSortingRow" value="false" />
+            <attribute name="empty" value="ServerConfiguration.cluster.empty"/>
+        </cc>
+        </property>
+   </section>
+
+    <section name="reports"
+        defaultValue="ServerConfiguration.pageTitle.reports">
+        <property span="true">
+        <cc name="reportsTable"
+            tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+            <attribute name="title"
+                value="ServerConfiguration.reports.title"/>
+            <attribute name="showAdvancedSortIcon" value="false" />
+            <attribute name="showPaginationControls" value="true" />
+            <attribute name="showLowerActions" value="false" />
+            <attribute name="showPaginationIcon" value="true" />
+            <attribute name="showSelectionIcons" value="false" />
+            <attribute name="showSortingRow" value="true" />
+            <attribute name="maxRows" value="10" />
+        </cc>
+        </property>
+   </section>
+       
+    <section name="package"
+        defaultValue="ServerConfiguration.pageTitle.package">
+        <property span="true">
+        <cc name="packagesTable"
+            tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+            <attribute name="title" value="ServerConfiguration.packages.title"/>
+            <attribute name="showAdvancedSortIcon" value="false" />
+            <attribute name="showPaginationControls" value="false" />
+            <attribute name="showLowerActions" value="false" />
+            <attribute name="showPaginationIcon" value="false" />
+            <attribute name="showSelectionIcons" value="false" />
+            <attribute name="showSortingRow" value="false" />
+            <attribute name="empty" value="ServerConfiguration.packages.empty"/>
+        </cc>
+        </property>
+   </section>
+ 
+   <section name="daemon" defaultValue="ServerConfiguration.pageTitle.daemon">
+        <property span="true">
+            <cc name="daemonsTable"
+                tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+                <attribute name="title"
+                    value="ServerConfiguration.daemons.title"/>
+                <attribute name="showAdvancedSortIcon" value="false" />
+                <attribute name="showPaginationControls" value="false" />
+                <attribute name="showLowerActions" value="false" />
+                <attribute name="showPaginationIcon" value="false" />
+                <attribute name="showSelectionIcons" value="false" />
+                <attribute name="showSortingRow" value="false" />
+                <attribute name="empty"
+                    value="ServerConfiguration.daemons.empty"/>
+            </cc>
+        </property>
+   </section>
+   
+   <section name="config" defaultValue="ServerConfiguration.pageTitle.config">
+        <property span="true">
+            <cc name="configTable"
+                tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+                <attribute name="title"
+                    value="ServerConfiguration.config.title"/>
+                <attribute name="showAdvancedSortIcon" value="false" />
+                <attribute name="showPaginationControls" value="false" />
+                <attribute name="showLowerActions" value="false" />
+                <attribute name="showPaginationIcon" value="false" />
+                <attribute name="showSelectionIcons" value="false" />
+                <attribute name="showSortingRow" value="false" />
+                <attribute name="empty"
+                    value="ServerConfiguration.config.empty"/>
+            </cc>
+            <cc name="Spacer"
+                tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                <attribute name="width" value="900" />
+            </cc>
+        </property>
+    </section>
+    
+    <section name="logTrace"
+        defaultValue="ServerConfiguration.pageTitle.logTrace">
+        <property span="true">
+        <cc name="logTraceTable"
+            tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+            <attribute name="title" value="ServerConfiguration.logtrace.title"/>
+            <attribute name="showAdvancedSortIcon" value="false" />
+            <attribute name="showPaginationControls" value="false" />
+            <attribute name="showLowerActions" value="false" />
+            <attribute name="showPaginationIcon" value="false" />
+            <attribute name="showSelectionIcons" value="false" />
+            <attribute name="showSortingRow" value="false" />
+            <attribute name="empty" value="ServerConfiguration.logtrace.empty"/>
+        </cc>
+        </property>
+   </section>
+
+   
+   
+    <section name="media"
+        defaultValue="ServerConfiguration.pageTitle.media">
+        <property>
+            <cc name="MediaText"
+                tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                <attribute name="defaultValue"
+                    value="ServerConfiguration.media.none" />
+                <attribute name="escape" value="false" />
+            </cc>
+        </property>
+    </section>
+    
+    <section name="explorer"
+        defaultValue="ServerConfiguration.pageTitle.explorer">
+        <property span="true">
+        <cc name="explorerTable"
+            tagclass="com.sun.web.ui.taglib.table.CCActionTableTag" >
+            <attribute name="title" value="ServerConfiguration.explorer.title"/>
+            <attribute name="showAdvancedSortIcon" value="false" />
+            <attribute name="showPaginationControls" value="false" />
+            <attribute name="showLowerActions" value="false" />
+            <attribute name="showPaginationIcon" value="false" />
+            <attribute name="showSelectionIcons" value="false" />
+            <attribute name="showSortingRow" value="false" />
+            <attribute name="empty" value="ServerConfiguration.explorer.empty"/>
+        </cc>
+        </property>
+   </section>
+    
+
+   
+</propertysheet>

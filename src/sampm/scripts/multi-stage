@@ -1,0 +1,86 @@
+#! /bin/csh
+#
+# $Revision: 1.5 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+################################################################################
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.	 No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)	operation of any of the software script(s) shall be
+#	uninterrupted or error free, or
+#
+# (ii)	functions contained in the software script(s) shall operate
+#	in the combinations which may be selected for use by
+#	Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#	issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+################################################################################
+#
+# Synopsis: This script is used to restore files from a samfsdump file
+#
+#	The first param is the dump file in which the file or files are to be
+#	restored from.
+#
+#	The second param is the files to restore.
+#
+################################################################################
+#
+# When            Who       Comments
+# ----            ---       -------
+#            2003 dcrouse	Initial Version
+# July 1st,  2004 jleach	Included PS Header
+# July 22nd, 2004 jdp		Cleaning up to run with the new SAMPM package
+##############################################################################
+
+# READ in the common site-tools parameters
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+
+set dump_file = $1
+set find =  $2
+
+cd $WINDOW
+samfsrestore -tvf $dump_file > list
+grep "$find" list > reload
+cat ./reload | xargs samfsrestore -f $dump_file -
+
+\rm ./list ./reload
+
+exit 0

@@ -1,0 +1,496 @@
+." $Revision: 1.31 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH samfsdump 1M "27 Feb 2006"
+.SH NAME
+samfsdump, samfsrestore \- Dumps or restores SAM-QFS file control structure data
+.SH SYNOPSIS
+\fBsamfsdump\fR
+\%[\fB\-b\ \fIbl_factor\fR]
+\%[\fB\-d\fR]
+\%\fB\-f\ \fIdump_file\fR
+\%[\fB\-n\fR]
+\%[\fB\-q\fR]
+\%[\fB\-P\fR]
+\%[\fB\-u\fR]
+.if n .br
+\%[\fB\-U\fR]
+\%[\fB\-v\fR]
+\%[\fB\-B\ \fIsize\fR]
+\%[\fB\-H\fR]
+\%[\fB\-I\ \fIinclude_file\fR]
+\%[\fB\-T\fR]
+\%[\fB\-W\fR]
+\%[\fB\-X\ \fIexcluded_dir\fR]
+[\fIfile \&.\&.\&.\fR]
+.PP
+\fBsamfsrestore\fR
+\%[\fB\-b\ \fIbl_factor\fR]
+\%[\fB\-d\fR]
+\%\fB\-f\ \fIdump_file\fR
+\%[\fB\-g\ \fIlog_file\fR]
+\%[\fB\-i\fR]
+\%[\fB\-l\fR]
+\%[\fB\-r\fR]
+\%[\fB\-s\fR]
+\%[\fB\-t\fR]
+\%[\fB\-v\fR]
+\%[\fB\-B\ \fIsize\fR]
+\%[\fB\-H\fR]
+\%[\fB\-R\fR]
+\%[\fB\-T\fR]
+\%[\fB\-2\fR]
+[\fIfile \&.\&.\&.\fR]
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsamfsdump\fR command creates a dump file containing control
+structure information for each specified \fIfile\fR.
+This command must be entered after you have used the \fBcd\fR(1)
+command to change to the
+mount point of a SAM-QFS file system.
+.PP
+The \fBsamfsdump\fR command creates a dump file, as follows:
+.TP 2
+\(bu
+If nothing is specified for \fIfile\fR,
+the \fBsamfsdump\fR command
+creates a dump file containing the control structures
+for every file in the current directory and also for every file in
+the current directory's subdirectories.
+.TP
+\(bu
+If an individual file is specified for \fIfile\fR,
+the \fBsamfsdump\fR command
+creates a dump file containing the control structures
+for that individual file.
+.TP
+\(bu
+If a directory is specified for \fIfile\fR,
+the \fBsamfsdump\fR command
+creates a dump file containing the control structures
+for every file in that directory and also for every file in
+that directory's subdirectories.
+.PP
+Any \fIfile\fR specified with an absolute path is
+stored in the dump file with an absolute path.  Any \fIfile\fR specified
+with a relative path is stored in the dump file with its relative path.
+.PP
+The \fBsamfsrestore\fR command uses the contents of the dump file
+to restore
+control structures for all the files in the dump file or
+for each specified
+\fIfile\fR.  If a \fIfile\fR is specified, its path and file name must
+match exactly what exists in the dump file.  By default, all files are
+restored to the absolute or relative location as each file is
+described in the dump file.  If the \fB\-s\fR option is specified,
+however, all file names with an absolute path in the dump file
+are restored relative to the current directory, using the entire path as
+contained in the dump file.
+.PP
+The \fBsamfsdump\fR command does not create a dump of any data
+associated with the files (unless the -P, -u or -U options are specified),
+so no data can be restored from this dump file.  It is assumed that the data
+associated with the dumped files has been archived in some way.  If a file
+for which no archive copy is available is dumped, a warning message is issued
+noting that this file will be marked as damaged when restored.
+When that file is restored from the
+dump file, it is marked as damaged by \fBsamfsrestore\fR.
+Note that this warning can be explicitly suppressed by using
+the \fB\-q\fR option.
+.PP
+You must be logged in as superuser (\fBroot\fR) in order to execute
+the \fBsamfsdump\fR and \fBsamfsrestore\fR commands.
+Sun Microsystems recommends that a site create \fBsamfsdump\fR dumps on a
+periodic basis as part of a disaster recovery plan.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\%\fB\-b\ \fIbl_factor\fR
+Specifies a blocking factor in units of 512 bytes.
+When specified, all I/O to the dump image file is done in
+multiples of the blocking factor.
+There is no blocking done by default.
+.TP 10
+\%\fB\-d\fR
+Enables debugging messages.
+This option is useful only to Sun Microsystems and is used to trace execution
+for verification purposes.
+.TP 10
+\%\fB\-f\ \fIdump_file\fR
+Names the file to which the control structure data
+dump is written to (by \fBsamfsdump\fR) or read from
+(by \fBsamfsrestore\fR).  You must specify a \fIdump_file\fR.
+.sp
+If a dash character (\fB\-\fR) is specified for the \fIdump_file\fR,
+\fBsamfsdump\fR writes the dump file to
+\fBstdout\fP and \fBsamfsrestore\fR reads the dump file
+from \fBstdin\fR.
+.sp
+The dump file data can be passed through appropriate filters, such as
+compression or encryption, after being written by \fBsamfsdump\fR
+or before being read by \fBsamfsrestore\fR.
+.TP 10
+\fB\-g\ \fIlog_file\fR
+(\fBsamfsrestore\fP only) Generates a file of online directories and files.
+For information on the format of this file, see the NOTES section
+of this man page.
+.TP 10
+\%\fB\-i\fR
+(\fBsamfsrestore\fP only) Prints the inode numbers of the files when listing the contents of the
+dump.
+For more listing options, see \%\fB\-l\fR, \%\fB\-t\fR,
+and \%\fB\-2\fR options.
+.TP 10
+\fB\-I\ \fIinclude_file\fR
+(\fBsamfsdump\fP only) Takes the list of files to dump from \fIinclude_file\fP.
+This file has one relative or absolute path to be dumped per line.
+After processing \fIinclude_file\fP, any [\fIfile\fR] arguments from the command
+line are processed.
+.TP 10
+\%\fB\-l\fR
+(\fBsamfsrestore\fP only) Prints one line per file.
+This option is similar to the \fBsls\fR(1M) command's \%\fB\-l\fR
+option when listing the dump contents.
+Note that this option is identified by
+the lowercase letter `l', not a number '1'.
+For more listing options, see the \%\fB\-i\fR, \%\fB\-t\fR,
+and \%\fB\-2\fR options.
+.TP 10
+\%\fB\-n\fR
+(\fBsamfsdump\fP only) Forces the \fBsamfsdump\fR file to use the newest header format
+available.
+The new header
+is incompatible with \fBsamfsrestore\fR prior to the 3.5.0 release level.
+Using the \%\fB\-u\fR or \%\fB\-U\fR arguments automatically enables
+the \%\fB\-n\fP argument.
+.TP 10
+\%\fB\-P\fR
+(\fBsamfsdump\fP only) Dumps the online data portions of files which are offline, but have
+partial data online.
+This option can considerably increase
+the size of the dump file, as data and metadata are both being dumped.
+You must take care to manage the increased size of the dump.
+This option can be used to move file partial data by piping the output
+of \fBsamfsdump\fR to the input of \fBsamfsrestore\fR.
+.TP 10
+\%\fB\-q\fR
+(\fBsamfsdump\fP only) Suppresses warning messages for damaged files.
+By default, \fBsamfsdump\fR writes warning messages for each file that
+would be considered damaged if the dump were restored.
+.TP 10
+\%\fB\-r\fR
+(\fBsamfsrestore\fP only) Replaces existing files when restoring control structures if the existing
+files have an older modification time than the dumped files.
+.TP 10
+\%\fB\-s\fR
+(\fBsamfsrestore\fP only) Removes leading slashes from file names prior to
+restoring them.  This is useful if the dump was made with an absolute
+path name and the dump is being restored to a different
+location.  Any directories required for the restoration and not defined
+in the dump file are automatically created.
+.TP 10
+\%\fB\-t\fR
+(\fBsamfsrestore\fP only) Lists the content of the dump file rather than restoring the dump.
+For more listing options, see the \%\fB\-i\fR, \%\fB\-l\fR,
+and \%\fB\-2\fR options.
+.TP 10
+\%\fB\-u\fR
+(\fBsamfsdump\fP only) Dumps the data portions of files without
+at least one archive copy.
+This option can considerably increase
+the size of the dump file, as data and metadata are both being dumped.
+You must take care to manage the increased size of the dump.
+.TP 10
+\%\fB\-U\fR
+(\fBsamfsdump\fP only) Dumps the data portions of files which are online.
+This option can considerably increase
+the size of the dump file, as data and metadata are both being dumped.
+If this option is used with segmented files, the archive copy information
+is not preserved when the file is restored.
+You must take care to manage the increased size of the dump.
+This option can be used to move file systems by piping the output
+of \fBsamfsdump\fR to the input of \fBsamfsrestore\fR.
+.TP 10
+\%\fB\-v\fR
+Prints file names as each file is processed.
+This option is superseded by the \fB\-l\fP or \fB\-2\fR options.
+.TP 10
+\%\fB\-B\ \fIsize\fR
+Specifies a buffer size in units of 512 bytes.
+Note that there are limits
+on the buffer size, as specified in the error message when the limits have
+been exceeded.
+The default buffer size is 512 * 512 bytes.
+.TP 10
+\%\fB\-H\fR
+For \fBsamfsdump\fR, creates the dump file without a dump header record.
+For \fBsamfsrestore\fR, declares that the existing dump file
+has no header record.
+This option can be used to
+create control structure dump files that can be concatenated using
+the \fBcat\fR command.  For more information on this command, see
+the \fBcat\fR(1) man page.
+.TP 10
+\%\fB\-R\fR
+(\fBsamfsrestore\fP only) Replaces existing files when restoring control structures.
+.TP 10
+\%\fB\-T\fR
+Displays statistics at command termination.
+These statistics include the number of files and
+directories processed, the number of errors and warnings, and
+other information.  Example:
+.sp
+.ft CO
+samfsdump statistics:
+              Files:              52020
+              Directories:        36031
+              Symbolic links:     0
+              Resource files:     8
+              File segments:      0
+              File archives:      0
+              Damaged files:      0
+              Files with data:    24102
+              File warnings:      0
+              Errors:             0
+              Unprocessed dirs:   0
+              File data bytes:    0
+.ft
+.sp
+The numbers after the \fBFiles\fR, \fBDirectories\fR,
+\fBSymbolic links\fR, and \fBResource files\fR keywords are the
+counts of files,
+directories, symbolic links, and \%removable-media files whose
+inodes are contained in the dump.
+.sp
+\fBFile segments\fR refers to the number of data segments associated with
+segmented files from the dump.
+.sp
+\fBFile archives\fR refers to the number of archive images associated with
+the preceding \fBFiles\fR, \fBDirectories\fR, \fBSymbolic links\fR,
+and \fBResource files\fR.
+.sp
+\fBDamaged files\fR refers to the number of \fBFiles\fR,
+\fBDirectories\fR, \fBSymbolic links\fR, and \fBResource files\fR that
+are either already marked damaged (for a \fBsamfsdump\fR)
+or were damaged during a restore because they had no archive image
+(for a \fBsamfsrestore\fR).
+.sp
+\fBFiles with data\fR refers to the number of \fBFiles\fR that
+have online (full or partial) data dumped or restored.
+.sp
+\fBFile warnings\fR refers to the number of \fBFiles\fR, \fBDirectories\fR,
+\fBSymbolic links\fR, and \fBResource files\fR that
+would be damaged should the dump be restored because they had no
+archive images at the time of the dump.
+.sp
+\fBErrors\fR refers to the
+number of error messages that were printed during the dump or
+restore.  These errors indicate a problem, but the problem is
+not severe enough to cause an early exit from \fBsamfsdump\fR or
+\fBsamfsrestore\fR.  Examples of errors during a restore are failing
+to create a symbolic link and failing to change the owner or group of
+a file.
+Errors that might occur during a dump include having a path
+name too long, failing to open a directory for reading,
+failing to read a symbolic link or resource file,
+or finding a file with an invalid mode.
+.sp
+\fBUnprocessed dirs\fR refers to the number of directories that
+were not processed due to an error, such as being unable to create the
+directory.
+.sp
+\fBFile data bytes\fR refers to the size of data that was dumped
+(using options -P, -U, or -u) or restored.
+.TP 10
+\fB-W\fP
+(Obsolete. \fBsamfsdump\fP only.)  Writes
+warning messages during the dump process for files that would be damaged
+if the dump were restored.
+This option is retained for compatibility.
+By default, these warning messages are now issued automatically.
+For more information on controlling this behavior,
+see the \%\fB\-q\fR option, which suppresses warning messages.
+.TP 10
+\%\fB\-X\ \fIexcluded_dir\fR
+(\fBsamfsdump\fP only) Specifies directory paths to be excluded from the dump.
+Multiple (up to 10) directories can be excluded by using
+multiple \%\fB\-X\fR options.
+A directory that resolves to \&. or \fBNULL\fR generates an error message.
+.TP 10
+\%\fB\-2\fR
+(\fBsamfsrestore\fP only) Writes two lines per file, similar to
+the \fBsls\fR(1) command's \%\fB\-2\fR option, when listing the
+contents of the dump.
+For more listing options, see the \%\fB\-i\fR, \%\fB\-l\fR,
+and \%\fB\-t\fR options.
+.TP 10
+\fIfile \&.\&.\&.\fR
+Lists files to be dumped or restored.  Note that the names
+given to restore must match exactly the names as they are stored in the
+dump.  You can use \fBsamfsrestore\ \-t\fR to see how the names are stored.
+.SH NOTES
+A \fBsamfsrestore\fR should not be attempted on a Sun StorEdge QFS
+shared file system
+client.
+.PP
+The \fBsamfsdump\fR
+output files compress to less than 25% of their original size.
+.PP
+If the \%\fB\-g\fR option is used, a log file is generated during
+file system restoration.
+This file contains one line per file that was online, or
+partially online, at the time the file was dumped.
+This line is divided into fields and contains the following
+information:
+.TP 7
+\fBField\fR
+\fBDescription\fR
+.TP
+1
+The file type, which is indicated by one of the
+following letters:
+.sp
+.nf
+\(bu \fBd\fR indicates a directory.
+\(bu \fBf\fR indicates a regular file.
+\(bu \fBl\fR indiactes a symbolic link.
+\(bu \fBR\fR indicates a removable media file.
+\(bu \fBI\fR indicates a segment index.
+\(bu \fBS\fR indicates a data segment.
+.fi
+.TP
+2
+The media type and Volume Serial Name (VSN)
+in \fImedia_type\fB.\fIvsn\fR format.
+.TP
+3
+The position on the media.
+.TP
+4
+Either \fBonline\fR or \fBpartial\fR.
+.TP
+5
+The path relative to the file system mount point.
+.RE
+.PP
+After a \fBsamfsrestore\fR command is issued,
+it is possible to restore files that were online,
+prior to the dump, back to their online state.  You do this by
+using the script in \fB/opt/SUNWsamfs/examples/restore.sh\fB.
+.SH EXAMPLES
+The following example creates a control structure dump of the entire
+\fB/sam\fR file system:
+.PP
+.ft CO
+.nf
+example# cd /sam
+example# samfsdump -f /destination/of/the/dump/samfsdump.today
+.ft
+.fi
+.PP
+To restore a control structure dump to \fB/sam\fR:
+.PP
+.ft CO
+.nf
+example# cd /sam
+example# samfsrestore -f /source/of/the/dump/samfsdump.yesterday
+.fi
+.ft
+.SH SEE ALSO
+\fBcat\fR(1),
+\fBsls\fR(1).
+.SH DIAGNOSTICS
+You may encounter messages while using the \fBsamfsdump\fR
+or \fBsamfsrestore\fR command.  The following list shows several
+possible messages and their explanations:
+.TP 20
+\fBMessage\fR
+\fBExplanation\fR
+.TP
+\fIfile\fB: Unrecognised mode (0x..)\fR
+\fBsamfsdump\fR is being asked to
+dump a file that is not a regular file, directory, symbolic link, or
+removable media file.  The Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems
+allow the creation of block special,
+character special, fifo, and other special files, but they do not function
+correctly.  \fBsamfsdump\fR does not attempt to dump them.
+.TP
+\fIfile\fB: Warning! File will be damaged.\fR
+If received during a \fBsamfsdump\fR, this means that
+the file in question does not currently have any archive copies.
+The file is dumped to the \fBsamfsdump\fR file, but if
+the \fBsamfsdump\fR file is used
+to restore this file, the file will be marked damaged.
+.TP
+\fIfile\fB: Warning! File is already damaged.\fR
+If received during a \fBsamfsdump\fR, means that
+the file is currently marked damaged.  During restoration,
+the file will still be damaged.
+.TP
+\fIfile\fB: File was already damaged prior to dump\fR
+If received during a \fBsamfsrestore\fR, this means
+that the file was dumped with the \fBdamaged\fR flag set.
+.TP
+\fIfile\fB: File is now damaged\fR
+If received during a \fBsamfsrestore\fR, this means that the
+file was dumped when it had no archive images.
+\fBsamfsdump\fR and \fBsamfsrestore\fR
+do not dump file data.  They rely on the file's data having been archived.
+Because the file no longer has any data associated with it,
+it is marked \fBdamaged\fR.
+.TP
+\fB\&.: Not a SAM-FS file.\fR
+You are attempting to dump files from a file system that is not
+a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system, or you are attempting to
+restore files from a \fBsamfsdump\fR dump file into a file system
+that is not a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system.
+.TP
+\fIfile\fB: stat() id mismatch: expected: %d.%d, got %d.%d\fR
+If received during a dump, this indicates one of two things.
+If the \fB%d.\fR portions match, but the \fB\&.%d\fR portions differ,
+then a directory or file was deleted and recreated
+while \fBsamfsdump\fR was operating on it.  The file is not dumped.
+If the \fB%d.\fR portions do not match, then a serious error has been
+encountered; consult your service provider for help.
+.TP
+\fBCorrupt samfsdump file.  name length %d\fR
+If received during a restore, this means that the path name of a
+file to be restored was less than zero or larger than
+\fBMAXPATHLEN\fR.  This should not occur.  \fBsamfsrestore\fR aborts.
+.TP
+\fBCorrupt samfsdump file. %s inode version incorrect\fR
+During a restore, this
+means that a the inode for the indicated file was in an old format.
+This should not occur.  \fBsamfsrestore\fR aborts.
+.TP
+\fIfile\fB: pathname too long\fR
+If received during a dump, this indicates that the path name of
+the indicated file is longer than 1024 characters.  The file is not
+dumped.

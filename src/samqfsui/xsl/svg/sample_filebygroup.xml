@@ -1,0 +1,82 @@
+<?xml version='1.0'?> 
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: sample_filebygroup.xml,v 1.7 2008/03/17 14:44:04 am143972 Exp $ -->
+
+<MetricReport name="Top10Groups" isSample="true">
+<filesystem name="qfs3">
+<date val="1162645200">
+<id val="2007"><name>storage-east</name><numFiles>88849</numFiles><numBytes>576058586629</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="120002"><name>unknown</name><numFiles>589</numFiles><numBytes>24944633856</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="60001"><name>nobody</name><numFiles>28434</numFiles><numBytes>10761330636</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="1"><name>other</name><numFiles>11495</numFiles><numBytes>2279549461</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="500"><name>esitms</name><numFiles>3</numFiles><numBytes>1606214656</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="0"><name>root</name><numFiles>5356</numFiles><numBytes>1414363089</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="10"><name>staff</name><numFiles>4150</numFiles><numBytes>512230039</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="5535"><name>osd</name><numFiles>1564</numFiles><numBytes>328549820</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="101"><name>isv</name><numFiles>38</numFiles><numBytes>42484219</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="143"><name>unknown</name><numFiles>105</numFiles><numBytes>15121470</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+</date>
+<date val="1162558800">
+<id val="2007"><name>storage-east</name><numFiles>88849656</numFiles><numBytes>576058586629</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="120002"><name>unknown</name><numFiles>589</numFiles><numBytes>24944633856</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="60001"><name>nobody</name><numFiles>28434</numFiles><numBytes>10761330636</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="1"><name>other</name><numFiles>11495</numFiles><numBytes>2279549461</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="500"><name>esitms</name><numFiles>3</numFiles><numBytes>1606214656</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="0"><name>root</name><numFiles>5356</numFiles><numBytes>1414363089</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="10"><name>staff</name><numFiles>4150</numFiles><numBytes>512230039</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="5535"><name>osd</name><numFiles>1564</numFiles><numBytes>328549820</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="101"><name>isv</name><numFiles>38</numFiles><numBytes>42484219</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+<id val="143"><name>unknown</name><numFiles>105</numFiles><numBytes>15121470</numBytes><numOnlineBytes>0</numOnlineBytes></id>
+</date>
+<date val="1162731600">
+<id val="2007"><name>storage-east</name><numFiles>88849</numFiles><numBytes>576058586629</numBytes><numOnlineBytes>26058586629</numOnlineBytes></id>
+<id val="120002"><name>unknown</name><numFiles>589</numFiles><numBytes>24944633856</numBytes><numOnlineBytes>24944633856</numOnlineBytes></id>
+<id val="60001"><name>nobody</name><numFiles>28434</numFiles><numBytes>10761330636</numBytes><numOnlineBytes>10761330636</numOnlineBytes></id>
+<id val="1"><name>other</name><numFiles>11495</numFiles><numBytes>2279549461</numBytes><numOnlineBytes>2279549461</numOnlineBytes></id>
+<id val="500"><name>esitms</name><numFiles>3</numFiles><numBytes>1606214656</numBytes><numOnlineBytes>1606214656</numOnlineBytes></id>
+<id val="0"><name>root</name><numFiles>5356</numFiles><numBytes>1414363089</numBytes><numOnlineBytes>1414363089</numOnlineBytes></id>
+<id val="10"><name>staff</name><numFiles>4150</numFiles><numBytes>512230039</numBytes><numOnlineBytes>512230039</numOnlineBytes></id>
+<id val="5535"><name>osd</name><numFiles>1564</numFiles><numBytes>328549820</numBytes><numOnlineBytes>328549820</numOnlineBytes></id>
+<id val="101"><name>isv</name><numFiles>38</numFiles><numBytes>42484219</numBytes><numOnlineBytes>42484219</numOnlineBytes></id>
+<id val="143"><name>unknown</name><numFiles>105</numFiles><numBytes>15121470</numBytes><numOnlineBytes>15121470</numOnlineBytes></id>
+</date>
+<date val="1162818000">
+<id val="2007"><name>storage-east</name><numFiles>88849</numFiles><numBytes>26058586629</numBytes><numOnlineBytes>26058586629</numOnlineBytes></id>
+<id val="120002"><name>unknown</name><numFiles>589</numFiles><numBytes>24944633856</numBytes><numOnlineBytes>24944633856</numOnlineBytes></id>
+<id val="60001"><name>nobody</name><numFiles>28434</numFiles><numBytes>10761330636</numBytes><numOnlineBytes>10761330636</numOnlineBytes></id>
+<id val="1"><name>other</name><numFiles>11495</numFiles><numBytes>2279549461</numBytes><numOnlineBytes>2279549461</numOnlineBytes></id>
+<id val="500"><name>esitms</name><numFiles>3</numFiles><numBytes>1606214656</numBytes><numOnlineBytes>1606214656</numOnlineBytes></id>
+<id val="0"><name>root</name><numFiles>5356</numFiles><numBytes>1414363089</numBytes><numOnlineBytes>1414363089</numOnlineBytes></id>
+<id val="10"><name>staff</name><numFiles>4150</numFiles><numBytes>512230039</numBytes><numOnlineBytes>512230039</numOnlineBytes></id>
+<id val="5535"><name>osd</name><numFiles>1564</numFiles><numBytes>328549820</numBytes><numOnlineBytes>328549820</numOnlineBytes></id>
+<id val="101"><name>isv</name><numFiles>38</numFiles><numBytes>42484219</numBytes><numOnlineBytes>42484219</numOnlineBytes></id>
+<id val="143"><name>unknown</name><numFiles>105</numFiles><numBytes>15121470</numBytes><numOnlineBytes>15121470</numOnlineBytes></id>
+</date>
+</filesystem>
+</MetricReport>

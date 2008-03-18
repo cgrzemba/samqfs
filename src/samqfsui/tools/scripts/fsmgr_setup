@@ -1,0 +1,1805 @@
+#! /bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#  ident	$Id: fsmgr_setup,v 1.25 2008/03/17 14:44:00 am143972 Exp $
+#
+#  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
+#  along with all other necessary applications such as JATO/Lockhart/J2SE.
+#
+#  Note: This script is explicitly used by File System Manager only (English)
+#
+#
+
+############################################
+#
+# GLOBAL VARIABLES
+#
+############################################
+
+MY_SCRIPT_NAME="fsmgr_setup"
+ARCH=`/usr/bin/uname -p`
+APP_NAME="File System Manager"
+MAJOR_REV="5"
+MINOR_REV="0"
+ZIP_FILE="fsmgr_${MAJOR_REV}.${MINOR_REV}.zip"
+LOCKHART_EXTERNAL_NAME="Sun Java(TM) Web Console"
+LH_MAJOR_VERSION=3
+LH_MINOR_VERSION=0
+LH_UPDATE_NUMBER=2
+LOCKHART_VERSION="${LH_MAJOR_VERSION}.${LH_MINOR_VERSION}.${LH_UPDATE_NUMBER}"
+
+BIN_DIR=/usr/sbin
+SMCWEBSERVER=${BIN_DIR}/smcwebserver
+LOCKHART_TARBALL="JavaWebConsole_${LOCKHART_VERSION}_${ARCH}.tar"
+ARG1=""
+SOLREV=""
+NEED_TO_INSTALL_LH=1
+IS_LOCKHART_CURRENT_OR_ABOVE=0
+SAMADMIN_EXIST=0
+
+EXIT_STATUS=""
+CURRENTDIR=`/usr/bin/pwd`
+UNINSTALL_FLAG="-u"
+AUTH_PREFIX="com.sun.netstorage.fsmgr"
+TMPDIR=/tmp/File_System_Manager
+ADMINFILE=${TMPDIR}/admin.SUNWfsmgr
+MY_LOG="/var/tmp/fsmgr.setup.log"
+DATE="`date +%m.%d.%Y.%H:%M`"
+OLD_R_PACKAGE_EXIST="no"
+OLD_U_PACKAGE_EXIST="no"
+R_PACKAGE_EXIST="no"
+U_PACKAGE_EXIST="no"
+PARTIAL_INSTALL_DETECTED="no"
+IS_UPGRADE="no"
+TRACE_LEVEL=""
+
+JAVA_MAJOR_REV="1"
+JAVA_INTER_REV="4"
+JAVA_MINOR_REV="2"
+
+
+############################################
+#
+# ERROR CODES
+#
+############################################
+
+EXIT_CODE_SUCCESS="0"
+EXIT_CODE_SYNTAX_ERROR="1"
+EXIT_CODE_NOT_SUPERUSER="2"
+EXIT_CODE_ABORT_BY_USER="3"
+EXIT_CODE_CREATE_LOG_FAIL="4"
+EXIT_CODE_CREATE_TMPDIR_FAIL="5"
+EXIT_CODE_ADMIN_FILE_INEXIST="6"
+EXIT_CODE_UNSUPPORTED_PLATFORM="7"
+
+EXIT_CODE_INSTALL_NOT_START_IN_CDROM="20"
+# EXIT_CODE_R_PACKAGE_EXIST="21"
+# EXIT_CODE_U_PACKAGE_EXIST="22"
+EXIT_CODE_UNSUPPORTED_OS="23"
+EXIT_CODE_INSUFF_SPACE_ROOT="24"
+EXIT_CODE_INSUFF_SPACE_TMP="25"
+EXIT_CODE_FAIL_TO_UNZIP="26"
+EXIT_CODE_FAIL_TO_UNTAR="27"
+EXIT_CODE_FAIL_TO_INSTALL_R_PACKAGE="28"
+EXIT_CODE_FAIL_TO_INSTALL_U_PACKAGE="29"
+EXIT_CODE_VERSION_NEWER_DETECTED="30"
+EXIT_CODE_VERSION_SAME_DETECTED="31"
+
+EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE="50"
+EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE="51"
+
+EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE="100"
+
+prepare_log_file()
+{
+    if [ -f ${MY_LOG} ]; then
+	/usr/bin/rm -rf ${MY_LOG}
+    fi
+
+    # Create the log file.  The file name has a timestamp in it.
+    /usr/bin/touch ${MY_LOG}.${DATE}
+    /usr/bin/chmod 666 ${MY_LOG}.${DATE}
+
+    if [ ! -f ${MY_LOG}.${DATE} ]; then
+        # Unable to create install log
+        EXIT_STATUS=${EXIT_CODE_CREATE_LOG_FAIL}
+	do_exit
+    else
+        # Create a soft link, so ui_report script can always grab the
+        # latest log file.
+        /usr/bin/ln -s ${MY_LOG}.${DATE} ${MY_LOG}
+	/usr/bin/chmod 666 ${MY_LOG}
+    fi
+
+    echo "This log file is created on : " > ${MY_LOG}
+    /usr/bin/date >> ${MY_LOG}
+    echo "=========================================================\n\n" \
+			>> ${MY_LOG}
+}
+
+show_syntax()
+{
+    echo "Syntax: ${MY_SCRIPT_NAME} [-hu]"
+    echo "\t -h ==> Show this help message"
+    echo "\t -u ==> Uninstall ${APP_NAME} ${MAJOR_REV}.${MINOR_REV} along with"
+    echo "\t        other supporting application"
+}
+
+show_separator()
+{
+    echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n" \
+				>> ${MY_LOG}
+}
+
+generate_admin_file()
+{
+    echo "Start generating $ADMINFILE ..." >> ${MY_LOG}
+
+    /usr/bin/mkdir -p ${TMPDIR}
+    echo "basedir=default" > $ADMINFILE
+    echo "mail=" >> $ADMINFILE
+    echo "runlevel=nocheck" >> $ADMINFILE
+    echo "conflict=nocheck" >> $ADMINFILE
+    echo "setuid=nocheck" >> $ADMINFILE
+    echo "action=nocheck" >> $ADMINFILE
+
+    if [ "$ARG1" = "$UNINSTALL_FLAG" ]; then
+        echo "partial=nocheck" >> $ADMINFILE
+    else
+        echo "partial=quit" >> $ADMINFILE
+    fi
+
+    echo "instance=quit" >> $ADMINFILE
+    echo "idepend=quit" >> $ADMINFILE
+    echo "rdepend=quit" >> $ADMINFILE
+    echo "space=quit" >> $ADMINFILE
+
+    echo "Content of $ADMINFILE" >> ${MY_LOG}
+    show_separator
+    /usr/bin/cat $ADMINFILE >> ${MY_LOG}
+    show_separator
+
+    echo "End of $ADMINFILE\n" >> ${MY_LOG}
+}
+
+show_contact_support() 
+{
+    echo "Please email ${MY_LOG}.${DATE} to Sun's product support team."
+}
+
+remove_tmp_directory_if_exist()
+{
+    cd /
+
+    # Remove tmp directory
+    /usr/bin/rm -rf ${TMPDIR}
+
+    if [ $? -eq 0 ]; then
+        echo "${TMPDIR} successfully deleted.\n" >> ${MY_LOG}
+    else
+        echo "Failed to delete ${TMPDIR}!\n" >> ${MY_LOG}
+    fi
+}
+
+do_exit()
+{
+    # print environment variables to log file
+    show_env_value >> ${MY_LOG}
+
+    DIR=`/usr/bin/pwd`
+
+    echo "Entering do_exit().  Exit Status: $EXIT_STATUS" >> ${MY_LOG}
+    echo "Current Directory Location: ${DIR}" >> ${MY_LOG}
+
+    remove_tmp_directory_if_exist
+
+
+    case $EXIT_STATUS in
+
+        $EXIT_CODE_SUCCESS )
+            exit 0
+            ;;
+
+        $EXIT_CODE_SYNTAX_ERROR )
+            exit 1
+            ;;
+
+        $EXIT_CODE_NOT_SUPERUSER )
+            (echo "Root privilege is required to run \c"
+             echo "this installer.") | tee -a ${MY_LOG}
+            exit 2
+            ;;
+  
+        $EXIT_CODE_ABORT_BY_USER )
+            echo "Program aborted by user." |tee -a ${MY_LOG}
+            exit 3
+            ;;
+
+        $EXIT_CODE_CREATE_LOG_FAIL )
+            echo "Failed to create ${MY_LOG}."
+            show_contact_support
+            exit 4
+            ;;
+                                       
+        $EXIT_CODE_CREATE_TMPDIR_FAIL )
+            echo "Failed to create ${TMPDIR}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 5
+            ;;
+
+        $EXIT_CODE_ADMIN_FILE_INEXIST )
+            echo "Failed to create ${ADMINFILE}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 6
+            ;;
+
+        $EXIT_CODE_UNSUPPORTED_PLATFORM )
+            echo "Solaris 9 (i386) is not a supported platform." \
+                | tee -a ${MY_LOG}
+            echo "Please upgrade the Operating System to Solaris 10 or above." \
+                | tee -a ${MY_LOG}
+            exit 7
+            ;;
+
+        $EXIT_CODE_INSTALL_NOT_START_IN_CDROM )
+            (echo "${ZIP_FILE} not found!"
+             echo "Please issue the ${MY_SCRIPT_NAME} command in \c"
+             echo "/cdrom/sam_qfs_4.5") | tee -a ${MY_LOG}
+            show_contact_support
+            exit 20
+            ;;
+
+        $EXIT_CODE_R_PACKAGE_EXIST )
+            echo "${APP_NAME} exists already." | tee -a ${MY_LOG}
+            exit 21
+            ;;
+
+        $EXIT_CODE_U_PACKAGE_EXIST )
+            echo "${APP_NAME} exists already." | tee -a ${MY_LOG}
+            exit 22
+            ;;
+
+        $EXIT_CODE_UNSUPPORTED_OS )
+            echo "Unsupported Operating System detected." | tee -a ${MY_LOG}
+            exit 23
+            ;;
+
+        $EXIT_CODE_INSUFF_SPACE_ROOT )
+            echo "Insufficient space in / (root) detected (requires 100MB)." \
+                | tee -a ${MY_LOG}
+            exit 24
+            ;;
+
+        $EXIT_CODE_INSUFF_SPACE_TMP )
+            echo "Insufficient space in /tmp detected (requires 250MB)." \
+                | tee -a ${MY_LOG}
+            exit 25
+            ;;
+
+        $EXIT_CODE_FAIL_TO_UNZIP )
+            echo "Failed to unzip ${ZIP_FILE}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 26
+            ;;
+
+        $EXIT_CODE_FAIL_TO_UNTAR )
+            echo "Failed to untar ${LOCKHART_TARBALL}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 27
+            ;;
+
+        $EXIT_CODE_FAIL_TO_INSTALL_R_PACKAGE )
+            echo "Failed to install SUNWfsmgrr package." | tee -a ${MY_LOG}
+            echo "Please re-run this setup script again and make sure " \
+                | tee -a ${MY_LOG}
+            echo "you answer 'y' when you are prompted to install/upgrade the " \
+                | tee -a ${MY_LOG}
+            echo "${LOCKHART_EXTERNAL_NAME} software." | tee -a ${MY_LOG}
+            exit 28
+            ;;
+
+        $EXIT_CODE_FAIL_TO_INSTALL_U_PACKAGE )
+            echo "Failed to install SUNWfsmgru package." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 29
+            ;;
+
+
+        $EXIT_CODE_VERSION_NEWER_DETECTED )
+            echo "Newer version of ${APP_NAME} is already installed." \
+                | tee -a ${MY_LOG}
+            exit 30
+            ;;
+
+        $EXIT_CODE_VERSION_SAME_DETECTED )
+            echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} is already installed." \
+                | tee -a ${MY_LOG}
+            exit 31
+            ;;
+
+
+        $EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE )
+            (echo "Uninstall failed."
+             echo "Failed to remove SUNWfsmgrr package.") | tee -a ${MY_LOG}
+            show_contact_support
+            exit 50
+            ;;
+
+        $EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE )
+            (echo "Uninstall failed."
+             echo "Failed to remove SUNWfsmgru package.") | tee -a ${MY_LOG}
+            show_contact_support
+            exit 51
+            ;;
+
+
+        $EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE )
+            echo "Failed to install ${LOCKHART_EXTERNAL_NAME}." | tee -a ${MY_LOG}
+            show_contact_support
+            exit 100
+            ;;
+
+        * )
+            echo "Unknown error occurred. Program terminated."
+            show_contact_support
+            exit 999
+            ;;
+    esac
+}
+
+#
+# Check if user is a superuser.
+#
+check_su()
+{
+    id=`/bin/id | awk -F"(" '{print $1}' | awk -F"=" '{print $2}'`
+
+    if [ "${id}" != "0" ]; then
+        EXIT_STATUS=$EXIT_CODE_NOT_SUPERUSER
+        do_exit
+    fi
+}
+
+show_configuration_files()
+{
+    echo "\nNow printing a few configuration files...\n" >> ${MY_LOG}
+
+    echo "/etc/passwd" >> ${MY_LOG}
+    show_separator
+    /usr/bin/cat /etc/passwd >> ${MY_LOG}
+    show_separator
+
+    echo "/etc/user_attr" >> ${MY_LOG}
+    show_separator
+    /usr/bin/cat /etc/user_attr >> ${MY_LOG}
+    show_separator
+
+    echo "/etc/security/auth_attr" >> ${MY_LOG}
+    show_separator
+    /usr/bin/cat /etc/security/auth_attr >> ${MY_LOG}
+    show_separator
+    
+    echo "/usr/sbin/smreg list" >> ${MY_LOG}   
+    show_separator
+    /usr/sbin/smreg list >> ${MY_LOG}
+    show_separator
+
+    if [ $? -eq 0 ]; then
+	echo "/usr/sbin/smreg list has been issued successfully." >> ${MY_LOG}
+    else
+        echo "Failed to issue command /usr/sbin/smreg list ." >> ${MY_LOG}
+    fi
+
+    echo "\n" >> ${MY_LOG}
+
+    ${SMCWEBSERVER} status >> ${MY_LOG}
+    if [ $? -eq 0 ]; then
+        echo "${SMCWEBSERVER} status has been issued successfully." \
+			>> ${MY_LOG}
+    else
+        echo "Failed to issue command ${SMCWEBSERVER} status ." \
+				>> ${MY_LOG}
+    fi
+
+    echo "\n" >> ${MY_LOG}
+}
+   
+
+unzip_files()
+{
+    (echo "Unzipping ${APP_NAME} files..."
+    echo "This process may take a while ...") \
+				| tee -a ${MY_LOG}
+
+    # untar lockhart package
+    /usr/bin/mkdir -p ${TMPDIR}
+    cd ${TMPDIR}
+
+    if [ ! -d ${TMPDIR} ]; then
+        # Failed to create ${TMPDIR}
+	EXIT_STATUS=${EXIT_CODE_CREATE_TMPDIR_FAIL}
+	do_exit
+    fi 
+
+    echo "\nUnzipping ${CURRENTDIR}/${ZIP_FILE} ..." >> ${MY_LOG}
+
+    /usr/bin/unzip -o ${CURRENTDIR}/${ZIP_FILE} >> ${MY_LOG}
+    if [ $? -eq 0 ]; then
+        echo "Unzip ${ZIP_FILE} successfully performed!" \
+						>> ${MY_LOG}
+    elif [ $? -eq 1 ]; then
+        echo "Unzip ${ZIP_FILE} successfully performed (with warnings)" \
+                                                >> ${MY_LOG}
+    else
+        # Failed to unzip ${ZIP_FILE}
+        echo "Unzip failed: Return code: $?" >> ${MY_LOG}
+        EXIT_STATUS=${EXIT_CODE_FAIL_TO_UNZIP}
+	do_exit
+    fi
+
+    /usr/sbin/tar xf ${LOCKHART_TARBALL}
+
+    if [ $? -eq 0 ]; then
+	echo "Untar ${LOCKHART_TARBALL} successfully performed!\n" >> ${MY_LOG}
+    else
+	# Failed to untar ${LOCKHART_TARBALL}
+	EXIT_STATUS=${EXIT_CODE_FAIL_TO_UNTAR}
+	do_exit
+    fi
+
+}
+
+#
+# This function is to check if the installed JRE and SDK has the same version.
+# Also, it checks if the installed SDK has the required rev that Lockhart
+# requires.
+
+check_java_sdk_jre()
+{
+    echo "\nNow start checking Java RE and SDK ...\n" >> ${MY_LOG}
+    jre_version=`pkginfo -l SUNWj3rt |grep VERSION | awk -F" " '{print $2}' | awk -F"," '{print $1}'`
+    sdk_version=`pkginfo -l SUNWj3dev |grep VERSION | awk -F" " '{print $2}' | awk -F"," '{print $1}'`
+
+    echo "SUNWj3rt (J2SDK runtime environment) Version: ${jre_version}" \
+        >> ${MY_LOG}
+    echo "SUNWj3dev (J2SDK development tools) Version: ${sdk_version}" \
+        >> ${MY_LOG}
+
+    if [ "a${jre_version}" = "a${sdk_version}" ]; then
+        # match
+        echo "Java JRE and SDK version matched!" >> ${MY_LOG}
+    else
+        my_host_name=`/usr/bin/hostname`
+        echo "On host ${my_host_name} the currently installed version of the" \
+                                                        | tee -a ${MY_LOG}
+        echo "Java Runtime Environment (JRE) does not match the installed" \
+                                                        | tee -a ${MY_LOG}
+        echo "version of the Java Development Kit (JDK).\n" | tee -a ${MY_LOG}
+
+        echo "Java Runtime Environment (JRE): Version ${jre_version}" \
+                                                           | tee -a ${MY_LOG}
+        echo "Java Development Kit (JDK)    : Version ${sdk_version}\n" \
+                                                           | tee -a ${MY_LOG} 
+
+        echo "To fix this problem, search for all the J2SDK related packages by running" | tee -a ${MY_LOG}
+        echo "          /usr/bin/pkginfo |grep J2\n "      | tee -a ${MY_LOG}
+        echo "and remove all the J2SDK related packages by running" \
+                                                           | tee -a ${MY_LOG}
+        echo "          /usr/bin/pkgrm <list of J2SDK packages found>\n" \
+                                                           | tee -a ${MY_LOG}
+        
+        echo "then re-run ${MY_SCRIPT_NAME} again." | tee -a ${MY_LOG}
+        EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE}
+        do_exit
+    fi
+
+    # If you reach here, JRE has the same version as SDK
+    # Now, check if the SDK has the minimum requirement that Lockhart needs
+    current_major_rev=`echo ${sdk_version} | awk -F"." '{print $1}'`
+    current_inter_rev=`echo ${sdk_version} | awk -F"." '{print $2}'`
+    current_minor_rev=`echo ${sdk_version} | awk -F"." '{print $3}'`
+
+    error_msg1="Java SDK and JRE does not meet the minimum requirement"
+    error_msg1="${error_msg1} of ${APP_NAME} ${MAJOR_REV}.${MINOR_REV}!"
+    error_msg2="Installation process will now terminate.  You can run"
+    error_msg2="${error_msg2} the installation script again and answer 'y'"
+    error_msg2="${error_msg2} when prompt to upgrade Java."
+
+    if [ ${current_major_rev} -lt ${JAVA_MAJOR_REV} -o ${current_inter_rev} -lt ${JAVA_INTER_REV} -o ${current_minor_rev} -lt ${JAVA_MINOR_REV} ]; then
+        echo "${error_msg1}" | tee -a ${MY_LOG}
+        echo "${error_msg2}" | tee -a ${MY_LOG}
+    else
+        echo "Java JRE and SDK version meets the minimum requirement!" \
+            >> ${MY_LOG}
+    fi
+
+    echo "\nDone checking Java RE and SDK ..." >> ${MY_LOG}
+}
+
+install_lockhart()
+{
+    echo "Start installing ${LOCKHART_EXTERNAL_NAME} and supporting application..." \
+        | tee -a ${MY_LOG}
+
+    # Run lockhart setup script. The script will take care of Lockhart
+    # framework version issues
+    #
+    # Case 1) If the host does not have Lockhart installed, Lockhart setup
+    #         script will go ahead and install the Lockhart framework v2.2 
+    # Case 2) If the host already has Lockhart v2.2 or older installed,
+    #         Lockhart setup script will prompt you if you want to overwrite
+    #         or upgrade the existing Lockhart framework.
+    # Case 3) If the host already has Lockhart v2.2 installed, lockhart
+    #         setup script will go ahead and overwrite the existing
+    #         Lockhart packages.  But if the system has Solaris 10 installed,
+    #         Lockhart setup script will NOT be called.
+    # Case 4) If the host already has a version newer than Lockhart v2.2,
+    #         Lockhart setup script will not be called.
+
+    echo "Issing Java WebConsole setup command..." >> ${MY_LOG}
+    ${TMPDIR}/setup -n | tee -a ${MY_LOG}
+
+    if [ $? -eq 0 ]; then
+        # if no error here, check if JRE and SDK fulfill the requirement
+        check_java_sdk_jre
+        echo "${LOCKHART_EXTERNAL_NAME} has been successfully installed!" >> ${MY_LOG}
+
+        # LH Successfully installed, try to start the webserver to get around
+        # console not configured error 3/14/07
+        ${SMCWEBSERVER} start
+    else
+	echo "Failed to install ${LOCKHART_EXTERNAL_NAME}!" | tee -a ${MY_LOG}
+	echo "Exit CODE (Lockhart): $?" >> ${MY_LOG}
+        EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE}
+        do_exit
+    fi
+}
+
+install_gui()
+{
+    # Stop installation if server has no Lockhart framework installed, or it has
+    # an older version of Lockhart framework installed
+    # (NOTE: online help needs Lockhart 2.2.4 or above to work properly)
+
+    # Check LH version again, this should now contains at least the LH version that
+    # is shipped with the CD
+    is_lockhart_current_or_above
+
+    if [ ${IS_LOCKHART_CURRENT_OR_ABOVE} -eq 0 ]; then
+        echo " "
+        echo "${LOCKHART_EXTERNAL_NAME} ${LOCKHART_VERSION} or newer is required.  Installation is now terminated.\n"
+        EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_R_PACKAGE}
+	do_exit
+    fi
+
+    echo "Ready to install ${APP_NAME} packages, cd to root\n" >> ${MY_LOG}
+    cd /
+
+   (echo "Start installing ${APP_NAME} packages..."
+    echo "This process may take a while ...") \
+                                                   | tee -a ${MY_LOG}
+
+    echo " " >> ${MY_LOG}
+
+ 
+    # Add the File System Manager packages
+    /usr/sbin/pkgadd -a $ADMINFILE \
+	-d ${TMPDIR}/2.${SOLREV}/${ARCH} SUNWfsmgrr | tee -a ${MY_LOG}
+
+    if [ $? -eq 0 ]; then
+	echo "SUNWfsmgrr successfully installed!" >> ${MY_LOG}
+    else
+	# Failed to install SUNWfsmgrr
+        EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_R_PACKAGE}
+	do_exit
+    fi
+
+    /usr/sbin/pkgadd -a $ADMINFILE \
+            -d ${TMPDIR}/2.${SOLREV}/${ARCH} SUNWfsmgru | tee -a ${MY_LOG}
+
+    if [ $? -eq 0 ]; then
+	echo "SUNWfsmgru successfully installed!" >> ${MY_LOG}
+    else
+	# Failed to install SUNWfsmgru
+	EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_U_PACKAGE}
+        do_exit
+    fi
+
+    echo "Done installing ${APP_NAME} packages." | tee -a ${MY_LOG}
+    echo " " >> ${MY_LOG}
+}
+
+check_architecture()
+{
+    # Check if user is trying to install the GUI on Solaris 9 (i386)
+    # Terminate installation procedure due to unsupport architecture
+    if [ ${SOLREV} = "9" -a ${ARCH} = "i386" ]; then
+        EXIT_STATUS=${EXIT_CODE_UNSUPPORTED_PLATFORM}
+        do_exit
+    fi
+}
+
+#
+# Function:    check_tomcat
+# Description: This function will prompt the users if they know Tomcat is version 4.0.5 or above.
+#              This function will suggest user to allow the script to remove the existing Tomcat
+#              packages if they are not sure about the Tomcat version.  The Lockhart installation
+#              script will install Tomcat that comes with the CD Image if SUNWtcatu is not found
+#
+check_tomcat()
+{
+    # If Lockhart 2 is installed, Tomcat should be good to use.  Return right away.
+    /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        pkgVersion=`env LANG=C LC_ALL=C pkgparam SUNWmcon VERSION | \
+                awk -F',' '{print $1}'`
+        versionMajor=`echo $pkgVersion | awk -F'.' '{print $1}'`
+        if [ ! ${pkgVersion} -lt 2 ]; then
+            return
+        fi
+    fi
+
+    # If script reaches here, need to check tomcat
+    # Tomcat may exist even if Lockhart is not installed
+    # Lockhart only cares about SUNWtcatu, other form of Tomcat will not affect Lockhart at all
+
+    # Check if TomCat package already exists
+    # There is no way we can check the version of TomCat
+    # Prompt user if TomCat version 4.0.5 of later is installed
+    # If yes, don't remove Tomcat and keep the flow of the script
+    # if no, remove SUNWtcatu package and run lockhart setup
+    # lockhart setup should automatically install TomCat 4.0.5
+
+    /usr/bin/pkginfo SUNWtcatu > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # package is installed
+        echo "TomCat package detected.  Remove it? [y]" >> ${MY_LOG}
+
+        msg1="TomCat package is already installed, but this installer is not"
+        msg1="$msg1 able to determine the version number of TomCat."
+        msg1="$msg1 ${APP_NAME} ${MAJOR_REV}.${MINOR_REV} needs TomCat 4.0.5 or"
+        msg1="$msg1 later to run correctly. \n\n"
+        msg1="$msg1 If you know the installed version is at least 4.0.5, you can"
+        msg1="$msg1 elect to use the current version by answering 'n' in the"
+        msg1="$msg1 question below. If you are not sure about it, answer 'y'"
+        msg1="$msg1 and let this installer to un-install the existing"
+        msg1="$msg1 TomCat package and install version 4.0.5 for you. \n\n"
+        msg1="$msg1 Do you want this installer to install TomCat 4.0.5 for you"
+
+         
+        ans=`/bin/ckyorn -Q -d "yes" -W 80 -p "${msg1}?"`
+
+        if [ "${ans}" = "y" -o "${ans}" = "yes" -o "${ans}" = "Y" -o "${ans}" = "YES" ]; then
+            echo "YES! Remove Tomcat .." >> ${MY_LOG}
+            echo "Start removing TomCat package(s)..." | tee -a ${MY_LOG}
+
+            # if Tomcat Servlet/JSP Container (root) exists, remove first
+            /usr/bin/pkginfo SUNWtcatr > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                echo "SUNWtcatr detected as well. Remove it too." >> ${MY_LOG}
+                # package is installed
+                /usr/sbin/pkgrm -n -a $ADMINFILE SUNWtcatr
+
+                if [ $? -eq 0 ]; then
+                    echo "SUNWtcatr has been removed successfully!" >> ${MY_LOG}
+                else
+                    echo "Failed to remove SUNWtcatr!" >> ${MY_LOG}
+                fi
+            fi
+
+            /usr/sbin/pkgrm -n -a $ADMINFILE SUNWtcatu
+            if [ $? -eq 0 ]; then
+                echo "SUNWtcatu has been removed successfully!" >> ${MY_LOG}
+            else
+                echo "Failed to remove SUNWtcatu!" >> ${MY_LOG}
+            fi
+
+            echo "Finish removing TomCat package(s)" | tee -a ${MY_LOG}
+        else
+            echo "NO! DO NOT remove TomCat!" >> ${MY_LOG}
+        fi
+    else
+        echo "No TomCat package(s) exists in the host!" >> ${MY_LOG}
+    fi
+}
+
+#
+# Function:    deal_with_lockhart_version_1
+# Desciption:  This function is called when Lockhart 1 is found.
+#              This function guides the user to remove LH 1 before the script can proceed forward
+#
+
+deal_with_lockhart_version_1()
+{
+    # LH 1, remove it
+    M="${LOCKHART_EXTERNAL_NAME} 1.0 is currently installed. This installer"
+    M="$M is going to install ${LOCKHART_EXTERNAL_NAME} ${LOCKHART_VERSION} and"
+    M="$M the current console needs to be uninstalled.\n\n"
+    M="$M Warning: Uninstalling ${LOCKHART_EXTERNAL_NAME} 1.0 will cause"
+    M="$M existing application that are registered in the console"
+    M="$M unusable! Do you want to continue [y]"
+
+    m_ans=`/bin/ckyorn -Q -d "yes" -W 80 -p "${M}?"`
+
+    if [ "${m_ans}" = "y" -o "${m_ans}" = "yes" -o "${m_ans}" = "Y" -o "${m_ans}" = "YES" ]; then
+        echo "${LOCKHART_EXTERNAL_NAME} 1.0 had been installed! Remove it? YES!" >> ${MY_LOG}
+        echo "Going to uninstall ${LOCKHART_EXTERNAL_NAME} 1.0..." >> ${MY_LOG}
+        /usr/sadm/lib/webconsole/bin/setup -uf | tee -a ${MY_LOG}
+
+        if [ $? -eq 0 ]; then
+            echo "${LOCKHART_EXTERNAL_NAME} 1.0 was uninstalled successfully!" >> ${MY_LOG}
+        else
+            echo "Failed to remove ${LOCKHART_EXTERNAL_NAME} 1.0!"  >> ${MY_LOG}
+        fi
+
+        check_tomcat
+    else
+        EXIT_STATUS=${EXIT_CODE_ABORT_BY_USER}
+        do_exit
+    fi
+}
+
+is_lockhart_current_or_above()
+{
+    LH_VERSION_STRING=`${SMCWEBSERVER} -V`
+
+    LH_MAJOR=`/usr/bin/echo ${LH_VERSION_STRING} | cut -d" " -f2 | cut -d"." -f1`
+    LH_MINOR=`/usr/bin/echo ${LH_VERSION_STRING} | cut -d" " -f2 | cut -d"." -f2`
+    LH_UPDATE=`/usr/bin/echo ${LH_VERSION_STRING} | cut -d" " -f2 | cut -d"." -f3`
+
+    if [ s${LH_UPDATE} = "s" ]; then
+        LH_UPDATE=0
+    fi
+
+    ### DO NOT combine the if/else case here, boundary situation considered ###
+    ### all three variables have connections ! ###
+
+    if [ ${LH_MAJOR} -lt ${LH_MAJOR_VERSION} ]; then
+        IS_LOCKHART_CURRENT_OR_ABOVE=0
+    elif [ ${LH_MAJOR} -gt ${LH_MAJOR_VERSION} ]; then
+        IS_LOCKHART_CURRENT_OR_ABOVE=1
+    elif [ ${LH_MINOR} -lt ${LH_MINOR_VERSION} ]; then
+        IS_LOCKHART_CURRENT_OR_ABOVE=0
+    elif [ ${LH_MINOR} -gt ${LH_MINOR_VERSION} ]; then
+        IS_LOCKHART_CURRENT_OR_ABOVE=1
+    elif [ ${LH_UPDATE} -lt ${LH_UPDATE_NUMBER} ]; then
+        IS_LOCKHART_CURRENT_OR_ABOVE=0
+    else
+        IS_LOCKHART_CURRENT_OR_ABOVE=1
+    fi
+
+    echo "IS_LOCKHART_CURRENT_OR_ABOVE is ${IS_LOCKHART_CURRENT_OR_ABOVE}" \
+        >> ${MY_LOG}
+
+    ## SPECIAL CASE: Prompt user to remove LH 1.0 if it is found 
+    if [ ${LH_MAJOR} -eq 1 ]; then
+        deal_with_lockhart_version_1
+    fi
+}
+
+check_install_lockhart()
+{
+    # Check if SUNWmcon exists for both S9 and S10
+    # If yes and LH is not up-to-date, run Lockhart installation
+    # if yes and LH is up-to-date, skip Lockhart installation
+
+    /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # Check if machine has up-to-date LH software, install new if not
+        is_lockhart_current_or_above
+
+        if [ ${IS_LOCKHART_CURRENT_OR_ABOVE} -eq 1 ]; then
+            # Skip Lockhart installation
+            echo "${LOCKHART_EXTERNAL_NAME} Version ${LOCKHART_VERSION} is already installed!" \
+                >> ${MY_LOG}
+            echo "No need to install ${LOCKHART_EXTERNAL_NAME}!" >> ${MY_LOG}
+            NEED_TO_INSTALL_LH=0
+        else
+            NEED_TO_INSTALL_LH=1
+        fi
+    else
+        echo "${LOCKHART_EXTERNAL_NAME} is not found in the root directory!"\
+            >> ${MY_LOG}
+        # Check to see if user specifies the root path
+        NEED_TO_INSTALL_LH=1
+    fi
+}
+
+install()
+{
+    # Unzip the ${ZIP_FILE} first
+    unzip_files
+
+    check_install_lockhart
+
+    if [ ${NEED_TO_INSTALL_LH} -eq 1 ]; then
+        # Check if Tomcat needs to be removed before LH setup kicks in
+        check_tomcat
+
+        # Kick in lockhart setup
+        install_lockhart
+    fi
+
+    # always install new GUI packages
+    # update flags if the GUI packages exist
+
+    check_if_packages_exist
+    package_cleanup
+    install_gui
+}
+
+check_hard_drive_space()
+{
+    # Check if "/" has at least 100 MB of space
+    # Check if "/tmp" has at least 250 MB of space
+
+    /usr/bin/rm -rf /tmp/tmp_harddrivespace_tmp
+    /usr/sbin/df -k |grep '/tmp$' > /tmp/tmp_harddrivespace_tmp
+    /usr/bin/cat /tmp/tmp_harddrivespace_tmp \
+                         | while read path ttl used ava cap mnt;
+    do
+        echo "Available space in /tmp is " $ava kilobytes >> ${MY_LOG}
+        if [ $ava -lt 256000 ]; then
+	    # Insufficient space in /tmp
+	    EXIT_STATUS=${EXIT_CODE_INSUFF_SPACE_TMP}
+            do_exit
+        fi
+    done
+
+    /usr/bin/rm -rf /tmp/tmp_harddrivespace_root
+    /usr/sbin/df -k |grep '/$' > /tmp/tmp_harddrivespace_root
+    /usr/bin/cat /tmp/tmp_harddrivespace_root \
+			 | while read path ttl used ava cap mnt;
+    do
+        echo "Available space in / is " $ava kilobytes >> ${MY_LOG}
+	if [ $ava -lt 102400 ]; then
+	    # Insufficient space in /
+	    EXIT_STATUS=${EXIT_CODE_INSUFF_SPACE_ROOT}
+	    do_exit
+	fi
+    done
+
+    # Remove temporary files
+    /usr/bin/rm -rf /tmp/tmp_harddrivespace_root
+    /usr/bin/rm -rf /tmp/tmp_harddrivespace_tmp
+}
+
+associate_root_to_admin_privilege() {
+
+    echo "Start editing /etc/user_attr ..." |tee -a ${MY_LOG}
+
+    # Save a copy of /etc/user_attr
+    /usr/bin/cp /etc/user_attr /etc/user_attr.samqfsui
+
+    # First remove the old root line 
+    /usr/bin/grep -v root /etc/user_attr > /tmp/user_attr.fsmgr.3
+    /usr/bin/grep -v samadmin /tmp/user_attr.fsmgr.3 > /tmp/user_attr.fsmgr.2
+
+    # Give administrator permission to root
+    myString=`/usr/bin/cat /etc/user_attr |grep root`
+    addOn=",com.sun.netstorage.fsmgr.*"
+
+    touch /tmp/user_attr.fsmgr.1
+
+    flag=0
+
+    echo ${myString} | tr ':' '\n' | while read field;
+    do
+        ## root
+        ## auths=solaris.*,solaris.grant;profile=abc;roles=myRole
+
+        str=`echo ${field} |grep auths=`
+        if [ ! "a${str}" = "a" ]; then
+            echo ${str} | tr ';' '\n' | while read field2;
+            ## auths=solaris.*,solaris.grant
+            ## profile=abc
+            ## roles=myRole
+            do
+                if [ `echo ${field2} | cut -c1-6` = "auths=" ]; then
+                    addOnExist=`echo ${field2} | grep ${addOn}`
+                    if [ ! "a${addOnExist}" = "a" ]; then
+                        if [ ${flag} -eq 0 ]; then
+			    echo ":${field2}\c" >> \
+                                /tmp/user_attr.fsmgr.1
+                        else
+			    echo ";${field2}\c" >> \
+                                /tmp/user_attr.fsmgr.1
+                        fi
+                    else
+                        if [ ${flag} -eq 0 ]; then
+                            echo ":${field2}${addOn}\c" >> \
+                                /tmp/user_attr.fsmgr.1
+                        else
+                            echo ";${field2}${addOn}\c" >> \
+                                /tmp/user_attr.fsmgr.1
+                        fi
+                    fi
+                else
+                    if [ ${flag} -eq 0 ]; then
+                        echo ":${field2}\c" >> /tmp/user_attr.fsmgr.1
+                    else
+                        echo ";${field2}\c" >> /tmp/user_attr.fsmgr.1
+                    fi
+                fi
+                flag=1
+            done
+        else
+            str2=`cat /tmp/user_attr.fsmgr.1`
+            if [ a${str2} = "a" ]; then
+                echo "${field}\c" >> /tmp/user_attr.fsmgr.1
+            else
+                echo ":${field}\c" >> /tmp/user_attr.fsmgr.1
+            fi
+        fi
+    done
+
+    echo "" >> /tmp/user_attr.fsmgr.1
+
+    # Preserve samadmin and make it act as root
+    if [ ${SAMADMIN_EXIST} -eq 1 ]; then
+        echo "Adding samadmin account back to /etc/user_attr"
+        echo "samadmin::::auths=com.sun.netstorage.fsmgr.*" >> \
+            /tmp/user_attr.fsmgr.1
+    fi
+
+    /usr/bin/cat /tmp/user_attr.fsmgr.1 >> /tmp/user_attr.fsmgr.2
+
+    /usr/bin/mv /tmp/user_attr.fsmgr.2 /etc/user_attr
+    echo "Done editing /etc/user_attr" |tee -a ${MY_LOG}
+
+    /usr/bin/rm -rf /tmp/user_attr.fsmgr*
+}
+
+remove_old_users()
+{
+    sCheck=`grep "^SAMadmin:" /etc/passwd`
+    if [ -z "$sCheck" ]; then
+        echo "SAMadmin role does not exist." >> ${MY_LOG}
+    else
+        echo "SAMadmin role is no longer used.  Removing SAMadmin ..." \
+            |tee -a ${MY_LOG}
+        /usr/sbin/roledel SAMadmin
+        if [ $? -eq 0 ]; then
+            echo "SAMadmin has been removed successfully!" \
+                |tee -a ${MY_LOG}
+        else
+            echo "Failed to remove SAMadmin!" |tee -a ${MY_LOG}
+            # TODO: Exit?
+        fi
+    fi
+
+    ## DO NOT remove samadmin, preserve the account
+    sCheck=`grep "^samadmin:" /etc/passwd`
+    if [ -z "$sCheck" ]; then
+        echo "samadmin user does not exist." >> ${MY_LOG}
+    else
+        SAMADMIN_EXIST=1
+    fi
+
+    sCheck=`grep "^samuser:" /etc/passwd`
+    if [ -z "$sCheck" ]; then
+        echo "samuser user does not exist." >> ${MY_LOG}
+    else
+        echo "samuser user is no longer used.  Removing samuser ..." \
+            |tee -a ${MY_LOG}
+        /usr/sbin/userdel samuser
+        if [ $? -eq 0 ]; then
+            echo "samuser has been removed successfully!" \
+                |tee -a ${MY_LOG}
+        else
+            echo "Failed to remove samuser!" |tee -a ${MY_LOG}
+            # TODO: Exit?
+        fi
+    fi
+}
+
+create_users()
+{
+    echo "\n"
+
+    /usr/bin/rm -rf /tmp/auth_attr.fsmgr*
+
+    # Add permissions to /etc/security/auth_attr
+    # Make a backup of the file
+    echo "Backing up /etc/security/auth_attr to /etc/security/auth_attr.old" \
+        |tee -a ${MY_LOG}
+
+    cp /etc/security/auth_attr /etc/security/auth_attr.old
+
+    # Check if the permissions are already in the file.
+    # If yes, overwrite it.
+    echo "Start editing /etc/security/auth_attr ..." \
+        |tee -a ${MY_LOG}
+    /usr/bin/egrep -v '(com.sun.netstorage.fsmgr|com.sun.netstorage.samqfs)' \
+        /etc/security/auth_attr > /tmp/auth_attr.fsmgr.1
+    /usr/bin/egrep -v \
+        '(File System Manager Authorizations|SAM-FS/QFS UI Authorizations)' \
+        /tmp/auth_attr.fsmgr.1 > /tmp/auth_attr.fsmgr.2
+
+    echo "# File System Manager Authorizations" >> /tmp/auth_attr.fsmgr.2
+
+    ## ALL ACCESS
+    echo "$AUTH_PREFIX.config:::File System Manager All Access::" >> \
+        /tmp/auth_attr.fsmgr.2
+
+    ## MEDIA ACCESS
+    echo "$AUTH_PREFIX.operator.media:::File System Manager Media Related Operation Access::" >> \
+        /tmp/auth_attr.fsmgr.2
+
+    ## START/STOP/IDLE ARCHIVING
+    echo "$AUTH_PREFIX.operator.sam.control:::File System Manager Start/Stop/Idle Archiving Access::" >> \
+        /tmp/auth_attr.fsmgr.2
+
+    ## FILE LEVEL OPS
+    echo "$AUTH_PREFIX.operator.file:::File System Manager File Level Operation Access::" >> \
+        /tmp/auth_attr.fsmgr.2
+
+    ## FILE SYSTEM OPS
+    echo "$AUTH_PREFIX.operator.filesystem:::File System Manager File System Level Operation Access::" >> \
+        /tmp/auth_attr.fsmgr.2
+
+    mv /tmp/auth_attr.fsmgr.2 /etc/security/auth_attr
+    echo "Done editing /etc/security/auth_attr \n" |tee -a ${MY_LOG}
+
+    /usr/bin/rm -rf /tmp/auth_attr.fsmgr*
+
+
+    # Associate root to admin auths
+    # Make a backup of the file
+    echo "Backing up /etc/user_attr to /etc/user_attr.old" |tee -a ${MY_LOG}
+    cp /etc/user_attr /etc/user_attr.old
+    echo "Start editing /etc/user_attr ..." |tee -a ${MY_LOG}
+    
+    associate_root_to_admin_privilege
+
+}
+
+#
+# Explicitly used in the UPGRADE path
+# Check if user/role account login directory is in /export/home, /SAMadmin
+# instead of /home.  Then add root as a part of SAMadmin role
+#
+fix_users_account_if_needed() {
+
+    echo "Checking if root already associates with the admin auths" >> ${MY_LOG}
+    myString="`/usr/bin/cat /etc/user_attr |grep root |grep com.sun.netstorage.fsmgr.\*`"
+
+    if [ "a${myString}" = "a" ]; then
+	echo "root is NOT associated with admin auths!" >> ${MY_LOG}
+	echo "Associating root to the administrator auths" >> ${MY_LOG}
+
+	associate_root_to_admin_privilege
+    else
+        echo "root is already associated with administrator auths!" >> ${MY_LOG}
+    fi
+}
+
+
+prompt_remove_users() {
+
+    M="Do you want to remove the users and roles that were added by the ${APP_NAME} [y]"
+    m_ans=`/bin/ckyorn -Q -d "yes" -p "${M}?"`
+
+    if [ "${m_ans}" = "y" -o "${m_ans}" = "yes" -o "${m_ans}" = "Y" -o "${m_ans}" = "YES" ]; then
+        remove_users
+    fi
+}
+
+
+remove_users() {
+
+    # remove old users if they exist
+    remove_old_users
+
+    # Remove permissions in /etc/security/auth_attr
+    echo "Start taking out entries in /etc/security/auth_attr..." \
+				>> ${MY_LOG}
+
+    /usr/bin/grep -v "com.sun.netstorage.fsmgr" \
+        /etc/security/auth_attr > /tmp/auth_attr.fsmgr.1
+    /usr/bin/grep -v "com.sun.netstorage.samqfs" \
+        /tmp/auth_attr.fsmgr.1 > /tmp/auth_attr.fsmgr.2
+    /usr/bin/grep -v "SAM-FS/QFS UI Authorizations" \
+        /tmp/auth_attr.fsmgr.2 > /tmp/auth_attr.fsmgr.3
+    /usr/bin/grep -v "File System Manager Authorizations" \
+        /tmp/auth_attr.fsmgr.3 > /tmp/auth_attr.fsmgr.4
+    /usr/bin/mv /tmp/auth_attr.fsmgr.4 /etc/security/auth_attr
+
+    echo "Done taking out entries in /etc/security/auth_attr" >> ${MY_LOG}
+
+    echo "Start taking out entries in /etc/user_attr..." >> ${MY_LOG}
+    /usr/bin/grep -v samadmin /etc/user_attr > /tmp/user_attr.fsmgr.3
+    /usr/bin/grep -v root /tmp/user_attr.fsmgr.3 > /tmp/user_attr.fsmgr.1
+
+    myString=`/usr/bin/cat /etc/user_attr |grep root`
+
+    touch /tmp/user_attr.fsmgr.2
+
+    flag=0
+    authflag=0
+
+    echo ${myString} | tr ':' '\n' | while read field;
+    do
+        ## root
+        ## auths=solaris.*,solaris.grant;profile=abc;roles=myRole
+
+        str=`echo ${field} |grep auths=`
+
+        if [ ! "a${str}" = "a" ]; then
+            echo ${str} | tr ';' '\n' | while read field2;
+            ## auths=solaris.*,solaris.grant
+            ## profile=abc
+            ## roles=myRole
+            do
+                if [ `echo ${field2} | cut -c1-6` = "auths=" ]; then
+                    if [ ${flag} -eq 0 ]; then
+                        echo ":auths=\c" >> /tmp/user_attr.fsmgr.2
+                    else
+                        echo ";auths=\c" >> /tmp/user_attr.fsmgr.2
+                    fi
+
+                    str3=`echo ${field2} | cut -f2 -d'='`
+                    echo ${str3} | tr ',' '\n' | while read field3
+                    do
+                        exist=`echo ${field3} | grep com.sun.netstorage.fsmgr.\*`
+                        if [ "a${exist}" = "a" ]; then
+                             if [ ${authflag} -eq 0 ]; then
+                                 echo "${field3}\c" >> /tmp/user_attr.fsmgr.2
+                             else
+                                 echo ",${field3}\c" >> /tmp/user_attr.fsmgr.2
+                             fi
+                        fi
+                        authflag=1
+                    done
+                else
+                    if [ ${flag} -eq 0 ]; then
+                        echo ":${field2}\c" >> /tmp/user_attr.fsmgr.2
+                    else
+                        echo ";${field2}\c" >> /tmp/user_attr.fsmgr.2
+                    fi
+                fi
+                flag=1
+            done
+        else
+            str2=`cat /tmp/user_attr.fsmgr.2`
+            if [ a${str2} = "a" ]; then
+                echo "${field}\c" >> /tmp/user_attr.fsmgr.2
+            else
+                echo ":${field}\c" >> /tmp/user_attr.fsmgr.2
+            fi
+        fi
+    done
+
+    echo "" >> /tmp/user_attr.fsmgr.2
+    cat /tmp/user_attr.fsmgr.2 >> /tmp/user_attr.fsmgr.1
+    /usr/bin/mv /tmp/user_attr.fsmgr.1 /etc/user_attr
+
+    /usr/bin/rm -f /tmp/auth_attr.fsmgr*
+    /usr/bin/rm -f /tmp/user_attr.fsmgr*
+}
+
+
+check_os() {
+    UNAME=`uname -r`
+    SOLREV=`case $UNAME in	\
+	5.6) echo 6;;		\
+	5.7) echo 7;;		\
+	5.8) echo 8;;		\
+	5.9) echo 9;;		\
+	5.10) echo 10;;		\
+	5.11) echo 11;;		\
+    esac`
+
+    echo "Start checking OS and architecture: " >> ${MY_LOG}
+    /usr/bin/cat /etc/release >> ${MY_LOG}
+    /usr/bin/uname -a >> ${MY_LOG}
+    /usr/bin/uname -p >> ${MY_LOG}
+
+    if [ $SOLREV -eq 6 -o $SOLREV -eq 7 -o $SOLREV -eq 8 ]; then
+	# Unsupported OS detected
+	EXIT_STATUS=${EXIT_CODE_UNSUPPORTED_OS}
+	do_exit
+    fi
+}
+
+show_log_file_location() {
+
+    echo "\nInstall/Uninstall log file named ${MY_LOG}.${DATE} is created.\n\n" 
+}
+
+show_complete_uninstall_message() {
+
+    echo "\nUninstall completed successfully." | tee -a ${MY_LOG}
+}
+
+show_complete_install_message() {
+
+    (echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} and its supporting application"
+    echo "is installed successfully.\n\n"
+
+    echo "******************* PLEASE READ **********************************\n"
+    echo "Please telnet to each Sun StorEdge(TM) QFS servers to be"
+    echo "managed and run the following command:\n"
+    echo "    /opt/SUNWsamfs/sbin/fsmadm status\n\n"
+    echo "This will determine if the ${APP_NAME} daemon is running.\n"
+    echo "If it is not running, please run the following command:\n"
+    echo "    /opt/SUNWsamfs/sbin/fsmadm config -a\n\n"
+    echo "This command will start the ${APP_NAME} daemon that communicates with"
+    echo "the ${APP_NAME}. Failure to do so will prevent ${APP_NAME}"
+    echo "from communicating with the Sun StorEdge QFS servers.\n"
+
+    echo "Remote access to the servers used by the ${APP_NAME} is now"
+    echo "restricted based on host name or IP address.  If you are managing"
+    echo "a Sun StorEdge(TM) QFS Server from a remote management station,"
+    echo "please telnet to the server and run the following command:\n"
+    echo "    /opt/SUNWsamfs/sbin/fsmadm add <management_station_host_name>.<domain>"
+
+    echo "Press ENTER to continue ..."
+    /usr/bin/read
+
+    echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} supports the following browsers:\n"
+    echo "  Browser Type                          Operating System"
+    echo "  ========================================================================"
+    echo "  Netscape 7.1/Mozilla 1.7/Firefox 1.5  Solaris OS,"
+    echo "                                        MS Windows 98SE, ME, 2000, and XP"
+    echo "  Internet Explorer 6.0                 MS Windows 98SE, ME, 2000, and XP\n"
+
+    echo "Now launch your web browser and type the following URL:"
+    echo "     https://<hostname>.<domain>:6789\n"
+    echo "where <hostname> is the host that you have just installed the"
+    echo "${APP_NAME}.\n"
+
+    echo "If you are served with a security related certificate, go ahead and"
+    echo "accept it.  Please see user docs for username and password details."
+    echo "\n"
+    echo "It is required to clear the browser cache before accessing the"
+    echo "${APP_NAME} for the first time.  Failure to do so may cause"
+    echo "unexpected behavior in various pages.\n"
+    echo "\n${APP_NAME} ${MAJOR_REV}.${MINOR_REV} has been tested with the"
+    echo "${LOCKHART_EXTERNAL_NAME} version ${LOCKHART_VERSION}."
+    echo "Installing this product with any older ${LOCKHART_EXTERNAL_NAME} version breaks both"
+    echo "applications. This product may work on newer ${LOCKHART_EXTERNAL_NAME}"
+    echo "versions, but this has not been tested."
+    echo "\n*****************************************************************"
+    echo "\n") | tee -a ${MY_LOG}
+}
+
+prepare_to_install()
+{
+    # make sure the two directories are empty
+    # 1. /opt/SUNWfsmgr
+    # 2. /var/opt/webconsole/webapps/fsmgr (Deploy directory)
+    # 3. /var/sadm/samqfsui (Remove script directory)
+
+    echo "Removing /opt/SUNWfsmgr && /var/opt/webconsole/webapps/fsmgr"\
+                                                >> ${MY_LOG}
+    /usr/bin/rm -rf /opt/SUNWfsmgr
+    /usr/bin/rm -rf /var/opt/webconsole/webapps/samqfsui
+     /usr/bin/rm -rf /var/sadm/samqfsui
+
+    # Generate admin file
+    generate_admin_file
+
+    # check if all the necessary files exist before going forward
+    if [ ! -f ${ADMINFILE} ]; then
+        # ${ADMINFILE} does not exist
+        EXIT_STATUS=${EXIT_CODE_ADMIN_FILE_INEXIST}
+        do_exit
+
+    elif [ ! -f ${ZIP_FILE} ]; then
+        # User does not issue the fsmgr_setup command in cdrom
+        EXIT_STATUS=${EXIT_CODE_INSTALL_NOT_START_IN_CDROM}
+        do_exit
+    fi
+}
+
+package_cleanup()
+{
+    # Generate admin file
+    generate_admin_file
+
+    # check if all the necessary files exist before going forward
+    if [ ! -f ${ADMINFILE} ]; then
+        # ${ADMINFILE} does not exist
+        EXIT_STATUS=${EXIT_CODE_ADMIN_FILE_INEXIST}
+        do_exit
+    fi
+
+    echo "Start cleaning up to prepare for new software installation" \
+        | tee -a ${MY_LOG}
+
+    # Remove SUNWsamqfsuiu if exists
+    if [ "${OLD_U_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWsamqfsuiu
+
+        # Check Status
+        if [ $? -ne 0 ]; then
+            echo "Failed to remove SUNWsamqfsuiu package" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE}
+            do_exit
+        fi
+    fi
+
+    # Remove SUNWsamqfsuir if exists
+    if [ "${OLD_R_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWsamqfsuir
+
+        # Check Status
+        if [ $? -ne 0 ]; then
+            echo "Failed to remove SUNWsamqfsuir package" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE}
+            do_exit
+        fi
+    fi
+
+    # Remove SUNWfsmgru if exists
+    if [ "${U_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWfsmgru
+
+        # Check Status
+        if [ $? -ne 0 ]; then
+            echo "Failed to remove SUNWfsmgru package" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE}
+            do_exit
+        fi
+    fi
+
+    # Remove SUNWfsmgrr if exists
+    if [ "${R_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWfsmgrr
+
+        # Check Status
+        if [ $? -ne 0 ]; then
+            echo "Failed to remove SUNWfsmgrr package" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE}
+            do_exit
+        fi
+    fi
+}
+
+prompt_user_to_install()
+{
+    M="An older version of ${APP_NAME} (Version ${CURRENT_R_MAJOR_VERSION}.${CURRENT_R_MINOR_VERSION}) is installed. The installer is"
+    M="$M about to upgrade ${APP_NAME} to version ${MAJOR_REV}.${MINOR_REV}."
+    M="$M Do you want to continue [y]"
+
+    m_ans=`/bin/ckyorn -Q -d "yes" -p "${M}?"`
+
+    if [ "${m_ans}" = "y" -o "${m_ans}" = "yes" -o "${m_ans}" = "Y" -o "${m_ans}" = "YES" ]; then
+        # Set Upgrade flag to true, need to check tracing setting
+        # upon installation complete
+        IS_UPGRADE="yes"
+
+	# Before cleaning up the packages, save trace level
+        TRACE_LEVEL=`/usr/sbin/smreg list |grep com.sun.netstorage.samqfs.web.tracelevel | awk -F=  '{print $2}'`
+
+        # Clean up old packages
+        package_cleanup
+
+        # Restart Java Web Console to avoid the console complaining that
+        # the samqfsui app is already deployed
+        ${SMCWEBSERVER} restart
+
+    else
+        EXIT_STATUS=${EXIT_CODE_ABORT_BY_USER}
+        do_exit
+    fi
+}
+
+#########################################################################
+# function: check_software_version()
+#
+# (Case 3 of check_install) else if both of them are installed, check version
+#    if existing version is older, prompt user to upgrade
+#    if existing version is newer, show error and terminate program
+#    if existing version is the same, show error and terminate program
+#
+#########################################################################
+
+check_software_version()
+{
+    # First check if the two packages have the same version numbers
+    # If yes, check installed version against the version that is going to be
+    #         installed
+    # If not, call package_cleanup and start installation process
+
+
+    CURRENT_R_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $1}'`
+    CURRENT_R_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}'`
+ 
+    CURRENT_U_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $1}'`
+    CURRENT_U_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}'`
+
+    if [ ${CURRENT_R_MAJOR_VERSION} -ne ${CURRENT_U_MAJOR_VERSION} ]; then
+        echo "${APP_NAME} packages version mismatch detected" | tee -a ${MY_LOG}
+        package_cleanup
+
+    elif [ ${CURRENT_R_MINOR_VERSION} -ne ${CURRENT_U_MINOR_VERSION} ]; then
+        echo "${APP_NAME} packages version mismatch detected" | tee -a ${MY_LOG}
+        package_cleanup
+
+    elif [ ${CURRENT_R_MAJOR_VERSION} -gt ${MAJOR_REV} ]; then
+        EXIT_STATUS=${EXIT_CODE_VERSION_NEWER_DETECTED}
+        do_exit
+
+    elif [ ${CURRENT_R_MAJOR_VERSION} -eq ${MAJOR_REV} ]; then
+        if [ ${CURRENT_R_MINOR_VERSION} -gt ${MINOR_REV} ]; then
+            EXIT_STATUS=${EXIT_CODE_VERSION_NEWER_DETECTED}
+            do_exit
+        elif [ ${CURRENT_R_MINOR_VERSION} -eq ${MINOR_REV} ]; then
+            EXIT_STATUS=${EXIT_CODE_VERSION_SAME_DETECTED}
+            do_exit
+        else
+            prompt_user_to_install
+        fi
+    else
+        prompt_user_to_install
+    fi
+}
+
+check_if_packages_exist() {
+
+    s1=""
+    s2=""
+
+    ######################################################################
+    ## Check all possible packages if they are installed ##
+
+    /usr/bin/pkginfo SUNWsamqfsuir > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWsamqfsuir exists
+        OLD_R_PACKAGE_EXIST="yes"
+    else
+        OLD_R_PACKAGE_EXIST="no"
+    fi
+
+    /usr/bin/pkginfo SUNWsamqfsuiu > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWsamqfsuiu exists
+        OLD_U_PACKAGE_EXIST="yes"
+    else
+        OLD_U_PACKAGE_EXIST="no"
+    fi
+
+    /usr/bin/pkginfo SUNWfsmgrr > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWfsmgrr exists
+        R_PACKAGE_EXIST="yes"
+        s1=`/usr/bin/pkginfo -l SUNWfsmgrr |grep STATUS |awk -F"  " '{print $2}'`
+    else
+        R_PACKAGE_EXIST="no"
+    fi
+
+    /usr/bin/pkginfo SUNWfsmgru > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        # SUNWfsmgru exists
+        U_PACKAGE_EXIST="yes"
+        s2=`/usr/bin/pkginfo -l SUNWfsmgru |grep STATUS |awk -F"  " '{print $2}'`
+    else
+        U_PACKAGE_EXIST="no"
+    fi
+
+    # Check if packages are only partially installed
+    # If yes, set flag so cleanup method will clean both packages up
+    
+    if [ "z${s1}" = "zpartially" -o "z${s2}" = "zpartially" ]; then
+        PARTIAL_INSTALL_DETECTED="yes"
+    fi
+
+    #######################################################################
+}
+
+check_install()
+{
+    # check if SUNWfsmgrr & SUNWfsmgru package is already installed
+    # (Case 1) if partial install found in either R or U package
+    # (Case 2) else if old GUI packages are found, treat as an upgrade
+    # (Case 3) else if only one of them is installed, remove that package
+    # (Case 4) else if both of them are installed, call check_software_version
+
+
+    check_if_packages_exist
+
+    ## Case 1 ##
+    if [ ${PARTIAL_INSTALL_DETECTED} = "yes" ]; then
+	echo "Partial Installation of ${APP_NAME} detected" \
+			| tee -a ${MY_LOG}
+	package_cleanup
+
+    ## Case 2 ##
+    elif [ "${OLD_R_PACKAGE_EXIST}" = "yes" -a \
+         "${OLD_U_PACKAGE_EXIST}" = "no" ]; then
+        echo "Incomplete installation of ${APP_NAME} detected" \
+                                                | tee -a ${MY_LOG}
+        package_cleanup
+
+    elif [ "${OLD_R_PACKAGE_EXIST}" = "no" -a \
+           "${OLD_U_PACKAGE_EXIST}" = "yes" ]; then
+        echo "Incomplete installation of ${APP_NAME} detected" \
+                                                | tee -a ${MY_LOG}
+        package_cleanup
+
+    elif [ "${OLD_R_PACKAGE_EXIST}" = "yes" -a \
+         "${OLD_U_PACKAGE_EXIST}" = "yes" ]; then
+            CURRENT_R_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWsamqfsuir |grep VERSION |awk -F" " '{print $2}' |awk -F"." '{print $1}'`
+            CURRENT_R_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWsamqfsuir |grep VERSION |awk -F" " '{print $2}' |awk -F"." '{print $2}'`
+            prompt_user_to_install
+
+    ## Case 3 ##
+
+    # If SUNWfsmgrr exists but not SUNWfsmgru
+    elif [ ${R_PACKAGE_EXIST} = "yes" -a ${U_PACKAGE_EXIST} = "no" ]; then
+        echo "Incomplete installation of ${APP_NAME} detected" \
+						| tee -a ${MY_LOG}
+        package_cleanup
+
+
+    # If SUNWfsmgru exists but not SUNWfsmgrr
+    elif [ ${R_PACKAGE_EXIST} = "no" -a ${U_PACKAGE_EXIST} = "yes" ]; then
+        echo "Incomplete installation of ${APP_NAME} detected" \
+						| tee -a ${MY_LOG}
+        package_cleanup
+
+    ## Case 4 ##
+    elif [ ${R_PACKAGE_EXIST} = "yes" -a ${U_PACKAGE_EXIST} = "yes" ]; then
+        check_software_version
+
+    fi
+
+    # clean up /opt and directories before install
+    prepare_to_install
+
+    # Check if system has enough hard drive space
+    check_hard_drive_space
+}
+
+process_syntax()
+{
+    if [ "$ARG1" = "$UNINSTALL_FLAG" ]; then
+	echo "Ready to performing UNINSTALL..." >> ${MY_LOG}
+
+        M="Are you sure you want to uninstall ${APP_NAME} [n]"
+        m_ans=`/bin/ckyorn -Q -d "no" -p "${M}?"`
+
+        if [ "${m_ans}" = "y" -o "${m_ans}" = "yes" -o "${m_ans}" = "Y" -o "${m_ans}" = "YES" ]; then
+	    echo "Uninstall ${APP_NAME}: YES" >> ${MY_LOG}
+            continue
+        else
+	    echo "Uninstall ${APP_NAME}:NO" >> ${MY_LOG}
+            (echo "\nAbort uninstalling ${APP_NAME}."
+            echo "No change is made to the host.") | tee -a ${MY_LOG}
+	    EXIT_STATUS=${EXIT_CODE_ABORT_BY_USER}
+	    do_exit
+        fi
+    else
+        show_syntax
+	EXIT_STATUS=${EXIT_CODE_SYNTAX_ERROR}
+	do_exit
+    fi
+}
+
+uninstall()
+{
+    # Only remove the two GUI packages if OS is Solaris 10
+
+    HAS_ERROR="no"
+
+    # generate the admin file
+    generate_admin_file
+
+    # check if all possible packages exists
+    check_if_packages_exist
+
+    # remove old GUI packages SUNWsamqfsuir & SUNWsamqfsuiu if they exist
+    if [ "${OLD_U_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWsamqfsuiu
+
+        if [ $? -ne 0 ]; then
+             # error to remove SUNWsamqfsuiu package
+             echo "Failed to remove SUNWsamqfsuiu"  >> ${MY_LOG}
+             EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE}
+             HAS_ERROR="yes"
+        else
+             echo "SUNWsamqfsuiu has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWsamqfsuiu package is not found in the host." \
+                                                >> ${MY_LOG}
+    fi
+
+    if [ "${OLD_R_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWsamqfsuir
+
+        if [ $? -ne 0 ]; then
+            # error to remove SUNWsamqfsuir package
+            echo "Failed to remove SUNWsamqfsuir"  >> ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE}
+            HAS_ERROR="yes"
+        else
+            echo "SUNWsamqfsuir has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWsamqfsuir package is not found in the host." \
+                                                        >> ${MY_LOG}
+    fi
+  
+
+    # remove SUNWfsmgrr & SUNWfsmgru package if they exist
+    if [ "${U_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWfsmgru
+
+        if [ $? -ne 0 ]; then
+             # error to remove SUNWfsmgru package
+             echo "Failed to remove SUNWfsmgru"  >> ${MY_LOG}
+             EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE}
+             HAS_ERROR="yes"
+        else
+             echo "SUNWfsmgru has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWfsmgru package is not found in the host." \
+                                                | tee -a ${MY_LOG}
+    fi
+
+    if [ "${R_PACKAGE_EXIST}" = "yes" ]; then
+        /usr/sbin/pkgrm -n -a $ADMINFILE SUNWfsmgrr
+
+        if [ $? -ne 0 ]; then
+            # error to remove SUNWfsmgrr package
+            echo "Failed to remove SUNWfsmgrr"  >> ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE}
+            HAS_ERROR="yes"
+        else
+            echo "SUNWfsmgrr has been removed successfully!"  >> ${MY_LOG}
+        fi
+    else
+        echo "SUNWfsmgrr package is not found in the host." \
+                                                        | tee -a ${MY_LOG}
+    fi
+
+    if [ ${HAS_ERROR} = "yes" ]; then
+        do_exit
+    fi
+
+    if [ ${SOLREV} -lt 10 ]; then
+        /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            P="Do you want to uninstall ${LOCKHART_EXTERNAL_NAME}?"
+            P="$P WARNING: Uninstall ${LOCKHART_EXTERNAL_NAME} will cause other"
+            P="$P applications that are registered in the console unusable. [n]"
+            REPLY=`/bin/ckyorn -Q -d "no" -p "${P}"`
+
+            if [ "$REPLY" = "y" -o "$REPLY" = "yes" -o \
+                "$REPLY" = "Y" -o "$REPLY" = "YES" ]; then
+                echo "Remove ${LOCKHART_EXTERNAL_NAME}? YES!" >> ${MY_LOG}
+                V="Start removing ${LOCKHART_EXTERNAL_NAME} and supporting application...\n"
+                echo $V | tee -a ${MY_LOG}
+                # Remove Java Web Console and the supporting applications
+                /usr/lib/webconsole/setup -u | tee -a ${MY_LOG}
+
+                if [ $? -eq 0 ]; then
+                    echo "${LOCKHART_EXTERNAL_NAME} has been uninstalled successfully!" \
+                                               | tee -a ${MY_LOG}
+                else
+                    echo "Failed to uninstall ${LOCKHART_EXTERNAL_NAME}!" |tee -a ${MY_LOG} 
+                fi
+            else
+                echo "Remove ${LOCKHART_EXTERNAL_NAME}? NO!" >> ${MY_LOG}
+            fi
+        else
+            echo "${LOCKHART_EXTERNAL_NAME} is not found in the management station." \
+                                                    | tee -a ${MY_LOG}
+        fi
+     fi
+}
+
+show_env_value() 
+{
+    echo "Printing system environment variables, including mount pts" \
+				>> ${MY_LOG}
+    show_separator
+    /usr/bin/env >> ${MY_LOG}
+
+    echo "\n\nIssuing /usr/sbin/mount\n" >> ${MY_LOG}
+    /usr/sbin/mount >> ${MY_LOG}
+    show_separator
+}
+
+turn_trace_on_if_needed()
+{
+    if [ ! z${TRACE_LEVEL} = "z" ]; then
+        echo "Switch tracing level to ${TRACE_LEVEL}..."
+        /opt/SUNWfsmgr/bin/fsmadm trace ${TRACE_LEVEL}
+        echo "Please follow the Installation & Configuration Guide to turn"
+        echo "tracing back on."
+    fi
+
+    # By now, all the settings should be carried over, remove old SUNWsamqfsui
+    # directory in /etc/opt
+    /usr/bin/rm -rf /etc/opt/SUNWsamqfsui
+}
+
+#
+# The method writes a dummy file to create a hook for the SUNWfsmgr packages
+# to check if the user is pkgadding the packages without running the
+# fsmgr_setup script.  This is designed to create a self service for users
+# so they know it is not the right thing to install individual pacakges
+# but to run fsmgr_setup instead.
+#
+write_dummy_file()
+{
+    /usr/bin/touch /var/tmp/fsmhook.tmp
+}
+
+remove_dummy_file()
+{
+    /usr/bin/rm /var/tmp/fsmhook.tmp
+}
+
+
+# Check the syntax and perform the appropriate task
+echo ""
+check_su
+check_os
+check_architecture
+prepare_log_file
+
+case $# in
+    0 ) show_env_value
+        write_dummy_file
+        check_install
+        install
+        remove_dummy_file
+
+        remove_old_users
+
+        create_users
+        fix_users_account_if_needed
+
+        show_configuration_files
+        show_complete_install_message
+        turn_trace_on_if_needed
+	show_log_file_location
+	EXIT_STATUS=${EXIT_CODE_SUCCESS}
+	do_exit
+        ;;
+    1 ) ARG1=$1
+        process_syntax
+	uninstall
+        prompt_remove_users
+	show_complete_uninstall_message
+	show_log_file_location
+	EXIT_STATUS=${EXIT_CODE_SUCCESS}
+        do_exit
+        ;;
+    * ) show_syntax | tee -a ${MY_LOG}
+	EXIT_STATUS=${EXIT_CODE_SYNTAX_ERROR}
+        do_exit
+        ;;
+esac

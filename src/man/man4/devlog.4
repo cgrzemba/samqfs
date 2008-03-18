@@ -1,0 +1,262 @@
+'\" t
+.\" $Revision: 1.10 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH devlog 4 "10 Dec 2003"
+.SH NAME
+devlog \- Device log file
+.SH SYNOPSIS
+\%\fB/var/opt/SUNWsamfs/devlog/\fInn\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+In Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments, media or tape
+hardware events that require operator intervention
+(such as tape positioning errors and requests for cleaning)
+are logged to file in the following directory:
+.PP
+\f(CO/var/opt/SUNWsamfs\fR
+.PP
+Within the preceding directory, events are logged to files
+that are named for the devices listed in the \fBmcf\fR file.
+For example, file \fBdevlog/47\fR logs all events for the
+device identified by Equipment Ordinal \fB47\fR in the \fBmcf\fR file.
+.PP
+After an event is logged, you can use the \fBtapealert\fR(1M)
+command to read the event logged in the \fBdevlog/\fInn\fR file,
+interpret the event, and write it to a text file for easier viewing.
+For more information about the specific events logged to the
+device log files, see the \fBtapealert\fR(1M) man page.
+.PP
+The \fBtapealert\fR(1M) command logs the following two types
+of messages in the device log (\fBdevlog/\fInn\fR) file:
+.TP 3
+\(bu
+Device TapeAlert support 
+.TP
+\(bu
+Active TapeAlert flags
+.PP
+The preceding type of messages are the undecoded TapeAlert events.  The
+\fBtapealert\fR(1M) command decodes these messages into a more
+readable format.
+The undecoded device log messages
+for device support contains the
+following information:
+.TP 10
+\fBField\fR
+\fBContent\fR
+.TP
+1
+The date in \fIyear\fB/\fImonth\fB/\fIday\fR format.
+.TP
+2
+The time expressed in a \%24-hour clock.
+.TP
+3
+The message number, followed by \fBTapeAlert\fR
+and \fBsupported\fR.
+TapeAlert messages start at 12000.
+.PP
+The following is an example of a device support message:
+.PP
+.ft CO
+.nf
+2003/06/13 10:52:23 12001 TapeAlert supported
+.fi
+.ft
+.PP
+The device log messages for active TapeAlert flags contain
+the following information:
+.TP 10
+\fBField\fR
+\fBContent\fR
+.TP
+1
+The date in \fIyear\fB/\fImonth\fB/\fIday\fR format.
+.TP
+2
+The time expressed in a \%24-hour clock.
+.TP
+3
+The message number, followed by \fBTapeAlert\fR.
+TapeAlert messages start at 12000.
+.TP
+4
+The characters \fBeq=\fR followed by
+the mcf(4) equipment ordinal number. 
+.TP
+5
+The characters \fBtype=\fR followed by
+the inquiry  peripheral device type.
+.TP
+6
+The characters \fBseq=\fR followed by
+the \fBsysevent\fR sequence number.
+The \fBsysevent\fR sequence number is zero if
+the \fBsysevent_post_event\fR function fails
+or is not called.
+The \fBsysevent\fR event handler \fB$sequence\fR macro
+is the same as the
+\fBdevlog/\fInn\fR file's \fBseq=\fIn\fR number.
+.TP
+7
+The characters \fBlen=\fR followed by the number of
+valid TapeAlert flags.
+.TP
+8
+The flags field.
+The 64 TapeAlert flags are written in big endian format.
+The most significant bit, on the left, is flag 64.
+The least significant bit is flag 1.
+.PP
+The following is an example of a TapeAlert flags message:
+.PP
+.ft CO
+.nf
+
+2003/06/13 10:52:23 12006 TapeAlert eq=91 type=1 seq=8 len=50 flags=0x0002004000000000
+.fi
+.ft
+.PP
+A decoded TapeAlert flag consists of four parts:
+.TP 4
+1.
+Flag
+.TP
+2.
+Severity
+.TP
+3.
+Application message
+.TP
+4.
+Probable cause
+.PP
+The T10 Technical Committee
+defines three types of flags.  Table 1 lists these flags
+in order of increasing severity.
+.PP
+\fBTable 1.  Flag Types\fR
+.PP
+.TS
+l c c c.
+\fBSeverity	Urgent Intervention	Risk of Data Loss	Explanation\fR
+Critical	X	X
+Warning		X	X
+Information			X
+.TE
+.PP
+If an Information-level flag is issued, you can perceive it as a
+predicted failure.  Take the time to correct the problem before it
+worsens.
+.PP
+The \fBtapealert\fR(1M) command supports the minimum flag subset
+as defined by the T10 Committee.  Table 2 shows these flags.
+.PP
+\fBTable 2.  Tape Drive TapeAlert Flags - Minimum Subset\fR
+.TP 20
+\fBFlag Number, Type\fR
+\fBExplanation\fR
+.TP
+\fB3h\fR, Hard error
+Active for any unrecoverable read/write/positioning
+error.  Internally deactivated when the media is unloaded.
+This flag is active as specified in flag number \fB5h\fR and
+\fB6h\fR.
+.TP
+\fB4h\fR, Media
+Active for any unrecoverable
+read/write/positioning error that is due to
+faulty media.  Internally deactivated
+when the media is unloaded.
+.TP
+\fB5h\fR, Read failure
+Active for any unrecoverable read error where
+the diagnosis is uncertain and could either be
+faulty media or faulty drive hardware.
+Internally deactivated when the media is unloaded.
+.TP
+\fB6h\fR, Write failure
+Active for any unrecoverable write/positioning
+error where the diagnosis is uncertain and could
+either be faulty media or faulty drive hardware.
+Internally deactivated when the media is
+unloaded.
+.TP
+\fB14h\fR, Clean now
+Active when the tape drive detects a cleaning
+cycle is needed.  Internally deactivated
+when the tape drive is successfully cleaned.
+.TP
+\fB16h\fR, Expired cleaning
+Active when the tape drive detects a cleaning
+cycle was attempted but was not successful.
+Internally deactivated when the next cleaning
+cycle is attempted.
+.TP
+\fB1fh\fR, Hardware B
+Active when the tape drive fails its internal
+Power-On-Self-Tests (POST).
+Not internally deactivated until the drive is
+powered off.
+.PP
+Table 3 summarizes the errors in the \fBdevlog/\fInn\fR file.
+.PP
+\fBTable 3.
+TapeAlert Flag Definition Groupings for
+Tape Drives With or Without an Autoloader\fR
+\fR
+.TP 15
+\fBFlag Number(s)\fR
+\fBDefinition\fR
+.TP
+\fB01h\fR to \fB13h\fR
+Tape drive write/read management
+.TP
+\fB14h\fR to \fB19h\fR
+Cleaning management
+.TP
+\fB1Ah\fR to \fB27h\fR
+Tape drive hardware errors
+.TP
+\fB28h\fR to \fB31h\fR
+Tape autoloader errors
+.TP
+\fB32h\fR to \fB40h\fR
+Further tape errors
+.PP
+The information in tables 1, 2, and 3 is derived from
+\fISCSI Stream Commands \- 2 (SSC\-2)\fR, Revision 08d.
+.SH SEE ALSO
+\fBtapealert\fR(1M).
+.PP
+\fBmcf\fR(4).
+

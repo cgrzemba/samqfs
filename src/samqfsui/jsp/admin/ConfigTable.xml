@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: ConfigTable.xml,v 1.10 2008/03/17 14:40:29 am143972 Exp $ -->
+
+<table>
+<column name="ConfigNameColumn" extrahtml="nowrap">
+    <cc name="FileHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="title"
+            value="ServerConfiguration.config.content.tooltip"/>
+        <attribute name="onClick"
+            value="
+                launchPopup(
+                    '/admin/ShowFileContent',
+                    'showconfig',
+                    getServerKey(),
+                    SIZE_LARGE,
+                    '&amp;SAMQFS_SHOW_CONTENT=true' +
+                    '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+                    '&amp;SAMQFS_CONFIG_FILE_NAME=' +
+                        getFileNameFromHref(this, 1));
+                return false;
+	"/>
+        <cc name="ConfigNameText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+</column>
+
+<column name="ConfigStatusColumn" extrahtml="nowrap">
+    <cc name="StatusHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="title"
+            value="ServerConfiguration.config.status.tooltip"/>
+        <attribute name="onClick"
+            value="
+                launchPopup(
+                    '/admin/ShowFileContent',
+                    'showconfig',
+                    getServerKey(),
+                    SIZE_NORMAL,
+                    '&amp;SAMQFS_SHOW_CONTENT=false' +
+                    '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+                    '&amp;SAMQFS_CONFIG_FILE_NAME=' +
+                        getFileNameFromHref(this, 0));
+                return false;
+	"/>
+        <cc name="ConfigStatusTextWithLink"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+    <cc name="ConfigStatusText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="BlankColumn" extrahtml="nowrap">
+    <cc name="BlankText"
+	tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+</table>

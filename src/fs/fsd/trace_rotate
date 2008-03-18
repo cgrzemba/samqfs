@@ -1,0 +1,58 @@
+#! /bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+#  trace_rotate tracefile
+#
+#  trace_rotate is intended to be executed by sam-fsd when a tracefile
+#  has aged or grown to the limits specified by the trace controls.
+#  trace_rotate moves the current tracefile to tracefile.0 and rotates
+#  former tracefiles accordingly.  If tracefile.7 exists it is lost.
+#
+#    ex:  trace_rotate /var/opt/SUNWsamfs/trace/sam-archiverd
+#
+#  If desired, you can disable the sam-fsd action, and perform the rotations
+#  by using cron.  In a crontab you could do the following:
+#
+# 10 3 * * 0  /opt/SUNWsamfs/sbin/trace_rotate /var/opt/SUNWsamfs/trace/sam-archiverd
+#
+# $Revision: 1.7 $
+#
+TRACE=$1
+#
+if test -s $TRACE
+then
+   	test -f $TRACE.6 && mv $TRACE.6 $TRACE.7
+   	test -f $TRACE.5 && mv $TRACE.5 $TRACE.6
+   	test -f $TRACE.4 && mv $TRACE.4 $TRACE.5
+   	test -f $TRACE.3 && mv $TRACE.3 $TRACE.4
+   	test -f $TRACE.2 && mv $TRACE.2 $TRACE.3
+   	test -f $TRACE.1 && mv $TRACE.1 $TRACE.2
+   	test -f $TRACE.0 && mv $TRACE.0 $TRACE.1
+   	mv $TRACE $TRACE.0
+fi

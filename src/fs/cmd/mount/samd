@@ -1,0 +1,284 @@
+#!/bin/ksh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# start - start the master SAM-FS daemon, sam-amld.
+#   Verify the /opt/SUNWsamfs/sbin/sam-amld file exists and the
+#   /var/opt/SUNWsamfs/mcf.bin file exists.
+#   Start sam-amld if it is not already running.
+#
+# config - send a HUP to sam-fsd to cause (re)configuration of file systems.
+#
+# stop - stop the master SAM-FS daemon sam-amld.
+#
+# hastop - send a USR2 to sam-fsd to stop the sam-archiverd, sam-stagealld,
+#   sam-stagerd and the master SAM-FS daemon sam-amld.
+#   Daemons stopped by hastop will not be restarted by the sam-fsd.
+#   This option is used for HA-SAM failover.
+#
+# For start, stop and hastop, if /opt/SUNWsamfs/sbin/sam-amld is not present,
+# this must be a SUNWqfs package, so issue a usage message.
+#
+#	$Revision: 1.33 $
+
+TREE=/tmp/sam-amld.tree.$$
+
+#
+# Return pid(s) of named process(es) in variable "pid"
+# The variable pid should be treated as a list of 0 or more process id's
+# because if there are is than one process with the same name, there
+# will be more than one process id's.
+#
+pidproc() {
+	pid=`/bin/ps -eo pid,comm |
+		/usr/bin/sed -e 's/\/.*\///' |
+		/usr/bin/grep " ${1}$" |
+		/usr/bin/awk '{print $1}'`
+}
+
+#
+# Kill named process(es)
+#
+killproc() {
+	pidproc $1
+	for x in ${pid}; do
+		kill -INT ${x}
+	done
+}
+
+#
+# Kill named tree
+#
+killtree() {
+	pidproc $1
+	if [ "${pid}" = "" ]; then
+		return 0
+	fi
+	#
+	# Note that ptree reports the entire tree containing the specified
+	# process.
+	# Ignore all processes that are above the specified process in the
+	# tree.
+	# Create a temporary file containing a list of process ids and names.
+	#
+	/usr/bin/ptree ${pid} | awk '
+		BEGIN {
+			list = 0;
+		}
+		{
+			if ( $2 == proc ) {
+				list = 1;
+			}
+			if ( list == 1 ) {
+				print $1 " " $2;
+			}
+		}' proc=$1 > $TREE
+	killproc $1
+	sleep 2
+
+	#
+	# Verify that the processes have exited.  Sleep for 10 seconds during
+	# each pass, and then execute kill -9 for any remaining processes.
+	#
+	let cnt=1
+	let max=4
+	while (( cnt <= max )); do
+		retry=false
+		while read PID PROC; do
+
+			#
+			# Check if process still exists.  Verify both name
+			# and pid
+			# for the case where the pid gets reused.
+			#
+
+			pidproc ${PROC}
+
+			#
+			# If there is more than one process with the same name
+			# (multiple virtual libraries in the same real
+			# library),
+			# then ${pid} will be a list of process id's
+			# separated by
+			# a newline character.
+			#
+			# Treat ${pid} returned by pidproc as a list of 0
+			# or more pid's.
+			#
+			for x in ${pid}; do
+				if [ ${x} = ${PID} ]; then
+					if (( cnt == max )); then
+						# Proc still exists; kill it.
+						kill -9 ${x}
+					else
+						retry=true
+					fi
+					break
+				fi
+			done
+			if [ "${retry}" = "true" ] && (( cnt < max )); then
+				# Process still exists; sleep again.
+				break;
+			fi
+		done < $TREE
+		if [ "${retry}" = "false" ]; then
+			# No processes exist.
+			break
+		fi
+		let cnt=cnt+1
+		sleep 10
+	done
+
+	#
+	# Perform a final check if necessary.  This implies that we performed
+	# a kill -9 on any remaining processes found in the last pass.  Issue
+	# an error message if any processes still exist.
+	#
+	if [ "${retry}" = "true" ]; then
+		error=false
+		while read PID PROC; do
+			pidproc ${PROC}
+			for x in ${pid}; do
+				if [ "${x}" = "${PID}" ]; then
+					error=true
+					echo "Error: process ${PROC} (pid ${PID}) could not be killed."
+				fi
+			done
+		done < $TREE
+		if [ "${error}" = "true" ]; then
+			echo "Error: Wait for all robot/drive activity to complete and then"
+			echo "Error: manually kill any remaining processes listed above."
+			rm -f $TREE
+			exit 1
+		fi
+	fi
+	rm -f $TREE
+}
+
+usage() {
+	if [ ! -f /opt/SUNWsamfs/sbin/sam-amld ]; then
+		echo "Usage: /opt/SUNWsamfs/sbin/samd  { config | buildmcf }"
+	else
+		echo "Usage: /opt/SUNWsamfs/sbin/samd { start | config | stop | buildmcf | hastop }"
+	fi
+	exit 1
+}
+
+if [ $# != 1 ] ; then
+	usage
+fi
+
+case "$1" in
+
+'config')
+
+	pidproc sam-fsd
+	echo "Configuring SAM-FS"
+	if [ "${pid}" = "" ]; then
+		/opt/SUNWsamfs/sbin/sam-fsd -C
+		sleep 5
+		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
+		sleep 2
+		pidproc sam-fsd
+	fi
+	if [ "${pid}" = "" ]; then
+		echo "Failed to start sam-fsd; check logs and inittab"
+		exit 1
+	fi
+	kill -HUP ${pid}
+	sleep 2
+	/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
+	;;
+
+'buildmcf')
+
+        echo "Building mcf for SAM-QFS"
+        /opt/SUNWsamfs/sbin/check_mcf.pl update
+        ;;
+
+'start')
+
+# The following checks for the mcf file and sam-amld already running.
+	if [ ! -f /opt/SUNWsamfs/sbin/sam-amld ]; then
+		usage
+	fi
+	if [ ! -f /var/opt/SUNWsamfs/mcf.bin ]; then
+		echo "SAM-FS configuration file (/var/opt/SUNWsamfs/mcf.bin) not found"
+		exit 0
+	fi
+	pidproc sam-amld
+	if [ "${pid}" != "" ]; then
+		echo "SAM-FS sam-amld daemon already running"
+		exit 0
+	fi
+
+	pidproc sam-fsd
+	if [ "${pid}" = "" ]; then
+		echo "Configuring SAM-FS"
+		/opt/SUNWsamfs/sbin/sam-fsd -C
+		sleep 5
+		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
+		sleep 2
+		pidproc sam-fsd
+	fi
+	echo "Starting SAM-FS sam-amld daemon"
+	if [ "${pid}" = "" ]; then
+		echo "Failed to start sam-fsd; check logs and inittab"
+		exit 1
+	fi
+	kill -USR1 ${pid}
+	;;
+
+'stop')
+
+	if [ ! -f /opt/SUNWsamfs/sbin/sam-amld ]; then
+		usage
+	fi
+	killtree sam-amld
+	;;
+
+'hastop')
+
+	if [ ! -f /opt/SUNWsamfs/sbin/sam-amld ]; then
+		usage
+	fi
+	pidproc sam-fsd
+	echo "Stopping HSM"
+	if [ "${pid}" != "" ]; then
+		kill -USR2 ${pid}
+	else
+		echo "No sam-fsd running."
+		exit 1
+	fi
+	;;
+
+*)
+	usage
+	;;
+esac
+exit 0

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+<!DOCTYPE registrationInfo SYSTEM "Registration.dtd">
+-->
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: app.xml,v 1.27 2008/03/17 14:40:23 am143972 Exp $ -->
+
+
+<registrationInfo version="3.0">
+    <!--Root element containing description of application elements-->
+    <managementApp
+        version="5.0"
+        category="storage"
+        package="com.sun.netstorage.samqfs.web"
+        bundle="resources/Resources"
+        bundleJar="com.sun.netstorage.samqfs.web.fsmgr.jar">
+
+        <!--Localizable plug-in name-->
+        <name localizable="true">File System Manager</name>
+
+        <!--Internal plug-in name-->
+        <pluginName>fsmgrAdmin</pluginName>
+
+        <!--Product Names-->
+        <primaryProductName>File System Manager</primaryProductName>
+
+        <!--Brief description of this management application-->
+        <shortDescription localizable="true">
+            The application that config and control QFS Servers with and without archiving capabilities
+        </shortDescription>
+
+        <!--Arbitrary length description of this management application-->
+        <description localizable="true">
+            A WEB-based graphical user interface that configs and controls Sun StorEdge QFS Servers
+        </description>
+
+        <!--Description of common masthead properties-->
+        <masthead
+            bundle="resources/Resources"
+            bundleJar="com.sun.netstorage.samqfs.web.fsmgr.jar"
+            showUserRole="true"
+            showServer="true"
+            showClose="true"
+            showHelp="true" />
+
+        <!--Description of common help properties-->
+        <help
+            bundle="resources/Resources"
+            bundleJar="com.sun.netstorage.samqfs.web.fsmgr.jar"
+            helpType="help2"
+            helpFileName="samqfs-serversummary.html"
+            versionFileName="samfs_version.shtml"
+            showCloseButton="true"
+            status="help.status"
+            helpTooltip="help.helpTooltip"
+            versionTooltip="help.versionTooltip"
+            windowTitle="help.windowTitle"/>
+
+    </managementApp>
+
+    <!--Tags used to determine a user's access to this app. Leave empty to indicate no auths required-->
+    <authTypes>
+        <authType name="">
+            <classType></classType>
+            <permissionParam name=""></permissionParam>
+        </authType>
+    </authTypes>
+
+    <!--URL to be used in targeting this app-->
+    <urlDesc>
+        <!--Value of the URL to be used in invoking this app-->
+        <url>/samqfsui/util/FrameFormat</url>
+    </urlDesc>
+</registrationInfo>

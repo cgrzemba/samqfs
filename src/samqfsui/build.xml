@@ -1,0 +1,310 @@
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: build.xml,v 1.14 2008/03/17 14:40:23 am143972 Exp $ -->
+
+<!--
+    This is the build file for the Sam/QFS Lockhart prototype GUI
+-->
+
+<!--
+    FYI: the Ant documentation is very actively maintained.  All available
+    tasks are documented with all their possible elements, real-world examples,
+    and "best practices" hints.  Check out:
+
+            http://jakarta.apache.org/ant/manual/index.html
+-->
+
+
+<!-- This is the root tag of the XML file, defining a project. -->
+<project name="File System Manager" default="dist" basedir=".">
+
+
+<!-- ===================== Property Definitions =========================== -->
+
+<!--
+    In here you can define "global" properties that all build targets may use.
+    Using ant, a property can be referred to later in the build script.  To
+    refer to a property, you use syntax like:  ${property.name}
+-->
+
+   <!-- The name & version of this application. -->
+   <property name="app.name" value="fsmgr"/>
+   <property name="app.version" value="5.0"/>
+   <property name="package.name" value="com/sun/netstorage/samqfs/web"/>
+
+   <!--
+       The library directory.  Any Jarfile in there are automatically used in
+       the CLASSPATH.  Note that, in this version of the build file, those
+       jarfiles are *not* included in the binary distribution that is built.
+   -->
+   <property name="lib.dir"             value="../../jar"/>
+
+   <!-- To support simultaneous builds on different platforms as done by
+        the 'crank' application, generated files for specific build must be
+        placed in a unique directory based on the platform.  The property
+        "obj.dir" contains the directory path.  It is not defined here.  It
+        defined by the upper level makefile and is passed into ant via the
+        '-D' command line option.   
+    -->
+   <!--
+       The library directory.  Any Jarfile in there are automatically used in
+       the CLASSPATH.  Note that, in this version of the build file, those
+       jarfiles are *not* included in the binary distribution that is built.
+   -->
+   <!-- fsmgmtjni.jar location -->
+   <property name="jni.lib.dir"	value="../lib/sammgmtjni/${obj.dir}/"/>
+
+   <!-- 
+        The prototype directory where the classfiles will be placed.  Note that
+        typical ant build trees usually call the directory "build" instead of
+        "proto", but the name doesn't really matter.
+    -->
+   <property name="classes.dir"           value="${obj.dir}/classes"/>
+
+   <!-- The distribution directory, where a full distribution can be created 
+	For now, we'll just put the JAR file there, we should really put a copy
+	of the full deployment direcotory here
+    -->
+   
+   <property name="dist.dir"            value="${obj.dir}/WEB-INF"/>
+
+   <!-- The root directory where the Java files are -->
+   <property name="java.src.dir"        value="src"/>
+
+   <!-- The directory where the JavaDoc files should be generated -->
+   <property name="javadoc.dir"        value="${obj.dir}/javadoc"/>
+
+   <!-- ... define other properties as needed ... -->
+
+ <!--  ==================== Compilation Control Options ==================== -->
+
+<!--
+    These are some typical Java compilation control options that modify how the
+    classes get compiled.
+-->
+
+  <property name="compile.debug"       value="true"/>
+  <property name="compile.deprecation" value="false"/>
+  <property name="compile.optimize"    value="false"/>
+
+
+<!-- ==================== Compilation Classpath =========================== -->
+
+<!--
+    This is where we define what the compile-time classpath will be.  This
+    section can easily grow to contain hundreds of Jarfiles, or even thousands
+    of .class files that are outside the scope of this project.
+-->
+
+  <!--
+    The concept of a "path" is well-defined in ant, so you don't have to go
+    through the trouble of building up a classpath string yourself.  The 'id'
+    that we assign to this path can be referred to later, like when we compile
+    the source.
+  -->
+  <path id="compile.classpath">
+
+    <!-- 
+        Include all JAR files that are in our lib directory.  The 'fileset'
+        concept is a very powerful one in ant.  You can use it to build very
+        specific collections of files that can be automatically iterated through
+        by many tasks( FTP-ing all files to a remote location, or tarring them
+        all up, etc etc).  Note the 'include' task will recursively search the
+        entire directory structure for any jarfile, since the 'name' we give it
+        is "**/*.jar".  
+    -->
+    <fileset dir="${lib.dir}">
+        <include name="**/*.jar"/>
+        <exclude name="**/s.*"/>
+    </fileset>
+    <fileset dir="${jni.lib.dir}">
+        <include name="**/*.jar"/>
+        <exclude name="**/s.*"/>
+    </fileset>
+
+  </path>
+
+  <!-- ==================== Start of Targets =============================== -->
+
+<!--
+    Like make, an ant build environment defines a number of inter-related
+    'targets' that the user can build.  However, unlike make, ant targets are
+    easy to read, debug, and extend.
+-->
+
+<!-- ==================== Clean Target ==================================== -->
+
+<!--
+  Clean up the build environment but leave the distribution.
+-->
+
+  <target name="clean" description="Clean up build environment">
+    <delete dir="${classes.dir}"/>
+  </target>
+
+<!-- ==================== Clobber Target ================================== -->
+
+<!--
+  Clean up everything.
+-->
+
+  <target name="clobber" description="Clobber the build environment">
+    <delete dir="${obj.dir}"/>
+  </target>
+
+<!-- ==================== Prepare Target ================================== -->
+
+<!--
+  Prepare the build environment to build.  In other words, make sure we have all
+  the directories we need, etc etc.  If you had any static files that you wanted
+  to include in the project's distribution (for instance, JSP files or something
+  else that doesn't get compiled), you'd copy that over here as well....
+-->
+
+  <target name="prepare" description="Prepare for a build">
+
+    <!-- Create object directory -->
+    <mkdir  dir="${obj.dir}"/>
+
+    <!-- Create build directory and copy static content -->
+    <mkdir  dir="${classes.dir}"/>
+
+    <!-- Remove old directories that object files were located -->
+    <delete dir="classes" failonerror="false" />
+    <delete dir="WEB-INF/lib" failonerror="false" />
+
+  </target>
+
+
+<!-- ==================== Compile Target ================================== -->
+
+<!--
+    Compile Everything.  This populates the 'proto' directory with object files.
+    Note also the explicit dependency of this target on the 'prepare' target.
+-->
+
+  <target name="compile" depends="prepare" description="Compile Java sources">
+
+    <!--
+        Here is the magical element that compiles *all* Java classes at once.
+        It looks a little complicated, but it's a whole lot easier here than in
+        make.  It is also very flexible & well documented.  Note that we use the
+        'compile.classpath' reference that was defined previously.
+     -->
+    <javac srcdir="src"
+        destdir="${classes.dir}"
+        debug="${compile.debug}"
+        deprecation="${compile.deprecation}"
+        optimize="${compile.optimize}"
+	listfiles="yes">
+    <classpath refid="compile.classpath"/>
+    <exclude name="**/,*"/>
+    </javac>
+
+    <!-- Copy all associated resource files -->
+    <copy  todir="${classes.dir}/${package.name}">
+      <fileset dir="src" includes="**/*.properties"/>
+    </copy>
+
+  </target>
+
+<!-- ==================== Javadoc Target ================================== -->
+
+<!--
+    Run Javadoc on all the compiled sources, and store them in the 'doc'
+    directory.
+-->
+
+  <target name="javadoc" depends="compile" description="Generate JavaDoc">
+
+    <mkdir dir="${javadoc.dir}" />
+
+    <javadoc destdir="${javadoc.dir}"
+				windowtitle="File System Manager API"
+				sourcepath="src"
+				packagenames="com.sun.netstorage.*" 
+				classpathref="compile.classpath" />
+    
+    <jar jarfile="doc/${app.name}-javadoc.jar" basedir="${javadoc.dir}" />
+  </target>
+
+<!-- ==================== Dist Target ===================================== -->
+
+<!--
+    Create a distribution of your project.  For now, we're just creating
+    jarfiles, but you can imagine doing other sorts of stuff here (copying over
+    external dependencies into your distribution, creating Solaris packages,
+    etc etc).
+-->
+
+  <target name="dist" depends="compile" description="Create a distribution">
+
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${dist.dir}/lib"/>
+
+    <copy todir="${dist.dir}">
+      <fileset dir="WEB-INF">
+        <include name="**/*"/>
+      </fileset>
+    </copy>
+
+    <!-- Create application JAR file -->
+    <jar jarfile="${dist.dir}/lib/${app.name}.jar" basedir="${classes.dir}"/>
+
+    <!-- Create the Javadoc JAR file -->
+    <!-- <jar jarfile="doc/${app.name}-javadoc.jar" basedir="${javadoc.dir}" /> -->
+
+  </target>
+
+<!-- ======= Target to process console resources ======= -->
+<!-- Do not run this target unless you know what is going on.  This target generates -->
+<!-- resource files for the framework, com_sun_web_ui in the base directory, -->
+<!-- WEB-INF/tld/com_iplanet_jato, and WEB-INF/tld/com_sun_web_ui directory. -->
+<!-- These new files are now a part of source code control for easier deployment. -->
+<!-- Do not run this target on machines without having Lockhart installed. -->
+
+  <target name="import"
+      description="Import console resources">
+      <echo message="Processing console resources" />
+      <path id="console.classpath">
+          <pathelement location="../../jar/serviceimpl.jar"/>
+          <pathelement location="../../jar/serviceapi.jar"/>
+          <pathelement location="../../jar/consoleutil.jar"/>
+      </path>
+      <taskdef name="jwc_import"
+          classname="com.sun.web.util.AntImport">
+          <classpath>
+              <path refid="console.classpath"/>
+          </classpath>
+      </taskdef>
+      <jwc_import
+          jato="true"
+          faces="true"
+          consoledir="/usr/share/webconsole" />
+  </target>
+
+</project>

@@ -1,0 +1,137 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH tarback.sh 1M "03 Dec 2001"
+.SH NAME
+tarback.sh \- Reloads files from Sun StorEdge \%SAM-FS or Sun \%SAM-QFS archive tapes
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/examples/tarback.sh\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBtarback.sh\fR
+script reloads files from Sun StorEdge \%SAM-FS or Sun \%SAM-QFS archive tapes.
+This script can be used if a file system is lost and there are no
+usable \fBsamfsdump\fR(1M) files or copies of the \&\fB.inodes\fR
+files available.
+.PP
+.SH USAGE
+The following steps describe how to use the \fBtarback.sh\fR script.
+.TP 10
+Step 1.
+Use \fBsammkfs\fR(1M) to recreate
+or restore the file system.
+.TP
+Step 2.
+Use \fBsamu\fR(1M) to set the drive you are using to \fBunavail\fR.
+.TP
+Step 3.
+Copy the script from its
+original location in \fB/opt/SUNWsamfs/examples/tarback.sh\fR
+to the \fB/tmp\fR directory or to a different alternate location.
+The script itself contains comments to guide you in
+tailoring the script for your own use.
+.TP
+Step 4.
+Modify the variables you need.
+Generally, only the
+following variables in the script need to be modified:
+.RS 10
+.TP 20
+\fBVariable Name\fR
+\fBContent\fR
+.TP
+\fBEQ="\fIeq\fB"\fR
+The Equipment Number of the tape drive as defined in the \fBmcf\fR
+file.
+.TP
+\fBTAPEDRIVE="\fIpath\fB"\fR
+The raw path to the device described by \fBEQ=\fR.
+.TP
+\fBBLOCKSIZE="\fIsize\fB"\fR
+The block size in \%512-byte units.  For example, specify \fB256\fR
+for a block size of 128 kilobytes.
+.TP
+\fBMEDIATYPE="\fImt\fB"\fR
+The \%2-character media type for this tape as defined on
+the \fBmcf\fR(4) man page.
+.TP
+\fBVSN_LIST="\fIvsn1 vsn2 \&.\&.\&.\fB"\fR
+The list of VSNs to be read.  There is no limit on the number of
+VSNs that can be specified.  Use a space character to separate
+the VSN names.  This list can be continued onto another line by
+using a backslash character (\\).
+.sp
+For example:
+.sp
+.ft CO
+.nf
+VSN_LIST="vsn1 vsn2 \\
+  vsn3"
+.fi
+.ft
+.RE
+.TP 10
+Step 5.
+Remove the pound character (\fB#\fR)
+from column 1 of the line that defines the variables.
+.TP
+Step 6.
+Run \fBtarback.sh\fR.  There are no arguments.
+.SH EXAMPLES
+The following script has been edited to contain site-specific
+information (only the edited portions of the script are shown):
+.PP
+.nf
+.ft CO
+STAR="/opt/SUNWsamfs/sbin/star"
+LOAD="/opt/SUNWsamfs/sbin/load"
+UNLOAD="/opt/SUNWsamfs/sbin/unload"
+EQ=28
+TAPEDRIVE="/dev/rmt/3cbn"
+BLOCKSIZE=256
+MEDIATYPE="lt"
+
+VSN_LIST="VSNA VSNB VSNC \\
+   VSNZ"
+.ft
+.fi
+.SH WARNINGS
+Improper use of this script can damage user or system data.
+Please refer to the \fISun QFS, Sun \%SAM-FS, and Sun \%SAM-QFS Disaster
+Recovery Guide\fR or contact technical support before using this script.
+.SH FILES
+The \fBtarback.sh\fR script resides in the following location:
+.PP
+.B /opt/SUNWsamfs/examples/tarback.sh
+.SH SEE ALSO
+\fBsamload\fR(1M),
+\fBsamu\fR(1M),
+\fBstar\fR(1M),
+\fBunload\fR(1M).

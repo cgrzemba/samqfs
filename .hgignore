@@ -1,0 +1,22 @@
+syntax: glob
+include/sam/fs/*.h
+
+syntax: regexp
+^MARKER
+^lib
+^cscope\.files
+^cscope\.out
+^cstyle\.files
+^cstyle\.out
+^copyright\.files
+^ID
+^webrev
+^tags
+/obj/Linux_
+/obj/SunOS_5
+^pkg-linux/RPMS
+^pkg-linux/iso_(open|qfs)\.iso
+^src/robots/vendor_supplied/stk/etc/make.sun.SunOS_5
+^src/gnucmd/fileutils-3.16/intl/libintl.h
+^LOG\.
+^BUILD\.

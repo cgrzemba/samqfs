@@ -1,0 +1,282 @@
+# $Id: GNUmakefile,v 1.5 2007/10/08 15:46:44 dr161460 Exp $
+# Generated automatically from Makefile.in.in by configure.
+# Makefile for program source directory in GNU NLS utilities package.
+# Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+PACKAGE = tar
+VERSION = 1.12
+
+DEPTH = ../../../../
+include $(DEPTH)/mk/common.mk
+
+SHELL = /bin/sh
+
+srcdir = .
+top_srcdir = ..
+
+prefix = ${SAMFS_TOOLS}
+exec_prefix = ${prefix}
+datadir = $(prefix)/share
+localedir = $(datadir)/locale
+gnulocaledir = $(prefix)/share/locale
+gettextsrcdir = $(prefix)/share/gettext/po
+subdir = po
+
+INSTALL = .././install-sh -c
+INSTALL_DATA = ${INSTALL} -m 644
+MKINSTALLDIRS = ./mkinstalldirs
+
+CC = ${GCC}
+GENCAT =
+GMSGFMT = PATH=../src:$$PATH /bin/msgfmt
+MSGFMT = /bin/msgfmt
+XGETTEXT = PATH=../src:$$PATH :
+MSGMERGE = PATH=../src:$$PATH msgmerge
+
+DEFS = -DHAVE_CONFIG_H
+CPPFLAGS =
+INCLUDES = -I.. -I$(top_srcdir)/intl
+CFLAGS = -g -O2 $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CERRWARN)
+
+COMPILE = $(CC) -c $(CFLAGS) $(XCFLAGS)
+
+SOURCES = cat-id-tbl.c
+POFILES =  de.po fr.po it.po ko.po nl.po no.po pl.po pt.po sl.po sv.po
+GMOFILES =  de.gmo fr.gmo it.gmo ko.gmo nl.gmo no.gmo pl.gmo pt.gmo sl.gmo sv.gmo
+DISTFILES = ChangeLog Makefile.in.in POTFILES.in $(PACKAGE).pot \
+stamp-cat-id $(POFILES) $(GMOFILES) $(SOURCES)
+
+POTFILES = \
+	../src/common.h \
+	../src/buffer.c \
+	../src/create.c \
+	../src/compare.c \
+	../src/delete.c \
+	../src/extract.c \
+	../src/incremen.c \
+	../src/list.c \
+	../src/mangle.c \
+	../src/names.c \
+	../src/rmt.c \
+	../src/rtapelib.c \
+	../src/tar.c \
+	../src/update.c \
+	../tests/genfile.c
+
+CATALOGS =  de.gmo fr.gmo it.gmo ko.gmo nl.gmo no.gmo pl.gmo pt.gmo sl.gmo sv.gmo
+CATOBJEXT = .gmo
+INSTOBJEXT = .mo
+
+include $(DEPTH)/mk/common.mk
+
+.SUFFIXES:
+.SUFFIXES: .c .o .po .pox .gmo .mo .msg .cat
+
+$(OBJ_DIR)/.c.o:
+	$(COMPILE) -o $(OBJ_DIR)/$@ $<
+
+.po.pox:
+	$(MAKE) $(PACKAGE).pot
+	$(MSGMERGE) $< $(srcdir)/$(PACKAGE).pot -o $*.pox
+
+.po.mo:
+	$(MSGFMT) -o $@ $<
+
+.po.gmo:
+	file=$(srcdir)/`echo $* | sed 's,.*/,,'`.gmo \
+	  && rm -f $$file && $(GMSGFMT) -o $$file $<
+
+.po.cat:
+	sed -f ../intl/po2msg.sed < $< > $*.msg \
+	  && rm -f $@ && $(GENCAT) $@ $*.msg
+
+all: all-yes
+
+all-yes: cat-id-tbl.c $(CATALOGS)
+all-no:
+
+$(PACKAGE).pot: $(POTFILES)
+	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=$(top_srcdir) \
+	  --add-comments --keyword=_ --keyword=N_ \
+	  --files-from=$(srcdir)/POTFILES.in
+	if [ ! -s $(PACKAGE).po ] \
+	  || cmp -s $(PACKAGE).po $(srcdir)/$(PACKAGE).pot; then \
+	  rm -f $(PACKAGE).po; \
+	else \
+	  rm -f $(srcdir)/$(PACKAGE).pot \
+	    && mv $(PACKAGE).po $(srcdir)/$(PACKAGE).pot; \
+	fi
+
+cat-id-tbl.c: stamp-cat-id
+stamp-cat-id: $(PACKAGE).pot
+	rm -f cat-id-tbl.tmp
+	sed -f ../intl/po2tbl.sed $(srcdir)/$(PACKAGE).pot \
+		| sed -e "s/@PACKAGE NAME@/$(PACKAGE)/" > cat-id-tbl.tmp
+	if cmp -s cat-id-tbl.tmp $(srcdir)/cat-id-tbl.c; then \
+	  rm cat-id-tbl.tmp; \
+	else \
+	  echo cat-id-tbl.c changed; \
+	  rm -f $(srcdir)/cat-id-tbl.c; \
+	  mv cat-id-tbl.tmp $(srcdir)/cat-id-tbl.c; \
+	fi
+	cd $(srcdir) && rm -f stamp-cat-id && echo timestamp > stamp-cat-id
+
+install: install-exec install-data
+install-exec:
+install-data: install-data-yes
+install-data-no: all
+install-data-yes: all
+	if test -r $(MKINSTALLDIRS); then \
+	  $(MKINSTALLDIRS) $(datadir); \
+	else \
+	  $(top_srcdir)/mkinstalldirs $(datadir); \
+	fi
+	@catalogs='$(CATALOGS)'; \
+	for cat in $$catalogs; do \
+	  case "$$cat" in \
+	    *.gmo) destdir=$(gnulocaledir);; \
+	    *)     destdir=$(localedir);; \
+	  esac; \
+	  lang=`echo $$cat | sed 's/$(CATOBJEXT)$$//'`; \
+	  dir=$$destdir/$$lang/LC_MESSAGES; \
+	  if test -r $(MKINSTALLDIRS); then \
+	    $(MKINSTALLDIRS) $$dir; \
+	  else \
+	    $(top_srcdir)/mkinstalldirs $$dir; \
+	  fi; \
+	  if test -r $$cat; then \
+	    $(INSTALL_DATA) $$cat $$dir/$(PACKAGE)$(INSTOBJEXT); \
+	    echo "installing $$cat as $$dir/$(PACKAGE)$(INSTOBJEXT)"; \
+	  else \
+	    $(INSTALL_DATA) $(srcdir)/$$cat $$dir/$(PACKAGE)$(INSTOBJEXT); \
+	    echo "installing $(srcdir)/$$cat as" \
+		 "$$dir/$(PACKAGE)$(INSTOBJEXT)"; \
+	  fi; \
+	  if test -r $$cat.m; then \
+	    $(INSTALL_DATA) $$cat.m $$dir/$(PACKAGE)$(INSTOBJEXT).m; \
+	    echo "installing $$cat.m as $$dir/$(PACKAGE)$(INSTOBJEXT).m"; \
+	  else \
+	    if test -r $(srcdir)/$$cat.m ; then \
+	      $(INSTALL_DATA) $(srcdir)/$$cat.m \
+		$$dir/$(PACKAGE)$(INSTOBJEXT).m; \
+	      echo "installing $(srcdir)/$$cat as" \
+		   "$$dir/$(PACKAGE)$(INSTOBJEXT).m"; \
+	    else \
+	      true; \
+	    fi; \
+	  fi; \
+	done
+	if test "$(PACKAGE)" = "gettext"; then \
+	  if test -r $(MKINSTALLDIRS); then \
+	    $(MKINSTALLDIRS) $(gettextsrcdir); \
+	  else \
+	    $(top_srcdir)/mkinstalldirs $(gettextsrcdir); \
+	  fi; \
+	  cd $(srcdir) && \
+	    $(INSTALL_DATA) Makefile.in.in $(gettextsrcdir)/Makefile.in.in; \
+	else \
+	  : ; \
+	fi
+
+# Define this as empty until I found a useful application.
+installcheck:
+
+uninstall:
+	catalogs='$(CATALOGS)'; \
+	for cat in $$catalogs; do \
+	  lang=`echo $$cat | sed 's/$(CATOBJEXT)$$//'`; \
+	  rm -f $(localedir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT); \
+	  rm -f $(localedir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT).m; \
+	  rm -f $(gnulocaledir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT); \
+	  rm -f $(gnulocaledir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT).m; \
+	done
+	rm -f $(gettextsrcdir)/po-Makefile.in.in
+
+check: all
+
+$(OBJ_DIR)/cat-id-tbl.o: ../intl/libgettext.h
+
+dvi info tags TAGS ID:
+
+mostlyclean:
+	rm -f core core.* *.pox $(PACKAGE).po *.old.po cat-id-tbl.tmp
+	rm -fr *.o
+
+clean: mostlyclean
+
+distclean: clean
+	rm -f Makefile Makefile.in POTFILES *.mo *.msg *.cat *.cat.m
+
+maintainer-clean: distclean
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+distdir = ../$(PACKAGE)-$(VERSION)/$(subdir)
+dist distdir: update-po $(DISTFILES)
+	dists="$(DISTFILES)"; \
+	for file in $$dists; do \
+	  ln $(srcdir)/$$file $(distdir) 2> /dev/null \
+	    || cp -p $(srcdir)/$$file $(distdir); \
+	done
+
+update-po: Makefile
+	$(MAKE) $(PACKAGE).pot
+	PATH=`pwd`/../src:$$PATH; \
+	cd $(srcdir); \
+	catalogs='$(CATALOGS)'; \
+	for cat in $$catalogs; do \
+	  lang=`echo $$cat | sed 's/$(CATOBJEXT)$$//'`; \
+	  mv $$lang.po $$lang.old.po; \
+	  echo "$$lang:"; \
+	  if $(MSGMERGE) $$lang.old.po $(PACKAGE).pot -o $$lang.po; then \
+	    rm -f $$lang.old.po; \
+	  else \
+	    echo "msgmerge for $$cat failed!"; \
+	    rm -f $$lang.po; \
+	    mv $$lang.old.po $$lang.po; \
+	  fi; \
+	done
+
+POTFILES: POTFILES.in
+	( if test 'x$(srcdir)' != 'x.'; then \
+	    posrcprefix='$(top_srcdir)/'; \
+	  else \
+	    posrcprefix="../"; \
+	  fi; \
+	  sed -e '/^#/d' -e '/^[ 	]*$$/d' \
+	      -e "s@.*@	$$posrcprefix& \\\\@" \
+	      -e '$$s/\(.*\) \\/\1/' < $(srcdir)/POTFILES.in > POTFILES )
+
+Makefile: #SUN# Makefile.in.in ../config.status POTFILES
+	cd .. \
+	  && CONFIG_FILES=$(subdir)/$@.in CONFIG_HEADERS= \
+	       $(SHELL) ./config.status
+
+# SUN targets:
+include $(DEPTH)/mk/targets.mk
+
+MODIFIED_SRCS =
+SRCS = cat-id-tbl.c de.gmo de.po fr.gmo fr.po it.gmo it.po ko.gmo ko.po \
+	Makefile.in Makefile.in.in nl.gmo nl.po no.gmo no.po pl.gmo pl.po   \
+	POTFILES POTFILES.in pt.gmo pt.po sl.gmo sl.po stamp-cat-id sv.gmo sv.po \
+	tar.pot
+
+# Tell versions [3.59,3.63) of GNU make not to export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:
+
+include $(DEPTH)/mk/depend.mk

@@ -1,0 +1,1087 @@
+#!/bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+#  samexplorer
+#
+#  samexplorer is a script that gathers information about the installed system
+#  and places it in a file for SAM-FS/QFS customer support.
+#
+#  NOTE: this script must be run as root.
+#
+# $Revision: 1.29 $
+#
+
+#  INPUT OPTIONS
+TGZ=ON
+while  getopts u OPT; do
+	case $OPT in
+		u)  TGZ=OFF;;
+		?)  echo "Usage: $0 [-u] [report_name] [num_lines]" 1>&2; exit 1;;
+		*)  echo "Usage: $0 [-u] [report_name] [num_lines]" 1>&2; exit 1;;
+	esac
+done
+shift `expr $OPTIND - 1`
+
+#  REPORT LOCATION
+REPORT=${1:-/tmp/SAMreport.`/bin/uname -n`.`/bin/date '+%Y%m%d.%H%M%Z'`}
+
+#  How many lines from log files, etc., to show in the output report.
+#  Default is 1,000, but your support provider may ask you to change
+#  this to provide additional historical log messages.
+HOW_MANY_LINES=${2:-1000}
+
+###
+#  CONFIGURATION VARIABLES
+
+#  The number of lines from samtrace output
+SAMTRACE_LINES=200
+
+#  The number of lines from showqueue output
+SHOWQUEUE_LINES=2000
+
+#  The number of lines from each mdb invocation
+MDB_LINES=100000
+
+#  Locale for messages
+LOCALE=C
+
+#  Options for dump_cat
+DUMPCATOPTS="-V"
+
+#  END OF CONFIGURATION VARIABLES - NO CHANGES BELOW HERE, PLEASE
+###
+
+#  SAMreport name
+REPORTNAME=`basename $REPORT`
+
+#  SAMreport directory
+REPORTDIR=`dirname $REPORT`
+
+#  Directories that SAM-QFS uses
+TMPDIR=/tmp
+VARTMPDIR=/var/tmp
+ETCDIR=/etc/opt/SUNWsamfs
+CUSTDIR=/etc/opt/SUNWsamfs/scripts
+VARDIR=/var/opt/SUNWsamfs
+CATDIR=/var/opt/SUNWsamfs/catalog
+USERDIR=/opt/SUNWsamfs/bin
+EXECDIR=/opt/SUNWsamfs/sbin
+
+#  Output files
+OUTDMPSHM=${REPORTDIR}/${REPORTNAME}.dmpshm_data
+OUTFSMGRLOG=${REPORTDIR}/${REPORTNAME}.fsmgr_text
+OUTSAMTRACE=${REPORTDIR}/${REPORTNAME}.samtrace_text
+OUTSHOWQUEUE=${REPORTDIR}/${REPORTNAME}.showqueue_text
+OUTARCHIVERTAR=${REPORTDIR}/${REPORTNAME}.archiver_data.tar
+OUTSTAGERTAR=${REPORTDIR}/${REPORTNAME}.stager_data.tar
+
+#  Temporary work files
+TMPBGDF=$TMPDIR/$$.sam_bg_df
+TMPBGINO=$TMPDIR/$$.sam_bg_ino
+TMPTRC=$TMPDIR/$$.sam_trcctls
+TMPPATALL=$TMPDIR/$$.sam_patchlist_all
+TMPPATSAM=$TMPDIR/$$.sam_patchlist_samqfs
+TMPPROC=$TMPDIR/$$.sam_procs
+TMPDMPSHM=$TMPDIR/$$.sam_dmpshm
+TMPSAMTRACE=$TMPDIR/$$.sam_samtrace
+TMPSHOWQUEUE=$TMPDIR/$$.sam_showqueue
+TMPEXCLUDE=$TMPDIR/$$.sam_exclude
+TMPTARBALL=$TMPDIR/$$.sam.tar
+TMPFSMGR=$VARTMPDIR/fsmgr.overall.log
+
+#  A tag emitted on lines indicating serious problems
+TAG=":-( "
+
+#  The prompt we fake on echoed command lines
+PROMPT="`/bin/uname -n`# "
+
+#  Function definitions
+
+#  How many "."s on the current line?  999 means "too many".
+COUNT=999
+
+#  Note:  If you find the lines of dots aren't the same length, or you
+#         get extra "."s in your output file, then check to make sure you
+#         haven't done something like "verbose ls >>$REPORT", because then
+#         twiddle's dot will go to the report file instead of the screen!
+#         Also avoid "verbose /opt/SUNWsamfs/sbin/samcmd u 2>&1 | head -100",
+#         because then twiddle's dot will go to the screen but won't get
+#         counted.
+twiddle()
+{
+	COUNT=`expr $COUNT + 1`
+	if [ $COUNT -ge 45 ]; then
+		COUNT=1
+		echo
+		/bin/echo -n Please wait.
+	fi
+	/bin/echo -n .
+}
+
+#  Warn the user that this script really should be run as root.
+rerun_as_root()
+{
+	echo " "
+	echo " "
+	echo Cannot read ${1} ...  Please rerun this script as root.
+	echo " "
+	echo Cannot read ${1} >>$REPORT 2>&1
+	echo " " >>$REPORT 2>&1
+	/bin/echo -n Please wait.
+}
+
+#  Define a variable containing the trace file name for a given daemon.
+settrace(){
+	eval ${1}TRC=`/bin/grep "^$2" < $TMPTRC | sed -e "s/$2 *//" | sed -e "s/^off$//"`
+}
+
+#  Execute a command, echoing it as it does so.
+verbose(){
+	twiddle
+	echo ""		>>$REPORT 2>&1
+	echo $PROMPT $*		>>$REPORT 2>&1
+	eval $*		>>$REPORT 2>&1
+	echo ""		>>$REPORT 2>&1
+}
+
+#  Indenting version of the above verbose function.
+verbosei(){
+	twiddle
+	echo ""		>>$REPORT 2>&1
+	echo "    " $PROMPT $*		>>$REPORT 2>&1
+	(eval $*		| sed -e "s/^/     /" )>>$REPORT 2>&1
+	echo ""		>>$REPORT 2>&1
+}
+
+#  Head version of the above verbose function.
+verbosehead(){
+	twiddle
+	echo ""		>>$REPORT 2>&1
+	echo $PROMPT $*		>>$REPORT 2>&1
+	eval $* 2>&1 | head -100		>>$REPORT 2>&1
+	echo ""		>>$REPORT 2>&1
+}
+
+#  Show a file, with title and verbose echoing of the cat command.
+showfiles(){
+for file in $*; do
+	echo "------------------- $file -------------------" >>$REPORT 2>&1
+	if [ -d $file -o -c $file -o -b $file -o -p $file ]; then
+		verbose /bin/ls -l $file
+		echo $TAG "$file is a directory, char special, block special or pipe.">>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	elif [ -r $file ]; then
+		verbose /bin/ls -l $file
+		verbose /bin/cat $file
+	elif [ -f $file ]; then
+		verbose /bin/ls -l $file
+		echo $file is not readable >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	else
+		echo $file does not exist >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	fi
+done
+}
+
+#  Indenting version of the above showfiles function.
+showifiles(){
+for file in $*; do
+	echo "     ------------------- $file -------------------" >>$REPORT 2>&1
+	if [ -d $file -o -c $file -o -b $file -o -p $file ]; then
+		verbosei /bin/ls -l $file
+		echo $TAG  "     $file is a directory, char special, block special or pipe.">>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	elif [ -r $file ]; then
+		verbosei /bin/ls -l $file
+		verbosei /bin/cat $file
+	elif [ -f $file ]; then
+		verbosei /bin/ls -l $file
+		echo "     " $file is not readable >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	else
+		echo "     " $file does not exist >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	fi
+done
+}
+
+#  Show at least $HOW_MANY_LINES lines of a group of files
+showenuf(){
+ENUF=0
+REM=$HOW_MANY_LINES
+for file in $*; do
+	echo "------------------- $file -------------------" >>$REPORT 2>&1
+	if [ -d $file -o -c $file -o -b $file -o -p $file ]; then
+		verbose /bin/ls -l $file
+		echo $TAG "$file is a directory, char special, block special or pipe.">>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	elif [ -r $file ]; then
+		verbose /bin/ls -l $file
+		if [ ! -s $file ]; then
+			echo $file is zero length >>$REPORT 2>&1
+			echo ""		>>$REPORT 2>&1
+		elif [ `/usr/bin/file $file | /bin/grep -c text` -eq 0 ]; then
+			echo $file is not a text file >>$REPORT 2>&1
+			echo ""		>>$REPORT 2>&1
+		else
+			ENUF=`/usr/bin/tail -$REM $file | /usr/bin/wc | cut -c1-8`
+			verbose /usr/bin/tail -$REM $file
+			if [ $ENUF -ge $REM ]; then
+				return
+			else
+				REM=`expr $REM - $ENUF`
+			fi
+		fi
+	elif [ -f $file ]; then
+		verbose /bin/ls -l $file
+		echo $file is not readable >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	else
+		echo $file does not exist >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	fi
+done
+}
+
+#  Show just the last $HOW_MANY_LINES lines of a file
+showtails(){
+for file in $*; do
+	echo "------------------- $file -------------------" >>$REPORT 2>&1
+	if [ -d $file -o -c $file -o -b $file -o -p $file ]; then
+		verbose /bin/ls -l $file
+		echo $TAG "$file is a directory, char special, block special or pipe.">>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	elif [ -r $file ]; then
+		verbose /bin/ls -l $file
+		if [ ! -s $file ]; then
+			echo $file is zero length >>$REPORT 2>&1
+			echo ""		>>$REPORT 2>&1
+		elif [ `/usr/bin/file $file | /bin/grep -c text` -eq 0 ]; then
+			echo $file is not a text file >>$REPORT 2>&1
+			echo ""		>>$REPORT 2>&1
+		else
+			verbose /usr/bin/tail -$HOW_MANY_LINES $file
+		fi
+	elif [ -f $file ]; then
+		verbose /bin/ls -l $file
+		echo $file is not readable >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	else
+		echo $file does not exist >>$REPORT 2>&1
+		echo ""		>>$REPORT 2>&1
+	fi
+done
+}
+
+#  End of function definitions
+
+#  Generate the report
+echo
+if [ $TGZ = "ON" ]; then
+	echo "Report name:     $REPORT.tar.gz"
+	echo "Lines per file:  $HOW_MANY_LINES"
+	echo "Output format:   tar.gz (default) Use -u for unarchived/uncompressed."
+else
+	echo "Report name:     $REPORT"
+	echo "Lines per file:  $HOW_MANY_LINES"
+	echo "Output format:   unarchived/uncompressed"
+fi
+
+/bin/rm -f $REPORT
+echo "SAM-QFS Software Support Report" >$REPORT
+echo " " >>$REPORT
+echo "Run at `/bin/date`" >>$REPORT
+echo "Run at `/bin/date -u`" >>$REPORT
+echo " " >>$REPORT
+echo "Run on `/bin/uname -n` by `/usr/bin/id`" >>$REPORT
+echo " " >>$REPORT
+
+#  Find the log file locations in the various configuration files
+if [ -f $ETCDIR/defaults.conf ]; then
+	if [ -r $ETCDIR/defaults.conf ]; then
+		# Strip out leading space/tab combinations
+		# Strip out comment lines
+		# Strip out "log = LOG_"
+		# Strip out trailing space/tab/comment combinations
+		# Test: "  log           = LOG_LOCAL6  # LOCAL7 already used for T3"
+		LOGIS=`grep LOCAL $ETCDIR/defaults.conf | sed -e "s/^[ 	]*//g" | grep -v "^#" | sed -e "s/^.*LOG_//" | sed -e "s/[ 	].*//g"`
+		if [ x$LOGIS = x ]; then
+			LOGIS=local7
+		fi
+	else
+		rerun_as_root $ETCDIR/defaults.conf
+		LOGIS=local7
+	fi
+else
+	LOGIS=local7
+fi
+
+#  Get the samfs log file.
+#  Skip non-sam entries with patterns like "local1,...,local7.none".
+
+if [ -f /etc/syslog.conf ]; then
+	if [ -r /etc/syslog.conf ]; then
+		# We decided to use the first possible entry, versus the last.
+		SAMLL=`grep -i $LOGIS /etc/syslog.conf | grep -v "#" | grep -iv $LOGIS'[^;]*.none' | head -1`
+		# Verify that there's a tab character in the line.
+		# Watch out for invisible tab character in following line!
+		SAMLM=`echo "$SAMLL" | grep "	"`
+		if [ "X" = "X$SAMLM" ]; then
+			echo $TAG /etc/syslog.conf entry for SAM-QFS missing tab >> $REPORT 2>&1
+			echo " " >> $REPORT 2>&1
+			# Sometimes there will be a second entry defined properly,
+			# so try the first entry with spaces versus tabs.
+			# Strip out leading/trailing comma sections.
+			# Test: "local7.debug  ifdef(`LOGHOST', /var/log/sam-log, @loghost)"
+			SAMLOG=`echo "$SAMLL" | sed -e "s/^.* //" -e "s/, *@.*//" -e "s/.*, *//" -e "1q"`
+		else
+			# Watch out for invisible tab character in following line!
+			# Strip out leading/trailing comma sections.
+			# Test: "local7.debug  ifdef(`LOGHOST', /var/log/sam-log, @loghost)"
+			SAMLOG=`echo "$SAMLL" | sed -e "s/^.*	//" -e "s/, *@.*//" -e "s/.*, *//" -e "1q"`
+		fi
+	else
+		rerun_as_root /etc/syslog.conf
+		SAMLOG=""
+	fi
+else
+	SAMLOG=""
+fi
+
+#  Beware - archiver.cmd et al. allow "#" anywhere to start a comment.
+#  Strip anything starting with "#" to the end of the line.
+
+if [ -f $ETCDIR/archiver.cmd ]; then
+	if [ -r $ETCDIR/archiver.cmd ]; then
+		ARCHLOGS=`sed -e "/#/s/#.*//" < $ETCDIR/archiver.cmd|grep "logfile.*="| sed -e "/logfile/,/logfile/s/^.*= *//"`
+	else
+		rerun_as_root $ETCDIR/archiver.cmd
+		ARCHLOGS=""
+	fi
+else
+	ARCHLOGS=""
+fi
+
+if [ -f $ETCDIR/recycler.cmd ]; then
+	if [ -r $ETCDIR/recycler.cmd ]; then
+		RECYLOGS=`sed -e "/#/s/#.*//" < $ETCDIR/recycler.cmd|grep "logfile.*=" | sed -e "/logfile/,/logfile/s/^.*= *//"`
+	else
+		rerun_as_root $ETCDIR/recycler.cmd
+		RECYLOGS=""
+	fi
+else
+	RECYLOGS=""
+fi
+
+if [ -f $ETCDIR/nrecycler.cmd ]; then
+	if [ -r $ETCDIR/nrecycler.cmd ]; then
+		NRECYLOGS=`sed -e "/#/s/#.*//" < $ETCDIR/nrecycler.cmd|grep "logfile.*=" | sed -e "/logfile/,/logfile/s/^.*= *//"`
+	else
+		rerun_as_root $ETCDIR/nrecycler.cmd
+		NRECYLOGS=""
+	fi
+else
+	NRECYLOGS=""
+fi
+
+
+if [ -f $ETCDIR/releaser.cmd ]; then
+	if [ -r $ETCDIR/releaser.cmd ]; then
+		RELELOGS=`sed -e "/#/s/#.*//" < $ETCDIR/releaser.cmd|grep "logfile.*="| sed -e "/logfile/,/logfile/s/^.*= *//"`
+	else
+		rerun_as_root $ETCDIR/releaser.cmd
+		RELELOGS=$VARDIR/releaser.log
+	fi
+else
+	RELELOGS=$VARDIR/releaser.log
+fi
+
+if [ -f $ETCDIR/stager.cmd ]; then
+	if [ -r $ETCDIR/stager.cmd ]; then
+		STAGLOGS=`sed -e "/#/s/#.*//" < $ETCDIR/stager.cmd|grep "logfile.*="| sed -e "/logfile/,/logfile/s/logfile *= *//" -e "s/ .*$//"`
+	else
+		rerun_as_root $ETCDIR/stager.cmd
+		STAGLOGS=""
+	fi
+else
+	STAGLOGS=""
+fi
+
+#  These log files' locations are fixed
+DEVLOGS=$VARDIR/devlog/*
+
+#  These data directory locations are fixed
+ARCHDATA="$VARDIR/archiver"
+STAGDATA="$VARDIR/stager"
+
+#  Find the trace files.
+
+/usr/lib/fs/samfs/sam-fsd -v 2>/dev/null | awk '
+	BEGIN {
+		flag = 0;
+	}
+	/Trace file controls/ {
+		flag = 1;
+	}
+	{
+		if (flag == 1) {
+			print $0;
+		}
+	}' > $TMPTRC
+
+#settrace AML  sam-amld
+#settrace ARCH sam-archiverd
+#settrace CAT  sam-catserverd
+settrace FSD  sam-fsd
+#settrace RCY  sam-recycler
+#settrace NRCY sam-nrecycler
+#settrace RFT  sam-rftd
+settrace SHFS sam-sharefsd
+#settrace STG  sam-stagerd
+#settrace SVR  sam-serverd
+#settrace CLI  sam-clientd
+#settrace MGMT fsmgmt
+
+/bin/rm $TMPTRC
+
+#  Make sure we're running as root.   Although most things will work,
+#  without being root, we should warn the user that the report is
+#  incomplete.
+
+USERID=`/usr/bin/id | sed -e "s/^[^=]*=//" -e "s/(.*//"`
+if [ $USERID -ne 0 ] ; then
+	echo " "
+	echo "Warning:  This script should be run as 'root'."
+	echo " "
+	echo "    But, since you have started it as uid ${USERID}, it will make the"
+	echo "    best effort it can.  The output report will be missing some"
+	echo "    important pieces of information, and you will probably see some"
+	echo "    error messages while this script is running.  If you have access"
+	echo "    to root, you should re-run this script as root."
+	echo " "
+	echo $TAG NOT RUN AS ROOT >> $REPORT 2>&1
+	echo $TAG NOT RUN AS ROOT >> $REPORT 2>&1
+	echo $TAG NOT RUN AS ROOT >> $REPORT 2>&1
+	echo " " >> $REPORT 2>&1
+fi
+
+echo "This report generated into: $REPORT"   >>$REPORT
+echo ""   >>$REPORT 2>&1
+
+echo "syslogd facility code:      $LOGIS"    >>$REPORT
+echo ""   >>$REPORT 2>&1
+
+echo "SAM-QFS Log:                $SAMLOG"   >>$REPORT
+#echo "AMLD Trace:                 $AMLTRC"   >>$REPORT
+#echo "Archiver Logs:              $ARCHLOGS" >>$REPORT
+#echo "Archiver Trace:             $ARCHTRC"  >>$REPORT
+#echo "Archiver Data:              $ARCHDATA" >>$REPORT
+#echo "Catalog Trace:              $CATTRC"   >>$REPORT
+#echo "Device Logs:                $DEVLOGS"  >>$REPORT
+echo "FSD Trace:                  $FSDTRC"   >>$REPORT
+#echo "Recycler Logs:              $RECYLOGS" >>$REPORT
+#echo "New recycler Logs:          $NRECYLOGS" >>$REPORT
+#echo "Recycler Trace:             $RCYTRC"   >>$REPORT
+#echo "New recycler Trace:         $NRCYTRC"  >>$REPORT
+#echo "Releaser Logs:              $RELELOGS" >>$REPORT
+#echo "RFTD Trace:                 $RFTTRC"   >>$REPORT
+echo "Share FS Trace:             $SHFSTRC"  >>$REPORT
+#echo "Stager Logs:                $STAGLOGS" >>$REPORT
+#echo "Stager Trace:               $STGTRC"   >>$REPORT
+#echo "Stager Data:                $STAGDATA" >>$REPORT
+#echo "Remote Server Trace:        $SVRTRC"   >>$REPORT
+#echo "Remote Client Trace:        $CLITRC"   >>$REPORT
+#echo "Mgmt Server Trace:          $MGMTTRC"  >>$REPORT
+echo ""   >>$REPORT 2>&1
+
+echo "------------------- locale --------------------------" >>$REPORT
+verbose /usr/bin/locale
+LC_ALL=$LOCALE
+export LC_ALL
+
+echo "------------------- boot time -----------------------" >>$REPORT
+verbose /usr/bin/who -b
+
+echo "------------------- uptime --------------------------" >>$REPORT
+verbose /usr/bin/uptime
+
+echo "------------------- uname ---------------------------" >>$REPORT
+verbose /bin/uname -a
+
+if [ -e /etc/redhat-release ]; then
+	showfiles /etc/redhat-release
+fi
+if [ -e /etc/SuSE-release ]; then
+	showfiles /etc/SuSE-release
+fi
+
+echo "------------------- fsmgr diagnostic report ---------" >>$REPORT
+#  Start the SAM-QFS Manager diagnostic report in the background.
+#  The output is saved to file $TMPFSMGR.  This is not configurable.
+echo "" >>$REPORT 2>&1
+if [ -x /opt/SUNWfsmgr/bin/fsmgr_report ]; then
+	echo Generating fsmgr diagnostic report file >>$REPORT 2>&1
+	echo $OUTFSMGRLOG >>$REPORT 2>&1
+	/opt/SUNWfsmgr/bin/fsmgr_report > /dev/null 2>&1 &
+else
+	echo fsmgr diagnostic report is not available >>$REPORT 2>&1
+fi
+echo "" >>$REPORT 2>&1
+
+echo "------------------- package info --------------------" >>$REPORT
+
+echo "" >> $REPORT
+echo "SUNWqfs package information" >> $REPORT
+rpm -qi SUNWqfs >>$REPORT
+echo "" >> $REPORT
+rpm -ql SUNWqfs >>$REPORT
+echo "" >> $REPORT
+rpm -qi SUNWqfs_kernel >>$REPORT
+echo "" >> $REPORT
+rpm -ql SUNWqfs_kernel >>$REPORT
+echo "" >> $REPORT
+echo "SUNWopen package information" >> $REPORT
+rpm -qi SUNWopen >>$REPORT
+echo "" >> $REPORT
+rpm -ql SUNWopen >>$REPORT
+echo "" >> $REPORT
+rpm -qi SUNWopen_kernel >>$REPORT
+echo "" >> $REPORT
+rpm -ql SUNWopen_kernel >>$REPORT
+echo "" >> $REPORT
+
+showfiles /opt/SUNWsamfs/include/version.h
+
+echo "------------------- kernel info ---------------------" >>$REPORT
+echo ""                                      >>$REPORT 2>&1
+/sbin/lsmod           >>$REPORT 2>&1
+cat /proc/version >>$REPORT
+echo "" >> $REPORT
+echo "CPUs:" >> $REPORT
+cat /proc/cpuinfo >>$REPORT
+echo "" >> $REPORT
+echo "Memory:" >> $REPORT
+cat /proc/meminfo >>$REPORT
+echo "" >> $REPORT
+
+showfiles $VARDIR/install_log
+echo "" >> $REPORT
+
+
+echo "------------------- driver output -------------------" >>$REPORT
+echo ""   >>$REPORT 2>&1
+/bin/grep Driver /var/log/messages* 2>&1 | head -10 >>$REPORT 2>&1
+echo ""   >>$REPORT 2>&1
+
+echo "------------------- mdadm failover info --------------" >>$REPORT
+echo ""   >>$REPORT 2>&1
+if [ -x /sbin/mdadm ]; then
+	for i in `cat $ETCDIR/mcf | /bin/awk '{print $1}' | grep "^\/dev\/md"`; do
+		/sbin/mdadm -D $i >>$REPORT 2>&1
+	done
+else
+	echo "/sbin/mdadm does not exist" >>$REPORT 2>&1
+fi
+echo ""   >>$REPORT 2>&1
+
+echo "------------------- ls -lR /opt/SUNWsamfs ------------" >>$REPORT
+verbose /bin/ls -lR  /opt/SUNWsamfs
+verbose /bin/ls -lL  /opt/SUNWsamfs
+for FILE in `ls -1 /opt/SUNWsamfs 2>/dev/null | grep -v "^jre$"`; do
+	verbose /bin/ls -lRL /opt/SUNWsamfs/$FILE
+done
+
+echo "------------------- $ETCDIR directory ---------------" >>$REPORT
+verbose /bin/ls -ld  $ETCDIR
+verbose /bin/ls -lLd  $ETCDIR
+verbose /bin/ls -l  $ETCDIR
+verbose /bin/ls -lL $ETCDIR
+
+echo "------------------- $VARDIR directory ---------------" >>$REPORT
+verbose /bin/ls -ld  $VARDIR
+verbose /bin/ls -lLd  $VARDIR
+verbose /bin/ls -l  $VARDIR
+verbose /bin/ls -lL $VARDIR
+
+showfiles $ETCDIR/mcf
+showfiles $ETCDIR/hosts*
+showfiles $ETCDIR/defaults.conf
+#showfiles $ETCDIR/diskvols.conf
+#showfiles $ETCDIR/inquiry.conf
+#showfiles $ETCDIR/archiver.cmd
+#showfiles $ETCDIR/preview.cmd
+#showfiles $ETCDIR/recycler.cmd
+#showfiles $ETCDIR/nrecycler.cmd
+#showfiles $ETCDIR/releaser.cmd
+#showfiles $ETCDIR/rft.cmd
+#showfiles $ETCDIR/samfs.cmd
+#showfiles $ETCDIR/stager.cmd
+#showfiles $ETCDIR/mount.sh
+#showfiles $CUSTDIR/archiver.sh
+#showfiles $CUSTDIR/dev_down.sh
+#showfiles $CUSTDIR/load_notify.sh
+#showfiles $CUSTDIR/log_rotate.sh
+#showfiles $CUSTDIR/recover.sh
+#showfiles $CUSTDIR/recycler.sh
+#showfiles $CUSTDIR/nrecycler.sh
+#showfiles $CUSTDIR/restore.sh
+#showfiles $CUSTDIR/save_core.sh
+#showfiles $CUSTDIR/ssi.sh
+#showfiles $CUSTDIR/stageback.sh
+#showfiles $CUSTDIR/tarback.sh
+showfiles /etc/syslog.conf
+showfiles /kernel/drv/samst.conf
+showfiles /kernel/drv/st.conf
+showfiles /kernel/drv/fp.conf
+showfiles /kernel/drv/fcp.conf
+showfiles /kernel/drv/jni.conf
+showfiles /kernel/drv/qla*.conf
+showfiles /kernel/drv/qlc.conf
+showfiles /usr/kernel/drv/dst.conf
+showfiles /etc/driver_classes
+showfiles /etc/driver_aliases
+showfiles /etc/mdadm.conf
+showfiles /etc/modules.conf
+showfiles /etc/modprobe.conf
+showfiles /etc/system
+
+#echo "------------------- samset --------------------------" >>$REPORT
+#echo ""   >>$REPORT 2>&1
+#verbose /opt/SUNWsamfs/sbin/samset
+#echo ""   >>$REPORT 2>&1
+#verbose /opt/SUNWsamfs/sbin/samset debug
+#echo ""   >>$REPORT 2>&1
+#verbose /opt/SUNWsamfs/sbin/samset devlog all
+
+echo "------------------- hostid --------------------------" >>$REPORT
+echo ""   >>$REPORT 2>&1
+echo "hostid is `/usr/bin/hostid`" >>$REPORT 2>&1
+echo ""   >>$REPORT 2>&1
+
+#echo "------------------- license info ---------------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd l
+#showfiles $ETCDIR/LICENSE.*
+
+echo "------------------- jre info ------------------------" >>$REPORT
+if [ -r /opt/SUNWsamfs/jre/bin/jre -a -x /opt/SUNWsamfs/jre/bin/jre ]; then
+	verbose "/opt/SUNWsamfs/jre/bin/jre -v 2>&1 | grep -i Version"
+else
+	echo ""   >>$REPORT 2>&1
+fi
+
+echo "------------------- network info --------------------" >>$REPORT
+verbose /sbin/ifconfig -a
+verbose /bin/grep rpc      /etc/nsswitch.conf
+verbose /bin/grep services /etc/nsswitch.conf
+verbose /bin/grep sam      /etc/rpc
+verbose "/usr/bin/ypcat rpc      | grep sam"
+verbose /bin/grep sam      /etc/services
+#verbose /bin/grep sam      /etc/yp/src/services
+verbose "/usr/bin/ypcat services | grep sam"
+#showfiles /etc/hostname*
+showfiles /etc/hosts
+#showfiles /etc/inet/ipnodes
+showfiles /etc/services
+showfiles /etc/nsswitch.conf
+
+echo "------------------- ipcs info -----------------------" >>$REPORT
+verbose /usr/bin/ipcs -a
+
+echo "------------------- SANergy info --------------------" >>$REPORT
+verbose '/bin/ls -l /opt/SANergy/lib /opt/SANergy/lib/sparcv9 /opt/SANergy/lib/amd64'
+verbose '/bin/ls -Ll /opt/SANergy/lib /opt/SANergy/lib/sparcv9 /opt/SANergy/lib/amd64'
+
+echo "------------------- group entry ---------------------" >>$REPORT
+verbose /bin/ls -l /etc/group
+verbose /bin/ls -Ll /etc/group
+verbose /bin/grep SAM_FS /etc/group
+verbose /usr/bin/ypmatch SAM_FS group
+
+#showfiles /var/spool/cron/tabs/root
+
+showenuf /var/log/messages\*
+
+if [ "x$SAMLOG" = x ]; then
+	echo $TAG " No sam log file defined."  >>$REPORT
+else
+	showenuf $SAMLOG\*
+fi
+
+for FILES in $FSDTRC $SHFSTRC
+do
+	showtails $FILES
+done
+
+#showtails $VARDIR/.grau/graulog*
+#showtails $TMPDIR/.grau
+
+echo "------------------- samtrace ------------------------" >>$REPORT
+echo "" >>$REPORT 2>&1
+echo Generating samtrace output file >>$REPORT 2>&1
+echo "/opt/SUNWsamfs/sbin/samtrace -f -v > $OUTSAMTRACE" >>$REPORT 2>&1
+/opt/SUNWsamfs/sbin/samtrace -f -v > $TMPSAMTRACE 2>&1
+/bin/rm -f $OUTSAMTRACE
+if [ -r $TMPSAMTRACE ]; then
+	/bin/mv $TMPSAMTRACE $OUTSAMTRACE
+	verbose head -$SAMTRACE_LINES $OUTSAMTRACE
+else
+	echo $TAG Error generating samtrace output file >>$REPORT 2>&1
+fi
+/bin/rm -f $TMPSAMTRACE
+
+echo "------------------- sam-fsd information -------------" >>$REPORT
+verbose /usr/lib/fs/samfs/sam-fsd -v
+
+echo "------------------- filesystem information ----------" >>$REPORT
+# Background this command so it doesn't hang the script
+# on file system problems.
+echo ""     >>$REPORT 2>&1
+echo "    " $PROMPT /bin/df -kl >>$REPORT 2>&1
+/bin/df -kl > $TMPBGDF 2>&1 &
+sleep 5
+twiddle
+sleep 5
+if [ -s $TMPBGDF ]; then
+	cat $TMPBGDF | sed -e "s/^/     /"  >>$REPORT 2>&1
+else
+	echo "     $TAG /bin/df -kl timed out" >>$REPORT 2>&1
+fi
+echo ""     >>$REPORT 2>&1
+/bin/rm -f $TMPBGDF
+
+showifiles /etc/mtab /etc/fstab /etc/inittab
+
+# accumulate samfs filesystem mount points
+SAMFSMP=`sed -e "/#/s/#.*//" < /etc/fstab | /bin/awk '$3 == "samfs" { print $2 " "}'`
+
+# accumulate samfs filesystem names
+SAMFSES=`sed -e "/#/s/#.*//" < /etc/fstab | /bin/awk '$3 == "samfs" { print $1 " "}'`
+
+echo "------------------- filesystem inodes ---------------" >>$REPORT
+# Background this command so it doesn't hang the script
+# on file system problems.
+for dir in $SAMFSMP; do
+	echo ""     >>$REPORT 2>&1
+	echo $PROMPT /bin/ls -al $dir/.inodes >>$REPORT 2>&1
+	/bin/ls -al $dir/.inodes > $TMPBGINO 2>&1 &
+	sleep 5
+	twiddle
+	if [ -s $TMPBGINO ]; then
+		cat $TMPBGINO >>$REPORT 2>&1
+	else
+		echo "$TAG /bin/ls -al $dir/.inodes timed out" >>$REPORT 2>&1
+	fi
+	echo ""     >>$REPORT 2>&1
+	/bin/rm -f $TMPBGINO
+done
+
+#echo "------------------- filesystem info -----------------" >>$REPORT
+#for fs in $SAMFSES; do
+#	verbose /opt/SUNWsamfs/sbin/samfsinfo $fs
+#done
+
+#echo "------------------- shared filesystem info ----------" >>$REPORT
+#for fs in $SAMFSES; do
+#	if [ `mount -v | grep "type samfs" | cut -d" " -f1 | egrep -c "^$fs$"` -eq 0 ]; then
+#		verbose /opt/SUNWsamfs/sbin/samsharefs -R $fs
+#	else
+#		verbose /opt/SUNWsamfs/sbin/samsharefs $fs
+#	fi
+#done
+
+#echo "------------------- filesystem parameters -----------" >>$REPORT
+#for SAMFS in $SAMFSMP; do
+#	verbose /opt/SUNWsamfs/sbin/samcmd N $SAMFS
+#done
+
+#echo "" >>$REPORT 2>&1
+#echo "------------------- samu filesystems info -----------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd f
+
+#echo "------------------- samu shared clients info --------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd g
+
+#echo "------------------- samu daemon trace info ----------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd d
+
+#echo "------------------- samu mass storage info ----------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd m
+
+#echo "------------------- samu active services ------------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd P
+
+#echo "------------------- samu device status info ---------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd s
+
+#echo "------------------- samu removable media info -------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd r
+
+#echo "------------------- samu preview info ---------------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd p
+
+#echo "------------------- samu pending stage queue --------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd w
+
+#echo "------------------- samu staging queue info ---------" >>$REPORT
+#verbosehead /opt/SUNWsamfs/sbin/samcmd u
+
+#echo "------------------- samu staging activity info ------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd n
+
+#echo "------------------- samu archiver info --------------" >>$REPORT
+#for SAMFS in $SAMFSES; do
+#	verbose /opt/SUNWsamfs/sbin/samcmd a $SAMFS
+#done
+
+#echo "------------------- archiver -lv --------------------" >>$REPORT
+#echo "" >>$REPORT 2>&1
+#verbose /bin/grep wait $ETCDIR/archiver.cmd
+#verbose /opt/SUNWsamfs/sbin/archiver -lv
+#echo "" >>$REPORT 2>&1
+
+#echo "------------------- showqueue -v --------------------" >>$REPORT
+#echo "" >>$REPORT 2>&1
+#echo Generating showqueue output file >>$REPORT 2>&1
+#echo "/opt/SUNWsamfs/sbin/showqueue -v > $OUTSHOWQUEUE" >>$REPORT 2>&1
+#/opt/SUNWsamfs/sbin/showqueue -v > $TMPSHOWQUEUE 2>&1
+#/bin/rm -f $OUTSHOWQUEUE
+#if [ -r $TMPSHOWQUEUE ]; then
+#	/bin/mv $TMPSHOWQUEUE $OUTSHOWQUEUE
+#	verbose head -$SHOWQUEUE_LINES $OUTSHOWQUEUE
+#else
+#	echo $TAG Error generating showqueue output file >>$REPORT 2>&1
+#fi
+#/bin/rm -f $TMPSHOWQUEUE
+
+#echo "------------------- kernel statistics ---------------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd K
+
+#echo "------------------- disk archiving dictionary ------" >>$REPORT
+#verbose /opt/SUNWsamfs/sbin/samcmd D
+
+echo "------------------- ps -edalf -----------------------" >>$REPORT
+verbose ps -edalf
+
+if [ -e /usr/bin/iostat ]; then
+	echo "------------------- iostat --------------------------" >>$REPORT
+	verbose "/usr/bin/iostat"
+fi
+
+if [ -e /usr/bin/mpstat ]; then
+	echo "------------------- mpstat --------------------------" >>$REPORT
+	verbose "/usr/bin/mpstat"
+fi
+
+#echo "------------------- kstat ---------------------------" >>$REPORT
+#verbose "/bin/kstat -n cpu_info0"
+
+#echo "------------------- prstat --------------------------" >>$REPORT
+#verbose /usr/bin/prstat 1 1
+
+#echo "------------------- prtconf -------------------------" >>$REPORT
+#verbose /usr/sbin/prtconf -V
+#verbose /usr/sbin/prtconf
+
+#echo "------------------- shared memory -------------------" >>$REPORT
+#echo "" >>$REPORT 2>&1
+#echo Generating shared memory data file >>$REPORT 2>&1
+#echo "/opt/SUNWsamfs/sbin/dmpshm > $OUTDMPSHM" >>$REPORT 2>&1
+#echo "" >>$REPORT 2>&1
+#/opt/SUNWsamfs/sbin/dmpshm > $TMPDMPSHM 2>&1
+#/bin/rm -f $OUTDMPSHM
+#if [ -r $TMPDMPSHM ]; then
+#	/bin/mv $TMPDMPSHM $OUTDMPSHM
+#else
+#	echo $TAG Error generating shared memory data file >>$REPORT 2>&1
+#fi
+#/bin/rm -f $TMPDMPSHM
+
+#echo "------------------- archiver datadir ----------------" >>$REPORT
+#verbose /bin/ls -ld $ARCHDATA
+#verbose /bin/ls -lLd $ARCHDATA
+#verbose /bin/ls -lLa $ARCHDATA
+
+#if [ -d $ARCHDATA ]; then
+#	if [ -r $ARCHDATA -a -x $ARCHDATA ]; then
+#		echo Generating archiver data file >>$REPORT 2>&1
+#		echo $OUTARCHIVERTAR >>$REPORT 2>&1
+#		echo "" >>$REPORT 2>&1
+#		(
+#			cd $VARDIR
+#			/bin/find archiver \( -name "*core*" -o -name "*log*" -o -name "*trace*" \) -print 2>/dev/null > $TMPEXCLUDE
+#			/bin/tar cfhX $TMPTARBALL $TMPEXCLUDE archiver
+#		) >>$REPORT 2>&1
+#		/bin/rm -f $OUTARCHIVERTAR
+#		if [ -r $TMPTARBALL ]; then
+#			/bin/mv $TMPTARBALL $OUTARCHIVERTAR
+#		else
+#			echo $TAG Error generating archiver data file >>$REPORT 2>&1
+#		fi
+#		/bin/rm -f $TMPEXCLUDE $TMPTARBALL
+#	else
+#		rerun_as_root $ARCHDATA
+#	fi
+#fi
+
+#echo "------------------- stager datadir ----------------" >>$REPORT
+#verbose /bin/ls -ld $STAGDATA
+#verbose /bin/ls -lLd $STAGDATA
+#verbose /bin/ls -lLa $STAGDATA
+
+#if [ -d $STAGDATA ]; then
+#	if [ -r $STAGDATA -a -x $STAGDATA ]; then
+#		echo Generating stager data file >>$REPORT 2>&1
+#		echo $OUTSTAGERTAR >>$REPORT 2>&1
+#		echo "" >>$REPORT 2>&1
+#		(
+#			cd $VARDIR
+#			/bin/find stager \( -name "*core*" -o -name "*log*" -o -name "*trace*" \) -print 2>/dev/null > $TMPEXCLUDE
+#			/bin/tar cfhX $TMPTARBALL $TMPEXCLUDE stager
+#		) >>$REPORT 2>&1
+#		/bin/rm -f $OUTSTAGERTAR
+#		if [ -r $TMPTARBALL ]; then
+#			/bin/mv $TMPTARBALL $OUTSTAGERTAR
+#		else
+#			echo $TAG Error generating stager data file >>$REPORT 2>&1
+#		fi
+#		/bin/rm -f $TMPEXCLUDE $TMPTARBALL
+#	else
+#		rerun_as_root $STAGDATA
+#	fi
+#fi
+
+#echo "------------------- dump_log ------------------------" >>$REPORT
+#verbose /bin/ls -l $VARDIR/amld/fs*log
+#echo /opt/SUNWsamfs/sbin/dump_log >>$REPORT 2>&1
+#/opt/SUNWsamfs/sbin/dump_log >>$REPORT 2>&1
+
+echo "------------------- core files ----------------------" >>$REPORT
+echo "" >>$REPORT 2>&1
+
+ONLINE_CORE_FILES=""
+for DIR in $ETCDIR $VARDIR $USERDIR $EXECDIR; do
+
+	CORE_FILES=""
+	if [ -d $DIR ]; then
+		if [ -r $DIR -a -x $DIR ]; then
+			echo "CORE_FILES=/usr/bin/find $DIR -follow -name \"core*\" -type f -print" >>$REPORT
+			CORE_FILES=`/usr//bin/find $DIR -follow -name "core*" -type f -print`
+			for file in $CORE_FILES; do
+				verbose "/bin/ls -tlLd $file; /usr/bin/file $file"
+			done
+		else
+			rerun_as_root $DIR
+		fi
+	else
+		echo $TAG missing $DIR >>$REPORT 2>&1
+	fi
+
+	if [ x"$CORE_FILES" != x ]; then
+		ONLINE_CORE_FILES="$ONLINE_CORE_FILES $CORE_FILES"
+	else
+		echo "" >>$REPORT 2>&1
+	fi
+
+done
+
+if [ -f /core ]; then
+	verbose "/bin/ls -tlLd /core; /usr/bin/file /core"
+	ONLINE_CORE_FILES="$ONLINE_CORE_FILES /core"
+fi
+
+echo "------------------- core file stack tracebacks ------" >>$REPORT
+if [ $USERID -eq 0 ]; then
+	for CORE in $ONLINE_CORE_FILES; do
+		verbose "/usr/bin/pstack $CORE; /usr/bin/pflags $CORE"
+	done
+else
+	rerun_as_root pstack
+fi
+
+echo "" >>$REPORT 2>&1
+echo "End at `/bin/date` on `/bin/uname -n` by `/usr/bin/id`" >>$REPORT
+echo " " >>$REPORT
+echo "------------------- THE END -------------------------" >>$REPORT
+echo " "
+echo " "
+
+if [ -s $TMPFSMGR ]; then
+	cp $TMPFSMGR $OUTFSMGRLOG
+fi
+
+echo " "
+echo "The following files should now be ftp'ed to your support provider"
+echo "as ftp type binary."
+echo " "
+
+#
+# Use the following syntax for the report name in order to echo
+# any unspecified dot slash for the path.
+#
+if [ $TGZ = "ON" ]; then
+	echo "${REPORTDIR}/${REPORTNAME}.tar.gz"
+else
+	echo "${REPORTDIR}/${REPORTNAME}"
+fi
+chmod 444 ${REPORTDIR}/${REPORTNAME}
+
+TARFILES=$REPORTNAME
+for file in $OUTFSMGRLOG $OUTDMPSHM $OUTSAMTRACE $OUTSHOWQUEUE $OUTARCHIVERTAR $OUTSTAGERTAR; do
+	if [ -s $file ]; then
+		if [ $TGZ = "ON" ]; then
+			TARFILES="$TARFILES `basename $file`"
+		else
+			echo "$file"
+		fi
+		chmod 444 $file
+	fi
+done
+echo " "
+
+if [ $TGZ = "ON" ]; then
+	(
+		cd $REPORTDIR
+		/bin/tar cf ${REPORTNAME}.tar $TARFILES 2>/dev/null
+		chmod 555 ${REPORTNAME}.tar
+		/bin/rm -f $TARFILES
+		/bin/gzip ${REPORTNAME}.tar
+	)
+fi
+
+if [ x"$ONLINE_CORE_FILES" != x ]; then
+	echo "This script found the following core files.  Please ftp them as"
+	echo "binary files to your support provider only if they appear to be"
+	echo "from the SAM-QFS product."
+	echo " "
+	for file in $ONLINE_CORE_FILES; do
+		/usr/bin/file $file | sed -e "s/:.*,/ :/" ; /bin/ls -tlLd $file
+		echo
+	done
+fi

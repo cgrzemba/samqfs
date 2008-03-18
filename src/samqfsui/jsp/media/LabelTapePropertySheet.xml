@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: LabelTapePropertySheet.xml,v 1.11 2008/03/17 14:40:36 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="labeltape1" defaultValue="">
+    <property span="true">
+	<label name="typeLabel" defaultValue="LabelTape.psheet1"
+            Id="typeId" labelFor="typeValue" />
+        <cc name="typeValue"
+            tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag" >
+            <option label="LabelTape.type1" value="LabelTape.type1" />
+            <option label="LabelTape.type2" value="LabelTape.type2" />
+        </cc>
+	<fieldhelp name="labelinlinehelp" 
+	    defaultValue="LabelTape.labelrelabel" />
+    </property>
+
+    <property>
+        <cc name="spacer"
+            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag" >
+            <attribute name="width" value="5"/>
+            <attribute name="height" value="3"/>
+        </cc>
+    </property>
+
+    <property span="true" required="true">
+	<label name="nameLabel" defaultValue="LabelTape.psheet2"
+            Id="nameId" labelFor="nameValue" />
+        <cc name="nameValue"
+            tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+            <attribute name="onKeyPress"
+                value="if (event.keyCode == 13) return false" />
+            <attribute name="maxLength" value="6" />
+	</cc>
+	<fieldhelp name="vsnHelp" defaultValue="VSNSearch.helptext" />
+    </property>
+
+    <property>
+        <cc name="spacer"
+            tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag" >
+            <attribute name="width" value="5"/>
+            <attribute name="height" value="3"/>
+        </cc>
+    </property>
+
+    <property span="true">
+        <label name="sizeLabel" defaultValue="LabelTape.psheet3"
+            Id="sizeId" labelFor="sizeValue" />
+        <cc name="sizeValue"
+            tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
+            <option label="LabelTape.size1" value="16" />
+            <option label="LabelTape.size2" value="32" />
+            <option label="LabelTape.size3" value="64" />
+            <option label="LabelTape.size4" value="128" />
+            <option label="LabelTape.size5" value="256" />
+            <option label="LabelTape.size6" value="512" />
+            <option label="LabelTape.size7" value="1024" />
+        </cc>
+    </property>
+    </section>
+</propertysheet>

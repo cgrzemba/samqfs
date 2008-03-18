@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE pagetitle SYSTEM "tags/dtd/pagetitle.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: VSNDetailsPageTitle.xml,v 1.21 2008/03/17 14:40:37 am143972 Exp $ -->
+
+<pagetitle >
+    <pageactions>
+        <cc name="LabelPageActionButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="defaultValue"
+                value="VSNDetails.PageActionButton1" />
+            <attribute name="disabled" value="true" />
+            <attribute name="onClick"
+                value="
+                    launchPopup(
+                        '/media/LabelTape',
+                        'labeltape',
+                        getServerKey(),
+                        SIZE_NORMAL,
+                        '&amp;SAMQFS_LIBRARY_NAME=' + getLibraryName() +
+                        '&amp;SAMQFS_SLOT_NUMBER=' + getSlotNumber());
+                    return false;
+            "/>
+        </cc>
+
+        <cc name="SamQFSWizardReserveButton"
+            tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
+            <attribute name="disabled" value="true" />
+            <attribute name="defaultValue"
+                value="VSNDetails.PageActionButton2" />
+        </cc>
+
+        <cc name="UnreservePageActionButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="disabled" value="true" />
+            <attribute name="onClick" value="
+                if (!showConfirmMsg(0)) return false;" />
+            <attribute name="defaultValue"
+                value="VSNDetails.PageActionButton3" />
+        </cc>
+
+        <cc name="EditVSNPageActionButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="disabled" value="true" />
+            <attribute name="defaultValue"
+                value="VSNDetails.PageActionButton4" />
+            <attribute name="onClick"
+                value="
+                    launchPopup(
+                        '/media/EditVSN',
+                        'editvsn',
+                        getServerKey(),
+                        SIZE_NORMAL,
+                        '&amp;SAMQFS_LIBRARY_NAME=' + getLibraryName() +
+                        '&amp;SAMQFS_SLOT_NUMBER=' + getSlotNumber());
+                    return false;
+                "/>
+        </cc>
+
+        <cc name="PageActionMenu"
+            tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+            <attribute name="commandChild" value="PageActionMenuHref" />
+            <attribute name="dynamic" value="true" />
+            <attribute name="type" value="jump"/>
+            <attribute name="onChange"
+                value="
+                    var item = getDropDownSelectedItem(this);
+                    if (item == 3) {
+                        if (!showConfirmMsg(1)) {
+                            resetDropDownMenu(this);
+                            return false;
+                        }
+                    }
+                "/>
+            <option label="VSNDetails.PageActionOption.title" value="0" />
+            <option label="VSNDetails.PageActionOption.audit" value="1" />
+            <option label="VSNDetails.PageActionOption.load" value="2" />
+            <option label="VSNDetails.PageActionOption.export" value="3" />
+        </cc>
+    </pageactions>
+</pagetitle>

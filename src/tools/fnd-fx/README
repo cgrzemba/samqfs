@@ -1,0 +1,187 @@
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+                     The fnd.c and fx.c programs.
+
+
+                              FND
+                              FND
+                              FND
+
+FND uses the archiver log(s).  They must be presented to fnd in
+chronological order:  the first line in the file must be the oldest
+archive log entry.
+
+Once you've gotten all the archiver logs together in one file (say, in
+archiver.log), run:
+
+     ./fnd < archiver.log > report
+
+to produce the report file "report."  report looks like:
+
+bilbo 98> ./fnd < archiver.log
+ 
+At line 6373:
+A 1998/04/20 20:00:04 d3 ST0113 timeX.2 4a4117c1.1 samfs1 140545.1 1239071 time/XJ/1995/284/BLUE.XJ.1995.284
+Offset decremented!  d3:ST0113 was 4a4117c1.3401(size 2304073), now 4a4117c1.1
+A 1998/04/20 20:00:04 d3 ST0113 timeX.2 4a4117c1.4597 samfs1 140545.1 1239071 time/XJ/1995/284/BLUE.XJ.1995.284
+echo "time/XJ/1995/284/BLUE.XJ.1995.284 2 0x4a4117c1 0 0x4597" | fx
+ 
+
+"At line" identifies the line number in the input file where the error
+occurred.
+
+The next line is the line as read from the input file.
+
+The third line contains the error message.  The messages are detailed
+below.
+
+Next comes the corrected archiver log, for your visual examination.
+
+Finally, the last line contains a unix command line you can execute to
+repair the problem.  The arguments for fx are described below in the
+"fx" section.
+
+                              THE POSSIBLE MESSAGES
+                              THE POSSIBLE MESSAGES
+                              THE POSSIBLE MESSAGES
+
+o   Line doesn't have 11 fields.  Skipping
+
+    Each input line is expected to have 11 fields.  Whenever the
+    archiver archives a filesystem's root directory, it fails to use
+    "." as the pathname.  Instead it has "".    The line is skipped.
+
+o   Malformed offset.position, missing '.':%s
+
+    The offset.position value lacked a period.  The line is skipped.
+
+o   Too many vsns: %d
+
+    The compiled in limit on the number of VSNs was reached.  The 
+    program exits.
+
+o   Position decremented!  %s was %llx.%llx(size %lld), now %llx.%llx
+    This error cannot be corrected.
+
+    The position number on the current line is less than the position
+    of the last-seen line for this VSN.  This probably indicates that
+    the VSN was relabeled.  The error cannot be corrected because the
+    tape itself is "corrupt".  (This error can be suppressed by not
+    giving the -r option.  STK tapes generate spurious errors of this
+    type because of their use of the high-order bit as a "wrap" indicator)
+
+o   This file also bad.
+
+    The position of this file is the same as the previous file on this
+    VSN, but that file had an offset overflow problem.  So, this file
+    is also bad.  
+
+o   Offset duplicated!  %s was %llx.%llx(size %lld), now %llx.%llx
+
+    The position.offset of this file is identical to the position.offset
+    of the previous file on this VSN.
+
+o   Offset decremented!  %s was %llx.%llx(size %lld), now %llx.%llx
+
+    This is the error that this program was written to detect.  It
+    occurs when the offset field overflows, giving the appearance that
+    this file's offset is smaller than the previous file's.
+
+
+                                 FND OPTIONS
+                                 FND OPTIONS
+                                 FND OPTIONS
+
+There are two options to fnd:
+
+    -f  Only display the first error for each position value.  This
+        suppresses the "This file also bad." errors.
+
+    -r  Enable the "Position decremented!" errors.  Some tapes, like d2,
+        seem to frequently have positions which begin with "ffffffff".
+        These confuse the comparison logic.  By default the test is
+        disabled, but to do a through job, this option should be selected.
+
+                                     FX
+                                     FX
+                                     FX
+
+fx (fix) is the program which repairs the inodes which fnd finds have
+incorrect offset values.
+
+fx reads lines from standard input.  Each line describes one repair.
+The fields on these lines are:
+
+     filename     (relative to current directory)
+     copy number  (1-4)
+     position_u   (upper 32 bits of position)
+     position     (lower 32 bits of position)
+     offset       (offset)
+
+The numbers can be in any base:   decimal   0octal   -or-  0xhex
+
+Note that, before running fs, you must "cd" to the filesystem which
+you'll be modifying.
+
+The program works by simulating a samfsdump/samfsrestore sequence on
+each file.  The filename is used to get the id, the id is used to get
+the full inode (using IDSTAT), the file is removed, the fields of the
+inode are modified according to the arguments, and a samfsrestore is 
+done, recreating the file, now with the correct values.
+
+Example:
+
+bilbo# cd /sam1
+bilbo# ls
+dir0        dir3        dir6        dir9        filec       filef
+dir1        dir4        dir7        filea       filed       fileg
+dir2        dir5        dir8        fileb       filee       lost+found
+bilbo# sls -D filed
+filed:
+  mode: -rw-rw----  links:   1  owner: tds       group: sam     
+  length: 1073741988  inode:       20
+  offline;
+  copy 1: ---- May 12 11:22         4.68825b lt T0
+  access:      May  8 17:59  modification: May  5 16:38
+  changed:     May  5 16:46  attributes:   May  5 16:38
+  creation:    May  5 16:38  residence:    May  5 16:38
+ 
+bilbo# /home/tds/IRIS2/fx 
+filed 1 0 4 0x88825b
+Name filed Copy 1 Position 0 4 Offset 8946267
+bilbo# sls -D filed
+filed:
+  mode: -rw-rw----  links:   1  owner: tds       group: sam     
+  length: 1073741988  inode:       20
+  offline;
+  copy 1: ---- May 12 11:22         4.88825b lt T0
+  access:      May  8 17:59  modification: May  5 16:38
+  changed:     May  5 16:46  attributes:   May  5 16:38
+  creation:    May  5 16:38  residence:    May  5 16:38
+
+
+                                 ###

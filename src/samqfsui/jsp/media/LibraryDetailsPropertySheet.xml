@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: LibraryDetailsPropertySheet.xml,v 1.14 2008/03/17 14:40:36 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="details" defaultValue="">
+        <property>
+            &lt;table>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet1" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="vendorValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet2" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="productValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet3" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="eqValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet6" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="capacityValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet7" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="freespaceValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet8" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="spaceconsumedValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet11" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="typeValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet12" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="AlarmsHref"
+                        tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+                           <attribute name="submitFormData" value="true" />
+                           <cc name="Alarm"
+                           tagclass="com.sun.web.ui.taglib.alarm.CCAlarmTag"/>
+                    </cc>
+                    <cc name="noAlarm"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet13" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="devicesValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet4" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="firmwareValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.serialnumber" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="serialValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                &lt;/td>
+                &lt;td>
+                &lt;/td>
+                &lt;td>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet5" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td colspan="9">
+                    <cc name="catalogValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                        <attribute name="escape" value="false" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet15" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td colspan="9">
+                    <cc name="statusInfoValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                        <attribute name="escape" value="false" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="LibraryDetails.psheet14" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td colspan="9">
+                    <cc name="statusMsgValue"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                        <attribute name="escape" value="false" />
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;/table>
+        </property>
+    </section>
+</propertysheet>

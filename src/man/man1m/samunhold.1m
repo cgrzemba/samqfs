@@ -1,0 +1,99 @@
+'\" t
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH samunhold 1M "22 Feb 2001"
+.SH NAME
+samunhold \- Releases SANergy file holds
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/samunhold\fR
+\fImntpoint\fR
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsamunhold\fR command can be used to release SANergy file holds.
+These holds can be detected when attempts are made to unmount a file
+system with the \fBumount\fR(1M) command.  If holds are present,
+the \fBumount\fR(1M) command generates log messages such as the
+following:
+.PP
+.ft CO
+Inode XXXX: held by SAN, refcnt = N
+.ft
+.PP
+SANergy File Sharing uses the following two types of leases,
+both of which require holds:
+.TP 2
+\(bu
+Read leases, which typically expire within a few seconds.
+.TP
+\(bu
+Write leases, which can extend for as long as an hour.
+.PP
+It is preferable to allow SANergy File Sharing to clean up the leases,
+but in
+an emergency, or in case of a SANergy File Sharing system
+failure, the administrator
+can use the \fBsamunhold\fR command to avoid a reboot.
+.PP
+The \fBsamunhold\fR command
+should only be run when SANergy File Sharing has held inodes
+and is preventing a file system from being unmounted.
+Prior to executing this command, the administrator
+should ensure the following:
+.TP 2
+\(bu
+There are no SANergy applications running on any
+client, possibly including the server itself.
+.TP
+\(bu
+The file system in question is not fused on any SANergy clients.
+.TP
+\(bu
+The file system is not NFS mounted.
+.SH OPTIONS
+The \fBsamunhold\fR command
+releases all held inodes (files) on the file system whose root
+directory is the named \fImntpoint\fR argument.
+The \fBsamunhold\fR command must be run as root.
+.SH EXAMPLES
+The following example shows the \fBsamunhold\fR command:
+.PP
+.nf
+.ft CO
+bilbo# samunhold /sam1
+bilbo# umount /sam1
+.ft
+.fi
+.SH SEE ALSO
+\fBumount\fR(1M).
+

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: CriteriaDetailsPropertySheet.xml,v 1.6 2008/03/17 14:40:30 am143972 Exp $                                                                -->
+
+<propertysheet>
+<section name="FileMatchCriteria" 
+         defaultValue="archiving.matchcriteria.section.title">
+
+<property span="true" required="true">
+&lt;table style="width:100%">
+&lt;tr> &lt;td style="width:25%" nowrap="nowrap">
+<cc name="StartingDirLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.startingdir.colon"/>
+    <attribute name="elementName" value="StartingDir"/>
+    <attribute name="showRequired" value="true"/>
+</cc>
+
+&lt;/td> &lt;td style="width:75%" nowrap="nowrap"> 
+<cc name="StartingDir"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+
+<property span="true">
+&lt;table style="width:100%" cellspacing="10">
+&lt;tr> &lt;td nowrap="nowrap">
+<cc name="NamePatternLabel" 
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.namepattern.colon"/>
+    <attribute name="elementName" value="NamePattern"/>
+</cc>
+
+&lt;/td> &lt;td  nowrap="nowrap">
+<cc name="NamePattern"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td  nowrap="nowrap">
+<cc name="MinimumSizeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.minimumsize.colon"/>
+    <attribute name="elementName" value="MinimumSize"/>
+</cc>
+
+&lt;/td> &lt;td  nowrap="nowrap">
+<cc name="MinimumSize"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+<cc name="MinimumSizeUnits"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td  nowrap="nowrap">
+<cc name="OwnerLabel" 
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.owner.colon"/>
+    <attribute name="elementName" value="Owner"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="Owner"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="MaximumSizeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.maximumsize.colon"/>
+    <attribute name="elementName" value="MaximumSize"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="MaximumSize"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+<cc name="MaximumSizeUnits"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td nowrap="nowrap">
+<cc name="GroupLabel" 
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.group.colon"/>
+    <attribute name="elementName" value="Group"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="Group"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="AccessAgeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.accessage.colon"/>
+    <attribute name="elementName" value="AccessAge"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="AccessAge"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+<cc name="AccessAgeUnits"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+</section>
+
+<section name="StagerReleaser"
+         defaultValue="archiving.stagerreleaser.section.title">
+
+<property span="true">
+&lt;table style="width:100%">
+&lt;tr> &lt;td nowrap="nowrap">
+<cc name="StagingLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.staging"/>
+    <attribute name="elementName" value="Staging"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="Staging"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="ReleasingLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.releasing"/>
+    <attribute name="elementName" value="Releasing"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="Releasing"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+</section>
+
+</propertysheet>

@@ -1,0 +1,921 @@
+.\" $Revision: 1.92 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH mount_samfs 1M "18 Jul 2006"
+.SH NAME
+mount_samfs \- Mounts a Sun StorEdge QFS or \%SAM-QFS file system
+.SH SYNOPSIS
+\fBmount\fR
+\fB\-F\ samfs\fR
+[\fIgeneric_options\fR]
+[\fB\-o\ \fIFSType_specific_options\fR]
+\fIspecial\fR |\0 \fImount_point\fR
+.PP
+\fBmount\fR
+\fB\-F\ samfs\fR
+[\fIgeneric_options\fR]
+[\fB\-o\ \fIFSType_specific_options\fR]
+\fIspecial\fR
+\fImount_point\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBmount\fR command attaches
+a file system to
+the file
+system hierarchy at the specified \fImount_point\fR,
+which is the path name of a directory.
+This man page describes how to mount a Sun StorEdge QFS
+or \%SAM-QFS file system, and it explains the unique options
+that can be used when mounting these file systems.
+.PP
+If the first form of the command is used, which specifies either
+a \fIspecial\fR or a \fImount_point\fR but not both,
+the \fBmount\fR command searches the \fB/etc/vfstab\fR file
+and fills in missing arguments, including
+the \fIFSType_specific_options\fR.
+The \fBmount\fR(1M) command also searches
+the \fB/etc/opt/SUNWsamfs/samfs.cmd\fR file for mount options.
+.PP
+For more information on the \fBmount\fR(1M) command,
+see the \fBmount\fR(1M) man page.
+For more information on the \fB/etc/opt/SUNWsamfs/samfs.cmd\fR file,
+see the \fBsamfs.cmd\fR(4) man page.
+.PP
+.SH OPTIONS
+.TP 10
+\fB\-F\ samfs\fR
+Specifies that the file system being mounted is of type \fBsamfs\fR.
+This is a required option if you are mounting a Sun StorEdge QFS
+or a \%SAM-QFS file system.  These file systems are all
+type \fBsamfs\fR.
+.TP
+\fIgeneric_options\fR
+One or more generic Solaris file system options.  For a list of
+possible \fIgeneric_options\fR, see the \fBmount\fR(1M) man page.
+.TP
+\fB\-o\ \%\fIFSType_specific_options\fR
+A list of mount options specific to file systems of type \fBsamfs\fR.
+If specifying multiple options, separate each option with a comma
+and no intervening spaces.
+For the list of possible \%\fB\-o\ \%\fIFSType_specific_options\fR,
+see one or more of the following headings on this man page:
+.RS 10
+.TP 3
+\(bu
+Miscellaneous Tuning Options
+.TP
+\(bu
+I/O Options
+.TP 3
+\(bu
+Storage and Archive Management Options
+.TP
+\(bu
+Shared File System Options
+.TP
+\(bu
+Multireader File System Options
+.TP
+\(bu
+Sun StorEdge QFS and \%SAM-QFS Options
+.RE
+.PP
+.RS 10
+If no \fIFSType_specific_options\fR are specified, the
+the file system is mounted as a read/write file system.
+.PP
+If invalid options are specified, a warning message
+is generated and the invalid options are disregarded.
+.PP
+NOTE: If running the Sun StorEdge QFS software on a Linux
+client, the available mount options are very limited. The
+following mount options are the ONLY ones available on a
+Linux client system: rw, ro, retry, shared, rdlease, wrlease,
+aplease, minallocsz, maxallocsz, min_pool, meta_timeo, noauto,
+and auto.
+.PP
+The noauto and auto options are only recognized within the
+\fB/etc/fstab\fR file and min_pool only in the \fBsamfs.cmd\fR file.
+The maximum value for meta_timeo is 60.
+.RE
+.PP
+.TP 10
+\fIspecial\fR
+The Family Set Name from the Sun StorEdge QFS
+ or \%SAM-QFS master configuration file (\fBmcf\fR).
+For more information on this file, see the
+\fBmcf\fR(4) man page.
+.TP
+\fImount_point\fR
+The path name or directory at which the file system is to be mounted.
+If the \fImount_point\fR
+has any contents prior to the \fBmount\fR
+operation, these are hidden until the file system is unmounted.
+.SH MISCELLANEOUS OPTIONS
+The following options can be used when mounting a Sun StorEdge QFS
+or \%SAM-QFS file system.
+These options can affect file system features and system performance.
+.TP 10
+\fBnosam\fR |\0 \fBsam\fR
+The \fBnosam\fR option mounts a
+\%SAM-QFS file system, but only the file system
+functionality is enabled.  The archiving, releasing, and
+staging functionality is disabled.  When a file system
+is mounted with this option, the file system
+returns \fBENOSPC\fR when it reaches 100% capacity.
+.sp
+Note that mounting a file system with the \fBnosam\fR
+option offers no data protection for newly created files
+or for previously archived files that have been modified.
+The default is \fBsam\fR.
+.TP 10
+\fBnoarscan\fR |\0 \fBarscan\fR
+The \fBnoarscan\fR option disables file system scans,
+typically performed by the \fBsam-arfind\fR daemon, for
+finding archive candidates on a mounted file system.
+This mount option can be useful for file systems in which
+new files are no longer being created yet staging and
+releasing are still desired.
+The default is \fBarscan\fR.
+.TP 10
+\fBnosuid\fR
+Mounts the file system with \fBsetuid\fR execution disallowed.
+By default, the file system mounts with \fBsetuid\fR execution allowed.
+.TP 10
+\fBnotrace\fR |\0 \fBtrace\fR
+The \fBnotrace\fR option disables file system tracing.
+The \fBtrace\fR option enables file system tracing.
+The default is \fBtrace\fR.
+.TP 10
+\fBnoquota\fR |\0 \fBquota\fR
+The \fBnoquota\fR option disables file system quotas.
+The \fBquota\fR option enables file system quotas,
+provided that at least one file system quota file is present.
+The default is \fBquota\fR.
+For more information on quotas, see the
+\fISun StorEdge QFS Configuration and Administration
+ Guide\fR.
+.TP 10
+\fBstripe=\fIn\fR
+Sets the stripe width for the file system to \fIn\fP disk
+allocation units (DAUs).  The stripe width means the \fIn\fR * DAU bytes
+are written to one data device logical equipment number (LUN)
+before switching to the next
+LUN.
+The DAU size is set on the \fBsammkfs\fR(1M) command's \fB\-a\fR option
+when the file system is initialized.
+For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 255.
+If \fIn\fR=0, files are round robined on each slice.
+.sp
+The default \fIn\fR on file systems with an \fBms\fR Equipment Type and
+on file systems with an \fIma\fR Equipment Type with no
+striped group (\fBg\fIx\fR) components is as follows:
+.PP
+.RS 10
+.TP 3
+\(bu
+128 kilobytes/DAU for DAUs < 128 kilobytes
+.TP 3
+\(bu
+1 for DAUs \(>= 128 kilobytes
+.RE
+.PP
+.RS 10
+By default, \fIn\fR=0 on a Sun StorEdge QFS shared file system.
+By default, \fIn\fR=0 on file systems with an \fBma\fR
+Equipment Type with any striped group (\fBg\fIx\fR) components.
+.sp
+NOTE:  The system sets \fBstripe=0\fR if mismatched
+striped groups exist.
+.sp
+For more information on file system types,
+see the \fBmcf\fR(4)\fR man page.
+.RE
+.TP 10
+\fBsync_meta=\fIn\fR
+Specifies whether or not the metadata is written
+to the disk every time it changes, as follows:
+.PP
+.RS 10
+.TP 3
+\(bu
+If \fBsync_meta=0\fR, metadata is held in a buffer before being written
+to disk.  This delayed write delivers higher performance.
+This is the default for
+Sun StorEdge QFS and \%SAM-QFS file systems that are
+not mounted as multireader file systems or as Sun StorEdge QFS shared file
+systems.
+.TP
+\(bu
+If \fBsync_meta=1\fR, metadata is written  to disk every time it
+changes.  This slows performance, but it ensures data consistency.
+This is the default for Sun StorEdge QFS file systems that are
+mounted as multireader file systems or as Sun StorEdge QFS shared file
+systems.  In a Sun StorEdge QFS shared file system,
+this is the setting that must
+be in effect if failover capability is required.
+.RE
+.TP 10
+\fBworm_capable\fR
+\fBThe worm_capable option allows Write Once Read Many (WORM) files to
+be stored in SAM-QFS filesystems.  Enabling this feature allows the WORM flag
+to be set on files and directories. Once the WORM flag is set, a file's
+data and path are immutable and the file can not be deleted until its
+retention period expires.  In addition, the volume on which the WORM
+file resides can not be deleted using sammkfs.  The SAM-QFS WORM package
+(SUNWsamfswm) must be installed to use this feature.
+.TP 10
+\fBworm_lite\fR
+\fBThe worm_lite option is similar to the worm_capable mount option but
+eases the restrictions regarding actions that can be taken on WORM-enabled
+volumes and retained files.  WORM lite enabled volumes can be deleted
+using sammkfs.  Retained files can be removed before their retention
+period expires and their retention period can be shortened (must have
+root privileges).  File data and path remain immutable.  The SAM-QFS
+WORM package (SUNWsamfswm) must be installed to use this feature.
+.TP 10
+\fBworm_emul\fR
+\fBThe worm_emul option is similar to the worm_capable mount option and
+enables WORM "Emulation mode".  The difference with this option is
+the trigger used to retain files is the transition from a writable to
+read-only file.  File data and path are immutable after appying the WORM
+trigger.  A file retained in this mode can not be deleted until it's
+retention period expires.  Volumes containing WORM emulation mode files
+can not be deleted using sammkfs.   The SAM-QFS WORM package (SUNWsamfswm)
+must be installed to use this feature.
+.TP 10
+\fBemul_lite\fR
+\fBThe emul_lite option is similar to the worm_capable mount option and
+enables WORM "Emulation Lite mode".  The trigger to retain files is
+the transition from a writable to read-only file.  Retained files can be
+removed before their retention period expires and their retention period
+can be shortened (must have root privileges).  Data and path changes to a
+file are immutable after applying the trigger.  Emulation lite enabled
+volumes can be deleted using sammkfs. The SAM-QFS WORM package (SUNWsamfswm)
+must be installed to use this feature.
+.TP 10
+\fBdef_retention=\fIn\fR
+\fBdef_retention option sets the default retention period.
+This option requires the SAM-QFS WORM package (SUNWsamfswm) be installed
+and a WORM mount option enabled.  This option sets the default retention
+period for files which have the WORM feature enabled with no supplied
+retention period.  The retention period can take three forms.
+A value of \fIpermanent\fR (or \fI0\fR)specifies permanent retention.
+A value of the form \fIM\fRy\fIN\fRd\fIO\fRh\fIP\fRm where
+\fIM\fR, \fIN\fR, \fIO\fR, \fIP\fR are arbitrary non-negative integers;
+y, d, h, m specify the number of years, days, hours, and minute(s)
+respectively.
+Note that combinations of this form are allowed, and specifiers may
+be omitted, e.g., \fI5y\fR, \fI3d1h\fR, \fI4m\fR.
+The final form is a simple integer value in minutes
+for \fIn\fR, an integer 1 \(<= \fIn\fR \(<= \fB2147483647\fR (231 - 1).
+If this option is not supplied, a 30 day (43,200 minute) default
+retention period is used.  The SAM-QFS WORM package (SUNWsamfswm) must
+be installed to use this feature.
+.TP
+\fBrd_ino_buf_size=\fIn\fR
+\fBrd_ino_buf_size\fR sets the size of buffer to \fIn\fR. This is the
+buffer which is used to read the .inodes file into buffer cache.
+For \fIn\fR, specify an integer such that 1024 \(<= \fIn\fR \(<= 16384.
+\fIn\fR is in units of bytes and rounded down to the nearest power of 2.
+The default is 16384 bytes.
+.TP
+\fBwr_ino_buf_size=\fIn\fR
+\fBwr_ino_buf_size\fR sets the size of the buffer to \fIn\fR.  This is
+the buffer which is used to synchronously write an inode through to the disk.
+For \fIn\fR, specify an integer such that
+512 \(<= \fIn\fR \(<= \fBrd_ino_buf_size\fR.
+\fIn\fR is in units of bytes and rounded down to the nearest power of 2.
+The default is 512 bytes.
+.RE
+.PP
+.SH I/O OPTIONS
+The following options are available for Sun StorEdge QFS and SAM-QFS
+file systems.
+They allow changing the type of I/O for a file
+based on I/O size and history.  Note that if direct I/O
+is specified for a file, these options are ignored
+and all I/O to regular files is direct, if possible.
+Well-aligned I/O occurs when the file offset falls on a 512-byte
+boundary and when the length of the I/O transfer is at least 512 bytes.
+.TP 10
+\fBdio_rd_consec=\fIn\fR
+Sets the number of consecutive I/O transfers with a buffer size greater
+than the specified lower limit (which is \fBdio_rd_form_min\fR
+for aligned reads or \fBdio_rd_ill_min\fR for misaligned reads) to
+\fIn\fR operations.
+By default, \fIn\fR=0, which means that no default direct reads occur
+based on I/O sizes.
+Also, by default, \fBdio_rd_form_min\fR and \fBdio_rd_ill_min\fR
+are ignored.
+.TP
+\fBdio_rd_form_min=\fIn\fR
+Sets the read well-aligned lower limit to \fIn\fR 1024-byte blocks.
+By default, \fIn\fR=256, 1024-byte blocks.
+If \fIn\fR=0, automatic I/O type switching for well-aligned reads
+is disabled.
+.TP
+\fBdio_rd_ill_min=\fIn\fR
+Sets the read misaligned lower limit to \fIn\fR 1024-byte blocks.
+By default, \fIn\fR=0, which disables automatic
+I/O type switching for misaligned reads.
+.TP
+\fBdio_wr_consec=\fIn\fR
+Sets the number of consecutive I/O transfers with a buffer size
+above the specified lower limit (which is \fBdio_wr_form_min\fR
+for aligned writes or \fBdio_wr_ill_min\fR for misaligned writes)
+to \fIn\fR operations.
+By default, \fIn\fR=0, which means that no default direct writes occur
+based on I/O sizes.
+Also, by default, \fBdio_wr_form_min\fR and \fBdio_wr_ill_min\fR
+are ignored.
+.TP
+\fBdio_wr_form_min=\fIn\fR
+Sets the write well-aligned lower limit to \fIn\fR 1024-byte blocks.
+By default, \fIn\fR=256 1024-byte blocks.
+Setting \fIn\fR=0 disables automatic I/O type switching for
+well-aligned writes.
+.TP
+\fBdio_wr_ill_min=\fIn\fR
+Sets the write misaligned lower limit to \fIn\fR 1024-byte blocks.
+By default, \fIn\fR=0, which disables automatic
+I/O type switching for misaligned writes.
+.TP
+\fBatime=\fI \fI-1 |\0 0 |\01\fR
+The file system is mounted by default with cached access time recording
+(\fBatime = 0\fR). This means access time updates to disk are
+deferred for up to 1 minute after the file is last accesssed.
+Note, the file access time is immediately updated on disk if SAM
+is enabled and the space used is above the low water mark
+or when the access time coincides with updates to the ctime or mtime.
+See stat(2). The access time is also updated when the
+the file system is unmounted.
+If \fBatime = 1\fR, the file system will always update access time on disk.
+If \fBatime = -1\fR, the file system will not update
+access time except when it coincides with updates to the ctime or mtime.
+See stat(2).  The \fBatime = -1\fR option reduces disk activity on file
+systems where access times are unimportant (for example, a Usenet news spool).
+Note, \fBatime = -1\fR, should not be set when SAM is enabled.
+.sp
+The POSIX standard requires that access times be marked on files.
+Note, for \fBatime = 0\fR (the default),
+the current access time may not be updated on disk in case
+of an interruption.
+.TP
+\fBnoatime\fR
+The \fBnoatime\fR is added to be compatible with other file systems.
+If \fBnoatime\fR is specified, atime = -1 will be set. This means
+the file system will not update access time except when it coincides
+with updates to the ctime or mtime.  See stat(2).
+Note, \fBnoatime\fR, should not be set when SAM is enabled.
+.TP
+\fBforcedirectio\fR
+Specifies direct I/O as the default I/O mode.
+This means that data is transferred directly between the user's
+buffer and disk.
+The \fBforcedirectio\fR option should be specified only if
+the file system is used for large block aligned sequential I/O.
+For more information, see the \fBdirectio\fR(3C), \fBsetfa\fR(1),
+\fBsam_setfa\fR(3), and \fBsam_advise\fR(3) man pages.
+The default I/O mode is buffered (uses the page cache).
+.TP
+\fBnodio_szero\fR |\0 \fBdio_szero\fR
+The \fBdio_szero\fR option causes uninitialized areas of sparse
+files written with direct I/O to be zeroed when the area is accessed.
+This makes the sparse file behavior the same as that for paged I/O.
+By default, sparse files written by direct I/O do not have the
+uninitialized areas zeroed for performance reasons.
+The default is \fBnodio_szero\fR.
+.TP
+\fBforce_nfs_async\fR
+Causes the file system to cache nfs data written to the server even if nfs
+has requested that the data be written synchronously through to disk.
+The \fBforce_nfs_async\fR option is only useful if
+the file system is mounted as a nfs server and the clients
+have set the nfs mount option \fBnoac\fR.  The default nfs \fBnoac\fR
+behavior without \fBforce_nfs_async\fR causes data to be
+synchronously written through to disk. Caution, the \fBforce_nfs_async\fR
+option violates the nfs protocol and should be used with care.
+Data may be lost in the event of a server interruption.
+Also, data is cached on the server and will
+not be immediately seen by all the clients if there are multiple nfs
+servers. Multiple nfs servers can be enabled with Shared QFS.
+.TP
+.BI sw_raid
+Causes the file system to align the writebehind buffer.
+This option should be set if the software raid feature of packages such
+as Solstice DiskSuite is being used on this file system.
+This option is off by default.
+.TP
+\fBreadahead=\fIn\fR
+Sets the maximum \fBreadahead\fR value to \fIn\fR.
+The \fBreadahead\fR option specifies the maximum number of bytes
+that can be read ahead by the file system.
+\fIn\fR is in units of kilobytes and must be a multiple of 8.
+For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 16777216.
+The default is 1024 (1,048,576 bytes).
+.TP
+\fBwritebehind=\fIn\fR
+Sets the maximum \fBwritebehind\fR value to \fIn\fR.
+The \fBwritebehind\fR option specifies the maximum number of bytes
+that can be written behind by the file system.
+\fIn\fR is in units of kilobytes and must be a multiple of 8.
+For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 16777216.
+The default is 512 (524,288 bytes).
+.TP
+\fBflush_behind=\fIn\fR
+Sets the maximum \fBflush_behind\fR value to \fIn\fR.
+When enabled, modified pages that are being written sequentially
+are written to disk asynchronously to help the Solaris VM layer
+keep the pages clean.
+This option sets the maximum \fBflush_behind\fR value to \fIn\fR.
+\fIn\fR is in units of kilobytes.
+For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 8192.
+The default is 0, which disables flush behind.
+.TP
+\fBwr_throttle=\fIn\fR
+Sets the maximum number of outstanding write bytes for one
+file to \fIn\fP kilobytes.
+If \fIn\fR = 0, there is no limit.
+
+The default is 2% of main memory. Using the 2% formula, given the
+main memory size on the left, the wr_throttle setting is on the right:
+.ft CO
+.nf
+	  1 GB	 20 MB
+	  4 GB	 80 MB
+	 16 GB	320 MB
+	 64 GB	1.3 GB
+.fi 
+.TP
+\fBqwrite\fR
+Enables
+simultaneous reads and writes to the same file from different threads.
+Specify this option only if users of the
+file system handle multiple simultaneous transactions to the same file.
+For example, this is useful for database applications.
+This option improves I/O performance by queuing multiple requests at
+the drive level.
+.sp
+By default, \fBqwrite\fR is not enabled, and the file system
+disables simultaneous reads and writes to the same file.
+This is the mode
+defined by the UNIX vnode interface standard that gives exclusive access
+to only one writer and forces other writers and readers to wait.
+.sp
+The \fBqwrite\fR option is disabled for NFS reads or writes of the
+file system.
+.TP 10
+\fBnoabr\fR |\0 \fBabr\fR
+For Oracle RAC with SAM-QFS AIO only.
+Disable (enable) Application Based Recovery of software mirrors.
+Applies only to SAM-QFS filesystems built on Solaris Volume Manager
+mirrored volumes that likewise support Application Based Recovery.
+Default is enabled.
+.TP 10
+\fBnodmr\fR |\0 \fBdmr\fR
+For Oracle RAC with SAM-QFS AIO only.
+Disable (enable) Directed Mirror Reads of software mirrors.
+Applies only to SAM-QFS filesystems built on Solaris Volume Manager
+mirrored volumes that likewise support directed mirror reads.
+Default is enabled.
+.SH STORAGE AND ARCHIVE MANAGEMENT OPTIONS
+The following options can be used when mounting a
+ \%SAM-QFS file system.
+These options pertain to the storage
+and archive management facilities of these file systems.
+.TP 10
+\fBhigh=\fIn\fR
+Sets the \%high-water mark for disk cache utilization to \fIn\fR
+percent.  When the amount of space used on the disk cache reaches
+\fIn\fR percent,
+the \%SAM-QFS file systems
+start the releaser process.  For more information, see the
+\fBsam-releaser\fR(1M) man page.
+The default is 80.
+.TP
+\fBlow=\fIn\fR
+Sets the \%low-water mark for disk cache utilization to \fIn\fR
+percent.  When the amount of space used on the disk cache reaches
+\fIn\fR percent, the \%SAM-QFS file system
+starts the releaser process, which stops releasing disk space.
+The default is 70.
+.TP
+\fBpartial=\fIn\fR
+Sets the default partial release size for the file system to \fIn\fR
+kilobytes.  The partial release size is used to determine how many
+bytes at the beginning of a file marked for partial release should be
+retained on disk cache when the file is released.  The user can
+override the default on a \%file-by-file
+basis by specifying a size when
+marking a file for partial release.  For more information, see
+the \fBrelease\fR(1) man page.
+.sp
+For \fIn\fR, specify an integer from 8 to whatever has been set
+for the \fBmaxpartial\fR option.
+For more information on \fBmaxpartial\fR, see the \fBmaxpartial\fR
+option in this list.
+The default is 16.
+.TP
+\fBmaxpartial=\fIn\fR
+Sets the maximum partial release size for the file system to \fIn\fR
+kilobytes.  The partial release size cannot be set larger than
+this \fBmaxpartial\fR setting.
+For \fIn\fR, specify an integer such
+that 0 \(<= \fIn\fR \(<= 2097152.
+The default is 16.
+.TP
+\fBpartial_stage=\fIn\fR
+Sets the partial stage size for the file system to \fIn\fR
+kilobytes.
+For a partial release file, this value specifies the offset in the
+file past which access results in the entire file being staged to disk.
+For \fIn\fR, specify a integer from 0 to whatever has been set for
+the \fBmaxpartial\fR option.
+The default is equal to whatever has been set for
+the \fBpartial\fR option.
+.TP
+\fBstage_n_window=\fIn\fR
+Sets the \fBstage\ \-n\fR buffer size
+for the file system to \fIn\fR kilobytes.
+This option applies to files that are read directly from the archive media.
+This attribute is set by using the
+\fBstage\fR(1) command's \%\fB-n\fR option.
+For a file with this attribute,
+this is the size that is staged in to the
+application's buffer at any one time.
+For \fIn\fR, specify an integer such
+that 64 \(<= \fIn\fR \(<= 2097152.
+The default is 256. If the total number of outstanding stage_n buffers is
+less than physical memory, the access is not NFS, and the stage_n_window is
+less than 1% physical memory, then the buffer
+is allocated in pageable memory. Otherwise, blocks are allocated for
+the buffer from the file system.
+Note, the SAM-QFS shared file system does not support
+\fBstage -n\fR from a client.
+.TP
+\fBstage_retries=\fIn\fR
+Sets the number of stage retries attempted per archive copy
+when certain errors are encountered.
+For \fIn\fR, specify a number such
+that 0 \(<= \fIn\fR \(<= 20.
+Setting \fIn\fR=0 prevents a retry from being initiated.
+The default is 3.
+.TP
+\fBstage_flush_behind=\fIn\fR
+Sets the maximum stage flush behind value to \fIn\fR kilobytes.
+Stage pages that
+are being staged are written to disk asynchronously
+to help the Solaris VM layer keep pages clean.
+For \fIn\fR, specify
+an integer such that 0 \(<= \fIn\fR \(<= 8192.
+The default is 0, which means that stage flush behind is disabled.
+.TP
+\fBhwm_archive\fR
+Invokes the archiver when
+the amount of data in the file system increases above the
+\%high-water mark.
+.SH SHARED FILE SYSTEM OPTIONS
+The following options are supported for Sun StorEdge QFS,
+Sun \%SAM-QFS, and Sun StorEdge \%SAM-FS shared file systems.
+.PP
+Both file system equipment types \fBms\fR and \fBma\fR are supported.
+For a description of the \fBma\fR and \fBms\fR file systems,
+see the \fBmcf\fR(4) man page.
+For a description of the Sun StorEdge QFS shared file system, see
+the \fISun StorEdge QFS Configuration and
+Administration Guide\fR.
+.PP
+The stripe width is set by default to round robin (using
+the \fBstripe=0\fR mount option).
+.TP 10
+\fBshared\fR
+Specifies that the file system being mounted is a Sun StorEdge QFS shared
+file system.  The \fBshared\fR option must be specified in
+the \fB/etc/vfstab\fR file because it is used in the boot initialization
+sequence.
+.TP
+\fBbg\fR
+Specifies that if the first mount attempt fails, the system
+should retry the mount in the background.
+If \fIbg\fR is not specified, the mount continues in the foreground.
+.TP
+\fBretry=\fIn\fR
+Specifies the number of times to retry the mount operation.
+For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 20000.
+By default, \fIn\fR=10000.
+.TP
+\fBminallocsz=\fIn\fR
+Sets the minimum block allocation value for the Sun StorEdge QFS
+shared file system to \fIn\fR.
+Specify \fIn\fR in units of kilobytes and as a
+multiple of 8 kilobytes.
+The \fBminallocsz\fR option specifies the minimum number of
+bytes that are allocated
+ahead of a write for a Sun StorEdge QFS shared file system.
+For \fIn\fR, specify an integer such that 16 \(<= \fIn\fR \(<= 2097152.
+By default, \fIn\fR=8 * allocation_unit (DAU).
+See \fBsammkfs\fR(1M) command's \fB\-a\fR option.
+.TP
+\fBmaxallocsz=\fIn\fR
+Sets the maximum block allocation value for
+the Sun StorEdge QFS shared file system to \fIn\fR.
+Specify \fIn\fR in units of kilobytes and as a multiple of 8
+kilobytes.
+The \fBmaxallocsz\fR option specifies the maximum number
+of bytes that are allocated
+ahead of a write for a Sun StorEdge QFS shared file system.
+For \fIn\fR, specify an integer such that 16 \(<= \fIn\fR \(<= 4194304.
+By default, \fIn\fR=128 * allocation_unit (DAU).
+See \fBsammkfs\fR(1M) command's \fB\-a\fR option.
+.TP
+\fBrdlease=\fIn\fR
+Sets the read lease time for the Sun StorEdge QFS shared
+file system to \fIn\fR seconds.
+The \fBrdlease\fR option specifies the maximum number of
+seconds that a file can be read before reacquiring the read lease.
+For \fIn\fR, specify an integer such that 15 \(<= \fIn\fR \(<= 600.
+By default, \fIn\fR=30.
+.TP
+\fBwrlease=\fIn\fR
+Sets the write lease time for the Sun StorEdge QFS
+shared file system to \fIn\fR seconds.
+Only one host can write to a file at any one time unless
+the \fBmh_write\fR option is set on the metadata server.
+If the \fBmh_write\fR option is set on the metadata server,
+multiple hosts can write to and read from the same file at the same time.
+If multiple hosts are writing, the last write is the
+one that is effective.
+The \fBwrlease\fR option specifies the maximum number of seconds
+that a file can be written before reacquiring the write lease.
+For \fIn\fR, specify an integer such that 15 \(<= \fIn\fR \(<= 600.
+By default, \fIn\fR=30.
+.TP
+\fBaplease=\fIn\fR
+Sets the append lease time for the Sun StorEdge QFS
+shared file system to \fIn\fR seconds.
+Only one host can append to a file at any one time.
+The \fBaplease\fR option
+specifies the maximum number of seconds that one host can append
+to a file before reacquiring the append lease.
+For \fIn\fR, specify an integer such that 15 \(<= \fIn\fR \(<= 600.
+By default, \fIn\fR=30.
+.TP
+\fBmh_write\fR
+Enables simultaneous reads and writes to the same file from multiple hosts.
+If mh_write is used, the Sun StorEdge QFS shared file system switches all hosts
+into directio. The application must use page aligned memory buffers
+and well formed sector I/O (512 bytes).
+Caution, if the application does not adhere to these alignment rules,
+data correctness is not guaranteed.
+
+This option is effective only on the metadata server host.
+If this option is specified when mounting the file system on
+a client host, it is ignored.  If the client host becomes the
+metadata server in the future, however, this option becomes effective.
+For this reason, it is recommended to use this mount option on the
+metadata host and all potential metadata server hosts.
+If the \fBmh_write\fR option is not specified on the metadata server,
+only one host can write at any one time to a single file.
+.TP
+\fBmin_pool=\fIn\fR
+Sets the minimum number of shared file system threads to keep around.
+The number of threads grows and shrinks dynamically based on load.
+This parameter tells the system to keep at least that many threads
+in the active pool.
+For \fIn\fR, specify an integer such that 8 \(<= \fIn\fR \(<= 2048.
+The default \fIn\fR=64.
+For Linux the default \fIn\fR=8.
+NOTE:  The \fBmin_pool\fR parameter must be set in \fBsamfs.cmd\fR file.
+It is ignored if set in the \fB/etc/vfstab\fR file or on the \fBmount\fR(1M)
+command.
+
+.TP
+\fBnstreams=\fIn\fR
+* No longer used. *
+
+.TP
+\fBmeta_timeo=\fIn\fR
+Allow attributes and directory data to be cached by a host system
+for up to \fIn\fR seconds before checking for consistency with the
+metadata server.
+The default \fIn\fR=3.
+.sp
+Example 1.  With the default setting of \fBmeta_timeo\fR=3, the
+file system verifies attribute and directory consistency with the
+metadata server at least every 3 seconds.  For instance, a new file
+created on one host may not be seen by an \fBls\fR(1) command on
+another host for up to 3 seconds.
+.sp
+Example 2.  If \fBmeta_timeo\fR=0, the file system verifies
+attribute and directory consistency with the metadata server
+before each use.  The \fBcattr\fR mount option can be used with
+\fBmeta_timeo\fR=0 to ensure that changes made by other hosts currently
+modifying a file are also immediately visible.
+.sp
+Example 3.  If \fBmeta_timeo=3\fR, with the \fBnocattr\fR mount option
+(default), the file system verifies attribute consistency if it has not
+been checked in the past 3 seconds; however, attribute changes made by a
+client host which is currently modifying a file may not be detected until
+the client lease time has expired.
+.sp
+Example 4.  If \fBmeta_timeo=3\fR, with the \fBcattr\fR mount option,
+the file system verifies attribute consistency if it has not been checked
+in the past 3 seconds, and also ensures that attribute changes made by
+other hosts are detected within that time interval.
+
+.TP
+\fBcattr\fR |\0 \fBnocattr\fR
+Enable (disable) attribute consistency checking.  If \fBcattr\fR is set,
+the file system ensures that attribute changes made by a host which is
+modifying a file are visible to other hosts within the \fBmeta_timeo\fR
+interval.  (Directories are not affected by \fBcattr\fR; directory
+modifications are always visible within the time interval set by
+\fBmeta_timeo\fR.)
+
+With the default setting of \fBnocattr\fR, attribute changes made by a
+host (in particular, file size and modification time) may not be visible
+to other hosts until the write or append lease time has expired.
+
+Note that enabling \fBcattr\fR may adversely affect performance, as
+additional network traffic is required.
+.TP
+\fBlease_timeo=\fIn\fR
+The read, write, and/or append lease for a single file is relinquished
+if it is not being used after \fIn\fR seconds.
+\fBlease_timeo\fR varies from -1 to 15 seconds.
+If \fBlease_timeo\fR is >=0, the lease is relinquished
+if it is not being used after \fIn\fR seconds.
+If \fBlease_timeo\fR is set to -1, the lease is not relinquished
+and the lease expires based on the lease time.
+Note, the read and write lease is not relinquished
+if \fBmh_write\fR is set because multiple reader/writer hosts are enabled.
+The default \fIn\fR is 0.
+.SH MULTIREADER FILE SYSTEM OPTIONS
+The following options support the single-writer, multireader file
+system.
+This file system is mounted on one host system
+as a single-writer file system that updates the file
+system.  In addition, this file system can be mounted on one or more
+host systems as a multireader file system.
+.PP
+These options can be specified only on Sun StorEdge QFS
+file systems.  The \fBwriter\fR option
+cannot be used if you are mounting the file system
+as a Sun StorEdge QFS shared file system, however, the \fBreader\fR option
+is supported. Note, \fBsync_meta\fR should be set to 1 if the
+\fBreader\fR option is used in a Sun StorEdge QFS shared file system.
+.PP
+A major difference between the multireader file system and Sun
+QFS shared file system is that the multireader host reads metadata from
+the disk, and the client hosts of a Sun StorEdge QFS shared file system
+read metadata over the network.
+.PP
+The system administrator must ensure that only one host
+in a multireader file system has the file system
+mounted with the \fBwriter\fR
+mount option enabled.
+.TP 10
+\fBwriter\fR
+Sets the file system to type writer.
+There can be only one host system that has the file system
+mounted with the \fBwriter\fR
+option at any one time.
+If \fBwriter\fR is specified, files are flushed to disk at
+close and directories are always written through to disk.
+The option \fBatime = 1\fB is set for \fBwriter\fR.
+.sp
+Prior to the 4.0 release, the \fBwriter\fR option was specified as
+the \fBshared_writer\fR option.  The older syntax is supported
+for backward compatibility.
+.TP
+\fBreader\fR
+Sets the file system to type reader.
+This mounts the file system as read only.
+There is no limit to the number of host systems that can
+have the same file system mounted with the \fBreader\fR option.
+By default, each lookup checks the inode and refreshes
+the inode pages if the inode has been modified by the writer host.
+If the \fBinvalid\fR option is set to a value greater than 0,
+the inode is checked for
+modification only after it has aged \fBinvalid\fR
+seconds after the last check; for more information, see
+the \fBinvalid\fR option.
+.sp
+Prior to the 4.0 release, the \fBreader\fR option was specified as
+the \fBshared_reader\fR option.  The older syntax is supported
+for backward compatibility.
+.TP
+\fBinvalid=\fIn\fR
+When specified in conjunction with the \fBreader\fR option,
+holds cached attributes for the multireader file system
+at least \fIn\fR
+seconds after file modification.  Caution, it is possible to
+read stale data if \fBinvalid\fR is set to a nonzero value.
+For \fIn\fR, specify an integer such that \%0\ \(<=\ \fIn\fR\ \(<=\ 60.
+By default, \fIn\fR=0.
+.sp
+Example 1.  If \fBinvalid=0\fR, which is the default,
+the file system always checks
+to see if the inode is stale.  That is, it checks to
+see if the inode has been
+changed by the writer host.
+.sp
+Example 2.  If \fBinvalid=30\fR, the
+file system checks the inode 30 seconds after the last
+check. This means that if you issue an \fBls\fR(1) command,
+you might not see a new file for 30 seconds after it has been created
+on the writer host.  This also means that if you open an existing
+file, for example with the \fBcat\fR(1) command, you might not see
+any changes made to the file on the writer host in the past 30 seconds.
+.TP
+\fBrefresh_at_eof\fR
+When specified in conjunction with the \fBreader\fR option,
+the current file size is refreshed when the read buffer exceeds the
+end of file.
+.SH SUN STOREDGE QFS OPTIONS
+The following options are supported only for Sun StorEdge QFS and \%SAM-QFS
+file systems on \fIma\fR Equipment Type file systems.
+For more information on the \fBma\fR file system Equipment Type, see the
+\fBmcf\fR(4) man page.
+.TP 10
+\fBmm_stripe=\fIn\fR
+Sets the metadata stripe width for the file system
+to \fIn\fR 16-kilobyte disk allocation
+units (DAUs).
+By default, \fBmm_stripe=1\fR,
+which writes one DAU of metadata to one LUN before switching
+to another LUN.
+If \fBmm_stripe=0\fR,
+the metadata is round robined across all available metadata LUNs.
+.SH FILES
+.TP 20
+\fB/etc/mnttab\fR
+Table of mounted file systems.
+.TP
+\fB/etc/vfstab\fR
+List of default parameters for each file system.
+.TP
+\fB/etc/opt/SUNWsamfs/samfs.cmd\fR
+List of default and global parameters for \%SAM-QFS
+file systems.  For more information, see the \fBsamfs.cmd\fR(4) man page.
+.SH SEE ALSO
+.BR release (1),
+.BR setfa (1),
+.BR ssum (1).
+.PP
+.BR mount (1M),
+.BR mountall (1M),
+.BR sam-releaser (1M),
+.BR sammkfs (1M),
+.BR umount_samfs (1M).
+.PP
+.BR mount (2).
+.PP
+.BR sam_setfa (3),
+.BR sam_advise (3),
+.BR directio (3C).
+.PP
+.BR mcf (4),
+.BR mnttab (4),
+.BR samfs.cmd(4),
+.BR vfstab (4).
+.SH NOTES
+If the directory upon which a file system is to be mounted is a
+symbolic link, the file system is mounted on
+the directory to which the symbolic link refers,
+rather than on top of the symbolic link itself.
+.PP
+The mount parameters can be provided in the \fBsamfs.cmd\fR file,
+in the \fB/etc/vfstab\fR file, and on the \fBmount\fR(1M)
+command.  Specifications in the \fB/etc/vfstab\fR file
+override the directives in the \fBsamfs.cmd\fR file,
+and options to the \fBmount\fR(1M)
+command override specifications in the \fB/etc/vfstab\fR file.

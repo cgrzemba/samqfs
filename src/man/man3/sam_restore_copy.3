@@ -1,0 +1,162 @@
+'\" t
+.\" $Revision: 1.18 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH sam_restore_copy 3 "24 Jan 2002"
+.SH NAME
+sam_restore_copy \- Creates an archive copy for a Sun StorEdge \%SAM-FS or a Sun \%SAM-QFS file
+.SH SYNOPSIS
+\fBcc\fR
+[\ \fIflag\fR\ \&.\&.\&.\ ]
+\fIfile\fR\ \&.\&.\&.
+\%\fB-L/opt/SUNWsamfs/lib\fR
+\%\fB-lsamut\ \fR[\ \fIlibrary\fR\ \&.\&.\&.\ ]
+.PP
+\fB#include "/opt/SUNWsamfs/include/stat.h"\fR
+.PP
+\fBint sam_restore_copy(const char *\fIpath\fB,
+int \fIcopy\fB,
+struct sam_stat *\fIbuf\fB,
+size_t \fIbufsize\fB,
+struct sam_section *\fIvbuf\fB,
+size_t \fIvbufsize\fB);\fR
+.SH DESCRIPTION
+The \fBsam_restore_copy()\fR library routine
+creates an archive copy for an existing Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS file.
+The file must already exist and the archive copy must not exist.
+The \fBsam_restore_copy()\fR library routine
+creates an archive copy using information supplied by the user and
+obtained from a source such as the \fBarchiver.log\fR.
+This library routine accepts the following arguments:
+.TP 10
+\fIpath\fR
+The path name to the file where the archive copy is being created.
+It may be an absolute or relative path name, but it must be no longer
+than \fBPATH_MAX\fR (see the \fB/usr/include/limits.h\fR file).
+.TP
+\fIcopy\fR
+The copy number (0, 1, 2, or 3) of the archive copy that is being created.
+.TP
+\fIbuf\fR
+A \fBsam_stat\fR structure.  See \fBsam_stat\fR(3).
+.TP
+\fIbufsize\fR
+The size of the \fIsam_stat\fR structure.  See \fBsam_stat\fR(3).
+.TP
+\fIvbuf\fR
+A \fBsam_section\fR structure for the array of VSNs if the archive
+copy overflowed volumes, that is, \fBn_vsns\fR > 1.
+If \fBn_vsns\fR = 1, \fIvbuf\fR should be set to NULL.
+See \fBsam_stat\fR(3).
+.TP
+\fIvbufsize\fR
+The size of the \fBsam_section\fR structure.
+If \fBn_vsns = 1, \fIvbufsize\fR should be set to 0.
+See \fBsam_stat\fR(3).
+.PP
+The following members in the \fBsam_stat\fR structure must exist.
+All other fields are ignored.
+.PP
+.nf
+ulong_t      st_mode      /\(** File mode (see mknod(2)) \(**/
+ulong_t      st_uid       /\(** User ID of the file's owner \(**/
+ulong_t      st_gid       /\(** Group ID of the file's owner \(**/
+u_longlong_t st_size      /\(** File size in bytes \(**/
+ulong_t      st_atime     /\(** Time of last access      \(**/
+ulong_t      st_ctime     /\(** Time of last file status change \(**/
+ulong_t      st_mtime     /\(** Time of last data modification  \(**/
+.fi
+.PP
+The following members in the \fBsam_copy_s\fR structure must exist for the copy.
+All other fields are ignored.
+.PP
+.nf
+u_longlong_t position;    /\(** Position of the file on the media. \(**/
+time_t       creation_time; /\(** Time the archive copy was created \(**/
+uint_t       offset;      /\(** Location of the copy in the archive file \(**/
+short        n_vsns;      /\(** Number of volumes used by the archive \(**/
+char         media[4];    /\(** Two character media type. \(**/
+char         vsn[32];     /\(** Volume serial name of the media volume \(**/
+.fi
+.PP
+The preceding fields have the following meaning:
+.TP 10
+\fBposition\fR
+The position of the file recorded on the media.
+.TP 10
+\fBcreation_time\fR
+This is the time that the archive was made.  If \fBcreation_time\fR
+is zero, it is set to the value of \fBtime()\fR.
+.TP
+\fBoffset\fR
+The location of the copy in the archive file in units of 512 bytes.
+.TP
+\fBn_vsns\fR
+The number of volumes that this copy spans.
+.TP
+\fBvsn\fR
+The volume serial name of the cartridge where the file resides.
+.TP
+\fBmedia\fR
+The \%two-character media type.
+For example, the media type for DLT tape is \fBlt\fR.
+See \fBmcf\fR(4).
+.SH RETURN VALUES
+Upon succesful creation of a file, a value of 0 is returned.
+Otherwise, a negative value is returned and \fBerrno\fR is set to indicate the error.
+The possible return values are:
+.nf
+.TS
+tab (%) ;
+ l l .
+-1%user is not root
+-2%invalid copy number
+-3%invalid VSN
+-4%file does not exist
+-5%file open failed
+-6%uid and gid do not match those for the existing file
+-7%invalid VSN for this copy
+-8%multiple copies but vbufsize incorrect
+-9%media type invalid
+-10%copy restore failed for some other reason
+.TE
+.fi
+.ft 3
+.SH FILES
+.TP 20
+\fB/etc/opt/SUNWsamfs/mcf
+The configuration file for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems.
+.SH "SEE ALSO"
+\fBsam_restore_file\fR(3),
+\fBsam_stat\fR(3).
+.PP
+\fBmcf\fR(4).
+

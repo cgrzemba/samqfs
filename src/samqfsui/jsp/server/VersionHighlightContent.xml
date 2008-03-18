@@ -1,0 +1,1602 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: VersionHighlightContent.xml,v 1.14 2008/03/17 14:40:39 am143972 Exp $ -->
+
+<!DOCTYPE content [
+    <!ELEMENT content (feature+)>
+    <!ELEMENT feature (feature-name, server-version, version+)>
+    <!ELEMENT feature-name (#PCDATA)>
+    <!ELEMENT server-version (#PCDATA)>
+    <!ELEMENT version (version-number, version-status)>
+    <!ELEMENT version-number (#PCDATA)>
+    <!ELEMENT version-status (#PCDATA)>
+    <!ATTLIST feature type (summary|detail) #IMPLIED>
+]>
+
+<content>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.qfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.ufs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.samqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.sharedqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.sharedsamqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.haqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.45
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.growfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.nfssharing
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.filebrowser
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.fs.recovery
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.restore
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.stage
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.metadatabackup
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.fastrestore
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.compression
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.browsebackup
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.smtpnotification
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.backups
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.recovery.snapshotdeletion
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.45
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.media
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.media.common
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.media.viewdetails
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.media.support.direct
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.media.support.acsls
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.discovery
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.disk
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.removable_media
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.acsls
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.45
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.shared
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.efi
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.42
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.suncluster
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.45
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.overlap
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.42
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.vendorID
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.discovery.raid
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.monitoring
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.snmp
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.faultreporting
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.tapealerts
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.logtraceviewer
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.faults.fs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.faults.media
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.faults.archive
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.subscript
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.stkerror
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.monitoring.console
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.archive_management.tape_archiving
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.wizard
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.continuous_archiving
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.42
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.metadata_archiving
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.vsnpools
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.42
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.archive_management.disk_archiving
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.disk_volumes
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.disk_volumn_pools
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.remote_disk_archive_volumes
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.archive_management.honeycomb
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.reporting
+    </feature-name>
+</feature>
+
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.mediadiskusage
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.samexplorer
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.45
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.siteinformation
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.serverconfiguration
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.property.fs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.property.media
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.processes
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.policydetail
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.spaceutilization
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.tapevsnstatus
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.acslsreport
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.metric.storagetiers
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.reporting.metric.age
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.security_enhancements
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.security.https
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.security.role
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.security.access_restriction
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.security.root_administrator
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.heterogenous_support
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.heterogenous_support.x86
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.44
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.registration
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.registration.cns
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
+        version.highlight.featurename.other
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.datavalidation
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.redirect
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.coexist
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.requirement
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.43
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.onlinehelp
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.41
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.44
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+</content>
+

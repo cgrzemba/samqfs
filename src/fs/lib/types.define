@@ -1,0 +1,140 @@
+#
+# $Revision: 1.17 $
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# The following types are unions, and the structure of
+# their innards cannot be readily determined.  So we
+# omit them and specify them as 'REMAP' (in types.swap).
+#
+#	rmt_sam_ureq
+#	sam_block_arg
+#	sam_callout_arg
+#	sam_inode_arg
+#	sam_name_arg
+#	sam_notify_arg
+#
+# The following list is of types for which we want descriptors.
+#
+type = DEFINE
+	CatalogEntry
+	CatalogReserve
+	MappedFile
+	csd_header
+	csd_header_extended
+	csd_filehdr
+	csum
+	rmt_sam_cnt_resp
+	rmt_sam_connect
+	rmt_sam_req_resp
+	rmt_sam_request
+	rmt_sam_update_vsn
+	rmt_sam_vsn_entry
+	sam_acl
+	sam_acl_inode
+	sam_arch_inode
+	sam_arch_rminfo
+	sam_archive
+	sam_archive_info
+	sam_block_getbuf
+	sam_block_fgetbuf
+	sam_block_getino
+	sam_block_quota
+	sam_block_sblk
+	sam_block_vfsstat
+	sam_block_vfsstat_v2
+	sam_callout_stage
+	sam_callout_relinquish_lease
+	sam_cred
+	sam_cl_attr
+	sam_dirent
+	sam_disk_inode
+	sam_disk_inode_part2
+	sam_dquot
+	sam_fsid_t
+	sam_hlp_inode
+	sam_host_table
+	sam_id
+	sam_indirect_extent
+	sam_ino_instance
+	sam_ino_record
+	sam_inode_ext_hdr
+	sam_inode_quota
+	sam_inode_setattr
+	sam_inode_stage
+	sam_inode_samaid
+	sam_inode_samattr
+	sam_inode_samarch
+	sam_label
+	sam_lease_data
+	sam_mva_inode
+	sam_name_acl
+	sam_name_create
+	sam_name_link
+	sam_name_mkdir
+	sam_name_remove
+	sam_name_rename
+	sam_name_rmdir
+	sam_name_symlink
+	sam_notify_dnlc
+	sam_notify_lease
+	sam_old_archive
+	sam_old_rminfo
+	sam_old_arch_rminfo
+	sam_old_rminfo
+	sam_old_resource
+	sam_old_resource_file
+	sam_old_section
+	sam_perm_inode
+	sam_perm_inode_v1
+	sam_quota_group
+	sam_quota_group_pair
+	sam_resource
+	sam_resource_file
+	sam_rfa_inode
+	sam_rm
+	sam_san_block
+	sam_san_callout
+	sam_san_header
+	sam_san_inode
+	sam_san_inode2
+	sam_san_lease
+	sam_san_lease2
+	sam_san_mount
+	sam_san_name
+	sam_san_name2
+	sam_san_notify
+	sam_sbinfo
+	sam_sbord
+	sam_share_flock
+	sam_sln_inode
+	sam_sr_attr
+	sam_timestruc
+	sam_vattr
+	sam_vsn_array
+	sam_vsn_section

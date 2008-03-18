@@ -1,0 +1,647 @@
+#! /bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#  ident        $Id: fsmgr_report,v 1.5 2008/03/17 14:44:00 am143972 Exp $
+#
+#  This program generates a system report explicitly for File System Manager.
+#  The report is designed to gather all the necessary information
+#  from customer's machine for debug purposes.
+#
+#
+
+############################################
+#
+# Global variables
+#
+############################################
+#
+APP_NAME="File System Manager"
+SECTION=""
+SECTION_DESC=""
+MY_LOG="/var/tmp/fsmgr.overall.log"
+DATE="`date +%m.%d.%Y.%H:%M`"
+LOG_DIR="/var/log/webconsole/console"
+LH_VERSION=2
+
+
+#
+# Check if user is a superuser.
+#
+check_su()
+{
+    id=`/bin/id | awk -F"(" '{print $1}' | awk -F"=" '{print $2}'`
+
+    if [ "${id}" != "0" ]; then
+	echo "Root privilege is required to run this installer." \
+					| tee -a ${MY_LOG}
+	exit 1
+    fi
+}
+
+#
+# Check Lockhart version, assign correct LOG_DIR
+#
+check_lockhart()
+{
+    BIN_DIR=/usr/sbin
+    SMCWEBSERVER=${BIN_DIR}/smcwebserver
+    LH_VERSION_STRING=`${SMCWEBSERVER} -V`
+    LH_VERSION=`/usr/bin/echo ${LH_VERSION_STRING} | cut -d" " -f2 | cut -d"." -f1`
+
+    if [ ${LH_VERSION} -eq 2 ]; then
+        LOG_DIR="/var/log/webconsole"
+    else
+        LOG_DIR="/var/log/webconsole/console"
+    fi
+}
+
+
+prepare_log_file()
+{
+    if [ -f ${MY_LOG} ]; then
+        /usr/bin/rm -rf ${MY_LOG}
+    fi
+
+    # Create the log file.  The file name has a timestamp in it.
+    /usr/bin/touch ${MY_LOG}.${DATE}
+    /usr/bin/chmod 666 ${MY_LOG}.${DATE}
+
+    if [ ! -f ${MY_LOG}.${DATE} ]; then
+        # Unable to create overall log
+	echo "Failed to create ${MY_LOG}.${DATE}." | tee -a ${MY_LOG}
+        exit 1
+    else
+        # Create a soft link, so ui_report script can always grab the
+        # latest log file.
+        /usr/bin/ln -s ${MY_LOG}.${DATE} ${MY_LOG}
+        /usr/bin/chmod 666 ${MY_LOG}
+    fi
+
+    echo "${APP_NAME} Software Support\n" > ${MY_LOG}
+ 
+    echo "Created on: \c" >> ${MY_LOG}
+    /usr/bin/date >> ${MY_LOG}
+    echo "Created by: \c" >> ${MY_LOG}
+    /bin/id >> ${MY_LOG}
+    echo "Report Location: ${MY_LOG}.${DATE}" >> ${MY_LOG}
+    echo "=========================================================\n\n" \
+                        >> ${MY_LOG}
+}
+
+show_log_file_location() {
+
+    echo "\n${APP_NAME} report named ${MY_LOG}.${DATE} is generated.\n\n"
+}
+
+
+print_header() {
+
+    echo "----------- $SECTION $SECTION_DESC -----------------\n" >> ${MY_LOG}
+}
+
+print_footer() {
+
+    # echo "\n<== $SECTION $SECTION_DESC ===>\n\n\n"  >> ${MY_LOG}
+    echo "\n\n\n" >> ${MY_LOG}
+}
+
+generate_section_1() {
+
+    echo "Generating Section 1 - System Information ...."
+
+    echo "\n" >> ${MY_LOG}
+    echo "1.0 - System Information" >> ${MY_LOG}
+    echo "------------------------\n\n" >> ${MY_LOG}
+
+    SECTION="1.1"
+    SECTION_DESC="HOSTNAME"
+    print_header
+
+    echo "\t/usr/bin/hostname :\t\c" >> ${MY_LOG}
+    /usr/bin/hostname >> ${MY_LOG}
+    print_footer
+
+    SECTION="1.2"
+    SECTION_DESC="ARCHITECTURE"
+    print_header
+
+    echo "\t/usr/bin/uname -p :\t\c" >> ${MY_LOG}
+    /usr/bin/uname -p >> ${MY_LOG}
+    print_footer
+
+    SECTION="1.3"
+    SECTION_DESC="OS RELEASE"
+    print_header
+
+    echo "\t/usr/bin/cat /etc/release :\n" >> ${MY_LOG}
+    /usr/bin/cat /etc/release >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="1.4"
+    SECTION_DESC="MOUNT POINT"
+    print_header
+
+    echo "\t/usr/sbin/mount :\n" >> ${MY_LOG}
+    /usr/sbin/mount >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="1.5"
+    SECTION_DESC="ENVIRONMENT VARIABLES"
+    print_header
+
+    echo "\t/usr/bin/env :\n" >> ${MY_LOG}
+    /usr/bin/env >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="1.6"
+    SECTION_DESC="FILESYSTEM INFO"
+    print_header
+
+    echo "\t/usr/sbin/df -k \n" >> ${MY_LOG}
+    /usr/sbin/df -k >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="1.7"
+    SECTION_DESC="JAVA VERSION"
+    print_header
+
+    echo "\t/usr/bin/which java :\n" >> ${MY_LOG}
+    /usr/bin/which java >> ${MY_LOG} 2>&1
+    echo "\n\tjava -version :\n" >> ${MY_LOG}
+    java -version >> ${MY_LOG} 2>&1
+
+    if [ -f /usr/j2se/bin/java ]; then
+        echo "\nJava software found in /usr/j2se"  >> ${MY_LOG}
+        echo "\n\t/usr/j2se/bin/java -version :\n" >> ${MY_LOG}
+        /usr/j2se/bin/java -version >> ${MY_LOG} 2>&1
+    fi
+
+    print_footer
+
+    SECTION="1.8"
+    SECTION_DESC="SYSTEM DIAGNOSTIC INFO"
+    print_header
+
+    echo "\t/usr/platform/sun4u/sbin/prtdiag :\n" >> ${MY_LOG}
+    /usr/platform/sun4u/sbin/prtdiag >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="1.9"
+    SECTION_DESC="CONTENT of /usr/lib (libsammgmt only)"
+    print_header
+
+    echo "\tls -al /usr/lib |grep libfsmgmt :\n" >> ${MY_LOG}
+    ls -al /usr/lib |grep libfsmgmt >> ${MY_LOG}
+    print_footer
+
+    SECTION="1.10"
+    SECTION_DESC="CONTENT of vfstab"
+    print_header
+
+    echo "\t/usr/bin/cat /etc/vfstab :\n" >> ${MY_LOG}
+    /usr/bin/cat /etc/vfstab >> ${MY_LOG}
+    print_footer
+
+    SECTION="1.11"
+    SECTION_DESC="Tomcat VERSION DETECTED"
+    print_header
+
+    echo "\t/usr/bin/cat ${LOG_DIR}/console_debug_log |grep Apache | tail -1 :\n" \
+        >> ${MY_LOG}
+    /usr/bin/cat ${LOG_DIR}/console_debug_log |grep Apache | tail -1 >> ${MY_LOG}
+    print_footer
+
+    echo "Done!"
+
+}
+
+generate_section_2() {
+
+    echo "Generating Section 2 - Package Information ..."
+
+    echo "\n" >> ${MY_LOG}
+    echo "2.0 - Package Information" >> ${MY_LOG}
+    echo "-------------------------\n\n" >> ${MY_LOG}
+
+    SECTION="2.1.1"
+    SECTION_DESC="SUNWsamqfsuir"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWsamqfsuir :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWsamqfsuir >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.1.2"
+    SECTION_DESC="SUNWfsmgrr"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWfsmgrr :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWfsmgrr >> ${MY_LOG} 2>&1
+    print_footer
+
+
+    SECTION="2.2.1"
+    SECTION_DESC="SUNWsamqfsuiu"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWsamqfsuiu :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWsamqfsuiu >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.2.2"
+    SECTION_DESC="SUNWfsmgru"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWfsmgru :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWfsmgru >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.3"
+    SECTION_DESC="SUNWmcon"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWmcon :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWmcon >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.4"
+    SECTION_DESC="SUNWmctag"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWmctag :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWmctag >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.5"
+    SECTION_DESC="SUNWmcos"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWmcos :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWmcos >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.6"
+    SECTION_DESC="SUNWmconr"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWmconr :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWmconr >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.7"
+    SECTION_DESC="SUNWjato"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWjato :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWjato >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.8"
+    SECTION_DESC="SUNWtcatu"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWtcatu :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWtcatu >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.9"
+    SECTION_DESC="SUNWsamfsr"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWsamfsr :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWsamfsr >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.10"
+    SECTION_DESC="SUNWsamfsu"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWsamfsu :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWsamfsu >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.11"
+    SECTION_DESC="SUNWqfsr"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWqfsr :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWqfsr >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.12"
+    SECTION_DESC="SUNWqfsu"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWqfsu :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWqfsu >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.13"
+    SECTION_DESC="SUNWcmcon"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWcmcon :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWcmcon >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.14"
+    SECTION_DESC="SUNWcmctg"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWcmctg :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWcmctg >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.15"
+    SECTION_DESC="SUNWfmcon"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWfmcon :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWfmcon >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.16"
+    SECTION_DESC="SUNWfmctg"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWfmctg :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWfmctg >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.17"
+    SECTION_DESC="SUNWjmcon"
+    print_header
+    echo "\t/usr/bin/pkginfo -l SUNWjmcon :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWjmcon >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.18"
+    SECTION_DESC="SUNWjmctg"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWjmctg :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWjmctg >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.19"
+    SECTION_DESC="SUNWcsamqfsui"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWcsamqfsui :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWcsamqfsui >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.20"
+    SECTION_DESC="SUNWjsamqfsui"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWjsamqfsui :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWjsamqfsui >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="2.21"
+    SECTION_DESC="SUNWfsamqfsui"
+    print_header
+
+    echo "\t/usr/bin/pkginfo -l SUNWfsamqfsui :\n" >> ${MY_LOG}
+    /usr/bin/pkginfo -l SUNWfsamqfsui >> ${MY_LOG} 2>&1
+    print_footer
+
+    echo "Done!"
+}
+
+generate_section_3() {
+
+    echo "Generating Section 3 - Configuration files ..."
+
+    echo "\n" >> ${MY_LOG}
+    echo "3.0 - Configuration Files" >> ${MY_LOG}
+    echo "-------------------------\n\n" >> ${MY_LOG}
+
+
+    SECTION="3.1"
+    SECTION_DESC="USER INFORMATION"
+    print_header
+
+    echo "\t/usr/bin/cat /etc/passwd :\n" >> ${MY_LOG}
+    /usr/bin/cat /etc/passwd >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="3.2"
+    SECTION_DESC="USER ATTRIBUTE DATABASE"
+    print_header
+
+    echo "\t/usr/bin/cat /etc/user_attr :\n" >> ${MY_LOG}
+    /usr/bin/cat /etc/user_attr >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="3.3"
+    SECTION_DESC="AUTHORIZATION DESC DATABASE"
+    print_header
+
+    echo "\t/usr/bin/cat /etc/security/attr_attr :\n" >> ${MY_LOG}
+    /usr/bin/cat /etc/security/auth_attr >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="3.4"
+    SECTION_DESC="GUI - SERVER LIST"
+    print_header
+
+    echo "\t/usr/bin/cat /var/log/webconsole/host.conf :\n" >> ${MY_LOG}
+    /usr/bin/cat /var/log/webconsole/host.conf >> ${MY_LOG} 2>&1
+    echo "\n" >> ${MY_LOG}
+    echo "\tls -al /var/log/webconsole/host.conf :\n" >> ${MY_LOG}
+    ls -al /var/log/webconsole/host.conf >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="3.5"
+    SECTION_DESC="NATIVE CODE CONFIGURATION SETTING"
+    print_header
+
+    echo "\t/usr/bin/cat /etc/syslog.conf :\n" >> ${MY_LOG}
+    /usr/bin/cat /etc/syslog.conf >> ${MY_LOG} 2>&1
+    print_footer
+
+    SECTION="3.6"
+    SECTION_DESC="SMREG OUTPUT"
+    print_header
+
+    echo "\t/usr/sbin/smreg list :\n" >> ${MY_LOG}
+    /usr/sbin/smreg list >> ${MY_LOG}
+    print_footer
+
+    SECTION="3.7"
+    SECTION_DESC="GUI - PREFERENCE SETTING"
+    print_header
+
+    echo "\t/usr/bin/cat /var/log/webconsole/pref.conf :\n" >> ${MY_LOG}
+    /usr/bin/cat /var/log/webconsole/pref.conf >> ${MY_LOG} 2>&1
+    echo "\n" >> ${MY_LOG}
+    echo "\tls -al /var/log/webconsole/pref.conf :\n" >> ${MY_LOG}
+    ls -al /var/log/webconsole/pref.conf >> ${MY_LOG} 2>&1
+    print_footer
+
+
+    echo "Done!"
+}
+
+generate_section_4() {
+
+    echo "Generating Section 4 - Gathering Log files ..."
+
+    echo "\n" >> ${MY_LOG}
+    echo "4.0 - Gathering LOG files" >> ${MY_LOG}
+    echo "-------------------------\n\n" >> ${MY_LOG}
+
+
+    SECTION="4.1"
+    SECTION_DESC="CONSOLE_DEBUG_LOG (LAST 2000 LINES)"
+    print_header
+
+    echo "\t/usr/bin/tail -2000 ${LOG_DIR}/console_debug_log :\n" \
+						>> ${MY_LOG}
+    if [ -f ${LOG_DIR}/console_debug_log ]; then
+        /usr/bin/tail -2000 ${LOG_DIR}/console_debug_log >> ${MY_LOG} 2>&1
+    else
+	echo "No ${LOG_DIR}/console_debug_log found!" >> ${MY_LOG}
+    fi
+
+    print_footer
+
+    if [ ${LH_VERSION} -ne 2 ]; then
+        SECTION="4.1.1"
+        SECTION_DESC="CONSOLE_CONFIG_LOG  (LAST 2000 LINES)"
+        print_header
+
+        echo "\t/usr/bin/tail -2000 ${LOG_DIR}/console_config_log :\n" \
+                                                >> ${MY_LOG}
+        if [ -f ${LOG_DIR}/console_config_log ]; then
+            /usr/bin/tail -2000 ${LOG_DIR}/console_config_log >> ${MY_LOG} 2>&1
+        else
+            echo "No ${LOG_DIR}/console_config_log found!" >> ${MY_LOG}
+        fi
+
+        print_footer
+
+        SECTION="4.1.2"
+        SECTION_DESC="CONSOLE_ADMIN_LOG  (LAST 2000 LINES)"
+        print_header
+
+        echo "\t/usr/bin/tail -2000 ${LOG_DIR}/console_admin_log :\n" \
+                                                >> ${MY_LOG}
+        if [ -f ${LOG_DIR}/console_admin_log ]; then
+            /usr/bin/tail -2000 ${LOG_DIR}/console_admin_log >> ${MY_LOG} 2>&1
+        else
+            echo "No ${LOG_DIR}/console_admin_log found!" >> ${MY_LOG}
+        fi
+
+        print_footer
+    fi
+
+
+    SECTION="4.2"
+    SECTION_DESC="LOCALHOST_LOG"
+    print_header
+
+    echo "Deprecated " >> ${MY_LOG}
+
+
+    SECTION="4.3"
+    SECTION_DESC="FSMGR.LOG & FSMGR.LOG.LCK"
+    print_header
+
+    echo "\t/usr/bin/tail -2000 ${LOG_DIR}/fsmgr.log:\n" >> ${MY_LOG}
+
+    if [ -f ${LOG_DIR}/fsmgr.log ]; then
+        /usr/bin/tail -2000 ${LOG_DIR}/fsmgr.log >> ${MY_LOG} 2>&1
+    else
+	echo "No ${LOG_DIR}/fsmgr.log found!" >> ${MY_LOG} 2>&1
+    fi
+
+    if [ -f ${LOG_DIR}/fsmgr.log.lck ]; then
+        echo "\n\tfsmgr.log.lck FOUND!" >> ${MY_LOG} 2>&1
+    else
+        echo "\n\tfsmgr.log.lck DOES NOT EXIST!" >> ${MY_LOG} 2>&1
+    fi
+
+    print_footer
+
+    SECTION="4.4"
+    SECTION_DESC="SAMQFSUI.TRACE"
+    print_header
+
+    echo "Deprecated " >> ${MY_LOG}
+
+    SECTION="4.5"
+    SECTION_DESC="INSTALL LOG"
+    print_header
+
+    if [ -L /var/tmp/fsmgr.setup.log ]; then
+        echo "\t/usr/bin/cat /var/tmp/fsmgr.setup.log :\n" >> ${MY_LOG}
+        /usr/bin/cat /var/tmp/fsmgr.setup.log >> ${MY_LOG} 2>&1
+    else
+	echo "No install log found!" >> ${MY_LOG}
+    fi
+
+    print_footer
+
+    SECTION="4.6"
+    SECTION_DESC="SYSLOG TRACE FILE"
+    print_header
+
+    TRACE_FILE=`ls -al ${LOG_DIR} | grep trace | cut -d" " -f20`
+    TRACE_FILE=`find ${LOG_DIR} -name *trace* -print`
+
+    if [ "a${TRACE_FILE}" = "a" ]; then
+        echo "No syslog trace file found!" >> ${MY_LOG}
+    else
+        echo "\t/usr/bin/tail -5000 ${TRACE_FILE} :\n" >> ${MY_LOG}
+        /usr/bin/tail -5000 ${TRACE_FILE} >> ${MY_LOG} 2>&1
+    fi
+
+    print_footer
+
+
+    echo "Done!"
+}
+
+
+check_su
+check_lockhart
+prepare_log_file
+generate_section_1
+generate_section_2
+generate_section_3
+generate_section_4
+
+echo "End of File. Current Time: \c" >> ${MY_LOG}
+/usr/bin/date >> ${MY_LOG}
+
+show_log_file_location
+
+exit 0

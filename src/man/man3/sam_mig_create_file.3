@@ -1,0 +1,137 @@
+.\" $Revision: 1.16 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_mig_create_file 3 "20 Dec 2007"
+.SH NAME
+sam_mig_create_file \- Creates an offline Sun StorageTek \%SAM-QFS file from foreign media
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamut [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/mig.h"
+#include "/opt/SUNWsamfs/include/stat.h"
+.ft
+.fi
+.LP
+.BI "int sam_mig_create_file(char *" "path" ,
+.BI "struct sam_stat *" "buf" );
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+.B sam_mig_create_file(\|)
+creates an offline Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file from a foreign
+(non- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS) media.
+.B sam_mig_create_file(\|)
+creates an offline file using information supplied by a foreign data
+migration program.  The information used to identify the location of the
+file is stored in the file inode in the archive record.
+.PP
+Note that the program calling this function is responsible for creating all
+directories in the path
+.I before
+calling the function.
+.PP
+.I path
+is the pathname to the file to be created.
+It may be an absolute or relative pathname but must be no longer
+than PATH_MAX (see the
+.B /usr/include/limits.h file).
+.PP
+.I buf
+is a sam_stat structure (see \fBsam_stat\fR(3)).
+.PP
+The following members in the \fBsam_stat\fR structure must
+be filled in.  All other fields are ignored.
+.PP
+.nf
+.ft 3
+ulong_t       st_mode      /\(** File mode (see mknod(2)) \(**/
+ulong_t       st_uid       /\(** User ID of the file's owner \(**/
+ulong_t       st_gid       /\(** Group ID of the file's owner \(**/
+u_longlong_t  st_size      /\(** File size in bytes \(**/
+ulong_t       st_atime     /\(** Time of last access      \(**/
+ulong_t       st_ctime     /\(** Time of last file status change \(**/
+ulong_t       st_mtime     /\(** Time of last data modification  \(**/
+.ft 1
+.fi
+.PP
+.ne 12
+These members in the sam_copy_s structure for the desired copy
+(copy[] part of the sam_stat structure) must be filled in:
+.nf
+.ft 3
+.ta 14n 30n
+u_longlong_t	position;	/\(** Any 8 bytes \(**/
+time_t	creation_time;	/\(** The time the archive file is created \(**/
+uint_t	offset;	/\(** Any 4 bytes \(**/
+char	vsn[32];	/\(** Any 31 characters \(**/
+char	media[2];	/\(** 2nd character of media type (must be 'z') \(**/
+char	media[3];	/\(** 3rd character of media type \(**/
+		/\(** (must be a digit or lowercase alpha)\(**/
+.ft 1
+.fi
+.PP
+.TP 10
+.B position
+Any 8 bytes that the 3rd party media program requires.
+.TP
+.B creation_time
+This is the time that the archive was made.  If
+.B creation_time
+is zero, it will be
+set to the value of \fBtime()\fR.
+.TP
+.B offset
+Any 4 bytes that the 3rd party media program requires.
+.TP
+.B vsn
+This is any 31 characters.  The 32nd character must be a zero byte.
+Other utilities may require this to be a valid VSN.
+.TP
+.B media
+The second character of the two character media type.  If this field is zero,
+then this copy does not contain any archive information and will be ignored.
+At least one of the entries must contain information.
+.sh "RETURN VALUES"
+Upon succesful creation of a file a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.ft 3
+.SH FILES
+.TP 20
+.B /opt/SUNWsamfs/migkit/mig_build_cd.c
+The example Migration Toolkit program.
+.TP
+.B /etc/opt/SUNWsamfs/mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+.SH "SEE ALSO"
+.BR sam_stat (3).

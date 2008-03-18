@@ -1,0 +1,276 @@
+.\" $Revision: 1.6 $
+.ds ]W Sun Microsystems, Inc.
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH pdvt 1 "16 Mar 2005"
+.SH NAME
+pdvt \- POSIX Device Verification Tool
+.SH SYNOPSIS
+.B pdvt
+.RB [ \-b ]
+.RB [ \-B ]
+.RB [ \-c " block_count" ]
+.RB [ \-C ]
+.RB [ \-d ]
+.RB [ \-D ]
+.RB [ \-e " data_error_limit" ]
+.RB [ \-E " io_error_limit" ]
+.RB [ \-f ]
+.RB [ \-g " stripe_group" ]
+.RB [ \-G " sync_file" ]
+.RB [ \-h ]
+.RB [ \-i " stride[k|m|g]" ]
+.RB [ \-k " offset[k|m|g|t]" ]
+.RB [ \-l " loops" ]
+.RB [ \-m " buffer[k|m|g|t]" ]
+.RB [ \-o " rw|wr|r|w" ]
+.RB [ \-p ]
+.RB [ \-P " a|o|0|r" ]
+.RB [ \-q " queue_size" ]
+.RB [ \-r ]
+.RB [ \-R " read_threads" ]
+.RB [ \-s " block_size[k|m]" ]
+.RB [ \-S " file_size[k|m|g|t]" ]
+.RB [ \-T ]
+.RB [ \-u ]
+.RB [ \-v " log_mask" ]
+.RB [ \-V ]
+.RB [ \-W " write_threads" ]
+.RB [ \-z " seconds" ]
+.IR "filename"
+.IR "[ filename_out ]"
+.SH AVAILABILITY
+.LP
+Sun Microsystems, Inc.
+.SH DESCRIPTION
+The POSIX Device Verification Test ("PDVT") uses POSIX threads, or pthreads,
+to test RAID device and file system I/O performance.
+.PP
+PDVT uses the concept of thread pools.
+PDVT (the boss thread) creates a specified number of worker threads.
+These worker threads survive for the duration of the program.
+The PDVT boss thread creates I/O requests and puts
+these requests on a work queue.
+Worker threads remove I/O requests from the work queue and process them.
+When a worker thread completes an I/O request,
+it removes another one from the work queue if the queue is not empty.
+.SH OPTIONS
+.TP
+.B \-b
+Perform backwards I/O.
+.TP
+.B \-B
+Print I/O buffer information.
+.TP
+.B \-c " block_count"
+The number of blocks to be written/read.
+.TP
+.B \-C
+Specifies that I/O use the page cache.
+.TP
+.B \-d
+Specifies direct I/O: I/O should not use the page cache.
+.TP
+.B \-D
+Live dangerously and allow PDVT to write to slices that start at cylinder 0.
+.TP
+.B \-e " data_error_limit"
+Specifies the maximum number of data miscompares that can occur before
+the test is stopped.
+.TP
+.B \-E " io_error_limit"
+Specifies the maximum number of I/O errors that can occur before
+the test is stopped.
+.TP
+.B \-f
+Set read process to follow an active writer.
+.TP
+.B \-g " stripe_group"
+Specifies the number of the striped group
+where the file is to be preallocated.
+Stripe_group is a number 0..n where n
+matches the gXXX devices configured in the SAM-QFS master
+configuration file.
+This option is only processed if \fI-p\fR is specified and it only
+applies to SAM-QFS filesystems with configured stripe groups.
+.TP
+.B \-G sync_file
+Threads will wait to perform I/O until sync_file exists.
+Once test is complete the sync_file will be removed.
+.TP
+.B \-h
+Print usage information.
+.TP
+.B \-i " stride[k|m|g]"
+Number of bytes to stride
+.TP
+.B \-k offset[k|m|g|t]
+Byte offset to start writing or reading from.
+.TP
+.B \-l " loops"
+Number of times to loop before closing the file.
+This option is useful for testing cache performance.
+.TP
+.B \-m "bufsize[k|m|g|t]"
+Buffer size for random data pattern.
+Pattern is based on file name and
+can therefore regenerate the data if using the same file name.
+Used in combination with \fIP r\fR option.
+.TP
+.B \-o " rw|wr|r|w"
+Operation options:
+.RS
+.TP
+rw - Read and write a file at the same time
+.TP
+wr - Write then read a file
+.TP
+r  - Read a file
+.TP
+w  - Write a file
+.RE
+.TP
+.B \-p
+Specifies the file should be preallocated.
+Striping is also permitted if striped groups have been configured
+as part of the filesystem.
+This option only applies to SAM-QFS filesystems.
+.TP
+.B \-P " a|o|0|r"
+The data pattern:
+.RS
+.TP
+a - ascending pattern based on file offset
+.TP
+o - ones pattern
+.TP
+0 - zeros pattern
+.TP
+r - random pattern (requires -m option)
+.RE
+.TP
+.B \-q " queue_size"
+Specifies the number of the entries that will be outstanding in the
+work queue.
+The \fIqueue_size\fR should be larger than \fIread_threads\fR.
+.TP
+.B \-r
+Perform random I/O
+.TP
+.B \-R " read_threads"
+Specifies the number of the threads that will be outstanding for read.
+If \fIread_threads\fR is less than write_threads, \fIwrite_threads\fR will
+be used.
+.TP
+.B \-s " block_size[k|m]"
+Size of blocks to be written/read.
+.TP
+.B \-S " file_size[k|m|g|t]"
+Size of file to be written/read.
+File size and block count are mutually exclusive.
+.TP
+.B \-T
+Start timing at memory allocation instead of I/O start.
+.TP
+.B \-u
+Unlink file when finished.
+.TP
+.B \-v "log_mask"
+Set logging mask to print info, errors, results and/or debugging information.
+Interpreted in octal by default, and has a default value of 03
+(print test results and error messages).
+.RS
+.TP
+001 - Print test results (on by default)
+.TP
+002 - Print error messages (on by default)
+.TP
+004 - Print debugging information during test
+.TP
+010 - Print lots of debugging information during test
+.TP
+020 - Print read and/or write return values
+.RE
+.TP
+.B \-V
+Data will be verified on the read pass.
+The times will include this comparison time.
+.TP
+.B \-W " write_threads"
+Specifies the number of the threads that will be outstanding for write.
+.TP
+.B \-z " seconds"
+Used in combination with \fIf\fR option to specify number of seconds
+to sleep before retrying a read request.
+Default is 50000000 nanoseconds.
+.SH EXAMPLES
+.LP
+Example 1: Write a file using 4 write threads and 8 queued requests
+.PP
+pdvt -o w -W 4 -q 8 -s 16m -S 4g /path/file.dat
+.PP
+Example 2: Write a file with a random buffer for data verification
+.PP
+pdvt -P r -m 4g -o w -W 4 -q 8 -s 16m -S 4g /path/file.dat
+.PP
+Example 3: Reading previous file with data verification
+.PP
+pdvt -P r -m 4g -V -o r -R 4 -q 8 -s 16m -S 4g /path/file.dat
+.SH NOTES
+.LP
+The output of PDVT will vary based on the log level selected.
+Test results and errors will be displayed by default,
+but setting the log level to something like
+7 will print the test results as well as the test configuration.
+.PP
+Output for results and information are comma separated values that can be
+imported into a spreadsheet.
+.PP
+Results:
+operation,block size(KB),fsize(KB),write threads,read threads,queue size,
+wall time,user time,system time,throughput(MB/sec)
+.PP
+Using the log level 10 will result in a significant amount of output showing what
+PDVT is doing.
+Additionally, log level 4 will print out each buffer as it is
+compared with a data verification read.
+.PP
+The random data feature uses the file name provided on the command line to
+produce a seed that is fed to the srand48(3C) function call.
+In order to verify a file once it is written,
+the file name must be the same as given on the write command.
+.PP
+Performance of a verification read should not be taken into consideration as the
+throughput represents the time not only to read a file, but also to verify each
+buffer.
+The verification process can add many seconds to a read.
+.SH "SEE ALSO"
+.BR dvt(1)
+.PP
+.BR sam_advise(3),
+.BR sam_setfa(3)
+.PP
+.BR mcf(4)

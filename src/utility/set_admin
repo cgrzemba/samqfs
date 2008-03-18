@@ -1,0 +1,171 @@
+#!/bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# $Revision: 1.12 $
+#
+# set_admin sam-admin-group
+#
+# if no "sam-admin-group" is specified, the user will be prompted for one.
+#
+
+#  List of programs in /opt/SUNWsamfs/sbin to be SAM-FS admin group executable.
+
+ADMLIST="archive_audit archiver auditslot build_cat chmed cleandrive \
+  dmpshm dump_cat dump_log export import itemize load move odlabel sam-fsd\
+  sam-recycler samtrace samcmd samset samu set_state showqueue tplabel \
+  unarchive unload"
+
+#  Check for root and exit if not.
+
+UID=`/bin/id | sed -e "s/^[^=]*=//" -e "s/(.*//"`
+if [ $UID -ne 0 ] ; then
+    echo "You do not have permission to run this script. You must be 'root'."
+	exit 1
+fi
+
+if [ X$1 = X ]; then
+
+	if [ -f /usr/xpg4/bin/tr ]; then
+		TR=/usr/xpg4/bin/tr
+	else
+		TR=/usr/bin/tr
+	fi
+
+	#
+	# Obtain the current setting for the administrator group
+	#
+	GROUPADM=bin
+	if [ -f /opt/SUNWsamfs/.samgroup ]; then
+		GROUPADM=`cat /opt/SUNWsamfs/.samgroup`
+	fi
+	#
+	#  Get the group for the administrators
+	#
+	echo ""
+	echo By default, the administrator commands may be executed by
+	echo root only.  However, if you wish, you can supply a group name
+	echo which will also be allowed to execute the administrator commands.
+	echo This group must currently exist in your system \(either in the
+	echo /etc/group file or in YP/NIS/NIS+\)
+	echo ""
+	echo "The current group setting for the administrator commands is $GROUPADM."
+	echo ""
+	echo "If this is the desired value enter \"y\", if you wish to change"
+	echo "the group setting to another group enter \"c\" ? \c"
+	 
+	ADDGROUP=0
+	CONTINUE=1
+	while [ $CONTINUE -eq 1 ]; do
+		read reply
+		REPLY=`echo $reply | $TR -s '[:lower:]' '[:upper:]'`
+		if [ X$REPLY = XY ]; then
+			CONTINUE=0
+		elif [ X$REPLY = XC ]; then
+			ADDGROUP=1
+			CONTINUE=0
+		else
+			echo ""
+			echo "You have entered an invalid value of \"$reply\""
+			echo ""
+			echo "Please enter \"y\" to use the current group or \"c\" to"
+			echo "change the group ? \c"
+
+		fi
+	done
+
+
+	if [ $ADDGROUP = 1 ]; then
+		CONTINUE=1
+		echo ""
+		echo Enter the name of the group which you wish to use administrator 
+		echo group.
+		while [ $CONTINUE -eq 1 ]; do
+			echo ""
+			read GROUPADM
+			echo ""
+			echo "You entered \"$GROUPADM\".  Enter y if this correct ? \c"
+			read reply
+			REPLY=`echo $reply | $TR -s '[:lower:]' '[:upper:]'`
+			if [ X$REPLY = XY ]; then
+				CONTINUE=0
+			else
+				echo ""
+				echo You did not accept \"$GROUPADM\" as the group.
+				echo ""
+				echo Please enter the name of the group you wish to use
+				echo as the administrator group.
+			fi
+		done
+	fi
+	echo ""
+else
+	#
+	# set_admin was passed the group name already
+	#
+	GROUPADM=$1
+fi
+
+if [ $GROUPADM = "bin" ]; then
+	ADMMODE=550
+else
+	ADMMODE=04550
+fi
+
+#  change the group on (most of) the adm commands in /opt/SUNWsamfs/sbin
+ 
+chgrp $GROUPADM /opt/SUNWsamfs/sbin
+if [ $? -ne 0 ]; then
+	echo " "
+	echo FATAL:  Group $GROUPADM does not exist in your system.
+	echo This was the group you named as the administrator group.
+	echo " "
+	echo Please add the group following your site procedures, and then
+	echo retry \"set_admin $GROUPADM\".
+	exit 1
+fi
+for object in $ADMLIST
+do
+	if [ ! -f /opt/SUNWsamfs/sbin/$object ]; then
+		continue
+	fi
+	chgrp $GROUPADM /opt/SUNWsamfs/sbin/$object
+	chmod $ADMMODE /opt/SUNWsamfs/sbin/$object
+done
+if [ $GROUPADM = "bin" ]; then
+	echo The administrator commands are executable by root only.
+else
+	echo The administrator commands are executable by root and
+	echo members of group $GROUPADM.
+fi	
+
+# Retain the administrator group name for future installs and references
+
+echo "$GROUPADM" > /opt/SUNWsamfs/.samgroup
+
+exit 0

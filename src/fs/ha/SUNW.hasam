@@ -1,0 +1,239 @@
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+# $Revision: 1.9 $
+
+RESOURCE_TYPE = "hasam";
+VENDOR_ID = SUNW;
+RT_DESCRIPTION = "HA-SAM server for Sun Cluster";
+
+RT_VERSION ="4.6";
+API_VERSION = 3;
+FAILOVER = FALSE;
+
+RT_BASEDIR=/opt/SUNWsamfs/sc/bin;
+PKGLIST = SUNWhasam;
+
+INIT            = hasam_init;
+FINI            = hasam_fini;
+START           = hasam_start;
+STOP            = hasam_stop;
+PRENET_START    = hasam_prenet_start;
+POSTNET_STOP    = hasam_postnet_stop;
+MONITOR_START   = hasam_monitor_start;
+MONITOR_STOP    = hasam_monitor_stop;
+MONITOR_CHECK   = hasam_monitor_check;
+VALIDATE        = hasam_validate;
+UPDATE          = hasam_update;
+
+
+# The paramtable is a list of bracketed resource property declarations
+# that come after the resource-type declarations
+# The property-name declaration must be the first attribute
+# after the open curly of a paramtable entry
+{
+	PROPERTY = Prenet_start_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Start_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Stop_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Validate_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Update_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Monitor_Start_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Monitor_Stop_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Monitor_Check_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = FailOver_Mode;
+	DEFAULT = SOFT;
+	TUNABLE = ANYTIME;
+}
+{
+	PROPERTY = Network_resources_used;
+	TUNABLE = WHEN_DISABLED;
+	DEFAULT = "";
+}
+{
+	PROPERTY = Thorough_Probe_Interval;
+	MAX = 3600;
+	DEFAULT = 60;
+	TUNABLE = ANYTIME;
+}
+{
+	PROPERTY = Retry_Count;
+	MAX = 10;
+	DEFAULT = 2;
+	TUNABLE = ANYTIME;
+}
+{
+	PROPERTY = Retry_Interval;
+	MAX = 3600;
+	DEFAULT = 750;
+	TUNABLE = ANYTIME;
+}
+
+{
+	PROPERTY = Port_list;
+	DEFAULT = ;
+	TUNABLE = AT_CREATION;
+}
+
+{
+	PROPERTY = Scalable;
+	DEFAULT=false;
+	TUNABLE = AT_CREATION;
+}
+
+{
+	PROPERTY = Load_balancing_policy;
+	DEFAULT = LB_WEIGHTED;
+	TUNABLE = AT_CREATION;
+}
+
+{
+	PROPERTY = Load_balancing_weights;
+	DEFAULT = "";
+	TUNABLE = ANYTIME;
+}
+
+#
+# Extension Properties
+#
+
+# Not to be edited by end user
+
+{
+	PROPERTY = Confdir_list;
+	EXTENSION;
+	STRINGARRAY;
+	DEFAULT = "";
+	TUNABLE = AT_CREATION;
+	DESCRIPTION = "The Configuration Directory Path(s)";
+}
+
+# These two control the restarting of the fault monitor itself
+# (not the server daemon) by PMF.
+{
+	PROPERTY = Monitor_retry_count;
+	EXTENSION;
+	INT;
+	DEFAULT = 4;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Number of PMF restarts allowed for the fault monitor";
+}
+
+{
+	PROPERTY = Monitor_retry_interval;
+	EXTENSION;
+	INT;
+	DEFAULT = 2;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Time window (minutes) for fault monitor restarts";
+}
+
+# Time out value for the probe
+{
+	PROPERTY = Probe_timeout;
+	EXTENSION;
+	INT;
+	MIN = 2;
+	DEFAULT = 120;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Time out value for the probe (seconds)";
+}
+
+# Child process monitoring level for PMF (-C option of pmfadm)
+# Default of -1 means: Do NOT use the -C option to PMFADM
+# A value of 0-> indicates the level of child process monitoring
+# by PMF that is desired.
+{
+	PROPERTY = Child_mon_level;
+	EXTENSION;
+	INT;
+	DEFAULT = -1;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Child monitoring level for PMF";
+}
+
+#
+# Extension Properties
+#
+
+#
+# SAM-QFS or SAM-FS family set name.  Must exist
+# in /etc/vfstab.
+#
+# Mount-at-boot should NOT be set in /etc/vfstab; the FS is
+# mounted by the boot/init and prenet_start methods if necessary.
+#
+{
+	PROPERTY = QFSName;
+	EXTENSION;
+	STRINGARRAY;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "SAM-QFS or SAM-FS filesystem name";
+}
+
+#
+# The Catalog filesystem
+# Specifies the mount point that must exist in
+# /etc/vfstab with mount-at-boot set to yes.
+{
+	PROPERTY = CatalogFileSystem;
+	EXTENSION;
+	STRING;
+	DEFAULT = "";
+	TUNABLE = WHEN_DISABLED;
+	DESCRIPTION = "The Catalog filesystem for SAM configurations";
+}

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: DriveTable.xml,v 1.7 2008/03/17 14:40:38 am143972 Exp $ -->
+
+<table>
+<column name="DriveLogColumn" extrahtml="nowrap">
+    <cc name="DriveLogHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick"
+            value="
+                launchPopup(
+                    '/admin/ShowLog',
+                    'showconfig',
+                    getServerName(),
+                    SIZE_LARGE,
+                    '&amp;SAMQFS_PATH_NAME=' + getPathFromHref(this));
+                return false;
+            "/>
+        <cc name="DriveLogText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+        <cc name="LogPath"
+            tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+    </cc>
+</column>
+
+<column name="DriveLibraryColumn" extrahtml="nowrap">
+    <cc name="DriveLibraryText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="DriveStateColumn" extrahtml="nowrap">
+    <cc name="DriveStateText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="DriveStatusColumn" extrahtml="nowrap">
+    <cc name="DriveStatusText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false"/>
+    </cc>
+</column>
+
+<column name="DriveActivityColumn" extrahtml="nowrap">
+    <cc name="DriveActivityText"
+	tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false"/>
+    </cc>
+</column>
+
+<column name="DriveIdleTimeColumn" extrahtml="nowrap">
+    <cc name="DriveIdleTimeText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="DriveVSNColumn" extrahtml="nowrap">
+    <cc name="DriveVSNText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="DriveTypeColumn" extrahtml="nowrap">
+    <cc name="DriveTypeText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+</table>

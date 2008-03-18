@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE propertysheet SYSTEM "com_sun_web_ui/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FilterSettingsPropSheet.xml,v 1.6 2008/03/17 14:40:40 am143972 Exp $ -->
+
+<!-- ********************************************************************** -->
+
+<propertysheet>
+    <section name="section" defaultValue="">        
+        <property>
+            <label name="fileNamePatternLabel" 
+                   defaultValue="FilterSettings.fileNamePatternLabel"/>
+            <cc name="fileNamePatternValue" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+            </cc> 
+            <![CDATA[
+            <br>
+            ]]>
+            <cc name="fileNamePatternHelp" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+                <attribute name="defaultValue" value="FilterSettings.fileNamePatternHelp" />
+            </cc>
+        </property>
+			
+        <property>
+            <label name="fileSizeGreaterLabel" defaultValue="FilterSettings.fileSizeGreaterLabel"/>
+            <cc name="fileSizeGreaterValue" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+            <cc name="fileSizeGreaterUnit" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                <option label="FilterSettings.fileSizeUnit.kb" value="kb"/>
+                <option label="FilterSettings.fileSizeUnit.mb" value="mb"/>
+                <option label="FilterSettings.fileSizeUnit.gb" value="gb"/>
+                <attribute name="defaultValue" value="mb"/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+ 	</property>
+        <property>
+            <label name="fileSizeLessLabel" defaultValue="FilterSettings.fileSizeLessLabel"/>
+            <cc name="fileSizeLessValue" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+            <cc name="fileSizeLessUnit" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                <option label="FilterSettings.fileSizeUnit.kb" value="kb"/>
+                <option label="FilterSettings.fileSizeUnit.mb" value="mb"/>
+                <option label="FilterSettings.fileSizeUnit.gb" value="gb"/>
+                <attribute name="defaultValue" value="mb"/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+ 	</property>		
+        <property>
+            <label name="fileDateLabel" defaultValue="FilterSettings.fileDateLabel"/>
+            <![CDATA[
+            <table><tr><td>
+            ]]>
+            <cc name="fileDateType" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                <option label="" value="blank"/>
+                <option label="FilterSettings.fileDateType.created" value="created"/>
+                <option label="FilterSettings.fileDateType.modified" value="modified"/>
+                <attribute name="defaultValue" value="created"/>
+                <attribute name="onChange" value="selectDateType(this.value);" />
+            </cc> 
+            <![CDATA[
+            </td></tr>
+            <tr><td rowspan="2">
+            ]]>
+            <cc name="fileDateRange" tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag">
+                <option label="FilterSettings.fileDateRange.inTheLast" value="inTheLast"/>
+                <option label="FilterSettings.fileDateRange.between" value="between"/>
+                <attribute name="defaultValue" value="inTheLast"/>
+                <attribute name="dynamic" value="true" />
+                <attribute name="onChange" value="selectDateRangeButton(this.value);" />
+            </cc> 
+            <![CDATA[
+            </td>
+            <td>
+            ]]>
+            <cc name="fileDateNum" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+            <![CDATA[
+            </td>
+            <td>
+            ]]>
+           <cc name="fileDateUnit" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                <option label="FilterSettings.fileDateUnit.days" value="days"/>
+                <option label="FilterSettings.fileDateUnit.months" value="months"/>
+                <attribute name="defaultValue" value="days"/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+            <![CDATA[
+            </td></tr>
+            <tr><td>
+            ]]>
+            <cc name="fileDateStart" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+            <![CDATA[
+            </td>
+            <td align="center">
+            ]]>
+            <cc name="fileDateText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                <attribute name="defaultValue" value="FilterSettings.fileDateText"/>
+            </cc> 
+            <![CDATA[
+            </td>
+            <td>
+            ]]>
+            <cc name="fileDateEnd" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+            <![CDATA[
+            </td></tr>
+            <tr><td></td><td>
+            ]]>
+            <cc name="fileDateHelp1" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                <attribute name="defaultValue" value="FilterSettings.fileDateHelp"/>
+            </cc> 
+            <![CDATA[
+            </td><td>
+            </td><td>
+            ]]>
+            <cc name="fileDateHelp2" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+                <attribute name="defaultValue" value="FilterSettings.fileDateHelp"/>
+            </cc> 
+            <![CDATA[
+            </td></tr></table>
+            ]]>
+        </property>
+        <property>
+            <label name="ownerLabel" defaultValue="FilterSettings.ownerLabel"/>
+            <cc name="ownerValue" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+            </cc> 
+        </property>
+        <property>
+            <label name="groupLabel" defaultValue="FilterSettings.groupLabel"/>
+            <cc name="groupValue" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+                <attribute name="defaultValue" value=""/>
+            </cc> 
+ 	</property>
+        <property name="isDamaged">
+            <label name="isDamagedLabel" defaultValue="FilterSettings.isDamagedLabel"/>
+            <cc name="isDamagedValue" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                <option label="" value="blank"/>
+                <option label="samqfsui.yes" value="yes"/>
+                <option label="samqfsui.no" value="no"/>
+                <attribute name="defaultValue" value="blank"/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+        </property>
+        <property name="isOnline">
+            <label name="isOnlineLabel" defaultValue="FilterSettings.isOnlineLabel"/>
+            <cc name="isOnlineValue" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                <option label="" value="blank"/>
+                <option label="samqfsui.yes" value="yes"/>
+                <option label="samqfsui.no" value="no"/>
+                <attribute name="defaultValue" value="blank"/>
+                <attribute name="dynamic" value="true" />
+            </cc> 
+        </property>
+        <property span="true">
+            <cc name="ClearButton"
+                tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+                <attribute name="defaultValue" value="CommonPopup.clear"/>
+                <attribute name="type" value="secondary"/>
+                <attribute name="onClick" value="clearForm(); return false;" />
+            </cc>
+        </property>
+        <property span="true">
+            <cc name="submitNow" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+        </property>
+        <property span="true">
+            <cc name="returnValue" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+        </property>
+    </section>
+</propertysheet>

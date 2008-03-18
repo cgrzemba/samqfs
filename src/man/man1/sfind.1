@@ -1,0 +1,1505 @@
+.\" $Revision: 1.24 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sfind 1 "28 Jun 2005"
+.na
+.nh
+.SH NAME
+sfind \- Searches for files in a directory hierarchy
+.SH SYNOPSIS
+\fBsfind\fR
+\%[\fIpath\fR\ .\|.\|.\|]
+[\fIexpression\fR]
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsfind\fR(1) command contains Sun Microsystems extensions to the
+GNU \fBfind\fR(1) command.  The extensions support the features
+of files that reside in Sun StorEdge QFS and Sun StorEdge \%SAM-FS
+file systems.
+.PP
+The \fBsfind\fR command
+searches the directory tree rooted at each \fIpath\fR by
+evaluating the specified \fIexpression\fR from left to right,
+according to the
+rules of precedence.
+The search continues until the outcome is
+known (the left hand side is false for \fBand\fR operations, true for
+\fBor\fR), at which point the \fBsfind\fR command moves on to
+the next file name.
+For more information on the rules
+of precedence, see the OPERATORS
+section of this man page.
+.PP
+The Sun Microsystems extensions to this
+command include the addition of several
+tests that reference characteristics
+specific to files that reside in
+a Sun StorEdge QFS or Sun StorEdge \%SAM-FS file system.  These
+tests are as follows:
+.PP
+\fB\-any_copy_d\fR,
+\fB\-any_copy_r\fR,
+\fB\-any_copy_v\fR,
+\fB\-archdone\fR,
+\fB\-archive_d\fR,
+\fB\-archive_n\fR,
+\fB\-archived\fR,
+\fB\-archpos \fIn\fR,
+\fB\-archpos1 \fIn\fR,
+\fB\-archpos2 \fIn\fR,
+\fB\-archpos3 \fIn\fR,
+\fB\-archpos4 \fIn\fR,
+\fB\-copies\ \fIn\fR,
+\fB\-copy\ \fIn\fR,
+\fB\-copy_d\ \fIn\fR,
+\fB\-copy_r\ \fIn\fR,
+\fB\-copy_v\ \fIn\fR,
+\fB\-damaged\fR,
+\fB\-is_setfa_g\fR,
+\fB\-is_setfa_s\fR,
+\fB\-mt\ \fImedia_type\fR,
+\fB\-mt1\ \fImedia_type\fR,
+\fB\-mt2\ \fImedia_type\fR,
+\fB\-mt3\ \fImedia_type\fR,
+\fB\-mt4\ \fImedia_type\fR,
+\fB\-offline\fR,
+\fB\-online\fR,
+\fB\-ovfl\fR,
+\fB\-ovfl1\fR,
+\fB\-ovfl2\fR,
+\fB\-ovfl3\fR,
+\fB\-ovfl4\fR,
+\fB\-partial_on\fR,
+\fB\-release_a\fR,
+\fB\-release_d\fR,
+\fB\-release_n\fR,
+\fB\-release_p\fR,
+\fB\-rmin\ \fIn\fR,
+\fB\-rtime\ \fIn\fR,
+\fB\-sections\ \fIn\fR,
+\fB\-sections1\ \fIn\fR,
+\fB\-sections2\ \fIn\fR,
+\fB\-sections3\ \fIn\fR,
+\fB\-sections4\ \fIn\fR,
+\fB\-segment\ \fIn\fR,
+\fB\-segment_a\fR,
+\fB\-segment_i\fR,
+\fB\-segment_s\fR,
+\fB\-segmented\fR,
+\fB\-segments\ \fIn\fR,
+\fB\-setfa_g\ \fIn\fR,
+\fB\-setfa_s\ \fIn\fR,
+\fB\-ssum_g\fR,
+\fB\-ssum_u\fR,
+\fB\-ssum_v\fR,
+\fB\-stage_a\fR,
+\fB\-stage_d\fR,
+\fB\-stage_n\fR,
+\fB\-verify\fR,
+\fB\-vsn\ \fIpattern\fR,
+\fB\-vsn1\ \fIpattern\fR,
+\fB\-vsn2\ \fIpattern\fR,
+\fB\-vsn3\ \fIpattern\fR,
+\fB\-vsn4\ \fIpattern\fR,
+\fB\-xmin\ \fIn\fR,
+\fB\-xtime\ \fIn\fR.
+.PP
+For a comprehensive lists of tests, see
+the TESTS section of this
+man page.
+.PP
+This command accepts the following options:
+.TP 10
+\fIpath\fR
+Specifies the path to the directory to be searched.
+If no \fIpath\fR is specified, the \fBsfind\fR command searches the
+current directory.
+If a \fIpath\fR is specified, the \fIpath\fR must appear on the command
+line to the left of the \fIexpression\fR argument.
+If specifying more than one \fIpath\fR,
+separate each with a space character.
+.TP
+\fIexpression\fR
+An expression composed from arguments described in the
+OPTIONS, TESTS,
+ACTIONS, and OPERATORS
+sections of this man page.
+If no \fIexpression\fR is specified, \fB\-print\fR is used.
+.sp
+The \fIexpression\fR must begin with one of the following characters:
+.sp
+.nf
+\- A dash (\fB\-\fR)
+\- An opening parenthesis (\fB(\fR)
+\- A closing parenthesis (\fB)\fR)
+\- A comma (\fB,\fR)
+\- An exclamation point (\fB!\fR)
+.fi
+.PP
+.RS 10
+Any arguments to the left of the preceding character list are
+assumed to be paths to search.  Any arguments to the right
+of the preceding character list are assumed to be part of
+the \fIexpression\fR.
+.sp
+An \fIexpression\fR can be constructed from the following:
+.TP 3
+\(bu
+\fIOptions\fR, which affect overall operation rather than the processing
+of a specific file.  Options always return true.  For a list of
+possible options, see the OPTIONS section.
+.TP
+\(bu
+\fITests\fR, which return a true or false value.
+For a list of possible tests, see the TESTS
+section.
+.TP
+\(bu
+\fIActions\fR, which have side effects.  Actions return a true or false value.
+If \fIexpression\fR contains no actions other than \fB\-prune\fR,
+the \fB\-print\fR action is performed on all files
+for which the expression is true.
+For a list of possible actions, see the ACTIONS
+section.
+.TP
+\(bu
+\fIOperators\fR, which separate options, tests, and actions.
+For a list of possible operators, see the OPERATORS
+section.
+The \fB\-and\fR operator is assumed if no operator is specified.
+.SS OPTIONS
+An \fIexpression\fR can contain one or more \fIoptions\fR.
+The \fIoptions\fR always return true.  The available \fIoptions\fR
+are as follows:
+.TP 10
+\fIoption\fR
+\fRAction\fR
+.TP
+\fB\-daystart\fR
+Measures times for
+\fB\-amin\fR,
+\fB\-atime\fR,
+\fB\-cmin\fR,
+\fB\-ctime\fR,
+\fB\-mmin,\fR
+and
+\fB\-mtime\fR
+from the beginning of today rather than from 24 hours ago.
+.TP
+\fB\-depth\fR
+Processes each directory's contents before the directory itself.
+.TP
+\fB\-follow\fR
+Dereferences symbolic links.  Implies the \fB\-noleaf\fR
+option.  For more information, see the \fB\-noleaf\fR information
+that follows in this list.
+.TP
+\fB\-maxdepth \fIlevels\fR
+Descends at most \fIlevels\fR
+levels of
+directories below the command line arguments.
+The \fIlevels\fR argument muse be a nonnegative integer.
+If you specify \fB\-maxdepth\ 0\fR, the \fItests\fR
+and \fIactions\fR are applied to
+the command line arguments only.
+For more information, see the TESTS
+and ACTIONS sections of
+this man page.
+.TP
+\fB\-mindepth \fIlevels\fR
+Prevents any tests or actions from being performed at
+levels less than \fIlevels\fR.
+The \fIlevels\fR argument must be a nonnegative integer.
+If you specify \fB\-mindepth\ 1\fR, all files except
+the command line arguments are processed.
+For more information, see the TESTS
+and ACTIONS sections of
+this man page.
+.TP
+\fB\-noleaf\fR
+Supresses optimization.
+When specified, the command does not assume that directories
+contain 2 fewer
+subdirectories than their hard link count.  This option is needed when
+searching file systems that do not follow the UNIX \%directory-link
+convention.  Such file systems include \%CD-ROM
+or \%MS-DOS file systems or AFS volume mount
+points.
+.sp
+Each directory on a typical UNIX file system has at least 2
+hard links:  its name and its \&\fB.\fR entry.  If subdirectories
+are present, each of those has a \&\fB..\fR entry linked to that
+directory.  When the \fBsfind\fR command
+examines a directory, after it has statted 2 fewer subdirectories
+than the directory's link count, it assumes that the rest of the entries
+in the directory are not directories.  That is, the rest of the entries
+are \fIleaf\fR files in the directory
+tree.  If only the files' names need to be examined, there is no need
+to stat them; this gives a significant increase in search speed.
+.TP
+\fB\-test_segments\fR
+For a segmented file, applies \fBsfind\fR tests to each individual
+data segment and to the index inode.  If a \fBsfind\fR test returns
+true for a data segment or for a segmented file's index
+inode, \fBsfind\fR writes the file path, a slash, and the segment number.
+The number zero is written for the index inode's segment number.
+.sp
+The following options always automatically enable
+the \fB\-test_segments\fR option: \fB\-segment\ \fIn\fR,
+\fB\-segment_i\fR, \fB\-segment_s\fR.
+.sp
+If this option is not specified, and the tests are applied to a segmented
+file, then the tests are applied at the file\-level, and they are
+aggregated over all data segments.
+.sp
+This option has no effect on test results when applied to unsegmented files.
+.sp
+For more information, see the TESTS section of this man page.
+.TP
+\fB\-version\fR
+Writes the \fBsfind\fR command's version number to standard error.
+.TP
+\fB\-ractive\fR
+If the WORM feature is active writes the path of files which are retained and
+the retention period has not expired.
+.TP
+\fB\-rover\fR
+If the WORM feature is active writes the path of files whose retention period
+has expired.
+.TP
+\fB\-rafter <date>\fR
+If the WORM feature is active writes the path of files whose retention period
+ends after the given date.  The date is specified with traditional format
+CCYYMMDDHHMM. CC is the century, YY is the year, MM is the month, DD is
+the day, HH is the hour, and MM is minute(s).
+.TP
+\fB\-rremain <time>\fR
+If the WORM feature is active writes the path of files with retention periods
+with at least <time> left.  The time is a duration specified as a combination
+of years, days, hours, and minutes given as a string "MyNdOhPm" where M, N,
+O, P are arbitrary non-negative integers. y, d, h, m represent the number
+of years, days, hours, and minute(s) for the search.
+.TP
+\fB\-rlonger <time>\fR
+If the WORM feature is active writes the path of files with retention periods
+longer than <time>.  The time is a duration specified as a combination of years,
+days, hours, and minutes given as a string "MyNdOhPm" where M, N, O, P are
+arbitrary non-negative integers. y, d, h, m represent the  number of years,
+days, hours, and minute(s) for the search.
+.TP
+\fB\-rpermanent <date>\fR
+If the WORM feature is active writes the path of files whose retention period
+is permanent.
+.TP
+\fB\-xdev\fR
+Prevents the command from descending directories on other file systems.
+.SS TESTS
+An \fIexpression\fR can contain one or more \fItests\fR.
+Many \fItests\fR accept a numeric argument, \fIn\fR.  The numeric
+arguments can be specified with a preceding plus sign (\fB+\fR) or
+minus sign (\fB-\fR), as follows:
+.TP 10
+\fIn\fB Format\fR
+\fBMeaning\fR
+.TP
+\fB+\fIn\fR
+Greater than \fIn\fR.
+.TP
+\fB\-\fIn\fR
+Less than \fIn\fR.
+.TP
+\ \fIn\fR
+Exactly \fIn\fR.
+.PP
+The available tests are as follows:
+.TP 10
+\fItest\fR
+\fBCondition\fR
+.TP
+\fB\-amin \fIn\fR
+File was last accessed \fIn\fR minutes ago.
+.TP
+\fB\-anewer \fIfile\fR
+File was last accessed more recently than \fIfile\fR was modified.
+The \fB\-anewer\fR test affects the \fB\-follow\fR option only
+if the \fB\-follow\fR option comes before (is to the left of)
+the \fB\-anewer\fR test on the command line.
+.TP
+\fB\-any_copy_d\fR
+File has an archive copy that is damaged.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the segmented file's index inode has
+an archive copy that is damaged or if at least one of the file's data
+segments has an archive copy that is damaged.
+.TP
+\fB\-any_copy_r\fR
+File has an archive copy marked for rearchiving by
+the \fBrearch\fR(1M) command or by the recycler.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the segmented file's index inode has an
+archive copy marked for rearchiving or if at least one of the file's
+data segments has an archive copy marked for rearchiving.
+.TP
+\fB\-any_copy_v\fR
+File has an archive copy that is verified.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the segmented file's index inode has
+an archive copy that is verified or if all of the file's data
+segments have an archive copy that is verified.
+.TP
+\fB\-archdone\fR
+File has completed archive processing.
+The archiver has no further work to do on the file at this time.
+Note that this does not mean that the file has been archived.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true for a segmented file if and
+only if all of the file's data segments have completed archive
+processing.  This test does not evaluate a segmented file's index
+inode to see if it has completed archive processing.
+.TP
+\fB\-archive_d\fR
+File has had the equivalent of \fBarchive\ \-d\fR run against it,
+so the archiver handles it according to system defaults.
+For more information
+on the \%\fB\-d\fR option to the \fBarchive\fR(1) command,
+see the \fBarchive\fR(1) man page.
+.TP
+\fB\-archive_n\fR
+File has had the equivalent of \fBarchive\ \-n\fR run against it,
+so it will never be archived.
+For more information
+on the \%\fB\-n\fR option to the \fBarchive\fR(1) command,
+see the \fBarchive\fR(1) man page.
+.TP
+\fB\-archived\fR
+File is archived.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if all of the file's data
+segments are archived.  This test does not evaluate a segmented file's
+index inode to see if it has been archived.  The following \fBsfind\fR command
+finds files
+on \fB/sam6\fR whose index inode has been archived:
+.RS 10
+.PP
+.nf
+.ft CO
+sfind /sam6 -archived -segment_i -print
+.ft
+.fi
+.PP
+The preceeding \fBsfind\fR command identifies only index inodes that have
+been archived; it does not yield any information regarding whether a segmented
+file's data segments have been archived.
+.RE
+.TP
+\fB\-archpos \fIn\fR
+File has at least one archive copy at position \fIn\fR.
+Note that \fIn\fR may be preceded by + or -, and specified
+in decimal, or hexadecimal if preceded by "0x".  This position
+is the position \fBprior to the decimal point\fR in sls output
+or the archiver log.  If \fIn\fR is a path starting with "d" or "f"
+it is interpreted as a relative path to a disk archive file.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the file's index inode has at
+least one archive copy at position \fIn\fR or if at least one of the
+file's data segments has at least one archive copy at position \fIn\fR.
+.TP
+\fB\-archpos1 \fIn\fR
+.PD 0
+.TP
+\fB\-archpos2 \fIn\fR
+.PD 0
+.TP
+\fB\-archpos3 \fIn\fR
+.PD 0
+.TP
+\fB\-archpos4 \fIn\fR
+File has the indicated copy number (1-4) at position \fIn\fR.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the file's index inode has the
+indicated archive copy at position \fIn\fR or if at least one of the
+file's data segments has the indicated archive copy at position \fIn\fR.
+.PD
+.TP
+\fB\-atime \fIn\fR
+File was last accessed \fIn\fR*24 hours ago.
+.TP
+\fB\-cmin \fIn\fR
+File status was last changed \fIn\fR minutes ago.
+.TP
+\fB\-cnewer \fIfile\fR
+File status was last changed more recently than \fIfile\fR
+was modified.  The \fB\-cnewer\fR test is affected by
+the \fB\-follow\fR option only if the \fB\-follow\fR option comes
+before (is to the left of) the \fB\-cnewer\fR test on the
+command line.
+.TP
+\fB\-copies \fIn\fR
+File has \fIn\fR archive copies.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if each of the file's data
+segments have \fIn\fR archive copies.  This test does not evaluate a segmented
+file's index inode to see if it has \fIn\fR archive copies.
+.TP
+\fB\-copy \fIn\fR
+File has an archive copy number \fIn\fR.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if each of the file's data
+segments have an archive copy number \fIn\fR.  This test does not evaluate a
+segmented file's index inode to see if it has an archive copy number \fIn\fR.
+.TP
+\fB\-copy_d \fIn\fR
+File has an archive copy number \fIn\fR that is damaged.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the segmented file's index inode has
+an archive copy number \fIn\fR that is damaged or if at least one of the
+file's data segments has an archive copy number \fIn\fR that is damaged.
+.TP
+\fB\-copy_r \fIn\fR
+File has an archive copy number \fIn\fR marked for rearchiving
+by the \fBrearch\fR(1M) command or by the recycler.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the segmented file's index inode has
+an archive copy number \fIn\fR marked for rearchiving or if at least one of the
+file's data segments has an archive copy number \fIn\fR marked for rearchiving.
+.TP
+\fB\-copy_v \fIn\fR
+File has an archive copy number \fIn\fR that is verified.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the segmented file's index inode has
+an archive copy number \fIn\fR that is verified or if all of the
+file's data segments have an archive copy number \fIn\fR that is verified.
+.TP
+\fB\-ctime \fIn\fR
+File status was last changed \fIn\fR*24 hours ago.
+.TP
+\fB\-damaged\fR
+File is damaged.
+.TP
+\fB\-empty\fR
+File is empty and is either a regular file or a directory.
+.TP
+\fB\-false\fR
+Always false.
+.TP
+\fB\-fstype \fItype\fR
+File is on a file system of type \fItype\fR.
+Possible file system types differ among the different UNIX versions
+and include, but are not limited to, the
+following:  \fBufs\fR, \fB4.2\fR, \fB4.3\fR, \fBnfs\fR, \fBtmp\fR,
+\fBmfs\fR, \fBS51K\fR, and \fBS52K\fR.
+You can use the \fB\-printf\fR action with its \fB%F\fR argument
+to obtain the types of your file systems.
+For more information on \fB\-printf\fR, see
+the ACTIONS section.
+.TP
+\fB\-gid \fIn\fR
+File has \fIn\fR for its numeric group ID.
+.TP
+\fB\-group \fIgname\fR
+File belongs to group \fIgname\fR.  A numeric group ID is allowed.
+.TP
+\fB\-ilname \fIpattern\fR
+Like \fB\-lname\fR, but the match is case insensitive.
+.TP
+\fB\-iname \fIpattern\fR
+Like \fB\-name\fR, but the match is case insensitive.
+For example, a \fIpattern\fR of \fBfo*\fR and \fBF??\fR both
+match file names \fBFoo\fR, \fBFOO\fR, \fBfoo\fR, \fBfOo\fR, and so on.
+.TP
+\fB\-inum \fIn\fR
+File has inode number \fIn\fR.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if any of the file's data segments
+or its index inode have inode number \fIn\fR.
+.TP
+\fB\-ipath \fIpattern\fR
+Like \fB\-path\fR, but the match is case insensitive.
+.TP
+\fB\-iregex \fIpattern\fR
+Like \fB\-regex\fR, but the match is case insensitive.
+.TP
+\fB\-is_setfa_g\fR
+File has had its stripe group number set using the \fBsetfa\ \-g\fR
+command.  For more information on the \fBsetfa\ \-g\fR command,
+see the \fBsetfa(1)\fR man page.
+.TP
+\fB\-is_setfa_s\fR
+File has had its stripe width set using the \fBsetfa\ \-s\fR
+command.  For more information on the \fBsetfa\ \-s\fR command,
+see the \fBsetfa(1)\fR man page.
+.TP
+\fB\-links \fIn\fR
+File has \fIn\fR links.
+.TP
+\fB\-lname \fIpattern\fR
+File is a symbolic link whose contents match shell pattern
+\fIpattern\fR.
+The metacharacters do not treat the slash character (\fB/\fR) or the
+period character (\&\fB.\fR) specially.
+.TP
+\fB\-mmin \fIn\fR
+File's data was last modified \fIn\fR minutes ago.
+.TP
+\fB\-mt \fImedia_type\fR
+File has an archive copy on the specified \fImedia_type\fR on any copy.
+.TP
+\fB\-mt1 \fImedia_type\fR
+.PD 0
+.TP
+\fB\-mt2 \fImedia_type\fR
+.PD 0
+.TP
+\fB\-mt3 \fImedia_type\fR
+.PD 0
+.TP
+\fB\-mt4 \fImedia_type\fR
+File has an archive copy on the specified \%\fImedia_type\fR for
+the indicated copy number (\%1-4).
+.PD
+.TP
+\fB\-mtime \fIn\fR
+File's data was last modified \fIn\fR*24 hours ago.
+.TP
+\fB\-name \fIpattern\fR
+Base of file name (the path with the leading directories removed)
+matches shell pattern \fIpattern\fR.  The metacharacters
+(\fB*\fR, \fB?\fR, and \fB[ ]\fR) do not match a \&\fB.\fR at the
+start of the base name.  To ignore
+a directory and the files under it, use the \fB\-prune\fR action.
+For more information, see the example in the \fB\-path\fR test
+in this list.
+.TP
+\fB\-newer \fIfile\fR
+File was modified more recently than \fIfile\fR.
+The \fB\-follow\fR option
+affects the \fB\-newer\fR test
+only if the \fB\-follow\fR option comes before (is to the left of)
+the \fB\-newer\fR test on the command line.
+.TP
+\fB\-nouser\fR
+No user corresponds to the file's numeric user ID.
+.TP
+\fB\-nogroup\fR
+No group corresponds to the file's numeric group ID.
+.TP
+\fB\-offline\fR
+File is offline.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the file's index inode is offline
+or if all of the file's data segments are offline.
+.TP
+\fB\-online\fR
+File is online.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the file's index inode is online
+and all of the file's data segments are online.
+.TP
+\fB\-ovfl\fR
+File has at least one archive copy that has sections on more than one VSN;
+this condition is known as volume overflow.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in effect,
+this test evaluates to true if the file's index inode has at least
+one archive copy that has sections on more than one VSN or if
+at least one of the file's data segments has an archive copy that has
+sections on more than one VSN.
+.TP
+\fB\-ovfl1\fR
+.PD 0
+.TP
+\fB\-ovfl2\fR
+.PD 0
+.TP
+\fB\-ovfl3\fR
+.PD 0
+.TP
+\fB\-ovfl4\fR
+File has an archive copy that has sections on more than one VSN for the
+indicated copy number (1-4).
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the file's index inode has an
+archive copy that has sections on more than one VSN for the indicated
+copy number or if at least one of the file's data segments has an archive
+copy that has sections on more than one VSN for the indicated copy number.
+.PD
+.TP
+\fB\-partial_on\fR
+File has the \%partial-release attribute set and
+the partially retained portion of the file is online.
+.TP
+\fB\-path \fIpattern\fR
+File name matches shell pattern \fIpattern\fR.
+The metacharacters do not treat the slash (\fB/\fR) or
+the period (\fB\&.\fR) specially.  For example,
+the following line writes an entry for a directory
+called \fB\&./src/misc\fR (if one exists):
+.RS 10
+.PP
+.nf
+.ft CO
+sfind . \-path './sr*sc'
+.ft
+.fi
+.PP
+To ignore a whole directory tree, use the \fB\-prune\fR action
+rather than
+checking every file in the tree.  For example, the following
+command skips the
+directory \fBsrc/emacs\fR for all files and directories under it and
+it writes the names of the other files found:
+.PP
+.nf
+.ft CO
+sfind . \-path './src/emacs' -prune -o -print
+.ft
+.fi
+.PP
+.RE
+.TP 10
+\fB\-perm \fImode\fR
+File's permission bits are exactly \fImode\fR (octal or symbolic).
+Symbolic modes use mode 0 as a point of departure.
+.TP
+\fB\-perm \-\fImode\fR
+All of the permission bits \fImode\fR are set for the file.
+.TP
+\fB\-perm +\fImode\fR
+Any of the permission bits \fImode\fR are set for the file.
+.TP
+\fB\-regex \fIpattern\fR
+File name matches regular expression \fIpattern\fR.
+This is a match on the whole path, not a search.
+For example, to match a file named \&\fB./fubar3\fR,
+you can use the regular expression \&\fB.*bar.\fR or \&\fB.*b.*3\fR,
+but not \&\fBb.*r3\fR.
+.TP
+\fB\-release_d\fR
+File has had the equivalent of having the \fBrelease\fR(1) command
+with its \fB\-d\fR option run against it,
+and thus has the default release handling.
+.TP
+\fB\-release_a\fR
+File has had the equivalent of having the \fBrelease\fR(1) command
+with its \fB\-a\fR option run against it,
+and thus will be released immediately after being archived.
+.TP
+\fB\-release_n\fR
+File has had the equivalent of having the \fBrelease\fR(1) command
+with its \fB\-n\fR option run against it,
+and thus will never be released.
+.TP
+\fB\-release_p\fR
+File has had the equivalent of having the \fBrelease\fR(1) command
+with its \fB\-p\fR option run against it,
+and thus will be partially released.
+.TP
+\fB\-rmin \fIn\fR
+File's residence was changed \fIn\fR minutes ago.
+.TP
+\fB\-rtime \fIn\fR
+File's residence was changed \fIn\fR*24 hours ago.
+.TP
+\fB\-sections\ \fIn\fR
+File has at least one archive copy that has sections on \fIn\fR VSNs.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the file's index inode has at least
+one archive copy that has sections on \fIn\fR VSNs or if at least one of
+the file's data segments has an archive copy number \fIn\fR that has
+sections on \fIn\fR VSNs.
+.TP
+\fB\-sections1\ \fIn\fR
+.PD 0
+.TP
+\fB\-sections2\ \fIn\fR
+.PD 0
+.TP
+\fB\-sections3\ \fIn\fR
+.PD 0
+.TP
+\fB\-sections4\ \fIn\fR
+File has an archive copy that has sections on \fIn\fR VSNs for the
+indicated copy number (1-4).
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not in
+effect, this test evaluates to true if the file's index inode has at
+least one archive copy that has sections on \fIn\fR VSNs for the
+indicated copy number or if at least one of the file's data segments has an
+archive copy number \fIn\fR that has sections on \fIn\fR VSNs.
+.PD
+.TP
+\fB\-segment\ \fIn\fR
+Data segment or index inode has segment number \fIn\fR.
+.sp
+Index inodes always have segment number 0.  Data segments are numbered
+sequentially starting with 1.
+.sp
+This test always causes \fBsfind\fR to run as if the \fB\-test_segments\fR
+option were in effect.
+.TP
+\fB\-segment_a\fR
+File or directory has had the segment attribute set.
+.sp
+If the \fB\-test_segments\fR option is also in effect, then this test
+evaluates to true for index inodes and data segments in addition to files and
+directories that have had the \fBsegment\fR attribute set.
+.TP
+\fB\-segment_i\fR
+Item is an index inode.
+.sp
+This test always causes \fBsfind\fR to run as if the
+\fB\-test_segments\fR option were in effect.
+.TP
+\fB\-segment_s\fR
+Item is a data segment.
+.sp
+This test always causes \fBsfind\fR to run as if the
+\fB\-test_segments\fR option were in effect.
+.TP
+\fB\-segmented\fR
+Item is a segmented file.
+.sp
+If used in conjunction with the \fB\-test_segments\fR option, this test
+evaluates to true for index inodes and data segments.
+.TP
+\fB\-segments\ \fIn\fR
+Segmented file has \fIn\fR data segments.
+.TP
+\fB\-setfa_g\fR \fIn\fR
+File's stripe group was set to \fIn\fR using
+the command \fBsetfa\ \-g\ \fIn\fR.
+For more information on the \fBsetfa\ \-g\fR command,
+see the \fBsetfa\fR(1) man page.
+.TP
+\fB\-setfa_s\fR \fIn\fR
+File's stripe width was set to \fIn\fR using
+the command \fBsetfa\ \-s\ \fIn\fR.
+For more information on the \fBsetfa\ \-s\fR command,
+see the \fBsetfa\fR(1) man page.
+.TP
+\fB\-size \fIn\fR[\fIunit\fR]
+File uses \fIn\fR \%512-byte blocks.
+To specify another size, use the \fIunit\fR suffix.
+The possible \fIunit\fR
+specifiers are as follows:
+.RS 10
+.TP 10
+\fIunit\fR
+\fBMeaning\fR
+.TP
+\fBb\fR or \fBc\fR
+Bytes.
+.TP
+\fBk\fR
+Kilobytes.
+.TP
+\fBm\fR
+Megabytes.
+.TP
+\fBg\fR
+Gigabytes.
+.TP
+\fBt\fR
+Terabytes.
+.PP
+For example, the following specifications are equivalent:
+.PP
+.nf
+.ft CO
+-size 3
+-size 1536b
+.fi
+.ft
+.PP
+The \fB\-size\fR test does not count indirect blocks,
+but it does count blocks in sparse files that are not actually allocated.
+.RE
+.TP 10
+\fB\-ssum_g\fR
+File has had the equivalent of the \fBssum\fR(1) command with
+its \fB\-g\fR option run against it, and thus will
+have a checksum value generated and stored for it when it is archived.
+.TP
+\fB\-ssum_u\fR
+File has had the equivalent of the \fBssum\fR(1) command with
+its \fB\-u\fR option run against it, and thus will
+have a checksum value verified (used) when it is staged.
+.TP
+\fB\-ssum_v\fR
+File has a valid checksum value.
+.sp
+For a segmented file, if the \fB\-test_segments\fR option is not
+in effect, this test evaluates to true if all of the file's data
+segments have valid checksum values.  This test does not evaluate a
+segmented file's index inode to see if it has a valid checksum value.
+.TP
+\fB\-stage_a\fR
+File has had the equivalent of the \fBstage\fR(1) command with
+its \fB\-a\fR option run against it, and thus will
+have associative staging behavior.
+.TP
+\fB\-stage_d\fR
+File has had the equivalent of the \fBstage\fR(1) command with
+its \fB\-d\fR option run against it, and thus will
+have the default staging behavior.
+.TP
+\fB\-stage_n\fR
+File has had the equivalent of the \fBstage\fR(1) command with
+its \fB\-n\fR option run against it, and thus will
+not be staged into disk cache for read references.
+.TP
+\fB\-true\fR
+Always true.
+.TP
+\fB\-type \fIc\fR
+File is of type \fIc\fR.  For \fIc\fR, specify one of the following:
+.RS 10
+.TP 10
+\fBType \fIc\fR
+\fBMeaning\fR
+.TP
+\fBb\fR
+Block (buffered) special.
+.TP
+\fBc\fR
+Character (unbuffered) special.
+.TP
+\fBd\fR
+Directory.
+.TP
+\fBp\fR
+Named pipe (FIFO).
+.TP
+\fBf\fR
+Regular file.
+.TP
+\fBl\fR
+Symbolic link.
+.TP
+\fBs\fR
+Socket.
+.TP
+\fBR\fR
+Removable media file.
+.RE
+.TP
+\fB\-uid \fIn\fR
+File's numeric user ID is \fIn\fR.
+.TP
+\fB\-used \fIn\fR
+File was last accessed \fIn\fR days after its status was last changed.
+.TP
+\fB\-user \fIuname\fR
+File is owned by user \fIuname\fR (numeric user ID allowed).
+.TP
+\fB\-verify\fR
+File has the verify attribute set.
+See the \fBssum\fR(1) man page for more information on the \fBverify\fR
+attribute.
+.TP
+\fB\-vsn \fIpattern\fR
+File has an archive copy on a volume with VSN matching shell pattern
+\fIpattern\fR for any copy.
+.TP
+\fB\-vsn1 \fIpattern\fR
+.PD 0
+.TP
+\fB\-vsn2 \fIpattern\fR
+.PD 0
+.TP
+\fB\-vsn3 \fIpattern\fR
+.PD 0
+.TP
+\fB\-vsn4 \fIpattern\fR
+File has an archive copy on a volume with VSN matching shell pattern
+\fIpattern\fR for the indicated copy (1-4).
+.PD
+.TP
+\fB\-xmin \fIn\fR
+File's data was created \fIn\fR minutes ago.
+.TP
+\fB\-xtime \fIn\fR
+File's data was created \fIn\fR*24 hours ago.
+.TP
+\fB\-xtype \fIc\fR
+The same as \fB\-type\fR unless the file is a symbolic link.
+For symbolic links, the \fB\-xtype\fR test checks the type of
+the file that the \fB\-type\fR test does not check.
+For \fIc\fR values, see the \fB\-type\fR test in this list.
+.sp
+For symbolic links, the following occurs:
+.RS 10
+.TP 3
+\(bu
+If the \fB\-follow\fR option has not been specified,
+the test returns true if the file is a link to a file of type \fIc\fR.
+.TP
+\(bu
+If the \fB\-follow\fR option has been specified,
+the test returns true if \fIc\fR is \fBl\fR.
+.RE
+.SS ACTIONS
+An \fIexpression\fR can contain one or more \fIactions\fR.
+The available \fIactions\fR are as follows:
+.TP 10
+\fIaction\fR
+\fBResult\fR
+.TP
+\fB\-exec \fIcommand\fB ;\fR
+Executes the specified \fIcommand\fR.
+True if 0 status is returned.
+All arguments to the right of the \fB\-exec\fR
+keyword are assumed to be arguments to \fIcommand\fR
+until an argument consisting of a semicolon (\fB;\fR) is encountered.
+The string \fB{}\fR is replaced by the current
+file name being processed everywhere it occurs in the arguments to the
+command, not just in arguments where it is alone, as in some versions
+of the \fBfind\fR(1) command.
+Both of these constructions might need to be escaped with a
+backslash character (\fB\e\fR) or quoted to protect them from expansion
+by the shell.
+.TP
+\fB\-fprint \fIfile\fR
+True.  Writes the full file name to file \fIfile\fR.
+If \fIfile\fR does not exist when \fBsfind\fR is run, it is created.
+If \fIfile\fR does exist, it is truncated.
+The file names \fB/dev/stdout\fR and \fB/dev/stderr\fR are
+handled specially; they refer to the standard
+output and standard error output, respectively.
+.TP
+\fB\-fprint0 \fIfile\fR
+True.  Similar to the \fB\-print0\fR action,
+but it writes to \fIfile\fR like \fB\-fprint\fR.
+.TP
+\fB\-fprintf \fIfile\fR \fIformat\fR
+True.  Similar to the \fB\-printf\fR action,
+but it writes to \fIfile\fR, using \fIformat\fR,
+like the \fB\-fprint\fR action.  For information on
+possible \fIformat\fR option, see
+the \fB\-printf\ \fIformat\fR action.
+.TP
+\fB\-ok \fIcommand\fB ;\fR
+Executes the specified \fIcommand\fR, like the \fB\-exec\fR action,
+but it asks the user first (on the standard input).
+If the user response
+does not start with \fBy\fR or \fBY\fR, \fIcommand\fR is not run, and
+the return value is false.
+.TP
+\fB\-print\fR
+True.  Writes the full file name, followed by a newline,
+to standard output.
+.TP
+\fB\-print0\fR
+True.  Writes the full file name, followed by a null character,
+to standard output.  This allows file names that contain newlines to be
+interpreted correctly by programs that process the \fBsfind\fR output.
+.TP
+\fB\-printf \fIformat\fR
+True.  Writes \fIformat\fR to standard output, interpreting
+both backslash (\fB\e\fR) escape and percent character (\fB%\fR)
+directives.  Field widths and precisions can be
+specified as with the \fBprintf\fR(3C) C library function.
+Unlike the \fB\-print\fR action, the \fB\-printf\fR action
+does not add a newline at the end of the string.
+.sp
+Two lists follow.  The escapes are listed first, and the
+directives are listed after the escapes.
+.PP
+.RS 10
+.TP 5
+\fBEsc\fR
+\fBResult\fR
+.TP
+\fB\ea\fR
+Alarm bell.
+.TP
+\fB\eb\fR
+Backspace.
+.TP
+\fB\ec\fR
+Stops printing from this \fIformat\fR immediately.
+.TP
+\fB\ef\fR
+Form feed.
+.TP
+\fB\en\fR
+Newline.
+.TP
+\fB\er\fR
+Carriage return.
+.TP
+\fB\et\fR
+Horizontal tab.
+.TP
+\fB\ev\fR
+Vertical tab.
+.TP
+\fB\e\e\fR
+A literal backslash (\fB\e\fR).
+.PP
+A backslash character (\fB\e\fR) followed by any other
+character is treated as an
+ordinary character, so both are written.
+.PP
+The directives begin with a percent (\fB%\fR) character
+followed by another character from the following list.  If
+the \fB%\fR character is followed by a character that is not from this
+list,
+the directive is discarded, but the other character is printed.
+The directives are as follows:
+.TP 6
+\fBDir\fR
+\fBMeaning\fR
+.TP
+\fB%%\fR
+A literal percent sign.
+.TP
+\fB%a\fR
+File's last access time in the format returned by
+the C \fBctime\fR(3C) function.
+.TP
+\fB%A\fIk\fR
+File's last access time in the format specified
+by \fIk\fR, which is either an ampersand (\fB@\fR)
+or a directive for the C \fBstrftime\fR(3C) function.
+The directives specify either the time or date.
+The possible
+values for \fIk\fR follow.  Some of them might not be
+available on all systems, due to differences in the \fBstrftime\fR(3C)
+function between systems.
+.PP
+.RS 5
+.TP 3
+\(bu
+An ampersand (\fB@\fR).  The ampersand signifies
+seconds elapsed since Jan. 1, 1970, 00:00 GMT.
+.TP
+\(bu
+A time field.
+The time fields are as follows:
+.PP
+.RS 3
+.TP 5
+\fIk\fR
+\fBMeaning\fR
+.TP
+\fBH\fR
+The hour in 00, \&.\|.\|.\|, 23 format.
+.TP
+\fBI\fR
+The hour in 01, \&.\|.\|.\|, 12 format.
+.TP
+\fBk\fR
+The hour in 0, \&.\|.\|.\|, 23 format.
+.TP
+\fBl\fR
+The hour in 1, \&.\|.\|.\|, 12 format.
+.TP
+\fBM\fR
+The minute in 00, \&.\|.\|.\|, 59 format.
+.TP
+\fBp\fR
+Specifies whether the locale's time is AM or PM.
+.TP
+\fBr\fR
+The time in a \%12-hour format.  This results in
+a \fIhh\fB:\fImm\fB:\fIss\fR [\fBA\fR\ |\ \fBP\fR]\fBM\fR format.
+.TP
+\fBS\fR
+The second in a 00, \&.\|.\|.\|, 61 format.
+.TP
+\fBT\fR
+The time in a \%24-hour format.  This results in
+a \fIhh\fB:\fImm\fB:\fIss\fR format.
+.TP
+\fBX\fR
+The locale's time representation in \fIH\fB:\fIM\fB:\fIS\fR.
+.TP
+\fBZ\fR
+The time zone (for example, \fBEDT\fR) or nothing (if no
+time zone is determinable).
+.RE
+.RE
+.PP
+.RS 5
+.TP 3
+\(bu
+A date field.
+The date fields are as follows:
+.RS 3
+.TP 5
+\fIk\fR
+\fBMeaning\fR
+.TP
+\fBa\fR
+The locale's abbreviated weekday name
+in Sun, \&.\|.\|.\|, Sat format.
+.TP
+\fBA\fR
+The locale's full weekday name, in Sunday, \&.\|.\|.\|, Saturday format.
+This is of variable length.
+.TP
+\fBb\fR, \fBh\fR
+The locale's abbreviated month name in Jan, \&.\|.\|.\|, Dec format.
+.TP
+\fBB\fR
+The locale's \%full-month name in January, \&.\|.\|.\|, December format.
+This is of variable length.
+.TP
+\fBc\fR
+The locale's date and time in the following example format:
+Sat Nov 04 12:02:33 EST 1989.
+.TP
+\fBd\fR
+The day of month in 01, \&.\|.\|., 31 format.
+.TP
+\fBD\fR
+The date in \fImm\fR/\fIdd\fR/\fIyy\fR format.
+.TP
+\fBj\fR
+The day of year in 001, \&.\|.\|.\|, 366 format.
+.TP
+\fBm\fR
+The month in 01, \&.\|.\|.\|, 12 format.
+.TP
+\fBU\fR
+The number of the week in the year, with Sunday considered to
+be the first day of week, in 00, \&.\|.\|.\|, 53 format.
+.TP
+\fBw\fR
+The day of week in 0, \&.\|.\|.\|, 6 format.
+.TP
+\fBW\fR
+The number of the week in the year, with Monday considered to
+be the first day of week, in 00, \&.\|.\|.\|, 53 format.
+.TP
+\fBx\fR
+The locale's date representation in \fImm\fR/\fIdd\fR/\fIyy\fR format.
+.TP
+\fBy\fR
+The last two digits of year in 00, \&.\|.\|.\|, 99 format.
+.TP
+\fBY\fR
+The year in the following example format:  2002.
+.RE
+.RE
+.TP 6
+\fBDir\fR
+\fBMeaning\fR
+.TP
+\fB%b\fR
+File's size in \%512-byte blocks (rounded up).
+.TP
+\fB%c\fR
+File's last status change time in the format returned by
+the C \fBctime\fR(3C) function.
+.TP
+\fB%C\fIk\fR
+File's last status change time in the format specified by \fIk\fR,
+which is the same as for the \fB%A\fIk\fR directive.
+For more information,
+see the \fB%A\fIk\fR directive previously in this list.
+.TP
+\fB%d\fR
+File's depth in the directory tree.
+A zero (\fR0\fR) means that the file is a command line argument.
+.TP
+\fB%f\fR
+File's name with any leading directories removed.
+.TP
+\fB%F\fR
+Type of file system the file is on.
+This value can be used for the \fB\-fstype\fR test.
+.TP
+\fB%g\fR
+File's group name.
+This is the numeric group ID if the group has no name.
+.TP
+\fB%G\fR
+File's numeric group ID.
+.TP
+\fB%h\fR
+Leading directories of file's name.
+.TP
+\fB%H\fR
+Command line argument under which file was found.
+.TP
+\fB%i\fR
+File's inode number in decimal.
+.TP
+\fB%k\fR
+File's size in 1K blocks rounded up.
+.TP
+\fB%K\fR
+Segment number of the data segment or the index inode.
+.sp
+Index inodes always have segment number 0.  Data segments are numbered
+sequentially starting with 1.
+.sp
+A dash (\fB\-\fR) is written if the item is not an index inode and not
+a data segment.
+.TP
+\fB%l\fR
+Object of symbolic link.
+Empty string if file is not a symbolic link.
+.TP
+\fB%m\fR
+File's permission bits in octal.
+.TP
+\fB%n\fR
+Number of hard links to file.
+.TP
+\fB%p\fR
+File's name.
+.TP
+\fB%P\fR
+File's name with the name of the command line argument under which
+it was found removed.
+.TP
+\fB%Q\fR
+Number of data segments that comprise the segmented file.
+.sp
+A dash (\fB\-\fR) is written if the item is not a segmented file.
+.TP
+\fB%r\fR
+File's stripe group number as it was set using the \fBsetfa\ \-g\fR command.
+A dash (\fB\-\fR) is written if the file's stripe group number was not
+set using \fBsetfa\ \-g\fR or if the file does not reside in a
+Sun StorEdge QFS file
+system.  For more information on the \fBsetfa\ \-g\fR command,
+see the \fBsetfa\fR(1) man page.
+.TP
+\fB%s\fR
+File's size in bytes.
+.TP
+\fB%t\fR
+File's last modification time in the format returned by
+the C \fBctime\fR(3C) function.
+.TP
+\fB%T\fIk\fR
+File's last modification time in the format specified by \fIk\fR,
+which is the same as for \fB%A\fIk\fR.
+For more information,
+see the \fB%A\fIk\fR directive previously in this list.
+.TP
+\fB%u\fR
+File's user name, or numeric user ID if the user has no name.
+.TP
+\fB%U\fR
+File's numeric user ID.
+.TP
+\fB%w\fR
+File's stripe width as it was set using the \fBsetfa\ \-s\fR command.
+A dash (\fB\-\fR) is written if the file's stripe width
+was not set using \fBsetfa\ \-s\fR or if the file
+does not reside in a Sun StorEdge QFS or Sun StorEdge \%SAM-FS
+file system.  For more information
+on the \fBsetfa\ \-s\fR command, see the \fBsetfa(1)\fR man page.
+.TP
+\fB%Z\fR
+Segment length setting in megabytes.  A dash (\fB\-\fR) is written if the
+item does not have the segment attribute set.
+.RE
+.PP
+.TP
+\fB\-prune\fR
+Always yields true.  Does not examine any directories
+or files in the directory structure below the pattern
+just matched.  If \fB\-depth\fR is  specified, \fB\-prune\fR has
+no effect.
+.TP
+\fB\-ls\fR
+True.  Writes information on the current file to standard output.
+The information written is in \fBls\fR(1) command format
+with \fB\-dils\fR options.  For more information on
+the \fBls\fR(1) command, see the \fBls\fR(1) man page.
+.sp
+By default, the block counts in the output are in 1K blocks.
+If the \fBPOSIXLY_CORRECT\fR environment variable is set,
+block counts are in \%512-byte blocks.
+.SS OPERATORS
+An \fIexpression\fR can contain one or more \fIoperators\fR.
+The following \fIoperators\fR are listed in order of decreasing precedence:
+.TP 15
+\fIoperators\fR
+\fBAction\fR
+.TP
+\fB(\fR \fIexpr\fR \fB)\fR
+Forces precedence.
+.TP
+\fB!\fR \fIexpr\fR
+True if \fIexpr\fR is false.
+.TP
+\fB\-not \fIexpr\fR
+Same as \fB!\fR \fIexpr\fR.
+.TP
+\fIexpr1 expr2\fR
+And (implied).  \fIexpr2\fR is not evaluated if \fIexpr1\fR is false.
+.TP
+\fIexpr1\fR \fB\-a \fIexpr2\fR
+Same as \fIexpr1 expr2\fR.
+.TP
+\fIexpr1\fR \fB\-and \fIexpr2\fR
+Same as \fIexpr1 expr2\fR.
+.TP
+\fIexpr1\fR \fB\-o \fIexpr2\fR
+Or. \fIexpr2\fR is not evaluated if \fIexpr1\fR is true.
+.TP
+\fIexpr1\fR \fB\-or \fIexpr2\fR
+Same as \fIexpr1\fR \fB\-o \fIexpr2\fR.
+.TP
+\fIexpr1\fR \fB, \fIexpr2\fR
+List.  Both \fIexpr1\fR and \fIexpr2\fR are always evaluated.
+The value of \fIexpr1\fR is discarded.  The value of the list is the
+value of \fIexpr2\fR.
+.SH EXAMPLES
+Example 1.  The following command finds
+all files in the \fB/sam4\fR directory that are not archived:
+.PP
+.nf
+.ft CO
+sfind /sam4 ! -archived
+.ft
+.fi
+.PP
+Example 2.
+The following command finds all regular files
+in the current directory that are archived,
+online, and are nonzero in length:
+.PP
+.nf
+.ft CO
+sfind .  -archived -online ! -empty -type f -print
+.ft
+.fi
+.PP
+Example 3.  The following command finds
+all regular files in the current directory that have archive
+copies on VSNs matching the shell pattern  \fBTP??3?\fR.  Note that
+shell wildcard characters must be escaped or quoted.
+.PP
+.nf
+.ft CO
+sfind .  -vsn "TP??3?" -type f
+.ft
+.fi
+.PP
+Alternatively, the following command could be used:
+.PP
+.nf
+.ft CO
+sfind .  -vsn TP\\?\\?3\\? -type f
+.ft
+.fi
+.PP
+Example 4.  The following command prints the modification time of
+all files in \fB/sam6\fR:
+.PP
+.nf
+.ft CO
+sfind /sam6 -printf "file %f mod time %Aa %Ab %Ad %AY %AT\\n"
+file file7 mod time Fri Nov 12 1999 18:44:27
+.ft
+.fi
+.PP
+Example 5.  The following command finds all files on \fB/sam6\fR that
+have at least one archive copy that has sections on more than one VSN,
+i.e. all files on \fB/sam6\fR that have at least one archive copy
+that overflows VSNs.
+.PP
+.nf
+.ft CO
+sfind /sam6 -ovfl -print
+.ft
+.fi
+.PP
+Example 6.  The following command finds all files on \fB/sam6\fR that
+have at least one archive copy that has sections on more than one VSN,
+but fewer than five VSNs.
+.PP
+.nf
+.ft CO
+sfind /sam6 -sections +1 -sections -5 -print
+.ft
+.fi
+.PP
+Example 7.  The following command finds all files in \fB/sam6\fR whose
+stripe group was set to a value greater than 3 but less than 8 and whose
+stripe width was set to a value greater than 1, but less than 5.  It prints
+the file's path, stripe group number and stripe width value:
+.PP
+.nf
+.ft CO
+sfind /sam6 -type f -setfa_g +3 -setfa_g -8 -setfa_s +1 -setfa_s -5 \\
+											-printf "Path: %p, g%r, s%w\\n"
+Path: /sam6/seismic_scan/030610/1200/scn.dat, g4, s2
+.ft
+.fi
+.PP
+Example 8.  The following command finds all files in \fB/sam6\fR which
+have disk archive copies on disk volume "diskv1" in file "d1/d4/d201/f107".
+.PP
+.nf
+.ft CO
+sfind /sam6 -vsn diskv1 -archpos d1/d4/d201/f107
+.ft
+.fi
+.SH EXIT STATUS
+The \fBsfind\fR(1) command exits with status
+of 0 if all files are processed successfully.
+It exits with a status greater than 0 if errors occur.
+.SH SEE ALSO
+\fBarchive\fR(1),
+\fBfind\fR(1),
+\fBrelease\fR(1),
+\fBsetfa\fR(1),
+\fBssum\fR(1),
+\fBstage\fR(1).
+.PP
+\fBrearch\fR(1M).
+.PP
+\fBprintf\fR(3C).

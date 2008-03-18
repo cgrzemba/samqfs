@@ -1,0 +1,120 @@
+.\" $Revision: 1.17 $ 
+.ds ]W Sun Microsystems 
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH tplabel 1M "08 Jan 2007"
+.SH NAME
+tplabel \- Label tape 
+.SH SYNOPSIS
+.B tplabel
+.BI \-vsn " vvvvvv"
+.BR \- [ new " | " old
+.IR vv... ]
+.RB [ \-b
+.IR " blksize" ]
+.RB [ \-w ]
+.RB [ \-V ]
+.RB [ \-erase ]
+.IB eq
+
+.B tplabel
+.BI \-vsn " vvvvvv"
+.BR \- [ new " | " old
+.IR vv... ]
+.RB [ \-b
+.IR " blksize" ]
+.RB [ \-w ]
+.RB [ \-V ]
+.RB [ \-erase ]
+.IB eq:slot 
+
+.SH DESCRIPTION
+.I tplabel
+labels the tape volume specified by
+.IR eq:slot.
+.I eq 
+is the equipment ordinal.
+If
+.I eq
+is a library,
+.I slot
+is the slot in the library containing the tape cartridge.
+
+The following sequence of labels is written: 
+ 
+.in +.5i
+.nf
+\f3VOL1\f1 
+\f3HDR1\f1 
+\f3HDR2\f1 
+\f2tapemark\f1 
+\f3EOF1\f1 
+\f2tapemark\f1 
+\f2tapemark\f1 
+.fi
+.in -.5i
+.LP
+The labels conform to ANSI X3.27-1987 File Structure and Labeling of
+Magnetic Tapes for Information Interchange.
+.LP
+.BI \-vsn " vvvvvv"
+specifies the volume serial name (VSN) of the tape being labeled.  The VSN must
+be one to six characters in length.  All characters in the VSN must be
+selected from the 26 upper-case letters, the 10 digits, and the
+following special characters: !"%&'()*+,-./:;<=>?_.
+.LP
+If the media being labeled was previously labeled, the VSN must be specified
+by
+.B \-old
+.IR vv... .
+The "old" VSN is compared with the VSN on the media to assure that the
+correct media is being relabeled.
+.LP
+If the media is not labeled (i.e., blank),
+.B \-new
+must be specified to prevent the previous label comparison from being made.
+.SH OPTIONS
+.TP 10   
+.B \-V 
+Verbose, lists label information written. 
+.TP
+.BI \-b " blksize"
+specifies the blocksize for this tape.  The value 
+must be one of 16, 32, 64, 128, 256, 512, 1024 or 2048 
+and represents the size of the tape block in
+units of 1024.  This option overrides the default blocksize. 
+.TP
+.B \-erase
+Erases the media completely before a label is written.  This is a security
+feature that is normally not necessary.  Complete media erasure will take
+a long time to perform since all data in the media is erased. 
+.TP
+.B \-w
+Wait for the labeling operation to complete.  If an error occurs, it will be 
+reported along with a completion code of 1.  All labeling errors are also 
+logged.  Note:  Canceling a command that is waiting for completion will not 
+cause the operation itself to be canceled.
+.PP

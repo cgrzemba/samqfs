@@ -1,0 +1,163 @@
+.\" $Revision: 1.20 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH import 1M "23 April 2001"
+.SH NAME
+import \- Imports cartridges into a library or the historian
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/import
+\fR[[\fB\-v\ \fIvolser\fR] |  
+\fR[\fB\-c\ \fInum \fB\-s\ \fIpool\fR]]
+.if n
+.br
+\fR[\fB\-e\fR]
+\fR[\fB\-l\fR]
+\fR[\fB\-n\fR]
+\fIeq\fR
+.PP
+\fB/opt/SUNWsamfs/sbin/import 
+\fB\-v\ \fIvolser\fR | \fB\-b\ \fIbarcode\fR
+\fR[\fB\-n\fR]
+\fB\-m\ \fItype\fR
+\fIeq\fR
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+The first form of the \fBimport\fR command sends a
+request to the automated library specified by \fIeq\fR to 
+import media.  The cartridge is placed in the first available slot
+in the library.  For example:
+.PP
+.ft CO
+import 27
+.ft
+.PP
+The second form of the \fBimport\fR command can be used only
+when \fIeq\fR is the Equipment Identifier of the default \fBhistorian\fR(7)
+and the cartridge is neither two-sided nor partitioned.
+This form adds an entry to the historian's catalog
+for the given \fItype\fR and the given \fIbarcode\fR or \fIvolser\fR.
+At least one of
+the \fB\-b\ \fIbarcode\fR or \fB\-v\ \fIvolser\fR identifiers must
+be present.  For example:
+.PP
+.ft CO
+import -b 007001 -m lt 27
+.ft
+.SH OPTIONS
+This command accepts several options.
+Some of the options affect only certain automated libraries.
+See the option descriptions and the NOTES section for information pertinent
+to \%vendor-specific automated libraries.
+The options for the \fBimport\fR command are as follows:
+.TP 10
+\fB\-b\ \fIbarcode\fR
+The barcode assigned to the cartridge.
+If the second form of the command is used, either
+a \fB\-v\ \fIvolser\fR or a \fB\-b\ \fIbarcode\fR option is required.
+.TP
+\fB\-c\ \fInum \fB\-s \fIpool\fR
+(Network-attached StorageTek automated libraries only.)
+.sp
+For StorageTek automated libraries using the first form of the
+\fBimport\fR command, either a \fB\-v\ \fIvolser\fR identifier
+or a \fB\-c\ \fInum \fB\-s\ \fIpool\fR identifier must be used.
+If used, the
+\fB\-c\ \fInum\fR and \fB\-s\ \fIpool\fR
+options must be specified together.
+.sp
+The \fB\-c\ \fInum\fR option specifies the number of volumes to be
+taken from the scratch pool specified by the \fB\-s\ \fIpool\fR option.
+.sp
+The \fB\-s\ \fIpool\fR option specifies the scratch pool from
+which \fInum\fR volumes should be taken and added to the catalog.
+.TP
+\fB\-e\fR
+Specifies that all newly added cartridges be audited.
+This includes an EOD search and updating the catalog with actual
+capacity and space-remaining values.
+.TP
+\fB\-l\fR
+(Network-attached StorageTek automated libraries only.)
+.sp
+The \fB\-l\fR option requests that the new VSN numbers be written to
+standard output.  If present, this option must be specified in
+conjunction with the \fB\-c\ \fInum\fR and \fB\-s\ \fIpool\fR options.
+.TP
+\fB\-m\ \fItype\fR
+The media type of the cartridge.
+For more information on valid media type codes, see
+the \fBmcf\fR(4) man page.
+.TP
+\fB\-n\fR
+Specifies that the media is unlabeled foreign tape (not Sun StorEdge \%SAM-FS 
+nor Sun \%SAM-QFS media). 
+It is write protected and can be only used for read access.
+.TP
+\fB\-v\ \fIvolser\fR
+(Network-attached ADIC/GRAU, StorageTek, and IBM 3494 automated
+libraries only.
+For the IBM 3494 library, this option is accepted only
+when running in shared mode; for more information, see
+the \fBibm3494\fR(7) man page.)
+.sp
+This option creates a catalog entry with 
+\fIvolser\fR as the barcode.  Physical import and export of cartridges
+within ADIC/Grau and StorageTek libraries are performed by utilities
+supplied by the vendor. 
+.TP
+\fIeq\fR
+The Equipment Identifier as entered in the \fBmcf\fR file.
+For more information on the \fBmcf\fR file, see the \fBmcf\fR(4) man page.
+.sp
+If the first form of the \fBimport\fR command is used,
+\fIeq\fR must be the equipment identifier of an automated libarary.
+.sp
+If the second form of the \fBimport\fR command is used,
+\fIeq\fR must be the equipment number of the default historian.
+.SH NOTES
+If you are using the first form of the command with
+a \%network-attached StorageTek automated library,
+you can identify the cartridge being imported by using either
+the \%\fB\-v\ \fIvolser\fR option or by using the \%\fB\-s\ \fIpool\fR
+and \%\fB\-c\ \fInum\fR options together.
+.SH FILES
+.TP 10
+\fBmcf\fR
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+.SH SEE ALSO
+\fBexport\fR(1M),
+\fBsam-robotsd\fR(1M).
+.PP
+\fBmcf\fR(4).
+.PP
+\fBhistorian\fR(7),
+\fBibm3494\fR(7).
+

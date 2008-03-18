@@ -1,0 +1,89 @@
+<?xml version='1.0'?> 
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: sample_filebylife.xml,v 1.6 2008/03/17 14:44:04 am143972 Exp $ -->
+<MetricReport name="FunctionalLife" isSample="true">
+<filesystem name="archtest1">
+<date val="1160398800">
+<range val="0"><numfiles>3</numfiles><numBytes>2315260028</numBytes><numOnlineBytes>2315260028</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144425</numfiles><numBytes>128322924467</numBytes><numOnlineBytes>73320904326</numOnlineBytes></range>
+<range val="30-90"><numfiles>129506</numfiles><numBytes>115213496493</numBytes><numOnlineBytes>26117992301</numOnlineBytes></range>
+<range val="90-180"><numfiles>1578986</numfiles><numBytes>554993756681</numBytes><numOnlineBytes>172397003036</numOnlineBytes></range>
+<range val="180-365"><numfiles>14381</numfiles><numBytes>102465089011</numBytes><numOnlineBytes>1726945739</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1160658000">
+<range val="0"><numfiles>2</numfiles><numBytes>2315256021</numBytes><numOnlineBytes>2315256021</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144426</numfiles><numBytes>129987398521</numBytes><numOnlineBytes>38984272460</numOnlineBytes></range>
+<range val="30-90"><numfiles>129493</numfiles><numBytes>112025818161</numBytes><numOnlineBytes>19915413548</numOnlineBytes></range>
+<range val="90-180"><numfiles>1578998</numfiles><numBytes>558067893893</numBytes><numOnlineBytes>136217283996</numOnlineBytes></range>
+<range val="180-365"><numfiles>14382</numfiles><numBytes>102578630131</numBytes><numOnlineBytes>1727011275</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1160917200">
+<range val="0"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144429</numfiles><numBytes>132315097234</numBytes><numOnlineBytes>8695666151</numOnlineBytes></range>
+<range val="30-90"><numfiles>112431</numfiles><numBytes>111546240890</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>1595750</numfiles><numBytes>558154339993</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>14380</numfiles><numBytes>102578620815</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161176400">
+<range val="0"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144392</numfiles><numBytes>106051606948</numBytes><numOnlineBytes>48537718324</numOnlineBytes></range>
+<range val="30-90"><numfiles>112454</numfiles><numBytes>164045040654</numBytes><numOnlineBytes>41151845</numOnlineBytes></range>
+<range val="90-180"><numfiles>1595110</numfiles><numBytes>331071840402</numBytes><numOnlineBytes>16332462119</numOnlineBytes></range>
+<range val="180-365"><numfiles>14991</numfiles><numBytes>334485219694</numBytes><numOnlineBytes>2269511680</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161522000">
+<range val="0"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144392</numfiles><numBytes>106051606948</numBytes><numOnlineBytes>48537718324</numOnlineBytes></range>
+<range val="30-90"><numfiles>112454</numfiles><numBytes>164045040654</numBytes><numOnlineBytes>41151845</numOnlineBytes></range>
+<range val="90-180"><numfiles>1595110</numfiles><numBytes>331071840402</numBytes><numOnlineBytes>16332462119</numOnlineBytes></range>
+<range val="180-365"><numfiles>14991</numfiles><numBytes>334485219694</numBytes><numOnlineBytes>2269511680</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161781200">
+<range val="0"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144207</numfiles><numBytes>126861519225</numBytes><numOnlineBytes>84922212573</numOnlineBytes></range>
+<range val="30-90"><numfiles>112625</numfiles><numBytes>163097296473</numBytes><numOnlineBytes>41151845</numOnlineBytes></range>
+<range val="90-180"><numfiles>1595144</numfiles><numBytes>335151352976</numBytes><numOnlineBytes>16332462119</numOnlineBytes></range>
+<range val="180-365"><numfiles>15011</numfiles><numBytes>344207663312</numBytes><numOnlineBytes>2269511680</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162040400">
+<range val="0"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="0-30"><numfiles>2144346</numfiles><numBytes>257393344107</numBytes><numOnlineBytes>166696493747</numOnlineBytes></range>
+<range val="30-90"><numfiles>410</numfiles><numBytes>66869992097</numBytes><numOnlineBytes>1905100</numOnlineBytes></range>
+<range val="90-180"><numfiles>1707297</numfiles><numBytes>303540199752</numBytes><numOnlineBytes>16371708864</numOnlineBytes></range>
+<range val="180-365"><numfiles>15002</numfiles><numBytes>344207662774</numBytes><numOnlineBytes>2269511680</numOnlineBytes></range>
+<range val=">365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+</filesystem>
+</MetricReport>

@@ -1,0 +1,134 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH dvt 1 "16 Mar 2005"
+.SH NAME
+dvt \- sequentially write and read a file.
+.SH SYNOPSIS
+.B dvt
+.RB [ \-c " block_count" ]
+.RB [ \-C ]
+.RB [ \-d ]
+.RB [ \-e " error_limit" ]
+.RB [ \-g " stripe_group" ]
+.RB [ \-o " rw|w|r" ]
+.RB [ \-O " byte_offset" ]
+.RB [ \-p ]
+.RB [ \-P " a|f|o|0(zero)" ]
+.RB [ \-q " queue_size" ]
+.RB [ \-R " read_threads" ]
+.RB [ \-s " block_size" ]
+.RB [ \-v ]
+.RB [ \-W " write_threads" ]
+.IR filename
+.SH AVAILABILITY
+.LP
+SUNWsamtp
+.SH DESCRIPTION
+.B dvt
+writes to a disk file and then reads the disk file.
+The time required for the transfer(s) is measured,
+and the read and write transfer rates are computed.
+The read optionally verifies the written data.
+.SH OPTIONS
+.TP
+.B \-c " block_count"
+The number of blocks to be written/read.
+.TP
+.B \-C
+Specifies that I/O should be buffered through the page cache.
+.TP
+.B \-d
+Specifies direct I/O: I/O should not use the page cache.
+.TP
+.B \-e " error_limit"
+Specifies the maximum number of data miscompares allowed to occur before
+the test is stopped.
+.TP
+.B \-g " stripe_group"
+Specifies the number of the striped group
+where the file is to be preallocated.
+Stripe_group is a number 0..127 corresponding to a set of
+g\fBXXX\fR devices in the SAM-QFS master configuration file.
+This option applies only to filesystems configured with
+stripe groups.
+.TP
+.B \-i " stride"
+Set the I/O offset stride to \fBstride\fR.
+.TP
+.B \-o " rw|w|r"
+The option \fIrw\fR means write the file and then read the file.
+This is the default.
+The option \fIw\fR means write the file.
+The option \fIr\fR means read an existing file written by dvt.
+.TP
+.B \-O " byte_offset"
+Offset initial file I/O by \fBbyte_offset\fB bytes.
+.TP
+.B \-p
+Specifies the file should be preallocated.
+This option applies only to SAM-QFS filesystems.
+.TP
+.B \-P " a|f|o|0"
+The data pattern.
+\fIa\fR is an ascending pattern which uses the 64 bit byte offset
+as the pattern.
+\fIf\fR is an ascending pattern
+which uses the 64 bit byte offset as the pattern, plus inserts 16
+characters of the filename at 8K boundaries.
+\fIo\fR writes all 1's.
+\fI0\fR (the numeral zero) writes all 0's.
+.TP
+.B \-q " queue_size"
+Specifies the number of the entries that will be outstanding in the
+work queue.
+The \fIqueue_size\fR should be larger than \fIread_threads\fR.
+.TP
+.B \-R " read_threads"
+Specifies the number of the threads that will be outstanding for read.
+If \fIread_threads\fR is less than write_threads, \fIwrite_threads\fR will
+be used.
+.TP
+.B \-s " size"
+The block size in bytes.
+If the size has the suffix \fBk\fR,
+the block size is in units of kilobytes.
+The size must be at least 1064 bytes to hold the parameter block header.
+.TP
+.B \-v
+Data will be verified on the read pass.
+The times and transfer rates will include this comparison time.
+.TP
+.B \-W " write_threads"
+Specifies the number of the threads that will be outstanding for write.
+.SH "SEE ALSO"
+.BR pdvt(1)
+.PP
+.BR sam_advise(3),
+.BR sam_setfa(3)
+.PP
+.BR mcf(4)

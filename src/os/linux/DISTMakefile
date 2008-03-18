@@ -1,0 +1,134 @@
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+# $Revision: 1.13 $
+
+OS= $(shell uname -s)
+LINUX_KERNEL := $(shell uname -r)
+LINUX_INCLUDE = /lib/modules/${LINUX_KERNEL}/build/include
+LINUX_CONFIG = /lib/modules/${LINUX_KERNEL}/build/.config
+LINUX_KERNEL_SAMFS = /lib/modules/${LINUX_KERNEL}/kernel/fs/samfs
+KERNEL_MAJOR= $(shell uname -r | cut -d- -f1 - | cut -d. -f2)
+export KERNEL_MAJOR
+KERNEL_MINOR= $(shell uname -r | cut -d- -f1 - | cut -d. -f3)
+export KERNEL_MINOR
+
+
+PROC = $(shell uname -m)
+
+OS_CHECK := $(shell grep -is suse /etc/issue)
+ifndef OS_CHECK
+OSFLAGS= -DRHE_LINUX
+export OS_TYPE=redhat
+else
+OSFLAGS= -DSUSE_LINUX
+export OS_TYPE=suse
+endif
+OSFLAGS += -D${PROC}
+OSFLAGS += -DKERNEL_MAJOR=${KERNEL_MAJOR} -DKERNEL_MINOR=${KERNEL_MINOR}
+
+OS_ARCH= ${OS}_${OS_TYPE}_${LINUX_KERNEL}_${PROC}
+export OS_ARCH
+
+ifeq (4, $(KERNEL_MAJOR))
+
+KERNEL_STRIP_1 := $(subst SMP,,${LINUX_KERNEL})
+KERNEL_STRIP_2 := $(subst smp,,${KERNEL_STRIP_1})
+#include ${LINUX_CONFIG}
+#ifdef CONFIG_SMP
+#export KERNEL_UNCLEAN=${KERNEL_STRIP_2}smp
+#else
+#export KERNEL_UNCLEAN=${KERNEL_STRIP_2}
+#endif
+
+DEF_CFLAGS = -I${DEPTH}/include ${OSFLAGS} -I${LINUX_INCLUDE}
+
+PERL= $(shell which perl)
+
+OBJ_DIR= obj/${OS_ARCH}
+
+ifeq (x86_64,${PROC})
+MODELFLAGS= -mcmodel=kernel -mno-red-zone
+endif
+
+
+SAM_INC = ../fs/include
+INCFLAGS = ${DEF_CFLAGS} -I$(SAM_INC) -include $(LINUX_INCLUDE)/linux/modversions.h
+
+CFLAGS = -DMODULE -DMODVERSIONS -D__KERNEL__ $(INCFLAGS) ${MODELFLAGS} $(CERRWARN)
+
+SAMGPL_SRCS = samgpl.c rfs_misc.c
+ifeq ($(PROC),i686)
+SAMGPL_SRCS += libgcc2.c
+endif
+SAMGPL_OBJS = $(SAMGPL_SRCS:%.c=${OBJ_DIR}/%.o)
+
+QFSKI_SRCS= qfs_ki.c
+QFSKI_OBJS = $(QFSKI_SRCS:%.c=${OBJ_DIR}/%.o)
+
+all: ${OBJ_DIR} ${OBJ_DIR}/SUNWqfs_open.o ${OBJ_DIR}/SUNWqfs_ki.o
+
+arch_string:
+	@echo ${OS_ARCH}
+
+${OBJ_DIR}/SUNWqfs_open.o: $(SAMGPL_OBJS)
+	$(LD) -i -o $@ $(SAMGPL_OBJS)
+
+${OBJ_DIR}/SUNWqfs_ki.o: $(QFSKI_OBJS)
+	$(LD) -i -o $@ $(QFSKI_OBJS)
+
+clean:
+	rm -rf ${OBJ_DIR}
+
+clobber:
+	rm -rf obj
+
+$(OBJ_DIR):
+	-mkdir -p $(OBJ_DIR)
+
+# replacement for the implied .c.o rule
+${OBJ_DIR}/%.o: %.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} $< -o $@
+
+else
+# kernel 2.6 build
+
+all:
+	@DEBUG=$(DEBUG) OSFLAGS="$(OSFLAGS)" $(MAKE) -f Makefile.kbuild
+
+arch_string:
+	@echo ${OS_ARCH}
+
+clean:
+	@DEBUG=$(DEBUG) OSFLAGS="$(OSFLAGS)" $(MAKE) -f Makefile.kbuild clean
+
+clobber:
+	@DEBUG=$(DEBUG) OSFLAGS="$(OSFLAGS)" $(MAKE) -f Makefile.kbuild clobber
+
+clobberall:
+	@DEBUG=$(DEBUG) OSFLAGS="$(OSFLAGS)" $(MAKE) -f Makefile.kbuild clobberall
+
+endif

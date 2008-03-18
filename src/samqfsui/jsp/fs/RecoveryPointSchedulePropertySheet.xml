@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: RecoveryPointSchedulePropertySheet.xml,v 1.8 2008/03/17 14:40:34 am143972 Exp $ -->
+
+<propertysheet>
+<section name="snapshotFilesSection" defaultValue="fs.recoverypointschedule.section.creation">
+    <property>
+        <label name="fsNameLabel" defaultValue="fs.recoverypointschedule.fsname"/>
+        <cc name="fsName" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </property>
+
+    <property required="true">
+            <label name="scheduleLabel" defaultValue="fs.recoverypointschedule.psheet.schedule" />
+            <![CDATA[<table><tr><td colspan="2">]]>
+            <cc name="enableScheduleValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                <attribute name="label" value="fs.recoverypointschedule.psheet.enableSchedule"/>
+                <attribute name="defaultValue" value="true" />
+            </cc>
+            <![CDATA[</td></tr><tr><td>]]>
+            <cc name="scheduleCalendarLabel"
+                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                <attribute name="defaultValue" value="fs.recoverypointschedule.startdate"/>
+                <attribute name="showRequired" value="true"/>
+            </cc>
+            <![CDATA[</td><td>]]>
+            <cc name="scheduleCalendar" 
+                tagclass="com.sun.web.ui.taglib.datetime.CCDateTimeWindowTag" >
+                <attribute name="showTextInput" value="true" />
+            </cc>
+            <![CDATA[</td></tr><tr><td>]]>
+            <cc name="startTimeLabel"
+                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                <attribute name="defaultValue" value="fs.recoverypointschedule.starttime"/>
+                <attribute name="showRequired" value="true"/>
+            </cc>
+            <![CDATA[</td><td>]]>
+            <cc name="startTimeHour"
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+            <cc name="startTimeMinute"
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+            <![CDATA[</td></tr><tr><td>]]>
+            <cc name="repeatIntervalLabel"
+                tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                <attribute name="defaultValue" value="fs.recoverypointschedule.repeatinterval"/>
+                <attribute name="showRequired" value="true"/>
+            </cc>
+            <![CDATA[</td><td>]]>
+            <cc name="repeatInterval"
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+            <![CDATA[</td></tr></table>]]>
+    </property>
+
+    <property required="true" alertMsg="fs.recoverypointschedule.error.locationEmpty">
+        <label name="locationLabel" defaultValue="fs.recoverypointschedule.psheet.location"/>
+        <![CDATA[<table><tr><td align="left">]]>
+
+        <cc name="recoveryPointFile" 
+            tagclass="com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControlTag" >
+            <attribute name="type" value="folder"/>
+            <attribute name="multipleSelect" value="false"/>
+            <attribute name="maxLength" value= "200" />
+        </cc>
+        <cc name="mountPoint" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+        <cc name="mountPointPrompt" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+        <![CDATA[</table></tr></td>]]>
+    </property>
+
+    <property required="true" alertMsg="fs.recoverypointschedule.error.namePrefixEmpty">
+        <label name="namePrefixLabel"
+               defaultValue="fs.recoverypointschedule.psheet.namePrefix" />
+        <cc name="namePrefixValue" 
+            tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+            <attribute name="size" value="50"/>
+            <attribute name="maxLength" value="200"/>
+        </cc>
+
+        <![CDATA[<br>]]>
+        <cc name="namePrefixHelp" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+            <attribute name="defaultValue" value="fs.recoverypointschedule.psheet.namePrefixHelp" />
+        </cc>            
+        <cc name="errorMsg" 
+            tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    </property>
+
+    <property name="retention">
+        <label name="retentionLabel" defaultValue="fs.recoverypointschedule.retention"/>
+        <cc name="retentionType" tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag">
+            <option label="fs.recoverypointschedule.retention.always" value="always"/>
+            <attribute name="onClick" value="onClickRetentionType(this);" />
+        </cc>
+
+        <![CDATA[<br>]]>
+        <cc name="retentionType" tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag">
+            <option label="fs.recoverypointschedule.retention.until1" value="until"/>
+            <attribute name="onClick" value="onClickRetentionType(this);" />
+        </cc>
+
+        <cc name="retentionValue" tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
+            <attribute name="size" value="4"/>
+            <attribute name="maxLength" value="4"/>
+            <attribute name="dynamic" value="true" />
+            <attribute name="onBlur" value="validateRetentionPeriod(this);"/>
+        </cc>
+
+        <cc name="retentionUnit" tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
+            <attribute name="dynamic" value="true" />
+        </cc>
+
+        <cc name="retentionText1" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+            <attribute name="defaultValue" value="fs.recoverypointschedule.retention.until2" />
+        </cc>            
+    </property>
+
+    <property name="notificationProperty">
+        <label name="notificationLabel" defaultValue="fs.recoverypointschedule.psheet.notification"/>
+        <cc name="notificationValue" tagclass="com.sun.web.ui.taglib.html.CCSelectableListTag" >
+            <attribute name="size" value="5" />
+        </cc>            
+        <![CDATA[<br><br>]]>
+    </property>  
+    </section>
+    
+    <section name="snapshotCreation" defaultValue="fs.recoverypointschedule.section.options" >
+        <property required="true">
+            <label name="compressionLabel"
+                defaultValue="fs.recoverypointschedule.psheet.compression"/>
+            <cc name="compressionValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" > 
+            </cc>
+        </property>
+
+        <property name="autoIndex">
+            <label name="autoIndexLabel" 
+                   defaultValue="fs.recoverypointschedule.psheet.autoIndex"/>
+            <cc name="autoIndexValue" 
+                tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+        </property>
+
+        <property>
+            <label name="preScriptLabel" defaultValue="fs.recoverypointschedule.psheet.preScript" />
+            <cc name="preScript" 
+                tagclass="com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControlTag" >
+                <attribute name="type" value="file"/>
+                <attribute name="multipleSelect" value="false"/>
+                <attribute name="maxLength" value= "200" />
+            </cc>
+            <![CDATA[
+            <br>
+            ]]>
+            <cc name="preScriptSkipOnFatalError" 
+                tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                <attribute name="label" value="fs.recoverypointschedule.psheet.preScriptSkipOnFatalError"/>
+                <attribute name="styleLevel" value="3"/>
+                <attribute name="defaultValue" value="false"/>
+            </cc>
+        </property>
+
+        <property>
+            <label name="postScriptLabel" defaultValue="fs.recoverypointschedule.psheet.postScript"/>
+            <cc name="postScript" 
+                tagclass="com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControlTag" >
+                <attribute name="type" value="file"/>
+                <attribute name="multipleSelect" value="false"/>
+                <attribute name="maxLength" value= "200" />
+            </cc>
+        </property>
+
+        <property>
+            <label name="logFileLabel" defaultValue="fs.recoverypointschedule.psheet.logFile"/>
+            <cc name="logFile" 
+                tagclass="com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControlTag" >
+                <attribute name="type" value="file"/>
+                <attribute name="multipleSelect" value="false"/>
+                <attribute name="maxLength" value= "200" />
+            </cc>
+            <![CDATA[
+            <br>
+            <br>
+            ]]>
+        </property>
+
+        <property name="snapshotContentsExclude">
+            <label name="contentsExcludeLabel" defaultValue="fs.recoverypointschedule.contents.exclude"/>
+            <![CDATA[
+                <table><tr><td align="center">
+            ]]>
+            <cc name="contentsExcludeList" tagclass="com.sun.web.ui.taglib.html.CCSelectableListTag" >
+                <attribute name="title" value="fs.recoverypointschedule.contents.exclude.tooltip" />
+                <attribute name="multiple" value="true" />
+                <attribute name="size" value="6" />
+            </cc>      
+            <![CDATA[
+                </td><td>
+            ]]>
+            <cc name="excludeDirs" tagclass="com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControlTag" >
+                <attribute name="type" value="folder" />
+                <attribute name="multipleSelect" value="true"/>
+                <attribute name="showTextField" value="false" />
+                <attribute name="buttonLabel" value="fs.recoverypointschedule.contents.exclude.add" />
+                <attribute name="onClose" value="var list=window.opener.document.forms[0].elements['RecoveryPointSchedule.RecoveryPointScheduleView.contentsExcludeList']; var count = list.options.length; var dirs = fileList.split(';'); list.options.length = count+dirs.length; var index=0; for(index=0; index!=dirs.length;index++) {if (index==dirs.length+1) break;list.options[count++] = new Option(dirs[index], dirs[index]); }" />
+            />
+            </cc>
+           <![CDATA[<br><br><br>]]>
+            <cc name="contentsExcludeRemove" tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
+                <attribute name="defaultValue" value="fs.recoverypointschedule.contents.exclude.remove"/>
+                <attribute name="dynamic" value="true" />
+                <attribute name="type" value="secondaryMini" />
+                <attribute name="onClick" value="return removeExcludeDir(this);" />
+            </cc>
+            <![CDATA[
+                </td></tr></table>
+            ]]>
+            <cc name="excludeDirList" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+            <cc name="removePrompt" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+        </property> 
+    </section>
+</propertysheet>

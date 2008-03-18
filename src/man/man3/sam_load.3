@@ -1,0 +1,198 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_load 3 "05 August 2003"
+.SH NAME
+sam_load \- Loads media on the removable media device
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_load(ushort_t " "eq_ord" ,
+.BI "char *" "vsn" ,
+.BI "char *" "media" ,
+.BI "uint_t " "slot" ,
+.BI "int " "partition" ,
+.BI "int " "wait_response" );
+.SH DESCRIPTION
+.PP
+.B sam_load(\|)
+requests that the media be loaded from
+.I slot:partition
+or 
+.I media.vsn
+into device
+.I eq_ord.
+The device must be in the unavailable state
+(see \fBset_state\fR(1M)) and controlled by a media changer.  If device
+.I eq_ord
+already has media loaded, it will be unloaded and the media put away before
+the new media is loaded.
+.PP
+The call will return immediately after issuing the command if
+zero is specified for
+.I wait_response
+value.  Other values for
+.I wait_response
+will give undefined results.
+.PP
+.B Note:
+Loading media used by Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+for archiving could
+result in the loss of the
+data contained on that media.  Sun Microsystems, Inc.  strongly recommends
+that archive media
+.B NOT
+be loaded in this manner.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_load(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB ER_DEVICE_NOT_READY
+The specified
+.I eq_ord
+device is not ready.
+.TP
+.SB ER_DEVICE_NOT_UNAVAILABLE
+The specified
+.I eq_ord
+device must be in the "unavailable" state (see
+.B set_state(1M)
+)
+.TP
+.SB ER_DEVICE_OFF_OR_DOWN
+The specified
+.I eq_ord
+device is "off" or "down" and must be in the "unavailable" state (see
+.B set_state(1M)
+)
+.TP
+.SB ER_DEVICE_USE_BY_ANOTHER
+The specified
+.I eq_ord
+device is busy and is being used by another process.
+.TP
+.SB ER_FIFO_PATH_LENGTH
+The path and filename for the FIFO pipe is too long.
+.TP
+.SB ER_NO_EQUIP_ORDINAL
+.I eq_ord
+is not a defined equipment ordinal in this configuration.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_RESPONSE_FIFO
+Unable to create the response FIFO pipe.
+.TP
+.SB ER_NO_STAT_ROBOT_CATALOG
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+cannot be accessed for status.
+.TP
+.SB ER_NOT_VALID_SLOT_NUMBER
+The specified
+.I ea
+is not valid for
+.I eq_ord
+device.
+.TP
+.SB ER_NOT_REMOV_MEDIA_DEVICE
+The specified
+.I eq_ord
+device is not a removable media device.
+.TP
+.SB ER_OPERATOR_NOT_PRIV
+Operator does not have permission to load removable media.
+.TP
+.SB ER_ROBOT_CATALOG_MISSING
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+is missing and a full audit is required.
+.TP
+.SB ER_ROBOT_DEVICE_REQUIRED
+Equipment ordinal
+.I eq_ord
+is not defined as a robotic device.
+.TP
+.SB ER_SLOT_IS_CLEAN_CARTRIDGE
+.I ea
+contains a cleaning cartridge.
+.TP
+.SB ER_SLOT_NOT_OCCUPIED
+.I ea
+does not contain any removable media.
+.TP
+.SB ER_SLOT_OR_VSN_REQUIRED
+Either a
+.I ea
+in the media changer or a
+.I vsn
+must be specified.
+.TP
+.SB ER_UNABLE_TO_MAP_CATALOG
+The catalog for the removable media changer at equipment ordinal
+.I eq_ord
+is unable to be mapped into memory.
+.TP
+.SB ER_VSN_NOT_FOUND_IN_ROBOT
+The specified
+.I vsn
+cannot be found in the robotic media changer at equipment ordinal
+.I eq_ord.
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+.SH SEE ALSO
+.BR load (1M),
+.BR set_state (1M),
+.BR sam-robotsd (1M),
+.BR unload (1M).
+.PP
+.BR sam_unload (3).
+.PP
+.BR mcf (4).

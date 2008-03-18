@@ -1,0 +1,84 @@
+'\" t
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_devstr 3 "05 Nov 2001"
+.SH NAME
+sam_devstr \- Translates numeric device status into character string
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsam [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/lib.h"
+.ft
+.fi
+.LP
+.BI "char *sam_devstr(uint_t " "status" )
+.SH DESCRIPTION
+.B sam_devstr(\|)
+translates an unsigned integer,
+.IR status ,
+into a character status string based on the bits set in
+.IR status ,
+returning a pointer to the character string.
+.PP
+The meanings of the characters in the string returned are as follows:
+.PP
+.nf
+.TS
+tab (/) ;
+ l l .
+s---------/Volume is being scanned.
+m---------/If a file system, the file system is mounted.
+M---------/The device is in maintenance mode.
+-E--------/Device received an unrecoverable error.
+-a--------/Device is auditing.
+ /If a file system, it is being archived.
+--l-------/Volume has a label.
+---I------/Device is in wait-idle mode.
+---A------/Device requires operator attention.
+----U-----/Unload has been requested.
+-----R----/The device has been requested.
+------w---/The device is open for writing.
+-------o--/The device is open.
+--------P-/The device is positioning (tape only).
+--------F-/All storage slots are occupied (robotic devices only).
+---------r/Device is ready.
+ /If a file system, its disk space is being released.
+---------R/Device is ready and the volume is \%read-only.
+---------p/Device is present.
+.TE
+.fi
+.SH "RETURN VALUES"
+A pointer to the character status string is returned.
+.SH "SEE ALSO"
+.BR sam_devstat (3).

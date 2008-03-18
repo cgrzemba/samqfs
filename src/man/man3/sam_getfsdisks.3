@@ -1,0 +1,94 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_getfsdisks 3 "05 Nov 2001"
+.SH NAME
+sam_getfsdisks \- Obtains list of disks in family set
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_getfsdisks(int " "eq" ,
+.BI "struct sam_fs_disk *" "disks" ,
+.BI "size_t " "disks_size" ,
+.BI "uint " "start_pos" ,
+.BI "int " "disk_count);"
+.SH DESCRIPTION
+.PP
+.B sam_getfsdisks(\|)
+obtains the data for each disk in the specified family set, based on the
+starting position number
+.I start_pos
+up to
+.I disk_count
+disks.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_getfsdisks(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB EFAULT
+No address specified to store disk data.
+.TP
+.SB EINVAL
+Size of storage area for disk data is too small for number of disks
+requested.
+.TP
+.SB ER_DEVICE_NOT_CORRECT_TYPE
+Device referenced by equipment ordinal
+.I eq_ord
+is not of family set or disk set type. 
+.TP
+.SB ER_NO_DEVICE_FOUND
+No disks or partitions found for family set equipment ordinal
+.I eq
+.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.

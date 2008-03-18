@@ -1,0 +1,143 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_set_state 3 "05 Nov 2001"
+.SH NAME
+sam_set_state \- Sets the new state for a removable media device
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/devstat.h"
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_set_state(ushort_t " "eq_ord" ,
+.BI "dstate_t " "new_state" ,
+.BI "int " "wait_response" );
+.SH DESCRIPTION
+.PP
+.B sam_set_state(\|)
+sets the device at equipment ordinal
+.I eq_ord
+to the specified state enumeration value.  The set of values are:
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+typedef enum dstate{
+    DEV_ON,                /* Normal operations */
+    DEV_RO,                /* Read only operations */
+    DEV_IDLE,              /* No new opens allowed */
+    DEV_UNAVAIL,           /* Unavaiable for file system */
+    DEV_OFF,               /* Off to this machine */
+    DEV_DOWN               /* Maintenance use only */
+}dstate_t;
+.ft 1
+.fi
+.SH
+Depending on the current state, only certain new states can be set:
+.PP
+.RS
+.nf
+.ft 3
+.ta 9n 22n
+
+Current State   Possible Next State
+DEV_ON          DEV_IDLE, DEV_OFF
+DEV_IDLE        Automatically goes to OFF when IDLE
+DEV_OFF         DEV_DOWN, DEV_ON
+DEV_DOWN        DEV_OFF
+.ft 1
+.fi
+.SH
+The call will return immediately after issuing the command if
+zero is specified for
+.I wait_response
+value.  Other values for
+.I wait_response
+will give undefined results.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_set_state(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB ER_DEVICE_DOWN_NEW_STATE
+If a device state is down, the new state for the specified
+.I eq_ord
+device must be off.
+.TP
+.SB ER_DEVICE_USE_BY_ANOTHER
+The specified
+.I eq_ord
+device is in use by another process.
+.TP
+.SB ER_FIFO_PATH_LENGTH
+The path and filename for the FIFO pipe is too long.
+.TP
+.SB ER_NO_EQUIP_ORDINAL
+.I eq_ord
+is not a defined equipment ordinal in this configuration.
+.TP
+.SB ER_INVALID_STATE_SPECIFIED
+Specified state is not a valid value.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_RESPONSE_FIFO
+Unable to create the response FIFO pipe.
+.TP
+.SB ER_NOT_REMOV_MEDIA_DEVICE
+The device with equipment ordinal
+.I eq_ord
+is not a removable media device.
+.TP
+.SB ER_OPERATOR_NOT_PRIV
+Operator does not have permission to set the state for devices.
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+.SH SEE ALSO
+.BR samu (1M).

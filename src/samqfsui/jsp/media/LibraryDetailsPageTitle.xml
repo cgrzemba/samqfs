@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE pagetitle SYSTEM "tags/dtd/pagetitle.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: LibraryDetailsPageTitle.xml,v 1.11 2008/03/17 14:40:36 am143972 Exp $ -->
+
+<pagetitle >
+    <pageactions>
+        <cc name="ViewVSNButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="defaultValue" value="LibrarySummary.button2" />
+        </cc>
+
+        <cc name="ImportButton"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <attribute name="defaultValue" value="LibrarySummary.button4" />
+            <attribute name="disabled" value="true" />
+            <attribute name="onClick"
+                value="if (!popUpWhenNeeded()) return false;" />
+        </cc>
+
+        <cc name="ActionMenu"
+            tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+            <attribute name="commandChild" value="PageActionsMenuHref"/>
+            <attribute name="dynamic" value="true" />
+            <attribute name="disabled" value="true" />
+            <attribute name="escape" value="false"/>
+            <attribute name="onChange"
+                value="
+                    var item = getDropDownSelectedItem(this);
+                    if (item == 1) {
+                        resetDropDownMenu(this);
+                        launchPopup(
+                            '/media/ChangeStatus',
+                            'changestatus',
+                            getServerKey(),
+                            SIZE_NORMAL,
+                            '&amp;SAMQFS_PARENT=LibrarySummaryView' +
+                            '&amp;SAMQFS_LIBRARY_NAME=' + getLibInformation(2));
+                        return false;
+                    } else if (item == 2) {
+                        if (!showConfirmMsg(1)) {
+                            resetDropDownMenu(this);
+                            return false;
+                        }
+                    } else if (item == 3) {
+                        if (!showConfirmMsg(0)) {
+                            resetDropDownMenu(this);
+                            return false;   
+                        }
+                    }
+                "/>
+            <option label="LibrarySummary.option.heading" value="0"/>
+            <option label="LibrarySummary.option.changestate" value="1"/>
+            <option label="LibrarySummary.option.unload" value="2"/>
+            <option label="LibrarySummary.option.delete" value="3"/>
+        </cc>
+    </pageactions>
+</pagetitle>

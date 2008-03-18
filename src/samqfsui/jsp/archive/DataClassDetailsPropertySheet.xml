@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: DataClassDetailsPropertySheet.xml,v 1.10 2008/03/17 14:40:30 am143972 Exp $ -->
+
+<propertysheet>
+<section name="DataClassCriteria" 
+         defaultValue="archiving.dataclass.criteria.section.title">
+
+<property span="true" required="true">
+&lt;table style="width:100%">
+&lt;tr> &lt;td style="width:25%" nowrap="nowrap">
+<cc name="StartingDirLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.startingdir.colon"/>
+    <attribute name="elementName" value="StartingDir"/>
+    <attribute name="showRequired" value="true"/>
+</cc>
+
+&lt;/td> &lt;td style="width:75%" nowrap="nowrap"> 
+<cc name="StartingDir"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+    <attribute name="size" value="40" />
+</cc>
+
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+
+<property span="true">
+&lt;table style="width:100%">
+&lt;tr> &lt;td nowrap="nowrap" colspan="2">
+<cc name="NamePatternLabel" 
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.namepattern.colon"/>
+    <attribute name="elementName" value="NamePattern"/>
+</cc>
+<cc name="NamePatternDropDown"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+<cc name="NamePattern"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+&lt;/td> &lt;td  nowrap="nowrap">
+<cc name="MinimumSizeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.minimumsize.colon"/>
+    <attribute name="elementName" value="MinimumSize"/>
+</cc>
+
+&lt;/td> &lt;td  nowrap="nowrap">
+<cc name="MinimumSize"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+<cc name="MinimumSizeUnits"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td  nowrap="nowrap">
+<cc name="OwnerLabel" 
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.owner.colon"/>
+    <attribute name="elementName" value="Owner"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="Owner"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="MaximumSizeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.maximumsize.colon"/>
+    <attribute name="elementName" value="MaximumSize"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="MaximumSize"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+<cc name="MaximumSizeUnits"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td nowrap="nowrap">
+<cc name="GroupLabel" 
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.group.colon"/>
+    <attribute name="elementName" value="Group"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="Group"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="AccessAgeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.accessage.colon"/>
+    <attribute name="elementName" value="AccessAge"/>
+</cc>
+
+&lt;/td> &lt;td nowrap="nowrap">
+<cc name="AccessAge"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
+<cc name="AccessAgeUnits"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+    
+&lt;/td> &lt;/tr>
+&lt;tr> &lt;td nowrap="nowrap">
+<cc name="IncludeDateLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" value="archiving.dataclass.includedata"/>
+    <attribute name="elementName" value="IncludeDate"/>
+</cc>
+
+&lt;/td> &lt;td rowspan="3" nowrap="nowrap">
+<cc name="IncludeDate"
+    tagclass="com.sun.web.ui.taglib.datetime.CCDateTimeWindowTag">
+    <attribute name="showTextInput" value="true" />
+</cc>
+    
+&lt;/td> &lt;td colspan="2" nowrap="nowrap">
+&lt;/td> &lt;/tr> &lt;/table>
+</property>
+</section>
+
+<section name="classAttributes" defaultValue="archiving.dataclass.attributes">
+<property span="true">
+&lt;/td> &lt;/tr> &lt;/table>
+
+&lt;table border="0" style="width:100%x" nowrap cellpadding="5">
+&lt;tr> &lt;td nowrap colspan="2">
+<cc name="autoworm"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+    <attribute name="label" 
+               value="archiving.dataclass.attributes.enableworm"/>
+</cc>
+&lt;/td> &lt;tr>
+
+&lt;tr> &lt;td nowrap valign="top" style="width:40%;text-indent:8px">
+<cc name="expirationTimeLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="defaultValue" 
+               value="archiving.dataclass.expirationtime"/>
+</cc>
+
+&lt;/td> &lt;td nowrap>
+<cc name="expirationTimeType"
+    tagclass="com.sun.web.ui.taglib.html.CCRadioButtonTag">
+    <attribute name="elementId" value="expirationTimeType"/>
+    <attribute name="layout" value="horizontal"/>
+    <attribute name="onClick" 
+               value="return handleExpirationTimeTypeChange(this)"/>
+</cc>
+
+&lt;div id="dateDiv">
+<cc name="absolute_expiration_time"
+    tagclass="com.sun.web.ui.taglib.datetime.CCDateTimeWindowTag">
+    <attribute name="showTextInput" value="true"/>
+</cc>
+<cc name="absolute_expiration_time-hidden" 
+    tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+&lt;/div>
+
+&lt;div id="durationDiv">
+<cc name="relative_expiration_time"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+    <attribute name="size" value="10"/>
+    <attribute name="dynamic" value="true"/>
+</cc>
+<cc name="relative_expiration_time_unit"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+    <attribute name="dynamic" value="true"/>
+</cc>
+&lt;/div>
+&lt;/td> &lt;/tr>
+
+&lt;tr> &lt;td nowrap colspan="2">
+<cc name="autodelete"
+     tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+     <attribute name="label" value="archiving.dataclass.attributes.filedeletion"/>
+</cc>
+&lt;/td> &lt;/tr>
+
+&lt;tr> &lt;td nowrap>
+<cc name="dedup"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+    <attribute name="elementId" value="dedup"/>
+    <attribute name="label" 
+               value="archiving.dataclass.attributes.detectduplicate"/>
+    <attribute name="onClick" value="return handleOnDedupClick(this)"/>
+</cc> 
+&lt;div id="absolutePathDiv" style="text-indent:30px">
+<cc name="bitbybit"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+    <attribute name="label" 
+               value="archiving.dataclass.attributes.absolutepath"/>
+</cc>
+&lt;/div>
+&lt;/td> 
+
+&lt;td nowrap style="width:50%">
+<cc name="periodicAuditLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="elementName" value="periodicaudit"/>
+    <attribute name="defaultValue" 
+                  value="archiving.dataclass.attributes.periodicaudit"/>
+</cc>
+<cc name="periodicaudit"
+    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+    <attribute name="elementId" value="periodicaudit"/>
+    <attribute name="onChange" value="return handleOnPeriodicAuditChange(this)"/>
+</cc>
+&lt;div id="auditPeriodDiv" style="text-indent:30px">
+<cc name="auditPeriodLabel"
+    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+    <attribute name="elementName" value="auditperiod"/>
+    <attribute name="defaultValue" 
+                  value="archiving.dataclass.attributes.auditperiod"/>
+</cc>
+<cc name="auditperiod"
+    tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+    <attribute name="size" value="5"/>
+    <attribute name="maxLength" value="10"/>
+</cc>
+<cc name="auditperiodunit"
+   tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
+&lt;/div>
+&lt;/td> &lt;/tr>
+&lt;/table>
+
+</property>
+</section>
+
+<section name="logging" defaultValue="archiving.dataclass.logging">
+<property span="true">
+&lt;/td>&lt;/tr>&lt;/table>
+
+&lt;table style="width:100%" cellpadding="5">
+&lt;tr>&lt;td style="width:50%" nowrap>
+<cc name="log_data_audit"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+      <attribute name="label" value="archiving.dataclass.log.audit"/>
+</cc>
+&lt;/td> &lt;td nowrap>
+<cc name="log_deduplication"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+    <attribute name="label" value="archiving.dataclass.log.duplicate"/>
+</cc>
+&lt;/td> &lt;/tr>
+
+&lt;tr> &lt;td nowrap>
+<cc name="log_autoworm"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+    <attribute name="label" value="archiving.dataclass.log.worm"/>
+</cc>
+
+&lt;/td> &lt;td nowrap>
+<cc name="log_autodeletion"
+    tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag">
+    <attribute name="label" value="archiving.dataclass.log.deletion"/>
+</cc>
+&lt;/td> &lt;/tr>
+&lt;/table>
+</property>
+</section>
+</propertysheet>

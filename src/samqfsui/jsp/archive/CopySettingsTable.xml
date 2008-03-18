@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: CopySettingsTable.xml,v 1.5 2008/03/17 14:40:30 am143972 Exp $ -->
+
+<table>
+<!-- table buttons -->
+<actions>
+    <cc name="Save"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true"/>
+        <attribute name="onClick" value="return handleSave(this);"/>
+    </cc>
+    <cc name="Reset"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true"/>
+        <attribute name="onClick" value="this.form.reset(); return false;"/>
+    </cc>
+</actions>
+
+<!-- column information -->
+<column name="CopyNumber">
+    <cc name="CopyNumberText" 
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="CopyNumberHidden"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="ArchiveAge" extrahtml="nowrap='nowrap'">
+    <cc name="ArchiveAgeText" 
+        tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+        <attribute name="size" value="5" />
+    </cc>
+    <cc name="ArchiveAgeUnits"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <option label="common.unit.time.weeks" value="9"/>
+        <option label="common.unit.time.days" value="8"/>
+        <option label="common.unit.time.hours" value="7"/>
+        <option label="common.unit.time.minutes" value="6"/>
+        <option label="common.unit.time.seconds" value="5"/>
+    </cc>
+</column>
+
+<column name="UnarchiveAge" extrahtml="nowrap='nowrap'">
+    <cc name="UnarchiveAgeText"
+        tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag">
+        <attribute name="size" value="5" />
+    </cc>
+    <cc name="UnarchiveAgeUnits" 
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <option label="common.unit.time.weeks" value="9"/>
+        <option label="common.unit.time.days" value="8"/>
+        <option label="common.unit.time.hours" value="7"/>
+        <option label="common.unit.time.minutes" value="6"/>
+        <option label="common.unit.time.seconds" value="5"/>
+    </cc>
+</column>
+
+<column name="ReleaseOptions" extrahtml="nowrap='nowrap'">
+    <cc name="ReleaseOptionsText"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <option label="archiving.releaseoptions.spacerequired" value="0"/>
+        <option label="archiving.releaseoptions.immediately" value="2"/>
+        <option label="archiving.releaseoptions.waitforall" value="4"/>
+    </cc>
+</column>
+
+</table>

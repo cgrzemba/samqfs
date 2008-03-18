@@ -1,0 +1,425 @@
+'\" t
+.\" $Revision: 1.20 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+'\" !tbl | mmdoc
+.TH sam_stat 3 "20 Dec 2007"
+.SH NAME
+sam_stat, sam_lstat, sam_segment_stat \- Gets file or segment status
+.SH SYNOPSIS
+\fBcc\fR [\fIflag\fR \&.\&.\&.] \fIfile\fR \&.\&.\&.
+\fB-L/opt/SUNWsamfs/lib\fR
+\fB-R/opt/SUNWsamfs/lib\fR
+\fB-lsam [\fIlibrary\fR \&.\&.\&.]
+.PP
+\fB#include "/opt/SUNWsamfs/include/stat.h"\fR
+.PP
+\fBint sam_stat(const char *\fIpath\fB,\fR
+\fBstruct sam_stat *\fIbuf\fB,\fR
+\fBsize_t \fIbufsize\fB);\fR
+.PP
+\fBint sam_lstat(const char *\fIpath\fB,\fR
+\fBstruct sam_stat *\fIbuf\fB,\fR
+\fBsize_t \fIbufsize\fB);\fR
+.PP
+\fBint sam_segment_stat(const char *\fIpath\fB,\fR
+\fBstruct sam_stat *\fIbuf\fB,\fR
+\fBsize_t \fIbufsize\fB);\fR
+.SH AVAILABILITY
+.nf
+\fBSUNWqfs\fR
+\fBSUNWsamfs\fR
+.fi
+.SH DESCRIPTION
+The \fBsam_stat(\|)\fR function
+returns file system attributes
+for the file to which \fIpath\fR points.
+The \fBsam_segment_stat(\|)\fR function
+works with segmented files.  It returns attributes for
+the file segments to which \fIpath\fR points.
+.PP
+The \fBsam_lstat(\|)\fR
+function returns file attributes similar to \fBsam_stat(\|)\fR.
+The difference is that if \fIfile\fR is a symbolic link,
+\fBsam_lstat(\|)\fR
+returns information about the link, while
+\fBsam_stat(\|)\fR
+returns information about the file or the file's segments that
+the link references.
+.PP
+If these functions succeed, they write file
+attributes to the structure, or to the array of structures,
+to which \fIbuf\fR points.  If they are returning information
+about a segmented file, they write information about the first
+file segment to
+the first structure in the array of structures.  They write information
+about the second file segment to the second structure in the array of
+structures, etc.
+.PP
+Note that when \fBsam_stat(\|)\fR
+and \fBsam_lstat(\|)\fR are executed on a segmented
+file, the functions return information about the index inode.
+.PP
+The \fBsam_stat\fR and \fBsam_lstat\fR functions are supported
+in Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS environments.
+The \fBsam_segment_stat\fR
+function is supported
+in Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+.SH OPTIONS
+These functions accept the following arguments:
+.TP 10
+\fIpath\fR
+Specifies the path to the file.  This is the file or segmented file
+for which the file status is to be obtained. 
+Read, write, or execute permission of the named \fIfile\fR is not required,
+but all directories listed in the \fIpath\fR leading to the \fIfile\fR must
+be searchable.
+.TP
+\fIbuf\fR
+Specifies a pointer to a
+structure into which information
+is placed concerning the file.
+The functions use one \fBsam_stat\fR structure
+from this argument for each single file or file segment.
+The length of \fIbuf\fR, in bytes, must be sized as follows:
+.IP
+\fIbytes\fR = \fInumber_of_segments\fR\ *\ \fBsizeof(struct\ sam_stat)\fR
+.IP
+The \fInumber_of_segments\fR is \fB1\fR for a nonsegmented
+file (used by \fBsam_stat\fR and \fBsam_lstat\fR).
+The \fInumber_of_segments\fR is greater than \fB1\fR for
+a segmented file (used by \fBsam_segment_stat\fR).
+.IP
+For an unsegmented file, \fIbuf\fR must be
+a \fBsam_struct\fR structure.
+.IP
+For a segmented file, \fIbuf\fR must be
+an array of \fBsam_struct\fR structures.
+.TP
+\fIbufsize\fR
+Specifies the length of the user's buffer, in bytes, to which \fIbuf\fR
+points.
+.SH STRUCTURE CONTENTS
+Table 1 and Table 2 show the content of the structure pointed to
+by \fIbuf\fR.
+.PP
+.ce 2
+\fBTABLE 1.  Members of struct sam_stat That
+Contain POSIX Standard File Attributes\fR
+.PP
+.TS
+l l l.
+\fBData Type\fR	\fBField Name\fR	\fBDescription\fR
+\fBulong_t	st_mode\fR	File mode (see \fBmknod\fR(2)
+\fBulong_t	st_ino\fR	Inode number
+\fBulong_t	st_dev\fR	ID of device containing the file
+\fBulong_t	st_nlink\fR	Number of links
+\fBulong_t	st_uid\fR	Numeric user ID of the file's owner
+\fBulong_t	st_gid\fR	Numeric group ID of the file's owner
+\fBu_longlong_t	st_size\fR	File size in bytes
+\fBtime_t	st_atime\fR	Time of last access
+\fBtime_t	st_mtime\fR	Time of last data modification
+\fBtime_t	st_ctime\fR	Time of last file status change
+.TE
+.PP
+The following list describes Table 1's fields in more detail.
+.TP 10
+\fBst_mode\fR
+The mode of the file as described in \fBmknod\fR(2).
+In addition to the modes described in \fBmknod\fR(2),
+the mode of a file may also be \fBS_IFLNK\fR if the file
+is a symbolic link.
+Note that \fBS_IFLNK\fR can be returned only by \fBsam_lstat\fR(\|).
+.TP
+\fBst_ino\fR
+This field uniquely identifies the file in a given file system.
+The pair \fBst_ino\fR and \fBst_dev\fR uniquely identifies regular files.
+.TP
+\fBst_dev\fR
+This field uniquely identifies the file system that contains the file.
+.TP
+\fBst_nlink\fR
+This field should be used only by administrative commands.
+.TP
+\fBst_uid\fR
+The numeric user ID of the file's owner.
+.TP
+\fBst_gid\fR
+The numeric group ID of the file's owner.
+.TP
+\fBst_size\fR
+For regular files, this is the address of the end of the file.
+.TP
+\fBst_atime\fR
+Time when file data was last accessed.
+Changed by the following functions:
+.BR creat ,
+.BR mknod ,
+.BR pipe ,
+.BR utime ,
+and
+.BR read .
+.TP
+\fBst_mtime\fR
+Time when data was last modified.
+Changed by the following functions:
+.BR creat ,
+.BR mknod ,
+.BR pipe ,
+.BR utime ,
+and
+.BR write .
+.TP
+\fBst_ctime\fR
+Time when file status was last changed.
+Changed by the following functions:
+.BR chmod ,
+.BR chown ,
+.BR creat ,
+.BR link ,
+.BR mknod ,
+.BR pipe ,
+.BR unlink ,
+.BR utime ,
+and
+.BR write .
+.PP
+.ce 2
+\fBTABLE 2.  Members of struct sam_stat That Contain
+Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS File Attributes\fR
+.PP
+.TS
+l l l.
+\fBData Type\fR	\fBField Name\fR	\fBDescription\fR
+\fBuint_t	attr\fR	File attributes
+\fBtime_t	attribute_time\fR	Time attributes last changed
+\fBtime_t	creation_time\fR	Time inode created
+\fBtime_t	residence_time\fR	Time file changed residence
+\fBstruct sam_copy_s	copy[MAX_ARCHIVE]\fR	Array of archive copy information
+\fBuchar_t	cs_algo\fR	Checksum algorithm indicator
+\fBuchar_t	flags\fR	Flags:  staging, stage err, etc.
+\fBuchar_t	stripe_width\fR	Stripe width set by setfa -s
+\fBuchar_t	stripe_group\fR	Stripe group set by setfa -g
+\fBulong_t	gen\fR	Inode generation number
+\fBulong_t	partial_size\fR	Partial size in kilobytes
+\fBdev_t	rdev\fR	ID of device if S_IFBLK or S_IFCHR
+\fBu_longlong_t	st_blocks\fR	Block count in 512 byte blocks
+\fBulong_t	segment_size\fR	Segment size in megabytes
+\fBulong_t	segment_number\fR	Number of this segment
+\fBuint_t	stage_ahead\fR	Number of segment to stage ahead
+\fBuint_t	admin_id\fR	admin ID; inherited from directory
+\fBuint_t	allocahead\fR	Allocate ahead size set by setfa -A
+\fBuint_t	rperiod_start_time\fR	Time WORM retention period started
+\fBuint_t	rperiod_duration\fR	WORM retention period duration
+\fBu_longlong_t	csum_val[2]\fR	128 checksum value
+.TE
+.PP
+The following list describes Table 2's fields in more detail.
+.TP 10
+\fBattr\fR
+Attributes assigned to the file by Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS
+functions and operations.
+.TP
+\fBattribute_time\fR
+Time when the Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS attributes last changed.
+Changed by the following functions:
+.BR sam_archive ,
+.BR sam_release ,
+and
+.BR sam_stage .
+Also changed by the automatic archive, release, and stage operations.
+.TP
+\fBcreation_time\fR
+Time when the inode was created for the file.
+.TP
+\fBresidence_time\fR
+Time when the file changed residency.
+Changed by the release and stage operations.
+.TP
+\fBcs_algo\fR
+Indicates the algorithm that is used when calculating the data verification
+value (checksum) for the file.  For more information, see \fBssum\fR(1).
+.TP
+\fBflags\fR
+Flags containing miscellaneous additional information about the file.
+Includes a bit that indicates that a stage is pending
+or is in progress on the file.  Also includes a bit that
+indicates that the last attempt to stage the file failed.
+.TP
+\fBgen\fR
+The inode generation number.
+.SH RETURN VALUES
+Upon successful completion, a value of \fB0\fR is returned.
+Otherwise, a value of \fB\-1\fR is returned and \fBerrno\fR
+is set to indicate the error.
+.SH ERRORS
+.PP
+The \fBsam_stat(\|)\fR and \fBsam_lstat(\|)\fR functions
+fail if one or more of the following are true:
+.TP 20
+\fBEACCES\fR
+Search permission is denied for a component of the path prefix.
+.TP
+\fBEFAULT\fR
+Either \fIbuf\fR or \fIpath\fR points to an illegal address.
+.TP
+\fBEINTR\fR
+A signal was caught during \fBsam_stat(\|)\fR or \fBsam_lstat(\|)\fR
+function processing.
+.TP
+\fBELOOP\fR
+Too many symbolic links were encountered in translating \fIpath\fR.
+.TP
+\fBEMULTIHOP\fR
+Components of \fIpath\fR require hopping to multiple
+remote machines and the file system does not allow it.
+.TP
+\fBENAMETOOLONG\fR
+The length of the \fIpath\fR argument exceeds {\f4PATH_MAX\fR},
+or the length of \fIpath\fR exceeds {\f4NAME_MAX\f1} while
+{\f4_POSIX_NO_TRUNC\f1} is in effect.
+.TP
+\fBENOENT\fR
+The named file does not exist or is the null pathname.
+.TP
+\fBENOLINK\fR
+\fIpath\fR points to a remote machine,
+and the link to that machine is no longer active.
+.TP
+\fBENOTDIR\fR
+A component of the path prefix is not a directory.
+.TP
+\fBEOVERFLOW\fR
+A component is too large to store in the structure to which \fIbuf\fR
+points.
+.SH EXAMPLES
+This example uses \fBsam_segment_stat\fR to obtain the status of
+a segmented file.
+.PP
+.ft CO
+.nf
+struct sam_stat file_info;
+struct sam_stat *data_seg_info_ptr;
+int number_of_data_segments;
+int result;
+
+/*
+ * Initialize file_info to be all zero bits:
+ */
+memset((void *) &file_info, 0, sizeof(struct sam_stat));
+
+/*
+ * Stat the file using the regular sam_stat function:
+ */
+result = sam_stat(path, &file_info, sizeof(struct sam_stat));
+
+if (result != 0) {
+    fprintf(stderr, "Error failed to sam stat the file, %s.\\n", path);
+    exit -70;
+}
+
+if (SS_ISSEGMENT_F(file_info.attr)) {
+    /*
+     * File is segmented, how many data segments does it have?
+     */
+
+    /*
+     * Determine how many complete (full) segments it has:
+     */
+    number_of_data_segments = file_info.st_size /
+                              (file_info.segment_size * 1048576);
+
+    /*
+     * Determine if it has one data segment that isn't "full":
+     */
+    if (file_info.st_size >
+        number_of_data_segments * file_info.segment_size * 1048576) {
+        number_of_data_segments++;
+    }
+} else {
+    /*
+     * File isn't segmented
+     */
+    number_of_data_segments = 1;
+}
+
+/*
+ * Allocate enough memory to hold all of the stat information for each
+ * data segment:
+ */
+data_seg_info_ptr = (struct sam_stat *) malloc(number_of_data_segments *
+                                               sizeof(struct sam_stat));
+
+if (data_seg_info_ptr == NULL) {
+    fprintf(stderr, "Error failed to allocate memory for data segment stat operation.\\n");
+    exit -80;
+}
+
+/*
+ * Initialize file_info to be all zero bits:
+ */   
+memset((void *) data_seg_info_ptr, 0, number_of_data_segments *
+                                      sizeof(struct sam_stat));
+
+if (SS_ISSEGMENT_F(file_info.attr)) {
+    /*
+     * Use sam_segment_stat to get the stat information for all of the
+     * data segments of the file.
+     */
+    result = sam_segment_stat(path, data_seg_info_ptr,
+                                               number_of_data_segments *
+                                               sizeof(struct sam_stat));
+} else {
+    /*
+     * File is not segmented, just use the stat information from the
+     * sam_stat call
+     */
+    memcpy((void *) data_seg_info_ptr, (void *)file_info, sizeof(struct sam_stat));
+}
+
+if (!SS_ISSEGMENT_F(file_info.attr)) {
+    number_of_data_segments = 1;
+    data_seg_info_ptr = &file_info_ptr;
+}
+
+/*
+ * data_seg_info_ptr now points to an array of sam_stat structures.
+ * There is one sam_stat structure for each data segment and they are
+ * indexed 0 through  number_of_data_segments - 1.
+ *
+ * Do not forget to deallocate the memory buffer pointed to by
+ * data_seg_info_ptr using free.
+ */
+.ft
+.fi
+.SH SEE ALSO
+\fBssum\fR(1).
+.PP
+\fBmknod\fR(2),
+\fBstat\fR(2).

@@ -1,0 +1,214 @@
+.\" $Revision: 1.22 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH ibm3494 7 "02 Jun 2004"
+.SH NAME
+ibm3494 \- The IBM3494 interface through lmcpd
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.LP
+.SH DESCRIPTION
+\fBibm3494\fR is the Sun StorEdge \%SAM-FS and Sun \%SAM-QFS
+interface to the
+IBM 3494 library.
+This interface utilizes the \fBlmcpd\fR interface supplied by IBM.
+For more information on configuration and interfacing the IBM libraries, see
+the documentation supplied with the IBM hardware and for
+\fBlmcpd\fR.
+.SH CONFIGURATION
+It is assumed that the site has the \fBlmcpd\fR daemon
+configured and operating with the 3494 library.
+.LP
+The "equipment identifier" field in the \fBmcf\fR file, (see \fBmcf\fR(4)),
+is the full path name to a parameters file used by \fBibm3494\fR.  This file
+consists of \fIkeyword\fR = \fIvalue\fR and \fIpath_name\fR = \fIvalue\fR pairs.
+All keyword/path_name/values are case-sensitive.
+.LP
+The keywords are:
+.TP 8
+.B name
+This is the name assigned by the system administrator and configured
+in the \fB/etc/ibmatl.conf\fR file and the symbolic name of the library.
+This parameter must be supplied, there is no default.
+.TP
+.B category
+The category is a hex number between 0x0001 and 0xfeff.
+Media controlled by Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+will have its category
+set to this value.  The default for category is 4.
+.TP
+.B access
+Access to the library may be \fBshared\fR or \fBprivate\fR.
+If \fBprivate\fR, then
+any media imported into the library (category = 0xff00) will be added
+to the catalog and its category will be changed to that specified by
+\fBcategory\fR above.  If \fBshared\fR, then the \fBimport\fR command
+(see \fBimport\fR(1M)) will have to be used to add media to the catalog.
+The default for access is \fBprivate\fR.
+.TP
+.I device_path_name
+There is one \fIdevice_path_name\fR entry
+for every drive in the library attached to this machine.
+This name must match the Equipment Identifier of an
+entry in the \fBmcf\fR file.
+Following the \fIdevice_path_name\fR is the "device number" as described
+in the IBM documentation.  The system administrator can determine this
+number by running the IBM supplied utility \fBmtlib\fR.
+Following the \fIdevice number\fR is the \fIshared\fR parameter. This 
+parameter is optional and is used to indicate the drive is shared 
+with other Sun StorEdge \%SAM-FS or Sun \%SAM-QFS servers. 
+See examples below.
+.LP
+.RE
+.SH EXAMPLE
+.LP
+.RE
+The example uses the following file
+and information obtained from the IBM
+supplied utility mtlib. Both are documented in the
+materials supplied by IBM.
+.LP
+.RE
+.ft CO
+.nf
+#
+# This is file: /etc/ibmatl.conf
+# Set this file up according the documentation supplied by IBM.
+3493a   198.174.196.50  test1
+.fi
+.ft
+.RE
+.LP
+After \fBlmcpd\fR is running, run \fBmtlib\fR to get the device numbers.
+.LP
+.RS
+.ft CO
+.nf
+mtlib -l 3493a -D
+  0, 00145340 003590B1A00
+  1, 00145350 003590B1A01
+.fi
+.ft
+.RE
+.LP
+Here is a sample parameters file and \fBmcf\fR entries 
+for a IBM 3494 library.
+.LP
+.RS
+.ft CO
+.nf
+#
+# This is parameters file /etc/opt/SUNWsamfs/ibm60.
+#
+name = 3493a                     # From /etc/ibmatl.conf
+/dev/rmt/1bn = 00145340          # From mtlib output
+/dev/rmt/2bn = 00145350 shared   # From mtlib output
+access=private
+category = 5
+
+# These are the mcf file entries.
+#
+# IBM 3494 library
+#
+/etc/opt/SUNWsamfs/ibm60 60   im   ibm3494e - ibmcat
+/dev/rmt/1bn             61   tp   ibm3494e        
+/dev/rmt/2bn             62   tp   ibm3494e
+.fi
+.ft
+.RE
+.LP
+.SH IMPORT/EXPORT
+Import media
+into the library by placing the new media into the I/O slots and
+closing the door.  The library will lock the door and move the media
+into the storage area. Only 100 volumes can be imported at one time.
+If you are running with \fBaccess=private\fR, the library
+will inform the daemon as the media is moved and the media will be 
+added to the catalog.  If running with \fBaccess=shared\fR, then an 
+\fBimport\fR
+(see \fBimport\fR(1M))
+command will need to be executed to add the media to the catalog.
+.LP
+Exporting media (in all modes) is performed by the
+\fBexport\fR (see 
+\fBexport\fR(1M)) command.  This command will move the media to the
+I/O area and the output mode light on the operator panel will light.
+The operator can then remove the media from the I/O area.
+.SH CATALOG
+If running with \fBaccess=shared\fR then a catalog will need to be built
+before starting Sun StorEdge \%SAM-FS or Sun \%SAM-QFS.
+There are two utilities used to maintain the library catalog.
+\fBbuild_cat\fR (see \fBbuild_cat\fR(1M)) is used to build the
+catalog.  \fBdump_cat\fR (see \fBdump_cat\fR(1M)) and \fBbuild_cat\fR
+together are used to change the size of the catalog. 
+.LP
+To initialize a catalog with 1000 slots run:
+.LP
+.RS
+build_cat /tmp/catalog_file < /dev/null
+.RE
+.LP
+then move \fB/tmp/catalog_file\fR to the path pointed to in the \fBmcf\fR
+file for this library.  (In this case /var/opt/SUNWsamfs/catalog/ibmcat).
+Use \fBimport\fR to populate the catalog with the volumes.
+Or, you can create a file with the list of volumes and supply 
+it as input to \fBbuild_cat\fR (see \fBbuild_cat\fR(1M) for the format
+of the input file).
+.LP
+If the size of the catalog needs to be increased, execute something
+like:
+.LP
+.RS
+dump_cat file1 | build_cat -s 2000 /tmp/file2
+.RE
+.LP
+This would create a new catalog file (\fB/tmp/file2\fR) with room for 2000
+entries and initialize it with the entries from file1.  This can
+only be done when the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+software is not running
+and \fBsam-amld\fR has
+been shutdown (see \fBsam-amld\fR(1M)).
+.SH FILES
+.TP 30
+.B mcf
+The configuration file for the Sun StorEdge \%SAM-FS and
+Sun \%SAM-QFS software.
+.TP
+.B /etc/ibmatl.conf
+Configuration file used by \fBlcmpd\fR.
+.TP
+.B /opt/SUNWsamfs/lib/libibmlmcp.so
+A shared object version of the runtime library supplied by IBM
+.SH SEE ALSO
+.BR build_cat (1M),
+.BR dump_cat (1M),
+.BR export (1M),
+.BR import (1M),
+.BR sam-robotsd (1M).
+.PP
+.BR mcf (4).

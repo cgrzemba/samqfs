@@ -1,0 +1,317 @@
+#!/bin/csh -x
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+#################################################################################
+# Customer acknowledges that the software script(s) are not a
+# generally available standard Sun product and that it is a
+# fundamental condition of supply of the software script(s) to
+# Customer that Customer accepts the same "as is" and without
+# warranty of any kind.  No support services of any kind are
+# available for the software script(s) and Sun does not represent
+# to Customer that:
+#
+# (i)   operation of any of the software script(s) shall be
+#       uninterrupted or error free, or
+#
+# (ii)  functions contained in the software script(s) shall operate
+#       in the combinations which may be selected for use by
+#       Customer or meet Customer's requirements, or
+#
+# (iii) that upgraded versions of the software script(s) will be
+#       issued.
+#
+# If Customer wishes to have the software script(s) modified, or
+# otherwise requires support, Sun may provide the same by means of
+# a separate consulting agreement priced on a time and materials
+# basis.
+#
+#################################################################################
+# Author:   Donald Crouse
+# Date:     July 1st, 2004
+# Project:  MS
+# Customer: MS
+# Version:  1.0
+#
+# Synopsis: watch-day Script to confirm SAM OK, otherwise email up the chain
+#
+#################################################################################
+# Change history (most recent first)
+#
+# When            Who           Comments
+# ----            ---           --------
+# 2003		 dcrouse	Initial Version
+# July 1st, 2004 jleach         Included PS Header & changes to support common
+#				source'd in site-tools-PARAMS
+#				contract changed to contact
+##############################################################################
+#
+#	watch-day - Take action in the event of a problem with the
+#		SAM file system  -- send message to:
+#				    log in it system root
+#                                   first site admin, or more!
+#                                   supervisor,        (after 5)
+#                                   Dept manager,      (after 10)
+#                                   IT manager,        (after 20)
+#			            .
+#			            .
+#			            .
+#                                   HIGHEST....       (after 40)
+#
+#		There must be a /tmp/don_temp1 file with 10 lines of with 0(zero) on each line
+#		to start the script.
+
+# READ in the common site-tools parameters
+source /etc/opt/SUNWsamfs/sampm/site-tools-PARAMS
+
+## Emailcontact information defined in site-tools-PARAMS
+#
+if ( ! -d /var/sadm/pkg/SUNWsamfsu ) then
+	/usr/ucb/mail -s "SAM-FS NEEDS HELP" $contact1 <<EOF
+The SUNWsamfs package is not installed. Unable to execute the cron job
+watch-day if this package is not installed. Please install the SUNWsamfsr and
+SUNWsamfsu packages. If unable please edit the crontab to disable the
+watch-day command from being executed.
+EOF
+	exit 1
+endif
+
+set max_sup = 5
+set max_dh = 10
+set max_it = 20
+set num = 1
+set fs = 0
+set fstmp = 1
+set comment = "#"
+
+set time = 20
+#
+set tape_type = "lt"
+#
+############################################################################
+#		code set up do not change
+############################################################################
+set file_count = (`cat /tmp/don_temp1`)
+echo file_count = $file_count
+\rm /tmp/don_temp1
+set error = 0
+set WAIT = 0
+set LONG_WAIT = 0
+set REAL = 0
+set WANT = 0
+set sub_count = 1
+set fs = 0
+#
+############################################################################
+############################################################################
+#			CHECK FOR OUTSTANDING TAPE REQUESTS	
+############################################################################
+############################################################################
+#
+set WAIT = `samcmd p | grep $tape_type | awk '{print $7} ' | tr -d : `
+echo $WAIT
+if ( $WAIT > $time ) set LONG_WAIT = 7
+echo $LONG_WAIT
+#
+############################################################################
+############################################################################
+#			loop through SAM-FS's
+############################################################################
+############################################################################
+set num = 1
+#
+#	Check if file system is above the high water mark
+   Start  of sam file systems samdump files
+#
+#       make list of file system names
+#
+set fspar = (`grep  "samfs" /etc/vfstab | awk '{print $1}'`)
+        set fs = $fspar[$num]
+        set num = 0
+#
+foreach dir (`grep "samfs" /etc/vfstab | awk '{print $3}'`)
+@       num++
+        set fs = ($fspar[$num])
+        echo $fs
+        echo $dir
+        echo $fstmp
+        set fstmp = `echo $fs | cut -c1`
+        echo $fstmp
+        if ($fstmp == $comment) then
+                echo "I'm out of here"
+                continue
+        endif
+echo    lets go on to the next
+#
+#       Save three days in UFS on this host
+#
+#
+
+#
+	set REAL = `df -k | awk '{print $5, $1, $6}' | grep $fs	| awk '{print $1}' | tr -d "%" `
+	set WANT = `samcmd N $dir | grep high | awk '{print $3}'`
+
+	echo DIR = $dir
+	echo REAL = $REAL
+	echo WANT = $WANT
+	echo LONG_WAIT = $LONG_WAIT
+
+#	set count = $file_count[$sub_count]
+#	echo $count
+	if ($REAL <= $WANT || $LONG_WAIT == 7 ) then
+		set count = 0
+		echo we are going path 1
+		goto loop
+	else
+	@ count++
+	set error = 7
+	echo we are going path 2
+	endif
+############################################################################
+#
+#	Send messages to root to keep a log of messages sent
+#
+/usr/ucb/mail -s "SAMFS NEEDS HELP" $contact <<EOF
+	the root message....
+SAM-FS -- $dir -- is over the high water mark for some reason, or
+		-- or --
+There is a tape request over $time minutes.
+
+This HELP was requested at `date`  !
+EOF
+############################################################################
+############################################################################
+#
+#	This can go on to who ever is needed to
+#	  correct the problem.
+#
+#
+############################################################################
+#	Send message to contact one
+#
+/usr/ucb/mail -s "SAMFS NEEDS HELP" $contact1 <<EOF
+SAM-FS -- $dir -- is over the high water mark for some reason,
+		-- or --
+There is a tape request outstanding for over $time minutes.
+
+This HELP was requested at `date`  !
+EOF
+############################################################################
+############################################################################
+#	Send message to contact one a
+#
+/usr/ucb/mail -s "SAMFS NEEDS HELP" $contact1a <<EOF
+SAM-FS -- $dir -- is over the high water mark for some reason,
+		-- or --
+There is a tape request outstanding for over $time minutes.
+
+This HELP was requested at `date`  !
+EOF
+############################################################################
+############################################################################
+#
+#	Send message to contact two
+#
+if ($count < $max_sup) goto loop
+/usr/ucb/mail -s "SAMFS NEEDS HELP" $contact2 <<EOF
+SAM-FS -- $dir -- is over the high water mark for some reason,
+		-- or --
+There is a tape request outstanding for over $time minutes.
+
+This HELP was requested at `date`  !
+EOF
+############################################################################
+#
+#	Send message to contact three
+#
+if ($count < $max_dh) goto loop
+/usr/ucb/mail -s "SAMFS NEEDS HELP" $contact3 <<EOF
+SAM-FS -- $dir -- is over the high water mark for some reason,
+		-- or --
+There is a tape request outstanding for over $time minutes.
+
+This HELP was requested at `date`  !
+EOF
+############################################################################
+#
+#	Send message to contact four
+#
+if ($count < $max_it) goto loop
+/usr/ucb/mail -s $dir-SAMFS  $contact4 <<EOF
+SAM-FS -- $dir -- is over the high water mark for some reason,
+		-- or --
+There is a tape request outstanding for over $time minutes.
+
+This HELP was requested at `date`  !
+EOF
+############################################################################
+#
+#	This can go on to who ever is needed to
+#	  correct the problem.
+#
+loop:
+set REAL = 0
+set WANT = 0
+@ sub_count++
+############################################################################
+#
+#	Send "all is well" message
+#
+#        After you are comfortable the script is properly
+#        monitoring your system  -- make comments of ( put # in column 1)
+#        on the next code bracket.
+#
+############################################################################
+if ( $error == 0 ) then
+/usr/ucb/mail -s "SAMFS --$dir-- ALL IS WELL" $contact  <<EOF
+SAMFS $dir --- ALL is well as of `date`
+EOF
+endif
+############################################################################
+############################################################################
+if ( $error == 0 ) then
+/usr/ucb/mail -s "SAMFS --$dir-- ALL IS WELL" $contact1  <<EOF
+SAMFS $dir --- ALL is well as of `date`
+EOF
+endif
+#############################################################################
+############################################################################
+if ( $error == 0 ) then
+/usr/ucb/mail -s "SAMFS --$dir-- ALL IS WELL" $contact1a  <<EOF
+SAMFS $dir --- ALL is well as of `date`
+EOF
+endif
+############################################################################
+end
+echo $file_count > /tmp/don_temp1
+################################################################################
+################################################################################
+#####                      end of script                                   #####
+################################################################################
+################################################################################
+

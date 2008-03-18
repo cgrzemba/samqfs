@@ -1,0 +1,78 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_stage 3X "05 Nov 2001"
+.SH NAME
+sam_stage \- Sets stage attributes on a file
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamrpc -l nsl [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samrpc.h"
+.ft
+.fi
+.LP
+.BI "int sam_stage(const char *" "path" ,
+.BI "const char *" "ops" );
+.SH DESCRIPTION
+This is the \%RPC-based version of
+.BR sam_stage (3),
+which allows stage attributes on a file to be set from a remote machine.
+.PP
+.BR sam_stage (3x)
+sets stage attributes on a file or directory by
+sending its request to the Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS RPC server, \fBsam-rpcd\fR.
+.PP
+A call to
+.BR sam_initrpc (3X)
+must be issued before calling this routine.
+.SH "RETURN VALUES"
+Upon successful completion, a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fR
+is set to indicate the error.
+.SH ERRORS
+.PP
+.TP 20
+.SB EDESTADDRREQ
+.B
+sam_initrpc
+was not successfully called, as required, before making this call.
+.SH "SEE ALSO"
+.BR stage (1).
+.PP
+.BR sam-stagealld (1M).
+.PP
+.BR sam_stage (3).
+.PP
+.BR sam_initrpc (3X),
+.BR sam_closerpc (3X).

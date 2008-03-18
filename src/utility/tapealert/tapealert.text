@@ -1,0 +1,1148 @@
+SSC2
+0x1
+Read warning
+Warning
+The tape drive is having problems reading data. No data has been\
+lost, but there has been a reduction in the performance of the\
+tape.
+The drive is having severe trouble reading.
+
+SSC2
+0x2
+Write warning
+Warning
+The tape drive is having problems writing data. No data has been\
+lost, but there has been a reduction in the capacity of the tape.
+The drive is having severe trouble writing.
+
+SSC2
+0x3
+Hard error
+Warning
+The operation has stopped because an error has occurred while\
+reading or writing data that the drive cannot correct.
+The drive had a hard read or write error.
+
+SSC2
+0x4
+Media
+Critical
+Your data is at risk:\
+1. Copy any data you require from this tape.\
+2. Do not use this tape again.\
+3. Restart the operation with a different tape.
+Media can no longer be written/read, or performance\
+is severely degraded.
+
+SSC2
+0x5
+Read failure
+Critical
+The tape is damaged or the drive is faulty. Call the tape drive\
+supplier help line.
+The drive can no longer read data from the tape.
+
+SSC2
+0x6
+Write failure
+Critical
+The tape is from a faulty batch or the tape drive is faulty:\
+1. Use a good tape to test the drive.\
+2. If the problem persists, call the tape drive supplier help line.
+The drive can no longer write data to the tape.
+
+SSC2
+0x7
+Media life
+Warning
+The tape cartridge has reached the end of its calculated useful\
+life:\
+1. Copy any data you need to another tape.\
+2. Discard the old tape.
+The media has exceeded its specified life.
+
+SSC2
+0x8
+Not data grade
+Warning
+The cartridge is not data-grade. Any data you write to the tape\
+is at risk. Replace the cartridge with a data-grade tape.
+The drive has not been able to read the MRS (Media Recognition\
+System) stripes. MRS stripes are pre-defined stripes at BOM to\
+identify the media. Media may be audio/video grade and is not for\
+a data streaming device.
+
+SSC2
+0x9
+Write protect
+Critical
+You are trying to write to a write protected cartridge. Remove\
+the write protection or use another tape.
+Write command attempted a write to a write protected tape.
+
+SSC2
+0xa
+No removal
+Information
+You cannot eject the cartridge because the tape drive is in use.\
+Wait until the operation is complete before ejecting the cartridge.
+Manual or software unload attempted when prevent media removal\
+is on.
+
+SSC2
+0xb
+Cleaning media
+Information
+The tape in the drive is a cleaning cartridge.
+Cleaning tape loaded into drive.
+
+SSC2
+0xc
+Unsupported format
+Information
+You have tried to load a cartridge of a type that is not supported\
+by this drive.
+Attempted load of unsupported tape format (e.g., DDS2 in DDS1\
+drive).
+
+SSC2
+0xd
+Recoverable snapped tape
+Critical
+The operation has failed because the tape in the drive has\
+snapped:\
+1. Discard the old tape.\
+2. Restart the operation with a different tape.
+Tape snapped/cut in the drive where media can be ejected.
+
+SSC2
+0xe
+Unrecoverable snapped tape
+Critical
+The operation has failed because the tape in the drive has\
+snapped:\
+1. Do not attempt to extract the tape cartridge.\
+2. Call the tape drive supplier help line.
+Tape snapped/cut in the drive where media cannot be ejected.
+
+SSC2
+0xf
+Memory chip in cartridge failure
+Warning
+The memory in the tape cartridge has failed, which reduces\
+performance. Do not use the cartridge for further write operations.
+Memory chip failed in cartridge.
+
+SSC2
+0x10
+Forced eject
+Critical
+The operation has failed because the tape cartridge was manually\
+de-mounted while the tape drive was actively writing or reading.
+Manual or forced eject while drive actively writing or reading.
+
+SSC2
+0x11
+Read only format
+Warning
+You have loaded a cartridge of a type that is read-only in this\
+drive. The cartridge will appear as write protected.
+Media loaded that is read-only format.
+
+SSC2
+0x12
+Tape directory corrupted on load
+Warning
+The tape directory on the tape cartridge has been corrupted. File\
+search performance will be degraded. The tape directory can be\
+rebuilt by reading all the data on the cartridge.
+Tape drive powered down with tape loaded, or permanent error\
+prevented the tape directory being updated.
+
+SSC2
+0x13
+Nearing media life
+Information
+The tape cartridge is nearing the end of its calculated life.\
+It is recommended that you:\
+1. Use another tape cartridge for your next backup.\
+2. Store this tape cartridge in a safe place in case you need\
+   to restore data from it.
+Media may have exceeded its specified number of passes.
+
+SSC2
+0x14
+Clean now
+Critical
+The tape drive needs cleaning:\
+1. If the operation has stopped, eject the tape and clean the\
+   drive.\
+2. If the operation has not stopped, wait for it to finish and\
+   then clean the drive.\
+Check the tape drive users manual for device specific cleaning\
+instructions.
+The drive has a head clog or needs cleaning.
+
+SSC2
+0x15
+Clean periodic
+Warning
+The tape drive is due for routine cleaning:\
+1. Wait for the current operation to finish.\
+2. Then use a cleaning cartridge.\
+Check the tape drive users manual for device specific cleaning\
+instructions.
+The drive is ready for a periodic cleaning.
+
+SSC2
+0x16
+Expired cleaning media
+Critical
+The last cleaning cartridge used in the tape drive has worn out:\
+1. Discard the worn out cleaning cartridge.\
+2. Wait for the current operation to finish.\
+3. Then use a new cleaning cartridge.
+The cleaning tape has expired.
+
+SSC2
+0x17
+Invalid cleaning tape
+Critical
+The last cleaning cartridge used in the tape drive was an invalid\
+type:\
+1. Do not use this cleaning cartridge in this drive.\
+2. Wait for the current operation to finish.\
+3. Then use a valid cleaning cartridge.
+Invalid cleaning tape type used.
+
+SSC2
+0x18
+Retension requested
+Warning
+The tape drive has requested a retension operation.
+The drive is having severe trouble reading or writing, that will\
+be resolved by a retension cycle.
+
+SSC2
+0x19
+Dual-port interface error
+Warning
+A redundant interface port on the tape drive has failed.
+Failure of one interface port in a dual-port configuration (i.e.,\
+Fibre Channel)
+
+SSC2
+0x1a
+Cooling fan failure
+Warning
+A tape drive cooling fan has failed.
+Fan failure inside tape drive mechanism or tape drive enclosure.
+
+SSC2
+0x1b
+Power supply failure
+Warning
+A redundant power supply has failed inside the tape drive\
+enclosure. Check the enclosure users manual for instructions on\
+replacing the failed power supply.
+Redundant PSU failure inside the tape drive enclosure or rack\
+subsystem.
+
+SSC2
+0x1c
+Power consumption
+Warning
+The tape drive power consumption is outside the specified range.
+Power consumption of the tape drive is outside specified range.
+
+SSC2
+0x1d
+Drive maintenance
+Warning
+Preventive maintenance of the tape drive is required. Check the\
+tape drive users manual for device specific preventive maintenance\
+tasks or call the tape drive supplier help line.
+The drive requires preventive maintenance (not cleaning).
+
+SSC2
+0x1e
+Hardware A
+Critical
+The tape drive has a hardware fault:\
+1. Eject the tape or magazine.\
+2. Reset the drive.\
+3. If the problem persists, call the tape drive supplier help line.
+The drive has a hardware fault that requires reset to recover.
+
+SSC2
+0x1f
+Hardware B
+Critical
+The tape drive has a hardware fault:\
+1. Turn the tape drive off and then on again.\
+2. Restart the operation.\
+3. If the problem persists, call the tape drive supplier help line.
+The drive has a hardware fault that is not read/write related or\
+requires a power cycle to recover.
+
+SSC2
+0x20
+Interface
+Warning
+The tape drive has a problem with the application client\
+interface:\
+1. Check the cables and cable connections.\
+2. Restart the operation.
+The drive has identified an interface fault.
+
+SSC2
+0x21
+Eject media
+Critical
+The operation has failed:\
+1. Eject the tape or magazine.\
+2. Insert the tape or magazine again.\
+3. Restart the operation.
+Failed to finish mounting.
+
+SSC2
+0x22
+Download fail
+Warning
+The firmware download has failed because you have tried to use\
+the incorrect firmware for this tape drive. Obtain the correct\
+firmware and try again.
+Firmware download failed.
+
+SSC2
+0x23
+Drive humidity
+Warning
+Environmental conditions inside the tape drive are outside the\
+specified humidity range.
+Drive humidity limits exceeded.
+
+SSC2
+0x24
+Drive temperature
+Warning
+Environmental conditions inside the tape drive are outside the\
+specified temperature range.
+Drive temperature limits exceeded.
+
+SSC2
+0x25
+Drive voltage
+Warning
+The voltage supply to the tape drive is outside the specified\
+range.
+Drive voltage limits exceeded.
+
+SSC2
+0x26
+Predictive failure
+Critical
+A hardware failure of the tape drive is predicted. Call the tape\
+drive supplier help line.
+Predictive failure of drive hardware.
+
+SSC2
+0x27
+Diagnostics required
+Warning
+The tape drive may have a hardware fault. Run extended diagnostics\
+to verify and diagnose the problem. Check the tape drive users\
+manual for device specific instructions on running extended\
+diagnostics tests.
+The drive may have a hardware fault that may be identified by\
+extended diagnostics (i.e. SEND DIAGNOSTIC command).
+
+SSC2
+0x28
+Loader hardware A
+Critical
+The changer mechanism is having difficulty communicating with the\
+tape drive:\
+1. Turn the autoloader off then on.\
+2. Restart the operation.\
+3. If a problem persists, call the tape drive supplier help line.
+Loader mechanism is having trouble communicating with the tape\
+drive.
+
+SSC2
+0x29
+Loader stray tape
+Critical
+A tape has been left in the autoloader by a previous hardware\
+fault:\
+1. Insert an empty magazine to clear the fault.\
+2. If the fault does not clear, turn the autoloader off and then\
+   on again.\
+3. If the problem persists, call the tape drive supplier help line.
+Stray tape left in loader after previous error recovery.
+
+SSC2
+0x2a
+Loader hardware B
+Warning
+There is a problem with the autoloader mechanism.
+Loader mechanism has a hardware fault.
+
+SSC2
+0x2b
+Loader door
+Critical
+The operation has failed because the autoloader door is open:\
+1. Clear any obstructions from the autoloader door.\
+2. Eject the magazine and then insert it again.\
+3. If the fault does not clear, turn the autoloader off and then\
+   on again.\
+4. If the problem persists, call the tape drive supplier help line.
+Tape changer door open.
+
+SSC2
+0x2c
+Loader hardware C
+Critical
+The autoloader has a hardware fault:\
+1. Turn the autoloader off and then on again.\
+2. Restart the operation.\
+3. If the problem persists, call the tape drive supplier help\
+   line.\
+Check the autoloader users manual for device specific instructions\
+on turning the device power on and off.
+The loader mechanism has a hardware fault that is not mechanically related.
+
+SSC2
+0x2d
+Loader magazine
+Critical
+The autoloader cannot operate without the magazine:\
+1. Insert the magazine into the autoloader.\
+2. Restart the operation.
+Loader magazine not present.
+
+SSC2
+0x2e
+Loader predictive failure
+Warning
+A hardware failure of the changer mechanism is predicted. Call\
+the tape drive supplier help line.
+Predictive failure of loader mechanism hardware.
+
+SSC2
+0x2f
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x30
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x31
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x32
+Lost statistics
+Warning
+Media statistics have been lost at some time in the past.
+Drive or library powered down with tape loaded.
+
+SSC2
+0x33
+Tape directory invalid at unload
+Warning
+The tape directory on the tape cartridge just unloaded has been\
+corrupted. File search performance will be degraded. The tape\
+directory can be rebuilt by reading all the data.
+Error preventing the tape directory being updated on unload.
+
+SSC2
+0x34
+Tape system area write failure
+Critical
+The tape just unloaded could not write its system area\
+successfully:\
+1. Copy data to another tape cartridge.\
+2. Discard the old cartridge.
+Write errors while writing the system area on unload.
+
+SSC2
+0x35
+Tape system area read failure
+Critical
+The tape system area could not be read successfully at load time:\
+1. Copy data to another tape cartridge.
+Read errors while reading the system area on load.
+
+SSC2
+0x36
+No start of data
+Critical
+The start of data could not be found on the tape:\
+1. Check that you are using the correct format tape.\
+2. Discard the tape or return the tape to your supplier.
+Tape damaged, bulk erased, or incorrect format.
+
+SSC2
+0x37
+Loading failure
+Critical
+The operation has failed because the media cannot be loaded and\
+threaded.\
+1. Remove the cartridge, inspect it as specified in the product\
+   manual, and retry the operation.\
+2. If the problem persists, call the tape drive supplier help line.
+The drive is unable to load the media and thread the tape.
+
+SSC3
+0x38
+Unrecoverable unload failure
+Critical
+The operation has failed because the medium cannot be unloaded:\
+1. Do not attempt to extract the tape cartridge.\
+2. Call the tape driver supplier help line.
+The drive is unable to unload the medium.
+
+SSC2
+0x38
+Reserved
+Reserved
+""
+""
+
+SSC3
+0x39
+Automation interface failure
+Critical
+The tape drive has a problem with the automation interface:\
+1. Check the power to the automation system.\
+2. Check the cables and cable connections.\
+3. Call the supplier help line if problem persists.
+The drive has identified an interface fault.
+
+SSC2
+0x39
+Reserved
+Reserved
+""
+""
+
+SSC3
+0x3a
+Firmware failure
+Warning
+The tape drive has reset itself due to a detected firmware fault. If\
+problem persists, call the supplier help line.
+Firmware bug.
+
+SSC2
+0x3a
+Reserved
+Reserved
+""
+""
+
+SSC3
+0x3b
+WORM medium integrity check failed
+Warning
+The tape drive has detected an inconsistency during the WORM medium\
+integrity checks. Someone may have tampered with the cartridge.
+Someone has tampered with the WORM medium.
+
+SSC2
+0x3b
+Reserved
+Reserved
+""
+""
+
+SSC3
+0x3c
+WORM medium overwrite attempted
+Warning
+An attempt had been made to overwrite user data on a WORM medium:\ 
+1. If a WORM medium was used inadvertently, replace it with a\
+   normal data medium.\
+2. If a WORM medium was used intentionally:\
+   a) check that the software application is compatible with the\
+      WORM medium format you are using.\
+   b) check that the medium is bar-coded correctly for WORM.
+The application software does not recognize the medium as WORM.
+
+SSC2
+0x3c
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x3d
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x3e
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x3f
+Reserved
+Reserved
+""
+""
+
+SSC2
+0x40
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x1
+Library hardware A
+Critical
+The library mechanism is having difficulty communicating with\
+the drive:\
+1. Turn the library off then on.\
+2. Restart the operation.\
+3. If the problem persists, call the library supplier help line.
+Changer mechanism is having trouble communicating with the\
+internal drive.
+
+SMC2
+0x2
+Library hardware B
+Warning
+There is a problem with the library mechanism. If problem\
+persists, call the library supplier help line.
+Changer mechanism has a hardware fault.
+
+SMC2
+0x3
+Library hardware C
+Critical
+The library has a hardware fault:\
+1. Reset the library.\
+2. Restart the operation.\
+Check the library users manual for device specific instructions\
+on resetting the device.
+The changer mechanism has a hardware fault that requires a reset\
+to recover.
+
+SMC2
+0x4
+Library hardware D
+Critical
+The library has a hardware fault:\
+1. Turn the library off then on again.\
+2. Restart the operation.\
+3. If the problem persists, call the library supplier help line.\
+Check the library users manual for device specific instructions\
+on turning the device power on and off.
+The changer mechanism has a hardware fault that is not\
+mechanically related or requires a power cycle to recover.
+
+SMC2
+0x5
+Library diagnostics required
+Warning
+The library mechanism may have a hardware fault. Run extended\
+diagnostics to verify and diagnose the problem. Check the library\
+users manual for device specific instructions on running extended\
+diagnostics test.
+The changer mechanism may have a hardware fault which would be\
+identified by extended diagnostics.
+
+SMC2
+0x6
+Library interface
+Critical
+The library has a problem with the host interface:\
+1. Check the cables and connections.\
+2. Restart the operation.
+The library has identified an interface fault.
+
+SMC2
+0x7
+Predictive failure
+Warning
+A hardware failure of the library is predicted. Call the library\
+supplier help line.
+Predictive failure of library hardware.
+
+SMC2
+0x8
+Library maintenance
+Warning
+Preventive maintenance of the library is required. Check the\
+library users manual for device specific preventative maintenance\
+tasks, or call your library supplier help line.
+Library preventative maintenance required.
+
+SMC2
+0x9
+Library humidity limits
+Critical
+General environmental conditions inside the library are outside\
+the specified humidity range.
+Library humidity limits exceeded.
+
+SMC2
+0xa
+Library temperature limits
+Critical
+General environmental conditions inside the library are outside\
+the specified temperature range.
+Library temperature limits exceeded.
+
+SMC2
+0xb
+Library voltage limits
+Critical
+The voltage supply to the library is outside the specified range.\
+There is a potential problem with the power supply or failure of\
+a redundant power supply.
+Library voltage limits exceeded.
+
+SMC2
+0xc
+Library stray tape
+Critical
+A cartridge has been left inside the library by a previous\
+hardware fault:\
+1. Insert an empty magazine to clear the fault.\
+2. If the fault does not clear, turn the library off and then\
+   on again.\
+3. If the problem persists, call the library supplier help line.
+Stray cartridge left in library after previous error recovery.
+
+SMC2
+0xd
+Library pick retry
+Warning
+There is a potential problem with the drive ejecting cartridges\
+or with the library mechanism picking a cartridge from a slot.\
+1. No action needs to be taken at this time.\
+2. If the problem persists, call the library supplier help line.
+Operation to pick a cartridge from a slot had to perform an\
+excessive number of retries before succeeding.
+
+SMC2
+0xe
+Library place retry
+Warning
+There is a potential problem with the library mechanism placing\
+a cartridge into a slot.\
+1. No action needs to be taken at this time.\
+2. If the problem persists, call the library supplier help line.
+Operation to place a cartridge in a slot had to perform an\
+excessive number of retries before succeeding.
+
+SMC2
+0xf
+Library load retry
+Warning
+There is a potential problem with the drive or the library\
+mechanism loading cartridges, or an incompatible cartridge.
+Operation to load a cartridge in a drive had to perform an\
+excessive number of retries before succeeding.
+
+SMC2
+0x10
+Library door
+Critical
+The library has failed because the door is open:\
+1. Clear any obstructions from the library door.\
+2. Close the library door.\
+3. If the problem persists, call the library supplier help line.
+Changer door open prevents library functioning.
+
+SMC2
+0x11
+Library mail-slot
+Critical
+There is a mechanical problem with the library media import/export\
+mail-slot.
+Mechanical problem with import/export mail-slot.
+
+SMC2
+0x12
+Library magazine
+Critical
+The library can not operate without the magazine.\
+1. Insert the magazine into the library.\
+2. Restart the operation.
+Library magazine not present.
+
+SMC2
+0x13
+Library security
+Warning
+Library security has been compromised.
+Library door opened then closed during operation.
+
+SMC2
+0x14
+Library security mode
+Information
+The library security mode has been changed. The library has\
+either been put into secure mode, or the library has exited the\
+secure mode. This is for information purposes only. No action\
+is required.
+Library security mode changed.
+
+SMC2
+0x15
+Library off-line
+Information
+The library has been manually turned off-line and is unavailable\
+for use.
+Library manually turned off-line.
+
+SMC2
+0x16
+Library drive off-line
+Information
+A drive inside the library has been taken off-line. This is for\
+information purposes only. No action is required.
+Library turned internal drive off-line.
+
+SMC2
+0x17
+Library scan retry
+Warning
+There is a potential problem with the bar code label or the\
+scanner hardware in the library mechanism.\
+1. No action needs to be taken at this time.\
+2. If the problem persists, call the library supplier help line.
+Operation to scan the bar code on a cartridge had to perform and\
+excessive number of retries before succeeding.
+
+SMC2
+0x18
+Library inventory
+Critical
+The library has detected an inconsistency in its inventory.\
+1. Redo the library inventory to correct inconsistency.\
+2. Restart the operation.\
+Check the applications users manual or the hardware users manual\
+for specific instructions on redoing the library inventory.
+Inconsistent media inventory.
+
+SMC2
+0x19
+Library illegal operation
+Warning
+A library operation has been attempted that is invalid at this\
+time.
+Illegal operation detected.
+
+SMC2
+0x1a
+Dual-port interface error
+Warning
+A redundant interface port on the library has failed.
+Failure of one interface port in a dual-port configuration.
+
+SMC2
+0x1b
+Cooling fan failure
+Warning
+A library cooling fan has failed.
+One or more fans inside the library have failed. Internal flag\
+state only cleared when all flags are working again.
+
+SMC2
+0x1c
+Power supply
+Warning
+A redundant power supply has failed inside the library. Check the\
+library users manual for instructions on replacing the failed\
+power supply.
+Redundant power supply failure inside the library subsystem.
+
+SMC2
+0x1d
+Power consumption
+Warning
+The library power consumption is outside the specified range.
+Power consumption of one or more devices inside the library is\
+outside the specified range.
+
+SMC2
+0x1e
+Pass-through mechanism failure
+Critical
+A failure has occurred in the cartridge pass-through mechanism\
+between two library modules.
+Error occurred in pass-through mechanism during self test or\
+while attempting to transfer a cartridge between library modules.
+
+SMC2
+0x1f
+Cartridge in pass-through mechanism
+Critical
+A cartridge has been left in the pass-through mechanism from a\
+previous hardware fault. Check the library users guide for\
+instructions on clearing this fault.
+Cartridge left in the pass-through mechanism between two library\
+modules.
+
+SMC2
+0x20
+Unreadable bar code labels
+Information
+The library was unable to read the bar code on a cartridge.
+Unable to read a bar code label on a cartridge during library\
+inventory/scan.
+
+SMC2
+0x21
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x22
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x23
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x24
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x25
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x26
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x27
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x28
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x29
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x2a
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x2b
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x2c
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x2d
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x2e
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x2f
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x30
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x31
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x32
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x33
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x34
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x35
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x36
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x37
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x38
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x38
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x39
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x3a
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x3b
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x3c
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x3d
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x3e
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x3f
+Reserved
+Reserved
+""
+""
+
+SMC2
+0x40
+Reserved
+Reserved
+""
+""
+

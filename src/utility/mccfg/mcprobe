@@ -1,0 +1,1217 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mcprobe - media changer probe for installed tape/optical drives and
+#           standalone tape/optical drive probe.
+#
+# $Revision: 1.6 $
+
+
+# Location of mcf.
+MCFLOC=$SAMFS_ETC/mcf
+
+
+# Location of catalog historian.
+MCFHIST=$SAMFS_VAR/catalog/historian
+
+
+# Empty record field marker.
+EMPTY="EMPTY"		# empty record field
+
+
+# Tape drive records for all tape devices.
+tp_rec_logical=""	# tape drive logical device path.
+tp_rec_node=""		# tape drive node device path.
+tp_rec_usn=""		# tape drive unit serial number.
+tp_rec_vendor=""	# tp vendor needed for inquiry.conf scan.
+tp_rec_product=""	# tp product needed for inquiry.conf scan.
+tp_rec_target=""	# tape drive target.
+tp_rec_lun=""		# tape drive lun.
+tp_rec_wwn=""		# tape drive world wide name.
+tp_rec_count=0		# number of tape drive records.
+
+
+# Standalone tape drive records.
+tpcfg_tape_drives=""	# tape drive logical paths.
+tpcfg_standalone=""	# list of tape drives not in mc.
+tpcfg_vendor=""		# used for inquiry.conf tp search.
+tpcfg_product=""	# used for inquiry.conf tp search.
+tpcfg_mc_inst_tps=""	# all robot installed tape drives.
+
+
+# Media Changer records for installed tape drives.
+mc_rec_loglibpath=""	# mc logical device path
+mc_rec_elem=""		# mc element address of tape drive
+mc_rec_logical=""	# mc elem tape drive logical device path
+mc_rec_target=""	# tp scsi target id
+mc_rec_lun=""		# tp scsi lun
+mc_rec_usn=""		# tp vendor unique unit serial number
+mc_rec_count=0		# number of mc records
+mc_rec_vendor=""	# mc manufacture
+mc_rec_product=""	# mc product
+mc_seen_usn=""		# already seen mc usn
+
+
+# Found media changer installed tape drive records.
+found_elem=""		# mc element address of tp.
+found_target=""		# tp scsi target id.
+found_lun=""		# tp scsi lun.
+found_usn=""		# tp unit serial number.
+found_logical=""	# tp logical device path.
+found_node=""		# tp node device path.
+found_vendor=""		# tp vendor.
+found_product=""	# tp product.
+found_count=0		# number of mc records.
+
+
+# MCF equipment ordinal counters. 
+mc_dummy_tp=1		# mc mcf dummy tp slot counter.
+mc_eq_ordinal=80	# first mcf robot equipment ordinal.
+
+
+# Inquiry peripheral device types.
+TP_DEV_TYPE=1		# tape drive.
+MO_DEV_TYPE=7		# magneto optical drive.
+RB_DEV_TYPE=8		# robot (media changer) device.
+
+
+# List of all optical drives.
+optical_drives=""	# inquiry peripheral device type 7 list.
+
+
+#----- logical_tape_devices - Find all logical tape drive paths.
+#      Given host system, find all logical tape drive paths.
+function logical_tape_devices {
+
+	logit "logical_tape_devices"
+
+	# find all tape drive logical device paths. 
+	list=`ls /dev/rmt/*cbn 2>&1`
+	rval=$?
+	if [ $rval -ne 0 ]; then
+		logit "logical_tape_devices ls $list returned $rval"
+		return
+	fi
+
+	# remove newlines and check for node path.
+	tp_list=""
+	for i in $list; do
+		ls -la "$i" > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			tp_list=`trim "$tp_list $i"`
+		fi
+	done
+
+	logit "logical_tape_devices $tp_list"
+	echo "$tp_list"
+}
+
+
+#----- logical_library_devices - Find all logical robot paths.
+#      Given host system, find all logical robot paths.
+function logical_library_devices {
+
+	logit "logical_library_devices"
+
+	# find all robots.
+	list=`ls /dev/samst/c* 2>&1`
+	rval=$?
+	if [ $rval -ne 0 ]; then
+		logit "logical_library_devices ls $list returned $rval"
+		return
+	fi
+
+	# remove newlines.
+	mc_list=""
+	for i in $list; do
+		ls -la "$i" > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			mc_list=`trim "$mc_list $i"`
+		fi
+	done
+
+	logit "logical_library_devices $mc_list"
+	echo "$mc_list"
+}
+
+function logical_magneto_optical {
+	optical="$1"
+	
+	logit "logical_magneto_optical samst <$optical>"
+	list=""
+
+	# handle samst peripheral device type 7 the same as type 1
+	for mo in $optical; do
+		$SAMFS_SBIN/scsiid -p $mo > $TMPFILE
+		exec 5<$TMPFILE
+		devtype=""
+		while read -5u line; do
+			out=`echo "$line" | grep "device-type: "`
+			if [ -n "$out" ]; then
+				devtype=${line##device-type: }
+				break
+			fi
+		done
+		exec 5<&-
+
+		if [ $devtype -eq $MO_DEV_TYPE ]; then
+			# add logical path to tape drives, treat as tape
+			list=`trim $list $mo`
+		fi
+	done
+
+	logit "logical_magneto_optical optical <$list>"
+	echo "$list"
+}
+
+#----- tape_device_node - Find all tape drive node paths.
+#      Given host system, find all tape drive node paths.
+function tape_device_node {
+	path="$1"
+
+	logit "tape_device_node $path"
+
+	node=""
+	out=`ls -la "$path" 2>&1`
+	rval=$?
+	if [ $rval -eq 0 ]; then
+		last=""
+		for i in $out; do
+			last="$i"
+		done
+		node="$last"
+	else
+		logit "tape_device_node ls -la $path $out"
+	fi
+
+	logit "tape_device_node $node"
+	echo "$node"
+}
+
+
+#----- probe_tp - Retrieve scsi id info.
+#      Given logical device path, issue inquiry commands probing the
+#      tape drive building a record foreach device.
+function probe_tp {
+	devpath="$1"
+
+	logit "probe_tp $devpath"
+	$SAMFS_SBIN/scsiid -e -p $devpath > $TMPFILE
+	rval=$?
+	if [ $rval -ne 0 ]; then
+		logit "probe_tp scsiid $devpath returned $rval"
+		exec 4<$TMPFILE
+		while read -4u line; do
+			logit "probe_tp $line"
+		done
+		exec 4<&-
+		return 1 
+	fi
+
+	# tape drive path+vendor+product+usn id.
+	vendor=
+	product=
+	usn=
+
+	# process probe output.
+	exec 4<$TMPFILE
+	while read -4u line; do
+
+		out=`echo $line | grep "unit-serial-number: "`
+		if [ -n "$out" ]; then
+			usn=${line##unit-serial-number: }
+		fi
+
+		out=`echo "$line" | grep "vendor: "`
+		if [ -n "$out" ]; then
+			vendor=${line##vendor: }
+		fi
+
+		out=`echo "$line" | grep "product: "`
+		if [ -n "$out" ]; then
+			product=${line##product: }
+		fi
+
+	done
+	exec 4<&-
+
+	logit "probe_tp <$vendor> <$product> <$usn>"
+
+	# seen usn?
+	if [ -n "$usn" ]; then
+		out=`echo "$tp_rec_usn" | grep "$usn"`
+		if [ -n "$out" ]; then
+			logit "$devpath DUPLICATE TAPE DRIVE ENTRY."
+			return 1 # already seen usn
+		fi
+	fi
+
+
+	# un-seen usn
+	tp_rec_usn=`trim "$tp_rec_usn $usn"`
+	tp_rec_vendor=`trim "$tp_rec_vendor $vendor"`
+	tp_rec_product=`trim "$tp_rec_product $product"`
+
+	return 0 # success
+}
+
+
+#----- build_host_tp_recs - Build array of tape drive records.
+#      Given a list of tape drive logical paths, build records
+#      containing logical device path, node device path, and unit
+#      serial number, etc. 
+function build_host_tp_recs {
+	logical_tp="$1"
+
+	# reinitialize tape drive array of records.
+	tp_rec_logical=""
+	tp_rec_node=""
+	tp_rec_usn=""
+	tp_rec_vendor=""
+	tp_rec_product=""
+
+	logit "build_host_tp_recs logical_tp=<$logical_tp>"
+
+	for i in $logical_tp; do
+		probe_tp "$i"
+		if [ $? -eq 0 ]; then
+			tp_rec_logical=`trim "$tp_rec_logical $i"`
+			out=`tape_device_node "$i"`
+			tp_rec_node=`trim "$tp_rec_node $out"`
+		fi
+	done
+
+	logit "build_host_tp_recs tp_rec_logical=<$tp_rec_logical>"
+	logit "build_host_tp_recs tp_rec_node=<$tp_rec_node>"
+
+	# save all tape drive logical device paths, vendor and product.
+	tpcfg_tape_drives="$tp_rec_logical"
+	tpcfg_vendor="$tp_rec_vendor"
+	tpcfg_product="$tp_rec_product"
+}
+
+
+#----- parse_tp_host_paths - Parse tape drive paths.
+#      Given list of tape drive node paths, parse scsi target,
+#      lun and fc-fabric wwn from the path. Store the results in a
+#      tape drive array record.
+function parse_tp_host_paths {
+
+	# reinitialize tape drive records.
+	tp_rec_target=""
+	tp_rec_lun=""
+	tp_rec_wwn=""
+	tp_rec_count=0
+
+	logit "parse_tp_host_paths"
+
+	for i in $tp_rec_node; do
+
+		logit "parse_tp_host_paths <$i>"
+
+		# fc-fabric attached tape drive
+		out=`echo $i | grep "st@w"`
+		if [ -n "$out" ]; then
+			# fibre channel attached tape drive
+			wwn=${out##*st@w}
+			wwn=`echo $wwn | cut -d"," -f1`
+			tp_rec_wwn=`trim "$tp_rec_wwn $wwn"`
+
+			lun=${out##*st@w*,};
+			lun=`echo $lun | cut -d":" -f1`
+			tp_rec_lun=`trim "$tp_rec_lun $lun"`
+
+			logit "parse_tp_host_paths wwn <$wwn> <$lun>"
+
+			# record field place holder
+			tp_rec_target=`trim "$tp_rec_target $EMPTY"`
+		else
+			# parallel scsi attached
+			target=""
+			lun=""
+
+			# is drive optical? 
+			out=`echo $i | grep "samst@"`
+			if [ -n "$out" ]; then
+				# optical drive
+				target=${out##*samst@}	
+				lun=${out##*samst@}
+				lun=${lun%%:*}
+				lun=${lun##*,}
+			else
+				out=`echo $i | grep "st@"`
+				if [ -n "$out" ]; then
+					# tape drive
+					target=${i##*st@}	
+					lun=${i##*st@*,};
+				fi
+			fi
+
+			logit "parse_tp_host_paths tid <$target> <$lun>"
+
+			if [ -n "$out" ]; then
+				target=`echo $target | cut -d"," -f1`
+				tp_rec_target=`trim "$tp_rec_target $target"`
+
+				lun=`echo $lun | cut -d":" -f1`
+				tp_rec_lun=`trim "$tp_rec_lun $lun"`
+
+				# record field place holder
+				tp_rec_wwn=`trim "$tp_rec_wwn $EMPTY"`
+			fi
+
+			logit "parse_tp_host_paths tid <$target> <$lun>"
+		fi
+
+		tp_rec_count=`expr $tp_rec_count + 1`
+	done
+}
+
+
+#----- probe_mc_for_tps - parse mc probe results file into records.
+#      Given a robot logical device path, retrieve and build a tp
+#      record containing target, lun, usn, and mc element address.
+function probe_mc_for_tps {
+	mc_rec_loglibpath="$1"
+
+	# reinitialize mc records.
+	mc_rec_elem=""
+	mc_rec_logical=""
+	mc_rec_target=""
+	mc_rec_lun=""
+	mc_rec_usn=""
+	mc_rec_count=0
+	mc_rec_vendor=""
+	mc_rec_product=""
+
+
+	logit "probe_mc_for_tps $mc_rec_loglibpath"
+
+	# probe media changer for installed tape drives.
+	$SAMFS_SBIN/scsiid -e -p $mc_rec_loglibpath > $TMPFILE
+	rval=$?
+	if [ $rval -ne 0 ]; then
+		logit "probe_mc_for_tps scsiid $mc_rec_loglibpath"\
+			"returned $rval"
+		# log error to logfile.
+		exec 4<$TMPFILE
+		while read -4u line; do
+			logit "probe_mc_for_tps $line"
+		done
+		exec 4<&-
+		return 1 # unsuccessful
+	fi
+
+	# media changer installed tape drive records.
+	tmp_vendor=	# tape drive vendor string.
+	tmp_product=	# tape drive product string.
+	tmp_elem=	# tape drive element address.
+	tmp_target=	# tape drive target.
+	tmp_lun=	# tape drive lun.
+	tmp_usn=	# tape drive unit serial number.
+	tmp_count=0	# total number of tape drives.
+
+	# id: field flag.
+	count1=0	# element address counter.
+	count2=0	# tape drive usn counter.
+
+	# this media changer's unit serial number.
+	mc_usn=
+
+	exec 5<$TMPFILE
+	while read -5u line; do
+		
+		out=`echo "$line" | grep "vendor: "`
+		if [ -n "$out" ]; then
+			# this mc vendor.
+			tmp_vendor=${line##vendor: }
+			logit "probe_mc_for_tps vendor=<$tmp_vendor>"
+		fi
+
+		out=`echo "$line" | grep "product: "`
+		if [ -n "$out" ]; then
+			# this mc product.
+			tmp_product=${line##product: }
+			logit "probe_mc_for_tps product=<$tmp_product>"
+		fi
+
+		out=`echo "$line" | grep "unit-serial-number: "`
+		if [ -n "$out" ]; then
+			# this mc usn.
+			mc_usn=${line##unit-serial-number: }
+			logit "probe_mc_for_tps mc usn=<$mc_usn>"
+		fi
+
+		out=`echo "$line" | grep "tape-drive-count: "`
+		if [ -n "$out" ]; then
+			# this mc installed tape drives.
+			tmp_count=${line##tape-drive-count: }
+			logit "probe_mc_for_tps count=<$tmp_count>"
+		fi
+
+		out=`echo "$line" | grep "target: "`
+		if [ -n "$out" ]; then
+			# more than one tape target allowed.
+			target=${line##target: }
+			tmp_target=`trim "$tmp_target $target`
+			logit "probe_mc_for_tps target=<$tmp_target>"
+		fi
+
+		out=`echo "$line" | grep "lun: "`
+		if [ -n "$out" ]; then
+			# every tape target has a lun.
+			lun=${line##lun: }
+			if [ -z "$lun" ];then
+				lun=0
+				logit "probe_mc_for_tps assume lun 0"
+			fi
+			tmp_lun=`trim "$tmp_lun $lun"`
+			logit "probe_mc_for_tps lun=<$tmp_lun>"
+		fi
+
+		out=`echo "$line" | grep "element-address: "`
+		if [[ -n "$out" ]] && [[ $count1 -lt $tmp_count ]]; then
+			# every tape has a mc slot.
+			elem=${line##element-address: }
+			tmp_elem=`trim "$tmp_elem $elem"`
+			logit "probe_mc_for_tps elem=<$elem>"
+			count1=`expr $count1 + 1`
+		fi
+
+		out=`echo "$line" | grep "id: "`
+		if [[ -n "$out" ]] && [[ $count2 -lt $tmp_count ]]; then
+			# every tape has a usn.
+			usn=${out##id: }
+			tmp_usn=`trim "$tmp_usn $usn"`
+			logit "probe_mc_for_tps usn=<$tmp_usn>"
+			count2=`expr $count2 + 1`
+		fi
+
+	done
+	exec 5<&-
+
+
+	# remove duplicate library paths.
+	for seen_usn in $mc_seen_usn; do
+		if [ "$mc_usn" = "$seen_usn" ]; then
+			logit "$mc_rec_loglibpath DUPLICATE MEDIA"\
+				"CHANGER ENTRY."
+			return 1 # already seen mc usn, ignore path
+		fi 
+	done
+	mc_seen_usn=`trim "$mc_seen_usn $mc_usn"`
+
+	if [ -z "$tmp_lun" ]; then
+		for i in $tmp_target; do
+			tmp_lun=`trim "$tmp_lun 0"`
+		done
+		logit "probe_mc_for_tps build lun 0s"
+	fi
+	
+	# copy over zero or more media changer installed tape drive records. 
+	mc_rec_vendor="$tmp_vendor"
+	mc_rec_product="$tmp_product"
+	mc_rec_elem="$tmp_elem"
+	mc_rec_target="$tmp_target"
+	mc_rec_lun="$tmp_lun"
+	mc_rec_usn="$tmp_usn"
+	mc_rec_count=$tmp_count
+
+	return 0 # success
+}
+
+
+#----- match_mc_with_tps - Match media changer with tape drives.
+#      Given tape drive records and media changer records, find
+#      which tape drives are installed in the media changer.
+function match_mc_with_tps {
+
+	# reinitialize mc array of records 
+	found_elem=""
+	found_target=""
+	found_lun=""
+	found_usn=""
+	found_logical=""
+	found_node=""
+	found_vendor=""
+	found_product=""
+	found_count=0
+
+	logit "match_mc_with_tps mc_rec_count=<$mc_rec_count>"
+	logit "match_mc_with_tps tp_rec_logical=<$tp_rec_logical>"\
+		"tp_rec_target=<$tp_rec_target> tp_rec_lun=<$tp_rec_lun>"
+
+	idx1=1
+	while [ $idx1 -le $mc_rec_count ]; do
+		logit "match_mc_with_tps outer $idx1 of $mc_rec_count"
+		
+		# get the easy mc rec fields 
+		mc_elem=`echo $mc_rec_elem | cut -d" " -f$idx1`
+		mc_target=`echo $mc_rec_target | cut -d" " -f$idx1`
+		mc_lun=`echo $mc_rec_lun | cut -d" " -f$idx1`
+		mc_node=`ls -la $mc_rec_loglibpath`
+		last=""
+		for node in $mc_node; do
+			last="$node"
+		done
+		mc_node="$last"
+
+		mc_usn=`echo $mc_rec_usn | cut -d" " -f$idx1`
+		mc_usn=`decode "$mc_usn"`
+		logit "match_mc_with_tps mc_usn=<$mc_usn>"
+		logit "match_mc_with_tps mc <$mc_rec_target> <$mc_rec_lun>"
+		logit "match_mc_with_tps tp <$tp_rec_target> <$tp_rec_lun>"\
+			"<$tp_rec_logical>"
+
+		# inner tp loop
+		idx2=1
+		found=0
+		while [[ $found -eq 0 ]] && [[ $idx2 -le $tp_rec_count ]]; do
+
+			logit "match_mc_with_tps inner $idx2 of $tp_rec_count"
+
+			tp_target=`echo $tp_rec_target | cut -d" " -f$idx2`
+			tp_lun=`echo $tp_rec_lun | cut -d" " -f$idx2`
+			tp_usn=`echo $tp_rec_usn | cut -d" " -f$idx2`
+			tp_logical=`echo $tp_rec_logical | cut -d" " -f$idx2`
+			tp_node=`echo $tp_rec_node | cut -d" " -f$idx2`
+
+			logit "match_mc_with_tps inner $idx2 $tp_target"\
+				"$tp_lun $tp_usn $tp_logical $tp_node"
+
+			# fixup mc and tp nodes by removing the specific driver
+			mc_node=${mc_node%%/samst@*}
+			out=`echo "$tp_node" | grep "samst@"`
+			if [ -n "$out" ]; then
+				# optical drive
+				tp_node=${tp_node%%/samst@*}
+			else
+				# tape drive
+				tp_node=${tp_node%%/st@*}
+			fi
+			logit "match_mc_with_tps mc=$mc_node tp=$tp_node"
+			tp_vendor=`echo $tp_rec_vendor | cut -d" " -f$idx2`
+			tp_product=`echo $tp_rec_product | cut -d" " -f$idx2`
+
+			# search for tape drive usn buried in robot devid
+			# text string.
+			usn_search=""
+			if [ -n "$tp_usn" ]; then
+				usn_search=`echo $mc_usn | grep "$tp_usn"`
+			fi
+
+			logit "match_mc_with_tps usn_search=<$usn_search>"\
+				"mc_usn=<$mc_usn> tp_usn=<$tp_usn>"
+			logit "match_mc_with_tps nexus: mc <$mc_target>"\
+				"<$mc_lun> <$mc_node>,"\
+				"tp <$tp_target> <$tp_lun> <$tp_node>"
+
+			# try and match by usn.
+			if [[ -n "$mc_usn" ]] && [[ -n "$tp_usn" ]]; then
+			   # match by exact usn or grep for tp usn in mc data.
+			   if [[ "$mc_usn" = "$tp_usn" ]] || \
+			      [[ -n "$usn_search" ]]; then
+				logit "match_mc_with_tps found usn match"
+				found=1
+			   fi
+
+			# else try and match by nexus. 
+			elif [[ "$mc_target" = "$tp_target" ]] && \
+			   [[ "$mc_lun" = "$tp_lun" ]] && \
+			   [[ "$mc_node" = "$tp_node" ]]; then
+				logit "match_mc_with_tps found nexus match"
+				found=1
+			fi
+
+			# tape drive usn and robot tape drive usn matched?
+			if [ $found -eq 1 ]; then
+				found_elem=`trim "$found_elem $mc_elem"`
+				found_target=`trim "$found_target $mc_target"`
+				found_lun=`trim "$found_lun $mc_lun"`
+				# use tp usn because mc tp usn is optional
+				found_usn=`trim "$found_usn $tp_usn"`
+				found_logical=`trim "$found_logical $tp_logical"`
+				found_node=`trim "$found_node $tp_node"`
+				found_vendor=`trim "$found_vendor $tp_vendor"`
+				found_product=`trim "$found_product $tp_product"`
+				found_count=`expr $found_count + 1`
+				logit "match_mc_with_tps built mc tp"\
+					"record, found_count=$found_count"
+			fi
+
+			idx2=`expr $idx2 + 1`
+		done
+
+		idx1=`expr $idx1 + 1`
+	done
+
+
+	# Record all robot installed tape drive logical paths. 
+	tpcfg_mc_inst_tps=`trim "$tpcfg_mc_inst_tps $found_logical"`
+
+	logit "match_mc_with_tps <$found_count> <$tpcfg_mc_inst_tps>"
+}
+
+
+#----- set_mc_dummy_tp - Set mc mcf tp slot counter.
+#      Given mc tp dummy place holder counter, change its value.
+function set_mc_dummy_tp {
+	mc_dummy_tp="$1"
+}
+
+
+#----- set_eq_ordinal - Set equipment ordinal.
+#      Given new robot eq ord, change its value.
+function set_eq_ordinal {
+	mc_eq_ordinal="$1"
+}
+
+
+#----- write_mc_mcf - display mcf formatted data.
+#      Given mc, mc installed tps, family set, and catalog, display 
+#      mcf formatted data.
+function write_mc_mcf {
+	family="$1"
+	catalog="$2"
+
+	mc=`display_samfs_mcf_mc_tp`
+
+	for path in $mc; do
+
+		out=`echo $path | grep "samst"`
+		if [ -n "$out" ]; then
+			out=`echo "$optical_drives" | grep "$path"`
+			if [ -z "$out" ]; then 
+				printf "%-19s %3d    rb   %-8s on   %s\n" \
+					$path $mc_eq_ordinal $family $catalog
+			else
+				printf "%-19s %3d    mo   %-8s on\n" \
+					$path $mc_eq_ordinal $family
+			fi
+		elif [ "$path" = "/dummy" ]; then
+			path="$path$mc_dummy_tp"
+			mc_dummy_tp=`expr $mc_dummy_tp + 1`
+
+			printf "%-19s %3d    tp   %-8s off\n" \
+				$path $mc_eq_ordinal $family
+		else
+			printf "%-19s %3d    tp   %-8s on\n" \
+				$path $mc_eq_ordinal $family
+		fi 
+
+		mc_eq_ordinal=`expr $mc_eq_ordinal + 1`	
+	done
+
+	return $mc_eq_ordinal
+}
+
+
+#----- display_samfs_mcf_mc_tp - display media changer info.
+#      Given everything known about a mc, display it in samfs mcf format.
+function display_samfs_mcf_mc_tp {
+
+	logit "display_mc_tp_mcf $mc_rec_loglibpath $mc_rec_count"
+
+	list_elem=""
+	list_logical=""
+
+	# display logical robot path for tp record group
+	echo "$mc_rec_loglibpath"
+
+	# build mcf list of mc tp  
+	logit "display_mc_tp_mcf building mc tp list"
+	mc_count=0
+	while [ $mc_count -lt $mc_rec_count ]; do
+
+		logit "display_mc_tp_mcf mc tp loop $mc_count of $mc_rec_count"
+
+		mc_index=`expr $mc_count + 1`
+		mc_elem=`echo $mc_rec_elem | cut -d" " -f$mc_index`
+
+		found=0
+		count=0
+		while [[ $found -eq 0 ]] && [[ $count -lt $found_count ]]; do
+
+			index=`expr $count + 1`
+			elem=`echo $found_elem | cut -d" " -f$index`
+			logical=`echo $found_logical | cut -d" " -f$index`
+
+			logit "display_mc_tp_mcf $elem $logical compare"\
+				"$mc_elem $mc_logical"
+
+			if [ "$elem" = "$mc_elem" ]; then
+				logit "display_mc_tp_mcf mc tp $elem"\
+					"$logical is attached to host"
+				list_elem=`trim "$list_elem $elem"`
+				list_logical=`trim "$list_logical $logical"`
+				found=1
+			fi
+
+			count=`expr $count + 1`
+		done
+
+		if [ $found -eq 0 ]; then
+			logit "display_mc_tp_mcf mc tp $mc_elem $logical"\
+				"is attached to some other host"
+			list_elem=`trim "$list_elem $mc_elem"`
+			list_logical=`trim "$list_logical /dummy"`
+		fi
+
+		mc_count=`expr $mc_count + 1`
+	done
+
+	# ascending ordered sort by element address for mcf.
+	logit "match_mc_with_tps sorting..."
+	rm -f $TMPFILE
+	touch $TMPFILE
+	count=0
+	while [ $count -lt $mc_count ]; do
+		index=`expr $count + 1`
+		elem=`echo $list_elem | cut -d" " -f$index`
+		logical=`echo $list_logical | cut -d" " -f$index`
+		echo "$elem $logical" >> $TMPFILE
+
+		count=`expr $count + 1`
+	done
+	sort $TMPFILE > $TMPFILE2
+
+	# display mcf mc ordered list of tps.
+	logit "match_mc_with_tps findings..."
+	exec 4<$TMPFILE2
+	while read -4u line; do
+		elem=`echo $line | cut -d" " -f1`
+		logical=`echo $line | cut -d" " -f2`
+		echo "$logical"
+		logit "match_mc_with_tps $elem $logical"
+	done
+	exec 4<&-
+}
+
+
+#----- display_all_mc_tp - display all media changer installed tape drives
+#      Given robot array of installed tape drive records, display all
+#      information about the tape drives.
+function display_all_mc_tp {
+
+	logit "display_all_mc_tp $found_count"
+	count=0
+	while [ $count -lt $found_count ]; do
+		index=`expr $count + 1`
+		elem=`echo $found_elem | cut -d" " -f$index`
+		target=`echo $found_target | cut -d" " -f$index`
+		lun=`echo $found_lun | cut -d" " -f$index`
+		usn=`echo $found_usn | cut -d" " -f$index`
+		logical=`echo $found_logical | cut -d" " -f$index`
+		node=`echo $found_node | cut -d" " -f$index`
+
+		echo "target=<$target> lun=<$lun> usn=<$usn> elem=<$elem>"
+		echo "\tlogical=<$logical>"
+		echo "\tnode=<$node>"
+
+		count=`expr $count + 1`
+	done
+}
+
+
+#----- find_tp - find tape drives.
+function find_tp {
+	tape_drives="$1"
+
+	logit "find_tp tape_drives=<$tape_drives>"
+
+	# Build array of tape drive records.
+	build_host_tp_recs "$tape_drives"
+
+	# from tp paths get target, lun and wwn info. 
+	parse_tp_host_paths
+}
+
+
+#----- find_mc_tp - Find media changer (mc) installed tape drives (tp).
+#      Given logical paths for a robot and tape drive(s), build a media
+#      changer record of installed tape drives. The media changer must
+#      either be parallel scsi and report target, lun or support
+#      tp usn info in a mc read elem status data transport with devid data.
+function find_mc_tp {
+	robot="$1"
+
+	logit "find_mc_tp robot=<$robot>"
+
+	# Get list of robot installed tape drives. 
+	probe_mc_for_tps "$robot"
+
+	# Match robot tape drives with local host tape drives.
+	match_mc_with_tps
+}
+
+
+#----- create_mcf - create empty mcf.
+#      Given location of mcf, test for mcf and if it does not exist then 
+#      ask the user to create one.
+function create_mcf {
+
+	if [ ! -f $MCFLOC ]; then
+		query_user "Create $MCFLOC"
+		if [ $? -ne 0 ]; then
+			return 1
+		fi
+		touch $MCFLOC
+	fi
+	return 0
+}
+
+
+#----- auto_cfg - automatic configuration.
+#      Given a host, configure SAM-FS mcf, samst.conf, files for robots and
+#      tape drives. Also display device not found warning messages for
+#      inquiry.conf and st.conf.
+function auto_cfg {
+
+	logit "auto_cfg"
+
+	# reset lists of installed and standalone tape drives.
+	tpcfg_tape_drives=
+	tpcfg_standalone=
+	tpcfg_mc_inst_tps=
+	tpcfg_vendor=
+	tpcfg_product=
+
+	# reset list of seen mc usns.
+	mc_seen_usn=""
+
+	# get robot and tape device paths.
+	robots=`logical_library_devices`
+	optical_drives=`logical_magneto_optical "$robots"`
+	tape_drives=`logical_tape_devices`
+
+	# treat tape and optical drives the same
+	tape_drives=`trim "$tape_drives $optical_drives"`
+
+	robot_list=""
+	for lib in $robots; do
+		found=0
+		for mo in $optical_drives; do
+			if [ "$lib" = "$mo" ]; then
+				found=1
+				break
+			fi
+		done
+		if [ $found -eq 0 ]; then
+			robot_list=`trim "$robot_list $lib"`
+		fi
+	done
+	robots="$robot_list"
+	logit "auto_cfg robots <$robots>"
+
+	eq_ordinal=80
+	mc_eq_ordinal=80
+
+	create_mcf
+	if [ $? -ne 0 ]; then
+		return
+	fi
+
+	# found device to add.
+	added_device=0
+	once=0
+
+	# search for robot installed tape drives.
+	for lib in $robots; do
+
+		find_tp "$tape_drives"
+		find_mc_tp "$lib"
+		if [ $mc_rec_count -eq 0 ]; then
+			logit "$lib PATH IS NOT VALID, CONTAINS NO TAPE, "\
+				"IS BUSY, OR DUPLICATE".
+			continue
+		fi
+
+		# is lib already in mcf?
+		skip=0
+		out=`cat $MCFLOC | grep "$lib"`
+		out=${out###*} # remove comment
+		if [ -n "$out" ]; then
+		  logit "$lib already configured in $MCFLOC." 
+		  skip=1	
+		fi
+
+		# display message only once for first unique library.
+		if [[ $skip -eq 0 ]] && [[ $once -eq 0 ]]; then
+			echo
+			echo
+			echo "Configure direct attach media changer."
+			echo
+			once=1
+		fi
+
+		# add new library entry?
+		if [ $skip -eq 0 ]; then
+		  echo "Configure: $lib"
+		  get_eq_ordinal "media changer"
+		  set_eq_ordinal $eq_ordinal
+		  get_family_set "$mc_rec_product" "media changer"
+		  get_catalog
+		  #  only way inc counters and display output
+		  write_mc_mcf "$family_set" "$catalog" > $TMPFILE2
+		  cat $TMPFILE2
+			
+		  query_user "Commit above to $MCFLOC"
+		  if [ $? -eq 0 ]; then
+		    echo >> $MCFLOC
+
+		    # comment robot mcf entry
+		    doc_vendor=`plain_text "$mc_rec_vendor"`
+		    doc_product=`plain_text "$mc_rec_product"`
+		    echo "# $doc_vendor $doc_product" >> $MCFLOC
+		    cat $TMPFILE2 >> $MCFLOC
+
+		    # search inquiry.conf to build warning list
+		    logit "auto_cfg build rb inq warn <$mc_rec_vendor>"\
+			"<$mc_rec_product>"
+		    inqconf_lookup "$mc_rec_vendor" "$mc_rec_product"
+
+		    logit "auto_cfg build tp inq warn <$found_vendor>"\
+			"<$found_product>"
+		    inqconf_lookup "$found_vendor" "$found_product"
+
+		    # is tape device st configured?
+		    tp_index=1
+		    for tp_log in $found_logical; do
+		      vv=`echo $found_vendor | cut -d" " -f$tp_index`
+		      pp=`echo $found_product | cut -d" " -f$tp_index`
+
+		      logit "auto_cfg build <$tp_log> <$vv> <$pp>"
+
+		      out=`echo "$tp_log" | grep "samst"`
+		      if [ -z "$out" ]; then
+		        logit "auto_cfg build tp st warn <$vv> <$pp>"
+		    	stconf_lookup "$vv" "$pp"
+		      fi
+		      tp_index=`expr $tp_index + 1`
+		    done
+
+		    added_device=1
+		  fi
+		else
+		  # bump eq ord so next lib or historian eq ord is correct
+		  ii=0
+		  while [ $ii -lt $mc_rec_count ]; do
+		  	mc_eq_ordinal=`expr $eq_ordinal + 1`
+			ii=`expr $ii + 1`
+		  done
+		fi
+
+		# increment mcf eq ord
+		next_eq_ordinal
+		set_eq_ordinal $eq_ordinal
+	done
+
+
+	# Configure mcf standalone tape drives.
+	find_tp "$tape_drives"
+
+	logit "auto_cfg <$tpcfg_tape_drives> <$tpcfg_mc_inst_tps>"
+	logit "auto_cfg <$tpcfg_vendor> <$tpcfg_product>"
+
+	tmp_tpcfg_vendor=
+	tmp_tpcfg_product=
+
+	index=1
+	for tp in $tpcfg_tape_drives; do
+		found=0
+		for mc_tp in $tpcfg_mc_inst_tps; do
+			if [ "$tp" = "$mc_tp" ]; then
+				found=1
+			fi
+		done
+
+		if [ $found -eq 0 ]; then
+			tpcfg_standalone=`trim "$tpcfg_standalone $tp"`
+
+			vendor=`echo $tpcfg_vendor | cut -f" " -f$index`
+			tmp_tpcfg_vendor=`trim "$tmp_tpcfg_vendor $vendor"`
+
+			product=`echo $tpcfg_product | cut -f" " -f$index`
+			tmp_tpcfg_product=`trim "$tmp_tpcfg_product $product"`
+
+			logit "auto_cfg standalone <$tp> <$vendor> <$product>"
+		fi
+
+		index=`expr $index + 1`
+	done
+	tpcfg_vendor="$tmp_tpcfg_vendor"
+	tpcfg_product="$tmp_tpcfg_product"
+
+
+	# Standalone Tape
+	if [ -n "$tpcfg_standalone" ]; then
+
+		# remove already configure mcf tape drives.
+		logical_list=""
+		vendor_list=""
+		product_list=""
+		index=1
+		for tp in $tpcfg_standalone; do
+			out=`cat $MCFLOC | grep "$tp"`
+			out=${out###*} # remove comment
+			if [ -n "$out" ]; then
+		  		logit "$tp already configured in $MCFLOC." 
+			else
+				logical_list=`trim "$logical_list $tp"`
+
+				vendor=`echo $tpcfg_vendor | 
+					cut -f" " -f$index`
+				vendor_list=`trim "$vendor_list $vendor"`
+
+				product=`echo $tpcfg_product | 
+					cut -f" " -f$index`
+				product_list=`trim "$product_list $product"`
+			fi
+
+			index=`expr $index + 1`
+		done
+		tpcfg_standalone="$logical_list"
+		tpcfg_vendor="$vendor_list"
+		tpcfg_product="$product_list"
+	fi
+
+	if [ -n "$tpcfg_standalone" ]; then
+		echo
+		echo
+		echo "Configure standalone devices."
+		echo
+	fi
+
+	logit "auto_cfg tpcfg_standalone=<$tpcfg_standalone>"
+	index=1
+	for tp in $tpcfg_standalone; do
+		echo "Configure: $tp"
+		get_eq_ordinal "tape drive"
+		set_eq_ordinal $eq_ordinal
+		vendor=`echo "$tpcfg_vendor" | cut -d" " -f$index`
+		logit "vendor=<$vendor> tpcfg_vendor=<$tpcfg_vendor>"
+		product=`echo "$tpcfg_product" | cut -d" " -f$index`
+		logit "product=<$product> tpcfg_product=<$tpcfg_product>"
+
+		msg="standalone tape drive"
+		devtype="tp"
+		out=`echo $tp | grep "samst"`
+		if [ -n "$out" ]; then
+			msg="standalone magneto optical drive"
+			devtype="mo"
+		fi
+
+		get_family_set "$product" "$msg"
+
+		printf "%-19s %3d    %s   %-8s on\n" \
+			$tp $eq_ordinal $devtype $family_set > $TMPFILE
+
+		cat $TMPFILE
+		query_user "Commit above to $MCFLOC"
+		if [ $? -eq 0 ]; then
+			echo >> $MCFLOC
+			doc_vendor=`plain_text "$vendor"`
+			doc_product=`plain_text "$product"`
+			echo "# $doc_vendor $doc_product" >> $MCFLOC
+			cat $TMPFILE >> $MCFLOC
+
+		   	logit "auto_cfg st warn <$found_vendor>"\
+				"<$found_product>"
+			# is device sam-fs configured?
+			inqconf_lookup "$vendor" "$product"
+			mc_eq_ordinal=`expr $eq_ordinal + 1`
+
+			# is tape device configured?
+			out=`echo "$tp" | grep samst`
+			if [ -z "$out" ]; then
+				stconf_lookup "$vendor" "$product"
+			fi
+
+			# mark at least one device written to mcf. 
+			added_device=1
+		fi
+
+		# increment mcf eq ord.
+		next_eq_ordinal
+		set_eq_ordinal $eq_ordinal
+
+		# inc standalone tp rec index.
+		index=`expr $index + 1`
+	done
+
+
+	# Add media historian and show vendor+product warnings.
+	if [ $added_device -eq 1 ]; then
+		# add mcf historian.
+		add_historian
+
+		# show inquiry.conf vendor+product warnings.
+		inqconf_show_warnings
+
+		# show st.conf vendor+product warnings.
+		stconf_show_warnings
+	fi
+}
+
+
+#----- add_historian - add mcf historian entry.
+#      Given a eq_ordinal, write a mcf historian entry.
+function add_historian {
+
+	# look for mcf historian already configured.
+	out=`cat $MCFLOC | grep historian`
+	out=${out###*}
+	if [ -n "$out" ]; then
+		# don't say anything because its ready
+		return
+	fi
+
+	# display activity message.
+	echo
+	echo
+	echo "Configure media historian."
+
+	# get mcf historian eq ordinal.
+	get_eq_ordinal "historian"
+	get_historian
+	hist="$userInput"
+
+	# confirm mcf addition.
+	printf "%-19s %3d    hy   -        -    %s\n" \
+		"historian" $eq_ordinal $hist > $TMPFILE
+	cat $TMPFILE
+	query_user "Commit above to $MCFLOC"
+	if [ $? -eq 0 ]; then
+		echo >> $MCFLOC
+		cat $TMPFILE >> $MCFLOC
+	fi
+
+	# increment mcf eq ord
+	next_eq_ordinal
+	set_eq_ordinal $eq_ordinal
+}

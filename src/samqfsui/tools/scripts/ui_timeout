@@ -1,0 +1,104 @@
+#!/bin/sh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+#  ident        $Id: ui_timeout,v 1.8 2008/03/17 14:44:00 am143972 Exp $
+#
+#  This script allows the user to set the session timeout value.
+#
+
+ECHO=/usr/bin/echo
+BIN_DIR=/usr/sbin
+SMREG=${BIN_DIR}/smreg
+WCADMIN=${BIN_DIR}/wcadmin
+SMCWEBSERVER=${BIN_DIR}/smcwebserver
+TIMEOUT=
+REPLY=
+IS_START=yes
+
+show_syntax()
+{
+    $ECHO "Syntax: ui_timeout <timeout_value>"
+    $ECHO "e.g. ui_timeout 30"
+    $ECHO "     (Set session timeout to 30 minutes)"
+}
+
+set_timeout_value()
+{
+    $ECHO "Setting session timeout value to ${TIMEOUT} minutes..."
+    LH_VERSION_STRING=`${SMCWEBSERVER} -V`
+    LH_VERSION=`/usr/bin/echo ${LH_VERSION_STRING} | cut -d" " -f2 | cut -d"." -f1`
+
+    if [ ${LH_VERSION} -gt 2 ]; then
+        ${WCADMIN} add -p -a console session.timeout.value=${TIMEOUT}
+    else
+        ${SMREG} add -p -c session.timeout.value=${TIMEOUT}
+    fi
+
+    if [ "${IS_START}" = "yes" ]; then
+        $SMCWEBSERVER start
+    fi
+}
+
+check_webserver()
+{
+    # check if webserver is running
+    # if yes, the script will first prompt the user because the webserver
+    # needs to be stopped
+
+    is_running=`${SMCWEBSERVER} status -p | cut -d"=" -f2`
+    if [ ${is_running} = "yes" ]; then
+        $ECHO "The Web Server is currently running."
+        P="Are you sure you want to stop the Web Server in order to"
+        P="${P} config the session timeout value?"
+        REPLY=`/bin/ckyorn -Q -d "no" -p "${P}"`
+
+        if [ "${REPLY}" = "y" -o "${REPLY}" = "yes" -o \
+             "${REPLY}" = "Y" -o "${REPLY}" = "YES" ]; then
+            ${SMCWEBSERVER} stop
+            set_timeout_value
+        else
+            echo "Setup exiting - no changes have been made to your system."
+        fi
+    else
+        IS_START=0
+        set_timeout_value
+    fi
+
+}
+
+# Check the syntax and perform the appropriate task
+case "$#" in
+    1 ) TIMEOUT=$1
+	check_webserver
+	exit 1
+        ;;
+    * ) $ECHO "Syntax Error"
+        show_syntax
+	exit 0
+        ;;
+esac

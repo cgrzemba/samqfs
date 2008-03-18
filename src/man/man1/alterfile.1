@@ -1,0 +1,60 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH alterfile 1 "18 Jan 1996"
+.SH NAME
+alterfile \- Alters file content
+.SH SYNOPSIS
+\fBalterfile\fR
+\%[\fB\-o\ \fIoffset\fR]
+\%[\fB\-v\ \fIv_value\fR]
+\%[\fB\-x\ \fIx_value\fR]
+\fIfile\fB \&.\|\&.\|\&.\fR
+.SH AVAILABILITY
+\fBSUNWsamtp\fR
+.SH DESCRIPTION
+The \fBalterfile\fR command changes one byte of a file.
+More than one \fIfile\fR can be specified as input.
+.SH OPTIONS
+This command accepts the following arguments:
+.TP 10
+\fB\-o\ \fIoffset\fR
+Alters the byte at this offset in the file.
+If not specified, the offset is a random number within the file.
+.TP
+\fB\-v\ \fIv_value\fR
+Changes the byte to \fIv_value\fR.
+If not specified, the byte is set to \fB0\fR.
+.TP
+\fB\-x\ \fIx_value\fR
+Changes the byte by exclusive \%OR-ing the byte with \fIx_value\fR.
+.TP
+\fIfile\fB \&.\|\&.\|\&.\fR
+Names one or more files to be changed.
+

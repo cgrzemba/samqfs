@@ -1,0 +1,251 @@
+." $Revision: 1.6 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH SUNW.qfs 5 "4 Aug 2004"
+.SH NAME
+SUNW.qfs \- Resource type implementation for the Sun StorEdge QFS
+shared file system in a Sun Cluster environment
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+The \fBSUNW.qfs\fR resource type implementation supports the
+Sun StorEdge QFS shared file system installed in a Sun Cluster
+environment.
+It defines a failover resource for the shared file system's
+metadata server (MDS).
+.PP
+The Sun StorEdge QFS shared file system must be
+configured to use Sun Cluster
+\fBdid\fR devices in the \fBmcf\fR(4) file.
+Additionally, the Sun Cluster \%node-private hostnames (see \fBscconf\fR(1M))
+must be used in the shared hosts file (see \fBhosts.fs\fR(4))
+for the host IP addresses.
+.SS Standard Properties
+See \fBr_properties\fR(5) for a complete description of the
+following resource properties:
+.PP
+.nf
+\fBValidate_timeout\fR
+Minimum: 60
+Default: 180
+.PP
+\fBBoot_timeout\fR
+Minimum: 30
+Default: 300
+.PP
+\fBPrenet_start_timeout\fR
+Minimum: 60
+Default: 300
+.PP
+\fBFini_timeout\fR
+Minimum: 60
+Default: 120
+.PP
+\fBUpdate_timeout\fR
+Minimum: 60
+Default: 120
+.PP
+\fBRetry_Count\fR
+Maximum: 10
+Default: 2
+Tunable: Anytime
+.PP
+\fBRetry_Interval\fR
+Maximum: 3600
+Default: 300
+Tunable: Anytime
+.PP
+\fBThorough_probe_interval\fR
+Maximum: 3600
+Default: 60
+Tunable: Anytime
+.PP
+\fBFailOver_Mode\fR
+Default: SOFT
+Tunable: Anytime
+.PP
+\fBThorough_Probe_Interval\fR
+Maximum: 3600
+Default: 60
+Tunable: Anytime
+.fi
+.SS Extension Properties
+.PP
+\fBQFSFileSystem\fR
+.nf
+Type: string array
+Default: none
+Tunable: Anytime
+.fi
+.br
+This property lists the mount points of the file systems under
+the control of the resource type.
+The mount points must appear in the \fB/etc/vfstab\fR file.
+The associated file systems must be \fBsamfs\fR file systems.
+.PP
+\fBMonitor_retry_count\fR
+.nf
+Default: 4
+Tunable: Anytime
+.fi
+.br
+This property controls the restarts of the fault monitor.
+This property indicates the
+number of times that the fault monitor is restarted by
+the Process Monitor Facility (PMF) and corresponds to
+the \%\fB-n\fR option passed to the \fBpmfadm\fR(1M) command.
+The number of restarts is counted in a specified time
+window (see the property \fBMonitor_retry_interval\fR).
+Note that this property refers to the restarts of the
+fault monitor itself, not the Sun StorEdge QFS daemons.
+.PP
+\fBMonitor_retry_interval\fR
+.nf
+Default: 2
+Tunable: Anytime
+.fi
+.br
+This property indicates that
+the failures of the fault monitor are counted and
+corresponds to the \%\fB-t\fR option passed to the \fBpmfadm\fR(1M)
+command.
+If the number of times the fault monitor
+fails exceeds the extension property
+\fBMonitor_retry_count\fR, the fault monitor is not restarted
+by the process monitor facility.
+.PP
+\fBProbe_timeout\fR
+.nf
+Default: 120
+Minimum: 2
+Tunable: Anytime
+.fi
+.br
+This property indicates the time out interval (in seconds)
+that the probe method is allowed.
+.PP
+\fBChild_mon_level\fR
+.nf
+Default: -1
+Tunable: Anytime
+.fi
+.br
+This property indicates to the PMF monitor the level of child
+process monitoring indicated.  -1 disables child monitoring;
+Values of zero or larger enable PMF -C monitoring of the specified level.
+.PP
+.SH EXAMPLES
+\fBExample 1. A shared hosts file.\fR
+.PP
+This example shows a shared hosts file for file system \fBsqfs1\fR,
+an already existing, unmounted, idle file system, and replacing
+its shared hosts file with one suitable for use with
+the \fBSUNW.qfs\fR agent.
+.PP
+.nf
+.ft CO
+example# samsharefs -R sqfs1
+#
+# Host file for family set 'sqfs1'
+#
+# Version: 4    Generation: 317     Count: 3
+# Server = host 0/ash, length = 83
+#
+ash ash-qfe0 1 - server
+elm elm-qfe0 2 -
+oak oak-qfe0 3 -
+example# cat /etc/opt/SUNWsamfs/hosts.sqfs1
+#
+# Host file for 'sqfs1'
+#
+ash clusternode1-priv 1 - server
+elm clusternode2-priv 2 -
+oak clusternode3-priv 3 -
+example# samsharefs -uR sqfs1
+#
+# Host file for family set 'sqfs1'
+#
+# Version: 4    Generation: 318    Count: 3
+# Server = host 0/ash, length = 110
+#
+ash clusternode1-priv 1 - server
+elm clusternode2-priv 2 -
+oak clusternode3-priv 3 -
+example# samd config
+.ft
+.fi
+.PP
+\fBExample 2. Instantiating a Failover MDS Resource.\fR
+.PP
+This example assumes that the data service is installed.
+This example instantiates a failover Sun StorEdge QFS MDS resource
+named \fBqfs-rs\fR in a resource group named \fBqfs-rg\fR.
+The \fBqfs-rg\fR resource group is assumed to contain at least one
+logical host name resource,
+which identifies the logical host names associated with
+the resource group.
+.PP
+.nf
+.ft CO
+example# scrgadm -a -t SUNW.qfs
+example# scrgadm -a -g qfs-rg -j qfs-rs -t SUNW.qfs \e
+.br
+-x QFSFileSystem=/global/qfs1,/global/qfs2
+.ft
+.fi
+.PP
+The \fBqfs-rg\fR resource group
+must contain a valid Sun StorEdge QFS mount point
+as its \fBQFSFileSystem\fR property.
+.PP
+.SH NOTES
+The mount point provided must be the mount point of a
+Sun StorEdge QFS shared file system.  The file system should be mounted
+on all resource nodes when the resource group is brought online.
+.PP
+Sun StorEdge QFS file systems that are not shared
+must use the HAStoragePlus resource type.
+.SH SEE ALSO
+\fBscha_resource_get\fR(1HA).
+.PP
+\fBpmfadm\fR(1M),
+\fBsamd\fR(1M),
+\fBsamsharefs\fR(1M),
+\fBscconf\fR(1M),
+\fBscrgadm\fR(1M),
+\fBscswitch\fR(1M).
+.PP
+\fBhosts.fs\fR(4),
+\fBmcf\fR(4),
+\fBvfstab\fR(4).
+.PP
+\fBattributes\fR(5),
+\fBr_properties\fR(5).
+.PP
+\fISun Cluster 3.1 Data Services Installation and Configuration Guide\fR

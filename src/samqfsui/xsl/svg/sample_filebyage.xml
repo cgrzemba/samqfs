@@ -1,0 +1,236 @@
+<?xml version='1.0'?> 
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: sample_filebyage.xml,v 1.6 2008/03/17 14:44:04 am143972 Exp $ -->
+
+<MetricReport name="FileAge" isSample="true">
+<filesystem name="samfs1">
+<date val="1160485200">
+<range val="0-30"><numfiles>240</numfiles><numBytes>217381129</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>79</numfiles><numBytes>101968550</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>491</numfiles><numBytes>538773771</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1160571600"><range val="0-30"><numfiles>235</numfiles><numBytes>216324361</numBytes><numOnlineBytes>216324361</numOnlineBytes></range>
+<range val="30-90"><numfiles>79</numfiles><numBytes>101968550</numBytes><numOnlineBytes>101968550</numOnlineBytes></range>
+<range val="90-180"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>491</numfiles><numBytes>538773771</numBytes><numOnlineBytes>538773771</numOnlineBytes></range>
+</date>
+<date val="1160658000">
+<range val="0-30"><numfiles>240</numfiles><numBytes>226556169</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>654</numfiles><numBytes>634439654</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>327</numfiles><numBytes>310508415</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>1023</numfiles><numBytes>1118061203</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1160744400">
+<range val="0-30"><numfiles>18</numfiles><numBytes>88401573</numBytes><numOnlineBytes>88401573</numOnlineBytes></range>
+<range val="30-90"><numfiles>4766</numfiles><numBytes>110025641</numBytes><numOnlineBytes>110025641</numOnlineBytes></range>
+<range val="90-180"><numfiles>19351</numfiles><numBytes>1007977451</numBytes><numOnlineBytes>1007977451</numOnlineBytes></range>
+<range val="180-365"><numfiles>183</numfiles><numBytes>39765537</numBytes><numOnlineBytes>39765537</numOnlineBytes></range>
+<range val=">365"><numfiles>38986</numfiles><numBytes>854335379</numBytes><numOnlineBytes>854335379</numOnlineBytes></range>
+</date>
+<date val="1160830800">
+<range val="0-30"><numfiles>235</numfiles><numBytes>224712969</numBytes><numOnlineBytes>224712969</numOnlineBytes></range>
+<range val="30-90"><numfiles>654</numfiles><numBytes>634439654</numBytes><numOnlineBytes>634439654</numOnlineBytes></range>
+<range val="90-180"><numfiles>327</numfiles><numBytes>310508415</numBytes><numOnlineBytes>310508415</numOnlineBytes></range>
+<range val="180-365"><numfiles>0</numfiles><numBytes>0</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>1023</numfiles><numBytes>1118061203</numBytes><numOnlineBytes>1118061203</numOnlineBytes></range>
+</date>
+<date val="1160917200">
+<range val="0-30"><numfiles>240</numfiles><numBytes>260897033</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>1090</numfiles><numBytes>1052885505</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>327</numfiles><numBytes>310508415</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>593</numfiles><numBytes>624413609</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>1438</numfiles><numBytes>1556568196</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161003600">
+<range val="0-30"><numfiles>235</numfiles><numBytes>258267401</numBytes><numOnlineBytes>258267401</numOnlineBytes></range>
+<range val="30-90"><numfiles>1090</numfiles><numBytes>1052885505</numBytes><numOnlineBytes>1052885505</numOnlineBytes></range>
+<range val="90-180"><numfiles>327</numfiles><numBytes>310508415</numBytes><numOnlineBytes>310508415</numOnlineBytes></range>
+<range val="180-365"><numfiles>593</numfiles><numBytes>624413609</numBytes><numOnlineBytes>624413609</numOnlineBytes></range>
+<range val=">365"><numfiles>1438</numfiles><numBytes>1556568196</numBytes><numOnlineBytes>1556568196</numOnlineBytes></range>
+</date>
+<date val="1161090000">
+<range val="0-30"><numfiles>240</numfiles><numBytes>261683465</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>1754</numfiles><numBytes>1697938470</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>747</numfiles><numBytes>721866714</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>679</numfiles><numBytes>700213854</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>1774</numfiles><numBytes>1919246082</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161176400">
+<range val="0-30"><numfiles>235</numfiles><numBytes>258267401</numBytes><numOnlineBytes>258267401</numOnlineBytes></range>
+<range val="30-90"><numfiles>1754</numfiles><numBytes>1697938470</numBytes><numOnlineBytes>1697938470</numOnlineBytes></range>
+<range val="90-180"><numfiles>747</numfiles><numBytes>721866714</numBytes><numOnlineBytes>721866714</numOnlineBytes></range>
+<range val="180-365"><numfiles>679</numfiles><numBytes>700213854</numBytes><numOnlineBytes>700213854</numOnlineBytes></range>
+<range val=">365"><numfiles>1774</numfiles><numBytes>1919246082</numBytes><numOnlineBytes>1919246082</numOnlineBytes></range>
+</date>
+<date val="1161262800">
+<range val="0-30"><numfiles>239</numfiles><numBytes>220530953</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>2604</numfiles><numBytes>2448672002</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>1168</numfiles><numBytes>1194711040</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>1931</numfiles><numBytes>2094179081</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161349200">
+<range val="0-30"><numfiles>235</numfiles><numBytes>216328457</numBytes><numOnlineBytes>216328457</numOnlineBytes></range>
+<range val="30-90"><numfiles>2604</numfiles><numBytes>2448672002</numBytes><numOnlineBytes>2448672002</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>821678376</numOnlineBytes></range>
+<range val="180-365"><numfiles>1168</numfiles><numBytes>1194711040</numBytes><numOnlineBytes>1194711040</numOnlineBytes></range>
+<range val=">365"><numfiles>1930</numfiles><numBytes>2093712898</numBytes><numOnlineBytes>2093712898</numOnlineBytes></range>
+</date>
+<date val="1161435600">
+<range val="0-30"><numfiles>240</numfiles><numBytes>271382793</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>3172</numfiles><numBytes>3082238462</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>1560</numfiles><numBytes>1593200543</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>2346</numfiles><numBytes>2551896335</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161522000">
+<range val="0-30"><numfiles>235</numfiles><numBytes>266656009</numBytes><numOnlineBytes>266656009</numOnlineBytes></range>
+<range val="30-90"><numfiles>3172</numfiles><numBytes>3082238462</numBytes><numOnlineBytes>3082238462</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>821678376</numOnlineBytes></range>
+<range val="180-365"><numfiles>1560</numfiles><numBytes>1593200543</numBytes><numOnlineBytes>1593200543</numOnlineBytes></range>
+<range val=">365"><numfiles>2346</numfiles><numBytes>2551896335</numBytes><numOnlineBytes>2551896335</numOnlineBytes></range>
+</date>
+<date val="1161608400">
+<range val="0-30"><numfiles>238</numfiles><numBytes>221833481</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>3893</numfiles><numBytes>3784635140</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>1758</numfiles><numBytes>1794754005</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>2938</numfiles><numBytes>3192734349</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161694800">
+<range val="0-30"><numfiles>235</numfiles><numBytes>216469646</numBytes><numOnlineBytes>216469646</numOnlineBytes></range>
+<range val="30-90"><numfiles>3890</numfiles><numBytes>3784477462</numBytes><numOnlineBytes>3784477462</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>821678376</numOnlineBytes></range>
+<range val="180-365"><numfiles>1758</numfiles><numBytes>1794754005</numBytes><numOnlineBytes>1794754005</numOnlineBytes></range>
+<range val=">365"><numfiles>2936</numfiles><numBytes>3192730253</numBytes><numOnlineBytes>3192730253</numOnlineBytes></range>
+</date>
+<date val="1161781200">
+<range val="0-30"><numfiles>348</numfiles><numBytes>332221564</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>5014</numfiles><numBytes>4853772771</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>1859</numfiles><numBytes>1905985537</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>3097</numfiles><numBytes>3403073161</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1161867600">
+<range val="0-30"><numfiles>344</numfiles><numBytes>351087740</numBytes><numOnlineBytes>351087740</numOnlineBytes></range>
+<range val="30-90"><numfiles>5014</numfiles><numBytes>4853772771</numBytes><numOnlineBytes>4853772771</numOnlineBytes></range>
+<range val="90-180"><numfiles>856</numfiles><numBytes>821678376</numBytes><numOnlineBytes>821678376</numOnlineBytes></range>
+<range val="180-365"><numfiles>1859</numfiles><numBytes>1905985537</numBytes><numOnlineBytes>1905985537</numOnlineBytes></range>
+<range val=">365"><numfiles>3096</numfiles><numBytes>3369518729</numBytes><numOnlineBytes>3369518729</numOnlineBytes></range>
+</date>
+<date val="1161954000">
+<range val="0-30"><numfiles>349</numfiles><numBytes>374955132</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>5668</numfiles><numBytes>5496890225</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>1056</numfiles><numBytes>959110659</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>1952</numfiles><numBytes>1992229580</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>3594</numfiles><numBytes>3914898942</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162040400">
+<range val="0-30"><numfiles>453</numfiles><numBytes>435560232</numBytes><numOnlineBytes>435560232</numOnlineBytes></range>
+<range val="30-90"><numfiles>5995</numfiles><numBytes>5817696456</numBytes><numOnlineBytes>5817696456</numOnlineBytes></range>
+<range val="90-180"><numfiles>1276</numfiles><numBytes>1243386761</numBytes><numOnlineBytes>1243386761</numOnlineBytes></range>
+<range val="180-365"><numfiles>2057</numfiles><numBytes>2096582748</numBytes><numOnlineBytes>2096582748</numOnlineBytes></range>
+<range val=">365"><numfiles>4141</numfiles><numBytes>4546097629</numBytes><numOnlineBytes>4546097629</numOnlineBytes></range>
+</date>
+<date val="1162126800">
+<range val="0-30"><numfiles>1548</numfiles><numBytes>1511982898</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>5995</numfiles><numBytes>5817696456</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>1276</numfiles><numBytes>1243386761</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>2057</numfiles><numBytes>2096582748</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>4473</numfiles><numBytes>4865256106</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162213200">
+<range val="0-30"><numfiles>1992</numfiles><numBytes>1961398179</numBytes><numOnlineBytes>1961398179</numOnlineBytes></range>
+<range val="30-90"><numfiles>6104</numfiles><numBytes>5927334772</numBytes><numOnlineBytes>5927334772</numOnlineBytes></range>
+<range val="90-180"><numfiles>1381</numfiles><numBytes>1344689741</numBytes><numOnlineBytes>1344689741</numOnlineBytes></range>
+<range val="180-365"><numfiles>2368</numfiles><numBytes>2401732224</numBytes><numOnlineBytes>2401732224</numOnlineBytes></range>
+<range val=">365"><numfiles>4898</numfiles><numBytes>5336086557</numBytes><numOnlineBytes>5336086557</numOnlineBytes></range>
+</date>
+<date val="1162299600">
+<range val="0-30"><numfiles>3212</numfiles><numBytes>3139642477</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>6104</numfiles><numBytes>5927334772</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>1398</numfiles><numBytes>1345302332</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>2368</numfiles><numBytes>2401732224</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>5249</numfiles><numBytes>5691243623</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162386000">
+<range val="0-30"><numfiles>3639</numfiles><numBytes>3547268452</numBytes><numOnlineBytes>3547268452</numOnlineBytes></range>
+<range val="30-90"><numfiles>6104</numfiles><numBytes>5927334772</numBytes><numOnlineBytes>5927334772</numOnlineBytes></range>
+<range val="90-180"><numfiles>1398</numfiles><numBytes>1345302332</numBytes><numOnlineBytes>1345302332</numOnlineBytes></range>
+<range val="180-365"><numfiles>2778</numfiles><numBytes>2799355373</numBytes><numOnlineBytes>2799355373</numOnlineBytes></range>
+<range val=">365"><numfiles>5769</numfiles><numBytes>6250855275</numBytes><numOnlineBytes>6250855275</numOnlineBytes></range>
+</date>
+<date val="1162472400">
+<range val="0-30"><numfiles>3865</numfiles><numBytes>3774659342</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>6104</numfiles><numBytes>5927334772</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>1406</numfiles><numBytes>1351757312</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>2974</numfiles><numBytes>3002428539</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>6642</numfiles><numBytes>7183763347</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162558800">
+<range val="0-30"><numfiles>3951</numfiles><numBytes>3872037785</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>7521</numfiles><numBytes>7282033275</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>1616</numfiles><numBytes>1553792635</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>3168</numfiles><numBytes>3199410601</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>7438</numfiles><numBytes>8021993204</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162645200">
+<range val="0-30"><numfiles>4195</numfiles><numBytes>4083806727</numBytes><numOnlineBytes>4083806727</numOnlineBytes></range>
+<range val="30-90"><numfiles>8938</numfiles><numBytes>8637709699</numBytes><numOnlineBytes>8637709699</numOnlineBytes></range>
+<range val="90-180"><numfiles>2052</numfiles><numBytes>1971314457</numBytes><numOnlineBytes>1971314457</numOnlineBytes></range>
+<range val="180-365"><numfiles>3464</numfiles><numBytes>3493841055</numBytes><numOnlineBytes>3493841055</numOnlineBytes></range>
+<range val=">365"><numfiles>7618</numfiles><numBytes>8217967908</numBytes><numOnlineBytes>8217967908</numOnlineBytes></range>
+</date>
+<date val="1162731600">
+<range val="0-30"><numfiles>5189</numfiles><numBytes>5079899017</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>10246</numfiles><numBytes>9902060963</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>2470</numfiles><numBytes>2312988632</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>3778</numfiles><numBytes>3797703729</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>7618</numfiles><numBytes>8217967908</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+<date val="1162818000">
+<range val="0-30"><numfiles>5195</numfiles><numBytes>5068646874</numBytes><numOnlineBytes>5068646874</numOnlineBytes></range>
+<range val="30-90"><numfiles>10246</numfiles><numBytes>9902060963</numBytes><numOnlineBytes>9902060963</numOnlineBytes></range>
+<range val="90-180"><numfiles>2480</numfiles><numBytes>2387049464</numBytes><numOnlineBytes>2387049464</numOnlineBytes></range>
+<range val="180-365"><numfiles>3778</numfiles><numBytes>3797703729</numBytes><numOnlineBytes>3797703729</numOnlineBytes></range>
+<range val=">365"><numfiles>7618</numfiles><numBytes>8217967908</numBytes><numOnlineBytes>8217967908</numOnlineBytes></range>
+</date>
+<date val="1162904400">
+<range val="0-30"><numfiles>5522</numfiles><numBytes>5396417863</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="30-90"><numfiles>10521</numfiles><numBytes>10216115017</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="90-180"><numfiles>2480</numfiles><numBytes>2387049464</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val="180-365"><numfiles>3778</numfiles><numBytes>3797703729</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+<range val=">365"><numfiles>7618</numfiles><numBytes>8217967908</numBytes><numOnlineBytes>0</numOnlineBytes></range>
+</date>
+</filesystem>
+</MetricReport>

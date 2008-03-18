@@ -1,0 +1,63 @@
+#!/usr/bin/sh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# De-activate SAM-FS Preventive Maintenance.
+#
+
+TMP=/tmp/$$
+
+echo "De-activating sar (system activity reporter) crontab jobs ... crontab -e sys"
+echo "#!/bin/sh" > $TMP
+echo "/etc/opt/SUNWsamfs/sampm/edit -d sar -f \"\$1\"" >> $TMP
+chmod a+rwx $TMP
+EDITOR=$TMP VISUAL=$TMP crontab -e sys
+rm -f $TMP
+
+echo "De-activating SAM-FS Preventive Maintenance crontab jobs ... crontab -e"
+echo "#!/bin/sh" > $TMP
+echo "/etc/opt/SUNWsamfs/sampm/edit -d pm -f \"\$1\"" >> $TMP
+chmod a+rwx $TMP
+EDITOR=$TMP VISUAL=$TMP crontab -e
+rm -f $TMP
+
+echo "De-activating system activity data gathering ... /etc/init.d/perf"
+/etc/opt/SUNWsamfs/sampm/edit -d perf
+
+echo "De-activating SAM-FS logging ... /etc/opt/SUNWsamfs/defaults.conf"
+/etc/opt/SUNWsamfs/sampm/edit -d defs
+/opt/SUNWsamfs/sbin/samset devlog all default > /dev/null 2>&1
+/opt/SUNWsamfs/sbin/samset debug all default > /dev/null 2>&1
+
+#
+# Remove the file flag that shows that sampm was activated
+#
+rm -f /etc/opt/SUNWsamfs/sampm/.activate
+
+
+exit 0

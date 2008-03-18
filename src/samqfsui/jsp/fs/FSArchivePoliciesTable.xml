@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FSArchivePoliciesTable.xml,v 1.15 2008/03/17 14:40:33 am143972 Exp $ -->
+
+<table>
+<actions>
+    <cc name="SamQFSWizardNewPolicyButton"
+        tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
+	<attribute name="dynamic" value="true" />
+    </cc>
+    
+    <cc name="AddCriteriaButton"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+	<attribute name="dynamic" value="true" />
+	<attribute name="disabled" value="true" />
+        <attribute name="onClick" value="
+            var clientParams = getClientParams();
+            var win =  launchPopup('/fs/FSAddPolicies', 
+                                   'fsaddpolicies',
+                                   getServerKey(),
+                                   'height=500,width=870',
+                                   '&amp;' + clientParams);
+            win.focus();
+            return false;"/>
+    </cc>
+
+    <cc name="RemoveButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+	<attribute name="dynamic" value="true" />
+	<attribute name="disabled" value="true" />
+	<attribute name="onClick"
+            value="if (!showConfirmMsg(1)) return false;" />
+    </cc>
+
+    <cc name="ReorderButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+	<attribute name="dynamic" value="true" />
+	<attribute name="disabled" value="true" />
+        <attribute name="onClick" value="
+            var urc_hf = 'FSArchivePolicies.FSArchivePoliciesView.unreorderableCriteria';
+            var unreorderable = this.form.elements[urc_hf].value;
+            var params = '&amp;' + getClientParams() + 
+                         '&amp;size=' + getTableSize() +
+                         '&amp;unreorderable=' + unreorderable;
+            var win = launchPopup('/fs/FSReorderPolicies',
+                                  'fsreorder',
+                                  getServerKey(),
+                                  null,
+                                  params);
+            win.focus();
+            return false;"/>
+    </cc>
+</actions>
+
+<column name="PositionColumn" sortname="Position"
+    extrahtml="nowrap='nowrap' align='center' valign='center'">
+    <cc name="Position"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    <cc name="GlobalImage"
+        tagclass="com.sun.web.ui.taglib.html.CCImageTag" />
+    <cc name="DefaultImage"
+        tagclass="com.sun.web.ui.taglib.html.CCImageTag" />
+</column>
+
+<column name="PolicyNameColumn" sortname="PolicyName"
+    extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="PolicyHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="PolicyName"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+    <cc name="PolicyNameHiddenField"
+	tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    <cc name="CriteriaNumberHiddenField"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    <cc name="IsGlobalCriteriaHiddenField"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+</column>
+
+<column name="StartingDirectoryColumn" sortname="StartingDirectory"
+    extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="StartingDirectory"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="NameColumn" extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="Name"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="OwnerColumn" extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="Owner"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="GroupColumn" extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="Group"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="MinSizeColumn" extrahtml="nowrap='nowrap' align='right' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="MinSize"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="MaxSizeColumn" extrahtml="nowrap='nowrap' align='right' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="MaxSize"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="AccessAgeColumn" extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="AccessAge"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+    </cc>
+</column>
+
+<column name="ArchiveAgeColumn" extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true" />
+        <cc name="ArchiveAge"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+            <attribute name="escape" value="false" />
+        </cc>
+    </cc>
+</column>
+
+<column name="MediaTypeColumn" extrahtml="nowrap='nowrap' valign='center'">
+    <cc name="CriteriaHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <cc name="MediaType"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+            <attribute name="escape" value="false"/>
+        </cc>
+    </cc>
+</column>
+</table>

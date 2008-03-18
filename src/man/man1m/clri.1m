@@ -1,0 +1,117 @@
+'\" t
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH clri 1M "28 Aug 1998"
+.SH NAME
+clri \- clear inode
+.SH SYNOPSIS
+.B clri
+[
+.BI \-F " samfs"
+]
+[
+.B \-V
+]
+.I mount-point i-number
+.br
+.SH AVAILABILITY
+\fBSUNWsamtp\fR
+.SH DESCRIPTION
+.B clri 
+writes zeroes on the inode numbered
+.I i-number
+on the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file
+system currently mounted on
+.IR mount-point .
+.I i-number 
+can be expressed as either a decimal integer, an octal integer 
+prefixed with a zero, or a hexidecimal integer prefixed with \fB0x\fR.
+.LP
+.B clri
+must be run as root.  Once you've cleared all the inodes you wish
+for a filesystem, you'll need to unmount and remount the filesystem to
+flush the inode cache to disk.  Finally, if there are any directory
+entries which point at the newly-cleared inodes, those directory entries
+will be cleared automatically by the filesytem the first time they
+are referenced.
+.SH EXAMPLE
+.nf
+Here's an example of using clri:
+
+     Mount the filesystem
+
+bilbo# mount /sam1                            
+
+     Find out the inode number which must be cleared.  Here, let's say
+     we would like to clear "file0."
+
+bilbo# cd /sam1/test
+bilbo# sls -i
+   169 file0     166 file3     339 file5      60 file7     160 file9
+   342 file2      63 file4     163 file6     336 file8
+
+      Ok, now we have its inode: 169.  Let's clear it!
+
+bilbo# /opt/SUNWsamfs/tools/clri /sam1 169
+
+      But, look!  It's still there!  Sure looks weird, though...
+
+bilbo# sls -l file0
+----------   0 root     root             0 Dec 31  1969 file0
+
+      Even "sync" doesn't help...
+
+bilbo# sync
+bilbo# sls -l file0
+----------   0 root     root             0 Dec 31  1969 file0
+
+      ...until we unmount and remount the filesystem.
+
+bilbo# cd /
+bilbo# umount /sam1
+bilbo# mount /sam1
+bilbo# cd /sam1/test
+
+      This is actually what clears the directory entry:
+
+bilbo# ls -l file0
+file0: No such file or directory
+
+      And, now it's gone!
+
+bilbo# ls -l
+bilbo 64
+-rw-rw----   1 root     other        218 Aug 19 16:41 file2
+-rw-rw----   1 root     other        206 Aug 19 16:41 file3
+-rw-rw----   1 root     other        257 Aug 19 16:41 file4
+-rw-rw----   1 root     other        179 Aug 19 16:41 file5
+-rw-rw----   1 root     other        230 Aug 19 16:41 file6
+-rw-rw----   1 root     other        192 Aug 19 16:41 file7
+-rw-rw----   1 root     other        212 Aug 19 16:41 file8
+-rw-rw----   1 root     other        240 Aug 19 16:41 file9

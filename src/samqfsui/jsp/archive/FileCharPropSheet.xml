@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: FileCharPropSheet.xml,v 1.6 2008/03/17 14:40:31 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="medTypeParam" defaultValue="">        
+        <property span="true" required="false">
+            <label name="minSize" defaultValue="FileChar.minSize"/>
+		<cc name="minSizeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+			
+        <property span="true" required="false">
+            <label name="maxSize" defaultValue="FileChar.maxSize"/>
+		<cc name="maxSizeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+			
+        <property span="true" required="false">
+            <label name="namePattern" defaultValue="FileChar.namePattern"/>
+		<cc name="namePatternText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+	
+        <property span="true" required="false">
+            <label name="owner" defaultValue="FileChar.owner"/>
+		<cc name="ownerText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+
+        <property span="true" required="false">
+            <label name="group" defaultValue="FileChar.group"/>
+		<cc name="groupText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+        
+		<property span="true" required="false">
+            <label name="stageAttribute" defaultValue="FileChar.stageAttribute"/>
+		<cc name="stageAttributeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+		
+		<property span="true" required="false">
+            <label name="releaseAttribute" defaultValue="FileChar.releaseAttribute"/>
+		<cc name="releaseAttributeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+		<attribute name="defaultValue" value=""/>
+		</cc> 
+		</property>
+	</section>	
+
+</propertysheet>

@@ -1,0 +1,144 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_import 3 "05 Nov 2001"
+.SH NAME
+sam_import \- Imports media to the removable media robotic device
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_import(ushort_t " "eq_ord" ,
+.BI "char *" "vsn" ,
+.BI "char *" "media_nm" ,
+.BI "int " "audit_eod" ,
+.BI "int " "wait_response" );
+.SH DESCRIPTION
+.PP
+.B sam_import(\|)
+requests the robotic media changer to import the selected media into the
+robot.  The media is placed in
+the first available element address of the catalog.
+For GRAU, STK, or IBM libraries, the
+.I vsn
+must be specified.  Physical import of media within the GRAU and STK are
+performed by utilites supplied by the vendor.  Both the
+.I vsn
+and the
+.I media_nm
+need to be specified to import into the Historian.  
+.PP
+The call will return immediately after issuing the command if
+zero is specified for
+.I wait_response
+value.  Other values for
+.I wait_response
+will give undefined results.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_import(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB ER_AUDIT_EOD_NOT_HISTORIAN
+A non-zero
+.I audit_eod
+flag, requesting an audit to end-of-data, cannot be specified for the
+Historian.
+.TP
+.SB ER_DEVICE_NOT_READY
+The specified
+.I eq_ord
+device is not ready.
+.TP
+.SB ER_FIFO_PATH_LENGTH
+The path and filename for the FIFO pipe is too long.
+.TP
+.SB ER_HISTORIAN_MEDIA_ONLY
+.I media_nm
+can only be specified for the Historian.
+.TP
+.SB ER_INVALID_MEDIA_TYPE
+The specified
+.I media_nm
+is not a valid media type.
+.TP
+.SB ER_MEDIA_FOR_HISTORIAN
+The type of media
+.I media_nm
+must be specified for the Historian.
+.TP
+.SB ER_NO_EQUIP_ORDINAL
+.I eq_ord
+is not a defined equipment ordinal in this configuration.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_RESPONSE_FIFO
+Unable to create the response FIFO pipe.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_OPERATOR_NOT_PRIV
+Operator does not have permission to import removable media.
+.TP
+.SB ER_ROBOT_DEVICE_REQUIRED
+Equipment ordinal
+.I eq_ord
+is not defined as a robotic device.
+.TP
+.SB ER_VSN_BARCODE_REQUIRED
+.I vsn
+must be specified for the GRAU, STK, and IBM media changers and the Historian.
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
+.SH SEE ALSO
+.BR export (1M),
+.BR import (1M),
+.BR sam-robotsd (1M).
+.PP
+.BR sam_export (3).
+.PP
+.BR mcf (4).

@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: AdminNotificationPropertySheet.xml,v 1.8 2008/03/17 14:40:29 am143972 Exp $ -->
+
+<propertysheet>
+  <section name="usability" defaultValue="">
+    <!-- select all options -->
+    <!-- deselect all options -->
+    <property span="true">
+        <cc name="selectAll" 
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+                <attribute name="defaultValue" value="common.button.selectAll"/>
+                <attribute name="dynamic" value="true"/>
+                <attribute name="bundleID" value="samBundle"/>
+                <attribute name="onClick"
+                value="return setStateCheckBoxes(true)"/>
+        </cc>
+        <cc name="deselectAll" 
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+                <attribute name="defaultValue"
+                    value="common.button.deselectAll"/>
+                <attribute name="dynamic" value="true" />
+                <attribute name="bundleID" value="samBundle"/>
+                <attribute name="onClick" 
+                    value="return setStateCheckBoxes(false)"/>
+        </cc>
+    </property>
+  </section>  
+  <section name="events" defaultValue="">
+    <property span="true">
+      &lt;table>
+      &lt;tr>
+      &lt;td width='40%' nowrap='nowrap' valign='top'>
+      <cc name="fsAlerts" tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value="emailAlert.label.fs"/>
+        <attribute name="styleLevel" value="1"/>
+      </cc>          
+      &lt;br />          
+      <cc name="check6" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.fsNoSpace"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.fsNoSpace.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.fsNoSpace.title"/>
+        </cc>
+      </cc>
+      &lt;br />           
+      <cc name="check7" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.hwmExceeded"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.hwmExceeded.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.hwmExceeded.title"/>
+        </cc>
+      </cc>
+      &lt;br />
+      <cc name="check5" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.snapshotError"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.snapshotError.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" 
+            value="emailAlert.snapshotError.title"/>
+        </cc>
+      </cc>
+      &lt;br />           
+      <cc name="check10" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.snapshotWarning"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.snapshotWarning.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" 
+            value="emailAlert.snapshotWarning.title"/>
+        </cc>
+      </cc>
+      &lt;/td>     
+      &lt;td width='10%' rowspan='3'>
+      <cc name="Spacer" tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+        <attribute name="width" value="15"/>
+      </cc>
+      &lt;/td>
+      &lt;td nowrap='nowrap' valign='top' rowspan='2'>
+      <cc name="deviceEvents" tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value="emailAlert.label.device"/>
+        <attribute name="styleLevel" value="1"/>
+      </cc>
+      &lt;br />
+      <cc name="check3" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.deviceDown"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.deviceDown.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.deviceDown.title"/>
+        </cc>
+      </cc>
+      &lt;br />
+      <cc name="check2" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.mediaRequired"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.mediaRequired.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.mediaRequired.title"/>
+        </cc>
+      </cc>
+      &lt;br/>
+      <cc name="check8" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.acslsError"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.acslsError.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.acslsError.title"/>
+        </cc>
+      </cc>
+      &lt;br />
+      <cc name="check9" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.acslsWarning"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.acslsWarning.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.acslsWarning.title"/>
+        </cc>
+      </cc>
+      &lt;/td>
+      &lt;/tr>
+      &lt;tr>
+      &lt;td>
+      <cc name="Spacer" tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+        <attribute name="height" value="15" />
+      </cc>
+      &lt;/td>
+      &lt;/tr>
+      &lt;tr>
+      &lt;td width='50%' nowrap='nowrap' valign='top'>       
+      <cc name="archiveEvents" tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value="emailAlert.label.archive"/>
+        <attribute name="styleLevel" value="1"/>
+      </cc>
+      &lt;br />
+      <cc name="check1" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" />
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue"
+          value="emailAlert.archiverInterrupted"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.archiverInterrupted.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" 
+            value="emailAlert.archiverInterrupted.title"/>
+        </cc>
+      </cc>
+      &lt;br />
+      <cc name="check4" tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag"/>
+      <cc name="infoHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="defaultValue" value="emailAlert.recyclerStatus"/>
+        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="launchPopup(
+          '/admin/ShowFileContent',
+          'content',
+          getServerKey(),
+          SIZE_SMALL,
+          '&amp;SAMQFS_SHOW_CONTENT=true' +
+          '&amp;SAMQFS_SHOW_LINE_CONTROL=false' +
+          '&amp;SAMQFS_RESOURCE_KEY_NAME=' + getResourceKey(this));
+          return false;
+        "/>
+        <attribute name="title" value="emailAlert.recyclerStatus.tooltip"/>
+        <cc name="label"
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="defaultValue" value="emailAlert.recyclerStatus.title"/>
+        </cc>
+      </cc>
+      &lt;/td>
+      &lt;/tr>
+      &lt;/table> 
+    </property>
+  </section>
+</propertysheet>

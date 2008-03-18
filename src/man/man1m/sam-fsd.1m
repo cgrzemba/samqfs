@@ -1,0 +1,191 @@
+.\" $Revision: 1.23 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam-fsd 1M "30 Dec 2003"
+.SH NAME
+sam-fsd \- Initializes Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments
+.SH SYNOPSIS
+.B /usr/lib/fs/samfs/sam-fsd 
+[
+.B \-C
+]
+[
+.B \-c
+.IR defaults ]
+[
+.B \-d
+.IR diskvols ]
+[
+.B \-f
+.IR samfs ]
+[
+.B \-m
+.IR mcf ]
+[
+.B \-v
+]
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B sam-fsd
+initializes Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments
+and performs tasks 
+for the file system kernel code. 
+These tasks include sending messages to syslog, and starting the archiver,
+releaser, shared fs, and stager daemons.
+It is started by
+.BR init (1M)
+using an entry in
+.B /etc/inittab
+
+sf:23:respawn:/usr/lib/fs/samfs/sam-fsd
+.LP
+When started,
+.B sam-fsd
+reads the configuration files
+.BR defaults.conf ,
+.BR diskvols.conf ,
+.BR mcf ,
+and
+.B samfs.cmd
+located in the directory
+.BR /etc/opt/SUNWsamfs .
+These files may be changed at any time while
+.B sam-fsd
+is running.  The changes will take place when
+.B sam-fsd
+is restarted, or sent the signal SIGHUP.
+.LP
+The filesystems are configured and necessary daemons are started.
+Configuration parameters are set, and table files are written for use by
+other components of Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environment.
+
+.LP
+If errors occur in any of the configuration files,
+.B sam-fsd
+refuses to run and writes a notification message to
+.BR syslog .
+The problem must be corrected, and the signal SIGHUP sent to
+.BR sam-fsd .
+.B sam-fsd
+then rereads the configuration files.  The
+.B syslog
+message contains the command necessary to signal
+.B sam-fsd .
+ 'kill -HUP
+.IR sam-fsd-pid '
+.SS Trace Files
+.LP
+Several Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS
+daemons write messages to trace files.
+These messages contain information about the state and progress of the
+work performed by the daemons.  The messages are primarily used by Sun
+engineers and support personnel to improve performance and diagnose problems.
+As such, the message content and format are subject to change with bugfixes
+and feature releases.
+
+The daemons writing trace files are:  \%sam-archiverd,
+\%sam-catserver, \%sam-fsd,
+\%sam-rftd, \%sam-recycler, \%sam-sharefsd, and \%sam-stagerd.
+
+To prevent the trace files from growing indefinitely, \%\fBsam-fsd\fR
+monitors the size and age of the trace files and periodically
+executes the script \fB/opt/SUNWsamfs/sbin/trace_rotate\fR.  This
+script moves the trace files to sequentially numbered copies.
+The script is executed when the trace file exceeds a specified
+size, or age.  The size and age are specified in \fBdefaults.conf\fR.
+If \fB/opt/SUNWsamfs/sbin/trace_rotate\fR does not
+exist, \%\fBsam-fsd\fR performs no action.
+.SH OPTIONS
+.LP
+.B sam-fsd
+may be started by direct execution to provide detailed messages about
+problems in configuration files.  In this case, the following options
+are allowed:
+.TP 10
+.B \-c
+.I defaults
+.br
+Sets an alternate \fBdefaults.conf\fR file to check.
+.I defaults
+is the path to the alternate defaults configuration file.
+.TP
+.B \-d
+.I diskvols
+.br
+Sets an alternate \fBdiskvols.conf\fR file to check.
+.I diskvols
+is the path to the alternate diskvols configuration file.
+.TP
+.B \-f
+.I fs_name
+.br
+Sets a single file system.
+.I fs_name 
+is the family set name from the \fBmcf\fR file.
+.TP
+.B \-m
+.I mcf
+.br
+Sets an alternate \fBmcf\fR file to check.
+.I mcf
+is the path to the alternate \fBmcf\fR file.
+.TP
+.B \-v
+Sets verbose mode.
+.TP
+.B \-C
+Configure Sun StorEdge \%SAM-FS and Sun \%SAM-QFS
+if not already configured.  Must
+be the only option.
+.SH FILES
+.TP 20
+.B /etc/opt/SUNWsamfs
+Location of Sun StorEdge \%SAM-FS and Sun StorEdge \%SAM-QFS
+configuration files.
+.TP
+.B mcf
+The configuration file for Sun StorEdge \%SAM-FS and
+Sun \%SAM-QFS environments.
+.TP
+.B samfs.cmd
+Sun StorEdge QFS and Sun StorEdge \%SAM-FS mount commands file.
+.TP
+.B defaults.conf
+Set default values for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS
+environment.
+.SH SEE ALSO
+.BR defaults.conf (4),
+.BR diskvols.conf (4),
+.BR mcf (4),
+.BR samfs.cmd (4).
+.PP
+.BR trace_rotate (1M).
+.RE
+.LP

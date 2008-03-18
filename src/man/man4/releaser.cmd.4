@@ -1,0 +1,296 @@
+.\" $Revision: 1.21 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH releaser.cmd 4 "06 Jan 2003"
+.SH NAME
+releaser.cmd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS releaser command file
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/releaser.cmd\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+Directives for controlling the releaser
+can be read from the
+\fB/etc/opt/SUNWsamfs/releaser.cmd\fR file.
+The directives must appear one per line.
+.PP
+Comment lines are permitted.  Comment lines must begin with a
+pound character (\fB#\fR), and the comment can extend through the
+rest of the line.
+.PP
+Directives that appear prior to any \fBfs=\fR directive
+are applied to all file systems.
+Directives that appear after a \fBfs=\fR directive are applied
+to the specified file system only.
+Directives that are specific to a file system override general
+directives.
+.PP
+The directives on this man page are divided into groups.
+The weight directives for size and age determine the
+release priority of a file.
+The miscellaneous directives control whether a log file is
+written, whether there is a minimum age required for files, and
+other aspects of releasing.
+.SH WEIGHT DIRECTIVES
+The following weights are used to calculate the release priority of
+each file in the file system.  Each file's priority is composed of
+two parts:  size priority and age priority.  The size priority
+plus the age priority equals the file's total release priority.
+.SS Size Priority
+The size priority is determined by the value of
+the \fBweight_size\fR directive.
+This directive has the following format:
+.TP
+\fBweight_size=\fIweight_size_value\fR
+Sets the weight factor for the size of the file
+to \fIweight_size_value\fR.
+Specify a \%floating-point number in the following range:
+.br
+0.0 \(<= \fIweight_size_value\fR \(<= 1.0.
+The default is 1.0.
+.sp
+The \fIweight_size_value\fR is multiplied by the size of
+the file in \%4-kilobyte blocks
+to arrive at the size component of the file's release priority.
+.SS Age Priority
+The age priority can be calculated in one of the following ways:
+.TP 3
+\(bu
+The first method multiplies the value of the \fBweight_age=\fR
+directive by the most
+recent of the following ages:  access age, modify age, and
+residence change age.
+The access age is defined as the current time minus the
+file's last access time.
+The \fBweight_age\fR directive has the following format:
+.RS 3
+.TP
+\fBweight_age=\fIweight_age_value\fR
+Sets the weight factor for the overall age of the file
+to \fIweight_age_value\fR.
+The \fIweight_age_value\fR is
+multiplied by the most recent of the file's access, modify or residence
+change age to arrive at the age component of the file's release priority.  
+Specify a \%floating-point number in the following range:
+.br
+0.0 \(<= \fIweight_age_value\fR \(<= 1.0.
+The default is 1.0.
+.sp
+If you specify a \fBweight_age=\fR directive for a given file system,
+you cannot specify \fBweight_age_access=\fR, \fBweight_age_modify=\fR,
+or \fBweight_age_residence=\fR directives for the same file system.
+.RE
+.TP 3
+\(bu
+The second method allows you to specify separate weights for
+the access, modify, and residence ages.
+The ages are calculated in units of \%60-second minutes.
+.sp
+If you want to specify separate weights for the access, modify, and
+residence ages, use the following directives in
+the \fBreleaser.cmd\fR file:
+.RS 3
+.TP
+\fBweight_age_access=\fIweight_age_access_value\fR
+Sets the weight factor for the access age of the file
+to \fIweight_age_access_value\fR.
+Specify a \%floating-point number in the following range:
+.br
+0.0 \(<= \fIweight_age_access\fR \(<= 1.0.
+The default is 1.0.
+.sp
+The \fIweight_age_access_value\fR is multiplied by the file's access
+age (expressed in minutes).  This product, added to
+the sum of the products of the modify and \%residence-change ages
+multiplied by their respective weights, becomes the age component of the
+file's release priority.
+.sp
+If you specify a \fBweight_age=\fR directive for a given file system,
+you cannot specify a \fBweight_age_access=\fR
+directive for the same file system.
+.TP
+\fBweight_age_modify=\fIweight_age_modify_value\fR
+Sets the weight factor for the modify age of the file
+to \fIweight_age_modify_value\fR.
+Specify a \%floating-point number in the following range:
+.br
+0.0 \(<= \fIweight_age_modify\fR \(<= 1.0.
+The default is 1.0.
+.sp
+The \fIweight_age_modify_value\fR is multiplied by the file's modify
+age (expressed in minutes).  This product, added to
+the sum of the products of the modify and \%residence-change ages
+multiplied by their respective weights, becomes the age component of the
+file's release priority.
+.sp
+If you specify a \fBweight_age=\fR directive for a given file system,
+you cannot specify a \fBweight_age_modify=\fR
+directive for the same file system.
+.TP
+\fBweight_age_residence=\fIweight_age_residence_value\fR
+Sets the weight factor for the \%residence-change
+age of the file to \fIweight_age_residence_value\fR.
+Specify a \%floating-point number in the following range:
+.br
+0.0 \(<= \fIweight_age_residence\fR \(<= 1.0.
+The default is 1.0.
+.sp
+The \fIweight_age_residence_value\fR is multiplied by the
+file's \%residence-change
+age (expressed in minutes).  This product, added to
+the sum of the products of the modify and \%residence-change ages
+multiplied by their respective weights, becomes the age component of the
+file's release priority.
+.sp
+If you specify a \fBweight_age=\fR directive for a given file system,
+you cannot specify a \fBweight_age_residence=\fR
+directive for the same file system.
+.RE
+.SH MISCELLANEOUS DIRECTIVES
+The following miscellaneous directives can be specified in
+the \fBreleaser.cmd\fR file:
+.TP
+.BI "fs = " file_system_family_set_name
+Specifies to the releaser that
+the subsequent directives apply to the
+indicated \fIfile_system_family_set_name\fR only.  
+.TP
+.BI "list_size = " number
+Sets the number of candidate files for release during one 
+pass of the file system.
+For \fInumber\fR, specify an integer number in the following range:
+.br
+10 \(<= \fInumber\fR \(<= 2,147,483,648
+The default is 10000.  If you have many small files in your
+file system you may want to increase this number.
+.TP
+.B "no_release"
+Prevents the releaser from releasing any files.
+This directive is useful when you are tuning the priority weights.
+Also see the \fBdisplay_all_candidates\fR directive.
+By default, files are released.
+.TP
+.B "rearch_no_release"
+Prevents the releaser from releasing files marked to be rearchived.
+By default, files marked for rearchive are released.
+.TP
+.BI "logfile = " filename
+Sets the name of the releaser's log file to \fIfilename\fR.
+By default, no log file is written.
+.TP
+.B "display_all_candidates"
+Writes the releaser priority for each file, as it is encountered,
+to the log file.
+This can be useful in tuning when used in conjunction with
+the \fBno_release\fR directive.  This
+directive allows you to judge the effect of
+changing the priority weights.
+By default file priority is not displayed in any way.
+.TP
+.BI "min_residence_age = " time
+Sets the minimum residency age to \fItime\fR seconds.
+This is the minimum
+time a file must be online before it is considered to be a release 
+candidate.
+The default is 600 seconds (10 minutes).
+.SH EXAMPLES
+Example 1.  This
+example file sets the \fBweight_age=\fR and \fBweight_size=\fR
+directives for
+the \fBsamfs1\fR file system.  No releaser log is produced.
+.ft CO
+.nf
+
+          fs = samfs1
+          weight_age = .45
+          weight_size = 0.3
+  
+.fi
+.ft R
+Example 2.  This example provides weights for all file systems.
+All file system releaser runs are
+logged to \fB/var/adm/releaser.log\fR.
+.ft CO
+.nf
+
+          weight_age = 1.0
+          weight_size = 0.03
+          logfile = /var/adm/releaser.log
+  
+.fi
+.ft R
+Example 3.  This example specifies weights and log
+files for each file system.
+.ft CO
+.nf
+
+          logfile = /var/adm/default.releaser.log
+
+          fs = samfs1
+
+          weight_age = 1.0
+          weight_size = 0.0
+          logfile = /var/adm/samfs1.releaser.log
+
+          fs = samfs2
+ 
+          weight_age_modify = 0.3    
+          weight_age_access = 0.03
+          weight_age_residence = 1.0
+          weight_size = 0.0
+          logfile = /var/adm/samfs2.releaser.log
+
+.fi
+.ft
+Example 4.  This example is identical in function to example 3, but it
+specifies the \fBweight_size=\fR and \fBlist_size=\fR directives globally.
+.ft CO
+.nf
+          logfile = /var/adm/default.releaser.log
+          weight_size = 0.0
+          list_size = 100000
+
+          fs = samfs1
+
+          weight_age = 1.0
+          logfile = /var/adm/samfs1.releaser.log
+
+          fs = samfs2
+ 
+          weight_age_modify = 0.3    
+          weight_age_access = 0.03
+          weight_age_residence = 1.0
+          logfile = /var/adm/samfs2.releaser.log
+
+.fi
+.ft
+.SH SEE ALSO
+.BR release (1).
+.PP
+.BR sam-releaser (1M).

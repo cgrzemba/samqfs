@@ -1,0 +1,148 @@
+## setup site-tools-PARAMS :
+## This defines the PARAMS for the site-tools &
+## is source'd in by the site-tools cshell scripts
+
+## contain parameters that may need to change if FS names or hostnames change.
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+############################################################################
+#                       SET UP EMAIL PARAMETERS
+############################################################################
+# Change the email address on the following "mail commands" in
+#  field [where] to send email to the appropriate recipient.
+#       be sure to use full e-mail addresses
+
+set contact1 = Patricia.Chase@sun.com
+set contact1a = david.halliwell@sun.com
+set contact2 = david.halliwell@sun.com
+set contact3 = donald.crouse@sun.com
+set contact4 = donald.crouse@sun.com
+
+#
+# The following define what time must be exceeded for the watch script
+# to send the all is ok message for each file system that is not passed
+# the high water mark. The minute should be set to +1 before the time
+# in the crontab entry for the watch script
+#
+set watch_hour = 23
+set watch_min = 29
+
+#
+# The following define the number of minutes that a tape load must be
+# waiting in order for an email to be sent that there is an outstanding
+# tape request. The first one defines the length of time for contact1 and
+# contact1a to be sent. The next ones increment for each additional contact
+# person to be notified.
+#
+set waittime = 20
+set waittime_cont2 = 25
+set waittime_cont3 = 30
+set waittime_cont4 = 40
+
+#
+# The following defines the number of system errors (user, system, and
+# I/O wait time) that must occur in order for the different levels of
+# email to be sent out. On any single occurance of one of these being
+# seen, email will be sent to root, contact1, and contact1a.
+#
+set sys_max2 = 20
+set sys_max3 = 30
+set sys_max4 = 35
+
+#
+#
+# The following define the number of times that the watch script must be
+# executed with a file system being over the high water mark before it
+# will send email to the contact people above the contact1 and contact1a
+# level. Each time the high water mark is encountered the contact1 and
+# contact1a people are notified
+#
+set max_cnt2 = 5
+set max_cnt3 = 10
+set max_cnt4 = 20
+
+#
+# default number of samfs file systems used in the watch script to
+# monitor.
+#
+set num_filesystems = 10
+
+set TMP_DIR = "/tmp/logs"
+#
+# The samfs file system which will contain all the sampm data. This
+# file system must be setup to archive the data as the site sees fit
+#
+set SAM_BASEDIR = /samqfs1
+set SAM_PATH = $SAM_BASEDIR/csd
+#
+# The ufs file system where local copies of files are stored by some
+# of the sampm scripts.
+#
+set UFS_PATH = /export/home
+
+#
+# The following is the name of the catalog message file. This values needs
+# to be updated to reflect the site's actual file name for the catalog
+# name they are using.
+#
+set ROBOT = "LTO90_cat"
+
+#
+# The following defines which type of tape devices the SAM-FS system
+# is using. Update this value to reflect the site's specific tape drive
+# type
+set tape_type = "lt"
+
+#
+# Short cuts to default well known places
+#
+set SAM_ETC = "/etc/opt/SUNWsamfs"
+set SAM_SBIN = "/opt/SUNWsamfs/sbin"
+set CATALOG = "/var/opt/SUNWsamfs/catalog"
+set DEVLOG = "/var/opt/SUNWsamfs/devlog"
+
+set HOST = `/usr/bin/hostname`
+
+#
+# This would be setup for using ftp to save files to an alternate host
+# Some of the scripts can ftp files from one host to another for
+# safe keeping. If this option is not used, then the ALT_HOST should be
+# set to a null string.
+#
+  if ($HOST == "server01") then
+            set ALT_HOST = server02
+  endif
+  if ($HOST == "server02") then
+            set ALT_HOST = server01
+  endif
+
+set ALT_PATH = "/$ALT_HOST/$HOST/csd"
+
+#### Setup WINDOW parameters
+set WINDOW = "/$SAM_BASEDIR/window"
+set WINDOW_DAYS = 15

@@ -1,0 +1,85 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH unload 1M "18 Dec 1997"
+.SH NAME
+unload \- Unload media from a device
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/unload
+[
+.B \-w
+]
+.I eq
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+Unload the media mounted on device \fIeq\fP.
+The device specified by
+\fIeq\fP must be a removable media device or a media changer.
+.LP
+If \fIeq\fP is a removable media device
+controlled by a media changer, the medium will be
+moved into storage. This command is used when a shutdown of a Sun StorEdge \%SAM-FS 
+or Sun \%SAM-QFS file system is
+required and a tape is still in a drive. This command is also used in
+situations where the system administrator wishes to remove a tape from a
+drive that is currently in the \fBunavail\fP state. 
+.LP
+If \fIeq\fP is a media changer, \fBunload\fP moves catalog entries from 
+the media changer's catalog to the historian's catalog. The device state for
+device \fIeq\fP is set to \fBoff\fP. When the device state for the media
+changer is set to \fBon\fP and the media changer has bar codes, then the
+catalog information for that media changer is retrieved from the historian. 
+If the media changer does not have bar codes, an audit invoked by the
+administrator will recover the historian information. This command is
+useful for moving tapes in to and out of media changers which do not
+have import/export capabilities, or sense capability for open door. By first
+issuing the \fBunload\fP command, the system administrator can safely open
+the door to the media changer, add or remove tapes, close the door, and
+re-audit the media changer.
+
+.LP
+If
+.B \-w
+is specified, the command will wait for the operation to complete
+before terminating.
+.LP
+.SH FILES
+.PD 0
+.TP 20
+.B mcf
+The configuration file for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS environment 
+.PD
+.SH SEE ALSO
+.BR auditslot (1M),
+.BR historian (7),
+.BR load (1M),
+.BR set_state (1M),
+.BR mcf (4),
+.BR sam-robotsd (1M)

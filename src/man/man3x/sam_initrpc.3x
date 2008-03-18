@@ -1,0 +1,87 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_initrpc 3X "03 Dec 2001"
+.SH NAME
+sam_initrpc \- Performs RPC initialization for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS RPC API library
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamrpc -l nsl [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samrpc.h"
+.ft
+.fi
+.LP
+.BI "int sam_initrpc(char *" "rpchost");
+.SH DESCRIPTION
+.B sam_initrpc()
+is the initialization routine for the \fBlibsamrpc\fR library.  It finds
+the RPC entry for the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS server
+and creates an RPC
+client handle.  In essence, this routine sets up the connection to the
+Sun StorEdge \%SAM-FS or Sun \%SAM-QFS host machine,
+required for other API calls in the \fBlibsamrpc\fR library.
+.PP
+\fBrpchost\fR is the hostname of the Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS host.
+If \fINULL\fR,
+.B sam_initrpc(\|)
+will check for an environment variable named \fISAMHOST\fR.  If such an
+environment variable exists, its setting will be taken for the hostname of
+the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS host, otherwise
+the \%built-in default, \fBsamhost\fR, is used.
+.PP
+.B sam_initrpc(\|)
+gets the RPC entry (program number) using the program name \fBsamfs\fR.
+This information (the RPC program name and number), and the hostname, is
+used to set up communication with the Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS RPC API
+server process, \fBsam-rpcd\fR, which runs on the
+Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+host machine.
+.SH "RETURN VALUES"
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_initrpc(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB EADDRNOTAVAIL
+No RPC entry for the program name \fBsamfs\fR could be found.
+.SH "SEE ALSO"
+.BR sam_closerpc (3X),
+.BR sam_archive (3X),
+.BR sam_release (3X),
+.BR sam_stage (3X),
+.BR sam_stat (3X).

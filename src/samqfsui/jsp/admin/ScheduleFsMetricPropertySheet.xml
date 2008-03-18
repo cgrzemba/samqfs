@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: ScheduleFsMetricPropertySheet.xml,v 1.5 2008/03/17 14:40:29 am143972 Exp $ -->
+
+<propertysheet>
+  <section name="fs" defaultValue="">
+    <property span="true">
+      <cc name="dataSourceNote" 
+        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value=""/>
+        <attribute name="escape" value="false"/>
+      </cc>
+    </property>
+  </section>
+  <section name="schedule" defaultValue="reports.collection.schedule.label">
+    <property span="true">
+      <![CDATA[<table border="0"><tr><td align="left">]]>
+      <cc name="startDateLabel"
+        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value="common.label.startDate"/>
+        <attribute name="elementName" value="startDate"/>
+      </cc>
+      <![CDATA[</td><td>]]>
+      <cc name="startDate"
+        tagclass="com.sun.web.ui.taglib.datetime.CCDateTimeWindowTag">
+        <attribute name="showTextInput" value="true" />
+      </cc>
+      <![CDATA[</td><td>]]>
+      <cc name="Spacer" tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+        <attribute name="width" value="15"/>
+      </cc>
+      <![CDATA[</td><td>]]>
+      <cc name="startTimeLabel"
+        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value="common.label.startTime"/>
+        <attribute name="elementName" value="startHour"/>
+      </cc>
+      <![CDATA[</td><td  valign="middle">]]>
+      <cc name="startHour"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <option label="00" value="00"/>
+        <option label="01" value="01"/>
+        <option label="02" value="02"/>
+        <option label="03" value="03"/>
+        <option label="04" value="04"/>
+        <option label="05" value="05"/>
+        <option label="06" value="06"/>
+        <option label="07" value="07"/>
+        <option label="08" value="08"/>
+        <option label="09" value="09"/>
+        <option label="10" value="10"/>
+        <option label="11" value="11"/>
+        <option label="12" value="12"/>
+        <option label="13" value="13"/>
+        <option label="14" value="14"/>
+        <option label="15" value="15"/>
+        <option label="16" value="16"/>
+        <option label="17" value="17"/>
+        <option label="18" value="18"/>
+        <option label="19" value="19"/>
+        <option label="20" value="20"/>
+        <option label="21" value="21"/>
+        <option label="22" value="22"/>
+        <option label="23" value="23"/>
+      </cc>
+      <cc name="colonLabel"
+        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value=":"/>
+      </cc>
+      <cc name="startMinute"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <option label="00" value="00"/>
+        <option label="05" value="05"/>
+        <option label="10" value="10"/>
+        <option label="15" value="15"/>
+        <option label="20" value="20"/>
+        <option label="25" value="25"/>
+        <option label="30" value="30"/>
+        <option label="35" value="35"/>
+        <option label="40" value="40"/>
+        <option label="45" value="45"/>
+        <option label="50" value="50"/>
+        <option label="55" value="55"/>
+      </cc>
+      <![CDATA[</td></tr><tr><td>]]>
+      <cc name="intervalLabel"
+        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+        <attribute name="defaultValue" value="common.repeatInterval.label"/>
+        <attribute name="elementName" value="intervalOptions"/>
+      </cc>
+      <![CDATA[</td><td>]]>
+      <cc name="intervalOptions" 
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <option label="common.repeatInterval.daily" value="8" />
+        <option label="common.repeatInterval.weekly" value="9" />
+        <option label="common.repeatInterval.monthly" value="11" />
+      </cc>    
+      <![CDATA[</td></tr></table>]]>
+    </property>
+  </section>
+</propertysheet>

@@ -1,0 +1,147 @@
+#!/usr/bin/ksh
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+#
+# mcinq - media changer and tape drive inquiry.conf lookup.
+#
+# $Revision: 1.5 $
+
+
+# Location of samfs inquiry.conf.
+INQCONF=$SAMFS_ETC/inquiry.conf
+
+
+# Device inquiry.conf Warning Record.
+vendor_warning=""	# vendor product needing an entry in inquiry.conf.
+product_warning=""	# vendor product needing an entry in inquiry.conf.
+
+
+#----- inqconf_find - search inquiry.conf for vendor and product.
+#      Given device inquiry vendor and product, search inquiry.conf for
+#      a list device or build a inquiry.conf warning list. 
+function inqconf_find {
+	vendor="$1"
+	product="$2"
+
+	logit "inqconf_find encoded vendor=<$vendor> product=<$product>"
+
+	vendor_search=`plain_text "$vendor"`
+	product_search=`plain_text "$product"`
+
+	logit "inqconf_find decoded vendor=<$vendor_search>"\
+		"product=<$product_search>"
+
+	found=0
+	exec 5<$INQCONF
+	while read -5u line; do
+		# remove leading comment.
+		line=${line###*}	
+		[ -z "$line" ] && continue
+
+		# Parse supported sam-fs inquiry.conf vendor and 
+		# product strings.
+		inq_vendor=`echo "$line" | cut -d"\"" -f2`
+		inq_product=`echo "$line" | cut -d"\"" -f4`
+
+		# find sam-fs shortest inquiry.conf vendor and product
+		# strings in current hw vendor and product strings. 
+		# The actual hw vendor and product strings are shorter
+		# than the ones found in inquiry.conf.
+		vout=`echo "$vendor_search" | grep "^$inq_vendor"`
+		pout=`echo "$product_search" | grep "^$inq_product"`
+
+		if [[ -n "$vout" ]] && [[ -n "$pout" ]]; then
+			logit "inqconf_find found"
+			found=1
+			break
+		fi
+	done 
+	exec 5<&-
+
+	if [ $found -eq 0 ]; then
+		match=0
+		index=1
+		for vv in $vendor_warning; do
+			pp=`echo $product_warning | cut -d" " -f$index`
+			if [[ "$vv" = "$vendor" ]] && \
+			   [[ "$pp" = "$product" ]]; then
+				match=1
+				
+			fi
+			
+			index=`expr "$index" + 1`
+		done
+
+		if [ $match -eq 0 ]; then
+			logit "inqconf_find adding warning for"\
+				"$vendor $product"
+			vendor_warning="$vendor_warning $vendor"
+			product_warning="$product_warning $product"
+		fi
+	fi
+}
+
+
+#----- inqconf_lookup - lookup inquiry.conf vendor product.
+#      Given device vendor and product, find out if it is listed in 
+#      inquiry.conf.
+function inqconf_lookup {
+	vendor="$1"
+	model="$2"
+
+	logit "inqconf_lookup vendor=<$vendor> product=<$model>"
+
+	count=1
+	for i in $vendor; do
+		j=`echo $model | cut -d" " -f$count`
+		logit "inqconf_lookup count=$count vendor=<$i> product=<$j>"
+		inqconf_find "$i" "$j"
+		count=`expr "$count" + 1`
+	done
+}
+
+
+#----- inqconf_show_warnings - show devices not in inquiry.conf.
+#      Given vendor product array of records, display the records.  
+function inqconf_show_warnings {
+
+	logit "inqconf_show_warnings vendor warn=<$vendor_warning>"\
+		"product warn=<$product_warning>"
+
+	index=1
+	for vv in $vendor_warning; do
+		pp=`echo $product_warning | cut -d" " -f$index`
+
+		vv=`plain_text "$vv"`
+		pp=`plain_text "$pp"`
+
+		echo
+		echo "Add \"$vv\" \"$pp\" alias to $INQCONF"
+
+		index=`expr "$index" + 1`
+	done
+}

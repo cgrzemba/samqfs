@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: CopyInformationTable.xml,v 1.6 2008/03/17 14:40:30 am143972 Exp $ -->
+
+<table>
+
+<!-- actions definition -->
+<actions>
+    <cc name="SamQFSWizardAddCopy"
+        tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
+        <attribute name="dynamic" value="true"/>
+    </cc>
+    <cc name="RemoveCopy"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true"/>
+        <attribute name="disabled" value="true"/>
+        <attribute name="onClick" value="return handleRemoveCopy(this);"/>
+    </cc>
+    <cc name="EditAdvancedOptions"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true"/>
+        <attribute name="disabled" value="true"/>
+        <attribute name="onClick" value="handleEditAdvancedOptions(this);"/>
+    </cc>
+    <cc name="EditVSNAssignments"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true"/>
+        <attribute name="disabled" value="true"/>
+        <attribute name="onClick" value="handleEditVSNAssignments(this);"/>
+    </cc>
+</actions>
+
+<!-- column definitions -->
+<column name="CopyNumber" 
+        sortname="CopyNumberText" extrahtml="nowrap='nowrap'">
+    <cc name="CopyOptionsHref"
+        tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <cc name="CopyNumberText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+    <cc name="CopyNumberHidden"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="MediaType" 
+        sortname="MediaTypeText" extrahtml="nowrap='nowrap'">
+    <cc name="MediaTypeText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="MediaTypeHidden"
+        tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="SpaceAvailable" sortname="SpaceAvailableText" 
+    extrahtml="nowrap='nowrap' align='right'">
+    <cc name="CopyVSNsHref"
+        tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+
+        <cc name="SpaceAvailableText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+</column>
+
+<column name="VSNsAvailable" extrahtml="nowrap='nowrap'">
+    <cc name="CopyVSNsHref"
+        tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <cc name="VSNsAvailableText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+</column>
+
+</table>

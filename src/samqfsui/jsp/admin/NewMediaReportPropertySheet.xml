@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE propertysheet SYSTEM "tags/dtd/propertysheet.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: NewMediaReportPropertySheet.xml,v 1.6 2008/03/17 14:40:29 am143972 Exp $ -->
+
+<propertysheet>
+    <section name="usability" defaultValue="">
+    <!-- select all options -->
+    <!-- deselect all options -->
+    <property span="true">
+        <cc name="staticText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+            <attribute name="bundleID" value="samBundle" />
+            <attribute name="defaultValue" value="reports.create.msg.selectcontent"/>
+        </cc>
+    </property>
+    <property span="true">
+        <cc name="selectButton" 
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
+                <attribute name="defaultValue" value="common.button.selectAll"/>
+                <attribute name="dynamic" value="true" />
+                <attribute name="bundleID" value="samBundle" />
+                <attribute name="onClick" value="return setStateCheckBoxes(true)"/>
+        </cc>
+        <cc name="deselectButton" 
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
+                <attribute name="defaultValue" value="common.button.deselectAll" />
+                <attribute name="dynamic" value="true" />
+                <attribute name="bundleID" value="samBundle" />
+                <attribute name="onClick" value="return setStateCheckBoxes(false)"/>
+        </cc>
+    </property>
+    </section>
+    
+    <section name="mediaStatus" defaultValue="">
+    <property span="true">
+        <cc name="staticText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+            <attribute name="bundleID" value="samBundle" />
+            <attribute name="defaultValue" value="common.label.vsnstatus"/>
+        </cc>
+    </property>
+    <property>
+        &lt;table>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check1"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.damagemedia"/>
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check2"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.duplicatevsn"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+             &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check3"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.readonly"/>
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check4"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.writeprotected"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>  
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check5"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.foreignmedia"/>
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check6"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.recycle"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check7"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.reserved"/>
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check8"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.unavailableslot"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check9"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.inuse"/>     
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                <cc name="check10"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="vsn.status.blank"/>    
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+        &lt;/table> 
+    </property>
+    <property span="true">
+        <cc name="staticText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
+            <attribute name="bundleID" value="samBundle" />
+            <attribute name="defaultValue" value="common.label.utilization"/>
+        </cc>
+    </property>
+    <property>
+        &lt;table>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check11"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="common.title.archiverPoolUtilization"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check12"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="common.title.vsnSummary"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>  
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="check13"
+                        tagclass="com.sun.web.ui.taglib.html.CCCheckBoxTag" >
+                        <attribute name="label" value="common.title.copyUtilization"/>
+                    </cc>
+                &lt;/td>
+            &lt;/tr>
+        &lt;/table> 
+    </property>
+    </section>
+</propertysheet>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table SYSTEM "tags/dtd/table.dtd">
+
+<!--  SAM-QFS_notice_begin                                                -->
+<!--                                                                      -->
+<!--CDDL HEADER START                                                     -->
+<!--                                                                      -->
+<!--The contents of this file are subject to the terms of the             -->
+<!--Common Development and Distribution License (the "License").          -->
+<!--You may not use this file except in compliance with the License.      -->
+<!--                                                                      -->
+<!--You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE   -->
+<!--or http://www.opensolaris.org/os/licensing.                           -->
+<!--See the License for the specific language governing permissions       -->
+<!--and limitations under the License.                                    -->
+<!--                                                                      -->
+<!--When distributing Covered Code, include this CDDL HEADER in each      -->
+<!--file and include the License file at usr/src/OPENSOLARIS.LICENSE.     -->
+<!--If applicable, add the following below this CDDL HEADER, with the     -->
+<!--fields enclosed by brackets "[]" replaced with your own identifying   -->
+<!--information: Portions Copyright [yyyy] [name of copyright owner]      -->
+<!--                                                                      -->
+<!--CDDL HEADER END                                                       -->
+<!--                                                                      -->
+<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Use is subject to license terms.                                      -->
+<!--                                                                      -->
+<!--  SAM-QFS_notice_end                                                  -->
+<!--                                                                      -->
+<!-- $Id: LibrarySharedDriveSummaryTable.xml,v 1.6 2008/03/17 14:40:37 am143972 Exp $ -->
+
+<table>
+<actions>
+    <cc name="ChangeStateButton"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+        <attribute name="onClick"
+            value="
+                launchPopup(
+                    '/media/ChangeStatus',
+                    'changestatus',
+                    null,
+                    SIZE_NORMAL,
+                    '&amp;SAMQFS_PARENT=LibraryDriveSummaryView' +
+                    '&amp;SAMQFS_LIBRARY_NAME=' + getLibraryName() +
+                    '&amp;SAMQFS_EQ=' + getSelectedEQ());
+                return false;
+        	"/>
+    </cc>
+
+    <cc name="IdleButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+    </cc>
+
+    <cc name="UnloadButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+        <attribute name="onClick"
+            value="
+                if (!showConfirmMsg(2)) {
+                    return false;
+                }" />
+    </cc>
+
+    <cc name="CleanButton" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="disabled" value="true" />
+    </cc>
+    
+    <cc name="ActionMenu"
+        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+        <attribute name="dynamic" value="true" />
+        <attribute name="commandChild" value="ActionMenuHref"/>
+        <attribute name="escape" value="false"/>
+        <option label="LibrarySummary.option.heading" value="0"/>
+        <option label="LibraryDriveSummary.option.share"
+                value="1" disabled="true"/>
+        <option label="LibraryDriveSummary.option.unshare"
+                value="2" disabled="true"/>
+    </cc>
+
+</actions>
+
+<column name="EQColumn" sortname="EQText" >
+    <cc name="EQText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="EQHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+</column>
+
+<column name="ProductIDColumn" sortname="ProductIDText" extrahtml="nowrap">
+    <cc name="ProductIDText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="StateColumn" sortname="StateText"
+    extrahtml="nowrap='nowrap' align='center'">
+    <cc name="StateText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="StateHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="SerialNumberColumn" sortname="SerialNumberText" extrahtml="nowrap">
+    <cc name="SerialNumberText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="FirmwareColumn" sortname="FirmwareText" extrahtml="nowrap">
+    <cc name="FirmwareText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+</column>
+
+<column name="VSNColumn" sortname="VSNText" extrahtml="nowrap">
+    <cc name="VSNHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+        <attribute name="submitFormData" value="true"/>
+        <cc name="VSNText"
+            tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    </cc>
+    <cc name="VSNHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+</column>
+
+<column name="UsageColumn" sortname="usageText" extrahtml="align='left'
+    nowrap='nowrap' valign='center'">
+  <cc name="UsageBarImage" tagclass="com.sun.web.ui.taglib.html.CCImageTag">
+    <attribute name="hspace" value="20" />
+  </cc>
+  <cc name="capacityText"
+      tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+  <cc name="usageText" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="SharedColumn" sortname="SharedText"
+    extrahtml="nowrap='nowrap' align='center'">
+    <cc name="SharedText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="SharedHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+</column>
+
+<column name="StatusColumn" sortname="StatusText" extrahtml="nowrap">
+    <cc name="StatusText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false" />
+    </cc>
+</column>
+
+<column name="MessageColumn" sortname="MessageText" extrahtml="nowrap">
+    <cc name="MessageText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+        <attribute name="escape" value="false" />
+    </cc>
+</column>
+
+</table>

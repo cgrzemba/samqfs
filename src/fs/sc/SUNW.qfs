@@ -1,0 +1,265 @@
+#
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# Resource Type Registration (RTR) file for
+# Shared SAM-QFS implementation on SunCluster
+# To make the Meta Data Server HA.
+#
+# $Revision: 1.20 $
+#
+
+RESOURCE_TYPE = "qfs";
+VENDOR_ID = SUNW;
+RT_DESCRIPTION = "SAM-QFS Agent on SunCluster";
+
+RT_VERSION ="4.6";
+API_VERSION = 3;
+FAILOVER = TRUE;
+
+
+RT_BASEDIR=/opt/SUNWsamfs/sc/bin;
+
+INIT			= scqfs_init;
+FINI			= scqfs_fini;
+BOOT			= scqfs_boot;
+START			= scqfs_start;
+STOP			= scqfs_stop;
+PRENET_START	= scqfs_prenet_start;
+POSTNET_STOP	= scqfs_postnet_stop;
+MONITOR_START	= scqfs_monitor_start;
+MONITOR_STOP	= scqfs_monitor_stop;
+MONITOR_CHECK	= scqfs_monitor_check;
+VALIDATE		= scqfs_validate;
+UPDATE			= scqfs_update;
+
+#$upgrade
+#$upgrade_from "3.1" anytime
+#$upgrade_from "3.2" anytime
+#$upgrade_from "4.5-05" anytime
+
+# The paramtable is a list of bracketed resource property
+# declarations that come after the resource-type declarations.
+# The property-name declaration must be the first attribute
+# after the open curly of a paramtable entry.
+#
+# The following are the system defined properties. Each of the
+# system defined properties have a default value set for each
+# of the attributes. Look at man rt_reg(4) for a detailed explanation.
+
+#
+# Prenet_start_timeout needs to be rather large. It is the
+# only method which really does anything real (except VALIDATE).
+# It needs to wait for a variety of things, some of which are
+# hardware dependent.
+#
+{
+	PROPERTY = Prenet_start_timeout;
+	MIN = 60;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Start_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+{
+	PROPERTY = Stop_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+{
+	PROPERTY = Postnet_stop_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+{
+	PROPERTY = Monitor_start_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+{
+	PROPERTY = Monitor_stop_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+{
+	PROPERTY = Monitor_check_timeout;
+	MIN = 60;
+	DEFAULT = 180;
+}
+{
+	PROPERTY = Init_timeout;
+	MIN = 30;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Boot_timeout;
+	MIN = 30;
+	DEFAULT = 300;
+}
+{
+	PROPERTY = Fini_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+
+# Validate method does a rather large number of
+# configuration checks, really speaking, none of
+# those operations are really "blocking", yet...
+# need to provide some decent timeout.
+{
+	PROPERTY = Validate_timeout;
+	MIN = 60;
+	DEFAULT = 180;
+}
+{
+	PROPERTY = Update_timeout;
+	MIN = 60;
+	DEFAULT = 120;
+}
+
+
+#
+# The QFSLeaseRecoveryPolicy determines whether the new
+# QFS Metadata Server waits for all configured hosts (those
+# listed in the shared hosts file) to connect to the server,
+# or only those that SunCluster says are not "down".
+#
+# Timeout => always wait
+# Auto => wait only if there are non-cluster FS hosts
+# Cluster => never await a host SunCluster says is down.
+#
+{
+	PROPERTY = QFSLeaseRecoveryPolicy;
+	EXTENSION;
+	ENUM { Timeout, Auto, Cluster };
+	DEFAULT = "Auto";
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "QFS Wait for Lease Recovery Policy";
+}
+
+{
+	PROPERTY = FailOver_Mode;
+	DEFAULT = SOFT;
+	TUNABLE = ANYTIME;
+}
+
+{
+	PROPERTY = Thorough_Probe_Interval;
+	MAX = 3600;
+	DEFAULT = 60;
+	TUNABLE = ANYTIME;
+}
+
+{
+	PROPERTY = Retry_Count;
+	MAX = 10;
+	DEFAULT = 2;
+	TUNABLE = ANYTIME;
+}
+
+{
+	PROPERTY = Retry_Interval;
+	MAX = 3600;
+	DEFAULT = 750;
+	TUNABLE = ANYTIME;
+}
+
+#
+# Extension Properties
+#
+
+#
+# QFS filesystem mount point. Must exist in /etc/vfstab;
+# Mount option(s) must include 'shared'.
+#
+# Mount-at-boot should NOT be set in /etc/vfstab; the FS is
+# mounted by the boot/init and prenet_start methods if necessary.
+#
+{
+	PROPERTY = QFSFileSystem;
+	EXTENSION;
+	STRINGARRAY;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "The SAM-QFS filesystem mount points";
+}
+
+{
+	PROPERTY = QFS_umount_await_clients;
+	EXTENSION;
+	INT;
+	TUNABLE = ANYTIME;
+	MIN = 0;
+	DEFAULT = 30;
+	MAX = 300;
+	DESCRIPTION = "The SAM-QFS filesystem time to wait for client unmounts";
+}
+
+# These two control the restarting of the fault monitor itself
+# (not the server daemon) by PMF.
+{
+	PROPERTY = Monitor_retry_count;
+	EXTENSION;
+	INT;
+	DEFAULT = 4;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Number of PMF restarts allowed for the fault monitor";
+}
+
+{
+	PROPERTY = Monitor_retry_interval;
+	EXTENSION;
+	INT;
+	DEFAULT = 2;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Time window (minutes) for fault monitor restarts";
+}
+
+# Time out value for the probe
+{
+	PROPERTY = Probe_timeout;
+	EXTENSION;
+	INT;
+	MIN = 2;
+	DEFAULT = 120;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Time out value for the probe (seconds)";
+}
+
+# Child process monitoring level for PMF (-C option of pmfadm)
+# Default of -1 means: Do NOT use the -C option to PMFADM
+# A value of 0-> indicates the level of child process monitoring
+# by PMF that is desired.
+{
+	PROPERTY = Child_mon_level;
+	EXTENSION;
+	INT;
+	DEFAULT = -1;
+	TUNABLE = ANYTIME;
+	DESCRIPTION = "Child monitoring level for PMF";
+}

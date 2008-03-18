@@ -1,0 +1,112 @@
+.\" $Revision: 1.18 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH sam-remote 7 "21 Feb 2003"
+.SH NAME
+sam-remote, sam-clientd, sam-serverd \- Describes the Sun \%SAM-Remote interface and daemons
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sam-serverd \fImshmid pshmid equip\fR
+.PP
+\fB/opt/SUNWsamfs/sbin/sam-clientd \fImshmid pshmid equip\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The Sun \%SAM-Remote client and server software allows automated
+libraries to be
+shared among the Solaris systems in a Sun StorEdge SAM environment.
+Sun \%SAM-Remote allows you to configure multiple storage clients
+that archive and stage files from a centralized optical and/or
+tape library.  This environment also allows you to make multiple
+archive copies on various media housed in multiple libraries.
+.SH DAEMONS
+The Sun \%SAM-Remote daemons, \%\fBsam-serverd\fR and \%\fBsam-clientd\fR,
+control Sun \%SAM-Remote.  The \%\fBsam-robotsd\fR daemon starts the
+\%\fBsam-serverd\fR and \%\fBsam-clientd\fR daemons.
+The identifiers associated with these daemons are as follows:
+.TP 10
+\fImshmid\fR
+The identifier of the master shared memory segment created
+by \%\fBsam-amld\fR.
+.TP
+\fIpshmid\fR
+The identifier of the preview shared memory segment created
+by \%\fBsam-amld\fR.
+.TP
+\fIequip\fR
+The equipment number of the device.
+.PP
+For more information on the \%\fBsam-robotsd\fR or
+\%\fBsam-amld\fR daemons, see the
+\%\fBsam-robotsd\fR(1M) or \%\fBsam-amld\fR(1M) man pages.
+.SH CONFIGURATION
+Configuring the Sun \%SAM-Remote client and server software involves
+adding lines to the \fBmcf\fR file on both the system to be used as
+the Sun \%SAM-Remote client and on the system to be used as
+the Sun \%SAM-Remote server.
+.PP
+In addition, a client configuration file must be created on
+the Sun \%SAM-Remote client, and a server configuration file must be
+created on the Sun \%SAM-Remote server.
+.PP
+Each entry in \fBmcf\fR file can configure up to ten clients per server.
+Use more mcf entries to configure more than ten clients.
+.PP
+In the \fBmcf\fR file, the \fBEquipment Type\fR field contains \fBsc\fR
+to define a Sun SAM-Remote client or \fBss\fR to define a Sun SAM-Remote
+server.
+.PP
+The server configuration file defines the disk buffer characteristics and 
+media to be used for each client. For a client named \fBportland\fR for example:
+.HP
+portland
+     media
+     100 at (000031|000032|000034|000035|000037|000038)
+     endmedia
+.PP
+The media definitions must be indented with white space or tab characters.
+The \fBregex\fR data must be enclosed by parentheses.
+.PP
+For a complete description of the Sun \%SAM-Remote configuration
+process,
+see the \fISun StorEdge SAM-FS Storage and Archive Managment Guide\fR.
+.SH FILES
+.TP 20
+\fBmcf\fR
+The master configuration file for Sun StorEdge SAM, Sun StorEdge QFS,
+the Sun \%SAM-Remote client, and the Sun \%SAM-Remote server.
+.TP
+\fB/opt/SUNWsamfs/lib/librmtsam.so\fR
+The Sun \%SAM-Remote shared object library.
+.SH SEE ALSO
+\fBsam-amld\fR(1M),
+\fBsam-robotsd\fR(1M).
+.PP
+\fBmcf\fR(4).
+.PP
+\fISun StorEdge SAM Storage and Archive Management Guide\fR.

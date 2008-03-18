@@ -1,0 +1,129 @@
+.\" $Revision: 1.14 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam_audit 3 "05 Nov 2001"
+.SH NAME
+sam_audit \- Audits media
+.SH SYNOPSIS
+.LP
+.BI "cc [ " "flag"
+.BI " ... ] " "file"
+.BI " ... -L/opt/SUNWsamfs/lib -lsamapi [ " "library" " ... ]"
+.LP
+.nf
+.ft 3
+#include "/opt/SUNWsamfs/include/samapi.h"
+.ft
+.fi
+.LP
+.BI "int sam_audit(ushort_t " "eq_ord" ,
+.BI "uint_t " "ea" ,
+.BI "int " "wait_response" );
+.SH DESCRIPTION
+.PP
+.B sam_audit(\|)
+performs a catalog audit on either a single element address in a robot or all the element addresses
+in a robot, for either optical or tape robotic devices.  Specifying 
+.I ea
+as the number of the robot element address will perform a catalog audit of that element address.
+If the 
+.I ea
+is set to the global
+.B ROBOT_NO_SLOT
+value, an audit of the entire robot will be performed. The call will return
+immediately after issuing the command if zero is specified for
+.I wait_response
+value.  Other values for
+.I wait_response
+will give undefined results.
+.SH "RETURN VALUES"
+Upon succesful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+\f4errno\fP
+is set to indicate the error.
+.SH ERRORS
+.PP
+.B sam_audit(\|)
+fails if one or more of the following are true:
+.TP 20
+.SB ER_FIFO_PATH_LENGTH
+The path and filename for the FIFO pipe is too long.
+.TP
+.SB ER_NO_EQUIP_ORDINAL
+.I eq_ord
+is not a defined equiptment ordinal in this configuration.
+.TP
+.SB ER_NO_MASTER_SHM
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NO_MASTER_SHM_ATT
+No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment found.
+Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
+.TP
+.SB ER_NOT_VALID_SLOT_NUMBER
+.I ea
+is not a valid element address in the robot at equipment ordinal
+.I eq_ord
+.TP
+.SB ER_NO_RESPONSE_FIFO
+Unable to create the response FIFO pipe.
+.TP
+.SB ER_NO_STAT_ROBOT_CATALOG
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+cannot be accessed for status.
+.TP
+.SB ER_OPERATOR_NOT_PRIV
+Operator does not have permission to perform a full audit
+.TP
+.SB ER_ROBOT_CATALOG_MISSING
+The robot media changer catalog for equipment ordinal
+.I eq_ord
+is missing and a full audit is required.
+.TP
+.SB ER_SLOT_NOT_OCCUPIED
+No media exists at the element address number
+.I ea
+specified
+.TP
+.SB ER_UNABLE_TO_MAP_CATALOG
+The catalog for the removable media changer at equipment ordinal
+.I eq_ord
+is unable to be mapped into memory.
+.SH FILES
+.TP 20
+.SB mcf
+The configuration file for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+.SH "SEE ALSO"
+.BR auditslot (1M),
+.BR export (1M),
+.BR import (1M),
+.BR move (1M),
+.BR sam-robotsd (1M).
+.PP
+.BR mcf (4).

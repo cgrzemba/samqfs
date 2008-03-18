@@ -1,0 +1,103 @@
+." $Revision: 1.5 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH fsmgr 1M  "27 Apr 2005"
+.SH NAME
+fsmgr \- Configures tracing for the File System Manager and starts or 
+stops the File System Manager portal agent
+.SH SYNOPSIS
+\%\fBfsmgr\fR
+\fIaction\fR
+.SH AVAILABILITY
+\fBSUNWfsmgr\fR
+.SH DESCRIPTION
+The \fBfsmgr\fR command changes the trace level of File System Manager 
+and starts or stops the File System Manager portal agent.
+.SH OPTIONS
+.TP
+\fBtrace\fR [ \fIlevel\fR ]
+Traces the File System Manager execution.
+If \fIlevel\fR is not specified, it displays the current trace level.
+.sp
+You can specify zero or more of the following for \fIlevel\fR:
+.RS 10
+.TP
+\fB1\fR
+Traces important messages only.
+.TP
+\fB2\fR
+Traces moderately important messages, including messages
+in trace level 1.
+.TP
+\fB3\fR
+Traces all messages.
+.TP
+\fBoff\fR
+Turns off tracing.
+.RE
+.TP
+\fBagent\fR [ \fIactions\fR ]
+Manages the File System Manager portal agent.
+.RS 10
+.TP
+\fBstart\fR
+Starts the File System Manger portal agent. Does not 
+configure the agent to auto-restart.
+.TP
+\fBstop\fR
+Stops the File System Manager portal agent.
+.TP
+\fBrestart\fR
+Restarts the File System Manager portal agent.
+.TP
+\fBconfig -a\fR
+Starts the File System Manager portal agent.
+Auto-restarts the agent every time it dies.
+.TP
+\fBconfig -n\fR
+Stops the File System Manager portal agent.
+Disables the auto-restart feature.
+.RE
+.PP
+NOTE: In Solaris 9 the portal agent auto-restart capability
+is managed using /etc/inittab. In Solaris 10 it is managed
+using the service management facility (smf(5)). See smf(5)
+for more information.
+.SH FILES
+This command resides in the following location:
+.TP 30
+\fBSoftware and Package\fR
+\fBLocation\fR
+.TP
+\%File System Manager (\fBSUNWfsmgr\fR)
+\fB/opt/SUNWfsmgr/bin/fsmgr\fR
+.SH SEE ALSO
+\fBinit\fR(1M),
+\%\fBfsmgmtd\fR(1M).
+

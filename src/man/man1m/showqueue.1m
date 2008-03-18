@@ -1,0 +1,141 @@
+." $Revision: 1.20 $ 
+.ds ]W Sun Microsystems 
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH showqueue 1M  "18 Feb 2007"
+.SH NAME
+showqueue \- Display content of an archiver queue files
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/showqueue
+.RB [ \-a ]
+.RB [ \-d ]
+.RB [ \-s ]
+.RB [ \-v ]
+.RB [ \-f ]
+.RI [ filesystem [ " archreq ..." "]]"
+
+.B /opt/SUNWsamfs/sbin/showqueue
+.RB [ \-d ]
+.RB [ \-v ]
+.BI \-q " archreq"
+
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B showqueue
+reads the archreq files named in the argument list and prints the information.
+
+If there are no names in the argument list, the scanlist and all ArchReq
+files are printed for all mounted filesystems.
+
+If there is only one name in the argument list, the scanlist and all ArchReq
+files are printed for that filesystem.
+
+Otherwise, print only the listed ArchReq files.
+.SH OPTIONS
+.TP
+.B \-a
+ArchReqs.  Print only ArchReqs.
+.TP
+.B \-c
+Use the current working directory as the base for files to display.  Without
+this option,
+.B showqueue
+uses the standard location for all archiver data (/var/opt/SUNWsamfs/archiver/fs_name).
+.TP
+.B \-d
+Debug.  Print ArchReq structure fields with no interpretation.
+.TP
+.B \-f
+Follow. If not using
+.BR \-q \,
+.B showqueue
+will not terminate after printing the requested queue information,
+but will enter an endless loop, wherein it sleeps for five seconds and then
+repeats the command.
+.TP
+.B \-q
+Print the ArchReq file
+.IR archreq .
+.I archreq
+is the actual name of the ArchReq.  This option is provided to allow the
+user to examine an ArchReq that is not under control of the archiver.  For
+instance, when the ArchReq is imported from another system.
+.TP
+.B \-s
+Scanlist.  Print only the scanlist.
+.TP
+.B \-v
+Print information about each file to be archived in the ArchReq files.
+
+.LP
+Example output for:
+.I showqueue -v samfs3
+
+.ft CO
+.nf
+ showqueue -v samfs3
+ Filesystem samfs3:  
+ Scan list  Examine: noscan
+   1 2004-11-26 08:03:33 b4827632       1___ 1  b4827632
+   2 2005-11-26 08:07:03 background          full .
+
+ Archive requests
+ b4827632.1.0 create 2004-11-26 08:03:33
+     files:10 space:  30.005M flags: start
+     Start archive at 2004-11-26 08:13:33
+     type:f ino:1104 flags:00 space:   3.000M time:1048683783 priority:0
+         b4827632/file0
+     type:f ino:1105 flags:00 space:   3.000M time:1048683784 priority:0
+         b4827632/file1
+     type:f ino:1106 flags:00 space:   3.000M time:1048683785 priority:0
+         b4827632/file2
+     type:f ino:1107 flags:00 space:   3.000M time:1048683786 priority:0
+         b4827632/file3
+     type:f ino:1108 flags:00 space:   3.000M time:1048683786 priority:0
+         b4827632/file4
+     type:f ino:1109 flags:00 space:   3.000M time:1048683787 priority:0
+         b4827632/file5
+     type:f ino:1110 flags:00 space:   3.000M time:1048683788 priority:0
+         b4827632/file6
+     type:f ino:1111 flags:00 space:   3.000M time:1048683788 priority:0
+         b4827632/file7
+     type:f ino:1112 flags:00 space:   3.000M time:1048683789 priority:0
+         b4827632/file8
+     type:f ino:1113 flags:00 space:   3.000M time:1048683790 priority:0
+         b4827632/file9
+
+.LP
+The scanlist shows the following:
+ column
+ 1    Scanlist entry number
+ 2-3  Time to scan directory
+ 4    Archive Set if known
+ 5    Archive copies expected during scan
+ 6    Scan depth
+ 7    Directory to scan
+ 8    If present, start scan at this subdirectory

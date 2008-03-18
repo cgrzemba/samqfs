@@ -1,0 +1,98 @@
+.\" $Revision: 1.18 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH ssi.sh 7 "12 Jan 2004"
+.SH NAME
+ssi.sh \- The configuration file for the StorageTek (STK) Client System Interface
+CSI.
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.LP
+.SH DESCRIPTION
+\fBssi.sh\fP is a script that allows users to select values for several
+dynamic environment variables used by the CSI.
+The STK API code defines default values for these variables if they are
+not defined dynamically. To allow the most flexibility in setting these
+variables, a shell script 
+\fB/etc/opt/SUNWsamfs/scripts/ssi.sh\fR, is used by
+the \fBsam-stkd\fR(1M) daemon,
+to start the \fBssi_so\fR. In general, most sites do not need to change the
+variables within this script.
+.SH CONFIGURATION
+An example script can be found in
+\fB/opt/SUNWsamfs/examples/ssi.sh\fR.
+This script, or a user created script, must be copied to 
+\fB/etc/opt/SUNWsamfs/scripts/ssi.sh\fR
+.LP
+It is assumed that the site has the server daemons (CSI and ACSLM)
+configured and operating with the STK library.
+.LP
+The following environment variables are defined in the 
+shell script supplied in
+\fB/opt/SUNWsamfs/examples/ssi.sh\fR:
+.TP 8
+.B CSI_TCP_RPCSERVICE
+This variable is used to define whether the CSI operates as a TCP RPC
+Server. This environmental variable must be set to TRUE for the firewall-secure
+CSC. The firewall-secure ACSLS applications packets are all sent using 
+the TCP network transport.
+
+.TP
+.B CSI_UDP_RPCSERVICE
+This variable is used to define whether the CSI operates as a UDP RPC 
+server. This environmental variable must be set to FALSE for the 
+firewall-secure CSC. The firewall-secure ACSLS applications packets are 
+all sent using the TCP network transport.
+
+The CSI can operate as a TCP and a UDP server simultaneously.
+.TP
+.B CSI_CONNECT_AGETIME
+This defines the value of the maximum age of pending requests in the CSI's
+request queue. This variable is accessed as a "C" character array datatype,
+expressed as an integer number of seconds. A value of 172800 indicates
+two days. 
+
+Messages older than this value are removed from the queue and the CSI
+sends an entry to the Event Log when this happens.
+.TP
+.B CSI_RETRY_TIMEOUT
+This defines the minimum amount of time, in seconds, that the CSI
+will wait between attempts to establish a network connection.
+.TP
+.B CSI_RETRY_TRIES
+This variable defines the number of attempts the CSI will make to
+transmit a message. Pending messages are discarded if a connection
+cannot be established within the defined number of tries. 
+
+The CSI_RETRY_TIMEOUT and CSI_RETRY_TRIES together determine the minimum 
+total time the CSI will attempt to send a message. 
+.SH SEE ALSO
+.BR sam-robotsd (1M).
+.PP
+.BR stk (7),
+.BR ssi_so (7).

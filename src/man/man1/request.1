@@ -1,0 +1,278 @@
+.\" $Revision: 1.18 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH request 1 "7 Aug 2001"
+.SH NAME
+request \- Creates a \%removable-media file
+.SH SYNOPSIS
+\fBrequest\fR
+[\fB\-f\fI\ file_id\fR]
+[\fB\-g\fI\ group\fR]
+[\fB\-i\fI\ information\fR]
+\fB\-m\fI\ media\fR
+[\fB\-N\fR] 
+[\fB\-n\fI\ version\fR]
+[\fB\-o\fI\ owner\fR]
+[\fB\-p\fI\ position1\fR[\fB/\fIposition2\fB/\fIposition3\fB/\fR .\|.\|.\|]]
+[\fB\-s\fI\ size\fR]
+[\fB\-v\fI\ vsn1\fR[\fB/\fIvsn2\fB/\fIvsn3\fB/\fR .\|.\|.\|]]
+\fIfile\fR
+.PP
+\fBrequest\fR
+[\fB\-f\fI\ file_id\fR]
+[\fB\-g\fI\ group\fR]
+[\fB\-i\fI\ information\fR]
+[\fB\-l\fI\ vsnfile\fR]
+\fB\-m\fI\ media\fR
+[\fB\-N\fR] 
+[\fB\-n\fI\ version\fR]
+[\fB\-o\fI\ owner\fR]
+[\fB\-s\fI\ size\fR]
+\fIfile\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The \fIrequest\fR command creates a \%removable-media file,
+which is a file that resides only on one or more removable media
+cartridges.  Such a file does not reside in online magnetic disk storage.
+Removable media files allow you to read data from tape
+or \%magneto-optical cartridges directly to memory.
+Creating removable media files allows you to use
+cartridges in
+an automated library without having them under the control of
+the storage and archive manager (SAM).  In addition, removable
+media files
+can also be used for disaster recovery purposes.
+.PP
+A removable media file can be written to more than one volume
+if the file is large.  This creates a \fIvolume overflow\fR file.
+.PP
+The \fB\-m\fI\ media\fR option to this command specifies the
+media type and is a required option.
+.PP
+The Volume Serial Name (VSN) for the removable media file
+specifies the cartridges to which the removable media file will
+be written.  The VSNs can be specified in one of two ways:
+.TP 3
+\(bu
+By specifying the \fB\-v\fI\ vsn\fR option.
+If you specify the VSN using this option, you can also use
+the \fB\-p\fR option to supply
+the position of the removable media file on the media.  You must be
+superuser to specify the \fB\-p\fR option.
+.TP
+\(bu
+By specifying the \fB\-l\fI\ vsnfile\fR option.
+.PP
+Note that you cannot specify both the \fB\-v\fR option and
+the \fB\-l\fR option on the same \fBrequest\fR command line.
+.PP
+When an application writes to a removable media file by using the
+\fBopen\fR(2) system call with the \fIoflag\fR argument set
+to \fBO_WRONLY\fR, \fBO_RDWR\fR, \fBO_CREAT\fR, or \fBO_TRUNC\fR,
+the Sun StorEdge \%SAM-FS software is
+updated to reflect the data's position on the cartridge.  Subsequent
+read access using the \fBopen\fR(2) call with \fIoflag\fR
+set to \fBO_RDONLY\fR results
+in a read of the data written during creation.
+.SH OPTIONS
+This command accepts several options.  In the following list, the
+options are grouped according to function.
+.SH General Options
+The following general options can be used for any type
+of \%removable-media cartridge:
+.TP 10
+\fB\-l\fI\ vsnfile\fR
+Specifies the name of the file that contains the list of VSNs.
+.sp
+Within a \fIvsnfile\fR, VSNs must be specified one per line.
+Each line must contain a VSN name.
+The \fIvsn\fR cannot be more than 6 characters in
+length for a tape or 31 characters in length for \%magneto-optical media.
+.sp
+You can also specify the position within the \fIvsnfile\fR.
+If specifying the position,
+begin each line with the VSN name, followed by a space character,
+and followed by a decimal or hexadecimal number that indicates
+the position on the medium.  If specifying in hexadecimal, precede
+the position indicator by \fBOx\fR characters.
+.sp
+Each VSN in the \fIvsnfile\fR must reside in a local automated library.
+.sp
+This option cannot be specified in conjunction with the \fB\-v\fR option.
+.TP 10
+\fB\-m\fI\ media\fR
+Specifies the media type.  For \fImedia\fR, specify a media type
+as described on the \fBmcf\fR(4) man page.  This is a required
+option.
+.TP
+\fB\-p\fI\ position1\fR[\fB/\fIposition2\fB/\fIposition3\fB/\fR .\|.\|.\|]
+A number that specifies the position of the removable media file
+on the cartridge.
+This option must be specified in conjunction with the \fB\-v\fR option.
+The number of \fIposition\fRs specified must match the number
+of \fIvsn\fRs specified on the \fB\-v\fR option.
+.sp
+The \fIposition\fR can be
+specified in decimal or hexadecimal.  To specify hexadecimal, precede
+the position with \fB0x\fR.
+If specified, the media is positioned to \fIposition\fR on each VSN.
+The number of \fIposition\fRs specified must match the number of VSNs.
+.sp
+Note that
+Sun StorEdge \%SAM-FS utilities usually
+print the position of the file on the medium in hexadecimal.
+You must be superuser to specify a \fIposition\fR.
+.TP
+\fB\-s\fI\ size\fR
+Specifies the required size in bytes.
+When \fIfile\fR is opened for write access,
+sufficient space on the media must be available
+before the first write is done.
+.TP
+\fB\-v\fI\ vsn1\fR[\fB/\fIvsn2\fB/\fIvsn3\fB/\fR .\|.\|.\|]
+Specifies one or more VSNs to which the removable media
+will be written.
+The \fIvsn\fR cannot be more than 6 characters in
+length for a tape or 31 characters in length for \%magneto-optical media.
+.sp
+If more than one VSN is specified,
+separate them with slash characters (\fB/\fR).
+.sp
+If you want to specify the position on the media, use
+the \fB\-p\fI position\fR argument in conjunction with this argument.
+.sp
+Each \fIvsn\fR specified must reside in a local automated library.
+.sp
+This option cannot be specified in conjunction with the \fB\-l\fR option.
+.TP
+\fIfile\fR
+Specifies the name of the file to be written to removable media.
+This can be a full path name.
+The file must reside in a
+Sun StorEdge \%SAM-FS file system.
+After the \%removable-media file is created, subsequent access to
+the file results in access to the specified \%removable-media cartridge.
+.SH Tape Media Options
+For tape files, each write to the media results in one tape block.
+Each read of the media returns either a tape block or the
+first \%buffer-size bytes of the tape block, whichever is smaller.
+The buffer size must be equal
+to or larger than the tape block in order to read the entire block.
+.PP
+The following option can be used only if the removable media
+file is being written to tape media:
+.TP
+\fB\-N\fR
+Specifies that the media is a foreign tape.
+That is, the tape was not written in a
+Sun StorEdge \%SAM-FS environment.
+The tape must be barcoded, write protected,
+opened for read access only, and positioned to 0.
+.SH Magneto-Optical Media Options
+The following options can be used only if the removable media
+file is being written to \%magneto-optical media:
+.TP 10
+\fB\-f\fI\ file_id\fR
+Specifies the recorded file name of the file
+to access (up to 31 characters).
+The default is the file name portion (basename) of the path specified
+by \fIfile\fR.  For requests in which \fIfile\fR is greater than
+31 characters, no default exists, and the \fB\-f\fR argument is required.
+.TP
+\fB\-n\fI\ version\fR
+Version number of the file.  If \fIversion\fR
+is 0, the most current version is used for read access, and
+a new version is created for write access.  The default value
+is 0.  For write access, the \fIfile\fR is updated
+with the new version number.
+.TP
+\fB\-o\fI\ owner\fR
+Specifies the owner.  Can be up to 31 characters.
+The default is the current user.
+For \%magneto-optical disk files that are to be used to read
+archive images, the owner specification must be \fB\-o\ sam_archive\fR.
+.TP
+\fB\-g\fI\ group\fR
+Specifies the group identifier.  Can be up to 31 characters.
+The default is the user's current group.
+For \%magneto-optical disk files that are to be used to read
+archive images, the group specification must be \fB\-g\ sam_archive\fR.
+.TP
+\fB\-i\fI\ information\fR
+Specified a user information string.
+The information string is written in the file's label at creation
+time.  Can be up to 159 characters.
+.SH EXAMPLES
+Example 1.
+This example command is used to recover data from
+a \%tape-resident archive file at position 286 hexadecimal
+on DLT volume \fBYYY\fR:
+.PP
+.nf
+.ft CO
+request -m lt -v YYY -p 0x286 /sam1/xxx
+.fi
+.ft
+.PP
+Example 2.  This example command shows how to specify multiple VSNs:
+.PP
+.nf
+.ft CO
+request -m lt -v YYY/VVV/WWW -p 0x286/0x3f07/0x0x4 /sam1/xox
+.fi
+.ft
+.PP
+Example 3.  This example has the same effect as the command line
+in Example 2, but it uses the \fB\-l\fR option:
+.PP
+.nf
+.ft CO
+request -m lt -l vsns /sam1/xox
+.ft
+.fi
+.PP
+File \fBvsns\fR is as follows:
+.PP
+.nf
+.ft CO
+YYY 0x286
+VVV 0x3f07
+WWW 0x0x4
+.fi
+.ft
+.SH SEE ALSO
+\fBbasename\fR(1).
+.PP
+\fBopen\fR(2).
+.PP
+\fBmcf\fR(4).
+.SH NOTES
+\%Removable-media files are not supported over NFS.
+
