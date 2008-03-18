@@ -2868,13 +2868,14 @@ Predicate *pred_ptr)
 
 	num_mins = pred_ptr->args.info.l_val;
 
-	if (SS_ISSAMFS(sb->attr) &&  SS_ISREADONLY(sb->attr) &&
-			!S_ISDIR(sb->st_mode) &&
-			(((sb->rperiod_start_time/60) +
-			sb->rperiod_duration) >=
-			((curr_time/60) + num_mins)) ||
-			(sb->rperiod_duration == 0)) {
-		return (true);
+	if (SS_ISSAMFS(sb->attr) && SS_ISREADONLY(sb->attr) &&
+	    !S_ISDIR(sb->st_mode)) {
+		if ((((sb->rperiod_start_time/60) +
+		    sb->rperiod_duration) >=
+		    ((curr_time/60) + num_mins)) ||
+		    (sb->rperiod_duration == 0)) {
+			return (true);
+		}
 	}
 	return (false);
 }
