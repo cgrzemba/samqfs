@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.144 $"
+#pragma ident "$Revision: 1.145 $"
 
 #include "sam/osversion.h"
 
@@ -730,6 +730,8 @@ sam_make_ino(
 		if (pip->di.status.b.worm_rdonly &&
 		    (pip->di.version >= SAM_INODE_VERS_2)) {
 			ip->di2.rperiod_duration = pip->di2.rperiod_duration;
+			ip->di2.rperiod_start_time =
+			    pip->di2.rperiod_start_time;
 		}
 	} else {
 		ip->di.status.bits = pip->di.status.bits & SAM_INHERIT_MASK;
