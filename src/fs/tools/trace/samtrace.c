@@ -7,7 +7,7 @@
  * Syntax:
  *	samtrace [-d corefile -n namelist] [-k #] [-O file] [-I file] \
  *				[-b bufs] -c -f [-i file] [-p seconds]
- *				-s -v -V [-T ticks]
+ *				[-t] [-s] [-v] [-V] [-T ticks]
  *
  * where:
  *  -d corefile The name of the corefile containing an
@@ -28,6 +28,9 @@
  *
  *  -V Verbose option, including inode free and hash chains.
  *		Includes -v output.
+ *
+ *  -t Suppress trace output.  Only table pointers are printed.
+ *		Typically -t would be used along with -v or -V.
  *
  *  -f Decode flags in trace.
  *
@@ -80,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.155 $"
+#pragma ident "$Revision: 1.156 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -273,6 +276,7 @@ int	trace_count;
 int	sam_amld = 0;		/* lowercase s sam_amld cmd queue */
 int	verbose = 0;		/* lowercase v medium verbose */
 int	Verbose = 0;		/* uppercase V full verbose */
+int	tracesuppress = 0;	/* lowercase t no trace */
 int	Decode = 0;		/* lowercase f flag decode */
 int	Dump = 0;		/* dump disk trace */
 int	Undump = 0;		/* read disk trace */
@@ -361,7 +365,7 @@ main(int argc, char *argv[])
 	 *	samtrace -i file [-f]
 	 */
 
-#define	OPT_STR		"b:c:d:fi:I:k:n:O:p:sT:vV"
+#define	OPT_STR		"b:c:d:fi:I:k:n:O:p:stT:vV"
 
 	while ((k = getopt(argc, argv, OPT_STR)) != EOF) {
 		switch (k) {
@@ -429,6 +433,10 @@ main(int argc, char *argv[])
 			Verbose = 1;
 			verbose = 1;
 			break;
+		/* -t */
+		case 't':
+			tracesuppress = 1;
+			break;
 #ifdef sun
 		/* -k */
 		case 'k':
@@ -460,7 +468,7 @@ main(int argc, char *argv[])
 	    (Cundump && (kmem || ksyms || sam_amld || verbose)) ||
 	    ((Cundump || Dump || Undump) && (StopAfter || TraceInterval))) {
 		fprintf(stderr, "Usage:\n\t"
-		    "%s [-d corefile -n namelist] [-s] [-v] [-V] [-f]\n",
+		    "%s [-d corefile -n namelist] [-s] [-v] [-V] [-t] [-f]\n",
 		    argv[0]);
 		fprintf(stderr, "\t%s -k # [-s] [-v] [-V] [-f]\n", argv[0]);
 		fprintf(stderr, "\t%s -O file\n", argv[0]);
@@ -828,14 +836,16 @@ main(int argc, char *argv[])
 		trace_count = j;
 	}
 
-	if (trace_count != 0) {
-		if (Dump) {
-			dump_sam_trace(tfile, traces, trace_count);
+	if (!tracesuppress) {
+		if (trace_count != 0) {
+			if (Dump) {
+				dump_sam_trace(tfile, traces, trace_count);
+			} else {
+				print_sam_trace(traces, trace_count);
+			}
 		} else {
-			print_sam_trace(traces, trace_count);
+			printf("Trace buffer is empty.\n");
 		}
-	} else {
-		printf("Trace buffer is empty.\n");
 	}
 
 #ifdef linux

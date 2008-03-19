@@ -1,4 +1,4 @@
-.\" $Revision: 1.22 $
+.\" $Revision: 1.23 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -39,6 +39,9 @@ samtrace \- Dumps the Sun StorEdge QFS, Sun StorEdge \%SAM-FS, or Sun \%SAM-QFS 
 ]
 [
 .B \-s
+]
+[
+.B \-t
 ]
 [
 .B \-v
@@ -172,6 +175,11 @@ between reads of the kernel trace buffer to \fIticks\fR scheduler ticks.
 The contents of the kernel trace buffers are by default copied
 to a \fBsamtrace\fR buffer whenever the trace buffer fills half-way,
 or 100 ticks (1 second) has passed, whichever occurs first.
+.TP
+.B \-t
+Suppress trace output.  When specified alone, displays only table
+address information.  Typically used in conjunction
+with -v or -V to see verbose information without traces.
 .TP
 .B \-v
 Verbose option, excluding inode free and hash chains.
