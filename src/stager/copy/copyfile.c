@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.101 $"
+#pragma ident "$Revision: 1.102 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -325,7 +325,12 @@ CopyFiles(void)
 			}
 
 			if (GET_FLAG(Stream->flags, SR_UNAVAIL)) {
-				rejectRequest(ENODEV, B_TRUE);
+				if (IS_VSN_BADMEDIA(
+				    ((VsnInfo_t *)&Stream->vi))) {
+					rejectRequest(ENOSPC, B_TRUE);
+				} else {
+					rejectRequest(ENODEV, B_TRUE);
+				}
 			} else {
 				rejectRequest(0, B_TRUE);
 			}

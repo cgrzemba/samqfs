@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.93 $"
+#pragma ident "$Revision: 1.94 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1341,6 +1341,7 @@ findResources(
 			} else {
 				THREAD_UNLOCK(stream);
 				ErrorStream(stream, ENODEV);
+				THREAD_LOCK(stream);
 			}
 
 		} else {
@@ -1352,6 +1353,29 @@ findResources(
 		}
 		return (priority);
 	}
+
+	/*
+	 * Check bad media.
+	 */
+	if (IS_VSN_BADMEDIA(vi)) {
+		priority = SP_noresources;
+
+		SetErrno = ENOSPC;	/* Set errno for trace */
+		Trace(TR_ERR, "Volume '%s.%s' is bad media",
+		    sam_mediatoa(file->ar[copy].media),
+		    file->ar[copy].section.vsn);
+
+		if (GET_FLAG(file->flags, FI_DCACHE)) {
+			SET_FLAG(stream->flags, SR_UNAVAIL);
+			priority = SP_start;
+		} else {
+			THREAD_UNLOCK(stream);
+			ErrorStream(stream, ENOSPC);
+			THREAD_LOCK(stream);
+		}
+		return (priority);
+	}
+
 	CLEAR_FLAG(stream->flags, SR_WAIT);
 	ASSERT(strcmp(stream->vi.vsn, stream->vsn) == 0);
 
