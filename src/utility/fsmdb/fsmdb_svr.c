@@ -40,6 +40,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <rpc/xdr.h>
+#include <stdarg.h>
 #include "mgmt/fsmdb_int.h"
 #include "mgmt/fsmdb.h"
 #include "mgmt/file_metrics.h"
@@ -81,6 +82,7 @@ static void fsm_free_file_details(filedetails_t *details);
 
 /* thread to clean up any aborted deletes */
 static void *finish_partial_deletes(void *arg);
+static void *do_checkpoint(void *arg);
 
 /*  Globals */
 boolean_t		do_daemon = TRUE;
@@ -88,6 +90,11 @@ pthread_attr_t		pattr;
 pthread_mutex_t		glock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t		quitcond = PTHREAD_COND_INITIALIZER;
 boolean_t		stopserver = FALSE;
+
+/* mutex and condition for checkpoint thread */
+pthread_mutex_t		ckptmutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t		ckptcond = PTHREAD_COND_INITIALIZER;
+int			active = 0;
 
 /* list of known file systems */
 fs_entry_t		*fs_entry_list = NULL;
@@ -119,6 +126,7 @@ main(int argc, char *argv[])
 	flock64_t	flk;
 	pthread_t	tid;
 	int		logfd = -1;
+	char		*errpfx = "main";
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
 		switch (c) {
@@ -198,7 +206,7 @@ main(int argc, char *argv[])
 		fsmdb_errFilep = fdopen(logfd, "a+");
 	}
 
-	fsmdb_log_err(dbEnv, NULL, "fsmdb starting");
+	LOGERR("fsmdb starting");
 
 	/* all threads we create should be detached */
 	(void) pthread_attr_init(&pattr);
@@ -212,16 +220,14 @@ main(int argc, char *argv[])
 	 */
 	st = mkdirp(fsmdbdir, 0655);
 	if ((st != 0) && (errno != EEXIST)) {
-		fsmdb_log_err(dbEnv, NULL,
-		    "Could not open database dir "fsmdbdir);
+		LOGERR("Could not open database dir %s", fsmdbdir);
 		return (st);
 	}
 
 	/* lock so multiple db processes don't start */
 	lockfd = open(fsmdbdir"/.lk", O_WRONLY|O_CREAT, 0655);
 	if (lockfd == -1) {
-		fsmdb_log_err(dbEnv, NULL,
-		    "Could not lockdatabase dir "fsmdbdir);
+		LOGERR("Could not lockdatabase dir %s", fsmdbdir);
 		return (errno);
 	}
 
@@ -233,8 +239,7 @@ main(int argc, char *argv[])
 	if (st == -1) {
 		if (errno == EAGAIN) {
 			/* already locked */
-			fsmdb_log_err(dbEnv, NULL,
-			    "fsmdb process already running");
+			LOGERR("fsmdb process already running");
 			st = 0;
 		}
 		goto done;
@@ -264,15 +269,20 @@ main(int argc, char *argv[])
 	unlink(fsmdbdoor);
 	st = mknod(fsmdbdoor, 0655, 0);
 	if (st == -1) {
+		st = errno;
 		(void) pthread_rwlock_unlock(&fslistlock);
+		LOGERR("Could not create door.");
 		goto done;
 	}
 
 	st = fattach(doorfd, fsmdbdoor);
 	if (st == -1) {
-		if (errno == EBUSY) {
+		st = errno;
+		if (st == EBUSY) {
 			/* shouldn't happen - another process got here first */
 			st = 0;
+		} else {
+			LOGERR("Could not attach to door %d", st);
 		}
 		(void) pthread_rwlock_unlock(&fslistlock);
 		goto done;
@@ -281,15 +291,20 @@ main(int argc, char *argv[])
 	/* get the database stuff running */
 	st = open_db_env(fsmdbdir);
 	if (st != 0) {
+		LOGERR("Could not open the DB environment %d", st);
 		(void) pthread_rwlock_unlock(&fslistlock);
 		goto done;
 	}
 
 	st = open_vsn_db();
 	if (st != 0) {
+		LOGERR("Could not open the VSN DB %d", st);
 		(void) pthread_rwlock_unlock(&fslistlock);
 		goto done;
 	}
+
+	/* start the checkpoint thread */
+	pthread_create(&tid, &pattr, do_checkpoint, NULL);
 
 	/* ready to work now */
 	(void) pthread_rwlock_unlock(&fslistlock);
@@ -306,6 +321,7 @@ main(int argc, char *argv[])
 
 done:
 	/* TODO:  wait for all tasks to end */
+	LOGERR("fsmdb exiting with status %d", st);
 
 	/* don't let any more calls in */
 	door_revoke(doorfd);
@@ -333,6 +349,7 @@ handle_signal(void *arg)	/* ARGSUSED */
 	int		signum;
 #endif	/* __lint */
 	sigset_t	mask;
+	char		*errpfx = "handle_signal";
 
 	(void) sigemptyset(&mask);
 	(void) sigaddset(&mask, SIGINT);
@@ -397,10 +414,11 @@ fsmsvr(
 	delete_snap_t		*delargs = NULL;
 	pthread_t		tid;
 	char			logbuf[MAXPATHLEN * 2];
-
+	char			*errpfx = "fsmsvr";
 
 	if (inargs == NULL) {
 		st = EINVAL;
+		LOGERR("No arguments received");
 		goto done;
 	}
 
@@ -417,10 +435,24 @@ fsmsvr(
 		case IMPORT_SAMFS:
 			if ((inargs->u.i.fsname[0] == '\0') ||
 			    (inargs->u.i.snapshot[0] == '\0')) {
+				LOGERR(
+				    "missing filesystem name or recovery "
+				    "point name");
 				st = EINVAL;
 				break;
 			}
+			LOGERR(
+			    "Importing %s for filesystem %s",
+			    inargs->u.i.snapshot,
+			    inargs->u.i.fsname);
+
 			st = get_fs_entry(inargs->u.i.fsname, TRUE, &fsent);
+
+			LOGERR(
+			    "Finished indexing %s, status = %d",
+			    inargs->u.i.snapshot,
+			    st);
+
 			if (st != 0) {
 				break;
 			}
@@ -432,26 +464,50 @@ fsmsvr(
 			if ((inargs->u.i.fsname[0] == '\0') ||
 			    (inargs->u.i.snapshot[0] == '\0')) {
 				st = EINVAL;
+				LOGERR(
+				    "missing filesystem name or metrics name");
 				break;
 			}
+
+			LOGERR("Gathering metrics for %s", inargs->u.i.fsname);
 
 			st = get_fs_entry(inargs->u.i.fsname, TRUE, &fsent);
+
 			if (st != 0) {
+				LOGERR("Internal error %d", st);
 				break;
 			}
 
+			/*
+			 * make sure we checkpoint here too.  Gathering metrics
+			 * uses in-memory databases, which end up generating
+			 * transaction logs.
+			 */
+			incr_active();
+
 			st = walk_live_fs(fsent, inargs->u.i.snapshot);
+
+			decr_active();
+
 			done_with_db_task(fsent);
+			LOGERR(
+			    "Finished gathering metrics for %s, status = %d",
+			    inargs->u.i.fsname, st);
 
 			break;
 
 		case CHECK_VSN:
 			if (inargs->u.c[0] == '\0') {
+				LOGERR("No VSN specified");
 				st = EINVAL;
 				break;
 			}
 
 			st = db_check_vsn_inuse(inargs->u.c);
+
+			LOGERR(
+			    "Check VSN %s complete, status = %d",
+			    inargs->u.c, st);
 
 			break;
 		case GET_ALL_VSN:
@@ -460,8 +516,11 @@ fsmsvr(
 				break;
 			}
 
+			LOGERR("Listing VSNs");
+
 			st = db_list_all_vsns(&i, &buf);
 			if (st != 0) {
+				LOGERR("List VSNs failed %d", st);
 				break;
 			}
 
@@ -476,19 +535,29 @@ fsmsvr(
 			if ((inargs->u.i.fsname[0] == '\0') ||
 			    (inargs->u.i.snapshot[0] == '\0')) {
 				st = EINVAL;
+				LOGERR(
+				    "missing filesystem name or recovery "
+				    "point name");
 				break;
 			}
 			if (outfile == NULL) {
 				st = EBADF;
 				break;
 			}
+
+			LOGERR(
+			    "Getting VSNs for filesystem %s recovery point %s",
+			    inargs->u.i.fsname, inargs->u.i.snapshot);
+
 			st = get_fs_entry(inargs->u.i.fsname, FALSE, &fsent);
-			if (st != 0) {
-				break;
+			if (st == 0) {
+				st = db_get_snapshot_vsns(fsent,
+				    inargs->u.i.snapshot, &num, &buf);
+				done_with_db_task(fsent);
 			}
-			st = db_get_snapshot_vsns(fsent, inargs->u.i.snapshot,
-			    &num, &buf);
-			done_with_db_task(fsent);
+
+			LOGERR("Getting VSNs in recovery point %s complete %d",
+			    inargs->u.i.snapshot, st);
 
 			if (st != 0) {
 				break;
@@ -503,6 +572,7 @@ fsmsvr(
 			break;
 		case GET_FS_METRICS:
 			if (inargs->u.m.fsname[0] == '\0') {
+				LOGERR("No filesystem specified");
 				st = EINVAL;
 				break;
 			}
@@ -511,6 +581,10 @@ fsmsvr(
 				st = EBADF;
 				break;
 			}
+			LOGERR(
+			    "Get Metrics for filesystem %s",
+			    inargs->u.m.fsname);
+
 			st = get_fs_entry(inargs->u.m.fsname, FALSE, &fsent);
 			if (st != 0) {
 				break;
@@ -518,6 +592,9 @@ fsmsvr(
 			st = generate_xml_fmrpt(fsent, outfile,
 			    inargs->u.m.rptType, inargs->u.m.start,
 			    inargs->u.m.end);
+
+			LOGERR("Finished getting metrics for %s, status = %d",
+			    inargs->u.m.fsname, st);
 
 			done_with_db_task(fsent);
 
@@ -533,12 +610,21 @@ fsmsvr(
 				break;
 			}
 
+			LOGERR("Listing recovery points for %s", inargs->u.c);
+
 			st = db_get_snapshots(fsent, &num, &buf);
 			done_with_db_task(fsent);
 
 			if (st != 0) {
+				LOGERR(
+				    "Failed to get recovery points, "
+				    "status = %d",
+				    st);
 				break;
 			}
+
+			LOGERR("Finished getting recovery points for %s",
+			    inargs->u.c);
 
 			if (buf != NULL) {
 				(void) fprintf(outfile, "%s", buf);
@@ -551,15 +637,25 @@ fsmsvr(
 		case DELETE_SNAPSHOT:
 			if ((inargs->u.i.fsname[0] == '\0') ||
 			    (inargs->u.i.snapshot[0] == '\0')) {
+				LOGERR("Missing filesystem name or "
+				    "recovery point");
 				st = EINVAL;
 				break;
 			}
+
+			LOGERR(
+			    "Removing index for recovery point %s "
+			    "for filesystem %s",
+			    inargs->u.i.snapshot, inargs->u.i.fsname);
+
 			st = get_fs_entry(inargs->u.i.fsname, FALSE, &fsent);
 			if (st != 0) {
 				break;
 			}
 			delargs = malloc(sizeof (delete_snap_t));
 			if (delargs == NULL) {
+				LOGERR(
+				    "Cannot delete recovery point, no memory");
 				st = ENOMEM;
 				done_with_db_task(fsent);
 				break;
@@ -591,8 +687,16 @@ fsmsvr(
 
 			buflen = 0;
 
+			LOGERR("Getting recovery point status for %s",
+			    inargs->u.c);
+
 			st = db_get_snapshot_status(fsent, &num, &buf, &buflen);
 			done_with_db_task(fsent);
+
+			LOGERR(
+			    "Finished get recovery point status for %s, "
+			    "status = %d",
+			    inargs->u.c, st);
 
 			if (st != 0) {
 				break;
@@ -621,10 +725,17 @@ fsmsvr(
 
 			lstp = NULL;
 
+			LOGERR("Listing recovery point files for %s",
+			    inargs->u.l.snapshot);
+
 			st = db_list_files(fsent, l.snapshot, l.startDir,
 			    l.startFile, l.howmany, l.which_details,
 			    l.restrictions, l.includeStart,
 			    &ret.count, &lstp);
+
+			LOGERR(
+			    "Finished list recovery point files for %s st = %d",
+			    inargs->u.l.snapshot, st);
 
 			done_with_db_task(fsent);
 
@@ -653,11 +764,17 @@ fsmsvr(
 				break;
 			}
 
+			LOGERR("Remove DB for filesystem %s", inargs->u.c);
+
 			db_remove_filesys(fsent);
+
+			LOGERR("Removed DB for filesystem %s", inargs->u.c);
+
 			done_with_db_task(fsent);
 			break;
 
 		default:
+			LOGERR("Inavalid operation %d", inargs->task);
 			st = ENOTSUP;
 			break;
 	}
@@ -682,10 +799,8 @@ done:
 	ret.status = st;
 
 	if (ret.status != 0) {
-		snprintf(logbuf, sizeof (logbuf),
-		    "Completed task type = %d, status = %d",
+		LOGERR("Completed task type = %d, status = %d",
 		    (inargs != NULL) ? inargs->task : -1, ret.status);
-		fsmdb_log_err(dbEnv, NULL, logbuf);
 	}
 
 	door_return((char *)&ret, sizeof (fsmdb_ret_t), NULL, 0);
@@ -1071,14 +1186,97 @@ fsmdb_log_err(
 {
 	char		timbuf[MAXPATHLEN];
 	time_t		logtime;
+	char		*pfxp = (char *)errpfx;
 
 	if (msg == NULL) {
 		return;
 	}
 
+	if (pfxp == NULL) {
+		pfxp = "";
+	}
+
 	logtime = time(NULL);
 	(void) cftime(timbuf, timefmt, &logtime);
-	(void) fprintf(fsmdb_errFilep, "%s [%ld]: %s\n", timbuf, fsmdb_pid,
-	    msg);
+	(void) fprintf(fsmdb_errFilep, "%s [%ld] %s: %s\n", timbuf, fsmdb_pid,
+	    pfxp, msg);
 	(void) fflush(fsmdb_errFilep);
+}
+
+void
+do_log_err(char *errpfx, char *fmt, ...)
+{
+	va_list		ap;
+	char		buf[2048];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof (buf), fmt, ap);
+	va_end();
+
+	fsmdb_log_err(dbEnv, errpfx, buf);
+}
+
+void
+incr_active(void)
+{
+	pthread_mutex_lock(&ckptmutex);
+	active++;
+	pthread_cond_signal(&ckptcond);
+	pthread_mutex_unlock(&ckptmutex);
+}
+
+void
+decr_active(void)
+{
+	pthread_mutex_lock(&ckptmutex);
+	active--;
+	pthread_cond_signal(&ckptcond);
+	pthread_mutex_unlock(&ckptmutex);
+}
+
+/*
+ *  function to periodically run dbEnv->checkpoint to keep the
+ *  number of transaction log files manageable.
+ */
+static void *
+do_checkpoint(void *arg)
+{
+	boolean_t	stopme = B_FALSE;
+	struct timespec	ts;
+	int		txnsize = (MEGA * 40) / KILO; /* sz in kb */
+	char		*errpfx = "ckpt";
+
+	/* 10 second sleeps while we're busy - may need to adjust this */
+	ts.tv_sec = 10;
+	ts.tv_nsec = 0;
+
+	pthread_mutex_lock(&glock);
+	stopme = stopserver;
+	pthread_mutex_unlock(&glock);
+
+	while (!stopme) {
+		/* Checkpoint if at least 40 MB of logs */
+		dbEnv->txn_checkpoint(dbEnv, txnsize, 0, 0);
+
+		/* sleep for a little while */
+		nanosleep(&ts, NULL);
+
+		/* is there anything to do? */
+		pthread_mutex_lock(&ckptmutex);
+		while (active <= 0) {
+			/*
+			 * we'll be woken up if an index
+			 * or delete request comes in.
+			 */
+			pthread_cond_wait(&ckptcond, &ckptmutex);
+
+			/* make sure the server isn't supposed to exit */
+			pthread_mutex_lock(&glock);
+			stopme = stopserver;
+			pthread_mutex_unlock(&glock);
+		}
+		pthread_mutex_unlock(&ckptmutex);
+	}
+
+	return (NULL);
 }

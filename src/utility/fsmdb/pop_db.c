@@ -103,18 +103,23 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 	int			med[4];
 	boolean_t		updinfo = FALSE;
 	char			errbuf[MAXPATHLEN + 1];
+	char			*errpfx = "index";
 
 	now = time(NULL);
 
 	if ((fsent == NULL) || (snappath == NULL)) {
+		LOGERR("No filesystem or recovery point specified");
 		return (EINVAL);
 	}
 
 	(void) pthread_mutex_lock(&fsent->statlock);
 	if (fsent->status == FSENT_DELETING) {
 		st = EINTR;
+		LOGERR("Request rejected for %s, deletion in progress",
+		    snappath);
 	} else {
 		(fsent->addtasks)++;
+		incr_active();
 	}
 	(void) pthread_mutex_unlock(&fsent->statlock);
 
@@ -126,6 +131,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 
 	st = set_snapshot(snappath, &dsp);
 	if (st != 0) {
+		LOGERR("Failed to read recovery point %s %d", snappath, st);
 		goto done;
 	}
 
@@ -136,6 +142,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 	len = sizeof (fsmsnap_t) + strlen(snapname);
 	snapdata = malloc(len);
 	if (snapdata == NULL) {
+		LOGERR("Out of memory");
 		goto done;
 	}
 	memset(snapdata, 0, len);
@@ -160,6 +167,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 		st = 0;
 		goto done;
 	} else if (st != 0) {
+		LOGERR("Error adding recovery point %s %d", snapname, st);
 		goto done;
 	}
 
@@ -169,6 +177,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 
 	st = add_file_path(fsent, txn, ".", TRUE, &filno, &parentid);
 	if (st != 0) {
+		LOGERR("addpath failed for '.' : %d", st);
 		st = -1;
 		goto done;
 	}
@@ -176,6 +185,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 	st = txn->commit(txn, 0);
 	txn = NULL;
 	if (st != 0) {
+		LOGERR("txn commit failed for '.' : %d", st);
 		goto done;
 	}
 
@@ -186,10 +196,17 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 		(void) pthread_mutex_lock(&fsent->statlock);
 		if (fsent->status == FSENT_DELETING) {
 			st = EINTR;
+			LOGERR("Index for %s interrupted for deletion",
+			    snapname);
 		}
 		(void) pthread_mutex_unlock(&fsent->statlock);
 		if (st != 0) {
 			goto done;
+		}
+
+		/* fnam can be NULL if the inode was a SAM special file */
+		if (fnam == NULL) {
+			continue;
 		}
 
 		if (strcmp(fnam, ".") == 0) {
@@ -200,6 +217,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 
 		st = dbEnv->txn_begin(dbEnv, NULL, &txn, 0);
 		if (st != 0) {
+			LOGERR("txn begin failed %d", st);
 			goto done;
 		}
 
@@ -211,6 +229,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 
 		st = add_file_path(fsent, txn, fnam, isdir, &filno, &parentid);
 		if (st != 0) {
+			LOGERR("addpath failed for %s : %d", fnam, st);
 			goto done;
 		}
 
@@ -220,6 +239,8 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 			    &pfvar);
 			if (st != 0) {
 				/* cleanup and get out */
+				LOGERR("Could not find parent dir for %s",
+				    fnam);
 				goto done;
 			}
 			filinfo.parent_mtime = pfvar.mtime;
@@ -243,6 +264,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 
 		CKPUT(dbp->put(dbp, txn, &key, &data, DB_NOOVERWRITE));
 		if (st != 0) {
+			LOGERR("Could not add filvar for %s %d", fnam, st);
 			goto done;
 		}
 
@@ -294,6 +316,8 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 			CKPUT(dbp->put(dbp, txn, &key, &data, 0));
 
 			if (st != 0) {
+				LOGERR("Could not add filinfo for %s %d",
+				    fnam, st);
 				goto done;
 			}
 		}
@@ -315,6 +339,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 
 			CKPUT(dbp->put(dbp, txn, &key, &data, DB_NODUPDATA));
 			if (st != 0) {
+				LOGERR("Could not add VSN for %s %d", fnam, st);
 				goto done;
 			}
 		}
@@ -322,6 +347,7 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 		st = txn->commit(txn, 0);
 		txn = NULL;
 		if (st != 0) {
+			LOGERR("txn commit failed for %s : %d", fnam, st);
 			goto done;
 		}
 
@@ -343,10 +369,6 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 		if ((count % 10000) == 0) {
 			time_t  pnow = time(NULL);
 
-			if ((count % 80000) == 0) {
-				dbEnv->txn_checkpoint(dbEnv, 0, 0, 0);
-			}
-
 			if (ckp == 0) {
 				ckp = now;
 			}
@@ -366,14 +388,14 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 done:
 	if (txn != NULL) {
 		if (st != 0) {
+			LOGERR("aborting final txn for %s", snapname);
 			txn->abort(txn);
 		} else {
+			LOGERR("committing final txn for %s", snapname);
 			txn->commit(txn, 0);
 		}
 	}
 	txn = NULL;
-
-	dbEnv->txn_checkpoint(dbEnv, 0, 0, 0);
 
 	/*
 	 * If we haven't been told to exit, keep the size small,
@@ -397,19 +419,14 @@ done:
 		endkey.data = &end;
 		startkey.size = endkey.size = FILVAR_DATA_OFF;
 
-#ifdef DO_DEBUG_PRINTF
-		fsmdb_log_err(dbEnv, NULL,
-		    "beginning compact after indexing %s",
+		LOGERR("beginning compact after indexing %s",
 		    snapdata->snapname);
-#endif
 
 		cst = (fsdb->snapfileDB)->compact((fsdb->snapfileDB), txn,
 		    &startkey, &endkey, &cstats, DB_FREE_SPACE, NULL);
 
 		if (cst != 0) {
-			snprintf(errbuf, sizeof (errbuf),
-			    "failed to compact database %d", cst);
-			fsmdb_log_err(dbEnv, NULL, errbuf);
+			LOGERR("failed to compact database %d", cst);
 		}
 #ifdef DO_DEBUG_PRINTF
 		snprintf(errbuf, sizeof (errbuf), "compact deadlocks: %d",
@@ -429,8 +446,6 @@ done:
 		fsmdb_log_err(dbEnv, NULL, errbuf);
 #endif
 	}
-
-	dbEnv->txn_checkpoint(dbEnv, 0, 0, 0);
 
 	/* done with the parts of this operation that need to be serialized */
 	if (locked) {
@@ -462,6 +477,10 @@ done:
 				snapdata->flags |= METRICS_AVAIL;
 
 				(void) db_update_snapshot(fsent, snapdata, len);
+				LOGERR("Metrics stored for %s", snapname);
+			} else {
+				LOGERR("Failed to store metrics for %s %d",
+				    snapname, st);
 			}
 		} else {
 			/* free any results we don't need */
@@ -474,6 +493,7 @@ done:
 	/* mark that we're done here */
 	(void) pthread_mutex_lock(&fsent->statlock);
 	(fsent->addtasks)--;
+	decr_active();
 	(void) pthread_cond_broadcast(&fsent->statcond);
 	(void) pthread_mutex_unlock(&fsent->statlock);
 
@@ -971,19 +991,10 @@ db_get_snapshots(fs_entry_t *fsent, uint32_t *nsnaps, char **snapnames)
 	}
 
 	dbp = fsent->fsdb->snapidDB;
-#if 0
-	st = dbEnv->txn_begin(dbEnv, NULL, &txn, 0);
-	if (st != 0) {
-		return (st);
-	}
-#endif
 
 	/* Acquire a cursor for the database. */
 	if ((st = dbp->cursor(dbp, txn, &curs, 0)) != 0) {
 		dbp->err(dbp, st, "DB->cursor");
-#if 0
-		txn->abort(txn);
-#endif
 		return (1);
 	}
 
@@ -993,9 +1004,6 @@ db_get_snapshots(fs_entry_t *fsent, uint32_t *nsnaps, char **snapnames)
 	outbuf = malloc(len);
 	if (outbuf == NULL) {
 		curs->c_close(curs);
-#if 0
-		txn->abort(txn);
-#endif
 		return (-1);
 	}
 	/* init the buffer for strlcat */
@@ -1039,9 +1047,6 @@ db_get_snapshots(fs_entry_t *fsent, uint32_t *nsnaps, char **snapnames)
 
 	/* Close the cursor. */
 	curs->c_close(curs);
-#if 0
-	txn->commit(txn, 0);
-#endif
 
 	if (st == 0) {
 		*snapnames = outbuf;
@@ -1238,6 +1243,7 @@ db_delete_snapshot(void* arg)
 	uint64_t	count = 0;
 	uint64_t	dirIDs[MAX_DEL_DIRS];
 	int		dirc = 0;
+	char		*errpfx = "unindex";
 
 	if (delete_arg != NULL) {
 		fsent = delete_arg->fsent;
@@ -1245,8 +1251,11 @@ db_delete_snapshot(void* arg)
 	}
 
 	if ((fsent == NULL) || (snapname[0] == '\0')) {
+		LOGERR("Filesystem or recovery point not provided");
 		goto done;
 	}
+
+	incr_active();
 
 	(void) fix_snap_name(snapname);
 
@@ -1285,6 +1294,7 @@ db_delete_snapshot(void* arg)
 
 	if (st == DB_NOTFOUND) {
 		st = 0;
+		LOGERR("Recovery point %s not found", snapname);
 		goto done;
 	}
 
@@ -1329,6 +1339,7 @@ db_delete_snapshot(void* arg)
 		if (fsent->status != FSENT_OK) {
 			st = EINTR;
 			(void) pthread_mutex_unlock(&fsent->statlock);
+			LOGERR("Request interrupted");
 			break;
 		}
 		(void) pthread_mutex_unlock(&fsent->statlock);
@@ -1347,6 +1358,9 @@ db_delete_snapshot(void* arg)
 			st = get_all_snapids(fsent, snapinfo->snapid, &nsnaps,
 			    &snaparray);
 			if (st != 0) {
+				LOGERR(
+				    "Failed to get list of recovery points %d",
+				    st);
 				goto done;
 			}
 			ckarray = FALSE;
@@ -1356,6 +1370,7 @@ db_delete_snapshot(void* arg)
 		    snaparray, dirIDs, &dirc, &count);
 
 		if ((st != 0) && (st != DB_NOTFOUND)) {
+			LOGERR("Removing entries failed %d", st);
 			break;
 		}
 
@@ -1369,11 +1384,6 @@ db_delete_snapshot(void* arg)
 		if (st == DB_NOTFOUND) {
 			break;
 		}
-
-		/* checkpointing clears up old logs */
-		if ((count % 20000) == 0) {
-			dbEnv->txn_checkpoint(dbEnv, 0, 0, 0);
-		}
 	}
 
 	/* clean up any directory paths if we broke out prematurely. */
@@ -1384,9 +1394,6 @@ db_delete_snapshot(void* arg)
 	if (st == DB_NOTFOUND) {
 		st = 0;
 	}
-
-	/* final checkpoint */
-	dbEnv->txn_checkpoint(dbEnv, 0, 0, 0);
 
 	if (st != 0) {
 		goto done;
@@ -1424,6 +1431,8 @@ done:
 		free(snaparray);
 	}
 
+	decr_active();
+
 	done_with_db_task(fsent);
 
 	return (NULL);
@@ -1459,6 +1468,7 @@ db_curs_delete(
 	uint32_t	fl;
 	DB		*dbp;
 	DB		*fdb;
+	char		*errpfx = "rmidxnode";
 
 	dbp = fsdb->snapfileDB;
 	fdb = fsdb->filesDB;
@@ -1469,6 +1479,7 @@ db_curs_delete(
 	st = dbp->cursor(dbp, stxn, &curs, 0);
 	if (st != 0) {
 		stxn->abort(stxn);
+		LOGERR("Could not create cursor %d", st);
 		return (st);
 	}
 
@@ -1508,6 +1519,8 @@ db_curs_delete(
 		st = curs->c_del(curs, 0);
 		if (st != 0) {
 			/* don't remove any of the other bits */
+			LOGERR("Could not delete node %d, status = %d",
+			    filvar.fuid.fid, st);
 			continue;
 		}
 
@@ -1587,10 +1600,12 @@ db_curs_delete(
 	if ((st == 0) || (st == DB_NOTFOUND)) {
 		st2 = stxn->commit(stxn, 0);
 		if (st2 != 0) {
+			LOGERR("Failed to commit txn %d", st2);
 			st = st2;
 		}
 	} else {
 		stxn->abort(stxn);
+		LOGERR("Failed, status = %d", st);
 	}
 
 	return (st);
@@ -1703,6 +1718,7 @@ db_delete_path(fs_db_t *fsdb, DB_TXN *txn, uint64_t fid)
 	DBT		key;
 	DB		*dbp;
 	DB_TXN		*ftxn;
+	char		*errpfx = "rmpath";
 
 
 	if (fsdb == NULL) {
@@ -1724,6 +1740,7 @@ db_delete_path(fs_db_t *fsdb, DB_TXN *txn, uint64_t fid)
 	if (st == 0) {
 		st = ftxn->commit(ftxn, 0);
 	} else {
+		LOGERR("Failed, status = %d", st);
 		st = ftxn->abort(ftxn);
 	}
 

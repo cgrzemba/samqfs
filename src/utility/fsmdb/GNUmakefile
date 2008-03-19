@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -87,7 +87,7 @@ PROG_SRC = \
 	vsn.c
 
 PROG_LIBS = $(ALIGN) -L$(DEPTH)/lib/$(OBJ_DIR) \
-		-ladm -ldoor -ldb-4.4 -lgen -lz -lnsl -lpthread $(LIBSO)
+		-ladm -ldoor -ldb-4.4 -lgen -lz -lnsl -lrt -lpthread $(LIBSO)
 
 
 LNOPTS += -a -m -o$(LIB)

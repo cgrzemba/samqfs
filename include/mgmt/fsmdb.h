@@ -29,7 +29,7 @@
 #ifndef	_FSM_FSMDB_H_
 #define	_FSM_FSMDB_H_
 
-#pragma ident   "$Revision: 1.20 $"
+#pragma ident   "$Revision: 1.21 $"
 
 #include <sys/types.h>
 #include "db.h"
@@ -756,5 +756,13 @@ db_update_snapshot(
  */
 int
 walk_live_fs(fs_entry_t *fsent, char *mountpt);
+
+/* helpers for logging */
+void do_log_err(char *errpfx, char *fmt, ...);
+#define	LOGERR(...) do_log_err(errpfx, __VA_ARGS__)
+
+/* helpers for checkpointing */
+void incr_active(void);
+void decr_active(void);
 
 #endif /* _FSM_FSMDB_H_ */
