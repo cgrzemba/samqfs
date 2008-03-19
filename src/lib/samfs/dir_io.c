@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -502,6 +502,10 @@ writeon:
 		if (errflag == 0) {
 			UpdateCatalog(un, 0, CatalogMediaClosed);
 		} else {
+			if (errflag < 0) {
+				/* Response should be a valid errno. */
+				errflag = EIO;
+			}
 			eq = (un->fseq ? un->fseq : un->eq);
 			(void) CatalogSetFieldByLoc(eq, un->slot, un->i.ViPart,
 			    CEF_Status, CES_bad_media, 0);

@@ -44,7 +44,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -354,12 +354,20 @@ create_tape_eof(
 	}
 	mutex_unlock(&un->mutex);
 
+
 	/*
-	 * Only writing a tape mark.
+	 * If only writing a tape mark (tapenonstop), return here.
+	 * If error, log it and mark media as bad.
 	 */
 	if (process_wtm) {
-		return (0);
+		if (return_error) {
+			/* Unable to write TM */
+			DevLog(DL_ERR(3286), un->dt.tp.position);
+			set_bad_media(un);
+		}
+		return (return_error);
 	}
+
 	if (process_eox) {
 		if (get_media_type(un) == MEDIA_WORM) {
 			/* Flush the device buffer to tape */

@@ -568,6 +568,7 @@ $ *    SAM-QFS_notice_end
 3283 Clearing cleaning bit, drive is clean
 3284 Drive %d is encryption capable
 3285 Attempt to position while writing, position failed.
+3286 Unable to write TM at %#x
 
 4000 Common
 4001 Close %d, open_count = %d
