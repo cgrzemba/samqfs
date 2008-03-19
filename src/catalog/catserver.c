@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.109 $"
+#pragma ident "$Revision: 1.110 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -2147,15 +2147,6 @@ MoveCartridge(
 			ced->CeStatus |= CES_occupied;
 			SendCustMsg(HERE, 18020, VolStringFromCe(ce));
 		} else {
-			/*
-			 * The following check is for catalog entry found in
-			 * Historian and physical volume found in destination
-			 * library. Most likely case is direct attached
-			 * library with no mailbox.
-			 */
-			if (ce->CeEq == eq) {
-				ce->CeEq = Historian;
-			}
 			SendCustMsg(HERE, 18021, VolStringFromCe(ce), eq);
 		}
 
