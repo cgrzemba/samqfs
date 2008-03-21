@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 #endif
 
 #include "sam/osversion.h"
@@ -301,7 +301,8 @@ sam_clear_ino(
 			 * Linux does not use this code path to change
 			 * file size so this flush is not needed.
 			 */
-			if (vn_has_cached_data(SAM_ITOV(ip)) && !ip->stage_seg) {
+			if (vn_has_cached_data(SAM_ITOV(ip)) &&
+			    !ip->stage_seg) {
 				sam_flush_pages(ip, 0);
 			}
 #endif

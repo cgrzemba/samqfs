@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 #endif
 
 #include "sam/osversion.h"
@@ -394,7 +394,7 @@ sam_taskq_destroy(void)
 	 */
 
 	while (samgt.schedule.forw !=
-		    (sam_schedule_entry_t *)(void *)&samgt.schedule) {
+	    (sam_schedule_entry_t *)(void *)&samgt.schedule) {
 		sam_schedule_entry_t *entry;
 		timeout_id_t id;
 		clock_t remaining;

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.67 $"
+#pragma ident   "$Revision: 1.68 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1472,15 +1472,15 @@ dsk2rdsk(
 
 	*rdskpath = getfullrawname(devpath);
 	if (*rdskpath == NULL) {
-                Trace(TR_ERR, "out of memory in getfullrawname");
-                return (-1);
-        }
+		Trace(TR_ERR, "out of memory in getfullrawname");
+		return (-1);
+	}
 	if (strcmp(*rdskpath, "\0") == 0) {
-                Trace(TR_ERR, "Could not convert dsk to rawdsk");
+		Trace(TR_ERR, "Could not convert dsk to rawdsk");
 		free(*rdskpath);
 		*rdskpath = NULL;
-                return (-1);
-        }
+		return (-1);
+	}
 
 	Trace(TR_DEBUG, "dsk2rdsk:  returned %s", *rdskpath);
 

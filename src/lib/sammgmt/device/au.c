@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.48 $"
+#pragma ident	"$Revision: 1.49 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -424,7 +424,7 @@ au_t *au)
 	}
 
 	/*
-	 * Special case for global devices which don't seem to 
+	 * Special case for global devices which don't seem to
 	 * like the scsi inquiry- convert to a did device.
 	 */
 	if ((beg = strstr(au->path, "/dev/global/")) != NULL) {
@@ -432,7 +432,7 @@ au_t *au)
 		beg += 12;
 		strlcat(pathbuf, beg, sizeof (upath_t));
 		path = pathbuf;
-	} else { 
+	} else {
 		path = au->path;
 	}
 
