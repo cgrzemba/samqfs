@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -473,7 +473,7 @@ sam_fd_host_table_get(
 	}
 
 	/* Get pointer to superblock. */
-	if ((err = sam_fd_block_get(fd, SUPERBLK*SAM_DEV_BSIZE, (void *)&sb,
+	if ((err = sam_fd_block_get(fd, SUPERBLK, (void *)&sb,
 			sizeof (struct sam_sblk))) != 0) {
 		return (err);
 	}
