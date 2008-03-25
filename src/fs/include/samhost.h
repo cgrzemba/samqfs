@@ -35,7 +35,7 @@
 #define	SAM_HOST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 #endif
 
 #include "sam/types.h"
@@ -131,5 +131,6 @@ int SamGetSharedHostName(struct sam_host_table *host, int hostno,
 
 /* Get hosts file given file descriptor */
 int sam_fd_host_table_get(int fd, struct sam_host_table *htp);
+int sam_fd_host_table_get2(int fd, int htsize, struct sam_host_table *htp);
 
 #endif /* SAM_HOST_H */

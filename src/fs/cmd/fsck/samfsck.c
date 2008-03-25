@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 
 /* ----- Includes */
@@ -8717,7 +8717,8 @@ shared_fs_convert(struct sam_sblk *sbp)
 		    !SAM_CHECK_INODE_VERSION(hostino.di.version) ||
 		    hostino.di.version != sblk_version ||
 		    !S_ISREG(hostino.di.mode) ||
-		    hostino.di.rm.size != SAM_HOSTS_TABLE_SIZE ||
+		    (hostino.di.rm.size != SAM_HOSTS_TABLE_SIZE &&
+		    hostino.di.rm.size != SAM_LARGE_HOSTS_TABLE_SIZE) ||
 		    !hostino.di.status.b.on_large ||
 		    hostino.di.status.b.offline) {
 			error(0, 0, catgets(catfd, SET, 13928,
@@ -8750,24 +8751,49 @@ shared_fs_convert(struct sam_sblk *sbp)
 static int
 shared_server(struct devlist *dp, offset_t hblk, upath_t server)
 {
-	struct sam_host_table_blk hosts;
-	struct sam_host_table *hp = &hosts.info.ht;
+	struct sam_host_table_blk *hosts;
+	struct sam_host_table *hp;
 	upath_t hostname;
 	int err;
+	int htsize = SAM_HOSTS_TABLE_SIZE;
+
+	hosts = (struct sam_host_table_blk *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
+	if (hosts == NULL) {
+		error(0, ENOMEM, catgets(catfd, SET, 13902,
+		    "Read of shared fs hosts data failed"));
+		return (TRUE);
+	}
+	hp = &hosts->info.ht;
 
 	/*
 	 * Return TRUE if the hosts file is so hosed that we can't
 	 * determine who the server is.
 	 */
-	if (d_read(dp, (char *)&hosts, sizeof (hosts)/SAM_DEV_BSIZE, hblk)) {
+again:
+	if (d_read(dp, (char *)hosts, htsize/SAM_DEV_BSIZE, hblk)) {
 		error(0, 0, catgets(catfd, SET, 13902,
 		    "Read of shared fs hosts data failed"));
+		free(hosts);
 		return (TRUE);
+	}
+	if (hp->length > htsize) {
+		/*
+		 * Need to read a large hosts table.
+		 */
+		if (htsize == SAM_LARGE_HOSTS_TABLE_SIZE) {
+			error(0, 0, catgets(catfd, SET, 13903,
+			    "Bad hosts data -- see samsharefs(1M) to fix"));
+			free(hosts);
+			return (TRUE);
+		}
+		htsize = SAM_LARGE_HOSTS_TABLE_SIZE;
+		goto again;
 	}
 	if (hp->cookie == SAM_HOSTS_COOKIE) {
 		if (hp->version != SAM_HOSTS_VERSION4) {
 			error(0, 0, catgets(catfd, SET, 13903,
 			    "Bad hosts data -- see samsharefs(1M) to fix"));
+			free(hosts);
 			return (TRUE);
 		}
 	} else if (hp->cookie == 0) {
@@ -8775,22 +8801,26 @@ shared_server(struct devlist *dp, offset_t hblk, upath_t server)
 		    hp->version > SAM_HOSTS_VERSION_MAX) {
 			error(0, 0, catgets(catfd, SET, 13903,
 			    "Bad hosts data -- see samsharefs(1M) to fix"));
+			free(hosts);
 			return (TRUE);
 		}
 	} else {
 		error(0, 0, catgets(catfd, SET, 13903,
 		    "Bad hosts data -- see samsharefs(1M) to fix"));
+		free(hosts);
 		return (TRUE);
 	}
 	if (hp->length < sizeof (sam_host_table_t) ||
-	    hp->length > SAM_HOSTS_TABLE_SIZE) {
+	    hp->length > SAM_LARGE_HOSTS_TABLE_SIZE) {
 		error(0, 0, catgets(catfd, SET, 13903,
 		    "Bad hosts data -- see samsharefs(1M) to fix"));
+		free(hosts);
 		return (TRUE);
 	}
 	if (!SamGetSharedHostName(hp, hp->server, server)) {
 		error(0, 0, catgets(catfd, SET, 13903,
 		    "Bad hosts data -- see samsharefs(1M) to fix"));
+		free(hosts);
 		return (TRUE);
 	}
 	if ((err = getHostName(hostname, sizeof (hostname), fsname)) !=
@@ -8842,11 +8872,14 @@ shared_server(struct devlist *dp, offset_t hblk, upath_t server)
 		}
 		error(0, 0, catgets(catfd, SET, 13904,
 		    "getHostName() failed -- can't get local hostname"));
+		free(hosts);
 		return (FALSE);
 	}
 	if (strncasecmp(server, hostname, sizeof (hostname)) == 0) {
+		free(hosts);
 		return (TRUE);
 	}
+	free(hosts);
 	return (FALSE);
 }
 

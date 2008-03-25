@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -447,16 +447,61 @@ sam_sb_fstype_get(
 
 /*
  * ----- sam_fd_host_table_get - Get host table
+ *
+ * This is now a wrapper for sam_fd_host_table_get2.
+ * Allocate a buffer large enough to hold a large
+ * hosts table. If the data returned by sam_fd_host_table_get2
+ * will fit in a small hosts table copy it back otherwise
+ * return EMSGSIZE;
  */
 int					/* Errno status code */
 sam_fd_host_table_get(
 	int fd,				/* Device file descriptor */
 	struct sam_host_table *htp)	/* Host table buffer */
 {
+	int nbytes;
+	int error;
+	int htbufsize = SAM_LARGE_HOSTS_TABLE_SIZE;
+	struct sam_host_table *lhtp;
+
+	lhtp = (struct sam_host_table *)malloc(htbufsize);
+	if (lhtp == NULL) {
+		return (ENOMEM);
+	}
+
+	error = sam_fd_host_table_get2(fd, htbufsize, lhtp);
+
+	if (error != 0) {
+		free(lhtp);
+		return (error);
+	}
+
+	if (lhtp->length > sizeof (struct sam_host_table)) {
+		free(lhtp);
+		return (EMSGSIZE);
+	}
+
+	bcopy((void *)lhtp, (void*)htp, sizeof (struct sam_host_table));
+	free(lhtp);
+
+	return (0);
+}
+
+
+/*
+ * ----- sam_fd_host_table_get2 - Get host table
+ */
+int					/* Errno status code */
+sam_fd_host_table_get2(
+	int fd,				/* Device file descriptor */
+	int htbufsize,		/* Size of hosts table buffer */
+	struct sam_host_table *htp)	/* Host table buffer */
+{
 	struct stat st;
 	struct sam_sblk sb;
 	int nbytes;
 	int err;
+	int htsize = SAM_HOSTS_TABLE_SIZE;
 
 	if ((fd < 0) || (htp == NULL)) {
 		return (EINVAL);
@@ -484,6 +529,7 @@ sam_fd_host_table_get(
 		return (ENOENT);
 	}
 
+again:
 	/* Find start of host table data */
 	if (llseek(fd, sb.info.sb.hosts * SAM_DEV_BSIZE, SEEK_SET) ==
 	    (off_t)-1) {
@@ -491,13 +537,27 @@ sam_fd_host_table_get(
 	}
 
 	/* Read host table info buffer */
-	nbytes = read(fd, (char *)htp, sizeof (struct sam_host_table));
+	nbytes = read(fd, (char *)htp, htsize);
 	if (nbytes < 0) {
 		return (errno);
 	}
 
-	if (nbytes != sizeof (struct sam_host_table)) {
+	if (nbytes != htsize) {
 		return (ENODEV);
+	}
+
+	if (htp->length > htsize) {
+		if (htbufsize < SAM_LARGE_HOSTS_TABLE_SIZE) {
+			/*
+			 * supplied buffer is too small.
+			 */
+			return (EMSGSIZE);
+		}
+		if (htsize == SAM_LARGE_HOSTS_TABLE_SIZE) {
+			return (ENODEV);
+		}
+		htsize = SAM_LARGE_HOSTS_TABLE_SIZE;
+		goto again;
 	}
 
 	return (0);

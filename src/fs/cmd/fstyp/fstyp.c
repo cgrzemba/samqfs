@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,6 +74,7 @@ main(int argc, char *argv[])
 	int fd;
 	unsigned long fstype;
 	char fsname[16];
+	int error;
 
 	(void) setlocale(LC_ALL, "");
 #if !defined(TEXT_DOMAIN)
@@ -125,7 +126,7 @@ main(int argc, char *argv[])
 
 	/* If verbose requested, show the details. */
 	if (vflag) {
-		struct sam_host_table ht;
+		struct sam_host_table *htp;
 		struct dk_cinfo ci;
 		struct dk_geom cg;
 		struct vtoc vt;
@@ -136,8 +137,10 @@ main(int argc, char *argv[])
 		int i;
 		sam_format_buf_t *bp;
 		int nparts = 0;
+		int htbufsize = SAM_LARGE_HOSTS_TABLE_SIZE;
 
 		bp = (sam_format_buf_t *)malloc(16384);
+		htp = (struct sam_host_table *)malloc(htbufsize);
 
 		sam_format_width_name_default(16);
 		sam_format_width_value_default(24);
@@ -207,9 +210,9 @@ main(int argc, char *argv[])
 		sam_format_prefix_default("    ");
 
 		/* Get and show host table info. */
-		if (sam_fd_host_table_get(fd, &ht) == 0) {
+		if (sam_fd_host_table_get2(fd, htbufsize, htp) == 0) {
 			printf("  hosts {\n");
-			sam_host_table_format(&ht, bp);
+			sam_host_table_format(htp, bp);
 			sam_format_print(bp, NULL);
 			printf("  }\n");	/* hosts */
 		}
