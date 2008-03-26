@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -202,7 +202,7 @@ main(int argc, char **argv)
 			mnt_opts = strdup(optarg);
 #endif /* CMD_UPDATE_MNTTAB */
 			while ((subopt = strtok(str, ",")) != NULL) {
-				char *value;
+				char *value, value1[32];
 
 				str = NULL;
 				if (strcmp("rw", subopt) == 0) {
@@ -216,9 +216,18 @@ main(int argc, char **argv)
 				}
 				if ((value = strchr(subopt, '=')) != NULL) {
 					*value++ = '\0';
+
+					if (strlen(value) <= sizeof (value1)) {
+						strcpy(value1, value);
+					} else {
+						fprintf(stderr,
+						    GetCustMsg(17312),
+						    program_name);
+						exit(EXIT_USAGE);
+					}
 				}
 				if (SetFieldValue(mp, MountParams,
-				    subopt, value, NULL) != 0) {
+				    subopt, value1, NULL) != 0) {
 					if (errno == ENOENT) {
 						/*
 						 * Ignore unrecognized mount
@@ -294,6 +303,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "        %s\n", mnt_point);
 		exit(EXIT_USAGE);
 	}
+
 	if (verbose) {
 		SetFieldPrintValues(mp->fi_name, MountParams, mp);
 	}

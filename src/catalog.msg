@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.584 $"
+$ pragma ident "$Revision: 1.585 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3101,6 +3101,7 @@ $ ===================================================================
 17309 Usage: %s [-F samfs] [generic options] [-o samfs_options] special_file mount_point.\n
 17310 File System '%s' has non-native byte order.
 17311 Package protocol version mismatch
+17312 %s: bad mount option value for def_retention.\n
 
 $  umount      (17400s)
 $ ===================================================================
