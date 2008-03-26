@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 
 #include "sam/osversion.h"
 
@@ -1805,7 +1805,8 @@ sam_init_block(sam_mount_t *mp)
 	 */
 	sblk = mp->mi.m_sbp;
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
-		if (mp->mi.m_fs[ord].skip_ord) {
+		dp = &mp->mi.m_fs[ord];
+		if (dp->skip_ord || dp->part.pt_type == DT_OBJECT) {
 			continue;
 		}
 		sam_reset_eq_space(mp, ord);
@@ -1814,7 +1815,8 @@ sam_init_block(sam_mount_t *mp)
 
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
 		dp = &mp->mi.m_fs[ord];
-		if (dp->skip_ord || dp->part.pt_state == DEV_NOALLOC) {
+		if (dp->skip_ord || dp->part.pt_state == DEV_NOALLOC ||
+		    dp->part.pt_type == DT_OBJECT) {
 			continue;
 		}
 		if (sam_init_blocklist(mp, ord) != 0) {
