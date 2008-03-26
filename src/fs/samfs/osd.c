@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 #include "sam/osversion.h"
 
@@ -343,13 +343,9 @@ sam_dk_object_done(
 		sema_v(&bdp->io_sema);		/* Increment completed I/Os */
 	}
 	bdp->io_count--;		/* Decrement number of issued I/O */
-	if (bp->b_flags & B_WRITE) {
-		TRACE(T_SAM_DIOWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
-		    offset, count);
-	} else {
-		TRACE(T_SAM_DIORDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
-		    offset, count);
-	}
+	TRACE((bp->b_flags & B_READ ? T_SAM_DIORDOBJ_COMP :
+	    T_SAM_DIOWROBJ_COMP), SAM_ITOV(ip), (sam_tr_t)iotp,
+	    offset, count);
 
 	/*
 	 *  Check for errors
@@ -487,16 +483,16 @@ sam_pg_object_done(
 	bp = (buf_t *)(iot_priv(iotp))->bp;
 	offset = bp->b_offset;
 	count = bp->b_bcount;
-	if (bp->b_flags & B_WRITE) {
-		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
-		    iotp->ot_write.op_starting_byte_address,
-		    iotp->ot_write.op_length);
-		ASSERT(iotp->ot_write.op_starting_byte_address == bp->b_offset);
-	} else {
+	if (bp->b_flags & B_READ) {
 		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
 		    iotp->ot_read.op_starting_byte_address,
 		    iotp->ot_read.op_length);
 		ASSERT(iotp->ot_read.op_starting_byte_address == bp->b_offset);
+	} else {
+		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
+		    iotp->ot_write.op_starting_byte_address,
+		    iotp->ot_write.op_length);
+		ASSERT(iotp->ot_write.op_starting_byte_address == bp->b_offset);
 	}
 
 	/*
@@ -513,7 +509,7 @@ sam_pg_object_done(
 		    ip->size);
 	}
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
-	if (bp->b_flags & B_WRITE) {
+	if (!(bp->b_flags & B_READ)) {	/* If writing */
 		if ((offset + count) > obj->cm_size) {
 			obj->cm_size = (offset + count);
 		}

@@ -25,7 +25,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.4 $"
+#pragma ident	"$Revision: 1.5 $"
 #endif
 
 #include <sys/systm.h>
@@ -77,11 +77,11 @@ logdone(buf_t *bp)
 {
 	bp->b_flags |= B_DONE;
 
-	if (bp->b_flags & B_WRITE) {
-		sema_v(&bp->b_sem);
-	} else {
+	if (bp->b_flags & B_READ) {
 		/* wakeup the thread waiting on this buf */
 		sema_v(&bp->b_io);
+	} else {
+		sema_v(&bp->b_sem);
 	}
 	return (0);
 }

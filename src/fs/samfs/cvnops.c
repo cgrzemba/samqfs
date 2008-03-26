@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.133 $"
+#pragma ident "$Revision: 1.134 $"
 
 #include "sam/osversion.h"
 
@@ -108,6 +108,13 @@ extern int qfs_fiologdisable(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
 extern int qfs_fioislog(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
 extern uint_t lqfs_debug;
 
+/*
+ * MDB switch to control paged i/o on object files.
+ */
+boolean_t sam_object_directio_required = TRUE;
+
+#define SAM_DIRECTIO_REQUIRED(ip) \
+	((SAM_IS_OBJECT_FILE(ip) && sam_object_directio_required))
 
 /*
  * ----- sam_close_vn - Close a SAM-QFS file.
@@ -477,11 +484,11 @@ segment_file:
 	 */
 
 	use_direct_io = ((ip->flags.bits & SAM_DIRECTIO) != 0) ||
-	    SAM_IS_OBJECT_FILE(ip);
+	    SAM_DIRECTIO_REQUIRED(ip);
 
 	if (vp->v_type == VREG) {
 		if (use_direct_io) {
-			if (!SAM_IS_OBJECT_FILE(ip) &&
+			if (!SAM_DIRECTIO_REQUIRED(ip) &&
 			    (!SAM_DIRECTIO_ALLOWED(ip) ||
 			    (((uint_t)uiop->uio_iov->iov_base & 1) != 0) ||
 			    (uiop->uio_resid < DEV_BSIZE))) {
@@ -788,11 +795,11 @@ segment_file:
 	 */
 
 	use_direct_io = ((ip->flags.bits & SAM_DIRECTIO) != 0) ||
-	    SAM_IS_OBJECT_FILE(ip);
+	    SAM_DIRECTIO_REQUIRED(ip);
 
 	if (vp->v_type == VREG) {
 		if (use_direct_io) {
-			if (!SAM_IS_OBJECT_FILE(ip) &&
+			if (!SAM_DIRECTIO_REQUIRED(ip) &&
 			    (!SAM_DIRECTIO_ALLOWED(ip) ||
 			    (((uint_t)uiop->uio_iov->iov_base & 1) != 0) ||
 			    (uiop->uio_resid < DEV_BSIZE))) {

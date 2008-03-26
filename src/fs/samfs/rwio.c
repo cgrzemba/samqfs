@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.164 $"
+#pragma ident "$Revision: 1.165 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1564,7 +1564,8 @@ sam_dk_direct_done(buf_t *bp)
 		sema_v(&bdp->io_sema);		/* Increment completed I/Os */
 	}
 	bdp->io_count--;		/* Decrement number of issued I/O */
-	TRACE(T_SAM_DIOCOMP, SAM_ITOV(ip),
+	TRACE((bp->b_flags & B_READ ? T_SAM_DIORDBLK_COMP :
+	    T_SAM_DIOWRBLK_COMP), SAM_ITOV(ip),
 	    (sam_tr_t)(bp->b_lblkno >> SAM2SUN_BSHIFT),
 	    (sam_tr_t)bdp->io_count, (sam_tr_t)bdp);
 	if ((bp->b_flags & B_ERROR)) {
@@ -1602,7 +1603,7 @@ sam_dk_aio_direct_done(sam_node_t *ip, buf_descriptor_t *bdp, offset_t count)
 		int error;
 
 		bp = bdp->aiouiop->bp;
-		rw = (bp->b_flags & B_WRITE) ? UIO_WRITE : UIO_READ;
+		rw = (bp->b_flags & B_READ) ? UIO_READ : UIO_WRITE;
 		if ((error = sam_dk_fini_direct_io(ip, rw, &bdp->aiouiop->uio,
 		    bdp))) {
 			bioerror(bp, error);
