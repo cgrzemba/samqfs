@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 
 #include "sam/osversion.h"
 
@@ -1624,12 +1624,13 @@ sam_reset_eq_space(
 	}
 
 	if (sblk->eq[ord].fs.space != (free * dau_blks)) {
-		ASSERT((free * dau_blks) > sblk->eq[ord].fs.capacity);
 		dcmn_err((CE_NOTE,
 		    "SAM-QFS: %s: reset ord=%d"
-		    " partition space from 0x%llx KB to 0x%llx KB",
+		    " partition space from 0x%llx KB to 0x%llx KB"
+		    " for capacity 0x%llx KB",
 		    mp->mt.fi_name, ord, sblk->eq[ord].fs.space,
-		    free * dau_blks));
+		    free * dau_blks, sblk->eq[ord].fs.capacity));
+		ASSERT((free * dau_blks) <= sblk->eq[ord].fs.capacity);
 		sblk->eq[ord].fs.space = free * dau_blks;
 	}
 
