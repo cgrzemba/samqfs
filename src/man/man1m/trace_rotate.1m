@@ -1,4 +1,4 @@
-.\" $Revision: 1.9 $
+.\" $Revision: 1.10 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH trace_rotate 1M "30 Dec 2003"
+.TH trace_rotate 1M "31 Mar 2008"
 .SH NAME
 trace_rotate \- Rotates trace files
 .SH SYNOPSIS
@@ -69,7 +69,16 @@ This command accepts the following arguments:
 \fItrace_file\fR
 The full path name of the trace file.
 .SH EXAMPLES
-By default, trace files are not rotated.
+By default, trace files are rotated by the
+.B sam-fsd
+daemon according to parameters specified in the
+\fB/etc/opt/SUNWsamfs/defaults.conf\fR
+file.  If no parameters are specified, the trace files
+are rotated when their size reaches 10 megabytes.
+The current parameters can be displayed by executing the
+.B /opt/SUNWsamfs/sbin/sam-fsd
+command.
+
 You could use the following command line to invoke the script
 manually:
 .PP
