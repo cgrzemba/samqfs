@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char *_SrcFile = __FILE__;
@@ -309,7 +309,7 @@ const uint_t req_count)
 					}
 				}
 				break;
-			} else if (DT_HPSLXX) {
+			} else if (library->un->equ_type == DT_HPSLXX) {
 				if ((err = scsi_cmd(library->open_fd,
 				    library->un,
 				    SCMD_INIT_ELE_RANGE_37,
