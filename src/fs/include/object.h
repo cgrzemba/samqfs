@@ -34,7 +34,9 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
+
+#include "sam/osversion.h"
 
 #ifndef	_SAM_FS_OBJECT_H
 #define	_SAM_FS_OBJECT_H
@@ -81,6 +83,9 @@ typedef union sam_id_attr {	/* Inode identification osd attribute */
 	sam_id_t	id;
 } sam_id_attr_t;
 
+
+#if SAM_ATTR_LIST
+
 /*
  *	Because the OSD structs are built using pack(1), any locals
  *	or statics need to be aligned. We cannot depend on the compiler
@@ -106,26 +111,29 @@ typedef union sam_osd_attr_page {
 	offset_t				value;
 } sam_osd_attr_page_t;
 
-typedef struct sam_osd_iot_priv {
+#endif /* SAM_ATTR_LIST */
+
+typedef struct sam_osd_req_priv {
 	ksema_t		osd_sema;	/* I/O Synchronization for io_task */
-	struct sam_buf	*bp;		/* buf struct */
 	struct sam_node	*ip;		/* Pointer to inode */
-} sam_osd_iot_priv_t;
+	struct buf	*bp;		/* Pointer to optional buffer */
+	osd_req_t	*reqp;		/* Pointer to request */
+	osd_result_t	result;		/* Results from I/O request */
+	osd_resid_t	resid;		/* If err_type == OSD_ERRTYPE_RESID */
+} sam_osd_req_priv_t;
 
-#define	iot_priv(__IOT)  ((struct sam_osd_iot_priv *)(__IOT)->ot_client_private)
+#define	sam_osd_setup_private(iorp) {  \
+	sema_init(&((iorp)->osd_sema), 0, NULL, SEMA_DEFAULT, NULL); \
+	bzero(iorp, sizeof (sam_osd_req_priv_t)); \
+}
 
-#define	sam_osd_setup_PRIVATE(iotp)  \
-	sema_init(&((iot_priv(iotp))->osd_sema), 0, NULL, SEMA_DEFAULT, NULL)
+#define	sam_osd_remove_private(iorp)  \
+	sema_destroy(&(iorp)->osd_sema)
 
-#define	sam_osd_remove_PRIVATE(iotp)  \
-	sema_destroy(&(iot_priv(iotp))->osd_sema)
+#define	sam_osd_obj_req_wait(iorp)	sema_p(&(iorp)->osd_sema)
 
-#define	sam_osd_io_task_WAIT(iotp)  \
-	sema_p(&(iot_priv(iotp))->osd_sema)
+#define	sam_osd_obj_req_done(iorp)  \
+	sema_v(&(iorp)->osd_sema)
 
-#define	sam_osd_io_task_DONE(iotp)  \
-	sema_v(&(iot_priv(iotp))->osd_sema)
-
-int sam_osd_io_errno(struct osd_iotask *iotp, struct buf *bp);
 
 #endif	/* _SAM_FS_OBJECT_H */

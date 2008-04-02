@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 #endif
 
 #ifdef sun
@@ -92,7 +92,7 @@ struct samdent {
 	dev_t   dev;			/* Device number for partition */
 #ifdef sun
 	vnode_t *svp;			/* Vnode for special device */
-	void	*oh;			/* osd_handle_t */
+	sam_osd_handle_t	oh;	/* osd_handle_t */
 #endif /* sun */
 #ifdef linux
 	struct file	*fp;		/* Linux open file pointer */
@@ -383,7 +383,7 @@ void sam_report_initial_watermark(sam_mount_t *mp);
 void sam_mount_setwm_blocks(sam_mount_t *mp);
 
 int sam_open_osd_device(struct samdent *dp, int filemode, cred_t *credp);
-void sam_close_osd_device(void *oh, int filemode, cred_t *credp);
+void sam_close_osd_device(sam_osd_handle_t oh, int filemode, cred_t *credp);
 #endif
 
 

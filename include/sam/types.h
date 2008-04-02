@@ -40,7 +40,7 @@
 #define	_SAM_TYPES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 #endif
 
 #ifdef linux
@@ -173,6 +173,11 @@ extern int *___errno(void);
 #define	SAM_FSTYPE "samfs"	/* st_fstype string for SAM-FS */
 
 #define	ROBOT_NO_SLOT 0xffffffff	/* used to flag no slot. */
+
+/*
+ * Define osd_handle (/usr/include/sys/osd.h)
+ */
+typedef	uint32_t sam_osd_handle_t;
 
 /*
  * When the space left on a tape(in units of 1024) falls below this,

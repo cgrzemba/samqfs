@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.193 $"
+#pragma ident "$Revision: 1.194 $"
 #endif
 
 #ifdef linux
@@ -84,7 +84,6 @@ struct sam_node;			/* forward declaration, in this file */
 #include "sam/quota.h"
 #include "sam/fs/acl.h"
 #include "sam/fs/share.h"
-
 
 
 /*
@@ -943,6 +942,8 @@ int  sam_read_ino(struct sam_mount *mp, sam_ino_t ino, buf_t **bpp,
 void sam_inactive_ino(sam_node_t *ip, cred_t *credp);
 void sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp);
 int  sam_drop_ino(sam_node_t *ip, cred_t *credp);
+int  sam_sync_inode(sam_node_t *ip, offset_t length,
+	sam_truncate_t tflag);
 int  sam_proc_truncate(sam_node_t *ip, offset_t length, sam_truncate_t tflag,
 	cred_t *credp);
 int  sam_space_ino(sam_node_t *ip, sam_flock_t *flp, int flag);
@@ -982,15 +983,18 @@ int sam_set_operation_nb(struct sam_mount *mp);
 void sam_unset_operation_nb(struct sam_mount *mp);
 #endif
 
-int sam_issue_object_io(void *oh, uint32_t command, uint64_t user_obj_id,
-	enum uio_seg seg, char *data, offset_t offset, offset_t length);
-int sam_create_priv_object_id(void *oh, uint64_t user_obj_id);
+int sam_issue_object_io(sam_osd_handle_t oh, uint32_t command,
+	uint64_t user_obj_id, enum uio_seg seg, char *data, offset_t offset,
+	offset_t length);
+int sam_create_priv_object_id(sam_osd_handle_t oh, uint64_t user_obj_id);
 int sam_create_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
 int sam_remove_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
 int sam_get_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
 	uint32_t attr_num, int64_t *attrp);
 int sam_set_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
 	uint32_t attr_num, int64_t attribute);
+int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
+	offset_t length);
 
 #if defined(SOL_510_ABOVE)
 extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);

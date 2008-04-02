@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.137 $"
+#pragma ident "$Revision: 1.138 $"
 
 #include "sam/osversion.h"
 
@@ -66,9 +66,6 @@
 #include "quota.h"
 #include "ino_ext.h"
 #include "rwio.h"
-#if defined(SAM_OSD_SUPPORT)
-#include "object.h"
-#endif
 #include "indirect.h"
 #include "extern.h"
 #include "trace.h"
@@ -81,10 +78,6 @@ static int sam_free_indirect_block(sam_node_t *ip, int kptr[], int ik,
 	uint32_t *extent_bn, uchar_t *extent_ord, int level, int *set);
 static int sam_reduce_ino(sam_node_t *ip, offset_t length,
 	sam_truncate_t tflag);
-static int sam_sync_inode(sam_node_t *ip, offset_t length,
-	sam_truncate_t tflag);
-static int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
-	offset_t length);
 
 extern int sam_map_truncate(sam_node_t *ip, offset_t length, cred_t *credp);
 
@@ -659,7 +652,7 @@ sam_reduce_ino(
  * Synchronously write the inode to disk before continuing.
  */
 
-static int				/* ERRNO if error, 0 if successful. */
+int					/* ERRNO if error, 0 if successful. */
 sam_sync_inode(
 	sam_node_t *ip,			/* inode entry */
 	offset_t length,		/* new length for file. */
@@ -964,76 +957,3 @@ sam_delete_archive(sam_node_t *ip)
 		}
 	}
 }
-
-
-#if defined(SAM_OSD_SUPPORT)
-
-/*
- * ----- sam_truncate_object_file - Truncate an osd file.
- */
-static int
-sam_truncate_object_file(
-	sam_node_t *ip,
-	sam_truncate_t tflag,	/* Truncate file or Release file */
-	offset_t length)
-{
-	sam_di_obj_t *obj = (sam_di_obj_t *)(void *)&ip->di.extent[0];
-	uint64_t id		= obj->user_id;
-	int offline		= ip->di.status.b.offline;
-	offset_t size	= ip->di.rm.size;
-	uchar_t	unit	= ip->di.unit;
-	int error;
-
-	/*
-	 * Sync the inode to make sure the size is updated
-	 * on disk. If error syncing inode, restore blocks
-	 * and previous state.
-	 */
-	if ((error = sam_sync_inode(ip, length, tflag))) {
-		if (tflag == SAM_PURGE) {
-			return (EIO);
-		}
-
-		obj->user_id = id;
-		ip->di.status.b.offline = offline;
-		ip->di.rm.size = size;
-		ip->di.unit = unit;
-		return (EIO);
-	}
-	obj->user_id = id;
-	ip->di.unit = unit;
-	if (length == 0) {
-		if (tflag != SAM_TRUNCATE && obj->user_id) {
-			(void) sam_remove_object_id(ip->mp, &ip->di);
-			ip->size = length;
-			ip->di.rm.size = length;
-			return (0);
-		}
-	} else {
-		int64_t size;
-
-		(void) sam_get_user_object_attr(ip->mp, &ip->di,
-		    OSD_USER_OBJECT_INFORMATION_LOGICAL_LENGTH,
-		    &size);
-		error = sam_set_user_object_attr(ip->mp, &ip->di,
-		    OSD_USER_OBJECT_INFORMATION_LOGICAL_LENGTH,
-		    (int64_t)length);
-	}
-	return (error);
-}
-
-#else
-
-/*
- * ----- sam_truncate_object_file - Truncate an osd file.
- */
-/* ARGSUSED */
-static int
-sam_truncate_object_file(
-	sam_node_t *ip,
-	sam_truncate_t tflag,	/* Truncate file or Release file */
-	offset_t length)
-{
-	return (EINVAL);
-}
-#endif

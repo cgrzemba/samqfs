@@ -1,4 +1,4 @@
-# $Revision: 1.125 $
+# $Revision: 1.126 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -280,14 +280,14 @@ T_SAM_DIORDBLK_ST	"DioRdBkSt:blk=%x,off=%x,len=%x"
 T_SAM_DIOWRBLK_ST	"DioWrBkSt:blk=%x,off=%x,len=%x"
 T_SAM_DIORDOBJ_ST	"DioRdObSt:cnt=%x,off=%x,len=%x"
 T_SAM_DIOWROBJ_ST	"DioWrObSt:cnt=%x,off=%x,len=%x"
-T_SAM_PGRDOBJ_ST	"PgRdObSt: iotp=%x,off=%x,len=%x"
-T_SAM_PGWROBJ_ST	"PgWrObSt: iotp=%x,off=%x,len=%x"
+T_SAM_PGRDOBJ_ST	"PgRdObSt: iorp=%x,off=%x,len=%x"
+T_SAM_PGWROBJ_ST	"PgWrObSt: iorp=%x,off=%x,len=%x"
 T_SAM_DIORDBLK_COMP	"DioRdBkCo:blk=%x,cnt=%d,bdp=%x"
 T_SAM_DIOWRBLK_COMP	"DioWrBkCo:blk=%x,cnt=%d,bdp=%x"
-T_SAM_DIORDOBJ_COMP	"DioRdObCo:iotp=%x,off=%x,len=%x"
-T_SAM_DIOWROBJ_COMP	"DioWrObCo:iotp=%x,off=%x,len=%x"
-T_SAM_PGRDOBJ_COMP	"PgRdObCo: iotp=%x,off=%x,len=%x"
-T_SAM_PGWROBJ_COMP	"PgWrObCo: iotp=%x,off=%x,len=%x"
+T_SAM_DIORDOBJ_COMP	"DioRdObCo:iorp=%x,off=%x,len=%x"
+T_SAM_DIOWROBJ_COMP	"DioWrObCo:iorp=%x,off=%x,len=%x"
+T_SAM_PGRDOBJ_COMP	"PgRdObCo: iorp=%x,off=%x,len=%x"
+T_SAM_PGWROBJ_COMP	"PgWrObCo: iorp=%x,off=%x,len=%x"
 T_SAM_DIOWAIT		"DioWait:  err=%d^[$e],cnt=%d,bdp=%x"
 T_SAM_DIOKERN		"DioKernel:uio=%x,rdev=%x,bdp=%x"
 T_SAM_DIOPAGES		"DioPages: off=%x,adj_len=%x"

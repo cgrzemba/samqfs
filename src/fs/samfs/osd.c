@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 #include "sam/osversion.h"
 
@@ -57,6 +57,7 @@
 #include <sys/ddi.h>
 #include <sys/byteorder.h>
 #if defined(SAM_OSD_SUPPORT)
+#include <sys/scsi/scsi_osd.h>
 #include <sys/osd.h>
 #endif
 
@@ -83,33 +84,43 @@
  * The following externals are resolved by the sosd device driver which will
  * be in Solaris 11. These externals only affect developers testing the new
  * object file system (mb).
- * osd_open_by_dev
+ *
+ * osd_handle_by_name
  * osd_close
- * osd_iotask_alloc
- * osd_iotask_start
- * osd_iotask_free
+ * osd_setup_write
+ * osd_setup_read
+ * osd_setup_write_bp
+ * osd_setup_read_bp
+ * osd_setup_get_page_attr
+ * osd_setup_set_page_attr
+ * osd_submit_req
+ * osd_free_req
  */
 
 /*
  * Remove the following after the device driver is in Solaris 11
  */
-char _depends_on[]	= "drv/sosd drv/scsi";
+char _depends_on[]	= "drv/sosd drv/scsi misc/scsi_osd";
 
-static int sam_osd_errno(struct osd_iotask *iotp);
 static int sam_osd_bp_from_kva(caddr_t memp, size_t memlen, int rw,
 	struct buf **bpp);
 static void sam_osd_release_bp(struct buf *bp, caddr_t memp, size_t memlen,
 	int rw);
+#if SAM_ATTR_LIST
 static void sam_format_get_attr_list(sam_out_get_osd_attr_list_t *listp,
 	uint32_t attr_page, uint32_t attr_num);
-#if SAM_ATTR_LIST
 static char *sam_get_attr_addr(osd_attributes_list_t *list,
 	uint32_t attr_num);
 static uint64_t sam_get_8_byte_attr_val(char *listp, uint32_t attr_num);
 #endif /* SAM_ATTR_LIST */
-static void sam_object_req_done(struct osd_iotask *iotp);
-static void sam_dk_object_done(struct osd_iotask *iotp);
-static void sam_pg_object_done(osd_iotask_t *iotp);
+
+static void sam_object_req_done(osd_req_t *reqp, void *ct_priv,
+	osd_result_t *resp);
+static void sam_dk_object_done(osd_req_t *reqp, void *ct_priv,
+	osd_result_t *resp);
+static void sam_pg_object_done(osd_req_t *reqp, void *ct_priv,
+	osd_result_t *resp);
+static int sam_osd_errno(int rc, sam_osd_req_priv_t *iorp);
 
 
 /*
@@ -121,14 +132,13 @@ sam_open_osd_device(
 	int filemode,		/* Filemode for open */
 	cred_t *credp)		/* Credentials pointer. */
 {
-	ldi_ident_t lident;
-	osd_handle_t oh;
+	sam_osd_handle_t oh;
 	vnode_t *svp;
 	dev_t dev;
-	int error;
+	int rc, error;
 
-	if ((error = lookupname(dp->part.pt_name, UIO_SYSSPACE,
-	    FOLLOW, NULL, &svp))) {
+	error = lookupname(dp->part.pt_name, UIO_SYSSPACE, FOLLOW, NULL, &svp);
+	if (error) {
 		return (ENODEV);
 	}
 	if (svp->v_type != VCHR) {
@@ -137,11 +147,9 @@ sam_open_osd_device(
 	}
 	dev = svp->v_rdev;
 	VN_RELE(svp);
-	if ((error = ldi_ident_from_dev(dev, &lident))) {
-		return (error);
-	}
-	if ((error = osd_open_by_dev(&dev, OTYP_CHR, filemode,
-	    credp, &oh, lident))) {
+	rc = osd_handle_by_name(dp->part.pt_name, filemode, credp, &oh);
+	if (rc != OSD_SUCCESS) {
+		error = sam_osd_errno(rc, NULL);
 		return (error);
 	}
 	dp->oh = oh;
@@ -159,7 +167,7 @@ sam_open_osd_device(
  */
 void
 sam_close_osd_device(
-	void *oh,		/* Object device handle */
+	sam_osd_handle_t oh,	/* Object device handle */
 	int filemode,		/* Filemode for open */
 	cred_t *credp)		/* Credentials pointer. */
 {
@@ -173,7 +181,7 @@ sam_close_osd_device(
  */
 int
 sam_issue_object_io(
-	void *oh,
+	sam_osd_handle_t oh,
 	uint32_t command,
 	uint64_t obj_id,
 	enum uio_seg seg,
@@ -181,75 +189,93 @@ sam_issue_object_io(
 	offset_t offset,
 	offset_t length)
 {
-	osd_iotask_t	*iotp;
-	uint64_t	partid = SAM_OBJ_PAR_ID;
-	char *bufp;
-	buf_t *bp;
-	int error;
-
-	error = osd_iotask_alloc(oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP);
-	if (error != OSD_SUCCESS) {
-		return (EINVAL);
-	}
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t		*reqp;
+	iovec_t			iov;
+	char			*bufp;
+	uint64_t		partid = SAM_OBJ_PAR_ID;
+	int			rc;
+	int			error = 0;
 
 	if (seg == UIO_USERSPACE) {
-		bufp = (char *)kmem_alloc(length, KM_SLEEP);
+		bufp = kmem_alloc(length, KM_SLEEP);
 	} else {
 		bufp = data;
 	}
-	if (error = sam_osd_bp_from_kva((char *)bufp, length,
-	    command == OSD_WRITE ? B_WRITE : B_READ, &bp)) {
-		goto fini;
-	}
-	if (command == OSD_WRITE) {
-		osd_setup_WRITE(iotp, obj_id, length, offset);
+	iov.iov_base = (void *)bufp;
+	iov.iov_len = (long)length;
+	if (command == FWRITE) {
+		reqp = osd_setup_write(oh, partid, obj_id, length, offset, 1,
+		    (caddr_t)&iov);
+		if (reqp == NULL) {
+			error = EINVAL;
+			goto fini;
+		}
 		if (seg == UIO_USERSPACE) {
 			if (copyin(data, bufp, length)) {
 				error = EFAULT;
 				goto fini;
 			}
 		}
-		iotp->ot_out_command_bp = bp;
 	} else {
-		osd_setup_READ(iotp, obj_id, length, offset);
-		iotp->ot_in_command_bp = bp;
+		reqp = osd_setup_read(oh, partid, obj_id, length, offset, 1,
+		    (caddr_t)&iov);
+		if (reqp == NULL) {
+			error = EINVAL;
+			goto fini;
+		}
 	}
-
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_object_req_done;
-	sam_osd_setup_PRIVATE(iotp);
-
-	if ((error = osd_iotask_start(iotp)) == OSD_SUCCESS) {
-		sam_osd_io_task_WAIT(iotp);
-		if (iotp->ot_error != OSD_SUCCESS) {
-			error = sam_osd_errno(iotp);
-		} else {
-			if (command == OSD_READ) {
-				if (seg == UIO_USERSPACE) {
-					if (copyout(bufp, data, length)) {
-						error = EFAULT;
-					}
+	sam_osd_setup_private(iorp);
+	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	if (rc == OSD_SUCCESS) {
+		sam_osd_obj_req_wait(iorp);	/* Wait for completion */
+		rc = iorp->result.err_code;
+		if (rc == OSD_SUCCESS) {
+			if (command == FREAD && seg == UIO_USERSPACE) {
+				if (copyout(bufp, data, length)) {
+					error = EFAULT;
 				}
 			}
+		} else {
+			error = sam_osd_errno(rc, iorp);
 		}
 	} else {
-		error = sam_osd_errno(iotp);
+		error = sam_osd_errno(rc, iorp);
+		goto fini;
 	}
-	sam_osd_remove_PRIVATE(iotp);
-	if (command == OSD_WRITE) {
-		sam_osd_release_bp(iotp->ot_out_command_bp, (char *)bufp,
-		    length, B_WRITE);
-	} else {
-		sam_osd_release_bp(iotp->ot_in_command_bp, (char *)bufp,
-		    length, B_READ);
-	}
+	sam_osd_remove_private(iorp);
+	(void) osd_free_req(reqp);
 fini:
-	(void) osd_iotask_free(iotp);
 	if (seg == UIO_USERSPACE) {
 		kmem_free(bufp, length);
 	}
 	return (error);
+}
+
+
+/*
+ * ----- sam_object_req_done - Process object osd request completion.
+ *
+ * This is the interrupt routine. Called when the object request completes.
+ */
+
+/* ARGSUSED0 */
+static void
+sam_object_req_done(
+	osd_req_t *reqp,
+	void *ct_priv,
+	osd_result_t *resp)
+{
+	sam_osd_req_priv_t *iorp = (sam_osd_req_priv_t *)ct_priv;
+
+	iorp->result = *resp;
+	if (resp->err_type == OSD_ERRTYPE_RESID) {
+		osd_resid_t *rp = (osd_resid_t *)resp->errp;
+
+		iorp->resid = *rp;
+	}
+	sam_osd_obj_req_done(iorp);	/* Wakeup caller */
 }
 
 
@@ -264,40 +290,51 @@ sam_issue_direct_object_io(
 	offset_t contig,
 	offset_t cur_loffset)
 {
-	osd_iotask_t	*iotp;
-	uint64_t	requested_user_object_id;
-	uint64_t	partid = SAM_OBJ_PAR_ID;
-	sam_di_obj_t	*obj;
-	int error;
+	sam_osd_handle_t	oh;
+	sam_osd_req_priv_t	*iorp;
+	osd_req_t		*reqp;
+	uint64_t		user_object_id;
+	uint64_t		partid = SAM_OBJ_PAR_ID;
+	sam_di_obj_t		*obj;
+	int			rc;
+	int			error = 0;
 
-	error = osd_iotask_alloc(ip->mp->mi.m_fs[ip->di.unit].oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP);
-	if (error != OSD_SUCCESS) {
-		return (EINVAL);
-	}
+
+	iorp = (sam_osd_req_priv_t *)kmem_zalloc(sizeof (sam_osd_req_priv_t),
+	    KM_SLEEP);
 	obj = (sam_di_obj_t *)(void *)&ip->di.extent[0];
-	requested_user_object_id = obj->user_id;
+	user_object_id = obj->user_id;
+	oh = ip->mp->mi.m_fs[ip->di.unit].oh;
 	if (rw == UIO_WRITE) {
-		osd_setup_WRITE(iotp, requested_user_object_id, contig,
-		    cur_loffset);
-		iotp->ot_out_command_bp = bp;
+		reqp = osd_setup_write_bp(oh, partid, user_object_id,
+		    contig, cur_loffset, bp);
+		if (reqp == NULL) {
+			kmem_free(iorp, sizeof (sam_osd_req_priv_t));
+			return (EINVAL);
+		}
 		if ((cur_loffset + contig) > obj->wr_size) {
 			obj->wr_size = (cur_loffset + contig);
 		}
 		ASSERT(contig <= SAM_OSD_MAX_WR_CONTIG);
 	} else {
-		osd_setup_READ(iotp, requested_user_object_id, contig,
-		    cur_loffset);
-		iotp->ot_in_command_bp = bp;
+		reqp = osd_setup_read_bp(oh, partid, user_object_id,
+		    contig, cur_loffset, bp);
+		if (reqp == NULL) {
+			kmem_free(iorp, sizeof (sam_osd_req_priv_t));
+			return (EINVAL);
+		}
 		ASSERT(contig <= SAM_OSD_MAX_RD_CONTIG);
 	}
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_dk_object_done;
-	(iot_priv(iotp))->bp = (struct sam_buf *)bp;
+	iorp->ip = ip;
+	iorp->bp = bp;
+	rc = osd_submit_req(reqp, 0, sam_dk_object_done, iorp);
+	if (rc != OSD_SUCCESS) {
+		osd_result_t result;
 
-	if ((error = osd_iotask_start(iotp)) != OSD_SUCCESS) {
-		iotp->ot_error = error; /* SET BY SOSD???? */
-		sam_dk_object_done(iotp);
+		result.err_code = (uint8_t)rc;
+		result.err_type = OSD_ERRTYPE_NONE;
+		sam_dk_object_done(reqp, iorp, &result);
+		error = sam_osd_errno(result.err_code, NULL);
 	}
 	return (error);
 }
@@ -311,9 +348,12 @@ sam_issue_direct_object_io(
 
 static void
 sam_dk_object_done(
-	osd_iotask_t *iotp)	/* The io_task pointer. */
+	osd_req_t *reqp,
+	void *ct_priv,
+	osd_result_t *resp)
 {
-	sam_node_t *ip;
+	sam_osd_req_priv_t	*iorp = (sam_osd_req_priv_t *)ct_priv;
+	sam_node_t		*ip;
 	buf_descriptor_t	*bdp;
 	sam_buf_t  		*sbp;
 	buf_t			*bp;
@@ -322,7 +362,8 @@ sam_dk_object_done(
 	sam_di_obj_t		*obj;
 	boolean_t		async;
 
-	bp = (buf_t *)(iot_priv(iotp))->bp;
+
+	bp = (buf_t *)iorp->bp;
 	sbp = (sam_buf_t *)bp;
 	bdp = (buf_descriptor_t *)(void *)bp->b_vp;
 	ip = bdp->ip;
@@ -332,7 +373,6 @@ sam_dk_object_done(
 	bp->b_iodone = NULL;
 	count = bp->b_bcount;
 	offset = bp->b_offset;
-
 	if (bp->b_flags & B_REMAPPED) {
 		bp_mapout(bp);
 	}
@@ -340,23 +380,24 @@ sam_dk_object_done(
 	mutex_enter(&bdp->bdp_mutex);
 	SAM_BUF_DEQ(&sbp->link);
 	if (!async) {
-		sema_v(&bdp->io_sema);		/* Increment completed I/Os */
+		sema_v(&bdp->io_sema);	/* Increment completed I/Os */
 	}
 	bdp->io_count--;		/* Decrement number of issued I/O */
 	TRACE((bp->b_flags & B_READ ? T_SAM_DIORDOBJ_COMP :
-	    T_SAM_DIOWROBJ_COMP), SAM_ITOV(ip), (sam_tr_t)iotp,
+	    T_SAM_DIOWROBJ_COMP), SAM_ITOV(ip), (sam_tr_t)iorp,
 	    offset, count);
 
 	/*
-	 *  Check for errors
+	 * Check for errors.
 	 */
-	if (iotp->ot_error != OSD_SUCCESS) {
-		bdp->error = sam_osd_io_errno(iotp, bp);
+	iorp->result = *resp;
+	if (resp->err_code != 0) {
+		bdp->error = sam_osd_errno(resp->err_code, iorp);
 		cmn_err(CE_WARN,
-		    "SAM-QFS: %s: DK er=%d, ip=%p, ino=%d, op=%x, off=%x"
+		    "SAM-QFS: %s: DK er=%d, ip=%p, ino=%d, sa=%x, off=%x"
 		    " len=%x r=%x sz=%x %x %x",
-		    ip->mp->mt.fi_name, iotp->ot_error, (void *)ip,
-		    ip->di.id.ino, iotp->ot_service_action, offset,
+		    ip->mp->mt.fi_name, resp->err_code, (void *)ip,
+		    ip->di.id.ino, resp->service_action, offset,
 		    bp->b_bcount, bp->b_resid, (offset+bp->b_bcount),
 		    obj->wr_size, ip->size);
 	}
@@ -364,7 +405,8 @@ sam_dk_object_done(
 
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
 	sam_free_buf_header((sam_uintptr_t *)bp);
-	(void) osd_iotask_free(iotp);
+	(void) osd_free_req(reqp);
+	kmem_free(iorp, sizeof (sam_osd_req_priv_t));
 
 	if (async) {
 		sam_dk_aio_direct_done(ip, bdp, count);
@@ -387,19 +429,23 @@ sam_pageio_object(
 	int flags)		/* Flags --B_INVAL, B_DIRTY, B_FREE, */
 				/*   B_DONTNEED, B_FORCE, B_ASYNC. */
 {
-	sam_mount_t 	*mp;	/* Pointer to mount table */
-	buf_t 		*bp;
-	osd_iotask_t	*iotp;
-	uint64_t	requested_user_object_id;
-	uint64_t	partid = SAM_OBJ_PAR_ID;
-	offset_t	high_addr;
-	sam_di_obj_t	*obj;
+	sam_osd_handle_t	oh;
+	sam_osd_req_priv_t	*iorp;
+	osd_req_t		*reqp;
+	sam_mount_t		*mp;	/* Pointer to mount table */
+	buf_t 			*bp;
+	uint64_t		user_object_id;
+	uint64_t		partid = SAM_OBJ_PAR_ID;
+	offset_t		high_addr;
+	sam_di_obj_t		*obj;
+	int			rc;
+
 
 	mp = ip->mp;
-	if ((osd_iotask_alloc(mp->mi.m_fs[ip->di.unit].oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP)) != OSD_SUCCESS) {
-		return (NULL);
-	}
+	oh = ip->mp->mi.m_fs[ip->di.unit].oh;
+	iorp = (sam_osd_req_priv_t *)kmem_zalloc(sizeof (sam_osd_req_priv_t),
+	    KM_SLEEP);
+
 	bp = pageio_setup(pp, vn_len, mp->mi.m_fs[iop->ord].svp, flags);
 	bp->b_edev = mp->mi.m_fs[iop->ord].dev;
 	bp->b_dev = cmpdev(bp->b_edev);
@@ -408,7 +454,7 @@ sam_pageio_object(
 	bp->b_file = SAM_ITOP(ip);
 	bp->b_offset = offset;
 	TRACE((bp->b_flags & B_READ) ? T_SAM_PGRDOBJ_ST :
-	    T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iotp, offset, vn_len);
+	    T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp, offset, vn_len);
 	if (!(bp->b_flags & B_READ)) {	/* If writing */
 		if (bp->b_flags & B_ASYNC) {
 			bp->b_iodone = (int (*) ())sam_page_wrdone;
@@ -420,11 +466,12 @@ sam_pageio_object(
 		}
 	}
 	obj = (sam_di_obj_t *)(void *)&ip->di.extent[0];
-	requested_user_object_id = obj->user_id;
+	user_object_id = obj->user_id;
 	high_addr = (offset + vn_len);
+
 	if (bp->b_flags & B_READ) {	/* If reading */
-		osd_setup_READ(iotp, requested_user_object_id, vn_len, offset);
-		iotp->ot_in_command_bp = bp;
+		reqp = osd_setup_read_bp(oh, partid, user_object_id,
+		    vn_len, offset, bp);
 		ASSERT(vn_len <= SAM_OSD_MAX_RD_CONTIG);
 		/*
 		 * Must wait to issue read until write (end of obj)
@@ -434,8 +481,8 @@ sam_pageio_object(
 	} else {
 		boolean_t lock_set = B_FALSE;
 
-		osd_setup_WRITE(iotp, requested_user_object_id, vn_len, offset);
-		iotp->ot_out_command_bp = bp;
+		reqp = osd_setup_write_bp(oh, partid, user_object_id,
+		    vn_len, offset, bp);
 		if (RW_OWNER_OS(&ip->inode_rwl) != curthread) {
 			lock_set = B_TRUE;
 			mutex_enter(&ip->fl_mutex);
@@ -448,15 +495,17 @@ sam_pageio_object(
 		}
 		ASSERT(vn_len <= SAM_OSD_MAX_WR_CONTIG);
 	}
-	bp->b_private = (void *)iotp;
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_pg_object_done;
-	sam_osd_setup_PRIVATE(iotp);
-	(iot_priv(iotp))->bp = (struct sam_buf *)bp;
-	(iot_priv(iotp))->ip = (struct sam_node *)ip;
-	if ((osd_iotask_start(iotp)) != OSD_SUCCESS) {
-		iotp->ot_error = OSD_FAILURE;
-		sam_pg_object_done(iotp);
+	bp->b_private = (void *)iorp;
+	sam_osd_setup_private(iorp);
+	iorp->bp = bp;
+	iorp->ip = ip;
+	iorp->reqp = reqp;
+	if ((rc = osd_submit_req(reqp, 0, sam_pg_object_done, iorp)) != 0) {
+		osd_result_t result;
+
+		result.err_code = (uint8_t)rc;
+		result.err_type = OSD_ERRTYPE_NONE;
+		sam_pg_object_done(reqp, iorp, &result);
 	}
 	return (bp);
 }
@@ -470,41 +519,42 @@ sam_pageio_object(
 
 static void
 sam_pg_object_done(
-	osd_iotask_t *iotp)	/* The io_task pointer. */
+	osd_req_t *reqp,
+	void *ct_priv,
+	osd_result_t *resp)
 {
+	sam_osd_req_priv_t	*iorp = (sam_osd_req_priv_t *)ct_priv;
 	sam_node_t 		*ip;
 	buf_t			*bp;
 	offset_t		count;
 	offset_t		offset;
 	sam_di_obj_t		*obj;
 
-	ip = (struct sam_node *)(iot_priv(iotp))->ip;
+
+	ip = iorp->ip;
 	obj = (sam_di_obj_t *)(void *)&ip->di.extent[0];
-	bp = (buf_t *)(iot_priv(iotp))->bp;
+	bp = iorp->bp;
 	offset = bp->b_offset;
 	count = bp->b_bcount;
 	if (bp->b_flags & B_READ) {
-		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
-		    iotp->ot_read.op_starting_byte_address,
-		    iotp->ot_read.op_length);
-		ASSERT(iotp->ot_read.op_starting_byte_address == bp->b_offset);
+		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
+		    bp->b_offset, bp->b_bcount);
 	} else {
-		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iotp,
-		    iotp->ot_write.op_starting_byte_address,
-		    iotp->ot_write.op_length);
-		ASSERT(iotp->ot_write.op_starting_byte_address == bp->b_offset);
+		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
+		    bp->b_offset, bp->b_bcount);
 	}
 
 	/*
-	 *  Check for errors
+	 * Check for errors.
 	 */
-	if (iotp->ot_error != OSD_SUCCESS) {
-		bp->b_error = sam_osd_io_errno(iotp, bp);
+	iorp->result = *resp;
+	if (resp->err_code != OSD_SUCCESS) {
+		bp->b_error = sam_osd_errno(resp->err_code, iorp);
 		cmn_err(CE_WARN,
-		    "SAM-QFS: %s: PG er=%d, ip=%p ino=%d op=%x off=%x"
+		    "SAM-QFS: %s: PG er=%d %d, ip=%p ino=%d sa=%x off=%x"
 		    " len=%x r=%x ha=%x %x %x %x",
-		    ip->mp->mt.fi_name, iotp->ot_error, (void *)ip,
-		    ip->di.id.ino, iotp->ot_service_action, offset, count,
+		    ip->mp->mt.fi_name, resp->err_code, bp->b_error, ip,
+		    ip->di.id.ino, resp->service_action, offset, count,
 		    bp->b_resid, (offset+count), obj->wr_size, obj->cm_size,
 		    ip->size);
 	}
@@ -521,9 +571,11 @@ sam_pg_object_done(
 		} else {
 			biodone(bp);
 		}
-		(void) osd_iotask_free(iotp);
+		(void) osd_free_req(reqp);
+		sam_osd_remove_private(iorp);
+		kmem_free(iorp, sizeof (sam_osd_req_priv_t));
 	} else {
-		sam_osd_io_task_DONE(iotp);
+		sam_osd_obj_req_done(iorp);	/* Wakeup caller */
 	}
 }
 
@@ -538,94 +590,69 @@ sam_pg_object_sync_done(
 	buf_t	*bp,		/* Pointer to the buffer */
 	char	*str)		/* "GETPAGE" OR "PUTPAGE" */
 {
-	struct osd_iotask	*iotp;
-	int error = 0;
+	sam_osd_req_priv_t	*iorp;
+	int			 error = 0;
 
-	iotp = (struct osd_iotask *)bp->b_private;
-	sam_osd_io_task_WAIT(iotp);
+	iorp = (sam_osd_req_priv_t *)bp->b_private;
+	sam_osd_obj_req_wait(iorp);	/* Wait for completion */
 	if (bp->b_error) {
 		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: %s ip=%p, ino=%d, op=%x"
+		    "SAM-QFS: %s: %s ip=%p, ino=%d,"
 		    " off=%x len=%x err=%d",
 		    ip->mp->mt.fi_name, str, (void *)ip, ip->di.id.ino,
-		    iotp->ot_service_action, bp->b_offset, bp->b_bcount,
+		    bp->b_offset, bp->b_bcount,
 		    bp->b_error));
 		if (error == 0) {
 			error = bp->b_error;
 		}
 	}
 	pageio_done(bp);
-	(void) osd_iotask_free(iotp);
+	(void) osd_free_req(iorp->reqp);
+	sam_osd_remove_private(iorp);
+	kmem_free(iorp, sizeof (sam_osd_req_priv_t));
 	return (error);
 }
 
 
 /*
- * ----- sam_osd_errno - Set errno given osd ot_errno.
- */
-static int
-sam_osd_errno(struct osd_iotask *iotp)
-{
-	int error;
-
-	switch (iotp->ot_error) {
-	case OSD_SUCCESS:
-		return (0);
-
-	case OSD_RESERVATION_CONFLICT:
-		return (EACCES);
-
-	case OSD_BUSY:
-		return (EAGAIN);
-
-	case OSD_INVALID:
-	case OSD_BADREQUEST:
-		return (EINVAL);
-
-	case OSD_TOOBIG:
-		return (E2BIG);
-
-	case OSD_FAILURE:
-	case OSD_CHECK_CONDITION:
-		return (EIO);
-
-	default:
-		error = EIO;
-		break;
-
-	}
-	return (error);
-}
-
-
-/*
- * ----- sam_osd_io_errno - Set errno in buffer given osd ot_error.
+ * ----- sam_osd_errno - Return errno given OSD error.
  */
 int
-sam_osd_io_errno(
-	struct osd_iotask *iotp,
-	struct buf *bp)
+sam_osd_errno(
+	int rc,
+	sam_osd_req_priv_t *iorp)
 {
-	int error;
+	buf_t *bp = NULL;
+	int error = 0;
 
-	bp->b_error = 0;
-	switch (iotp->ot_error) {
+	if (iorp) {
+		bp = iorp->bp;
+		if (bp) {
+			bp->b_error = 0;
+		}
+	}
+
+	switch (rc) {
 	case OSD_SUCCESS:
-		bp->b_resid = 0;
+		if (bp) {
+			bp->b_resid = 0;
+		}
 		return (0);
 
-	case OSD_RESIDUAL:
-		{
-			osd_resid_t *orp;
+	case OSD_RESIDUAL: {
+		osd_resid_t *residp = (osd_resid_t *)iorp->result.errp;
 
-			orp = iotp->ot_errp;
-			bp->b_resid = (bp->b_flags & B_READ) ?
-			    orp->ot_in_command_resid :
-			    orp->ot_out_command_resid;
-			cmn_err(CE_NOTE,
-			    "SAM-QFS: OSD RESID resid=%x, off=%llx",
-			    bp->b_resid, (long long)bp->b_offset);
-			return (0);
+		ASSERT(residp != NULL);
+		if (residp == NULL) {
+			return (EINVAL);
+		}
+		bp->b_resid = (bp->b_flags & B_READ) ?
+		    residp->ot_in_command_resid :
+		    residp->ot_out_command_resid;
+		cmn_err(CE_NOTE,
+		    "SAM-QFS: OSD RESID resid=%x, off=%llx, cnt=%llx",
+		    bp->b_resid, (long long)bp->b_offset, bp->b_bcount);
+		return (0);
 		}
 
 	case OSD_RESERVATION_CONFLICT:
@@ -664,14 +691,16 @@ sam_osd_io_errno(
 		error = EIO;
 		break;
 	}
-	bp->b_error = error;
-	bp->b_flags |= B_ERROR;
+	if (bp) {
+		bp->b_error = error;	/* Return error in buffer */
+		bp->b_flags |= B_ERROR;
+	}
 	return (error);
 }
 
 
 /*
- * ----- sam_osd_bp_from_kva - Setup the buf struct for the memobj.
+ * ----- sam_osd_bp_from_kva - Setup the buf struct for the request.
  */
 static int
 sam_osd_bp_from_kva(
@@ -730,107 +759,107 @@ sam_osd_release_bp(
 
 
 /*
- * ----- sam_object_req_done - Process object osd request completion.
- *
- * This is the interrupt routine. Called when the object request completes.
- */
-
-static void
-sam_object_req_done(struct osd_iotask *iotp)	/* The osd_iotask pointer. */
-{
-	sam_osd_io_task_DONE(iotp);
-}
-
-
-/*
  * ----- sam_create_priv_object_id - Process create of privileged object id.
  */
 int
 sam_create_priv_object_id(
-	void		*oh,
-	uint64_t	user_obj_id)
+	sam_osd_handle_t	oh,
+	uint64_t		user_obj_id)
 {
-	struct osd_iotask	*iotp;
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t 		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
-	int error;
+	int			rc;
+	int			error = 0;
 
-	if ((error = osd_iotask_alloc(oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP)) != OSD_SUCCESS) {
-		return (EINVAL);
-	}
+	reqp = osd_setup_create_object(oh, partid, user_obj_id, 1);
+	sam_osd_setup_private(iorp);
 
-	osd_setup_CREATE(iotp, user_obj_id, (uint64_t)1);
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_object_req_done;
-	sam_osd_setup_PRIVATE(iotp);
-
-	if ((error = osd_iotask_start(iotp)) == OSD_SUCCESS) {
-		sam_osd_io_task_WAIT(iotp);
-		if (iotp->ot_error != OSD_SUCCESS) {
-			error = sam_osd_errno(iotp);
+	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	if (rc == OSD_SUCCESS) {
+		sam_osd_obj_req_wait(iorp);
+		if (iorp->result.err_code != OSD_SUCCESS) {
+			error = sam_osd_errno(iorp->result.err_code, iorp);
 		}
 	} else {
-		error = sam_osd_errno(iotp);
+		error = EINVAL;
 	}
-	sam_osd_remove_PRIVATE(iotp);
-	(void) osd_iotask_free(iotp);
+	(void) osd_free_req(reqp);
+	sam_osd_remove_private(iorp);
 	return (error);
 }
 
 
 /*
  * ----- sam_create_object_id - Process create_object id.
+ * Later ask target to create user object ID:
+ * Use OSD_CURRENT_COMMAND_PAGE.
  */
 int
 sam_create_object_id(
 	sam_mount_t *mp,
 	struct sam_disk_inode *dp)
 {
-	struct osd_iotask	*iotp;
-	uint64_t		requested_user_object_id;
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	uint64_t		user_object_id;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
-	int error;
+	osd_req_t		*reqp;
+	int			rc;
+	int			error = 0;
 
+	iorp = &ior_priv;
 	ASSERT(mp->mi.m_fs[dp->unit].oh != 0);
 	dp->version = SAM_INODE_VERSION;
-	if ((error = osd_iotask_alloc(mp->mi.m_fs[dp->unit].oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP)) != OSD_SUCCESS) {
-		return (EINVAL);
-	}
 	mutex_enter(&mp->ms.m_waitwr_mutex);
-	requested_user_object_id = mp->mi.m_sbp->info.sb.osd_user_id++;
+	user_object_id = mp->mi.m_sbp->info.sb.osd_user_id++;
 	mutex_exit(&mp->ms.m_waitwr_mutex);
 
-	osd_setup_CREATE(iotp, requested_user_object_id, (uint64_t)1);
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_object_req_done;
-	sam_osd_setup_PRIVATE(iotp);
+	reqp = osd_setup_create_object(mp->mi.m_fs[dp->unit].oh, partid,
+	    user_object_id, (uint64_t)1);
+	sam_osd_setup_private(iorp);
 
-	if ((error = osd_iotask_start(iotp)) == OSD_SUCCESS) {
-		sam_osd_io_task_WAIT(iotp);
-		if (iotp->ot_error == OSD_SUCCESS) {
+	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	if (rc == OSD_SUCCESS) {
+		sam_osd_obj_req_wait(iorp);
+		if (iorp->result.err_code == OSD_SUCCESS) {
 			sam_di_obj_t	*obj;
 			sam_id_attr_t	x;
 
 			dp->rm.ui.flags |= RM_OBJECT_FILE;
 			obj = (sam_di_obj_t *)(void *)&dp->extent[0];
-			obj->user_id = requested_user_object_id;
-			x.id = dp->id;
+			obj->user_id = user_object_id;
 
 			/*
 			 * Replace OSD_USER_OBJECT_INFORMATION_USERNAME
 			 * with QFS vendor specific attribute for ino/gen.
 			 */
+#if SAM_ATTR_LIST
+			x.id = dp->id;
 			error = sam_set_user_object_attr(mp, dp,
 			    OSD_USER_OBJECT_INFORMATION_USERNAME, x.attr);
+			{
+				int64_t ret_attr;
+				sam_id_attr_t	y;
+
+				if ((error = sam_get_user_object_attr(mp, dp,
+				    OSD_USER_OBJECT_INFORMATION_USERNAME,
+				    &ret_attr))) {
+				}
+			}
+#endif /* SAM_ATTR_LIST */
 		} else {
-			error = sam_osd_errno(iotp);
+			error = sam_osd_errno(iorp->result.err_code, iorp);
+			if (error == 0) {
+				error = EINVAL;
+			}
 		}
 	} else {
-		error = sam_osd_errno(iotp);
+		error = EINVAL;
 	}
-	sam_osd_remove_PRIVATE(iotp);
-	(void) osd_iotask_free(iotp);
+	(void) osd_free_req(reqp);
+	sam_osd_remove_private(iorp);
 	return (error);
 }
 
@@ -843,31 +872,30 @@ sam_remove_object_id(
 	sam_mount_t *mp,
 	struct sam_disk_inode *dp)
 {
-	struct osd_iotask	*iotp;
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
-	sam_di_obj_t	*obj;
-	int error;
+	sam_di_obj_t		*obj;
+	int			rc;
+	int			error = 0;
 
-	if ((error = osd_iotask_alloc(mp->mi.m_fs[dp->unit].oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP)) != OSD_SUCCESS) {
-		return (EINVAL);
-	}
 	obj = (sam_di_obj_t *)(void *)&dp->extent[0];
-	osd_setup_REMOVE(iotp, (uint64_t)obj->user_id);
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_object_req_done;
-	sam_osd_setup_PRIVATE(iotp);
+	reqp = osd_setup_remove_object(mp->mi.m_fs[dp->unit].oh, partid,
+	    (uint64_t)obj->user_id);
+	sam_osd_setup_private(iorp);
 
-	if ((error = osd_iotask_start(iotp)) == OSD_SUCCESS) {
-		sam_osd_io_task_WAIT(iotp);
-		if (iotp->ot_error != OSD_SUCCESS) {
-			error = sam_osd_errno(iotp);
+	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	if (rc == OSD_SUCCESS) {
+		sam_osd_obj_req_wait(iorp);
+		if (iorp->result.err_code != OSD_SUCCESS) {
+			error = sam_osd_errno(iorp->result.err_code, iorp);
 		}
 	} else {
-		error = sam_osd_errno(iotp);
+		error = EINVAL;
 	}
-	sam_osd_remove_PRIVATE(iotp);
-	(void) osd_iotask_free(iotp);
+	(void) osd_free_req(reqp);
+	sam_osd_remove_private(iorp);
 	return (error);
 }
 
@@ -882,77 +910,46 @@ sam_get_user_object_attr(
 	uint32_t	attr_num,	/* Attribute number */
 	int64_t		*attrp)		/* Returned attribute */
 {
-	struct osd_iotask	*iotp;
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
-	sam_out_get_osd_attr_list_t out_attr;
-	sam_out_get_osd_attr_list_t *out_attrp = &out_attr;
-	sam_in_get_osd_attr_list_t	*in_attrp;
-	sam_di_obj_t	*obj;
-	int 						error;
-
-	if ((error = osd_iotask_alloc(mp->mi.m_fs[dp->unit].oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP)) != OSD_SUCCESS) {
-		return (EINVAL);
-	}
-	out_attrp = (sam_out_get_osd_attr_list_t *)kmem_zalloc
-	    (sizeof (sam_out_get_osd_attr_list_t), KM_SLEEP);
-	sam_format_get_attr_list(out_attrp,
-	    OSD_USER_OBJECT_INFORMATION_PAGE, attr_num);
-	in_attrp = (sam_in_get_osd_attr_list_t *)kmem_zalloc
-	    (sizeof (sam_in_get_osd_attr_list_t), KM_SLEEP);
+	int64_t			attribute;
+	sam_di_obj_t		*obj;
+	int			rc;
+	int			error = 0;
 
 	obj = (sam_di_obj_t *)(void *)&dp->extent[0];
-	osd_setup_GET_ATTRIBUTES(iotp, (uint64_t)obj->user_id);
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_object_req_done;
-	iotp->ot_opts = OSD_O_LISTFMT;
-
-	if (error = sam_osd_bp_from_kva((char *)out_attrp,
-	    sizeof (sam_out_get_osd_attr_list_t), B_WRITE,
-	    &iotp->ot_out_get_attrs_bp)) {
-		goto fini1;
-	}
-	if (error = sam_osd_bp_from_kva((char *)in_attrp,
-	    sizeof (sam_in_get_osd_attr_list_t), B_READ,
-	    &iotp->ot_in_ret_attrs_bp)) {
+	reqp = osd_setup_get_page_attr(mp->mi.m_fs[dp->unit].oh, partid,
+	    (uint64_t)obj->user_id, OSD_USER_OBJECT_INFORMATION_PAGE,
+	    sizeof (attribute), (uint32_t *)(void *)&attribute);
+	if (reqp == NULL) {
+		error = EINVAL;
 		goto fini;
 	}
-	sam_osd_setup_PRIVATE(iotp);
-	if ((error = osd_iotask_start(iotp)) == OSD_SUCCESS) {
-		sam_osd_io_task_WAIT(iotp);
-		if (iotp->ot_error == OSD_SUCCESS) {
-			/*
-			 * length = sam_get_8_byte_attr_val(
-			 * (char *)in_attrp,0x82);
-			 */
-			memcpy((char *)attrp, &in_attrp->value[0], 8);
-			NTOHLL(*attrp);
-		} else {
-			error = sam_osd_errno(iotp);
-			dcmn_err((CE_WARN,
-			    "SAM-QFS: %s: OSD get attr %x err=%d.%d, ino=%d,"
-			    " getattr = 0x%llx", mp->mt.fi_name, attr_num,
-			    error, iotp->ot_error, dp->id.ino,
-			    (long long)*attrp));
+	sam_osd_setup_private(iorp);
+	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	if (rc == 0) {
+		sam_osd_obj_req_wait(iorp);
+		if (iorp->result.err_code != OSD_SUCCESS) {
+			error = sam_osd_errno(iorp->result.err_code, iorp);
+			dcmn_err((CE_WARN, "SAM-QFS: %s: "
+			    "OSD GET attr %x"
+			    " err=%d, errno=%d, ino=%d, setattr = 0x%llx",
+			    mp->mt.fi_name, attr_num, iorp->result.err_code,
+			    error, dp->id.ino, (long long)attribute));
 		}
 	} else {
-		error = sam_osd_errno(iotp);
+		error = EINVAL;
 	}
-	sam_osd_remove_PRIVATE(iotp);
-	sam_osd_release_bp(iotp->ot_in_ret_attrs_bp,
-	    (char *)in_attrp,
-	    sizeof (sam_in_get_osd_attr_list_t), B_READ);
+	*attrp = attribute;
+	sam_osd_remove_private(iorp);
+	(void) osd_free_req(reqp);
 fini:
-	sam_osd_release_bp(iotp->ot_out_get_attrs_bp,
-	    (char *)out_attrp,
-	    sizeof (osd_list_type_retrieve_t), B_WRITE);
-fini1:
-	(void) osd_iotask_free(iotp);
-	kmem_free((char *)out_attrp, sizeof (sam_out_get_osd_attr_list_t));
-	kmem_free((char *)in_attrp, sizeof (sam_in_get_osd_attr_list_t));
 	return (error);
 }
 
+#if SAM_ATTR_LIST
 
 /*
  * ----- sam_format_get_attr_list - Param for a single attribute.
@@ -976,7 +973,6 @@ sam_format_get_attr_list(
 }
 
 
-#if SAM_ATTR_LIST
 /*
  * ----- sam_get_attr_addr - Search an attribute value list for the
  * specified attribute number and return a pointer to the list entry.
@@ -1041,56 +1037,102 @@ sam_set_user_object_attr(
 	uint32_t	attr_num,	/* Attribute number */
 	int64_t		attribute)	/* Attribute */
 {
-	struct osd_iotask	*iotp;
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
-	sam_osd_attr_page_t	attr;
-	sam_osd_attr_page_t	*attrp = &attr;
-	sam_di_obj_t	*obj;
-	int 			error;
+	sam_di_obj_t		*obj;
+	int			rc;
+	int			error = 0;
 
-	if ((error = osd_iotask_alloc(mp->mi.m_fs[dp->unit].oh, &iotp,
-	    sizeof (sam_osd_iot_priv_t), OSD_SLEEP)) != OSD_SUCCESS) {
-		return (EINVAL);
-	}
 	obj = (sam_di_obj_t *)(void *)&dp->extent[0];
-	osd_setup_SET_ATTRIBUTES(iotp, (uint64_t)obj->user_id);
-	attrp = kmem_zalloc(sizeof (sam_osd_attr_page_t), KM_SLEEP);
-	memcpy(&attrp->value, &attribute, 8);
-	iotp->ot_set_attributes_page = OSD_USER_OBJECT_INFORMATION_PAGE;
-	iotp->ot_set_attribute_number = attr_num;
-	iotp->ot_opts = OSD_O_PAGEFMT;
-
-	iotp->ot_partition_id = partid;
-	iotp->ot_iodone = sam_object_req_done;
-
-	if (error = sam_osd_bp_from_kva((char *)attrp, sizeof (offset_t),
-	    B_WRITE, &iotp->ot_out_set_attrs_bp)) {
+	reqp = osd_setup_set_page_attr(mp->mi.m_fs[dp->unit].oh, partid,
+	    (uint64_t)obj->user_id, OSD_USER_OBJECT_INFORMATION_PAGE,
+	    attr_num, sizeof (attribute), (uint32_t *)&attribute);
+	if (reqp == NULL) {
+		error = EINVAL;
 		goto fini;
 	}
-	sam_osd_setup_PRIVATE(iotp);
-	if ((error = osd_iotask_start(iotp)) == OSD_SUCCESS) {
-		sam_osd_io_task_WAIT(iotp);
-		if (iotp->ot_error != OSD_SUCCESS) {
-			error = sam_osd_errno(iotp);
-			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD set attr %x"
+	sam_osd_setup_private(iorp);
+	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	if (rc == 0) {
+		sam_osd_obj_req_wait(iorp);
+		if (iorp->result.err_code != OSD_SUCCESS) {
+			error = sam_osd_errno(iorp->result.err_code, iorp);
+			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD SET attr %x"
 			    " err=%d.%d, ino=%d, setattr = 0x%llx",
-			    mp->mt.fi_name, attr_num, error, iotp->ot_error,
+			    mp->mt.fi_name, attr_num, iorp->result.err_code, rc,
 			    dp->id.ino, (long long)attribute));
 		}
 	} else {
-		error = sam_osd_errno(iotp);
+		error = EINVAL;
 	}
-	sam_osd_remove_PRIVATE(iotp);
-	sam_osd_release_bp(iotp->ot_out_set_attrs_bp, (char *)attrp,
-	    sizeof (offset_t), B_WRITE);
+	sam_osd_remove_private(iorp);
+	(void) osd_free_req(reqp);
 fini:
-	(void) osd_iotask_free(iotp);
-	kmem_free(attrp, sizeof (sam_osd_attr_page_t));
+	return (error);
+}
+
+
+/*
+ * ----- sam_truncate_object_file - Truncate an osd file.
+ */
+int
+sam_truncate_object_file(
+	sam_node_t *ip,
+	sam_truncate_t tflag,	/* Truncate file or Release file */
+	offset_t length)
+{
+	sam_di_obj_t *obj 	= (sam_di_obj_t *)(void *)&ip->di.extent[0];
+	uint64_t id		= obj->user_id;
+	int offline		= ip->di.status.b.offline;
+	offset_t size		= ip->di.rm.size;
+	uchar_t	unit		= ip->di.unit;
+	int error;
+
+	/*
+	 * Sync the inode to make sure the size is updated
+	 * on disk. If error syncing inode, restore blocks
+	 * and previous state.
+	 */
+	if ((error = sam_sync_inode(ip, length, tflag))) {
+		if (tflag == SAM_PURGE) {
+			return (EIO);
+		}
+
+		obj->user_id = id;
+		ip->di.status.b.offline = offline;
+		ip->di.rm.size = size;
+		ip->di.unit = unit;
+		return (EIO);
+	}
+	obj->user_id = id;
+	ip->di.unit = unit;
+	if (length == 0) {
+		if (tflag != SAM_TRUNCATE && obj->user_id) {
+			(void) sam_remove_object_id(ip->mp, &ip->di);
+			ip->size = length;
+			ip->di.rm.size = length;
+			return (0);
+		}
+	} else {
+		int64_t size;
+
+#if SAM_ATTR_LIST
+		(void) sam_get_user_object_attr(ip->mp, &ip->di,
+		    OSD_USER_OBJECT_INFORMATION_LOGICAL_LENGTH,
+		    &size);
+		error = sam_set_user_object_attr(ip->mp, &ip->di,
+		    OSD_USER_OBJECT_INFORMATION_LOGICAL_LENGTH,
+		    (int64_t)length);
+#endif /* SAM_ATTR_LIST */
+	}
 	return (error);
 }
 
 
 #else /* SAM_OSD_SUPPORT */
+
 
 /*
  * ----- sam_open_osd_device - Open an osd device. Return object handle.
@@ -1112,7 +1154,7 @@ sam_open_osd_device(
 /* ARGSUSED */
 void
 sam_close_osd_device(
-	void *oh,			/* Object device handle */
+	sam_osd_handle_t oh,	/* Object device handle */
 	int filemode,		/* Filemode for open */
 	cred_t *credp)		/* Credentials pointer. */
 {
@@ -1125,7 +1167,7 @@ sam_close_osd_device(
 /* ARGSUSED */
 int
 sam_issue_object_io(
-	void *oh,
+	sam_osd_handle_t oh,
 	uint32_t command,
 	uint64_t user_obj_id,
 	enum uio_seg seg,
@@ -1192,7 +1234,7 @@ sam_pg_object_sync_done(
 /* ARGSUSED */
 int
 sam_create_priv_object_id(
-	void		*oh,
+	sam_osd_handle_t	oh,
 	uint64_t	user_obj_id)
 {
 	return (EINVAL);
@@ -1253,4 +1295,19 @@ sam_set_user_object_attr(
 {
 	return (EINVAL);
 }
+
+
+/*
+ * ----- sam_truncate_object_file - Truncate an osd file.
+ */
+/* ARGSUSED */
+int
+sam_truncate_object_file(
+	sam_node_t *ip,
+	sam_truncate_t tflag,	/* Truncate file or Release file */
+	offset_t length)
+{
+	return (EINVAL);
+}
+
 #endif /* SAM_OSD_SUPPORT */

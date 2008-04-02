@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.206 $"
+#pragma ident "$Revision: 1.207 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1525,7 +1525,7 @@ sam_validate_sblk(
 #ifdef sun
 		if (dp->part.pt_type == DT_OBJECT) {
 			buf = kmem_alloc(sizeof (struct sam_sblk), KM_SLEEP);
-			if ((error = sam_issue_object_io(dp->oh, OSD_CMD_READ,
+			if ((error = sam_issue_object_io(dp->oh, FREAD,
 			    SAM_OBJ_SBLK_ID, UIO_SYSSPACE, buf,
 			    0, sizeof (struct sam_sblk)))) {
 				err_line = __LINE__;

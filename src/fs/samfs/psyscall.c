@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.172 $"
+#pragma ident "$Revision: 1.173 $"
 #endif
 
 #include "sam/osversion.h"
@@ -374,7 +374,7 @@ sam_osd_device(
 		break;
 
 	case OSD_DEV_CLOSE:
-		sam_close_osd_device((void *)args.oh, args.filemode, credp);
+		sam_close_osd_device(args.oh, args.filemode, credp);
 		break;
 
 	default:
@@ -441,18 +441,18 @@ sam_osd_command(
 	switch (args.command) {
 
 	case OSD_CMD_CREATE:
-		error = sam_create_priv_object_id((void *)args.oh,
+		error = sam_create_priv_object_id(args.oh,
 		    args.obj_id);
 		break;
 
 	case OSD_CMD_WRITE:
-		error = sam_issue_object_io((void *)args.oh, OSD_WRITE,
+		error = sam_issue_object_io(args.oh, FWRITE,
 		    args.obj_id, UIO_USERSPACE, data, args.offset,
 		    args.size);
 		break;
 
 	case OSD_CMD_READ:
-		error = sam_issue_object_io((void *)args.oh, OSD_READ,
+		error = sam_issue_object_io(args.oh, FREAD,
 		    args.obj_id, UIO_USERSPACE, data, args.offset,
 		    args.size);
 		break;

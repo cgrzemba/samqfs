@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.90 $"
+#pragma ident "$Revision: 1.91 $"
 #endif
 
 #include "sam/types.h"
@@ -416,7 +416,7 @@ struct sam_syscall_rdsock {
 
 typedef struct sam_osd_dev_arg {	/* Filesystem device osd args */
 	upath_t	osd_name;	/* OSD device name */
-	uint64_t oh;		/* OSD handle, returned--open/given--other */
+	sam_osd_handle_t oh;	/* OSD handle, returned--open/given--other */
 	int32_t param;		/* OSD_DEV_OPEN or OSD_DEV_CLOSE */
 	int32_t filemode;	/* Filemode for open & close */
 } sam_osd_dev_arg_t;
@@ -427,7 +427,7 @@ typedef struct sam_osd_dev_arg {	/* Filesystem device osd args */
 
 typedef struct sam_osd_cmd_arg {	/* Filesystem osd command args */
 	uname_t fs_name;	/* Mount point name */
-	uint64_t oh;		/* OSD handle */
+	sam_osd_handle_t oh;	/* OSD handle */
 	int32_t ord;		/* OSD ordinal, given */
 	int32_t command;	/* Command - create, write, or read */
 	int64_t obj_id;		/* User object id */
