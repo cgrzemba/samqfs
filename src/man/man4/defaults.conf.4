@@ -1,4 +1,4 @@
-.\" $Revision: 1.57 $
+.\" $Revision: 1.58 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -152,6 +152,8 @@ For \fIsize\fR, enter an integer number such
 that \fB0\fR \(<= \fIsize\fR \(<= \fB2147483647\fR megabytes.
 If \fIsize\fR = \fB0\fR, paged I/O is used to stage all files.
 The default \fIsize\fR is \fB100\fR megabytes.
+.sp 1
+NOTE: Staging on a shared QFS file system always uses direct I/O.
 .TP 10
 \fBexported_media = \fIvalue\fR
 Declares exported media to be available or unavailable to the
