@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaUtil.java,v 1.20 2008/03/17 14:43:40 am143972 Exp $
+// ident	$Id: MediaUtil.java,v 1.21 2008/04/03 02:21:39 ronaldso Exp $
 
 /**
  * This util class contains a few helper methods that are used in code related
@@ -39,9 +39,10 @@ package com.sun.netstorage.samqfs.web.media;
 import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.ContainerView;
 
-
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
+import com.sun.netstorage.samqfs.web.model.media.DiskVolume;
 
 import com.sun.netstorage.samqfs.web.model.media.Drive;
 import com.sun.netstorage.samqfs.web.model.media.Library;
@@ -179,7 +180,7 @@ public class MediaUtil {
      * one flag.
      */
     public static String getFlagsInformation(VSN vsn) throws SamFSException {
-        NonSyncStringBuffer buffer = new NonSyncStringBuffer();
+        StringBuffer buffer = new StringBuffer();
         String dotDotDot = "...";
         String comma = ", ";
 
@@ -290,7 +291,7 @@ public class MediaUtil {
 
     public static String createLibraryEntry(Library myLibrary)
         throws SamFSException {
-        NonSyncStringBuffer myBuf = new NonSyncStringBuffer();
+        StringBuffer myBuf = new StringBuffer();
         String availableSlotWord =
             SamUtil.getResourceString("ServerConfiguration.media.word.slot");
 
@@ -391,5 +392,278 @@ public class MediaUtil {
         // server is 4.5 or newer and driver is ACSLS, return true
         return getLibraryObject(serverName, libName).getDriverType()
                                                         == Library.ACSLS;
+    }
+
+    /**
+     * Return the word description of the media attributes of a VSN
+     * @param vsn - the VSN Object of which you request the word description
+     * @param maxShown - Maximum flags shown in the GUI
+     * @return the word description (the most important attribute)
+     * of the media attributes of the VSN follow by ... if there are more than
+     * one flag.
+     */
+    public static String getFlagString(VSN vsn, int maxShown)
+        throws SamFSException {
+        StringBuffer buffer = new StringBuffer();
+        String dotDotDot = " ... ";
+        String comma = ", ";
+        boolean needTotal = false;
+        int count = 0;
+
+        /**
+         * Below is the importance sequence of the media flags.
+         * We only show the most important flag, and follow by ... if there
+         * is more than one flag.
+         *
+         * Damaged Media
+         * Needs Audit
+         * Unavailable
+         * Duplicate VSN
+         * Volume is full
+         * Recycle
+         * Read-only
+         * Write-protected
+         * Foreign Media
+         */
+
+        // First of all, state if the vsn is reserved
+
+        if (vsn.isReserved()) {
+            buffer.append(SamUtil.getResourceString("EditVSN.reserved"));
+            buffer.append(comma);
+            count++;
+        }
+
+        if (vsn.isMediaDamaged()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.damagemedia")).append(comma);
+                count ++;
+            }
+        }
+
+        if (vsn.isNeedAudit()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.needaudit")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isUnavailable()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.unavailable")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isDuplicateVSN()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.duplicatevsn")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isVolumeFull()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.volumefull")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isRecycled()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.recycle")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isReadOnly()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.readonly")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isWriteProtected()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.writeprotected")).append(comma);
+                count ++;
+            }
+        }
+        if (vsn.isForeignMedia()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(dotDotDot);
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "EditVSN.foreignmedia")).append(comma);
+                count ++;
+            }
+        }
+
+        if (needTotal) {
+            return buffer.append("(").append(count).append(")").toString();
+        } else if (buffer.length() > 0) {
+            return buffer.toString().substring(0, buffer.length() - 2);
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * construct the 'media flags' display string 
+     */
+    public static String getFlagString(DiskVolume vsn, int maxShown) {
+        NonSyncStringBuffer buffer = new NonSyncStringBuffer();
+        int count = 0;
+        boolean needTotal = false;
+
+        // check bad media
+        if (vsn.isBadMedia()) {
+            buffer.append(SamUtil.getResourceString(
+                "archiving.diskvsn.flags.badmedia")).append(", ");
+            count++;
+        }
+        
+        // check unavailable
+        if (vsn.isUnavailable()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(" ... ");
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "archiving.diskvsn.flags.unavailable")).append(", ");
+                count ++;
+            }
+        }
+
+        // check readOnly
+        if (vsn.isReadOnly()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(" ... ");
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "archiving.diskvsn.flags.readonly")).append(", ");
+                count ++;
+            }
+        }
+
+        // check labeleled
+        if (vsn.isLabeled()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(" ... ");
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "archiving.diskvsn.flags.labeled")).append(", ");
+                count ++;
+            }
+        }
+
+        // check unknown
+        if (vsn.isUnknown()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(" ... ");
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "archiving.diskvsn.flags.unknown")).append(", ");
+                count ++;
+            }
+        }
+
+        // check remote
+        if (vsn.isRemote()) {
+            if (needTotal) {
+                count++;
+            } else if (count >= maxShown) {
+                buffer.append(" ... ");
+                needTotal = true;
+                count++;
+            } else {
+                buffer.append(SamUtil.getResourceString(
+                    "archiving.diskvsn.flags.remote"));
+                count ++;
+
+            }
+        }
+
+        if (needTotal) {
+            return buffer.append("(").append(count).append(")").toString();
+        } else if (buffer.length() > 0) {
+            return buffer.toString().substring(0, buffer.length() - 2);
+        } else {
+            return "";
+        }
+    }
+    
+    public static boolean isDiskType(int mediaType) {
+        return mediaType == BaseDevice.MTYPE_DISK ||
+               mediaType == BaseDevice.MTYPE_STK_5800;
     }
 }

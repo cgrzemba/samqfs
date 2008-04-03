@@ -27,13 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNPoolSummaryView.java,v 1.32 2008/03/17 14:43:30 am143972 Exp $
+// ident	$Id: VSNPoolSummaryView.java,v 1.33 2008/04/03 02:21:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
 import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
@@ -42,7 +41,6 @@ import com.sun.netstorage.samqfs.mgmt.SamFSMultiMsgException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.archive.VSNPool;
-import com.sun.netstorage.samqfs.web.model.media.VSN;
 import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.CommonTableContainerView;
@@ -124,7 +122,6 @@ public class VSNPoolSummaryView extends CommonTableContainerView {
             ((CCButton) getChild("New")).setDisabled(false);
 
             // disable delete & remove until user selects something
-            ((CCButton)getChild("Edit")).setDisabled(true);
             ((CCButton)getChild("Delete")).setDisabled(true);
         }
         TraceUtil.trace3("Exiting");
@@ -164,7 +161,8 @@ public class VSNPoolSummaryView extends CommonTableContainerView {
                 errCause = "ArchiveConfig.warning.detail";
             } else {
                 processMsg = "Failed to delete vsn pool";
-                errMsg = "VSNPoolSummary.error.failedDelete";
+                errMsg = SamUtil.getResourceString(
+                            "VSNPoolSummary.error.failedDelete", poolName);
                 errCause = smfex.getMessage();
             }
 
@@ -191,8 +189,7 @@ public class VSNPoolSummaryView extends CommonTableContainerView {
         // which is needed in order to update the data
         try {
             Thread.sleep(5000);
-        }
-        catch (InterruptedException iex) {
+        } catch (InterruptedException iex) {
             TraceUtil.trace3("InterruptedException Caught: Reason: " +
                              iex.getMessage());
         }
@@ -204,7 +201,6 @@ public class VSNPoolSummaryView extends CommonTableContainerView {
     private void initTableHeaders() {
         // set button labels
         model.setActionValue("New", "archiving.new");
-        model.setActionValue("Edit", "archiving.edit");
         model.setActionValue("Delete", "archiving.delete");
 
         // set column headers
@@ -217,7 +213,8 @@ public class VSNPoolSummaryView extends CommonTableContainerView {
     public void populateTableModel() {
         CommonViewBeanBase parent = (CommonViewBeanBase)getParentViewBean();
         String serverName = parent.getServerName();
-        NonSyncStringBuffer inUse = new NonSyncStringBuffer();
+        StringBuffer inUse = new StringBuffer();
+        StringBuffer buffer = new StringBuffer();
 
         try {
             SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
@@ -227,8 +224,6 @@ public class VSNPoolSummaryView extends CommonTableContainerView {
             // prevent those darn null pointer exception
             if (pool == null)
                 pool = new VSNPool[0];
-
-            NonSyncStringBuffer buffer = new NonSyncStringBuffer();
 
             // disable tooltips
             ((CCRadioButton)((CCActionTable)getChild(CHILD_ACTION_TABLE)).

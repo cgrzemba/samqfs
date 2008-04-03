@@ -28,27 +28,26 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNs.jsp,v 1.13 2008/03/17 14:40:30 am143972 Exp $
+// ident	$Id: CopyVSNs.jsp,v 1.14 2008/04/03 02:21:38 ronaldso Exp $
 --%>
 
 <%@page info="CopyVSNs" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato" %>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
-<jato:useViewBean className="com.sun.netstorage.samqfs.web.archive.CopyVSNsViewBean">
+<jato:useViewBean
+    className="com.sun.netstorage.samqfs.web.archive.CopyVSNsViewBean">
 
 <!-- include helper javascript -->
-<script type="text/javascript" src="/samqfsui/js/archive/copyvsns.js"></script>
-
-<!-- tab everything by 30  px -->
-<style>
-    td.indent{padding-left:30px; text-align:left}
-</style>
+<script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
+<script language="javascript"
+        src="/samqfsui/js/archive/vsnpools.js"></script>
+<script language="javascript" src="/samqfsui/js/archive/copyvsns.js"></script>
 
 <!-- page header -->
 <cc:header
     pageTitle="archiving.policy.copyvsns.headertitle" 
-    copyrightYear="2006" 
+    copyrightYear="2008" 
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
         if (parent.serverName != null) {
@@ -78,74 +77,74 @@
 
 <table cellspacing="10"> 
     <tr><td class="indent">
-        <cc:label name="mediaTypeLabel" 
+        <cc:label name="LabelMediaType" 
                   defaultValue="archiving.mediatype"
                   bundleID="samBundle"
                   elementName="mediaType"/>
     </td><td>
         <cc:dropdownmenu name="mediaType"
                          bundleID="samBundle"
+                         onClick="saveMenuValue(this)"
                          onChange="handleMediaTypeChange(this)"/>
-    </td></tr>
-    
-    <tr><td class="indent">
-        <cc:label name="vsnsDefinedLabel"
-                  defaultValue="archiving.vsnsdefined"
-                  bundleID="samBundle"
-                  elementName="vsnsDefined"/>
     </td><td>
-        <cc:textfield name="vsnsDefined"
-                      bundleID="samBundle"
-                      size="40"/>
-    </td></tr>
-    
-    <tr><td class="indent">
-        <cc:label name="poolDefinedLabel"
-                  defaultValue="archiving.pooldefined"
-                  bundleID="samBundle"
-                  elementName="poolDefined"/>
-    </td><td>
-        <cc:dropdownmenu name="poolDefined"
-                        bundleID="samBundle"/>
-    </td></tr>
-    <tr><td colspan=2" class="indent">
-
-        <cc:spacer name="spacer1" height="20"/>
-        <img src="/com_sun_web_ui/images/other/dot.gif"
-             height="1" width="100%" class="ConLin"/>
-        </td>
-    </tr>
-    
-    <tr><td class="indent">
-        <cc:label name="freeSpaceLabel"
+        <cc:spacer name="Spacer" width="20" />
+        <cc:label name="LabelFreeSpace" 
                   defaultValue="archiving.freespace"
                   bundleID="samBundle"
-                  elementName="freeSpace"/>
+                  elementName="TextFreeSpace"/>
     </td><td>
-        <cc:text name="freeSpace"
-                 bundleID="samBundle"/>
-    </td></tr>
-    
-    <tr><td class="indent">
-        <cc:label name="availableMembersLabel"
-                  defaultValue="archiving.availablemembers"
-                  bundleID="samBundle"
-                  elementName="availableMembers"/>
-    </td><td>
-        <cc:text name="availableMembers"
+        <cc:text name="TextFreeSpace"
                  bundleID="samBundle"/>
     </td></tr>
 </table>
 <br>
+
+<!-- Action Table -->
+<jato:containerView name="MediaExpressionView">
+  <cc:actiontable
+    name="MediaExpressionTable"
+    bundleID="samBundle"
+    title="MediaAssignment.tabletitle.copyvsn"
+    selectionType="multiple"
+    showAdvancedSortIcon="true"
+    showLowerActions="true"
+    showPaginationControls="true"
+    showPaginationIcon="false"
+    showSelectionIcons="true"
+    page="1"/>
+  <br />
+  <div style="padding-left:20px">
+    <cc:text name="reservedVSNMessage"
+      escape="false"
+      bundleID="samBundle"/>
+  </div>
+  <cc:hidden name="Expressions"/>
+  <cc:hidden name="SelectedExpression"/>
+  <cc:hidden name="SelectedPool"/>
+  <cc:hidden name="MediaType"/>
+  <cc:hidden name="poolBoolean"/>
+  <cc:hidden name="deleteConfirmation" bundleID="samBundle"/>
+  <cc:hidden name="ServerName"/>
+  <cc:hidden name="hasPermission"/>
+  <cc:hidden name="NoSelectionMsg"/>
+  <cc:hidden name="deletePoolConfirmation"/>
+  <cc:hidden name="NoPermissionMsg"/>
+</jato:containerView>
+
 <span style="padding-left:20px">
 <cc:text name="message"
          bundleID="samBundle"/>
 </span>
 
-<cc:hidden name="hardReset"/>
-<cc:hidden name="all_pools"/>
-
 </cc:pagetitle>
+
+<cc:hidden name="ResetMessage"/>
+<cc:hidden name="DeleteAllMessage"/>
+<cc:hidden name="ServerName"/>
+<cc:hidden name="PolicyName"/>
+<cc:hidden name="CopyNumber"/>
+
+
 </jato:form>
 </cc:header>
 </jato:useViewBean>

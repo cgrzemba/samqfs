@@ -27,38 +27,101 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: VSNPoolDetailsPropSheet.xml,v 1.8 2008/03/17 14:40:31 am143972 Exp $ -->
+<!-- $Id: VSNPoolDetailsPropSheet.xml,v 1.9 2008/04/03 02:21:38 ronaldso Exp $ -->
 
 <propertysheet>
-		<section name="vsnDetailsSection" defaultValue="">	
+    <section name="vsnDetailsSection" defaultValue="">
         <property span="true" required="false">
-            <label name="vsnPoolName" defaultValue="VSNPoolDetails.vsnPoolName"/>
-		<cc name="vsnPoolNameText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
-		<attribute name="defaultValue" value=""/>
-		</cc> 
-		</property>
-        
-		<property span="true" required="false">
-            <label name="mediaType" defaultValue="VSNPoolDetails.mediaType"/>
-		<cc name="mediaTypeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
-		<attribute name="defaultValue" value=""/>
-		</cc> 
-		</property>
-		
-		<property span="true" required="false">
-            <label name="spaceAvailable" defaultValue="VSNPoolDetails.spaceAvailable"/>
-		<cc name="spaceAvailableText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
-		<attribute name="defaultValue" value=""/>
-		</cc> 
-		</property>
-		
-		<property span="true" required="false">
-            <label name="regexp" defaultValue="VSNPoolDetails.regexp"/>
-		<cc name="regexpText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
-		<attribute name="defaultValue" value=""/>
-		</cc> 
-		</property>
-		</section>
-
-		
+            &lt;table>
+            &lt;tr>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="VSNPoolDetails.vsnPoolName" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="vsnPoolNameText"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="VSNPoolDetails.mediaType" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="mediaTypeText"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="VSNPoolDetails.spaceAvailable" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="spaceAvailableText"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="80" />
+                    </cc>
+                &lt;/td>
+                &lt;td nowrap='nowrap'>
+                    <cc name="Label"
+                        tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
+                        <attribute name="defaultValue"
+                            value="VSNPoolDetails.totalvolume" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="Spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="15" />
+                    </cc>
+                &lt;/td>
+                &lt;td>
+                    <cc name="totalVolumeText"
+                        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" />
+                &lt;/td>
+            &lt;/tr>
+            &lt;/table>
+        </property>
+    </section>
 </propertysheet>

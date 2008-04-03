@@ -27,67 +27,237 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: copyvsns.js,v 1.6 2008/03/17 14:40:25 am143972 Exp $
+// ident	$Id: copyvsns.js,v 1.7 2008/04/03 02:21:38 ronaldso Exp $
 
-/* handler for the reset button */
-function handleResetButton(field) {
-    var hardReset = field.form["CopyVSNs.hardReset"].value;
+    var origMenuValue = "";
 
-    /* determine if we should perform a soft or hard reset */
-    if (hardReset == "true") {
-        // perform a hard reset via the backend
-        return true;
-    } else {
-        // perform a soft reset
-        field.form.reset();
+    function getForm() {
+        return document.forms[0];
+    }
+
+    function getPageName() {
+        var strArray = getForm().action.split("/");
+        return strArray[strArray.length - 1];
+    }
+
+    function getViewName() {
+        return getPageName() + ".MediaExpressionView";
+    }
+
+    function getTableName() {
+        return "MediaExpressionTable";
+    }
+
+    function saveMenuValue(field) {
+        origMenuValue = field.value;
+    }
+
+    /* handler for the media type drop down */
+    function handleMediaTypeChange(field) {
+        var formName = field.form.name;
+        var theForm = field.form;
+        var resetMsgArr =
+            theForm.elements[getPageName() + ".ResetMessage"].value.split(";");
+
+        // Change from undefined to a media type
+        if (origMenuValue == "-999") {
+            if (!confirm(resetMsgArr[1])) {
+                field.value = origMenuValue;
+                return false;
+            }
+        } else {
+            if (!confirm(resetMsgArr[0])) {
+                field.value = origMenuValue;
+                return false;
+            }
+        }
+
+        // pop new pool windows, reset menu to original value just in case if
+        // user clicks cancel in the new pool pop up.  The menu will be
+        // presented with new media pool after a pool is successfully created.
+        field.value = origMenuValue;
+
+        launchCopyVSNExtensionPopup(true);
         return false;
     }
 
-}
-
-var prefix = "CopyVSNs.";
-var saveButton = prefix + "Save";
-var poolDropDown = prefix + "poolDefined";
-
-/* handler for the media type drop down */
-function handleMediaTypeChange(field) {
-    var formName = field.form.name;
-    var theForm = field.form;
-
-    var poolArray = null;
-    // disable/enable save button
-    if (field.value == "-999") {
-        // disable save
-        ccSetButtonDisabled(saveButton, formName, 1);
-        poolArray = new Array();
-        poolArray[0] = "--";
-    } else {
-        // enable 
-        ccSetButtonDisabled(saveButton, formName, 0);
-        poolArray = getPoolsForMediaType(theForm, field.value);
+    function getMediaType() {
+        return getForm().elements[getViewName() + ".MediaType"].value;
     }
 
-    // vsn pool dropdown
-    var size = poolArray.length;
-    theForm.elements[poolDropDown].options.length = size;
-    for (var i = 0; i < size; i++) {
-        theForm.elements[poolDropDown].options[i] = 
-            new Option(poolArray[i], poolArray[i]);
+    function getTileNumberFromName(fieldName) {
+        if (fieldName == null)
+            return -1;
+
+        var a1 = fieldName.split("[");
+        var a2 = a1[1].split("]");
+        var tileNumber = a2[0];
+
+        return tileNumber;
     }
-}
 
-function getPoolsForMediaType(form, mediaType) {
+    function getExpression(fieldName) {
+        var expValue =
+            getForm().elements[getViewName() +  ".Expressions"].value;
+        var expArray = expValue.split(",");
+        var index = getTileNumberFromName(fieldName);
+        return expArray[index];
+    }
 
-    var rawArray = form.elements[prefix + "all_pools"].value.split(";");
-    var poolArray = null;
-    
-    for (var i = 0; i < rawArray.length; i++) {
-        var temp = rawArray[i].split("=");
-        if (temp[0] == mediaType) {
-            poolArray = temp[1].split(",");
-            break;
+    /**
+     * @Override
+     */
+    function launchEditExpressionPopup(expression) {
+        // Check Permission
+        var hasPermission = getForm().elements[
+                            getViewName() + ".hasPermission"].value == "true";
+        if (!hasPermission) {
+            var noPermissionMsg = getForm().elements[
+                                  getViewName() + ".NoPermissionMsg"].value;
+            alert(noPermissionMsg);
+            return false;
+        }
+
+        var params = "&OPERATION=EDIT_EXP";
+        var mediaType = getMediaType();
+        var policyName = getForm().elements[
+                            getPageName() + ".PolicyName"].value;
+        var copyNumber = getForm().elements[
+                            getPageName() + ".CopyNumber"].value;
+        params += "&media_type=" + mediaType +
+                  "&policy_info=" + policyName + "." + copyNumber;
+
+        if (expression != "") {
+            params += "&expression=" + expression;
+        }
+        var win = launchPopup("/archive/NewEditVSNPool",
+                            "edit_exp",
+                            getForm().elements[
+                                getViewName() + ".ServerName"].value,
+                            SIZE_VOLUME_ASSIGNER,
+                            params);
+
+        return false;
+    }
+
+     function launchMatchingVolumePopup(field) {
+        var selectedExp = getExpression(field.name);
+        var param = '&SAMQFS_SHOW_CONTENT=false' +
+            '&SAMQFS_SHOW_LINE_CONTROL=false' +
+            '&SAMQFS_STAGE_Q_LIST=false' +
+            '&matching_volumes=' + ',' + selectedExp;
+        launchPopup(
+            '/admin/ShowFileContent',
+            'content',
+            getServerName(),
+            SIZE_NORMAL,
+            param);
+        return false;
+    }
+
+    function launchCopyVSNExtensionPopup(resetType) {
+        var mediaType =
+            resetType ? -1 : getMediaType();
+        var policyName = getForm().elements[
+                            getPageName() + ".PolicyName"].value;
+        var copyNumber = getForm().elements[
+                            getPageName() + ".CopyNumber"].value;
+        var param = "&SAMQFS_media_type=" + mediaType +
+                  "&SAMQFS_policy_info=" + policyName + "." + copyNumber;
+        launchPopup(
+            '/archive/CopyVSNExtension',
+            'content',
+            getServerName(),
+            SIZE_VOLUME_ASSIGNER,
+            param);
+        return false;
+    }
+
+    function isPool(field) {
+        var tileNumber = getTileNumberFromName(field.name);
+        var poolBufArray =
+            getForm().elements[getViewName() + ".poolBoolean"].value.split(",");
+        return poolBufArray[tileNumber] == "true";
+    }
+
+    function handleTextExpression(field) {
+        if (!isPool(field)) {
+            launchEditExpressionPopup(getExpression(field.name));
+            return false;
+        } else {
+            // Otherwise go to pool details page
+            return true;
         }
     }
 
-    return poolArray;
-}
+    function handleButtonAdd() {
+        launchCopyVSNExtensionPopup(false);
+        return false;
+    }
+
+    function handleButtonDelete() {
+        var prefix = getViewName() + "." +
+                     getTableName() + ".SelectionCheckbox";
+        var theForm = getForm();
+        var existingExpression =
+            theForm.elements[getViewName() + ".Expressions"].value;
+        var expArray = existingExpression.split(",");
+        var selected_exps = "";
+        var selected_pools = "";
+        var allChecked = true;
+
+        // loop through the check boxes and determine which ones are selected
+        for (var i = 0; i < expArray.length; i++) {
+            var check_box_name = prefix + i;
+            var theCheckBox = theForm.elements[check_box_name];
+            var poolBuf = getForm().elements[getViewName() + ".poolBoolean"].
+                                                            value.split(",");
+            if (theCheckBox.checked) {
+                if (poolBuf[i] == "true") {
+                    selected_pools += expArray[i] + ",";
+                } else {
+                    selected_exps += expArray[i] + ",";
+                }
+            } else {
+                allChecked = false;
+            }
+        }
+
+        // Show error message if nothing is selected
+        if (selected_exps.length == 0 && selected_pools.length == 0) {
+            alert(theForm.elements[getViewName() + ".NoSelectionMsg"].value);
+            return false;
+        // Otherwise warn user that he/she is about to delete the selected
+        // expressions
+        } else {
+            // Remove trailing semi-colon
+            selected_exps =
+                selected_exps.length == 0 ?
+                    "" :
+                    selected_exps.substring(0, selected_exps.length - 1);
+            selected_pools =
+                selected_pools.length == 0 ?
+                    "" :
+                    selected_pools.substring(0, selected_pools.length - 1);
+
+            // check if user has selected all expressions, warn user he/she is
+            // about to delete the pool if all expressions are selected
+            if (allChecked) {
+                alert(theForm.elements[
+                        getPageName() + ".DeleteAllMessage"].value);
+                return false;
+            } else {
+                var result = window.confirm(getForm().elements[
+                    getViewName() + ".deleteConfirmation"].value);
+                if (!result) {
+                    return false;
+                }
+            }
+            theForm.elements[getViewName() + ".SelectedExpression"].value
+                = selected_exps;
+            theForm.elements[getViewName() + ".SelectedPool"].value
+                = selected_pools;
+        }
+
+return true;
+    }

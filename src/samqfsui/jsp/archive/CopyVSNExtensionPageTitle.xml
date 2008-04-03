@@ -27,7 +27,23 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: CopyVSNsPageTitle.xml,v 1.9 2008/04/03 02:21:38 ronaldso Exp $ -->
+<!-- $Id: CopyVSNExtensionPageTitle.xml,v 1.1 2008/04/03 02:21:38 ronaldso Exp $ -->
 
 <pagetitle>
+    <pagebuttons>
+        <cc name="Submit"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <!-- See the CCButton class for button types. -->
+            <attribute name="type" value="primary"/>
+            <attribute name="defaultValue" value="CommonPopup.ok" />
+        </cc>
+
+        <cc name="Cancel"
+            tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+            <!-- See the CCButton class for button types. -->
+            <attribute name="type" value="secondary"/>
+            <attribute name="defaultValue" value="CommonPopup.cancel" />
+            <attribute name="onClick" value="cleanupPopup(this);"/>
+        </cc>
+    </pagebuttons>
 </pagetitle>

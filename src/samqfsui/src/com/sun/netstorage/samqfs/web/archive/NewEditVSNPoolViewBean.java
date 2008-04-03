@@ -27,77 +27,71 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewEditVSNPoolViewBean.java,v 1.25 2008/03/17 14:40:44 am143972 Exp $
+// ident	$Id: NewEditVSNPoolViewBean.java,v 1.26 2008/04/03 02:21:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
 import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
-import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
+import com.sun.netstorage.samqfs.web.media.AssignMediaView;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemArchiveManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.archive.ArchiveCopy;
+import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
+import com.sun.netstorage.samqfs.web.model.archive.ArchiveVSNMap;
 import com.sun.netstorage.samqfs.web.model.archive.VSNPool;
-import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
-import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.util.CommonSecondaryViewBeanBase;
-import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCPageTitleModel;
-import com.sun.web.ui.view.html.CCButton;
-import com.sun.web.ui.view.html.CCDropDownMenu;
-import com.sun.web.ui.view.html.CCLabel;
-import com.sun.web.ui.view.html.CCRadioButton;
-import com.sun.web.ui.view.html.CCStaticTextField;
-import com.sun.web.ui.view.html.CCTextField;
 import com.sun.web.ui.view.pagetitle.CCPageTitle;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import javax.servlet.ServletException;
 
 /**
- *  This class is the view bean for the New/Edit VSN Pool page
+ *  This class is the view bean for the New/Edit VSN Pool page.  This page
+ *  has four different modes:
+ *
+ *  1. Create a new volume pool
+ *  2. Edit an existing volume pool
+ *  3. Create a new volume pool, and add the pool to the copy vsn
+ *  4. Create an expression, and add the expression to the copy vsn
  */
 public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
     // The "logical" name for this page.
     public static final String PAGE_NAME = "NewEditVSNPool";
-    private static final String DEFAULT_DISPLAY_URL =
-                                "/jsp/archive/NewEditVSNPool.jsp";
+    private static final
+        String DEFAULT_DISPLAY_URL = "/jsp/archive/NewEditVSNPool.jsp";
 
-    // children
-    public static final String REQUIRED_LABEL = "requiredLabel";
-    public static final String NAME = "name";
-    public static final String NAME_LABEL = "nameLabel";
-    public static final String MEDIA_TYPE = "mediaType";
-    public static final String MEDIA_TYPE_LABEL = "mediaTypeLabel";
-    public static final String SPECIFY_VSN_LABEL = "specifyVSNLabel";
-    public static final String VSN_START_END_RADIO = "vsnStartEndRadio";
-    public static final String VSN_RANGE_RADIO = "vsnRangeRadio";
-    public static final String START_LABEL = "startLabel";
-    public static final String START = "start";
-    public static final String END_LABEL = "endLabel";
-    public static final String END = "end";
-    public static final String VSN_RANGE_LABEL = "vsnRangeLabel";
-    public static final String VSN_RANGE = "vsnRange";
-    public static final String VSN_RANGE_HELP = "vsnRangeHelp";
-
-    public static final String OPERATION = "OPERATION";
-    public static final String NEW_POOL = "NEW";
-    public static final String EDIT_POOL = "EDIT";
+    // pagelet view
+    private static final String PAGELET_VIEW = "AssignMediaView";
 
     // Page Title Attributes and Components.
     private CCPageTitleModel ptModel = null;
+    private static final String PAGE_TITLE = "PageTitle";
 
-    // determines if this is initial load of the page
-    private boolean isFirstLoad = false;
+    // Request Param & Page Session Attributes
+    // Used to determine if this pop up is using as new or editing a pool
+    public static final String OPERATION = "OPERATION";
+    public static final String NEW_POOL = "NEW";
+    public static final
+        String NEW_POOL_ADD_TO_COPYVSN = "NEW_POOL_ADD_TO_COPYVSN";
+    public static final
+        String NEW_EXP_ADD_TO_COPYVSN = "NEW_EXP_ADD_TO_COPYVSN";
+    public static final String EDIT_POOL = "EDIT";
+    public static final String EDIT_EXP = "EDIT_EXP";
+
+
+    // page session attributes / request params
+    public static final String POOL_NAME = "pool_name";
+    public static final String EXPRESSION = "expression";
+    public static final String MEDIA_TYPE = "media_type";
+    public static final String POLICY_INFO = "policy_info";
 
     /**
      * Constructor
@@ -109,417 +103,352 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
 
         ptModel = createPageTitleModel();
         registerChildren();
+        saveRequestParam();
         TraceUtil.trace3("Exiting");
     }
 
 
     /**
+     * @Override
      * Register each child view.
      */
     protected void registerChildren() {
         TraceUtil.trace3("Entering");
         super.registerChildren();
+        registerChild(PAGE_TITLE, CCPageTitle.class);
         ptModel.registerChildren(this);
-
-        registerChild(REQUIRED_LABEL, CCLabel.class);
-        registerChild(NAME, CCTextField.class);
-        registerChild(NAME_LABEL, CCLabel.class);
-        registerChild(MEDIA_TYPE, CCDropDownMenu.class);
-        registerChild(MEDIA_TYPE_LABEL, CCLabel.class);
-        registerChild(SPECIFY_VSN_LABEL, CCLabel.class);
-        registerChild(VSN_START_END_RADIO, CCRadioButton.class);
-        registerChild(VSN_RANGE_RADIO, CCRadioButton.class);
-        registerChild(START_LABEL, CCLabel.class);
-        registerChild(START, CCTextField.class);
-        registerChild(END_LABEL, CCLabel.class);
-        registerChild(END, CCTextField.class);
-        registerChild(VSN_RANGE_LABEL, CCLabel.class);
-        registerChild(VSN_RANGE, CCTextField.class);
-        registerChild(VSN_RANGE_HELP, CCStaticTextField.class);
-
+        registerChild(PAGELET_VIEW, AssignMediaView.class);
         TraceUtil.trace3("Exiting");
     }
 
     /**
+     * @Override
      * Instantiate each child view.
      */
     protected View createChild(String name) {
-        if (name.indexOf("Label") != -1) {
-            return new CCLabel(this, name, null);
-        } else if (name.equals(NAME) ||
-                   name.equals(START) ||
-                   name.equals(END) ||
-                   name.equals(VSN_RANGE)) {
-            return new CCTextField(this, name, null);
-        } else if (name.equals(MEDIA_TYPE)) {
-            return new CCDropDownMenu(this, name, null);
-        } else if (name.equals(VSN_START_END_RADIO)) {
-            CCRadioButton radio =
-                new CCRadioButton(this, VSN_START_END_RADIO, "vsnrange");
-            radio.setOptions(new OptionList(new String [] {""},
-                                            new String [] {"startend"}));
-            return radio;
-        } else if (name.equals(VSN_RANGE_RADIO)) {
-            CCRadioButton radio =
-                new CCRadioButton(this, VSN_START_END_RADIO, "vsnrange");
-            radio.setOptions(new OptionList(new String [] {""},
-                                            new String [] {"vsnrange"}));
-            return radio;
-        } else if (name.equals(VSN_RANGE_HELP)) {
-            return new CCStaticTextField(this, name, null);
-        } else if (super.isChildSupported(name)) {
-            return super.createChild(name);
-        } else if (name.equals("PageTitle")) {
+        if (name.equals(PAGELET_VIEW)) {
+            short mode = -1;
+            if (getPageMode().equals(EDIT_POOL)) {
+                mode = AssignMediaView.MODE_EDIT_POOL;
+            } else if (getPageMode().equals(EDIT_EXP)){
+                mode = AssignMediaView.MODE_COPY_INFO_EDIT_EXP;
+            } else if (getPageMode().equals(NEW_POOL_ADD_TO_COPYVSN)) {
+                mode = AssignMediaView.MODE_COPY_INFO_NEW_POOL;
+            } else if (getPageMode().equals(NEW_EXP_ADD_TO_COPYVSN)) {
+                mode = AssignMediaView.MODE_COPY_INFO_NEW_EXP;
+            } else {
+                mode = AssignMediaView.MODE_NEW_POOL;
+            }
+            return new AssignMediaView(this, name, mode);
+        } else if (name.equals(PAGE_TITLE)) {
             return new CCPageTitle(this, ptModel, name);
         } else if (ptModel.isChildSupported(name)) {
             return ptModel.createChild(this, name);
+        } else if (super.isChildSupported(name)) {
+            return super.createChild(name);
         } else  {
             throw new IllegalArgumentException("Invalid child [" + name + "]");
         }
     }
 
+    /**
+     * @Override
+     * @param event - Display Event
+     * @throws com.iplanet.jato.model.ModelControlException
+     */
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
         TraceUtil.trace3("Entering");
         super.beginDisplay(event);
 
-        CCDropDownMenu mediaType = (CCDropDownMenu)getChild(MEDIA_TYPE);
+        // Set the correct page title and page title help
+        if (getPageMode().equals(NEW_POOL)) {
+            // New Volume Pool
+            ptModel.setPageTitleText("NewEditVSNPool.pageTitle.new");
+            ptModel.setPageTitleHelpMessage(
+                "NewEditVSNPool.pageTitle.new.help");
+        } else if (getPageMode().equals(EDIT_POOL)) {
+            // Edit Volume Pool
+            String poolName = (String) getPageSessionAttribute(POOL_NAME);
 
-        String serverName = getServerName();
-        String poolName = "";
-
-        try {
-            SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
-
-            int [] mediaTypes = sysModel.getSamQFSSystemMediaManager().
-                getAvailableArchiveMediaTypes();
-
-            String [] labels = new String[mediaTypes.length];
-            String [] values = new String[mediaTypes.length];
-
-            for (int i = 0; i < mediaTypes.length; i++) {
-                labels[i] = SamUtil.getMediaTypeString(mediaTypes[i]);
-                values[i] = Integer.toString(mediaTypes[i]);
-            }
-
-            mediaType.setOptions(new OptionList(labels, values));
-
-            if (!isNewVSNPool()) {
-                ptModel.setPageTitleText("NewEditVSNPool.edit.pageTitle");
-
-                poolName = getVSNPoolName();
-
-                CCTextField name = (CCTextField)getChild(NAME);
-                if (isFirstLoad) {
-                    loadPoolDetails(serverName, poolName);
-                }
-                // always disable media type and name if editing a pool
-                name.setDisabled(true);
-                mediaType.setDisabled(true);
-                name.setValue(poolName);
+            // Figure out if user is adding or editing an expression
+            String expression = (String) getPageSessionAttribute(EXPRESSION);
+            if (expression == null) {
+                // adding new expression
+                ptModel.setPageTitleText(
+                    SamUtil.getResourceString(
+                        "NewEditVSNPool.pageTitle.edit.newexpression",
+                        new String [] {poolName}));
+                ptModel.setPageTitleHelpMessage(
+                    SamUtil.getResourceString(
+                        "NewEditVSNPool.pageTitle.edit.newexpression.help",
+                        new String [] {poolName}));
             } else {
-                ptModel.setPageTitleText("NewEditVSNPool.new.pageTitle");
+                ptModel.setPageTitleText(
+                    SamUtil.getResourceString(
+                        "NewEditVSNPool.pageTitle.edit.oldexpression",
+                        new String [] {expression, poolName}));
+                ptModel.setPageTitleHelpMessage(
+                    SamUtil.getResourceString(
+                        "NewEditVSNPool.pageTitle.edit.oldexpression.help",
+                        new String [] {expression, poolName}));
             }
+        } else if (getPageMode().equals(EDIT_EXP)) {
+            String expression = (String) getPageSessionAttribute(EXPRESSION);
 
-            // enable list field if range set.
-            // especially important for the initial page load of creating new
-            // vsn pool.
-            String rs = getDisplayFieldStringValue(VSN_START_END_RADIO);
-            if ("vsnrange".equals(rs))
-                ((CCTextField)getChild(VSN_RANGE)).setDisabled(false);
-        } catch (SamFSException smfex) {
-            SamUtil.processException(smfex,
-                                     this.getClass(),
-                                     "beginDisplay",
-                                     "Exception occurred within framework",
-                                     serverName);
-
-            ((CCButton)getChild("Submit")).setDisabled(true);
-
-            throw new ModelControlException(smfex.getMessage() != null ?
-               smfex.getMessage() : "Exception occurred within framework");
+            // Editing expression
+            ptModel.setPageTitleText(
+                SamUtil.getResourceString(
+                    "NewEditVSNPool.pageTitle.edit.editexpression",
+                    new String [] {expression}));
+            ptModel.setPageTitleHelpMessage(
+                SamUtil.getResourceString(
+                    "NewEditVSNPool.pageTitle.edit.editexpression.help",
+                    new String [] {expression}));
+        } else if (getPageMode().equals(NEW_POOL_ADD_TO_COPYVSN)) {
+            ptModel.setPageTitleText(
+                SamUtil.getResourceString(
+                    "NewEditVSNPool.pageTitle.new.addtocopyvsn",
+                    new String [] {
+                        getPolicyName(),
+                        Integer.toString(getCopyNumber())}));
+            ptModel.setPageTitleHelpMessage(
+                SamUtil.getResourceString(
+                    "NewEditVSNPool.pageTitle.new.addtocopyvsn.help",
+                    new String [] {
+                        getPolicyName(),
+                        Integer.toString(getCopyNumber())}));
+        } else if (getPageMode().equals(NEW_EXP_ADD_TO_COPYVSN)) {
+            ptModel.setPageTitleText(
+                SamUtil.getResourceString(
+                    "NewEditVSNPool.pageTitle.newexp.addtocopyvsn",
+                    new String [] {
+                        getPolicyName(),
+                        Integer.toString(getCopyNumber())}));
+            ptModel.setPageTitleHelpMessage(
+                SamUtil.getResourceString(
+                    "NewEditVSNPool.pageTitle.newexp.addtocopyvsn.help",
+                    new String [] {
+                        getPolicyName(),
+                        Integer.toString(getCopyNumber())}));
         }
-
         TraceUtil.trace3("Exiting");
     }
 
-    private CCPageTitleModel createPageTitleModel() {
-        return new CCPageTitleModel(
-           RequestManager.getRequestContext().getServletContext(),
-           "/jsp/archive/NewEditVSNPoolPageTitle.xml");
-    }
-
     /**
-     *  determine if we are creating a new vsn pool or editing an existing one
-     *
-     * @return boolean - true if creating a new pool else false
-     *
-     */
-    protected boolean isNewVSNPool() {
-        String operation = (String)getPageSessionAttribute(OPERATION);
-
-        if (operation == null) {
-            operation = RequestManager.getRequest().getParameter(OPERATION);
-            setPageSessionAttribute(OPERATION, operation);
-
-            // if operation is in the request, then this is the initial page
-            // load.
-            isFirstLoad = true;
-        }
-        return NEW_POOL.equals(operation);
-    }
-
-    /**
-     * return the name of the pool being edited. This method is and should
-     * only be called when editing an existing pool.
-     *
-     * @return poolName - name of the pool
-     *
-     */
-    protected String getVSNPoolName() {
-        String poolName =
-            (String)getPageSessionAttribute(Constants.Archive.VSN_POOL_NAME);
-        if (poolName == null) {
-            poolName = RequestManager.
-                getRequest().getParameter(Constants.Archive.VSN_POOL_NAME);
-            setPageSessionAttribute(Constants.Archive.VSN_POOL_NAME, poolName);
-        }
-
-        return poolName;
-    }
-
-    /**
-     * validate user input
-     *
-     * @return errors - a list of error messages
-     *
-     */
-    protected List validate() throws SamFSException {
-        List errors = new ArrayList();
-
-        SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
-        SamQFSSystemArchiveManager archiveManager =
-            sysModel.getSamQFSSystemArchiveManager();
-
-        String poolName = null;
-        int mediaType = BaseDevice.MTYPE_DISK;
-
-        // prevent successive calls to isNewVSNPool
-        boolean newPool = isNewVSNPool();
-
-        if (newPool) {
-            poolName = getDisplayFieldStringValue(NAME);
-            poolName = poolName == null? "" : poolName.trim();
-
-            String s = getDisplayFieldStringValue(MEDIA_TYPE);
-            // shouldn't be null, but default to disk anyway
-            mediaType =
-                s == null ? BaseDevice.MTYPE_DISK : Integer.parseInt(s);
-        } else {
-            poolName = getVSNPoolName();
-        }
-
-        // check for null
-        if (poolName.equals("")) {
-            errors.add(SamUtil.getResourceString("NewEditVSN.namenull"));
-            ((CCLabel)getChild(NAME_LABEL)).setShowError(true);
-        } else {
-            // check for well-formedness
-            if (!SamUtil.isValidFSNameString(poolName)) {
-                errors.add(SamUtil.getResourceString("NewEditVSN.invalidname"));
-                ((CCLabel)getChild(NAME_LABEL)).setShowError(true);
-            }
-
-            // check for uniqueness
-            String [] allPoolNames = archiveManager.getAllPoolNames();
-
-            // prevent looping through pool names  while editing an existing
-            // pool
-            boolean found = !newPool;
-            for (int i = 0; i < allPoolNames.length && !found; i++) {
-                if (poolName.equals(allPoolNames[i])) {
-                    found = true;
-                }
-            }
-            if (found && newPool) {
-                errors.add(SamUtil.getResourceString("NewEditVSN.nameinuse",
-                                                     poolName));
-                ((CCLabel)getChild(NAME_LABEL)).setShowError(true);
-            }
-        }
-
-        // determine if to use range or start & end
-        String radio = getDisplayFieldStringValue(VSN_START_END_RADIO);
-        boolean isRange = "vsnrange".equals(radio) ? true : false;
-
-        String expression = "";
-        if (isRange) {
-            // validate range
-            String range = getDisplayFieldStringValue(VSN_RANGE);
-            range = range == null ? "" : range.trim();
-            if (range.equals("")) {
-                errors.add(
-                     SamUtil.getResourceString("NewEditVSN.rangenull"));
-                ((CCLabel)getChild(VSN_RANGE_LABEL)).setShowError(true);
-            } else {
-                expression = range;
-            }
-        } else {
-            // validate start - end combination
-            boolean valid = true;
-
-            String start = getDisplayFieldStringValue(START);
-            String end = getDisplayFieldStringValue(END);
-            start = start == null ? "" : start.trim();
-            end = end == null ? "" : end.trim();
-
-            if (start.equals("")) {
-                errors.add(
-                SamUtil.getResourceString("NewEditVSN.invalidstart"));
-                ((CCLabel)getChild(START_LABEL)).setShowError(true);
-
-                valid = false;
-            }
-
-            if (end.equals("")) {
-                errors.add(
-                     SamUtil.getResourceString("NewEditVSN.invalidend"));
-                ((CCLabel)getChild(END_LABEL)).setShowError(true);
-
-                valid = false;
-            }
-
-            if (valid) {
-                expression = SamQFSUtil.createExpression(start, end);
-                if (expression == null) {
-                    errors.add(
-                    SamUtil.getResourceString("NewEditVSN.invalidstartend"));
-                    ((CCLabel)getChild(START_LABEL)).setShowError(true);
-                    ((CCLabel)getChild(END_LABEL)).setShowError(true);
-                }
-            }
-        }
-
-        // if valid, save the pool and return else return without saving
-        if (errors.size() == 0) {
-            if (isNewVSNPool()) {
-                archiveManager.createVSNPool(poolName, mediaType, expression);
-            } else {
-                VSNPool thePool = archiveManager.getVSNPool(poolName);
-                if (thePool == null)
-                    throw new SamFSException(null, -2010);
-
-                thePool.setMemberVSNs(thePool.getMediaType(), expression);
-            }
-
-            // set confirmation alert message
-        }
-        return errors;
-    }
-
-    /**
-     * initial populating of the contianer view
-     */
-    protected void loadPoolDetails(String serverName, String poolName)
-        throws SamFSException {
-        SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
-
-        VSNPool thePool  =
-            sysModel.getSamQFSSystemArchiveManager().getVSNPool(poolName);
-
-        if (thePool == null)
-            throw new SamFSException(null, -2010);
-
-        String vsnExpression = thePool.getVSNExpression();
-
-        ((CCTextField)getChild(NAME)).setValue(poolName);
-        ((CCDropDownMenu)getChild(MEDIA_TYPE)).
-            setValue(Integer.toString(thePool.getMediaType()));
-
-        CCTextField range = (CCTextField)getChild(VSN_RANGE);
-        CCTextField start = (CCTextField)getChild(START);
-        CCTextField end = (CCTextField)getChild(END);
-        CCRadioButton radio = (CCRadioButton)getChild(VSN_START_END_RADIO);
-
-        if (vsnExpression != null) {
-            range.setValue(vsnExpression);
-            radio.setValue("vsnrange");
-            start.setDisabled(true);
-            end.setDisabled(true);
-            range.setDisabled(false);
-        } else {
-            range.setDisabled(true);
-            radio.setValue("startend");
-            start.setDisabled(false);
-            end.setDisabled(false);
-        }
-    }
-
-    /**
-     * handler for the submit button. Creates the new pool or saves the
-     * changes to an existing pool.
-     *
-     * @param evt
-     * @throws ServletException
-     * @throws IOException
+     * Handler for the submit button
+     * @param evt Request Invocation Event
+     * @throws javax.servlet.ServletException
+     * @throws java.io.IOException
      */
     public void handleSubmitRequest(RequestInvocationEvent evt)
         throws ServletException, IOException {
 
         String serverName = getServerName();
+        AssignMediaView view = (AssignMediaView) getChild(PAGELET_VIEW);
+        String poolName = view.getPoolName();
+
+        // run validation, refresh page to show error alert if there are any
+        // user input errors.
+        if (!view.validate()) {
+            getParentViewBean().forwardTo(getRequestContext());
+            return;
+        }
+
+        String successMessage = null, failedMessage = null;
 
         try {
-            List errors = validate();
+            String expression = view.getExpression();
+            SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
+            SamQFSSystemArchiveManager archiveManager =
+                sysModel.getSamQFSSystemArchiveManager();
 
-            if (errors.size() > 0) {
-                NonSyncStringBuffer buffer = new NonSyncStringBuffer();
-                Iterator it = errors.iterator();
-
-                while (it.hasNext()) {
-                    buffer.append((String)it.next()).append("<br>");
+            if (getPageMode().equals(NEW_POOL) ||
+                getPageMode().equals(NEW_POOL_ADD_TO_COPYVSN)) {
+                successMessage = SamUtil.getResourceString(
+                        "archiving.vsnpool.new.success", poolName);
+                failedMessage = SamUtil.getResourceString(
+                        "archiving.vsnpool.new.failed", poolName);
+                
+                // catch the warning here because we still need to add the pool
+                // to the copy vsn
+                SamFSWarnings thisWarning = null;
+                try {
+                    int mediaType = view.getMediaType();
+                    archiveManager.createVSNPool(
+                        poolName, mediaType, expression);
+                } catch (SamFSWarnings warningEx) {
+                    thisWarning = warningEx;
                 }
 
-                SamUtil.setErrorAlert(this,
-                                      ALERT,
-                                      "-2010",
-                                      -2010,
-                                      buffer.toString(),
-                                      serverName);
-            } else {
-                String poolName = isNewVSNPool() ?
-                    getDisplayFieldStringValue(NAME) : getVSNPoolName();
-                SamUtil.setInfoAlert(
-                    this,
-                    ALERT,
-                    "success.summary",
-                    isNewVSNPool() ?
-                        SamUtil.getResourceString(
-                            "archiving.vsnpool.new.success", poolName) :
-                        SamUtil.getResourceString(
-                            "archiving.vsnpool.edit.success", poolName),
-                    serverName);
-                setSubmitSuccessful(true);
-            }
-        } catch (SamFSWarnings sfw) {
-            SamUtil.setWarningAlert(this,
-                                     ALERT,
-                                     "ArchiveConfig.warning.summary",
-                                     "ArchiveConfig.warning.detail");
+                if (getPageMode().equals(NEW_POOL_ADD_TO_COPYVSN)) {
+                    // Add to Copy VSN
+                    // Update success and fail message.  If the code reaches
+                    // here, the pool is created successfully.
+                    successMessage = SamUtil.getResourceString(
+                        "CopyVSNs.addpool.success",
+                        new String [] {
+                            getPolicyName(),
+                            Integer.toString(getCopyNumber())});
+                    failedMessage = SamUtil.getResourceString(
+                        "CopyVSNs.addpool.failed",
+                        new String [] {
+                            getPolicyName(),
+                            Integer.toString(getCopyNumber())});
 
+                    // Add to Copy VSN
+                    ArchivePolicy thePolicy = getArchivePolicy(archiveManager);
+                    ArchiveVSNMap vsnMap = getVSNMap(thePolicy);
+
+                    String existingExpression = vsnMap.getPoolExpression();
+                    existingExpression =
+                        existingExpression == null ? "" : existingExpression;
+                    String newExpression =
+                        existingExpression.length() == 0 ?
+                                poolName :
+                                existingExpression + "," + poolName;
+ System.out.println("oldExpression: " + existingExpression);
+ System.out.println("newExpression: " + newExpression);
+                    // Update VSN Map and push the new settings to the new policy
+                    vsnMap.setPoolExpression(newExpression);
+                    vsnMap.setWillBeSaved(true);
+
+                    thePolicy.updatePolicy();
+                    
+                    if (thisWarning != null) {
+                        throw thisWarning;
+                    }
+                }
+            } else if (getPageMode().equals(EDIT_POOL)) {
+                successMessage = SamUtil.getResourceString(
+                        "archiving.vsnpool.edit.success", poolName);
+                failedMessage = SamUtil.getResourceString(
+                        "archiving.vsnpool.edit.failed", poolName);
+                VSNPool thePool = archiveManager.getVSNPool(poolName);
+                if (thePool == null)
+                    throw new SamFSException(null, -2010);
+
+                // Add new expression to the existing expression list
+                // or edit an existing expression (check page session attribute)
+                String editExpression =
+                    (String) getPageSessionAttribute(EXPRESSION);
+                if (editExpression == null) {
+                    // add new expression
+                    TraceUtil.trace2("Adding new expression: " + expression +
+                                     " to " + thePool.getVSNExpression());
+
+                    thePool.setMemberVSNs(thePool.getMediaType(),
+                        thePool.getVSNExpression() + "," + expression);
+                } else {
+                    // edit existing expression
+                    String [] existingExpression =
+                        thePool.getVSNExpression().split(",");
+                    String [] newExpression =
+                        new String[existingExpression.length];
+                    for (int i = 0; i < existingExpression.length; i++) {
+                        if (existingExpression[i].equals(editExpression)) {
+                            newExpression[i] = expression;
+                        } else {
+                            newExpression[i] = existingExpression[i];
+                        }
+                    }
+                    // Now create the new expression string
+                    StringBuffer buf = new StringBuffer();
+                    for (int i = 0; i < newExpression.length; i++) {
+                        buf.append(newExpression[i]).append(",");
+                    }
+                    if (buf.length() != 0) {
+                        buf.deleteCharAt(buf.length() - 1);
+                    }
+
+                    TraceUtil.trace2("Editing expression: " +
+                        thePool.getVSNExpression() + " to " + buf.toString());
+
+                    thePool.setMemberVSNs(
+                        thePool.getMediaType(), buf.toString());
+                }
+            } else if (getPageMode().equals(EDIT_EXP)
+                    || getPageMode().equals(NEW_EXP_ADD_TO_COPYVSN)) {
+                String editExpression =
+                    (String) getPageSessionAttribute(EXPRESSION);
+                String policyName = getPolicyName();
+                int copyNumber = getCopyNumber();
+System.out.println("Policy Name: " + policyName);
+System.out.println("Copy Number: " + copyNumber);
+
+                ArchivePolicy thePolicy = getArchivePolicy(archiveManager);
+                ArchiveVSNMap vsnMap = getVSNMap(thePolicy);
+
+                String existingExpression = vsnMap.getMapExpression();
+                existingExpression =
+                    existingExpression == null ? "" : existingExpression;
+                String newExpression = null;
+
+                // Editing an expression
+                if (getPageMode().equals(EDIT_EXP)) {
+                    successMessage = SamUtil.getResourceString(
+                        "archiving.vsnpool.editexp.success", editExpression);
+                    failedMessage = SamUtil.getResourceString(
+                        "archiving.vsnpool.editexp.failed", editExpression);
+                    newExpression =
+                        replaceExpression(
+                            existingExpression.split(","),
+                            editExpression,
+                            expression);
+                // Adding an expression
+                } else {
+                    successMessage = SamUtil.getResourceString(
+                        "CopyVSNs.addexp.success",
+                        new String [] {
+                            getPolicyName(),
+                            Integer.toString(getCopyNumber())});
+                    failedMessage = SamUtil.getResourceString(
+                        "CopyVSNs.addexp.failed",
+                        new String [] {
+                            getPolicyName(),
+                            Integer.toString(getCopyNumber())});
+
+                    newExpression =
+                        existingExpression.length() == 0 ?
+                            expression :
+                            existingExpression + "," + expression;
+                }
+System.out.println("oldExpression: " + existingExpression);
+System.out.println("Editing: " + editExpression + " to " + expression);
+System.out.println("newExpression: " + newExpression);
+                // Update VSN Map and push the new settings to the new policy
+                vsnMap.setMapExpression(newExpression);
+                vsnMap.setWillBeSaved(true);
+
+                thePolicy.updatePolicy();
+            }
+            SamUtil.setInfoAlert(
+                this,
+                ALERT,
+                "success.summary",
+                successMessage,
+                serverName);
+            setSubmitSuccessful(true);
+        } catch (SamFSWarnings sfw) {
+            SamUtil.setWarningAlert(
+                this,
+                ALERT,
+                "ArchiveConfig.warning.summary",
+                "ArchiveConfig.warning.detail");
             setSubmitSuccessful(true);
         } catch (SamFSException sfe) {
-            SamUtil.processException(sfe,
-                            getClass(),
-                            "handleSubmitRequest",
-                            "Error validating user input",
-                            serverName);
-
-            SamUtil.setErrorAlert(this,
-                            ALERT,
-                            "-2010",
-                            sfe.getSAMerrno(),
-                            sfe.getMessage(),
-                            serverName);
-
+            SamUtil.processException(
+                sfe,
+                getClass(),
+                "handleSubmitRequest",
+                "Error validating user input",
+                serverName);
+            SamUtil.setErrorAlert(
+                this,
+                ALERT,
+                failedMessage,
+                sfe.getSAMerrno(),
+                sfe.getMessage(),
+                serverName);
         }
 
         forwardTo(getRequestContext());
@@ -537,4 +466,106 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
         throws ServletException, IOException {
         forwardTo(getRequestContext());
     }
+
+    private CCPageTitleModel createPageTitleModel() {
+        return new CCPageTitleModel(
+           RequestManager.getRequestContext().getServletContext(),
+           "/jsp/archive/NewEditVSNPoolPageTitle.xml");
+    }
+
+    private String replaceExpression(
+        String [] existingArray, String expression, String newExpression) {
+        StringBuffer newExpressionBuf = new StringBuffer();
+        for (int i = 0; i < existingArray.length; i++) {
+            if (existingArray[i].equals(expression)) {
+                newExpressionBuf.append(newExpression).append(",");
+            } else {
+                newExpressionBuf.append(existingArray[i]).append(",");
+            }
+        }
+        return newExpressionBuf.substring(
+                        0, newExpressionBuf.length() - 1).toString();
+    }
+
+    /**
+     * Determine if we are creating a new vsn pool or editing an existing one
+     * @return boolean - true if creating a new pool else false
+     */
+    protected String getPageMode() {
+        String operation = (String)getPageSessionAttribute(OPERATION);
+
+        if (operation == null) {
+            operation = RequestManager.getRequest().getParameter(OPERATION);
+            setPageSessionAttribute(OPERATION, operation);
+        }
+
+        TraceUtil.trace3("getPageMode: " + operation);
+
+        return operation;
+    }
+
+    private void saveRequestParam() {
+        String poolName = (String) getPageSessionAttribute(POOL_NAME);
+        if (poolName == null) {
+            poolName = RequestManager.getRequest().getParameter(POOL_NAME);
+            setPageSessionAttribute(POOL_NAME, poolName);
+        }
+        String mediaType = (String) getPageSessionAttribute(MEDIA_TYPE);
+        if (mediaType == null) {
+            mediaType = RequestManager.getRequest().getParameter(MEDIA_TYPE);
+            setPageSessionAttribute(MEDIA_TYPE, mediaType);
+        }
+        String expression = (String) getPageSessionAttribute(EXPRESSION);
+        if (expression == null) {
+            expression = RequestManager.getRequest().getParameter(EXPRESSION);
+            setPageSessionAttribute(EXPRESSION, expression);
+        }
+
+        // In the format of <policy_name.copy_number>
+        String policyInfo = (String) getPageSessionAttribute(POLICY_INFO);
+        if (policyInfo == null) {
+            policyInfo = RequestManager.getRequest().getParameter(POLICY_INFO);
+            setPageSessionAttribute(POLICY_INFO, policyInfo);
+        }
+    }
+
+    private ArchivePolicy getArchivePolicy(
+        SamQFSSystemArchiveManager archiveManager) throws SamFSException {
+        ArchivePolicy thePolicy =
+            archiveManager.getArchivePolicy(getPolicyName());
+        // make sure the policy wasn't deleted in the process
+        if (thePolicy == null) {
+            throw new SamFSException(null, -2000);
+        }
+        return thePolicy;
+    }
+
+    private ArchiveVSNMap getVSNMap(ArchivePolicy thePolicy)
+        throws SamFSException {
+        ArchiveCopy theCopy = thePolicy.getArchiveCopy(getCopyNumber());
+        if (theCopy == null) {
+            throw new SamFSException(null, -2006);
+        }
+        return theCopy.getArchiveVSNMap();
+     }
+
+    private int getCopyNumber() {
+        String [] policyInfoArray = getPolicyInfoArray();
+        return Integer.parseInt(policyInfoArray[1]);
+    }
+
+    private String getPolicyName() {
+        String [] policyInfoArray = getPolicyInfoArray();
+        return policyInfoArray[0];
+    }
+
+    private String [] getPolicyInfoArray() {
+        String policyInfo = (String) getPageSessionAttribute(POLICY_INFO);
+        if (policyInfo == null || policyInfo.length() == 0) {
+            return new String[0];
+        } else {
+            return policyInfo.split("\\.");
+        }
+    }
+
 }

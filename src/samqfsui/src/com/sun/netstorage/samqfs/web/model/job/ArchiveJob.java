@@ -27,12 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArchiveJob.java,v 1.10 2008/03/17 14:43:51 am143972 Exp $
+// ident	$Id: ArchiveJob.java,v 1.11 2008/04/03 02:21:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.job;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.model.media.VSN;
 
 public interface ArchiveJob extends BaseJob {
 

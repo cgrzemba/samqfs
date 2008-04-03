@@ -27,46 +27,60 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: VSNPoolSummaryTable.xml,v 1.16 2008/04/03 02:21:38 ronaldso Exp $ -->
+<!-- $Id: MediaAssignmentTable.xml,v 1.1 2008/04/03 02:21:38 ronaldso Exp $ -->
+
+<!--                                                                        -->
+<!-- NOTE: This Table descriptor is used in the Volume Pool Details Page    -->
 
 <table>
+
 <actions>
-  <cc name="New" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
-    <attribute name="dynamic" value="true" />
-    <attribute name="disabled" value="true" />
-    <attribute name="OnClick" value="return launchNewPoolPopup(this);"/>
+  <cc name="ButtonAdd" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <attribute name="defaultValue" value="MediaAssignment.button.add" />
+    <attribute name="bundleID" value="samBundle" />
+    <attribute name="onClick" value="return handleButtonAdd();"/>
   </cc>
 
-  <cc name="Delete" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
-    <attribute name="dynamic" value="true" />
-    <attribute name="disabled" value="true" />
-    <attribute name="OnClick"
-	value="return handleDeletePoolButton(this);" />
+  <cc name="ButtonDelete" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <attribute name="defaultValue" value="MediaAssignment.button.delete" />
+    <attribute name="titleDisabled"
+        value="common.button.delete.disabledtooltip" />
+    <attribute name="bundleID" value="samBundle" />
+    <attribute name="onClick" value="return handleButtonDelete();" />
   </cc>
 </actions>
 
-<column name="VSNPoolName" sortname="VSNPoolNameText" extrahtml="nowrap">
-  <cc name="VSNPoolHref" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
-    <attribute name="submitFormData" value="true"/>
-    <cc name="VSNPoolNameText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+<column name="ColumnExpression" sortname="TextExpression" extrahtml="nowrap">
+  <cc name="TextExpressionHref" 
+      tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+    <attribute name="onClick"
+               value="if (!handleTextExpression(this)) return false;"/>
+    <cc name="TextExpression" 
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
   </cc>
-  <cc name="VSNPoolHiddenField" 
-	tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
 </column>
 
-<column name="MediaType" sortname="MediaTypeText" extrahtml="nowrap">
-  <cc name="MediaTypeText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
-  <cc name="HiddenStatus" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
-  <cc name="MediaTypeHidden" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
+<column name="ColumnFreeSpace" sortname="HiddenFreeSpace" extrahtml="nowrap">
+  <cc name="TextFreeSpace" 
+      tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+  <cc name="HiddenFreeSpace"
+      tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
 </column>
 
-<column name="Members" sortname="MembersText" extrahtml="nowrap">
-  <cc name="MembersText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
-</column>
-
-<column name="FreeSpace" sortname="FreeSpaceText" 
-    extrahtml="nowrap='nowrap' align='right'">
-    <cc name="FreeSpaceText" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/> 
+<column name="ColumnMatchingVolume" extrahtml="nowrap">
+  <cc name="TextMatchingVolume" 
+      tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+      <attribute name="escape" value="false" />
+  </cc>
+  <cc name="MatchingVolumeHref" 
+      tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
+      <attribute name="onClick"
+                 value="return launchMatchingVolumePopup(this);"/>
+      <cc name="TextMatchingVolumeWithLink" 
+          tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
+          <attribute name="escape" value="false" />
+    </cc>
+  </cc>
 </column>
 
 </table>

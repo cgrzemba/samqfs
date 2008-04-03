@@ -29,9 +29,9 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNPoolDetails.jsp,v 1.17 2008/03/17 14:40:31 am143972 Exp $
+// ident	$Id: VSNPoolDetails.jsp,v 1.18 2008/04/03 02:21:38 ronaldso Exp $
 --%>
-<%@ page info="Index" language="java" %> 
+<%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
@@ -39,8 +39,8 @@
     className="com.sun.netstorage.samqfs.web.archive.VSNPoolDetailsViewBean">
 
 <cc:header
-    pageTitle="VSNPoolDetails.pageTitle" 
-    copyrightYear="2006"
+    pageTitle="VSNPoolDetails.pageTitle"
+    copyrightYear="2008"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
         if (parent.serverName != null) {
@@ -48,45 +48,22 @@
         }"
     bundleID="samBundle">
 
-<script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
-<script language="javascript" src="/samqfsui/js/archive/vsnpools.js"></script>
-
-<script language="javascript">
-
-    function showConfirmMsg(key) {
-
-	var str1 = "<cc:text name='StaticText' bundleID='samBundle' defaultValue='VSNPoolSummary.confirmMsg1'/>";
-
-	if (key == 1) {
-	if (!confirm(str1))
-		return false;
-	else return true;
-	 } else return false; // this case should never be used
-
-    }
-
-    function getSelectedPoolName() {
-
-        var myForm = document.VSNPoolDetailsForm;
-        var poolName = myForm.elements["VSNPoolDetails.VSNPoolNameField"].value;
-
-        return poolName;
-    }
-
-</script>
-
 <!-- Form -->
 <jato:form name="VSNPoolDetailsForm" method="post">
 
-<cc:breadcrumbs name="BreadCrumb" bundleID="samBundle" /> 
+<script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
+<script language="javascript" src="/samqfsui/js/archive/vsnpools.js"></script>
+<script language="javascript"
+        src="/samqfsui/js/archive/mediaexpression.js"></script>
 
-<br>
+
+<cc:breadcrumbs name="BreadCrumb" bundleID="samBundle" />
+
 <!-- inline alart -->
 <cc:alertinline name="Alert" bundleID="samBundle" />
-<br>
 
 <!-- Page title -->
-<cc:pagetitle name="PageTitle" 
+<cc:pagetitle name="PageTitle"
               bundleID="samBundle"
               pageTitleText="VSNPoolDetails.pageTitle"
               showPageTitleSeparator="true"
@@ -98,40 +75,39 @@
               showJumpLinks="false"/>
 
 <!-- Action Table -->
-<jato:containerView name="VSNPoolDetailsView">
+<jato:containerView name="MediaExpressionView">
   <cc:actiontable
-    name="VSNPoolDetailsTable"
+    name="MediaExpressionTable"
     bundleID="samBundle"
-    title="VSNPoolDetails.tabletitle"
-    selectionType="none"
+    title="MediaAssignment.tabletitle"
+    selectionType="multiple"
     showAdvancedSortIcon="true"
     showLowerActions="true"
     showPaginationControls="true"
     showPaginationIcon="false"
     showSelectionIcons="true"
     page="1"/>
+  <br />
+  <div style="padding-left:20px">
+    <cc:text name="reservedVSNMessage"
+      escape="false"
+      bundleID="samBundle"/>
+  </div>
+
+  <cc:hidden name="VSNPoolNameField" />
+  <cc:hidden name="MediaType" />
+  <cc:hidden name="Expressions"/>
+  <cc:hidden name="SelectedExpression"/>
+  <cc:hidden name="deleteConfirmation" bundleID="samBundle"/>
+  <cc:hidden name="ServerName"/>
+  <cc:hidden name="hasPermission"/>
+  <cc:hidden name="NoSelectionMsg"/>
+  <cc:hidden name="deletePoolConfirmation"/>
+  <cc:hidden name="NoPermissionMsg"/>
 </jato:containerView>
-
-<cc:spacer name="spacer1" height="20"/>
-
-<div style="padding-left:20px">
-<cc:text name="reservedVSNMessage"
-    escape="false"
-    bundleID="samBundle"/>
-</div>
 
 </cc:pagetitle>
 
-<cc:hidden name="NEHiddenField1" />
-<cc:hidden name="NEHiddenField2" />
-<cc:hidden name="NEHiddenField3" />
-<cc:hidden name="NEHiddenField4" />
-<cc:hidden name="NEHiddenField5" />
-<cc:hidden name="VSNPoolNameField" />
-<cc:hidden name="deleteConfirmation" bundleID="samBundle"/>
-<cc:hidden name="ServerName"/>
-
 </jato:form>
 </cc:header>
-</jato:useViewBean> 
-
+</jato:useViewBean>

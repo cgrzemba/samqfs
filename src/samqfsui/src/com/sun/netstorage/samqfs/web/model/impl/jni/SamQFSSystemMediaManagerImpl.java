@@ -27,14 +27,19 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemMediaManagerImpl.java,v 1.22 2008/03/17 14:43:46 am143972 Exp $
+// ident	$Id: SamQFSSystemMediaManagerImpl.java,v 1.23 2008/04/03 02:21:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
 import com.sun.netstorage.samqfs.mgmt.FileUtil;
 import com.sun.netstorage.samqfs.mgmt.SamFSConnection;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.mgmt.arc.BaseVSNPoolProps;
+import com.sun.netstorage.samqfs.mgmt.arc.CatVSNPoolProps;
+import com.sun.netstorage.samqfs.mgmt.arc.DiskVSNPoolProps;
 import com.sun.netstorage.samqfs.mgmt.arc.DiskVol;
+import com.sun.netstorage.samqfs.mgmt.arc.VSNMap;
+import com.sun.netstorage.samqfs.mgmt.arc.VSNOp;
 import com.sun.netstorage.samqfs.mgmt.fs.FSInfo;
 import com.sun.netstorage.samqfs.mgmt.media.CatEntry;
 import com.sun.netstorage.samqfs.mgmt.media.Discovered;
@@ -55,6 +60,8 @@ import com.sun.netstorage.samqfs.web.model.media.DiskVolume;
 import com.sun.netstorage.samqfs.web.model.media.Drive;
 import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.model.media.VSN;
+import com.sun.netstorage.samqfs.web.model.media.VSNWrapper;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import java.util.ArrayList;
 
 
@@ -475,4 +482,197 @@ public class SamQFSSystemMediaManagerImpl implements SamQFSSystemMediaManager {
     public String [] getUnusableVSNs(int eq, int flag) throws SamFSException {
         return Media.getVSNs(theModel.getJniContext(), eq, flag);
     }
+
+    /**
+     * Evaluate vsn expressions and return a list of VSNs that matches the
+     * expression.  This method is currently strictly used by the VSN browser
+     * pop up.
+     *
+     * @param mediaType - Type of media of which you want to evaluate potential
+     *                    VSN matches
+     * @param policyName - Name of the policy of which you are adding to the
+     *                     VSN Pool. Leave this field null if you just want to
+     *                     evaluate the vsn expressions
+     * @param copyNumber - Number of copy of which you are adding to the
+     *                     VSN Pool. Leave this field as -1 if you just want to
+     *                     evaluate the vsn expressions
+     * @param startVSN - Start of VSN range, use null to get all VSNs
+     * @param endVSN   - End of VSN range, use null to get all VSNs
+     * @param expression - Contain regular expressions of which you want to
+     *                     evaluate potential VSN matches.  Leave this null or
+     *                     empty if you want to get all VSNs
+     *
+     * (Either enter startVSN and endVSN, or expression, or both null to catch all)
+     *
+     * @param maxEntry - Maximum number of entry you want to return
+     * @return Array of VSNs that matches the input VSN expression(s)
+     */
+    public VSNWrapper evaluateVSNExpression(
+        int mediaType, String policyName, int copyNumber,
+        String startVSN, String endVSN, String expression,
+        String poolName, int maxEntry)
+        throws SamFSException {
+
+        TraceUtil.trace2("Logic: Entering evaluateVSNExpression");
+
+        expression = expression == null ? "" : expression.trim();
+        startVSN   = startVSN   == null ? "" : startVSN.trim();
+        endVSN     = endVSN     == null ? "" : endVSN.trim();
+
+        TraceUtil.trace2("Logic: mediaType: " + mediaType);
+        TraceUtil.trace2("Logic: startVSN: " + startVSN);
+        TraceUtil.trace2("Logic: endVSN: " + endVSN);
+        TraceUtil.trace2("Logic: expression: " + expression);
+        TraceUtil.trace2("Logic: maxEntry: " + maxEntry);
+
+        String [] expressionArray = null;
+
+        if (startVSN.length() == 0 && endVSN.length() != 0) {
+            startVSN = endVSN;
+        } else if (startVSN.length() != 0 && endVSN.length() == 0) {
+            endVSN = startVSN;
+        }
+
+        if (expression.length() == 0 &&
+            startVSN.length() == 0 && endVSN.length() == 0 &&
+            poolName == null) {
+            // return empty
+            return new VSNWrapper(new VSN[0], new DiskVolume[0], 0, 0, "");
+
+        } else if (startVSN.length() != 0) {
+            // Use start/end range
+            String rangeExpression =
+                SamQFSUtil.createExpression(startVSN, endVSN);
+            if (rangeExpression == null) {
+                throw new SamFSException(
+                "Failed to generate range expression from start and end VSNs!");
+            } else {
+                expressionArray = rangeExpression.split(" ");
+            }
+        } else {
+            // use user-defined expression
+            expressionArray = expression.split(",");
+        }
+
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < expressionArray.length; i++) {
+            if (buf.length() > 0) {
+                buf.append(",");
+            }
+            buf.append(expressionArray[i]);
+
+            TraceUtil.trace2(
+                "expressionArray[" + i + "] is " + expressionArray[i]);
+        }
+        
+        // Prepare vsnMap if we need to resolve an array of expressions, 
+        // except vsn pool
+        VSNMap myVSNMap = null;
+
+        if (poolName == null) {
+            TraceUtil.trace2("Logic: Start building VSNMap!");
+
+            // TODO: Check policyName and copyNumber here???
+            myVSNMap =
+                new VSNMap("<ignore_me>",
+                           SamQFSUtil.getMediaTypeString(mediaType),
+                           expressionArray,
+                           null);
+            TraceUtil.trace2("Logic: Done building VSNMap!");
+            TraceUtil.trace2(
+                "Logic: vsnmap.tostring: " + myVSNMap.toString());
+        }
+
+        long freeSpaceInMB = 0;
+        VSNWrapper vsnWrapper = null;
+        BaseVSNPoolProps mapProps = null;
+   
+        // Disk
+        if (mediaType == BaseDevice.MTYPE_DISK ||
+            mediaType == BaseDevice.MTYPE_STK_5800) {
+
+            if (poolName == null) {
+                mapProps =
+                    VSNOp.getPoolPropsByMap(
+                        theModel.getJniContext(),
+                        myVSNMap,
+                        0,
+                        maxEntry,
+                        Media.VSN_NO_SORT,
+                        false);
+            } else {
+                mapProps =
+                    VSNOp.getPoolPropsByPool(
+                        theModel.getJniContext(),
+                        VSNOp.getPool(theModel.getJniContext(), poolName),
+                        0,
+                        maxEntry,
+                        Media.VSN_NO_SORT,
+                        false);
+            }
+
+            freeSpaceInMB = mapProps.getFreeSpace();
+            DiskVol [] dvols =
+                ((DiskVSNPoolProps) mapProps).getDiskEntries();
+
+            TraceUtil.trace2("Total DiskVol: " + dvols.length);
+
+            DiskVolume [] vols = null;
+            if (dvols != null) {
+                vols = new DiskVolumeImpl[dvols.length];
+                for (int i = 0; i < dvols.length; i++) {
+                    vols[i] = new DiskVolumeImpl(dvols[i]);
+                }
+            }
+            vsnWrapper = new VSNWrapper(
+                            null, vols, freeSpaceInMB,
+                            mapProps.getNumOfVSNs(),
+                            buf.toString());
+
+        // Tape
+        } else {
+            if (poolName == null) {
+                mapProps =
+                    VSNOp.getPoolPropsByMap(
+                        theModel.getJniContext(),
+                        myVSNMap,
+                        0,
+                        maxEntry,
+                        Media.VSN_NO_SORT,
+                        false);
+            } else {
+                mapProps =
+                    VSNOp.getPoolPropsByPool(
+                        theModel.getJniContext(),
+                        VSNOp.getPool(theModel.getJniContext(), poolName),
+                        0,
+                        maxEntry,
+                        Media.VSN_NO_SORT,
+                        false);
+            }
+            
+            freeSpaceInMB = mapProps.getFreeSpace();
+            CatEntry [] cats =
+               ((CatVSNPoolProps) mapProps).getCatEntries();
+
+            TraceUtil.trace2("Total CatEntry: " + cats.length);
+
+            VSN [] allVSNs = new VSN[cats.length];
+            if ((cats != null) && (cats.length > 0)) {
+                for (int i = 0; i < cats.length; i++) {
+                    allVSNs[i] = new VSNImpl(theModel, cats[i]);
+                }
+            }
+            vsnWrapper = new VSNWrapper(
+                            allVSNs, null, freeSpaceInMB,
+                            mapProps.getNumOfVSNs(),
+                            buf.toString());
+        }
+
+        TraceUtil.trace2("Logic: Returning vsnWrapper!");
+
+        return vsnWrapper;
+
+    }
+
 }

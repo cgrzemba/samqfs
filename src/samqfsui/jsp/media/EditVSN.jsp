@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: EditVSN.jsp,v 1.13 2008/03/17 14:40:36 am143972 Exp $
+// ident	$Id: EditVSN.jsp,v 1.14 2008/04/03 02:21:38 ronaldso Exp $
 --%>
 <%@ page language="java" %>
 <%@ page import="com.iplanet.jato.view.ViewBean" %>
@@ -44,7 +44,7 @@
 <!-- Define the resource bundle, html, head, meta, stylesheet and body tags -->
 <cc:header
     pageTitle="EditVSN.browserPageTitle"
-    copyrightYear="2006"
+    copyrightYear="2008"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="initializePopup(this)"
     bundleID="samBundle">
@@ -74,6 +74,5 @@
 </cc:pagetitle>
 
 </jato:form>
-</body>
 </cc:header>
 </jato:useViewBean> 

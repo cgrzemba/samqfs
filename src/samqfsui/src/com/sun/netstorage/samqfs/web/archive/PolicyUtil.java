@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PolicyUtil.java,v 1.43 2008/03/17 14:40:44 am143972 Exp $
+// ident	$Id: PolicyUtil.java,v 1.44 2008/04/03 02:21:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -759,6 +759,26 @@ public class PolicyUtil {
         }
 
         return allPools;
+    }
+
+    /**
+     * Determine if the pool name is already in use.
+     * @param serverName
+     * @param poolName
+     * @return true or false if the pool name is already in use
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    public static boolean poolExists(String serverName, String poolName)
+        throws SamFSException {
+        VSNPool [] allPools = getAllVSNPools(serverName);
+        allPools = allPools == null ? new VSNPool[0] : allPools;
+
+        for (int i = 0; i < allPools.length; i++) {
+            if (allPools[i].getPoolName().equals(poolName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

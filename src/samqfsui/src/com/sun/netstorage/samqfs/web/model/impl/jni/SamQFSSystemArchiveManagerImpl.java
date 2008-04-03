@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemArchiveManagerImpl.java,v 1.12 2008/03/17 14:43:46 am143972 Exp $
+// ident	$Id: SamQFSSystemArchiveManagerImpl.java,v 1.13 2008/04/03 02:21:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -506,6 +506,9 @@ public class SamQFSSystemArchiveManagerImpl
     }
 
     public VSNPool getVSNPool(String poolName) throws SamFSException {
+        // updating pool information
+        createPoolsFromBackEnd();
+
         return (VSNPool) vsnPoolMap.get(poolName);
     }
 
@@ -639,7 +642,7 @@ public class SamQFSSystemArchiveManagerImpl
                 String vsnCopyPath = copies[j].getDiskArchiveVSNPath();
                 if (vsnString.equals(vsnCopyString) &&
                     vsnPath.equals(vsnCopyPath)) {
-                    TraceUtil.trace3("FOUND IT");
+                    TraceUtil.trace3("FOUND IT, VSN is in used!");
                     isUse = true;
                     break;
                 }
@@ -650,17 +653,17 @@ public class SamQFSSystemArchiveManagerImpl
 
     private void createPoolsFromBackEnd() throws SamFSException {
         TraceUtil.trace3("Logic: Enter createPoolsFromBackEnd()");
-
         vsnPoolMap.clear();
         SamQFSUtil.doPrint("jni call for pool.");
         com.sun.netstorage.samqfs.mgmt.arc.VSNPool[] jniPools =
             VSNOp.getPools(theModel.getJniContext());
 
-        if (jniPools == null)
+        if (jniPools == null) {
             SamQFSUtil.doPrint("jni returned null array");
-        else
+        } else {
             SamQFSUtil.doPrint("length: " +
                                (new Integer(jniPools.length)).toString());
+        }
 
         if ((jniPools != null) && (jniPools.length > 0)) {
             for (int i = 0; i < jniPools.length; i++) {

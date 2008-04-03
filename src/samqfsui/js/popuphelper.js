@@ -27,13 +27,14 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: popuphelper.js,v 1.14 2008/03/17 14:40:24 am143972 Exp $
+// ident	$Id: popuphelper.js,v 1.15 2008/04/03 02:21:37 ronaldso Exp $
 
 // window sizes
 // If you add a size here, you must add a else if case in launchPopUp so
 // the pop up window will have the centralize position on the screen    
 var SIZE_MONITOR_CONSOLE = "height=500,width=1000";
-var SIZE_LARGE = "height=700,width=900"; 
+var SIZE_VOLUME_ASSIGNER = "height=700,width=800";
+var SIZE_LARGE = "height=700,width=900";
 var SIZE_NORMAL= "height=600,width=700";
 var SIZE_SMALL= "height=350,width=700";
 var SIZE_DETAILS = "height=600,width=500";

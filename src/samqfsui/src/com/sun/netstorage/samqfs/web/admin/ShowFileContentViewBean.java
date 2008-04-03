@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ShowFileContentViewBean.java,v 1.10 2008/03/17 14:40:41 am143972 Exp $
+// ident	$Id: ShowFileContentViewBean.java,v 1.11 2008/04/03 02:21:38 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -40,10 +40,16 @@ import com.iplanet.jato.view.event.RequestInvocationEvent;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
+import com.sun.netstorage.samqfs.web.media.MediaUtil;
 import com.sun.netstorage.samqfs.web.model.ConfigStatus;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemMediaManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.archive.VSNPool;
 import com.sun.netstorage.samqfs.web.model.job.StageJob;
 import com.sun.netstorage.samqfs.web.model.job.StageJobFileData;
+import com.sun.netstorage.samqfs.web.model.media.DiskVolume;
+import com.sun.netstorage.samqfs.web.model.media.VSN;
+import com.sun.netstorage.samqfs.web.model.media.VSNWrapper;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
@@ -97,6 +103,10 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
     // Page Title Attributes and Components.
     private CCPageTitleModel pageTitleModel = null;
 
+    // page request key for matching volumes in volume pool details page
+    // format: pool_name,expression
+    private static final String MATCHING_VOLUME = "matching_volumes";
+
     /**
      * Constructor
      */
@@ -107,6 +117,11 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
 
         pageTitleModel = createPageTitleModel();
         registerChildren();
+
+        if (isResourceKeyName() && !isStagingQList()) {
+            // size the text area to fit the small popup
+            setWindowSizeNormal(false);
+        }
         TraceUtil.trace3("Exiting");
     }
 
@@ -125,10 +140,6 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
             registerChild(CHILD_LINE_NUMBER, CCStaticTextField.class);
             registerChild(CHILD_TEXTFIELD, CCTextField.class);
             registerChild(CHILD_ERROR_MESSAGE, CCHiddenField.class);
-        }
-        if (isResourceKeyName() && !isStagingQList()) {
-            // size the text area to fit the small popup
-            setWindowSizeNormal(false);
         }
     }
 
@@ -176,6 +187,8 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
         TraceUtil.trace2("isShowLineControl(): " + isShowLineControl());
         TraceUtil.trace2("isStagingQList(): " + isStagingQList());
         TraceUtil.trace2("isShowContent(): " + isShowContent());
+System.out.println(
+            "getShowMatchingVolumes(): " + getShowMatchingVolumes());
 
         String pageTitle = null;
         // SAM Explorer if showLineControl == true
@@ -208,6 +221,13 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
                     SamUtil.getResourceString(
                         "ShowFileContent.pageTitle.config.content",
                         getServerName());
+            } else if (getShowMatchingVolumes() != null) {
+                String [] keyArray = getShowMatchingVolumes().split(",");
+                pageTitle = SamUtil.getResourceString(
+                        "ShowFileContent.pageTitle.matchingvolumes",
+                        new String [] {
+                            keyArray[1],
+                            keyArray[0]});
             } else {
                 pageTitle = SamUtil.getResourceString(
                     "ShowFileContent.pageTitle.config.status",
@@ -282,7 +302,6 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
                     content[0] =
                         SamUtil.getResourceString(
                             getResourceKeyName().concat(".info"));
-
                 } else {
                     // Show Configuration File Content
                     // TODO: Will 10000 work all the time?
@@ -324,8 +343,9 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
                 }
                 buf.append(fileData[i].getFileName());
             }
+        } else if (getShowMatchingVolumes() != null) {
+             buf = createMatchingVolumesString();
         } else {
-
             ConfigStatus [] myConfigStatusArray =
                 sysModel.getConfigStatus();
             ConfigStatus myConfigStatus = null;
@@ -442,6 +462,72 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
         }
 
         return fileName;
+    }
+
+    private String getShowMatchingVolumes() {
+        // first check the page session
+        String matchVol = (String) getPageSessionAttribute(MATCHING_VOLUME);
+
+        // second check the request
+        if (matchVol == null) {
+            matchVol =
+                RequestManager.getRequest().getParameter(MATCHING_VOLUME);
+
+            if (matchVol != null) {
+                setPageSessionAttribute(MATCHING_VOLUME, matchVol);
+            }
+        }
+
+        return matchVol;
+    }
+
+    private StringBuffer createMatchingVolumesString() {
+        String [] keyArray = getShowMatchingVolumes().split(",");
+        StringBuffer buf = new StringBuffer();
+
+        boolean reserved = false;
+
+        try {
+            SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
+            VSNPool pool = sysModel.
+                getSamQFSSystemArchiveManager().getVSNPool(keyArray[0]);
+            VSNWrapper wrapper =
+                sysModel.getSamQFSSystemMediaManager().
+                    evaluateVSNExpression(
+                        pool.getMediaType(), null, -1,
+                        null, null, keyArray[1],
+                        null,
+                        SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+
+            if (MediaUtil.isDiskType(pool.getMediaType())) {
+                DiskVolume [] vsns = wrapper.getAllDiskVSNs();
+                for (int i = 0; i < vsns.length; i++) {
+                    buf.append(vsns[i].getName());
+                    buf.append("  ");
+                }
+            } else {
+                VSN [] vsns = wrapper.getAllTapeVSNs();
+                for (int i = 0; i < vsns.length; i++) {
+                    buf.append(vsns[i].getVSN());
+                    if (vsns[i].isReserved()) {
+                        reserved = true;
+                        buf.append("*");
+                    }
+                    buf.append("  ");
+                }
+            }
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1(
+                "Failed to generate matching volume string!", samEx);
+            return new StringBuffer("BAD");
+        }
+
+        if (reserved) {
+            buf.append("\n\n");
+            buf.append(
+                SamUtil.getResourceString("archiving.reservedvsninpool", "*"));
+        }
+        return buf;
     }
 
     private boolean isShowContent() {
@@ -598,5 +684,17 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
 
         forwardTo(getRequestContext());
         TraceUtil.trace3("Exiting");
+    }
+
+    /**
+     * To avoid throwing java exception to the console debug log
+     * @param event
+     * @throws javax.servlet.ServletException
+     * @throws java.io.IOException
+     */
+    public void handleCancelRequest(RequestInvocationEvent event)
+        throws ServletException, IOException {
+
+        getParentViewBean().forwardTo(getRequestContext());
     }
 }

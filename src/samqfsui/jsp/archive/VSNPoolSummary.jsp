@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNPoolSummary.jsp,v 1.19 2008/03/17 14:40:31 am143972 Exp $
+// ident	$Id: VSNPoolSummary.jsp,v 1.20 2008/04/03 02:21:38 ronaldso Exp $
 --%>
 
 <%@ page info="Index" language="java" %>
@@ -54,7 +54,7 @@
 
 <jato:form name="VSNPoolSummaryForm" method="post">
 
-<cc:alertinline name="Alert" bundleID="samBundle" /><br />
+<cc:alertinline name="Alert" bundleID="samBundle" />
 
 <cc:pagetitle name="PageTitle" bundleID="samBundle"
         pageTitleText="VSNPoolSummary.pageTitle"
@@ -96,6 +96,5 @@
 </cc:pagetitle>
 
 </jato:form>
-</body>
 </cc:header>
 </jato:useViewBean>

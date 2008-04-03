@@ -27,16 +27,18 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemMediaManager.java,v 1.15 2008/03/17 14:43:42 am143972 Exp $
+// ident	$Id: SamQFSSystemMediaManager.java,v 1.16 2008/04/03 02:21:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.mgmt.arc.VSNPool;
 import com.sun.netstorage.samqfs.mgmt.media.StkClntConn;
 import com.sun.netstorage.samqfs.web.model.media.DiskVolume;
 import com.sun.netstorage.samqfs.web.model.media.Drive;
 import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.model.media.VSN;
+import com.sun.netstorage.samqfs.web.model.media.VSNWrapper;
 
 /**
  *
@@ -294,4 +296,34 @@ public interface SamQFSSystemMediaManager {
      */
     public String [] getUnusableVSNs(int eq, int flag) throws SamFSException;
 
+    /**
+     * Evaluate vsn expressions and return a list of VSNs that matches the
+     * expression.  This method is currently strictly used by the VSN browser
+     * pop up.
+     *
+     * @param mediaType - Type of media of which you want to evaluate potential
+     *                    VSN matches
+     * @param policyName - Name of the policy of which you are adding to the
+     *                     VSN Pool. Leave this field null if you just want to
+     *                     evaluate the vsn expressions
+     * @param copyNumber - Number of copy of which you are adding to the
+     *                     VSN Pool. Leave this field as -1 if you just want to
+     *                     evaluate the vsn expressions
+     * @param startVSN - Start of VSN range, use null to get all VSNs
+     * @param endVSN   - End of VSN range, use null to get all VSNs
+     * @param expression - Contain regular expressions of which you want to
+     *                     evaluate potential VSN matches.  Leave this null or
+     *                     empty if you want to get all VSNs
+     * @param poolName - the pool of which you want to resolve
+     * @param maxEntry - Maximum number of entry you want to return
+     * @return Array of VSNs that matches the input VSN expression(s)
+     */
+    public VSNWrapper evaluateVSNExpression(
+        int mediaType, String policyName, int copyNumber,
+        String startVSN, String endVSN, String expression,
+        String poolName, int maxEntry)
+        throws SamFSException;
+
+    // Default maximum entry the GUI will fetch in the action table
+    public static final int MAXIMUM_ENTRIES_FETCHED = 1000;
 }

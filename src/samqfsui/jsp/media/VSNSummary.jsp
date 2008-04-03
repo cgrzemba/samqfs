@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNSummary.jsp,v 1.28 2008/03/17 14:40:37 am143972 Exp $
+// ident	$Id: VSNSummary.jsp,v 1.29 2008/04/03 02:21:38 ronaldso Exp $
 --%>
 
 <%@ page info="Index" language="java" %> 
@@ -50,14 +50,14 @@
         toggleDisabledState();"
     bundleID="samBundle">
 
+<jato:form name="VSNSummaryForm" method="post">
+
 <script language="javascript"
     src="/samqfsui/js/media/VSNSummary.js">
 </script>
 <script language="javascript"
     src="/samqfsui/js/popuphelper.js">
 </script>
-
-<jato:form name="VSNSummaryForm" method="post">
 
 <!-- Bread Crumb component -->
 <cc:breadcrumbs name="BreadCrumb" bundleID="samBundle" />
