@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -225,6 +225,8 @@ main(int argc, char **argv)
 						    program_name);
 						exit(EXIT_USAGE);
 					}
+				} else {
+					value1[0] = '\0';
 				}
 				if (SetFieldValue(mp, MountParams,
 				    subopt, value1, NULL) != 0) {
