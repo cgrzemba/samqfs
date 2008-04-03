@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.130 $"
+#pragma ident "$Revision: 1.131 $"
 
 #include "sam/osversion.h"
 
@@ -127,9 +127,11 @@ sam_ioctl_util_cmd(
 		} else {
 			if ((error = sam_find_ino(mp->mi.m_vfsp,
 			    IG_EXISTS, &pp->id, &ip)) == 0) {
+				RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				error = sam_set_archive(ip, pp, credp);
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+				RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 				sam_rele_ino(ip);
 			}
 		}
@@ -162,9 +164,11 @@ sam_ioctl_util_cmd(
 				}
 				if ((error = sam_find_ino(mp->mi.m_vfsp,
 				    IG_EXISTS, &sa.id, &ip)) == 0) {
+					RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 					error = sam_set_archive(ip, &sa, credp);
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+					RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 					sam_rele_ino(ip);
 				}
 				if (error != 0) {
@@ -451,9 +455,18 @@ sam_ioctl_util_cmd(
 				}
 			}
 			if (idopen->flags & IDO_direct_io) {
+
+				/*
+				 * sam_set_directio() doesn't normally require
+				 * data_rwl, but here we are acquiring it to
+				 * to coordinate with a thread coming through
+				 * sendfile.
+				 */
+				RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				sam_set_directio(ip, DIRECTIO_ON);
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+				RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 			}
 			VN_RELE(SAM_ITOV(ip));
 			idopen->mtime = SAM_SECOND();	/* For C_IDOPENDIR */
@@ -1273,6 +1286,8 @@ sam_set_archive(
 	boolean_t release = FALSE;
 	boolean_t inconsistent = FALSE;
 
+	ASSERT(RW_OWNER_OS(&ip->data_rwl) == curthread);
+
 	if (ip->mp->mt.fi_mflag & MS_RDONLY) {
 		return (EROFS);
 	}
@@ -1542,13 +1557,8 @@ sam_set_archive(
 		kmem_free(req, sizeof (*req));
 	}
 	if (release) {
-		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-
 		SAM_COUNT64(sam, archived_rele);
-		RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
-		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		error = sam_drop_ino(ip, credp);
-		RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 	}
 	/*
 	 * If thread waiting on archiving, wake it up now if at least 1
