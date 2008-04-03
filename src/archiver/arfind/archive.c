@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.121 $"
+#pragma ident "$Revision: 1.122 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -1364,6 +1364,8 @@ growArchReq(
 		ArchReqMsg(HERE, ar, 4355, ts);
 		Trace(TR_QUEUE, "Archreq full (%s)", archReqName(ar, arname));
 		ar->ArStatus |= ARF_full;
+		ar->ArStatus &= ~ARF_merge;
+
 		ar = createArchReq(&ArchSetTable[ar->ArAsn], ar->ArCopy);
 	}
 

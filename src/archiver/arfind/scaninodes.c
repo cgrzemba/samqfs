@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -194,9 +194,13 @@ ScanInodes(
 #endif /* defined(SCAN_TRACE) */
 
 		while ((se->SeFlags & SE_back) && pauseScan) {
+			/* Inode scan paused for file system activity. */
 			PostOprMsg(4365);
+
 			ThreadsCondTimedWait(&scanPause, &scanPauseMutex,
 			    time(NULL) + (4 * 60));
+
+			ClearOprMsg();
 
 #if defined(SCAN_TRACE)
 			if ((se->SeFlags & SE_back) && pauseScan == FALSE) {
