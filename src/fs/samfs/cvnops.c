@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 
 #include "sam/osversion.h"
 
@@ -113,7 +113,7 @@ extern uint_t lqfs_debug;
  */
 boolean_t sam_object_directio_required = TRUE;
 
-#define SAM_DIRECTIO_REQUIRED(ip) \
+#define	SAM_DIRECTIO_REQUIRED(ip) \
 	((SAM_IS_OBJECT_FILE(ip) && sam_object_directio_required))
 
 /*
