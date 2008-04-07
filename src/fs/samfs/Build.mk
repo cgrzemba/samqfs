@@ -1,4 +1,4 @@
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 
 #    SAM-QFS_notice_begin
 #
@@ -113,7 +113,6 @@ LD = ld
 
 include $(DEPTH)/mk/targets.mk
 
-
 ifeq ($(OS), SunOS)
 # SunOS
 install:	pre_install
@@ -123,6 +122,9 @@ pre_install:	$(OBJ_DIR)/$(MODULE) modunload
 	# Enable init to restart fsd & notify init to restart fsd.
 	chmod ugo+x /usr/lib/fs/samfs/sam-fsd
 	@-/bin/kill -HUP 1
+	if [ -x /sbin/bootadm ] ; then \
+		/sbin/bootadm update-archive > /dev/null 2>&1; \
+	fi
 
 modload: install
 	modload $(FSDEST)/$(PROG)
