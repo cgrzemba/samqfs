@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: mediaexpression.js,v 1.1 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: mediaexpression.js,v 1.2 2008/04/09 20:37:26 ronaldso Exp $
 
 
     function getForm() {
@@ -171,13 +171,13 @@
             param);
         return false;
     }
-    
+
     function handleTextExpression(field) {
         return launchEditPoolPopup(getExpression(field.name));
     }
-    
+
     function handleButtonAdd() {
         return launchEditPoolPopup('');
     }
-    
-    
+
+

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AssignMediaPagelet.jsp,v 1.1 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: AssignMediaPagelet.jsp,v 1.2 2008/04/09 20:37:27 ronaldso Exp $
 --%>
 
 <%@ page language="java" %>
@@ -126,10 +126,10 @@
     <cc:i18nbundle
         id="samBundle"
         baseName="com.sun.netstorage.samqfs.web.resource.Resources"/>
-    
+
     <!-- feedback alert -->
     <cc:alertinline name="Alert" bundleID="samBundle"/>
-    
+
     <table style="margin-left:10px" cellpadding="5" border="0">
         <tr id="TR_Name">
             <td valign="top">
@@ -272,12 +272,12 @@
             </td>
         </tr>
     </table>
-    
+
     <cc:hidden name="HiddenPageMode" elementId="HiddenPageMode"/>
     <cc:hidden name="HiddenShowTable" elementId="HiddenShowTable" />
     <cc:hidden name="HiddenSelectionMethod" elementId="HiddenSelectionMethod"/>
     <cc:hidden name="HiddenExpressionUsed" />
     <cc:hidden name="HiddenNoMediaTypeMessage"
                elementId="HiddenNoMediaTypeMessage" />
-    
+
 </jato:pagelet>

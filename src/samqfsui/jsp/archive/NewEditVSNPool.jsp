@@ -28,11 +28,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewEditVSNPool.jsp,v 1.22 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: NewEditVSNPool.jsp,v 1.23 2008/04/09 20:37:27 ronaldso Exp $
 --%>
 
 <%@ page info="NewEditVSNPool" language="java" %>
-<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%> 
+<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <jato:useViewBean
@@ -72,7 +72,7 @@
 
     <!-- the assign media pagelets -->
     <cc:includepagelet name="AssignMediaView"/>
-    
+
 </cc:pagetitle>
 
 </jato:form>

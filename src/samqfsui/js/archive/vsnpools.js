@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: vsnpools.js,v 1.10 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: vsnpools.js,v 1.11 2008/04/09 20:37:26 ronaldso Exp $
 
 var POPUP_URI = "/archive/NewEditVSNPool";
 
@@ -35,7 +35,7 @@ function getPageName(thisForm) {
     var strArray = thisForm.action.split("/");
     return strArray[strArray.length - 1];
 }
-    
+
 function getServerKey(field) {
     return field.form.elements[getPageName(field.form) + ".ServerName"].value;
 }
@@ -43,7 +43,7 @@ function getServerKey(field) {
 function launchNewPoolPopup(field) {
     var params = "&OPERATION=NEW";
     var win = launchPopup(POPUP_URI,
-                          "new_vsn_pool", 
+                          "new_vsn_pool",
                           getServerKey(field),
                           SIZE_VOLUME_ASSIGNER,
                           params);
@@ -55,7 +55,7 @@ function launchEditPoolPopup(field) {
 
   var poolName = getSelectedPoolName(field);
   params += "&SAMQFS_vsn_pool_name=" + poolName;
-  
+
   var win = launchPopup(POPUP_URI,
                         "edit_vsn_pool",
                         getServerKey(field),
@@ -76,13 +76,13 @@ function handleDeletePoolButton(field) {
     if (!confirm(confirmMsg))
         return false;
 
-    var selectedPoolName = getSelectedPoolName(field);    
+    var selectedPoolName = getSelectedPoolName(field);
     theForm.elements["VSNPoolSummary.VSNPoolSummaryView.selectedPool"].value =
         selectedPoolName;
 }
 
 function handleDetailsDeletePoolButton(field) {
-    var confirmMsg = 
+    var confirmMsg =
         field.form.elements["VSNPoolDetails.deleteConfirmation"].value;
 
     return confirm(confirmMsg);
@@ -91,12 +91,12 @@ function handleDetailsDeletePoolButton(field) {
 /* handle table selection */
 function handlePoolSelection(field) {
     var prefix = "VSNPoolSummary";
-  
+
     // table container view is usually ... <pageName>.<pageNameView>
     var buttonPrefix = prefix + "." + prefix + "View";
     var editButton = buttonPrefix + ".Edit";
     var deleteButton = buttonPrefix + ".Delete";
-  
+
     var formName = document.forms[0].name;
 
     if (field != null && isTableDeselectButton(field)) {
@@ -169,7 +169,7 @@ function handleVSNRadio(field) {
         ccSetTextFieldDisabled(prefix + ".end", field.form.name, 0);
         ccSetTextFieldDisabled(prefix + ".vsnRange", field.form.name, 1);
     } else {
-        ccSetTextFieldDisabled(prefix + ".start", field.form.name, 1); 
+        ccSetTextFieldDisabled(prefix + ".start", field.form.name, 1);
         ccSetTextFieldDisabled(prefix + ".end", field.form.name, 1);
         ccSetTextFieldDisabled(prefix + ".vsnRange", field.form.name, 0);
     }

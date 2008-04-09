@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: MediaAssignmentTable.xml,v 1.1 2008/04/03 02:21:38 ronaldso Exp $ -->
+<!-- $Id: MediaAssignmentTable.xml,v 1.2 2008/04/09 20:37:27 ronaldso Exp $ -->
 
 <!--                                                                        -->
 <!-- NOTE: This Table descriptor is used in the Volume Pool Details Page    -->
@@ -51,32 +51,32 @@
 </actions>
 
 <column name="ColumnExpression" sortname="TextExpression" extrahtml="nowrap">
-  <cc name="TextExpressionHref" 
+  <cc name="TextExpressionHref"
       tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
     <attribute name="onClick"
                value="if (!handleTextExpression(this)) return false;"/>
-    <cc name="TextExpression" 
+    <cc name="TextExpression"
         tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
   </cc>
 </column>
 
 <column name="ColumnFreeSpace" sortname="HiddenFreeSpace" extrahtml="nowrap">
-  <cc name="TextFreeSpace" 
+  <cc name="TextFreeSpace"
       tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
   <cc name="HiddenFreeSpace"
       tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
 </column>
 
 <column name="ColumnMatchingVolume" extrahtml="nowrap">
-  <cc name="TextMatchingVolume" 
+  <cc name="TextMatchingVolume"
       tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
       <attribute name="escape" value="false" />
   </cc>
-  <cc name="MatchingVolumeHref" 
+  <cc name="MatchingVolumeHref"
       tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
       <attribute name="onClick"
                  value="return launchMatchingVolumePopup(this);"/>
-      <cc name="TextMatchingVolumeWithLink" 
+      <cc name="TextMatchingVolumeWithLink"
           tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag">
           <attribute name="escape" value="false" />
     </cc>

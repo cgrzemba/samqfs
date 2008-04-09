@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemMediaManagerImpl.java,v 1.23 2008/04/03 02:21:40 ronaldso Exp $
+// ident	$Id: SamQFSSystemMediaManagerImpl.java,v 1.24 2008/04/09 20:37:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -489,20 +489,21 @@ public class SamQFSSystemMediaManagerImpl implements SamQFSSystemMediaManager {
      * pop up.
      *
      * @param mediaType - Type of media of which you want to evaluate potential
-     *                    VSN matches
+     *  VSN matches
      * @param policyName - Name of the policy of which you are adding to the
-     *                     VSN Pool. Leave this field null if you just want to
-     *                     evaluate the vsn expressions
+     *  VSN Pool. Leave this field null if you just want to evaluate the vsn
+     *  expressions
      * @param copyNumber - Number of copy of which you are adding to the
-     *                     VSN Pool. Leave this field as -1 if you just want to
-     *                     evaluate the vsn expressions
+     *  VSN Pool. Leave this field as -1 if you just want to evaluate the vsn
+     *  expressions
      * @param startVSN - Start of VSN range, use null to get all VSNs
      * @param endVSN   - End of VSN range, use null to get all VSNs
      * @param expression - Contain regular expressions of which you want to
-     *                     evaluate potential VSN matches.  Leave this null or
-     *                     empty if you want to get all VSNs
+     *  evaluate potential VSN matches.  Leave this null or empty if you want to
+     *  get all VSNs
      *
-     * (Either enter startVSN and endVSN, or expression, or both null to catch all)
+     * (Either enter startVSN and endVSN, or expression, or both null to catch
+     *  all)
      *
      * @param maxEntry - Maximum number of entry you want to return
      * @return Array of VSNs that matches the input VSN expression(s)
@@ -517,7 +518,7 @@ public class SamQFSSystemMediaManagerImpl implements SamQFSSystemMediaManager {
 
         expression = expression == null ? "" : expression.trim();
         startVSN   = startVSN   == null ? "" : startVSN.trim();
-        endVSN     = endVSN     == null ? "" : endVSN.trim();
+        endVSN = endVSN == null ? "" : endVSN.trim();
 
         TraceUtil.trace2("Logic: mediaType: " + mediaType);
         TraceUtil.trace2("Logic: startVSN: " + startVSN);
@@ -564,8 +565,8 @@ public class SamQFSSystemMediaManagerImpl implements SamQFSSystemMediaManager {
             TraceUtil.trace2(
                 "expressionArray[" + i + "] is " + expressionArray[i]);
         }
-        
-        // Prepare vsnMap if we need to resolve an array of expressions, 
+
+        // Prepare vsnMap if we need to resolve an array of expressions,
         // except vsn pool
         VSNMap myVSNMap = null;
 
@@ -586,7 +587,7 @@ public class SamQFSSystemMediaManagerImpl implements SamQFSSystemMediaManager {
         long freeSpaceInMB = 0;
         VSNWrapper vsnWrapper = null;
         BaseVSNPoolProps mapProps = null;
-   
+
         // Disk
         if (mediaType == BaseDevice.MTYPE_DISK ||
             mediaType == BaseDevice.MTYPE_STK_5800) {
@@ -650,7 +651,7 @@ public class SamQFSSystemMediaManagerImpl implements SamQFSSystemMediaManager {
                         Media.VSN_NO_SORT,
                         false);
             }
-            
+
             freeSpaceInMB = mapProps.getFreeSpace();
             CatEntry [] cats =
                ((CatVSNPoolProps) mapProps).getCatEntries();

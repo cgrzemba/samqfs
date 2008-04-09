@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNs.jsp,v 1.14 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: CopyVSNs.jsp,v 1.15 2008/04/09 20:37:27 ronaldso Exp $
 --%>
 
 <%@page info="CopyVSNs" language="java" %>
@@ -46,8 +46,8 @@
 
 <!-- page header -->
 <cc:header
-    pageTitle="archiving.policy.copyvsns.headertitle" 
-    copyrightYear="2008" 
+    pageTitle="archiving.policy.copyvsns.headertitle"
+    copyrightYear="2008"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
         if (parent.serverName != null) {
@@ -75,9 +75,9 @@
 <!-- body -->
 <cc:spacer name="spacer" height="10" width="1"/>
 
-<table cellspacing="10"> 
+<table cellspacing="10">
     <tr><td class="indent">
-        <cc:label name="LabelMediaType" 
+        <cc:label name="LabelMediaType"
                   defaultValue="archiving.mediatype"
                   bundleID="samBundle"
                   elementName="mediaType"/>
@@ -88,7 +88,7 @@
                          onChange="handleMediaTypeChange(this)"/>
     </td><td>
         <cc:spacer name="Spacer" width="20" />
-        <cc:label name="LabelFreeSpace" 
+        <cc:label name="LabelFreeSpace"
                   defaultValue="archiving.freespace"
                   bundleID="samBundle"
                   elementName="TextFreeSpace"/>
@@ -117,7 +117,10 @@
     <cc:text name="reservedVSNMessage"
       escape="false"
       bundleID="samBundle"/>
+    <cc:text name="inheritAllSetsMessage"
+      bundleID="samBundle"/>
   </div>
+
   <cc:hidden name="Expressions"/>
   <cc:hidden name="SelectedExpression"/>
   <cc:hidden name="SelectedPool"/>
@@ -130,11 +133,6 @@
   <cc:hidden name="deletePoolConfirmation"/>
   <cc:hidden name="NoPermissionMsg"/>
 </jato:containerView>
-
-<span style="padding-left:20px">
-<cc:text name="message"
-         bundleID="samBundle"/>
-</span>
 
 </cc:pagetitle>
 

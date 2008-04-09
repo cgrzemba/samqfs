@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaExpressionTiledView.java,v 1.1 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: MediaExpressionTiledView.java,v 1.2 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -39,6 +39,7 @@ import com.sun.netstorage.samqfs.web.util.CommonTiledViewBase;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -49,7 +50,7 @@ public class MediaExpressionTiledView extends CommonTiledViewBase {
                                   String name) {
         super(parent, model, name);
     }
-    
+
     public void handleTextExpressionHrefRequest(RequestInvocationEvent evt)
         throws ServletException, IOException {
 
@@ -57,7 +58,9 @@ public class MediaExpressionTiledView extends CommonTiledViewBase {
             ((TiledViewRequestInvocationEvent)evt).getTileNumber());
 
         String poolName = getDisplayFieldStringValue("TextExpressionHref");
-System.out.println("POOL NAME: " + poolName);
+
+        TraceUtil.trace3(
+            "handleTextExpressionHrefRequest: POOL NAME: " + poolName);
 
         CommonViewBeanBase source = (CommonViewBeanBase)getParentViewBean();
         CommonViewBeanBase target =

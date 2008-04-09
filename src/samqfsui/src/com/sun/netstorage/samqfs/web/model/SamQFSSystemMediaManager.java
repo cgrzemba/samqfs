@@ -27,12 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemMediaManager.java,v 1.16 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: SamQFSSystemMediaManager.java,v 1.17 2008/04/09 20:37:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.mgmt.arc.VSNPool;
 import com.sun.netstorage.samqfs.mgmt.media.StkClntConn;
 import com.sun.netstorage.samqfs.web.model.media.DiskVolume;
 import com.sun.netstorage.samqfs.web.model.media.Drive;
@@ -302,18 +301,18 @@ public interface SamQFSSystemMediaManager {
      * pop up.
      *
      * @param mediaType - Type of media of which you want to evaluate potential
-     *                    VSN matches
+     *  VSN matches
      * @param policyName - Name of the policy of which you are adding to the
-     *                     VSN Pool. Leave this field null if you just want to
-     *                     evaluate the vsn expressions
+     *  VSN Pool. Leave this field null if you just want to evaluate the vsn
+     *  expressions
      * @param copyNumber - Number of copy of which you are adding to the
-     *                     VSN Pool. Leave this field as -1 if you just want to
-     *                     evaluate the vsn expressions
+     *  VSN Pool. Leave this field as -1 if you just want to evaluate the vsn
+     *  expressions
      * @param startVSN - Start of VSN range, use null to get all VSNs
      * @param endVSN   - End of VSN range, use null to get all VSNs
      * @param expression - Contain regular expressions of which you want to
-     *                     evaluate potential VSN matches.  Leave this null or
-     *                     empty if you want to get all VSNs
+     *  evaluate potential VSN matches.  Leave this null or empty if you want to
+*  get all VSNs
      * @param poolName - the pool of which you want to resolve
      * @param maxEntry - Maximum number of entry you want to return
      * @return Array of VSNs that matches the input VSN expression(s)
@@ -324,6 +323,10 @@ public interface SamQFSSystemMediaManager {
         String poolName, int maxEntry)
         throws SamFSException;
 
-    // Default maximum entry the GUI will fetch in the action table
+    // Default maximum entry the GUI will fetch in Assign Media View
     public static final int MAXIMUM_ENTRIES_FETCHED = 1000;
+
+    // Default maximum entry the GUI will fetch in Copy VSNs, Pool Details, and
+    // Show VSN pop ups
+    public static final int MAXIMUM_ENTRIES_FETCHED_OTHERS = 10000;
 }

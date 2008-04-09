@@ -17,7 +17,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: VSNWrapper.java,v 1.1 2008/04/03 02:21:40 ronaldso Exp $
+// ident    $Id: VSNWrapper.java,v 1.2 2008/04/09 20:37:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -35,7 +35,7 @@ public class VSNWrapper {
 
     // Expression used in search criteria to come up with matching VSNs
     public String expressionUsed;
-    
+
     /** Creates a new instance of VSNWrapper */
     public VSNWrapper() {
     }
@@ -69,5 +69,5 @@ public class VSNWrapper {
 
     public String getExpressionUsed() {
         return expressionUsed;
-    }
+    }   
 }

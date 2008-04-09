@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ShowFileContentViewBean.java,v 1.11 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: ShowFileContentViewBean.java,v 1.12 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -36,14 +36,17 @@ import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.ChildDisplayEvent;
 import com.iplanet.jato.view.event.DisplayEvent;
-import com.iplanet.jato.view.event.RequestInvocationEvent;
 
+import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
 import com.sun.netstorage.samqfs.web.media.MediaUtil;
 import com.sun.netstorage.samqfs.web.model.ConfigStatus;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemMediaManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.archive.ArchiveCopy;
+import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
+import com.sun.netstorage.samqfs.web.model.archive.ArchiveVSNMap;
 import com.sun.netstorage.samqfs.web.model.archive.VSNPool;
 import com.sun.netstorage.samqfs.web.model.job.StageJob;
 import com.sun.netstorage.samqfs.web.model.job.StageJobFileData;
@@ -61,9 +64,9 @@ import com.sun.web.ui.view.html.CCStaticTextField;
 import com.sun.web.ui.view.html.CCTextArea;
 import com.sun.web.ui.view.html.CCTextField;
 import com.sun.web.ui.view.html.CCHiddenField;
-
 import java.io.IOException;
 import javax.servlet.ServletException;
+
 
 /**
  *  This class is the view bean for both the pop up of Config File Content
@@ -187,7 +190,7 @@ public class ShowFileContentViewBean extends ShowPopUpWindowViewBeanBase {
         TraceUtil.trace2("isShowLineControl(): " + isShowLineControl());
         TraceUtil.trace2("isStagingQList(): " + isStagingQList());
         TraceUtil.trace2("isShowContent(): " + isShowContent());
-System.out.println(
+        TraceUtil.trace2(
             "getShowMatchingVolumes(): " + getShowMatchingVolumes());
 
         String pageTitle = null;
@@ -223,11 +226,26 @@ System.out.println(
                         getServerName());
             } else if (getShowMatchingVolumes() != null) {
                 String [] keyArray = getShowMatchingVolumes().split(",");
-                pageTitle = SamUtil.getResourceString(
+                if (keyArray[0].equals(keyArray[1])) {
+                    // Used for Copy volumes to show members in pool
+                    pageTitle = SamUtil.getResourceString(
+                        "ShowFileContent.pageTitle.matchingvolumes.pools",
+                        new String [] {
+                            keyArray[0]});
+                } else if (keyArray[0].indexOf(".") == -1) {
+                    // Used for Volume Pool
+                    pageTitle = SamUtil.getResourceString(
                         "ShowFileContent.pageTitle.matchingvolumes",
                         new String [] {
                             keyArray[1],
                             keyArray[0]});
+                } else {
+                    // Used for Copy Volumes
+                    pageTitle = SamUtil.getResourceString(
+                        "ShowFileContent.pageTitle.matchingvolumes.copyvsns",
+                        new String [] {
+                            keyArray[1]});
+                }
             } else {
                 pageTitle = SamUtil.getResourceString(
                     "ShowFileContent.pageTitle.config.status",
@@ -486,20 +504,55 @@ System.out.println(
         StringBuffer buf = new StringBuffer();
 
         boolean reserved = false;
+        VSNWrapper wrapper = null;
+        int mediaType = -1;
 
         try {
             SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
-            VSNPool pool = sysModel.
-                getSamQFSSystemArchiveManager().getVSNPool(keyArray[0]);
-            VSNWrapper wrapper =
-                sysModel.getSamQFSSystemMediaManager().
-                    evaluateVSNExpression(
-                        pool.getMediaType(), null, -1,
-                        null, null, keyArray[1],
-                        null,
-                        SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
 
-            if (MediaUtil.isDiskType(pool.getMediaType())) {
+            if (keyArray[0].indexOf(".") == -1) {
+                // Use in Pool Details page, or looking at volumes of a pool
+                // in the copy volumes page
+                VSNPool pool = sysModel.
+                    getSamQFSSystemArchiveManager().getVSNPool(keyArray[0]);
+                mediaType = pool.getMediaType();
+
+                // if both keys are equal, this pop up is trying to show the
+                // participating volumes of the pool
+                if (keyArray[0].equals(keyArray[1])) {
+                    wrapper =
+                        sysModel.getSamQFSSystemMediaManager().
+                            evaluateVSNExpression(
+                                mediaType, null, -1,
+                                null, null, null,
+                                keyArray[0],
+                                SamQFSSystemMediaManager.
+                                    MAXIMUM_ENTRIES_FETCHED_OTHERS);
+                } else {
+                    wrapper =
+                        sysModel.getSamQFSSystemMediaManager().
+                            evaluateVSNExpression(
+                                mediaType, null, -1,
+                                null, null, keyArray[1],
+                                null,
+                                SamQFSSystemMediaManager.
+                                    MAXIMUM_ENTRIES_FETCHED_OTHERS);
+                }
+            } else {
+                // Copy Volumes
+                ArchiveVSNMap vsnMap = getVSNMap(sysModel, keyArray[0]);
+                mediaType = vsnMap.getArchiveMediaType();
+                wrapper =
+                    sysModel.getSamQFSSystemMediaManager().
+                            evaluateVSNExpression(
+                                mediaType, null, -1,
+                                null, null, keyArray[1],
+                                null,
+                                SamQFSSystemMediaManager.
+                                    MAXIMUM_ENTRIES_FETCHED_OTHERS);
+            }
+
+            if (MediaUtil.isDiskType(mediaType)) {
                 DiskVolume [] vsns = wrapper.getAllDiskVSNs();
                 for (int i = 0; i < vsns.length; i++) {
                     buf.append(vsns[i].getName());
@@ -529,6 +582,32 @@ System.out.println(
         }
         return buf;
     }
+
+    private ArchiveVSNMap getVSNMap(
+        SamQFSSystemModel sysModel, String policyInfo) throws SamFSException {
+
+        String [] key = policyInfo.split("\\.");
+        String policyName =
+            key != null && key.length > 1 ?
+                key[0] : "";
+        int copyNumber =
+            key != null && key.length > 1 ?
+                Integer.parseInt(key[1]) : -1;
+
+        ArchivePolicy thePolicy = sysModel.
+            getSamQFSSystemArchiveManager().getArchivePolicy(policyName);
+        // make sure the policy wasn't deleted in the process
+        if (thePolicy == null) {
+            throw new SamFSException(null, -2000);
+        }
+
+        ArchiveCopy theCopy = thePolicy.getArchiveCopy(copyNumber);
+        if (theCopy == null) {
+            throw new SamFSException(null, -2006);
+        }
+        return theCopy.getArchiveVSNMap();
+    }
+
 
     private boolean isShowContent() {
         // first check the page session

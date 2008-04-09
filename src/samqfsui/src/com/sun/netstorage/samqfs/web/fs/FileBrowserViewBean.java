@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserViewBean.java,v 1.25 2008/03/17 14:43:34 am143972 Exp $
+// ident	$Id: FileBrowserViewBean.java,v 1.26 2008/04/09 20:37:29 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -860,7 +860,7 @@ public class FileBrowserViewBean extends CommonViewBeanBase {
         // directory that matches the filter.  It makes no sense to carry over
         // the filter criteria to the next level.
         removePageSessionAttribute(FILTER_VALUE);
-        
+
         // refresh page
         forwardTo(getRequestContext());
 

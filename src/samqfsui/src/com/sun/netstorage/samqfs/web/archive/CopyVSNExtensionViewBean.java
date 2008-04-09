@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNExtensionViewBean.java,v 1.1 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: CopyVSNExtensionViewBean.java,v 1.2 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -35,6 +35,7 @@ import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
+import com.iplanet.jato.view.event.ChildDisplayEvent;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 
@@ -55,6 +56,7 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.view.html.CCButton;
+import com.sun.web.ui.view.html.CCDropDownMenu;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCLabel;
 import com.sun.web.ui.view.html.CCRadioButton;
@@ -78,19 +80,24 @@ public class CopyVSNExtensionViewBean extends CommonSecondaryViewBeanBase {
 
     private static final String POLICY_INFO = "SAMQFS_policy_info";
     private static final String MEDIA_TYPE = "SAMQFS_media_type";
+    private static final String RESET_MEDIA_TYPE = "ResetMediaType";
 
     // Page components
     private static final String RADIO_TYPE_1 = "RadioType1";
     private static final String RADIO_TYPE_2 = "RadioType2";
     private static final String RADIO_TYPE_3 = "RadioType3";
     private static final String EXISTING_POOL = "ExistingPool";
-    private static final String LABEL = "Label";
+    private static final String MENU_TYPE = "MenuType";
+    private static final String LABEL_MEDIA_TYPE = "LabelMediaType";
+    private static final String LABEL_EXISTING_POOL = "LabelExistingPool";
     private static final String HELP_TEXT = "HelpText";
     private static final String HIDDEN_MEDIA_TYPE = "MediaType";
     private static final String HIDDEN_SERVER_NAME = "ServerName";
     private static final String HIDDEN_POLICY_NAME = "PolicyName";
     private static final String HIDDEN_COPY_NUMBER = "CopyNumber";
-    
+    private static final String HIDDEN_POOL_INFO = "PoolInfo";
+    private static final String HIDDEN_NO_AVAIL_POOL_MSG = "NoAvailPoolMsg";
+
     // Page Title Attributes
     private CCPageTitleModel pageTitleModel = null;
 
@@ -126,12 +133,16 @@ public class CopyVSNExtensionViewBean extends CommonSecondaryViewBeanBase {
         PageTitleUtil.registerChildren(this, pageTitleModel);
         registerChild(RADIO_TYPE_1, CCRadioButton.class);
         registerChild(EXISTING_POOL, CCSelectableList.class);
-        registerChild(LABEL, CCLabel.class);
+        registerChild(MENU_TYPE, CCDropDownMenu.class);
+        registerChild(LABEL_MEDIA_TYPE, CCLabel.class);
+        registerChild(LABEL_EXISTING_POOL, CCLabel.class);
         registerChild(HELP_TEXT, CCStaticTextField.class);
         registerChild(HIDDEN_MEDIA_TYPE, CCHiddenField.class);
         registerChild(HIDDEN_SERVER_NAME, CCHiddenField.class);
         registerChild(HIDDEN_POLICY_NAME, CCHiddenField.class);
         registerChild(HIDDEN_COPY_NUMBER, CCHiddenField.class);
+        registerChild(HIDDEN_POOL_INFO, CCHiddenField.class);
+        registerChild(HIDDEN_NO_AVAIL_POOL_MSG, CCHiddenField.class);
     }
 
     /**
@@ -159,14 +170,18 @@ public class CopyVSNExtensionViewBean extends CommonSecondaryViewBeanBase {
             return (View) myChild;
         } else if (name.equals(EXISTING_POOL)) {
             return new CCSelectableList(this, name, null);
-        } else if (name.equals(LABEL)) {
+        } else if (name.startsWith("Label")) {
             return new CCLabel(this, name, null);
         } else if (name.equals(HELP_TEXT)) {
             return new CCStaticTextField(this, name, null);
+        } else if (name.equals(MENU_TYPE)) {
+            return new CCDropDownMenu(this, name, null);
         } else if (name.equals(HIDDEN_MEDIA_TYPE)
                 || name.equals(HIDDEN_SERVER_NAME)
                 || name.equals(HIDDEN_POLICY_NAME)
-                || name.equals(HIDDEN_COPY_NUMBER) ) {
+                || name.equals(HIDDEN_COPY_NUMBER)
+                || name.equals(HIDDEN_POOL_INFO)
+                || name.equals(HIDDEN_NO_AVAIL_POOL_MSG)) {
             return new CCHiddenField(this, name, null);
         } else {
             throw new IllegalArgumentException(new NonSyncStringBuffer().append(
@@ -180,14 +195,64 @@ public class CopyVSNExtensionViewBean extends CommonSecondaryViewBeanBase {
      */
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
         super.beginDisplay(event);
-        saveParam();
-        populateExistingPoolBox();
+
+        // keep track of the first available media type in the drop down menu
+        // Populate pools with this type if mediaType is -1.
+        int firstMediaType = -1;
+
+        // No media type is selected yet, show select media type menu
+        if (getMediaType() == -1) {
+            firstMediaType = populateMediaTypeMenu();
+        }
+
+        populateExistingPoolBox(firstMediaType);
 
         // set default radio button to the first item if it has no value
         CCRadioButton radio = (CCRadioButton) getChild(RADIO_TYPE_1);
         if (radio.getValue() == null) {
             radio.setValue("createexp");
         }
+
+        populateHiddenFields();
+    }
+
+    /**
+     * Hide media type menu if the media type is already defined
+     */
+    public boolean beginMenuTypeDisplay(ChildDisplayEvent event) {
+        return getMediaType() == -1;
+    }
+
+    public boolean beginLabelMenuTypeDisplay(ChildDisplayEvent event) {
+        return getMediaType() == -1;
+    }
+
+    private int populateMediaTypeMenu() {
+        CCDropDownMenu menu = (CCDropDownMenu) getChild(MENU_TYPE);
+
+        try {
+            int [] mediaTypes =
+                SamUtil.getModel(getServerName()).getSamQFSSystemMediaManager().
+                    getAvailableArchiveMediaTypes();
+
+            String [] labels = new String[mediaTypes.length];
+            String [] values = new String[mediaTypes.length];
+
+            for (int i = 0; i < mediaTypes.length; i++) {
+                labels[i] = SamUtil.getMediaTypeString(mediaTypes[i]);
+                values[i] = Integer.toString(mediaTypes[i]);
+            }
+            menu.setOptions(new OptionList(labels, values));
+
+            if (mediaTypes != null && mediaTypes.length != 0) {
+                return mediaTypes[0];
+            }
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Failed to populate media type menu!", samEx);
+            disablePageButtons();
+        }
+
+        return -1;
     }
 
     /**
@@ -225,7 +290,9 @@ public class CopyVSNExtensionViewBean extends CommonSecondaryViewBeanBase {
             "number of pools about to be added: " + selectedPoolArray.length);
 
         String radioValue = (String) getDisplayFieldValue(RADIO_TYPE_1);
-System.out.println("radio: " + radioValue);
+
+        TraceUtil.trace3("handleSubmitRequest: radio: " + radioValue);
+
         if (!radioValue.equals("useexistingpool")) {
             forwardToMediaAssigner(radioValue.equals("createpool"));
             return;
@@ -256,14 +323,35 @@ System.out.println("radio: " + radioValue);
             }
             ArchiveVSNMap vsnMap = theCopy.getArchiveVSNMap();
 
+            TraceUtil.trace3("vsnMap type: " + vsnMap.getArchiveMediaType());
+
             StringBuffer poolBuf = new StringBuffer();
 
             String existingPoolStr = vsnMap.getPoolExpression();
             existingPoolStr = existingPoolStr == null ? "" : existingPoolStr;
 
             TraceUtil.trace3("Old Pool Expression: " + existingPoolStr);
-System.out.println("Old Pool Expression: " + existingPoolStr);
-            poolBuf.append(existingPoolStr);
+
+            int mediaType = -1;
+            if (isResetMediaType()) {
+                // Clear both pool and map expressions
+                vsnMap.setPoolExpression("");
+                vsnMap.setMapExpression("");
+            } else {
+                // only appending existing pool expression if user is not
+                // resetting the media type
+                poolBuf.append(existingPoolStr);
+            }
+
+            mediaType =
+                getMediaType() == -1 ?
+                    Integer.parseInt(
+                        (String) getDisplayFieldValue(MENU_TYPE)) :
+                    getMediaType();
+
+            TraceUtil.trace3("Setting vsnMap mediaType to: " + mediaType);
+
+            vsnMap.setArchiveMediaType(mediaType);
 
             // Append the new selected pool to the list
             for (int i = 0; i < selectedPoolArray.length; i++) {
@@ -274,7 +362,7 @@ System.out.println("Old Pool Expression: " + existingPoolStr);
             }
 
             TraceUtil.trace3("New Pool Expression: " + poolBuf);
-System.out.println("New Pool Expression: " + poolBuf);
+
             LogUtil.info(
                 this.getClass(),
                 "handleSubmitRequest",
@@ -330,11 +418,13 @@ System.out.println("New Pool Expression: " + poolBuf);
         forwardTo(getRequestContext());
     }
 
-    private void saveParam() {
+    private void populateHiddenFields() {
         String policyInfo = getPolicyInfo();
+        int mediaType = getMediaType();
+        boolean resetType = isResetMediaType();
 
         ((CCHiddenField) getChild(HIDDEN_MEDIA_TYPE)).setValue(
-                                Integer.toString(getMediaType()));
+                                Integer.toString(mediaType));
         ((CCHiddenField) getChild(HIDDEN_SERVER_NAME)).setValue(
                                 getServerName());
         ((CCHiddenField) getChild(HIDDEN_POLICY_NAME)).setValue(
@@ -342,14 +432,28 @@ System.out.println("New Pool Expression: " + poolBuf);
         ((CCHiddenField) getChild(HIDDEN_COPY_NUMBER)).setValue(
                                 Integer.toString(getCopyNumber()));
 
+        ((CCHiddenField) getChild(HIDDEN_NO_AVAIL_POOL_MSG)).setValue(
+            SamUtil.getResourceString(
+                "CopyVSNs.extension.noavailpool",
+                SamUtil.getMediaTypeString(mediaType)));
+
+        TraceUtil.trace3("isResetType: " + resetType);
         TraceUtil.trace3("CopyVSNExtension: policyInfo is " + policyInfo);
-        TraceUtil.trace3("CopyVSNExtension: mediaType is " + getMediaType());
+        TraceUtil.trace3("CopyVSNExtension: mediaType is " + mediaType);
     }
 
-    private void populateExistingPoolBox() {
+    private void populateExistingPoolBox(int firstMediaType) {
         StringBuffer poolBuf = new StringBuffer();
+        StringBuffer allPoolBuf = new StringBuffer();
         OptionList poolOptions = null;
-        int mediaType = getMediaType();
+
+        // Use the first available media type to populate the volume pools
+        // if no type is selected yet
+        int mediaType =
+            getMediaType() == -1 ?
+                firstMediaType : getMediaType();
+
+        TraceUtil.trace3("populateExistingPoolBox() mediaType: " + mediaType);
 
         try {
             VSNPool [] allPools = PolicyUtil.getAllVSNPools(getServerName());
@@ -358,6 +462,8 @@ System.out.println("New Pool Expression: " + poolBuf);
                     notUsedInThisCopy(allPools[i])) {
                     poolBuf.append(allPools[i].getPoolName()).append(",");
                 }
+                allPoolBuf.append(allPools[i].getPoolName()).append(",").
+                           append(allPools[i].getMediaType()).append(";");
             }
             String [] poolArray = null;
             if (poolBuf.length() != 0) {
@@ -367,6 +473,12 @@ System.out.println("New Pool Expression: " + poolBuf);
                 poolArray = new String[0];
             }
             poolOptions = new OptionList(poolArray, poolArray);
+
+            if (allPoolBuf.length() != 0) {
+                allPoolBuf.deleteCharAt(allPoolBuf.length() - 1);
+            }
+            ((CCHiddenField) getChild(
+                HIDDEN_POOL_INFO)).setValue(allPoolBuf.toString());
 
         } catch (SamFSException samEx) {
             TraceUtil.trace1("SamFSException caught!", samEx);
@@ -409,6 +521,9 @@ System.out.println("New Pool Expression: " + poolBuf);
             newPool ?
                 "NEW_POOL_ADD_TO_COPYVSN" :
                 "NEW_EXP_ADD_TO_COPYVSN");
+         target.setPageSessionAttribute(
+            target.RESET_TYPE,
+            Boolean.toString(isResetMediaType()));
         target.setPageSessionAttribute(
             target.MEDIA_TYPE,
             (String) getDisplayFieldValue(HIDDEN_MEDIA_TYPE));
@@ -453,6 +568,25 @@ System.out.println("New Pool Expression: " + poolBuf);
         return true;
     }
 
+    private boolean isResetMediaType() {
+        // first check the page session
+        String resetType = (String) getPageSessionAttribute(RESET_MEDIA_TYPE);
+
+        // second check the request
+        if (resetType == null) {
+            resetType =
+                RequestManager.getRequest().getParameter(RESET_MEDIA_TYPE);
+
+            if (resetType != null) {
+                setPageSessionAttribute(RESET_MEDIA_TYPE, resetType);
+            } else {
+                return false;
+            }
+        }
+        TraceUtil.trace3("isResetMediaType() Return " + resetType);
+        return Boolean.valueOf(resetType).booleanValue();
+    }
+
     private String getPolicyInfo() {
         // first check the page session
         String policyInfo = (String) getPageSessionAttribute(POLICY_INFO);
@@ -463,14 +597,12 @@ System.out.println("New Pool Expression: " + poolBuf);
 
             if (policyInfo != null) {
                 setPageSessionAttribute(POLICY_INFO, policyInfo);
-            }
-
-            if (policyInfo == null) {
+            } else {
                 throw new IllegalArgumentException("Policy Info not supplied");
             }
         }
 
-        return policyInfo == null ? "" : policyInfo;
+        return policyInfo;
     }
 
     private int getMediaType() {
@@ -483,10 +615,6 @@ System.out.println("New Pool Expression: " + poolBuf);
 
             if (typeString != null) {
                 setPageSessionAttribute(MEDIA_TYPE, typeString);
-            }
-
-            if (typeString == null) {
-                throw new IllegalArgumentException("Media Type not supplied");
             }
         }
 

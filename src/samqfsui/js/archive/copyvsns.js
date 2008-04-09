@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: copyvsns.js,v 1.7 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: copyvsns.js,v 1.8 2008/04/09 20:37:26 ronaldso Exp $
 
     var origMenuValue = "";
 
@@ -72,12 +72,13 @@
             }
         }
 
+        launchCopyVSNExtensionPopup(parseInt(field.value), true);
+
         // pop new pool windows, reset menu to original value just in case if
         // user clicks cancel in the new pool pop up.  The menu will be
         // presented with new media pool after a pool is successfully created.
         field.value = origMenuValue;
 
-        launchCopyVSNExtensionPopup(true);
         return false;
     }
 
@@ -142,10 +143,16 @@
 
      function launchMatchingVolumePopup(field) {
         var selectedExp = getExpression(field.name);
+        var firstParam =
+            isPool(field) ?
+                selectedExp :
+                getForm().elements[getPageName() + ".PolicyName"].value + "." +
+                getForm().elements[getPageName() + ".CopyNumber"].value;
         var param = '&SAMQFS_SHOW_CONTENT=false' +
             '&SAMQFS_SHOW_LINE_CONTROL=false' +
             '&SAMQFS_STAGE_Q_LIST=false' +
-            '&matching_volumes=' + ',' + selectedExp;
+            '&matching_volumes=' + firstParam + ',' + selectedExp;
+
         launchPopup(
             '/admin/ShowFileContent',
             'content',
@@ -155,15 +162,15 @@
         return false;
     }
 
-    function launchCopyVSNExtensionPopup(resetType) {
-        var mediaType =
-            resetType ? -1 : getMediaType();
+    function launchCopyVSNExtensionPopup(mediaType, reset) {
         var policyName = getForm().elements[
                             getPageName() + ".PolicyName"].value;
         var copyNumber = getForm().elements[
                             getPageName() + ".CopyNumber"].value;
-        var param = "&SAMQFS_media_type=" + mediaType +
+        var param = "&ResetMediaType=" + (reset ? "true" : "false") +
+                  "&SAMQFS_media_type=" + mediaType +
                   "&SAMQFS_policy_info=" + policyName + "." + copyNumber;
+
         launchPopup(
             '/archive/CopyVSNExtension',
             'content',
@@ -191,7 +198,7 @@
     }
 
     function handleButtonAdd() {
-        launchCopyVSNExtensionPopup(false);
+        launchCopyVSNExtensionPopup(getMediaType(), false);
         return false;
     }
 

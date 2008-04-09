@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AssignMediaView.java,v 1.1 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: AssignMediaView.java,v 1.2 2008/04/09 20:37:29 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -324,7 +324,7 @@ public class AssignMediaView extends RequestHandlingViewBase
             wrapper = mediaManager.evaluateVSNExpression(
                 mediaType, null, -1,
                 startVSN, endVSN, null,
-                null, mediaManager.MAXIMUM_ENTRIES_FETCHED + 1);
+                null, mediaManager.MAXIMUM_ENTRIES_FETCHED);
             if (startVSN.length() == 0 && endVSN.length() == 0) {
                 tableModel.setTitle(
                     SamUtil.getResourceString(
@@ -336,7 +336,10 @@ public class AssignMediaView extends RequestHandlingViewBase
                         new String [] {
                             SamUtil.getMediaTypeString(mediaType),
                             startVSN,
-                            endVSN}));
+                            endVSN,
+                            Capacity.newCapacity(
+                                wrapper.getFreeSpaceInMB(),
+                                SamQFSSystemModel.SIZE_MB).toString()}));
             }
         } else {
             String expression = (String) getDisplayFieldValue(VALUE_EXPRESSION);
@@ -346,7 +349,7 @@ public class AssignMediaView extends RequestHandlingViewBase
             wrapper = mediaManager.evaluateVSNExpression(
                 mediaType, null, -1,
                 null, null, expression,
-                null, mediaManager.MAXIMUM_ENTRIES_FETCHED + 1);
+                null, mediaManager.MAXIMUM_ENTRIES_FETCHED);
             if (expression.length() == 0) {
                 tableModel.setTitle(
                     SamUtil.getResourceString(
@@ -357,7 +360,10 @@ public class AssignMediaView extends RequestHandlingViewBase
                         "AssignMedia.table.title.regex",
                         new String [] {
                             SamUtil.getMediaTypeString(mediaType),
-                            expression}));
+                            expression,
+                            Capacity.newCapacity(
+                                wrapper.getFreeSpaceInMB(),
+                                SamQFSSystemModel.SIZE_MB).toString()}));
             }
         }
 
@@ -379,7 +385,8 @@ public class AssignMediaView extends RequestHandlingViewBase
             return;
         }
 
-        TraceUtil.trace2("Items returned: " + wrapper.getTotalNumberOfVSNs());
+        TraceUtil.trace2(
+            "Total Matching VSNs: " + wrapper.getTotalNumberOfVSNs());
 
         if (MediaUtil.isDiskType(getMediaType())) {
             populateDiskVolumns(wrapper);
@@ -411,13 +418,13 @@ public class AssignMediaView extends RequestHandlingViewBase
             wrapper = mediaManager.evaluateVSNExpression(
                 getMediaType(), null, -1,
                 startVSN, endVSN, null,
-                null, mediaManager.MAXIMUM_ENTRIES_FETCHED + 1);
+                null, mediaManager.MAXIMUM_ENTRIES_FETCHED);
         } else {
             String expression = (String) getDisplayFieldValue(VALUE_EXPRESSION);
             wrapper = mediaManager.evaluateVSNExpression(
                 getMediaType(), null, -1,
                 null, null, expression,
-                null, mediaManager.MAXIMUM_ENTRIES_FETCHED + 1);
+                null, mediaManager.MAXIMUM_ENTRIES_FETCHED);
         }
 
         TraceUtil.trace3(
@@ -431,7 +438,7 @@ public class AssignMediaView extends RequestHandlingViewBase
      * edited by the user
      */
     public String getPoolName() {
-        String poolName = "";
+        String poolName = null;
         if (pageMode == MODE_NEW_POOL ||
             pageMode == MODE_COPY_INFO_NEW_POOL) {
             poolName = (String) getDisplayFieldValue(VALUE_NAME);
@@ -441,8 +448,8 @@ public class AssignMediaView extends RequestHandlingViewBase
             poolName = (String)
                 parent.getPageSessionAttribute(parent.POOL_NAME);
         } else {
-            // no op
-            ;
+            // this case is never used
+            poolName = "";
         }
 
         TraceUtil.trace2("getPoolName(): " + poolName);
@@ -484,7 +491,7 @@ public class AssignMediaView extends RequestHandlingViewBase
      */
     public void handleButtonSelectedRequest(RequestInvocationEvent rie)
         throws ServletException, IOException {
-        if (!validate()) {
+        if (!validate(false)) {
             getParentViewBean().forwardTo(getRequestContext());
         } else {
             handleButtons();
@@ -532,53 +539,59 @@ public class AssignMediaView extends RequestHandlingViewBase
     /**
      * Validate user input
      */
-    public boolean validate() {
+    public boolean validate(boolean callFromViewBean) {
         // check pool name & media type if it is needed
-        TraceUtil.trace2("page mode: " + pageMode);
+        TraceUtil.trace2(
+            "validate: page mode: " + pageMode +
+            " callFromViewBean: " + callFromViewBean);
 
         String errorMessage = null;
         boolean error = false;
 
         if (pageMode == MODE_NEW_POOL) {
-            String poolName = (String) getDisplayFieldValue(VALUE_NAME);
-            poolName = poolName == null ? "" : poolName.trim();
+            // Only validate the pool name field when we are about to create
+            // a pool
+            if (callFromViewBean) {
+                String poolName = (String) getDisplayFieldValue(VALUE_NAME);
+                poolName = poolName == null ? "" : poolName.trim();
 
-            if (poolName.length() == 0) {
-                TraceUtil.trace1("No pool name is defined!");
+                if (poolName.length() == 0) {
+                    TraceUtil.trace1("No pool name is defined!");
 
-                errorMessage = "AssignMedia.error.nopoolname";
-                error = true;
+                    errorMessage = "AssignMedia.error.nopoolname";
+                    error = true;
 
-            } else if (!SamUtil.isValidFSNameString(poolName)) {
-                // Check for well-formness
-                errorMessage = "AssignMedia.error.poolname.nonwellform";
-                error = true;
+                } else if (!SamUtil.isValidFSNameString(poolName)) {
+                    // Check for well-formness
+                    errorMessage = "AssignMedia.error.poolname.nonwellform";
+                    error = true;
 
-            } else {
-                try {
-                    if (PolicyUtil.poolExists(getServerName(), poolName)) {
-                        // Check if pool name is already in use
+                } else {
+                    try {
+                        if (PolicyUtil.poolExists(getServerName(), poolName)) {
+                            // Check if pool name is already in use
+                            errorMessage = "AssignMedia.error.poolname.duplicate";
+                            error = true;
+                        }
+                    } catch (SamFSException samEx) {
+                        TraceUtil.trace1(
+                            "Failed to check if pool name is in use!", samEx);
                         errorMessage = "AssignMedia.error.poolname.duplicate";
                         error = true;
                     }
-                } catch (SamFSException samEx) {
-                    TraceUtil.trace1(
-                        "Failed to check if pool name is in use!", samEx);
-                    errorMessage = "AssignMedia.error.poolname.duplicate";
-                    error = true;
                 }
-            }
 
-            if (error) {
-                SamUtil.setErrorAlert(
-                    this,
-                    ALERT,
-                    errorMessage,
-                    -1,
-                    "",
-                    getServerName());
-                setLabelError(LABEL_NAME);
-                return false;
+                if (error) {
+                    SamUtil.setErrorAlert(
+                        this,
+                        ALERT,
+                        errorMessage,
+                        -1,
+                        "",
+                        getServerName());
+                    setLabelError(LABEL_NAME);
+                    return false;
+                }
             }
 
             if (getMediaType() ==
@@ -656,10 +669,11 @@ public class AssignMediaView extends RequestHandlingViewBase
             showTable == null ?
                 Boolean.toString(false) :
                 showTable.toString());
-System.out.println("initializeTableComponent: " +
-    (showTable == null ?
-                Boolean.toString(false) :
-                showTable.toString()));
+
+        TraceUtil.trace3("initializeTableComponent: " +
+            (showTable == null ?
+                        Boolean.toString(false) :
+                        showTable.toString()));
 
         // If table needs to be shown, initialize headers and populate content
         if (showTable != null && showTable.booleanValue()) {
@@ -775,7 +789,7 @@ System.out.println("initializeTableComponent: " +
 
         for (int i = 0;
              i < diskVols.length &&
-             i < SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED + 1; i++) {
+             i < SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED; i++) {
             if (i > 0) {
                 actionTableModel.appendRow();
             }
@@ -830,7 +844,9 @@ System.out.println("initializeTableComponent: " +
         }
 
         // Notify users that there are more than MAXIMUM_ENTRIES_FETCHED matches
-        if (diskVols.length >
+System.out.println("Wrapper Total: " + wrapper.getTotalNumberOfVSNs());
+System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+        if (wrapper.getTotalNumberOfVSNs() >
             SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED) {
             int totalEntry = wrapper.getTotalNumberOfVSNs();
             SamUtil.setInfoAlert(
@@ -841,7 +857,10 @@ System.out.println("initializeTableComponent: " +
                     new String [] {
                         Integer.toString(
                             SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED),
-                        Integer.toString(totalEntry)}),
+                        Integer.toString(totalEntry),
+                        Capacity.newCapacity(
+                            wrapper.getFreeSpaceInMB(),
+                            SamQFSSystemModel.SIZE_MB).toString()}),
                 "",
                 getServerName());
             actionTableModel.setTitle(
@@ -857,7 +876,7 @@ System.out.println("initializeTableComponent: " +
         VSN [] vsns = wrapper.getAllTapeVSNs();
         for (int i = 0;
              i < vsns.length &&
-             i < SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED + 1; i++) {
+             i < SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED; i++) {
             if (i > 0) {
                 actionTableModel.appendRow();
             }
@@ -885,7 +904,10 @@ System.out.println("initializeTableComponent: " +
         }
 
         // Notify users that there are more than MAXIMUM_ENTRIES_FETCHED matches
-        if (vsns.length > SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED) {
+System.out.println("Wrapper Total: " + wrapper.getTotalNumberOfVSNs());
+System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+        if (wrapper.getTotalNumberOfVSNs() >
+            SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED) {
             int totalEntry = wrapper.getTotalNumberOfVSNs();
             SamUtil.setInfoAlert(
                 this,
@@ -895,7 +917,10 @@ System.out.println("initializeTableComponent: " +
                     new String [] {
                         Integer.toString(
                             SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED),
-                        Integer.toString(totalEntry)}),
+                        Integer.toString(totalEntry),
+                    Capacity.newCapacity(
+                            wrapper.getFreeSpaceInMB(),
+                            SamQFSSystemModel.SIZE_MB).toString()}),
                 "",
                 getServerName());
             actionTableModel.setTitle(
@@ -953,8 +978,8 @@ System.out.println("initializeTableComponent: " +
      * are used in client-side javascript.
      */
     private void populateHiddenMessages() {
-       ((CCHiddenField) getChild(HIDDEN_NO_MEDIA_TYPE_MESSAGE)).
-           setValue(SamUtil.getResourceString("AssignMedia.button.error"));
+        ((CCHiddenField) getChild(HIDDEN_NO_MEDIA_TYPE_MESSAGE)).
+            setValue(SamUtil.getResourceString("AssignMedia.button.error"));
     }
 
     private int getUsage(long available, long total) {

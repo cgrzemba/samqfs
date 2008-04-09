@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PolicySummaryView.java,v 1.22 2008/03/17 14:40:44 am143972 Exp $
+// ident	$Id: PolicySummaryView.java,v 1.23 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -424,8 +424,8 @@ public class PolicySummaryView extends CommonTableContainerView {
         parent.forwardTo(getRequestContext());
     }
 
-     public void handleConfigureAllSetsRequest(RequestInvocationEvent rie)
-         throws ServletException, IOException {
+    public void handleConfigureAllSetsRequest(RequestInvocationEvent rie)
+        throws ServletException, IOException {
 
          CommonViewBeanBase parent = (CommonViewBeanBase) getParentViewBean();
 
@@ -443,5 +443,5 @@ public class PolicySummaryView extends CommonTableContainerView {
          // finally forward to the viewbean
          parent.forwardTo((CommonViewBeanBase)
              getViewBean(PolicyDetailsViewBean.class));
-     }
+    }
 }

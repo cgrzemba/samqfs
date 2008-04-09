@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNsViewBean.java,v 1.27 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: CopyVSNsViewBean.java,v 1.28 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -96,7 +96,6 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
 
     // child views
     private static final String MEDIA_TYPE = "mediaType";
-    private static final String MESSAGE = "message";
 
     private static final String PT_FILE = "/jsp/archive/CopyVSNsPageTitle.xml";
     private CCPageTitleModel ptModel = null;
@@ -143,7 +142,6 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
         registerChild(FS_DETAILS_HREF, CCHref.class);
         registerChild(FS_ARCHIVEPOL_HREF, CCHref.class);
         registerChild(COPY_VSNS_HREF, CCHref.class);
-        registerChild(MESSAGE, CCStaticTextField.class);
         registerChild(POLICY_NAME, CCHiddenField.class);
         registerChild(COPY_NUMBER, CCHiddenField.class);
         PageTitleUtil.registerChildren(this, ptModel);
@@ -158,8 +156,7 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
             return new MediaExpressionView(this, name, false);
         } else if (name.equals(MEDIA_TYPE)) {
             return new CCDropDownMenu(this, name, null);
-        } else if (name.equals(MESSAGE) ||
-                   name.equals(TEXT_FREE_SPACE)) {
+        } else if (name.equals(TEXT_FREE_SPACE)) {
             return new CCStaticTextField(this, name, null);
         } else if (name.equals(RESET_MESSAGE) ||
                    name.equals(SERVER_NAME) ||
@@ -224,11 +221,6 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
             SamUtil.getResourceString("CopyVSNs.message.cannotdeleteall"));
 
         try {
-            if (getVSNMap().inheritedFromALLSETS()) {
-                CCStaticTextField message =
-                    (CCStaticTextField)getChild(MESSAGE);
-                message.setValue("archiving.copyvsns.usingallsets");
-            }
             populateMediaTypeMenu(getVSNMap());
 
             ((CCStaticTextField) getChild(TEXT_FREE_SPACE)).setValue(
@@ -274,16 +266,6 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
                                   sfe.getMessage(),
                                   serverName);
         }
-
-        // disable save & reset button if no media authorization
-        /*
-        if (!SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.MEDIA_OPERATOR)) {
-
-            ((CCButton)getChild("Save")).setDisabled(true);
-            ((CCButton)getChild("Reset")).setDisabled(true);
-        }
-         */
     }
 
     private void populateMediaTypeMenu(ArchiveVSNMap vsnMap)

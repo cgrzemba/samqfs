@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewEditVSNPoolViewBean.java,v 1.26 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: NewEditVSNPoolViewBean.java,v 1.27 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -92,6 +92,7 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
     public static final String EXPRESSION = "expression";
     public static final String MEDIA_TYPE = "media_type";
     public static final String POLICY_INFO = "policy_info";
+    public static final String RESET_TYPE = "reset_type";
 
     /**
      * Constructor
@@ -130,7 +131,7 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
             short mode = -1;
             if (getPageMode().equals(EDIT_POOL)) {
                 mode = AssignMediaView.MODE_EDIT_POOL;
-            } else if (getPageMode().equals(EDIT_EXP)){
+            } else if (getPageMode().equals(EDIT_EXP)) {
                 mode = AssignMediaView.MODE_COPY_INFO_EDIT_EXP;
             } else if (getPageMode().equals(NEW_POOL_ADD_TO_COPYVSN)) {
                 mode = AssignMediaView.MODE_COPY_INFO_NEW_POOL;
@@ -249,7 +250,7 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
 
         // run validation, refresh page to show error alert if there are any
         // user input errors.
-        if (!view.validate()) {
+        if (!view.validate(true)) {
             getParentViewBean().forwardTo(getRequestContext());
             return;
         }
@@ -262,13 +263,15 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
             SamQFSSystemArchiveManager archiveManager =
                 sysModel.getSamQFSSystemArchiveManager();
 
+            TraceUtil.trace3("handleSubmit: getPageMode(): " + getPageMode());
+
             if (getPageMode().equals(NEW_POOL) ||
                 getPageMode().equals(NEW_POOL_ADD_TO_COPYVSN)) {
                 successMessage = SamUtil.getResourceString(
                         "archiving.vsnpool.new.success", poolName);
                 failedMessage = SamUtil.getResourceString(
                         "archiving.vsnpool.new.failed", poolName);
-                
+
                 // catch the warning here because we still need to add the pool
                 // to the copy vsn
                 SamFSWarnings thisWarning = null;
@@ -303,17 +306,26 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
                     existingExpression =
                         existingExpression == null ? "" : existingExpression;
                     String newExpression =
-                        existingExpression.length() == 0 ?
+                        existingExpression.length() == 0 || isResetMediaType() ?
                                 poolName :
                                 existingExpression + "," + poolName;
- System.out.println("oldExpression: " + existingExpression);
- System.out.println("newExpression: " + newExpression);
-                    // Update VSN Map and push the new settings to the new policy
+
+                    TraceUtil.trace3("oldExpression: " + existingExpression);
+                    TraceUtil.trace3("newExpression: " + newExpression);
+
+                    // Update VSN Map and push the new settings to the new
+                    // policy
                     vsnMap.setPoolExpression(newExpression);
+
+                    // hard reset media type, purge the old expressions
+                    if (isResetMediaType()) {
+                        vsnMap.setArchiveMediaType(view.getMediaType());
+                        vsnMap.setMapExpression("");
+                    }
                     vsnMap.setWillBeSaved(true);
 
                     thePolicy.updatePolicy();
-                    
+
                     if (thisWarning != null) {
                         throw thisWarning;
                     }
@@ -372,8 +384,9 @@ public class NewEditVSNPoolViewBean extends CommonSecondaryViewBeanBase {
                     (String) getPageSessionAttribute(EXPRESSION);
                 String policyName = getPolicyName();
                 int copyNumber = getCopyNumber();
-System.out.println("Policy Name: " + policyName);
-System.out.println("Copy Number: " + copyNumber);
+
+                TraceUtil.trace3("Policy Name: " + policyName);
+                TraceUtil.trace3("Copy Number: " + copyNumber);
 
                 ArchivePolicy thePolicy = getArchivePolicy(archiveManager);
                 ArchiveVSNMap vsnMap = getVSNMap(thePolicy);
@@ -408,15 +421,24 @@ System.out.println("Copy Number: " + copyNumber);
                             Integer.toString(getCopyNumber())});
 
                     newExpression =
-                        existingExpression.length() == 0 ?
+                        existingExpression.length() == 0 || isResetMediaType() ?
                             expression :
                             existingExpression + "," + expression;
                 }
-System.out.println("oldExpression: " + existingExpression);
-System.out.println("Editing: " + editExpression + " to " + expression);
-System.out.println("newExpression: " + newExpression);
+
+                TraceUtil.trace3("oldExpression: " + existingExpression);
+                TraceUtil.trace3(
+                    "Editing: " + editExpression + " to " + expression);
+                TraceUtil.trace3("newExpression: " + newExpression);
+
                 // Update VSN Map and push the new settings to the new policy
                 vsnMap.setMapExpression(newExpression);
+
+                // If user is resetting the media type, purge old expressions
+                if (isResetMediaType()) {
+                    vsnMap.setArchiveMediaType(view.getMediaType());
+                    vsnMap.setPoolExpression("");
+                }
                 vsnMap.setWillBeSaved(true);
 
                 thePolicy.updatePolicy();
@@ -499,8 +521,6 @@ System.out.println("newExpression: " + newExpression);
             setPageSessionAttribute(OPERATION, operation);
         }
 
-        TraceUtil.trace3("getPageMode: " + operation);
-
         return operation;
     }
 
@@ -547,7 +567,7 @@ System.out.println("newExpression: " + newExpression);
             throw new SamFSException(null, -2006);
         }
         return theCopy.getArchiveVSNMap();
-     }
+    }
 
     private int getCopyNumber() {
         String [] policyInfoArray = getPolicyInfoArray();
@@ -568,4 +588,12 @@ System.out.println("newExpression: " + newExpression);
         }
     }
 
+    private boolean isResetMediaType() {
+        String resetType = (String) getPageSessionAttribute(RESET_TYPE);
+        if (resetType == null || resetType.length() == 0) {
+            return false;
+        } else {
+            return Boolean.valueOf(resetType).booleanValue();
+        }
+    }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.40 2008/03/17 14:43:46 am143972 Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.41 2008/04/09 20:37:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -53,7 +53,8 @@ import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.SharedDiskCache;
 import com.sun.netstorage.samqfs.web.model.media.StripedGroup;
 import com.sun.netstorage.samqfs.web.model.impl.jni.fs.FileSystemImpl;
-import com.sun.netstorage.samqfs.web.model.impl.jni.fs.FileSystemMountPropertiesImpl;
+import
+com.sun.netstorage.samqfs.web.model.impl.jni.fs.FileSystemMountPropertiesImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.fs.SharedMemberImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.media.DiskCacheImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.media.SharedDiskCacheImpl;

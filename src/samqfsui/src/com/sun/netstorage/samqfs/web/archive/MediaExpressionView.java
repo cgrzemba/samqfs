@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaExpressionView.java,v 1.1 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: MediaExpressionView.java,v 1.2 2008/04/09 20:37:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -63,8 +63,10 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.util.LogUtil;
 import com.sun.web.ui.view.html.CCButton;
+import com.sun.web.ui.view.html.CCCheckBox;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCStaticTextField;
+import com.sun.web.ui.view.table.CCActionTable;
 import java.io.IOException;
 import javax.servlet.ServletException;
 
@@ -89,6 +91,7 @@ public class MediaExpressionView extends CommonTableContainerView {
     private static final String HIDDEN_MEDIA_TYPE = "MediaType";
     private static final String HIDDEN_IS_POOL = "poolBoolean";
     public static final String HIDDEN_EXPRESSIONS = "Expressions";
+    public static final String INHERIT_ALL_SETS_MSG = "inheritAllSetsMessage";
 
     private CCActionTableModel model = null;
     private static final String BUTTON_ADD = "ButtonAdd";
@@ -100,6 +103,9 @@ public class MediaExpressionView extends CommonTableContainerView {
     // column
     private boolean reserved = false;
 
+    // identify if this copy volume list is inherited from allsets
+    private boolean inheritAllSets = false;
+
     // boolean to indicate which page is currently using this view
     private boolean useInPoolDetails = false;
 
@@ -109,7 +115,7 @@ public class MediaExpressionView extends CommonTableContainerView {
      * @param parent
      * @param name
      * @param useInPoolDetails - boolean to indicate which page is currently
-     *                           using this view
+     * using this view
      */
     public MediaExpressionView(
         View parent, String name, boolean useInPoolDetails) {
@@ -142,12 +148,14 @@ public class MediaExpressionView extends CommonTableContainerView {
         registerChild(NO_SELECTION_MSG, CCHiddenField.class);
         registerChild(NO_PERMISSION_MSG, CCHiddenField.class);
         registerChild(DELETE_POOL_CONFIRMATION, CCHiddenField.class);
+        registerChild(INHERIT_ALL_SETS_MSG, CCStaticTextField.class);
     }
 
     public View createChild(String name) {
         if (name.equals(TILED_VIEW)) {
             return new MediaExpressionTiledView(this, model, name);
-        } else if (name.equals(RESERVED_VSN_MESSAGE)) {
+        } else if (name.equals(RESERVED_VSN_MESSAGE)
+                || name.equals(INHERIT_ALL_SETS_MSG)) {
             return new CCStaticTextField(this, name, null);
         } else if (name.equals(CHILD_POOL_NAME)
                    || name.equals(HIDDEN_MEDIA_TYPE)
@@ -171,6 +179,7 @@ public class MediaExpressionView extends CommonTableContainerView {
         initTableHeaders();
         populateTable();
         populateDaggerMessage();
+        populateInheritAllSetsMessage();
         populateHiddenFields();
     }
 
@@ -183,9 +192,9 @@ public class MediaExpressionView extends CommonTableContainerView {
     private void initTableHeaders() {
         model.setTitle(
             useInPoolDetails ?
-                "MediaAssignment.tabletitle.copyvsn" :
+                "MediaAssignment.tabletitle.pool" :
                 SamUtil.getResourceString(
-                    "MediaAssignment.heading.expression.copyvsn",
+                    "MediaAssignment.tabletitle.copyvsn",
                     new String [] {
                         (String) getParentViewBean().getPageSessionAttribute(
                             Constants.Archive.POLICY_NAME),
@@ -216,11 +225,29 @@ public class MediaExpressionView extends CommonTableContainerView {
 
     private void populateDaggerMessage() {
         CCStaticTextField child =
-                (CCStaticTextField)getChild(RESERVED_VSN_MESSAGE);
+                (CCStaticTextField) getChild(RESERVED_VSN_MESSAGE);
+
+        TraceUtil.trace3("reserved: " + reserved);
+
         if (reserved) {
             String msg =
                 SamUtil.getResourceString("archiving.reservedvsninpool",
                                           Constants.Symbol.DAGGER);
+            child.setValue(msg);
+        } else {
+            child.setValue("");
+        }
+    }
+
+    private void populateInheritAllSetsMessage() {
+        CCStaticTextField child =
+                (CCStaticTextField) getChild(INHERIT_ALL_SETS_MSG);
+
+        TraceUtil.trace3("inheritAllSets: " + inheritAllSets);
+
+        if (inheritAllSets) {
+            String msg =
+                SamUtil.getResourceString("archiving.copyvsns.usingallsets");
             child.setValue(msg);
         } else {
             child.setValue("");
@@ -235,6 +262,8 @@ public class MediaExpressionView extends CommonTableContainerView {
         ((CCHiddenField) getChild(HAS_PERMISSION)).setValue(
             Boolean.toString(permission));
 
+        disableTableSelectionToolTip();
+
         CommonViewBeanBase parent = (CommonViewBeanBase) getParentViewBean();
         String serverName = parent.getServerName();
 
@@ -243,9 +272,6 @@ public class MediaExpressionView extends CommonTableContainerView {
         StringBuffer isPoolBuf = new StringBuffer();
 
         try {
-            // TODO: Disabling selection tooltips
-
-
             SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
 
             String [] expressions = null;
@@ -291,7 +317,8 @@ public class MediaExpressionView extends CommonTableContainerView {
                             mediaType, null, -1,
                             null, null, expressions[i],
                             null,
-                            SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+                            SamQFSSystemMediaManager.
+                                MAXIMUM_ENTRIES_FETCHED_OTHERS);
                 long freeSpace = wrapper.getFreeSpaceInMB();
                 model.setValue(
                     "TextFreeSpace",
@@ -326,6 +353,14 @@ public class MediaExpressionView extends CommonTableContainerView {
                     "Pool Expression: " + vsnMap.getPoolExpression());
                 TraceUtil.trace3("Number of pools: " + expressions.length);
 
+                // figure out if this copy is inherited from allsets
+                inheritAllSets = vsnMap.inheritedFromALLSETS();
+                TraceUtil.trace3(
+                    "This copy is " +
+                        (inheritAllSets ? "not " : "") +
+                        "inherited from allsets");
+
+
                 for (int i = 0; i < expressions.length; i++) {
                     if (buf.length() > 0) {
                         model.appendRow();
@@ -343,7 +378,7 @@ public class MediaExpressionView extends CommonTableContainerView {
                                 null, null, null,
                                 expressions[i],
                                 SamQFSSystemMediaManager.
-                                    MAXIMUM_ENTRIES_FETCHED);
+                                    MAXIMUM_ENTRIES_FETCHED_OTHERS);
                     long freeSpace = wrapper.getFreeSpaceInMB();
                     model.setValue(
                         "TextFreeSpace",
@@ -441,6 +476,8 @@ public class MediaExpressionView extends CommonTableContainerView {
 
     private void handleCopyVSNsDelete(
         CommonViewBeanBase parent, String serverName) {
+        TraceUtil.trace3("Entering handleCopyVSNsDelete()");
+
         String selectedExpression =
             (String) getDisplayFieldValue(SELECTED_EXPRESSION);
         String selectedPool =
@@ -453,8 +490,9 @@ public class MediaExpressionView extends CommonTableContainerView {
         selectedPool = selectedPool == null ? "" : selectedPool;
         selectedExpression =
             selectedExpression == null ? "" : selectedExpression;
-System.out.println("selected pool: " + selectedPool);
-System.out.println("selectedExpression: " + selectedExpression);
+
+        TraceUtil.trace3("selected pool: " + selectedPool);
+        TraceUtil.trace3("selectedExpression: " + selectedExpression);
         TraceUtil.trace3("Delete button clicked in Copy VSNs page table.");
         TraceUtil.trace3(
             "Working on: " +  policyName + "." + copyNumber.toString());
@@ -468,15 +506,17 @@ System.out.println("selectedExpression: " + selectedExpression);
             String poolExpressions = vsnMap.getPoolExpression();
             expressions = expressions == null ? "" : expressions;
             poolExpressions = poolExpressions == null ? "" : poolExpressions;
-System.out.println("existing expressions: " + expressions);
-System.out.println("existing poolExpressions: " + poolExpressions);
+
+            TraceUtil.trace3("existing expressions: " + expressions);
+            TraceUtil.trace3("existing poolExpressions: " + poolExpressions);
 
             String newExpression = removeSelectedFieldsFromString(
                 expressions.split(","), selectedExpression.split(","));
             String newPoolExpressions = removeSelectedFieldsFromString(
                 poolExpressions.split(","), selectedPool.split(","));
-System.out.println("after expressions: " + newExpression);
-System.out.println("after poolExpressions: " + newPoolExpressions);
+
+            TraceUtil.trace3("after expressions: " + newExpression);
+            TraceUtil.trace3("after poolExpressions: " + newPoolExpressions);
 
             // Update VSN Map and push the new settings to the new policy
             vsnMap.setMapExpression(
@@ -486,6 +526,14 @@ System.out.println("after poolExpressions: " + newPoolExpressions);
             vsnMap.setWillBeSaved(true);
 
             thePolicy.updatePolicy();
+
+            SamUtil.setInfoAlert(
+                getParentViewBean(),
+                CommonViewBeanBase.CHILD_COMMON_ALERT,
+                SamUtil.getResourceString(
+                    "MediaAssignment.delete.expression.copyvsn"),
+                "",
+                serverName);
 
         } catch (SamFSWarnings warnEx) {
             TraceUtil.trace1("SamFSWarning caught!", warnEx);
@@ -673,7 +721,7 @@ System.out.println("after poolExpressions: " + newPoolExpressions);
                 target,
                 CommonViewBeanBase.CHILD_COMMON_ALERT,
                 SamUtil.getResourceString(
-                    "MediaAssignment.delete.expression", poolName),
+                    "MediaAssignment.delete.expression.pool", poolName),
                 "",
                 serverName);
             parent.forwardTo(getRequestContext());
@@ -816,5 +864,26 @@ System.out.println("after poolExpressions: " + newPoolExpressions);
 
         source.forwardTo(
             (CommonViewBeanBase)getViewBean(VSNDetailsViewBean.class));
+    }
+
+    private void disableTableSelectionToolTip() {
+        CCActionTable myTable =
+            (CCActionTable) getChild(CHILD_ACTION_TABLE);
+
+        // de-select all rows & Disable tooltip of selection boxes
+        try {
+            for (int i = 0; i < model.getSize(); i++) {
+                model.setRowSelected(i, false);
+                CCCheckBox myCheckBox =
+                (CCCheckBox) myTable.getChild(
+                     CCActionTable.CHILD_SELECTION_CHECKBOX + i);
+                myCheckBox.setTitle("");
+                myCheckBox.setTitleDisabled("");
+            }
+        } catch (ModelControlException modelEx) {
+            TraceUtil.trace1(
+                "ModelControlException caught while disabling tooltip!",
+                modelEx);
+        }
     }
 }

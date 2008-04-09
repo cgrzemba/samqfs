@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaUtil.java,v 1.21 2008/04/03 02:21:39 ronaldso Exp $
+// ident	$Id: MediaUtil.java,v 1.22 2008/04/09 20:37:29 ronaldso Exp $
 
 /**
  * This util class contains a few helper methods that are used in code related
@@ -563,7 +563,7 @@ public class MediaUtil {
     }
 
     /**
-     * construct the 'media flags' display string 
+     * construct the 'media flags' display string
      */
     public static String getFlagString(DiskVolume vsn, int maxShown) {
         NonSyncStringBuffer buffer = new NonSyncStringBuffer();
@@ -576,7 +576,7 @@ public class MediaUtil {
                 "archiving.diskvsn.flags.badmedia")).append(", ");
             count++;
         }
-        
+
         // check unavailable
         if (vsn.isUnavailable()) {
             if (needTotal) {
@@ -661,7 +661,7 @@ public class MediaUtil {
             return "";
         }
     }
-    
+
     public static boolean isDiskType(int mediaType) {
         return mediaType == BaseDevice.MTYPE_DISK ||
                mediaType == BaseDevice.MTYPE_STK_5800;

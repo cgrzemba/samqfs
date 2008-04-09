@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNExtension.jsp,v 1.1 2008/04/03 02:21:38 ronaldso Exp $
+// ident	$Id: CopyVSNExtension.jsp,v 1.2 2008/04/09 20:37:27 ronaldso Exp $
 --%>
 
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -39,7 +39,7 @@
 
 <script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
 <script language="javascript">
-    
+
     function getForm() {
         return document.forms[0];
     }
@@ -51,7 +51,40 @@
 
     function changeComponentState(flag) {
         var boxName = getPageName() + ".ExistingPool";
-        ccSetSelectableListDisabled(boxName, getForm().name, !flag);
+        var menuName = getPageName() + ".MenuType";
+        var selectBox = getForm().elements[getPageName() + ".ExistingPool"];
+
+        if (flag == 2 && selectBox.options.length == 0) {
+            // show error message. No pools are available.
+            // auto-select radio button to "create a volume pool"
+            alert(
+                getForm().elements[getPageName() + ".NoAvailPoolMsg"].value);
+            var radio = getForm().elements[getPageName() + ".RadioType1"];
+            radio[1].checked = true;
+
+        } else {
+            ccSetSelectableListDisabled(boxName, getForm().name, flag != 2);
+            ccSetDropDownMenuDisabled(menuName, getForm().name, flag != 2);
+        }
+
+    }
+
+    function handleMediaTypeChange(field) {
+        var selectBox = field.form.elements[getPageName() + ".ExistingPool"];
+        var poolInfo = field.form.elements[getPageName() + ".PoolInfo"].value;
+        var poolArr = poolInfo.split(";");
+
+        // clear selectBox
+        selectBox.options.length = 0;
+
+        var counter = 0;
+        for (var i = 0; i < poolArr.length; i++) {
+            var infoArr = poolArr[i].split(",");
+            if (infoArr[1] == field.value) {
+                selectBox.options[counter++] =
+                    new Option(infoArr[0], infoArr[0]);
+            }
+        }
     }
 
 </script>
@@ -94,7 +127,7 @@
                 name="RadioType1"
                 elementId="Radio_CreateExpression"
                 title="CopyVSNs.extension.choice.createexp"
-                onClick="changeComponentState(false);"
+                onClick="changeComponentState(0);"
                 styleLevel="3"
                 bundleID="samBundle"
                 dynamic="true" />
@@ -106,7 +139,7 @@
                 name="RadioType2"
                 elementId="radioAcsls"
                 title="CopyVSNs.extension.choice.createpool"
-                onClick="changeComponentState(false);"
+                onClick="changeComponentState(1);"
                 styleLevel="3"
                 bundleID="samBundle"
                 dynamic="true" />
@@ -118,7 +151,7 @@
                 name="RadioType3"
                 elementId="radioNetwork"
                 title="CopyVSNs.extension.choice.useexistingpool"
-                onClick="changeComponentState(true);"
+                onClick="changeComponentState(2);"
                 styleLevel="3"
                 bundleID="samBundle"
                 dynamic="true" />
@@ -127,9 +160,26 @@
     <tr>
         <td valign="top" class="indent2">
             <cc:label
-                name="Label"
+                name="LabelMenuType"
                 bundleID="samBundle"
-                defaultValue="CopyVSNs.extension.label"/>
+                defaultValue="CopyVSNs.extension.label.selecttype"/>
+        </td>
+        <td>
+            <cc:dropdownmenu
+                name="MenuType"
+                elementId="MenuType"
+                dynamic="true"
+                disabled="true"
+                onChange="handleMediaTypeChange(this)"
+                bundleID="samBundle"/>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top" class="indent2">
+            <cc:label
+                name="LabelExistingPool"
+                bundleID="samBundle"
+                defaultValue="CopyVSNs.extension.label.selectpool"/>
         </td>
         <td>
             <cc:selectablelist
@@ -161,7 +211,9 @@
 <cc:hidden name="ServerName"/>
 <cc:hidden name="PolicyName"/>
 <cc:hidden name="CopyNumber"/>
+<cc:hidden name="PoolInfo"/>
+<cc:hidden name="NoAvailPoolMsg"/>
 
 </jato:form>
 </cc:header>
-</jato:useViewBean> 
+</jato:useViewBean>
