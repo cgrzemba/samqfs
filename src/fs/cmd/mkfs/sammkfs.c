@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 
 /* ----- Include Files ---- */
@@ -429,6 +429,22 @@ process_args(
 				    (strncmp(host, servername, len) != 0)) {
 					host_is_server = FALSE;
 				}
+			}
+
+			hostbuflen = SAM_LARGE_HOSTS_TABLE_SIZE;
+			hostbuf = (struct sam_host_table *)malloc(hostbuflen);
+			if (hostbuf == NULL) {
+				error(1, 0, "Hosts file memory allocation"
+				    "failed for (%s)", fs_name);
+			}
+			memset((char *)hostbuf, 0, hostbuflen);
+			if (SamStoreHosts(hostbuf, hostbuflen,
+			    HostTab, 1) < 0) {
+				free(hostbuf);
+				error(1, 0, catgets(catfd, SET, 13450,
+				    "Can't store FS %s hosts file "
+				    "into FS (check hosts file size)."),
+				    fs_name);
 			}
 		}
 	}
@@ -1461,11 +1477,34 @@ iino(void)
 			    mp->mi.m_dau[dt].size[LG];
 			dp->di.blocks = mp->mi.m_dau[dt].blocks[LG] * nhdau;
 			dp->di.status.b.direct_map = 1;
-			/*
-			 * Leave rm.size at the old 16k size
-			 * for backward compatability.
-			 */
-			dp->di.rm.size = SAM_HOSTS_TABLE_SIZE;
+			if (hostbuf != NULL &&
+			    hostbuf->length > SAM_HOSTS_TABLE_SIZE ||
+			    hostbuf->count > SAM_MAX_SMALL_SHARED_HOSTS) {
+
+				dp->di.rm.size = SAM_LARGE_HOSTS_TABLE_SIZE;
+
+				printf("Building '%s' with a large "
+				    "hosts table.\n", fs_name);
+				printf("This file system will not be "
+				    "mountable by any version\n");
+				printf("of SAM-QFS that does not "
+				    "support a large hosts table.\n");
+
+				if (!verbose && isatty(0) &&
+				    !ask(catgets(catfd, SET, 13428,
+				    "Do you wish to continue? [y/N] "), 'n')) {
+					printf(catgets(catfd, SET, 13430,
+				    "Not building '%s'.  Exiting.\n"), fs_name);
+					exit(2);
+				}
+
+			} else {
+				/*
+				 * Leave rm.size at the old 16k size
+				 * for backward compatability.
+				 */
+				dp->di.rm.size = SAM_HOSTS_TABLE_SIZE;
+			}
 			dp->di.nlink = 1;
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
@@ -1611,38 +1650,32 @@ iino(void)
 			length = mp->mi.m_dau[dt].kblocks[LG];
 			break;
 		case SAM_HOST_INO:	/* or SAM_IOCTL_INO */
-			hostbuflen = SAM_LARGE_HOSTS_TABLE_SIZE;
-			hostbuf = (struct sam_host_table *)malloc(hostbuflen);
-			memset((char *)hostbuf, 0, hostbuflen);
 			length = dp->di.rm.size/SAM_DEV_BSIZE;
-			if (HostTab != NULL) {
-				if (SamStoreHosts(hostbuf, hostbuflen,
-				    HostTab, 1) < 0) {
-					free(hostbuf);
-					error(1, 0, catgets(catfd, SET, 13450,
-					    "Can't store FS %s hosts file "
-					    "into FS (check hosts file size)."),
-					    fs_name);
-				}
-				if (hostbuf->length > SAM_HOSTS_TABLE_SIZE) {
+			if (hostbuf != NULL) {
+				if (dp->di.rm.size > SAM_HOSTS_TABLE_SIZE) {
 					/*
 					 * Creating a large hosts table.
-					 * Leave rm.size at the old value for
-					 * backward compatibility but
-					 * flag the super block so we know that
-					 * this is a large hosts table.
 					 */
 					sblock.info.sb.opt_mask |=
 					    SBLK_OPTV1_LG_HOSTS;
+					sblock.info.sb.magic = SAM_MAGIC_V2A;
+
 					length =
 					    SAM_LARGE_HOSTS_TABLE_SIZE/
 					    SAM_DEV_BSIZE;
 				}
 				sblock.info.sb.hosts =
 				    (dp->di.extent[0] << fblk_to_extent);
+				bufp = (char *)hostbuf;
+				break;
+
+			} else {
+				/*
+				 * No hosts table.
+				 * Probably will never get here.
+				 */
+				error(1, 0, "No host table for (%s)", fs_name);
 			}
-			bufp = (char *)hostbuf;
-			break;
 		case SAM_ARCH_INO:
 		case SAM_STAGE_INO:
 			length = DIR_LOG_BLOCK;

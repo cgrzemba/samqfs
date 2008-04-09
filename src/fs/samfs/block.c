@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 
 #include "sam/osversion.h"
 
@@ -107,7 +107,7 @@ static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t command,
 static void sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
 static int sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
-static int sam_update_the_sblks(sam_mount_t *mp);
+int sam_update_the_sblks(sam_mount_t *mp);
 static void sam_release_blocks(sam_mount_t *mp, sam_fb_pool_t *fbp, int bt,
 	int active);
 
@@ -2488,7 +2488,7 @@ sam_fs_clear_map(
  *
  */
 
-static int				/* > 0 if error, 0 if successful */
+int				/* > 0 if error, 0 if successful */
 sam_update_the_sblks(struct sam_mount *mp)
 {
 	int ord;

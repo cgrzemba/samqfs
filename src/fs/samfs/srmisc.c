@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.77 $"
+#pragma ident "$Revision: 1.78 $"
 
 #include "sam/osversion.h"
 
@@ -464,6 +464,14 @@ sam_sgethosts(
 				 *
 				 * There is no going back to a small host table.
 				 */
+
+				if (sblk->magic != SAM_MAGIC_V2 &&
+				    sblk->magic != SAM_MAGIC_V2A) {
+					error = ENOSYS;
+					sam_rele_ino(ip);
+					goto out;
+				}
+
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 				/*
@@ -479,17 +487,28 @@ sam_sgethosts(
 				sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
 				sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
 
+
+				mutex_enter(&mp->mi.m_sblk_mutex);
+				/*
+				 * No going back now.
+				 */
 				sblk->opt_mask |= SBLK_OPTV1_LG_HOSTS;
-				(void) sam_update_all_sblks(mp);
+				sblk->magic = SAM_MAGIC_V2A;
+
+				mutex_exit(&mp->mi.m_sblk_mutex);
+
+				error = sam_update_the_sblks(mp);
 
 				TRANS_END_CSYNC(ip->mp, terr, issync,
 				    TOP_SETATTR, trans_size);
 
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
-				if (terr) {
-					sam_rele_ino(ip);
+				if (error == 0) {
 					error = terr;
+				}
+				if (error) {
+					sam_rele_ino(ip);
 					goto out;
 				}
 			}

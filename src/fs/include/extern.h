@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.219 $"
+#pragma ident "$Revision: 1.220 $"
 
 
 #ifndef	_SAM_FS_EXTERN_H
@@ -406,6 +406,7 @@ int sam_sync_meta(sam_node_t *pip, sam_node_t *cip, cred_t *credp);
 boolean_t sam_update_all_sblks(sam_mount_t *mp);
 boolean_t sam_update_sblk(sam_mount_t *mp, uchar_t ord, int sblk_no,
 	boolean_t sbinfo_only);
+int sam_update_the_sblks(sam_mount_t *mp);
 
 #pragma rarely_called(sam_req_fsck)
 

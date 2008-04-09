@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 
@@ -42,6 +42,7 @@ static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 #include <errno.h>
 
 #include <sys/vfs.h>
+#include <ctype.h>
 
 #include "sam/sam_malloc.h"
 #include "sam/custmsg.h"
@@ -52,6 +53,8 @@ static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 #include "sam/nl_samfs.h"
 #include "sam/shareops.h"
 #include "utility.h"
+#include "sam/fs/sblk.h"
+#include "sblk_mgmt.h"
 
 
 char *program_name;				/* used by ChkFs() */
@@ -77,6 +80,7 @@ static int HostLen = 0;
 static char  *GetHostDev(char *fs);
 static void   PrintHosts(char *fsname, struct sam_host_table *hosttab);
 
+static int ask(char *msg, char def);
 
 /*
  * From src/lib/samut/error.c
@@ -106,6 +110,9 @@ main(int ac, char *av[])
 	int newhtsize;
 	int oldhtsize;
 	int estatus;
+	int makinglarge = 0;
+	int sbfd;
+	struct sam_sblk sb;
 
 	program_name = av[0];
 	CustmsgInit(0, NULL);
@@ -191,6 +198,12 @@ main(int ac, char *av[])
 		    FsName);
 	}
 
+	errc = sam_dev_sb_get(DevName, &sb, &sbfd);
+	if (errc != 0) {
+		printf("Cannot access superblock for %s errno %d\n",
+		    FsName, errc);
+		exit(1);
+	}
 	/*
 	 * Always read existing host table.  The 'gen' number in the
 	 * host file should always be incremented, so we need to get
@@ -484,14 +497,34 @@ main(int ac, char *av[])
 			PrintHosts(FsName, &HostTab->info.ht);
 		}
 
-		if (HostTab->info.ht.length <= SAM_HOSTS_TABLE_SIZE) {
+		if (HostTab->info.ht.length <= SAM_HOSTS_TABLE_SIZE &&
+		    HostTab->info.ht.count <= SAM_MAX_SMALL_SHARED_HOSTS) {
 			/*
 			 * New host table fits in the space allowed
-			 * for a small host table.
+			 * for a small host table and is under the small
+			 * host table host limit.
 			 */
 			newhtsize = SAM_HOSTS_TABLE_SIZE;
 		} else {
 			newhtsize = SAM_LARGE_HOSTS_TABLE_SIZE;
+			if (!(sb.info.sb.opt_mask & SBLK_OPTV1_LG_HOSTS) &&
+			    !RawDisk) {
+
+				printf("Creating a large "
+				    "hosts table for %s.\n", FsName);
+				printf("This file system will not be "
+				    "mountable by any version\n");
+				printf("of SAM-QFS that does not "
+				    "support a large hosts table.\n");
+
+				if (isatty(0) &&
+				    !ask(catgets(catfd, SET, 13428,
+				    "Do you wish to continue? [y/N] "), 'n')) {
+					printf("Not creating new hosts table "
+					    "for '%s'.  Exiting.\n", FsName);
+					exit(1);
+				}
+			}
 		}
 
 		if (RawDisk) {
@@ -650,4 +683,37 @@ PrintHosts(char *fs, struct sam_host_table *host)
 		putchar(*c);
 		c++;
 	}
+}
+
+
+/*
+ * ----- ask - ask the user a y/n question
+ *
+ * Emit the message provided, and await a y/n response.
+ * Allow a default y/n value to be passed, specifying
+ * whether y or n is to be returned for a non-y/n answer.
+ */
+static int
+ask(char *msg, char def)
+{
+	int i, n;
+	int defret = (def == 'y' ? TRUE : FALSE);
+	char answ[120];
+
+	printf("%s", msg);
+	fflush(stdout);
+	n = read(0, answ, sizeof (answ));
+	for (i = 0; i < n; i++) {
+		if (answ[i] == ' ' || answ[i] == '\t') {
+			continue;
+		}
+		if (tolower(answ[i]) == 'n') {
+			return (FALSE);
+		}
+		if (tolower(answ[i]) == 'y') {
+			return (TRUE);
+		}
+		return (defret);
+	}
+	return (defret);
 }

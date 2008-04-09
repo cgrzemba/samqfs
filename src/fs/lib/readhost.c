@@ -78,7 +78,7 @@
  *          venus        venus-1.foo.com
  *          pluto        pluto-1.foo.com
  */
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 
 /* ANSI C headers. */
@@ -597,19 +597,30 @@ SamPutRawHosts(
 	 * Check for a large host table and set
 	 * the length to write accordingly.
 	 */
-	if (sblk.info.sb.opt_mask & SBLK_OPTV1_LG_HOSTS) {
-		if (htbufsize < SAM_LARGE_HOSTS_TABLE_SIZE) {
-			SETERRNO("New host table buffer size too small",
-			    EINVAL);
-			return (-1);
-		}
-		len = SAM_LARGE_HOSTS_TABLE_SIZE;
-	} else {
-		if (htp->info.ht.length > SAM_HOSTS_TABLE_SIZE) {
+	if (htp->info.ht.length > SAM_HOSTS_TABLE_SIZE) {
+		/*
+		 * Writing a large hosts table.
+		 */
+		if (!(sblk.info.sb.opt_mask & SBLK_OPTV1_LG_HOSTS)) {
 			SETERRNO("New host table size too big", EMSGSIZE);
 			return (-1);
 		}
-		len = SAM_HOSTS_TABLE_SIZE;
+		if (htbufsize < SAM_LARGE_HOSTS_TABLE_SIZE) {
+			SETERRNO("New host table buffer too small", EINVAL);
+			return (-1);
+		}
+		len = SAM_LARGE_HOSTS_TABLE_SIZE;
+
+	} else {
+		/*
+		 * Writing a small hosts table.
+		 */
+		if (htbufsize >= SAM_LARGE_HOSTS_TABLE_SIZE &&
+		    (sblk.info.sb.opt_mask & SBLK_OPTV1_LG_HOSTS)) {
+			len = SAM_LARGE_HOSTS_TABLE_SIZE;
+		} else {
+			len = SAM_HOSTS_TABLE_SIZE;
+		}
 	}
 
 	if (write(devfd, (char *)htp, len) != len) {
