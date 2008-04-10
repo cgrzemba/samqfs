@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.34 $"
+#pragma ident	"$Revision: 1.35 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -723,15 +723,17 @@ arcopyinst2ArCopyProc(JNIEnv *env, void *v_arcopyinst) {
 	    Str(cpi->CiMtype), Str(cpi->CiVsn));
 	cls = (*env)->FindClass(env, BASEPKG"/arc/job/ArCopyProc");
 	mid = (*env)->GetMethodID(env, cls, "<init>",
-	    "(JJJILjava/lang/String;Ljava/lang/String;)V");
+	    "(JJJIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 
 	newObj = (*env)->NewObject(env, cls, mid,
 	    (jlong)(cpi->CiBytesWritten / 1024), // KB to handle fsize_t
 	    (jlong)(cpi->CiSpace / 1024), // KB required to archive all files
 	    (jlong)cpi->CiPid,
 	    (jint)cpi->CiFiles,
+	    (jint)cpi->CiFilesWritten,
 	    JSTRING(cpi->CiMtype),
-	    JSTRING(cpi->CiVsn));
+	    JSTRING(cpi->CiVsn),
+	    JSTRING(cpi->CiOprmsg));
 	PTRACE(2, "jni:arcopyinst2ArCopyProc() done");
 	return (newObj);
 }
@@ -744,20 +746,28 @@ archreq2ArchReq(JNIEnv *env, void *v_archreq) {
 	jmethodID mid;
 	jobject newObj;
 	struct ArchReq *areq = (struct ArchReq *)v_archreq;
+	int file_count;
 
 	PTRACE(2, "jni:archreq2ArchReq entry");
 	cls = (*env)->FindClass(env, BASEPKG"/arc/job/ArchReq");
 	mid = (*env)->GetMethodID(env, cls, "<init>",
-		"(Ljava/lang/String;Ljava/lang/String;JIJ"
-		"[L"BASEPKG"/arc/job/ArCopyProc;)V");
+	    "(Ljava/lang/String;Ljava/lang/String;JIJIIJS"
+	    "[L"BASEPKG"/arc/job/ArCopyProc;)V");
+
+	/* Showqueue uses ArCount if ArFiles is 0 so we will too. */
+	file_count = (areq->ArFiles != 0) ? areq->ArFiles : areq->ArCount;
 
 	newObj = (*env)->NewObject(env, cls, mid,
-		JSTRING(areq->ArFsname),
-		JSTRING(areq->ArAsname),
-		(jlong)areq->ArTime,
-		(jint)areq->ArState,
-		(jlong)areq->ArSeqnum,
-		arr2jarray(env,
+	    JSTRING(areq->ArFsname),
+	    JSTRING(areq->ArAsname),
+	    (jlong)areq->ArTime,
+	    (jint)areq->ArState,
+	    (jlong)areq->ArSeqnum,
+	    (jint)areq->ArDrivesUsed,
+	    (jint)file_count,
+	    (jlong)(areq->ArSpace / 1024),
+	    (jshort)areq->ArFlags,
+	    arr2jarray(env,
 		areq->ArCpi,
 		sizeof (struct ArcopyInstance),
 		areq->ArDrives,

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArchiveJobImpl.java,v 1.12 2008/03/17 14:43:49 am143972 Exp $
+// ident	$Id: ArchiveJobImpl.java,v 1.13 2008/04/10 13:36:27 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.job;
 
@@ -323,7 +323,7 @@ public class ArchiveJobImpl extends BaseJobImpl implements ArchiveJob {
         buf.append("StageVSN Loaded: ")
             .append(stageLoaded)
             .append("\n")
-            .append("Total No Of Files Already Copied: ")
+	    .append("Total No Of Files Already Copied: ")
             .append(filesCopied)
             .append("\n")
             .append("DataVolume Already Copied: ")
@@ -345,21 +345,19 @@ public class ArchiveJobImpl extends BaseJobImpl implements ArchiveJob {
     private void update() {
         if (jniJob != null) {
 
-            // API does not exist for commented out stuff
             super.setstartDateTime(SamQFSUtil.
                                    convertTime(jniJob.getCreationTime()));
 
             fsName = jniJob.getFSName();
-            // fsMountPoint = new String();
-
             policyName = SamQFSUtil.getCriteriaName(jniJob.getARSetName());
             copyNumber = SamQFSUtil.getCopyNumber(jniJob.getARSetName());
-
             vsnName = jniJob.getVSN();
             mediaType = SamQFSUtil.getMediaTypeInteger(jniJob.getMediaType());
+	    volumeToBeCopied = jniJob.getSpaceNeeded();
             dataVolume = jniJob.getBytesWritten(); // in kbytes
-            filesToBeCopied = jniJob.getFiles();
-            volumeToBeCopied = jniJob.getSpaceNeeded();
+	    filesToBeCopied = jniJob.getFiles();
+	    filesCopied = jniJob.getFilesWritten();
+            super.setDescription(jniJob.getStatus());
         }
     }
 }

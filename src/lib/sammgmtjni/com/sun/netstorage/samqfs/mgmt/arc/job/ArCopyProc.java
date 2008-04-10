@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArCopyProc.java,v 1.8 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: ArCopyProc.java,v 1.9 2008/04/10 13:36:27 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc.job;
 
@@ -38,22 +38,29 @@ public class ArCopyProc {
     private long pid;
     private int files;
     private String mediaType, vsn; // of volume being written
+    private String oprMsg;
+    private int filesWritten;
 
     private ArCopyProc(long bytesWritten, long spaceNeeded, long pid,
-        int files, String mediaType, String vsn) {
+		int files, int filesWritten, String mediaType,
+		String vsn, String oprMsg) {
             this.bytesWritten = bytesWritten;
             this.spaceNeeded = spaceNeeded;
             this.pid = pid;
             this.files = files;
+            this.filesWritten = filesWritten;
             this.mediaType = mediaType;
             this.vsn = vsn;
+	    this.oprMsg = oprMsg;
     }
     long getPID() { return pid; }
 
     public long getBytesWritten() { return bytesWritten; }
     public long getSpaceNeeded() { return spaceNeeded; }
     public int getFiles() { return files; }
+    public int getFilesWritten() { return filesWritten; }
     public String getMediaType() { return mediaType; }
     public String getVSN() { return vsn; }
+    public String getOprMsg() { return oprMsg; }
 
 }

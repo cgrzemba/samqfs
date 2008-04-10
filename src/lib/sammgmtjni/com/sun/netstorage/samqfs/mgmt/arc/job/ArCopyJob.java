@@ -27,20 +27,20 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArCopyJob.java,v 1.9 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: ArCopyJob.java,v 1.10 2008/04/10 13:36:27 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc.job;
 
 import com.sun.netstorage.samqfs.mgmt.Ctx;
 import com.sun.netstorage.samqfs.mgmt.Job;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *
  * This class does not have a direct equivalent in the C API.
- * It roughly maps to a ArCopy and it also includes informations from the
- * corresponding ArchReq
+ * It roughly maps to a ArCopy and it also includes information from the
+ * corresponding ArchReq.
  */
 
 public class ArCopyJob extends Job {
@@ -62,22 +62,80 @@ public class ArCopyJob extends Job {
     public String getARSetName() { return archReq.getArsetName(); }
     public long getCreationTime() { return archReq.getCreationTime(); }
 
-    public long getBytesWritten() { return arCopy.getBytesWritten(); } // kbtes
-    public long getSpaceNeeded() { return arCopy.getSpaceNeeded(); } // kbytes
-    public int getFiles() { return arCopy.getFiles(); }
-    public String getMediaType() { return arCopy.getMediaType(); }
+    public long getSpaceNeeded() {
+	if (archReq.isBeingComposed() || archReq.getDrivesUsed() <= 1) {
+	    // If the archReq is still being composed or there
+	    // are fewer than 1 drive being used return the value for the
+	    // entire archreq.
+	    return archReq.getSpaceNeeded();
+	}
+
+	return arCopy.getSpaceNeeded();
+    }
+
+    /*
+     * Method is misnamed. It returns KB.
+     */
+    public long getBytesWritten() {
+	// If the archreq is still being composed or no drives are assigned
+	// then return 0. Else if the bytes written is not sane return 0.
+	if (archReq.isBeingComposed() || archReq.getDrivesUsed() < 1) {
+	    return 0;
+	} else if (arCopy.getBytesWritten() > archReq.getSpaceNeeded()) {
+	    return 0;
+	}
+	return arCopy.getBytesWritten();
+    }
+
+    public int getFiles() {
+	if (archReq.isBeingComposed() || archReq.getDrivesUsed() <= 1) {
+	    // If the archReq is still being composed or there
+	    // is only 1 drive assigned return the value for the
+	    // entire archreq.
+	    return archReq.getFiles();
+	}
+	return arCopy.getFiles();
+    }
+
+    public int getFilesWritten() {
+	int drives = archReq.getDrivesUsed();
+	if (drives == 0 || (arCopy.getFilesWritten() > archReq.getFiles())) {
+	    // There are no archive copies so nothing has been written.
+	    // or the files written value doesn't make sense. So return 0.
+	    return 0;
+	} else {
+	    return arCopy.getFilesWritten();
+	}
+    }
+
+    public String getMediaType() {
+	String media = arCopy.getMediaType();
+	if (media == null || media.length() == 0) {
+	    if (archReq.isDisk()) {
+		return new String("dk");
+	    } else if (archReq.isSTK5800()) {
+		return new String("cb");
+	    }
+	}
+	return media;
+    }
+
     public String getVSN() { return arCopy.getVSN(); }
+    public String getStatus() {
+	return arCopy.getOprMsg();
+    }
 
     public static ArCopyJob[] getAll(Ctx c) throws SamFSException {
         ArchReq[] archReqs = ArchReq.getAll(c);
-        Vector cpJobs = new Vector();
+        ArrayList cpJobs = new ArrayList();
         ArCopyJob[] a;
         int i, j;
-        for (i = 0; i < archReqs.length; i++)
-            for (j = 0; j < archReqs[i].getArCopyProcs().length; j++)
-                cpJobs.addElement(
-                    new ArCopyJob(archReqs[i],
-                        archReqs[i].getArCopyProcs()[j]));
+        for (i = 0; i < archReqs.length; i++) {
+	    for (j = 0; j < archReqs[i].getArCopyProcs().length; j++) {
+		cpJobs.add(new ArCopyJob(archReqs[i],
+					 archReqs[i].getArCopyProcs()[j]));
+	    }
+	}
         a = new ArCopyJob[cpJobs.size()];
         return (ArCopyJob[])cpJobs.toArray(a);
     }

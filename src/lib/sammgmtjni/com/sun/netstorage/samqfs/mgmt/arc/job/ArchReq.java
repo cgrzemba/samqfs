@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArchReq.java,v 1.8 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: ArchReq.java,v 1.9 2008/04/10 13:36:27 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc.job;
 
@@ -41,22 +41,42 @@ import com.sun.netstorage.samqfs.mgmt.Ctx;
  */
 public class ArchReq {
 
+    public static final int AR_acnors = 0x0001; /* arcopy norestart error */
+    public static final int AR_disk   = 0x0002; /* Archive to disk */
+    public static final int AR_first  = 0x0004; /* 1st time request composed */
+    public static final int AR_honeycomb = 0x0008; /* Archive to honeycomb */
+    public static final int AR_join	= 0x0010; /* has joined files */
+    public static final int AR_nonstage = 0x0020; /* has non-stagable files */
+    public static final int AR_offline  = 0x0040; /* has offline files */
+    public static final int AR_schederr = 0x0080; /* Scheduler error */
+    public static final int AR_segment  = 0x0100; /* has segmented files */
+    public static final int AR_unqueue  = 0x0200; /* Unqueue request */
+
     private String fsName;
     private String arsetName; // this might include copy #. need to check
     private long creationTime;
     private int state;
     private long seqNum;
+    private int drivesUsed;
+    private int files;
+    private long spaceNeeded; // space to archive all files in kb
+    private short flags;
 
     private ArCopyProc[] copyProcs;
 
     private ArchReq(String fsName, String arsetName, long creationTime,
-        int state, long seqNum,
-        ArCopyProc[] copyProcs) {
+		    int state, long seqNum, int drivesUsed, int files,
+		    long spaceNeeded, short flags,
+		    ArCopyProc[] copyProcs) {
             this.fsName = fsName;
             this.arsetName = arsetName;
             this.creationTime = creationTime;
             this.state = state;
             this.seqNum = seqNum;
+	    this.drivesUsed = drivesUsed;
+	    this.files = files;
+	    this.spaceNeeded = spaceNeeded;
+	    this.flags = flags;
             this.copyProcs = copyProcs;
     }
 
@@ -69,8 +89,39 @@ public class ArchReq {
     public String getFSName() { return fsName; }
     public String getArsetName() { return arsetName; }
     public long getCreationTime() { return creationTime; }
+
     public int getState() { return state; }
+    public boolean isBeingComposed() {
+	return (state == ARS_create);
+    }
+    public boolean isBeingArchived() {
+	return (state == ARS_archive);
+    }
+    public boolean isBeingScheduled() {
+	return (state == ARS_schedule);
+    }
+
     public long getSeqNum() { return seqNum; }
+    public int getDrivesUsed() { return drivesUsed; }
+    public int getFiles() { return files; }
+
+    /*
+     * Get the space needed to archive all files for this archreq.
+     * The returned result is in kb.
+     *
+     * This total space may be broken up to be archived by several
+     * ArCopyProcs. The amount written is available from the
+     * individual ArCopyProcs.
+     */
+    public long getSpaceNeeded() { return spaceNeeded; }
+    public short getFlags() { return flags; }
+    public boolean isDisk() { return ((flags & AR_disk) != 0); }
+    public boolean isSTK5800() { return ((flags & AR_honeycomb) != 0); }
+
+    /*
+     * There will be at least 1 ArCopyProc for each ArchReq.
+     * If DrivesUsed > 1 there will be that many CopyProcs
+     */
     public ArCopyProc[] getArCopyProcs() { return copyProcs; }
 
     public static native ArchReq[] getAll(Ctx c) throws SamFSException;
