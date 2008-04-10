@@ -63,7 +63,7 @@
 #include "element.h"
 #include "generic.h"
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -165,6 +165,7 @@ int
 sam2aci_type(
 		media_t media)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	aci_media_t	aci_media;
 
 	switch (media) {
@@ -209,6 +210,7 @@ sam2aci_type(
 		aci_media = 0;
 	}
 	return ((int)aci_media);
+#endif
 }
 
 

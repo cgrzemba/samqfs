@@ -59,7 +59,7 @@
 #include "aml/dev_log.h"
 
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -82,6 +82,8 @@ static char    *_SrcFile = __FILE__;
 int
 api_valid_error(dtype_t type, int errorcode, dev_ent_t *un)
 {
+
+#if !defined(SAM_OPEN_SOURCE)
 	register api_messages_t *tmp;
 
 	if ((errorcode < 0) && (errorcode >= NO_ECODES)) {
@@ -96,6 +98,7 @@ api_valid_error(dtype_t type, int errorcode, dev_ent_t *un)
 		return (0);
 	}
 	return (-1);
+#endif
 }
 
 /*
@@ -107,7 +110,9 @@ api_return_degree(dtype_t type, int errorcode)
 {
 	api_errs_t	ret = API_ERR_TR;
 
+#if !defined(SAM_OPEN_SOURCE)
 	ASSIGN_VALUE(ret, type, errorcode, degree);
+#endif
 	return (ret);
 }
 
@@ -120,7 +125,9 @@ api_return_retry(dtype_t type, int errorcode)
 {
 	uint_t	   ret = 0;
 
+#if !defined(SAM_OPEN_SOURCE)
 	ASSIGN_VALUE(ret, type, errorcode, retry);
+#endif
 	return (ret);
 }
 
@@ -133,7 +140,9 @@ api_return_message(dtype_t type, int errorcode)
 {
 	char	   *ret = (char *)0;
 
+#if !defined(SAM_OPEN_SOURCE)
 	ASSIGN_VALUE(ret, type, errorcode, mess);
+#endif
 	return (ret);
 }
 
@@ -146,6 +155,8 @@ api_return_sleep(dtype_t type, int errorcode)
 {
 	uint_t	   ret = 0;
 
+#if !defined(SAM_OPEN_SOURCE)
 	ASSIGN_VALUE(ret, type, errorcode, sleep);
+#endif
 	return (ret);
 }

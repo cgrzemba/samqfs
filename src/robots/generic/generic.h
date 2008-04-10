@@ -32,7 +32,7 @@
  */
 
 /*
- * $Revision: 1.23 $
+ * $Revision: 1.24 $
  */
 
 #if !defined(_GENERIC_H)
@@ -45,7 +45,11 @@
 #include "aml/historian.h"
 #include "../lib/librobots.h"
 #include "../common/common.h"
+
+#if !SAM_OPEN_SOURCE
 #include "aci.h"
+#endif
+
 #include "api_errors.h"
 
 #define	GENERIC_MAIN_THREADS	2	/* number of main thread */
@@ -229,11 +233,13 @@ typedef struct {
 	int		api_status;	/* return from api call */
 	int		d_errno; /* d_errno if api call failed */
 	int		sequence;	/* sequence number */
+#if !SAM_OPEN_SOURCE
 	union {
 		aci_vol_desc_t  vol_des;
 		aci_drive_entry_t drive_ent;
 		aci_req_entry_t req_ent;
 	}		data;
+#endif
 }		api_resp_api_t;
 
 

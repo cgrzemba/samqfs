@@ -31,10 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 static char *_SrcFile = __FILE__;
 
+#include <stdio.h>
 #include <thread.h>
 #include <synch.h>
 #include <stdlib.h>
@@ -57,6 +58,11 @@ static char *_SrcFile = __FILE__;
 #include "sam/defaults.h"
 #include "sam/nl_samfs.h"
 #include "generic.h"
+
+#if SAM_OPEN_SOURCE
+#include "derrno.h"
+#endif
+
 #include "sam/lib.h"
 #include "aml/proto.h"
 #include "aml/catalog.h"
@@ -534,6 +540,7 @@ add_to_cat_req(
 	library_t *library,
 	robo_event_t *event)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		local_retry, d_errno, last_derrno = -1;
 	uint32_t	status;
 	char		*l_mess = library->un->dis_mes[DIS_MES_NORM];
@@ -772,6 +779,7 @@ add_to_cat_req(
 		(void) CatalogSetFieldByLoc(library->un->eq, vid.ViSlot,
 		    vid.ViPart, CEF_Status, status, 0);
 	}
+#endif
 }
 
 
@@ -784,6 +792,7 @@ api_export_media(
 	library_t *library,
 	robo_event_t *event)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 	err = 0;
 	char 	*ent_pnt = "api_export_media";
 	uint_t 	slot;
@@ -1051,4 +1060,5 @@ api_export_media(
 
 err:
 	disp_of_event(library, event, err);
+#endif
 }

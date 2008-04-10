@@ -30,11 +30,12 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
 
+#include <stdio.h>
 #include <thread.h>
 #include <synch.h>
 #include <string.h>

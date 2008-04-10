@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -143,6 +143,7 @@ clear_drive(drive)
 
 	/* Do we know the catalog location */
 	if (IS_GENERIC_API(drive->library->un->type)) {
+#if !defined(SAM_OPEN_SOURCE)
 		api_errs_t	ret;
 		char	   *tag;
 		int		d_errno;
@@ -324,6 +325,7 @@ clear_drive(drive)
 			DevLog(DL_ALL(3248), held_vsn);
 		}
 
+#endif
 		return (0);
 
 	} else {		/* Not a GRAU */

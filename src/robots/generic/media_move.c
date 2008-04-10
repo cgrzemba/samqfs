@@ -30,11 +30,12 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
 
+#include <stdio.h>
 #include <thread.h>
 #include <synch.h>
 #include <string.h>
@@ -274,6 +275,7 @@ flip_and_scan(
 
 	if (IS_GENERIC_API(drive->library->un->type)) {
 
+#if !defined(SAM_OPEN_SOURCE)
 		/* the grau won't do a flip, you need to unload and load */
 		int		partition;
 
@@ -314,6 +316,7 @@ flip_and_scan(
 			drive->aci_drive_entry->volser[0] = '\0';
 			return (1);
 		}
+#endif
 	} else if (IS_STORAGE(drive->library, drive->media_element)) {
 		if (move_media(drive->library, 0, drive->element,
 		    drive->media_element,
@@ -670,6 +673,7 @@ api_load_media(
 		drive_state_t *drive,
 		struct CatalogEntry *ce)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		local_retry, last_derrno = -1;
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
 	dev_ent_t	*un = drive->un;
@@ -820,6 +824,7 @@ api_load_media(
 	mutex_unlock(&drive->un->mutex);
 
 	return (RET_GET_MEDIA_SUCCESS);
+#endif
 }
 
 
@@ -833,6 +838,7 @@ api_unload_media(
 		library_t *library,
 		drive_state_t *drive)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		local_retry, last_derrno = -1;
 	dev_ent_t	*un = drive->un;
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
@@ -980,6 +986,7 @@ api_unload_media(
 	mutex_unlock(&un->mutex);
 
 	return (0);
+#endif
 }
 
 
@@ -1001,6 +1008,7 @@ api_get_media(
 		robo_event_t *event,
 		struct CatalogEntry *ce)
 {				/* catalog entry of volume to be mounted */
+#if !defined(SAM_OPEN_SOURCE)
 	ushort_t	media_element;
 	dev_ent_t	*un = drive->un;
 	int		is_new_flip;
@@ -1169,6 +1177,7 @@ api_get_media(
 	mutex_unlock(&un->mutex);
 
 	return (RET_GET_MEDIA_SUCCESS);
+#endif
 }
 
 
@@ -1195,6 +1204,7 @@ aci_force_media(
 		drive_state_t *drive,
 		int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
 	xport_state_t  *transport;
@@ -1283,6 +1293,7 @@ aci_force_media(
 	cond_destroy(&force->condit);
 	free(force);
 	return (err);
+#endif
 }
 
 
@@ -1296,6 +1307,7 @@ aci_drive_access(
 		drive_state_t *drive,
 		int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	char	   *ent_pnt = "aci_drive_access";
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
@@ -1393,6 +1405,7 @@ aci_drive_access(
 		free(aci_info);
 	free(drv_access);
 	return (err);
+#endif
 }
 
 
@@ -1406,6 +1419,7 @@ aci_dismount_media(
 		drive_state_t *drive,
 		int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	char	   *ent_pnt = "aci_dismount_media";
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
@@ -1507,6 +1521,7 @@ aci_dismount_media(
 	cond_destroy(&dismount->condit);
 	free(dismount);
 	return (err);
+#endif
 }
 
 
@@ -1521,6 +1536,7 @@ aci_load_media(
 		struct CatalogEntry *ce,
 		int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
 	char	   *ent_pnt = "aci_load_media";
@@ -1613,6 +1629,7 @@ aci_load_media(
 	cond_destroy(&load->condit);
 	free(load);
 	return (err);
+#endif
 }
 
 
@@ -1627,6 +1644,7 @@ aci_view_media(
 		int *fj_tplen,
 		int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	char	   *l_mess = library->un->dis_mes[DIS_MES_NORM];
 	char	   *ent_pnt = "aci_view_media";
@@ -1712,6 +1730,7 @@ aci_view_media(
 	free(view);
 	free(volume_info);
 	return (err);
+#endif
 }
 
 
@@ -1725,6 +1744,7 @@ aci_getside(
 	    char *new_vsn,
 	    int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	xport_state_t  *transport;
 	robo_event_t   *getsideinfo;
@@ -1804,6 +1824,7 @@ aci_getside(
 	free(getsideinfo);
 	free(volume_info);
 	return (err);
+#endif
 }
 
 

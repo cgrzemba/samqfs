@@ -31,11 +31,12 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
 
+#include <stdio.h>
 #include <synch.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -62,6 +63,11 @@ static char    *_SrcFile = __FILE__;
 #include "aml/robots.h"
 #include "sam/defaults.h"
 #include "generic.h"
+
+#if SAM_OPEN_SOURCE
+#include "derrno.h"
+#endif
+
 #include "aml/trace.h"
 #include "aml/proto.h"
 #include "sam/nl_samfs.h"

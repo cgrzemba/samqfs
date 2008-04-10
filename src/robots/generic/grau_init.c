@@ -68,7 +68,7 @@
 
 #include "generic.h"
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -110,6 +110,7 @@ api_initialize(
 		library_t *library,
 		dev_ptr_tbl_t *dev_ptr_tbl)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		i, fatal = 0;
 	char	   *ent_pnt = "api_initialize";
 	char	   *l_mess = library->un->dis_mes[DIS_MES_NORM];
@@ -369,6 +370,7 @@ api_initialize(
 	memccpy(l_mess, "Initialization complete", '\0', DIS_MES_LEN);
 #endif
 	return (0);
+#endif
 }
 
 
@@ -477,6 +479,7 @@ void
 api_init_drive(
 		drive_state_t *drive)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		local_retry = -1;
 	int		last_derrno = -1;
 	int		d_errno;
@@ -618,6 +621,7 @@ api_init_drive(
 		mutex_unlock(&drive->un->mutex);
 	}
 
+#endif
 }
 
 
@@ -691,6 +695,7 @@ query_drive(
 	    drive_state_t *drive,
 	    int *d_errno)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int		err;
 	char	   *ent_pnt = "query_drive";
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
@@ -786,4 +791,5 @@ query_drive(
 	cond_destroy(&query->condit);
 	free(query);
 	return (err);
+#endif
 }

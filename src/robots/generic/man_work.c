@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -40,6 +40,7 @@ static char *_SrcFile = __FILE__;
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <syslog.h>
 #include <time.h>
 #include <dlfcn.h>

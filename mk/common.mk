@@ -1,4 +1,4 @@
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 
 #    SAM-QFS_notice_begin
 #
@@ -43,6 +43,12 @@ $(error "DEPTH variable is undefined")
 endif
 
 -include $(DEPTH)/mk/include/CONFIG.mk
+ifneq ($(HAVE_internal_mk),yes)
+-include $(DEPTH)/mk/include/internal.mk
+endif
+ifneq ($(HAVE_internal_mk),yes)
+SAM_OPEN_SOURCE=yes
+endif
 include $(DEPTH)/mk/include/defaults.mk
 
 SAMQFS_VERSION := 5.0
@@ -143,6 +149,13 @@ DEPCFLAGS += $(DEBUGCDEFS)
 # Build with SAM_TRACE enabled
 #
 DEPCFLAGS += -DSAM_TRACE
+
+ifeq ($(SAM_OPEN_SOURCE),yes)
+#
+# Build with SAM_OPEN_SOURCE
+#
+	DEPCFLAGS += -DSAM_OPEN_SOURCE
+endif
 
 #
 # make depend output file

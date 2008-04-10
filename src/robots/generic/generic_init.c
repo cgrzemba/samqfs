@@ -1,6 +1,7 @@
 /*
  *  generic_init.c - initialize the library and all its elements
  */
+
 /*
  *    SAM-QFS_notice_begin
  *
@@ -30,11 +31,12 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
 
+#include <stdio.h>
 #include <thread.h>
 #include <synch.h>
 #include <signal.h>

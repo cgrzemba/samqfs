@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -77,6 +77,7 @@ PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
 LNOPTS = -a -Dlint
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)
 
+ifneq ($(SAM_OPEN_SOURCE), yes)
 ifeq ($(PLATFORM), sparc)
 MPROGS = grau_helper
 grau_helper_SRC = grau_helper.c
@@ -90,6 +91,7 @@ ACILIB = libaci.so
 	@-rm -f $(OBJ_DIR)/$(ACILIB)
 	@ln -s $(DEPTH)/$(OBJDEPTH)/lib/$(OBJ_DIR)/$(ACILIB) `/bin/pwd`/$(OBJ_DIR)/$(ACILIB)
 
+endif
 endif
 
 include $(DEPTH)/mk/targets.mk

@@ -30,10 +30,11 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 static char *_SrcFile = __FILE__;
 
+#include <stdio.h>
 #include <thread.h>
 #include <synch.h>
 #include <stdlib.h>
@@ -1061,6 +1062,7 @@ void *
 api_load_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t 	*event = vevent;
 	library_t	*library = (library_t *)event->next;
@@ -1086,6 +1088,7 @@ api_load_command(
 	api_start_request(library, "mount", sequ_no, event, 3,
 	    aci_info->aci_vol_desc->volser, media,
 	    aci_info->aci_drive_entry->drive_name);
+#endif
 	thr_exit(NULL);
 }
 
@@ -1098,6 +1101,7 @@ void *
 api_force_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t 	*event = vevent;
 	library_t	*library = (library_t *)event->next;
@@ -1116,6 +1120,7 @@ api_force_command(
 
 	api_start_request(library, "force", sequ_no, event, 1,
 	    aci_info->aci_drive_entry->drive_name);
+#endif
 	thr_exit(NULL);
 }
 
@@ -1127,6 +1132,7 @@ void *
 api_drive_access_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t *event = vevent;
 	library_t 	*library = (library_t *)event->next;
@@ -1145,6 +1151,7 @@ api_drive_access_command(
 		    aci_info->aci_drive_entry->drive_name);
 	api_start_request(library, "driveaccess", sequ_no, event, 2,
 	    library->api_client, aci_info->aci_drive_entry->drive_name);
+#endif
 	thr_exit(NULL);
 }
 
@@ -1156,6 +1163,7 @@ void *
 api_query_drive_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t	*event = vevent;
 	library_t 	*library = (library_t *)event->next;
@@ -1174,6 +1182,7 @@ api_query_drive_command(
 		    aci_info->aci_drive_entry->drive_name);
 	api_start_request(library, "querydrive", sequ_no, event, 2,
 	    library->api_client, aci_info->aci_drive_entry->drive_name);
+#endif
 	thr_exit(NULL);
 }
 
@@ -1185,6 +1194,7 @@ void *
 api_dismount_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t	*event = vevent;
 	library_t 	*library = (library_t *)event->next;
@@ -1210,6 +1220,7 @@ api_dismount_command(
 
 	api_start_request(library, "dismount", sequ_no, event, 2,
 	    aci_info->aci_drive_entry->volser, media);
+#endif
 	thr_exit(NULL);
 }
 
@@ -1221,6 +1232,7 @@ void *
 api_view_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t	*event = vevent;
 	library_t 	*library = (library_t *)event->next;
@@ -1245,6 +1257,7 @@ api_view_command(
 
 	api_start_request(library, "view", sequ_no, event, 3,
 	    volume_info->volser, media, library->api_client);
+#endif
 	thr_exit(NULL);
 }
 
@@ -1253,6 +1266,7 @@ void *
 api_getsideinfo_command(
 	void *vevent)
 {
+#if !defined(SAM_OPEN_SOURCE)
 	int 		sequ_no;
 	robo_event_t	*event = vevent;
 	library_t 	*library = (library_t *)event->next;
@@ -1272,6 +1286,7 @@ api_getsideinfo_command(
 
 	api_start_request(library, "getside", sequ_no, event, 2,
 	    library->api_client, volume_info->volser);
+#endif
 	thr_exit(NULL);
 }
 
