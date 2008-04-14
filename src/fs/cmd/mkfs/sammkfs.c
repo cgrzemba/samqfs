@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 
 /* ----- Include Files ---- */
@@ -1478,8 +1478,8 @@ iino(void)
 			dp->di.blocks = mp->mi.m_dau[dt].blocks[LG] * nhdau;
 			dp->di.status.b.direct_map = 1;
 			if (hostbuf != NULL &&
-			    hostbuf->length > SAM_HOSTS_TABLE_SIZE ||
-			    hostbuf->count > SAM_MAX_SMALL_SHARED_HOSTS) {
+			    (hostbuf->length > SAM_HOSTS_TABLE_SIZE ||
+			    hostbuf->count > SAM_MAX_SMALL_SHARED_HOSTS)) {
 
 				dp->di.rm.size = SAM_LARGE_HOSTS_TABLE_SIZE;
 
@@ -1669,10 +1669,9 @@ iino(void)
 				bufp = (char *)hostbuf;
 				break;
 
-			} else {
+			} else if (shared) {
 				/*
 				 * No hosts table.
-				 * Probably will never get here.
 				 */
 				error(1, 0, "No host table for (%s)", fs_name);
 			}
