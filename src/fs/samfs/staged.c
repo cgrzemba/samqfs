@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 #include "sam/osversion.h"
 
@@ -1030,7 +1030,6 @@ sam_stage_write_io(
 			}
 		}
 		base = ip->stage_seg;
-		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		if (base == NULL) {
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    0, S_WRITE);
@@ -1052,17 +1051,14 @@ sam_stage_write_io(
 			if (lreloff == 0) {
 				segmap_pagecreate(segkmap, lbase, PAGESIZE,
 				    F_SOFTLOCK);
-				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				ip->lbase = lbase;
 				ip->stage_seg = base;
-				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
 			ASSERT(ip->stage_seg && n > 0);
 			error = uiomove((lbase + lreloff), n, UIO_WRITE, uiop);
 
 			if (((lreloff + n) == PAGESIZE) ||
 			    ((offset + n) >= size)) {
-				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				if (ip->lbase != 0) {
 					(void) segmap_fault(kas.a_hat,
 					    segkmap, ip->lbase, PAGESIZE,
@@ -1072,7 +1068,6 @@ sam_stage_write_io(
 				} else {
 					if (error == 0)  error = ECOMM;
 				}
-				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
 			if (error)  break;
 			/*
@@ -1089,7 +1084,6 @@ sam_stage_write_io(
 			segmap_release(segkmap, base, error ? SM_INVAL :
 			    SM_WRITE | SM_ASYNC | SM_DONTNEED);
 		}
-		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		TRACE(T_SAM_STWRIO2, vp, (sam_tr_t)base,
 		    (sam_tr_t)uiop->uio_resid,
 		    (sam_tr_t)reloff);
@@ -1176,14 +1170,12 @@ sam_stage_n_write_io(
 	TRACE(T_SAM_STNWRIO1, vp, (sam_tr_t)offset, (sam_tr_t)reloff, nbytes);
 	base = (caddr_t)ip->st_buf + ((offset - ip->stage_off) & PAGEMASK);
 	ip->size = offset + nbytes;
-	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 	/*
 	 * Move the data from the stager daemon pages into the stage_n
 	 * memory buffer.
 	 */
 	error = uiomove((base + reloff), nbytes, UIO_WRITE, uiop);
-	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 	TRACE(T_SAM_STNWRIO2, vp, (sam_tr_t)base,
 	    (sam_tr_t)uiop->uio_resid, error);
 	if ((error == 0) && !ip->flags.b.staging) {
