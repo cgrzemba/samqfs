@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameHelper.js,v 1.8 2008/03/17 14:40:24 am143972 Exp $
+// ident	$Id: FrameHelper.js,v 1.9 2008/04/16 17:07:25 ronaldso Exp $
 
 /** 
  * This file is used to construct the frames format, and it also contains
@@ -78,15 +78,18 @@
         document.write('marginwidth="' + marginwidth + '"');
         document.write('marginheight="' + marginheight + '"');
         
-        // var whereToGo = "fs/FSSummary";
-        var whereToGo = "util/CommonTasks";
-        if (destination == "lib") {
+        var whereToGo = "";
+        if (destination == "firsttime") {
+            whereToGo = "util/CommonTasks";
+        } else if (destination == "lib") {
             whereToGo = "media/LibrarySummary";
             
         } else if (destination == "alarm") {
             whereToGo = "alarms/CurrentAlarmSummary";
         } else if (destination == "serverinfo") {
             whereToGo = "admin/ServerConfiguration";
+        } else {
+            whereToGo = "fs/FSSummary";
         }
 
         if (frameID == "Content") {

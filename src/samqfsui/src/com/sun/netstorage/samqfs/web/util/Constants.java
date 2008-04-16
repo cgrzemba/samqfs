@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Constants.java,v 1.100 2008/03/17 14:43:56 am143972 Exp $
+// ident	$Id: Constants.java,v 1.101 2008/04/16 17:07:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -414,6 +414,7 @@ public interface Constants {
 
     public interface Symbol {
         public static final String DAGGER = "&#8224";
+        public static final String DOT = "&#8865";
     }
 
     public interface Cis {

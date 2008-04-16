@@ -27,13 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerSelectionViewBean.java,v 1.32 2008/03/17 14:43:54 am143972 Exp $
+// ident	$Id: ServerSelectionViewBean.java,v 1.33 2008/04/16 17:07:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
 import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 
@@ -45,8 +44,6 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.view.html.CCHiddenField;
-import com.sun.web.ui.view.html.CCImageField;
-import com.sun.web.ui.view.html.CCLabel;
 import com.sun.web.ui.view.html.CCStaticTextField;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,21 +67,12 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
     // cc components from the corresponding jsp page(s)...
     public static final String CHILD_CONTAINER_VIEW  = "ServerSelectionView";
 
-    public static final String CHILD_IMAGE = "Image";
-
-    public static final String CHILD_LABEL = "Label";
-    public static final String CHILD_AVAILABLE_SERVERS  = "AvailableServers";
-    public static final String CHILD_DISK_CACHE = "DiskCache";
-    public static final
-        String CHILD_DISK_CACHE_AVAILABLE = "DiskCacheAvailable";
-    public static final String CHILD_TOTAL_FS = "TotalFS";
-
-
     // Page Title Attributes and Components.
     private CCPageTitleModel pageTitleModel = null;
 
-    // child that used in javascript confirm messages
-    public static final String CHILD_STATICTEXT = "StaticText";
+    // Page children
+    public static final String CHILD_STATICTEXT1 = "StaticText1";
+    public static final String CHILD_STATICTEXT2 = "StaticText2";
     public static final String CHILD_CONFIRM_MESSAGE_HIDDEN_FIELD =
         "ConfirmMessageHiddenField";
 
@@ -112,19 +100,12 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
      * Register each child view.
      */
     protected void registerChildren() {
-        TraceUtil.trace3("Entering");
         super.registerChildren();
         PageTitleUtil.registerChildren(this, pageTitleModel);
-        registerChild(CHILD_IMAGE, CCImageField.class);
         registerChild(CHILD_CONFIRM_MESSAGE_HIDDEN_FIELD, CCHiddenField.class);
-        registerChild(CHILD_STATICTEXT, CCStaticTextField.class);
+        registerChild(CHILD_STATICTEXT1, CCStaticTextField.class);
+        registerChild(CHILD_STATICTEXT2, CCStaticTextField.class);
         registerChild(CHILD_CONTAINER_VIEW, ServerSelectionView.class);
-        registerChild(CHILD_LABEL, CCLabel.class);
-        registerChild(CHILD_AVAILABLE_SERVERS, CCStaticTextField.class);
-        registerChild(CHILD_DISK_CACHE, CCStaticTextField.class);
-        registerChild(CHILD_DISK_CACHE_AVAILABLE, CCStaticTextField.class);
-        registerChild(CHILD_TOTAL_FS, CCStaticTextField.class);
-        TraceUtil.trace3("Exiting");
     }
 
     /**
@@ -134,24 +115,14 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
      * @return View The instantiated child view
      */
     protected View createChild(String name) {
-        TraceUtil.trace3(new NonSyncStringBuffer("Entering: name is ").
-            append(name).toString());
-
         View child = null;
         if (super.isChildSupported(name)) {
             child = super.createChild(name);
-        } else if (name.equals(CHILD_LABEL)) {
-            child = new CCLabel(this, name, null);
-        } else if (name.equals(CHILD_AVAILABLE_SERVERS) ||
-            name.equals(CHILD_DISK_CACHE) ||
-            name.equals(CHILD_DISK_CACHE_AVAILABLE) ||
-            name.equals(CHILD_TOTAL_FS)) {
-            child = new CCStaticTextField(this, name, null);
         } else if (name.equals(CHILD_CONFIRM_MESSAGE_HIDDEN_FIELD)) {
             child = new CCHiddenField(
                 this,
                 name,
-                new NonSyncStringBuffer(
+                new StringBuffer(
                     SamUtil.getResourceString("ServerSelection.confirmMsg1")).
                     append("\n").append(
                     SamUtil.getResourceString("ServerSelection.confirmMsg2")).
@@ -164,16 +135,13 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
             child = PageTitleUtil.createChild(this, pageTitleModel, name);
         // Javascript used StaticTextField
-        } else if (name.equals(CHILD_STATICTEXT)) {
+        } else if (name.startsWith("StaticText")) {
             child = new CCStaticTextField(this, name, null);
-        } else if (name.equals(CHILD_IMAGE)) {
-            child = new CCImageField(this, name, null);
         } else {
             throw new IllegalArgumentException(
                 "Invalid child name [" + name + "]");
         }
 
-        TraceUtil.trace3("Exiting");
         return (View) child;
     }
 
@@ -189,18 +157,17 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
     }
 
     private CCPageTitleModel createPageTitleModel() {
-        TraceUtil.trace3("Entering");
         if (pageTitleModel == null) {
             pageTitleModel = new CCPageTitleModel(
                 SamUtil.createBlankPageTitleXML());
         }
-        TraceUtil.trace3("Exiting");
+
         return pageTitleModel;
     }
 
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
-        TraceUtil.trace3("Entering");
         if (!ServerUtil.isClientBrowserSupported()) {
+            TraceUtil.trace1("Unsupported browser detected!");
             SamUtil.setErrorAlert(
                 this,
                 ServerCommonViewBeanBase.CHILD_COMMON_ALERT,
@@ -209,12 +176,12 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
                 null,
                 "");
         } else {
+            TraceUtil.trace3("Populating Host Table Model!...");
             // populate the action table model
             ServerSelectionView view =
                 (ServerSelectionView) getChild(CHILD_CONTAINER_VIEW);
             try {
                 view.populateTableModels();
-                populateCapacitySummary();
             } catch (SamFSException samEx) {
                 SamUtil.processException(
                     samEx,
@@ -230,6 +197,15 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
                     samEx.getMessage(),
                     "");
             }
+
+            ((CCStaticTextField) getChild(CHILD_STATICTEXT1)).setValue(
+                SamUtil.getResourceString(
+                    "ServerSelection.help.1",
+                    SamUtil.getResourceString("masthead.altText")));
+            ((CCStaticTextField) getChild(CHILD_STATICTEXT2)).setValue(
+                SamUtil.getResourceString(
+                    "ServerSelection.help.2",
+                    Constants.Symbol.DOT));
         }
         TraceUtil.trace3("Exiting");
     }
@@ -237,29 +213,5 @@ public class ServerSelectionViewBean extends ServerCommonViewBeanBase {
     private void setUserPermission() {
         // this call is enough to initialize user authorizations
         SecurityManager manager = SecurityManagerFactory.getSecurityManager();
-    }
-
-    private void populateCapacitySummary() throws SamFSException {
-        // Grab information from page session that were set by the View
-
-        String capacitySummary =
-            (String) this.getPageSessionAttribute(
-                Constants.ServerAttributes.CAPACITY_SUMMARY);
-
-        String [] info = capacitySummary.split("###");
-
-        if (info.length != 4) {
-            // Internal Error
-            throw new SamFSException(null, -2551);
-        } else {
-            ((CCStaticTextField) getChild(CHILD_AVAILABLE_SERVERS)).
-                setValue(info[0]);
-            ((CCStaticTextField) getChild(CHILD_DISK_CACHE)).
-                setValue(ServerUtil.generateNumberWithUnitString(info[1]));
-            ((CCStaticTextField) getChild(CHILD_DISK_CACHE_AVAILABLE)).
-                setValue(ServerUtil.generateNumberWithUnitString(info[2]));
-            ((CCStaticTextField) getChild(CHILD_TOTAL_FS)).
-                setValue(info[3]);
-        }
     }
 }

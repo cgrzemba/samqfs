@@ -27,9 +27,9 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerSelection.js,v 1.7 2008/03/17 14:40:28 am143972 Exp $
+// ident	$Id: ServerSelection.js,v 1.8 2008/04/16 17:07:26 ronaldso Exp $
 
-/** 
+/**
  * This is the javascript file of Server Selection Page
  */
 
@@ -58,7 +58,7 @@
         if (field != null) {
             var elementName   = field.name;
             if (elementName != (prefix + "ServerSelectionTable.DeselectAllHref")
-                && field.type == "radio" 
+                && field.type == "radio"
                 && field.checked) {
                 disabled = false;
                 // update selected index
@@ -78,7 +78,7 @@
                 viewDisabled = false;
 	    }
         }
- 
+
         // Toggle action buttons disable state
         ccSetButtonDisabled(
             ButtonRemove, "ServerSelectionForm", disabled);
@@ -109,7 +109,7 @@
         var tmpArray = hidden.split("###");
         return tmpArray[1];
     }
-    
+
     /**
      * Retrieve the server name
      */
@@ -118,7 +118,7 @@
         var end   = tmpStr.indexOf("###");
         return (tmpStr.substring(start, end));
     }
-     
+
     /**
      * Create the URL that set the Content frame to what user desires.  The
      * URL should also contains the server name as a part of the request.
@@ -127,7 +127,7 @@
         // if whereToGo is "serverinfo", View Configuration button is clicked
         // we need to retrieve the server name in a different way than an
         // href is clicked
-        
+
         var servername = "";
 
         if (whereToGo != "serverinfo") {
@@ -137,19 +137,8 @@
             if (parseInt(alarmType) >= 4) {
                 return true;
             }
-
             // grep the server name
             servername = getServerString(unescape(tmpStr));
-
-        } else {
-            if (selectedIndex != -1) {
-                // Get the View Config flag to determine if the View Configuration
-                // Button should be enabled or not
-                var hiddenFieldValue = document.ServerSelectionForm.elements[
-                    prefixTiled + selectedIndex + "].HiddenInfo"].value;
-                var myArray = hiddenFieldValue.split("###");
-                servername = myArray[0];
-            }
         }
         // create URL and forward the page
         var url = "/samqfsui/util/FrameFormat?SERVER_NAME=" + servername +

@@ -27,12 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: ServerSelectionView.java,v 1.36 2008/03/17 14:43:54 am143972 Exp $
+// ident    $Id: ServerSelectionView.java,v 1.37 2008/04/16 17:07:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
@@ -48,6 +47,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SystemCapacity;
 import com.sun.netstorage.samqfs.web.model.alarm.AlarmSummary;
 import com.sun.netstorage.samqfs.web.util.Authorization;
+import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
@@ -90,26 +90,13 @@ public class ServerSelectionView extends MultiTableViewBase {
      * Register each child view.
      */
     public void registerChildren() {
-        TraceUtil.trace3("Entering");
         super.registerChildren();
         registerChild(CHILD_TILED_VIEW, ServerSelectionTiledView.class);
-        TraceUtil.trace3("Exiting");
     }
 
     public View createChild(String name) {
-        TraceUtil.trace3(new NonSyncStringBuffer().append(
-            "Entering: name is ").append(name).toString());
-
         View child = null;
         if (name.equals(CHILD_TILED_VIEW)) {
-            // The ContainerView used to register and create children
-            // for "column" elements defined in the model's XML
-            // document. Note that we're creating a seperate
-            // ContainerView only to evoke JATO's TiledView behavior
-            // for these elements. If TiledView behavior is not
-            // required, creating a ContainerView object is not
-            // necessary. By default, CCActionTable will attempt to
-            // retrieve all children from it's parent (i.e., this view).
             child = new ServerSelectionTiledView(
                 this, getTableModel(SERVER_TABLE), name);
         } else if (name.equals(SERVER_TABLE)) {
@@ -126,35 +113,34 @@ public class ServerSelectionView extends MultiTableViewBase {
             throw new IllegalArgumentException("Invalid Child '" + name + "'");
         }
 
-        TraceUtil.trace3("Exiting");
         return (View) child;
     }
 
     public void handleAddButtonRequest(RequestInvocationEvent event)
         throws ServletException, IOException, ModelControlException {
-        TraceUtil.trace3("Entering");
         getParentViewBean().forwardTo(getRequestContext());
-        TraceUtil.trace3("Exiting");
     }
 
     public void handleRemoveButtonRequest(RequestInvocationEvent event)
         throws ServletException, IOException, ModelControlException {
-        TraceUtil.trace3("Entering");
+        TraceUtil.trace3("User trying to remove a host ...");
         String rowKey = getSelectedRowKey();
 
         try {
             SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
             if (appModel == null) {
+                TraceUtil.trace1("AppModel is null!");
                 throw new SamFSException(null, -2501);
             }
 
             LogUtil.info(this.getClass(), "handleRemoveButtonRequest",
-                new NonSyncStringBuffer().append(
+                new StringBuffer().append(
                     "Start removing server ").append(rowKey).toString());
             appModel.removeHost(rowKey);
             LogUtil.info(this.getClass(), "handleRemoveButtonRequest",
-                new NonSyncStringBuffer().append(
+                new StringBuffer().append(
                     "Done removing server ").append(rowKey).toString());
+            TraceUtil.trace3("Done removing host!");
             setSuccessAlert("ServerSelection.action.delete", rowKey);
         } catch (SamFSException ex) {
             SamUtil.processException(
@@ -172,7 +158,6 @@ public class ServerSelectionView extends MultiTableViewBase {
                 rowKey);
         }
         getParentViewBean().forwardTo(getRequestContext());
-        TraceUtil.trace3("Existing");
     }
 
     /**
@@ -180,8 +165,6 @@ public class ServerSelectionView extends MultiTableViewBase {
      * @param event The DisplayEvent
      */
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
-        TraceUtil.trace3("Entering");
-
         initializeTableHeaders();
 
         if (SecurityManagerFactory.getSecurityManager().
@@ -200,14 +183,9 @@ public class ServerSelectionView extends MultiTableViewBase {
             CCActionTable.CHILD_SELECTION_RADIOBUTTON);
         myRadio.setTitle("");
         myRadio.setTitleDisabled("");
-
-        TraceUtil.trace3("Exiting");
     }
 
     private String getSelectedRowKey() throws ModelControlException {
-        TraceUtil.trace3("Entering");
-        String returnValue = null;
-
         // restore the selected rows
         CCActionTable actionTable =
             (CCActionTable) getChild(SERVER_TABLE);
@@ -236,22 +214,19 @@ public class ServerSelectionView extends MultiTableViewBase {
             ((String) serverModel.getValue(
                 "HiddenInfo")).split(ServerUtil.delimitor);
 
-        TraceUtil.trace3(new NonSyncStringBuffer().append(
+        TraceUtil.trace3(new StringBuffer().append(
             "Selected server name is ").append(returnArray[0]).toString());
 
-        TraceUtil.trace3("Exiting");
         return returnArray[0];
     }
 
     private void setSuccessAlert(String msg, String item) {
-        TraceUtil.trace3("Entering");
         SamUtil.setInfoAlert(
             getParentViewBean(),
             ServerCommonViewBeanBase.CHILD_COMMON_ALERT,
             "success.summary",
             SamUtil.getResourceString(msg, item),
             "");
-        TraceUtil.trace3("Exiting");
     }
 
     private void initializeTableHeaders() {
@@ -284,24 +259,13 @@ public class ServerSelectionView extends MultiTableViewBase {
 
     private void populateServerTable() throws SamFSException {
 
-        // The following variables are used to aggregate the total amount
-        // of various items.  These information is shown in the capacity
-        // Summary Section of the Server Selection Page
-        long totalAvailableServers = 0;
-        long totalMountedFS = 0;
-        long totalDiskCache = 0;
-        long totalAvailableDiskCache = 0;
-
         // The following variables are amount per host based.
         long serverDiskCache = 0;
         long serverAvailableDiskCache = 0;
         long serverMediaCapacity = 0;
         long serverAvailableMediaCapacity = 0;
-        long serverMountedFS = 0;
-        long serverLibraryCount = 0;
-        long serverMediaSlot = 0;
-
         int alarmType = -1;
+        int diskConsumed = -1, mediaConsumed = -1;
         String hostName = "";
         String versionNumber = "";
         String architecture = "";
@@ -359,7 +323,7 @@ public class ServerSelectionView extends MultiTableViewBase {
                 }
 
                 TraceUtil.trace2(
-                    new NonSyncStringBuffer("hostName: ").append(hostName).
+                    new StringBuffer("hostName: ").append(hostName).
                     toString());
 
                 // DOWN fault
@@ -368,7 +332,7 @@ public class ServerSelectionView extends MultiTableViewBase {
                 if (allSystemModel[i].isDown()) {
                     TraceUtil.trace2("System is DOWN");
                     if (allSystemModel[i].isAccessDenied()) {
-                        TraceUtil.trace1(new NonSyncStringBuffer(
+                        TraceUtil.trace1(new StringBuffer(
                             "Access Denied to server ").
                             append(hostName).toString());
                         alarmType = ServerUtil.ALARM_ACCESS_DENIED;
@@ -377,7 +341,7 @@ public class ServerSelectionView extends MultiTableViewBase {
                         alarmType = ServerUtil.ALARM_DOWN;
                     }
                 } else if (!allSystemModel[i].isServerSupported()) {
-                    TraceUtil.trace1(new NonSyncStringBuffer(
+                    TraceUtil.trace1(new StringBuffer(
                         "Server ").append(hostName).append(
                         " is not supported.  Out of rev.").toString());
                     alarmType = ServerUtil.ALARM_NOT_SUPPORTED;
@@ -405,7 +369,7 @@ public class ServerSelectionView extends MultiTableViewBase {
                         alarmType = ServerUtil.ALARM_NO_ERROR;
                     } else {
                         alarmType = getMostSevereAlarm(critical, major, minor);
-                        TraceUtil.trace2(new NonSyncStringBuffer(
+                        TraceUtil.trace2(new StringBuffer(
                             "AlarmType is ").append(alarmType).toString());
                     }
 
@@ -419,9 +383,19 @@ public class ServerSelectionView extends MultiTableViewBase {
                     serverAvailableDiskCache =
                         mySystemCapacity.getAvailDiskCacheKB() == -1 ?
                             0 : mySystemCapacity.getAvailDiskCacheKB();
-                    diskCacheString =
-                        ServerUtil.createStringWithPercentage(
-                            serverDiskCache, serverAvailableDiskCache);
+
+                    diskConsumed =
+                        serverDiskCache == 0 ?
+                            0 :
+                            100 - (int) (serverAvailableDiskCache * 100 /
+                                                        serverDiskCache);
+                    if (diskConsumed < 0 || diskConsumed > 100) {
+                        diskCacheString = Constants.Image.ICON_BLANK_ONE_PIXEL;
+                    } else {
+                        diskCacheString = new StringBuffer(
+                               Constants.Image.USAGE_BAR_DIR).
+                               append(diskConsumed).append(".gif").toString();
+                    }
 
                     serverMediaCapacity =
                         mySystemCapacity.getMediaKB() == -1 ?
@@ -429,38 +403,33 @@ public class ServerSelectionView extends MultiTableViewBase {
                     serverAvailableMediaCapacity =
                         mySystemCapacity.getAvailMediaKB() == -1 ?
                             0 : mySystemCapacity.getAvailMediaKB();
-                    mediaCapacityString =
-                        ServerUtil.createStringWithPercentage(
-                            serverMediaCapacity,
-                            serverAvailableMediaCapacity);
 
-                    serverMountedFS =
-                        mySystemCapacity.getNumOfMountedFS() == -1 ?
-                        0 : mySystemCapacity.getNumOfMountedFS();
-                    serverLibraryCount =
-                        mySystemCapacity.getNumOfLibs() == -1 ?
-                        0 : mySystemCapacity.getNumOfLibs();
-                    serverMediaSlot =
-                        mySystemCapacity.getNumOfSlots() == -1 ?
-                        0 : mySystemCapacity.getNumOfSlots();
-
-                    // Aggregate necessary information for capacity summary
-                    totalDiskCache += serverDiskCache;
-                    totalAvailableDiskCache += serverAvailableDiskCache;
-                    totalMountedFS += serverMountedFS;
+                    mediaConsumed =
+                        serverAvailableMediaCapacity == 0 ?
+                            0 :
+                            100 - (int) (serverAvailableMediaCapacity * 100 /
+                                                serverAvailableMediaCapacity);
+                    if (mediaConsumed < 0 || mediaConsumed > 100) {
+                        mediaCapacityString =
+                            Constants.Image.ICON_BLANK_ONE_PIXEL;
+                    } else {
+                        mediaCapacityString = new StringBuffer(
+                               Constants.Image.USAGE_BAR_DIR).
+                               append(mediaConsumed).append(".gif").toString();
+                    }
                 }
             } catch (SamFSAccessDeniedException denyEx) {
                 // DO NOT need to call processException
                 // We do not need to try to reconnect to the server
                 // User intervention is required here
-                TraceUtil.trace1(new NonSyncStringBuffer(
-                    "Access Denied to server ").append(hostName).toString());
+                TraceUtil.trace1(
+                    "Access Denied to server " + hostName, denyEx);
                 alarmType = ServerUtil.ALARM_ACCESS_DENIED;
             } catch (SamFSCommException comEx) {
                 // allSystemModel[i].setDown();
-                TraceUtil.trace1(new NonSyncStringBuffer(
-                    "Communication exception while connecting to server ").
-                    append(hostName).toString());
+                TraceUtil.trace1(
+                    "Communication exception while connecting to server " +
+                    hostName, comEx);
                 SamUtil.processException(
                     comEx,
                     this.getClass(),
@@ -469,9 +438,9 @@ public class ServerSelectionView extends MultiTableViewBase {
                     hostName);
                 alarmType = ServerUtil.ALARM_DOWN;
             } catch (SamFSException samEx) {
-                TraceUtil.trace1(new NonSyncStringBuffer(
-                    "General SAM FS exception while connecting to server ").
-                    append(hostName).toString());
+                TraceUtil.trace1(
+                    "General SAM FS exception while connecting to server " +
+                    hostName, samEx);
                 TraceUtil.trace1("Reason: " + samEx.getMessage());
                 SamUtil.processException(
                     samEx,
@@ -482,9 +451,9 @@ public class ServerSelectionView extends MultiTableViewBase {
                 alarmType = ServerUtil.ALARM_DOWN;
             } catch (Exception genEx) {
                 // for safety purposes
-                TraceUtil.trace1(new NonSyncStringBuffer(
-                    "Unknown Exception while connecting to server ").
-                    append(hostName).toString());
+                TraceUtil.trace1(
+                    "Unknown Exception while connecting to server " + hostName,
+                    genEx);
                 SamUtil.processException(
                     genEx,
                     this.getClass(),
@@ -504,22 +473,42 @@ public class ServerSelectionView extends MultiTableViewBase {
                 case ServerUtil.ALARM_NOT_SUPPORTED:
                     versionNumber = "";
                     architecture = "";
-                    diskCacheString = "";
-                    mediaCapacityString = "";
+                    diskCacheString = Constants.Image.ICON_BLANK_ONE_PIXEL;
+                    mediaCapacityString = Constants.Image.ICON_BLANK_ONE_PIXEL;
+                    mediaConsumed = -1;
+                    diskConsumed = -1;
                     break;
 
                 default:
-                    totalAvailableServers++;
                     break;
             }
 
             model.setValue("VersionText", versionNumber);
             model.setValue("ArchText", architecture);
-            model.setValue("DiskCacheText", diskCacheString);
-            model.setValue("MediaCapacityText", mediaCapacityString);
+
+            model.setValue("DiskUsageBarImage", diskCacheString);
+            model.setValue("DiskCapacityText",
+                diskConsumed == -1 ?
+                    "" :
+                    new StringBuffer("(").append(
+                        new Capacity(
+                            serverDiskCache, SamQFSSystemModel.SIZE_KB)).
+                            append(")").toString());
+            model.setValue("DiskUsageText", new Integer(diskConsumed));
+
+            model.setValue("MediaUsageBarImage", mediaCapacityString);
+            model.setValue("MediaCapacityText",
+                mediaConsumed == -1 ?
+                    "" :
+                    new StringBuffer("(").append(
+                    new Capacity(
+                        serverMediaCapacity, SamQFSSystemModel.SIZE_KB)).
+                        append(")").toString());
+            model.setValue("MediaUsageText", new Integer(mediaConsumed));
+
             model.setValue("AccessDeniedText", "");
             String info =
-                new NonSyncStringBuffer(hostName).append(ServerUtil.delimitor).
+                new StringBuffer(hostName).append(ServerUtil.delimitor).
                     append(alarmType).toString();
             model.setValue("HiddenInfo", info);
             model.setValue(
@@ -531,24 +520,12 @@ public class ServerSelectionView extends MultiTableViewBase {
             model.setValue(
                 ServerSelectionTiledView.CHILD_MEDIA_CAPACITY_HREF, info);
 
-
-            SamUtil.doPrint(new NonSyncStringBuffer("Host: ").append(hostName)
+            SamUtil.doPrint(new StringBuffer("Host: ").append(hostName)
                 .append(" Alarm: ").append(alarmType).toString());
 
             // Set Alarm Icon
             setAlarmInModel(alarmType);
         }
-
-        // Set aggregate information to page session for the
-        // Capacity Summary section in Server Selection Page
-        getParentViewBean().setPageSessionAttribute(
-            Constants.ServerAttributes.CAPACITY_SUMMARY,
-            new NonSyncStringBuffer().append(
-                totalAvailableServers).append(ServerUtil.delimitor).append(
-                totalDiskCache).append(ServerUtil.delimitor).append(
-                totalAvailableDiskCache).append(ServerUtil.delimitor).append(
-                totalMountedFS).append(ServerUtil.delimitor).toString());
-
         TraceUtil.trace3("Exiting");
     }
 

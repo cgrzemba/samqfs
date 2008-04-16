@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerUtil.java,v 1.18 2008/03/17 14:43:54 am143972 Exp $
+// ident	$Id: ServerUtil.java,v 1.19 2008/04/16 17:07:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
@@ -140,22 +140,6 @@ public class ServerUtil {
 
         TraceUtil.trace3("Exiting");
         return returnValue;
-    }
-
-    public static String createStringWithPercentage(
-        long totalSize, long availableSize) {
-
-        int percentage = 0;
-        String percentSymbol =
-            SamUtil.getResourceString("ServerSelection.percentSymbol");
-
-        if (totalSize != 0) {
-            percentage = (int) (availableSize * 100 / totalSize);
-        }
-
-        return new NonSyncStringBuffer(generateNumberWithUnitString(totalSize)).
-            append(" (").append(percentage).append(percentSymbol).
-            append(")").toString();
     }
 
     public static int getServerMostSevereAlarm(AlarmSummary myAlarmSummary) {

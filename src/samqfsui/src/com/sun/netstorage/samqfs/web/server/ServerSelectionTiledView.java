@@ -27,11 +27,10 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerSelectionTiledView.java,v 1.37 2008/03/17 14:43:54 am143972 Exp $
+// ident	$Id: ServerSelectionTiledView.java,v 1.38 2008/04/16 17:07:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
-import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
@@ -40,9 +39,6 @@ import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.iplanet.jato.view.event.TiledViewRequestInvocationEvent;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.alarms.CurrentAlarmSummaryViewBean;
-import com.sun.netstorage.samqfs.web.fs.FSSummaryViewBean;
-import com.sun.netstorage.samqfs.web.media.LibrarySummaryViewBean;
 import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
@@ -54,14 +50,10 @@ import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
-import com.sun.netstorage.samqfs.web.util.ServerInfo;
 import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.view.alert.CCAlertInline;
-import com.sun.netstorage.samqfs.web.util.CommonTasksViewBean;
 import java.io.IOException;
-import java.util.Hashtable;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpSession;
 
 
 
@@ -136,20 +128,6 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
         TraceUtil.trace3("Exiting");
     }
 
-    public void handleDiskCacheHrefRequest(RequestInvocationEvent event)
-        throws ServletException, IOException, ModelControlException {
-        TraceUtil.trace3("Entering");
-        handleForward(event, 2);
-        TraceUtil.trace3("Exiting");
-    }
-
-    public void handleMediaCapacityHrefRequest(RequestInvocationEvent event)
-        throws ServletException, IOException, ModelControlException {
-        TraceUtil.trace3("Entering");
-        handleForward(event, 3);
-        TraceUtil.trace3("Exiting");
-    }
-
     public void handleVersionHrefRequest(RequestInvocationEvent event)
         throws ServletException, IOException, ModelControlException {
         TraceUtil.trace3("Entering");
@@ -171,16 +149,11 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
         throws ServletException, IOException, ModelControlException {
         TraceUtil.trace3("Entering");
 
-        // Since children are bound to the primary model of a
-        // TiledView, the model contains the submitted value
-        // associated with each row. And because the primary model is
-        // always reset to the first() position during submit, we need
-        // to make sure we move to the right location in the model
-        // before reading values. Otherwise, we would always read
-        // values from the first row only.
+        // If code reaches here, it means the connection to the server is down.
+        // Otherwise, the javscript should create an url and forward the page
+        // to the three-frame mode.
         model.setRowIndex(((TiledViewRequestInvocationEvent)
             event).getTileNumber());
-        ViewBean targetView = null;
         String str = null;
 
         // Get the server name from the HREF
@@ -188,27 +161,15 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
             // Server
             case 0:
                 str = (String) getDisplayFieldValue(CHILD_SERVER_HREF);
-                targetView = getViewBean(CommonTasksViewBean.class);
                 break;
 
             // Faults
             case 1:
                 str = (String) getDisplayFieldValue(CHILD_ALARM_HREF);
-                targetView = getViewBean(CurrentAlarmSummaryViewBean.class);
-                break;
-
-            // Disk Cache
-            case 2:
-                str = (String) getDisplayFieldValue(CHILD_DISK_CACHE_HREF);
-                targetView = getViewBean(FSSummaryViewBean.class);
-                break;
-
-            // Media Capacity
-            case 3:
-                str = (String) getDisplayFieldValue(CHILD_MEDIA_CAPACITY_HREF);
-                targetView = getViewBean(LibrarySummaryViewBean.class);
                 break;
         }
+
+        TraceUtil.trace3("handleForward: str is: " + str);
 
         // When the server is down, we try to reconnect the server.
         // Then check the server to see if it's still down,
@@ -230,7 +191,8 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
                 break;
 
             default:
-                executeRegularRoutine(tmpArray[0], targetView);
+                // Should not reach here
+                getParentViewBean().forwardTo(getRequestContext());
                 break;
         }
 
@@ -271,6 +233,9 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
      */
     private void executeDownRoutine(String serverName)
         throws ModelControlException {
+
+        TraceUtil.trace3("Entering executeDownRoutine!");
+
         boolean hasError = false;
         ViewBean targetView = null;
         SamQFSSystemModel sysModel = getSystemModel(serverName);
@@ -283,6 +248,7 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
 
             sysModel.reconnect();
             // now after reconnect, check if the machine is STILL down
+
             hasError = sysModel.isDown();
 
         } catch (Exception e) {
@@ -352,6 +318,7 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
         targetView.setPageSessionAttribute(
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
         targetView.forwardTo(getRequestContext());
+        return;
     }
 
     /**
@@ -394,118 +361,5 @@ public class ServerSelectionTiledView extends CommonTiledViewBase {
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
         targetView.forwardTo(getRequestContext());
 
-    }
-
-    private void executeRegularRoutine(String serverName, ViewBean targetView)
-        throws ModelControlException {
-
-        boolean isDown = false;
-        SamQFSSystemModel sysModel = getSystemModel(serverName);
-
-        // Now the server is connected, and is up and running.
-        // The final check is the license validation.  We may need to
-        // clean this up because there's no longer any license in 4.3.
-        // samfs license type
-        short licenseType = -1;
-        // Variable to hold samfs server api version number
-        // api 1.3 = samfs 4.4
-        // api 1.4 = samfs 4.5
-        String samfsServerAPIVersion = "1.3"; // set to previous release
-
-        // Page may contain stale data
-        // Double check if server is still up
-        // If not, refresh Server Page and so the icon will change to DOWN
-        try {
-            isDown = sysModel.isDown();
-
-            samfsServerAPIVersion = sysModel.getServerAPIVersion();
-
-            // If the server api version cannot be obtained,
-            // samfsServerAPIVersion defaults to the previous version
-            samfsServerAPIVersion = (samfsServerAPIVersion == null) ?
-                "1.3" : samfsServerAPIVersion;
-
-            TraceUtil.trace1(new NonSyncStringBuffer().append(
-                "samfsServerAPIVersion: ").append(
-                samfsServerAPIVersion).toString());
-
-            licenseType = sysModel.getLicenseType();
-
-        } catch (Exception ex) {
-            TraceUtil.trace1(new NonSyncStringBuffer().append(
-                "Exception while trying to get license type").append(
-                (ex.getMessage() != null) ?
-                    ex.getMessage() : "null").toString());
-
-            SamUtil.processException(
-                    ex,
-                    this.getClass(),
-                    "executeRegularRoutine()",
-                    "Failed to retreive license from server",
-                    serverName);
-
-            // User will have to retry the operation
-            targetView = getViewBean(ErrorHandleViewBean.class);
-            CCAlertInline alert = (CCAlertInline) targetView.getChild
-                (ErrorHandleViewBean.CHILD_ALERT);
-            alert.setType(CCAlertInline.TYPE_ERROR);
-            alert.setSummary(SamUtil.getResourceString(
-                "license.error", new String[] {serverName}));
-            if (ex.getMessage() != null) {
-                alert.setDetail(ex.getMessage());
-            }
-
-            targetView.forwardTo(getRequestContext());
-            TraceUtil.trace3("Exiting");
-            return;
-        }
-
-        if (isDown) {
-            TraceUtil.trace1("Server " + serverName +
-                " is now marked as down or has an error");
-            targetView = getParentViewBean();
-        } else if (licenseType != -1) {
-            // put samfs license type of current server in session
-            HttpSession session =
-                RequestManager.getRequestContext().getRequest().getSession();
-            Hashtable serverTable = (Hashtable) session.getAttribute(
-                Constants.SessionAttributes.SAMFS_SERVER_INFO);
-            if (serverTable == null) {
-                serverTable = new Hashtable();
-            }
-
-            // Create the server info obj and put it in the serverTable
-            TraceUtil.trace2(new NonSyncStringBuffer(
-                "Got samfs license type: ").append(
-                licenseType).toString());
-            TraceUtil.trace2(new NonSyncStringBuffer(
-                "Got samfs server api version: "). append(
-                samfsServerAPIVersion).toString());
-
-            serverTable.put(serverName,
-                new ServerInfo(
-                    serverName, samfsServerAPIVersion, licenseType));
-
-            session.setAttribute(
-                Constants.SessionAttributes.SAMFS_SERVER_INFO,
-                serverTable);
-
-            TraceUtil.trace2(new NonSyncStringBuffer(
-                "Put Server information in session: ").append(
-                serverTable.toString()).toString());
-        } else {
-            // licenseType = -1
-            // should never get here, but if it does handle gracefully
-            targetView = getViewBean(ErrorHandleViewBean.class);
-            CCAlertInline alert = (CCAlertInline) targetView.getChild
-                (ErrorHandleViewBean.CHILD_ALERT);
-            alert.setType(CCAlertInline.TYPE_ERROR);
-            alert.setSummary(SamUtil.getResourceString(
-                "license.error", new String[] {serverName}));
-        }
-
-        targetView.setPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
-        targetView.forwardTo(getRequestContext());
     }
 }

@@ -28,10 +28,10 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerSelection.jsp,v 1.18 2008/03/17 14:40:39 am143972 Exp $
+// ident	$Id: ServerSelection.jsp,v 1.19 2008/04/16 17:07:26 ronaldso Exp $
 --%>
 
-<%@ page info="Index" language="java" %> 
+<%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
@@ -44,13 +44,18 @@
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     bundleID="samBundle"
     onLoad="toggleDisabledState()" >
-    
+
 <script language="javascript"
     src="/samqfsui/js/server/ServerSelection.js">
 </script>
 <script language="javascript"
     src="/samqfsui/js/popuphelper.js">
 </script>
+
+<style>
+    td.indent1{padding-left:10px; text-align:left}
+    td.indent2{padding-left:30px; padding-top:20px; text-align:left}
+</style>
 
 <!-- Masthead -->
 <cc:primarymasthead name="Masthead"
@@ -75,13 +80,27 @@
 
 <br />
 
-<cc:spacer name="Spacer"
-    width="5"
-    height="5" />
-    
-<cc:text name="StaticText"
-    defaultValue="ServerSelection.onlineHelp1"
-    bundleID="samBundle" />
+<table>
+<tr>
+    <td class="indent1">
+        <cc:text
+            name="StaticText1"
+            defaultValue="ServerSelection.help.1"
+            escape="false"
+            bundleID="samBundle" />
+    </td>
+</tr>
+<tr>
+    <td class="indent2">
+        <cc:text
+            name="StaticText2"
+            defaultValue="ServerSelection.help.2"
+            escape="false"
+            bundleID="samBundle" />
+    </td>
+</tr>
+</table>
+
 <br /><br />
 
 <!-- Action Table -->
@@ -106,75 +125,6 @@
 
 </cc:pagetitle>
 
-<br />
-
-<cc:pagetitle name="PageTitle" bundleID="samBundle"
-    pageTitleText="ServerSelection.pageTitle.capacitysummary"
-    showPageTitleSeparator="true"
-    showPageButtonsTop="false"
-    showPageButtonsBottom="false">
-
-<br />
-
-<table>
-<tr>
-    <td>
-        <cc:spacer name="Spacer" height="1" width="10" />
-        <cc:label
-            name="Label"
-            defaultValue="ServerSelection.capacitySummary.availableservers"
-            bundleID="samBundle" />
-    </td>          
-    <td>
-        <cc:spacer name="Spacer" height="1" width="10" />
-        <cc:text name="AvailableServers" />
-    </td>
-    <td>
-        <cc:spacer name="Spacer" height="1" width="20" />
-    </td>
-    <td>
-        <cc:label
-            name="Label"
-            defaultValue="ServerSelection.capacitySummary.totalfilesystems"
-            bundleID="samBundle" />
-    </td>          
-    <td>
-        <cc:spacer name="Spacer" height="1" width="10" />
-        <cc:text name="TotalFS" />
-    </td>
-</tr>
-<tr>
-    <td>
-        <cc:spacer name="Spacer" height="1" width="10" />
-        <cc:label
-            name="Label"
-            defaultValue="ServerSelection.capacitySummary.diskcache"
-            bundleID="samBundle" />
-    </td>
-    <td>
-        <cc:spacer name="Spacer" height="1" width="10" />
-        <cc:text name="DiskCache" />
-    </td>
-    <td>
-        <cc:spacer name="Spacer" height="1" width="20" />
-    </td>
-    <td>
-        <cc:label
-            name="Label"
-            defaultValue="ServerSelection.capacitySummary.diskcacheavailable"
-            bundleID="samBundle" />
-    </td>
-    <td>
-        <cc:spacer name="Spacer" height="1" width="10" />
-        <cc:text name="DiskCacheAvailable" />
-    </td>
-</tr>
-</table>
-
-<cc:spacer name="Spacer" width="5" height="5" />
-
-</cc:pagetitle>
-
 </jato:form>
 </cc:header>
-</jato:useViewBean> 
+</jato:useViewBean>
