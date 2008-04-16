@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DriveModel.java,v 1.14 2008/03/17 14:43:52 am143972 Exp $
+// ident	$Id: DriveModel.java,v 1.15 2008/04/16 16:36:59 ronaldso Exp $
 
 /**
  * This is the model class of the library drive frame
@@ -42,6 +42,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemMediaManager;
 import com.sun.netstorage.samqfs.web.model.media.Drive;
 import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.TimeConvertor;
 import com.sun.web.ui.model.CCActionTableModel;
 import java.text.DateFormat;
 import java.util.Date;
@@ -113,7 +114,8 @@ public final class DriveModel extends CCActionTableModel {
                     "DriveIdleTimeText",
                     idleTime <= 0 ?
                         "" :
-                        Long.toString(idleTime));
+                        TimeConvertor.newTimeConvertor(
+                            idleTime, TimeConvertor.UNIT_SEC).toString());
                 setValue(
                     "DriveStateText",
                     SamUtil.getStateString(allDrives[j].getState()));

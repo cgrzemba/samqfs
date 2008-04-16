@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StagingQueueModel.java,v 1.13 2008/03/17 14:43:53 am143972 Exp $
+// ident	$Id: StagingQueueModel.java,v 1.14 2008/04/16 16:36:59 ronaldso Exp $
 
 /**
  * This is the model class of the staging queue frame
@@ -42,6 +42,7 @@ import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.model.job.StageJob;
 import com.sun.netstorage.samqfs.web.model.job.StageJobFileData;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.TimeConvertor;
 import com.sun.web.ui.model.CCActionTableModel;
 import java.util.GregorianCalendar;
 
@@ -85,7 +86,6 @@ public final class StagingQueueModel extends CCActionTableModel {
             }
 
             StageJob stageJob = (StageJob) baseJobs[i];
-            StageJobFileData[] filesData = stageJob.getFileData();
 
             setValue("StagingQVSNText", stageJob.getVSNName());
             setValue("StagingQTypeText",
@@ -94,7 +94,10 @@ public final class StagingQueueModel extends CCActionTableModel {
             long initial = stageJob.getStartDateTime().getTimeInMillis();
             long now = new GregorianCalendar().getTimeInMillis();
             int wait = (int) ((now - initial) / 1000);
-            setValue("StagingQWaitText", Integer.toString(wait));
+
+            setValue("StagingQWaitText",
+                     TimeConvertor.newTimeConvertor(
+                        wait, TimeConvertor.UNIT_SEC).toString());
 
             setValue(
                 "StagingQCountText",

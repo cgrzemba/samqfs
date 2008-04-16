@@ -1,4 +1,4 @@
-/*
+  /*
  *    SAM-QFS_notice_begin
  *
  * CDDL HEADER START
@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArCopyQueueModel.java,v 1.7 2008/03/17 14:43:52 am143972 Exp $
+// ident	$Id: ArCopyQueueModel.java,v 1.8 2008/04/16 16:36:59 ronaldso Exp $
 
 /**
  * This is the model class of the archiving queue frame
@@ -42,6 +42,8 @@ import com.sun.netstorage.samqfs.web.model.job.ArchiveJob;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.TimeConvertor;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import java.util.GregorianCalendar;
 
@@ -106,23 +108,39 @@ public final class ArCopyQueueModel extends CCActionTableModel {
                 "ArCopyQSizeText",
                 SamUtil.getResourceString("Monitor.utilization",
                 new String [] {
-                    Capacity.newCapacity(
-                        arcopyJob.getDataVolumeAlreadyCopied(),
-                        SamQFSSystemModel.SIZE_KB).toString(),
-                    Capacity.newCapacity(
-                        (arcopyJob.getDataVolumeAlreadyCopied() +
-                        arcopyJob.getDataVolumeToBeCopied()),
-                                 SamQFSSystemModel.SIZE_KB).toString()}));
+                    arcopyJob.getDataVolumeAlreadyCopied() == 0 ?
+                        "0" :
+                        Capacity.newCapacity(
+                            arcopyJob.getDataVolumeAlreadyCopied(),
+                            SamQFSSystemModel.SIZE_KB).toString(),
+                    arcopyJob.getDataVolumeToBeCopied() == 0 ?
+                        "0" :
+                        Capacity.newCapacity(
+                            (arcopyJob.getDataVolumeAlreadyCopied() +
+                            arcopyJob.getDataVolumeToBeCopied()),
+                                     SamQFSSystemModel.SIZE_KB).toString()}));
             setValue("ArCopyQVSNText", arcopyJob.getVSNName());
+
+            String mediaTypeString =
+                SamUtil.getMediaTypeString(arcopyJob.getMediaType());
             setValue(
                 "ArCopyQTypeText",
-                SamUtil.getMediaTypeString(arcopyJob.getMediaType()));
+                mediaTypeString.equals(
+                    SamUtil.getResourceString("media.type.unknown")) ?
+                    "" :
+                    mediaTypeString);
 
             long initial = arcopyJob.getStartDateTime().getTimeInMillis();
             long now = new GregorianCalendar().getTimeInMillis();
-            int wait = (int) ((now - initial) / 1000);
+            long wait = (now - initial) / 1000;
 
-            setValue("ArCopyQWaitText", Integer.toString(wait));
+            TraceUtil.trace3("Initial ArCopy Time: " + initial);
+            TraceUtil.trace3("Current Time: " + now);
+            TraceUtil.trace3("Wait Time (sec): " + wait);
+
+            setValue("ArCopyQWaitText",
+                     TimeConvertor.newTimeConvertor(
+                        wait, TimeConvertor.UNIT_SEC).toString());
             setValue("ArCopyQActivityText", arcopyJob.getDescription());
         }
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.116 2008/03/17 14:43:57 am143972 Exp $
+// ident	$Id: SamUtil.java,v 1.117 2008/04/16 16:37:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -562,6 +562,44 @@ public class SamUtil {
             case SamQFSSystemModel.SIZE_PB:
                 return SamUtil.getResourceString(
                     "AdminSetup.qutity6");
+            default:
+                return "";
+        }
+    }
+    
+    // method to retrieve the unit size String (localized) from integer
+    public static String getDurationL10NString(boolean plural, int unit) {
+        switch (unit) {
+            case TimeConvertor.UNIT_MILLI_SEC:
+                return
+                    SamUtil.getResourceString(
+                        plural ?
+                            "common.unit.time.msec" :
+                            "common.unit.time.msec.single");
+            case TimeConvertor.UNIT_SEC:
+                return
+                    SamUtil.getResourceString(
+                        plural ?
+                            "common.unit.time.sec" :
+                            "common.unit.time.sec.single");
+            case TimeConvertor.UNIT_MIN:
+                return
+                    SamUtil.getResourceString(
+                        plural ?
+                            "common.unit.time.min" :
+                            "common.unit.time.min.single");
+            case TimeConvertor.UNIT_HR:
+                return
+                    SamUtil.getResourceString(
+                        plural ?
+                            "common.unit.time.hr" :
+                            "common.unit.time.hr.single");
+            case TimeConvertor.UNIT_DAY:
+                return
+                    SamUtil.getResourceString(
+                        plural ?
+                            "common.unit.time.day" :
+                            "common.unit.time.day.single");
             default:
                 return "";
         }

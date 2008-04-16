@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: TraceUtil.java,v 1.16 2008/03/17 14:43:57 am143972 Exp $
+// ident	$Id: TraceUtil.java,v 1.17 2008/04/16 16:37:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -42,13 +42,10 @@ import com.sun.netstorage.samqfs.mgmt.Util;
  */
 public final class TraceUtil {
 
-    private static final boolean ON = true;
-
     private final static int TRACE_OFF = 0;
     private final static int TRACE_STACKSIZE = 5;
 
     // Private static attributes
-    private static boolean trace_init = false;
     private static int trace_level = TRACE_OFF;
     private static int trace_stacksize = TRACE_STACKSIZE;
 
@@ -68,14 +65,18 @@ public final class TraceUtil {
 
         if (level == null) {
             trace_level = TRACE_OFF;
-            trace_init = false;
-            return;
+        } else {
+            try {
+                trace_level = Integer.parseInt(level);
+                trace_stacksize = TRACE_STACKSIZE;
+            } catch (NumberFormatException numEx) {
+                // bad level number
+                trace_level = TRACE_OFF;
+            }
         }
 
-        trace_stacksize = TRACE_STACKSIZE;
-        openTrace(level);
         Util.setNativeTraceLevel(trace_level);
-        TraceUtil.trace1(new StringBuffer(
+        trace1(new StringBuffer(
             "Starting component debug tracing. L").append(trace_level).
             toString());
     }
@@ -88,12 +89,7 @@ public final class TraceUtil {
      * @return    True if some level of tracing is enabled
      */
     public static final boolean isOn() {
-        if (TraceUtil.ON && trace_level > 0) {
-            return true;
-        } else {
-            return false;
-        }
-
+        return trace_level > 0;
     }
 
     /**
@@ -103,11 +99,7 @@ public final class TraceUtil {
      * tracing is at level 1 or off.
      */
     public static final boolean isOnLevel2() {
-        if (TraceUtil.ON && trace_level > 1) {
-            return true;
-        } else {
-            return false;
-        }
+        return trace_level > 1;
     }
 
     /**
@@ -117,11 +109,7 @@ public final class TraceUtil {
      * level 1, 2 or off.
      */
     public static final boolean isOnLevel3() {
-        if (TraceUtil.ON && trace_level > 2) {
-            return true;
-        } else {
-            return false;
-        }
+        return trace_level > 2;
     }
 
     /**
@@ -131,7 +119,7 @@ public final class TraceUtil {
      * @param    message The debug trace message
      */
     public static final void trace1(String message) {
-        if (TraceUtil.ON && trace_level > 0) {
+        if (trace_level > 0) {
             writeTraceToSyslog(message);
         }
     }
@@ -144,7 +132,7 @@ public final class TraceUtil {
      * @param    ex  The exception to trace back
      */
     public static final void trace1(String message, Throwable ex) {
-        if (TraceUtil.ON && trace_level > 0) {
+        if (trace_level > 0) {
             writeTraceToSyslog(message);
             if (ex != null) {
                 writeStackTraceToSyslog(ex);
@@ -159,7 +147,7 @@ public final class TraceUtil {
      * @param    message The debug trace message
      */
     public static final void trace2(String message) {
-        if (TraceUtil.ON && trace_level > 1) {
+        if (trace_level > 1) {
             writeTraceToSyslog(message);
         }
     }
@@ -172,7 +160,7 @@ public final class TraceUtil {
      * @param    ex  The exception to trace back
      */
     public static final void trace2(String message, Throwable ex) {
-        if (TraceUtil.ON && trace_level > 1) {
+        if (trace_level > 1) {
             writeTraceToSyslog(message);
             if (ex != null) {
                 writeStackTraceToSyslog(ex);
@@ -187,7 +175,7 @@ public final class TraceUtil {
      * @param    message The debug trace message
      */
     public static final void trace3(String message) {
-        if (TraceUtil.ON && trace_level > 2) {
+        if (trace_level > 2) {
             writeTraceToSyslog(message);
         }
     }
@@ -200,7 +188,7 @@ public final class TraceUtil {
      * @param    ex  The exception to trace back
      */
     public static final void trace3(String message, Throwable ex) {
-        if (TraceUtil.ON && trace_level > 2) {
+        if (trace_level > 2) {
             writeTraceToSyslog(message);
             if (ex != null) {
                 writeStackTraceToSyslog(ex);
@@ -234,68 +222,6 @@ public final class TraceUtil {
     // Private methods
     //
     // *******************************************************************
-
-    // Internal method to open the trace log file
-    /**
-     * The traceOpen method initializes the client or server
-     * for debug tracing.  The level of tracing is specified as an integer
-     * from zero (no tracing) to three (most detailed tracing) with
-     * optional characters to indicate additional message prefix informatino.
-     * The trace file name argument can specify output to standard out,
-     * standard error, or a specific log trace file name.  The management
-     * client and management server will each specify a different trace
-     * file name.  The trace file will be written to the local system's
-     * /var/log directory.
-     *
-     * @param    level    The debug trace level: {0|1|2|3}
-     * @param    filename    The debug trace log file name, stdout, or stderr
-     */
-    private static void openTrace(String level) {
-        if (!TraceUtil.ON) {
-            return;
-        }
-
-        String trace_sufx = null;
-        int i;
-
-        if (trace_init) {
-            if (level != null) {
-                if (Integer.parseInt(level) != trace_level) {
-                    trace_level = Integer.parseInt(level);
-                    return;
-                }
-            }
-        }
-
-        // Get the trace level and any optional flags
-        trace_level = TRACE_OFF;
-
-        // All trace/debug messages should include the method and
-        // classname along with the debug message
-
-        if (level != null) {
-            Integer ix;
-            try {
-                ix = new Integer(level.substring(0, 1));
-            } catch (Exception ex) {
-                // Eat the exception
-                ix = new Integer(0);
-            }
-            trace_level = ix.intValue();
-        }
-
-        Util.setNativeTraceLevel(trace_level);
-
-        // If tracing turned off at runtime, just return.
-        if (trace_level == 0) {
-            return;
-        }
-
-        // Indicate we have initialized tracing
-        trace_init = true;
-
-    } // end openTrace
-
 
     // Return the class name and method name that called the trace method.
     private static String getClassMethod() {
