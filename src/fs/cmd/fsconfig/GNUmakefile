@@ -1,4 +1,4 @@
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 
 #    SAM-QFS_notice_begin
 #
@@ -38,14 +38,13 @@ INCFLAGS = $(OSFLAGS) -I$(LINUX_INCLUDE) -I$(INCLUDE) -I../../include -I../../in
 else
 INCFLAGS = -I$(INCLUDE) -I../../include -I../../include/$(OBJ_DIR)
 endif
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(DEBUGCDEFS) $(THRCOMP)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(THRCOMP)
 
 PROG_LIBS = -L ../../lib/$(OBJ_DIR) -L $(DEPTH)/lib/$(OBJ_DIR) \
-	$(STATIC_OPT) -lfscmd $(DYNAMIC_OPT) -lsamut -lsamconf $(LIBSO) $(EFI_LIBS)
+	$(STATIC_OPT) -lfscmd $(DYNAMIC_OPT) -lsamut -lsamconf $(LIBSO) -ldl
 
 ifeq ($(OS), Linux)
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
-PROG_LIBS += -ldl
 endif
 
 LNOPTS = -amnuxs -Dlint

@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -1457,11 +1457,9 @@ checkRelease(void)
 	char *rel = "5.11";
 #elif defined(SOL5_10)
 	char *rel = "5.10";
-#elif defined(SOL5_9)
-	char *rel = "5.9";
 #else
 	char *rel = "??";
-#endif /* defined(SOL5_11) */
+#endif
 	char buf[32];
 
 	(void) sysinfo(SI_RELEASE, buf, sizeof (buf));

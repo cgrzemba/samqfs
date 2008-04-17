@@ -1,4 +1,4 @@
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 
 #    SAM-QFS_notice_begin
 #
@@ -37,13 +37,13 @@ samfsck_SRC =  samfsck.c
 fsck_SRC	=  fsck.c
 
 INCFLAGS = -I../../include -I../../include/$(OBJ_DIR) -I$(INCLUDE)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(DEBUGCDEFS)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)
 
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 
 PROG_LIBS = -L ../../lib/$(OBJ_DIR) $(STATIC_OPT) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut $(DYNAMIC_OPT) \
-	-ladm -ldl $(SYSEVENT_LIBS)
+	-ladm -ldl -lsysevent -lnvpair
 samfsck_LIBS =  $(PROG_LIBS)
 fsck_LIBS	 =  $(PROG_LIBS)
 

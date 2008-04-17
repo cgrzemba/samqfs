@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.36 $"
+#pragma ident	"$Revision: 1.37 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -561,10 +561,10 @@ sqm_lst_t **lst
  *   sqm_lst_t **	OUT  - list of name-value pairs describing the package
  * format:
  *  PKGINST = SUNWsamfsu
- *     NAME = Sun SAM-FS and Sun SAM-QFS software Solaris 9 (usr)
+ *     NAME = Sun SAM and Sun SAM-QFS software Solaris 10 (usr)
  * CATEGORY = system
  *     ARCH = sparc
- *  VERSION = 4.3.multidisk REV=debug REV=5.9.2005.01.18
+ *  VERSION = 4.6.5 REV=debug REV=5.10.2007.03.12
  *   VENDOR = Sun Microsystems Inc.
  *     DESC = Storage and Archive Manager File System
  *   PSTAMP = ns-east-6420050118171403

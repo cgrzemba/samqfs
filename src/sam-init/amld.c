@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -88,7 +88,6 @@ extern void *samfm_service(void *arg);
 /* Private data. */
 static sam_defaults_t *df;
 static thread_t fifo_threads[NUM_FIFOS];
-#ifdef GXML_AVAILABLE
 static const char *xmllib[] = {	/* Gnome XML library search paths */
 	"/usr/lib/libxml2.so.2",
 	"/opt/SUNWstade/libxml2/lib/libxml2.so.2",
@@ -97,7 +96,6 @@ static const char *xmllib[] = {	/* Gnome XML library search paths */
 };
 static void *xmlhandle = NULL;	/* Gnome XML library handle */
 static thread_t samfm_thread;	/* StorADE API thread */
-#endif /* GXML_AVAILABLE */
 
 /* Private functions. */
 static void identify_devices(void);
@@ -247,7 +245,6 @@ main(
 		exit(2);
 	}
 
-#ifdef GXML_AVAILABLE
 	if (df->samstorade != B_FALSE) {
 		/*
 		 * Dynamic linking of Gnome XML shared library.
@@ -275,11 +272,6 @@ main(
 		sam_syslog(LOG_INFO,
 		    "Sun StorADE API in defaults.conf is off.");
 	}
-#else
-	sam_syslog(LOG_INFO,
-	    "Sun StorADE API unavailable, libxml.so.2 not installed on build"
-	    " machine.");
-#endif /* GXML_AVAILABLE */
 
 	(void) ArchiverRmState(1);
 	while (shutdown_amld == 0) {
@@ -343,12 +335,10 @@ kill_off_threads()
 
 	for (i = 0; i < NUM_FIFOS; i++)
 		thr_kill(fifo_threads[i], SIGINT);
-#ifdef GXML_AVAILABLE
 	if (xmlhandle) {
 		thr_kill(samfm_thread, SIGINT);
 		(void) dlclose(xmlhandle);
 	}
-#endif /* GXML_AVAILABLE */
 }
 
 

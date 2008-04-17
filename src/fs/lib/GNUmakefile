@@ -1,4 +1,4 @@
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 
 #    SAM-QFS_notice_begin
 #
@@ -55,7 +55,7 @@ INCFLAGS = $(OSFLAGS) -I$(LINUX_INCLUDE) -I../include -I$(INCLUDE) $(DEBUGCDEFS)
 else
 INCFLAGS = $(OSFLAGS) -I../include -I$(INCLUDE) $(DEBUGCDEFS)
 endif
-DEPCFLAGS = -I../include/$(OBJ_DIR) $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(EFI_SUPPORT)
+DEPCFLAGS = -I../include/$(OBJ_DIR) $(INCFLAGS) $(VERS) $(METADATA_SERVER)
 ifeq ($(SPARCV9), yes)
 DEPCFLAGS += -DSPARCV9_BUILD
 endif

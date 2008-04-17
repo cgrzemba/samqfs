@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.151 $"
+#pragma ident "$Revision: 1.152 $"
 
 #include "sam/osversion.h"
 
@@ -65,9 +65,7 @@
 #include <vm/as.h>
 #include <vm/seg_vn.h>
 
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 #if defined(SOL_511_ABOVE)
 #include <sys/vfs_opreg.h>
@@ -80,7 +78,6 @@
 #include "sam/fioctl.h"
 #include "sam/samaio.h"
 
-#include "cred.h"
 #include "samfs.h"
 #include "ino.h"
 #include "macros.h"
@@ -93,8 +90,6 @@
 #include "trace.h"
 #include "qfs_log.h"
 
-
-#if defined(SOL_510_ABOVE)
 
 /*
  * ----	sam_EIO
@@ -113,148 +108,8 @@ sam_EIO(void)
 	return (EIO);
 }
 
-#else	/* SOL_510_ABOVE */
-
-/*
- *  Vnode functions not defined before Solaris 5.10.
- * Beginning with Solaris 10 the vnode is defined to
- * be opaque. Solaris 10 implements a vnode cache
- * and accessor functions for the private fields of
- * the vnode structure. To reduce complexity of the
- * mainline code and minimize the pervasiveness of
- * ifdef's we've implemented a vnode cache and duplicated
- * the accessor functions for versions of SAM/Q that run
- * on kernels previous to Solaris 10.
- *
- *  The functions prefixed with "vn_" are defined in the
- * Solaris 10 kernel but not in previous versions. It may
- * be that we want to put wrappers around these functions
- * at some point.
- */
-
-/*
- * we're running on a kernel previous to Solaris 10
- * so go ahead and implement our own vnode cache.
- */
-
-kmem_cache_t *sam_vn_cache;
-
-/* ARGSUSED */
-static int
-sam_vn_cache_constructor(void *buf, void *cdrarg, int kmflags)
-{
-	struct vnode *vp;
-
-	vp = buf;
-
-	sam_mutex_init(&vp->v_lock, NULL, MUTEX_DEFAULT, NULL);
-	cv_init(&vp->v_cv, NULL, CV_DEFAULT, NULL);
-
-	rw_init(&vp->v_nbllock, NULL, RW_DEFAULT, NULL);
-
-	return (0);
-}
-
-/* ARGSUSED */
-static void
-sam_vn_cache_destructor(void *buf, void *cdrarg)
-{
-	struct vnode *vp;
-
-	vp = buf;
-
-	mutex_destroy(&vp->v_lock);
-	cv_destroy(&vp->v_cv);
-
-	rw_destroy(&vp->v_nbllock);
-}
-
-void
-sam_vn_create_cache(void)
-{
-	sam_vn_cache = kmem_cache_create("sam_vn_cache", sizeof (struct vnode),
-	    64, sam_vn_cache_constructor, sam_vn_cache_destructor,
-	    NULL, NULL, NULL, 0);
-}
-
-void
-sam_vn_destroy_cache(void)
-{
-	kmem_cache_destroy(sam_vn_cache);
-}
-
-int
-vn_has_cached_data(vnode_t *vp)
-{
-	return (vp->v_pages != NULL);
-}
-
-int
-vn_has_flocks(vnode_t *vp)
-{
-	return (vp->v_filocks != NULL);
-}
-
-int
-vn_ismntpt(vnode_t *vp)
-{
-	return (vp->v_vfsmountedhere != NULL);
-}
-
-void
-vn_setops(vnode_t *vp, vnodeops_t *vnodeops)
-{
-	vp->v_op = vnodeops;
-}
-
-void
-vn_reinit(vnode_t *vp) {
-
-	vp->v_count = 1;
-	vp->v_vfsp = NULL;
-	vp->v_stream = NULL;
-	vp->v_vfsmountedhere = NULL;
-	vp->v_flag = NULL;
-	vp->v_type = VNON;
-	vp->v_rdev = NODEV;
-
-	vp->v_filocks = NULL;
-	vp->v_shrlocks = NULL;
-	vp->v_pages = NULL;
-
-	vp->v_locality = NULL;
-}
-
-vnode_t *
-vn_alloc(int kmflag)
-{
-	vnode_t *vp;
-
-	vp = kmem_cache_alloc(sam_vn_cache, kmflag);
-
-	vn_reinit(vp);
-
-	return (vp);
-}
-
-void
-vn_free(vnode_t *vp)
-{
-	/*
-	 * There are cases in QFS where we'll remove a vnode
-	 * with a reference count of 1. Let's catch everything
-	 * else.
-	 */
-	ASSERT((vp->v_count == 0) || (vp->v_count == 1));
-
-	kmem_cache_free(sam_vn_cache, vp);
-}
-
-#endif	/* SOL_510_ABOVE */
 
 /* ----- Vnode operations supported on the samfs file system. */
-
-#if defined(SOL_510_ABOVE)
 
 struct vnodeops *samfs_vnodeopsp;
 
@@ -381,114 +236,6 @@ const fs_operation_def_t samfs_vnode_staleops_template[] = {
 	NULL, NULL
 };
 
-#else
-/*
- * Solaris 9
- */
-struct vnodeops samfs_vnodeops = {
-	sam_open_vn,			/* sam_open_vn */
-	sam_close_vn,			/* sam_close_vn */
-	sam_read_vn,			/* sam_read_vn */
-	sam_write_vn,			/* sam_write_vn */
-	sam_ioctl_vn,			/* sam_ioctl_vn */
-	fs_setfl,				/*  */
-	sam_getattr_vn,			/* sam_getattr_vn */
-	sam_setattr_vn,			/* sam_setattr_vn */
-	sam_access_vn,			/* sam_access_vn */
-	sam_lookup_vn,			/* sam_lookup_vn */
-	sam_create_vn,			/* sam_create_vn */
-	sam_remove_vn,			/* sam_remove_vn */
-	sam_link_vn,			/* sam_link_vn */
-	sam_rename_vn,			/* sam_rename_vn */
-	sam_mkdir_vn,			/* sam_mkdir_vn */
-	sam_rmdir_vn,			/* sam_rmdir_vn */
-	sam_readdir_vn,			/* sam_readdir_vn */
-	sam_symlink_vn,			/* sam_symlink_vn */
-	sam_readlink_vn,		/* sam_readlink_vn */
-	sam_fsync_vn,			/* sam_fsync_vn */
-	sam_inactive_vn,		/* sam_inactive_vn */
-	sam_fid_vn,				/* sam_fid_vn */
-	sam_rwlock_vn,			/* sam_rwlock_vn */
-	sam_rwunlock_vn,		/* sam_rwunlock_vn */
-	sam_seek_vn,			/* sam_seek_vn */
-	fs_cmp,					/* sam_cmp_vn */
-	sam_frlock_vn,			/* sam_frlock_vn */
-	sam_space_vn,			/* sam_space_vn */
-	fs_nosys,				/* sam_realvp_vn */
-	sam_getpage_vn,			/* sam_getpage_vn */
-	sam_putpage_vn,			/* sam_putpage_vn */
-	sam_map_vn,				/* sam_map_vn */
-	sam_addmap_vn,			/* sam_addmap_vn */
-	sam_delmap_vn,			/* sam_delmap_vn */
-	fs_poll,				/* sam_poll_vn */
-	fs_nosys,				/* sam_dump_vn */
-	sam_pathconf_vn,		/* sam_pathconf_vn */
-	fs_nosys,				/* sam_pageio_vn */
-	fs_nosys,				/* sam_dumpctl_vn */
-	fs_dispose,				/*  */
-	sam_setsecattr_vn,		/* sam_setsecattr_vn */
-	sam_getsecattr_vn,		/* sam_getsecattr_vn */
-	fs_shrlock,				/*  */
-};
-
-struct vnodeops *samfs_vnodeopsp = &samfs_vnodeops;
-
-
-/*
- * Vnode ops structure for forcibly unmounted filesystems.  Vnodes
- * have their vnops pointer reassigned to this structure so as to
- * avoid vp references except to allow their release.
- */
-struct vnodeops samfs_vnode_staleops = {
-	sam_open_stale_vn,			/* EIO */
-	sam_close_stale_vn,			/* sam_close_stale_vn */
-	sam_read_stale_vn,			/* EIO */
-	sam_write_stale_vn,			/* EIO */
-	sam_ioctl_stale_vn,			/* EIO */
-	fs_setfl,					/* setfl */
-	sam_getattr_stale_vn,		/* EIO */
-	sam_setattr_stale_vn,		/* EIO */
-	sam_access_stale_vn,		/* EIO */
-	sam_lookup_stale_vn,		/* EIO */
-	sam_create_stale_vn,		/* EIO */
-	sam_remove_stale_vn,		/* EIO */
-	sam_link_stale_vn,			/* EIO */
-	sam_rename_stale_vn,		/* EIO */
-	sam_mkdir_stale_vn,			/* EIO */
-	sam_rmdir_stale_vn,			/* EIO */
-	sam_readdir_stale_vn,		/* EIO */
-	sam_symlink_stale_vn,		/* EIO */
-	sam_readlink_stale_vn,		/* EIO */
-	sam_fsync_stale_vn,			/* EIO */
-	sam_inactive_stale_vn,		/* sam_inactive_stale_vn */
-	sam_fid_stale_vn,			/* EIO */
-	sam_rwlock_vn,				/* rwlock */
-	sam_rwunlock_vn,			/* rwunlock */
-	sam_seek_stale_vn,			/* EIO */
-	fs_cmp,						/* cmp */
-	sam_frlock_stale_vn,		/* EIO */
-	sam_space_stale_vn,			/* EIO */
-	fs_nosys,					/* realvp */
-	sam_getpage_stale_vn,		/* EIO */
-	sam_putpage_vn,				/* sam_putpage_vn */
-	sam_map_stale_vn,			/* EIO */
-	sam_addmap_stale_vn,		/* EIO */
-	sam_delmap_stale_vn,		/* sam_delmap_stale_vn */
-	fs_poll,					/* poll */
-	fs_nosys,					/* dump */
-	sam_pathconf_stale_vn,		/* EIO */
-	fs_nosys,					/* pageio */
-	fs_nosys,					/* dumpctl */
-	fs_dispose,					/* dispose */
-	sam_setsecattr_stale_vn,	/* EIO */
-	sam_getsecattr_stale_vn,	/* EIO */
-	fs_shrlock,					/* shrlock */
-};
-
-struct vnodeops *samfs_vnode_staleopsp = &samfs_vnode_staleops;
-
-#endif
-
 
 /*
  * ----- sam_open_vn - Open a SAM-FS file.
@@ -559,11 +306,7 @@ sam_open_vn(
 	/*
 	 * If exec'ed program, don't increment count because there is no close.
 	 */
-#if defined(SOL_510_ABOVE)
 	if (!(p->p_proc_flag & P_PR_EXEC)) {
-#else
-	if (!(p->p_flag & SPREXEC)) {
-#endif
 		mutex_enter(&ip->fl_mutex);
 		ip->no_opens++;
 		mutex_exit(&ip->fl_mutex);
@@ -585,19 +328,11 @@ out:
 /* ARGSUSED4 */
 int				/* ERRNO if error, 0 if successful. */
 sam_setattr_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* pointer to vnode. */
 	vattr_t *vap,		/* vattr pointer. */
 	int flags,		/* flags. */
 	cred_t *credp,		/* credentials pointer. */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* pointer to vnode. */
-	vattr_t *vap,		/* vattr pointer. */
-	int flags,		/* flags. */
-	cred_t *credp		/* credentials pointer. */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t *ip;
 	int error;
@@ -1486,23 +1221,13 @@ sam_frlock_vn(
 /* ARGSUSED6 */
 int				/* ERRNO if error occured, 0 if successful. */
 sam_space_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* vnode entry */
 	int cmd,		/* command */
 	sam_flock_t *flp,	/* Pointer to flock */
 	int filemode,		/* filemode flags, see file.h */
 	offset_t offset,	/* offset */
 	cred_t *credp,		/* credentials */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* vnode entry */
-	int cmd,		/* command */
-	sam_flock_t *flp,	/* Pointer to flock */
-	int filemode,		/* filemode flags, see file.h */
-	offset_t offset,	/* offset */
-	cred_t *credp		/* credentials */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	int error = 0;
 	sam_node_t *ip;
@@ -1905,141 +1630,3 @@ sam_delmap_stale_vn(
 	TRACE(T_SAM_DELMAP_RET, vp, pages, ip->mm_pages, error);
 	return (error);
 }
-
-
-#if !defined(SOL_510_ABOVE)
-/*
- * These are placeholders for the stale vnops table.  In Solaris 5.10,
- * we can define these as sam_EIO; earlier versions of Solaris require
- * functions whose arguments match the actual vnops.
- */
-
-/* ARGSUSED */
-int
-sam_open_stale_vn(vnode_t **vpp, int filemode, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_setattr_stale_vn(vnode_t *vp, vattr_t *vap, int flags, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_lookup_stale_vn(vnode_t *pvp, char *cp, vnode_t **vpp, pathname_t *pnp,
-    int flags, vnode_t *rdir, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_create_stale_vn(vnode_t *pvp, char *cp, vattr_t *vap, vcexcl_t ex,
-    int mode, vnode_t **vpp, cred_t *credp, int filemode)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_remove_stale_vn(vnode_t *pvp, char *cp, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_link_stale_vn(vnode_t *pvp, vnode_t *vp, char *cp, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_rename_stale_vn(vnode_t *opvp, char *onm, vnode_t *npvp, char *nnm,
-    cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_mkdir_stale_vn(vnode_t *pvp, char *cp, vattr_t *vap, vnode_t **vpp,
-    cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_rmdir_stale_vn(vnode_t *pvp, char *cp, vnode_t *cdir, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_symlink_stale_vn(vnode_t *pvp, char *cp, vattr_t *vap, char *tnm,
-    cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_frlock_stale_vn(vnode_t *vp, int cmd, sam_flock_t *flp, int filemode,
-    offset_t offset, struct flk_callback *fcb, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_space_stale_vn(vnode_t *vp, int cmd, sam_flock_t *flp, int filemode,
-    offset_t offset, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_addmap_stale_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t a,
-    sam_size_t length, uchar_t prot, uchar_t maxprot, uint_t flags,
-    cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_setsecattr_stale_vn(struct vnode *vp, vsecattr_t *vsap, int flag,
-    struct cred *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_getsecattr_stale_vn(vnode_t *vp, vsecattr_t *vsap, int flag, cred_t *credp)
-{
-	return (EIO);
-}
-#endif	/* !SOL_510_ABOVE */

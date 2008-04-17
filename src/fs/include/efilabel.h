@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if SAM_EFI_AVAILABLE
+#ifdef sun
 
 int is_efi_present(void);
 
 int call_efi_alloc_and_read(int, struct dk_gpt **);
 void call_efi_free(struct dk_gpt *);
 
-#endif
+#endif /* sun */

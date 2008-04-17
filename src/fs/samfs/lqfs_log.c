@@ -25,7 +25,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.5 $"
+#pragma ident	"$Revision: 1.6 $"
 #endif
 
 #include <sys/systm.h>
@@ -380,10 +380,8 @@ push_dirty_bp(ml_unit_t *ul, buf_t *bp)
 	}
 	newbp->b_flags = 0;
 	newbp->b_bcount = 0;
-#if defined(SOL_510_ABOVE)
 	newbp->b_file = NULL;
 	newbp->b_offset = -1;
-#endif /* defined(SOL_510_ABOVE) */
 	newbp->b_bufsize = bp->b_bufsize - bp->b_bcount;
 	newbp->b_un.b_addr = bp->b_un.b_addr + bp->b_bcount;
 	bp->b_bufsize = bp->b_bcount;
@@ -509,9 +507,7 @@ alloc_wrbuf(cirbuf_t *cb, size_t bufsize)
 		bp = kmem_zalloc(sizeof (buf_t), KM_SLEEP);
 		sema_init(&bp->b_sem, 1, NULL, SEMA_DEFAULT, NULL);
 		sema_init(&bp->b_io, 0, NULL, SEMA_DEFAULT, NULL);
-#if defined(SOL_510_ABOVE)
 		bp->b_offset = -1;
-#endif /* defined(SOL_510_ABOVE) */
 		bp->b_forw = cb->cb_free;
 		cb->cb_free = bp;
 	}

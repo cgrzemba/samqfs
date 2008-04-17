@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_SOLARIS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 #endif
 
 /*
@@ -315,7 +315,7 @@
 #define	FS_PATHCONF_OS(vp, cmd_a, valp, credp, ct) \
 	fs_pathconf(vp, cmd_a, valp, credp, ct)
 
-#elif defined(SOL_510_ABOVE)
+#else
 /*
  * ----- Solaris 10 vnode operations.
  */
@@ -358,55 +358,6 @@
 	do { } while (0)
 /*
  * ----- Solaris 10 filesystem utilities.
- */
-#define	FS_FRLOCK_OS(vp, cmd, flp, filemode, offset, fcb, credp, ct) \
-	fs_frlock(vp, cmd, flp, filemode, offset, fcb, credp)
-#define	FS_PATHCONF_OS(vp, cmd_a, valp, credp, ct) \
-	fs_pathconf(vp, cmd_a, valp, credp)
-
-#else
-/*
- * ----- Solaris 9 vnode operations.
- */
-#define	VOP_OPEN_OS(vpp, mode, cr, ct) \
-	VOP_OPEN(vpp, mode, cr)
-#define	VOP_CLOSE_OS(vp, f, c, o, cr, ct) \
-	VOP_CLOSE(vp, f, c, o, cr)
-#define	VOP_READ_OS(vp, uiop, iof, cr, ct) \
-	VOP_READ(vp, uiop, iof, cr)
-#define	VOP_WRITE_OS(vp, uiop, iof, cr, ct) \
-	VOP_WRITE(vp, uiop, iof, cr)
-#define	VOP_IOCTL_OS(vp, cmd, a, f, cr, rvp, ct) \
-	VOP_IOCTL(vp, cmd, a, f, cr, rvp)
-#define	VOP_GETATTR_OS(vp, vap, f, cr, ct) \
-	VOP_GETATTR(vp, vap, f, cr)
-#define	VOP_RWLOCK_OS(vp, w, ct) \
-	VOP_RWLOCK(vp, w)
-#define	VOP_RWUNLOCK_OS(vp, w, ct) \
-	VOP_RWUNLOCK(vp, w)
-#define	VOP_REALVP_OS(vp1, vp2, ct) \
-	VOP_REALVP(vp1, vp2)
-#define	VOP_PUTPAGE_OS(vp, of, sz, fl, cr, ct) \
-	VOP_PUTPAGE(vp, of, sz, fl, cr)
-/*
- * ----- Solaris 9 vnevent notifications.
- */
-#define	VNEVENT_REMOVE_OS(rmvp, pvp, cp, ct) \
-	do { } while (0)
-#define	VNEVENT_RMDIR_OS(rmvp, pvp, cp, ct) \
-	do { } while (0)
-#define	VNEVENT_RENAME_SRC_OS(ovp, opvp, onm, ct) \
-	do { } while (0)
-#define	VNEVENT_RENAME_DEST_OS(nvp, npvp, nnm, ct) \
-	do { } while (0)
-#define	VNEVENT_RENAME_DEST_DIR_OS(vp, ct) \
-	do { } while (0)
-#define	VNEVENT_CREATE_OS(vp, ct) \
-	do { } while (0)
-#define	VNEVENT_LINK_OS(vp, ct) \
-	do { } while (0)
-/*
- * ----- Solaris 9 filesystem utilities.
  */
 #define	FS_FRLOCK_OS(vp, cmd, flp, filemode, offset, fcb, credp, ct) \
 	fs_frlock(vp, cmd, flp, filemode, offset, fcb, credp)

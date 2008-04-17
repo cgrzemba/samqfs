@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.165 $"
+#pragma ident "$Revision: 1.166 $"
 #endif
 
 #include "sam/osversion.h"
@@ -66,11 +66,9 @@
 #include <vm/as.h>
 #include <vm/seg.h>
 #include <vm/seg_map.h>
-#endif /* sun */
 
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
+#endif /* sun */
 
 #ifdef  linux
 #include <linux/sched.h>
@@ -105,7 +103,6 @@
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "sam/types.h"
 #ifdef sun
 #include "sam/samaio.h"
@@ -1327,12 +1324,7 @@ sam_dk_wait_direct_io(sam_node_t *ip, buf_descriptor_t *bdp)
 		TRACE(T_SAM_DIOWAIT, SAM_ITOV(ip), bdp->error, bdp->io_count,
 		    (sam_tr_t)bdp);
 		mutex_exit(&bdp->bdp_mutex);
-#if defined(SOL_510_ABOVE)
 		atomic_add_64(&cpup->cpu_stats.sys.iowait, 1);
-#else
-		atomic_add_32((uint32_t *)&cpup->cpu_stat.cpu_syswait.iowait,
-		    1);
-#endif
 		if (panicstr) {
 			while (bdp->io_count) {
 				drv_usecwait(10);
@@ -1340,12 +1332,7 @@ sam_dk_wait_direct_io(sam_node_t *ip, buf_descriptor_t *bdp)
 		} else {
 			sema_p(&bdp->io_sema);	/* Wait until all I/Os done */
 		}
-#if defined(SOL_510_ABOVE)
 		atomic_add_64(&cpup->cpu_stats.sys.iowait, -1);
-#else
-		atomic_add_32((uint32_t *)&cpup->cpu_stat.cpu_syswait.iowait,
-		    -1);
-#endif
 		mutex_enter(&bdp->bdp_mutex);
 	}
 	mutex_exit(&bdp->bdp_mutex);
@@ -1422,10 +1409,9 @@ sam_dk_issue_direct_io(
 		bp->b_un.b_addr = (caddr_t)iov->iov_base;
 		bp->b_bcount = (size_t)contig;
 		bp->b_flags = bflags;
-#if defined(SOL_510_ABOVE)
 		bp->b_file = SAM_ITOP(ip);
 		bp->b_offset = uiop->uio_loffset;
-#endif
+
 		/*
 		 * If as_pagelock provided us with a pagelist (an array of
 		 * all pages in the I/O range, correct to the start of this

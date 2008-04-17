@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,9 +130,7 @@ main(int argc, char *argv[])
 		struct dk_cinfo ci;
 		struct dk_geom cg;
 		struct vtoc vt;
-#if SAM_EFI_AVAILABLE
 		struct dk_gpt *eip;
-#endif /* SAM_EFI_AVAILABLE */
 		struct sam_perm_inode pi;
 		int i;
 		sam_format_buf_t *bp;
@@ -184,7 +182,6 @@ main(int argc, char *argv[])
 				printf("    }\n");	/* part # */
 			}
 			printf("  }\n");	/* vtoc */
-#if SAM_EFI_AVAILABLE
 		/* Couldn't get VTOC info.  Get and show EFI VTOC info. */
 		} else {
 			if (sam_fd_efi_get(fd, &eip) == 0) {
@@ -204,7 +201,6 @@ main(int argc, char *argv[])
 
 				call_efi_free(eip);
 			}
-#endif /* SAM_EFI_AVAILABLE */
 		}
 
 		sam_format_prefix_default("    ");

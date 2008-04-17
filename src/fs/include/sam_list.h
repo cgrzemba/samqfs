@@ -39,25 +39,11 @@
 #define	_SAM_LIST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 #endif
 
 #ifdef sun
-#ifdef SOL_510_ABOVE
 #include <sys/list.h>
-#else
-#include "list_sol9.h"
-#define	list_object(a, b)	list_object_s9((a), (b))
-#define	list_create(a, b, c)	list_create_s9((a), (b), (c))
-#define	list_destroy(a, b, c)	list_destroy_s9((a), (b), (c))
-#define	list_insert_tail(a, b)	list_insert_tail_s9((a), (b))
-#define	list_insert_head(a, b)	list_insert_head_s9((a), (b))
-#define	list_remove(a, b)	list_remove_s9((a), (b))
-#define	list_head(a)	list_head_s9((a))
-#define	list_tail(a)	list_tail_s9((a))
-#define	list_next(a, b)	list_next_s9((a), (b))
-#define	list_prev(a, b)	list_prev_s9((a), (b))
-#endif
 
 #ifdef _KERNEL
 #define	list_enqueue(list, item)	list_insert_tail((list), (item))

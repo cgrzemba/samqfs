@@ -1,4 +1,4 @@
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 
 #    SAM-QFS_notice_begin
 #
@@ -60,9 +60,9 @@ LIB_SRC = \
 		tape2.c \
 		tapealert.c
 
-DEPCFLAGS += -I$(OBJ_DIR) $(SYSEVENT_SUPPORT) $(THRCOMP)
+DEPCFLAGS += -I$(OBJ_DIR) $(THRCOMP)
 LIB_LIBS +=  -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcat $(LIBSO) \
-	-lgen -ldl -lthread -lposix4 -lintl $(SYSEVENT_LIBS)
+	-lgen -ldl -lthread -lposix4 -lintl -lsysevent -lnvpair
 
 ifeq ($(SPARCV9), yes)
 LNOPTS = $(LIBS_LFLAGS64)

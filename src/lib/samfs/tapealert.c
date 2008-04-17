@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #include <stdio.h>
 #include <syslog.h>
@@ -63,10 +63,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/tapealert.h"
 #include "aml/tapealert_vals.h"
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 #include <libsysevent.h>
 #include <libnvpair.h>
-#endif /* SAM_SYSEVENT_AVAILABLE */
 
 /* global device shared memory */
 extern shm_alloc_t master_shm, preview_shm;
@@ -77,10 +75,8 @@ extern shm_alloc_t master_shm, preview_shm;
 	key == 0xe || key == 0x10 || key == 0x16)
 
 static void setup_tapealert(dev_ent_t *, int);
-#ifdef SAM_SYSEVENT_AVAILABLE
 static int tapealert_sysevent(char *, int, dev_ent_t *, int, uint64_t,
 	uint64_t *);
-#endif /* SAM_SYSEVENT_AVAILABLE */
 
 /*
  * --- get_supports_tapealert - determine if the robot or tape drive supports
@@ -497,12 +493,10 @@ tapealert(
 	}
 	strcpy(un->tapealert_vsn, un->vsn);
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 	/*
 	 * send tapealert sysevent
 	 */
 	rtn = tapealert_sysevent(src_fn, src_ln, un, flags_len, flags, &seq_no);
-#endif /* SAM_SYSEVENT_AVAILABLE */
 
 	/*
 	 * log active flags
@@ -591,7 +585,6 @@ tapealert_mts(
 	return (0);
 }
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 /* --- tapealert_sysevent - send a tapealert sysevent to n event handlers */
 static int		/* 0 successful */
 tapealert_sysevent(
@@ -720,4 +713,3 @@ done:
 
 	return (rtn);
 }
-#endif /* SAM_SYSEVENT_AVAILABLE */

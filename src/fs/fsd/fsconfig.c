@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.94 $"
+#pragma ident "$Revision: 1.95 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -937,7 +937,7 @@ gatherFsDevices(struct sam_mount_info *mi)
 				}
 			}
 		}
-#if sun
+#ifdef sun
 		/*
 		 * Open device to get size
 		 */
@@ -962,7 +962,7 @@ gatherFsDevices(struct sam_mount_info *mi)
 				close(fd);
 			}
 		}
-#endif
+#endif /* sun */
 
 adddev:
 		fsp++;

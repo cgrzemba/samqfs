@@ -1,4 +1,4 @@
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 
 #    SAM-QFS_notice_begin
 #
@@ -68,7 +68,10 @@ PROG_LIBS += -lsamspmd -lsamspm -lsamrft $(DB_LIB) $(DYNAMIC_OPT) \
 else
 PROG_LIBS += -lsamconf
 endif
-PROG_LIBS += $(DYNAMIC_OPT) -lpthread -ldl -lrt $(LIBSO) $(SYSEVENT_LIBS)
+PROG_LIBS += $(DYNAMIC_OPT) -lpthread -ldl -lrt $(LIBSO)
+ifeq ($(OS), SunOS)
+PROG_LIBS += -lsysevent -lnvpair
+endif
 
 fsd_LIBS = $(PROG_LIBS)
 qfs-fsd_LIBS = $(PROG_LIBS)

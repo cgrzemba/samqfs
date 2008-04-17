@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.115 $"
+#pragma ident "$Revision: 1.116 $"
 #endif
 
 #include "sam/osversion.h"
@@ -65,9 +65,7 @@
 #include <netinet/in.h>
 #include <sys/strsubr.h>
 #include <sys/callb.h>
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 #endif /* sun */
 
 #ifdef linux
@@ -105,7 +103,6 @@
 #include <sam/types.h>
 #include <sam/syscall.h>
 
-#include "cred.h"
 #include "bswap.h"
 #include "scd.h"
 #include "inode.h"

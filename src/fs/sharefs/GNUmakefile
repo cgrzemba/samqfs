@@ -1,4 +1,4 @@
-# $Revision: 1.14 $
+# $Revision: 1.16 $
 
 #    SAM-QFS_notice_begin
 #
@@ -41,6 +41,10 @@ PROG_SRC = \
 	config.c \
 	configcmp.c
 
+ifeq ($(OS), SunOS)
+PROG_SRC += server.c
+endif
+
 ifeq ($(BUILD_SC_AGENT), yes)
 CLUSTERINC =  -DCLUSTER_SVCS -I /usr/cluster/include
 CLUSTERLD =  -ldl
@@ -52,23 +56,15 @@ else
 LADM = -ladm
 endif
 
-ifeq ($(OS), SunOS)
-PROG_SRC += server.c
-ifneq ($(OS_REVISION), 5.9)
-CLUSTERINC += -DKSTR_VOP_READ
-endif
-endif
-
-
 LIBSO = $(LIBSO_OPT)/usr/lib/fs/samfs
 PROG_LIBS = ../lib/$(OBJ_DIR)/libfscmd.a \
 		$(STATIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) \
 			-lsam -lsamut -lsamspm $(LIBSO) \
 		$(DYNAMIC_OPT) -lsamconf \
-		$(LADM) -lnsl -lresolv -lpthread $(CLUSTERLD) $(SYSEVENT_LIBS)
+		$(LADM) -lnsl -lresolv -lpthread $(CLUSTERLD)
 
 ifeq ($(OS), SunOS)
-PROG_LIBS += -lsocket
+PROG_LIBS += -lsysevent -lnvpair -lsocket
 endif
 
 INCFLAGS = -D_POSIX_PTHREAD_SEMANTICS -I. -I../include -I../include/$(OBJ_DIR) \

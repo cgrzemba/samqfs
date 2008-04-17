@@ -1,4 +1,4 @@
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 
 #    SAM-QFS_notice_begin
 #
@@ -78,8 +78,8 @@ LIB_SRC = \
 	util.c \
 	volidstr.c
 
-LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamconf -lsamrft $(DB_LIB) $(SYSEVENT_LIBS) $(LIBSO) \
-	-lsocket -lnsl -lgen -lintl
+LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamconf -lsamrft $(DB_LIB) \
+	-lsysevent -lnvpair $(LIBSO) -lsocket -lnsl -lgen -lintl
 else
 
 LIB_SRC = \
@@ -112,7 +112,7 @@ LIB_LIBS = -lnsl $(LIBSO)
 
 endif
 
-DEPCFLAGS += -I$(INCLUDE)/sam/$(OBJ_DIR) -I$(DB_INCLUDE) $(SYSEVENT_SUPPORT) $(THRCOMP) $(THRCOMP)
+DEPCFLAGS += -I$(INCLUDE)/sam/$(OBJ_DIR) -I$(DB_INCLUDE) $(THRCOMP)
 
 ifeq ($(SPARCV9), yes)
 LNOPTS = $(LIBS_LFLAGS64)

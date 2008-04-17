@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 #endif
 
 
@@ -157,7 +157,7 @@ int sam_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 int sam_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp, caller_context_t *ct);
 
-#elif defined(SOL_510_ABOVE)
+#else
 /*
  * ----- Solaris 10 SAM-FS vnode function prototypes.
  */
@@ -220,67 +220,6 @@ int sam_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 int sam_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp);
 
-#else
-/*
- * ----- Solaris 9 SAM-FS vnode function prototypes.
- */
-int sam_open_vn(vnode_t **vpp, int, cred_t *credp);
-int sam_close_vn(vnode_t *vp, int filemode, int count, offset_t offset,
-	cred_t *credp);
-int sam_read_vn(vnode_t *vp, struct uio *uiop, int ioflag, cred_t *credp);
-int sam_write_vn(vnode_t *vp, struct uio *uiop, int ioflag, cred_t *credp);
-
-int sam_ioctl_vn(vnode_t *vp, int cmp, sam_intptr_t arg, int flag,
-	cred_t *credp, int *rvp);
-int sam_getattr_vn(vnode_t *vp, struct vattr *vap, int flag, cred_t *credp);
-int sam_setattr_vn(vnode_t *vp, struct vattr *vap, int flag, cred_t *credp);
-int sam_access_vn(vnode_t *vp, int mode, int flag, cred_t *credp);
-int sam_lookup_vn(vnode_t *vp, char *cp, vnode_t **vpp, struct pathname *pnp,
-	int flag, vnode_t *rdir, cred_t *credp);
-int sam_create_vn(vnode_t *vp, char *cp, struct vattr *vap, vcexcl_t ex,
-	int mode, vnode_t **vpp, cred_t *credp, int filemode);
-int sam_remove_vn(vnode_t *pvp, char *cp, cred_t *credp);
-int sam_link_vn(vnode_t *pvp, vnode_t *vp, char *cp, cred_t *credp);
-int sam_rename_vn(vnode_t *opvp, char *omn, vnode_t *npvp, char *nnm,
-	cred_t *credp);
-int sam_mkdir_vn(vnode_t *pvp, char *cp, struct vattr *vap, vnode_t **vpp,
-	cred_t *credp);
-int sam_rmdir_vn(vnode_t *pvp, char *cp, vnode_t *cdir, cred_t *credp);
-int sam_readdir_vn(vnode_t *vp, struct uio *uiop, cred_t *credp, int *eofp);
-int sam_symlink_vn(vnode_t *pvp, char *cp, struct vattr *vap, char *tnm,
-	cred_t *credp);
-int sam_readlink_vn(vnode_t *vp, struct uio *uiop, cred_t *credp);
-int sam_fsync_vn(vnode_t *vp, int filemode, cred_t *credp);
-void sam_inactive_vn(vnode_t *vp, cred_t *credp);
-int sam_fid_vn(vnode_t *vp, struct fid *fidp);
-void sam_rwlock_vn(vnode_t *vp, int w);
-void sam_rwunlock_vn(vnode_t *vp, int w);
-int sam_seek_vn(vnode_t *vp, offset_t ooff, offset_t *noffp);
-int sam_frlock_vn(vnode_t *vp, int cmd, sam_flock_t *flp, int flag,
-	offset_t offset, flk_callback_t *fcp, cred_t *credp);
-int sam_space_vn(vnode_t *vp, int cmd, sam_flock_t *flp, int flag,
-	offset_t offset, cred_t *credp);
-int sam_getpage_vn(vnode_t *vp, offset_t offset, sam_size_t length,
-	uint_t *protp, struct page **pglist, sam_size_t plsize,
-	struct seg *segp, caddr_t addr, enum seg_rw rw, cred_t *credp);
-int sam_putpage_vn(vnode_t *vp, offset_t offset, sam_size_t length, int flags,
-	cred_t *credp);
-int sam_map_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t *addrpp,
-	sam_size_t length, uchar_t prot, uchar_t maxprot, uint_t flags,
-	cred_t *credp);
-int sam_addmap_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t a,
-	sam_size_t length, uchar_t prot, uchar_t maxprot, uint_t flags,
-	cred_t *credp);
-int sam_delmap_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t a,
-	sam_size_t length, uint_t prot, uint_t maxprot, uint_t flags,
-	cred_t *credp);
-int sam_pathconf_vn(vnode_t *vp, int cmd, ulong_t *valp,
-	cred_t *credp);
-int sam_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
-	cred_t *credp);
-int sam_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
-	cred_t *credp);
-
 #endif	/* SAM-FS vnode function prototypes */
 
 
@@ -303,7 +242,7 @@ int sam_delmap_stale_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t a,
 	sam_size_t length, uint_t prot, uint_t maxprot, uint_t flags,
 	cred_t *credp, caller_context_t *ct);
 
-#elif defined(SOL_510_ABOVE)
+#else
 /*
  * ----- Solaris 10 SAM-FS stale vnode function prototypes.
  */
@@ -314,53 +253,6 @@ int sam_delmap_stale_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t a,
 	sam_size_t length, uint_t prot, uint_t maxprot, uint_t flags,
 	cred_t *credp);
 
-#else
-/*
- * ----- Solaris 9 SAM-FS stale vnode function prototypes.
- */
-int sam_open_stale_vn(vnode_t **, int, cred_t *);
-int sam_close_stale_vn(vnode_t *vp, int filemode, int count, offset_t offset,
-	cred_t *credp);
-int sam_read_stale_vn(vnode_t *, struct uio *, int, cred_t *);
-int sam_write_stale_vn(vnode_t *, struct uio *, int, cred_t *);
-int sam_ioctl_stale_vn(vnode_t *, int, sam_intptr_t, int, cred_t *, int *);
-int sam_getattr_stale_vn(vnode_t *, struct vattr *, int, cred_t *);
-int sam_setattr_stale_vn(vnode_t *, struct vattr *, int, cred_t *);
-int sam_access_stale_vn(vnode_t *, int, int, cred_t *);
-int sam_lookup_stale_vn(vnode_t *, char *, vnode_t **, struct pathname *,
-	int, vnode_t *, cred_t *);
-int sam_create_stale_vn(vnode_t *, char *, struct vattr *, vcexcl_t,
-	int, vnode_t **, cred_t *, int);
-int sam_remove_stale_vn(vnode_t *, char *, cred_t *);
-int sam_link_stale_vn(vnode_t *, vnode_t *, char *, cred_t *);
-int sam_rename_stale_vn(vnode_t *, char *, vnode_t *, char *, cred_t *);
-int sam_mkdir_stale_vn(vnode_t *, char *, struct vattr *, vnode_t **, cred_t *);
-int sam_rmdir_stale_vn(vnode_t *, char *, vnode_t *, cred_t *);
-int sam_readdir_stale_vn(vnode_t *, struct uio *, cred_t *, int *);
-int sam_symlink_stale_vn(vnode_t *, char *, struct vattr *, char *, cred_t *);
-int sam_readlink_stale_vn(vnode_t *, struct uio *, cred_t *);
-int sam_fsync_stale_vn(vnode_t *, int, cred_t *);
-void sam_inactive_stale_vn(vnode_t *vp, cred_t *credp);
-int sam_fid_stale_vn(vnode_t *, struct fid *);
-int sam_seek_stale_vn(vnode_t *, offset_t, offset_t *);
-int sam_frlock_stale_vn(vnode_t *, int, sam_flock_t *, int,
-	offset_t, flk_callback_t *, cred_t *);
-int sam_space_stale_vn(vnode_t *, int, sam_flock_t *, int, offset_t, cred_t *);
-int sam_getpage_stale_vn(vnode_t *, offset_t, sam_size_t,
-	uint_t *, struct page **, sam_size_t, struct seg *,
-	caddr_t, enum seg_rw, cred_t *);
-int sam_putpage_stale_vn(vnode_t *vp, offset_t offset, sam_size_t length,
-	int flags, cred_t *credp);
-int sam_map_stale_vn(vnode_t *, offset_t, struct as *, caddr_t *,
-	sam_size_t, uchar_t, uchar_t, uint_t, cred_t *);
-int sam_addmap_stale_vn(vnode_t *, offset_t, struct as *, caddr_t,
-	sam_size_t, uchar_t, uchar_t, uint_t flags, cred_t *);
-int sam_delmap_stale_vn(vnode_t *vp, offset_t offset, struct as *asp, caddr_t a,
-	sam_size_t length, uint_t prot, uint_t maxprot, uint_t flags,
-	cred_t *credp);
-int sam_pathconf_stale_vn(vnode_t *, int, ulong_t *, cred_t *);
-int sam_getsecattr_stale_vn(vnode_t *, vsecattr_t *, int, cred_t *);
-int sam_setsecattr_stale_vn(vnode_t *, vsecattr_t *, int, cred_t *);
 #endif	/* SAM-FS stale vnode function prototypes */
 
 #endif	/* _SAMFS_H */

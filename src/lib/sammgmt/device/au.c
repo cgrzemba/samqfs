@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.49 $"
+#pragma ident	"$Revision: 1.50 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -50,10 +50,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/vtoc.h>
 #include <sys/vfstab.h>
 #include <errno.h>
-#if SAM_EFI_AVAILABLE
 #include <sys/efi_partition.h>
 #include "efilabel.h"
-#endif
 
 /*  other header files */
 #include "pub/mgmt/device.h"
@@ -605,8 +603,6 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 }
 
 
-#ifdef SAM_EFI_AVAILABLE
-
 static int
 checkEFIslice(const char *slice, int fd, dsize_t *capacity)
 {
@@ -648,7 +644,6 @@ checkEFIslice(const char *slice, int fd, dsize_t *capacity)
 	call_efi_free(efi);
 	return (0);
 }
-#endif
 
 /* this holds the name of the last slice for which open() returned EIO */
 static char lastioerrslice[MAXPATHLEN + 1] = "";
@@ -729,7 +724,6 @@ dsize_t *capacity)	/* put its size in here */
 	}
 
 	if ((slice_idx = read_vtoc(fd, &toc)) < 0) {
-#ifdef SAM_EFI_AVAILABLE
 		/* look for an EFI label */
 		if (VT_ENOTSUP == slice_idx) {
 			if (is_efi_present()) {
@@ -742,7 +736,6 @@ dsize_t *capacity)	/* put its size in here */
 				return (-1);
 			}
 		}
-#endif
 		strlcpy(lastioerrslice, slice, sizeof (lastioerrslice));
 		close(fd);
 		return (-1);

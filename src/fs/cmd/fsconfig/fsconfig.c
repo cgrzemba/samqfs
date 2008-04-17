@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 /* Feature test switches. */
 
@@ -41,12 +41,12 @@
 
 #include <sys/stat.h>
 #include <sys/vfs.h>
-#ifdef linux
-#include <string.h>
-#else
+#ifdef sun
 #include <sys/dkio.h>
 #include <sys/vtoc.h>
-#endif /* linux */
+#else
+#include <string.h>
+#endif /* sun */
 
 #include "sam/types.h"
 #include "sam/custmsg.h"
@@ -58,11 +58,11 @@
 #define	DEC_INIT
 #include "sam/devnm.h"
 
-#if SAM_EFI_AVAILABLE
+#ifdef sun
 #include <sys/uuid.h>
 #include <sys/efi_partition.h>
 #include "efilabel.h"
-#endif
+#endif /* sun */
 
 extern int byte_swap_sb(struct sam_sblk *sblk, size_t len);
 extern int byte_swap_hb(struct sam_host_table_blk *htp);
@@ -76,9 +76,9 @@ struct DevInfo {
 	char *di_devname;
 	struct sam_sblk *di_sblk;
 	struct vtoc	*di_vtoc;
-#if SAM_EFI_AVAILABLE
+#ifdef sun
 	struct dk_gpt *di_efi;
-#endif
+#endif /* sun */
 	struct dk_cinfo *di_dkip;
 	struct sam_host_table *di_hosts;
 } Devs[MAXDEV];
@@ -101,10 +101,10 @@ int blocks = 0;
 static void SamPrintSB(struct sam_sblk *, char *);
 static void SamPrintVTOC(struct vtoc *, char *);
 static void SamPrintDKIOC(struct dk_cinfo *, char *);
-#if SAM_EFI_AVAILABLE
+#ifdef sun
 static void SamPrintUUID(struct uuid *);
 static void SamPrintEFI(struct dk_gpt *, char *);
-#endif
+#endif /* sun */
 
 /*
  * Search through a list of files/devices provided on the command
@@ -184,14 +184,12 @@ CheckDev(char *dev)
 	int fd;
 	struct stat sbuf;
 	struct sam_sblk sblk;
-#ifndef linux
+#ifdef sun
 	struct dk_cinfo dkc;
 	struct vtoc vt;
-#endif
-	static struct sam_host_table_blk *htp = NULL;
-#if SAM_EFI_AVAILABLE
 	struct dk_gpt *efi_vtoc;
-#endif
+#endif /* sun */
+	static struct sam_host_table_blk *htp = NULL;
 	int hosts_table_size;
 
 	if ((fd = open(dev, O_RDONLY)) < 0) {
@@ -328,11 +326,7 @@ CheckDev(char *dev)
 		Devs[NDevs].di_hosts = NULL;
 	}
 
-#ifdef linux
-
-	Devs[NDevs].di_dkip = NULL;
-
-#else /* linux */
+#ifdef sun
 	if (debug && S_ISCHR(sbuf.st_mode)) {
 		if (ioctl(fd, DKIOCINFO, &dkc) >= 0) {
 			Devs[NDevs].di_dkip =
@@ -354,14 +348,16 @@ CheckDev(char *dev)
 	} else {
 		Devs[NDevs].di_dkip = NULL;
 	}
-#endif /* linux */
+#else /* sun */
+
+	Devs[NDevs].di_dkip = NULL;
+
+#endif /* sun */
 
 	Devs[NDevs].di_vtoc = NULL;
-#if SAM_EFI_AVAILABLE
-	Devs[NDevs].di_efi = NULL;
-#endif
 
-#ifndef linux
+#ifdef sun
+	Devs[NDevs].di_efi = NULL;
 	if (debug && S_ISCHR(sbuf.st_mode)) {
 		if (ioctl(fd, DKIOCGVTOC, &vt) >= 0) {
 			Devs[NDevs].di_vtoc =
@@ -373,11 +369,9 @@ CheckDev(char *dev)
 			}
 			bcopy((char *)&vt, (char *)Devs[NDevs].di_vtoc,
 			    sizeof (vt));
-#if SAM_EFI_AVAILABLE
 		} else if (is_efi_present() &&
 		    ((*call_efi_alloc_and_read)(fd, &efi_vtoc) >= 0)) {
 			Devs[NDevs].di_efi = efi_vtoc;
-#endif
 		} else {
 			if (verbose) {
 				/* Could not get VTOC of '%s' */
@@ -385,7 +379,7 @@ CheckDev(char *dev)
 			}
 		}
 	}
-#endif /* linux */
+#endif /* sun */
 
 	if (verbose) {
 		if (Devs[NDevs].di_flags & DI_SBLK_BSWAPPED) {
@@ -429,11 +423,11 @@ DumpDevs(void)
 		if (Devs[i].di_vtoc) {
 			SamPrintVTOC(Devs[i].di_vtoc, Devs[i].di_devname);
 		}
-#if SAM_EFI_AVAILABLE
+#ifdef sun
 		if (Devs[i].di_efi) {
 			SamPrintEFI(Devs[i].di_efi, Devs[i].di_devname);
 		}
-#endif
+#endif /* sun */
 	}
 }
 
@@ -850,7 +844,7 @@ SamPrintVTOC(struct vtoc *vtp, char *dev)
 	}
 }
 
-#if SAM_EFI_AVAILABLE
+#ifdef sun
 
 /*
  * Print a UUID with minimal formatting and no decoding.
@@ -906,4 +900,4 @@ SamPrintEFI(struct dk_gpt *efi, char *dev)
 	}
 }
 
-#endif
+#endif /* sun */

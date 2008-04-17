@@ -1,4 +1,4 @@
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 
 #    SAM-QFS_notice_begin
 #
@@ -32,7 +32,7 @@ DEPCFLAGS = \
 	$(DEBUGCDEFS) \
 	-DAPI_DEBUG=syslog \
 	-I$(INCLUDE) \
-	$(METADATA_SERVER) $(EFI_SUPPORT) $(THRCOMP)
+	$(METADATA_SERVER) $(THRCOMP)
 
 include $(DEPTH)/mk/common.mk
 

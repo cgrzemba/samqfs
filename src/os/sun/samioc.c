@@ -1,4 +1,4 @@
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 /*
  *    SAM-QFS_notice_begin
@@ -240,19 +240,6 @@ samioc_getinfo(dev_info_t *dip, ddi_info_cmd_t infocmd, void *arg,
 }
 
 
-#ifndef SOL_510_ABOVE
-static int
-samioc_identify(dev_info_t *dip)
-{
-	if (strcmp(ddi_get_name(dip), "samioc") == 0) {
-		return (DDI_IDENTIFIED);
-	}
-
-	return (DDI_NOT_IDENTIFIED);
-}
-#endif
-
-
 static int
 samioc_detach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 {
@@ -336,11 +323,7 @@ static struct dev_ops samioc_dev_ops = {
 	DEVO_REV,				// devo_rev
 	0,					// devo_refcnt
 	&samioc_getinfo,			// getinfo(9E)
-#ifdef SOL_510_ABOVE
-	nulldev,				/* no identify in 5.10 */
-#else
-	&samioc_identify,			// identify(9E)
-#endif
+	nulldev,				/* no identify routine */
 	nulldev,				// probe(9E)
 	&samioc_attach,				// attach(9E)
 	&samioc_detach,				// detach(9E)

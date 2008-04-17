@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 #include "sam/osversion.h"
 
@@ -48,16 +48,13 @@
 /* Solaris headers. */
 #include "sys/mount.h"
 #include "sys/wait.h"
-#if sun
+#ifdef sun
 #include <sys/dkio.h>
 #include <sys/vtoc.h>
 #include <sys/mnttab.h>
-
-#if SAM_EFI_AVAILABLE
 #include <sys/efi_partition.h>
 #include "efilabel.h"
-#endif
-#endif
+#endif /* sun */
 
 /* SAM-FS headers. */
 #include "sam/custmsg.h"
@@ -281,7 +278,7 @@ ChkFs(void)
 }
 
 
-#if sun
+#ifdef sun
 
 /*
  * ----- Open file system block device and get size
@@ -349,9 +346,7 @@ get_blk_device(
 			free(devrname);
 			return (-1);
 		}
-	}
-#if SAM_EFI_AVAILABLE
-	else if (is_efi_present()) {
+	} else if (is_efi_present()) {
 		int part;
 		int saved_errno;
 		struct dk_gpt *efi_vtoc;
@@ -375,9 +370,7 @@ get_blk_device(
 			free(devrname);
 			return (-1);
 		}
-	}
-#endif
-	else {
+	} else {
 		error(0, errno, "%s", devrname);
 		error(0, 0,
 		    catgets(catfd, SET, 1442,
@@ -416,4 +409,4 @@ check_mnttab(char *mnt_special)
 	(void) fclose(mntfd);
 	return (err);
 }
-#endif
+#endif /* sun */

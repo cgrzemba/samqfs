@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.101 $"
+#pragma ident "$Revision: 1.102 $"
 
 #include "sam/osversion.h"
 
@@ -1386,10 +1386,8 @@ sam_write_map(
 	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_ASYNC|B_WRITE;
 	bp->b_iodone = (int (*) ())sam_block_done;
-#if defined(SOL_510_ABOVE)
 	bp->b_file = NULL;
 	bp->b_offset = -1;
-#endif
 	if ((bp->b_flags & B_READ) == 0) {
 		LQFS_MSG(CE_WARN, "sam_write_map(): bdev_strategy writing "
 		    "mof 0x%x edev %ld nb %d\n", bp->b_blkno * 512,

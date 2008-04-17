@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.194 $"
+#pragma ident "$Revision: 1.195 $"
 #endif
 
 #ifdef linux
@@ -996,9 +996,9 @@ int sam_set_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
 int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
 	offset_t length);
 
-#if defined(SOL_510_ABOVE)
+#ifdef sun
 extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
-#endif	/* SOL_510_ABOVE */
+#endif
 extern int sam_access_ino(sam_node_t *ip, int mode, boolean_t locked,
 		cred_t *credp);
 

@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_uninstall,v 1.13 2008/03/17 14:44:00 am143972 Exp $
+#  ident	$Id: fsmgr_uninstall,v 1.14 2008/04/17 18:20:15 ta129963 Exp $
 #
 #  This program uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
@@ -557,38 +557,6 @@ uninstall()
 
     if [ ${HAS_ERROR} = "yes" ]; then
         do_exit
-    fi
-
-    if [ ${SOLREV} -lt 10 ]; then
-        /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            P="Do you want to uninstall Sun(TM) Web Console?"
-            P="$P WARNING: Uninstalling Sun(TM) Web Console will cause other"
-            P="$P applications that are registered in the console unusable."
-            REPLY=`/bin/ckyorn -Q -d "no" -p "${P}"`
-
-            if [ "$REPLY" = "y" -o "$REPLY" = "yes" -o \
-                "$REPLY" = "Y" -o "$REPLY" = "YES" ]; then
-                echo "Remove Sun Web Console? YES!" >> ${MY_LOG}
-                V="Start removing Sun(TM) Web Console and supporting application...\n"
-                echo $V | tee -a ${MY_LOG}
-                # Remove Sun(TM) Web Console and the supporting applications
-                /usr/lib/webconsole/setup -u | tee -a ${MY_LOG}
-
-                if [ $? -eq 0 ]; then
-                    echo "Sun Web Console has been uninstalled successfully!" \
-                                                    >> ${MY_LOG}
-                else
-                    echo "Failed to uninstall Sun Web Console!" >> ${MY_LOG}
-                    # TODO: Exit?
-                fi
-            else
-                echo "Remove Sun Web Console? NO!" >> ${MY_LOG}
-            fi
-        else
-            echo "Sun(TM) Web Console is not installed in the host." \
-                                                    | tee -a ${MY_LOG}
-        fi
     fi
 
     # Remove tmp directory

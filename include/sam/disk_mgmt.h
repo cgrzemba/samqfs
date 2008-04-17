@@ -35,17 +35,15 @@
 #define	_SAM_FS_DISK_MGMT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 #endif
 
-#ifndef linux
+#ifdef sun
 #include <sys/dkio.h>
 #include <sys/vtoc.h>
-#if SAM_EFI_AVAILABLE
 #include <sys/uuid.h>
 #include <sys/efi_partition.h>
 #include <efilabel.h>
-#endif /* SAM_EFI_AVAILABLE */
 
 int sam_fd_control_info_get(int fd, struct dk_cinfo *cip);
 
@@ -55,15 +53,10 @@ int sam_fd_vtoc_get(int fd, struct vtoc *vtp);
 
 int sam_vtoc_part_count(struct vtoc *, int *);
 
-
-#if SAM_EFI_AVAILABLE
-
 int sam_fd_efi_get(int fd, struct dk_gpt **eipp);
 
 int sam_efi_part_count(struct dk_gpt *, int *);
 
-#endif /* SAM_EFI_AVAILABLE */
-
-#endif /* linux */
+#endif /* sun */
 
 #endif /* _SAM_FS_DISK_MGMT_H */

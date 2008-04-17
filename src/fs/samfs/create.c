@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.145 $"
+#pragma ident "$Revision: 1.146 $"
 
 #include "sam/osversion.h"
 
@@ -58,16 +58,12 @@
 #include <sys/dnlc.h>
 #include <sys/fbuf.h>
 #include <sys/mount.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /*
  * ----- SAMFS Includes
  */
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "rwio.h"
@@ -1635,11 +1631,7 @@ sam_enter_dnlc(
 	 */
 	pvp = SAM_ITOV(pip);
 	vp = SAM_ITOV(ip);
-#if defined(SOL_510_ABOVE)
 	dnlc_update(pvp, cp, vp);
-#else
-	dnlc_update(pvp, cp, vp, NOCRED);
-#endif
 	/*
 	 * Add to the directory cache.
 	 */

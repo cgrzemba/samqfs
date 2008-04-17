@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 
 #include "sam/osversion.h"
 
@@ -60,14 +60,10 @@
 #include <sys/file.h>
 #include <sys/flock.h>
 #include <sys/dkio.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "sam/types.h"
 #include "sam/uioctl.h"
 #include "sam/resource.h"
@@ -358,7 +354,6 @@ sam_ioctl_util_cmd(
 			    !(ip->di.ar_flags[idopen->copy] & AR_rearch)) {
 				error = ENOARCH;
 			} else if (MANDLOCK(SAM_ITOV(ip), ip->di.mode)) {
-#if defined(SOL_510_ABOVE)
 				sam_rwlock_vn(SAM_ITOV(ip), 0, NULL);
 				if (chklock(SAM_ITOV(ip), FREAD,
 				    (sam_offset_t)0, (int)0,
@@ -366,15 +361,6 @@ sam_ioctl_util_cmd(
 					error = EQ_FILE_LOCKED;
 				}
 				sam_rwunlock_vn(SAM_ITOV(ip), 0, NULL);
-#else
-				sam_rwlock_vn(SAM_ITOV(ip), 0);
-				if (chklock(SAM_ITOV(ip), FREAD,
-				    (sam_offset_t)0, (int)0,
-				    FNDELAY)) {
-					error = EQ_FILE_LOCKED;
-				}
-				sam_rwunlock_vn(SAM_ITOV(ip), 0);
-#endif
 			}
 		}
 
@@ -395,7 +381,6 @@ sam_ioctl_util_cmd(
 		}
 		if (error == 0 && (error =
 		    sam_get_fd(SAM_ITOV(ip), rvp)) == 0) {
-#if defined(SOL_510_ABOVE)
 			vnode_t *vp = SAM_ITOV(ip);
 
 			/*
@@ -407,7 +392,6 @@ sam_ioctl_util_cmd(
 				atomic_add_32(&vp->v_rdcnt, 1);
 				atomic_add_32(&vp->v_wrcnt, 1);
 			}
-#endif
 			ip->no_opens++;
 		}
 

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.206 $"
+#pragma ident "$Revision: 1.207 $"
 
 #include "sam/osversion.h"
 
@@ -1453,22 +1453,6 @@ sam_delete_ino_cache(void)
 	mutex_exit(&samgt.ifreelock);
 	kmem_cache_destroy(samgt.inode_cache);
 	samgt.inode_cache = NULL;
-
-#if !defined(SOL_510_ABOVE)
-	/*
-	 * Dismantle the vnode cache. This must be
-	 * done after the call to kmem_cache_destroy()
-	 * for the inode cache as kmem_magazine_destroy(),
-	 * called by kmem_cache_destroy(), will invoke the
-	 * inode destructor during cleanup. The inode
-	 * destructor will attempt to free any remaining
-	 * vnodes which will result in a call to the vnode
-	 * destructor. Thus, the inode cache must be completely
-	 * dismantled before removing the vnode cache. If it
-	 * isn't there then bad things will happen.
-	 */
-	sam_vn_destroy_cache();
-#endif  /* SOL_510_ABOVE */
 }
 
 /*

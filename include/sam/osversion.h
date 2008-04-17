@@ -38,15 +38,11 @@
 #define	_SAM_OSVERSION_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 #endif
 
 #if defined(SOL5_11)
 #define	SOL_511_ABOVE
-#endif
-
-#if defined(SOL5_10) || defined(SOL5_11)
-#define	SOL_510_ABOVE
 #endif
 
 #endif /* !defined(_SAM_OSVERSION_H) */

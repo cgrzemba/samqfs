@@ -1,4 +1,4 @@
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 
 #    SAM-QFS_notice_begin
 #
@@ -43,7 +43,7 @@ PROG_SRC = \
 		server.c \
 		samfm_service.c
 
-DEPCFLAGS += $(THRCOMP) -I$(DEPTH)/include/pub/$(OBJ_DIR) $(GXML_FLAGS)
+DEPCFLAGS += $(THRCOMP) -I$(DEPTH)/include/pub/$(OBJ_DIR) -I/usr/include/libxml2
 PROG_LIBS = ../fs/lib/$(OBJ_DIR)/libfscmd.a \
 	-L $(DEPTH)/lib/$(OBJ_DIR) $(STATIC_OPT) -lsamspm $(LIBSO) \
 	$(DYNAMIC_OPT) -lsamcat -lsamfs -lsamut -lsamconf \

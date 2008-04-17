@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.220 $"
+#pragma ident "$Revision: 1.221 $"
 
 
 #ifndef	_SAM_FS_EXTERN_H
@@ -413,26 +413,7 @@ int sam_update_the_sblks(sam_mount_t *mp);
 
 /* vnops.c function prototypes. */
 
-#if defined(SOL_510_ABOVE)
-
-/* vnops.c function prototypes for Solaris 10 systems. */
 int sam_EIO(void);
-
-#else	/* SOL_510_ABOVE */
-
-/* vnops.c function prototypes for Solaris 9 systems. */
-
-int vn_has_cached_data(vnode_t *vp);
-int vn_has_flocks(vnode_t *vp);
-int vn_ismntpt(vnode_t *vp);
-void vn_setops(vnode_t *vp, vnodeops_t *vnodeops);
-vnode_t *vn_alloc(int kmflag);
-void vn_free(vnode_t *vp);
-void vn_reinit(vnode_t *vp);
-void sam_vn_create_cache(void);
-void sam_vn_destroy_cache(void);
-
-#endif	/* SOL_510_ABOVE */
 
 
 /* bio.c function prototypes. */

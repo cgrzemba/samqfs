@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 
 #include "sam/osversion.h"
 
@@ -62,13 +62,9 @@
 #include <sys/share.h>
 #include <sys/unistd.h>
 #include <nfs/nfs.h>
-
 #include <vm/as.h>
 #include <vm/seg_vn.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
@@ -328,19 +324,11 @@ sam_close_vn(
 
 int				/* ERRNO if error, 0 if successful. */
 sam_read_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* pointer to vnode. */
 	uio_t *uiop,		/* user I/O vector array. */
 	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
 	cred_t *credp,		/* credentials pointer. */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* pointer to vnode. */
-	uio_t *uiop,		/* user I/O vector array. */
-	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
-	cred_t *credp		/* credentials pointer. */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t		*ip, *bip;
 	int				stage_n_set = 0;
@@ -371,13 +359,8 @@ sam_read_vn(
 	if (MANDLOCK(vp, ip->di.mode)) {
 		sam_u_offset_t off = uiop->uio_loffset;
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-#if defined(SOL_510_ABOVE)
 		error = chklock(vp, FREAD, off, uiop->uio_resid,
 		    uiop->uio_fmode, ct);
-#else
-		error = chklock(vp, FREAD, off, uiop->uio_resid,
-		    uiop->uio_fmode);
-#endif
 		if (error) {
 			return (error);
 		}
@@ -602,19 +585,11 @@ out:
 
 int				/* ERRNO if error, 0 if successful. */
 sam_write_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* pointer to vnode. */
 	uio_t *uiop,		/* user I/O vector array. */
 	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
 	cred_t *credp,		/* credentials pointer. */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* pointer to vnode. */
-	uio_t *uiop,		/* user I/O vector array. */
-	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
-	cred_t *credp		/* credentials pointer. */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t	*ip, *bip;
 	int			error = 0;
@@ -701,13 +676,8 @@ sam_write_vn(
 		sam_u_offset_t off = uiop->uio_loffset;
 
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-#if defined(SOL_510_ABOVE)
 		error = chklock(vp, FWRITE, off, uiop->uio_resid,
 		    uiop->uio_fmode, ct);
-#else
-		error = chklock(vp, FWRITE, off, uiop->uio_resid,
-		    uiop->uio_fmode);
-#endif
 		if (error) {
 			goto out2;
 		}
@@ -1613,15 +1583,9 @@ sam_rwlock_common(
 /* ARGSUSED2 */
 void
 sam_rwlock_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* Pointer to vnode. */
 	int w,			/* Lock flag. */
-	caller_context_t *ct	/* Caller context pointer. */
-#else
-	vnode_t *vp,		/* Pointer to vnode. */
-	int w			/* Lock flag. */
-#endif
-)
+	caller_context_t *ct)	/* Caller context pointer. */
 {
 	sam_node_t *ip;
 
@@ -1644,15 +1608,9 @@ sam_rwlock_vn(
 /* ARGSUSED2 */
 void
 sam_rwunlock_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* Pointer to vnode. */
 	int w,			/* Lock flag. */
-	caller_context_t *ct	/* Caller context pointer. */
-#else
-	vnode_t *vp,		/* Pointer to vnode. */
-	int w			/* Lock flag. */
-#endif
-)
+	caller_context_t *ct)	/* Caller context pointer. */
 {
 	sam_node_t *ip;
 
@@ -2310,13 +2268,10 @@ sam_pathconf_vn(
 		 */
 		*valp = 36 + ip->mp->mi.m_sbp->info.sb.ext_bshift;
 		return (0);
-	}
-#if defined(SOL_510_ABOVE)
-	else if (cmd == (caddr_t)_PC_ACL_ENABLED) {
+	} else if (cmd == (caddr_t)_PC_ACL_ENABLED) {
 		*valp = _ACL_ACLENT_ENABLED;
 		return (0);
 	}
-#endif
 	return (FS_PATHCONF_OS(vp, cmd_a, valp, credp, NULL));
 }
 
@@ -2409,21 +2364,17 @@ sam_ioctl_file_cmd(
 		break;
 
 	case C_FIOLOGENABLE:
-#if defined(SOL_510_ABOVE)
 		if (secpolicy_fs_config(credp, ip->mp->mi.m_vfsp) != 0) {
 			return (EPERM);
 		}
-#endif /* defined(SOL_510_ABOVE) */
 		error = qfs_fiologenable(SAM_ITOV(ip), (void *)arg,
 		    credp, flag);
 		break;
 
 	case C_FIOLOGDISABLE:
-#if defined(SOL_510_ABOVE)
 		if (secpolicy_fs_config(credp, ip->mp->mi.m_vfsp) != 0) {
 			return (EPERM);
 		}
-#endif /* defined(SOL_510_ABOVE) */
 		error = qfs_fiologdisable(SAM_ITOV(ip), (void *)arg,
 		    credp, flag);
 		break;
@@ -2432,11 +2383,9 @@ sam_ioctl_file_cmd(
 		return (qfs_fioislog(SAM_ITOV(ip), (void *)arg, credp, flag));
 
 	case C_FIO_SET_LQFS_DEBUG:
-#if defined(SOL_510_ABOVE)
 		if (secpolicy_fs_config(credp, ip->mp->mi.m_vfsp) != 0) {
 			return (EPERM);
 		}
-#endif /* defined(SOL_510_ABOVE) */
 		if (ddi_copyin(*((caddr_t *)arg), &lqfs_debug, sizeof (uint_t),
 		    flag)) {
 			return (EFAULT);
@@ -3034,129 +2983,3 @@ sam_free_listio(struct sam_listio_call *callp)
 	}
 	kmem_free(callp, sizeof (struct sam_listio_call));
 }
-
-
-#if !defined(SOL_510_ABOVE)
-
-/*
- *  "Stale" VN functions.  Called through the vnode ops table
- * after the associated filesystem has been forcibly unmounted.
- * Most of these return EIO, except those that free resources
- * (and aren't defined here).
- *
- * Under Solaris 9, we want these functions to be of the correct
- * type as far as arguments and the like go.  Under >= Solaris 10,
- * we can just use sam_EIO().
- *
- * Functions that allow reclamation of resources (close, inactive)
- * have non-trivial definitions and are not defined here.
- */
-
-/* ARGSUSED */
-int
-sam_read_stale_vn(vnode_t *vp, uio_t *uiop, int ioflag, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_write_stale_vn(vnode_t *vp, uio_t *uiop, int ioflag, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_ioctl_stale_vn(vnode_t *vp, int cmd, sam_intptr_t arg, int flag,
-    cred_t *credp, int *rvp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_getattr_stale_vn(vnode_t *vp, vattr_t *vap, int flag, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_access_stale_vn(vnode_t *vp, int mode, int flags, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_readdir_stale_vn(vnode_t *vp, uio_t *uiop, cred_t *credp, int *eofp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_readlink_stale_vn(vnode_t *vp, uio_t *uiop, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_fsync_stale_vn(vnode_t *vp, int filemode, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_fid_stale_vn(vnode_t *vp, fid_t *fidp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_seek_stale_vn(vnode_t *vp, offset_t ooff, offset_t *noffp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_getpage_stale_vn(vnode_t *vp, offset_t offset, sam_size_t length,
-    uint_t *protp, page_t **pglist, sam_size_t plsize, struct seg *segp,
-    caddr_t addr, enum seg_rw rw, cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_map_stale_vn(vnode_t *vp, offset_t offset, struct as *asp, char **addrpp,
-    sam_size_t length, uchar_t prot, uchar_t maxprot, uint_t flags,
-    cred_t *credp)
-{
-	return (EIO);
-}
-
-
-/* ARGSUSED */
-int
-sam_pathconf_stale_vn(vnode_t *vp, int cmd_a, ulong_t *valp, cred_t *credp)
-{
-	return (EIO);
-}
-#endif	/* !SOL_510_ABOVE */

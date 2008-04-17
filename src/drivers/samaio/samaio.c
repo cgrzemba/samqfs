@@ -412,22 +412,6 @@ samaio_getinfo(
 
 
 /*
- * -----	samaio_identify - Return device driver identification.
- */
-
-#if !defined(SOL_510_ABOVE)
-static int
-samaio_identify(dev_info_t *dip)
-{
-	if (strcmp(ddi_get_name(dip), "samaio") == 0) {
-		return (DDI_IDENTIFIED);
-	}
-	return (DDI_NOT_IDENTIFIED);
-}
-#endif
-
-
-/*
  * -----	samaio_attach - create and attach samaio ctl device file,
  *		minor = 0.
  */
@@ -777,11 +761,7 @@ static struct dev_ops samaio_ops = {
 	DEVO_REV,		/* devo_rev, */
 	0,			/* refcnt  */
 	samaio_getinfo,		/* getinfo */
-#if defined(SOL_510_ABOVE)
-	nulldev,		/* no identify in 5.10 */
-#else
-	samaio_identify,	/* identify */
-#endif
+	nulldev,		/* no identify routine */
 	nulldev,		/* probe */
 	samaio_attach,		/* attach */
 	samaio_detach,		/* detach */

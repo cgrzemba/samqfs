@@ -1,4 +1,4 @@
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 
 #    SAM-QFS_notice_begin
 #
@@ -34,11 +34,11 @@ PROG = fstyp
 PROG_SRC = fstyp.c
 
 INCFLAGS = -I$(INCLUDE) -I../../include -I../../include/$(OBJ_DIR)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(THRCOMP)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(THRCOMP)
 CFLAGS = $(DEPCFLAGS) $(PLATFLAGS) $(CERRWARN)
 
 PROG_LIBS = -L ../../lib/$(OBJ_DIR) -L $(DEPTH)/lib/$(OBJ_DIR) \
-	$(STATIC_OPT) -lfscmd -lsamut $(DYNAMIC_OPT) $(LIBSO) $(EFI_LIBS)
+	$(STATIC_OPT) -lfscmd -lsamut $(DYNAMIC_OPT) $(LIBSO) -ldl
 
 DESTDIR = /usr/lib/fs/samfs
 

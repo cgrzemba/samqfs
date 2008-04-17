@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 
 #include "sam/osversion.h"
 
@@ -67,7 +67,6 @@
 #include "sam/types.h"
 #include "sam/resource.h"
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "ino_ext.h"

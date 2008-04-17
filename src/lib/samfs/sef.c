@@ -47,10 +47,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <limits.h>
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 #include <libsysevent.h>
 #include <libnvpair.h>
-#endif /* SAM_SYSEVENT_AVAILABLE */
 
 #include "sam/types.h"
 #include "sam/names.h"
@@ -421,9 +419,7 @@ int fd)			/* device file descriptor */
 		}
 	}
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 	un->sef_sample.state |= SEF_SYSEVENT;
-#endif
 
 	/* if write, read and sysevent then sef is supported */
 	sef_mask = (SEF_WRT_ERR_COUNTERS | SEF_RD_ERR_COUNTERS | SEF_SYSEVENT);
@@ -533,7 +529,6 @@ sef_where_t where)    /* sef location */
 	}
 	rlen = PAGE_LEN - resid;
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 	/*
 	 * send sef sysevent
 	 */
@@ -541,7 +536,6 @@ sef_where_t where)    /* sef location */
 	    == 0) {
 		un->sef_sample.state &= ~SEF_POLL;
 	}
-#endif /* SAM_SYSEVENT_AVAILABLE */
 
 error:
 	/* restore callers previous cdb and sense */
@@ -639,7 +633,6 @@ int num)		/* array of counters length */
 	return (0);
 }
 
-#ifdef SAM_SYSEVENT_AVAILABLE
 /* --- sef_sysevent - send a sef sysevent to n event handlers */
 static int		/* 0 successful */
 sef_sysevent(
@@ -832,4 +825,3 @@ done:
 
 	return (rtn);
 }
-#endif /* SAM_SYSEVENT_AVAILABLE */

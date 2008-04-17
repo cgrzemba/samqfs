@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 /* ANSI C headers. */
 #include <ctype.h>
@@ -90,8 +90,7 @@ StrFromErrno(
 		msgnum = (errno_arg - SAM_ERRNO) + ERRNO_CATALOG;
 	} else if (0 <= errno_arg && errno_arg < 256) {
 		/*
-		 * Pre Solaris 9 strerrno() returns NULL if the error is
-		 * not known.  Solaris 9 strerrno() returns "Unknown error"
+		 * Solaris strerrno() returns "Unknown error"
 		 * if the error is not known.
 		 */
 		if ((p = strerror(errno_arg)) != NULL) {

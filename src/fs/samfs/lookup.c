@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.78 $"
+#pragma ident "$Revision: 1.79 $"
 
 #include "sam/osversion.h"
 
@@ -172,11 +172,7 @@ sam_lookup_name(
 		}
 
 		error = 0;
-#if defined(SOL_510_ABOVE)
 		if ((vp = dnlc_lookup(SAM_ITOV(pip), cp))) {
-#else
-		if ((vp = dnlc_lookup(SAM_ITOV(pip), cp, NOCRED))) {
-#endif
 			sam_node_t *ip;
 
 			if (vp == DNLC_NO_VNODE) {
@@ -419,11 +415,7 @@ sam_find_component(
 		}
 		*ipp = ip;
 
-#if defined(SOL_510_ABOVE)
 		dnlc_update(SAM_ITOV(pip), cp, SAM_ITOV(ip));
-#else
-		dnlc_update(SAM_ITOV(pip), cp, SAM_ITOV(ip), NOCRED);
-#endif
 
 		SAM_COUNT64(dnlc, ednlc_name_hit);
 		return (0);
@@ -440,11 +432,7 @@ sam_find_component(
 				/*
 				 * add the name to negative cache.
 				 */
-#if defined(SOL_510_ABOVE)
 				dnlc_update(pvp, cp, DNLC_NO_VNODE);
-#else
-				dnlc_update(pvp, cp, DNLC_NO_VNODE, NOCRED);
-#endif
 				SAM_COUNT64(dnlc, dnlc_neg_entry);
 			}
 			RW_UNLOCK_OS(&pip->inode_rwl, RW_READER);
@@ -672,13 +660,8 @@ restart:
 						 * dnlc_purge_vp() and a
 						 * dnlc_enter().
 						 */
-#if defined(SOL_510_ABOVE)
 						dnlc_update(SAM_ITOV(pip), cp,
 						    SAM_ITOV(ip));
-#else
-						dnlc_update(SAM_ITOV(pip), cp,
-						    SAM_ITOV(ip), NOCRED);
-#endif
 
 						if (found_ednlc_entry) {
 							if (ednlc_in == in) {
@@ -970,11 +953,7 @@ done:
 			/*
 			 * add the name to negative cache.
 			 */
-#if defined(SOL_510_ABOVE)
 			dnlc_update(pvp, cp, DNLC_NO_VNODE);
-#else
-			dnlc_update(pvp, cp, DNLC_NO_VNODE, NOCRED);
-#endif
 			SAM_COUNT64(dnlc, dnlc_neg_entry);
 		}
 		TRACE(T_SAM_EDNLC_RET, pvp, error, 4, 0);

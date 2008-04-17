@@ -1,4 +1,4 @@
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 
 #    SAM-QFS_notice_begin
 #
@@ -34,11 +34,11 @@ PROG = umount
 PROG_SRC = umount.c
 
 INCFLAGS = -I$(INCLUDE)/sam/$(OBJ_DIR) -I../../include -I$(INCLUDE)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(DEBUGCDEFS)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)
 
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(DYNAMIC_OPT) \
-	-ldl $(SYSEVENT_LIBS)
+	-ldl -lsysevent -lnvpair
 
 LNOPTS = -nmuxs -Dlint
 LNLIBS = -L ../../lib/$(OBJ_DIR) -lfscmd -L $(DEPTH)/lib/$(OBJ_DIR)

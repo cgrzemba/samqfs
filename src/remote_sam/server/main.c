@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -60,13 +60,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	RETURN(ptr) return (ptr)
 #define	ERROR(val) (val)
 
-#if !defined(SOL_510_ABOVE)
-#pragma error_messages(off, E_NO_EXPLICIT_TYPE_GIVEN)
-#endif
 #include <regexp.h>
-#if !defined(SOL_510_ABOVE)
-#pragma error_messages(default, E_NO_EXPLICIT_TYPE_GIVEN)
-#endif
 
 #define	MAIN
 

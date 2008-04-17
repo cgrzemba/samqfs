@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 #include "sam/osversion.h"
 
@@ -56,14 +56,10 @@
 #include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/disp.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "sam/types.h"
 #include "sam/resource.h"
 #include "amld.h"
@@ -1306,12 +1302,10 @@ syscall_stage_response(
 				 */
 				if ((error = sam_get_fd(vp,
 				    &rvp->r_val1)) == 0) {
-#if defined(SOL_510_ABOVE)
 					if (vp->v_type == VREG) {
 						atomic_add_32(&vp->v_rdcnt, 1);
 						atomic_add_32(&vp->v_wrcnt, 1);
 					}
-#endif
 					ip->stage_pid = SAM_CUR_PID;
 					ip->no_opens++;
 					opened = 1;

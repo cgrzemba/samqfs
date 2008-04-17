@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -240,7 +240,7 @@ TimeString(
 }
 
 
-#ifndef linux
+#ifdef sun
 /*
  *  Convert a date/time string to time_t value
  *  Various formats in the string are accepted; see the strptime()
@@ -316,7 +316,7 @@ StrToTime(
 	errno = EINVAL;
 	return (-1);
 }
-#endif
+#endif /* sun */
 
 
 /*

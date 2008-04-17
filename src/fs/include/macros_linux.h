@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 #endif
 
 #ifdef __KERNEL__
@@ -479,5 +479,17 @@ extern char *nfsd_thread_name;
 #define	sam_req_fsck(a, b, c)			do { } while (0)
 #define	sam_set_operation_nb(a)			(0)
 #define	sam_unset_operation_nb(a)		do { } while (0)
+
+
+/*
+ * ----- Credential macros.
+ */
+#define	crgetuid(credp)		(credp->cr_uid)
+
+
+/*
+ * ----- Security Policy macros.
+ */
+#define	secpolicy_fs_config(credp, vfsp)	(suser(credp) ? 0 : EPERM)
 
 #endif /* _SAM_MACROS_LINUX_H */

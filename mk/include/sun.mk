@@ -1,4 +1,4 @@
-# $Revision: 1.35 $
+# $Revision: 1.37 $
 
 #    SAM-QFS_notice_begin
 #
@@ -102,12 +102,6 @@ CSTYLETREE = $(SAMFS_TOOLS)/bin/cstyletree
 OS_ARCH := $(OS)_$(OS_REVISION)_$(ISA_TARGET)
 VERS := $(shell $(CMDECHO) -n -DSOL`uname -r | cut -d . -f1-2 | tr . _` )
 
-ifeq ($(OS_REVISION), 5.9)
-	OS_VERS := Solaris 9
-	CC = $(SAMFS_TOOLS)/SOS10/bin/cc
-	LINT = $(SAMFS_TOOLS)/SOS10/bin/lint
-	CSCOPE = $(SAMFS_TOOLS)/SOS10/bin/cscope
-else
 ifeq ($(OS_REVISION), 5.10)
 	OS_VERS := Solaris 10
 	CC = $(SAMFS_TOOLS)/SOS10/bin/cc
@@ -123,24 +117,14 @@ else
 $(error "Unknown Solaris version $(OS_REVISION)")
 endif
 endif
-endif
 
 LD = $(CC)
 GCC = $(SAMFS_TOOLS)/gcc-3.4.0-$(OS)_$(OS_REVISION)/bin/gcc
 
 #
-# Kernel Stabs (Symbol TABle entrieS) support for Solaris 10 and beyond.
-# Each Solaris release should use the corresponding Solaris ON tools.
+# Kernel Stabs (Symbol TABle entrieS) support.  Each Solaris release
+# should use the corresponding Solaris ON tools.
 #
-ifeq ($(OS_REVISION), 5.9)
-	CTFCONVERT =
-	CTFCVTFLAGS =
-	CTFCONVERT_CMD =
-
-	CTFMERGE =
-	CTFMRGFLAGS =
-	CTFMERGE_CMD =
-else
 ifeq ($(OS_REVISION), 5.10)
 	CTFCONVERT = $(SAMFS_TOOLS)/on10-tools/bin/$(PLATFORM)/ctfconvert
 	CTFCVTFLAGS = -l $(SAMQFS_VERSION)
@@ -160,7 +144,6 @@ ifeq ($(OS_REVISION), 5.11)
 	CTFMERGE_CMD = cd $(OBJ_DIR); $(CTFMERGE) $(CTFMRGFLAGS) -o $(MODULE) $(MODULE_OBJS_BASE)
 else
 $(error "Unknown Solaris version $(OS_REVISION)")
-endif
 endif
 endif
 
@@ -184,55 +167,6 @@ ifeq ($(PLATFORM), sparc)
 	# The "-Wc,-Qiselect-T1" enables tail-call optimization when using "-g".
 	DEBUGCFLAGS += -Wc,-Qiselect-T1
 endif
-
-#
-# EFI support is present with Solaris 10 or a Solaris 9 update.  Test for
-# the presence of the EFI header file.  We don't link against libefi, so
-# that we can run on Solaris 9 (where it may or may not be present); instead
-# we link against the dynamic loader.  (We could probably link against libefi
-# when building for Solaris 10, but it doesn't seem worthwhile to maintain
-# two separate code paths.)
-#
-ifeq ($(COMPLETE), yes)
-	EFI_SUPPORT = -DSAM_EFI_AVAILABLE
-	EFI_LIBS = -ldl
-endif
-ifeq ($(shell [ ! -f /usr/include/sys/efi_partition.h ] || echo "yes"), yes)
-	EFI_SUPPORT = -DSAM_EFI_AVAILABLE
-	EFI_LIBS = -ldl
-endif
-
-#
-# Defines/libraries to use when building with sysevents.
-# Sysevent (SNMP) support is available in Solaris 9 and above.
-# Check for the existence of the include files that sysevent requires.
-#
-ifeq ($(COMPLETE), yes)
-	SYSEVENT_SUPPORT = -DSAM_SYSEVENT_AVAILABLE
-	SYSEVENT_LIBS = -lsysevent -lnvpair
-endif
-ifeq ($(shell [ ! -f /usr/include/libsysevent.h ] || echo "yes"), yes)
-	SYSEVENT_SUPPORT = -DSAM_SYSEVENT_AVAILABLE
-	SYSEVENT_LIBS = -lsysevent -lnvpair
-endif
-
-#
-# Defines/libraries to use when building with the Gnome XML Parser.
-# Support for the Gnome XML Parser is available in Solaris 9 and above.
-# Check for the existence of the required files.
-#
-ifeq ($(COMPLETE), yes)
-	GXML_SUPPORT = -DGXML_AVAILABLE
-	GXML_LIBS = -lxml2
-	GXML_INC = -I/usr/include/libxml2
-endif
-ifeq ($(shell [ ! -f /usr/include/libxml2/libxml/parser.h ] || echo "yes"), yes)
-	GXML_SUPPORT = -DGXML_AVAILABLE
-	GXML_LIBS = -lxml2
-	GXML_INC = -I/usr/include/libxml2
-endif
-
-GXML_FLAGS = $(GXML_SUPPORT) $(GXML_INC)
 
 #
 # New java setup rules
@@ -280,11 +214,7 @@ DB_LIB = -ldb
 # StorageTek 5800 API definitions
 #
 ifeq ($(PLATFORM), sparc)
-	ifeq ($(SPARCV9), yes)
-		HC_ARCH = sol_9_sparc
-	else
-		HC_ARCH = sol_10_sparc
-	endif
+	HC_ARCH = sol_10_sparc
 endif
 ifeq ($(PLATFORM), i386)
 	HC_ARCH = sol_10_x86
@@ -312,5 +242,5 @@ LIBSO_OPT = -R
 STATIC_OPT = -Bstatic
 DYNAMIC_OPT = -Bdynamic
 SHARED_CFLAGS = -G -K PIC
-DEPCFLAGS = -I$(INCLUDE) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER)
+DEPCFLAGS = -I$(INCLUDE) $(VERS) $(METADATA_SERVER)
 

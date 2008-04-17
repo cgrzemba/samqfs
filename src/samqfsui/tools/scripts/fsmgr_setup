@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_setup,v 1.25 2008/03/17 14:44:00 am143972 Exp $
+#  ident	$Id: fsmgr_setup,v 1.26 2008/04/17 18:20:15 ta129963 Exp $
 #
 #  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
@@ -260,7 +260,7 @@ do_exit()
             ;;
 
         $EXIT_CODE_UNSUPPORTED_PLATFORM )
-            echo "Solaris 9 (i386) is not a supported platform." \
+            echo "Unsupported platform." \
                 | tee -a ${MY_LOG}
             echo "Please upgrade the Operating System to Solaris 10 or above." \
                 | tee -a ${MY_LOG}
@@ -633,16 +633,6 @@ install_gui()
 
     echo "Done installing ${APP_NAME} packages." | tee -a ${MY_LOG}
     echo " " >> ${MY_LOG}
-}
-
-check_architecture()
-{
-    # Check if user is trying to install the GUI on Solaris 9 (i386)
-    # Terminate installation procedure due to unsupport architecture
-    if [ ${SOLREV} = "9" -a ${ARCH} = "i386" ]; then
-        EXIT_STATUS=${EXIT_CODE_UNSUPPORTED_PLATFORM}
-        do_exit
-    fi
 }
 
 #
@@ -1221,7 +1211,7 @@ check_os() {
     /usr/bin/uname -a >> ${MY_LOG}
     /usr/bin/uname -p >> ${MY_LOG}
 
-    if [ $SOLREV -eq 6 -o $SOLREV -eq 7 -o $SOLREV -eq 8 ]; then
+    if [ $SOLREV -eq 6 -o $SOLREV -eq 7 -o $SOLREV -eq 8 -o $SOLREV -eq 9 ]; then
 	# Unsupported OS detected
 	EXIT_STATUS=${EXIT_CODE_UNSUPPORTED_OS}
 	do_exit
@@ -1686,37 +1676,6 @@ uninstall()
     if [ ${HAS_ERROR} = "yes" ]; then
         do_exit
     fi
-
-    if [ ${SOLREV} -lt 10 ]; then
-        /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            P="Do you want to uninstall ${LOCKHART_EXTERNAL_NAME}?"
-            P="$P WARNING: Uninstall ${LOCKHART_EXTERNAL_NAME} will cause other"
-            P="$P applications that are registered in the console unusable. [n]"
-            REPLY=`/bin/ckyorn -Q -d "no" -p "${P}"`
-
-            if [ "$REPLY" = "y" -o "$REPLY" = "yes" -o \
-                "$REPLY" = "Y" -o "$REPLY" = "YES" ]; then
-                echo "Remove ${LOCKHART_EXTERNAL_NAME}? YES!" >> ${MY_LOG}
-                V="Start removing ${LOCKHART_EXTERNAL_NAME} and supporting application...\n"
-                echo $V | tee -a ${MY_LOG}
-                # Remove Java Web Console and the supporting applications
-                /usr/lib/webconsole/setup -u | tee -a ${MY_LOG}
-
-                if [ $? -eq 0 ]; then
-                    echo "${LOCKHART_EXTERNAL_NAME} has been uninstalled successfully!" \
-                                               | tee -a ${MY_LOG}
-                else
-                    echo "Failed to uninstall ${LOCKHART_EXTERNAL_NAME}!" |tee -a ${MY_LOG} 
-                fi
-            else
-                echo "Remove ${LOCKHART_EXTERNAL_NAME}? NO!" >> ${MY_LOG}
-            fi
-        else
-            echo "${LOCKHART_EXTERNAL_NAME} is not found in the management station." \
-                                                    | tee -a ${MY_LOG}
-        fi
-     fi
 }
 
 show_env_value() 
@@ -1767,7 +1726,6 @@ remove_dummy_file()
 echo ""
 check_su
 check_os
-check_architecture
 prepare_log_file
 
 case $# in

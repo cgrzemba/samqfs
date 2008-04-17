@@ -1,4 +1,4 @@
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 
 #    SAM-QFS_notice_begin
 #
@@ -42,10 +42,8 @@ DIRS =	\
 ifeq ($(MAKECMDGOALS), clobberall)
 	DIRS += sc ha
 else
-ifeq ($(OS), SunOS)
-	ifeq ($(BUILD_SC_AGENT), yes)
-		DIRS += sc ha
-	endif
+ifeq ($(BUILD_SC_AGENT), yes)
+	DIRS += sc ha
 endif
 endif
 

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 
 #include "sam/osversion.h"
 
@@ -571,10 +571,8 @@ sam_write_ino_sector(
 		tbp->b_bcount = mp->mt.fi_wr_ino_buf_size;
 		tbp->b_bufsize = tbp->b_bcount;
 		tbp->b_flags = B_PHYS | B_BUSY | B_WRITE;
-#if defined(SOL_510_ABOVE)
 		tbp->b_file = SAM_ITOP(mp->mi.m_inodir);
 		tbp->b_offset = (base_ino - 1) * SAM_ISIZE;
-#endif
 		if ((tbp->b_flags & B_READ) == 0) {
 			LQFS_MSG(CE_WARN, "sam_write_ino_sector(): "
 			    "bdev_strategy writing mof 0x%x edev %ld "

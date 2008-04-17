@@ -1,4 +1,4 @@
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 
 #    SAM-QFS_notice_begin
 #
@@ -36,7 +36,7 @@ DEPCFLAGS = \
 	-DDEBUG \
 	-I$(INCLUDE) \
 	-I$(INCLUDE)/sam/$(OBJ_DIR) \
-	-DSAMRPC_CLIENT $(DEBUGCDEFS) $(METADATA_SERVER) $(EFI_SUPPORT) $(THRCOMP)
+	-DSAMRPC_CLIENT $(DEBUGCDEFS) $(METADATA_SERVER) $(THRCOMP)
 
 SRC_VPATH = ../.. ../../../samut ../../../samconf ../xdr
 vpath %c $(SRC_VPATH)
@@ -110,7 +110,7 @@ LIB_SRC += \
 
 
 LIB_LIBS += \
-	-L$(DEPTH)/lib/$(OBJ_DIR) $(SYSEVENT_LIBS) $(LIBSO) -lpthread -lsocket -lnsl -lgen -lintl
+	-L$(DEPTH)/lib/$(OBJ_DIR) -lsysevent -lnvpair $(LIBSO) -lpthread -lsocket -lnsl -lgen -lintl
 
 LNOPTS = -a -u -m -x -o$(LIB)
 LNLIBS =

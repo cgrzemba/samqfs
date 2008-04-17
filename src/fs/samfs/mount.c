@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.207 $"
+#pragma ident "$Revision: 1.208 $"
 #endif
 
 #include "sam/osversion.h"
@@ -254,10 +254,9 @@ sam_dev_cleanup(sam_mount_t *mp)
  * otherwise it doesn't.
  *
  * ddi-abrwrite-supported is supported through the DKIOCGETVOLCAP
- * DKIOCSETVOLCAP, and DKIOCDMR ioctl()s.  These are defined
- * in /usr/include/sys/dkio.h, and do not exist in all versions
- * of Solaris 9.  SAM-QFS, through the SAM AIO interface, emulates
- * these ioctl()s for SAM AIO files.
+ * DKIOCSETVOLCAP, and DKIOCDMR ioctl()s.  These are defined in
+ * /usr/include/sys/dkio.h.  SAM-QFS, through the SAM AIO interface,
+ * emulates these ioctl()s for SAM AIO files.
  */
 static int
 sds_abr_capable()

@@ -1,4 +1,4 @@
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 
 #    SAM-QFS_notice_begin
 #
@@ -42,12 +42,16 @@ INCFLAGS = -I$(INCLUDE)/sam/$(OBJ_DIR) -I../../include -I$(INCLUDE)
 SCRIPT = samfs.shared
 LADM = -ladm
 endif
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(DEBUGCDEFS)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)
 
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamconf $(DYNAMIC_OPT) \
-	$(LADM) -ldl $(SYSEVENT_LIBS)
+	$(LADM) -ldl
+
+ifeq ($(OS), SunOS)
+PROG_LIBS += -lsysevent -lnvpair
+endif
 
 LNOPTS = -mnuxs -Dlint
 LNLIBS = -L ../../lib/$(OBJ_DIR) -lfscmd \

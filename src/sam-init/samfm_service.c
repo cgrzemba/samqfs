@@ -53,9 +53,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <dlfcn.h>
-#ifdef GXML_AVAILABLE
 #include <libxml/parser.h>
-#endif /* GXML_AVAILABLE */
 #include "sam/spm.h"
 #include "sam/types.h"
 #include "sam/lib.h"
@@ -65,7 +63,6 @@
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
-#ifdef GXML_AVAILABLE
 #define	HERE _SrcFile, __LINE__ /* Sam syslog debug info. */
 
 /*
@@ -907,4 +904,3 @@ void * /* Always returns NULL. */
 		(void) close(client_fd);
 	}
 }
-#endif /* GXML_AVAILABLE */

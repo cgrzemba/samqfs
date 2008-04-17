@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 #include "sam/osversion.h"
 
@@ -51,14 +51,10 @@
 #include <sys/systm.h>
 #include <sys/cpuvar.h>
 #include <sys/thread.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "sam/types.h"
 
 #include "inode.h"

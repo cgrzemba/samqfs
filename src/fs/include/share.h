@@ -35,17 +35,17 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.125 $"
+#pragma ident "$Revision: 1.126 $"
 #endif
 
 
 #ifndef	_SAM_FS_SHARE_H
 #define	_SAM_FS_SHARE_H
 
-#ifndef linux
+#ifdef sun
 #include	<sys/vnode.h>
 #include	<sys/acl.h>
-#endif	/* linux */
+#endif	/* sun */
 
 #include	<sam/sys_types.h>
 #include	"ino.h"

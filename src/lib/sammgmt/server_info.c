@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 /*
  *	server_info.c -  generic system info functions
@@ -343,10 +343,10 @@ sqm_lst_t **res)
  *
  * Example (new lines will not be present)
  *  PKGINST = SUNWsamfsu,
- *     NAME = Sun SAM-FS and Sun SAM-QFS software Solaris 9 (usr),
+ *     NAME = Sun SAM and Sun SAM-QFS software Solaris 10 (usr),
  * CATEGORY = system,
  *     ARCH = sparc,
- *  VERSION = 4.3.multidisk REV=debug REV=5.9.2005.01.18,
+ *  VERSION = 4.6.5 REV=debug REV=5.10.2007.03.12,
  *   VENDOR = Sun Microsystems Inc.,
  *   STATUS = completely installed
  *

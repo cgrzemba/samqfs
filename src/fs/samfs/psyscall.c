@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.173 $"
+#pragma ident "$Revision: 1.174 $"
 #endif
 
 #include "sam/osversion.h"
@@ -59,9 +59,7 @@
 #include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/disp.h>
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 #endif /* sun */
 #if defined(SAM_OSD_SUPPORT)
 #include <sys/osd.h>
@@ -98,7 +96,6 @@
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "sam/param.h"
@@ -654,7 +651,7 @@ sam_mount_info(
 	struct sam_mount_arg args;
 	sam_mount_t *mp = NULL, **lastmp = NULL;
 	void *mt = NULL;
-#if defined(SOL_510_ABOVE)
+#ifdef sun
 	struct vfs *vfsp = NULL;
 #endif
 	size_t mount_size;
@@ -698,7 +695,7 @@ sam_mount_info(
 		}
 
 		if (strncmp(mnt, args.fs_name, sizeof (args.fs_name)) == 0) {
-#if defined(SOL_510_ABOVE)
+#ifdef sun
 			vfsp = mp->mi.m_vfsp;
 #endif
 			error = 0;

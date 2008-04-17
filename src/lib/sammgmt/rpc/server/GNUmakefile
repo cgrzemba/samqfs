@@ -1,4 +1,4 @@
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 
 #    SAM-QFS_notice_begin
 #
@@ -39,7 +39,7 @@ DEPCFLAGS = \
 	-DAPI_DEBUG=syslog \
 	-DDEBUG \
 	-I$(INCLUDE) \
-	-DSAMRPC_SERVER $(DEBUGCDEFS) $(METADATA_SERVER) $(EFI_SUPPORT) $(THRCOMP)
+	-DSAMRPC_SERVER $(DEBUGCDEFS) $(METADATA_SERVER) $(THRCOMP)
 
 PROG = fsmgmtd
 PROG_SRC = \

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.68 $"
+#pragma ident   "$Revision: 1.69 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1415,13 +1415,7 @@ modeToString(mode_t mode, char *prots)
 		case S_IFBLK:	{ prots[0] = 'b'; break; } /* block special */
 		case S_IFCHR:	{ prots[0] = 'c'; break; } /* char special */
 		case S_IFIFO:	{ prots[0] = 'p'; break; } /* FIFO */
-#ifdef S_IFPORT
-		/*
-		 * Only available as of Solaris 10. ifdef can be removed
-		 * when support for Solaris 9 is removed.
-		 */
 		case S_IFPORT:	{ prots[0] = 'P'; break; } /* event port */
-#endif
 		case S_IFSOCK:	{ prots[0] = 's'; break; } /* AF_UNIX socket */
 		case S_IFREG:	{ prots[0] = '-'; break; } /* ordinary file */
 		default:	{ prots[0] = '?'; break; } /* Dunno */

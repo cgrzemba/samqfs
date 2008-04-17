@@ -1,4 +1,4 @@
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -122,7 +122,7 @@ BSWAP_INCLUDES = -I$(DEPTH)/src/fs/include
 
 STK_INCLUDES =	-I$(DEPTH)/src/robots/stk/stk_includes
 
-DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG $(METADATA_SERVER) $(EFI_SUPPORT) \
+DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG $(METADATA_SERVER) \
 		-I. -I$(INCLUDE) -I$(INCLUDE)/pub/$(OBJ_DIR) -I$(DEPTH) \
 		$(ARCHIVER_INCLUDES) -I/usr/include $(BSWAP_INCLUDES) \
 		$(CATALOG_INCLUDES) \

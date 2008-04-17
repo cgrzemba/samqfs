@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -2324,9 +2324,6 @@ print_vfs(
 	    vfs->vfs_fsid.val[0], vfs->vfs_fsid.val[1]);
 	printf("\t%08lx vfs_bcount\n", vfs->vfs_bcount);
 	printf("\t%08lx vfs_mtime\n", vfs->vfs_mtime);
-#if !defined(SOL_510_ABOVE)
-	printf("\t%08x vfs_nsubmounts\n", vfs->vfs_nsubmounts);
-#endif
 }
 #endif
 

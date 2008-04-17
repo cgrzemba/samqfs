@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 #
 
 #  INPUT OPTIONS
@@ -549,9 +549,7 @@ verbose /bin/uname -a
 #  Issue a warning if the patch isn't there; otherwise echo the full patch id.
 #
 SOL_VER=`/bin/uname -r | cut -c1-5`
-if [ $SOL_VER = "5.9" ]; then
-	NEEDED="NONE"
-elif [ $SOL_VER = "5.10" ]; then
+if [ $SOL_VER = "5.10" ]; then
 	NEEDED="NONE"
 elif [ $SOL_VER = "5.11" ]; then
 	NEEDED="NONE"
@@ -912,33 +910,19 @@ fi
 
 echo "------------------- threadlist of running system ----" >>$REPORT
 if [ $USERID -eq 0 ]; then
-	if [ $SOL_VER = "5.9" ]; then
-		echo '=n"---- date/time ----"
-			time/y
-			lbolt/K
-			=n"---- utsname ----"
-			$<utsname
-			=n"---- sam_version/sam_build_uname ----"
-			sam_version/s
-			sam_build_uname/s
-			=n"---- threadlist ----"
-			$<threadlist
-			=n"---- sam_ mdb end ----"' | /bin/mdb -k 2>&1 | head -$MDB_LINES >> $REPORT 2>&1
-	else
-		echo '=n"---- date/time ----"
-			time/y
-			lbolt/K
-			=n"---- utsname ----"
-			utsname::print
-			=n"---- sam_version/sam_build_uname ----"
-			sam_version/s
-			sam_build_uname/s
-			=n"---- threadlist ----"
-			::threadlist -v
-			=n"---- function call args ----"
-			::walk thread | ::findstack ".$c6"
-			=n"---- sam_ mdb end ----"' | /bin/mdb -k 2>&1 | head -$MDB_LINES >> $REPORT 2>&1
-	fi
+	echo '=n"---- date/time ----"
+		time/y
+		lbolt/K
+		=n"---- utsname ----"
+		utsname::print
+		=n"---- sam_version/sam_build_uname ----"
+		sam_version/s
+		sam_build_uname/s
+		=n"---- threadlist ----"
+		::threadlist -v
+		=n"---- function call args ----"
+		::walk thread | ::findstack ".$c6"
+		=n"---- sam_ mdb end ----"' | /bin/mdb -k 2>&1 | head -$MDB_LINES >> $REPORT 2>&1
 else
 	rerun_as_root threadlist
 fi
@@ -1469,53 +1453,29 @@ if [ -n "$dumpdir" ]; then
 		VM_SOL_VER=`/bin/file $vmcore | cut -d" " -f2`
 		# Only process vmcores that match the running Solaris release.
 		if [ $SOL_VER = $VM_SOL_VER ]; then
-			if [ $SOL_VER = "5.9" ]; then
-				echo '=n"---- date/time ----"
-					time/y
-					lbolt/K
-					=n"---- utsname ----"
-					$<utsname
-					=n"---- sam_version/sam_build_uname ----"
-					sam_version/s
-					sam_build_uname/s
-					=n"---- panic string ----"
-					*panicstr/s
-					=n"----panic_regs/2K----"
-					panic_regs/2K
-					=n"---- stack traceback ----"
-					$c
-					=n"---- stack traceback verbose----"
-					$C
-					=n"---- message buffer ----"
-					$<msgbuf
-					=n"---- threadlist ----"
-					$<threadlist
-					=n"---- sam_ mdb end ----"' | mdb -k $unix $vmcore 2>&1 | head -$MDB_LINES >>$REPORT 2>&1
-			else
-				echo '=n"---- date/time ----"
-					time/y
-					lbolt/K
-					=n"---- utsname ----"
-					utsname::print
-					=n"---- sam_version/sam_build_uname ----"
-					sam_version/s
-					sam_build_uname/s
-					=n"---- panic string ----"
-					*panicstr/s
-					=n"----panic_regs/2K----"
-					panic_regs/2K
-					=n"---- stack traceback ----"
-					$c
-					=n"---- stack traceback verbose----"
-					$C
-					=n"---- message buffer ----"
-					$<msgbuf
-					=n"---- threadlist ----"
-					::threadlist -v
-					=n"---- function call args ----"
-					::walk thread | ::findstack ".$c6"
-					=n"---- sam_ mdb end ----"' | mdb -k $unix $vmcore 2>&1 | head -$MDB_LINES >>$REPORT 2>&1
-			fi
+			echo '=n"---- date/time ----"
+				time/y
+				lbolt/K
+				=n"---- utsname ----"
+				utsname::print
+				=n"---- sam_version/sam_build_uname ----"
+				sam_version/s
+				sam_build_uname/s
+				=n"---- panic string ----"
+				*panicstr/s
+				=n"----panic_regs/2K----"
+				panic_regs/2K
+				=n"---- stack traceback ----"
+				$c
+				=n"---- stack traceback verbose----"
+				$C
+				=n"---- message buffer ----"
+				$<msgbuf
+				=n"---- threadlist ----"
+				::threadlist -v
+				=n"---- function call args ----"
+				::walk thread | ::findstack ".$c6"
+				=n"---- sam_ mdb end ----"' | mdb -k $unix $vmcore 2>&1 | head -$MDB_LINES >>$REPORT 2>&1
 		fi
 	done
 fi

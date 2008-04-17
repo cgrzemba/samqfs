@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.248 $"
+#pragma ident "$Revision: 1.249 $"
 #endif
 
 #include "sam/osversion.h"
@@ -63,6 +63,7 @@
 #include <sys/file.h>
 #include <sys/flock.h>
 #include <nfs/lm.h>
+#include <sys/policy.h>
 #endif /* sun */
 
 #ifdef linux
@@ -93,15 +94,10 @@
 #include <asm/system.h>
 #endif /* linux */
 
-#if defined(SOL_510_ABOVE)
-#include <sys/policy.h>
-#endif
-
 /*
  * ----- SAMFS Includes
  */
 
-#include "cred.h"
 #include <sam/types.h>
 #include <sam/syscall.h>
 #include <sam/shareops.h>
@@ -566,11 +562,7 @@ sam_client_lookup_name(
 	 * Check DNLC first.
 	 */
 	error = 0;
-#if defined(SOL_510_ABOVE)
 	if ((vp = dnlc_lookup(SAM_ITOV(pip), cp))) {
-#else
-	if ((vp = dnlc_lookup(SAM_ITOV(pip), cp, NOCRED))) {
-#endif
 		sam_node_t *ip;
 
 		/*
@@ -813,11 +805,7 @@ sam_get_client_ino(
 	}
 	if (error == 0) {
 		*ipp = ip;
-#if defined(SOL_510_ABOVE)
 		dnlc_update(SAM_ITOV(pip), cp, SAM_ITOV(ip));
-#else
-		dnlc_update(SAM_ITOV(pip), cp, SAM_ITOV(ip), NOCRED);
-#endif
 		sam_directed_actions(ip, irec->sr_attr.actions,
 		    irec->sr_attr.offset,
 		    credp);

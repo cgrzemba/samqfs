@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 
 #include "sam/osversion.h"
 
@@ -61,14 +61,10 @@
 #include <sys/fs_subr.h>
 #include <sys/panic.h>
 #include <vm/seg_map.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "sam/types.h"
 #include "sam/mount.h"
 
@@ -76,7 +72,6 @@
 #include "license/license.h"
 #endif	/* METADATA_SERVER */
 
-#include "cred.h"
 #include "samfs.h"
 #include "inode.h"
 #include "mount.h"
@@ -100,23 +95,7 @@ static int sam_open_vfs_operation(sam_mount_t *mp);
  * Operations supported on virtual file system.
  */
 
-#if defined(SOL_510_ABOVE)
 vfsops_t *samfs_vfsopsp;
-#else
-struct vfsops samfs_vfsops = {
-	samfs_mount,			/* vfs_mount */
-	samfs_umount,			/* vfs_umount */
-	samfs_root,				/* vfs_root */
-	samfs_statvfs,			/* vfs_statvfs */
-	samfs_sync,				/* vfs_sync */
-	samfs_vget,				/* vfs_vget */
-	fs_nosys,				/* vfs_mountroot */
-	fs_nosys,				/* vfs_swapvp */
-	samfs_freevfs			/* vfs_freevfs */
-};
-
-vfsops_t *samfs_vfsopsp = &samfs_vfsops;
-#endif
 
 
 /*
@@ -152,17 +131,6 @@ samfs_mount(
 	 */
 	if (samgt.fstype == 0) {
 		cmn_err(CE_WARN, "SAM-QFS: init incomplete, mount failed");
-#if !defined(SOL_510_ABOVE)
-		cmn_err(CE_WARN,
-		    "SAM-QFS: "
-		    "This mount failure may be caused by a "
-		    "Solaris 32/64 change");
-		cmn_err(CE_WARN,
-		    "SAM-QFS: Reinstalling SUNWsamfsr/SUNWsamfsu "
-		    "or SUNWqfsr/SUNWqfsu packages,");
-		cmn_err(CE_WARN,
-		    "SAM-QFS: or else boot -r should correct");
-#endif
 		return (EFAULT);
 	}
 
@@ -350,20 +318,11 @@ samfs_mount(
 	 */
 	if (pp->flags & MS_RDONLY) {
 		vfsp->vfs_flag |= VFS_RDONLY;
-#if defined(SOL_510_ABOVE)
 		vfs_setmntopt(vfsp, MNTOPT_RO, NULL, 0);
-#else
-		vfs_setmntopt(&vfsp->vfs_mntopts, MNTOPT_RO, NULL, 0);
-#endif
 	}
 
 	if (pp->flags & MS_NOSUID) {
-#if defined(SOL_510_ABOVE)
 		vfs_setmntopt(vfsp, MNTOPT_NOSUID, NULL, 0);
-#else
-		vfsp->vfs_flag |= VFS_NOSUID;
-		vfs_setmntopt(&vfsp->vfs_mntopts, MNTOPT_NOSUID, NULL, 0);
-#endif
 	}
 
 	if (!SAM_IS_STANDALONE(mp)) {
@@ -752,26 +711,6 @@ done:
 	mutex_exit(&samgt.global_mutex);
 	return (error);
 }
-
-#if !defined(SOL_510_ABOVE)
-size_t
-strlcat(char *dst, char *src, size_t n)
-{
-	int l, m;
-
-	l = strlen(dst);
-	m = strlen(src);
-	if (l + m < n) {
-		strncpy(&dst[l], src, m);
-		bzero(&dst[l+m], n - (l + m));
-	} else {
-		if (l < n) {
-			strncpy(&dst[l], src, n - l);
-		}
-	}
-	return (l + m);
-}
-#endif
 
 
 /*

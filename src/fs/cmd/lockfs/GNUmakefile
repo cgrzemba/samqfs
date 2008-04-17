@@ -1,4 +1,4 @@
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 
 #    SAM-QFS_notice_begin
 #
@@ -34,7 +34,7 @@ PROG = lockfs
 PROG_SRC = lockfs.c
 
 INCFLAGS = -I../../include -I../../include/$(OBJ_DIR) -I$(INCLUDE)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(DEBUGCDEFS)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)
 
 LIBSO = $(LIBSO_OPT) /usr/lib/fs/samfs
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \

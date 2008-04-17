@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.119 $"
+#pragma ident "$Revision: 1.120 $"
 
 #define	SAM_INIT
 
@@ -116,9 +116,7 @@ struct sam_debug_statistics sam_debug_stats;
 static kstat_t *sam_debug_kstats;
 #endif
 
-#if defined(SOL_510_ABOVE)
 static int samfs_init10(int fstype, char *name);
-#endif
 static int samfs_init(struct vfssw *vfsswp, int fstype);
 static void sam_clean_ino(void);
 static void sam_init_ino(void);
@@ -155,15 +153,13 @@ sam_delete_sharefs_rpc_item_cache(void)
 
 /* ----- samioc (syscall) data. */
 static int samioc_id = 0;		/* Id returned from modunload() */
+
 /* Set sam_syscall address and lock */
 static void (*samioc_link)(void *) = NULL;
-
 
 /* ----- vfsops contains the vfs entry points - defined in sam/vfsops.c. */
 /* ----- vnodeops contains the vnode entry points - defined in sam/vnops.c. */
 /* ----- and sam/clvnops.c. */
-
-#if defined(SOL_510_ABOVE)
 
 extern vfsops_t	*samfs_vfsopsp;
 
@@ -190,10 +186,6 @@ extern struct vnodeops *samfs_vnode_staleopsp;
  */
 extern const fs_operation_def_t samfs_client_vnode_staleops_template[];
 extern struct vnodeops *samfs_client_vnode_staleopsp;
-
-#else
-extern struct vfsops samfs_vfsops;
-#endif
 
 
 /*
@@ -239,7 +231,6 @@ static mntopts_t samfs_mntopts = {
 	mntopts
 };
 
-#if defined(SOL_510_ABOVE)
 
 static vfsdef_t samfs_vfsdef = {
 	VFSDEF_VERSION,
@@ -249,23 +240,6 @@ static vfsdef_t samfs_vfsdef = {
 	&samfs_mntopts
 };
 
-#else
-/*
- * ---- Filesystem type switch table, vfssw, contains, in addition to the
- *		pointer to vfsops, the routines that support the loading and
- *		unloading of the sam filesystem.
- */
-
-
-static struct vfssw samfs_vfssw  = {
-	"samfs",			/* type name string */
-	samfs_init,			/* (*vsw_init)() */
-	&samfs_vfsops,		/* filesystem operations vector */
-	VSW_HASPROTO,
-	&samfs_mntopts
-};
-#endif
-
 
 /* ----- Module linkage information for the kernel.  */
 
@@ -273,11 +247,7 @@ extern	struct	mod_ops	mod_fsops;
 static struct modlfs modlfs = {
 	&mod_fsops,		/* type of module.  This is a file system */
 	samfs_fsid,		/* "Storage & Archiving Mgmt FS" */
-#if defined(SOL_510_ABOVE)
 	&samfs_vfsdef,		/* vfs def table */
-#else
-	&samfs_vfssw,		/* filesystem switch table */
-#endif
 };
 
 static struct modlinkage modlinkage = {
@@ -485,7 +455,6 @@ _info(struct modinfo *modinfop)
 }
 
 
-#if	defined(SOL_510_ABOVE)
 static int
 samfs_init10(int fstype, char *name)
 {
@@ -545,7 +514,6 @@ samfs_init10(int fstype, char *name)
 	}
 	return (samfs_init(NULL, fstype));
 }
-#endif
 
 /* ARGSUSED */
 static int
@@ -670,18 +638,6 @@ sam_init_ino(void)
 {
 	sam_ihead_t *hip;
 	int	i;
-
-#if !defined(SOL_510_ABOVE)
-
-	/*
-	 * If we've been compiled for a kernel version
-	 * that doesn't have a vnode cache then we'll
-	 * create and initialize our own.
-	 */
-
-	sam_vn_create_cache();
-
-#endif	/* SOL_510_ABOVE */
 
 	/*
 	 * Find suitable values for ninodes and nhino.

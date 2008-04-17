@@ -1,4 +1,4 @@
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 
 #    SAM-QFS_notice_begin
 #
@@ -50,10 +50,6 @@ COMMON_SRCS = common_subr.c extent.c setdau.c
 
 ifeq ($(PLATFORM), sparc)
 SPARC_INLINE = ../include/sparc.il
-endif
-
-ifeq ($(OS_REVISION), 5.9)
-SRCS2 += list_sol9.c
 endif
 
 INCFLAGS = -I../include -I../include/$(OBJ_DIR) -I$(DEPTH)/include/pub/$(OBJ_DIR) -D_KERNEL -D_SYSCALL32 $(PROD_BUILD) $(SPARC_INLINE)

@@ -25,7 +25,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.11 $"
+#pragma ident	"$Revision: 1.12 $"
 #endif
 
 #include <sys/systm.h>
@@ -1162,12 +1162,7 @@ lqfs_disable(vnode_t *vp, struct fiolog *flp)
 	 * Logging is already disabled; done
 	 */
 	if (LQFS_GET_LOGBNO(fs) == 0 || LQFS_GET_LOGP(qfsvfsp) == NULL) {
-#if defined(SOL_510_ABOVE)
 		vfs_setmntopt(qfsvfsp->vfs_vfs, MNTOPT_NOLOGGING, NULL, 0);
-#else
-		vfs_setmntopt(&qfsvfsp->vfs_vfs->vfs_mntopts, MNTOPT_NOLOGGING,
-		    NULL, 0);
-#endif /* defined(SOL_510_ABOVE) */
 		return (0);
 	}
 
@@ -1273,12 +1268,7 @@ lqfs_disable(vnode_t *vp, struct fiolog *flp)
 #else
 	/* QFS doesn't do this yet. */
 #endif /* LQFS_TODO_LOCKFS */
-#if defined(SOL_510_ABOVE)
 	vfs_setmntopt(qfsvfsp->vfs_vfs, MNTOPT_NOLOGGING, NULL, 0);
-#else
-	vfs_setmntopt(&qfsvfsp->vfs_vfs->vfs_mntopts, MNTOPT_NOLOGGING,
-	    NULL, 0);
-#endif /* defined(SOL_510_ABOVE) */
 	vfs_unlock(qfsvfsp->vfs_vfs);
 
 	LQFS_SET_FS_ROLLED(fs, FS_ALL_ROLLED);
@@ -1365,11 +1355,7 @@ lqfs_enable(struct vnode *vp, struct fiolog *flp, cred_t *cr)
 	if (LQFS_GET_LOGP(qfsvfsp)) {
 		flp->error = FIOLOG_ETRANS;
 		/* for root ensure logging option is set */
-#if defined(SOL_510_ABOVE)
 		vfs_setmntopt(vfsp, MNTOPT_LOGGING, NULL, 0);
-#else
-		vfs_setmntopt(&vfsp->vfs_mntopts, MNTOPT_LOGGING, NULL, 0);
-#endif /* defined(SOL_510_ABOVE) */
 		return (0);
 	}
 
@@ -1400,11 +1386,7 @@ recheck:
 
 	if (ul && LQFS_GET_LOGBNO(fs) &&
 	    (flp->nbytes_actual == ul->un_requestsize)) {
-#if defined(SOL_510_ABOVE)
 		vfs_setmntopt(vfsp, MNTOPT_LOGGING, NULL, 0);
-#else
-		vfs_setmntopt(&vfsp->vfs_mntopts, MNTOPT_LOGGING, NULL, 0);
-#endif /* defined(SOL_510_ABOVE) */
 		return (0);
 	}
 
@@ -1546,11 +1528,7 @@ recheck:
 	 *		Start the reclaim thread, if necessary
 	 *	Thaw readers
 	 */
-#if defined(SOL_510_ABOVE)
 	vfs_setmntopt(vfsp, MNTOPT_LOGGING, NULL, 0);
-#else
-	vfs_setmntopt(&vfsp->vfs_mntopts, MNTOPT_LOGGING, NULL, 0);
-#endif /* defined(SOL_510_ABOVE) */
 
 	TRANS_DOMATAMAP(qfsvfsp);
 	TRANS_MATA_MOUNT(qfsvfsp);

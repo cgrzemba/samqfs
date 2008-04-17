@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -53,14 +53,14 @@
 #undef DEVICE_DEFAULTS
 #include "sam/defaults.h"
 
-#ifndef linux
+#ifdef sun
 #include "aml/robots.h"
 #else
 	/*
 	 * Lifted from robots.h
 	 */
 #define	INITIAL_MOUNT_TIME	30
-#endif /* linux */
+#endif /* sun */
 
 #include "sam/lib.h"
 #include "sam/names.h"

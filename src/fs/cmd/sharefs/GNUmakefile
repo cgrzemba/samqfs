@@ -1,4 +1,4 @@
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 
 #    SAM-QFS_notice_begin
 #
@@ -34,12 +34,12 @@ PROG = sharefs
 PROG_SRC = sharefs.c
 
 INCFLAGS =  -I ../../include -I $(DEPTH)/include/pub -I$(INCLUDE)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(EFI_SUPPORT) $(METADATA_SERVER) $(DEBUGCDEFS) $(THRCOMP)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(THRCOMP)
 
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L../../lib/$(OBJ_DIR) -lfscmd \
 			-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut \
-			$(DYNAMIC_OPT) $(SYSEVENT_LIBS) $(LIBSO) -ladm -ldl
+			$(DYNAMIC_OPT) -lsysevent -lnvpair $(LIBSO) -ladm -ldl
 
 LNOPTS = -anmusx -Dlint
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

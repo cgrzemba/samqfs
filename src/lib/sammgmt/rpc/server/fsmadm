@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-# ident	$Id: fsmadm,v 1.12 2008/03/17 14:43:51 am143972 Exp $
+# ident	$Id: fsmadm,v 1.13 2008/04/17 18:26:12 ta129963 Exp $
 #
 # fsmadm:
 # This script is used to start, stop, restart and get status of the
@@ -41,7 +41,6 @@
 # restart	Restart daemon (do not modify inittab)
 # config -n	Remove any inittab settings for daemon
 # config -a	Configure inittab to start daemon on everytime it dies
-# config -b	Configure inittab to start daemon on a system boot
 # status        shows File System Manager version and configuration status
 #
 #
@@ -142,12 +141,6 @@ usage_detail_samfs() {
 	$ECHO "config -a\tStart File System Manager daemon"
 	$ECHO "\t\tAuto-restart daemon everytime it dies"
 	$ECHO
-	# For Solaris 10, config -b is not available
-	if [ $SOLREV -eq 9 ]; then
-		$ECHO "config -b\tStart File System Manager daemon"
-		$ECHO "\t\tAuto-restart daemon at system reboot only"
-		$ECHO
-	fi
 	#
 	$ECHO "status\t\tDisplay config info for File System Manager daemon"
 	$ECHO
@@ -373,31 +366,17 @@ start_mgmtrpcd() {
 
 		return 1
 	else
-		if [ $SOLREV -ge 10 ]; then
-			# using smf
-			# solaris 10: automated restart of daemon uses smf
-			service=`$SVCS | /usr/bin/grep $SAMMGMT_SERVICE_NAME`
-			if [ "${service}" = "" ]; then
-				$ECHO "SAM-QFS daemon is not configured to auto-restart"
-				$ECHO
-				$ECHO "To enable the auto-restart feature"
-				$ECHO "stop the daemon and then use fsmadm config -a"
-				$ECHO
-			fi
-
-		else
-			# for sol 8, 9
-			inittab_entry_exists
-
-			if [ $? == 2 ]; then
-
-				$ECHO "SAM-QFS daemon is not configured to auto-restart"
-				$ECHO
-				$ECHO "To enable the auto-restart feature"
-				$ECHO "stop the daemon and then use fsmadm config -a"
-				$ECHO
-			fi
+		# using smf
+		# solaris 10: automated restart of daemon uses smf
+		service=`$SVCS | /usr/bin/grep $SAMMGMT_SERVICE_NAME`
+		if [ "${service}" = "" ]; then
+			$ECHO "SAM-QFS daemon is not configured to auto-restart"
+			$ECHO
+			$ECHO "To enable the auto-restart feature"
+			$ECHO "stop the daemon and then use fsmadm config -a"
+			$ECHO
 		fi
+
 	fi
 
 	return 0
@@ -460,11 +439,9 @@ case "$1" in
 	else
 
 		$ECHO "File System Manager daemon is running"
-		if [ $SOLREV -ge 10 ]; then
-			status=`$SVCS -H -o state $SAMMGMT_SERVICE_NAME`
-			if [ $status != "" ]; then
-				$ECHO "Service State: $status"
-			fi
+		status=`$SVCS -H -o state $SAMMGMT_SERVICE_NAME`
+		if [ $status != "" ]; then
+			$ECHO "Service State: $status"
 		fi
 		$ECHO
 		$FSMGMTD -v
@@ -475,14 +452,8 @@ case "$1" in
 	$ECHO
 
 	# for Solaris 10, use svccfg and svcadm
-	if [ $SOLREV -ge 10 ]; then
-			service_cfg_exists
-			autocfg=$?
-	else
-		# for Solaris 9, parse the File System Manager entry in $INITTAB
-		inittab_entry_exists
-		autocfg=$?
-	fi
+	service_cfg_exists
+	autocfg=$?
 
 	case $autocfg in
 
@@ -557,14 +528,8 @@ case "$1" in
 	killproc fsmgmtd
 
 	# for Solaris 10, use svccfg and svcadm
-	if [ $SOLREV -ge 10 ]; then
-		service_cfg_exists
-		autocfg=$?
-	else
-		# for Solaris 9, parse the File System Manager entry in $INITTAB
-		inittab_entry_exists
-		autocfg=$?
-	fi
+	service_cfg_exists
+	autocfg=$?
 
 	case $autocfg in
 
@@ -603,15 +568,9 @@ case "$1" in
 	# Stop the daemon
 	killproc fsmgmtd
 
-	if [ $SOLREV -ge 10 ]; then
-		service_cfg_exists
-		autocfg=$?
-	else
-		# for Solaris 9, parse the File System Manager entry in $INITTAB
-		inittab_entry_exists
-		autocfg=$?
-	fi
-	# if respawn entry exists in /etc/inittab, or in svcs (solaris 10)
+	service_cfg_exists
+	autocfg=$?
+	# if respawn entry exists in svcs
 	# then init will restart the daemon
 
 	if [ $autocfg != 0 ]; then
@@ -654,95 +613,17 @@ case "$1" in
 		#####################################################
 
 			# for solaris 10, the enable/disable is done using smf
-			if [ $SOLREV -ge 10 ]; then
-				$ECHO "Disabling auto-restart feature for File System Manager daemon"
-				$SVCADM disable $SAMMGMT_SERVICE_NAME
-#				$SVCCFG delete $SAMMGMT_SERVICE_NAME
-				$ECHO
-				$ECHO "Stopping File System Manager daemon"
-			else
-
-				inittab_entry_exists
-
-				case $? in
-				0)
-					# init will also stop the daemon
-
-					$ECHO "Disabling auto-restart feature for File System Manager daemon"
-					$ECHO
-					$ECHO "Stopping File System Manager daemon"
-					$ECHO
-
-					remove_from_inittab
-					;;
-				1)
-					$ECHO "Disabling auto-restart feature for File System Manager daemon"
-					$ECHO
-					remove_from_inittab
-					# stop the daemon
-
-					is_mgmtrpcd_running
-					if [ $? == 0 ]; then
-						killproc fsmgmtd
-					fi
-					;;
-				*)
-					# stop the daemon
-
-					is_mgmtrpcd_running
-					if [ $? == 0 ]; then
-						killproc fsmgmtd
-					fi
-					;;
-				esac
-			fi
+			$ECHO "Disabling auto-restart feature for File System Manager daemon"
+			$SVCADM disable $SAMMGMT_SERVICE_NAME
+#			$SVCCFG delete $SAMMGMT_SERVICE_NAME
+			$ECHO
+			$ECHO "Stopping File System Manager daemon"
 			# Update /opt/SUNWsamfs/.fsmgmtd with fsmgmt state
 			# config -n : OFF
 			# config -a : ALL
-			# config -b : BOOT
 			echo "OFF" > /opt/SUNWsamfs/.fsmgmtd
 			;;
 
-		b)
-			if [ $SOLREV -ge 10 ]; then
-				# break
-				$ECHO "Option is not supported on Solaris 10"
-				exit 1
-			fi
-		#####################################################
-		# Start File System Manager and enable auto-restart at system boot
-		#####################################################
-
-			respawn_entry_exists
-			if [ $? == 0 ]; then
-
-				$ECHO "File System Manager daemon is configured to"
-				$ECHO
-				$ECHO "Stopping File System Manager daemon"
-				$ECHO "auto-restart everytime the daemon dies"
-				$ECHO
-				$ECHO "Use 'fsmadm config -n' to first disable"
-				$ECHO "that feature and then use this option"
-
-				exit 1
-			fi
-			# no entry found in /etc/inittab
-			add_to_inittab $BOOT_ENTRY
-			if [ $? == 0 ]; then
-				$ECHO "File System Manager daemon is configured to auto-restart at system reboot"
-
-			# Update /opt/SUNWsamfs/.fsmgmtd with fsmgmt state
-			# config -b : BOOT
-			echo "BOOT" > /opt/SUNWsamfs/.fsmgmtd
-
-			fi
-
-			# Start the daemon
-			is_mgmtrpcd_running
-			if [ $? != 0 ]; then
-				start_mgmtrpcd
-			fi
-			;;
 		a)
 		#####################################################
 		# Start File System Manager and enable auto-restart (respawn)
@@ -771,17 +652,11 @@ case "$1" in
 				exit 1
 			fi
 
-			if [ $SOLREV -ge 10 ]; then
-
-				$SVCCFG import $SAMMGMT_CFG_FILE
-				if [ $? == 0 ]; then
-					$SVCADM enable $SAMMGMT_SERVICE_NAME
-				fi
-				status=$?
-			else
-				add_to_inittab $RESPAWN_ENTRY
-				status=$?
+			$SVCCFG import $SAMMGMT_CFG_FILE
+			if [ $? == 0 ]; then
+				$SVCADM enable $SAMMGMT_SERVICE_NAME
 			fi
+			status=$?
 
 			if [ $status == 0 ]; then
 				$ECHO "File System Manager daemon is configured to auto-restart everytime the daemon dies"

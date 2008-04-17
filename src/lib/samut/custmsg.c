@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 
 /*
  * static char *_SrcFile = __FILE__;$* Using __FILE__ makes duplicate strings
@@ -71,10 +71,10 @@
 #include "sam/defaults.h"
 
 /* Solaris sysevent (SNMP) headers */
-#if SAM_SYSEVENT_AVAILABLE
+#ifdef sun
 #include <libsysevent.h>
 #include <libnvpair.h>
-#endif	/* SAM_SYSEVENT_AVAILABLE */
+#endif	/* sun */
 
 #if defined(lint)
 #include "sam/lint.h"
@@ -113,7 +113,7 @@ static char *getMsg(int msgNum);
 static char *sendMsg(int msgNum, char *msg);
 static void samCatopen(void);
 
-#if SAM_SYSEVENT_AVAILABLE
+#ifdef sun
 static pthread_mutex_t sam_flood_events_mutex = PTHREAD_MUTEX_INITIALIZER;
 static sam_defaults_t *defaults = NULL;	/* snmp support is on/off? */
 /*
@@ -145,7 +145,7 @@ static struct event {
 
 static int get_index(int msgnum, struct event e[]);
 
-#endif	/* SAM_SYSEVENT_AVAILABLE */
+#endif	/* sun */
 
 /*
  * Initialize syslog(), if running as daemon.
@@ -159,9 +159,9 @@ CustmsgInit(
 	notifyFunc = notifyFunc_a;
 	samCatopen();
 	logMode = logMode_a;
-#if SAM_SYSEVENT_AVAILABLE
+#ifdef sun
 	defaults = (sam_defaults_t *)GetDefaults();
-#endif	/* SAM_SYSEVENT_AVAILABLE */
+#endif	/* sun */
 }
 
 
@@ -646,7 +646,7 @@ PostEvent(
  */
 {
 
-#if SAM_SYSEVENT_AVAILABLE
+#ifdef sun
 
 	sysevent_id_t eid;	/* pointer to a system unique identifier */
 	nvlist_t *attr_list;	/* name-value pair associated with event */
@@ -773,16 +773,16 @@ PostEvent(
 	}
 	return (err);
 
-#else	/* SAM_SYSEVENT_AVAILABLE */
+#else	/* sun */
 	sam_syslog(errortype, "%s %s %d %s", class, subclass, msgnum, msg);
 	/* sysevent support not available */
 	return (0);
-#endif	/* SAM_SYSEVENT_AVAILABLE */
+#endif	/* sun */
 
 }
 
 
-#if SAM_SYSEVENT_AVAILABLE
+#ifdef sun
 static int
 get_index(int msgnum, struct event e[])
 {
@@ -800,7 +800,7 @@ get_index(int msgnum, struct event e[])
 	}
 	return (-1);
 }
-#endif	/* SAM_SYSEVENT_AVAILABLE */
+#endif	/* sun */
 
 
 #if defined(TEST)

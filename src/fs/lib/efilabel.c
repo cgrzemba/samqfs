@@ -32,9 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
-
-#if SAM_EFI_AVAILABLE
+#pragma ident "$Revision: 1.12 $"
 
 #include <sys/efi_partition.h>
 #include <dlfcn.h>
@@ -110,21 +108,4 @@ void
 call_efi_free(struct dk_gpt *efi_vtoc)
 {
 	(*efi_free_func) (efi_vtoc);
-}
-
-#endif /* SAM_EFI_AVAILABLE */
-
-/*
- * ----- efi_available
- *  Returns 1 if EFI is available.  Otherwise, returns 0.
- */
-int
-efi_available(void)
-{
-#if SAM_EFI_AVAILABLE
-	return (1);		/* SAM EFI is available */
-#else
-	return (0);		/* SAM EFI is not available */
-#endif /* SAM_EFI_AVAILABLE */
-
 }

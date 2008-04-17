@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.147 $"
+#pragma ident "$Revision: 1.148 $"
 
 #include "sam/osversion.h"
 
@@ -58,19 +58,14 @@
 #include <sys/lockfs.h>
 #include <sys/mode.h>
 #include <vm/pvn.h>
-
 #include <nfs/nfs.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
 #include "sam/types.h"
 #include "sam/fioctl.h"
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "rwio.h"
@@ -570,13 +565,11 @@ sam_setattr_ino(
 	int issync;
 	int trans_size;
 	int dotrans = 0;
-#if defined(SOL_510_ABOVE)
 	vattr_t oldva;
 
 	oldva.va_mode = ip->di.mode;
 	oldva.va_uid = ip->di.uid;
 	oldva.va_gid = ip->di.gid;
-#endif
 
 	vp = SAM_ITOV(ip);
 	if (vap->va_mask & AT_NOSET) {
@@ -596,14 +589,12 @@ sam_setattr_ino(
 	}
 
 	/*
-	 * Solaris 10 generic setattr security policy check.
+	 * Generic setattr security policy check.
 	 */
-#if defined(SOL_510_ABOVE)
 	if (error = secpolicy_vnode_setattr(credp, vp, vap,
 	    &oldva, flags, sam_access_ino_ul, ip)) {
 		return (error);
 	}
-#endif
 	/*
 	 * Start LQFS setattr transaction
 	 */
@@ -625,13 +616,6 @@ sam_setattr_ino(
 	mask = vap->va_mask;
 
 	if (mask & AT_SIZE) {		/* -----Change size */
-#if !defined(SOL_510_ABOVE)
-		if (vp->v_type == VDIR) {
-			error = EISDIR;	/* Cannot change size of a directory */
-			goto out;
-		}
-		error = sam_access_ino(ip, S_IWRITE, TRUE, credp);
-#endif
 		if (error == 0) {
 			/* Can only truncate a regular file */
 			if (S_ISREQ(ip->di.mode)) {
@@ -661,12 +645,6 @@ sam_setattr_ino(
 	}
 
 	if (mask & AT_MODE) {				/* -----Change mode */
-#if !defined(SOL_510_ABOVE)
-		if ((credp->cr_uid != ip->di.uid) && !suser(credp)) {
-			error = EPERM;
-			goto out;
-		}
-#endif
 		/* Cannot change .inodes file */
 		if (ip->di.id.ino == SAM_INO_INO) {
 			error = EPERM;
@@ -675,17 +653,6 @@ sam_setattr_ino(
 		oldmode = ip->di.mode;
 		ip->di.mode &= S_IFMT;
 		ip->di.mode |= vap->va_mode & ~S_IFMT;
-#if !defined(SOL_510_ABOVE)
-		if (credp->cr_uid != 0) {
-			if ((ip->di.mode & S_ISVTX) && (vp->v_type != VDIR)) {
-				ip->di.mode &= ~S_ISVTX;
-			}
-			if ((ip->di.mode & S_ISGID) &&
-			    (!groupmember((uid_t)ip->di.gid, credp))) {
-				ip->di.mode &= ~S_ISGID;
-			}
-		}
-#endif
 		if (ip->di.status.b.worm_rdonly) {
 			if (!S_ISDIR(ip->di.mode)) {
 				ip->di.mode &= ~WMASK;
@@ -737,12 +704,10 @@ sam_setattr_ino(
 	if (mask & (AT_UID | AT_GID)) {		/* -----Change uid/gid */
 		int ouid, ogid;
 
-#if defined(SOL_510_ABOVE)
 		if (vap->va_mask & AT_MODE) {
 			ip->di.mode = (ip->di.mode & S_IFMT) |
 			    (vap->va_mode & ~S_IFMT);
 		}
-#endif
 		/*
 		 * To change file ownership, a process must have
 		 * privilege if:
@@ -757,23 +722,11 @@ sam_setattr_ino(
 		    (rstchown &&
 		    (((mask & AT_UID) && vap->va_uid != ip->di.uid) ||
 		    ((mask & AT_GID) && !groupmember(vap->va_gid, credp))))) {
-#if defined(SOL_510_ABOVE)
 			error = secpolicy_vnode_owner(credp, vap->va_uid);
 			if (error) {
-#else
-			if (!suser(credp)) {
-				error = EPERM;
-#endif
 				goto out;
 			}
 		}
-
-#if !defined(SOL_510_ABOVE)
-		if ((ip->di.mode & (S_ISUID | S_ISGID)) &&
-		    (!suser(credp))) {
-			ip->di.mode &= ~(S_ISUID | S_ISGID);
-		}
-#endif
 
 		ouid = ip->di.uid;
 		ogid = ip->di.gid;
@@ -791,18 +744,6 @@ sam_setattr_ino(
 	}
 
 	if (mask & (AT_ATIME | AT_MTIME)) {	/* -----Modify times */
-#if !defined(SOL_510_ABOVE)
-		if ((credp->cr_uid != ip->di.uid) && (crgetuid(credp) != 0)) {
-			if (flags & ATTR_UTIME) {
-				error = EPERM;
-				goto out;
-			}
-			if ((error = sam_access_ino(ip, S_IWRITE,
-			    TRUE, credp))) {
-				goto out;
-			}
-		}
-#endif
 		/*
 		 * Synchronously flush pages so dates do not get changed after
 		 * utime.  If staging, finish stage and then flush pages.

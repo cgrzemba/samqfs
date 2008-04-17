@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -158,8 +158,6 @@ sam_vtoc_part_count(
 	return (0);
 }
 
-#if SAM_EFI_AVAILABLE
-
 /*
  * ----- sam_fd_efi_get - Get device EFI VTOC information
  */
@@ -207,5 +205,3 @@ sam_efi_part_count(
 	*count = eip->efi_nparts;
 	return (0);
 }
-
-#endif /* SAM_EFI_AVAILABLE */

@@ -41,7 +41,7 @@
 #define	_SAM_FS_CLIENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.72 $"
+#pragma ident "$Revision: 1.73 $"
 #endif
 
 #ifdef	linux
@@ -244,11 +244,6 @@ typedef struct sam_cl_flock {
 	int32_t nfs_lock;	/* Set if nfs lock */
 	sam_share_flock_t flock;
 } sam_cl_flock_t;
-
-#if !defined(SOL_510_ABOVE)
-#define	SAM_CREDSIZE (sizeof (cred_t) + (NGROUPS_MAX_DEFAULT-1)*sizeof (gid_t))
-#endif
-
 
 /* ----- Client forward outstanding message chain structure. */
 

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -138,7 +138,7 @@ setSocket(
 	int size;
 	extern int errno;
 
-#ifndef	KSTR_VOP_READ
+#ifdef linux
 	size = sizeof (sam_san_max_message_t) * 2;
 	if ((msg = (sam_san_max_message_t *)valloc(size)) == NULL) {
 		errno = 0;
@@ -153,7 +153,7 @@ setSocket(
 		return (-1);
 	}
 #endif	/* LOCK_BUFFERS */
-#endif	/* !KSTR_VOP_READ */
+#endif	/* linux */
 
 	strncpy(rdsock.fs_name, fs, sizeof (rdsock.fs_name));
 	strncpy(rdsock.hname, host, sizeof (rdsock.hname));
@@ -169,7 +169,7 @@ setSocket(
 		error = errno;
 	}
 
-#ifndef	KSTR_VOP_READ
+#ifdef linux
 #if LOCK_BUFFERS
 	if (munlock((char *)msg, size) != 0) {
 		SysError(HERE, "FS %s: munlock[setSocket] failed", fs);
@@ -179,7 +179,7 @@ setSocket(
 #endif	/* LOCK_BUFFERS */
 
 	free(msg);
-#endif	/* !KSTR_VOP_READ */
+#endif	/* linux */
 	return (error);
 }
 

@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.279 $"
+#pragma ident "$Revision: 1.280 $"
 
 #include "sam/osversion.h"
 
@@ -1017,11 +1017,7 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 			}
 		}
 	}
-#if defined(SOL_510_ABOVE)
 	crfree(credp);
-#else
-	kmem_free(credp, SAM_CREDSIZE);
-#endif
 	return (error);
 }
 
@@ -2317,11 +2313,7 @@ sam_client_allocate_append(sam_node_t *ip, sam_san_message_t *msg)
 				}
 				offset += size;
 			}
-#if defined(SOL_510_ABOVE)
 			crfree(credp);
-#else
-			kmem_free(credp, SAM_CREDSIZE);
-#endif
 			l2p->irec.sr_attr.actions |= SR_STALE_INDIRECT;
 			l2p->irec.sr_attr.offset = dp->offset;
 			ip->flags.b.updated = 1;
@@ -2778,11 +2770,7 @@ lost_it:
 		error = EPROTO;
 		break;
 	}
-#if defined(SOL_510_ABOVE)
 	crfree(cred);
-#else
-	kmem_free(cred, SAM_CREDSIZE);
-#endif
 	return (error);
 }
 
@@ -3059,11 +3047,7 @@ sam_process_inode_request(
 
 	SAM_CLOSE_OPERATION(ip->mp, error);
 
-#if defined(SOL_510_ABOVE)
 	crfree(cred);
-#else
-	kmem_free(cred, SAM_CREDSIZE);
-#endif
 	return (error);
 }
 
@@ -3734,7 +3718,6 @@ sam_update_cl_attr(
 static cred_t *
 sam_getcred(sam_cred_t *sam_credp)
 {
-#if defined(SOL_510_ABOVE)
 	cred_t *cr;
 
 	if ((unsigned int)(sam_credp->cr_ruid) > MAXUID) {
@@ -3762,22 +3745,6 @@ sam_getcred(sam_cred_t *sam_credp)
 	    sam_credp->cr_sgid);
 	crsetgroups(cr, sam_credp->cr_ngroups, sam_credp->cr_groups);
 	crsetzone(cr, global_zone);
-#else
-	int i;
-	cred_t *cr;
 
-	cr = (cred_t *)kmem_zalloc(SAM_CREDSIZE, KM_SLEEP);
-	cr->cr_ref = sam_credp->cr_ref;
-	cr->cr_uid = sam_credp->cr_uid;
-	cr->cr_gid = sam_credp->cr_gid;
-	cr->cr_ruid = sam_credp->cr_ruid;
-	cr->cr_rgid = sam_credp->cr_rgid;
-	cr->cr_suid = sam_credp->cr_suid;
-	cr->cr_sgid = sam_credp->cr_sgid;
-	cr->cr_ngroups = sam_credp->cr_ngroups;
-	for (i = 0; i < cr->cr_ngroups; i++) {
-		cr->cr_groups[i] = sam_credp->cr_groups[i];
-	}
-#endif
 	return (cr);
 }

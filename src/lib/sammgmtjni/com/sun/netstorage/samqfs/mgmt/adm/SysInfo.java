@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SysInfo.java,v 1.16 2008/03/17 14:43:56 am143972 Exp $
+// ident	$Id: SysInfo.java,v 1.17 2008/04/17 18:26:13 ta129963 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.adm;
 
@@ -90,10 +90,10 @@ public class SysInfo {
     /**
      * @return an array of Strings, each string formatted as follows:
      * PKGINST = SUNWsamfsu
-     *	NAME = Sun SAM-FS and Sun SAM-QFS software Solaris 9 (usr)
+     *	NAME = Sun SAM and Sun SAM-QFS software Solaris 10 (usr)
      * CATEGORY = system
      *	ARCH = sparc
-     * VERSION = 4.3.multidisk REV=debug REV=5.9.2005.01.18
+     * VERSION = 4.6.5 REV=debug REV=5.10.2007.03.12
      * VENDOR = Sun Microsystems Inc.
      *	DESC = Storage and Archive Manager File System
      * PSTAMP = ns-east-6420050118171403

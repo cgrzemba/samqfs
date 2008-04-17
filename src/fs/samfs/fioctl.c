@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.89 $"
+#pragma ident "$Revision: 1.90 $"
 
 #include <sam/osversion.h>
 
@@ -477,12 +477,7 @@ sam_restore_a_file(
 				 * to avoid the sync may forced by VN_RELE()
 				 * below.  Need to replace by VN_HOLD() later.
 				 */
-#if	defined(SOL_510_ABOVE)
 				dnlc_update(pvp, name_str, SAM_ITOV(ip));
-#else
-				dnlc_update(pvp, name_str, SAM_ITOV(ip),
-				    NOCRED);
-#endif
 				link = kmem_alloc(MAXPATHLEN+1, KM_SLEEP);
 
 				ptr = (void *)resp->lp.p32;
@@ -524,11 +519,7 @@ sam_restore_a_file(
 			 * the sync may forced by VN_RELE() below.
 			 * Need to replace by VN_HOLD() later.
 			 */
-#if	defined(SOL_510_ABOVE)
 			dnlc_update(pvp, name_str, SAM_ITOV(ip));
-#else
-			dnlc_update(pvp, name_str, SAM_ITOV(ip), NOCRED);
-#endif
 		}
 	}
 	RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);

@@ -35,16 +35,14 @@
 #define	_SAM_DISK_SHOW_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 #endif
 
-#ifndef linux
+#ifdef sun
 #include <sys/dkio.h>
 #include <sys/vtoc.h>
-#if SAM_EFI_AVAILABLE
 #include <sys/uuid.h>
 #include <sys/efi_partition.h>
-#endif /* SAM_EFI_AVAILABLE */
 
 /* Unrecognized disk type */
 #define	DKC_UNKNOWN_STR		"unknown"
@@ -87,8 +85,6 @@ sam_vpart_id_to_str(unsigned long id, char *strp, int len);
 int
 sam_vpart_pflags_to_str(unsigned long pflags, char *strp, int len);
 
-#if SAM_EFI_AVAILABLE
-
 /* Unrecognized EFI VTOC UID */
 #define	UUID_UNKNOWN_STR	"unknown"
 
@@ -103,8 +99,6 @@ sam_efi_partition_format(struct dk_gpt *eip, int index, sam_format_buf_t *bufp);
 int
 sam_uuid_to_str(struct uuid *uup, char *strp, int len);
 
-#endif /* SAM_EFI_AVAILABLE */
-
-#endif /* linux */
+#endif /* sun */
 
 #endif /* _SAM_DISK_SHOW_H */

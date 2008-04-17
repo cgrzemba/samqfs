@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.153 $"
+#pragma ident "$Revision: 1.154 $"
 #endif
 
 #include "sam/osversion.h"
@@ -61,6 +61,7 @@
 #include <sys/proc.h>
 #include <sys/disp.h>
 #include <sys/mount.h>
+#include <sys/policy.h>
 #endif /* sun */
 
 #ifdef linux
@@ -86,10 +87,6 @@
 /*
  * ----- SAMFS Includes
  */
-
-#if defined(SOL_510_ABOVE)
-#include <sys/policy.h>
-#endif
 
 #ifdef linux
 #include "sam/linux_types.h"
@@ -118,7 +115,6 @@
 #undef st_ctime
 #include "pub/rminfo.h"
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "sam/param.h"

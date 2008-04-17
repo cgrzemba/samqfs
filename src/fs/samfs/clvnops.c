@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.183 $"
+#pragma ident "$Revision: 1.184 $"
 
 #include "sam/osversion.h"
 
@@ -62,10 +62,7 @@
 #include <sys/rwlock.h>
 #include <sys/dnlc.h>
 #include <sys/share.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 #if defined(SOL_511_ABOVE)
 #include <sys/vfs_opreg.h>
@@ -81,14 +78,12 @@
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "sam/param.h"
 #include "sam/types.h"
 #include "sam/samaio.h"
 
 #include "samfs.h"
 #include "ino.h"
-#include "cred.h"
 #include "macros.h"
 #include "inode.h"
 #include "mount.h"
@@ -166,7 +161,7 @@ static int sam_client_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages,
 	caller_context_t *ct);
 
-#elif defined(SOL_510_ABOVE)
+#else
 /*
  * ----- Solaris 10 SAM-QFS shared client vnode function prototypes.
  */
@@ -222,62 +217,6 @@ static int sam_client_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 static int sam_client_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp);
 static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages);
-#else
-/*
- * ----- Solaris 9 SAM-QFS shared client vnode function prototypes.
- */
-static int sam_client_open_vn(vnode_t **vpp, int, cred_t *credp);
-static int sam_client_close_vn(vnode_t *vp, int filemode, int count,
-	offset_t offset, cred_t *credp);
-static int sam_client_read_vn(vnode_t *vp, struct uio *uiop, int ioflag,
-	cred_t *credp);
-static int sam_client_write_vn(vnode_t *vp, struct uio *uiop, int ioflag,
-	cred_t *credp);
-static int sam_client_getattr_vn(vnode_t *vp, struct vattr *vap, int flag,
-	cred_t *credp);
-static int sam_client_setattr_vn(vnode_t *vp, struct vattr *vap, int flag,
-	cred_t *credp);
-static int sam_client_lookup_vn(vnode_t *vp, char *cp, vnode_t **vpp,
-	struct pathname *pnp, int flag, vnode_t *rdir, cred_t *credp);
-static int sam_client_create_vn(vnode_t *vp, char *cp, struct vattr *vap,
-	vcexcl_t ex, int mode, vnode_t **vpp, cred_t *credp, int filemode);
-static int sam_client_remove_vn(vnode_t *pvp, char *cp, cred_t *credp);
-static int sam_client_link_vn(vnode_t *pvp, vnode_t *vp, char *cp,
-	cred_t *credp);
-static int sam_client_rename_vn(vnode_t *opvp, char *omn, vnode_t *npvp,
-	char *nnm, cred_t *credp);
-static int sam_client_mkdir_vn(vnode_t *pvp, char *cp, struct vattr *vap,
-	vnode_t **vpp, cred_t *credp);
-static int sam_client_rmdir_vn(vnode_t *pvp, char *cp, vnode_t *cdir,
-	cred_t *credp);
-static int sam_client_readdir_vn(vnode_t *vp, struct uio *uiop, cred_t *credp,
-	int *eofp);
-static int sam_client_symlink_vn(vnode_t *pvp, char *cp, struct vattr *vap,
-	char *tnm, cred_t *credp);
-static int sam_client_readlink_vn(vnode_t *vp, struct uio *uiop, cred_t *credp);
-static int sam_client_fsync_vn(vnode_t *vp, int filemode, cred_t *credp);
-static int sam_client_frlock_vn(vnode_t *vp, int cmd, sam_flock_t *flp,
-	int flag, offset_t offset, struct flk_callback *fcb, cred_t *credp);
-static int sam_client_space_vn(vnode_t *vp, int cmd, sam_flock_t *flp,
-	int flag, offset_t offset, cred_t *credp);
-static int sam_client_getpage_vn(vnode_t *vp, offset_t offset,
-	sam_size_t length, uint_t *protp, struct page **pglist,
-	sam_size_t plsize, struct seg *segp, caddr_t addr, enum seg_rw rw,
-	cred_t *credp);
-static int sam_client_map_vn(vnode_t *vp, offset_t offset, struct as *asp,
-	caddr_t *addrpp, sam_size_t length, uchar_t prot, uchar_t maxprot,
-	uint_t flags, cred_t *credp);
-static int sam_client_addmap_vn(vnode_t *vp, offset_t offset, struct as *asp,
-	caddr_t a, sam_size_t length, uchar_t prot, uchar_t maxprot,
-	uint_t flags, cred_t *credp);
-static int sam_client_delmap_vn(vnode_t *vp, offset_t offset, struct as *asp,
-	caddr_t a, sam_size_t length, uint_t prot, uint_t maxprot,
-	uint_t flags, cred_t *credp);
-static int sam_client_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
-	cred_t *credp);
-static int sam_client_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
-	cred_t *credp);
-static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages);
 
 #endif	/* SAM-QFS shared client vnode function prototypes */
 
@@ -285,7 +224,6 @@ static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages);
 /*
  * ----- Vnode operations supported on the SAM-QFS shared file system.
  */
-#if defined(SOL_510_ABOVE)
 struct vnodeops *samfs_client_vnodeopsp;
 
 const fs_operation_def_t samfs_client_vnodeops_template[] = {
@@ -412,110 +350,6 @@ const fs_operation_def_t samfs_client_vnode_staleops_template[] = {
 	NULL, NULL
 };
 
-#else
-/*
- * Solaris 9 shared client vnode ops table.
- */
-struct vnodeops samfs_client_vnodeops = {
-	sam_client_open_vn,		/* vnode_open */
-	sam_client_close_vn,		/* vnode_close */
-	sam_client_read_vn,		/* vnode_read */
-	sam_client_write_vn,		/* vnode_write */
-	sam_ioctl_vn,			/* vnode_ioctl */
-	fs_setfl,			/*  */
-	sam_client_getattr_vn,		/* vnode_getattr */
-	sam_client_setattr_vn,		/* vnode_setattr */
-	sam_access_vn,			/* vnode_access */
-	sam_client_lookup_vn,		/* vnode_lookup */
-	sam_client_create_vn,		/* vnode_create */
-	sam_client_remove_vn,		/* vnode_remove */
-	sam_client_link_vn,		/* vnode_link */
-	sam_client_rename_vn,		/* vnode_rename */
-	sam_client_mkdir_vn,		/* vnode_mkdir */
-	sam_client_rmdir_vn,		/* vnode_rmdir */
-	sam_client_readdir_vn,		/* vnode_readdir */
-	sam_client_symlink_vn,		/* vnode_symlink */
-	sam_client_readlink_vn,		/* vnode_readlink */
-	sam_client_fsync_vn,		/* vnode_fsync */
-	sam_inactive_vn,		/* vnode_inactive */
-	sam_fid_vn,			/* vnode_fid */
-	sam_rwlock_vn,			/* vnode_rwlock */
-	sam_rwunlock_vn,		/* vnode_rwunlock */
-	sam_seek_vn,			/* vnode_seek */
-	fs_cmp,				/* vnode_cmp */
-	sam_client_frlock_vn,		/* vnode_frlock */
-	sam_client_space_vn,		/* vnode_space */
-	fs_nosys,			/* vnode_realvp */
-	sam_client_getpage_vn,		/* vnode_getpage */
-	sam_putpage_vn,			/* vnode_putpage */
-	sam_client_map_vn,		/* vnode_map */
-	sam_client_addmap_vn,		/* vnode_addmap */
-	sam_client_delmap_vn,		/* vnode_delmap */
-	fs_poll,			/* vnode_poll */
-	fs_nosys,			/* vnode_dump */
-	sam_pathconf_vn,		/* vnode_pathconf */
-	fs_nosys,			/* vnode_pageio */
-	fs_nosys,			/* vnode_dumpctl */
-	fs_dispose,			/*  */
-	sam_client_setsecattr_vn,	/* vnode_setsecattr */
-	sam_client_getsecattr_vn,	/* vnode_getsecattr */
-	fs_shrlock,			/*  */
-};
-
-struct vnodeops *samfs_client_vnodeopsp = &samfs_client_vnodeops;
-
-/*
- * Solaris 9 shared client vnode ops table for forcibly unmounted FSes.
- */
-struct vnodeops samfs_client_vnode_staleops = {
-	sam_open_stale_vn,			/* EIO */
-	sam_close_stale_vn,			/* vnode_close */
-	sam_read_stale_vn,			/* EIO */
-	sam_write_stale_vn,			/* EIO */
-	sam_ioctl_stale_vn,			/* EIO */
-	fs_setfl,				/*  */
-	sam_getattr_stale_vn,			/* EIO */
-	sam_setattr_stale_vn,			/* EIO */
-	sam_access_stale_vn,			/* EIO */
-	sam_lookup_stale_vn,			/* EIO */
-	sam_create_stale_vn,			/* EIO */
-	sam_remove_stale_vn,			/* EIO */
-	sam_link_stale_vn,			/* EIO */
-	sam_rename_stale_vn,			/* EIO */
-	sam_mkdir_stale_vn,			/* EIO */
-	sam_rmdir_stale_vn,			/* EIO */
-	sam_readdir_stale_vn,			/* EIO */
-	sam_symlink_stale_vn,			/* EIO */
-	sam_readlink_stale_vn,			/* EIO */
-	sam_fsync_stale_vn,			/* EIO */
-	sam_inactive_stale_vn,			/* vnode_inactive */
-	sam_fid_stale_vn,			/* EIO */
-	sam_rwlock_vn,				/* rwlock */
-	sam_rwunlock_vn,			/* rwunlock */
-	sam_seek_stale_vn,			/* EIO */
-	fs_cmp,					/* vnode_cmp */
-	sam_frlock_stale_vn,			/* EIO */
-	sam_space_stale_vn,			/* EIO */
-	fs_nosys,				/* vnode_realvp */
-	sam_getpage_stale_vn,			/* EIO */
-	sam_putpage_vn,				/* vnode_putpage */
-	sam_map_stale_vn,			/* EIO */
-	sam_addmap_stale_vn,			/* EIO */
-	sam_delmap_stale_vn,			/* vnode_delmap */
-	fs_poll,				/* vnode_poll */
-	fs_nosys,				/* vnode_dump */
-	sam_pathconf_stale_vn,			/* EIO */
-	fs_nosys,				/* vnode_pageio */
-	fs_nosys,				/* vnode_dumpctl */
-	fs_dispose,				/*  */
-	sam_setsecattr_stale_vn,		/* EIO */
-	sam_getsecattr_stale_vn,		/* EIO */
-	fs_shrlock,				/*  */
-};
-
-struct vnodeops *samfs_client_vnode_staleopsp = &samfs_client_vnode_staleops;
-#endif
-
 
 #ifdef METADATA_SERVER
 extern struct vnodeops *samfs_vnodeopsp;
@@ -635,11 +469,7 @@ sam_client_open_vn(
 		 *		when the inode was inactive except for holds
 		 *		due to leases.
 		 */
-#if defined(SOL_510_ABOVE)
 		if (!(p->p_proc_flag & P_PR_EXEC)) {
-#else
-		if (!(p->p_flag & SPREXEC)) {
-#endif
 			mutex_enter(&ip->fl_mutex);
 			ip->no_opens++;
 			mutex_exit(&ip->fl_mutex);
@@ -973,19 +803,11 @@ done:
 
 int				/* ERRNO if error, 0 if successful. */
 sam_client_read_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* pointer to vnode. */
 	uio_t *uiop,		/* user I/O vector array. */
 	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
 	cred_t *credp,		/* credentials pointer. */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* pointer to vnode. */
-	uio_t *uiop,		/* user I/O vector array. */
-	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
-	cred_t *credp		/* credentials pointer. */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t *ip;
 	int error = 0;
@@ -1031,11 +853,7 @@ sam_client_read_vn(
 		error = sam_proc_get_lease(ip, &data, NULL, NULL, credp);
 	}
 	if (error == 0) {
-#if defined(SOL_510_ABOVE)
 		error = sam_read_vn(vp, uiop, ioflag, credp, ct);
-#else
-		error = sam_read_vn(vp, uiop, ioflag, credp);
-#endif
 	}
 	if (using_lease) {
 		mutex_enter(&ip->ilease_mutex);
@@ -1059,19 +877,11 @@ sam_client_read_vn(
 
 int				/* ERRNO if error, 0 if successful. */
 sam_client_write_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* pointer to vnode. */
 	uio_t *uiop,		/* user I/O vector array. */
 	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
 	cred_t *credp,		/* credentials pointer. */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* pointer to vnode. */
-	uio_t *uiop,		/* user I/O vector array. */
-	int ioflag,		/* file I/O flags (/usr/include/sys/file.h). */
-	cred_t *credp		/* credentials pointer. */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t *ip;
 	int error = 0;
@@ -1170,11 +980,7 @@ sam_client_write_vn(
 		/* XXX - Do we need to check again for writing past EOF? */
 	}
 	if (error == 0) {
-#if defined(SOL_510_ABOVE)
 		error = sam_write_vn(vp, uiop, ioflag, credp, ct);
-#else
-		error = sam_write_vn(vp, uiop, ioflag, credp);
-#endif
 	}
 	if (using_lease) {
 		mutex_enter(&ip->ilease_mutex);
@@ -1312,19 +1118,11 @@ sam_client_getattr_vn(
 /* ARGSUSED4 */
 int				/* ERRNO if error, 0 if successful. */
 sam_client_setattr_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* pointer to vnode. */
 	vattr_t *vap,		/* vattr pointer. */
 	int flags,		/* flags. */
 	cred_t *credp,		/* credentials pointer. */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* pointer to vnode. */
-	vattr_t *vap,		/* vattr pointer. */
-	int flags,		/* flags. */
-	cred_t *credp		/* credentials pointer. */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t *ip;
 	uint_t mask;
@@ -2606,23 +2404,13 @@ out:
 /* ARGSUSED6 */
 int				/* ERRNO if error occurred, 0 if successful. */
 sam_client_space_vn(
-#if defined(SOL_510_ABOVE)
 	vnode_t *vp,		/* vnode entry */
 	int cmd,		/* command */
 	sam_flock_t *flp,	/* flock, used if mandatory lock set */
 	int filemode,		/* filemode flags, see file.h */
 	offset_t offset,	/* offset */
 	cred_t *credp,		/* credentials */
-	caller_context_t *ct	/* caller context pointer. */
-#else
-	vnode_t *vp,		/* vnode entry */
-	int cmd,		/* command */
-	sam_flock_t *flp,	/* flock, used if mandatory lock set */
-	int filemode,		/* filemode flags, see file.h */
-	offset_t offset,	/* offset */
-	cred_t *credp		/* credentials */
-#endif
-)
+	caller_context_t *ct)	/* caller context pointer. */
 {
 	sam_node_t *ip;
 	int error;

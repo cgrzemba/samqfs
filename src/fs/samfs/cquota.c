@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 #include "sam/osversion.h"
 
@@ -63,17 +63,13 @@
 #include <sys/ksynch.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
 #define	__QUOTA_DEFS
 #include "sam/types.h"
 #include "sam/param.h"
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "rwio.h"
@@ -957,17 +953,10 @@ sam_quota_flush(struct sam_quot *qp)
 	iop.uio_resid = sizeof (struct sam_dquot);
 	iop.uio_llimit = SAM_MAXOFFSET_T;
 
-#if defined(SOL_510_ABOVE)
 	sam_rwlock_vn(vp, 1, NULL);
 	OPTRACE(vp, __LINE__, (sam_tr_t)qp, qp->qt_index);
 	error = sam_write_vn(vp, &iop, 0, CRED(), NULL);
 	sam_rwunlock_vn(vp, 1, NULL);
-#else
-	sam_rwlock_vn(vp, 1);
-	OPTRACE(vp, __LINE__, (sam_tr_t)qp, qp->qt_index);
-	error = sam_write_vn(vp, &iop, 0, CRED());
-	sam_rwunlock_vn(vp, 1);
-#endif
 
 	if (error) {
 		cmn_err(CE_WARN,
@@ -1183,15 +1172,9 @@ sam_quota_read_entry(sam_node_t *ip, struct sam_dquot *dqp, int type,
 	iop.uio_llimit = SAM_MAXOFFSET_T;
 	TRACE(T_SAM_QUOTA_READ, SAM_ITOV(ip), 1, type, index);
 
-#if defined(SOL_510_ABOVE)
 	sam_rwlock_vn(vp, 0, NULL);
 	error = sam_read_vn(vp, &iop, 0, CRED(), NULL);
 	sam_rwunlock_vn(vp, 0, NULL);
-#else
-	sam_rwlock_vn(vp, 0);
-	error = sam_read_vn(vp, &iop, 0, CRED());
-	sam_rwunlock_vn(vp, 0);
-#endif
 
 	if (error) {
 		cmn_err(CE_WARN,
@@ -1227,15 +1210,9 @@ read_default:
 	iop.uio_llimit = SAM_MAXOFFSET_T;
 	TRACE(T_SAM_QUOTA_READDEF, SAM_ITOV(ip), 1, type, index);
 
-#if defined(SOL_510_ABOVE)
 	sam_rwlock_vn(vp, 0, NULL);
 	error = sam_read_vn(vp, &iop, 0, CRED(), NULL);
 	sam_rwunlock_vn(vp, 0, NULL);
-#else
-	sam_rwlock_vn(vp, 0);
-	error = sam_read_vn(vp, &iop, 0, CRED());
-	sam_rwunlock_vn(vp, 0);
-#endif
 
 	if (error) {
 		cmn_err(CE_WARN,

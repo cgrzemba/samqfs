@@ -44,10 +44,6 @@ static char SccId[] = "@(#) %full_name:  1/csrc/t_cdriver.c/2.1.3 %";
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/syslog.h>
-/*
- * signal.h is required to avoid a duplicate define of SA_RESTART on
- * Solaris 9.
- */
 #include <pthread.h>
 #include <signal.h>
 #include "sam/types.h"

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.119 $"
+#pragma ident "$Revision: 1.120 $"
 #endif
 
 #include "sam/osversion.h"
@@ -58,13 +58,9 @@
 #include <sys/lockfs.h>
 #include <sys/sunddi.h>
 #include <vm/pvn.h>
-
 #include <nfs/nfs.h>
-#endif /* sun */
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
+#endif /* sun */
 
 #ifdef linux
 #include <linux/sched.h>
@@ -103,7 +99,6 @@
 #include "sam/samaio.h"
 #endif /* sun */
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "segment.h"
@@ -139,7 +134,7 @@ extern char *statfs_thread_name;
 #endif /* linux */
 
 
-#if defined(SOL_510_ABOVE)
+#ifdef sun
 /*
  * ---- sam_access_ino_ul
  *
@@ -154,10 +149,8 @@ sam_access_ino_ul(void *vip, int mode, cred_t *credp)
 
 	return (sam_access_ino(ip, mode, TRUE, credp));
 }
-#endif	/* SOL_510_ABOVE */
 
 
-#ifdef sun
 /*
  * ----- sam_access_ino - Get access permissions.
  * Given an inode & mode of access, verify permissions for caller.
@@ -174,9 +167,7 @@ sam_access_ino(
 	boolean_t locked,	/* is ip->inode_rwl held by caller? */
 	cred_t *credp)		/* credentials pointer. */
 {
-#if defined(SOL_510_ABOVE)
 	int shift = 0;
-#endif
 
 	ASSERT(!locked || RW_LOCK_HELD(&ip->inode_rwl));
 
@@ -192,12 +183,6 @@ sam_access_ino(
 			return (EROFS);
 		}
 	}
-
-#if !defined(SOL_510_ABOVE)
-	if (crgetuid(credp) == 0) {
-		return (0);		/* all accesses allowed for root */
-	}
-#endif
 
 	if (!locked) {
 		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
@@ -218,7 +203,6 @@ sam_access_ino(
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 	}
 
-#if defined(SOL_510_ABOVE)
 	if (crgetuid(credp) != ip->di.uid) {
 		shift += 3;
 		if (!groupmember((uid_t)ip->di.gid, credp)) {
@@ -230,24 +214,6 @@ sam_access_ino(
 		return (0);
 	}
 	return (secpolicy_vnode_access(credp, SAM_ITOV(ip), ip->di.uid, mode));
-#else
-	if (crgetuid(credp) != ip->di.uid) {
-		/*
-		 * caller not owner, check group
-		 */
-		mode >>= 3;
-		if (groupmember((uid_t)ip->di.gid, credp) == 0) {
-			/*
-			 * caller not in group, check other
-			 */
-			mode >>= 3;
-		}
-	}
-	if ((ip->di.mode & mode) == mode) {
-		return (0);
-	}
-	return (EACCES);
-#endif
 }
 #endif /* sun */
 

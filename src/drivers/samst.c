@@ -129,7 +129,7 @@
  *	  flags are present at open, then the unit must pass test_unit_ready.
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 
 /*
@@ -316,9 +316,6 @@ static struct cb_ops samst_cb_ops = {
 static int
 samst_info(dev_info_t *dip, ddi_info_cmd_t infocmd, void *arg,
 	void **result);
-#ifndef SOL_510_ABOVE
-static int	samst_identify(dev_info_t *devi);
-#endif
 static int	samst_probe(dev_info_t *devi);
 static int	samst_attach(dev_info_t *devi, ddi_attach_cmd_t cmd);
 static int	samst_detach(dev_info_t *devi, ddi_detach_cmd_t cmd);
@@ -329,11 +326,7 @@ static struct dev_ops samst_ops = {
 	DEVO_REV,		/* devo_rev, */
 	0,			/* refcnt  */
 	samst_info,		/* info */
-#ifdef SOL_510_ABOVE
-	nulldev,		/* no identify in 5.10 */
-#else
-	samst_identify,		/* identify */
-#endif
+	nulldev,		/* no identify routine */
 	samst_probe,		/* probe */
 	samst_attach,		/* attach */
 	samst_detach,		/* detach */
@@ -427,25 +420,6 @@ _info(struct modinfo *modinfop)
 /*
  *	Autoconfiguration Routines
  */
-
-#ifndef SOL_510_ABOVE
-/*
- * identify(9e) - are we the right driver?
- * Called during autoconfiguration to match a found dev_info node with
- * a driver
- */
-static int
-samst_identify(dev_info_t *dip)
-{
-	SAMST_LOG(0, SAMST_CE_DEBUG2, "samst_identify, name = %s\n",
-	    ddi_get_name(dip));
-	if (strcmp(ddi_get_name(dip), "samst") == 0)
-		return (DDI_IDENTIFIED);
-	else
-		return (DDI_NOT_IDENTIFIED);
-}
-#endif
-
 
 /*
  * probe(9e) - Check that we're talking to the right device on the SCSI bus.

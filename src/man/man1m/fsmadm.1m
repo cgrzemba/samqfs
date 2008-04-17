@@ -1,4 +1,4 @@
-." $Revision: 1.6 $
+." $Revision: 1.7 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .nh
 .na
-.TH fsmadm 1M  "27 Apr 2005"
+.TH fsmadm 1M  "17 Apr 2008"
 .SH NAME
 fsmadm \- Starts or stops the \fBfsmgmtd\fR daemon
 .SH SYNOPSIS
@@ -84,48 +84,16 @@ Specify one of the following for \fIarg\fR:
 .TP
 \%\fB-n\fR
 Stops the \%File System Manager daemon.
-In Solaris 9 it disables the automatic restart feature by removing 
-the \%File System Manager entry from \fB/etc/inittab\fR.
-In Solaris 10 the automatic restart feature is controlled using the
+The automatic restart feature is controlled using the
 service management facility (smf(5)). See smf(5) for more information.
 .TP
 \%\fB-a\fR
 Starts the \%File System Manager daemon.
 Configures \fBinit\fR to restart the daemon every time it dies.
-In Solaris 9 this is accomplished by adding a \%File System Manager 
-\fBrespawn\fR entry to \fB/etc/inittab\fR, as follows:
-.sp
-.RS 10
-.nf
-.ft CO
-sfad:3:respawn:/opt/SUNWsamfs/sbin/fsmgmtd
-.fi
-.ft
-.RE
-.RS 10
-
-In Solaris 10 the automatic restart feature is controlled using the
+The automatic restart feature is controlled using the
 service management facility (smf(5)). See smf(5) for more information.
 .RE
 .TP
-\%\fB-b\fR
-Starts the \%File System Manager daemon. In Solaris 9 it
-configures \fBinit\fR to restart the daemon only at system boot
-by adding a \%File System Manager \fBonce\fR entry to \fB/etc/inittab\fR,
-as follows:
-.sp
-.RS 10
-.nf
-.ft CO
-sfad:3:once:/opt/SUNWsamfs/sbin/fsmgmtd
-.fi
-.ft
-.RE
-.RS 10
-
-This option is not available in Solaris 10.
-.RE
-.TP 10
 \fBstatus\fR
 Displays version and configuration information for the \%File System
 Manager daemon if the \%File System Manager daemon is running and if

@@ -37,12 +37,12 @@
 #define	_SAM_UIOCTL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 #endif
 
-#ifndef linux
+#ifdef sun
 #include <sys/ioccom.h>
-#endif	/* linux */
+#endif	/* sun */
 #include <sam/types.h>
 #include <sam/param.h>
 #include <sam/fs/ino.h>

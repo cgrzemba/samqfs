@@ -120,7 +120,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.9 $"
+#pragma ident "$Revision: 1.10 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -447,8 +447,6 @@ sam_vtoc_partition_format(
 }
 
 
-#if SAM_EFI_AVAILABLE
-
 /*
  * ----- sam_efi_format - Format device EFI VTOC information
  */
@@ -583,5 +581,3 @@ sam_efi_partition_format(
 
 	return (0);
 }
-
-#endif /* SAM_EFI_AVAILABLE */

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.89 $"
+#pragma ident "$Revision: 1.90 $"
 
 #include "sam/osversion.h"
 
@@ -922,10 +922,8 @@ sam_pageio(
 	bp->b_dev = cmpdev(bp->b_edev);
 	bp->b_blkno = iop->blkno << SAM2SUN_BSHIFT;
 	bp->b_un.b_addr = (caddr_t)pg_off;
-#if defined(SOL_510_ABOVE)
 	bp->b_file = SAM_ITOP(ip);
 	bp->b_offset = off;
-#endif
 	TRACE(T_SAM_STARTBIO, SAM_ITOV(ip),
 	    (ip->rdev ? (sam_tr_t)bp->b_dev : iop->ord),
 	    iop->blkno, vn_len);

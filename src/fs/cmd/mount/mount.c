@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -394,11 +394,11 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifndef sun
+#ifdef linux
 	gmi.type = GENERIC_SAM_MOUNT_INFO;
 	gmi.len = sizeof (mount_info);
 	gmi.data = (void *)&mount_info;
-#endif /* sun */
+#endif /* linux */
 
 	if (errflag ||
 #ifdef linux

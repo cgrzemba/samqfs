@@ -1,4 +1,4 @@
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 LIB = stkapi 
 LIB_SRC = stk.c stk_wrap.c
 
-DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG $(METADATA_SERVER) $(EFI_SUPPORT) \
+DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG $(METADATA_SERVER) \
 		-I. -I.. -I$(INCLUDE) \
 		-I$(DEPTH)/src/robots/vendor_supplied/stk/src/h $(THRCOMP)
 

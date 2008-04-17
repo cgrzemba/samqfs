@@ -52,7 +52,7 @@
  * contributors.
  */
 
-#pragma ident	"$Revision: 1.6 $"
+#pragma ident	"$Revision: 1.7 $"
 
 /*
  * SAM-QFS umount
@@ -70,9 +70,7 @@
 #include <errno.h>
 #include <sam/osversion.h>
 #include <sam/shareops.h>
-#if defined(SOL_510_ABOVE)
 #include <priv.h>
-#endif
 
 #include <sam/custmsg.h>
 
@@ -144,19 +142,11 @@ main(int argc, char *argv[])
 		exit(RET_ERR);
 	}
 
-#if defined(SOL_510_ABOVE)
 	if (!priv_ineffect(PRIV_SYS_MOUNT)) {
 		/* insufficient privilege */
 		pr_err(GetCustMsg(17401));
 		exit(RET_ERR);
 	}
-#else
-	if (geteuid() != 0) {
-		/* insufficient privilege */
-		pr_err(GetCustMsg(17401));
-		exit(RET_ERR);
-	}
-#endif
 
 	/*
 	 * exit, really

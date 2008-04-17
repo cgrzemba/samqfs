@@ -29,7 +29,7 @@
 #ifndef _MGMT_H
 #define	_MGMT_H
 
-#pragma	ident	"$Revision: 1.63 $"
+#pragma	ident	"$Revision: 1.64 $"
 
 /*
  * mgmt.h - SAMFS APIs for misc operations.
@@ -232,10 +232,10 @@ get_logntrace(ctx_t *ctx, sqm_lst_t **lst);
  *
  * Example (new lines will not be present)
  *  PKGINST = SUNWsamfsu,
- *     NAME = Sun SAM-FS and Sun SAM-QFS software Solaris 9 (usr),
+ *     NAME = Sun SAM and Sun SAM-QFS software Solaris 10 (usr),
  * CATEGORY = system,
  *     ARCH = sparc,
- *  VERSION = 4.3.multidisk REV=debug REV=5.9.2005.01.18,
+ *  VERSION = 4.6.5 REV=debug REV=5.10.2007.03.12,
  *   VENDOR = Sun Microsystems Inc.,
  *   STATUS = completely installed
  *
@@ -278,10 +278,10 @@ get_package_info(ctx_t *ctx, char *packages, sqm_lst_t **);
  *
  * Example (new lines will not be present)
  *  PKGINST = SUNWsamfsu,
- *     NAME = Sun SAM-FS and Sun SAM-QFS software Solaris 9 (usr),
+ *     NAME = Sun SAM and Sun SAM-QFS software Solaris 10 (usr),
  * CATEGORY = system,
  *     ARCH = sparc,
- *  VERSION = 4.3.multidisk REV=debug REV=5.9.2005.01.18,
+ *  VERSION = 4.6.5 REV=debug REV=5.10.2007.03.12,
  *   VENDOR = Sun Microsystems Inc.,
  *   STATUS = completely installed
  *

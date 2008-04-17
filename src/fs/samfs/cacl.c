@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 #include "sam/osversion.h"
 
@@ -51,14 +51,10 @@
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/acl.h>
-
-#if defined(SOL_510_ABOVE)
 #include <sys/policy.h>
-#endif
 
 /* ----- SAMFS Includes */
 
-#include "cred.h"
 #include "inode.h"
 #include "mount.h"
 #include "extern.h"
@@ -73,9 +69,6 @@ static int sam_get_acl_ext_data(sam_node_t *bip, int cnt, sam_acl_t *entp,
 			int dfcnt, sam_acl_t *dfentp);
 
 extern void bcopy(const void *s1, void *s2, size_t n);
-#if !defined(SOL_510_ABOVE)
-extern int  groupmember(gid_t gid, cred_t *cr);
-#endif
 
 
 /*
@@ -211,12 +204,10 @@ sam_acl_access(
 
 out:
 	if (error) {
-#if defined(SOL_510_ABOVE)
 		if (secpolicy_vnode_access(credp,
 		    SAM_ITOV(ip), ip->di.uid, mode) == 0) {
 			return (0);
 		}
-#endif
 		TRACE(T_SAM_CACL_ERR, SAM_ITOV(ip), (int)ip->di.id.ino,
 		    errline, error);
 	}
