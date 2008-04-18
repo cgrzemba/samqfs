@@ -1,4 +1,4 @@
-.\" $Revision: 1.92 $
+.\" $Revision: 1.93 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH mount_samfs 1M "18 Jul 2006"
+.TH mount_samfs 1M "18 Apr 2008"
 .SH NAME
 mount_samfs \- Mounts a Sun StorEdge QFS or \%SAM-QFS file system
 .SH SYNOPSIS
@@ -244,7 +244,7 @@ be in effect if failover capability is required.
 .RE
 .TP 10
 \fBworm_capable\fR
-\fBThe worm_capable option allows Write Once Read Many (WORM) files to
+The \fBworm_capable\fR option allows Write Once Read Many (WORM) files to
 be stored in SAM-QFS filesystems.  Enabling this feature allows the WORM flag
 to be set on files and directories. Once the WORM flag is set, a file's
 data and path are immutable and the file can not be deleted until its
@@ -253,7 +253,7 @@ file resides can not be deleted using sammkfs.  The SAM-QFS WORM package
 (SUNWsamfswm) must be installed to use this feature.
 .TP 10
 \fBworm_lite\fR
-\fBThe worm_lite option is similar to the worm_capable mount option but
+The \fBworm_lite\fR option is similar to the worm_capable mount option but
 eases the restrictions regarding actions that can be taken on WORM-enabled
 volumes and retained files.  WORM lite enabled volumes can be deleted
 using sammkfs.  Retained files can be removed before their retention
@@ -262,7 +262,7 @@ root privileges).  File data and path remain immutable.  The SAM-QFS
 WORM package (SUNWsamfswm) must be installed to use this feature.
 .TP 10
 \fBworm_emul\fR
-\fBThe worm_emul option is similar to the worm_capable mount option and
+The \fBworm_emul\fR option is similar to the worm_capable mount option and
 enables WORM "Emulation mode".  The difference with this option is
 the trigger used to retain files is the transition from a writable to
 read-only file.  File data and path are immutable after appying the WORM
@@ -272,7 +272,7 @@ can not be deleted using sammkfs.   The SAM-QFS WORM package (SUNWsamfswm)
 must be installed to use this feature.
 .TP 10
 \fBemul_lite\fR
-\fBThe emul_lite option is similar to the worm_capable mount option and
+The \fBemul_lite\fR option is similar to the worm_capable mount option and
 enables WORM "Emulation Lite mode".  The trigger to retain files is
 the transition from a writable to read-only file.  Retained files can be
 removed before their retention period expires and their retention period
@@ -282,7 +282,7 @@ volumes can be deleted using sammkfs. The SAM-QFS WORM package (SUNWsamfswm)
 must be installed to use this feature.
 .TP 10
 \fBdef_retention=\fIn\fR
-\fBdef_retention option sets the default retention period.
+The \fBdef_retention\fR option sets the default retention period.
 This option requires the SAM-QFS WORM package (SUNWsamfswm) be installed
 and a WORM mount option enabled.  This option sets the default retention
 period for files which have the WORM feature enabled with no supplied

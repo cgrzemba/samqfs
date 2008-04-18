@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.20 $
+.\" $Revision: 1.21 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -29,7 +29,7 @@
 .na
 .nh
 '\" !tbl | mmdoc
-.TH sam_stat 3 "20 Dec 2007"
+.TH sam_stat 3 "18 Apr 2008"
 .SH NAME
 sam_stat, sam_lstat, sam_segment_stat \- Gets file or segment status
 .SH SYNOPSIS
@@ -235,9 +235,9 @@ l l l.
 \fBuint_t	stage_ahead\fR	Number of segment to stage ahead
 \fBuint_t	admin_id\fR	admin ID; inherited from directory
 \fBuint_t	allocahead\fR	Allocate ahead size set by setfa -A
+\fBu_longlong_t	csum_val[2]\fR	128 checksum value
 \fBuint_t	rperiod_start_time\fR	Time WORM retention period started
 \fBuint_t	rperiod_duration\fR	WORM retention period duration
-\fBu_longlong_t	csum_val[2]\fR	128 checksum value
 .TE
 .PP
 The following list describes Table 2's fields in more detail.
