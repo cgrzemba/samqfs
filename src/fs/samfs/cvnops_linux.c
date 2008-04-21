@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 #endif
 
 #include "sam/osversion.h"
@@ -83,7 +83,6 @@
 #include "macros.h"
 #include "inode.h"
 #include "mount.h"
-#include "arfind.h"
 #include "rwio.h"
 #include "clextern.h"
 

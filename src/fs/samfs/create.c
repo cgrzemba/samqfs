@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.146 $"
+#pragma ident "$Revision: 1.147 $"
 
 #include "sam/osversion.h"
 
@@ -63,6 +63,8 @@
 /*
  * ----- SAMFS Includes
  */
+#include "sam/types.h"
+#include "sam/samevent.h"
 
 #include "inode.h"
 #include "mount.h"
@@ -286,10 +288,17 @@ sam_create_name(
 	}
 	sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
 	/*
-	 * Notify arfind of file/directory.  This triggers the archiving
-	 * of files that are created on the shared clients.
+	 * Notify arfind of file/directory creation. This triggers the
+	 * archiving of files that are created on the shared clients.
 	 */
 	sam_send_to_arfind(ip, AE_create, 0);
+
+	/*
+	 * Notify event daemon of file/directory creation.
+	 */
+	if (operation != SAM_RENAME_LINK) {
+		sam_send_event(ip, ev_create, 0);
+	}
 
 	/*
 	 * Add to the DNLC cache and directory cache.

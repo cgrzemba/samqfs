@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.136 $"
+#pragma ident "$Revision: 1.137 $"
 
 #include "sam/osversion.h"
 
@@ -72,6 +72,7 @@
 #include "sam/types.h"
 #include "sam/fioctl.h"
 #include "sam/samaio.h"
+#include "sam/samevent.h"
 
 #include "samfs.h"
 #include "ino.h"
@@ -294,9 +295,15 @@ sam_close_vn(
 		sam_fsync_vn(vp, FSYNC, credp);
 #endif
 	}
+	/*
+	 * Notify arfind and event daemon of close.
+	 */
 	if (last_close && !arch_close &&
 	    !S_ISDIR(ip->di.mode) && ip->di.id.ino != SAM_INO_INO) {
 		sam_send_to_arfind(ip, AE_close, 0);
+		if (filemode & (FWRITE|FAPPEND|FCREAT|FTRUNC)) {
+			sam_send_event(ip, ev_close, filemode);
+		}
 	}
 
 	/*

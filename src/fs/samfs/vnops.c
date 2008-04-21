@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.152 $"
+#pragma ident "$Revision: 1.153 $"
 
 #include "sam/osversion.h"
 
@@ -77,6 +77,7 @@
 #include "sam/types.h"
 #include "sam/fioctl.h"
 #include "sam/samaio.h"
+#include "sam/samevent.h"
 
 #include "samfs.h"
 #include "ino.h"
@@ -573,9 +574,10 @@ sam_remove_vn(
 		error = sam_remove_name(pip, cp, ip, &name, credp);
 		if (error == 0) {
 			/*
-			 * Notify arfind of removal.
+			 * Notify arfind and event daemon of removal.
 			 */
 			sam_send_to_arfind(ip, AE_remove, 0);
+			sam_send_event(ip, ev_remove, 0);
 		}
 		rmvp = SAM_ITOV(ip);
 	}
@@ -982,9 +984,10 @@ go_fish:
 		error = sam_remove_name(pip, cp, ip, &name, credp);
 		if (error == 0) {
 			/*
-			 * Notify arfind of removal.
+			 * Notify arfind and event daemon of removal.
 			 */
 			sam_send_to_arfind(ip, AE_remove, 0);
+			sam_send_event(ip, ev_remove, 0);
 			rmvp = SAM_ITOV(ip);
 		}
 	}

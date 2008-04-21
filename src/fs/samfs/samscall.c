@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 #include "sam/osversion.h"
 
@@ -73,6 +73,7 @@
 #include "samsanergy/fsmdc.h"
 #include "samsanergy/fsmdcsam.h"
 #include "sam/syscall.h"
+#include "sam/samevent.h"
 
 #include "global.h"
 #include "fsdaemon.h"
@@ -80,8 +81,8 @@
 #include "inode.h"
 #include "ino_ext.h"
 #include "ioblk.h"
-#include "extern.h"
 #include "arfind.h"
+#include "extern.h"
 #include "rwio.h"
 #include "syslogerr.h"
 #include "debug.h"
@@ -204,6 +205,13 @@ sam_priv_sam_syscall(
 		 */
 		case SC_arfind:
 			error = sam_arfind_call(arg, size, credp);
+			break;
+
+		/*
+		 *	Event daemon.
+		 */
+		case SC_event_open:
+			error = sam_event_open(arg, size, credp);
 			break;
 
 		/*

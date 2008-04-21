@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 
 #include "sam/osversion.h"
 
@@ -67,6 +67,7 @@
 
 #include "sam/types.h"
 #include "sam/mount.h"
+#include "sam/samevent.h"
 
 #ifdef METADATA_SERVER
 #include "license/license.h"
@@ -327,8 +328,10 @@ samfs_mount(
 
 	if (!SAM_IS_STANDALONE(mp)) {
 		sam_arfind_init(mp);
+		sam_event_init(mp);
 	} else {
 		mp->mi.m_fsact_buf = NULL;
+		mp->mi.m_fsev_buf = NULL;
 	}
 	mutex_exit(&samgt.global_mutex);
 
@@ -784,6 +787,7 @@ samfs_umount(
 		(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 
 		sam_arfind_umount(mp); /* Tell arfind we're trying to unmount */
+		sam_event_umount(mp);
 	}
 
 	/*
@@ -899,6 +903,7 @@ samfs_umount(
 
 	if (!SAM_IS_STANDALONE(mp)) {
 		sam_arfind_fini(mp);
+		sam_event_fini(mp);
 	}
 
 	/*

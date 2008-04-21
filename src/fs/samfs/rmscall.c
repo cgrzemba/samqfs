@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.87 $"
+#pragma ident "$Revision: 1.88 $"
 
 #include "sam/osversion.h"
 
@@ -89,13 +89,14 @@
 #include "pub/sam_errno.h"
 #include "sam/mount.h"
 #include "sam/syscall.h"
+#include "sam/samevent.h"
 
 #include "global.h"
 #include "inode.h"
 #include "ino_ext.h"
 #include "segment.h"
-#include "extern.h"
 #include "arfind.h"
+#include "extern.h"
 #include "trace.h"
 #include "debug.h"
 #include "qfs_log.h"
@@ -183,7 +184,11 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 						    AR_arch_i;
 					}
 				}
+				/*
+				 * Notify arfind and event daemon of archive.
+				 */
 				sam_send_to_arfind(ip, AE_archive, 0);
+				sam_send_event(ip, ev_archive, 0);
 				}
 				break;
 			case 'n':
@@ -1018,6 +1023,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 	    ((error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip))
 	    == 0)) {
 		int		arfindEvent;
+		enum sam_event_num event;
 		int copy, mask;
 		sam_id_t id[MAX_ARCHIVE];
 
@@ -1027,6 +1033,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 		 * Unlock buffer and return error if nonexistent copy.
 		 */
 		arfindEvent = AE_none;
+		event = ev_none;
 		for (copy = 0, mask = 1; copy < MAX_ARCHIVE;
 		    copy++, mask += mask) {
 
@@ -1121,6 +1128,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 					}
 				}
 				arfindEvent = AE_unarchive;
+				event = ev_unarchive;
 				if (ip->di.version >= SAM_INODE_VERS_2) {
 					if (ip->di.ext_attrs & ext_mva) {
 						brelse(bp);
@@ -1182,6 +1190,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				 */
 				if (arch_status_n == 0) {
 					arfindEvent = AE_unarchive;
+					event = ev_unarchive;
 				}
 				permip->di.arch_status = ip->di.arch_status =
 				    ip->di.arch_status & ~(1 << copy) &
@@ -1238,6 +1247,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				if (ap->flags & SU_archive) {
 					ip->di.ar_flags[copy] |= AR_rearch;
 					arfindEvent = AE_rearchive;
+					event = ev_rearchive;
 				}
 
 				/*
@@ -1272,6 +1282,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				ip->di.ar_flags[copy] |= AR_rearch;
 				ip->di.ar_flags[copy] &= ~AR_verified;
 				arfindEvent = AE_rearchive;
+				event = ev_rearchive;
 				break;
 
 			case OP_unrearch:
@@ -1293,6 +1304,13 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 					ip->di.status.b.archdone = 0;
 					sam_send_to_arfind(ip, arfindEvent,
 					    copy + 1);
+				}
+				if (event != ev_none) {
+					/*
+					 * Notify event daemon of unarchive,
+					 * rearchive.
+					 */
+					sam_send_event(ip, event, copy + 1);
 				}
 			}
 		}

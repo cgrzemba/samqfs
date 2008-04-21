@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.132 $"
+#pragma ident "$Revision: 1.133 $"
 
 #include "sam/osversion.h"
 
@@ -67,6 +67,7 @@
 #include "sam/types.h"
 #include "sam/uioctl.h"
 #include "sam/resource.h"
+#include "sam/samevent.h"
 #include "pub/sam_errno.h"
 #include "pub/rminfo.h"
 
@@ -507,8 +508,12 @@ sam_ioctl_util_cmd(
 				    (pp->c_flags & pp->flags);
 				ip->di.status.b.archdone = 0;
 				ip->flags.b.changed = 1;
+				/*
+				 * Notify arfind and event daemon of rearchive.
+				 */
 				sam_send_to_arfind(ip, AE_rearchive,
 				    pp->copy + 1);
+				sam_send_event(ip, ev_rearchive, pp->copy + 1);
 			} else {
 				error = EINVAL;
 			}

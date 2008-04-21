@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.141 $"
+#pragma ident "$Revision: 1.142 $"
 #endif
 
 #ifdef sun
@@ -262,6 +262,7 @@ typedef struct sam_mt_instance {
 	offset_t	m_high_blk_count; /* HWM: Pt at which releaser strtd */
 	offset_t	m_low_blk_count; /* LWH: FS low water mark */
 #ifdef sun
+	void		*m_fsev_buf;	/* FS event buf for door callout */
 	sam_time_t	m_xmsg_time;	/* Time of last WM transition msg */
 	int		m_xmsg_state;	/* State at last transition message */
 	struct vfs	*m_vfsp;	/* Pointer to vfs entry	*/

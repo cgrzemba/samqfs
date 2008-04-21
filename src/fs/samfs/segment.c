@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 
 #include "sam/osversion.h"
 
@@ -62,6 +62,7 @@
 #include "sam/param.h"
 #include "sam/types.h"
 #include "sam/syscall.h"
+#include "sam/samevent.h"
 
 #include "macros.h"
 #include "sblk.h"
@@ -778,7 +779,7 @@ sam_alloc_segment_ino(
 	bip->di.ext_attrs &= ~ext_mva;
 
 	/*
-	 * Notify arfind of segment index inode change.
+	 * Notify arfind & event daemon of segment index inode change.
 	 * Stale copy 1, and note the modification time in copy 1 creation time.
 	 */
 	if (!(bip->di.ar_flags[0] & AR_stale)) {
@@ -793,12 +794,14 @@ sam_alloc_segment_ino(
 			bdwrite(bp);
 		}
 		sam_send_to_arfind(bip, AE_modify, 0);
+		sam_send_event(bip, ev_modify, 0);
 	}
 
 	/*
-	 * Notify arfind of data segment change.
+	 * Notify arfind & event daemon of data segment change.
 	 */
 	sam_send_to_arfind(ip, AE_modify, 0);
+	sam_send_event(ip, ev_modify, 0);
 
 	ip->di.rm.info.dk.seg.ord = segment_ord; /* Save inode ordinal */
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -1293,9 +1296,10 @@ sam_segment_issue_callback(
 			mutex_exit(&ip->fl_mutex);
 			error = sam_clear_ino(ip, length, cflag, credp);
 			/*
-			 * Notify arfind of removal.
+			 * Notify arfind and event daemon of removal.
 			 */
 			sam_send_to_arfind(ip, AE_remove, 0);
+			sam_send_event(ip, ev_remove, 0);
 			sam_return_this_ino(ip, 1);
 			if (vp->v_count != 0) {
 				dcmn_err((CE_NOTE,

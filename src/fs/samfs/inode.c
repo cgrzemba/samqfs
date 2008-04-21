@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.148 $"
+#pragma ident "$Revision: 1.149 $"
 
 #include "sam/osversion.h"
 
@@ -65,6 +65,7 @@
 
 #include "sam/types.h"
 #include "sam/fioctl.h"
+#include "sam/samevent.h"
 
 #include "inode.h"
 #include "mount.h"
@@ -740,7 +741,11 @@ sam_setattr_ino(
 		ip->di.status.b.archdone = 0;
 		TRANS_INODE(ip->mp, ip);
 		sam_mark_ino(ip, SAM_CHANGED);
+		/*
+		 * Notify arfind and event daemon of setattr.
+		 */
 		sam_send_to_arfind(ip, AE_change, 0);
+		sam_send_event(ip, ev_change, 0);
 	}
 
 	if (mask & (AT_ATIME | AT_MTIME)) {	/* -----Modify times */

@@ -1,4 +1,4 @@
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 
 #    SAM-QFS_notice_begin
 #
@@ -41,7 +41,7 @@ SRCS1 = bio.c cacl.c clcall.c client.c clmisc.c clcomm.c \
 	qfs_log.c qfs_trans.c rwio.c scd.c stage.c syscall.c thread.c \
 	trace.c vfsops.c
 
-SRCS2 = acl.c amld.c arfind.c balloc.c block.c create.c fioctl.c \
+SRCS2 = acl.c amld.c arfind.c balloc.c block.c create.c event.c fioctl.c \
 	ialloc.c inode.c lookup.c quota.c reclaim.c remove.c rename.c \
 	rmedia.c rmscall.c samscall.c san.c segment.c server.c srcomm.c \
 	srmisc.c staged.c truncate.c uioctl.c update.c vnops.c

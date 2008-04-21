@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 #endif
 
 #include "sam/osversion.h"
@@ -84,7 +84,6 @@
 #include "dirent.h"
 #include "debug.h"
 #include "clextern.h"
-#include "arfind.h"
 #include "trace.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
@@ -1053,9 +1052,8 @@ samqfs_put_sblk(struct super_block *lsb)
 
 
 	/*
-	 * Finish cleaning up arfind; close our backing store devices.
+	 * Close our backing store devices.
 	 */
-
 	sam_cleanup_mount(mp, NULL, NULL);
 
 	mutex_enter(&samgt.global_mutex);

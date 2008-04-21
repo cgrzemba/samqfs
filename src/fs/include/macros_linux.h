@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 #endif
 
 #ifdef __KERNEL__
@@ -470,6 +470,7 @@ extern char *nfsd_thread_name;
 #define	sam_start_stop_rmedia(a, b)	do { } while (0)
 #define	sam_mount_setwm_blocks(a)	do { } while (0)
 #define	sam_send_to_arfind(a, b, c)	do { } while (0)
+#define	sam_send_event(a, b, c)		do { } while (0)
 
 #define	sam_get_segment_ino(a, b, c)		(ENOTSUP)
 #define	sam_quota_fonline(a, b, c)		(0)

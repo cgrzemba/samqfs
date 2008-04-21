@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.221 $"
+#pragma ident "$Revision: 1.222 $"
 
 
 #ifndef	_SAM_FS_EXTERN_H
@@ -49,6 +49,7 @@
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/fbuf.h>
+#include "sam/samevent.h"
 #include "mount.h"
 #include "inode.h"
 #include "dirent.h"
@@ -116,6 +117,14 @@ void sam_kill_block(sam_mount_t *mp);
 /* cvnops.c */
 
 int sam_remove_listio(sam_node_t *ip);
+
+/* event.c */
+
+int sam_event_open(void *arg, int size, cred_t *credp);
+void sam_event_init(sam_mount_t *mp);
+void sam_event_fini(sam_mount_t *mp);
+void sam_event_umount(sam_mount_t *mp);
+void sam_send_event(sam_node_t *ip, enum sam_event_num event, ushort_t param);
 
 /* iget.c */
 

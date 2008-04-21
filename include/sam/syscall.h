@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.91 $"
+#pragma ident "$Revision: 1.92 $"
 #endif
 
 #include "sam/types.h"
@@ -130,6 +130,7 @@ typedef enum {
 	SC_get_san_ids = 168,	/* replacement for SC_get_filemap */
 	SC_san_ops = 169,	/* replacement for SC_get_file */
 	SC_store_ops = 170,	/* like SC_san_ops, but on an open file */
+	SC_event_open = 171,	/* takes sam_event_open_arg (sam/samevent.h) */
 	SC_SAM_MAX = 255
 } SC_cmd;
 

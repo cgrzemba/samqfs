@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 
 #include "sam/osversion.h"
 
@@ -59,6 +59,8 @@
 
 /* ----- SAMFS Includes */
 
+#include "sam/types.h"
+#include "sam/samevent.h"
 #include "inode.h"
 #include "mount.h"
 #include "ioblk.h"
@@ -427,7 +429,11 @@ sam_rename_inode(
 			error_line = __LINE__;
 		/* Check possible new archive set */
 		oip->di.status.b.archdone = 0;
+		/*
+		 * Notify arfind and event daemon of file/directory rename.
+		 */
 		sam_send_to_arfind(oip, AE_rename, 0);
+		sam_send_event(oip, ev_rename, 0);
 		goto out15;
 	} else {
 		/*

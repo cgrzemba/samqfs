@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.120 $"
+#pragma ident "$Revision: 1.121 $"
 #endif
 
 #include "sam/osversion.h"
@@ -97,6 +97,7 @@
 #include "sam/types.h"
 #ifdef sun
 #include "sam/samaio.h"
+#include "sam/samevent.h"
 #endif /* sun */
 
 #include "inode.h"
@@ -1201,7 +1202,7 @@ sam_mark_ino(
 
 	/*
 	 * Remove archive copy status. Mark copies stale.
-	 * Notify arfind of changed file (or data segment).
+	 * Notify arfind & event daemon of changed file (or data segment).
 	 * If the WORM bit is enabled we can't do this as we
 	 * will stale archive copies and if the file is off-line
 	 * will inadvertently damage the file.  Further, if the
@@ -1223,6 +1224,7 @@ sam_mark_ino(
 		ip->di.status.b.cs_val = 0;
 		ip->di.status.b.archdone = 0;
 		sam_send_to_arfind(ip, AE_modify, 0);
+		sam_send_event(ip, ev_modify, 0);
 	}
 }
 
