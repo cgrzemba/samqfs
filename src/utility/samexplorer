@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.44 $
+# $Revision: 1.45 $
 #
 
 #  INPUT OPTIONS
@@ -1013,7 +1013,7 @@ if [ -r $ETCDIR/mcf ]; then
 		# listed in mcf(4) man page order
 		#
 		case $eqtype in
-		'ms'|'ma'|'mb'|'moa')
+		'ms'|'ma'|'mb'|'mat')
 			;;
 		'ob')
 			;;

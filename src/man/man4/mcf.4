@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.86 $
+.\" $Revision: 1.87 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -288,7 +288,7 @@ meta devices.
 Metadata resides on these meta devices.
 File data resides on the object storage device(s).
 .TP
-\fBmoa\fR
+\fBmat\fR
 A Sun StorEdge QFS disk cache family set with one or more
 meta devices.  Metadata resides on these meta devices.
 File data resides on the data device(s). This standalone file system
@@ -296,19 +296,19 @@ has no namespace and is only used as the OSD target backing store of an
 \fBob\fP object device in an \fBmb\fP file system.
 .PP
 A maximum of 252 separate magnetic disk devices can be defined for each
-\fBms\fP, \fBma\fP, \fBmb\fP, or \fBmoa\fP disk cache family set.
+\fBms\fP, \fBma\fP, \fBmb\fP, or \fBmat\fP disk cache family set.
 .PP
 The \fBFamily Set\fR field is required for file system disks.
 It is used to define the magnetic disks that make up the family set.
 For a magnetic disk device, the \fBFamily Set\fR field entry must match
-a \fBFamily Set\fR defined on an \fBms\fR, \fBma\fP, \fBmb\fR, or \fBmoa\fR
+a \fBFamily Set\fR defined on an \fBms\fR, \fBma\fP, \fBmb\fR, or \fBmat\fR
 entry.
 .PP
 The keyword \fBshared\fR must be specified in the \fBAdditional
 Parameters\fR field if the file system is a shared file system.
 A \fBshared\fR file system is built by using the \%\fB\-S\fR
 option to the \fBsammkfs\fR(1M) command. The \fBshared\fR option
-is not supported for an \fBmoa\fR file system.
+is not supported for an \fBmat\fR file system.
 For more information on this option, see the \fBsammkfs\fR(1M) man page.
 .PP
 For each disk device, the \fBEquipment Identifier\fR field
@@ -319,36 +319,36 @@ in a shared file system, the keyword \fBnodev\fR must be specified
 in the \fBEquipment Identifier\fR field for the mm devices.
 .PP
 The following equipment types are used to define the disk devices that
-reside within an \fBms\fR, \fBma\fR, \fBmb\fR, or \fBmoa\fR file system:
+reside within an \fBms\fR, \fBma\fR, \fBmb\fR, or \fBmat\fR file system:
 .TP 7
 \fBmm\fR
 A magnetic disk that is part of an
-\fBma\fR, \fBmb\fR, or \fBmoa\fR disk cache family set.
+\fBma\fR, \fBmb\fR, or \fBmat\fR disk cache family set.
 Metadata is allocated on this device.
 At least one \fBmm\fR device is required in an
-\fBma\fR, \fBmb\fR, or \fBmoa\fR file system.
+\fBma\fR, \fBmb\fR, or \fBmat\fR file system.
 .TP
 \fBmd\fR
 A magnetic disk that is part of an
-\fBms\fR, \fBma\fR, or \fBmoa\fR disk cache family set.
+\fBms\fR, \fBma\fR, or \fBmat\fR disk cache family set.
 This device stores file data allocated in small Disk Allocation
 Units (DAUs) of 4 kilobytes and large DAUs of 16, 32, or 64 kilobytes.
 The default is 64 kilobytes.
 In an \fBms\fR family set, this device stores both metadata and file data.
-In an \fBma\fR or \fBmoa\fR family set, this device stores only file data.
+In an \fBma\fR or \fBmat\fR family set, this device stores only file data.
 .TP
 \fBmr\fR
 A magnetic disk that is part of an
-\fBma\fR or \fBmoa\fP disk cache family set.
+\fBma\fR or \fBmat\fP disk cache family set.
 This device stores file data allocated in large Disk Allocation
 Units (DAUs) that are a multiple of 8 kilobytes in a fully adjustable
 range from 8 to 65528 kilobytes.  The default is 64 kilobytes.
 At least one \fBmr\fR device is required in an
-\fBma\fR or \fBmoa\fR file system.
+\fBma\fR or \fBmat\fR file system.
 .TP
 \fBg\fIXXX\fR
 A magnetic disk that is part of an
-\fBma\fR or \fBmoa\fP disk cache family set.
+\fBma\fR or \fBmat\fP disk cache family set.
 The \fIXXX\fR identifies a striped group of devices.
 This device stores file data allocated in a large DAU
 size multiplied by the number of members in the striped group.

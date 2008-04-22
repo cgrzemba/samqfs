@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 
 /* ----- Include Files ---- */
@@ -475,7 +475,7 @@ process_args(
 		if ((mnt_info.params.fi_type == DT_META_OBJ_TGT_SET) &&
 		    shared) {
 			error(1, 0, catgets(catfd, SET, 17261,
-			    "%s: 'moa' filesystem cannot be shared"),
+			    "%s: 'mat' filesystem cannot be shared"),
 			    fs_name);
 		}
 		if (mnt_info.params.fi_type == DT_META_SET ||
@@ -1379,7 +1379,7 @@ iino(void)
 
 	/*
 	 * Build .inodes file for all file system types.
-	 * For the "moa" object target file system, build object inodes --
+	 * For the "mat" object target file system, build object inodes --
 	 * all these object inodes do not have names.
 	 */
 	memset(dcp, 0, mp->mi.m_dau[dt].size[LG]);

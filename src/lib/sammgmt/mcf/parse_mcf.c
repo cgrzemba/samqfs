@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.27 $"
+#pragma ident   "$Revision: 1.28 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -376,7 +376,7 @@ base_dev_t *fam_set_dev)	/* family set for which to check devices */
 			continue;
 		}
 
-		/* check valid ma or moa file system devices. */
+		/* check valid ma or mat file system devices. */
 		if ((fam_set_type == DT_META_SET ||
 		    fam_set_type == DT_META_OBJ_TGT_SET) &&
 		    (!is_stripe_group(dev_type)) &&

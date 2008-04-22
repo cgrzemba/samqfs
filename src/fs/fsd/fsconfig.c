@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.95 $"
+#pragma ident "$Revision: 1.96 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -211,7 +211,7 @@ FsConfig(char *fscfg_name)
 		}
 		if ((mi->params.fi_config1 & MC_SHARED_FS) &&
 		    (mi->params.fi_type == DT_META_OBJ_TGT_SET)) {
-			/* "%s: 'moa' filesystem cannot be shared" */
+			/* "%s: 'mat' filesystem cannot be shared" */
 			FatalError(17261, mi->params.fi_name);
 		}
 		if ((msg = MountCheckParams(&mi->params)) != NULL) {

@@ -40,7 +40,7 @@
 #define	_SAM_DEVNM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 #endif
 
 
@@ -123,7 +123,7 @@ char *dev_nmmd[] = {
 };
 
 char *dev_nmfs[] = {
-	"fs", "ms", "ma", "mb", "moa", "??", "??", "??", NULL
+	"fs", "ms", "ma", "mb", "mat", "??", "??", "??", NULL
 };
 
 /* NOTE: This table must be in synch with the DT_xxx defines in devstat.h */
@@ -146,7 +146,7 @@ dev_nm_t dev_nm2dt[] = {
 	{"ms",  0, DT_DISK_SET },
 	{"ma",  0, DT_META_SET },
 	{"mb",	0, DT_META_OBJECT_SET },
-	{"moa",	0, DT_META_OBJ_TGT_SET },
+	{"mat",	0, DT_META_OBJ_TGT_SET },
 	{"rb",  0, DT_ROBOT },
 	{"rc",  0, DT_LMS4500 },
 	{"ml",  0, DT_DLT2700 },

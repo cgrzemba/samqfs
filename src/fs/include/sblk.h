@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -86,7 +86,7 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
 #define	SAM_OBJ_MAX_MKFS_INO	(32)	/* Max object mkfs I-num */
 
 /*
- * Special Object IDs. Used to access special inodes in the "moa" file system.
+ * Special Object IDs. Used to access special inodes in the "mat" file system.
  */
 #define	SAM_OBJ_LBLK_ID (((uint64_t)SAM_OBJ_LBLK_INO << 32) | SAM_OBJ_LBLK_INO)
 #define	SAM_OBJ_SBLK_ID	(((uint64_t)SAM_OBJ_SBLK_INO << 32) | SAM_OBJ_SBLK_INO)

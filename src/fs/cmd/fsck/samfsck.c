@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 
 /* ----- Includes */
@@ -2323,7 +2323,7 @@ process_inodes()
 			/*
 			 * Make inode an orphan if valid with no parent or
 			 * parent didn't know inode. Skip orphan processing
-			 * for the "moa" file system.
+			 * for the "mat" file system.
 			 */
 			if ((!orphan_full) && (inop->id.ino >= min_usr_inum)) {
 				if ((mnt_info.params.fi_type !=

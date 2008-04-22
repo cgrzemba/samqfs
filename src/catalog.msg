@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.585 $"
+$ pragma ident "$Revision: 1.586 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3072,7 +3072,7 @@ $ From fsd/readmcf.c
 
 $ From fsd/fsconfig.c
 17260 GetFsMountDefs(%s) failed
-17261 %s: 'moa' filesystem cannot be shared
+17261 %s: 'mat' filesystem cannot be shared
 17262 -wS Reconfigure mounted filesystem %s
 17263 Cannot open object device %s
 
