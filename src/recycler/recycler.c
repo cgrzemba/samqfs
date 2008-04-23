@@ -36,7 +36,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.81 $"
+#pragma ident "$Revision: 1.82 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -2881,7 +2881,7 @@ getMultiVsnInfo(
 			error = errno;
 			if (errno != ENOENT) {
 				emit(TO_ALL, LOG_ERR, 5024,
-				    program_name, inode->inode.di.id.ino,
+				    fs_name, inode->inode.di.id.ino,
 				    inode->inode.di.id.gen);
 			}
 			SamFree(vsnp);
