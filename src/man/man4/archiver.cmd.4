@@ -1,4 +1,4 @@
-.\" $Revision: 1.83 $
+.\" $Revision: 1.84 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -874,7 +874,7 @@ archive set named
 If not specified, one drive will be used.
 .RE
 .TP
-.B "-fillvsns"
+.B "-fillvsns" "[" minfill "]"
 The default action of the archiver is to utilize all volumes associated with
 an Archive Set for archiving.  When a group of files is to be archived
 at the same time, a volume with enough space for all the files will be selected
@@ -882,7 +882,22 @@ for use.  This action may cause volumes to not be filled to capacity.
 .RS
 .LP
 Selecting this parameter causes the archiver to attempt to fill volumes by
-separating the group of files into smaller groups.
+separating the group of files into smaller groups.  
+.LP
+The optional
+.I minfill
+parameter specifies the minimum free space that a volume must have in order to
+be included in the above calculation. 
+.I minfill
+is specified as a file size.
+.TP
+Example:
+.ft CO
+-fillvsns 1G
+.LP
+Volumes will be filled until they have less than 1G free space, after which 
+they are considered full.
+.ft
 .RE
 .TP
 .BI "-join " method

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -58,6 +58,8 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/exit.h"
 #include "aml/fifo.h"
 #include "sam/lib.h"
+#include "aml/catalog.h"
+#include "aml/catlib.h"
 
 /* Local headers. */
 #include "archiverd.h"
@@ -1885,6 +1887,35 @@ findRmVolume(
 		volsTried++;
 
 		/*
+		 * Check if volume has less free space then the minimum
+		 * required for fillvsns. If so, mark as full and continue.
+		 */
+		if (fillvsns && vi->VfSpace < as->AsFillvsnsmin) {
+			/* Logical VolId to update catalog. */
+			struct VolId vid;
+			vid.ViFlags = VI_logical;
+			strncpy(vid.ViMtype, vi->VfMtype, sizeof (vid.ViMtype));
+			strncpy(vid.ViVsn, vi->VfVsn, sizeof (vid.ViVsn));
+
+			Trace(TR_QUEUE, "ArchReq %s: Setting %s.%s full,"
+			    " free space (%llu) less than fillvsns (%llu)",
+			    ArchReqName(ar, arname),
+			    vi->VfMtype,
+			    vi->VfVsn,
+			    vi->VfSpace,
+			    as->AsFillvsnsmin);
+
+			/* Mark volume as full */
+			if (CatalogSetField(&vid, CEF_Status,
+			    CES_archfull, CES_archfull) == -1) {
+				Trace(TR_ERR, "Catalog set full failed: %s.%s",
+				    vid.ViMtype,
+				    vid.ViVsn);
+			}
+
+			continue;
+		}
+		/*
 		 * Skip volume if no drives are available for the
 		 * library holding the volume.
 		 */
@@ -1909,6 +1940,7 @@ findRmVolume(
 			 */
 			continue;
 		}
+
 		volsAvail->count++;
 
 		/*

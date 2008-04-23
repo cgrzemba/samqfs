@@ -34,11 +34,11 @@
 #if !defined(_AML_ARCHSET_H)
 #define	_AML_ARCHSET_H
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 /* Macros. */
 #define	ARCHSETS_MAGIC 01222230524	/* Archive sets file magic number */
-#define	ARCHSETS_VERSION 60512		/* Archive sets file version (YMMDD) */
+#define	ARCHSETS_VERSION 80410		/* Archive sets file version (YMMDD) */
 
 #define	ALL_SETS "allsets"		/* Name of defaults archive set */
 #define	NO_ARCHIVE "no_archive"		/* Name of "no_archive" archive set */
@@ -120,6 +120,7 @@ struct ArchSet {
 	fsize_t		AsOvflmin;	/* Minimum archive file size to */
 					/* overflow volume */
 	fsize_t		AsStartSize;	/* Size of ArchReq to start archiving */
+	fsize_t		AsFillvsnsmin;	/* Min space for fillvsns volumes */
 
 	int		AsBufsize;	/* Buffer size * device blksize */
 	int		AsStartCount;	/* Files in ArchReq to */

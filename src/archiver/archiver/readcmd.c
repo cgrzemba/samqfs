@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.108 $"
+#pragma ident "$Revision: 1.109 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -60,6 +60,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/types.h"
 #include "sam/lib.h"
 #include "sam/readcfg.h"
+#include "sam/sam_trace.h"
 
 /* Local headers. */
 #define	NEED_ARCHSET_NAMES
@@ -102,6 +103,7 @@ static void notGlobalDirective(void);
 static void paramsDiskArchive(void);
 static void paramsInvalid(void);
 static void paramsSetfield(void);
+static void paramsSetFillvsns(void);
 static void procParams(void);
 static void procVsnpools(void);
 static void procVsns(void);
@@ -146,6 +148,7 @@ static DirProc_t directives[] = {
 static char dirName[TOKEN_SIZE];
 static char errMsg[256];
 static char token[TOKEN_SIZE];
+static boolean_t peekedToken = FALSE; /* Whether next token looked at. */
 
 static struct ArchSet *as;		/* Current archive set */
 static set_name_t asname;		/* Current archive set name */
@@ -791,6 +794,7 @@ static DirProc_t table[] = {
 	{ "-simread",		paramsInvalid,		DP_other },
 	{ "-tstovfl",		paramsInvalid,		DP_other },
 #endif /* !defined(DEBUG) | defined(lint) */
+	{ "-fillvsns",		paramsSetFillvsns,  DP_other },
 	{ NULL,	paramsSetfield, DP_other }
 };
 	static boolean_t allsets = TRUE;
@@ -827,7 +831,12 @@ static DirProc_t table[] = {
 		}
 	}
 	paramsDefined = FALSE;
-	while (ReadCfgGetToken() != 0) {
+	peekedToken = FALSE;
+	while (peekedToken || ReadCfgGetToken() != 0) {
+		if (peekedToken && token[0] == '\0') {
+			break;
+		}
+		peekedToken = FALSE;
 		strncpy(dirName, token, sizeof (dirName)-1);
 		ReadCfgLookupDirname(dirName, table);
 		if (!allsets && !allsetsCopy &&
@@ -2466,6 +2475,24 @@ paramsSetfield(void)
 		    token, msgFuncSetField) != 0) {
 			ReadCfgError(0, errMsg);
 		}
+	}
+}
+
+static void
+paramsSetFillvsns(void)
+{
+	as->AsEflags |= AE_fillvsns; /* Set fillvsns execution flag. */
+
+	/* Try to use the token value if it isn't a parameter */
+	if (ReadCfgGetToken() != 0 && token[0] != '-') {
+		Trace(TR_DEBUG, "Setting fillvsnsmin, token: %s", token);
+		if (SetFieldValue(as, ArchSet, dirName+1,
+		    token, msgFuncSetField) != 0) {
+			ReadCfgError(0, errMsg);
+		}
+	} else {
+		/* Tell procParams we peeked, but didn't use the token */
+		peekedToken = TRUE;
 	}
 }
 
