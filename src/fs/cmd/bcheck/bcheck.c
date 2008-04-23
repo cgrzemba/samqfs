@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 /* ANSI C headers. */
 #include <stdio.h>
@@ -252,6 +252,8 @@ process_args(int argc, char **argv)
 
 	strcpy(mnt_point, argv[1]);
 
+	/* Initialize samfs syscalls */
+	LoadFS(NULL);
 	if (err = chk_devices(mnt_point, O_RDONLY, &mnt_info)) {
 		return (err);
 	}
