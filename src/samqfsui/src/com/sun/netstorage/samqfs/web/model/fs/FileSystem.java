@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystem.java,v 1.17 2008/03/17 14:43:45 am143972 Exp $
+// ident	$Id: FileSystem.java,v 1.18 2008/04/23 19:58:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -115,5 +115,7 @@ public interface FileSystem extends GenericFileSystem {
         throws SamFSException;
 
     public int getStatusFlag();
+
+    public void setDeviceState(int newState, int [] eqs) throws SamFSException;
 
 }

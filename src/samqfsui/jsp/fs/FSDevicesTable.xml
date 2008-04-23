@@ -27,37 +27,49 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FSDevicesTable.xml,v 1.10 2008/03/17 14:40:33 am143972 Exp $ -->
+<!-- $Id: FSDevicesTable.xml,v 1.11 2008/04/23 19:58:39 ronaldso Exp $ -->
 
 <table>
 
+<actions>
+    <cc name="ButtonEnable"
+	tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="onClick" value="return handleButton(true);"/>
+    </cc>
+    <cc name="ButtonDisable"
+	tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="onClick" value="return handleButton(false);"/>
+    </cc>
+</actions>
+
 <column name="ColumnName" sortname="TextName" >
-    <cc name="TextName" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="TextName"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
 </column>
 
 <column name="ColumnType" sortname="TextType" extrahtml="align='center'">
-  <cc name="TextType" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
-</column>
-
-<column name="ColumnInode" sortname="TextInode"  >
-  <cc name="TextInode" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="TextType"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
 </column>
 
 <column name="ColumnEQ" sortname="TextEQ" >
-    <cc name="TextEQ" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/> 
+    <cc name="TextEQ"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
 </column>
 
-<column name="ColumnCapacity" sortname="TextCapacity" extrahtml="nowrap='nowrap' align='right'">
-    <cc name="TextCapacity" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+<column name="ColumnAlloc" sortname="AllocImage"
+    extrahtml="align='center' nowrap='nowrap' valign='center'">
+    <cc name="ImageAlloc" tagclass="com.sun.web.ui.taglib.html.CCImageTag" />
 </column>
 
-<column name="ColumnFreeSpace" sortname="TextFreeSpace" extrahtml="nowrap='nowrap' align='right'">
-    <cc name="TextFreeSpace" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+<column name="ColumnCapacity" sortname="usageText"
+    extrahtml="align='left' nowrap='nowrap' valign='center'">
+    <cc name="ImageUsageBar" tagclass="com.sun.web.ui.taglib.html.CCImageTag">
+        <attribute name="hspace" value="20" />
+    </cc>
+    <cc name="capacityText"
+        tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
+    <cc name="usageText" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
 </column>
-
-<column name="ColumnConsumed" sortname="TextConsumed" >
-    <cc name="TextConsumed" tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
-</column>
-
 
 </table>

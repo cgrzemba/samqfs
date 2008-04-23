@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevicesViewBean.java,v 1.22 2008/03/17 14:43:33 am143972 Exp $
+// ident	$Id: FSDevicesViewBean.java,v 1.23 2008/04/23 19:58:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -36,7 +36,6 @@ import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBean;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
-import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.archive.CriteriaDetailsViewBean;
 import com.sun.netstorage.samqfs.web.archive.PolicyDetailsViewBean;
 import com.sun.netstorage.samqfs.web.archive.PolicySummaryViewBean;
@@ -44,9 +43,11 @@ import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
+import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCBreadCrumbsModel;
+import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.view.breadcrumb.CCBreadCrumbs;
 import com.sun.web.ui.view.html.CCHref;
 import java.io.IOException;
@@ -75,23 +76,26 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
     public static final String POLICY_DETAILS_HREF   = "PolicyDetailsHref";
     public static final String CRITERIA_DETAILS_HREF = "CriteriaDetailsHref";
 
+    // Page Title Attributes and Components.
+    private CCPageTitleModel pageTitleModel = null;
+
     /**
      * Constructor
      */
     public FSDevicesViewBean() {
         super(PAGE_NAME, DEFAULT_DISPLAY_URL);
         TraceUtil.initTrace();
-        TraceUtil.trace3("Entering");
+
+        pageTitleModel = createPageTitleModel();
         registerChildren();
-        TraceUtil.trace3("Exiting");
     }
 
     /**
      * Register each child
      */
     protected void registerChildren() {
-        TraceUtil.trace3("Entering");
         super.registerChildren();
+        PageTitleUtil.registerChildren(this, pageTitleModel);
         registerChild(CHILD_CONTAINER_VIEW, FSDevicesView.class);
         registerChild(CHILD_BREADCRUMB, CCBreadCrumbs.class);
         registerChild(CHILD_FS_SUM_HREF, CCHref.class);
@@ -100,7 +104,7 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_DETAILS_HREF, CCHref.class);
         registerChild(CRITERIA_DETAILS_HREF, CCHref.class);
-        TraceUtil.trace3("Exiting");
+
     }
 
     /**
@@ -109,20 +113,17 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
      * @return child component
      */
     protected View createChild(String name) {
-
-        TraceUtil.trace3("Entering");
-        if (super.isChildSupported(name)) {
-            TraceUtil.trace3("Exiting");
+        if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
+            return PageTitleUtil.createChild(this, pageTitleModel, name);
+        } else if (super.isChildSupported(name)) {
             return super.createChild(name);
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
-            TraceUtil.trace3("Exiting");
             return new FSDevicesView(this, name);
         } else if (name.equals(CHILD_BREADCRUMB)) {
             CCBreadCrumbsModel model =
                 new CCBreadCrumbsModel("FSDevices.pageTitle");
             BreadCrumbUtil.createBreadCrumbs(this, name, model);
             CCBreadCrumbs child = new CCBreadCrumbs(this, model, name);
-            TraceUtil.trace3("Exiting");
             return child;
         } else if (name.equals(CHILD_FS_SUM_HREF) ||
                    name.equals(CHILD_FS_DET_HREF) ||
@@ -130,7 +131,6 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF)) {
-            TraceUtil.trace3("Exiting");
             return new CCHref(this, name, null);
         } else {
             throw new IllegalArgumentException(
@@ -145,29 +145,22 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
         TraceUtil.trace3("Entering");
 
-        String serverName = (String) getPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
-        FSDevicesView view = (FSDevicesView) getChild(CHILD_CONTAINER_VIEW);
+        String fsName = (String) getPageSessionAttribute(
+            Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        pageTitleModel.setPageTitleText(
+            SamUtil.getResourceString("FSDevices.pageTitle.fsname", fsName));
+    }
 
-        try {
-            view.populateData();
-        } catch (SamFSException ex) {
-            SamUtil.processException(
-                ex,
-                this.getClass(),
-                "FSDevicesViewBean()",
-                "Unable to populate device table",
-                serverName);
-            SamUtil.setErrorAlert(
-                this,
-                CHILD_COMMON_ALERT,
-                "FSDevices.error.failedPopulate",
-                ex.getSAMerrno(),
-                ex.getMessage(),
-                serverName);
+    /**
+     * Create PageTitle Model
+     * @return PageTitleModel
+     */
+    private CCPageTitleModel createPageTitleModel() {
+        if (pageTitleModel == null) {
+            pageTitleModel =
+                PageTitleUtil.createModel("/jsp/fs/FSDevicesPageTitle.xml");
         }
-
-        TraceUtil.trace3("Exiting");
+        return pageTitleModel;
     }
 
     /**

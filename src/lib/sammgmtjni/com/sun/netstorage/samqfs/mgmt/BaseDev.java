@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseDev.java,v 1.9 2008/03/17 14:43:55 am143972 Exp $
+// ident	$Id: BaseDev.java,v 1.10 2008/04/23 19:58:38 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.mgmt;
 
@@ -49,6 +49,7 @@ public class BaseDev {
     public static final int DEV_UNAVAIL = 3; /* Unavailable for file system */
     public static final int DEV_OFF  = 4; /* Off to this machine */
     public static final int DEV_DOWN = 5; /* Maintenance use only */
+    public static final int DEV_NOALLOC = 6; /* Allocation Disabled */
 
     /* private constructors */
     protected BaseDev() {; }

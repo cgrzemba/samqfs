@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseDevice.java,v 1.17 2008/03/17 14:43:52 am143972 Exp $
+// ident	$Id: BaseDevice.java,v 1.18 2008/04/23 19:58:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -41,6 +41,7 @@ public interface BaseDevice {
     public static final int UNAVAILABLE = 3;
     public static final int IDLE = 4;
     public static final int READONLY = 5;
+    public static final int NOALLOC = 6;
 
     // media types
     public static final int MTYPE_SONY_AIT = 101;

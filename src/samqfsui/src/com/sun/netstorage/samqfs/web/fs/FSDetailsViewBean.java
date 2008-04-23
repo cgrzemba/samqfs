@@ -27,13 +27,14 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsViewBean.java,v 1.61 2008/03/17 14:43:33 am143972 Exp $
+// ident	$Id: FSDetailsViewBean.java,v 1.62 2008/04/23 19:58:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBean;
+import com.iplanet.jato.view.event.ChildDisplayEvent;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
@@ -84,12 +85,12 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
     public static final String CHILD_HIDDEN_SERVERNAME = "ServerName";
     public static final String CONFIRM_MESSAGES = "ConfirmMessages";
 
-    public static final String CLUSTER_VIEW = "FSDClusterView";
+    private static final String CLUSTER_VIEW = "FSDClusterView";
+    private static final String SUNPLEX_VIEW = "SunPlexManagerView";
+    private static final String DEVICES_VIEW = "FSDevicesView";
 
     private CCBreadCrumbsModel breadCrumbsModel;
-    private int sharedFlag = 0;
 
-    private static final String SUNPLEX_VIEW = "SunPlexManagerView";
     /**
      * Constructor
      */
@@ -122,6 +123,7 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
         registerChild(CHILD_STATICTEXT, CCStaticTextField.class);
         registerChild(CLUSTER_VIEW, FSDClusterView.class);
         registerChild(SUNPLEX_VIEW, SunPlexManagerView.class);
+        registerChild(DEVICES_VIEW, FSDevicesView.class);
         TraceUtil.trace3("Exiting");
     }
 
@@ -142,6 +144,8 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
             return super.createChild(name);
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
             return new FSDetailsView(this, name);
+        } else if (name.equals(DEVICES_VIEW)) {
+            return new FSDevicesView(this, name);
         } else if (name.equals(CHILD_HIDDEN_SERVERNAME) ||
             name.equals(CONFIRM_MESSAGES)) {
             TraceUtil.trace3("Exiting");
@@ -226,6 +230,15 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
         }
 
         TraceUtil.trace3("Exiting");
+    }
+
+    public boolean beginFSDevicesViewDisplay(ChildDisplayEvent event) {
+        String psaUFS = (String) getPageSessionAttribute("psa_UFS");
+        boolean showBlank =
+            psaUFS == null ?
+                false :
+                Boolean.valueOf(psaUFS).booleanValue();
+        return !showBlank;
     }
 
     /**

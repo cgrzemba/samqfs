@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FS.java,v 1.22 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: FS.java,v 1.23 2008/04/23 19:58:38 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -117,6 +117,8 @@ public class FS {
         throws SamFSException;
     public static native void resetEqOrdinals(Ctx c, String fs, int[] eqs)
         throws SamFSException;
+    public static native void setDeviceState(Ctx c, String fsName, int state,
+        int[] eqs) throws SamFSException;
 
 
     // --------------- generic methods (non-samq specific) -------------------

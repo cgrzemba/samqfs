@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSUtil.java,v 1.55 2008/03/17 14:43:46 am143972 Exp $
+// ident	$Id: SamQFSUtil.java,v 1.56 2008/04/23 19:58:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -801,29 +801,33 @@ public class SamQFSUtil {
 
         switch (uiState) {
 
-        case BaseDevice.ON:
-            jniState = BaseDev.DEV_ON;
-            break;
+            case BaseDevice.ON:
+                jniState = BaseDev.DEV_ON;
+                break;
 
-        case BaseDevice.OFF:
-            jniState = BaseDev.DEV_OFF;
-            break;
+            case BaseDevice.OFF:
+                jniState = BaseDev.DEV_OFF;
+                break;
 
-        case BaseDevice.DOWN:
-            jniState = BaseDev.DEV_DOWN;
-            break;
+            case BaseDevice.DOWN:
+                jniState = BaseDev.DEV_DOWN;
+                break;
 
-        case BaseDevice.UNAVAILABLE:
-            jniState = BaseDev.DEV_UNAVAIL;
-            break;
+            case BaseDevice.UNAVAILABLE:
+                jniState = BaseDev.DEV_UNAVAIL;
+                break;
 
-        case BaseDevice.IDLE:
-            jniState = BaseDev.DEV_IDLE;
-            break;
+            case BaseDevice.IDLE:
+                jniState = BaseDev.DEV_IDLE;
+                break;
 
-        case BaseDevice.READONLY:
-            jniState = BaseDev.DEV_RO;
-            break;
+            case BaseDevice.READONLY:
+                jniState = BaseDev.DEV_RO;
+                break;
+
+            case BaseDevice.NOALLOC:
+                jniState = BaseDev.DEV_NOALLOC;
+                break;
 
         }
 
@@ -838,29 +842,32 @@ public class SamQFSUtil {
 
         switch (jniState) {
 
-        case BaseDev.DEV_ON:
-            uiState = BaseDevice.ON;
-            break;
+            case BaseDev.DEV_ON:
+                uiState = BaseDevice.ON;
+                break;
 
-        case BaseDev.DEV_OFF:
-            uiState = BaseDevice.OFF;
-            break;
+            case BaseDev.DEV_OFF:
+                uiState = BaseDevice.OFF;
+                break;
 
-        case BaseDev.DEV_DOWN:
-            uiState = BaseDevice.DOWN;
-            break;
+            case BaseDev.DEV_DOWN:
+                uiState = BaseDevice.DOWN;
+                break;
 
-        case BaseDev.DEV_UNAVAIL:
-            uiState = BaseDevice.UNAVAILABLE;
-            break;
+            case BaseDev.DEV_UNAVAIL:
+                uiState = BaseDevice.UNAVAILABLE;
+                break;
 
-        case BaseDev.DEV_IDLE:
-            uiState = BaseDevice.IDLE;
-            break;
+            case BaseDev.DEV_IDLE:
+                uiState = BaseDevice.IDLE;
+                break;
 
-        case BaseDev.DEV_RO:
-            uiState = BaseDevice.READONLY;
-            break;
+            case BaseDev.DEV_RO:
+                uiState = BaseDevice.READONLY;
+                break;
+
+            case BaseDev.DEV_NOALLOC:
+                uiState = BaseDevice.NOALLOC;
 
         }
 

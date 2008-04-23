@@ -28,16 +28,16 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetails.jsp,v 1.30 2008/03/17 14:40:33 am143972 Exp $
+// ident	$Id: FSDetails.jsp,v 1.31 2008/04/23 19:58:39 ronaldso Exp $
 --%>
-<%@ page info="Index" language="java" %> 
+<%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <jato:useViewBean className="com.sun.netstorage.samqfs.web.fs.FSDetailsViewBean">
 
 <cc:header
-    pageTitle="FSDetails.pageTitle" 
+    pageTitle="FSDetails.pageTitle"
     copyrightYear="2006"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
@@ -52,6 +52,7 @@
 <script language="javascript" src="/samqfsui/js/fs/cluster.js"></script>
 <script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
 <script language="javascript" src="/samqfsui/js/fs/FSDetails.js"></script>
+<script language="javascript" src="/samqfsui/js/fs/FSDevices.js"></script>
 
 <!-- Form -->
 <jato:form name="FSDetailsForm" method="post">
@@ -59,7 +60,7 @@
 <!-- Bread Crumb componente-->
 <cc:breadcrumbs name="BreadCrumb" bundleID="samBundle" />
 
-<br>
+<br /><br />
 <!-- inline alart -->
 <cc:alertinline name="Alert" bundleID="samBundle" />
 <br>
@@ -67,7 +68,7 @@
 <jato:containerView name="FSDetailsView">
 
 <!-- Page title -->
-<cc:pagetitle name="PageTitle" 
+<cc:pagetitle name="PageTitle"
               bundleID="samBundle"
               pageTitleText="FSDetails.pageTitle"
               showPageTitleSeparator="true"
@@ -76,8 +77,8 @@
 
 
 <!-- PropertySheet -->
-<cc:propertysheet name="PropertySheet" 
-              bundleID="samBundle" 
+<cc:propertysheet name="PropertySheet"
+              bundleID="samBundle"
               showJumpLinks="false"/>
 
 <cc:hidden name="SamfsckHiddenAction" />
@@ -92,15 +93,33 @@
 
 <!-- sunplex manager link -->
 <cc:includepagelet name="SunPlexManagerView"/>
-    
+
 <!-- cluster node list table -->
 <cc:includepagelet name="FSDClusterView"/>
 
 <br>
+<jato:containerView name="FSDevicesView">
+    <!-- Action Table -->
+    <cc:actiontable
+        name="FSDevicesTable"
+        bundleID="samBundle"
+        title="FSDevices.tabletitle"
+        selectionType="multiple"
+        showLowerActions="true"
+        showPaginationControls="true"
+        showPaginationIcon="true"
+        maxRows="25"
+        page="1"/>
+    <cc:hidden name="AllDevices"/>
+    <cc:hidden name="SelectedDevices"/>
+    <cc:hidden name="NoSelectionMsg"/>
+    <cc:hidden name="DisableMsg"/>
+</jato:containerView>
+
 <cc:hidden name="ServerName" />
 <cc:hidden name="ConfirmMessages" />
 
 </jato:form>
 </cc:header>
-</jato:useViewBean> 
+</jato:useViewBean>
 

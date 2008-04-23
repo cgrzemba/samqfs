@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.44 2008/03/17 14:43:49 am143972 Exp $
+// ident	$Id: FileSystemImpl.java,v 1.45 2008/04/23 19:58:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -60,7 +60,6 @@ import com.sun.netstorage.samqfs.web.model.impl.jni.archive.
 import com.sun.netstorage.samqfs.web.model.impl.jni.archive.ArchivePolicyImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.media.DiskCacheImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.media.StripedGroupImpl;
-import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.StripedGroup;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
@@ -823,5 +822,22 @@ public class FileSystemImpl extends GenericFileSystemImpl
     public int getStatusFlag() {
 
         return fsInfo.getStatusFlags();
+    }
+
+    /**
+     * Set a new device state for all the devices with eqs that match one of
+     * the eq in the array of integer
+     *
+     * @param newState
+     * @param eqs
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    public void setDeviceState(int newState, int [] eqs) throws SamFSException {
+
+        FS.setDeviceState(
+            getJniContext(),
+            fsInfo.getName(),
+            SamQFSUtil.convertStateToJni(newState),
+            eqs);
     }
 }

@@ -28,13 +28,16 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevices.jsp,v 1.11 2008/03/17 14:40:33 am143972 Exp $
+// ident	$Id: FSDevices.jsp,v 1.12 2008/04/23 19:58:39 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
-<jato:useViewBean className="com.sun.netstorage.samqfs.web.fs.FSDevicesViewBean">
+<jato:useViewBean
+    className="com.sun.netstorage.samqfs.web.fs.FSDevicesViewBean">
+
+<script language="javascript" src="/samqfsui/js/fs/FSDevices.js"/>
 
 <!-- Define the resource bundle, html, head, meta, stylesheet and body tags -->
 <cc:header
@@ -54,31 +57,30 @@
 
 <cc:alertinline name="Alert" bundleID="samBundle" />
 
-<jato:containerView name="FSDevicesView">
-
-    <cc:pagetitle name="PageTitle" bundleID="samBundle"
-        pageTitleText="FSDevices.title"
+<cc:pagetitle name="PageTitle" bundleID="samBundle"
+        pageTitleText="<insert>"
         showPageTitleSeparator="true"
         showPageButtonsTop="false"
         showPageButtonsBottom="false">
-
-<br>
-
+<br/>
+<jato:containerView name="FSDevicesView">
     <!-- Action Table -->
     <cc:actiontable
         name="FSDevicesTable"
         bundleID="samBundle"
         title="FSDevices.tabletitle"
-        selectionType="none"
+        selectionType="multiple"
         showLowerActions="true"
         showPaginationControls="true"
         showPaginationIcon="true"
         maxRows="25"
         page="1"/>
-
-</cc:pagetitle>
-
+    <cc:hidden name="AllDevices"/>
+    <cc:hidden name="SelectedDevices"/>
+    <cc:hidden name="NoSelectionMsg"/>
+    <cc:hidden name="DisableMsg"/>
 </jato:containerView>
+</cc:pagetitle>
 
 </jato:form>
 </cc:header>

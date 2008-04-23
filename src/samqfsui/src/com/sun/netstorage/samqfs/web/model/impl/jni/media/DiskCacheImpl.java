@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.17 2008/03/17 14:43:50 am143972 Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.18 2008/04/23 19:58:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
@@ -38,6 +38,7 @@ import com.sun.netstorage.samqfs.mgmt.fs.DiskDev;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
+import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 
 
 public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
@@ -52,6 +53,7 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
     private int noOfInodesRemaining = -1;
     private String vendor = new String();
     private String productId = new String();
+    private boolean alloc = false;
 
 
     public DiskCacheImpl() {
@@ -94,8 +96,11 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
             availableSpace = disk.getFreeSpace();
             if (capacity != 0) {
                 consumedSpace = (int) ((capacity-availableSpace)*100/capacity);
-            } else
+            } else {
                 consumedSpace = 0;
+            }
+
+            alloc = super.getState() == BaseDevice.ON;
         }
     }
 
@@ -220,16 +225,15 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
 
 
     public String getVendor() {
-
         return vendor;
-
     }
 
 
     public String getProductId() {
-
         return productId;
-
     }
 
+    public boolean isAlloc() {
+        return alloc;
+    }
 }

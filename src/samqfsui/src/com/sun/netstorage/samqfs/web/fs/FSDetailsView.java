@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.42 2008/03/17 14:43:33 am143972 Exp $
+// ident	$Id: FSDetailsView.java,v 1.43 2008/04/23 19:58:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -288,6 +288,8 @@ public class FSDetailsView extends CommonTableContainerView {
             hasAuthorization(Authorization.FILESYSTEM_OPERATOR)) {
             if (fsType == GenericFileSystem.FS_NONSAMQ) {
                 setUFSOptions(fs);
+                getParentViewBean().
+                    setPageSessionAttribute("psa_UFS", Boolean.toString(true));
             } else if (fsType == GenericFileSystem.FS_QFS ||
                 qfsStandalone ||
                 fsType == GenericFileSystem.FS_SAM &&
@@ -331,7 +333,6 @@ public class FSDetailsView extends CommonTableContainerView {
      * Deal with UFS, ZFS
      */
     protected void setUFSOptions(GenericFileSystem fs) {
-        ((CCButton) getChild("ViewDeviceButton")).setDisabled(true);
         ((CCWizardWindow)
             getChild("SamQFSWizardGrowFSButton")).setDisabled(true);
         ((CCButton) getChild("EditMountOptionsButton")).setDisabled(true);
@@ -378,7 +379,6 @@ public class FSDetailsView extends CommonTableContainerView {
             noDeleteFlag = checkDeleteFlag(fs);
         }
 
-        ((CCButton) getChild("ViewDeviceButton")).setDisabled(false);
         ((CCButton) getChild("EditMountOptionsButton")).setDisabled(false);
 
         if (state == FileSystem.UNMOUNTED && fsShared == FileSystem.UNSHARED) {
@@ -431,8 +431,6 @@ public class FSDetailsView extends CommonTableContainerView {
             // this is for shared fs
             noDeleteFlag = checkDeleteFlag(fs);
         }
-
-        ((CCButton) getChild("ViewDeviceButton")).setDisabled(false);
 
         // disable view policy button if file system is HA
         ((CCButton) getChild("ViewPolicyButton")).setDisabled(fs.isHA());
@@ -761,23 +759,6 @@ public class FSDetailsView extends CommonTableContainerView {
         pageTitleModel.setModel("SamQFSWizardGrowFSButton", growWizWinModel);
         growWizWinModel.setValue(
             "SamQFSWizardGrowFSButton", "FSDetails.button.grow");
-        TraceUtil.trace3("Exiting");
-    }
-
-    /**
-     * Handle request for ViewDeviceButton
-     */
-    public void handleViewDeviceButtonRequest(RequestInvocationEvent event)
-        throws ServletException, IOException {
-
-        TraceUtil.trace3("Entering");
-
-        ViewBean targetView = getViewBean(FSDevicesViewBean.class);
-        ViewBean vb = getParentViewBean();
-        BreadCrumbUtil.breadCrumbPathForward(
-            vb,
-            PageInfo.getPageInfo().getPageNumber(vb.getName()));
-        ((CommonViewBeanBase) vb).forwardTo(targetView);
         TraceUtil.trace3("Exiting");
     }
 
