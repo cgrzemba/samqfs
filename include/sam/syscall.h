@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.92 $"
+#pragma ident "$Revision: 1.93 $"
 #endif
 
 #include "sam/types.h"
@@ -106,6 +106,7 @@ typedef enum {
 	SC_getfsclistat = 123,	/* takes sam_getfsclistat_arg_t */
 	SC_osd_device = 124,	/* takes sam_osd_dev_arg */
 	SC_osd_command = 125,	/* takes sam_osd_cmd_arg */
+	SC_fseq_ord = 126,	/* takes sam_fseq_arg */
 	SC_FS_MAX = 149,
 
 	SC_SAM_MIN = 150,
@@ -247,8 +248,8 @@ struct sam_setfsparam_arg {	/* set filesystem parameter */
 typedef struct {		/* release disk space */
 	equ_t fseq;		/* Family set equipment number */
 	sam_id_t id;		/* status */
-	uint64_t freeblocks;	/* free space after release in blocks */
-				/* of 1024 */
+	uint64_t freeblocks;	/* free space after release in blocks of 1K */
+	int shrink;		/* sam-shrink: release partial if allocated */
 } sam_fsdropds_arg_t;
 
 struct sam_setfsconfig_arg {	/* set filesystem config parameter */
@@ -391,7 +392,8 @@ typedef enum {			/* Parameter command flags. */
 	DK_CMD_add = 3,		/* Add disk eq to grow file system */
 	DK_CMD_remove = 4,	/* Remove disk eq to shrink file system */
 	DK_CMD_release = 5,	/* Release disk eq to evacuate file system */
-	DK_CMD_max = 5
+	DK_CMD_off = 6,		/* Change Noalloc disk to off */
+	DK_CMD_max = 6
 } DK_CMD_param;
 
 struct sam_setfspartcmd_arg {	/* Set filesystem partition command */
@@ -437,6 +439,13 @@ typedef struct sam_osd_cmd_arg {	/* Filesystem osd command args */
 	SAM_POINTER(char) data; /* Data */
 } sam_osd_cmd_arg_t;
 
+typedef struct {		/* inode on ord? */
+	equ_t fseq;		/* Family set equipment number */
+	sam_id_t id;		/* Inode */
+	equ_t eq;		/* Family set equipment number */
+	ushort_t ord;		/* Family set ordinal number */
+	int on_ord;		/* Set if this inode is on specified eq */
+} sam_fseq_arg_t;
 
 #if defined(_SAM_FS_AMLD_H)
 

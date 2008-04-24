@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 #include "sam/osversion.h"
 
@@ -1015,18 +1015,28 @@ sam_drop_call(
 		    "SAM-QFS: %s: Cannot release file:"
 		    " %d.%d, flag=%x ac=%d pid=%d.%d.%d.%d",
 		    mp->mt.fi_name, ip->di.id.ino, ip->di.id.gen,
-		    ip->flags.bits,
-		    ip->arch_count, ip->arch_pid[0], ip->arch_pid[1],
-		    ip->arch_pid[2],
-		    ip->arch_pid[3]));
-	} else if (ip->di.status.b.nodrop || ip->di.status.b.archnodrop ||
-	    ip->flags.b.accessed) {
+		    ip->flags.bits, ip->arch_count, ip->arch_pid[0],
+		    ip->arch_pid[1], ip->arch_pid[2], ip->arch_pid[3]));
+
+	} else if ((args.shrink == 0) &&
+	    (ip->di.status.b.nodrop || ip->di.status.b.archnodrop ||
+	    ip->flags.b.accessed)) {
 		error = EINVAL;
+
 	} else {
+		int bof_online;
+
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		if (args.shrink) {
+			bof_online = ip->di.status.b.bof_online;
+			ip->di.status.b.bof_online = 0;
+		}
 		error = sam_drop_ino(ip, credp);
+		if (args.shrink) {
+			ip->di.status.b.bof_online = bof_online;
+		}
 		RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 	}
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -1038,8 +1048,8 @@ sam_drop_call(
 	mutex_enter(&mp->mi.m_inode.mutex);
 	while (mp->mi.m_next != NULL || mp->mi.m_inode.busy) {
 		mp->mi.m_inode.wait++;
-		if (sam_cv_wait_sig(
-		    &mp->mi.m_inode.get_cv, &mp->mi.m_inode.mutex) == 0) {
+		if (sam_cv_wait_sig(&mp->mi.m_inode.get_cv,
+		    &mp->mi.m_inode.mutex) == 0) {
 			mp->mi.m_inode.wait--;
 			error = EINTR;
 			break;
@@ -1049,7 +1059,9 @@ sam_drop_call(
 	mutex_exit(&mp->mi.m_inode.mutex);
 
 droperr:
-	/* return blks now free */
+	/*
+	 * Return blks now free
+	 */
 	args.freeblocks = mp->mi.m_sbp->info.sb.space;
 	if (size != sizeof (args) ||
 	    copyout((caddr_t)&args, arg, sizeof (args))) {

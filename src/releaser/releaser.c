@@ -68,7 +68,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -712,6 +712,7 @@ release_a_file(struct sam_fs_info *mp, sam_id_t id)
 	dropds_arg.fseq = mp->fi_eq;
 	dropds_arg.id = id;
 	dropds_arg.freeblocks = 0LL;
+	dropds_arg.shrink = 0;
 
 	freeblocks = 0LL;
 	if (release) {

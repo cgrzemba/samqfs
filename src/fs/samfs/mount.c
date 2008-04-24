@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.208 $"
+#pragma ident "$Revision: 1.209 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1240,22 +1240,25 @@ sam_build_allocation_links(
 	if (mp->mi.m_dk_max[disk_type] == 0) {	/* First entry */
 		mp->mi.m_dk_start[disk_type] = (short)i;
 		mp->mi.m_unit[disk_type] = (short)i;
+		mp->mi.m_dk_max[disk_type]++;
 	} else {
 		int ord;
 
-		for (ord = 0; ord < i; ord++) {
-			if (mp->mi.m_fs[ord].num_group == 0) {
+		for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
+			if ((ord == i) ||
+			    (mp->mi.m_fs[ord].num_group == 0) ||
+			    (mp->mi.m_fs[ord].part.pt_state != DEV_ON)) {
 				continue;
 			}
 			if (disk_type == mp->mi.m_fs[ord].dt) {
 				if (mp->mi.m_fs[ord].next_ord == 0) {
 					mp->mi.m_fs[ord].next_ord = i;
+					mp->mi.m_dk_max[disk_type]++;
 					break;
 				}
 			}
 		}
 	}
-	mp->mi.m_dk_max[disk_type]++;
 
 	/*
 	 * Make sure that stripe group elements have adjacent
@@ -1515,6 +1518,14 @@ sam_validate_sblk(
 		if (!ck_meta && (dp->part.pt_type == DT_META) &&
 		    strcmp(dp->part.pt_name, "nodev") == 0) {
 			continue;
+		}
+		if (fs_count != 0) {	/* Processed first device, ord 0 */
+			if (mp->mi.m_fs[i].part.pt_state == DEV_OFF ||
+			    mp->mi.m_fs[i].part.pt_state == DEV_DOWN) {
+				err_line = __LINE__;
+				error = ENOENT;
+				goto setpart2;
+			}
 		}
 		if (dp->opened == 0) {
 			err_line = __LINE__;
@@ -1952,17 +1963,7 @@ sam_unmount_fs(
 	 * Wait for the release block list.
 	 */
 #ifdef	METADATA_SERVER
-	mutex_enter(&mp->mi.m_inode.mutex);
-	while (mp->mi.m_next != NULL) {
-		mutex_enter(&mp->mi.m_inode.put_mutex);
-		cv_signal(&mp->mi.m_inode.put_cv);
-		mutex_exit(&mp->mi.m_inode.put_mutex);
-
-		mp->mi.m_inode.wait++;
-		cv_wait(&mp->mi.m_inode.get_cv, &mp->mi.m_inode.mutex);
-		mp->mi.m_inode.wait--;
-	}
-	mutex_exit(&mp->mi.m_inode.mutex);
+	sam_wait_release_blk_list(mp);
 #endif	/* METADATA_SERVER */
 
 	/*

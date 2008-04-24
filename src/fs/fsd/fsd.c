@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -122,6 +122,9 @@ static struct ChildProc {
 	struct ChildProcEntry {
 		uname_t CpName;			/* process name */
 		upath_t CpFsname;		/* Assoc file system name */
+		char	CpParam1[16];		/* First parameter */
+		char	CpParam2[16];		/* Second parameter */
+		int	CpArgc;			/* Number of arguments */
 		time_t	CpRestartTime;
 		uint32_t CpFlags;
 		pid_t	CpPid;
@@ -316,6 +319,7 @@ main(int argc, char *argv[])
 	MakeDir(SAM_VARIABLE_PATH"/uds");
 #ifdef METADATA_SERVER
 	MakeDir(SAM_VARIABLE_PATH"/sharefsd");
+	MakeDir(SAM_VARIABLE_PATH"/shrink");
 
 	if (!QfsOnly) {
 		struct stat lbuf;
@@ -556,7 +560,31 @@ main(int argc, char *argv[])
 			argv[0] = SAM_RELEASER;
 			argv[1] = args->fs_name;
 			argv[2] = NULL;
-			StartProcess(argv, 0, 0);
+			StartProcess(2, argv, 0, 0);
+#endif /* sun */
+			}
+			break;
+
+		case (FSD_shrink): {
+#ifdef sun
+			struct sam_fsd_shrink *args =
+			    (struct sam_fsd_shrink *)&cmd.args;
+			char	ceq[16];
+			char	*argv[5];
+
+			argv[0] = SAM_SHRINK;
+			argv[1] = args->fs_name;
+			if (args->command == DK_CMD_remove) {
+				argv[2] = "remove";
+			} else {
+				argv[2] = "release";
+			}
+			sprintf(ceq, "%d", args->eq);
+			argv[3] = ceq;
+			argv[4] = NULL;
+			Trace(TR_MISC, "shrink(%s, %s, %s)", argv[1],
+			    argv[2], argv[3]);
+			StartProcess(4, argv, 0, 0);
 #endif /* sun */
 			}
 			break;
@@ -945,22 +973,25 @@ processSignals(int allow)
  */
 void
 StartProcess(
-	char *argv[],
+	int	argc,				/* Number of args */
+	char *argv[],			/* Array of args */
 	int flags,
 	int tid)
 {
 	struct ChildProcEntry *cpNew;
-	char	*arg;
+	char	*arg[5];
 	int		i;
 
-	if (argv[1] != NULL) {
-		arg = argv[1];
-	} else {
-		arg = "";
+	for (i = 1; i < argc; i++) {
+		if (argv[i] != NULL) {
+			arg[i] = argv[i];
+		} else {
+			arg[i] = "";
+		}
 	}
 	if (!Daemon && !FsCfgOnly) {
 		/* Would start %s(%s)\n */
-		printf(GetCustMsg(17292), argv[0], arg);
+		printf(GetCustMsg(17292), argv[0], arg[1]);
 		return;
 	}
 
@@ -972,7 +1003,7 @@ StartProcess(
 		if (*cp->CpName == '\0') {
 			cpNew = cp;
 		} else if (strcmp(cp->CpName, argv[0]) == 0 &&
-		    strcmp(cp->CpFsname, arg) == 0) {
+		    strcmp(cp->CpFsname, arg[1]) == 0) {
 			/*
 			 * Already have one of these.
 			 */
@@ -1006,7 +1037,14 @@ StartProcess(
 	}
 	memset(cpNew, 0, sizeof (struct ChildProcEntry));
 	strncpy(cpNew->CpName, argv[0], sizeof (cpNew->CpName));
-	strncpy(cpNew->CpFsname, arg, sizeof (cpNew->CpFsname));
+	strncpy(cpNew->CpFsname, arg[1], sizeof (cpNew->CpFsname));
+	if (argc > 2) {
+		strncpy(cpNew->CpParam1, arg[2], sizeof (cpNew->CpParam1));
+	}
+	if (argc > 3) {
+		strncpy(cpNew->CpParam2, arg[3], sizeof (cpNew->CpParam2));
+	}
+	cpNew->CpArgc = argc;
 	cpNew->CpFlags = flags;
 	cpNew->CpTid = tid;
 	if (ready || FsCfgOnly) {
@@ -1369,7 +1407,7 @@ checkChildren(void)
 				static boolean_t exePathFirst = TRUE;
 				struct stat sb;
 				static upath_t path;
-				char	*argv[4];
+				char	*argv[6];
 				int		i;
 
 				/*
@@ -1392,11 +1430,20 @@ checkChildren(void)
 				exePathFirst = TRUE;
 				argv[0] = cp->CpName;
 				argv[1] = cp->CpFsname;
+				i = 2;
+				if (cp->CpArgc > 2) {
+					argv[i] = cp->CpParam1;
+					i++;
+				}
+				if (cp->CpArgc > 3) {
+					argv[i] = cp->CpParam2;
+					i++;
+				}
 				if (FsCfgOnly) {
-					argv[2] = CONFIG;
-					argv[3] = NULL;
+					argv[i] = CONFIG;
+					argv[i+1] = NULL;
 				} else {
-					argv[2] = NULL;
+					argv[i] = NULL;
 				}
 
 				/*
@@ -1616,7 +1663,7 @@ checkTraceFiles(void)
 				argv[0] = TRACE_ROTATE;
 				argv[1] = tc->TrFname;
 				argv[2] = NULL;
-				StartProcess(argv, CP_nosignal, tid);
+				StartProcess(2, argv, CP_nosignal, tid);
 				Trace(TR_MISC, "Rotate %s", tc->TrFname);
 			}
 		} else if (errno == ENOENT || errno == ENOTDIR) {
@@ -2172,7 +2219,7 @@ StartShareDaemon(char *fs)
 {
 	char *argv[3] = { SAM_SHAREFSD, fs, NULL };
 
-	StartProcess(argv, CP_respawn | CP_qstart, 0);
+	StartProcess(2, argv, CP_respawn | CP_qstart, 0);
 }
 
 
@@ -2292,7 +2339,7 @@ startStopHsm(int cmd, char *fs)
 		argv[1] = NULL;
 		for (i = 0; hsmDaemons[i] != NULL; i++) {
 			argv[0] = hsmDaemons[i];
-			StartProcess(argv, CP_respawn, 0);
+			StartProcess(2, argv, CP_respawn, 0);
 		}
 		startSamamld(hsms + SamRemoteServerCount);
 		hsmsRunning = 1;
@@ -2314,7 +2361,7 @@ startSamamld(int hsmfs)			/* Mounted HSM file systems */
 	argv[0] = SAM_AMLD;
 	argv[1] = NULL;
 	if (RmediaDeviceCount > 0 && hsmfs > 0) {
-		StartProcess(argv, 0, 0);
+		StartProcess(2, argv, 0, 0);
 	} else {
 		StopProcess(argv, FALSE, SIGINT);
 	}
@@ -2335,7 +2382,7 @@ startSamrftd(void)
 	argv[0] = SAM_RFT;
 	argv[1] = NULL;
 	if (SamRemoteServerCount > 0 || DiskVolClientCount > 0) {
-		StartProcess(argv, CP_respawn, 0);
+		StartProcess(2, argv, CP_respawn, 0);
 	} else {
 		StopProcess(argv, FALSE, SIGINT);
 	}

@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 
 /* ----- Includes */
@@ -1313,9 +1313,15 @@ check_fs(void)
 	printf("\n");
 	printf(catgets(catfd, SET, 1380, "Inodes processed: %d\n"), ino_count);
 
-	/* If debug print option, print maps and .blocks file */
+	/*
+	 * If debug print option, print maps and .blocks file
+	 */
 	if (debug_print) {
 		for (ord = 0; ord < fs_count; ord++) {
+			if ((sblock.eq[ord].fs.state == DEV_OFF) ||
+			    (sblock.eq[ord].fs.state == DEV_DOWN)) {
+				continue;
+			}
 			if (is_stripe_group(sblock.eq[ord].fs.type)) {
 				/* If NOT first group member */
 				if (sblock.eq[ord].fs.num_group == 0) {
@@ -1327,8 +1333,14 @@ check_fs(void)
 		debug_print_sm_blocks();
 	}
 
-	/* Build new bit map and update new superblock */
+	/*
+	 * Build new bit map and update new superblock
+	 */
 	for (ord = 0; ord < fs_count; ord++) {
+		if ((sblock.eq[ord].fs.state == DEV_OFF) ||
+		    (sblock.eq[ord].fs.state == DEV_DOWN)) {
+			continue;
+		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
 			/* If NOT first group member */
 			if (sblock.eq[ord].fs.num_group == 0) {
@@ -1419,6 +1431,10 @@ check_fs(void)
 		int sblock_counts_wrong = 0;
 
 		for (ord = 0; ord < fs_count; ord++) {
+			if ((sblock.eq[ord].fs.state == DEV_OFF) ||
+			    (sblock.eq[ord].fs.state == DEV_DOWN)) {
+				continue;
+			}
 			if (is_stripe_group(sblock.eq[ord].fs.type)) {
 				/* If NOT first group member */
 				if (sblock.eq[ord].fs.num_group == 0) {
@@ -1436,6 +1452,10 @@ check_fs(void)
 		 */
 		if (debug_print) {
 			for (ord = 0; ord < fs_count; ord++) {
+				if ((sblock.eq[ord].fs.state == DEV_OFF) ||
+				    (sblock.eq[ord].fs.state == DEV_DOWN)) {
+					continue;
+				}
 				if (is_stripe_group(sblock.eq[ord].fs.type)) {
 					/* If NOT first group member */
 					if (sblock.eq[ord].fs.num_group == 0) {
@@ -1722,7 +1742,9 @@ build_devices(void)
 	}
 	for (ord = 0, devlp = (struct devlist *)ndevp; ord < fs_count;
 	    ord++, devlp++) {
-		if (devlp->state == DEV_OFF || devlp->state == DEV_DOWN) {
+		if (sblk->eq[ord].fs.state == DEV_OFF ||
+		    sblk->eq[ord].fs.state == DEV_DOWN) {
+			devlp->state = sblk->eq[ord].fs.state;
 			continue;
 		}
 		if (devlp->type == DT_OBJECT) {
@@ -1848,6 +1870,9 @@ build_devices(void)
 	 */
 	for (ord = 0, devlp = (struct devlist *)devp; ord < fs_count;
 	    ord++, devlp++) {
+		if (devlp->state == DEV_OFF || devlp->state == DEV_DOWN) {
+			continue;
+		}
 		if (devlp->eq == 0) {
 			error(0, 0,
 			    catgets(catfd, SET, 1628,

@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -217,18 +217,6 @@ typedef struct sam_sbinfo {
 #define	FS_PRE_FLAG	0
 #define	FS_ALL_ROLLED	1
 #define	FS_NEED_ROLL	3
-
-/*
- * command - Per partition allocation command.
- *
- * command is set to change allocation on a partition.
- */
-#define	SBORD_NONE	0x00		/* No allocation command */
-#define	SBORD_NOALLOC	0x01		/* No allocation on this partition */
-#define	SBORD_ALLOC	0x02		/* Allocation to this partition */
-#define	SBORD_ADD	0x03		/* Add this partition */
-#define	SBORD_REMOVE	0x04		/* Remove this partition */
-#define	SBORD_RELEASE	0x05		/* Release this partition */
 
 /*
  * Request FSCK bits.  They come in two flavors -- generic

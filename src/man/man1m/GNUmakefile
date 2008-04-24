@@ -1,4 +1,4 @@
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 
 #    SAM-QFS_notice_begin
 #
@@ -46,7 +46,7 @@ MAN_SRCS =  archive_audit.1m archive_mark.1m archiver.1m archiver.sh.1m \
 	sam-genericd.1m sam-ibm3494d.1m \
 	sam-logd.1m sam-recycler.1m sam-releaser.1m \
 	sam-rftd.1m sam-robotsd.1m sam-rpcd.1m sam-sonyd.1m       \
-	sam-scannerd.1m sam-stagealld.1m sam-stkd.1m \
+	sam-scannerd.1m sam-shrink.1m sam-stagealld.1m sam-stkd.1m \
 	sam-stagerd.1m sam-stagerd_copy.1m \
 	samtrace.1m samchaid.1m samcmd.1m samd.1m samdev.1m     \
 	samgetvol.1m samexport.1m samfsck.1m samfsconfig.1m         \
@@ -74,7 +74,7 @@ MAN_RELEASED_SRCS = $( shell echo archive_audit.1m \
 	sam-amld.1m sam-archiverd.1m sam-arcopy.1m sam-arfind.1m sam-ftpd.1m \
 	sam-fsd.1m sam-logd.1m sam-recycler.1m sam-releaser.1m \
 	sam-rftd.1m sam-robotsd.1m sam-rpcd.1m sam-scannerd.1m  \
-	sam-stagerd.1m sam-stagerd_copy.1m \
+	sam-shrink.1m sam-stagerd.1m sam-stagerd_copy.1m \
 	sam-stagealld.1m samtrace.1m samunhold.1m sam-sonyd.1m      \
 	samchaid.1m samcmd.1m samd.1m samdev.1m samfsck.1m          \
 	samfsconfig.1m samfsdump.1m samfstyp.1m             \

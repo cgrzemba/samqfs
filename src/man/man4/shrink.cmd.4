@@ -1,0 +1,139 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH shrink.cmd 4 "15 Apr 2008"
+.SH NAME
+shrink.cmd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS shrink command file
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/shrink.cmd\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+Directives for controlling the shrink
+can be read from the
+\fB/etc/opt/SUNWsamfs/shrink.cmd\fR file.
+The directives must appear one per line.
+.PP
+Comment lines are permitted.  Comment lines must begin with a
+pound character (\fB#\fR), and the comment can extend through the
+rest of the line.
+.PP
+Directives that appear prior to any \fBfs=\fR directive
+are applied to all file systems.
+Directives that appear after a \fBfs=\fR directive are applied
+to the specified file system only.
+Directives that are specific to a file system override general
+directives.
+.PP
+The miscellaneous directives control whether a log file is
+written, whether to stage back on-line files that were released,
+other aspects of shrinking.
+.RE
+.SH MISCELLANEOUS DIRECTIVES
+The following miscellaneous directives can be specified in
+the \fBshrink.cmd\fR file:
+.TP
+.B "block_size = " \fIn\fR
+Sets the buffer size to read the .inodes file in units of megabytes.
+For \fIn\fR, specify an integer such that 1 \(<= \fIn\fR \(<= 16.
+The default \fIn\fR=1MB.
+.TP
+.B "display_all_files"
+Writes the name for each file, as it is encountered,
+to the log file. This directive allows you to see the effect of
+executing the remove or release command.
+.TP
+.B "do_not_execute"
+Writes the name for each file, as it is encountered,
+to the log file. This directive allows you to judge the effect of
+executing the remove or release command.
+.TP
+.BI "fs = " file_system_family_set_name
+Specifies to the shrink that
+the subsequent directives apply to the
+indicated \fIfile_system_family_set_name\fR only.
+.TP
+.BI "logfile = " filename
+Sets the name of the shrink's log file to \fIfilename\fR.
+By default, no log file is written.
+.TP
+.BI "stage_files"
+The files released are staged back on-line.
+By default, released files are not staged back on-line.
+See \fIstage\fR.
+.TP
+.BI "stage_partial"
+The partial size released for files is staged back on-line.
+By default, the partial size is not staged back on-line.
+See \fIstage -p\fR.
+.TP
+.B "streams = " \fIn\fR
+Sets the number of threads to be used to shrink the equipment.
+For \fIn\fR, specify an integer such that 1 \(<= \fIn\fR \(<= 128.
+The default \fIn\fR=8.
+.SH EXAMPLES
+Example 1.  This
+example file sets the \fBstreams\fR directive for
+the \fBsamfs1\fR file system. A shrink log is produced.
+.ft CO
+.nf
+
+          fs = samfs1
+          streams = 64
+          logfile = /var/adm/shrink.log
+
+.fi
+.ft
+Example 2.  This example specifies stage parameters and log
+files for each file system.
+.ft CO
+.nf
+
+		  display_all_files
+          logfile = /var/adm/default.shrink.log
+
+          fs = samfs1
+
+          stage_files
+          stage_partial
+          logfile = /var/adm/samfs1.shrink.log
+
+          fs = samfs2
+
+          stage_partial
+          logfile = /var/adm/samfs2.shrink.log
+
+.fi
+.ft
+.SH SEE ALSO
+\fBrelease\fR(1),
+\fBstage\fR(1).
+.PP
+\fBmount_samfs\fR(1M),
+\fBsam-shrink\fR(1M).

@@ -38,7 +38,7 @@
 #define	_SAM_FS_FSDAEMON_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 #endif
 
 /*
@@ -55,6 +55,7 @@ enum FSD_cmd {
 	FSD_umount,		/* Argument is sam_fsd_umount */
 	FSD_stalefs,		/* Argument is sam_fsd_umount */
 	FSD_stop_sam,		/* Argument is sam_fsd_mount */
+	FSD_shrink,		/* Argument is sam_fsd_shrink */
 	FSD_cmd_MAX
 };
 
@@ -64,12 +65,12 @@ enum FSD_cmd {
 #endif
 
 struct sam_fsd_archiver {
-	uname_t fs_name;
+	uname_t		fs_name;	/* File system name */
 };
 
 struct sam_fsd_mount {
-	uname_t fs_name;		/* File system name */
-	sam_time_t init;		/* Time superblock iniitalized */
+	uname_t		fs_name;	/* File system name */
+	sam_time_t	init;		/* Time superblock iniitalized */
 };
 
 struct sam_fsd_releaser {
@@ -77,20 +78,26 @@ struct sam_fsd_releaser {
 };
 
 struct sam_fsd_syslog {
-	upath_t mnt_point;
-	sam_id_t id;
+	upath_t		mnt_point;	/* Mount point */
+	sam_id_t	id;		/* Inode id - i-number and generation */
 	int		slerror;	/* errmsg, include/sam/fs/syslogerr.h */
 	int		error;		/* errno */
 	int		param;		/* optional integer parameter */
 };
 
 struct sam_fsd_umount {
-	uname_t fs_name;		/* File system name */
+	uname_t		fs_name;	/* File system name */
 	int		umounted;	/* 1 if umount succeeded, 0 if not */
 };
 
 struct sam_fsd_restart {
-	uname_t fs_name;
+	uname_t		fs_name;	/* File system name */
+};
+
+struct sam_fsd_shrink {
+	uname_t		fs_name;	/* File system name */
+	int		command;	/* DK_CMD_remove or DK_CMD_release */
+	int		eq;		/* Equipment to remove/release */
 };
 
 struct sam_fsd_cmd {
@@ -102,6 +109,7 @@ struct sam_fsd_cmd {
 		struct sam_fsd_syslog syslog;
 		struct sam_fsd_umount umount;
 		struct sam_fsd_restart restart;
+		struct sam_fsd_shrink shrink;
 	} args;
 };
 

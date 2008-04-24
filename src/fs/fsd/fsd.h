@@ -34,7 +34,7 @@
 #if !defined(FSD_H)
 #define	FSD_H
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 /* SAM-FS includes. */
 #include "sam/custmsg.h"
@@ -136,7 +136,7 @@ void ReadMcf(char *mcf_name);
 void WriteMcfbin(int DeviceNumof, dev_ent_t *DeviceTable);
 void SenseRestart(void);
 void ServerInit(void);
-void StartProcess(char *argv[], int flags, int tid);
+void StartProcess(int argc, char *argv[], int flags, int tid);
 void StopProcess(char *argv[], boolean_t erase, int sig);
 void WriteDefaults(void);
 void StartShareDaemon(char *fs);

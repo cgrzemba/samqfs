@@ -1,0 +1,131 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License")
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam-shrink 1M "15 Apr 2008"
+.SH NAME
+sam-shrink \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS disk space shrink process
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sam-shrink\fR
+\fIfile_system\fR | \fIfamily_set\fR
+\fI\-remove\fR | \fI\-release\fR
+.I eq
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+This \fIsam-shrink\fP process is executed when a shrink of a Sun StorEdge \%QFS
+or Sun \%SAM-QFS file system is required.
+The \fIsamu\fP command \fIremove\fP or \fIrelease\fP on device \fIeq\fP
+causes the \fIeq\fP state to be set to \fInoalloc\fP. Then, the file system
+requests the master daemon
+\fIsam-fsd\fP daemon to start the process \%\fBsam-shrink\fR.
+The device specified by \fIeq\fP must be a data device that
+resides within a \fIms\fP or \fIma\fP file system.
+If the data device is a stripe group, the first
+\fIeq\fP of the stripe group is given.
+The \fIeq\fP state is changed to \fInoalloc\fP by the \fIsamu\fP command.
+.PP
+The remove option copies all files and metadata that reside on \fIeq\fP
+to the other available data devices according to the mount parameters.
+.PP
+The release eption is only available on the Sun StorEdge \%SAM-QFS
+file system. The release option marks all files that reside on
+\fIeq\fP offline. If any files have partial on-line, that data will be
+released, too. Files that have not been archived and metadata that
+resides on \fIeq\fP will be copied
+to the other available data devices according to the mount parameters.
+.PP
+After successful completion of the remove or release operation, the
+\fIeq\fP state will be \fIoff\fP. It may take a long time to complete
+the shrink operation.
+.PP
+If the remove or release operation was not able to release or move all
+the files on the \fIeq\fP state will remain \fInoalloc\fP. The remove
+or release operation can be executed again on this \fIeq\fP. The
+\fBshrink.log\fR should be examined for reasons why the
+\fIeq\fP state could not be change to \fIoff\fP.
+.SH LOG
+Within the \fBshrink.cmd\fR file,
+you can specify a log file for each Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS file system.
+If no \fBlogfile=\fIfilename\fR directive exists in the file,
+no logging occurs.
+For more information on the \fBlogfile=\fIfilename\fR directive,
+see the \fBshrink.cmd\fR(4) man page.
+.PP
+The sam-shrink creates the log file (if it does not exist) and
+appends the following to it for each run:
+.ft CO
+.nf
+
+     Tue Sep 29 15:31:15 2008 Shrink process started: samfs5 release 15
+     RE 6412.5  P S0 /sam1/250m
+     RE 5131.5  P S0 /sam1/filecq
+     MV 5095.4 -- S0 /sam1/filecu
+     ER 5039.5 16 S0 /sam1/filedi
+     MV 5039.2 -- S0 /sam1/lsc/filexx
+     Tue Sep 29 15:31:55 2008 shrink process successful for samfs5 eq 15
+.fi
+.ft
+.PP
+The first line shows the arguments with which the shrink
+was invoked: file_system command equipment.
+.PP
+The next block of lines has one line per file processed:
+The fields are as follows:
+.TP 15
+\fBField Number\fR
+\fBContent\fR
+.TP
+1
+This field contains the \fItag\fB:
+\fIRE\fR for released, \fIMV\fR for removed,
+or \fIER\fR for error releasing or removing file.
+If the directive \fIdo_not_execute\fR is set in the \fBshrink.cmd\fR file,
+this field contains the this field contains the \fItag\fB: \fINO\fR.
+.TP
+2
+This field contains the inode and generation number of the file.
+.TP
+3
+This field contains the stage or errno \fItag\fR.
+For the command release, \fItag\fR is either \fI S\fR for file staged back
+on-line, \fI P\fR for partial staged back on-line,
+or \fI--\fR for no stage action on this file.
+For a field with \fIER\fR in the first field, this tag is the error number.
+.TP
+4
+This field contains an \fBS\fR followed by the segment number.
+This is the number of the segment that was released.
+.TP
+5
+This field contains the full path name of the released or moved file.
+.PP
+.SH SEE ALSO
+.BR mcf (4).
+.BR shrink.cmd (4).

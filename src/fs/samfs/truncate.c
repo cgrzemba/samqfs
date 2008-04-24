@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.138 $"
+#pragma ident "$Revision: 1.139 $"
 
 #include "sam/osversion.h"
 
@@ -74,8 +74,6 @@
 
 
 static void sam_delete_archive(sam_node_t *ip);
-static int sam_free_indirect_block(sam_node_t *ip, int kptr[], int ik,
-	uint32_t *extent_bn, uchar_t *extent_ord, int level, int *set);
 static int sam_reduce_ino(sam_node_t *ip, offset_t length,
 	sam_truncate_t tflag);
 
@@ -595,6 +593,9 @@ sam_reduce_ino(
 		mutex_exit(&mp->mi.m_inode.put_mutex);
 
 	} else {
+		sam_ib_arg_t	args;
+
+		args.cmd = SAM_FREE_BLOCK;
 		ASSERT(de < NOEXT);
 		for (i = (NOEXT - 1); i >= de; i--) {
 			int set = 0;
@@ -627,9 +628,9 @@ sam_reduce_ino(
 				 */
 				kptr_index = NIEXT - 1;
 			}
-			error = sam_free_indirect_block(ip, kptr, kptr_index,
-			    &ip->di.extent[i], &ip->di.extent_ord[i],
-			    (i - NDEXT), &set);
+			error = sam_proc_indirect_block(ip, args, kptr,
+			    kptr_index, &ip->di.extent[i],
+			    &ip->di.extent_ord[i], (i - NDEXT), &set);
 			if (error == ECANCELED) {
 				error = 0;
 				if (kptr_index <= 0) {
@@ -722,13 +723,16 @@ sam_sync_inode(
 
 
 /*
- * ----- sam_free_indirect_block - Free indirect extents.
- * Recusively call this routine until all indirect blocks are released.
+ * ----- sam_proc_indirect_block - Free/Find indirect extents.
+ * Free - Recusively call this routine until all indirect blocks are freed.
+ * Find - Recusively call this routine until one indirect block is found
+ * that matches given ord.
  */
 
-static int			/* ERRNO if error, 0 if successful. */
-sam_free_indirect_block(
+int				/* ERRNO if error, 0 if successful. */
+sam_proc_indirect_block(
 	sam_node_t *ip,		/* inode entry */
+	sam_ib_arg_t args,	/* Function arguments -- free or find */
 	int kptr[],		/* array of extents that end the file. */
 	int ik,			/* kptr index */
 	uint32_t *extent_bn,	/* mass storage extent block number */
@@ -757,7 +761,7 @@ sam_free_indirect_block(
 	bp->b_flags &= ~B_DELWRI;
 	iep = (sam_indirect_extent_t *)(void *)bp->b_un.b_addr;
 	if ((error = sam_validate_indirect_block(ip, iep, level))) {
-		sam_req_ifsck(mp, -1, "sam_free_indirect_block: validate",
+		sam_req_ifsck(mp, -1, "sam_proc_indirect_block: validate",
 		    &ip->di.id);
 		brelse(bp);
 		SAMFS_PANIC_INO(mp->mt.fi_name,
@@ -776,7 +780,7 @@ sam_free_indirect_block(
 	}
 	for (i = (DEXT - 1); i >= 0; i--) {
 		if (iep->extent[i] == 0) {
-			continue;				/* If empty */
+			continue;		/* If empty */
 		}
 		ie_addr = &iep->extent[i];
 		ie_ord = &iep->extent_ord[i];
@@ -800,9 +804,8 @@ sam_free_indirect_block(
 				*set = 1;
 				reset = 0;
 			}
-			error = sam_free_indirect_block(ip, kptr, (ik + 1),
-			    ie_addr,
-			    ie_ord, (level - 1), set);
+			error = sam_proc_indirect_block(ip, args, kptr,
+			    (ik + 1), ie_addr, ie_ord, (level - 1), set);
 			if (error == ECANCELED) {
 				break;
 			}
@@ -820,34 +823,48 @@ sam_free_indirect_block(
 				error = ECANCELED;
 				break;
 			}
-			/*
-			 * Free large data block. If directory, may be meta
-			 * block.
-			 */
-			ip->flags.b.changed = 1;
-			sam_free_block(mp, LG, *ie_addr, *ie_ord);
-			*ie_addr = 0;
-			*ie_ord = 0;
-			dt = ip->di.status.b.meta;
-			blocks = mp->mi.m_fs[ip->di.unit].num_group == 1 ?
-			    LG_BLOCK(mp, dt):
-			    (LG_BLOCK(mp, dt) *
-			    mp->mi.m_fs[ip->di.unit].num_group);
-			ip->di.blocks -= blocks;
-			if (S_ISSEGS(&ip->di)) {
-				ip->segment_ip->di.blocks -= blocks;
+			if (args.cmd == SAM_FREE_BLOCK) {
+				/*
+				 * Free large data block. If directory, may
+				 * be meta block.
+				 */
+				ip->flags.b.changed = 1;
+				sam_free_block(mp, LG, *ie_addr, *ie_ord);
+				*ie_addr = 0;
+				*ie_ord = 0;
+				dt = ip->di.status.b.meta;
+				blocks = mp->mi.m_fs[ip->di.unit].num_group ==
+				    1 ? LG_BLOCK(mp, dt): (LG_BLOCK(mp, dt) *
+				    mp->mi.m_fs[ip->di.unit].num_group);
+				ip->di.blocks -= blocks;
+				if (S_ISSEGS(&ip->di)) {
+					ip->segment_ip->di.blocks -= blocks;
+				}
+			} else if (args.cmd == SAM_FIND_ORD) {
+				if (*ie_ord == args.ord) {
+					error = ECANCELED;
+					break;
+				}
 			}
 		}
 	}
-	if (error != ECANCELED) {
+	if (args.cmd == SAM_FREE_BLOCK) {
+		if (error != ECANCELED) {
+			bp->b_flags |= B_STALE|B_AGE;
+			brelse(bp);
+			ip->flags.b.changed = 1;
+			sam_free_block(mp, LG, *extent_bn, *extent_ord);
+			*extent_bn = 0;
+			*extent_ord = 0;
+		} else {
+			bdwrite(bp);
+		}
+	} else if (args.cmd == SAM_FIND_ORD) {
+		if (*extent_ord == args.ord) {
+			error = ECANCELED;
+		}
 		bp->b_flags |= B_STALE|B_AGE;
 		brelse(bp);
-		ip->flags.b.changed = 1;
-		sam_free_block(mp, LG, *extent_bn, *extent_ord);
-		*extent_bn = 0;
-		*extent_ord = 0;
-	} else {
-		bdwrite(bp);
 	}
 	return (error);
 }

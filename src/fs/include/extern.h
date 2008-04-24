@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.222 $"
+#pragma ident "$Revision: 1.223 $"
 
 
 #ifndef	_SAM_FS_EXTERN_H
@@ -168,6 +168,7 @@ int sam_init_inode(sam_mount_t *mp);
 void sam_resync_server(sam_schedule_entry_t *entry);
 void sam_expire_client_leases(sam_schedule_entry_t *entry);
 void sam_expire_server_leases(sam_schedule_entry_t *entry);
+void sam_wait_release_blk_list(struct sam_mount *mp);
 
 
 /* ialloc.c function prototypes. */

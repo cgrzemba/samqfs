@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.85 $"
+#pragma ident "$Revision: 1.86 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -166,16 +166,14 @@ static struct {
 		"add", QFS_STANDALONE, 1, CmdSetFsDskCmd, 0, 7110,
 		"eq", 7191, "Add eq to mounted file system"
 	},
-#if SAM_SHRINK
 	{
-		"remove", QFS_STANDALONE, 1, CmdSetFsDskCmd, 0,	7194,
-		"eq1 [eq2]", 7192, "Remove eq1; move to eq2 if specified"
+		"remove", QFS_STANDALONE, 1, CmdSetFsDskCmd, 0,	7110,
+		"eq", 7192, "Remove eq; copy files to ON eqs"
 	},
 	{
-		"release", QFS_STANDALONE, 1, CmdSetFsDskCmd, 0, 7110,
+		"release", SAM_DISK, 1, CmdSetFsDskCmd, 0, 7110,
 		"eq", 7193, "Release eq and mark files offline"
 	},
-#endif /* SAM_SHRINK */
 	{
 		"alloc", QFS_STANDALONE, 1, CmdSetFsDskCmd, 0, 7110,
 		"eq", 7190, "Enable allocation on partition"
@@ -1466,7 +1464,7 @@ CmdSetFsConfig(
 /*
  * Handle the following commands on a disk eq on a mounted file system:
  * add eq
- * remove eq1 [eq2]
+ * remove eq
  * release eq
  * alloc eq
  * noalloc eq
@@ -1479,32 +1477,28 @@ CmdSetFsDskCmd(
 	int32_t	command;
 	char	*errstr;
 
-	if (Argc < 2)
+	if (Argc < 2) {
 		Usage();
+	}
 	errstr = CheckFSPartByEq(Argv[1], &fi);
 	if (errstr == NULL) {
 		if (strcmp(Argv[0], "add") == 0) {
 			command = DK_CMD_add;
+		} else if (strcmp(Argv[0], "release") == 0) {
+			command = DK_CMD_release;
 		} else if (strcmp(Argv[0], "alloc") == 0) {
 			command = DK_CMD_alloc;
 		} else if (strcmp(Argv[0], "noalloc") == 0) {
 			command = DK_CMD_noalloc;
 		} else {
-			command = DK_CMD_null;
+			Error(errstr, Argv[1]);
+			return;
 		}
-		if (command != DK_CMD_null) {
-			if (SetFsPartCmd(fi.fi_name, Argv[1], command) != 0) {
-				if (errno == EINVAL) {
-					Error(catgets(catfd, SET, 7009,
-					    "Cannot execute command %s"
-					    " for device %s."),
-					    Argv[0], Argv[1]);
-				} else if (errno == ENOTSUP) {
-					Error(catgets(catfd, SET, 7010,
-					    "Cannot change disk device state "
-					    "from client."));
-				}
-			}
+		if (SetFsPartCmd(fi.fi_name, Argv[1], command) != 0) {
+			Error(catgets(catfd, SET, 7009,
+			    "Cannot execute command %s"
+			    " for device %s., errno=%d"),
+			    Argv[0], Argv[1], errno);
 		}
 	} else {
 		Error(errstr, Argv[1]);

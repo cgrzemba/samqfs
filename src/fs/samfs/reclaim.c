@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.126 $"
+#pragma ident "$Revision: 1.127 $"
 
 #include "sam/osversion.h"
 
@@ -1470,4 +1470,27 @@ sam_free_indirect_block(
 		}
 	}
 	return (error);
+}
+
+
+/*
+ * ----- sam_wait_release_blk_list - Wait until released blocks
+ * are merged in maps and superblock is updated.
+ */
+
+void
+sam_wait_release_blk_list(
+	struct sam_mount *mp)	/* mount table */
+{
+	mutex_enter(&mp->mi.m_inode.mutex);
+	while (mp->mi.m_next != NULL || mp->mi.m_inode.busy) {
+		mutex_enter(&mp->mi.m_inode.put_mutex);
+		cv_signal(&mp->mi.m_inode.put_cv);
+		mutex_exit(&mp->mi.m_inode.put_mutex);
+
+		mp->mi.m_inode.wait++;
+		cv_wait(&mp->mi.m_inode.get_cv, &mp->mi.m_inode.mutex);
+		mp->mi.m_inode.wait--;
+	}
+	mutex_exit(&mp->mi.m_inode.mutex);
 }

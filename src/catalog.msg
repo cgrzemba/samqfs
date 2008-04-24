@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.586 $"
+$ pragma ident "$Revision: 1.587 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -102,6 +102,9 @@ $  misc         (20000s)
 $  d2format		(21000s)
 $  rft/remote	(22000s)
 $  mount_samfs	(23000s)
+$  WORM         (24000s)
+$  shrink       (25000s)
+$  libsammgmt   (30000s)
 
 
 $  Old Messages  (1-3016)
@@ -1598,9 +1601,8 @@ $ 7147 ** NOT USED ** Set trace options
 7189 Disable allocation on partition
 7190 Enable allocation on partition
 7191 Add eq to mounted file system
-7192 Remove eq1; move to eq2 if specified
+7192 Remove eq; copy files to ON eqs
 7193 Release eq and mark files offline
-7194 eq1 [eq2]
 
 $  samu display help screen   (7200s)
 $ ===================================================================
@@ -3622,6 +3624,17 @@ $ ==============================================================
 24004 Mount point not WORM'd.
 24005 Unknown error when setting retention period.
 
+$ shrink (25000s)
+$ ==============================================================
+25000 %s: Error in shrink command file %s.
+25001 %s: Error pthread_setconcurrency
+25002 Cannot F_IDOPEN %s/.inodes: %s
+25003 %s: Error pthread_join
+25004 %s: Error pthread_create
+25005 %s: Error valloc buffers
+25006 %s: Error mlock buffers
+25007 llseek: offset %lld (%#llx): %s
+25008 Read failed: offset %lld (%#llx): %s
 
 $ libsammgmt (30000s)
 $ ==============================================================

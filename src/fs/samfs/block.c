@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.102 $"
+#pragma ident "$Revision: 1.103 $"
 
 #include "sam/osversion.h"
 
@@ -101,9 +101,8 @@ static void sam_reset_fs_space(sam_mount_t *mp);
 static void sam_reset_eq_space(sam_mount_t *mp, int ord);
 static void sam_drain_free_list(sam_mount_t *mp, struct samdent *dp);
 static void sam_change_state(sam_mount_t *mp, struct samdent *dp, int ord);
-static void sam_shrink_fs(sam_mount_t *mp, struct samdent *dp, int ord);
-static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t command,
-	uchar_t state);
+static int sam_shrink_fs(sam_mount_t *mp, struct samdent *dp, int command);
+static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t state);
 static void sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
 static int sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
@@ -259,11 +258,21 @@ sam_block_thread(sam_mount_t *mp)
 				 * is not empty.
 				 */
 				dp = &mp->mi.m_fs[ord];
-				if (dp->skip_ord || dp->map_empty ||
-				    (dp->part.pt_type == DT_OBJECT)) {
+				if (dp->skip_ord) {
 					continue;
 				}
 
+				if (dp->command != DK_CMD_null) {
+					sam_change_state(mp, dp, ord);
+					if (dp->part.pt_state != DEV_ON) {
+						continue;
+					}
+				}
+
+				if (dp->map_empty ||
+				    (dp->part.pt_type == DT_OBJECT)) {
+					continue;
+				}
 				if (sam_get_blklist(mp, ord)) {
 					blocks_allocated = TRUE;
 				}
@@ -1104,13 +1113,6 @@ sam_get_blklist(
 	dp = &mp->mi.m_fs[ord];
 	if (dp->busy || dp->modified)  {
 		return (0);		/* Ordinal is busy with I/O */
-	}
-
-	if (dp->command != SBORD_NONE) {
-		sam_change_state(mp, dp, ord);
-		if (dp->part.pt_state != DEV_ON) {
-			return (0);
-		}
 	}
 	return (sam_get_disk_blks(mp, ord));
 }
@@ -1966,10 +1968,18 @@ sam_change_state(
 	boolean_t sblk_modified = FALSE;
 	int bt;
 
+	/*
+	 * If busy, cannot change state
+	 */
+	dp = &mp->mi.m_fs[ord];
+	if (dp->busy || dp->modified)  {
+		return;		/* Ordinal is busy with I/O */
+	}
+
 	switch (dp->command) {
 
-	case SBORD_REMOVE:
-	case SBORD_RELEASE:
+	case DK_CMD_remove:
+	case DK_CMD_release:
 		/*
 		 * Remove/release is not supported for sblk version 1.
 		 */
@@ -1979,27 +1989,42 @@ sam_change_state(
 			    " Cannot remove/release eq %d lun %s",
 			    mp->mt.fi_name, dp->part.pt_eq,
 			    dp->part.pt_name);
+			dp->command = DK_CMD_null;
+			return;
+		}
+		if ((dp->part.pt_type == DT_META) ||
+		    (mp->mt.mm_count == 0)) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: shrink only "
+			    "supported for data devices in a ma file system",
+			    mp->mt.fi_name);
+			dp->command = DK_CMD_null;
 			return;
 		}
 
 		/* LINTED [fallthrough on case statement] */
-	case SBORD_NOALLOC:
+	case DK_CMD_noalloc:
 		sam_drain_free_list(mp, dp);
+		dp->skip_ord = 1;
 		for (bt = 0; bt < SAM_MAX_DAU; bt++) {
 			if (dp->block[bt] != NULL) {
 				sam_delete_blocklist(&dp->block[bt]);
 			}
 		}
-		if (dp->command == SBORD_NOALLOC) {
-			dp->command = SBORD_NONE;
-			dp->part.pt_state = DEV_NOALLOC;
-			sblk_modified = TRUE;
-		} else {
-			sam_shrink_fs(mp, dp, ord);
+		dp->part.pt_state = DEV_NOALLOC;
+		mutex_enter(&mp->ms.m_synclock);
+		sam_update_filsys(mp, 0);
+		mutex_exit(&mp->ms.m_synclock);
+
+		if (dp->command != DK_CMD_noalloc) {
+			if (sam_shrink_fs(mp, dp, dp->command)) {
+				dp->command = DK_CMD_null;
+				return;
+			}
 		}
+		sblk_modified = TRUE;
 		break;
 
-	case SBORD_ADD:
+	case DK_CMD_add:
 		/*
 		 * Add is not supported for sblk version 1.
 		 */
@@ -2009,6 +2034,7 @@ sam_change_state(
 			    " Cannot add eq %d lun %s",
 			    mp->mt.fi_name, dp->part.pt_eq,
 			    dp->part.pt_name);
+			dp->command = DK_CMD_null;
 			return;
 		} else {
 			sam_grow_fs(mp, dp, ord);
@@ -2024,7 +2050,7 @@ sam_change_state(
 		}
 
 		/* LINTED [fallthrough on case statement] */
-	case SBORD_ALLOC: {
+	case DK_CMD_alloc: {
 		int i;
 		int prev_num_grp;
 		int dt, dev_type;
@@ -2050,6 +2076,7 @@ sam_change_state(
 					    "package must be updated to "
 					    "support online grow",
 					    mp->mt.fi_name, ord, clp->hname);
+					dp->command = DK_CMD_null;
 					return;
 				}
 
@@ -2062,6 +2089,7 @@ sam_change_state(
 					    mp->mt.fi_name, ord, clp->hname,
 					    sblk->info.sb.fs_count,
 					    clp->fs_count);
+					dp->command = DK_CMD_null;
 					return;
 				}
 			}
@@ -2087,7 +2115,6 @@ sam_change_state(
 			(void) sam_init_blocklist(mp, ord);
 		}
 		dp->skip_ord = 0;
-		dp->command = SBORD_NONE;
 		dp->part.pt_state = DEV_ON;
 		mutex_exit(&mp->mi.m_block.mutex);
 		if (SAM_IS_SHARED_FS(mp)) {
@@ -2096,6 +2123,40 @@ sam_change_state(
 		sblk_modified = TRUE;
 		}
 		break;
+
+	case DK_CMD_off: {
+		offset_t space;
+
+		sam_wait_release_blk_list(mp);
+
+		mutex_enter(&mp->ms.m_synclock);
+		sam_update_filsys(mp, 0);
+		mutex_exit(&mp->ms.m_synclock);
+
+		sblk = mp->mi.m_sbp;
+		space = sblk->eq[ord].fs.space + sblk->eq[ord].fs.system;
+		if (space != sblk->eq[ord].fs.capacity) {
+			cmn_err(CE_WARN,
+			    "SAM-QFS: %s: cannot OFF ord=%d space 0x%llx KB"
+			    " is not equal to capacity 0x%llx KB",
+			    mp->mt.fi_name, ord, space,
+			    sblk->eq[ord].fs.capacity);
+		} else {
+			dp->skip_ord = 1;
+			dp->part.pt_state = DEV_OFF;
+			mutex_enter(&mp->mi.m_sblk_mutex);
+			sblk->eq[ord].fs.state = DEV_OFF;
+			sblk->info.sb.capacity -= sblk->eq[ord].fs.capacity;
+			sblk->eq[ord].fs.capacity = 0;
+			sblk->info.sb.space -= sblk->eq[ord].fs.space;
+			sblk->eq[ord].fs.space = 0;
+			sblk->eq[ord].fs.system = 0;
+			sblk->eq[ord].fs.dau_next = 0;
+			mutex_exit(&mp->mi.m_sblk_mutex);
+		}
+		sblk_modified = TRUE;
+		break;
+		}
 
 	default:
 		break;
@@ -2108,7 +2169,7 @@ sam_change_state(
 	sblk = mp->mi.m_sbp;
 	if (sblk_modified && (ord < sblk->info.sb.fs_count)) {
 		mutex_enter(&mp->mi.m_sblk_mutex);
-		sam_set_lun_state(mp, ord, dp->command, dp->part.pt_state);
+		sam_set_lun_state(mp, ord, dp->part.pt_state);
 		if ((sam_update_the_sblks(mp)) != 0) { 	/* If error */
 			cmn_err(CE_WARN, "SAM-QFS: %s: Error changing state on"
 			    " eq %d lun %s, could not write sblk",
@@ -2116,17 +2177,17 @@ sam_change_state(
 		}
 		mutex_exit(&mp->mi.m_sblk_mutex);
 	}
+	dp->command = DK_CMD_null;
 }
 
 
 /*
- * ----- sam_set_lun_state - Set command and state for lun or striped group
+ * ----- sam_set_lun_state - Set state for lun or striped group
  */
 static void
 sam_set_lun_state(
 	struct sam_mount *mp,
 	int ord,
-	uchar_t command,
 	uchar_t state)
 {
 	struct samdent *dp;
@@ -2138,7 +2199,6 @@ sam_set_lun_state(
 	sop = &mp->mi.m_sbp->eq[ord].fs;
 	num_group = dp->num_group;
 	for (i = 0; i < num_group; i++, dp++, sop++) {
-		dp->command = command;
 		sop->state = state;
 		dp->part.pt_state = state;
 	}
@@ -2146,27 +2206,30 @@ sam_set_lun_state(
 
 
 /*
- * ----- sam_shrink_fs - Remove this eq to the file system
- * Build the bit maps and add this partition to the file system
+ * ----- sam_shrink_fs - Remove/Release this eq from the file system
+ * Tell sam-fsd to start sam-shrink process.
  */
-/* ARGSUSED2 */
-static void
+static int			/* 1 if error; 0 if successful */
 sam_shrink_fs(
 	sam_mount_t *mp,	/* Pointer to the mount table. */
 	struct samdent *dp,	/* Pointer to device entry in mount table */
-	int ord)		/* Current ordinal */
+	int command)		/* Shrink command -- release or remove */
 {
-	if (dp->part.pt_state != DEV_OFF) {
+	struct sam_fsd_cmd cmd;
+
+	bzero((char *)&cmd, sizeof (cmd));
+	cmd.cmd = FSD_shrink;
+	bcopy(mp->mt.fi_name, cmd.args.shrink.fs_name,
+	    sizeof (cmd.args.shrink.fs_name));
+	cmd.args.shrink.command = command;
+	cmd.args.shrink.eq = dp->part.pt_eq;
+	if (sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd))) {
 		cmn_err(CE_WARN, "SAM-QFS: %s: Error removing eq %d lun %s,"
-		    " state %d is not OFF",
-		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name,
-		    dp->part.pt_state);
-		return;
+		    " cannot send command to sam-fsd",
+		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
+		return (1);
 	}
-	cmn_err(CE_WARN, "SAM-QFS: %s: Cannot shrink eq %d lun %s state 0x%x,"
-	    " Not implemented",
-	    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name,
-	    dp->part.pt_state);
+	return (0);
 }
 
 
@@ -2280,26 +2343,33 @@ sam_grow_fs(
 	 * If ms file system, put maps on this device.
 	 */
 	if (mp->mt.mm_count && (type != DT_META)) {
-		mm_ord = sblk->info.sb.mm_ord;	/* Next meta device */
-
 		/*
 		 * Preallocate a sequential number of blocks for the maps on
-		 * mm_ord.
+		 * mm_ord. If maps already exists, use the existing map.
 		 */
 		pa.length = blocks / LG_DEV_BLOCK(mp, dt);
 		pa.count = howmany(pa.length, (SAM_DEV_BSIZE * NBBY));
-		pa.count = (pa.count + LG_DEV_BLOCK(mp, MM) - 1) /
-		    LG_DEV_BLOCK(mp, MM);
-		pa.dt = MM;
-		pa.ord = (ushort_t)mm_ord;
-		sam_process_prealloc_req(mp, sblk, &pa, TRUE);
-		if (pa.error) {
-			cmn_err(CE_WARN, "SAM-QFS: %s: Error adding "
-			    "eq %d lun %s,"
-			    " maps on eq %d, error = %d",
-			    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name,
-			    sblk->eq[mm_ord].fs.eq, pa.error);
-			return;
+		if (sblk->eq[ord].fs.allocmap != 0 &&
+		    sblk->eq[ord].fs.l_allocmap == pa.count) {
+			mm_ord = sblk->eq[ord].fs.mm_ord;
+			sblk->info.sb.mm_ord = (ushort_t)mm_ord;
+			pa.first_bn = sblk->eq[ord].fs.allocmap;
+		} else {
+			mm_ord = sblk->info.sb.mm_ord;	/* Next meta device */
+			pa.count = (pa.count + LG_DEV_BLOCK(mp, MM) - 1) /
+			    LG_DEV_BLOCK(mp, MM);
+			pa.dt = MM;
+			pa.ord = (ushort_t)mm_ord;
+			pa.error = 0;
+			sam_process_prealloc_req(mp, sblk, &pa, TRUE);
+			if (pa.error) {
+				cmn_err(CE_WARN, "SAM-QFS: %s: Error adding "
+				    "eq %d lun %s maps on eq %d, error = %d",
+				    mp->mt.fi_name, dp->part.pt_eq,
+				    dp->part.pt_name,
+				    sblk->eq[mm_ord].fs.eq, pa.error);
+				return;
+			}
 		}
 	} else {
 		mm_ord = ord;
@@ -2339,6 +2409,7 @@ sam_grow_fs(
 	 * Initialize the new device entry in the superblock.
 	 */
 	sop = &sblk->eq[ord].fs;
+	sop->dau_next = 0;
 	sop->num_group = dp->num_group;
 	sop->mm_ord = (ushort_t)mm_ord;
 	sblk->eq[mm_ord].fs.dau_next = pa.first_bn;
@@ -2408,7 +2479,7 @@ sam_grow_fs(
 		ddp->skip_ord = 1;	/* Skip until block pool initialized */
 		dsop->type = sop->type;
 		dsop->eq = ddp->part.pt_eq;
-		ddp->command = SBORD_NONE;
+		ddp->command = DK_CMD_null;
 		dsop->mm_ord = sop->mm_ord;
 		dsop->system = sop->system;
 		dsop->state = DEV_NOALLOC;

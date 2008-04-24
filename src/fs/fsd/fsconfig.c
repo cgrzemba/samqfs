@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -330,6 +330,17 @@ FsConfig(char *fscfg_name)
 					diffMsgFunc(msg);
 					diffs++;
 					break;
+				} else if (mi->part[i].pt_state !=
+				    mi_prev->part[i].pt_state) {
+					snprintf(msg, sizeof (msg),
+					    "Ord %d state %s/%s", i,
+					    dev_state
+					    [mi_prev->part[i].pt_state],
+					    dev_state[mi->part[i].pt_state]);
+					diffMsgFunc(msg);
+					diffs++;
+					lun_diffs++;
+					break;
 				}
 			}
 			diffs += SetfieldDiff(&mi->params, &mi_prev->params,
@@ -572,7 +583,7 @@ FsConfig(char *fscfg_name)
 				 */
 				argv[0] = SAM_SHAREFSD;
 				argv[1] = mi->params.fi_name;
-				StartProcess(argv, CP_respawn | CP_qstart, 0);
+				StartProcess(2, argv, CP_respawn|CP_qstart, 0);
 			}
 		}
 	}

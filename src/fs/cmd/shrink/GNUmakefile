@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,16 +26,23 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../../..
+DEPTH = ../../../..
 
 include $(DEPTH)/mk/common.mk
 
-ifeq ($(OS), Linux)
-DIRS = fsconfig mount
-else
-DIRS = bcheck dump-restore fsck fsconfig fstyp mkfs mount ncheck lockfs \
-		sharefs shrink umount
-endif
+PROG = shrink
+PROG_SRC = shrink.c readcmd.c
+
+INCFLAGS = -I $(INCLUDE) -I../../include -I../../include/$(OBJ_DIR)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) \
+	$(DEBUGCDEFS) $(THRCOMP)
+
+PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
+	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam -lsamconf $(DYNAMIC_OPT) \
+	$(LIBSO) -ladm -ldl -lsysevent -lnvpair
+
+LNOPTS = -nmuxs -Dlint
+LNLIBS = -L ../../lib/$(OBJ_DIR) -L $(DEPTH)/lib/$(OBJ_DIR)
 
 include $(DEPTH)/mk/targets.mk
 

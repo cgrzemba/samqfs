@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.174 $"
+#pragma ident "$Revision: 1.175 $"
 #endif
 
 #include "sam/osversion.h"
@@ -140,9 +140,10 @@ static void sam_mount_destroy(sam_mount_t *mp);
 static void sam_mount_init(sam_mount_t *mp);
 static int sam_mount_info(void *arg, int size, cred_t *credp);
 #ifdef METADATA_SERVER
-static int sam_setfspartcmd(void *arg);
+static int sam_setfspartcmd(void *arg, cred_t *credp);
 static int sam_license_info(int cmd, void *arg, int size, cred_t *credp);
 static int sam_get_fsclistat(void *arg, int size);
+static int sam_fseq_ord(void *arg, int size, cred_t *credp);
 #endif
 static int sam_get_fsstatus(void *arg, int size);
 static int sam_get_fsinfo(void *arg, int size);
@@ -234,6 +235,7 @@ sam_priv_syscall(
 		/*
 		 *	File system miscellaneous calls.
 		 */
+
 		/*
 		 * Quota operations.
 		 */
@@ -249,14 +251,12 @@ sam_priv_syscall(
 		 */
 		case SC_setfspartcmd:
 			error = sam_setfspartcmd(
-			    (struct sam_setfspartcmd_arg *)arg);
+			    (struct sam_setfspartcmd_arg *)arg, credp);
 			break;
-#endif
 
 		/*
 		 *	Shared file system options.
 		 */
-#ifdef METADATA_SERVER
 		case SC_set_server:
 			error = sam_set_server(arg, size, credp);
 			break;
@@ -301,6 +301,10 @@ sam_priv_syscall(
 
 		case SC_gethosts:
 			error = sam_sgethosts(arg, size, 0, credp);
+			break;
+
+		case SC_fseq_ord:
+			error = sam_fseq_ord(arg, size, credp);
 			break;
 #endif
 
@@ -1785,9 +1789,12 @@ sam_find_filesystem(uname_t fs_name)
  */
 
 static int		/* ERRNO if error, 0 if successful. */
-sam_setfspartcmd(void *arg)		/* Pointer to arguments. */
+sam_setfspartcmd(
+	void *arg,	/* Pointer to arguments. */
+	cred_t *credp)	/* Credentials */
 {
 	struct sam_setfspartcmd_arg args;
+	struct samdent *dp;
 	struct sam_fs_part *pt;
 	sam_mount_t *mp;
 	int	i, ord;
@@ -1807,7 +1814,8 @@ sam_setfspartcmd(void *arg)		/* Pointer to arguments. */
 	if ((mp = sam_find_filesystem(args.fs_name)) == NULL) {
 		return (ENOENT);
 	}
-	if ((error = secpolicy_fs_config(CRED(), mp->mi.m_vfsp)) != 0) {
+	if ((error = secpolicy_fs_config(credp, mp->mi.m_vfsp)) != 0) {
+		error = EACCES;
 		goto out;
 	}
 	if (SAM_IS_CLIENT_OR_READER(mp)) {
@@ -1827,10 +1835,12 @@ sam_setfspartcmd(void *arg)		/* Pointer to arguments. */
 	error = 0;
 	ord = -1;
 	for (i = 0; i < mp->mt.fs_count; i++) {
-		pt = &mp->mi.m_fs[i].part;
+		dp = &mp->mi.m_fs[i];
+		pt = &dp->part;
 		if (pt->pt_eq != args.eq) {
 			continue;
 		}
+
 		/*
 		 * If the supplied equipment is an element of a stripe
 		 * group, issue the change to the first equipment.
@@ -1842,56 +1852,70 @@ sam_setfspartcmd(void *arg)		/* Pointer to arguments. */
 			for (j = 0; j < i; j++) {
 				if (mp->mi.m_fs[j].part.pt_type ==
 				    pt->pt_type) {
-					pt = &mp->mi.m_fs[j].part;
+					dp = &mp->mi.m_fs[j];
+					pt = &dp->part;
 					ord = j;
 					break;
 				}
 			}
 		}
 
+		/*
+		 * If busy processing previous command for this eq
+		 */
+		if (dp->command != DK_CMD_null) {
+			SAM_KICK_BLOCK(mp);
+			error = EBUSY;
+			goto out;
+		}
+
 		switch (args.command) {
 
-		case DK_CMD_add:
-			if (pt->pt_state == DEV_OFF) {
-				mp->mi.m_fs[i].command = SBORD_ADD;
-				mp->mi.m_fs[i].skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		case DK_CMD_remove:
-			if (pt->pt_state == DEV_ON) {
-				mp->mi.m_fs[i].command = SBORD_REMOVE;
-				mp->mi.m_fs[i].skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		case DK_CMD_release:
-			if (pt->pt_state == DEV_ON) {
-				mp->mi.m_fs[i].command = SBORD_RELEASE;
-				mp->mi.m_fs[i].skip_ord = 0;
+		case DK_CMD_noalloc:
+			if ((pt->pt_type != DT_META) &&
+			    (pt->pt_state == DEV_ON)) {
+				dp->command = DK_CMD_noalloc;
+				dp->skip_ord = 0;
 			} else {
 				error = EINVAL;
 			}
 			break;
 
 		case DK_CMD_alloc:
+		case DK_CMD_off:
 			if (pt->pt_state == DEV_NOALLOC) {
-				mp->mi.m_fs[i].command = SBORD_ALLOC;
-				mp->mi.m_fs[i].skip_ord = 0;
+				dp->command = (uchar_t)args.command;
+				dp->skip_ord = 0;
 			} else {
 				error = EINVAL;
 			}
 			break;
 
+		case DK_CMD_add:
+			if (pt->pt_state == DEV_OFF) {
+				dp->command = DK_CMD_add;
+				dp->skip_ord = 0;
+			} else {
+				error = EINVAL;
+			}
+			break;
 
-		case DK_CMD_noalloc:
+		case DK_CMD_remove:
+			if (pt->pt_state == DEV_ON ||
+			    pt->pt_state == DEV_NOALLOC) {
+				dp->command = DK_CMD_remove;
+				dp->skip_ord = 0;
+			} else {
+				error = EINVAL;
+			}
+			break;
+
+		case DK_CMD_release:
 			if ((pt->pt_type != DT_META) &&
-			    (pt->pt_state == DEV_ON)) {
-				mp->mi.m_fs[i].command = SBORD_NOALLOC;
+			    pt->pt_state == DEV_ON ||
+			    pt->pt_state == DEV_NOALLOC) {
+				dp->command = DK_CMD_release;
+				dp->skip_ord = 0;
 			} else {
 				error = EINVAL;
 			}
@@ -1907,10 +1931,8 @@ sam_setfspartcmd(void *arg)		/* Pointer to arguments. */
 	if (ord >= 0) {
 		if (error == 0) {
 			/*
-			 * Mark the super block (for persistence).
+			 * Signal block thread to process LUN state change
 			 */
-			(void) sam_update_sblk(mp, 0, 0, TRUE);
-			(void) sam_update_sblk(mp, 0, 1, TRUE);
 			SAM_KICK_BLOCK(mp);
 		}
 	} else {
@@ -1919,6 +1941,113 @@ sam_setfspartcmd(void *arg)		/* Pointer to arguments. */
 
 out:
 	SAM_SYSCALL_DEC(mp, locked);
+	return (error);
+}
+
+
+/*
+ * ----- sam_fseq_call - Check if inode is allocated on eq.
+ */
+
+static int			/* ERRNO if error, 0 if successful. */
+sam_fseq_ord(
+	void *arg,		/* Pointer to arguments. */
+	int size,
+	cred_t *credp)
+{
+	sam_fseq_arg_t args;
+	sam_mount_t *mp;
+	sam_node_t *ip = NULL;			/* pointer to rm inode */
+	int i;
+	int kptr[NIEXT + (NIEXT-1)];
+	sam_ib_arg_t ib_args;
+	int error = 0;
+
+	if (size != sizeof (args) ||
+	    copyin(arg, (caddr_t)&args, sizeof (args))) {
+		return (EFAULT);
+	}
+
+	/*
+	 * If the mount point is mounted, process on_ord request.
+	 */
+	if ((mp = find_mount_point(args.fseq)) == NULL) {
+		return (ECANCELED);
+	}
+	if (mp->mi.m_fs[args.ord].part.pt_eq != args.eq) {
+		error = EINVAL;
+		goto out;
+	}
+	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+		error = EAGAIN;
+		goto out;
+	}
+	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if ((error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS, &args.id, &ip))) {
+		goto out;
+	}
+	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+
+	for (i = 0; i < (NIEXT+2); i++) {
+		kptr[i] = -1;
+	}
+	ib_args.cmd = SAM_FIND_ORD;
+	ib_args.ord = args.ord;
+	ib_args.first_ord = ip->di.extent_ord[0];
+	for (i = (NOEXT - 1); i >= NDEXT; i--) {
+		int set = 0;
+		int kptr_index;
+
+		if (ip->di.extent[i] == 0) {
+			continue;
+		}
+		if (i == NDEXT) {
+			/*
+			 * The current index in the top level indirect
+			 * block matches the index where the new offset
+			 * resides.  The values in the kptr array
+			 * starting at 0 are those returned by
+			 * sam_get_extent. Blocks with an index greater
+			 * than the value in kptr at each level will be
+			 * released. No indirect blocks down this tree
+			 * will be release since the new offset is down
+			 * this tree.
+			 */
+			kptr_index = 0;
+			set = 1;	/* First indirect block */
+		} else {
+			/*
+			 * Deleting all blocks down this indirect tree,
+			 * this is indicated by values of -1 in the kptr
+			 * array starting at kptr_index.
+			 */
+			kptr_index = NIEXT - 1;
+		}
+		error = sam_proc_indirect_block(ip, ib_args, kptr, kptr_index,
+		    &ip->di.extent[i], &ip->di.extent_ord[i],
+		    (i - NDEXT), &set);
+		if (error == ECANCELED) {
+			error = 0;
+			args.on_ord = 1;
+			break;
+		} else {
+			error = ENOENT;
+		}
+	}
+	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+	VN_RELE(SAM_ITOV(ip));
+
+	if (size != sizeof (args) ||
+	    copyout((caddr_t)&args, arg, sizeof (args))) {
+		error = EFAULT;
+	}
+
+out:
+	SAM_SYSCALL_DEC(mp, 0);
 	return (error);
 }
 #endif

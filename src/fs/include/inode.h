@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.195 $"
+#pragma ident "$Revision: 1.196 $"
 #endif
 
 #ifdef linux
@@ -942,6 +942,16 @@ int  sam_read_ino(struct sam_mount *mp, sam_ino_t ino, buf_t **bpp,
 void sam_inactive_ino(sam_node_t *ip, cred_t *credp);
 void sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp);
 int  sam_drop_ino(sam_node_t *ip, cred_t *credp);
+
+enum sam_ib_cmd {SAM_FREE_BLOCK, SAM_FIND_ORD};
+typedef struct sam_ib_arg {
+	enum sam_ib_cmd	cmd;
+	int		ord;
+	int		first_ord;
+} sam_ib_arg_t;
+int  sam_proc_indirect_block(sam_node_t *ip, sam_ib_arg_t arg, int kptr[],
+	int ik, uint32_t *extent_bn, uchar_t *extent_ord, int level, int *set);
+
 int  sam_sync_inode(sam_node_t *ip, offset_t length,
 	sam_truncate_t tflag);
 int  sam_proc_truncate(sam_node_t *ip, offset_t length, sam_truncate_t tflag,
