@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopupViewBean.java,v 1.20 2008/03/17 14:43:34 am143972 Exp $
+// ident	$Id: FileDetailsPopupViewBean.java,v 1.21 2008/04/29 19:32:14 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -70,12 +70,12 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String DEFAULT_URL = "/jsp/fs/FileDetailsPopup.jsp";
     public static final String CHILD_ACTION_TABLE = "ActionTable";
 
-    public static final String FILE_TO_VIEW = "file_to_view";
-    public static final String IS_ARCHIVING = "is_archiving";
-    public static final String FS_NAME = "fs_name";
-    public static final String MOUNT_POINT = "mount_point";
-    public static final String RECOVERY_POINT_PATH = "snap_path";
-    public static final String IS_DIR = "is_dir";
+    public static final String FILE_TO_VIEW = "filetoview";
+    public static final String IS_ARCHIVING = "isarchiving";
+    public static final String FS_NAME = "fsname";
+    public static final String MOUNT_POINT = "mountpoint";
+    public static final String RECOVERY_POINT_PATH = "snappath";
+    public static final String IS_DIR = "isdir";
 
     // Hidden field for javascript to determine if it needs to bring the focus
     // to the bottom of the page

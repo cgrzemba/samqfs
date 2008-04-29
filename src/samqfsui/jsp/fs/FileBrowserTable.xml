@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FileBrowserTable.xml,v 1.8 2008/03/17 14:40:33 am143972 Exp $ -->
+<!-- $Id: FileBrowserTable.xml,v 1.9 2008/04/29 19:32:14 ronaldso Exp $ -->
 
 <table>
 <actions>
@@ -87,7 +87,7 @@
             tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
     </cc>
     <cc name="IconFile" tagclass="com.sun.web.ui.taglib.html.CCImageTag" >
-        <attribute name="align" value="middle" /> 
+        <attribute name="align" value="middle" />
     </cc>
     <cc name="FileNameText"
         tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
@@ -134,7 +134,6 @@
         <attribute name="align" value="middle" />
         <attribute name="border" value="0" />
     </cc>
-    <cc name="CopyInfo" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
     <cc name="HiddenInfo" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
 
 </column>

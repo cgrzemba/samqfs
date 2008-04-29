@@ -27,12 +27,13 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StagePopupViewBean.java,v 1.16 2008/03/17 14:43:35 am143972 Exp $
+// ident	$Id: StagePopupViewBean.java,v 1.17 2008/04/29 19:32:14 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
+import com.iplanet.jato.view.html.OptionList;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
@@ -47,16 +48,17 @@ import com.sun.web.ui.view.html.CCCheckBox;
 import com.sun.web.ui.view.html.CCDropDownMenu;
 import com.sun.web.ui.view.html.CCLabel;
 import com.sun.web.ui.view.html.CCStaticTextField;
-import java.io.IOException;
-import javax.servlet.ServletException;
-import com.iplanet.jato.view.html.OptionList;
-import com.sun.netstorage.samqfs.web.util.ConversionUtil;
+import com.sun.netstorage.samqfs.mgmt.FileUtil;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.stg.Stager;
 import com.sun.netstorage.samqfs.web.model.fs.FileCopyDetails;
+import com.sun.netstorage.samqfs.web.model.fs.StageFile;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
+import java.io.File;
+import java.io.IOException;
+import javax.servlet.ServletException;
 
 /**
  * This is the view bean of the stage pop up window.  This pop up window is
@@ -75,9 +77,11 @@ public class StagePopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String STAGE_FROM = "stageFrom";
     public static final String RECURSIVE = "recursive";
 
-    public static final String FILE_TO_STAGE = "file_to_stage";
-    public static final String IS_DIR = "is_dir";
-    public static final String COPY_INFO = "copy_info";
+    public static final String FILE_TO_STAGE = "filetostage";
+    public static final String IS_DIR = "isdir";
+    public static final String FS_NAME = "fsname";
+    public static final String MOUNT_POINT = "mountpoint";
+    public static final String RECOVERY_POINT_PATH = "snappath";
 
     private CCPageTitleModel ptModel = null;
 
@@ -197,6 +201,12 @@ public class StagePopupViewBean extends CommonSecondaryViewBeanBase {
         TraceUtil.trace3("Exiting");
     }
 
+    public void handleCancelRequest(RequestInvocationEvent rie)
+        throws ServletException, IOException {
+
+        getParentViewBean().forwardTo(getRequestContext());
+    }
+
     public void handleSubmitRequest(RequestInvocationEvent rie)
         throws ServletException, IOException {
 
@@ -267,6 +277,51 @@ public class StagePopupViewBean extends CommonSecondaryViewBeanBase {
         forwardTo(getRequestContext());
     }
 
+    /**
+     * Retrieve the copy information of the selected file.
+     * There are only three things available in each of the FileCopyDetails
+     * object.
+     */
+    private FileCopyDetails [] getCopyDetails() throws SamFSException {
+        SamQFSSystemFSManager fsManager =
+            SamUtil.getModel(getServerName()).getSamQFSSystemFSManager();
+        StageFile stageFile =
+            getSelectedStageFile(fsManager, getFSName(), getFileToStage());
+
+        return stageFile.getFileCopyDetails();
+    }
+
+    private StageFile getSelectedStageFile(
+        SamQFSSystemFSManager fsManager, String fsName, String fileNameWithPath)
+        throws SamFSException {
+
+        String mountPoint = getMountPoint();
+
+        String relativePathName;
+        if (File.separator.equals(mountPoint)) {
+            relativePathName = fileNameWithPath.substring(mountPoint.length());
+        } else {
+            relativePathName =
+                fileNameWithPath.substring(mountPoint.length() + 1);
+        }
+
+        int theseDetails = FileUtil.FNAME
+                         | FileUtil.FILE_TYPE
+                         | FileUtil.SIZE
+                         | FileUtil.CREATED
+                         | FileUtil.MODIFIED
+                         | FileUtil.ACCESSED
+                         | FileUtil.CHAR_MODE
+                         | FileUtil.SAM_STATE
+                         | FileUtil.COPY_DETAIL;
+
+        return fsManager.getFileInformation(
+                    fsName,
+                    getRecoveryPoint(), // snapPath
+                    relativePathName,
+                    theseDetails);
+    }
+
     protected String getFileToStage() {
         String file = (String)getPageSessionAttribute(FILE_TO_STAGE);
 
@@ -289,33 +344,41 @@ public class StagePopupViewBean extends CommonSecondaryViewBeanBase {
         return Boolean.valueOf(isDirectory).booleanValue();
     }
 
+    public String getFSName() {
+        String fsName = (String) getPageSessionAttribute(FS_NAME);
+
+        if (fsName == null) {
+            fsName =
+                RequestManager.getRequest().getParameter(FS_NAME);
+            setPageSessionAttribute(FS_NAME, fsName);
+        }
+
+        return fsName;
+    }
+
+    private String getMountPoint() {
+        String mountPoint = (String) getPageSessionAttribute(MOUNT_POINT);
+
+        if (mountPoint == null) {
+            mountPoint =
+                RequestManager.getRequest().getParameter(MOUNT_POINT);
+            setPageSessionAttribute(MOUNT_POINT, mountPoint);
+        }
+        return mountPoint;
+    }
+
     /**
-     * Retrieve the copy information of the selected file.
-     * There are only three things available in each of the FileCopyDetails
-     * object.
-     * 1. Copy Number
-     * 2. Media Type
-     * 3. Damaged state
+     * getRecoveryPoint returns null in live mode
      */
-    protected FileCopyDetails [] getCopyDetails() throws SamFSException {
-        String copyInfo = (String) getPageSessionAttribute(COPY_INFO);
+    protected String getRecoveryPoint() {
+        String recoveryPoint =
+            (String) getPageSessionAttribute(RECOVERY_POINT_PATH);
 
-        if (copyInfo == null) {
-            copyInfo = RequestManager.getRequest().getParameter(COPY_INFO);
-            setPageSessionAttribute(COPY_INFO, copyInfo);
+        if (recoveryPoint == null) {
+            recoveryPoint =
+                RequestManager.getRequest().getParameter(RECOVERY_POINT_PATH);
+            setPageSessionAttribute(RECOVERY_POINT_PATH, recoveryPoint);
         }
-        // no copy
-        if (copyInfo == null || copyInfo.length() == 0) {
-            return new FileCopyDetails[0];
-        }
-
-        String [] copyInfoArray = copyInfo.split("###");
-        FileCopyDetails [] copyDetails =
-            new FileCopyDetails[copyInfoArray.length];
-        for (int i = 0; i < copyDetails.length; i++) {
-            copyDetails[i] = new FileCopyDetails(
-                                ConversionUtil.strToProps(copyInfoArray[i]));
-        }
-        return copyDetails;
+        return recoveryPoint == null ? "" : recoveryPoint;
     }
 }

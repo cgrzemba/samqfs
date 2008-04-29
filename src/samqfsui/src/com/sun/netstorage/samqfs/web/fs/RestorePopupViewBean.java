@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RestorePopupViewBean.java,v 1.9 2008/03/17 14:43:35 am143972 Exp $
+// ident	$Id: RestorePopupViewBean.java,v 1.10 2008/04/29 19:32:14 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -37,6 +37,7 @@ import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.iplanet.jato.view.html.OptionList;
+import com.sun.netstorage.samqfs.mgmt.FileUtil;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.util.CommonSecondaryViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
@@ -52,14 +53,15 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileCopyDetails;
 import com.sun.netstorage.samqfs.web.model.fs.RestoreFile;
+import com.sun.netstorage.samqfs.web.model.fs.StageFile;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControl;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserModel;
-import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.PropertySheetUtil;
 import com.sun.web.ui.view.html.CCStaticTextField;
+import java.io.File;
 
 public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
     // page name & default url
@@ -75,12 +77,11 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String ORIGINAL_FILE = "restoreTypeText";
 
     //  keep track of file names and info
-    public static final String FILE_TO_RESTORE = "file_to_restore";
-    public static final String FS_NAME = "fs_name";
-    public static final String MOUNT_POINT = "mount_point";
-    public static final String IS_DIR = "is_dir";
-    public static final String COPY_INFO = "copy_info";
-    public static final String RECOVERY_POINT_PATH = "snap_path";
+    public static final String FILE_TO_RESTORE = "filetorestore";
+    public static final String FS_NAME = "fsname";
+    public static final String MOUNT_POINT = "mountpoint";
+    public static final String IS_DIR = "isdir";
+    public static final String RECOVERY_POINT_PATH = "snappath";
 
     // Flag to indicate restore entire recovery point
     public static final String ENTIRE_RECOVERY_POINT = "##all##";
@@ -155,12 +156,6 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
 
         String serverName = getServerName();
         String file = getFileToRestore();
-
-        // save the fs name from http request, do not remove
-        String fsName = getFSName();
-
-        // save the recovery point from http request, do not remove
-        String recoveryPoint = getRecoveryPoint();
 
         // Restore the entire recovery point?
         boolean restoreEntire = false;
@@ -439,6 +434,12 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
         forwardTo(getRequestContext());
     }
 
+    public void handleCancelRequest(RequestInvocationEvent rie)
+        throws ServletException, IOException {
+
+        getParentViewBean().forwardTo(getRequestContext());
+    }
+
     private void createRestorePathFileChooserModel() {
         TraceUtil.trace3("Entering");
 
@@ -535,30 +536,43 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
      * Retrieve the copy information of the selected file.
      * There are only three things available in each of the FileCopyDetails
      * object.
-     * 1. Copy Number
-     * 2. Media Type
-     * 3. Damaged state
      */
-    protected FileCopyDetails [] getCopyDetails() throws SamFSException {
-        String copyInfo = (String) getPageSessionAttribute(COPY_INFO);
+    private FileCopyDetails [] getCopyDetails() throws SamFSException {
+        SamQFSSystemFSManager fsManager =
+            SamUtil.getModel(getServerName()).getSamQFSSystemFSManager();
+        StageFile stageFile =
+            getSelectedStageFile(fsManager, getFSName(), getFileToRestore());
 
-        if (copyInfo == null) {
-            copyInfo = RequestManager.getRequest().getParameter(COPY_INFO);
-            setPageSessionAttribute(COPY_INFO, copyInfo);
+        return stageFile.getFileCopyDetails();
+    }
+
+    private StageFile getSelectedStageFile(
+        SamQFSSystemFSManager fsManager, String fsName, String fileNameWithPath)
+        throws SamFSException {
+
+        String mountPoint = getMountPoint();
+        String relativePathName;
+        if (File.separator.equals(mountPoint)) {
+            relativePathName = fileNameWithPath.substring(mountPoint.length());
+        } else {
+            relativePathName =
+                fileNameWithPath.substring(mountPoint.length() + 1);
         }
 
-        // no copy
-        if (copyInfo == null || copyInfo.length() == 0) {
-            return new FileCopyDetails[0];
-        }
+        int theseDetails = FileUtil.FNAME
+                         | FileUtil.FILE_TYPE
+                         | FileUtil.SIZE
+                         | FileUtil.CREATED
+                         | FileUtil.MODIFIED
+                         | FileUtil.ACCESSED
+                         | FileUtil.CHAR_MODE
+                         | FileUtil.SAM_STATE
+                         | FileUtil.COPY_DETAIL;
 
-        String [] copyInfoArray = copyInfo.split("###");
-        FileCopyDetails [] copyDetails =
-            new FileCopyDetails[copyInfoArray.length];
-        for (int i = 0; i < copyDetails.length; i++) {
-            copyDetails[i] = new FileCopyDetails(
-                                ConversionUtil.strToProps(copyInfoArray[i]));
-        }
-        return copyDetails;
+        return fsManager.getFileInformation(
+                    fsName,
+                    getRecoveryPoint(), // snapPath
+                    relativePathName,
+                    theseDetails);
     }
 }

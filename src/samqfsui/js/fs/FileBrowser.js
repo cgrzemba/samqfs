@@ -27,9 +27,9 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: FileBrowser.js,v 1.11 2008/03/17 14:40:26 am143972 Exp $
+// ident    $Id: FileBrowser.js,v 1.12 2008/04/29 19:32:14 ronaldso Exp $
 
-/** 
+/**
  * This is the javascript file for the File Brwoser Page
  */
 
@@ -55,7 +55,7 @@
 
         document.FileBrowserForm.elements["FileBrowser.Dir"].value = text;
     }
-    
+
     function launchFilterPopup(field) {
         var formName      = field.form.name;
         var returnValue   = "FileBrowser.filterReturnValue";
@@ -73,30 +73,32 @@
             promptText,
             loadValue);
     }
-    
+
     function launchStagePopup(field) {
         var myForm      = document.FileBrowserForm;
         var fileNames   = field.form.elements[
             "FileBrowser.fileNames"].value.split(";");
         var fileToStage = fileNames[modelIndex];
-        
+
         var prefixWithIndex = prefixTiled + modelIndex + "].";
 
         // retrieve if the entry is a directory or a file
         var hidden    = myForm.elements[prefixWithIndex + "HiddenInfo"].value;
         var hiddenArr = hidden.split("###");
         var isDir     = hiddenArr[2] == "true";
+        var snapPath    = myForm.elements["FileBrowser.snapPath"].value;
+        if ("live" == snapPath) snapPath = "";
 
-        var copyInfo  = myForm.elements[prefixWithIndex + "CopyInfo"].value;
-
-        var params = "&file_to_stage=" + escape(fileToStage) +
-                     "&copy_info=" + escape(copyInfo) +
-                     "&is_dir=" + isDir;
+        var params = "&filetostage=" + fileToStage +
+                     "&isdir=" + isDir +
+                     "&fsname=" + getFSInfo(0) +
+                     "&mountpoint=" + getFSInfo(1) +
+                     "&snappath=" + snapPath;
         var name = "stage_file_popup";
         var uri = "/fs/StagePopup";
 
         // need to collect parameters : fs name, file name at the very least
-        var win = launchPopup(uri, name, null, null, params);
+        var win = launchPopup(uri, name, null, null, encodeURI(params));
         win.focus();
         return false;
     }
@@ -111,10 +113,10 @@
 
         // Restore entire recovery point
         if (entire) {
-            params = "&file_to_restore=" + escape("##all##") +
-                     "&fs_name=" + getFSInfo(0) +
-                     "&mount_point=" + getFSInfo(1) +
-                     "&snap_path=" + snapPath;
+            params = "&filetorestore=" + "##all##" +
+                     "&fsname=" + getFSInfo(0) +
+                     "&mountpoint=" + getFSInfo(1) +
+                     "&snappath=" + snapPath;
         } else {
             var fileNames   = field.form.elements[
                 "FileBrowser.fileNames"].value.split(";");
@@ -123,22 +125,22 @@
             var prefixWithIndex = prefixTiled + modelIndex + "].";
 
             // retrieve if the entry is a directory or a file
-            var hidden    = myForm.elements[prefixWithIndex + "HiddenInfo"].value;
+            var hidden = myForm.elements[prefixWithIndex + "HiddenInfo"].value;
             var hiddenArr = hidden.split("###");
             var isDir     = hiddenArr[2] == "true";
 
-            var copyInfo  = myForm.elements[prefixWithIndex + "CopyInfo"].value;
+            var snapPath    = myForm.elements["FileBrowser.snapPath"].value;
+            if ("live" == snapPath) snapPath = "";
 
-            params = "&file_to_restore=" + escape(fileToRestore) +
-                         "&fs_name=" + getFSInfo(0) +
-                         "&mount_point=" + getFSInfo(1) +
-                         "&is_dir=" + isDir +
-                         "&snap_path=" + snapPath +
-                         "&copy_info=" + escape(copyInfo);
+            params = "&filetorestore=" + fileToRestore +
+                     "&fsname=" + getFSInfo(0) +
+                     "&mountpoint=" + getFSInfo(1) +
+                     "&isdir=" + isDir +
+                     "&snappath=" + snapPath;
         }
 
         // need to collect parameters : fs name, file name at the very least
-        var win = launchPopup(uri, name, null, null, params);
+        var win = launchPopup(uri, name, null, null, encodeURI(params));
         win.focus();
         return false;
     }
@@ -155,7 +157,7 @@
 
         return fsInfoArray[parseInt(value)];
     }
-    
+
     function launchViewDetailsPopup(field) {
         var myForm      = document.FileBrowserForm;
         var isArchiving = field.form.elements[
@@ -173,13 +175,12 @@
         var snapPath    = myForm.elements["FileBrowser.snapPath"].value;
         if ("live" == snapPath) snapPath = "";
 
-        var params = "&fs_name=" + getFSInfo(0) +
-                     "&mount_point=" + getFSInfo(1) +
-                     "&file_to_view=" + escape(fileToView) +
-                     "&is_dir=" + isDir +
-                     "&is_archiving=" + isArchiving +
-                     "&snap_path=" + snapPath;
-
+        var params = "&fsname=" + getFSInfo(0) +
+                     "&mountpoint=" + getFSInfo(1) +
+                     "&filetoview=" + fileToView +
+                     "&isdir=" + isDir +
+                     "&isarchiving=" + isArchiving +
+                     "&snappath=" + snapPath;
         var name = "file_details_popup_" + uniqueWindowKey;
         uniqueWindowKey++;
         var uri = "/fs/FileDetailsPopup";
@@ -189,12 +190,12 @@
         win.focus();
         return false;
     }
-    
+
     /* helper function to retrieve element by id */
     function $(id) {
         return document.getElementById(id);
     }
-    
+
     function handleToggleComponent() {
         var supportToggle =
             document.FileBrowserForm.elements[
@@ -205,7 +206,7 @@
             $("toggleDiv").style.visibility="";
         }
     }
-    
+
     function handleToggleRadio(field) {
         if (field.value == "recovery") {
             ccSetDropDownMenuDisabled(
@@ -253,7 +254,7 @@
             "=&jato.pageSession=" + pageSession;
         field.form.submit();
     }
-    
+
     function handleFileSelection(field) {
         var disabled      = true;
         var stageDisabled = true;
@@ -303,7 +304,7 @@
             // Archive/Stage/Release should not be allowed
             isArchiving =
                 myForm.elements["FileBrowser.isArchiving"].value == "true";
-                
+
             var prefixWithIndex = prefixTiled + modelIndex + "].";
 
             // check if the file/directory is online
@@ -313,7 +314,7 @@
 
             // check if there are any valid copies
             noValidCopy = hiddenArr[0] == "true";
-            
+
             // If entry is a directory, allow Stage to pop up
             // directory is always online
             isDir = hiddenArr[2] == "true";
@@ -330,14 +331,14 @@
             actionMenu, formName,
             disabled || !isArchiving || isRecoveryMode || !hasPermission(),
             1);
-            
+
         // Release
         ccSetDropDownMenuOptionDisabled(
             actionMenu, formName,
             disabled || !isArchiving || isRecoveryMode || (!online && !isDir)
                                      || !hasPermission(),
             2);
-            
+
         // Stage
         ccSetDropDownMenuOptionDisabled(
             actionMenu, formName,
@@ -345,7 +346,7 @@
                      || (noValidCopy && !isDir) || isRecoveryMode
                      || !hasPermission(),
             3);
-            
+
         // Restore
         ccSetDropDownMenuOptionDisabled(
             actionMenu, formName,

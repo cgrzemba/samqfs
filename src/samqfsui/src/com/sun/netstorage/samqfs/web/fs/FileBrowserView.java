@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserView.java,v 1.22 2008/03/17 14:43:34 am143972 Exp $
+// ident	$Id: FileBrowserView.java,v 1.23 2008/04/29 19:32:14 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -326,7 +326,6 @@ public class FileBrowserView extends CommonTableContainerView {
                 }
 
                 FileCopyDetails [] allDetails = file.getFileCopyDetails();
-                StringBuffer copyBuf = new StringBuffer();
 
                 // reset image fields
                 for (int k = 1; k <= 4; k++) {
@@ -337,11 +336,6 @@ public class FileBrowserView extends CommonTableContainerView {
 
                 boolean noValidCopy = true;
                 for (int j = 0; j < allDetails.length; j++) {
-                    if (copyBuf.length() > 0) {
-                        copyBuf.append("###");
-                    }
-                    copyBuf.append(allDetails[j].encode());
-
                     String copyString =
                         Integer.toString(allDetails[j].getCopyNumber());
 
@@ -355,10 +349,6 @@ public class FileBrowserView extends CommonTableContainerView {
                             allDetails[j].getMediaType(),
                             thisCopyDamaged));
                 }
-
-                // Hidden Field for Stage / Restore Pop Up
-                // <copy1_info>###<copy2_info>....
-                model.setValue("CopyInfo", copyBuf.toString());
 
                 // Hidden Field for Javascript
                 // <isAllCopyDamaged>###<online_status>###<isDirectory>
