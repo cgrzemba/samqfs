@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.79 $"
+#pragma ident "$Revision: 1.80 $"
 
 #include "sam/osversion.h"
 
@@ -445,40 +445,106 @@ sam_sgethosts(
 		 */
 		if (rwsize == SAM_LARGE_HOSTS_TABLE_SIZE &&
 		    (ip->di.rm.size < SAM_LARGE_HOSTS_TABLE_SIZE)) {
+			struct sam_sbinfo *sblk = &ip->mp->mi.m_sbp->info.sb;
+
+			if (sblk->magic != SAM_MAGIC_V2 &&
+			    sblk->magic != SAM_MAGIC_V2A) {
+				error = ENOSYS;
+				sam_rele_ino(ip);
+				goto out;
+			}
+
+			/*
+			 * TMP transaction until something more
+			 * specific exists.
+			 */
+			trans_size = (int)TOP_SETATTR_SIZE(ip);
+			TRANS_BEGIN_CSYNC(ip->mp, issync,
+			    TOP_SETATTR, trans_size);
+
 			/*
 			 * See if there is enough space for
-			 * a large host table.
+			 * a large host table, if not allocate a new one.
 			 */
-			if ((ip->di.blocks * SAM_BLK) >=
-			    SAM_LARGE_HOSTS_TABLE_SIZE) {
-				struct sam_sbinfo *sblk =
-				    &ip->mp->mi.m_sbp->info.sb;
+			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+			if ((ip->di.blocks * SAM_BLK)
+			    < SAM_LARGE_HOSTS_TABLE_SIZE) {
+				sam_bn_t save_bn;
+				uchar_t	save_ord;
+				int32_t save_blocks;
+				offset_t save_size;
+				int fblk_to_extent;
+
+				ASSERT(ip->di.status.b.direct_map == 0);
+				ASSERT(ip->di.status.b.on_large == 1);
+				ASSERT(ip->di.rm.size == SAM_HOSTS_TABLE_SIZE);
+
 				/*
-				 * Enough disk space has been allocated for
-				 * a large host table so set the size
-				 * accordingly and flag the superblock.
-				 *
-				 * There is no going back to a small host table.
+				 * Allocate space for a new large
+				 * direct map host file.
 				 */
 
-				if (sblk->magic != SAM_MAGIC_V2 &&
-				    sblk->magic != SAM_MAGIC_V2A) {
-					error = ENOSYS;
-					sam_rele_ino(ip);
-					goto out;
+				/*
+				 * Save these old values in case of an error.
+				 */
+				save_size = ip->di.rm.size;
+				save_bn = ip->di.extent[0];
+				save_ord = ip->di.extent_ord[0];
+				save_blocks = ip->di.blocks;
+
+				ip->di.rm.size = 0;
+				ip->size = 0;
+				ip->di.extent[0] = 0;
+				ip->di.extent_ord[0] = 0;
+				ip->di.blocks = 0;
+
+				/*
+				 * The large host table must be a
+				 * direct map file for samsharefs -R
+				 */
+				ip->di.status.b.direct_map = 1;
+
+				error = sam_map_block(ip, (offset_t)0,
+				    SAM_LARGE_HOSTS_TABLE_SIZE,
+				    SAM_ALLOC_BLOCK, NULL, credp);
+
+				if (error) {
+					/*
+					 * Restore the original info.
+					 */
+					ip->di.status.b.direct_map = 0;
+					ip->size = save_size;
+					ip->di.rm.size = save_size;
+					ip->di.extent[0] = save_bn;
+					ip->di.extent_ord[0] = save_ord;
+					ip->di.blocks = save_blocks;
+
+				} else {
+					/*
+					 * Free the old host table.
+					 */
+					sam_free_block(mp, LG,
+					    save_bn, save_ord);
+
+					/*
+					 * Record the new hosts table location
+					 * in the superblock.
+					 */
+					fblk_to_extent =
+					    sblk->ext_bshift - SAM_DEV_BSHIFT;
+					sblk->hosts =
+					    ip->di.extent[0] << fblk_to_extent;
+					sblk->hosts_ord = ip->di.extent_ord[0];
 				}
+			}
 
-				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-
+			if (error == 0) {
 				/*
-				 * TMP transaction until something more
-				 * specific exists.
+				 * Update the inode and the superblocks.
 				 */
-				trans_size = (int)TOP_SETATTR_SIZE(ip);
-				TRANS_BEGIN_CSYNC(ip->mp, issync,
-				    TOP_SETATTR, trans_size);
-
+				ip->size = SAM_LARGE_HOSTS_TABLE_SIZE;
 				ip->di.rm.size = SAM_LARGE_HOSTS_TABLE_SIZE;
+
 				TRANS_INODE(ip->mp, ip);
 				sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
 				sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
@@ -494,19 +560,18 @@ sam_sgethosts(
 				mutex_exit(&mp->mi.m_sblk_mutex);
 
 				error = sam_update_the_sblks(mp);
+			}
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
-				TRANS_END_CSYNC(ip->mp, terr, issync,
-				    TOP_SETATTR, trans_size);
+			TRANS_END_CSYNC(ip->mp, terr, issync,
+			    TOP_SETATTR, trans_size);
 
-				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-
-				if (error == 0) {
-					error = terr;
-				}
-				if (error) {
-					sam_rele_ino(ip);
-					goto out;
-				}
+			if (error == 0) {
+				error = terr;
+			}
+			if (error) {
+				sam_rele_ino(ip);
+				goto out;
 			}
 		}
 

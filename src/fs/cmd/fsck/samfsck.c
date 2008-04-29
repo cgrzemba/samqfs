@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 
 /* ----- Includes */
@@ -1180,10 +1180,10 @@ check_fs(void)
 	 */
 	if (repair_files && sblock.info.sb.hosts) {
 		upath_t srvr;
+		ushort_t hosts_ord = sblock.info.sb.hosts_ord;
 
-		if (!shared_server(&devp->device[mm_ord],
+		if (!shared_server(&devp->device[hosts_ord],
 		    sblock.info.sb.hosts, srvr)) {
-			devlp = &devp->device[mm_ord];
 			error(0, 0, catgets(catfd, SET, 13326,
 			    "Must run samfsck from the metadata server %s"),
 			    srvr);
@@ -8712,7 +8712,6 @@ quota_compare_entry(struct sam_dquot *ondisk, struct sam_dquot *computed,
  *	) If converting to shared FS:
  *		) Ensure that the HOST_INO file is what we expect (IFREG,
  *		  correct length, LARGE, online, ...)
- *		) Ensure that the HOST_INO extend_ord[0] is 0.
  *		) Ensure that the HOST_INO extent[0] isn't 0.
  *	) Ensure that the FS was shared if asking to uncovert or
  *	  non-shared if asking to convert.
@@ -8750,7 +8749,8 @@ shared_fs_convert(struct sam_sblk *sbp)
 			    "shared_fs_convert: hosts file inode problem"));
 			clean_exit(ES_error);
 		}
-		if (hostino.di.extent_ord[0] != 0) {
+		if (sbp->info.sb.magic == SAM_MAGIC_V2 &&
+		    hostino.di.extent_ord[0] != 0) {
 			error(0, 0, catgets(catfd, SET, 13929,
 			    "shared_fs_convert: hosts file ordinal extent "
 			    "err (%d != 0)"),
@@ -8764,6 +8764,7 @@ shared_fs_convert(struct sam_sblk *sbp)
 			clean_exit(ES_error);
 		}
 		sbp->info.sb.hosts = hostino.di.extent[0] << ext_bshift;
+		sbp->info.sb.hosts_ord = hostino.di.extent_ord[0];
 	} else if (cvt_to_nonshared) {	/* Shared (V2) FS -> unshared V2 FS */
 		sbp->info.sb.hosts = 0;
 	}

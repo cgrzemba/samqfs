@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 
 /* ----- Include Files ---- */
@@ -1666,6 +1666,7 @@ iino(void)
 				}
 				sblock.info.sb.hosts =
 				    (dp->di.extent[0] << fblk_to_extent);
+				sblock.info.sb.hosts_ord = dp->di.extent_ord[0];
 				bufp = (char *)hostbuf;
 				break;
 

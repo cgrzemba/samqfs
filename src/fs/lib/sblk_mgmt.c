@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -524,8 +524,9 @@ sam_fd_host_table_get2(
 	}
 
 	/* Verify this superblock has a host table. */
-	if ((sb.info.sb.magic == SAM_MAGIC_V1) || (sb.info.sb.ord != 0) ||
-	    (sb.info.sb.hosts == 0)) {
+	if ((sb.info.sb.magic == SAM_MAGIC_V1) ||
+	    (sb.info.sb.hosts == 0) ||
+	    (sb.info.sb.ord != sb.info.sb.hosts_ord)) {
 		return (ENOENT);
 	}
 

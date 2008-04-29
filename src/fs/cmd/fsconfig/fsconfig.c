@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 /* Feature test switches. */
 
@@ -81,6 +81,7 @@ struct DevInfo {
 #endif /* sun */
 	struct dk_cinfo *di_dkip;
 	struct sam_host_table *di_hosts;
+	int di_hosts_table_size;
 } Devs[MAXDEV];
 int NDevs;
 
@@ -88,7 +89,7 @@ static void CheckDev(char *);
 static void DumpDevs(void);
 static void SortDevs(void);
 static void ListDevs(void);
-static void ListHosts(struct DevInfo *);
+static void ListHosts(struct DevInfo *, int);
 static void ListFSet(struct DevInfo *, int);
 static void TypeStr(dtype_t, char *buf);
 static void FSStr(uname_t, char *buf);
@@ -289,7 +290,8 @@ CheckDev(char *dev)
 
 	if (shared && (sblk.info.sb.magic == SAM_MAGIC_V2 ||
 	    sblk.info.sb.magic == SAM_MAGIC_V2A) &&
-	    sblk.info.sb.ord == 0 && sblk.info.sb.hosts != 0) {
+	    sblk.info.sb.ord == sblk.info.sb.hosts_ord &&
+	    sblk.info.sb.hosts != 0) {
 		if (llseek(fd, sblk.info.sb.hosts*SAM_DEV_BSIZE, SEEK_SET)
 		    == (offset_t)-1) {
 			if (verbose) {
@@ -322,6 +324,7 @@ CheckDev(char *dev)
 		}
 		bcopy((char *)htp, (char *)Devs[NDevs].di_hosts,
 		    hosts_table_size);
+		Devs[NDevs].di_hosts_table_size = hosts_table_size;
 	} else {
 		Devs[NDevs].di_hosts = NULL;
 	}
@@ -494,7 +497,7 @@ ListDevs(void)
 				break;
 			}
 		}
-		ListHosts(&Devs[i]);
+		ListHosts(&Devs[i], n);
 		ListFSet(&Devs[i], n);
 	}
 }
@@ -503,14 +506,32 @@ ListDevs(void)
  * Dump out a hosts record, if one.
  */
 static void
-ListHosts(struct DevInfo *dip)
+ListHosts(struct DevInfo *rdip, int nd)
 {
 	int n;
+	int i;
 	char fsbuf[sizeof (uname_t)+8];
+	struct DevInfo *dip;
 
 	if (!shared) {
 		return;
 	}
+
+	/*
+	 * DevInfo arg is for ordinal 0,
+	 * the hosts table may not be on
+	 * ordinal 0.
+	 */
+	dip = rdip;
+	if (!dip->di_hosts) {
+		/*
+		 * Look for a device in this
+		 * group that has a hosts table.
+		 */
+		for (i = 0; i < nd && dip->di_hosts == NULL; i++, dip++) {
+		}
+	}
+
 	if (!dip->di_hosts) {
 		return;
 	}
@@ -518,7 +539,7 @@ ListHosts(struct DevInfo *dip)
 	FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
 	n = dip->di_hosts->count;
 	if (n < 0 || offsetof(sam_host_table_t, ent[n]) >
-	    SAM_HOSTS_TABLE_SIZE) {
+	    dip->di_hosts_table_size) {
 		/* Host table count out of range (%d).\n */
 		fprintf(stderr, GetCustMsg(13237), n);
 		return;

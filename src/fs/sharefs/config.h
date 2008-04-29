@@ -34,7 +34,7 @@
 #if !defined(SHFS_CONFIG_H)
 #define	SHFS_CONFIG_H
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 /*
  * These bits + structure keeps track of all the items that
@@ -90,8 +90,9 @@ struct shfs_config {
 		upath_t serverAddr;
 		struct sam_label_blk lb;	/* label block from fs disk */
 		timestruc_t lHostModTime;	/* mod time, hosts.fs.local */
-		struct sam_host_table_blk *ht;	/* host table from root slice */
+		struct sam_host_table_blk *ht;	/* host table */
 		int htsize;
+		ushort_t hosts_ord;	/* dev ordinal of the host table */
 	} cp[2];
 };
 

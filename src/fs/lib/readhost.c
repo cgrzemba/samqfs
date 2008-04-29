@@ -78,7 +78,7 @@
  *          venus        venus-1.foo.com
  *          pluto        pluto-1.foo.com
  */
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 
 /* ANSI C headers. */
@@ -140,6 +140,8 @@ static int HostServer = 0;
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 		"abcdefghijklmnopqrstuvwxyz0123456789-_.:,")
 #define	cvtNumber(s)	cvtToken(s, "-x0123456789")
+
+int OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag);
 
 static int
 cvtToken(char *s, char *okchars)
@@ -432,6 +434,12 @@ SamStoreHosts(struct sam_host_table *ht, int size, char ***tabd, int gen)
  * The size of the buffer containing struct sam_host_table_blk
  * may actually be bigger than sizeof(struct sam_host_table_blk)
  * if we have a large host table.
+ *
+ * The dev arg is the raw device name of ordinal 0.
+ * This device may or may not contain the hosts table.
+ * The original hosts table created at mkfs time will
+ * be on ordinal 0. If an older small hosts table was
+ * replaced with a large one it may not be on ordinal 0.
  */
 int
 SamGetRawHosts(
@@ -446,6 +454,7 @@ SamGetRawHosts(
 	extern int errno;
 	offset_t offset64;
 	int len;
+	int error;
 
 	SETERRNO(NULL, 0);
 	devfd = open(dev, O_RDONLY);
@@ -508,6 +517,25 @@ SamGetRawHosts(
 		len = SAM_HOSTS_TABLE_SIZE;
 	}
 
+	if (sblk.info.sb.hosts_ord != 0) {
+		/*
+		 * The hosts table is not on ordinal 0
+		 * so close devfd and open the correct device.
+		 */
+		close(devfd);
+		error = OpenFsDevOrd(sblk.info.sb.fs_name,
+		    sblk.info.sb.hosts_ord, &devfd, O_RDONLY);
+
+		if (error != 0) {
+			SETERRNO("Open of hosts table device for read failed",
+			    errno);
+			return (-1);
+		}
+	}
+
+	/*
+	 * Read the hosts table.
+	 */
 	offset64 = sblk.info.sb.hosts*SAM_DEV_BSIZE;
 	if (llseek(devfd, offset64, SEEK_SET) == -1) {
 		close(devfd);
@@ -544,6 +572,7 @@ SamPutRawHosts(
 	extern int errno;
 	offset_t offset64;
 	int len;
+	int error;
 
 	SETERRNO(NULL, 0);
 	devfd = open(dev, O_RDWR);
@@ -586,13 +615,6 @@ SamPutRawHosts(
 		SETERR("Filesystem not shared");
 		return (-1);
 	}
-	offset64 = sblk.info.sb.hosts*SAM_DEV_BSIZE;
-	if (llseek(devfd, offset64, SEEK_SET) == -1) {
-		close(devfd);
-		SETERRNO("Seek to hosts file offset failed", errno);
-		return (-1);
-	}
-
 	/*
 	 * Check for a large host table and set
 	 * the length to write accordingly.
@@ -621,6 +643,28 @@ SamPutRawHosts(
 		} else {
 			len = SAM_HOSTS_TABLE_SIZE;
 		}
+	}
+
+	if (sblk.info.sb.hosts_ord != 0) {
+		/*
+		 * The hosts table is not on ordinal 0
+		 * so close devfd and open the correct device.
+		 */
+		close(devfd);
+		error = OpenFsDevOrd(sblk.info.sb.fs_name,
+		    sblk.info.sb.hosts_ord, &devfd, O_RDWR);
+		if (error != 0) {
+			SETERRNO("Open of hosts table device for write failed",
+			    errno);
+			return (-1);
+		}
+	}
+
+	offset64 = sblk.info.sb.hosts*SAM_DEV_BSIZE;
+	if (llseek(devfd, offset64, SEEK_SET) == -1) {
+		close(devfd);
+		SETERRNO("Seek to hosts file offset failed", errno);
+		return (-1);
 	}
 
 	if (write(devfd, (char *)htp, len) != len) {
@@ -776,5 +820,76 @@ SamGetSharedHostName(struct sam_host_table *host, int hostno, upath_t name)
 		}
 		name[slen] = s[slen];
 	}
+	return (0);
+}
+
+
+/*
+ * ----- OpenFsDevOrd
+ *
+ * Given the name of a filesystem and a device ordinal,
+ * return an open file descriptor for the raw device.
+ */
+int
+OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag)
+{
+	struct sam_fs_part slice[252];
+	char devname[sizeof (slice[0].pt_name)+1],
+	    rdevname[sizeof (slice[0].pt_name)+2];
+	int r, j, k, n;
+	int npt;
+	int fd;
+	extern int errno;
+
+	if (ord > 251) {
+		return (EINVAL);
+	}
+
+	/*
+	 * Read enough of the partition table
+	 * to get the requested device.
+	 *
+	 * Need a function that returns just the
+	 * requested ordinal.
+	 */
+	npt = ord + 1;
+	r = GetFsParts(fs, npt, &slice[0]);
+	if (r < 0) {
+		return (errno);
+	}
+	if (strcmp((char *)&slice[0].pt_name, "nodev") == 0) {
+		/*
+		 * The requested ordinal is a nodev.
+		 */
+		return (EINVAL);
+	}
+	bzero((char *)devname, sizeof (devname));
+	strncpy(devname, (char *)&slice[ord].pt_name,
+	    sizeof (slice[0].pt_name));
+
+	/*
+	 * Convert the name to a raw device name.
+	 */
+	n = strlen(devname);
+	for (j = k = 0; k < n; j++, k++) {
+		rdevname[j] = devname[k];
+		if (strncmp(&devname[k], "/dsk/", 5) == 0) {
+			strncpy(&rdevname[j], "/rdsk/", 6);
+			k += 4;
+			j += 5;
+		}
+	}
+	rdevname[j] = '\0';
+	if (j == k) {
+		return (ENODEV);
+	}
+
+	fd = open(rdevname, oflag);
+
+	if (fd < 0) {
+		return (errno);
+	}
+	*devfd = fd;
+
 	return (0);
 }

@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -344,6 +344,9 @@ sam_sbinfo_format(
 
 	sprintf(vp, "%lld", sbip->hosts);
 	(void) sam_format_element_append(&bp, "host_offset", vp);
+
+	sprintf(vp, "%d", sbip->hosts_ord);
+	(void) sam_format_element_append(&bp, "host_ord", vp);
 
 	sprintf(vp, "%lld", sbip->inodes);
 	(void) sam_format_element_append(&bp, "inode_offset", vp);

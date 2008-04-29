@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -67,6 +67,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "config.h"
 
 extern struct shfs_config config;
+extern int OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag);
 
 /*
  * Local private functions
@@ -242,69 +243,6 @@ putLabel(
 }
 
 
-static int
-putHostsInfo(
-	int rfd,
-	char *fs,
-	struct cfdata *cfp)
-{
-	struct sam_sblk sb;
-	offset_t offset64;
-	struct sam_host_table_blk *hb = cfp->ht;
-	int htsize = cfp->htsize;
-
-	offset64 = SUPERBLK*SAM_DEV_BSIZE;
-	if (llseek(rfd, offset64, SEEK_SET) == -1) {
-		SysError(HERE, "FS %s: seek failed on superblock read", fs);
-		return (-1);
-	}
-	if (read(rfd, (char *)&sb, sizeof (sb)) != sizeof (sb)) {
-		SysError(HERE, "FS %s: superblock read failed", fs);
-		return (-1);
-	}
-
-	if (strncmp("SBLK", sb.info.sb.name, sizeof (sb.info.sb.name)) != 0) {
-		errno = 0;
-		SysError(HERE, "FS %s: superblock read returned bad fs "
-		    "superblock", fs);
-		return (-1);
-	}
-	if (strncmp(fs, sb.info.sb.fs_name,
-	    sizeof (sb.info.sb.fs_name)) != 0) {
-		errno = 0;
-		SysError(HERE, "FS %s: superblock read returned wrong "
-		    "fs superblock",
-		    fs);
-		return (-1);
-	}
-	if (sb.info.sb.magic != SAM_MAGIC_V2 &&
-	    sb.info.sb.magic != SAM_MAGIC_V2A) {
-		errno = 0;
-		SysError(HERE, "FS %s: superblock read returned bad "
-		    "superblock type",
-		    fs);
-		return (-1);
-	}
-
-	if (sb.info.sb.hosts == 0) {
-		errno = 0;
-		SysError(HERE, "FS %s: filesystem not shared -- "
-		    "no hosts file", fs);
-		return (-1);
-	}
-	offset64 = sb.info.sb.hosts*SAM_DEV_BSIZE;
-	if (llseek(rfd, offset64, SEEK_SET) == -1) {
-		SysError(HERE, "FS %s: seek failed on hosts file write", fs);
-		return (-1);
-	}
-	if (write(rfd, (char *)hb, htsize) != htsize) {
-		SysError(HERE, "FS %s: write failed on hosts file write", fs);
-		return (-1);
-	}
-	return (0);
-}
-
-
 /*
  * ----- putHosts
  *
@@ -319,30 +257,100 @@ putHosts(
 	char *fs,
 	struct cfdata *cfp)
 {
-	char name[MAXPATHLEN];
 	int rfd;
+	int error;
+	struct sam_sblk sb;
+	offset_t offset64;
+	struct sam_host_table_blk *hb = cfp->ht;
+	int htsize = cfp->htsize;
+	ushort_t hosts_ord = cfp->hosts_ord;
 
 	/*
 	 * Get the superblock and hosts info if we have a dev name
 	 */
-	if (strcmp(config.mnt.part[0].pt_name, "nodev") == 0) {
+	if (strcmp(config.mnt.part[hosts_ord].pt_name, "nodev") == 0) {
 		errno = 0;
 		SysError(HERE, "FS %s: server has 'nodev' device", fs);
 		return (-1);
 	}
-	if (!Dsk2Rdsk(config.mnt.part[0].pt_name, name)) {
-		errno = 0;
-		SysError(HERE, "FS %s: no raw dev name for superblock on '%s'",
-		    fs, config.mnt.part[0].pt_name);
-		return (-1);
-	} else if ((rfd = open(name, OPEN_RDWR_RAWFLAGS)) < 0) {
-		return (-1);
-	} else if (putHostsInfo(rfd, fs, cfp) < 0) {
-		(void) close(rfd);
+
+	/*
+	 * Get a RDWR file descriptor for the device
+	 * that holds the hosts table.
+	 */
+	error = OpenFsDevOrd(fs, hosts_ord, &rfd, O_RDWR);
+
+	if (error != 0) {
+		SysError(HERE, "FS %s: Open failed on superblock", fs);
 		return (-1);
 	}
-	(void) close(rfd);
-	Trace(TR_MISC, "FS %s: Wrote shared hosts file on %s", fs, name);
+
+	offset64 = SUPERBLK*SAM_DEV_BSIZE;
+	if (llseek(rfd, offset64, SEEK_SET) == -1) {
+		SysError(HERE, "FS %s: llseek failed on superblock", fs);
+		return (-1);
+	}
+
+	if (read(rfd, (char *)&sb, sizeof (sb)) != sizeof (sb)) {
+		SysError(HERE, "FS %s: read failed on superblock", fs);
+		return (-1);
+	}
+
+	/*
+	 * Make sure this is the correct device.
+	 */
+	if (strncmp("SBLK", sb.info.sb.name, sizeof (sb.info.sb.name)) != 0) {
+		errno = 0;
+		SysError(HERE, "FS %s: superblock read returned bad fs "
+		    "superblock", fs);
+		return (-1);
+	}
+
+	if (strncmp(fs, sb.info.sb.fs_name,
+	    sizeof (sb.info.sb.fs_name)) != 0) {
+		errno = 0;
+		SysError(HERE, "FS %s: superblock read returned wrong "
+		    "fs superblock",
+		    fs);
+		return (-1);
+	}
+
+	if (sb.info.sb.magic != SAM_MAGIC_V2 &&
+	    sb.info.sb.magic != SAM_MAGIC_V2A) {
+		errno = 0;
+		SysError(HERE, "FS %s: superblock read returned bad "
+		    "superblock type",
+		    fs);
+		return (-1);
+	}
+	if (sb.info.sb.hosts == 0) {
+		errno = 0;
+		SysError(HERE, "FS %s: filesystem not shared -- "
+		    "no hosts file", fs);
+		return (-1);
+	}
+
+	if (sb.info.sb.hosts_ord != hosts_ord ||
+	    sb.info.sb.hosts_ord != sb.info.sb.ord) {
+		errno = 0;
+		SysError(HERE, "FS %s: Bad hosts table device ordinal --", fs);
+		return (-1);
+	}
+
+	offset64 = sb.info.sb.hosts*SAM_DEV_BSIZE;
+	if (llseek(rfd, offset64, SEEK_SET) == -1) {
+		SysError(HERE, "FS %s: seek failed on hosts file write", fs);
+		close(rfd);
+		return (-1);
+	}
+	if (write(rfd, (char *)hb, htsize) != htsize) {
+		SysError(HERE, "FS %s: write failed on hosts file write", fs);
+		close(rfd);
+		return (-1);
+	}
+	close(rfd);
+	Trace(TR_MISC, "FS %s: Wrote shared hosts file on %s",
+	    fs, config.mnt.part[hosts_ord].pt_name);
 	return (0);
 }
 #endif	/* METADATA_SERVER */

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -107,6 +107,7 @@ static int labelFd = -1;
 static uint64_t labelOh = 0;
 static upath_t labelName;
 
+extern int OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag);
 
 /*
  * OpenDevs(char *fs)
@@ -530,6 +531,10 @@ getRootInfo(
 	static struct sam_host_table_blk *hba = NULL;
 	static int htsize = 0;
 	struct sam_host_table_blk *hb = NULL;
+	int hfd = 0;
+	int error;
+	int close_hfd;
+	ushort_t hosts_ord;
 
 	if (cfp != NULL) {
 		hb = cfp->ht;
@@ -586,6 +591,33 @@ getRootInfo(
 		    "no hosts file", fs);
 		return (R_SBLK_ERR);
 	}
+
+	hosts_ord = sb->info.sb.hosts_ord;
+
+	if (hosts_ord != 0) {
+		/*
+		 * The hosts table is on
+		 * a different device ordinal.
+		 * Get a file descriptor for it.
+		 */
+		error = OpenFsDevOrd(fs, hosts_ord, &hfd, O_RDONLY);
+
+		if (error != 0) {
+			SysError(HERE, "FS %s: Unable to open hosts file dev\n",
+			    fs);
+			return (R_SBLK_ERR);
+		}
+		close_hfd = 1;
+
+	} else {
+		/*
+		 * The hosts table is on device ordinal 0
+		 * so we can use the supplied file descriptor.
+		 */
+		hfd = rfd;
+		close_hfd = 0;
+	}
+
 again:
 	/*
 	 * Try reading the old small table first.
@@ -599,14 +631,23 @@ again:
 		 */
 		MEMALIGN(hba, LX_ALIGN, SAM_LARGE_HOSTS_TABLE_SIZE);
 		if (hba == NULL) {
+			if (close_hfd) {
+				close(hfd);
+			}
 			return (R_SBLK_ERR);
 		}
 	}
 	offset64 = sb->info.sb.hosts * SAM_DEV_BSIZE;
-	if (llseek(rfd, offset64, SEEK_SET) == -1) {
+	if (llseek(hfd, offset64, SEEK_SET) == -1) {
+		if (close_hfd) {
+			close(hfd);
+		}
 		return (R_SBLK_ERR);
 	}
-	if (read(rfd, (char *)hba, htsize) != htsize) {
+	if (read(hfd, (char *)hba, htsize) != htsize) {
+		if (close_hfd) {
+			close(hfd);
+		}
 		return (R_SBLK_ERR);
 	}
 	if (hba->info.ht.length > sizeof (*hba) && htsize == sizeof (*hba)) {
@@ -615,12 +656,16 @@ again:
 	}
 	memcpy(hb, hba, htsize);
 	cfp->htsize = htsize;
+	cfp->hosts_ord = sb->info.sb.hosts_ord;
 
 	if (swap_bytes) {
 		/*
 		 * Byte swap the host table block from the disk
 		 */
 		if (byte_swap_hb(hb)) {
+			if (close_hfd) {
+				close(hfd);
+			}
 			return (R_SBLK_ERR);
 		}
 	}
@@ -631,6 +676,9 @@ again:
 		default:
 			errno = 0;
 			SysError(HERE, "FS %s: bad hosts file version", fs);
+			if (close_hfd) {
+				close(hfd);
+			}
 			return (R_SBLK_ERR);
 		}
 	} else if (hb->info.ht.cookie == 0) {
@@ -646,12 +694,21 @@ again:
 		default:
 			errno = 0;
 			SysError(HERE, "FS %s: bad hosts file version", fs);
+			if (close_hfd) {
+				close(hfd);
+			}
 			return (R_SBLK_ERR);
 		}
 	} else {
 		errno = 0;
 		SysError(HERE, "FS %s: bad hosts file version", fs);
+		if (close_hfd) {
+			close(hfd);
+		}
 		return (R_SBLK_ERR);
+	}
+	if (close_hfd) {
+		close(hfd);
 	}
 	return (swap_bytes ? R_FOREIGN : 0);
 }

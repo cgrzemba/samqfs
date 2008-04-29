@@ -35,7 +35,7 @@
 #define	SAM_HOST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 #endif
 
 #include "sam/types.h"
@@ -79,7 +79,7 @@ typedef struct sam_host_table {
 	uint32_t	length;		/* byte count of this structure */
 	uint16_t	pendsrv;	/* pending host server index */
 	uint16_t	server;		/* host server index */
-	char		ent[1];		/* total struct size to 16k */
+	char		ent[1];		/* total struct size to 16k/2048k */
 } sam_host_table_t;
 
 typedef struct sam_host_table_blk {
