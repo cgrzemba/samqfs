@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamWizardImpl.java,v 1.16 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: SamWizardImpl.java,v 1.17 2008/04/29 17:08:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.wizard;
 
@@ -75,6 +75,9 @@ public class SamWizardImpl implements WizardInterface, WizardInterfaceExt {
     // the following boolean can be removed after all wizards finish
     // migrating to the new wizard style (with result page)
     private boolean showResultsPage;
+
+    // Keep track of the label name and change the label when error occurs
+    public static final String VALIDATION_ERROR = "ValidationError";
 
     // store a reference of model manager which will be used to clean up model
     // when this wizard is finished

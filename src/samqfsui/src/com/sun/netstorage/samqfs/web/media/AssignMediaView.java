@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AssignMediaView.java,v 1.2 2008/04/09 20:37:29 ronaldso Exp $
+// ident	$Id: AssignMediaView.java,v 1.3 2008/04/29 17:08:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -122,18 +122,23 @@ public class AssignMediaView extends RequestHandlingViewBase
         String HIDDEN_NO_MEDIA_TYPE_MESSAGE = "HiddenNoMediaTypeMessage";
     public static final String EXPRESSION_USED = "HiddenExpressionUsed";
 
+    // Only used in wizards to determine if user is going to create a pool or
+    // an expression
+    public static final String MEDIA_ASSIGN_MODE = "media_assign_mode";
+
     private Map tableModels = null;
 
     // Page Mode related information
     private short pageMode = -1;
     // TODO: replace with enum java 5.0
-    public static final short MODE_WIZARD = 0;
-    public static final short MODE_NEW_POOL = 1;
-    public static final short MODE_EDIT_POOL = 2;
-    public static final short MODE_NEW_COPY = 3;
-    public static final short MODE_COPY_INFO_EDIT_EXP = 4;
-    public static final short MODE_COPY_INFO_NEW_POOL = 5;
-    public static final short MODE_COPY_INFO_NEW_EXP = 6;
+    public static final short MODE_WIZARD_NEW_POOL = 0;
+    public static final short MODE_WIZARD_NEW_EXP = 1;
+    public static final short MODE_NEW_POOL = 2;
+    public static final short MODE_EDIT_POOL = 3;
+    public static final short MODE_NEW_COPY = 4;
+    public static final short MODE_COPY_INFO_EDIT_EXP = 5;
+    public static final short MODE_COPY_INFO_NEW_POOL = 6;
+    public static final short MODE_COPY_INFO_NEW_EXP = 7;
 
     // Determine if the action table needed to be shown
     private static final String PSA_SHOW_TABLE = "psa_show_table";
@@ -183,7 +188,13 @@ public class AssignMediaView extends RequestHandlingViewBase
 
         // Set wizard model if used in wizards
         if (wizardModel != null) {
-            pageMode = MODE_WIZARD;
+            String mediaViewMode =
+                (String) wizardModel.getValue(MEDIA_ASSIGN_MODE);
+            if ("pool".equals(mediaViewMode)) {
+                pageMode = MODE_WIZARD_NEW_POOL;
+            } else {
+                pageMode = MODE_WIZARD_NEW_EXP;
+            }
             setDefaultModel(wizardModel);
         }
 
@@ -440,7 +451,8 @@ public class AssignMediaView extends RequestHandlingViewBase
     public String getPoolName() {
         String poolName = null;
         if (pageMode == MODE_NEW_POOL ||
-            pageMode == MODE_COPY_INFO_NEW_POOL) {
+            pageMode == MODE_COPY_INFO_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_POOL) {
             poolName = (String) getDisplayFieldValue(VALUE_NAME);
         } else if (pageMode == MODE_EDIT_POOL) {
             NewEditVSNPoolViewBean parent =
@@ -525,7 +537,8 @@ public class AssignMediaView extends RequestHandlingViewBase
      * pool), copy number if there is any, etc.
      */
     private void setPageMode(DisplayEvent event) throws ModelControlException {
-        if (pageMode == MODE_WIZARD) {
+        if (pageMode == MODE_WIZARD_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_EXP) {
             super.beginDisplay(event);
             SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
             // To get around wizard not catching the resource bundle
@@ -538,20 +551,25 @@ public class AssignMediaView extends RequestHandlingViewBase
 
     /**
      * Validate user input
+     * @param poolNameRequired
+     * @param event - wizard event, null when view is not used within wizard
+     * @return
      */
-    public boolean validate(boolean callFromViewBean) {
+    public boolean validate(boolean poolNameRequired) {
         // check pool name & media type if it is needed
         TraceUtil.trace2(
             "validate: page mode: " + pageMode +
-            " callFromViewBean: " + callFromViewBean);
+            " poolNameRequired: " + poolNameRequired);
 
         String errorMessage = null;
         boolean error = false;
 
-        if (pageMode == MODE_NEW_POOL) {
+        if (pageMode == MODE_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_EXP) {
             // Only validate the pool name field when we are about to create
             // a pool
-            if (callFromViewBean) {
+            if (poolNameRequired) {
                 String poolName = (String) getDisplayFieldValue(VALUE_NAME);
                 poolName = poolName == null ? "" : poolName.trim();
 
@@ -570,7 +588,8 @@ public class AssignMediaView extends RequestHandlingViewBase
                     try {
                         if (PolicyUtil.poolExists(getServerName(), poolName)) {
                             // Check if pool name is already in use
-                            errorMessage = "AssignMedia.error.poolname.duplicate";
+                            errorMessage =
+                                "AssignMedia.error.poolname.duplicate";
                             error = true;
                         }
                     } catch (SamFSException samEx) {
@@ -585,7 +604,7 @@ public class AssignMediaView extends RequestHandlingViewBase
                     SamUtil.setErrorAlert(
                         this,
                         ALERT,
-                        errorMessage,
+                        SamUtil.getResourceString(errorMessage),
                         -1,
                         "",
                         getServerName());
@@ -597,13 +616,14 @@ public class AssignMediaView extends RequestHandlingViewBase
             if (getMediaType() ==
                 Integer.parseInt(SelectableGroupHelper.NOVAL)) {
                 TraceUtil.trace1("No media type is defined!");
-                SamUtil.setErrorAlert(
-                    this,
-                    ALERT,
-                    "AssignMedia.error.nomediatype",
-                    -1,
-                    "",
-                    getServerName());
+                    SamUtil.setErrorAlert(
+                        this,
+                        ALERT,
+                        SamUtil.getResourceString(
+                            "AssignMedia.error.nomediatype"),
+                        -1,
+                        "",
+                        getServerName());
                 setLabelError(LABEL_TYPE);
                 return false;
             }
@@ -627,7 +647,7 @@ public class AssignMediaView extends RequestHandlingViewBase
                 SamUtil.setErrorAlert(
                     this,
                     ALERT,
-                    "AssignMedia.error.nostartend",
+                    SamUtil.getResourceString("AssignMedia.error.nostartend"),
                     -1,
                     "",
                     getServerName());
@@ -648,7 +668,7 @@ public class AssignMediaView extends RequestHandlingViewBase
                 SamUtil.setErrorAlert(
                     this,
                     ALERT,
-                    "AssignMedia.error.noexpression",
+                    SamUtil.getResourceString("AssignMedia.error.noexpression"),
                     -1,
                     "",
                     getServerName());
@@ -702,7 +722,9 @@ public class AssignMediaView extends RequestHandlingViewBase
         String [] labels, values;
         int counter = 0;
 
-        if (pageMode == MODE_NEW_POOL) {
+        if (pageMode == MODE_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_EXP) {
             labels = new String[mediaTypes.length + 1];
             values = new String[mediaTypes.length + 1];
             labels[0] = SelectableGroupHelper.NOVAL_LABEL;
@@ -844,8 +866,9 @@ public class AssignMediaView extends RequestHandlingViewBase
         }
 
         // Notify users that there are more than MAXIMUM_ENTRIES_FETCHED matches
-System.out.println("Wrapper Total: " + wrapper.getTotalNumberOfVSNs());
-System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+        TraceUtil.trace3("Wrapper Total: " + wrapper.getTotalNumberOfVSNs());
+        TraceUtil.trace3("MAXIMUM_ENTRIES_FETCHED: " +
+                        SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
         if (wrapper.getTotalNumberOfVSNs() >
             SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED) {
             int totalEntry = wrapper.getTotalNumberOfVSNs();
@@ -904,8 +927,10 @@ System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMU
         }
 
         // Notify users that there are more than MAXIMUM_ENTRIES_FETCHED matches
-System.out.println("Wrapper Total: " + wrapper.getTotalNumberOfVSNs());
-System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+        TraceUtil.trace3("Wrapper Total: " + wrapper.getTotalNumberOfVSNs());
+        TraceUtil.trace3("MAXIMUM_ENTRIES_FETCHED: " +
+            SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED);
+
         if (wrapper.getTotalNumberOfVSNs() >
             SamQFSSystemMediaManager.MAXIMUM_ENTRIES_FETCHED) {
             int totalEntry = wrapper.getTotalNumberOfVSNs();
@@ -1006,7 +1031,8 @@ System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMU
      * Retrieve current server name
      */
     private String getServerName() {
-        if (pageMode == MODE_WIZARD) {
+        if (pageMode == MODE_WIZARD_NEW_POOL ||
+            pageMode == MODE_WIZARD_NEW_EXP) {
             return (String) ((SamWizardModel) getDefaultModel()).getValue(
                     Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
         } else {
@@ -1072,16 +1098,19 @@ System.out.println("MAXIMUM_ENTRIES_FETCHED: " + SamQFSSystemMediaManager.MAXIMU
      */
     public boolean beginLabelNameDisplay(ChildDisplayEvent event) {
         return pageMode != MODE_COPY_INFO_EDIT_EXP &&
-               pageMode != MODE_COPY_INFO_NEW_EXP;
+               pageMode != MODE_COPY_INFO_NEW_EXP &&
+               pageMode != MODE_WIZARD_NEW_EXP;
     }
 
     public boolean beginValueNameDisplay(ChildDisplayEvent event) {
         return pageMode != MODE_COPY_INFO_EDIT_EXP &&
-               pageMode != MODE_COPY_INFO_NEW_EXP;
+               pageMode != MODE_COPY_INFO_NEW_EXP &&
+               pageMode != MODE_WIZARD_NEW_EXP;
     }
 
     public boolean beginTextNameHelpDisplay(ChildDisplayEvent event) {
         return pageMode != MODE_COPY_INFO_EDIT_EXP &&
-               pageMode != MODE_COPY_INFO_NEW_EXP;
+               pageMode != MODE_COPY_INFO_NEW_EXP &&
+               pageMode != MODE_WIZARD_NEW_EXP;
     }
 }

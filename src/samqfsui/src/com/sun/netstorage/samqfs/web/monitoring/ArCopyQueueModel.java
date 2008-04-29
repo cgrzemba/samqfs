@@ -1,4 +1,4 @@
-  /*
+/*
  *    SAM-QFS_notice_begin
  *
  * CDDL HEADER START
@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArCopyQueueModel.java,v 1.8 2008/04/16 16:36:59 ronaldso Exp $
+// ident	$Id: ArCopyQueueModel.java,v 1.9 2008/04/29 17:08:08 ronaldso Exp $
 
 /**
  * This is the model class of the archiving queue frame

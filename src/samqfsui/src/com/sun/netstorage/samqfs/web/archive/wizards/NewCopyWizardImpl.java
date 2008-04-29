@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewCopyWizardImpl.java,v 1.30 2008/03/17 14:43:30 am143972 Exp $
+// ident	$Id: NewCopyWizardImpl.java,v 1.31 2008/04/29 17:08:07 ronaldso Exp $
 
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
@@ -37,11 +37,13 @@ import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiMsgException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
-import com.sun.netstorage.samqfs.web.archive.PolicyUtil;
-import com.sun.netstorage.samqfs.web.archive.SelectableGroupHelper;
+import com.sun.netstorage.samqfs.mgmt.arc.CopyParams;
+import com.sun.netstorage.samqfs.web.media.AssignMediaView;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemArchiveManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.archive.ArchiveCopy;
 import com.sun.netstorage.samqfs.web.model.archive.ArchiveCopyGUIWrapper;
+import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteriaCopy;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.model.archive.ArchiveVSNMap;
 import com.sun.netstorage.samqfs.web.util.Constants;
@@ -52,110 +54,72 @@ import com.sun.netstorage.samqfs.web.wizard.WizardResultView;
 import com.sun.web.ui.model.CCWizardWindowModel;
 import com.sun.web.ui.model.wizard.WizardEvent;
 import com.sun.web.ui.model.wizard.WizardInterface;
+import com.sun.web.ui.util.LogUtil;
 
 interface NewCopyWizardImplData {
     final String name = "NewCopyWizardImpl";
     final String title = "ArchiveWizard.copy.title";
 
     final Class [] pageClass = {
-        CopyMediaParametersView.class,
-        NewCopyTapeOptions.class,
-        NewCopyDiskOptions.class,
+        CopyParamsView.class,
+        AssignMediaView.class,
         NewCopySummary.class,
         WizardResultView.class
     };
 
     final int COPY_MEDIA_PAGE = 0;
-    final int TAPE_COPY_OPTIONS_PAGE = 1;
-    final int DISK_COPY_OPTIONS_PAGE = 2;
-    final int SUMMARY_PAGE = 3;
-    final int RESULT_PAGE = 4;
+    final int ASSIGN_MEDIA_PAGE = 1;
+    final int SUMMARY_PAGE = 2;
+    final int RESULT_PAGE = 3;
 
-    final int[] TapePrefOn = {
+    final int[] NewPoolExpSeq = {
         COPY_MEDIA_PAGE,
-        TAPE_COPY_OPTIONS_PAGE,
+        ASSIGN_MEDIA_PAGE,
         SUMMARY_PAGE,
         RESULT_PAGE
     };
 
-    final int[] TapePrefOff = {
+    final int[] ExistPoolSeq = {
         COPY_MEDIA_PAGE,
-        TAPE_COPY_OPTIONS_PAGE,
-        SUMMARY_PAGE,
-        RESULT_PAGE
-    };
-
-    final int[] DiskPrefOn = {
-        COPY_MEDIA_PAGE,
-        DISK_COPY_OPTIONS_PAGE,
-        SUMMARY_PAGE,
-        RESULT_PAGE
-    };
-
-    final int[] DiskPrefOff = {
-        COPY_MEDIA_PAGE,
-        DISK_COPY_OPTIONS_PAGE,
         SUMMARY_PAGE,
         RESULT_PAGE
     };
 
     final String [] pageTitle = {
-        "NewArchivePolWizard.page3.title",
-        "NewArchivePolWizard.page4.title",
-        "NewArchivePolWizard.page5.title",
-        "NewArchivePolWizard.summary.title",
+        "archiving.copy.mediaparam.title",
+        "archiving.copy.createexp.title",
+        "common.wizard.summary.title",
         "wizard.result.steptext"
     };
 
     final String [][] stepHelp = {
-        {"NewPolicyWizard.copymediaparam.help1",
-         "NewPolicyWizard.copymediaparam.help2",
-         "NewPolicyWizard.copymediaparam.help3",
-         "NewPolicyWizard.copymediaparam.help4",
-         "NewPolicyWizard.copymediaparam.help5",
-         "NewPolicyWizard.copymediaparam.help.reserve"},
-        {"NewPolicyWizard.copyoption.help.tapeoptions.help1",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help2",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help3",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help4",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help5",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help6",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help7",
-         "NewPolicyWizard.copyoption.help.tapeoptions.help8"},
-        {"NewPolicyWizard.copyoption.help.diskoptions.help1",
-         "NewPolicyWizard.copyoption.help.diskoptions.help2",
-         "NewPolicyWizard.copyoption.help.diskoptions.help3",
-         "NewPolicyWizard.copyoption.help.diskoptions.help4",
-         "NewPolicyWizard.copyoption.help.diskoptions.help5",
-         "NewPolicyWizard.copyoption.help.diskoptions.help6",
-         "NewPolicyWizard.copyoption.help.diskoptions.help7",
-         "NewPolicyWizard.copyoption.help.diskoptions.help8",
-         "NewPolicyWizard.copyoption.help.diskoptions.help9",
-         "NewPolicyWizard.copyoption.help.diskoptions.help10",
-         "NewPolicyWizard.copyoption.help.diskoptions.help11",
-         "NewPolicyWizard.copyoption.help.diskoptions.help12"},
-        {"NewArchivePolWizard.summary.help.text1"},
+        {"archiving.copy.mediaparam.help1",
+         "archiving.copy.mediaparam.help2",
+         "archiving.copy.mediaparam.help3",
+         "archiving.copy.mediaparam.help4"},
+        {"archiving.copy.newpoolexp.help1",
+         "archiving.copy.newpoolexp.help2"},
+        {"common.wizard.summary.instruction"},
         {"wizard.result.help.text1",
          "wizard.result.help.text2"}
     };
 
     final String [] stepText = {
-        "NewArchivePolWizard.page3.steptext",
-        "NewArchivePolWizard.page4.steptext",
-        "NewArchivePolWizard.page5.steptext",
-        "NewArchivePolWizard.summary.steptext",
+        "archiving.copy.mediaparam.title",
+        "archiving.copy.createexp.title",
+        "common.wizard.summary.title",
         "wizard.result.steptext"
     };
 
     final String [] stepInstruction = {
-        "NewArchivePolWizard.page3.instruction",
-        "NewArchivePolWizard.page4.instruction",
-        "NewArchivePolWizard.page5.instruction",
+        "",
+        "archiving.copy.newpoolexp.instruction.1",
         "NewArchivePolWizard.summary.instruction",
         "wizard.result.instruction",
     };
 
     final String [] cancelmsg = {
+        "",
         "",
         "",
         "",
@@ -176,28 +140,21 @@ public class NewCopyWizardImpl extends SamWizardImpl {
         "com.sun.netstorage.samqfs.web.archive.wizards.NewCopyWizardImpl";
 
     public static final String COPY_GUIWRAPPER = "new_gui_copy_wrapper";
-    public static final String ARCHIVING_TYPE = "archiving_type_string";
-    public static final String MEDIA_TYPE = "new_copy_media_type";
+    public static final String MEDIA_EXPRESSION = "media_expression";
+    public static final String MEDIA_TYPE = "media_type";
+    public static final String NEW_POOL_NAME = "new_pool_name";
 
-    // Keep track of the label name and change the label when error occurs
-    public static final String VALIDATION_ERROR = "ValidationError";
-
-    // variables to define radio buttons as disk or tape
-    public static final String TAPE = "tape";
-    public static final String DISK = "disk";
 
     private boolean wizardInitialized = false;
 
     public static WizardInterface create(RequestContext requestContext) {
-        TraceUtil.trace3("Entering");
-        TraceUtil.trace3("Exiting");
-
+        TraceUtil.trace3("WizardInterface: create()");
         return new NewCopyWizardImpl(requestContext);
     }
 
     protected NewCopyWizardImpl(RequestContext requestContext) {
         super(requestContext, PAGEMODEL_NAME);
-        TraceUtil.trace3("Entering");
+        TraceUtil.trace3("Entering NewCopyWizardImpl()");
 
         // retrieve and save the server name
         String serverName = requestContext.getRequest().getParameter(
@@ -241,17 +198,13 @@ public class NewCopyWizardImpl extends SamWizardImpl {
         cancelMsg = NewCopyWizardImplData.cancelmsg;
 
         setShowResultsPage(true);
-        pages = NewCopyWizardImplData.DiskPrefOn;
+        pages = NewCopyWizardImplData.ExistPoolSeq;
         initializeWizardPages(pages);
 
         // initialize GUI Wrapper
         ArchiveCopyGUIWrapper myWrapper = getArchiveCopyGUIWrapper();
 
-        // retrieve and save server name
-        String serverName = requestContext.getRequest().getParameter(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
-        wizardModel.setValue(Constants.PageSessionAttributes.SAMFS_SERVER_NAME,
-                             serverName);
+        String serverName = getServerName();
 
         // retrieve version and save it
         try {
@@ -328,89 +281,106 @@ public class NewCopyWizardImpl extends SamWizardImpl {
         switch (pages[id]) {
             case NewCopyWizardImplData.COPY_MEDIA_PAGE:
                 return processCopyMediaPage(wizardEvent);
-            case NewCopyWizardImplData.TAPE_COPY_OPTIONS_PAGE:
-                return processTapeCopyOptionsPage(wizardEvent);
-            case NewCopyWizardImplData.DISK_COPY_OPTIONS_PAGE:
-                return processDiskCopyOptionsPage(wizardEvent);
+            case NewCopyWizardImplData.ASSIGN_MEDIA_PAGE:
+                return processAssignMediaPage(wizardEvent);
         }
 
         return true;
     }
 
     public boolean previousStep(WizardEvent wizardEvent) {
-        TraceUtil.trace3("Calling previousStep");
-
-        // update WizardManager
         super.previousStep(wizardEvent);
-
-        int id = pageIdToPage(wizardEvent.getPageId());
-
-        switch (pages[id]) {
-            case NewCopyWizardImplData.TAPE_COPY_OPTIONS_PAGE:
-                // call this special function to have the LOCK checkbox
-                // and the ignore recycle radio button remembered
-                // when previous step is clicked
-                return processLockandIgnoreRecycle(wizardEvent, true);
-            case NewCopyWizardImplData.DISK_COPY_OPTIONS_PAGE:
-                // call this special function to have the LOCK checkbox
-                // and the ignore recycle radio button remembered
-                // when previous step is clicked
-                return processLockandIgnoreRecycle(wizardEvent, false);
-        }
-
         return true;
     }
 
     public boolean finishStep(WizardEvent event) {
-        boolean result = true, warningException = false;
-        String errMsg = null, errCode = null, warningSummary = null;
-
         // make sure the wizard is still active
         if (!super.finishStep(event)) {
             return true;
         }
 
+        boolean result = true, warningException = false;
+        String errMsg = null, errCode = null, warningSummary = null;
+        SamFSWarnings warning = null;
+
         try {
             SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
+            SamQFSSystemArchiveManager archiveManager =
+                    sysModel.getSamQFSSystemArchiveManager();
 
             // retrieve the relevant policy
             ArchivePolicy thePolicy =
-                sysModel.getSamQFSSystemArchiveManager().
-                    getArchivePolicy(getPolicyName());
+                    archiveManager.getArchivePolicy(getPolicyName());
 
             // retrieve guiwrapper and save it
             ArchiveCopyGUIWrapper wrapper = getArchiveCopyGUIWrapper();
-
             ArchiveVSNMap vsnMap = wrapper.getArchiveCopy().getArchiveVSNMap();
-            int mediaType = vsnMap.getArchiveMediaType();
 
-            // for API version 1.3 (Rel 4.4) and up, create the disk volume
-            // first, if new disk archiving with new disk volumes
-            String version =
-                (String)wizardModel.getValue(Constants.Wizard.SERVER_VERSION);
+            if (pages == NewCopyWizardImplData.NewPoolExpSeq) {
+                String expression =
+                    (String) wizardModel.getValue(MEDIA_EXPRESSION);
 
-            String selectedVSN = CopyMediaParametersView.EXISTING_VSN;
+                if ("pool".equals((String) wizardModel.getValue(
+                                AssignMediaView.MEDIA_ASSIGN_MODE))) {
+                    // Create new volume pool
+                    String poolName =
+                        (String) wizardModel.getValue(NEW_POOL_NAME);
+                    int mediaType = Integer.parseInt(
+                                    (String) wizardModel.getValue(MEDIA_TYPE));
 
-            boolean isNewDiskVSN =
-                CopyMediaParametersView.NEW_DISK_VSN.equals(selectedVSN);
+                    // Create the volume pool, insert try/catch block here to
+                    // make sure we catch the warning, but yet it will contine
+                    // adding this pool for this copy
+                    try {
+                        LogUtil.info(
+                            "Start creating Volume Pool named " + poolName);
+                        TraceUtil.trace3("About to create pool " + poolName);
+                        archiveManager.createVSNPool(
+                                poolName, mediaType, expression);
+                        LogUtil.info(
+                            "Done creating Volume Pool named " + poolName);
+                    } catch (SamFSWarnings wex) {
+                        warning = wex;
+                    }
 
-            // set the willbesaved flag on the archive vsn map
+                    vsnMap.setPoolExpression(poolName);
+                    vsnMap.setArchiveMediaType(mediaType);
+                } else {
+                    TraceUtil.trace3(
+                        "About to create copy by defining an expression.");
+                }
+            } else {
+                TraceUtil.trace3(
+                    "About to use existing pool to create a copy.");
+            }
+
+            TraceUtil.trace3(
+                "Reserved: " + wrapper.getArchiveCopy().getReservationMethod());
+
+            // Commit changes
             vsnMap.setWillBeSaved(true);
 
             // new add the copy to the policy
             thePolicy.addArchiveCopy(wrapper);
 
+            // Now we are done adding the wrapper to the copy, throw the
+            // warnings at create pool time if there are any
+            if (warning != null) {
+                throw warning;
+            }
 
         } catch (SamFSWarnings sfw) {
             result = false;
             warningException = true;
             warningSummary = "ArchiveConfig.error";
             errMsg = "ArchiveConfig.warning.detail";
+            TraceUtil.trace1("SamFSWarnings caught.", sfw);
         } catch (SamFSMultiMsgException sfme) {
             result = false;
             warningException = true;
             warningSummary = "ArchiveConfig.error";
-            errMsg = "ArchiveConfig.warning.detail";
+            errMsg = sfme.getMessage();
+            TraceUtil.trace1("SamFSMultiMsgException caught.", sfme);
         } catch (SamFSException samEx) {
             result = false;
             SamUtil.processException(
@@ -421,6 +391,7 @@ public class NewCopyWizardImpl extends SamWizardImpl {
                 getServerName());
             errMsg = samEx.getMessage();
             errCode = Integer.toString(samEx.getSAMerrno());
+            TraceUtil.trace1("SamFSException caught.", samEx);
         }
 
         if (result) {
@@ -465,611 +436,132 @@ public class NewCopyWizardImpl extends SamWizardImpl {
         return true;
     }
 
-    private boolean processLockandIgnoreRecycle(
-        WizardEvent wizardEvent, boolean isTapeCopy) {
-        TraceUtil.trace3("Entering");
+    private boolean processCopyMediaPage(WizardEvent event) {
+        CopyParamsView pageView = (CopyParamsView) event.getView();
+        boolean result = pageView.validate(event);
 
-        // retrieve the wrapper
-        ArchiveCopyGUIWrapper wrapper = getArchiveCopyGUIWrapper();
-        ArchiveCopy copy = wrapper.getArchiveCopy();
-
-        if (!isTapeCopy) {
-            // ignore recycling only shows if disk copy side
-            String ignoreRecycling = (String) wizardModel.getValue(
-                NewCopyDiskOptions.CHILD_IGNORE_RECYCLING_CHECKBOX);
-
-            boolean isIgnore = "true".equals(ignoreRecycling);
-            copy.setIgnoreRecycle(isIgnore);
+        if (!result) {
+            return result;
         }
 
-        TraceUtil.trace3("Exiting");
-        return true;
-    }
-
-    private boolean processCopyMediaPage(WizardEvent event) {
-        TraceUtil.trace3("Entering");
         // begin by retrieving the archive gui wrapper
         ArchiveCopyGUIWrapper wrapper = getArchiveCopyGUIWrapper();
+        ArchivePolCriteriaCopy criteriaCopy =
+                wrapper.getArchivePolCriteriaCopy();
+        ArchiveCopy archiveCopy = wrapper.getArchiveCopy();
+        ArchiveVSNMap vsnMap = archiveCopy.getArchiveVSNMap();
 
-        CopyMediaValidator validator =
-            new CopyMediaValidator(wizardModel, event, wrapper);
+        // Safe to save archive age
+        String archiveAge = (String)
+            wizardModel.getValue(CopyParamsView.ARCHIVE_AGE);
+        String ageUnitStr = (String)
+            wizardModel.getValue(CopyParamsView.ARCHIVE_AGE_UNIT);
+        criteriaCopy.setArchiveAge(Long.parseLong(archiveAge));
+        criteriaCopy.setArchiveAgeUnit(Integer.parseInt(ageUnitStr));
 
-        boolean result = validator.validate();
+        String archiveMenu = (String) wizardModel.getValue(
+                                    CopyParamsView.ARCHIVE_MEDIA_MENU);
+        if (archiveMenu.equals(CopyParamsView.MENU_CREATE_POOL) ||
+            archiveMenu.equals(CopyParamsView.MENU_CREATE_EXP)) {
+            // Update wizard steps if user is about to create a pool or an
+            // expression for this copy
+            pages = NewCopyWizardImplData.NewPoolExpSeq;
+            initializeWizardPages(pages);
 
-        // set values for the summary page
-        wizardModel.setValue(NewCopySummary.ARCHIVE_AGE,
-                             validator.getSummaryArchiveAge());
-        wizardModel.setValue(NewCopySummary.ARCHIVE_TYPE,
-                             validator.getSummaryArchiveType());
-        wizardModel.setValue(NewCopySummary.DISK_VSN,
-                             validator.getSummaryDiskVSNName());
-        wizardModel.setValue(NewCopySummary.DISK_ARCHIVE_PATH,
-                             validator.getSummaryDiskVSNPath());
-        wizardModel.setValue(NewCopySummary.VSN_POOL_NAME,
-                             validator.getSummaryVSNPoolName());
-        wizardModel.setValue(NewCopySummary.SPECIFY_VSN,
-                             validator.getSummarySpecifiedVSNs());
-        wizardModel.setValue(NewCopySummary.RESERVE,
-                             validator.getSummaryRMString());
+            if (archiveMenu.equals(CopyParamsView.MENU_CREATE_POOL)) {
+                wizardModel.setValue(AssignMediaView.MEDIA_ASSIGN_MODE, "pool");
+            } else {
+                wizardModel.setValue(AssignMediaView.MEDIA_ASSIGN_MODE, "exp");
+            }
+
+            // reset
+            vsnMap.setMapExpression("");
+            vsnMap.setPoolExpression("");
+            vsnMap.setArchiveMediaType(-1);
+
+        } else if (archiveMenu.startsWith(CopyParamsView.MENU_ANY_VOL)) {
+            // Use any available volumes
+            // Save pool information if user chooses an existing pool
+            String [] info = archiveMenu.split(",");
+            vsnMap.setMapExpression(".");
+            vsnMap.setPoolExpression("");
+            vsnMap.setArchiveMediaType(Integer.parseInt(info[1]));
+            wizardModel.setValue(MEDIA_TYPE, info[1]);
+            wizardModel.setValue(NEW_POOL_NAME, "");
+        } else {
+            // Update wizard steps if user is using existing pools
+            pages = NewCopyWizardImplData.ExistPoolSeq;
+            initializeWizardPages(pages);
+
+            // Save pool information if user chooses an existing pool
+            String [] poolInfo = archiveMenu.split(",");
+            vsnMap.setMapExpression("");
+            vsnMap.setPoolExpression(poolInfo[0]);
+            vsnMap.setArchiveMediaType(Integer.parseInt(poolInfo[1]));
+            wizardModel.setValue(NEW_POOL_NAME, "");
+            wizardModel.setValue(MEDIA_TYPE, poolInfo[1]);
+        }
+
+        // Reserve volume for archive policy and copy
+        boolean reserved =
+            Boolean.valueOf((String) wizardModel.getValue(
+                    CopyParamsView.RESERVED)).booleanValue();
+        archiveCopy.setReservationMethod(
+            reserved ? CopyParams.RM_SET : -1);
 
         return result;
     }
 
-    private boolean processTapeCopyOptionsPage(WizardEvent event) {
-        ArchiveCopyGUIWrapper wrapper = getArchiveCopyGUIWrapper();
-        ArchiveCopy copy = wrapper.getArchiveCopy();
+    private boolean processAssignMediaPage(WizardEvent event) {
+        AssignMediaView pageView = (AssignMediaView) event.getView();
+        boolean result = pageView.validate(
+            "pool".equals((String) wizardModel.getValue(
+                AssignMediaView.MEDIA_ASSIGN_MODE)));
 
-        // offline copy
-        String offlineCopyString = (String) wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_OFFLINE_COPY_DROPDOWN);
-        if (!SelectableGroupHelper.NOVAL.equals(offlineCopyString)) {
-            copy.setOfflineCopyMethod(Integer.parseInt(offlineCopyString));
-        } else {
-            copy.setOfflineCopyMethod(-1);
+        // If error is found, return
+        if (!result) {
+            return result;
         }
 
-        wizardModel.setValue(
-            NewCopySummary.OFFLINE_COPY,
-            getOfflineCopyString(Integer.parseInt(offlineCopyString)));
+        // Safe to save information
+        try {
+            String expression = pageView.getExpression();
+            int mediaType = pageView.getMediaType();
+            wizardModel.setValue(MEDIA_TYPE, Integer.toString(mediaType));
+            wizardModel.setValue(MEDIA_EXPRESSION, expression);
 
-        // drives
-        String drives = (String) wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_DRIVES_TEXTFIELD);
-        drives = drives != null ? drives.trim() : "";
+            TraceUtil.trace2(
+                "From AssignMediaView: expression is " + expression);
+            TraceUtil.trace2(
+                "From AssignMediaView: mediaType is " + mediaType);
 
-        if (!drives.equals("")) {
-            try {
-                int d = Integer.parseInt(drives);
-                if (d < 0) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_DRIVES_TEXT,
-                        "NewPolicyWizard.copyoption.error.drives",
-                        true);
-                    return false;
-                } else {
-                    copy.setDrives(d);
-                }
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_DRIVES_TEXT,
-                    "NewPolicyWizard.copyoption.error.drives",
-                    true);
-                return false;
+            String mode = (String) wizardModel.getValue(
+                                AssignMediaView.MEDIA_ASSIGN_MODE);
+            if ("exp".equals(mode)) {
+                ArchiveCopyGUIWrapper wrapper = getArchiveCopyGUIWrapper();
+                ArchiveCopy archiveCopy = wrapper.getArchiveCopy();
+                ArchiveVSNMap vsnMap = archiveCopy.getArchiveVSNMap();
+                vsnMap.setMapExpression(expression);
+                vsnMap.setArchiveMediaType(mediaType);
+                wizardModel.setValue(NEW_POOL_NAME, "");
+            } else {
+                String poolName = pageView.getPoolName();
+                TraceUtil.trace2(
+                    "From AssignMediaView: poolName is " + poolName);
+                wizardModel.setValue(NEW_POOL_NAME, poolName);
             }
-        } else {
-            copy.setDrives(-1);
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1(
+                "Failed to retrieve expression from AssignMediaView!", samEx);
+            event.setSeverity(WizardEvent.ACKNOWLEDGE);
+            event.setErrorMessage(SamUtil.getResourceString(
+                "AssignMedia.error.retrieve.expression"));
+            result = false;
         }
 
-        // if both min and max are not set, don't bother
-        String drivesMin = ((String)wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_DRIVES_MIN_TEXTFIELD)).trim();
-
-
-        String drivesMax = ((String)wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXTFIELD)).trim();
-
-        drivesMin = drivesMin != null ? drivesMin.trim() : "";
-        drivesMax = drivesMax != null ? drivesMax.trim() : "";
-
-        // if only one of min or max is set reject it
-        // min without max
-        if (!drivesMin.equals("") && drivesMax.equals("")) {
-            setJavascriptErrorMessage(
-                event,
-                NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXT,
-                "NewPolicyWizard.copyoption.error.minmaxeither",
-                true);
-            return false;
-        }
-
-        // max without min
-        if (drivesMin.equals("") && !drivesMax.equals("")) {
-            setJavascriptErrorMessage(
-                event,
-                NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXT,
-                "NewPolicyWizard.copyoption.error.minmaxeither",
-                true);
-            return false;
-        }
-
-        if (!drivesMin.equals("") && !drivesMax.equals("")) {
-            String drivesMinSizeUnit = (String)wizardModel.getValue(
-                NewCopyTapeOptions.CHILD_DRIVES_MIN_DROPDOWN);
-            boolean mn = false;
-            boolean mnu = false;
-            boolean mx = false;
-            boolean mxu = false;
-
-            long min = -1;
-            int minu = -1;
-            long max = -1;
-            int maxu = -1;
-
-            // verify minisize
-            try {
-                min = Long.parseLong(drivesMin);
-                if (min < 0)  {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_DRIVES_MIN_TEXT,
-                        "NewPolicyWizard.copyoption.error.mindrives",
-                        true);
-                    return false;
-                } else {
-                    mn = true;
-                    // now that we have a valid size, verify the units
-                    if (!SelectableGroupHelper.NOVAL.equals(drivesMinSizeUnit))
-                    {
-                        minu = Integer.parseInt(drivesMinSizeUnit);
-                        mnu = true;
-                    } else {
-                        setJavascriptErrorMessage(
-                            event,
-                            NewCopyTapeOptions.CHILD_DRIVES_MIN_TEXT,
-                            "NewPolicyWizard.copyoption.error.mindrivesunit",
-                            true);
-                        return false;
-                    }
-                }
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_DRIVES_MIN_TEXT,
-                    "NewPolicyWizard.copyoption.error.mindrives",
-                    true);
-                return false;
-            }
-
-            // verify the max size
-            String drivesMaxSizeUnit = (String)wizardModel.getValue(
-                NewCopyTapeOptions.CHILD_DRIVES_MAX_DROPDOWN);
-            try {
-                max = Long.parseLong(drivesMax);
-                if (max < 0) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXT,
-                        "NewPolicyWizard.copyoption.error.maxdrives",
-                        true);
-                    return false;
-                } else {
-                    mx = true;
-                    if (!SelectableGroupHelper.NOVAL.equals(drivesMaxSizeUnit))
-                    {
-                        maxu = Integer.parseInt(drivesMaxSizeUnit);
-                        mxu = true;
-                    } else {
-                        setJavascriptErrorMessage(
-                            event,
-                            NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXT,
-                            "NewPolicyWizard.copyoption.error.maxdrivesunit",
-                            true);
-                        return false;
-                    }
-                }
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXT,
-                    "NewPolicyWizard.copyoption.error.maxdrives",
-                    true);
-                return false;
-            }
-
-            // check if max is really greater than min
-            if (!PolicyUtil.isMaxGreaterThanMin(min, minu, max, maxu)) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_DRIVES_MAX_TEXT,
-                    "NewPolicyWizard.copyoption.error.mingreaterthanmax",
-                    true);
-                return false;
-            }
-
-            // if we get here ... we have all four values and they are valid
-            copy.setMinDrives(min);
-            copy.setMinDrivesUnit(minu);
-            copy.setMaxDrives(max);
-            copy.setMaxDrivesUnit(maxu);
-
-            wizardModel.setValue(
-                NewCopySummary.MAX_DRIVE,
-                new NonSyncStringBuffer().append(max).append(" ").
-                    append(SamUtil.getSizeUnitL10NString(maxu)).toString());
-            wizardModel.setValue(
-                NewCopySummary.MIN_DRIVE,
-                new NonSyncStringBuffer().append(min).append(" ").
-                    append(SamUtil.getSizeUnitL10NString(minu)).toString());
-
-        } else {
-            // set everything to -1
-            copy.setMinDrives(-1);
-            copy.setMinDrivesUnit(-1);
-            copy.setMaxDrives(-1);
-            copy.setMaxDrivesUnit(-1);
-            wizardModel.setValue(NewCopySummary.MAX_DRIVE, "");
-            wizardModel.setValue(NewCopySummary.MIN_DRIVE, "");
-        }
-
-        // buffer size & lock support have been removed in 4.6
-        copy.setBufferSize(-1);
-
-        // start age
-        String startAge = (String) wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_START_AGE_TEXTFIELD);
-        startAge = startAge != null ? startAge.trim() : "";
-        if (!startAge.equals("")) {
-            try {
-                long age = Long.parseLong(startAge);
-                if (age < 0 || age > Integer.MAX_VALUE) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_START_AGE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startage",
-                        true);
-                    return false;
-                }
-                String startAgeUnit = (String) wizardModel.getValue(
-                    NewCopyTapeOptions.CHILD_START_AGE_DROPDOWN);
-                if (startAgeUnit.equals(SelectableGroupHelper.NOVAL)) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_START_AGE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startageunit",
-                        true);
-                    return false;
-                }
-                int ageUnit = Integer.parseInt(startAgeUnit);
-                copy.setStartAge(age);
-                copy.setStartAgeUnit(ageUnit);
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_START_AGE_TEXT,
-                    "NewPolicyWizard.copyoption.error.startageunit",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setStartAge(-1);
-            copy.setStartAgeUnit(-1);
-        }
-
-        // start count
-        String startCount = (String)wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_START_COUNT_TEXTFIELD);
-        startCount = startCount != null ? startCount.trim() : "";
-        if (!startCount.equals("")) {
-            try {
-                int count = Integer.parseInt(startCount);
-                if (count < 0) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_START_COUNT_TEXT,
-                        "NewPolicyWizard.copyoption.error.startcount",
-                        true);
-                    return false;
-                }
-                copy.setStartCount(count);
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_START_COUNT_TEXT,
-                    "NewPolicyWizard.copyoption.error.startcount",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setStartCount(-1);
-        }
-
-        // Start size
-        String startSize = (String) wizardModel.getValue(
-            NewCopyTapeOptions.CHILD_START_SIZE_TEXTFIELD);
-        startSize = startSize != null ? startSize.trim() : "";
-        if (!startSize.equals("")) {
-            try {
-                long size = Long.parseLong(startSize);
-                if (size < 0) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_START_SIZE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startcount",
-                        true);
-                    return false;
-                }
-                String startSizeUnit = (String)wizardModel.getValue(
-                    NewCopyTapeOptions.CHILD_START_SIZE_DROPDOWN);
-                if (startSizeUnit.equals(SelectableGroupHelper.NOVAL)) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyTapeOptions.CHILD_START_SIZE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startsizeunit",
-                        true);
-                    return false;
-                }
-                int sizeUnit = Integer.parseInt(startSizeUnit);
-                copy.setStartSize(size);
-                copy.setStartSizeUnit(sizeUnit);
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyTapeOptions.CHILD_START_SIZE_TEXT,
-                    "NewPolicyWizard.copyoption.error.startcount",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setStartSize(-1);
-            copy.setStartSizeUnit(-1);
-        }
-
-        // if we get this far, everything in this checked out
-        wizardModel.setValue(COPY_GUIWRAPPER, wrapper);
-        return true;
+        return result;
     }
 
-    private boolean processDiskCopyOptionsPage(WizardEvent event) {
-        // retrieve the wrapper
-        ArchiveCopyGUIWrapper wrapper = getArchiveCopyGUIWrapper();
-        ArchiveCopy copy = wrapper.getArchiveCopy();
-
-        // offline copy method
-        String offlineCopyString = (String) wizardModel.getValue(
-             NewCopyDiskOptions.CHILD_OFFLINE_COPY_DROPDOWN);
-        if (offlineCopyString.equals(SelectableGroupHelper.NOVAL)) {
-            copy.setOfflineCopyMethod(-1);
-        } else {
-            int ocMethod = Integer.parseInt(offlineCopyString);
-            copy.setOfflineCopyMethod(ocMethod);
-            wizardModel.setValue(
-                NewCopySummary.OFFLINE_COPY,
-                getOfflineCopyString(Integer.parseInt(offlineCopyString)));
-        }
-
-        // buffer size and lock support have been removed in 4.6
-        copy.setBufferSize(-1);
-
-        // start age
-        String startAge = (String) wizardModel.getValue(
-            NewCopyDiskOptions.CHILD_START_AGE_TEXTFIELD);
-        startAge = startAge != null ? startAge.trim() : "";
-        if (!startAge.equals("")) {
-            try {
-                long age = Long.parseLong(startAge);
-                if (age < 0 || age > Integer.MAX_VALUE) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_START_AGE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startage",
-                        true);
-                    return false;
-                }
-                String startAgeUnit = (String) wizardModel.getValue(
-                    NewCopyDiskOptions.CHILD_START_AGE_DROPDOWN);
-                if (startAgeUnit.equals(SelectableGroupHelper.NOVAL)) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_START_AGE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startageunit",
-                        true);
-                    return false;
-                }
-                int ageUnit = Integer.parseInt(startAgeUnit);
-                copy.setStartAge(age);
-                copy.setStartAgeUnit(ageUnit);
-                wizardModel.setValue(
-                    NewCopySummary.START_AGE,
-                    new NonSyncStringBuffer().append(age).append(" ").
-                        append(getTimeUnitString(ageUnit)).toString());
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyDiskOptions.CHILD_START_AGE_TEXT,
-                    "NewPolicyWizard.copyoption.error.startage",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setStartAge(-1);
-            copy.setStartAgeUnit(-1);
-            wizardModel.setValue(NewCopySummary.START_AGE, "");
-        }
-
-        // start count
-        String startCount = (String)wizardModel.getValue(
-                    NewCopyDiskOptions.CHILD_START_COUNT_TEXTFIELD);
-        startCount = startCount != null ? startCount.trim() : "";
-        if (!startCount.equals("")) {
-            try {
-                int count = Integer.parseInt(startCount);
-                if (count < 0) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_START_COUNT_TEXT,
-                        "NewPolicyWizard.copyoption.error.startcount",
-                        true);
-                    return false;
-                }
-                copy.setStartCount(count);
-                wizardModel.setValue(
-                    NewCopySummary.START_COUNT,
-                    startCount);
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyDiskOptions.CHILD_START_COUNT_TEXT,
-                    "NewPolicyWizard.copyoption.error.startcount",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setStartCount(-1);
-            wizardModel.setValue(NewCopySummary.START_COUNT, "");
-        }
-
-        // Start size
-        String startSize = (String)wizardModel.getValue(
-                    NewCopyDiskOptions.CHILD_START_SIZE_TEXTFIELD);
-        startSize = startSize != null ? startSize.trim() : "";
-        if (!startSize.equals("")) {
-            try {
-                long size = Long.parseLong(startSize);
-                if (size < 0) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_START_SIZE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startsize",
-                        true);
-                    return false;
-                }
-                String startSizeUnit = (String)wizardModel.getValue(
-                    NewCopyDiskOptions.CHILD_START_SIZE_DROPDOWN);
-                if (startSizeUnit.equals(SelectableGroupHelper.NOVAL)) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_START_SIZE_TEXT,
-                        "NewPolicyWizard.copyoption.error.startsizeunit",
-                        true);
-                    return false;
-                }
-                int sizeUnit = Integer.parseInt(startSizeUnit);
-                copy.setStartSize(size);
-                copy.setStartSizeUnit(sizeUnit);
-                wizardModel.setValue(
-                    NewCopySummary.START_SIZE,
-                    new NonSyncStringBuffer().append(startSize).append(" ").
-                        append(SamUtil.getSizeUnitL10NString(
-                            sizeUnit)).toString());
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyDiskOptions.CHILD_START_SIZE_TEXT,
-                    "NewPolicyWizard.copyoption.error.startsize",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setStartSize(-1);
-            copy.setStartSizeUnit(-1);
-            wizardModel.setValue(NewCopySummary.START_SIZE, "");
-        }
-
-        // hwm
-        String recycleHwm = (String) wizardModel.getValue(
-            NewCopyDiskOptions.CHILD_RECYCLE_HWM_TEXTFIELD);
-        recycleHwm = recycleHwm != null ? recycleHwm.trim() : "";
-        if (!recycleHwm.equals("")) {
-            try {
-                int hwm = Integer.parseInt(recycleHwm);
-                if ((hwm > 100) || (hwm < 0)) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_RECYCLE_HWM_TEXT,
-                        "NewArchivePolWizard.page5.errRecycleHwm",
-                        true);
-                    return false;
-                }
-                copy.setRecycleHWM(hwm);
-                wizardModel.setValue(
-                    NewCopySummary.RECYCLE_HWM,
-                    recycleHwm);
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyDiskOptions.CHILD_RECYCLE_HWM_TEXT,
-                    "NewArchivePolWizard.page5.errRecycleHwm",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setRecycleHWM(-1);
-            wizardModel.setValue(NewCopySummary.RECYCLE_HWM, "");
-        }
-
-        // ignore recycling
-        String ignoreRecycling = (String) wizardModel.getValue(
-            NewCopyDiskOptions.CHILD_IGNORE_RECYCLING_CHECKBOX);
-
-        boolean isIgnore = ignoreRecycling.equals("true") ? true : false;
-        copy.setIgnoreRecycle(isIgnore);
-
-        // notification mail
-        String mailAddress = (String)wizardModel.getValue(
-            NewCopyDiskOptions.CHILD_MAIL_ADDRESS);
-        mailAddress = mailAddress != null ? mailAddress.trim() : "";
-
-        if (!SamUtil.isValidEmailAddress(mailAddress)) {
-            setJavascriptErrorMessage(
-                event,
-                NewCopyDiskOptions.CHILD_MAIL_ADDRESS_TEXT,
-                "NewArchivePolWizard.page5.errMailingAddress",
-                true);
-            return false;
-        }
-        if (!mailAddress.equals("")) {
-            copy.setNotificationAddress(mailAddress);
-        }
-
-        // min gain
-        String minGain = (String)wizardModel.getValue(
-            NewCopyDiskOptions.CHILD_MIN_GAIN_TEXTFIELD);
-        minGain = minGain != null ? minGain.trim() : "";
-
-        if (!minGain.equals("")) {
-            try {
-                int gain = Integer.parseInt(minGain);
-                if ((gain > 100) || (gain < 0)) {
-                    setJavascriptErrorMessage(
-                        event,
-                        NewCopyDiskOptions.CHILD_MIN_GAIN_TEXT,
-                        "NewPolicyWizard.copyoption.error.mingain",
-                        true);
-                    return false;
-                }
-                copy.setMinGain(gain);
-            } catch (NumberFormatException nfe) {
-                setJavascriptErrorMessage(
-                    event,
-                    NewCopyDiskOptions.CHILD_MIN_GAIN_TEXT,
-                    "NewPolicyWizard.copyoption.error.mingain",
-                    true);
-                return false;
-            }
-        } else {
-            copy.setMinGain(-1);
-        }
-
-        // save it
-        wizardModel.setValue(COPY_GUIWRAPPER, wrapper);
-        return true;
-    }
-
-    /**
-     * NOTE: potential concurrency issue here
-     */
     public ArchiveCopyGUIWrapper getArchiveCopyGUIWrapper() {
         ArchiveCopyGUIWrapper wrapper =
             (ArchiveCopyGUIWrapper)wizardModel.getValue(COPY_GUIWRAPPER);
@@ -1080,6 +572,8 @@ public class NewCopyWizardImpl extends SamWizardImpl {
                     getArchiveCopyGUIWrapper();
                 wizardModel.setValue(COPY_GUIWRAPPER, wrapper);
             } catch (SamFSException sfe) {
+                TraceUtil.trace1(
+                    "Failed to retreive copy GUI wrapper in copy wizard!", sfe);
                 SamUtil.processException(
                     sfe,
                     this.getClass(),
@@ -1112,10 +606,6 @@ public class NewCopyWizardImpl extends SamWizardImpl {
     // overwrite getPageClass() to clear the WIZARD_ERROR value when
     // the wizard is initialized
     public Class getPageClass(String pageId) {
-        TraceUtil.trace3(new NonSyncStringBuffer().append(
-            "Entered with pageID = ").append(pageId).toString());
-        int page = pageIdToPage(pageId);
-
         // clear out previous errors if wizard has been initialized
         if (wizardInitialized) {
             wizardModel.setValue(
@@ -1124,83 +614,6 @@ public class NewCopyWizardImpl extends SamWizardImpl {
         }
 
         return super.getPageClass(pageId);
-    }
-
-    private String getTimeUnitString(int value) {
-        switch (value) {
-            case SamQFSSystemModel.TIME_SECOND:
-                return SamUtil.getResourceString("ArchiveSetup.seconds");
-            case SamQFSSystemModel.TIME_MINUTE:
-                return SamUtil.getResourceString("ArchiveSetup.minutes");
-            case SamQFSSystemModel.TIME_HOUR:
-                return SamUtil.getResourceString("ArchiveSetup.hours");
-            case SamQFSSystemModel.TIME_DAY:
-                return SamUtil.getResourceString("ArchiveSetup.days");
-            case SamQFSSystemModel.TIME_WEEK:
-                return SamUtil.getResourceString("ArchiveSetup.weeks");
-            default:
-                return "";
-        }
-    }
-
-    private String getReservationString(int value) {
-        switch (value) {
-            case ArchivePolicy.RES_FS:
-                return SamUtil.getResourceString(
-                    "NewArchivePolWizard.page4.reserveOption1");
-            case ArchivePolicy.RES_POLICY:
-                return SamUtil.getResourceString(
-                    "NewArchivePolWizard.page4.reserveOption2");
-            case ArchivePolicy.RES_DIR:
-                return SamUtil.getResourceString(
-                    "NewArchivePolWizard.page4.reserveOption3");
-            case ArchivePolicy.RES_USER:
-                return SamUtil.getResourceString(
-                    "NewArchivePolWizard.page4.reserveOption4");
-            case ArchivePolicy.RES_GROUP:
-                return SamUtil.getResourceString(
-                    "NewArchivePolWizard.page4.reserveOption5");
-            default:
-                return "";
-        }
-    }
-
-    private String getOfflineCopyString(int value) {
-        switch (value) {
-            case ArchivePolicy.OC_DIRECT:
-                return SamUtil.getResourceString(
-                    "NewPolicyWizard.tapecopyoption.offlineCopy.direct");
-            case ArchivePolicy.OC_STAGEAHEAD:
-                return SamUtil.getResourceString(
-                    "NewPolicyWizard.tapecopyoption.offlineCopy.stageAhead");
-            case ArchivePolicy.OC_STAGEALL:
-                return SamUtil.getResourceString(
-                    "NewPolicyWizard.tapecopyoption.offlineCopy.stageAll");
-            default:
-                return "NewPolicyWizard.tapecopyoption.offlineCopy.default";
-        }
-    }
-
-    private String getSpecifyVSNString(
-        String startVSN, String endVSN, String vsnRange) {
-        NonSyncStringBuffer returnStringBuffer = new NonSyncStringBuffer();
-
-        if (startVSN != null && endVSN != null &&
-            (startVSN.length() != 0) && (endVSN.length() != 0)) {
-            returnStringBuffer.append(
-                SamUtil.getResourceString(
-                    "NewPolicyWizard.specifyVSN",
-                    new String[] {startVSN, endVSN}));
-        }
-
-        if (vsnRange != null && vsnRange.length() != 0) {
-            if (returnStringBuffer.length() != 0) {
-                returnStringBuffer.append(", ");
-            }
-            return returnStringBuffer.append(vsnRange).toString();
-        } else {
-            return returnStringBuffer.toString();
-        }
     }
 
     private String getServerName() {
@@ -1213,20 +626,5 @@ public class NewCopyWizardImpl extends SamWizardImpl {
         String policyName = (String) wizardModel.getValue(
             Constants.SessionAttributes.POLICY_NAME);
         return policyName == null ? "" : policyName;
-    }
-
-    /**
-     * setJavascriptErrorMessage(wizardEvent, labelName, message, setLabel)
-     * labelName = Name of the label of which you want to highlight
-     * message   = Javascript message in pop up
-     * setLabel  = boolean set to false for previous button
-     */
-    private void setJavascriptErrorMessage(
-        WizardEvent event, String labelName, String message, boolean setLabel) {
-        event.setSeverity(WizardEvent.ACKNOWLEDGE);
-        event.setErrorMessage(message);
-        if (setLabel) {
-            wizardModel.setValue(VALIDATION_ERROR, labelName);
-        }
     }
 }

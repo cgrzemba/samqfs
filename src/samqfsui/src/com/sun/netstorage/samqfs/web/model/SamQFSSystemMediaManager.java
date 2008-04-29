@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemMediaManager.java,v 1.17 2008/04/09 20:37:30 ronaldso Exp $
+// ident	$Id: SamQFSSystemMediaManager.java,v 1.18 2008/04/29 17:08:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -312,7 +312,7 @@ public interface SamQFSSystemMediaManager {
      * @param endVSN   - End of VSN range, use null to get all VSNs
      * @param expression - Contain regular expressions of which you want to
      *  evaluate potential VSN matches.  Leave this null or empty if you want to
-*  get all VSNs
+     *  get all VSNs
      * @param poolName - the pool of which you want to resolve
      * @param maxEntry - Maximum number of entry you want to return
      * @return Array of VSNs that matches the input VSN expression(s)

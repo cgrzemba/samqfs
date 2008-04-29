@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AssignMediaPagelet.jsp,v 1.2 2008/04/09 20:37:27 ronaldso Exp $
+// ident	$Id: AssignMediaPagelet.jsp,v 1.3 2008/04/29 17:08:06 ronaldso Exp $
 --%>
 
 <%@ page language="java" %>
@@ -36,12 +36,6 @@
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <script language="javascript">
-
-    var MODE_WIZARD = 0;
-    var MODE_NEW_POOL = 1;
-    var MODE_EDIT_POOL = 2;
-    var MODE_NEW_COPY = 3;
-    var MODE_COPY_INFO = 4;
 
     /* helper function to retrieve element by id */
     function $(id) {

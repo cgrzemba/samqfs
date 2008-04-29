@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyMediaValidator.java,v 1.16 2008/03/17 14:43:30 am143972 Exp $
+// ident	$Id: CopyMediaValidator.java,v 1.17 2008/04/29 17:08:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
 
@@ -328,17 +328,6 @@ public class CopyMediaValidator {
 
         // for use
         selectedMediaType = mType;
-
-        // useful for updating the page list
-        if (mType == BaseDevice.MTYPE_DISK) {
-            model.setValue(COPY_TYPE, AT_DISK);
-            model.setValue(NewCopyWizardImpl.MEDIA_TYPE,
-                           NewCopyWizardImpl.DISK);
-        } else {
-            model.setValue(COPY_TYPE, AT_TAPE);
-            model.setValue(NewCopyWizardImpl.MEDIA_TYPE,
-                           NewCopyWizardImpl.TAPE);
-        }
 
         TraceUtil.trace3("Exiting");
         // if we get here, everything worked fine

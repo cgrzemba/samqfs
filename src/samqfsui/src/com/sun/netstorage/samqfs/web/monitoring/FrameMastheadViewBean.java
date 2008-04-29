@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameMastheadViewBean.java,v 1.2 2008/03/17 14:43:52 am143972 Exp $
+// ident	$Id: FrameMastheadViewBean.java,v 1.3 2008/04/29 17:08:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.monitoring;
 
@@ -45,7 +45,7 @@ public class FrameMastheadViewBean extends ViewBeanBase {
 
     protected static final
         String SECONDARY_MASTHEAD = "SecondaryMasthead";
- 
+
     // Page information...
     private static final String PAGE_NAME = "FrameMasthead";
     private static final String DEFAULT_DISPLAY_URL =

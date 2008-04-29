@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.117 2008/04/16 16:37:00 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.118 2008/04/29 17:08:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -566,7 +566,7 @@ public class SamUtil {
                 return "";
         }
     }
-    
+
     // method to retrieve the unit size String (localized) from integer
     public static String getDurationL10NString(boolean plural, int unit) {
         switch (unit) {

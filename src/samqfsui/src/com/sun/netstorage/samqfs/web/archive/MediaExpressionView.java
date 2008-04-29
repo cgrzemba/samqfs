@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaExpressionView.java,v 1.2 2008/04/09 20:37:28 ronaldso Exp $
+// ident	$Id: MediaExpressionView.java,v 1.3 2008/04/29 17:08:06 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -823,17 +823,14 @@ public class MediaExpressionView extends CommonTableContainerView {
         ((CCHiddenField)getChild(NO_SELECTION_MSG)).setValue(
             SamUtil.getResourceString("common.noneselected"));
         ((CCHiddenField)getChild(DELETE_POOL_CONFIRMATION)).setValue(
-            useInPoolDetails ?
-                SamUtil.getResourceString(
-                    "MediaAssignment.deletepool.confirm.pool") :
-                SamUtil.getResourceString(
-                    "MediaAssignment.deletepool.confirm.copyvsn"));
+            SamUtil.getResourceString(
+                    "MediaAssignment.deletepool.confirm"));
         ((CCHiddenField)getChild(NO_PERMISSION_MSG)).setValue(
             useInPoolDetails ?
                 SamUtil.getResourceString(
-                    "MediaAssignment.deletepool.confirm.pool") :
+                    "MediaAssignment.nopermission.pool") :
                 SamUtil.getResourceString(
-                    "MediaAssignment.deletepool.confirm.copyvsn"));
+                    "MediaAssignment.nopermission.copyvsn"));
     }
 
     /**

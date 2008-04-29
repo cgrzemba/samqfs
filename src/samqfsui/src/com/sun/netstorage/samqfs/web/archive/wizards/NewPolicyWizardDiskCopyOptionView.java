@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewPolicyWizardDiskCopyOptionView.java,v 1.13 2008/03/17 14:43:31 am143972 Exp $
+// ident	$Id: NewPolicyWizardDiskCopyOptionView.java,v 1.14 2008/04/29 17:08:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
 
@@ -259,7 +259,7 @@ public class NewPolicyWizardDiskCopyOptionView extends RequestHandlingViewBase
                     "Failed to pre-populate input fields",
                     getServerName());
                 SamUtil.setErrorAlert(this,
-                    NewPolicyWizardDiskCopyOptionView.CHILD_ALERT,
+                    CHILD_ALERT,
                     "NewArchivePolWizard.page4.failedPopulate",
                     samEx.getSAMerrno(),
                     samEx.getMessage(),
@@ -285,7 +285,7 @@ public class NewPolicyWizardDiskCopyOptionView extends RequestHandlingViewBase
             int code = Integer.parseInt(
                 (String) wizardModel.getValue(Constants.Wizard.ERROR_CODE));
             SamUtil.setErrorAlert(this,
-                NewCopyTapeOptions.CHILD_ALERT,
+                CHILD_ALERT,
                 "NewArchivePolWizard.error.carryover",
                 code,
                 msgs,

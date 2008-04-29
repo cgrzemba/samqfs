@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewPolicyWizardCopyParametersView.java,v 1.15 2008/03/17 14:43:31 am143972 Exp $
+// ident	$Id: NewPolicyWizardCopyParametersView.java,v 1.16 2008/04/29 17:08:07 ronaldso Exp $
 
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
@@ -347,7 +347,7 @@ public class NewPolicyWizardCopyParametersView extends RequestHandlingViewBase
             int code = Integer.parseInt(
                 (String) wizardModel.getValue(Constants.Wizard.ERROR_CODE));
             SamUtil.setErrorAlert(this,
-                NewCopyTapeOptions.CHILD_ALERT,
+                NewPolicyWizardCopyParametersView.CHILD_ALERT,
                 "NewArchivePolWizard.error.carryover",
                 code,
                 msgs,
