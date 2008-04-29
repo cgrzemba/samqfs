@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -3403,7 +3403,7 @@ sqm_lst_t	**strlst) 	/* OUTPUT - parameter as a list of strings */
 		Trace(TR_ERR, "read parameter file failed: %s", samerrmsg);
 		return (-1);
 	}
-	printf("path %s file descriptor: %d\n", path, fp);
+
 
 	*strlst = lst_create();
 	if (*strlst == NULL) {

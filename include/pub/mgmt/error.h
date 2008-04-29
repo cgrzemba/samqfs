@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.139 $"
+#pragma	ident	"$Revision: 1.140 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */
@@ -329,6 +329,7 @@ typedef enum samapi_errno {
 	SE_INVALID_VSN_RANGE			= 30452,
 	SE_ACS_REQUEST_ERR			= 30453,
 	SE_ACS_RESPONSE_ERR			= 30454,
+	SE_ACS_START_CLIENT_FAILED		= 30455,
 
 	SE_FILE_SYSTEM_BEGIN			= SAM_MGMT_START + 500,
 	SE_FS_CONTAINS_NO_DEVICES		= 30501,

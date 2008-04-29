@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.587 $"
+$ pragma ident "$Revision: 1.588 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3902,6 +3902,9 @@ $ ignoring the last argument %s for 4.1
 30450 Unable to get the STK ACSLS hostname, perhaps no file systems are mounted and SAM-FS and sam-catserverd are not running
 30451 Unknown device type
 30452 VSN names given in the start and end range should be of the same length and format
+30453 ACSLS Request failed: %s
+30454 IPC failure waiting for ACSLS response
+30455 Unable to start the ACSLS client. Check the server name and port number and try again
 
 30501 Filesystem %s contains no devices
 30502 Filesystem %s contained no data devices

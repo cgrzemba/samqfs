@@ -30,11 +30,7 @@
 /*
  *	stk.c -  APIs to do ACSLS network attached library ACSAPI calls.
  */
-#pragma ident   "$Id"
-
-#ifndef lint
-static char SccId[] = "@(#) %full_name:  1/csrc/t_cdriver.c/2.1.3 %";
-#endif
+#pragma	ident	"$Revision: 1.43 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -249,7 +245,7 @@ stk_host_info_t *stk_host_info)
 	char env_stk_port_num[128];
 	char ssi_pid[129];
 	pid_t pid_num;
-	pid_t pid;
+	pid_t pid = -1;
 	FILE *file_ptr;
 	int fd;
 	int checks;
@@ -260,7 +256,11 @@ stk_host_info_t *stk_host_info)
 
 	Trace(TR_OPRMSG, "Entering stk ssi daemon startup");
 
-	if (find_process(SBIN_DIR"/ssi_so", &proclist) == 0) {
+	/*
+	 * Check to see if the ssi_so daemon is already running. If so
+	 * do not start another.
+	 */
+	if (find_process("ssi_so", &proclist) == 0) {
 		if ((proclist != NULL) && (proclist->length > 0)) {
 
 			lst_free_deep(proclist);
@@ -277,6 +277,10 @@ stk_host_info_t *stk_host_info)
 
 			char    shmid[12], equ[12], pshmid[12];
 
+			/* Close open file descriptors > stderr */
+			closefrom(3);
+
+			/* Setup the needed environment variables */
 			snprintf(env_stk_hostname, sizeof (env_stk_hostname),
 			    "CSI_HOSTNAME=%s", stk_host_info->hostname);
 			putenv(env_stk_hostname);
@@ -305,13 +309,19 @@ stk_host_info_t *stk_host_info)
 				return (-1);
 			}
 			fprintf(file_ptr, "%d\n", pid_num);
+			fprintf(file_ptr, "CSI_HOSTNAME=%s\n",
+			    stk_host_info->hostname);
+			fprintf(file_ptr, "ACSAPI_SSI_SOCKET=%s\n",
+			    stk_host_info->portnum);
 			fclose(file_ptr);
 			snprintf(equ, sizeof (equ), "%d", pid_num);
 			Trace(TR_OPRMSG, "Finished stk ssi daemon startup");
 			execl(stk_cmd, "ssi.sh", "100", "200", equ, NULL);
 			return (0);
 		}
-		if (pid < 0 && checks > 0) {
+
+		/* Failure to launch. Don't hang around forever trying */
+		if (pid < 0 && checks >= 5) {
 			samerrno = SE_PID_FORK_FAILED;
 			snprintf(samerrmsg, MAX_MSG_LEN,
 			    GetCustMsg(SE_PID_FORK_FAILED));
@@ -322,13 +332,35 @@ stk_host_info_t *stk_host_info)
 		sleep(5);
 
 	}
-	while (waitpid(pid, &status, WNOHANG) == 0) {
+
+	/*
+	 * Under normal conditions the ssi_so daemon will not exit.
+	 * However, call waitpid several times in case there was an
+	 * error on execution. This will avoid defunct process
+	 * buildup if discovery is executed multiple times in the
+	 * face of failures.
+	 *
+	 * In a non error case this code will leave a single defunct
+	 * process hanging around if the ssi_so daemon goes down or
+	 * is restarted by external means.
+	 */
+	checks = 0;
+	while (waitpid(pid, &status, WNOHANG) == 0 && ++checks < 5) {
 		sleep(1);
 	}
-	if (WIFEXITED(status)) {
-		Trace(TR_MISC, "child ssi.sh %d exited with status %d",
+
+	/*
+	 * If the process terminated with non zero status then
+	 * trace a message and return an error.
+	 */
+	if (WIFEXITED(status) && WEXITSTATUS(status)) {
+		Trace(TR_ERR, "child ssi_so %d exited with status %d",
 		    pid, WEXITSTATUS(status));
+		samerrno = SE_ACS_START_CLIENT_FAILED;
+		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno));
+		return (-1);
 	}
+
 
 	set_stk_env(stk_host_info);
 	Trace(TR_OPRMSG, "Finished stk ssi daemon startup");
@@ -377,9 +409,22 @@ sqm_lst_t **stk_volume_list)	/* OUTPUT */
 		}
 
 		if (stkmtype2sammtype(vol->media_type, sam_mtype) != 0) {
-			lst_free_deep(vollst);
-			Trace(TR_ERR, "get volume list by media failed: %s",
+			/*
+			 * media type mapping failed. Remove this volume
+			 * from the results.
+			 */
+			free(vol);
+			if (lst_remove(vollst, node) != 0) {
+
+				lst_free_deep(vollst);
+				return (-1);
+			}
+
+			Trace(TR_ERR, "media type conversion failed: %s",
 			    samerrmsg);
+			sam_mtype[0] = '\0';
+			node = next;
+			continue;
 		}
 
 		if (strncmp(sam_mtype, equ_type, sizeof (sam_mtype)) != 0) {
@@ -492,7 +537,7 @@ stk_phyconf_info_t **info)
  *	get a list of vsns after filtering some vsns.
  *	sqm_lst_t **stk_volume_list -	a list of stk_volume_t,
  *					it must be freed by caller.
- *	This API function returns a voilume list based on
+ *	This API function returns a volume list based on
  *	the filter options given by customer.  The current
  *	filter options include: none, physicaly location,
  *	scratch pool, VSN range, VSN regular expression.
@@ -506,7 +551,8 @@ sqm_lst_t **stk_volume_list)
 {
 
 	int i;
-	sqm_lst_t *vol_list, *vol1_list, *vol_date_list;
+	sqm_lst_t *vol_list;
+	sqm_lst_t *range_list = NULL;
 	node_t *node_volume, *node_c;
 	stk_volume_t *print_volume;
 	sqm_lst_t *namevalue_list;
@@ -593,15 +639,17 @@ sqm_lst_t **stk_volume_list)
 		return (-1);
 	}
 
+
+	/* Apply the filters */
 	node_volume = vol_list->head;
-	while (node_volume != NULL) {
+	while (node_volume != NULL && filter->filter_type != NONE) {
+
 		print_volume = (stk_volume_t *)node_volume->data;
+
 		if (filter->filter_type == SCRATCH_POOL) {
 			if (print_volume->pool_id != filter->scratch_pool_id) {
 				if (lst_remove(vol_list, node_volume) != 0) {
 					Trace(TR_ERR, "%s", samerrmsg);
-					free_list_of_stk_volume(vol_date_list);
-					free_list_of_stk_volume(vol1_list);
 					free_list_of_stk_volume(vol_list);
 					return (-1);
 				}
@@ -613,26 +661,38 @@ sqm_lst_t **stk_volume_list)
 			int str_len, end_str_len;
 			vsn_t new_vsn, temp_vsn;
 			char *ch;
+
+			/* Create the range list on the first time through */
+			if (range_list == NULL) {
+				range_list = lst_create();
+				if (range_list == NULL) {
+					free_list_of_stk_volume(vol_list);
+					return (-1);
+				}
+			}
 			beg_num = get_vsn_num(filter->start_vsn, &str_len);
 			end_num = get_vsn_num(filter->end_vsn, &end_str_len);
 			count = end_num - beg_num;
-			strlcpy(new_vsn, filter->start_vsn,
-			    sizeof (new_vsn));
+			strlcpy(new_vsn, filter->start_vsn, sizeof (new_vsn));
+
 			for (i = 0; i <= count; i++) {
 				strlcpy(temp_vsn, new_vsn,
 				    sizeof (temp_vsn));
 				if (strcmp(new_vsn,
 				    print_volume->stk_vol) == 0) {
 
-					if (lst_append(vol1_list,
+
+					/*
+					 * move the volume to the range list
+					 */
+					node_volume->data = NULL;
+					if (lst_append(range_list,
 					    print_volume) != 0) {
 						Trace(TR_ERR, "%s", samerrmsg);
 						free_list_of_stk_volume(
-						    vol_date_list);
-						free_list_of_stk_volume(
 						    vol_list);
 						free_list_of_stk_volume(
-						    vol1_list);
+						    range_list);
 						return (-1);
 					}
 					break;
@@ -644,8 +704,7 @@ sqm_lst_t **stk_volume_list)
 					snprintf(samerrmsg, MAX_MSG_LEN,
 					    GetCustMsg(samerrno));
 					Trace(TR_ERR, "%s", samerrmsg);
-					free_list_of_stk_volume(vol_date_list);
-					free_list_of_stk_volume(vol1_list);
+					free_list_of_stk_volume(range_list);
 					free_list_of_stk_volume(vol_list);
 					return (-1);
 				}
@@ -661,8 +720,6 @@ sqm_lst_t **stk_volume_list)
 				    GetCustMsg(SE_GET_REGEXP_FAILED),
 				    filter->vsn_expression);
 				Trace(TR_ERR, "%s", samerrmsg);
-				free_list_of_stk_volume(vol_date_list);
-				free_list_of_stk_volume(vol1_list);
 				free_list_of_stk_volume(vol_list);
 				return (-1);
 			}
@@ -670,8 +727,6 @@ sqm_lst_t **stk_volume_list)
 			if (reg_rtn == NULL) {
 				if (lst_remove(vol_list, node_volume) != 0) {
 					Trace(TR_ERR, "%s", samerrmsg);
-					free_list_of_stk_volume(vol_date_list);
-					free_list_of_stk_volume(vol1_list);
 					free_list_of_stk_volume(vol_list);
 					return (-1);
 				}
@@ -682,7 +737,7 @@ sqm_lst_t **stk_volume_list)
 		node_volume = node_volume->next;
 	}
 	if (filter->filter_type == VSN_RANGE) {
-		*stk_volume_list = vol1_list;
+		*stk_volume_list = range_list;
 		free_list_of_stk_volume(vol_list);
 	} else {
 		*stk_volume_list = vol_list;
@@ -734,8 +789,7 @@ sqm_lst_t **stk_library_list)	/* a list of structure library_t */
 {
 	stk_host_info_t	*stk_host;
 	node_t		*node;
-	sqm_lst_t		*mcf_paths;
-	library_t	*lib;
+	sqm_lst_t	*mcf_paths;
 
 	Trace(TR_MISC, "discovering acsls configuration");
 
@@ -760,22 +814,9 @@ sqm_lst_t **stk_library_list)	/* a list of structure library_t */
 		stk_host = (stk_host_info_t *)node->data;
 	}
 
-	if (get_acs_library_cfg(stk_host, mcf_paths, &lib) != 0) {
+	if (get_acs_library_cfg(stk_host, mcf_paths, stk_library_list) != 0) {
 
 		lst_free_deep(mcf_paths);
-		Trace(TR_ERR, "discover stk failed: %s", samerrmsg);
-		return (-1);
-	}
-
-	/* cannot change interface, return list of libraries */
-	*stk_library_list = lst_create();
-	if (*stk_library_list == NULL) {
-		Trace(TR_ERR, "discover stk failed: %s", samerrmsg);
-		return (-1);
-	}
-	if (lst_append(*stk_library_list, lib) != 0) {
-		free(lib);
-		lst_free(*stk_library_list);
 		Trace(TR_ERR, "discover stk failed: %s", samerrmsg);
 		return (-1);
 	}
@@ -786,34 +827,37 @@ sqm_lst_t **stk_library_list)	/* a list of structure library_t */
 
 
 /*
- * get the configuration of the acs library, given the name of the acsls
- * hostname and port.
- *
+ * Get the configuration of the acs libraries given the name of the
+ * acsls host and port.  If no libraries are found and no errors
+ * encountered an empty list will be returned.
  */
 int
 get_acs_library_cfg(
 stk_host_info_t *stk_host,
 sqm_lst_t *mcf_paths,	/* a list of device paths listed in mcf */
-library_t **lib)	/* RETURN - a list of structure library_t, */
+sqm_lst_t **res_lst)	/* RETURN - a list of structure library_t, */
 {
 	uname_t lib_serial_no = {0}; /* 32 chars */
 	sqm_lst_t *stk_lsm_serial_list	= NULL;
 	sqm_lst_t *stk_cap_list		= NULL;
 	node_t *stk_cap_node;
-	stk_cap_t *stk_cap;
-	sqm_lst_t *lst			= NULL;
+	stk_cap_t *stk_cap		= NULL;
 	hashtable_t *ht_drives		= NULL;
 	hashtable_t *ht_stk_devpaths	= NULL;
 	stk_param_t *stk_param		= NULL;
-	library_t *library;
 	ht_iterator_t *it_drives	= NULL;
+	library_t *lib;
 
-	if (ISNULL(lib, stk_host, mcf_paths)) {
+	if (ISNULL(res_lst, stk_host, mcf_paths)) {
 		Trace(TR_ERR, "get acs library cfg failed: %s", samerrmsg);
 		return (-1);
 	}
 
 	Trace(TR_MISC, "get acs library cfg for %s", stk_host->hostname);
+
+	/* set the results to null in case an error is encountered */
+	*res_lst = NULL;
+
 
 	/* check if the acsls host is accessible */
 	if (nw_down((char *)stk_host->hostname) != 0) {
@@ -871,7 +915,9 @@ library_t **lib)	/* RETURN - a list of structure library_t, */
 	stk_cap_node = stk_cap_list->head;
 	if (stk_cap_node != NULL) {
 		stk_cap = (stk_cap_t *)stk_cap_node->data;
+		stk_cap_node->data = NULL;
 	}
+	lst_free_deep(stk_cap_list);
 
 	/*
 	 * The capacity entry in stk the parameter file is optional and only
@@ -882,6 +928,11 @@ library_t **lib)	/* RETURN - a list of structure library_t, */
 	 * drive types hosted by the library and then get the corresponding
 	 * capacity values.
 	 */
+
+	*res_lst = lst_create();
+	if (*res_lst == NULL) {
+		goto error;
+	}
 
 	/*
 	 * Mixed-media, If a library has mixed media, then it
@@ -896,64 +947,94 @@ library_t **lib)	/* RETURN - a list of structure library_t, */
 		goto error;
 	}
 
+	/*
+	 * Iterate over the drives building library objects. Remove or
+	 * detach data in the hashtables as it is included in the results so
+	 * that nothing is referenced from two places and all data can be
+	 * safely freed.
+	 */
 	while (ht_has_next(it_drives)) {
 		char *key;
 		void *drives;
 		void *devpaths;
 
-		if (ht_get_next(it_drives, &key, &drives) != 0) {
-
+		/* ht_drives key=equ_type, data=list of drive_t */
+		if (ht_detach_next(it_drives, &key, &drives) != 0) {
 			goto error;
 		}
 
 		if (ISNULL(key)) {
-
+			lst_free_deep_typed(drives, FREEFUNCCAST(free_drive));
 			goto error;
 		}
 
-		/* get the devpaths for this key from ht_stk_devpaths */
-		if (ht_get(ht_stk_devpaths, key, &devpaths) != 0) {
+		/*
+		 * Get the devpaths for this key from ht_stk_devpaths
+		 * h_stk_devpaths key=equ_typ,data=list stk_device_t
+		 */
+		if ((ht_remove(ht_stk_devpaths, key, &devpaths) != 0) ||
+		    devpaths == NULL) {
+			lst_free_deep_typed(drives, FREEFUNCCAST(free_drive));
 			goto error;
 		}
 
-		stk_param =
-		    (stk_param_t *)mallocer(sizeof (stk_param_t));
+		stk_param = (stk_param_t *)mallocer(sizeof (stk_param_t));
 		if (ISNULL(stk_param)) {
+			lst_free_deep(devpaths);
+			lst_free_deep_typed(drives, FREEFUNCCAST(free_drive));
 			goto error;
 		}
 		memset(stk_param, 0, sizeof (stk_param_t));
 
-		/* h_stk_devpaths key=equ_typ,data=list stk_device_t */
 		stk_param->stk_device_list = (sqm_lst_t *)devpaths;
 
 		/* stk_param->stk_capacity_list = stk_capacity_list; */
 		strlcpy(stk_param->hostname,
 		    stk_host->hostname, sizeof (uname_t));
 		stk_param->portnum = atoi(stk_host->portnum);
-		/* ht_drives key=equ_type, data=list of drive_t */
+
 
 		/* Create a library and attach the drives */
-		*lib = (library_t *)mallocer(sizeof (library_t));
-		if (ISNULL(*lib)) {
+		lib = (library_t *)mallocer(sizeof (library_t));
+		if (ISNULL(lib)) {
+			free_stk_param(stk_param);
+			lst_free_deep_typed(drives, FREEFUNCCAST(free_drive));
 			goto error;
 		}
-		memset(*lib, 0, sizeof (library_t));
-		(*lib)->drive_list = (sqm_lst_t *)drives;
-		(*lib)->storage_tek_parameter = stk_param;
-		strlcpy((*lib)->serial_no, lib_serial_no, sizeof (uname_t));
-		strlcpy((*lib)->base_info.equ_type, "sk", sizeof (devtype_t));
+		memset(lib, 0, sizeof (library_t));
+		lib->drive_list = (sqm_lst_t *)drives;
+		lib->storage_tek_parameter = stk_param;
+		strlcpy(lib->serial_no, lib_serial_no, sizeof (uname_t));
+		strlcpy(lib->base_info.equ_type, "sk", sizeof (devtype_t));
 
+		if (lst_append(*res_lst, lib) != 0) {
+			free_library(lib);
+			goto error;
+		}
 	}
-	free_hashtable(&ht_drives);
-	free_hashtable(&ht_stk_devpaths);
+
+	free(it_drives);
+
+	/* Deep free the hasttables and any remaining elements */
+	ht_list_hash_free_deep(&ht_drives, FREEFUNCCAST(free_drive));
+	ht_list_hash_free_deep(&ht_stk_devpaths, FREEFUNCCAST(free));
+
 	Trace(TR_OPRMSG, "finished getting stk_only media information");
 	return (0);
 error:
 	Trace(TR_ERR, "get stk media information failed: %d[%s]",
 	    samerrno, samerrmsg);
+
+	/* Free the results and set the return to NULL */
+	free_list_of_libraries(*res_lst);
+	*res_lst = NULL;
+
 	free(stk_cap);
-	free_hashtable(&ht_drives);
-	free_hashtable(&ht_stk_devpaths);
+	free(it_drives);
+
+	/* Deep free the hasttables and any remaining elements */
+	ht_list_hash_free_deep(&ht_drives, FREEFUNCCAST(free_drive));
+	ht_list_hash_free_deep(&ht_stk_devpaths, FREEFUNCCAST(free));
 	return (-1);
 }
 
@@ -992,14 +1073,14 @@ hashtable_t **h_drives)
 	/* OUTPUT - hashtable with list of drive_t, for each media type */
 {
 
-	sqm_lst_t *tdrive_list	= NULL;
-	node_t *tdrive_node;
-	drive_t *tdrive		= NULL;
-	sqm_lst_t *stkdrive_list	= NULL;
-	node_t *stkdrive_node;
-	acs_drive_t *stkdrive;
-	stk_device_t *stk_devpath;
-	sqm_lst_t *paths;
+	sqm_lst_t	*tdrive_list	= NULL;
+	node_t		*tdrive_node;
+	drive_t		*tdrive		= NULL;
+	sqm_lst_t	*stkdrive_list	= NULL;
+	node_t		*stkdrive_node;
+	acs_drive_t	*stkdrive;
+	stk_device_t	*stk_devpath;
+	sqm_lst_t	*paths;
 
 	if (ISNULL(stk_host, mcf_paths, h_stk_devpaths, h_drives)) {
 		return (-1);
@@ -1031,6 +1112,10 @@ hashtable_t **h_drives)
 
 		stkdrive = (acs_drive_t *)stkdrive_node->data;
 
+		/*
+		 * Find the drive on this host by searching for a drive
+		 * that matches the serial number returned from acsls.
+		 */
 		if (discover_tape_drive(
 		    stkdrive->serial_num, mcf_paths, &tdrive_list) == -1) {
 			goto error;
@@ -1050,8 +1135,8 @@ hashtable_t **h_drives)
 			continue;
 		}
 
-		/* A match is found */
-		tdrive_node = tdrive_list->head; /* found from tape discovery */
+		/* A match is found from tape discovery on this host. */
+		tdrive_node = tdrive_list->head;
 		if (tdrive_node != NULL) {
 			tdrive = (drive_t *)tdrive_node->data;
 		}
@@ -1088,9 +1173,15 @@ hashtable_t **h_drives)
 			if (list_hash_put(*h_drives,
 			    tdrive->base_info.equ_type,
 			    tdrive) != 0) {
-
+				free(stk_devpath);
 				goto error;
 			}
+
+			/*
+			 * set the tdrives data to NULL so it does not
+			 * get freed in the the error case's lst_free_deep.
+			 */
+			tdrive_node->data = NULL;
 
 			if (list_hash_put(*h_stk_devpaths,
 			    strdup(tdrive->base_info.equ_type),
@@ -1100,21 +1191,27 @@ hashtable_t **h_drives)
 				goto error;
 			}
 
-			/* set the tdrives data to NULL, */
-			/* so it does not get freed */
-			tdrive_node->data = NULL;
+			/*
+			 * free tdrive_list but not the elements since
+			 * these have been included in the hashtable.
+			 */
+			lst_free(tdrive_list);
+			tdrive_list = NULL;
 		}
 	}
 
-	lst_free_deep_typed(tdrive_list, FREEFUNCCAST(free_drive));
 	lst_free_deep(stkdrive_list);
 	return (0);
 error:
 	Trace(TR_ERR, "get stk dev paths failed: %d[%s]", samerrno, samerrmsg);
+
+	/*
+	 * Deep free all of the lists and hash tables created here.
+	 */
 	lst_free_deep_typed(tdrive_list, FREEFUNCCAST(free_drive));
 	lst_free_deep(stkdrive_list);
-	free_hashtable(h_drives);
-	free_hashtable(h_stk_devpaths);
+	ht_list_hash_free_deep(h_drives, FREEFUNCCAST(free_drive));
+	ht_list_hash_free_deep(h_stk_devpaths, FREEFUNCCAST(free));
 	return (-1);
 }
 
@@ -1167,549 +1264,6 @@ free_stk_phyconf_info(stk_phyconf_info_t *stk_phyconf_info)
 }
 
 
-/*
- *	This function will start a thread to run real
- *	event registration.
- */
-int
-start_acsls_event() {
-	pthread_t	tid;
-	int		return_status = 0;
-	int		st;
-
-	pthread_mutex_lock(&acsls_event_mutex);
-	if (acsls_event_continue == B_TRUE) {
-		/* already running */
-		pthread_mutex_unlock(&acsls_event_mutex);
-		return (0);
-	}
-
-	st = pthread_create(&tid, NULL, register_ACSLS_event, (void *)NULL);
-	if (st != 0) {
-		samerrno = SE_THREAD_CREATION_FAILED;
-		snprintf(samerrmsg, MAX_MSG_LEN,
-		    GetCustMsg(SE_THREAD_CREATION_FAILED), "");
-		strlcat(samerrmsg, strerror(errno), MAX_MSG_LEN);
-		Trace(TR_ERR, "%s", samerrmsg);
-		return_status = -1;
-	}
-	pthread_mutex_unlock(&acsls_event_mutex);
-
-	return (return_status);
-}
-
-
-/*
- * register for notification of hardware status changes and the addition and
- * removal of cartridges from the library. This function should be called only
- * under an independent thread.
- */
-void *
-register_ACSLS_event(void *arg)
-{
-	ACS_REGISTER_RESPONSE *from_server;
-	int		 i;
-	LOCKID	  lock_id = NO_LOCK_ID;
-	REGISTRATION_ID registration_id;
-	EVENT_CLASS_TYPE eventClass[MAX_ID];
-	unsigned short  count;
-
-	STATUS	status;
-	ALIGNED_BYTES rbuf[MAX_MESSAGE_SIZE / sizeof (ALIGNED_BYTES)];
-
-	char self[50];
-	BOOLEAN	check_mode;
-	ACS_RESPONSE_TYPE type;
-	REQ_ID	req_id;
-	SEQ_NO	s, seq_nmbr;
-
-	pthread_detach(pthread_self());
-
-	pthread_mutex_lock(&acsls_event_mutex);
-	acsls_event_continue = B_TRUE;
-	pthread_mutex_unlock(&acsls_event_mutex);
-	strlcpy(self, "register_acsls_event", sizeof (self));
-	s = (SEQ_NO)404;
-	check_mode = FALSE;
-
-	strlcpy(registration_id.registration, "STK STK",
-	    sizeof (registration_id.registration));
-
-	/*
-	 *	There are two kinds of events:
-	 *	volume and resources. We subscribe
-	 *	both.
-	 */
-	count = 2;
-	eventClass[0] = EVENT_CLASS_RESOURCE;
-	eventClass[1] = EVENT_CLASS_VOLUME;
-
-	status = acs_register(s, registration_id, eventClass, count);
-	if (status != STATUS_SUCCESS) {
-		Trace(TR_OPRMSG, "\t%s: acs_register() failed %s\n",
-		    acs_status(status));
-		pthread_mutex_lock(&acsls_event_mutex);
-		acsls_event_continue = B_FALSE;
-		pthread_mutex_unlock(&acsls_event_mutex);
-		return (NULL);
-	}
-
-	/*
-	 *	infinite loop and Wait for FINAL response,
-	 */
-	do {
-		status = acs_response(-1, &seq_nmbr, &req_id, &type, rbuf);
-		if (status == STATUS_IPC_FAILURE) {
-			samerrno = SE_STK_COMMUNICATION_BROKEN;
-			snprintf(samerrmsg, MAX_MSG_LEN,
-			    GetCustMsg(samerrno));
-			return (NULL);
-		}
-
-		if (type == RT_ACKNOWLEDGE) {
-			st_show_ack_res(s, EXTENDED | ACKNOWLEDGE,
-			    0, NO_LOCK_ID, type, seq_nmbr, status, rbuf);
-		} else if (type == RT_INTERMEDIATE) {
-			from_server = (ACS_REGISTER_RESPONSE *) rbuf;
-			st_show_int_resp_hdr(type, seq_nmbr, s, status);
-
-			if (!check_mode)
-				st_show_register_info(from_server);
-		}
-		if (type == RT_FINAL) {
-		/* Print out the generic final response data */
-			st_show_final_resp_hdr(type, seq_nmbr, s, status);
-			if (no_variable_part(status) == TRUE) {
-				break;
-			}
-
-			from_server = (ACS_REGISTER_RESPONSE *) rbuf;
-			if (from_server->register_status != STATUS_SUCCESS) {
-				Trace(TR_OPRMSG, "\t%s: status is %s \n",
-				    self, acs_status(
-				    from_server->register_status));
-				samerrno = SE_ACS_RESPONSE_ERR;
-				snprintf(samerrmsg, MAX_MSG_LEN,
-				    GetCustMsg(samerrno),
-				    acs_status(from_server->register_status));
-				pthread_mutex_lock(&acsls_event_mutex);
-				acsls_event_continue = B_FALSE;
-				pthread_mutex_unlock(&acsls_event_mutex);
-				return (NULL);
-
-			}
-			if (!check_mode)
-				st_show_register_info(from_server);
-		}
-	} while (type != RT_FINAL);
-	pthread_mutex_lock(&acsls_event_mutex);
-	acsls_event_continue = B_FALSE;
-	pthread_mutex_unlock(&acsls_event_mutex);
-	return (NULL);
-}
-
-
-/*
- *	Check registration.
- *	If we don't call this function, ACSLS will automatically
- *	terminate event after a while.  If it finds out client side
- *	still listen, it will continue.
- */
-void
-c_check_registration()
-{
-	ACS_CHECK_REGISTRATION_RESPONSE *from_server;
-	int		 i;
-	LOCKID	  lock_id = NO_LOCK_ID;
-	REGISTRATION_ID registration_id;
-	EVENT_CLASS_TYPE eventClass[MAX_ID];
-	unsigned short  count;
-	EVENT_REGISTER_STATUS *ev_reg_stat;
-
-	STATUS	status;
-	ALIGNED_BYTES rbuf[MAX_MESSAGE_SIZE / sizeof (ALIGNED_BYTES)];
-
-	char self[50];
-	BOOLEAN	check_mode;
-	ACS_RESPONSE_TYPE type;
-	REQ_ID	req_id;
-	SEQ_NO	s, seq_nmbr;
-
-	strlcpy(self, "c_check_registration", sizeof (self));
-	s = (SEQ_NO)405;
-	strlcpy(registration_id.registration, "STK STK",
-	    sizeof (registration_id.registration));
-	status = acs_check_registration(s, registration_id);
-	if (status != STATUS_SUCCESS) {
-		Trace(TR_OPRMSG, "\t%s: check_registeration() failed %s\n",
-		    acs_status(status));
-		return;
-	}
-
-	/* Wait for FINAL response */
-	do {
-		status = acs_response(- 1, &seq_nmbr, &req_id, &type, rbuf);
-		if (status == STATUS_IPC_FAILURE) {
-			samerrno = SE_STK_COMMUNICATION_BROKEN;
-			snprintf(samerrmsg, MAX_MSG_LEN,
-			    GetCustMsg(samerrno));
-			return;
-		}
-		if (type == RT_ACKNOWLEDGE) {
-			st_show_ack_res(s, EXTENDED | ACKNOWLEDGE,
-			    0, NO_LOCK_ID, type, seq_nmbr, status, rbuf);
-		} else {
-			st_show_final_resp_hdr(type, seq_nmbr, s, status);
-			if (no_variable_part(status) == TRUE) {
-				break;
-			}
-			from_server = (ACS_CHECK_REGISTRATION_RESPONSE *) rbuf;
-			if (from_server->check_registration_status !=
-			    STATUS_SUCCESS) {
-				Trace(TR_OPRMSG, "\t%s: status is %s \n",
-				    self, acs_status(
-				    from_server->check_registration_status));
-				samerrno = SE_ACS_RESPONSE_ERR;
-				snprintf(samerrmsg, MAX_MSG_LEN,
-				    GetCustMsg(samerrno),
-				    acs_status(
-				    from_server->check_registration_status));
-				return;
-
-			}
-			if (!check_mode)
-				st_show_event_register_status(&from_server->
-				    event_register_status);
-		}
-	} while (type != RT_FINAL);
-}
-
-
-
-/*
- *	show registration information.
- */
-void
-st_show_register_info(
-ACS_REGISTER_RESPONSE *from_server)
-{
-	char    type, event_class[30];
-	char	vol_type[30], volid[7], resource_data_type;
-	int	i, event_type = 0;
-	char	self[50];
-
-	strlcpy(self, "st_show_register_info", sizeof (self));
-	Trace(TR_OPRMSG, "event_sequence is %d",
-	    from_server->event_sequence);
-	/*  For a EVENT_REGISTER_STATUS    */
-
-	if ((from_server->event_reply_type == EVENT_REPLY_REGISTER) ||
-	    (from_server->event_reply_type == EVENT_REPLY_UNREGISTER) ||
-	    (from_server->event_reply_type == EVENT_REPLY_SUPERCEDED) ||
-	    (from_server->event_reply_type == EVENT_REPLY_SHUTDOWN)) {
-
-		Trace(TR_OPRMSG, "%s: registration_id is: %s",
-		    self, from_server->event.
-		    event_register_status.registration_id.registration);
-		if (from_server->event_reply_type == EVENT_REPLY_REGISTER) {
-			Trace(TR_OPRMSG, "%s: EVENT_REPLY_TYPE is:"
-			    " EVENT_REPLY_REGISTER\n", self);
-		}
-		if (from_server->event_reply_type == EVENT_REPLY_UNREGISTER) {
-			Trace(TR_OPRMSG, "%s: EVENT_REPLY_TYPE is: "
-			    "EVENT_REPLY_UNREGISTER\n", self);
-		}
-		if (from_server->event_reply_type == EVENT_REPLY_SUPERCEDED) {
-			Trace(TR_OPRMSG, "%s: EVENT_REPLY_TYPE is: "
-			    "EVENT_REPLY_SUPERCEDED\n", self);
-		}
-
-		if (from_server->event_reply_type == EVENT_REPLY_SHUTDOWN) {
-			Trace(TR_OPRMSG, "%s: EVENT_REPLY_TYPE is: "
-			    "EVENT_REPLY_SHUTDOWN\n", self);
-		}
-
-		st_show_event_register_status(&from_server->event.
-		    event_register_status);
-
-	/* For an EVENT_VOLUME_STATUS  */
-	} else if (from_server->event_reply_type == EVENT_REPLY_VOLUME) {
-		Trace(TR_OPRMSG, "EVENT_REPLY_TYPE is: EVENT_REPLY_VOLUME");
-		event_type = from_server->event.event_volume_status.event_type;
-		switch (event_type) {
-			case VOL_ENTERED:
-				strlcpy(vol_type, "VOL_ENTERED",
-				    sizeof (vol_type));
-				break;
-			case VOL_ADDED:
-				strlcpy(vol_type, "VOL_ADDED",
-				    sizeof (vol_type));
-				break;
-			case VOL_REACTIVATED:
-				strlcpy(vol_type, "VOL_REACTIVATED",
-				    sizeof (vol_type));
-				break;
-			case VOL_EJECTED:
-				strlcpy(vol_type, "VOL_EJECTED",
-				    sizeof (vol_type));
-				break;
-			case VOL_DELETED:
-				strlcpy(vol_type, "VOL_DELETED",
-				    sizeof (vol_type));
-				break;
-			case VOL_MARKED_ABSENT:
-				strlcpy(vol_type, "VOL_MARKED_ABSENT",
-				    sizeof (vol_type));
-				break;
-			default:
-				strlcpy(vol_type, "none",
-				    sizeof (vol_type));
-		}
-		Trace(TR_OPRMSG, "VOL_EVENT_TYPE is: %s", vol_type);
-		memset(volid, 0, sizeof (volid));
-		strlcpy(volid, from_server->event.event_volume_status.
-		    vol_id.external_label, sizeof (volid));
-		Trace(TR_OPRMSG, "%s: VOLID is: %s\n", self, volid);
-	}
-	/* For an EVENT_RESOURCE_STATUS  */
-	else if (from_server->event_reply_type == EVENT_REPLY_RESOURCE)
-		st_show_event_resource_status(from_server);
-	else if (from_server->event_reply_type == EVENT_REPLY_CLIENT_CHECK) {
-		Trace(TR_OPRMSG, "EVENT_REPLY_TYPE is: "
-		    "EVENT_REPLY_CLIENT_CHECK");
-		Trace(TR_OPRMSG, "responding with a check_registration");
-		c_check_registration();
-		Trace(TR_OPRMSG, "completed call to check_registration.");
-	} else {
-	/* Must have a problem because it's not a valid status */
-		Trace(TR_OPRMSG, "%s: Not a valid resource status\n");
-	}
-
-}
-
-
-/*
- *	st_show_event_register_status.
- */
-void
-st_show_event_register_status(
-EVENT_REGISTER_STATUS *from_server)
-{
-	int		 i, count = 0;
-	char		event_class[20];
-	EVENT_CLASS_TYPE ev_class;
-	EVENT_CLASS_REGISTER_RETURN register_return;
-
-	char self[50];
-
-	strlcpy(self, "st_show_event_register_status", sizeof (self));
-	count = from_server->count;
-	Trace(TR_OPRMSG, "%s: COUNT is: %d\n", self, count);
-	for (i = 0; i < count; i++) {
-		ev_class = from_server->register_status[i].event_class;
-		if (ev_class == EVENT_CLASS_VOLUME) {
-			strlcpy(event_class, "EVENT_CLASS_VOLUME",
-			    sizeof (event_class));
-		} else if (ev_class == EVENT_CLASS_RESOURCE) {
-			strlcpy(event_class, "EVENT_CLASS_RESOURCE",
-			    sizeof (event_class));
-		}
-		Trace(TR_OPRMSG, "%s: EVENT_CLASS is: %s\n", self, event_class);
-		register_return =
-		    from_server->register_status[i].register_return;
-		if (register_return == EVENT_REGISTER_REGISTERED) {
-			Trace(TR_OPRMSG, "REGISTER_RETURN is: "
-			    "EVENT_REGISTER_REGISTERED\n");
-
-		} else if (register_return == EVENT_REGISTER_UNREGISTERED) {
-			Trace(TR_OPRMSG, "%s: REGISTER_RETURN is: "
-			    "EVENT_REGISTER_UNREGISTERED\n", self);
-
-		} else if (register_return == EVENT_REGISTER_INVALID_CLASS) {
-			Trace(TR_OPRMSG, "%s: REGISTER_RETURN is: "
-			    "EVENT_REGISTER_INVALID_CLASS\n",
-			    self);
-		}
-	}
-}
-
-
-/*
- *	st_show_event_resource_status.
- */
-void
-st_show_event_resource_status(
-ACS_REGISTER_RESPONSE *from_server)
-{
-	RESOURCE_EVENT resource_event;
-	char self[50];
-	char msg[1024];
-
-	strlcpy(self, "st_show_event_resource_status", sizeof (self));
-	Trace(TR_OPRMSG, "EVENT_REPLY_TYPE is: EVENT_REPLY_RESOURCE");
-	Trace(TR_OPRMSG, "%s: RESOURCE_TYPE is: %s\n", self,
-	    cl_type(from_server->event.event_resource_status.
-	    resource_type));
-
-	Trace(TR_OPRMSG, "RESOURCE_IDENTIFIER is: %s",
-	    cl_identifier(from_server->event.
-	    event_resource_status.resource_type,
-	    &from_server->event.event_resource_status.resource_identifier));
-	Trace(TR_OPRMSG, "RESOURCE_EVENT is: %s",
-	    cl_resource_event(from_server->event.
-	    event_resource_status.resource_event));
-
-	resource_event =
-	    from_server->event.event_resource_status.resource_event;
-
-	if (resource_event == RESOURCE_INOPERATIVE ||
-	    resource_event == RESOURCE_UNIT_ATTENTION ||
-	    resource_event == RESOURCE_HARDWARE_ERROR) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_HARDWARE_ERROR),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_ERROR_SUBCLASS,
-		    SE_ACSLS_HARDWARE_ERROR, LOG_ERR,
-		    msg, NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_MAINT_REQUIRED ||
-	    resource_event == RESOURCE_DIAGNOSTIC) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_MAINTANCE),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_ERROR_SUBCLASS,
-		    SE_ACSLS_MAINTANCE, LOG_ERR,
-		    msg, NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_DEGRADED_MODE) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_DEGRADED_MODE),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_ERROR_SUBCLASS,
-		    SE_ACSLS_DEGRADED_MODE, LOG_ERR,
-		    msg, NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
-	} else if (resource_event == RESOURCE_SERV_CONFIG_MISMATCH) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_SERV_CONFIG_MISMATCH),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_ERROR_SUBCLASS,
-		    SE_ACSLS_SERV_CONFIG_MISMATCH, LOG_ERR,
-		    msg, NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_SERV_FAILURE) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_SERV_ERROR),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_ERROR_SUBCLASS,
-		    SE_ACSLS_SERV_ERROR, LOG_ERR,
-		    msg, NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_SERV_LOG_FAILED) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_SERV_LOG_ERROR),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_ERROR_SUBCLASS,
-		    SE_ACSLS_SERV_LOG_ERROR, LOG_ERR,
-		    msg, NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_OFFLINE) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_RESOURCE_OFFLINE),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_INFO_SUBCLASS,
-		    SE_ACSLS_RESOURCE_OFFLINE, LOG_INFO,
-		    msg, NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_SERIAL_NUM_CHG) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_RESOURCE_SERIAL_NUM_CHG),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier),
-		    &from_server->event.event_resource_status.
-		    resource_data.serial_num.serial_nbr[0]);
-		PostEvent(ACSLS_CLASS, ACSLS_INFO_SUBCLASS,
-		    SE_ACSLS_RESOURCE_SERIAL_NUM_CHG, LOG_INFO,
-		    msg, NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_LMU_NEW_MASTER) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_RESOURCE_LMU_NEW_MASTER),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_INFO_SUBCLASS,
-		    SE_ACSLS_RESOURCE_LMU_NEW_MASTER, LOG_INFO,
-		    msg, NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_DRIVE_CLEAN_REQUEST) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_RESOURCE_DRIVE_CLEAN_REQUEST),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_INFO_SUBCLASS,
-		    SE_ACSLS_RESOURCE_DRIVE_CLEAN_REQUEST, LOG_INFO,
-		    msg, NOTIFY_AS_EMAIL);
-
-	} else if (resource_event == RESOURCE_DRIVE_ADDED) {
-		snprintf(msg, sizeof (msg),
-		    GetCustMsg(SE_ACSLS_RESOURCE_DRIVE_ADDED),
-		    cl_type(from_server->event.event_resource_status.
-		    resource_type),
-		    cl_identifier(
-		    from_server->event.event_resource_status.resource_type,
-		    &from_server->event.event_resource_status.
-		    resource_identifier));
-		PostEvent(ACSLS_CLASS, ACSLS_INFO_SUBCLASS,
-		    SE_ACSLS_RESOURCE_DRIVE_ADDED, LOG_INFO,
-		    msg, NOTIFY_AS_EMAIL);
-	}
-}
 
 
 /*
@@ -2082,30 +1636,25 @@ STATUS status)
  *
  * Description:
  *
- *	This function prints the response data returned from
+ *	This function checks and traces the response data returned from
  *	acs_response(). It has two modes of operation.
  *	- a checking mode when interacting with the sample server t_acslm.
  *	- a reporting mode when interacting with a native server.
  *
- *
- *
- * Implicit Inputs:
- *
- *	status - Global variable that holds the status returned from
+ * Inputs:
+ *	status - variable that holds the status returned from
  *		 acs_response.
- *	type - Global variable that holds the value of the response
- *	   type returned by acs_response.
- *	seq_number - Global variable that holds the user supplied sequence
+ *	type -  variable that holds the value of the response
+ *		type returned by acs_response.
+ *	seq_number -  variable that holds the user supplied sequence
  *		 number that uniquely identifies the response and which
  *		 is returned by acs_response.
  *	self - string that names the calling routine.
  *
- *
  * Return Values:
- *
- *		None.
+ *		-1 if an error is detected.
  */
-static void
+static int
 st_show_final_resp_hdr(
 ACS_RESPONSE_TYPE type,
 SEQ_NO seq_nmbr,
@@ -2131,19 +1680,19 @@ STATUS status)
 		Trace(TR_OPRMSG, "\t%s: acs_response() "
 		    "(FINAL RESPONSE) failed:%s\n",
 		    self, acs_status(status));
-		return;
+		return (-1);
 	}
 	if (seq_nmbr != s) {
 		Trace(TR_OPRMSG, "\t%s: %s sequence "
 		    "mismatch got:%d expected:%d\n",
 		    self, "FINAL RESPONSE", seq_nmbr, s);
-		return;
+		return (-1);
 	}
 	if (type != RT_FINAL) {
 		Trace(TR_OPRMSG, "\t%s: FINAL RESPONSE type failure.\n", self);
 		Trace(TR_OPRMSG, "\t%s: expected RT_FINAL, got %s.\n", self,
 		    acs_type_response(type));
-		return;
+		return (-1);
 	}
 	if (!check_mode) {
 		Trace(TR_OPRMSG, "\tFinal Status: %s\n", acs_status(status));
@@ -2153,6 +1702,7 @@ STATUS status)
 		free(rtto_str);
 	}
 	Trace(TR_OPRMSG, "Finished st_show_final_resp_hdr");
+	return (0);
 }
 
 
@@ -2433,8 +1983,12 @@ wait_for_response(
 	do {
 		rbuf[0] = '\0';
 
+		/*
+		 * This used to block indefinitely which caused problems
+		 * in error cases. Like when the wrong server was specified.
+		 */
 		st = acs_response(
-		    -1, /* Block indefinitely */
+		    300,
 		    &rseq,
 		    &reqid,
 		    &type,
@@ -2442,7 +1996,11 @@ wait_for_response(
 
 		if (st == STATUS_IPC_FAILURE) {
 			samerrno = SE_ACS_RESPONSE_ERR;
-			// fill samerrmsg
+			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno));
+			return (-1);
+		} else if (st == STATUS_PROCESS_FAILURE) {
+			samerrno = SE_ACS_RESPONSE_ERR;
+			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno));
 			return (-1);
 		}
 
@@ -2469,7 +2027,12 @@ wait_for_response(
 		} else { // type == RT_FINAL
 
 			/* TBD: validate response */
-			st_show_final_resp_hdr(type, rseq, seq, st);
+			if (st_show_final_resp_hdr(type, rseq, seq, st) != 0) {
+				samerrno = SE_ACS_RESPONSE_ERR;
+				snprintf(samerrmsg, MAX_MSG_LEN,
+				    GetCustMsg(samerrno));
+				return (-1);
+			}
 
 			if (no_variable_part(st) == TRUE) {
 				break;
@@ -2535,7 +2098,7 @@ acs_display_info(
 
 		samerrno = SE_ACS_REQUEST_ERR;
 		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
-		    acs_status(st));
+		    Str(acs_status(st)));
 
 		Trace(TR_ERR, "get acs display info failed: %s", samerrmsg);
 		return (-1);
@@ -3124,6 +2687,9 @@ parse_vol_resp(
 			ptr2 += l;
 			l = parse_f(ptr2, vol->volume_type);
 			ptr2 += l;
+
+			Trace(TR_OPRMSG, "%s %s %s", Str(vol->stk_vol),
+			    Str(vol->media_type), Str(vol->volume_type));
 
 			if (lst_append(*lst, vol) != 0) {
 				free(vol);

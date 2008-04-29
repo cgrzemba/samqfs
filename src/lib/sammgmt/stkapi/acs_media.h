@@ -29,7 +29,7 @@
 #ifndef	_ACS_MEDIA_H
 #define	_ACS_MEDIA_H
 
-#pragma ident   "$Revision: 1.5 $"
+#pragma ident   "$Revision: 1.6 $"
 
 #include "pub/mgmt/sqm_list.h"
 #include "pub/mgmt/types.h"
@@ -244,15 +244,6 @@ static void
 free_list_of_stk_volume(sqm_lst_t *stk_volume_list);
 
 /*
- * The following are required to register for ACSLS events and
- * propagate them via sysevents
- *
- */
-pthread_mutex_t acsls_event_mutex = PTHREAD_MUTEX_INITIALIZER;
-boolean_t	acsls_event_continue = B_FALSE;
-
-void *register_ACSLS_event(void *arg);
-/*
  * The following functions st_XXX and their utilities are copied from
  * src/robots/vendor_supplied/stk/src/client/t_cdriver.c
  */
@@ -269,21 +260,18 @@ static void st_show_int_resp_hdr(
 	SEQ_NO seq_nmbr,
 	SEQ_NO s,
 	STATUS status);
-static void st_show_final_resp_hdr(
+static int st_show_final_resp_hdr(
 	ACS_RESPONSE_TYPE type,
 	SEQ_NO seq_nmbr,
 	SEQ_NO s,
 	STATUS status);
-static void st_show_register_info(ACS_REGISTER_RESPONSE *from_server);
-static void st_show_event_register_status(EVENT_REGISTER_STATUS *from_server);
-static void st_show_event_resource_status(ACS_REGISTER_RESPONSE *from_server);
-static void c_check_registration();
+
 static BOOLEAN no_variable_part(STATUS status);
 static char *decode_mopts(unsigned char msgopt, char *str_buffer);
 static char *decode_vers(long vers, char *buffer);
 static char *decode_eopts(unsigned char extopt, char *str_buffer);
 
 int get_acs_library_cfg(stk_host_info_t *stk_host, sqm_lst_t *mcf_paths,
-    library_t **lib);
+    sqm_lst_t **res_lst);
 
 #endif /* ACS_MEDIA_H */

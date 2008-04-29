@@ -29,7 +29,7 @@
 #ifndef	HASH_H
 #define	HASH_H
 
-#pragma ident	"$Revision: 1.9 $"
+#pragma ident	"$Revision: 1.10 $"
 
 
 /* default to a prime size */
@@ -100,8 +100,10 @@ ht_remove(hashtable_t *h, char *key, void **value);
 
 
 /*
- * create an iterator for the hashtable t. The underlying table should not
- * be modified after itteration has begun.
+ * Create an iterator for the hashtable t. The underlying table should
+ * not be modified after iteration has begun. The only exception is
+ * through use of the function: ht_detach_next and the caller should
+ * read the warning associated with that function prior to use.
  */
 int
 ht_get_iterator(hashtable_t *t, ht_iterator_t **it);
@@ -115,8 +117,21 @@ ht_has_next(ht_iterator_t *it);
  * get the next element from the iterator.
  */
 int
-ht_get_next(ht_iterator_t *itt, char **key, void **value);
+ht_get_next(ht_iterator_t *it, char **key, void **value);
 
+/*
+ * This function returns the next element from the iterator and sets the data
+ * pointer to null in the hashtable. It is useful when the iterator is
+ * being used to drive the creation of other structures. By removing the
+ * elements from the hashtable the caller can avoid having multiple references
+ * to the same data and will be able to free the table.
+ *
+ * WARNING: The Hashtable can no longer be used directly after calls
+ * to ht_detach_next on the iterator. It is only safe to continue
+ * iteration and/or to free or deep free the hashtable.
+ */
+int
+ht_detach_next(ht_iterator_t *it, char **key, void **value);
 
 /*
  * extension of hashtable put that uses lists of elements for duplicate keys
@@ -139,8 +154,17 @@ free_hashtable(hashtable_t **);
 void
 ht_free_deep(hashtable_t **t, void (*data_free)(void*));
 
-
+/*
+ * Function to deep free a hash table built using list_hash_put.
+ * This function will free the hashtable, the lists and the data
+ * elements in the lists.
+ *
+ * Requires as an argument a function pointer to a
+ * function that frees the type of data member that has been
+ * added in list_hash_put.
+ */
 void
-free_ht_iterator(ht_iterator_t *);
+ht_list_hash_free_deep(hashtable_t **t, void (*data_free)(void*));
+
 
 #endif /* HASH_H */

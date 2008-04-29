@@ -263,7 +263,9 @@ ht_free_deep(hashtable_t **t, void (*data_free)(void*)) {
 		cur = (*t)->items[i];
 		while (cur != NULL) {
 			next = cur->next;
-			(*data_free)(cur->data);
+			if (cur->data != NULL) {
+				(*data_free)(cur->data);
+			}
 			free(cur);
 			cur = next;
 		}
@@ -274,13 +276,40 @@ ht_free_deep(hashtable_t **t, void (*data_free)(void*)) {
 }
 
 
-int
-ht_get_next(
+void
+ht_list_hash_free_deep(hashtable_t **t, void (*data_free)(void *)) {
+	int i;
+	hnode_t *cur, *next;
+
+	if (t == NULL || *t == NULL)
+		return;
+
+	for (i = 0; i < (*t)->size; i++) {
+
+		cur = (*t)->items[i];
+		while (cur != NULL) {
+			next = cur->next;
+			if (cur->data != NULL) {
+				lst_free_deep_typed((sqm_lst_t *)cur->data,
+				    FREEFUNCCAST(*data_free));
+			}
+			free(cur);
+			cur = next;
+		}
+	}
+	free((*t)->items);
+	free((*t));
+	*t = NULL;
+}
+
+
+static int
+ht_next(
 ht_iterator_t *it,
 char **key,
-void **value)
+void **value,
+boolean_t detach)
 {
-
 
 	/* traverse in two dimensions, along table and down chains */
 
@@ -325,12 +354,37 @@ void **value)
 	 */
 	*key = it->next_item->key;
 	*value = it->next_item->data;
+
+	if (detach) {
+		it->next_item->key = NULL;
+		it->next_item->data = NULL;
+	}
+
 	it->next_item = it->next_item->next;
 	it->visited++;
-	return (0);
 
+	return (0);
 }
 
+
+int
+ht_detach_next(
+ht_iterator_t *it,
+char **key,
+void **value)
+{
+
+	return (ht_next(it, key, value, B_TRUE));
+}
+
+int
+ht_get_next(
+ht_iterator_t *it,
+char **key,
+void **value)
+{
+	return (ht_next(it, key, value, B_FALSE));
+}
 
 int
 ht_has_next(ht_iterator_t *it) {
