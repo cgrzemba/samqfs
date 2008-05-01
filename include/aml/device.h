@@ -38,7 +38,7 @@
 #if !defined(_AML_DEVICE_H)
 #define	_AML_DEVICE_H
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 
 #ifdef sun
@@ -324,6 +324,8 @@ typedef enum {
 						/* permanent label */
 	PROPERTY_ENCRYPTION_DRIVE = 0x0100	/* encryption drive */
 } properties_t;
+
+#define	VOLSAFE_LABEL_ERROR	(1)	/* attempt to re-label volsafe media */
 
 /* device identification (world wide name, port, etc) */
 

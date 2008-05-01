@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -445,7 +445,9 @@ label_slot(
 		drive->un->status.bits &= ~DVST_OPENED;
 
 		if (err) {
-			drive->un->status.bits |= DVST_BAD_MEDIA;
+			if (err != VOLSAFE_LABEL_ERROR) {
+				drive->un->status.bits |= DVST_BAD_MEDIA;
+			}
 			CatalogLabelFailed(&drive->un->i, label_request->vsn);
 		} else {
 			UpdateCatalog(drive->un, 0, CatalogLabelComplete);

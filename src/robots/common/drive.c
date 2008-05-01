@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -780,12 +780,15 @@ mount(
 
 			if (err) {
 				mutex_lock(&un->mutex);
+				if (err != VOLSAFE_LABEL_ERROR) {
+					un->status.bits |= DVST_BAD_MEDIA;
+					(void) CatalogSetFieldByLoc(
+					    drive->library->un->eq, ce->CeSlot,
+					    ce->CePart, CEF_Status,
+					    CES_bad_media, 0);
+				}
 				un->status.bits &= ~DVST_REQUESTED;
-				un->status.bits |= DVST_BAD_MEDIA;
 				mutex_unlock(&un->mutex);
-				(void) CatalogSetFieldByLoc(
-				    drive->library->un->eq, ce->CeSlot,
-				    ce->CePart, CEF_Status, CES_bad_media, 0);
 				/* Call CatalogLabelFailed to remove "dummy" */
 				/* entry. */
 				CatalogLabelFailed(&un->i, (char *)lb_vsn);

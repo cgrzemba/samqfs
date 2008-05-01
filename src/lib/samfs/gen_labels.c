@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 static char    *_SrcFile = __FILE__;
 
@@ -288,8 +288,12 @@ wt_labels(void *param)
 	DEC_OPEN(un);
 	DEC_ACTIVE(un);
 	un->status.bits |= DVST_READY | DVST_SCANNING;
-	if (exit_status)
-		un->status.bits |= DVST_BAD_MEDIA;
+	if (exit_status) {
+		if (exit_status != VOLSAFE_LABEL_ERROR) {
+			un->status.bits |= DVST_BAD_MEDIA;
+		}
+		CatalogLabelFailed(&un->i, request.vsn);
+	}
 	mutex_unlock(&un->mutex);
 	mutex_unlock(&un->io_mutex);
 
@@ -305,7 +309,9 @@ wt_labels(void *param)
 
 	scan_a_device(un, open_fd);
 	(void) close(open_fd);
-	UpdateCatalog(un, 0, CatalogLabelComplete);
+	if (!exit_status) {
+		UpdateCatalog(un, 0, CatalogLabelComplete);
+	}
 
 thread_exit:
 
@@ -321,8 +327,11 @@ thread_exit:
 }
 
 /*
- * write_tape_labels io_mutex held on entry. returns -1 if proc fails 0 upon
- * success
+ * write_tape_labels io_mutex held on entry.
+ * Returns:
+ *  0 - Success
+ *  1 - Attempt was made to relable volsafe media
+ * -1 - Any other label failure
  */
 
 int
@@ -648,10 +657,9 @@ write_tape_labels(
 			TAPEALERT(*open_fd, un);
 			un->dt.tp.properties |= PROPERTY_VOLSAFE_PERM_LABEL;
 			mutex_lock(&un->mutex);
-			un->space = un->capacity = 0;
 			un->status.bits &= ~DVST_LABELLING;
 			mutex_unlock(&un->mutex);
-			return (0);
+			return (VOLSAFE_LABEL_ERROR);
 		}
 		DevLog(DL_ERR(3009));
 		SendCustMsg(HERE, 9335);

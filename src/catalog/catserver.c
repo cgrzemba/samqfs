@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.110 $"
+#pragma ident "$Revision: 1.111 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -641,13 +641,6 @@ LabelFailed(
 	}
 	if ((ce != cet) && (ce != NULL) && (cet != NULL)) {
 		FreeEntry(cet);
-	}
-
-	/*
-	 * Set the 'E' flag on the entry because the label failed.
-	 */
-	if (ce != NULL) {
-		ce->CeStatus |= CES_bad_media;
 	}
 
 	TraceRequest(hdr, &rsp, "LabelFailed(%s, %s)",
