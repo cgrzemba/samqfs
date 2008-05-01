@@ -34,7 +34,7 @@
 #if !defined(_AML_TAPES_H)
 #define	_AML_TAPES_H
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 #include "aml/labels.h"
 #include "sam/resource.h"
@@ -74,7 +74,7 @@
 #define	IBM_3570_SZ	(1024 * 1024 * 5)	/*   5 gb */
 #define	IBM_3580_SZ	(1024 * 1024 * 800)	/* 800 gb */
 #define	STK_D3_SZ	(1024 * 1024 * 10)	/*  10 gb */
-#define	STK_9840_SZ	(1024 * 1024 * 40)	/*  40 gb */
+#define	STK_9840_SZ	(1024 * 1024 * 75)	/*  75 gb */
 #define	STK_9940_SZ	(1024 * 1024 * 200)	/* 200 gb */
 #define	STK_TITAN_SZ	(1024 * 1024 * 500)	/* 500 gb */
 #define	SONYDTF_DFT_SZ	(1024 * 1024 * 200)	/* 200 gb */
