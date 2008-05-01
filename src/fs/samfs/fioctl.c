@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.90 $"
+#pragma ident "$Revision: 1.91 $"
 
 #include <sam/osversion.h>
 
@@ -509,6 +509,25 @@ sam_restore_a_file(
 				kmem_free(link, MAXPATHLEN+1);
 				VN_RELE(SAM_ITOV(ip));	/* Decrement v_count */
 			}
+		} else if (S_ISREG(perm_ino->di.mode) &&
+		    perm_ino->di.status.b.worm_rdonly &&
+		    (perm_ino->di.version >= SAM_INODE_VERSION) &&
+		    (perm_ino->di2.p2flags & P2FLAGS_WORM_V2)) {
+			/*
+			 * Check to see if we need to update the superblock
+			 * for worm'd regular file.
+			 */
+			struct sam_sbinfo *sblk = &pip->mp->mi.m_sbp->info.sb;
+			if ((sblk->opt_mask & SBLK_OPTV1_CONV_WORMV2) == 0) {
+				sblk->opt_mask |= SBLK_OPTV1_CONV_WORMV2;
+				if (!sam_update_all_sblks(pip->mp)) {
+					cmn_err(CE_WARN,
+					    "SAM-QFS: %s: WORM can't update"
+					    " superblock via a samfsrestore"
+					    " operation",
+					    pip->mp->mt.fi_name);
+				}
+			}
 		}
 	}
 	if (error == 0 && multi_vol) {
@@ -970,7 +989,7 @@ sam_restore_inode(
 		sblk->opt_mask |= SBLK_OPTV1_CONV_WORMV2;
 		if (!sam_update_all_sblks(ip->mp)) {
 			cmn_err(CE_WARN, "SAM-QFS: %s: WORM can't update"
-			    " superblock, may not be able to mount fs",
+			    " superblock via a samfsrestore operation",
 			    ip->mp->mt.fi_name);
 		}
 	}

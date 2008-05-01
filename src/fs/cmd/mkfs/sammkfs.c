@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 
 /* ----- Include Files ---- */
@@ -2276,7 +2276,7 @@ check_fs_devices(char *fs_name)
 {
 	int ord, num_sblks, num_sblks_worm;
 	int abort_on_error;
-	int strict_worm = 0, worm_lite = 0;
+	int strict_worm = 0, worm_lite = 0, worm_v2 = 0;
 	struct devlist *dp;
 	struct sam_sbinfo *sblkp;
 	char sb[SAM_DEV_BSIZE];
@@ -2310,13 +2310,17 @@ check_fs_devices(char *fs_name)
 			if (sblkp->opt_mask_ver == 1 &&
 			    ((sblkp->opt_mask &
 			    (SBLK_OPTV1_STRICT_WORM |
-			    SBLK_OPTV1_LITE_WORM)) != 0)) {
+			    SBLK_OPTV1_LITE_WORM |
+			    SBLK_OPTV1_CONV_WORMV2)) != 0)) {
 				if ((sblkp->opt_mask &
 				    SBLK_OPTV1_STRICT_WORM) != 0) {
 					strict_worm = 1;
 				} else if ((sblkp->opt_mask &
 				    SBLK_OPTV1_LITE_WORM) != 0) {
 					worm_lite = 1;
+				} else if ((sblkp->opt_mask &
+				    SBLK_OPTV1_CONV_WORMV2) != 0) {
+					worm_v2 = 1;
 				}
 				if (!growfs || (ord >= old_count)) {
 					num_sblks_worm++;
@@ -2334,7 +2338,7 @@ check_fs_devices(char *fs_name)
 #else
 		abort_on_error = 1;
 #endif	/* DEBUG */
-		if (strict_worm) {
+		if (strict_worm || worm_v2) {
 			error(abort_on_error, 0,
 			    catgets(catfd, SET, 13465,
 			    "Write Once Read Many partitions detected "
