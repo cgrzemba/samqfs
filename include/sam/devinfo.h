@@ -42,7 +42,7 @@
 #define	SAM_DEVINFO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 #endif
 
 #define	INQUIRY_CONF    SAM_CONFIG_PATH"/inquiry.conf"
@@ -97,6 +97,7 @@ typedef enum {
 	M_IBM3590,		/* IBM3590 Tape */
 	M_IBMATL,		/* IBM ATL interface */
 	M_STK97XX,		/* STK through SCSI */
+	M_FJNMXX,		/* Fujitsu NML270 and 250 libraries */
 	M_IBM3570,		/* IBM3570 Tape */
 	M_IBM3570C,		/* IBM3570 Media changer */
 	M_SONYDTF,		/* Sony DTF 2120 */
@@ -258,6 +259,8 @@ sam_model_t sam_model[] = {
 		"STK D3 Tape"},
 	{"stk97xx", DT_STK97XX, M_STK97XX, DTYPE_CHANGER,
 		"STK 97XX or Sun L700/L180 Library" },
+	{"fujitsu_nm", DT_FJNMXX, M_FJNMXX, DTYPE_CHANGER,
+		"Fujitsu NM2XX Libraries" },
 	{"stk9840", DT_9840, M_STK9840, DTYPE_SEQUENTIAL,
 		"STK 9840 Tape"},
 	{"stk9940", DT_9940, M_STK9940, DTYPE_SEQUENTIAL,

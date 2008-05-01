@@ -40,7 +40,7 @@
 #define	_SAM_DEVNM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 #endif
 
 
@@ -130,7 +130,7 @@ char *dev_nmfs[] = {
 
 char *dev_nmrb[] = {
 	"rb", "rc", "cy", "ds", "hp", "ml", "me", "me", "me", "ac", "ac", "ac",
-	"gr", "eb", "sk", "ad", "sl", "im", "s9", "?1", "ic", "dm", "cs",
+	"gr", "eb", "sk", "ad", "sl", "im", "s9", "nm", "ic", "dm", "cs",
 	"?2", "ac", "pd", "pe", "as", "e8", "sn", "il", "ae", "h4", "hc", "q8",
 	"al", "ov", "pg", "c4", NULL
 };
@@ -170,8 +170,8 @@ dev_nm_t dev_nm2dt[] = {
 	{"e8",  0, DT_EXBX80 },
 	{"sk",  0, DT_STKAPI },
 	{"s9",  0, DT_STK97XX },
+	{"nm",  0, DT_FJNMXX },
 	{"sn",  0, DT_STKLXX },
-	{"?1",  0, DT_UNUSED1 },
 	{"h4",	0, DT_HPSLXX },
 	{"ic",  0, DT_3570C },
 	{"im",  0, DT_IBMATL },

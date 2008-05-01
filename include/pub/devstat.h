@@ -38,7 +38,7 @@
 #define	SAM_DEVSTAT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 #endif
 
 #ifdef	linux
@@ -210,7 +210,7 @@ struct sam_ndevstat {
 #define	DT_ADIC448	(DT_TAPE_SR | 15)	/* ADIC 448 */
 #define	DT_SPECLOG	(DT_TAPE_SR | 16)	/* Spectra Logic */
 #define	DT_STK97XX	(DT_TAPE_SR | 18)	/* STK 97xx series  */
-#define	DT_UNUSED1	(DT_TAPE_SR | 19)	/* unused and available */
+#define	DT_FJNMXX	(DT_TAPE_SR | 19)	/* Fujitsu NM2XX */
 #define	DT_3570C	(DT_TAPE_SR | 20)	/* IBM 3570 Changer  */
 #define	DT_SONYDMS	(DT_TAPE_SR | 21)	/* SONY DMS Changer  */
 #define	DT_SONYCSM	(DT_TAPE_SR | 22)	/* SONY CSM-20s Tape Library */

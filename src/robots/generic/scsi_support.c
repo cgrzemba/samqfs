@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -112,6 +112,8 @@ rotate_mailbox(
 	case DT_IBM3584:
 		/* FALLTHROUGH */
 	case DT_HPSLXX:
+		/* FALLTHROUGH */
+	case DT_FJNMXX:
 		mutex_unlock(&library->un->io_mutex);
 		return (0);
 

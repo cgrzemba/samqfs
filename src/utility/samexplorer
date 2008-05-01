@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.45 $
+# $Revision: 1.46 $
 #
 
 #  INPUT OPTIONS
@@ -1030,7 +1030,7 @@ if [ -r $ETCDIR/mcf ]; then
 				verbosei /etc/prtvtoc $hope
 			fi
 			;;
-		'rb'|'ad'|'ae'|'al'|'as'|'a1'|'q8'|'ov'|'ac'|'cy'|'ds'|'eb'|'e8'|'hc'|'hp'|'ic'|'me'|'pd'|'pg'|'ml'|'dm'|'cs'|'sl'|'s9'|'sn'|'il'|'c4')
+		'rb'|'ad'|'ae'|'al'|'as'|'a1'|'q8'|'ov'|'ac'|'cy'|'ds'|'eb'|'e8'|'hc'|'hp'|'ic'|'me'|'pd'|'pg'|'ml'|'dm'|'cs'|'sl'|'s9'|'nm'|'sn'|'il'|'c4')
 			echo "$eqtype dump_cat follows" >>$REPORT 2>&1
 			echo "" >>$REPORT 2>&1
 			verbose /opt/SUNWsamfs/sbin/dump_cat $DUMPCATOPTS $catpath

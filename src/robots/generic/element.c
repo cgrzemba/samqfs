@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char *_SrcFile = __FILE__;
@@ -269,6 +269,7 @@ const uint_t req_count)
 
 
 	if (library->un->equ_type != DT_HP_C7200 &&
+	    library->un->equ_type != DT_FJNMXX &&
 	    library->un->equ_type != DT_QUANTUMC4) {
 		int 	added_more_time = FALSE;
 
