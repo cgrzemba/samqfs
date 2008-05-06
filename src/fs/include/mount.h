@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.142 $"
+#pragma ident "$Revision: 1.143 $"
 #endif
 
 #ifdef sun
@@ -267,6 +267,7 @@ typedef struct sam_mt_instance {
 	int		m_xmsg_state;	/* State at last transition message */
 	struct vfs	*m_vfsp;	/* Pointer to vfs entry	*/
 	struct vnode	*m_vn_root;	/* Vnode of root */
+	int		m_maxphys;	/* Maximum I/O request size */
 #endif /* sun */
 #ifdef linux
 	struct super_block *m_vfsp;	/* Pointer to Linux super_block */
@@ -278,6 +279,7 @@ typedef struct sam_mt_instance {
 	kmutex_t	m_sblk_mutex;	/* Superblock mutex for this mount */
 	offset_t	m_prev_space;	/* Last ttl free blocks in family set */
 	offset_t	m_prev_mm_space; /* Last total free blocks for mm */
+	offset_t	m_inoblk_blocks; /* Num free blocks in .block file */
 	int32_t		m_prev_state;	/* Last fsck state (bit 0) */
 	int		m_fs_syncing;	/* Set if file system is syncing */
 	uint_t		m_sblk_size;	/* Size of incore superblock */
@@ -292,7 +294,6 @@ typedef struct sam_mt_instance {
 	int		m_blk_ord;		/* Ord for .blocks file */
 	int		m_no_blocks;	/* Number of times no free blocks */
 	int		m_no_inodes;	/* Number of times no free inodes */
-	offset_t	m_inoblk_blocks; /* Num free blocks in .block file */
 	int		m_wait_write;	/* Cnt of threads waiting on ENOSPC */
 	int		m_wait_frozen;	/* Count of threads frozen */
 	ushort_t	m_rmseqno;	/* Removable media sequence number */

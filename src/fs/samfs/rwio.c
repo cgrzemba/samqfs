@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.166 $"
+#pragma ident "$Revision: 1.167 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1423,8 +1423,8 @@ sam_dk_issue_direct_io(
 			    btop((uintptr_t)iov->iov_base -
 			    ((uintptr_t)iovp->base & PAGEMASK));
 		}
-		if (!(iop->imap.flags & M_OBJECT)) {
-			minphys(bp);
+		if (bp->b_bcount > ip->mp->mi.m_maxphys) {
+			bp->b_bcount = ip->mp->mi.m_maxphys;
 		}
 
 		/*

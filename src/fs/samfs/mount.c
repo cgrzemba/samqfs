@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.209 $"
+#pragma ident "$Revision: 1.210 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1157,6 +1157,7 @@ sam_set_mount(sam_mount_t *mp)
 			}
 		}
 	}
+
 	if (mp->mt.fi_minallocsz < 0) {
 		mp->mt.fi_minallocsz = SAM_DEFAULT_MINALLOCSZ * LG_BLK(mp, DD);
 	}
@@ -1167,7 +1168,13 @@ sam_set_mount(sam_mount_t *mp)
 		mp->mt.fi_maxallocsz = mp->mt.fi_minallocsz;
 	}
 	mp->mt.fi_ext_bsize = 1 << sblk->info.sb.ext_bshift;
+
 #ifdef sun
+	/*
+	 * Default maximum I/O request size to MAX(1MB, maxphys).
+	 */
+	mp->mi.m_maxphys = MAX(SAM_ONE_MEGABYTE, maxphys);
+
 	if (SAM_IS_SHARED_FS(mp) &&
 	    (mp->mt.fi_stage_n_window < mp->mt.fi_minallocsz)) {
 		mp->mt.fi_stage_n_window = mp->mt.fi_minallocsz;
