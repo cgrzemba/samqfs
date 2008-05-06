@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.281 $"
+#pragma ident "$Revision: 1.282 $"
 
 #include "sam/osversion.h"
 
@@ -902,11 +902,17 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 					l2p->irec.sr_attr.actions |=
 					    SR_FORCE_SIZE;
 				}
-				ip->size_owner = client_ord;
-				if (lp->data.filemode & FAPPEND) {
-					/* Append at EOF */
+				/*
+				 * If the requester is already the size owner
+				 * he knows what the correct size is so assume
+				 * he has sent the correct offset for FAPPEND.
+				 * Otherwise set the offset to the current size.
+				 */
+				if ((lp->data.filemode & FAPPEND) &&
+				    (ip->size_owner != client_ord)) {
 					lp->data.offset = ip->di.rm.size;
 				}
+				ip->size_owner = client_ord;
 
 				/*
 				 * Don't do the allocate append if it's a

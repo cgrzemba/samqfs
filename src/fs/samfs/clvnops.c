@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.184 $"
+#pragma ident "$Revision: 1.185 $"
 
 #include "sam/osversion.h"
 
@@ -915,7 +915,11 @@ sam_client_write_vn(
 
 		data.lflag = 0;
 		data.sparse = SPARSE_none;
-		data.offset = uiop->uio_loffset;
+		if (ioflag & FAPPEND) {
+			data.offset = ip->di.rm.size;
+		} else {
+			data.offset = uiop->uio_loffset;
+		}
 		data.resid = uiop->uio_resid;
 		data.alloc_unit = ip->cl_alloc_unit;
 		data.filemode = ioflag;
