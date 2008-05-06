@@ -78,7 +78,7 @@
  *          venus        venus-1.foo.com
  *          pluto        pluto-1.foo.com
  */
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 
 
 /* ANSI C headers. */
@@ -364,7 +364,7 @@ SamStoreHosts(struct sam_host_table *ht, int size, char ***tabd, int gen)
 	ht->count	= (uint16_t)c;
 	ht->server	= (uint16_t)s;
 	ht->pendsrv = ht->server;
-	ht->prevsrv = (uint16_t)-1;
+	ht->prevsrv = 0;
 	ht->length = 0;
 
 	b = &ht->ent[0];
@@ -702,11 +702,11 @@ SamHostsCvt(struct sam_host_table *ht, char **errstr, int *err)
 		SETERR("Bad length field in host table");
 		return (NULL);
 	}
-	if (ht->server != (uint16_t)-1 && ht->server >= ht->count) {
+	if (ht->server != HOSTS_NOSRV && ht->server >= ht->count) {
 		SETERR("Bad server count");
 		return (NULL);
 	}
-	if (ht->pendsrv != (uint16_t)-1 && ht->pendsrv >= ht->count) {
+	if (ht->pendsrv != HOSTS_NOSRV && ht->pendsrv >= ht->count) {
 		SETERR("Bad pending server count");
 		return (NULL);
 	}
@@ -760,7 +760,7 @@ SamHostsCvt(struct sam_host_table *ht, char **errstr, int *err)
 			return (NULL);
 		}
 	}
-	if (ht->server != (uint16_t)-1) {
+	if (ht->server != HOSTS_NOSRV) {
 		if ((tab[ht->server][HOSTS_SERVER] = strdup("server")) ==
 		    NULL) {
 			SETERR("Can't allocate memory");

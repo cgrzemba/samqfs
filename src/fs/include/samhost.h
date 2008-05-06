@@ -35,7 +35,7 @@
 #define	SAM_HOST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 #endif
 
 #include "sam/types.h"
@@ -98,6 +98,13 @@ typedef struct sam_host_table_blk {
 #define	HOSTS_STPRI	3	/* for future use (stager priority?) */
 #define	HOSTS_SERVER	4	/* optional "server" declaration */
 #define	HOSTS_FIELDMAX	5	/* field count */
+
+/*
+ * Special values in server, pendsrv, prevsrv fields
+ */
+#define	HOSTS_NOSRV	((uint16_t)65535)	/* -1 */
+	/* Involuntary failover for prevsrv field */
+	/* No server specified for server or pendsrv fields */
 
 /*
  * External Functions.

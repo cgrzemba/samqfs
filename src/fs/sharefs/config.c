@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -602,7 +602,7 @@ ValidateFs(
 	    fs, (config.mnt.params.fi_status & FS_MOUNTED) ? "" : "n't");
 
 	while ((cfp->flags & (R_ERRBITS | R_BUSYBITS | R_SBLK_NOFS)) ||
-	    cfp->ht->info.ht.server == (uint16_t)-1) {
+	    cfp->ht->info.ht.server == HOSTS_NOSRV) {
 		if (!waitstate) {
 			if (cfp->flags & R_ERRBITS) {
 				Trace(TR_MISC, "FS %s: Error in filesystem; "
@@ -610,7 +610,7 @@ ValidateFs(
 			} else if (cfp->flags & R_BUSYBITS) {
 				Trace(TR_MISC, "FS %s: Filesystem busy; "
 				    "waiting", fs);
-			} else if (cfp->ht->info.ht.server == (uint16_t)-1) {
+			} else if (cfp->ht->info.ht.server == HOSTS_NOSRV) {
 				Trace(TR_MISC, "FS %s: Server = NONE; "
 				    "waiting", fs);
 			} else {
@@ -670,12 +670,8 @@ ValidateFs(
 			 * initialized to the current metadata server to avoid
 			 * triggering an immediate failover.
 			 *
-			 * Version 4 host table has a prevsrv field which is
-			 * initialized to -1.  This field is used with the
-			 * cluster agent to recover from a situation where
-			 * the cluster starts a failover and discovers the
-			 * filesystem's server is no-server.  It then uses
-			 * prevsrv to make sure fencing completes.
+			 * Version 4 host table has a cookie field that
+			 * is initialized.
 			 */
 			switch (cfp->ht->info.ht.version) {
 				case SAM_HOSTS_VERSION2:	/* V2 -> V3 */
@@ -693,10 +689,6 @@ ValidateFs(
 					    cfp->ht->info.ht.server;
 					cfp->ht->info.ht.version =
 					    SAM_HOSTS_VERSION4;
-					/* FALLTHRU */
-				case SAM_HOSTS_VERSION4:	/* V4 -> V5 */
-					Trace(TR_MISC, "FS %s: Updating V4 "
-					    "hosts file to V5", fs);
 					cfp->ht->info.ht.cookie =
 					    SAM_HOSTS_COOKIE;
 					break;
@@ -718,7 +710,7 @@ ValidateFs(
 			 * Pending voluntary failover.
 			 */
 
-			if (cfp->ht->info.ht.pendsrv != (uint16_t)-1 &&
+			if (cfp->ht->info.ht.pendsrv != HOSTS_NOSRV &&
 			    !SamGetSharedHostName(&cfp->ht->info.ht,
 			    cfp->ht->info.ht.pendsrv,
 			    newserver)) {
@@ -777,7 +769,7 @@ ValidateFs(
 			 * (putHosts() doesn't need this information, but
 			 * putLabel() does.)
 			 */
-			if (nfp->ht->info.ht.server == (uint16_t)-1) {
+			if (nfp->ht->info.ht.server == HOSTS_NOSRV) {
 				strcpy(nfp->serverName, "-NONE-");
 				strcpy(nfp->serverAddr, "-NOADDR-");
 			} else if (GetSharedHostInfo(&nfp->ht->info.ht,
@@ -793,14 +785,14 @@ ValidateFs(
 			return (FALSE);
 		}
 
-		if (cfp->ht->info.ht.prevsrv == (uint16_t)-1) {
+		if (cfp->ht->info.ht.prevsrv == HOSTS_NOSRV) {
 			upath_t newserver;
 			struct cfdata *nfp;
 
 			/*
 			 * Pending involuntary failover
 			 */
-			if (cfp->ht->info.ht.server != (uint16_t)-1 &&
+			if (cfp->ht->info.ht.server != HOSTS_NOSRV &&
 			    !SamGetSharedHostName(&cfp->ht->info.ht,
 			    cfp->ht->info.ht.server, newserver)) {
 				errno = 0;
@@ -956,7 +948,7 @@ DoUpdate(char *fs)
 		 * block to match the new server.  (putHosts() doesn't need
 		 * this information, but putLabel() does.)
 		 */
-		if (nfp->ht->info.ht.server == (uint16_t)-1) {
+		if (nfp->ht->info.ht.server == HOSTS_NOSRV) {
 			strcpy(nfp->serverName, "-NONE-");
 			strcpy(nfp->serverAddr, "-NOADDR-");
 		} else if (GetSharedHostInfo(&nfp->ht->info.ht,

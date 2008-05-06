@@ -39,7 +39,7 @@
 #define	_SAM_PARAM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 #endif
 
 #define	L_FSET 252			/* Maximum family set size */
@@ -54,7 +54,8 @@
 #define	SAM_DEFAULT_META_DAU (16)	/* Default DAU for SAMFS */
 
 #define	SAM_MAX_SMALL_SHARED_HOSTS	(512)	/* small hosts table limit */
-#define	SAM_MAX_SHARED_HOSTS (65535)	/* max hosts for shared FS */
+#define	SAM_MAX_SHARED_HOSTS (65280)	/* max hosts for shared FS */
+					/* Reserve 255 for special use */
 
 /*
  * 30 days is default retention period for WORM.

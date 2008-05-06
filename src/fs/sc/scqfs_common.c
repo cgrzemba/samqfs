@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -739,7 +739,7 @@ get_serverinfo(char *fs,
 
 	if (prevsrv != NULL) {
 		*prevsrv = NULL;
-		if (htb->info.ht.prevsrv != (uint16_t)-1) {
+		if (htb->info.ht.prevsrv != HOSTS_NOSRV) {
 			rc = SamGetSharedHostName(&htb->info.ht,
 			    htb->info.ht.prevsrv, host);
 			if (!rc) {
@@ -755,7 +755,7 @@ get_serverinfo(char *fs,
 
 	if (server != NULL) {
 		*server = NULL;
-		if (htb->info.ht.server != (uint16_t)-1) {
+		if (htb->info.ht.server != HOSTS_NOSRV) {
 			rc = SamGetSharedHostName(&htb->info.ht,
 			    htb->info.ht.server, host);
 			if (!rc) {
@@ -770,7 +770,7 @@ get_serverinfo(char *fs,
 
 	if (pendsrv != NULL) {
 		*pendsrv = NULL;
-		if (htb->info.ht.pendsrv != (uint16_t)-1) {
+		if (htb->info.ht.pendsrv != HOSTS_NOSRV) {
 			rc = SamGetSharedHostName(&htb->info.ht,
 			    htb->info.ht.pendsrv, host);
 			if (!rc) {
@@ -1718,7 +1718,7 @@ get_qfsstate(char *fsname)
 		rc = ST_PENDING;
 	} else if (fsi.fi_status & FS_MDS_CHANGING) {
 		rc = ST_PENDING;
-	} else if (htb->info.ht.server == (uint16_t)-1) {
+	} else if (htb->info.ht.server == HOSTS_NOSRV) {
 		rc = ST_NOSRVR;
 	} else if (!(fsi.fi_status & FS_MOUNTED) ||
 	    (fsi.fi_status & (FS_MOUNTING | FS_UMOUNT_IN_PROGRESS))) {
@@ -2206,9 +2206,9 @@ set_server(char *qfsdev, char *master, int mode)
 		 * Save current server and populate table
 		 * with new server index
 		 */
-		if (htb->info.ht.server != (uint16_t)-1) {
+		if (htb->info.ht.server != HOSTS_NOSRV) {
 			/* mark involuntary */
-			htb->info.ht.prevsrv = (uint16_t)-1;
+			htb->info.ht.prevsrv = HOSTS_NOSRV;
 		}
 		htb->info.ht.pendsrv = (uint16_t)server_index;
 		htb->info.ht.server = (uint16_t)server_index;
@@ -2235,7 +2235,7 @@ set_server(char *qfsdev, char *master, int mode)
 
 		/* Save current server and populate pending server */
 		htb->info.ht.prevsrv = htb->info.ht.server;
-		if (htb->info.ht.prevsrv == (uint16_t)-1) {
+		if (htb->info.ht.prevsrv == HOSTS_NOSRV) {
 			htb->info.ht.prevsrv = 0;
 		}
 		htb->info.ht.pendsrv = (uint16_t)server_index;

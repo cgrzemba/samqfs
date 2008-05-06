@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -704,7 +704,7 @@ GetServerInfo(char *fs)
 		if ((cfp->flags & R_SBLK_BITS) != R_SBLK) {
 			return (CFG_ERROR);
 		}
-		if (ht->server == (uint16_t)-1) {
+		if (ht->server == HOSTS_NOSRV) {
 			errno = 0;
 			SysError(HERE, "FS %s: hosts table declares no "
 			    "server", fs);

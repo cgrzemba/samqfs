@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -303,7 +303,7 @@ cmpHT(char *fs, struct cfdata *ocp, struct cfdata *ncp)
 	    bcmp(ht1->ent, ht2->ent, len)) {
 		change |= CH_HT_HOSTS;
 	}
-	if (ht1->prevsrv == (uint16_t)-1 || ht2->prevsrv == (uint16_t)-1) {
+	if (ht1->prevsrv == HOSTS_NOSRV || ht2->prevsrv == HOSTS_NOSRV) {
 		change |= CH_HT_HOSTS | CH_HT_INVOL;
 	}
 	/*

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 
@@ -437,7 +437,7 @@ main(int ac, char *av[])
 					} else {
 						/* Involuntary failover */
 						HostTab->info.ht.prevsrv =
-						    (uint16_t)-1;
+						    HOSTS_NOSRV;
 						HostTab->info.ht.server = i;
 						HostTab->info.ht.pendsrv = i;
 					}
@@ -445,7 +445,7 @@ main(int ac, char *av[])
 					if (HostTab->info.ht.pendsrv !=
 					    HostTab->info.ht.server ||
 					    HostTab->info.ht.pendsrv ==
-					    (uint16_t)-1) {
+					    HOSTS_NOSRV) {
 						free(HostTab);
 						error(1, 0, catgets(catfd,
 						    SET, 13708,
@@ -649,14 +649,14 @@ PrintHosts(char *fs, struct sam_host_table *host)
 	}
 	printf("# Version: %d    Generation: %d    Count: %d\n",
 	    host->version, host->gen, host->count);
-	if (host->server == (uint16_t)-1) {
+	if (host->server == HOSTS_NOSRV) {
 		printf("# Server = (NONE), length = %d\n", host->length);
 	} else {
 		printf("# Server = host %d/%s, length = %d\n",
 		    host->server, server, host->length);
 	}
 	if (host->pendsrv != host->server) {	/* pending server change? */
-		if (host->pendsrv == (uint16_t)-1) {
+		if (host->pendsrv == HOSTS_NOSRV) {
 			printf("# Pending Server = (NONE)\n");
 		} else {
 			if (!SamGetSharedHostName(host, host->pendsrv,
