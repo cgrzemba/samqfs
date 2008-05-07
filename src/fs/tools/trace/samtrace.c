@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -3687,8 +3687,8 @@ skipclient:
 
 		printf("\n\tEQ%d %s\n", mount->mi.m_fs[ord].part.pt_eq,
 		    (mount->mi.m_fs[ord].part.pt_type == DT_META ? "MM" :
-		    (mount->mi.m_fs[ord].part.pt_type == DT_OBJECT ?
-		    "OB" : "DD")));
+		    (is_target_group(mount->mi.m_fs[ord].part.pt_type) ?
+		    "ox" : "DD")));
 		for (i = 0; i < SAM_MAX_DAU; i++) {
 			int out = 0;
 			if (mount->mi.m_fs[ord].block[i] == NULL) {

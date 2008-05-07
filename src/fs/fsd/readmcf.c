@@ -57,7 +57,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -387,7 +387,8 @@ McfLine(void)
 			strcpy(dev.dt.tp.samst_name, token);
 			break;
 
-		case DT_DISK: {
+		case DT_DISK:
+		case DT_TARGET: {
 #ifdef sun
 			char *rdsk;
 
@@ -500,11 +501,21 @@ nm_to_dtclass(char *nm)
 		dt = DT_THIRD_PARTY | (*(++nm) & 0xff);
 		return (dt);
 	}
+
 	/* Striped groups - g0 - g127 */
 	if (*nm == 'g' && *nmp >= '0' && *nmp <= '9') {
 		dt = strtol(nmp, NULL, 10);
 		if (dt < dev_nmsg_size) {
 			dt = DT_STRIPE_GROUP | dt;
+			return (dt);
+		}
+	}
+
+	/* Target groups - o0 - o127 */
+	if (*nm == 'o' && *nmp >= '0' && *nmp <= '9') {
+		dt = strtol(nmp, NULL, 10);
+		if (dt < dev_nmtg_size) {
+			dt = DT_TARGET_GROUP | dt;
 			return (dt);
 		}
 	}

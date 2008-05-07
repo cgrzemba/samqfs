@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 
 /* ----- Includes */
@@ -1155,7 +1155,7 @@ check_fs(void)
 			devlp->mm = NULL;
 			continue;
 		}
-		if (devlp->type == DT_OBJECT) {
+		if (is_target_group(devlp->type)) {
 			devlp->mm = NULL;
 			continue;
 		}
@@ -1202,7 +1202,7 @@ check_fs(void)
 		if (devlp->state == DEV_OFF || devlp->state == DEV_DOWN) {
 			continue;
 		}
-		if (devlp->type == DT_OBJECT) {
+		if (is_target_group(devlp->type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1239,7 +1239,7 @@ check_fs(void)
 		if (devlp->state == DEV_OFF || devlp->state == DEV_DOWN) {
 			continue;
 		}
-		if (devlp->type == DT_OBJECT) {
+		if (is_target_group(devlp->type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1698,7 +1698,7 @@ build_devices(void)
 	}
 	for (ord = 0, devlp = (struct devlist *)ndevp; ord < fs_count;
 	    ord++, devlp++) {
-		if (devlp->type == DT_OBJECT) {
+		if (is_target_group(devlp->type)) {
 			continue;
 		}
 		if (d_read(devlp, (char *)sblk,
@@ -1747,7 +1747,7 @@ build_devices(void)
 			devlp->state = sblk->eq[ord].fs.state;
 			continue;
 		}
-		if (devlp->type == DT_OBJECT) {
+		if (is_target_group(devlp->type)) {
 			if ((read_object(fsname, devlp->oh, ord,
 			    SAM_OBJ_SBLK_INO, (char *)&sblock, 0,
 			    SAM_DEV_BSIZE))) {

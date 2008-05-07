@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.154 $"
+#pragma ident "$Revision: 1.155 $"
 #endif
 
 #include "sam/osversion.h"
@@ -768,6 +768,10 @@ sam_proc_stat(
 				if (is_stk5800(media)) {
 					p = "cb";
 				}
+			} else if (is_target_group(media)) {
+				if (n < dev_nmtg_size) {
+					p = dev_nmtg[n];
+				} else p = "??";
 			} else if (is_stripe_group(media)) {
 				if (n < dev_nmsg_size) {
 					p = dev_nmsg[n];

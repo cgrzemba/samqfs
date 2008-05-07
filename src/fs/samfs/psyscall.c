@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.175 $"
+#pragma ident "$Revision: 1.176 $"
 #endif
 
 #include "sam/osversion.h"
@@ -434,7 +434,7 @@ sam_osd_command(
 		goto out;
 	}
 	dp = &mp->mi.m_fs[args.ord];
-	if (dp->part.pt_type != DT_OBJECT) {
+	if (!is_target_group(dp->part.pt_type)) {
 		error = EINVAL;
 		goto out;
 	}

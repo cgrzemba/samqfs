@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -223,7 +223,7 @@ tryDevs(char *fs)
 		d = 0;
 	}
 	strcpy(labelName, mnt.part[d].pt_name);
-	if (mnt.part[d].pt_type == DT_OBJECT) {
+	if (is_target_group(mnt.part[d].pt_type)) {
 		if ((open_obj_device(mnt.part[d].pt_name, OPEN_READ_RAWFLAGS,
 		    &labelOh)) < 0) {
 			SysError(HERE,
@@ -381,7 +381,7 @@ GetConfig(char *fs, struct sam_sblk *sb)
 	}
 	oh = 0;
 	rfd = -1;
-	if (config.mnt.part[d].pt_type == DT_OBJECT) {
+	if (is_target_group(config.mnt.part[d].pt_type)) {
 		if ((open_obj_device(config.mnt.part[d].pt_name,
 		    OPEN_READ_RAWFLAGS, &oh)) < 0) {
 			if (errno == EBUSY) {

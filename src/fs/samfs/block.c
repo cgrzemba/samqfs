@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.103 $"
+#pragma ident "$Revision: 1.104 $"
 
 #include "sam/osversion.h"
 
@@ -188,7 +188,7 @@ sam_block_thread(sam_mount_t *mp)
 			struct samdent *dp;
 
 			dp = &mp->mi.m_fs[ord];
-			if (dp->skip_ord || (dp->part.pt_type == DT_OBJECT)) {
+			if (dp->skip_ord || is_target_group(dp->part.pt_type)) {
 				continue;
 			}
 			if (dp->busy) {		/* I/O in progress */
@@ -270,7 +270,7 @@ sam_block_thread(sam_mount_t *mp)
 				}
 
 				if (dp->map_empty ||
-				    (dp->part.pt_type == DT_OBJECT)) {
+				    is_target_group(dp->part.pt_type)) {
 					continue;
 				}
 				if (sam_get_blklist(mp, ord)) {
@@ -319,7 +319,7 @@ sam_block_thread(sam_mount_t *mp)
 
 			dp = &mp->mi.m_fs[ord];
 			if (dp->skip_ord || dp->map_empty ||
-			    (dp->part.pt_type == DT_OBJECT)) {
+			    is_target_group(dp->part.pt_type)) {
 				continue;
 			}
 			for (bt = 0; bt < SAM_MAX_DAU; bt++) {
@@ -396,7 +396,7 @@ sam_block_thread(sam_mount_t *mp)
 
 					dp = &mp->mi.m_fs[ord];
 					if (dp->skip_ord || dp->busy ||
-					    (dp->part.pt_type == DT_OBJECT)) {
+					    is_target_group(dp->part.pt_type)) {
 						continue;
 					}
 					if (dp->modified) { /* I/O completed */
@@ -1806,7 +1806,7 @@ sam_init_block(sam_mount_t *mp)
 	sblk = mp->mi.m_sbp;
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
 		dp = &mp->mi.m_fs[ord];
-		if (dp->skip_ord || dp->part.pt_type == DT_OBJECT) {
+		if (dp->skip_ord || is_target_group(dp->part.pt_type)) {
 			continue;
 		}
 		sam_reset_eq_space(mp, ord);
@@ -1816,7 +1816,7 @@ sam_init_block(sam_mount_t *mp)
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
 		dp = &mp->mi.m_fs[ord];
 		if (dp->skip_ord || dp->part.pt_state == DEV_NOALLOC ||
-		    dp->part.pt_type == DT_OBJECT) {
+		    is_target_group(dp->part.pt_type)) {
 			continue;
 		}
 		if (sam_init_blocklist(mp, ord) != 0) {
@@ -2273,7 +2273,7 @@ sam_grow_fs(
 	 * Currently cannot add object device ("ob").
 	 */
 	type = dp->part.pt_type;
-	if (type == DT_OBJECT) {
+	if (is_target_group(type)) {
 		cmn_err(CE_WARN, "SAM-QFS: %s: Cannot add object eq %d "
 		    "lun %s",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);

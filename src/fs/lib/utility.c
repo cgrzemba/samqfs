@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 
 #include "sam/osversion.h"
 
@@ -169,7 +169,7 @@ chk_devices(
 		dp->state = fsp->pt_state;
 		dp->filemode = oflags;
 
-		if (dp->type == DT_OBJECT) {
+		if (is_target_group(dp->type)) {
 			if ((open_obj_device(fsp->pt_name, oflags,
 			    &dp->oh)) < 0) {
 				error(0, 0, catgets(catfd, SET, 17263,
@@ -209,7 +209,9 @@ chk_devices(
 #endif
 	}
 
-	/* Verify sizes for striped groups are the same */
+	/*
+	 * Verify sizes for striped groups are the same.
+	 */
 	dp = (struct devlist *)devp;
 	for (i = 0; i < fs_count; i++) {
 		if (is_stripe_group(dp->type)) {
@@ -534,7 +536,7 @@ write_sblk(
 		if (dp->state == DEV_OFF || dp->state == DEV_DOWN) {
 			continue;
 		}
-		if (dp->type == DT_OBJECT) {
+		if (is_target_group(dp->type)) {
 			err = write_obj_sblk(sbp, dp, ord);
 		} else {
 			err = write_blk_sblk(sbp, dp, ord);

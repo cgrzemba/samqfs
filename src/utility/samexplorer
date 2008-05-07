@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.46 $
+# $Revision: 1.47 $
 #
 
 #  INPUT OPTIONS
@@ -1015,7 +1015,7 @@ if [ -r $ETCDIR/mcf ]; then
 		case $eqtype in
 		'ms'|'ma'|'mb'|'mat')
 			;;
-		'ob')
+		'o[0-9]*')
 			;;
 		'mm'|'md'|'mr'|g[0-9]*)
 			hope=`echo $eqid | sed -e "s/dsk/rdsk/"`

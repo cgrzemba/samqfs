@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.88 $
+.\" $Revision: 1.89 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -29,7 +29,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH mcf 4 "08 Feb 2008"
+.TH mcf 4 "07 May 2008"
 .SH NAME
 mcf \- Master configuration file for Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS software
 .SH SYNOPSIS
@@ -113,8 +113,8 @@ qfs3                             30 ma qfs3 - shared
 #
 qfs4                                              40 mb qfs4 - shared
 /dev/dsk/c2t50020F2300000C98d0s4                  41 mm qfs4 -
-/dev/osd/osd0100080020E1381F00002A00479F7D98,root 42 ob qfs4 -
-/dev/osd/osd010000144F94A14C00002A00479F4EB4,root 43 ob qfs4 -
+/dev/osd/osd0100080020E1381F00002A00479F7D98,root 42 o1 qfs4 -
+/dev/osd/osd010000144F94A14C00002A00479F4EB4,root 43 o1 qfs4 -
 #
 .ft
 .fi
@@ -286,14 +286,14 @@ File data resides on the data device(s).
 A Sun StorEdge QFS or Sun \%SAM-QFS disk cache family set with one or more
 meta devices.
 Metadata resides on these meta devices.
-File data resides on the object storage device(s).
+File data resides on the object storage device(s) (OSDs).
 .TP
 \fBmat\fR
 A Sun StorEdge QFS disk cache family set with one or more
 meta devices.  Metadata resides on these meta devices.
 File data resides on the data device(s). This standalone file system
 has no namespace and is only used as the OSD target backing store of an
-\fBob\fP object device in an \fBmb\fP file system.
+object storage device (OSD) in an \fBmb\fP file system.
 .PP
 A maximum of 252 separate magnetic disk devices can be defined for each
 \fBms\fP, \fBma\fP, \fBmb\fP, or \fBmat\fP disk cache family set.
@@ -363,11 +363,19 @@ It is not possible to use the \fBsamgrowfs\fR(1M) command
 to increase the size of a striped group.
 However, it is possible to add additional striped groups.
 .TP
-\fBob\fR
+\fBo\fIXXX\fR
 An object-based storage device that is part of an
 \fBmb\fR disk cache family set.
-This device stores file data.
-At least one \fBob\fR device is required in an
+These devices store file data.
+The \fIXXX\fR identifies a group of "like" devices that are
+used for a stripe. Note, a file will be optionally striped
+across members in the \fBo\fIXXX\fR OSD group. There is no striping
+across different groups of OSD devices.
+The \fIXXX\fR must be a decimal number in the
+range \fB0\fR \(<= \fIXXX\fR \(<= \fB127\fR.
+These devices are recommended to be the same type of block devices.
+For example, one group could be FC and another group could be SATA.
+At least one \fBo\fIXXX\fR device is required in an
 \fBmb\fR file system.
 .PP
 The \fBEquipment Identifier\fR is used during the \fBmount\fR(1M)

@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.210 $"
+#pragma ident "$Revision: 1.211 $"
 #endif
 
 #include "sam/osversion.h"
@@ -321,7 +321,7 @@ sam_getdev(
 			continue;
 		}
 		TRACES(T_SAM_OPEN_DEV, mp, dp->part.pt_name);
-		if (dp->part.pt_type == DT_OBJECT) {
+		if (is_target_group(dp->part.pt_type)) {
 			if ((dp->error = sam_open_osd_device(dp, filemode,
 			    credp))) {
 				continue;
@@ -501,9 +501,11 @@ sam_getdev(
 							dp->dmr_cap = 1;
 						}
 					}
+					if (is_target_group(dp->part.pt_type)) {
+						break;
+					}
 					switch (dp->part.pt_type) {
 					case DT_META:
-					case DT_OBJECT:
 						break;
 
 					case DT_DATA:
@@ -1540,7 +1542,7 @@ sam_validate_sblk(
 			goto setpart2;
 		}
 #ifdef sun
-		if (dp->part.pt_type == DT_OBJECT) {
+		if (is_target_group(dp->part.pt_type)) {
 			buf = kmem_alloc(sizeof (struct sam_sblk), KM_SLEEP);
 			if ((error = sam_issue_object_io(dp->oh, FREAD,
 			    SAM_OBJ_SBLK_ID, UIO_SYSSPACE, buf,
@@ -1713,7 +1715,7 @@ sam_validate_sblk(
 setpart1:
 
 #ifdef sun
-		if (dp->part.pt_type == DT_OBJECT) {
+		if (is_target_group(dp->part.pt_type)) {
 			kmem_free(buf, sizeof (struct sam_sblk));
 		} else {
 			bp->b_flags |= B_STALE | B_AGE;
@@ -2172,7 +2174,7 @@ sam_close_devices(
 		TRACE(T_SAM_DEV_CLOSE, mp, dp->part.pt_eq, dp->part.pt_state,
 		    dp->error);
 		if (dp->opened) {
-			if (dp->part.pt_type == DT_OBJECT) {
+			if (is_target_group(dp->part.pt_type)) {
 				sam_close_osd_device(dp->oh, filemode, credp);
 				continue;
 			} else {

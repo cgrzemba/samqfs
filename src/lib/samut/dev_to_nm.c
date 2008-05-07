@@ -41,7 +41,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 
 #include <sys/types.h>
@@ -101,6 +101,15 @@ device_to_nm(
 			return ("??");
 		} else {
 			return (getMn((dt & DT_MEDIA_MASK), dev_nmmd));
+		}
+	case DT_TARGET:
+		if (is_target_group(dt)) {
+			if ((dt & DT_MEDIA_MASK) < dev_nmtg_size) {
+				return (dev_nmtg[dt & DT_MEDIA_MASK]);
+			}
+			return ("??");
+		} else {
+			return ("??");
 		}
 	case DT_OPTICAL:
 		return (getMn((dt & DT_MEDIA_MASK), dev_nmod));

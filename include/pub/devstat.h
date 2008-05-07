@@ -38,7 +38,7 @@
 #define	SAM_DEVSTAT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 #endif
 
 #ifdef	linux
@@ -131,6 +131,7 @@ struct sam_ndevstat {
 /* Device types */
 #define	DT_CLASS_MASK		0xff00	/* Device class type mask */
 #define	DT_STRIPE_GROUP_MASK	0xff80	/* Device class mask for striped grp */
+#define	DT_TARGET_GROUP_MASK	0xff80	/* Device class mask for target group */
 #define	DT_MEDIA_MASK		0x007f	/* Device media type mask */
 #define	DT_SCSI_ROBOT_MASK	0x1880	/* Device is a scsi robot */
 #define	DT_CLASS_SHIFT		8	/* Device class type shift */
@@ -141,7 +142,6 @@ struct sam_ndevstat {
 #define	DT_META			0x102	/* Disk storage for meta data */
 #define	DT_RAID			0x103	/* Disk storage for raid data */
 #define	DT_STK5800		0x104	/* STK 5800 archive storage */
-#define	DT_OBJECT		0x105	/* Disk storage for object-based data */
 
 #define	DT_TAPE			0x200	/* Tape */
 #define	DT_VIDEO_TAPE		0x201	/* VHS Video tape */
@@ -164,6 +164,9 @@ struct sam_ndevstat {
 #define	DT_SONYSAIT		0x212   /* SONY Super AIT */
 #define	DT_3592			0x213   /* IBM 3592 and TS1120 drives */
 #define	DT_TITAN		0x214	/* STK Titanium drive */
+
+#define	DT_TARGET		0x300	/* Target OSD storage */
+#define	DT_TARGET_GROUP		0x380	/* Object storage for striped target */
 
 #define	DT_OPTICAL		0x500	/* Optical disk storage */
 #define	DT_WORM_OPTICAL_12	0x501	/* WORM optical disk (12) */
@@ -265,6 +268,8 @@ struct sam_ndevstat {
 #define	is_third_party(a)	(((a) & DT_CLASS_MASK) == DT_THIRD_PARTY)
 #define	is_stripe_group(a)	(((a) & DT_STRIPE_GROUP_MASK) == \
 								DT_STRIPE_GROUP)
+#define	is_target_group(a)	(((a) & DT_TARGET_GROUP_MASK) == \
+								DT_TARGET_GROUP)
 #define	is_rsd(a)		((a) == DT_PSEUDO_RD)
 #define	is_stk5800(a)		((a) == DT_STK5800)
 

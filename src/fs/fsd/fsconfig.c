@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -879,7 +879,7 @@ gatherFsDevices(struct sam_mount_info *mi)
 		}
 		if ((mp->fi_type == DT_META_OBJECT_SET) &&
 		    (dev->type != DT_META) &&
-		    (dev->type != DT_OBJECT)) {
+		    !is_target_group(dev->type)) {
 			/* File system %s has invalid devices. */
 			LibError(NULL, 0, 17215, mp->fi_name);
 			err++;
@@ -932,7 +932,7 @@ gatherFsDevices(struct sam_mount_info *mi)
 			err++;
 			continue;
 		} else if (dev->state == DEV_ON || dev->state == DEV_NOALLOC) {
-			if (dev->type == DT_OBJECT) {
+			if (is_target_group(dev->type)) {
 				if (!S_ISCHR(sb.st_mode)) {
 					/* %s must be character special file. */
 					LibError(NULL, 0, 17259, dev->name);
@@ -953,7 +953,7 @@ gatherFsDevices(struct sam_mount_info *mi)
 		 * Open device to get size
 		 */
 		if (dev->state == DEV_ON || dev->state == DEV_NOALLOC) {
-			if (dev->type == DT_OBJECT) {
+			if (is_target_group(dev->type)) {
 				uint64_t	oh;	/* osd_handle_t */
 
 				if ((open_obj_device(dev->name, O_RDONLY, &oh))

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.38 $"
+#pragma ident   "$Revision: 1.39 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1189,7 +1189,7 @@ sqm_lst_t *ret_lst)	/* optional return of malloced valid device types */
 					goto err;
 				}
 				if (lst_append(ret_lst,
-				    (char *)strdup("ob")) != 0) {
+				    (char *)strdup("oxx")) != 0) {
 					goto err;
 				}
 			}

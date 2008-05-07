@@ -40,7 +40,7 @@
 #define	_SAM_DEVNM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 #endif
 
 
@@ -113,6 +113,27 @@ char *dev_nmsg[] = {
 #define	SG_CNT (sizeof (dev_nmsg)/sizeof (char *))
 
 int dev_nmsg_size = sizeof (dev_nmsg) / sizeof (dev_nmsg[0]);
+
+/* Define all possible target groups - o0 - o127 */
+
+char *dev_nmtg[] = {
+"o0  ", "o1  ", "o2  ", "o3  ", "o4  ", "o5  ", "o6  ", "o7  ", "o8  ", "o9  ",
+"o10 ", "o11 ", "o12 ", "o13 ", "o14 ", "o15 ", "o16 ", "o17 ", "o18 ", "o19 ",
+"o20 ", "o21 ", "o22 ", "o23 ", "o24 ", "o25 ", "o26 ", "o27 ", "o28 ", "o29 ",
+"o30 ", "o31 ", "o32 ", "o33 ", "o34 ", "o35 ", "o36 ", "o37 ", "o38 ", "o39 ",
+"o40 ", "o41 ", "o42 ", "o43 ", "o44 ", "o45 ", "o46 ", "o47 ", "o48 ", "o49 ",
+"o50 ", "o51 ", "o52 ", "o53 ", "o54 ", "o55 ", "o56 ", "o57 ", "o58 ", "o59 ",
+"o60 ", "o61 ", "o62 ", "o63 ", "o64 ", "o65 ", "o66 ", "o67 ", "o68 ", "o69 ",
+"o70 ", "o71 ", "o72 ", "o73 ", "o74 ", "o75 ", "o76 ", "o77 ", "o78 ", "o79 ",
+"o80 ", "o81 ", "o82 ", "o83 ", "o84 ", "o85 ", "o86 ", "o87 ", "o88 ", "o89 ",
+"o90 ", "o91 ", "o92 ", "o93 ", "o94 ", "o95 ", "o96 ", "o97 ", "o98 ", "o99 ",
+"o100", "o101", "o102", "o103", "o104", "o105", "o106", "o107", "o108", "o109",
+"o110", "o111", "o112", "o113", "o114", "o115", "o116", "o117", "o118", "o119",
+"o120", "o121", "o122", "o123", "o124", "o125", "o126", "o127" };
+
+#define	TG_CNT (sizeof (dev_nmtg)/sizeof (char *))
+
+int dev_nmtg_size = sizeof (dev_nmtg) / sizeof (dev_nmtg[0]);
 
 #endif	/* DEC_INIT */
 
@@ -187,7 +208,6 @@ dev_nm_t dev_nm2dt[] = {
 	{"md",  0, DT_DATA },
 	{"mm",  0, DT_META },
 	{"mr",  0, DT_RAID },
-	{"ob",  0, DT_OBJECT },
 	{"tp",  1, DT_TAPE },
 	{"vt",  1, DT_VIDEO_TAPE },
 	{"st",  1, DT_SQUARE_TAPE },
@@ -336,6 +356,8 @@ extern  char *dev_nmmd[];
 extern  char *dev_nmtp[];
 extern  char *dev_nmsg[];
 extern  int dev_nmsg_size;
+extern  char *dev_nmtg[];
+extern  int dev_nmtg_size;
 extern  char *dev_nmod[];
 extern  char *dev_nmfs[];
 extern  char *dev_nmrb[];
