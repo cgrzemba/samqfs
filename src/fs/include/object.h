@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.5 $"
+#pragma ident "$Revision: 1.6 $"
 
 #include "sam/osversion.h"
 
@@ -61,8 +61,8 @@
 
 /* Maxcontig for OSD I/O */
 
-#define	SAM_OSD_MAX_WR_CONTIG		0x100000
-#define	SAM_OSD_MAX_RD_CONTIG		0x20000
+#define	SAM_OSD_MAX_WR_CONTIG		0x800000
+#define	SAM_OSD_MAX_RD_CONTIG		0x800000
 
 /*
  *  Macros to keep sane (NTOH - network to host; HTON - host to network).
@@ -123,8 +123,8 @@ typedef struct sam_osd_req_priv {
 } sam_osd_req_priv_t;
 
 #define	sam_osd_setup_private(iorp) {  \
-	sema_init(&((iorp)->osd_sema), 0, NULL, SEMA_DEFAULT, NULL); \
 	bzero(iorp, sizeof (sam_osd_req_priv_t)); \
+	sema_init(&((iorp)->osd_sema), 0, NULL, SEMA_DEFAULT, NULL); \
 }
 
 #define	sam_osd_remove_private(iorp)  \
@@ -135,5 +135,37 @@ typedef struct sam_osd_req_priv {
 #define	sam_osd_obj_req_done(iorp)  \
 	sema_v(&(iorp)->osd_sema)
 
+/*
+ * SAM-QFS Vendor Defined OSD Page
+ * The format is in Big Endian
+ */
+#define	OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO    0x2fffffff
+typedef struct sam_objinfo_page {
+	uint32_t	sop_pgno;
+	uint32_t	sop_pglen;
+	uint64_t	sop_partid;
+	uint64_t	sop_oid;
+	uint64_t	sop_append_addr;
+	uint64_t	sop_size;
+	uint64_t	sop_trans_id;
+	uint32_t	sop_fino;
+	uint32_t	sop_fgen;
+} sam_objinfo_page_t;
+
+#define	SOP_PGNO(SOPP)		BE_32(SOPP->sop_pgno)
+#define	SOP_PGLEN(SOPP)		BE_32(SOPP->sop_pglen)
+#define	SOP_PARTID(SOPP)	BE_64(SOPP->sop_partid)
+#define	SOP_OID(SOPP)		BE_64(SOPP->sop_oid)
+#define	SOP_APPENDADDR(SOPP)	BE_64(SOPP->sop_append_addr)
+#define	SOP_SIZE(SOPP)		BE_64(SOPP->sop_size)
+#define	SOP_TRANSID(SOPP)	BE_64(SOPP->sop_trans_id)
+#define	SOP_FINO(SOPP)		BE_32(SOPP->sop_fino)
+#define	SOP_FGEN(SOPP)		BE_32(SOPP->sop_fgen)
+
+#define	OSD_SAMQFS_VENDOR_CREATED_OBJECTS_LIST_PAGE    0x2ffffffe
+typedef struct sam_objlist_page {
+	uint32_t	solp_pgno;
+	uint32_t	solp_pglen;
+} sam_objlist_page_t;
 
 #endif	/* _SAM_FS_OBJECT_H */

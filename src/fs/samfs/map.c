@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.137 $"
+#pragma ident "$Revision: 1.138 $"
 #endif
 
 #include "sam/osversion.h"
@@ -183,7 +183,7 @@ sam_map_block(
 	offset_t count,		/* Requested byte count. */
 	sam_map_t flag,		/* SAM_READ if reading. */
 				/* SAM_READ_PUT if read with rounded up */
-				/*   filsize, return contiguous blocks. */
+				/*   filesize, return contiguous blocks. */
 				/* SAM_RD_DIRECT_IO if read directio */
 				/* SAM_WRITE if writing. */
 				/* SAM_WR_DIRECT_IO if write directio */
@@ -373,6 +373,9 @@ sam_clear_map_cache(sam_node_t *ip)
 {
 	int i;
 
+	if (SAM_IS_OBJECT_FILE(ip)) {
+		return;
+	}
 	mutex_enter(&ip->iom.map_mutex);
 	ip->iom.map_in = ip->iom.map_out = 0;
 	for (i = 0; i < SAM_MAX_IOM; i++) {
@@ -398,7 +401,7 @@ sam_map_direct(
 	offset_t count,		/* Requested byte count. */
 	sam_map_t flag,		/* SAM_READ if reading. */
 				/* SAM_READ_PUT if read with rounded up */
-				/*   filsize, return contiguous blocks. */
+				/*   filesize, return contiguous blocks. */
 				/* SAM_RD_DIRECT_IO if read directio */
 				/* SAM_WRITE if writing. */
 				/* SAM_WR_DIRECT_IO if write directio */
@@ -541,7 +544,7 @@ sam_map_direct(
 				ip->cl_allocsz = offset + size;
 			}
 			if (flag < SAM_WRITE_SPARSE) {
-				/* Increment filsize if no error */
+				/* Increment filesize if no error */
 				ip->size = offset + size;
 				if (flag != SAM_WRITE &&
 				    flag != SAM_WR_DIRECT_IO) {
@@ -636,7 +639,7 @@ sam_map_indirect(
 	offset_t count,		/* Requested byte count. */
 	sam_map_t flag,		/* SAM_READ if reading. */
 				/* SAM_READ_PUT if read with rounded up */
-				/*   filsize, return contiguous blocks. */
+				/*   filesize, return contiguous blocks. */
 				/* SAM_RD_DIRECT_IO if read directio */
 				/* SAM_WRITE if writing. */
 				/* SAM_WR_DIRECT_IO if write directio */
@@ -1342,7 +1345,7 @@ sam_clear_append(
 		}
 		if ((offset + count) >= ip->size) {
 			if (flag < SAM_WRITE_SPARSE) {
-				/* Increment filsize if no error */
+				/* Increment filesize if no error */
 				ip->size = offset + mapp->size_left;
 				if (flag != SAM_WRITE &&
 				    flag != SAM_WR_DIRECT_IO) {
@@ -2361,8 +2364,15 @@ sam_map_truncate(
 
 	if (length > size) {
 		/*
-		 * Truncate up the old fashioned way.
+		 * Truncate up.
 		 */
+		if (SAM_IS_OBJECT_FILE(ip)) {
+			offset_t nbytes;
+			nbytes = length - size;
+			error = sam_map_block(ip, size, nbytes, SAM_WRITE,
+			    NULL, credp);
+			goto out;
+		}
 
 		extra = sam_round_to_dau(ip, offset, SAM_ROUND_UP) - offset;
 
@@ -2402,6 +2412,10 @@ sam_map_truncate(
 		/*
 		 * Truncate down.
 		 */
+		if (SAM_IS_OBJECT_FILE(ip)) {
+			goto out;
+		}
+
 		bzero((char *)&ioblk, sizeof (sam_ioblk_t));
 		bzero(&params, sizeof (params));
 
@@ -2463,6 +2477,7 @@ sam_map_truncate(
 		}
 	}
 
+out:
 	if (error == 0) {
 		ip->size = length;
 	}
@@ -2598,7 +2613,7 @@ sam_map_osd(
 	offset_t count,		/* Requested byte count. */
 	sam_map_t flag,		/* SAM_READ if reading. */
 				/* SAM_READ_PUT if read with rounded up */
-				/*   filsize, return contiguous blocks. */
+				/*   filesize, return contiguous blocks. */
 				/* SAM_RD_DIRECT_IO if read directio */
 				/* SAM_WRITE if writing. */
 				/* SAM_WR_DIRECT_IO if write directio */
@@ -2618,7 +2633,7 @@ sam_map_osd(
 		bzero((char *)iop, sizeof (sam_ioblk_t));
 		iop->imap.flags = (M_OBJECT | M_VALID);
 		iop->contig = SAM_OSD_MAX_WR_CONTIG;
-		if (flag <= SAM_RD_DIRECT_IO) {
+		if (flag <= SAM_RD_DIRECT_IO) {		/* If reading */
 			offset_t size;
 
 			size = (ip->size + PAGESIZE - 1) & PAGEMASK;
@@ -2658,7 +2673,7 @@ sam_map_osd(
 			}
 			if (flag < SAM_WRITE_SPARSE) {
 				/*
-				 * Increment filsize if no error
+				 * Increment filesize if no error
 				 */
 				ip->size = offset + count;
 				if (flag != SAM_WRITE &&

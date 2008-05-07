@@ -21,7 +21,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.6 $"
+#pragma ident	"$Revision: 1.7 $"
 #endif
 
 /*
@@ -83,7 +83,7 @@ int qfs_max_crb_divisor = QFS_MAX_CRB_DEFAULT_DIVISOR; /* tunable */
 void handle_dquot(mapentry_t *);
 
 /*
- * GENERIC MAP ROUTINES
+ * Generic Map Routines
  */
 
 #define	CRB_FREE(crb, me) \

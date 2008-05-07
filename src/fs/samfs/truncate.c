@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.139 $"
+#pragma ident "$Revision: 1.140 $"
 
 #include "sam/osversion.h"
 
@@ -321,27 +321,22 @@ sam_proc_truncate(
 				ip->size = length;
 			}
 
-			error = 0;
 			if ((length != size) &&
-			    !SAM_IS_OBJECT_FILE(ip)) {
-				if (!S_ISSEGI(&ip->di)) {
-					while (((error = sam_map_truncate(ip,
-					    length, credp)) != 0) &&
-					    IS_SAM_ENOSPC(error)) {
-						ip->size = size;
-						ip->di.rm.size = size;
-						RW_UNLOCK_OS(&ip->inode_rwl,
-						    RW_WRITER);
-						error = sam_wait_space(ip,
-						    error);
-						RW_LOCK_OS(&ip->inode_rwl,
-						    RW_WRITER);
-						if (error) {
-							break;
-						}
+			    (!S_ISSEGI(&ip->di))) {
+				while (((error = sam_map_truncate(ip,
+				    length, credp)) != 0) &&
+				    IS_SAM_ENOSPC(error)) {
+					ip->size = size;
+					ip->di.rm.size = size;
+					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+					error = sam_wait_space(ip, error);
+					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+					if (error) {
+						break;
 					}
 				}
 			}
+
 			/*
 			 * sam_map_block sets file size (ip->di.rm.size) to
 			 * length.  Reset for an error or for a release.
@@ -359,18 +354,11 @@ sam_proc_truncate(
 			}
 		}
 
-		/*
-		 * Object inode
-		 */
-		if (SAM_IS_OBJECT_FILE(ip)) {
-			error = sam_truncate_object_file(ip, tflag, length);
-			return (error);
+		if (error != 0) {
+			goto out;
 		}
 
-		/*
-		 * Block inode
-		 */
-		if ((error == 0) && (length <= size)) {
+		if (length <= size) {
 			if ((length == 0) && (vn_has_cached_data(vp) != 0)) {
 				(void) pvn_vplist_dirty(vp,
 				    (sam_u_offset_t)length,
@@ -380,7 +368,13 @@ sam_proc_truncate(
 			    ntotblks != 0LL)) {
 				sam_quota_bret(ip->mp, ip, ndkblks, ntotblks);
 			}
-			if ((error = sam_reduce_ino(ip, length, tflag)) == 0) {
+			if (SAM_IS_OBJECT_FILE(ip)) {
+				error = sam_truncate_object_file(ip, tflag,
+				    length);
+			} else {
+				error = sam_reduce_ino(ip, length, tflag);
+			}
+			if (error == 0) {
 				ip->size = length;  /* Current size */
 			}
 			ndkblks = ndkblks - D2QBLKS(ip->di.blocks);
@@ -403,6 +397,11 @@ sam_proc_truncate(
 			default:
 				break;
 			}
+		} else {
+			if (SAM_IS_OBJECT_FILE(ip)) {
+				error = sam_truncate_object_file(ip, tflag,
+				    length);
+			}
 		}
 	} else {
 		if (length != ip->di.rm.size) {
@@ -413,6 +412,7 @@ sam_proc_truncate(
 	/*
 	 * Clear write map cache info and reset allocated size.
 	 */
+out:
 	sam_clear_map_cache(ip);
 	ip->cl_allocsz = length;
 	return (error);

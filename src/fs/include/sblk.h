@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.69 $"
+#pragma ident "$Revision: 1.70 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -194,10 +194,6 @@ typedef struct sam_sbinfo {
 	char		pad2;		/* LQFS: Pad to 8-byte boundary */
 	uint32_t	opt_features;	/* Opt features - backward compatible */
 	uchar_t		fill3[4];	/* Unused */
-#if defined(SAM_OSD_SUPPORT)
-	/* osd_user_id will go away when we switch to new target */
-	uint64_t	osd_user_id;	/* Last assigned object user id */
-#endif
 } sam_sbinfo_t;
 
 /*

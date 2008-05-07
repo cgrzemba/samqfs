@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 
 /* ----- Include Files ---- */
@@ -607,16 +607,6 @@ new_fs(void)
 	memset((char *)&sblock, 0, sizeof (struct sam_sblk));
 	strncpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblock.info.sb.name));
-
-#if defined(SAM_OSD_SUPPORT)
-	/*
-	 * This is the first user object ID for a DT_META_OBJECT_SET
-	 * It increments on every user object create. This will go away
-	 * when we convert to the target returning user object IDs.
-	 */
-	sblock.info.sb.osd_user_id = 0x10000;
-#endif /* SAM_OSD_SUPPORT */
-
 	sblock.info.sb.fs_count = fs_count;
 	sblock.info.sb.da_count = fs_count - mm_count;
 	sblock.info.sb.mm_count = mm_count;

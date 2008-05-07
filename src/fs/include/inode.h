@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.196 $"
+#pragma ident "$Revision: 1.197 $"
 #endif
 
 #ifdef linux
@@ -998,7 +998,8 @@ int sam_issue_object_io(sam_osd_handle_t oh, uint32_t command,
 	offset_t length);
 int sam_create_priv_object_id(sam_osd_handle_t oh, uint64_t user_obj_id);
 int sam_create_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
-int sam_remove_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
+int sam_remove_object_id(struct sam_mount *mp, uint64_t user_obj_id,
+	uchar_t unit);
 int sam_get_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
 	uint32_t attr_num, int64_t *attrp);
 int sam_set_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
