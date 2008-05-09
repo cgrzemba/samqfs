@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PendingScanningData.java,v 1.12 2008/03/17 14:43:38 am143972 Exp $
+// ident	$Id: PendingScanningData.java,v 1.13 2008/05/09 21:08:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.jobs;
 
@@ -83,7 +83,7 @@ public final class PendingScanningData extends ArrayList {
                     break;
                 case 1:
                     rowHeader = "JobsDetails.scanningData.row2";
-                    data = scanJob.getOfflieFiles();
+                    data = scanJob.getOfflineFiles();
                     break;
                 case 2:
                     rowHeader = "JobsDetails.scanningData.row3";

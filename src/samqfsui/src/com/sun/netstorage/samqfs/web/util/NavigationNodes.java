@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NavigationNodes.java,v 1.18 2008/03/17 14:43:56 am143972 Exp $
+// ident	$Id: NavigationNodes.java,v 1.19 2008/05/09 21:08:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -82,7 +82,8 @@ public class NavigationNodes  {
     public static final int NODE_FS_REPORTS = 103;
     public static final int NODE_SCHEDULED_TASKS = 111;
     public static final int NODE_REGISTRATION = 112;
-
+    public static final int NODE_JOBS = 113;
+    
     // Node under Data Access
     public static final int NODE_FILE_BROWSER = 41;
     public static final int NODE_RECOVERY_POINTS = 42;
@@ -372,6 +373,15 @@ public class NavigationNodes  {
         myNode.setValue(createURL("jobs/AllJobs.jsp"));
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_JOB_ALL), myNode);
+        
+        // jobs summary page
+        myNode = new CCNavNode(NODE_JOBS,
+                              "node.admin.job",
+                              "node.admin.job.tooltip",
+                              "node.admin.job.tooltip");
+        myNode.setValue(createURL("faces/jsp/jobs/Jobs.jsp"));
+        myNode.setAcceptsChildren(false);
+        nodeMap.put(new Integer(NODE_JOBS), myNode);
 
         // scheduled tasks
         myNode = new CCNavNode(NODE_SCHEDULED_TASKS,

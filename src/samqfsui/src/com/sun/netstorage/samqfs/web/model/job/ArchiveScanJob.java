@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArchiveScanJob.java,v 1.7 2008/03/17 14:43:51 am143972 Exp $
+// ident	$Id: ArchiveScanJob.java,v 1.8 2008/05/09 21:08:59 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.job;
 
@@ -36,7 +36,7 @@ public interface ArchiveScanJob extends BaseJob {
 
     public ArchiveScanJobData getRegularFiles();
 
-    public ArchiveScanJobData getOfflieFiles();
+    public ArchiveScanJobData getOfflineFiles();
 
     public ArchiveScanJobData getArchDoneFiles();
 

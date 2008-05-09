@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.118 2008/04/29 17:08:08 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.119 2008/05/09 21:08:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
+import com.iplanet.jato.RequestContext;
 import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.view.ContainerView;
 import com.sun.netstorage.samqfs.mgmt.SamFSAccessDeniedException;
@@ -64,8 +65,12 @@ import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 
 public class SamUtil {
 
@@ -674,7 +679,7 @@ public class SamUtil {
     public static DateFormat getTimeFormat() {
         return DateFormat.getDateTimeInstance(DateFormat.LONG,
                                               DateFormat.MEDIUM,
-                  RequestManager.getRequestContext().getRequest().getLocale());
+                                              getCurrentRequest().getLocale());
     }
 
     /**
@@ -992,12 +997,12 @@ public class SamUtil {
 
 
     public static CCI18N getCCI18NObj() {
-        HttpServletRequest httprq = RequestManager.getRequest();
+        HttpServletRequest httprq = getCurrentRequest();
         CCI18N i18n = (CCI18N) httprq.getAttribute(Constants.I18N.I18N_OBJECT);
 
         if (i18n == null) {
             i18n = new CCI18N(httprq,
-                RequestManager.getResponse(),
+                              getCurrentResponse(),
                 Constants.ResourceProperty.BASE_NAME, null, httprq.getLocale());
             httprq.setAttribute(Constants.I18N.I18N_OBJECT, i18n);
         }
@@ -1006,13 +1011,13 @@ public class SamUtil {
     }
 
     public static CCI18N getCCI18NObj(String BaseName, String bundleId) {
-        HttpServletRequest httprq = RequestManager.getRequest();
+        HttpServletRequest httprq = getCurrentRequest();
         CCI18N i18n = (CCI18N) httprq.getAttribute(
                                         Constants.I18N.I18N_OBJECT + bundleId);
 
         if (i18n == null) {
             i18n = new CCI18N(httprq,
-                              RequestManager.getResponse(),
+                              getCurrentResponse(),
                               BaseName,
                               bundleId,
                               null);
@@ -1957,5 +1962,62 @@ public class SamUtil {
             return null;
         }
         return (String) myMap.get(serverName);
+    }
+
+    /**
+     * Retrieve the <code>HttpServletRequest</code> object for the request
+     * currently being processed. NOTE: To get JATO and JSF based pages to
+     * cohabit, it will be necessary to change all methods that use the JATO
+     * utililty class <code>RequestManager</code>.
+     * 
+     * @return - <code>HttpServletRequest</code>
+     */
+    public static HttpServletRequest getCurrentRequest() {
+        HttpServletRequest request = null;
+        
+        // check if the request is coming from a JSF page
+        FacesContext fcontext = FacesContext.getCurrentInstance();
+        if (fcontext != null) {
+            ExternalContext econtext = fcontext.getExternalContext();
+            if (econtext != null) {
+                request = (HttpServletRequest)econtext.getRequest();
+            }
+        }
+        
+        if (request == null) { // must be a JATO request
+            RequestContext cxt = RequestManager.getRequestContext();
+            if (cxt != null) {
+                request = cxt.getRequest();
+            }
+        }
+        return request;
+    }
+    
+    /** 
+     * Get the <code>HttpServletResponse</code> object for the current request.
+     * This is necessary allow both JATO and JSF-based pages to co-exist and
+     * utilize the same utility methods in this class.
+     */
+    public static HttpServletResponse getCurrentResponse() {
+        HttpServletResponse response = null;
+        
+        // is this JSF response?
+        FacesContext fcontext = FacesContext.getCurrentInstance();
+        if (fcontext != null) {
+            ExternalContext econtext = fcontext.getExternalContext();
+            
+            if (econtext != null) {
+                response = (HttpServletResponse)econtext.getResponse();
+            }
+        }
+        
+        if (response == null) { // must be a JATO response 
+            RequestContext rcontext = RequestManager.getRequestContext();
+            if (rcontext != null) {
+                response = RequestManager.getResponse();
+            }
+        }
+        
+        return response;
     }
 }

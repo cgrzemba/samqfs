@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseJob.java,v 1.12 2008/03/17 14:43:51 am143972 Exp $
+// ident	$Id: BaseJob.java,v 1.13 2008/05/09 21:08:59 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.job;
 
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 public interface BaseJob {
@@ -87,6 +88,10 @@ public interface BaseJob {
 
     // Start Time and Date could be null for certain type/condition of jobs.
     public GregorianCalendar getStartDateTime();
+
+    // needed to avoid writing a JSF converter for Calendar
+    // returns java.util.Date representation of getStartDateTime()
+    public Date getStartTime();
 
     // End Time and Date could be null for certain type/condition of jobs.
     public GregorianCalendar getEndDateTime();

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseJobImpl.java,v 1.11 2008/03/17 14:43:49 am143972 Exp $
+// ident	$Id: BaseJobImpl.java,v 1.12 2008/05/09 21:08:58 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.job;
 
@@ -35,6 +35,7 @@ import com.sun.netstorage.samqfs.mgmt.Job;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import java.util.GregorianCalendar;
+import java.util.Date;
 
 public class BaseJobImpl implements BaseJob {
 
@@ -91,6 +92,11 @@ public class BaseJobImpl implements BaseJob {
     public GregorianCalendar getStartDateTime() { return startDateTime; }
     public void  setstartDateTime(GregorianCalendar startDateTime) {
         this.startDateTime = startDateTime;
+    }
+
+    public Date getStartTime() {
+        return this.startDateTime != null 
+            ? new Date(this.startDateTime.getTimeInMillis()) : null;
     }
 
     // End Time and Date could be null for certain type/condition of jobs.

@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.3 2008/03/17 14:40:23 am143972 Exp $ -->
+<!-- $Id: faces-config.xml,v 1.4 2008/05/09 21:08:58 kilemba Exp $ -->
 
 <faces-config>
     <application>
@@ -54,4 +54,46 @@
         <managed-bean-class>com.sun.netstorage.samqfs.web.test.MenuListBackingBean</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
+    
+    <!-- Jobs beans -->
+    <!-- controller -->
+    <managed-bean>
+        <description>Controller class for the Jobs pages</description>
+        <managed-bean-name>JobController</managed-bean-name>
+        <managed-bean-class>com.sun.netstorage.samqfs.web.jobs.JobController</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+
+    <managed-bean>
+        <description>Jobs Beans</description>
+        <managed-bean-name>JobsBean</managed-bean-name>
+        <managed-bean-class>com.sun.netstorage.samqfs.web.jobs.JobsBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+    
+    <managed-bean>
+        <description>Job Details Bean</description>
+        <managed-bean-name>JobDetailsBean</managed-bean-name>
+        <managed-bean-class>com.sun.netstorage.samqfs.web.jobs.JobDetailsBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+    
+    <!-- navigation rules -->
+    <navigation-rule>
+        <from-view-id>/jsp/jobs/Jobs.jsp</from-view-id>
+        <navigation-case>
+            <from-out-come>jobdetails</from-out-come>
+            <to-view-id>/jsp/jobs/JobDetails.jsp</to-view-id>
+        </navigation-case>
+    </navigation-rule>
+    
+    <!-- converters -->
+    <converter>
+        <converter-id>JobTypeConverter</converter-id>
+        <converter-class>com.sun.netstorage.samqfs.web.jobs.JobTypeConverter</converter-class>
+    </converter>
+    <converter>
+        <converter-id>JobStatusConverter</converter-id>
+        <converter-class>com.sun.netstorage.samqfs.web.jobs.JobStatusConverter</converter-class>
+    </converter>
 </faces-config>

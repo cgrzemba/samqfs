@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModelImpl.java,v 1.26 2008/03/17 14:43:46 am143972 Exp $
+// ident	$Id: SamQFSAppModelImpl.java,v 1.27 2008/05/09 21:08:58 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -36,8 +36,9 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
-import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -47,7 +48,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.servlet.ServletContext;
-import com.iplanet.jato.RequestManager;
+import javax.servlet.http.HttpServletRequest;
 
 public class SamQFSAppModelImpl extends DefaultModel
     implements SamQFSAppModel {
@@ -55,16 +56,12 @@ public class SamQFSAppModelImpl extends DefaultModel
     private SamQFSSystemSharedFSManager sharedManager = null;
 
     public SamQFSAppModelImpl() throws SamFSException {
-
     }
 
-
-    public SamQFSSystemModel[] getAllSamQFSSystemModels() {
-        HashMap map = (HashMap)RequestManager.getHandlingServlet()
-            .getServletConfig().getServletContext()
-            .getAttribute(Constants.sc.HOST_MODEL_MAP);
-
-        return (SamQFSSystemModelImpl[]) map.values()
+    public SamQFSSystemModel[] getAllSamQFSSystemModels() {        
+        HashMap modelMap = getHostModelMap();
+        
+        return (SamQFSSystemModelImpl[]) modelMap.values()
                     .toArray(new SamQFSSystemModelImpl[0]);
     }
 
@@ -166,9 +163,8 @@ public class SamQFSAppModelImpl extends DefaultModel
             map.put(host, new SamQFSSystemModelImpl(host));
 
             try {
-                String path = RequestManager.getHandlingServlet()
-                    .getServletConfig().getServletContext()
-                    .getRealPath("/tmp/host.conf");
+                String path = SamUtil.getCurrentRequest().getSession()
+                    .getServletContext().getRealPath("/tmp/host.conf");
 
                 PrintWriter out = new PrintWriter(new FileWriter(path, true));
                 if (out != null) {
@@ -197,9 +193,8 @@ public class SamQFSAppModelImpl extends DefaultModel
             PrintWriter out = null;
 
             try {
-                String path = RequestManager.getHandlingServlet()
-                    .getServletConfig().getServletContext()
-                    .getRealPath("/tmp/host.conf");
+                String path = SamUtil.getCurrentRequest().getSession()
+                    .getServletContext().getRealPath("/tmp/host.conf");
                 in = new BufferedReader(new FileReader(path));
                 if (in != null) {
                     String host;
@@ -296,8 +291,8 @@ public class SamQFSAppModelImpl extends DefaultModel
 
 
     private HashMap getHostModelMap() {
-        ServletContext sc = RequestManager.getHandlingServlet()
-            .getServletConfig().getServletContext();
+        HttpServletRequest request = SamUtil.getCurrentRequest();
+        ServletContext sc = request.getSession().getServletContext();
         HashMap result = (HashMap)sc.getAttribute(Constants.sc.HOST_MODEL_MAP);
 
         if (result == null) {
