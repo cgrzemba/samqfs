@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.158 $"
+#pragma ident "$Revision: 1.159 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -1019,7 +1019,7 @@ StartProcess(
 			return;
 		}
 	}
-	Trace(TR_MISC, "Adding process %s(%s)", argv[0], arg);
+	Trace(TR_MISC, "Adding process %s(%s)", argv[0], arg[1]);
 	if (cpNew == NULL) {	/* Increase childProc->entry */
 		/*
 		 * Small trick here - childProcTable is always 'one entry
