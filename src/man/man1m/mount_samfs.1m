@@ -1,4 +1,4 @@
-.\" $Revision: 1.93 $
+.\" $Revision: 1.94 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH mount_samfs 1M "18 Apr 2008"
+.TH mount_samfs 1M "09 May 2008"
 .SH NAME
 mount_samfs \- Mounts a Sun StorEdge QFS or \%SAM-QFS file system
 .SH SYNOPSIS
@@ -168,6 +168,23 @@ The default is \fBarscan\fR.
 \fBnosuid\fR
 Mounts the file system with \fBsetuid\fR execution disallowed.
 By default, the file system mounts with \fBsetuid\fR execution allowed.
+.TP 10
+\fBnogfsid\fR |\0 \fBgfsid\fR
+The \fBnogfsid\fR option disables the setting of a global file system id,
+and uses the historical setting of the root slice device type paired
+with the file system type.
+The \fBgfsid\fR option enables the setting of a global file system id,
+and uses the file system id that is stored in the superblock, which
+consists of the file system creation time paired with the hostid.
+The default is \fBgfsid\fR.
+.TP 10
+\fBnocdevid\fR |\0 \fBcdevid\fR
+The \fBnocdevid\fR option disables the setting of a global file system
+device id, and uses the historical setting of the root slice device type.
+The \fBcdevid\fR option enables the setting of a global file system
+device id that consists of the samioc module major number paired with
+the file system equipment number as specified in the mcf(4) file.
+The default is \fBcdevid\fR.
 .TP 10
 \fBnotrace\fR |\0 \fBtrace\fR
 The \fBnotrace\fR option disables file system tracing.
