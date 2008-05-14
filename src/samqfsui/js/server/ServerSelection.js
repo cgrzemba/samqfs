@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerSelection.js,v 1.8 2008/04/16 17:07:26 ronaldso Exp $
+// ident	$Id: ServerSelection.js,v 1.9 2008/05/14 23:14:54 ronaldso Exp $
 
 /**
  * This is the javascript file of Server Selection Page
@@ -124,22 +124,15 @@
      * URL should also contains the server name as a part of the request.
      */
     function createURL(field, whereToGo) {
-        // if whereToGo is "serverinfo", View Configuration button is clicked
-        // we need to retrieve the server name in a different way than an
-        // href is clicked
-
-        var servername = "";
-
-        if (whereToGo != "serverinfo") {
-            // convert href object to a string
-            var tmpStr = field + "";
-            var alarmType = getAlarmType(unescape(tmpStr));
-            if (parseInt(alarmType) >= 4) {
-                return true;
-            }
-            // grep the server name
-            servername = getServerString(unescape(tmpStr));
+        // convert href object to a string
+        var tmpStr = field + "";
+        var alarmType = getAlarmType(unescape(tmpStr));
+        if (parseInt(alarmType) >= 4) {
+            return true;
         }
+        // grep the server name
+        var servername = getServerString(unescape(tmpStr));
+
         // create URL and forward the page
         var url = "/samqfsui/util/FrameFormat?SERVER_NAME=" + servername +
                   "&DESTINATION=" + whereToGo;

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NavigationNodes.java,v 1.19 2008/05/09 21:08:57 kilemba Exp $
+// ident	$Id: NavigationNodes.java,v 1.20 2008/05/14 23:14:54 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -50,47 +50,51 @@ public class NavigationNodes  {
     public static final int NODE_FILE_SYSTEM = 5;
     public static final int NODE_ARCHIVE = 1;
     public static final int NODE_STORAGE = 2;
-    public static final int NODE_ADMIN   = 3;
-    public static final int NODE_COMMON_TASKS = 6;
+    public static final int NODE_MONITORING = 6;
+    public static final int NODE_REPORTS = 39;
+    public static final int NODE_GETTING_STARTED = 7;
 
-    // Node under archive
-    public static final int NODE_CLASSIFICATION = 11;
-    public static final int NODE_POLICY = 12;
-    public static final int NODE_RECYCLER = 13;
-    public static final int NODE_GENERAL = 14;
+    // Node under Getting Started
+    public static final int NODE_ABOUT_SAMQFS = 200;
+    public static final int NODE_FIRST_TIME_CONFIG = 201;
+    public static final int NODE_REGISTRATION = 112;
 
-    // Node under storage
-    public static final int NODE_FS = 0;
+    // Node under Archive Media (storage)
     public static final int NODE_LIBRARY = 21;
     public static final int NODE_VSN_POOL = 22;
     public static final int NODE_DISK_VSN = 23;
     public static final int NODE_TAPE_VSN = 25;
 
-    // Node under Admin
-    public static final int NODE_SERVER_CONFIG = 31;
+    // Node under File Systems & NFS
+    public static final int NODE_FS = 0;
+    public static final int NODE_NFS = 43;
+
+    // Node under archive
+    public static final int NODE_POLICY = 12;
+    public static final int NODE_RECYCLER = 13;
+    public static final int NODE_GENERAL = 14;
+    public static final int NODE_ACTIVITY = 37;
+
+    // Node under File Browser & Recovery
+    public static final int NODE_FILE_BROWSER = 41;
+    public static final int NODE_RECOVERY_POINTS = 42;
+    public static final int NODE_SCHEDULED_TASKS = 111;
+
+    // Node under Monitoring
+    public static final int NODE_DASHBOARD = 100;
     public static final int NODE_FAULT = 32;
+    public static final int NODE_NOTIFICATION = 38;
     public static final int NODE_JOB = 33;
     public static final int NODE_JOB_CURRENT = 34;
     public static final int NODE_JOB_PENDING = 35;
     public static final int NODE_JOB_ALL = 36;
-    public static final int NODE_ACTIVITY = 37;
-    public static final int NODE_NOTIFICATION = 38;
-    public static final int NODE_REPORTS = 39;
-    public static final int NODE_MONITORING = 100;
+    public static final int NODE_JOBS = 113;
+
+    // Node under Metrics & Reports
     public static final int NODE_MEDIA_REPORTS = 101;
     public static final int NODE_FS_METRICS = 102;
     public static final int NODE_FS_REPORTS = 103;
-    public static final int NODE_SCHEDULED_TASKS = 111;
-    public static final int NODE_REGISTRATION = 112;
-    public static final int NODE_JOBS = 113;
-    
-    // Node under Data Access
-    public static final int NODE_FILE_BROWSER = 41;
-    public static final int NODE_RECOVERY_POINTS = 42;
-
-    // Node under Network Shares
-    public static final int NODE_NFS = 43;
-    public static final int NODE_CIFS = 44;
+    public static final int NODE_SERVER_CONFIG = 31;
 
     private HashMap nodeMap;
     private String serverName;
@@ -108,8 +112,48 @@ public class NavigationNodes  {
         // CCNavNode(id, label, tooltip, status)
         CCNavNode myNode = null;
 
+        // Getting Started
+        myNode =
+            new CCNavNode(
+            NODE_GETTING_STARTED, "node.gettingstarted",
+            "node.gettingstarted.tooltip",
+            "node.gettingstarted.tooltip");
+        myNode.setValue(createURL("fs/FSSummary.jsp"));
+        myNode.setExpanded(false);
+        nodeMap.put(new Integer(NODE_GETTING_STARTED), myNode);
+
+        // About SAM-QFS
+        myNode =
+            new CCNavNode(
+            NODE_ABOUT_SAMQFS, "node.aboutsamqfs",
+            "node.aboutsamqfs.tooltip",
+            "node.aboutsamqfs.tooltip");
+        myNode.setValue(createURL("fs/FSSummary.jsp"));
+        myNode.setAcceptsChildren(false);
+        nodeMap.put(new Integer(NODE_ABOUT_SAMQFS), myNode);
+
+        // First Time Configuration
+        myNode =
+            new CCNavNode(
+            NODE_FIRST_TIME_CONFIG, "node.firsttimeconfig",
+            "node.firsttimeconfig.tooltipp",
+            "node.firsttimeconfig.tooltip");
+        myNode.setValue(createURL("fs/FSSummary.jsp"));
+        myNode.setAcceptsChildren(false);
+        nodeMap.put(new Integer(NODE_FIRST_TIME_CONFIG), myNode);
+
+         // Product Registration CNS
+        myNode =
+            new CCNavNode(
+            NODE_REGISTRATION, "node.admin.registration",
+            "node.admin.registration.tooltip",
+            "node.admin.registration.tooltip");
+        myNode.setValue(createURL("admin/Registration.jsp"));
+        myNode.setAcceptsChildren(false);
+        nodeMap.put(new Integer(NODE_REGISTRATION), myNode);
+
         /**
-         * Data Access
+         * File Browsing & Recovery
          */
         myNode =
             new CCNavNode(
@@ -173,16 +217,6 @@ public class NavigationNodes  {
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_NFS), myNode);
 
-        // CIFS (NOT USED IN 4.6)
-        myNode =
-            new CCNavNode(
-            NODE_CIFS, "node.dataaccess.cifs",
-            "node.dataaccess.cifs.tooltip",
-            "node.dataaccess.cifs.tooltip");
-        myNode.setValue(createURL("fs/FSSummary.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_CIFS), myNode);
-
         /**
          * Archive Manangement
          */
@@ -192,18 +226,8 @@ public class NavigationNodes  {
             "node.archive.tooltip",
             "node.archive.tooltip");
         myNode.setExpanded(false);
-        myNode.setValue(createURL("archive/DataClassSummary.jsp"));
+        myNode.setValue(createURL("archive/PolicySummary.jsp"));
         nodeMap.put(new Integer(NODE_ARCHIVE), myNode);
-
-        // Data Class
-        myNode =
-            new CCNavNode(
-            NODE_CLASSIFICATION, "node.archive.class",
-            "node.archive.class.tooltip",
-            "node.archive.class.tooltip");
-        myNode.setValue(createURL("archive/DataClassSummary.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_CLASSIFICATION), myNode);
 
         // Policies
         myNode =
@@ -297,27 +321,6 @@ public class NavigationNodes  {
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_LIBRARY), myNode);
 
-        /**
-         * System Management
-         */
-        myNode =
-            new CCNavNode(
-            NODE_ADMIN, "node.admin",
-            "node.admin.tooltip", "node.admin.serverinfo.tooltip");
-        myNode.setValue(createURL("admin/ServerConfiguration.jsp"));
-        myNode.setExpanded(false);
-        nodeMap.put(new Integer(NODE_ADMIN), myNode);
-
-        // Product Registration CNS
-        myNode =
-            new CCNavNode(
-            NODE_REGISTRATION, "node.admin.registration",
-            "node.admin.registration.tooltip",
-            "node.admin.registration.tooltip");
-        myNode.setValue(createURL("admin/Registration.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_REGISTRATION), myNode);
-
         // Server Info
         myNode =
             new CCNavNode(
@@ -373,7 +376,7 @@ public class NavigationNodes  {
         myNode.setValue(createURL("jobs/AllJobs.jsp"));
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_JOB_ALL), myNode);
-        
+
         // jobs summary page
         myNode = new CCNavNode(NODE_JOBS,
                               "node.admin.job",
@@ -392,15 +395,24 @@ public class NavigationNodes  {
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_SCHEDULED_TASKS), myNode);
 
-        // System Monitoring
+        // Monitoring
         myNode =
             new CCNavNode(
             NODE_MONITORING, "node.admin.monitoring",
             "node.admin.monitoring.tooltip",
             "node.admin.monitoring.tooltip");
         myNode.setValue(createURL("monitoring/SystemMonitoring.jsp"));
-        myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_MONITORING), myNode);
+
+        // Dashboard
+        myNode =
+            new CCNavNode(
+            NODE_DASHBOARD, "node.dashboard",
+            "node.dashboard.tooltip",
+            "node.dashboard.tooltip");
+        myNode.setValue(createURL("monitoring/SystemMonitoring.jsp"));
+        myNode.setAcceptsChildren(false);
+        nodeMap.put(new Integer(NODE_DASHBOARD), myNode);
 
         // Notification
         myNode =
@@ -413,7 +425,7 @@ public class NavigationNodes  {
         nodeMap.put(new Integer(NODE_NOTIFICATION), myNode);
 
 
-        // System Metrics
+        // Metrics & Reports
         myNode =
             new CCNavNode(
             NODE_REPORTS, "node.admin.metrics",
@@ -451,15 +463,6 @@ public class NavigationNodes  {
         myNode.setValue(createURL("admin/FileMetricSummary.jsp"));
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_FS_METRICS), myNode);
-
-        // common tasks
-        myNode = new CCNavNode(NODE_COMMON_TASKS,
-                               "node.commontasks",
-                               "node.commontasks.tooltip",
-                               "node.commontasks.tooltip");
-        myNode.setValue(createURL("util/CommonTasks.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_COMMON_TASKS), myNode);
     }
 
     private String createURL(String suffix) {

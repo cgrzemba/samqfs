@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameNavigatorViewBean.java,v 1.23 2008/03/17 14:43:56 am143972 Exp $
+// ident	$Id: FrameNavigatorViewBean.java,v 1.24 2008/05/14 23:14:54 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -152,56 +152,102 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
 
         // Add first level leafs to the tree
 
-        // Common Tasks should be the first node
+        // Getting Started should be the first node
         model.addNode(naviNodes.getNavigationNode(
-                      NavigationNodes.NODE_COMMON_TASKS));
+                      NavigationNodes.NODE_GETTING_STARTED));
 
-        node = naviNodes.getNavigationNode(NavigationNodes.NODE_FB_RECOVERY);
-        model.addNode(node);
+        // Archive Media (SAM only)
+        if (!isQFSStandAlone) {
+            node = naviNodes.getNavigationNode(NavigationNodes.NODE_STORAGE);
+            model.addNode(node);
+        }
 
+        // File Systems & NFS
         // File System & NFS Shares node is always visible for any version/
         // SAM and Q setups
         node = naviNodes.getNavigationNode(NavigationNodes.NODE_FILE_SYSTEM);
         model.addNode(node);
 
-        // Archive / Storage Management is NOT visible for QFS Setups
+        // Archive Administration (SAM only)
         if (!isQFSStandAlone) {
             node = naviNodes.getNavigationNode(NavigationNodes.NODE_ARCHIVE);
-            // default page is Archive Policy
-            node.setValue(createURL("archive/PolicySummary.jsp"));
-            model.addNode(node);
-
-            node = naviNodes.getNavigationNode(NavigationNodes.NODE_STORAGE);
             model.addNode(node);
         }
 
-        // System Management is visible for all setups
-        node = naviNodes.getNavigationNode(NavigationNodes.NODE_ADMIN);
+        node = naviNodes.getNavigationNode(NavigationNodes.NODE_FB_RECOVERY);
+        if (isQFSStandAlone) {
+            node.setTooltip("node.dataaccess.tooltip.qfs");
+            node.setStatus("node.dataaccess.tooltip.qfs");
+        }
         model.addNode(node);
 
+        // Monitoring is visible for all setups
+        node = naviNodes.getNavigationNode(NavigationNodes.NODE_MONITORING);
+        if (isQFSStandAlone) {
+            node.setTooltip("node.admin.monitoring.tooltip.qfs");
+            node.setStatus("node.admin.monitoring.tooltip.qfs");
+            node.setValue(createURL("alarms/CurrentAlarmSummary.jsp"));
+        }
+        model.addNode(node);
+
+        // Metrics & Reports (SAM only)
+        // Call out separate node "System Details" for the QFS only machines
+        if (!isQFSStandAlone) {
+            node = naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_REPORTS);
+            model.addNode(node);
+        } else {
+            model.addNode(naviNodes.getNavigationNode(
+                      NavigationNodes.NODE_SERVER_CONFIG));
+        }
+
         /**
-         * Data Access -> File Browser / Recovery Point
+         * Getting Started
+         * 1. About SAM & QFS
+         * 2. First Time Configuration
+         * 3. Registration
          */
-        node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_FB_RECOVERY);
+        node = (CCNavNode) model.getNodeById(
+                            NavigationNodes.NODE_GETTING_STARTED);
         if (node != null) {
             node.removeAllChildren();
 
-            // File Browser
             node.addChild(
-                naviNodes.getNavigationNode(NavigationNodes.NODE_FILE_BROWSER));
-
-            // Recovery Point - For SAM setups only
-            if (!isQFSStandAlone) {
-                node.addChild(naviNodes.getNavigationNode(
-                        NavigationNodes.NODE_RECOVERY_POINTS));
-            } else {
-                node.setLabel("node.dataaccess.qfs");
-                node.setTooltip("node.dataaccess.tooltip.qfs");
-            }
+                naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_ABOUT_SAMQFS));
+            node.addChild(
+                naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_FIRST_TIME_CONFIG));
+            node.addChild(
+                naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_REGISTRATION));
         }
 
         /**
-         * File System & NFS Shares -> File Systems / NFS
+         * Archive Media (SAM only)
+         * 1. Tape Libraries
+         * 2. Tape Volumes
+         * 3. Disk Volumes
+         * 4. Volume Pools
+         */
+        if (!isQFSStandAlone) {
+            node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_STORAGE);
+            node.removeAllChildren();
+
+            node.addChild(
+                naviNodes.getNavigationNode(NavigationNodes.NODE_LIBRARY));
+            node.addChild(
+                naviNodes.getNavigationNode(NavigationNodes.NODE_TAPE_VSN));
+            node.addChild(
+                naviNodes.getNavigationNode(NavigationNodes.NODE_DISK_VSN));
+            node.addChild(
+                naviNodes.getNavigationNode(NavigationNodes.NODE_VSN_POOL));
+        }
+
+        /**
+         * File System & NFS Shares
+         * 1. File Systems
+         * 2. NFS Shares
          */
         node = (CCNavNode) model.getNodeById(
                                 NavigationNodes.NODE_FILE_SYSTEM);
@@ -217,9 +263,11 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
         }
 
         /**
-         * Archive Administration ->
-         *   Archive Policies, Recycler, General Setup, Archive Activity
-         * The Archive Admin node will not show up in QFS setup
+         * Archive Administration (SAM only)
+         * 1. Policies
+         * 2. Storage Recycling
+         * 3. Global Parameters
+         * 4. Archive Activity
          */
         if (!isQFSStandAlone) {
             node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_ARCHIVE);
@@ -241,87 +289,98 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
                 node.addChild(
                     naviNodes.getNavigationNode(NavigationNodes.NODE_ACTIVITY));
             }
-
-            /**
-             * Storage Administration ->
-             * SAM-QFS
-             * Tape Libraries, Tape VSNs, Disk VSNs, VSN Pools, VSN Pools
-             *
-             * This node will not show up in QFS setup
-             */
-            node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_STORAGE);
-            node.removeAllChildren();
-
-            node.addChild(
-                naviNodes.getNavigationNode(NavigationNodes.NODE_LIBRARY));
-            node.addChild(
-                naviNodes.getNavigationNode(NavigationNodes.NODE_TAPE_VSN));
-            node.addChild(
-                naviNodes.getNavigationNode(NavigationNodes.NODE_DISK_VSN));
-            node.addChild(
-                naviNodes.getNavigationNode(NavigationNodes.NODE_VSN_POOL));
         }
 
         /**
-         * System Administration
-         * Faults, Jobs, Notifications, Reports, Registration
+         * File Browser & Recovery
+         * 1. File Browser
+         * 2. Recovery Points (SAM only)
+         * 3. Scheduled Tasks (SAM only)
          */
-        node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_ADMIN);
-        node.removeAllChildren();
+        node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_FB_RECOVERY);
+        if (node != null) {
+            node.removeAllChildren();
 
-        // Server Info
-        node.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_SERVER_CONFIG));
+            if (isQFSStandAlone) {
+                node.setLabel("node.dataaccess.qfs");
+                node.setTooltip("node.dataaccess.tooltip.qfs");
+                node.setStatus("node.dataaccess.tooltip.qfs");
+            } else {
+                // Recovery Point - For SAM setups only
+                node.addChild(naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_RECOVERY_POINTS));
+                node.addChild(naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_SCHEDULED_TASKS));
+            }
 
-        // Faults
-        node.addChild(naviNodes.getNavigationNode(NavigationNodes.NODE_FAULT));
-
-        // Jobs
-        child = naviNodes.getNavigationNode(NavigationNodes.NODE_JOB);
-        child.removeAllChildren();
-
-        // Current, Pending, All Jobs
-        child.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_JOB_CURRENT));
-        child.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_JOB_PENDING));
-        child.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_JOB_ALL));
-        node.addChild(child);
-
-        // Scheduled tasks & System Monitoring
-        node.addChild(naviNodes
-             .getNavigationNode(NavigationNodes.NODE_SCHEDULED_TASKS));
-
-        // Show Monitoring console if it is a SAM-QFS server
-        if (!isQFSStandAlone) {
-            node.addChild(naviNodes
-                 .getNavigationNode(NavigationNodes.NODE_MONITORING));
+            node.addChild(
+                naviNodes.getNavigationNode(NavigationNodes.NODE_FILE_BROWSER));
         }
 
-        // Notifications
-        node.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_NOTIFICATION));
+        /**
+         * Monitoring
+         * 1. Dashboard (SAM-only)
+         * 2. Faults
+         * 3. Email Alerts
+         * 4. Jobs
+         */
+        node = (CCNavNode) model.getNodeById(NavigationNodes.NODE_MONITORING);
+        if (node != null) {
+            node.removeAllChildren();
 
-        // Reports
-        child = naviNodes.getNavigationNode(NavigationNodes.NODE_REPORTS);
-        child.removeAllChildren();
+            if (!isQFSStandAlone) {
+                node.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_DASHBOARD));
+            }
 
-        // Media Report / FS Report / FS Metric
-        if (!isQFSStandAlone) {
-            child.addChild(
-                naviNodes.getNavigationNode(
-                    NavigationNodes.NODE_MEDIA_REPORTS));
+            node.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_FAULT));
+
+            node.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_NOTIFICATION));
+
+            // Jobs
+            child = naviNodes.getNavigationNode(NavigationNodes.NODE_JOB);
+            if (child != null) {
+                child.removeAllChildren();
+
+                // Current, Pending, All Jobs
+                child.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_JOB_CURRENT));
+                child.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_JOB_PENDING));
+                child.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_JOB_ALL));
+                node.addChild(child);
+            }
         }
-        child.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_FS_METRICS));
-        child.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_FS_REPORTS));
-        node.addChild(child);
 
-        // Product Registration
-        node.addChild(
-            naviNodes.getNavigationNode(NavigationNodes.NODE_REGISTRATION));
+        /**
+         * Metrics & Reports (SAM only)
+         * 1. Media Status
+         * 2. File Data Distribution
+         * 3. File System Utilization
+         * 4. System Details
+         */
+        if (!isQFSStandAlone) {
+            node = (CCNavNode) model.getNodeById(
+                            NavigationNodes.NODE_REPORTS);
+            if (node != null) {
+                node.removeAllChildren();
+
+                node.addChild(naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_MEDIA_REPORTS));
+
+                node.addChild(naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_FS_METRICS));
+
+                node.addChild(naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_FS_REPORTS));
+
+                node.addChild(naviNodes.getNavigationNode(
+                        NavigationNodes.NODE_SERVER_CONFIG));
+            }
+        }
 
         return model;
     }
@@ -345,7 +404,7 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
             SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
             allSystemModel = appModel.getAllSamQFSSystemModels();
         } catch (SamFSException samEx) {
-            TraceUtil.trace1("Failed to retrieve server Version number");
+            TraceUtil.trace1("Failed to retrieve server Version number", samEx);
             // Eat the exception, do not throw anything up
         }
 

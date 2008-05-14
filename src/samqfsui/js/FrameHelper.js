@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameHelper.js,v 1.9 2008/04/16 17:07:25 ronaldso Exp $
+// ident	$Id: FrameHelper.js,v 1.10 2008/05/14 23:14:54 ronaldso Exp $
 
 /** 
  * This file is used to construct the frames format, and it also contains
@@ -80,14 +80,13 @@
         
         var whereToGo = "";
         if (destination == "firsttime") {
-            whereToGo = "util/CommonTasks";
+            // TODO: Change to First Time Configuration Page
+            whereToGo = "fs/FSSummary";
         } else if (destination == "lib") {
             whereToGo = "media/LibrarySummary";
             
         } else if (destination == "alarm") {
             whereToGo = "alarms/CurrentAlarmSummary";
-        } else if (destination == "serverinfo") {
-            whereToGo = "admin/ServerConfiguration";
         } else {
             whereToGo = "fs/FSSummary";
         }
