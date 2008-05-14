@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StripedGrp.java,v 1.7 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: StripedGrp.java,v 1.8 2008/05/14 21:02:56 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -35,7 +35,7 @@ import com.sun.netstorage.samqfs.mgmt.fs.DiskDev;
 
 public class StripedGrp {
 
-    private String name;    /* gxx format */
+    private String name;    /* gxx format or oxx format */
     private DiskDev[] devs;
 
 
@@ -54,5 +54,4 @@ public class StripedGrp {
             s = s + "\n  " + devs[i];
         return s;
     }
-
 }

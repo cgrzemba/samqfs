@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.10 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: Host.java,v 1.11 2008/05/14 21:02:56 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -36,6 +36,14 @@ import com.sun.netstorage.samqfs.mgmt.Ctx;
 
 
 public class Host {
+    public static final int CL_STATE_OFF = 0;
+    public static final int CL_STATE_ON  = 1;
+
+    /* Shared FS Host Function options must match options in pub/mgmt/hosts.h */
+    public static final int STORAGE_NODE	= 0x0001;
+    public static final int MDS			= 0x0002;
+    public static final int CLIENTS		= 0x0004;
+    public static final int HOST_DETAILS	= 0x0008;
 
     String name;
     String ipAddrs[];
@@ -82,29 +90,83 @@ public class Host {
 
 
     /*
-     * public class methods. must be called on a [potential] metadata server
+     * public class methods. must be called on the metadata server
      */
 
     /**
-     * return the hosts that are allowed to access
-     * the specified shared filesystem
+     * Function to add multiple clients to a shared file system. This
+     * function may be run to completion in the background.
+     * Returns:
+     * 0 for successful completion
+     * -1 for error
+     * job_id will be returned if the job has not completed.
      */
-    public static native Host[] getConfig(Ctx ctx, String fsName)
+    public static native int addClients(String fsname, Host[] hosts)
 	throws SamFSException;
 
     /**
-     * remove specified host from the configuration of
-     * the specified shared filesystem
+     * The file system must be unmounted to remove clients. You can
+     * disable access from clients without unmounting the file system
+     * with the setClientState function.
+     *
+     * Returns: 0, 1, job ID
+     * 0 for successful completion
+     * -1 for error
+     * job ID will be returned if the job has not completed.
      */
-    public static native void removeFromConfig(Ctx ctx,
-	String fsName, String hostName) throws SamFSException;
-
-    /**
-     * add specified host to the configuration of
-     * the specified shared filesystem
-     */
-    public static native void addToConfig(Ctx c, String fsName, Host newHost)
+    public static native int removeClients(String fsname, String[] clients)
 	throws SamFSException;
+
+    /*
+     * Enable or disable client access. This operation is performed on
+     * the metadata server. The states CL_STATE_ON and CL_STATE_OFF are
+     * supported.
+     */
+    public static native void setClientState(String fsname,
+	String[] hostNames, int state) throws SamFSException;
+
+    /*
+     * Method to retrieve data about shared file system hosts.
+     *
+     * By setting the options field you can determine what type
+     * of hosts will be included and what data will be returned.
+     *
+     * The options field supports the flags:
+     * STORAGE_NODE | MDS | CLIENTS | HOST_DETAILS
+     *
+     * Where MDS returns the potential metadata information too.
+     *
+     * For Storage Nodes the capacity is reported in the devices of the file
+     * system. This call only returns information about the host, ip and
+     * status.
+     *
+     * Keys shared by all classes of host include:
+     * hostName = %s
+     * type = OSD | client | mds | pmds
+     * ip_addresses = space separated list of ips.
+     * os = Operating System Version
+     * version = sam/qfs version
+     * arch = x86 | sparc
+     * mounted = %d ( -1 means not mounted otherwise time mounted in seconds)
+     * status = ON | OFF
+     * error = assumed_dead | known_dead
+     *
+     * faults = %d (only on storage nodes. This key only present if faults
+     *		    exist)
+     *
+     * If HOST_DETAILS flag is set in options the following will be obtained
+     * for clients and real and potential metadata servers. Information
+     * about decoding these can be found in the pub/mgmt/hosts.h header file.
+     *
+     * fi_status=<hex 32bit map>
+     * fi_flags = <hex 32bit map>
+     * mnt_cfg = <hex 32bit map>
+     * mnt_cfg1 = <hex 32bit map>
+     * no_msgs= int32
+     * low_msg = uint32
+     */
+    public static native String[] getSharedFSHosts(Ctx c, String fsName,
+	int options) throws SamFSException;
 
     /**
      * return a list of IP adresses and names under which this host is known
@@ -143,5 +205,29 @@ public class Host {
      */
     public static native String getMetadataServerName(Ctx c, String fsName)
         throws SamFSException;
+
+
+    /* Pre 5.0 Shared File System Compatability Functions */
+
+    /**
+     * return the hosts that are allowed to access
+     * the specified shared filesystem
+     */
+    public static native Host[] getConfig(Ctx ctx, String fsName)
+	throws SamFSException;
+
+    /**
+     * remove specified host from the configuration of
+     * the specified shared filesystem
+     */
+    public static native void removeFromConfig(Ctx ctx,
+	String fsName, String hostName) throws SamFSException;
+
+    /**
+     * add specified host to the configuration of
+     * the specified shared filesystem
+     */
+    public static native void addToConfig(Ctx c, String fsName, Host newHost)
+	throws SamFSException;
 
 }

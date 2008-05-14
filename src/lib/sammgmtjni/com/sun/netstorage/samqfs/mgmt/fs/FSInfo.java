@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSInfo.java,v 1.18 2008/03/17 14:43:58 am143972 Exp $
+// ident	$Id: FSInfo.java,v 1.19 2008/05/14 21:02:56 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -36,11 +36,18 @@ import com.sun.netstorage.samqfs.mgmt.Ctx;
 
 public class FSInfo {
 
-    // fs equipment type
+    // fs equipment types
+    public static final String UFS_DATA = "ufs";
     public static final String SEPARATE_METADATA = "ma";
     public static final String COMBINED_METADATA = "ms";
-    // since 4.4
-    public static final String UFS_DATA = "ufs";
+    public static final String OBJECT_TARGET = "mat";
+    public static final String OBJECT_BASED_QFS	= "mb";
+
+    // A proto object based qfs is one that is still in the
+    // process of being configured.
+    public static final String PROTO_OBJECT_BASED = "mbp";
+
+
 
     /**
      * this value should be used if the user wants a new valid EQU to be

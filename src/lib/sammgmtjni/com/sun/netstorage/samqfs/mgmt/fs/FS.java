@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FS.java,v 1.23 2008/04/23 19:58:38 ronaldso Exp $
+// ident	$Id: FS.java,v 1.24 2008/05/14 21:02:56 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -51,6 +51,7 @@ public class FS {
 
     public static native void create(Ctx c, FSInfo fsinfo, boolean mountAtBoot)
         throws SamFSException;
+
     /**
      * The steps are as follows:
      *
@@ -84,13 +85,105 @@ public class FS {
     public static native void remove(Ctx c, String fsname)
         throws SamFSException;
 
-    public static native void mount(Ctx c, String fsname) throws SamFSException;
+    public static native void mount(Ctx c, String fsname)
+	throws SamFSException;
+
     public static native void umount(Ctx c, String fsname)
         throws SamFSException;
 
-    public static native void grow(Ctx c, FSInfo fs,
+    /*
+     * Returns 0 for the general case but for shared file systems this
+     * function returns the job id of the job that is contacting the
+     * clients.
+     */
+    public static native int grow(Ctx c, FSInfo fs,
         DiskDev[] addMetadataDisks, DiskDev[] addDataDisks,
         StripedGrp[] addStripedGrps) throws SamFSException;
+
+    /*
+     * Method to remove a device from a file system by releasing all of
+     * the data on the device.
+     *
+     * options is a string of key value pairs that are based on the
+     * directives in shrink.cmd. If options is non-null the options
+     * will be set for this file system in the shrink.cmd file
+     * prior to invoking the shrink.
+     *
+     * Options Keys:
+     *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	   display_all_files = TRUE | FALSE (default FALSE)
+     *	   do_not_execute = TRUE | FALSE (default FALSE)
+     *	   logfile = filename (default no logging)
+     *	   stage_files = TRUE | FALSE (default FALSE)
+     *	   stage_partial = TRUE | FALSE (default FALSE)
+     *	   streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public static native int shrinkRelease(Ctx c, String fsname,
+	int eqToRelease, String options) throws SamFSException;
+
+    /*
+     * Method to remove a device from a file system by copying the
+     * data to other devices. If replacementEq is the eq of a device
+     * in the file system the data will be copied to that device.
+     * If replacementEq is -1 the data will be copied to available devices
+     * in the FS.
+     *
+     * Options Keys:
+     *	   logfile = filename (default no logging)
+     *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	   display_all_files = TRUE | FALSE (default FALSE)
+     *	   do_not_execute = TRUE | FALSE (default FALSE)
+     *	   logfile = filename (default no logging)
+     *	   streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public static native int shrinkRemove(Ctx c, String fsname,
+	int eqToRemove, int replacementEq, String options)
+	throws SamFSException;
+
+    /*
+     * Method to remove a device from a file system by copying the
+     * data to a newly added device.
+     *
+     * Options Keys:
+     *	   logfile = filename (default no logging)
+     *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	   display_all_files = TRUE | FALSE (default FALSE)
+     *	   do_not_execute = TRUE | FALSE (default FALSE)
+     *	   logfile = filename (default no logging)
+     *	   streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public static native int shrinkReplaceDev(Ctx c, String fsname,
+	int eqToRemove, DiskDev replacementDev, String options)
+	throws SamFSException;
+
+    /*
+     * Method to remove a striped group from a file system by copying the
+     * data to a new striped group.
+     *
+     * Options Keys:
+     *	   logfile = filename (default no logging)
+     *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	   display_all_files = TRUE | FALSE (default FALSE)
+     *	   do_not_execute = TRUE | FALSE (default FALSE)
+     *	   logfile = filename (default no logging)
+     *	   streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public static native int shrinkReplaceGroup(Ctx c, String fsname,
+	int eqToRemove, StripedGrp replacementDev, String options)
+	throws SamFSException;
+
 
     public static native void fsck(Ctx c, String fsName, String logfile,
         boolean repair) throws SamFSException;
@@ -121,6 +214,73 @@ public class FS {
         int[] eqs) throws SamFSException;
 
 
+
+    // --------------- shared file system methods ----------------
+
+    /*
+     * Method to get summary status for a shared file system
+     * Status is returned as key value strings.
+     *
+     * The method potentially returns three strings. One each for the
+     * client status, pmds status and storage node status. If no storage
+     * nodes are present no storage node string will be returned.
+     *
+     * The format is as follows:
+     * clients=1024, unmounted=24, off=2, error=0
+     * storage_nodes=124, unmounted=0, off=1, error=0
+     * pmds = 8, unmounted=2, off=0, error=0
+     */
+    public static native String[] getSharedFSSummaryStatus(Ctx c, String fsName)
+	throws SamFSException;
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task.  Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public static native int mountClients(Ctx c, String fsName,
+	String[] clients) throws SamFSException;
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public static native int unmountClients(Ctx c, String fsName,
+	String[] clients) throws SamFSException;
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public static native int setSharedFSMountOptions(Ctx c, String fsName,
+	String[] clients, MountOptions mo) throws SamFSException;
+
+    /*
+     * nodeData is a key value string that includes the following keys:
+     * host = hostname
+     * dataip = ip address
+     * group = groupId (o1, o2, o3 etc.)
+     *
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public static native int addStorageNode(String hpcFSName, String nodeName,
+	String nodeIP, FSInfo backingStore, String nodeData)
+	throws SamFSException;
+
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public static native int removeStorageNode(String hpcFSName,
+	String nodeName) throws SamFSException;
+
+
     // --------------- generic methods (non-samq specific) -------------------
 
 
@@ -142,6 +302,8 @@ public class FS {
 
     public static native String[] getNFSOptions(Ctx c, String mntPoint)
         throws SamFSException;
+
     public static native void setNFSOptions(Ctx c, String mntPoint,
         String opts) throws SamFSException;
+
 }

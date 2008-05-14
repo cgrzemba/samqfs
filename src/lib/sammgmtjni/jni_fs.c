@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.42 $"
+#pragma ident	"$Revision: 1.43 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -839,22 +839,26 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_FS_umount(JNIEnv *env,
 }
 
 
-JNIEXPORT void JNICALL
+JNIEXPORT jint JNICALL
 Java_com_sun_netstorage_samqfs_mgmt_fs_FS_grow(JNIEnv *env,
     jclass cls /*ARGSUSED*/, jobject ctx, jobject fsObj,
     jobjectArray mdDsks, jobjectArray dDsks, jobjectArray Grps) {
 
+	int ret;
 	PTRACE(1, "jni:FS_grow() entry");
-
-	if (-1 == grow_fs(CTX,
+	ret == grow_fs(CTX,
 	    FSInfo2fs(env, fsObj),
 	    jarray2lst(env, mdDsks, BASEPKG"/fs/DiskDev", DiskDev2dsk),
 	    jarray2lst(env, dDsks, BASEPKG"/fs/DiskDev", DiskDev2dsk),
-	    jarray2lst(env, Grps, BASEPKG"/fs/StripedGrp", StripedGrp2sgrp))) {
+	    jarray2lst(env, Grps, BASEPKG"/fs/StripedGrp", StripedGrp2sgrp));
+
+	if (ret == -1) {
 		ThrowEx(env);
-		return;
+		return (-1);
 	}
+
 	PTRACE(1, "jni:FS_grow() done");
+	return (ret);
 }
 
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SysInfo.java,v 1.17 2008/04/17 18:26:13 ta129963 Exp $
+// ident	$Id: SysInfo.java,v 1.18 2008/05/14 21:02:55 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.adm;
 
@@ -208,4 +208,27 @@ public class SysInfo {
      */
     public static native String[] getComponentStatusSummary(Ctx c)
         throws SamFSException;
+
+    /*
+     * This method is to support the First Time Configuration Checklist.
+     * It provides the information that allows the GUI to show feedback
+     * to the users that things have occurred.
+     *
+     * Key value string showing the status.
+     * Keys ==> Value type
+     * lib_count = int
+     * lib_names = space separated list.
+     * tape_count = int
+     * qfs_count = int
+     * disk_vols_count = int
+     * volume_pools = int
+     * object_qfs_protos = int (number of HPC file systems
+     *				currently partially created)
+     * ojbect_qfs_names = space separated list of names.
+     * Storage_nodes = int (only provided if object_qfs_proto_count == 1)
+     * clients = int (only provided if object_qfs_proto_count == 1)
+     */
+    public static native String getConfigurationSummary(Ctx c)
+	throws SamFSException;
+
 }

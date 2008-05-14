@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Job.java,v 1.15 2008/03/17 14:43:55 am143972 Exp $
+// ident	$Id: Job.java,v 1.16 2008/05/14 21:02:55 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt;
 
@@ -193,6 +193,39 @@ public abstract class Job {
      * SAMARUNEXPLORER:-
      * activityid=%s,starttime=%ld,details=\"/full/path/file\",type=%s,pid=%d
      *
+     * Multi-Host operations will share the same set of key value pairs.
+     * These key-value pairs will apply for the following job types:
+     *		UnmountClients, MountClients AddClients, RemoveClients,
+     *		AddStorageNode, RemoveStorageNode, SharedGrow, SharedShrink
+     *		SharedFSMountOptions
+     *
+     * Multi-Host Operation Keys:
+     * activityid=%s (This matches the job id returned by the functions)
+     * type=%s
+     * starttime=%d
+     * fsname=%s
+     * host_count = int
+     * hosts_responding = int
+     * hosts_pending = int
+     * status=success|partial_failure|failure|pending
+     * error = overall_error_number (only present when failure or
+     *			partial_failure set)
+     * error_msg = overall_error_message
+     * OKHosts = hostf hoste hostc hostb hostn hostr
+     * host_errors = 31002 32006 32008
+     * 31002 = hostz
+     * 32006 = hosta hostk
+     * 32008 = hostl hostm
+     *
+     * A note about multi-host error keys:
+     * The numbers used for the error reporting keys map to
+     * error numbers. Error numbers are returned to allow localization
+     * of the messages in the GUI even when the backend servers are
+     * running in the C locale.
+     *
+     * host_errors can be used to get a list of all of the
+     * types of errors that have occurred. Using the number as a key
+     * allows the caller to determine what hosts enountered that error.
      */
     public static native String[] getAllActivities(Ctx c, int maxEntries,
         String filter) throws SamFSException;
