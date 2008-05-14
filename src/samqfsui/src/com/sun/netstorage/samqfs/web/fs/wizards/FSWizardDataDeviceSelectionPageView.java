@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.27 2008/03/17 14:43:35 am143972 Exp $
+// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.28 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -88,6 +88,8 @@ public class FSWizardDataDeviceSelectionPageView
         // and QFS (multiple selection), we need to reset actiontable state data
         // if fs type has changed.
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
+
+        // fsType is null when this view is used in the Grow wizard
         String fsType = (String)
             wizardModel.getValue(CreateFSWizardImpl.FSTYPE_KEY);
         String prevFSType = (String) wizardModel.getValue(PREV_FSTYPE_KEY);
@@ -98,7 +100,7 @@ public class FSWizardDataDeviceSelectionPageView
         }
         wizardModel.setValue(PREV_FSTYPE_KEY, fsType);
 
-        if (fsType.equals(CreateFSWizardImpl.FSTYPE_UFS)) {
+        if (fsType != null && fsType.equals(CreateFSWizardImpl.FSTYPE_UFS)) {
             tableModel.setSelectionType(CCActionTableModelInterface.SINGLE);
         } else {
             tableModel.setSelectionType(CCActionTableModelInterface.MULTIPLE);

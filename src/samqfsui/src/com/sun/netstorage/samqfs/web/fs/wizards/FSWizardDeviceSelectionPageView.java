@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.16 2008/03/17 14:43:35 am143972 Exp $
+// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.17 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -367,11 +367,13 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         TraceUtil.trace3("Entering");
 
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
+
+        // fsType is null when page is used in Grow Wizard
         String fsType = (String) wm.getValue(CreateFSWizardImpl.FSTYPE_KEY);
 
         CCLabel counterLabel =
             ((CCLabel) getChild(FSWizardDeviceSelectionPageView.CHILD_LABEL));
-        if (fsType.equals(CreateFSWizardImpl.FSTYPE_UFS)) {
+        if (fsType == null || fsType.equals(CreateFSWizardImpl.FSTYPE_UFS)) {
             counterLabel.setVisible(false);
             TraceUtil.trace3("Returned false");
             return false;
@@ -386,11 +388,13 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         TraceUtil.trace3("Entering");
 
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
+
+        // fsType is null when page is used in Grow Wizard
         String fsType = (String) wm.getValue(CreateFSWizardImpl.FSTYPE_KEY);
 
         CCTextField counter = ((CCTextField)
             getChild(FSWizardDeviceSelectionPageView.CHILD_COUNTER));
-        if (fsType.equals(CreateFSWizardImpl.FSTYPE_UFS)) {
+        if (fsType == null || fsType.equals(CreateFSWizardImpl.FSTYPE_UFS)) {
             counter.setVisible(false);
             TraceUtil.trace3("Returned false");
             return false;

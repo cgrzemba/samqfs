@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryModel.java,v 1.65 2008/03/17 14:43:34 am143972 Exp $
+// ident	$Id: FileSystemSummaryModel.java,v 1.66 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -184,15 +184,13 @@ public class FileSystemSummaryModel extends CCActionTableModel {
     // Initialize table model
     /**
      * Special Note on the description column of the FS Summary Action Table.
-     * Due to the change of terminology in 4.4, the FS Description (formerly
+     * Due to the change of terminology, the FS Description (formerly
      * FS Type) is changed.  Due to the tight relationship of the fsType and
      * the code logic behind it, FSUtil.getFSDescription method was created to
      * get the description of the file system.  Moreover, this new method will
      * be used in the filter of the FS Summary page as well.
      */
     public void initModelRows(String serverName) throws SamFSException {
-
-        TraceUtil.trace3("Entering");
         clear();
         latestRows.clear();
 
@@ -204,7 +202,7 @@ public class FileSystemSummaryModel extends CCActionTableModel {
         fileSystems = fsManager.getNonSAMQFileSystems();
 
         if (fsList == null && fileSystems == null) {
-            TraceUtil.trace3("Exiting");
+            TraceUtil.trace3("fsList is null or fileSystems is null!");
             return;
         }
 
@@ -216,10 +214,8 @@ public class FileSystemSummaryModel extends CCActionTableModel {
         boolean umountEnabled = false;
         boolean deleteEnabled = false;
         boolean fsckEnabled = false;
-        boolean snapshotEnabled = false;
 
         for (i = 0; fsList != null && i < fsList.length; i++) {
-            String noAlarm = "";
             String name  = null,
                    point = null,
                    state = null;
@@ -336,9 +332,24 @@ public class FileSystemSummaryModel extends CCActionTableModel {
             StringBuffer enabledButtons = new StringBuffer();
             StringBuffer enabledMenuOptions = new StringBuffer();
 
-            growEnabled = !fsList[i].isHA() &&
-                (fsState == FileSystem.UNMOUNTED) &&
-                (fsShareStatus == FileSystem.UNSHARED);
+            String serverAPIVersion = "1.5";
+            try {
+                serverAPIVersion =
+                    SamUtil.getServerInfo(serverName).
+                                getSamfsServerAPIVersion();
+                TraceUtil.trace3("API Version: " + serverAPIVersion);
+            } catch (SamFSException samEx) {
+                TraceUtil.trace1("Error getting samfs version!", samEx);
+            }
+
+            if (SamUtil.isVersionCurrentOrLaterThan(serverAPIVersion, "1.6")) {
+                growEnabled = !fsList[i].isHA();
+            } else {
+                growEnabled = !fsList[i].isHA() &&
+                    (fsState == FileSystem.UNMOUNTED) &&
+                    (fsShareStatus == FileSystem.UNSHARED);
+            }
+
             deleteEnabled =
             (fsState == FileSystem.UNMOUNTED) && !UFS_ROOT.equals(point);
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.43 2008/04/23 19:58:39 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.44 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -381,13 +381,26 @@ public class FSDetailsView extends CommonTableContainerView {
 
         ((CCButton) getChild("EditMountOptionsButton")).setDisabled(false);
 
-        if (state == FileSystem.UNMOUNTED && fsShared == FileSystem.UNSHARED) {
-            ((CCWizardWindow)
-                getChild("SamQFSWizardGrowFSButton")).setDisabled(false);
-        } else {
-            ((CCWizardWindow)
-                getChild("SamQFSWizardGrowFSButton")).setDisabled(true);
+        boolean growEnabled = false;
+        String serverAPIVersion = "1.5";
+        try {
+            serverAPIVersion =
+                SamUtil.getServerInfo(serverName).
+                            getSamfsServerAPIVersion();
+            TraceUtil.trace3("API Version: " + serverAPIVersion);
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Error getting samfs version!", samEx);
         }
+
+        if (SamUtil.isVersionCurrentOrLaterThan(serverAPIVersion, "1.6")) {
+            growEnabled = fs.isHA();
+        } else {
+            growEnabled = fs.isHA() &&
+                (state == FileSystem.UNMOUNTED) &&
+                (fsShared == FileSystem.UNSHARED);
+        }
+        ((CCWizardWindow)
+                getChild("SamQFSWizardGrowFSButton")).setDisabled(growEnabled);
 
         // calculate state info for dropdown menu options
 
@@ -593,10 +606,6 @@ public class FSDetailsView extends CommonTableContainerView {
         String type = null;
         String state = null;
         String share = null;
-        String alarmType = null;
-        String alarmCount = null;
-        StringBuffer alarms = new StringBuffer();
-        String noAlarm = "";
         String sharedType = null;
         String deviceName = "";
         String metadataPlacement = "";

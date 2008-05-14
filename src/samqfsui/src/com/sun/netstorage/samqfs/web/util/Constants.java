@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Constants.java,v 1.101 2008/04/16 17:07:27 ronaldso Exp $
+// ident	$Id: Constants.java,v 1.102 2008/05/14 20:20:02 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -341,10 +341,9 @@ public interface Constants {
 
         public static final String SERVER_API_VERSION = "SamServerAPIVersion";
 
-        public static final String AVAILABLE_LUNS = "AvailableLuns";
         public static final int MAX_LUNS = 252;
 
-        public static final int DEVICE_SELECTION_LIST_MAX_SIZE = 5;
+        public static final int DEVICE_SELECTION_LIST_MAX_SIZE = 10;
 
         public static final String COPY_NUMBER = "copyNumber";
 

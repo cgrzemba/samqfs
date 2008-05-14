@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardStripedGroupNumberPage.jsp,v 1.5 2008/03/17 14:40:33 am143972 Exp $
+// ident	$Id: GrowWizardStripedGroupNumberPage.jsp,v 1.6 2008/05/14 20:20:00 ronaldso Exp $
 --%>
 
 <%@ page language="java" %> 
@@ -47,12 +47,9 @@
 --%>
 
 
-<tr>
-<td>
 <cc:alertinline name="Alert" bundleID="samBundle" /><br />
-</td>
-</tr>
 
+<table style="padding-left:10px">
 <tr>
   <td>
     <cc:label name="numOfStripedGroupLabel" bundleID="samBundle"
@@ -63,7 +60,7 @@
     <cc:textfield name="numOfStripedGroupTextField"
       bundleID="samBundle" dynamic="true" maxLength="3" />
   </td>
-  </td>
 </tr>
+</table>
 
 </jato:pagelet>

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetails.jsp,v 1.31 2008/04/23 19:58:39 ronaldso Exp $
+// ident	$Id: FSDetails.jsp,v 1.32 2008/05/14 20:20:00 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -60,10 +60,8 @@
 <!-- Bread Crumb componente-->
 <cc:breadcrumbs name="BreadCrumb" bundleID="samBundle" />
 
-<br /><br />
 <!-- inline alart -->
 <cc:alertinline name="Alert" bundleID="samBundle" />
-<br>
 
 <jato:containerView name="FSDetailsView">
 

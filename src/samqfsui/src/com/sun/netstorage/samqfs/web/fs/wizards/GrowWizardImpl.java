@@ -27,16 +27,44 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardImpl.java,v 1.40 2008/03/17 14:43:35 am143972 Exp $
+// ident	$Id: GrowWizardImpl.java,v 1.41 2008/05/14 20:20:01 ronaldso Exp $
+
+
+// Possible Steps:
+//
+// Step A: Select if you want to add a metadata device or a data device
+// Step B: Select devices for metadata
+// Step C: Specify the number of striped groups to add
+// Step D: Select devices for data
+// Step E: Review Summary
+// Step F: View Results
+//
+// =============================================================================
+//
+// Case 1: For an un-mounted "ma" type QFS,
+//
+// ==> Seq: B,D,E,F (non-striped)
+// ==> Seq: B,C,D^(# of new striped groups),E,F
+//
+// Case 2: For a mounted "ma" type QFS,
+//
+// ==> Seq: A,B,D,E,F (non-striped, select both checkbox in A)
+// ==> Seq: A,B,E,F   (non-striped or striped, select only grow metadata in A)
+// ==> Seq: A,D,E,F   (non-striped, select only grow data in A)
+// ==> Seq: A,B,C,D^(# of new striped groups),E,F (striped,select both box in A)
+// ==> Seq: A,C,D^(# of new striped groups),E,F
+// (striped,select only grow data in A)
+//
+// Case 3: For a mounted or un-mounted "ms" type QFS, (no striped group in ms)
+//
+// ==> Seq: D,E,F
+
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
 import com.iplanet.jato.RequestContext;
-import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
-import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
@@ -44,7 +72,6 @@ import com.sun.netstorage.samqfs.web.model.media.StripedGroup;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
-import com.sun.netstorage.samqfs.web.util.ServerInfo;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.wizard.SamWizardImpl;
 import com.sun.netstorage.samqfs.web.wizard.WizardResultView;
@@ -55,9 +82,7 @@ import com.sun.web.ui.model.wizard.WizardInterface;
 import com.sun.web.ui.view.table.CCActionTable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Hashtable;
 import java.util.Iterator;
-import javax.servlet.http.HttpSession;
 
 interface GrowWizardImplData {
 
@@ -65,6 +90,7 @@ interface GrowWizardImplData {
     final String title = "FSWizard.grow.title";
 
     final Class[] pageClass = {
+        GrowWizardMethodView.class,
         FSWizardMetadataDeviceSelectionPageView.class,
         GrowWizardStripedGroupNumberPageView.class,
         FSWizardStripedGroupDeviceSelectionPageView.class,
@@ -74,6 +100,7 @@ interface GrowWizardImplData {
     };
 
     final String[] pageTitle = {
+        "FSWizard.grow.method.title",
         "FSWizard.metadataDevicePage.title",
         "FSWizard.grow.stripedGroupNumberPage.title",
         "FSWizard.stripedGroupDevicePage.title",
@@ -83,6 +110,7 @@ interface GrowWizardImplData {
     };
 
     final String[][] stepHelp = {
+        {"FSWizard.grow.stripedGroupNumberPage.help.text1"},
         {"FSWizard.devicePage.help.text1",
          "FSWizard.devicePage.help.text2",
          "FSWizard.devicePage.help.text3",
@@ -127,6 +155,7 @@ interface GrowWizardImplData {
     };
 
     final String[] stepText = {
+        "FSWizard.grow.method.step.text",
         "FSWizard.metadataDevicePage.step.text",
         "FSWizard.grow.stripedGroupNumberPage.step.text",
         "FSWizard.stripedGroupDevicePage.step.text",
@@ -136,6 +165,7 @@ interface GrowWizardImplData {
     };
 
     final String[] stepInstruction = {
+        "FSWizard.grow.method.step.text",
         "FSWizard.metadataDevicePage.instruction.text",
         "FSWizard.grow.stripedGroupNumberPage.instruction.text",
         "FSWizard.stripedGroupDevicePage.instruction.text",
@@ -145,29 +175,21 @@ interface GrowWizardImplData {
     };
 
     final String[] cancelmsg = {
-        "FSWizard.metadataDevicePage.cancel",
-        "FSWizard.grow.stripedGroupNumberPage.cancel",
-        "FSWizard.stripedGroupDevicePage.cancel",
-        "FSWizard.dataDevicePage.cancel",
-        "FSWizard.grow.summaryPage.cancel",
+        "",
+        "",
+        "",
+        "",
+        "",
         ""
     };
 
-    final int PAGE_METADATA = 0;
-    final int PAGE_STRIPED_GROUP_NUM = 1;
-    final int PAGE_STRIPED_GROUP = 2;
-    final int PAGE_DATA = 3;
-    final int PAGE_SUMMARY = 4;
-    final int PAGE_RESULT = 5;
-
-
-    // The follow are examples of fsPages and qfsPages
-    final int[] qfsPages = {
-        PAGE_METADATA,
-        PAGE_DATA,
-        PAGE_SUMMARY,
-        PAGE_RESULT
-    };
+    final int PAGE_METHOD = 0;
+    final int PAGE_METADATA = 1;
+    final int PAGE_STRIPED_GROUP_NUM = 2;
+    final int PAGE_STRIPED_GROUP = 3;
+    final int PAGE_DATA = 4;
+    final int PAGE_SUMMARY = 5;
+    final int PAGE_RESULT = 6;
 }
 
 public class GrowWizardImpl extends SamWizardImpl {
@@ -179,59 +201,60 @@ public class GrowWizardImpl extends SamWizardImpl {
     public static final String WIZARDCLASSNAME =
         "com.sun.netstorage.samqfs.web.fs.wizards.GrowWizardImpl";
 
-    // Constants defining FileSystem Type
-    public static final String FSTYPE_KEY = "fsTypeKey";
-    public static final String FSTYPE_FS  = "fs";
-    public static final String FSTYPE_QFS = "qfs";
+    // Wizard model value to determine if file system has combined
+    public static final String ATTR_COMBINED = "attr_combined";
 
-    // Variables to store allDevices, selectedMetaDevices, selectedDataDevices
-    private DiskCache[] allAllocatableDevices = null;
-    private ArrayList selectedDataDevicesList = null;
-    private ArrayList selectedMetaDevicesList = null;
-    private ArrayList selectedStripedGroupDevicesList = null;
+    // Wizard model value to determine if file system is mounted or not
+    public static final String ATTR_IS_MOUNTED = "attr_is_mounted";
 
-    private FileSystem fileSystemHandle = null;
-
-    private String fsType = FSTYPE_FS;
-
-    private boolean fs = false;
     private boolean wizardInitialized = false;
-
-    // max number of striped groups we can grow a filesystem
-    private int availableGroups = 0;
-    private int numStripedGroups = -1;
-
-    // Keep this variable even if it may not be in used.  Keep this variable
-    // around in case we need to support backward compatibility in the future
-    // Variable to hold samfs server api version number
-    // api 1.0 = samfs 4.1
-    // api 1.1 = samfs 4.2
-    // api 1.2 = samfs 4.3
-    // api 1.3 = samfs 4.4
-    // api 1.4 = samfs 4.5
-    // api 1.5 = samfs 4.6
-    private String samfsServerAPIVersion = "1.5"; // previous release version
 
     // Variable to hold previously entered number of striped groups
     private String OLD_NUM_STRIPED_GROUPS = "OLD_NUM_STRIPED_GROUPS";
 
-    // TODO: this should be moved to base class
+    // Hold the number of devices that can be added to the file system.
+    // A file system cannot hold more than 252 LUNs
+    private int maxDeviceToAdd = -1;
+
     protected String serverName = null;
     protected String fsName = null;
 
-    // Static Create method called by the viewbean
+    // Save a copy of file system object of which is about to grow
+    private FileSystem thisFS = null;
+
+    // An example of "page" steps
+    private int [] mountSteps = new int [] {GrowWizardImplData.PAGE_METHOD,
+                                            GrowWizardImplData.PAGE_METADATA,
+                                            GrowWizardImplData.PAGE_DATA,
+                                            GrowWizardImplData.PAGE_SUMMARY,
+                                            GrowWizardImplData.PAGE_RESULT};
+
+    /**
+     * Static Create method called by the parent viewbean
+     * @param requestContext
+     * @return
+     */
     public static WizardInterface create(RequestContext requestContext) {
         TraceUtil.initTrace();
         TraceUtil.trace2("in create()");
         return  new GrowWizardImpl(requestContext);
     }
 
+    /**
+     * Default constructor
+     * @param requestContext
+     */
     public GrowWizardImpl(RequestContext requestContext) {
         super(requestContext, WIZARDPAGEMODELNAME);
         initializeWizard(requestContext);
         initializeWizardControl(requestContext);
     }
 
+    /**
+     * Creating wizard window model
+     * @param cmdChild
+     * @return
+     */
     public static CCWizardWindowModel createModel(String cmdChild) {
         return
             getWizardWindowModel(
@@ -241,16 +264,20 @@ public class GrowWizardImpl extends SamWizardImpl {
                 cmdChild);
     }
 
-    // overwrite getPageClass() to put striped group number into wizardModel
-    // so that it can be accessed by NewWizardStripedGroupPage
+    /**
+     * Overwrite getPageClass() to put striped group number into wizardModel
+     * so that it can be accessed by NewWizardStripedGroupPage
+     * @param pageId
+     * @return
+     */
     public Class getPageClass(String pageId) {
         TraceUtil.trace2("Entered with pageID = " + pageId);
         int page = pageIdToPage(pageId);
         if (pages[page] == GrowWizardImplData.PAGE_STRIPED_GROUP) {
             wizardModel.setValue(
                 Constants.Wizard.STRIPED_GROUP_NUM,
-                new Integer(page - GrowWizardImplData.PAGE_STRIPED_GROUP));
-            TraceUtil.trace2("This is striped group # " +
+                getStripedGroupNumber(page));
+            TraceUtil.trace3("This is striped group # " +
                 (page - GrowWizardImplData.PAGE_STRIPED_GROUP));
 
         }
@@ -263,11 +290,32 @@ public class GrowWizardImpl extends SamWizardImpl {
         return super.getPageClass(pageId);
     }
 
+    /**
+     * Return an array of string contains the future steps shown in each step
+     * @Override
+     * @param pageId
+     * @return
+     */
     public String[] getFutureSteps(String pageId) {
-        TraceUtil.trace2("Entered with pageID = " + pageId);
+        TraceUtil.trace3("Entered with pageID = " + pageId);
         int page = pageIdToPage(pageId);
         String[] futureSteps = null;
 
+        if (pages[page] == GrowWizardImplData.PAGE_METHOD ||
+            pages[page] == GrowWizardImplData.PAGE_STRIPED_GROUP_NUM) {
+            return new String[0];
+        } else if (
+            pages[page] == GrowWizardImplData.PAGE_METADATA
+            && getNumberOfAvailStripedGrps() != -1
+            && isMounted() && isAddingData()) {
+            return
+                new String [] {
+                    SamUtil.getResourceString(
+                        stepText[GrowWizardImplData.PAGE_STRIPED_GROUP_NUM],
+                        new String [] {
+                            Integer.toString(
+                                GrowWizardImplData.PAGE_STRIPED_GROUP_NUM)})};
+        }
         int howMany = pages.length - page - 1;
         futureSteps = new String[howMany];
 
@@ -275,10 +323,12 @@ public class GrowWizardImpl extends SamWizardImpl {
             int futureStep = page + 1 + i;
             int futurePage = pages[futureStep];
             if (futurePage == GrowWizardImplData.PAGE_STRIPED_GROUP) {
-                futureSteps[i] = SamUtil.getResourceString(
-                    stepText[futurePage],
-                    new String[] {Integer.toString(
-                futureStep - GrowWizardImplData.PAGE_STRIPED_GROUP) });
+                futureSteps[i] =
+                    SamUtil.getResourceString(
+                        stepText[futurePage],
+                        new String [] {
+                            Integer.toString(
+                                getStripedGroupNumber(futureStep))});
             } else {
                 futureSteps[i] = stepText[futurePage];
             }
@@ -287,16 +337,20 @@ public class GrowWizardImpl extends SamWizardImpl {
         return futureSteps;
     }
 
+    /**
+     * Return the step text for each step
+     * @param pageId
+     * @return
+     */
     public String getStepText(String pageId) {
-        TraceUtil.trace2("Entered with pageID = " + pageId);
+        TraceUtil.trace3("Entered with pageID = " + pageId);
         int page = pageIdToPage(pageId);
         String text = null;
 
         if (pages[page] == GrowWizardImplData.PAGE_STRIPED_GROUP) {
             text = SamUtil.getResourceString(
                 stepText[pages[page]],
-                new String[] { Integer.toString(
-                    page - GrowWizardImplData.PAGE_STRIPED_GROUP) });
+                new String[] {Integer.toString(getStripedGroupNumber(page))});
         } else {
             text = stepText[pages[page]];
         }
@@ -304,8 +358,13 @@ public class GrowWizardImpl extends SamWizardImpl {
         return text;
     }
 
+    /**
+     * Return the step title for each step
+     * @param pageId
+     * @return
+     */
     public String getStepTitle(String pageId) {
-        TraceUtil.trace2("Entered with pageID = " + pageId);
+        TraceUtil.trace3("Entered with pageID = " + pageId);
         int page = pageIdToPage(pageId);
         String title = null;
 
@@ -313,7 +372,7 @@ public class GrowWizardImpl extends SamWizardImpl {
             title = SamUtil.getResourceString(
                 pageTitle[pages[page]],
                 new String[] { Integer.toString(
-                    page - GrowWizardImplData.PAGE_STRIPED_GROUP) });
+                    getStripedGroupNumber(page))});
         } else {
             title = pageTitle[pages[page]];
         }
@@ -321,9 +380,14 @@ public class GrowWizardImpl extends SamWizardImpl {
         return title;
     }
 
+    /**
+     * This method is called when the "next" button is clicked in a wizard step
+     * @param wizardEvent
+     * @return
+     */
     public boolean nextStep(WizardEvent wizardEvent) {
         String pageId = wizardEvent.getPageId();
-        TraceUtil.trace2("Entered with pageID = " + pageId);
+        TraceUtil.trace3("Entered with pageID = " + pageId);
 
         // make this wizard active
         super.nextStep(wizardEvent);
@@ -334,6 +398,9 @@ public class GrowWizardImpl extends SamWizardImpl {
         int page = pageIdToPage(pageId);
 
         switch (pages[page]) {
+            case GrowWizardImplData.PAGE_METHOD:
+                // Process the selections in the method page
+                return processMethodPage(wizardEvent);
             case GrowWizardImplData.PAGE_METADATA:
                 // Process the selections in the MetaDatadevices Page
                 return processMetaDataDevicesPage(wizardEvent);
@@ -355,28 +422,30 @@ public class GrowWizardImpl extends SamWizardImpl {
     }
 
     /**
-     * finishStep will collect all data input in each of
-     * wizard step then call API to grow the fs
+     * This method is called when the finish button is clicked on the very last
+     * step (review selections).
+     * finishStep() will collect all data input in each of wizard step then
+     * call API to grow the fs
+     * @param wizardEvent
+     * @return
      */
     public boolean finishStep(WizardEvent wizardEvent) {
-
         String pageId = wizardEvent.getPageId();
-        TraceUtil.trace2("Entered with pageID = " + pageId);
+        TraceUtil.trace3("Entered with pageID = " + pageId);
 
         // make sure this wizard is still active before commit
         if (super.finishStep(wizardEvent) == false) {
             return true;
         }
 
-        DiskCache[] metadataDevices = getSelectedDeviceArray(
-            selectedMetaDevicesList);
-        DiskCache[] dataDevices = getSelectedDeviceArray(
-            selectedDataDevicesList);
+        DiskCache[] metadataDevices =
+            convertArrayListToArray(getSelectedMetaDataDevices());
+        DiskCache[] dataDevices =
+            convertArrayListToArray(getSelectedDataDevices());
 
         StripedGroup[] stripedGroups = null;
         try {
-            stripedGroups =
-                getSelectedStripedGroupsArray(selectedStripedGroupDevicesList);
+            stripedGroups = getSelectedStripedGroupsArray();
         } catch (SamFSException ex) {
             SamUtil.processException(
                 ex,
@@ -400,24 +469,21 @@ public class GrowWizardImpl extends SamWizardImpl {
             return true;
         }
 
-        SamQFSSystemModel sysModel = null;
         try {
-            sysModel = SamUtil.getModel(serverName);
-            FileSystem fileSystem =
-                sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
-            if (fileSystem == null) {
-                throw new SamFSException(null, -1000);
-            }
-
             // Now grow the FileSystem
-            sysModel.getSamQFSSystemFSManager().growFileSystem(
-                fileSystem,
+            LogUtil.info(
+                this.getClass(),
+                "finishStep",
+                "Start growing FS " + fsName);
+
+            getFileSystem().grow(
                 metadataDevices,
                 dataDevices,
                 stripedGroups);
 
             wizardModel.setValue(Constants.Wizard.FINISH_RESULT,
                 Constants.Wizard.RESULT_SUCCESS);
+
             LogUtil.info(
                 this.getClass(),
                 "finishStep",
@@ -433,8 +499,6 @@ public class GrowWizardImpl extends SamWizardImpl {
                 Constants.Wizard.WIZARD_RESULT_ALERT_DETAIL,
                 SamUtil.getResourceString(
                     "FSSummary.growfs", fsName));
-
-            TraceUtil.trace2("Done growing FS " + fsName);
             return true;
         } catch (SamFSException ex) {
             SamUtil.processException(
@@ -460,6 +524,11 @@ public class GrowWizardImpl extends SamWizardImpl {
         }
     }
 
+    /**
+     * This method is called when the cancel button is clicked
+     * @param wizardEvent
+     * @return
+     */
     public boolean cancelStep(WizardEvent wizardEvent) {
         super.cancelStep(wizardEvent);
 
@@ -471,18 +540,55 @@ public class GrowWizardImpl extends SamWizardImpl {
         return true;
     }
 
+    /**
+     * This method is called when the close button is clicked
+     * @param wizardEvent
+     */
     public void closeStep(WizardEvent wizardEvent) {
-        TraceUtil.trace2("Clearing out wizard model...");
+        TraceUtil.trace3("Clearing out wizard model...");
         wizardModel.clear();
-        TraceUtil.trace2("Done!");
+        TraceUtil.trace3("Done!");
+    }
+
+    /**
+     * Private method to process the method page
+     */
+    private boolean processMethodPage(WizardEvent wizardEvent) {
+        String addingMeta = (String)
+                wizardModel.getValue(GrowWizardMethodView.CHECKBOX_META);
+        String addingData = (String)
+                wizardModel.getValue(GrowWizardMethodView.CHECKBOX_DATA);
+        if (Boolean.valueOf(addingMeta).booleanValue() == false &&
+            Boolean.valueOf(addingData).booleanValue() == false) {
+            setWizardAlert(wizardEvent, "FSWizard.grow.error.method");
+            return false;
+        } else if (Boolean.valueOf(addingMeta).booleanValue() == false) {
+            // clear selected meta device array
+            wizardModel.setValue(
+                Constants.Wizard.SELECTED_METADEVICES,
+                null);
+        } else if (Boolean.valueOf(addingData).booleanValue() == false) {
+            // clear selected device array
+            wizardModel.setValue(
+                Constants.Wizard.SELECTED_DATADEVICES,
+                null);
+        }
+
+        if (-1 == getNumberOfAvailStripedGrps()) {
+            updateWizardSteps(-1);
+        } else {
+            updateWizardSteps(1);
+        }
+
+        initializeWizardPages(pages);
+        return true;
     }
 
     /**
      * Private method to process the MetaData Devices page
      */
     private boolean processMetaDataDevicesPage(WizardEvent wizardEvent) {
-        TraceUtil.trace3("Entered");
-        TraceUtil.trace2("Entered processMetaDataDevicesPage.., ");
+        TraceUtil.trace3("Entered processMetaDataDevicesPage.., ");
         boolean result = true;
 
         // Get a handle to the View
@@ -522,9 +628,7 @@ public class GrowWizardImpl extends SamWizardImpl {
             setWizardAlert(wizardEvent, "FSWizard.grow.error.metadata");
             return false;
         } else {
-            int availableLuns = ((Integer) wizardModel.getValue(
-                Constants.Wizard.AVAILABLE_LUNS)).intValue();
-            if (selectedRows.length > availableLuns) {
+            if (selectedRows.length > maxDeviceToAdd) {
                 setWizardAlert(wizardEvent, "FSWizard.maxlun");
                 return false;
             }
@@ -532,10 +636,7 @@ public class GrowWizardImpl extends SamWizardImpl {
 
         // Traverse through the selection and populate selectedDataDevicesList
         String deviceSelected = null;
-        DiskCache device = null;
-        if (selectedMetaDevicesList == null) {
-            selectedMetaDevicesList = new ArrayList();
-        }
+        ArrayList selectedMetaDevicesList = getSelectedMetaDataDevices();
         selectedMetaDevicesList.clear();
 
         for (int i = 0; i < selectedRows.length; i++) {
@@ -544,12 +645,12 @@ public class GrowWizardImpl extends SamWizardImpl {
             selectedMetaDevicesList.add(deviceSelected);
         }
 
+        // Set the value of the selection to display in the summary page
+        Collections.sort(selectedMetaDevicesList);
+
         wizardModel.setValue(
             Constants.Wizard.SELECTED_METADEVICES,
             selectedMetaDevicesList);
-
-        // Set the value of the selection to display in the summary page
-        Collections.sort(selectedMetaDevicesList);
 
         // The following codechecks for lun overlapping
 
@@ -611,12 +712,6 @@ public class GrowWizardImpl extends SamWizardImpl {
             return false;
         }
 
-        StringBuffer deviceList = new StringBuffer();
-        for (int i = 0; i < selectedMetaDevicesList.size(); i++) {
-            deviceList.append((String) selectedMetaDevicesList.get(i)).
-                append("<br>");
-        }
-
         return result;
     }
 
@@ -625,7 +720,6 @@ public class GrowWizardImpl extends SamWizardImpl {
      */
     private boolean processDataDevicesPage(WizardEvent wizardEvent) {
         TraceUtil.trace3("Entered");
-        TraceUtil.trace2("Entered processDataDevicesPage.., ");
 
         // Get a handle to the View
         FSWizardDeviceSelectionPageView view =
@@ -660,12 +754,11 @@ public class GrowWizardImpl extends SamWizardImpl {
 
         TraceUtil.trace2(
             "Number of selected rows are : " + selectedRows.length);
+
+        ArrayList selectedDataDevicesList = getSelectedDataDevices();
+
         // Traverse through the selection and populate selectedDataDevicesList
         String deviceSelected = null;
-        DiskCache device = null;
-        if (selectedDataDevicesList == null) {
-            selectedDataDevicesList = new ArrayList();
-        }
         selectedDataDevicesList.clear();
 
         for (int i = 0; i < selectedRows.length; i++) {
@@ -674,6 +767,8 @@ public class GrowWizardImpl extends SamWizardImpl {
             selectedDataDevicesList.add(deviceSelected);
         }
 
+        Collections.sort(selectedDataDevicesList);
+
         wizardModel.setValue(
             Constants.Wizard.SELECTED_DATADEVICES,
             selectedDataDevicesList);
@@ -681,25 +776,29 @@ public class GrowWizardImpl extends SamWizardImpl {
         // when growing a fs, it's allowed to grow metadata devices only
         // so if user didn't select any data devices, return now
         if (selectedRows.length < 1) {
-            if (fsType == FSTYPE_QFS) {
+            if (isCombined()) {
+                setWizardAlert(wizardEvent, "FSWizard.grow.error.data");
+                return false;
+            } else if (isMounted() && isAddingData()) {
+                // user explicitly said he/she wants to add data devices in the
+                // first step (method)
+                setWizardAlert(
+                    wizardEvent, "FSWizard.grow.error.data.explicit");
+                return false;
+            } else {
                 wizardModel.setValue(
                     GrowWizardSummaryPageView.CHILD_DATA_FIELD, "");
                 return true;
-            } else {
-                setWizardAlert(wizardEvent, "FSWizard.grow.error.data");
-                return false;
             }
         } else {
-            int availableLuns = ((Integer) wizardModel.getValue(
-                Constants.Wizard.AVAILABLE_LUNS)).intValue();
-            if (fsType == FSTYPE_QFS) {
-                int metaDevices = selectedMetaDevicesList.size();
-                if (selectedRows.length > availableLuns - metaDevices) {
+            if (isCombined()) {
+                if (selectedRows.length > maxDeviceToAdd) {
                     setWizardAlert(wizardEvent, "FSWizard.maxlun");
                     return false;
                 }
             } else {
-                if (selectedRows.length > availableLuns) {
+                int metaDevices = getSelectedMetaDataDevices().size();
+                if (selectedRows.length > maxDeviceToAdd - metaDevices) {
                     setWizardAlert(wizardEvent, "FSWizard.maxlun");
                     return false;
                 }
@@ -769,15 +868,6 @@ public class GrowWizardImpl extends SamWizardImpl {
             return false;
         }
 
-        StringBuffer deviceList = new StringBuffer();
-        for (int i = 0; i < selectedDataDevicesList.size(); i++) {
-            deviceList.append((String) selectedDataDevicesList.get(i)).
-                append("<br>");
-        }
-        wizardModel.setValue(
-            GrowWizardSummaryPageView.CHILD_DATA_FIELD,
-            deviceList.toString());
-
         return true;
     }
 
@@ -787,8 +877,9 @@ public class GrowWizardImpl extends SamWizardImpl {
      */
     private boolean processStripedGroupDevicesPage(WizardEvent wizardEvent) {
         TraceUtil.trace3("Entered");
-        TraceUtil.trace2("Entered processStripedGroupDevicesPage.., ");
 
+        ArrayList selectedStripedGroupDevicesList =
+                            getSelectedStripedGroupDevices();
         // Get a handle to the View
         FSWizardDeviceSelectionPageView view =
             (FSWizardDeviceSelectionPageView)wizardEvent.getView();
@@ -827,9 +918,7 @@ public class GrowWizardImpl extends SamWizardImpl {
             setWizardAlert(wizardEvent, "FSWizard.grow.error.data");
             return false;
         } else {
-            int availableLuns = ((Integer) wizardModel.getValue
-                (Constants.Wizard.AVAILABLE_LUNS)).intValue();
-            int metaLuns = selectedMetaDevicesList.size();
+            int metaLuns = getSelectedMetaDataDevices().size();
             int totalStripeLuns = 0;
             if (selectedStripedGroupDevicesList != null) {
                 for (int j = 0; j < groupNum; j++) {
@@ -839,7 +928,7 @@ public class GrowWizardImpl extends SamWizardImpl {
                 }
             }
             int usedLuns = metaLuns + totalStripeLuns + selectedRows.length;
-            if (usedLuns > availableLuns) {
+            if (usedLuns > maxDeviceToAdd) {
                 setWizardAlert(wizardEvent, "FSWizard.maxlun");
                 return false;
             }
@@ -850,10 +939,6 @@ public class GrowWizardImpl extends SamWizardImpl {
         // selectedStripedGroupDevicesList
 
         String deviceSelected = null;
-        DiskCache device = null;
-        if (selectedStripedGroupDevicesList == null) {
-            selectedStripedGroupDevicesList = new ArrayList();
-        }
 
         ArrayList thisGroupDevices;
         if (selectedStripedGroupDevicesList.size() <= groupNum) {
@@ -968,24 +1053,6 @@ public class GrowWizardImpl extends SamWizardImpl {
             return false;
         }
 
-        StringBuffer deviceList = new StringBuffer();
-        for (int j = 0; j < selectedStripedGroupDevicesList.size(); j++) {
-            ArrayList groupDevices =
-                (ArrayList) selectedStripedGroupDevicesList.get(j);
-            deviceList.append(SamUtil.getResourceString(
-                "FSWizard.new.stripedGroup.deviceListing",
-                new String[] { Integer.toString(j) })).append("<br>");
-            for (int i = 0; i < groupDevices.size(); i++) {
-                deviceList.append("&nbsp;&nbsp;&nbsp;").
-                    append((String) groupDevices.get(i)).
-                    append("<br>");
-            }
-        }
-
-        wizardModel.setValue(
-            GrowWizardSummaryPageView.CHILD_DATA_FIELD,
-            deviceList.toString());
-
         // clear out previous error
         wizardModel.setValue(
                 Constants.Wizard.WIZARD_ERROR,
@@ -997,14 +1064,19 @@ public class GrowWizardImpl extends SamWizardImpl {
      * Private method to validate striped group number
      */
     private boolean processStripedGroupNumberPage(WizardEvent wizardEvent) {
-        String numGroups = (String) wizardModel.getWizardValue(
+        String numGroups = (String) wizardModel.getValue(
             GrowWizardStripedGroupNumberPageView.
                 CHILD_NUM_OF_STRIPED_GROUP_TEXTFIELD);
+        int availableGroups = getNumberOfAvailStripedGrps();
+        int numStripedGroups = -1;
 
         if (numGroups != null) {
             try {
                 numStripedGroups = Integer.parseInt(numGroups);
             } catch (NumberFormatException nfe) {
+                TraceUtil.trace1(
+                    "User entry of striped group number contains " +
+                    "non-numeric characters!", nfe);
             }
         }
         if (numStripedGroups < 0 || numStripedGroups > availableGroups) {
@@ -1014,14 +1086,17 @@ public class GrowWizardImpl extends SamWizardImpl {
             return false;
         }
 
-        generateWizardPages(numStripedGroups);
+        updateWizardSteps(numStripedGroups);
         initializeWizardPages(pages);
 
         // set data field in summary page
         if (numStripedGroups == 0) {
             wizardModel.setValue(
-            GrowWizardSummaryPageView.CHILD_DATA_FIELD, "");
+                Constants.Wizard.SELECTED_DATADEVICES, null);
         }
+
+        ArrayList selectedStripedGroupDevicesList =
+                            getSelectedStripedGroupDevices();
 
         // clear striped group devices if necessary
         Integer oldNumGroups = (Integer)
@@ -1048,68 +1123,95 @@ public class GrowWizardImpl extends SamWizardImpl {
         return true;
     }
 
-    private void getFileSystemHandle() throws SamFSException {
-        TraceUtil.trace3("Entering");
-        int availableLuns = -1;
-
-        SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
-        fileSystemHandle =
-            sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
-        if (fileSystemHandle == null) {
-            throw new SamFSException(null, -1000);
+    /**
+     * Get a handle of the file system that we are about to grow
+     * @return
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    private FileSystem getFileSystem() throws SamFSException {
+        if (thisFS == null) {
+            SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
+            thisFS =
+                sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
+            if (thisFS == null) {
+                throw new SamFSException(null, -1000);
+            }
         }
+        return thisFS;
+    }
 
-        // Set the FSType in the model
-        fsType = FSTYPE_FS;
-        if (fileSystemHandle.getFSType() == FileSystem.SEPARATE_METADATA) {
-            fsType = FSTYPE_QFS;
-        }
-        wizardModel.setValue(FSTYPE_KEY, fsType);
+    /**
+     * Pre-process the necessary file system information to the wizard model
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    private void populateFSInfoInWizardModel() throws SamFSException {
+        FileSystem myFS = getFileSystem();
 
-        // get the available lun to grow for samfs
-        if (fsType == FSTYPE_FS) {
-            int dataDeviceLuns = fileSystemHandle.getDataDevices().length;
-            availableLuns = Constants.Wizard.MAX_LUNS - dataDeviceLuns;
-        }
+        StripedGroup[] group = myFS.getStripedGroups();
 
-        StripedGroup[] group = fileSystemHandle.getStripedGroups();
         int stripedDeviceLuns = 0;
+        int availableGroups = -1;
+
         if (group != null && group.length > 0) {
             availableGroups =
                 Constants.Wizard.MAX_STRIPED_GROUPS - group.length;
-            numStripedGroups = 0;
+
             // used devices for striped group
-            for (int i = 0; i < group.length; i++)
+            for (int i = 0; i < group.length; i++) {
                 stripedDeviceLuns += group[i].getMembers().length;
+            }
+
+            if (isMounted()) {
+                pages = mountSteps;
+            } else {
+                updateWizardSteps(1);
+            }
+
             TraceUtil.trace2("group length = " + group.length);
             TraceUtil.trace2("available num of groups = " + availableGroups);
+        } else {
+            // same metadata and data device
+            updateWizardSteps(-1);
         }
 
-        if (fsType == FSTYPE_QFS) {
-            int metaDeviceLuns = fileSystemHandle.getMetadataDevices().length;
+        initializeWizardPages(pages);
+
+        // get the available lun to grow for samfs
+        if (isCombined()) {
+            int dataDeviceLuns = myFS.getDataDevices().length;
+            maxDeviceToAdd = Constants.Wizard.MAX_LUNS - dataDeviceLuns;
+        } else {
+            int metaDeviceLuns = myFS.getMetadataDevices().length;
             // retrieve data if any
             int dataDevicesLuns = 0;
-            DiskCache[] dataDevices = fileSystemHandle.getDataDevices();
+            DiskCache[] dataDevices = myFS.getDataDevices();
             if (dataDevices != null && dataDevices.length > 0)
                 dataDevicesLuns = dataDevices.length;
-            availableLuns = Constants.Wizard.MAX_LUNS - metaDeviceLuns -
+            maxDeviceToAdd = Constants.Wizard.MAX_LUNS - metaDeviceLuns -
                 dataDevicesLuns - stripedDeviceLuns;
         }
 
+        TraceUtil.trace3("Setting AvailableGroups: " + availableGroups);
         wizardModel.setValue(
             Constants.Wizard.AVAILABLE_STRIPED_GROUPS,
             new Integer(availableGroups));
+    }
 
-        wizardModel.setValue(
-            Constants.Wizard.AVAILABLE_LUNS,
-            new Integer(availableLuns));
+    private int getNumberOfAvailStripedGrps() {
+        Integer sgroups =
+            (Integer) wizardModel.getValue(
+                Constants.Wizard.AVAILABLE_STRIPED_GROUPS);
+        return
+            sgroups == null ?
+                -1:
+                sgroups.intValue();
     }
 
     /**
      * Utility method to return an Array of DataDevices
      * from an ArrayList of device paths
      */
-    private DiskCache[] getSelectedDeviceArray(ArrayList selectedDevicePaths) {
+    private DiskCache[] convertArrayListToArray(ArrayList selectedDevicePaths) {
         if (selectedDevicePaths == null) {
             return new DiskCache[0];
         }
@@ -1130,9 +1232,10 @@ public class GrowWizardImpl extends SamWizardImpl {
     /**
      * Utility method to return an Array of StripedGroup
      */
-    private StripedGroup[] getSelectedStripedGroupsArray(ArrayList groupList)
+    private StripedGroup[] getSelectedStripedGroupsArray()
         throws SamFSException {
 
+        ArrayList groupList = getSelectedStripedGroupDevices();
         if (groupList == null) {
             return new StripedGroup[0];
         }
@@ -1146,7 +1249,7 @@ public class GrowWizardImpl extends SamWizardImpl {
         StripedGroup[] stripedGroups = new StripedGroup[numGroups];
         for (int i = 0; i < numGroups; i++) {
             ArrayList groupDevices = (ArrayList) groupList.get(i);
-            DiskCache[] disks = getSelectedDeviceArray(groupDevices);
+            DiskCache[] disks = convertArrayListToArray(groupDevices);
             stripedGroups[i] = sysModel.getSamQFSSystemFSManager().
                 createStripedGroup("",  disks);
         }
@@ -1155,9 +1258,12 @@ public class GrowWizardImpl extends SamWizardImpl {
     }
 
     private DiskCache getDiskCacheObject(String devicePath) {
-        for (int i = 0; i < allAllocatableDevices.length; i++) {
-            if (allAllocatableDevices[i].getDevicePath().equals(devicePath)) {
-                return allAllocatableDevices[i];
+        DiskCache [] devices =
+            (DiskCache[]) wizardModel.getValue(
+                                Constants.Wizard.ALLOCATABLE_DEVICES);
+        for (int i = 0; i < devices.length; i++) {
+            if (devices[i].getDevicePath().equals(devicePath)) {
+                return devices[i];
             }
         }
 
@@ -1177,33 +1283,15 @@ public class GrowWizardImpl extends SamWizardImpl {
      * those entries for the Metadata LUN selection page.
      */
     private void populateDevicesInWizardModel() throws SamFSException {
-        DiskCache[] devices = (DiskCache[]) wizardModel.getValue(
-            Constants.Wizard.ALLOCATABLE_DEVICES);
+        TraceUtil.trace2("Populating allocatable units to wizard model!");
 
-        if (devices != null) {
-            return;
-        }
-
-        if (allAllocatableDevices == null) {
-            TraceUtil.trace2(
-                "DeviceList is Null., Getting devices from sysmodel");
-            SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
-            allAllocatableDevices =
-                sysModel.getSamQFSSystemFSManager().
-                    discoverAvailableAllocatableUnits(null);
-        }
-
+        SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
+        DiskCache [] devices =
+            sysModel.getSamQFSSystemFSManager().
+                discoverAvailableAllocatableUnits(null);
         wizardModel.setValue(
             Constants.Wizard.ALLOCATABLE_DEVICES,
-            allAllocatableDevices);
-    }
-
-    private void setExceptionInModel(SamFSException ex) {
-        wizardModel.setValue(
-            Constants.Wizard.WIZARD_ERROR, Constants.Wizard.WIZARD_ERROR_YES);
-        wizardModel.setValue(Constants.Wizard.ERROR_MESSAGE, ex.getMessage());
-        wizardModel.setValue(
-            Constants.Wizard.ERROR_CODE, Integer.toString(ex.getSAMerrno()));
+            devices);
     }
 
     private void setWizardAlert(WizardEvent wizardEvent, String message) {
@@ -1230,32 +1318,14 @@ public class GrowWizardImpl extends SamWizardImpl {
             Constants.Parameters.SERVER_NAME);
         wizardModel.setValue(Constants.Wizard.FS_NAME, fsName);
         wizardModel.setValue(Constants.Wizard.SERVER_NAME, serverName);
-        TraceUtil.trace2("fsNameParam = " + fsName +
-            ", serverNameParam = " + serverName);
+
+        TraceUtil.trace2("File System Name: " + fsName +
+                         "Server Name: " + serverName);
 
         try {
-            SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
             populateDevicesInWizardModel();
-            getFileSystemHandle();
+            populateFSInfoInWizardModel();
 
-            // get samfs server api version number
-            // TODO: this is not concurrent
-            HttpSession session =
-                RequestManager.getRequestContext().getRequest().getSession();
-            Hashtable serverTable = (Hashtable) session.getAttribute(
-                Constants.SessionAttributes.SAMFS_SERVER_INFO);
-
-            if (serverTable != null && serverName != null) {
-                ServerInfo serverInfo = (ServerInfo)
-                    serverTable.get(serverName);
-                if (serverInfo != null) {
-                    // get samfs server api version number
-                    samfsServerAPIVersion =
-                        serverInfo.getSamfsServerAPIVersion();
-                    TraceUtil.trace2("got samfsServerAPIVersion from cache: " +
-                        samfsServerAPIVersion);
-                } // else defaults to initialized value 1.1
-            }
         } catch (SamFSException ex) {
             SamUtil.processException(
                 ex,
@@ -1274,50 +1344,201 @@ public class GrowWizardImpl extends SamWizardImpl {
                 Integer.toString(ex.getSAMerrno()));
         }
 
-        TraceUtil.trace2("samfsServerAPIVersion = " + samfsServerAPIVersion);
-
-        // store samfs server api version number in wizard model so that
-        // it can be accessed in all wizard pages
-        wizardModel.setValue(
-            Constants.Wizard.SERVER_API_VERSION, samfsServerAPIVersion);
-
         // now generate pages based on fs type
-        generateWizardPages(numStripedGroups);
         setShowResultsPage(true);
         initializeWizardPages(pages);
 
         TraceUtil.trace2("wizard initialized!");
     }
 
-    private void generateWizardPages(int stripedGroups) {
-        int totalPages = 2; // summary & result page
-        if (fsType == FSTYPE_QFS) {
+    /**
+     * Update the wizard flow
+     * @param stripedGroups
+     */
+    private void updateWizardSteps(int stripedGroups) {
+        // For wizard step logic, see the top of this java file
+        int totalPages =
+            (isMounted() && !isCombined()) ?
+                3 : 2;
+
+        if (isAddingMeta()) {
             totalPages++; // metadata page
         }
-        if (stripedGroups < 0) {
-            totalPages++; // data page
-        } else {
-            totalPages++; // striped group number page
-            totalPages += stripedGroups; // striped group pages
+
+        if (isAddingData()) {
+            if (stripedGroups >= 0) {
+                totalPages++; // striped group number page
+                totalPages += stripedGroups; // striped group pages
+            } else {
+                totalPages++; // data page
+            }
         }
 
         pages = new int[totalPages];
         int pageCount = 0;
 
-        if (fsType == FSTYPE_QFS) {
+        if (isMounted() && !isCombined()) {
+            pages[pageCount++] = GrowWizardImplData.PAGE_METHOD;
+        }
+        if (isAddingMeta()) {
             pages[pageCount++] = GrowWizardImplData.PAGE_METADATA;
         }
 
-        if (stripedGroups < 0) {
-            pages[pageCount++] = GrowWizardImplData.PAGE_DATA;
-        } else {
-            pages[pageCount++] = GrowWizardImplData.PAGE_STRIPED_GROUP_NUM;
-            for (int i = 0; i < stripedGroups; i++) {
-                pages[pageCount++] = GrowWizardImplData.PAGE_STRIPED_GROUP;
+        if (isAddingData()) {
+            if (stripedGroups >= 0) {
+                pages[pageCount++] = GrowWizardImplData.PAGE_STRIPED_GROUP_NUM;
+                for (int i = 0; i < stripedGroups; i++) {
+                    pages[pageCount++] = GrowWizardImplData.PAGE_STRIPED_GROUP;
+                }
+            } else {
+                pages[pageCount++] = GrowWizardImplData.PAGE_DATA;
             }
         }
 
         pages[pageCount++] = GrowWizardImplData.PAGE_SUMMARY;
         pages[pageCount] = GrowWizardImplData.PAGE_RESULT;
+    }
+
+    private int getStripedGroupNumber(int page) {
+        int pageAhead = 0;
+        if (pages[0] == GrowWizardImplData.PAGE_METHOD) {
+            pageAhead++;
+        }
+        if (isAddingMeta()) {
+            pageAhead++;
+        }
+        if (isAddingData()) {
+            // striped group number page
+            pageAhead++;
+        }
+
+        return page - pageAhead;
+    }
+
+    /**
+     * Helper method to determine the metadata placement
+     * @return boolean value if metadata and data are in the same device
+     */
+    private boolean isCombined() {
+        Boolean combined = (Boolean) wizardModel.getValue(ATTR_COMBINED);
+        try {
+            if (combined == null) {
+                boolean c =
+                    getFileSystem().getFSType() == FileSystem.COMBINED_METADATA;
+                wizardModel.setValue(ATTR_COMBINED, new Boolean(c));
+                TraceUtil.trace2(
+                    "Setting ATTR_COMBINED to " + c);
+                return c;
+            } else {
+                return
+                    combined == null ?
+                        true :
+                        combined.booleanValue();
+            }
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Failed to retrieve file system!", samEx);
+            return true;
+        }
+    }
+
+    private ArrayList getSelectedDataDevices() {
+        ArrayList selectedDataDevicesList =
+            (ArrayList) wizardModel.getValue(
+                Constants.Wizard.SELECTED_DATADEVICES);
+        if (selectedDataDevicesList == null) {
+            selectedDataDevicesList = new ArrayList();
+            wizardModel.setValue(
+                Constants.Wizard.SELECTED_DATADEVICES,
+                selectedDataDevicesList);
+        }
+        return selectedDataDevicesList;
+    }
+
+    private ArrayList getSelectedMetaDataDevices() {
+        ArrayList selectedMetaDevicesList =
+            (ArrayList) wizardModel.getValue(
+                Constants.Wizard.SELECTED_METADEVICES);
+        if (selectedMetaDevicesList == null) {
+            selectedMetaDevicesList = new ArrayList();
+            wizardModel.setValue(
+                Constants.Wizard.SELECTED_METADEVICES,
+                selectedMetaDevicesList);
+        }
+        return selectedMetaDevicesList;
+    }
+
+    private ArrayList getSelectedStripedGroupDevices() {
+        ArrayList selectedStripedGroupDevicesList =
+            (ArrayList) wizardModel.getValue(
+                Constants.Wizard.SELECTED_STRIPED_GROUP_DEVICES);
+        if (selectedStripedGroupDevicesList == null) {
+            selectedStripedGroupDevicesList = new ArrayList();
+            wizardModel.setValue(
+                Constants.Wizard.SELECTED_STRIPED_GROUP_DEVICES,
+                selectedStripedGroupDevicesList);
+        }
+        return selectedStripedGroupDevicesList;
+    }
+
+    /**
+     * Helper method to determine if the file system is mounted
+     * @return boolean value if metadata and data are in the same device
+     */
+    private boolean isMounted() {
+        Boolean mounted = (Boolean) wizardModel.getValue(ATTR_IS_MOUNTED);
+        try {
+            if (mounted == null) {
+                boolean m = getFileSystem().getState() == FileSystem.MOUNTED;
+                wizardModel.setValue(ATTR_IS_MOUNTED, new Boolean(m));
+                TraceUtil.trace2("Setting ATTR_IS_MOUNTED to " + m);
+                return m;
+            } else {
+                return
+                    mounted == null ?
+                        false :
+                        mounted.booleanValue();
+            }
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Failed to retrieve file system!", samEx);
+            return false;
+        }
+    }
+
+    /**
+     * Return true if file system is umounted and file system has separate
+     * data and metadata devices.
+     * Return true if file system is mounted and user selects to grow metadata
+     * devices.
+     * Otherwise return false.
+     */
+    private boolean isAddingMeta() {
+        if (!isMounted() && !isCombined()) {
+            return true;
+        } else if (isMounted()) {
+            String addingMeta = (String)
+                wizardModel.getValue(GrowWizardMethodView.CHECKBOX_META);
+            return
+                addingMeta == null ?
+                    false :
+                    Boolean.valueOf(addingMeta).booleanValue();
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Return true all the time except when user specifically selects not to
+     * grow data devices.  This happens only when the file syste is mounted.
+     */
+    private boolean isAddingData() {
+        if (!isMounted()) {
+            return true;
+        }
+        String addingData =
+            (String) wizardModel.getValue(GrowWizardMethodView.CHECKBOX_DATA);
+        return
+            addingData == null ?
+                true :
+                Boolean.valueOf(addingData).booleanValue();
     }
 }

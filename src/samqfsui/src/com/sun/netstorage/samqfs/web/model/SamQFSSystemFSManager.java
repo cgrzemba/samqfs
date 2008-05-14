@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemFSManager.java,v 1.44 2008/03/17 14:43:42 am143972 Exp $
+// ident	$Id: SamQFSSystemFSManager.java,v 1.45 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -275,20 +275,6 @@ public interface SamQFSSystemFSManager {
      * @param host - the host of the HA-setup
      */
     public void removeHostFromHAFS(FileSystem fs, String host)
-        throws SamFSException;
-
-
-    /**
-     * Grow specified file system by adding new devices to it.
-     *
-     * @param fs FileSystem to act on
-     * @param metadata
-     * @param data
-     * @param groups
-     * @throws SamFSException if anything unexpected happens.
-     */
-    public void growFileSystem(FileSystem fs, DiskCache[] metadata,
-                               DiskCache[] data, StripedGroup[] groups)
         throws SamFSException;
 
 

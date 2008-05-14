@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardSummaryPageView.java,v 1.13 2008/03/17 14:43:36 am143972 Exp $
+// ident	$Id: GrowWizardSummaryPageView.java,v 1.14 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -35,6 +35,7 @@ import com.iplanet.jato.model.Model;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.RequestHandlingViewBase;
 import com.iplanet.jato.view.View;
+import com.iplanet.jato.view.event.ChildDisplayEvent;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.web.util.Constants;
@@ -42,9 +43,11 @@ import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.wizard.SamWizardModel;
 import com.sun.web.ui.view.alert.CCAlertInline;
+import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCLabel;
 import com.sun.web.ui.view.html.CCSelectableList;
 import com.sun.web.ui.view.wizard.CCWizardPage;
+import java.util.ArrayList;
 
 /**
  * A ContainerView object for the pagelet for summary page of the Grow
@@ -57,13 +60,14 @@ public class GrowWizardSummaryPageView extends RequestHandlingViewBase
     public static final String PAGE_NAME = "GrowWizardSummaryPageView";
 
     // Child view names (i.e. display fields).
-    public static final String CHILD_LABEL = "Label";
+    public static final String CHILD_LABEL_META = "LabelMeta";
+    public static final String CHILD_LABEL_DATA = "LabelData";
     public static final String CHILD_DATA_FIELD = "DataField";
     public static final String CHILD_METADATA_FIELD = "MetadataField";
     public static final String CHILD_ALERT = "Alert";
+    public static final String NONE_SELECTED = "NoneSelected";
 
     private boolean previous_error = false;
-    private String fsType = GrowWizardImpl.FSTYPE_FS;
 
     // Should be in CCWizardPage ?
     /**
@@ -94,10 +98,12 @@ public class GrowWizardSummaryPageView extends RequestHandlingViewBase
      */
     protected void registerChildren() {
         TraceUtil.trace3("Entering");
-        registerChild(CHILD_LABEL, CCLabel.class);
+        registerChild(CHILD_LABEL_META, CCLabel.class);
+        registerChild(CHILD_LABEL_DATA, CCLabel.class);
         registerChild(CHILD_DATA_FIELD, CCSelectableList.class);
         registerChild(CHILD_METADATA_FIELD, CCSelectableList.class);
         registerChild(CHILD_ALERT, CCAlertInline.class);
+        registerChild(NONE_SELECTED, CCHiddenField.class);
         TraceUtil.trace3("Exiting");
     }
 
@@ -108,12 +114,14 @@ public class GrowWizardSummaryPageView extends RequestHandlingViewBase
         if (name.equals(CHILD_METADATA_FIELD) ||
                    name.equals(CHILD_DATA_FIELD)) {
             return new CCSelectableList(this, name, null);
-        } else if (name.equals(CHILD_LABEL)) {
+        } else if (name.startsWith("Label")) {
             return new CCLabel(this, name, null);
         } else if (name.equals(CHILD_ALERT)) {
             CCAlertInline child1 = new CCAlertInline(this, name, null);
             child1.setValue(CCAlertInline.TYPE_ERROR);
             return child1;
+        } else if (name.equals(NONE_SELECTED)) {
+            return new CCHiddenField(this, name, null);
         } else {
             throw new IllegalArgumentException(
                 "GrowWizardSummaryPageView : Invalid child name ["
@@ -131,73 +139,94 @@ public class GrowWizardSummaryPageView extends RequestHandlingViewBase
      * @return The pagelet to use for the rendering of this instance.
      */
     public String getPageletUrl() {
-        TraceUtil.trace3("Entering");
         String url = null;
 
         if (!previous_error) {
-            if (fsType.equals(GrowWizardImpl.FSTYPE_QFS)) {
-                url = "/jsp/fs/GrowWizardQFSSummaryPage.jsp";
-            } else {
-                url = "/jsp/fs/GrowWizardFSSummaryPage.jsp";
-            }
+            url = "/jsp/fs/GrowWizardQFSSummaryPage.jsp";
         } else if (previous_error) {
             url = "/jsp/fs/wizardErrorPage.jsp";
         }
-        TraceUtil.trace3("Exiting");
         return url;
     }
 
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
-        TraceUtil.trace3("Entering");
         super.beginDisplay(event);
 
         SamWizardModel wizardModel = (SamWizardModel)getDefaultModel();
-        fsType = (String) wizardModel.getValue(GrowWizardImpl.FSTYPE_KEY);
+
+        CCHiddenField noneSelect = (CCHiddenField) getChild(NONE_SELECTED);
+        if (isNothingSelected()) {
+            SamUtil.setErrorAlert(
+                this,
+                CHILD_ALERT,
+                "FSWizard.grow.noselection.error",
+                0,
+                "",
+                (String) wizardModel.getValue(
+                                Constants.Wizard.SERVER_NAME));
+            noneSelect.setValue(Boolean.toString(true));
+            return;
+        } else {
+            noneSelect.setValue(Boolean.toString(false));
+        }
 
         // populate device selection list
-        if (fsType.equals(GrowWizardImpl.FSTYPE_QFS)) {
-            String metaDataDevice = (String) wizardModel.getWizardValue(
-                GrowWizardSummaryPageView.CHILD_METADATA_FIELD);
-            String[] metaDataList = metaDataDevice.split("<br>");
-            for (int i = 0; i < metaDataList.length; i ++) {
-                int index = metaDataList[i].lastIndexOf('/');
-                String pathString = metaDataList[i].substring(index + 1);
-                metaDataList[i] = pathString;
-            }
-            OptionList metaDataOptions =
-                new OptionList(metaDataList, metaDataList);
-            CCSelectableList selectableMetadataList = ((CCSelectableList)
-                getChild(GrowWizardSummaryPageView.CHILD_METADATA_FIELD));
-            selectableMetadataList.setOptions(metaDataOptions);
-            int metaDataOptionSize = metaDataList.length;
-            if (metaDataOptionSize <
-                Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE) {
-                selectableMetadataList.setSize(metaDataOptionSize);
+        ArrayList selectedMetaDevicesList = getSelectedMetaDataDevices();
+        String [] metaDataList =
+            convertArrayListToArray(selectedMetaDevicesList, false);
+
+        OptionList metaDataOptions =
+            new OptionList(metaDataList, metaDataList);
+        CCSelectableList selectableMetadataList = ((CCSelectableList)
+            getChild(GrowWizardSummaryPageView.CHILD_METADATA_FIELD));
+        selectableMetadataList.setOptions(metaDataOptions);
+        int metaDataOptionSize = metaDataList.length;
+        if (metaDataOptionSize <
+            Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE) {
+            selectableMetadataList.setSize(metaDataOptionSize);
+        } else {
+            selectableMetadataList.setSize(
+                Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE);
+        }
+
+        // populate device selection list
+        ArrayList selectedDevicesList = getSelectedDataDevices();
+        String [] dataList =
+            convertArrayListToArray(selectedDevicesList, false);
+
+        // populate striped group selection list
+        ArrayList selectedStripedGroupDevicesList =
+                            getSelectedStripedGroupDevices();
+        String [] stripedGroupList =
+            convertArrayListToArray(selectedStripedGroupDevicesList, true);
+
+        if (dataList.length > 0) {
+            OptionList dataOptions = new OptionList(dataList, dataList);
+            CCSelectableList selectDataOptions = ((CCSelectableList)
+                getChild(GrowWizardSummaryPageView.CHILD_DATA_FIELD));
+            selectDataOptions.setOptions(dataOptions);
+            int dataOptionsSize = dataList.length;
+            if (dataOptionsSize <
+                    Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE) {
+                selectDataOptions.setSize(dataOptionsSize);
             } else {
-                selectableMetadataList.setSize(
+                selectDataOptions.setSize(
                     Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE);
             }
-        }
-
-        String dataDevice = (String) wizardModel.getWizardValue(
-            GrowWizardSummaryPageView.CHILD_DATA_FIELD);
-        String[] dataList = dataDevice.split("<br>");
-        for (int i = 0; i < dataList.length; i ++) {
-            int index = dataList[i].lastIndexOf('/');
-            String pathString = dataList[i].substring(index + 1);
-            dataList[i] = pathString;
-        }
-
-        OptionList dataOptions = new OptionList(dataList, dataList);
-        CCSelectableList selectDataOptions = ((CCSelectableList)
-            getChild(GrowWizardSummaryPageView.CHILD_DATA_FIELD));
-        selectDataOptions.setOptions(dataOptions);
-        int dataOptionsSize = dataList.length;
-        if (dataOptionsSize < Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE) {
-            selectDataOptions.setSize(dataOptionsSize);
-        } else {
-            selectDataOptions.setSize(
-                Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE);
+        } else if (stripedGroupList.length > 0) {
+            OptionList dataOptions =
+                new OptionList(stripedGroupList, stripedGroupList);
+            CCSelectableList selectDataOptions = ((CCSelectableList)
+                getChild(GrowWizardSummaryPageView.CHILD_DATA_FIELD));
+            selectDataOptions.setOptions(dataOptions);
+            int dataOptionsSize = stripedGroupList.length;
+            if (dataOptionsSize <
+                    Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE) {
+                selectDataOptions.setSize(dataOptionsSize);
+            } else {
+                selectDataOptions.setSize(
+                    Constants.Wizard.DEVICE_SELECTION_LIST_MAX_SIZE);
+            }
         }
 
         String t = (String) wizardModel.getValue(Constants.Wizard.WIZARD_ERROR);
@@ -241,5 +270,106 @@ public class GrowWizardSummaryPageView extends RequestHandlingViewBase
         }
 
         TraceUtil.trace3("Exiting");
+    }
+
+    /**
+     * Utility method to return an Array of DataDevices
+     * from an ArrayList of device paths
+     */
+    private String [] convertArrayListToArray(
+        ArrayList selectedDevicePaths, boolean stripedGroups) {
+        if (selectedDevicePaths == null) {
+            return new String[0];
+        }
+
+        String[] selectedDevices = null;
+
+        if (stripedGroups) {
+            StringBuffer buf = new StringBuffer();
+            for (int i = 0; i < selectedDevicePaths.size(); i++) {
+                buf.append(
+                    SamUtil.getResourceString(
+                        "FSWizard.new.stripedGroup.deviceListing",
+                        new String[] {Integer.toString(i)})).append("<br>");
+                ArrayList groupMember = (ArrayList) selectedDevicePaths.get(i);
+                groupMember =
+                    groupMember == null ? new ArrayList() : groupMember;
+                for (int j = 0; j < groupMember.size(); j++) {
+                    buf.append(" &nbsp;&nbsp;&nbsp;").
+                        append((String) groupMember.get(j)).
+                        append("<br>");
+                }
+            }
+            selectedDevices = buf.toString().split("<br>");
+        } else {
+            selectedDevices = new String[selectedDevicePaths.size()];
+            for (int i = 0; i < selectedDevicePaths.size(); i++) {
+                selectedDevices[i] = (String) selectedDevicePaths.get(i);
+            }
+        }
+
+        return selectedDevices;
+    }
+
+    private boolean isNothingSelected() {
+        return
+            getSelectedDataDevices().size() == 0 &&
+            getSelectedMetaDataDevices().size() == 0 &&
+            getSelectedStripedGroupDevices().size() == 0;
+    }
+
+    private ArrayList getSelectedDataDevices() {
+        SamWizardModel wizardModel = (SamWizardModel)getDefaultModel();
+        ArrayList selectedDataDevicesList =
+            (ArrayList) wizardModel.getValue(
+                Constants.Wizard.SELECTED_DATADEVICES);
+        selectedDataDevicesList =
+            selectedDataDevicesList == null ?
+                new ArrayList() : selectedDataDevicesList;
+        return selectedDataDevicesList;
+    }
+
+    private ArrayList getSelectedMetaDataDevices() {
+        SamWizardModel wizardModel = (SamWizardModel)getDefaultModel();
+        ArrayList selectedMetaDevicesList =
+            (ArrayList) wizardModel.getValue(
+                Constants.Wizard.SELECTED_METADEVICES);
+        selectedMetaDevicesList =
+            selectedMetaDevicesList == null ?
+                new ArrayList() : selectedMetaDevicesList;
+        return selectedMetaDevicesList;
+    }
+
+    private ArrayList getSelectedStripedGroupDevices() {
+        SamWizardModel wizardModel = (SamWizardModel)getDefaultModel();
+        ArrayList selectedStripedGroupDevicesList =
+            (ArrayList) wizardModel.getValue(
+                Constants.Wizard.SELECTED_STRIPED_GROUP_DEVICES);
+        selectedStripedGroupDevicesList =
+            selectedStripedGroupDevicesList == null ?
+                new ArrayList() : selectedStripedGroupDevicesList;
+        return selectedStripedGroupDevicesList;
+    }
+
+    public boolean beginLabelMetaDisplay(ChildDisplayEvent event)
+        throws ModelControlException {
+        return getSelectedMetaDataDevices().size() != 0;
+    }
+
+    public boolean beginLabelDataDisplay(ChildDisplayEvent event)
+        throws ModelControlException {
+        return getSelectedDataDevices().size() != 0 ||
+               getSelectedStripedGroupDevices().size() != 0;
+    }
+
+    public boolean beginMetadataFieldDisplay(ChildDisplayEvent event)
+        throws ModelControlException {
+        return getSelectedMetaDataDevices().size() != 0;
+    }
+
+    public boolean beginDataFieldDisplay(ChildDisplayEvent event)
+        throws ModelControlException {
+        return getSelectedDataDevices().size() != 0 ||
+               getSelectedStripedGroupDevices().size() != 0;
     }
 }

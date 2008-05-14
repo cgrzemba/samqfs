@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.79 2008/03/17 14:43:46 am143972 Exp $
+// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.80 2008/05/14 20:20:02 ronaldso Exp $
 
 
 
@@ -540,15 +540,6 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
         throws SamFSException {
         FS.remove(((SamQFSSystemModelImpl)getApp().getSamQFSSystemModel(host)).
             getJniContext(), fs.getName());
-    }
-
-    public void growFileSystem(FileSystem fs, DiskCache[] metadataDevices,
-                               DiskCache[] dataDevices,
-                               StripedGroup[] stripedGroups)
-        throws SamFSException {
-
-        ((FileSystemImpl) fs).grow(metadataDevices, dataDevices,
-                                   stripedGroups);
     }
 
     public void createDirectory(String fullPath) throws SamFSException {

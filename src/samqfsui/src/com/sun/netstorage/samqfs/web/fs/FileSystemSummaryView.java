@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.90 2008/03/17 14:43:34 am143972 Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.91 2008/05/14 20:20:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -700,7 +700,7 @@ public class FileSystemSummaryView extends CommonTableContainerView {
 
         // No Archive concept in QFS
         if (systemSetup != SETUP_QFS) {
-                setArchiveWizardNames();
+            setArchiveWizardNames();
         }
 
         TraceUtil.trace3("Exiting");

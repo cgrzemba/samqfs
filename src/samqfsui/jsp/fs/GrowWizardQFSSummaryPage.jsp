@@ -1,4 +1,3 @@
-
 <%--
 /*
  *    SAM-QFS_notice_begin
@@ -29,70 +28,63 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardQFSSummaryPage.jsp,v 1.7 2008/03/17 14:40:33 am143972 Exp $
+// ident	$Id: GrowWizardQFSSummaryPage.jsp,v 1.8 2008/05/14 20:20:00 ronaldso Exp $
 --%>
-<%@ page language="java" %> 
-<%@ page import="com.iplanet.jato.view.ViewBean" %>
-<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%> 
+<%@ page language="java" %>
+<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
+
+<script type="text/javascript">
+    function wizardPageInit() {
+        var tf = document.wizWinForm;
+        var string = tf.elements[
+            "WizardWindow.Wizard.GrowWizardSummaryPageView.NoneSelected"].value;
+        WizardWindow_Wizard.setFinishButtonDisabled(string == "true", null);
+    }
+    WizardWindow_Wizard.pageInit = wizardPageInit;
+
+</script>
 
 <jato:pagelet>
 
 <cc:i18nbundle id="samBundle"
- baseName="com.sun.netstorage.samqfs.web.resources.Resources" />
+               baseName="com.sun.netstorage.samqfs.web.resources.Resources" />
 
-<%-- For now assume we're still presenting the components in a table
-     which is output by the framework and components are
-     in rows and cells
---%>
+<cc:alertinline name="Alert" bundleID="samBundle" />
 
 <table border="0" cellspacing="10" cellpadding="0">
-<tbody>
-<tr>
-<td>
-<cc:alertinline name="Alert" bundleID="samBundle" /><br />
-</td>
-</tr>
-  <tr>
-	<td>
-      <cc:label name="Label" styleLevel="2"
-          elementName="MetadataField"
-          defaultValue="FSWizard.grow.selectedMetadata"
-          bundleID="samBundle" />
-    </td>
-    <td>
-      <cc:selectablelist name="MetadataField"
-          bundleID="samBundle" escape="false" />
-    </td>
-  </tr>
-
-  <tr>
-    <td>
-      <cc:label name="Label" styleLevel="2"
-          elementName="DataField"
-          defaultValue="FSWizard.grow.selectedData"
-          bundleID="samBundle" />
-    </td>
-    <td>
-      <cc:selectablelist name="DataField"
-          bundleID="samBundle" escape="false" />
-    </td>
-  </tr>
-
-  <tr>
-    <td>
-	  <cc:label name="Label" styleLevel="2"
-          elementName="DumpField"
-		  defaultValue="FSWizard.grow.commitORsave"
-          bundleID="samBundle" />
-	</td>
-    <td>
-	  <cc:text name="DumpField"
-          bundleID="samBundle" />
-	</td>
-  </tr>
-
-</tbody>
+    <tbody>
+    <tr>
+        <td valign="top">
+            <cc:label name="LabelMeta"
+                      styleLevel="2"
+                      elementName="MetadataField"
+                      defaultValue="FSWizard.grow.selectedMetadata"
+                      bundleID="samBundle" />
+        </td>
+        <td>
+            <cc:selectablelist name="MetadataField"
+                               bundleID="samBundle"
+                               escape="false" />
+        </td>
+    </tr>
+    <tr>
+        <td valign="top">
+            <cc:label name="LabelData"
+                      styleLevel="2"
+                      elementName="DataField"
+                      defaultValue="FSWizard.grow.selectedData"
+                      bundleID="samBundle" />
+        </td>
+        <td>
+            <cc:selectablelist name="DataField"
+                               bundleID="samBundle"
+                               escape="false" />
+        </td>
+    </tr>
+    </tbody>
 </table>
+
+<cc:hidden name="NoneSelected" />
 
 </jato:pagelet>

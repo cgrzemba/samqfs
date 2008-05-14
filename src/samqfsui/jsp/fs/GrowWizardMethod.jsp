@@ -1,4 +1,3 @@
-
 <%--
 /*
  *    SAM-QFS_notice_begin
@@ -29,44 +28,43 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardFSSummaryPage.jsp,v 1.8 2008/03/17 14:40:33 am143972 Exp $
+// ident	$Id: GrowWizardMethod.jsp,v 1.1 2008/05/14 20:20:00 ronaldso Exp $
 --%>
-<%@ page language="java" %> 
-<%@ page import="com.iplanet.jato.view.ViewBean" %>
-<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%> 
+
+<%@ page language="java" %>
+<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <jato:pagelet>
 
-<cc:i18nbundle id="samBundle"
- baseName="com.sun.netstorage.samqfs.web.resources.Resources" />
+    <cc:i18nbundle
+        id="samBundle"
+        baseName="com.sun.netstorage.samqfs.web.resources.Resources" />
 
-<%-- For now assume we're still presenting the components in a table
-     which is output by the framework and components are
-     in rows and cells
---%>
-<table border="0" cellspacing="10" cellpadding="0">
-<tbody>
-<tr>
-<td>
-<cc:alertinline name="Alert" bundleID="samBundle" /><br />
-</td>
-</tr>
+    <table style="padding-left:10px">
+    <tr>
+        <td rowspan="2" valign="top">
+            <cc:label
+                name="LabelMethod"
+                bundleID="samBundle"
+                defaultValue="FSWizard.grow.label.method" />
+        </td>
+        <td style="padding-left:10px">
+            <cc:checkbox
+                name="CheckBoxMeta"
+                bundleID="samBundle"
+                styleLevel="3"
+                label="FSWizard.grow.checkbox.meta" />
 
-  <tr>
-    <td>
-      <cc:label name="Label" styleLevel="2"
-          elementName="DataField"
-          defaultValue="FSWizard.grow.selectedData"
-          bundleID="samBundle" />
-    </td>
-    <td>
-      <cc:selectablelist name="DataField"
-          bundleID="samBundle" escape="false" />
-    </td>
-  </tr>
-
-</tbody>
-</table>
+        </td>
+    </tr>
+        <td style="padding-left:10px">
+            <cc:checkbox
+                name="CheckBoxData"
+                bundleID="samBundle"
+                styleLevel="3"
+                label="FSWizard.grow.checkbox.data" />
+        </td>
+    </table>
 
 </jato:pagelet>
