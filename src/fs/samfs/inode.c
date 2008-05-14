@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.149 $"
+#pragma ident "$Revision: 1.150 $"
 
 #include "sam/osversion.h"
 
@@ -78,6 +78,16 @@
 #include "acl.h"
 #include "qfs_log.h"
 
+/*
+ * Some common mask bits.
+ */
+#define	SUID_SET(mode) ((mode) & S_ISUID)
+#define	RMASK (S_IRUSR | S_IRGRP | S_IROTH)
+#define	WMASK (S_IWUSR | S_IWGRP | S_IWOTH)
+#define	XMASK (S_IXUSR | S_IXGRP | S_IXOTH)
+#define	WXMASK (WMASK | XMASK)
+#define	RWXALLMASK (S_IRWXU | S_IRWXG | S_IRWXO)
+#define	GRP_SVTXMASK (S_ISGID | S_ISVTX)
 
 static inline int sam_inode_validate(ino_t ino, struct sam_perm_inode *pip);
 
@@ -327,7 +337,7 @@ sam_chk_worm(sam_mode_t mode, uint_t mask, sam_node_t *ip)
  * perimission for Compatibility mode.
  */
 
-int
+static int
 sam_worm_trigger(sam_node_t *ip, sam_mode_t oldmode, timespec_t system_time)
 {
 	struct sam_sbinfo *sblk = &ip->mp->mi.m_sbp->info.sb;

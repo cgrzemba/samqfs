@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 #endif
 
 #include "sam/osversion.h"
@@ -340,18 +340,6 @@
 	}						\
 	mutex_exit(&((mp)->mi.m_block.put_mutex));	\
 }
-
-/*
- * WORM trigger macros.
- */
-
-#define	RMASK (S_IRUSR | S_IRGRP | S_IROTH)
-#define	WMASK (S_IWUSR | S_IWGRP | S_IWOTH)
-#define	XMASK (S_IXUSR | S_IXGRP | S_IXOTH)
-#define	WXMASK (WMASK | XMASK)
-#define	RWXALLMASK (S_IRWXU | S_IRWXG | S_IRWXO)
-#define	SUID_SET(mode) ((mode) & S_ISUID)
-#define	GRP_SVTXMASK (S_ISGID | S_ISVTX)
 
 
 #endif /* _SAM_MACROS_H */

@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.223 $"
+#pragma ident "$Revision: 1.224 $"
 
 
 #ifndef	_SAM_FS_EXTERN_H
@@ -214,8 +214,6 @@ int	sam_set_symlink(sam_node_t *pip, sam_node_t *ip, char *sln,
 int sam_set_old_symlink(sam_node_t *ip, char *sln, int n_chars, cred_t *credp);
 int sam_get_old_symlink(sam_node_t *bip, struct uio *uiop, cred_t *credp);
 int sam_check_worm_capable(sam_node_t *ip, boolean_t all_flag);
-int sam_worm_trigger(sam_node_t *ip, sam_mode_t oldmode,
-			timespec_t system_time);
 
 
 /* cquota.c function prototypes. */

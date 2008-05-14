@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.58 $"
+#pragma ident "$Revision: 1.59 $"
 
 #include "sam/osversion.h"
 
@@ -58,7 +58,6 @@
 #include "mount.h"
 #include "extern.h"
 #include "debug.h"
-#include "macros.h"
 #include "trace.h"
 #include "ino_ext.h"
 #include "qfs_log.h"
@@ -617,8 +616,6 @@ sam_set_acl(
 {
 	int error = 0, errline = 0;
 	sam_ic_acl_t *aclp;
-	sam_mode_t oldmode;
-	timespec_t  system_time;
 
 	ASSERT(RW_WRITE_HELD(&bip->inode_rwl));
 
@@ -651,31 +648,10 @@ sam_set_acl(
 			aclp->flags &= ~ACL_MODIFIED;	/* Incore updated */
 
 			/* Apply ACL permission values to inode mode. */
-			oldmode = bip->di.mode;
 			bip->di.mode = ((bip->di.mode & ~0777) |
 			    ((aclp->acl.owner->a_perm & 07) << 6) |
 			    MASK2MODE(aclp) |
 			    (aclp->acl.other->a_perm & 07));
-
-			if (samgt.license.license.lic_u.b.WORM_fs &&
-			    (bip->di.version >= SAM_INODE_VERS_2) &&
-			    (bip->mp->mt.fi_config & MT_ALLEMUL) &&
-			    (((oldmode & RWXALLMASK) == RWXALLMASK) ||
-			    ((oldmode & WMASK) &&
-			    !(bip->di.mode & WMASK)))) {
-
-				SAM_HRESTIME(&system_time);
-				error = sam_worm_trigger(bip, oldmode,
-				    system_time);
-				if (error) {
-					bip->di.mode = oldmode;
-					cmn_err(CE_WARN, "SAM-FS: Error setting"
-					    " WORM trigger %d", error);
-				} else if ((oldmode & RWXALLMASK) ==
-				    RWXALLMASK) {
-					bip->di.mode = oldmode;
-				}
-			}
 
 			/* Release any previous ACL inode ext(s). */
 			if (bip->di.ext_attrs & ext_acl) {
