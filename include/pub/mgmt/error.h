@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.140 $"
+#pragma	ident	"$Revision: 1.141 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */
@@ -362,6 +362,8 @@ typedef enum samapi_errno {
 	SE_VSNS_REQUIRED			= 30530,
 	SE_VSNS_MUST_MATCH_COPIES		= 30531,
 	SE_NOT_A_DEFAULT_SET			= 30532,
+	SE_ONLINE_GROW_FAILED			= 30533,
+	SE_ONLINE_GROW_FAILED_SBLK_V1  		= 30534,
 
 	SE_ARCHIVE_BEGIN = SAM_MGMT_START + 600,
 	SE_MAP_ALREADY_EXISTS			= 30601,

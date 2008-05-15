@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.588 $"
+$ pragma ident "$Revision: 1.589 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3937,6 +3937,8 @@ $ ignoring the last argument %s for 4.1
 30530 VSN assignments must be specified for the archive set
 30531 The number of copies must match the number of VSN assignments
 30532 The policy specified for the file system must be an explicit default policy
+30533 Online grow failed
+30534 Online grow failed because the file system has superblock version 1. Umount the file system and try again
 
 30601 A VSN copy map already exists for %s
 30602 VSN pool %s already exists

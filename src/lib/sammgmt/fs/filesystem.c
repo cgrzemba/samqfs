@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.71 $"
+#pragma ident   "$Revision: 1.72 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -55,7 +55,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "pub/mgmt/sqm_list.h"
 #include "sam/sam_trace.h"
 #include "sam/mount.h"
-
+#include "sam/syscall.h"
+#include "sam/lib.h"
 
 #include "pub/devstat.h"
 #include "pub/mgmt/device.h"
@@ -90,7 +91,7 @@ static int setup_vfstab(fs_t *fs, boolean_t mount_at_boot);
 static int grow_samfs_struct(mcf_cfg_t *mcf, fs_t *fs,
     const sqm_lst_t *new_data, sqm_lst_t **res_devs);
 
-static int grow_qfs_struct(mcf_cfg_t *mcf, fs_t *fs,
+static int grow_qfs_struct(mcf_cfg_t *mcf, fs_t *fs, boolean_t mounted,
 	const sqm_lst_t *new_metadata, const sqm_lst_t *new_data,
 	const sqm_lst_t *striped_groups, sqm_lst_t **l);
 
@@ -129,6 +130,9 @@ static int check_fs_arch_set(char *fs_name, fs_arch_cfg_t *arc);
 
 static int internal_create_fs(ctx_t *ctx, fs_t *fs, boolean_t mount_at_boot,
     fs_arch_cfg_t *arc_info);
+
+static int cmd_online_grow(char *fs_name, int eq);
+
 
 #define		DEFAULT_DATA_DISK_TYPE "md"
 #define		META_DATA_DEVICE "mm"
@@ -823,17 +827,20 @@ verify_fs_unmounted(uname_t fs_name)
  * grow the filesystem.
  */
 int
-grow_fs(ctx_t *ctx,
+grow_fs(
+ctx_t *ctx,
 fs_t *fs,				/* fs to grow */
-const sqm_lst_t *new_meta,			/* list of disk_t */
-const sqm_lst_t *new_data,			/* list of disk_t */
+const sqm_lst_t *new_meta,		/* list of disk_t */
+const sqm_lst_t *new_data,		/* list of disk_t */
 const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 {
 
 	mcf_cfg_t *mcf;
 	base_dev_t *dev;
 	int num_type;
-	sqm_lst_t *res_devs;
+	sqm_lst_t *res_devs = NULL;
+	boolean_t mounted = B_FALSE;
+	fs_t *live_fs;
 
 	if (ISNULL(fs)) {
 		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
@@ -841,10 +848,28 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 	}
 	Trace(TR_MISC, "growing fs %s", Str(fs->fi_name));
 
-	if (verify_fs_unmounted(fs->fi_name) != 0) {
-		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
+
+	/*
+	 * Don't simply rely on the argument, get the file system to
+	 * check the superblock version and see if it is mounted or
+	 * not.
+	 */
+	if (get_fs(NULL, fs->fi_name, &live_fs) == -1) {
 		return (-1);
 	}
+
+	if (live_fs->fi_status & FS_MOUNTED) {
+		mounted = B_TRUE;
+	}
+
+	/* If the fs is mounted check that it will support the online grow */
+	if (mounted && live_fs->fi_version == 1) {
+		samerrno = SE_ONLINE_GROW_FAILED_SBLK_V1;
+		setsamerr(samerrno);
+		free_fs(live_fs);
+		return (-1);
+	}
+	free_fs(live_fs);
 
 	if (read_mcf_cfg(&mcf) != 0) {
 		/* leave samerrno as set */
@@ -877,10 +902,10 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 		if (grow_samfs_struct(mcf, fs, new_data, &res_devs) != 0) {
 			goto err;
 		}
-	} else if (num_type == DT_META_SET) {
-		if (grow_qfs_struct(mcf, fs, new_meta, new_data,
+	} else if (num_type == DT_META_SET || num_type == DT_META_OBJECT_SET ||
+	    num_type == DT_META_OBJ_TGT_SET) {
+		if (grow_qfs_struct(mcf, fs, mounted, new_meta, new_data,
 		    new_stripe_groups, &res_devs) != 0) {
-
 			goto err;
 		}
 	} else {
@@ -893,11 +918,9 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 
 
 	if (append_to_family_set(ctx, fs->fi_name, res_devs) != 0) {
-		lst_free_deep(res_devs);
 		goto err;
 	}
 
-	lst_free_deep(res_devs);
 
 	/*
 	 * if there is a ctx and its dump path is not empty,
@@ -905,6 +928,7 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 	 */
 	if (ctx != NULL && *ctx->dump_path != '\0') {
 		free_mcf_cfg(mcf);
+		lst_free_deep(res_devs);
 		Trace(TR_MISC, "grow fs %s in %s", Str(fs->fi_name),
 		    ctx->dump_path);
 		return (0);
@@ -915,16 +939,58 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 		goto err;
 	}
 
-	/* call grow */
-	if (fs_grow(fs->fi_name) != 0) {
-		goto err;
+	if (mounted) {
+		node_t *n;
+		char *last_group = NULL;
+
+		/* Loop over the new devices calling online grow for each */
+		for (n = res_devs->head; n != NULL; n = n->next) {
+			base_dev_t *dev = (base_dev_t *)n->data;
+
+			/*
+			 * It is only necessary to call grow for the
+			 * first dev in a striped group. Make sure we
+			 * don't double call as the command will
+			 * return an error on the second call.
+			 */
+			if ((*(dev->equ_type) == 'g') ||
+			    (*(dev->equ_type) == 'o')) {
+
+				if (last_group != NULL &&
+				    strcmp(dev->equ_type, last_group) == 0) {
+					/*
+					 * Skip devs from the group
+					 * beyond the first
+					 */
+					continue;
+				} else {
+					/*
+					 * set last_group for this first
+					 * device of a group and go on to
+					 * call grow.
+					 */
+					last_group = dev->equ_type;
+				}
+
+			}
+			if (cmd_online_grow(fs->fi_name, dev->eq) != 0) {
+				goto err;
+			}
+		}
+	} else {
+		/* call grow */
+		if (fs_grow(fs->fi_name) != 0) {
+			goto err;
+		}
 	}
 
+	lst_free_deep(res_devs);
 	free_mcf_cfg(mcf);
 	Trace(TR_MISC, "grew fs %s", Str(fs->fi_name));
 	return (0);
 
 err:
+	lst_free_deep(res_devs);
 	free_mcf_cfg(mcf);
 	Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
 	return (-1);
@@ -1070,6 +1136,7 @@ static int
 grow_qfs_struct(
 mcf_cfg_t *mcf,			/* input for decision making */
 fs_t *fs,			/* fs struct to modify */
+boolean_t mounted,
 const sqm_lst_t *new_metadata,	/* list of disk_t */
 const sqm_lst_t *new_data,		/* list of disk_t */
 const sqm_lst_t *striped_groups,	/* list of striped_group_t */
@@ -1081,7 +1148,7 @@ sqm_lst_t **res_devs)		/* list of striped_group_t */
 	sqm_lst_t		*group_ids = NULL;
 
 	Trace(TR_DEBUG, "grow qfs struct %s", fs->fi_name);
-	if (new_metadata == NULL || new_metadata->length == 0) {
+	if (!mounted && (new_metadata == NULL || new_metadata->length == 0)) {
 		/* no devices */
 		samerrno = SE_FS_METADATA_DEV_REQUIRED;
 		snprintf(samerrmsg, MAX_MSG_LEN,
@@ -3495,4 +3562,22 @@ char *type)
 	    (res != -1) ? "success" : "failed");
 
 	return (res);
+}
+
+static int
+cmd_online_grow(
+char *fs_name,
+int eq) {
+
+	char eqbuf[7];
+
+	snprintf(eqbuf, 7, "%d", eq);
+	if (SetFsPartCmd(fs_name, eqbuf, DK_CMD_add) != 0) {
+		samerrno = SE_ONLINE_GROW_FAILED;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(samerrno), eq);
+		return (-1);
+	}
+
+	return (0);
 }
