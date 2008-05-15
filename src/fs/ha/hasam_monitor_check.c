@@ -80,27 +80,11 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * Check if atleast one tape library with drive is
-	 * configured in mcf, if not there is a possibility
-	 * no library is configured and the archiving is
-	 * limited to disk archives.
-	 * So don't return error if no library is detected.
+	 * Check if sam-fsd is running. We need this daemon
+	 * to start sam-amld later after failover.
 	 */
-	if (!tape_lib_drv_avail) {
-		/*
-		 * Check if sam-fsd daemon is running
-		 */
-		if (!is_sam_fsd()) {
-			return (1);
-		}
-	} else {
-		/*
-		 * Tape library is configured in mcf,
-		 * so validate essential SAM daemons
-		 */
-		if (!verify_essential_sam_daemons()) {
-			return (1);
-		}
+	if (!is_sam_fsd()) {
+		return (1);
 	}
 
 	/*
