@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Select.java,v 1.1 2008/05/09 21:08:57 kilemba Exp $
+// ident	$Id: Select.java,v 1.2 2008/05/15 04:34:10 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -48,7 +48,7 @@ public class Select {
         buf.append("#{")
             .append(this.rowBinding)
             .append(".tableRow}");
-        
+
         rowBinding = buf.toString();
         listener = new TableSelectPhaseListener();
     }

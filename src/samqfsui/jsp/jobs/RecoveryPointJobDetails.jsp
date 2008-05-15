@@ -25,46 +25,51 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: JobDetails.jsp,v 1.2 2008/05/15 04:34:08 kilemba Exp $ -->
-
+<!-- $Id: RecoveryPointJobDetails.jsp,v 1.1 2008/05/15 04:34:08 kilemba Exp $ -->
+                       
 <jsp:root version="1.2"
-   xmlns:f="http://java.sun.com/jsf/core"
-   xmlns:h="http://java.sun.com/jsf/html"
-   xmlns:ui="http://www.sun.com/web/ui"
-   xmlns:c="http://java.sun.com/jsp/jstl/core"
-   xmlns:jsp="http://java.sun.com/JSP/Page">
-   <jsp:directive.page contentType="text/html;charset=ISO-8859-1" 
-                       pageEncoding="UTF-8"/>
-   <f:view>
-   <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
-                 var="samBundle"/>
-                 
-   <ui:page>
-   <ui:html>
-   <ui:head title="#{samBundle['node.admin.job']}"/>
-   <ui:body>
-   <ui:form id="JobDetailsForm">
-       <ui:contentPageTitle title="#{samBundle['job.details.title']}" />
-       <h:panelGrid columns="2" style="margin-left:10px" cellspacing="10">
-           <ui:label text="#{samBundle['job.details.id']}" for="jobId"/>
-           <ui:staticText id="jobId" text="#{JobController.job.jobId}"/>
-           
-           <ui:label text="#{samBundle['job.details.type']}" for="jobType"/>
-           <ui:staticText id="jobType" text="#{JobController.job.type}" />
-        
-           <ui:label for="url" text="Page URL" />
-           <ui:staticText id="url" text="#{JobController.jobDetailsPageUrl}"/>
-       </h:panelGrid>
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:ui="http://www.sun.com/web/ui"
+    xmlns:jsp="http://java.sun.com/JSP/Page">
+    <jsp:directive.page contentType="text/html;charset=ISO-8859-1" pageEncoding="UTF-8"/>
 
-       <!--- redefine the managed bean here for the benefit of the older tags-->
-       <jsp:useBean id="JobController"
-                    class="com.sun.netstorage.samqfs.web.jobs.JobController"
-                    scope="request"/>
-       <c:set var="url" value="${JobController.jobDetailsPageUrl}"/>
-       <jsp:include page="${url}"/>
-   </ui:form>
-   </ui:body>
-   </ui:html>
-   </ui:page>
-   </f:view>
+<f:view>
+<f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources" var="samBundle" />
+<ui:page>
+<ui:html>
+<ui:head title="#{samBundle['node.admin.job']}"/>
+<ui:body>
+<ui:form id="RecoveryPointJobDetailsForm">
+    <ui:breadcrumbs id="breadcrumbs" style="margin-bottom:20px">
+       <ui:hyperlink url="Jobs.jsp" text="#{samBundle['admin.jobs.summary.pagetitle']}"/>
+       <ui:hyperlink url="Jobs.jsp" text="#{samBundle['job.details.title']}"/>		      
+    </ui:breadcrumbs>	  
+
+    <ui:contentPageTitle title="#{samBundle['job.details.title']}"/>
+
+    <h:panelGrid columns="2" style="margin-left:20px" cellspacing="10">
+        <ui:label for="jobId" text="#{samBundle['job.details.id']}"/>
+        <ui:staticText id="jobId" text="#{JobController.recoveryPointJob.jobId}"/>
+
+        <ui:label for="type" text="#{samBundle['job.details.type']}"/>
+        <ui:staticText id="type" text="#{JobController.recoveryPointJob.type}" converter="JobTypeConverter"/>
+
+        <ui:label for="initTime" text="#{samBundle['job.details.initializationtime']}"/>
+        <ui:staticText id="initTime" text="#{JobController.recoveryPointJob.startTime}">
+            <f:convertDateTime dateStyle="medium" timeStyle="medium"/>
+        </ui:staticText>
+
+        <ui:label for="fsname" text="#{samBundle['job.details.fsname']}"/>
+        <ui:staticText id="fsname" text="#{JobController.recoveryPointJob.fileSystemName}"/>
+
+        <ui:label for="snapshotfile" text="#{samBundle['job.details.snapshot']}"/>
+        <ui:staticText id="snapshotfile" text="#{JobController.recoveryPointJob.dumpFileName}"/>
+    </h:panelGrid>
+
+</ui:form>
+</ui:body>
+</ui:html>
+</ui:page>
+</f:view>
 </jsp:root>

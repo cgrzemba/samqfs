@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModelImpl.java,v 1.27 2008/05/09 21:08:58 kilemba Exp $
+// ident	$Id: SamQFSAppModelImpl.java,v 1.28 2008/05/15 04:34:09 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -58,9 +58,9 @@ public class SamQFSAppModelImpl extends DefaultModel
     public SamQFSAppModelImpl() throws SamFSException {
     }
 
-    public SamQFSSystemModel[] getAllSamQFSSystemModels() {        
+    public SamQFSSystemModel[] getAllSamQFSSystemModels() {
         HashMap modelMap = getHostModelMap();
-        
+
         return (SamQFSSystemModelImpl[]) modelMap.values()
                     .toArray(new SamQFSSystemModelImpl[0]);
     }

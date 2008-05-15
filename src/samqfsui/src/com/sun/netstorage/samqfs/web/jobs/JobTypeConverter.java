@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JobTypeConverter.java,v 1.1 2008/05/09 21:08:57 kilemba Exp $
+// ident	$Id: JobTypeConverter.java,v 1.2 2008/05/15 04:34:09 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.jobs;
 
@@ -42,7 +42,7 @@ public class JobTypeConverter implements Converter {
     /**
      * Thus far implementation of this method is not required for jobs. It may
      * be required for the screens that actually define the jobs.
-     * 
+     *
      * @param context - the current faces context.
      * @param component - the component whose value is to be converted.
      * @param value - the string representation of the current job.
@@ -59,7 +59,7 @@ public class JobTypeConverter implements Converter {
                               Object value) {
         int jobType = ((Integer)value).intValue();
         String key = null;
-        
+
         switch (jobType) {
             case BaseJob.TYPE_ARCHIVE_SCAN:
                 key = "job.type.archivescan";
@@ -88,6 +88,8 @@ public class JobTypeConverter implements Converter {
             case BaseJob.TYPE_RELEASE:
                 key = "job.type.release";
                 break;
+            case BaseJob.TYPE_RELEASE_FILES:
+                key = "job.type.releasefiles";
             case BaseJob.TYPE_RESTORE:
                 key = "job.type.restore";
                 break;
@@ -109,7 +111,7 @@ public class JobTypeConverter implements Converter {
             default:
                 key = "job.type.unknown";
         }
-        
+
         return JSFUtil.getMessage(key);
     }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.1 2008/05/09 21:08:57 kilemba Exp $
+// ident	$Id: JSFUtil.java,v 1.2 2008/05/15 04:34:10 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -59,13 +59,14 @@ public class JSFUtil {
 
     // instances of this class are meaningless. Prevent it from being
     // instantiated
-    private JSFUtil(){}
-    
+    private JSFUtil() {
+    }
+
     /** fore-go  user level concurrency for now */
     // TODO:
     public static String getServerName() {
         String serverName = null;
-        
+
         // 1. check in the request attribute
         // - same jsf request
         HttpServletRequest request = getRequest();
@@ -79,11 +80,11 @@ public class JSFUtil {
         } else {
             session.setAttribute(SERVER_NAME, serverName);
         }
-        
+
         return serverName;
     }
 
-    /** 
+    /**
      * return the http request object for the user request currently being
      * handled.
      */
@@ -92,7 +93,7 @@ public class JSFUtil {
         FacesContext fcontext = FacesContext.getCurrentInstance();
         if (fcontext != null) {
             ExternalContext econtext = fcontext.getExternalContext();
-        
+
             if (econtext != null) {
                 req = (HttpServletRequest)econtext.getRequest();
             }
@@ -116,17 +117,17 @@ public class JSFUtil {
         // next check the view root
         if (locale == null) {
             UIViewRoot root = FacesContext.getCurrentInstance().getViewRoot();
-            if (root != null) 
+            if (root != null)
                 locale = root.getLocale();
         }
 
         // finally return the default locale.
-        if (locale == null) 
+        if (locale == null)
             locale = Locale.getDefault();
 
         return locale;
     }
-    
+
     // The following methods are using to resolve resource bundle keys in java
     // classes. NOTE: its not necessary to use these methods when resolving
     // keys in JSPs, instead use the JSTL <code><f:loadBundle .../></code> tag.
@@ -150,7 +151,7 @@ public class JSFUtil {
 					   + "'");
             // TODO: log this and return the key
         }
-        
+
         // try to resolve the given key.
         String message = null;
         try {
@@ -159,10 +160,10 @@ public class JSFUtil {
             // do nothing for now.
             // TODO: log this
         }
-        
+
         return formatMessage((message != null ? message : key), arg);
     }
-    
+
     /**
      * format a string message by substituting the provided arguemnts.
      */

@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ArchiveScanJobDetails.jsp,v 1.1 2008/05/09 21:08:57 kilemba Exp $ -->
+<!-- $Id: ArchiveScanJobDetails.jsp,v 1.2 2008/05/15 04:34:08 kilemba Exp $ -->
                        
 <jsp:root version="1.2"
     xmlns:f="http://java.sun.com/jsf/core"
@@ -33,18 +33,33 @@
     xmlns:ui="http://www.sun.com/web/ui"
     xmlns:jsp="http://java.sun.com/JSP/Page">
     <jsp:directive.page contentType="text/html;charset=ISO-8859-1" pageEncoding="UTF-8"/>
-        
-    <ui:label for="fsname" text="#{samBundle['job.details.fsname']}"/>
-    <ui:staticText id="fsname" text="#{JobController.archiveScanJob.fileSystemName}"/>
 
-    <ui:table id="scanJobDataTable"
-                title="#{samBundle['job.details.scan.table.title']}"    
-                style="margin:10px">
-        <ui:tableRowGroup id="scanDataRows"
-                            sourceData="#{JobController.scanJobData}"
-                            sourceVar="scanData">
+<f:view>
+<f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources" var="samBundle" />
+<ui:page>
+<ui:html>
+<ui:head title="#{samBundle['node.admin.job']}"/>
+<ui:body>
+<ui:form id="ArchiveScanJobDetailsForm">
+    <ui:breadcrumbs id="breadcrumbs" style="margin-bottom:20px">
+       <ui:hyperlink url="Jobs.jsp" text="#{samBundle['admin.jobs.summary.pagetitle']}"/>
+       <ui:hyperlink url="Jobs.jsp" text="#{samBundle['job.details.title']}"/>		      
+    </ui:breadcrumbs>	  
+
+    <ui:contentPageTitle title="#{samBundle['job.details.title']}"/>
+
+    <h:panelGrid columns="2" style="margin-left:20px" cellspacing="10">
+    <ui:label text="#{samBundle['job.details.id']}" for="jobId"/>
+    <ui:staticText id="jobId" text="#{JobController.job.jobId}"/>
+
+    <ui:label text="#{samBundle['job.details.type']}" for="jobType"/>
+    <ui:staticText id="jobType" text="#{JobController.job.type}" converter="JobTypeConverter"/>
+    </h:panelGrid>
+
+    <ui:table id="scanJobDataTable" title="#{samBundle['job.details.scan.table.title']}" style="margin:10px">
+        <ui:tableRowGroup id="scanDataRows" sourceData="#{JobController.scanJobData}" sourceVar="scanData">
             <ui:tableColumn id="fileType" headerText="#{samBundle['job.details.scan.table.filetype']}">
-                <ui:staticText text="xyz"/>
+                <ui:staticText text="#{scanData.value.fileTypeLabel}"/>
             </ui:tableColumn>
 
             <ui:tableColumn id="totalfiles" headerText="#{samBundle['job.details.scan.table.totalfiles']}">
@@ -64,4 +79,10 @@
             </ui:tableColumn>
         </ui:tableRowGroup>
     </ui:table>
+
+</ui:form>
+</ui:body>
+</ui:html>
+</ui:page>
+</f:view>
 </jsp:root>

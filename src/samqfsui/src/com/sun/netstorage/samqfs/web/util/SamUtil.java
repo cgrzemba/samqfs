@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.119 2008/05/09 21:08:57 kilemba Exp $
+// ident	$Id: SamUtil.java,v 1.120 2008/05/15 04:34:10 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -1969,12 +1969,12 @@ public class SamUtil {
      * currently being processed. NOTE: To get JATO and JSF based pages to
      * cohabit, it will be necessary to change all methods that use the JATO
      * utililty class <code>RequestManager</code>.
-     * 
+     *
      * @return - <code>HttpServletRequest</code>
      */
     public static HttpServletRequest getCurrentRequest() {
         HttpServletRequest request = null;
-        
+
         // check if the request is coming from a JSF page
         FacesContext fcontext = FacesContext.getCurrentInstance();
         if (fcontext != null) {
@@ -1983,7 +1983,7 @@ public class SamUtil {
                 request = (HttpServletRequest)econtext.getRequest();
             }
         }
-        
+
         if (request == null) { // must be a JATO request
             RequestContext cxt = RequestManager.getRequestContext();
             if (cxt != null) {
@@ -1992,32 +1992,32 @@ public class SamUtil {
         }
         return request;
     }
-    
-    /** 
+
+    /**
      * Get the <code>HttpServletResponse</code> object for the current request.
      * This is necessary allow both JATO and JSF-based pages to co-exist and
      * utilize the same utility methods in this class.
      */
     public static HttpServletResponse getCurrentResponse() {
         HttpServletResponse response = null;
-        
+
         // is this JSF response?
         FacesContext fcontext = FacesContext.getCurrentInstance();
         if (fcontext != null) {
             ExternalContext econtext = fcontext.getExternalContext();
-            
+
             if (econtext != null) {
                 response = (HttpServletResponse)econtext.getResponse();
             }
         }
-        
-        if (response == null) { // must be a JATO response 
+
+        if (response == null) { // must be a JATO response
             RequestContext rcontext = RequestManager.getRequestContext();
             if (rcontext != null) {
                 response = RequestManager.getResponse();
             }
         }
-        
+
         return response;
     }
 }

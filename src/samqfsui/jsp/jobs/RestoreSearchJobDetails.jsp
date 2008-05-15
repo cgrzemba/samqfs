@@ -25,8 +25,8 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ArchiveCopyJobDetails.jsp,v 1.2 2008/05/15 04:34:08 kilemba Exp $ -->
-
+<!-- $Id: RestoreSearchJobDetails.jsp,v 1.1 2008/05/15 04:34:08 kilemba Exp $ -->
+                       
 <jsp:root version="1.2"
     xmlns:f="http://java.sun.com/jsf/core"
     xmlns:h="http://java.sun.com/jsf/html"
@@ -36,12 +36,11 @@
 
 <f:view>
 <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources" var="samBundle" />
-
 <ui:page>
 <ui:html>
 <ui:head title="#{samBundle['node.admin.job']}"/>
 <ui:body>
-<ui:form id="ArchiceCopyDetailsForm">
+<ui:form id="RestoreSearchJobDetailsForm">
     <ui:breadcrumbs id="breadcrumbs" style="margin-bottom:20px">
        <ui:hyperlink url="Jobs.jsp" text="#{samBundle['admin.jobs.summary.pagetitle']}"/>
        <ui:hyperlink url="Jobs.jsp" text="#{samBundle['job.details.title']}"/>		      
@@ -49,37 +48,28 @@
 
     <ui:contentPageTitle title="#{samBundle['job.details.title']}"/>
 
-    <h:panelGrid columns="2" style="margin:10px" cellspacing="10">
-    <ui:label text="#{samBundle['job.details.id']}" for="jobId"/>
-    <ui:staticText id="jobId" text="#{JobController.job.jobId}"/>
+    <h:panelGrid columns="2" style="margin-left:20px" cellspacing="10">
+        <ui:label for="jobId" text="#{samBundle['job.details.id']}"/>
+        <ui:staticText id="jobId" text="#{JobController.restoreSearchJob.jobId}"/>
 
-    <ui:label text="#{samBundle['job.details.type']}" for="jobType"/>
-    <ui:staticText id="jobType" text="#{JobController.job.type}" converter="JobTypeConverter"/>
+        <ui:label for="type" text="#{samBundle['job.details.type']}"/>
+        <ui:staticText id="type" text="#{JobController.restoreSearchJob.type}" converter="JobTypeConverter"/>
 
-    <ui:label for="fsname" text="#{samBundle['job.details.fsname']}"/>
-    <ui:staticText id="fsname" text="#{JobController.archiveCopyJob.fileSystemName}"/>
+        <ui:label for="initTime" text="#{samBundle['job.details.initializationtime']}"/>
+        <ui:staticText id="initTime" text="#{JobController.restoreSearchJob.startTime}">
+            <f:convertDateTime dateStyle="medium" timeStyle="medium"/>
+        </ui:staticText>
 
-    <ui:label for="policyname" text="#{samBundle['job.details.copy.policyname']}"/>
-    <ui:staticText id="policyname" text="#{JobController.archiveCopyJob.policyName}"/>
+        <ui:label for="fsname" text="#{samBundle['job.details.fsname']}"/>
+        <ui:staticText id="fsname" text="#{JobController.restoreSearchJob.fileSystemName}"/>
 
-    <ui:label for="copynumber" text="#{samBundle['job.details.copy.copynumber']}"/>
-    <ui:staticText id="copynumber" text="#{JobController.archiveCopyJob.copyNumber}"/>
+        <ui:label for="snapshot" text="#{samBundle['job.details.snapshot']}"/>
+        <ui:staticText for="snapshot" text="#{JobController.restoreSearchJob.dumpFileName}"/>
 
-    <ui:label for="vsn" text="#{samBundle['job.details.copy.vsn']}"/>
-    <ui:staticText id="vsn" text="#{JobController.archiveCopyJob.VSNName}"/>
-
-    <ui:label for="mediatype" text="#{samBundle['job.details.copy.mediatype']}"/>
-    <ui:staticText id="mediatype" text="#{JobController.archiveCopyJob.mediaType}"/>
-
-    <ui:label for="inittime" text="#{samBundle['job.details.copy.initializationtime']}"/>
-    <ui:staticText id="inittime" text="#{JobController.archiveCopyJob.startTime}"/>
-
-    <ui:label for="totalfiles" text="#{samBundle['job.details.copy.totalfiles']}"/>
-    <ui:staticText id="totalfiles" text="#{JobController.archiveCopyJob.totalNoOfFilesToBeCopied}"/>
-
-    <ui:label for="datavolume" text="#{samBundle['job.details.copy.datavolume']}"/>
-    <ui:staticText id="datavolume" text="#{JobController.archiveCopyJob.dataVolumeToBeCopied}"/>
+        <ui:label for="criteria" text="#{samBundle['job.details.searchcriteria']}"/>
+        <ui:staticText for="criteria" text="#{JobController.restoreSearchJob.searchCriteria}"/>
     </h:panelGrid>
+
 </ui:form>
 </ui:body>
 </ui:html>

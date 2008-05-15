@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.4 2008/05/09 21:08:58 kilemba Exp $ -->
+<!-- $Id: faces-config.xml,v 1.5 2008/05/15 04:34:08 kilemba Exp $ -->
 
 <faces-config>
     <application>
@@ -82,8 +82,48 @@
     <navigation-rule>
         <from-view-id>/jsp/jobs/Jobs.jsp</from-view-id>
         <navigation-case>
-            <from-out-come>jobdetails</from-out-come>
-            <to-view-id>/jsp/jobs/JobDetails.jsp</to-view-id>
+            <from-outcome>archivecopy</from-outcome>
+            <to-view-id>/jsp/jobs/ArchiveCopyJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>archivescan</from-outcome>
+            <to-view-id>/jsp/jobs/ArchiveScanJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>release</from-outcome>
+            <to-view-id>/jsp/jobs/ReleaseJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>mediamount</from-outcome>
+            <to-view-id>/jsp/jobs/MountMediaJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>samfsck</from-outcome>
+            <to-view-id>/jsp/jobs/SamfsckJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>labeltape</from-outcome>
+            <to-view-id>/jsp/jobs/LabelTapeJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>restore</from-outcome>
+            <to-view-id>/jsp/jobs/RestoreJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>restoresearch</from-outcome>
+            <to-view-id>/jsp/jobs/RestoreSearchJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>recoverypoint</from-outcome>
+            <to-view-id>/jsp/jobs/RecoveryPointJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>enablerecoverypoint</from-outcome>
+            <to-view-id>/jsp/jobs/EnableRecoveryPointJobDetails.jsp</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>generic</from-outcome>
+            <to-view-id>/jsp/jobs/GenericJobDetails.jsp</to-view-id>
         </navigation-case>
     </navigation-rule>
     

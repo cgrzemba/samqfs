@@ -27,23 +27,31 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: JobController.java,v 1.1 2008/05/09 21:08:57 kilemba Exp $
+// ident        $Id: JobController.java,v 1.2 2008/05/15 04:34:09 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.jobs;
 
 import com.sun.data.provider.FieldKey;
 import com.sun.data.provider.RowKey;
-import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.data.provider.TableDataProvider;
 import com.sun.data.provider.impl.ObjectArrayDataProvider;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.util.JSFUtil;
-import com.sun.netstorage.samqfs.web.util.SamUtil;
-import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemJobManager;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.job.ArchiveJob;
 import com.sun.netstorage.samqfs.web.model.job.ArchiveScanJob;
-import com.sun.netstorage.samqfs.web.model.job.ArchiveScanJobData;
+import com.sun.netstorage.samqfs.web.model.job.BaseJob;
+import com.sun.netstorage.samqfs.web.model.job.GenericJob;
+import com.sun.netstorage.samqfs.web.model.job.MountJob;
+import com.sun.netstorage.samqfs.web.model.job.ReleaseJob;
+import com.sun.netstorage.samqfs.web.model.job.LabelJob;
+import com.sun.netstorage.samqfs.web.model.job.RestoreJob;
+import com.sun.netstorage.samqfs.web.model.job.RestoreSearchJob;
+import com.sun.netstorage.samqfs.web.model.job.FSDumpJob;
+import com.sun.netstorage.samqfs.web.model.job.EnableDumpJob;
+import com.sun.netstorage.samqfs.web.model.job.SamfsckJob;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
+import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.Select;
 import com.sun.web.ui.component.TableRowGroup;
 import javax.faces.context.FacesContext;
@@ -66,17 +74,17 @@ public class JobController {
 
     private void initTableDataProvider() {
         String serverName = JSFUtil.getServerName();
-        if (serverName != null){
+        if (serverName != null) {
             try {
                 SamQFSSystemModel model = SamUtil.getModel(serverName);
                 if (model == null)
                     throw new SamFSException("System model is null");
-                
+
                 SamQFSSystemJobManager jobManager =
                     model.getSamQFSSystemJobManager();
                 if (jobManager == null)
                     throw new SamFSException("job manager is null");
-                
+
                 BaseJob [] job = jobManager.getAllJobs();
                 if (job != null) {
                     this.dataProvider = new ObjectArrayDataProvider(job);
@@ -85,12 +93,12 @@ public class JobController {
             }
         } // else we are in big trouble.
     }
-    
+
     public TableDataProvider getJobList() {
         if (this.dataProvider ==  null) {
             initTableDataProvider();
         }
-        
+
         return this.dataProvider;
     }
 
@@ -98,34 +106,34 @@ public class JobController {
     public TableRowGroup getTableRowGroup() {
         return this.rowGroup;
     }
-    
+
     public void setTableRowGroup(TableRowGroup rowGroup) {
         this.rowGroup = rowGroup;
     }
-    
+
     public Select getSelect() {
         return this.select;
     }
-    
+
     public void setSelect(Select sel) {
         this.select = sel;
     }
-    
+
     protected Long getSelectedJobId() {
         Long jobId = null;
         TableDataProvider provider = getJobList();
         RowKey [] rows = getTableRowGroup().getSelectedRowKeys();
         if (rows != null && rows.length == 1) {
             FieldKey field = provider.getFieldKey("jobId");
-            
+
             jobId = (Long)provider.getValue(field, rows[0]);
         }
-        
+
         // safe to clear the selection
         getSelect().clear();
         return jobId;
     }
-    
+
     // event handlers
     public String cancelJob() {
         System.out.println("Processing 'cancelJob()'");
@@ -137,12 +145,12 @@ public class JobController {
             SamQFSSystemModel model = SamUtil.getModel(serverName);
             if (model == null)
                 throw new SamFSException("system model is null");
-            
+
             SamQFSSystemJobManager jobManager =
                 model.getSamQFSSystemJobManager();
             if (jobManager == null)
                 throw new SamFSException("job manager is null");
-            
+
             BaseJob theJob = jobManager.getJobById(selectedJobId);
             jobManager.cancelJob(theJob);
         } catch (SamFSException sfe) {
@@ -150,32 +158,98 @@ public class JobController {
         }
         return "redisplay";
     }
-    
+
     public String gotoJob() {
         System.out.println("Processing 'gotoJob()'");
         Long id = getSelectedJobId();
 
         System.out.println("go to job : " + id);
         this.selectedJobId = id.longValue();
-        return "jobdetails";
+
+        int type = getJob(this.selectedJobId).getType();
+
+        System.out.println("job type = " + type);
+        return getDetailsPage(type);
     }
-    
+
     public String handleJobHref() {
         System.out.println("Processing 'handleJobHref()'");
         FacesContext context = FacesContext.getCurrentInstance();
         ValueBinding binding = context.getApplication()
             .createValueBinding("#{jobs.value.jobId}");
-        
+
         Long id = (Long)binding.getValue(context);
         System.out.println("selected job id = " + id);
-        
+
         this.selectedJobId = id.longValue();
-        return "jobdetails";
+
+        int type = getJob(this.selectedJobId).getType();
+        System.out.println("job type = " + type);
+
+        String pageCode = getDetailsPage(type);
+        System.out.println("job details code = " + pageCode);
+
+        return pageCode;
+        // getDetailsPage(type);
     }
-    
+
+    // TODO: utility class candidate
+    public String getDetailsPage(int jobType) {
+        String code = null;
+        switch (jobType) {
+        case BaseJob.TYPE_ARCHIVE_COPY:
+            code = "archivecopy";
+            break;
+        case BaseJob.TYPE_ARCHIVE_SCAN:
+            code = "archivescan";
+            break;
+        case BaseJob.TYPE_RELEASE:
+            code = "release";
+            break;
+        case BaseJob.TYPE_MOUNT: // TODO: this will need to change because of
+                                 // mount clients
+            code = "mountmedia";
+            break;
+        case BaseJob.TYPE_FSCK:
+            code = "samfsck";
+            break;
+        case BaseJob.TYPE_TPLABEL:
+            code = "labeltape";
+            break;
+        case BaseJob.TYPE_RESTORE:
+            code = "restore";
+            break;
+        case BaseJob.TYPE_RESTORE_SEARCH:
+            code = "restoresearch";
+            break;
+        case BaseJob.TYPE_DUMP:
+            code = "recoverypoint";
+            break;
+        case BaseJob.TYPE_ENABLE_DUMP:
+            code = "enablerecoverypoint";
+            break;
+        case BaseJob.TYPE_ARCHIVE_FILES:
+        case BaseJob.TYPE_RELEASE_FILES:
+        case BaseJob.TYPE_STAGE_FILES:
+        case BaseJob.TYPE_RUN_EXPLORER:
+            code = "generic";
+            break;
+        default:
+            code = "badtype";
+        }
+
+        return code;
+    }
+
     // job details page
-    /**returns the job object of the job selected in the summary page */
+    /**
+     * returns the job object of the job selected in the summary page
+     */
     public BaseJob getJob() {
+        return getJob(this.selectedJobId);
+    }
+
+    public BaseJob getJob(long jobId) {
         if (this.selectedJob == null) {
             System.out.println("job details selected job = " + selectedJobId);
             String serverName = JSFUtil.getServerName();
@@ -184,20 +258,20 @@ public class JobController {
                 SamQFSSystemModel model = SamUtil.getModel(serverName);
                 if (model == null)
                     throw new SamFSException("system model is null");
-            
+
                 SamQFSSystemJobManager jobManager =
                     model.getSamQFSSystemJobManager();
-                if (jobManager == null) 
+                if (jobManager == null)
                     throw new SamFSException("job manager is null");
-            
-                this.selectedJob = jobManager.getJobById(selectedJobId);
-                if (this.selectedJob == null) 
+
+                this.selectedJob = jobManager.getJobById(jobId);
+                if (this.selectedJob == null)
                     throw new SamFSException("job not found");
             } catch (SamFSException sfe) {
                 // TODO: // exception processing
             }
         }
-            
+
         return this.selectedJob;
     }
 
@@ -211,48 +285,81 @@ public class JobController {
         return (ArchiveScanJob)this.selectedJob;
     }
 
+    public GenericJob getGenericJob() {
+        return (GenericJob)this.selectedJob;
+    }
+
+    public ReleaseJob getReleaseJob() {
+        return (ReleaseJob)this.selectedJob;
+    }
+
+    public MountJob getMediaMountJob() {
+        return (MountJob)this.selectedJob;
+    }
+
+    public SamfsckJob getSamfsckJob() {
+        return (SamfsckJob)this.selectedJob;
+    }
+
+    public LabelJob getLabelTapeJob() {
+        return (LabelJob)this.selectedJob;
+    }
+
+    public RestoreJob getRestoreJob() {
+        return (RestoreJob)this.selectedJob;
+    }
+
+    public RestoreSearchJob getRestoreSearchJob() {
+        return (RestoreSearchJob)this.selectedJob;
+    }
+
+    public FSDumpJob getRecoveryPointJob() {
+        return (FSDumpJob)this.selectedJob;
+    }
+
+    public EnableDumpJob getEnableRecoveryPointJob() {
+        return (EnableDumpJob)this.selectedJob;
+    }
+
     // TODO: since this is a read only table, populating the data provider can
     // probably be deffered until the display response phase.
     public TableDataProvider getScanJobData() {
         if (this.scanJobDataProvider == null) {
-            ArchiveScanJobData [] data = new ArchiveScanJobData[9];
+            UIArchiveScanJobData [] data = new UIArchiveScanJobData[9];
 
             ArchiveScanJob scanJob = getArchiveScanJob();
             if (scanJob != null) {
-                data[0] = scanJob.getRegularFiles();
-                data[1] = scanJob.getOfflineFiles();
-                data[2] = scanJob.getArchDoneFiles();
-                data[3] = scanJob.getCopy1();
-                data[4] = scanJob.getCopy2();
-                data[5] = scanJob.getCopy3();
-                data[6] = scanJob.getCopy4();
-                data[7] = scanJob.getDirectories();
-                data[8] = scanJob.getTotal();
+                data[0] = new UIArchiveScanJobData(scanJob.getRegularFiles(),
+                    JSFUtil.getMessage("job.details.scan.table.regularfiles"));
+
+                data[1] = new UIArchiveScanJobData(scanJob.getOfflineFiles(),
+                    JSFUtil.getMessage("job.details.scan.table.offlinefiles"));
+
+                data[2] = new UIArchiveScanJobData(scanJob.getArchDoneFiles(),
+                    JSFUtil.getMessage("job.details.scan.table.completed"));
+
+                data[3] = new UIArchiveScanJobData(scanJob.getCopy1(),
+                    JSFUtil.getMessage("job.details.scan.table.copy1"));
+
+                data[4] = new UIArchiveScanJobData(scanJob.getCopy2(),
+                    JSFUtil.getMessage("job.details.scan.table.copy2"));
+
+                data[5] = new UIArchiveScanJobData(scanJob.getCopy3(),
+		            JSFUtil.getMessage("job.details.scan.table.copy3"));
+
+                data[6] = new UIArchiveScanJobData(scanJob.getCopy4(),
+		            JSFUtil.getMessage("job.details.scan.table.copy4"));
+
+                data[7] = new UIArchiveScanJobData(scanJob.getDirectories(),
+		            JSFUtil.getMessage("job.details.scan.dir"));
+
+                data[8] = new UIArchiveScanJobData(scanJob.getTotal(),
+		            JSFUtil.getMessage("job.details.total"));
             }
 
             this.scanJobDataProvider = new ObjectArrayDataProvider(data);
         }
 
         return this.scanJobDataProvider;
-    }
-
-    public String getJobDetailsPageFragment() {
-        System.out.println("Entered getJobDetailsPageFragment()");
-        // String page = "ArchiveScanJobDetails.jsp";
-        String page = null;
-
-        switch (this.selectedJob.getType()) {
-        case BaseJob.TYPE_ARCHIVE_SCAN:
-            page = "ArchiveScanJobDetails.jsp";
-            break;
-        case BaseJob.TYPE_ARCHIVE_COPY:
-            page = "ArchiveCopyJobDetails.jsp";
-            break;
-        default:
-            // do nothing
-        }
-
-        System.out.println("getJobDetailsFragment() : " + page);
-        return page;
     }
 }

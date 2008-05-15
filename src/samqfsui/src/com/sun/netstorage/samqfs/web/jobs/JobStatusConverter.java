@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JobStatusConverter.java,v 1.1 2008/05/09 21:08:57 kilemba Exp $
+// ident	$Id: JobStatusConverter.java,v 1.2 2008/05/15 04:34:09 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.jobs;
 
@@ -50,7 +50,7 @@ public class JobStatusConverter implements Converter {
                               Object value) {
         int status = (Integer)value;
         String key = null;
-        
+
         switch (status) {
             case BaseJob.CONDITION_CURRENT:
                 key = "job.status.current";
@@ -61,7 +61,7 @@ public class JobStatusConverter implements Converter {
             default:
                 key = "job.status.unknown";
         }
-        
+
         return JSFUtil.getMessage(key);
     }
 }

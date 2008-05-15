@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseJobImpl.java,v 1.12 2008/05/09 21:08:58 kilemba Exp $
+// ident	$Id: BaseJobImpl.java,v 1.13 2008/05/15 04:34:10 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.job;
 
@@ -95,7 +95,7 @@ public class BaseJobImpl implements BaseJob {
     }
 
     public Date getStartTime() {
-        return this.startDateTime != null 
+        return this.startDateTime != null
             ? new Date(this.startDateTime.getTimeInMillis()) : null;
     }
 
