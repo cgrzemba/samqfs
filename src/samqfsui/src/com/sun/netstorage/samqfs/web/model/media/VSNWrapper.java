@@ -1,23 +1,33 @@
 /*
  *    SAM-QFS_notice_begin
  *
- *      Solaris 2.x Sun Storage & Archiving Management File System
+ * CDDL HEADER START
  *
- *      Copyright (c) 2007 Sun Microsystems, Inc.
- *      All Rights Reserved.
+ * The contents of this file are subject to the terms of the
+ * Common Development and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
  *
- *      Government Rights Notice
- *      Use, duplication, or disclosure by the U.S. Government is
- *      subject to restrictions set forth in the Sun Microsystems,
- *      Inc. license agreements and as provided in DFARS 227.7202-1(a)
- *      and 227.7202-3(a) (1995), DRAS 252.227-7013(c)(ii) (OCT 1988),
- *      FAR 12.212(a)(1995), FAR 52.227-19, or FAR 52.227-14 (ALT III),
- *      as applicable.  Sun Microsystems, Inc.
+ * You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+ * or http://www.opensolaris.org/os/licensing.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each
+ * file and include the License file at pkg/OPENSOLARIS.LICENSE.
+ * If applicable, add the following below this CDDL HEADER, with the
+ * fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ */
+/*
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: VSNWrapper.java,v 1.3 2008/04/29 17:08:08 ronaldso Exp $
+// ident    $Id: VSNWrapper.java,v 1.4 2008/05/16 18:39:04 am143972 Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
