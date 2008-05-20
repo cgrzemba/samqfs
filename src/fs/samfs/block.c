@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.105 $"
+#pragma ident "$Revision: 1.106 $"
 
 #include "sam/osversion.h"
 
@@ -2134,7 +2134,8 @@ sam_change_state(
 		mutex_exit(&mp->ms.m_synclock);
 
 		sblk = mp->mi.m_sbp;
-		space = sblk->eq[ord].fs.space + sblk->eq[ord].fs.system;
+		space = sblk->eq[ord].fs.space +
+			(sblk->eq[ord].fs.system * sblk->eq[ord].fs.num_group);
 		if (space != sblk->eq[ord].fs.capacity) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: cannot OFF ord=%d space 0x%llx KB"
