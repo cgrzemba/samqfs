@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.83 $"
+#pragma ident   "$Revision: 1.84 $"
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 
@@ -74,7 +74,6 @@ static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 #include "pub/mgmt/hosts.h"
 #include "pub/mgmt/license.h"
 #include "mgmt/config/common.h"
-#include "mgmt/config/cfg_hosts.h"
 #include "mgmt/config/cfg_fs.h"
 #include "mgmt/config/cfg_diskvols.h"
 #include "mgmt/config/vfstab.h"
@@ -1427,19 +1426,10 @@ fs_t **fs)		/* OUT - filled fs_t struct */
 	}
 
 	/*
-	 * if fs is shared metadata server or potential metadata server,
-	 * get the hosts config. Also set up the file systems struct to
-	 * identify this host's role.
+	 * Set up the file system struct to identify this host's role.
 	 */
 	if (f->fi_shared_fs && !(f->fi_status & FS_NODEVS)) {
-		if (cfg_get_hosts_config(NULL, f, &(f->hosts_config)) != 0) {
-			if (samerrno != SE_CLIENTS_HAVE_NO_HOSTS_FILE) {
-				Trace(TR_ERR,
-				    "Failed to populate hosts config for %s",
-				    f->fi_name);
-				ret = -2;
-			}
-		} else if (!(f->fi_status & FS_MOUNTED) ||
+		if (!(f->fi_status & FS_MOUNTED) ||
 		    strcmp(f->equ_type, "ms") == 0) {
 
 			/*
@@ -1454,6 +1444,7 @@ fs_t **fs)		/* OUT - filled fs_t struct */
 			}
 		}
 	}
+
 	*fs = f;
 
 	Trace(TR_MISC, "fill fs done (%d)", ret);

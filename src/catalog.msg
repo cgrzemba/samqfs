@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.590 $"
+$ pragma ident "$Revision: 1.591 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -4093,7 +4093,8 @@ $ shared filesystems errors
 31134 The advanced network configuration could not be read. Check the /etc/opt/SUNWsamfs/hosts.local file for this file system
 31135 The advanced network configuration could not be set. The input was not well-formed
 31136 Unable to obtain the list of valid IP addresses and names for this host.
-
+31137 The client table is out of sync with the super block
+31138 Unable to retrieve the hosts info. The string is too long
 $ samrestore errors
 
 31200 No value for keyword %s. Possible client/server version mismatch.

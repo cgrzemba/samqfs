@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.110 $"
+#pragma ident	"$Revision: 1.111 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -2095,6 +2095,9 @@ extern samrpc_result_t *samrpc_add_host_3_svr();
 
 #define	samrpc_discover_ip_addresses	1166
 extern samrpc_result_t *samrpc_discover_ip_addresses_3_svr();
+
+#define	samrpc_get_shared_fs_hosts	1167
+extern samrpc_result_t *samrpc_get_shared_fs_hosts_5_0_svr();
 
 /* samfsrestore and samfsdump */
 #define	samrpc_set_csd_params	1169

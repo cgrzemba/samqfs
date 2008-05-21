@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.13 $"
+#pragma ident	"$Revision: 1.14 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -105,6 +105,35 @@ Host2host(JNIEnv *env, jobject hostObj) {
 	PTRACE(2, "jni:Host2host() done");
 	return (host);
 }
+
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_Host_getSharedFSHosts(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName, jint options) {
+
+	jobjectArray newArr;
+	sqm_lst_t *kvlst;
+	jboolean isCopy; /* used by string macros */
+	char *cstr = GET_STR(fsName, isCopy);
+
+	PTRACE(1, "jni:Host_getSharedFSHosts(...,%s)", Str(cstr));
+
+	if (-1 == get_shared_fs_hosts(CTX, cstr, options, &kvlst)) {
+		REL_STR(fsName, cstr, isCopy);
+		ThrowEx(env);
+		return (NULL);
+	}
+	PTRACE(1, "jni:shared host information obtained");
+
+	newArr = lst2jarray(env, kvlst, "java/lang/String", charr2String);
+	REL_STR(fsName, cstr, isCopy);
+	lst_free_deep(kvlst);
+	PTRACE(1, "jni:Host_getSharedFSHosts() done");
+	return (newArr);
+
+}
+
+
 
 JNIEXPORT jobjectArray JNICALL
 Java_com_sun_netstorage_samqfs_mgmt_fs_Host_getConfig(JNIEnv *env,

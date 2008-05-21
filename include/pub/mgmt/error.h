@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.142 $"
+#pragma	ident	"$Revision: 1.143 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */
@@ -511,6 +511,8 @@ typedef enum samapi_errno {
 	SE_LOCAL_HOST_READ_FAILED		= 31134,
 	SE_SET_ADV_CFG_BAD_INPUT		= 31135,
 	SE_CANT_GET_HOST_IPS			= 31136,
+	SE_CLNT_TBL_OUT_OF_SYNC			= 31137,
+	SE_HOST_KV_TOO_LONG			= 31138,
 
 	/* Sam restore errors */
 	SE_NOKEYVALUE				= 31200,

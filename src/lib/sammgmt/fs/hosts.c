@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "	$Revision: 1.41 $"
+#pragma ident "	$Revision: 1.42 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -67,21 +67,37 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "samhost.h"
 #include "sam/mount.h"
 
+/* client info headers */
+#include "sam/syscall.h"
+#include "sam/lib.h"
+/*
+ *  Client status bit definitions - see src/fs/include/client.h
+ */
+#define	SAM_CLIENT_DEAD 0x01    /* Client assumed dead during failover */
+#define	SAM_CLIENT_INOP 0x02    /* client known dead */
+#define	SAM_CLIENT_SOCK_BLOCKED 0x04    /* Writing to client returned EAGAIN */
 
 #define	IFCONFIG_CMD "/usr/sbin/ifconfig -a"
 
 static int write_host_line(FILE *f, host_info_t *h);
 static int make_hosts_list(char ***charhosts, sqm_lst_t **hosts,
-    upath_t server_name, int mounted_hosts);
+    upath_t server_name, struct sam_get_fsclistat_arg *clnt_stat,
+    int kv_options);
 
 static int cp_host_fields(host_info_t *dest, host_info_t *src);
+
+static int get_host_kv(char **charhosts, sam_client_info_t *clnt_stat,
+    int kv_options, char **kv_string);
+
+static int get_host_struct(char **charhosts, upath_t server_name,
+    host_info_t **h);
 
 
 static int
 get_names_for_ip(
-char *ip,	/* IP address as a string */
-int af,		/* address family. AF_INET or AF_INET6 */
-sqm_lst_t *lst	/* add addresses to this list */)
+char	*ip,	/* IP address as a string */
+int	af,	/* address family. AF_INET or AF_INET6 */
+sqm_lst_t *lst)	/* add addresses to this list */
 {
 
 	struct hostent *hp = NULL;
@@ -474,7 +490,6 @@ cp_host_fields(host_info_t *dest, host_info_t *src) {
 	node_t *n;
 
 	dest->server_priority = src->server_priority;
-	dest->mounted_hosts = src->mounted_hosts;
 
 	/*
 	 * Don't allow this function to change the current server
@@ -779,7 +794,7 @@ host_info_t *h)
  * Return an ordered list of the host_info_t structures. The order will
  * match the order in the hosts.<fs_name> file.
  *
- * preconditions:
+ * Note:
  * 1. Must be called on a metadata server or potential metadata server.
  */
 int
@@ -787,6 +802,50 @@ get_host_config(
 ctx_t *ctx,		/* ARGSUSED */
 char *fs_name,		/* name of fs to get hosts config for. */
 sqm_lst_t **hosts)		/* Ordered list of host_info_t */
+{
+	fs_t *fs;
+
+	if (ISNULL(fs_name, hosts)) {
+		Trace(TR_ERR, "getting hosts config failed: %s", samerrmsg);
+		return (-1);
+	}
+
+
+	Trace(TR_MISC, "getting hosts config for fs %s", fs_name);
+	if (get_fs(NULL, fs_name, &fs) == -1) {
+		Trace(TR_ERR, "getting hosts config failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	if (!fs->fi_shared_fs) {
+		free_fs(fs);
+		samerrno = SE_ONLY_SHARED_HAVE_HOSTS;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_ONLY_SHARED_HAVE_HOSTS), fs_name);
+		Trace(TR_ERR, "getting hosts config failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	if (cfg_get_hosts_config(NULL, fs, hosts, 0) != 0) {
+		free_fs(fs);
+		Trace(TR_ERR, "getting hosts config failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	free_fs(fs);
+
+	Trace(TR_MISC, "returning hosts config for fs %s", fs_name);
+	return (0);
+}
+
+
+
+int
+get_shared_fs_hosts(
+ctx_t	*c,		/* ARGSUSED */
+char *fs_name,
+int32_t options,
+sqm_lst_t **hosts)
 {
 
 	fs_t *fs;
@@ -812,7 +871,7 @@ sqm_lst_t **hosts)		/* Ordered list of host_info_t */
 		return (-1);
 	}
 
-	if (cfg_get_hosts_config(NULL, fs, hosts) != 0) {
+	if (cfg_get_hosts_config(NULL, fs, hosts, options) != 0) {
 		free_fs(fs);
 		Trace(TR_ERR, "getting hosts config failed: %s", samerrmsg);
 		return (-1);
@@ -827,17 +886,25 @@ sqm_lst_t **hosts)		/* Ordered list of host_info_t */
 
 /*
  * Internal function to get a hosts list for a shared file system, given
- * the file system structure.
+ * the file system structure. This function fetches the information in one
+ * of two formats depending on the kv_options. If kv_options != 0 the
+ * hosts list will contain key value pair strings. Otherwise it will
+ * include host_info_t structures.
  *
  * Preconditions:
  * 1. file system is shared.
  * 2. call is being made on a metadata server or a potential metadata server.
+ *    Note however that for calls on a potential metadata server the client
+ *    table information will not be available from SC_getfsclistat so there
+ *    will be no additional information beyond that available from the
+ *    file system's host table.
  */
 int
 cfg_get_hosts_config(
-ctx_t *ctx,		/* ARGSUSED */
-fs_t *fs,		/* fs to get hosts for */
-sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
+ctx_t		*ctx,		/* ARGSUSED */
+fs_t		*fs,		/* fs to get hosts for */
+sqm_lst_t	**hosts,	/* malloced sqm_lst_t of host_info_t for fs */
+int32_t		kv_options)	/* what to fetch and include */
 {
 
 	struct sam_host_table_blk *host_tbl;
@@ -845,12 +912,23 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 	char	*errmsg;
 	int	errc = 0;
 	char	*devname = NULL;
-	int	mounted_hosts = 0;
 	int htsize = SAM_LARGE_HOSTS_TABLE_SIZE;
 
-	Trace(TR_OPRMSG, "getting host config for %s", Str(fs->fi_name));
 
-	host_tbl = (struct sam_host_table_blk *)malloc(htsize);
+	/* Client Info Table Structs */
+	struct sam_get_fsclistat_arg stat_arg;
+	struct sam_get_fsclistat_arg *clnt_stat = NULL;
+	sam_client_info_t *clnts = NULL;
+
+	Trace(TR_OPRMSG, "getting hosts config for %s", Str(fs->fi_name));
+
+	/* Allocate space to hold the new large host table */
+	host_tbl = (struct sam_host_table_blk *)mallocer(htsize);
+	if (host_tbl == NULL) {
+		Trace(TR_ERR, "getting hosts config failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
 	bzero((char *)host_tbl, htsize);
 
 
@@ -860,7 +938,6 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 		 * file system is not mounted get the information from
 		 * the first metadata device.
 		 */
-
 		if (strcmp(fs->equ_type, "ma") == 0 &&
 		    (fs->meta_data_disk_list == NULL ||
 		    fs->meta_data_disk_list->length == 0)) {
@@ -868,18 +945,19 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 			snprintf(samerrmsg, MAX_MSG_LEN,
 			    GetCustMsg(SE_UNABLE_TO_READ_RAW_HOSTS),
 			    fs->fi_name, "no metadata devices");
-
+			free(host_tbl);
 			Trace(TR_ERR, "getting hosts config failed: %s",
 			    "no metadata devices");
 			return (-1);
 		} else {
 			disk_t *d;
 
+			/* select a device to read the hosts information from */
 			if (strcmp(fs->equ_type, "ma") == 0) {
 				d = (disk_t *)
 				    fs->meta_data_disk_list->head->data;
 			} else {
-				/* it is a shared ms */
+				/* fs is shared ms, so use a data disk */
 				d = (disk_t *)fs->data_disk_list->head->data;
 			}
 			if (strcmp(d->base_info.name, NODEV_STR) == 0) {
@@ -887,7 +965,7 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 				samerrno = SE_CLIENTS_HAVE_NO_HOSTS_FILE;
 				snprintf(samerrmsg, MAX_MSG_LEN,
 				    GetCustMsg(SE_CLIENTS_HAVE_NO_HOSTS_FILE));
-
+				free(host_tbl);
 				Trace(TR_ERR,
 				    "getting hosts config failed: %s",
 				    samerrmsg);
@@ -902,8 +980,7 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 				snprintf(samerrmsg, MAX_MSG_LEN,
 				    GetCustMsg(SE_CANNOT_DETERMINE_RAW_SLICE),
 				    fs->fi_name);
-
-
+				free(host_tbl);
 				Trace(TR_ERR,
 				    "getting hosts config failed: %s",
 				    samerrmsg);
@@ -935,6 +1012,7 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 				if (devname != NULL) {
 					free(devname);
 				}
+				free(host_tbl);
 				return (0);
 			}
 
@@ -950,11 +1028,15 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 			if (devname != NULL) {
 				free(devname);
 			}
+			free(host_tbl);
 			return (-1);
 		}
 
 	} else {
-		/* fs is mounted get the information from the core */
+		/*
+		 * The filesystem is mounted, so get the information from
+		 * the core
+		 */
 		if (sam_gethost(fs->fi_name, htsize,
 		    (char *)host_tbl) < 0) {
 
@@ -963,24 +1045,58 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 			    GetCustMsg(SE_UNABLE_TO_GET_HOSTS_FROM_CORE),
 			    fs->fi_name);
 
+			free(host_tbl);
 			Trace(TR_ERR, "getting hosts config failed: %s",
 			    samerrmsg);
 
 			return (-1);
 		}
 
-		/* also get the number of mounted hosts from the system */
-		mounted_hosts = sam_shareops(fs->fi_name,
-		    SHARE_OP_CL_MOUNTED, 0);
 		/*
-		 * Note that if mounted hosts < 0 we could check errno
-		 * EBUSY - The fs is not mounted or is failing over
-		 * EINVAL - This is not the mds
-		 * But at this point we do not care. Leave the negative
-		 * number set to avoid the confusion that could arise
-		 * if the number was set to 0.
+		 * If this host is the current metadata server and
+		 * kv_options is non-null get the client info.
+		 *
+		 * This code is inside the mounted block because...
+		 * While the client table will be populated on the mds
+		 * if the file system has been mounted since pkgadd or
+		 * reboot, it does not appear to contain reliable
+		 * useful information except for that which has
+		 * already been obtained from the superblock.
 		 */
+		if (fs->fi_status & FS_SERVER && kv_options) {
+			clnts = mallocer(SAM_MAX_SHARED_HOSTS *
+			    sizeof (sam_client_info_t));
+
+			if (clnts == NULL) {
+				Trace(TR_ERR, "getting hosts config failed:"
+				    "%d %s", samerrno, samerrmsg);
+				free(host_tbl);
+				return (-1);
+			}
+
+			strncpy(stat_arg.fs_name, fs->fi_name,
+			    sizeof (stat_arg.fs_name));
+			stat_arg.maxcli = SAM_MAX_SHARED_HOSTS;
+			stat_arg.numcli = 0;
+			stat_arg.fc.ptr = clnts;
+			if (sam_syscall(SC_getfsclistat, &stat_arg,
+			    sizeof (stat_arg)) < 0) {
+				free(clnts);
+				free(host_tbl);
+				Trace(TR_ERR, "SC_getfsclistat failed");
+				return (-1);
+			}
+
+			/*
+			 * Since we now know we have good data- setup
+			 * clnt_stat to pass the data to make_hosts_list
+			 */
+			if (stat_arg.fs_name != '\0') {
+				clnt_stat = &stat_arg;
+			}
+		}
 	}
+
 
 
 	/*
@@ -994,6 +1110,10 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 		    GetCustMsg(SE_UNABLE_TO_CONVERT_HOSTS_FILE),
 		    fs->fi_name);
 
+		SamHostsFree(charhosts);
+		free(host_tbl);
+		free(clnts);
+
 		Trace(TR_ERR, "getting hosts config failed: %s",
 		    samerrmsg);
 
@@ -1001,7 +1121,11 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 	}
 
 	if (make_hosts_list(charhosts, hosts, fs->fi_server,
-	    mounted_hosts) != 0) {
+	    clnt_stat, kv_options) != 0) {
+
+		SamHostsFree(charhosts);
+		free(host_tbl);
+		free(clnts);
 
 		Trace(TR_ERR, "getting hosts config failed: %s",
 		    samerrmsg);
@@ -1009,8 +1133,11 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
 		return (-1);
 	}
 
-	Trace(TR_MISC, "got hosts from config for %s", fs->fi_name);
+	SamHostsFree(charhosts);
+	free(host_tbl);
+	free(clnts);
 
+	Trace(TR_MISC, "got hosts from config for %s", fs->fi_name);
 	return (0);
 }
 
@@ -1020,10 +1147,11 @@ sqm_lst_t **hosts)		/* malloced sqm_lst_t of host_info_t for fs */
  */
 static int
 make_hosts_list(
-char	***charhosts,
+char		***charhosts,
 sqm_lst_t	**hosts,
-upath_t server_name,
-int	mounted_hosts)
+upath_t		server_name,
+struct sam_get_fsclistat_arg *clnt_stat,
+int		kv_options)
 {
 
 	host_info_t *h = NULL;
@@ -1032,50 +1160,298 @@ int	mounted_hosts)
 
 	*hosts = lst_create();
 	if (*hosts == NULL) {
+		Trace(TR_ERR, "Making host lists failed: %d %s",
+		    samerrno, samerrmsg);
 		return (-1);
 	}
 
-
 	for (i = 0; charhosts[i] != NULL; i++) {
-		h = mallocer(sizeof (host_info_t));
-		if (h == NULL) {
-			goto err;
-		}
 
+		if (kv_options) {
+			char *kv_string;
+			sam_client_info_t *clnt = NULL;
 
-		memset(h, 0, sizeof (host_info_t));
+			if (clnt_stat != NULL && i >= clnt_stat->maxcli) {
+				/*
+				 * The raw host table information is
+				 * out of sync with what the client
+				 * info table from the mds.  This
+				 * should never happen. If it does it
+				 * means that explicit comparisons of
+				 * names or ordinals will be required.
+				 */
+				samerrno = SE_CLNT_TBL_OUT_OF_SYNC;
+				snprintf(samerrmsg, MAX_MSG_LEN,
+				    GetCustMsg(samerrno));
+				Trace(TR_ERR, "FS reports different number "
+				    "of clients than the superblock:%d %s",
+				    samerrno, samerrmsg);
+				goto err;
+			}
 
-		h->host_name = strdup(charhosts[i][HOSTS_NAME]);
+			if (clnt_stat != NULL) {
+				clnt = &(((sam_client_info_t *)
+				    clnt_stat->fc.ptr)[i]);
+			}
 
+			if (get_host_kv(charhosts[i], clnt,
+			    kv_options, &kv_string) != 0) {
+				goto err;
+			}
 
-		if (*charhosts[i][HOSTS_PRI] == '-') {
-			h->server_priority = 0;
+			/*
+			 * kv_string can be NULL in the non-error case
+			 * where the type of host is being filtered out
+			 * due to its role in the FS and the value of
+			 * kv_options.
+			 */
+			if (kv_string != NULL) {
+				if (lst_append(*hosts, kv_string) != 0) {
+					goto err;
+				}
+			}
 		} else {
-			h->server_priority = atoi(charhosts[i][HOSTS_PRI]);
-		}
+			h = NULL;
 
-		if (charhosts[i][HOSTS_SERVER]) {
-			h->current_server = B_TRUE;
-			strlcpy(server_name, h->host_name, sizeof (upath_t));
-			h->mounted_hosts = mounted_hosts;
-		}
-
-		h->ip_addresses = str2lst(charhosts[i][HOSTS_IP], ", ");
-
-
-		if (lst_append(*hosts, h) != 0) {
-			free_host_info(h);
-			goto err;
+			if (get_host_struct(charhosts[i],
+			    server_name, &h) != 0) {
+				goto err;
+			}
+			if (lst_append(*hosts, h) != 0) {
+				free_host_info(h);
+				goto err;
+			}
 		}
 	}
 
 	return (0);
 
 err:
-	lst_free(*hosts);
-	free_host_info(h);
+	if (kv_options) {
+		lst_free_deep(*hosts);
+	} else {
+		free_list_of_host_info(*hosts);
+	}
+	Trace(TR_ERR, "Making hosts lists failed:%d %d", samerrno, samerrmsg);
 	return (-1);
 }
+
+
+/*
+ * get_host_kv returns a key value string for the host. It also evaluates
+ * the kv_options. If the type of host passed in is not requested in the options
+ * success is returned and kv_string is set to NULL.
+ */
+static
+int get_host_kv(
+char **charhost,
+sam_client_info_t *clnt,
+int kv_options,
+char **kv_string) {
+
+	int priority = 0;
+	size_t cur_sz = 0;
+	int buf_sz = 2048; /* sufficient for hostname, ips, keys and values */
+	char buf[buf_sz];
+	char *ip_beg;
+	char *c;
+
+
+	*kv_string = NULL;
+	buf[0] = '\0';
+
+	if ((cur_sz = strlcat(buf, "hostname=", buf_sz)) > buf_sz) {
+		goto err;
+	}
+
+	cur_sz = strlcat(buf, charhost[HOSTS_NAME], buf_sz);
+	if (cur_sz > buf_sz) {
+		Trace(TR_ERR, "getting host kv failed:%d %s");
+		goto err;
+	}
+
+
+	if (*charhost[HOSTS_PRI] == '-') {
+		priority = 0;
+	} else {
+		priority = atoi(charhost[HOSTS_PRI]);
+	}
+
+	/*
+	 * Determine host type. If that type of host has not been requested
+	 * return 0 without creating a kv string.
+	 */
+	if (priority == 0) {
+		if ((kv_options & HOSTS_CLIENTS) == 0) {
+			return (0);
+		}
+		cur_sz = strlcat(buf, ",type=client", buf_sz);
+	} else if (charhost[HOSTS_SERVER]) {
+		if ((kv_options & HOSTS_MDS) == 0) {
+			return (0);
+		}
+
+		cur_sz = strlcat(buf, ",type=mds", buf_sz);
+		cur_sz = strlcat(buf, ",cur_mds=true", buf_sz);
+	} else {
+		if ((kv_options & HOSTS_MDS) == 0) {
+			return (0);
+		}
+		cur_sz = strlcat(buf, ",type=pmds", buf_sz);
+	}
+
+	if (cur_sz > buf_sz) {
+		goto err;
+	}
+	cur_sz = strlcat(buf, ",ip_addresses=", buf_sz);
+	if (cur_sz > buf_sz) {
+		goto err;
+	}
+	ip_beg = buf + cur_sz;
+	cur_sz = strlcat(buf, charhost[HOSTS_IP], buf_sz);
+	if (cur_sz > buf_sz) {
+		goto err;
+	}
+	if ((buf + cur_sz) == ip_beg) {
+		/* Missing ip addresses is an error */
+		goto err;
+	}
+	/* Remove the commas in the ip address string */
+	for (c = ip_beg; *c != '\0'; c++) {
+		if (*c == ',') {
+			*c = ' ';
+		}
+	}
+
+	/*
+	 * If clnt_stat == NULL skip the additional info
+	 */
+	if (clnt != NULL) {
+
+		/* Check that we have the same host in both lists */
+		if (clnt != NULL && clnt->cl_status != 0) {
+
+			if (strcmp(clnt->hname,
+			    charhost[HOSTS_NAME]) != 0) {
+
+				samerrno = SE_CLNT_TBL_OUT_OF_SYNC;
+				snprintf(samerrmsg, MAX_MSG_LEN,
+				    GetCustMsg(samerrno));
+				Trace(TR_ERR, "Mismatch for %s: %d %s",
+				    clnt->hname, samerrno, samerrmsg);
+					goto err;
+			}
+
+			if (clnt->cl_status & FS_MOUNTED) {
+				cur_sz = strlcat(buf, ",mounted=1", buf_sz);
+			} else {
+				cur_sz = strlcat(buf, ",mounted=0", buf_sz);
+			}
+			if (cur_sz > buf_sz) {
+				goto err;
+			}
+
+			if (clnt->cl_flags & SAM_CLIENT_DEAD) {
+				cur_sz = strlcat(buf,
+				    ",error=assumed_dead", buf_sz);
+			}
+			if (cur_sz > buf_sz) {
+				goto err;
+			}
+
+			if (clnt->cl_flags & SAM_CLIENT_INOP) {
+				cur_sz = strlcat(buf, ",error=gone",
+				    buf_sz);
+			}
+			if (cur_sz > buf_sz) {
+				goto err;
+			}
+
+			if (clnt->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {
+				cur_sz = strlcat(buf, ",error=blocked",
+				    buf_sz);
+			}
+			if (cur_sz > buf_sz) {
+				goto err;
+			}
+
+			if (kv_options & HOSTS_DETAILS) {
+				char *cl_info_beg = buf + cur_sz;
+				int added;
+				added = snprintf(cl_info_beg, buf_sz - cur_sz,
+				    ",status=0x%x,mnt_cfg=0x%x,mnt_cfg1=0x%x,"
+				    "flags=0x%x,no_msg=%d,low_msg=%d",
+				    clnt->cl_status, clnt->cl_config,
+				    clnt->cl_config1, clnt->cl_flags,
+				    clnt->cl_nomsg, clnt->cl_min_seqno);
+				if ((added + cur_sz) > buf_sz) {
+					goto err;
+				}
+			}
+		}
+	}
+
+
+	*kv_string = copystr(buf);
+	if (*kv_string == NULL) {
+		return (-1);
+	}
+	return (0);
+
+err:
+	setsamerr(SE_HOST_KV_TOO_LONG);
+	Trace(TR_ERR, "Host KV too long for %s %s", charhost[HOSTS_NAME], buf);
+	return (-1);
+}
+
+static int
+get_host_struct(
+char **charhost,
+upath_t server_name,
+host_info_t **h) {
+
+
+	*h = mallocer(sizeof (host_info_t));
+	if (*h == NULL) {
+		Trace(TR_ERR, "making lists of hosts failed: %d %s",
+		    samerrno, samerrmsg);
+		goto err;
+	}
+
+	memset(*h, 0, sizeof (host_info_t));
+	(*h)->host_name = strdup(charhost[HOSTS_NAME]);
+	if ((*h)->host_name == NULL) {
+		Trace(TR_ERR, "making list of hosts failed:%d %s");
+		goto err;
+	}
+
+	if (*charhost[HOSTS_PRI] == '-') {
+		(*h)->server_priority = 0;
+	} else {
+		(*h)->server_priority = atoi(charhost[HOSTS_PRI]);
+	}
+
+	if (charhost[HOSTS_SERVER]) {
+		(*h)->current_server = B_TRUE;
+		strlcpy(server_name, (*h)->host_name, sizeof (upath_t));
+	}
+
+	(*h)->ip_addresses = str2lst(charhost[HOSTS_IP], ", ");
+	if ((*h)->ip_addresses == NULL) {
+		Trace(TR_ERR, "making host lists failed:%d %s",
+		    samerrno, samerrmsg);
+		free_host_info(*h);
+		goto err;
+	}
+
+	return (0);
+
+err:
+	free_host_info(*h);
+	*h = NULL;
+	return (-1);
+}
+
 
 /*
  * Internal function to create a hosts config. This function creates or
@@ -1134,7 +1510,7 @@ fs_t *fs)	/* The fs for which to create a host config */
 		 * Check if the host is already present and don't add it if
 		 * it is.
 		 */
-		if (cfg_get_hosts_config(ctx, fs, &cur_hosts) != 0) {
+		if (cfg_get_hosts_config(ctx, fs, &cur_hosts, 0) != 0) {
 			Trace(TR_ERR, "creating hosts config for %s failed %s",
 			    fs->fi_name, samerrmsg);
 			return (-1);

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.13 $"
+#pragma ident	"$Revision: 1.14 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -68,6 +68,34 @@ struct svc_req *req	/* ARGSUSED */
 	SAMRPC_SET_RESULT(ret, SAM_HOST_INFO_LIST, lst);
 
 	Trace(TR_DEBUG, "Get host config return[%d] with[%d] hosts",
+	    ret, (ret == -1) ? ret : lst->length);
+
+	return (&rpc_result);
+}
+
+samrpc_result_t *
+samrpc_get_shared_fs_hosts_5_0_svr(
+int_string_arg_t *arg,		/* argument to api */
+struct svc_req *req	/* ARGSUSED */
+)
+{
+
+	int ret = -1;
+	sqm_lst_t *lst = NULL;
+
+	Trace(TR_DEBUG, "Get shared fs hosts");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library to get shared fs hosts");
+	ret = get_shared_fs_hosts(arg->ctx, arg->str, arg->i,  &lst);
+
+	SAMRPC_SET_RESULT(ret, SAM_STRING_LIST, lst);
+
+	Trace(TR_DEBUG, "Get shared fs hosts return[%d] with[%d] hosts",
 	    ret, (ret == -1) ? ret : lst->length);
 
 	return (&rpc_result);

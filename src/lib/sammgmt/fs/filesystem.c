@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.73 $"
+#pragma ident   "$Revision: 1.74 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -529,21 +529,12 @@ fs_t **fs)	/* malloced return */
 	if (strcmp(fs_dev->additional_params, "shared") == 0) {
 		(*fs)->fi_shared_fs = B_TRUE;
 
-		/* if there were not nodev entries, get the hosts config */
+
+		/*
+		 * if nodevs is set we know it is client. Otherwise
+		 * set the shared status flags.
+		 */
 		if (!((*fs)->fi_status & FS_NODEVS)) {
-			sqm_lst_t *l;
-
-			if (cfg_get_hosts_config(NULL, (*fs), &l) != 0) {
-
-				Trace(TR_ERR, "create fs struct failed: %s",
-				    samerrmsg);
-
-				/* return the error text as a warning */
-				(*fs)->hosts_config = NULL;
-				return (-2);
-			}
-
-			(*fs)->hosts_config = l;
 			if (set_shared_fs_status_flags(*fs) != 0) {
 				return (-2);
 			}
@@ -565,20 +556,34 @@ int
 set_shared_fs_status_flags(fs_t *f) {
 	node_t *n;
 	upath_t host_name;
-	boolean_t host_set = B_FALSE;
 	boolean_t found = B_FALSE;
+	sqm_lst_t *hosts;
 
 	Trace(TR_MISC,
 	    "setting fs status bits for unmounted shared file system %s",
 	    f->fi_name);
-	if (!host_set) {
-		gethostname(host_name, sizeof (host_name));
-		host_set = B_TRUE;
+
+	if (!f->fi_shared_fs) {
+		samerrno = SE_ONLY_SHARED_HAVE_HOSTS;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_ONLY_SHARED_HAVE_HOSTS), f->fi_name);
+		Trace(TR_ERR, "setting shared status flags failed: %s",
+		    samerrmsg);
+		return (-1);
 	}
 
+
+	if (cfg_get_hosts_config(NULL, f, &hosts, 0) != 0) {
+		Trace(TR_ERR, "getting shared status flags failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	gethostname(host_name, sizeof (host_name));
+
 	Trace(TR_MISC, "host name is %s", Str(host_name));
-	if (f->hosts_config != NULL) {
-		for (n = f->hosts_config->head; n != NULL;
+	if (hosts != NULL) {
+		for (n = hosts->head; n != NULL && found != B_TRUE;
 			n = n->next) {
 
 			host_info_t *hi = (host_info_t *)n->data;
@@ -603,14 +608,12 @@ set_shared_fs_status_flags(fs_t *f) {
 						f->fi_status |= FS_NODEVS;
 					}
 				}
-			} else {
-				Trace(TR_MISC,
-				    "hi->hostname '%s' != host_name '%s'",
-				    hi->host_name, host_name);
 			}
 		}
 	}
 	Trace(TR_MISC, "done considering hosts");
+
+	free_list_of_host_info(hosts);
 
 	if (!found) {
 		samerrno = SE_UNABLE_TO_DETERMINE_HOST_STATUS;

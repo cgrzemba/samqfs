@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.14 $"
+#pragma ident	"$Revision: 1.15 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -84,6 +84,55 @@ sqm_lst_t **hosts			/* return - list of host_info_t	*/
 	 * set the tail
 	 */
 	SET_LIST_TAIL((*hosts));
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+int
+get_shared_fs_hosts(
+ctx_t *ctx,			/* client connection		*/
+char *fs_name,			/* fs_name to get hosts cfg for */
+int32_t options,
+sqm_lst_t **hosts_kv			/* return - list of host_info_t	*/
+)
+{
+
+	int ret_val;
+	int_string_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:get shared fs hosts";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, hosts_kv)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = fs_name;
+	arg.i = options;
+
+	SAMRPC_CLNT_CALL(samrpc_get_shared_fs_hosts, int_string_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+	*hosts_kv = (sqm_lst_t *)result.samrpc_result_u.result.result_data;
+
+	/*
+	 * xdr does not preserve the tail of the list
+	 * set the tail
+	 */
+	SET_LIST_TAIL((*hosts_kv));
 
 	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
 	PTRACE(2, "%s exit", func_name);

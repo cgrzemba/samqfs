@@ -30,7 +30,7 @@
 #ifndef _CFG_HOSTS_H
 #define	_CFG_HOSTS_H
 
-#pragma ident "	$Revision: 1.12 $	"
+#pragma ident "	$Revision: 1.13 $	"
 
 #include "pub/mgmt/types.h"
 #include "pub/mgmt/filesystem.h"
@@ -75,7 +75,8 @@ host_info_t *h);	/* The host to add */
 
 /*
  * Internal function to get a hosts list for a shared file system, given
- * the file system structure.
+ * the file system structure. If kv_options is 0 host_info_t structs will
+ * be returned. Otherwise key value pairs will be returned.
  *
  * Preconditions:
  * 1. file system is shared.
@@ -85,7 +86,8 @@ int
 cfg_get_hosts_config(
 ctx_t *ctx,		/* context argument for RPC use */
 fs_t *fs,		/* fs to get hosts for */
-sqm_lst_t **hosts);	/* malloced sqm_lst_t of host_info_t for fs */
+sqm_lst_t **hosts,	/* list of host_info_t or kv strings see kv_options */
+int32_t kv_options);	/* If != 0 kv strings will be returned */
 
 
 /*
