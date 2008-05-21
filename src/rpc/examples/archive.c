@@ -1,4 +1,4 @@
-/* 
+/*
  *    SAM-QFS_notice_begin
  *
  * CDDL HEADER START
@@ -35,7 +35,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 
 /* Feature test switches. */
 /* REMOTE Use rpc for access. */
