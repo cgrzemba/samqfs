@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 	(void) pthread_create(&tid, &pattr, handle_signal, NULL);
 
 	/*
-	 * Open the Database Environment
+	 * Setup the operating environment
 	 */
 	st = mkdirp(fsmdbdir, 0655);
 	if ((st != 0) && (errno != EEXIST)) {
@@ -224,10 +224,19 @@ main(int argc, char *argv[])
 		return (st);
 	}
 
+	/*
+	 * Make sure the door directory exists
+	 */
+	st = mkdirp(fsmdbdoordir, 0655);
+	if ((st != 0) && (errno != EEXIST)) {
+		LOGERR("Could not open door dir %s", fsmdbdoordir);
+		return (st);
+	}
+
 	/* lock so multiple db processes don't start */
-	lockfd = open(fsmdbdir"/.lk", O_WRONLY|O_CREAT, 0655);
+	lockfd = open(fsmdbdoorlock, O_WRONLY|O_CREAT, 0655);
 	if (lockfd == -1) {
-		LOGERR("Could not lockdatabase dir %s", fsmdbdir);
+		LOGERR("Could not create lock file %s", fsmdbdoorlock);
 		return (errno);
 	}
 

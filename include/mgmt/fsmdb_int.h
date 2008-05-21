@@ -43,11 +43,14 @@
  */
 
 /*
- *  Location of database and door
+ * Location of database, door and lock
  */
-#define	fsmdbdir  VAR_DIR"/fsmdb"
-#define	fsmdbdoor VAR_DIR"/fsmdb/.door"
-#define	fsmdbproc "fsmdb"
+#define	fsmdbdir        VAR_DIR"/fsmdb"
+#define	fsmdbdoordir    "/var/run/samfs"
+#define	fsmdbdoor       fsmdbdoordir"/fsmdb_door"
+#define	fsmdbdoorlock   fsmdbdoor"_lock"
+#define	fsmdbproc       "fsmdb"
+
 
 /* assign ids and arg types to functions for door call and dispatch */
 #define	IMPORT_SAMFS		1
