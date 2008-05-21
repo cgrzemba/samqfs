@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.160 $"
+#pragma ident "$Revision: 1.161 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -65,6 +65,7 @@ static char *_SrcFile = __FILE__;
 /* Solaris headers. */
 #include <syslog.h>
 #include <sys/sysmacros.h>
+#include <sys/resource.h>
 #ifdef linux
 #include <linux/utsname.h>
 #endif /* linux */
@@ -364,19 +365,9 @@ main(int argc, char *argv[])
 #endif /* METADATA_SERVER */
 
 	/*
-	 * csLimit is the maximum number of outstanding children that
-	 * sam-fsd can have.  This number is o(m * FileSysNumof + n * NDmn)
-	 * where m ~= 2 (sharefsd, releaser), NDmn ~= 6 (archiverd,
-	 * stagerd, stagealld, rftd, initd, and notify), n ~= 2 (the
-	 * daemon itself, plus a proc to rotate its trace file).  Also,
-	 * filesystems can be added on the fly.  Slots are cheap.
+	 * Configure.
+	 * Allocate child status queue.
 	 */
-	if (childStatusQueue == NULL) {
-		csLimit = (2 * FileSysNumof) + (2 * 6) + 128; /* 128 extras */
-		SamMalloc(childStatusQueue, csLimit *
-		    sizeof (struct ChildStatus));
-	}
-
 	if (!reconfig) {
 		configure(NULL, NULL, NULL);
 	}
@@ -385,6 +376,24 @@ main(int argc, char *argv[])
 		Trace(TR_MISC, "File system daemon started");
 	}
 
+	/*
+	 * Set the number of open file descriptors to the limit, This is
+	 * inherited by children so everyone started by sam-fsd will have
+	 * this limit.
+	 */
+	{
+		struct rlimit rlimits;
+
+		if (getrlimit(RLIMIT_NOFILE, &rlimits) != -1) {
+			rlimits.rlim_cur = rlimits.rlim_max;
+			if (setrlimit(RLIMIT_NOFILE, &rlimits) < 0) {
+				Trace(TR_ERR, "setrlimit(%d) failed",
+				    (int)rlimits.rlim_max);
+			}
+		} else {
+			Trace(TR_ERR, "getrlimit() failed");
+		}
+	}
 	/*
 	 * Kill off waiting parent, so it returns to caller now that
 	 * things are properly initialized.
@@ -395,7 +404,6 @@ main(int argc, char *argv[])
 
 	/*
 	 * Begin operation.
-	 * Allocate child status queue.
 	 */
 	sam_syslog(LOG_INFO, "Starting %s version %s", SAM_NAME, SAM_VERSION);
 	sam_syslog(LOG_INFO, COPYRIGHT);
@@ -775,7 +783,7 @@ daemonize(void)
 
 	processSignals(TRUE);		/* Enable signal reception */
 
-#define		INIT_TIMEOUT	30	/* max time for sam-fsd to finish */
+#define		INIT_TIMEOUT	300	/* max time for sam-fsd to finish */
 #define		WAIT_ALARMINT	3	/* check for config done period */
 
 	t = time(NULL);
@@ -1750,6 +1758,21 @@ configure(
 #endif /* sun */
 	fileRequired = (fscfg_name != NULL);
 	FsConfig(fscfg_name);
+
+	/*
+	 * csLimit is the maximum number of outstanding children that
+	 * sam-fsd can have.  This number is o(m * FileSysNumof + n * NDmn)
+	 * where m ~= 2 (sharefsd, releaser), NDmn ~= 6 (archiverd,
+	 * stagerd, stagealld, rftd, initd, and notify), n ~= 2 (the
+	 * daemon itself, plus a proc to rotate its trace file).  Also,
+	 * filesystems can be added on the fly.  Slots are cheap.
+	 */
+	if (childStatusQueue == NULL) {
+		csLimit = (2 * FileSysNumof) + (2 * 6) + 128; /* 128 extras */
+		SamMalloc(childStatusQueue, csLimit *
+		    sizeof (struct ChildStatus));
+	}
+
 	if (FsCfgOnly) {
 		return;
 	}
