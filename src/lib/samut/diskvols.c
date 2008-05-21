@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -73,6 +73,14 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 /* Private data. */
 static pthread_mutex_t diskvolsMutex = PTHREAD_MUTEX_INITIALIZER;
+/*
+ * We keep a count on the number of connection to each DB.
+ * This count is incremented if handle is created successfuly in
+ * DiskVolsNewHandle and decremented in DiskVolsDeleteHandle.
+ * DiskVolsDeleteHandle will destroy the handle only if the
+ * count becomes zero.
+ */
+static int connections[3] = {0, 0, 0};
 static DiskVolsDictionary_t *hdrDict = NULL;
 static DiskVolsDictionary_t *vsnDict = NULL;
 static DiskVolsDictionary_t *cliDict = NULL;
@@ -188,6 +196,10 @@ DiskVolsNewHandle(
 	} else {
 		dict = NULL;
 	}
+
+	if (dict != NULL) {
+		connections[(dbtype - 1)]++;
+	}
 	pthread_mutex_unlock(&diskvolsMutex);
 
 	return (dict);
@@ -217,21 +229,25 @@ int
 DiskVolsDeleteHandle(
 	int dbtype)
 {
-	if (dbtype == DISKVOLS_VSN_DICT && vsnDict != NULL) {
-		(void) vsnDict->Close(vsnDict);
-		(void) DiskVolsDestroy(vsnDict);
-		vsnDict = NULL;
+	pthread_mutex_lock(&diskvolsMutex);
+	if (--connections[(dbtype - 1)] == 0) {
+		if (dbtype == DISKVOLS_VSN_DICT && vsnDict != NULL) {
+			(void) vsnDict->Close(vsnDict);
+			(void) DiskVolsDestroy(vsnDict);
+			vsnDict = NULL;
 
-	} else if (dbtype == DISKVOLS_CLI_DICT && cliDict != NULL) {
-		(void) cliDict->Close(cliDict);
-		(void) DiskVolsDestroy(cliDict);
-		cliDict = NULL;
+		} else if (dbtype == DISKVOLS_CLI_DICT && cliDict != NULL) {
+			(void) cliDict->Close(cliDict);
+			(void) DiskVolsDestroy(cliDict);
+			cliDict = NULL;
 
-	} else if (dbtype == DISKVOLS_HDR_DICT && hdrDict != NULL) {
-		(void) hdrDict->Close(hdrDict);
-		(void) DiskVolsDestroy(hdrDict);
-		hdrDict = NULL;
+		} else if (dbtype == DISKVOLS_HDR_DICT && hdrDict != NULL) {
+			(void) hdrDict->Close(hdrDict);
+			(void) DiskVolsDestroy(hdrDict);
+			hdrDict = NULL;
+		}
 	}
+	pthread_mutex_unlock(&diskvolsMutex);
 
 	return (0);
 }
