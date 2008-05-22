@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: JobController.java,v 1.3 2008/05/16 18:38:55 am143972 Exp $
+// ident        $Id: JobController.java,v 1.4 2008/05/22 13:42:33 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.jobs;
 
@@ -50,6 +50,8 @@ import com.sun.netstorage.samqfs.web.model.job.RestoreSearchJob;
 import com.sun.netstorage.samqfs.web.model.job.FSDumpJob;
 import com.sun.netstorage.samqfs.web.model.job.EnableDumpJob;
 import com.sun.netstorage.samqfs.web.model.job.SamfsckJob;
+import com.sun.netstorage.samqfs.web.model.job.StageJob;
+import com.sun.netstorage.samqfs.web.model.job.StageJobFileData;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.Select;
@@ -67,7 +69,7 @@ public class JobController {
     // retrieve it again
     private BaseJob selectedJob = null;
     private TableDataProvider scanJobDataProvider = null;
-
+    private TableDataProvider stageJobFileDataProvider = null;
 
     public JobController() {
     }
@@ -321,6 +323,10 @@ public class JobController {
         return (EnableDumpJob)this.selectedJob;
     }
 
+    public StageJob getStageJob() {
+        return (StageJob)this.selectedJob;
+    }
+
     // TODO: since this is a read only table, populating the data provider can
     // probably be deffered until the display response phase.
     public TableDataProvider getScanJobData() {
@@ -345,21 +351,42 @@ public class JobController {
                     JSFUtil.getMessage("job.details.scan.table.copy2"));
 
                 data[5] = new UIArchiveScanJobData(scanJob.getCopy3(),
-		            JSFUtil.getMessage("job.details.scan.table.copy3"));
+                    JSFUtil.getMessage("job.details.scan.table.copy3"));
 
                 data[6] = new UIArchiveScanJobData(scanJob.getCopy4(),
-		            JSFUtil.getMessage("job.details.scan.table.copy4"));
+                    JSFUtil.getMessage("job.details.scan.table.copy4"));
 
                 data[7] = new UIArchiveScanJobData(scanJob.getDirectories(),
-		            JSFUtil.getMessage("job.details.scan.dir"));
+                    JSFUtil.getMessage("job.details.scan.dir"));
 
                 data[8] = new UIArchiveScanJobData(scanJob.getTotal(),
-		            JSFUtil.getMessage("job.details.total"));
+                    JSFUtil.getMessage("job.details.total"));
             }
 
             this.scanJobDataProvider = new ObjectArrayDataProvider(data);
         }
 
         return this.scanJobDataProvider;
+    }
+
+
+    public TableDataProvider getStageJobFileData() {
+        if (this.stageJobFileDataProvider == null) {
+
+            StageJob theJob = getStageJob();
+            if (theJob != null) {
+
+                try {
+                    StageJobFileData [] data =
+                        theJob.getFileData(0, 100, (short)1, true);
+                    this.stageJobFileDataProvider =
+                        new ObjectArrayDataProvider(data);
+                } catch (SamFSException sfe) {
+                    // TODO: log & alert
+                }
+            } // if the job
+        }
+
+        return this.stageJobFileDataProvider;
     }
 }

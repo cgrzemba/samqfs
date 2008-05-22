@@ -26,7 +26,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id $ -->
+<!-- $Id: dailyActivity.xsl,v 1.7 2008/05/22 13:42:34 kilemba Exp $ -->
 
 <xsl:stylesheet 
   version="1.0"

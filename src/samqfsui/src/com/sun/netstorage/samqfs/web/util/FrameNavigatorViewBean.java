@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameNavigatorViewBean.java,v 1.25 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: FrameNavigatorViewBean.java,v 1.26 2008/05/22 13:42:33 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -340,6 +340,10 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
                             NavigationNodes.NODE_NOTIFICATION));
 
             // Jobs
+            node.addChild(naviNodes.getNavigationNode(
+                            NavigationNodes.NODE_JOBS));
+            /*
+            // Jobs
             child = naviNodes.getNavigationNode(NavigationNodes.NODE_JOB);
             if (child != null) {
                 child.removeAllChildren();
@@ -353,6 +357,9 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
                             NavigationNodes.NODE_JOB_ALL));
                 node.addChild(child);
             }
+	    */
+
+
         }
 
         /**

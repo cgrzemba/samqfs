@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id $ -->
+<!-- $Id: CommonPageTitle.xml,v 1.5 2008/05/22 13:42:32 kilemba Exp $ -->
 
 <!-- common page title with 2 buttons Submit and Cancel for all main pages.  -->
 <pagetitle>
