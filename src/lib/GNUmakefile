@@ -1,4 +1,4 @@
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 
 #    SAM-QFS_notice_begin
 #
@@ -37,6 +37,9 @@ DIRS = \
 	samut
 
 ifeq ($(OS), SunOS)
+BDB = bdb
+SAMCAT = samcat
+SAMRFT = samrft
 DIRS += \
 	bdb \
 	fsmdb \
@@ -61,13 +64,13 @@ include $(DEPTH)/mk/targets.mk
 # List any parallel build directory dependencies here
 # or .NOTPARALLEL: for sequential directory builds
 #
-sam:		samcat samconf samspm samut
+sam:		$(SAMCAT) samconf samspm samut
 samspm:		samconf
-samfs:		sam samut samcat
-sammgmt:	sam samut samcat samfs samapi fsmdb csn
+samfs:		sam samut $(SAMCAT)
+sammgmt:	sam samut $(SAMCAT) samfs samapi fsmdb csn
 samrft:		samspm
-samut:		samconf samrft bdb
-samcat samapi: samut
+samut:		samconf $(SAMRFT) $(BDB)
+samcat samapi:	samut
 sammgmt/stkapi:	sammgmt
 sammgmtjni:	sammgmt
 csn:		samut curl ssl
