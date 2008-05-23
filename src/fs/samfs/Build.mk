@@ -1,4 +1,4 @@
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 
 #    SAM-QFS_notice_begin
 #
@@ -48,7 +48,7 @@ SRCS2 = acl.c amld.c arfind.c balloc.c block.c create.c event.c fioctl.c \
 
 COMMON_SRCS = common_subr.c extent.c setdau.c
 
-ifeq ($(PLATFORM), sparc)
+ifeq ($(HAVE_internal_mk)-$(PLATFORM), yes-sparc)
 SPARC_INLINE = ../include/sparc.il
 endif
 
