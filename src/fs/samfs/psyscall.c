@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.177 $"
+#pragma ident "$Revision: 1.178 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1038,6 +1038,11 @@ sam_set_fsparam(
 	switch (args.sp_offset) {
 	case offsetof(struct sam_fs_info, fi_sync_meta):
 		mp->mt.fi_sync_meta = (short)args.sp_value;
+		if (mp->mt.fi_sync_meta) {
+			mp->mt.fi_config |= MT_SYNC_META;
+		} else {
+			mp->mt.fi_config &= ~MT_SYNC_META;
+		}
 		break;
 
 	case offsetof(struct sam_fs_info, fi_atime):
