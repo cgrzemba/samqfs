@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.212 $"
+#pragma ident "$Revision: 1.213 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1254,17 +1254,19 @@ sam_build_allocation_links(
 		int ord;
 
 		for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
-			if ((ord == i) ||
-			    (mp->mi.m_fs[ord].num_group == 0) ||
-			    (mp->mi.m_fs[ord].part.pt_state != DEV_ON)) {
+			if (disk_type != mp->mi.m_fs[ord].dt) {
 				continue;
 			}
-			if (disk_type == mp->mi.m_fs[ord].dt) {
-				if (mp->mi.m_fs[ord].next_ord == 0) {
-					mp->mi.m_fs[ord].next_ord = i;
-					mp->mi.m_dk_max[disk_type]++;
-					break;
-				}
+			if ((ord == i) ||
+			    (mp->mi.m_fs[ord].num_group == 0) ||
+			    ((sblk->eq[ord].fs.state != DEV_ON) &&
+			    (sblk->eq[ord].fs.state != DEV_NOALLOC))) {
+				continue;
+			}
+			if (mp->mi.m_fs[ord].next_ord == 0) {
+				mp->mi.m_fs[ord].next_ord = i;
+				mp->mi.m_dk_max[disk_type]++;
+				break;
 			}
 		}
 	}
