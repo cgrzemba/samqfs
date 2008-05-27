@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.141 $"
+#pragma ident "$Revision: 1.142 $"
 
 #include "sam/osversion.h"
 
@@ -370,7 +370,7 @@ sam_proc_truncate(
 			}
 			if (SAM_IS_OBJECT_FILE(ip)) {
 				error = sam_truncate_object_file(ip, tflag,
-				    length);
+				    size, length, credp);
 			} else {
 				error = sam_reduce_ino(ip, length, tflag);
 			}
@@ -400,7 +400,7 @@ sam_proc_truncate(
 		} else {
 			if (SAM_IS_OBJECT_FILE(ip)) {
 				error = sam_truncate_object_file(ip, tflag,
-				    length);
+				    size, length, credp);
 			}
 		}
 	} else {

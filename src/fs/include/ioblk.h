@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 #endif
 
 
@@ -157,7 +157,7 @@ typedef struct map_params {
 
 typedef struct sam_cache_ioblk {
 	offset_t	blk_off0; /* Offset, beginning of stripe grp dau */
-	sam_size_t	contig0;	/* Contiguous kluster size */
+	offset_t	contig0;	/* Contiguous kluster size */
 	sam_daddr_t	blkno0;		/* First block offset in file	*/
 	uchar_t		ord0;		/* First group device ordinal */
 	uchar_t		dt;		/* Device type - data or meta */
@@ -170,7 +170,7 @@ typedef struct sam_ioblk {
 	uint64_t	zerodau[2];	/* Bit map for allocated DAUs */
 	offset_t	count;		/* Byte count in block */
 	offset_t	blk_off;	/* Offset at beginning of disk dau */
-	sam_size_t	contig;		/* Contiguous kluster size */
+	offset_t	contig;		/* Contiguous kluster size */
 	sam_daddr_t	blkno;		/* Current block offset in file	*/
 	int		pboff;		/* Physical byte offset	*/
 	int		num_group;	/* Num elements in the striped group */
@@ -178,11 +178,12 @@ typedef struct sam_ioblk {
 	int		dev_bsize;	/* Device r/m/w size */
 	ushort_t	no_daus;	/* Num daus returned for sparse */
 	uchar_t		ord;		/* Current device ordinal */
+	uchar_t		obji;		/* Current object array index */
 } sam_ioblk_t;
 
 
 typedef struct sam_iohdr {
-	sam_size_t  contig;			/* Contiguous kluster size */
+	offset_t  contig;			/* Contiguous kluster size */
 	uchar_t	nioblk;				/* Number of ioblks */
 	sam_ioblk_t ioblk[SAM_MAX_BP];
 } sam_iohdr_t;

@@ -1,4 +1,4 @@
-.\" $Revision: 1.95 $
+.\" $Revision: 1.96 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -201,7 +201,13 @@ For more information on quotas, see the
  Guide\fR.
 .TP 10
 \fBstripe=\fIn\fR
-Sets the stripe width for the file system to \fIn\fP disk
+This option has a different meaning based on whether the file system is
+block-based (\fBms\fR \fBma\fR \fBmat\fR)
+or object-based (\fBmb\fR). For more information on
+file system types, see the \fBmcf\fR(4)\fR man page.
+.sp
+For block-based file systems, \fBstripe\fR
+sets the stripe width for the file system to \fIn\fP disk
 allocation units (DAUs).  The stripe width means the \fIn\fR * DAU bytes
 are written to one data device logical equipment number (LUN)
 before switching to the next
@@ -232,8 +238,12 @@ Equipment Type with any striped group (\fBg\fIx\fR) components.
 NOTE:  The system sets \fBstripe=0\fR if mismatched
 striped groups exist.
 .sp
-For more information on file system types,
-see the \fBmcf\fR(4)\fR man page.
+For object-based file systems, \fBstripe\fR
+sets the stripe width for the file system to \fIn\fP OSD units.
+The stripe width means the file is horzontially striped across \fIn\fR
+OSD units.
+If \fIn\fR=0, then all the units in the target object group are
+selected. The default \fIn\fR is 1.
 .RE
 .TP 10
 \fBsync_meta=\fIn\fR

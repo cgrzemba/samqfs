@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.139 $"
+#pragma ident "$Revision: 1.140 $"
 #endif
 
 #include "sam/osversion.h"
@@ -123,8 +123,6 @@
 #include "object.h"
 #endif
 
-static int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
-	sam_map_t flag, struct sam_ioblk *iop);
 static int sam_map_direct(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 static int sam_map_indirect(sam_node_t *ip, offset_t offset, offset_t count,
@@ -144,6 +142,8 @@ static int sam_contig(int maxcontig, uint32_t *bnp, uchar_t *eip, int lblocks,
 #ifdef sun
 int sam_fbzero(sam_node_t *ip, offset_t offset, int tlen,
 	sam_ioblk_t *iop, map_params_t *mapp, struct fbuf **fbp);
+int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
+	sam_map_t flag, struct sam_ioblk *iop);
 #endif
 #ifdef linux
 void sam_linux_fbzero(sam_node_t *, offset_t, int);
@@ -2591,123 +2591,3 @@ sam_fbzero(sam_node_t *ip, offset_t offset, int tlen, sam_ioblk_t *iop,
 	return (error);
 }
 #endif
-
-
-#if defined(SAM_OSD_SUPPORT)
-/*
- * ----- sam_map_osd - Map request to osds.
- *
- *  For the given inode and logical byte address: if iop is set, return
- *  the I/O descriptor. If iop is NULL, just return;
- *
- *  NOTE: This code currently has a workaround for an OSD bug where large
- *  writes (>128K) corrupt data.  When this is fixed, the offset & contig
- *  values below should be corrected to cover the whole file.
- */
-
-/* ARGSUSED */
-int					/* ERRNO, 0 if successful. */
-sam_map_osd(
-	sam_node_t *ip,		/* Pointer to the inode. */
-	offset_t offset,	/* Logical byte offset in file (longlong_t). */
-	offset_t count,		/* Requested byte count. */
-	sam_map_t flag,		/* SAM_READ if reading. */
-				/* SAM_READ_PUT if read with rounded up */
-				/*   filesize, return contiguous blocks. */
-				/* SAM_RD_DIRECT_IO if read directio */
-				/* SAM_WRITE if writing. */
-				/* SAM_WR_DIRECT_IO if write directio */
-				/*   (READERS lock held ) */
-				/* SAM_FORCEFAULT if write and fault for page */
-				/* SAM_WRITE_MMAP if memory mapped write. */
-				/* SAM_WRITE_BLOCK if get block */
-				/* SAM_WRITE_SPARSE if sparse block */
-				/* SAM_ALLOC_BLOCK alloc & don't update size */
-				/* SAM_ALLOC_BITMAP alloc & bld bit map(srvr) */
-				/* SAM_ALLOC_ZERO allocate and zero. */
-	sam_ioblk_t *iop)	/* Ioblk array. */
-{
-	TRACE(T_SAM_OKMAP, SAM_ITOP(ip), (sam_tr_t)offset,
-	    (sam_tr_t)count, (sam_tr_t)flag);
-	if (iop) {
-		bzero((char *)iop, sizeof (sam_ioblk_t));
-		iop->imap.flags = (M_OBJECT | M_VALID);
-		iop->contig = SAM_OSD_MAX_WR_CONTIG;
-		if (flag <= SAM_RD_DIRECT_IO) {		/* If reading */
-			offset_t size;
-
-			size = (ip->size + PAGESIZE - 1) & PAGEMASK;
-			iop->contig = size - offset;
-			if (iop->contig > SAM_OSD_MAX_RD_CONTIG) {
-				iop->contig = SAM_OSD_MAX_RD_CONTIG;
-			}
-			if (offset >= size) {
-				iop->imap.flags |= M_OBJ_EOF;
-			}
-		}
-		iop->ord = ip->di.unit;
-		iop->count = count;
-		iop->blkno = 0x7fffffff;
-		iop->blk_off = (offset & ~(iop->contig - 1));
-		iop->num_group = 1;
-		iop->dev_bsize = ip->mp->mi.m_fs[iop->ord].dev_bsize;
-		iop->pboff = (offset & (iop->dev_bsize - 1));
-		iop->count = count;
-#ifdef OSD_ALIGNMENT
-		/*
-		 * Must round down to block size if device does not support
-		 * byte offsets and lengths -- Seagate
-		 */
-		iop->count = iop->count & ~(iop->dev_bsize - 1);
-#endif
-	}
-	if (flag >= SAM_WRITE) {
-		ASSERT(RW_WRITE_HELD(&ip->inode_rwl) ||
-		    (flag == SAM_WR_DIRECT_IO));
-		if ((offset + count) >= ip->size) {
-			if (flag == SAM_WR_DIRECT_IO) {
-				mutex_enter(&ip->fl_mutex);
-			}
-			if ((offset + count) > ip->cl_allocsz) {
-				ip->cl_allocsz = offset + count;
-			}
-			if (flag < SAM_WRITE_SPARSE) {
-				/*
-				 * Increment filesize if no error
-				 */
-				ip->size = offset + count;
-				if (flag != SAM_WRITE &&
-				    flag != SAM_WR_DIRECT_IO) {
-					if (!ip->flags.b.staging &&
-					    !S_ISSEGI(&ip->di)) {
-						if (ip->size > ip->di.rm.size) {
-							ip->di.rm.size =
-							    ip->size;
-						}
-					}
-				}
-			}
-			if (flag == SAM_WR_DIRECT_IO) {
-				mutex_exit(&ip->fl_mutex);
-			}
-		}
-	}
-	return (0);
-}
-
-
-#else /* SAM_OSD_SUPPORT */
-
-/* ARGSUSED */
-int					/* ERRNO, 0 if successful. */
-sam_map_osd(
-	sam_node_t *ip,		/* Pointer to the inode. */
-	offset_t offset,	/* Logical byte offset in file (longlong_t). */
-	offset_t count,		/* Requested byte count. */
-	sam_map_t flag,
-	sam_ioblk_t *iop)	/* Ioblk array. */
-{
-	return (EINVAL);
-}
-
-#endif /* SAM_OSD_SUPPORT */

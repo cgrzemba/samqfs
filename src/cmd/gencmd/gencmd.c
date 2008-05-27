@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 
 /* Feature test switches. */
 	/* None. */
@@ -135,7 +135,7 @@ static struct {
 	{ "rearch",	"ac:fm:Morv:",	ChgArch,	rearch },
 	{ "undamage",	"c:fm:Mrv:",	ChgArch,	undamage },
 	{ "unrearch",	"c:fm:Mrv:",	ChgArch,	unrearch },
-	{ "setfa",	"A:BDdfg:l:L:qrs:V",	Setfa,	sam_setfa },
+	{ "setfa",	"A:BDdfg:h:l:L:o:qrs:v:V",	Setfa,	sam_setfa },
 	{ "segment",	"dfl:rs:V",		Segment,	sam_segment },
 };
 int n_cmd_table_entries = sizeof (cmd_table)/sizeof (cmd_table[0]);
@@ -151,27 +151,31 @@ static int C_opt = FALSE;
 static int D_opt = FALSE;
 static int e_opt = FALSE;
 static int g_opt = FALSE;
-static int I_opt = FALSE;
+static int G_opt = FALSE;
+static int h_opt = FALSE;
 static int i_opt = FALSE;	/* not an external option */
-static int u_opt = FALSE;
-static int M_opt = FALSE;
-static int n_opt = FALSE;
+static int I_opt = FALSE;
 static int l_opt = FALSE;
 static int L_opt = FALSE;
+static int M_opt = FALSE;
+static int n_opt = FALSE;
+static int o_opt = FALSE;
 static int p_opt = FALSE;
 static int q_opt = FALSE;
 static int s_opt = FALSE;
+static int u_opt = FALSE;
+static int v_opt = FALSE;
+static int V_opt = FALSE;
 static int w_opt = FALSE;
 static int W_opt = FALSE;
 static int x_opt = FALSE;
-static int V_opt = FALSE;
-static int G_opt = FALSE;
 
 
 /* Static data. */
 static int algo;
 static int partial;
 static int stripe_group;
+static int stripe_width;
 static offset_t length;
 static offset_t allocahead;
 
@@ -296,6 +300,15 @@ main(
 			}
 			break;
 
+		case 'h':
+			h_opt = TRUE;
+			if (optarg) {
+				stripe_width = atoi(optarg);
+			} else {
+				stripe_width = 0;
+			}
+			break;
+
 		case 'G':
 			G_opt = TRUE;
 			break;
@@ -338,7 +351,16 @@ main(
 			break;
 
 		case 'o':
-			args.flags |= SU_online;
+			if (dofile == sam_setfa) {
+				o_opt = TRUE;
+				if (optarg) {
+					stripe_group = atoi(optarg);
+				} else {
+					stripe_group = 0;
+				}
+			} else {
+				args.flags |= SU_online;
+			}
 			break;
 
 		case 'p':
@@ -360,7 +382,6 @@ main(
 		case 's':
 			s_opt = TRUE;
 			if (optarg) {
-
 				partial = atoi(optarg);
 			} else {
 				exit_status++;
@@ -372,7 +393,19 @@ main(
 			break;
 
 		case 'v':
-			strncpy(args.vsn, optarg, sizeof (args.vsn));
+			if (dofile == sam_setfa) {
+				if (!optarg ||
+				    get_length(optarg, &length) < 0) {
+					prerror(0, 0, catgets(catfd, SET, 5109,
+					    "Bad or missing %c argument"),
+					    'v');
+					exit_status++;
+				} else {
+					v_opt = TRUE;
+				}
+			} else {
+				strncpy(args.vsn, optarg, sizeof (args.vsn));
+			}
 			break;
 
 		case 'V':
@@ -732,6 +765,29 @@ Setfa(void)
 	}
 	if (s_opt) {
 		sprintf(num, "s%d", partial);
+		pnum = num;
+		n = strlen(num);
+		for (i = 0; i < n; i++) {
+			*opn++ = *pnum++;
+		}
+	}
+	if (o_opt) {
+		sprintf(num, "o%d", stripe_group);
+		n = strlen(num);
+		for (i = 0; i < n; i++) {
+			*opn++ = *pnum++;
+		}
+	}
+	if (h_opt) {
+		sprintf(num, "h%d", stripe_width);
+		pnum = num;
+		n = strlen(num);
+		for (i = 0; i < n; i++) {
+			*opn++ = *pnum++;
+		}
+	}
+	if (v_opt) {
+		sprintf(num, "v%lld", length);
 		pnum = num;
 		n = strlen(num);
 		for (i = 0; i < n; i++) {

@@ -38,7 +38,7 @@
 #define	_SAM_FS_RMEDIA_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 #endif
 
 #ifdef linux
@@ -110,6 +110,11 @@ typedef struct  {
 				uint_t ord;	/* Seg ord - seg_ino only */
 			} seg;
 		} dk;
+		struct objinfo {
+			uint_t	stripe_shift;	/* Shift for stripe depth */
+			uint_t	num_group;
+			uint_t	pad1;
+		} obj;
 	} info;
 } sam_rm_t;
 

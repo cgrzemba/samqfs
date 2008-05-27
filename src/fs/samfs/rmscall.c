@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.89 $"
+#pragma ident "$Revision: 1.90 $"
 
 #include "sam/osversion.h"
 
@@ -447,9 +447,18 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 			offset_t allocahead = 0;
 			int stripe = 0;
 			int stripe_group = 0;
+			int stripe_shift = 0;
+			int target_group = 0;
+			uchar_t new_target_group, new_unit;
+			sam_di_obj_t *obj;
+			int ord;
 
 			switch (*op++) {
 			case 'A':
+				if (SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
 				while (*op != '\0' && '0' <= *op &&
 				    *op <= '9') {
 					allocahead = (10 * allocahead) +
@@ -516,6 +525,10 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				flags.b.directio = 1;
 				break;
 			case 'g':
+				if (SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
 				while (*op != '\0' && '0' <= *op &&
 				    *op <= '9') {
 					stripe_group = (10 * stripe_group) +
@@ -581,6 +594,10 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				}
 				break;
 			case 'l':
+				if (SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
 				while (*op != '\0' && '0' <= *op &&
 				    *op <= '9') {
 					dfilesize = (10 * dfilesize) +
@@ -592,6 +609,10 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				}
 				break;
 			case 'L':
+				if (SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
 				while (*op != '\0' && '0' <= *op &&
 				    *op <= '9') {
 					filesize = (10 * filesize) + *op - '0';
@@ -602,6 +623,10 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				}
 				break;
 			case 'q':
+				if (SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
 				if (ip->di.id.ino >= mp->mi.m_min_usr_inum ||
 				    ip->di.id.ino == SAM_ROOT_INO) {
 					if (samgt.samaio_vp) {
@@ -618,6 +643,10 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				}
 				break;
 			case 's':
+				if (SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
 				while (*op != '\0' && '0' <= *op &&
 				    *op <= '9') {
 					stripe = (10 * stripe) + *op - '0';
@@ -634,6 +663,106 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 					ip->di.stride = 0;
 					status.stripe_width = 1;
 				}
+				break;
+			case 'h':
+				if (!SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
+				while (*op != '\0' && '0' <= *op &&
+				    *op <= '9') {
+					stripe = (10 * stripe) + *op - '0';
+					op++;
+				}
+				if (stripe > SAM_MAX_OSD_STRIPE) {
+					error = EINVAL;
+					break;
+				}
+				ip->di.stripe = (char)stripe;
+				ip->di.stride = 0;
+				status.stripe_width = 1;
+				break;
+			case 'v': {
+				offset_t stripe_depth = 0;
+				offset_t value;
+
+				if (!SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
+				while (*op != '\0' && '0' <= *op &&
+				    *op <= '9') {
+					stripe_depth = (10 * stripe_depth) +
+					    *op - '0';
+					op++;
+				}
+				value = SAM_DEV_BSIZE;
+				stripe_shift = SAM_DEV_BSHIFT;
+				for (;;) {
+					if (value >= stripe_depth) {
+						stripe_depth = value;
+						break;
+					}
+					stripe_shift++;
+					value <<= 1;
+				}
+				stripe_depth /= 1024;
+				if (stripe_depth < 0 ||
+				    stripe_depth > UINT_MAX) {
+					error = EINVAL;
+				}
+				}
+				break;
+			case 'o':
+				if (!SAM_IS_OBJECT_FS(mp)) {
+					error = EINVAL;
+					break;
+				}
+				while (*op != '\0' && '0' <= *op &&
+				    *op <= '9') {
+					target_group = (10 * target_group) +
+					    *op - '0';
+					op++;
+				}
+				if (target_group > dev_nmtg_size) {
+					error = EINVAL;
+					break;
+				}
+				new_target_group = (uchar_t)target_group;
+				target_group |= DT_TARGET_GROUP;
+				for (ord = 0; ord < mp->mt.fs_count; ord++) {
+					if (target_group == mp->mi.m_fs[
+					    ord].part.pt_type) {
+						new_unit = (uchar_t)ord;
+						break;
+					}
+				}
+				if (ord >= mp->mt.fs_count) {
+					error = EINVAL;
+					break;
+				}
+				/*
+				 * Cannot set target group if object id's
+				 * are already created. Do not return an
+				 * error if setting the same target group.
+				 */
+				obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
+				if (S_ISREG(ip->di.mode) && obj->ol[0].obj_id) {
+					if (old_status.stripe_group &&
+					    ip->di.stripe_group !=
+					    new_target_group) {
+						error = EINVAL;
+						break;
+					}
+				}
+				/*
+				 * Don't reset unit on metadata (directories)
+				 */
+				if (ip->di.status.b.meta == 0) {
+					ip->di.unit = new_unit;
+				}
+				ip->di.stripe_group = new_target_group;
+				status.stripe_group = 1;
 				break;
 			default:
 				error = EINVAL;
@@ -703,6 +832,9 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 			if (error == 0 && allocahead) {
 				ip->di.rm.info.dk.allocahead = (int)allocahead;
 			}
+			if (error == 0 && stripe_shift) {
+				ip->di.rm.info.obj.stripe_shift = stripe_shift;
+			}
 		}
 		break;
 
@@ -713,7 +845,7 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 			break;
 		}
 #endif	/* METADATA_SERVER */
-		if (SAM_IS_SHARED_FS(mp)) {
+		if (SAM_IS_SHARED_FS(mp) || SAM_IS_OBJECT_FS(mp)) {
 			error = ENOTSUP;
 			break;
 		}

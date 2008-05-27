@@ -2298,17 +2298,36 @@ struct file *f)		/* File entry */
 		printf(";");
 	}
 	if ((SS_ISDIRECTIO(f->stat.attr) || f->stat.allocahead ||
-			SS_ISAIO(f->stat.attr) ||
-			(SS_ISSETFA_G(f->stat.attr) || SS_ISSETFA_S(f->stat.attr))) &&
-			!SS_ISSEGMENT_S(f->stat.attr)) {
+	    SS_ISAIO(f->stat.attr) ||
+		f->stat.obj_depth ||
+	    ((SS_ISSETFA_O(f->stat.attr) || SS_ISSETFA_H(f->stat.attr)) &&
+		SS_ISOBJECT_FS(f->stat.attr)) ||
+	    (SS_ISSETFA_G(f->stat.attr) || SS_ISSETFA_S(f->stat.attr))) &&
+	    !SS_ISSEGMENT_S(f->stat.attr)) {
 
 		any++;
 		printf("  setfa -");
 		if (SS_ISAIO(f->stat.attr))  printf("q");
 		if (SS_ISDIRECTIO(f->stat.attr))  printf("D");
-		if (SS_ISSETFA_G(f->stat.attr)) printf("g %d", f->stat.stripe_group);
-		if (SS_ISSETFA_S(f->stat.attr)) printf("s %d", f->stat.stripe_width);
-		if (f->stat.allocahead) printf("A %uk", f->stat.allocahead);
+		if (SS_ISSETFA_G(f->stat.attr)) {
+			if (SS_ISOBJECT_FS(f->stat.attr)) {
+				printf("o %d", f->stat.stripe_group);
+			} else {
+				printf("g %d", f->stat.stripe_group);
+			}
+		}
+		if (SS_ISSETFA_S(f->stat.attr)) {
+			if (SS_ISOBJECT_FS(f->stat.attr)) {
+				printf("h %d", f->stat.stripe_width);
+			} else {
+				printf("s %d", f->stat.stripe_width);
+			}
+		}
+		if (SS_ISOBJECT_FS(f->stat.attr)) {
+			if (f->stat.obj_depth) printf("v %uk", f->stat.obj_depth);
+		} else {
+			if (f->stat.allocahead) printf("A %uk", f->stat.allocahead);
+		}
 		printf(";");
 	}
 	if (SS_ISSEGMENT_A(f->stat.attr) && !SS_ISSEGMENT_S(f->stat.attr)) {

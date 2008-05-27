@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.168 $"
+#pragma ident "$Revision: 1.169 $"
 #endif
 
 #include "sam/osversion.h"
@@ -965,12 +965,14 @@ sam_dk_direct_io(
 		}
 		if (lock_pages) {
 			if ((error = as_pagelock(bdp->asp,
-			    &(iovp->pplist), iovp->base,
-			    vblen, lock_type))) {
+			    &(iovp->pplist), iovp->base, vblen, lock_type))) {
 				iovp->base = 0;
 				iovp->blength = vblen = 0;
 				iovp->pplist = NULL;
 				iovp->pagelock_failed = TRUE;
+				if (SAM_IS_OBJECT_FILE(ip)) {
+					goto done;
+				}
 			}
 		}
 
@@ -1156,8 +1158,7 @@ unallocated_read:
 				 */
 				start_len = iov->iov_len;
 				iov_len = sam_dk_issue_direct_io(ip, bdp,
-				    &ioblk, rw, uiop,
-				    iovp);
+				    &ioblk, rw, uiop, iovp);
 				undelegated_bytes -= (start_len - iov_len);
 				if (undelegated_bytes == 0) {
 					/*
@@ -1353,7 +1354,7 @@ sam_dk_issue_direct_io(
 	iov_descriptor_t *iovp)
 {
 	buf_t *bp;
-	offset_t contig, iop_contig, cur_loffset;
+	offset_t contig, iop_contig;
 	uint32_t int_contig;
 	int bflags = B_PHYS | B_BUSY | B_ASYNC;
 	offset_t blkno;			/* block # on device (union) */
@@ -1447,7 +1448,6 @@ sam_dk_issue_direct_io(
 		iov->iov_base += contig;
 		iov->iov_len -= int_contig;
 		bdp->length = iov->iov_len;
-		cur_loffset = uiop->uio_loffset;
 		uiop->uio_loffset += contig;
 		uiop->uio_resid -= int_contig;
 		iop_contig = iop->contig - contig;
@@ -1456,12 +1456,13 @@ sam_dk_issue_direct_io(
 		saved_uio_resid = uiop->uio_resid;
 		saved_iov_len = iov->iov_len;
 
-		if (iop->imap.flags & M_OBJECT) {
+		if (SAM_IS_OBJECT_FILE(ip)) {
 			TRACE((rw == UIO_WRITE ? T_SAM_DIOWROBJ_ST :
 			    T_SAM_DIORDOBJ_ST), SAM_ITOV(ip), bdp->io_count,
-			    cur_loffset, contig);
-			(void) sam_issue_direct_object_io(ip, rw, bp, contig,
-			    cur_loffset);
+			    iop->blk_off+iop->pboff,
+			    (offset_t)iop->obji<<32|contig);
+			(void) sam_issue_direct_object_io(ip, rw, bp, iop,
+			    contig);
 		} else {
 			TRACE(rw == UIO_WRITE ? T_SAM_DIOWRBLK_ST :
 			    T_SAM_DIORDBLK_ST, SAM_ITOV(ip),
@@ -1496,6 +1497,21 @@ sam_dk_issue_direct_io(
 			iop->pboff += contig;
 			TRACE(T_SAM_GROUPIO1, SAM_ITOV(ip), iop->ord,
 			    (sam_tr_t)saved_uio_resid, (uint_t)iop->contig);
+		} else if (SAM_IS_OBJECT_FILE(ip)) {
+			sam_di_obj_t		*obj;
+
+			obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
+			iop->obji++;
+			if (iop->obji >= iop->num_group) {
+				iop->obji = 0;
+				iop->imap.blk_off0 += iop->bsize;
+			}
+			iop->ord = obj->ol[iop->obji].ord;
+			iop->pboff = 0;
+			iop->blk_off = iop->imap.blk_off0;
+			iop->pboff = 0;
+			TRACE(T_SAM_GROUPIO2, SAM_ITOV(ip), iop->ord,
+			    (sam_tr_t)saved_uio_resid, (sam_tr_t)iop->contig);
 		} else {
 			if (++iop->ord == (iop->imap.ord0 + iop->num_group)) {
 				iop->ord = iop->imap.ord0;
@@ -1510,7 +1526,7 @@ sam_dk_issue_direct_io(
 			    (sam_tr_t)saved_uio_resid, (sam_tr_t)iop->contig);
 		}
 		if ((saved_uio_resid < (ssize_t)iop->dev_bsize) ||
-		    (saved_iov_len < DEV_BSIZE) || (iop_contig <= 0)) {
+		    (saved_iov_len < iop->dev_bsize) || (iop->contig <= 0)) {
 			break;		/* If done */
 		}
 	}

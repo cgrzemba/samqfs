@@ -38,7 +38,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 #endif
 
 #ifndef	SAM_STAT_H
@@ -152,11 +152,11 @@ struct sam_stat {
 	time_t 		creation_time;	/* Time inode created */
 	time_t 		residence_time;	/* Time file changed residence */
 	struct 		sam_copy_s copy[MAX_ARCHIVE];
-	uint_t		attr;		/* File attributes */
+	uint_t		old_attr;	/* File attr, backwards compatible */
 	uchar_t		cs_algo;	/* Checksum algorithm indicator */
 	uchar_t		flags;		/* Flags:  staging, stage err, etc. */
-	uchar_t		stripe_width;	/* Stripe width set by setfa -s */
-	uchar_t		stripe_group;	/* Stripe group set by setfa -g */
+	uchar_t		stripe_width;	/* Stripe Width set by setfa -s or -h */
+	uchar_t		stripe_group;	/* Stripe Group set by setfa -g or -o */
 	uint_t 		gen;		/* File generation number */
 	uint_t 		partial_size;	/* Partial size in kilobytes */
 #ifdef	sun
@@ -180,13 +180,14 @@ struct sam_stat {
 	uint_t 		admin_id;
 	/* Allocate ahead size set by setfa -A */
 	uint_t 		allocahead;
-	uint_t 		pad9;
+	uint_t		obj_depth;	/* Object stripe depth in kilobytes */
 	/* 128 bit checksum */
 	u_longlong_t 	cs_val[2];
 	/* WORM retention period start and duration. */
 	time_t		rperiod_start_time;
 	uint_t		rperiod_duration;
 	uint_t		pad11;
+	u_longlong_t	attr;		/* File attributes */
 };
 
 #else   /* __sparcv9 || __amd64 || linux */
@@ -260,11 +261,11 @@ struct sam_stat {
 	time_t		residence_time;	/* Time file changed residence */
 #endif	/* __i386 */
 	struct		sam_copy_s copy[MAX_ARCHIVE];
-	uint_t		attr;		/* File attributes */
+	uint_t		old_attr;	/* File attr, backwards compatible */
 	uchar_t 	cs_algo;	/* Checksum algorithm indicator */
 	uchar_t		flags;		/* Flags:  staging, stage err, etc. */
-	uchar_t		stripe_width;	/* Stripe width set by setfa -s */
-	uchar_t		stripe_group;	/* Stripe group set by setfa -g */
+	uchar_t		stripe_width;	/* Stripe Width set by setfa -s or -h */
+	uchar_t		stripe_group;	/* Stripe Group set by setfa -g or -o */
 	ulong_t		gen;		/* File generation number */
 	ulong_t		partial_size;	/* Partial size in kilobytes */
 	dev_t		rdev;		/* ID of device if S_IFBLK or S_IFCHR */
@@ -282,7 +283,7 @@ struct sam_stat {
 	ulong_t 	admin_id;
 	/* Allocate ahead size set by setfa -A */
 	ulong_t 	allocahead;
-	ulong_t 	pad9;
+	ulong_t 	obj_depth;	/* Object stripe depth in kilobytes */
 	/* 128 bit checksum */
 	u_longlong_t 	cs_val[2];
 	/* WORM retention period start and duration. */
@@ -295,6 +296,7 @@ struct sam_stat {
 #endif	/* __i386 */
 	ulong_t		rperiod_duration;
 	ulong_t		pad11;
+	u_longlong_t	attr;		/* File attributes */
 };
 
 #endif   /* __sparcv9 || __amd64 || linux */
@@ -399,12 +401,15 @@ struct sam_section {	/* For each archive copy volume section */
 #define	SS_SEGMENT_F 	0x04000000	/* Stage/archive file in segments */
 /*	SS_ARCHIVE_A    0x08000000	used by sam_stat() - see above */
 
-#define	SS_SETFA_S   	0x10000000	/* Stripe width set by setfa -s */
-#define	SS_SETFA_G   	0x20000000	/* Stripe group set by setfa -g */
-
+#define	SS_SETFA_S   	0x10000000	/* Stripe Width set by setfa -s */
+#define	SS_SETFA_H   	0x10000000	/* Stripe Width set by setfa -h */
+#define	SS_SETFA_G   	0x20000000	/* Stripe Group set by setfa -g */
+#define	SS_SETFA_O   	0x20000000	/* Stripe Group set by setfa -o */
 #define	SS_DFACL	0x40000000	/* Default access control list - */
 					/* present */
 #define	SS_ACL		0x80000000	/* Access control list present */
+
+#define	SS_OBJECT_FS   	0x000100000000	/* Object file system "mb" */
 
 #define	SS_ISSAMFS(attr)	(((attr)&SS_SAMFS) != 0)
 #define	SS_ISREMEDIA(attr)   	(((attr)&SS_REMEDIA) != 0)
@@ -439,6 +444,9 @@ struct sam_section {	/* For each archive copy volume section */
 #define	SS_ISACL(attr)		(((attr)&SS_ACL) != 0)
 #define	SS_ISDATAV(attr)	(((attr)&SS_DATA_V) != 0)
 #define	SS_ISAIO(attr)		(((attr)&SS_AIO) != 0)
+#define	SS_ISOBJECT_FS(attr)	(((attr)&SS_OBJECT_FS) != 0)
+#define	SS_ISSETFA_O(attr)	(((attr)&SS_SETFA_O) != 0)
+#define	SS_ISSETFA_H(attr)	(((attr)&SS_SETFA_H) != 0)
 
 /*
  * SAMFS flags.

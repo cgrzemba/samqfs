@@ -134,7 +134,9 @@ xdr_samstat_t(
 	if (!xdr_vector(xdrs, (char *)objp->copy, MAX_ARCHIVE,
 	    sizeof (samcopy), (xdrproc_t)xdr_samcopy))
 		return (FALSE);
-	if (!xdr_uint_t(xdrs, &objp->attr))
+	if (!xdr_uint_t(xdrs, &objp->old_attr))
+		return (FALSE);
+	if (!xdr_u_longlong_t(xdrs, &objp->attr))
 		return (FALSE);
 	if (!xdr_u_char(xdrs, &objp->cs_algo))
 		return (FALSE);

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.148 $"
+#pragma ident "$Revision: 1.149 $"
 
 #include "sam/osversion.h"
 
@@ -811,9 +811,9 @@ sam_set_unit(
 	sam_mount_t *mp,			/* Mount table pointer. */
 	struct sam_disk_inode *di)		/* Disk inode pointer. */
 {
-	int i, ord, oldord;
+	int i, ord, oldord, mask;
 	mode_t	mode = di->mode;
-	boolean_t striped = B_FALSE;
+	boolean_t striped = FALSE;
 
 	/*
 	 * Set the slice based on round robin and then set the next ordinal.
@@ -823,12 +823,21 @@ sam_set_unit(
 	}
 	i = di->status.b.meta;	/* Device type: data (DD) or meta (MM) */
 	di->stride = 0;		/* Reset stride to 0 */
-	if ((i == DD) && di->status.b.stripe_group) {
+	mask = 0;
+	if (i == DD) {
+		if (SAM_IS_OBJECT_FS(mp)) {
+			di->status.b.stripe_group = 1;
+			mask = DT_TARGET_GROUP;
+		} else if (di->status.b.stripe_group) {
+			mask = DT_STRIPE_GROUP;
+		}
+	}
+	if (mask) {
 		for (ord = 0; ord < mp->mt.fs_count; ord++) {
-			if ((di->stripe_group|DT_STRIPE_GROUP) ==
+			if ((di->stripe_group|mask) ==
 			    mp->mi.m_fs[ord].part.pt_type) {
 				di->unit = (uchar_t)ord;
-				striped = B_TRUE;
+				striped = TRUE;
 				break;
 			}
 		}

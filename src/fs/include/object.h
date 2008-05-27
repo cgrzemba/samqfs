@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 #include "sam/osversion.h"
 
@@ -115,8 +115,10 @@ typedef union sam_osd_attr_page {
 
 typedef struct sam_osd_req_priv {
 	ksema_t		osd_sema;	/* I/O Synchronization for io_task */
+	int		obji;		/* Object layout index */
 	struct sam_node	*ip;		/* Pointer to inode */
 	struct buf	*bp;		/* Pointer to optional buffer */
+	offset_t	offset;		/* Logical offset in object I/O */
 	osd_req_t	*reqp;		/* Pointer to request */
 	osd_result_t	result;		/* Results from I/O request */
 	osd_resid_t	resid;		/* If err_type == OSD_ERRTYPE_RESID */
@@ -140,6 +142,7 @@ typedef struct sam_osd_req_priv {
  * The format is in Big Endian
  */
 #define	OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO    0x2fffffff
+
 typedef struct sam_objinfo_page {
 	uint32_t	sop_pgno;
 	uint32_t	sop_pglen;
@@ -163,9 +166,27 @@ typedef struct sam_objinfo_page {
 #define	SOP_FGEN(SOPP)		BE_32(SOPP->sop_fgen)
 
 #define	OSD_SAMQFS_VENDOR_CREATED_OBJECTS_LIST_PAGE    0x2ffffffe
+
 typedef struct sam_objlist_page {
 	uint32_t	solp_pgno;
 	uint32_t	solp_pglen;
 } sam_objlist_page_t;
+
+/*
+ * SAM-QFS Vendor Defined file system attribute page
+ */
+#define	OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO 0x2ffffffd
+
+typedef struct sam_fsinfo_page {
+	uint32_t	sfp_pgno;
+	uint32_t	sfp_pglen;
+	offset_t	sfp_capacity;
+	offset_t	sfp_space;
+} sam_fsinfo_page_t;
+
+#define	SFP_PGNO(SFPP)		BE_32(SFPP->sfp_pgno)
+#define	SFP_PGLEN(SFPP)		BE_32(SFPP->sfp_pglen)
+#define	SFP_CAPACITY(SFPP)	BE_64(SFPP->sfp_capacity)
+#define	SFP_SPACE(SFPP)		BE_64(SFPP->sfp_space)
 
 #endif	/* _SAM_FS_OBJECT_H */

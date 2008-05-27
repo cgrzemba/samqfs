@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.23 $
+.\" $Revision: 1.24 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -29,7 +29,7 @@
 .na
 .nh
 '\" !tbl | mmdoc
-.TH sam_stat 3 "29 Apr 2008"
+.TH sam_stat 3 "19 May 2008"
 .SH NAME
 sam_stat, sam_lstat, sam_segment_stat \- Gets file or segment status
 .SH SYNOPSIS
@@ -217,15 +217,15 @@ Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS File Attributes\fR
 .TS
 l l l.
 \fBData Type\fR	\fBField Name\fR	\fBDescription\fR
-\fBuint_t	attr\fR	File attributes
+\fBuint_t	old_attr\fR	Backward compatible, see attr
 \fBtime_t	attribute_time\fR	Time attributes last changed
 \fBtime_t	creation_time\fR	Time inode created
 \fBtime_t	residence_time\fR	Time file changed residence
 \fBstruct sam_copy_s	copy[MAX_ARCHIVE]\fR	Array of archive copy information
 \fBuchar_t	cs_algo\fR	Checksum algorithm indicator
 \fBuchar_t	flags\fR	Flags:  staging, stage err, etc.
-\fBuchar_t	stripe_width\fR	Stripe width set by setfa -s
-\fBuchar_t	stripe_group\fR	Stripe group set by setfa -g
+\fBuchar_t	stripe_width\fR	Stripe width set by setfa -s or -h
+\fBuchar_t	stripe_group\fR	Stripe group set by setfa -g or -o
 \fBulong_t	gen\fR	Inode generation number
 \fBulong_t	partial_size\fR	Partial size in kilobytes
 \fBdev_t	rdev\fR	ID of device if S_IFBLK or S_IFCHR
@@ -234,10 +234,12 @@ l l l.
 \fBulong_t	segment_number\fR	Number of this segment
 \fBuint_t	stage_ahead\fR	Number of segment to stage ahead
 \fBuint_t	admin_id\fR	admin ID; inherited from directory
-\fBuint_t	allocahead\fR	Allocate ahead size set by setfa -A
+\fBuint_t	allocahead\fR	Allocate ahead set by setfa -A
+\fBuint_t	obj_depth\fR	Stripe depth (KB) set by setfa -v
 \fBu_longlong_t	csum_val[2]\fR	128 checksum value
 \fBtime_t	rperiod_start_time\fR	Time WORM retention period started
 \fBuint_t	rperiod_duration\fR	WORM retention period duration
+\fBu_longlong_t	attr\fR	File attributes
 .TE
 .PP
 The following list describes Table 2's fields in more detail.

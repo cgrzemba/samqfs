@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 #endif
 
 
@@ -200,7 +200,7 @@ int sam_process_zerodaus(sam_node_t *ip, sam_lease_data_t *dp, cred_t *credp);
 int sam_dk_direct_io(sam_node_t *ip, enum uio_rw rw, int ioflag,
 	uio_t *uiop, cred_t *credp);
 int sam_issue_direct_object_io(sam_node_t *ip, enum uio_rw rw, struct buf *bp,
-	offset_t contig, offset_t cur_loffset);
+	sam_ioblk_t *iop, offset_t contig);
 void sam_dk_aio_direct_done(sam_node_t *ip, buf_descriptor_t *bdp,
 	offset_t count);
 buf_t *sam_pageio_object(sam_node_t *ip, sam_ioblk_t *iop, page_t *pp,

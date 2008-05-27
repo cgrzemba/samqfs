@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 #endif
 
 #include "sam/osversion.h"
@@ -678,6 +678,19 @@ sam_proc_stat(
 	if (ip->di.rm.ui.flags & RM_DATA_VERIFY) {
 		sb.attr |= SS_DATA_V;
 	}
+	if (SAM_IS_OBJECT_FS(ip->mp)) {
+		sb.attr |= SS_OBJECT_FS;
+		if (ip->di.rm.info.obj.stripe_shift) {	/* Units of kilobytes */
+			sb.obj_depth =
+			    (1 << (ip->di.rm.info.obj.stripe_shift - 10));
+		}
+	} else {
+		sb.allocahead = ip->di.rm.info.dk.allocahead;
+	}
+	sb.old_attr = (ip->di.status.bits & SAM_ATTR_MASK) | SS_SAMFS;
+	sb.stripe_width = ip->di.status.b.stripe_width ?
+	    ip->di.stripe : ip->mp->mt.fi_stripe[DD];
+	sb.stripe_group = ip->di.stripe_group;
 	sb.attribute_time = ip->di.attribute_time;
 	sb.creation_time = ip->di.creation_time;
 	sb.residence_time = ip->di.residence_time;
@@ -685,9 +698,6 @@ sam_proc_stat(
 
 	if (ip->flags.b.staging) sb.flags |= SS_STAGING;
 	sb.flags |= ip->di.status.b.stage_failed ? SS_STAGEFAIL : 0;
-	sb.stripe_width = ip->di.status.b.stripe_width ?
-	    ip->di.stripe : ip->mp->mt.fi_stripe[DD];
-	sb.stripe_group = ip->di.stripe_group;
 
 	sb.gen = ip->di.id.gen;
 	if (!S_ISREQ(ip->di.mode)) sb.partial_size = ip->di.psize.partial;
@@ -701,7 +711,6 @@ sam_proc_stat(
 	sb.st_blocks  =
 	    (u_longlong_t)ip->di.blocks * (u_longlong_t)(SAM_BLK/DEV_BSIZE);
 	sb.admin_id   = bip->di.admin_id;
-	sb.allocahead = ip->di.rm.info.dk.allocahead;
 
 	/*
 	 * Read permanent inode.  Enter archive copy info.
@@ -1311,13 +1320,8 @@ sam_file_operations(int cmd, void *arg)
 
 	/*
 	 * Only the owner or superuser may perform file operations.
-	 *
-	 * Except -
-	 *
-	 * owner cannot do "archive -n" or "release -n"
-	 *
+	 * Except - owner cannot do "archive -n" or "release -n"
 	 * non-owner with "r" or "x" permission can stage.
-	 *
 	 */
 	credp = CRED();
 	if (cmd != SC_stage && secpolicy_vnode_owner(credp, ip->di.uid)) {

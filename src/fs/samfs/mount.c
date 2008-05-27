@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.213 $"
+#pragma ident "$Revision: 1.214 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1147,7 +1147,9 @@ sam_set_mount(sam_mount_t *mp)
 	 * Stripe defaults to round robin if striped groups exist.
 	 */
 	if (mp->mt.fi_stripe[DD] < 0) {
-		if (SAM_IS_SHARED_FS(mp)) {
+		if (SAM_IS_OBJECT_FS(mp)) {
+			mp->mt.fi_stripe[DD] = 1;
+		} else if (SAM_IS_SHARED_FS(mp)) {
 			mp->mt.fi_stripe[DD] = 0;
 		} else {
 			dau = LG_DEV_BLOCK(mp, DD);

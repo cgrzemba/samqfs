@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.198 $"
+#pragma ident "$Revision: 1.199 $"
 #endif
 
 #ifdef linux
@@ -1000,12 +1000,8 @@ int sam_create_priv_object_id(sam_osd_handle_t oh, uint64_t user_obj_id);
 int sam_create_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
 int sam_remove_object_id(struct sam_mount *mp, uint64_t user_obj_id,
 	uchar_t unit);
-int sam_get_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
-	uint32_t attr_num, int64_t *attrp);
-int sam_set_user_object_attr(struct sam_mount *mp, struct sam_disk_inode *dp,
-	uint32_t attr_num, int64_t attribute);
 int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
-	offset_t length);
+	offset_t size, offset_t length, cred_t *credp);
 
 #ifdef sun
 extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
