@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -81,6 +81,8 @@ static void setSimpleParam();
 static void setBufsizeParams();
 static void setDrivesParams();
 static void setLogfileParam();
+static void setMaxActiveDefault(void *v);
+static int setMaxActiveParam(void *v, char *value, char *buf, int bufsize);
 static void setfieldErrmsg(int code, char *msg);
 static void readcfgErrmsg(char *msg, int lineno, char *line);
 static boolean_t verifyFile(char *file);
@@ -425,4 +427,52 @@ verifyFile(
 		}
 	}
 	return (rc);
+}
+
+/* Sets the default max_active based on the system memory size. */
+static void
+setMaxActiveDefault(void *v)
+{
+	long pages, pgsize;
+	int64_t memsize;
+	int maxactive;
+
+	pages = sysconf(_SC_PHYS_PAGES);
+	pgsize = sysconf(_SC_PAGESIZE);
+	memsize = (int64_t)pages * (int64_t)pgsize;
+
+	/* Number of GB (rounded nearest) * maxactive per GB */
+	maxactive = (((memsize>>29)+1)>>1) * STAGER_MAX_ACTIVE_PER_GB;
+
+	/* Make sure we calculated something that makes sense */
+	if (maxactive < STAGER_MAX_ACTIVE_PER_GB) {
+		maxactive = STAGER_MAX_ACTIVE_PER_GB;
+	} else if (maxactive > STAGER_MAX_ACTIVE) {
+		maxactive = STAGER_MAX_ACTIVE;
+	}
+
+	Trace(TR_PROC, "Setting maxactive default %d", maxactive);
+	*(int *)v = maxactive;
+}
+
+/* Sets the max_active parameter based on stager.cmd user input */
+static int
+setMaxActiveParam(void *v, char *value, char *buf, int bufsize)
+{
+	int64_t	val;
+	if (StrToFsize(value, (uint64_t *)&val) != 0) {
+		/* Invalid '%s' value ('%s') */
+		snprintf(buf, bufsize, GetCustMsg(14101), "maxactive", value);
+		return (-1);
+	}
+
+	if (val < 1 || val > STAGER_MAX_ACTIVE) {
+		/* '%s' value is out of range %lld to %lld */
+		snprintf(buf, bufsize, GetCustMsg(14102), "maxactive",
+		    (int64_t)1, (int64_t)STAGER_MAX_ACTIVE);
+		return (-1);
+	}
+
+	*(int *)v = val;
+	return (0);
 }
