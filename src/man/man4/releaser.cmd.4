@@ -1,4 +1,4 @@
-.\" $Revision: 1.22 $
+.\" $Revision: 1.23 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -187,8 +187,11 @@ pass of the file system.
 For \fInumber\fR, specify an integer number in the following range:
 .br
 10 \(<= \fInumber\fR \(<= 2,147,483,648
-The default is 10000.  If you have many small files in your
-file system you may want to increase this number.
+.br
+The default is based on the size of the .inodes file.  If there is enough
+space for one million inodes (512-bytes/inode), \fInumber\fR is 100000,
+otherwise it is 30000. If you have many small files in your file system
+you may want to increase this number.
 .TP
 .B "no_release"
 Prevents the releaser from releasing any files.

@@ -1,4 +1,4 @@
-.\" $Revision: 1.22 $
+.\" $Revision: 1.23 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -91,8 +91,10 @@ an ordered list of the files that can be released.
 The position of each file on the
 list depends on a priority calculated for each inode by the 
 releaser (see the PRIORITY WEIGHTS section of this man page.)
-Only the top \fIlist_size\fR (default 10,000) files are kept on the list.
-See \fBreleaser.cmd\fR(4) for a description of \fIlist_size\fR.
+Only the top \fIlist_size\fR files are kept on the list.  The default
+\fIlist_size\fR is 30000 for filesystems with less than 1M inodes, and 
+100000 with more than 1M inodes.  See \fBreleaser.cmd\fR(4) for a 
+description of \fIlist_size\fR.
 .PP
 Starting with the file with the numerically largest priority, the disk
 space used by each file is released until the \fIlow_water_mark\fR has

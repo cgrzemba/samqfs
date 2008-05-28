@@ -68,7 +68,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -116,6 +116,11 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 #define	CFG_FILE	SAM_CONFIG_PATH"/releaser.cmd"
 
+
+#define	INODE_SIZE_THRSHLD (1000000 * SAM_ISIZE) /* 1M inodes (bytes) */
+#define	SML_DEF_SIZE 30000
+#define	LRG_DEF_SIZE 100000
+
 /* Buffer for inodes read from disk */
 static union sam_di_ino
 	inodes[(INO_BLK_FACTOR * INO_BLK_SIZE) / sizeof (union sam_di_ino) + 2];
@@ -162,6 +167,7 @@ static	void releaser_trailer(void);
 static	void show_stats_then_zero(void);
 static	void sigalrm_handler(int ignored);
 static	void sigint_handler(int ignored);
+static  void set_default_listsize(void);
 
 /*  The current time, and how often (in seconds) it should be refreshed */
 static time_t now;
@@ -181,7 +187,7 @@ float weight_age_residence = 1.0;
 float weight_size = 1.0, weight_age = 1.0;
 int debug_partial = FALSE;
 int display_all_candidates = FALSE;
-int list_size = KEEP_HOW_MANY;		/* size of candidate list */
+int list_size = 0;		/* size of candidate list */
 int min_residence_age = 600;	/* minimum online age in seconds = 10 min. */
 int release = TRUE;
 int rearch_release = TRUE;
@@ -275,6 +281,11 @@ main(
 	 */
 	if (!use_one_age_weight && ! use_three_age_weights) {
 		use_one_age_weight = TRUE;
+	}
+
+	/* If no list size was specified, set a default. */
+	if (list_size == 0) {
+		set_default_listsize();
 	}
 
 	/*
@@ -1114,6 +1125,30 @@ format_time(clock_t clock)
 
 	(void) cftime(buf, (char *)0, &clock);
 	return (buf);
+}
+
+/*
+ * Sets the list_size to a default
+ * based on the length of the .inodes file.
+ */
+static void
+set_default_listsize(void)
+{
+	struct stat64 buf;
+
+	if (fstat64(inode_fd, &buf) != 0) {
+		fprintf(log, "Error getting .inodes size: %s\n",
+		    strerror(errno));
+		fprintf(log, "Using list_size %d\n", SML_DEF_SIZE);
+		list_size = SML_DEF_SIZE;
+		return;
+	}
+
+	if (buf.st_size < INODE_SIZE_THRSHLD) {
+		list_size = SML_DEF_SIZE;
+	} else {
+		list_size = LRG_DEF_SIZE;
+	}
 }
 
 #if defined(TEST)
