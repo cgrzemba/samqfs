@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.110 $"
+#pragma ident "$Revision: 1.111 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -284,6 +284,7 @@ ReadCmds(
 			exit(EXIT_ERRORS);
 		}
 		noCmdFile = TRUE;
+		dirWait(); /* If noCmdFile default to wait directive */
 		errors = 0;
 	}
 

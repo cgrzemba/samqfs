@@ -1,4 +1,4 @@
-.\" $Revision: 1.85 $
+.\" $Revision: 1.86 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -411,7 +411,8 @@ archiving begins.  The wait may be applied globally or to one or more
 file systems.
 .RS
 .LP
-The default is no waiting.
+The default is no waiting.  However, if archiver.cmd does not exist then the 
+default is to wait.
 .RE
 .TP 5
 .BI "timeout = [ operation | media ] " time
