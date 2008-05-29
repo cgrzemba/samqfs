@@ -34,7 +34,7 @@
 #if !defined(_AML_SCSI_ERROR_H)
 #define	_AML_SCSI_ERROR_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -54,6 +54,7 @@ extern "C" {
 #define	WRONG_MODE	10	/* Wrong mode */
 #define	MEDIA_RESER	11	/* Media reserved by another */
 #define	INCOMPATIBLE	12	/* Incompatible media */
+#define	ACCESS_DENIED	13	/* Access to library denied */
 
 #if defined(SCSI_ERRCODES)
 char *scsi_errcode[] = {
@@ -70,6 +71,7 @@ char *scsi_errcode[] = {
 	"Changer is not in the correct mode.",
 	"Media is reserved by another initiator.",
 	"Incompatible media",
+	"Access to library denied.",
 };
 #else
 extern char *scsi_errcode[];

@@ -40,7 +40,7 @@
 #define	_SAM_DEVNM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 #endif
 
 
@@ -153,7 +153,7 @@ char *dev_nmrb[] = {
 	"rb", "rc", "cy", "ds", "hp", "ml", "me", "me", "me", "ac", "ac", "ac",
 	"gr", "eb", "sk", "ad", "sl", "im", "s9", "nm", "ic", "dm", "cs",
 	"?2", "ac", "pd", "pe", "as", "e8", "sn", "il", "ae", "h4", "hc", "q8",
-	"al", "ov", "pg", "c4", NULL
+	"al", "ov", "pg", "c4", "s3", NULL
 };
 
 char *dev_nmps[] = {
@@ -216,12 +216,12 @@ dev_nm_t dev_nm2dt[] = {
 	{"xm",  1, DT_EXABYTE_M2_TAPE },
 	{"lt",  1, DT_LINEAR_TAPE },
 	{"dt",  1, DT_DAT },
-	{"xx",  1, DT_xx },
 	{"d3",  1, DT_D3 },
 	{"fd",  0, DT_FUJITSU_128 },
 	{"pd",  0, DT_PLASMON_D },
 	{"pg",  0, DT_PLASMON_G },
 	{"c4",  0, DT_QUANTUMC4 },
+	{"s3",  0, DT_SL3000 },
 	{"sg",  1, DT_9840 },
 	{"sf",  1, DT_9940 },
 	{"ib",  1, DT_3590 },
@@ -292,7 +292,6 @@ dev_nm_t    dev_nm2mt[] = {
 	{"xm",  0, DT_EXABYTE_M2_TAPE },
 	{"lt",  0, DT_LINEAR_TAPE },
 	{"dt",  0, DT_DAT },
-	{"xx",  0, DT_xx },
 	{"d3",  0, DT_D3 },
 	{"fd",  0, DT_FUJITSU_128 },
 	{"sg",  0, DT_9840 },

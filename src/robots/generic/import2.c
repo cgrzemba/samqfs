@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -487,6 +487,7 @@ init_import(
 	    iport->library->un->type != DT_ADIC448 &&
 	    iport->library->un->type != DT_ATLP3000 &&
 	    iport->library->un->type != DT_IBM3584 &&
+	    iport->library->un->type != DT_SL3000 &&
 	    iport->library->un->type != DT_SONYDMS &&
 	    !(iport->library->un->type == DT_STK97XX &&
 	    iport->library->range.ie_count > 1)) {
@@ -556,6 +557,8 @@ init_import(
 	case DT_HPSLXX:
 		/* Fallthrough */
 	case DT_FJNMXX:
+		/* Fallthrough */
+	case DT_SL3000:
 		/* Fallthrough */
 	case DT_ODI_NEO:
 		iport->library->im_ele = iport;
@@ -697,6 +700,7 @@ process_multi_import(
 			    (equ_type == DT_QUANTUMC4) ||
 			    (equ_type == DT_HPSLXX) ||
 			    (equ_type == DT_FJNMXX) ||
+			    (equ_type == DT_SL3000) ||
 			    (equ_type == DT_STKLXX &&
 			    strncmp((char *)un->product_id,
 			    "SL500", 5) == 0)) ||

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 
 #define	MAIN
@@ -716,6 +716,33 @@ sam_scsi_err_t   stklxx[] = {
 	0xff, 0xff, 0xff, 0xff, END_OF_LIST
 };
 
+sam_scsi_err_t   stksl3000[] = {
+	0x00, 0x00, 0x00, 0x00, IGNORE,
+	0x02, 0x04, 0x01, 0x00, WAIT_READY,   /* becoming ready */
+	0x02, 0x04, 0x03, MAN_INTER, DOWN_EQU, /* Fatal error */
+	0x02, 0x04, 0x81, WRONG_MODE, DOWN_EQU, /* Operator put unit in */
+						/* maintainence mode */
+	0x02, 0x3a, 0x02, DOOR_OPEN, WAIT_READY, /* CAP is open */
+	0x02, 0x74, 0x71, ACCESS_DENIED, DOWN_EQU, /* Partition Access Denied */
+	0x02, 0xff, 0xff, 0x00, WAIT_READY,   /* becoming ready */
+	0x04, 0xff, 0xff, HARDWARE, DOWN_EQU, /* all hardware errors */
+	0x05, 0x30, 0x00, INCOMPATIBLE, INCOMPATIBLE_MEDIA,
+	0x05, 0x3a, 0x00, 0x00, NO_MEDIA, /* Medium not present */
+						/* drive not unloaded */
+	0x05, 0x3b, 0x0d, 0x00, D_ELE_FULL, /* Destination element full */
+	0x05, 0x3b, 0x0e, 0x00, S_ELE_EMPTY,  /* Source element empty */
+	0x05, 0xff, 0xff, 0x00, ILLREQ, /* Catch-all illegal request */
+	0x06, 0x28, 0xff, 0x00, IGNORE, /* Not ready-to-ready transition */
+					/* CAP element accessed */
+	0x06, 0x29, 0x01, POWER_ON, IGNORE,   /* power on  */
+	0x06, 0x3f, 0x01, 0x00, WAIT_READY,   /* microcode changed */
+	0x0b, 0x47, 0x00, 0x00, LONG_WAIT_LOG, /* SCSI parity error */
+	0x0b, 0x48, 0x00, 0x00, LONG_WAIT_LOG, /* Initiator detected error */
+	0x0b, 0x4e, 0x00, 0x00, LONG_WAIT_LOG, /* Command overlap error */
+	0xff, 0xff, 0xff, 0x00, DOWN_EQU,
+	0xff, 0xff, 0xff, 0xff, END_OF_LIST
+};
+
 sam_scsi_err_t   ibm3584[] = {
 	0x00, 0x00, 0x00, 0x00, IGNORE,
 	0x02, 0x04, 0x01, 0x00, WAIT_READY,   /* becoming ready */
@@ -843,6 +870,7 @@ struct codes
 	plasmond, DT_PLASMON_D,
 	plasmong, DT_PLASMON_G,
 	stklxx, DT_STKLXX,
+	stksl3000, DT_SL3000,
 	ibm3584, DT_IBM3584,
 	adic100, DT_ADIC100,
 	qual82xx, DT_QUAL82xx,

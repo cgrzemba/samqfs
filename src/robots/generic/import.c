@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -339,6 +339,8 @@ import_media(
 				/* FALLTHROUGH */
 			case DT_STKLXX:
 				/* FALLTHROUGH */
+			case DT_SL3000:
+				/* FALLTHROUGH */
 			case DT_IBM3584:
 				/* FALLTHROUGH */
 			case DT_STK97XX:
@@ -555,13 +557,15 @@ generic_export_media(
 	case DT_STK97XX:
 		/* FALLTHROUGH */
 	case DT_FJNMXX:
+		/* FALLTHROUGH */
+	case DT_SL3000:
 		/*
 		 * Media changers must support init_element_range command
 		 * (0xe7) to use find_empty_export.
 		 *
-		 * Actually, DT_QUANTUMC4, DT_HP_C7200 and DT_FJNMXX do
-		 * not support the E7. However, there is special code in
-		 * process_multi_import to handle these.
+		 * Actually, DT_QUANTUMC4, DT_HP_C7200, DT_FJNMXX and
+		 * DT_SL3000 do not support the E7. However, there is
+		 * special code in process_multi_import to handle these.
 		 */
 		if ((iport = find_empty_export(library)))
 			mutex_lock(&iport->mutex);
@@ -842,6 +846,7 @@ generic_export_media(
 	    (library->un->type != DT_IBM3584) &&
 	    (library->un->type != DT_HPSLXX) &&
 	    (library->un->type != DT_FJNMXX) &&
+	    (library->un->type != DT_SL3000) &&
 	    (library->un->type != DT_ATLP3000)) {
 		mutex_lock(&library->un->mutex);
 		library->un->status.bits |= (DVST_ATTENTION | DVST_I_E_PORT);
