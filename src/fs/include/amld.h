@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 #endif
 
 
@@ -218,7 +218,7 @@ typedef struct {
  */
 
 typedef struct samamld_cmd_queue {
-#ifndef	linux
+#ifdef sun
 	kcondvar_t	cmd_cv;
 	char		pad[4];	/* for amd64 64bit alignment of cmd_mutex */
 	kmutex_t	cmd_mutex;
@@ -249,7 +249,7 @@ typedef struct samamld_cmd_queue {
 typedef struct {
 	samamld_cmd_queue_t *front;
 	samamld_cmd_queue_t *end;
-#ifndef	linux
+#ifdef sun
 	kmutex_t cmd_queue_mutex;
 	kmutex_t cmd_lockout_mutex;
 	kcondvar_t cmd_lockout_cv;
@@ -274,9 +274,9 @@ typedef struct samamld_cmd_table {
 	/* free list of sam-amld cmds */
 	samamld_cmd_queue_t *cmd_buffer_free_list;
 	kcondvar_t free_list_cond;
+	char	pad[4];	/* needed for amd64 64bit alignment of mutexes */
 	samamld_cmd_queue_hdr_t samamld_cmd_queue_hdr;
-#ifndef	linux
-	char	pad[4];	/* needed for amd64 64bit alignment of queue_mutex */
+#ifdef sun
 	kmutex_t queue_mutex;
 #endif	/* linux */
 	int cmd_buffer_free_list_count;
