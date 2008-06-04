@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.15 2008/05/16 18:38:58 am143972 Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.16 2008/06/04 18:16:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -36,6 +36,8 @@ import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.mgmt.fs.FSArchCfg;
 
+import com.sun.netstorage.samqfs.mgmt.fs.FSInfo;
+import com.sun.netstorage.samqfs.mgmt.fs.MountOptions;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
@@ -49,6 +51,168 @@ import com.sun.netstorage.samqfs.web.model.media.StripedGroup;
  *
  */
 public interface SamQFSSystemSharedFSManager {
+
+    /**
+     * The following methods are used in the 5.0 release onwards.
+     */
+
+    /**
+     * Function to add multiple clients to a shared file system. This
+     * function may be run to completion in the background.
+     * Returns:
+     * 0 for successful completion
+     * -1 for error
+     * job_id will be returned if the job has not completed.
+     */
+    public int addClients(String fsName, String[] clients)
+	throws SamFSException;
+
+    /**
+     * The file system must be unmounted to remove clients. You can
+     * disable access from clients without unmounting the file system
+     * with the setClientState function.
+     *
+     * Returns: 0, 1, job ID
+     * 0 for successful completion
+     * -1 for error
+     * job ID will be returned if the job has not completed.
+     */
+    public int removeClients(String fsName, String[] clients)
+	throws SamFSException;
+
+    /*
+     * Enable or disable client access. This operation is performed on
+     * the metadata server. The states CL_STATE_ON and CL_STATE_OFF are
+     * supported.
+     */
+    public void setClientState(String fsName,
+	String[] hostNames, int state) throws SamFSException;
+
+    /*
+     * Method to retrieve data about shared file system hosts.
+     *
+     * By setting the options field you can determine what type
+     * of hosts will be included and what data will be returned.
+     *
+     * The options field supports the flags:
+     * STORAGE_NODE | MDS | CLIENTS | HOST_DETAILS
+     *
+     * Where MDS returns the potential metadata information too.
+     *
+     * For Storage Nodes the capacity is reported in the devices of the file
+     * system. This call only returns information about the host, ip and
+     * status.
+     *
+     * Keys shared by all classes of host include:
+     * hostName = %s
+     * type = OSD | client | mds | pmds
+     * ip_addresses = space separated list of ips.
+     * os = Operating System Version
+     * version = sam/qfs version
+     * arch = x86 | sparc
+     * mounted = %d ( -1 means not mounted otherwise time mounted in seconds)
+     * status = ON | OFF
+     * error = assumed_dead | known_dead
+     *
+     * faults = %d (only on storage nodes. This key only present if faults
+     *		    exist)
+     *
+     * If HOST_DETAILS flag is set in options the following will be obtained
+     * for clients and real and potential metadata servers. Information
+     * about decoding these can be found in the pub/mgmt/hosts.h header file.
+     *
+     * fi_status=<hex 32bit map>
+     * fi_flags = <hex 32bit map>
+     * mnt_cfg = <hex 32bit map>
+     * mnt_cfg1 = <hex 32bit map>
+     * no_msgs= int32
+     * low_msg = uint32
+     */
+    public SharedHostInfo [] getSharedFSHosts(
+        String mdServer, String fsName, int options)
+        throws SamFSException;
+
+    /*
+     * Method to get summary status for a shared file system
+     * Status is returned as key value strings.
+     *
+     * The method potentially returns three strings. One each for the
+     * client status, pmds status and storage node status. If no storage
+     * nodes are present no storage node string will be returned.
+     *
+     * The format is as follows:
+     * clients=1024, unmounted=24, off=2, error=0
+     * storage_nodes=124, unmounted=0, off=1, error=0
+     * pmds = 8, unmounted=2, off=0, error=0
+     */
+    public MemberInfo [] getSharedFSSummaryStatus(
+        String mdServer, String fsName) throws SamFSException;
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task.  Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int mountClients(String mdServer, String fsName, String [] clients)
+        throws SamFSException;
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int unmountClients(String mdServer, String fsName, String [] clients)
+        throws SamFSException;
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int setSharedFSMountOptions(String mdServer, String fsName,
+	String [] clients, MountOptions mo) throws SamFSException;
+
+    /*
+     * nodeData is a key value string that includes the following keys:
+     * host = hostname
+     * dataip = ip address
+     * group = groupId (o1, o2, o3 etc.)
+     *
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int addStorageNode(String hpcFSName, String nodeName,
+	String nodeIP, FSInfo backingStore, String nodeData)
+	throws SamFSException;
+
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int removeStorageNode(String hpcFSName, String nodeName)
+        throws SamFSException;
+
+
+    /**
+     * Get the failover status of the named shared file system.
+     * @param mdServer Name of current metadata server
+     * @param fsName Name of the File System to query
+     * @return true if this server is in the process of failing over, false
+     * if it is not.
+     */
+    public boolean failingover(String mdServer, String fsName)
+        throws SamFSException;
+
+    /**
+     * Get a list of all IP addresses assigned to this host.
+     * @param hostName
+     * @return Array of IP addresses.
+     * @throws SamFSException if anything unexpected occurs.
+     */
+    public String[] getIPAddresses(String hostName) throws SamFSException;
 
     /**
      * @return An array of <code>SharedDiskCache</code> objects .
@@ -67,9 +231,19 @@ public interface SamQFSSystemSharedFSManager {
         throws SamFSMultiHostException;
 
     /**
+     * Call this method when before the process exits to release any
+     * resources (threads, etc.) that the garbage collector can't
+     * take care of on its own.
+     */
+    public void freeResources();
+
+    ////////////////////////////////////////////////////////////////////////////
+    // The following methods are used strictly for 4.6 servers for backward
+    // compatibility purpose
+
+    /**
      *
      * Uses the C library to create a new shared file system.
-     * @since 4.6
      * @param fsName
      * @param mountPoint
      * @param DAUSize
@@ -153,16 +327,6 @@ public interface SamQFSSystemSharedFSManager {
         throws SamFSMultiHostException;
 
     /**
-     * Get the failover status of the named shared file system.
-     * @param mdServer Name of current metadata server
-     * @param fsName Name of the File System to query
-     * @return true if this server is in the process of failing over, false
-     * if it is not.
-     */
-    public boolean failingover(String mdServer, String fsName)
-        throws SamFSException;
-
-    /**
      * Returns the type of server for the named file system.  Possible
      * return values are defined in:
      * <code>com.sun.netstorage.samqfs.web.model.fs.SharedMember</code>
@@ -186,21 +350,6 @@ public interface SamQFSSystemSharedFSManager {
 
 
     /**
-     * Set the mount options for the named file system on all hosts
-     * that have access to the shared file system.
-     * @param mdServer Name of the metadata server
-     * @param fsName Name of the shared file system to be operated on.
-     * @param options Options to be applied to the FS on all hosts.
-     * @throws SamFSMultiHostException if the operation fails
-     * for some of the hosts.
-     *
-     */
-    public void setSharedMountOptions(String mdServer, String fsName,
-        FileSystemMountProperties options)
-        throws SamFSMultiHostException;
-
-
-    /**
      * Returns an array of host names representing hosts that are
      * currently managed by the application, but are not members of
      * the named shared file system.
@@ -215,14 +364,6 @@ public interface SamQFSSystemSharedFSManager {
         throws SamFSException;
 
     /**
-     * Get a list of all IP addresses assigned to this host.
-     * @param hostName
-     * @return Array of IP addresses.
-     * @throws SamFSException if anything unexpected occurs.
-     */
-    public String[] getIPAddresses(String hostName) throws SamFSException;
-
-    /**
      * Create an instance of SharedMember with the specified properties
      * @param name Host name
      * @param ips Array of IP addresses
@@ -233,27 +374,40 @@ public interface SamQFSSystemSharedFSManager {
     public SharedMember createSharedMember(String name, String[] ips,
         int type);
 
-    /**
-     * Call this method when before the process exits to release any
-     * resources (threads, etc.) that the garbage collector can't
-     * take care of on its own.
-     */
-    public void freeResources();
 
     /**
+     * Set the mount options for the named file system on all hosts
+     * that have access to the shared file system.
+     * @param mdServer Name of the metadata server
+     * @param fsName Name of the shared file system to be operated on.
+     * @param options Options to be applied to the FS on all hosts.
+     * @throws SamFSMultiHostException if the operation fails
+     * for some of the hosts.
+     *
+     */
+    public void setSharedMountOptions(String mdServer, String fsName,
+        FileSystemMountProperties options)
+        throws SamFSMultiHostException;
+
+        /**
      * Call this method to set how a shared member of a shared file system
      * talks to the metadata/potential metadata server.
-     * This method is called in 4.5+ servers.  No version checking is needed
-     * as 4.4 servers will never access to the Advanced Network Configuration
-     * Setup Page.
      */
     public MDSAddresses [] getAdvancedNetworkConfig(
         String hostName, String fsName) throws SamFSException;
 
 
+    /**
+     * This is probably 4.6 only
+     * @param hostNames
+     * @param fsName
+     * @param mdsName
+     * @param addresses
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
     public void setAdvancedNetworkConfigToMultipleHosts(
         String [] hostNames, String fsName,
         String mdsName, MDSAddresses [] addresses)
         throws SamFSMultiHostException, SamFSException;
-
 }

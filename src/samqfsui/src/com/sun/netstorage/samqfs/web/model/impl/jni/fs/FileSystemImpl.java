@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.46 2008/05/16 18:39:02 am143972 Exp $
+// ident	$Id: FileSystemImpl.java,v 1.47 2008/06/04 18:16:11 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -53,6 +53,7 @@ import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
 import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
+import com.sun.netstorage.samqfs.web.model.fs.ShrinkOption;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSSystemModelImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
 import com.sun.netstorage.samqfs.web.model.impl.jni.archive.
@@ -839,5 +840,114 @@ public class FileSystemImpl extends GenericFileSystemImpl
             fsInfo.getName(),
             SamQFSUtil.convertStateToJni(newState),
             eqs);
+    }
+
+    // Added 5.0
+    /*
+     * Method to remove a device from a file system by releasing all of
+     * the data on the device.
+     *
+     * options is a string of key value pairs that are based on the
+     * directives in shrink.cmd. If options is non-null the options
+     * will be set for this file system in the shrink.cmd file
+     * prior to invoking the shrink.
+     *
+     * Options Keys:
+     *   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	 display_all_files = TRUE | FALSE (default FALSE)
+     *	 do_not_execute = TRUE | FALSE (default FALSE)
+     *	 logfile = filename (default no logging)
+     *	 stage_files = TRUE | FALSE (default FALSE)
+     *	 stage_partial = TRUE | FALSE (default FALSE)
+     *	 streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public int shrinkRelease(int eqToRelease, ShrinkOption options)
+        throws SamFSException {
+        
+        return FS.shrinkRelease(
+                    getJniContext(), fsInfo.getName(),
+                    eqToRelease, options.toString());
+    }
+
+    /*
+     * Method to remove a device from a file system by copying the
+     * data to other devices. If replacementEq is the eq of a device
+     * in the file system the data will be copied to that device.
+     * If replacementEq is -1 the data will be copied to available devices
+     * in the FS.
+     *
+     * Options Keys:
+     *	 logfile = filename (default no logging)
+     *	 block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	 display_all_files = TRUE | FALSE (default FALSE)
+     *	 do_not_execute = TRUE | FALSE (default FALSE)
+     *	 logfile = filename (default no logging)
+     *	 streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public int shrinkRemove(
+        int eqToRemove, int replacementEq, ShrinkOption options)
+	throws SamFSException {
+        
+        return FS.shrinkRemove(
+                    getJniContext(), fsInfo.getName(),
+                    eqToRemove, replacementEq, options.toString());
+    }
+
+    /*
+     * Method to remove a device from a file system by copying the
+     * data to a newly added device.
+     *
+     * Options Keys:
+     *	 logfile = filename (default no logging)
+     *	 block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	 display_all_files = TRUE | FALSE (default FALSE)
+     *	 do_not_execute = TRUE | FALSE (default FALSE)
+     *	 logfile = filename (default no logging)
+     *	 streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public int shrinkReplaceDev(
+        int eqToRemove, DiskCache replacement, ShrinkOption options)
+	throws SamFSException {
+        
+        return FS.shrinkReplaceDev(
+                    getJniContext(), fsInfo.getName(),
+                    eqToRemove,
+                    ((DiskCacheImpl) replacement).getJniDisk(),
+                    options.toString());
+    }
+
+    /*
+     * Method to remove a striped group from a file system by copying the
+     * data to a new striped group.
+     *
+     * Options Keys:
+     *	 logfile = filename (default no logging)
+     *	 block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+     *	 display_all_files = TRUE | FALSE (default FALSE)
+     *	 do_not_execute = TRUE | FALSE (default FALSE)
+     *	 logfile = filename (default no logging)
+     *	 streams = n  where 1 <= n <= 128 default 8
+     *
+     * The integer return is a job id that will be meaningful only for
+     * shared file systems.
+     */
+    public int shrinkReplaceGroup(
+        int eqToRemove, StripedGroup replacement, ShrinkOption options)
+	throws SamFSException {
+        
+        return FS.shrinkReplaceGroup(
+                    getJniContext(), fsInfo.getName(),
+                    eqToRemove,
+                    ((StripedGroupImpl) replacement).getJniStripedGroup(),
+                    options.toString());
     }
 }

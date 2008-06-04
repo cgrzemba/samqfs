@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.42 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.43 2008/06/04 18:16:11 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -43,8 +43,10 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.web.model.MDSAddresses;
+import com.sun.netstorage.samqfs.web.model.MemberInfo;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteria;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
@@ -67,6 +69,7 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+
 public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         SamQFSSystemSharedFSManager {
 
@@ -79,6 +82,257 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 	// initialize thread pool (start threads)
         threadPool.init();
     }
+
+    /**
+     * Function to add multiple clients to a shared file system. This
+     * function may be run to completion in the background.
+     * Returns:
+     * 0 for successful completion
+     * -1 for error
+     * job_id will be returned if the job has not completed.
+     */
+    public int addClients(String fsName, String [] clients)
+	throws SamFSException {
+
+        // TODO: To be verified
+
+        clients = clients == null ? new String[0] : clients;
+
+        Host [] allClients = new Host[clients.length];
+        for (int i = 0; i < clients.length; i++) {
+            Host newHost =
+                new Host(clients[i],
+                         getIPAddresses(clients[i]),
+                         0,
+                         false);
+            allClients[i] = newHost;
+        }
+
+        return Host.addClients(fsName, allClients);
+    }
+
+    /**
+     * The file system must be unmounted to remove clients. You can
+     * disable access from clients without unmounting the file system
+     * with the setClientState function.
+     *
+     * Returns: 0, 1, job ID
+     * 0 for successful completion
+     * -1 for error
+     * job ID will be returned if the job has not completed.
+     */
+    public int removeClients(String fsName, String[] clients)
+	throws SamFSException {
+
+        // TODO: To be verified
+        return Host.removeClients(fsName, clients);
+
+    }
+
+    /*
+     * Enable or disable client access. This operation is performed on
+     * the metadata server. The states CL_STATE_ON and CL_STATE_OFF are
+     * supported.
+     */
+    public void setClientState(String fsName,
+	String[] hostNames, int state) throws SamFSException {
+
+        hostNames = hostNames == null ? new String[0] : hostNames;
+        Host.setClientState(fsName, hostNames, state);
+
+    }
+
+    /*
+     * Method to retrieve data about shared file system hosts.
+     *
+     * By setting the options field you can determine what type
+     * of hosts will be included and what data will be returned.
+     *
+     * The options field supports the flags:
+     * STORAGE_NODE | MDS | CLIENTS | HOST_DETAILS
+     *
+     * Where MDS returns the potential metadata information too.
+     *
+     * For Storage Nodes the capacity is reported in the devices of the file
+     * system. This call only returns information about the host, ip and
+     * status.
+     *
+     * Keys shared by all classes of host include:
+     * hostName = %s
+     * type = OSD | client | mds | pmds
+     * ip_addresses = space separated list of ips.
+     * os = Operating System Version
+     * version = sam/qfs version
+     * arch = x86 | sparc
+     * mounted = %d ( -1 means not mounted otherwise time mounted in seconds)
+     * status = ON | OFF
+     * error = assumed_dead | known_dead
+     *
+     * faults = %d (only on storage nodes. This key only present if faults
+     *		    exist)
+     *
+     * If HOST_DETAILS flag is set in options the following will be obtained
+     * for clients and real and potential metadata servers. Information
+     * about decoding these can be found in the pub/mgmt/hosts.h header file.
+     *
+     * fi_status=<hex 32bit map>
+     * fi_flags = <hex 32bit map>
+     * mnt_cfg = <hex 32bit map>
+     * mnt_cfg1 = <hex 32bit map>
+     * no_msgs= int32
+     * low_msg = uint32
+     */
+    public SharedHostInfo [] getSharedFSHosts(
+        String mdServer, String fsName, int options)
+        throws SamFSException {
+
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+
+        String [] hostInfo =
+            Host.getSharedFSHosts(model.getJniContext(), fsName, options);
+        hostInfo = hostInfo == null ? new String[0] : hostInfo;
+
+        SharedHostInfo [] sharedHostInfo = new SharedHostInfo[hostInfo.length];
+        for (int i = 0; i < hostInfo.length; i++) {
+            sharedHostInfo[i] = new SharedHostInfo(hostInfo[i]);
+        }
+
+        return sharedHostInfo;
+    }
+
+    /*
+     * Method to get summary status for a shared file system
+     * Status is returned as key value strings.
+     *
+     * The method potentially returns three strings. One each for the
+     * client status, pmds status and storage node status. If no storage
+     * nodes are present no storage node string will be returned.
+     *
+     * The format is as follows:
+     * clients=1024, unmounted=24, off=2, error=0
+     * storage_nodes=124, unmounted=0, off=1, error=0
+     * pmds = 8, unmounted=2, off=0, error=0
+     */
+    public MemberInfo [] getSharedFSSummaryStatus(
+        String mdServer, String fsName) throws SamFSException {
+
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+
+        String [] info =
+            // FS.getSharedFSSummaryStatus(model.getJniContext(), fsName);
+            new String [] {
+                "pmds=8,unmounted=2,off=0,error=0",
+                "storage_nodes=124,unmounted=0,off=1,error=0",
+                "clients=1024,unmounted=24,off=2,error=0"};
+        MemberInfo [] memberInfos = new MemberInfo[info.length];
+        for (int i = 0; i < memberInfos.length; i++) {
+            memberInfos[i] = new MemberInfo(info[i]);
+        }
+
+        return memberInfos;
+    }
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task.  Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int mountClients(String mdServer, String fsName, String [] clients)
+        throws SamFSException {
+
+        // TODO: To be verified
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+
+        return FS.mountClients(model.getJniContext(), fsName, clients);
+    }
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int unmountClients(String mdServer, String fsName, String [] clients)
+        throws SamFSException {
+
+        // TODO: To be verified
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+
+        return FS.unmountClients(model.getJniContext(), fsName, clients);
+    }
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int setSharedFSMountOptions(String mdServer, String fsName,
+	String [] clients, MountOptions mo) throws SamFSException {
+
+        // TODO: To be verified
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+
+        return FS.setSharedFSMountOptions(
+                    model.getJniContext(), fsName, clients, mo);
+    }
+
+    /*
+     * nodeData is a key value string that includes the following keys:
+     * host = hostname
+     * dataip = ip address
+     * group = groupId (o1, o2, o3 etc.)
+     *
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int addStorageNode(String hpcFSName, String nodeName,
+	String nodeIP, FSInfo backingStore, String nodeData)
+	throws SamFSException {
+
+        // TODO: To be verified
+        return FS.addStorageNode(
+                    hpcFSName, nodeName, nodeIP, backingStore, nodeData);
+    }
+
+
+    /*
+     * A non-zero return indicates that a background job has been started
+     * to complete this task. Information can be obtained about this job by
+     * using the Job.getAllActivities function with a filter on the job id.
+     */
+    public int removeStorageNode(String hpcFSName, String nodeName)
+        throws SamFSException {
+
+        // TODO: To be verifiedd
+        return FS.removeStorageNode(hpcFSName, nodeName);
+    }
+
+
     public void freeResources() {
         threadPool.destroy();
     }
@@ -190,6 +444,149 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
 	    return sdcArr;
     }
+
+    public boolean failingover(String mdServer, String fsName)
+        throws SamFSException {
+
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+        FSInfo info = FS.get(model.getJniContext(), fsName);
+        if (info == null) {
+            throw new SamFSException("logic.invalidFS");
+        }
+        return info.failoverStatus() != 0;
+    }
+
+    public String[] getIPAddresses(String hostName) throws SamFSException {
+
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(hostName);
+
+        if (model.isDown()) {
+            throw new SamFSException("logic.hostIsDown");
+        }
+        return Host.discoverIPsAndNames(model.getJniContext());
+    }
+
+    protected boolean matchAUs(DiskDev dc1, DiskDev dc2) {
+	boolean match = false;
+	AU au1, au2;
+	au1 = dc1.getAU();
+        au2 = dc2.getAU();
+	if (au1.getSCSIDevInfo() != null &&
+	    au2.getSCSIDevInfo() != null)
+	    /* if same disk */
+	    if (0 ==
+		au1.getSCSIDevInfo().devID.compareTo(
+		au2.getSCSIDevInfo().devID)) {
+                /* if same slice (compare last char of the path) */
+		if (au1.getPath().charAt(au1.getPath().length() - 1) ==
+		    au2.getPath().charAt(au2.getPath().length() - 1)) {
+		    match = true;
+                }
+	    }
+	return match;
+    }
+
+    protected void parallelDisco(String[] servers, String[] clients,
+        DiskCache[][] allDCs, /* put the result in here */
+        ArrayList errHostNames, ArrayList errExceptions,
+        boolean ignoreHA) throws SamFSMultiHostException {
+
+	int n; // thread index
+	String[] hosts = new String[servers.length +
+				   ((clients != null) ? clients.length : 0)];
+	for (n = 0; n < servers.length; n++)
+	    hosts[n] = servers[n];
+	if (clients != null) {
+	    for (int i = 0; i < clients.length; i++, n++) {
+		hosts[n] = clients[i];
+            }
+        }
+
+        // create barrier object
+        Barrier bar = new Barrier();
+
+        // get threads from pool; specify barrier as the ThreadListener
+        ThreadPoolMember[] t = new ThreadPoolMember[hosts.length];
+	for (n = 0; n < hosts.length; n++) {
+	    t[n] = threadPool.getNewThread(bar, "disco-" + n);
+        }
+
+	// add threads to barrier
+	bar.addThreads(t);
+
+	/*
+	 * run discovery without filtering on all clients, since they are not
+	 * required to see the shared metadata storage but if they do, then we
+	 * need to make sure that they are not already using that storage.
+	 *
+	 * run discovery+filtering on metadata servers
+	 */
+        try {
+            Object[] methodArgs;
+	    SamQFSSystemModel model;
+
+	    for (n = 0; n < hosts.length; n++) {
+                methodArgs = new Object[3];
+		try {
+		    model = this.appModel.getSamQFSSystemModel(hosts[n]);
+		} catch (SamFSException e) {
+		    t[n].setThrowable(e); // set exception for this thread
+		    continue;
+		}
+
+                methodArgs[0] = (n < servers.length)
+                    ? Boolean.TRUE  // discover only avail. AU-s
+                    : Boolean.FALSE; // discover all AU-s
+
+		if (model.isClusterNode() && !ignoreHA) {
+                    // may be optimized
+                    methodArgs[1] = new String[] { hosts[n] };
+                } else {
+                    methodArgs[1] = null;
+                }
+
+                methodArgs[2] = Boolean.TRUE; // AU-s will be used for sharedfs
+
+		t[n].startMethod(new MethodInfo("discoverAUs",
+		    model.getSamQFSSystemFSManager(),
+                    methodArgs));
+	    }
+        } catch (NoSuchMethodException nsme) {
+            TraceUtil.trace1(
+                "NoSuchMethodException caught in parallelDisco()!");
+            throw new SamFSMultiHostException(nsme.getMessage());
+        }
+
+	// wait for all threads to finish
+        bar.waitForAll();
+
+	for (n = 0; n < hosts.length; n++) {
+	    Throwable e;
+	    // check if an exception occured in thread n
+	    if (null != (e = t[n].getThrowable())) {
+		errHostNames.add(hosts[n]);
+		errExceptions.add(e);
+	    } else {
+		// no exception, get the result
+		DiskCache[] dc = (DiskCache[]) t[n].getResult();
+		TraceUtil.trace1(dc.length + " AU-s discovered");
+		allDCs[n] = new DiskCacheImpl[dc.length];
+		for (int d = 0; d < dc.length; d++)
+		    allDCs[n][d] = (DiskCacheImpl) dc[d];
+	    }
+	}
+
+	threadPool.releaseAllToPool();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // 4.6 ONLY METHODS
 
     public FileSystem createSharedFileSystem(String fsName,
                                        String mountPoint,
@@ -327,7 +724,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
         // create fs on the metadata server
         FileSystem fs = null;
-        String savePath = null;
         SamFSMultiStepOpException archWarning = null;
 
         try {
@@ -854,24 +1250,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         }
     }
 
-
-    public boolean failingover(String mdServer, String fsName)
-        throws SamFSException {
-
-        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
-            this.appModel.getSamQFSSystemModel(mdServer);
-
-        if (model.isDown()) {
-            throw new SamFSException("logic.hostIsDown");
-        }
-        FSInfo info = FS.get(model.getJniContext(), fsName);
-        if (info == null) {
-            throw new SamFSException("logic.invalidFS");
-        }
-        return info.failoverStatus() != 0;
-    }
-
-
     public int getSharedFSType(String hostName, String fsName)
         throws SamFSException {
 
@@ -1066,19 +1444,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
         return (String[]) hostList.toArray(new String[0]);
     }
-
-
-    public String[] getIPAddresses(String hostName) throws SamFSException {
-
-        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
-            this.appModel.getSamQFSSystemModel(hostName);
-
-        if (model.isDown()) {
-            throw new SamFSException("logic.hostIsDown");
-        }
-        return Host.discoverIPsAndNames(model.getJniContext());
-    }
-
 
     public SharedMember createSharedMember(String name, String[] ips,
         int type) {
@@ -1295,25 +1660,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         return resultIPs;
     }
 
-    protected boolean matchAUs(DiskDev dc1, DiskDev dc2) {
-	boolean match = false;
-	AU au1, au2;
-	au1 = dc1.getAU();
-        au2 = dc2.getAU();
-	if (au1.getSCSIDevInfo() != null &&
-	    au2.getSCSIDevInfo() != null)
-	    /* if same disk */
-	    if (0 ==
-		au1.getSCSIDevInfo().devID.compareTo(
-		au2.getSCSIDevInfo().devID)) {
-                /* if same slice (compare last char of the path) */
-		if (au1.getPath().charAt(au1.getPath().length() - 1) ==
-		    au2.getPath().charAt(au2.getPath().length() - 1)) {
-		    match = true;
-                }
-	    }
-	return match;
-    }
     private DiskDev[] fixDiskPath(DiskDev[] disksUsed,
         DiskCache[] disksKnown) throws SamFSException {
 
@@ -1332,100 +1678,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             }
         }
         return disksUsed;
-    }
-
-
-    protected void parallelDisco(String[] servers, String[] clients,
-        DiskCache[][] allDCs, /* put the result in here */
-        ArrayList errHostNames, ArrayList errExceptions,
-        boolean ignoreHA) throws SamFSMultiHostException {
-
-	int n; // thread index
-	String[] hosts = new String[servers.length +
-				   ((clients != null) ? clients.length : 0)];
-	for (n = 0; n < servers.length; n++)
-	    hosts[n] = servers[n];
-	if (clients != null) {
-	    for (int i = 0; i < clients.length; i++, n++) {
-		hosts[n] = clients[i];
-            }
-        }
-
-        // create barrier object
-        Barrier bar = new Barrier();
-
-        // get threads from pool; specify barrier as the ThreadListener
-        ThreadPoolMember[] t = new ThreadPoolMember[hosts.length];
-	for (n = 0; n < hosts.length; n++) {
-	    t[n] = threadPool.getNewThread(bar, "disco-" + n);
-        }
-
-	// add threads to barrier
-	bar.addThreads(t);
-
-	/*
-	 * run discovery without filtering on all clients, since they are not
-	 * required to see the shared metadata storage but if they do, then we
-	 * need to make sure that they are not already using that storage.
-	 *
-	 * run discovery+filtering on metadata servers
-	 */
-        try {
-            Object[] methodArgs;
-	    SamQFSSystemModel model;
-
-	    for (n = 0; n < hosts.length; n++) {
-                methodArgs = new Object[3];
-		try {
-		    model = this.appModel.getSamQFSSystemModel(hosts[n]);
-		} catch (SamFSException e) {
-		    t[n].setThrowable(e); // set exception for this thread
-		    continue;
-		}
-
-                methodArgs[0] = (n < servers.length)
-                    ? Boolean.TRUE  // discover only avail. AU-s
-                    : Boolean.FALSE; // discover all AU-s
-
-		if (model.isClusterNode() && !ignoreHA) {
-                    // may be optimized
-                    methodArgs[1] = new String[] { hosts[n] };
-                } else {
-                    methodArgs[1] = null;
-                }
-
-                methodArgs[2] = Boolean.TRUE; // AU-s will be used for sharedfs
-
-		t[n].startMethod(new MethodInfo("discoverAUs",
-		    model.getSamQFSSystemFSManager(),
-                    methodArgs));
-	    }
-        } catch (NoSuchMethodException nsme) {
-            TraceUtil.trace1(
-                "NoSuchMethodException caught in parallelDisco()!");
-            throw new SamFSMultiHostException(nsme.getMessage());
-        }
-
-	// wait for all threads to finish
-        bar.waitForAll();
-
-	for (n = 0; n < hosts.length; n++) {
-	    Throwable e;
-	    // check if an exception occured in thread n
-	    if (null != (e = t[n].getThrowable())) {
-		errHostNames.add(hosts[n]);
-		errExceptions.add(e);
-	    } else {
-		// no exception, get the result
-		DiskCache[] dc = (DiskCache[]) t[n].getResult();
-		TraceUtil.trace1(dc.length + " AU-s discovered");
-		allDCs[n] = new DiskCacheImpl[dc.length];
-		for (int d = 0; d < dc.length; d++)
-		    allDCs[n][d] = (DiskCacheImpl) dc[d];
-	    }
-	}
-
-	threadPool.releaseAllToPool();
     }
 
     private Host[] membersToHosts(SharedMember[] members,
