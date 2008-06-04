@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.27 $"
+#pragma ident	"$Revision: 1.28 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -530,6 +530,32 @@ samrpc_create_fs_and_mount_1_svr(
 	}
 
 	Trace(TR_DEBUG, "Create fs and mount return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_set_device_state_5_0_svr(
+	string_int_intlist_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "set device state");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library to set device state");
+
+	ret = set_device_state(arg->ctx, arg->str, arg->num, arg->int_lst);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "set device state return[%d]", ret);
 	return (&rpc_result);
 }
 

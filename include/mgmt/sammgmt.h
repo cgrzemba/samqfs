@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.111 $"
+#pragma ident	"$Revision: 1.112 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -971,8 +971,15 @@ typedef struct create_arch_fs_arg {
 typedef struct int_list_arg {
 	ctx_t *ctx;
 	int num;
-	sqm_lst_t *lst;
+	sqm_lst_t *lst;	/* lst of ints */
 } int_list_arg_t;
+
+typedef struct string_int_intlist_arg {
+	ctx_t *ctx;
+	char *str;
+	int num;
+	sqm_lst_t *int_lst;	/* lst of ints */
+} string_int_intlist_arg_t;
 
 typedef struct int_list_result {
 	sqm_lst_t *lst;
@@ -1737,6 +1744,8 @@ extern  samrpc_result_t *samrpc_get_mds_host_6_svr();
 #define	samrpc_create_arch_fs 328
 extern  samrpc_result_t *samrpc_create_arch_fs_6_svr();
 
+#define	samrpc_set_device_state 329
+extern samrpc_result_t *samrpc_set_device_state_5_0_svr();
 
 
 /* license.h */
@@ -2532,6 +2541,7 @@ extern bool_t xdr_create_fs_mount_arg_t();
 extern bool_t xdr_create_arch_fs_arg_t();
 extern bool_t xdr_fs_arch_cfg_t();
 extern bool_t xdr_int_list_arg_t();
+extern bool_t xdr_string_int_intlist_arg_t();
 extern bool_t xdr_intlist_arg_t();
 extern bool_t xdr_int_list_result_t();
 extern bool_t xdr_reset_eq_arg_t();

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.74 $"
+#pragma ident   "$Revision: 1.75 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -132,6 +132,8 @@ static int internal_create_fs(ctx_t *ctx, fs_t *fs, boolean_t mount_at_boot,
     fs_arch_cfg_t *arc_info);
 
 static int cmd_online_grow(char *fs_name, int eq);
+
+static disk_t *find_disk(fs_t *f, int eq);
 
 
 #define		DEFAULT_DATA_DISK_TYPE "md"
@@ -529,10 +531,9 @@ fs_t **fs)	/* malloced return */
 	if (strcmp(fs_dev->additional_params, "shared") == 0) {
 		(*fs)->fi_shared_fs = B_TRUE;
 
-
 		/*
-		 * if nodevs is set we know it is client. Otherwise
-		 * set the shared status flags.
+		 * if nodevs is set we know it is a client. Otherwise
+		 * set the shared status flags
 		 */
 		if (!((*fs)->fi_status & FS_NODEVS)) {
 			if (set_shared_fs_status_flags(*fs) != 0) {
@@ -3567,6 +3568,135 @@ char *type)
 	return (res);
 }
 
+
+/*
+ * set_device_state currently supports alloc/noalloc
+ */
+int
+set_device_state(
+ctx_t *ctx,
+char *fs_name,
+dstate_t new_state,
+sqm_lst_t *eqs) {
+
+	node_t *n;
+	int32_t command = 0;
+	fs_t *fs;
+	char *last_group = NULL;
+
+	if (ISNULL(fs_name, eqs)) {
+		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
+		return (-1);
+	}
+	Trace(TR_MISC, "setting device state:%d", new_state);
+	if (new_state == DEV_NOALLOC) {
+		command = DK_CMD_noalloc;
+	} else if (new_state == DEV_ON) {
+		command = DK_CMD_alloc;
+	} else {
+		samerrno = SE_INVALID_DEVICE_STATE;
+		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
+		    new_state);
+		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	if (get_fs(NULL, fs_name, &fs) == -1) {
+		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	if (!(fs->fi_status & FS_MOUNTED)) {
+		samerrno = SE_SET_DISK_STATE_FS_NOT_MOUNTED;
+		setsamerr(samerrno);
+		free_fs(fs);
+		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	for (n = eqs->head; n != NULL; n = n->next) {
+		int eq = *(int *)n->data;
+		char eqbuf[4];
+		disk_t *dsk;
+
+		dsk = find_disk(fs, eq);
+		if (dsk == NULL) {
+			samerrno = SE_NOT_FOUND;
+			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
+			    fs_name);
+			free_fs(fs);
+			Trace(TR_ERR, "setting device state failed:%s",
+			    samerrmsg);
+			return (-1);
+		}
+
+		/*
+		 * If the state being set is noalloc verify that
+		 * the device is not a metadata device. Metadata devices can
+		 * not currently be turned off by setting to noalloc.
+		 */
+		if (strcmp(dsk->base_info.equ_type, "mm") == 0 &&
+		    new_state == DEV_NOALLOC) {
+			samerrno = SE_CANNOT_DISABLE_MM_ALLOCATION;
+			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
+			    fs_name);
+			free_fs(fs);
+			Trace(TR_ERR, "setting device state failed:%s",
+			    samerrmsg);
+			return (-1);
+		}
+
+		/*
+		 * If the state being set is the same as the current state that
+		 * the device is reporting skip it. Otherwise the SetFsPartCmd
+		 * command will return an error.
+		 */
+		if (dsk->base_info.state == new_state) {
+			continue;
+		}
+
+		/*
+		 * It is only necessary to set the state for the
+		 * first dev in a striped group. Don't double call
+		 * SetFsPartCommand as it will return an error for
+		 * the second call.
+		 */
+		if ((*(dsk->base_info.equ_type) == 'g') ||
+		    (*(dsk->base_info.equ_type) == 'o')) {
+			if (last_group != NULL &&
+			    strcmp(dsk->base_info.equ_type, last_group) == 0) {
+				/*
+				 * Skip devs from the group
+				 * beyond the first
+				 */
+				continue;
+			} else {
+				/*
+				 * set last_group for this first
+				 * device of a group and go on to
+				 * call the command.
+				 */
+				last_group = dsk->base_info.equ_type;
+			}
+		}
+
+		snprintf(eqbuf, 7, "%d", eq);
+		if (SetFsPartCmd(fs_name, eqbuf, command) != 0) {
+			samerrno = SE_SET_DISK_STATE_FAILED;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(samerrno), eq, new_state);
+			free_fs(fs);
+			return (-1);
+		}
+	}
+	free_fs(fs);
+
+	Trace(TR_MISC, "set device state:%d", new_state);
+	return (0);
+
+}
+
+
 static int
 cmd_online_grow(
 char *fs_name,
@@ -3583,4 +3713,43 @@ int eq) {
 	}
 
 	return (0);
+}
+
+
+static disk_t *
+find_disk(fs_t *f, int eq) {
+	node_t *n;
+	node_t *sgn;
+
+	if (f == NULL) {
+		return (NULL);
+	}
+
+	for (n = f->meta_data_disk_list->head; n != NULL; n = n->next) {
+		disk_t *dsk = (disk_t *)n->data;
+		if (dsk != NULL && dsk->base_info.eq == eq) {
+			return (dsk);
+		}
+	}
+	for (n = f->data_disk_list->head; n != NULL; n = n->next) {
+		disk_t *dsk = (disk_t *)n->data;
+		if (dsk != NULL && dsk->base_info.eq == eq) {
+			return (dsk);
+		}
+	}
+	for (sgn = f->striped_group_list->head; sgn != NULL; sgn = sgn->next) {
+		striped_group_t *sg = (striped_group_t *)sgn->data;
+		if (sg == NULL || sg->disk_list == NULL) {
+			continue;
+		}
+		for (n = sg->disk_list->head; n != NULL; n = n->next) {
+			disk_t *dsk = (disk_t *)n->data;
+			if (dsk != NULL && dsk->base_info.eq == eq) {
+				return (dsk);
+			}
+		}
+	}
+
+	return (NULL);
+
 }

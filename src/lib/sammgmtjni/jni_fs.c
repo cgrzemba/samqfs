@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.44 $"
+#pragma ident	"$Revision: 1.45 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -1066,6 +1066,28 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_FS_resetEqOrdinals(JNIEnv *env,
 	lst_free(lst);
 	PTRACE(1, "jni:jni:FS_resetEqOrdinals() done");
 
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_setDeviceState(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+    jint state, jintArray eqs) {
+
+	jboolean isCopy;
+	char *cstr = GET_STR(fsName, isCopy);
+	sqm_lst_t *lst;
+	int res;
+
+	PTRACE(1, "jni:FS_setDeviceState(...,%s)", cstr);
+	lst = jintArray2lst(env, eqs);
+	res = set_device_state(CTX, cstr, state, lst);
+	REL_STR(fsName, cstr, isCopy);
+	if (-1 == res) {
+		ThrowEx(env);
+		return;
+	}
+	PTRACE(1, "jni:FS_setDeviceState() done");
 }
 
 JNIEXPORT void JNICALL

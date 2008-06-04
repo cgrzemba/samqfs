@@ -29,7 +29,7 @@
 #ifndef _FILESYSTEM_H
 #define	_FILESYSTEM_H
 
-#pragma ident	"$Revision: 1.51 $"
+#pragma ident	"$Revision: 1.52 $"
 
 
 
@@ -528,6 +528,18 @@ int get_default_mount_options(ctx_t *ctx, devtype_t fs_type, int dau_size,
  * entries removed from vfstab, and mount options removed from samfs.cmd
  */
 int remove_fs(ctx_t *ctx, uname_t fsname);
+
+
+/*
+ * Set the device state for the identified devices. Currently only the
+ * DEV_NOALLOC and DEV_ON states are supported by this function.
+ *
+ * The eqs list is a list of the equipment ordinals of the devices to
+ * set the state for. It is not considered an error if the device already
+ * has its state set to new_state.
+ */
+int set_device_state(ctx_t *ctx, char *fs_name, dstate_t new_state,
+    sqm_lst_t *eqs);
 
 
 /*

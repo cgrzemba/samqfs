@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.30 $"
+#pragma ident	"$Revision: 1.31 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -850,6 +850,45 @@ fs_arch_cfg_t *arch_cfg		/* default arch set config info */
 	PTRACE(2, "%s exit", func_name);
 	return (ret_val);
 }
+
+int
+set_device_state(ctx_t *ctx, char *fs_name, dstate_t new_state,
+    sqm_lst_t *eqs) {
+
+	int ret_val;
+	string_int_intlist_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:set device state";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, eqs)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = fs_name;
+	arg.num = new_state;
+	arg.int_lst = eqs;
+
+	SAMRPC_CLNT_CALL(samrpc_set_device_state, string_int_intlist_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
 
 
 /*

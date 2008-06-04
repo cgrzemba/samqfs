@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.143 $"
+#pragma	ident	"$Revision: 1.144 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */
@@ -364,6 +364,9 @@ typedef enum samapi_errno {
 	SE_NOT_A_DEFAULT_SET			= 30532,
 	SE_ONLINE_GROW_FAILED			= 30533,
 	SE_ONLINE_GROW_FAILED_SBLK_V1  		= 30534,
+	SE_SET_DISK_STATE_FAILED		= 30535,
+	SE_SET_DISK_STATE_FS_NOT_MOUNTED	= 30536,
+	SE_CANNOT_DISABLE_MM_ALLOCATION		= 30537,
 
 	SE_ARCHIVE_BEGIN = SAM_MGMT_START + 600,
 	SE_MAP_ALREADY_EXISTS			= 30601,
@@ -513,6 +516,9 @@ typedef enum samapi_errno {
 	SE_CANT_GET_HOST_IPS			= 31136,
 	SE_CLNT_TBL_OUT_OF_SYNC			= 31137,
 	SE_HOST_KV_TOO_LONG			= 31138,
+	SE_INVALID_CLIENT_STATE_ARG		= 31139,
+	SE_INVALID_CLIENT_STATE			= 31140,
+	SE_CANNOT_DISABLE_MDS			= 31141,
 
 	/* Sam restore errors */
 	SE_NOKEYVALUE				= 31200,

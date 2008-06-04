@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.33 $"
+#pragma ident	"$Revision: 1.34 $"
 
 #include "pub/mgmt/types.h"
 #include "pub/devstat.h"
@@ -539,5 +539,21 @@ xdr_public_key_result_t(XDR *xdrs, public_key_result_t *objp) {
 
 	XDR_PTR2STRUCT(objp->signature, crypt_str_t);
 
+	return (TRUE);
+}
+
+
+bool_t
+xdr_string_int_intlist_arg_t(
+XDR *xdrs,
+string_int_intlist_arg_t *objp)
+{
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str, ~0))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->num))
+		return (FALSE);
+	XDR_PTR2LST(objp->int_lst, int_list);
 	return (TRUE);
 }

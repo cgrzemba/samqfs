@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.113 $"
+#pragma ident	"$Revision: 1.114 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -360,6 +360,7 @@ sammgmtprog_1(rqstp, transp)
 		string_arg_t samrpc_get_advanced_network_cfg_5_arg;
 		string_arg_t samrpc_get_mds_host_6_arg;
 		create_arch_fs_arg_t samrpc_create_arch_fs_6_arg;
+		string_int_intlist_arg_t samrpc_set_device_state_5_0_arg;
 
 		/* license.h */
 		ctx_arg_t samrpc_get_license_type_1_arg;
@@ -1540,6 +1541,12 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_argument = xdr_create_arch_fs_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_create_arch_fs_6_svr;
+		break;
+
+	case samrpc_set_device_state:
+		_xdr_argument = xdr_string_int_intlist_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_set_device_state_5_0_svr;
 		break;
 
 	/*

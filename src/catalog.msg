@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.591 $"
+$ pragma ident "$Revision: 1.592 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3939,6 +3939,9 @@ $ ignoring the last argument %s for 4.1
 30532 The policy specified for the file system must be an explicit default policy
 30533 Online grow failed
 30534 Online grow failed because the file system has superblock version 1. Umount the file system and try again
+30535 Setting the device state failed
+30536 Setting the device state failed. The file system must be mounted
+30537 Metadata devices cannot have allocation disabled
 
 30601 A VSN copy map already exists for %s
 30602 VSN pool %s already exists
@@ -4095,6 +4098,10 @@ $ shared filesystems errors
 31136 Unable to obtain the list of valid IP addresses and names for this host.
 31137 The client table is out of sync with the super block
 31138 Unable to retrieve the hosts info. The string is too long
+31139 Invalid client state specified as input: %d
+31140 Invalid client state found in configuration: %s
+31141 The metadata server cannot be disabled
+
 $ samrestore errors
 
 31200 No value for keyword %s. Possible client/server version mismatch.
