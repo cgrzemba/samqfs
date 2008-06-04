@@ -1,4 +1,4 @@
-.\" $Revision: 1.29 $
+.\" $Revision: 1.30 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -253,16 +253,6 @@ When the filesystem scan is finished, send each ArchReq to sam-archiverd.
 .LP
 If the ArchReq requires automatic 'owner' Archive Sets, separate the
 ArchReq by owner.
-.LP
-For ArchReq-s with a 'join' method required:
-.br
-Sort the files using the join method property as the key.  This
-collects the files with the same property together.  Step through
-the ArchReq to mark the archive file boundaries where the
-properties differ.  Sort the files within the archive file boundaries
-according to the 'sort' method.  Each group of joined files is treated as
-if it were a single file for the remainder of the composing and scheduling
-processes.
 .LP
 Sort the files according to the 'sort' method.  Sorting the files will
 tend to keep the files together in the archive files.  The default is no

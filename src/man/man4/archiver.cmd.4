@@ -1,4 +1,4 @@
-.\" $Revision: 1.87 $
+.\" $Revision: 1.88 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -901,50 +901,6 @@ they are considered full.
 .ft
 .RE
 .TP
-.BI "-join " method
-Organize the files in this Archive Set Copy so that each Archive tar File contains
-only files that match according to
-.IR method .
-.RS
-.LP
-For selecting the desired organization,
-.I method
-may be:
-.TP 6
-.B none
-Organize the Archive tar File so that the size of the Archive tar File is less than
-.BR archmax .
-If the size of a single file is greater than
-.BR archmax ,
-it will be the only file in the Archive tar File.
-.TP
-.B path
-Organize the Archive tar File so that the files included all have the same
-directory paths. 
-.RS
-.LP
-Note:
-The use of
-.B "-join path "
-writes all data files to the same archive tar file.  Therefore, many directories
-with a few small files creates many archive tar files.  These small archive
-files can affect the performance of high speed tape drives.  Also,
-.B "-join path "
-places all files from the same directory on a single volume.  It is
-possible that a group of files might not fit on any available volume,
-including an empty volume.  In such a case, files are never archived.
-For most applications, using the
-.B "-sort path "
-directive is more 
-efficient than using the
-.B "-join path "
-directive, if the more 
-restrictive operation of
-.B "-join path "
-is not a requirement.
-.RE
-.RE
-.TP
 .B "-lock"
 Lock the archive copy buffer for the duration of
 the \fBsam-arcopy\fR(1M) operation.
@@ -1251,7 +1207,7 @@ optimize archive timeliness versus archive work done.
 These values override the \fBexamine=\fImethod\fR specification, if any.
 .PP
 Example 1.  If it takes an hour to create files for an Archive Set
-that uses \fB-join path\fR, then you can specify \fB-startage 1h\fR
+that uses \fB-sort path\fR, then you can specify \fB-startage 1h\fR
 ensure that all files are created before scheduling the Archive Request.
 .PP
 Example 2.  You can specify \fB-startsize 150G\fR to direct the
