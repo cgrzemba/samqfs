@@ -39,8 +39,10 @@
 #define	_SAM_MACROS_SOLARIS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 #endif
+
+#include <sys/types.h>
 
 /*
  * ----- read/write locks
@@ -253,7 +255,20 @@
  */
 
 #define	SAM_SET_ABR(a)		sam_set_abr(a)
-#define	sam_mutex_init(sem, a2, a3, a4)	mutex_init(sem, a2, a3, a4)
+
+/*
+ * 64-bit kernel mutexes must be 8-byte aligned for atomicity.
+ */
+#ifdef _LP64
+#define	sam_mutex_init(sem, a2, a3, a4) {				\
+	ASSERT(!((uint64_t)sem & 0x7));					\
+	mutex_init(sem, a2, a3, a4);					\
+}
+#else  /* _LP64 */
+#define	sam_mutex_init(sem, a2, a3, a4) {				\
+	mutex_init(sem, a2, a3, a4);					\
+}
+#endif /* _LP64 */
 
 #define	local_to_solaris_errno(x)	(x)
 #define	solaris_to_local_errno(x)	(x)

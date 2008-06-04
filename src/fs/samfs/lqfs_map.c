@@ -28,7 +28,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.8 $"
+#pragma ident	"$Revision: 1.9 $"
 #endif
 
 #include <sys/systm.h>
@@ -182,8 +182,8 @@ map_get(ml_unit_t *ul, enum maptypes maptype, int nh)
 	 * online-grow.
 	 */
 	mtm = kmem_zalloc(sizeof (mt_map_t), KM_SLEEP);
-	mutex_init(&mtm->mtm_mutex, NULL, MUTEX_DEFAULT, NULL);
-	mutex_init(&mtm->mtm_scan_mutex, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&mtm->mtm_mutex, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&mtm->mtm_scan_mutex, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&mtm->mtm_to_roll_cv, NULL, CV_DEFAULT, NULL);
 	cv_init(&mtm->mtm_from_roll_cv, NULL, CV_DEFAULT, NULL);
 	rw_init(&mtm->mtm_rwlock, NULL, RW_DEFAULT, NULL);
@@ -206,7 +206,7 @@ map_get(ml_unit_t *ul, enum maptypes maptype, int nh)
 	/*
 	 * Initialize locks
 	 */
-	mutex_init(&mtm->mtm_lock, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&mtm->mtm_lock, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&mtm->mtm_cv_commit, NULL, CV_DEFAULT, NULL);
 	cv_init(&mtm->mtm_cv_next, NULL, CV_DEFAULT, NULL);
 	cv_init(&mtm->mtm_cv_eot, NULL, CV_DEFAULT, NULL);

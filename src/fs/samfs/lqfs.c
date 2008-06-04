@@ -28,7 +28,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.13 $"
+#pragma ident	"$Revision: 1.14 $"
 #endif
 
 #include <sys/systm.h>
@@ -496,8 +496,8 @@ lqfs_snarf(qfsvfs_t *qfsvfsp, fs_lqfs_common_t *fs, int ronly)
 	if (ul->un_debug & MT_MATAMAP) {
 		ul->un_matamap = map_get(ul, matamaptype, DELTAMAP_NHASH);
 	}
-	mutex_init(&ul->un_log_mutex, NULL, MUTEX_DEFAULT, NULL);
-	mutex_init(&ul->un_state_mutex, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&ul->un_log_mutex, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&ul->un_state_mutex, NULL, MUTEX_DEFAULT, NULL);
 
 	/*
 	 * Aquire the qfs_scan_lock before linking the mtm data
@@ -1968,7 +1968,7 @@ lqfs_init(void)
 	lqfs_bp = kmem_cache_create("lqfs_bufs", sizeof (lqfs_buf_t), 0,
 	    NULL, NULL, NULL, NULL, NULL, 0);
 
-	mutex_init(&log_mutex, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&log_mutex, NULL, MUTEX_DEFAULT, NULL);
 
 	_init_top();
 

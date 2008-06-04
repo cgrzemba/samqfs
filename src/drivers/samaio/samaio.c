@@ -77,6 +77,7 @@
 
 #include "sam/types.h"
 #include "sam/samaio.h"
+#include "sam/fs/macros.h"
 #include "sam/fs/ino.h"
 #include "sam/fs/inode.h"
 #include "sam/fs/debug.h"
@@ -803,7 +804,7 @@ _init(void)
 		return (error);
 	}
 
-	mutex_init(&samaio_mutex, NULL, MUTEX_DRIVER, NULL);
+	sam_mutex_init(&samaio_mutex, NULL, MUTEX_DRIVER, NULL);
 	error = mod_install(&samaio_modlinkage);
 	if (error) {
 		mutex_destroy(&samaio_mutex);

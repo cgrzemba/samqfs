@@ -1,4 +1,4 @@
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 /*
  *    SAM-QFS_notice_begin
@@ -51,6 +51,7 @@
 
 #include <sam/samioc.h>
 
+#include "sam/fs/macros.h"
 
 //
 // Device information
@@ -364,7 +365,8 @@ _init(void)
 		rc = mod_install(&samioc_modlinkage);
 
 		if (rc == 0) {
-			mutex_init(&samioc_mutex, NULL, MUTEX_DEFAULT, NULL);
+			sam_mutex_init(&samioc_mutex, NULL, MUTEX_DEFAULT,
+			    NULL);
 		} else {
 			ddi_soft_state_fini(&samioc_state);
 		}

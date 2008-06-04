@@ -28,7 +28,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.7 $"
+#pragma ident	"$Revision: 1.8 $"
 #endif
 
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ top_roll_debug(ml_unit_t *ul)
 int
 top_init_debug(void)
 {
-	mutex_init(&toptracelock, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&toptracelock, NULL, MUTEX_DEFAULT, NULL);
 	return (1);
 }
 
