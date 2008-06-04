@@ -29,7 +29,7 @@
 #ifndef	FILE_DETAILS_H
 #define	FILE_DETAILS_H
 
-#pragma ident	"$Revision: 1.10 $"
+#pragma ident	"$Revision: 1.11 $"
 
 #include <sys/types.h>
 #include "pub/stat.h"	/* sam_stat */
@@ -38,7 +38,7 @@
 
 #define	FL_OFFLINE	0x00000001
 #define	FL_PARTIAL	0x00000002
-#define	FL_WORM		0x00000004
+#define	FL_WORM		0x00000004	/* worm has been triggered */
 #define	FL_ARCHDONE	0x00000008
 #define	FL_STAGEPEND	0x00000010
 #define	FL_SEGMENTED	0x00000020
@@ -69,7 +69,7 @@ typedef struct {
 
 typedef struct {
 	char	*file_name;		/* malloced */
-	uint32_t	attrmod;		/* for WORM duration */
+	uint32_t	worm_start;	/* worm start time */
 	uid_t		user;
 	gid_t		group;
 	mode_t		prot;
@@ -82,7 +82,8 @@ typedef struct {
 	off64_t		snapOffset;		/* restore only */
 	fildet_seg_t	summary;		/* segment index, or whole */
 						/* file if not segmented */
-	fildet_seg_t *segments;		/* only used if segmented */
+	fildet_seg_t	*segments;		/* only used if segmented */
+	uint32_t	worm_duration;		/* minutes, 0 = permanent */
 } filedetails_t;
 
 /* used by the restore component as well as sam_file_util */

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileUtil.java,v 1.16 2008/05/16 18:35:26 am143972 Exp $
+// ident	$Id: FileUtil.java,v 1.17 2008/06/04 22:23:28 pg125177 Exp $
 package com.sun.netstorage.samqfs.mgmt;
 
 import com.sun.netstorage.samqfs.mgmt.Ctx;
@@ -51,7 +51,8 @@ public class FileUtil {
     public static final int USER    = 0x00000020;
     public static final int GROUP   = 0x00000040;
     public static final int MODE    = 0x00000080;
-    public static final int FNAME   = 0x00000100;
+    public static final int FNAME	= 0x00000100;
+    public static final int WORM	= 0x00000200;
     public static final int SAM_STATE    = 0x00001000;
     public static final int RELEASE_ATTS = 0x00002000;
     public static final int STAGE_ATTS   = 0x00004000;
@@ -61,6 +62,7 @@ public class FileUtil {
     public static final int COPY_DETAIL  = 0x00040000;
     public static final int SEGMENT_ALL  = 0x00080000;
     public static final int ARCHIVE_ATTS = 0x00100000;
+
 
     /*
      * file_type=%d values returned by getExtFileDetails. These must

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.8 $"
+#pragma ident	"$Revision: 1.9 $"
 
 #include <sys/types.h>
 #include <rpc/xdr.h>
@@ -45,7 +45,7 @@ xdr_filedetails_t(XDR *xdrs, filedetails_t *objp)
 {
 	if (!xdr_wrapstring(xdrs, &objp->file_name))
 		return (FALSE);
-	if (!xdr_uint32_t(xdrs, &objp->attrmod))
+	if (!xdr_uint32_t(xdrs, &objp->worm_start))
 		return (FALSE);
 	if (!xdr_int32_t(xdrs, (int32_t *)&objp->user))
 		return (FALSE);
@@ -70,7 +70,8 @@ xdr_filedetails_t(XDR *xdrs, filedetails_t *objp)
 	if (!xdr_array(xdrs, (char **)&objp->segments, &objp->segCount,
 	    ~0, sizeof (fildet_seg_t), xdr_fildet_seg_t))
 		return (FALSE);
-
+	if (!xdr_uint32_t(xdrs, &objp->worm_duration))
+		return (FALSE);
 	return (TRUE);
 }
 

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.31 $"
+#pragma ident   "$Revision: 1.32 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -67,6 +67,13 @@ collect_file_details_stat(
 	sqm_lst_t		*files,
 	uint32_t	which_details,
 	sqm_lst_t		**status);
+
+
+static int
+worm_details_to_str(
+	filedetails_t *det,
+	char *res,
+	int len);
 
 
 int
@@ -115,6 +122,10 @@ copydetails_to_string(
 	uint32_t	which_details,
 	char		*buf,
 	int		buflen);
+
+
+extern void MinToStr(time_t chgtime, long num_mins,
+    char *gtime, char *str);
 
 #define	ADD_STR_TO_LIST(buf, lstp) { \
 	int	len;						\
@@ -580,7 +591,7 @@ collect_file_details_stat(
 	char		buf[MAXPATHLEN + 1];
 	int		i;
 
-	/* TODO:  Add checks for WORM files */
+
 
 	if (ISNULL(usedir, files, status)) {
 		Trace(TR_ERR, "get extended file details failed: %d %s",
@@ -647,6 +658,13 @@ collect_file_details_stat(
 			details->summary.flags |= FL_NOTSAM;
 			ADD_DETAILS_TO_LIST(details, results);
 			continue;
+		}
+
+		/* Add worm information */
+		if (SS_ISREADONLY(sout->attr)) {
+			details->worm_duration = sout->rperiod_duration;
+			details->worm_start = sout->rperiod_start_time;
+			details->summary.flags |= FL_WORM;
 		}
 
 		if (SS_ISRELEASE_A(sout->attr)) {
@@ -1101,6 +1119,13 @@ filedetails_to_string(
 			    "group=%s,", tmpbuf);
 		}
 
+		if (which_details & FD_WORM &&
+		    det->summary.flags & FL_WORM) {
+
+			total += worm_details_to_str(det, cur + total,
+			    len - total);
+		}
+
 		/*
 		 * If the file is not a sam file the rest of this
 		 * is pointless so continue.
@@ -1404,6 +1429,7 @@ copydetails_to_string(
 	return (added);
 }
 
+
 void
 free_file_details(filedetails_t *details) {
 	int		i;
@@ -1498,4 +1524,62 @@ summarize_vsn_info(filedetails_t *details)
 		}
 	}
 
+}
+
+
+static int
+worm_details_to_str(
+filedetails_t *det,
+char *res,
+int len) {
+
+	int added = 0;
+
+	if (ISNULL(det, res)) {
+		Trace(TR_ERR, "Error in worm_details_to_str %s", samerrmsg);
+		return (0);
+	}
+
+	if (det->file_type == FTYPE_DIR) {
+		added += snprintf(res + added, len - added,
+		    "worm=capable,");
+		added += snprintf(res + added, len - added,
+		    "worm_duration=%u,", det->worm_duration);
+	} else {
+		time_t current_time = time((time_t *)0);
+		char ret_end[40];
+		char ret_period[40];
+
+		/*
+		 * convert times to minutes to allow comparison.
+		 */
+		if (det->worm_duration == 0 ||
+		    (det->worm_duration + det->worm_start/60) >
+		    current_time/60) {
+			added += snprintf(res + added, len - added,
+			    "worm=active,");
+		} else {
+			added += snprintf(res + added, len - added,
+			    "worm=expired,");
+		}
+
+		added += snprintf(res + added, len - added,
+		    "worm_start=%u,", det->worm_start);
+
+		if (det->worm_duration == 0) {
+			added += snprintf(res + added, len - added,
+			    "worm_duration=permanent,");
+		} else {
+			added += snprintf(res + added, len - added,
+			    "worm_duration=%u,", det->worm_duration);
+
+			MinToStr(det->worm_start, det->worm_duration,
+			    ret_period, ret_end);
+
+			added += snprintf(res + added, len - added,
+			    "worm_end=%s,", ret_end);
+		}
+	}
+
+	return (added);
 }

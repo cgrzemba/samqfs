@@ -29,7 +29,7 @@
 #ifndef	_FSM_FILE_UTIL_H
 #define	_FSM_FILE_UTIL_H
 
-#pragma ident   "$Revision: 1.15 $"
+#pragma ident   "$Revision: 1.16 $"
 
 /*
  * file_util.h - Utilities for manipulating files and directories
@@ -175,6 +175,7 @@ get_file_details(
 #define	FD_GROUP	0x00000040
 #define	FD_MODE		0x00000080
 #define	FD_FNAME	0x00000100
+#define	FD_WORM		0x00000200
 #define	FD_SAM_STATE	0x00001000
 #define	FD_RELEASE_ATTS	0x00002000
 #define	FD_STAGE_ATTS	0x00004000
@@ -187,7 +188,7 @@ get_file_details(
 
 #define	FD_SUMMARY	FD_FILE_TYPE|FD_SIZE|FD_CREATED|FD_MODIFIED|\
 			FD_ACCESSED|FD_USER|FD_GROUP|FD_MODE|FD_FNAME|\
-			FD_SAM_STATE|FD_CHAR_MODE|FD_COPY_SUMMARY
+			FD_SAM_STATE|FD_CHAR_MODE|FD_COPY_SUMMARY|FD_WORM
 
 #define	FD_ALL		0xffffffff
 
