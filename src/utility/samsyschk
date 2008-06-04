@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 
 #    SAM-QFS_notice_begin
 #
@@ -146,15 +146,6 @@ done
 echo " "
 
 /bin/rm -f /opt/SUNWsamfs/man/windex
-
-#
-# Set forceload for all supported OS levels for 4.1 release and newer
-#
-cp /etc/system /etc/system.SUNWsamfs
-echo '* BEGIN SUNWsamfs file system addition' >> /etc/system
-echo '* DO NOT EDIT above line or the next 2 lines  below...' >> /etc/system
-echo 'forceload: fs/samfs' >> /etc/system
-echo '* END SUNWsamfs file system addition' >> /etc/system
 
 #
 # Set the user scripts to the correct administrator group
