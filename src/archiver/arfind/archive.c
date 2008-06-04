@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.123 $"
+#pragma ident "$Revision: 1.124 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -255,31 +255,44 @@ Archive(
 				if (startRequests && ar->ArCount != 0) {
 					ar->ArStartTime = timeNow;
 				}
+
 				if (!(ar->ArStatus & ARF_merge) &&
 				    (ar->ArCount >= ar->ArStartCount ||
 				    ar->ArSpace >= ar->ArStartSize ||
 				    timeNow >= ar->ArStartTime)) {
+
 					struct ArchReq *arS;
+					char arSname[ARCHREQ_NAME_SIZE];
 
 					/*
 					 * Conditions have been met for
 					 * archival to start.  Check for
 					 * an ArchReq already scheduled.
+					 * Don't dequeue a full archreq
+					 * for merging.
 					 */
-					if ((arS = checkQueue(ar->ArAsn)) !=
-					    NULL) {
+					arS = NULL;
+					if (!(ar->ArStatus & ARF_full)) {
+						arS = checkQueue(ar->ArAsn);
+					}
+					if (arS != NULL) {
 						/*
 						 * ArchReq scheduled.
 						 * Dequeue it for merging.
 						 */
-						(void) archReqName(arS, arname);
+						(void) archReqName(arS,
+						    arSname);
 						Trace(TR_QUEUE,
-						    "Archreq backup (%s)",
-						    arname);
+						    "Archreq mergeS(%s)",
+						    arSname);
 						arS->ArStatus |= ARF_merge;
+
 						if (dequeueArchReq(arS)) {
 							ar->ArStatus |=
 							    ARF_merge;
+							Trace(TR_QUEUE,
+							    "Archreq merge "
+							    "(%s)", arname);
 							break;
 						} else {
 							/*

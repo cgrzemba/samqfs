@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -543,6 +543,14 @@ obsoleteFsExamine(
 					    ev->AeId.ino, ev->AeId.gen);
 #endif /* defined(AR_DEBUG) */
 					break;
+				}
+
+				/* Done if archdone already set. */
+				if (dinode->status.b.archdone) {
+					if (event != AE_rename &&
+					    event != AE_archive) {
+						break;
+					}
 				}
 
 				EXAM_MODE(dinode) = (short)event;

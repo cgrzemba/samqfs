@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -235,6 +235,12 @@ ArchReqPrint(
 	fprintf(st, " flags:");
 	if (ar->ArStatus & ARF_rearch) {
 		fprintf(st, " rearch");
+	}
+	if (ar->ArStatus & ARF_full) {
+		fprintf(st, " full");
+	}
+	if (ar->ArStatus & ARF_merge) {
+		fprintf(st, " merge");
 	}
 	for (n = 0; n <= NUMOF(ArFlagNames); n++) {
 		if (ar->ArFlags & (1 << n)) {

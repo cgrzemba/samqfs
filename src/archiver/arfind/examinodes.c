@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -164,7 +164,7 @@ ExamInodes(
 
 #if defined(EXAM_TRACE)
 		if (examList->ElCount != examList->ElFree) {
-			Trace(TR_DEBUG, "Examlist search start "
+			Trace(TR_MISC, "Examlist search start "
 			    "count: %d size: %d free: %d",
 			    examList->ElCount, examList->ElSize,
 			    examList->ElFree);
@@ -226,6 +226,19 @@ ExamInodes(
 				    fileEventNames[event], flags);
 #endif /* defined(FILE_TRACE) */
 
+				/* Done if archdone already set. */
+				if (dinode->status.b.archdone) {
+					if (event != AE_rename &&
+					    event != AE_archive) {
+
+						/* Lock examine list. */
+						PthreadMutexLock(
+						    &examListMutex);
+						noActiveMsg = FALSE;
+						continue;
+					}
+				}
+
 				EXAM_MODE(dinode) = (ushort_t)event;
 				CheckInode(pb, &pinode, &seAdd);
 
@@ -271,7 +284,7 @@ ExamInodes(
 		if (active == 0 && !noActiveMsg) {
 			noActiveMsg = TRUE;
 #if defined(EXAM_TRACE)
-			Trace(TR_DEBUG, "Examlist no activity");
+			Trace(TR_MISC, "Examlist no activity");
 #endif /* defined(EXAM_TRACE) */
 		}
 
@@ -422,7 +435,7 @@ idListAdd(
 			LibFatal(MapFileGrow, IDLIST);
 		}
 #if defined(EXAM_TRACE)
-		Trace(TR_DEBUG, "Grow %s: %d", IDLIST, idList->IlCount);
+		Trace(TR_MISC, "Grow %s: %d", IDLIST, idList->IlCount);
 #endif /* defined(EXAM_TRACE) */
 	}
 
@@ -506,7 +519,7 @@ initExaminodes(void)
 		examList = ArMapFileAttach(EXAMLIST, EXAMLIST_MAGIC, O_RDWR);
 		if (examList != NULL) {
 #if defined(EXAM_TRACE)
-			Trace(TR_DEBUG, "Found examlist");
+			Trace(TR_MISC, "Found examlist");
 #endif /* defined(EXAM_TRACE) */
 			if (examList->ElVersion != EXAMLIST_VERSION) {
 				Trace(TR_DEBUG,
@@ -557,7 +570,7 @@ initExamList(
 	el->ElFree = 0;
 	el->El.MfValid  = 1;
 #if defined(EXAM_TRACE)
-	Trace(TR_DEBUG, "Create ExamList: %s %u", name, el->El.MfLen);
+	Trace(TR_MISC, "Create ExamList: %s %u", name, el->El.MfLen);
 #endif /* defined(EXAM_TRACE) */
 	return (el);
 }
@@ -629,7 +642,7 @@ addExamList(
 				LibFatal(MapFileGrow, EXAMLIST);
 			}
 #if defined(EXAM_TRACE)
-			Trace(TR_DEBUG, "Examlist grow count: %d len: %d",
+			Trace(TR_MISC, "Examlist grow count: %d len: %d",
 			    examList->ElCount, examList->El.MfLen);
 #endif /* defined(EXAM_TRACE) */
 		}

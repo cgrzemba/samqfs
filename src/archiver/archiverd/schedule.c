@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.133 $"
+#pragma ident "$Revision: 1.134 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -288,6 +288,8 @@ ScheduleDequeue(
 	 */
 	for (qe = schedQ.QuHead.QeFwd; qe != &schedQ.QuHead; qe = qe->QeFwd) {
 		if (strcmp(qe->QeArname, dequeueArname) == 0) {
+			Trace(TR_MISC, "schedQ Dequeue(%s 0x%x)",
+			    dequeueArname, qe);
 			QueueRemove(qe);
 			goto out;
 		}
@@ -688,10 +690,7 @@ archiveFiles(void)
 
 	/* Scheduling archives */
 	PostOprMsg(4304);
-#if defined(AR_DEBUG)
-	Trace(TR_ARDEBUG, "Scheduling archives");
-	QueueTrace(HERE, &schedQ);
-#endif /* defined(AR_DEBUG) */
+	Trace(TR_MISC, "Scheduling archives");
 
 	/*
 	 * Make an assignment of resources so that scheduling priority can be
