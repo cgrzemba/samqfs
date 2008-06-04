@@ -1,4 +1,4 @@
-." $Revision: 1.21 $ 
+." $Revision: 1.22 $ 
 .ds ]W Sun Microsystems 
 .\" SAM-QFS_notice_begin
 .\"
@@ -35,10 +35,12 @@ showqueue \- Display content of an archiver queue files
 .RB [ \-s ]
 .RB [ \-v ]
 .RB [ \-f ]
+.RB [ \-c ]
 .RI [ filesystem [ " archreq ..." "]]"
 
 .B /opt/SUNWsamfs/sbin/showqueue
 .RB [ \-d ]
+.RB [ \-c ]
 .RB [ \-v ]
 .BI \-q " archreq"
 
@@ -98,37 +100,62 @@ Example output for:
 
 .ft CO
 .nf
- showqueue -v samfs3
- Filesystem samfs3:  
- Scan list  Examine: noscan
-   1 2004-11-26 08:03:33 b4827632       1___ 1  b4827632
-   2 2005-11-26 08:07:03 background          full .
+showqueue -v samfs3
+Filesystem samfs3:  
+Files waiting to start:         10
+Files being scheduled:           0
+Files archiving:                 0
+Events processed:              129
+    archive             0
+    change              3
+    close              60
+    create             66
+    hwm                 0
+    modify              0
+    rearchive           0
+    rename              0
+    remove              0
+    unarchive           0
+    internal            0
+Exam list: 11 entries
+ 2007-04-11 14:41:12 Archmax
+ 2007-04-11 14:41:09 Archmax/dir1
+ 2007-04-11 14:41:10 Archmax/dir2
+ 2007-04-11 14:39:10 Archmax/dir2/file0
+ 2007-04-11 14:39:10 Archmax/dir2/file1
+ 2007-04-11 14:39:10 Archmax/dir2/file2
+ 2007-04-11 14:39:10 Archmax/dir2/file3
+ 2007-04-11 14:39:10 Archmax/dir2/file4
+ 2007-04-11 14:39:12 Archmax/dir5/file7
+ 2007-04-11 14:39:12 Archmax/dir5/file8
+ 2007-04-11 14:39:12 Archmax/dir5/file9
 
- Archive requests
- b4827632.1.0 create 2004-11-26 08:03:33
-     files:10 space:  30.005M flags: start
-     Start archive at 2004-11-26 08:13:33
-     type:f ino:1104 flags:00 space:   3.000M time:1048683783 priority:0
-         b4827632/file0
-     type:f ino:1105 flags:00 space:   3.000M time:1048683784 priority:0
-         b4827632/file1
-     type:f ino:1106 flags:00 space:   3.000M time:1048683785 priority:0
-         b4827632/file2
-     type:f ino:1107 flags:00 space:   3.000M time:1048683786 priority:0
-         b4827632/file3
-     type:f ino:1108 flags:00 space:   3.000M time:1048683786 priority:0
-         b4827632/file4
-     type:f ino:1109 flags:00 space:   3.000M time:1048683787 priority:0
-         b4827632/file5
-     type:f ino:1110 flags:00 space:   3.000M time:1048683788 priority:0
-         b4827632/file6
-     type:f ino:1111 flags:00 space:   3.000M time:1048683788 priority:0
-         b4827632/file7
-     type:f ino:1112 flags:00 space:   3.000M time:1048683789 priority:0
-         b4827632/file8
-     type:f ino:1113 flags:00 space:   3.000M time:1048683790 priority:0
-         b4827632/file9
-
+Scan list  Examine: noscan
+  0 2007-04-12 00:00:00 background       ---- inodes
+Archive requests
+samfs1.Archmax.1.0 create 2007-04-11 14:39:09
+    files:10 space:  10.005M flags:
+    Start archive at 2007-04-11 14:40:09 | 10000 files |   10.0G bytes
+    type:f ino:1037 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file0
+    type:f ino:1038 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file1
+    type:f ino:1039 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file2
+    type:f ino:1040 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file3
+    type:f ino:1041 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file4
+    type:f ino:1042 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file5
+    type:f ino:1043 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file6
+    type:f ino:1044 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file7
+    type:f ino:1045 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file8
+    type:f ino:1046 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file9
 .LP
 The scanlist shows the following:
  column
