@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSUtil.java,v 1.57 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSUtil.java,v 1.58 2008/06/04 18:10:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -371,6 +371,10 @@ public class SamQFSUtil {
             else if ((equipType.equals("h4")) || (equipType.equals("H4")))
                 type = BaseDevice.MTYPE_HP_SL48;
 
+            else if ((equipType.equals("s3")) || (equipType.equals("S3")))
+                type = BaseDevice.MTYPE_STK_SL3000;
+            else if ((equipType.equals("nm")) || (equipType.equals("NM")))
+                type = BaseDevice.MTYPE_LT270_250;
         }
 
         return type;
@@ -506,6 +510,12 @@ public class SamQFSUtil {
             break;
         case BaseDevice.MTYPE_HP_SL48:
             s = "h4";
+            break;
+        case BaseDevice.MTYPE_STK_SL3000:
+            s = "s3";
+            break;
+        case BaseDevice.MTYPE_LT270_250:
+            s = "nm";
             break;
         default:
         }

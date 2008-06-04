@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseDevice.java,v 1.19 2008/05/16 18:39:04 am143972 Exp $
+// ident	$Id: BaseDevice.java,v 1.20 2008/06/04 18:10:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -83,6 +83,8 @@ public interface BaseDevice {
     public static final int MTYPE_SONY_PETASITE = 119;
     public static final int MTYPE_FUJ_LMF = 120;
     public static final int MTYPE_IBM_3494 = 121;
+    public static final int MTYPE_STK_SL3000 = 139;
+    public static final int MTYPE_LT270_250 = 140;
 
     // for disk archiving
     public static final int MTYPE_DISK = 133;
