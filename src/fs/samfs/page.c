@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.91 $"
+#pragma ident "$Revision: 1.92 $"
 
 #include "sam/osversion.h"
 
@@ -460,6 +460,9 @@ sam_read_ahead(
 			if (sam_map_block(ip, (offset_t)vn_off,
 			    (offset_t)length,
 			    (SAM_READ_PUT | SAM_MAP_NOWAIT), iop, CRED())) {
+				return;
+			}
+			if (iop->imap.flags & M_OBJ_EOF) {
 				return;
 			}
 		} else {

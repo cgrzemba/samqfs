@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.199 $"
+#pragma ident "$Revision: 1.200 $"
 #endif
 
 #ifdef linux
@@ -394,6 +394,7 @@ typedef struct sam_ichain	{
  *    koffset
  *    klength
  *    pp->p_fsdata (for pages on which a write is in progress)
+ *    eoo
  *
  *  The following field is protected by daemon_mutex.
  *    daemon_busy

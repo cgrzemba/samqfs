@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.138 $"
+#pragma ident "$Revision: 1.139 $"
 
 #include "sam/osversion.h"
 
@@ -108,7 +108,7 @@ extern uint_t lqfs_debug;
 /*
  * MDB switch to control paged i/o on object files.
  */
-boolean_t sam_object_directio_required = TRUE;
+boolean_t sam_object_directio_required = FALSE;
 
 #define	SAM_DIRECTIO_REQUIRED(ip) \
 	((SAM_IS_OBJECT_FILE(ip) && sam_object_directio_required))

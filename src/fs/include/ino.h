@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 #endif
 
 #ifdef linux
@@ -324,7 +324,7 @@ typedef struct sam_di_ext {
 #define	SAM_MAX_OSD_STRIPE	3
 
 typedef struct sam_obj_layout {
-	int64_t			obj_id;		/* User object ID */
+	uint64_t		obj_id;		/* User object ID */
 	offset_t		eoo;		/* User obj written size */
 	ushort_t		ord;		/* Ordinal */
 	uchar_t			pad[6];

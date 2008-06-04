@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #include "sam/osversion.h"
 
@@ -129,6 +129,7 @@ static void sam_dk_object_done(osd_req_t *reqp, void *ct_priv,
 static void sam_pg_object_done(osd_req_t *reqp, void *ct_priv,
 	osd_result_t *resp);
 static int sam_osd_errno(int rc, sam_osd_req_priv_t *iorp);
+static uint64_t sam_decode_scsi_buf(char *scsi_buf, int scsi_len);
 
 
 /*
@@ -372,6 +373,10 @@ sam_issue_direct_object_io(
 
 	iorp = (sam_osd_req_priv_t *)kmem_zalloc(sizeof (sam_osd_req_priv_t),
 	    KM_SLEEP);
+	if (!iorp) {
+		return (ENOMEM);
+	}
+
 	obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
 	user_object_id = obj->ol[obji].obj_id;
 	oh = ip->mp->mi.m_fs[obj->ol[obji].ord].oh;
@@ -461,9 +466,11 @@ sam_dk_object_done(
 		TRACE(T_SAM_DIOWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
 		if (resp->err_code == OSD_SUCCESS) {
+			mutex_enter(&ip->write_mutex);
 			if ((offset + count) > obj->ol[obji].eoo) {
 				obj->ol[obji].eoo = (offset + count);
 			}
+			mutex_exit(&ip->write_mutex);
 		}
 	}
 	if (resp->err_code != 0) {
@@ -508,15 +515,23 @@ sam_pageio_object(
 	osd_req_t		*reqp;
 	sam_mount_t		*mp;	/* Pointer to mount table */
 	buf_t 			*bp;
+	offset_t		count;
 	uint64_t		user_object_id;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
 	sam_di_obj_t		*obj;
 	int			rc;
 
-
-	mp = ip->mp;
 	iorp = (sam_osd_req_priv_t *)kmem_zalloc(sizeof (sam_osd_req_priv_t),
 	    KM_SLEEP);
+	if (!iorp) {
+		return (NULL);
+	}
+
+	mp = ip->mp;
+	count = vn_len;
+	obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
+	oh = mp->mi.m_fs[obj->ol[iop->obji].ord].oh;
+	user_object_id = obj->ol[iop->obji].obj_id;
 
 	bp = pageio_setup(pp, vn_len, mp->mi.m_fs[iop->ord].svp, flags);
 	bp->b_edev = mp->mi.m_fs[iop->ord].dev;
@@ -525,40 +540,61 @@ sam_pageio_object(
 	bp->b_un.b_addr = (char *)pg_off;
 	bp->b_file = SAM_ITOP(ip);
 	bp->b_offset = offset;
-	TRACE((bp->b_flags & B_READ) ? T_SAM_PGRDOBJ_ST :
-	    T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp, offset, vn_len);
-	if (!(bp->b_flags & B_READ)) {	/* If writing */
-		if (bp->b_flags & B_ASYNC) {
-			bp->b_iodone = (int (*) ())sam_page_wrdone;
-			TRACE(T_SAM_ASYNC_WR, SAM_ITOV(ip), ip->di.id.ino,
-			    (sam_tr_t)bp->b_pages, (sam_tr_t)bp);
-			mutex_enter(&ip->write_mutex);
-			ip->cnt_writes += bp->b_bcount;
-			mutex_exit(&ip->write_mutex);
-		}
-	}
+	bp->b_private = (void *)iorp;
 
-	obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
-	oh = ip->mp->mi.m_fs[obj->ol[iop->obji].ord].oh;
-	user_object_id = obj->ol[iop->obji].obj_id;
+	sam_osd_setup_private(iorp);
+	iorp->obji = iop->obji;
+	iorp->offset = iop->blk_off;
+	iorp->ip = ip;
+	iorp->bp = bp;
 
 	if (bp->b_flags & B_READ) {	/* If reading */
+		mutex_enter(&ip->write_mutex);
+		if ((iop->blk_off + count) > obj->ol[iop->obji].eoo) {
+			count = obj->ol[iop->obji].eoo - iop->blk_off;
+			mutex_exit(&ip->write_mutex);
+			bp->b_bcount = (size_t)count;
+			pagezero(pp, pg_off, PAGESIZE);
+			if ((count < 0) || (pg_off > PAGESIZE)) {
+				dcmn_err((CE_PANIC,
+				    "SAM-QFS: %s: PAGE COUNT off=%x, cnt=%llx, "
+				    "eoo=%llx pg_off=%x",
+				    mp->mt.fi_name, iop->blk_off, count,
+				    obj->ol[iop->obji].eoo, pg_off));
+				kmem_free(iorp, sizeof (sam_osd_req_priv_t));
+				bp->b_error = EINVAL;
+				return (bp);
+			}
+		} else {
+			mutex_exit(&ip->write_mutex);
+		}
+		TRACE(T_SAM_PGRDOBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
+		    offset, count);
 		reqp = osd_setup_read_bp(oh, partid, user_object_id,
-		    vn_len, offset, bp);
+		    count, iop->blk_off, bp);
 	} else {
+		TRACE(T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
+		    offset, count);
 		reqp = osd_setup_write_bp(oh, partid, user_object_id,
-		    vn_len, offset, bp);
+		    count, iop->blk_off, bp);
 	}
 	if (reqp == NULL) {
 		kmem_free(iorp, sizeof (sam_osd_req_priv_t));
 		bp->b_error = EINVAL;
 		return (bp);
 	}
-	bp->b_private = (void *)iorp;
-	sam_osd_setup_private(iorp);
-	iorp->bp = bp;
-	iorp->ip = ip;
 	iorp->reqp = reqp;
+	if (!(bp->b_flags & B_READ)) {	/* If writing */
+		if (bp->b_flags & B_ASYNC) {
+			bp->b_iodone = (int (*) ())sam_page_wrdone;
+			TRACE(T_SAM_ASYNC_WR, SAM_ITOV(ip), ip->di.id.ino,
+			    (sam_tr_t)bp->b_pages, (sam_tr_t)bp);
+			mutex_enter(&ip->write_mutex);
+			ip->cnt_writes += count;
+			mutex_exit(&ip->write_mutex);
+		}
+	}
+
 	rc = osd_submit_req(reqp, 0, sam_pg_object_done, iorp);
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
@@ -605,14 +641,16 @@ sam_pg_object_done(
 	 */
 	if (bp->b_flags & B_READ) {	/* If reading */
 		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
-		    bp->b_offset, bp->b_bcount);
+		    offset, count);
 	} else {			/* If writing */
 		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
-		    bp->b_offset, bp->b_bcount);
+		    offset, count);
 		if (resp->err_code == OSD_SUCCESS) {
+			mutex_enter(&ip->write_mutex);
 			if ((offset + count) > obj->ol[obji].eoo) {
 				obj->ol[obji].eoo = (offset + count);
 			}
+			mutex_exit(&ip->write_mutex);
 		}
 	}
 	if (resp->err_code != OSD_SUCCESS) {
@@ -732,20 +770,52 @@ sam_osd_errno(
 		error = E2BIG;
 		break;
 
-	case OSD_FAILURE:
-	case OSD_CHECK_CONDITION:
+	case OSD_CHECK_CONDITION: {
+		char		*scsi_buf;
+		uint32_t	scsi_len;
+		uint64_t	xfer;
+
 		error = EIO;
+		if (iorp->result.err_type == OSD_ERRTYPE_SENSE) {
+			scsi_buf = (char *)iorp->result.sense_data;
+			if (scsi_buf == NULL) {
+				cmn_err(CE_WARN,
+				    "SAM-QFS: OSD_ERRTYPE_SENSE err_type=%d "
+				    "w/no scsi_buf\n",
+				    iorp->result.err_type);
+				break;
+			}
+		} else {
+			cmn_err(CE_WARN,
+			    "SAM-QFS: OSD_CHECK_CONDITION err_type=%d "
+			    "w/no scsi_buf\n",
+			    iorp->result.err_type);
+			break;
+		}
+		scsi_len = iorp->result.sense_data_len;
+		xfer = sam_decode_scsi_buf(scsi_buf, scsi_len);
+		if (xfer > 0) {
+			bp->b_resid = bp->b_bcount - xfer;
+			error = 0;
+			cmn_err(CE_NOTE,
+			    "SAM-QFS: OSD SCSI resid=%x, off=%llx, cnt=%llx",
+			    bp->b_resid, (long long)bp->b_offset, bp->b_bcount);
+		} else {
+			int64_t *sb = (int64_t *)(void *)scsi_buf;
+			int64_t *sb1 = sb + 1;
+			int64_t *sb2 = sb + 2;
+
+			cmn_err(CE_WARN,
+			    "SAM-QFS: OSD SCSI BUF = %16.16llx "
+			    "%16.16.llx %16.16.llx\n",
+			    *sb, *sb1, *sb2);
+		}
+		}
 		break;
 
-#if DECODE_SCSI
-	{
-		int osderr_detail = 0;
-		if (iotp->ot_errtype == OSD_ERR_SENSE && iotp->ot_errlen != 0) {
-			osderr_detail = osd_decode_sense(iotp->ot_errbufp,
-			    iotp->ot_errlen);
-		}
-	}
-#endif /* DECODE_SCSI */
+	case OSD_FAILURE:
+		error = EIO;
+		break;
 
 	default:
 		error = EIO;
@@ -756,6 +826,45 @@ sam_osd_errno(
 		bp->b_flags |= B_ERROR;
 	}
 	return (error);
+}
+
+
+/*
+ * ----- sam_decode_scsi_buf - Return errno given OSD error.
+ */
+/* ARGSUSED */
+static uint64_t
+sam_decode_scsi_buf(
+	char *scsi_buf,
+	int scsi_len)
+{
+	uint64_t len;
+
+	if (scsi_buf[0] != 0x72) {
+		return (-1);
+	}
+	if (scsi_buf[1] == 1) {		/* Recovered error */
+		/*
+		 * Check for reading past end of object
+		 */
+		if ((scsi_buf[2] == 0x3b) && (scsi_buf[3] == 0x17)) {
+			if ((scsi_buf[8] == 1) && (scsi_buf[9] == 0xa)) {
+				/*
+				 * Bytes 12-19 is no. of bytes transferred
+				 */
+				len = ((uint64_t)(scsi_buf[12]) << 56) |
+				    ((uint64_t)(scsi_buf[13]) << 48) |
+				    ((uint64_t)(scsi_buf[14]) << 40) |
+				    ((uint64_t)(scsi_buf[15]) << 32) |
+				    ((uint64_t)(scsi_buf[16]) << 24) |
+				    ((uint64_t)(scsi_buf[17]) << 16) |
+				    ((uint64_t)(scsi_buf[18]) << 8) |
+				    (scsi_buf[19]);
+				return (len);
+			}
+		}
+	}
+	return (-1);
 }
 
 
@@ -906,7 +1015,7 @@ sam_create_object_id(
 	n = 0;
 	while (n < num_group) {
 		reqp = osd_setup_create_object(mp->mi.m_fs[ord].oh, partid,
-		    0, (uint64_t)numobj);
+		    0, numobj);
 		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
@@ -1049,7 +1158,7 @@ sam_get_user_object_attr(
 
 	obj = (sam_di_obj_t *)(void *)&dp->extent[2];
 	reqp = osd_setup_get_attr(mp->mi.m_fs[dp->unit].oh, partid,
-	    (uint64_t)obj->ol[n].obj_id);
+	    obj->ol[n].obj_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
@@ -1183,7 +1292,7 @@ sam_set_user_object_attr(
 
 	obj = (sam_di_obj_t *)(void *)&dp->extent[2];
 	reqp = osd_setup_set_attr(mp->mi.m_fs[obj->ol[n].ord].oh, partid,
-	    (uint64_t)obj->ol[n].obj_id);
+	    obj->ol[n].obj_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
@@ -1247,7 +1356,6 @@ sam_truncate_object_file(
 	 */
 	ASSERT(tflag != SAM_REDUCE);
 	if ((error = sam_sync_inode(ip, length, tflag))) {
-		TRACE(T_SAM_GENERIC, SAM_ITOP(ip), 101, length, error);
 		if (tflag == SAM_PURGE) {
 			return (EIO);
 		}
@@ -1278,7 +1386,7 @@ sam_truncate_object_file(
 	/*
 	 * Truncate up/down, reset end of object for all appropriate stripes.
 	 */
-	if ((error = sam_map_block(ip, length, 1, SAM_WRITE, &ioblk, credp))) {
+	if ((error = sam_map_block(ip, length, 0, SAM_WRITE, &ioblk, credp))) {
 		return (error);
 	}
 	for (i = 0; i < num_group; i++) {
