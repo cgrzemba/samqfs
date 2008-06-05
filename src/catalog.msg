@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.592 $"
+$ pragma ident "$Revision: 1.593 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3441,6 +3441,7 @@ $     3067 3068 4441 4499 4501 4498 4515 4800 4804
 20353 Recycler exiting - new recycler is enabled (nrecycler = yes) in defaults.conf.
 20354 Metadata records for the following list of OIDs will be deleted.
 20355 The following list of files and directories will be removed.
+20356     ** Mingain will be calculated based on media capacity **
 
 $  nrecycler      (20400-20699)
 20400 \n========== Recycler begins at %s ===========

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -471,6 +471,11 @@ PrintCatalogs(void)
 			}
 		} else if (CATALOG_LIST_ON()) {
 			emit(TO_FILE, 0, 20212, util, ROBOT->high, ROBOT->min);
+		}
+
+		/* Inform user that default is being based on VSN capacity */
+		if (ROBOT->min == DEFAULT_MIN_GAIN && CATALOG_LIST_ON()) {
+			emit(TO_FILE, 0, 20356);
 		}
 
 		if (ROBOT->mail && CATALOG_LIST_ON()) {

@@ -1,4 +1,4 @@
-.\" $Revision: 1.22 $
+.\" $Revision: 1.23 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -123,7 +123,8 @@ would increase their free space by
 .I percent
 or more.
 Volumes not meeting the \fB-mingain\fP parameter are not recycled.
-The default is 50.
+The default is based on the capacity of the volume (<200GB 60%, 
+>=200GB 90%).
 .RE
 .RS
 .TP

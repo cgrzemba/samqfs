@@ -35,7 +35,7 @@
  */
 
 /*
- * $Revision: 1.32 $
+ * $Revision: 1.33 $
  */
 
 #if !defined(_RECYCLER_H)
@@ -127,7 +127,12 @@ typedef struct {
 	char		*mailaddress;
 } ROBOT_TABLE;
 
-#define	DEFAULT_MIN_GAIN 50
+/* Mingain defines, defaults determined by media capacity at runtime */
+#define	DEFAULT_MIN_GAIN -1
+#define	MIN_GAIN_SM_MEDIA 60
+#define	MIN_GAIN_LG_MEDIA 90
+#define	MIN_GAIN_MEDIA_THRSH 214748364800LL /* 200 GB */
+
 #define	DEFAULT_MIN_OBS  50
 #define	DEFAULT_ROBOT_HWM 95
 #define	DEFAULT_DATAQUANTITY 1073741824 /* 1 gigabyte */

@@ -36,7 +36,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.83 $"
+#pragma ident "$Revision: 1.84 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -162,6 +162,7 @@ static void summarize_dk_vsn(VSN_TABLE *vsn);
 static void sync_and_sleep(void);
 static int  getMultiVsnInfo(char *, union sam_di_ino *, int,
 	struct sam_section *, size_t);
+static int  getMinGain(ROBOT_TABLE *robot, VSN_TABLE *vsn);
 
 void
 main(
@@ -1363,13 +1364,14 @@ select_rm_candidates(void)
 				 * Disqualify if minimum gain
 				 * requirement not met.
 				 */
-				if (VSN->junk <= Robot->min) {
+				if (VSN->junk <= getMinGain(Robot, VSN)) {
 					cemit(TO_FILE, 0, 20231,
-					    VSN->junk, Robot->min);
+					    VSN->junk, getMinGain(Robot, VSN));
 					Trace(TR_MISC,
 					    "'%s' doesn't meet min-gain: "
 					    "junk: %d%% min: %d%%",
-					    VSN->vsn, VSN->junk, Robot->min);
+					    VSN->vsn, VSN->junk,
+					    getMinGain(Robot, VSN));
 					continue;
 				}
 
@@ -1555,13 +1557,14 @@ select_dk_candidates(void)
 			/*
 			 * Disqualify if minimum gain requirement not met.
 			 */
-			if (vsn_entry->junk <= robot_entry->min) {
+			if (vsn_entry->junk <=
+			    getMinGain(robot_entry, vsn_entry)) {
 				/* VSN doesn't meet min-gain... skipping */
 				cemit(TO_FILE, 0, 20231, vsn_entry->junk,
-				    robot_entry->min);
+				    getMinGain(robot_entry, vsn_entry));
 			} else {
 				cemit(TO_FILE, 0, 20228, vsn_entry->junk,
-				    robot_entry->min);
+				    getMinGain(robot_entry, vsn_entry));
 			}
 
 			/*
@@ -2908,4 +2911,21 @@ getMultiVsnInfo(
 	SamFree(vsnp);
 
 	return (0);
+}
+
+static int
+getMinGain(ROBOT_TABLE *robot, VSN_TABLE *vsn)
+{
+	int mingain = robot->min;
+
+	/* Check if the mingain is default, look at the vsn capacity */
+	if (mingain == DEFAULT_MIN_GAIN) {
+		if (vsn->capacity < MIN_GAIN_MEDIA_THRSH) {
+			mingain = MIN_GAIN_SM_MEDIA;
+		} else {
+			mingain = MIN_GAIN_LG_MEDIA;
+		}
+	}
+
+	return (mingain);
 }
