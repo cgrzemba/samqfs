@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #include "sam/osversion.h"
 
@@ -156,7 +156,7 @@ sam_open_osd_device(
 	}
 	dev = svp->v_rdev;
 	VN_RELE(svp);
-	rc = osd_handle_by_name(dp->part.pt_name, filemode, credp, &oh);
+	rc = osd_open_by_name(dp->part.pt_name, filemode, credp, (void *)&oh);
 	if (rc != OSD_SUCCESS) {
 		error = sam_osd_errno(rc, NULL);
 		return (error);
@@ -181,7 +181,7 @@ sam_close_osd_device(
 	cred_t *credp)		/* Credentials pointer. */
 {
 	ASSERT(oh != NULL);
-	(void) osd_close(oh, filemode, credp);
+	(void) osd_close((void *)oh, filemode, credp);
 }
 
 
@@ -218,8 +218,8 @@ sam_issue_object_io(
 	iov.iov_base = (void *)bufp;
 	iov.iov_len = (long)length;
 	if (command == FWRITE) {
-		reqp = osd_setup_write(oh, partid, obj_id, length, offset, 1,
-		    (caddr_t)&iov);
+		reqp = osd_setup_write((void *)oh, partid, obj_id, length,
+		    offset, 1, &iov);
 		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
@@ -231,15 +231,15 @@ sam_issue_object_io(
 			}
 		}
 	} else {
-		reqp = osd_setup_read(oh, partid, obj_id, length, offset, 1,
-		    (caddr_t)&iov);
+		reqp = osd_setup_read((void *)oh, partid, obj_id, length,
+		    offset, 1, &iov);
 		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
 		}
 	}
 	sam_osd_setup_private(iorp);
-	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);	/* Wait for completion */
 		rc = iorp->result.err_code;
@@ -286,19 +286,15 @@ sam_get_osd_fs_attr(
 	int			error = 0;
 
 
-	reqp = osd_setup_get_attr(oh, partid, SAM_OBJ_SBLK_ID);
+	reqp = osd_setup_get_attr((void *)oh, partid, SAM_OBJ_SBLK_ID);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	error = osd_add_get_page_attr_to_req(reqp,
+	osd_add_get_page_attr_to_req(reqp,
 	    OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO,
 	    sizeof (sam_fsinfo_page_t), (void *) &fs_attr);
-	if (error) {
-		error = EINVAL;
-		goto fini;
-	}
 	sam_osd_setup_private(iorp);
-	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if (iorp->result.err_code != OSD_SUCCESS) {
@@ -339,8 +335,8 @@ sam_object_req_done(
 	sam_osd_req_priv_t *iorp = (sam_osd_req_priv_t *)ct_priv;
 
 	iorp->result = *resp;
-	if (resp->err_type == OSD_ERRTYPE_RESID) {
-		osd_resid_t *rp = (osd_resid_t *)resp->resid_data;
+	if (resp->err_code == OSD_RESIDUAL) {
+		osd_resid_t *rp = (osd_resid_t *)&resp->resid_data;
 
 		iorp->resid = *rp;
 	}
@@ -381,10 +377,10 @@ sam_issue_direct_object_io(
 	user_object_id = obj->ol[obji].obj_id;
 	oh = ip->mp->mi.m_fs[obj->ol[obji].ord].oh;
 	if (rw == UIO_WRITE) {
-		reqp = osd_setup_write_bp(oh, partid, user_object_id,
+		reqp = osd_setup_write_bp((void *)oh, partid, user_object_id,
 		    contig, offset, bp);
 	} else {
-		reqp = osd_setup_read_bp(oh, partid, user_object_id,
+		reqp = osd_setup_read_bp((void *)oh, partid, user_object_id,
 		    contig, offset, bp);
 	}
 	if (reqp == NULL) {
@@ -395,12 +391,11 @@ sam_issue_direct_object_io(
 	iorp->offset = offset;	/* Logical offset in I/O request */
 	iorp->ip = ip;
 	iorp->bp = bp;
-	rc = osd_submit_req(reqp, 0, sam_dk_object_done, iorp);
+	rc = osd_submit_req(reqp, sam_dk_object_done, iorp);
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
 		result.err_code = (uint8_t)rc;
-		result.err_type = OSD_ERRTYPE_NONE;
 		sam_dk_object_done(reqp, iorp, &result);
 		error = sam_osd_errno(result.err_code, NULL);
 	}
@@ -570,12 +565,12 @@ sam_pageio_object(
 		}
 		TRACE(T_SAM_PGRDOBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, count);
-		reqp = osd_setup_read_bp(oh, partid, user_object_id,
+		reqp = osd_setup_read_bp((void *)oh, partid, user_object_id,
 		    count, iop->blk_off, bp);
 	} else {
 		TRACE(T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, count);
-		reqp = osd_setup_write_bp(oh, partid, user_object_id,
+		reqp = osd_setup_write_bp((void *)oh, partid, user_object_id,
 		    count, iop->blk_off, bp);
 	}
 	if (reqp == NULL) {
@@ -595,12 +590,11 @@ sam_pageio_object(
 		}
 	}
 
-	rc = osd_submit_req(reqp, 0, sam_pg_object_done, iorp);
+	rc = osd_submit_req(reqp, sam_pg_object_done, iorp);
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
 		result.err_code = (uint8_t)rc;
-		result.err_type = OSD_ERRTYPE_NONE;
 		sam_pg_object_done(reqp, iorp, &result);
 	}
 	return (bp);
@@ -738,7 +732,7 @@ sam_osd_errno(
 		return (0);
 
 	case OSD_RESIDUAL: {
-		osd_resid_t *residp = (osd_resid_t *)iorp->result.resid_data;
+		osd_resid_t *residp = (osd_resid_t *)&iorp->result.resid_data;
 
 		ASSERT(residp != NULL);
 		if (residp == NULL) {
@@ -776,20 +770,11 @@ sam_osd_errno(
 		uint64_t	xfer;
 
 		error = EIO;
-		if (iorp->result.err_type == OSD_ERRTYPE_SENSE) {
-			scsi_buf = (char *)iorp->result.sense_data;
-			if (scsi_buf == NULL) {
-				cmn_err(CE_WARN,
-				    "SAM-QFS: OSD_ERRTYPE_SENSE err_type=%d "
-				    "w/no scsi_buf\n",
-				    iorp->result.err_type);
-				break;
-			}
-		} else {
+		scsi_buf = (char *)iorp->result.sense_data;
+		if (scsi_buf == NULL) {
 			cmn_err(CE_WARN,
-			    "SAM-QFS: OSD_CHECK_CONDITION err_type=%d "
-			    "w/no scsi_buf\n",
-			    iorp->result.err_type);
+			    "SAM-QFS: OSD_CHECK_CONDITION "
+			    "w/no scsi_buf\n");
 			break;
 		}
 		scsi_len = iorp->result.sense_data_len;
@@ -942,13 +927,13 @@ sam_create_priv_object_id(
 	int			rc;
 	int			error = 0;
 
-	reqp = osd_setup_create_object(oh, partid, user_obj_id, 1);
+	reqp = osd_setup_create_object((void *)oh, partid, user_obj_id, 1);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
 	sam_osd_setup_private(iorp);
 
-	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if (iorp->result.err_code != OSD_SUCCESS) {
@@ -1014,23 +999,19 @@ sam_create_object_id(
 	num_group = (num_group == 0) ? mp->mi.m_fs[ord].num_group : num_group;
 	n = 0;
 	while (n < num_group) {
-		reqp = osd_setup_create_object(mp->mi.m_fs[ord].oh, partid,
-		    0, numobj);
+		reqp = osd_setup_create_object((void *)mp->mi.m_fs[ord].oh,
+		    partid, 0, numobj);
 		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
 		}
 
 		objlist = objlist_save;
-		error = osd_add_get_page_attr_to_req(reqp,
+		osd_add_get_page_attr_to_req(reqp,
 		    OSD_SAMQFS_VENDOR_CREATED_OBJECTS_LIST_PAGE,
 		    pglistsize, (void *) objlist);
-		if (error) {
-			error = EINVAL;
-			goto fini;
-		}
 		sam_osd_setup_private(iorp);
-		rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+		rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 		if (rc == OSD_SUCCESS) {
 			sam_osd_obj_req_wait(iorp);
 			if (iorp->result.err_code == OSD_SUCCESS) {
@@ -1053,7 +1034,7 @@ sam_create_object_id(
 				x.id.ino = BE_32(dp->id.ino);
 				x.id.gen = BE_32(dp->id.gen);
 				error = sam_set_user_object_attr(mp, dp, n,
-				    OSD_USER_OBJECT_INFORMATION_USERNAME,
+				    OSD_USER_OBJECT_INFO_USERNAME,
 				    x.attr);
 				if (error) {
 					break;
@@ -1113,14 +1094,14 @@ sam_remove_object_id(
 	int			rc;
 	int			error = 0;
 
-	reqp = osd_setup_remove_object(mp->mi.m_fs[unit].oh, partid,
+	reqp = osd_setup_remove_object((void *)mp->mi.m_fs[unit].oh, partid,
 	    user_obj_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
 	sam_osd_setup_private(iorp);
 
-	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if (iorp->result.err_code != OSD_SUCCESS) {
@@ -1157,20 +1138,16 @@ sam_get_user_object_attr(
 
 
 	obj = (sam_di_obj_t *)(void *)&dp->extent[2];
-	reqp = osd_setup_get_attr(mp->mi.m_fs[dp->unit].oh, partid,
+	reqp = osd_setup_get_attr((void *)mp->mi.m_fs[dp->unit].oh, partid,
 	    obj->ol[n].obj_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	error = osd_add_get_page_attr_to_req(reqp,
+	osd_add_get_page_attr_to_req(reqp,
 	    OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO,
 	    sizeof (sam_objinfo_page_t), (void *) attrp);
-	if (error) {
-		error = EINVAL;
-		goto fini;
-	}
 	sam_osd_setup_private(iorp);
-	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if (iorp->result.err_code != OSD_SUCCESS) {
@@ -1291,20 +1268,16 @@ sam_set_user_object_attr(
 	int			error = 0;
 
 	obj = (sam_di_obj_t *)(void *)&dp->extent[2];
-	reqp = osd_setup_set_attr(mp->mi.m_fs[obj->ol[n].ord].oh, partid,
-	    obj->ol[n].obj_id);
+	reqp = osd_setup_set_attr((void *)mp->mi.m_fs[obj->ol[n].ord].oh,
+	    partid, obj->ol[n].obj_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	error = osd_add_set_page_attr_cdb(reqp,
-	    OSD_USER_OBJECT_INFORMATION_PAGE, attr_num, sizeof (attribute),
-	    (char *)&attribute);
-	if (error) {
-		error = EINVAL;
-		goto fini;
-	}
+	osd_add_set_page_1attr_cdb(reqp,
+	    OSD_USER_OBJECT_INFORMATION_PAGE, attr_num,
+	    sizeof (attribute), (char *)&attribute);
 	sam_osd_setup_private(iorp);
-	rc = osd_submit_req(reqp, 0, sam_object_req_done, iorp);
+	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if (iorp->result.err_code != OSD_SUCCESS) {
@@ -1402,7 +1375,7 @@ sam_truncate_object_file(
 		}
 		if (oino.ol[i].eoo != eoo) {
 			err = sam_set_user_object_attr(ip->mp, &ip->di, i,
-			    OSD_USER_OBJECT_INFORMATION_LOGICAL_LENGTH,
+			    OSD_USER_OBJECT_INFO_LOGICAL_LENGTH,
 			    BE_64((int64_t)eoo));
 			if (err == 0) {
 				obj->ol[i].eoo = eoo;

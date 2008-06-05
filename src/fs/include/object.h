@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 
 #include "sam/osversion.h"
 
@@ -149,7 +149,8 @@ typedef struct sam_objinfo_page {
 	uint64_t	sop_partid;
 	uint64_t	sop_oid;
 	uint64_t	sop_append_addr;
-	uint64_t	sop_size;
+	uint64_t	sop_bytes_alloc;	/* Data bytes allocated */
+	uint64_t	sop_logical_len;	/* Logical end of object */
 	uint64_t	sop_trans_id;
 	uint32_t	sop_fino;
 	uint32_t	sop_fgen;
@@ -159,8 +160,9 @@ typedef struct sam_objinfo_page {
 #define	SOP_PGLEN(SOPP)		BE_32(SOPP->sop_pglen)
 #define	SOP_PARTID(SOPP)	BE_64(SOPP->sop_partid)
 #define	SOP_OID(SOPP)		BE_64(SOPP->sop_oid)
-#define	SOP_APPENDADDR(SOPP)	BE_64(SOPP->sop_append_addr)
-#define	SOP_SIZE(SOPP)		BE_64(SOPP->sop_size)
+#define	SOP_APPEND_ADDR(SOPP)	BE_64(SOPP->sop_append_addr)
+#define	SOP_BYTES_ALLOC(SOPP)	BE_64(SOPP->sop_bytes_alloc)
+#define	SOP_LOGICAL_LEN(SOPP)	BE_64(SOPP->sop_logical_len)
 #define	SOP_TRANSID(SOPP)	BE_64(SOPP->sop_trans_id)
 #define	SOP_FINO(SOPP)		BE_32(SOPP->sop_fino)
 #define	SOP_FGEN(SOPP)		BE_32(SOPP->sop_fgen)

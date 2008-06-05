@@ -40,7 +40,7 @@
 #define	_SAM_TYPES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 #endif
 
 #ifdef linux
@@ -177,7 +177,7 @@ extern int *___errno(void);
 /*
  * Define osd_handle (/usr/include/sys/osd.h)
  */
-typedef	uint32_t sam_osd_handle_t;
+typedef	uint64_t sam_osd_handle_t;
 
 /*
  * When the space left on a tape(in units of 1024) falls below this,
