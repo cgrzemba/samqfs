@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.129 $"
+#pragma ident "$Revision: 1.130 $"
 #endif
 
 #include <sam/types.h>
@@ -98,7 +98,7 @@ struct sam_fs_info {	/* File system information */
 	int	fi_partial_stage; /* Partial size to start stage in kbytes */
 	int	fi_flush_behind; 	/* Write flush behind in bytes */
 	int	fi_stage_flush_behind;	/* Stage flush behind in bytes */
-	int	fi_stage_n_window;	/* Stage -n window size in bytes */
+	uint	fi_stage_n_window;	/* Stage -n window size in bytes */
 	int	fi_stage_retries; /* max stage retries for cksum stage err */
 	int	fi_timeout;	/* Timeout for stage requests in fs */
 	int	fi_dio_wr_consec; /* No. of consecutive qualified writes */

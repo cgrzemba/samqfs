@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.214 $"
+#pragma ident "$Revision: 1.215 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1185,7 +1185,7 @@ sam_set_mount(sam_mount_t *mp)
 	}
 	if (mp->mt.fi_stage_n_window > ((physmem * PAGESIZE) / 100)) {
 		cmn_err(CE_NOTE,
-		"SAM-QFS: %s: stage_n_window(%d) > 1%% physmem(%lld),"
+		"SAM-QFS: %s: stage_n_window(%u) > 1%% physmem(%lld),"
 		    " stage_n_window too large for swap space, may block"
 		    " if file system full",
 		    mp->mt.fi_name, mp->mt.fi_stage_n_window,
