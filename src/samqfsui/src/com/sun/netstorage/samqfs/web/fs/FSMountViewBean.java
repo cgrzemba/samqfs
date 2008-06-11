@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSMountViewBean.java,v 1.25 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSMountViewBean.java,v 1.26 2008/06/11 16:58:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
+import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBean;
@@ -57,6 +58,7 @@ import com.sun.web.ui.view.html.CCHref;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import com.sun.netstorage.samqfs.web.util.Authorization;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 
 /**
@@ -91,6 +93,7 @@ public class FSMountViewBean extends CommonViewBeanBase {
     private static final String CHILD_FS_DET_HREF = "FileSystemDetailsHref";
     private static final String CHILD_FS_ARCH_POL_HREF = "FSArchivePolicyHref";
     public static final String CHILD_SHARED_FS_HREF = "SharedFSDetailsHref";
+    public static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
 
     // handler for archive pages (v44)
     public static final String POLICY_SUMMARY_HREF   = "PolicySummaryHref";
@@ -114,7 +117,6 @@ public class FSMountViewBean extends CommonViewBeanBase {
      * Register each child view.
      */
     protected void registerChildren() {
-        TraceUtil.trace3("Entering");
         super.registerChildren();
         PageTitleUtil.registerChildren(this, pageTitleModel);
         registerChild(CHILD_CONTAINER_VIEW, FSMountView.class);
@@ -126,7 +128,7 @@ public class FSMountViewBean extends CommonViewBeanBase {
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_DETAILS_HREF, CCHref.class);
         registerChild(CRITERIA_DETAILS_HREF, CCHref.class);
-        TraceUtil.trace3("Exiting");
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
     }
 
     /**
@@ -136,25 +138,90 @@ public class FSMountViewBean extends CommonViewBeanBase {
      * @return View The instantiated child view
      */
     protected View createChild(String name) {
-        TraceUtil.trace3("Entering");
         if (super.isChildSupported(name)) {
-            TraceUtil.trace3("Exiting");
             return super.createChild(name);
         // Propertysheet Container.
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
-            FSMountView child = new FSMountView(this, name);
+            String serverName = (String) getPageSessionAttribute(
+                Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+            if (serverName == null){
+                serverName = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME,
+                    serverName);
+            }
+            String fsName = (String) getPageSessionAttribute(
+                Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+            if (fsName == null){
+                fsName = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.FILE_SYSTEM_NAME,
+                    fsName);
+            }
+            Integer archive = (Integer) getPageSessionAttribute(
+                Constants.PageSessionAttributes.ARCHIVE_TYPE);
+            if (archive == null){
+                String archiveStr = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.ARCHIVE_TYPE);
+                int type =
+                    archiveStr == null ? -1 : Integer.parseInt(archiveStr);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.ARCHIVE_TYPE,
+                    new Integer(type));
+            }
+            String pageType = (String) getPageSessionAttribute(
+                Constants.SessionAttributes.MOUNT_PAGE_TYPE);
+            if (pageType == null){
+                pageType = RequestManager.getRequest().getParameter(
+                    Constants.SessionAttributes.MOUNT_PAGE_TYPE);
+                setPageSessionAttribute(
+                    Constants.SessionAttributes.MOUNT_PAGE_TYPE,
+                    pageType);
+            }
+            String sharedType = (String) getPageSessionAttribute(
+                Constants.SessionAttributes.SHARED_CLIENT_HOST);
+            if (sharedType == null){
+                sharedType = RequestManager.getRequest().getParameter(
+                    Constants.SessionAttributes.SHARED_CLIENT_HOST);
+                setPageSessionAttribute(
+                    Constants.SessionAttributes.SHARED_CLIENT_HOST,
+                    sharedType);
+            }
+            FSMountView child =
+                new FSMountView(
+                    this, name,
+                    serverName, fsName, archive, pageType, sharedType);
             return child;
         // PageTitle Child
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
-            TraceUtil.trace3("Exiting");
             return PageTitleUtil.createChild(this, pageTitleModel, name);
         // Breadcrumb
         } else if (name.equals(CHILD_BREADCRUMB)) {
+            Integer [] pagePath = (Integer []) getPageSessionAttribute(
+                                Constants.SessionAttributes.PAGE_PATH);
+            if (pagePath == null){
+                String pathString = RequestManager.getRequest().getParameter(
+                                        Constants.SessionAttributes.PAGE_PATH);
+                pathString = pathString == null ? "" : pathString;
+                String [] pathStringArr =
+                    pathString == null ?
+                        new String[0] :
+                        pathString.split(",");
+                Integer [] path = new Integer[pathStringArr.length];
+                for (int i = 0; i < pathStringArr.length; i++){
+                    path[i] = new Integer(pathStringArr[i]);
+                }
+
+                setPageSessionAttribute(
+                    Constants.SessionAttributes.PAGE_PATH,
+                    path);
+            }
             CCBreadCrumbsModel model =
                 new CCBreadCrumbsModel("FSMountParams.pageTitle");
             BreadCrumbUtil.createBreadCrumbs(this, name, model);
             CCBreadCrumbs child = new CCBreadCrumbs(this, model, name);
-            TraceUtil.trace3("Exiting");
             return child;
         // Breadcrumb HREFs
         } else if (name.equals(CHILD_FS_SUM_HREF) ||
@@ -163,8 +230,8 @@ public class FSMountViewBean extends CommonViewBeanBase {
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF) ||
-                   name.equals(CHILD_FS_ARCH_POL_HREF)) {
-            TraceUtil.trace3("Exiting");
+                   name.equals(CHILD_FS_ARCH_POL_HREF) ||
+                    name.equals(SHARED_FS_SUMMARY_HREF)) {
             return new CCHref(this, name, null);
         } else
             throw new IllegalArgumentException(
@@ -289,9 +356,7 @@ public class FSMountViewBean extends CommonViewBeanBase {
         TraceUtil.trace3("Entering");
         String s = (String) getDisplayFieldValue("SharedFSDetailsHref");
         ViewBean targetView = getViewBean(SharedFSDetailsViewBean.class);
-        String hostName = (String)
-            getPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+        String hostName = getServerName();
         TraceUtil.trace3("set page session for hostName " +
             hostName);
         targetView.setPageSessionAttribute(
@@ -333,9 +398,7 @@ public class FSMountViewBean extends CommonViewBeanBase {
         String s = (String) getDisplayFieldValue("FSArchivePolicyHref");
         ViewBean targetView =
             getViewBean(FSArchivePoliciesViewBean.class);
-        String hostName = (String)
-            getPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+        String hostName = getServerName();
         TraceUtil.trace3("set page session for hostName " +
             hostName);
         targetView.setPageSessionAttribute(
@@ -521,6 +584,23 @@ public class FSMountViewBean extends CommonViewBeanBase {
             PageInfo.getPageInfo().getPageNumber(target.getName()), s);
 
         forwardTo(target);
+    }
+
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
+        throws ServletException, IOException {
+
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
+
+        TraceUtil.trace2("FSMount: Navigate back to URL: " + url);
+
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + getFSName();
+        JSFUtil.forwardToJSFPage(this, url, params);
     }
 
     private String getFSName() {

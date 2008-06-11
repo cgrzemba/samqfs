@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.122 2008/06/04 18:10:14 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.123 2008/06/11 16:58:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -541,19 +541,19 @@ public class SamUtil {
             case SamQFSSystemModel.TIME_SECOND:
                 return SamUtil.getResourceString(
                     "common.unit.time.seconds");
-        case SamQFSSystemModel.TIME_MONTHS:
-            return SamUtil.getResourceString(
-                    "common.unit.time.months");
-        case SamQFSSystemModel.TIME_DAY_OF_MONTH:
-            return SamUtil.getResourceString(
-                    "common.unit.time.dayofmonth");
-        case SamQFSSystemModel.TIME_DAY_OF_WEEK:
-            return SamUtil.getResourceString(
-                    "common.unit.time.dayofweek");
-        case SamQFSSystemModel.TIME_YEAR:
-            return SamUtil.getResourceString("common.unit.time.years");
-            default:
-                return "";
+            case SamQFSSystemModel.TIME_MONTHS:
+                return SamUtil.getResourceString(
+                        "common.unit.time.months");
+            case SamQFSSystemModel.TIME_DAY_OF_MONTH:
+                return SamUtil.getResourceString(
+                        "common.unit.time.dayofmonth");
+            case SamQFSSystemModel.TIME_DAY_OF_WEEK:
+                return SamUtil.getResourceString(
+                        "common.unit.time.dayofweek");
+            case SamQFSSystemModel.TIME_YEAR:
+                return SamUtil.getResourceString("common.unit.time.years");
+                default:
+                    return "";
         }
     }
     // method to retrieve the unit size String (localized) from integer
@@ -583,38 +583,64 @@ public class SamUtil {
     }
 
     // method to retrieve the unit size String (localized) from integer
-    public static String getDurationL10NString(boolean plural, int unit) {
+    public static String getDurationL10NString(
+        boolean plural, int unit, boolean isJSF) {
         switch (unit) {
             case TimeConvertor.UNIT_MILLI_SEC:
                 return
-                    SamUtil.getResourceString(
-                        plural ?
-                            "common.unit.time.msec" :
-                            "common.unit.time.msec.single");
+                    isJSF ?
+                        JSFUtil.getMessage(
+                            plural ?
+                                "common.unit.time.msec" :
+                                "common.unit.time.msec.single") :
+                        SamUtil.getResourceString(
+                            plural ?
+                                "common.unit.time.msec" :
+                                "common.unit.time.msec.single");
             case TimeConvertor.UNIT_SEC:
                 return
-                    SamUtil.getResourceString(
-                        plural ?
-                            "common.unit.time.sec" :
-                            "common.unit.time.sec.single");
+                    isJSF ?
+                        JSFUtil.getMessage(
+                            plural ?
+                                "common.unit.time.sec" :
+                                "common.unit.time.sec.single") :
+                        SamUtil.getResourceString(
+                            plural ?
+                                "common.unit.time.sec" :
+                                "common.unit.time.sec.single");
             case TimeConvertor.UNIT_MIN:
                 return
-                    SamUtil.getResourceString(
-                        plural ?
-                            "common.unit.time.min" :
-                            "common.unit.time.min.single");
+                    isJSF ?
+                        JSFUtil.getMessage(
+                            plural ?
+                                "common.unit.time.min" :
+                                "common.unit.time.min.single") :
+                        SamUtil.getResourceString(
+                            plural ?
+                                "common.unit.time.min" :
+                                "common.unit.time.min.single");
             case TimeConvertor.UNIT_HR:
                 return
-                    SamUtil.getResourceString(
-                        plural ?
-                            "common.unit.time.hr" :
-                            "common.unit.time.hr.single");
+                    isJSF ?
+                        JSFUtil.getMessage(
+                            plural ?
+                                "common.unit.time.hr" :
+                                "common.unit.time.hr.single") :
+                        SamUtil.getResourceString(
+                            plural ?
+                                "common.unit.time.hr" :
+                                "common.unit.time.hr.single");
             case TimeConvertor.UNIT_DAY:
                 return
-                    SamUtil.getResourceString(
-                        plural ?
-                            "common.unit.time.day" :
-                            "common.unit.time.day.single");
+                    isJSF ?
+                        JSFUtil.getMessage(
+                            plural ?
+                                "common.unit.time.day" :
+                                "common.unit.time.day.single"):
+                        SamUtil.getResourceString(
+                            plural ?
+                                "common.unit.time.day" :
+                                "common.unit.time.day.single");
             default:
                 return "";
         }

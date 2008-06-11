@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: TimeConvertor.java,v 1.2 2008/05/16 18:39:07 am143972 Exp $
+// ident	$Id: TimeConvertor.java,v 1.3 2008/06/11 16:58:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -61,6 +61,10 @@ public class TimeConvertor implements Comparable, Comparator {
 
     public static final long [] unitSizes = {MSEC, SEC, MIN, HR, DAY};
 
+    // Determine which utility method to call when converting resource bundle
+    // string
+    public boolean jsf = false;
+
     /**
      * examples:
      * newTimeConvertor(60, ...TimeConvertor.UNIT_SEC) -> 1 MIN
@@ -69,13 +73,22 @@ public class TimeConvertor implements Comparable, Comparator {
     public static TimeConvertor newTimeConvertor(long size, int unit) {
         return new TimeConvertor(size, unit);
     }
+    public static TimeConvertor newTimeConvertor(
+        long size, int unit, boolean jsf) {
+        return new TimeConvertor(size, unit, jsf);
+    }
 
     protected TimeConvertor() {
     }
 
     public TimeConvertor(long size, int unit) {
+        this(size, unit, false);
+    }
+
+    public TimeConvertor(long size, int unit, boolean jsf) {
         this.size = size;
         this.unit = unit;
+        this.jsf = jsf;
 
         if (size <= 0) {
             sizeStr = new StringBuffer();
@@ -98,10 +111,11 @@ public class TimeConvertor implements Comparable, Comparator {
             return;
         } else {
             sizeStr.append(size).append(" ").append(
-                SamUtil.getDurationL10NString(size > 1, unit));
+                SamUtil.getDurationL10NString(size > 1, unit, jsf));
             if (carryOverSize != 0) {
                 sizeStr.append(" ").append(carryOverSize).append(" ").append(
-                    SamUtil.getDurationL10NString(carryOverSize > 1, unit - 1));
+                    SamUtil.getDurationL10NString(
+                        carryOverSize > 1, unit - 1, jsf));
             }
             return;
         }
@@ -237,5 +251,9 @@ public class TimeConvertor implements Comparable, Comparator {
      */
     public int compare(TimeConvertor c1, TimeConvertor c2) {
         return c1.compareTo(c2);
+    }
+
+    public boolean isJsf() {
+        return jsf;
     }
 }

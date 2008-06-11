@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PageInfo.java,v 1.33 2008/05/16 18:39:07 am143972 Exp $
+// ident	$Id: PageInfo.java,v 1.34 2008/06/11 16:58:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -57,7 +57,7 @@ public class PageInfo {
 
     private PageInfo() {
 
-        pagePaths = new PagePath [36];
+        pagePaths = new PagePath [37];
 
         pagePaths[0] = new PagePath(
             "FileSystemDetailsHref",
@@ -238,6 +238,11 @@ public class PageInfo {
             "RecoveryPointScheduleHref",
             "fs.recoverypointschedule.pagetitle",
             "fs.recoverypointschedule.breadcrumbmouseover");
+        
+        pagePaths[36] = new PagePath(
+            "SharedFSSummaryHref",
+            "SharedFS.title",
+            "SharedFS.title.breadcrumbmouseover");
 
         pageNames = new HashMap();
 
@@ -278,6 +283,7 @@ public class PageInfo {
         pageNames.put("RecoveryPoints", new Integer(33));
         pageNames.put("ScheduledTasks", new Integer(34));
         pageNames.put("RecoveryPointSchedule", new Integer(35));
+        pageNames.put("SharedFSSummary", new Integer(36));
     }
 
     public PagePath getPagePath(int index) {

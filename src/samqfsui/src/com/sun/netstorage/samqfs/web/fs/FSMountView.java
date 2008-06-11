@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSMountView.java,v 1.37 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSMountView.java,v 1.38 2008/06/11 16:58:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -72,9 +72,21 @@ public class FSMountView extends RequestHandlingViewBase {
     // is direct io set to on?
     private boolean directIO = false;
 
-    public FSMountView(View parent, String name) {
+    private String serverName, fsName, pageType, sharedType;
+    private Integer archive;
+
+    public FSMountView(
+        View parent, String name,
+        String serverName, String fsName,
+        Integer archive, String pageType, String sharedType) {
         super(parent, name);
         TraceUtil.trace3("Entering");
+
+        this.serverName = serverName;
+        this.fsName = fsName;
+        this.archive = archive;
+        this.pageType = pageType;
+        this.sharedType = sharedType;
 
         createPropertySheetModel();
         registerChildren();
@@ -83,15 +95,11 @@ public class FSMountView extends RequestHandlingViewBase {
     }
 
     public void registerChildren() {
-        TraceUtil.trace3("Entering");
         registerChild(CHILD_PROPERTY_SHEET, CCPropertySheet.class);
         propertySheetModel.registerChildren(this);
-        TraceUtil.trace3("Exiting");
     }
 
     public View createChild(String name) {
-        TraceUtil.trace3("Entering");
-
         // Propertysheet child
         if (name.equals(CHILD_PROPERTY_SHEET)) {
             return new CCPropertySheet(this, propertySheetModel, name);
@@ -108,7 +116,6 @@ public class FSMountView extends RequestHandlingViewBase {
      * Create propertysheet model
      */
     private CCPropertySheetModel createPropertySheetModel() {
-        TraceUtil.trace3("Entering");
         TraceUtil.trace2("PageType = " + getPageType());
 
         if (propertySheetModel == null)  {
@@ -131,7 +138,6 @@ public class FSMountView extends RequestHandlingViewBase {
             propertySheetModel = PropertySheetUtil.createModel(psXml);
         }
 
-        TraceUtil.trace3("Exiting");
         return propertySheetModel;
     }
 
@@ -139,7 +145,6 @@ public class FSMountView extends RequestHandlingViewBase {
      * Load the data for propertysheet model
      */
     public void loadPropertySheetModel() throws SamFSException {
-        TraceUtil.trace3("Entering");
         propertySheetModel.clear();
         String sharedMetaClient = (String)
         getParentViewBean().getPageSessionAttribute(
@@ -148,10 +153,10 @@ public class FSMountView extends RequestHandlingViewBase {
         if (sharedMetaClient != null) {
             model = SamUtil.getModel(sharedMetaClient);
         } else {
-            model = SamUtil.getModel(getServerName());
+            model = SamUtil.getModel(serverName);
         }
         FileSystem fs =
-            model.getSamQFSSystemFSManager().getFileSystem(getFSName());
+            model.getSamQFSSystemFSManager().getFileSystem(fsName);
         if (fs == null) {
             throw new SamFSException(null, -1000);
         }
@@ -189,8 +194,6 @@ public class FSMountView extends RequestHandlingViewBase {
             ((CCDropDownMenu) getChild("miswriteminUnit")).setDisabled(true);
             ((CCRadioButton) getChild("dioszeroValue")).setDisabled(true);
         }
-
-        TraceUtil.trace3("Exiting");
     }
 
     /**
@@ -409,7 +412,7 @@ public class FSMountView extends RequestHandlingViewBase {
             "questionValue", properties.isArchiverAutoRun() ? "yes" : "no");
 
         // for QFS license, disable all archive related properties
-        String hostName = getServerName();
+        String hostName = serverName;
 
         if (SamUtil.getSystemType(hostName) == SamQFSSystemModel.QFS) {
             ((CCTextField) getChild("partreleaseValue")).setDisabled(true);
@@ -575,16 +578,16 @@ public class FSMountView extends RequestHandlingViewBase {
 
         String exceHost = null;
         if (host == null) {
-            exceHost = getServerName();
+            exceHost = serverName;
             TraceUtil.trace3("set page session for exechost " + exceHost);
 
             SamQFSSystemModel sysModel = SamUtil.getModel(exceHost);
-            fs = sysModel.getSamQFSSystemFSManager().getFileSystem(getFSName());
+            fs = sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
         } else {
             exceHost = host;
             SamQFSSystemModel model = SamUtil.getModel(host);
 
-            fs = model.getSamQFSSystemFSManager().getFileSystem(getFSName());
+            fs = model.getSamQFSSystemFSManager().getFileSystem(fsName);
         }
 
         if (fs == null) {
@@ -631,10 +634,10 @@ public class FSMountView extends RequestHandlingViewBase {
             SamQFSSystemSharedFSManager fsManager =
                 appModel.getSamQFSSystemSharedFSManager();
             if (host != null) {
-                fsManager.setSharedMountOptions(host, getFSName(), properties);
+                fsManager.setSharedMountOptions(host, fsName, properties);
             } else {
                 fsManager.setSharedMountOptions(
-                    exceHost, getFSName(), properties);
+                    exceHost, fsName, properties);
             }
         } else {
             fs.changeMountOptions();
@@ -1258,34 +1261,20 @@ public class FSMountView extends RequestHandlingViewBase {
         }
     }
 
-    private String getFSName() {
-        return (String) getParentViewBean().getPageSessionAttribute(
-            Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
-    }
-
     private String getPageType() {
-        return (String) getParentViewBean().getPageSessionAttribute(
-            Constants.SessionAttributes.MOUNT_PAGE_TYPE);
+        return this.pageType;
     }
 
     private String getSharedClientType() {
-        return (String) getParentViewBean().getPageSessionAttribute(
-            Constants.SessionAttributes.SHARED_CLIENT_HOST);
-    }
-
-    private String getServerName() {
-        return (String) getParentViewBean().getPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+        return this.sharedType;
     }
 
     private boolean isArchive() {
-        Integer type = (Integer) getParentViewBean().getPageSessionAttribute(
-            Constants.PageSessionAttributes.ARCHIVE_TYPE);
-        if (type == null) {
+        if (archive == null) {
             // shared fs
             return false;
         } else {
-            return type.intValue() == FileSystem.ARCHIVING;
+            return archive.intValue() == FileSystem.ARCHIVING;
         }
     }
 }

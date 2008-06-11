@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSUtil.java,v 1.22 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FSUtil.java,v 1.23 2008/06/11 16:58:00 ronaldso Exp $
 
 /**
  * This util class contains a few declaration of the file system
@@ -45,8 +45,10 @@ import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
+import javax.servlet.http.HttpServletRequest;
 
 public class FSUtil {
 
@@ -182,6 +184,11 @@ public class FSUtil {
 
     public static String getFileSystemDescriptionString(
         GenericFileSystem myGenericFS) {
+        return getFileSystemDescriptionString(myGenericFS, false);
+    }
+
+    public static String getFileSystemDescriptionString(
+        GenericFileSystem myGenericFS, boolean jsf) {
 
         StringBuffer myBuffer = new StringBuffer();
 
@@ -190,67 +197,100 @@ public class FSUtil {
 
             case FS_DESC_QFS:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.qfs"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.qfs") :
+                        SamUtil.getResourceString("filesystem.desc.qfs"));
                  break;
             case FS_DESC_QFS_ARCHIVING:
                  myBuffer.append(
-                     SamUtil.getResourceString(
-                         "filesystem.desc.qfs.archiving"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.qfs.archiving") :
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.archiving"));
                  break;
             case FS_DESC_QFS_CLIENT:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.qfs.client"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.qfs.client") :
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.client"));
                  break;
             case FS_DESC_QFS_CLIENT_ARCHIVING:
                  myBuffer.append(
-                     SamUtil.getResourceString(
-                         "filesystem.desc.qfs.client.archiving"));
+                     jsf ?
+                        JSFUtil.getMessage(
+                            "filesystem.desc.qfs.client.archiving") :
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.client.archiving"));
                  break;
             case FS_DESC_QFS_SERVER:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.qfs.server"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.qfs.server") :
+                        SamUtil.getResourceString("filesystem.desc.qfs.server"));
                  break;
             case FS_DESC_QFS_SERVER_ARCHIVING:
                  myBuffer.append(
-                     SamUtil.getResourceString(
-                         "filesystem.desc.qfs.server.archiving"));
+                     jsf ?
+                        JSFUtil.getMessage(
+                            "filesystem.desc.qfs.server.archiving") :
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.server.archiving"));
                  break;
             case FS_DESC_QFS_POTENTIAL_SERVER:
                  myBuffer.append(
-                     SamUtil.getResourceString(
-                         "filesystem.desc.qfs.potential.server"));
+                     jsf ?
+                        JSFUtil.getMessage(
+                            "filesystem.desc.qfs.potential.server") :
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.potential.server"));
                  break;
             case FS_DESC_QFS_POTENTIAL_SERVER_ARCHIVING:
                  myBuffer.append(
-                     SamUtil.getResourceString(
-                         "filesystem.desc.qfs.potential.server.archiving"));
+                     jsf ?
+                        JSFUtil.getMessage(
+                            "filesystem.desc.qfs.potential.server.archiving") :
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.potential.server.archiving"));
                  break;
             case FS_DESC_UFS:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.ufs"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.ufs") :
+                        SamUtil.getResourceString("filesystem.desc.ufs"));
                  break;
             case FS_DESC_ZFS:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.zfs"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.zfs") :
+                        SamUtil.getResourceString("filesystem.desc.zfs"));
                  break;
             case FS_DESC_VXFS:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.vxfs"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.vxfs") :
+                        SamUtil.getResourceString("filesystem.desc.vxfs"));
                  break;
             case FS_DESC_NFS_CLIENT:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.nfs.client"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.nfs.client") :
+                        SamUtil.getResourceString("filesystem.desc.nfs.client"));
                  break;
             default:
                  myBuffer.append(
-                     SamUtil.getResourceString("filesystem.desc.unknown"));
+                     jsf ?
+                        JSFUtil.getMessage("filesystem.desc.unknown") :
+                        SamUtil.getResourceString("filesystem.desc.unknown"));
                  return myBuffer.toString();
         }
 
         // determine if the fs is ha
         if (myGenericFS.isHA()) {
-            myBuffer.append(",").
-                append(SamUtil.getResourceString("filesystem.desc.ha"));
+            myBuffer.append(",").append(
+                jsf ?
+                    JSFUtil.getMessage("filesystem.desc.ha") :
+                    SamUtil.getResourceString("filesystem.desc.ha"));
         }
 
         return myBuffer.toString();
@@ -399,5 +439,18 @@ public class FSUtil {
                 Constants.Image.ICON_TAPE_PREFIX.concat(copyStr).
                     concat(Constants.Image.ICON_SUFFIX);
         }
+    }
+
+    /**
+     * Method to retrieve file system name from the request, and save it in the
+     * session.
+     */
+    public static String getFSName() {
+        HttpServletRequest request = JSFUtil.getRequest();
+        String fsName =
+            request.getParameter(Constants.PageSessionAttributes.FS_NAME);
+        JSFUtil.setAttribute(Constants.PageSessionAttributes.FS_NAME, fsName);
+
+        return fsName;
     }
 }

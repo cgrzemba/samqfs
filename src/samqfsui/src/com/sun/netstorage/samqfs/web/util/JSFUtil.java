@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.4 2008/06/04 18:09:28 kilemba Exp $
+// ident	$Id: JSFUtil.java,v 1.5 2008/06/11 16:58:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -40,6 +40,9 @@ import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.faces.component.UIViewRoot;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  *
@@ -182,14 +185,14 @@ public class JSFUtil {
     }
 
     /** for now store values in session */
-    public void setAttribute(Object value, String name) {
+    public static void setAttribute(Object value, String name) {
         HttpSession session = getRequest().getSession();
         if (name != null)
             session.setAttribute(name, value);
     }
 
     /** for now, store values in session */
-    public Object getAttribute(String name) {
+    public static Object getAttribute(String name) {
         HttpSession session = getRequest().getSession();
         Object value = null;
 
@@ -197,5 +200,66 @@ public class JSFUtil {
             value = session.getAttribute(name);
 
         return value;
+    }
+
+    /**
+     * Used by JSF page when it's needed to forward to a JATO based page, or
+     * used by a JSF page to redirect to another JSF page when it's appropriate.
+     * @param url
+     * @param params
+     */
+    public static void redirectPage(String url, String params) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        ExternalContext ec = context.getExternalContext();
+        HttpServletRequest request =
+            (HttpServletRequest) ec.getRequest();
+        HttpServletResponse response =
+            (HttpServletResponse) ec.getResponse();
+
+        params = params == null ? "" : "?" + params;
+        // Get the context path.
+        String targetURL = request.getContextPath() + url + params;
+
+        try {
+System.out.println("Forward to URL: " + targetURL);
+            // Redirect to the particular JATO page
+            response.sendRedirect(targetURL);
+
+            // Skip the JSF cycle.
+            context.responseComplete();
+
+        } catch (Exception se) {
+            // handle the exception
+        }
+    }
+
+    /**
+     * Used by a JATO based page to forward to JSF based page.
+     * @param vb
+     * @param url
+     * @param params
+     */
+    public static void forwardToJSFPage(
+            CommonViewBeanBase vb, String url, String params) {
+        HttpServletRequest request = vb.getRequestContext().getRequest();
+        HttpServletResponse response =
+            vb.getRequestContext().getResponse();
+
+        params = params == null ? "" : "?" + params;
+        String targetURL = url + params;
+
+        TraceUtil.trace2("Forward to URL: " + targetURL);
+
+        ServletContext sc = vb.getRequestContext().getServletContext();
+        RequestDispatcher rd = sc.getRequestDispatcher(targetURL);
+
+        try {
+            rd.forward(request, response);
+        } catch (Exception se) {
+            TraceUtil.trace1(
+            "Exception caught while forwarding back to JSF Page " + url,
+                se);
+            vb.forwardTo(vb.getRequestContext());
+        }
     }
 }

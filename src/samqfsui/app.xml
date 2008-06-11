@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: app.xml,v 1.28 2008/05/16 19:39:10 am143972 Exp $ -->
+<!-- $Id: app.xml,v 1.29 2008/06/11 16:57:58 ronaldso Exp $ -->
 
 
 <registrationInfo version="3.0">
@@ -42,13 +42,13 @@
         bundleJar="com.sun.netstorage.samqfs.web.fsmgr.jar">
 
         <!--Localizable plug-in name-->
-        <name localizable="true">File System Manager</name>
+        <name localizable="true">SAM-QFS Manager</name>
 
         <!--Internal plug-in name-->
         <pluginName>fsmgrAdmin</pluginName>
 
         <!--Product Names-->
-        <primaryProductName>File System Manager</primaryProductName>
+        <primaryProductName>SAM-QFS Manager</primaryProductName>
 
         <!--Brief description of this management application-->
         <shortDescription localizable="true">
@@ -57,7 +57,7 @@
 
         <!--Arbitrary length description of this management application-->
         <description localizable="true">
-            A WEB-based graphical user interface that configs and controls Sun StorEdge QFS Servers
+            Sun StorageTek Storage Archive Manager (SAM) software provides policy-based archiving services that help you automate management of your information assets based on business value. It provides a powerful, easily managed, cost-effective way to access, archive, and protect business data over its entire lifecycle.  This self-protecting file system offers continuous archiving and fast recovery features to help enhance productivity resource utilization.
         </description>
 
         <!--Description of common masthead properties-->

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesView.java,v 1.31 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSArchivePoliciesView.java,v 1.32 2008/06/11 16:58:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -106,20 +106,17 @@ public class FSArchivePoliciesView extends CommonTableContainerView {
     // keeps track of whether the new policy wizard is already up or not
     private boolean newPolicyWizardRunning = false;
 
-    private boolean writeRole = false;
-
     protected String serverName;
     protected String fsName;
 
-    public FSArchivePoliciesView(View parent, String name) {
+    public FSArchivePoliciesView(
+        View parent, String name, String serverName, String fsName) {
         super(parent, name);
         TraceUtil.initTrace();
         TraceUtil.trace3("Entering");
-        ViewBean vb = getParentViewBean();
-        serverName = (String) vb.getPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
-        fsName = (String) vb.getPageSessionAttribute(
-            Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+
+        this.serverName = serverName;
+        this.fsName = fsName;
 
         CHILD_ACTION_TABLE = "FSArchivePoliciesTable";
         model = new FSArchivePoliciesModel(serverName, fsName);

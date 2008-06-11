@@ -27,13 +27,14 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.1 2008/06/04 18:16:10 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.2 2008/06/11 16:58:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
 import java.util.Properties;
 
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 
 /**
  * this class encapsulates information about a shared file system host
@@ -65,45 +66,44 @@ import com.sun.netstorage.samqfs.web.util.ConversionUtil;
  */
 public class SharedHostInfo {
 
-    final String KEY_NAME = "hostName";
-    final String KEY_TYPE = "type";
-    final String KEY_IP_ADDRESSES = "ip_addresses";
-    final String KEY_OS = "os";
-    final String KEY_VERSION = "version";
-    final String KEY_ARCH = "arch";
-    final String KEY_MOUNTED = "mounted";
-    final String KEY_STATUS = "status";
-    final String KEY_ERROR = "error";
-    final String KEY_FAULTS = "faults";
+    private static final String KEY_NAME = "hostName";
+    private static final String KEY_TYPE = "type";
+    private static final String KEY_IP_ADDRESSES = "ip_addresses";
+    private static final String KEY_OS = "os";
+    private static final String KEY_VERSION = "version";
+    private static final String KEY_ARCH = "arch";
+    private static final String KEY_MOUNTED = "mounted";
+    private static final String KEY_STATUS = "status";
+    private static final String KEY_ERROR = "error";
+    private static final String KEY_FAULTS = "faults";
 
     // HOST_DETAILS
-    final String KEY_FI_STATUS = "fi_status";
-    final String KEY_FI_FLAGS = "fi_flags";
-    final String KEY_MNT_CFG = "mnt_cfg";
-    final String KEY_MNT_CFG_1 = "mnt_cfg1";
-    final String KEY_NO_MSGS = "no_msgs";
-    final String KEY_LOW_MSG = "low_msg";
+    private static final String KEY_FI_STATUS = "fi_status";
+    private static final String KEY_FI_FLAGS = "fi_flags";
+    private static final String KEY_MNT_CFG = "mnt_cfg";
+    private static final String KEY_MNT_CFG_1 = "mnt_cfg1";
+    private static final String KEY_NO_MSGS = "no_msgs";
+    private static final String KEY_LOW_MSG = "low_msg";
 
 
     // definitions
 
     // type = OSD | client | mds | pmds
-    final short TYPE_MDS = 0;
-    final short TYPE_PMDS = 1;
-    final short TYPE_CLIENT = 2;
-    final short TYPE_OSD = 3;
-
-    // arch = x86 | sparc
-    final short ARCH_SPARC = 0;
-    final short ARCH_X86 = 1;
+    public static final short TYPE_MDS = 0;
+    public static final short TYPE_PMDS = 1;
+    public static final short TYPE_CLIENT = 2;
+    public static final short TYPE_OSD = 3;
 
     // status = ON | OFF
-    final short STATUS_ON = 0;
-    final short STATUS_OFF = 1;
+    public static final short STATUS_ON = 0;
+    public static final short STATUS_OFF = 1;
 
-    // error = assumed_dead | known_dead
-    final short ERROR_ASSUMED_DEAD = 0;
-    final short ERROR_KNOWN_DEAD = 1;
+    // overall status
+    public static final short STATUS_ASSUMED_DEAD = 0;
+    public static final short STATUS_KNOWN_DEAD = 1;
+    public static final short STATUS_ACCESS_DISABLED = 2;
+    public static final short STATUS_UNMOUNTED = 3;
+    public static final short STATUS_OK = 4;
 
     protected Properties props = null;
 
@@ -115,27 +115,31 @@ public class SharedHostInfo {
     }
 
     public String getName() {
-        return props.getProperty(KEY_NAME);
+        return props.getProperty(KEY_NAME, "");
     }
 
     public String getOS() {
-        return props.getProperty(KEY_OS);
+        return props.getProperty(KEY_OS, "");
     }
-    
+
     public String [] getIPAddresses() {
-        String str = props.getProperty(KEY_IP_ADDRESSES);
+        String str = getIPAddressesStr();
         if (str.length() == 0) {
             return new String[0];
         }
         return str.split(" ");
     }
 
+    public String getIPAddressesStr() {
+        return props.getProperty(KEY_IP_ADDRESSES, "");
+    }
+
     public String getVersion() {
-        return props.getProperty(KEY_VERSION);
+        return props.getProperty(KEY_VERSION, "");
     }
 
     public short getType() {
-        String str = props.getProperty(KEY_TYPE);
+        String str = props.getProperty(KEY_TYPE, "");
         if ("mds".equals(str)) {
             return TYPE_MDS;
         } else if ("pmds".equals(str)) {
@@ -148,30 +152,30 @@ public class SharedHostInfo {
         return -1;
     }
 
-    public short getArch() {
-        String str = props.getProperty(KEY_ARCH);
+    public String getArch() {
+        String str = props.getProperty(KEY_ARCH, "");
         if ("sparc".equals(str)) {
-            return ARCH_SPARC;
+            return JSFUtil.getMessage("common.text.sparc");
         } else if ("x86".equals(str)) {
-            return ARCH_X86;
+            return JSFUtil.getMessage("common.text.x86");
         }
-        return -1;
+        return "";
     }
 
-    public int getMounted() {
-        String str = props.getProperty(KEY_MOUNTED);
+    public Long getMounted() {
+        String str = props.getProperty(KEY_MOUNTED, "");
         if (str.length() == 0) {
-            return -1;
+            return new Long(-1);
         }
         try {
-            return Integer.parseInt(str);
+            return new Long(str);
         } catch (NumberFormatException ex) {
-            return -1;
+            return new Long(-1);
         }
     }
-    
+
     public short getStatus() {
-        String str = props.getProperty(KEY_STATUS);
+        String str = props.getProperty(KEY_STATUS, "");
         if ("ON".equals(str)) {
             return STATUS_ON;
         } else if ("OFF".equals(str)) {
@@ -180,18 +184,12 @@ public class SharedHostInfo {
         return -1;
     }
 
-    public short getError() {
-        String str = props.getProperty(KEY_ERROR);
-        if ("assumed_dead".equals(str)) {
-            return ERROR_ASSUMED_DEAD;
-        } else if ("known_dead".equals(str)) {
-            return ERROR_KNOWN_DEAD;
-        }
-        return -1;
+    public String getError() {
+        return props.getProperty(KEY_ERROR, "");
     }
 
     public int getFaults() {
-        String str = props.getProperty(KEY_FAULTS);
+        String str = props.getProperty(KEY_FAULTS, "");
         if (str.length() == 0) {
             return -1;
         }
@@ -199,6 +197,50 @@ public class SharedHostInfo {
             return Integer.parseInt(str);
         } catch (NumberFormatException ex) {
             return -1;
+        }
+    }
+
+    public String getStatusIcon() {
+        switch (getStatusValue()) {
+            case STATUS_ASSUMED_DEAD:
+            case STATUS_KNOWN_DEAD:
+                return "/images/error_13x.gif";
+            case STATUS_ACCESS_DISABLED:
+            case STATUS_UNMOUNTED:
+                return "/images/disabled_13x.png";
+            case STATUS_OK:
+            default:
+                return "/images/OK_13x.png";
+        }
+    }
+
+    public String getStatusString() {
+        switch (getStatusValue()) {
+            case STATUS_ASSUMED_DEAD:
+                return JSFUtil.getMessage("SharedFS.state.assumeddead");
+            case STATUS_KNOWN_DEAD:
+                return JSFUtil.getMessage("SharedFS.state.knowndead");
+            case STATUS_ACCESS_DISABLED:
+                return JSFUtil.getMessage("SharedFS.state.accessdisabled");
+            case STATUS_UNMOUNTED:
+                return JSFUtil.getMessage("SharedFS.state.unmounted");
+            case STATUS_OK:
+            default:
+                return JSFUtil.getMessage("SharedFS.state.ok");
+        }
+    }
+
+    private short getStatusValue() {
+        if ("assumed_dead".equals(getError())) {
+            return STATUS_ASSUMED_DEAD;
+        } else if ("known_dead".equals(getError())) {
+            return STATUS_KNOWN_DEAD;
+        } else if (STATUS_OFF == getStatus()) {
+            return STATUS_ACCESS_DISABLED;
+        } else if (-1 == getMounted()){
+            return STATUS_UNMOUNTED;
+        } else {
+            return STATUS_OK;
         }
     }
 

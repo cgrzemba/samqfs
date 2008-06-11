@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Constants.java,v 1.103 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: Constants.java,v 1.104 2008/06/11 16:58:01 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -422,6 +422,16 @@ public interface Constants {
 
     public interface sc {
         public static final String HOST_MODEL_MAP = "host.model.map";
+    }
+
+    /**
+     * Alert Type Strings for JSF:Alert component
+     */
+    public interface Alert {
+        public static final String INFO = "information";
+        public static final String SUCCESS = "success";
+        public static final String WARNING = "warning";
+        public static final String ERROR = "error";
     }
 
     public final static String UNDERBAR = "_";

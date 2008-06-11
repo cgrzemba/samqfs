@@ -29,32 +29,24 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.6 2008/05/16 19:39:11 am143972 Exp $ -->
+<!-- $Id: faces-config.xml,v 1.7 2008/06/11 16:57:59 ronaldso Exp $ -->
 
 <faces-config>
     <application>
         <locale-config>
             <default-locale>en</default-locale>
             <supported-locale>en_US</supported-locale>
-        </locale-config>   
+        </locale-config>
     </application>
-    
-    <navigation-rule>
-        <description>REMOVE ME WHEN THIS IS NO LONGER NEEDED</description>
-        <from-view-id>/jsp/test/content.jsp</from-view-id>
-        <navigation-case>
-            <from-outcome>GROW</from-outcome>
-            <to-view-id>/jsp/test/header.jsp</to-view-id>
-        </navigation-case>
-    </navigation-rule>
-    
+
+    <!-- HPC Shared File System Beans -->
     <managed-bean>
-        <description>REMOVE ME WHEN THIS IS NO LONGER NEEDED</description>
-        <managed-bean-name>MenuListBackingBean</managed-bean-name>
-        <managed-bean-class>com.sun.netstorage.samqfs.web.test.MenuListBackingBean</managed-bean-class>
+        <description>Manage Bean for Shared File System Pages</description>
+        <managed-bean-name>SharedFSBean</managed-bean-name>
+        <managed-bean-class>com.sun.netstorage.samqfs.web.fs.SharedFSBean</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
-    
+
     <!-- Jobs beans -->
     <!-- controller -->
     <managed-bean>
@@ -70,14 +62,14 @@
         <managed-bean-class>com.sun.netstorage.samqfs.web.jobs.JobsBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
-    
+
     <managed-bean>
         <description>Job Details Bean</description>
         <managed-bean-name>JobDetailsBean</managed-bean-name>
         <managed-bean-class>com.sun.netstorage.samqfs.web.jobs.JobDetailsBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
-    
+
     <!-- navigation rules -->
     <navigation-rule>
         <from-view-id>/jsp/jobs/Jobs.jsp</from-view-id>
@@ -126,7 +118,7 @@
             <to-view-id>/jsp/jobs/GenericJobDetails.jsp</to-view-id>
         </navigation-case>
     </navigation-rule>
-    
+
     <!-- converters -->
     <converter>
         <converter-id>JobTypeConverter</converter-id>
@@ -135,5 +127,13 @@
     <converter>
         <converter-id>JobStatusConverter</converter-id>
         <converter-class>com.sun.netstorage.samqfs.web.jobs.JobStatusConverter</converter-class>
+    </converter>
+    <converter>
+        <converter-id>SpaceDelimiterConverter</converter-id>
+        <converter-class>com.sun.netstorage.samqfs.web.util.SpaceDelimiterConverter</converter-class>
+    </converter>
+    <converter>
+        <converter-id>TimeInSecConverter</converter-id>
+        <converter-class>com.sun.netstorage.samqfs.web.util.TimeInSecConverter</converter-class>
     </converter>
 </faces-config>

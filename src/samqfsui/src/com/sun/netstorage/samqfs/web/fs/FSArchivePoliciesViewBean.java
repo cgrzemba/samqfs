@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesViewBean.java,v 1.32 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSArchivePoliciesViewBean.java,v 1.33 2008/06/11 16:58:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
+import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBean;
@@ -47,6 +48,7 @@ import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.PropertySheetUtil;
@@ -90,6 +92,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
     public static final String CHILD_FS_SUMMARY_HREF = "FileSystemSummaryHref";
     public static final String CHILD_FS_DETAILS_HREF = "FileSystemDetailsHref";
     public static final String CHILD_SHARED_FS_HREF = "SharedFSDetailsHref";
+    public static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
 
     // handler for archive pages (v44)
     public static final String POLICY_SUMMARY_HREF   = "PolicySummaryHref";
@@ -134,6 +137,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_DETAILS_HREF, CCHref.class);
         registerChild(CRITERIA_DETAILS_HREF, CCHref.class);
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
         registerChild(CHILD_ROLE, CCStaticTextField.class);
         registerChild(CHILD_STATICTEXT, CCStaticTextField.class);
         registerChild(CHILD_HIDDEN_SERVERNAME, CCHiddenField.class);
@@ -156,7 +160,25 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         if (name.equals(CHILD_IMAGE)) {
             child = new CCImageField(this, name, null);
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
-            child = new FSArchivePoliciesView(this, name);
+            String serverName = (String) getPageSessionAttribute(
+                Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+            if (serverName == null){
+                serverName = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME,
+                    serverName);
+            }
+            String fsName = (String) getPageSessionAttribute(
+                Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+            if (fsName == null){
+                fsName = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.FILE_SYSTEM_NAME,
+                    fsName);
+            }
+            child = new FSArchivePoliciesView(this, name, serverName, fsName);
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
             child = PageTitleUtil.createChild(this, pageTitleModel, name);
         } else if (PropertySheetUtil.isChildSupported(
@@ -164,6 +186,26 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
             child = PropertySheetUtil.createChild(
                 this, propertySheetModel, name);
         } else if (name.equals(CHILD_BREADCRUMB)) {
+            Integer [] pagePath = (Integer []) getPageSessionAttribute(
+                                Constants.SessionAttributes.PAGE_PATH);
+            if (pagePath == null){
+                String pathString = RequestManager.getRequest().getParameter(
+                                        Constants.SessionAttributes.PAGE_PATH);
+                pathString = pathString == null ? "" : pathString;
+                String [] pathStringArr =
+                    pathString == null ?
+                        new String[0] :
+                        pathString.split(",");
+                Integer [] path = new Integer[pathStringArr.length];
+                for (int i = 0; i < pathStringArr.length; i++){
+                    path[i] = new Integer(pathStringArr[i]);
+                }
+
+                setPageSessionAttribute(
+                    Constants.SessionAttributes.PAGE_PATH,
+                    path);
+            }
+
             breadCrumbsModel =
                 new CCBreadCrumbsModel("FSArchivePolicies.pageTitle");
 
@@ -176,6 +218,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
                    name.equals(CHILD_SHARED_FS_HREF) ||
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
+                   name.equals(SHARED_FS_SUMMARY_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF)) {
             child = new CCHref(this, name, null);
         } else if (name.equals(CHILD_ROLE)) {
@@ -232,9 +275,9 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         TraceUtil.trace3("Entering");
 
         String serverName = (String) getPageSessionAttribute(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+                Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
         String fsName = (String) getPageSessionAttribute(
-            Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+                Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
 
         ((CCHiddenField)
             getChild(CHILD_HIDDEN_SERVERNAME)).setValue(serverName);
@@ -265,6 +308,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
                 ex.getMessage(),
                 serverName);
         }
+
 
         TraceUtil.trace3("Exiting");
     }
@@ -645,5 +689,23 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
 
         forwardTo(target);
         TraceUtil.trace3("Exiting");
+    }
+
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
+        throws ServletException, IOException {
+
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
+
+        TraceUtil.trace2("FSArchivePolicy: Navigate back to URL: " + url);
+
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + (String) getPageSessionAttribute(
+                             Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        JSFUtil.forwardToJSFPage(this, url, params);
     }
 }
