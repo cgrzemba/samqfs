@@ -27,28 +27,22 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.1 2008/06/11 16:58:00 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.2 2008/06/11 23:03:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.data.provider.TableDataProvider;
 import com.sun.data.provider.impl.ObjectArrayDataProvider;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.web.ui.component.Hyperlink;
 import com.sun.web.ui.model.Option;
 import com.sun.web.ui.model.OptionTitle;
+import javax.servlet.http.HttpServletRequest;
 
 public class SharedFSClientBean {
-
-    /** Page Modes for target pages */
-    public static final short MODE_CLIENT_ALL = 0;
-    public static final short MODE_CLIENT_OK = 1;
-    public static final short MODE_CLIENT_UNMOUNTED = 2;
-    public static final short MODE_CLIENT_DISABLED = 3;
-    public static final short MODE_CLIENT_IN_ERROR = 4;
-    public static final short MODE_CLIENT_DELETE = 5;
 
     /** Page Menu Options */
     protected String [][] menuOptions = new String [][] {
@@ -61,10 +55,14 @@ public class SharedFSClientBean {
 
     // Basic Filter Menu
     protected String [][] filterOptions = new String [][] {
-        {"SharedFS.state.ok", Short.toString(MODE_CLIENT_OK)},
-        {"SharedFS.state.unmounted", Short.toString(MODE_CLIENT_UNMOUNTED)},
-        {"SharedFS.state.accessdisabled", Short.toString(MODE_CLIENT_DISABLED)},
-        {"SharedFS.state.inerror", Short.toString(MODE_CLIENT_IN_ERROR)}
+        {"SharedFS.state.ok",
+             Short.toString(SamQFSSystemSharedFSManager.FILTER_OK)},
+        {"SharedFS.state.unmounted",
+             Short.toString(SamQFSSystemSharedFSManager.FILTER_UNMOUNTED)},
+        {"SharedFS.state.accessdisabled",
+             Short.toString(SamQFSSystemSharedFSManager.FILTER_DISABLED)},
+        {"SharedFS.state.inerror",
+             Short.toString(SamQFSSystemSharedFSManager.FILTER_IN_ERROR)}
     };
 
     protected boolean archive = false;
@@ -150,4 +148,43 @@ public class SharedFSClientBean {
         return filterMenuOptions;
     }
 
+    /**
+     * Method to retrieve page mode from the request, and save it in the
+     * session.
+     */
+    public short getFilter() {
+        HttpServletRequest request = JSFUtil.getRequest();
+        String mode = request.getParameter("mode");
+        try {
+            if (mode == null) {
+                mode = (String) JSFUtil.getAttribute("mode");
+                if (mode == null) {
+                    return 0;
+                } else {
+                    return Short.parseShort(mode);
+                }
+            } else {
+                JSFUtil.setAttribute("mode", mode);
+                return Short.parseShort(mode);
+            }
+        } catch (NumberFormatException numEx) {
+            System.out.println("NumberFormatException in getMode()");
+            return -1;
+        }
+    }
+
+    public String getClientTableTitle() {
+        if (0 == getFilter()) {
+            return JSFUtil.getMessage("SharedFS.title.table.clients");
+        } else {
+            return JSFUtil.getMessage(
+                "SharedFS.title.table.clients.filtered",
+                new String [] {
+                    JSFUtil.getMessage(filterOptions[getFilter() - 1][0])});
+        }
+    }
+
+    public String getClientTableFilterSelectedOption() {
+        return Short.toString(getFilter());
+    }
 }

@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.1 2008/06/11 16:57:59 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.2 2008/06/11 23:03:36 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -166,7 +166,10 @@
                                     noWrap="true"
                                     overlapLabel="false">
                                     <!-- Client Table -->
-                                    <ui:table id="tableClients" title="#{samBundle['SharedFS.title.table.clients']}">
+                                    <ui:table id="tableClients">
+                                        <f:facet name="title">
+                                            <ui:staticText text="#{samBundle['SharedFS.title.table.clients']}"/>
+                                        </f:facet>
                                         <ui:tableRowGroup id="snsRows"
                                                           binding="#{SharedFSBean.clientTableRowGroup}"
                                                           sourceData="#{SharedFSBean.clientList}"
@@ -255,7 +258,10 @@
                                     noWrap="true"
                                     overlapLabel="false">
                                     <!-- Storage Node Table -->
-                                    <ui:table id="tableStorageNodes" title="#{samBundle['SharedFS.title.table.sns']}">
+                                    <ui:table id="tableStorageNodes">
+                                        <f:facet name="title">
+                                            <ui:staticText text="#{samBundle['SharedFS.title.table.sns']}"/>
+                                        </f:facet>
                                         <ui:tableRowGroup id="snsRows"
                                                           binding="#{SharedFSBean.snTableRowGroup}"
                                                           sourceData="#{SharedFSBean.storageNodeList}"

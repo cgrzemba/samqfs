@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.1 2008/06/11 16:58:00 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.2 2008/06/11 23:03:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -176,7 +176,7 @@ sfe.printStackTrace();
         }
     }
 
-    private void getClientData() {
+    private void getClientData(short filter) {
         timeClient = Long.toString(System.currentTimeMillis());
 System.out.println("serverName: " + serverName);
 System.out.println("fsName: " + fsName);
@@ -195,7 +195,12 @@ System.out.println("fsName: " + fsName);
 
                 SharedHostInfo [] infos =
                     sharedFSManager.getSharedFSHosts(
-                        serverName, fsName, SharedHostInfo.TYPE_CLIENT);
+                        serverName,
+                        fsName,
+                        SharedHostInfo.TYPE_MDS |
+                        SharedHostInfo.TYPE_PMDS |
+                        SharedHostInfo.TYPE_CLIENT,
+                        filter);
 
                 clientBean.populate(infos, showArchive);
 
@@ -375,7 +380,7 @@ System.out.println("selected: " + selected);
         } else if ("removesn".equals(selected)) {
             forwardToSNPage();
         } else if ("removecn".equals(selected)) {
-            forwardToClientPage();
+            forwardToClientPage((short)10);
         }
     }
 
@@ -510,8 +515,9 @@ System.out.println("selected: " + selected);
         JSFUtil.redirectPage("/faces/jsp/fs/SharedFSStorageNode.jsp", "mode=5");
     }
 
-    private void forwardToClientPage(){
-        JSFUtil.redirectPage("/faces/jsp/fs/SharedFSClient.jsp", "mode=5");
+    private void forwardToClientPage(short filter) {
+        JSFUtil.redirectPage(
+            "/faces/jsp/fs/SharedFSClient.jsp", "mode=" + filter);
     }
 
     private void executeCommand(boolean mount){
@@ -524,8 +530,10 @@ System.out.println("selected: " + selected);
             setAlertInfo(
                 Constants.Alert.INFO,
                 mount ?
-                    JSFUtil.getMessage("SharedFS.message.mount.ok"):
-                    JSFUtil.getMessage("SharedFS.message.unmount.ok"),
+                    JSFUtil.getMessage("SharedFS.message.mount.ok",
+                                       thisFS.getName()):
+                    JSFUtil.getMessage("SharedFS.message.unmount.ok",
+                                       thisFS.getName()),
                 null);
 
         } catch (SamFSException samEx){
@@ -537,15 +545,16 @@ System.out.println("selected: " + selected);
             setAlertInfo(
                 Constants.Alert.ERROR,
                 mount ?
-                    JSFUtil.getMessage("SharedFS.message.mount.failed"):
-                    JSFUtil.getMessage("SharedFS.message.unmount.failed"),
+                    JSFUtil.getMessage("SharedFS.message.mount.failed",
+                                       thisFS.getName()):
+                    JSFUtil.getMessage("SharedFS.message.unmount.failed",
+                                       thisFS.getName()),
                 samEx.getMessage());
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // Bean getters and setters
-
     public boolean isShowStorageNodes() {
         return showStorageNodes;
     }
@@ -571,9 +580,13 @@ System.out.println("selected: " + selected);
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Client Summary Page Methods (SharedFSClient.jsp)
+    // Client Summary Page Methods (SharedFSClient.jsp)\
+    public String getClientTableTitle() {
+        return clientBean.getClientTableTitle();
+    }
+
     public TableDataProvider getClientSummaryList() {
-        getClientData();
+        getClientData(clientBean.getFilter());
         return clientBean.getClientList();
     }
 
@@ -605,33 +618,36 @@ System.out.println("selected: " + selected);
     public void setClientTableSelectedOption(String clientTableSelectedOption) {
         this.clientTableSelectedOption = clientTableSelectedOption;
     }
-    
+
     public String getClientTableFilterSelectedOption() {
-        return clientTableFilterSelectedOption;
+        return clientBean.getClientTableFilterSelectedOption();
     }
 
     public void setClientTableFilterSelectedOption(
         String clientTableFilterSelectedOption) {
         this.clientTableFilterSelectedOption = clientTableFilterSelectedOption;
     }
-    
+
     /** Return the array of jump menu options */
     public Option[] getClientTableMenuOptions() {
         return clientBean.getJumpMenuOptions();
     }
-    
+
     /** Return the array of filter menu options */
     public Option[] getClientTableFilterOptions() {
         return clientBean.getFilterMenuOptions();
     }
-    
+
     public void handleTableMenuSelection(ActionEvent event) {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
         System.out.println("handleTableMenuSelection() called: " + selected);
     }
-    
-    public String handleFilterChange() {
-        return "";
+
+    public void handleFilterChange(ActionEvent event) {
+        DropDown dropDown = (DropDown) event.getComponent();
+        String selected = (String) dropDown.getSelected();
+        System.out.println("Entering handleFilterChange! selected:" + selected);
+        forwardToClientPage(Short.parseShort(selected));
     }
 }

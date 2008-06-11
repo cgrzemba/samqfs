@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.44 2008/06/11 16:58:00 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.45 2008/06/11 23:03:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -183,7 +183,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * low_msg = uint32
      */
     public SharedHostInfo [] getSharedFSHosts(
-        String mdServer, String fsName, int options)
+        String mdServer, String fsName, int options, short filter)
         throws SamFSException {
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
@@ -197,15 +197,20 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             // Host.getSharedFSHosts(model.getJniContext(), fsName, options);
             createFakeHostInfo();
         hostInfo = hostInfo == null ? new String[0] : hostInfo;
-
         SharedHostInfo [] sharedHostInfo = new SharedHostInfo[hostInfo.length];
+
         for (int i = 0; i < hostInfo.length; i++) {
             sharedHostInfo[i] = new SharedHostInfo(hostInfo[i]);
         }
 
-        return sharedHostInfo;
+        // Show All
+        if (SamQFSSystemSharedFSManager.FILTER_NONE == filter) {
+            return sharedHostInfo;
+        } else {
+            return filterHosts(sharedHostInfo, filter);
+        }
     }
-    
+
     /**
      * TODO: Remove ME!
      */
@@ -216,8 +221,38 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
                 "hostName=moon,type=client,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF,error=assumed_dead",
                 "hostName=mars,type=client,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON,error=known_dead",
                 "hostName=jupiter,type=client,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
-                "hostName=venus,type=client,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"    
+                "hostName=venus,type=client,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"
             };
+    }
+
+    private SharedHostInfo [] filterHosts(
+        SharedHostInfo [] infos, short filter) {
+        ArrayList hostList = new ArrayList();
+        // TODO: Add FILTER_CUSTOM
+        for (int i = 0; i < infos.length; i++) {
+            if (
+                (FILTER_OK == filter &&
+                    SharedHostInfo.STATUS_OK == infos[i].getStatusValue()) ||
+                (FILTER_UNMOUNTED == filter &&
+                    SharedHostInfo.STATUS_UNMOUNTED ==
+                                    infos[i].getStatusValue()) ||
+                (FILTER_DISABLED == filter &&
+                    SharedHostInfo.STATUS_ACCESS_DISABLED ==
+                                    infos[i].getStatusValue()) ||
+                (FILTER_IN_ERROR == filter &&
+                    SharedHostInfo.STATUS_ASSUMED_DEAD ==
+                                    infos[i].getStatusValue()) ||
+                (FILTER_IN_ERROR == filter &&
+                    SharedHostInfo.STATUS_KNOWN_DEAD ==
+                                    infos[i].getStatusValue()) ||
+                (FILTER_FAULTS == filter &&
+                    SharedHostInfo.STATUS_FAULTS ==
+                                    infos[i].getStatusValue())) {
+                // Matched
+                hostList.add(infos[i]);
+            }
+        }
+        return (SharedHostInfo []) hostList.toArray(new SharedHostInfo[0]);
     }
 
     /*

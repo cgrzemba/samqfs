@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.1 2008/06/11 16:57:59 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.2 2008/06/11 23:03:36 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -62,7 +62,7 @@
                         <f:verbatim><![CDATA[<br><br>]]></f:verbatim>
 
                         <ui:table id="tableClientSummary"
-                                  title="#{samBundle['SharedFS.title.table.clients']}"
+                                  title="#{SharedFSBean.clientTableTitle}"
                                   style="margin:10px"
                                   paginateButton="true"
                                   paginationControls="true"
@@ -115,9 +115,8 @@
                                 <ui:dropDown id="filter"
                                              submitForm="true"
                                              immediate="true"
-                                             action="handleFilterChange"
+                                             actionListener="#{SharedFSBean.handleFilterChange}"
                                              items="#{SharedFSBean.clientTableFilterOptions}"
-                                             onChange="if (filterMenuChanged() == false) return false"
                                              selected="#{SharedFSBean.clientTableFilterSelectedOption}" />
                             </f:facet>
 
@@ -142,14 +141,6 @@
                                                 rowHeader="true">
                                     <ui:staticText text="#{clientTable.value.name}"/>
                                 </ui:tableColumn>
-                                <ui:tableColumn id="colArch"
-                                                headerText="#{samBundle['SharedFS.client.table.heading.arch']}"
-                                                align="left"
-                                                valign="top"
-                                                sort="arch"
-                                                rowHeader="true">
-                                    <ui:staticText text="#{clientTable.value.arch}"/>
-                                </ui:tableColumn>
                                 <ui:tableColumn id="colIPAddress"
                                                 headerText="#{samBundle['SharedFS.client.table.heading.ipaddress']}"
                                                 align="left"
@@ -159,6 +150,14 @@
                                     <ui:staticText text="#{clientTable.value.IPAddressesStr}"
                                                    escape="false"
                                                    converter="SpaceDelimiterConverter"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colArch"
+                                                headerText="#{samBundle['SharedFS.client.table.heading.arch']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="arch"
+                                                rowHeader="true">
+                                    <ui:staticText text="#{clientTable.value.arch}"/>
                                 </ui:tableColumn>
                                 <ui:tableColumn id="colOS"
                                                 headerText="#{samBundle['SharedFS.client.table.heading.os']}"

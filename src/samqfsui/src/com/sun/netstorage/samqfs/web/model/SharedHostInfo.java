@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.2 2008/06/11 16:58:00 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.3 2008/06/11 23:03:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -94,16 +94,17 @@ public class SharedHostInfo {
     public static final short TYPE_CLIENT = 2;
     public static final short TYPE_OSD = 3;
 
-    // status = ON | OFF
-    public static final short STATUS_ON = 0;
-    public static final short STATUS_OFF = 1;
+    // state = ON | OFF
+    public static final short STATE_ON = 0;
+    public static final short STATE_OFF = 1;
 
     // overall status
     public static final short STATUS_ASSUMED_DEAD = 0;
     public static final short STATUS_KNOWN_DEAD = 1;
     public static final short STATUS_ACCESS_DISABLED = 2;
-    public static final short STATUS_UNMOUNTED = 3;
-    public static final short STATUS_OK = 4;
+    public static final short STATUS_FAULTS = 3;
+    public static final short STATUS_UNMOUNTED = 4;
+    public static final short STATUS_OK = 5;
 
     protected Properties props = null;
 
@@ -177,9 +178,9 @@ public class SharedHostInfo {
     public short getStatus() {
         String str = props.getProperty(KEY_STATUS, "");
         if ("ON".equals(str)) {
-            return STATUS_ON;
+            return STATE_ON;
         } else if ("OFF".equals(str)) {
-            return STATUS_OFF;
+            return STATE_OFF;
         }
         return -1;
     }
@@ -230,12 +231,14 @@ public class SharedHostInfo {
         }
     }
 
-    private short getStatusValue() {
+    public short getStatusValue() {
         if ("assumed_dead".equals(getError())) {
             return STATUS_ASSUMED_DEAD;
         } else if ("known_dead".equals(getError())) {
             return STATUS_KNOWN_DEAD;
-        } else if (STATUS_OFF == getStatus()) {
+        } else if (-1 != getFaults()){
+            return STATUS_FAULTS;
+        } else if (STATE_OFF == getStatus()) {
             return STATUS_ACCESS_DISABLED;
         } else if (-1 == getMounted()){
             return STATUS_UNMOUNTED;

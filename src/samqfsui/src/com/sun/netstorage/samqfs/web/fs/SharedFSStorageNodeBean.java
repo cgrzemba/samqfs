@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSStorageNodeBean.java,v 1.1 2008/06/11 16:58:00 ronaldso Exp $
+// ident        $Id: SharedFSStorageNodeBean.java,v 1.2 2008/06/11 23:03:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -38,12 +38,7 @@ import com.sun.web.ui.component.Hyperlink;
 public class SharedFSStorageNodeBean {
 
     /** Page Modes for target pages */
-    public static final short MODE_SN_ALL = 0;
-    public static final short MODE_SN_OK = 1;
-    public static final short MODE_SN_UNMOUNTED = 2;
-    public static final short MODE_SN_DISABLED = 3;
-    public static final short MODE_SN_FAULTS = 4;
-    public static final short MODE_SN_DELETE = 5;
+    
 
     public SharedFSStorageNodeBean() {
     }

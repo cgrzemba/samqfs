@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.16 2008/06/04 18:16:10 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.17 2008/06/11 23:03:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -129,8 +129,17 @@ public interface SamQFSSystemSharedFSManager {
      * low_msg = uint32
      */
     public SharedHostInfo [] getSharedFSHosts(
-        String mdServer, String fsName, int options)
+        String mdServer, String fsName, int options, short filter)
         throws SamFSException;
+
+    /** Filters for target pages */
+    public static final short FILTER_NONE = 0;
+    public static final short FILTER_OK = 1;
+    public static final short FILTER_UNMOUNTED = 2;
+    public static final short FILTER_DISABLED = 3;
+    public static final short FILTER_IN_ERROR = 4;
+    public static final short FILTER_FAULTS = 5;
+    public static final short FILTER_CUSTOM = 6;
 
     /*
      * Method to get summary status for a shared file system
