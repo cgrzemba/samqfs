@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.128 $"
+#pragma ident "$Revision: 1.129 $"
 
 #include "sam/osversion.h"
 
@@ -97,7 +97,7 @@ static void sam_prepare_callout_table(sam_callout_entry_t **callouts,
 	int *max_callouts, int *num_callouts, struct sam_lease_ino *llp);
 static void sam_free_callout_table(sam_callout_entry_t *callouts,
 	int max_callouts);
-static int sam_free_direct_map(sam_mount_t *mp, struct sam_rel_blks *block);
+int sam_free_direct_map(sam_mount_t *mp, struct sam_rel_blks *block);
 static int sam_free_indirect_map(sam_mount_t *mp, struct sam_rel_blks *block);
 static int sam_free_indirect_block(struct sam_mount *mp, struct sam_sblk *sblk,
 	struct sam_rel_blks *block, int kptr[], uint32_t *extent_bn,
@@ -1216,7 +1216,7 @@ sam_free_extents(sam_mount_t *mp)
  * This routine frees direct map blocks.
  */
 
-static int				/* ERRNO if error, 0 if successful. */
+int				/* ERRNO if error, 0 if successful. */
 sam_free_direct_map(
 	sam_mount_t *mp,		/* Pointer to the mount table. */
 	struct sam_rel_blks *block)	/* release block entry */

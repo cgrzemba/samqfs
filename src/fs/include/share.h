@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.127 $"
+#pragma ident "$Revision: 1.128 $"
 #endif
 
 
@@ -259,7 +259,8 @@ enum LEASE_type {
 	LTYPE_open	= 6,
 	LTYPE_rmap	= 7,
 	LTYPE_wmap	= 8,
-	LTYPE_max_op	= 9
+	LTYPE_exclusive	= 9,
+	LTYPE_max_op	= 10
 };
 
 #define	SAM_MAX_LTYPE	LTYPE_max_op
@@ -273,13 +274,15 @@ enum LEASE_type {
 #define	CL_OPEN		(1 << LTYPE_open)	/* Outstanding open */
 #define	CL_RMAP		(1 << LTYPE_rmap)	/* Read-mapping */
 #define	CL_WMAP		(1 << LTYPE_wmap)	/* Write-mapping */
+#define	CL_EXCLUSIVE	(1 << LTYPE_exclusive)	/* Exclusive access */
 
 #define	CL_CLOSE	(CL_READ | CL_WRITE | CL_APPEND | CL_TRUNCATE | \
 				CL_FRLOCK | CL_OPEN | CL_RMAP | CL_WMAP)
 
 /* XXX - Should stage leases be non-expiring too? */
 
-#define	SAM_NON_EXPIRING_LEASES (CL_TRUNCATE|CL_FRLOCK|CL_OPEN|CL_RMAP|CL_WMAP)
+#define	SAM_NON_EXPIRING_LEASES (CL_TRUNCATE|CL_FRLOCK|CL_OPEN| \
+				CL_RMAP|CL_WMAP|CL_EXCLUSIVE)
 #define	SAM_DATA_MODIFYING_LEASES (CL_WRITE|CL_WMAP|CL_APPEND|CL_STAGE)
 
 enum TRUNC_flag {			/* Flag for LTYPE_truncate */
@@ -334,7 +337,6 @@ typedef struct sam_san_lease {
 	sam_share_flock_t flock;	/* File locking record */
 	sam_cred_t cred;		/* Credentials */
 	uint32_t gen[SAM_MAX_LTYPE];	/* Generation # of lease(s) */
-	char	pad[4];			/* Force pad */
 } sam_san_lease_t;
 
 typedef struct sam_san_lease2 {

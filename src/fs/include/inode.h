@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.200 $"
+#pragma ident "$Revision: 1.201 $"
 #endif
 
 #ifdef linux
@@ -84,6 +84,7 @@ struct sam_node;			/* forward declaration, in this file */
 #include "sam/quota.h"
 #include "sam/fs/acl.h"
 #include "sam/fs/share.h"
+#include "sam/syscall.h"
 
 
 /*
@@ -944,11 +945,11 @@ void sam_inactive_ino(sam_node_t *ip, cred_t *credp);
 void sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp);
 int  sam_drop_ino(sam_node_t *ip, cred_t *credp);
 
-enum sam_ib_cmd {SAM_FREE_BLOCK, SAM_FIND_ORD};
 typedef struct sam_ib_arg {
 	enum sam_ib_cmd	cmd;
 	int		ord;
 	int		first_ord;
+	int		new_ord;
 } sam_ib_arg_t;
 int  sam_proc_indirect_block(sam_node_t *ip, sam_ib_arg_t arg, int kptr[],
 	int ik, uint32_t *extent_bn, uchar_t *extent_ord, int level, int *set);

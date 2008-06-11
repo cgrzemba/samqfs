@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.247 $"
+#pragma ident "$Revision: 1.248 $"
 #endif
 
 #include "sam/osversion.h"
@@ -626,6 +626,10 @@ sam_proc_get_lease(
 		/*
 		 * Write mmap needs to allocate and clear range.
 		 */
+		check_lease_expiration = FALSE;
+		break;
+
+	case LTYPE_exclusive:
 		check_lease_expiration = FALSE;
 		break;
 

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.179 $"
+#pragma ident "$Revision: 1.180 $"
 #endif
 
 #include "sam/osversion.h"
@@ -60,6 +60,7 @@
 #include <sys/proc.h>
 #include <sys/disp.h>
 #include <sys/policy.h>
+#include <sys/stat.h>
 #endif /* sun */
 #if defined(SAM_OSD_SUPPORT)
 #include <sys/osd.h>
@@ -121,10 +122,12 @@
 #ifdef sun
 #include "extern.h"
 #include "syslogerr.h"
+#include "copy_extents.h"
 #endif /* sun */
 #include "rwio.h"
 #include "trace.h"
 #include "sam_list.h"
+#include "qfs_log.h"
 
 #ifdef sun
 extern struct vnodeops samfs_vnodeops;
@@ -144,6 +147,8 @@ static int sam_setfspartcmd(void *arg, cred_t *credp);
 static int sam_license_info(int cmd, void *arg, int size, cred_t *credp);
 static int sam_get_fsclistat(void *arg, int size);
 static int sam_fseq_ord(void *arg, int size, cred_t *credp);
+static int sam_move_ip_extents(sam_node_t *ip, sam_ib_arg_t *ib_args,
+    int *doipupdate, cred_t *credp);
 #endif
 static int sam_get_fsstatus(void *arg, int size);
 static int sam_get_fsinfo(void *arg, int size);
@@ -156,6 +161,7 @@ static int sam_get_sblk(void *arg, int size);
 static int sam_osd_device(void *arg, int size, cred_t *credp);
 static int sam_osd_command(void *arg, int size, cred_t *credp);
 #endif
+
 
 /*
  * ----- sam_priv_syscall - Process the sam privileged system calls.
@@ -1967,6 +1973,12 @@ sam_fseq_ord(
 	int kptr[NIEXT + (NIEXT-1)];
 	sam_ib_arg_t ib_args;
 	int error = 0;
+	int save_error = 0;
+	int doipupdate = 0;
+	int remove_lease = 0;
+	krw_t rw_type;
+	int trans_size;
+	dtype_t opt = 0, npt = 0;
 
 	if (size != sizeof (args) ||
 	    copyin(arg, (caddr_t)&args, sizeof (args))) {
@@ -1995,14 +2007,131 @@ sam_fseq_ord(
 	if ((error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS, &args.id, &ip))) {
 		goto out;
 	}
-	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+
+	ib_args.cmd = args.cmd;
+	ib_args.ord = args.ord;
+	ib_args.first_ord = ip->di.extent_ord[0];
+	ib_args.new_ord = args.new_ord;
+
+	if (ib_args.cmd == SAM_MOVE_ORD) {
+		int onum_group, nnum_group;
+
+		if (SAM_IS_SHARED_CLIENT(mp)) {
+			error = ENOSYS;
+			goto outrele;
+		}
+
+		/*
+		 * Old partition type.
+		 * DT_META (258), DT_DATA (257)
+		 * DT_RAID (259), or di->stripe_group|DT_STRIPE_GROUP
+		 */
+		opt = mp->mi.m_fs[ib_args.ord].part.pt_type;
+
+		if (is_stripe_group(opt)) {
+			/*
+			 * Old ordinal is a stripe group so
+			 * a new matching stripe group must be provided.
+			 */
+			if (ib_args.new_ord < 0) {
+				error = EINVAL;
+				goto outrele;
+			}
+			onum_group = mp->mi.m_fs[ib_args.ord].num_group;
+
+			npt = mp->mi.m_fs[ib_args.new_ord].part.pt_type;
+			nnum_group = mp->mi.m_fs[ib_args.new_ord].num_group;
+
+			if (!is_stripe_group(npt) ||
+			    nnum_group != onum_group) {
+				error = EINVAL;
+				goto outrele;
+			}
+
+		} else if (ib_args.new_ord >= 0) {
+			/*
+			 * New partition type.
+			 */
+			npt = mp->mi.m_fs[ib_args.new_ord].part.pt_type;
+			if (opt != npt) {
+				/*
+				 * Partition types don't match.
+				 */
+				error = EINVAL;
+				goto outrele;
+			}
+		}
+
+		trans_size = (int)TOP_SETATTR_SIZE(ip);
+		TRANS_BEGIN_ASYNC(ip->mp, TOP_SETATTR, trans_size);
+
+		rw_type = RW_WRITER;
+		RW_LOCK_OS(&ip->data_rwl, rw_type);
+
+		/*
+		 * Only need the lease for regular files since
+		 * all directory modifications are done on the MDS.
+		 */
+		if (SAM_IS_SHARED_FS(mp) && !S_ISDIR(ip->di.mode)) {
+			sam_lease_data_t data;
+
+			bzero(&data, sizeof (data));
+			data.ltype = LTYPE_exclusive;
+
+			error = sam_proc_get_lease(ip, &data,
+			    NULL, NULL, credp);
+
+			if (error != 0) {
+				goto transend;
+			}
+			remove_lease = 1;
+		}
+		RW_LOCK_OS(&ip->inode_rwl, rw_type);
+
+		if (S_ISDIR(ip->di.mode)) {
+			error = sam_sync_meta(ip, NULL, credp);
+		} else {
+			error = sam_flush_pages(ip, 0);
+		}
+		if (error != 0) {
+			goto outunlock;
+		}
+
+		sam_clear_map_cache(ip);
+
+		if (ib_args.new_ord >= 0) {
+			if (is_stripe_group(opt)) {
+				ip->di.stripe_group =
+				    (npt & ~DT_STRIPE_GROUP_MASK);
+			}
+			ip->di.unit = ib_args.new_ord;
+		}
+
+		error = sam_move_ip_extents(ip, &ib_args, &doipupdate, credp);
+		if (error != 0) {
+			goto outunlock;
+		}
+		if (ip->di.status.b.direct_map) {
+			/*
+			 * If file is a direct map file then
+			 * we are finished moving data.
+			 */
+			goto skip_indirects;
+		}
+
+	} else {
+
+		rw_type = RW_READER;
+		RW_LOCK_OS(&ip->inode_rwl, rw_type);
+	}
 
 	for (i = 0; i < (NIEXT+2); i++) {
 		kptr[i] = -1;
 	}
-	ib_args.cmd = SAM_FIND_ORD;
-	ib_args.ord = args.ord;
-	ib_args.first_ord = ip->di.extent_ord[0];
+
+	/*
+	 * Now do the indirects for SAM_FIND_ORD and SAM_MOVE_ORD.
+	 */
 	for (i = (NOEXT - 1); i >= NDEXT; i--) {
 		int set = 0;
 		int kptr_index;
@@ -2010,6 +2139,17 @@ sam_fseq_ord(
 		if (ip->di.extent[i] == 0) {
 			continue;
 		}
+
+		if (ib_args.cmd == SAM_MOVE_ORD &&
+		    ib_args.ord == ip->di.extent_ord[i]) {
+			/*
+			 * This top level indirect is on
+			 * the ordinal getting moved so an inode
+			 * update will be required when finished.
+			 */
+			doipupdate = 1;
+		}
+
 		if (i == NDEXT) {
 			/*
 			 * The current index in the top level indirect
@@ -2039,20 +2179,152 @@ sam_fseq_ord(
 			error = 0;
 			args.on_ord = 1;
 			break;
-		} else {
+		} else if (args.cmd == SAM_FIND_ORD) {
 			error = ENOENT;
 		}
 	}
-	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+
+skip_indirects:
+	if (doipupdate) {
+
+		TRANS_INODE(ip->mp, ip);
+
+		ip->flags.b.changed = 1;
+		sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
+	}
+
+	if (remove_lease) {
+		error = sam_proc_rm_lease(ip, CL_EXCLUSIVE, RW_WRITER);
+	}
+
+	RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
+	if (ib_args.cmd == SAM_MOVE_ORD) {
+		RW_UNLOCK_OS(&ip->data_rwl, rw_type);
+		TRANS_END_ASYNC(ip->mp, TOP_SETATTR, trans_size);
+	}
+
+outrele:
+	if (S_ISSEGS(&ip->di) && ip->seg_held) {
+		sam_rele_index(ip);
+	}
+
 	VN_RELE(SAM_ITOV(ip));
 
-	if (size != sizeof (args) ||
-	    copyout((caddr_t)&args, arg, sizeof (args))) {
-		error = EFAULT;
+	if (error == 0) {
+		if (size != sizeof (args) ||
+		    copyout((caddr_t)&args, arg, sizeof (args))) {
+			error = EFAULT;
+		}
 	}
 
 out:
 	SAM_SYSCALL_DEC(mp, 0);
+	return (error);
+
+outunlock:
+
+	ASSERT(ib_args.cmd == SAM_MOVE_ORD);
+
+	if (remove_lease) {
+		save_error = error;
+		error = sam_proc_rm_lease(ip, CL_EXCLUSIVE, RW_WRITER);
+	}
+	RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
+transend:
+	RW_UNLOCK_OS(&ip->data_rwl, rw_type);
+
+	TRANS_END_ASYNC(ip->mp, TOP_SETATTR, trans_size);
+
+	if (S_ISSEGS(&ip->di) && ip->seg_held) {
+		sam_rele_index(ip);
+	}
+	VN_RELE(SAM_ITOV(ip));
+
+	if (error == 0 && save_error != 0) {
+		error = save_error;
+	}
+
+	SAM_SYSCALL_DEC(mp, 0);
+	return (error);
+}
+
+
+/*
+ * ----- sam_move_ip_extents -
+ *
+ * Move the data off of the direct extents in the inode
+ * that are on the specified device ordinal.
+ *
+ */
+static int			/* ERRNO if error, 0 if successful. */
+sam_move_ip_extents(
+	sam_node_t *ip,
+	sam_ib_arg_t *ib_args,
+	int *doipupdate,
+	cred_t *credp)
+{
+	sam_mount_t *mp = ip->mp;
+	int error = 0;
+	int i;
+	int bt;		/* file extent block type LG or SM */
+	int dt;		/* file data device type META (1) or DATA (0) */
+
+	if (ib_args->cmd != SAM_MOVE_ORD) {
+		return (EINVAL);
+	}
+
+	if (ip->di.status.b.direct_map) {
+		error = sam_allocate_and_copy_directmap(ip, ib_args, credp);
+		if (error == 0) {
+			*doipupdate = 1;
+		}
+		return (error);
+	}
+
+	/*
+	 * File device type
+	 * 1 = META, 0 = DATA
+	 */
+	dt = ip->di.status.b.meta;
+
+	for (i = 0; i < NDEXT; i++) {
+		if (ip->di.extent[i] != 0 &&
+		    ip->di.extent_ord[i] == ib_args->ord) {
+			sam_bn_t obn, nbn;
+			int oord, nord;
+
+			if (ip->di.status.b.on_large || (i >= NSDEXT)) {
+				/*
+				 * Large DAU.
+				 */
+				bt = LG;
+			} else {
+				/*
+				 * Small DAU.
+				 */
+				bt = SM;
+			}
+
+			obn = ip->di.extent[i];
+			oord =  ip->di.extent_ord[i];
+
+			error = sam_allocate_and_copy_extent(ip, bt, dt,
+			    obn, oord, NULL, &nbn, &nord, NULL);
+
+			if (error == 0) {
+				/*
+				 * Save the new extent in the inode
+				 * and free the old one.
+				 */
+				ip->di.extent_ord[i] = nord;
+				ip->di.extent[i] = nbn;
+				*doipupdate = 1;
+
+				sam_free_block(mp, bt, obn, oord);
+			}
+		}
+	}
+
 	return (error);
 }
 #endif

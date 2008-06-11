@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.283 $"
+#pragma ident "$Revision: 1.284 $"
 
 #include "sam/osversion.h"
 
@@ -1019,6 +1019,9 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 				}
 				break;
 
+			case LTYPE_exclusive:
+				break;
+
 			default:
 				break;
 			}
@@ -1533,6 +1536,7 @@ sam_add_ino_lease(
 	struct sam_lease_ino *llp;	/* Ptr to lease entry for this inode */
 	int index;
 	uint32_t other_leases;
+	uint32_t wt_leases;
 	uint16_t relinquish_lease_mask = 0; /* Ask client to relinq lease(s) */
 	uint16_t lease_mask;
 	int i;
@@ -1550,6 +1554,7 @@ sam_add_ino_lease(
 
 	index = -1;
 	other_leases = 0;
+	wt_leases = 0;
 	for (i = 0; i < llp->no_clients; i++) {
 		if (llp->lease[i].client_ord == client_ord) {
 			if (llp->lease[i].leases == 0) {
@@ -1566,6 +1571,7 @@ sam_add_ino_lease(
 			index = i;
 		} else {
 			other_leases |= llp->lease[i].leases;
+			wt_leases |= llp->lease[i].wt_leases;
 		}
 	}
 
@@ -1608,11 +1614,13 @@ sam_add_ino_lease(
 			 */
 			index = -1;
 			other_leases = 0;
+			wt_leases = 0;
 			for (i = 0; i < llp->no_clients; i++) {
 				if (llp->lease[i].client_ord == client_ord) {
 					index = i;
 				} else {
 					other_leases |= llp->lease[i].leases;
+					wt_leases |= llp->lease[i].wt_leases;
 				}
 			}
 
@@ -1728,7 +1736,9 @@ sam_add_ino_lease(
 		 * No MH_WRITE - wait reader until writer's lease expires.
 		 * Writable mmaps always block reads.
 		 */
-		if (other_leases & (CL_WMAP|CL_TRUNCATE)) {
+		if (other_leases & (CL_WMAP|CL_TRUNCATE|CL_EXCLUSIVE)) {
+			wait_lease = TRUE;
+		} else if (wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
 		} else if (other_leases & (CL_WRITE|CL_APPEND)) {
 			if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
@@ -1756,7 +1766,9 @@ sam_add_ino_lease(
 		 * If readers and/or writers, put them in directio.
 		 * Memory maps, truncate, and stage always block writes.
 		 */
-		if (other_leases & (CL_RMAP|CL_WMAP|CL_TRUNCATE|CL_STAGE)) {
+		if (other_leases &
+		    (CL_RMAP|CL_WMAP|CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
+		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
 		} else if (other_leases & ~(CL_OPEN|CL_FRLOCK)) {
 			if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
@@ -1785,7 +1797,9 @@ sam_add_ino_lease(
 		 * directio.
 		 */
 		if (other_leases &
-		    (CL_RMAP|CL_WMAP|CL_APPEND|CL_TRUNCATE|CL_STAGE)) {
+		    (CL_RMAP|CL_WMAP|CL_APPEND|CL_TRUNCATE|
+		    CL_STAGE|CL_EXCLUSIVE) ||
+		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
 			relinquish_lease_mask = other_leases & CL_APPEND;
 		} else if (other_leases & ~(CL_OPEN|CL_FRLOCK)) {
@@ -1829,6 +1843,10 @@ sam_add_ino_lease(
 		 * operations during the truncate.
 		 */
 
+		if (wt_leases & CL_EXCLUSIVE) {
+			wait_lease = TRUE;
+			break;
+		}
 		if (l2p->inp.data.lflag != SAM_RELEASE) {
 			if (other_leases & ~(CL_STAGE|CL_OPEN|CL_FRLOCK)) {
 				/*
@@ -1877,7 +1895,9 @@ sam_add_ino_lease(
 		 * have write permission (including truncate and writable maps)
 		 * to the file.
 		 */
-		if (other_leases & (CL_APPEND|CL_WRITE|CL_TRUNCATE|CL_WMAP)) {
+		if (other_leases &
+		    (CL_APPEND|CL_WRITE|CL_TRUNCATE|CL_WMAP|CL_EXCLUSIVE) ||
+		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
 		}
 		may_read = TRUE;
@@ -1890,8 +1910,27 @@ sam_add_ino_lease(
 		 */
 		if (other_leases &
 		    (CL_WRITE|CL_APPEND|CL_WMAP|CL_TRUNCATE|CL_READ|
-		    CL_RMAP|CL_STAGE)) {
+		    CL_RMAP|CL_STAGE|CL_EXCLUSIVE) ||
+		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
+		}
+		may_read = TRUE;
+		may_write = TRUE;
+		break;
+
+	case LTYPE_exclusive:
+		/*
+		 * No other concurrent leases are allowed except CL_OPEN.
+		 * Also someone waiting for an exclusive lease
+		 * will block other lease requests.
+		 */
+		if (other_leases &
+		    (CL_WRITE|CL_APPEND|CL_WMAP|CL_TRUNCATE|CL_READ|
+		    CL_RMAP|CL_STAGE|CL_EXCLUSIVE) ||
+		    wt_leases & CL_EXCLUSIVE) {
+			wait_lease = TRUE;
+			relinquish_lease_mask =
+			    other_leases & (CL_APPEND|CL_WRITE|CL_READ);
 		}
 		may_read = TRUE;
 		may_write = TRUE;
@@ -2084,6 +2123,7 @@ sam_remove_lease(
 	boolean_t append_lease_remains;
 	boolean_t removed_append_lease;
 	boolean_t removed_truncate_lease;
+	boolean_t removed_exclusive_lease;
 	boolean_t last_lease;
 	int no_clients;
 	int nl;
@@ -2105,6 +2145,7 @@ sam_remove_lease(
 	append_lease_remains = FALSE;
 	removed_append_lease = FALSE;
 	removed_truncate_lease = FALSE;
+	removed_exclusive_lease = FALSE;
 	mutex_enter(&ip->ilease_mutex);
 	if (ip->sr_leases) {
 		llp = ip->sr_leases;
@@ -2154,6 +2195,10 @@ sam_remove_lease(
 				removed_truncate_lease =
 					((lease_mask & llp->lease[nl].leases &
 					CL_TRUNCATE) != 0);
+				removed_exclusive_lease =
+				    ((lease_mask & llp->lease[nl].leases &
+				    CL_EXCLUSIVE) != 0);
+
 				llp->lease[nl].wt_leases &= ~lease_mask;
 				llp->lease[nl].leases &= ~lease_mask;
 			}
@@ -2215,7 +2260,8 @@ sam_remove_lease(
 	/*
 	 * Stale indirect blocks and invalidate pages after truncate.
 	 */
-	if (removed_truncate_lease || removed_append_lease) {
+	if (removed_truncate_lease || removed_append_lease ||
+	    removed_exclusive_lease) {
 		mutex_enter(&ip->ilease_mutex);
 		if (ip->sr_leases) {
 			llp = ip->sr_leases;

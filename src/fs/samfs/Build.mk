@@ -1,4 +1,4 @@
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 
 #    SAM-QFS_notice_begin
 #
@@ -34,8 +34,8 @@ ifeq ($(OS), SunOS)
 
 MODULE = samfs
 
-SRCS1 = bio.c cacl.c clcall.c client.c clmisc.c clcomm.c \
-	clvnops.c cquota.c creclaim.c ctrunc.c cvnops.c getdents.c \
+SRCS1 = bio.c cacl.c clcall.c client.c clmisc.c clcomm.c clvnops.c\
+	copy_extents.c cquota.c creclaim.c ctrunc.c cvnops.c getdents.c \
 	iget.c init.c iput.c lqfs.c lqfs_debug.c lqfs_log.c lqfs_map.c \
 	lqfs_thread.c lqfs_top.c map.c mount.c osd.c page.c psyscall.c \
 	qfs_log.c qfs_trans.c rwio.c scd.c stage.c syscall.c thread.c \

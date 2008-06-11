@@ -50,7 +50,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1025,6 +1025,7 @@ sam_ord_on_indirects(
 	sam_fseq_arg_t	fseq_arg;
 	int err;
 
+	fseq_arg.cmd = SAM_FIND_ORD;
 	fseq_arg.fseq = mp->fi_eq;
 	fseq_arg.eq = control.eq;
 	fseq_arg.ord = ord;

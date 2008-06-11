@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.142 $"
+#pragma ident "$Revision: 1.143 $"
 
 #include "sam/osversion.h"
 
@@ -71,6 +71,7 @@
 #include "trace.h"
 #include "debug.h"
 #include "qfs_log.h"
+#include "copy_extents.h"
 
 
 static void sam_delete_archive(sam_node_t *ip);
@@ -749,6 +750,7 @@ sam_proc_indirect_block(
 	uchar_t *ie_ord;
 	int reset = 0;
 	int error = 0;
+	int bwrite_indirect = 0;
 
 	mp = ip->mp;
 	bn = *extent_bn;
@@ -845,6 +847,34 @@ sam_proc_indirect_block(
 					error = ECANCELED;
 					break;
 				}
+			} else if (args.cmd == SAM_MOVE_ORD) {
+				if (*ie_ord == args.ord) {
+					sam_bn_t obn, nbn;
+					int oord, nord;
+					int dt;
+					/*
+					 * Copy a direct extent data block and
+					 * update the indirect that
+					 * references it.
+					 */
+					dt = ip->di.status.b.meta;
+					if (args.new_ord >= 0) {
+						ip->di.unit = args.new_ord;
+					}
+					oord = *ie_ord;
+					obn = *ie_addr;
+					error = sam_allocate_and_copy_extent(ip,
+					    LG, dt, obn, oord, NULL,
+					    &nbn, &nord, NULL);
+					if (error == 0) {
+						*ie_addr = nbn;
+						*ie_ord = nord;
+
+						sam_free_block(mp, LG,
+						    obn, oord);
+						bwrite_indirect = 1;
+					}
+				}
 			}
 		}
 	}
@@ -865,6 +895,35 @@ sam_proc_indirect_block(
 		}
 		bp->b_flags |= B_STALE|B_AGE;
 		brelse(bp);
+	} else if (args.cmd == SAM_MOVE_ORD) {
+		if (*extent_ord == args.ord) {
+			sam_bn_t obn, nbn;
+			int oord, nord;
+			int dt;
+			/*
+			 * Copy indirect extent and
+			 * update the indirect that references it.
+			 */
+			if (args.new_ord >= 0) {
+				mp->mi.m_inodir->di.unit = args.new_ord;
+			}
+			obn = *extent_bn;
+			oord = *extent_ord;
+			dt = mp->mi.m_inodir->di.status.b.meta;
+			error = sam_allocate_and_copy_bp(mp->mi.m_inodir,
+			    LG, dt, obn, oord, bp, &nbn, &nord, NULL);
+
+			if (error == 0) {
+				*extent_bn = nbn;
+				*extent_ord = nord;
+				sam_free_block(mp, LG, obn, oord);
+			}
+		}
+		if (bwrite_indirect) {
+			bwrite(bp);
+		} else if (bp) {
+			brelse(bp);
+		}
 	}
 	return (error);
 }

@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.94 $"
+#pragma ident "$Revision: 1.95 $"
 #endif
 
 #include "sam/types.h"
@@ -439,12 +439,16 @@ typedef struct sam_osd_cmd_arg {	/* Filesystem osd command args */
 	SAM_POINTER(char) data; /* Data */
 } sam_osd_cmd_arg_t;
 
+enum sam_ib_cmd {SAM_FREE_BLOCK, SAM_FIND_ORD, SAM_MOVE_ORD};
+
 typedef struct {		/* inode on ord? */
-	equ_t fseq;		/* Family set equipment number */
+	enum sam_ib_cmd cmd;
+	equ_t fseq;		/* File system Family set equipment number */
 	sam_id_t id;		/* Inode */
-	equ_t eq;		/* Family set equipment number */
-	ushort_t ord;		/* Family set ordinal number */
+	equ_t eq;		/* Device Family set equipment number */
+	ushort_t ord;	/* Device Family set ordinal number */
 	int on_ord;		/* Set if this inode is on specified eq */
+	int new_ord;	/* Device ordinal to move data to if specified */
 } sam_fseq_arg_t;
 
 #if defined(_SAM_FS_AMLD_H)
