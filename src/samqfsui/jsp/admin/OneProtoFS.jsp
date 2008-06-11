@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: OneProtoFS.jsp,v 1.1 2008/06/11 20:33:01 kilemba Exp $
+// ident	$Id: OneProtoFS.jsp,v 1.2 2008/06/11 21:16:18 kilemba Exp $
 --%>
 
 <%@page info="CommonTasks" language="java" %>

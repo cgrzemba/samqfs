@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AboutSAMQFS.jsp,v 1.1 2008/06/11 20:33:01 kilemba Exp $ -->
+<!-- $Id: AboutSAMQFS.jsp,v 1.2 2008/06/11 21:16:18 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"

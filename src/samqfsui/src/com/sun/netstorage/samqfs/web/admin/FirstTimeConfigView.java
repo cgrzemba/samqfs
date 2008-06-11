@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FirstTimeConfigView.java,v 1.1 2008/06/11 20:33:02 kilemba Exp $
+// ident	$Id: FirstTimeConfigView.java,v 1.2 2008/06/11 21:16:19 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
