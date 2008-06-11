@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SysInfo.java,v 1.19 2008/05/16 18:35:27 am143972 Exp $
+// ident	$Id: SysInfo.java,v 1.20 2008/06/11 20:33:01 kilemba Exp $
 
 package com.sun.netstorage.samqfs.mgmt.adm;
 
@@ -224,8 +224,8 @@ public class SysInfo {
      * volume_pools = int
      * object_qfs_protos = int (number of HPC file systems
      *				currently partially created)
-     * ojbect_qfs_names = space separated list of names.
-     * Storage_nodes = int (only provided if object_qfs_proto_count == 1)
+     * object_qfs_names = space separated list of names.
+     * storage_nodes = int (only provided if object_qfs_proto_count == 1)
      * clients = int (only provided if object_qfs_proto_count == 1)
      */
     public static native String getConfigurationSummary(Ctx c)

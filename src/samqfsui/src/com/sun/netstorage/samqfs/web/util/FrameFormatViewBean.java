@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameFormatViewBean.java,v 1.11 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: FrameFormatViewBean.java,v 1.12 2008/06/11 20:33:03 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -111,7 +111,9 @@ public class FrameFormatViewBean extends ViewBeanBase {
         try {
             SamQFSSystemModel [] model =
                 SamQFSFactory.getSamQFSAppModel().getAllSamQFSSystemModels();
-            if (model != null && model.length == 1) {
+            if (model != null &&
+                model.length == 1 &&
+                !model[0].isAccessDenied()) {
                 hostName = model[0].getHostname();
             }
         } catch (SamFSException sfe) {

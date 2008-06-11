@@ -27,11 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemAdminManager.java,v 1.29 2008/05/16 18:38:58 am143972 Exp $
+// ident	$Id: SamQFSSystemAdminManager.java,v 1.30 2008/06/11 20:33:02 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.model.admin.Configuration;
 import com.sun.netstorage.samqfs.web.model.admin.Notification;
 import com.sun.netstorage.samqfs.web.model.admin.Schedule;
 import com.sun.netstorage.samqfs.web.model.admin.ScheduleTaskID;
@@ -247,4 +248,13 @@ public interface SamQFSSystemAdminManager {
         String proxyHost, int proxyPort,
         String authUser, byte[] authPassword)
         throws SamFSException;
+
+    /**
+     * This is method is used to support the first time configuration checklist.
+     * It provides the information needed to give the user feedback on the
+     * completion states of the various components on the checklist.
+     *
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    public Configuration getConfigurationSummary() throws SamFSException;
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemAdminManagerImpl.java,v 1.36 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSSystemAdminManagerImpl.java,v 1.37 2008/06/11 20:33:03 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -43,6 +43,7 @@ import com.sun.netstorage.samqfs.mgmt.reg.Register;
 import com.sun.netstorage.samqfs.web.model.ProductRegistrationInfo;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemAdminManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.admin.Configuration;
 import com.sun.netstorage.samqfs.web.model.admin.FileMetricSchedule;
 import com.sun.netstorage.samqfs.web.model.admin.Notification;
 import com.sun.netstorage.samqfs.web.model.admin.Schedule;
@@ -504,5 +505,42 @@ public class SamQFSSystemAdminManagerImpl implements SamQFSSystemAdminManager {
                             registration.toString(),
                             password,
                             authPassword);
+    }
+
+    /**
+     * This is method is used to support the first time configuration checklist.
+     * It provides the information needed to give the user feedback on the
+     * completion states of the various components on the checklist.
+     *
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    public Configuration getConfigurationSummary() throws SamFSException {
+
+        // TODO: waiting for C-API implementation
+        // String rawConfig =
+        //    SysInfo.getConfigurationSummary(theModel.getJniContext());
+
+        String rawConfig = null;
+        Configuration config = new Configuration(rawConfig);
+
+        return config;
+    }
+
+    // sample Configuration for testing purposes
+    public static String rawConfig;
+    static {
+        StringBuffer buf = new StringBuffer();
+        buf.append("lib_count=1,")
+            .append("lib_names=hp-200 hp-300,")
+            .append("tape_count=25,")
+            .append("qfs_count=2,")
+            .append("disk_vols_count=5,")
+            .append("volume_pools=2,")
+            .append("object_qfs_protos=2,")
+            .append("object_qfs_names=hpcfs1 hpcfs2,")
+            .append("storage_nodes=2,")
+            .append("clients=4");
+
+        rawConfig = buf.toString();
     }
 }

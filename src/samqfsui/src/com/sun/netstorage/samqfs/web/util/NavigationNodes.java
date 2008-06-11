@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NavigationNodes.java,v 1.21 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: NavigationNodes.java,v 1.22 2008/06/11 20:33:03 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -118,7 +118,7 @@ public class NavigationNodes  {
             NODE_GETTING_STARTED, "node.gettingstarted",
             "node.gettingstarted.tooltip",
             "node.gettingstarted.tooltip");
-        myNode.setValue(createURL("fs/FSSummary.jsp"));
+        myNode.setValue(createURL("faces/jsp/admin/AboutSAMQFS.jsp"));
         myNode.setExpanded(false);
         nodeMap.put(new Integer(NODE_GETTING_STARTED), myNode);
 
@@ -128,7 +128,7 @@ public class NavigationNodes  {
             NODE_ABOUT_SAMQFS, "node.aboutsamqfs",
             "node.aboutsamqfs.tooltip",
             "node.aboutsamqfs.tooltip");
-        myNode.setValue(createURL("fs/FSSummary.jsp"));
+        myNode.setValue(createURL("faces/jsp/admin/AboutSAMQFS.jsp"));
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_ABOUT_SAMQFS), myNode);
 
@@ -138,7 +138,7 @@ public class NavigationNodes  {
             NODE_FIRST_TIME_CONFIG, "node.firsttimeconfig",
             "node.firsttimeconfig.tooltipp",
             "node.firsttimeconfig.tooltip");
-        myNode.setValue(createURL("fs/FSSummary.jsp"));
+        myNode.setValue(createURL("admin/FirstTimeConfig.jsp"));
         myNode.setAcceptsChildren(false);
         nodeMap.put(new Integer(NODE_FIRST_TIME_CONFIG), myNode);
 
