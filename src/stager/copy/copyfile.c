@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.103 $"
+#pragma ident "$Revision: 1.104 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -2080,10 +2080,22 @@ verifyTarHeader(
 	if (verifylen) {
 		tarsize = llfrom_str(sizeof (tar_header->size),
 		    tar_header->size);
+#define	OLDHDRMAX 07777777777
 		if (tarsize != reqlen) {
-			Trace(TR_MISC, "Request length (%lld) does not match "
-			    "tar header (%lld) file size", reqlen, tarsize);
-			return (EIO);
+			if (reqlen <= OLDHDRMAX) {
+				Trace(TR_MISC, "Request length (%lld) does "
+				    "not match tar header (%lld) file size",
+				    reqlen, tarsize);
+				return (EIO);
+			} else if (tarsize != (reqlen & OLDHDRMAX)) {
+				Trace(TR_MISC, "Request length adjusted "
+				    "to %lld", reqlen & OLDHDRMAX);
+				Trace(TR_MISC, "Request length (%lld) does "
+				    "not match tar header (%lld) file size",
+				    reqlen & OLDHDRMAX, tarsize);
+				return (EIO);
+
+			}
 		}
 	}
 
