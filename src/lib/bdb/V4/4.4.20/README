@@ -1,0 +1,52 @@
+This version of Berkeley DB, V4.4.20 without encryption, was downloaded from:
+http://www.oracle.com/technology/software/products/berkeley-db/db/index.html
+
+It has been patched with the publicly available patches as of
+5/12/08. These include patches for: 14061, 14033, 14240, 14657
+
+It was built with the 'standard' "configure" options.  All platform
+libraries were built with the Solaris Sun Studio 10 C compiler with
+CFLAGS set to the following:
+  i386:		no additional cflags
+  AMD64:	-xarch=amd64 -Ui386 -U__i386
+  sparc:	no additional cflags
+  sparcv9:	-xarch=v9 -xchip=ultra2
+
+If you wish to build SAM-QFS on an i386 machine you will need to build
+Berkeley DB for both i386 and AMD64. If you wish to build SAM-QFS on
+a sparc machine you will need to build Berkeley DB for both sparc 
+and sparcv9.
+
+To build Berkeley DB for each architecture:
+1. Download the source and patches from the site specified above to 
+   a directory outside the SAM-QFS source tree.
+
+2. Apply the patches to the source.
+
+3. Set the CFLAGS environment variable to the appropriate setting
+   from above.
+
+4. Build the code according to the instructions found by following the
+   'Building for UNIX/POSIX systems' link on the docs/index.html
+   page found in the download. There is no need to run make install
+   as the resulting binaries are what is needed.
+
+5. Create the architecture specific directories in the SAM-QFS tree.
+   At sam-qfs/src/lib/bdb/V4/4.4.20 create the following directories
+	amd_64/
+	i386/
+	solaris_sparc/
+	solaris_sparcv9/
+
+   In each of these directories create 2 subdirectories:
+	include/
+	lib/
+
+6. Copy the header file and libraries to the architecture specific
+   directories in the SAM-QFS tree.
+	
+   For example: The i386 version should be copied from the download's 
+   build_unix directory to: sam-qfs/src/lib/bdb/V4/4.4.20/i386/
+   directory as follows:
+	a. copy db.h to the i386/include directory
+	b. copy libdb-4.4.a and libdb-4-4.so to the i386/lib directory
