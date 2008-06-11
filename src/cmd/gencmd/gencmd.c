@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 /* Feature test switches. */
 	/* None. */
@@ -1136,8 +1136,9 @@ chkfile(void)
 			if (!S_ISDIR(sb.st_mode)) {
 				if (!SS_ISSEGMENT_F(sb.attr)) {
 					if (i_opt) {
-						if (SS_ISSTAGE_N(sb.attr) ||
-						    !SS_ISOFFLINE(sb.attr)) {
+						if (!SS_ISOFFLINE(sb.attr) ||
+						    (SS_ISSTAGE_N(sb.attr) &&
+						    !x_opt)) {
 							return (1);
 						}
 					} else if (p_opt) {
