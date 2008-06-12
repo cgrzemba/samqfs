@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 #endif
 
 #include "sam/osversion.h"
@@ -755,9 +755,13 @@ sam_proc_stat(
 				continue;
 			}
 			/* Return active or stale copy. */
-			sb.copy[copy].flags = ip->di.ar_flags[copy];
+			sb.copy[copy].flags = ip->di.ar_flags[copy] &
+			    CF_AR_FLAGS_MASK;
 			if (ip->di.arch_status & mask) {
 				sb.copy[copy].flags |= CF_ARCHIVED;
+			}
+			if (permip->ar.image[copy].arch_flags & SAR_hdr_off0) {
+				sb.copy[copy].flags |= CF_PAX_ARCH_FMT;
 			}
 			sb.copy[copy].n_vsns = permip->ar.image[copy].n_vsns;
 			sb.copy[copy].creation_time =

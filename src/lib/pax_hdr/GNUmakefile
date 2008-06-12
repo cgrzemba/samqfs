@@ -1,4 +1,4 @@
-# $Revision: 1.15 $
+# $Revision: 1.2 $
 
 #    SAM-QFS_notice_begin
 #
@@ -27,29 +27,35 @@
 #    SAM-QFS_notice_end
 
 DEPTH = ../../..
+OBJ_DEPTH = ../../..
+LIB_HOME = $(DEPTH)/src/lib/pax_hdr
+
+DEPCFLAGS += -I$(OBJ_DIR)
 
 include $(DEPTH)/mk/common.mk
 
-PROG = arcopy
-PROG_SRC = \
-	arcopy.c \
-	checksum.c \
-	copyfile.c \
-	dkarchive.c \
-	hcarchive.c \
-	header.c \
-	rmarchive.c \
-	setarch.c \
-	sparse.c
+LIB = pax_hdr
+LIB_SRC = \
+	pax_util.c \
+	pax_pair.c \
+	pax_xhdr.c \
+	pax_hdr.c
 
-include ../archiver.mk
+LIB_LIBS +=  -L$(DEPTH)/lib/$(OBJ_DIR) -lsamut $(LIBSO)
 
-DEPCFLAGS += $(HC_INCLUDE)
-ADDLIB = -lsamfs -lsamrft -lpax_hdr $(HC_LIB)
+ifeq ($(SPARCV9), yes)
+LNOPTS = $(LIBS_LFLAGS64)
+else
+LNOPTS = $(LIBS_LFLAGS32)
+endif
+LNLIBS =
 
 include $(DEPTH)/mk/targets.mk
 
 install: all
-	$(INSTALL) $(SYSINST) $(OBJ_DIR)/$(PROG) $(ADMDEST)/sam-$(PROG)
+	$(INSTALL) $(USERINST) $(OBJ_DIR)/lib$(LIB).so $(LIBDEST)
+
+test : $(OBJ_DIR)/libpax_hdr.so $(PROG)
+	$(OBJ_DIR)/$(PROG)
 
 include $(DEPTH)/mk/depend.mk

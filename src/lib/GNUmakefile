@@ -1,4 +1,4 @@
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 
 #    SAM-QFS_notice_begin
 #
@@ -55,7 +55,8 @@ DIRS += \
 	sammgmt \
 	sammgmt/stkapi \
 	sammgmtjni \
-	samsanergy
+	samsanergy \
+	pax_hdr
 endif
 
 include $(DEPTH)/mk/targets.mk
@@ -74,5 +75,6 @@ samcat samapi:	samut
 sammgmt/stkapi:	sammgmt
 sammgmtjni:	sammgmt
 csn:		samut curl ssl
+pax_hdr:	samut
 
 include $(DEPTH)/mk/depend.mk

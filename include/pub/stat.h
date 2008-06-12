@@ -38,7 +38,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 #endif
 
 #ifndef	SAM_STAT_H
@@ -470,6 +470,9 @@ struct sam_section {	/* For each archive copy volume section */
 #define	CF_UNARCHIVED		0x0020	/* This archive copy was unarchived */
 #define	CF_INCONSISTENT 	0x0040	/* This archive copy is inconsistent */
 #define	CF_ARCHIVED		0x0080	/* This archive copy made */
+#define	CF_AR_FLAGS_MASK	0x00FF  /* the flags in the stat struct from */
+					/* the AR_FLAGS in the inode */
+#define	CF_PAX_ARCH_FMT		0x8000	/* from SAR_hdr_off0 in the inode */
 
 int sam_stat(const char *path, struct sam_stat *buf, size_t bufsize);
 int sam_lstat(const char *path, struct sam_stat *buf, size_t bufsize);

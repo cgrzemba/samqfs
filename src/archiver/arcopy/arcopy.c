@@ -39,7 +39,7 @@
  */
 
 
-#pragma ident "$Revision: 1.111 $"
+#pragma ident "$Revision: 1.112 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -139,6 +139,7 @@ static int stopSignal = 0;
 /* Private functions. */
 static boolean_t archiveIdled(void);
 static void arcopyInit(char *argv[]);
+static void arcopyCleanup();
 static void getArchReq(char *arname, int cpi);
 static void reconfig(ReconfigControl_t ctrl);
 static void setIoMethod(int fn);
@@ -256,6 +257,8 @@ main(
 	if (stopSignal != 0) {
 		Trace(TR_MISC, "Stopped by %s", StrSignal(stopSignal));
 	}
+
+	arcopyCleanup();
 
 	Trace(TR_MISC, "%d file%s archived in %d archive file%s.",
 	    FilesArchived, (FilesArchived != 1) ? "s" : "",
@@ -437,6 +440,7 @@ arcopyInit(
 	char *argv[])
 {
 	static struct sam_fs_info fi;
+	sam_defaults_t *defaults;
 	struct ArfindState *af_state;
 	size_t	size;
 	char	*p;
@@ -493,7 +497,33 @@ arcopyInit(
 		exit(EXIT_NORESTART);
 	}
 	MntPoint = fi.fi_mnt_point;
-	OldArchive = fi.fi_config & MT_OLD_ARCHIVE_FMT;
+
+	DefaultHeader = NULL;
+
+	if (!(defaults = GetDefaults())) {
+		LibFatal(GetDefaults, fsName);
+	}
+	/*
+	 * default to using legacy format if both flags are set, which would
+	 * be unexpected, to say the least.  Ditto if neither flag is set
+	 */
+	if (defaults->flags & DF_LEGACY_ARCH_FORMAT) {
+		if (defaults->flags & DF_PAX_ARCH_FORMAT) {
+			Trace(TR_DEBUG, "both flags set, using legacy");
+		}
+
+		Trace(TR_DEBUG, "arcopy using legacy format");
+		ZeroOffset = 0;
+		ArchiveFormat = LEGACY_FORMAT;
+	} else if (defaults->flags & DF_PAX_ARCH_FORMAT) {
+		Trace(TR_DEBUG, "arcopy using pax format");
+		ZeroOffset = 1;
+		ArchiveFormat = PAX_FORMAT;
+	} else {
+		Trace(TR_DEBUG, "neither flag set, using legacy");
+		ZeroOffset = 0;
+		ArchiveFormat = LEGACY_FORMAT;
+	}
 
 	/*
 	 * Get the ArchReq.
@@ -583,6 +613,14 @@ arcopyInit(
 	}
 }
 
+void
+arcopyCleanup()
+{
+	if (DefaultHeader) {
+		ph_destroy_hdr(DefaultHeader);
+		DefaultHeader = NULL;
+	}
+}
 
 /*
  * Get the ArchReq.

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -102,6 +102,7 @@ static void dirOperator(void);
 static void dirTrace(void);
 static void dirValue(void);
 static void procTrace(void);
+static void dirTarFormat(void);
 
 /* Private data. */
 
@@ -121,6 +122,7 @@ static DirProc_t dirProcTable[] = {
 	{ "operator",			dirOperator,		DP_value },
 	{ "stage_retries",		dirObsolete,		DP_value },
 	{ "trace",			dirTrace,		DP_set   },
+	{ "tar_format",			dirTarFormat,		DP_value },
 	{ NULL,				dirValue,		DP_setfield }
 };
 
@@ -940,6 +942,34 @@ dirLabels(void)
 	}
 }
 
+/*
+ * tar_format = legacy | pax
+ */
+static void
+dirTarFormat(void)
+{
+#if DEBUG
+	if (strcmp(token, "legacy") == 0) {
+		(void) SetFieldValue(&defaults, Defaults, "legacy_arch_format",
+		    "TRUE", msgFunc);
+		(void) SetFieldValue(&defaults, Defaults, "pax_arch_format",
+		    "FALSE", msgFunc);
+	} else if (strcmp(token, "pax") == 0) {
+		(void) SetFieldValue(&defaults, Defaults, "legacy_arch_format",
+		    "FALSE", msgFunc);
+		(void) SetFieldValue(&defaults, Defaults, "pax_arch_format",
+		    "TRUE", msgFunc);
+	} else {
+		ReadCfgError(14101, dirName, token);
+	}
+#else /* DEBUG */
+	/* redundant, these values are set by default */
+	(void) SetFieldValue(&defaults, Defaults, "legacy_arch_format",
+	    "TRUE", msgFunc);
+	(void) SetFieldValue(&defaults, Defaults, "pax_arch_format",
+	    "FALSE", msgFunc);
+#endif /* DEBUG */
+}
 
 /*
  * log = facility

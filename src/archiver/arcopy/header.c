@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -57,6 +57,8 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <aml/tar.h>
 #include <aml/tar_hdr.h>
 
+#include <pax_hdr/pax_hdr.h>
+
 /* Local headers. */
 #include "arcopy.h"
 #include "sparse.h"
@@ -64,7 +66,14 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+#define	STANDARDIZED_MODE_BITS 07777
+#define	SAM_ctime "SAM.ctime"
+
 /* Private functions. */
+static void buildPaxHeader(char *name, int name_l, struct sam_stat *st);
+static pax_hdr_t *createDefaultHeader();
+static void samTimeToPaxTime(time_t sam_time, pax_time_t *pax_time);
+static void buildLegacyHeader(char *name, int name_l, struct sam_stat *st);
 static void writeHeader(char *name, struct sam_stat *st, char type);
 static char *getgname(int gid);
 static char *getuname(int uid);
@@ -77,12 +86,187 @@ static struct sam_stat sta;
 char linkname[MAXPATHLEN + 1];
 int link_l;
 
+void
+BuildHeader(
+	char *name,		/* File name. */
+	int name_l,		/* Length of file name. */
+	struct sam_stat *st)	/* File status. */
+{
+	switch (ArchiveFormat) {
+	case LEGACY_FORMAT:
+		buildLegacyHeader(name, name_l, st);
+		break;
+	case PAX_FORMAT:
+		buildPaxHeader(name, name_l, st);
+		break;
+	default:
+		LibFatal(BuildHeader, "unknown archive format");
+	}
+}
+
+
+/* Private functions. */
+
+/*
+ * Builds a pax header and writes it to the archive medium.
+ */
+static void
+buildPaxHeader(
+	char *name,		/* File name. */
+	int name_l,		/* Length of file name. */
+	struct sam_stat *st)	/* File status. */
+{
+	int status = PX_SUCCESS;
+	pax_hdr_t *hdr = ph_create_hdr();
+	int has_xhdr;
+	size_t header_size;
+	char *buffer;
+	pax_pair_t *ctime_pair = NULL;
+	pax_time_t mtime;
+	pax_time_t atime;
+	pax_time_t ctime;
+
+	if (!hdr) {
+		LibFatal(ph_create_header, "failed to create a header");
+	}
+
+	/* Remove leading '/' from file name. */
+	while (*name == '/') {
+		name++;
+	}
+
+	status += ph_set_name(hdr, name);
+	Trace(TR_DEBUG, "set name status was %x", status);
+	status += ph_set_mode(hdr, st->st_mode & STANDARDIZED_MODE_BITS);
+	Trace(TR_DEBUG, "set mode status was %x", status);
+	status += ph_set_uid(hdr, st->st_uid);
+	Trace(TR_DEBUG, "set uid status was %x", status);
+	status += ph_set_gid(hdr, st->st_gid);
+	Trace(TR_DEBUG, "set gid status was %x", status);
+	status += ph_set_uname(hdr, getuname(st->st_uid));
+	Trace(TR_DEBUG, "set uname status was %x", status);
+	status += ph_set_gname(hdr, getgname(st->st_gid));
+	Trace(TR_DEBUG, "set gname status was %x", status);
+	status += ph_set_size(hdr, st->st_size);
+	Trace(TR_DEBUG, "set size status was %x", status);
+
+	samTimeToPaxTime(st->st_mtime, &mtime);
+	samTimeToPaxTime(st->st_atime, &atime);
+	samTimeToPaxTime(st->st_ctime, &ctime);
+
+	status += ph_set_mtime(hdr, mtime);
+	Trace(TR_DEBUG, "set mtime status was %x", status);
+	status += ph_set_atime(hdr, atime);
+	Trace(TR_DEBUG, "set atime status was %x", status);
+
+	ctime_pair = pxp_mkpair_time(SAM_ctime, ctime);
+	status += pxh_put_pair(&hdr->xhdr_list, ctime_pair, 0);
+	Trace(TR_DEBUG, "set ctime status was %x", status);
+
+	if (S_ISLNK(st->st_mode)) {
+		snprintf(ScrPath, sizeof (ScrPath), "%s/%s", MntPoint, name);
+		if ((link_l =
+		    readlink(ScrPath, linkname, sizeof (linkname)-1)) < 0) {
+			Trace(TR_DEBUG, "readlink(%s)", ScrPath);
+			link_l = 0;
+		}
+		linkname[link_l] = '\0';
+		status += ph_set_linkname(hdr, linkname);
+		Trace(TR_DEBUG, "set linkname status was %x", status);
+		status += ph_set_type(hdr, PAX_TYPE_SYMLINK);
+		Trace(TR_DEBUG, "set type status was %x", status);
+	} else if (S_ISDIR(st->st_mode)) {
+		status += ph_set_type(hdr, PAX_TYPE_DIRECTORY);
+		Trace(TR_DEBUG, "set type status was %x", status);
+	} else {
+		status += ph_set_type(hdr, PAX_TYPE_FILE);
+		Trace(TR_DEBUG, "set type status was %x", status);
+	}
+
+	if (status) {
+		LibFatal(buildPaxHeader, "failed setting a header field");
+	}
+
+	has_xhdr = ph_has_ext_hdr(hdr);
+
+	if (has_xhdr && !DefaultHeader) {
+		DefaultHeader = createDefaultHeader();
+		if (!DefaultHeader) {
+			LibFatal(createDefaultHeader,
+			    "could not create default header");
+		}
+	}
+
+	status = ph_get_header_size(hdr, &header_size, NULL, NULL);
+	if (!PXSUCCESS(status)) {
+		LibFatal(ph_get_header_size, "failed to get header size");
+	}
+
+	buffer = WaitRoom(header_size);
+
+	status = ph_write_header(hdr, buffer, header_size, NULL,
+	    DefaultHeader, ph_basic_name_callback);
+	if (!PXSUCCESS(status)) {
+		LibFatal(ph_get_write_header, "failed to write header");
+	}
+
+	AdvanceIn(header_size);
+
+	ph_destroy_hdr(hdr);
+}
+
+/*
+ * Creates a default header for the pax library to use when actual header
+ * data won't fit into the required ustar header blocks.
+ */
+static pax_hdr_t *
+createDefaultHeader()
+{
+	int status = PX_SUCCESS;
+	pax_hdr_t *hdr = NULL;
+	pax_time_t now;
+
+	hdr = ph_create_hdr();
+
+	if (!hdr) {
+		return (NULL);
+	}
+
+	now.sec = (int64_t)time(0);
+	now.nsec = 0;
+
+	status += ph_set_uname(hdr, "root");
+	status += ph_set_gname(hdr, "root");
+	status += ph_set_uid(hdr, 0);
+	status += ph_set_gid(hdr, 0);
+	status += ph_set_mtime(hdr, now);
+	status += ph_set_type(hdr, '0');
+
+	if (status) {
+		ph_destroy_hdr(hdr);
+		hdr = NULL;
+	}
+
+	return (hdr);
+}
+
+/*
+ * Converts a sam time_t to a pax_time.
+ */
+static void
+samTimeToPaxTime(
+	time_t sam_time,
+	pax_time_t *pax_time)
+{
+	pax_time->sec = sam_time;
+	pax_time->nsec = 0;
+}
 
 /*
  * Build tar header record.
  */
-void
-BuildHeader(
+static void
+buildLegacyHeader(
 	char *name,		/* File name. */
 	int name_l,		/* Length of file name. */
 	struct sam_stat *st)	/* File status. */
@@ -115,10 +299,6 @@ BuildHeader(
 		writeHeader(name, st, IsSparse() ? LF_SPARSE : LF_NORMAL);
 	}
 }
-
-
-
-/* Private functions. */
 
 /*
  * Write a tar header record.

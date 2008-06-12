@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.78 $"
+#pragma ident "$Revision: 1.79 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -218,9 +218,6 @@ CopyFile(void)
 	}
 	ClearTimeout(TO_stage);
 	SparseFile = FALSE;
-	if (!OldArchive) {
-		GetFileStoreInfo(s_fd);
-	}
 
 simread:
 	/* Copying file %s */
@@ -273,11 +270,11 @@ simread:
 		st.st_atime	= dp.access_time.tv_sec; /* Access time */
 		st.st_mtime	= dp.modify_time.tv_sec; /* Modification time */
 		st.st_ctime	= dp.change_time.tv_sec; /* Inode changed */
-		if (!OldArchive) {
+		if (ZeroOffset) {
 			File->AfOffset = fileOffset;
 		}
 		BuildHeader(File->f->FiName, File->f->FiName_l, &st);
-		if (OldArchive) {
+		if (!ZeroOffset) {
 			File->AfOffset = fileOffset;
 		}
 	}
@@ -307,9 +304,6 @@ simread:
 
 	if (AF_tarheader(File->AfFlags)) {
 		RoundBuffer(TAR_RECORDSIZE);
-	}
-	if (!OldArchive) {
-		File->AfFileSize = fileOffset - File->AfOffset;
 	}
 	PthreadMutexUnlock(&bufInuse);
 
@@ -890,10 +884,6 @@ copyRegular(
 	}
 
 	size = File->AfFileSize;
-	if (!OldArchive & IsSparse()) {
-		File->AfFlags |= AF_sparse;
-		size = GetFileSize();
-	}
 
 	while (size > 0) {
 		boolean_t dataRead;

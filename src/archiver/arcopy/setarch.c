@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -226,13 +226,14 @@ enterArchiveStatus(
 
 		ve = &VolsTable->entry[af->AfVol];
 		/*
-		 * Old archive format set based on mount config.
-		 * By default the mount config param MT_OLD_ARCHIVE_FMT
-		 * is set.  It appears to be used for detecting if
-		 * sparse archiving but sparse archiving is not supported.
+		 * ZeroOffset indicates that the offset points to the
+		 * beginning of the tar header block instead of the
+		 * beginning of the file data.  This is configured implicitly
+		 * from defaults.conf:  Any format other than 'legacy'
+		 * (currently limited to 'pax') should set this bit.
 		 */
 		sa->ar.arch_flags =
-		    ((!OldArchive) ? 0 : SAR_hdr_off0) |
+		    ((ZeroOffset) ? SAR_hdr_off0 : 0) |
 		    ((af->AfFlags & AF_sparse) ? SAR_sparse : 0);
 		sa->ar.version = 0;
 		sa->ar.creation_time	= af->AfCreateTime;

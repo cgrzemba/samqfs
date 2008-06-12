@@ -35,7 +35,10 @@
 #ifndef ARCOPY_H
 #define	ARCOPY_H
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
+
+/* Sam includes */
+#include <pax_hdr/pax_hdr.h>
 
 /* Local includes. */
 #include "common.h"
@@ -99,6 +102,11 @@ DCL struct ArchiveFile *File;		/* File being archived */
 
 #define	AF_tarheader(flags)	((flags & AF_notarhdr) == 0)
 
+typedef enum ArchFormat {
+	LEGACY_FORMAT,
+	PAX_FORMAT
+} ArchFormat_t;
+
 DCL int FilesNumof IVAL(0);		/* Number of entries */
 
 DCL ExecState_t Exec IVAL(ES_init);
@@ -115,8 +123,10 @@ DCL int AfFd IVAL(-1);			/* Archive file file descriptor */
 DCL int ArchiveCopy;			/* Copy being made */
 DCL int BlockSize IVAL(0);		/* Number of bytes in media block */
 DCL int FilesArchived IVAL(0);		/* Files archived */
-DCL int OldArchive;			/* Old/New style archive records? */
 DCL int ReadCount;			/* Number bytes for read() from file */
+DCL int ZeroOffset;			/* offset to beginning of tar header */
+DCL pax_hdr_t *DefaultHeader;		/* defaults to use for tar headers */
+DCL ArchFormat_t ArchiveFormat;		/* Old/New style archive records? */
 DCL int WriteCount;			/* Number bytes for write() to file */
 DCL int WriteTimeout;			/* Media dependent write timeout */
 
