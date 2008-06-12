@@ -1,4 +1,4 @@
-.\" $Revision: 1.24 $
+.\" $Revision: 1.25 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,11 +27,17 @@
 .\" SAM-QFS_notice_end
 .TH sam-fsd 1M "30 Dec 2003"
 .SH NAME
-sam-fsd \- Initializes Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments
+sam-fsd \- Initializes Sun StorEdge \%SAM-QFS environments
 .SH SYNOPSIS
 .B /usr/lib/fs/samfs/sam-fsd 
 [
 .B \-C
+]
+[
+.B \-N
+]
+[
+.B \-D
 ]
 [
 .B \-c
@@ -54,17 +60,14 @@ SUNWsamfs
 .SH DESCRIPTION
 .LP
 .B sam-fsd
-initializes Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments
+initializes Sun StorEdge \%SAM-QFS environments
 and performs tasks 
 for the file system kernel code. 
 These tasks include sending messages to syslog, and starting the archiver,
 releaser, shared fs, and stager daemons.
-It is started by
-.BR init (1M)
-using an entry in
-.B /etc/inittab
+It is managed as a service by the Solaris Service Management Facility
+.BR smf (5)
 
-sf:23:respawn:/usr/lib/fs/samfs/sam-fsd
 .LP
 When started,
 .B sam-fsd
@@ -84,7 +87,7 @@ is restarted, or sent the signal SIGHUP.
 .LP
 The filesystems are configured and necessary daemons are started.
 Configuration parameters are set, and table files are written for use by
-other components of Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environment.
+other components of Sun StorEdge \%SAM-QFS environment.
 
 .LP
 If errors occur in any of the configuration files,
@@ -102,7 +105,7 @@ message contains the command necessary to signal
 .IR sam-fsd-pid '
 .SS Trace Files
 .LP
-Several Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS
+Several Sun StorEdge QFS, and Sun StorEdge \%SAM-QFS
 daemons write messages to trace files.
 These messages contain information about the state and progress of the
 work performed by the daemons.  The messages are primarily used by Sun
@@ -161,24 +164,33 @@ is the path to the alternate \fBmcf\fR file.
 Sets verbose mode.
 .TP
 .B \-C
-Configure Sun StorEdge \%SAM-FS and Sun \%SAM-QFS
+Configure Sun StorEdge \%SAM-QFS
 if not already configured.  Must
 be the only option.
+.TP
+.B \-N
+Exits with a non-zero status if any Sun StorEdge \%SAM-QFS
+file systems are configured.  Used by the Solaris SMF
+facility. Must be the only option.
+.TP
+.B \-D
+Used by the SMF facility to start sam-fsd as a daemon.
+Used by the Solaris SMF facility.  Must be the only option.
 .SH FILES
 .TP 20
 .B /etc/opt/SUNWsamfs
-Location of Sun StorEdge \%SAM-FS and Sun StorEdge \%SAM-QFS
+Location of Sun StorEdge \%SAM-QFS
 configuration files.
 .TP
 .B mcf
-The configuration file for Sun StorEdge \%SAM-FS and
-Sun \%SAM-QFS environments.
+The configuration file for
+Sun StorEdge \%SAM-QFS environments.
 .TP
 .B samfs.cmd
-Sun StorEdge QFS and Sun StorEdge \%SAM-FS mount commands file.
+Sun StorEdge \%QFS and Sun StorEdge \%SAM-QFS mount commands file.
 .TP
 .B defaults.conf
-Set default values for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS
+Set default values for Sun StorEdge \%SAM-QFS
 environment.
 .SH SEE ALSO
 .BR defaults.conf (4),

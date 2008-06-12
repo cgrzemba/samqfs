@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.77 $"
+#pragma ident "$Revision: 1.78 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -344,35 +344,25 @@ main(int argc, char **argv)
 		if (!(mp->fi_config & MT_SHARED_MO)) {
 			FatalError(0, 17305, mp->fi_name);
 		}
-
-		/*
-		 * For Solaris systems:
-		 * There is special code here to defer mounting shared
-		 * filesystems to the appropriate run level rc script when
-		 * the command mount -a or mount -t samfs is invoked.  The
-		 * concern appears to be with the network not being 'up' yet.
-		 *
-		 * For non-Solaris systems:
-		 * such issues with mounting shared filesystems are the
-		 * same as with mounting NFS or any other type of 'network'
-		 * filesystems.  For non-Solaris (e.g., Linux, etc.) behavior,
-		 * we should be consistent with how we handle mounting any
-		 * filesystem that requires network communication.
-		 * Therefore, make the behavior of mounting shared filesystems
-		 * consistent with that of other such filesystems.  That is,
-		 * include code in the appropriate rc run level script(s) to
-		 * mount and unmount shared filesystems, but also go ahead
-		 * with the mount attempt here, as requested by the commands
-		 * mount -a or mount -t samfs.
-		 */
 #ifdef sun
 		/*
 		 * Shared mounts return immediately if called by mountall.
-		 * Shared mounts are done later by the S73samfs.shared script.
-		 * NOTE. The network must be up for a shared file system to
-		 * mount.
+		 * This is because the network must be up for a shared file
+		 * system to successfully mount, and mountall is typically
+		 * invoked before the network is up.  Instead, shared mounts
+		 * are done later for linux by the S73samfs.shared rc script
+		 * or, for Solaris, by the qfs/shared-mount service.
 		 */
+		if (strcmp(GetParentName(), "mountall") == 0) {
+			fprintf(stderr,
+			    "%s: Returning success for mountall FS %s\n",
+			    argv[0], mp->fi_name);
+			return (EXIT_SUCCESS);
+		}
 		if (strcmp(GetParentName(), "mount") == 0) {
+			fprintf(stderr,
+			    "%s: Returning success for mount FS %s\n",
+			    argv[0], mp->fi_name);
 			return (EXIT_SUCCESS);
 		}
 #endif /* sun */

@@ -1,5 +1,7 @@
 #!/sbin/sh
 
+# $id$
+
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -26,27 +28,13 @@
 #
 #    SAM-QFS_notice_end
 
-# $Revision: 1.16 $
+. /lib/svc/share/smf_include.sh
 
 [ ! -d /usr/bin ] && exit
 
-RELEASE=`grep Solaris /etc/release`
-RELREV=`echo $RELEASE | sed -e "s/^.*Sol/Sol/" | cut -f2 -d' '`
-
 #
-# Map Nevada to Solaris 11.
+# The manifest ensures that this service is dependent on the sam-fsd service.
 #
-if [ "$RELREV" = "Nevada" ]; then
-	RELREV="11"
-fi
-
-#
-# This rc script is obsoleted by SMF management on Solaris 10 and later.
-#
-if [ $RELREV -ge 10 ]; then
-	echo "The S73samfs.shared script is superceded by SMF on this release."
-	exit 0
-fi
 
 #
 # Wait up to this long for clients of a metadata server to unmount.
@@ -88,7 +76,7 @@ case "$1" in
 		if [ x"$automnt" != "xyes" ]; then
 			continue
 		fi
-		# Skip entries that have don't the "shared" option.
+		# Skip entries that don't have the "shared" option.
 		g=`/usr/bin/grep '\<shared\>' << EOF
 			$mntopts
 		EOF`
@@ -197,8 +185,13 @@ case "$1" in
 
 *)
 	echo "Usage: $0 { start | stop }"
-	exit 1
+	/usr/sbin/svcadm disable svc:/network/qfs/shared-mount
+	exit $SMF_EXIT_FATAL
 	;;
 esac
 
-exit 0
+echo "The qfs-shared-mount service has completed running."
+# echo "The qfs-shared-mount service is being placed in maintenance mode."
+# /usr/sbin/svcadm mark maintenance svc:/network/qfs/shared-mount
+# exit $SMF_EXIT_MON_OFFLINE
+exit $SMF_EXIT_OK

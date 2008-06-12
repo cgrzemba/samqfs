@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 #include "sam/osversion.h"
 
@@ -227,9 +227,7 @@ ChkFs(void)
 	if (system(pkgchk)) {
 		exit(EXIT_FAILURE);
 	}
-#endif /* sun */
 
-#ifdef METADATA_SERVER
 	if ((fd = open(fsdLockName, O_RDWR)) < 0) {
 		error(EXIT_FAILURE, errno, GetCustMsg(613), fsdLockName);
 	}
@@ -240,7 +238,7 @@ ChkFs(void)
 		close(fd);
 		error(EXIT_FAILURE, errno, GetCustMsg(12020), program_name);
 	}
-#endif
+#endif /* sun */
 
 	LoadFS(NULL);
 
@@ -250,7 +248,6 @@ ChkFs(void)
 		return;
 	}
 
-#if defined(METADATA_SERVER) || defined(linux)
 	/*
 	 * Filesystem is not configured.
 	 * Execute sam-fsd to configure it.
@@ -272,9 +269,20 @@ ChkFs(void)
 			exit(EXIT_FAILURE);
 		}
 	}
-#else
-	printf("File system not configured; start cld\n");
-#endif /* defined(METADATA_SERVER) || defined(linux) */
+#ifdef sun
+	printf("%s: Enabling the sam-fsd service.\n", program_name);
+	pid = fork();
+	if (pid == -1) {
+		error(EXIT_FAILURE, errno, "Cannot fork");
+	} else if (pid == 0) {
+		close(fd);
+		execl("/usr/sbin/svcadm", "svcadm", "enable", "-t",
+			SAM_FSD, NULL);
+	} else {
+		waitpid(pid, &status, 0);
+		close(fd);
+	}
+#endif /* sun */
 }
 
 

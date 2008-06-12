@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.161 $"
+#pragma ident "$Revision: 1.162 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -147,6 +147,7 @@ static boolean_t stopHsm = FALSE;	/* Set to stop hsm  */
 static boolean_t ready = FALSE;		/* ready to execute */
 
 static pid_t Pid = 0;
+static pid_t Ppid = 0;
 static int stopSignal = 0;		/* Signal to stop all processes */
 static int nextWakeup;			/* secs until next awakening */
 static int mountedFs;			/* number of fs mounted */
@@ -158,24 +159,32 @@ static struct sigaction sig_action;	/* signal actions */
 
 static jmp_buf errReturn;		/* Error message return */
 
+/*
+ * fsd.h defines the following global boolean variables
+ * (all default to FALSE):
+ *	Daemon
+ *	FsCfgOnly
+ *	QfsOnly
+ *	Verbose
+ */
+
 /* Private functions. */
 static void catchSignals(int sig);
 static void nullCatcher(int sig);
 static void processSignals(int allow);
 static void daemonize(void);
 static void checkChildren(void);
-static void checkRelease(void);
+static int checkRelease(int fatalflag);
 static void checkTraceFiles(void);
 static void clearReleaser(char *fsname);
 static void configure(char *defaults_name, char *diskvols_name,
 		char *fscfg_name);
 static void issueResellersMessage(void);
-static void runManual(int argc, char *argv[]);
 static void sendSyslogMsg(struct sam_fsd_syslog *args);
 static void signalProc(int sig, char *pname, char *fsname);
 static void sendFsMount(char *fsname);
 static void sendFsUmount(char *fsname);
-static void setInittab(void);
+static void initRestart(void);
 static void sigInit(void (*handler)(int));
 static void sigReset(void);
 #ifdef sun
@@ -185,12 +194,17 @@ static void startSamamld(int fsMounted);
 static void startSamrftd(void);
 
 /* LQFS: Logging control functions */
-static void disable_logging(char *mp, char *special);
-static void enable_logging(char *mp, char *special);
-static int checkislog(char *mp);
-static void initLogging(char *fsname);
+static void disable_journaling(char *mp, char *special);
+static void enable_journaling(char *mp, char *special);
+static int checkisjournal(char *mp);
+static void initJournaling(char *fsname);
 #endif /* sun */
 
+#define	NO_FATAL_ERR_FLAG	0
+#define	FATAL_ERR_FLAG		1
+
+#define	INIT_TIMEOUT	300	/* max secs for sam-fsd to finish init */
+#define	WAIT_ALARMINT	3	/* secs for periodic config done check */
 
 int
 main(int argc, char *argv[])
@@ -198,6 +212,26 @@ main(int argc, char *argv[])
 	int i, errcode;
 	int killsigs[] = { SIGEMT, SIGEMT, SIGKILL, SIGKILL, 0};
 	char errbuf[SPM_ERRSTR_MAX];
+	struct sam_get_fsstatus_arg arg;
+	int c;
+	extern char *optarg;
+	extern int optind;
+	char *defaults_name = NULL;
+	char *diskvols_name = NULL;
+	char *fscfg_name = NULL;
+	int ConfigOnly = 0;
+	int ValidateOnly = 0;
+	int RunAsDaemon = 0;
+	int StartedByInit = 0;
+	int CapArgs = 0;
+	int SmallArgs = 0;
+	int errors = 0;
+#ifdef sun
+	char *optstr = "CNDc:d:f:m:v";
+	int GetNumFs = 0;
+#else
+	char *optstr = "Cc:d:f:m:v";
+#endif /* sun */
 
 	Pid = getpid();
 
@@ -213,56 +247,155 @@ main(int argc, char *argv[])
 	deadPool->count = 1;
 
 	CustmsgInit(1, NULL);	/* Assure message translation */
-	if (argc == 2 && strcmp(argv[1], "-C") == 0) {
-		struct sam_fs_status *fsarray;
 
-		/*
-		 * Filesystem is not configured and sam-fsd
-		 * was executed for a filesystem program.
-		 *
-		 * Modload the samfs module and perform basic configuration.
-		 */
-		checkRelease();			/* verify Solaris version */
-		TraceInit(program_name, TI_fsd);
-		Trace(TR_MISC, "File system daemon started - config only");
-		LoadFS((void *)FatalError);
-		if (GetFsStatus(&fsarray) > 0) {
-			/* File system already configured.\n */
-			printf(GetCustMsg(17294));
-			return (EXIT_SUCCESS);
+	/*
+	 * For most daemons, making the distinction between being started by
+	 * the system vs another root user process is not an issue because
+	 * most daemons behave the same regardless of which root process starts
+	 * them.  sam-fsd is an atypical daemon, because it supports the
+	 * ability for any root user to invoke it directly, with no arguments,
+	 * just to validate a configuration and die without running as a
+	 * daemon.  At the same time, it can also be started directly by the
+	 * init process (i.e. "the system"), invoked with no arguments, to
+	 * make iteself run as a daemon after the config has been instantiated.
+	 *
+	 * On a Linux client, sam-fsd can easily make the distinction between
+	 * being started directly by the system (i.e. init), and being
+	 * originally started by a root user process.  It was started
+	 * directly by init if it's parent is init (always PPID 1) AND
+	 * it's process group ID is the same as it's PID (i.e. the process
+	 * didn't just get inherited by init because it's original parent
+	 * died).  In any other case, it must have been started by a root
+	 * user process for the purpose of validating a SAM-QFS configuration.
+	 *
+	 * On Solaris, the distinction between being started by the system
+	 * (via SMF svc.startd) and started by a root user process becomes
+	 * less determinate.  This is because svc.startd, unlike init, can't
+	 * always be identified by a specific PID - it really is just another
+	 * root user process.  So, sam-fsd can't continue to use the same
+	 * algorithm to make the distinction between being started by the
+	 * system and being started by a root user process.
+	 *
+	 * For Solaris, the user-specified configuration validation
+	 * syntax will remain the same, because we can't guarantee that
+	 * the root user will always remember to use a new syntax.  The
+	 * system-start syntax will change, to use a new -D option, to
+	 * inform sam-fsd that it is being started by the system and must
+	 * run as a daemon.  The -D option will also be available for use
+	 * by the root user.  Since sam-fsd is no longer started by init,
+	 * it must always transform itself into a daemon, regardless of
+	 * whether it is invoked with the -D option by the system or by a
+	 * root user process.
+	 */
+
+	while ((c = getopt(argc, argv, optstr)) != EOF) {
+		switch (c) {
+			case 'C':
+				ConfigOnly = 1;
+				CapArgs++;
+				break;
+#ifdef sun
+			case 'N':
+				GetNumFs = 1;
+				CapArgs++;
+				break;
+			case 'D':
+				RunAsDaemon = 1;
+				CapArgs++;
+				break;
+#endif /* sun */
+			case 'c':
+				defaults_name = optarg;
+				SmallArgs++;
+				break;
+			case 'd':
+				diskvols_name = optarg;
+				SmallArgs++;
+				break;
+			case 'f':
+				fscfg_name = optarg;
+				SmallArgs++;
+				break;
+			case 'm':
+				McfName = optarg;
+				SmallArgs++;
+				break;
+			case 'v':
+				Verbose = TRUE;
+				SmallArgs++;
+				break;
+			case '?':
+			default:
+				errors++;
+				break;
 		}
+	}
 
-		FsCfgOnly = TRUE;
-		daemonize();		/* fork -- only child returns */
+	if (errors != 0 || (argc - optind) > 0 ||
+	    CapArgs > 1 || (CapArgs && SmallArgs)) {
+		fprintf(stderr,
+#ifdef sun
+		    "%s %s -C | -N | -D | [-c defaults] [-d diskvols] "
+		    "[-f samfs] [-m mcf] [-v] \n",
+#else
+		    "%s %s -C | [-c defaults] [-d diskvols] [-f samfs] "
+		    "[-m mcf] [-v] \n",
+#endif /* sun */
+		    GetCustMsg(4601), program_name);
+		exit(EXIT_USAGE);
+	}
 
-		setInittab();
-		free(fsarray);
-#ifdef linux
-		/* init was HUP'ed. It will respawn sam-fsd within 5 secs. */
-		sleep(5);
-#endif /* linux */
-	} else if (getppid() != 1 || getpgid(0) != getpid()) {
+	if (CapArgs == 0) {
+#ifdef sun
 		/*
-		 * Not started by init.
-		 * Process configuration files to report all errors.
+		 * On Solaris, sam-fsd is invoked without any uppercase
+		 * arguments only by a root user process just to validate a
+		 * proposed configuration.
 		 */
-		checkRelease();			/* verify Solaris version */
-		TraceInit(NULL, TI_none);
-		LoadFS((void *)FatalError);
-		runManual(argc, argv);
-		return (EXIT_SUCCESS);
+		ValidateOnly = 1;
+#else
+		/*
+		 * On a Linux client, sam-fsd can be invoked without
+		 * the -C (config) argument by either init, to instantiate
+		 * the configuration and run as a daemon, or by a root user
+		 * process, just to validate a proposed configuration.
+		 */
+		if ((getppid() == 1) && (getpgid(0) == getpid())) {
+			StartedByInit = 1;
+		} else {
+			ValidateOnly = 1;
+		}
+#endif /* sun */
+	}
+
+	/*
+	 * Verify Solaris version.
+	 */
+#ifdef sun
+	/*
+	 * If sam-fsd was invoked with the -N (number) option, and
+	 * checkRelease() fails, simply return 0 to indicate that
+	 * no file systems are configured.  Otherwise, make checkRelease()
+	 * fail fatally as usual.
+	 */
+	if (GetNumFs) {
+		if (checkRelease(NO_FATAL_ERR_FLAG) != 0) {
+			return (0);
+		}
 	} else {
+#endif /* sun */
+		(void) checkRelease(FATAL_ERR_FLAG);
+#ifdef sun
+	}
+#endif /* sun */
 
+	/*
+	 * Initialize tracing.
+	 */
+	if (RunAsDaemon || StartedByInit) {
 		/*
-		 * Started by 'init', run as a daemon.
-		 */
-		Daemon = TRUE;
-
-		/*
-		 * Init (should have) started sam-fsd without open file
-		 * descriptors.  In any case, before tracing initialization,
-		 * grab the classic stdin, stdout, stderr file descriptors
-		 * as /dev/null.
+		 * We are a daemon (or will become one when our parent dies).
+		 * Close open file descriptors.
 		 */
 		(void) close(STDIN_FILENO);
 		if (open("/dev/null", O_RDONLY) != STDIN_FILENO) {
@@ -277,54 +410,218 @@ main(int argc, char *argv[])
 			LibFatal(open, "stderr /dev/null");
 		}
 
-		MakeTraceCtl();
-		checkRelease();		/* verify Solaris version */
-
-		LoadFS((void *)FatalError);
 	}
 
 	/*
+	 * Make sure that a trace binary control file exists,
+	 * and initialize tracing.
+	 */
+	MakeTraceCtl();
+	TraceInit(program_name, TI_fsd);
+
+	/*
+	 * Modload the samfs module and perform basic
+	 * configuration.
+	 */
+	LoadFS((void *)FatalError);
+
+#ifdef sun
+	/*
+	 * If sam-fsd was invoked with the -N (number) option, exit
+	 * with the number of actively configured SAM-QFS file systems.
+	 */
+	if (GetNumFs) {
+		int numfs = 0;
+
+		/*
+		 * Issue trace message.
+		 */
+		Trace(TR_MISC, "Query started");
+
+		memset(&arg, 0, sizeof (arg));
+		if (sam_syscall(SC_getfsstatus, &arg, sizeof (arg)) >= 0) {
+			numfs = arg.numfs;
+			if (numfs > 255) {
+				numfs = 255;	/* Exit status can't be > 255 */
+			}
+		}
+
+		Trace(TR_MISC,
+		    "Query exiting with status %d", numfs);
+
+		return (numfs);
+	}
+#endif /* sun */
+
+	/*
+	 * If sam-fsd was invoked with no arguments, just validate the
+	 * proposed configuration and record all errors.
+	 */
+	if (ValidateOnly) {
+		/*
+		 * Issue trace message.
+		 */
+		Trace(TR_MISC, "Validation started");
+
+		/*
+		 * Go validate the configuration, and exit.
+		 */
+		CustmsgInit(0, NULL);	/* Assure message translation */
+		/*
+		 * Read configuration files.
+		 * Go through the motions of configuring the file systems.
+		 */
+		configure(defaults_name, diskvols_name, fscfg_name);
+		Trace(TR_MISC, "Validation completed - exiting");
+		return (EXIT_SUCCESS);
+	}
+
+	/*
+	 * If sam-fsd was invoked with the -C (config) option, and
+	 * SAM-QFS is already configured, then exit with success.
+	 * Otherwise, exit with failure.
+	 */
+	if (ConfigOnly) {
+		/*
+		 * Issue trace message.
+		 */
+		Trace(TR_MISC, "Configuration started");
+
+		/*
+		 * If at least one SAM-QFS file system has been
+		 * configured, then we're done.
+		 */
+		memset(&arg, 0, sizeof (arg));
+		if (sam_syscall(SC_getfsstatus, &arg, sizeof (arg)) > 0) {
+			printf(GetCustMsg(17294));
+			Trace(TR_MISC, "File system already configured");
+			return (EXIT_SUCCESS);
+		}
+
+		/*
+		 * SAM-QFS is not yet configured.
+		 */
+		FsCfgOnly = TRUE;
+	}
+
+	if (FsCfgOnly || RunAsDaemon) {
+		/*
+		 * Issue trace message, and create child to either do
+		 * basic FS configuration, or to run as the
+		 * sam-fsd daemon.
+		 */
+		Trace(TR_MISC, "Creating child sam-fsd");
+		daemonize();
+		TracePid = getpid();
+	}
+
+	/*
+	 * Functions called beyond this point check the Daemon flag.
+	 * If we were started by init (Linux client), or with the -D option
+	 * (Solaris MDS or client) then we must behave as the sam-fsd daemon.
+	 * If we were started via SMF with the -D option, then our parent
+	 * might still be alive, but that's okay because it will kill itself
+	 * or be killed later.
+	 */
+	if (RunAsDaemon || StartedByInit) {
+		Daemon = TRUE;
+	}
+
+#ifdef linux
+	/*
+	 * If sam-fsd was invoked with the -C (config) option,
+	 * initialize sam-fsd's auto-restart capability.  On a Linux
+	 * client, this involves updating /etc/inittab and sending a
+	 * HUP signal to init.  Init will restart sam-fsd within 5
+	 * seconds.
+	 *
+	 * NOTE: We don't need to do this on a Solaris MDS or
+	 * client because, when we exit, the ChkFs() function that
+	 * invoked us with the -C option will enable the sam-fsd
+	 * service to invoke sam-fsd with the -D (daemon) option.
+	 */
+	if (FsCfgOnly) {
+		initRestart();
+
+		sleep(5);
+	}
+#endif /* linux */
+
+	/*
 	 * Change to our working directory for any core files.
-	 * Initialize message processing.
 	 */
 	MakeDir(SAM_VARIABLE_PATH"/fsd");
 	if (chdir(SAM_VARIABLE_PATH"/fsd") == -1) {
 		FatalError(608, SAM_VARIABLE_PATH"/fsd");
 	}
 
+	/*
+	 * Initialize message (i.e. signal) processing.
+	 * Register signals HUP, INT, EMT, ALRM, TERM, USR1, USR2 to
+	 * be handled by catchSignals(), but block those signals plus
+	 * SIGCHLD for now.  Note that SIGCHLD is not actually
+	 * registered yet.
+	 */
 	sigInit(catchSignals);
 
 	/*
-	 * Ensure that we're the only sam-fsd daemon running.  Two cases:
-	 * (1) This proc wasn't started by init (exit if any others exist); or
-	 * (2) This proc was started by init (kill off all others).
+	 * Use a lock file to ensure that we're the only sam-fsd instance
+	 * running.
 	 */
+#ifdef sun
+	if ((i = sam_lockout(SAM_FSD, ".", SAM_FSD ".", NULL)) != 0) {
+		Trace(TR_MISC, "Daemon can't run exclusively - exiting");
+		exit(EXIT_SUCCESS);
+	}
+#else
 	if ((i = sam_lockout(SAM_FSD,
 	    ".", SAM_FSD ".", FsCfgOnly ? NULL : killsigs)) != 0) {
 		if (i < 0) {
 			FatalError(17291, SAM_VARIABLE_PATH "/fsd");
 		}
-		if (FsCfgOnly || stopSignal) {
+		if (FsCfgOnly) {
+			Trace(TR_MISC, "Configuration completed - exiting");
+			exit(EXIT_SUCCESS);
+		}
+		if (stopSignal) {
+			Trace(TR_MISC, "Received stop signal - exiting");
 			exit(EXIT_SUCCESS);
 		}
 	}
+#endif /* sun */
 
 	/*
 	 * Read configuration files.
 	 */
 	moreInfo = TRUE;
+
+	/*
+	 * The next call to longjmp() will jump with it's specified return
+	 * value to here, unless we call setjmp() again in the interim.
+	 * This direct call to setjmp() returns 0, and sets 'reconfig' to
+	 * FALSE to perform the configuration below.
+	 */
 	if (setjmp(errReturn) == 0) {
 		reconfig = FALSE;
 	}
 
+	/*
+	 * Create working directories as needed.
+	 */
 	MakeDir(SAM_VARIABLE_PATH"/uds");
-#ifdef METADATA_SERVER
+#ifdef sun
+	/*
+	 * This is an MDS-capable host.
+	 */
 	MakeDir(SAM_VARIABLE_PATH"/sharefsd");
 	MakeDir(SAM_VARIABLE_PATH"/shrink");
 
 	if (!QfsOnly) {
 		struct stat lbuf;
 
+		/*
+		 * This is a SAM-capable host.
+		 */
 		MakeDir(SAM_VARIABLE_PATH"/amld");
 		MakeDir(SAM_VARIABLE_PATH"/archiver");
 		MakeDir(SAM_VARIABLE_PATH"/releaser");
@@ -362,18 +659,14 @@ main(int argc, char *argv[])
 		}
 		sleep(2);
 	}
-#endif /* METADATA_SERVER */
+#endif /* sun */
 
 	/*
-	 * Configure.
-	 * Allocate child status queue.
+	 * If we haven't done configuration yet, do it.
 	 */
 	if (!reconfig) {
+		Trace(TR_MISC, "Configuring");
 		configure(NULL, NULL, NULL);
-	}
-	if (Daemon) {
-		TraceInit(program_name, TI_fsd);
-		Trace(TR_MISC, "File system daemon started");
 	}
 
 	/*
@@ -394,12 +687,31 @@ main(int argc, char *argv[])
 			Trace(TR_ERR, "getrlimit() failed");
 		}
 	}
+
 	/*
-	 * Kill off waiting parent, so it returns to caller now that
-	 * things are properly initialized.
+	 * If sam-fsd was started in config mode or to run as a daemon, and
+	 * it's parent isn't init, kill off the waiting parent so it returns
+	 * to the invoker.
 	 */
-	if (Pid > 1 && FsCfgOnly) {
+	if ((FsCfgOnly || RunAsDaemon) && (Pid > 1)) {
+		Trace(TR_MISC, "Sending SIGCLD to parent PID %d", Pid);
 		kill(Pid, SIGCLD);
+	}
+
+#ifdef sun
+	/*
+	 * Now that configuration is done, this child sam-fsd must exit on
+	 * a Solaris MDS or client so that SMF starts the real sam-fsd daemon.
+	 * On a Linux client, we can continue to run as the daemon.
+	 */
+	if (FsCfgOnly) {
+		Trace(TR_MISC, "Configuration completed - exiting");
+		exit(EXIT_SUCCESS);
+	}
+#endif /* sun */
+
+	if (Daemon) {
+		Trace(TR_MISC, "File system daemon running");
 	}
 
 	/*
@@ -409,7 +721,7 @@ main(int argc, char *argv[])
 	sam_syslog(LOG_INFO, COPYRIGHT);
 	issueResellersMessage();
 	/*
-	 * SIGCHLD for death of child processes.
+	 * Actually register SIGCHLD for death of child processes.
 	 */
 	(void) sigaction(SIGCHLD, &sig_action, NULL);
 	ServerInit();
@@ -420,10 +732,19 @@ main(int argc, char *argv[])
 	startSamrftd();
 #endif /* sun */
 
+	/*
+	 * Make the next longjmp() call jump to here with it's specified
+	 * return value.  When that happens, then mark our configuration
+	 * as having been completed.  Until then, leave it marked as
+	 * not yet completed.
+	 */
 	if (setjmp(errReturn) != 0) {
 		reconfig = TRUE;
 	}
 
+	/*
+	 * Loop until we notice that we've received a signal to stop.
+	 */
 	for (;;) {
 		int r, saveErrno;
 		struct sam_fsd_cmd cmd;
@@ -431,14 +752,28 @@ main(int argc, char *argv[])
 		if (stopSignal) {
 			signalProc(stopSignal, NULL, NULL);
 			stopSignal = 0;
+			Trace(TR_MISC, "Received stop signal - exiting");
 			break;			/* exit */
 		}
 
 		checkChildren();
 
+		/*
+		 * If our configuration has been marked as completed,
+		 * then mark it as not completed, and re-read the config.
+		 * We leave the config marked as not completed
+		 */
 		if (reconfig) {
+			/*
+			 * Mark our configuration as not having been completed.
+			 */
 			reconfig = FALSE;
 			sam_syslog(LOG_INFO, "Rereading configuration files");
+
+			/*
+			 * Configure again.
+			 */
+			Trace(TR_MISC, "Re-configuring");
 			configure(NULL, NULL, NULL);
 			TraceReconfig();
 #ifdef sun
@@ -547,7 +882,7 @@ main(int argc, char *argv[])
 			sam_syslog(LOG_INFO, "%s built %s.", args->fs_name,
 			    time_str);
 #ifdef sun
-			initLogging(args->fs_name);
+			initJournaling(args->fs_name);
 #endif /* sun */
 			signalProc(SIGHUP, NULL, args->fs_name);
 			if (!QfsOnly) {
@@ -689,63 +1024,6 @@ main(int argc, char *argv[])
 	return (EXIT_SUCCESS);
 }
 
-
-/*
- * Run sam-fsd manually.
- */
-static void
-runManual(int argc, char *argv[])
-{
-	extern int optind;
-	char	*defaults_name = NULL;
-	char	*diskvols_name = NULL;
-	char	*fscfg_name = NULL;
-	int		c;
-	int		errors;
-
-	Daemon = FALSE;
-	CustmsgInit(0, NULL);	/* Assure message translation */
-
-	errors = 0;
-	while ((c = getopt(argc, argv, "c:d:f:m:v")) != EOF) {
-		switch (c) {
-		case 'c':
-			defaults_name = optarg;
-			break;
-		case 'd':
-			diskvols_name = optarg;
-			break;
-		case 'f':
-			fscfg_name = optarg;
-			break;
-		case 'm':
-			McfName = optarg;
-			break;
-		case 'v':
-			Verbose = TRUE;
-			break;
-		case '?':
-		default:
-			errors++;
-			break;
-		}
-	}
-	if (errors != 0 || (argc - optind) > 0) {
-	/* usage: */
-	fprintf(stderr,
-	    "%s %s [-c defaults] [-d diskvols] [-f samfs] [-m mcf] [-v] \n",
-	    GetCustMsg(4601), program_name);
-		exit(EXIT_USAGE);
-	}
-
-	/*
-	 * Read configuration files.
-	 * Go through the motions of configuring the file systems.
-	 */
-	configure(defaults_name, diskvols_name, fscfg_name);
-}
-
-
 /*
  * daemonize()
  *
@@ -762,52 +1040,92 @@ static void
 daemonize(void)
 {
 	pid_t child;
-	time_t t;
+	time_t start_time;
 	int r, status;
-	struct sam_fs_status *fsarray;
+	struct sam_get_fsstatus_arg arg;
+	int numfs = 0;
 
+	/*
+	 * Initialize message (i.e. signal) processing.
+	 * Register signals HUP, INT, EMT, ALRM, TERM, USR1, USR2 to
+	 * be handled by nullCatcher(), but block those signals plus
+	 * SIGCHLD for now.  Note that SIGCHLD is not actually
+	 * registered yet.
+	 */
 	sigInit(nullCatcher);
 
 	child = fork1();
 	if (child == 0) {
+		/*
+		 * Let the child process live to either go do the
+		 * configuration or to run as a daemon.
+		 */
 		return;
 	}
 
 	/*
-	 * parent or error - exit when done (no return)
+	 * This is the parent process.  Child pid is saved in 'child'.
 	 */
+
 	if (child < 0) {
+		/*
+		 * Parent exits on failure to fork a child.
+		 */
 		LibFatal(fork1, "configure");
 		exit(EXIT_FAILURE);
 	}
 
-	processSignals(TRUE);		/* Enable signal reception */
+	memset(&arg, 0, sizeof (arg));
 
-#define		INIT_TIMEOUT	300	/* max time for sam-fsd to finish */
-#define		WAIT_ALARMINT	3	/* check for config done period */
+	/*
+	 * Unblock signals, but do nothing meaningful with them (nullCatcher).
+	 */
+	processSignals(TRUE);
 
-	t = time(NULL);
+	start_time = time(NULL);
 	do {
 		int wt;
+		int err;
 
 		/*
 		 * Set a wakeup for the remaining INIT_TIMEOUT interval, but no
 		 * more than WAIT_ALARMINT seconds and no less than one second.
 		 */
-		wt = (t + INIT_TIMEOUT) - time(NULL);
+		wt = (start_time + INIT_TIMEOUT) - time(NULL);
 		wt = MIN(wt, WAIT_ALARMINT);
 		wt = MAX(wt, 1);
 		(void) alarm(wt);
-		if (child) {
+		if (child) {	/* Always TRUE on first iteration */
 			r = waitpid(child, &status, 0);	/* await child */
 			if (r >= 0) {
 				child = 0;
 			}
 		} else {
+			/*
+			 * Now wait for SIGALRM or any other signal that
+			 * we're initerested in.
+			 */
 			pause();
 		}
-	} while ((time(NULL) - t < INIT_TIMEOUT) &&
-	    GetFsStatus(&fsarray) <= 0);
+		/*
+		 * Keep iterating until our time has expired, or the
+		 * filesystem has been initialized.
+		 */
+		if (sam_syscall(SC_getfsstatus, &arg, sizeof (arg)) >= 0) {
+			numfs = arg.numfs;
+		}
+	} while ((numfs <= 0) &&
+	    (time(NULL) - start_time < INIT_TIMEOUT));
+
+	if (numfs <= 0) {
+		Trace(TR_MISC,
+		    "Parent timed out waiting for configuration - exiting");
+	} else {
+		Trace(TR_MISC,
+		    "Parent detected config (%d file systems) - exiting",
+		    numfs);
+	}
+
 	_exit(EXIT_SUCCESS);
 }
 
@@ -852,15 +1170,32 @@ FatalError(
 	*p = '\0';
 
 	if (!Daemon) {
+		/*
+		 * We weren't started in config mode, nor by someone other
+		 * than init.  Display the fatal error message and die.
+		 * (NOTE: This doesn't guarantee that we weren't started
+		 * by init in config mode!!!)
+		 */
 		fprintf(stderr, "%s: %s\n", program_name, msg_buf);
-		if (FsCfgOnly && Pid > 1 && Pid != getpid()) {
+
+		if (FsCfgOnly && (Pid > 1) && (Pid != getpid())) {
+			/*
+			 * We were started in config mode, and had a parent
+			 * other than init.  Wait about 5 seconds for our
+			 * parent to do stuff, an then try to kill them.
+			 * (NOTE: If our parent died already, and another
+			 * process grabbed their former PID, then who are
+			 * we killing???)
+			 */
 			sleep(5);
+			Trace(TR_MISC, "Sending SIGKILL to parent PID %d", Pid);
 			kill(Pid, SIGKILL);
 		}
 		exit(EXIT_FATAL);
 	}
 
 	/*
+	 * We were started by init (not in config mode).
 	 * At this point, we have a serious configuration startup error.
 	 * We don't even know how to access SAM's log file, so we use
 	 * syslog directly.
@@ -888,24 +1223,38 @@ FatalError(
 	    "  You must run 'samd config' after the problem has been "
 	    "corrected.");
 
+	/*
+	 * If our configuration was marked as completed, jump back
+	 * to the point of the last setjmp().
+	 */
 	if (reconfig) {
 		longjmp(errReturn, 1);
 	}
 
 	/*
-	 * Wait for restart.
-	 * If we exit, 'init' will simply respawn us.
-	 * Wait for someone else to kill us.
+	 * Our configuration was marked as not yet completed.
 	 */
 	for (;;) {
 		/*
-		 * Wait for signals
+		 * Unblock signals for about 5 seconds only.
 		 */
 		processSignals(TRUE);
 		sleep(5);
 		processSignals(FALSE);
 
+		/*
+		 * If we notice that we were told to stop, then exit, and
+		 * 'init' (Linux) or SMF (Solaris) will respawn
+		 * us.  Otherwise, if our config has finally been marked as
+		 * completed, then jump back to the point of the last
+		 * setjmp().
+		 */
 		SenseRestart();
+
+		/*
+		 * Not told to stop, and config not done.  Go unblock
+		 * signals again.
+		 */
 	}
 }
 
@@ -1067,9 +1416,18 @@ StartProcess(
 void
 SenseRestart(void)
 {
+	/*
+	 * If we reseived a signal to stop, then exit.
+	 */
 	if (stopSignal != 0) {
+		Trace(TR_MISC, "Received stop signal - exiting");
 		exit(EXIT_SUCCESS);
 	}
+
+	/*
+	 * If our configuration was marked as completed, jump back
+	 * to the point of the last setjmp().
+	 */
 	if (reconfig) {
 		longjmp(errReturn, 1);
 	}
@@ -1257,6 +1615,10 @@ catchSignals(int sig)
 	case SIGINT:
 	case SIGEMT:
 	case SIGTERM:
+		/*
+		 * Stop everything at our next opportunity when we receive
+		 * an INT, EMT, or TERM signal.
+		 */
 		stopSignal = SIGTERM;
 		break;
 
@@ -1392,7 +1754,7 @@ checkChildren(void)
 				} else {
 					cp->CpRestartTime = now + delay;
 				}
-				Trace(TR_MISC, "Restarting %s in %ld seconds.",
+				Trace(TR_MISC, "Restarting %s in %ld seconds",
 				    cp->CpName, cp->CpRestartTime - now);
 				break;
 				}
@@ -1503,8 +1865,8 @@ checkChildren(void)
 /*
  * Check Solaris release.
  */
-static void
-checkRelease(void)
+static int
+checkRelease(int fatalflag)
 {
 #ifdef sun
 	char	*systemchk = SYSCHK;
@@ -1514,7 +1876,7 @@ checkRelease(void)
 	char *rel = "5.10";
 #else
 	char *rel = "??";
-#endif
+#endif /* defined(SOL5_11) */
 	char buf[32];
 
 	(void) sysinfo(SI_RELEASE, buf, sizeof (buf));
@@ -1535,7 +1897,10 @@ checkRelease(void)
 			LibFatal(samsyschk, "");
 		}
 		if (open("/tmp/.samsyschk", O_RDONLY | O_CREAT) == -1) {
-			LibFatal(open, "/tmp/.samsyschk");
+			if (fatalflag) {
+				LibFatal(open, "/tmp/.samsyschk");
+			}
+			return (1);
 		}
 	}
 #endif /* sun */
@@ -1561,7 +1926,7 @@ checkRelease(void)
 	val = atoi(rel);
 	*cp = '.';
 	if (val > MIN_REL_MAJOR) {
-		return;			/* Good */
+		return (0);			/* Good */
 	}
 	if (val < MIN_REL_MAJOR) {
 		goto mismatch;
@@ -1576,7 +1941,7 @@ checkRelease(void)
 	val = atoi(rel);
 	*cp = '.';
 	if (val > MIN_REL_MINOR) {
-		return;			/* Good */
+		return (0);			/* Good */
 	}
 	if (val < MIN_REL_MINOR) {
 		goto mismatch;
@@ -1593,7 +1958,7 @@ checkRelease(void)
 	}
 	val = atoi(rel);
 	if (val >= MIN_REL_UPDATE) {	/* Good */
-		return;
+		return (0);
 	}
 
 mismatch:
@@ -1602,6 +1967,7 @@ mismatch:
 	    MIN_REL_MAJOR, MIN_REL_MINOR, MIN_REL_UPDATE);
 	exit(EXIT_FATAL);
 #endif /* linux */
+	return (0);
 }
 
 
@@ -1824,12 +2190,12 @@ issueResellersMessage(void)
 	void	*handle;
 
 	if ((handle = dlopen(RESELL_LIB, RTLD_NOW | RTLD_GLOBAL)) == NULL) {
-		Trace(TR_MISC, "No reseller library installed: %s.",
+		Trace(TR_MISC, "No reseller library installed: %s",
 		    dlerror());
 		return;
 	}
 	if ((msg = (char **)dlsym(handle, "resellers_message")) == NULL) {
-		Trace(TR_MISC, "No reseller message: %s.", dlerror());
+		Trace(TR_MISC, "No reseller message: %s", dlerror());
 	} else {
 		sam_syslog(LOG_INFO, "%s", *msg);
 	}
@@ -1930,19 +2296,19 @@ signalProc(
 
 #ifdef sun
 /*
- * Report logging state change errors.
+ * Report journaling state change errors.
  */
 static void
-reportlogerror(int ret, char *mp, char *special, char *cmd, fiolog_t *flp)
+reportjournalerror(int ret, char *mp, char *special, char *cmd, fiolog_t *flp)
 {
 	/* No error */
 	if ((ret != -1) && (flp->error == FIOLOG_ENONE)) {
 		return;
 	}
 
-	/* logging was not enabled/disabled */
+	/* Journaling was not enabled/disabled */
 	if (ret == -1 || flp->error != FIOLOG_ENONE) {
-		Trace(TR_MISC, "Could not %s logging for %s on %s.\n",
+		Trace(TR_MISC, "Could not %s journaling for %s on %s\n",
 		    cmd, special, mp);
 	}
 
@@ -1957,72 +2323,73 @@ reportlogerror(int ret, char *mp, char *special, char *cmd, fiolog_t *flp)
 		if (flp->nbytes_requested &&
 		    (flp->nbytes_requested != flp->nbytes_actual)) {
 			Trace(TR_MISC,
-			    "The log has been resized from %d bytes "
-			    "to %d bytes.\n",
+			    "The journal has been resized from %d bytes "
+			    "to %d bytes\n",
 			    flp->nbytes_requested,
 			    flp->nbytes_actual);
 		}
 		return;
 	case FIOLOG_ENOTSUP:
 		Trace(TR_MISC,
-		    "NOTE: File system version does not support logging.\n");
+		    "NOTE: File system version does not support journaling\n");
 		break;
 	case FIOLOG_ETRANS :
 		Trace(TR_MISC,
-		    "File system logging is already enabled.\n");
+		    "File system journaling is already enabled\n");
 		break;
 	case FIOLOG_EULOCK :
-		Trace(TR_MISC, "File system is locked.\n");
+		Trace(TR_MISC, "File system is locked\n");
 		break;
 	case FIOLOG_EWLOCK :
-		Trace(TR_MISC, "The file system could not be write locked.\n");
+		Trace(TR_MISC, "The file system could not be write locked\n");
 		break;
 	case FIOLOG_ECLEAN :
-		Trace(TR_MISC, "The file system may not be stable.");
-		Trace(TR_MISC, "Please see samfsck(1M).\n");
+		Trace(TR_MISC, "The file system may not be stable");
+		Trace(TR_MISC, "Please see samfsck(1M)\n");
 		break;
 	case FIOLOG_ENOULOCK :
-		Trace(TR_MISC, "The file system could not be unlocked.\n");
+		Trace(TR_MISC, "The file system could not be unlocked\n");
 		break;
 	default :
-		Trace(TR_MISC, "Unrecognized error code (%d).\n", flp->error);
+		Trace(TR_MISC, "Unrecognized error code (%d)\n", flp->error);
 		break;
 	}
 }
 
 
 /*
- * Check logging state - return non-zero if logging is enabled.
+ * Check journaling state - return non-zero if journaling is enabled.
  */
 static int
-checkislog(char *mp)
+checkisjournal(char *mp)
 {
 	int fd;
-	uint32_t islog;
+	uint32_t isjournal;
 
 	fd = open(mp, O_RDONLY);
-	islog = 0;
-	(void) ioctl(fd, _FIOISLOG, &islog);
+	isjournal = 0;
+	(void) ioctl(fd, _FIOISLOG, &isjournal);
 	(void) close(fd);
-	return ((int)islog);
+	return ((int)isjournal);
 }
 
 
 /*
- * Enable logging.
+ * Enable journaling.
  */
 static void
-enable_logging(char *mp, char *special)
+enable_journaling(char *mp, char *special)
 {
-	int fd, ret, islog;
+	int fd, ret, isjournal;
 	fiolog_t fl;
 	uint_t debug_level = 0x2ff;
 
 	fd = open(mp, O_RDONLY);
 	if (fd == -1) {
 		Trace(TR_MISC,
-		    "Error while enabling logging for %s on %s (%s) - "
-		    "Logging state is unknown.", special, mp, strerror(errno));
+		    "Error while enabling journaling for %s on %s (%s) - "
+		    "Journaling state is unknown", special, mp,
+		    strerror(errno));
 		return;
 	}
 	fl.nbytes_requested = 0;
@@ -2030,85 +2397,88 @@ enable_logging(char *mp, char *special)
 	fl.error = FIOLOG_ENONE;
 	ret = ioctl(fd, _FIOLOGENABLE, &fl);
 	if (ret == -1) {
-		Trace(TR_MISC, "Error while enabling logging for %s on %s (%s)",
+		Trace(TR_MISC,
+		    "Error while enabling journaling for %s on %s (%s)",
 		    special, mp, strerror(errno));
 	}
 	(void) close(fd);
 
-	/* is logging enabled? */
-	islog = checkislog(mp);
+	/* is journaling enabled? */
+	isjournal = checkisjournal(mp);
 
 	/* report errors, if any */
-	if (ret == -1 || !islog) {
-		reportlogerror(ret, mp, special, "enable", &fl);
+	if (ret == -1 || !isjournal) {
+		reportjournalerror(ret, mp, special, "enable", &fl);
 	}
 out:
-	Trace(TR_MISC, "Logging state is %s for %s on %s.",
-	    islog ? "enabled" : "disabled", special, mp);
+	Trace(TR_MISC, "Journaling state is %s for %s on %s",
+	    isjournal ? "enabled" : "disabled", special, mp);
 }
 
 
 static void
-disable_logging(char *mp, char *special)
+disable_journaling(char *mp, char *special)
 {
-	int fd, ret, islog;
+	int fd, ret, isjournal;
 	fiolog_t fl;
 
 	fd = open(mp, O_RDONLY);
 	if (fd == -1) {
 		Trace(TR_MISC,
-		    "Error while disabling logging for %s on %s (%s) - "
-		    "Logging state is unknown.", special, mp, strerror(errno));
+		    "Error while disabling journaling for %s on %s (%s) - "
+		    "Journaling state is unknown", special, mp,
+		    strerror(errno));
 		return;
 	}
 	fl.error = FIOLOG_ENONE;
 	ret = ioctl(fd, _FIOLOGDISABLE, &fl);
 	if (ret == -1) {
 		Trace(TR_MISC,
-		    "Error while disabling logging for %s on %s (%s)",
+		    "Error while disabling journaling for %s on %s (%s)",
 		    special, mp, strerror(errno));
 	}
 	(void) close(fd);
 
-	/* is logging enabled? */
-	islog = checkislog(mp);
+	/* is journaling enabled? */
+	isjournal = checkisjournal(mp);
 
 	/* report errors, if any */
-	if (ret == -1 || islog) {
-		reportlogerror(ret, mp, special, "disable", &fl);
+	if (ret == -1 || isjournal) {
+		reportjournalerror(ret, mp, special, "disable", &fl);
 	}
 out:
-	Trace(TR_MISC, "Logging state is %s for %s on %s",
-	    islog ? "enabled" : "disabled", special, mp);
+	Trace(TR_MISC, "Journaling state is %s for %s on %s",
+	    isjournal ? "enabled" : "disabled", special, mp);
 }
 
 /*
- * Initialize logging (or not) for a newly-mounted filesystem.
+ * Initialize journaling (or not) for a newly-mounted filesystem.
  */
 static void
-initLogging(char *fsname)
+initJournaling(char *fsname)
 {
 	struct sam_fs_info fi;
 
 	if (GetFsInfo(fsname, &fi) >= 0) {
 		if ((fi.fi_status & FS_CLIENT) == 0) {
 			Trace(TR_MISC,
-			    "This host is the logging MDS for %s", fsname);
+			    "This host is the journaling MDS for %s", fsname);
 			if ((fi.fi_mflag & MS_RDONLY) == 0) {
 				if (fi.fi_config1 & MC_LOGGING) {
-					enable_logging(fi.fi_mnt_point,
+					enable_journaling(fi.fi_mnt_point,
 					    fsname);
 				} else {
-					disable_logging(fi.fi_mnt_point,
+					disable_journaling(fi.fi_mnt_point,
 					    fsname);
 				}
 			} else {
 				Trace(TR_MISC,
-				    "%s is mounted read-only.", fsname);
+				    "%s is mounted read-only", fsname);
 			}
 		} else {
 			Trace(TR_MISC,
-			    "This host is not the logging MDS for %s", fsname);
+			    "This host is not the journaling MDS for %s",
+			    fsname);
 		}
 	}
 }
@@ -2142,11 +2512,14 @@ char *fsname)
 }
 
 
+#ifdef linux
 /*
- * Set /etc/inittab.
+ * Solaris hosts depend on SMF to manage sam-fsd auto-restart via
+ * the manifest in /var/svc/manifest/system.  Linux clients
+ * depend on a respawn entry in /etc/inittab.
  */
 void
-setInittab(void)
+initRestart(void)
 {
 	static char *samFsd = SAM_SAMFS_PATH"/"SAM_FSD;
 	static char line[256];
@@ -2156,6 +2529,8 @@ setInittab(void)
 	upath_t	initBakName;
 	char	*initName = "/etc/inittab";
 	int		l = strlen(samFsd);
+
+	Trace(TR_MISC, "Initializing sam-fsd auto-restart");
 
 	/*
 	 * Scan the "/etc/inittab" file to find our sam-fsd line.
@@ -2227,7 +2602,10 @@ setInittab(void)
 
 	Trace(TR_MISC, "sam-fsd respawn line added to %s", initName);
 	kill(1, SIGHUP);
+
+	Trace(TR_MISC, "Initialization completed for sam-fsd auto-restart");
 }
+#endif /* linux */
 
 
 /*
