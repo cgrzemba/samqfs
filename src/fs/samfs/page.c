@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.92 $"
+#pragma ident "$Revision: 1.93 $"
 
 #include "sam/osversion.h"
 
@@ -366,7 +366,30 @@ sam_getapage(
 				 * of the file
 				 */
 				len = MIN(iop->ioblk[i].bsize, vn_tot);
-				pagezero(pp, pg_off, len);
+
+				/*
+				 * If the DAU size is more than the page size,
+				 * we split the block into number of pages and
+				 * will zero in the pages from that offfset
+				 * till the end of DAU.
+				 */
+				if (len > 0 && pg_off >= 0 &&
+						(pg_off + len <= PAGESIZE)) {
+					pagezero(pp, pg_off, len);
+				} else {
+					uint_t no_pages = len / PAGESIZE;
+					uint_t count;
+					page_t *savep = pp->p_next;
+
+					pagezero(pp, pg_off,
+							(PAGESIZE - pg_off));
+
+					for (count = 1; count < no_pages;
+								count++) {
+						pagezero(savep, 0, PAGESIZE);
+						savep = pp->p_next;
+					}
+				}
 				bp[i] = NULL;
 
 			}
