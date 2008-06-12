@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.180 $"
+#pragma ident "$Revision: 1.181 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1180,7 +1180,7 @@ sam_set_fsparam(
 		break;
 
 	case offsetof(struct sam_fs_info, fi_stage_n_window):
-		mp->mt.fi_stage_n_window = (uint)args.sp_value;
+		mp->mt.fi_stage_n_window = (uint_t)args.sp_value;
 		break;
 
 	case offsetof(struct sam_fs_info, fi_stage_retries):
