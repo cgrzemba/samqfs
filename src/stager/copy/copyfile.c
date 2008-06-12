@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.104 $"
+#pragma ident "$Revision: 1.105 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1249,7 +1249,9 @@ static void
 checkBuffers(
 	char *new_vsn)
 {
-	u_longlong_t currentPos;
+	int		copy;
+	u_longlong_t	currentPos;
+	FileInfo_t	*file;
 
 	/*
 	 * If first request for this thread, allocate buffers
@@ -1267,6 +1269,9 @@ checkBuffers(
 		InvalidateBuffers();
 		Control->currentPos = 0;
 		strcpy(Context->vsn, new_vsn);
+		file = GetFile(Stream->first);
+		copy = file->copy;
+		Context->dk_position = file->ar[copy].section.position;
 		return;
 	}
 

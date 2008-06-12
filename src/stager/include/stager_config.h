@@ -34,7 +34,7 @@
 #if !defined(CONFIG_H)
 #define	CONFIG_H
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 #include <limits.h>
 
@@ -117,5 +117,10 @@
  * Max number of copy errors in a stream before rejecting it.
  */
 #define	MAX_COPY_STREAM_ERRORS	10
+
+/*
+ * Number of streams to allocate for each disk archive volume.
+ */
+#define	STREAMS_PER_DISKVOL	4
 
 #endif /* CONFIG_H */

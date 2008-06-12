@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -679,7 +679,7 @@ initLibraryTable(void)
 
 	if (numDiskVols > 0) {
 		libraryTable.entries++;
-		driveTable.entries += numDiskVols;
+		driveTable.entries += numDiskVols * STREAMS_PER_DISKVOL;
 		Trace(TR_MISC, "Disk volumes: %d", numDiskVols);
 	}
 
@@ -817,14 +817,15 @@ initLibraryTable(void)
 		(void) strncpy(lib->name, mtype, sizeof (lib->name));
 		SET_LIB_DISK(lib);
 		SET_LIB_AVAIL(lib);
-		lib->num_drives = numDiskVols;
-		lib->num_allowed_drives = numDiskVols;
-		lib->num_avail_drives = numDiskVols;
+		lib->num_drives = numDiskVols * STREAMS_PER_DISKVOL;
+		lib->num_allowed_drives = numDiskVols * STREAMS_PER_DISKVOL;
+		lib->num_avail_drives = numDiskVols * STREAMS_PER_DISKVOL;
 
 		/*
 		 * Define drives belonging to disk archive library.
 		 */
-		for (jmap = 0; jmap < numDiskVols; jmap++) {
+		for (jmap = 0; jmap < numDiskVols * STREAMS_PER_DISKVOL;
+		    jmap++) {
 
 			sprintf(drive->name, "%s%d", mtype, jmap);
 			drive->lib = ldx;

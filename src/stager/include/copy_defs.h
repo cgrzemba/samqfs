@@ -34,7 +34,7 @@
 #if !defined(COPY_DEFS_H)
 #define	COPY_DEFS_H
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 #include "aml/remote.h"
 #include "aml/sam_rft.h"
@@ -86,6 +86,7 @@ typedef struct CopyInstance {
 	int		seqnum;		/* current or last active sequence */
 					/*    number */
 	int		num_buffers;	/* number of i/o buffers */
+	u_longlong_t	dk_position;	/* position of disk arch stage req */
 	boolean_t	lockbuf;	/* lock buffers */
 
 	boolean_t	created;	/* set if copy thread already created */

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -132,6 +132,7 @@ Compose(void)
 	int i;
 	int copy;
 	int retry;
+	u_longlong_t position;
 
 	if (composeList.entries == 0)
 		return;
@@ -141,6 +142,7 @@ Compose(void)
 
 	currentVsn = NULL;
 	stream = NULL;
+	position = 0;
 
 	for (i = 0; i < composeList.entries; i++) {
 
@@ -150,12 +152,15 @@ Compose(void)
 
 		/*
 		 * If first VSN (currentVsn == NULL) or different VSN or
-		 * disk cache alrady open, ie. multivolume, create a new
+		 * disk cache already open, ie. multivolume, create a new
 		 * stream.  Add new stream to the work queue.
 		 */
 		if (currentVsn == NULL ||
 		    (strcmp(file->ar[copy].section.vsn, currentVsn) != 0) ||
-		    GET_FLAG(file->flags, FI_DCACHE)) {
+		    GET_FLAG(file->flags, FI_DCACHE) ||
+		    (IS_COPY_DISKARCH(file, copy) &&
+		    strcmp(file->ar[copy].section.vsn, currentVsn) == 0 &&
+		    file->ar[copy].section.position != position)) {
 
 			retry = 3;
 			stream = NULL;
@@ -172,8 +177,15 @@ Compose(void)
 				    "Create stream", currentVsn);
 			}
 			AddWork(stream);
+
+			if (stream->diskarch) {
+				position = file->ar[copy].section.position;
+				currentVsn = file->ar[copy].section.vsn;
+			}
+
 			if (GET_FLAG(file->flags, FI_DCACHE_CLOSE) == 0) {
 				currentVsn = file->ar[copy].section.vsn;
+				position = file->ar[copy].section.position;
 			}
 		}
 

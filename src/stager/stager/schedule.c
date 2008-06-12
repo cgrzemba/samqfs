@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.95 $"
+#pragma ident "$Revision: 1.96 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -108,7 +108,7 @@ static int startCopy(StreamInfo_t *stream);
 static CopyInstance_t *findCopy(int library, media_t media);
 static CopyInstance_t *findCopyByPid(pid_t pid);
 static int isCopyIdle(VsnInfo_t *vi);
-static int isCopyBusy(VsnInfo_t *vi);
+static int isCopyBusy(VsnInfo_t *vi, u_longlong_t position);
 static boolean_t isDriveAvailForCopy(int library);
 static void initCopyProcList(boolean_t recover);
 static void startCopyProcess(CopyInstance_t *context);
@@ -871,7 +871,6 @@ insertWork(
 	 * to an active stream if there is a matching inactive stream
 	 * found first.
 	 */
-
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 		if (GET_FLAG(file->flags, FI_DCACHE_CLOSE)) {
@@ -886,7 +885,8 @@ insertWork(
 			}
 		} else if ((strcmp(file->ar[copy].section.vsn,
 		    stream->vsn) == 0) &&
-		    (file->ar[copy].media == stream->media)) {
+		    (file->ar[copy].media == stream->media) &&
+		    !(IS_COPY_DISKARCH(file, copy))) {
 
 			added = AddStream(stream, id, ADD_STREAM_SORT);
 
@@ -1384,7 +1384,7 @@ findResources(
 	 * Set resource to busy if copy already working on this VSN or
 	 * if there are no idle copy available for library.
 	 */
-	if (isCopyBusy(&stream->vi)) {
+	if (isCopyBusy(&stream->vi, file->ar[copy].section.position)) {
 		priority = SP_busy;
 
 	} else if (isCopyIdle(&stream->vi) == FALSE) {
@@ -1828,12 +1828,13 @@ isCopyIdle(
 }
 
 /*
- * Check if there copy proc for specified library and media type
+ * Check if the copy proc for specified library and media type
  * is busy.
  */
 static int
 isCopyBusy(
-	VsnInfo_t *vi)
+	VsnInfo_t *vi,
+	u_longlong_t position)
 {
 	int busy = 0;
 	int i;
@@ -1850,7 +1851,8 @@ isCopyBusy(
 	for (i = 0; i < CopyprocList->entries; i++) {
 		if (CopyprocList->data[i].idle == B_FALSE &&
 		    CopyprocList->data[i].lib == library &&
-		    strcmp(CopyprocList->data[i].vsn, vi->vsn) == 0) {
+		    strcmp(CopyprocList->data[i].vsn, vi->vsn) == 0 &&
+		    CopyprocList->data[i].dk_position == position) {
 			busy = 1;
 			break;
 		}
