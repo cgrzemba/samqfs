@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -662,7 +662,15 @@ process_multi_import(
 
 	do {
 		/*
-		 * The adic cannot hold the door locked for longer then 2
+		 * Wait for operator to import media before we lock the door.
+		 */
+
+		if (equ_type == DT_PLASMON_G) {
+			sleep(60);
+		}
+
+		/*
+		 * The adic cannot hold the door locked for longer than 2
 		 * moves so it must be locked and unlocked around each move.
 		 * Also, since it must be unlocked, then there is a chance
 		 * that the operator did something, so status_element_range
@@ -673,6 +681,13 @@ process_multi_import(
 				return;
 			}
 		} else {
+			/*
+			 *  On the Plasmon-G, we have to make sure
+			 *  the magazine, if any, is locked.
+			 */
+			if (equ_type == DT_PLASMON_G) {
+				LOCK_MAILBOX(library);
+			}
 			status_element_range(library,
 			    IMPORT_EXPORT_ELEMENT,
 			    library->range.ie_lower,
@@ -710,9 +725,6 @@ process_multi_import(
 				if (!first_element && equ_type == DT_ADIC448 &&
 				    lock_and_status_adic(library)) {
 					return;
-				}
-				if (first_element && equ_type == DT_PLASMON_G) {
-					LOCK_MAILBOX(library);
 				}
 				first_element = FALSE;
 				move_flags.bits = 0;
@@ -824,6 +836,9 @@ process_multi_import(
 
 		if (equ_type == DT_ADIC448)
 			unlock_adic(library);
+		if (equ_type == DT_PLASMON_G) {
+			UNLOCK_MAILBOX(library);
+		}
 	} while (equ_type == DT_PLASMON_G && media_imported == 0);
 }
 
@@ -857,7 +872,7 @@ find_empty_export(
  * elements.
  *
  * return 0 if ok
- *		  not 0 if failur
+ *		  not 0 if failure
  */
 int
 lock_and_status_adic(

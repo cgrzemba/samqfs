@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 
 #define	MAIN
@@ -678,6 +678,8 @@ sam_scsi_err_t   plasmong[] = {
 	0x04, 0x80, 0x24, HARDWARE, DOWN_SUB_EQU,
 	0x04, 0x80, 0x25, HARDWARE, DOWN_SUB_EQU,
 	0x04, 0x80, 0x26, HARDWARE, DOWN_SUB_EQU,
+	0x04, 0x80, 0x80, DOOR_OPEN, WAIT_READY_LONG,
+	0x04, 0x80, 0x81, DOOR_OPEN, WAIT_READY_LONG,
 	0x04, 0xff, 0xff, HARDWARE, DOWN_EQU,
 	0x05, 0x3b, 0x0d, HARDWARE, D_ELE_FULL,
 	0x05, 0x3b, 0x0e, HARDWARE, S_ELE_EMPTY,
@@ -695,7 +697,7 @@ sam_scsi_err_t   stklxx[] = {
 	0x02, 0x04, 0x01, 0x00, WAIT_READY,   /* becoming ready */
 	0x02, 0x04, 0x03, MAN_INTER, DOWN_EQU, /* Fatal error */
 	0x02, 0x04, 0x81, WRONG_MODE, DOWN_EQU, /* Operator put unit in */
-						/* maintainence mode */
+						/* maintenance mode */
 	0x02, 0x3a, 0x02, DOOR_OPEN, WAIT_READY, /* CAP is open */
 	0x02, 0xff, 0xff, 0x00, WAIT_READY,   /* becoming ready */
 	0x04, 0xff, 0xff, HARDWARE, DOWN_EQU, /* all hardware errors */
@@ -721,7 +723,7 @@ sam_scsi_err_t   stksl3000[] = {
 	0x02, 0x04, 0x01, 0x00, WAIT_READY,   /* becoming ready */
 	0x02, 0x04, 0x03, MAN_INTER, DOWN_EQU, /* Fatal error */
 	0x02, 0x04, 0x81, WRONG_MODE, DOWN_EQU, /* Operator put unit in */
-						/* maintainence mode */
+						/* maintenance mode */
 	0x02, 0x3a, 0x02, DOOR_OPEN, WAIT_READY, /* CAP is open */
 	0x02, 0x74, 0x71, ACCESS_DENIED, DOWN_EQU, /* Partition Access Denied */
 	0x02, 0xff, 0xff, 0x00, WAIT_READY,   /* becoming ready */
