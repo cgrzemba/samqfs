@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 #include "sam/osversion.h"
 
@@ -277,7 +277,7 @@ ChkFs(void)
 	} else if (pid == 0) {
 		close(fd);
 		execl("/usr/sbin/svcadm", "svcadm", "enable", "-t",
-			SAM_FSD, NULL);
+		    SAM_FSD, NULL);
 	} else {
 		waitpid(pid, &status, 0);
 		close(fd);
