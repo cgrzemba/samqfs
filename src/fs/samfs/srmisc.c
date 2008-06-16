@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.81 $"
+#pragma ident "$Revision: 1.82 $"
 
 #include "sam/osversion.h"
 
@@ -81,6 +81,7 @@ static void sam_start_failover(sam_mount_t *mp, boolean_t new_server,
 	char *server);
 static void sam_failover_new_server(sam_mount_t *mp, cred_t *credp);
 extern void sam_clear_cmd(enum SCD_daemons scdi);
+static void sam_onoff_client_delay(sam_schedule_entry_t *entry);
 
 
 /*
@@ -1126,4 +1127,190 @@ lqfs_flush(sam_mount_t *mp)
 	}
 
 	return (error);
+}
+
+
+/*
+ * ----- sam_onoff_client
+ *
+ * Process the system call to set/read the client on/off flag in the
+ * client table.
+ */
+int				/* ERRNO if error, 0 if successful. */
+sam_onoff_client(
+	void *arg,		/* Pointer to arguments */
+	int size,		/* Size of argument struct */
+	cred_t *credp)		/* Credentials */
+{
+	sam_onoff_client_arg_t args;	/* Arguments into syscall */
+	sam_mount_t *mp;
+	client_entry_t *clp;
+	int f;
+	int error = 0;
+
+	/*
+	 * Copy in user arguments
+	 */
+	if (size != sizeof (args) ||
+	    copyin(arg, (caddr_t)&args, sizeof (args))) {
+		return (EFAULT);
+	}
+	/*
+	 * Look up file system, check for permission, mounted, shared & server
+	 */
+	if ((mp = sam_find_filesystem(args.fs_name)) == NULL) {
+		return (ENOENT);
+	}
+	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
+		error = EACCES;
+		goto out;
+	}
+	if (!(mp->mt.fi_status & FS_MOUNTED)) {
+		error = EXDEV;
+		goto out;
+	}
+	if (!SAM_IS_SHARED_FS(mp) || !SAM_IS_SHARED_SERVER(mp)) {
+		error = ENOTTY;
+		goto out;
+	}
+
+	/*
+	 * Look up client table entry
+	 */
+	if (args.clord < 1 || args.clord > mp->ms.m_maxord) {
+		error = ENOENT;
+		goto out;
+	}
+	clp = sam_get_client_entry(mp, args.clord, 1);
+	if (clp == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+
+	/*
+	 * Set on/off status in client table
+	 */
+	mutex_enter(&mp->ms.m_cl_wrmutex);
+	f = clp->cl_flags & (SAM_CLIENT_OFF | SAM_CLIENT_OFF_PENDING);
+	switch (args.command) {
+
+	case SAM_ONOFF_CLIENT_OFF:
+		if (f == 0) {
+			clp->cl_flags |= SAM_CLIENT_OFF_PENDING;
+			clp->cl_offtime = 0;
+			sam_taskq_add(sam_onoff_client_delay, mp, NULL, hz / 2);
+		}
+		break;
+
+	case SAM_ONOFF_CLIENT_ON:
+		clp->cl_flags &= ~(SAM_CLIENT_OFF | SAM_CLIENT_OFF_PENDING);
+		clp->cl_offtime = 0;
+		break;
+
+	case SAM_ONOFF_CLIENT_READ:
+		break;
+
+	default:
+		error = EINVAL;
+		mutex_exit(&mp->ms.m_cl_wrmutex);
+		goto out;
+	}
+	mutex_exit(&mp->ms.m_cl_wrmutex);
+
+	/*
+	 * Send message to client
+	 */
+	if ((args.command == SAM_ONOFF_CLIENT_OFF) && (f == 0)) {
+		/*
+		 * Was up, going down.
+		 * Use inode 1 (mp->mi.m_inodir) for sam_proc_notify
+		 * to lookup mount point.
+		 */
+		sam_proc_notify(mp->mi.m_inodir, NOTIFY_hostoff, args.clord,
+		    NULL);
+	}
+
+	/*
+	 * Return old flags to user
+	 */
+	args.ret = f;
+	if (copyout((caddr_t)&args.ret,
+	    (char *)arg + offsetof(sam_onoff_client_arg_t, ret),
+	    sizeof (args.ret))) {
+		error = EFAULT;
+	}
+
+out:
+	SAM_SYSCALL_DEC(mp, 0);
+	return (error);
+}
+
+
+/*
+ * ----- sam_onoff_client
+ *
+ * Process the system call to set/read the client on/off flag in the
+ * client table.
+ */
+static void
+sam_onoff_client_delay(
+	sam_schedule_entry_t *entry)	/* Task queue callback entry */
+{
+	sam_mount_t *mp = entry->mp;
+	client_entry_t *clp;
+	int ord;
+	int off_pending = 0;
+
+	mutex_enter(&samgt.schedule_mutex);
+	sam_taskq_remove(entry);	/* releases above mutex */
+
+	/*
+	 * Loop over all clients for SAM_CLIENT_OFF_PENDING clients
+	 */
+	for (ord = 1; ord <= mp->ms.m_max_clients; ord++) {
+		clp = sam_get_client_entry(mp, ord, 0);
+		if ((clp->cl_flags & SAM_CLIENT_OFF_PENDING) == 0) {
+			continue;
+		}
+		off_pending++;
+
+		/*
+		 * Wait for client to unmount for 20 sec., then off anyway.
+		 */
+		if ((clp->cl_offtime++ >= 40) ||
+		    ((clp->cl_status & FS_MOUNTED) == 0)) {
+			/*
+			 * Move from SAM_CLIENT_OFF_PENDING to
+			 * SAM_CLIENT_OFF state.
+			 */
+			mutex_enter(&mp->ms.m_cl_wrmutex);
+			clp->cl_flags &= ~SAM_CLIENT_OFF_PENDING;
+			clp->cl_flags |= SAM_CLIENT_OFF;
+			mutex_exit(&mp->ms.m_cl_wrmutex);
+			off_pending--;
+
+			/*
+			 * Signal server sam_read_sock thread (and only
+			 * that thread) to exit.  sam-sharefsd ignores most
+			 * signals except SIGEMT.  This will also indirectly
+			 * decrement the mp->ms.m_no_clients count.
+			 */
+			if (clp->cl_thread != NULL) {
+				tsignal(clp->cl_thread, SIGEMT);
+				delay(hz / 2);
+			}
+
+			/*
+			 * Mark as unmounted if not already unmounted.
+			 */
+			if (clp->cl_status & FS_MOUNTED) {
+				mutex_enter(&mp->ms.m_cl_wrmutex);
+				clp->cl_status &= ~FS_MOUNTED;
+				mutex_exit(&mp->ms.m_cl_wrmutex);
+			}
+		}
+	}
+	if (off_pending > 0) {
+		sam_taskq_add(sam_onoff_client_delay, mp, NULL, hz / 2);
+	}
 }

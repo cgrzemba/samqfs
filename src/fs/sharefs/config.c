@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -541,7 +541,6 @@ updateConfig(char *fs)
 		Trace(TR_MISC, "FS %s: hosts.%s.local modtime changed; "
 		    "flags=%x",
 		    fs, fs, nfp->flags);
-		goto out;
 	}
 
 out:
@@ -587,6 +586,7 @@ ValidateFs(
 	int waitstate = 0;
 
 	if (GetConfig(fs, &sb) < 0) {	/* always reads into config.freeTab */
+		Trace(TR_MISC, "FS %s: GetConfig failed, exiting", fs);
 		exit(EXIT_NORESTART);
 	}
 	swapConfig(fs);

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 #include "sam/osversion.h"
 
@@ -395,6 +395,15 @@ sam_add_client(sam_mount_t *mp, char *hname, int clord, uint64_t client_tags)
 		cmn_err(CE_WARN, "SAM-QFS: %s: sam_add_client "
 		    "client entry allocation failed for host %s at ordinal %d",
 		    mp->mt.fi_name, hname, clord);
+		ret = EFAULT;
+		goto out;
+	}
+	if (clp->cl_flags & SAM_CLIENT_OFF) {
+		cmn_err(CE_WARN, "SAM-QFS: %s: sam_add_client "
+		    "connection attempt from down host %s ordinal %d",
+		    mp->mt.fi_name, hname, clord);
+		ret = EHOSTDOWN;
+		goto out;
 	}
 	if (clp->cl_sh.sh_fp == NULL) {
 		strncpy(clp->hname, hname, sizeof (clp->hname));
@@ -407,8 +416,9 @@ sam_add_client(sam_mount_t *mp, char *hname, int clord, uint64_t client_tags)
 	} else {
 		ret = EEXIST;
 	}
-	mutex_exit(&mp->ms.m_cl_wrmutex);
 
+out:
+	mutex_exit(&mp->ms.m_cl_wrmutex);
 	return (ret);
 }
 

@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -52,6 +52,8 @@ static char *_SrcFile = __FILE__;
 
 /* SAM-FS headers. */
 #include "sam/mount.h"
+#include "sam/syscall.h"
+#include "sam/lib.h"
 
 #include "sblk.h"
 #include "samhost.h"
@@ -268,7 +270,7 @@ cmpSBlk(
 static int
 cmpHT(char *fs, struct cfdata *ocp, struct cfdata *ncp)
 {
-	int len, change = 0;
+	int len, i, change = 0;
 	struct sam_host_table *ht1 = &ocp->ht->info.ht;
 	struct sam_host_table *ht2 = &ncp->ht->info.ht;
 
@@ -290,7 +292,6 @@ cmpHT(char *fs, struct cfdata *ocp, struct cfdata *ncp)
 		change = CH_HT_HOSTS | CH_HT_BAD;
 		return (change);
 	}
-	len -= offsetof(struct sam_host_table, ent);
 	if (ht1->version != ht2->version) {
 		change = CH_HT_HOSTS | CH_HT_VERS;
 		if (ht2->version <= SAM_HOSTS_VERSION_MIN ||
@@ -298,11 +299,93 @@ cmpHT(char *fs, struct cfdata *ocp, struct cfdata *ncp)
 		    ht2->version < ht1->version) {
 			change |= CH_HT_BAD;
 		}
-	} else if (ht1->count != ht2->count ||
-	    ht1->length != ht2->length ||
-	    bcmp(ht1->ent, ht2->ent, len)) {
+	} else if (ht1->count != ht2->count) {
 		change |= CH_HT_HOSTS;
 	}
+
+#ifdef METADATA_SERVER
+	/*
+	 * If server, scan text of host table for changes.
+	 */
+	if (strncasecmp(Host.hname, ocp->serverName,
+	    sizeof (ocp->serverName))) {
+		/* We are not the server */
+		goto out;
+	}
+
+	/*
+	 * If CH_HT_HOSTS or CH_HT_BAD, skip these tests because we're
+	 * either exiting or going to be doing failover which means
+	 * exit and restart.  When we come back in, we'll do the host
+	 * onoff tests.
+	 */
+	if (change & (CH_HT_HOSTS | CH_HT_BAD)) {
+		goto out;
+	}
+
+	/*
+	 * Scan host table entries.
+	 *
+	 * Already know that the host counts are the same between ht1 & ht2
+	 * because of above CH_HT_HOSTS test.
+	 */
+	for (i = 0; i < ht2->count; i++) {
+		int r;
+		upath_t n1, a1, s1, o1;
+		upath_t n2, a2, s2, o2;
+
+		r = SamGetSharedHostInfo(ht1, i, n1, a1, s1, o1);
+		if (!r) {
+			SysError(HERE, "FS %s: Error scanning current host"
+			    " file line %d", fs, i);
+			change |= CH_HT_HOSTS | CH_HT_BAD;
+			goto out;
+		}
+		r = SamGetSharedHostInfo(ht2, i, n2, a2, s2, o2);
+		if (!r) {
+			SysError(HERE, "FS %s: Error scanning new host"
+			    " file line %d", fs, i);
+			change |= CH_HT_HOSTS | CH_HT_BAD;
+			goto out;
+		}
+		/* Compare host name & addr field */
+		if (strcmp(n1, n2) || strcmp(a1, a2)) {
+			SysError(HERE, "FS %s: Error scanning host"
+			    " file line %d, host name/address change not"
+			    " allowed while mounted", fs, i);
+			change |= CH_HT_HOSTS | CH_HT_BAD;
+			goto out;
+		}
+		/* Skipping HOSTS_PRI field on purpose; server doesn't care. */
+		/* Process HOSTS_HOSTONOFF field */
+		if (ncp->flags & R_MNTD) {
+			char *hp = o2;	/* new host file onoff field */
+			int off = SAM_ONOFF_CLIENT_ON;
+			int r;
+
+			/* If on/off field not specified, default it to on */
+			if (*hp == '\0') {
+				hp = "on";
+			}
+			if (strcasecmp("off", hp) == 0) {
+				Trace(TR_MISC, "FS %s: marking host %s off", fs,
+				    n2);
+				off = SAM_ONOFF_CLIENT_OFF;
+			}
+			if ((r = onoff_client(fs, i, off)) < 0) {
+				SysError(HERE, "FS %s: Error marking host"
+				    " %s %s", fs, n2,
+				    off == SAM_ONOFF_CLIENT_OFF ? "off": "on");
+			}
+		}
+	}
+	/* Compare server field */
+	if (ht1->server != ht2->server) {
+		change |= CH_HT_HOSTS;
+	}
+out:
+#endif	/* METADATA_SERVER */
+
 	if (ht1->prevsrv == HOSTS_NOSRV || ht2->prevsrv == HOSTS_NOSRV) {
 		change |= CH_HT_HOSTS | CH_HT_INVOL;
 	}

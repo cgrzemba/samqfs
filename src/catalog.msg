@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.593 $"
+$ pragma ident "$Revision: 1.594 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2254,6 +2254,7 @@ $ ===================================================================
 12524 Unexpected character in host name
 12525 ReadCfg %s failed
 12526 gethostname failed - %s
+12527 Unexpected token in optional 'host on/off' field
 
 $  utility      (13000s)
 $ ===================================================================
@@ -2656,19 +2657,20 @@ $ move
 
 $  utility/samsharefs cmd
 $ ===================================================================
-13700 Usage:\n\t%s [-hqRu] [-s host] fs_name
+13700 Usage:\n\t%s [-hqRu] [-f host] [-o host] [-s host] fs_name
 13701 Incorrect usage.
-13702 -d/-u options incompatible:  Use -U <hostsfile>.
+13702 XX-UNUSED-XX -d/-u options incompatible:  Use -U <hostsfile>.
 13703 XX-UNUSED-XX
 13704 XX-UNUSED-XX %s:  -s and -A options are incompatible.
 13705 XX-UNUSED-XX %s:  -s and -C options are incompatible.
 13706 Unknown extra arguments.
 13707 Host %s cannot be a metadata server for FS %s.
 13708 Host failover already pending on FS %s.
-
+13709 -o or -f flags incompatible with -u.
 13710 Usage:\n\t%s -R[hqu] [-s host] fs_name\n\t%s [-Rhq] fs_name
 13711 Only metadata host can change metadata server
 13712 Host file changes allowed only on unmounted FSes
+13713 Off host %s cannot be a metadata server for FS %s
 
 13720 Cannot find FS %s
 13721 Input file processing failed.
@@ -2687,6 +2689,9 @@ $ ===================================================================
 13734 Host table too large.
 13735 Cannot get FS %s information.
 13736 -R option is not valid while FS %s is mounted.
+13737 Host %s was already %s.
+13738 Server host %s cannot be marked off.
+13739 Warning - marking potential metadata server %s off.
 
 13740 XX-UNUSED-XX %s:  Cannot open device '%s'
 13741 XX-UNUSED-XX %s:  Cannot llseek to superblock on '%s' (%d)

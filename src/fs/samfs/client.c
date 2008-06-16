@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.167 $"
+#pragma ident "$Revision: 1.168 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1293,15 +1293,26 @@ sam_process_notify_request(sam_mount_t *mp, sam_san_message_t *msg)
 	 * is held.
 	 */
 
-	if (msg->hdr.operation == NOTIFY_lease) {
+	/*
+	 * These notify operations don't require an inode.
+	 */
+	switch (msg->hdr.operation) {
+
+	case NOTIFY_lease:
 		sam_restart_waiter(mp, &nop->id);
+		return;
+
+	case NOTIFY_hostoff:
+		/* Ask sharefsd to wake up, unmount, and quit */
+		cmn_err(CE_WARN, "SAM-QFS: fs %s NOTIFY_hostoff received",
+		    mp->mt.fi_name);
+		sam_wake_sharedaemon(mp, EIO);
 		return;
 	}
 
 	/*
 	 * All other notify operations require an inode.
 	 */
-
 	if (nop->id.ino == SAM_INO_INO) {
 		ip = mp->mi.m_inodir;
 	} else {
@@ -1316,7 +1327,8 @@ sam_process_notify_request(sam_mount_t *mp, sam_san_message_t *msg)
 		switch (msg->hdr.operation) {
 
 		case NOTIFY_lease:
-			/* case NOTIFY_lease is handled above */
+		case NOTIFY_hostoff:
+			/* These cases handled above */
 			break;
 
 		case NOTIFY_lease_expire:

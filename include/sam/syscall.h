@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.95 $"
+#pragma ident "$Revision: 1.96 $"
 #endif
 
 #include "sam/types.h"
@@ -107,6 +107,7 @@ typedef enum {
 	SC_osd_device = 124,	/* takes sam_osd_dev_arg */
 	SC_osd_command = 125,	/* takes sam_osd_cmd_arg */
 	SC_fseq_ord = 126,	/* takes sam_fseq_arg */
+	SC_onoff_client = 127,	/* takes sam_onoff_client_arg */
 	SC_FS_MAX = 149,
 
 	SC_SAM_MIN = 150,
@@ -438,6 +439,17 @@ typedef struct sam_osd_cmd_arg {	/* Filesystem osd command args */
 	int64_t size;		/* Size */
 	SAM_POINTER(char) data; /* Data */
 } sam_osd_cmd_arg_t;
+
+#define	SAM_ONOFF_CLIENT_OFF	0
+#define	SAM_ONOFF_CLIENT_ON	1
+#define	SAM_ONOFF_CLIENT_READ	2
+
+typedef struct sam_onoff_client_arg {	/* On / off client command args */
+	uname_t fs_name;	/* Family set name */
+	int32_t clord;		/* Client ordinal, [0...n] based */
+	int32_t command;	/* Command - off, on, or read only */
+	int32_t ret;		/* Old on/off value */
+} sam_onoff_client_arg_t;
 
 enum sam_ib_cmd {SAM_FREE_BLOCK, SAM_FIND_ORD, SAM_MOVE_ORD};
 

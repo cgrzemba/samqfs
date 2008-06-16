@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 
 /* ANSI headers. */
 #include <stdlib.h>
@@ -84,12 +84,18 @@ static struct sam_client_info 		*fclient = NULL;
 /*
  *  bit definitions - see src/fs/include/client.h
  */
-#define	SAM_CLIENT_DEAD 0x01    /* Client assumed dead during failover */
-#define	SAM_CLIENT_INOP 0x02    /* Don't hold up failover (client known dead) */
+#define	SAM_CLIENT_DEAD	0x01	/* Client assumed dead during failover */
+#define	SAM_CLIENT_INOP	0x02	/* Don't hold up failover (client known dead) */
+#define	SAM_CLIENT_SOCK_BLOCKED	0x04	/* Writing to client returned EAGAIN */
+#define	SAM_CLIENT_OFF_PENDING	0x08	/* Client transitioning to OFF */
+#define	SAM_CLIENT_OFF	0x10	/* Client marked OFF in hosts file */
 
 static sam_flagtext_t cflagsTable[] = {
-    SAM_CLIENT_DEAD,  "DEAD",   /* Client assumed dead during failover */
-    SAM_CLIENT_INOP,  "INOP",	/* Don't hold up failover (client known dead) */
+    SAM_CLIENT_DEAD, "DEAD",	/* Client assumed dead during failover */
+    SAM_CLIENT_INOP, "INOP",	/* Don't hold up failover (client known dead) */
+    SAM_CLIENT_SOCK_BLOCKED, "BLK",	/* Writing to client returned EAGAIN */
+    SAM_CLIENT_OFF_PENDING, "OFP",	/* Client transitioning to OFF */
+    SAM_CLIENT_OFF, "OFF",	/* Client marked off in hosts file */
 };
 static int cflagsTableSize = sizeof (cflagsTable)/sizeof (sam_flagtext_t);
 
@@ -158,7 +164,7 @@ DisClients()
 "ord hostname              seqno nomsgs status   config  conf1  flags"));
 
 			for (j = clifirst; j < ncli; j++) {
-				char extra[17];
+				char extra[21];
 
 				if (ln > LINES - 3) {
 					break;
@@ -169,28 +175,34 @@ DisClients()
 					continue;
 				}
 
+					/*    "MNT SRV OFF BLK DEAD" */
+					/*    "MNT CLI OFF BLK DOWN" */
+				strcpy(extra, "                    ");
 				if (fc->cl_status & FS_MOUNTED) {
 					strcpy(extra, "MNT ");
-				} else {
-					strcpy(extra, "    ");
 				}
 				if (fc->cl_status & FS_SERVER) {
 					strcpy(extra+4, "SVR ");
 				} else {
 					strcpy(extra+4, "CLI ");
 				}
+				if (fc->cl_flags & SAM_CLIENT_OFF_PENDING) {
+					strcpy(extra+8, "OFP ");
+				}
+				if (fc->cl_flags & SAM_CLIENT_OFF) {
+					strcpy(extra+8, "OFF ");
+				}
+				if (fc->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {
+					strcpy(extra+12, "BLK ");
+				}
 				if (fc->cl_flags & SAM_CLIENT_DEAD) {
-					strcpy(extra+8, "DEAD");
-				} else {
-					strcpy(extra+8, "    ");
+					strcpy(extra+16, "DEAD");
 				}
 				if (fc->cl_flags & SAM_CLIENT_INOP) {
-					strcpy(extra+12, "GONE");
-				} else {
-					strcpy(extra+12, "    ");
+					strcpy(extra+16, "DOWN");
 				}
 				Mvprintw(ln++, 0,
-				    "%3d %-20s %6d %6d %6x %8x %6x %6x %s",
+				    "%3d %-16s %6d %6d %6x %8x %6x %6x %s",
 				    j+1, fc->hname,
 				    fc->cl_min_seqno, fc->cl_nomsg,
 				    fc->cl_status,

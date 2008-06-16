@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.20 $
+.\" $Revision: 1.21 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -33,7 +33,9 @@
 samsharefs \- Manipulates the Sun StorEdge QFS shared file system configuration
 .SH SYNOPSIS
 \fBsamsharefs\fR
+\%[\fB\-f \fIhost\fR]
 \%[\fB\-h\fR]
+\%[\fB\-o \fIhost\fR]
 \%[\fB\-q\fR]
 \%[\fB\-R\fR]
 \%[\fB\-s \fIhost\fR]
@@ -81,8 +83,50 @@ This command accepts the following options:
 .\" Specifies that the generation number in the hosts file should
 .\" be reset to zero.  Normally, the generation number is incremented
 .\" each time the hosts file is rewritten.
+\fB\-f\ \fIhost\fR
+Marks \fIhost\fR "off" in the hosts file.  This option rewrites
+the on-disk hosts file and causes the SAM-QFS daemon to reread
+the hosts file.  Marking the host off disallows that host to access
+the specified \fIfs_name\fR, and reverses the effect of
+the -o option.  -f is incompatible with -u parameter.
+.sp
+Marking a host client "off" allows that client to be removed and shut
+down.  Note that the client will need to be marked "off" from the metadata
+server for each file system that it mounts.
+.sp
+The host client's "on" or "off" status can be seen in the 4th column
+of the host file (as printed by the samsharefs command).  For backwards
+compatibility, a "-", "0", or blank in this column indicates "on".  Also, if
+a client is marked off, it is indicated by an "OFF" flag on the
+samu "g" display (or the samcmd g command).
+.sp
+\fBCAUTIONS & LIMITATIONS:\fR
+A file system that is to be shared to other clients must be mounted
+on the metadata server and also be mountable to potential metadata
+servers.  Thus a client that is an actual or potential metadata
+server cannot be marked off.
+.sp
+Marking a host client off causes the client to unmount forcibly
+the file system (if reachable) and causes the metadata server to
+stop listening for command for that file system from that client.
+It is recommended that the file system be unmounted normally prior
+to marking that client off for that file system.  If this is not
+done, a system reboot of the client may be needed to remount the
+the file system on that client.  Note: Linux clients cannot do the
+forcible unmount, and thus may leave the file system mounted on
+the client.  It will be unable to communicate to the server and
+rebooting / marking the client on are the recommended approach to
+restoring this client to operation.
+.TP
 \fB\-h\fR
 Writes a short usage message to \fBstdout\fR.
+.TP
+\fB\-o\ \fIhost\fR
+Marks \fIhost\fR "on" in the hosts file.  This option rewrites
+the on-disk hosts file and causes the SAM-QFS daemon to reread
+the hosts file.  Marking the host on allows that host to access
+to the specified \fIfs_name\fR, and reverses the effect of
+the -f option.  -o is incompatible with -u parameter.
 .TP
 \fB\-q\fR
 Suppresses host configuration output.

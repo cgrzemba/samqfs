@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.284 $"
+#pragma ident "$Revision: 1.285 $"
 
 #include "sam/osversion.h"
 
@@ -267,6 +267,24 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 	}
 
 	/*
+	 * Validate client and check to see if it is marked down.
+	 */
+	clp = sam_get_client_entry(mp, msg->hdr.client_ord, 0);
+	if (clp == NULL) {
+		cmn_err(CE_WARN,
+		    "SAM-QFS: %s: Message received from unknown "
+		    "client ord %d", mp->mt.fi_name, msg->hdr.client_ord);
+		goto fini;
+	}
+	if (clp->cl_flags & SAM_CLIENT_OFF) {
+		cmn_err(CE_NOTE,
+		    "SAM-QFS: %s: Message received from down "
+		    "client ord %d", mp->mt.fi_name, msg->hdr.client_ord);
+		/* Drop message */
+		goto fini;
+	}
+
+	/*
 	 * Check if the client has already processed this message. The
 	 * returned ack tells us the client has received & processed
 	 * all the messages < ack. If so, remove the processed messages
@@ -284,13 +302,6 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 	 * XXX up for a client that is mounting rather than failing
 	 * XXX over.
 	 */
-	clp = sam_get_client_entry(mp, msg->hdr.client_ord, 0);
-	if (clp == NULL) {
-		cmn_err(CE_WARN,
-		    "SAM-QFS: %s: Message received from unknown "
-		    "client ord %d", mp->mt.fi_name, msg->hdr.client_ord);
-		goto fini;
-	}
 	mutex_enter(&clp->cl_msgmutex);
 	clp->cl_msg_time = lbolt;
 	if (clp->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {

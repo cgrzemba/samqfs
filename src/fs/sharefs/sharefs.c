@@ -85,7 +85,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -143,9 +143,10 @@ static void shutDown(void);
 static void blockHangupSignals(char *);
 static void blockSignalHandling(char *);
 static void unBlockSignalHandling(char *);
-static void signalWaiter(char *);
+static int signalWaiter(char *);
 static void catchSig(int sig);
 static void catchSigEMT(int sig);
+static void ForceUmountDown(char *fs);
 
 
 /*
@@ -161,7 +162,7 @@ main(int argc, char *argv[])
 	char fileName[64];
 	uname_t fs_name;
 	char	*traceName;
-	int err;
+	int err, ret;
 
 	program_name  = "sam-sharefsd";
 	if (argc == 3) {
@@ -419,12 +420,10 @@ main(int argc, char *argv[])
 	 * Every 10 seconds, sharefsd wakes up & checks for its parent.
 	 * On return, it shuts down the two main threads.
 	 */
-	signalWaiter(Host.fs.fi_name);
-
-	if (ShutdownDaemon) {
-		shutDown();
-	}
-	return (EXIT_NORESTART);
+	ret = signalWaiter(Host.fs.fi_name);
+	shutDown();
+	Trace(TR_MISC, "FS %s: Exiting, status = %d.", Host.fs.fi_name, ret);
+	exit(ret);
 }
 
 
@@ -495,9 +494,6 @@ shutDown(void)
 		SysError(HERE, "FS %s: pthread_join[ClientRdSocket] failed",
 		    Host.fs.fi_name);
 	}
-
-	Trace(TR_MISC, "FS %s: Exiting.", Host.fs.fi_name);
-	exit(EXIT_SUCCESS);
 }
 
 
@@ -599,9 +595,11 @@ blockHangupSignals(char *fs_name)
  * -----	signalWaiter.
  * The main thread calls this and waits for signals.
  */
-static void
+static int
 signalWaiter(char *fs_name)
 {
+	int ret = EXIT_SUCCESS;
+
 	/*
 	 * The main program waits for signals, and notifies the other
 	 * threads of outside conditions.
@@ -632,7 +630,10 @@ signalWaiter(char *fs_name)
 			if (e == EIO) {
 				Trace(TR_MISC, "FS %s: forced unmount",
 				    Host.fs.fi_name);
+				ForceUmountDown(fs_name);
 				ShutdownDaemon = TRUE;
+				ret = EXIT_NORESTART;
+				break;	/* skip DoUpdate() */
 			} else if (e != EINTR) {
 				Trace(TR_MISC, "FS %s: wakeup (%d)",
 				    Host.fs.fi_name, e);
@@ -645,6 +646,7 @@ signalWaiter(char *fs_name)
 		}
 		DoUpdate(fs_name);
 	}
+	return (ret);
 }
 
 
@@ -709,4 +711,35 @@ static void
 catchSigEMT(int sig)
 {
 	TraceSignal(sig);
+}
+
+
+/*
+ * ForceUmountDown - unmount the file system because server told us to
+ * via a NOTIFY that we are going down.  Try to unmount cleanly first,
+ * but ultimately we are going down.
+ */
+#ifdef sun
+#define	UMOUNT "/usr/sbin/umount"
+#endif /* sun */
+#ifdef linux
+#define	UMOUNT "/bin/umount"
+#endif /* linux */
+
+static void
+ForceUmountDown(char *fs)
+{
+	char p[sizeof (UMOUNT) + sizeof (" -f ") + sizeof (uname_t) + 2];
+	int r;
+
+	Trace(TR_MISC, "FS %s: Down request received, unmounting.", fs);
+	sprintf(p, UMOUNT " %s", fs);
+	r = system(p);
+#ifdef sun
+	if (r) {
+		/* try umount -f if umount failed */
+		sprintf(p, UMOUNT " -f %s", fs);
+		system(p);
+	}
+#endif /* sun */
 }

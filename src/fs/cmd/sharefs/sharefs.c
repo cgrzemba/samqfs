@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 
@@ -73,6 +73,8 @@ static char *NewHostFile = NULL;
 static char *NewNameServer = NULL;
 static int32_t NewServer = 0;
 static int   Foreign = 0;		/* Shared Hosts file is byte-swapped */
+static char *HostOff = NULL;		/* Host to mark off */
+static char *HostOn = NULL;		/* Host to mark on */
 
 static int HostGen = -1;
 static int HostLen = 0;
@@ -102,7 +104,7 @@ extern void error(int status, int errnum, char *msg, ...);
 int
 main(int ac, char *av[])
 {
-	int i, errc, c, mod = 0;
+	int i, errc, c, mod = 0, rewriteHT = 0;
 	struct sam_host_table_blk *HostTab = NULL;
 	char ***ATab = NULL;
 	char *errmsg;
@@ -118,13 +120,16 @@ main(int ac, char *av[])
 	CustmsgInit(0, NULL);
 
 #ifdef DEBUG
-#define	OPT_STR	"GhqRs:uU:x"
+#define	OPT_STR	"f:Gho:qRs:uU:x"
 #else
-#define	OPT_STR	"hqRs:u"
+#define	OPT_STR	"f:ho:qRs:u"
 #endif
 
 	while ((c = getopt(ac, av, OPT_STR)) != EOF) {
 		switch (c) {
+		case 'f':	/* -f - off a host */
+			HostOff = optarg;
+			break;
 		case 'G':	/* -G -- DEBUG only */
 			ResetGen = 1;
 			break;
@@ -134,6 +139,9 @@ main(int ac, char *av[])
 			    program_name);
 			exit(0);
 			/*NOTREACHED*/
+		case 'o':	/* -o - on a host */
+			HostOn = optarg;
+			break;
 		case 'q':	/* -q */
 			PrintHost = 0;
 			break;
@@ -160,7 +168,8 @@ main(int ac, char *av[])
 
 	if (ac == 1) {
 		error(1, 0, catgets(catfd, SET, 13700,
-		    "Usage:\n\t%s [-hqRu] [-s host] fs_name"),
+		    "Usage:\n\t%s [-hqRu] [-f host ] [-o host ]"
+		    " [-s host] fs_name"),
 		    program_name);
 	}
 	if (optind+1 == ac) {
@@ -172,24 +181,15 @@ main(int ac, char *av[])
 		    "Unknown extra arguments."));
 	}
 
+	if ((HostOff || HostOn) && NewHostFileFlag) {
+		error(1, 0, catgets(catfd, SET, 13709,
+		    "-o or -f flags incompatible with -u."));
+	}
+
 	if (NewHostFileFlag && !NewHostFile) {
-		if (FsName) {
-			SamMalloc(NewHostFile, MAXPATHLEN);
-			sprintf(NewHostFile, "%s/hosts.%s",
-			    SAM_CONFIG_PATH, FsName);
-		} else {
-			/*
-			 * We could figure this by going to the device
-			 * specified, and reading the family set name from
-			 * there.  But if the dev 0 slice is specified, it
-			 * seems better to get explicit direction on the
-			 * hosts file desired, rather than trusting
-			 * the device's superblock.
-			 */
-			error(1, 0, catgets(catfd, SET, 13702,
-			    "-d/-u options incompatible:  "
-			    "Use -U <hostsfile>."));
-		}
+		SamMalloc(NewHostFile, MAXPATHLEN);
+		sprintf(NewHostFile, "%s/hosts.%s",
+		    SAM_CONFIG_PATH, FsName);
 	}
 
 	if ((DevName = GetHostDev(FsName)) == NULL) {
@@ -403,6 +403,76 @@ main(int ac, char *av[])
 		}
 		ATab = BTab;
 		mod = 1;
+		rewriteHT = 1;
+	}
+
+	/*
+	 * Process -f flag - mark host off
+	 */
+	if (HostOff) {
+		int found = 0;
+
+		for (i = 0; ATab[i] != NULL; i++) {
+			if (strcasecmp(HostOff, ATab[i][HOSTS_NAME]) == 0) {
+				if (ATab[i][HOSTS_HOSTONOFF] &&
+				    strcasecmp("off", ATab[i][HOSTS_HOSTONOFF])
+				    == 0) {
+					error(2, 0, catgets(catfd, SET, 13737,
+					    "Host %s was already %s."),
+					    HostOff, "off");
+				}
+				if (ATab[i][HOSTS_SERVER] &&
+				    strcasecmp("server", ATab[i][HOSTS_SERVER])
+				    == 0) {
+					error(2, 0, catgets(catfd, SET, 13738,
+					    "Server host %s cannot be marked"
+					    " off."), HostOff);
+				}
+				if (ATab[i][HOSTS_PRI] &&
+				    atoi(ATab[i][HOSTS_PRI]) != 0) {
+					error(0, 0, catgets(catfd, SET, 13739,
+					    "Warning - marking potential"
+					    " metadata server %s off."),
+					    HostOff);
+				}
+				ATab[i][HOSTS_HOSTONOFF] = "off";
+				found = mod = rewriteHT = 1;
+				break;
+			}
+		}
+		if (!found) {
+			error(102, 0, catgets(catfd, SET, 13722,
+			    "Host '%s' not found in host table."), HostOff);
+		}
+	}
+
+	/*
+	 * Process -o flag - mark host on
+	 */
+	if (HostOn) {
+		int found = 0;
+
+		for (i = 0; ATab[i] != NULL; i++) {
+			if (strcasecmp(HostOn, ATab[i][HOSTS_NAME]) == 0) {
+				if (ATab[i][HOSTS_HOSTONOFF] &&
+				    strcasecmp("off", ATab[i][HOSTS_HOSTONOFF])
+				    != 0) {
+					error(2, 0, catgets(catfd, SET, 13737,
+					    "Host '%s' was already %s."),
+					    HostOn, "on");
+				}
+				ATab[i][HOSTS_HOSTONOFF] = "on";
+				found = mod = rewriteHT = 1;
+				break;
+			}
+		}
+		if (!found) {
+			error(102, 0, catgets(catfd, SET, 13722,
+			    "Host '%s' not found in host table."), HostOn);
+		}
+	}
+
+	if (rewriteHT) {
 		if (SamStoreHosts(&HostTab->info.ht,
 		    SAM_LARGE_HOSTS_TABLE_SIZE, ATab, HostGen) < 0) {
 			free(HostTab);
@@ -423,6 +493,15 @@ main(int ac, char *av[])
 					error(1, 0, catgets(catfd, SET, 13707,
 					    "Host %s cannot be a metadata "
 					    "server for FS %s."),
+					    NewNameServer, FsName);
+				}
+				if (ATab[i][HOSTS_HOSTONOFF] &&
+				    strcasecmp(ATab[i][HOSTS_HOSTONOFF], "off")
+				    == 0) {
+					free(HostTab);
+					error(1, 0, catgets(catfd, SET, 13713,
+					    "Off host %s cannot be a metadata"
+					    " server for FS %s"),
 					    NewNameServer, FsName);
 				}
 				if (RawDisk) {
@@ -535,6 +614,10 @@ main(int ac, char *av[])
 				    "Cannot write hosts file -- %s"), errmsg);
 			}
 		} else {
+			/*
+			 * Note: NewServer arg to sam_sethost not currently
+			 * used by the system call.
+			 */
 			if (sam_sethost(FsName, NewServer, newhtsize,
 			    (char *)HostTab) < 0) {
 				if (errno == ENOTACTIVE) {

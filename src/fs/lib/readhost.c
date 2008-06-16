@@ -68,17 +68,20 @@
  *		returned by SamReadHost() or SamHostsCvt(), above.
  *
  *      Example hosts file:
- * #          REQ          REQ             opt       opt     opt
- * #        nodename     node-addr        SERVER    STAGER
+ * #        Required     Required         Optional  Optional Optional
+ * #        nodename     node-addr        SERVER    Hostonoff
  * #
- *          cosmic       cosmic-1.foo.com   1         1     server
- *          spacey       spacey-1.foo.com   2         2
- *          sol          sol-1.foo.com      3
+ *          cosmic       cosmic-1.foo.com   1         on     server
+ *          spacey       spacey-1.foo.com   2         on
+ *          sol          sol-1.foo.com      3         -
  *          mars         mars-1.foo.com
  *          venus        venus-1.foo.com
  *          pluto        pluto-1.foo.com
+ *
+ *	Note that "-", "0", and blank are acceptable alternatives in
+ *	the Hostonoff field and all denote "on" (for backwards compatibility).
  */
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 
 /* ANSI C headers. */
@@ -256,10 +259,19 @@ hostLine(void)
 				}
 				break;
 			case HOSTS_PRI:			/* server pri */
-			case HOSTS_STPRI:		/* stager pri */
 				if (cvtNumber(token)) {
 					/* unexpected char in numeric field */
 					ReadCfgError(12523);
+					continue;
+				}
+				break;
+			case HOSTS_HOSTONOFF:		/* host on/off */
+				if ((strcasecmp(token, "on") != 0) &&
+				    (strcasecmp(token, "off") != 0) &&
+				    (strspn(token, "onfONF-0") !=
+				    strlen(token))) {
+					/* unexpected token in on/off field */
+					ReadCfgError(12527);
 					continue;
 				}
 				break;
@@ -287,8 +299,8 @@ hostLine(void)
 			switch (i) {
 			case HOSTS_SERVER:
 				break;
-			case HOSTS_STPRI:
-				l[i] = strdup("0");
+			case HOSTS_HOSTONOFF:
+				l[i] = strdup("on");
 				break;
 			case HOSTS_PRI:
 				l[i] = strdup("0");
@@ -377,7 +389,7 @@ SamStoreHosts(struct sam_host_table *ht, int size, char ***tabd, int gen)
 		char **l = tabd[i];
 
 		if (l[HOSTS_NAME] && l[HOSTS_IP] && l[HOSTS_PRI] &&
-		    l[HOSTS_STPRI]) {
+		    l[HOSTS_HOSTONOFF]) {
 
 			if (size > 0) {
 				snsize = size;
@@ -386,7 +398,7 @@ SamStoreHosts(struct sam_host_table *ht, int size, char ***tabd, int gen)
 			}
 			n = snprintf(b, snsize, "%s %s %s %s\n",
 			    l[HOSTS_NAME], l[HOSTS_IP], l[HOSTS_PRI],
-			    l[HOSTS_STPRI]);
+			    l[HOSTS_HOSTONOFF]);
 
 			if (n < 0) {
 				return (-1);
@@ -747,7 +759,7 @@ SamHostsCvt(struct sam_host_table *ht, char **errstr, int *err)
 				*d++ = *s++;
 			*d++ = '\0';
 			s++;
-			if (*s2 == '\n' && j != HOSTS_STPRI) {
+			if (*s2 == '\n' && j != HOSTS_HOSTONOFF) {
 				SETERR("Conversion error: too few fields on "
 				    "line");
 				SamHostsFree(tab);
@@ -796,10 +808,17 @@ SamHostsFree(char ***ht)
 
 
 /*
- * Extract the host name from a host table and an index
+ * Extract the host name, address, server priority, on/off field
+ * from a host table and an index.
  */
-int
-SamGetSharedHostName(struct sam_host_table *host, int hostno, upath_t name)
+int					/* 0 if not found/error */
+SamGetSharedHostInfo(
+	struct sam_host_table *host,	/* Host table pointer */
+	int hostno,			/* Index to look up */
+	upath_t name,			/* Name to return */
+	upath_t addr,			/* Address to return */
+	upath_t serverpri,		/* Server priority field */
+	upath_t onoff)			/* Host on/off field */
 {
 	int slen, count;
 	char *s = &host->ent[0];
@@ -808,19 +827,100 @@ SamGetSharedHostName(struct sam_host_table *host, int hostno, upath_t name)
 		return (0);
 	}
 	count = host->length - offsetof(struct sam_host_table, ent[0]);
-	while (count-- && hostno) {
-		if (*s++ == '\n') {
+	/*
+	 * Skip to hostno line
+	 */
+	while (hostno != 0 && count--) {
+		if (*s++ == '\n')
 			hostno--;
-		}
 	}
+	/*
+	 * Get name field
+	 */
 	for (slen = 0; slen < sizeof (upath_t) && slen < count; slen++) {
 		if (s[slen] == ' ') {
-			name[slen] = '\0';
+			if (name != NULL) {
+				name[slen++] = '\0';
+			}
+			break;
+		}
+		if (name != NULL) {
+			name[slen] = s[slen];
+		}
+	}
+	s += slen;
+	count -= slen;
+	/*
+	 * Get addr field
+	 */
+	for (slen = 0; slen < sizeof (upath_t) && slen < count; slen++) {
+		if (s[slen] == ' ') {
+			if (addr != NULL) {
+				addr[slen++] = '\0';
+			}
+			break;
+		}
+		if (addr != NULL) {
+			addr[slen] = s[slen];
+		}
+	}
+	s += slen;
+	count -= slen;
+	/*
+	 * Get serverpri field
+	 */
+	for (slen = 0; slen < sizeof (upath_t) && slen < count; slen++) {
+		if (s[slen] == ' ' || s[slen] == '\n') {
+			if (serverpri != NULL) {
+				serverpri[slen++] = '\0';
+			}
+			break;
+		}
+		if (serverpri != NULL) {
+			serverpri[slen] = s[slen];
+		}
+	}
+	s += slen;
+	count -= slen;
+	/*
+	 * Get host on/off field
+	 */
+	for (slen = 0; slen < sizeof (upath_t) && slen < count; slen++) {
+		if (s[slen] == ' ' || s[slen] == '\n') {
+			if (onoff != NULL) {
+				onoff[slen++] = '\0';
+			}
 			return (1);
 		}
-		name[slen] = s[slen];
+		if (onoff != NULL) {
+			onoff[slen] = s[slen];
+		}
 	}
 	return (0);
+}
+
+
+/*
+ * Extract the host name from a host table and an index
+ */
+int
+SamGetSharedHostName(struct sam_host_table *host, int hostno, upath_t name)
+{
+	return (SamGetSharedHostInfo(host, hostno, name, NULL, NULL, NULL));
+}
+
+
+/*
+ * Extract the host name and address from a host table and an index
+ */
+int
+GetSharedHostInfo(
+	struct sam_host_table *host,
+	int hostno,
+	upath_t name,
+	upath_t addr)
+{
+	return (SamGetSharedHostInfo(host, hostno, name, addr, NULL, NULL));
 }
 
 

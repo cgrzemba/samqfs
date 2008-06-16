@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.128 $"
+#pragma ident "$Revision: 1.129 $"
 #endif
 
 
@@ -693,7 +693,8 @@ enum NOTIFY_operation {
 	NOTIFY_dnlc		= 3,
 	NOTIFY_getino		= 4,
 	NOTIFY_panic		= 5,
-	NOTIFY_max_op		= 6
+	NOTIFY_hostoff		= 6,
+	NOTIFY_max_op		= 7
 };
 
 typedef struct sam_notify_dnlc {

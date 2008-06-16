@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -71,7 +71,6 @@ static char *_SrcFile = __FILE__;
 #include "sam/mount.h"
 #include "sam/lib.h"
 #include "sam/exit.h"
-
 #include "sblk.h"
 #include "samhost.h"
 
@@ -414,6 +413,10 @@ GetConfig(char *fs, struct sam_sblk *sb)
 			err = 1;
 		}
 	}
+
+	/*
+	 * Get label info and indirectly read in host table (in getRootInfo).
+	 */
 	if (err == 0) {
 		cfp->flags |= getLabelInfo(rfd, oh, fs, d, &cfp->lb);
 		cfp->flags |= getRootInfo(rfd, oh, fs, d, sb, NULL);
@@ -930,52 +933,4 @@ Dsk2Rdsk(
 	return (1);
 
 #endif	/* linux */
-}
-
-/*
- * Extract the host name from a host table and an index
- */
-int
-GetSharedHostInfo(
-	struct sam_host_table *host,
-	int hostno,
-	upath_t name,
-	upath_t addr)
-{
-	int slen, count;
-	char *s = &host->ent[0];
-
-	if (hostno < 0 || hostno >= host->count) {
-		return (0);
-	}
-	count = host->length - offsetof(struct sam_host_table, ent[0]);
-	while (count-- && hostno != 0) {
-		if (*s++ == '\n')
-			hostno--;
-	}
-	for (slen = 0; slen < sizeof (upath_t) && slen < count; slen++) {
-		if (s[slen] == ' ') {
-			if (name != NULL) {
-				name[slen++] = '\0';
-			}
-			break;
-		}
-		if (name != NULL) {
-			name[slen] = s[slen];
-		}
-	}
-	s += slen;
-	count -= slen;
-	for (slen = 0; slen < sizeof (upath_t) && slen < count; slen++) {
-		if (s[slen] == ' ') {
-			if (addr != NULL) {
-				addr[slen] = '\0';
-			}
-			return (1);
-		}
-		if (addr != NULL) {
-			addr[slen] = s[slen];
-		}
-	}
-	return (0);
 }

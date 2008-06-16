@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.250 $"
+#pragma ident "$Revision: 1.251 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2233,6 +2233,7 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 			break;
 
 		case NOTIFY_getino:
+		case NOTIFY_hostoff:
 			break;
 
 		default:

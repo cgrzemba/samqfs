@@ -35,7 +35,7 @@
 #define	SAM_HOST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 #endif
 
 #include "sam/types.h"
@@ -95,7 +95,7 @@ typedef struct sam_host_table_blk {
 #define	HOSTS_NAME	0	/* name of host */
 #define	HOSTS_IP	1	/* IP addresses of host (comma separated) */
 #define	HOSTS_PRI	2	/* host's server priority */
-#define	HOSTS_STPRI	3	/* for future use (stager priority?) */
+#define	HOSTS_HOSTONOFF	3	/* client/host on or off field */
 #define	HOSTS_SERVER	4	/* optional "server" declaration */
 #define	HOSTS_FIELDMAX	5	/* field count */
 
@@ -133,8 +133,11 @@ int SamPutRawHosts(char *dev, struct sam_host_table_blk *ht,
 /*
  * Extract the host name from a host table and an index
  */
-int SamGetSharedHostName(struct sam_host_table *host, int hostno,
-			upath_t name);
+int SamGetSharedHostInfo(struct sam_host_table *host, int hostno, upath_t name,
+		upath_t addr, char *serverpri, char *onoff);
+int SamGetSharedHostName(struct sam_host_table *host, int hostno, upath_t name);
+int GetSharedHostInfo(struct sam_host_table *host, int hostno, upath_t name,
+		upath_t addr);
 
 /* Get hosts file given file descriptor */
 int sam_fd_host_table_get(int fd, struct sam_host_table *htp);

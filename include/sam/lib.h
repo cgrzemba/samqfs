@@ -39,7 +39,7 @@
 #define	_SAM_LIB_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 #endif
 
 #include "sam/types.h"
@@ -158,6 +158,7 @@ int OpenInodesFile(char *mountPoint);
 char *SetFsParam(char *fsname, char *param, char *value);
 char *SetFsConfig(char *fsname, char *param);
 int SetFsPartCmd(char *fsname, char *eqnum, int32_t command);
+int onoff_client(char *fsname, int cl, int cmd);
 
 char *StrFromFsStatus(struct sam_fs_info *fi);
 #endif /* defined(_SAMFS_MOUNT_H) */

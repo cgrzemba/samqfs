@@ -34,7 +34,7 @@
 #if !defined(SHAREFS_H)
 #define	SHAREFS_H
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 #include "sam/custmsg.h"
 #include "sam/sam_trace.h"
@@ -132,7 +132,6 @@ int IsClusterNodeUp(char *node);	/* 0 yes, 1 no, < 0 not cluster */
  */
 int SysFailover(char *fs, char *server);
 
-int GetSharedHostInfo(struct sam_host_table *, int, upath_t, upath_t);
 int GetHostTab(struct sam_host_table_blk *);	/* get host table */
 char **DeCommaStr(char *str, int len);	/* explode comma-separated string  */
 					/* into NULL-term'd char *array[] */

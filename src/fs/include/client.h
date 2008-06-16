@@ -41,7 +41,7 @@
 #define	_SAM_FS_CLIENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 #endif
 
 #ifdef	linux
@@ -170,9 +170,11 @@ typedef struct sam_msg_array {
 /*
  * Client flags
  */
-#define	SAM_CLIENT_DEAD 0x01	/* Client assumed dead during failover */
-#define	SAM_CLIENT_INOP	0x02	/* Don't hold up failover (clnt known dead) */
+#define	SAM_CLIENT_DEAD	0x01	/* Client assumed dead during failover */
+#define	SAM_CLIENT_INOP	0x02	/* Don't hold up failover (client known dead) */
 #define	SAM_CLIENT_SOCK_BLOCKED	0x04	/* Writing to client returned EAGAIN */
+#define	SAM_CLIENT_OFF_PENDING	0x08	/* Client transitioning to OFF */
+#define	SAM_CLIENT_OFF	0x10	/* Client marked OFF in hosts file */
 
 typedef struct client_entry {
 	upath_t hname;		/* Client host name */
@@ -196,6 +198,7 @@ typedef struct client_entry {
 	short fs_count;		/* Number of family set members */
 	short mm_count;		/* Number of meta set members */
 	sam_queue_t queue;	/* message queue for this client */
+	int cl_offtime;		/* Transition from pending to off state */
 } client_entry_t;
 
 

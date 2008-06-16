@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 #include "sam/osversion.h"
 
@@ -517,6 +517,27 @@ SetFsPartCmd(
 		return (-1);
 	}
 	return (0);
+}
+
+
+/*
+ * onoff_client - Mark hosts on or off in client table.
+ */
+int				/* Error return */
+onoff_client(
+	char *fsname,		/* Filesystem name */
+	int cl,			/* Client host ordinal (0 based) */
+	int cmd)		/* Command */
+{
+	sam_onoff_client_arg_t arg;
+
+	strncpy(arg.fs_name, fsname, sizeof (arg.fs_name) - 1);
+	arg.clord = cl + 1;	/* client ordinals are 1 based */
+	arg.command = cmd;
+	if (sam_syscall(SC_onoff_client, (void *) &arg, sizeof (arg)) < 0) {
+		return (-1);
+	}
+	return (arg.ret);
 }
 
 
