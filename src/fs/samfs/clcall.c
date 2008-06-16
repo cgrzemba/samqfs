@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.248 $"
+#pragma ident "$Revision: 1.249 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2234,6 +2234,24 @@ sam_proc_inode(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_inode "
 				    "inode_quota byte swap error",
+				    ip->mp->mt.fi_name);
+				error = EIO;
+				goto out;
+			}
+			break;
+
+		case INODE_samaid:
+			/*
+			 * Byte swap the sam_inode_samaid_t portion
+			 * of the message.
+			 */
+			r = sam_byte_swap(sam_inode_samaid_swap_descriptor,
+			    (void *)&msg->call.inode.arg.p.samaid,
+			    sizeof (sam_inode_samaid_t));
+			if (r) {
+				cmn_err(CE_WARN,
+				    "SAM-QFS: %s: sam_proc_inode "
+				    "inode_samaid byte swap error",
 				    ip->mp->mt.fi_name);
 				error = EIO;
 				goto out;
