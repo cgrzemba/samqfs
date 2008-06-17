@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.2 2008/06/11 23:03:36 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.3 2008/06/17 16:04:27 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -43,7 +43,9 @@
 
     <ui:page>
         <ui:html>
-            <ui:head title="#{samBundle['SharedFS.pagetitle.client']}"/>
+            <ui:head title="#{samBundle['SharedFS.pagetitle.client']}">
+                <ui:script url="/js/fs/SharedFS.js"/>
+            </ui:head>
             <ui:body>
                 <ui:form id="SharedFSClientForm">
                     <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsClient}" />
@@ -79,12 +81,13 @@
                                                onClick="alert('Coming Soon');"/>
                                     <ui:button id="buttonRemove"
                                                text="#{samBundle['common.button.remove']}"
+                                               onClick="if (handleButtonRemove(1) == false) return false;"
                                                actionListener="#{SharedFSBean.handleRemoveClient}"/>
                                     <ui:dropDown
                                         id="Menu"
                                         submitForm="true"
-                                        immediate="true"
                                         forgetValue="true"
+                                        onChange="if (handleClientDropDownMenu(this) == false) return false;"
                                         selected="#{SharedFSBean.clientTableSelectedOption}"
                                         items="#{SharedFSBean.clientTableMenuOptions}"
                                         actionListener="#{SharedFSBean.handleTableMenuSelection}" />
@@ -98,12 +101,13 @@
                                                onClick="alert('Coming Soon');"/>
                                     <ui:button id="buttonRemove"
                                                text="#{samBundle['common.button.remove']}"
+                                               onClick="if (handleOperation(1, true) == false) return false;"
                                                actionListener="#{SharedFSBean.handleRemoveClient}"/>
                                     <ui:dropDown
                                         id="Menu"
                                         submitForm="true"
-                                        immediate="true"
                                         forgetValue="true"
+                                        onChange="if (handleClientDropDownMenu(this) == false) return false;"
                                         selected="#{SharedFSBean.clientTableSelectedOption}"
                                         items="#{SharedFSBean.clientTableMenuOptions}"
                                         actionListener="#{SharedFSBean.handleTableMenuSelection}" />
@@ -121,6 +125,7 @@
                             </f:facet>
 
                             <ui:tableRowGroup id="clientTableRows"
+                                              selected="#{SharedFSBean.selectClient.selectedState}"
                                               binding="#{SharedFSBean.clientSummaryTableRowGroup}"
                                               sourceData="#{SharedFSBean.clientSummaryList}"
                                               sourceVar="clientTable">
@@ -129,7 +134,8 @@
                                                 selectId="select"
                                                 sort="#{SharedFSBean.selectClient.selectedState}">
                                     <ui:checkbox id="select"
-                                                 name="same"
+                                                 onClick="setTimeout('initClientTableRows()', 0);"
+                                                 name="checkBoxSelect"
                                                  selected="#{SharedFSBean.selectClient.selected}"
                                                  selectedValue="#{SharedFSBean.selectClient.selectedValue}"/>
                                 </ui:tableColumn>
@@ -140,6 +146,14 @@
                                                 sort="name"
                                                 rowHeader="true">
                                     <ui:staticText text="#{clientTable.value.name}"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colHostType"
+                                                headerText="#{samBundle['SharedFS.client.table.heading.type']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="typeString"
+                                                rowHeader="true">
+                                    <ui:staticText text="#{clientTable.value.typeString}"/>
                                 </ui:tableColumn>
                                 <ui:tableColumn id="colIPAddress"
                                                 headerText="#{samBundle['SharedFS.client.table.heading.ipaddress']}"
@@ -190,6 +204,11 @@
                         </ui:table>
                     </ui:contentPageTitle>
                     <ui:hiddenField id="Time" value="#{SharedFSBean.timeClient}"/>
+                    <ui:hiddenField id="NoMultipleOp" value="#{SharedFSBean.noMultipleOpMsg}"/>
+                    <ui:hiddenField id="NoneSelected" value="#{SharedFSBean.noneSelectedMsg}"/>
+                    <ui:hiddenField id="ConfirmRemove" value="#{SharedFSBean.confirmRemove}"/>
+                    <ui:hiddenField id="ConfirmDisable" value="#{SharedFSBean.confirmDisable}"/>
+                    <ui:hiddenField id="ConfirmUnmount" value="#{SharedFSBean.confirmUnmount}"/>
                 </ui:form>
             </ui:body>
         </ui:html>

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.123 2008/06/11 16:58:01 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.124 2008/06/17 16:04:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -558,25 +558,41 @@ public class SamUtil {
     }
     // method to retrieve the unit size String (localized) from integer
     public static String getSizeUnitL10NString(int unit) {
+        return getSizeUnitL10NString(unit, false);
+    }
+
+    public static String getSizeUnitL10NString(int unit, boolean jsf) {
         switch (unit) {
             case SamQFSSystemModel.SIZE_B:
-                return SamUtil.getResourceString(
-                    "AdminSetup.qutity1");
+                return
+                    jsf ?
+                        JSFUtil.getMessage("AdminSetup.qutity1") :
+                        SamUtil.getResourceString("AdminSetup.qutity1");
             case SamQFSSystemModel.SIZE_KB:
-                return SamUtil.getResourceString(
-                    "AdminSetup.qutity2");
+                return
+                    jsf ?
+                        JSFUtil.getMessage("AdminSetup.qutity2") :
+                        SamUtil.getResourceString("AdminSetup.qutity2");
             case SamQFSSystemModel.SIZE_MB:
-                return SamUtil.getResourceString(
-                    "AdminSetup.qutity3");
+                return
+                    jsf ?
+                        JSFUtil.getMessage("AdminSetup.qutity3") :
+                        SamUtil.getResourceString("AdminSetup.qutity3");
             case SamQFSSystemModel.SIZE_GB:
-                return SamUtil.getResourceString(
-                    "AdminSetup.qutity4");
+                return
+                    jsf ?
+                        JSFUtil.getMessage("AdminSetup.qutity4") :
+                        SamUtil.getResourceString("AdminSetup.qutity4");
             case SamQFSSystemModel.SIZE_TB:
-                return SamUtil.getResourceString(
-                    "AdminSetup.qutity5");
+                return
+                    jsf ?
+                        JSFUtil.getMessage("AdminSetup.qutity5") :
+                        SamUtil.getResourceString("AdminSetup.qutity5");
             case SamQFSSystemModel.SIZE_PB:
-                return SamUtil.getResourceString(
-                    "AdminSetup.qutity6");
+                return
+                    jsf ?
+                        JSFUtil.getMessage("AdminSetup.qutity6") :
+                        SamUtil.getResourceString("AdminSetup.qutity6");
             default:
                 return "";
         }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.3 2008/06/11 23:03:36 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.4 2008/06/17 16:04:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -151,6 +151,21 @@ public class SharedHostInfo {
             return TYPE_OSD;
         }
         return -1;
+    }
+    
+    public String getTypeString() {
+        switch (getType()) {
+            case TYPE_MDS:
+                return JSFUtil.getMessage("SharedFS.text.mds");
+            case TYPE_PMDS:
+                return JSFUtil.getMessage("SharedFS.text.pmds");
+            case TYPE_CLIENT:
+                return JSFUtil.getMessage("SharedFS.text.client");
+            case TYPE_OSD:
+                return JSFUtil.getMessage("SharedFS.text.osd");
+            default:
+                return "";
+        }
     }
 
     public String getArch() {

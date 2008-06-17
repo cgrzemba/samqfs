@@ -27,14 +27,16 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSSummaryBean.java,v 1.1 2008/06/11 16:58:00 ronaldso Exp $
+// ident        $Id: SharedFSSummaryBean.java,v 1.2 2008/06/17 16:04:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.data.provider.TableDataProvider;
 import com.sun.data.provider.impl.ObjectArrayDataProvider;
 import com.sun.netstorage.samqfs.web.model.MemberInfo;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
+import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.web.ui.component.Hyperlink;
@@ -68,6 +70,7 @@ public class SharedFSSummaryBean {
     /** Holds value of the file system mount point. */
     protected String textMountPoint = null;
     /** Holds value of the file system capacity. */
+    protected String imageUsage = null;
     protected String textCapacity = null;
     /** Holds value of the file system high water mark. */
     protected String textHWM = null;
@@ -147,6 +150,10 @@ public class SharedFSSummaryBean {
         return textCapacity;
     }
 
+    public String getImageUsage() {
+        return imageUsage;
+    }
+
     public String getTextMountPoint() {
         return textMountPoint;
     }
@@ -172,6 +179,7 @@ public class SharedFSSummaryBean {
         if (clientInfo == null) {
             clientInfo = getInfo(allInfo, SECTION_CLIENTS);
         }
+
         return
             clientInfo == null ?
                 new ObjectArrayDataProvider(new MemberInfo[0]):
@@ -204,22 +212,44 @@ public class SharedFSSummaryBean {
     public void populateSummary(
         MemberInfo [] infos, FileSystem thisFS, boolean showStorageNodes) {
 
-        textType = FSUtil.getFileSystemDescriptionString(thisFS, true);
-        textMountPoint =
-            thisFS.getState() == FileSystem.MOUNTED ?
-                thisFS.getMountPoint() + " " +
-                JSFUtil.getMessage("SharedFS.text.mounted") :
-            JSFUtil.getMessage("SharedFS.text.notmounted");
-        if (thisFS.getArchivingType() == FileSystem.ARCHIVING) {
-            textHWM = Integer.toString(thisFS.getMountProperties().getHWM());
-            textArchiving = "TODO:";
-        }
-
         allInfo = infos;
         summaryInfo = getInfo(infos, SECTION_SUMMARY);
 
+        int hwm = thisFS.getMountProperties().getHWM();
+        boolean archive = thisFS.getArchivingType() == FileSystem.ARCHIVING;
+
+        if (archive) {
+            textHWM = Integer.toString(hwm);
+            textArchiving = "TODO:";
+        }
+
+        textType = FSUtil.getFileSystemDescriptionString(thisFS, true);
         textPMDS = summaryInfo.length > 0 ?
             Integer.toString(summaryInfo[0].getPmds()) : "";
+
+        if (thisFS.getState() == FileSystem.MOUNTED) {
+            textMountPoint = thisFS.getMountPoint() + " " +
+                JSFUtil.getMessage("SharedFS.text.mounted");
+            textCapacity =
+                "(" +
+                Capacity.newCapacityInJSF(
+                    thisFS.getCapacity(), SamQFSSystemModel.SIZE_KB) +
+                ")";
+            int consumed = thisFS.getConsumedSpacePercentage();
+            if (archive && consumed >= hwm) {
+                // have hwm and usage exceeds hwm
+                imageUsage =
+                    Constants.Image.JSF_RED_USAGE_BAR_DIR + consumed + ".gif";
+            } else {
+                // have no hwm, or have hwm but usage does not exceed hwm
+                imageUsage =
+                    Constants.Image.JSF_USAGE_BAR_DIR + consumed + ".gif";
+            }
+        } else {
+            textMountPoint = JSFUtil.getMessage("SharedFS.text.notmounted");
+            imageUsage = Constants.Image.JSF_ICON_BLANK;
+            textCapacity = "";
+        }
     }
 
     private MemberInfo [] getInfo(MemberInfo [] infos, short sectionId) {

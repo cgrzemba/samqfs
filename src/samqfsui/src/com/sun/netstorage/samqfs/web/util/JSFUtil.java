@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.5 2008/06/11 16:58:01 ronaldso Exp $
+// ident	$Id: JSFUtil.java,v 1.6 2008/06/17 16:04:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -185,7 +185,7 @@ public class JSFUtil {
     }
 
     /** for now store values in session */
-    public static void setAttribute(Object value, String name) {
+    public static void setAttribute(String name, Object value) {
         HttpSession session = getRequest().getSession();
         if (name != null)
             session.setAttribute(name, value);

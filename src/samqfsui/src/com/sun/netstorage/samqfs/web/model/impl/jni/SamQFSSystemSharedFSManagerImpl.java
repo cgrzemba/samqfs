@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.45 2008/06/11 23:03:36 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.46 2008/06/17 16:04:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -125,7 +125,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 	throws SamFSException {
 
         // TODO: To be verified
-        return Host.removeClients(fsName, clients);
+        // return Host.removeClients(fsName, clients);
+        return 0;
 
     }
 
@@ -135,10 +136,12 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * supported.
      */
     public void setClientState(String fsName,
-	String[] hostNames, int state) throws SamFSException {
+	String[] hostNames, boolean on) throws SamFSException {
 
         hostNames = hostNames == null ? new String[0] : hostNames;
-        Host.setClientState(fsName, hostNames, state);
+        // Host.setClientState(
+        //      fsName, hostNames, on ? Host.CL_STATE_ON : Host.CL_STATE_OFF);
+        return;
 
     }
 
@@ -217,8 +220,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
     private String [] createFakeHostInfo() {
         return
             new String [] {
-                "hostName=earth,type=client,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
-                "hostName=moon,type=client,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF,error=assumed_dead",
+                "hostName=earth,type=mds,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
+                "hostName=moon,type=pmds,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF,error=assumed_dead",
                 "hostName=mars,type=client,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON,error=known_dead",
                 "hostName=jupiter,type=client,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
                 "hostName=venus,type=client,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"
@@ -308,7 +311,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             throw new SamFSException("logic.hostIsDown");
         }
 
-        return FS.mountClients(model.getJniContext(), fsName, clients);
+        // return FS.mountClients(model.getJniContext(), fsName, clients);
+        return 0;
     }
 
     /*
@@ -327,7 +331,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             throw new SamFSException("logic.hostIsDown");
         }
 
-        return FS.unmountClients(model.getJniContext(), fsName, clients);
+        // return FS.unmountClients(model.getJniContext(), fsName, clients);
+        return 0;
     }
 
     /*
@@ -379,7 +384,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         throws SamFSException {
 
         // TODO: To be verifiedd
-        return FS.removeStorageNode(hpcFSName, nodeName);
+        // return FS.removeStorageNode(hpcFSName, nodeName);
+        return 0;
     }
 
 

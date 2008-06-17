@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.17 2008/06/11 23:03:36 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.18 2008/06/17 16:04:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -86,7 +86,7 @@ public interface SamQFSSystemSharedFSManager {
      * supported.
      */
     public void setClientState(String fsName,
-	String[] hostNames, int state) throws SamFSException;
+	String[] hostNames, boolean on) throws SamFSException;
 
     /*
      * Method to retrieve data about shared file system hosts.

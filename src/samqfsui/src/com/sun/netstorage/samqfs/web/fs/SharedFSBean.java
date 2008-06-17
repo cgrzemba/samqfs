@@ -27,10 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.2 2008/06/11 23:03:36 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.3 2008/06/17 16:04:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
+import com.sun.data.provider.FieldKey;
+import com.sun.data.provider.RowKey;
 import com.sun.data.provider.TableDataProvider;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.MemberInfo;
@@ -49,8 +51,10 @@ import com.sun.web.ui.component.Hyperlink;
 import com.sun.web.ui.component.TabSet;
 import com.sun.web.ui.component.TableRowGroup;
 import com.sun.web.ui.model.Option;
+import com.sun.web.ui.model.OptionTitle;
 import java.io.Serializable;
 import javax.faces.event.ActionEvent;
+
 
 public class SharedFSBean implements Serializable {
 
@@ -66,6 +70,7 @@ public class SharedFSBean implements Serializable {
     /** Holds value of the file system mount point. */
     protected String textMountPoint = null;
     /** Holds value of the file system capacity. */
+    protected String imageUsage = null;
     protected String textCapacity = null;
     /** Holds value of the file system high water mark. */
     protected String textHWM = null;
@@ -93,21 +98,25 @@ public class SharedFSBean implements Serializable {
     protected String alertDetail = null;
     protected String alertSummary = null;
 
+    /** Hidden fields for javascript messages */
+    protected String noMultipleOpMsg = null;
+    protected String noneSelectedMsg = null;
+    protected String confirmRemove = null;
+    protected String confirmDisable = null;
+    protected String confirmUnmount = null;
+    protected String confirmUnmountFS = null;
+
     /** Holds table information in Client Summary Page. */
     protected TableRowGroup clientSummaryTableRowGroup = null;
     protected Select selectClient = new Select("clientTable");
     protected String clientTableSelectedOption = null;
     protected String clientTableFilterSelectedOption = null;
 
-    /** Holds the file system object of which is displaying. */
-    private FileSystem thisFS = null;
-
     private SharedFSTabBean tabBean = null;
     private SharedFSSummaryBean summaryBean = null;
     private SharedFSClientBean clientBean = null;
     private SharedFSStorageNodeBean snBean = null;
-    private String serverName = null;
-    private String fsName = null;
+
 
     public SharedFSBean() {
 System.out.println("Entering SharedFSBean()!");
@@ -116,36 +125,32 @@ System.out.println("Entering SharedFSBean()!");
         this.clientBean = new SharedFSClientBean();
         this.snBean = new SharedFSStorageNodeBean();
 
-        this.serverName = JSFUtil.getServerName();
-        this.fsName = FSUtil.getFSName();
+        // Call to the backend for first time page display
+        getSummaryData();
+
+        populateHiddenFields();
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // Remote Calls
 
     private void getSummaryData() {
-        timeSummary = Long.toString(System.currentTimeMillis());
+System.out.println("Calling to backend, getSummaryData()!");
+        String fsName = getFSName();
+        String serverName = JSFUtil.getServerName();
+
 System.out.println("serverName: " + serverName);
 System.out.println("fsName: " + fsName);
+
+        timeSummary = Long.toString(System.currentTimeMillis());
+
         if (serverName != null) {
             try {
-                SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
-                if (appModel == null) {
-                    throw new SamFSException("App model is null");
-                }
-
                 SamQFSSystemSharedFSManager sharedFSManager =
-                                appModel.getSamQFSSystemSharedFSManager();
-                if (sharedFSManager == null) {
-                    throw new SamFSException("shared fs manager is null");
-                }
-
+                                                getSharedFSManager();
                 MemberInfo [] infos = sharedFSManager.getSharedFSSummaryStatus(
                             serverName, fsName);
-
-                SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
-                thisFS =
-                    sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
+                FileSystem thisFS = getFileSystem();
                 showArchive = thisFS.getArchivingType() == FileSystem.ARCHIVING;
                 mounted = thisFS.getState() == FileSystem.MOUNTED;
 
@@ -177,21 +182,18 @@ sfe.printStackTrace();
     }
 
     private void getClientData(short filter) {
-        timeClient = Long.toString(System.currentTimeMillis());
+        String fsName = getFSName();
+        String serverName = JSFUtil.getServerName();
+
 System.out.println("serverName: " + serverName);
 System.out.println("fsName: " + fsName);
+
+        timeClient = Long.toString(System.currentTimeMillis());
+
         if (serverName != null) {
             try {
-                SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
-                if (appModel == null) {
-                    throw new SamFSException("App model is null");
-                }
-
                 SamQFSSystemSharedFSManager sharedFSManager =
-                                appModel.getSamQFSSystemSharedFSManager();
-                if (sharedFSManager == null) {
-                    throw new SamFSException("shared fs manager is null");
-                }
+                                                getSharedFSManager();
 
                 SharedHostInfo [] infos =
                     sharedFSManager.getSharedFSHosts(
@@ -244,9 +246,6 @@ sfe.printStackTrace();
     ////////////////////////////////////////////////////////////////////////////
     // Tab Set
     public TabSet getTabSet() {
-        // Call to the backend
-        getSummaryData();
-
 System.out.println("getTabSet: " + showStorageNodes);
         this.tabSet = tabBean.getMyTabSet(showStorageNodes);
         return tabSet;
@@ -262,11 +261,11 @@ System.out.println("getTabSet: " + showStorageNodes);
     }
 
     public Hyperlink [] getBreadCrumbsClient(){
-        return clientBean.getBreadCrumbs(thisFS.getName());
+        return clientBean.getBreadCrumbs(getFSName());
     }
 
     public Hyperlink [] getBreadCrumbsStorageNode(){
-        return snBean.getBreadCrumbs(thisFS.getName());
+        return snBean.getBreadCrumbs(getFSName());
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -327,6 +326,10 @@ System.out.println("calling setAlertInfo!");
 
     /** Return the array of jump menu options */
     public Option[] getJumpMenuOptions() {
+        // Call to the backend
+        getSummaryData();
+
+System.out.println("Entering getJumpMenuOptions: mounted: " + mounted);
         return summaryBean.getJumpMenuOptions(showStorageNodes, mounted);
     }
 
@@ -356,7 +359,7 @@ System.out.println("calling setAlertInfo!");
                  + "=" + JSFUtil.getServerName();
 
         params += "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
-             + "=" + thisFS.getName();
+             + "=" + getFSName();
 
         // Check util/PageInfo.java, 36 is the number for SharedFSSummary
         params += "&" + Constants.SessionAttributes.PAGE_PATH
@@ -417,6 +420,14 @@ System.out.println("selected: " + selected);
 
     public void setTextCapacity(String textCapacity) {
         this.textCapacity = textCapacity;
+    }
+
+    public String getImageUsage() {
+        return summaryBean.getImageUsage();
+    }
+
+    public void setImageUsage(String imageUsage) {
+        this.imageUsage = imageUsage;
     }
 
     public String getTextMountPoint() {
@@ -483,13 +494,43 @@ System.out.println("selected: " + selected);
 
     ////////////////////////////////////////////////////////////////////////////
     // Helper methods
+    private String getFSName() {
+        return FSUtil.getFSName();
+    }
+
+    private FileSystem getFileSystem() throws SamFSException {
+        String fsName = getFSName();
+        SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
+        if (appModel == null) {
+            throw new SamFSException("App model is null");
+        }
+        SamQFSSystemModel sysModel = SamUtil.getModel(JSFUtil.getServerName());
+        return sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
+    }
+
+    private SamQFSSystemSharedFSManager getSharedFSManager()
+        throws SamFSException {
+        SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
+
+        if (appModel == null) {
+            throw new SamFSException("App model is null");
+        }
+
+        SamQFSSystemSharedFSManager sharedFSManager =
+                        appModel.getSamQFSSystemSharedFSManager();
+        if (sharedFSManager == null) {
+            throw new SamFSException("shared fs manager is null");
+        }
+        return sharedFSManager;
+    }
+
     private void forwardToMountOptionsPage() {
         // TODO: NEED TO pass more attributes for shared fs
         String params =
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME
                  + "=" + JSFUtil.getServerName();
         params += "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
-             + "=" + thisFS.getName();
+             + "=" + getFSName();
         params += "&" + Constants.PageSessionAttributes.ARCHIVE_TYPE
              + "=" + (isShowArchive() ? FileSystem.ARCHIVING :
                                         FileSystem.NONARCHIVING);
@@ -522,6 +563,8 @@ System.out.println("selected: " + selected);
 
     private void executeCommand(boolean mount){
         try {
+            FileSystem thisFS = getFileSystem();
+
             if (mount) {
                 thisFS.mount();
             } else {
@@ -541,16 +584,25 @@ System.out.println("selected: " + selected);
                     samEx,
                     this.getClass(),
                     "executeCommand",samEx.getMessage(),
-                    serverName);
+                    JSFUtil.getServerName());
             setAlertInfo(
                 Constants.Alert.ERROR,
                 mount ?
                     JSFUtil.getMessage("SharedFS.message.mount.failed",
-                                       thisFS.getName()):
+                                       getFSName()):
                     JSFUtil.getMessage("SharedFS.message.unmount.failed",
-                                       thisFS.getName()),
+                                       getFSName()),
                 samEx.getMessage());
         }
+    }
+
+    private void populateHiddenFields() {
+        noMultipleOpMsg = JSFUtil.getMessage("common.morethanoneselected");
+        noneSelectedMsg = JSFUtil.getMessage("common.noneselected");
+        confirmRemove = JSFUtil.getMessage("SharedFS.message.remove");
+        confirmDisable = JSFUtil.getMessage("SharedFS.message.disable");
+        confirmUnmount = JSFUtil.getMessage("SharedFS.message.unmount");
+        confirmUnmountFS = JSFUtil.getMessage("SharedFS.message.unmountfs");
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -579,6 +631,54 @@ System.out.println("selected: " + selected);
         this.mounted = mounted;
     }
 
+    public String getNoMultipleOpMsg() {
+        return noMultipleOpMsg;
+    }
+
+    public void setNoMultipleOpMsg(String noMultipleOpMsg) {
+        this.noMultipleOpMsg = noMultipleOpMsg;
+    }
+
+    public String getNoneSelectedMsg() {
+        return noneSelectedMsg;
+    }
+
+    public void setNoneSelectedMsg(String noneSelectedMsg) {
+        this.noneSelectedMsg = noneSelectedMsg;
+    }
+
+    public String getConfirmDisable() {
+        return confirmDisable;
+    }
+
+    public void setConfirmDisable(String confirmDisable) {
+        this.confirmDisable = confirmDisable;
+    }
+
+    public String getConfirmRemove() {
+        return confirmRemove;
+    }
+
+    public void setConfirmRemove(String confirmRemove) {
+        this.confirmRemove = confirmRemove;
+    }
+
+    public String getConfirmUnmount() {
+        return confirmUnmount;
+    }
+
+    public void setConfirmUnmount(String confirmUnmount) {
+        this.confirmUnmount = confirmUnmount;
+    }
+
+    public String getConfirmUnmountFS() {
+        return confirmUnmountFS;
+    }
+
+    public void setConfirmUnmountFS(String confirmUnmountFS) {
+        this.confirmUnmountFS = confirmUnmountFS;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Client Summary Page Methods (SharedFSClient.jsp)\
     public String getClientTableTitle() {
@@ -600,7 +700,28 @@ System.out.println("selected: " + selected);
     }
 
     public void handleRemoveClient(ActionEvent event) {
-        setAlertInfo(Constants.Alert.INFO, "Clients removed!", null);
+        String [] selectedClients = getSelectedClients();
+System.out.println("Entering handleRemoveClient: selected: " +
+    selectedClients == null ? "null" : selectedClients.length);
+        try {
+            SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
+            sharedFSManager.removeClients(getFSName(), selectedClients);
+
+            setAlertInfo(
+                Constants.Alert.INFO,
+                JSFUtil.getMessage(
+                    "SharedFS.message.removeclients.ok",
+                    convertArrayToString(selectedClients)),
+                null);
+        } catch (SamFSException samEx) {
+            setAlertInfo(
+                Constants.Alert.ERROR,
+                JSFUtil.getMessage(
+                    "SharedFS.message.removeclients.failed",
+                    convertArrayToString(selectedClients)),
+                samEx.getMessage());
+        }
     }
 
     public Select getSelectClient() {
@@ -620,7 +741,9 @@ System.out.println("selected: " + selected);
     }
 
     public String getClientTableFilterSelectedOption() {
-        return clientBean.getClientTableFilterSelectedOption();
+        this.clientTableFilterSelectedOption =
+            clientBean.getClientTableFilterSelectedOption();
+        return clientTableFilterSelectedOption;
     }
 
     public void setClientTableFilterSelectedOption(
@@ -639,15 +762,107 @@ System.out.println("selected: " + selected);
     }
 
     public void handleTableMenuSelection(ActionEvent event) {
+        String [] selectedClients = getSelectedClients();
+System.out.println("Entering handleTableMenuSelection: selected: " +
+    selectedClients == null ? "null" : selectedClients.length);
+
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-        System.out.println("handleTableMenuSelection() called: " + selected);
+System.out.println("handleTableMenuSelection() called: " + selected);
+
+        if (clientBean.menuOptions[0][1].equals(selected)) {
+            forwardToMountOptionsPage();
+            return;
+        }
+
+        String message = "", errorMessage = "";
+
+        try {
+            SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
+            // mount
+            if (clientBean.menuOptions[1][1].equals(selected)) {
+                sharedFSManager.mountClients(
+                    JSFUtil.getServerName(), getFSName(), selectedClients);
+                message = "SharedFS.message.mountclients.ok";
+                errorMessage = "SharedFS.message.mountclients.failed";
+
+            // unmount
+            } else if (clientBean.menuOptions[2][1].equals(selected)) {
+                sharedFSManager.unmountClients(
+                    JSFUtil.getServerName(), getFSName(), selectedClients);
+                message = "SharedFS.message.unmountclients.ok";
+                errorMessage = "SharedFS.message.unmountclients.failed";
+
+            // Enable Access
+            } else if (clientBean.menuOptions[3][1].equals(selected)) {
+                sharedFSManager.setClientState(
+                        getFSName(), selectedClients, true);
+                message = "SharedFS.message.enableclients.ok";
+                errorMessage = "SharedFS.message.enableclients.failed";
+            // Disable Access
+            } else if (clientBean.menuOptions[4][1].equals(selected)) {
+                sharedFSManager.setClientState(
+                        getFSName(), selectedClients, false);
+                message = "SharedFS.message.disableclients.ok";
+                errorMessage = "SharedFS.message.disableclients.failed";
+            }
+
+            setAlertInfo(
+                Constants.Alert.INFO,
+                JSFUtil.getMessage(
+                    message,
+                    convertArrayToString(selectedClients)),
+                null);
+        } catch (SamFSException samEx) {
+            setAlertInfo(
+                Constants.Alert.ERROR,
+                JSFUtil.getMessage(
+                    errorMessage,
+                    convertArrayToString(selectedClients)),
+                samEx.getMessage());
+        }
+        
+        // reset menu
+        clientTableSelectedOption = OptionTitle.NONESELECTED;
     }
 
     public void handleFilterChange(ActionEvent event) {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-        System.out.println("Entering handleFilterChange! selected:" + selected);
+System.out.println("Entering handleFilterChange! selected:" + selected);
         forwardToClientPage(Short.parseShort(selected));
+    }
+
+    protected String [] getSelectedClients() {
+        TableDataProvider provider = getClientSummaryList();
+        RowKey [] rows = getClientSummaryTableRowGroup().getSelectedRowKeys();
+        String [] selected = null;
+        if (rows != null && rows.length >= 1) {
+            selected = new String[rows.length];
+
+            FieldKey field = provider.getFieldKey("name");
+            for (int i = 0; i < rows.length; i++) {
+                selected[i] = (String) provider.getValue(field, rows[i]);
+            }
+        }
+
+        // safe to clear the selection
+        getSelectClient().clear();
+        return selected;
+    }
+
+    private String convertArrayToString(String [] inputArray) {
+        if (inputArray == null ||inputArray.length == 0) {
+            return "";
+        }
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < inputArray.length; i++) {
+            if (buf.length() > 0) {
+                buf.append(",");
+            }
+            buf.append(inputArray[i]);
+        }
+        return buf.toString();
     }
 }

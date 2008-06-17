@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Capacity.java,v 1.11 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: Capacity.java,v 1.12 2008/06/17 16:04:28 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -40,6 +40,7 @@ public class Capacity implements Comparable, Comparator {
     private long size;
     private int unit;
     NonSyncStringBuffer sizeStr;
+    private boolean jsf = false;
 
     // Values of SamQFSSystemModel unit constants should be transparent to us
     // since they are arbitrary, so we will use local constants that we can
@@ -68,7 +69,11 @@ public class Capacity implements Comparable, Comparator {
      * newCapacity(2500, ...Model.SIZE_KB) -> 2.44 MB
      */
     public static Capacity newCapacity(long size, int unit) {
-        return new Capacity(size, unit, false);
+        return new Capacity(size, unit, false, false);
+    }
+
+    public static Capacity newCapacityInJSF(long size, int unit) {
+        return new Capacity(size, unit, false, true);
     }
 
     /**
@@ -77,19 +82,20 @@ public class Capacity implements Comparable, Comparator {
      * newExactCapacity(2500, SIZE_KB) -> 2500 KB
      */
     public static Capacity newExactCapacity(long size, int unit) {
-        return new Capacity(size, unit, true);
+        return new Capacity(size, unit, true, false);
     }
 
     protected Capacity() {
     }
 
     public Capacity(long size, int unit) {
-        this(size, unit, false);
+        this(size, unit, false, false);
     }
 
-    protected Capacity(long size, int unit, boolean exact) {
+    protected Capacity(long size, int unit, boolean exact, boolean jsf) {
         this.size = size;
         this.unit = convertSysUnitToLocalUnit(unit);
+        this.jsf = jsf;
 
         format(0, (exact ? -1 : 2), exact);
         // 2 decimal digits by default, unless exact mode requested
@@ -181,7 +187,7 @@ public class Capacity implements Comparable, Comparator {
         // map unit back to its system model value for String look up
         int sunit = convertLocalUnitToSysUnit(unit);
 
-	sizeStr.append(SamUtil.getSizeUnitL10NString(sunit));
+	sizeStr.append(SamUtil.getSizeUnitL10NString(sunit, jsf));
     }
 
     protected void setSize(long size) {
@@ -287,7 +293,7 @@ public class Capacity implements Comparable, Comparator {
         long size = Long.parseLong(args[0]);
         int unit = Integer.parseInt(args[1]);
 
-        Capacity c = new Capacity(size, unit, exact);
+        Capacity c = new Capacity(size, unit, exact, false);
 
         System.out.println("capacity.toString : " + c);
         System.out.println("capacity.getValue : " + c.getValue());

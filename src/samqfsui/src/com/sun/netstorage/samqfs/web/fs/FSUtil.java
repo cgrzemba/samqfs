@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSUtil.java,v 1.23 2008/06/11 16:58:00 ronaldso Exp $
+// ident	$Id: FSUtil.java,v 1.24 2008/06/17 16:04:27 ronaldso Exp $
 
 /**
  * This util class contains a few declaration of the file system
@@ -449,7 +449,15 @@ public class FSUtil {
         HttpServletRequest request = JSFUtil.getRequest();
         String fsName =
             request.getParameter(Constants.PageSessionAttributes.FS_NAME);
-        JSFUtil.setAttribute(Constants.PageSessionAttributes.FS_NAME, fsName);
+        if (fsName != null) {
+System.out.println("Getting fsName from request, set to session: " + fsName);
+            JSFUtil.setAttribute(
+                Constants.PageSessionAttributes.FS_NAME, fsName);
+        } else {
+            fsName = (String) JSFUtil.getAttribute(
+                Constants.PageSessionAttributes.FS_NAME);
+System.out.println("Retrieivng fsName from session: " + fsName);
+        }
 
         return fsName;
     }

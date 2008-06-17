@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.2 2008/06/11 23:03:36 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.3 2008/06/17 16:04:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -55,6 +55,8 @@ public class SharedFSClientBean {
 
     // Basic Filter Menu
     protected String [][] filterOptions = new String [][] {
+        {"SharedFS.filter.all",
+             Short.toString(SamQFSSystemSharedFSManager.FILTER_NONE)},
         {"SharedFS.state.ok",
              Short.toString(SamQFSSystemSharedFSManager.FILTER_OK)},
         {"SharedFS.state.unmounted",
@@ -110,6 +112,8 @@ public class SharedFSClientBean {
     }
 
     public TableDataProvider getClientList() {
+System.out.println("client: getClientList: info is " +
+    (infos != null ? "not " : "") + "null!");
         return
             infos == null?
                 new ObjectArrayDataProvider(new SharedHostInfo[0]) :
@@ -135,14 +139,12 @@ public class SharedFSClientBean {
     }
 
     public Option [] getFilterMenuOptions() {
-        Option[] filterMenuOptions = new Option[filterOptions.length + 1];
-        filterMenuOptions[0] =
-                new OptionTitle(JSFUtil.getMessage("SharedFS.filter.all"));
-        for (int i = 1; i < filterOptions.length + 1; i++) {
+        Option[] filterMenuOptions = new Option[filterOptions.length];
+        for (int i = 0; i < filterOptions.length; i++) {
             filterMenuOptions[i] =
                 new Option(
-                    filterOptions[i - 1][1],
-                    JSFUtil.getMessage(filterOptions[i - 1][0]));
+                    filterOptions[i][1],
+                    JSFUtil.getMessage(filterOptions[i][0]));
         }
 
         return filterMenuOptions;
@@ -185,6 +187,10 @@ public class SharedFSClientBean {
     }
 
     public String getClientTableFilterSelectedOption() {
-        return Short.toString(getFilter());
+        if (getFilter() <= 0) {
+            return OptionTitle.NONESELECTED;
+        } else {
+            return Short.toString(getFilter());
+        }
     }
 }
