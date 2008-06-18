@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSStorageNode.jsp,v 1.2 2008/06/17 16:04:27 ronaldso Exp $ -->
+<!-- $Id: SharedFSStorageNode.jsp,v 1.3 2008/06/18 20:28:06 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -43,15 +43,156 @@
 
     <ui:page>
         <ui:html>
-            <ui:head title="#{samBundle['SharedFS.pagetitle.sn']}"/>
-            <ui:body>
+            <ui:head title="#{samBundle['SharedFS.pagetitle.sn']}">
+                <ui:script url="/js/fs/SharedFS.js"/>
+            </ui:head>
+            <ui:body id="SNBody">
                 <ui:form id="SharedFSStorageNodeForm">
                     <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsStorageNode}" />
                     <ui:tabSet binding="#{SharedFSBean.tabSet}" selected="storagenode" />
+                    <ui:alert id="alert"
+                              rendered="#{SharedFSBean.alertRendered}"
+                              type="#{SharedFSBean.alertType}"
+                              summary="#{SharedFSBean.alertSummary}"
+                              detail="#{SharedFSBean.alertDetail}"/>
                     <ui:contentPageTitle
                         id="pageTitle"
                         title="#{samBundle['SharedFS.pagetitle.sn']}">
+
+                        <f:verbatim><![CDATA[<br><br>]]></f:verbatim>
+                        <ui:staticText id="textInstruction" text="#{samBundle['SharedFS.help.sn.pageinstruction']}" style="margin:10px"/>
+                        <f:verbatim><![CDATA[<br><br>]]></f:verbatim>
+
+                        <ui:table id="tableStorageNodeSummary"
+                                  title="#{SharedFSBean.snTableTitle}"
+                                  style="margin:10px"
+                                  paginateButton="true"
+                                  paginationControls="true"
+                                  clearSortButton="true"
+                                  deselectMultipleButton="true"
+                                  selectMultipleButton="true"
+                                  sortPanelToggleButton="true">
+
+                            <!-- Table Button Top -->
+                            <f:facet name="actionsTop">
+                                <f:subview id="actionsTop">
+                                    <ui:button id="buttonAdd"
+                                               text="#{samBundle['common.button.add']}"
+                                               onClick="alert('Coming Soon'); return false;"/>
+                                    <ui:button id="buttonRemove"
+                                               text="#{samBundle['common.button.remove']}"
+                                               onClick="if (handleButtonRemove(0) == false) return false;"
+                                               actionListener="#{SharedFSBean.handleRemoveStorageNode}"/>
+                                    <ui:dropDown
+                                        id="Menu"
+                                        submitForm="true"
+                                        forgetValue="true"
+                                        onChange="if (handleSnDropDownMenu(this) == false) return false;"
+                                        selected="#{SharedFSBean.snTableSelectedOption}"
+                                        items="#{SharedFSBean.snTableMenuOptions}"
+                                        actionListener="#{SharedFSBean.handleSnTableMenuSelection}" />
+                                </f:subview>
+                            </f:facet>
+                            <!-- Table Button Buttom -->
+                            <f:facet name="actionsBottom">
+                                <f:subview id="actionsBottom">
+                                    <ui:button id="buttonAdd"
+                                               text="#{samBundle['common.button.add']}"
+                                               onClick="alert('Coming Soon'); return false;"/>
+                                    <ui:button id="buttonRemove"
+                                               text="#{samBundle['common.button.remove']}"
+                                               onClick="if (handleOperation(0, true) == false) return false;"
+                                               actionListener="#{SharedFSBean.handleRemoveStorageNode}"/>
+                                    <ui:dropDown
+                                        id="Menu"
+                                        submitForm="true"
+                                        forgetValue="true"
+                                        onChange="if (handleSnDropDownMenu(this) == false) return false;"
+                                        selected="#{SharedFSBean.snTableSelectedOption}"
+                                        items="#{SharedFSBean.snTableMenuOptions}"
+                                        actionListener="#{SharedFSBean.handleSnTableMenuSelection}" />
+                                </f:subview>
+                            </f:facet>
+
+                            <!-- filter -->
+                            <f:facet name="filter">
+                                <ui:dropDown id="filter"
+                                             submitForm="true"
+                                             immediate="true"
+                                             actionListener="#{SharedFSBean.handleSnFilterChange}"
+                                             items="#{SharedFSBean.snTableFilterOptions}"
+                                             selected="#{SharedFSBean.snTableFilterSelectedOption}" />
+                            </f:facet>
+
+                            <ui:tableRowGroup id="snTableRows"
+                                              selected="#{SharedFSBean.selectStorageNode.selectedState}"
+                                              binding="#{SharedFSBean.snSummaryTableRowGroup}"
+                                              sourceData="#{SharedFSBean.snSummaryList}"
+                                              sourceVar="snTable">
+                                <!-- Selection Type -->
+                                <ui:tableColumn id="selection"
+                                                selectId="select"
+                                                sort="#{SharedFSBean.selectStorageNode.selectedState}">
+                                    <ui:checkbox id="select"
+                                                 onClick="setTimeout('initSnTableRows()', 0);"
+                                                 name="checkBoxSelect"
+                                                 selected="#{SharedFSBean.selectStorageNode.selected}"
+                                                 selectedValue="#{SharedFSBean.selectStorageNode.selectedValue}"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colHostName"
+                                                headerText="#{samBundle['SharedFS.sn.table.heading.hostname']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="name"
+                                                rowHeader="true">
+                                    <ui:staticText text="#{snTable.value.name}"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colFault"
+                                                headerText="#{samBundle['SharedFS.sn.table.heading.fault']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="faultString"
+                                                rowHeader="true">
+                                    <ui:image id="imageFault" hspace="5" url="#{snTable.value.faultIcon}"/>
+                                    <ui:staticText text="#{snTable.value.faultString}"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colUsage"
+                                                headerText="#{samBundle['SharedFS.sn.table.heading.usage']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="usage"
+                                                rowHeader="true">
+                                    <ui:image id="imageUsage" hspace="5" url="#{snTable.value.usageBar}"/>
+                                    <ui:staticText text="#{snTable.value.usage}" visible="false"/>
+                                    <ui:staticText text="#{snTable.value.capacityStr}"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colIScsiId"
+                                                headerText="#{samBundle['SharedFS.sn.table.heading.iscsiid']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="iscsiid"
+                                                rowHeader="true">
+                                    <ui:staticText text="#{snTable.value.iscsiid}"/>
+                                </ui:tableColumn>
+                                <ui:tableColumn id="colStatus"
+                                                headerText="#{samBundle['SharedFS.sn.table.heading.status']}"
+                                                align="left"
+                                                valign="top"
+                                                sort="statusString"
+                                                rowHeader="true">
+                                    <ui:image id="imageStatus" hspace="2" url="#{snTable.value.statusIcon}"/>
+                                    <ui:staticText text="#{snTable.value.statusString}"/>
+                                </ui:tableColumn>
+                            </ui:tableRowGroup>
+                        </ui:table>
                     </ui:contentPageTitle>
+                    <ui:hiddenField id="Time" value="#{SharedFSBean.timeStorageNode}"/>
+                    <ui:hiddenField id="NoMultipleOp" value="#{SharedFSBean.noMultipleOpMsg}"/>
+                    <ui:hiddenField id="NoneSelected" value="#{SharedFSBean.noneSelectedMsg}"/>
+                    <ui:hiddenField id="ConfirmRemoveSn" value="#{SharedFSBean.confirmRemoveSn}"/>
+                    <ui:hiddenField id="ConfirmDisableSn" value="#{SharedFSBean.confirmDisableSn}"/>
+                    <ui:hiddenField id="ConfirmUnmountSn" value="#{SharedFSBean.confirmUnmountSn}"/>
+                    <ui:hiddenField id="ConfirmClearFaultSn" value="#{SharedFSBean.confirmClearFaultSn}"/>
                 </ui:form>
             </ui:body>
         </ui:html>

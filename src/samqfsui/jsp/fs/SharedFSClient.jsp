@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.3 2008/06/17 16:04:27 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.4 2008/06/18 20:28:06 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -78,7 +78,7 @@
                                 <f:subview id="actionsTop">
                                     <ui:button id="buttonAdd"
                                                text="#{samBundle['common.button.add']}"
-                                               onClick="alert('Coming Soon');"/>
+                                               onClick="alert('Coming Soon'); return false;"/>
                                     <ui:button id="buttonRemove"
                                                text="#{samBundle['common.button.remove']}"
                                                onClick="if (handleButtonRemove(1) == false) return false;"
@@ -98,7 +98,7 @@
                                 <f:subview id="actionsBottom">
                                     <ui:button id="buttonAdd"
                                                text="#{samBundle['common.button.add']}"
-                                               onClick="alert('Coming Soon');"/>
+                                               onClick="alert('Coming Soon'); return false;"/>
                                     <ui:button id="buttonRemove"
                                                text="#{samBundle['common.button.remove']}"
                                                onClick="if (handleOperation(1, true) == false) return false;"

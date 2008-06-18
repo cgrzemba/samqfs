@@ -27,10 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.4 2008/06/17 16:04:28 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.5 2008/06/18 20:28:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
+import com.sun.netstorage.samqfs.web.util.Capacity;
+import com.sun.netstorage.samqfs.web.util.Constants;
 import java.util.Properties;
 
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
@@ -92,7 +94,7 @@ public class SharedHostInfo {
     public static final short TYPE_MDS = 0;
     public static final short TYPE_PMDS = 1;
     public static final short TYPE_CLIENT = 2;
-    public static final short TYPE_OSD = 3;
+    public static final short TYPE_OSD = 4;
 
     // state = ON | OFF
     public static final short STATE_ON = 0;
@@ -152,7 +154,7 @@ public class SharedHostInfo {
         }
         return -1;
     }
-    
+
     public String getTypeString() {
         switch (getType()) {
             case TYPE_MDS:
@@ -237,7 +239,10 @@ public class SharedHostInfo {
             case STATUS_KNOWN_DEAD:
                 return JSFUtil.getMessage("SharedFS.state.knowndead");
             case STATUS_ACCESS_DISABLED:
-                return JSFUtil.getMessage("SharedFS.state.accessdisabled");
+                return
+                    getType() == TYPE_OSD ?
+                        JSFUtil.getMessage("SharedFS.state.allocdisabled") :
+                        JSFUtil.getMessage("SharedFS.state.accessdisabled");
             case STATUS_UNMOUNTED:
                 return JSFUtil.getMessage("SharedFS.state.unmounted");
             case STATUS_OK:
@@ -251,8 +256,6 @@ public class SharedHostInfo {
             return STATUS_ASSUMED_DEAD;
         } else if ("known_dead".equals(getError())) {
             return STATUS_KNOWN_DEAD;
-        } else if (-1 != getFaults()){
-            return STATUS_FAULTS;
         } else if (STATE_OFF == getStatus()) {
             return STATUS_ACCESS_DISABLED;
         } else if (-1 == getMounted()){
@@ -260,6 +263,68 @@ public class SharedHostInfo {
         } else {
             return STATUS_OK;
         }
+    }
+
+    /**
+     * TODO: Fix this
+     */
+    public short getFaultStatus() {
+        return 0;
+    }
+
+    public String getFaultString() {
+        switch (getFaultStatus()) {
+            case 1:
+                return "Critical";
+            case 2:
+                return "Major";
+            case 3:
+                return "Minor";
+            case 0:
+            default:
+                return "";
+        }
+    }
+
+    public String getFaultIcon() {
+        switch (getFaultStatus()) {
+            case 1:
+                return "";
+            case 2:
+                return "";
+            case 3:
+                return "";
+            case 0:
+            default:
+                return Constants.Image.JSF_ICON_BLANK_ONE_PIXEL;
+        }
+    }
+
+    public String getUsageBar() {
+        return Constants.Image.JSF_USAGE_BAR_DIR + getUsage() + ".gif";
+    }
+
+    public int getUsage() {
+        return 34;
+    }
+
+    public String getCapacityStr() {
+        long cap = getCapacityInKb();
+        if (cap < 0) {
+            return "";
+        }
+        return
+            "(" +
+            Capacity.newCapacityInJSF(cap, SamQFSSystemModel.SIZE_KB) +
+            ")";
+    }
+
+    public long getCapacityInKb() {
+        return (long) 1325488;
+    }
+    
+    public String getIscsiid() {
+        return "c1t2d3s4";
     }
 
     public String toString() {

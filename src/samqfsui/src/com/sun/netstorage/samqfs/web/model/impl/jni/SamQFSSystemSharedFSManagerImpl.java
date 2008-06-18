@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.46 2008/06/17 16:04:28 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.47 2008/06/18 20:28:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -195,10 +195,12 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         if (model.isDown()) {
             throw new SamFSException("logic.hostIsDown");
         }
-
+System.out.println("options: " + options);
+boolean useInSN = (options & SharedHostInfo.TYPE_OSD) == SharedHostInfo.TYPE_OSD;
+System.out.println("useInSN: " + useInSN);
         String [] hostInfo =
             // Host.getSharedFSHosts(model.getJniContext(), fsName, options);
-            createFakeHostInfo();
+            createFakeHostInfo(useInSN);
         hostInfo = hostInfo == null ? new String[0] : hostInfo;
         SharedHostInfo [] sharedHostInfo = new SharedHostInfo[hostInfo.length];
 
@@ -217,15 +219,21 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
     /**
      * TODO: Remove ME!
      */
-    private String [] createFakeHostInfo() {
+    private String [] createFakeHostInfo(boolean useInSN) {
         return
-            new String [] {
-                "hostName=earth,type=mds,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
-                "hostName=moon,type=pmds,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF,error=assumed_dead",
-                "hostName=mars,type=client,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON,error=known_dead",
-                "hostName=jupiter,type=client,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
-                "hostName=venus,type=client,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"
-            };
+            !useInSN ?
+                new String [] {
+                    "hostName=earth,type=mds,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
+                    "hostName=moon,type=pmds,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF,error=assumed_dead",
+                    "hostName=mars,type=client,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON,error=known_dead",
+                    "hostName=jupiter,type=client,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
+                    "hostName=venus,type=client,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"} :
+                new String [] {
+                    "hostName=earth,type=OSD,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
+                    "hostName=moon,type=OSD,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF",
+                    "hostName=mars,type=OSD,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON",
+                    "hostName=jupiter,type=OSD,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
+                    "hostName=venus,type=OSD,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"};
     }
 
     private SharedHostInfo [] filterHosts(
@@ -249,8 +257,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
                     SharedHostInfo.STATUS_KNOWN_DEAD ==
                                     infos[i].getStatusValue()) ||
                 (FILTER_FAULTS == filter &&
-                    SharedHostInfo.STATUS_FAULTS ==
-                                    infos[i].getStatusValue())) {
+                    infos[i].getFaults() > 0)) {
                 // Matched
                 hostList.add(infos[i]);
             }

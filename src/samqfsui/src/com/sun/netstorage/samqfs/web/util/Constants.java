@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Constants.java,v 1.105 2008/06/17 16:04:28 ronaldso Exp $
+// ident	$Id: Constants.java,v 1.106 2008/06/18 20:28:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -229,6 +229,9 @@ public interface Constants {
             String ICON_AVAILABLE = IMAGE_DIR.concat("samqfs_available.gif");
         public static final
             String ICON_BLANK_ONE_PIXEL = IMAGE_DIR.concat("samqfs_blank.gif");
+        public static final
+            String JSF_ICON_BLANK_ONE_PIXEL =
+                    JSF_IMAGE_DIR.concat("samqfs_blank.gif");
         public static final
             String ICON_BLANK = IMAGE_DIR.concat("blank.gif");
         public static final

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.3 2008/06/17 16:04:27 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.4 2008/06/18 20:28:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -120,10 +120,6 @@ System.out.println("client: getClientList: info is " +
                 new ObjectArrayDataProvider(infos);
     }
 
-    public String getTitleClients() {
-        return JSFUtil.getMessage("SharedFS.title.clients");
-    }
-
     public Option [] getJumpMenuOptions() {
         Option[] jumpMenuOptions = new Option[menuOptions.length + 1];
         jumpMenuOptions[0] =
@@ -182,7 +178,7 @@ System.out.println("client: getClientList: info is " +
             return JSFUtil.getMessage(
                 "SharedFS.title.table.clients.filtered",
                 new String [] {
-                    JSFUtil.getMessage(filterOptions[getFilter() - 1][0])});
+                    JSFUtil.getMessage(filterOptions[getFilter()][0])});
         }
     }
 

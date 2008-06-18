@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.3 2008/06/17 16:04:27 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.4 2008/06/18 20:28:06 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -183,7 +183,7 @@
                           binding="#{SharedFSBean.clientTableRowGroup}"
                           sourceData="#{SharedFSBean.clientList}"
                           sourceVar="clients">
-            
+
             <ui:tableColumn id="colAllClients"
                             headerText="#{samBundle['SharedFS.table.heading.allclients']}"
                             align="center"
@@ -275,7 +275,7 @@
                           binding="#{SharedFSBean.snTableRowGroup}"
                           sourceData="#{SharedFSBean.storageNodeList}"
                           sourceVar="sns">
-            
+
             <ui:tableColumn id="colAllClients"
                             headerText="#{samBundle['SharedFS.table.heading.allsns']}"
                             align="center"
@@ -334,7 +334,7 @@
                               url="/faces/jsp/fs/SharedFSStorageNode.jsp"
                               immediate="true">
                     <ui:staticText text="#{sns.value.error}"/>
-                    <f:param name="mode" value="4"/>
+                    <f:param name="mode" value="5"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colSpacer" spacerColumn="true" width="40%"/>

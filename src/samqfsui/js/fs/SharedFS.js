@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.1 2008/06/17 16:04:27 ronaldso Exp $
+// ident	$Id: SharedFS.js,v 1.2 2008/06/18 20:28:06 ronaldso Exp $
 
 
 // Used by drop down menu in summary page
@@ -52,17 +52,23 @@ function getClientTable() {
 
 function getSNTable() {
     return document.getElementById(
-             "SharedFSStorageForm:pageTitle:tableStorageNodeSummary");
+             "SharedFSStorageNodeForm:pageTitle:tableStorageNodeSummary");
 }
 
 function initClientTableRows() {
     getClientTable().initAllRows();
 }
 
+function initSnTableRows() {
+    getSNTable().initAllRows();
+}
+
 function handleButtonRemove(client) {
     if (handleOperation(client, true) == false) {
         return false;
-    } else if (!confirm(getMessage(1, 2))) {
+    } else if (client == 1 && !confirm(getMessage(1, 2))) {
+        return false;
+    } else if (client == 0 && !confirm(getMessage(0, 5))) {
         return false;
     } else {
         return true;
@@ -104,25 +110,60 @@ function handleClientDropDownMenu(menu) {
     return true;
 }
 
+function handleSnDropDownMenu(menu) {
+    var selectedValue = menu.value;
+    if (selectedValue == "editmo") {
+        // Edit Mount Option only allows one selection
+        if (handleOperation(0, false) == false) {
+            resetDropDownMenu(menu);
+            return false;
+        }
+    } else {
+        // show confirm messages if needed
+        if (selectedValue == "unmount") {
+            if (!confirm(getMessage(0, 7))) {
+                resetDropDownMenu(menu);
+                return false;
+            } else {
+                return true;
+            }
+        } else if (selectedValue == "disablealloc") {
+            if (!confirm(getMessage(0, 6))) {
+                resetDropDownMenu(menu);
+                return false;
+            } else {
+                return true;
+            }
+        } else if (selectedValue == "clearfault") {
+            if (!confirm(getMessage(0, 8))) {
+                resetDropDownMenu(menu);
+                return false;
+            } else {
+                return true;
+            }
+        }
+        // Otherwise everything else allows multiple selection
+        if (handleOperation(0, true) == false) {
+            resetDropDownMenu(menu);
+            return false;
+        }
+    }
+    return true;
+}
+
 function handleOperation(client, allowMultiple) {
     var selections =
         client == 1 ?
           getClientTable().getAllSelectedRowsCount() :
           getSNTable().getAllSelectedRowsCount();
     if (selections <= 0) {
-        alert(getMessage(1, 1));
+        alert(getMessage(client, 1));
         return false;
     } else if (!allowMultiple && selections > 1) {
-        alert(getMessage(1, 0));
+        alert(getMessage(client, 0));
         return false;
     } else {
         return true;
-    }
-}
-
-function handleFilter(menu) {
-    if (menu.value == "") {
-        
     }
 }
 
@@ -155,9 +196,22 @@ function getMessage(page, choice) {
         case 4:
             return document.getElementById(
                       thisFormId + ":" + "ConfirmUnmount").value;
+        case 5:
+            return document.getElementById(
+                      thisFormId + ":" + "ConfirmRemoveSn").value;
+        case 6:
+            return document.getElementById(
+                      thisFormId + ":" + "ConfirmDisableSn").value;
+        case 7:
+            return document.getElementById(
+                      thisFormId + ":" + "ConfirmUnmountSn").value;
+        case 8:
+            return document.getElementById(
+                      thisFormId + ":" + "ConfirmClearFaultSn").value;
         default:
             return "";
     }
+                      
 }
 
 // Resetting drop down menu to select top selection

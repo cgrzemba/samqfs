@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.3 2008/06/17 16:04:27 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.4 2008/06/18 20:28:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -61,6 +61,8 @@ public class SharedFSBean implements Serializable {
     /** Holds value of time loaded for each page. */
     protected String timeSummary = null;
     protected String timeClient = null;
+    protected String timeStorageNode = null;
+
     /** Holds value of tab set. */
     protected TabSet tabSet = null;
     /** Holds value of property jumpMenuSelectedOption. */
@@ -105,12 +107,22 @@ public class SharedFSBean implements Serializable {
     protected String confirmDisable = null;
     protected String confirmUnmount = null;
     protected String confirmUnmountFS = null;
+    protected String confirmRemoveSn = null;
+    protected String confirmDisableSn = null;
+    protected String confirmUnmountSn = null;
+    protected String confirmClearFaultSn = null;
 
     /** Holds table information in Client Summary Page. */
     protected TableRowGroup clientSummaryTableRowGroup = null;
     protected Select selectClient = new Select("clientTable");
     protected String clientTableSelectedOption = null;
     protected String clientTableFilterSelectedOption = null;
+
+    /** Holds table information in Storage Node Summary Page. */
+    protected TableRowGroup snSummaryTableRowGroup = null;
+    protected Select selectStorageNode = new Select("snTable");
+    protected String snTableSelectedOption = null;
+    protected String snTableFilterSelectedOption = null;
 
     private SharedFSTabBean tabBean = null;
     private SharedFSSummaryBean summaryBean = null;
@@ -181,14 +193,18 @@ sfe.printStackTrace();
         }
     }
 
-    private void getClientData(short filter) {
+    /**
+     * Remote call and get client/storage node data
+     *
+     * @param client true if getting data for client summary apge
+     * @param filter page filter short number
+     */
+    private void getData(boolean client, short filter) {
         String fsName = getFSName();
         String serverName = JSFUtil.getServerName();
 
 System.out.println("serverName: " + serverName);
 System.out.println("fsName: " + fsName);
-
-        timeClient = Long.toString(System.currentTimeMillis());
 
         if (serverName != null) {
             try {
@@ -199,12 +215,20 @@ System.out.println("fsName: " + fsName);
                     sharedFSManager.getSharedFSHosts(
                         serverName,
                         fsName,
-                        SharedHostInfo.TYPE_MDS |
-                        SharedHostInfo.TYPE_PMDS |
-                        SharedHostInfo.TYPE_CLIENT,
+                            client ?
+                                SharedHostInfo.TYPE_MDS |
+                                SharedHostInfo.TYPE_PMDS |
+                                SharedHostInfo.TYPE_CLIENT :
+                                SharedHostInfo.TYPE_OSD,
                         filter);
 
-                clientBean.populate(infos, showArchive);
+                if (client) {
+                    clientBean.populate(infos, showArchive);
+                    timeClient = Long.toString(System.currentTimeMillis());
+                } else {
+                    snBean.populate(infos);
+                    timeStorageNode = Long.toString(System.currentTimeMillis());
+                }
 
                 // no error found
                 this.alertRendered = false;
@@ -215,11 +239,14 @@ sfe.printStackTrace();
                 SamUtil.processException(
                     sfe,
                     this.getClass(),
-                    "getClientData",sfe.getMessage(),
+                    "getData",
+                    sfe.getMessage(),
                     serverName);
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    "L10N: Failed to populate client info",
+                    client ?
+                        "L10N: Failed to populate client info" :
+                        "L10N: Failed to populate sn info",
                     sfe.getMessage());
             }
         }
@@ -241,6 +268,14 @@ sfe.printStackTrace();
 
     public void setTimeClient(String timeClient) {
         this.timeClient = timeClient;
+    }
+
+    public String getTimeStorageNode() {
+        return timeStorageNode;
+    }
+
+    public void setTimeStorageNode(String timeStorageNode) {
+        this.timeStorageNode = timeStorageNode;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -381,7 +416,7 @@ System.out.println("selected: " + selected);
         } else if ("unmount".equals(selected)) {
             executeCommand(false);
         } else if ("removesn".equals(selected)) {
-            forwardToSNPage();
+            forwardToSnPage((short) 10);
         } else if ("removecn".equals(selected)) {
             forwardToClientPage((short)10);
         }
@@ -552,8 +587,9 @@ System.out.println("selected: " + selected);
         JSFUtil.redirectPage("/fs/FSMount", params);
     }
 
-    private void forwardToSNPage(){
-        JSFUtil.redirectPage("/faces/jsp/fs/SharedFSStorageNode.jsp", "mode=5");
+    private void forwardToSnPage(short filter){
+        JSFUtil.redirectPage(
+            "/faces/jsp/fs/SharedFSStorageNode.jsp", "mode=" + filter);
     }
 
     private void forwardToClientPage(short filter) {
@@ -603,6 +639,10 @@ System.out.println("selected: " + selected);
         confirmDisable = JSFUtil.getMessage("SharedFS.message.disable");
         confirmUnmount = JSFUtil.getMessage("SharedFS.message.unmount");
         confirmUnmountFS = JSFUtil.getMessage("SharedFS.message.unmountfs");
+        confirmRemoveSn = JSFUtil.getMessage("SharedFS.message.removesn");
+        confirmDisableSn = JSFUtil.getMessage("SharedFS.message.disablesn");
+        confirmUnmountSn = JSFUtil.getMessage("SharedFS.message.unmountsn");
+        confirmClearFaultSn = JSFUtil.getMessage("SharedFS.message.clearfault");
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -679,6 +719,38 @@ System.out.println("selected: " + selected);
         this.confirmUnmountFS = confirmUnmountFS;
     }
 
+    public String getConfirmClearFaultSn() {
+        return confirmClearFaultSn;
+    }
+
+    public void setConfirmClearFaultSn(String confirmClearFaultSn) {
+        this.confirmClearFaultSn = confirmClearFaultSn;
+    }
+
+    public String getConfirmDisableSn() {
+        return confirmDisableSn;
+    }
+
+    public void setConfirmDisableSn(String confirmDisableSn) {
+        this.confirmDisableSn = confirmDisableSn;
+    }
+
+    public String getConfirmRemoveSn() {
+        return confirmRemoveSn;
+    }
+
+    public void setConfirmRemoveSn(String confirmRemoveSn) {
+        this.confirmRemoveSn = confirmRemoveSn;
+    }
+
+    public String getConfirmUnmountSn() {
+        return confirmUnmountSn;
+    }
+
+    public void setConfirmUnmountSn(String confirmUnmountSn) {
+        this.confirmUnmountSn = confirmUnmountSn;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Client Summary Page Methods (SharedFSClient.jsp)\
     public String getClientTableTitle() {
@@ -686,7 +758,7 @@ System.out.println("selected: " + selected);
     }
 
     public TableDataProvider getClientSummaryList() {
-        getClientData(clientBean.getFilter());
+        getData(true, clientBean.getFilter());
         return clientBean.getClientList();
     }
 
@@ -700,7 +772,7 @@ System.out.println("selected: " + selected);
     }
 
     public void handleRemoveClient(ActionEvent event) {
-        String [] selectedClients = getSelectedClients();
+        String [] selectedClients = getSelectedKeys(true);
 System.out.println("Entering handleRemoveClient: selected: " +
     selectedClients == null ? "null" : selectedClients.length);
         try {
@@ -762,7 +834,7 @@ System.out.println("Entering handleRemoveClient: selected: " +
     }
 
     public void handleTableMenuSelection(ActionEvent event) {
-        String [] selectedClients = getSelectedClients();
+        String [] selectedClients = getSelectedKeys(true);
 System.out.println("Entering handleTableMenuSelection: selected: " +
     selectedClients == null ? "null" : selectedClients.length);
 
@@ -822,7 +894,7 @@ System.out.println("handleTableMenuSelection() called: " + selected);
                     convertArrayToString(selectedClients)),
                 samEx.getMessage());
         }
-        
+
         // reset menu
         clientTableSelectedOption = OptionTitle.NONESELECTED;
     }
@@ -834,9 +906,21 @@ System.out.println("Entering handleFilterChange! selected:" + selected);
         forwardToClientPage(Short.parseShort(selected));
     }
 
-    protected String [] getSelectedClients() {
-        TableDataProvider provider = getClientSummaryList();
-        RowKey [] rows = getClientSummaryTableRowGroup().getSelectedRowKeys();
+    /**
+     * Retrieve the selected row keys form the table
+     * @param client true if used in client summary page, otherwise it is used
+     * in the storage node summary page
+     * @return an array of Strings that hold the keys of selected rows
+     */
+    protected String [] getSelectedKeys(boolean client) {
+        TableDataProvider provider =
+            client ?
+                getClientSummaryList() :
+                getSnSummaryList();
+        RowKey [] rows =
+            client ?
+                getClientSummaryTableRowGroup().getSelectedRowKeys() :
+                getSnSummaryTableRowGroup().getSelectedRowKeys();
         String [] selected = null;
         if (rows != null && rows.length >= 1) {
             selected = new String[rows.length];
@@ -848,9 +932,186 @@ System.out.println("Entering handleFilterChange! selected:" + selected);
         }
 
         // safe to clear the selection
-        getSelectClient().clear();
+        if (client) {
+            getSelectClient().clear();
+        } else {
+            getSelectStorageNode().clear();
+        }
         return selected;
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Storage Node Page jsp/fs/SharedFSStorageNode.jsp
+    public String getSnTableTitle() {
+        return snBean.getSnTableTitle();
+    }
+
+    public TableDataProvider getSnSummaryList() {
+        getData(false, snBean.getFilter());
+        return snBean.getSnList();
+    }
+
+    public TableRowGroup getSnSummaryTableRowGroup() {
+        return snSummaryTableRowGroup;
+    }
+
+    public void setSnSummaryTableRowGroup(
+        TableRowGroup snSummaryTableRowGroup) {
+        this.snSummaryTableRowGroup = snSummaryTableRowGroup;
+    }
+
+    public void handleRemoveStorageNode(ActionEvent event) {
+        String [] selectedSns = getSelectedKeys(false);
+System.out.println("Entering handleRemoveStorageNode: selected: " +
+    selectedSns == null ? "null" : selectedSns.length);
+        try {
+            SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
+            // sharedFSManager.removeStorageNode(getFSName(), selectedSns);
+
+            setAlertInfo(
+                Constants.Alert.INFO,
+                JSFUtil.getMessage(
+                    "SharedFS.message.removesns.ok",
+                    convertArrayToString(selectedSns)),
+                null);
+        } catch (SamFSException samEx) {
+            setAlertInfo(
+                Constants.Alert.ERROR,
+                JSFUtil.getMessage(
+                    "SharedFS.message.removesns.failed",
+                    convertArrayToString(selectedSns)),
+                samEx.getMessage());
+        }
+    }
+
+    public Select getSelectStorageNode() {
+        return selectStorageNode;
+    }
+
+    public void setSelectStorageNode(Select selectStorageNode) {
+        this.selectStorageNode = selectStorageNode;
+    }
+
+    public String getSnTableSelectedOption() {
+        return snTableSelectedOption;
+    }
+
+    public void setSnTableSelectedOption(String snTableSelectedOption) {
+        this.snTableSelectedOption = snTableSelectedOption;
+    }
+
+    public String getSnTableFilterSelectedOption() {
+        this.snTableFilterSelectedOption =
+            snBean.getSnTableFilterSelectedOption();
+        return snTableFilterSelectedOption;
+    }
+
+    public void setSnTableFilterSelectedOption(
+        String snTableFilterSelectedOption) {
+        this.snTableFilterSelectedOption = snTableFilterSelectedOption;
+    }
+
+    /** Return the array of jump menu options */
+    public Option[] getSnTableMenuOptions() {
+        return snBean.getJumpMenuOptions();
+    }
+
+    /** Return the array of filter menu options */
+    public Option[] getSnTableFilterOptions() {
+        return snBean.getFilterMenuOptions();
+    }
+
+    public void handleSnTableMenuSelection(ActionEvent event) {
+        String [] selectedSns = getSelectedKeys(false);
+System.out.println("Entering handleSnTableMenuSelection: selected: " +
+    selectedSns == null ? "null" : selectedSns.length);
+
+        DropDown dropDown = (DropDown) event.getComponent();
+        String selected = (String) dropDown.getSelected();
+System.out.println("handleTableMenuSelection() called: " + selected);
+
+        if (snBean.menuOptions[0][1].equals(selected)) {
+            forwardToMountOptionsPage();
+            return;
+        }
+
+        String message = "", errorMessage = "";
+
+        try {
+            SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
+            // mount
+            if (snBean.menuOptions[1][1].equals(selected)) {
+                /*
+                sharedFSManager.mountClients(
+                    JSFUtil.getServerName(), getFSName(), selectedSns);
+                 */
+                message = "SharedFS.message.mountsns.ok";
+                errorMessage = "SharedFS.message.mountsns.failed";
+
+            // unmount
+            } else if (snBean.menuOptions[2][1].equals(selected)) {
+                /*
+                sharedFSManager.unmountClients(
+                    JSFUtil.getServerName(), getFSName(), selectedSns);
+                 */
+                message = "SharedFS.message.unmountsns.ok";
+                errorMessage = "SharedFS.message.unmountsns.failed";
+
+            // Enable Allocation
+            } else if (snBean.menuOptions[3][1].equals(selected)) {
+                /*
+                sharedFSManager.setClientState(
+                        getFSName(), selectedSns, true);
+                 */
+                message = "SharedFS.message.enablesns.ok";
+                errorMessage = "SharedFS.message.enablesns.failed";
+            // Disable Allocation
+            } else if (snBean.menuOptions[4][1].equals(selected)) {
+                /*
+                sharedFSManager.setClientState(
+                        getFSName(), selectedSns, false);
+                 */
+                message = "SharedFS.message.disablesns.ok";
+                errorMessage = "SharedFS.message.disablesns.failed";
+            // Clear Faults
+            } else if (snBean.menuOptions[5][1].equals(selected)) {
+                /*
+                sharedFSManager.setClientState(
+                        getFSName(), selectedSns, false);
+                 */
+                message = "SharedFS.message.clearfaults.ok";
+                errorMessage = "SharedFS.message.clearfaults.failed";
+            }
+
+            setAlertInfo(
+                Constants.Alert.INFO,
+                JSFUtil.getMessage(
+                    message,
+                    convertArrayToString(selectedSns)),
+                null);
+        } catch (SamFSException samEx) {
+            setAlertInfo(
+                Constants.Alert.ERROR,
+                JSFUtil.getMessage(
+                    errorMessage,
+                    convertArrayToString(selectedSns)),
+                samEx.getMessage());
+        }
+
+        // reset menu
+        snTableSelectedOption = OptionTitle.NONESELECTED;
+    }
+
+    public void handleSnFilterChange(ActionEvent event) {
+        DropDown dropDown = (DropDown) event.getComponent();
+        String selected = (String) dropDown.getSelected();
+System.out.println("Entering handleSnFilterChange! selected:" + selected);
+        forwardToSnPage(Short.parseShort(selected));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
 
     private String convertArrayToString(String [] inputArray) {
         if (inputArray == null ||inputArray.length == 0) {
