@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -233,8 +233,7 @@ enterArchiveStatus(
 		 * (currently limited to 'pax') should set this bit.
 		 */
 		sa->ar.arch_flags =
-		    ((ZeroOffset) ? SAR_hdr_off0 : 0) |
-		    ((af->AfFlags & AF_sparse) ? SAR_sparse : 0);
+		    ((ZeroOffset) ? SAR_hdr_off0 : 0);
 		sa->ar.version = 0;
 		sa->ar.creation_time	= af->AfCreateTime;
 

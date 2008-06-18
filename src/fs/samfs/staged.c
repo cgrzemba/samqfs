@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 #include "sam/osversion.h"
 
@@ -103,7 +103,7 @@ sam_stagerd_file(
 	offset_t length,	/* requested length */
 	cred_t *credp)		/* credentials pointer */
 {
-	int error, prealloc;
+	int error;
 	offset_t cur_size;
 	sam_stage_request_t *req;
 	int req_ext_cnt;
@@ -125,7 +125,7 @@ sam_stagerd_file(
 	}
 
 	if (error = sam_build_stagerd_req(ip, -1, req, &req_ext_cnt, &req_ext,
-	    &prealloc, credp)) {
+	    credp)) {
 		goto out;
 	}
 
@@ -135,74 +135,12 @@ sam_stagerd_file(
 	 */
 	cur_size = ip->size;
 	if (length && !ip->flags.b.nowaitspc) {
-		offset_t offset;
-		offset_t size;
 
 		/*
 		 *  Set stage wait flag on request.
 		 */
 		req->filesys.wait = 1;
 
-		/*
-		 * New format archives support sparse files -- don't allocate
-		 */
-		if (prealloc) {
-			boolean_t buf_allocated = FALSE;
-
-			offset = ip->stage_off;
-			size   = ip->stage_len;
-			if (ip->di.blocks == 0) {
-				sam_set_unit(ip->mp, &(ip->di));
-			}
-
-			/*
-			 * If stage -n, not NFS, total allocated umem is <
-			 * physmem, and buffer is less than 1% of physmem,
-			 * allocate buffer in memory pages which flush to swap.
-			 */
-			if (sam_stage_n_umem &&
-			    ip->flags.b.stage_n && !SAM_THREAD_IS_NFS() &&
-			    ((size + ip->mp->mi.m_umem_size) <=
-			    (physmem * PAGESIZE)) &&
-			    (size <= ((physmem * PAGESIZE) / 100))) {
-				if (ip->st_buf) {
-					if (size > ip->st_umem_len) {
-						atomic_add_64(
-						    &ip->mp->mi.m_umem_size,
-						    -ip->st_umem_len);
-						ddi_umem_free(ip->st_cookie);
-						ip->st_buf = NULL;
-						ip->st_umem_len = 0;
-					}
-				}
-				if (ip->st_buf == NULL) {
-					if ((ip->st_buf =
-					    ddi_umem_alloc((size_t)size,
-					    (DDI_UMEM_PAGEABLE|DDI_UMEM_SLEEP),
-					    &ip->st_cookie))) {
-						ip->st_umem_len = size;
-						atomic_add_64(
-						    &ip->mp->mi.m_umem_size,
-						    size);
-						buf_allocated = TRUE;
-					}
-				} else {
-					buf_allocated = TRUE;
-				}
-			}
-			if (!buf_allocated) {
-				while ((error = sam_map_block(ip, offset,
-				    size, SAM_WRITE_BLOCK, NULL, credp)) != 0 &&
-				    IS_SAM_ENOSPC(error)) {
-					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-					error = sam_wait_space(ip, error);
-					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-					if (error) {
-						break;
-					}
-				}
-			}
-		}
 	}
 
 	if (error == 0) {
@@ -280,7 +218,6 @@ sam_build_stagerd_req(
 	int *req_ext_cnt,		/* ret count of extended stagerd */
 					/*   requests */
 	sam_stage_request_t **req_ext,	/* ret extended stagerd request ptr */
-	int *prealloc,			/* ret 1 to prealloc, 0 not to */
 	cred_t *credp)			/* credentials pointer */
 {
 	int error;
@@ -288,7 +225,7 @@ sam_build_stagerd_req(
 	buf_t *bp;
 	int n_vsns;
 	int i, j;
-	int mask, sparse = 0;
+	int mask;
 	int max_cnt;
 	offset_t partial_size;
 	int truncate_file = FALSE;
@@ -378,18 +315,9 @@ sam_build_stagerd_req(
 					    STAGE_COPY_STALE;
 				}
 				if (permip->ar.image[i].arch_flags &
-				    SAR_hdr_off0) {
-					req->arcopy[i].flags |=
-					    STAGE_COPY_HDR0;
-				}
-				if (permip->ar.image[i].arch_flags &
 				    SAR_diskarch) {
 					req->arcopy[i].flags |=
 					    STAGE_COPY_DISKARCH;
-				}
-				if (permip->ar.image[i].arch_flags &
-				    SAR_sparse) {
-					sparse = 1;
 				}
 			}
 		}
@@ -516,10 +444,6 @@ sam_build_stagerd_req(
 			partial_size = sam_partial_size(ip);
 		}
 		error = sam_proc_truncate(ip, partial_size, SAM_RELEASE, credp);
-	}
-
-	if (prealloc != NULL) {
-		*prealloc = !sparse;
 	}
 
 	if (error) {

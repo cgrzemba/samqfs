@@ -59,7 +59,7 @@
 #define	_SAM_RESOURCE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 #endif
 
 #include "sam/types.h"
@@ -252,7 +252,6 @@ typedef struct sam_stage_copy {
 #define	STAGE_COPY_ARCHIVED	0x0001	/* Copy made */
 #define	STAGE_COPY_STALE	0x0002	/* Copy is stale */
 #define	STAGE_COPY_DAMAGED	0x0004	/* Copy is damaged */
-#define	STAGE_COPY_HDR0		0x0008	/* Position/offset point to tar hdr */
 #define	STAGE_COPY_DISKARCH	0x0010	/* Copy is disk archive */
 #define	STAGE_COPY_VERIFY	0x0020	/* Copy needs verification */
 

@@ -35,7 +35,7 @@
 #ifndef ARCOPY_H
 #define	ARCOPY_H
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 /* Sam includes */
 #include <pax_hdr/pax_hdr.h>
@@ -98,7 +98,6 @@ DCL struct ArchiveFile *File;		/* File being archived */
 #define	AF_offline	0x0020		/* File was offline */
 #define	AF_overflow	0x0040		/* File overflowed volume */
 #define	AF_release	0x0080		/* Release file after archival */
-#define	AF_sparse	0x0100		/* Sparse tar file written */
 
 #define	AF_tarheader(flags)	((flags & AF_notarhdr) == 0)
 

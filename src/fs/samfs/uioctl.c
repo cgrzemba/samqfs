@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 
 #include "sam/osversion.h"
 
@@ -1501,7 +1501,6 @@ sam_set_archive(
 	    (ip->di.rm.ui.flags & RM_DATA_VERIFY)) {
 
 		int i;
-		int prealloc;
 		int req_ext_cnt;
 		sam_stage_request_t *req;
 		sam_stage_request_t *req_ext;
@@ -1511,8 +1510,7 @@ sam_set_archive(
 			error = ENOMEM;
 		} else {
 			error = sam_build_stagerd_req(ip, copy, req,
-			    &req_ext_cnt,
-			    &req_ext, &prealloc, credp);
+			    &req_ext_cnt, &req_ext, credp);
 			if (!error) {
 				req->arcopy[copy].flags |= STAGE_COPY_VERIFY;
 				req->copy = copy;

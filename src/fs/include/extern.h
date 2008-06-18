@@ -38,8 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.226 $"
-
+#pragma ident "$Revision: 1.227 $"
 
 #ifndef	_SAM_FS_EXTERN_H
 #define	_SAM_FS_EXTERN_H
@@ -324,8 +323,7 @@ void sam_release_seg(sam_node_t *ip);
 int sam_rmmap_block(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 int sam_build_stagerd_req(sam_node_t *ip, int copy, sam_stage_request_t *req,
-	int *req_ext_cnt, sam_stage_request_t **req_ext,
-	int *prealloc, cred_t *credp);
+	int *req_ext_cnt, sam_stage_request_t **req_ext, cred_t *credp);
 
 
 /* syscall.c function prototypes. */
