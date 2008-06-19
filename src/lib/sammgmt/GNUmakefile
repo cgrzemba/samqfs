@@ -1,4 +1,4 @@
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -111,7 +111,8 @@ LIB_SRC = \
 	file_util.c \
 	bswap.c \
 	task_schedule.c \
-	file_metrics_report.c
+	file_metrics_report.c \
+	shrink_opts.c
 
 # note that the -I for OBJ_DIR is required for version.h.
 ARCHIVER_INCLUDES =	-I$(DEPTH)/src/archiver/include \
