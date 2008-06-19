@@ -34,7 +34,7 @@
 #if !defined(STAGER_THREADS_H)
 #define	STAGER_THREADS_H
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 /* Pthread functions macros with error checking. */
 #define	PthreadMutexLock(a) \
@@ -63,9 +63,17 @@
 { int _rval_; _rval_ = pthread_mutexattr_init(a); if (_rval_ != 0) \
 	LibFatal(pthread_mutexattr_init, #a); }
 
+#define	PthreadMutexattrDestroy(a) \
+{ int _rval_; _rval_ = pthread_mutexattr_destroy(a); if (_rval_ != 0) \
+	LibFatal(pthread_mutexattr_destroy, #a); }
+
 #define	PthreadCondattrInit(a) \
 { int _rval_; _rval_ = pthread_condattr_init(a); if (_rval_ != 0) \
 	LibFatal(pthread_condattr_init, #a); }
+
+#define	PthreadCondattrDestroy(a) \
+{ int _rval_; _rval_ = pthread_condattr_destroy(a); if (_rval_ != 0) \
+	LibFatal(pthread_condattr_destroy, #a); }
 
 #define	PthreadMutexattrSetpshared(a, b) \
 { int _rval_; _rval_ = pthread_mutexattr_setpshared(a, b); if (_rval_ != 0) \
@@ -82,5 +90,41 @@
 #define	PthreadCondInit(a, b) \
 { int _rval_; _rval_ = pthread_cond_init(a, b); if (_rval_ != 0) \
 	LibFatal(pthread_cond_init, #a); }
+
+#define	PthreadCancel(a) \
+{ int _rval_; _rval_ = pthread_cancel(a); if (_rval_ != 0) \
+	LibFatal(pthread_cancel, #a); }
+
+/* Structures. */
+typedef struct ThreadSema {
+	pthread_mutex_t	mutex;		/* protect access to count */
+	pthread_cond_t	cv;		/* signals change to count */
+	int		count;		/* protected count */
+} ThreadSema_t;
+
+typedef struct ThreadState {
+	pthread_mutex_t	mutex;		/* protect access to state */
+	pthread_cond_t	cv;		/* signals change to state */
+	int		state;		/* protected state */
+} ThreadState_t;
+
+/* Structure representing communication to another thread. */
+typedef struct ThreadComm {
+	pthread_mutex_t	mutex;		/* protect access to data */
+	pthread_cond_t	avail;		/* data available */
+	int		data_ready;	/* data present */
+	void		*first;
+	void		*last;
+	pthread_t	tid;		/* thread id */
+} ThreadComm_t;
+
+/* Define prototypes in threads_impl.c */
+void ThreadSemaInit(ThreadSema_t *s, int value);
+void ThreadSemaWait(ThreadSema_t *s);
+void ThreadSemaPost(ThreadSema_t *s);
+
+void ThreadStateInit(ThreadState_t *s);
+void ThreadStateWait(ThreadState_t *s);
+void ThreadStatePost(ThreadState_t *s);
 
 #endif /* STAGER_THREADS_H */

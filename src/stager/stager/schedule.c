@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -62,35 +62,36 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/fioctl.h"
 #include "sam/nl_samfs.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "aml/fsd.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
-
-/* Local headers. */
-#include "stager_lib.h"
-#include "stager_config.h"
-#include "file_defs.h"
-#include "rmedia.h"
-#include "device.h"
-#include "stream.h"
-#include "copy_defs.h"
-#include "schedule.h"
-#include "compose.h"
-#include "filesys.h"
-#include "readcmd.h"
-#include "copy_defs.h"
-#include "thirdparty.h"
-
+#include "aml/stager.h"
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_config.h"
+#include "stager_shared.h"
+#include "stager_threads.h"
+#include "copy_defs.h"
+#include "file_defs.h"
+#include "rmedia.h"
+#include "stream.h"
+
+#include "stager.h"
+#include "schedule.h"
+#include "thirdparty.h"
+
 static upath_t fullpath;
-static boolean_t infiniteLoop = TRUE;
+static boolean_t infiniteLoop = B_TRUE;
 
 static void scheduleWork();
 static void startWork(boolean_t copy_assigned);
-static int insertWork(reqid_t id);
+static int insertWork(int id);
 static void checkWork();
 static void requeueWork(pid_t pid);
 static void updateWorkState();
@@ -100,18 +101,18 @@ static void updateStreamState(
 	StagerStateInfo_t *update, StreamInfo_t *stream, int i);
 static boolean_t ifWorkAvail();
 static void checkCopies();
-static int recoverCopyProcList(int numDrives);
+static int recoverCopyInstanceList(int numDrives);
 
 static enum StreamPriority findResources(StreamInfo_t *stream);
 
 static int startCopy(StreamInfo_t *stream);
-static CopyInstance_t *findCopy(int library, media_t media);
-static CopyInstance_t *findCopyByPid(pid_t pid);
-static int isCopyIdle(VsnInfo_t *vi);
-static int isCopyBusy(VsnInfo_t *vi, u_longlong_t position);
+static CopyInstanceInfo_t *findCopy(int library, media_t media);
+static CopyInstanceInfo_t *findCopyByPid(pid_t pid);
+static boolean_t isCopyIdle(VsnInfo_t *vi);
+static boolean_t isCopyBusy(VsnInfo_t *vi, u_longlong_t position);
 static boolean_t isDriveAvailForCopy(int library);
-static void initCopyProcList(boolean_t recover);
-static void startCopyProcess(CopyInstance_t *context);
+static void initCopyInstanceList(boolean_t recover);
+static void startCopyProcess(CopyInstanceInfo_t *instance);
 /* LINTED static unused */
 static void waitCopyProcesses();
 static boolean_t sendLoadNotify(StreamInfo_t *stream, equ_t fseq);
@@ -119,7 +120,7 @@ static void *loadExportedVol(void *arg);
 static void cancelLoadExpVol(StreamInfo_t *stream);
 static void setLdCancelSig();
 static void catchLdCancelSig(int sig);
-static void restoreCopyProc(CopyInstance_t *copy);
+static void restoreCopyProc(CopyInstanceInfo_t *copy);
 static boolean_t isStagingSuspended(media_t	media);
 
 /*
@@ -134,7 +135,7 @@ static struct {
 	StreamInfo_t	*last;			/* last stream in list */
 } workQueue = { 0, NULL, NULL };
 
-CopyProcList_t *CopyprocList = NULL;
+CopyInstanceList_t *CopyInstanceList = NULL;
 extern StageReqs_t StageReqs;
 extern int Seqnum;
 extern int ShutdownStager;
@@ -148,13 +149,11 @@ int OrphanProcs = 0;
  */
 int
 SendToScheduler(
-	reqid_t id)
+	int id)
 {
-	int status;
 	SchedRequest_t *request;
 
-	status = pthread_mutex_lock(&SchedComm.mutex);
-	ASSERT(status == 0);
+	PthreadMutexLock(&SchedComm.mutex);
 
 	SamMalloc(request, sizeof (SchedRequest_t));
 
@@ -175,10 +174,11 @@ SendToScheduler(
 		SchedComm.last = request;
 	}
 
-	status = pthread_cond_signal(&SchedComm.avail);
+	PthreadCondSignal(&SchedComm.avail);
 
-	pthread_mutex_unlock(&SchedComm.mutex);
-	return (status);
+	PthreadMutexUnlock(&SchedComm.mutex);
+
+	return (0);
 }
 
 /*
@@ -193,8 +193,8 @@ Scheduler(
 	SchedRequest_t *request;
 	FileInfo_t *file;
 	struct timespec timeout;
-	int status;
-	reqid_t id;
+	int rval;
+	int id;
 	extern StagerStateInfo_t *State;
 	int copy;
 
@@ -210,7 +210,7 @@ Scheduler(
 		timeout.tv_sec = time(NULL) + SCHEDULER_TIMEOUT_SECS;
 		timeout.tv_nsec = 0;
 
-		status = pthread_mutex_lock(&comm->mutex);
+		PthreadMutexLock(&comm->mutex);
 
 		/*
 		 * Wait on the condition variable for SCHEDULER_TIMEOUT_SECS or
@@ -218,9 +218,10 @@ Scheduler(
 		 */
 		while (comm->first == NULL) {
 
-			status = pthread_cond_timedwait(&comm->avail,
+			rval = pthread_cond_timedwait(&comm->avail,
 			    &comm->mutex, &timeout);
-			if (status == ETIMEDOUT) {
+
+			if (rval == ETIMEDOUT) {
 				/*
 				 * Wait timed out.  Check if drive state has
 				 * changed and other stage requests can now be
@@ -291,7 +292,7 @@ Scheduler(
 			}
 		}
 
-		status = pthread_mutex_unlock(&comm->mutex);
+		PthreadMutexUnlock(&comm->mutex);
 
 		if (OrphanProcs != 0) {
 			checkCopies();
@@ -379,9 +380,9 @@ scheduleWork(void)
 		    (GET_FLAG(stream->flags, SR_CLEAR) == 0) &&
 		    (stream->thirdparty == B_FALSE)) {
 
-			THREAD_LOCK(stream);
+			PthreadMutexLock(&stream->mutex);
 			stream->priority = findResources(stream);
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&stream->mutex);
 		}
 		stream = stream->next;
 	}
@@ -475,7 +476,7 @@ AddWork(
  */
 void
 CancelWork(
-	reqid_t id)
+	int id)
 {
 	int i;
 	FileInfo_t *file;
@@ -485,7 +486,7 @@ CancelWork(
 
 	file = GetFile(id);
 	copy = file->copy;
-	Trace(TR_MISC, "Request to cancel inode: %d.%d fseq: %d",
+	Trace(TR_MISC, "Request to cancel inode: %d.%d (%d)",
 	    file->id.ino, file->id.gen, file->fseq);
 
 	stream = workQueue.first;
@@ -518,15 +519,15 @@ ShutdownWork(void)
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 
-		THREAD_LOCK(stream);
+		PthreadMutexLock(&stream->mutex);
 		SET_FLAG(stream->flags, SR_ERROR);
-		THREAD_UNLOCK(stream);
+		PthreadMutexUnlock(&stream->mutex);
 
 		while (stream->first > EOS) {
-			THREAD_LOCK(stream);
+			PthreadMutexLock(&stream->mutex);
 			file = GetFile(stream->first);
 
-			THREAD_LOCK(file);
+			PthreadMutexLock(&file->mutex);
 			StageError(file, ENODEV);
 			stream->first = file->next;
 			stream->count--;
@@ -534,8 +535,8 @@ ShutdownWork(void)
 			if (stream->first == EOS) {
 				stream->last = EOS;
 			}
-			THREAD_UNLOCK(stream);
-			THREAD_UNLOCK(file);
+			PthreadMutexUnlock(&stream->mutex);
+			PthreadMutexUnlock(&file->mutex);
 
 			SetStageDone(file);
 		}
@@ -623,22 +624,23 @@ updateWorkState(void)
 	if (OrphanProcs > 0) {
 		struct stat buf;
 
-		for (i = 0; i < CopyprocList->entries; i++) {
-			CopyInstance_t *ci = &CopyprocList->data[i];
+		for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+			CopyInstanceInfo_t *ci;
 
+			ci = &CopyInstanceList->cl_data[i];
 			if (j >= STAGER_DISPLAY_ACTIVE) {
 				break;
 			}
-			if (GET_FLAG(ci->flags, CI_orphan) == 0 ||
-			    ci->pid == 0) {
+			if (GET_FLAG(ci->ci_flags, CI_orphan) == 0 ||
+			    ci->ci_pid == 0) {
 				continue;
 			}
-			sprintf(fullpath, "%s/%s.%d", SharedInfo->streamsDir,
-			    ci->vsn, ci->seqnum);
+			sprintf(fullpath, "%s/%s.%d", SharedInfo->si_streamsDir,
+			    ci->ci_vsn, ci->ci_seqnum);
 			if (stat(fullpath, &buf) < 0) {
 				Trace(TR_DEBUG, "Stream %s for orphan copy "
 				    "pid: %ld not found.",
-				    fullpath, ci->pid);
+				    fullpath, ci->ci_pid);
 			} else {
 				stream = (StreamInfo_t *)MapInFile(fullpath,
 				    O_RDONLY, NULL);
@@ -702,7 +704,7 @@ updateActiveState(
 	StreamInfo_t *stream,
 	int j)
 {
-	reqid_t  id;
+	int  id;
 	FileInfo_t *file;
 	int msgnum;
 	int copy;
@@ -853,7 +855,7 @@ updateStreamState(
  */
 static int
 insertWork(
-	reqid_t id)
+	int id)
 {
 	int i;
 	FileInfo_t *file;
@@ -886,7 +888,7 @@ insertWork(
 		} else if ((strcmp(file->ar[copy].section.vsn,
 		    stream->vsn) == 0) &&
 		    (file->ar[copy].media == stream->media) &&
-		    !(IS_COPY_DISKARCH(file, copy))) {
+		    !(IF_COPY_DISKARCH(file, copy))) {
 
 			added = AddStream(stream, id, ADD_STREAM_SORT);
 
@@ -923,18 +925,20 @@ ShutdownCopy(
 	int stopSignal)
 {
 	int i;
+	pid_t pid;
 
-	if (CopyprocList == NULL) {
+	if (CopyInstanceList == NULL) {
 		return;
 	}
 
 	Trace(TR_MISC, "ShutdownCopy: sig: %d", stopSignal);
 
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].pid != 0) {
-			(void) kill(CopyprocList->data[i].pid, stopSignal);
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		pid = CopyInstanceList->cl_data[i].ci_pid;
+		if (pid != 0) {
+			(void) kill(pid, stopSignal);
 			Trace(TR_MISC, "Sent signal %d to copy[%d]",
-			    stopSignal, (int)CopyprocList->data[i].pid);
+			    stopSignal, (int)pid);
 		}
 	}
 
@@ -950,18 +954,23 @@ ShutdownCopy(
 		procs = 1;
 		while (procs != 0) {
 			procs = 0;
-			for (i = 0; i < CopyprocList->entries; i++) {
-				if (CopyprocList->data[i].pid != 0) {
-					char rmfn[10];
+			for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+				pid = CopyInstanceList->cl_data[i].ci_pid;
 
-					sprintf(rmfn, "%d",
-					    CopyprocList->data[i].rmfn);
-					if (FindProc("sam-stagerd_copy", rmfn)
-					    > 0) {
+				if (pid != 0) {
+					int rv;
+					char rmfn[10];
+					CopyInstanceInfo_t *ci;
+
+					ci = &CopyInstanceList->cl_data[i];
+					sprintf(rmfn, "%d", ci->ci_rmfn);
+
+					rv = FindProc(COPY_PROGRAM_NAME, rmfn);
+					if (rv > 0) {
 						procs++;
 						Trace(TR_DEBUG,
-						    "Copy:%d pid:%d busy.", i,
-						    CopyprocList->data[i].pid);
+						    "Copy: %d pid: %d busy.",
+						    i, (int)ci->ci_pid);
 						sleep(1);
 						break;
 					}
@@ -977,12 +986,12 @@ ShutdownCopy(
 void
 RemoveCopyProcMapFile(void)
 {
-	if (CopyprocList == NULL) {
+	if (CopyInstanceList == NULL) {
 		return;
 	}
-	RemoveMapFile(SharedInfo->copyprocsFile, (void *) CopyprocList,
-	    CopyprocList->size);
-	CopyprocList = NULL;
+	RemoveMapFile(SharedInfo->si_copyInstancesFile,
+	    (void *) CopyInstanceList, CopyInstanceList->cl_size);
+	CopyInstanceList = NULL;
 }
 
 /*
@@ -994,7 +1003,7 @@ CopyProcExit(
 {
 	pid_t pid;
 	int stat;
-	CopyInstance_t *copy;
+	CopyInstanceInfo_t *instance;
 	int exitstatus;
 	int signum;
 	boolean_t restart = B_TRUE;
@@ -1035,28 +1044,28 @@ CopyProcExit(
 		 * Find copy proc struct for exited child process.
 		 * Enable copy struct so process can be restarted.
 		 */
-		copy = findCopyByPid(pid);
+		instance = findCopyByPid(pid);
 
-		if (copy != NULL) {
+		if (instance != NULL) {
 			boolean_t shutdown;
 
-			shutdown = IS_SHUTDOWN(copy);
+			shutdown = IF_SHUTDOWN(instance);
 			/*
 			 * The scheduler thread may be accessing this copy's
-			 * context. Lock it before changing the state.
+			 * instance. Lock it before changing the state.
 			 */
-			(void) pthread_mutex_lock(&copy->request_mutex);
+			PthreadMutexLock(&instance->ci_requestMutex);
 			if (restart) {
-				copy->created = B_FALSE;
-				copy->idle = B_TRUE;
-				copy->pid = 0;
-				CLEAR_FLAG(copy->flags,
+				instance->ci_created = B_FALSE;
+				instance->ci_busy = B_FALSE;
+				instance->ci_pid = 0;
+				CLEAR_FLAG(instance->ci_flags,
 				    (CI_shutdown | CI_failover));
-				copy->first = copy->last = NULL;
+				instance->ci_first = instance->ci_last = NULL;
 			} else {
-				copy->idle = B_FALSE;
+				instance->ci_busy = B_TRUE;
 			}
-			(void) pthread_mutex_unlock(&copy->request_mutex);
+			PthreadMutexUnlock(&instance->ci_requestMutex);
 
 			if (shutdown == B_FALSE) {
 				/*
@@ -1065,7 +1074,7 @@ CopyProcExit(
 				 *  process and requeue them.
 				 */
 				requeueWork(pid);
-				restoreCopyProc(copy);
+				restoreCopyProc(instance);
 			}
 		}
 	}
@@ -1079,9 +1088,9 @@ CopyProcExit(
 static void
 checkWork(void)
 {
-	StreamInfo_t  *stream;
-	StreamInfo_t  *next;
-	StreamInfo_t  *prev;
+	StreamInfo_t *stream;
+	StreamInfo_t *next;
+	StreamInfo_t *prev;
 
 	prev = NULL;
 	stream = workQueue.first;
@@ -1146,7 +1155,7 @@ requeueWork(
 			 * If not already done, requeue stream.
 			 */
 			if (GET_FLAG(stream->flags, SR_DONE) == 0) {
-				reqid_t id;
+				int id;
 				FileInfo_t *prev = NULL;
 
 				id = stream->first;
@@ -1154,12 +1163,12 @@ requeueWork(
 					FileInfo_t *file;
 					boolean_t removed = B_FALSE;
 
-					THREAD_LOCK(stream);
+					PthreadMutexLock(&stream->mutex);
 					file = GetFile(id);
 
-					THREAD_LOCK(file);
+					PthreadMutexLock(&file->mutex);
 					if (prev != NULL) {
-						THREAD_LOCK(prev);
+						PthreadMutexLock(&prev->mutex);
 					}
 
 					/*
@@ -1201,10 +1210,11 @@ requeueWork(
 						removed = B_TRUE;
 					}
 					if (prev != NULL) {
-						THREAD_UNLOCK(prev);
+						PthreadMutexUnlock(
+						    &prev->mutex);
 					}
-					THREAD_UNLOCK(file);
-					THREAD_UNLOCK(stream);
+					PthreadMutexUnlock(&file->mutex);
+					PthreadMutexUnlock(&stream->mutex);
 
 					id = file->next;
 					if (removed) {
@@ -1339,9 +1349,9 @@ findResources(
 				SET_FLAG(stream->flags, SR_UNAVAIL);
 				priority = SP_start;
 			} else {
-				THREAD_UNLOCK(stream);
+				PthreadMutexUnlock(&stream->mutex);
 				ErrorStream(stream, ENODEV);
-				THREAD_LOCK(stream);
+				PthreadMutexLock(&stream->mutex);
 			}
 
 		} else {
@@ -1369,9 +1379,9 @@ findResources(
 			SET_FLAG(stream->flags, SR_UNAVAIL);
 			priority = SP_start;
 		} else {
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&stream->mutex);
 			ErrorStream(stream, ENOSPC);
-			THREAD_LOCK(stream);
+			PthreadMutexLock(&stream->mutex);
 		}
 		return (priority);
 	}
@@ -1387,7 +1397,7 @@ findResources(
 	if (isCopyBusy(&stream->vi, file->ar[copy].section.position)) {
 		priority = SP_busy;
 
-	} else if (isCopyIdle(&stream->vi) == FALSE) {
+	} else if (isCopyIdle(&stream->vi) == B_FALSE) {
 		priority = SP_noresources;
 
 	}
@@ -1430,12 +1440,11 @@ startCopy(
 {
 	extern char *WorkDir;
 	int ret;
-	int status;
 	VsnInfo_t *vi;
 	FileInfo_t *file;
-	CopyRequest_t *request;
+	CopyRequestInfo_t *request;
 	pthread_condattr_t cattr;
-	CopyInstance_t *context = NULL;
+	CopyInstanceInfo_t *instance = NULL;
 
 	vi = &stream->vi;
 	file = GetFile(stream->first);		/* first file in stream */
@@ -1454,8 +1463,8 @@ startCopy(
 	 * find the copy process with the already opened file descriptor.
 	 */
 	if (stream->context != 0) {
-		context = findCopyByPid(stream->context);
-		if (context == NULL &&
+		instance = findCopyByPid(stream->context);
+		if (instance == NULL &&
 		    GET_FLAG(stream->flags, SR_DCACHE_CLOSE)) {
 			/*
 			 * Copy process has exited, no need to close file
@@ -1470,19 +1479,19 @@ startCopy(
 		/*
 		 * Make sure copy process is not already busy.
 		 */
-		if (context != NULL && context->idle == B_FALSE) {
+		if (instance != NULL && instance->ci_busy == B_TRUE) {
 			Trace(TR_MISC, "Copy process %d busy",
 			    (int)stream->context);
-			context = NULL;
+			instance = NULL;
 		}
-		if (context == NULL) {
+		if (instance == NULL) {
 			Trace(TR_MISC, "Find copy failed "
 			    "pid: %d stream '%s.%d'",
 			    (int)stream->context, stream->vsn, stream->seqnum);
 		}
 
 	} else {
-		context = findCopy(vi->lib, vi->media);
+		instance = findCopy(vi->lib, vi->media);
 	}
 
 	/*
@@ -1490,63 +1499,62 @@ startCopy(
 	 * streams could be scheduled on the thread and this stream lost
 	 * the race.  Set stream priority and return.
 	 */
-	if (context == NULL) {
+	if (instance == NULL) {
 		stream->priority = SP_busy;
 		return (0);
 	}
 
-	Trace(TR_MISC, "Found copy-rm%d context: 0x%x media: '%s'",
-	    context->rmfn, (int)context, sam_mediatoa(context->media));
+	Trace(TR_MISC, "Found copy-rm%d instance: 0x%x media: '%s'",
+	    instance->ci_rmfn, (int)instance, sam_mediatoa(instance->ci_media));
 
-	status = pthread_mutex_lock(&context->request_mutex);
+	PthreadMutexLock(&instance->ci_requestMutex);
 
 	/*
 	 * Copy process timed out.  Reschedule this request.
 	 */
-	if (IS_SHUTDOWN(context) || context->created == 0) {
+	if (IF_SHUTDOWN(instance) || instance->ci_created == 0) {
 		stream->priority = SP_start;
 		Trace(TR_MISC, "\ttimed out");
-		status = pthread_mutex_unlock(&context->request_mutex);
+		PthreadMutexUnlock(&instance->ci_requestMutex);
 		return (0);
 	}
 
 	/*
 	 * Create and initialize a request structure.
 	 */
-	SamMalloc(request, sizeof (CopyRequest_t));
-	memset(request, 0, sizeof (CopyRequest_t));
+	SamMalloc(request, sizeof (CopyRequestInfo_t));
+	memset(request, 0, sizeof (CopyRequestInfo_t));
 
-	request->next = NULL;
-	request->got_it_flag = B_FALSE;
+	request->cr_next = NULL;
+	request->cr_gotItFlag = B_FALSE;
 
-	pthread_condattr_init(&cattr);
-	pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
-	status = pthread_cond_init(&request->got_it, &cattr);
-	ASSERT(status == 0);
-	pthread_condattr_destroy(&cattr);
+	PthreadCondattrInit(&cattr);
+	PthreadCondattrSetpshared(&cattr, PTHREAD_PROCESS_SHARED);
+	PthreadCondInit(&request->cr_gotIt, &cattr);
+	PthreadCondattrDestroy(&cattr);
 
-	/* FIXME - generate this path once for each context and reuse */
 	(void) sprintf(fullpath, "%s/rm%d/%s", WorkDir,
-	    context->rmfn, COPY_FILE_FILENAME);
-	ret = WriteMapFile(fullpath, (void *)request, sizeof (CopyRequest_t));
+	    instance->ci_rmfn, COPY_FILE_FILENAME);
+	ret = WriteMapFile(fullpath, (void *)request,
+	    sizeof (CopyRequestInfo_t));
 	if (ret != 0) {
 		upath_t dirpath;
 
 		/*
 		 * Make a directory if it doesn't already exist.
 		 */
-		(void) sprintf(dirpath, "%s/rm%d", WorkDir, context->rmfn);
+		(void) sprintf(dirpath, "%s/rm%d", WorkDir, instance->ci_rmfn);
 		MakeDirectory(dirpath);
 
 		ret = WriteMapFile(fullpath, (void *)request,
-		    sizeof (CopyRequest_t));
+		    sizeof (CopyRequestInfo_t));
 		if (ret != 0) {
 			FatalSyscallError(EXIT_NORESTART, HERE,
 			    "WriteMapFile", fullpath);
 		}
 	}
 	SamFree(request);
-	request = (CopyRequest_t *)MapInFile(fullpath, O_RDWR, NULL);
+	request = (CopyRequestInfo_t *)MapInFile(fullpath, O_RDWR, NULL);
 	if (request == NULL) {
 		Trace(TR_ERR, "Cannot map in file %s", fullpath);
 		stream->priority = SP_busy;
@@ -1554,14 +1562,14 @@ startCopy(
 	}
 
 	Trace(TR_MISC, "Schedule copy-rm%d: '%s.%d' 0x%x",
-	    context->rmfn, stream->vsn, stream->seqnum, (int)request);
+	    instance->ci_rmfn, stream->vsn, stream->seqnum, (int)request);
 
-	if (context->first == NULL) {
-		context->first = request;
-		context->last = request;
+	if (instance->ci_first == NULL) {
+		instance->ci_first = request;
+		instance->ci_last = request;
 	} else {
-		(context->last)->next = request;
-		context->last = request;
+		(instance->ci_last)->cr_next = request;
+		instance->ci_last = request;
 	}
 
 	/*
@@ -1569,26 +1577,25 @@ startCopy(
 	 * abnormal copy proc termination this allows us to find streams
 	 * that were active.
 	 */
-	stream->pid = context->pid;
+	stream->pid = instance->ci_pid;
 
 	/*
 	 * Set active flag for this stream.  This prevents the scheduler
 	 * from treating this as an inactive stream before the copy thread
 	 * has a change to pick it up.
 	 */
-	THREAD_LOCK(stream);
+	PthreadMutexLock(&stream->mutex);
 	SET_FLAG(stream->flags, SR_ACTIVE);
-	THREAD_UNLOCK(stream);
+	PthreadMutexUnlock(&stream->mutex);
 
-	(void) strncpy(request->vsn, stream->vsn, sizeof (request->vsn));
-	request->seqnum = stream->seqnum;
+	(void) strncpy(request->cr_vsn, stream->vsn, sizeof (request->cr_vsn));
+	request->cr_seqnum = stream->seqnum;
 
 	/*
 	 * Tell copy server that a request is available.  This call
 	 * unblocks the server thread waiting on the condition variable.
 	 */
-	status = pthread_cond_signal(&context->request);
-	ASSERT(status == 0);
+	PthreadCondSignal(&instance->ci_request);
 
 	/*
 	 * Request issued.  Copy server will free request
@@ -1596,18 +1603,16 @@ startCopy(
 	 * Otherwise we may try to schedule another stream on this
 	 * copy server since it will look idle.
 	 */
-	while (request->got_it_flag == B_FALSE) {
-		status = pthread_cond_wait(&request->got_it,
-		    &context->request_mutex);
-		ASSERT(status == 0);
+	while (request->cr_gotItFlag == B_FALSE) {
+		PthreadCondWait(&request->cr_gotIt, &instance->ci_requestMutex);
 	}
-	status = pthread_mutex_unlock(&context->request_mutex);
+	PthreadMutexUnlock(&instance->ci_requestMutex);
 
 	/*
 	 * Unmap pages of memory.  Request's memory
 	 * mapped file is removed in child.
 	 */
-	UnMapFile(request, sizeof (CopyRequest_t));
+	UnMapFile(request, sizeof (CopyRequestInfo_t));
 
 	return (0);
 }
@@ -1616,52 +1621,55 @@ startCopy(
  * Find copy proc for specified library and media type.
  * If a copy proc has not yet been created it gets started here.
  */
-static CopyInstance_t *
+static CopyInstanceInfo_t *
 findCopy(
 	int library,
 	media_t	media)
 {
 	int i;
-	int status;
 	int num_drives;
 	int retry;
 	int trylock;
 
-	CopyInstance_t *context = NULL;
+	CopyInstanceInfo_t *instance = NULL;
 
 	num_drives = GetNumLibraryDrives(library);
 	/*
 	 * Attempt to find idle thread for this media type.
 	 */
-	if (CopyprocList == NULL) {
+	if (CopyInstanceList == NULL) {
 		return (NULL);
 	}
 
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].lib == library) {
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		if (CopyInstanceList->cl_data[i].ci_lib == library) {
 			num_drives--;
-			if (CopyprocList->data[i].idle && num_drives >= 0) {
-				context = &CopyprocList->data[i];
+			if (CopyInstanceList->cl_data[i].ci_busy == B_FALSE &&
+			    num_drives >= 0) {
+				instance = &CopyInstanceList->cl_data[i];
 				break;
 			}
 		}
 	}
 
 	/*
-	 * If there is no existing thread (context == NULL), check here
-	 * if we can create a new one.  CopyprocList has an entry
+	 * If there is no existing thread (instance == NULL), check here
+	 * if we can create a new one.  CopyInstanceList has an entry
 	 * for all drives allowed (not just available) so also check
 	 * to make sure we do not oversubscribe the copy threads and
 	 * number of drives available for the library.
 	 */
-	if (context == NULL) {
+	if (instance == NULL) {
 		num_drives = GetNumLibraryDrives(library);
-		for (i = 0; i < CopyprocList->entries; i++) {
-			if (CopyprocList->data[i].lib == library) {
+		for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+			CopyInstanceInfo_t *ci;
+
+			ci = &CopyInstanceList->cl_data[i];
+			if (ci->ci_lib == library) {
 				num_drives--;
-				if (CopyprocList->data[i].created == B_FALSE &&
+				if (ci->ci_created == B_FALSE &&
 				    num_drives >= 0) {
-					context = &CopyprocList->data[i];
+					instance = ci;
 					break;
 				}
 			}
@@ -1671,9 +1679,9 @@ findCopy(
 	/*
 	 * If unable to find or create a copy thread.  This means
 	 * multiple streams could be scheduled on the thread and this
-	 * stream lost the race.  Return NULL context.
+	 * stream lost the race.  Return NULL instance.
 	 */
-	if (context == NULL)
+	if (instance == NULL)
 		return (NULL);
 
 	/*
@@ -1684,11 +1692,11 @@ findCopy(
 	retry = 3;
 	trylock = EBUSY;
 	while (trylock != 0) {
-		trylock = pthread_mutex_trylock(&context->request_mutex);
+		trylock = pthread_mutex_trylock(&instance->ci_requestMutex);
 		if (trylock != 0) {
 			Trace(TR_MISC, "Request mutex locked %d "
-			    "context: 0x%x, errno: %d",
-			    trylock, (int)context, errno);
+			    "instance: 0x%x, errno: %d",
+			    trylock, (int)instance, errno);
 			if (--retry > 0) {
 				sleep(5);
 			} else {
@@ -1703,39 +1711,29 @@ findCopy(
 				 */
 
 				Trace(TR_MISC, "Reinitialize mutex lock "
-				    "context: 0x%x", (int)context);
+				    "instance: 0x%x", (int)instance);
 
 				/*
 				 * Reinitialize mutex.
 				 */
-				if (pthread_mutexattr_init(&mattr)) {
-					LibFatal(pthread_mutexattr_init, NULL);
-				}
-				if (pthread_mutexattr_setpshared(&mattr,
-				    PTHREAD_PROCESS_SHARED)) {
-					LibFatal(pthread_mutexattr_setpshared,
-					    NULL);
-				}
-				if (pthread_condattr_init(&cattr)) {
-					LibFatal(pthread_condattr_init, NULL);
-				}
-				if (pthread_condattr_setpshared(&cattr,
-				    PTHREAD_PROCESS_SHARED)) {
-					LibFatal(pthread_condattr_setpshared,
-					    NULL);
-				}
+				PthreadMutexattrInit(&mattr);
+				PthreadMutexattrSetpshared(&mattr,
+				    PTHREAD_PROCESS_SHARED);
+				PthreadCondattrInit(&cattr);
+				PthreadCondattrSetpshared(&cattr,
+				    PTHREAD_PROCESS_SHARED);
 
-				pthread_mutex_init(&context->request_mutex,
+				PthreadMutexInit(&instance->ci_requestMutex,
 				    &mattr);
-				pthread_cond_init(&context->request, &cattr);
-				pthread_mutex_init(&context->running_mutex,
+				PthreadCondInit(&instance->ci_request, &cattr);
+				PthreadMutexInit(&instance->ci_runningMutex,
 				    &mattr);
-				pthread_cond_init(&context->running, &cattr);
+				PthreadCondInit(&instance->ci_running, &cattr);
 
-				pthread_mutexattr_destroy(&mattr);
-				pthread_condattr_destroy(&cattr);
+				PthreadMutexattrDestroy(&mattr);
+				PthreadCondattrDestroy(&cattr);
 
-				pthread_mutex_lock(&context->request_mutex);
+				PthreadMutexLock(&instance->ci_requestMutex);
 
 				break;
 			}
@@ -1745,81 +1743,85 @@ findCopy(
 	/*
 	 * If copy process/thread not created it gets started here.
 	 */
-	if (context->created == 0) {
+	if (instance->ci_created == 0) {
 		boolean_t lockbuf;
 
-		context->media = media;
-		context->num_buffers = GetMediaCharsBufsize(media, &lockbuf);
-		context->lockbuf = lockbuf;
+		instance->ci_media = media;
+		instance->ci_numBuffers = GetMediaParamsBufsize(media,
+		    &lockbuf);
+		instance->ci_lockbuf = lockbuf;
 
 		/*
 		 * Start copy process for removable media drive.
 		 */
-		startCopyProcess(context);
+		startCopyProcess(instance);
 	}
 
-	status = pthread_mutex_unlock(&context->request_mutex);
-	ASSERT(status == 0);
+	PthreadMutexUnlock(&instance->ci_requestMutex);
 
-	return (context);
+	return (instance);
 }
 
 /*
  * Find an existing copy proc by pid.  This shouldn't happen,
  * but return NULL if copy proc does not exist.
  */
-static CopyInstance_t *
+static CopyInstanceInfo_t *
 findCopyByPid(
 	pid_t pid)
 {
 	int i;
-	CopyInstance_t *context = NULL;
+	CopyInstanceInfo_t *instance = NULL;
 
-	if (CopyprocList == NULL) {
-		return (context);
+	if (CopyInstanceList == NULL) {
+		return (instance);
 	}
 
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].created &&
-		    CopyprocList->data[i].pid == pid) {
-			context = &CopyprocList->data[i];
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		if (CopyInstanceList->cl_data[i].ci_created &&
+		    CopyInstanceList->cl_data[i].ci_pid == pid) {
+			instance = &CopyInstanceList->cl_data[i];
 			break;
 		}
 	}
-	Trace(TR_MISC, "Find copy: 0x%x by pid: %d", (int)context, (int)pid);
-	return (context);
+	Trace(TR_MISC, "Find copy: 0x%x by pid: %d", (int)instance, (int)pid);
+	return (instance);
 }
 
 /*
  * Check if there is an idle copy proc for specified library
  * and media type.
  */
-static int
+static boolean_t
 isCopyIdle(
 	VsnInfo_t *vi)
 {
-	int avail = 0;
+	boolean_t avail;
 	int i;
 	int library;
 	int num_avail_drives;
 
-	ASSERT(CopyprocList != NULL);
+	avail = B_FALSE;
 
 	/*
-	 * Attempt to find idle thread for specified library.  The CopyprocList
-	 * structure has an entry for all drives allowed (not just available)
-	 * so also check to make sure not to oversubscribe the copy threads
-	 * and number of drives available for the library.
+	 * Attempt to find idle thread for specified library.
+	 * The CopyInstanceList structure has an entry for all drives
+	 * allowed (not just available) * so also check to make sure not
+	 * to oversubscribe the copy threads and number of drives
+	 * available for the library.
 	 */
 	library = vi->lib;
 	num_avail_drives = GetNumLibraryDrives(library);
 
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].lib == library) {
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		CopyInstanceInfo_t *ci;
+
+		ci = &CopyInstanceList->cl_data[i];
+		if (ci->ci_lib == library) {
 			num_avail_drives--;
-			if (CopyprocList->data[i].idle &&
-			    num_avail_drives >= 0) {
-				avail = 1;
+			if (ci->ci_busy == B_FALSE && num_avail_drives >= 0) {
+
+				avail = B_TRUE;
 				break;
 			}
 		}
@@ -1831,16 +1833,17 @@ isCopyIdle(
  * Check if the copy proc for specified library and media type
  * is busy.
  */
-static int
+static boolean_t
 isCopyBusy(
 	VsnInfo_t *vi,
 	u_longlong_t position)
 {
-	int busy = 0;
+	boolean_t busy;
 	int i;
 	int library;
 
-	initCopyProcList(B_FALSE);
+	busy = B_FALSE;
+	initCopyInstanceList(B_FALSE);
 
 /*
  * FIXME - detect if trying to schedule flip side of two-sided media
@@ -1848,12 +1851,16 @@ isCopyBusy(
  */
 
 	library = vi->lib;
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].idle == B_FALSE &&
-		    CopyprocList->data[i].lib == library &&
-		    strcmp(CopyprocList->data[i].vsn, vi->vsn) == 0 &&
-		    CopyprocList->data[i].dk_position == position) {
-			busy = 1;
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		CopyInstanceInfo_t *ci;
+
+		ci = &CopyInstanceList->cl_data[i];
+		if (ci->ci_busy == B_TRUE &&
+		    ci->ci_lib == library &&
+		    strcmp(ci->ci_vsn, vi->vsn) == 0 &&
+		    ci->ci_dkPosition == position) {
+
+			busy = B_TRUE;
 			break;
 		}
 	}
@@ -1873,10 +1880,10 @@ isDriveAvailForCopy(
 	int num_drives;
 
 	num_drives = GetNumLibraryDrives(library);
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].vsn_lib == library &&
-		    CopyprocList->data[i].idle == B_FALSE &&
-		    CopyprocList->data[i].created == B_TRUE) {
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		if (CopyInstanceList->cl_data[i].ci_vsnLib == library &&
+		    CopyInstanceList->cl_data[i].ci_busy == B_FALSE &&
+		    CopyInstanceList->cl_data[i].ci_created == B_TRUE) {
 			if (--num_drives <= 0) {
 				return (B_FALSE);
 			}
@@ -1886,11 +1893,11 @@ isDriveAvailForCopy(
 }
 
 /*
- * Initialize copy proc list.  The CopyprocList has an entry for all
+ * Initialize copy proc list.  The CopyInstanceList has an entry for all
  * drives allowed (not just available).
  */
 static void
-initCopyProcList(
+initCopyInstanceList(
 	boolean_t recover)
 {
 	struct sigaction sig_action;
@@ -1904,7 +1911,7 @@ initCopyProcList(
 	pthread_mutexattr_t mattr;
 	pthread_condattr_t cattr;
 
-	if (CopyprocList != NULL) {
+	if (CopyInstanceList != NULL) {
 		return;
 	}
 	numDrives = GetNumAllDrives();
@@ -1914,11 +1921,11 @@ initCopyProcList(
 	}
 
 	if (recover == B_TRUE) {
-		if (recoverCopyProcList(numDrives) < 0) {
+		if (recoverCopyInstanceList(numDrives) < 0) {
 			return;
 		} else {
-			ASSERT(CopyprocList != NULL);
-			SharedInfo->num_copyprocs = numDrives;
+			ASSERT(CopyInstanceList != NULL);
+			SharedInfo->si_numCopyInstanceInfos = numDrives;
 			Trace(TR_MISC, "Recovered %d copy procs", numDrives);
 
 			memset(&sig_action, 0, sizeof (sig_action));
@@ -1932,30 +1939,22 @@ initCopyProcList(
 
 	Trace(TR_MISC, "Initialize %d copy procs", numDrives);
 
-	size = sizeof (CopyProcList_t);
-	size += (numDrives - 1) * sizeof (CopyInstance_t);
-	SamMalloc(CopyprocList, size);
-	(void) memset(CopyprocList, 0, size);
+	size = sizeof (CopyInstanceList_t);
+	size += (numDrives - 1) * sizeof (CopyInstanceInfo_t);
+	SamMalloc(CopyInstanceList, size);
+	(void) memset(CopyInstanceList, 0, size);
 
-	CopyprocList->magic	= STAGER_COPYPROC_LIST_MAGIC;
-	CopyprocList->version	= STAGER_COPYPROC_LIST_VERSION;
-	CopyprocList->create	= StageReqs.val->create;
-	CopyprocList->entries	= numDrives;
-	CopyprocList->size	= size;
-	SharedInfo->num_copyprocs = numDrives;
+	CopyInstanceList->cl_magic	= COPY_INSTANCE_LIST_MAGIC;
+	CopyInstanceList->cl_version    = COPY_INSTANCE_LIST_VERSION;
+	CopyInstanceList->cl_create	= StageReqs.val->create;
+	CopyInstanceList->cl_entries	= numDrives;
+	CopyInstanceList->cl_size	= size;
+	SharedInfo->si_numCopyInstanceInfos = numDrives;
 
-	if (pthread_mutexattr_init(&mattr)) {
-		LibFatal(pthread_mutexattr_init, NULL);
-	}
-	if (pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED)) {
-		LibFatal(pthread_mutexattr_setpshared, NULL);
-	}
-	if (pthread_condattr_init(&cattr)) {
-		LibFatal(pthread_condattr_init, NULL);
-	}
-	if (pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED)) {
-		LibFatal(pthread_condattr_setpshared, NULL);
-	}
+	PthreadMutexattrInit(&mattr);
+	PthreadMutexattrSetpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	PthreadCondattrInit(&cattr);
+	PthreadCondattrSetpshared(&cattr, PTHREAD_PROCESS_SHARED);
 
 	/*
 	 * Assign copy proc to each allowed drive in all
@@ -1971,7 +1970,7 @@ initCopyProcList(
 			continue;
 		}
 
-		numDrives = entry->num_allowed_drives;
+		numDrives = entry->li_numAllowedDrives;
 
 		/*
 		 * Mark each copy proc if accessing a remote library.
@@ -1980,45 +1979,46 @@ initCopyProcList(
 			is_remote = TRUE;
 		}
 		while (numDrives-- > 0) {
-			CopyInstance_t *ci;
-			ci = &CopyprocList->data[j];
+			CopyInstanceInfo_t *ci;
 
-			pthread_mutex_init(&ci->request_mutex, &mattr);
-			pthread_cond_init(&ci->request, &cattr);
+			ci = &CopyInstanceList->cl_data[j];
 
-			pthread_mutex_init(&ci->running_mutex, &mattr);
-			pthread_cond_init(&ci->running, &cattr);
+			PthreadMutexInit(&ci->ci_requestMutex, &mattr);
+			PthreadCondInit(&ci->ci_request, &cattr);
 
-			ci->lib = i;
-			ci->eq = entry->eq;
-			ci->idle = B_TRUE;
+			PthreadMutexInit(&ci->ci_runningMutex, &mattr);
+			PthreadCondInit(&ci->ci_running, &cattr);
 
-			ci->rmfn = j;
-			ci->drive_eq = GetEqOrdinal(j);
+			ci->ci_lib = i;
+			ci->ci_eq = entry->li_eq;
+			ci->ci_busy = B_TRUE;
+
+			ci->ci_rmfn = j;
+			ci->ci_drive = GetEqOrdinal(j);
 
 			/*
 			 * Set flag if drive associated with this copy
 			 * process resides on a remote host.
 			 */
 			if (is_remote) {
-				SET_FLAG(ci->flags, CI_remote);
+				SET_FLAG(ci->ci_flags, CI_samremote);
 			}
 			j++;
 		}
 	}
 
-	ret = WriteMapFile(SharedInfo->copyprocsFile, (void *)CopyprocList,
-	    size);
+	ret = WriteMapFile(SharedInfo->si_copyInstancesFile,
+	    (void *)CopyInstanceList, size);
 	if (ret != 0) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "WriteMapFile",
-		    SharedInfo->copyprocsFile);
+		    SharedInfo->si_copyInstancesFile);
 	}
-	SamFree(CopyprocList);
-	CopyprocList = (CopyProcList_t *)
-	    MapInFile(SharedInfo->copyprocsFile, O_RDWR, NULL);
+	SamFree(CopyInstanceList);
+	CopyInstanceList = (CopyInstanceList_t *)
+	    MapInFile(SharedInfo->si_copyInstancesFile, O_RDWR, NULL);
 
-	pthread_mutexattr_destroy(&mattr);
-	pthread_condattr_destroy(&cattr);
+	PthreadMutexattrDestroy(&mattr);
+	PthreadCondattrDestroy(&cattr);
 
 	memset(&sig_action, 0, sizeof (sig_action));
 	sig_action.sa_handler = CopyProcExit;
@@ -2032,14 +2032,14 @@ initCopyProcList(
  */
 static void
 startCopyProcess(
-	CopyInstance_t *context)
+	CopyInstanceInfo_t *instance)
 {
 	extern char *CopyExecPath;
 	pid_t pid;
 	int i;
 
 	Trace(TR_MISC, "Starting copy-rm%d media: '%s'",
-	    context->rmfn, sam_mediatoa(context->media));
+	    instance->ci_rmfn, sam_mediatoa(instance->ci_media));
 
 	/*
 	 * Set non-standard files to close on exec.
@@ -2051,8 +2051,8 @@ startCopyProcess(
 	pid = fork1();
 	if (pid < 0) {
 		SysError(HERE, "fork1");
-		context->pid = 0;
-		context->created = B_FALSE;
+		instance->ci_pid = 0;
+		instance->ci_created = B_FALSE;
 		return;
 	}
 
@@ -2060,20 +2060,20 @@ startCopyProcess(
 
 		char rm[16];
 
-		sprintf(rm, "%d", context->rmfn);
+		sprintf(rm, "%d", instance->ci_rmfn);
 		execl(CopyExecPath, COPY_PROGRAM_NAME, rm, NULL);
 
 		Trace(TR_ERR, "Exec '%s' failed %d", CopyExecPath, errno);
-		context->pid = 0;
-		context->created = B_FALSE;
+		instance->ci_pid = 0;
+		instance->ci_created = B_FALSE;
 		return;
 	}
 
 	/*
 	 * Parent.
 	 */
-	context->pid = pid;
-	context->created = B_TRUE;
+	instance->ci_pid = pid;
+	instance->ci_created = B_TRUE;
 }
 
 /*
@@ -2085,8 +2085,11 @@ waitCopyProcesses(void)
 	int i;
 
 	Trace(TR_MISC, "Waiting for copy procs to shutdown");
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].pid != 0) {
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		CopyInstanceInfo_t *ci;
+
+		ci = &CopyInstanceList->cl_data[i];
+		if (ci->ci_pid != 0) {
 			int signum = SIGKILL;
 
 			sleep(2);
@@ -2094,10 +2097,10 @@ waitCopyProcesses(void)
 			/*
 			 * If not yet shutdown, force it.
 			 */
-			if (CopyprocList->data[i].pid != 0) {
-				(void) kill(CopyprocList->data[i].pid, signum);
+			if (ci->ci_pid != 0) {
+				(void) kill(ci->ci_pid, signum);
 				Trace(TR_MISC, "Sent signal %d to copy[%d]",
-				    signum, (int)CopyprocList->data[i].pid);
+				    signum, (int)ci->ci_pid);
 			}
 		}
 	}
@@ -2239,26 +2242,26 @@ loadExportedVol(
  */
 static void
 restoreCopyProc(
-	CopyInstance_t *copy
+	CopyInstanceInfo_t *instance
 )
 {
 	extern char *WorkDir;
 	upath_t req_file;
-	CopyRequest_t *request;
+	CopyRequestInfo_t *request;
 
 	/*
 	 * Check if request was seen by copy process.  If not, tell
 	 * the scheduler we got it so it doesn't wait forever.
 	 */
-	(void) sprintf(req_file, "%s/rm%d/%s", WorkDir, copy->rmfn,
+	(void) sprintf(req_file, "%s/rm%d/%s", WorkDir, instance->ci_rmfn,
 	    COPY_FILE_FILENAME);
-	request = (CopyRequest_t *)MapInFile(req_file, O_RDWR, NULL);
+	request = (CopyRequestInfo_t *)MapInFile(req_file, O_RDWR, NULL);
 	if (request != NULL) {
-		(void) pthread_mutex_lock(&copy->request_mutex);
-		request->got_it_flag = B_TRUE;
-		(void) pthread_cond_signal(&request->got_it);
-		(void) pthread_mutex_unlock(&copy->request_mutex);
-		RemoveMapFile(req_file, request, sizeof (CopyRequest_t));
+		PthreadMutexLock(&instance->ci_requestMutex);
+		request->cr_gotItFlag = B_TRUE;
+		PthreadCondSignal(&request->cr_gotIt);
+		PthreadMutexUnlock(&instance->ci_requestMutex);
+		RemoveMapFile(req_file, request, sizeof (CopyRequestInfo_t));
 	}
 }
 
@@ -2289,9 +2292,9 @@ ClearScheduler(
 		Trace(TR_MISC, "Clear requests: '%s.%s 0x%x",
 		    sam_mediatoa(stream->media), stream->vsn, (int)stream);
 
-		THREAD_LOCK(stream);
+		PthreadMutexLock(&stream->mutex);
 		SET_FLAG(stream->flags, SR_CLEAR);
-		THREAD_UNLOCK(stream);
+		PthreadMutexUnlock(&stream->mutex);
 	}
 }
 
@@ -2313,7 +2316,7 @@ static void
 cancelLoadExpVol(
 	StreamInfo_t *stream)
 {
-	THREAD_LOCK(stream);
+	PthreadMutexLock(&stream->mutex);
 	if (GET_FLAG(stream->flags, SR_WAIT)) {
 		if (stream->ldtid != 0) {
 			(void) pthread_kill(stream->ldtid, SIGUSR1);
@@ -2325,7 +2328,7 @@ cancelLoadExpVol(
 		}
 		CLEAR_FLAG(stream->flags, SR_WAIT);
 	}
-	THREAD_UNLOCK(stream);
+	PthreadMutexUnlock(&stream->mutex);
 }
 
 /*
@@ -2404,36 +2407,36 @@ checkCopies(void)
 	struct stat buf;
 	StreamInfo_t *stream;
 
-	if (CopyprocList == NULL) {
+	if (CopyInstanceList == NULL) {
 		return;
 	}
 	Trace(TR_DEBUG, "Pending copies: entries:%d OrphanProcs:%d",
-	    CopyprocList->entries, OrphanProcs);
+	    CopyInstanceList->cl_entries, OrphanProcs);
 
 	OrphanProcs = 0;
-	for (i = 0; i < CopyprocList->entries; i++) {
-		CopyInstance_t *cc = &CopyprocList->data[i];
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		CopyInstanceInfo_t *cc = &CopyInstanceList->cl_data[i];
 
 		Trace(TR_DEBUG, "i: %d flags: %04x shutdown: %d",
-		    i, cc->flags, cc->shutdown);
-		if (GET_FLAG(cc->flags, CI_orphan) == 0) {
+		    i, cc->ci_flags, cc->ci_shutdown);
+		if (GET_FLAG(cc->ci_flags, CI_orphan) == 0) {
 			continue;
 		}
 
-		if (IS_SHUTDOWN(cc)) {
+		if (IF_SHUTDOWN(cc)) {
 			pthread_mutexattr_t mattr;
 			pthread_condattr_t cattr;
 
 			Trace(TR_MISC, "Orphan copy process pid: %d exited",
-			    (int)cc->pid);
+			    (int)cc->ci_pid);
 
-			DoneOrphanReq(cc->pid);
-			sprintf(fullpath, "%s/%s.%d", SharedInfo->streamsDir,
-			    cc->vsn, cc->seqnum);
+			DoneOrphanReq(cc->ci_pid);
+			sprintf(fullpath, "%s/%s.%d", SharedInfo->si_streamsDir,
+			    cc->ci_vsn, cc->ci_seqnum);
 			if (stat(fullpath, &buf) < 0) {
 				Trace(TR_DEBUG, "Stream %s for orphan copy "
 				    "pid: %d not found.",
-				    fullpath, (int)cc->pid);
+				    fullpath, (int)cc->ci_pid);
 			} else {
 				stream = (StreamInfo_t *)MapInFile(fullpath,
 				    O_RDONLY, NULL);
@@ -2444,35 +2447,27 @@ checkCopies(void)
 				}
 			}
 
-			cc->created	= B_FALSE;
-			cc->idle	= B_TRUE;
-			cc->pid		= 0;
-			CLEAR_FLAG(cc->flags, (CI_shutdown | CI_failover));
-			cc->first = cc->last = NULL;
-			CLEAR_FLAG(cc->flags, CI_orphan);
+			cc->ci_created	= B_FALSE;
+			cc->ci_busy	= B_TRUE;
+			cc->ci_pid		= 0;
+			CLEAR_FLAG(cc->ci_flags, (CI_shutdown | CI_failover));
+			cc->ci_first = cc->ci_last = NULL;
+			CLEAR_FLAG(cc->ci_flags, CI_orphan);
 
-			if (pthread_mutexattr_init(&mattr)) {
-				LibFatal(pthread_mutexattr_init, NULL);
-			}
-			if (pthread_mutexattr_setpshared(&mattr,
-			    PTHREAD_PROCESS_SHARED)) {
-				LibFatal(pthread_mutexattr_setpshared, NULL);
-			}
-			if (pthread_condattr_init(&cattr)) {
-				LibFatal(pthread_condattr_init, NULL);
-			}
-			if (pthread_condattr_setpshared(&cattr,
-			    PTHREAD_PROCESS_SHARED)) {
-				LibFatal(pthread_condattr_setpshared, NULL);
-			}
+			PthreadMutexattrInit(&mattr);
+			PthreadMutexattrSetpshared(&mattr,
+			    PTHREAD_PROCESS_SHARED);
+			PthreadCondattrInit(&cattr);
+			PthreadCondattrSetpshared(&cattr,
+			    PTHREAD_PROCESS_SHARED);
 
-			pthread_mutex_init(&cc->request_mutex, &mattr);
-			pthread_cond_init(&cc->request, &cattr);
-			pthread_mutex_init(&cc->running_mutex, &mattr);
-			pthread_cond_init(&cc->running, &cattr);
+			PthreadMutexInit(&cc->ci_requestMutex, &mattr);
+			PthreadCondInit(&cc->ci_request, &cattr);
+			PthreadMutexInit(&cc->ci_runningMutex, &mattr);
+			PthreadCondInit(&cc->ci_running, &cattr);
 
-			pthread_mutexattr_destroy(&mattr);
-			pthread_condattr_destroy(&cattr);
+			PthreadMutexattrDestroy(&mattr);
+			PthreadCondattrDestroy(&cattr);
 		} else {
 			OrphanProcs++;
 		}
@@ -2489,15 +2484,15 @@ CheckCopyProcs(void)
 	pid_t pid;
 	char rmfn[10];
 
-	initCopyProcList(B_TRUE);
+	initCopyInstanceList(B_TRUE);
 
-	if (CopyprocList == NULL) {
+	if (CopyInstanceList == NULL) {
 		/*
-		 * Failed to recover the CopyprocList. If there is a pending
+		 * Failed to recover the CopyInstanceList. If there is a pending
 		 * request on the request list, kill all "sam-stagerd_copy" to
 		 * avoid copy process to accidentally update the request list.
 		 * It happens if copy process has an active request and stagerd
-		 * failed to recover the CopyprocList, stagerd removes a
+		 * failed to recover the CopyInstanceList, stagerd removes a
 		 * request from the request list in requeueRequests(), and
 		 * copy process also set the FI_DONE in the SetStageDone() when
 		 * it detected daemon (parent) exit.
@@ -2527,15 +2522,16 @@ CheckCopyProcs(void)
 	}
 
 	/*
-	 * CopyprocList has successfully recovered.
+	 * CopyInstanceList has successfully recovered.
 	 */
 
-	Trace(TR_DEBUG, "Recovered %d copy procs", CopyprocList->entries);
+	Trace(TR_DEBUG, "Recovered %d copy procs",
+	    CopyInstanceList->cl_entries);
 	Trace(TR_DEBUG, "     %8s lib media rmfn creat idl shtdwn flgs %6s "
 	    "seq", "pid", "vsn");
 
-	for (i = 0; i < CopyprocList->entries; i++) {
-		CopyInstance_t *cc;
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		CopyInstanceInfo_t *cc;
 		int id;
 		int retry;
 		int trylock;
@@ -2543,31 +2539,32 @@ CheckCopyProcs(void)
 		StreamInfo_t *cs;
 		FileInfo_t *fi = NULL;
 
-		cc = &CopyprocList->data[i];
+		cc = &CopyInstanceList->cl_data[i];
 		Trace(TR_DEBUG,
 		    "[%2d] %8d %3d %5s %4d %5d %3d %6d %04x %6s %4d",
-		    i, (int)cc->pid, cc->lib, sam_mediatoa(cc->media), cc->rmfn,
-		    cc->created, cc->idle, cc->shutdown, cc->flags, cc->vsn,
-		    cc->seqnum);
-		if (cc->pid <= 0) {
+		    i, (int)cc->ci_pid, cc->ci_lib,
+		    sam_mediatoa(cc->ci_media), cc->ci_rmfn,
+		    cc->ci_created, cc->ci_busy, cc->ci_shutdown,
+		    cc->ci_flags, cc->ci_vsn, cc->ci_seqnum);
+		if (cc->ci_pid <= 0) {
 			continue;
 		}
 
-		SET_FLAG(cc->flags, CI_orphan);
-		sprintf(rmfn, "%d", cc->rmfn);
-		if ((pid = FindProc("sam-stagerd_copy", rmfn)) != cc->pid) {
+		SET_FLAG(cc->ci_flags, CI_orphan);
+		sprintf(rmfn, "%d", cc->ci_rmfn);
+		if ((pid = FindProc("sam-stagerd_copy", rmfn)) != cc->ci_pid) {
 			/*
 			 * Copy process is no longer running, make sure
 			 * shutdown is set, to force checkCopies() to clean up
 			 * this entry.
 			 */
-			SET_FLAG(cc->flags, CI_shutdown);
+			SET_FLAG(cc->ci_flags, CI_shutdown);
 		} else {
 			/*
 			 * Copy process is still running.
 			 */
 			Trace(TR_MISC, "Orphan copy-%d pid: %d still running",
-			    cc->rmfn, (int)pid);
+			    cc->ci_rmfn, (int)pid);
 			if (StageReqs.entries == 0) {
 				/*
 				 * There is no pending requests on request list.
@@ -2575,15 +2572,15 @@ CheckCopyProcs(void)
 				 */
 				Trace(TR_MISC, "No pending requests, "
 				    "kill copy-%d pid:%d",
-				    cc->rmfn, (int)pid);
+				    cc->ci_rmfn, (int)pid);
 
 				KillCopyProc(pid, cc);
 				continue;
 			}
 		}
 
-		sprintf(stream, "%s/%s.%d", SharedInfo->streamsDir,
-		    cc->vsn, cc->seqnum);
+		sprintf(stream, "%s/%s.%d", SharedInfo->si_streamsDir,
+		    cc->ci_vsn, cc->ci_seqnum);
 		Trace(TR_DEBUG, "attaching stream \"%s\"", stream);
 		cs = (StreamInfo_t *)MapInFile(stream, O_RDWR, NULL);
 		if (cs == NULL) {
@@ -2591,7 +2588,7 @@ CheckCopyProcs(void)
 		}
 
 		Trace(TR_DEBUG, "stream: '%s.%d' count: %d create: 0x%x "
-		    "lib: %d media: '%s' context: %d pid: %d flags:% 04x "
+		    "lib: %d media: '%s' instance: %d pid: %d flags:% 04x "
 		    "first: %d error: %d",
 		    cs->vsn, cs->seqnum, cs->count, (int)cs->create, cs->lib,
 		    sam_mediatoa(cs->media), (int)cs->context, (int)cs->pid,
@@ -2625,7 +2622,7 @@ CheckCopyProcs(void)
 					 * Stream mutex is locked.
 					 * Kill copy proc.
 					 */
-					if (pid == cc->pid) {
+					if (pid == cc->ci_pid) {
 						KillCopyProc(pid, cc);
 					}
 					break;
@@ -2633,7 +2630,7 @@ CheckCopyProcs(void)
 			}
 		}
 		if (trylock == 0) {
-			(void) pthread_mutex_unlock(&cs->mutex);
+			PthreadMutexUnlock(&cs->mutex);
 		}
 
 		id = cs->first;
@@ -2667,7 +2664,7 @@ CheckCopyProcs(void)
 						 * File mutex is locked.
 						 * Kill copy proc.
 						 */
-						if (pid == cc->pid) {
+						if (pid == cc->ci_pid) {
 							KillCopyProc(pid, cc);
 						}
 						break;
@@ -2676,7 +2673,7 @@ CheckCopyProcs(void)
 			}
 			if (trylock == 0) {
 
-				(void) pthread_mutex_unlock(&fi->mutex);
+				PthreadMutexUnlock(&fi->mutex);
 
 				/*
 				 * FI_ORPHAN and fi->context are also set in
@@ -2688,7 +2685,7 @@ CheckCopyProcs(void)
 				 * fi->flags and fi->context.
 				 */
 				SET_FLAG(fi->flags, FI_ORPHAN);
-				fi->context  = cc->pid;
+				fi->context  = cc->ci_pid;
 
 				Trace(TR_MISC, "Orphan inode %d.%d fseq: %d "
 				    "flags: %04x",
@@ -2701,10 +2698,10 @@ CheckCopyProcs(void)
 }
 
 /*
- * Recover copyCopyProcList cretaed by the previous sam-stagerd.
+ * Recover copyCopyInstanceList cretaed by the previous sam-stagerd.
  */
 static int
-recoverCopyProcList(
+recoverCopyInstanceList(
 	int numDrives)
 {
 	struct stat buf;
@@ -2720,46 +2717,47 @@ recoverCopyProcList(
 	LibraryInfo_t *entry;
 	boolean_t valid = B_TRUE;
 
-	if (stat(SharedInfo->copyprocsFile, &buf) != 0) {
+	if (stat(SharedInfo->si_copyInstancesFile, &buf) != 0) {
 		Trace(TR_ERR, "No such %s, errno: %d",
-		    SharedInfo->copyprocsFile, errno);
+		    SharedInfo->si_copyInstancesFile, errno);
 		return (-1);
 	}
 
-	CopyprocList = (CopyProcList_t *)MapInFile(SharedInfo->copyprocsFile,
+	CopyInstanceList =
+	    (CopyInstanceList_t *)MapInFile(SharedInfo->si_copyInstancesFile,
 	    O_RDWR, NULL);
-	if (CopyprocList == NULL) {
+	if (CopyInstanceList == NULL) {
 		Trace(TR_ERR, "Cannot map in file %s",
-		    SharedInfo->copyprocsFile);
+		    SharedInfo->si_copyInstancesFile);
 		return (-1);
 	}
 
-	size = sizeof (CopyProcList_t);
-	size += (numDrives - 1) * sizeof (CopyInstance_t);
+	size = sizeof (CopyInstanceList_t);
+	size += (numDrives - 1) * sizeof (CopyInstanceInfo_t);
 
-	if (CopyprocList->magic != STAGER_COPYPROC_LIST_MAGIC		||
-	    CopyprocList->version != STAGER_COPYPROC_LIST_VERSION	||
-	    CopyprocList->create != StageReqs.val->create		||
-	    CopyprocList->entries != numDrives				||
-	    CopyprocList->size != size) {
+	if (CopyInstanceList->cl_magic != COPY_INSTANCE_LIST_MAGIC	||
+	    CopyInstanceList->cl_version != COPY_INSTANCE_LIST_VERSION	||
+	    CopyInstanceList->cl_create != StageReqs.val->create	||
+	    CopyInstanceList->cl_entries != numDrives			||
+	    CopyInstanceList->cl_size != size) {
 
 		Trace(TR_MISC, "Invalid %s found, remove.",
-		    SharedInfo->copyprocsFile);
-		RemoveMapFile(SharedInfo->copyprocsFile, CopyprocList,
-		    buf.st_size);
-		CopyprocList = NULL;
+		    SharedInfo->si_copyInstancesFile);
+		RemoveMapFile(SharedInfo->si_copyInstancesFile,
+		    CopyInstanceList, buf.st_size);
+		CopyInstanceList = NULL;
 		return (-1);
 	}
 
 	/*
-	 * Mapped in CopyprocList has a valid header, then validate the library
-	 * config against current library table.
+	 * Mapped in CopyInstanceList has a valid header, then validate the
+	 * library config against current library table.
 	 */
 
 	j = -1;
-	for (i = 0; i < CopyprocList->entries; i++) {
-		if (CopyprocList->data[i].lib != j) {
-			j = CopyprocList->data[i].lib;
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		if (CopyInstanceList->cl_data[i].ci_lib != j) {
+			j = CopyInstanceList->cl_data[i].ci_lib;
 			xnumlibs++;		/* count old library */
 		}
 	}
@@ -2775,10 +2773,10 @@ recoverCopyProcList(
 	if (numlibs != xnumlibs) {
 		Trace(TR_MISC, "Previous %s had different library count: %d "
 		    "current: %d, remove",
-		    SharedInfo->copyprocsFile, xnumlibs, numlibs);
-		RemoveMapFile(SharedInfo->copyprocsFile, CopyprocList,
-		    buf.st_size);
-		CopyprocList = NULL;
+		    SharedInfo->si_copyInstancesFile, xnumlibs, numlibs);
+		RemoveMapFile(SharedInfo->si_copyInstancesFile,
+		    CopyInstanceList, buf.st_size);
+		CopyInstanceList = NULL;
 		return (-1);
 	}
 
@@ -2799,16 +2797,16 @@ recoverCopyProcList(
 
 		drvcnt = 0;
 
-		for (j = 0; j < CopyprocList->entries; j++) {
-			CopyInstance_t *ci;
-			ci = &CopyprocList->data[j];
+		for (j = 0; j < CopyInstanceList->cl_entries; j++) {
+			CopyInstanceInfo_t *ci;
+			ci = &CopyInstanceList->cl_data[j];
 
-			if (entry->eq != ci->eq) {
+			if (entry->li_eq != ci->ci_eq) {
 				continue;
 			}
 
 			if (is_remote &&
-			    (GET_FLAG(ci->flags, CI_remote) == 0)) {
+			    (GET_FLAG(ci->ci_flags, CI_samremote) == 0)) {
 				continue;
 			}
 
@@ -2816,22 +2814,22 @@ recoverCopyProcList(
 				drvcnt++;
 				Trace(TR_DEBUG, "Disk library found "
 				    "drvcnt: %d num_drives: %d",
-				    drvcnt, entry->num_drives);
+				    drvcnt, entry->li_numDrives);
 			} else {
 				for (k = 0; k < numDrives; k++) {
-					if (ci->drive_eq == GetEqOrdinal(k)) {
+					if (ci->ci_drive == GetEqOrdinal(k)) {
 						drvcnt++;
 						Trace(TR_DEBUG,
 						    "Library found eq: %d "
 						    "drvcnt: %d num_drives: %d",
-						    ci->drive_eq, drvcnt,
-						    entry->num_drives);
+						    ci->ci_drive, drvcnt,
+						    entry->li_numDrives);
 						break;
 					}
 				}
 			}
 		}
-		if (drvcnt != entry->num_drives) {
+		if (drvcnt != entry->li_numDrives) {
 			valid = B_FALSE;
 			break;
 		}
@@ -2839,27 +2837,27 @@ recoverCopyProcList(
 	if (valid != B_TRUE) {
 		Trace(TR_MISC, "Previous %s had different drive count: %d "
 		    " for library eq: %d, remove",
-		    SharedInfo->copyprocsFile, drvcnt, entry->eq);
-		RemoveMapFile(SharedInfo->copyprocsFile, CopyprocList,
-		    buf.st_size);
-		CopyprocList = NULL;
+		    SharedInfo->si_copyInstancesFile, drvcnt, entry->li_eq);
+		RemoveMapFile(SharedInfo->si_copyInstancesFile,
+		    CopyInstanceList, buf.st_size);
+		CopyInstanceList = NULL;
 		return (-1);
 	}
 
 	Trace(TR_MISC, "%s recovered, create: 0x%x entries: %d",
-	    SharedInfo->copyprocsFile, (int)CopyprocList->create,
-	    CopyprocList->entries);
+	    SharedInfo->si_copyInstancesFile, (int)CopyInstanceList->cl_create,
+	    CopyInstanceList->cl_entries);
 
 	return (0);
 }
 
 /*
- * Kill a copy process and clear the CopyInstance_t.
+ * Kill a copy process and clear the CopyInstanceInfo_t.
  */
 void
 KillCopyProc(
 	pid_t pid,
-	CopyInstance_t *cc)
+	CopyInstanceInfo_t *cc)
 {
 	pthread_mutexattr_t mattr;
 	pthread_condattr_t cattr;
@@ -2870,14 +2868,14 @@ KillCopyProc(
 	if (cc == NULL) {
 		int i;
 
-		for (i = 0; i < CopyprocList->entries; i++) {
-			if (CopyprocList->data[i].pid == pid) {
-				cc = &CopyprocList->data[i];
+		for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+			if (CopyInstanceList->cl_data[i].ci_pid == pid) {
+				cc = &CopyInstanceList->cl_data[i];
 				break;
 			}
 		}
 		if (cc == NULL) {
-			Trace(TR_ERR, "No CopyprocList for pid: %d found",
+			Trace(TR_ERR, "No CopyInstanceList for pid: %d found",
 			    (int)pid);
 			return;
 		}
@@ -2885,35 +2883,26 @@ KillCopyProc(
 
 	kill(pid, SIGKILL);
 
-	cc->created = B_FALSE;
-	cc->idle = B_TRUE;
-	cc->pid = 0;
-	cc->first = 0;
-	cc->last = 0;
-	CLEAR_FLAG(cc->flags, (CI_orphan | CI_shutdown | CI_failover));
+	cc->ci_created = B_FALSE;
+	cc->ci_busy = B_TRUE;
+	cc->ci_pid = 0;
+	cc->ci_first = 0;
+	cc->ci_last = 0;
+	CLEAR_FLAG(cc->ci_flags, (CI_orphan | CI_shutdown | CI_failover));
 
 	/*
 	 * Reinitialize mutex and condition.
 	 */
+	PthreadMutexattrInit(&mattr);
+	PthreadMutexattrSetpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	PthreadCondattrInit(&cattr);
+	PthreadCondattrSetpshared(&cattr, PTHREAD_PROCESS_SHARED);
 
-	if (pthread_mutexattr_init(&mattr)) {
-		LibFatal(pthread_mutexattr_init, NULL);
-	}
-	if (pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED)) {
-		LibFatal(pthread_mutexattr_setpshared, NULL);
-	}
-	if (pthread_condattr_init(&cattr)) {
-		LibFatal(pthread_condattr_init, NULL);
-	}
-	if (pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED)) {
-		LibFatal(pthread_condattr_setpshared, NULL);
-	}
+	PthreadMutexInit(&cc->ci_requestMutex, &mattr);
+	PthreadCondInit(&cc->ci_request, &cattr);
+	PthreadMutexInit(&cc->ci_runningMutex, &mattr);
+	PthreadCondInit(&cc->ci_running, &cattr);
 
-	pthread_mutex_init(&cc->request_mutex, &mattr);
-	pthread_cond_init(&cc->request, &cattr);
-	pthread_mutex_init(&cc->running_mutex, &mattr);
-	pthread_cond_init(&cc->running, &cattr);
-
-	pthread_mutexattr_destroy(&mattr);
-	pthread_condattr_destroy(&cattr);
+	PthreadMutexattrDestroy(&mattr);
+	PthreadCondattrDestroy(&cattr);
 }

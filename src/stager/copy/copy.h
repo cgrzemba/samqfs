@@ -1,5 +1,5 @@
 /*
- * copy.h -
+ * copy.h - stager copy process definitions
  */
 
 /*
@@ -34,29 +34,60 @@
 #if !defined(COPY_H)
 #define	COPY_H
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 #include "aml/sam_rft.h"
 
 #define	SetErrno (*(___errno()))
 
 /*
+ * Used for number of entries in the copy instance list.
+ * Only the data section of the copy instance list is memory mapped.
+ */
+#define	CopyInstanceListCount SharedInfo->si_numCopyInstanceInfos
+
+/*
+ * Define prototypes in archive_read.c
+ */
+void *ArchiveRead(void *arg);
+int SetPosition(int from_pos, int to_pos);
+
+/*
  * Define prototypes in copy.c
  */
-CopyInstance_t *FindCopyProc(int lib, media_t media);
+CopyInstanceInfo_t *FindCopyInstanceInfo(int lib, media_t media);
 
 /*
  * Define prototypes in copyfile.c
  */
 void CopyFiles();
-void InvalidateBuffers();
-int SetPosition(int from_pos, int to_pos);
+void ResetBuffers();
+void SetFileError(FileInfo_t *file, int fd, offset_t write_off,
+	int error);
+
+/*
+ * Define prototypes in disk_cache.c
+ */
+int DiskCacheOpen(FileInfo_t *file);
+int DiskCacheWrite(FileInfo_t *file, int fd);
+
+/*
+ * Define prototypes in double_buffer.c
+ */
+void *DoubleBuffer(void *arg);
+
+/*
+ * Define prototypes in filesys.c
+ */
+void MapInFileSystem();
+char *GetMountPointName(equ_t fseq);
+char *GetFsName(equ_t fseq);
 
 /*
  * Define prototypes in stage.c
  */
-void InitStage(char *new_vsn);
-void EndStage();
+void StageInit(char *new_vsn);
+void StageEnd();
 int LoadVolume();
 int NextArchiveFile();
 void EndArchiveFile();
@@ -64,53 +95,72 @@ int GetBlockSize();
 u_longlong_t GetPosition();
 int SeekVolume(int to_pos);
 void UnloadVolume();
-offset_t GetBufferSize(int block_size);
 equ_t GetDriveNumber();
 
 /*
  * Define prototypes in rmstage.c
  */
-void InitRmStage();
-int LoadRmVolume();
-int GetRmBlockSize();
-u_longlong_t GetRmPosition();
-int SeekRmVolume(int to_pos);
-void UnloadRmVolume();
-offset_t GetRmBufferSize(int block_size);
-equ_t GetRmDriveNumber();
+void RmInit();
+int RmLoadVolume();
+int RmGetBlockSize();
+u_longlong_t RmGetPosition();
+int RmSeekVolume(int to_pos);
+void RmUnloadVolume();
+offset_t RmGetBufferSize(int block_size);
+equ_t RmGetDriveNumber();
 
 /*
  * Define prototypes in dkstage.c
  */
-void InitDkStage();
-int LoadDkVolume();
-int NextDkArchiveFile();
-void EndDkArchiveFile();
-int SeekDkVolume(int to_pos);
-u_longlong_t GetDkPosition();
-void UnloadDkVolume();
+void DkInit();
+int DkLoadVolume();
+int DkNextArchiveFile();
+void DkEndArchiveFile();
+int DkSeekVolume(int to_pos);
+u_longlong_t DkGetPosition();
+void DkUnloadVolume();
 
 /*
  * Define prototypes in hcstage.c
  */
-void HcStageInit();
-int HcStageLoadVolume();
-int HcStageNextArchiveFile();
-void HcStageEndArchiveFile();
-int HcStageReadArchiveFile(void *rft, void *buf, size_t nbytes);
-int HcStageSeekVolume(int to_pos);
-u_longlong_t HcStageGetPosition();
-void HcStageUnloadVolume();
+void HcInit();
+int HcLoadVolume();
+int HcNextArchiveFile();
+void HcEndArchiveFile();
+int HcReadArchiveFile(void *rft, void *buf, size_t nbytes);
+int HcSeekVolume(int to_pos);
+u_longlong_t HcGetPosition();
+void HcUnloadVolume();
 
 /*
  * Define prototypes in checksum.c
  */
-void InitChecksum(FileInfo_t *file, boolean_t init);
-void SetChecksumDone();
+void ChecksumInit(FileInfo_t *file, boolean_t init);
 void Checksum(char *data, int num_bytes);
-void WaitForChecksum();
+void ChecksumWait();
 int ChecksumCompare(int fd, sam_id_t *id);
-csum_t GetChecksumVal();
-void SetChecksumVal(csum_t val);
+csum_t ChecksumGetVal();
+void ChecksumSetVal(csum_t val);
+
+/*
+ * Define prototypes in error_retry.c
+ */
+boolean_t IfRetry(FileInfo_t *file, int errorNum);
+int RetryOptical(char *buf, longlong_t total_read, int file_position);
+void SendErrorResponse(FileInfo_t *file);
+void ErrorFile(FileInfo_t *file);
+
+/*
+ * Define prototypes in log.c
+ */
+void LogIt(LogType_t type, FileInfo_t *file);
+
+/*
+ * Define prototypes in stage_reqs.c
+ */
+FileInfo_t *GetFile(int id);
+void SetStageDone(FileInfo_t *file);
+void MapInRequestList();
+void UnMapRequestList();
 
 #endif

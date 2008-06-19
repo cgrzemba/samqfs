@@ -34,19 +34,7 @@
 #if !defined(SCHEDULE_H)
 #define	SCHEDULE_H
 
-#pragma ident "$Revision: 1.22 $"
-
-/*
- *	SAM-FS headers.
- */
-#include "aml/stager.h"
-
-/*
- *	Local headers.
- */
-#include "stage_reqs.h"
-#include "copy_defs.h"
-#include "stream.h"
+#pragma ident "$Revision: 1.23 $"
 
 /*
  * Schedule request.
@@ -82,18 +70,18 @@ typedef struct LoadExported {
 } LoadExported_t;
 
 /* Functions */
-int SendToScheduler(reqid_t id);
+int SendToScheduler(int id);
 void CheckCopyProcs();
 void *Scheduler(void *arg);
 void AddWork(StreamInfo_t *stream);
-void CancelWork(reqid_t id);
+void CancelWork(int id);
 void ShutdownCopy(int stopSignal);
 void RemoveCopyProcMapFile();
 void CopyProcExit(int sig);
 void ClearScheduler(media_t media, char *volume);
-void CancelWork(reqid_t id);
+void CancelWork(int id);
 void ShutdownWork();
 void TraceWorkQueue(int flag, char *srcFile, int srcLine);
-void KillCopyProc(pid_t pid, CopyInstance_t *cc);
+void KillCopyProc(pid_t pid, CopyInstanceInfo_t *cc);
 
-#endif /* SCHEDULER_H */
+#endif /* SCHEDULE_H */

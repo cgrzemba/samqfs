@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -65,16 +65,18 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #undef DEC_INIT
 #include "sam/custmsg.h"
 #include "aml/tar.h"
-
-/* Local headers. */
-#include "stager_lib.h"
-#include "stager_config.h"
-#include "stage_reqs.h"
-#include "copy_defs.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "stager_config.h"
+#include "copy_defs.h"
+
+#include "copy.h"
 
 /*
  * Context for checksum.
@@ -85,15 +87,15 @@ typedef struct checksumInfo {
 
 	pthread_mutex_t	mutex;
 
-	int		is_avail;	/* data available to checksum */
+	boolean_t	is_avail;	/* data available to checksum */
 	pthread_cond_t	avail;
-	int		is_complete;	/* checksumming is complete */
+	boolean_t	is_complete;	/* checksumming is complete */
 	pthread_cond_t	complete;
 
 	uchar_t		algo;		/* checksum algorithm */
 	csum_func	func;		/* function */
 	csum_t		val;		/* value accumulator */
-	u_longlong_t	cookie;
+	u_longlong_t	seed;
 	boolean_t	is_initialized;
 
 	char 		*data;		/* data in buffer to checksum */
@@ -101,8 +103,7 @@ typedef struct checksumInfo {
 } checksumInfo_t;
 
 /* Public data. */
-extern CopyInstance_t *Context;
-extern CopyControl_t *Control;
+extern CopyInstanceInfo_t *Instance;
 
 /* Private data. */
 static checksumInfo_t *checksum = NULL;
@@ -114,31 +115,28 @@ static void* checksumWorker(void *arg);
  * Initialize checksumming.
  */
 void
-InitChecksum(
+ChecksumInit(
 	FileInfo_t *file,
-	boolean_t init
+	boolean_t alreadyInitialized
 )
 {
-	Trace(TR_MISC, "Checksum file inode: %d", file->id.ino);
+	boolean_t startWorker;
 
 	if (checksum == NULL) {
-		int status;
-
 		SamMalloc(checksum, sizeof (checksumInfo_t));
 		memset(checksum, 0, sizeof (checksumInfo_t));
 
-		status = pthread_mutex_init(&checksum->mutex, NULL);
-		ASSERT(status == 0);
+		PthreadMutexInit(&checksum->mutex, NULL);
+		PthreadCondInit(&checksum->avail, NULL);
+		PthreadCondInit(&checksum->complete, NULL);
 
-		status = pthread_cond_init(&checksum->avail, NULL);
-		ASSERT(status == 0);
-
-		status = pthread_cond_init(&checksum->complete, NULL);
-		ASSERT(status == 0);
+		startWorker = B_TRUE;
+	} else {
+		startWorker = B_FALSE;
 	}
 
 	if (checksum->algo & CS_USER_BIT) {
-		checksum->cookie = 0;
+		checksum->seed = 0;
 	} else {
 		/*
 		 * The checksum is preset with the space required for the
@@ -147,24 +145,32 @@ InitChecksum(
 		 * If the file name is > 100 characters, we need another tar
 		 * header and tar record as well for the long file name.
 		 */
-		checksum->cookie = file->len + TAR_RECORDSIZE;
-		checksum->cookie = roundup(checksum->cookie, TAR_RECORDSIZE);
+		checksum->seed = file->len + TAR_RECORDSIZE;
+		checksum->seed = roundup(checksum->seed, TAR_RECORDSIZE);
 
 		if (file->namelen > NAMSIZ) {
-			checksum->cookie += file->namelen + TAR_RECORDSIZE;
-			checksum->cookie =
-			    roundup(checksum->cookie, TAR_RECORDSIZE);
+			checksum->seed += file->namelen + TAR_RECORDSIZE;
+			checksum->seed =
+			    roundup(checksum->seed, TAR_RECORDSIZE);
 		}
 	}
+
+	Trace(TR_MISC, "Checksum init inode: %d.%d algo: %d seed: %lld",
+	    file->id.ino, file->id.gen, file->csum_algo & ~CS_USER_BIT,
+	    checksum->seed);
+
 	checksum->algo = file->csum_algo;
 	memset(&checksum->val, 0, sizeof (csum_t));
-	checksum->is_initialized = init;
+	checksum->is_initialized = alreadyInitialized;
 	checksum->done = B_FALSE;
-	checksum->is_complete = 0;
-	checksum->is_avail = 0;
+	checksum->is_complete = B_FALSE;
+	checksum->is_avail = B_FALSE;
 
-	if (pthread_create(&checksum->id, NULL, checksumWorker, NULL) != 0) {
-		LibFatal(pthread_create, NULL);
+	if (startWorker == B_TRUE) {
+		if (pthread_create(&checksum->id, NULL, checksumWorker,
+		    NULL) != 0) {
+			LibFatal(pthread_create, NULL);
+		}
 	}
 }
 
@@ -176,70 +182,43 @@ Checksum(
 	char *data,
 	int num_bytes)
 {
-	int status;
 	ASSERT(checksum != NULL);
 
 	Trace(TR_DEBUG, "Checksumming data: 0x%x bytes: %d",
 	    (int)data, num_bytes);
 
-	status = pthread_mutex_lock(&checksum->mutex);
-	ASSERT(status == 0);
+	PthreadMutexLock(&checksum->mutex);
 
 	checksum->data = data;
 	checksum->num_bytes = num_bytes;
-	checksum->is_avail = 1;
-	checksum->is_complete = 0;
+	checksum->is_avail = B_TRUE;
+	checksum->is_complete = B_FALSE;
 
-	status = pthread_cond_signal(&checksum->avail);
-	ASSERT(status == 0);
+	PthreadCondSignal(&checksum->avail);
 
-	status = pthread_mutex_unlock(&checksum->mutex);
-	ASSERT(status == 0);
-}
-
-void
-WaitForChecksum(void)
-{
-	int status;
-	ASSERT(checksum != NULL);
-
-	status = pthread_mutex_lock(&checksum->mutex);
-	while (checksum->is_complete == 0) {
-		status = pthread_cond_wait(&checksum->complete,
-		    &checksum->mutex);
-		ASSERT(status == 0);
-	}
-	status = pthread_mutex_unlock(&checksum->mutex);
-	ASSERT(status == 0);
+	PthreadMutexUnlock(&checksum->mutex);
 }
 
 /*
- * Set flag for worker thread to indicate staging is done.
+ * Wait for checksum thread to complete accumulation of the checksum
+ * value for a data block.
  */
 void
-SetChecksumDone(void)
+ChecksumWait(void)
 {
-	int status;
 	ASSERT(checksum != NULL);
 
-	if (checksum != NULL) {
-		status = pthread_mutex_lock(&checksum->mutex);
-		ASSERT(status == 0);
-
-		checksum->done = B_TRUE;
-		checksum->is_avail = 1;
-
-		status = pthread_cond_signal(&checksum->avail);
-		ASSERT(status == 0);
-		status = pthread_mutex_unlock(&checksum->mutex);
-		ASSERT(status == 0);
-
-		(void) pthread_join(checksum->id, NULL);
+	PthreadMutexLock(&checksum->mutex);
+	while (checksum->is_complete == B_FALSE) {
+		PthreadCondWait(&checksum->complete, &checksum->mutex);
 	}
+	PthreadMutexUnlock(&checksum->mutex);
 }
 
 /*
- *
+ * Done staging file.  Compare accumulated checksum value on stage
+ * against value generated during archive.  Upon successful completion
+ * return a zero.  Otherwise, this function returns errno.
  */
 int
 ChecksumCompare(
@@ -249,49 +228,54 @@ ChecksumCompare(
 	struct sam_perm_inode pi;
 	struct sam_ioctl_idstat idstat;
 	int i;
+	int retval;
 
-	int error = 0;
 	ASSERT(checksum != NULL);
+
+	retval = 0;
 
 	idstat.id = *id;
 	idstat.size = sizeof (pi);
 	idstat.dp.ptr = &pi;
 	if (ioctl(fd, F_IDSTAT, &idstat) != 0) {
-		error = errno;
+		retval = errno;
 	}
 
-	if (error == 0 && checksum != NULL) {
+	if (retval == 0 && checksum != NULL) {
 		for (i = 0; i < 4; i++) {
 			if (pi.csum.csum_val[i] != checksum->val.csum_val[i]) {
-				error = EDVVCMP;
+				retval = EDVVCMP;
 				break;
 			}
 		}
-		if (error == EDVVCMP && pi.di.cs_algo == CS_SIMPLE) {
-			error = 0;
+
+		/* Checksum failed.  Try endian repair calculation. */
+		if (retval == EDVVCMP && pi.di.cs_algo == CS_SIMPLE) {
+			retval = 0;
 			Trace(TR_MISC, "Trying alternate-endian checksum "
 			    "inode: %d.%d", id->ino, id->gen);
 			Trace(TR_MISC, "Checksum inode: %d.%d "
-			    "length %lld cookie %lld",
+			    "length: %lld cookie: %lld",
 			    id->ino, id->gen, (u_longlong_t)pi.di.rm.size,
-			    checksum->cookie);
+			    checksum->seed);
 			cs_repair((uchar_t *)&pi.csum.csum_val[0],
-			    &checksum->cookie);
+			    &checksum->seed);
 			for (i = 0; i < 4; i++) {
 				if (pi.csum.csum_val[i] !=
 				    checksum->val.csum_val[i]) {
-					error = EDVVCMP;
+					retval = EDVVCMP;
 					break;
 				}
 			}
 		}
-		if (error == EDVVCMP) {
-			Trace(TR_ERR, "Checksum error inode: %d.%d",
+
+		if (retval == EDVVCMP) {
+			Trace(TR_MISC, "Checksum error inode: %d.%d",
 			    id->ino, id->gen);
-			Trace(TR_ERR, "Checksum value: %.8x %.8x %.8x %.8x",
+			Trace(TR_MISC, "Checksum value: %.8x %.8x %.8x %.8x",
 			    pi.csum.csum_val[0], pi.csum.csum_val[1],
 			    pi.csum.csum_val[2], pi.csum.csum_val[3]);
-			Trace(TR_ERR, "Checksum calc: %.8x %.8x %.8x %.8x",
+			Trace(TR_MISC, "Checksum calc: %.8x %.8x %.8x %.8x",
 			    checksum->val.csum_val[0],
 			    checksum->val.csum_val[1],
 			    checksum->val.csum_val[2],
@@ -299,14 +283,14 @@ ChecksumCompare(
 		}
 	}
 
-	return (error);
+	return (retval);
 }
 
 /*
  * Get checksum value accumulator.
  */
 csum_t
-GetChecksumVal(void)
+ChecksumGetVal(void)
 {
 	return (checksum->val);
 }
@@ -315,7 +299,7 @@ GetChecksumVal(void)
  * Set checksum value accumulator.
  */
 void
-SetChecksumVal(
+ChecksumSetVal(
 	csum_t val)
 {
 	checksum->val = val;
@@ -329,35 +313,30 @@ checksumWorker(
 	/* LINTED argument unused in function */
 	void *arg)
 {
-	int status;
 	ASSERT(checksum != NULL);
 
 	while (checksum->done == B_FALSE) {
 
-		status = pthread_mutex_lock(&checksum->mutex);
-		ASSERT(status == 0);
+		PthreadMutexLock(&checksum->mutex);
 
-		while (checksum->is_avail == 0) {
-			status = pthread_cond_wait(&checksum->avail,
-			    &checksum->mutex);
-			ASSERT(status == 0);
+		while (checksum->is_avail == B_FALSE) {
+			PthreadCondWait(&checksum->avail, &checksum->mutex);
 		}
 
-		status = pthread_mutex_unlock(&checksum->mutex);
-		ASSERT(status == 0);
+		PthreadMutexUnlock(&checksum->mutex);
 
-		if (checksum->done) {
+		if (checksum->done == B_TRUE) {
 			break;
 		}
 
 		if (checksum->is_initialized == B_FALSE) {
 			if (checksum->algo & CS_USER_BIT) {
 				checksum->func = cs_user;
-				cs_user(&checksum->cookie, checksum->algo, 0, 0,
+				cs_user(&checksum->seed, checksum->algo, 0, 0,
 				    &checksum->val);
 			} else {
 				checksum->func = csum[checksum->algo];
-				csum[checksum->algo](&checksum->cookie, 0, 0,
+				csum[checksum->algo](&checksum->seed, 0, 0,
 				    &checksum->val);
 			}
 			checksum->is_initialized = B_TRUE;
@@ -371,15 +350,11 @@ checksumWorker(
 			    &checksum->val);
 		}
 
-		status = pthread_mutex_lock(&checksum->mutex);
-		ASSERT(status == 0);
-		checksum->is_complete = 1;
-		checksum->is_avail = 0;
-		status = pthread_cond_signal(&checksum->complete);
-		ASSERT(status == 0);
-		status = pthread_mutex_unlock(&checksum->mutex);
-		ASSERT(status == 0);
-
+		PthreadMutexLock(&checksum->mutex);
+		checksum->is_complete = B_TRUE;
+		checksum->is_avail = B_FALSE;
+		PthreadCondSignal(&checksum->complete);
+		PthreadMutexUnlock(&checksum->mutex);
 	}
 
 	return (NULL);

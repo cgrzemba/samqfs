@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.595 $"
+$ pragma ident "$Revision: 1.596 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3253,6 +3253,7 @@ $ File System Manager uses 19035 instead of 19023, custmsg has code to
 $ prevent flooding
 19035 Unable to create one or more removable media files. File system may be out of inodes. Please see the log files for additional information
 19036 -Sw Unexpected STK 5800 metadata query result, more than 1 OID (%d) found
+19037 -Sw Internal error: '%s'
 
 $ Operator messages
 19200 Loading VSN %s

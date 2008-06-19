@@ -34,7 +34,7 @@
 #if !defined(THIRDPARTY_H)
 #define	THIRDPARTY_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 /*
  * SAM-FS headers.
@@ -65,10 +65,10 @@ typedef struct ThirdPartyInfo {
 
 } ThirdPartyInfo_t;
 
-int SendToMigrator(reqid_t id);
+int SendToMigrator(int id);
 int InitMigration(dev_ent_t *dev);
 void *Migrator(void *arg);
 void MigrationRequest(FileInfo_t *file);
-void CancelThirdPartyRequest(reqid_t id);
+void CancelThirdPartyRequest(int id);
 
 #endif /* Migration_H */

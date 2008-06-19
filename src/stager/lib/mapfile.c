@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -61,6 +61,8 @@ struct tm *localtime_r(const time_t *clock, struct tm *res);
 #include "pub/stat.h"
 #include "sam/exit.h"
 #include "sam/custmsg.h"
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
 
 /* Local headers. */
 #include "stager_config.h"

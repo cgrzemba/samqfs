@@ -34,10 +34,7 @@
 #if !defined(RMEDIA_H)
 #define	RMEDIA_H
 
-#pragma ident "$Revision: 1.30 $"
-
-#include "aml/device.h"
-#include "aml/stager_defs.h"
+#pragma ident "$Revision: 1.31 $"
 
 /* Enums. */
 
@@ -99,20 +96,20 @@ enum {
  * Each drive is referenced by this structure.
  */
 typedef struct DriveInfo {
-	ushort_t	flags;
-	uname_t    	name;		/* name for display */
-	int		lib;		/* library, offset in table */
-	dev_ent_t  	*device;	/* device entry */
-	VsnInfo_t	vi;		/* loaded VSN info */
+	ushort_t	dr_flags;
+	uname_t    	dr_name;	/* name for display */
+	int		dr_lib;		/* library, offset in table */
+	dev_ent_t  	*dr_device;	/* device entry */
+	VsnInfo_t	dr_vi;		/* loaded VSN info */
 } DriveInfo_t;
 
-#define	IS_DRIVE_AVAIL(x)	(x->flags & DI_AVAIL)
-#define	SET_DRIVE_AVAIL(x)	(x->flags |= DI_AVAIL)
-#define	CLEAR_DRIVE_AVAIL(x)	(x->flags &= ~DI_AVAIL)
+#define	IS_DRIVE_AVAIL(x)	(x->dr_flags & DI_AVAIL)
+#define	SET_DRIVE_AVAIL(x)	(x->dr_flags |= DI_AVAIL)
+#define	CLEAR_DRIVE_AVAIL(x)	(x->dr_flags &= ~DI_AVAIL)
 
-#define	IS_DRIVE_BUSY(x)	(x->flags & DI_BUSY)
-#define	SET_DRIVE_BUSY(x)	(x->flags |= DI_BUSY)
-#define	CLEAR_DRIVE_BUSY(x)	(x->flags &= ~DI_BUSY)
+#define	IS_DRIVE_BUSY(x)	(x->dr_flags & DI_BUSY)
+#define	SET_DRIVE_BUSY(x)	(x->dr_flags |= DI_BUSY)
+#define	CLEAR_DRIVE_BUSY(x)	(x->dr_flags &= ~DI_BUSY)
 
 /*
  * Removable media library.
@@ -120,48 +117,51 @@ typedef struct DriveInfo {
  * referenced by this structure.
  */
 typedef struct LibraryInfo {
-	ushort_t	flags;
-	uname_t		name;		/* name for display */
-	int		eq;		/* equipment number */
-	int		num_drives;	/* number of drives in library */
-	int		num_allowed_drives;	/* number of drives allowed */
+	ushort_t	li_flags;
+	uname_t		li_name;	/* name for display */
+	int		li_eq;		/* equipment number */
+	int		li_numDrives;	/* number of drives in library */
+	int		li_numAllowedDrives;	/* number of drives allowed */
 						/*   to use */
-	int		num_avail_drives;	/* number of drives available */
+	int		li_numAvailDrives;	/* number of drives available */
 						/*   to use */
-	dev_ent_t  	*device;	/* device entry */
-	int		manual;		/* drive table index for manual drive */
+	dev_ent_t  	*li_device;	/* device entry */
+	int		li_manual;	/* drive table index for manual drive */
 } LibraryInfo_t;
 
-#define	IS_LIB_MANUAL(x)	(x->flags & LI_MANUAL)
-#define	IS_LIB_REMOTE(x)	(x->flags & LI_REMOTE)
-#define	IS_LIB_HISTORIAN(x)	(x->flags & LI_HISTORIAN)
-#define	IS_LIB_DISK(x)		(x->flags & LI_DISK)
-#define	IS_LIB_OFF(x)		(x->flags & LI_OFF)
-#define	IS_LIB_AVAIL(x)		(x->flags & LI_AVAIL)
-#define	IS_LIB_THIRDPARTY(x)	(x->flags & LI_THIRDPARTY)
-#define	IS_LIB_HONEYCOMB(x)	(x->flags & LI_HONEYCOMB)
+#define	IS_LIB_MANUAL(x)	(x->li_flags & LI_MANUAL)
+#define	IS_LIB_REMOTE(x)	(x->li_flags & LI_REMOTE)
+#define	IS_LIB_HISTORIAN(x)	(x->li_flags & LI_HISTORIAN)
+#define	IS_LIB_DISK(x)		(x->li_flags & LI_DISK)
+#define	IS_LIB_OFF(x)		(x->li_flags & LI_OFF)
+#define	IS_LIB_AVAIL(x)		(x->li_flags & LI_AVAIL)
+#define	IS_LIB_THIRDPARTY(x)	(x->li_flags & LI_THIRDPARTY)
+#define	IS_LIB_HONEYCOMB(x)	(x->li_flags & LI_HONEYCOMB)
 
-#define	SET_LIB_AVAIL(x)	(x->flags |= LI_AVAIL)
-#define	SET_LIB_MANUAL(x)	(x->flags |= LI_MANUAL)
-#define	SET_LIB_HISTORIAN(x)	(x->flags |= LI_HISTORIAN)
-#define	SET_LIB_REMOTE(x)	(x->flags |= LI_REMOTE)
-#define	SET_LIB_DISK(x)		(x->flags |= LI_DISK)
-#define	SET_LIB_THIRDPARTY(x)	(x->flags |= LI_THIRDPARTY)
-#define	SET_LIB_HONEYCOMB(x)	(x->flags |= LI_HONEYCOMB)
+#define	SET_LIB_AVAIL(x)	(x->li_flags |= LI_AVAIL)
+#define	SET_LIB_MANUAL(x)	(x->li_flags |= LI_MANUAL)
+#define	SET_LIB_HISTORIAN(x)	(x->li_flags |= LI_HISTORIAN)
+#define	SET_LIB_REMOTE(x)	(x->li_flags |= LI_REMOTE)
+#define	SET_LIB_DISK(x)		(x->li_flags |= LI_DISK)
+#define	SET_LIB_THIRDPARTY(x)	(x->li_flags |= LI_THIRDPARTY)
+#define	SET_LIB_HONEYCOMB(x)	(x->li_flags |= LI_HONEYCOMB)
 
 /*
- * Removable media characteristics table.
- * Used to hold media dependent characteristics information.
+ * Removable media parameters table.
+ * Used to hold media dependent parameters information.
  */
-typedef struct MediaCharsInfo {
-	mtype_t		name;		/* media name */
-	ushort_t	flags;
-	media_t		type;		/* media type */
-	int		drives;		/* num of drives that can use media */
-	int		bufsize;	/* size of stage buffer * device */
+typedef struct MediaParamsInfo {
+	mtype_t		mp_name;	/* media name */
+	ushort_t	mp_flags;
+	media_t		mp_type;	/* media type */
+	int		mp_drives;	/* num of drives that can use media */
+	int		mp_bufsize;	/* size of stage buffer * device */
 					/*    mau size */
-	boolean_t	lockbuf;	/* lock buffer */
-} MediaCharsInfo_t;
+	boolean_t	mp_lockbuf;	/* lock buffer */
+	/* Timeout values for stage operations that may get stopped. */
+	int		mp_readTimeout;		/* media read */
+	int		mp_requestTimeout;	/* media mount */
+} MediaParamsInfo_t;
 
 /* Functions */
 int InitMedia();
@@ -183,8 +183,8 @@ int GetEqOrdinal(int drive);
 VsnInfo_t *FindVsn(vsn_t vsn, media_t media);
 boolean_t IsVsnAvail(VsnInfo_t *vi, boolean_t *attended);
 
-void MakeMediaCharsTable();
-int GetMediaCharsBufsize(media_t type, boolean_t *lockbuf);
-void SetMediaCharsBufsize(char *name, int bufsize, boolean_t lockbuf);
+void MakeMediaParamsTable();
+int GetMediaParamsBufsize(media_t type, boolean_t *lockbuf);
+void SetMediaParamsBufsize(char *name, int bufsize, boolean_t lockbuf);
 
 #endif /* RMEDIA_H */

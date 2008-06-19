@@ -34,13 +34,7 @@
 #if !defined(STAGER_H)
 #define	STAGER_H
 
-#pragma ident "$Revision: 1.9 $"
-
-/*
- * Define prototypes in control.c
- */
-void ReconfigLock();
-void ReconfigUnlock();
+#pragma ident "$Revision: 1.10 $"
 
 /*
  * Stager start mode.
@@ -50,4 +44,70 @@ enum StartMode {
 	SM_failover,	/* Start after failover */
 	SM_restart	/* Start after abnormal termination */
 };
+
+/*
+ * Define prototypes in control.c
+ */
+void ReconfigLock();
+void ReconfigUnlock();
+
+/*
+ * Define prototypes in compose.c
+ */
+void AddCompose(int id);
+void Compose();
+int GetNumComposeEntries();
+
+/*
+ * Define prototypes in control.c
+ */
+char *Control(char *ident, char *value);
+
+/*
+ * Define prototypes in device.c
+ */
+int InitDevices();
+dev_ent_t *GetDevices(boolean_t check);
+
+/*
+ * Define prototypes in error_retry.c
+ */
+boolean_t DamageArcopy(FileInfo_t *file);
+
+/*
+ * Define prototypes in filesys.c
+ */
+int InitFilesys();
+void CreateRmFiles();
+char *GetMountPointName(equ_t fseq);
+void RemoveFileSystemMapFile();
+void MountFileSystem(char *name);
+void UmountFileSystem(char *name);
+boolean_t IsFileSystemMounted(equ_t fseq);
+int InitMessages();
+
+/*
+ * Define prototypes in log.c
+ */
+void OpenLogFile(char *name);
+void CheckLogFile(char *name);
+void LogIt(LogType_t type, FileInfo_t *file);
+void LogStageStart(FileInfo_t *file);
+
+/*
+ * Define prototypes in readcmd.c
+ */
+void ReadCmds();
+char *GetCfgLogFile();
+int GetCfgLogEvents();
+char *GetCfgTraceFile();
+uint32_t GetCfgTraceMask();
+boolean_t IsTraceEnabled(char *keys);
+long GetCfgMaxActive();
+long GetCfgMaxRetries();
+char *GetCfgProbeDir();
+size_t GetCfgProbeBufsize();
+int GetCfgNumDrives();
+sam_stager_drives_t *GetCfgDrives();
+
 #endif /* STAGER_H */

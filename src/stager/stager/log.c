@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -41,6 +41,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -55,21 +56,22 @@ struct tm *localtime_r(const time_t *clock, struct tm *res);
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 #include "aml/stager.h"
-
-/* Local headers. */
-#include "stager_lib.h"
-#include "file_defs.h"
-#include "stage_reqs.h"
-#include "log.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "file_defs.h"
+
+#include "stage_reqs.h"
+
 #define	MAXLINE 1024+256
 
 /*	Public data. */
-LogInfo_t LogFile = { NULL };
+FILE *LogFile = NULL;
 
 /*	Private data. */
 static char logBuffer[MAXLINE];
@@ -85,14 +87,14 @@ void
 OpenLogFile(
 	char *name)
 {
-	if (LogFile.file != NULL) {
-		fclose(LogFile.file);
-		LogFile.file = NULL;
+	if (LogFile != NULL) {
+		fclose(LogFile);
+		LogFile = NULL;
 	}
 
 	if (name != NULL && *name != '\0') {
-		LogFile.file = fopen64(name, "a");
-		if (LogFile.file == NULL) {
+		LogFile = fopen64(name, "a");
+		if (LogFile == NULL) {
 			SendCustMsg(HERE, 19002, name);
 		}
 	}
@@ -117,9 +119,9 @@ CheckLogFile(
 			/*
 			 * Log file not found or truncated.  Start a new one.
 			 */
-			(void) pthread_mutex_lock(&logFileMutex);
+			PthreadMutexLock(&logFileMutex);
 			OpenLogFile(name);
-			(void) pthread_mutex_unlock(&logFileMutex);
+			PthreadMutexUnlock(&logFileMutex);
 		}
 	}
 }
@@ -140,7 +142,7 @@ LogIt(
 		return;
 	}
 
-	if (LogFile.file != NULL && IsLogEventEnabled(type)) {
+	if (LogFile != NULL && IsLogEventEnabled(type)) {
 
 		switch (type) {
 			case LOG_STAGE_START:
@@ -220,7 +222,7 @@ writeLogFile(
 	char *msg;
 	static char *tdformat = " %Y/%m/%d %H:%M:%S ";
 
-	(void) pthread_mutex_lock(&logFileMutex);
+	PthreadMutexLock(&logFileMutex);
 	msg = logBuffer;
 	strcpy(msg, type);
 	msg += strlen(msg);
@@ -237,7 +239,7 @@ writeLogFile(
 
 	*msg++ = '\n';
 	*msg = '\0';
-	fputs(logBuffer, LogFile.file);
-	(void) fflush(LogFile.file);
-	(void) pthread_mutex_unlock(&logFileMutex);
+	fputs(logBuffer, LogFile);
+	(void) fflush(LogFile);
+	PthreadMutexUnlock(&logFileMutex);
 }

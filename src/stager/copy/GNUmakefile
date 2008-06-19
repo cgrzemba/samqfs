@@ -1,4 +1,4 @@
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 
 #    SAM-QFS_notice_begin
 #
@@ -32,10 +32,14 @@ include $(DEPTH)/mk/common.mk
 
 PROG = copy
 PROG_SRC = \
+		archive_read.c \
 		checksum.c \
+		circular_io.c \
 		copy.c \
 		copyfile.c \
+		disk_cache.c \
 		dkstage.c \
+		double_buffer.c \
 		error_retry.c \
 		filesys.c \
 		hcstage.c \

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -50,13 +50,17 @@
 #include "sam/sam_trace.h"
 #include "sam/lib.h"
 #include "aml/stager.h"
-
-/* Local headers. */
-#include "schedule.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
+#include "copy_defs.h"
+#include "stream.h"
+
+#include "schedule.h"
 
 char *
 Control(

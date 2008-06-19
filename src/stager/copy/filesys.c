@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -61,16 +61,17 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/exit.h"
 #include "sam/custmsg.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/lib.h"
+#include "aml/stager_defs.h"
+#if defined(lint)
+#include "sam/lint.h"
+#endif /* defined(lint) */
 
 /* Local headers. */
 #include "stager_lib.h"
 #include "stager_config.h"
-#include "filesys.h"
-
-#if defined(lint)
-#include "sam/lint.h"
-#endif /* defined(lint) */
+#include "stager_shared.h"
 
 /*
  *	File system table.
@@ -86,10 +87,10 @@ void
 MapInFileSystem(void)
 {
 	fileSystem = (struct sam_fs_status *)MapInFile(
-	    SharedInfo->fileSystemFile, O_RDWR, NULL);
+	    SharedInfo->si_fileSystemFile, O_RDWR, NULL);
 	if (fileSystem == NULL) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "MapInFile",
-		    SharedInfo->fileSystemFile);
+		    SharedInfo->si_fileSystemFile);
 	}
 }
 
@@ -103,7 +104,7 @@ GetMountPointName(
 	int i;
 	char *mount_point_name = NULL;
 
-	for (i = 0; i < SharedInfo->num_filesystems; i++) {
+	for (i = 0; i < SharedInfo->si_numFilesys; i++) {
 
 		if (fileSystem[i].fs_eq == eq) {
 
@@ -148,7 +149,7 @@ GetFsName(
 	int i;
 	char *fs_name = NULL;
 
-	for (i = 0; i < SharedInfo->num_filesystems; i++) {
+	for (i = 0; i < SharedInfo->si_numFilesys; i++) {
 		if (fileSystem[i].fs_eq == eq) {
 			fs_name = fileSystem[i].fs_name;
 			break;
@@ -168,7 +169,7 @@ updateFileSystems(void)
 	struct sam_fs_status *fsarray;
 
 	num = GetFsStatus(&fsarray);
-	ASSERT(num == SharedInfo->num_filesystems);
+	ASSERT(num == SharedInfo->si_numFilesys);
 
 	for (i = 0; i < num; i++) {
 		fileSystem[i] = *(fsarray + i);

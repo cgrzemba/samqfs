@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -41,6 +41,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -60,18 +61,20 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/uioctl.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
+#if defined(lint)
+#include "sam/lint.h"
+#endif /* defined(lint) */
 
 /* Local headers. */
 #include "stager_lib.h"
 #include "stager_config.h"
 #include "stager_threads.h"
-#include "stage_reqs.h"
+#include "stager_shared.h"
 #include "stage_done.h"
 #include "copy_defs.h"
-
-#if defined(lint)
-#include "sam/lint.h"
-#endif /* defined(lint) */
+#include "file_defs.h"
 
 /*
  * This structure contains all stage requests in progress.
@@ -84,9 +87,9 @@ static struct {
 	FileInfo_t	*data;
 } stageReqs = { NULL };
 
-static StageDone_t *stageDone = NULL;
+static StageDoneInfo_t *stageDone = NULL;
 
-extern CopyInstance_t *Context;
+extern CopyInstanceInfo_t *Instance;
 
 /*
  * Map in stage request file.
@@ -95,17 +98,17 @@ void
 MapInRequestList()
 {
 	stageReqs.data =
-	    (FileInfo_t *)MapInFile(SharedInfo->stageReqsFile, O_RDWR, NULL);
+	    (FileInfo_t *)MapInFile(SharedInfo->si_stageReqsFile, O_RDWR, NULL);
 	if (stageReqs.data == NULL) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "MapInFile",
-		    SharedInfo->stageReqsFile);
+		    SharedInfo->si_stageReqsFile);
 	}
 
-	stageDone = (StageDone_t *)MapInFile(SharedInfo->stageDoneFile, O_RDWR,
-	    NULL);
+	stageDone = (StageDoneInfo_t *)MapInFile(SharedInfo->si_stageDoneFile,
+	    O_RDWR, NULL);
 	if (stageDone == NULL) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "MapInFile",
-		    SharedInfo->stageDoneFile);
+		    SharedInfo->si_stageDoneFile);
 	}
 }
 
@@ -135,10 +138,10 @@ SetStageDone(
 	int id;
 	FileInfo_t *last;
 
-	THREAD_LOCK(file);
+	PthreadMutexLock(&file->mutex);
 	SET_FLAG(file->flags, FI_DONE);
 
-	Trace(TR_DEBUG, "SetStageDone: ino: %d.%d fseq: %d",
+	Trace(TR_DEBUG, "Set stage done inode: %d.%d (%d)",
 	    file->id.ino, file->id.gen, file->fseq);
 
 	if (getppid() == 1) {
@@ -151,22 +154,22 @@ SetStageDone(
 			CLEAR_FLAG(file->flags, FI_DCACHE);
 			SET_FLAG(file->flags, FI_CANCEL);
 		}
-		file->context = Context->pid;
-		THREAD_UNLOCK(file);
+		file->context = Instance->ci_pid;
+		PthreadMutexUnlock(&file->mutex);
 		return;
 	}
-	THREAD_UNLOCK(file);
+	PthreadMutexUnlock(&file->mutex);
 
 	id = file->sort;
-	PthreadMutexLock(&stageDone->mutex);
-	if (stageDone->first == -1) {
-		stageDone->first = stageDone->last = id;
+	PthreadMutexLock(&stageDone->sd_mutex);
+	if (stageDone->sd_first == -1) {
+		stageDone->sd_first = stageDone->sd_last = id;
 	} else {
-		last = GetFile(stageDone->last);
+		last = GetFile(stageDone->sd_last);
 		last->next = id;
-		stageDone->last = id;
+		stageDone->sd_last = id;
 	}
 	file->next = -1;
-	PthreadCondSignal(&stageDone->cond);
-	PthreadMutexUnlock(&stageDone->mutex);
+	PthreadCondSignal(&stageDone->sd_cond);
+	PthreadMutexUnlock(&stageDone->sd_mutex);
 }

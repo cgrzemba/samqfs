@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -62,6 +62,7 @@ struct tm *localtime_r(const time_t *clock, struct tm *res);
 #include "sam/defaults.h"
 #include "sam/uioctl.h"
 #include "sam/exit.h"
+#include "sam/sam_trace.h"
 #include "aml/stager.h"
 #include "aml/shm.h"
 #include "aml/stager_defs.h"
@@ -70,7 +71,7 @@ struct tm *localtime_r(const time_t *clock, struct tm *res);
 /* Local headers. */
 #include "stager_config.h"
 #include "stager_lib.h"
-#include "log_defs.h"
+#include "stager_shared.h"
 
 #if defined(lint)
 #include "sam/lint.h"
@@ -79,6 +80,9 @@ struct tm *localtime_r(const time_t *clock, struct tm *res);
 #define	MAXLINE 1024+256
 
 extern char *GetMountPointName(equ_t fseq);
+
+/* Private functions */
+static void waitForDbx();
 
 /*
  * Fatal system call error handler.  Unrecoverable system call
@@ -115,6 +119,49 @@ WarnSyscallError(
 
 	sprintf(trBuffer, GetCustMsg(19006), funcName, funcArg, errno);
 	_Trace(TR_err, srcFile, srcLine, trBuffer);
+}
+
+/*
+ * Fatal internal error handler.  Unrecoverable internal error was found.
+ * Trace failing message and exit daemon process.
+ */
+void
+FatalInternalError(
+	const char *srcFile,
+	const int srcLine,
+	const char *msg)
+{
+	char trBuffer[MAXLINE];
+
+	SendCustMsg(srcFile, srcLine, 19037, msg);
+
+	sprintf(trBuffer, GetCustMsg(19037), msg);
+	_Trace(TR_misc, srcFile, srcLine, trBuffer);
+
+	waitForDbx();
+
+	exit(EXIT_FATAL);
+}
+
+
+/*
+ * Warn internal error handler.  Recoverable internal error was found.
+ * Trace failing message and return to caller.
+ */
+void
+WarnInternalError(
+	const char *srcFile,
+	const int srcLine,
+	const char *msg)
+{
+	char trBuffer[MAXLINE];
+
+	SendCustMsg(srcFile, srcLine, 19037, msg);
+
+	sprintf(trBuffer, GetCustMsg(19037), msg);
+	_Trace(TR_misc, srcFile, srcLine, trBuffer);
+
+	waitForDbx();
 }
 
 char *
@@ -324,7 +371,7 @@ IsLogEventEnabled(
 	boolean_t enabled = B_FALSE;
 	int events;
 
-	events = SharedInfo->logEvents;
+	events = SharedInfo->si_logEvents;
 
 	switch (type) {
 		case LOG_STAGE_START:
@@ -441,3 +488,22 @@ MakeDirectory(
 		}
 	}
 }
+
+#if defined(DEBUG)
+static void
+waitForDbx()
+{
+	static int attachDbx = 1;
+
+	while (attachDbx == 1) {
+		/* assign attachDbx = 0 */
+		sleep(5);
+	}
+	attachDbx = 1;
+}
+#else
+static void
+waitForDbx()
+{
+}
+#endif

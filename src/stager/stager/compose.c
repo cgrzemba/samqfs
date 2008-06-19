@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -57,22 +57,24 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/shm.h"
 #include "pub/stat.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
+#include "aml/stager_defs.h"
+#if defined(lint)
+#include "sam/lint.h"
+#endif /* defined(lint) */
 
 /* Local headers. */
 #include "stager_lib.h"
 #include "stager_config.h"
+#include "copy_defs.h"
 #include "file_defs.h"
 #include "rmedia.h"
-#include "stage_reqs.h"
-#include "compose.h"
 #include "stream.h"
-#include "schedule.h"
 
-#if defined(lint)
-#include "sam/lint.h"
-#endif /* defined(lint) */
+#include "stage_reqs.h"
+#include "schedule.h"
 
 static void initComposeList();
 static FileInfo_t **makeSortList();
@@ -158,7 +160,7 @@ Compose(void)
 		if (currentVsn == NULL ||
 		    (strcmp(file->ar[copy].section.vsn, currentVsn) != 0) ||
 		    GET_FLAG(file->flags, FI_DCACHE) ||
-		    (IS_COPY_DISKARCH(file, copy) &&
+		    (IF_COPY_DISKARCH(file, copy) &&
 		    strcmp(file->ar[copy].section.vsn, currentVsn) == 0 &&
 		    file->ar[copy].section.position != position)) {
 

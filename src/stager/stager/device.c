@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -58,17 +58,17 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/exit.h"
 #include "sam/custmsg.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/lib.h"
-
-/* Local headers. */
-#include "stager_lib.h"
-#include "device.h"
-#include "rmedia.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #undef shmdt
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
+#include "rmedia.h"
 
 extern shm_alloc_t master_shm;
 extern shm_ptr_tbl_t *shm_ptr_tbl;

@@ -34,12 +34,9 @@
 #if !defined(FILE_DEFS_H)
 #define	FILE_DEFS_H
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
-#include "sam/types.h"
-#include "sam/resource.h"
-
-#define	IS_COPY_DISKARCH(f, copy)  \
+#define	IF_COPY_DISKARCH(f, copy)  \
 	((f->ar[copy].flags & STAGE_COPY_DISKARCH) != 0)
 
 /*
@@ -72,34 +69,35 @@ enum {
 /* Structures. */
 
 /*
+ * File extent header information.
+ */
+typedef struct FileExtentHdrInfo {
+	uint32_t	fh_magic;	/* magic number */
+	uint32_t	fh_version;	/* version number */
+	time_t		fh_create;
+	int		fh_alloc;
+	int		fh_entries;
+} FileExtentHdrInfo_t;
+
+#define	FILE_EXTENT_MAGIC	05041501
+#define	FILE_EXTENT_VERSION	80601	/* YMMDD */
+
+/*
  * File extent information.
  * Extention to file information structure.
  */
 typedef struct FileExtentInfo {
-	sam_id_t	id;		/* file identification */
-	int		ext_ord;	/* extension ordinal */
-	equ_t		fseq;		/* filesystem equipment ordinal */
-	int		count;		/* active count */
-
+	sam_id_t	fe_id;		/* file identification */
+	int		fe_extOrd;	/* extension ordinal */
+	equ_t		fe_fseq;	/* filesystem equipment ordinal */
+	int		fe_count;	/* active count */
 	/*
 	 * To save memory, the FileInfo structure contains only one
 	 * vsn record.  If a multivolume stage request, all
 	 * volume sections for each archive copy are saved here.
 	 */
-	int		se_ord;
-	sam_stage_copy_t ar[MAX_ARCHIVE];
+	sam_stage_copy_t fe_ar[MAX_ARCHIVE];
 
 } FileExtentInfo_t;
-
-#define	STAGE_EXTNT_MAGIC	05041501
-#define	STAGE_EXTNT_VERSION	60522	/* YMMDD */
-
-typedef struct FileExtentInfoHdr {
-	uint32_t	magic;
-	uint32_t	version;
-	time_t		create;
-	int		alloc;
-	int		entries;
-} FileExtentInfoHdr_t;
 
 #endif /* FILE_DEFS_H */

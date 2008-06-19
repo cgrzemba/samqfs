@@ -35,16 +35,18 @@
 #define	SAM_TRACE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 #endif
 
 /* Debug Macros. */
 #if defined(DEBUG)
-#define	ASSERT(f) { if (!(f))  _Assert(_SrcFile, __LINE__); }
+#define	ASSERT(f) { if (!(f))  _Assert(_SrcFile, __LINE__, 0); }
 #define	ASSERT_NOT_REACHED(f) assert(0);
+#define	ASSERT_WAIT_FOR_DBX(f) { if (!(f))  _Assert(_SrcFile, __LINE__, 1); }
 #else /* defined(DEBUG) */
 #define	ASSERT(f) {}
 #define	ASSERT_NOT_REACHED(f) {}
+#define	ASSERT_WAIT_FOR_DBX(f) {}
 #endif /* defined(DEBUG) */
 
 /*
@@ -230,7 +232,7 @@ struct TraceCtlBin {
 /* Functions. */
 #if defined(DEBUG)
 void AssertMessage(char *SrcFile, int SrcLine, char *msg);
-void _Assert(char *SrcFile, int SrcLine);
+void _Assert(char *SrcFile, int SrcLine, int wait);
 #endif /* defined(DEBUG) */
 void TraceClose(int TrcLen);
 void TraceInit(char *programName, int idmp);

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.83 $"
+#pragma ident "$Revision: 1.84 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -41,6 +41,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -59,6 +60,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/uioctl.h"
 #include "aml/id_to_path.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "aml/stager.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
@@ -66,26 +68,26 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/nl_samfs.h"
 #include "pub/sam_errno.h"
 #include "sam/exit.h"
-
-/* Local headers. */
-#include "stager.h"
-#include "stager_lib.h"
-#include "stager_config.h"
-#include "stage_reqs.h"
-#include "stage_done.h"
-#include "readcmd.h"
-#include "log.h"
-#include "filesys.h"
-#include "error_retry.h"
-#include "schedule.h"
-#include "thirdparty.h"
-#include "copy_defs.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
-static reqid_t addRequest(FileInfo_t *file);
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "stager_config.h"
+#include "stager_shared.h"
+#include "copy_defs.h"
+#include "stage_done.h"
+#include "copy_defs.h"
+
+#include "stager.h"
+#include "stage_reqs.h"
+#include "schedule.h"
+#include "thirdparty.h"
+
+static int addRequest(FileInfo_t *file);
 static void markFree(int index);
 static int getFree();
 static int isFree(int index);
@@ -108,7 +110,7 @@ static char pathBuffer[PATHBUF_SIZE];
 /*
  * External.
  */
-extern CopyProcList_t *CopyprocList;
+extern CopyInstanceList_t *CopyInstanceList;
 extern enum StartMode StartMode;
 
 /*
@@ -134,7 +136,7 @@ StageReqs_t StageReqs = {
 
 static struct {
 	pthread_mutex_t		mutex;		/* protect access */
-	FileExtentInfoHdr_t	*hdr;
+	FileExtentHdrInfo_t	*hdr;
 	FileExtentInfo_t	*data;
 } stageExtents = { PTHREAD_MUTEX_INITIALIZER, NULL, NULL };
 
@@ -143,7 +145,7 @@ static struct {
  * from copy procs so request list space can be freed in a timely
  * fashion.
  */
-StageDone_t *stageDone = NULL;
+StageDoneInfo_t *stageDone = NULL;
 
 /*
  * Create an entry for file that is to be staged.
@@ -317,10 +319,10 @@ CreateFile(
 	 */
 	fi.magic = STAGER_REQUEST_MAGIC;
 
-	pthread_mutexattr_init(&mattr);
-	pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-	(void) pthread_mutex_init(&(fi.mutex), &mattr);
-	pthread_mutexattr_destroy(&mattr);
+	PthreadMutexattrInit(&mattr);
+	PthreadMutexattrSetpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	PthreadMutexInit(&(fi.mutex), &mattr);
+	PthreadMutexattrDestroy(&mattr);
 
 	return (&fi);
 }
@@ -329,14 +331,14 @@ CreateFile(
  * Create new entry for a staging request and add to list. The request
  * list contains all stage requests in progress.
  */
-reqid_t
+int
 AddFile(
 	sam_stage_request_t *req,
 	int *status)
 {
 	FileInfo_t *file;
 	int copy;
-	reqid_t id = -1;
+	int id = -1;
 
 	*status = REQUEST_ERROR;
 
@@ -394,9 +396,10 @@ AddFile(
 		if (copy != file->copy) {
 			file->copy = copy;
 
-			Trace(TR_MISC, "Switch inode: %d.%d "
+			Trace(TR_MISC, "Set copy inode: %d.%d "
 			    "len: %lld offset: %lld copy: %d vsn: '%s.%s'",
-			    file->id.ino, file->id.gen, file->len, file->offset,
+			    file->id.ino, file->id.gen,
+			    file->len, file->offset,
 			    copy + 1, sam_mediatoa(file->ar[copy].media),
 			    file->ar[copy].section.vsn);
 		}
@@ -450,9 +453,9 @@ CancelRequest(
 				if (is_third_party(file->ar[copy].media)) {
 					CancelThirdPartyRequest(i);
 				} else if (GET_FLAG(file->flags, FI_MULTIVOL)) {
-					THREAD_LOCK(file);
+					PthreadMutexLock(&file->mutex);
 					SET_FLAG(file->flags, FI_CANCEL);
-					THREAD_UNLOCK(file);
+					PthreadMutexUnlock(&file->mutex);
 					if (file->ar[copy].ext_ord < min_ext) {
 						min_ext =
 						    file->ar[copy].ext_ord;
@@ -496,7 +499,7 @@ ErrorRequest(
  */
 FileInfo_t *
 GetFile(
-	reqid_t id)
+	int id)
 {
 	FileInfo_t *file = NULL;
 	if (id >= 0) {
@@ -516,8 +519,10 @@ GetFile(
  */
 int
 CheckRequests(
-	reqid_t *id)
+	int *id)
 {
+	extern FILE *LogFile;
+
 	int err = CHECK_REQUEST_SUCCESS;
 	int i;
 	int copy;
@@ -535,7 +540,7 @@ CheckRequests(
 			/*
 			 * Generate staging log file entry.
 			 */
-			if (LogFile.file) {
+			if (LogFile != NULL) {
 				uint_t flags;
 				LogType_t logtype;
 
@@ -583,11 +588,11 @@ CheckRequests(
 					file->copy = -1;
 				} else {
 					file->copy = copy;
-					Trace(TR_MISC, "%s inode: %d "
+					Trace(TR_MISC, "%s inode: %d.%d "
 					    "error: %d next copy: %d",
 					    damaged ? "Damaged" : "Error",
-					    file->id.ino, file->error,
-					    file->copy + 1);
+					    file->id.ino, file->id.gen,
+					    file->error, file->copy + 1);
 				}
 
 				if (file->copy >= 0) {
@@ -606,7 +611,8 @@ CheckRequests(
 					*id = i;
 					err = CHECK_REQUEST_SCHED;
 
-					Trace(TR_MISC, "Resched inode: %d.%d "
+					Trace(TR_MISC,
+					    "Resched inode: %d.%d "
 					    "len: %lld offset: %lld copy: %d "
 					    "vsn: '%s.%s'",
 					    file->id.ino, file->id.gen,
@@ -637,15 +643,16 @@ CheckRequests(
 				    file->fseq, NULL, &extent) < 0) {
 					SysError(HERE,
 					    "Failed to find multivolume extent"
-					    " inode: %d.%d, ext_ord: %d",
+					    " inode: %d.%d ext_ord: %d",
 					    file->id.ino, file->id.gen,
 					    file->ar[copy].ext_ord);
 					exit(EXIT_FAILURE);
 				}
-				Trace(TR_MISC, "Get file extent: inode: %d.%d "
-				    "ext_ord: %d fseq: %d",
+				Trace(TR_MISC,
+				    "Get file extent: inode: %d.%d "
+				    "ext_ord: %d",
 				    file->id.ino, file->id.gen,
-				    file->ar[copy].ext_ord, file->fseq);
+				    file->ar[copy].ext_ord);
 
 				ASSERT(file->ar[copy].n_vsns >=
 				    file->se_ord + 1);
@@ -696,7 +703,7 @@ CheckRequests(
 					sam_stage_copy_t *se_ar;
 
 					se_ord = file->se_ord;
-					se_ar = &extent.ar[copy];
+					se_ar = &extent.fe_ar[copy];
 
 					file->ar[copy].section.position =
 					    se_ar->section[se_ord].position;
@@ -801,7 +808,7 @@ RemoveStageReqsMapFile(void)
 
 	if (StageReqs.alloc > 0) {
 		size = StageReqs.alloc * sizeof (FileInfo_t);
-		RemoveMapFile(SharedInfo->stageReqsFile,
+		RemoveMapFile(SharedInfo->si_stageReqsFile,
 		    (void *) StageReqs.data, size);
 
 		StageReqs.alloc = 0;
@@ -815,8 +822,8 @@ RemoveStageReqsMapFile(void)
 void
 RemoveStageDoneMapFile(void)
 {
-	RemoveMapFile(SharedInfo->stageDoneFile, (void *) stageDone,
-	    sizeof (StageDone_t));
+	RemoveMapFile(SharedInfo->si_stageDoneFile, (void *) stageDone,
+	    sizeof (StageDoneInfo_t));
 }
 
 /*
@@ -840,25 +847,25 @@ SetStageDone(
 	int id;
 	FileInfo_t *last;
 
-	THREAD_LOCK(file);
+	PthreadMutexLock(&file->mutex);
 	SET_FLAG(file->flags, FI_DONE);
-	THREAD_UNLOCK(file);
+	PthreadMutexUnlock(&file->mutex);
 
 	Trace(TR_DEBUG, "SetStageDone: ino: %d.%d fseq: %d",
 	    file->id.ino, file->id.gen, file->fseq);
 
 	id = file->sort;
-	pthread_mutex_lock(&stageDone->mutex);
-	if (stageDone->first == -1) {
-		stageDone->first = stageDone->last = id;
+	PthreadMutexLock(&stageDone->sd_mutex);
+	if (stageDone->sd_first == -1) {
+		stageDone->sd_first = stageDone->sd_last = id;
 	} else {
-		last = GetFile(stageDone->last);
+		last = GetFile(stageDone->sd_last);
 		last->next = id;
-		stageDone->last = id;
+		stageDone->sd_last = id;
 	}
 	file->next = -1;
-	pthread_cond_signal(&stageDone->cond);
-	pthread_mutex_unlock(&stageDone->mutex);
+	PthreadCondSignal(&stageDone->sd_cond);
+	PthreadMutexUnlock(&stageDone->sd_mutex);
 }
 
 /*
@@ -883,7 +890,8 @@ TraceStageReqs(
 				file = &StageReqs.data[i];
 				_Trace(flag, srcFile, srcLine,
 				    "[%d] file: 0x%x inode: %d.%d",
-				    i, (int)file, file->id.ino, file->id.gen);
+				    i, (int)file, file->id.ino,
+				    file->id.gen);
 			}
 		}
 	}
@@ -895,11 +903,11 @@ TraceStageReqs(
  * as an index file that is memory mapped to the process's address
  * space we must copy the file's information to the request list.
  */
-static reqid_t
+static int
 addRequest(
 	FileInfo_t *file)
 {
-	reqid_t index = -1;
+	int index = -1;
 	extern StagerStateInfo_t *State;
 
 	if (StageReqs.data == NULL) {
@@ -909,10 +917,10 @@ addRequest(
 	index = getFree();
 
 	if (index >= 0) {
-		pthread_mutex_lock(&StageReqs.entries_mutex);
+		PthreadMutexLock(&StageReqs.entries_mutex);
 		StageReqs.entries++;
-		pthread_cond_signal(&StageReqs.entries_cond);
-		pthread_mutex_unlock(&StageReqs.entries_mutex);
+		PthreadCondSignal(&StageReqs.entries_cond);
+		PthreadMutexUnlock(&StageReqs.entries_mutex);
 
 		/*
 		 * Maintain own index in the request list.  File sorting is
@@ -936,16 +944,16 @@ addRequest(
  */
 void
 DeleteRequest(
-	reqid_t id)
+	int id)
 {
 	extern StagerStateInfo_t *State;
 
 	if (id >= 0 && isFree(id) == 0) {
 		(void) memset(&StageReqs.data[id], 0, sizeof (FileInfo_t));
 		markFree(id);
-		pthread_mutex_lock(&StageReqs.entries_mutex);
+		PthreadMutexLock(&StageReqs.entries_mutex);
 		StageReqs.entries--;
-		pthread_mutex_unlock(&StageReqs.entries_mutex);
+		PthreadMutexUnlock(&StageReqs.entries_mutex);
 
 		if (State != NULL) {
 			State->reqEntries = StageReqs.entries;
@@ -991,28 +999,28 @@ GetArcopy(
  */
 static void
 markFree(
-	reqid_t index)
+	int index)
 {
-	pthread_mutex_lock(&StageReqs.free_list_mutex);
+	PthreadMutexLock(&StageReqs.free_list_mutex);
 	StageReqs.sp++;
 	StageReqs.free[StageReqs.sp] = index;
-	pthread_mutex_unlock(&StageReqs.free_list_mutex);
+	PthreadMutexUnlock(&StageReqs.free_list_mutex);
 }
 
 /*
  * Get a free entry from stage request list.
  */
-static reqid_t
+static int
 getFree(void)
 {
-	reqid_t index = -1;
+	int index = -1;
 
-	pthread_mutex_lock(&StageReqs.free_list_mutex);
+	PthreadMutexLock(&StageReqs.free_list_mutex);
 	if (StageReqs.sp >= 0) {
 		index = StageReqs.free[StageReqs.sp];
 		StageReqs.sp--;
 	}
-	pthread_mutex_unlock(&StageReqs.free_list_mutex);
+	PthreadMutexUnlock(&StageReqs.free_list_mutex);
 
 	return (index);
 }
@@ -1020,12 +1028,12 @@ getFree(void)
 /*
  * Check if entry in stage request list is free.
  */
-static reqid_t
+static int
 isFree(
-	reqid_t index)
+	int index)
 {
 	int i;
-	reqid_t free = 0;
+	int free = 0;
 
 	for (i = 0; i < StageReqs.sp; i++) {
 		if (StageReqs.free[i] == index) {
@@ -1060,7 +1068,7 @@ InitRequestList()
 			/*
 			 * Make sure old request list doesn't exist.
 			 */
-			(void) unlink(SharedInfo->stageReqsFile);
+			(void) unlink(SharedInfo->si_stageReqsFile);
 
 			/*
 			 *	Recover failed, allocate new list.
@@ -1087,7 +1095,7 @@ InitRequestList()
 			recovered = B_TRUE;
 		}
 
-		size = StageReqs.alloc * sizeof (reqid_t);
+		size = StageReqs.alloc * sizeof (int);
 		SamMalloc(StageReqs.free, size);
 
 		/*
@@ -1112,10 +1120,9 @@ InitRequestList()
 
 					Trace(TR_MISC,
 					    "Pending request id: %d "
-					    "inode: %d.%d fseq: "
-					    "%d flags: %04x",
+					    "inode: %d.%d flags: %04x",
 					    i, fi->id.ino, fi->id.gen,
-					    fi->fseq, fi->flags);
+					    fi->flags);
 
 					if (StageReqs.requeue == -1) {
 						fi->next = -1;
@@ -1176,9 +1183,9 @@ InitRequestList()
 	}
 
 	if (recovered == B_FALSE) {
-		createRequestMapFile(SharedInfo->stageReqsFile);
+		createRequestMapFile(SharedInfo->si_stageReqsFile);
 		StageReqs.data =
-		    (FileInfo_t *)MapInFile(SharedInfo->stageReqsFile,
+		    (FileInfo_t *)MapInFile(SharedInfo->si_stageReqsFile,
 		    O_RDWR, NULL);
 	}
 
@@ -1244,9 +1251,9 @@ createMultiVolume(
 			SysError(HERE, "Failed to allocate multivolume extent");
 			exit(EXIT_FAILURE);
 		}
-		Trace(TR_MISC, "Add file extent: inode: %d.%d fseq: %d "
-		    "count: %d", req->id.ino, req->id.gen, req->fseq,
-		    extent.id.ino != 0 ? extent.count : 0);
+		Trace(TR_MISC, "Add file extent: inode: %d.%d "
+		    "count: %d", req->id.ino, req->id.gen,
+		    extent.fe_id.ino != 0 ? extent.fe_count : 0);
 	}
 	return (multivol);
 }
@@ -1266,37 +1273,38 @@ getFileExtent(
 	int i;
 	int ret = -1;
 
-	pthread_mutex_lock(&stageExtents.mutex);
+	PthreadMutexLock(&stageExtents.mutex);
 	traceFileExtents(TR_MISC);
 
 	if (stageExtents.hdr == NULL) {
 		if (req == NULL) {
-			pthread_mutex_unlock(&stageExtents.mutex);
+			PthreadMutexUnlock(&stageExtents.mutex);
 			return (-1);
 		}
 
 		createFileExtent();
 
-		stageExtents.hdr = (FileExtentInfoHdr_t *)
-		    MapInFile(SharedInfo->stageReqExtents, O_RDWR, NULL);
+		stageExtents.hdr = (FileExtentHdrInfo_t *)
+		    MapInFile(SharedInfo->si_stageReqExtents, O_RDWR, NULL);
 		if (stageExtents.hdr == NULL) {
 			Trace(TR_ERR, "Cannot map in file %s",
-			    SharedInfo->stageReqExtents);
-			pthread_mutex_unlock(&stageExtents.mutex);
+			    SharedInfo->si_stageReqExtents);
+			PthreadMutexUnlock(&stageExtents.mutex);
 			return (-1);
 		}
 		stageExtents.data = (FileExtentInfo_t *)(void *)
-		    (stageExtents.hdr + sizeof (FileExtentInfoHdr_t));
+		    (stageExtents.hdr + sizeof (FileExtentHdrInfo_t));
 	} else {
-		if (stageExtents.hdr->entries > 0) {
+		if (stageExtents.hdr->fh_entries > 0) {
 			FileExtentInfo_t *entry;
 
-			for (i = 0; i < stageExtents.hdr->alloc; i++) {
+			for (i = 0; i < stageExtents.hdr->fh_alloc; i++) {
 				entry = &stageExtents.data[i];
-				if (entry != NULL && entry->id.ino == id.ino &&
-				    entry->id.gen == id.gen &&
-				    entry->fseq == fseq &&
-				    entry->ext_ord == ext_ord) {
+				if (entry != NULL &&
+				    entry->fe_id.ino == id.ino &&
+				    entry->fe_id.gen == id.gen &&
+				    entry->fe_fseq == fseq &&
+				    entry->fe_extOrd == ext_ord) {
 					extent = entry;
 					break;
 				}
@@ -1308,48 +1316,53 @@ getFileExtent(
 		while (extent == NULL) {
 			size_t osz;
 			size_t nsz;
-			FileExtentInfoHdr_t *nhdr;
+			FileExtentHdrInfo_t *nhdr;
 
 			/*
 			 * Enter new extent.
 			 */
-			for (; i < stageExtents.hdr->alloc; i++) {
+			for (; i < stageExtents.hdr->fh_alloc; i++) {
 				int j, k;
 
-				if (stageExtents.data[i].id.ino != 0) {
+				if (stageExtents.data[i].fe_id.ino != 0) {
 					continue;
 				}
 
 				extent = &stageExtents.data[i];
-				extent->id.ino	= id.ino;
-				extent->id.gen	= id.gen;
-				extent->fseq	= fseq;
-				extent->ext_ord = ext_ord;
+				extent->fe_id.ino = id.ino;
+				extent->fe_id.gen = id.gen;
+				extent->fe_fseq	= fseq;
+				extent->fe_extOrd = ext_ord;
 
 		/*  N.B. Bad indentation to meet cstyle requirements. */
 				for (j = 0; j < MAX_ARCHIVE; j++) {
 				for (k = 0; k < SAM_MAX_VSN_SECTIONS; k++) {
-					extent->ar[j].section[k].position =
+					sam_stage_copy_t *ar;
+
+					ar = &extent->fe_ar[j];
+
+					ar->section[k].position =
 					    req->arcopy[j].section[k].position;
-					extent->ar[j].section[k].offset =
+					ar->section[k].offset =
 					    req->arcopy[j].section[k].offset;
-					extent->ar[j].section[k].length =
+					ar->section[k].length =
 					    req->arcopy[j].section[k].length;
-					strcpy(extent->ar[j].section[k].vsn,
+					strcpy(ar->section[k].vsn,
 					    req->arcopy[j].section[k].vsn);
+
 				if (*TraceFlags & (1 << TR_misc) &&
-				    extent->ar[j].section[k].vsn[0] != '\0') {
+				    ar->section[k].vsn[0] != '\0') {
 					Trace(TR_MISC, "[%d, %d] pos: "
 					    "%llx.%llx len: %lld vsn: '%s'",
 					    j, k,
-					    extent->ar[j].section[k].position,
-					    extent->ar[j].section[k].offset,
-					    extent->ar[j].section[k].length,
-					    extent->ar[j].section[k].vsn);
+					    ar->section[k].position,
+					    ar->section[k].offset,
+					    ar->section[k].length,
+					    ar->section[k].vsn);
 				}
 				}
 				}
-				stageExtents.hdr->entries++;
+				stageExtents.hdr->fh_entries++;
 				break;
 			}
 			if (extent != NULL) {
@@ -1360,46 +1373,49 @@ getFileExtent(
 			 * Increase size of file extension.
 			 */
 
-			osz = nsz = sizeof (FileExtentInfoHdr_t);
+			osz = nsz = sizeof (FileExtentHdrInfo_t);
 			osz += sizeof (FileExtentInfo_t) *
-			    stageExtents.hdr->alloc;
+			    stageExtents.hdr->fh_alloc;
 			nsz += sizeof (FileExtentInfo_t) *
-			    (stageExtents.hdr->alloc + STAGE_EXTENTS_CHUNKSIZE);
+			    (stageExtents.hdr->fh_alloc +
+			    STAGE_EXTENTS_CHUNKSIZE);
 
 			SamMalloc(nhdr, nsz);
 			(void) memset(nhdr, 0, nsz);
 			(void) memcpy(nhdr, stageExtents.hdr, osz);
 
-			(void) RemoveMapFile(SharedInfo->stageReqExtents,
+			(void) RemoveMapFile(SharedInfo->si_stageReqExtents,
 			    stageExtents.hdr, osz);
 
-			if (WriteMapFile(SharedInfo->stageReqExtents,
+			if (WriteMapFile(SharedInfo->si_stageReqExtents,
 			    (void *)nhdr, nsz) != 0) {
 				FatalSyscallError(EXIT_NORESTART, HERE,
 				    "WriteMapFile",
-				    SharedInfo->stageReqExtents);
+				    SharedInfo->si_stageReqExtents);
 			}
 
 			SamFree(nhdr);
-			stageExtents.hdr = (FileExtentInfoHdr_t *)
-			    MapInFile(SharedInfo->stageReqExtents,
+			stageExtents.hdr = (FileExtentHdrInfo_t *)
+			    MapInFile(SharedInfo->si_stageReqExtents,
 			    O_RDWR, NULL);
 			if (stageExtents.hdr == NULL) {
 				Trace(TR_ERR, "Cannot map in file %s",
-				    SharedInfo->stageReqExtents);
-				pthread_mutex_unlock(&stageExtents.mutex);
+				    SharedInfo->si_stageReqExtents);
+				PthreadMutexUnlock(&stageExtents.mutex);
 				return (-1);
 			}
 
 			stageExtents.data =
 			    (FileExtentInfo_t *)(void *)(stageExtents.hdr +
-			    sizeof (FileExtentInfoHdr_t));
-			stageExtents.hdr->alloc += STAGE_EXTENTS_CHUNKSIZE;
+			    sizeof (FileExtentHdrInfo_t));
+
+			stageExtents.hdr->fh_alloc += STAGE_EXTENTS_CHUNKSIZE;
 			Trace(TR_DEBUG, "Added %d extensions, current: %d",
-			    STAGE_EXTENTS_CHUNKSIZE, stageExtents.hdr->alloc);
+			    STAGE_EXTENTS_CHUNKSIZE,
+			    stageExtents.hdr->fh_alloc);
 		}
 		if (extent != NULL) {
-			extent->count++;
+			extent->fe_count++;
 		}
 	}
 	if (extent != NULL) {
@@ -1408,7 +1424,7 @@ getFileExtent(
 			memcpy(raddr, extent, sizeof (FileExtentInfo_t));
 		}
 	}
-	pthread_mutex_unlock(&stageExtents.mutex);
+	PthreadMutexUnlock(&stageExtents.mutex);
 	return (ret);
 }
 
@@ -1420,19 +1436,19 @@ createFileExtent(void)
 {
 	size_t sz;
 
-	sz = sizeof (FileExtentInfoHdr_t);
+	sz = sizeof (FileExtentHdrInfo_t);
 	sz += sizeof (FileExtentInfo_t) * STAGE_EXTENTS_CHUNKSIZE;
 	SamMalloc(stageExtents.hdr, sz);
 	(void) memset(stageExtents.hdr, 0, sz);
-	stageExtents.hdr->magic	= STAGE_EXTNT_MAGIC;
-	stageExtents.hdr->version = STAGE_EXTNT_VERSION;
-	stageExtents.hdr->alloc	= STAGE_EXTENTS_CHUNKSIZE;
-	stageExtents.hdr->create = StageReqs.val->create;
+	stageExtents.hdr->fh_magic   = FILE_EXTENT_MAGIC;
+	stageExtents.hdr->fh_version = FILE_EXTENT_VERSION;
+	stageExtents.hdr->fh_alloc  = STAGE_EXTENTS_CHUNKSIZE;
+	stageExtents.hdr->fh_create = StageReqs.val->create;
 
-	if (WriteMapFile(SharedInfo->stageReqExtents,
+	if (WriteMapFile(SharedInfo->si_stageReqExtents,
 	    (void *)stageExtents.hdr, sz) != 0) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "WriteMapFile",
-		    SharedInfo->stageReqExtents);
+		    SharedInfo->si_stageReqExtents);
 	}
 
 	SamFree(stageExtents.hdr);
@@ -1455,44 +1471,44 @@ deleteFileExtent(
 		return;
 	}
 
-	pthread_mutex_lock(&stageExtents.mutex);
+	PthreadMutexLock(&stageExtents.mutex);
 	traceFileExtents(TR_MISC);
 
-	if (stageExtents.hdr->entries > 0) {
+	if (stageExtents.hdr->fh_entries > 0) {
 		FileExtentInfo_t *entry;
-		for (i = 0; i < stageExtents.hdr->alloc; i++) {
+		for (i = 0; i < stageExtents.hdr->fh_alloc; i++) {
 			entry = &stageExtents.data[i];
-			if (entry->id.ino == id.ino &&
-			    entry->id.gen == id.gen && entry->fseq == fseq &&
-			    entry->ext_ord == ext_ord) {
+			if (entry->fe_id.ino == id.ino &&
+			    entry->fe_id.gen == id.gen &&
+			    entry->fe_fseq == fseq &&
+			    entry->fe_extOrd == ext_ord) {
 				Trace(TR_MISC, "Delete file extent: "
-				    "inode: %d.%d ext_ord: %d "
-				    "fseq: %d count: %d",
-				    entry->id.ino, entry->id.gen,
-				    entry->ext_ord, entry->fseq, entry->count);
-				if (--entry->count > 0) {
+				    "inode: %d.%d ext_ord: %d count: %d",
+				    entry->fe_id.ino, entry->fe_id.gen,
+				    entry->fe_extOrd, entry->fe_count);
+				if (--entry->fe_count > 0) {
 					break;
 				}
 				(void) memset(&stageExtents.data[i], 0,
 				    sizeof (FileExtentInfo_t));
-				stageExtents.hdr->entries--;
+				stageExtents.hdr->fh_entries--;
 				break;
 			}
 		}
 	}
-	if (stageExtents.hdr->entries == 0) {
+	if (stageExtents.hdr->fh_entries == 0) {
 		size_t sz;
 		/*
 		 * No active extensions, remove map file.
 		 */
-		sz = sizeof (FileExtentInfoHdr_t);
-		sz += sizeof (FileExtentInfo_t) * stageExtents.hdr->alloc;
-		RemoveMapFile(SharedInfo->stageReqExtents,
+		sz = sizeof (FileExtentHdrInfo_t);
+		sz += sizeof (FileExtentInfo_t) * stageExtents.hdr->fh_alloc;
+		RemoveMapFile(SharedInfo->si_stageReqExtents,
 		    stageExtents.hdr, sz);
 		stageExtents.hdr = NULL;
 		stageExtents.data = NULL;
 	}
-	pthread_mutex_unlock(&stageExtents.mutex);
+	PthreadMutexUnlock(&stageExtents.mutex);
 }
 
 /*
@@ -1507,28 +1523,29 @@ InitStageDoneList(void)
 	pthread_mutexattr_t mattr;
 
 	ASSERT(stageDone == NULL);
-	size = sizeof (StageDone_t);
+	size = sizeof (StageDoneInfo_t);
 	SamMalloc(stageDone, size);
 
-	pthread_mutexattr_init(&mattr);
-	pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-	(void) pthread_mutex_init(&stageDone->mutex, &mattr);
-	pthread_mutexattr_destroy(&mattr);
+	PthreadMutexattrInit(&mattr);
+	PthreadMutexattrSetpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	PthreadMutexInit(&stageDone->sd_mutex, &mattr);
+	PthreadMutexattrDestroy(&mattr);
 
-	pthread_condattr_init(&cattr);
-	pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
-	(void) pthread_cond_init(&stageDone->cond, &cattr);
-	pthread_condattr_destroy(&cattr);
+	PthreadCondattrInit(&cattr);
+	PthreadCondattrSetpshared(&cattr, PTHREAD_PROCESS_SHARED);
+	PthreadCondInit(&stageDone->sd_cond, &cattr);
+	PthreadCondattrDestroy(&cattr);
 
-	stageDone->first = stageDone->last = -1;
+	stageDone->sd_first = stageDone->sd_last = -1;
 
-	ret = WriteMapFile(SharedInfo->stageDoneFile, (void *)stageDone, size);
+	ret = WriteMapFile(SharedInfo->si_stageDoneFile,
+	    (void *)stageDone, size);
 	if (ret != 0) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "WriteMapFile",
-		    SharedInfo->stageDoneFile);
+		    SharedInfo->si_stageDoneFile);
 	}
 	SamFree(stageDone);
-	stageDone = (StageDone_t *)MapInFile(SharedInfo->stageDoneFile,
+	stageDone = (StageDoneInfo_t *)MapInFile(SharedInfo->si_stageDoneFile,
 	    O_RDWR, NULL);
 
 }
@@ -1545,10 +1562,10 @@ waitForStageDone(void)
 	timeout.tv_sec = time(NULL) + REQUEST_TIMEOUT_SECS;
 	timeout.tv_nsec = 0;
 
-	pthread_mutex_lock(&stageDone->mutex);
-	while (stageDone->first == -1 && ShutdownStager == 0) {
-		status = pthread_cond_timedwait(&stageDone->cond,
-		    &stageDone->mutex, &timeout);
+	PthreadMutexLock(&stageDone->sd_mutex);
+	while (stageDone->sd_first == -1 && ShutdownStager == 0) {
+		status = pthread_cond_timedwait(&stageDone->sd_cond,
+		    &stageDone->sd_mutex, &timeout);
 		/*
 		 * Wait timed out.  Calculate new time out value.
 		 */
@@ -1559,19 +1576,19 @@ waitForStageDone(void)
 	}
 
 	if (ShutdownStager) {
-		pthread_mutex_unlock(&stageDone->mutex);
+		PthreadMutexUnlock(&stageDone->sd_mutex);
 		return (-1);
 	}
 
-	id = stageDone->first;
+	id = stageDone->sd_first;
 	file = GetFile(id);
-	stageDone->first = file->next;
+	stageDone->sd_first = file->next;
 
-	if (stageDone->first == -1) {
-		stageDone->last = -1;
+	if (stageDone->sd_first == -1) {
+		stageDone->sd_last = -1;
 	}
 
-	pthread_mutex_unlock(&stageDone->mutex);
+	PthreadMutexUnlock(&stageDone->sd_mutex);
 
 	return (id);
 }
@@ -1599,8 +1616,8 @@ StageError(
 
 	arg.ret_err = error;
 
-	Trace(TR_MISC, "Filesys resp inode: %d error: %d",
-	    file->id.ino, arg.ret_err);
+	Trace(TR_MISC, "Filesys resp inode: %d.%d fseq: %d ret_err: %d",
+	    file->id.ino, file->id.gen, file->fseq, arg.ret_err);
 
 	rc = sam_syscall(SC_fsstage, &arg, sizeof (arg));
 	if (rc == -1) {
@@ -1655,19 +1672,19 @@ traceFileExtents(
 
 	_Trace(flag, srcFile, srcLine,
 	    "File extents entries: %d alloc: %d data: 0x%x",
-	    stageExtents.hdr->entries, stageExtents.hdr->alloc,
+	    stageExtents.hdr->fh_entries, stageExtents.hdr->fh_alloc,
 	    (int)stageExtents.data);
 
-	if (stageExtents.hdr->entries > 0) {
+	if (stageExtents.hdr->fh_entries > 0) {
 		FileExtentInfo_t *entry;
-		for (i = 0; i < stageExtents.hdr->alloc; i++) {
+		for (i = 0; i < stageExtents.hdr->fh_alloc; i++) {
 			entry = &stageExtents.data[i];
-			if (entry->id.ino != 0) {
+			if (entry->fe_id.ino != 0) {
 				_Trace(flag, srcFile, srcLine,
 				    "[%d] extent: 0x%x inode: %d.%d "
 				    "ext_ord: %d", i, (int)entry,
-				    entry->id.ino, entry->id.gen,
-				    entry->ext_ord);
+				    entry->fe_id.ino, entry->fe_id.gen,
+				    entry->fe_extOrd);
 			}
 		}
 	}
@@ -1685,16 +1702,16 @@ recoverRequestList(void)
 
 	ASSERT(StageReqs.data == NULL);
 
-	if (stat(SharedInfo->stageReqsFile, &buf) < 0) {
+	if (stat(SharedInfo->si_stageReqsFile, &buf) < 0) {
 		Trace(TR_DEBUG, "stat(%s) failed, errno: %d",
-		    SharedInfo->stageReqsFile, errno);
+		    SharedInfo->si_stageReqsFile, errno);
 		return (-1);
 	}
 	StageReqs.data = (FileInfo_t *)MapInFile(
-	    SharedInfo->stageReqsFile, O_RDWR, &size);
+	    SharedInfo->si_stageReqsFile, O_RDWR, &size);
 	if (StageReqs.data == NULL) {
 		Trace(TR_DEBUG, "MapInFile(%s) failed",
-		    SharedInfo->stageReqsFile);
+		    SharedInfo->si_stageReqsFile);
 		return (-1);
 	}
 	if (size <= sizeof (StageReqFileVal_t)) {
@@ -1721,7 +1738,7 @@ recoverRequestList(void)
 	}
 	StageReqs.alloc = count;
 	Trace(TR_MISC, "Recovered request list: %s, alloc: %d",
-	    SharedInfo->stageReqsFile, (int)StageReqs.alloc);
+	    SharedInfo->si_stageReqsFile, (int)StageReqs.alloc);
 	return (0);
 
 out:
@@ -1729,7 +1746,7 @@ out:
 	 * Remove old request list.
 	 */
 	Trace(TR_MISC, "Can't recover old request list");
-	RemoveMapFile(SharedInfo->stageReqsFile, StageReqs.data, size);
+	RemoveMapFile(SharedInfo->si_stageReqsFile, StageReqs.data, size);
 	return (-1);
 }
 
@@ -1769,8 +1786,9 @@ SeparateMultiVolReq(void)
 			/*
 			 * Multivolume request found.
 			 */
-			Trace(TR_MISC, "Multivolume request file inode: %d.%d "
-			    " se_ord: %d ext_ord: %d n_vsns: %d flags: 0x%x",
+			Trace(TR_MISC,
+			    "Multivolume request file inode: %d.%d "
+			    "se_ord: %d ext_ord: %d n_vsns: %d flags: 0x%x",
 			    fi->id.ino, fi->id.gen, fi->se_ord,
 			    fi->ar[fi->copy].ext_ord,
 			    fi->ar[fi->copy].n_vsns, fi->flags);
@@ -1848,14 +1866,16 @@ SeparateMultiVolReq(void)
 		}
 
 		if (GET_FLAG(mfi->flags, FI_ORPHAN)) {
-			if (CopyprocList == NULL) {
+			if (CopyInstanceList == NULL) {
 				/*
 				 * This happens copy process has exited
 				 * before sam-stagerd has restarted and config
 				 * has changed.
 				 */
-				Trace(TR_MISC, "Can't recover multivolume req "
-				    "inode: %d.%d copyproclist not recovered "
+				Trace(TR_MISC,
+				    "Can't recover multivolume req "
+				    "inode: %d.%d "
+				    "copyproclist not recovered "
 				    "file is orphaned",
 				    mfi->id.ino, mfi->id.gen);
 				remove = B_TRUE;
@@ -1877,8 +1897,8 @@ SeparateMultiVolReq(void)
 					remove = B_FALSE;
 				} else {
 					Trace(TR_MISC, "Staging from the first "
-					    "or mid vsn inode: "
-					    "%d.%d flags: %04x vsn_cnt: %d "
+					    "or mid vsn inode: %d.%d "
+					    " flags: %04x vsn_cnt: %d "
 					    "n_vsns: %d",
 					    mfi->id.ino, mfi->id.gen,
 					    mfi->flags, mfi->vsn_cnt,
@@ -1902,7 +1922,8 @@ SeparateMultiVolReq(void)
 		    mfi->se_ord != 0) {
 			Trace(TR_MISC, "Can't recover multivolume request "
 			    "inode: %d.%d incomplete request, se_ord: %d "
-			    "ext_ord: %d", mfi->id.ino, mfi->id.gen,
+			    "ext_ord: %d",
+			    mfi->id.ino, mfi->id.gen,
 			    mfi->se_ord, mfi->ar[mfi->copy].ext_ord);
 			remove = B_TRUE;
 		}
@@ -1927,7 +1948,8 @@ SeparateMultiVolReq(void)
 
 			while (id >= 0) {
 				fi = GetFile(id);
-				Trace(TR_MISC, "Request removed, inode: %d.%d "
+				Trace(TR_MISC,
+				    "Request removed, inode: %d.%d "
 				    "ext_ord: %d se_ord: %d",
 				    fi->id.ino, fi->id.gen,
 				    fi->ar[fi->copy].ext_ord, fi->se_ord);
@@ -1960,14 +1982,14 @@ DoneOrphanReq(
 		fi = GetFile(i);
 		if (GET_FLAG(fi->flags, FI_ORPHAN) != 0 && fi->context == pid) {
 			Trace(TR_MISC, "Done orphanreq inode: %d.%d "
-			    "fseq: %d pid: %d",
-			    fi->id.ino, fi->id.gen, fi->fseq, (int)pid);
+			    "pid: %d",
+			    fi->id.ino, fi->id.gen, (int)pid);
 			SetStageDone(fi);
 			break;
 		}
 	}
 	if (i >= StageReqs.alloc) {
-		Trace(TR_MISC, "DoneOrphanReq pid: %d has no pending requests",
+		Trace(TR_MISC, "Done orphanReq pid: %d has no pending requests",
 		    (int)pid);
 	}
 }
@@ -1983,43 +2005,44 @@ recoverFileExtent(void)
 
 	ASSERT(stageExtents.hdr == NULL);
 
-	if (stat(SharedInfo->stageReqExtents, &buf) != 0) {
+	if (stat(SharedInfo->si_stageReqExtents, &buf) != 0) {
 		Trace(TR_MISC, "No request extents available");
 		return;
 	}
 
-	stageExtents.hdr = (FileExtentInfoHdr_t *)
-	    MapInFile(SharedInfo->stageReqExtents, O_RDWR, NULL);
+	stageExtents.hdr = (FileExtentHdrInfo_t *)
+	    MapInFile(SharedInfo->si_stageReqExtents, O_RDWR, NULL);
 	if (stageExtents.hdr == NULL) {
 		Trace(TR_ERR, "Cannot map in file %s",
-		    SharedInfo->stageReqExtents);
+		    SharedInfo->si_stageReqExtents);
 		return;
 	}
 
-	if (stageExtents.hdr->magic	!= STAGE_EXTNT_MAGIC ||
-	    stageExtents.hdr->version != STAGE_EXTNT_VERSION ||
-	    stageExtents.hdr->create != StageReqs.val->create) {
+	if (stageExtents.hdr->fh_magic   != FILE_EXTENT_MAGIC ||
+	    stageExtents.hdr->fh_version != FILE_EXTENT_VERSION ||
+	    stageExtents.hdr->fh_create  != StageReqs.val->create) {
 
 		Trace(TR_ERR, "Corrupted header %s",
-		    SharedInfo->stageReqExtents);
-		RemoveMapFile(SharedInfo->stageReqExtents,
+		    SharedInfo->si_stageReqExtents);
+		RemoveMapFile(SharedInfo->si_stageReqExtents,
 		    stageExtents.hdr, buf.st_size);
 		stageExtents.hdr = NULL;
 		return;
 	}
-	sz = sizeof (FileExtentInfoHdr_t);
-	sz += stageExtents.hdr->alloc * sizeof (FileExtentInfo_t);
+
+	sz = sizeof (FileExtentHdrInfo_t);
+	sz += stageExtents.hdr->fh_alloc * sizeof (FileExtentInfo_t);
 	if (sz != buf.st_size) {
 		Trace(TR_ERR, "Corrupted header size %s",
-		    SharedInfo->stageReqExtents);
-		RemoveMapFile(SharedInfo->stageReqExtents, stageExtents.hdr,
+		    SharedInfo->si_stageReqExtents);
+		RemoveMapFile(SharedInfo->si_stageReqExtents, stageExtents.hdr,
 		    buf.st_size);
 		stageExtents.hdr = NULL;
 		return;
 	}
 
 	stageExtents.data = (FileExtentInfo_t *)(void *)(stageExtents.hdr +
-	    sizeof (FileExtentInfoHdr_t));
+	    sizeof (FileExtentHdrInfo_t));
 	Trace(TR_MISC, "Stage request extents recovered");
 }
 
@@ -2031,48 +2054,50 @@ checkFileExtent(void)
 {
 	int i;
 
-	pthread_mutex_lock(&stageExtents.mutex);
-	for (i = 0; i < stageExtents.hdr->alloc; i++) {
+	PthreadMutexLock(&stageExtents.mutex);
+	for (i = 0; i < stageExtents.hdr->fh_alloc; i++) {
 		int id;
 		FileInfo_t *fi;
 
-		if (stageExtents.data[i].id.ino == 0) {
+		if (stageExtents.data[i].fe_id.ino == 0) {
 			continue;
 		}
 
 		id = StageReqs.requeue;
 		while (id >= 0) {
 			fi = GetFile(id);
-			if (fi->id.ino == stageExtents.data[i].id.ino) {
+			if (fi->id.ino == stageExtents.data[i].fe_id.ino) {
 				break;
 			}
 			id = fi->next;
 		}
+
 		if (id < 0) {
 			Trace(TR_MISC, "No request exist for extent "
-			    "file: %d.%d, remove",
-			    stageExtents.data[i].id.ino,
-			    stageExtents.data[i].id.gen);
+			    "inode: %d.%d remove",
+			    stageExtents.data[i].fe_id.ino,
+			    stageExtents.data[i].fe_id.gen);
 			(void) memset(&stageExtents.data[i], 0,
 			    sizeof (FileExtentInfo_t));
-			stageExtents.hdr->entries--;
-			ASSERT(stageExtents.hdr->entries >= 0);
+			stageExtents.hdr->fh_entries--;
+			ASSERT(stageExtents.hdr->fh_entries >= 0);
 		}
 	}
-	if (stageExtents.hdr->entries == 0) {
+
+	if (stageExtents.hdr->fh_entries == 0) {
 		size_t sz;
 
 		/*
 		 * No active extensions, remove map file.
 		 */
-		sz = sizeof (FileExtentInfoHdr_t);
-		sz += sizeof (FileExtentInfo_t) * stageExtents.hdr->alloc;
-		RemoveMapFile(SharedInfo->stageReqExtents,
+		sz = sizeof (FileExtentHdrInfo_t);
+		sz += sizeof (FileExtentInfo_t) * stageExtents.hdr->fh_alloc;
+		RemoveMapFile(SharedInfo->si_stageReqExtents,
 		    stageExtents.hdr, sz);
 		stageExtents.hdr = NULL;
 		stageExtents.data = NULL;
 	}
-	pthread_mutex_unlock(&stageExtents.mutex);
+	PthreadMutexUnlock(&stageExtents.mutex);
 }
 
 /*

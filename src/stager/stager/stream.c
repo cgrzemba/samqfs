@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -59,21 +59,25 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/device.h"
 #include "aml/stager.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
-
-/* Local headers. */
-#include "stager_lib.h"
-#include "stager_config.h"
-#include "stage_reqs.h"
-#include "rmedia.h"
-#include "stream.h"
-#include "copy_defs.h"
+#include "aml/stager_defs.h"
 #include "sam/lib.h"
-
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "stager_config.h"
+#include "stager_shared.h"
+#include "rmedia.h"
+#include "stream.h"
+#include "copy_defs.h"
+
+#include "stage_reqs.h"
 
 static upath_t fullpath;
 static pthread_mutex_t createStreamMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -101,7 +105,7 @@ CreateStream(
 	pthread_mutexattr_t mattr;
 	int copy;
 
-	(void) pthread_mutex_lock(&createStreamMutex);
+	PthreadMutexLock(&createStreamMutex);
 	copy = file->copy;
 	size = sizeof (StreamInfo_t);
 	SamMalloc(stream, size);
@@ -116,7 +120,7 @@ CreateStream(
 		    sizeof (vsn_t));
 	}
 	stream->media = file->ar[copy].media;
-	stream->diskarch = IS_COPY_DISKARCH(file, copy);
+	stream->diskarch = IF_COPY_DISKARCH(file, copy);
 	stream->thirdparty = is_third_party(file->ar[copy].media);
 
 	/*
@@ -129,13 +133,13 @@ CreateStream(
 	stream->seqnum = Seqnum;
 	stream->first = stream->last = EOS;
 
-	pthread_mutexattr_init(&mattr);
-	pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-	THREAD_INIT_LOCK(stream, &mattr);
-	(void) pthread_mutexattr_destroy(&mattr);
+	PthreadMutexattrInit(&mattr);
+	PthreadMutexattrSetpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	PthreadMutexInit(&stream->mutex, &mattr);
+	PthreadMutexattrDestroy(&mattr);
 
 	(void) sprintf(fullpath, "%s/%s.%d",
-	    SharedInfo->streamsDir, stream->vsn, Seqnum);
+	    SharedInfo->si_streamsDir, stream->vsn, Seqnum);
 
 	ret = WriteMapFile(fullpath, (void *)stream, size);
 	if (ret != 0) {
@@ -157,7 +161,7 @@ CreateStream(
 	} else {
 		Seqnum++;
 	}
-	(void) pthread_mutex_unlock(&createStreamMutex);
+	PthreadMutexUnlock(&createStreamMutex);
 	return (stream);
 }
 
@@ -175,15 +179,15 @@ ErrorStream(
 	Trace(TR_MISC, "Error stream: '%s' 0x%x error: %d",
 	    TrNullString(stream->vsn), (int)stream, error);
 
-	THREAD_LOCK(stream);
+	PthreadMutexLock(&stream->mutex);
 	SET_FLAG(stream->flags, SR_ERROR);
-	THREAD_UNLOCK(stream);
+	PthreadMutexUnlock(&stream->mutex);
 
 	while (stream->first > EOS) {
 
-		THREAD_LOCK(stream);
+		PthreadMutexLock(&stream->mutex);
 		file = GetFile(stream->first);
-		THREAD_LOCK(file);
+		PthreadMutexLock(&file->mutex);
 		file->error = error;
 
 		/*
@@ -204,8 +208,8 @@ ErrorStream(
 		if (stream->first == EOS) {
 			stream->last = EOS;
 		}
-		THREAD_UNLOCK(stream);
-		THREAD_UNLOCK(file);
+		PthreadMutexUnlock(&stream->mutex);
+		PthreadMutexUnlock(&file->mutex);
 
 		SetStageDone(file);
 	}
@@ -213,11 +217,11 @@ ErrorStream(
 	/*
 	 * Set active and done flag on stream for delete.
 	 */
-	THREAD_LOCK(stream);
+	PthreadMutexLock(&stream->mutex);
 	SET_FLAG(stream->flags, SR_ACTIVE);
 	SET_FLAG(stream->flags, SR_DONE);
 	CLEAR_FLAG(stream->flags, SR_ERROR);
-	THREAD_UNLOCK(stream);
+	PthreadMutexUnlock(&stream->mutex);
 }
 
 /*
@@ -232,10 +236,10 @@ ClearStream(
 
 	while (stream->first > EOS) {
 
-		THREAD_LOCK(stream);
+		PthreadMutexLock(&stream->mutex);
 		file = GetFile(stream->first);
 
-		THREAD_LOCK(file);
+		PthreadMutexLock(&file->mutex);
 		active = GET_FLAG(file->flags, FI_ACTIVE);
 
 		if (active == B_FALSE &&
@@ -250,8 +254,8 @@ ClearStream(
 			stream->last = EOS;
 		}
 
-		THREAD_UNLOCK(stream);
-		THREAD_UNLOCK(file);
+		PthreadMutexUnlock(&stream->mutex);
+		PthreadMutexUnlock(&file->mutex);
 
 		if (active == B_FALSE) {
 			SetStageDone(file);
@@ -275,7 +279,7 @@ DeleteStream(
 	Trace(TR_MISC, "Delete stream: '%s.%d' 0x%x",
 	    stream->vsn, stream->seqnum, (int)stream);
 
-	(void) sprintf(fullpath, "%s/%s.%d", SharedInfo->streamsDir,
+	(void) sprintf(fullpath, "%s/%s.%d", SharedInfo->si_streamsDir,
 	    stream->vsn, stream->seqnum);
 	RemoveMapFile(fullpath, stream, sizeof (StreamInfo_t));
 }
@@ -289,7 +293,7 @@ DeleteStream(
 int
 AddStream(
 	StreamInfo_t *stream,
-	reqid_t id,
+	int id,
 	int sort)
 {
 	int added = FALSE;
@@ -321,9 +325,9 @@ AddStream(
 		 * thread removing staled files while this thread is
 		 * add entries to the stream.
 		 */
-		THREAD_LOCK(stream);
+		PthreadMutexLock(&stream->mutex);
 		if (GET_FLAG(stream->flags, SR_ERROR)) {
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&stream->mutex);
 			return (FALSE);
 		}
 
@@ -360,7 +364,7 @@ AddStream(
 			sortList = makeSortList(stream);
 			separatePositions(stream, sortList);
 		}
-		THREAD_UNLOCK(stream);
+		PthreadMutexUnlock(&stream->mutex);
 
 	} else {
 		/*
@@ -377,10 +381,10 @@ AddStream(
 boolean_t
 CancelStream(
 	StreamInfo_t *stream,
-	reqid_t id)
+	int id)
 {
 	FileInfo_t *curr;
-	reqid_t curr_id;
+	int curr_id;
 	boolean_t found = B_FALSE;
 	boolean_t done = B_FALSE;
 
@@ -400,10 +404,10 @@ CancelStream(
 			/*
 			 * Remove file from stream.
 			 */
-			THREAD_LOCK(stream);
-			THREAD_LOCK(file);
+			PthreadMutexLock(&stream->mutex);
+			PthreadMutexLock(&file->mutex);
 			if (prev != NULL) {
-				THREAD_LOCK(prev);
+				PthreadMutexLock(&prev->mutex);
 			}
 			if (GET_FLAG(file->flags, FI_ACTIVE) == 0) {
 				if (prev != NULL) {
@@ -430,10 +434,10 @@ CancelStream(
 				done = B_TRUE;
 			}
 			if (prev != NULL) {
-				THREAD_UNLOCK(prev);
+				PthreadMutexUnlock(&prev->mutex);
 			}
-			THREAD_UNLOCK(file);
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&file->mutex);
+			PthreadMutexUnlock(&stream->mutex);
 
 			/*
 			 * Mark file as done.
@@ -490,7 +494,7 @@ addActiveStream(
 		return (FALSE);
 	}
 
-	THREAD_LOCK(stream);
+	PthreadMutexLock(&stream->mutex);
 
 	/*
 	 * Check if stream has already completed.  Don't add a
@@ -498,7 +502,7 @@ addActiveStream(
 	 */
 	if (GET_FLAG(stream->flags, SR_DONE) ||
 	    stream->first == EOS || stream->last == EOS) {
-		THREAD_UNLOCK(stream);
+		PthreadMutexUnlock(&stream->mutex);
 		return (FALSE);
 	}
 
@@ -513,11 +517,11 @@ addActiveStream(
 	 * of the active stream.
 	 */
 	if (stream->diskarch) {
-		THREAD_LOCK(last);
+		PthreadMutexLock(&last->mutex);
 		added = appendActiveStream(stream, last, id);
 
-		THREAD_UNLOCK(stream);
-		THREAD_UNLOCK(last);
+		PthreadMutexUnlock(&stream->mutex);
+		PthreadMutexUnlock(&last->mutex);
 		goto out;
 	}
 
@@ -526,7 +530,7 @@ addActiveStream(
 		 * Add new stage file request as first
 		 * entry in stream.
 		 */
-		THREAD_LOCK(first);
+		PthreadMutexLock(&first->mutex);
 		if (GET_FLAG(first->flags, FI_ACTIVE) == 0) {
 
 			file->next = fid;
@@ -534,16 +538,16 @@ addActiveStream(
 			stream->count++;
 			added = TRUE;
 		}
-		THREAD_UNLOCK(stream);
-		THREAD_UNLOCK(first);
+		PthreadMutexUnlock(&stream->mutex);
+		PthreadMutexUnlock(&first->mutex);
 
 	} else if (comparePosition(&file, &last) > 0) {
 
-		THREAD_LOCK(last);
+		PthreadMutexLock(&last->mutex);
 		added = appendActiveStream(stream, last, id);
 
-		THREAD_UNLOCK(stream);
-		THREAD_UNLOCK(last);
+		PthreadMutexUnlock(&stream->mutex);
+		PthreadMutexUnlock(&last->mutex);
 
 	} else {
 
@@ -569,7 +573,7 @@ addActiveStream(
 			if ((comparePosition(&file, &f1) > 0) &&
 			    (comparePosition(&file, &f2) < 0)) {
 
-				THREAD_LOCK(f1);
+				PthreadMutexLock(&f1->mutex);
 				if (GET_FLAG(f1->flags, FI_DONE) == 0) {
 
 					f1->next = id;
@@ -578,8 +582,8 @@ addActiveStream(
 					added = TRUE;
 
 				}
-				THREAD_UNLOCK(stream);
-				THREAD_UNLOCK(f1);
+				PthreadMutexUnlock(&stream->mutex);
+				PthreadMutexUnlock(&f1->mutex);
 
 				/*
 				 * Exiting loop with stream unlocked.
@@ -600,7 +604,7 @@ addActiveStream(
 		 * is already unlocked from lock chaining with a file entry.
 		 */
 		if (locked == B_TRUE) {
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&stream->mutex);
 		}
 	}
 
@@ -759,14 +763,15 @@ comparePosition(
 		if ((GET_FLAG((*f1)->flags, FI_DUPLICATE) == 0) &&
 		    (GET_FLAG((*f2)->flags, FI_DUPLICATE) == 0)) {
 
-			THREAD_LOCK((*f1));
-			THREAD_LOCK((*f2));
+			PthreadMutexLock(&(*f1)->mutex);
+			PthreadMutexLock(&(*f2)->mutex);
 
 			if ((GET_FLAG((*f1)->flags, FI_OPENING) == 0) &&
 			    (GET_FLAG((*f2)->flags, FI_OPENING) == 0)) {
-				Trace(TR_MISC, "Duplicate file inode: %d.%d "
-				    "[%d.%d]", (*f1)->id.ino, (*f1)->id.gen,
-				    (*f2)->id.ino, (*f2)->id.gen);
+				Trace(TR_MISC, "Duplicate file inode: "
+				    "%d.%d (%d) [%d.%d] (%d)",
+				    (*f1)->id.ino, (*f1)->id.gen, (*f1)->fseq,
+				    (*f2)->id.ino, (*f2)->id.gen, (*f2)->fseq);
 				/*
 				 * One of these files may be actively staging.
 				 * Don't mark an active file as a duplicate.
@@ -778,8 +783,8 @@ comparePosition(
 				}
 			}
 
-			THREAD_UNLOCK((*f1));
-			THREAD_UNLOCK((*f2));
+			PthreadMutexUnlock(&(*f1)->mutex);
+			PthreadMutexUnlock(&(*f2)->mutex);
 
 		}
 		return (-1);

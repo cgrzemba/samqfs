@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -59,19 +59,21 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/exit.h"
 #include "sam/custmsg.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "aml/stager.h"
+#include "aml/stager_defs.h"
 #include "sam/signals.h"
-
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
 #include "stager_config.h"
 #include "stager_lib.h"
-#include "stage_reqs.h"
+#include "stager_threads.h"
+#include "stager_shared.h"
 #include "file_defs.h"
 #include "copy_defs.h"
-#include "filesys.h"
+
 #include "copy.h"
 
 /*
@@ -86,7 +88,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 char *program_name;
 
 /*
- * Data shared with copy procs.
+ * Common Data shared among all processes.
  */
 SharedInfo_t *SharedInfo = NULL;
 
@@ -98,7 +100,7 @@ StagerStateInfo_t *State = NULL;
 /*
  * Copy process context.
  */
-CopyInstance_t *Context = NULL;
+CopyInstanceInfo_t *Instance = NULL;
 
 /*
  * Set of signals to block.  Only the thread that calls
@@ -137,15 +139,15 @@ nl_catd catfd = NULL;
  */
 
 /*
- * Contexts for all procs.
+ * Instances for all procs.
  */
-CopyProcList_t *copyprocList;
+CopyInstanceList_t *copyInstanceList;
 
 static upath_t	fullpath;
 
 /* Private functions. */
 static void initCopy();
-static CopyInstance_t *getCopyProc(int rmfn);
+static CopyInstanceInfo_t *getInstance(int rmfn);
 
 static void fatalSignalCleanup(int signum);
 static void sigHup(int signum);
@@ -222,15 +224,17 @@ main(
 		FatalSyscallError(EXIT_NORESTART, HERE, "chdir", fullpath);
 	}
 
-	Trace(TR_PROC, "Copy proc started");
+	Trace(TR_PROC, "Copy process started");
 
 	/*
-	 * Initialize copy helper.
+	 * Initialize copy process.
 	 */
 	initCopy();
 
-	Context = getCopyProc(rmfn);
-	ASSERT(Context != NULL);
+	Instance = getInstance(rmfn);
+	if (Instance == NULL) {
+		return (EXIT_FATAL);
+	}
 
 	/*
 	 * Enter loop to copy all files in stream.
@@ -249,23 +253,30 @@ main(
 /*
  * Find context for another copy proc.
  */
-CopyInstance_t *
-FindCopyProc(
+CopyInstanceInfo_t *
+FindCopyInstanceInfo(
 	int lib,
 	media_t media)
 {
+	CopyInstanceInfo_t *instance;
 	int i;
 
-	for (i = 0; i < SharedInfo->num_copyprocs; i++) {
-		if (copyprocList->data[i].lib == lib) break;
-	}
-	ASSERT(i >= 0 && i < SharedInfo->num_copyprocs);
+	instance = NULL;
 
-	if (copyprocList->data[i].created == B_FALSE) {
-		copyprocList->data[i].media = media;
-		copyprocList->data[i].num_buffers = 4;
+	for (i = 0; i < CopyInstanceListCount; i++) {
+		if (copyInstanceList->cl_data[i].ci_lib == lib) {
+			instance = &copyInstanceList->cl_data[i];
+			break;
+		}
 	}
-	return (&copyprocList->data[i]);
+
+	ASSERT(instance != NULL);
+
+	if (instance->ci_created == B_FALSE) {
+		instance->ci_media = media;
+		instance->ci_numBuffers = COPY_NUMOF_BUFFERS;
+	}
+	return (instance);
 }
 
 /*
@@ -282,11 +293,12 @@ initCopy(void)
 	/*
 	 * Map in copy proc contexts.
 	 */
-	copyprocList = (CopyProcList_t *)MapInFile(
-	    SharedInfo->copyprocsFile, O_RDWR, NULL);
-	if (copyprocList == NULL) {
+	copyInstanceList = (CopyInstanceList_t *)MapInFile(
+	    SharedInfo->si_copyInstancesFile, O_RDWR, NULL);
+
+	if (copyInstanceList == NULL) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "MapInFile",
-		    SharedInfo->copyprocsFile);
+		    SharedInfo->si_copyInstancesFile);
 	}
 
 	/*
@@ -296,19 +308,25 @@ initCopy(void)
 }
 
 /*
- * Get context for copy proc.
+ * Get instance for copy process.
  */
-static CopyInstance_t *
-getCopyProc(
+static CopyInstanceInfo_t *
+getInstance(
 	int rmfn)
 {
 	int i;
+	CopyInstanceInfo_t *instance;
 
-	for (i = 0; i < SharedInfo->num_copyprocs; i++) {
-		if (copyprocList->data[i].rmfn == rmfn) break;
+	instance = NULL;
+	for (i = 0; i < CopyInstanceListCount; i++) {
+		if (copyInstanceList->cl_data[i].ci_rmfn == rmfn) {
+			instance = &copyInstanceList->cl_data[i];
+			break;
+		}
 	}
-	ASSERT(i >= 0 && i < SharedInfo->num_copyprocs);
-	return (&copyprocList->data[i]);
+
+	ASSERT(instance != NULL);
+	return (instance);
 }
 
 /*
@@ -334,15 +352,15 @@ sigTerm(
 	int signum)
 {
 	Trace(TR_MISC, "Shutdown by signal %d", signum);
-	SET_FLAG(Context->flags, CI_shutdown);
+	SET_FLAG(Instance->ci_flags, CI_shutdown);
 	/*
 	 *  Tell copyfile thread that a shutdown has been
 	 *  requests.  This will unblock the thread waiting on
 	 *  the condition variable.
 	 */
-	(void) pthread_mutex_lock(&Context->request_mutex);
-	(void) pthread_cond_signal(&Context->request);
-	(void) pthread_mutex_unlock(&Context->request_mutex);
+	PthreadMutexLock(&Instance->ci_requestMutex);
+	PthreadCondSignal(&Instance->ci_request);
+	PthreadMutexUnlock(&Instance->ci_requestMutex);
 }
 
 static void
@@ -350,13 +368,13 @@ sigUsr1(
 	int signum)
 {
 	Trace(TR_MISC, "Shutdown for voluntary failover by signal %d", signum);
-	SET_FLAG(Context->flags, CI_failover);
+	SET_FLAG(Instance->ci_flags, CI_failover);
 	/*
 	 *  Tell copyfile thread that a shutdown for a voluntary
 	 *  failover has been requested. This will unblock the thread
 	 *  waiting on the condition variable.
 	 */
-	(void) pthread_mutex_lock(&Context->request_mutex);
-	(void) pthread_cond_signal(&Context->request);
-	(void) pthread_mutex_unlock(&Context->request_mutex);
+	PthreadMutexLock(&Instance->ci_requestMutex);
+	PthreadCondSignal(&Instance->ci_request);
+	PthreadMutexUnlock(&Instance->ci_requestMutex);
 }

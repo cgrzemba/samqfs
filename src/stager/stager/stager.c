@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -72,36 +72,34 @@ struct tm *localtime_r(const time_t *clock, struct tm *res);
 #include "sam/syscall.h"
 #include "sam/custmsg.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/exit.h"
 #include "sam/lib.h"
 #include "aml/stager.h"
 #include "aml/remote.h"
 #include "sam/signals.h"
-
-/* Local headers. */
-#include "stager.h"
-#include "stager_config.h"
-#include "stager_lib.h"
-#include "rmedia.h"
-#include "stage_reqs.h"
-#include "stage_done.h"
-#include "stream.h"
-#include "schedule.h"
-#include "readcmd.h"
-#include "device.h"
-#include "thread.h"
-#include "compose.h"
-#include "file_defs.h"
-#include "filesys.h"
-#include "rmedia.h"
-#include "log.h"
-#include "thirdparty.h"
-#include "copy_defs.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #undef kill
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_config.h"
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "stager_shared.h"
+#include "copy_defs.h"
+#include "rmedia.h"
+#include "stream.h"
+#include "stage_done.h"
+#include "file_defs.h"
+
+#include "stager.h"
+#include "stage_reqs.h"
+#include "schedule.h"
+#include "thread.h"
+#include "thirdparty.h"
 
 static upath_t fullpath;	/* temporary space for building names */
 static void initStagerd();
@@ -133,10 +131,10 @@ static void requeueRequests();
 /*
  * External stage request list.
  */
-extern CopyProcList_t *CopyprocList;
+extern CopyInstanceList_t *CopyInstanceList;
 extern StageReqs_t StageReqs;
 extern int OrphanProcs;
-extern StageDone_t *stageDone;
+extern StageDoneInfo_t *stageDone;
 
 static time_t cmdFileTime;
 static char cmdFileName[] = SAM_CONFIG_PATH"/"COMMAND_FILE_NAME;
@@ -296,10 +294,10 @@ main(
 	createShared();
 
 	/*
-	 * Make characteristics table for media.  NOTE: media table
+	 * Make media parameters table.  NOTE: this table
 	 * must be created before reading the command file.
 	 */
-	MakeMediaCharsTable();
+	MakeMediaParamsTable();
 
 	/*
 	 * Read command file.
@@ -372,7 +370,7 @@ main(
 		 * Force scheduler thread to check orphan procs if copyprocList
 		 * has recovered.
 		 */
-		if (CopyprocList != NULL) {
+		if (CopyInstanceList != NULL) {
 			OrphanProcs = -1;
 		}
 	}
@@ -380,7 +378,7 @@ main(
 	/*
 	 * Let fs to know stagerd is running.
 	 */
-	setStagerPid(SharedInfo->parentPid);
+	setStagerPid(SharedInfo->si_parentPid);
 
 	/*
 	 * Allow filesystemReader thread to receive a request from FS.
@@ -439,7 +437,7 @@ main(
 	removeStateMapFile();
 
 	if (ShutdownStager == SIGUSR1) {
-		SharedInfo->parentPid = -1;
+		SharedInfo->si_parentPid = -1;
 		Trace(TR_PROC, "Stager daemon exiting for failover");
 	} else {
 		removeSharedMapFile();	/* remove stager's shared data last */
@@ -454,13 +452,13 @@ main(
 void
 ReconfigLock(void)
 {
-	(void) pthread_mutex_lock(&reconfigMutex);
+	PthreadMutexLock(&reconfigMutex);
 }
 
 void
 ReconfigUnlock(void)
 {
-	(void) pthread_mutex_unlock(&reconfigMutex);
+	PthreadMutexUnlock(&reconfigMutex);
 }
 
 /*
@@ -570,13 +568,14 @@ createSharedMapFile(void)
 		shared = (SharedInfo_t *)MapInFile(fullpath, O_RDONLY, &len);
 		if (shared != NULL) {
 			if (len == sizeof (SharedInfo_t) &&
-			    shared->magic == STAGER_SHARED_MAGIC &&
-			    shared->version == STAGER_SHARED_VERSION) {
+			    shared->si_magic == SHARED_INFO_MAGIC &&
+			    shared->si_version == SHARED_INFO_VERSION) {
 				Trace(TR_MISC, "Old daemon pid: %ld",
-				    shared->parentPid);
-				if (shared->parentPid < 0) {
+				    shared->si_parentPid);
+				if (shared->si_parentPid < 0) {
 					StartMode = SM_failover;
-				} else if (shared->parentPid > 0) {
+				} else if (shared->si_parentPid > 0) {
+					int rv;
 					struct stat sb;
 
 					/*
@@ -588,11 +587,12 @@ createSharedMapFile(void)
 					 * abnormal termination.
 					 */
 					SetErrno = 0;
-					if (FindProc("sam-stagerd", "") > 0) {
-						Trace(TR_ERR,
+					rv = FindProc(STAGERD_PROGRAM_NAME, "");
+					if (rv > 0) {
+						Trace(TR_MISC,
 						    "Another stagerd %ld is "
 						    "already running.",
-						    shared->parentPid);
+						    shared->si_parentPid);
 						UnMapFile(shared, len);
 						cleanupAndExit(EXIT_FAILURE);
 					}
@@ -603,11 +603,13 @@ createSharedMapFile(void)
 					 * failover. Otherwise, restarted
 					 * after abnormal termination.
 					 */
-					Trace(TR_MISC, "Old/New hostid: "
-					    "0x%lx/0x%lx", shared->hostId,
-					    SharedInfo->hostId);
-					if ((shared->hostId !=
-					    SharedInfo->hostId) &&
+					Trace(TR_MISC,
+					    "Old/New hostid: 0x%lx/0x%lx",
+					    shared->si_hostId,
+					    SharedInfo->si_hostId);
+
+					if ((shared->si_hostId !=
+					    SharedInfo->si_hostId) &&
 					    (stat(HASAM_RUN_FILE, &sb) == 0)) {
 						StartMode = SM_failover;
 					} else {
@@ -655,7 +657,7 @@ makeStagerDirs(void)
 	/*
 	 * Make directory for streams.
 	 */
-	MakeDirectory(SharedInfo->streamsDir);
+	MakeDirectory(SharedInfo->si_streamsDir);
 
 	/*
 	 * Make directories for copy procs.
@@ -674,20 +676,18 @@ makeStagerDirs(void)
 static int
 createScheduler(void)
 {
-	int status;
+	int rval;
 	extern SchedComm_t SchedComm;
 
-	status = pthread_mutex_init(&SchedComm.mutex, NULL);
-	if (status == 0) {
-		status = pthread_cond_init(&SchedComm.avail, NULL);
-		if (status == 0) {
-			SchedComm.first = SchedComm.last = NULL;
+	PthreadMutexInit(&SchedComm.mutex, NULL);
+	PthreadCondInit(&SchedComm.avail, NULL);
 
-			status = pthread_create(&SchedComm.tid, NULL,
-			    Scheduler, (void *)&SchedComm);
-		}
-	}
-	return (status);
+	SchedComm.first = SchedComm.last = NULL;
+
+	rval = pthread_create(&SchedComm.tid, NULL, Scheduler,
+	    (void *)&SchedComm);
+
+	return (rval);
 }
 
 /*
@@ -697,7 +697,7 @@ createScheduler(void)
 static int
 createMigrator(void)
 {
-	int status;
+	int rval;
 	extern SchedComm_t MigComm;
 
 	/*
@@ -708,9 +708,9 @@ createMigrator(void)
 		return (0);
 	}
 
-	status = pthread_create(&MigComm.tid, NULL, Migrator, (void *)&MigComm);
+	rval = pthread_create(&MigComm.tid, NULL, Migrator, (void *)&MigComm);
 
-	return (status);
+	return (rval);
 }
 
 /*
@@ -720,11 +720,11 @@ createMigrator(void)
 static int
 createFilesystemReader(void)
 {
-	int okay;
+	int rval;
 
-	okay = pthread_create(&fsReaderThreadId, NULL, filesystemReader, NULL);
+	rval = pthread_create(&fsReaderThreadId, NULL, filesystemReader, NULL);
 
-	return (okay);
+	return (rval);
 }
 
 /*
@@ -776,8 +776,8 @@ filesystemReader(void)
 			continue;
 		}
 
-		Trace(TR_MISC, "Received file inode: %d.%d",
-		    request.id.ino, request.id.gen);
+		Trace(TR_MISC, "Received file inode: %d.%d fseq: %d",
+		    request.id.ino, request.id.gen, request.fseq);
 
 		/*
 		 * Check if request to cancel stage.
@@ -859,33 +859,33 @@ createShared(void)
 	SamMalloc(SharedInfo, sizeof (SharedInfo_t));
 	(void) memset(SharedInfo, 0, sizeof (SharedInfo_t));
 
-	SharedInfo->magic = STAGER_SHARED_MAGIC;
-	SharedInfo->version = STAGER_SHARED_VERSION;
-	SharedInfo->hostId = gethostid();
-	SharedInfo->parentPid = getpid();
+	SharedInfo->si_magic = SHARED_INFO_MAGIC;
+	SharedInfo->si_version = SHARED_INFO_VERSION;
+	SharedInfo->si_hostId = gethostid();
+	SharedInfo->si_parentPid = getpid();
 
-	(void) sprintf(SharedInfo->stageReqsFile, "%s/%s",
+	(void) sprintf(SharedInfo->si_stageReqsFile, "%s/%s",
 	    WorkDir, STAGE_REQS_FILENAME);
 
-	(void) sprintf(SharedInfo->stageReqExtents, "%s/%s",
+	(void) sprintf(SharedInfo->si_stageReqExtents, "%s/%s",
 	    WorkDir, STAGE_REQ_EXTENTNAME);
 
-	(void) sprintf(SharedInfo->stageDoneFile, "%s/%s",
+	(void) sprintf(SharedInfo->si_stageDoneFile, "%s/%s",
 	    WorkDir, STAGE_DONE_FILENAME);
 
-	(void) sprintf(SharedInfo->copyprocsFile, "%s/%s",
+	(void) sprintf(SharedInfo->si_copyInstancesFile, "%s/%s",
 	    WorkDir, COPY_PROCS_FILENAME);
 
-	(void) sprintf(SharedInfo->streamsDir, "%s/%s",
+	(void) sprintf(SharedInfo->si_streamsDir, "%s/%s",
 	    WorkDir, STREAMS_DIRNAME);
 
-	(void) sprintf(SharedInfo->fileSystemFile, "%s/%s",
+	(void) sprintf(SharedInfo->si_fileSystemFile, "%s/%s",
 	    WorkDir, FILESYSTEM_FILENAME);
 
-	(void) sprintf(SharedInfo->diskVolumesFile, "%s/%s",
+	(void) sprintf(SharedInfo->si_diskVolumesFile, "%s/%s",
 	    WorkDir, DISK_VOLUMES_FILENAME);
 
-	(void) sprintf(SharedInfo->coresDir, "%s", WorkDir);
+	(void) sprintf(SharedInfo->si_coresDir, "%s", WorkDir);
 }
 
 /*
@@ -899,10 +899,10 @@ createState(void)
 	SamMalloc(State, sizeof (StagerStateInfo_t));
 	(void) memset(State, 0, sizeof (StagerStateInfo_t));
 
-	State->pid = SharedInfo->parentPid;
+	State->pid = SharedInfo->si_parentPid;
 	(void) strcpy(State->logFile, GetCfgLogFile());
-	(void) strcpy(State->streamsDir, SharedInfo->streamsDir);
-	(void) strcpy(State->stageReqsFile, SharedInfo->stageReqsFile);
+	(void) strcpy(State->streamsDir, SharedInfo->si_streamsDir);
+	(void) strcpy(State->stageReqsFile, SharedInfo->si_stageReqsFile);
 
 	sprintf(fullpath, "%s/%s/%s",
 	    SAM_VARIABLE_PATH, STAGER_DIRNAME, STAGER_STATE_FILENAME);
@@ -1013,7 +1013,7 @@ readCmdFile(void)
 	}
 	ReadCmds();
 
-	SharedInfo->logEvents = GetCfgLogEvents();
+	SharedInfo->si_logEvents = GetCfgLogEvents();
 }
 
 /*
@@ -1049,9 +1049,9 @@ reconfig(void)
 		Trace(TR_MISC, "Rereading command file");
 
 		/*
-		 * Re-init characteristics table for media.
+		 * Re-init media parameters table.
 		 */
-		MakeMediaCharsTable();
+		MakeMediaParamsTable();
 
 		readCmdFile();
 
@@ -1149,9 +1149,9 @@ sigUsr1(
 	ShutdownStager = signum;
 
 	if (stageDone != NULL) {
-		pthread_mutex_lock(&stageDone->mutex);
-		pthread_cond_signal(&stageDone->cond);
-		pthread_mutex_unlock(&stageDone->mutex);
+		PthreadMutexLock(&stageDone->sd_mutex);
+		PthreadCondSignal(&stageDone->sd_cond);
+		PthreadMutexUnlock(&stageDone->sd_mutex);
 	}
 }
 
@@ -1178,7 +1178,7 @@ requeueRequests(void)
 	 * copyprocList will be allocated after first SendToScheduler() call
 	 * if it's not recovered or allocated yet.
 	 */
-	if (CopyprocList != NULL) {
+	if (CopyInstanceList != NULL) {
 		nocopyproc = B_FALSE;
 	}
 
@@ -1209,11 +1209,11 @@ requeueRequests(void)
 			} else {
 				pthread_mutexattr_t mattr;
 
-				pthread_mutexattr_init(&mattr);
-				pthread_mutexattr_setpshared(&mattr,
+				PthreadMutexattrInit(&mattr);
+				PthreadMutexattrSetpshared(&mattr,
 				    PTHREAD_PROCESS_SHARED);
-				(void) pthread_mutex_init(&fi->mutex, &mattr);
-				pthread_mutexattr_destroy(&mattr);
+				PthreadMutexInit(&fi->mutex, &mattr);
+				PthreadMutexattrDestroy(&mattr);
 
 				Trace(TR_MISC, "Requeue request: %d.%d "
 				    "flags:%04x context:%d",
@@ -1236,8 +1236,11 @@ requeueRequests(void)
 		} else {
 			int i;
 
-			for (i = 0; i < CopyprocList->entries; i++) {
-				if (CopyprocList->data[i].pid == fi->context) {
+			for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+				CopyInstanceInfo_t *ci;
+
+				ci = &CopyInstanceList->cl_data[i];
+				if (ci->ci_pid == fi->context) {
 					/*
 					 * Orphan copy proc is still staging
 					 * this file. Leave this as staging.
@@ -1251,7 +1254,7 @@ requeueRequests(void)
 					break;
 				}
 			}
-			if (i >= CopyprocList->entries) {
+			if (i >= CopyInstanceList->cl_entries) {
 				Trace(TR_MISC, "Delete orphan request: %d.%d "
 				    "flags: %04x context: %d",
 				    fi->id.ino, fi->id.gen, fi->flags,

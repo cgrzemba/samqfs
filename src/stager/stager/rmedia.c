@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.58 $"
+#pragma ident "$Revision: 1.59 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -61,23 +61,23 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/diskvols.h"
 #include "sam/lib.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/custmsg.h"
 #include "aml/stager.h"
+#include "aml/stager_defs.h"
 #include "pub/mig.h"
+#if defined(lint)
+#include "sam/lint.h"
+#endif /* defined(lint) */
 
 /* Local headers. */
-#include "stager.h"
 #include "stager_lib.h"
 #include "stager_config.h"
 #include "stager_shared.h"
 #include "rmedia.h"
-#include "device.h"
-#include "readcmd.h"
-#include "thirdparty.h"
 
-#if defined(lint)
-#include "sam/lint.h"
-#endif /* defined(lint) */
+#include "stager.h"
+#include "thirdparty.h"
 
 extern shm_alloc_t master_shm;
 extern shm_ptr_tbl_t *shm_ptr_tbl;
@@ -109,12 +109,12 @@ static int manualDrives;
 static boolean_t foundThirdParty = B_FALSE;
 
 /*
- *	Media characteristics table.
+ *	Media parameters table.
  */
 static struct {
 	int 	entries;
-	MediaCharsInfo_t *data;
-} mediaCharsTable = { 0, NULL };
+	MediaParamsInfo_t *data;
+} mediaParamsTable = { 0, NULL };
 
 /*
  * Holds all VSNs in the catalog.
@@ -187,7 +187,7 @@ GetNumAllDrives(void)
 		if (IS_LIB_HISTORIAN(entry) || IS_LIB_THIRDPARTY(entry))
 			continue;
 
-		num_drives +=  entry->num_drives;
+		num_drives +=  entry->li_numDrives;
 	}
 
 	return (num_drives);
@@ -232,7 +232,7 @@ IfDrivesAvail(void)
 		 * drives available.
 		 */
 		if (!IS_LIB_HISTORIAN(lib) && !IS_LIB_THIRDPARTY(lib)) {
-			avail += lib->num_avail_drives;
+			avail += lib->li_numAvailDrives;
 		}
 	}
 	ReconfigUnlock();		/* allow reconfig */
@@ -252,14 +252,14 @@ GetNumLibraryDrives(
 
 	ReconfigLock();		/* wait on reconfig */
 
-	if (libraryTable.data[lib].num_avail_drives <
-	    libraryTable.data[lib].num_allowed_drives) {
+	if (libraryTable.data[lib].li_numAvailDrives <
+	    libraryTable.data[lib].li_numAllowedDrives) {
 
-		num_drives = libraryTable.data[lib].num_avail_drives;
+		num_drives = libraryTable.data[lib].li_numAvailDrives;
 
 	} else  {
 
-		num_drives = libraryTable.data[lib].num_allowed_drives;
+		num_drives = libraryTable.data[lib].li_numAllowedDrives;
 	}
 	ReconfigUnlock();		/* allow reconfig */
 
@@ -281,7 +281,7 @@ IsLibraryDriveFree(
 
 	for (i = 0; i < driveTable.entries; i++) {
 		drive = &driveTable.data[i];
-		if (drive->lib == lib && IS_DRIVE_AVAIL(drive)) {
+		if (drive->dr_lib == lib && IS_DRIVE_AVAIL(drive)) {
 			avail = TRUE;
 			break;
 		}
@@ -327,7 +327,7 @@ retrySearch:
 			/*
 			 * Get VSN from manual drive.
 			 */
-			getManualVsn(&driveTable.data[lib->manual],
+			getManualVsn(&driveTable.data[lib->li_manual],
 			    &vsnTable.data[i]);
 
 		} else if (IS_LIB_DISK(lib)) {
@@ -367,20 +367,26 @@ retrySearch:
 				 * VSN in library.  Check if VSN has moved
 				 * .ie imported or exported.
 				 */
-				struct CatalogEntry *ce = vi->ce;
-				if (ce->CeEq != libraryTable.data[vi->lib].eq) {
+				struct CatalogEntry *ce;
+				LibraryInfo_t *lib;
+
+				ce = vi->ce;
+				lib = &libraryTable.data[vi->lib];
+
+				if (ce->CeEq != lib->li_eq) {
 					int i;
 
 					for (i = 0; i < libraryTable.entries;
 					    i++) {
-						if (ce->CeEq ==
-						    libraryTable.data[i].eq) {
+						lib = &libraryTable.data[i];
+						if (ce->CeEq == lib->li_eq) {
 							vi->lib = i;
 							break;
 						}
 					}
 				}
 			}
+
 			/*
 			 * If disk volume, check existence of the
 			 * the diskvols.seqnum.
@@ -499,7 +505,7 @@ GetEqOrdinal(
 
 	dev_ent_t *dev;
 	DriveInfo_t *entry = &driveTable.data[drive];
-	dev = entry->device;
+	dev = entry->dr_device;
 	if (dev != NULL) {
 		eq = dev->eq;
 	}
@@ -517,7 +523,7 @@ IsLibraryOff(
 	LibraryInfo_t *entry = &libraryTable.data[lib];
 
 	return (IS_LIB_OFF(entry) ||
-	    (IS_LIB_AVAIL(entry) && entry->num_avail_drives == 0));
+	    (IS_LIB_AVAIL(entry) && entry->li_numAvailDrives == 0));
 }
 
 /*
@@ -560,9 +566,9 @@ setLibraryDrivesAllowed(
 
 	for (i = 0; i < libraryTable.entries; i++) {
 		lib = &libraryTable.data[i];
-		if (strcmp(name, lib->name) == 0) {
-			if (count < lib->num_allowed_drives) {
-				lib->num_allowed_drives = count;
+		if (strcmp(name, lib->li_name) == 0) {
+			if (count < lib->li_numAllowedDrives) {
+				lib->li_numAllowedDrives = count;
 			}
 			break;
 		}
@@ -722,28 +728,28 @@ initLibraryTable(void)
 	for (dev = dev_head; dev != NULL;
 	    dev = (struct dev_ent *)SHM_REF_ADDR(dev->next)) {
 
-		lib->flags = 0;
-		lib->device = dev;
+		lib->li_flags = 0;
+		lib->li_device = dev;
 
 		if (dev->type == DT_HISTORIAN) {
-			(void) strncpy(lib->name, "Historian",
-			    sizeof (lib->name));
+			(void) strncpy(lib->li_name, "Historian",
+			    sizeof (lib->li_name));
 			SET_LIB_HISTORIAN(lib);
-			lib->eq = dev->eq;
-			lib->num_drives = manualDrives;
+			lib->li_eq = dev->eq;
+			lib->li_numDrives = manualDrives;
 
 		} else if (IS_THIRD_PARTY(dev)) {
-			(void) strncpy(lib->name, "ThirdParty",
-			    sizeof (lib->name));
+			(void) strncpy(lib->li_name, "ThirdParty",
+			    sizeof (lib->li_name));
 			SET_LIB_THIRDPARTY(lib);
-			lib->eq = dev->eq;
+			lib->li_eq = dev->eq;
 			(void) InitMigration(dev);
 
 		} else if (IS_ROBOT(dev) || dev->equ_type == DT_PSEUDO_SC) {
 			dev_ent_t *find;
 
-			memcpy(lib->name, dev->set, sizeof (lib->name));
-			lib->eq = dev->eq;
+			memcpy(lib->li_name, dev->set, sizeof (lib->li_name));
+			lib->li_eq = dev->eq;
 
 			/* Check if remote sam client */
 			if (dev->equ_type == DT_PSEUDO_SC) {
@@ -758,13 +764,13 @@ initLibraryTable(void)
 			    find = (struct dev_ent *)SHM_REF_ADDR(find->next)) {
 				if (find->eq != dev->eq) {
 					if (find->fseq == dev->eq) {
-						lib->num_drives++;
+						lib->li_numDrives++;
 
-						sprintf(drive->name, "%s%d",
+						sprintf(drive->dr_name, "%s%d",
 						    sam_mediatoa(find->type),
 						    find->eq);
-						drive->device = find;
-						drive->lib = ldx;
+						drive->dr_device = find;
+						drive->dr_lib = ldx;
 
 						/*
 						 * Increment to next drive
@@ -780,17 +786,17 @@ initLibraryTable(void)
 			/*
 			 * Manual drive.
 			 */
-			sprintf(lib->name, "%s%d", sam_mediatoa(dev->type),
+			sprintf(lib->li_name, "%s%d", sam_mediatoa(dev->type),
 			    dev->eq);
 			SET_LIB_MANUAL(lib);
-			lib->num_drives = 1;
-			lib->manual = ddx;
-			lib->eq = dev->eq;
+			lib->li_numDrives = 1;
+			lib->li_manual = ddx;
+			lib->li_eq = dev->eq;
 
-			sprintf(drive->name, "%s%d", sam_mediatoa(dev->type),
+			sprintf(drive->dr_name, "%s%d", sam_mediatoa(dev->type),
 			    dev->eq);
-			drive->device = dev;
-			drive->lib = ldx;
+			drive->dr_device = dev;
+			drive->dr_lib = ldx;
 
 			/* Increment to next drive table entry. */
 			drive++;
@@ -805,7 +811,7 @@ initLibraryTable(void)
 		 * Set number of drives allowed.  Increment to next
 		 * library table entry.
 		 */
-		lib->num_allowed_drives = lib->num_drives;
+		lib->li_numAllowedDrives = lib->li_numDrives;
 		lib++;
 		ldx++;
 	}
@@ -814,12 +820,12 @@ initLibraryTable(void)
 		char *mtype;
 
 		mtype = sam_mediatoa(DT_DISK);
-		(void) strncpy(lib->name, mtype, sizeof (lib->name));
+		(void) strncpy(lib->li_name, mtype, sizeof (lib->li_name));
 		SET_LIB_DISK(lib);
 		SET_LIB_AVAIL(lib);
-		lib->num_drives = numDiskVols * STREAMS_PER_DISKVOL;
-		lib->num_allowed_drives = numDiskVols * STREAMS_PER_DISKVOL;
-		lib->num_avail_drives = numDiskVols * STREAMS_PER_DISKVOL;
+		lib->li_numDrives = numDiskVols * STREAMS_PER_DISKVOL;
+		lib->li_numAllowedDrives = numDiskVols * STREAMS_PER_DISKVOL;
+		lib->li_numAvailDrives = numDiskVols * STREAMS_PER_DISKVOL;
 
 		/*
 		 * Define drives belonging to disk archive library.
@@ -827,8 +833,8 @@ initLibraryTable(void)
 		for (jmap = 0; jmap < numDiskVols * STREAMS_PER_DISKVOL;
 		    jmap++) {
 
-			sprintf(drive->name, "%s%d", mtype, jmap);
-			drive->lib = ldx;
+			sprintf(drive->dr_name, "%s%d", mtype, jmap);
+			drive->dr_lib = ldx;
 			SET_DRIVE_AVAIL(drive);
 
 			/* Increment to next drive table entry. */
@@ -844,20 +850,20 @@ initLibraryTable(void)
 		char *mtype;
 
 		mtype = sam_mediatoa(DT_STK5800);
-		(void) strncpy(lib->name, mtype, sizeof (lib->name));
+		(void) strncpy(lib->li_name, mtype, sizeof (lib->li_name));
 		SET_LIB_HONEYCOMB(lib);
 		SET_LIB_AVAIL(lib);
-		lib->num_drives = numHoneycombVols;
-		lib->num_allowed_drives = numHoneycombVols;
-		lib->num_avail_drives = numHoneycombVols;
+		lib->li_numDrives = numHoneycombVols;
+		lib->li_numAllowedDrives = numHoneycombVols;
+		lib->li_numAvailDrives = numHoneycombVols;
 
 		/*
 		 * Define drives belonging to honeycomb archive library.
 		 */
 		for (jmap = 0; jmap < numHoneycombVols; jmap++) {
 
-			sprintf(drive->name, "%s%d", mtype, jmap);
-			drive->lib = ldx;
+			sprintf(drive->dr_name, "%s%d", mtype, jmap);
+			drive->dr_lib = ldx;
 			SET_DRIVE_AVAIL(drive);
 
 			/* Increment to next drive table entry. */
@@ -870,50 +876,50 @@ initLibraryTable(void)
 }
 
 /*
- * Make characteristics table for media.  This table is created from
+ * Make parameters table for media.  This table is created from
  * information in dev_nm2mt[].
  */
 void
-MakeMediaCharsTable(void)
+MakeMediaParamsTable(void)
 {
 	size_t size;
 	int i = 0;
 	extern sam_defaults_t *Defaults;
 
-	if (mediaCharsTable.data != NULL) {
-		SamFree(mediaCharsTable.data);
+	if (mediaParamsTable.data != NULL) {
+		SamFree(mediaParamsTable.data);
 
-		mediaCharsTable.data = NULL;
-		mediaCharsTable.entries = 0;
+		mediaParamsTable.data = NULL;
+		mediaParamsTable.entries = 0;
 	}
 
 	while (dev_nm2mt[i].nm != NULL) {
-		mediaCharsTable.entries++;
+		mediaParamsTable.entries++;
 		i++;
 	}
 
-	size = mediaCharsTable.entries * sizeof (MediaCharsInfo_t);
-	SamMalloc(mediaCharsTable.data, size);
-	(void) memset(mediaCharsTable.data, 0, size);
+	size = mediaParamsTable.entries * sizeof (MediaParamsInfo_t);
+	SamMalloc(mediaParamsTable.data, size);
+	(void) memset(mediaParamsTable.data, 0, size);
 
-	for (i = 0; i < mediaCharsTable.entries; i++) {
+	for (i = 0; i < mediaParamsTable.entries; i++) {
 		dev_nm_t *dev;
-		MediaCharsInfo_t *mc;
+		MediaParamsInfo_t *mp;
 
-		mc = &mediaCharsTable.data[i];
+		mp = &mediaParamsTable.data[i];
 		dev = &dev_nm2mt[i];
 
-		(void) strcpy(mc->name, dev->nm);
-		mc->type = dev->dt;
-		mc->bufsize = STAGER_DEFAULT_MC_BUFSIZE;
+		(void) strcpy(mp->mp_name, dev->nm);
+		mp->mp_type = dev->dt;
+		mp->mp_bufsize = STAGER_DEFAULT_MC_BUFSIZE;
 
-		if (mc->type == DT_OPTICAL) {
-			mc->type = Defaults->optical;
-			mc->flags |= MC_DEFAULT;
+		if (mp->mp_type == DT_OPTICAL) {
+			mp->mp_type = Defaults->optical;
+			mp->mp_flags |= MC_DEFAULT;
 		}
-		if (mc->type == DT_TAPE) {
-			mc->type = Defaults->tape;
-			mc->flags |= MC_DEFAULT;
+		if (mp->mp_type == DT_TAPE) {
+			mp->mp_type = Defaults->tape;
+			mp->mp_flags |= MC_DEFAULT;
 		}
 	}
 }
@@ -922,7 +928,7 @@ MakeMediaCharsTable(void)
  * Set buffer size for media type.
  */
 void
-SetMediaCharsBufsize(
+SetMediaParamsBufsize(
 	char *name,
 	int bufsize,
 	boolean_t lockbuf)
@@ -932,18 +938,18 @@ SetMediaCharsBufsize(
 
 	type = sam_atomedia(name);
 
-	for (i = 0; i < mediaCharsTable.entries; i++) {
-		MediaCharsInfo_t *mc;
+	for (i = 0; i < mediaParamsTable.entries; i++) {
+		MediaParamsInfo_t *mp;
 
-		mc = &mediaCharsTable.data[i];
+		mp = &mediaParamsTable.data[i];
 
 		/*
 		 * Check for matching media type.  Need to change actual
 		 * media classs and, if applicable, the default media class.
 		 */
-		if (mc->type == type) {
-			mc->bufsize = bufsize;
-			mc->lockbuf = lockbuf;
+		if (mp->mp_type == type) {
+			mp->mp_bufsize = bufsize;
+			mp->mp_lockbuf = lockbuf;
 		}
 	}
 }
@@ -952,20 +958,20 @@ SetMediaCharsBufsize(
  * Get buffer size and lock for media type.
  */
 int
-GetMediaCharsBufsize(
+GetMediaParamsBufsize(
 	media_t type,
 	boolean_t *lockbuf)
 {
 	int i;
 	int bufsize = 0;
 
-	for (i = 0; i < mediaCharsTable.entries; i++) {
-		MediaCharsInfo_t *mc;
+	for (i = 0; i < mediaParamsTable.entries; i++) {
+		MediaParamsInfo_t *mp;
 
-		mc = &mediaCharsTable.data[i];
-		if (mc->type == type) {
-			bufsize = mc->bufsize;
-			*lockbuf = mc->lockbuf;
+		mp = &mediaParamsTable.data[i];
+		if (mp->mp_type == type) {
+			bufsize = mp->mp_bufsize;
+			*lockbuf = mp->mp_lockbuf;
 			break;
 		}
 	}
@@ -991,7 +997,7 @@ initCatalog(void)
 	removableMediaFound = B_FALSE;
 	for (i = 0; i < libraryTable.entries; i++) {
 		lib = &libraryTable.data[i];
-		if ((lib->flags & (LI_DISK | LI_HONEYCOMB)) == 0) {
+		if ((lib->li_flags & (LI_DISK | LI_HONEYCOMB)) == 0) {
 			removableMediaFound = B_TRUE;
 			break;
 		}
@@ -1079,7 +1085,7 @@ initVsnTable(void)
 
 		} else {
 			if (vsnTable.catalog) {
-				dev = lib->device;
+				dev = lib->li_device;
 				cetable = CatalogGetEntriesByLibrary(dev->eq,
 				    &numCatalogEntries);
 				vsnTable.entries += numCatalogEntries;
@@ -1109,7 +1115,7 @@ initVsnTable(void)
 
 	for (i = 0; i < libraryTable.entries; i++) {
 
-		dev = libraryTable.data[i].device;
+		dev = libraryTable.data[i].li_device;
 
 		lib = &libraryTable.data[i];
 		if (IS_LIB_MANUAL(lib)) {
@@ -1194,23 +1200,23 @@ setDriveState(
 	for (i = 0; i < libraryTable.entries; i++) {
 
 		lib = &libraryTable.data[i];
-		if (lib->flags & (LI_DISK | LI_HONEYCOMB))
+		if (lib->li_flags & (LI_DISK | LI_HONEYCOMB))
 			continue;
 
-		dev = lib->device;
+		dev = lib->li_device;
 		avail_drives = 0;
 		flags = 0;
 
 		if (IS_LIB_HISTORIAN(lib)) {
 
-			lib->num_allowed_drives = manual_drives;
-			lib->num_avail_drives = manual_drives;
+			lib->li_numAllowedDrives = manual_drives;
+			lib->li_numAvailDrives = manual_drives;
 			avail_drives = manual_drives;
 
 		} else if (IS_LIB_THIRDPARTY(lib)) {
 
-			lib->num_allowed_drives = 1;
-			lib->num_avail_drives = 1;
+			lib->li_numAllowedDrives = 1;
+			lib->li_numAvailDrives = 1;
 			avail_drives = 1;
 
 			if (dev->state == DEV_ON) {
@@ -1225,7 +1231,7 @@ setDriveState(
 			 * Manual drive is available if drive is on and ready.
 			 */
 
-			drive->flags = 0;
+			drive->dr_flags = 0;
 			if (dev->state == DEV_ON && dev->status.b.ready) {
 				flags = LI_AVAIL;
 				SET_DRIVE_AVAIL(drive);
@@ -1237,7 +1243,7 @@ setDriveState(
 
 			} else {
 				CLEAR_DRIVE_AVAIL(drive);
-				(void) memset(&drive->vi, 0,
+				(void) memset(&drive->dr_vi, 0,
 				    sizeof (VsnInfo_t));
 			}
 			if (IS_LIB_MANUAL(lib))
@@ -1283,7 +1289,7 @@ setDriveState(
 				 * Drive is available if library is available
 				 * drive is on.
 				 */
-				drive->flags = 0;
+				drive->dr_flags = 0;
 				if ((flags & LI_AVAIL) &&
 				    ent->state == DEV_ON) {
 					SET_DRIVE_AVAIL(drive);
@@ -1296,25 +1302,25 @@ setDriveState(
 					}
 				} else {
 					CLEAR_DRIVE_AVAIL(drive);
-					(void) memset(&drive->vi, 0,
+					(void) memset(&drive->dr_vi, 0,
 					    sizeof (VsnInfo_t));
 				}
 				drive++;
 			}
 		}
 
-		if ((lib->flags & (LI_AVAIL | LI_OFF)) != flags ||
-		    lib->num_avail_drives != avail_drives) {
+		if ((lib->li_flags & (LI_AVAIL | LI_OFF)) != flags ||
+		    lib->li_numAvailDrives != avail_drives) {
 
 			/*
 			 * Library state has changed.
 			 */
 
-			lib->flags &= ~(LI_AVAIL | LI_OFF);
-			lib->flags |= flags;
-			lib->num_avail_drives = avail_drives;
+			lib->li_flags &= ~(LI_AVAIL | LI_OFF);
+			lib->li_flags |= flags;
+			lib->li_numAvailDrives = avail_drives;
 			Trace(TR_MISC, "Library %d state change: 0x%x %d",
-			    lib->eq, lib->flags, avail_drives);
+			    lib->li_eq, lib->li_flags, avail_drives);
 			changed = TRUE;
 		}
 	}
@@ -1332,7 +1338,7 @@ getManualVsn(
 	dev_ent_t *dev;
 	int i;
 
-	dev = drive->device;
+	dev = drive->dr_device;
 
 	if (dev->status.b.ready == 0 ||
 	    dev->status.b.present == 0 ||
@@ -1347,8 +1353,9 @@ getManualVsn(
 		vi->flags = 0;
 		vi->media = dev->type;
 		for (i = 0; i < driveTable.entries; i++) {
-			if (driveTable.data[i].lib == vi->lib &&
-			    strcmp(driveTable.data[i].vi.vsn, vi->vsn) == 0) {
+			if (driveTable.data[i].dr_lib == vi->lib &&
+			    strcmp(driveTable.data[i].dr_vi.vsn,
+			    vi->vsn) == 0) {
 
 				SET_VSN_LOADED(vi);	/* mark loaded */
 				vi->drive = i;		/* set drive */
@@ -1393,9 +1400,10 @@ getLibraryVsn(
 				for (i = 0; i < driveTable.entries; i++) {
 					dr = &driveTable.data[i];
 
-					if (dr->lib == vi->lib &&
-					    dr->vi.vsn[0] != '\0' &&
-					    strcmp(dr->vi.vsn, vi->vsn) == 0) {
+					if (dr->dr_lib == vi->lib &&
+					    dr->dr_vi.vsn[0] != '\0' &&
+					    strcmp(dr->dr_vi.vsn,
+					    vi->vsn) == 0) {
 
 						/* mark loaded */
 						SET_VSN_LOADED(vi);
@@ -1478,8 +1486,9 @@ getDiskLibraryVsn(
 	 */
 	if (!IS_VSN_UNUSABLE(vi)) {
 		for (i = 0; i < driveTable.entries; i++) {
-			if (driveTable.data[i].lib == vi->lib &&
-			    strcmp(driveTable.data[i].vi.vsn, vi->vsn) == 0) {
+			if (driveTable.data[i].dr_lib == vi->lib &&
+			    strcmp(driveTable.data[i].dr_vi.vsn,
+			    vi->vsn) == 0) {
 
 				SET_VSN_LOADED(vi);	/* mark loaded */
 				vi->drive = i;		/* set drive */
@@ -1496,11 +1505,12 @@ static void
 getDriveVsn(
 	DriveInfo_t *drive)
 {
-	VsnInfo_t *vi = &drive->vi;
+	VsnInfo_t *vi;
 	dev_ent_t *dev;
 	int i;
 
-	dev = drive->device;
+	vi = &drive->dr_vi;
+	dev = drive->dr_device;
 
 	if (dev->status.b.ready == 0 ||
 	    dev->status.b.present == 0 ||
@@ -1514,13 +1524,14 @@ getDriveVsn(
 		memmove(vi->vsn, dev->vsn, sizeof (vi->vsn));
 		vi->flags = 0;
 		vi->media = dev->type;
-		vi->lib = drive->lib;
+		vi->lib = drive->dr_lib;
 		for (i = 0; i < driveTable.entries; i++) {
-			if (driveTable.data[i].lib == vi->lib &&
-			    strcmp(driveTable.data[i].vi.vsn, vi->vsn) == 0) {
+			if (driveTable.data[i].dr_lib == vi->lib &&
+			    strcmp(driveTable.data[i].dr_vi.vsn,
+			    vi->vsn) == 0) {
 
 				SET_VSN_LOADED(vi);	/* mark loaded */
-				vi->drive = i;	  /* set drive */
+				vi->drive = i;		/* set drive */
 				break;
 			}
 		}

@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -68,24 +68,26 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/custmsg.h"
 #include "sam/exit.h"
 #include "sam/sam_malloc.h"
-
-/* Local headers. */
-#include "stager_config.h"
-#include "stager_lib.h"
-#include "stage_reqs.h"
-#include "rmedia.h"
-#include "stream.h"
-#include "copy_defs.h"
-#include "filesys.h"
-#include "copy.h"
-
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+/* Local headers. */
+#include "stager_config.h"
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "rmedia.h"
+#include "stream.h"
+#include "copy_defs.h"
+
+#include "copy.h"
+#include "circular_io.h"
+
 /* Public data. */
-extern CopyInstance_t *Context;
-extern CopyControl_t *Control;
+extern CopyInstanceInfo_t *Instance;
+extern IoThreadInfo_t *IoThread;
 extern StreamInfo_t *Stream;
 
 /* Private data. */
@@ -115,7 +117,7 @@ static int simErrors = 5;
  * Init removable media file stage.
  */
 void
-InitRmStage(void)
+RmInit(void)
 {
 	memset(&rmInfo, 0, sizeof (struct sam_rminfo));
 }
@@ -124,7 +126,7 @@ InitRmStage(void)
  * Load removable media volume.
  */
 int
-LoadRmVolume(void)
+RmLoadVolume(void)
 {
 	char rmPath[MAXPATHLEN + 4];
 	char *mount_name;
@@ -132,9 +134,9 @@ LoadRmVolume(void)
 	int error = 0;
 
 	Trace(TR_MISC, "Load rm volume: '%s.%s'",
-	    sam_mediatoa(Context->media), Stream->vsn);
+	    sam_mediatoa(Instance->ci_media), Stream->vsn);
 
-	if (IS_REMOTE_STAGE(Context)) {
+	if (Instance->ci_flags & CI_samremote) {
 		initRemoteStage();
 	}
 
@@ -155,9 +157,9 @@ LoadRmVolume(void)
 
 	mount_name = GetMountPointName(file->fseq);
 
-	sprintf(rmPath, "%s/%s/rm%d", mount_name, RM_DIR, Context->rmfn);
+	sprintf(rmPath, "%s/%s/rm%d", mount_name, RM_DIR, Instance->ci_rmfn);
 
-	error = loadVol(rmPath, Stream->vsn, Context->media);
+	error = loadVol(rmPath, Stream->vsn, Instance->ci_media);
 
 	if (error == 0) {
 		/*
@@ -172,7 +174,7 @@ LoadRmVolume(void)
  * Get removable media file block size.
  */
 int
-GetRmBlockSize(void)
+RmGetBlockSize(void)
 {
 	return (rmInfo.block_size);
 }
@@ -181,12 +183,12 @@ GetRmBlockSize(void)
  * Get removable media file buffer size.
  */
 offset_t
-GetRmBufferSize(
+RmGetBufferSize(
 	int block_size)
 {
 	offset_t buffer_size = 0;
 
-	if ((Context->media & DT_CLASS_MASK) == DT_OPTICAL) {
+	if ((Instance->ci_media & DT_CLASS_MASK) == DT_OPTICAL) {
 		/*
 		 * Optical media reads are blocked by driver.
 		 */
@@ -206,7 +208,7 @@ GetRmBufferSize(
  * following load volume request.
  */
 u_longlong_t
-GetRmPosition(void)
+RmGetPosition(void)
 {
 	return (rmInfo.position);
 }
@@ -215,7 +217,7 @@ GetRmPosition(void)
  * Get drive number for the mounted VSN.
  */
 equ_t
-GetRmDriveNumber(void)
+RmGetDriveNumber(void)
 {
 	return (rmDriveNumber);
 }
@@ -224,27 +226,27 @@ GetRmDriveNumber(void)
  * Unload removable media file.
  */
 void
-UnloadRmVolume(void)
+RmUnloadVolume(void)
 {
 	struct sam_ioctl_rmunload rmunload;
 
 	Trace(TR_MISC, "Unload rm volume: '%s'", Stream->vsn);
 	rmunload.flags = 0;
 
-	if (IS_REMOTE_STAGE(Context)) {
-		if (SamrftUnloadVol(Control->rft, &rmunload) < 0) {
+	if (Instance->ci_flags & CI_samremote) {
+		if (SamrftUnloadVol(IoThread->io_rftHandle, &rmunload) < 0) {
 			WarnSyscallError(HERE, "SamrftUnloadVol", "");
 		}
 
-		SamrftDisconnect(Control->rft);
-		Control->rft = NULL;
+		SamrftDisconnect(IoThread->io_rftHandle);
+		IoThread->io_rftHandle = NULL;
 
 	} else {
 
-		if (ioctl(Control->rmfd, F_UNLOAD, &rmunload) < 0) {
+		if (ioctl(IoThread->io_rmFildes, F_UNLOAD, &rmunload) < 0) {
 			WarnSyscallError(HERE, "ioctl", "F_UNLOAD");
 		}
-		if (close(Control->rmfd) < 0) {
+		if (close(IoThread->io_rmFildes) < 0) {
 			WarnSyscallError(HERE, "close", "");
 		}
 	}
@@ -254,19 +256,19 @@ UnloadRmVolume(void)
  * Seek to block on removable media.
  */
 int
-SeekRmVolume(
-	int to_pos)
+RmSeekVolume(
+	int to)
 {
 	int position = -1;
 
-	Trace(TR_MISC, "Start positioning %d", to_pos);
+	Trace(TR_MISC, "Start positioning: %d", to);
 
-	if (IS_REMOTE_STAGE(Context)) {
-		if (SamrftSeekVol(Control->rft, to_pos) < 0) {
+	if (Instance->ci_flags & CI_samremote) {
+		if (SamrftSeekVol(IoThread->io_rftHandle, to) < 0) {
 			WarnSyscallError(HERE, "GetrftSeekVol", "");
 
 		} else {
-			position = to_pos;
+			position = to;
 		}
 
 	} else {
@@ -274,10 +276,11 @@ SeekRmVolume(
 		sam_ioctl_rmposition_t pos_args;
 		int attempts = 2;
 
-		pos_args.setpos = to_pos;
+		pos_args.setpos = to;
 
 		while (position == -1 && attempts-- > 0) {
-			err = ioctl(Control->rmfd, F_RMPOSITION, &pos_args);
+			err = ioctl(IoThread->io_rmFildes, F_RMPOSITION,
+			    &pos_args);
 
 #ifdef SIM_POSITION_ERROR
 			if (simErrors > 0) {
@@ -298,18 +301,20 @@ SeekRmVolume(
 #endif
 
 			if (err >= 0) {
-				position = to_pos;
+				position = to;
 
 			} else {
 				if (errno == ECANCELED) {
-					FileInfo_t *file = Control->file;
+					FileInfo_t *file = IoThread->io_file;
 
 					position = 0;
 
 					Trace(TR_MISC, "Canceled(pos error) "
 					    "inode: %d.%d",
 					    file->id.ino, file->id.gen);
-					SET_FLAG(Control->flags, CC_cancel);
+
+					SET_FLAG(IoThread->io_flags, IO_cancel);
+
 				} else {
 					WarnSyscallError(HERE, "ioctl",
 					    "F_RMPOSITION");
@@ -361,9 +366,9 @@ loadVol(
 	/*
 	 * Request and open the removable media.
 	 */
-	if (IS_REMOTE_STAGE(Context)) {
+	if (Instance->ci_flags & CI_samremote) {
 		SetErrno = 0;
-		if (SamrftLoadVol(Control->rft, &rb, oflag) < 0) {
+		if (SamrftLoadVol(IoThread->io_rftHandle, &rb, oflag) < 0) {
 			if (errno == 0) {
 				SetErrno = ETIME;
 			}
@@ -422,7 +427,7 @@ loadVol(
 			}
 		}
 
-		Control->rmfd = fd;
+		IoThread->io_rmFildes = fd;
 		if (fd == -1) {
 			if (errno == 0) {
 				error = EIO;
@@ -449,8 +454,8 @@ initRemoteStage(void)
 	/*
 	 *	Establish connection to remote host.
 	 */
-	Control->rft = (void *) SamrftConnect(hostName);
-	if (Control->rft == NULL) {
+	IoThread->io_rftHandle = (void *) SamrftConnect(hostName);
+	if (IoThread->io_rftHandle == NULL) {
 		LibFatal(SamrftConnect, hostName);
 	}
 }
@@ -526,15 +531,15 @@ initHostName(void)
 {
 	int af;
 
-	if ((Context->flags & CI_addrval) == 0) {
+	if ((Instance->ci_flags & CI_addrval) == 0) {
 		getHostAddr();
 	}
-	if (Context->flags & CI_ipv6) {
+	if (Instance->ci_flags & CI_ipv6) {
 		af = AF_INET6;
 	} else {
 		af = AF_INET;
 	}
-	hostName = SamrftGetHostByAddr(&Context->host_addr, af);
+	hostName = SamrftGetHostByAddr(&Instance->ci_hostAddr, af);
 	if (hostName == NULL) {
 		FatalSyscallError(EXIT_FATAL, HERE, "SamrftGetHostByAddr", "");
 	}
@@ -569,7 +574,7 @@ getHostAddr(void)
 	for (dev = dev_head; dev != NULL;
 			dev = (struct dev_ent *)SHM_REF_ADDR(dev->next)) {
 
-		if (dev->eq == Context->eq) {
+		if (dev->eq == Instance->ci_eq) {
 			ASSERT(dev->equ_type == DT_PSEUDO_SC);
 			found_device = TRUE;
 			break;
@@ -580,11 +585,11 @@ getHostAddr(void)
 		srvr_clnt_t *server;
 
 		server = (srvr_clnt_t *)SHM_REF_ADDR(dev->dt.sc.server);
-		memcpy(&Context->host_addr, &server->control_addr,
+		memcpy(&Instance->ci_hostAddr, &server->control_addr,
 		    sizeof (in6_addr_t));
-		Context->flags |= CI_addrval;
+		Instance->ci_flags |= CI_addrval;
 		if (server->flags && SRVR_CLNT_IPV6) {
-			Context->flags |= CI_ipv6;
+			Instance->ci_flags |= CI_ipv6;
 		}
 	}
 }
@@ -602,8 +607,8 @@ getRmInfo(
 	extern shm_alloc_t master_shm;
 	extern shm_ptr_tbl_t *shm_ptr_tbl;
 
-	if (IS_REMOTE_STAGE(Context)) {
-		if (SamrftGetVolInfo(Control->rft, &rmInfo,
+	if (Instance->ci_flags & CI_samremote) {
+		if (SamrftGetVolInfo(IoThread->io_rftHandle, &rmInfo,
 		    &rmDriveNumber) < 0) {
 			FatalSyscallError(EXIT_FATAL, HERE,
 			    "SamrftGetVolInfo", "");
@@ -614,7 +619,7 @@ getRmInfo(
 
 		sr.bufsize = SAM_RMINFO_SIZE(1);
 		sr.buf.ptr = &rmInfo;
-		if (ioctl(Control->rmfd, F_GETRMINFO, &sr) < 0) {
+		if (ioctl(IoThread->io_rmFildes, F_GETRMINFO, &sr) < 0) {
 			FatalSyscallError(EXIT_FATAL, HERE, "ioctl",
 			    "F_GETRMINFO");
 		}

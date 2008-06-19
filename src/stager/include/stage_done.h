@@ -34,18 +34,15 @@
 #if !defined(STAGE_DONE_H)
 #define	STAGE_DONE_H
 
-#pragma ident "$Revision: 1.13 $"
-
-/* Local headers. */
-#include "file_defs.h"
+#pragma ident "$Revision: 1.14 $"
 
 /* Structures. */
 
-typedef struct StageDone {
-	pthread_mutex_t	mutex;	/* protect access to data */
-	pthread_cond_t	cond;	/* condition set when data is available */
-	int		first;	/* start of completed file indices */
-	int		last;	/* last of completed file indices */
-} StageDone_t;
+typedef struct StageDoneInfo {
+	pthread_mutex_t	sd_mutex;	/* protect access to data */
+	pthread_cond_t	sd_cond;	/* cond set when data is available */
+	int		sd_first;	/* start of completed file indices */
+	int		sd_last;	/* last of completed file indices */
+} StageDoneInfo_t;
 
 #endif /* STAGE_DONE_H */

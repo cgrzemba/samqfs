@@ -44,7 +44,7 @@
  * may lead to a "deadly embrace" lockup on the trace mutex.
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -130,6 +130,9 @@ static void setAge(char *value, struct TraceCtlEntry *tc);
 
 
 #if defined(DEBUG)
+
+static int waitForDbx = 1;
+
 /*
  * Send assertion message.
  */
@@ -155,9 +158,21 @@ AssertMessage(
 void
 _Assert(
 	char *SrcFile,	/* Caller's source file. */
-	int SrcLine)	/* Caller's source line. */
+	int SrcLine,	/* Caller's source line. */
+	int wait)	/* Wait for dbx */
 {
 	AssertMessage(SrcFile, SrcLine, "Assertion failed");
+
+	if (wait) {
+		while (waitForDbx == 1) {
+			/*
+			 * To continue,
+			 * assign waitForDbx = 0
+			 */
+			sleep(5);
+		}
+		waitForDbx = 1;
+	}
 	abort();
 }
 #endif /* defined(DEBUG) */

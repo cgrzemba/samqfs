@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -41,6 +41,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /* POSIX headers. */
 #include <dlfcn.h>
@@ -51,17 +52,22 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/types.h"
 #include "sam/lib.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "aml/stager.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
 #include "aml/shm.h"
+#include "aml/stager_defs.h"
 
 /* Local headers. */
 #include "stager_lib.h"
+#include "stager_threads.h"
 #include "stager_config.h"
-#include "readcmd.h"
-#include "rmedia.h"
+#include "copy_defs.h"
 #include "file_defs.h"
+#include "rmedia.h"
+
+#include "stager.h"
 #include "thirdparty.h"
 #include "schedule.h"
 
@@ -72,11 +78,11 @@ extern shm_ptr_tbl_t *shm_ptr_tbl;
 #define	NUM_TOOLKIT_API 3
 
 static int initToolkitList();
-static void addThirdPartyRequest(reqid_t id);
+static void addThirdPartyRequest(int id);
 static void *thirdPartyStage(void *arg);
 static void stageFile(ThirdPartyInfo_t *mig, FileInfo_t *file);
 static enum StreamPriority findResources(StreamInfo_t *stream);
-static void cancelThirdPartyStream(ThirdPartyInfo_t *mig, reqid_t id);
+static void cancelThirdPartyStream(ThirdPartyInfo_t *mig, int id);
 
 static boolean_t infiniteLoop = B_TRUE;
 
@@ -116,13 +122,11 @@ SchedComm_t MigComm = {
  */
 int
 SendToMigrator(
-	reqid_t id)
+	int id)
 {
-	int status;
 	SchedRequest_t *request;
 
-	status = pthread_mutex_lock(&MigComm.mutex);
-	ASSERT(status == 0);
+	PthreadMutexLock(&MigComm.mutex);
 
 	SamMalloc(request, sizeof (SchedRequest_t));
 
@@ -143,10 +147,10 @@ SendToMigrator(
 		MigComm.last = request;
 	}
 
-	status = pthread_cond_signal(&MigComm.avail);
+	PthreadCondSignal(&MigComm.avail);
 
-	pthread_mutex_unlock(&MigComm.mutex);
-	return (status);
+	PthreadMutexUnlock(&MigComm.mutex);
+	return (0);
 }
 
 /*
@@ -160,7 +164,7 @@ Migrator(
 	SchedComm_t *comm;
 	SchedRequest_t *request;
 	struct timespec timeout;
-	int status;
+	int rval;
 
 	comm = (SchedComm_t *)arg;
 	if (comm == NULL) {
@@ -177,7 +181,7 @@ Migrator(
 		timeout.tv_sec = time(NULL) + SCHEDULER_TIMEOUT_SECS;
 		timeout.tv_nsec = 0;
 
-		status = pthread_mutex_lock(&comm->mutex);
+		PthreadMutexLock(&comm->mutex);
 
 		/*
 		 * Wait on the condition variable for SCHEDULER_TIMEOUT_SECS or
@@ -185,9 +189,9 @@ Migrator(
 		 */
 		while (comm->first == NULL) {
 
-			status = pthread_cond_timedwait(&comm->avail,
+			rval = pthread_cond_timedwait(&comm->avail,
 			    &comm->mutex, &timeout);
-			if (status == ETIMEDOUT) {
+			if (rval == ETIMEDOUT) {
 				/*
 				 * Wait timed out.  Check if drive state has
 				 * changed and other stage requests can now be
@@ -215,7 +219,7 @@ Migrator(
 			}
 		}
 
-		status = pthread_mutex_unlock(&comm->mutex);
+		PthreadMutexUnlock(&comm->mutex);
 
 	}
 	return (NULL);
@@ -320,20 +324,20 @@ InitMigration(
 		 * will monitor the work list for migration stage requests.
 		 */
 		create_thread.running = B_FALSE;
-		(void) pthread_cond_init(&create_thread.cond, NULL);
-		(void) pthread_mutex_init(&create_thread.mutex, NULL);
+		PthreadCondInit(&create_thread.cond, NULL);
+		PthreadMutexInit(&create_thread.mutex, NULL);
 
 		if (pthread_create(&mig->tid, NULL, thirdPartyStage,
 		    (void *)&idx) != 0) {
 			WarnSyscallError(HERE, "pthread_create", "");
 		}
 
-		(void) pthread_mutex_lock(&create_thread.mutex);
+		PthreadMutexLock(&create_thread.mutex);
 		while (create_thread.running == B_FALSE) {
-			pthread_cond_wait(&create_thread.cond,
+			PthreadCondWait(&create_thread.cond,
 			    &create_thread.mutex);
 		}
-		(void) pthread_mutex_unlock(&create_thread.mutex);
+		PthreadMutexUnlock(&create_thread.mutex);
 
 	}
 
@@ -412,9 +416,9 @@ initToolkitList(void)
 	if (toolkitList.data == NULL) {
 		SamMalloc(toolkitList.data, size);
 	} else {
-		pthread_mutex_lock(&toolkitList.mutex);
+		PthreadMutexLock(&toolkitList.mutex);
 		SamRealloc(toolkitList.data, size);
-		pthread_mutex_unlock(&toolkitList.mutex);
+		PthreadMutexUnlock(&toolkitList.mutex);
 	}
 	return (idx);
 }
@@ -425,7 +429,7 @@ initToolkitList(void)
  */
 static void
 addThirdPartyRequest(
-	reqid_t id)
+	int id)
 {
 	int i;
 	int added;
@@ -494,27 +498,27 @@ thirdPartyStage(
 	    pthread_self(), sam_mediatoa(mig->dev->equ_type),
 	    mig->dev->name);
 
-	(void) pthread_mutex_lock(&create_thread.mutex);
+	PthreadMutexLock(&create_thread.mutex);
 	create_thread.running = B_TRUE;
-	(void) pthread_mutex_unlock(&create_thread.mutex);
-	pthread_cond_signal(&create_thread.cond);
+	PthreadMutexUnlock(&create_thread.mutex);
+	PthreadCondSignal(&create_thread.cond);
 
 	while (infiniteLoop) {
 		(void) sleep(5);
 
-		pthread_mutex_lock(&toolkitList.mutex);
+		PthreadMutexLock(&toolkitList.mutex);
 		mig = &toolkitList.data[idx];
-		pthread_mutex_unlock(&toolkitList.mutex);
+		PthreadMutexUnlock(&toolkitList.mutex);
 
 		if (mig->stream == NULL) continue;
 
 		stream = mig->stream;
 
-		THREAD_LOCK(stream);
+		PthreadMutexLock(&stream->mutex);
 
 		stream->priority = findResources(stream);
 		if (stream->priority != SP_start) {
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&stream->mutex);
 			continue;
 		}
 
@@ -524,19 +528,19 @@ thirdPartyStage(
 
 			file = GetFile(stream->first);
 
-			THREAD_LOCK(file);
-			THREAD_UNLOCK(stream);
+			PthreadMutexLock(&file->mutex);
+			PthreadMutexUnlock(&stream->mutex);
 
 			SET_FLAG(file->flags, FI_ACTIVE);
 
 			stageFile(mig, file);
 
-			THREAD_UNLOCK(file);
+			PthreadMutexUnlock(&file->mutex);
 
 			/*
 			 * Remove file from stream before marking it as done.
 			 */
-			THREAD_LOCK(stream);
+			PthreadMutexLock(&stream->mutex);
 			stream->first = file->next;
 
 			file->next = -1;
@@ -546,7 +550,7 @@ thirdPartyStage(
 				stream->last = EOS;
 			}
 		}
-		THREAD_UNLOCK(stream);
+		PthreadMutexUnlock(&stream->mutex);
 	}
 	return (NULL);
 }
@@ -579,7 +583,7 @@ findResources(
  */
 void
 CancelThirdPartyRequest(
-	reqid_t id)
+	int id)
 {
 	int i;
 	int copy;
@@ -632,10 +636,10 @@ CancelThirdPartyRequest(
 static void
 cancelThirdPartyStream(
 	ThirdPartyInfo_t *mig,
-	reqid_t id)
+	int id)
 {
 	FileInfo_t *curr;
-	reqid_t curr_id;
+	int curr_id;
 	boolean_t done = B_FALSE;
 	boolean_t found = B_FALSE;
 
@@ -656,10 +660,10 @@ cancelThirdPartyStream(
 			/*
 			 * Remove file from stream.
 			 */
-			THREAD_LOCK(stream);
-			THREAD_LOCK(file);
+			PthreadMutexLock(&stream->mutex);
+			PthreadMutexLock(&file->mutex);
 			if (prev != NULL) {
-				THREAD_LOCK(prev);
+				PthreadMutexLock(&prev->mutex);
 			}
 			if (GET_FLAG(file->flags, FI_ACTIVE)) {
 				tp_stage_t *migreq;
@@ -691,10 +695,10 @@ cancelThirdPartyStream(
 				done = B_TRUE;
 			}
 			if (prev != NULL) {
-				THREAD_UNLOCK(prev);
+				PthreadMutexUnlock(&prev->mutex);
 			}
-			THREAD_UNLOCK(file);
-			THREAD_UNLOCK(stream);
+			PthreadMutexUnlock(&file->mutex);
+			PthreadMutexUnlock(&stream->mutex);
 
 			/*
 			 * Mark file as done.

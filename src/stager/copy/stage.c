@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -66,43 +66,38 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/custmsg.h"
 #include "sam/exit.h"
 #include "sam/sam_malloc.h"
-
-/* Local headers. */
-#include "stager_config.h"
-#include "stager_lib.h"
-#include "stage_reqs.h"
-#include "rmedia.h"
-#include "stream.h"
-#include "copy_defs.h"
-#include "copy.h"
-
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+/* Local headers. */
+#include "stager_config.h"
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "rmedia.h"
+#include "stream.h"
+#include "copy_defs.h"
+
+#include "copy.h"
+#include "circular_io.h"
+
 /* Public data. */
-extern CopyInstance_t *Context;
-
-/*
- * Control information for process.
- */
-extern CopyControl_t *Control;
-
-/*
- * Active stream for process.
- */
+extern CopyInstanceInfo_t *Instance;
+extern IoThreadInfo_t *IoThread;
 extern StreamInfo_t *Stream;
 
 /* Private data. */
-static CopyInstance_t *errContext = NULL;
+static CopyInstanceInfo_t *errInstance = NULL;
 
-static void switchContext(CopyInstance_t *from, boolean_t save);
+static void switchInstance(CopyInstanceInfo_t *from, boolean_t save);
 
 /*
  * Init stage.
  */
 void
-InitStage(
+StageInit(
 	char *new_vsn)
 {
 	/*
@@ -115,9 +110,9 @@ InitStage(
 	 * deal with buffer reuse after the VSN has been loaded and the tape
 	 * block size is obtained for the media.
 	 */
-	if (strcmp(Context->vsn, new_vsn) != 0) {
-		Context->vsn[0] = '\0';
-		Context->dk_position = 0;
+	if (strcmp(Instance->ci_vsn, new_vsn) != 0) {
+		Instance->ci_vsn[0] = '\0';
+		Instance->ci_dkPosition = 0;
 	}
 
 	/*
@@ -125,31 +120,32 @@ InitStage(
 	 * may be switching to another type of media.  Find a
 	 * context for the new media type.
 	 */
-	if (Context->media != Stream->media) {
+	if (Instance->ci_media != Stream->media) {
 
-		errContext = FindCopyProc(Stream->lib, Stream->media);
-		switchContext(errContext, B_TRUE);
+		errInstance = FindCopyInstanceInfo(Stream->lib, Stream->media);
+		switchInstance(errInstance, B_TRUE);
 
-		if (is_disk(errContext->media)) {
-			if (is_stk5800(errContext->media)) {
-				Control->flags |= CC_honeycomb;
+		if (is_disk(errInstance->ci_media)) {
+			if (is_stk5800(errInstance->ci_media)) {
+				IoThread->io_flags |= IO_stk5800;
 			} else {
-				Control->flags |= CC_disk;
+				IoThread->io_flags |= IO_disk;
 			}
-		}
+		} else {
+			/* staging for sam remote */
+			if (errInstance->ci_flags & CI_samremote) {
+				IoThread->io_flags |= IO_samremote;
+			}
 
-		if (Control->numBuffers != 0) {
-			SamFree(Control->buffers[0].data);
-			Control->numBuffers = 0;
 		}
 	}
 
-	if (Control->flags & CC_disk) {
-		InitDkStage();
-	} else if (Control->flags & CC_honeycomb) {
-		HcStageInit();
+	if (IoThread->io_flags & IO_disk) {
+		DkInit();
+	} else if (IoThread->io_flags & IO_stk5800) {
+		HcInit();
 	} else {
-		InitRmStage();
+		RmInit();
 	}
 }
 
@@ -157,16 +153,17 @@ InitStage(
  * End stage.
  */
 void
-EndStage(void)
+StageEnd(void)
 {
-	if (errContext != NULL) {
-		switchContext(NULL, B_FALSE);
-		errContext = NULL;
+	if (errInstance != NULL) {
+		switchInstance(NULL, B_FALSE);
+		errInstance = NULL;
 
-		if (Control->numBuffers != 0) {
-			SamFree(Control->buffers[0].data);
-			Control->numBuffers = 0;
-		}
+		CircularIoDestructor(IoThread->io_reader);
+		CircularIoDestructor(IoThread->io_writer);
+
+		IoThread->io_numBuffers = 0;
+		IoThread->io_blockSize = 0;
 	}
 }
 
@@ -176,17 +173,17 @@ EndStage(void)
 int
 LoadVolume(void)
 {
-	int error = 0;
+	int rval;
 
-	if (Control->flags & CC_disk) {
-		error = LoadDkVolume();
-	} else if (Control->flags & CC_honeycomb) {
-		error = HcStageLoadVolume();
+	if (IoThread->io_flags & IO_disk) {
+		rval = DkLoadVolume();
+	} else if (IoThread->io_flags & IO_stk5800) {
+		rval = HcLoadVolume();
 	} else {
-		error = LoadRmVolume();
+		rval = RmLoadVolume();
 	}
 
-	return (error);
+	return (rval);
 }
 
 /*
@@ -195,14 +192,15 @@ LoadVolume(void)
 int
 NextArchiveFile(void)
 {
-	int error = 0;
+	int rval;
 
-	if (Control->flags & CC_disk) {
-		error = NextDkArchiveFile();
-	} else if (Control->flags & CC_honeycomb) {
-		error = HcStageNextArchiveFile();
+	rval = 0;
+	if (IoThread->io_flags & IO_disk) {
+		rval = DkNextArchiveFile();
+	} else if (IoThread->io_flags & IO_stk5800) {
+		rval = HcNextArchiveFile();
 	}
-	return (error);
+	return (rval);
 }
 
 /*
@@ -211,10 +209,10 @@ NextArchiveFile(void)
 void
 EndArchiveFile(void)
 {
-	if (Control->flags & CC_disk) {
-		EndDkArchiveFile();
-	} else if (Control->flags & CC_honeycomb) {
-		HcStageEndArchiveFile();
+	if (IoThread->io_flags & IO_disk) {
+		DkEndArchiveFile();
+	} else if (IoThread->io_flags & IO_stk5800) {
+		HcEndArchiveFile();
 	}
 }
 
@@ -224,19 +222,20 @@ EndArchiveFile(void)
 int
 GetBlockSize(void)
 {
-	int block_size = 0;
+	int blockSize = 0;
 
-	if (Control->flags & CC_diskArchiving) {
+	if (IoThread->io_flags & IO_diskArchiving) {
 		/*
 		 * Media allocation unit(mau) for disk archive media.
 		 */
-		block_size = OD_SS_DEFAULT;
+		blockSize = OD_BS_DEFAULT;
 	} else {
-		block_size = GetRmBlockSize();
+		blockSize = RmGetBlockSize();
 	}
-	return (block_size);
+	return (blockSize);
 }
 
+#if 0
 /*
  * Get buffer size for mounted media.
  */
@@ -253,21 +252,22 @@ GetBufferSize(
 	}
 	return (buffer_size);
 }
+#endif
 
 /*
- * Get position of archive file.
+ * Get position of archive media.
  */
 u_longlong_t
 GetPosition(void)
 {
 	u_longlong_t position;
 
-	if (Control->flags & CC_disk) {
-		position = GetDkPosition();
-	} else if (Control->flags & CC_honeycomb) {
-		position = HcStageGetPosition();
+	if (IoThread->io_flags & IO_disk) {
+		position = DkGetPosition();
+	} else if (IoThread->io_flags & IO_stk5800) {
+		position = HcGetPosition();
 	} else {
-		position = GetRmPosition();
+		position = RmGetPosition();
 	}
 	return (position);
 }
@@ -277,16 +277,16 @@ GetPosition(void)
  */
 int
 SeekVolume(
-	int to_pos)
+	int to)
 {
 	int position;
 
-	if (Control->flags & CC_disk) {
-		position = SeekDkVolume(to_pos);
-	} else if (Control->flags & CC_honeycomb) {
-		position = HcStageSeekVolume(to_pos);
+	if (IoThread->io_flags & IO_disk) {
+		position = DkSeekVolume(to);
+	} else if (IoThread->io_flags & IO_stk5800) {
+		position = HcSeekVolume(to);
 	} else {
-		position = SeekRmVolume(to_pos);
+		position = RmSeekVolume(to);
 	}
 	return (position);
 }
@@ -300,10 +300,10 @@ GetDriveNumber(void)
 {
 	equ_t eq;
 
-	if (Control->flags & CC_diskArchiving) {
+	if (IoThread->io_flags & IO_diskArchiving) {
 		eq = 0;
 	} else {
-		eq = GetRmDriveNumber();
+		eq = RmGetDriveNumber();
 	}
 	return (eq);
 }
@@ -314,12 +314,12 @@ GetDriveNumber(void)
 void
 UnloadVolume(void)
 {
-	if (Control->flags & CC_disk) {
-		UnloadDkVolume();
-	} else if (Control->flags & CC_honeycomb) {
-		HcStageUnloadVolume();
+	if (IoThread->io_flags & IO_disk) {
+		DkUnloadVolume();
+	} else if (IoThread->io_flags & IO_stk5800) {
+		HcUnloadVolume();
 	} else {
-		UnloadRmVolume();
+		RmUnloadVolume();
 	}
 }
 
@@ -328,47 +328,50 @@ UnloadVolume(void)
  * Save or restore context.
  */
 static void
-switchContext(
-	CopyInstance_t *from,
+switchInstance(
+	CopyInstanceInfo_t *from,
 	boolean_t save)
 {
-	static CopyInstance_t saveContext;
+	static CopyInstanceInfo_t saveInstance;
 
 	if (save) {
-		memcpy(&saveContext, Context, sizeof (saveContext));
+		memcpy(&saveInstance, Instance, sizeof (saveInstance));
 
-		Trace(TR_MISC, "Switch context (0x%x) "
+		Trace(TR_MISC, "Switch instance (0x%x) "
 		    "curr: '%s' 0x%x to: '%s' 0x%x",
-		    (int)Context, sam_mediatoa(Context->media), Context->flags,
-		    sam_mediatoa(from->media), from->flags);
+		    (int)Instance,
+		    sam_mediatoa(Instance->ci_media), Instance->ci_flags,
+		    sam_mediatoa(from->ci_media), from->ci_flags);
 
-		Context->media = from->media;
-		Context->num_buffers = from->num_buffers;
-		Context->flags = from->flags;
-		Context->eq = from->eq;
+		Instance->ci_media = from->ci_media;
+		Instance->ci_numBuffers = from->ci_numBuffers;
+		Instance->ci_flags = from->ci_flags;
+		Instance->ci_eq = from->ci_eq;
 	} else {
 
 		/*
 		 * Restore from saved context.
 		 */
 
-		Trace(TR_MISC, "Restore context (0x%x) "
+		Trace(TR_MISC, "Restore instance (0x%x) "
 		    "curr: '%s' 0x%x to: '%s' 0x%x",
-		    (int)Context, sam_mediatoa(Context->media), Context->flags,
-		    sam_mediatoa(saveContext.media), saveContext.flags);
+		    (int)Instance,
+		    sam_mediatoa(Instance->ci_media), Instance->ci_flags,
+		    sam_mediatoa(saveInstance.ci_media), saveInstance.ci_flags);
 
-		Context->media = saveContext.media;
-		Context->num_buffers = saveContext.num_buffers;
-		Context->flags = saveContext.flags;
-		Context->eq = saveContext.eq;
+		Instance->ci_media = saveInstance.ci_media;
+		Instance->ci_numBuffers = saveInstance.ci_numBuffers;
+		Instance->ci_flags = saveInstance.ci_flags;
+		Instance->ci_eq = saveInstance.ci_eq;
 	}
 
-	Control->flags = 0;
-	if (is_disk(Context->media)) {
-		if (is_stk5800(Context->media)) {
-			Control->flags |= CC_honeycomb;
+	/* Update io thread to reflect changed context. */
+	IoThread->io_flags = 0;
+	if (is_disk(Instance->ci_media)) {
+		if (is_stk5800(Instance->ci_media)) {
+			IoThread->io_flags |= IO_stk5800;
 		} else {
-			Control->flags |= CC_disk;
+			IoThread->io_flags |= IO_disk;
 		}
 	}
 }

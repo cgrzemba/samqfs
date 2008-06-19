@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -67,27 +67,28 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/exit.h"
 #include "sam/custmsg.h"
 #include "aml/stager.h"
+#include "aml/stager_defs.h"
 #include "aml/id_to_path.h"
 #include "sam/sam_malloc.h"
-
-/* Local headers. */
-#include "stager_config.h"
-#include "stager_lib.h"
-#include "stager_threads.h"
-#include "stage_reqs.h"
-#include "rmedia.h"
-#include "stream.h"
-#include "copy_defs.h"
-#include "filesys.h"
-#include "copy.h"
+#include "sam/sam_trace.h"
+#if defined(lint)
+#include "sam/lint.h"
+#endif /* defined(lint) */
 
 /* Honeycomb headers. */
 #include "hc.h"
 #include "hcclient.h"
 
-#if defined(lint)
-#include "sam/lint.h"
-#endif /* defined(lint) */
+/* Local headers. */
+#include "stager_config.h"
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "rmedia.h"
+#include "stream.h"
+#include "copy_defs.h"
+
+#include "copy.h"
+#include "circular_io.h"
 
 /*
  * Context of multi threading Honeycomb API.
@@ -115,8 +116,8 @@ typedef struct retrieveObject {
 } retrieveObject_t;
 
 /* Public data */
-extern CopyInstance_t *Context;
-extern CopyControl_t *Control;
+extern CopyInstanceInfo_t *Instance;
+extern IoThreadInfo_t *IoThread;
 extern StreamInfo_t *Stream;
 extern StagerStateInfo_t *State;
 
@@ -141,7 +142,7 @@ static void *retrieve(void *arg);
  * Init stage from honeycomb data silo.
  */
 void
-HcStageInit(void)
+HcInit(void)
 {
 	DiskVolsDictionary_t *diskvols;
 	struct DiskVolumeInfo *dv;
@@ -171,11 +172,11 @@ HcStageInit(void)
  * Open honeycomb archive file.
  */
 int
-HcStageLoadVolume(void)
+HcLoadVolume(void)
 {
 	Trace(TR_MISC, "Load hc volume: '%s'", Stream->vsn);
 
-	Control->rft = NULL;
+	IoThread->io_rftHandle = NULL;
 
 	initSession();		/* initialize honeycomb session */
 	initAPI();		/* initialize honeycomb api */
@@ -187,7 +188,7 @@ HcStageLoadVolume(void)
  * Open next honeycomb archive file.
  */
 int
-HcStageNextArchiveFile(void)
+HcNextArchiveFile(void)
 {
 	FileInfo_t *file;
 	int copy;
@@ -198,7 +199,7 @@ HcStageNextArchiveFile(void)
 	hc_query_result_set_t *rset;
 	int numOids;
 
-	file = Control->file;
+	file = IoThread->io_file;
 	copy = file->copy;
 
 	Trace(TR_MISC, "HC next archive inode: %d.%d len: %lld offset: %lld",
@@ -251,8 +252,8 @@ HcStageNextArchiveFile(void)
 		return (-1);
 	}
 
-	InvalidateBuffers();
-	Control->currentPos = 0;
+	ResetBuffers();
+	IoThread->io_position = 0;
 
 	/*
 	 * Send retrieve request to worker thread.
@@ -275,7 +276,7 @@ HcStageNextArchiveFile(void)
  * End of honeycomb archive file.
  */
 void
-HcStageEndArchiveFile(void)
+HcEndArchiveFile(void)
 {
 	Trace(TR_DEBUG, "End HC archive file");
 	PthreadMutexLock(&retrieveData->dataMutex);
@@ -290,7 +291,7 @@ HcStageEndArchiveFile(void)
  * Read from honeycomb media.
  */
 int
-HcStageReadArchiveFile(
+HcReadArchiveFile(
 	/* LINTED argument unused in function */
 	void *rft,
 	void *buf,
@@ -404,7 +405,7 @@ HcStageReadArchiveFile(
  * Seek to position on honeycomb archive file.
  */
 int
-HcStageSeekVolume(
+HcSeekVolume(
 	int to_pos)
 {
 	/* Nothing to do */
@@ -415,7 +416,7 @@ HcStageSeekVolume(
  * Get position of honeycomb archive file.
  */
 u_longlong_t
-HcStageGetPosition(void)
+HcGetPosition(void)
 {
 	/* Not available */
 	return (-1);
@@ -426,15 +427,15 @@ HcStageGetPosition(void)
  * Close honeycomb archive file.
  */
 void
-HcStageUnloadVolume(void)
+HcUnloadVolume(void)
 {
 	Trace(TR_MISC, "Unload hc volume: '%s'", Stream->vsn);
 
 	endAPI();
 	endSession();
 
-	(void) SamrftClose(Control->rft);
-	SamrftDisconnect(Control->rft);
+	(void) SamrftClose(IoThread->io_rftHandle);
+	SamrftDisconnect(IoThread->io_rftHandle);
 	if (diskVolume != NULL) {
 		SamFree(diskVolume);
 		diskVolume = NULL;
@@ -454,8 +455,8 @@ initSession(void)
 
 	session = NULL;
 
-	Control->rft = (void *) SamrftConnect("localhost");
-	if (Control->rft == NULL) {
+	IoThread->io_rftHandle = (void *) SamrftConnect("localhost");
+	if (IoThread->io_rftHandle == NULL) {
 		LibFatal(SamrftConnect, "localhost");
 	}
 

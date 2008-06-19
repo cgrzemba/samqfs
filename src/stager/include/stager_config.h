@@ -34,9 +34,7 @@
 #if !defined(CONFIG_H)
 #define	CONFIG_H
 
-#pragma ident "$Revision: 1.21 $"
-
-#include <limits.h>
+#pragma ident "$Revision: 1.22 $"
 
 #define	STAGERD_PROGRAM_NAME	"sam-stagerd"
 #define	COPY_PROGRAM_NAME	"sam-stagerd_copy"
@@ -95,11 +93,11 @@
 #define	REQUEST_TIMEOUT_SECS	2
 
 /*
- * Copy process timeout value in seconds.  Copy proc will wait
+ * Copy process timeout value in seconds.  Copy process will wait
  * on the condition variable (copy requests) for this timeout value.
  * If timeout is reached, the copy process will exit.
  */
-#define	COPYPROC_TIMEOUT_SECS	60*5
+#define	COPY_INSTANCE_TIMEOUT_SECS	60*5
 
 /*
  * Number of times max active stages is exceeded before logging
@@ -117,6 +115,11 @@
  * Max number of copy errors in a stream before rejecting it.
  */
 #define	MAX_COPY_STREAM_ERRORS	10
+
+/*
+ * Default number of i/o buffers.
+ */
+#define	COPY_NUMOF_BUFFERS	4
 
 /*
  * Number of streams to allocate for each disk archive volume.

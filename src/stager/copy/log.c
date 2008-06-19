@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -43,14 +43,12 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 /* SAM-FS headers. */
 #include "aml/stager.h"
 #include "aml/stager_defs.h"
-
-/* Local headers. */
-#include "log_defs.h"
-#include "stager_lib.h"
-
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
 
 /*
  * Write staging event to log file.

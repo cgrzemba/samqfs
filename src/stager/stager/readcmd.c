@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -68,13 +68,13 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/sam_trace.h"
 #include "sam/custmsg.h"
 #include "aml/stager.h"
+#include "aml/stager_defs.h"
 #include "sam/custmsg.h"
 
 /*
  * Local headers.
  */
 #include "stager_config.h"
-#include "readcmd.h"
 #include "rmedia.h"
 
 static void setSimpleParam();
@@ -244,7 +244,7 @@ setBufsizeParams(void)
 				}
 			}
 
-			SetMediaCharsBufsize(media, config.bufsize.size,
+			SetMediaParamsBufsize(media, config.bufsize.size,
 			    config.bufsize.lockbuf);
 
 		} else {

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -60,67 +60,67 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/tar.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
-
-/* Local headers. */
-#include "stager_lib.h"
-#include "stager_config.h"
-#include "stage_reqs.h"
-#include "file_defs.h"
-#include "copy_defs.h"
-#include "copy.h"
-#include "error_retry.h"
-
-/* Public data. */
-extern CopyInstance_t *Context;
-extern CopyControl_t *Control;
-
-/* Private functions. */
-static boolean_t isRetryError(int error);
-
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_config.h"
+#include "stager_threads.h"
+#include "file_defs.h"
+#include "copy_defs.h"
+
+#include "copy.h"
+#include "circular_io.h"
+
+/* Public data. */
+extern CopyInstanceInfo_t *Instance;
+extern IoThreadInfo_t *IoThread;
+
+/* Private functions. */
+static boolean_t isRetryError(int error);
+
 /*
- * Check if stage error should be retried.
+ * Check if stage error should be retried.  This function returns
+ * true if the error should be retried.
  */
-int
-IsRetryError(
-	FileInfo_t *file)
+boolean_t
+IfRetry(
+	FileInfo_t *file,
+	int errorNum)
 {
-	int retry = FALSE;
-	ASSERT(file != 0);
+	boolean_t retval;
 
-	Trace(TR_ERR, "Error retry started inode: %d copy %d errno %d",
-	    file->id.ino, file->copy + 1, errno);
-
-	if (Control->flags & CC_honeycomb) {
-		/* No retry if honeycomb */
-		return (FALSE);
+	if (file == NULL) {
+		return (B_FALSE);
 	}
 
-	/*
-	 *  Check if error can be retried.
-	 */
-	if (isRetryError(errno)) {
-		/*
-		 * Decrement maximum retry attempts for this copy.
-		 */
+	Trace(TR_MISC, "Error retry inode: %d.%d copy: %d errno: %d",
+	    file->id.ino, file->id.gen, file->copy + 1, errorNum);
+
+	if (IoThread->io_flags & IO_stk5800) {
+		/* No retry if honeycomb. */
+		return (B_FALSE);
+	}
+
+	retval = B_FALSE;
+
+	/*  Check if error can be retried. */
+	if (isRetryError(errorNum)) {
+
+		/* Decrement maximum retry attempts for this copy. */
 		file->retry--;
 
-		/*
-		 * Check if max retry count for this copy exhausted.
-		 */
+		/* Check if max retry count for this copy exhausted. */
 		if (file->retry >= 0) {
-			/*
-			 * Max retry count not exhausted.
-			 */
-			retry = TRUE;
-			SetErrno = 0;
+			/* Max retry count not exhausted. */
+			retval = B_TRUE;
 		}
 	}
-
-	return (retry);
+	return (retval);
 }
 
 /*
@@ -171,9 +171,6 @@ SendErrorResponse(
 		 * filesystem and close the file.
 		 */
 		CLEAR_FLAG(file->flags, FI_DCACHE);
-		if (GET_FLAG(file->flags, FI_USE_CSUM)) {
-			SetChecksumDone();
-		}
 		ErrorFile(file);
 	}
 }
@@ -193,8 +190,8 @@ SendErrorResponse(
  * read again.
  */
 int
-RetryRead(
-	int in,
+RetryOptical(
+	char *buf,
 	longlong_t total_read,
 	int file_position)
 {
@@ -202,11 +199,9 @@ RetryRead(
 	int mau_in_buffer;
 	int count;
 	boolean_t error;
+	int bufSize;
 
-	extern CopyInstance_t *Context;
-	extern CopyControl_t *Control;
-
-	if ((Context->media & DT_CLASS_MASK) != DT_OPTICAL) {
+	if ((Instance->ci_media & DT_CLASS_MASK) != DT_OPTICAL) {
 		return (-1);
 	}
 
@@ -214,31 +209,32 @@ RetryRead(
 		return (-1);
 	}
 
-	if (total_read < Control->bufSize) {
+	bufSize = IoThread->io_blockSize * IoThread->io_numBuffers;
+	if (total_read < bufSize) {
 		/*
 		 * Retry empty sector on optical.
 		 */
-		Trace(TR_ERR, "Empty sector retry total_read: %lld",
+		Trace(TR_MISC, "Empty sector retry total_read: %lld",
 		    total_read);
 
 		SetErrno = 0;
 		(void) SetPosition(0, file_position);
 
-		mau_in_buffer = total_read / Control->mau;
-		if (total_read % Control->mau) {
+		mau_in_buffer = total_read / IoThread->io_blockSize;
+		if (total_read % IoThread->io_blockSize) {
 			mau_in_buffer++;
 		}
-		count = mau_in_buffer * Control->mau;
+		count = mau_in_buffer * IoThread->io_blockSize;
 
-		Trace(TR_MISC, "Start empty sector read in: %d count: %d",
-		    in, count);
+		Trace(TR_MISC, "Start empty sector read buf: 0x%x count: %d",
+		    (int)buf, count);
 
-		if (IS_REMOTE_STAGE(Context)) {
-			numbytes_read = SamrftRead(Control->rft,
-			    Control->buffers[in].data, count);
+		if (Instance->ci_flags & CI_samremote) {
+			numbytes_read = SamrftRead(IoThread->io_rftHandle,
+			    buf, count);
 		} else {
-			numbytes_read = read(Control->rmfd,
-			    Control->buffers[in].data, count);
+			numbytes_read = read(IoThread->io_rmFildes,
+			    buf, count);
 		}
 
 		Trace(TR_MISC, "End empty sector read %d", numbytes_read);
@@ -256,7 +252,7 @@ RetryRead(
 	 */
 	Trace(TR_ERR, "Optical read error retry");
 
-	count = Control->bufSize;
+	count = bufSize;
 	error = B_TRUE;
 
 	while (error && count > (8 * 1024)) {
@@ -268,14 +264,14 @@ RetryRead(
 		count = count >> 1;
 
 		Trace(TR_MISC, "Start optical read error retry "
-		    "in: %d count: %d", in, count);
+		    "buf: 0x%x count: %d", (int)buf, count);
 
-		if (IS_REMOTE_STAGE(Context)) {
-			numbytes_read = SamrftRead(Control->rft,
-			    Control->buffers[in].data, count);
+		if (Instance->ci_flags & CI_samremote) {
+			numbytes_read = SamrftRead(IoThread->io_rftHandle,
+			    buf, count);
 		} else {
-			numbytes_read = read(Control->rmfd,
-			    Control->buffers[in].data, count);
+			numbytes_read = read(IoThread->io_rmFildes,
+			    buf, count);
 		}
 		Trace(TR_MISC, "End optical read error retry %d",
 		    numbytes_read);
@@ -284,6 +280,7 @@ RetryRead(
 			error = B_FALSE;
 		}
 	}
+
 	return (numbytes_read);
 }
 

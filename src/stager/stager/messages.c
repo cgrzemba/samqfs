@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -58,17 +58,18 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/udscom.h"
 #include "sam/sam_trace.h"
 #include "aml/stager.h"
-
-/* Local headers. */
-#include "filesys.h"
-#include "schedule.h"
-#include "control.h"
-#include "stage_reqs.h"
-#include "log.h"
-
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
+#include "copy_defs.h"
+
+#include "stager.h"
+#include "schedule.h"
+#include "stage_reqs.h"
 
 /* Server functions. */
 static void *fsMount(void *arg, struct UdsMsgHeader *hdr);

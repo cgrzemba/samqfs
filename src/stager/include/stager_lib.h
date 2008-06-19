@@ -34,21 +34,7 @@
 #if !defined(STAGER_LIB_H)
 #define	STAGER_LIB_H
 
-#pragma ident "$Revision: 1.26 $"
-
-/* POSIX headers. */
-#include <pthread.h>
-
-/* Solaris headers. */
-
-/* SAM-FS headers. */
-#include "sam/param.h"
-#include "sam/sam_trace.h"
-#include "aml/stager_defs.h"
-
-/* Local headers. */
-#include "stager_shared.h"
-#include "log_defs.h"
+#pragma ident "$Revision: 1.27 $"
 
 /*
  * Macros for manipulating a bit mask used as flags.
@@ -88,45 +74,15 @@
  */
 #define	IS_SHARED_CLIENT(x)	((x) & FS_CLIENT)
 
-/* Structures. */
-typedef struct ThreadSema {
-	pthread_mutex_t	mutex;		/* protect access to count */
-	pthread_cond_t	cv;		/* signals change to count */
-	int		count;		/* protected count */
-} ThreadSema_t;
-
-typedef struct ThreadState {
-	pthread_mutex_t mutex;		/* protect access to state */
-	pthread_cond_t	cv;		/* signals change to state */
-	int		state;		/* protected state */
-} ThreadState_t;
-
-/*
- * Structure representing communication to another thread.
- */
-typedef struct ThreadComm {
-	pthread_mutex_t	mutex;		/* protect access to data */
-	pthread_cond_t	avail;		/* data available */
-	int		data_ready;	/* data present */
-	void		*first;
-	void		*last;
-	pthread_t	tid;		/* thread id */
-} ThreadComm_t;
-
-#define	THREAD_INIT_LOCK(x, y)	(pthread_mutex_init(&(x->mutex), y));
-#define	THREAD_LOCK(x)		(pthread_mutex_lock(&(x->mutex)));
-#define	THREAD_UNLOCK(x)	(pthread_mutex_unlock(&(x->mutex)));
+/* Log type definitions. */
+typedef enum {
+    LOG_STAGE_START,
+    LOG_STAGE_DONE,
+    LOG_STAGE_CANCEL,
+    LOG_STAGE_ERROR
+} LogType_t;
 
 extern boolean_t traceOn;
-
-/* Functions */
-void ThreadSemaInit(ThreadSema_t *s, int value);
-void ThreadSemaWait(ThreadSema_t *s);
-void ThreadSemaPost(ThreadSema_t *s);
-
-void ThreadStateInit(ThreadState_t *s);
-void ThreadStateWait(ThreadState_t *s);
-void ThreadStatePost(ThreadState_t *s);
 
 /*
  * Define prototypes in utility.c
@@ -135,6 +91,11 @@ void FatalSyscallError(const int exitStatus, const char *srcFile,
 	const int srcLine, const char *funcName, const char *funcArg);
 void WarnSyscallError(const char *srcFile,
 	const int srcLine, const char *funcName, const char *funcArg);
+void FatalInternalError(const char *srcFile, const int srcLine,
+    const char *msg);
+void WarnInternalError(const char *srcFile, const int srcLine,
+    const char *msg);
+
 char *GetTime();
 size_t GetMemUse();
 void *ShmatSamfs(int mode);

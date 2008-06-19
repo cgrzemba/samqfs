@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -61,19 +61,21 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/exit.h"
 #include "sam/custmsg.h"
 #include "sam/sam_malloc.h"
+#include "sam/sam_trace.h"
 #include "sam/lib.h"
-
-/* Local headers. */
-#include "stager.h"
-#include "stager_lib.h"
-#include "stager_config.h"
-#include "filesys.h"
-#include "device.h"
-#include "rmedia.h"
-
+#include "aml/stager.h"
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
+
+/* Local headers. */
+#include "stager_lib.h"
+#include "stager_config.h"
+#include "stager_shared.h"
+#include "rmedia.h"
+
+#include "stager.h"
 
 /*
  * File system table.
@@ -147,11 +149,11 @@ InitFilesys(void)
 	}
 
 	free(fsarray);		/* free memory allocated in GetFsStatus() */
-	createFileSystemMapFile(SharedInfo->fileSystemFile);
+	createFileSystemMapFile(SharedInfo->si_fileSystemFile);
 	fileSystemTable.data =
-	    (struct sam_fs_status *)MapInFile(SharedInfo->fileSystemFile,
+	    (struct sam_fs_status *)MapInFile(SharedInfo->si_fileSystemFile,
 	    O_RDWR, NULL);
-	SharedInfo->num_filesystems = fileSystemTable.entries;
+	SharedInfo->si_numFilesys = fileSystemTable.entries;
 
 	Trace(TR_DEBUG, "Filesystems initialized");
 	return (0);
@@ -235,7 +237,7 @@ RemoveFileSystemMapFile(void)
 	size_t size;
 
 	size = fileSystemTable.entries * sizeof (struct sam_fs_status);
-	RemoveMapFile(SharedInfo->fileSystemFile,
+	RemoveMapFile(SharedInfo->si_fileSystemFile,
 	    (void *)fileSystemTable.data, size);
 }
 

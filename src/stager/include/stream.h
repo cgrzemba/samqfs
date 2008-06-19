@@ -34,14 +34,11 @@
 #ifndef _STREAM_H
 #define	_STREAM_H
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <file_defs.h>
-#include <rmedia.h>
 
 #define	EOS		-1			/* End of stream */
 

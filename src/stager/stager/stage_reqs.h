@@ -34,15 +34,13 @@
 #if !defined(STAGE_REQS_H)
 #define	STAGE_REQS_H
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 /* SAM-FS headers. */
 #include "aml/stager_defs.h"
 
 /* Local headers. */
 #include "file_defs.h"
-
-typedef int reqid_t;	/* request list identifier */
 
 /* Structures. */
 
@@ -65,7 +63,7 @@ typedef struct StageReqFileVal {
 typedef struct StageReqs {
 	size_t		entries;	/* number of entries in use */
 	size_t		alloc;		/* size of allocated space */
-	reqid_t		*free;		/* free list pointer */
+	int		*free;		/* free list pointer */
 	int		sp;		/* stack pointer for free list */
 	int		requeue;	/* requeue link pointer */
 
@@ -78,19 +76,19 @@ typedef struct StageReqs {
 } StageReqs_t;
 
 /* Functions */
-reqid_t AddFile(sam_stage_request_t *req, int *status);
+int AddFile(sam_stage_request_t *req, int *status);
 void CancelRequest(sam_stage_request_t *req);
 
 FileInfo_t *CreateFile(sam_stage_request_t *req);
-FileInfo_t *GetFile(reqid_t id);
+FileInfo_t *GetFile(int id);
 void InitStageDoneList();
 void SetStageDone(FileInfo_t *file);
 void StageError(FileInfo_t *file, int error);
-void DeleteRequest(reqid_t id);
+void DeleteRequest(int id);
 int GetArcopy(FileInfo_t *file, int start);
 int InitRequestList();
 
-int CheckRequests(reqid_t *id);
+int CheckRequests(int *id);
 void ErrorRequest(sam_stage_request_t *req, int error);
 void SeparateMultiVolReq();
 void DoneOrphanReq(pid_t pid);

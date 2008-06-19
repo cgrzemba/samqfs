@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -57,9 +57,11 @@
 #include "pub/stat.h"
 #include "sam/fioctl.h"
 #include "pub/rminfo.h"
+#include "aml/stager_defs.h"
 
 /* Local headers. */
 #include "stager_lib.h"
+#include "stager_threads.h"
 
 #if defined(lint)
 #include "sam/lint.h"

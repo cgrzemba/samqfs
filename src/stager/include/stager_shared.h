@@ -34,35 +34,34 @@
 #if !defined(STAGER_SHARED_H)
 #define	STAGER_SHARED_H
 
-#pragma ident "$Revision: 1.20 $"
-
-#include "sam/types.h"
+#pragma ident "$Revision: 1.21 $"
 
 /*
  * Stager's shared data definition.  This structure defines common data
  * that is used among all processes.  There is one copy of this structure
  * and its located in a memory mapped file.
  */
-#define	STAGER_SHARED_MAGIC	012322267146
-#define	STAGER_SHARED_VERSION	60814	/* YMMDD */
+#define	SHARED_INFO_MAGIC	012322267146
+#define	SHARED_INFO_VERSION	60814	/* YMMDD */
 
 typedef struct SharedInfo {
-	uint32_t magic;			/* magic number */
-	uint32_t version;		/* version number */
-	long hostId;			/* hostid where sam-stagerd started */
-	pid_t parentPid;		/* pid of stager's parent daemon */
-	upath_t	stageReqsFile;		/* file name for stage requests */
-	upath_t	stageReqExtents;	/* filename for stage request extents */
-	upath_t	stageDoneFile;		/* file name for stage completitions */
-	upath_t	copyprocsFile;		/* file name for copy procs data */
-	upath_t	streamsDir;		/* directory for stream data */
-	int	max_active;		/* max number of active stages */
-	int	num_copyprocs;		/* number of copy processes/threads */
-	int	num_filesystems;	/* number of filesystems */
-	int	logEvents;		/* stage log events */
-	upath_t	fileSystemFile;		/* file name for filesystem data */
-	upath_t	diskVolumesFile;	/* file name for disk volumes */
-	upath_t	coresDir;		/* directory for core files */
+	uint32_t si_magic;		/* magic number */
+	uint32_t si_version;		/* version number */
+	long si_hostId;			/* hostid where sam-stagerd started */
+	pid_t si_parentPid;		/* pid of stager's parent daemon */
+	/* Paths to memory mapped work files. */
+	upath_t	si_stageReqsFile;	/* stage requests file */
+	upath_t	si_stageReqExtents;	/* stage request extents file */
+	upath_t	si_stageDoneFile;	/* stage completitions file */
+	upath_t	si_copyInstancesFile;	/* copy instances data file */
+	upath_t	si_streamsDir;		/* stream data directory */
+	int	si_max_active;		/* max number of active stages */
+	int	si_numCopyInstanceInfos;	/* number of copy processes */
+	int	si_numFilesys;		/* number of filesystems */
+	int	si_logEvents;		/* stage log events */
+	upath_t	si_fileSystemFile;	/* file name for filesystem data */
+	upath_t	si_diskVolumesFile;	/* file name for disk volumes */
+	upath_t	si_coresDir;		/* directory for core files */
 } SharedInfo_t;
 
 extern SharedInfo_t *SharedInfo;

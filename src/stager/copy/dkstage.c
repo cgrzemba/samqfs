@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -68,24 +68,26 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/stager.h"
 #include "aml/id_to_path.h"
 #include "sam/sam_malloc.h"
-
-/* Local headers. */
-#include "stager_config.h"
-#include "stager_lib.h"
-#include "stage_reqs.h"
-#include "rmedia.h"
-#include "stream.h"
-#include "copy_defs.h"
-#include "filesys.h"
-#include "copy.h"
-
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
+/* Local headers. */
+#include "stager_config.h"
+#include "stager_lib.h"
+#include "stager_threads.h"
+#include "rmedia.h"
+#include "stream.h"
+#include "copy_defs.h"
+
+#include "copy.h"
+#include "circular_io.h"
+
 /* Public data */
-extern CopyInstance_t *Context;
-extern CopyControl_t *Control;
+extern CopyInstanceInfo_t *Instance;
+extern IoThreadInfo_t *IoThread;
 extern StreamInfo_t *Stream;
 extern StagerStateInfo_t *State;
 
@@ -104,7 +106,7 @@ static boolean_t diskArchiveOpen;
  * Init stage from disk file.
  */
 void
-InitDkStage(void)
+DkInit(void)
 {
 	DiskVolsDictionary_t *diskvols;
 	struct DiskVolumeInfo *dv;
@@ -134,12 +136,12 @@ InitDkStage(void)
  * Open disk archive file.
  */
 int
-LoadDkVolume(void)
+DkLoadVolume(void)
 {
 	Trace(TR_MISC, "Load dk volume: '%s'", Stream->vsn);
 
 	diskArchiveOpen = B_FALSE;
-	Control->rft = NULL;
+	IoThread->io_rftHandle = NULL;
 
 	return (initRemoteStage());
 }
@@ -148,7 +150,7 @@ LoadDkVolume(void)
  * Open next disk archive file.
  */
 int
-NextDkArchiveFile(void)
+DkNextArchiveFile(void)
 {
 	static upath_t tarFileName;
 	FileInfo_t *file;
@@ -157,14 +159,14 @@ NextDkArchiveFile(void)
 	int error = 0;
 	boolean_t oprmsg = B_TRUE;
 
-	file = Control->file;
+	file = IoThread->io_file;
 	copy = file->copy;
 
 	if (diskArchiveOpen == B_FALSE ||
 	    seqnum != file->ar[copy].section.position) {
 
 		if (diskArchiveOpen) {
-			(void) SamrftClose(Control->rft);
+			(void) SamrftClose(IoThread->io_rftHandle);
 			diskArchiveOpen = B_FALSE;
 		}
 
@@ -178,7 +180,7 @@ NextDkArchiveFile(void)
 		snprintf(fullpath, sizeof (fullpath), "%s/%s",
 		    diskVolume->DvPath, tarFileName);
 
-		Trace(TR_DEBUG, "Open file '%s' (0x%llx)", fullpath, seqnum);
+		Trace(TR_MISC, "Open file '%s' (0x%llx)", fullpath, seqnum);
 
 		if (lastdvavail == B_FALSE &&
 		    strncmp(fullpath, lastdv, sizeof (fullpath)) == 0) {
@@ -192,7 +194,7 @@ NextDkArchiveFile(void)
 		while (error == -1 && retry-- > 0) {
 			int rc;
 
-			rc = SamrftOpen(Control->rft, fullpath,
+			rc = SamrftOpen(IoThread->io_rftHandle, fullpath,
 			    O_RDONLY | O_LARGEFILE, NULL);
 			if (rc == 0) {
 				error = 0;
@@ -210,9 +212,9 @@ NextDkArchiveFile(void)
 		 * current position to beginning of file.
 		 */
 		if (error == 0) {
-			InvalidateBuffers();
+			ResetBuffers();
 			diskArchiveOpen = B_TRUE;
-			Control->currentPos = 0;
+			IoThread->io_position = 0;
 			lastdvavail = B_TRUE;
 		} else {
 			char errbuf[132];
@@ -254,7 +256,7 @@ NextDkArchiveFile(void)
  * End of disk archive file.
  */
 void
-EndDkArchiveFile(void)
+DkEndArchiveFile(void)
 {
 }
 
@@ -262,19 +264,24 @@ EndDkArchiveFile(void)
  * Seek to position on disk archive file.
  */
 int
-SeekDkVolume(
+DkSeekVolume(
 	int to_pos)
 {
-	off64_t set_position;
+	int rval;
+	off64_t setPosition;
 	off64_t offset;
 
-	set_position = to_pos * Control->mau;
-	Trace(TR_DEBUG, "Seek to %lld", set_position);
+	setPosition = to_pos * IoThread->io_blockSize;
+	Trace(TR_DEBUG, "Seek to: %d (%lld)", to_pos, setPosition);
 
-	if (SamrftSeek(Control->rft, set_position, SEEK_SET, &offset) < 0) {
+	rval = SamrftSeek(IoThread->io_rftHandle, setPosition,
+	    SEEK_SET, &offset);
+
+	if (rval < 0) {
 		FatalSyscallError(EXIT_NORESTART, HERE,
 		    "SamrftSeek", "SEEK_SET");
 	}
+
 	return (to_pos);
 }
 
@@ -282,18 +289,20 @@ SeekDkVolume(
  * Get position of disk archive file.
  */
 u_longlong_t
-GetDkPosition(void)
+DkGetPosition(void)
 {
-	u_longlong_t position;
+	int rval;
+	u_longlong_t getPosition;
 	off64_t offset;
 
-	if (SamrftSeek(Control->rft, 0, SEEK_SET, &offset) < 0) {
+	rval = SamrftSeek(IoThread->io_rftHandle, 0, SEEK_SET, &offset);
+	if (rval < 0) {
 		FatalSyscallError(EXIT_NORESTART, HERE,
 		    "SamrftSeek", "SEEK_SET");
 	}
-	position = offset/Control->mau;
+	getPosition = offset/IoThread->io_blockSize;
 
-	return (position);
+	return (getPosition);
 }
 
 
@@ -301,14 +310,16 @@ GetDkPosition(void)
  * Close disk archive file.
  */
 void
-UnloadDkVolume(void)
+DkUnloadVolume(void)
 {
 	Trace(TR_MISC, "Unload dk volume: '%s'", Stream->vsn);
+
 	if (diskArchiveOpen) {
-		(void) SamrftClose(Control->rft);
+		(void) SamrftClose(IoThread->io_rftHandle);
 		diskArchiveOpen = B_FALSE;
 	}
-	SamrftDisconnect(Control->rft);
+
+	SamrftDisconnect(IoThread->io_rftHandle);
 	if (diskVolume != NULL) {
 		SamFree(diskVolume);
 		diskVolume = NULL;
@@ -322,29 +333,30 @@ UnloadDkVolume(void)
 static int
 initRemoteStage(void)
 {
-	char *host_name;
+	char *hostname;
 	extern StagerStateInfo_t *State;
-	char *vsn = NULL;
 
 	/*
 	 * Establish connection to remote host.
 	 */
-	host_name = DiskVolsGetHostname(diskVolume);
-	Control->rft = (void *) SamrftConnect(host_name);
+	hostname = DiskVolsGetHostname(diskVolume);
+	IoThread->io_rftHandle = (void *) SamrftConnect(hostname);
 
-	if (Control->rft == NULL) {
-		if (host_name == NULL) {
-			host_name = "";
+	if (IoThread->io_rftHandle == NULL) {
+		if (hostname == NULL) {
+			hostname = "";
 		}
 		if (State != NULL) {
-			PostOprMsg(State->errmsg, 19208, host_name);
+			PostOprMsg(State->errmsg, 19208, hostname);
 			sleep(5);
 			ClearOprMsg(State->errmsg);
 		}
-		LibFatal(SamrftConnect, host_name);
+		LibFatal(SamrftConnect, hostname);
 	}
-	if (DiskVolsIsAvail(vsn, diskVolume, B_FALSE, DVA_stager) != B_TRUE) {
+
+	if (DiskVolsIsAvail(NULL, diskVolume, B_FALSE, DVA_stager) != B_TRUE) {
 		return (ENODEV);
 	}
+
 	return (0);
 }

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -58,14 +58,18 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/tar.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
+#include "sam/sam_trace.h"
+#include "aml/stager_defs.h"
 
 /* Local headers. */
 #include "stager_lib.h"
 #include "stager_config.h"
-#include "stage_reqs.h"
+#include "copy_defs.h"
 #include "file_defs.h"
 #include "rmedia.h"
 #include "stream.h"
+
+#include "stage_reqs.h"
 #include "schedule.h"
 
 static boolean_t isDamageError(int error);
