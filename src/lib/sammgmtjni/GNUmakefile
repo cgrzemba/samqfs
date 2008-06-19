@@ -1,4 +1,4 @@
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 
 #    SAM-QFS_notice_begin
 #
@@ -172,6 +172,7 @@ JNATIVESRCS = \
 
 JTESTSRCS = \
 	${BASEPKG}/test/TUtil.java \
+	${BASEPKG}/test/TestFSShrink.java \
 	${BASEPKG}/test/TestVSNPoolProps.java \
 	${BASEPKG}/test/TestDVolFlags.java \
 	${BASEPKG}/test/TestFScreate.java \

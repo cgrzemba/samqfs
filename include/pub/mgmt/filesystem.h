@@ -29,7 +29,7 @@
 #ifndef _FILESYSTEM_H
 #define	_FILESYSTEM_H
 
-#pragma ident	"$Revision: 1.52 $"
+#pragma ident	"$Revision: 1.53 $"
 
 
 
@@ -42,6 +42,7 @@
 #include "pub/mgmt/sqm_list.h"
 #include "pub/devstat.h"
 #include "pub/mgmt/archive.h"
+#include "pub/mgmt/device.h"
 
 #define	MCF_DUMP_FILE	"mcf.dump"
 #define	SAMFS_DUMP_FILE	"samfs.cmd.dump"
@@ -619,6 +620,83 @@ int grow_fs(ctx_t *ctx,
 	const sqm_lst_t	*additional_meta_data_disk,
 	const sqm_lst_t	*additional_data_disk,
 	const sqm_lst_t	*additional_striped_group);
+
+
+
+/*
+ * Method to remove a device from a file system by releasing all of
+ * the data on the device.
+ *
+ * kv_options is a string of key value pairs that are based on the
+ * directives in shrink.cmd. If options is non-null the options
+ * will be set for this file system in the shrink.cmd file
+ * prior to invoking the shrink.
+ *
+ * Options Keys:
+ *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+ *	   display_all_files = TRUE | FALSE (default FALSE)
+ *	   do_not_execute = TRUE | FALSE (default FALSE)
+ *	   logfile = filename (default no logging)
+ *	   stage_files = TRUE | FALSE (default FALSE)
+ *	   stage_partial = TRUE | FALSE (default FALSE)
+ *	   streams = n  where 1 <= n <= 128 default 8
+ */
+int
+shrink_release(ctx_t *c, char *fs_name, int eq_to_release, char *kv_options);
+
+/*
+ * Method to remove a device from a file system by copying the
+ * data to other devices. If replacement_eq is the eq of a device
+ * in the file system the data will be copied to that device.
+ * If replacement_eq is -1 the data will be copied to available devices
+ * in the FS.
+ *
+ * Options Keys:
+ *	   logfile = filename (default no logging)
+ *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+ *	   display_all_files = TRUE | FALSE (default FALSE)
+ *	   do_not_execute = TRUE | FALSE (default FALSE)
+ *	   logfile = filename (default no logging)
+ *	   streams = n  where 1 <= n <= 128 default 8
+ */
+int
+shrink_remove(ctx_t *c, char *fs_name, int eq_to_remove, int replacement_eq,
+    char *kv_options);
+
+
+/*
+ * Method to remove a device from a file system by copying the
+ * data to a newly added device.
+ *
+ * Options Keys:
+ *	   logfile = filename (default no logging)
+ *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+ *	   display_all_files = TRUE | FALSE (default FALSE)
+ *	   do_not_execute = TRUE | FALSE (default FALSE)
+ *	   logfile = filename (default no logging)
+ *	   streams = n  where 1 <= n <= 128 default 8
+ */
+int
+shrink_replace_device(ctx_t *c, char *fs_name, int eq_to_replace,
+    disk_t *replacement, char *kv_options);
+
+
+/*
+ * Method to remove a striped group from a file system by copying the
+ * data to a new striped group.
+ *
+ * Options Keys:
+ *	   logfile = filename (default no logging)
+ *	   block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+ *	   display_all_files = TRUE | FALSE (default FALSE)
+ *	   do_not_execute = TRUE | FALSE (default FALSE)
+ *	   logfile = filename (default no logging)
+ *	   streams = n  where 1 <= n <= 128 default 8
+ */
+int
+shrink_replace_group(ctx_t *c, char *fs_name, int eq_to_replace,
+    striped_group_t *replacement, char *kv_options);
+
 
 /*
  * Deprecated. This function is only here to so that backwards compatible

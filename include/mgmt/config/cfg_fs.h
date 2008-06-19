@@ -30,7 +30,7 @@
 #ifndef _CFG_FS_H
 #define	_CFG_FS_H
 
-#pragma ident   "$Revision: 1.17 $"
+#pragma ident   "$Revision: 1.18 $"
 
 #include "pub/mgmt/sqm_list.h"
 #include "pub/mgmt/filesystem.h"
@@ -140,5 +140,27 @@ int set_shared_fs_status_flags(fs_t *f);
  */
 int
 shared_fs_check(ctx_t *ctx, char *fs_name, mcf_cfg_t *mcf);
+
+
+/*
+ * Function to return the shrink options for the named file system.
+ * Keys and values:
+ * block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+ * display_all_files = TRUE | FALSE (default FALSE)
+ * do_not_execute = TRUE | FALSE (default FALSE)
+ * logfile = filename (default no logging)
+ * stage_files = TRUE | FALSE (default FALSE)
+ * stage_partial = TRUE | FALSE (default FALSE)
+ * streams = n  where 1 <= n <= 128 default 8
+ */
+int
+get_shrink_options(char *fs_name, char **kv_opts);
+
+/*
+ * Function to set the shrink options for the named file system.
+ * See the key value pairs defined for get_shrink_options.
+ */
+int
+set_shrink_options(char *fs_name, char *kv_opts);
 
 #endif /* _CFG_FS_H */

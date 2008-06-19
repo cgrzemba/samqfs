@@ -36,7 +36,7 @@
 #ifndef _CFG_COMMON_H
 #define	_CFG_COMMON_H
 
-#pragma ident   "$Revision: 1.19 $"
+#pragma ident   "$Revision: 1.20 $"
 
 /* move to parser_utils.h once notify is updated */
 #define	MAX_LINE 1024
@@ -67,6 +67,7 @@
 #define	MCF_CFG		CFG_DIR"/mcf"
 #define	DEFAULTS_CFG	CFG_DIR"/defaults.conf"
 #define	SAMFS_CFG	CFG_DIR"/samfs.cmd"
+#define	SHRINK_CFG	CFG_DIR"/shrink.cmd"
 #define	ARCHIVER_CFG	CFG_DIR"/archiver.cmd"
 #define	DISKVOL_CFG	CFG_DIR"/diskvols.conf"
 #define	RELEASE_CFG	CFG_DIR"/releaser.cmd"

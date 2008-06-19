@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.28 $"
+#pragma ident	"$Revision: 1.29 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -862,5 +862,135 @@ samrpc_create_arch_fs_6_svr(
 	}
 
 	Trace(TR_DEBUG, "Create arch fs return[%d]", ret);
+	return (&rpc_result);
+}
+
+samrpc_result_t *
+samrpc_shrink_release_5_0_svr(
+	string_string_int_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "shrink release");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+
+	Trace(TR_DEBUG, "Calling native library to shrink release");
+	ret = shrink_release(
+	    arg->ctx,
+	    arg->str1, /* fs_name */
+	    arg->int1, /* eq_to_release */
+	    arg->str2); /* kv_options */
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "shrink release return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_shrink_remove_5_0_svr(
+	string_string_int_int_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "shrink remove");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+
+	Trace(TR_DEBUG, "Calling native library to shrink remove");
+	ret = shrink_remove(
+	    arg->ctx,
+	    arg->str1, /* fs_name */
+	    arg->int1, /* eq_to_remove */
+	    arg->int2, /* replacement eq */
+	    arg->str2); /* kv_options */
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "shrink remove return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_shrink_replace_device_5_0_svr(
+	string_string_int_disk_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "shrink replace device");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+
+	Trace(TR_DEBUG, "Calling native library to shrink replace device");
+	ret = shrink_replace_device(
+	    arg->ctx,
+	    arg->str1, /* fs_name */
+	    arg->int1, /* eq_to_replace */
+	    arg->dsk, /* replacement disk */
+	    arg->str2); /* kv_options */
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "shrink replace device return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_shrink_replace_group_5_0_svr(
+	string_string_int_group_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "shrink replace group");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+
+	Trace(TR_DEBUG, "Calling native library to shrink replace group");
+	ret = shrink_replace_group(
+	    arg->ctx,
+	    arg->str1, /* fs_name */
+	    arg->int1, /* eq_to_replace */
+	    arg->grp, /* replacement group */
+	    arg->str2); /* kv_options */
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "shrink replace group return[%d]", ret);
 	return (&rpc_result);
 }

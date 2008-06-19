@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.112 $"
+#pragma ident	"$Revision: 1.113 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -575,6 +575,37 @@ typedef struct string_string_arg {
 	char *str1;
 	char *str2;
 } string_string_arg_t;
+
+typedef struct string_string_int_arg {
+	ctx_t *ctx;
+	char *str1;
+	char *str2;
+	int int1;
+} string_string_int_arg_t;
+
+typedef struct string_string_int_int_arg {
+	ctx_t *ctx;
+	char *str1;
+	char *str2;
+	int int1;
+	int int2;
+} string_string_int_int_arg_t;
+
+typedef struct string_string_int_disk_arg {
+	ctx_t *ctx;
+	char *str1;
+	char *str2;
+	int int1;
+	disk_t *dsk;
+} string_string_int_disk_arg_t;
+
+typedef struct string_string_int_group_arg {
+	ctx_t *ctx;
+	char *str1;
+	char *str2;
+	int int1;
+	striped_group_t *grp;
+} string_string_int_group_arg_t;
 
 typedef struct int_int_arg {
 	ctx_t *ctx;
@@ -1747,6 +1778,18 @@ extern  samrpc_result_t *samrpc_create_arch_fs_6_svr();
 #define	samrpc_set_device_state 329
 extern samrpc_result_t *samrpc_set_device_state_5_0_svr();
 
+#define	samrpc_shrink_release 330
+extern samrpc_result_t *samrpc_shrink_release_5_0_svr();
+
+#define	samrpc_shrink_remove 331
+extern samrpc_result_t *samrpc_shrink_remove_5_0_svr();
+
+#define	samrpc_shrink_replace_device 332
+extern samrpc_result_t *samrpc_shrink_replace_device_5_0_svr();
+
+#define	samrpc_shrink_replace_group 333
+extern samrpc_result_t *samrpc_shrink_replace_group_5_0_svr();
+
 
 /* license.h */
 #define	samrpc_get_license_type		400
@@ -2550,6 +2593,11 @@ extern bool_t xdr_string_uint32_arg_t();
 extern bool_t xdr_int_uint32_arg_t();
 extern bool_t xdr_string_uint32_uint32_arg_t();
 extern bool_t xdr_int_int_arg_t();
+extern bool_t xdr_string_string_int_arg_t();
+extern bool_t xdr_string_string_int_int_arg_t();
+extern bool_t xdr_string_string_int_disk_arg_t();
+extern bool_t xdr_string_string_int_group_arg_t();
+
 
 /* license.h */
 extern bool_t xdr_license_info_t();

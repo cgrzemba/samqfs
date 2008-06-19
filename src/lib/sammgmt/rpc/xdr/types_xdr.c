@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.34 $"
+#pragma ident	"$Revision: 1.35 $"
 
 #include "pub/mgmt/types.h"
 #include "pub/devstat.h"
@@ -555,5 +555,74 @@ string_int_intlist_arg_t *objp)
 	if (!xdr_int(xdrs, &objp->num))
 		return (FALSE);
 	XDR_PTR2LST(objp->int_lst, int_list);
+	return (TRUE);
+}
+
+
+
+bool_t
+xdr_string_string_int_arg_t(
+XDR *xdrs,
+string_string_int_arg_t *objp) {
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str1, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->str2, ~0))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->int1))
+		return (FALSE);
+
+	return (TRUE);
+}
+
+bool_t
+xdr_string_string_int_int_arg_t(
+XDR *xdrs,
+string_string_int_int_arg_t *objp) {
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str1, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->str2, ~0))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->int1))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->int2))
+		return (FALSE);
+
+	return (TRUE);
+}
+
+bool_t
+xdr_string_string_int_disk_arg_t(
+XDR *xdrs,
+string_string_int_disk_arg_t *objp) {
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str1, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->str2, ~0))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->int1))
+		return (FALSE);
+	XDR_PTR2STRUCT(objp->dsk, disk_t);
+
+	return (TRUE);
+}
+
+bool_t
+xdr_string_string_int_group_arg_t(
+XDR *xdrs,
+string_string_int_group_arg_t *objp) {
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str1, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->str2, ~0))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->int1))
+		return (FALSE);
+	XDR_PTR2STRUCT(objp->grp, striped_group_t);
 	return (TRUE);
 }

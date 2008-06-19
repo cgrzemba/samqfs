@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.31 $"
+#pragma ident	"$Revision: 1.32 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -1316,6 +1316,164 @@ char *opts		/* nfs options */
 	ret_val = result.status;
 	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
 
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+int
+shrink_release(ctx_t *ctx, char *fs_name, int eq_to_release, char *kv_options) {
+
+	int ret_val;
+	string_string_int_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:shrink release";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str1 = fs_name;
+	arg.str2 = kv_options;
+	arg.int1 = eq_to_release;
+
+	SAMRPC_CLNT_CALL(samrpc_shrink_release, string_string_int_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+shrink_remove(ctx_t *ctx, char *fs_name, int eq_to_remove, int replacement_eq,
+    char *kv_options) {
+	int ret_val;
+	string_string_int_int_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:shrink remove";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str1 = fs_name;
+	arg.str2 = kv_options;
+	arg.int1 = eq_to_remove;
+	arg.int2 = replacement_eq;
+
+	SAMRPC_CLNT_CALL(samrpc_shrink_remove, string_string_int_int_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+shrink_replace_device(ctx_t *ctx, char *fs_name, int eq_to_replace,
+    disk_t *replacement, char *kv_options) {
+
+	int ret_val;
+	string_string_int_disk_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:shrink replace device";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, replacement)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str1 = fs_name;
+	arg.str2 = kv_options;
+	arg.int1 = eq_to_replace;
+	arg.dsk = replacement;
+
+	SAMRPC_CLNT_CALL(samrpc_shrink_replace_device,
+	    string_string_int_disk_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+shrink_replace_group(ctx_t *ctx, char *fs_name, int eq_to_replace,
+    striped_group_t *replacement, char *kv_options) {
+
+	int ret_val;
+	string_string_int_group_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:shrink replace group";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, replacement)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str1 = fs_name;
+	arg.str2 = kv_options;
+	arg.int1 = eq_to_replace;
+	arg.grp = replacement;
+
+	SAMRPC_CLNT_CALL(samrpc_shrink_replace_group,
+	    string_string_int_group_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
 	PTRACE(2, "%s exit", func_name);
 	return (ret_val);
 }

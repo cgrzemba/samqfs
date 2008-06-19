@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.45 $"
+#pragma ident	"$Revision: 1.46 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -1205,4 +1205,137 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_FS_getFileMetrics(JNIEnv *env,
 
 	PTRACE(1, "jni:FS_getFileMetrics() done");
 	return (JSTRING(buf));
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_shrinkRelease(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName, jint eqToRelease,
+    jstring kvOptions) {
+
+	jboolean isCopy1;
+	jboolean isCopy2;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(kvOptions, isCopy2);
+	int ret;
+
+
+	PTRACE(1, "jni:FS_shrinkRelease(%s...) entry", Str(cstr1));
+
+	ret = shrink_release(CTX, cstr1, (int)eqToRelease, cstr2);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(kvOptions, cstr2, isCopy2);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_shrinkRelease() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_shrinkRemove(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName, jint eqToRemove,
+    jint replacementEq, jstring kvOptions) {
+
+	jboolean isCopy1;
+	jboolean isCopy2;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(kvOptions, isCopy2);
+	int ret;
+
+
+	PTRACE(1, "jni:FS_shrinkRemove(%s...) entry", Str(cstr1));
+
+	ret = shrink_remove(CTX, cstr1, (int)eqToRemove,
+	    (int)replacementEq, cstr2);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(kvOptions, cstr2, isCopy2);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_shrinkRemove() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_shrinkReplaceDev(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName, jint eqToReplace,
+    jobject replacementDisk, jstring kvOptions) {
+
+	jboolean isCopy1;
+	jboolean isCopy2;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(kvOptions, isCopy2);
+	disk_t *dsk;
+	int ret;
+
+
+	PTRACE(1, "jni:FS_shrinkReplaceDev(%s...) entry", Str(cstr1));
+
+	dsk = (disk_t *)DiskDev2dsk(env, replacementDisk);
+	if (dsk == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		REL_STR(kvOptions, cstr2, isCopy2);
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	ret = shrink_replace_device(CTX, cstr1,
+	    (int)eqToReplace, dsk, cstr2);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(kvOptions, cstr2, isCopy2);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_shrinkReplaceDev() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_shrinkReplaceGroup(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName, jint eqToReplace,
+    jobject replacementGroup, jstring kvOptions) {
+
+	jboolean isCopy1;
+	jboolean isCopy2;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(kvOptions, isCopy2);
+	striped_group_t *grp;
+	int ret;
+
+
+	PTRACE(1, "jni:FS_shrinkReplaceDev(%s...) entry", Str(cstr1));
+
+	grp = (striped_group_t *)StripedGrp2sgrp(env, replacementGroup);
+	if (grp == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		REL_STR(kvOptions, cstr2, isCopy2);
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	ret = shrink_replace_group(CTX, cstr1, (int)eqToReplace,
+	    grp, cstr2);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(kvOptions, cstr2, isCopy2);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_shrinkReplaceDev() done");
+	return (ret);
 }

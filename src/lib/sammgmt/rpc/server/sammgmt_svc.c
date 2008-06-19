@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.114 $"
+#pragma ident	"$Revision: 1.115 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -361,6 +361,12 @@ sammgmtprog_1(rqstp, transp)
 		string_arg_t samrpc_get_mds_host_6_arg;
 		create_arch_fs_arg_t samrpc_create_arch_fs_6_arg;
 		string_int_intlist_arg_t samrpc_set_device_state_5_0_arg;
+		string_string_int_arg_t samrcp_shrink_release_5_0_arg;
+		string_string_int_int_arg_t samrpc_shrink_remove_5_0_arg;
+		string_string_int_disk_arg_t
+			samrpc_shrink_replace_device_5_0_arg;
+		string_string_int_group_arg_t
+			samrpc_shrink_replace_group_5_0_arg;
 
 		/* license.h */
 		ctx_arg_t samrpc_get_license_type_1_arg;
@@ -1547,6 +1553,30 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_argument = xdr_string_int_intlist_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_set_device_state_5_0_svr;
+		break;
+
+	case samrpc_shrink_release:
+		_xdr_argument = xdr_string_string_int_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_shrink_release_5_0_svr;
+		break;
+
+	case samrpc_shrink_remove:
+		_xdr_argument = xdr_string_string_int_int_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_shrink_remove_5_0_svr;
+		break;
+
+	case samrpc_shrink_replace_device:
+		_xdr_argument = xdr_string_string_int_disk_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_shrink_replace_device_5_0_svr;
+		break;
+
+	case samrpc_shrink_replace_group:
+		_xdr_argument = xdr_string_string_int_group_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_shrink_replace_group_5_0_svr;
 		break;
 
 	/*

@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.594 $"
+$ pragma ident "$Revision: 1.595 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3948,6 +3948,13 @@ $ ignoring the last argument %s for 4.1
 30535 Setting the device state failed
 30536 Setting the device state failed. The file system must be mounted
 30537 Metadata devices cannot have allocation disabled
+30538 Releasing the data failed
+30539 Removing the device from the file system failed
+30540 Getting shrink options failed
+30541 In order to shrink a file system it must be mounted
+30542 You cannot remove a device group without specifying a replacement
+30543 The file system does not contain a device with the equipment ordinal %d
+30544 The file system does not contain a device with the path %s
 
 30601 A VSN copy map already exists for %s
 30602 VSN pool %s already exists
@@ -4104,8 +4111,8 @@ $ shared filesystems errors
 31136 Unable to obtain the list of valid IP addresses and names for this host.
 31137 The client table is out of sync with the super block
 31138 Unable to retrieve the hosts info. The string is too long
-31139 Invalid client state specified as input: %d
-31140 Invalid client state found in configuration: %s
+31139 Invalid client state specified as input:%d
+31140 Invalid client state found in configuration:%s
 31141 The metadata server cannot be disabled
 
 $ samrestore errors

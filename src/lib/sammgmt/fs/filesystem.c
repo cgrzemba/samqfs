@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.75 $"
+#pragma ident   "$Revision: 1.76 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -49,6 +49,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "mgmt/control/fscmd.h"
 #include "pub/mgmt/error.h"
@@ -84,7 +85,10 @@ boolean_t is_valid_disk_name(upath_t name);
 /* private functions. */
 static void remove_eq(sqm_lst_t *l, equ_t eq);
 
-static int get_needed_eqs_for_fs(mcf_cfg_t *mcf, fs_t *fs, sqm_lst_t **eqs);
+static int
+get_needed_eqs(mcf_cfg_t *mcf, equ_t fi_eq, const sqm_lst_t *data_disk_list,
+    const sqm_lst_t *meta_data_disk_list, const sqm_lst_t *striped_group_list,
+    sqm_lst_t **eqs);
 
 static int setup_vfstab(fs_t *fs, boolean_t mount_at_boot);
 
@@ -98,16 +102,14 @@ static int grow_qfs_struct(mcf_cfg_t *mcf, fs_t *fs, boolean_t mounted,
 static int find_striped_group(sqm_lst_t *l, uname_t name, striped_group_t **sg);
 
 static int build_metadata_dev(sqm_lst_t *l, fs_t *fs, disk_t *disk,
-	sqm_lst_t *eqs, node_t *insert_after);
+	sqm_lst_t *eqs);
 
 static int build_striped_group(sqm_lst_t *res_devs, fs_t *fs,
-    striped_group_t *sg, sqm_lst_t *group_ids, sqm_lst_t *eqs,
-    node_t *insert_after);
+    striped_group_t *sg, sqm_lst_t *group_ids, sqm_lst_t *eqs);
 
 static int build_qfs(mcf_cfg_t *mcf, fs_t *fs);
 
-static int build_dev(sqm_lst_t *l, fs_t *fs, disk_t *disk, sqm_lst_t *eqs,
-	node_t *insert_after);
+static int build_dev(sqm_lst_t *l, fs_t *fs, disk_t *disk, sqm_lst_t *eqs);
 
 static int build_samfs(mcf_cfg_t *mcf, fs_t *fs);
 
@@ -133,7 +135,23 @@ static int internal_create_fs(ctx_t *ctx, fs_t *fs, boolean_t mount_at_boot,
 
 static int cmd_online_grow(char *fs_name, int eq);
 
-static disk_t *find_disk(fs_t *f, int eq);
+static disk_t *find_disk_by_eq(fs_t *f, int eq);
+
+static disk_t *find_disk_by_path(fs_t *f, char *path);
+
+static int _set_device_state(fs_t *fs, sqm_lst_t *eqs, dstate_t new_state);
+
+static int shrink(char *fs_name, int eq_to_exclude, int replacement_eq,
+    char *kv_options, boolean_t release);
+
+static int shrink_replace(ctx_t *c, char *fs_name, int eq_to_replace,
+    disk_t *dk_replacement, striped_group_t *sg_replacement, char *kv_options);
+
+
+
+static int _grow_fs(ctx_t *ctx, fs_t *fs, const sqm_lst_t *new_meta,
+    const sqm_lst_t *new_data, const sqm_lst_t *new_stripe_groups);
+
 
 
 #define		DEFAULT_DATA_DISK_TYPE "md"
@@ -828,10 +846,12 @@ verify_fs_unmounted(uname_t fs_name)
 
 
 /*
- * grow the filesystem.
+ * Internal grow file system function. The only difference between thi
+ * and grow_fs is that this function trusts that the fs argument is
+ * up to date.
  */
-int
-grow_fs(
+static int
+_grow_fs(
 ctx_t *ctx,
 fs_t *fs,				/* fs to grow */
 const sqm_lst_t *new_meta,		/* list of disk_t */
@@ -844,7 +864,6 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 	int num_type;
 	sqm_lst_t *res_devs = NULL;
 	boolean_t mounted = B_FALSE;
-	fs_t *live_fs;
 
 	if (ISNULL(fs)) {
 		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
@@ -852,28 +871,16 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 	}
 	Trace(TR_MISC, "growing fs %s", Str(fs->fi_name));
 
-
-	/*
-	 * Don't simply rely on the argument, get the file system to
-	 * check the superblock version and see if it is mounted or
-	 * not.
-	 */
-	if (get_fs(NULL, fs->fi_name, &live_fs) == -1) {
-		return (-1);
-	}
-
-	if (live_fs->fi_status & FS_MOUNTED) {
+	if (fs->fi_status & FS_MOUNTED) {
 		mounted = B_TRUE;
 	}
 
 	/* If the fs is mounted check that it will support the online grow */
-	if (mounted && live_fs->fi_version == 1) {
-		samerrno = SE_ONLINE_GROW_FAILED_SBLK_V1;
-		setsamerr(samerrno);
-		free_fs(live_fs);
+	if (mounted && fs->fi_version == 1) {
+		setsamerr(SE_ONLINE_GROW_FAILED_SBLK_V1);
+		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
 		return (-1);
 	}
-	free_fs(live_fs);
 
 	if (read_mcf_cfg(&mcf) != 0) {
 		/* leave samerrno as set */
@@ -919,7 +926,6 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 		    GetCustMsg(SE_INVALID_FS_TYPE), fs->equ_type);
 		goto err;
 	}
-
 
 	if (append_to_family_set(ctx, fs->fi_name, res_devs) != 0) {
 		goto err;
@@ -1001,6 +1007,48 @@ err:
 }
 
 
+int
+grow_fs(
+ctx_t *ctx,
+fs_t *fs,				/* fs to grow */
+const sqm_lst_t *new_meta,		/* list of disk_t */
+const sqm_lst_t *new_data,		/* list of disk_t */
+const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
+{
+
+	fs_t *live_fs;
+
+	if (ISNULL(fs)) {
+		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
+		return (-1);
+	}
+	Trace(TR_MISC, "growing fs %s", Str(fs->fi_name));
+
+
+	/*
+	 * Don't simply rely on the argument, get the fs from the system
+	 * so that its status is fresh. The argument from the user could
+	 * be out of date.
+	 */
+	if (get_fs(NULL, fs->fi_name, &live_fs) == -1) {
+		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
+		return (-1);
+	}
+
+
+	if (_grow_fs(ctx, live_fs, new_meta, new_data,
+	    new_stripe_groups) != 0) {
+		free_fs(live_fs);
+		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	free_fs(live_fs);
+	Trace(TR_MISC, "grew fs %s", Str(fs->fi_name));
+	return (0);
+}
+
+
 /*
  * fills in the data_disk structures and inserts them into the mcf at
  * the appropriate place(after all other members of the fs).
@@ -1035,21 +1083,9 @@ sqm_lst_t **res_devs)	/* list of base_dev_t */
 		return (-1);
 	}
 
-	/*
-	 * insert the new disks into the fs.
-	 * Note that this is inserting a pointer to the exact same
-	 * disk.
-	 */
-	for (n = new_data->head; n != NULL; n = n->next) {
-		if (lst_append(fs->data_disk_list, n->data) != 0) {
-			Trace(TR_ERR, "grow samfs struct failed: %s",
-			    samerrmsg);
-			return (-1);
-		}
-	}
 
 	/* get needed eqs. */
-	if (get_needed_eqs_for_fs(mcf, fs, &eqs) != 0) {
+	if (get_needed_eqs(mcf, fs->fi_eq, new_data, NULL, NULL, &eqs) != 0) {
 		Trace(TR_ERR, "grow samfs struct failed: %s", samerrmsg);
 		return (-1);
 	}
@@ -1058,7 +1094,7 @@ sqm_lst_t **res_devs)	/* list of base_dev_t */
 	for (n = new_data->head; n != NULL; n = n->next) {
 		/* insert into mcf and fs */
 		if (build_dev(*res_devs, fs, (disk_t *)n->data,
-		    eqs, (*res_devs)->tail) != 0) {
+		    eqs) != 0) {
 
 			lst_free_deep(eqs);
 			Trace(TR_ERR, "grow samfs struct failed: %s",
@@ -1168,77 +1204,40 @@ sqm_lst_t **res_devs)		/* list of striped_group_t */
 		Trace(TR_ERR, "grow qfs struct failed: %s", samerrmsg);
 		return (-1);
 	}
+
 	/*
-	 * insert the new disks into the fs.
-	 * Note that this is inserting a pointer to the exact same
-	 * disk.
+	 * Determine the data type for the data disks.
 	 */
 	if (new_data != NULL) {
 		devtype_t dt;
 
-		if (fs->data_disk_list == NULL) {
-			fs->data_disk_list = lst_create();
-			if (fs->data_disk_list == NULL) {
-				Trace(TR_ERR, "grow qfs struct failed: %s",
-				    samerrmsg);
-				return (-1);
-			}
-		}
 		if (determine_datadevice_type(fs, new_data, dt) != 0) {
+			lst_free_deep(*res_devs);
+			*res_devs = NULL;
+			Trace(TR_ERR, "grow qfs struct failed: %s", samerrmsg);
 			return (-1);
 		}
 
+		/* Set the equ type for the disks in the new_data list */
 		for (n = new_data->head; n != NULL; n = n->next) {
-			strcpy(((disk_t *)n->data)->base_info.equ_type, dt);
-			if (lst_append(fs->data_disk_list, n->data) != 0) {
+			if (ISNULL(n->data)) {
+				lst_free_deep(*res_devs);
+				*res_devs = NULL;
 				Trace(TR_ERR, "grow qfs struct failed: %s",
 				    samerrmsg);
 				return (-1);
 			}
+			strlcpy(((disk_t *)n->data)->base_info.equ_type, dt,
+			    sizeof (devtype_t));
 		}
 	}
 
-	if (new_metadata != NULL) {
-		if (fs->meta_data_disk_list == NULL) {
-			fs->meta_data_disk_list = lst_create();
-			if (fs->meta_data_disk_list == NULL) {
-				Trace(TR_ERR, "grow qfs struct failed: %s",
-				    samerrmsg);
-				return (-1);
-			}
-		}
-		for (n = new_metadata->head; n != NULL; n = n->next) {
-			if (lst_append(fs->meta_data_disk_list,
-			    n->data) != 0) {
-				Trace(TR_ERR, "grow qfs struct failed: %s",
-				    samerrmsg);
-				return (-1);
 
-			}
-		}
-	}
-
-	if (striped_groups != NULL) {
-		if (fs->striped_group_list == NULL) {
-			fs->striped_group_list = lst_create();
-			if (fs->striped_group_list == NULL) {
-				Trace(TR_ERR, "grow qfs struct failed: %s",
-				    samerrmsg);
-				return (-1);
-			}
-		}
-
-		for (n = striped_groups->head; n != NULL; n = n->next) {
-			if (lst_append(fs->striped_group_list, n->data) != 0) {
-				Trace(TR_ERR, "grow qfs struct failed: %s",
-				    samerrmsg);
-				return (-1);
-			}
-		}
-	}
-
-	/* get needed eqs. */
-	if (get_needed_eqs_for_fs(mcf, fs, &eqs) != 0) {
+	/* get needed eqs for the new devices */
+	if (get_needed_eqs(mcf, fs->fi_eq, new_data,
+	    new_metadata, striped_groups, &eqs) != 0) {
+		lst_free_deep(*res_devs);
+		*res_devs = NULL;
 		Trace(TR_ERR, "grow qfs struct failed: %s", samerrmsg);
 		return (-1);
 	}
@@ -1249,8 +1248,7 @@ sqm_lst_t **res_devs)		/* list of striped_group_t */
 		Trace(TR_DEBUG, "about to build meta data disks");
 		for (n = new_metadata->head; n != NULL; n = n->next) {
 			if (build_metadata_dev(*res_devs, fs,
-			    (disk_t *)n->data, eqs,
-			    (*res_devs)->tail) != 0) {
+			    (disk_t *)n->data, eqs) != 0) {
 
 				lst_free_deep(eqs);
 				lst_free_deep(*res_devs);
@@ -1266,8 +1264,9 @@ sqm_lst_t **res_devs)		/* list of striped_group_t */
 
 		Trace(TR_DEBUG, "grow qfs struct build data disks");
 		for (n = new_data->head; n != NULL; n = n->next) {
-			if (build_dev(*res_devs, fs, (disk_t *)n->data, eqs,
-			    (*res_devs)->tail) != 0) {
+			if (build_dev(*res_devs, fs, (disk_t *)n->data,
+			    eqs) != 0) {
+
 				lst_free_deep(*res_devs);
 				lst_free_deep(eqs);
 				Trace(TR_ERR, "grow qfs struct failed: %s",
@@ -1303,7 +1302,7 @@ sqm_lst_t **res_devs)		/* list of striped_group_t */
 
 			if (build_striped_group(*res_devs, fs,
 			    (striped_group_t *)n->data, group_ids,
-			    eqs, (*res_devs)->tail) != 0) {
+			    eqs) != 0) {
 
 				lst_free_deep(eqs);
 				lst_free_deep(group_ids);
@@ -1849,7 +1848,9 @@ fs_t *fs)	/* fs struct to populate */
 	}
 
 	/* figure out how many devices need a free eq to be selected */
-	if (get_needed_eqs_for_fs(mcf, fs, &eqs) != 0) {
+	if (get_needed_eqs(mcf, fs->fi_eq, fs->data_disk_list,
+	    fs->meta_data_disk_list, fs->striped_group_list, &eqs) != 0) {
+
 		Trace(TR_ERR, "building samfs failed: %s", samerrmsg);
 		return (-1);
 	}
@@ -1893,8 +1894,7 @@ fs_t *fs)	/* fs struct to populate */
 	/* build each individual device */
 	for (n = fs->data_disk_list->head; n != NULL; n = n->next) {
 
-		if (build_dev(mcf->mcf_devs, fs, (disk_t *)n->data, eqs,
-		    mcf->mcf_devs->tail) != 0) {
+		if (build_dev(mcf->mcf_devs, fs, (disk_t *)n->data, eqs) != 0) {
 
 			lst_free_deep(eqs);
 			Trace(TR_ERR, "building samfs failed: %s", samerrmsg);
@@ -1913,9 +1913,12 @@ fs_t *fs)	/* fs struct to populate */
  * filesystem which does not have an eq already specified.
  */
 static int
-get_needed_eqs_for_fs(
+get_needed_eqs(
 mcf_cfg_t *mcf,	/* current mcf cfg, input for decision making */
-fs_t *fs,	/* fs for which to get eqs */
+equ_t fi_eq,
+const sqm_lst_t *data_disk_list,
+const sqm_lst_t *meta_data_disk_list,
+const sqm_lst_t *striped_group_list,
 sqm_lst_t **eqs)	/* malloced list of equ_t */
 {
 
@@ -1924,12 +1927,12 @@ sqm_lst_t **eqs)	/* malloced list of equ_t */
 
 	Trace(TR_DEBUG, "get eq numbers for fs entry");
 	/* figure out how many devices need a free eq to be selected */
-	if (!is_valid_eq(fs->fi_eq)) {
+	if (!is_valid_eq(fi_eq)) {
 		eqs_needed++;
 	}
 
-	if (fs->data_disk_list != NULL) {
-		for (n = fs->data_disk_list->head; n != NULL; n = n->next) {
+	if (data_disk_list != NULL) {
+		for (n = data_disk_list->head; n != NULL; n = n->next) {
 			disk_t *d = (disk_t *)n->data;
 			if (!is_valid_eq(d->base_info.eq)) {
 				eqs_needed++;
@@ -1937,8 +1940,8 @@ sqm_lst_t **eqs)	/* malloced list of equ_t */
 		}
 	}
 
-	if (fs->meta_data_disk_list != NULL) {
-		for (n = fs->meta_data_disk_list->head;
+	if (meta_data_disk_list != NULL) {
+		for (n = meta_data_disk_list->head;
 		    n != NULL; n = n->next) {
 
 			disk_t *d = (disk_t *)n->data;
@@ -1948,8 +1951,8 @@ sqm_lst_t **eqs)	/* malloced list of equ_t */
 		}
 	}
 
-	if (fs->striped_group_list != NULL) {
-		for (n = fs->striped_group_list->head;
+	if (striped_group_list != NULL) {
+		for (n = striped_group_list->head;
 		    n != NULL; n = n->next) {
 
 			striped_group_t *sg = (striped_group_t *)n->data;
@@ -1987,8 +1990,7 @@ build_dev(
 sqm_lst_t *res_devs,	/* cfg into which dev should be inserted */
 fs_t *fs,		/* fs to which dev is being added */
 disk_t *disk,		/* disk to build dev for */
-sqm_lst_t *eqs,		/* list of available eqs */
-node_t *insert_after)	/* node after which the dev should be inserted */
+sqm_lst_t *eqs)		/* list of available eqs */
 {
 
 	base_dev_t *dev;
@@ -2065,14 +2067,7 @@ node_t *insert_after)	/* node after which the dev should be inserted */
 	dev->fseq = fs->fi_eq;
 	*dev->additional_params = '\0';
 
-	if (insert_after == NULL) {
-		if (lst_append(res_devs, dev) != 0) {
-			free(dev);
-			Trace(TR_ERR, "build device failed: %s", samerrmsg);
-			return (-1);
-		}
-
-	} else if (lst_ins_after(res_devs, insert_after, dev) != 0) {
+	if (lst_append(res_devs, dev) != 0) {
 		free(dev);
 		Trace(TR_ERR, "build device failed: %s", samerrmsg);
 		return (-1);
@@ -2198,7 +2193,9 @@ fs_t *fs)
 		return (-1);
 	}
 
-	if (get_needed_eqs_for_fs(mcf, fs, &eqs) != 0) {
+	if (get_needed_eqs(mcf, fs->fi_eq, fs->data_disk_list,
+	    fs->meta_data_disk_list, fs->striped_group_list, &eqs) != 0) {
+
 		Trace(TR_ERR, "build qfs failed: %s", samerrmsg);
 		return (-1);
 	}
@@ -2246,7 +2243,7 @@ fs_t *fs)
 	for (n = fs->meta_data_disk_list->head; n != NULL; n = n->next) {
 
 		if (build_metadata_dev(mcf->mcf_devs, fs, (disk_t *)n->data,
-		    eqs, mcf->mcf_devs->tail) != 0) {
+		    eqs) != 0) {
 
 			lst_free_deep(eqs);
 			Trace(TR_ERR, "build qfs failed: %s", samerrmsg);
@@ -2258,7 +2255,7 @@ fs_t *fs)
 	if (fs->data_disk_list != NULL && fs->data_disk_list->length != 0) {
 		for (n = fs->data_disk_list->head; n != NULL; n = n->next) {
 			if (build_dev(mcf->mcf_devs, fs, (disk_t *)n->data,
-			    eqs, mcf->mcf_devs->tail) != 0) {
+			    eqs) != 0) {
 
 				lst_free_deep(eqs);
 				Trace(TR_ERR, "build qfs failed: %s",
@@ -2288,8 +2285,7 @@ fs_t *fs)
 		    n = n->next) {
 
 			if (build_striped_group(mcf->mcf_devs, fs,
-			    (striped_group_t *)n->data, group_ids, eqs,
-			    mcf->mcf_devs->tail) != 0) {
+			    (striped_group_t *)n->data, group_ids, eqs) != 0) {
 
 				lst_free_deep(eqs);
 				lst_free_deep(group_ids);
@@ -2316,8 +2312,7 @@ sqm_lst_t *res_devs,		/* cfg into which dev should be inserted */
 fs_t *fs,		/* fs to which striped group is being added. */
 striped_group_t *sg,	/* striped group to insert */
 sqm_lst_t *group_ids,	/* list of available group ids */
-sqm_lst_t *eqs,		/* list of available eqs */
-node_t *insert_after)	/* node after which the dev should be inserted */
+sqm_lst_t *eqs)		/* list of available eqs */
 {
 
 	node_t *n;
@@ -2351,7 +2346,7 @@ node_t *insert_after)	/* node after which the dev should be inserted */
 		}
 
 		/*
-		 * striped group names contain up to chars and a '\0',
+		 * striped group names contain upto 4 chars and a '\0',
 		 * copy them over.
 		 */
 		strlcpy(sg->name, (char *)group_ids->head->data, 5);
@@ -2367,14 +2362,12 @@ node_t *insert_after)	/* node after which the dev should be inserted */
 
 		disk_t *tmp_disk = (disk_t *)n->data;
 		strcpy(tmp_disk->base_info.equ_type, sg->name);
-		if (build_dev(res_devs, fs, tmp_disk, eqs,
-		    insert_after) != 0) {
+		if (build_dev(res_devs, fs, tmp_disk, eqs) != 0) {
 
 			Trace(TR_ERR, "build striped group failed: %s",
 			    samerrmsg);
 			return (-1);
 		}
-		insert_after = insert_after->next;
 	}
 	Trace(TR_DEBUG, "built striped group");
 	return (0);
@@ -2389,8 +2382,7 @@ build_metadata_dev(
 sqm_lst_t *res_devs,	/* cfg into which dev should be inserted */
 fs_t *fs,		/* fs to which dev is being added */
 disk_t *disk,		/* disk to build dev for */
-sqm_lst_t *eqs,		/* list of available eqs */
-node_t *insert_after)	/* node after which the dev should be inserted */
+sqm_lst_t *eqs)		/* list of available eqs */
 {
 
 	Trace(TR_DEBUG, "build metadata dev");
@@ -2416,7 +2408,7 @@ node_t *insert_after)	/* node after which the dev should be inserted */
 		disk->base_info.additional_params[0] = '\0';
 	}
 
-	if (build_dev(res_devs, fs, disk, eqs, insert_after) != 0) {
+	if (build_dev(res_devs, fs, disk, eqs) != 0) {
 		Trace(TR_ERR, "build metadata dev failed: %s", samerrmsg);
 		return (-1);
 	}
@@ -3064,8 +3056,7 @@ fs_arch_cfg_t *arc) {
 
 
 		if (arc->copies == NULL || arc->copies->length == 0) {
-			samerrno = SE_COPIES_REQUIRED;
-			setsamerr(samerrno);
+			setsamerr(SE_COPIES_REQUIRED);
 			Trace(TR_ERR, "check fs arch cfg failed:%s", samerrmsg);
 			return (-1);
 		}
@@ -3073,16 +3064,12 @@ fs_arch_cfg_t *arc) {
 
 
 		if (arc->vsn_maps == NULL || arc->vsn_maps->length == 0) {
-			samerrno = SE_VSNS_REQUIRED;
-			setsamerr(samerrno);
-
-
+			setsamerr(SE_VSNS_REQUIRED);
 			Trace(TR_ERR, "check fs arch cfg failed: %s",
 			    samerrmsg);
 			return (-1);
 		} else if (arc->vsn_maps->length != arc->copies->length) {
-			samerrno = SE_VSNS_MUST_MATCH_COPIES;
-			setsamerr(samerrno);
+			setsamerr(SE_VSNS_MUST_MATCH_COPIES);
 			Trace(TR_ERR, "check fs arch cfg failed: %s",
 			    samerrmsg);
 			return (-1);
@@ -3099,8 +3086,7 @@ fs_arch_cfg_t *arc) {
 				(m->vsn_pool_names == NULL ||
 				m->vsn_pool_names->length == 0)) {
 
-				samerrno = SE_VSNS_REQUIRED;
-				setsamerr(samerrno);
+				setsamerr(SE_VSNS_REQUIRED);
 
 				Trace(TR_ERR, "check fs arch cfg failed: %s",
 				    samerrmsg);
@@ -3574,21 +3560,57 @@ char *type)
  */
 int
 set_device_state(
-ctx_t *ctx,
+ctx_t *ctx		/* ARGSUSED */,
 char *fs_name,
 dstate_t new_state,
 sqm_lst_t *eqs) {
 
-	node_t *n;
-	int32_t command = 0;
+
 	fs_t *fs;
-	char *last_group = NULL;
 
 	if (ISNULL(fs_name, eqs)) {
 		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
 		return (-1);
 	}
+
 	Trace(TR_MISC, "setting device state:%d", new_state);
+
+	if (get_fs(NULL, fs_name, &fs) == -1) {
+		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	if (!(fs->fi_status & FS_MOUNTED)) {
+		setsamerr(SE_SET_DISK_STATE_FS_NOT_MOUNTED);
+		free_fs(fs);
+		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	if (_set_device_state(fs, eqs, new_state) != 0) {
+		free_fs(fs);
+		Trace(TR_ERR, "setting device state failed:%s",
+		    samerrmsg);
+		return (-1);
+	}
+	free_fs(fs);
+
+	Trace(TR_MISC, "set device state:%d", new_state);
+	return (0);
+
+}
+
+
+/*
+ * Setting device state is idempotent- e.g. setting a device that is noalloc
+ * to noalloc will not return an error.
+ */
+static int
+_set_device_state(fs_t *fs, sqm_lst_t *eqs, dstate_t new_state) {
+	node_t *n;
+	int32_t command = 0;
+	char *last_group = NULL;
+
 	if (new_state == DEV_NOALLOC) {
 		command = DK_CMD_noalloc;
 	} else if (new_state == DEV_ON) {
@@ -3601,30 +3623,13 @@ sqm_lst_t *eqs) {
 		return (-1);
 	}
 
-	if (get_fs(NULL, fs_name, &fs) == -1) {
-		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
-		return (-1);
-	}
-
-	if (!(fs->fi_status & FS_MOUNTED)) {
-		samerrno = SE_SET_DISK_STATE_FS_NOT_MOUNTED;
-		setsamerr(samerrno);
-		free_fs(fs);
-		Trace(TR_ERR, "setting device state failed:%s", samerrmsg);
-		return (-1);
-	}
-
 	for (n = eqs->head; n != NULL; n = n->next) {
 		int eq = *(int *)n->data;
-		char eqbuf[4];
+		char eqbuf[7];
 		disk_t *dsk;
 
-		dsk = find_disk(fs, eq);
+		dsk = find_disk_by_eq(fs, eq);
 		if (dsk == NULL) {
-			samerrno = SE_NOT_FOUND;
-			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
-			    fs_name);
-			free_fs(fs);
 			Trace(TR_ERR, "setting device state failed:%s",
 			    samerrmsg);
 			return (-1);
@@ -3639,8 +3644,7 @@ sqm_lst_t *eqs) {
 		    new_state == DEV_NOALLOC) {
 			samerrno = SE_CANNOT_DISABLE_MM_ALLOCATION;
 			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
-			    fs_name);
-			free_fs(fs);
+			    fs->fi_name);
 			Trace(TR_ERR, "setting device state failed:%s",
 			    samerrmsg);
 			return (-1);
@@ -3681,21 +3685,19 @@ sqm_lst_t *eqs) {
 		}
 
 		snprintf(eqbuf, 7, "%d", eq);
-		if (SetFsPartCmd(fs_name, eqbuf, command) != 0) {
+		if (SetFsPartCmd(fs->fi_name, eqbuf, command) != 0) {
 			samerrno = SE_SET_DISK_STATE_FAILED;
 			snprintf(samerrmsg, MAX_MSG_LEN,
 			    GetCustMsg(samerrno), eq, new_state);
-			free_fs(fs);
+			Trace(TR_ERR, "setting device state failed:%s",
+			    samerrmsg);
 			return (-1);
 		}
 	}
-	free_fs(fs);
 
-	Trace(TR_MISC, "set device state:%d", new_state);
+	Trace(TR_MISC, "_set device state:%d", new_state);
 	return (0);
-
 }
-
 
 static int
 cmd_online_grow(
@@ -3715,13 +3717,451 @@ int eq) {
 	return (0);
 }
 
+int
+fs_dev_remove(
+char *fs_name,
+int eq) {
+
+	char eqbuf[7];
+
+	snprintf(eqbuf, 7, "%d", eq);
+	if (SetFsPartCmd(fs_name, eqbuf, DK_CMD_remove) != 0) {
+		samerrno = SE_FS_DEV_REMOVE_FAILED;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(samerrno), eq);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+fs_dev_release(
+char *fs_name,
+int eq) {
+
+	char eqbuf[7];
+
+	snprintf(eqbuf, 7, "%d", eq);
+	if (SetFsPartCmd(fs_name, eqbuf, DK_CMD_release) != 0) {
+		samerrno = SE_FS_DEV_RELEASE_FAILED;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(samerrno), eq);
+		return (-1);
+	}
+
+	return (0);
+}
+
+
+int
+shrink_release(
+ctx_t *c		/* ARGSUSED */,
+char *fs_name,
+int eq_to_release,
+char *kv_options) {
+
+	int ret_val;
+
+	ret_val = shrink(fs_name, eq_to_release, -1,
+	    kv_options, B_TRUE);
+
+	Trace(TR_MISC, "shrink release returning %d", ret_val);
+	return (ret_val);
+}
+
+int
+shrink_remove(
+ctx_t *c		/* ARGSUSED */,
+char *fs_name,
+int eq_to_release,
+int replacement_eq,
+char *kv_options) {
+
+	int ret_val;
+
+	ret_val = shrink(fs_name, eq_to_release, replacement_eq,
+	    kv_options, B_FALSE);
+
+	Trace(TR_MISC, "shrink release returning %d", ret_val);
+
+	return (ret_val);
+}
+
+
+int
+shrink_replace_group(
+ctx_t *c,
+char *fs_name,
+int eq_to_replace,
+striped_group_t *replacement,
+char *kv_options) {
+
+	int ret_val;
+
+
+	Trace(TR_MISC, "shrink replace group %d entry", eq_to_replace);
+
+
+	if (ISNULL(fs_name, replacement)) {
+		Trace(TR_ERR, "shrink replace group failed: %d %s", samerrno,
+		    samerrmsg);
+		return (-1);
+	}
+
+	ret_val = shrink_replace(c, fs_name, eq_to_replace, NULL, replacement,
+	    kv_options);
+
+	Trace(TR_MISC, "shrink replace group returning %d", ret_val);
+
+	return (ret_val);
+}
+
+
+
+int
+shrink_replace_device(
+ctx_t *c,
+char *fs_name,
+int eq_to_replace,
+disk_t *replacement,
+char *kv_options) {
+
+	int ret_val;
+
+	Trace(TR_MISC, "shrink replace group %d entry", eq_to_replace);
+
+	if (ISNULL(fs_name, replacement)) {
+		Trace(TR_ERR, "shrink replace device failed: %d %s", samerrno,
+		    samerrmsg);
+		return (-1);
+	}
+
+	ret_val = shrink_replace(c, fs_name, eq_to_replace, replacement, NULL,
+	    kv_options);
+
+	Trace(TR_MISC, "shrink relplace_device returning %d", ret_val);
+
+	return (ret_val);
+}
+
+
+/*
+ * This essentially boils down to an online grow of the
+ * file system followed by a shink_remove
+ */
+static int
+shrink_replace(
+ctx_t *c,
+char *fs_name,
+int eq_to_replace,
+disk_t *dk_replacement,
+striped_group_t *sg_replacement,
+char *kv_options) {
+
+
+	fs_t		*fs = NULL;
+	fs_t		*post_grow_fs;
+	sqm_lst_t	*new_meta = NULL;
+	sqm_lst_t	*new_data = NULL;
+	sqm_lst_t	*new_group = NULL;
+	sqm_lst_t	*new_dev_lst;
+	disk_t		*dsk_being_removed;
+	disk_t		*replacement_post_grow;
+	char		*replacement_path = NULL;
+	void		*replacement = NULL;
+	int		new_dev_type;
+	int		ret;
+
+
+	/*
+	 * check dk_replacemnt or sg_replacement after we know which should
+	 * be non-NULL
+	 */
+	if (ISNULL(fs_name)) {
+		Trace(TR_MISC, "shrink replace failed: %d %s", samerrno,
+		    samerrmsg);
+		return (-1);
+	}
+
+	/*
+	 * You cannot shrink the fs unless it is mounted. Check this before
+	 * performing the grow.
+	 */
+	ret = get_fs(NULL, fs_name, &fs);
+	if (ret == -1) {
+		Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+		return (-1);
+	}
+	if (ret == -2 || !(fs->fi_status & FS_MOUNTED)) {
+		setsamerr(SE_SHRINK_FS_NOT_MOUNTED);
+		free_fs(fs);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	/*
+	 * Find the device to remove to make sure it exists prior to
+	 * getting too far.
+	 */
+	dsk_being_removed = find_disk_by_eq(fs, eq_to_replace);
+	if (dsk_being_removed == NULL) {
+		free_fs(fs);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	/* Create and populate the appropriate argument list for grow */
+	new_dev_lst = lst_create();
+	if (new_dev_lst == NULL) {
+		free_fs(fs);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+
+	/*
+	 * Check to see if the disk being removed is metadata, data or a
+	 * striped group. This will determine which grow argument should
+	 * be non-NULL.
+	 */
+	new_dev_type = nm_to_dtclass(dsk_being_removed->base_info.equ_type);
+	if (new_dev_type == DT_META) {
+		if (dk_replacement != NULL) {
+			new_meta = new_dev_lst;
+			replacement = dk_replacement;
+			replacement_path = dk_replacement->au_info.path;
+		}
+	} else if ((new_dev_type & DT_STRIPE_GROUP_MASK) == DT_STRIPE_GROUP) {
+		if (sg_replacement != NULL &&
+		    sg_replacement->disk_list != NULL &&
+		    sg_replacement->disk_list->head != NULL &&
+		    sg_replacement->disk_list->head->data != NULL) {
+			disk_t *tmp_dk =
+			    (disk_t *)sg_replacement->disk_list->head->data;
+
+			new_group = new_dev_lst;
+			replacement = sg_replacement;
+			replacement_path = tmp_dk->au_info.path;
+		}
+	} else  {
+		if (dk_replacement != NULL) {
+			/*
+			 * set the data disk list. Grow will sort out
+			 * wether it is an mr or md
+			 */
+			new_data = new_dev_lst;
+			replacement = dk_replacement;
+			replacement_path = dk_replacement->au_info.path;
+		}
+	}
+	if (ISNULL(replacement)) {
+		free_fs(fs);
+		lst_free(new_dev_lst);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+
+	if (lst_append(new_dev_lst, replacement) != 0) {
+		free_fs(fs);
+		lst_free(new_dev_lst);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+
+	if (_grow_fs(c, fs, new_meta, new_data, new_group) != 0) {
+		free_fs(fs);
+		lst_free(new_dev_lst);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	free_fs(fs);
+
+	/*
+	 * Refetch the file system and find the disk we just added to
+	 * to get the eq that was set inside the grow function. Note
+	 * this works for striped group too as only the eq for the
+	 * first disk in the group is needed.
+	 */
+	if (get_fs(NULL, fs_name, &post_grow_fs) == -1) {
+		lst_free(new_dev_lst);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	replacement_post_grow =
+	    find_disk_by_path(post_grow_fs, replacement_path);
+
+	if (replacement_post_grow == NULL) {
+		free_fs(post_grow_fs);
+		lst_free(new_dev_lst);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+
+	if (shrink(fs_name, eq_to_replace, replacement_post_grow->base_info.eq,
+	    kv_options, B_FALSE) != 0) {
+		free_fs(post_grow_fs);
+		lst_free(new_dev_lst);
+		Trace(TR_ERR, "shrink replace device failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	/* free the lst but not the replacement argument */
+	lst_free(new_dev_lst);
+	free_fs(post_grow_fs);
+
+	Trace(TR_MISC, "shrink replace succeeded for:%s", fs_name);
+	return (0);
+}
+
+
+static int
+shrink(char *fs_name, int eq_to_exclude, int replacement_eq,
+    char *kv_options, boolean_t release) {
+
+
+	fs_t *fs;
+	int ret;
+	sqm_lst_t *eqs;
+	timespec_t waitspec = {1, 0};
+
+
+	/* ignore NULL kv_options at this point */
+	if (ISNULL(fs_name)) {
+		Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+		return (-1);
+	}
+	Trace(TR_MISC, "shrinking fs %s exclude: %d, replacement: %d",
+	    fs_name, eq_to_exclude, replacement_eq);
+
+	/*
+	 * get the file system to check the superblock version and
+	 * see if it is mounted or not.
+	 */
+	ret = get_fs(NULL, fs_name, &fs);
+	if (ret == -1) {
+		Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+		return (-1);
+	}
+	if (ret == -2 || !(fs->fi_status & FS_MOUNTED)) {
+		setsamerr(SE_SHRINK_FS_NOT_MOUNTED);
+		free_fs(fs);
+		Trace(TR_ERR, "shrink failed:%s", samerrmsg);
+		return (-1);
+	}
+
+
+	/* set the shrink options if non-NULL */
+	if (kv_options && *kv_options != '\0') {
+		if (set_shrink_options(fs_name, kv_options) != 0) {
+			free_fs(fs);
+			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+			return (-1);
+		}
+	}
+
+	/*
+	 * The device must be set noalloc for the shrink to succeed.
+	 * Call _set_device_state it will check that the eq is part of
+	 * the fs and verify that the state is noalloc and if not
+	 * will set the state to noalloc.0
+	 */
+	eqs = lst_create();
+	if (eqs == NULL) {
+		free_fs(fs);
+		Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+		return (-1);
+	}
+	if (lst_append(eqs, &eq_to_exclude) != 0) {
+		lst_free(eqs);
+		free_fs(fs);
+		Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+		return (-1);
+	}
+	if (_set_device_state(fs, eqs, DEV_NOALLOC) != 0) {
+		lst_free(eqs);
+		free_fs(fs);
+		Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	lst_free(eqs);
+
+	/*
+	 * Sleep for 1 second to give the device state a chance to
+	 * reflect DEV_NOALLOC.
+	 */
+	nanosleep(&waitspec, NULL);
+
+
+	if (release) {
+		if (fs_dev_release(fs->fi_name, eq_to_exclude) != 0) {
+			free_fs(fs);
+			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+			return (-1);
+		}
+	} else if (replacement_eq == -1) {
+		disk_t *dk = NULL;
+
+		/*
+		 * The user cannot remove a striped group without specifying
+		 * a replacement. So check that this is not a striped group.
+		 */
+		dk = find_disk_by_eq(fs, eq_to_exclude);
+		if (dk == NULL) {
+			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+			free_fs(fs);
+			return (-1);
+		}
+
+		if (*(dk->base_info.equ_type) == 'g' ||
+		    *(dk->base_info.equ_type) == 'o') {
+
+			setsamerr(SE_SHRINK_REPLACEMENT_GROUP_REQUIRED);
+			free_fs(fs);
+			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+			return (-1);
+		}
+
+		if (fs_dev_remove(fs->fi_name, eq_to_exclude) != 0) {
+			free_fs(fs);
+			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+			return (-1);
+		}
+
+
+	} else {
+		/*
+		 * Core support for specifying the replacement device
+		 * is not yet available. For now simply call fs_dev_remove.
+		 */
+		if (fs_dev_remove(fs->fi_name, eq_to_exclude) != 0) {
+			free_fs(fs);
+			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
+			return (-1);
+		}
+	}
+
+	Trace(TR_MISC, "releasing %d from fs %s succeeded", eq_to_exclude,
+	    fs->fi_name);
+
+	free_fs(fs);
+
+	return (0);
+}
+
 
 static disk_t *
-find_disk(fs_t *f, int eq) {
+find_disk_by_eq(fs_t *f, int eq) {
 	node_t *n;
 	node_t *sgn;
 
-	if (f == NULL) {
+	if (ISNULL(f)) {
 		return (NULL);
 	}
 
@@ -3750,6 +4190,49 @@ find_disk(fs_t *f, int eq) {
 		}
 	}
 
-	return (NULL);
+	samerrno = SE_EQ_NOT_FOUND;
+	snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno), eq);
 
+	return (NULL);
+}
+
+static disk_t *
+find_disk_by_path(fs_t *f, char *path) {
+	node_t *n;
+	node_t *sgn;
+
+	if (ISNULL(f, path)) {
+		return (NULL);
+	}
+
+	for (n = f->meta_data_disk_list->head; n != NULL; n = n->next) {
+		disk_t *dsk = (disk_t *)n->data;
+		if (dsk != NULL && strcmp(dsk->base_info.name, path) == 0) {
+			return (dsk);
+		}
+	}
+	for (n = f->data_disk_list->head; n != NULL; n = n->next) {
+		disk_t *dsk = (disk_t *)n->data;
+		if (dsk != NULL && strcmp(dsk->base_info.name, path) == 0) {
+			return (dsk);
+		}
+	}
+	for (sgn = f->striped_group_list->head; sgn != NULL; sgn = sgn->next) {
+		striped_group_t *sg = (striped_group_t *)sgn->data;
+		if (sg == NULL || sg->disk_list == NULL) {
+			continue;
+		}
+		for (n = sg->disk_list->head; n != NULL; n = n->next) {
+			disk_t *dsk = (disk_t *)n->data;
+			if (dsk != NULL &&
+			    strcmp(dsk->base_info.name, path) == 0) {
+				return (dsk);
+			}
+		}
+	}
+
+	samerrno = SE_PATH_NOT_FOUND;
+	snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno), path);
+
+	return (NULL);
 }
