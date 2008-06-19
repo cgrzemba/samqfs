@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.115 $"
+#pragma ident	"$Revision: 1.116 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -206,6 +206,7 @@ sammgmtprog_1(rqstp, transp)
 		ctx_arg_t samrpc_get_sc_ui_state_5_arg;
 		ctx_arg_t samrpc_get_status_processes_6_arg;
 		ctx_arg_t samrpc_get_component_status_summary_6_arg;
+		ctx_arg_t samrpc_get_config_summary_5_0_arg;
 
 		/* archive.h - config APIs */
 		ctx_arg_t samrpc_get_default_ar_set_copy_cfg_1_arg;
@@ -671,6 +672,12 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_argument = xdr_ctx_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_get_component_status_summary_6_svr;
+		break;
+
+	case samrpc_get_config_summary:
+		_xdr_argument = xdr_ctx_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_get_config_summary_5_0_svr;
 		break;
 
 	/*

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.38 $"
+#pragma ident	"$Revision: 1.39 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -1072,6 +1072,48 @@ sqm_lst_t **status_lst		/* return list of integers giving status */
 	*status_lst = (sqm_lst_t *)result.samrpc_result_u.result.result_data;
 
 	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+get_config_summary(
+ctx_t *ctx,		/* client connection */
+char **res		/* kv results string */
+)
+{
+	int ret_val;
+	ctx_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:get config summary";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(res)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+
+	SAMRPC_CLNT_CALL(samrpc_get_config_summary, ctx_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	*res =  (char *)result.samrpc_result_u.result.result_data;
+
+	PTRACE(2, "%s returning with status [%d] [%s]...",
+	    func_name, ret_val, (*res != NULL) ? *res : "NULL");
+
 	PTRACE(2, "%s exit", func_name);
 	return (ret_val);
 }

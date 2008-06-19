@@ -29,7 +29,7 @@
 #ifndef _MGMT_H
 #define	_MGMT_H
 
-#pragma	ident	"$Revision: 1.66 $"
+#pragma	ident	"$Revision: 1.67 $"
 
 /*
  * mgmt.h - SAMFS APIs for misc operations.
@@ -306,6 +306,29 @@ get_package_information(ctx_t *ctx, char *pkgs, int32_t which_info,
  */
 int
 get_configuration_status(ctx_t *ctx, sqm_lst_t **l);
+
+
+/*
+ * This method is to support the First Time Configuration Checklist.
+ * It provides the information that allows the GUI to show high level
+ * feedback to the users about what is currently configured.
+ *
+ * Key value string showing the status.
+ * Keys ==> Value type
+ * lib_count = int
+ * lib_names = space separated list.
+ * tape_count = int
+ * qfs_count = int
+ * disk_vols_count = int
+ * volume_pools = int
+ * object_qfs_protos = int (number of HPC file systems currently partially
+ *	created)
+ * ojbect_qfs_names = space separated list of names.
+ * Storage_nodes = int (only provided if object_qfs_proto_count == 1)
+ * clients = int (only provided if object_qfs_proto_count == 1)
+ */
+int
+get_config_summary(ctx_t *c, char **res);
 
 
 /*

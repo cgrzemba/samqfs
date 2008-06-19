@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.113 $"
+#pragma ident	"$Revision: 1.114 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -2112,6 +2112,9 @@ extern  samrpc_result_t *samrpc_get_status_processes_6_svr();
 
 #define	samrpc_get_component_status_summary 1125
 extern  samrpc_result_t *samrpc_get_component_status_summary_6_svr();
+
+#define	samrpc_get_config_summary 1126
+extern  samrpc_result_t *samrpc_get_config_summary_5_0_svr();
 
 /* recyc_sh_wrap.h */
 

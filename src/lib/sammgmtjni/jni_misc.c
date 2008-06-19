@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.35 $"
+#pragma ident	"$Revision: 1.36 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -506,4 +506,20 @@ Java_com_sun_netstorage_samqfs_mgmt_adm_SysInfo_getComponentStatusSummary(
 
 	PTRACE(3, "jni:SysInfo getComponentStatusSummary() done");
 	return (newArr);
+}
+
+
+JNIEXPORT jstring JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_adm_SysInfo_getConfigurationSummary(
+	JNIEnv *env, jclass cls /*ARGSUSED*/, jobject ctx) {
+
+	char *str = NULL;
+
+	PTRACE(3, "jni:SysInfo getConfigurationSummary() entry");
+	if (-1 == get_config_summary(CTX, &str)) {
+		ThrowEx(env);
+		return (NULL);
+	}
+	PTRACE(3, "jni:SysInfo getConfigurationSummary() done");
+	return (JSTRING(str));
 }

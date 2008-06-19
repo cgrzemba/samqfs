@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 /*
  *	server_info.c -  generic system info functions
@@ -1357,6 +1357,109 @@ get_system_info(ctx_t *ctx /* ARGSUSED */, char **info) {
 	*info = strdup(buffer);
 
 	return (0);
+}
+
+
+int
+get_config_summary(ctx_t *c, char **res) {
+	sqm_lst_t	*lst = NULL;
+	char		*tmp_res;
+	char		detail_buf[32];
+	size_t		sz = 1024;
+	node_t		*n;
+
+	tmp_res = (char *)mallocer(sz);
+	if (tmp_res == NULL) {
+		*res = NULL;
+		return (-1);
+	}
+	*tmp_res = '\0';
+
+	if ((get_all_libraries(c, &lst) != -1) && lst->length != 0) {
+		int cat_entries = 0;
+		boolean_t libs_printed = B_FALSE;
+
+		snprintf(detail_buf, sizeof (detail_buf),
+		    "lib_count=%d,", lst->length);
+		STRLCATGROW(tmp_res, detail_buf, sz);
+
+		for (n = lst->head; n != NULL; n = n->next) {
+			library_t *lib = (library_t *)n->data;
+			int lib_entries = 0;
+			if (lib != NULL) {
+				libs_printed = B_TRUE;
+
+				if (n == lst->head) {
+					STRLCATGROW(tmp_res, "lib_names=", sz);
+				}
+				STRLCATGROW(tmp_res, lib->base_info.set, sz);
+				STRLCATGROW(tmp_res, " ", sz);
+
+				if (get_no_of_catalog_entries(c,
+				    lib->base_info.eq, &lib_entries) == 0) {
+					cat_entries += lib_entries;
+				}
+			}
+			if (libs_printed) {
+				STRLCATGROW(tmp_res, ",", sz);
+			}
+
+		}
+		if (cat_entries != 0) {
+			snprintf(detail_buf, sizeof (detail_buf),
+			    "tape_count=%d,", cat_entries);
+			STRLCATGROW(tmp_res, detail_buf, sz);
+		}
+	}
+	if (lst != NULL) {
+		free_list_of_libraries(lst);
+	}
+
+	if (get_all_fs(c, &lst) != -1) {
+		if (lst->length != 0) {
+			snprintf(detail_buf, sizeof (detail_buf),
+			    "qfs_count=%d,", lst->length);
+			STRLCATGROW(tmp_res, detail_buf, sz);
+		}
+
+		free_list_of_fs(lst);
+	}
+	if (get_all_disk_vols(c, &lst) != -1) {
+		if (lst->length != 0) {
+			snprintf(detail_buf, sizeof (detail_buf),
+			    "disk_vols_count=%d,", lst->length);
+			STRLCATGROW(tmp_res, detail_buf, sz);
+		}
+
+		lst_free_deep(lst);
+	}
+	if (get_all_vsn_pools(c, &lst) != -1) {
+		if (lst->length != 0) {
+			snprintf(detail_buf, sizeof (detail_buf),
+			    "volume_pools=%d,", lst->length);
+			STRLCATGROW(tmp_res, detail_buf, sz);
+		}
+
+		free_vsn_pool_list(lst);
+	}
+
+
+	if (tmp_res != NULL) {
+		if (*tmp_res != '\0') {
+			char *end;
+			end = strrchr(tmp_res, ',');
+			if (end != NULL) {
+				*end = '\0';
+			}
+		}
+
+		*res = tmp_res;
+		return (0);
+	} else {
+		*res = NULL;
+		setsamerr(SE_NO_MEM);
+		return (-1);
+	}
 }
 
 

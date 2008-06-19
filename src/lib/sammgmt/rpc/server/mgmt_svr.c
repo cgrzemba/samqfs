@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.36 $"
+#pragma ident	"$Revision: 1.37 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -648,5 +648,28 @@ struct svc_req *req	/* ARGSUSED */
 	    ret, (lst != NULL) ? lst->length : -1);
 
 	Trace(TR_DEBUG, "Get component status summary return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_get_config_summary_5_0_svr(
+	ctx_arg_t *arg, /* ARGSUSED */
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+	char *res = NULL;
+
+	Trace(TR_DEBUG, "Get config summary");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	ret = get_config_summary(arg->ctx, &res);
+
+	SAMRPC_SET_RESULT(ret, SAM_MGMT_STRING, res);
+
+	Trace(TR_DEBUG, "Return config summary [%s]", Str(res));
 	return (&rpc_result);
 }
