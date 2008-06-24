@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.151 $"
+#pragma ident "$Revision: 1.152 $"
 
 #include "sam/osversion.h"
 
@@ -570,12 +570,6 @@ sam_setattr_ino(
 	vnode_t *vp;
 	sam_mode_t oldmode, mode;
 	timespec_t  system_time;
-#ifdef LQFS_TODO_LOCKFS
-	struct ulockfs *ulp;
-#endif /* LQFS_TODO_LOCKFS */
-	int issync;
-	int trans_size;
-	int dotrans = 0;
 	vattr_t oldva;
 
 	oldva.va_mode = ip->di.mode;
@@ -606,23 +600,6 @@ sam_setattr_ino(
 	    &oldva, flags, sam_access_ino_ul, ip)) {
 		return (error);
 	}
-	/*
-	 * Start LQFS setattr transaction
-	 */
-#ifdef LQFS_TODO_LOCKFS
-	error = ufs_lockfs_begin(ip->mp, &ulp,
-	    ULOCKFS_SETATTR_MASK);
-	if (error) {
-		return (error);
-	}
-	if (ulp) {
-#endif /* LQFS_TODO_LOCKFS */
-		trans_size = (int)TOP_SETATTR_SIZE(ip);
-		TRANS_BEGIN_CSYNC(ip->mp, issync, TOP_SETATTR, trans_size);
-		dotrans++;
-#ifdef LQFS_TODO_LOCKFS
-	}
-#endif /* LQFS_TODO_LOCKFS */
 
 	mask = vap->va_mask;
 
@@ -914,22 +891,6 @@ sam_setattr_ino(
 		}
 	}
 out:
-#ifdef LQFS_TODO_LOCKFS
-	if (ulp) {
-#endif /* LQFS_TODO_LOCKFS */
-		if (dotrans) {
-			int terr = 0;
-
-			TRANS_END_CSYNC(ip->mp, terr, issync,
-			    TOP_SETATTR, trans_size);
-			if (error == 0) {
-				error = terr;
-			}
-		}
-#ifdef LQFS_TODO_LOCKFS
-		ufs_lockfs_end(ulp);
-	}
-#endif /* LQFS_TODO_LOCKFS */
 
 	return (error);
 }

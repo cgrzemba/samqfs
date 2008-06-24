@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.90 $"
+#pragma ident "$Revision: 1.91 $"
 
 #include "sam/osversion.h"
 
@@ -1494,7 +1494,9 @@ sam_request_file(void *arg)
 	struct sam_rminfo *urb;
 	struct sam_section *vsnp;
 	sam_mount_t *mp;
-
+	int issync;
+	int trans_size;
+	int terr = 0;
 
 	if (copyin(arg, (caddr_t)&args, sizeof (args))) {
 		return (EFAULT);
@@ -1530,6 +1532,9 @@ sam_request_file(void *arg)
 	if ((error = sam_open_operation(ip))) {
 		return (error);
 	}
+
+	trans_size = (int)TOP_SETATTR_SIZE(ip);
+	TRANS_BEGIN_CSYNC(ip->mp, issync, TOP_SETATTR, trans_size);
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 	if (ip->di.version == SAM_INODE_VERS_1) {
@@ -1827,6 +1832,12 @@ sam_request_file(void *arg)
 out:
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	mp = ip->mp;
+
+	TRANS_END_CSYNC(mp, terr, issync, TOP_SETATTR, trans_size);
+	if (error == 0) {
+		error = terr;
+	}
+
 	VN_RELE(vp);
 	SAM_CLOSE_OPERATION(mp, error); /* can't use ip->mp since vp released */
 	return (error);

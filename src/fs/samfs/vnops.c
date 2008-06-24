@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.154 $"
+#pragma ident "$Revision: 1.155 $"
 
 #include "sam/osversion.h"
 
@@ -337,13 +337,32 @@ sam_setattr_vn(
 {
 	sam_node_t *ip;
 	int error;
+	int issync;
+	int trans_size;
+	int dotrans = 0;
 
 	TRACE(T_SAM_SETATTR, vp, (sam_tr_t)vap, flags, vap->va_mask);
 	ip = SAM_VTOI(vp);
 
+	/*
+	 * Start LQFS transaction
+	 */
+	trans_size = (int)TOP_SETATTR_SIZE(ip);
+	TRANS_BEGIN_CSYNC(ip->mp, issync, TOP_SETATTR, trans_size);
+	dotrans++;
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+
 	error = sam_setattr_ino(ip, vap, flags, credp);
+
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+	if (dotrans) {
+		int terr = 0;
+
+		TRANS_END_CSYNC(ip->mp, terr, issync, TOP_SETATTR, trans_size);
+		if (error == 0) {
+			error = terr;
+		}
+	}
 
 	TRACE(T_SAM_SETATTR_RET, vp, (sam_tr_t)vap, error, 0);
 	return (error);

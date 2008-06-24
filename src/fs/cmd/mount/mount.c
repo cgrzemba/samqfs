@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.78 $"
+#pragma ident "$Revision: 1.79 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -72,11 +72,18 @@
 #include <sam/lib.h>
 #include <sam/syscall.h>
 #include <utility.h>
+#ifdef sun
+#include <sam/fioctl.h>
+#endif /* sun */
 
 /* Private functions. */
 static void FatalError(int ErrNum, int MsgNum, ...);
 static int retry_mount(struct sam_fs_info *mp, struct sam_share_arg *fsp,
 	char *fset_name, char *mnt_point, struct sam_mount_info *mount_info);
+
+#ifdef sun
+static int checkisjournal(char *mp);
+#endif /* sun */
 
 #ifdef CMD_UPDATE_MNTTAB
 static void add_mnttab_entry(char *file, char *mnt_point, char *mnt_opts,
@@ -425,6 +432,27 @@ main(int argc, char **argv)
 		}
 	}
 
+#ifdef sun
+	/*
+	 * If journaling was requested, wait for it to be enabled
+	 * by sam-fsd before updating mnttab and exiting.
+	 */
+	if (mp->fi_config1 & MC_LOGGING) {
+		struct sam_fs_info fi;
+
+		if (GetFsInfo(fset_name, &fi) >= 0) {
+			if ((fi.fi_status & FS_CLIENT) == 0) {
+				int isjournal;
+
+				while ((isjournal = checkisjournal(mnt_point))
+				    == 0) {
+					sleep(1);
+				}
+			}
+		}
+	}
+#endif /* sun */
+
 	/*
 	 * For Linux, -n indicates no mounted FS table update.
 	 */
@@ -519,6 +547,25 @@ retry_mount(
 	}
 	return (0);
 }
+
+#ifdef sun
+/*
+ * Check journaling state - return non-zero if journaling is enabled.
+ */
+static int
+checkisjournal(char *mp)
+{
+	int fd;
+	uint32_t isjournal = 0;
+
+	fd = open(mp, O_RDONLY);
+	if (fd >= 0) {
+		(void) ioctl(fd, _FIOISLOG, &isjournal);
+		(void) close(fd);
+	}
+	return ((int)isjournal);
+}
+#endif /* sun */
 
 
 #ifdef CMD_UPDATE_MNTTAB

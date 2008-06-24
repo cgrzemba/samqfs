@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.285 $"
+#pragma ident "$Revision: 1.286 $"
 
 #include "sam/osversion.h"
 
@@ -2957,11 +2957,27 @@ sam_get_inode_request(sam_mount_t *mp, sam_san_message_t *msg)
 	sam_san_inode2_t *i2p = &msg->call.inode2;
 	sam_node_t *ip;
 	int error = 0;
+	int issync;
+	int trans_size;
+	int dotrans = 0;
 
 	if ((error = sam_get_ino(mp->mi.m_vfsp, IG_EXISTS,
 	    &inp->id, &ip)) == 0) {
 		TRACE(T_SAM_SR_INODE, SAM_ITOV(ip), msg->hdr.client_ord,
 		    msg->hdr.operation, ip->di.rm.size);
+
+		switch (msg->hdr.operation) {
+		case INODE_setattr:
+		case INODE_samaid:
+			trans_size = (int)TOP_SETATTR_SIZE(ip);
+			TRANS_BEGIN_CSYNC(ip->mp, issync, TOP_SETATTR,
+			    trans_size);
+			dotrans++;
+			break;
+		default:
+			break;
+		}
+
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		sam_update_cl_attr(ip, msg->hdr.client_ord, &inp->cl_attr);
 
@@ -2978,10 +2994,23 @@ sam_get_inode_request(sam_mount_t *mp, sam_san_message_t *msg)
 		 */
 		sam_set_sr_attr(ip, i2p->irec.sr_attr.actions, &i2p->irec);
 		(void) sam_update_inode_buffer_rw(ip);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+
+		if (dotrans) {
+			int terr = 0;
+
+			TRANS_END_CSYNC(ip->mp, terr, issync, TOP_SETATTR,
+			    trans_size);
+
+			if (error == 0) {
+				error = terr;
+			}
+		}
+
 		TRACE(T_SAM_SR_INODE_RET, SAM_ITOV(ip),
 		    i2p->irec.sr_attr.current_size,
 		    i2p->irec.sr_attr.actions, error);
-		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+
 		VN_RELE(SAM_ITOV(ip));
 	}
 	return (error);
