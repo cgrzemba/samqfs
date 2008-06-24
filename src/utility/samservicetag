@@ -1,0 +1,178 @@
+#!/bin/ksh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at pkg/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# samservicetag add|delete
+#
+# add - Determines which (QFS only or SAM-QFS) package is installed
+#   and adds the appropriate service tag to the repository using the
+#   CLI interface "stclient".  This is called from mount or samd config
+#   time.
+#
+# delete - Deletes all QFS or SAM service tags from the service tag
+#   repository.  This is called at package delete time.
+#
+# In all cases, if service tags is not installed on the system, this
+# command is a noop.
+#
+#	$Revision: 1.1 $
+#
+
+#
+# Initial stuff.
+#
+CMDNAME=$0
+USAGE="usage: $CMDNAME add|delete"
+T=/tmp/st.$$
+trap "rm -f $T" 0
+
+#
+# QFS and SAM Product URN's
+#
+# Paths for URN's from SwoRDFish are:
+# UPT > Software > Storage Management Software > Data Management >
+#	Sun StorageTek QFS Software
+# UPT > Software > Storage Management Software > Data Management >
+#	Sun StorageTek SAM-FS Software
+# Service tags can be looked up at:
+#	http://metadata.sfbay.sun.com/Browse/index.jsp
+# Email to swordfish-request@sun.com to request new ones to be created.
+#
+QFS_URN_50="urn:uuid:9e251fb7-e00a-11dc-ac55-080020a9ed93"
+SAM_URN_50="urn:uuid:1c800ca9-e00e-11dc-ac55-080020a9ed93"
+QFS_URN="$QFS_URN_50"
+SAM_URN="$SAM_URN_50"
+
+#
+# Process arguments.
+#
+CMD="$1"
+if [ $# -ne 1 -o "$CMD" != "add" -a "$CMD" != "delete" ]
+then
+	echo $USAGE 1>&2
+	exit 2
+fi
+
+#
+# Check to see if service tags package is installed on this system.
+#
+STC=/bin/stclient
+if [ ! -x $STC ]
+then
+	exit 0
+fi
+
+#
+# Find out which package is installed.
+#
+PKG=""
+pkginfo -l SUNWqfsr   >$T  2>/dev/null && PKG=SUNWqfs
+pkginfo -l SUNWsamfsr >>$T 2>/dev/null && PKG=SUNWsamfs
+
+#
+# Get version, arch, rel.
+#
+VERS=`awk <$T '/VERSION:/ { print $2 }'`
+ARCH=`awk <$T '/ARCH:/    { print $2 }'`
+REL=`echo $VERS | sed -e 's/\(...\).*/\1/'`	# First 3 char of VERS
+rm -f $T
+
+#
+# Check release level - remind us to update URNs if level changes.
+# Get new URNs from SwoRDFish when level changes
+#
+if [ $REL != "5.0" ]
+then
+	echo "$CMDNAME: Warning: update $CMDNAME with new service tags" 1>&2
+	echo "	for level $REL" 1>&2
+fi
+
+#
+# Process command.
+#
+case $CMD-$PKG in
+
+add-)
+	echo "$CMDNAME: Internal error - no SAM-QFS package installed?" 1>&2
+	exit 0
+	;;
+
+add-SUNWqfs)
+	#
+	# Add QFS service tag.
+	#
+	QFS_INSTANCE_URN=`$STC -f -t "$QFS_URN" 2>/dev/null | head -1`
+	if [ "$QFS_INSTANCE_URN" == "Record not found" ]
+	then
+		$STC -a \
+		    -p "Sun StorageTek QFS 5.0 Software" \
+		    -e $REL -t "$QFS_URN" -P "Sun StorageTek QFS Software" \
+		    -m Sun -A $ARCH -z global -S "$VERS" >/dev/null
+	fi
+	;;
+
+add-SUNWsamfs)
+	#
+	# Add QFS and SAM service tags.
+	#
+	QFS_INSTANCE_URN=`$STC -f -t "$QFS_URN" 2>/dev/null | head -1`
+	if [ "$QFS_INSTANCE_URN" == "Record not found" ]
+	then
+		$STC -a \
+		    -p "Sun StorageTek QFS 5.0 Software" \
+		    -e $REL -t "$QFS_URN" -P "Sun StorageTek QFS Software" \
+		    -m Sun -A $ARCH -z global -S "$VERS" >/dev/null
+	fi
+	SAM_INSTANCE_URN=`$STC -f -t "$SAM_URN" 2>/dev/null | head -1`
+	if [ "$SAM_INSTANCE_URN" == "Record not found" ]
+	then
+		$STC -a \
+		    -p "Sun StorageTek Storage Archive Manager 5.0 Software" \
+		    -e $REL -t "$SAM_URN" -P "Sun StorageTek SAM-FS Software" \
+		    -m Sun -A $ARCH -z global -S "$VERS" >/dev/null
+	fi
+	;;
+
+delete-*)
+	#
+	# Delete all QFS and SAM service tags, including multiple copies
+	# if present.  Update below list as new levels are released.
+	#
+	for URN in "$QFS_URN_50" "$SAM_URN_50"
+	do
+		INSTANCE_URN=`$STC -f -t "$URN" 2>/dev/null | head -1`
+		while [ "$INSTANCE_URN" != "Record not found" ]
+		do
+			$STC -d -i "$INSTANCE_URN" >/dev/null
+			INSTANCE_URN=`$STC -f -t "$URN" 2>/dev/null | head -1`
+		done
+	done
+	;;
+
+esac
+

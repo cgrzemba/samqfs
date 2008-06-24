@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 #include "sam/osversion.h"
 
@@ -270,14 +270,38 @@ ChkFs(void)
 		}
 	}
 #ifdef sun
+	/*
+	 * Enable sam-fsd
+	 */
 	printf("%s: Enabling the sam-fsd service.\n", program_name);
 	pid = fork();
 	if (pid == -1) {
-		error(EXIT_FAILURE, errno, "Cannot fork");
+		error(EXIT_FAILURE, errno, "Cannot fork to enable sam-fsd");
 	} else if (pid == 0) {
 		close(fd);
 		execl("/usr/sbin/svcadm", "svcadm", "enable", "-t",
 		    SAM_FSD, NULL);
+		error(EXIT_FAILURE, errno, "Cannot exec to enable sam-fsd");
+	} else {
+		waitpid(pid, &status, 0);
+		close(fd);
+	}
+	/*
+	 * Add appropriate service tags
+	 */
+	printf("%s: Adding service tags.\n", program_name);
+	pid = fork();
+	if (pid == -1) {
+		/* Treat as nonfatal error */
+		printf("%s: Could not fork to add service tags.\n",
+		    program_name);
+	} else if (pid == 0) {
+		close(fd);
+		execl(SAM_EXECUTE_PATH"/"SAM_SERVICETAG, SAM_SERVICETAG, "add",
+		    NULL);
+		printf("%s: Could not exec "SAM_SERVICETAG
+		    " to add service tags.\n", program_name);
+		exit(0);
 	} else {
 		waitpid(pid, &status, 0);
 		close(fd);

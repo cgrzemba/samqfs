@@ -1,0 +1,73 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH samservicetag 1M "20 June 2008"
+.SH NAME
+samservicetag \- Adds or deletes Service Tags for a Sun StorEdge QFS or
+Sun StorEdge \%SAM-FS file system.
+.SH SYNOPSIS
+.B samservicetag
+[\fBadd|delete\fR]
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The
+.B samservicetag
+command adds or deletes service tags for the Sun StorEdge QFS
+or Sun StorEdge \%SAM-FS file system software.  One service tag
+for QFS and optionally one for \%SAM-FS is installed per system.
+See man stclient for more information on service tags.
+.LP
+The
+.B samservicetag
+command must be run as root.  This command is not intended
+to be run separately, but rather is invoked from QFS or \%SAM-FS
+directly.  An "samservicetag add" operation is done either at "samd config",
+"samd start", or when a file system is mounted.  A "samservicetag delete"
+operation is done when the QFS or \%SAM-FS package is deleted.
+.SH OPTIONS
+This command accepts the following options:
+.TP 14
+\fIadd\fR
+This option will add service tags to the repository depending upon
+which QFS or \%SAM-FS package is installed.  If the SUNWqfs package is
+installed, a QFS service tag is added.  If the SUNWsamfs package is installed,
+both a QFS and \%SAM-FS service tag is added.
+.TP
+\fIdelete\fR
+This option deletes all QFS or \%SAM-FS service tags in the repository.
+.SH EXAMPLE
+.ft CO
+.nf
+# samservicetag add
+# samservicetag delete
+.fi
+.ft

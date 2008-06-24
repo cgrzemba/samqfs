@@ -36,7 +36,7 @@
 #define	_SAM_NAMES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 #endif
 
 #define	SAM_CONFIG_PATH "/etc/opt/SUNWsamfs"		/* configuration data */
@@ -70,6 +70,7 @@
 #define	SAM_RMTSERVER "sam-serverd"	/* remote server daemon */
 #define	SAM_RMTCLIENT "sam-clientd"	/* remote client daemon */
 #define	SAM_MGMTAPI "fsmgmt"		/* mgmt api */
+#define	SAM_SERVICETAG "samservicetag"	/* service tag cmd */
 
 #define	CONFIG "mcf"			/* configuration file name */
 
