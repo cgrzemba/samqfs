@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.158 $"
+#pragma ident "$Revision: 1.159 $"
 #endif
 
 #include "sam/osversion.h"
@@ -760,7 +760,7 @@ sam_proc_stat(
 			if (ip->di.arch_status & mask) {
 				sb.copy[copy].flags |= CF_ARCHIVED;
 			}
-			if (permip->ar.image[copy].arch_flags & SAR_hdr_off0) {
+			if (permip->ar.image[copy].arch_flags & SAR_pax_hdr) {
 				sb.copy[copy].flags |= CF_PAX_ARCH_FMT;
 			}
 			sb.copy[copy].n_vsns = permip->ar.image[copy].n_vsns;

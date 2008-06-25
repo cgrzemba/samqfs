@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 #endif
 
 #ifdef linux
@@ -114,11 +114,11 @@
 /* ----- Archive copy record. 4 copies in the permanent inode */
 
 enum SAR_flags {
-	SAR_unused	= 0x10,	/* currently unused */
-	SAR_hdr_off0	= 0x20,	/* file_offset points to tar hdr, not data */
-	SAR_diskarch	= 0x40,	/* disk archive format */
-				/* if disk archive and no tar header, */
-				/* SAR_hdr_off0 will also be set */
+	SAR_pax_hdr	= 0x10,	/* pax tar hdr written when archived  */
+	SAR_donot_use	= 0x20,	/* this bit was set on files archived */
+				/* at 4.0 until 5.0, this bit is not  */
+				/* set on files archived prior to 4.0 */
+	SAR_diskarch	= 0x40,	/* disk archive  */
 	SAR_size_block	= 0x80	/* file_offset is in units of 512 bytes */
 };
 
