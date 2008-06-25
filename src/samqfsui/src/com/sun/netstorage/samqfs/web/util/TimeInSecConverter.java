@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: TimeInSecConverter.java,v 1.1 2008/06/11 16:58:01 ronaldso Exp $
+// ident	$Id: TimeInSecConverter.java,v 1.2 2008/06/25 21:04:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -47,8 +47,8 @@ public class TimeInSecConverter implements Converter {
      *
      * @param context - the current faces context.
      * @param component - the component whose value is to be converted.
-     * @param value - the string representation of the current job.
-     * @return Integer - the symbolic constant for the current Job type
+     * @param value - the string representation of the time in second
+     * @return Integer - the symbolic constant for the time
      */
     public Object getAsObject(FacesContext context,
             UIComponent component,

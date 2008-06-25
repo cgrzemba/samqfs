@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.4 2008/06/18 20:28:06 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.5 2008/06/25 21:03:55 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -33,131 +33,131 @@
     xmlns:h="http://java.sun.com/jsf/html"
     xmlns:ui="http://www.sun.com/web/ui"
     xmlns:jsp="http://java.sun.com/JSP/Page">
-    <jsp:directive.page
-        contentType="text/html;charset=ISO-8859-1"
-        pageEncoding="UTF-8"/>
+<jsp:directive.page
+    contentType="text/html;charset=ISO-8859-1"
+    pageEncoding="UTF-8"/>
 
 <f:view>
-    <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
-                  var="samBundle"/>
+<f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
+              var="samBundle"/>
 
-    <ui:page id="page">
-        <ui:html id="html">
-            <ui:head id="head" title="#{samBundle['SharedFS.title']}">
-                <ui:script url="/js/fs/SharedFS.js"/>
-            </ui:head>
-            <ui:body id="SharedFSBody">
-                <ui:form id="SharedFSForm">
-                    <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsSummary}" />
-                    <ui:tabSet binding="#{SharedFSBean.tabSet}" selected="summary" />
-                    <ui:alert id="alert"
-                              rendered="#{SharedFSBean.alertRendered}"
-                              type="#{SharedFSBean.alertType}"
-                              summary="#{SharedFSBean.alertSummary}"
-                              detail="#{SharedFSBean.alertDetail}"/>
-                    <ui:contentPageTitle
-                        id="pageTitle"
-                        title="#{samBundle['SharedFS.title']}">
-                        <f:facet name="pageActions">
-                            <ui:panelGroup id="pageActionsGroup">
-                                <ui:button
-                                    id="ButtonAddClients"
-                                    text="#{samBundle['SharedFS.operation.addclients']}"
-                                    primary="true"
-                                    immediate="true"
-                                    onClick="alert('This will launch the Add Clients Wizard. Stay tuned!'); return false;"
-                                    actionListener="#{SharedFSBean.handleAddClients}" />
-                                <ui:button
-                                    id="ButtonAddSN"
-                                    text="#{samBundle['SharedFS.operation.addsn']}"
-                                    primary="true"
-                                    immediate="true"
-                                    rendered="#{SharedFSBean.showStorageNodes}"
-                                    onClick="alert('This will launch the Add Storage Nodes Wizard. Stay tuned!'); return false;"
-                                    actionListener="#{SharedFSBean.handleAddStorageNodes}" />
-                                <ui:button
-                                    id="ButtonViewPolicies"
-                                    text="#{samBundle['SharedFS.operation.viewpolicies']}"
-                                    primary="true"
-                                    immediate="true"
-                                    rendered="#{SharedFSBean.showArchive}"
-                                    actionListener="#{SharedFSBean.handleViewPolicies}" />
-                                <ui:dropDown
-                                    id="Menu"
-                                    toolTip="#{samBundle['SharedFS.dropdown.tooltip']}"
-                                    submitForm="true"
-                                    immediate="true"
-                                    forgetValue="true"
-                                    onChange="if (handleSummaryMenu(this) == false) return false;"
-                                    selected="#{SharedFSBean.jumpMenuSelectedOption}"
-                                    items="#{SharedFSBean.jumpMenuOptions}"
-                                    actionListener="#{SharedFSBean.handleJumpMenuSelection}" />
-                            </ui:panelGroup>
-                        </f:facet>
-                        <ui:propertySheet
-                            id="propertySheet">
+<ui:page id="page">
+<ui:html id="html">
+<ui:head id="head" title="#{samBundle['SharedFS.title']}">
+    <ui:script url="/js/fs/SharedFS.js"/>
+</ui:head>
+<ui:body id="SharedFSBody">
+<ui:form id="SharedFSForm">
+    <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsSummary}" />
+    <ui:tabSet binding="#{SharedFSBean.tabSet}" selected="summary" />
+    <ui:alert id="alert"
+              rendered="#{SharedFSBean.alertRendered}"
+              type="#{SharedFSBean.alertType}"
+              summary="#{SharedFSBean.alertSummary}"
+              detail="#{SharedFSBean.alertDetail}"/>
+    <ui:contentPageTitle
+        id="pageTitle"
+        title="#{samBundle['SharedFS.title']}">
+    <f:facet name="pageActions">
+        <ui:panelGroup id="pageActionsGroup">
+            <ui:button
+                id="ButtonAddClients"
+                text="#{samBundle['SharedFS.operation.addclients']}"
+                primary="true"
+                immediate="true"
+                onClick="alert('This will launch the Add Clients Wizard. Stay tuned!'); return false;"
+                actionListener="#{SharedFSBean.handleAddClients}" />
+            <ui:button
+                id="ButtonAddSN"
+                text="#{samBundle['SharedFS.operation.addsn']}"
+                primary="true"
+                immediate="true"
+                rendered="#{SharedFSBean.showStorageNodes}"
+                onClick="alert('This will launch the Add Storage Nodes Wizard. Stay tuned!'); return false;"
+                actionListener="#{SharedFSBean.handleAddStorageNodes}" />
+            <ui:button
+                id="ButtonViewPolicies"
+                text="#{samBundle['SharedFS.operation.viewpolicies']}"
+                primary="true"
+                immediate="true"
+                rendered="#{SharedFSBean.showArchive}"
+                actionListener="#{SharedFSBean.handleViewPolicies}" />
+            <ui:dropDown
+                id="Menu"
+                toolTip="#{samBundle['SharedFS.dropdown.tooltip']}"
+                submitForm="true"
+                immediate="true"
+                forgetValue="true"
+                onChange="if (handleSummaryMenu(this) == false) return false;"
+                selected="#{SharedFSBean.jumpMenuSelectedOption}"
+                items="#{SharedFSBean.jumpMenuOptions}"
+                actionListener="#{SharedFSBean.handleJumpMenuSelection}" />
+        </ui:panelGroup>
+    </f:facet>
+    <ui:propertySheet
+        id="propertySheet">
 
-                            <!-- file system property section -->
-                            <ui:propertySheetSection
-                                id="sectionDetails"
-                                label="">
-                                <ui:property
-                                    id="propertyTextType"
-                                    labelAlign="left"
-                                    label="#{samBundle['SharedFS.label.type']}"
-                                    noWrap="true"
-                                    overlapLabel="false">
-                                    <ui:staticText id="textType" text="#{SharedFSBean.textType}" />
-                                </ui:property>
-                                <ui:property
-                                    id="propertyTextMountPoint"
-                                    labelAlign="left"
-                                    label="#{samBundle['SharedFS.label.mountpt']}"
-                                    noWrap="true"
-                                    overlapLabel="false">
-                                    <ui:staticText id="textMountPoint" text="#{SharedFSBean.textMountPoint}" />
-                                </ui:property>
-                                <ui:property
-                                    id="propertyTextCapacity"
-                                    labelAlign="left"
-                                    label="#{samBundle['SharedFS.label.cap']}"
-                                    noWrap="true"
-                                    overlapLabel="false">
-                                    <ui:image id="imageUsage" hspace="0" url="#{SharedFSBean.imageUsage}"/>
-                                    <ui:staticText id="textCapacity" text="#{SharedFSBean.textCapacity}" />
-                                </ui:property>
-                                <ui:property
-                                    id="propertyTextHWM"
-                                    labelAlign="left"
-                                    label="#{samBundle['SharedFS.label.hwm']}"
-                                    noWrap="true"
-                                    rendered="#{SharedFSBean.showArchive}"
-                                    overlapLabel="false">
-                                    <ui:staticText id="textHWM" text="#{SharedFSBean.textHWM}" />
-                                </ui:property>
-                                <ui:property
-                                    id="propertyTextArchiving"
-                                    labelAlign="left"
-                                    label="#{samBundle['SharedFS.label.archiving']}"
-                                    noWrap="true"
-                                    rendered="#{SharedFSBean.showArchive}"
-                                    overlapLabel="false">
-                                    <ui:staticText id="textArchiving" text="#{SharedFSBean.textArchiving}" />
-                                </ui:property>
-                                <ui:property
-                                    id="propertyTextPMDS"
-                                    labelAlign="left"
-                                    label="#{samBundle['SharedFS.label.pmds']}"
-                                    noWrap="true"
-                                    overlapLabel="false">
-                                    <ui:hyperlink id="viewPMDSLink"
-                                                  url="/faces/jsp/fs/SharedFSClient.jsp"
-                                                  immediate="true">
-                                        <ui:staticText id="textPMDS" text="#{SharedFSBean.textPMDS}" />
-                                        <f:param name="mode" value="0"/>
-                                    </ui:hyperlink>
-                                </ui:property>
-    <f:verbatim><![CDATA[<br><br>]]></f:verbatim>
+    <!-- file system property section -->
+    <ui:propertySheetSection
+        id="sectionDetails"
+        label="">
+    <ui:property
+        id="propertyTextType"
+        labelAlign="left"
+        label="#{samBundle['SharedFS.label.type']}"
+        noWrap="true"
+        overlapLabel="false">
+    <ui:staticText id="textType" text="#{SharedFSBean.textType}" />
+    </ui:property>
+    <ui:property
+        id="propertyTextMountPoint"
+        labelAlign="left"
+        label="#{samBundle['SharedFS.label.mountpt']}"
+        noWrap="true"
+        overlapLabel="false">
+    <ui:staticText id="textMountPoint" text="#{SharedFSBean.textMountPoint}" />
+    </ui:property>
+    <ui:property
+        id="propertyTextCapacity"
+        labelAlign="left"
+        label="#{samBundle['SharedFS.label.cap']}"
+        noWrap="true"
+        overlapLabel="false">
+    <ui:image id="imageUsage" hspace="0" url="#{SharedFSBean.imageUsage}"/>
+    <ui:staticText id="textCapacity" text="#{SharedFSBean.textCapacity}" />
+    </ui:property>
+    <ui:property
+        id="propertyTextHWM"
+        labelAlign="left"
+        label="#{samBundle['SharedFS.label.hwm']}"
+        noWrap="true"
+        rendered="#{SharedFSBean.showArchive}"
+        overlapLabel="false">
+    <ui:staticText id="textHWM" text="#{SharedFSBean.textHWM}" />
+    </ui:property>
+    <ui:property
+        id="propertyTextArchiving"
+        labelAlign="left"
+        label="#{samBundle['SharedFS.label.archiving']}"
+        noWrap="true"
+        rendered="#{SharedFSBean.showArchive}"
+        overlapLabel="false">
+    <ui:staticText id="textArchiving" text="#{SharedFSBean.textArchiving}" />
+    </ui:property>
+    <ui:property
+        id="propertyTextPMDS"
+        labelAlign="left"
+        label="#{samBundle['SharedFS.label.pmds']}"
+        noWrap="true"
+        overlapLabel="false">
+    <ui:hyperlink id="viewPMDSLink"
+                  url="/faces/jsp/fs/SharedFSClient.jsp"
+                  immediate="true">
+        <ui:staticText id="textPMDS" text="#{SharedFSBean.textPMDS}" />
+        <f:param name="mode" value="0"/>
+    </ui:hyperlink>
+    </ui:property>
+    <ui:markup tag="br" singleton="true"/>
     </ui:propertySheetSection>
     <!-- clients section -->
     <ui:propertySheetSection

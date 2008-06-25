@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.19 2008/05/16 18:39:02 am143972 Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.20 2008/06/25 21:03:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
@@ -235,5 +235,26 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
 
     public boolean isAlloc() {
         return alloc;
+    }
+    
+    public String getDevicePath() {
+        return super.getDevicePath();
+    }
+    
+    public String getDevicePathDisplayString() {
+        String pathString = getDevicePath();
+        String [] sliceElement = pathString.split("/");
+        int type = getDiskType();
+
+        // if the slice is a SVM volume, we need to show the disk group
+        if ((type == DiskCache.SVM_LOGICAL_VOLUME ||
+            type == DiskCache.SVM_LOGICAL_VOLUME_MIRROR ||
+            type == DiskCache.SVM_LOGICAL_VOLUME_RAID_5) &&
+            sliceElement.length == 6) {
+            return sliceElement[3] + "/" + sliceElement[5];
+        } else {
+            int index = pathString.indexOf("/dsk/");
+            return pathString.substring(index + 5);
+        }
     }
 }

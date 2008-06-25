@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.4 2008/06/18 20:28:07 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.5 2008/06/25 21:03:57 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -43,6 +43,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.Select;
@@ -784,14 +785,14 @@ System.out.println("Entering handleRemoveClient: selected: " +
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     "SharedFS.message.removeclients.ok",
-                    convertArrayToString(selectedClients)),
+                    ConversionUtil.arrayToStr(selectedClients, ' ')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     "SharedFS.message.removeclients.failed",
-                    convertArrayToString(selectedClients)),
+                    ConversionUtil.arrayToStr(selectedClients, ' ')),
                 samEx.getMessage());
         }
     }
@@ -884,14 +885,14 @@ System.out.println("handleTableMenuSelection() called: " + selected);
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     message,
-                    convertArrayToString(selectedClients)),
+                    ConversionUtil.arrayToStr(selectedClients, ' ')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     errorMessage,
-                    convertArrayToString(selectedClients)),
+                    ConversionUtil.arrayToStr(selectedClients, ' ')),
                 samEx.getMessage());
         }
 
@@ -973,14 +974,14 @@ System.out.println("Entering handleRemoveStorageNode: selected: " +
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     "SharedFS.message.removesns.ok",
-                    convertArrayToString(selectedSns)),
+                    ConversionUtil.arrayToStr(selectedSns, ' ')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     "SharedFS.message.removesns.failed",
-                    convertArrayToString(selectedSns)),
+                    ConversionUtil.arrayToStr(selectedSns, ' ')),
                 samEx.getMessage());
         }
     }
@@ -1089,14 +1090,14 @@ System.out.println("handleTableMenuSelection() called: " + selected);
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     message,
-                    convertArrayToString(selectedSns)),
+                    ConversionUtil.arrayToStr(selectedSns, ' ')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     errorMessage,
-                    convertArrayToString(selectedSns)),
+                    ConversionUtil.arrayToStr(selectedSns, ' ')),
                 samEx.getMessage());
         }
 
@@ -1109,21 +1110,5 @@ System.out.println("handleTableMenuSelection() called: " + selected);
         String selected = (String) dropDown.getSelected();
 System.out.println("Entering handleSnFilterChange! selected:" + selected);
         forwardToSnPage(Short.parseShort(selected));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    private String convertArrayToString(String [] inputArray) {
-        if (inputArray == null ||inputArray.length == 0) {
-            return "";
-        }
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < inputArray.length; i++) {
-            if (buf.length() > 0) {
-                buf.append(",");
-            }
-            buf.append(inputArray[i]);
-        }
-        return buf.toString();
     }
 }

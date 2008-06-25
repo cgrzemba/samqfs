@@ -27,24 +27,24 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SpaceDelimiterConverter.java,v 1.2 2008/06/25 21:04:00 ronaldso Exp $
+// ident	$Id: CapacityInMbConverter.java,v 1.1 2008/06/25 21:04:00 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 
-public class SpaceDelimiterConverter implements Converter {
+public class CapacityInMbConverter implements Converter {
 
     /**
      * Thus far implementation of this method is not required.
      *
      * @param context - the current faces context.
      * @param component - the component whose value is to be converted.
-     * @param value - the string representation of the string with spacer
-     * delimiter
-     * @return Integer - the symbolic constant for the string with <br>
+     * @param value - the string representation of the capacity in mega-bytes
+     * @return Integer - the symbolic constant for the capacity
      */
     public Object getAsObject(FacesContext context,
             UIComponent component,
@@ -56,18 +56,9 @@ public class SpaceDelimiterConverter implements Converter {
             UIComponent component,
             Object value) {
 
-        String [] ipAddresses = ((String) value).split(" ");
-        if (ipAddresses.length == 0) {
-            return "";
-        }
-
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < ipAddresses.length; i++){
-            if (buf.length() > 0) {
-                buf.append("<br />");
-            }
-            buf.append(ipAddresses[i]);
-        }
-        return buf.toString();
+        return
+            Capacity.newCapacityInJSF(
+                ((Long) value).longValue(),
+                SamQFSSystemModel.SIZE_MB).toString();
     }
 }
