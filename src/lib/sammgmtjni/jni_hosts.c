@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.14 $"
+#pragma ident	"$Revision: 1.15 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -55,7 +55,7 @@ host2Host(JNIEnv *env, void *v_host_info) {
 	    Str(h->host_name),
 	    (NULL == h->ip_addresses) ? -1 : h->ip_addresses->length,
 	    h->server_priority,
-	    h->mounted_hosts,
+	    h->state,
 	    h->current_server);
 
 	PTRACE(2, "jni:host2Host() entry");
@@ -68,7 +68,7 @@ host2Host(JNIEnv *env, void *v_host_info) {
 	    lst2jarray(env, h->ip_addresses, "java/lang/String", charr2String),
 	    (jint)h->server_priority,
 	    JBOOL(h->current_server),
-	    (jint)h->mounted_hosts);
+	    (jint)h->state);
 
 	PTRACE(2, "jni:host2Host() done");
 	return (newObj);
@@ -93,14 +93,14 @@ Host2host(JNIEnv *env, jobject hostObj) {
 	    String2charr);
 
 	host->server_priority = (int)getJIntFld(env, cls, hostObj, "srvPrio");
-	host->mounted_hosts = 0; /* currently not used */
+	host->state = 0;
 	host->current_server = getBoolFld(env, cls, hostObj, "isCrtServer");
 
 	PTRACE(3, "jni:%s|%d|%d|%d|%d",
 	    Str(host->host_name),
 	    (NULL == host->ip_addresses) ? -1 : host->ip_addresses->length,
 	    host->server_priority,
-	    host->mounted_hosts,
+	    host->state,
 	    host->current_server);
 	PTRACE(2, "jni:Host2host() done");
 	return (host);
@@ -300,4 +300,26 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_Host_getMetadataServerName(
 
 	PTRACE(1, "jni:Host_getMetadataServerName() done");
 	return (JSTRING(res));
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_Host_setClientState(JNIEnv *env,
+	jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+	jobjectArray host_strs, jint state) {
+
+	jboolean isCopy;
+	char *cstr = GET_STR(fsName, isCopy);
+
+	PTRACE(1, "jni:Host_setAdvancedNetCfg() entry");
+	if (-1 == set_host_state(CTX, cstr,
+	    jarray2lst(env, host_strs, "java/lang/String", String2charr),
+	    state)) {
+		REL_STR(fsName, cstr, isCopy);
+		ThrowEx(env);
+		return;
+	}
+
+	REL_STR(fsName, cstr, isCopy);
+
+	PTRACE(1, "jni:Host_setAdvancedNetCfg() done");
 }

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.9 $"
+#pragma ident	"$Revision: 1.10 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -57,7 +57,7 @@ host_info_t *objp)
 
 	if (!xdr_int(xdrs, &objp->server_priority))
 		return (FALSE);
-	if (!xdr_int(xdrs, &objp->mounted_hosts))
+	if (!xdr_int(xdrs, &objp->state))
 		return (FALSE);
 	if (!xdr_boolean_t(xdrs, &objp->current_server))
 		return (FALSE);
@@ -92,5 +92,22 @@ string_host_info_arg_t *objp)
 
 	XDR_PTR2STRUCT(objp->h, host_info_t);
 
+	return (TRUE);
+}
+
+
+bool_t
+xdr_string_strlst_int_arg_t(
+XDR *xdrs,
+string_strlst_int_arg_t *objp)
+{
+
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str, ~0))
+		return (FALSE);
+	XDR_PTR2LST(objp->strlst, string_list);
+	if (!xdr_int(xdrs, &objp->int1))
+		return (FALSE);
 	return (TRUE);
 }

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "	$Revision: 1.42 $"
+#pragma ident "	$Revision: 1.43 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -76,13 +76,19 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	SAM_CLIENT_DEAD 0x01    /* Client assumed dead during failover */
 #define	SAM_CLIENT_INOP 0x02    /* client known dead */
 #define	SAM_CLIENT_SOCK_BLOCKED 0x04    /* Writing to client returned EAGAIN */
+#define	SAM_CLIENT_OFF_PENDING  0x08	/* Client transitioning to OFF */
+#define	SAM_CLIENT_OFF  0x10		/* Client marked OFF in hosts file */
 
 #define	IFCONFIG_CMD "/usr/sbin/ifconfig -a"
+#define	CL_STATE_ON_STR "on"
+#define	CL_STATE_OFF_STR "off"
 
 static int write_host_line(FILE *f, host_info_t *h);
 static int make_hosts_list(char ***charhosts, sqm_lst_t **hosts,
     upath_t server_name, struct sam_get_fsclistat_arg *clnt_stat,
     int kv_options);
+
+static int client_state_to_int(char *state_str);
 
 static int cp_host_fields(host_info_t *dest, host_info_t *src);
 
@@ -490,6 +496,7 @@ cp_host_fields(host_info_t *dest, host_info_t *src) {
 	node_t *n;
 
 	dest->server_priority = src->server_priority;
+	dest->state = src->state;
 
 	/*
 	 * Don't allow this function to change the current server
@@ -746,6 +753,12 @@ host_info_t *h)
 	node_t *n;
 	upath_t addresses;
 	size_t addrlen = sizeof (addresses);
+	char *cl_state_str;
+
+	if (ISNULL(f)) {
+		Trace(TR_ERR, "Null file pointer in write_host_line");
+		return (-1);
+	}
 
 	if (h == NULL) {
 		Trace(TR_MISC, "host line was null");
@@ -778,13 +791,24 @@ host_info_t *h)
 		strlcat(addresses, (char *)n->data, addrlen);
 	}
 
+	if (h->state == CL_STATE_ON) {
+		cl_state_str = CL_STATE_ON_STR;
+	} else if (h->state == CL_STATE_OFF) {
+		cl_state_str = CL_STATE_OFF_STR;
+	} else {
+		samerrno = SE_INVALID_CLIENT_STATE_ARG;
+		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
+		    h->state);
+		return (-1);
+	}
+
 	/* write the new host */
 	if (h->current_server) {
-		fprintf(f, "%s\t%s\t%d\t%d\t%s\n", h->host_name, addresses,
-		    h->server_priority, 0, "server");
+		fprintf(f, "%s\t%s\t%d\t%s\t%s\n", h->host_name, addresses,
+		    h->server_priority, cl_state_str, "server");
 	} else {
-		fprintf(f, "%s\t%s\t%d\t%d\n", h->host_name, addresses,
-		    h->server_priority, 0);
+		fprintf(f, "%s\t%s\t%d\t%s\n", h->host_name, addresses,
+		    h->server_priority, cl_state_str);
 	}
 
 	return (0);
@@ -880,6 +904,104 @@ sqm_lst_t **hosts)
 	free_fs(fs);
 
 	Trace(TR_MISC, "returning hosts config for fs %s", fs_name);
+	return (0);
+}
+
+
+int
+set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
+    int client_state) {
+
+	fs_t *fs;
+	node_t *n;
+	sqm_lst_t *cfg_hosts;
+	boolean_t mounted = B_FALSE;
+	int err;
+
+
+	if (ISNULL(fs_name, host_names)) {
+		Trace(TR_ERR, "setting client state failed: %s", samerrmsg);
+		return (-1);
+	}
+	if (client_state != CL_STATE_OFF && client_state != CL_STATE_ON) {
+		samerrno = SE_INVALID_CLIENT_STATE_ARG;
+		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
+		    client_state);
+		Trace(TR_ERR, "setting client state failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	/* Note that if -2 is returned by get_fs you can continue. */
+	err = get_fs(NULL, fs_name, &fs);
+	if (err == -1) {
+		Trace(TR_ERR, "setting client state failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	if (!fs->fi_shared_fs) {
+		samerrno = SE_ONLY_SHARED_HAVE_HOSTS;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_ONLY_SHARED_HAVE_HOSTS), fs_name);
+		free_fs(fs);
+		Trace(TR_ERR, "setting client state failed: %s", samerrmsg);
+		return (-1);
+	}
+	if (cfg_get_hosts_config(NULL, fs, &cfg_hosts, 0) != 0) {
+		free_fs(fs);
+		Trace(TR_ERR, "setting client state failed: %s", samerrmsg);
+		return (-1);
+	}
+
+	fs->hosts_config = cfg_hosts;
+
+	for (n = host_names->head; n != NULL; n = n->next) {
+		char *name = (char *)n->data;
+		node_t *cfg_node;
+		host_info_t *h;
+
+		if (name == NULL || *name == '\0') {
+			continue;
+		}
+
+		/*
+		 * Use lst_search with cmp_str_2_str_ptr because the
+		 * host name char pointer is the first field in the
+		 * host_info_t structs.
+		 */
+		cfg_node = lst_search(cfg_hosts, name, cmp_str_2_str_ptr);
+		if (cfg_node == NULL) {
+			continue;
+		}
+		h = (host_info_t *)cfg_node->data;
+		h->state = client_state;
+	}
+
+	/* set the new config */
+	if (cfg_set_hosts_config(c, fs) != 0) {
+		free_fs(fs);
+		Trace(TR_ERR, "Setting client state failed: %s",
+		    samerrmsg);
+
+		return (-1);
+	}
+
+	if (fs->fi_status & FS_MOUNTED) {
+		mounted = B_TRUE;
+	}
+
+	/* activate the new config */
+	if (sharefs_cmd(fs->fi_name, NULL, B_TRUE, mounted,
+	    B_FALSE) != 0) {
+		free_fs(fs);
+		Trace(TR_ERR, "setting client state failed: %s",
+		    samerrmsg);
+
+		return (-1);
+	}
+
+	free_fs(fs);
+	Trace(TR_ERR, "set client state");
+
 	return (0);
 }
 
@@ -1200,10 +1322,10 @@ int		kv_options)
 			}
 
 			/*
-			 * kv_string can be NULL in the non-error case
-			 * where the type of host is being filtered out
-			 * due to its role in the FS and the value of
-			 * kv_options.
+			 * kv_string can be NULL in non-error
+			 * cases. This is true if type of host is
+			 * being filtered out due to its role in the
+			 * file system.
 			 */
 			if (kv_string != NULL) {
 				if (lst_append(*hosts, kv_string) != 0) {
@@ -1255,7 +1377,7 @@ char **kv_string) {
 	char buf[buf_sz];
 	char *ip_beg;
 	char *c;
-
+	boolean_t status_set = B_FALSE;
 
 	*kv_string = NULL;
 	buf[0] = '\0';
@@ -1282,6 +1404,10 @@ char **kv_string) {
 	 * return 0 without creating a kv string.
 	 */
 	if (priority == 0) {
+		/*
+		 * A priority of 0 means the host is a client. If clients
+		 * have not been requested return
+		 */
 		if ((kv_options & HOSTS_CLIENTS) == 0) {
 			return (0);
 		}
@@ -1324,76 +1450,110 @@ char **kv_string) {
 	}
 
 	/*
-	 * If clnt_stat == NULL skip the additional info
+	 * If clnt_stat == NULL or status == 0 skip the additional info
 	 */
-	if (clnt != NULL) {
+	if (clnt != NULL && clnt->cl_status != 0) {
 
-		/* Check that we have the same host in both lists */
-		if (clnt != NULL && clnt->cl_status != 0) {
+		/*
+		 * For off or unmounted hosts the hname gets cleared.
+		 * If it is set, make sure it matches the name from
+		 * charhosts.
+		 */
+		if (*clnt->hname != '\0' && strcmp(clnt->hname,
+		    charhost[HOSTS_NAME]) != 0) {
 
-			if (strcmp(clnt->hname,
-			    charhost[HOSTS_NAME]) != 0) {
+			samerrno = SE_CLNT_TBL_OUT_OF_SYNC;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(samerrno));
+			Trace(TR_ERR, "Mismatch for %s: %d %s",
+			    Str(charhost[HOSTS_NAME]), samerrno, samerrmsg);
+			return (-1);
+		}
 
-				samerrno = SE_CLNT_TBL_OUT_OF_SYNC;
-				snprintf(samerrmsg, MAX_MSG_LEN,
-				    GetCustMsg(samerrno));
-				Trace(TR_ERR, "Mismatch for %s: %d %s",
-				    clnt->hname, samerrno, samerrmsg);
-					goto err;
-			}
+		if (clnt->cl_status & FS_MOUNTED) {
+			cur_sz = strlcat(buf, ",mounted=1", buf_sz);
+		} else {
+			cur_sz = strlcat(buf, ",mounted=0", buf_sz);
+		}
+		if (cur_sz > buf_sz) {
+			goto err;
+		}
 
-			if (clnt->cl_status & FS_MOUNTED) {
-				cur_sz = strlcat(buf, ",mounted=1", buf_sz);
-			} else {
-				cur_sz = strlcat(buf, ",mounted=0", buf_sz);
-			}
+		if (clnt->cl_flags & SAM_CLIENT_DEAD) {
+			cur_sz = strlcat(buf,
+			    ",error=assumed_dead", buf_sz);
+		}
+		if (cur_sz > buf_sz) {
+			goto err;
+		}
+
+		if (clnt->cl_flags & SAM_CLIENT_INOP) {
+			cur_sz = strlcat(buf, ",error=gone",
+			    buf_sz);
+		}
+		if (cur_sz > buf_sz) {
+			goto err;
+		}
+
+		if (clnt->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {
+			cur_sz = strlcat(buf, ",error=blocked",
+			    buf_sz);
+		}
+		if (cur_sz > buf_sz) {
+			goto err;
+		}
+
+		if (clnt->cl_flags & SAM_CLIENT_OFF_PENDING) {
+			status_set = B_TRUE;
+			cur_sz = strlcat(buf, ",status=OFFPENDING", buf_sz);
 			if (cur_sz > buf_sz) {
 				goto err;
 			}
+		}
 
-			if (clnt->cl_flags & SAM_CLIENT_DEAD) {
-				cur_sz = strlcat(buf,
-				    ",error=assumed_dead", buf_sz);
-			}
-			if (cur_sz > buf_sz) {
+		if (kv_options & HOSTS_DETAILS) {
+			char *cl_info_beg = buf + cur_sz;
+			int added;
+			added = snprintf(cl_info_beg, buf_sz - cur_sz,
+			    ",status=0x%x,mnt_cfg=0x%x,mnt_cfg1=0x%x,"
+			    "flags=0x%x,no_msg=%d,low_msg=%d",
+			    clnt->cl_status, clnt->cl_config,
+			    clnt->cl_config1, clnt->cl_flags,
+			    clnt->cl_nomsg, clnt->cl_min_seqno);
+			if ((added + cur_sz) > buf_sz) {
 				goto err;
-			}
-
-			if (clnt->cl_flags & SAM_CLIENT_INOP) {
-				cur_sz = strlcat(buf, ",error=gone",
-				    buf_sz);
-			}
-			if (cur_sz > buf_sz) {
-				goto err;
-			}
-
-			if (clnt->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {
-				cur_sz = strlcat(buf, ",error=blocked",
-				    buf_sz);
-			}
-			if (cur_sz > buf_sz) {
-				goto err;
-			}
-
-			if (kv_options & HOSTS_DETAILS) {
-				char *cl_info_beg = buf + cur_sz;
-				int added;
-				added = snprintf(cl_info_beg, buf_sz - cur_sz,
-				    ",status=0x%x,mnt_cfg=0x%x,mnt_cfg1=0x%x,"
-				    "flags=0x%x,no_msg=%d,low_msg=%d",
-				    clnt->cl_status, clnt->cl_config,
-				    clnt->cl_config1, clnt->cl_flags,
-				    clnt->cl_nomsg, clnt->cl_min_seqno);
-				if ((added + cur_sz) > buf_sz) {
-					goto err;
-				}
 			}
 		}
 	}
 
 
+	/*
+	 * The charhost can have a number of different values that
+	 * map to ON. Normalize those here and return either ON or OFF.
+	 */
+	if (!status_set) {
+		if ((strcasecmp(charhost[3], "on") == 0) ||
+		    (strcmp(charhost[3], "0") == 0) ||
+		    (strcmp(charhost[3], "-") == 0)) {
+			cur_sz = strlcat(buf, ",status=ON", buf_sz);
+			if (cur_sz > buf_sz) {
+				goto err;
+			}
+		} else {
+			cur_sz = strlcat(buf, ",status=OFF", buf_sz);
+			if (cur_sz > buf_sz) {
+				goto err;
+			}
+		}
+	}
+
+
+
+
 	*kv_string = copystr(buf);
 	if (*kv_string == NULL) {
+		Trace(TR_ERR, "get host kv failed: %d %s",
+		    samerrno, samerrmsg);
 		return (-1);
 	}
 	return (0);
@@ -1440,7 +1600,13 @@ host_info_t **h) {
 	if ((*h)->ip_addresses == NULL) {
 		Trace(TR_ERR, "making host lists failed:%d %s",
 		    samerrno, samerrmsg);
-		free_host_info(*h);
+		goto err;
+	}
+
+	(*h)->state = client_state_to_int(charhost[HOSTS_HOSTONOFF]);
+	if ((*h)->state < 0) {
+		Trace(TR_ERR, "making host lists failed:%d %s",
+		    samerrno, samerrmsg);
 		goto err;
 	}
 
@@ -1450,6 +1616,38 @@ err:
 	free_host_info(*h);
 	*h = NULL;
 	return (-1);
+}
+
+
+static int
+client_state_to_int(char *state_str) {
+
+	/*
+	 * The "-" and "zero" entries are here for backwards compatiblity.
+	 */
+	if ((strcasecmp(state_str, "on") == 0) ||
+	    (strcmp(state_str, "0") == 0) ||
+	    (strcmp(state_str, "-") == 0)) {
+
+		return (CL_STATE_ON);
+
+	} else if (strcasecmp(state_str, "off") == 0) {
+		return (CL_STATE_OFF);
+	} else {
+		/*
+		 * This state may mean the core has introduced a new
+		 * STATE that we don't support yet OR there is an
+		 * error in the configuration. Note that from the live
+		 * file system there is an "off pending" state but that
+		 * never gets written into the file so we don't need to
+		 * convert it here.
+		 */
+		samerrno = SE_INVALID_CLIENT_STATE;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_INVALID_CLIENT_STATE), Str(state_str));
+		Trace(TR_ERR, "Invalid client state %s", Str(state_str));
+		return (-1);
+	}
 }
 
 

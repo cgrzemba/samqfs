@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: TestHost.java,v 1.11 2008/05/16 18:35:31 am143972 Exp $
+// ident	$Id: TestHost.java,v 1.12 2008/06/25 15:57:18 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.test;
 
@@ -42,7 +42,7 @@ public class TestHost {
 
     public static void main(String args[]) {
 
-        Host host[];
+        String host[];
         FSInfo fs[];
         SamFSConnection conn;
         Ctx ctx;
@@ -51,12 +51,14 @@ public class TestHost {
         ArrayList ipAddresses;
 
         if (args.length == 0) {
-            jnilib = "sammgmtjnilocal";
-            hostname  = "localhost";
-        } else {
-            jnilib = "fsmgmtjni";
-            hostname = args[0];
+	    System.out.println("Usage: java -classpath ... classname hostname" +
+		" discover | on <fs_name> <clients> | " +
+		"off <fs_name> <clients> ");
+	    System.exit(-1);
         }
+	jnilib = "fsmgmtjni";
+	hostname = args[0];
+
 
         try {
 
@@ -70,56 +72,54 @@ public class TestHost {
             conn.setTimeout(65);
             System.out.println("timeout set - " + conn);
 
-            System.out.println("\nCalling native Host.discoverIPsAndNames()");
-	    String[] ips = Host.discoverIPsAndNames(ctx);
+	    if (args[1].equals("discover")) {
+		System.out.println("\nCalling Host.discoverIPsAndNames()");
+		String[] ips = Host.discoverIPsAndNames(ctx);
+		for (int i = 0; i < ips.length; i++) {
+		    System.out.println("\t " + ips[i]);
+		}
+	    } else if (args[1].equals("gethosts")) {
 
-	    for (int i = 0; i < ips.length; i++)
-		System.out.println("\t " + ips[i]);
+		System.out.println("\nCalling native FS.getAll()");
+		fs = FS.getAll(ctx);
+		System.out.println("Back to java ");
+		for (int i = 0; i < fs.length; i++) {
+		    if (fs[i].isShared()) {
+			System.out.println("Calling native Host.getConfig()");
+			host = Host.getSharedFSHosts(ctx, fs[i].getName(), 0xf);
 
-            System.out.println("\nCalling native FS.getAll()");
-            fs = FS.getAll(ctx);
-            System.out.println("Back to java ");
-            for (int i = 0; i < fs.length; i++) {
-                System.out.println(fs[i] + "\n");
-                if (fs[i].isShared()) {
-                    System.out.println("Calling native Host.getConfig()");
-                    host = Host.getConfig(ctx, fs[i].getName());
-
-                    for (int j = 0; j < host.length; j++) {
-                        System.out.println(host[j] + "\n");
-                    }
-                }
-            }
-
-	    if (args.length < 2) {
-
-		String[] hosts_in =  {
-		"hostname=ns-east-64, ipaddresses=10.8.11.64 192.168.0.64",
-		"hostname=ns-east-16, ipaddresses=ns-east-16 192.168.0.16",
-		"hostname=ns-east-33, ipaddresses= ns-east-33 192.168.0.33"};
-
-		fsName = "testfs";
-		System.out.println("\nCalling native" +
-				   "Hosts.setAdvancedNetCfg()");
-
-		Host.setAdvancedNetCfg(ctx, fsName, hosts_in);
-		System.out.println("Back to java");
-
-		System.out.println("\nCalling native" +
-				   "Hosts.getAdvancedNetCfg(bbaa)");
-		String[] hosts = Host.getAdvancedNetCfg(ctx, fsName);
-		System.out.println("Back to java");
-		for (int i = 0; i < hosts.length; i++)
-		    System.out.println("\t " + hosts[i]);
+			for (int j = 0; j < host.length; j++) {
+			    System.out.println(host[j] + "\n");
+			}
+		    }
+		}
+	    } else if (args[1].equals("on") && args.length >= 4) {
+		System.out.println("enable clients:");
+		String[] clients = new String[args.length - 3];
+		for (int i = 3; i < args.length; i++) {
+		    System.out.println(args[i]);
+		    clients[i - 3] = args[i];
+		}
+		System.out.println("calling set state with clients" +
+				   clients.length);
+		Host.setClientState(ctx, args[2], clients, Host.CL_STATE_ON);
+		System.out.println("back");
+	    } else if (args[1].equals("off") && args.length >= 4) {
+		System.out.println("disable clients:");
+		String[] clients = new String[args.length - 3];
+		for (int i = 3; i < args.length; i++) {
+		    System.out.println(args[i]);
+		    clients[i - 3] = args[i];
+		}
+		System.out.println("calling set state with clients" +
+				   clients.length);
+		Host.setClientState(ctx, args[2], clients, Host.CL_STATE_OFF);
+		System.out.println("back");
 	    } else {
-		fsName = args[1];
-		System.out.println("\nCalling native Hosts." +
-				   "getAdvancedNetCfg(" + fsName + ")");
-		String[] hosts = Host.getAdvancedNetCfg(ctx, fsName);
-		System.out.println("Back to java");
-		for (int i = 0; i < hosts.length; i++)
-		    System.out.println("\t " + hosts[i]);
+
+		System.out.println("There was no match for args[1] " + args[1]);
 	    }
+
         } catch (SamFSException e) {
                 System.out.println(e);
         }

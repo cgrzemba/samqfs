@@ -29,7 +29,7 @@
 #ifndef _HOSTS_H
 #define	_HOSTS_H
 
-#pragma ident "	$Revision: 1.18 $	"
+#pragma ident "	$Revision: 1.19 $	"
 
 
 
@@ -44,6 +44,8 @@ discover_ip_addresses(
 ctx_t *,
 sqm_lst_t **addrs); /* list of IP addreses and names */
 
+#define	CL_STATE_OFF 0
+#define	CL_STATE_ON 1
 
 
 /*
@@ -66,15 +68,12 @@ typedef struct host_info {
 	int	server_priority;
 
 	/*
-	 * For the metadata server this field indicates how many clients
-	 * have the file system mounted including the mds.
-	 * Possible values and their meaning:
-	 * negative number indicates the mds does not have the fs mounted
-	 * or there was an error trying to obtain the number.
-	 * 0 indicates no hosts have it mounted.
-	 * +number indicates number of servers with the host mounted.
+	 * For 4.6 this field for the mds was used to indicate the number of
+	 * clients that have the file system mounted including the mds.
+	 * For 5.0 it indicates the state of the client as reported by the
+	 * metadata server. Either CL_STATE_ON or CL_STATE_OFF
 	 */
-	int	mounted_hosts;
+	int	state;
 
 	/* true if the named host is the current server */
 	boolean_t current_server;
@@ -130,6 +129,15 @@ typedef struct host_info {
 int get_shared_fs_hosts(ctx_t *c, char *fs_name, int32_t options,
     sqm_lst_t **hosts);
 
+
+/*
+ * Function to enable or disable client or potential metadata server
+ * access to a shared file system.  For client_state use either
+ * CL_STATE_OFF or CL_STATE_ON. It is not considered an error if the
+ * client already has the new state.
+ */
+int set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
+    int client_state);
 
 /*
  * Return an ordered list of the host_info_t structures. The order will

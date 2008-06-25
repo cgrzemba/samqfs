@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.114 $"
+#pragma ident	"$Revision: 1.115 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -606,6 +606,13 @@ typedef struct string_string_int_group_arg {
 	int int1;
 	striped_group_t *grp;
 } string_string_int_group_arg_t;
+
+typedef struct string_strlst_int_arg {
+	ctx_t *ctx;
+	char *str;
+	int int1;
+	sqm_lst_t *strlst;
+} string_strlst_int_arg_t;
 
 typedef struct int_int_arg {
 	ctx_t *ctx;
@@ -1247,6 +1254,7 @@ typedef struct string_strlst_arg {
 	char *str;
 	sqm_lst_t *strlst;
 } string_strlst_arg_t;
+
 
 typedef struct string_string_strlst_arg {
 	ctx_t *ctx;
@@ -2154,6 +2162,11 @@ extern samrpc_result_t *samrpc_discover_ip_addresses_3_svr();
 #define	samrpc_get_shared_fs_hosts	1167
 extern samrpc_result_t *samrpc_get_shared_fs_hosts_5_0_svr();
 
+#define	samrpc_set_host_state		1168
+extern samrpc_result_t *samrpc_set_host_state_5_0_svr();
+
+
+
 /* samfsrestore and samfsdump */
 #define	samrpc_set_csd_params	1169
 extern samrpc_result_t *samrpc_set_csd_params_4_svr();
@@ -2600,7 +2613,7 @@ extern bool_t xdr_string_string_int_arg_t();
 extern bool_t xdr_string_string_int_int_arg_t();
 extern bool_t xdr_string_string_int_disk_arg_t();
 extern bool_t xdr_string_string_int_group_arg_t();
-
+extern bool_t xdr_string_strlst_int_arg_t();
 
 /* license.h */
 extern bool_t xdr_license_info_t();

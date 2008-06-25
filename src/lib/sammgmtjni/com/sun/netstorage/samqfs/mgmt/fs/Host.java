@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.12 2008/05/16 18:35:28 am143972 Exp $
+// ident	$Id: Host.java,v 1.13 2008/06/25 15:57:16 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -49,7 +49,7 @@ public class Host {
     String ipAddrs[];
     int srvPrio;
     boolean isCrtServer;
-    int hostsMounted;
+    int state;
 
     public Host(String name, String ipAddrs[], int srvPrio,
 		 boolean crtServer) {
@@ -60,12 +60,12 @@ public class Host {
     }
 
     public Host(String name, String ipAddrs[], int srvPrio,
-		 boolean crtServer, int hostsMounted) {
+		 boolean crtServer, int state) {
 	this.name = name;
 	this.ipAddrs = ipAddrs;
 	this.srvPrio = srvPrio;
 	this.isCrtServer = crtServer;
-	this.hostsMounted = hostsMounted;
+	this.state = state;
     }
 
 
@@ -77,7 +77,7 @@ public class Host {
     public String[] getIPs() { return ipAddrs; }
     public int getSrvPrio() { return srvPrio; }
     public boolean isCrtServer() { return isCrtServer; }
-    public int getHostsMounted() { return hostsMounted; }
+    public int getState() { return state; }
     public String toString() {
 	String s = name + ",";
 	int i;
@@ -101,7 +101,8 @@ public class Host {
      * -1 for error
      * job_id will be returned if the job has not completed.
      */
-    public static native int addClients(String fsname, Host[] hosts)
+    public static native int addClients(String fsname,
+					Host[] hosts)
 	throws SamFSException;
 
     /**
@@ -114,7 +115,8 @@ public class Host {
      * -1 for error
      * job ID will be returned if the job has not completed.
      */
-    public static native int removeClients(String fsname, String[] clients)
+    public static native int removeClients(String fsname,
+					   String[] clients)
 	throws SamFSException;
 
     /*
@@ -122,7 +124,7 @@ public class Host {
      * the metadata server. The states CL_STATE_ON and CL_STATE_OFF are
      * supported.
      */
-    public static native void setClientState(String fsname,
+    public static native void setClientState(Ctx c, String fsname,
 	String[] hostNames, int state) throws SamFSException;
 
     /*

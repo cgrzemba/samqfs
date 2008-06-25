@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.14 $"
+#pragma ident	"$Revision: 1.15 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -291,6 +291,32 @@ struct svc_req *req	/* ARGSUSED */
 
 	Trace(TR_DEBUG, "Get mds host return[%d] with[%s] entries",
 	    ret, (str != NULL) ? str : "NULL");
+
+	return (&rpc_result);
+}
+
+samrpc_result_t *
+samrpc_set_host_state_5_0_svr(
+string_strlst_int_arg_t *arg,	/* argument to api */
+struct svc_req *req		/* ARGSUSED */
+)
+{
+
+	int ret = -1;
+
+	Trace(TR_DEBUG, "Set host state");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library to set host state");
+	ret = set_host_state(arg->ctx, arg->str, arg->strlst, arg->int1);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "Set host state [%d]", ret);
 
 	return (&rpc_result);
 }
