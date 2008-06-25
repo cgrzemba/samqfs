@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamWizardImpl.java,v 1.18 2008/05/16 18:39:07 am143972 Exp $
+// ident	$Id: SamWizardImpl.java,v 1.19 2008/06/25 18:36:30 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.wizard;
 
@@ -186,24 +186,8 @@ public class SamWizardImpl implements WizardInterface, WizardInterfaceExt {
                 break;
 
             case 0:
+            case 1: // ignore wizard warnings
                 wizardActive = true;
-                break;
-
-            case 1:
-                wizardActive = false;
-                wizardModel.setValue(
-                    Constants.Wizard.WIZARD_ERROR,
-                    Constants.Wizard.WIZARD_ERROR_YES);
-                wizardModel.setValue(
-                    Constants.Wizard.ERROR_MESSAGE,
-                    "SamWizard.wizardControl.warning.message");
-                wizardModel.setValue(Constants.Wizard.ERROR_CODE, "1101");
-                wizardModel.setValue(
-                    Constants.Wizard.ERROR_DETAIL,
-                    Constants.Wizard.ERROR_INLINE_ALERT);
-                wizardModel.setValue(
-                    Constants.Wizard.ERROR_SUMMARY,
-                    "SamWizard.wizardControl.warning.summary");
                 break;
         }
 
