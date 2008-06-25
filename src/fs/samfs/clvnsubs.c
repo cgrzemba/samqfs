@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 #include "sam/osversion.h"
 
@@ -428,19 +428,6 @@ int				/* ERRNO if error occured, 0 if successful. */
 sam_prealloc_blocks(sam_mount_t *mp, sam_prealloc_t *pap)
 {
 	return (0);
-}
-
-
-/*
- * ----- sam_release_seg - Unlock a SAM-FS staging page.
- * A page may be left locked due to staging, unlock it. Release
- * the staging segment.
- */
-
-/* ARGSUSED */
-void
-sam_release_seg(sam_node_t *ip)
-{
 }
 
 

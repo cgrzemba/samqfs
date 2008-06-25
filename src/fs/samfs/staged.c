@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 
 #include "sam/osversion.h"
 
@@ -242,9 +242,7 @@ sam_build_stagerd_req(
 	    (!ip->flags.b.stage_n && samgt.dio_stage_file_size &&
 	    (ip->di.rm.size >=
 	    ((offset_t)samgt.dio_stage_file_size*1024*1024)))) {
-		if (ip->stage_seg) {
-			(void) sam_release_seg(ip);
-		}
+
 		if (vn_has_cached_data(SAM_ITOV(ip))) {
 			sam_flush_pages(ip, B_INVAL);
 		}
@@ -804,20 +802,10 @@ sam_close_stage(sam_node_t *ip, cred_t *credp)
 			/* Process next section for stage_n */
 			process_stage = 1;
 		}
-		/*
-		 * Don't release stage segment if in the middle of staging a
-		 * multi-volume file.
-		 */
-		if (!process_stage) {
-			if (ip->stage_seg)  sam_release_seg(ip);
-		}
 	} else {
 		if (ip->stage_err == 0)  {
 			ip->stage_err = ECOMM;
 		}
-
-		/* If there was an error, there may be a locked page */
-		if (ip->stage_seg)  sam_release_seg(ip);
 
 		/* For stage_n, indicate there was no data staged */
 		ip->stage_len = ip->stage_off = 0;
@@ -952,11 +940,9 @@ sam_stage_write_io(
 				return (error);
 			}
 		}
-		base = ip->stage_seg;
-		if (base == NULL) {
-			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
-			    0, S_WRITE);
-		}
+
+		base = segmap_getmapflt(segkmap, vp, offset, nbytes,
+		    0, S_WRITE);
 		lbase = (caddr_t)((sam_size_t)(base + reloff) & PAGEMASK);
 
 		/*
@@ -970,43 +956,50 @@ sam_stage_write_io(
 
 			offset = uiop->uio_loffset;
 			lreloff = offset & ((sam_u_offset_t)PAGESIZE - 1);
-			n = MIN((PAGESIZE - lreloff), nbytes);
-			if (lreloff == 0) {
-				segmap_pagecreate(segkmap, lbase, PAGESIZE,
-				    F_SOFTLOCK);
-				ip->lbase = lbase;
-				ip->stage_seg = base;
-			}
-			ASSERT(ip->stage_seg && n > 0);
-			error = uiomove((lbase + lreloff), n, UIO_WRITE, uiop);
+			n = MIN(PAGESIZE, nbytes);
 
-			if (((lreloff + n) == PAGESIZE) ||
-			    ((offset + n) >= size)) {
-				if (ip->lbase != 0) {
-					(void) segmap_fault(kas.a_hat,
-					    segkmap, ip->lbase, PAGESIZE,
-					    F_SOFTUNLOCK, S_WRITE);
-					ip->lbase = 0;
-					ip->stage_seg = 0;
-				} else {
-					if (error == 0)  error = ECOMM;
-				}
+			/* Assert page-aligned offset. */
+			/* Assert PAGESIZE io, or last write */
+			ASSERT(lreloff == 0);
+			ASSERT((n == PAGESIZE) || ((offset + n) >= size));
+
+			/* Check asserts for non-DEBUG builds, return error. */
+			if ((lreloff != 0) || ((n != PAGESIZE) &&
+			    ((offset + n) < size))) {
+				error = ECOMM;
+				break;
 			}
-			if (error)  break;
+
+			segmap_pagecreate(segkmap, lbase,
+			    PAGESIZE, F_SOFTLOCK);
+
+			error = uiomove(lbase, n, UIO_WRITE, uiop);
+
+			(void) segmap_fault(kas.a_hat, segkmap, lbase,
+			    PAGESIZE, F_SOFTUNLOCK, S_WRITE);
+
+			if (error) {
+				break;
+			}
+
 			/*
 			 * Check for uiomove failure: new_offset - orig_offset
-			 * != number of bytes moved. If so, return ECOMM. Should
-			 * not happen.
+			 * != number of bytes moved. If so, return ECOMM.
+			 * Should not happen.
 			 */
-			if ((uiop->uio_loffset - offset) != n)  error = ECOMM;
-			lbase += (n + lreloff);
+			if ((uiop->uio_loffset - offset) != n) {
+				error = ECOMM;
+			}
+			lbase += n;
 			nbytes -= n;
-			if ((nbytes <= 0) || error)  break;
+			if ((nbytes <= 0) || error) {
+				break;
+			}
 		}
-		if (ip->stage_seg == 0) {
-			segmap_release(segkmap, base, error ? SM_INVAL :
-			    SM_WRITE | SM_ASYNC | SM_DONTNEED);
-		}
+
+		segmap_release(segkmap, base, error ? SM_INVAL :
+		    SM_WRITE | SM_ASYNC | SM_DONTNEED);
+
 		TRACE(T_SAM_STWRIO2, vp, (sam_tr_t)base,
 		    (sam_tr_t)uiop->uio_resid,
 		    (sam_tr_t)reloff);
@@ -1014,7 +1007,9 @@ sam_stage_write_io(
 		if (!ip->flags.b.staging) {
 			error = ECANCELED;
 		}
-		if (error || (uiop->uio_resid <= 0))  break;
+		if (error || (uiop->uio_resid <= 0)) {
+			break;
+		}
 	}
 	if (error == 0) {
 		/*
@@ -1030,33 +1025,9 @@ sam_stage_write_io(
 		if (ip->stage_err == 0) {
 			ip->stage_err = (short)error;
 		}
-		if (ip->stage_seg) {
-			sam_release_seg(ip);
-		}
 	}
 	return (error);
 }
-
-
-/*
- * ----- sam_release_seg - Unlock a SAM-QFS staging page.
- *
- * A page may be left locked due to staging, unlock it. Release
- * the staging segment.
- */
-
-void
-sam_release_seg(sam_node_t *ip)
-{
-	if (ip->lbase) {
-		(void) segmap_fault(kas.a_hat, segkmap, ip->lbase, PAGESIZE,
-		    F_SOFTUNLOCK, S_WRITE);
-		ip->lbase = 0;
-	}
-	segmap_release(segkmap, ip->stage_seg, 0);
-	ip->stage_seg = 0;
-}
-
 
 /*
  * ----- sam_stage_n_write_io - Write a SAM-QFS file that is being staged

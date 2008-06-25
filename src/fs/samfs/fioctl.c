@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.92 $"
+#pragma ident "$Revision: 1.93 $"
 
 #include <sam/osversion.h>
 
@@ -1237,9 +1237,6 @@ sam_stage_write(
 	}
 	if (ip->stage_err) {
 		error = ip->stage_err;	/* If staging operation cancelled */
-		if (ip->stage_seg) {
-			(void) sam_release_seg(ip);
-		}
 	} else if ((uio.uio_loffset + count) > st_length) {
 		error = ESPIPE;	/* off + length > filesize, no data written */
 	} else {
@@ -1278,9 +1275,6 @@ sam_stage_write(
 					 * Switch to directio. Flush and
 					 * invalidate pages.
 					 */
-					if (ip->stage_seg) {
-						(void) sam_release_seg(ip);
-					}
 					sam_flush_pages(ip, B_INVAL);
 					ip->flags.b.stage_directio = 1;
 				}

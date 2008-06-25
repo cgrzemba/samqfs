@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.94 $"
+#pragma ident "$Revision: 1.95 $"
 
 #include "sam/osversion.h"
 
@@ -1117,7 +1117,7 @@ sam_flush_pages(
 	} else {
 		error = 0;
 	}
-	if (flags != B_ASYNC && !ip->stage_seg) {
+	if (flags != B_ASYNC) {
 		ip->flags.b.stage_pages = 0;
 	}
 

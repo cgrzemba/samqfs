@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 #endif
 
 #include "sam/osversion.h"
@@ -706,9 +706,7 @@ sam_cancel_stage(
 
 	ip->stage_err = (short)err;	/* If staging operation cancelled */
 	ip->flags.b.staging = 0;
-	if (ip->stage_seg) {
-		sam_release_seg(ip);
-	}
+
 	sam_set_size(ip);
 	TRACE(T_SAM_FIFO_CANST, SAM_ITOP(ip), ip->di.id.ino,
 	    ip->di.rm.size, err);

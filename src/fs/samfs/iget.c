@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.208 $"
+#pragma ident "$Revision: 1.209 $"
 
 #include "sam/osversion.h"
 
@@ -529,7 +529,6 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->io_count = 0;
 	ip->mm_pages = 0;
 	ip->wmm_pages = 0;
-	ip->stage_seg = 0;
 	ip->flush_len = 0;
 	ip->space = 0;
 	ip->ra_off = 0;
@@ -1295,11 +1294,9 @@ sam_set_directio(
 			if (directio_flag == DIRECTIO_ON) {
 				/*
 				 * Flush and invalidate pages to set directio.
-				 * Cannot flush pages now if memory mapped or
-				 * staging with a page locked across a SWRITE
-				 * call.
+				 * Cannot flush pages now if memory mapped.
 				 */
-				if (!ip->mm_pages && !ip->stage_seg) {
+				if (!ip->mm_pages) {
 					sam_flush_pages(ip, B_INVAL);
 				}
 			}

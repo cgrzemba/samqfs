@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.186 $"
+#pragma ident "$Revision: 1.187 $"
 
 #include "sam/osversion.h"
 
@@ -474,10 +474,9 @@ sam_client_open_vn(
 			ip->no_opens++;
 			mutex_exit(&ip->fl_mutex);
 		}
-	} else if ((ip->no_opens == 0) &&
-	    !ip->stage_seg && (ip->mm_pages == 0)) {
+	} else if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
 		/*
-		 * If error on open && not staging and no mmap pages, update
+		 * If error on open and no mmap pages, update
 		 * inode on the server and cancel lease. LEASE_remove waits
 		 * for the response. This allows the allocated pages to be
 		 * released.
@@ -762,18 +761,17 @@ retry:
 			goto done;
 		}
 
-		if (S_ISREG(ip->di.mode) &&
-		    vn_has_cached_data(vp) && !ip->stage_seg) {
+		if (S_ISREG(ip->di.mode) && vn_has_cached_data(vp)) {
 
 			sam_flush_pages(ip, 0);
 		}
 	}
 
 	/*
-	 * On last close, if not staging and no mmapped pages, update inode on
+	 * On last close and no mmapped pages, update inode on
 	 * the server and cancel leases. LEASE_remove waits for the response.
 	 */
-	if (last_close && !ip->stage_seg && (ip->mm_pages == 0)) {
+	if (last_close && (ip->mm_pages == 0)) {
 		if (S_ISREG(ip->di.mode)) {
 			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
 		}
@@ -1466,7 +1464,7 @@ sam_client_create_vn(
 
 				bzero(&data, sizeof (data));
 
-				if (vn_has_cached_data(vp) && !ip->stage_seg) {
+				if (vn_has_cached_data(vp)) {
 					sam_flush_pages(ip, B_INVAL);
 				}
 				data.ltype = LTYPE_truncate;
@@ -2448,7 +2446,7 @@ sam_client_space_vn(
 				RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 				mutex_enter(&ip->cl_apmutex);
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-				if (vn_has_cached_data(vp) && !ip->stage_seg) {
+				if (vn_has_cached_data(vp)) {
 					sam_flush_pages(ip, 0);
 				}
 				data.ltype = LTYPE_truncate;
@@ -3035,7 +3033,7 @@ sam_mmap_rmlease(
 		sam_client_remove_leases(ip, CL_WMAP, 0);
 		(void) sam_proc_relinquish_lease(ip,
 		    CL_WMAP, FALSE, ip->cl_leasegen);
-	} else if ((remaining_pages == 0) && !ip->stage_seg) {
+	} else if (remaining_pages == 0) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */
@@ -3045,7 +3043,7 @@ sam_mmap_rmlease(
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
 			rw_type = RW_WRITER;
-			if (vn_has_cached_data(vp) && !ip->stage_seg) {
+			if (vn_has_cached_data(vp)) {
 				sam_flush_pages(ip, 0);
 			}
 		}

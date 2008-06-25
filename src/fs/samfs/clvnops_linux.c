@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 #endif
 
 #include "sam/osversion.h"
@@ -236,10 +236,9 @@ samqfs_client_open_vn(
 		mutex_enter(&ip->fl_mutex);
 		ip->no_opens++;
 		mutex_exit(&ip->fl_mutex);
-	} else if ((ip->no_opens == 0) && !ip->stage_seg &&
-	    (ip->mm_pages == 0)) {
+	} else if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
 		/*
-		 * If error on open && not staging and no mmap pages, update
+		 * If error on open and no mmap pages, update
 		 * inode on the server and cancel lease. LEASE_remove waits
 		 * for the response.
 		 * This allows the allocated pages to be released.
@@ -313,10 +312,10 @@ samqfs_client_close_vn(
 	}
 
 	/*
-	 * On last close && not staging and no mmap pages, update inode
+	 * On last close and no mmap pages, update inode
 	 * on the server and cancel lease. LEASE_remove waits for the response.
 	 */
-	if (last_close && !ip->stage_seg && (ip->mm_pages == 0)) {
+	if (last_close && (ip->mm_pages == 0)) {
 		if (S_ISREG(ip->di.mode)) {
 			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
 			if (error == 0) {
@@ -666,7 +665,7 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 		sam_proc_relinquish_lease(ip, CL_WMAP, FALSE, ip->cl_leasegen);
 		goto out;
 
-	} else if ((remaining_pages == 0) && !ip->stage_seg) {
+	} else if (remaining_pages == 0) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */

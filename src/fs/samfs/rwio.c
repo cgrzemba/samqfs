@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.169 $"
+#pragma ident "$Revision: 1.170 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2238,7 +2238,7 @@ sam_flush_pages(
 	}
 #endif
 
-	if (flags != B_ASYNC && !ip->stage_seg) {
+	if (flags != B_ASYNC) {
 		ip->flags.b.stage_pages = 0;
 	}
 

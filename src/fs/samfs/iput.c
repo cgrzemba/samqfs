@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.122 $"
+#pragma ident "$Revision: 1.123 $"
 #endif
 
 #include "sam/osversion.h"
@@ -366,9 +366,6 @@ sam_inactive_ino(
 	mutex_exit(&vp->v_lock);
 
 	if (ino != 0 && !(ip->flags.bits & SAM_STALE)) {
-		if (ip->stage_seg) {
-			sam_release_seg(ip);	/* Release staging segment */
-		}
 		if (S_ISSEGI(&ip->di) && ip->segment_ip) {
 			/*
 			 * If active segment inode, release it.

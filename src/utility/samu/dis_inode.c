@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 
 
 /* ANSI headers. */
@@ -302,7 +302,6 @@ dis_incore(sam_node_t *node)	/* Incore inode image */
 	Mvprintw(ln++, 0, "%.8x space_u", node->space);
 	Mvprintw(ln++, 0, "%.8x space_l", (uint_t)node->space);
 	Mvprintw(ln++, 0, "%.8x mm_pages", node->mm_pages);
-	Mvprintw(ln++, 0, "%.8x stage_seg", node->stage_seg);
 	var = (uint_t *)&node->write_mutex;
 	Mvprintw(ln++, 0, "%.8x write_mutex owner", MUTEX_OWNER_PTR(*var));
 	Mvprintw(ln++, 0, "%.8x koffset_u", node->koffset);
