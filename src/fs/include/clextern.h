@@ -34,7 +34,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.58 $"
+#pragma ident "$Revision: 1.59 $"
 #endif
 
 #ifndef	_SAM_FS_CLEXTERN_H
@@ -210,7 +210,6 @@ int	sam_wait_archive(sam_node_t *ip, int archive_w);
 int sam_wait_rm(sam_node_t *ip, int flag);
 
 #ifdef sun
-void sam_release_seg(sam_node_t *ip);
 void sam_start_stop_rmedia(sam_mount_t *mp, sam_dstate_t);
 #endif
 

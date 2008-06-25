@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.251 $"
+#pragma ident "$Revision: 1.252 $"
 #endif
 
 #include "sam/osversion.h"
@@ -917,8 +917,7 @@ sam_directed_actions(
 		}
 	}
 
-	if ((actions & (SR_INVAL_PAGES|SR_SYNC_PAGES)) &&
-	    !ip->stage_seg) {
+	if (actions & (SR_INVAL_PAGES|SR_SYNC_PAGES)) {
 		int flags;
 		boolean_t set = TRUE;
 
@@ -1005,12 +1004,10 @@ sam_client_frlock_ino(
 	 * prior to lock release.
 	 */
 	if ((cmd == F_SETLK) || (cmd == F_SETLKW) || (cmd == 0)) {
-		if (!ip->stage_seg) {
-			if ((cmd == 0) || (flp->l_type == F_UNLCK)) {
-				sam_flush_pages(ip, B_INVAL);
-			} else {
-				sam_flush_pages(ip, 0);
-			}
+		if ((cmd == 0) || (flp->l_type == F_UNLCK)) {
+			sam_flush_pages(ip, B_INVAL);
+		} else {
+			sam_flush_pages(ip, 0);
 		}
 	}
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);

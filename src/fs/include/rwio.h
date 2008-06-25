@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 #endif
 
 
@@ -167,7 +167,7 @@ typedef struct buf_descriptor {
  */
 
 #define	SAM_DIRECTIO_ALLOWED(ip) \
-	(((ip)->mm_pages == 0) && ((ip)->stage_seg == NULL))
+	((ip)->mm_pages == 0)
 
 #endif /* sun */
 

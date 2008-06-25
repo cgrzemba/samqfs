@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.227 $"
+#pragma ident "$Revision: 1.228 $"
 
 #ifndef	_SAM_FS_EXTERN_H
 #define	_SAM_FS_EXTERN_H
@@ -319,7 +319,6 @@ int sam_get_multivolume_copy_id(sam_node_t *bip, int copy, sam_id_t *idp);
 int sam_close_stage(sam_node_t *ip, cred_t *credp);
 int sam_stage_write_io(vnode_t *vp, uio_t *uiop);
 int sam_stage_n_write_io(vnode_t *vp, uio_t *uiop);
-void sam_release_seg(sam_node_t *ip);
 int sam_rmmap_block(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 int sam_build_stagerd_req(sam_node_t *ip, int copy, sam_stage_request_t *req,
