@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModelImpl.java,v 1.96 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSSystemModelImpl.java,v 1.97 2008/06/25 23:23:27 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -59,6 +59,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemMediaManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SystemCapacity;
 import com.sun.netstorage.samqfs.web.model.SystemInfo;
+import com.sun.netstorage.samqfs.web.model.admin.Configuration;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
@@ -674,5 +675,36 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
             }
         }
         return "";
+    }
+
+    /**
+     * @since 5.0
+     * @return boolean -  true if the server represented by this model has
+     * archiving media configured otherwize false.
+     */
+    public boolean hasArchivingMedia() throws SamFSException {
+        Configuration config =
+            getSamQFSSystemAdminManager().getConfigurationSummary();
+
+        // A tape or disk volume will do
+        return (config.getTapeCount() > 0) || (config.getDiskVolumeCount() > 0);
+    }
+
+    /**
+     * @since 5.0
+     * @return boolean - true if the server represented by this model has
+     * at least one archiving file system configured, otherwise false.
+     */
+    public boolean hasArchivingFileSystem() throws SamFSException {
+         boolean found = false;
+         FileSystem [] fs = getSamQFSSystemFSManager().getAllFileSystems();
+
+         if (fs != null && fs.length > 0) {
+             for (int i = 0; !found && i < fs.length; i++) {
+                 found = (fs[i].getFSType() == FileSystem.ARCHIVING);
+             }
+         }
+
+         return false;
     }
 }

@@ -27,14 +27,14 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: firsttimeconfig.js,v 1.1 2008/06/11 20:33:01 kilemba Exp $
+// ident	$Id: firsttimeconfig.js,v 1.2 2008/06/25 23:23:26 kilemba Exp $
 
 var formName = "FirstTimeConfigForm";
 var prefix = "FirstTimeConfig.";
 
 /* handler for the more information link on the instruction paragraph */
 function handleMoreInformation() {
-    alert("comming soon ...");
+    alert("coming soon ...");
     return false;
 }
 
@@ -43,7 +43,9 @@ function handleMoreInformation() {
  * client-side parameters to the wizard instance.
  */
 function getClientParams() {
-    return null;
+    var params = "&serverNameParam=" + getServerName();
+    
+    return params;
 }
 
 /* retrieve the currently managed server */
@@ -96,7 +98,11 @@ function importTapeVolumes() {
 
 /* handler for the create file system link */
 function createFileSystem() {
-  alert("coming soon ...");
+  launchPopup("/fs/NewFileSystemPopup",
+              "new_fs_popup",
+              getServerName(),
+              SIZE_NORMAL,
+              null);
 
   return false;
 }
@@ -123,10 +129,8 @@ function handleImportTapeVSNs(button) {
   if (driverType == "1001") { // samst
     return true;
   } else { // go to the import vsn page
-    var serverName =
-      opener.document.CommonTasksForm.elements["CommonTasks.serverName"].value;
     var url = "/samqfsui/media/ImportVSN" +
-      "?SERVER_NAME=" + serverName +
+      "?SERVER_NAME=" + getServerName() +
       "&LIBRARY_NAME=" + tokens[0];
 
     opener.document.location.href = url;
@@ -167,7 +171,16 @@ function addStorageNode() {
 
 /* handler for the create the fs on the metadata server href */
 function createFSOnMDS() {
-  alert("coming soon ...");
+  var theForm = document.forms[formName];
+  var buttonName = "FirstTimeConfig.FirstTimeConfigView.newFileSystemWizard";
+  var button = theForm.elements[buttonName];
+  alert("launching wizard ...");
+  
+  if (button != null) {
+      button.click();
+  } else {
+      alert("button is null :" + button);
+  }
 
   return false;
 }

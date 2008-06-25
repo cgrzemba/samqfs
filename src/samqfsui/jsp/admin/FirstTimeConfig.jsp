@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.1 2008/06/11 20:33:01 kilemba Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.2 2008/06/25 23:23:26 kilemba Exp $
 --%>
 
 <%@page info="CommonTasks" language="java" %>
@@ -65,10 +65,8 @@
     <cc:image name="moreImg" bundleID="samBundle" border="0" defaultValue="/samqfsui/images/link_arrow.gif"/>
     <cc:text name="moreText" bundleID="samBundle" defaultValue="firsttime.moreinfo"/>
 </cc:href>
-<div style="margin:20px;text-align:right">
-    <cc:image name="asteriskImg" defaultValue="/samqfsui/images/asterisk.gif"/>
-    <cc:label name="requiredLabel" bundleID="samBundle" defaultValue="page.required"/>
-</div>
+
+<cc:legend name="Legend" align="right"/>
 </div>
 
 <div style="margin:20px">
@@ -163,6 +161,7 @@
 <div style="display:none">
 <jato:containerView name="FirstTimeConfigView">
     <samqfs:wizardwindow name="addLibraryWizard" />
+    <samqfs:wizardwindow name="newFileSystemWizard" />
 </jato:containerView>
 </div>
 

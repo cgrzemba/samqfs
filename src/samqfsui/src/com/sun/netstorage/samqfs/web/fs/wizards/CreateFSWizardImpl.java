@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CreateFSWizardImpl.java,v 1.100 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: CreateFSWizardImpl.java,v 1.101 2008/06/25 23:23:25 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -336,6 +336,8 @@ interface CreateFSWizardImplData {
 
 
 public class CreateFSWizardImpl extends SamWizardImpl {
+    public static final String POPUP_HAFS = "newfspopup.hafs";
+    public static final String POPUP_HPC = "newfspopup.hpc";
 
     // NEW: constant string for wizard
     public static final String WIZARDPAGEMODELNAME = "CreateFSPageModelName";

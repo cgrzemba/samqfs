@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: samqfsui.js,v 1.25 2008/05/16 19:39:12 am143972 Exp $
+// ident	$Id: samqfsui.js,v 1.26 2008/06/25 23:23:26 kilemba Exp $
 
 
    // trim (STRING myString)
@@ -374,6 +374,23 @@
                ((c >= "A") && (c <= "Z")) || (c == "-") || (c == "_"));
    }
 
+   function isValidFileSystemNameCharacter(c) {
+       return (isDigit(c) || ((c >= "a") && (c <= "z")) ||
+              ((c >= "A") && (c <= "Z")) ||
+              (c == "-") || (c == "_") || (c == "."));
+   }
+   
+   function isValidFileSystemName(fsname) {
+       if (isDigit(fsname[0])) return false;
+
+       var valid = true;
+       for (var i = 0; valid && i < fsname.length; i++) {
+           valid = isValidFileSystemNameCharacter(fsname[i]);
+       }
+       
+       return valid;
+   }
+   
    function isHexDigit(c) {
       return (isDigit(c) || 
          ((c >= "a") && (c <= "f")) || ((c >= "A") && (c <= "F")));

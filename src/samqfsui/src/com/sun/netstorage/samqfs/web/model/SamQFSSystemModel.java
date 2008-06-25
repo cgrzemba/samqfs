@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModel.java,v 1.55 2008/05/16 18:38:58 am143972 Exp $
+// ident	$Id: SamQFSSystemModel.java,v 1.56 2008/06/25 23:23:27 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -213,4 +213,17 @@ public interface SamQFSSystemModel {
      */
     public StageFile [] getCISReportEntries() throws SamFSException;
 
+    /**
+     * @since 5.0
+     * @return boolean -  true if the server represented by this model has
+     * archiving media configured otherwize false.
+     */
+    public boolean hasArchivingMedia() throws SamFSException;
+
+    /**
+     * @since 5.0
+     * @return boolean - true if the server represented by this model has
+     * at least one archiving file system configured, otherwise false.
+     */
+    public boolean hasArchivingFileSystem() throws SamFSException;
 }

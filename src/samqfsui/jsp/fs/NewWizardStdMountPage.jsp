@@ -29,7 +29,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardStdMountPage.jsp,v 1.8 2008/05/16 19:39:20 am143972 Exp $
+// ident	$Id: NewWizardStdMountPage.jsp,v 1.9 2008/06/25 23:23:25 kilemba Exp $
 
 --%>
 <%@ page language="java" %> 
@@ -48,8 +48,17 @@
       WizardWindow_Wizard.setNextButtonDisabled(disabled, null);
       WizardWindow_Wizard.setPreviousButtonDisabled(disabled, null);
    }
-   WizardWindow_Wizard.pageInit = wizardPageInit;
 
+    function customNextClicked() {
+        // display the disk discovery message
+        var theForm = document.wizWinForm;
+        var message = theForm.elements["WizardWindow.Wizard.NewWizardStdMountView.discoveryMessage"].value;
+        setTimeout(alert(message), 7000);
+
+        return true;
+    }
+   WizardWindow_Wizard.pageInit = wizardPageInit;
+   WizardWindow_Wizard.nextClicked = customNextClicked;
 </script>
 
 <jato:pagelet>
@@ -138,5 +147,5 @@
   </td>
 </tr>
 <cc:hidden name="errorOccur" />
-
+<cc:hidden name="discoveryMessage" />
 </jato:pagelet>

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardMountView.java,v 1.33 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: NewWizardMountView.java,v 1.34 2008/06/25 23:23:26 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -234,10 +234,12 @@ public class NewWizardMountView extends RequestHandlingViewBase
         TraceUtil.trace3("Entering");
 
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
-        String metaLocationVal = (String) wizardModel.getValue(
-            NewWizardFSNameView.CHILD_META_LOCATION_RADIOBUTTON);
-
-        if (metaLocationVal.equals("FSWizard.new.fstype.qfs.metaSame")) {
+        // String metaLocationVal = (String) wizardModel.getValue(
+        // NewWizardFSNameView.CHILD_META_LOCATION_RADIOBUTTON);
+        String mdStorage = (String)
+            wizardModel.getValue(NewWizardMetadataOptionsView.METADATA_STORAGE);
+        if (NewWizardMetadataOptionsView.SAME_DEVICE.equals(mdStorage)) {
+            // if (metaLocationVal.equals("FSWizard.new.fstype.qfs.metaSame")) {
             // Reset this value to no in case user goes back and forth in
             // the wizard.  This call will ensure the qwrite and force-directio
             // do not get enabled accidentally
@@ -325,9 +327,16 @@ public class NewWizardMountView extends RequestHandlingViewBase
     private void fillDefaultValues(SamWizardModel wizardModel) {
         String fsType =
             (String) wizardModel.getValue(CreateFSWizardImpl.FSTYPE_KEY);
-        String dauSize = (String)
-            wizardModel.getValue(NewWizardFSNameView.CHILD_DAU_DROPDOWN);
-        int dau = Integer.parseInt(dauSize);
+        // String dauSize = (String)
+        //    wizardModel.getValue(NewWizardFSNameView.CHILD_DAU_DROPDOWN);
+        // int dau = Integer.parseInt(dauSize);
+
+        // String blockSize = (String)
+        //    wizardModel.getValue(NewWizardBlockAllocationView.BLOCK_SIZE);
+        // int dau = Integer.parseInt(blockSize);
+
+        // TODO: retrieve from wizard model
+        int dau = 64;
 
         String serverName =
           (String)wizardModel.getValue(Constants.Wizard.SERVER_NAME);
@@ -391,8 +400,8 @@ public class NewWizardMountView extends RequestHandlingViewBase
 
     private boolean isHAFS() {
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
-        String hafs = (String)wm.getValue(NewWizardFSNameView.HAFS);
+        Boolean hafs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HAFS);
 
-        return hafs == null ? false : hafs.equals("true");
+        return hafs.booleanValue();
     }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: WizardUtil.java,v 1.9 2008/05/16 18:39:07 am143972 Exp $
+// ident	$Id: WizardUtil.java,v 1.10 2008/06/25 23:23:28 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.wizard;
 
@@ -90,5 +90,58 @@ public class WizardUtil {
             implClass);
 
         return wizWinModel;
+    }
+
+    /**
+     * This utility method inserts an array containing page ids to the main
+     * page id array before or after a specified page.
+     *
+     * @param original - the main array to be added to
+     * @param insert - the new array to insert in the original
+     * @param page - the page to insert before or after
+     * @param before - true to insert before or false to insert after.
+     * @return
+     */
+    public static int [] insertPagesBefore(int [] original,
+                                      int [] insert,
+                                      int page,
+                                      boolean before) {
+        int [] result = new int[original.length + insert.length];
+
+        // find the index of page on the original array
+        int pageIndex = 0;
+        boolean found = false;
+        for (int i = 0; !found && i < original.length; i++) {
+            if (original[i] == page) {
+                pageIndex = i;
+                found = true;
+            }
+        }
+
+        // adjust the uptoIndex to account for whether we are inserting the
+        // new array before or after the give page
+        int uptoIndex = pageIndex;
+        if (before) uptoIndex = pageIndex -1;
+
+        // copy the first half of the array
+        int resultIndex = 0;
+        for (int i = 0; i <= uptoIndex; i++, resultIndex++) {
+            result[resultIndex] = original[i];
+
+        }
+
+        // copy the insert array to the result
+        for (int i = 0; i < insert.length; i++, resultIndex++) {
+            result[resultIndex] = insert[i];
+        }
+
+        // copy the remaining part of the orginal array
+        for (int i = uptoIndex + 1; i < original.length; i++, resultIndex++) {
+            result[resultIndex] = original[i];
+
+        }
+
+        // if before, then copy the insert array into result
+        return result;
     }
 }

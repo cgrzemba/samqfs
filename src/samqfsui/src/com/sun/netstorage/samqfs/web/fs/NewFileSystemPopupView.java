@@ -27,16 +27,15 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FirstTimeConfigView.java,v 1.3 2008/06/25 23:23:27 kilemba Exp $
+// ident	$Id: NewFileSystemPopupView.java,v 1.1 2008/06/25 23:23:25 kilemba Exp $
 
-package com.sun.netstorage.samqfs.web.admin;
+package com.sun.netstorage.samqfs.web.fs;
 
 import com.iplanet.jato.view.RequestHandlingViewBase;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.web.fs.wizards.CreateFSWizardImpl;
-import com.sun.netstorage.samqfs.web.media.wizards.AddLibraryImpl;
-import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
+import com.sun.netstorage.samqfs.web.util.CommonSecondaryViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCWizardWindowModel;
@@ -45,20 +44,15 @@ import com.sun.web.ui.view.wizard.CCWizardWindow;
 import java.io.IOException;
 import javax.servlet.ServletException;
 
-public class FirstTimeConfigView extends RequestHandlingViewBase {
-
+public class NewFileSystemPopupView extends RequestHandlingViewBase {
     // child views
-    public static final String ADD_LIBRARY = "addLibraryWizard";
     public static final String NEW_FS = "newFileSystemWizard";
-    public static final String ADD_LIBRARY_FORWARD = "addLibraryWizardForward";
-    public static final String NEW_FS_FORWARD = "newFileSystemWizardForward";
+    public static final String NEW_FS_FORWARD = "newFileSystemWizardForwardTo";
 
-    private CCWizardWindowModel addLibraryWizardModel = null;
-    private CCWizardWindowModel newFileSystemWizardModel =  null;
+    // model
+    private CCWizardWindowModel newFSModel = null;
 
-    // private String serverName = null;
-
-    public FirstTimeConfigView(View parent, String name) {
+    public NewFileSystemPopupView(View parent, String name) {
         super(parent, name);
 
         TraceUtil.initTrace();
@@ -71,62 +65,42 @@ public class FirstTimeConfigView extends RequestHandlingViewBase {
 
     public void registerChildren() {
         TraceUtil.trace3("Entering");
-        registerChild(ADD_LIBRARY, CCWizardWindow.class);
+
         registerChild(NEW_FS, CCWizardWindow.class);
-        registerChild(ADD_LIBRARY_FORWARD, CCHref.class);
         registerChild(NEW_FS_FORWARD, CCHref.class);
         TraceUtil.trace3("Exiting");
     }
 
     public View createChild(String name) {
-        if (name.equals(ADD_LIBRARY)) {
-            return new CCWizardWindow(this, addLibraryWizardModel, name);
-        } else if (name.equals(NEW_FS)) {
-            return new CCWizardWindow(this, newFileSystemWizardModel, name);
-        } else if (name.equals(ADD_LIBRARY_FORWARD) ||
-            name.equals(NEW_FS_FORWARD)) {
+        if (name.equals(NEW_FS)) {
+            return new CCWizardWindow(this, newFSModel, name);
+        } else if (name.equals(NEW_FS_FORWARD)) {
             return new CCHref(this, name, null);
         } else {
-            throw new IllegalArgumentException("invalid child '" + name + "'");
+            throw new IllegalArgumentException("Invalid child '" + name + "'");
         }
     }
 
     private void initializeWizard() {
-        CommonViewBeanBase parent = (CommonViewBeanBase)getParentViewBean();
+        CommonSecondaryViewBeanBase parent =
+            (CommonSecondaryViewBeanBase)getParentViewBean();
         String serverName = parent.getServerName();
 
-        // add library wizard
         String commandChild = new StringBuffer().append(getQualifiedName())
-            .append(".").append(ADD_LIBRARY_FORWARD).toString();
-        addLibraryWizardModel = AddLibraryImpl.createModel(commandChild);
-        addLibraryWizardModel.setValue(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
-
-        // new file system wizard
-        commandChild = new StringBuffer().append(getQualifiedName())
             .append(".").append(NEW_FS_FORWARD).toString();
-        newFileSystemWizardModel = CreateFSWizardImpl.createModel(commandChild);
-        newFileSystemWizardModel.setValue(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
+        newFSModel = CreateFSWizardImpl.createModel(commandChild);
+        newFSModel.setValue(Constants.PageSessionAttributes.SAMFS_SERVER_NAME,
+                            serverName);
+        System.out.println("server name = " + serverName);
     }
 
-    public void handleAddLibraryWizardRequest(RequestInvocationEvent rie)
-        throws ServletException, IOException {
-        getParentViewBean().forwardTo(getRequestContext());
-    }
-
-    public void handleAddLibraryWizardForwardRequest(RequestInvocationEvent rie)
-        throws ServletException, IOException {
-        getParentViewBean().forwardTo(getRequestContext());
-    }
-
+    // handlers for the wizard related buttons
     public void handleNewFileSystemWizardRequest(RequestInvocationEvent rie)
         throws ServletException, IOException {
         getParentViewBean().forwardTo(getRequestContext());
     }
 
-    public void handleNewFileSystemWizardForwardRequest(
+    public void handleNewFileSystemWizardForwardToRequest(
         RequestInvocationEvent rie) throws ServletException, IOException {
         getParentViewBean().forwardTo(getRequestContext());
     }
-}

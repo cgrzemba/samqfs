@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemAdminManagerImpl.java,v 1.37 2008/06/11 20:33:03 kilemba Exp $
+// ident	$Id: SamQFSSystemAdminManagerImpl.java,v 1.38 2008/06/25 23:23:27 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -536,8 +536,8 @@ public class SamQFSSystemAdminManagerImpl implements SamQFSSystemAdminManager {
             .append("qfs_count=2,")
             .append("disk_vols_count=5,")
             .append("volume_pools=2,")
-            .append("object_qfs_protos=2,")
-            .append("object_qfs_names=hpcfs1 hpcfs2,")
+            .append("object_qfs_protos=1,")
+            .append("object_qfs_names=hpcfs1,")
             .append("storage_nodes=2,")
             .append("clients=4");
 

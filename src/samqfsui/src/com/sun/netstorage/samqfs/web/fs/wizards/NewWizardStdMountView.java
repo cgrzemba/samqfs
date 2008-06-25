@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardStdMountView.java,v 1.12 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: NewWizardStdMountView.java,v 1.13 2008/06/25 23:23:26 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -68,11 +68,12 @@ public class NewWizardStdMountView
     public static final String CHILD_BOOT_CHECKBOX = "bootTimeCheckBox";
     public static final String CHILD_READONLY_CHECKBOX = "readOnlyCheckBox";
     public static final String CHILD_NOSETUID_CHECKBOX = "noSetUIDCheckBox";
-    public static final String
-        CHILD_MOUNT_AFTER_CREATE_CHECKBOX = "mountAfterCreateCheckBox";
+    public static final String CHILD_MOUNT_AFTER_CREATE_CHECKBOX =
+        "mountAfterCreateCheckBox";
     public static final String CHILD_ALERT = "Alert";
 
     public static final String CHILD_ERROR = "errorOccur";
+    public static final String DISCOVERY_MESSAGE = "discoveryMessage";
     private boolean previous_error = false;
 
 
@@ -113,6 +114,7 @@ public class NewWizardStdMountView
         registerChild(CHILD_MOUNT_AFTER_CREATE_CHECKBOX, CCCheckBox.class);
         registerChild(CHILD_ALERT, CCAlertInline.class);
         registerChild(CHILD_ERROR, CCHiddenField.class);
+        registerChild(DISCOVERY_MESSAGE, CCHiddenField.class);
         TraceUtil.trace3("Exiting");
     }
 
@@ -121,14 +123,14 @@ public class NewWizardStdMountView
      */
     protected View createChild(String name) {
         TraceUtil.trace3("Entering");
-        View child = null;
+        // View child = null;
 
         if (name.equals(CHILD_LABEL)) {
-            child = (View)new CCLabel(this, name, null);
+            return new CCLabel(this, name, null);
         } else if (name.equals(CHILD_MOUNT_FIELD)) {
-            child = (View) new CCTextField(this, name, null);
+            return new CCTextField(this, name, null);
         } else if (name.equals(CHILD_CREATE_TEXT)) {
-            child = (View) new CCStaticTextField(this, name, null);
+            return new CCStaticTextField(this, name, null);
         } else if (name.equals(CHILD_BOOT_CHECKBOX)
             || name.equals(CHILD_READONLY_CHECKBOX)
             || name.equals(CHILD_MOUNT_AFTER_CREATE_CHECKBOX)
@@ -137,22 +139,19 @@ public class NewWizardStdMountView
                 new CCCheckBox
                 (this, name, "samqfsui.yes", "samqfsui.no", false);
             boxChild.setBoundName(name);
-            child = (View) boxChild;
+            return boxChild;
         } else if (name.equals(CHILD_ALERT)) {
             CCAlertInline alert = new CCAlertInline(this, name, null);
             alert.setValue(CCAlertInline.TYPE_ERROR);
             TraceUtil.trace3("Exiting");
-            child = (View) alert;
-        } else if (name.equals(CHILD_ERROR)) {
-            CCHiddenField text = new CCHiddenField(this, name, null);
-            TraceUtil.trace3("Exiting");
-            child = (View) text;
+            return alert;
+        } else if (name.equals(CHILD_ERROR) ||
+                   name.equals(DISCOVERY_MESSAGE)) {
+            return new CCHiddenField(this, name, null);
         } else {
             throw new IllegalArgumentException(
                 "NewWizardStdMountView : Invalid child name [" + name + "]");
         }
-        TraceUtil.trace3("Exiting");
-        return child;
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -236,6 +235,10 @@ public class NewWizardStdMountView
                     msgs);
             }
         }
+
+        // load the discovery message
+        ((CCHiddenField)getChild(DISCOVERY_MESSAGE))
+            .setValue(SamUtil.getResourceString("discovery.disk"));
         TraceUtil.trace3("Exiting");
     }
 
