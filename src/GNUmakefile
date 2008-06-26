@@ -1,4 +1,4 @@
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 
 #    SAM-QFS_notice_begin
 #
@@ -65,6 +65,7 @@ PDIRS = $(COMMON_PDIRS)
 ifeq ($(OS), SunOS)
 PDIRS += \
 		conf \
+		fsalog \
 		drivers \
 		catalog \
 		rft \

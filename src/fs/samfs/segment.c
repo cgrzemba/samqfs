@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 
 #include "sam/osversion.h"
 
@@ -794,14 +794,19 @@ sam_alloc_segment_ino(
 			bdwrite(bp);
 		}
 		sam_send_to_arfind(bip, AE_modify, 0);
-		sam_send_event(bip, ev_modify, 0);
+		if (bip->mp->ms.m_fsev_buf) {
+			sam_send_event(bip, ev_modify, 0,
+			    bip->di.modify_time.tv_sec);
+		}
 	}
 
 	/*
 	 * Notify arfind & event daemon of data segment change.
 	 */
 	sam_send_to_arfind(ip, AE_modify, 0);
-	sam_send_event(ip, ev_modify, 0);
+	if (ip->mp->ms.m_fsev_buf) {
+		sam_send_event(ip, ev_modify, 0, ip->di.modify_time.tv_sec);
+	}
 
 	ip->di.rm.info.dk.seg.ord = segment_ord; /* Save inode ordinal */
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -1299,7 +1304,10 @@ sam_segment_issue_callback(
 			 * Notify arfind and event daemon of removal.
 			 */
 			sam_send_to_arfind(ip, AE_remove, 0);
-			sam_send_event(ip, ev_remove, 0);
+			if (ip->mp->ms.m_fsev_buf) {
+				sam_send_event(ip, ev_remove, 0,
+				    ip->di.change_time.tv_sec);
+			}
 			sam_return_this_ino(ip, 1);
 			if (vp->v_count != 0) {
 				dcmn_err((CE_NOTE,

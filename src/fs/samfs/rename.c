@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 #include "sam/osversion.h"
 
@@ -359,6 +359,14 @@ sam_rename_inode(
 	}
 
 	/*
+	 * If parents are different and event logging on, send 1st of
+	 * 2 events for rename. 1 = old parent, 2 = new parent.
+	 */
+	if (parents_are_different && oip->mp->ms.m_fsev_buf) {
+		sam_send_event(oip, ev_rename, 1, opip->di.modify_time.tv_sec);
+	}
+
+	/*
 	 * Link the new file to the existing old file.
 	 */
 	nname.operation = SAM_RENAME_LINK;
@@ -433,13 +441,26 @@ sam_rename_inode(
 		 * Notify arfind and event daemon of file/directory rename.
 		 */
 		sam_send_to_arfind(oip, AE_rename, 0);
-		sam_send_event(oip, ev_rename, 0);
+		if (oip->mp->ms.m_fsev_buf == NULL) {
+			goto out15;
+		}
+		if (parents_are_different) {
+			sam_send_event(oip, ev_rename, 2,
+			    npip->di.modify_time.tv_sec);
+		} else {
+			sam_send_event(oip, ev_rename, 0,
+			    npip->di.modify_time.tv_sec);
+		}
 		goto out15;
 	} else {
 		/*
 		 * At this point nip may be null or set, but v_count has already
 		 * been dealt with accordingly.
 		 */
+		if (parents_are_different && oip->mp->ms.m_fsev_buf) {
+			sam_send_event(oip, ev_rename, 2,
+			    opip->di.modify_time.tv_sec);
+		}
 		error_line = __LINE__;
 		goto out14;
 	}

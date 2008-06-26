@@ -35,7 +35,7 @@
 #define	SAM_TRACE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 #endif
 
 /* Debug Macros. */
@@ -167,6 +167,7 @@ enum TraceId { TI_none = 0,	/* Used for stderr/stdout */
 	TI_aml,
 	TI_archiver,
 	TI_catserver,
+	TI_fsalogd,
 	TI_fsd,
 	TI_rft,
 	TI_recycler,
@@ -189,6 +190,7 @@ static char *traceIdNames[] = {
 	SAM_AMLD,
 	SAM_ARCHIVER,
 	SAM_CATSERVER,
+	SAM_FSALOGD,
 	SAM_FSD,
 	SAM_RFT,
 	SAM_RECYCLER,

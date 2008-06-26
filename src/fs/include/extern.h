@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.228 $"
+#pragma ident "$Revision: 1.229 $"
 
 #ifndef	_SAM_FS_EXTERN_H
 #define	_SAM_FS_EXTERN_H
@@ -120,10 +120,11 @@ int sam_remove_listio(sam_node_t *ip);
 /* event.c */
 
 int sam_event_open(void *arg, int size, cred_t *credp);
-void sam_event_init(sam_mount_t *mp);
+int sam_event_init(sam_mount_t *mp, int bufsize);
 void sam_event_fini(sam_mount_t *mp);
 void sam_event_umount(sam_mount_t *mp);
-void sam_send_event(sam_node_t *ip, enum sam_event_num event, ushort_t param);
+void sam_send_event(sam_node_t *ip, enum sam_event_num event, ushort_t param,
+	sam_time_t time);
 
 /* iget.c */
 

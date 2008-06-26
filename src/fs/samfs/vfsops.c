@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.159 $"
+#pragma ident "$Revision: 1.160 $"
 
 #include "sam/osversion.h"
 
@@ -326,12 +326,13 @@ samfs_mount(
 		vfs_setmntopt(vfsp, MNTOPT_NOSUID, NULL, 0);
 	}
 
+	mp->mi.m_fsact_buf = NULL;
+	mp->ms.m_fsev_buf = NULL;
 	if (!SAM_IS_STANDALONE(mp)) {
 		sam_arfind_init(mp);
-		sam_event_init(mp);
-	} else {
-		mp->mi.m_fsact_buf = NULL;
-		mp->mi.m_fsev_buf = NULL;
+		if (mp->mt.fi_config1 & MC_SAM_DB) {
+			(void) sam_event_init(mp, 0);
+		}
 	}
 	mutex_exit(&samgt.global_mutex);
 
@@ -654,6 +655,10 @@ samfs_mount(
 		bcopy(mp->mt.fi_name, cmd.args.mount.fs_name,
 		    sizeof (cmd.args.mount.fs_name));
 		cmd.args.mount.init = mp->mi.m_sbp->info.sb.init;
+		cmd.args.mount.start_fsalogd = FALSE;
+		if (mp->mt.fi_config1 & MC_SAM_DB) {
+			cmd.args.mount.start_fsalogd = TRUE;
+		}
 		(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 	}
 
@@ -787,7 +792,6 @@ samfs_umount(
 		(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 
 		sam_arfind_umount(mp); /* Tell arfind we're trying to unmount */
-		sam_event_umount(mp);
 	}
 
 	/*
@@ -875,6 +879,15 @@ samfs_umount(
 	}
 
 	/*
+	 * Notify fsalog daemon of successful umount
+	 */
+	if (!SAM_IS_STANDALONE(mp)) {
+		if (mp->ms.m_fsev_buf) {
+			sam_event_umount(mp);
+		}
+	}
+
+	/*
 	 * Unhash last 3 inodes and inactivate them.
 	 */
 	if ((e = sam_umount_ino(vfsp, fflag)) != 0) {
@@ -900,10 +913,11 @@ samfs_umount(
 	/*
 	 * Finish cleaning up arfind; close our backing store devices.
 	 */
-
 	if (!SAM_IS_STANDALONE(mp)) {
 		sam_arfind_fini(mp);
-		sam_event_fini(mp);
+		if (mp->ms.m_fsev_buf) {
+			sam_event_fini(mp);
+		}
 	}
 
 	/*

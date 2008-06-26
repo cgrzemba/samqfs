@@ -38,7 +38,7 @@
 #define	_SAM_FS_FSDAEMON_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 #endif
 
 /*
@@ -71,6 +71,7 @@ struct sam_fsd_archiver {
 struct sam_fsd_mount {
 	uname_t		fs_name;	/* File system name */
 	sam_time_t	init;		/* Time superblock iniitalized */
+	boolean_t	start_fsalogd;	/* Start fsalogd */
 };
 
 struct sam_fsd_releaser {

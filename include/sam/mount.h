@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 #endif
 
 #include <sam/types.h>
@@ -208,6 +208,8 @@ struct sam_fs_info {	/* File system information */
 #define	MC_CLUSTER_FASTSW 0x00000200	/* accelerate MDS switchover */
 #define	MC_LOGGING	0x00000400	/* logging specified */
 #define	MC_OBJECT_FS	0x00000800	/* Object storage file system */
+
+#define	MC_SAM_DB	0x00001000	/* SAM DB enabled in this filesystem */
 
 
 /* Collection of fi_status flags which are failover flags */

@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.162 $"
+#pragma ident "$Revision: 1.163 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -624,6 +624,7 @@ main(int argc, char *argv[])
 		 */
 		MakeDir(SAM_VARIABLE_PATH"/amld");
 		MakeDir(SAM_VARIABLE_PATH"/archiver");
+		MakeDir(SAM_VARIABLE_PATH"/fsalogd");
 		MakeDir(SAM_VARIABLE_PATH"/releaser");
 		/*
 		 * HA-SAM requires stager to be linked to a directory.
@@ -888,6 +889,17 @@ main(int argc, char *argv[])
 			if (!QfsOnly) {
 				sendFsMount(args->fs_name);
 #ifdef sun
+				if (args->start_fsalogd) {
+					/*
+					 * Start sam-fsalogd for this fs.
+					 */
+					Trace(TR_MISC,
+					    "Start %s (fsalogd) for %s",
+					    SAM_FSALOGD, args->fs_name);
+					argv[0] = SAM_FSALOGD;
+					argv[1] = args->fs_name;
+					StartProcess(2, argv, 0, 0);
+				}
 				startStopHsm(FSD_mount, args->fs_name);
 #endif /* sun */
 			}

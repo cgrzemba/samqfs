@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.286 $"
+#pragma ident "$Revision: 1.287 $"
 
 #include "sam/osversion.h"
 
@@ -2545,13 +2545,6 @@ sam_process_name_request(
 			 */
 			error = sam_remove_name(pip, np->component, ip,
 			    &v.name, cred);
-			if (error == 0) {
-				/*
-				 * Notify arfind & event daemon of removal.
-				 */
-				sam_send_to_arfind(ip, AE_remove, 0);
-				sam_send_event(ip, ev_remove, 0);
-			}
 			sam_set_sr_ino(ip, &n2p->new_id, &n2p->nrec);
 			rmvp = SAM_ITOV(ip);
 		}
@@ -2659,11 +2652,6 @@ go_fish:
 			error = sam_remove_name(pip, np->component,
 			    ip, &v.name, cred);
 			if (error == 0) {
-				/*
-				 * Notify arfind and event daemon of removal.
-				 */
-				sam_send_to_arfind(ip, AE_remove, 0);
-				sam_send_event(ip, ev_remove, 0);
 				rmvp = SAM_ITOV(ip);
 			}
 			sam_set_sr_ino(ip, &n2p->new_id, &n2p->nrec);

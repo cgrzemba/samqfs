@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.159 $"
+#pragma ident "$Revision: 1.160 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -2291,6 +2291,7 @@ decode_fi_config1(uint64_t value)
 		{ MC_CLUSTER_MGMT, "MC_CLUSTER_MGMT" },
 		{ MC_CLUSTER_FASTSW, "MC_CLUSTER_FASTSW" },
 		{ MC_OBJECT_FS, "MC_OBJECT_FS" },
+		{ MC_SAM_DB, "MC_SAM_DB" },
 		{ 0, "" }
 	};
 
@@ -3100,6 +3101,7 @@ print_mount(
 	printf("\t%s mnt_point\n", mount->mt.fi_mnt_point);
 	printf("\t%8x fs version\n", mount->mt.fi_version);
 	printf("\t%12p mp_next\n", mount->ms.m_mp_next);
+	printf("\t%12p m_fsev_buf\n", mount->ms.m_fsev_buf);
 	printf("\t%12p next\n", mount->mi.m_next);
 	printf("\t%12p invalp\n", mount->mi.m_invalp);
 	printf("\t%12p prealloc\n", mount->mi.m_prealloc);

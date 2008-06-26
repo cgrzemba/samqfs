@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.152 $"
+#pragma ident "$Revision: 1.153 $"
 
 #include "sam/osversion.h"
 
@@ -732,7 +732,10 @@ sam_setattr_ino(
 		 * Notify arfind and event daemon of setattr.
 		 */
 		sam_send_to_arfind(ip, AE_change, 0);
-		sam_send_event(ip, ev_change, 0);
+		if (ip->mp->ms.m_fsev_buf) {
+			sam_send_event(ip, ev_change, 0,
+			    ip->di.change_time.tv_sec);
+		}
 	}
 
 	if (mask & (AT_ATIME | AT_MTIME)) {	/* -----Modify times */

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.149 $"
+#pragma ident "$Revision: 1.150 $"
 
 #include "sam/osversion.h"
 
@@ -294,13 +294,6 @@ sam_create_name(
 	sam_send_to_arfind(ip, AE_create, 0);
 
 	/*
-	 * Notify event daemon of file/directory creation.
-	 */
-	if (operation != SAM_RENAME_LINK) {
-		sam_send_event(ip, ev_create, 0);
-	}
-
-	/*
 	 * Add to the DNLC cache and directory cache.
 	 */
 	slot_size = dp->d_reclen - SAM_DIRSIZ(dp);
@@ -315,6 +308,13 @@ sam_create_name(
 		sam_mark_ino(ip, (SAM_ACCESSED | SAM_UPDATED | SAM_CHANGED));
 	}
 	*ipp = ip;
+
+	/*
+	 * Notify event daemon of file/directory creation.
+	 */
+	if (ip->mp->ms.m_fsev_buf && operation != SAM_RENAME_LINK) {
+		sam_send_event(ip, ev_create, 0, ip->di.creation_time);
+	}
 
 	/*
 	 * If sync_meta == 1, sync parent, child and directory pages.

@@ -1,4 +1,4 @@
-.\" $Revision: 1.96 $
+.\" $Revision: 1.97 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -539,6 +539,15 @@ The following options can be used when mounting a
 These options pertain to the storage
 and archive management facilities of these file systems.
 .TP 10
+\fBnosam_db\fR |\0 \fBsam_db\fR
+The \fBnosam_db\fR option indicates there is no associated database with
+this file system.
+The \fBsam_db\fR option indicates there is an associated database with
+this file system and file system activity logging is enabled. The sam-fsd
+deamon starts sam-fsalogd who logs file system activity.
+For more information, see the \fBfsalog.cmd\fR(1M) man page.
+The default is \fBnosam_db\fR.
+.TP
 \fBhigh=\fIn\fR
 Sets the \%high-water mark for disk cache utilization to \fIn\fR
 percent.  When the amount of space used on the disk cache reaches
@@ -920,6 +929,7 @@ file systems.  For more information, see the \fBsamfs.cmd\fR(4) man page.
 .PP
 .BR mount (1M),
 .BR mountall (1M),
+.BR sam-fsalogd (1M),
 .BR sam-releaser (1M),
 .BR sammkfs (1M),
 .BR umount_samfs (1M).

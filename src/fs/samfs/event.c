@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 #include "sam/osversion.h"
 
@@ -97,11 +97,13 @@ struct sam_event_em {
 static void sam_daemon_notify(sam_schedule_entry_t *);
 static void sam_periodic_notify(sam_schedule_entry_t *entry);
 static void sam_start_notify(sam_mount_t *mp, struct sam_event_em *em);
+static void sam_call_daemon_door(sam_mount_t *mp, struct sam_event_em *em);
 
 
 /*
  * ----- sam_event_open - connect an event processing daemon.
  * Process system call SC_event_open from daemon.
+ * Initialize event management at SC_event_open from daemon.
  *
  */
 int				/* ERRNO if error, 0 if successful. */
@@ -135,14 +137,30 @@ sam_event_open(
 	if ((error = secpolicy_fs_config(credp, mp->mi.m_vfsp))) {
 		goto out;
 	}
-
-	em = (struct sam_event_em *)(mp->mi.m_fsev_buf);
-	if (em == NULL) {
-		/*
-		 * No event management defined.
-		 */
+	if (SAM_IS_STANDALONE(mp)) {
 		error = EINVAL;
 		goto out;
+	}
+
+
+	em = mp->ms.m_fsev_buf;
+	if (em == NULL) {
+#ifdef DEBUG
+		/*
+		 * DEBUG supports running fsalogd from comand line.
+		 */
+		mutex_enter(&samgt.global_mutex);
+		error = sam_event_init(mp, arg.eo_bufsize);
+		mutex_exit(&samgt.global_mutex);
+		if (error) {
+			goto out;
+		}
+#endif
+		em = mp->ms.m_fsev_buf;
+		if (em == NULL) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	mutex_enter(&em->em_mutex);
@@ -227,12 +245,26 @@ sam_event_fini(
 	sam_mount_t *mp)		/* Pointer to mount table */
 {
 	struct sam_event_em	*em;
+	struct sam_event_buffer *eb;
 	struct anon_map		*amp;
 	caddr_t			kaddr;
+	int			i;
 
-	em = (struct sam_event_em *)(mp->mi.m_fsev_buf);
-	if (em != NULL) {
+	em = mp->ms.m_fsev_buf;
+	if (em == NULL) {
 		return;
+	}
+
+	/*
+	 * Delay up to 3 seconds for fsalogd to pick up events.
+	 */
+	i = 3;
+	eb = em->em_buffer;
+	while (i-- > 0) {
+		if (eb->eb_in == eb->eb_out) {
+			break;
+		}
+		delay(hz);
 	}
 	amp = em->em_amp;
 	kaddr = (caddr_t)(void *)em->em_buffer;
@@ -275,16 +307,17 @@ sam_event_fini(
 	mutex_destroy(&em->em_mutex);
 	cv_destroy(&em->em_waitcv);
 	kmem_free(em, sizeof (struct sam_event_em));
-	mp->mi.m_fsev_buf = NULL;
+	mp->ms.m_fsev_buf = NULL;
 }
 
 
 /*
  *  ---- sam_event_init - initialize event processing.
  */
-void
+int
 sam_event_init(
-	sam_mount_t *mp)		/* Pointer to mount table */
+	sam_mount_t *mp,		/* Pointer to mount table */
+	int	bufsize)		/* Size of event callout table */
 {
 	struct sam_event_em *em;
 	struct sam_event_buffer *eb;
@@ -293,15 +326,17 @@ sam_event_init(
 	int size;
 
 	/*
-	 * Allocate the control structure.
+	 * Allocate the control structure if it does not exist.
 	 */
+	if (mp->ms.m_fsev_buf) {
+		return (0);
+	}
 	em = (struct sam_event_em *)
 	    kmem_zalloc(sizeof (struct sam_event_em), KM_SLEEP);
 	if (em == NULL) {
-		cmn_err(CE_WARN, "SAM-QFS: %s: Event control "
-		    "structure allocation failed",
-		    mp->mt.fi_name);
-		return;
+		cmn_err(CE_WARN, "SAM-QFS: %s: fsalogd event control "
+		    "structure allocation failed", mp->mt.fi_name);
+		return (ENOMEM);
 	}
 
 	/*
@@ -311,7 +346,10 @@ sam_event_init(
 	 * needed since the page will be locked into memory.
 	 * Allocate the space.
 	 */
-	size = roundup(EV_BUFFER_SIZE * 1024, PAGESIZE);
+	if (bufsize == 0) {
+		bufsize = EV_BUFFER_SIZE * 1024;
+	}
+	size = roundup(bufsize, PAGESIZE);
 #if defined(SOL_511_ABOVE)
 	amp = anonmap_alloc(size, size, ANON_SLEEP);
 #else
@@ -324,13 +362,13 @@ sam_event_init(
 		kmem_free(em, sizeof (struct sam_event_em));
 		cmn_err(CE_WARN, "SAM-QFS: %s: Event buffer "
 		    "allocation failed", mp->mt.fi_name);
-		return;
+		return (ENOMEM);
 	}
 
 	/*
 	 * Initialize the event management structure.
 	 */
-	mp->mi.m_fsev_buf = em;
+	mp->ms.m_fsev_buf = em;
 	sam_mutex_init(&em->em_mutex, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&em->em_waitcv, NULL, CV_DEFAULT, NULL);
 	em->em_notify = FALSE;
@@ -354,6 +392,7 @@ sam_event_init(
 	eb->eb_ev_lost[1] = 0;
 	eb->eb_in = eb->eb_out = 0;
 	eb->eb_limit = em->em_limit;
+	return (0);
 }
 
 
@@ -367,7 +406,8 @@ void
 sam_send_event(
 	sam_node_t *ip,			/* Pointer to inode */
 	enum sam_event_num event,	/* The file event */
-	ushort_t param)			/* Optional parameter */
+	ushort_t param,			/* Optional parameter */
+	sam_time_t time)		/* Event time */
 {
 	sam_mount_t		*mp;	/* Pointer to mount table */
 	struct sam_event_em	*em;
@@ -377,7 +417,7 @@ sam_send_event(
 	int			in;
 
 	mp = ip->mp;
-	em = (struct sam_event_em *)(mp->mi.m_fsev_buf);
+	em = mp->ms.m_fsev_buf;
 	if (em == NULL) {
 		return;
 	}
@@ -428,16 +468,23 @@ sam_send_event(
 	 */
 	eb->eb_in = in;
 	ev->ev_num = (ushort_t)event;
-	SAM_HRESTIME(&system_time);
-	ev->ev_time = system_time.tv_sec;
+	if (time == 0) {
+		SAM_HRESTIME(&system_time);
+		ev->ev_time = system_time.tv_sec;
+	} else {
+		ev->ev_time = time;
+	}
 	ev->ev_id = ip->di.id;
 	ev->ev_pid = ip->di.parent_id;
 	ev->ev_param = param;
-	ev->ev_seqno = ++em->em_seqno;
+	if (++em->em_seqno == 0) {
+		em->em_seqno = 1;
+	}
+	ev->ev_seqno = em->em_seqno;
 
 	/*
 	 * Check number of entries in buffer.
-	 * Wake up the event if over 1 quarter full;
+	 * Wake up the event if over 1 quarter full.
 	 */
 	if (!em->em_notify) {
 		int		n;
@@ -464,7 +511,7 @@ sam_event_umount(
 {
 	struct sam_event_em *em;
 
-	em = (struct sam_event_em *)(mp->mi.m_fsev_buf);
+	em = mp->ms.m_fsev_buf;
 	if (em == NULL) {
 		return;
 	}
@@ -473,12 +520,14 @@ sam_event_umount(
 		em->em_buffer->eb_umount = 1;
 		mutex_exit(&em->em_mutex);
 		if ((em->em_mask & ev_umount)) {
-			sam_send_event(mp->mi.m_inodir, ev_umount, 0);
+			sam_send_event(mp->mi.m_inodir, ev_umount, 0, 0);
 		}
 	}
-	mutex_enter(&em->em_mutex);
-	sam_start_notify(mp, em);
-	mutex_exit(&em->em_mutex);
+	/*
+	 * Call the daemon door directly because the fsalogd need to get the
+	 * umount event.
+	 */
+	sam_call_daemon_door(mp, em);
 }
 
 
@@ -491,18 +540,28 @@ sam_daemon_notify(
 {
 	struct sam_event_em *em;
 	sam_mount_t *mp;
+
+	mp = entry->mp;
+	em = mp->ms.m_fsev_buf;
+	if (em != NULL) {
+		sam_call_daemon_door(mp, em);
+	}
+	mutex_enter(&samgt.schedule_mutex);
+	sam_taskq_remove(entry);
+}
+
+
+/*
+ *  ---- sam_call_daemon_door - call daemon door
+ */
+static void
+sam_call_daemon_door(
+	sam_mount_t *mp,
+	struct sam_event_em *em)
+{
 	door_handle_t dh;
 	int error;
 
-	mp = entry->mp;
-	em = (struct sam_event_em *)(mp->mi.m_fsev_buf);
-	if (em == NULL) {
-		goto out;
-	}
-
-	/*
-	 * Call daemon door.
-	 */
 	mutex_enter(&em->em_mutex);
 	em->em_buffer->eb_ev_lost[0] = em->em_lost_events;
 	dh = em->em_doorp;
@@ -542,10 +601,6 @@ sam_daemon_notify(
 	em->em_notify = FALSE;
 	cv_signal(&em->em_waitcv);
 	mutex_exit(&em->em_mutex);
-
-out:
-	mutex_enter(&samgt.schedule_mutex);
-	sam_taskq_remove(entry);
 }
 
 
@@ -561,7 +616,7 @@ sam_periodic_notify(
 	sam_mount_t *mp;
 
 	mp = entry->mp;
-	em = (struct sam_event_em *)(mp->mi.m_fsev_buf);
+	em = mp->ms.m_fsev_buf;
 	if (em == NULL) {
 		return;
 	}

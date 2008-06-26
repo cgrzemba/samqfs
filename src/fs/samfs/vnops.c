@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.155 $"
+#pragma ident "$Revision: 1.156 $"
 
 #include "sam/osversion.h"
 
@@ -591,13 +591,6 @@ sam_remove_vn(
 
 		/* Entry exists, remove it. */
 		error = sam_remove_name(pip, cp, ip, &name, credp);
-		if (error == 0) {
-			/*
-			 * Notify arfind and event daemon of removal.
-			 */
-			sam_send_to_arfind(ip, AE_remove, 0);
-			sam_send_event(ip, ev_remove, 0);
-		}
 		rmvp = SAM_ITOV(ip);
 	}
 	RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);
@@ -1002,11 +995,6 @@ go_fish:
 
 		error = sam_remove_name(pip, cp, ip, &name, credp);
 		if (error == 0) {
-			/*
-			 * Notify arfind and event daemon of removal.
-			 */
-			sam_send_to_arfind(ip, AE_remove, 0);
-			sam_send_event(ip, ev_remove, 0);
 			rmvp = SAM_ITOV(ip);
 		}
 	}

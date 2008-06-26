@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 
 #include "sam/osversion.h"
 
@@ -180,6 +180,57 @@ sam_ioctl_util_cmd(
 				}
 			}
 		}
+		}
+		break;
+
+	case C_IDGETDENTS: {		/* Read full SAM-FS directory */
+		sam_ioctl_idgetdents_t *gdp;
+		uio_t uio;
+		iovec_t iov;
+		void *dir;
+		sam_node_t *ip;
+		vnode_t *vp;
+
+		if (SAM_IS_SHARED_FS(mp) && !SAM_IS_SHARED_SERVER(mp)) {
+			error = ENOTSUP;
+			break;
+		}
+		gdp = (sam_ioctl_idgetdents_t *)(void *)arg;
+		if (error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS,
+		    &gdp->id, &ip)) {
+			break;
+		}
+		if (gdp->size < sizeof (struct sam_dirent)) {
+			error = EINVAL;
+			break;
+		}
+		vp = SAM_ITOV(ip);
+		if (vp->v_type != VDIR) {
+			error = ENOTDIR;
+			sam_rele_ino(ip);
+			break;
+		}
+		dir = (void *)gdp->dir.p32;
+		if (curproc->p_model != DATAMODEL_ILP32) {
+			dir = (void *)gdp->dir.p64;
+		}
+		iov.iov_base = (char *)dir;
+		iov.iov_len	= gdp->size;
+		uio.uio_iov	= (iovec_t *)&iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_loffset = gdp->offset;
+		uio.uio_segflg = UIO_USERSPACE;
+		uio.uio_resid = gdp->size;
+		uio.uio_fmode = 0;
+		RW_LOCK_OS(&ip->data_rwl, RW_READER);
+		error = sam_getdents(ip, &uio, credp, &gdp->eof, FMT_SAM);
+		RW_UNLOCK_OS(&ip->data_rwl, RW_READER);
+
+		if (error == 0) {
+			*rvp = gdp->size - uio.uio_resid;
+			gdp->offset = uio.uio_loffset;
+		}
+		sam_rele_ino(ip);
 		}
 		break;
 
@@ -508,12 +559,12 @@ sam_ioctl_util_cmd(
 				    (pp->c_flags & pp->flags);
 				ip->di.status.b.archdone = 0;
 				ip->flags.b.changed = 1;
+
 				/*
-				 * Notify arfind and event daemon of rearchive.
+				 * Notify arfind of archive copy change.
 				 */
 				sam_send_to_arfind(ip, AE_rearchive,
 				    pp->copy + 1);
-				sam_send_event(ip, ev_rearchive, pp->copy + 1);
 			} else {
 				error = EINVAL;
 			}
@@ -1414,6 +1465,10 @@ sam_set_archive(
 		}
 
 		SAM_COUNT64(sam, archived);
+		if (ip->mp->ms.m_fsev_buf) {
+			sam_send_event(ip, ev_archive, (copy + 1),
+			    permip->ar.image[copy].creation_time);
+		}
 
 		/*
 		 * If all required copies are done, and no copies need further
@@ -1492,12 +1547,12 @@ sam_set_archive(
 		ip->flags.b.changed = 1;
 		bdwrite(bp);
 	}
+
 	/*
 	 * Build a stage request and send it to the stager for
 	 * files requiring data verification.
 	 */
-	if (!error &&
-	    !S_ISDIR(ip->di.mode) &&
+	if (!error && !S_ISDIR(ip->di.mode) &&
 	    (ip->di.rm.ui.flags & RM_DATA_VERIFY)) {
 
 		int i;

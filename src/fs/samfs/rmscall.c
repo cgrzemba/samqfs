@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.91 $"
+#pragma ident "$Revision: 1.92 $"
 
 #include "sam/osversion.h"
 
@@ -188,7 +188,6 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				 * Notify arfind and event daemon of archive.
 				 */
 				sam_send_to_arfind(ip, AE_archive, 0);
-				sam_send_event(ip, ev_archive, 0);
 				}
 				break;
 			case 'n':
@@ -1260,7 +1259,6 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 					}
 				}
 				arfindEvent = AE_unarchive;
-				event = ev_unarchive;
 				if (ip->di.version >= SAM_INODE_VERS_2) {
 					if (ip->di.ext_attrs & ext_mva) {
 						brelse(bp);
@@ -1322,8 +1320,8 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				 */
 				if (arch_status_n == 0) {
 					arfindEvent = AE_unarchive;
-					event = ev_unarchive;
 				}
+				event = ev_archange;
 				permip->di.arch_status = ip->di.arch_status =
 				    ip->di.arch_status & ~(1 << copy) &
 				    ~(1 << dcopy) |
@@ -1379,8 +1377,8 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				if (ap->flags & SU_archive) {
 					ip->di.ar_flags[copy] |= AR_rearch;
 					arfindEvent = AE_rearchive;
-					event = ev_rearchive;
 				}
+				event = ev_archange;
 
 				/*
 				 * If file is offline and all copies are
@@ -1408,13 +1406,13 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				ip->di.ar_flags[copy] &= ~(AR_damaged|AR_stale);
 				ip->di.arch_status |= mask;
 				ip->di.status.b.damaged = 0;
+				event = ev_archange;
 				break;
 
 			case OP_rearch:
 				ip->di.ar_flags[copy] |= AR_rearch;
 				ip->di.ar_flags[copy] &= ~AR_verified;
 				arfindEvent = AE_rearchive;
-				event = ev_rearchive;
 				break;
 
 			case OP_unrearch:
@@ -1438,11 +1436,18 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 					    copy + 1);
 				}
 				if (event != ev_none) {
+					int cn = copy + 1;
 					/*
 					 * Notify event daemon of unarchive,
 					 * rearchive.
 					 */
-					sam_send_event(ip, event, copy + 1);
+					if (ap->operation == OP_exarchive) {
+						cn = 0;
+					}
+					if (ip->mp->ms.m_fsev_buf) {
+						sam_send_event(ip, event, cn,
+						    ip->di.modify_time.tv_sec);
+					}
 				}
 			}
 		}

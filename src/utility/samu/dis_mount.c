@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 
 
 /* ANSI headers. */
@@ -106,6 +106,7 @@ sam_flagtext_t confTable[] = {
 int	confTableSize = sizeof (confTable)/sizeof (sam_flagtext_t);
 
 sam_flagtext_t conf1Table[] = {
+	MC_SAM_DB, "SAM_DB",
 	MC_OBJECT_FS, "OBJECT_FS",
 	MC_CLUSTER_FASTSW, "CLUSTER_FASTSW",
 	MC_CLUSTER_MGMT, "CLUSTER_MGMT",

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.84 $"
+#pragma ident "$Revision: 1.85 $"
 
 #include "sam/osversion.h"
 
@@ -60,11 +60,13 @@
 /* ----- SAMFS Includes */
 
 #include "sam/types.h"
+#include "sam/samevent.h"
 
 #include "inode.h"
 #include "mount.h"
 #include "dirent.h"
 #include "extern.h"
+#include "arfind.h"
 #include "debug.h"
 #include "trace.h"
 #include "ino_ext.h"
@@ -347,6 +349,15 @@ sam_remove_name(
 	fbp = NULL;
 	TRANS_INODE(pip->mp, pip);
 	TRANS_INODE(ip->mp, ip);
+
+	/*
+	 * Notify arfind and event daemon of removal.
+	 */
+	sam_send_to_arfind(ip, AE_remove, 0);
+	if (ip->mp->ms.m_fsev_buf) {
+		sam_send_event(ip, ev_remove, 0, ip->di.change_time.tv_sec);
+	}
+
 out:
 	if (fbp != NULL) {
 		fbrelse(fbp, S_OTHER);

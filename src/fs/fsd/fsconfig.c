@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -409,6 +409,19 @@ FsConfig(char *fscfg_name)
 				}
 
 				/*
+				 * Stop file system activity daemon if there
+				 * was one. Wait a second for it to terminate.
+				 */
+				if (mi_prev != NULL &&
+				    (mi_prev->params.fi_config1 &
+				    MC_SAM_DB)) {
+					argv[0] = SAM_FSALOGD;
+					argv[1] = mi->params.fi_name;
+					StopProcess(argv, TRUE, SIGINT);
+					sleep(1);
+				}
+
+				/*
 				 * Remove this filesystem.
 				 */
 				fsmount.fs_count = mi->params.fs_count;
@@ -514,6 +527,17 @@ FsConfig(char *fscfg_name)
 		 */
 		if (mi->params.fi_config1 & MC_SHARED_FS) {
 			argv[0] = SAM_SHAREFSD;
+			argv[1] = mi->params.fi_name;
+			StopProcess(argv, TRUE, SIGINT);
+			sleep(1);
+		}
+
+		/*
+		 * If SAM DB enabled, stop file system activity daemon &
+		 * wait 1 sec. for it to terminate.
+		 */
+		if (mi->params.fi_config1 & MC_SAM_DB) {
+			argv[0] = SAM_FSALOGD;
 			argv[1] = mi->params.fi_name;
 			StopProcess(argv, TRUE, SIGINT);
 			sleep(1);

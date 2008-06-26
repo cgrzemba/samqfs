@@ -1,0 +1,80 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam-fsalogd 1M "08 June 2008"
+.SH NAME
+sam-fsalogd \- Logs SAM file system activity in a Sun StorEdge \%SAM-QFS
+file system
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sam-fsalogd\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsam-fsalogd\fR daemon is initiated
+by the \fBsam-fsd\fR daemon. The \fBsam-fsd\fR daemon starts a
+file system activity daemon for each configured SAM-QFS file system.
+.PP
+The \fBsam-fsalogd\fR daemon opens a door to the Sun \%SAM-QFS
+file system. The \fBsam-fsalogd\fR daemon receives events
+associated with this file system and logs them. Events include:
+.PP
+.ce 2
+\fBTABLE 1.  SAM file system activity events\fR
+.PP
+.RS
+.nf
+.ft 4
+.ta 0n 26n 36n  48
+Event       Description        Parameter        Time\fR
+ev_none     -                  -                -
+ev_create   File created       -                creation time
+ev_change   uid/gid changed    -                change time
+ev_close    modified & closed  filemode         modify time
+ev_rename   renamed            0=same parent    parent modify time
+ev_rename   renamed            1=old parent     old parent modify time
+ev_rename   renamed            2=new parent     new parent modify time
+ev_remove   removed            -                change time
+ev_offline  marked offline     -                residence time
+ev_online   marked online      -                residence time
+ev_archive  copy archived      copy number      copy creation time
+ev_modify   copies stale       -                modify time
+ev_archange copies changed     -                modify time
+ev_umount   umount fs          -                now
+.TE
+.PP
+.SH FILES
+Detailed trace information is written to the \fBsam-fsalogd\fR trace file.
+.PP
+In the \fBfsalog.cmd\fR file,
+you can specify the directory pathbname where the logs are stored for
+each Sun \%SAM-QFS file system.
+.SH SEE ALSO
+\fBmount_samfs\fR(1M).
+\fBsam-fsd\fR(1M).
+.PP
+\fBfsalog.cmd\fR(4M).
+\fBdefault.conf\fR(4M).

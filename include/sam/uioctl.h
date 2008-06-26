@@ -37,7 +37,7 @@
 #define	_SAM_UIOCTL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 #endif
 
 #ifdef sun
@@ -308,6 +308,21 @@ struct sam_ioctl_listsetarch {
 
 #define	C_LISTSETARCH 21
 #define	F_LISTSETARCH _IOW('u', C_LISTSETARCH, struct sam_ioctl_listsetarch)
+
+
+/* Given ino.gen, Get directory entries returned unformated (FMT_SAM). */
+
+typedef struct {
+	sam_id_t id;		/* Directory inode number & generation number */
+	SAM_POINTER(struct sam_dirent) dir;	/* Directory buffer */
+	int32_t		size;		/* Length of directory buffer */
+	offset_t	offset;		/* Directory file offset-in/out */
+	int		eof;		/* EOF found on previous read */
+} sam_ioctl_idgetdents_t;
+
+#define	C_IDGETDENTS 22
+#define	F_IDGETDENTS _IOWR('u', C_IDGETDENTS, sam_ioctl_idgetdents_t)
+
 
 /* End: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */
 #if _LONG_LONG_ALIGNMENT == 8 && _LONG_LONG_ALIGNMENT_32 == 4

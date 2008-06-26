@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 
 #include "sam/osversion.h"
 
@@ -301,8 +301,10 @@ sam_close_vn(
 	if (last_close && !arch_close &&
 	    !S_ISDIR(ip->di.mode) && ip->di.id.ino != SAM_INO_INO) {
 		sam_send_to_arfind(ip, AE_close, 0);
-		if (filemode & (FWRITE|FAPPEND|FCREAT|FTRUNC)) {
-			sam_send_event(ip, ev_close, filemode);
+		if (ip->mp->ms.m_fsev_buf &&
+		    (filemode & (FWRITE|FAPPEND|FCREAT|FTRUNC))) {
+			sam_send_event(ip, ev_close, filemode,
+			    ip->di.modify_time.tv_sec);
 		}
 	}
 

@@ -38,16 +38,17 @@
 /* File events. */
 enum sam_event_num {
 	ev_none,
-	ev_archive,			/* archive immediate */
+	ev_create,			/* File created */
 	ev_change,			/* Attributes changed - uid, gid */
 	ev_close,			/* File closed */
-	ev_create,			/* File created */
-	ev_modify,			/* File modified */
-	ev_rearchive,			/* Rearchived */
 	ev_rename,			/* File renamed */
 	ev_remove,			/* File removed */
-	ev_unarchive,			/* Unarchived */
-	ev_umount,			/* Umount */
+	ev_offline,			/* File changed to offline */
+	ev_online,			/* File changed to online */
+	ev_archive,			/* Archive copy made */
+	ev_modify,			/* Archive copies stale */
+	ev_archange,			/* Archive copy changed */
+	ev_umount,			/* File system umount */
 	ev_max
 };
 
@@ -70,6 +71,7 @@ struct sam_event_open_arg {
 	uname_t	eo_fsname;		/* File system name */
 	uint_t	eo_door_id;		/* Daemon's door */
 	int	eo_interval;		/* Periodic upcall interval (seconds) */
+	int	eo_bufsize;		/* Maximum bufsize in bytes */
 	int	eo_mask;		/* Daemon mask for event */
 	SAM_POINTER(void) eo_buffer;	/* returned - addr of shared buffer */
 };
@@ -82,10 +84,11 @@ struct sam_event_open_arg {
 typedef struct sam_event {
 	sam_id_t    ev_id;	/* Inode */
 	sam_id_t    ev_pid;	/* Parent inode */
-	uint32_t    ev_num;	/* File action event */
-	uint32_t    ev_param;	/* Parameter */
+	ushort_t    ev_num;	/* File action event */
+	ushort_t    ev_param;	/* Parameter */
 	sam_time_t  ev_time;	/* File action event time in seconds */
 	uint32_t    ev_seqno;	/* Sequence number */
+	uint32_t    fill;
 } sam_event_t;
 
 struct sam_event_buffer {
