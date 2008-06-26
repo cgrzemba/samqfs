@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.95 $"
+#pragma ident "$Revision: 1.96 $"
 
 #include "sam/osversion.h"
 
@@ -659,7 +659,11 @@ sam_putapage(
 	if (SAM_VP_IS_STALE(vp)) {
 		TRACE(T_SAM_STALE_PP, vp, ip->di.id.ino, flags, 0);
 		if (pp) {
-			pvn_write_done(pp, (B_WRITE | flags));
+			/*
+			 * We should invalidate the pages as filesystem is
+			 * no longer mounted.
+			 */
+			pvn_write_done(pp, (B_INVAL | flags));
 		}
 		return (0);
 	}

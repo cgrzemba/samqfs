@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.139 $"
+#pragma ident "$Revision: 1.140 $"
 
 #include "sam/osversion.h"
 
@@ -1976,6 +1976,19 @@ sam_putpage_vn(
 	if (vn_has_cached_data(vp) == 0) {
 		return (0);
 	}
+
+	/*
+	 * If the vnode is stale, we would need to invalidate all
+	 * the pages of the vnode. Incoming request is changed to
+	 * address all the pages of the vnode. B_ASYNC flag is cleared
+	 * to prevent unnecessary extra processing as the vnode is stale.
+	 */
+	if (SAM_VP_IS_STALE(vp)) {
+		offset = 0;
+		length = 0;
+		flags &= ~(B_ASYNC);
+	}
+
 	ip = SAM_VTOI(vp);
 	if (S_ISREQ(ip->di.mode)) {
 		cmn_err(SAMFS_DEBUG_PANIC,
