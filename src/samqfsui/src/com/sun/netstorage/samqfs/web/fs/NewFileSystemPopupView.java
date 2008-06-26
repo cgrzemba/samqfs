@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewFileSystemPopupView.java,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewFileSystemPopupView.java,v 1.2 2008/06/26 02:10:58 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -104,3 +104,4 @@ public class NewFileSystemPopupView extends RequestHandlingViewBase {
         RequestInvocationEvent rie) throws ServletException, IOException {
         getParentViewBean().forwardTo(getRequestContext());
     }
+}
