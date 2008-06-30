@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -72,9 +72,9 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
 #define	SAM_MAX_MKFS_INO	(8)	/* Max block mkfs I-num */
 
 /*
- * Special Reserved Inode Numbers for Object QFS.
+ * Special Reserved Inode Numbers for Object QFS - mat FS only.
  */
-#define	SAM_OBJ_QFSCTL_INO	(26)	/* I-num for .objects file */
+#define	SAM_OBJ_OBJCTL_INO	(26)	/* I-num for .objects file */
 #define	SAM_OBJ_ORPHANS_INO	(27)	/* I-num for orphan list */
 #define	SAM_OBJ_LBLK_INO	(28)	/* I-num for MDS label block */
 #define	SAM_OBJ_SBLK_INO	(29)	/* I-num for MDS superblock */
@@ -88,6 +88,9 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
 /*
  * Special Object IDs. Used to access special inodes in the "mat" file system.
  */
+#define	SAM_OBJ_ORPHANS_ID	(((uint64_t)SAM_OBJ_ORPHANS_INO << 32) \
+	| SAM_OBJ_ORPHANS_INO)
+
 #define	SAM_OBJ_LBLK_ID (((uint64_t)SAM_OBJ_LBLK_INO << 32) | SAM_OBJ_LBLK_INO)
 #define	SAM_OBJ_SBLK_ID	(((uint64_t)SAM_OBJ_SBLK_INO << 32) | SAM_OBJ_SBLK_INO)
 #define	SAM_OBJ_PAR_ID	(((uint64_t)SAM_OBJ_PAR_INO << 32) | SAM_OBJ_PAR_INO)
@@ -100,9 +103,10 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
 #define	SAM_MAX_PRIV_INO_VERS_1 (5)	/* Max privileged vers 1 I-num */
 #define	SAM_MIN_USER_INO_VERS_1	(9)	/* Min user inode vers 1 I-num */
 
-#define	SAM_PRIVILEGE_INO(vers, ino)	(((ino <= SAM_MAX_PRIV_INO) && \
+#define	SAM_PRIVILEGE_INO(vers, ino)	((((ino <= SAM_MAX_PRIV_INO) && \
 	(ino != SAM_LOSTFOUND_INO) && (vers != SAMFS_SBLKV1)) || \
-	(ino <= SAM_MAX_PRIV_INO_VERS_1))
+	(ino <= SAM_MAX_PRIV_INO_VERS_1)) &&	\
+	(!((ino >= SAM_OBJ_OBJCTL_INO) && (ino <= SAM_OBJ_ROOT_INO))))
 
 /*
  * Solaris has a 1Tb limit on device size in 32 bit kernels, and

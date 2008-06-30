@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.146 $"
+#pragma ident "$Revision: 1.147 $"
 #endif
 
 #ifdef sun
@@ -63,6 +63,9 @@ struct sam_mount;
 #include	"scd.h"
 #include	"client.h"
 
+#ifdef sun
+#include	"pub/objnops.h"
+#endif
 
 /*
  * ----- samdent is the logical device (partition) entry for a SAM filesystem.
@@ -265,6 +268,16 @@ typedef struct sam_mt_instance {
 #ifdef sun
 	sam_time_t	m_xmsg_time;	/* Time of last WM transition msg */
 	int		m_xmsg_state;	/* State at last transition message */
+
+	uint64_t	m_osdt_sim;	/* OSD target simulation mode */
+	uint64_t	m_osdt_lun;	/* Logical Unit Number of this Target */
+	uint64_t	m_osdt_ioctlref; /* Number active ioctl references */
+	void		*m_orphan_hdl;	/* Handle to Orphans list */
+	struct vnode	*m_vn_objctl;	/* /[MOUNT_POINT]/.objects vnode */
+
+	struct sam_node *m_osdfs_root;	/* Root Object of this device */
+	struct sam_node *m_osdfs_part;	/* Partition 0 of this device */
+
 	struct vfs	*m_vfsp;	/* Pointer to vfs entry	*/
 	struct vnode	*m_vn_root;	/* Vnode of root */
 	int		m_maxphys;	/* Maximum I/O request size */

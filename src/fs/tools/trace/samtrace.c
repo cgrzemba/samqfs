@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.160 $"
+#pragma ident "$Revision: 1.161 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -1945,6 +1945,7 @@ decode_S(uint64_t value)
 		{ FS_RELEASING, "RELEASING" },
 		{ FS_STAGING, "STAGING" },
 		{ FS_ARCHIVING, "ARCHIVING" },
+		{ FS_OSDT_MOUNTED, "OSDT_MOUNTED" },
 		{ 0, "" }
 	};
 

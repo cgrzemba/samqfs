@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 
 #include "sam/osversion.h"
 
@@ -90,6 +90,7 @@
 #include "debug.h"
 #include "trace.h"
 #include "qfs_log.h"
+#include "objctl.h"
 
 
 /*
@@ -406,6 +407,24 @@ sam_lookup_vn(
 
 	TRACES(T_SAM_LOOKUP, pvp, cp);
 	pip = SAM_VTOI(pvp);
+
+	/*
+	 * If we are at root AND we are implementing objects on the Storage
+	 * Node AND the component name is '.objects', we give it the special
+	 * Gpfs vnode that we use to display objects on the Storage Node.
+	 *
+	 * This is a special trap to enable us to provide "pathname" for
+	 * objects implemented by SAMQFS.
+	 *
+	 */
+	if (pip->mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+		if ((pvp == pip->mp->mi.m_vn_root) &&
+		    pip->mp->mi.m_vn_objctl && (strcmp(cp, OBJCTL_NAME) == 0)) {
+			VN_HOLD(pip->mp->mi.m_vn_objctl);
+			*vpp = pip->mp->mi.m_vn_objctl;
+			return (0);
+		}
+	}
 
 	if ((error = sam_lookup_name(pip, cp, &ip, NULL, credp)) == 0) {
 		*vpp = SAM_ITOV(ip);

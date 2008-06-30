@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 
 
 /* ----- Include Files ---- */
@@ -680,8 +680,7 @@ new_fs(void)
 		}
 		mord = sblock.eq[ord].fs.mm_ord;
 		err = sam_bfmap(SAMMKFS_CALLER, &sblock, ord,
-		    &devp->device[mord],
-		    dcp, NULL, 1);
+		    &devp->device[mord], dcp, NULL, 1);
 		if (err) {
 			error(0, 0,
 			    catgets(catfd, SET, 801,
@@ -1536,7 +1535,7 @@ iino(void)
 				dp->di.unit = mm_ord;
 			}
 			break;
-		case SAM_OBJ_QFSCTL_INO:
+		case SAM_OBJ_OBJCTL_INO:
 		case SAM_OBJ_ORPHANS_INO:
 		case SAM_OBJ_LBLK_INO:
 		case SAM_OBJ_SBLK_INO:
@@ -1721,7 +1720,7 @@ iino(void)
 			}
 			break;
 		case SAM_SHFLOCK_INO:
-		case SAM_OBJ_QFSCTL_INO:
+		case SAM_OBJ_OBJCTL_INO:
 		case SAM_OBJ_ORPHANS_INO:
 		case SAM_OBJ_LBLK_INO:
 		case SAM_OBJ_SBLK_INO:
@@ -1736,6 +1735,7 @@ iino(void)
 			err = TRUE;
 			break;
 		}
+
 		fblk = (dp->di.extent[0] << fblk_to_extent);
 		if (d_write(&devp->device[mm_ord], (char *)bufp, length,
 		    fblk)) {

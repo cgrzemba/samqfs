@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.209 $"
+#pragma ident "$Revision: 1.210 $"
 
 #include "sam/osversion.h"
 
@@ -76,6 +76,7 @@
 #include "syslogerr.h"
 #include "trace.h"
 #include "qfs_log.h"
+#include "objnode.h"
 
 
 #ifdef METADATA_SERVER
@@ -184,6 +185,10 @@ sam_get_ino(
 	if (ip == NULL) {
 		ip = (sam_node_t *)kmem_cache_alloc(samgt.inode_cache,
 		    KM_SLEEP);
+		if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+			sam_objnode_alloc(ip);
+		}
+
 		ip->mp = NULL;
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		ip->flags.bits = 0;
@@ -262,6 +267,10 @@ sam_get_ino(
 #else
 		vn_setops(vp, samfs_client_vnodeopsp);
 #endif
+	}
+
+	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+		sam_objnode_init(ip);
 	}
 
 	ASSERT(vp->v_data == (caddr_t)ip);
@@ -1400,6 +1409,10 @@ sam_destroy_ino(sam_node_t *ip, boolean_t locked)
 	}
 	if (--samgt.inocount < 0) {
 		samgt.inocount = 0;
+	}
+
+	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+		sam_objnode_free(ip);
 	}
 
 	kmem_cache_free(samgt.inode_cache, (void *)ip);

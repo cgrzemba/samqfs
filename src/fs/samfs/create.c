@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.150 $"
+#pragma ident "$Revision: 1.151 $"
 
 #include "sam/osversion.h"
 
@@ -89,8 +89,6 @@ extern ushort_t sam_dir_gennamehash(int nl, char *np);
 static int sam_make_dir(sam_node_t *pip, sam_node_t *ip, cred_t *credp);
 static int sam_make_dirslot(sam_node_t *ip, struct sam_name *namep,
 							struct fbuf **fbpp);
-static int sam_make_ino(sam_node_t *pip, vattr_t *vap, sam_node_t **ipp,
-						cred_t *credp);
 static int sam_set_hardlink_parent(sam_node_t *bip);
 static void sam_enter_dnlc(sam_node_t *pip, sam_node_t *ip, char *cp,
 				struct sam_name *namep, ushort_t slot_size);
@@ -600,7 +598,7 @@ out:
  *	Inode read/write lock set on return with no error.
  */
 
-static int			/* ERRNO if error, 0 if successful. */
+int				/* ERRNO if error, 0 if successful. */
 sam_make_ino(
 	sam_node_t *pip,	/* Pointer to parent directory inode */
 	vattr_t	*vap,		/* Pointer to attributes. */

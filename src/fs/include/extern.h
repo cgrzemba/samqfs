@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.229 $"
+#pragma ident "$Revision: 1.230 $"
 
 #ifndef	_SAM_FS_EXTERN_H
 #define	_SAM_FS_EXTERN_H
@@ -206,6 +206,8 @@ int sam_flush_and_destroy_vnode(vnode_t *, kmutex_t *, boolean_t *);
 
 int sam_create_name(sam_node_t *pip, char *cp, sam_node_t **ipp,
 	struct sam_name *namep, vattr_t *vap, cred_t *credp);
+int sam_make_ino(sam_node_t *pip, vattr_t *vap, sam_node_t **ipp,
+	cred_t *credp);
 int sam_restore_name(sam_node_t *pip, char *cp, struct sam_name *namep,
 	struct sam_perm_inode *perm_ino, sam_id_t *id, cred_t *credp);
 void sam_set_unit(sam_mount_t *mp, struct sam_disk_inode *di);

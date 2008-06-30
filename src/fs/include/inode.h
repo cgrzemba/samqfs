@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.202 $"
+#pragma ident "$Revision: 1.203 $"
 #endif
 
 #ifdef linux
@@ -441,6 +441,7 @@ typedef struct sam_ichain	{
 #define	PAD0_CONTENTS (0xfeedfacefeedfaceULL)
 #define	PAD1_CONTENTS (0xfacefeedfacefeedULL)
 
+struct objnode;
 typedef struct sam_node {
 	sam_ichain_t	chain; /* Hash & Free chain forw/back, must be first */
 
@@ -457,6 +458,11 @@ typedef struct sam_node {
 	 * Hence the pointer.
 	 */
 	struct vnode	*vnode;
+
+	/*
+	 * Object Node.
+	 */
+	struct objnode	*objnode;
 
 	/*
 	 * Start client specific fields.
@@ -1047,7 +1053,13 @@ int sam_ioctl_file_cmd(sam_node_t *ip, int, int *, int flag, int *rvp,
 	cred_t *credp);
 int sam_proc_lockfs(sam_node_t *ip, int cmd, int *arg, int flag, int *rvp,
 	cred_t *credp);
-
+#ifdef sun
+#if defined(SOL_511_ABOVE)
+int sam_obj_ioctl_cmd(sam_node_t *ip, int, int *, int *rvp, cred_t *credp);
+#else
+#define	sam_obj_ioctl_cmd(ip, a, b, rvp, credp)	(ENOTSUP)
+#endif
+#endif /* ifdef sun */
 
 #endif /* _KERNEL */
 

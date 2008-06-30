@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.215 $"
+#pragma ident "$Revision: 1.216 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1918,6 +1918,7 @@ sam_unmount_fs(
 	sam_unmount_flag_t flag)	/* Unmount flag - umount or failover */
 {
 	vfs_t *vfsp;
+	vnode_t *vp;
 	int e;
 	boolean_t dfhold;
 	int retry_cnt;
@@ -1925,6 +1926,27 @@ sam_unmount_fs(
 	clock_t vn_wait_time;
 
 	vfsp = mp->mi.m_vfsp;
+
+	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+		if (mp->mi.m_osdt_lun != ~0ULL) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: Busy - "
+			    "OSD LU Provider has FS attached", mp->mt.fi_name);
+			return (EBUSY);
+		}
+
+		if (mp->mi.m_osdfs_root) {
+			vp = SAM_ITOV(mp->mi.m_osdfs_root);
+			VN_RELE(vp);
+			mp->mi.m_osdfs_root = NULL;
+		}
+
+		if (mp->mi.m_osdfs_part) {
+			vp = SAM_ITOV(mp->mi.m_osdfs_part);
+			VN_RELE(vp);
+			mp->mi.m_osdfs_part = NULL;
+		}
+
+	}
 
 	mutex_enter(&mp->mi.m_inode.mutex);
 	mp->mi.m_inode.flag = SAM_THR_UMOUNTING;

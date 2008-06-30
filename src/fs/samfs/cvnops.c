@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.141 $"
+#pragma ident "$Revision: 1.142 $"
 
 #include "sam/osversion.h"
 
@@ -1006,6 +1006,10 @@ sam_ioctl_vn(
 		    flag, credp);
 		break;
 #endif
+
+	case 'o':		/* QFS OBJECT ioctl commands */
+		error = sam_obj_ioctl_cmd(ip, (cmd & 0xff), p, rvp, credp);
+		break;
 
 	default:
 		error = ENOTTY;

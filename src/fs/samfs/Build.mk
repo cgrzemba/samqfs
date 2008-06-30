@@ -1,4 +1,4 @@
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 
 #    SAM-QFS_notice_begin
 #
@@ -46,6 +46,12 @@ SRCS2 = acl.c amld.c arfind.c balloc.c block.c create.c event.c fioctl.c \
 	rmedia.c rmscall.c samscall.c san.c segment.c server.c srcomm.c \
 	srmisc.c staged.c truncate.c uioctl.c update.c vnops.c
 
+ifeq ($(OS_REVISION), 5.11)
+OSD_SRCS = osdfs.c osdfsops.c objnode.c objnops.c objattrops.c \
+	objctl.c objnops_simops.c objnops_simmem.c objorphan.c \
+	objioctl.c
+endif
+
 COMMON_SRCS = common_subr.c extent.c setdau.c
 
 ifeq ($(HAVE_internal_mk)-$(PLATFORM), yes-sparc)
@@ -88,19 +94,19 @@ LDFLAGS = -i
 endif
 # End ifeq ($(OS), SunOS)
 
-MODULE_SRC = $(SRCS1) $(SRCS2) $(COMMON_SRCS)
+MODULE_SRC = $(SRCS1) $(SRCS2) $(OSD_SRCS) $(COMMON_SRCS)
 
 #
 # Source for 'make depend'.  Since there are 2 versions of mount.c (./mount.c ../lib/mount.c)
 # we need to explicitly list the make depend source here rather than let the depend target
 # generate the list from PROG_SRC and vpath.
 #
-DEPEND_SRC = $(SRCS1) $(SRCS2) $(addprefix $(SRC_VPATH)/, $(COMMON_SRCS))
+DEPEND_SRC = $(SRCS1) $(SRCS2) $(OSD_SRCS) $(addprefix $(SRC_VPATH)/, $(COMMON_SRCS))
 
 #
 # Lint source and options
 #
-LNSRC = $(SRCS1) $(SRCS2) $(addprefix $(SRC_VPATH)/, $(COMMON_SRCS))
+LNSRC = $(SRCS1) $(SRCS2) $(OSD_SRCS) $(addprefix $(SRC_VPATH)/, $(COMMON_SRCS))
 LNOPTS = -nuxms -erroff=E_INCL_NUSD,E_INCL_MNUSD,E_CONSTANT_CONDITION \
 	-erroff=E_STATIC_UNUSED,E_EXPR_NULL_EFFECT -Dlint
 LNLIBS =

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 
 /* ANSI headers. */
@@ -168,6 +168,8 @@ FS_RESYNCING,		"RESYNCING",	/* Server is resyncing */
 FS_RELEASING,		"RELEASING",	/* releasing is active on this fs */
 FS_STAGING,		"STAGING",	/* staging is active on this fs */
 FS_ARCHIVING,		"ARCHIVING",	/* archiving is active on this fs */
+FS_OSDT_MOUNTED,	"OSDT_MOUNTED", /* Filesystem is currently mounted as */
+					/* an OSD Target */
 };
 int statusTableSize = sizeof (statusTable)/sizeof (sam_flagtext_t);
 

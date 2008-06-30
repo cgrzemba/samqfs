@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.132 $"
+#pragma ident "$Revision: 1.133 $"
 #endif
 
 #include <sam/types.h>
@@ -141,6 +141,8 @@ struct sam_fs_info {	/* File system information */
 
 #define	FS_SRVR_DOWN	  0x00001000	/* Server is not responding */
 #define	FS_SRVR_BYTEREV	  0x00002000	/* Server has rev byte ordering */
+
+#define	FS_OSDT_MOUNTED   0x00010000	/* FS is mounted by OSD Target */
 
 #define	FS_SRVR_DONE	  0x00400000	/* Server finished failover */
 #define	FS_CLNT_DONE	  0x00800000	/* Client finished resetting leases */

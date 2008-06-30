@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.121 $"
+#pragma ident "$Revision: 1.122 $"
 
 #define	SAM_INIT
 
@@ -71,6 +71,7 @@
 #include "kstats.h"
 #include "pub/version.h"
 #include "samhost.h"
+#include "objctl.h"
 
 extern int ncsize;
 
@@ -439,6 +440,8 @@ _fini(void)
 
 	lqfs_fini();
 
+	sam_objctl_fini();
+
 	return (mod_remove(&modlinkage));		/* Remove module */
 }
 
@@ -617,6 +620,8 @@ samfs_init(
 	samioc_link((void *)sam_syscall);
 
 	lqfs_init();
+
+	sam_objctl_init();
 
 	return (0);
 }

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.160 $"
+#pragma ident "$Revision: 1.161 $"
 
 #include "sam/osversion.h"
 
@@ -83,7 +83,7 @@
 #include "arfind.h"
 #include "trace.h"
 #include "qfs_log.h"
-
+#include "objctl.h"
 extern int ncsize;
 
 extern int sam_freeze_ino(sam_node_t *ip, int force_freeze);
@@ -438,6 +438,13 @@ samfs_mount(
 	vfsp->vfs_bcount = 0;
 
 	/*
+	 * OSD FS specific Initialization
+	 */
+	mp->mi.m_osdt_lun = ~0ULL;	/* 0 is a valid LUN */
+	mp->mi.m_osdfs_root = NULL;
+	mp->mi.m_osdfs_part = NULL;
+
+	/*
 	 * Get .inodes, root, & .blocks (hidden) inodes.
 	 */
 	for (i = SAM_INO_INO; i <= SAM_BLK_INO; i++) {
@@ -464,6 +471,33 @@ samfs_mount(
 		case SAM_BLK_INO:
 			mp->mi.m_inoblk = rip;
 			break;
+		}
+	}
+
+	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+		/*
+		 * Get the default Root Object and default Partition 0 inodes.
+		 */
+		id.ino = SAM_OBJ_ROOT_INO;
+		id.gen = SAM_OBJ_ROOT_INO;
+		if ((error = sam_get_ino(vfsp, IG_EXISTS, &id, &rip))) {
+			TRACE(T_SAM_MNT_ERRID, vfsp, 14, id.ino, error);
+			(void) sam_umount_ino(vfsp, TRUE);
+			err_line = __LINE__;
+			goto done;
+		} else {
+			mp->mi.m_osdfs_root = rip;
+		}
+
+		id.ino = SAM_OBJ_PAR0_INO;
+		id.gen = SAM_OBJ_PAR0_INO;
+		if ((error = sam_get_ino(vfsp, IG_EXISTS, &id, &rip))) {
+			TRACE(T_SAM_MNT_ERRID, vfsp, 14, id.ino, error);
+			(void) sam_umount_ino(vfsp, TRUE);
+			err_line = __LINE__;
+			goto done;
+		} else {
+			mp->mi.m_osdfs_part = rip;
 		}
 	}
 
@@ -693,6 +727,9 @@ done:
 		    (sam_tr_t)mp->mi.m_vn_root, 0);
 		cmn_err(CE_NOTE,
 		    "SAM-QFS: %s: Completed mount filesystem", fsname);
+		if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+			sam_objctl_create(mp);
+		}
 	} else {
 		if (mp) {
 			if (needtrans) {
@@ -772,6 +809,13 @@ samfs_umount(
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 		TRACE(T_SAM_UMNT_RET, vfsp, 11, (sam_tr_t)mp, EBUSY);
 		return (EBUSY);
+	} else if ((mp->mt.fi_status & FS_OSDT_MOUNTED) &&
+	    !(fflag & MS_FORCE)) {
+		mutex_exit(&mp->ms.m_waitwr_mutex);
+		cmn_err(CE_NOTE,
+		"SAM-QFS: %s: Umount ignored - OSD Target Service is still "
+		"active.", mp->mt.fi_name);
+		return (EBUSY);
 	}
 
 	TRACE(T_SAM_UMNT_RET, vfsp, 1, (sam_tr_t)mp, 0);
@@ -792,6 +836,10 @@ samfs_umount(
 		(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 
 		sam_arfind_umount(mp); /* Tell arfind we're trying to unmount */
+	}
+
+	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
+		sam_objctl_destroy(mp);
 	}
 
 	/*
@@ -1412,6 +1460,18 @@ again:
 		return (EIO);
 	}
 	mp = (sam_mount_t *)(void *)vfsp->vfs_data;
+	sam_fidp = (sam_fid_t *)fidp;
+
+	/*
+	 * Trap for the special objctl Root Node.  This Root Node is used
+	 * to emulate the Object namespace in qfs.
+	 */
+	if ((sam_fidp->un._fid.id.ino == SAM_OBJ_OBJCTL_INO) &&
+	    (sam_fidp->un._fid.id.gen == SAM_OBJ_OBJCTL_INO)) {
+		*vpp = mp->mi.m_vn_objctl;
+		VN_HOLD(*vpp);
+		return (0);
+	}
 
 	/*
 	 * Need to hard freeze NFS threads in sam_open_vfs_operation.
@@ -1428,7 +1488,6 @@ again:
 		return (error);
 	}
 
-	sam_fidp = (sam_fid_t *)fidp;
 	error = sam_stale_hash_ino(&sam_fidp->un._fid.id, mp, &ip);
 
 	if (error == EAGAIN) {
