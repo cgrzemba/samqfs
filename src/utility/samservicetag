@@ -40,7 +40,7 @@
 # In all cases, if service tags is not installed on the system, this
 # command is a noop.
 #
-#	$Revision: 1.1 $
+#	$Revision: 1.2 $
 #
 
 #
@@ -127,7 +127,9 @@ add-SUNWqfs)
 	# Add QFS service tag.
 	#
 	QFS_INSTANCE_URN=`$STC -f -t "$QFS_URN" 2>/dev/null | head -1`
-	if [ "$QFS_INSTANCE_URN" == "Record not found" ]
+	echo $QFS_INSTANCE_URN | grep urn >/dev/null
+	# If QFS service tag does not exist, add it:
+	if [ $? -ne 0 ]
 	then
 		$STC -a \
 		    -p "Sun StorageTek QFS 5.0 Software" \
@@ -141,7 +143,9 @@ add-SUNWsamfs)
 	# Add QFS and SAM service tags.
 	#
 	QFS_INSTANCE_URN=`$STC -f -t "$QFS_URN" 2>/dev/null | head -1`
-	if [ "$QFS_INSTANCE_URN" == "Record not found" ]
+	echo $QFS_INSTANCE_URN | grep urn >/dev/null
+	# If QFS service tag does not exist, add it:
+	if [ $? -ne 0 ]
 	then
 		$STC -a \
 		    -p "Sun StorageTek QFS 5.0 Software" \
@@ -149,7 +153,9 @@ add-SUNWsamfs)
 		    -m Sun -A $ARCH -z global -S "$VERS" >/dev/null
 	fi
 	SAM_INSTANCE_URN=`$STC -f -t "$SAM_URN" 2>/dev/null | head -1`
-	if [ "$SAM_INSTANCE_URN" == "Record not found" ]
+	echo $SAM_INSTANCE_URN | grep urn >/dev/null
+	# If SAM service tag does not exist, add it:
+	if [ $? -ne 0 ]
 	then
 		$STC -a \
 		    -p "Sun StorageTek Storage Archive Manager 5.0 Software" \
@@ -165,14 +171,17 @@ delete-*)
 	#
 	for URN in "$QFS_URN_50" "$SAM_URN_50"
 	do
+		I=9
 		INSTANCE_URN=`$STC -f -t "$URN" 2>/dev/null | head -1`
-		while [ "$INSTANCE_URN" != "Record not found" ]
+		echo $INSTANCE_URN | grep urn >/dev/null
+		while [ $? -eq 0 -a $I -ge 0 ]
 		do
+			I=`expr $I - 1`
 			$STC -d -i "$INSTANCE_URN" >/dev/null
 			INSTANCE_URN=`$STC -f -t "$URN" 2>/dev/null | head -1`
+			echo $INSTANCE_URN | grep urn >/dev/null
 		done
 	done
 	;;
 
 esac
-
