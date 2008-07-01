@@ -32,8 +32,8 @@
 
 if [ ! -d  /opt/SUNWsamfs/sbin ]; then
 	echo "The SAM-QFS package is not yet installed."
-	echo "The sam-fsd service is being placed in maintenance mode."
-	/usr/sbin/svcadm mark maintenance svc:/system/sam-fsd
+	echo "The sam-fsd service is being disabled."
+	/usr/sbin/svcadm disable svc:/system/sam-fsd
 	exit $SMF_EXIT_MON_OFFLINE
 fi
 
@@ -45,11 +45,11 @@ if [ $NUMFS -eq 0 ]; then
 	# The sam-fsd -N exit code indicates the number that have been
 	# configured (0 indicates none).
 	echo "SAM-QFS is not yet configured."
-	echo "The sam-fsd service is being placed in maintenance mode."
-	/usr/sbin/svcadm mark maintenance svc:/system/sam-fsd
+	echo "The sam-fsd service is being disabled."
+	/usr/sbin/svcadm disable svc:/system/sam-fsd
 	exit $SMF_EXIT_MON_OFFLINE
 fi
 
-echo "SAM-QFS is already configured with" $NUMFS "SAM-QFS file system(s)."
+echo "SAM-QFS is configured with" $NUMFS "SAM-QFS file system(s)."
 echo "Starting the sam-fsd service."
 exec /opt/SUNWsamfs/sbin/sam-fsd -D

@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.49 $
+# $Revision: 1.50 $
 #
 
 #  INPUT OPTIONS
@@ -89,6 +89,7 @@ VARTMPDIR=/var/tmp
 ETCDIR=/etc/opt/SUNWsamfs
 CUSTDIR=/etc/opt/SUNWsamfs/scripts
 VARDIR=/var/opt/SUNWsamfs
+VARSVCLOGDIR=/var/svc/log
 CATDIR=/var/opt/SUNWsamfs/catalog
 USERDIR=/opt/SUNWsamfs/bin
 EXECDIR=/opt/SUNWsamfs/sbin
@@ -437,6 +438,10 @@ fi
 #  These log files' locations are fixed
 DEVLOGS=$VARDIR/devlog/*
 
+#  SAM-QFS SMF Services Logs
+SVCFSDLOG=$VARSVCLOGDIR/system-sam-fsd:default.log
+SVCSHMNTLOG=$VARSVCLOGDIR/network-qfs-shared-mount:default.log
+
 #  These data directory locations are fixed
 ARCHDATA="$VARDIR/archiver"
 STAGDATA="$VARDIR/stager"
@@ -505,7 +510,9 @@ echo "Archiver Trace:             $ARCHTRC"  >>$REPORT
 echo "Archiver Data:              $ARCHDATA" >>$REPORT
 echo "Catalog Trace:              $CATTRC"   >>$REPORT
 echo "Device Logs:                $DEVLOGS"  >>$REPORT
+echo "FSD Service Log:            $SVCFSDLOG" >>$REPORT
 echo "FSD Trace:                  $FSDTRC"   >>$REPORT
+echo "Shared Mount Service Log:   $SVCSHMNTLOG" >>$REPORT
 echo "Recycler Logs:              $RECYLOGS" >>$REPORT
 echo "New recycler Logs:          $NRECYLOGS" >>$REPORT
 echo "Recycler Trace:             $RCYTRC"   >>$REPORT
@@ -868,7 +875,7 @@ else
 	showenuf $SAMLOG\*
 fi
 
-for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $FSDTRC $RECYLOGS $NRECYLOGS $RCYTRC $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
+for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $NRECYLOGS $RCYTRC $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
 do
 	showtails $FILES
 done
@@ -1160,6 +1167,10 @@ if [ x$hist_cat = x ]; then
 fi
 
 echo "------------------- sam-fsd information -------------" >>$REPORT
+# Show state of sam-fsd service
+verbose /usr/bin/svcs sam-fsd
+verbose /usr/bin/svcs -x sam-fsd
+verbose /usr/bin/svcs -l sam-fsd
 verbose /usr/lib/fs/samfs/sam-fsd -v
 
 echo "------------------- filesystem information ----------" >>$REPORT
@@ -1213,6 +1224,11 @@ for fs in $SAMFSES; do
 done
 
 echo "------------------- shared filesystem info ----------" >>$REPORT
+# Show state of qfs/shared-mount service
+verbose /usr/bin/svcs qfs/shared-mount
+verbose /usr/bin/svcs -x qfs/shared-mount
+verbose /usr/bin/svcs -l qfs/shared-mount
+echo ""					>>$REPORT 2>&1
 for fs in $SAMFSES; do
 	if [ `mount -v | grep "type samfs" | cut -d" " -f1 | egrep -c "^$fs$"` -eq 0 ]; then
 		verbose /opt/SUNWsamfs/sbin/samsharefs -R $fs
