@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.170 $"
+#pragma ident "$Revision: 1.171 $"
 #endif
 
 #include "sam/osversion.h"
@@ -66,7 +66,6 @@
 #include <vm/as.h>
 #include <vm/seg.h>
 #include <vm/seg_map.h>
-
 #include <sys/policy.h>
 #endif /* sun */
 
@@ -177,6 +176,7 @@ sam_read_io(
 	caddr_t base;		/* Kernel address of mapped in block */
 	int error;
 	sam_node_t *ip;
+	sam_u_offset_t buff_off;
 	int is_lio = (ioflag == FASYNC &&
 	    ((struct samaio_uio *)uiop)->type == SAMAIO_LIO_PAGED);
 
@@ -215,6 +215,7 @@ start:
 		if (offset > SAM_MAXOFFSET_T) {
 			return (EFBIG);
 		}
+		buff_off = offset & (offset_t)MAXBMASK;
 		reloff = offset & ((sam_u_offset_t)MAXBSIZE - 1);
 		nbytes = MIN(((sam_u_offset_t)MAXBSIZE - reloff),
 		    uiop->uio_resid);
@@ -253,23 +254,42 @@ start:
 		 * Map the file offset..nbytes and lock it. This may result in a
 		 * call to getpage.
 		 */
-		base = segmap_getmapflt(segkmap, vp, offset, nbytes, 1, S_READ);
-
-		/*
-		 * Move the data from the locked pages into the user's buffer
-		 */
 		seg_flags = 0;
 		ASSERT(nbytes > 0);
-		error = UIOMOVE((base + reloff), nbytes, UIO_READ, uiop,
-		    is_lio);
+		if (sam_vpm_enable) {
+
+			error = vpm_data_copy(vp, offset, nbytes, uiop, 1, NULL,
+			    0, S_READ);
+
+		} else {
+			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
+			    1, S_READ);
+
+			/*
+			 * Move the data from the locked pages into the
+			 * user's buffer
+			 */
+			error = UIOMOVE((base + reloff), nbytes, UIO_READ, uiop,
+			    is_lio);
+		}
 		if (error == 0) {
 			if (((reloff + nbytes) == MAXBSIZE) && free_page &&
 			    (freemem < (lotsfree + pages_before_pager))) {
 				seg_flags = SM_FREE | SM_ASYNC | SM_DONTNEED;
 			}
-			error = segmap_release(segkmap, base, seg_flags);
+			if (sam_vpm_enable) {
+				error = vpm_sync_pages(vp, buff_off, nbytes,
+				    seg_flags);
+			} else {
+				error = segmap_release(segkmap, base,
+				    seg_flags);
+			}
 		} else {
-			(void) segmap_release(segkmap, base, 0);
+			if (sam_vpm_enable) {
+				(void) vpm_sync_pages(vp, buff_off, nbytes, 0);
+			} else {
+				(void) segmap_release(segkmap, base, 0);
+			}
 		}
 		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 		TRACE(T_SAM_READIO2, vp, (sam_tr_t)base,
@@ -396,6 +416,7 @@ sam_write_io(
 	int error, forcefault, seg_flags;
 	sam_size_t nbytes;
 	sam_u_offset_t offset, reloff, allocsz, orig_offset, segsz;
+	sam_u_offset_t buff_off;
 	caddr_t base;			/* Kernel address of mapped in block */
 	sam_map_t type;
 	sam_node_t *ip;
@@ -454,6 +475,7 @@ start:
 		 */
 		offset = uiop->uio_loffset;
 		reloff = offset & ((sam_u_offset_t)MAXBSIZE - 1);
+		buff_off = offset & (offset_t)MAXBMASK;
 		nbytes = MIN(((sam_u_offset_t)MAXBSIZE - reloff),
 		    uiop->uio_resid);
 
@@ -552,21 +574,31 @@ start:
 		 * Map the file offset..nbytes and lock it. This may result in a
 		 * call to getpage.
 		 */
-		base = segmap_getmapflt(segkmap, vp, offset, nbytes, forcefault,
-		    S_WRITE);
-
 		pglock = 0;
-		if (forcefault == 0) {
-			pglock = segmap_pagecreate(segkmap, base, nbytes, 0);
-		}
-
-		/*
-		 * Move the data from the user's buffer into the locked pages.
-		 */
 		seg_flags = 0;
 		ASSERT(nbytes > 0);
-		error = UIOMOVE((base + reloff), nbytes, UIO_WRITE,
-		    uiop, is_lio);
+
+		if (sam_vpm_enable) {
+
+			error = vpm_data_copy(vp, offset, nbytes, uiop,
+			    forcefault, NULL, 0, S_WRITE);
+		} else {
+			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
+			    forcefault, S_WRITE);
+
+			if (forcefault == 0) {
+				pglock = segmap_pagecreate(segkmap, base,
+				    nbytes, 0);
+			}
+
+			/*
+			 * Move the data from the user's buffer into the
+			 * locked pages.
+			 */
+			error = UIOMOVE((base + reloff), nbytes, UIO_WRITE,
+			    uiop, is_lio);
+		}
+
 		if (error) {
 			seg_flags = SM_INVAL;	/* Invalidate pages */
 		} else if ((ioflag & (FSYNC|FDSYNC)) &&
@@ -577,10 +609,15 @@ start:
 			/* Flush out full blocks asynchronously if not listio */
 			seg_flags = SM_WRITE | SM_ASYNC | SM_DONTNEED;
 		}
-		if (pglock) {
-			segmap_pageunlock(segkmap, base, nbytes, S_WRITE);
+		if (sam_vpm_enable) {
+			(void) vpm_sync_pages(vp, buff_off, nbytes, seg_flags);
+		} else {
+			if (pglock) {
+				segmap_pageunlock(segkmap, base, nbytes,
+				    S_WRITE);
+			}
+			(void) segmap_release(segkmap, base, seg_flags);
 		}
-		(void) segmap_release(segkmap, base, seg_flags);
 
 		TRACE(T_SAM_WRITEIO2, vp, (sam_tr_t)base,
 		    (sam_tr_t)uiop->uio_resid,

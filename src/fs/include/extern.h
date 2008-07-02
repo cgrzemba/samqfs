@@ -38,11 +38,12 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.230 $"
+#pragma ident "$Revision: 1.231 $"
+
+#include "sam/osversion.h"
 
 #ifndef	_SAM_FS_EXTERN_H
 #define	_SAM_FS_EXTERN_H
-
 
 #include <sys/types.h>
 #include <sys/buf.h>
@@ -74,6 +75,37 @@ extern	boolean_t	sam_use_negative_dnlc;
 
 /* ----- External for I/O */
 extern int maxphys;			/* from <sys/sunddi.h> */
+
+/* ----- Externals for VPM */
+
+extern int sam_vpm_enable;
+
+#if !defined(SOL_511_ABOVE)
+
+typedef struct vmap {
+	caddr_t	vs_addr;		/* mapped address */
+	size_t	vs_len;			/* currently fixed at PAGESIZE */
+	void	*vs_data;		/* opaque - private data */
+} vmap_t;
+
+extern int
+vpm_map_pages(struct vnode *vp, u_offset_t off, size_t len,
+    int fetchpage, vmap_t *vml, int nseg, int  *newpage,
+    enum seg_rw rw);
+
+extern void
+vpm_unmap_pages(vmap_t *vml, enum seg_rw rw);
+
+extern int
+vpm_sync_pages(struct vnode *vp, u_offset_t off, size_t len,
+    uint_t flags);
+
+extern int
+vpm_data_copy(struct vnode *vp, u_offset_t off, size_t len,
+    struct uio *uio, int fetchpage, int *newpage, int zerostart,
+    enum seg_rw rw);
+
+#endif /* SOL_511_ABOVE */
 
 /* ----- Rarely called Solaris functions */
 

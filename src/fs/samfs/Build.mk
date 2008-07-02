@@ -1,4 +1,4 @@
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 
 #    SAM-QFS_notice_begin
 #
@@ -45,6 +45,10 @@ SRCS2 = acl.c amld.c arfind.c balloc.c block.c create.c event.c fioctl.c \
 	ialloc.c inode.c lookup.c quota.c reclaim.c remove.c rename.c \
 	rmedia.c rmscall.c samscall.c san.c segment.c server.c srcomm.c \
 	srmisc.c staged.c truncate.c uioctl.c update.c vnops.c
+
+ifeq ($(OS_REVISION), 5.10)
+SRCS2 += vpm_stubs.c
+endif
 
 ifeq ($(OS_REVISION), 5.11)
 OSD_SRCS = osdfs.c osdfsops.c objnode.c objnops.c objattrops.c \

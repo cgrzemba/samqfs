@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.142 $"
+#pragma ident "$Revision: 1.143 $"
 
 #include "sam/osversion.h"
 
@@ -1787,7 +1787,8 @@ retry:
 	 */
 	appending = (offset + (offset_t)length) >
 	    ((size + PAGEOFFSET) & (~((offset_t)PAGEOFFSET)));
-	if (appending) {
+
+	if (appending && (!sam_vpm_enable || (segp != segkmap))) {
 		error = EFAULT;
 		goto out;
 	}

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 
 #include "sam/osversion.h"
 
@@ -913,8 +913,8 @@ sam_stage_write_io(
 	uio_t *uiop)		/* Pointer to user I/O vector array. */
 {
 	int error;
-	sam_ssize_t nbytes;
-	sam_u_offset_t offset, reloff;
+	sam_ssize_t nbytes, start_nbytes;
+	sam_u_offset_t offset, reloff, start_off;
 	caddr_t base, lbase;		/* Kernel address of mapped in block */
 	sam_node_t *ip;
 	offset_t size;
@@ -929,7 +929,8 @@ sam_stage_write_io(
 	}
 
 	for (;;) {
-		offset = uiop->uio_loffset;
+		start_off = offset = uiop->uio_loffset;
+		start_nbytes = uiop->uio_resid;
 		reloff = offset & (MAXBSIZE - 1);
 		nbytes = MIN(((sam_u_offset_t)MAXBSIZE - reloff),
 		    uiop->uio_resid);
@@ -946,9 +947,12 @@ sam_stage_write_io(
 			}
 		}
 
-		base = segmap_getmapflt(segkmap, vp, offset, nbytes,
-		    0, S_WRITE);
-		lbase = (caddr_t)((sam_size_t)(base + reloff) & PAGEMASK);
+		if (!sam_vpm_enable) {
+			base = segmap_getmapflt(segkmap, vp, offset,
+			    nbytes, 0, S_WRITE);
+			lbase = (caddr_t)((sam_size_t)(base + reloff) &
+			    PAGEMASK);
+		}
 
 		/*
 		 * A maximum PAGESIZE number of bytes are transferred each
@@ -975,16 +979,25 @@ sam_stage_write_io(
 				break;
 			}
 
-			segmap_pagecreate(segkmap, lbase,
-			    PAGESIZE, F_SOFTLOCK);
+			if (sam_vpm_enable) {
+				error = vpm_data_copy(vp, offset, n, uiop,
+				    0, NULL, 0, S_WRITE);
 
-			error = uiomove(lbase, n, UIO_WRITE, uiop);
+				if (error) {
+					break;
+				}
+			} else {
+				segmap_pagecreate(segkmap, lbase,
+				    PAGESIZE, F_SOFTLOCK);
 
-			(void) segmap_fault(kas.a_hat, segkmap, lbase,
-			    PAGESIZE, F_SOFTUNLOCK, S_WRITE);
+				error = uiomove(lbase, n, UIO_WRITE, uiop);
 
-			if (error) {
-				break;
+				(void) segmap_fault(kas.a_hat, segkmap, lbase,
+				    PAGESIZE, F_SOFTUNLOCK, S_WRITE);
+
+				if (error) {
+					break;
+				}
 			}
 
 			/*
@@ -995,17 +1008,24 @@ sam_stage_write_io(
 			if ((uiop->uio_loffset - offset) != n) {
 				error = ECOMM;
 			}
-			lbase += n;
+			if (!sam_vpm_enable) {
+				lbase += n;
+			}
 			nbytes -= n;
 			if ((nbytes <= 0) || error) {
 				break;
 			}
 		}
+		if (sam_vpm_enable) {
+			(void) vpm_sync_pages(vp, start_off, start_nbytes,
+			    error ? SM_INVAL : SM_WRITE|SM_ASYNC|SM_DONTNEED);
+		} else {
+			segmap_release(segkmap, base, error ? SM_INVAL :
+			    SM_WRITE | SM_ASYNC | SM_DONTNEED);
+		}
 
-		segmap_release(segkmap, base, error ? SM_INVAL :
-		    SM_WRITE | SM_ASYNC | SM_DONTNEED);
-
-		TRACE(T_SAM_STWRIO2, vp, (sam_tr_t)base,
+		TRACE(T_SAM_STWRIO2, vp,
+		    sam_vpm_enable ? (sam_tr_t)start_off : (sam_tr_t)base,
 		    (sam_tr_t)uiop->uio_resid,
 		    (sam_tr_t)reloff);
 		ip->flags.b.stage_pages = 1; /* Dirty stage pages in memory */
@@ -1033,6 +1053,7 @@ sam_stage_write_io(
 	}
 	return (error);
 }
+
 
 /*
  * ----- sam_stage_n_write_io - Write a SAM-QFS file that is being staged
