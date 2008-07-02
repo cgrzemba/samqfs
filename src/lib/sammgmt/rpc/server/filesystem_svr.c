@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.29 $"
+#pragma ident	"$Revision: 1.30 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -992,5 +992,212 @@ samrpc_shrink_replace_group_5_0_svr(
 	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
 
 	Trace(TR_DEBUG, "shrink replace group return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+
+samrpc_result_t *
+samrpc_mount_clients_5_0_svr(
+	str_cnt_strarray_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "mount clients");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+	Trace(TR_DEBUG, "Calling native to mount clients");
+	ret = mount_clients(
+	    arg->ctx,
+	    arg->str,
+	    arg->array,
+	    arg->cnt);
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "mount clients return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_unmount_clients_5_0_svr(
+	str_cnt_strarray_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "unmount clients");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+	Trace(TR_DEBUG, "Calling native library unmount clients");
+	ret = unmount_clients(
+	    arg->ctx,
+	    arg->str,
+	    arg->array,
+	    arg->cnt);
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "mount clients return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_change_shared_fs_mount_options_5_0_svr(
+		str_cnt_strarray_mntopts_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "change shared fs mount options");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+	ret = change_shared_fs_mount_options(
+	    arg->ctx,
+	    arg->str,
+	    arg->array,
+	    arg->cnt,
+	    arg->mo);
+
+	Trace(TR_DEBUG, "Calling native library change shared fs mnt opts");
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "change shared fs mount options return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_create_proto_fs_5_0_svr(
+	string_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "create proto fs");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library to create proto fs");
+
+	ret = create_proto_fs(arg->ctx, arg->str);
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "create proto fs return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_add_storage_node_5_0_svr(
+	add_storage_node_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "add storage node");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+	Trace(TR_DEBUG, "Calling native library add storage node");
+
+	ret = add_storage_node(arg->ctx,
+	    arg->fs_name,
+	    arg->node_name,
+	    arg->node_ip,
+	    arg->fs,
+	    arg->node_data);
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "add storage node return[%d]", ret);
+	return (&rpc_result);
+}
+
+
+samrpc_result_t *
+samrpc_remove_storage_node_5_0_svr(
+	string_string_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+
+	Trace(TR_DEBUG, "remove storage node");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+	Trace(TR_DEBUG, "Calling native library remove storage node");
+
+	ret = remove_storage_node(arg->ctx,
+	    arg->str1,
+	    arg->str2);
+
+	SAMRPC_UPDATE_TIMESTAMP(ret);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "remove storage node return[%d]", ret);
+	return (&rpc_result);
+}
+
+samrpc_result_t *
+samrpc_get_shared_fs_summary_status_5_0_svr(
+	string_arg_t *arg,
+	struct svc_req *req	/* ARGSUSED */
+)
+{
+	int ret = -1;
+	sqm_lst_t *lst;
+
+	Trace(TR_DEBUG, "Get sh fs summary status %s", arg->str);
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library to get fs summary status");
+	ret = get_shared_fs_summary_status(arg->ctx, arg->str, &lst);
+
+	SAMRPC_SET_RESULT(ret, SAM_FS_STRING_LIST, lst);
+
+	Trace(TR_DEBUG, "Get sh fs summary status [%s] return[%d]",
+	    arg->str, ret);
 	return (&rpc_result);
 }

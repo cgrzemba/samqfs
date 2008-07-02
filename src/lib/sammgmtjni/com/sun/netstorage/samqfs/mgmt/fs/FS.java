@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FS.java,v 1.25 2008/05/16 18:35:28 am143972 Exp $
+// ident	$Id: FS.java,v 1.26 2008/07/02 18:58:58 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -218,6 +218,16 @@ public class FS {
     // --------------- shared file system methods ----------------
 
     /*
+     * Create a prototype of a qfs with object storage nodes. After
+     * this function is called the user can proceed with the
+     * configuration of the storage nodes for the file system. The
+     * proto file system is a place holder for the configuration
+     * information prior to creating the file system.
+     */
+    public static native void createProtoFS(Ctx c, String fsName)
+	throws SamFSException;
+
+    /*
      * Method to get summary status for a shared file system
      * Status is returned as key value strings.
      *
@@ -267,8 +277,8 @@ public class FS {
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public static native int addStorageNode(String hpcFSName, String nodeName,
-	String nodeIP, FSInfo backingStore, String nodeData)
+    public static native int addStorageNode(Ctx c, String hpcFSName,
+	String nodeName, String nodeIP, FSInfo backingStore, String nodeData)
 	throws SamFSException;
 
 
@@ -277,7 +287,7 @@ public class FS {
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public static native int removeStorageNode(String hpcFSName,
+    public static native int removeStorageNode(Ctx c, String hpcFSName,
 	String nodeName) throws SamFSException;
 
 

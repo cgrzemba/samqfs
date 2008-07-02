@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.32 $"
+#pragma ident	"$Revision: 1.33 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -241,6 +241,7 @@ fs_t **fs	/* return - file system info */
 	PTRACE(2, "%s exit", func_name);
 	return (ret_val);
 }
+
 
 /*
  * create_fs() is for creating a file system. This single method can
@@ -1472,6 +1473,313 @@ shrink_replace_group(ctx_t *ctx, char *fs_name, int eq_to_replace,
 	CHECK_FUNCTION_FAILURE(result, func_name);
 
 	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+
+/*
+ * Function to mount a shared file system on multiple clients.
+ */
+int
+mount_clients(
+ctx_t *ctx,		/* client connection */
+uname_t fsname,		/* file system name */
+char *clients[],
+int client_count)
+{
+	int ret_val;
+	str_cnt_strarray_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:mount clients";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fsname, clients)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = (char *)fsname;
+	arg.cnt = (unsigned int)client_count;
+	arg.array = clients;
+
+	SAMRPC_CLNT_CALL(samrpc_mount_clients, str_cnt_strarray_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+/*
+ * Function to unmount a shared file system on multiple clients.
+ */
+int
+unmount_clients(
+ctx_t *ctx,		/* client connection */
+uname_t fsname,		/* file system name */
+char *clients[],
+int client_count)
+{
+	int ret_val;
+	str_cnt_strarray_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:unmount clients";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fsname, clients)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = (char *)fsname;
+	arg.cnt = (unsigned int)client_count;
+	arg.array = clients;
+
+	SAMRPC_CLNT_CALL(samrpc_unmount_clients, str_cnt_strarray_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+/*
+ * change the mount options of a file system.
+ */
+int
+change_shared_fs_mount_options(
+ctx_t *ctx,			/* client connection */
+char *fs_name,			/* file system name */
+char *clients[],
+int client_count,
+mount_options_t *options	/* mount options */
+)
+{
+	int ret_val;
+	str_cnt_strarray_mntopts_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:change shared fs mount options";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, clients, options)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = fs_name;
+	arg.array = clients;
+	arg.cnt = (unsigned int)client_count;
+	arg.mo = options;
+
+	SAMRPC_CLNT_CALL(samrpc_change_shared_fs_mount_options,
+	    str_cnt_strarray_mntopts_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+add_storage_node(
+ctx_t *ctx,		/* client connection */
+char *fs_name,
+char *node_name,
+char *node_ip,
+fs_t *backing_store,		/* file system info */
+char *node_data)
+{
+	int ret_val;
+	add_storage_node_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:add storage node";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, node_name, node_ip, backing_store, node_data)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.fs_name = fs_name;
+	arg.node_name = node_name;
+	arg.node_ip = node_ip;
+	arg.node_data = node_data;
+	arg.fs = backing_store;
+
+	SAMRPC_CLNT_CALL(samrpc_add_storage_node, add_storage_node_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+remove_storage_node(
+ctx_t *ctx,		/* client connection */
+char *fs_name,		/* file system name */
+char *node_name
+)
+{
+	int ret_val;
+	string_string_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:remove storage node";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, node_name)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str1 = fs_name;
+	arg.str2 = node_name;
+
+	SAMRPC_CLNT_CALL(samrpc_remove_storage_node, string_string_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+int
+create_proto_fs(
+ctx_t *ctx,	/* client connection */
+char *fs_name)	/* file system name */
+{
+	int ret_val;
+	string_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:create_proto_fs";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = (char *)fs_name;
+
+	SAMRPC_CLNT_CALL(samrpc_create_proto_fs, string_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+int
+get_shared_fs_summary_status(
+ctx_t *ctx,
+char *fs_name,
+sqm_lst_t **lst)
+{
+	int ret_val;
+	string_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:get_shared_fs_summary_status";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = (char *)fs_name;
+
+	SAMRPC_CLNT_CALL(samrpc_get_shared_fs_summary_status, string_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+	*lst = (sqm_lst_t *)result.samrpc_result_u.result.result_data;
+
+	/*
+	 * xdr does not preserve the tail of the list
+	 * set the tail
+	 */
+	SET_LIST_TAIL((*lst));
 
 	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
 	PTRACE(2, "%s exit", func_name);

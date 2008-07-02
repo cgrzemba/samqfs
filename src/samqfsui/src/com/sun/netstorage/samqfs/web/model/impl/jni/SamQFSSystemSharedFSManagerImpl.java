@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.47 2008/06/18 20:28:07 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.48 2008/07/02 18:58:59 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -108,7 +108,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             allClients[i] = newHost;
         }
 
-        return Host.addClients(fsName, allClients);
+        return Host.addHosts(null, fsName, allClients);
     }
 
     /**
@@ -377,7 +377,7 @@ System.out.println("useInSN: " + useInSN);
 	throws SamFSException {
 
         // TODO: To be verified
-        return FS.addStorageNode(
+        return FS.addStorageNode(null,
                     hpcFSName, nodeName, nodeIP, backingStore, nodeData);
     }
 

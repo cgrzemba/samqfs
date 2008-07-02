@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.76 $"
+#pragma ident   "$Revision: 1.77 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -4235,4 +4235,193 @@ find_disk_by_path(fs_t *f, char *path) {
 	snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno), path);
 
 	return (NULL);
+}
+
+
+/*
+ * Mount the shared file system on the named clients.
+ *
+ * A positive non-zero return indicates that a background job has been
+ * started to complete this task. The return value is the job id.
+ * Information can be obtained about the job by using the
+ * list_activities function in process job with a filter on the job
+ * id.
+ */
+int
+mount_clients(
+ctx_t *ctx,
+char *fs_name,
+char *clients[],
+int client_count) {
+	int i;
+
+	if (ISNULL(fs_name, clients)) {
+		Trace(TR_ERR, "mount clients failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+	for (i = 0; i < client_count; i++) {
+		Trace(TR_MISC, "client[%d] = %s", i, clients[i]);
+	}
+
+	return (0);
+}
+
+
+
+
+/*
+ * Unmount the shared file system on the named clients.
+ *
+ * A positive non-zero return indicates that a background job has been
+ * started to complete this task. The return value is the job id.
+ * Information can be obtained about the job by using the
+ * list_activities function in process job with a filter on the job
+ * id.
+ */
+int
+unmount_clients(
+ctx_t *ctx,
+char *fs_name,
+char *clients[],
+int client_count) {
+
+
+	if (ISNULL(fs_name, clients)) {
+		Trace(TR_ERR, "unmount clients failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	return (0);
+}
+
+
+/*
+ * Change the mount options for the named clients of the shared file system.
+ *
+ * A positive non-zero return indicates that a background job has been
+ * started to complete this task. The return value is the job id.
+ * Information can be obtained about the job by using the
+ * list_activities function in process job with a filter on the job
+ * id.
+ */
+int
+change_shared_fs_mount_options(
+ctx_t *ctx,
+char *fs_name,
+char *clients[],
+int client_count,
+mount_options_t *mo) {
+
+	if (ISNULL(fs_name, clients, mo)) {
+		Trace(TR_ERR, "change shared fs mount options failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	return (0);
+}
+
+
+/* place holders for HPC fs stubs */
+static char *proto_fs = NULL;
+static int proto_nodes = 0;
+
+
+/*
+ * Create a prototype qfs with object storage nodes file system. After
+ * this function is called the user can proceed with the configuration of the
+ * storage nodes for the file system. The proto file system is a place holder
+ * for the configuration information prior to creating the file system.
+ */
+int
+create_proto_fs(ctx_t *c, char *fs_name) {
+	if (ISNULL(fs_name)) {
+		Trace(TR_ERR, "create proto fs failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+	if (proto_fs == NULL) {
+		proto_fs = strdup(fs_name);
+	}
+	return (0);
+}
+
+
+/*
+ * nodeData is a key value string that includes the following keys:
+ * host = hostname
+ * dataip = ip address
+ * group = groupId (o1, o2, o3 etc.)
+ *
+ * A non-zero positive return indicates that a background job has been started
+ * to complete this task. Information can be obtained about this job by
+ * using the Job.getAllActivities function with a filter on the job id.
+ */
+int
+add_storage_node(ctx_t *c, char *fs_name, char *node_name, char *node_ip,
+    fs_t *backing_store, char *node_data) {
+
+
+
+	if (ISNULL(fs_name, node_name, node_ip, backing_store, node_data)) {
+		Trace(TR_ERR, "add storage node failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	proto_nodes++;
+	return (0);
+}
+
+
+/*
+ * Remove a storage node from the shared fs configuration.
+ *
+ * A non-zero positive return indicates that a background job has been started
+ * to complete this task. Information can be obtained about this job by
+ * using the Job.getAllActivities function with a filter on the job id.
+ */
+int
+remove_storage_node(
+ctx_t *c,
+char *fs_name,
+char *node_name) {
+
+
+	if (ISNULL(fs_name, node_name)) {
+		Trace(TR_ERR, "remove storage node failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+	proto_nodes--;
+	return (0);
+}
+
+int
+get_shared_fs_summary_status(ctx_t *c, char *fs_name, sqm_lst_t **lst) {
+	char buf[64];
+
+	if (ISNULL(fs_name, lst)) {
+		Trace(TR_ERR, "get shared fs summary status failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+	*lst = lst_create();
+	if (*lst == NULL) {
+		Trace(TR_ERR, "get shared fs summary status failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	snprintf(buf, sizeof (buf), "storage_nodes=%d", proto_nodes);
+	if (lst_append(*lst, copystr(buf)) != 0) {
+		lst_free(*lst);
+		Trace(TR_ERR, "get shared fs summary status failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	return (0);
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.117 $"
+#pragma ident	"$Revision: 1.118 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -368,6 +368,14 @@ sammgmtprog_1(rqstp, transp)
 			samrpc_shrink_replace_device_5_0_arg;
 		string_string_int_group_arg_t
 			samrpc_shrink_replace_group_5_0_arg;
+		str_cnt_strarray_t samrpc_mount_clients_5_0_arg;
+		str_cnt_strarray_t samrpc_unmount_clients_5_0_arg;
+		str_cnt_strarray_mntopts_t
+			samrpc_change_shared_fs_mount_options_5_0_arg;
+		string_arg_t samrpc_create_proto_fs_5_0_arg;
+		add_storage_node_arg_t samrpc_add_storage_node_5_0_arg;
+		string_string_arg_t samrpc_remove_storage_node_5_0_arg;
+		string_arg_t samrpc_get_shared_fs_summary_status_5_0_arg;
 
 		/* license.h */
 		ctx_arg_t samrpc_get_license_type_1_arg;
@@ -481,6 +489,8 @@ sammgmtprog_1(rqstp, transp)
 		ctx_arg_t samrpc_discover_ip_addresses_3_arg;
 		int_string_arg_t samrpc_get_shared_fs_hosts_5_0_arg;
 		string_strlst_int_arg_t samrpc_set_host_state_5_0_arg;
+		string_hostlst_arg_t samrpc_add_hosts_5_0_arg;
+		str_cnt_strarray_t samrpc_remove_hosts_5_0_arg;
 
 		/* restore.h */
 		string_string_arg_t samrpc_set_csd_params_4_arg;
@@ -1587,6 +1597,50 @@ sammgmtprog_1(rqstp, transp)
 		local = (char *(*)()) samrpc_shrink_replace_group_5_0_svr;
 		break;
 
+	case samrpc_mount_clients:
+		_xdr_argument = xdr_str_cnt_strarray_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_mount_clients_5_0_svr;
+		break;
+
+	case samrpc_unmount_clients:
+		_xdr_argument = xdr_str_cnt_strarray_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_unmount_clients_5_0_svr;
+		break;
+
+	case samrpc_change_shared_fs_mount_options:
+		_xdr_argument = xdr_str_cnt_strarray_mntopts_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)())
+		    samrpc_change_shared_fs_mount_options_5_0_svr;
+		break;
+
+	case samrpc_create_proto_fs:
+		_xdr_argument = xdr_string_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_create_proto_fs_5_0_svr;
+		break;
+
+	case samrpc_add_storage_node:
+		_xdr_argument = xdr_add_storage_node_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_add_storage_node_5_0_svr;
+		break;
+
+	case samrpc_remove_storage_node:
+		_xdr_argument = xdr_string_string_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_remove_storage_node_5_0_svr;
+		break;
+
+	case samrpc_get_shared_fs_summary_status:
+		_xdr_argument = xdr_string_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)())
+		    samrpc_get_shared_fs_summary_status_5_0_svr;
+		break;
+
 	/*
 	 * license.h
 	 */
@@ -2152,6 +2206,18 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_argument = xdr_string_strlst_int_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_set_host_state_5_0_svr;
+		break;
+
+	case samrpc_add_hosts:
+		_xdr_argument = xdr_string_hostlst_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_add_hosts_5_0_svr;
+		break;
+
+	case samrpc_remove_hosts:
+		_xdr_argument = xdr_str_cnt_strarray_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_remove_hosts_5_0_svr;
 		break;
 
 	/* restore.h */

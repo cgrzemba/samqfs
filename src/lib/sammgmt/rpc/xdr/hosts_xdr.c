@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.10 $"
+#pragma ident	"$Revision: 1.11 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -101,13 +101,25 @@ xdr_string_strlst_int_arg_t(
 XDR *xdrs,
 string_strlst_int_arg_t *objp)
 {
-
-
 	XDR_PTR2CTX(objp->ctx);
 	if (!xdr_string(xdrs, (char **)&objp->str, ~0))
 		return (FALSE);
 	XDR_PTR2LST(objp->strlst, string_list);
 	if (!xdr_int(xdrs, &objp->int1))
 		return (FALSE);
+	return (TRUE);
+}
+
+
+bool_t
+xdr_string_hostlst_arg_t(
+XDR *xdrs,
+string_hostlst_arg_t *objp)
+{
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->fs_name, ~0))
+		return (FALSE);
+	XDR_PTR2LST(objp->host_infos, host_info_list);
+
 	return (TRUE);
 }

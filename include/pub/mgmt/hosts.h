@@ -29,7 +29,7 @@
 #ifndef _HOSTS_H
 #define	_HOSTS_H
 
-#pragma ident "	$Revision: 1.19 $	"
+#pragma ident "	$Revision: 1.20 $	"
 
 
 
@@ -138,6 +138,30 @@ int get_shared_fs_hosts(ctx_t *c, char *fs_name, int32_t options,
  */
 int set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
     int client_state);
+
+/*
+ * Function to add multiple clients to a shared file system. This
+ * function may be run to completion in the background.
+ * Returns:
+ * 0 for successful completion
+ * -1 for error
+ * job_id will be returned if the job has not completed.
+ */
+int add_hosts(ctx_t *c, char *fs_name, sqm_lst_t *hosts);
+
+
+/*
+ * The file system must be unmounted to remove clients. You can
+ * disable access from clients without unmounting the file system
+ * with the set_client_state function.
+ *
+ * Returns: 0, 1, job ID
+ * 0 for successful completion
+ * -1 for error
+ * job ID will be returned if the job has not completed.
+ */
+int remove_hosts(ctx_t *c, char *fs_name, char *host_names[], int host_count);
+
 
 /*
  * Return an ordered list of the host_info_t structures. The order will

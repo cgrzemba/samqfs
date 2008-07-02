@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.35 $"
+#pragma ident	"$Revision: 1.36 $"
 
 #include <stdlib.h>
 #include <jni.h>
@@ -522,9 +522,10 @@ jarray2arrOfPtrs(JNIEnv *env,
 	PTRACE(2, "jni:jarray2arrOfPtrs(jarr[%d],%s)", n, className);
 	arr = malloc(n * sizeof (void *));
 
-	for (idx = 0; idx < n; idx++)
+	for (idx = 0; idx < n; idx++) {
 		arr[idx] =
 		    j2c(env, (*env)->GetObjectArrayElement(env, jarr, idx));
+	}
 	PTRACE(2, "jni:jarray2arrOfPtrs() done");
 	return (arr);
 }

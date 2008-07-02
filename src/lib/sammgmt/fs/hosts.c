@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "	$Revision: 1.43 $"
+#pragma ident "	$Revision: 1.44 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1001,6 +1001,74 @@ set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
 
 	free_fs(fs);
 	Trace(TR_ERR, "set client state");
+
+	return (0);
+}
+
+
+/*
+ * Function to add multiple clients to a shared file system. This
+ * function may be run to completion in the background.
+ * Returns:
+ * 0 for successful completion
+ * -1 for error
+ * job_id will be returned if the job has not completed.
+ */
+int add_hosts(
+ctx_t *c,
+char *fs_name,
+sqm_lst_t *hosts) {
+
+	node_t *n;
+
+	if (ISNULL(fs_name, hosts)) {
+		Trace(TR_ERR, "remove clients failed: %s",
+		    samerrmsg);
+
+		return (-1);
+	}
+
+	for (n = hosts->head; n != NULL; n = n->next) {
+		host_info_t *hi = (host_info_t *)n->data;
+		if (hi != NULL) {
+			Trace(TR_MISC, "add_host: host = %s",
+			    Str(hi->host_name));
+		}
+	}
+	return (0);
+}
+
+
+
+/*
+ * The file system must be unmounted to remove clients. You can
+ * disable access from clients without unmounting the file system
+ * with the setClientState function.
+ *
+ * Returns: 0, 1, job ID
+ * 0 for successful completion
+ * -1 for error
+ * job ID will be returned if the job has not completed.
+ */
+int remove_hosts(
+ctx_t *c,
+char *fs_name,
+char *host_names[],
+int host_count) {
+
+	int i;
+
+	Trace(TR_MISC, "remove hosts entry");
+	if (ISNULL(fs_name, host_names, host_count)) {
+		Trace(TR_ERR, "remove clients failed: %s",
+		    samerrmsg);
+
+		return (-1);
+	}
+
+	for (i = 0; i < host_count; i++) {
+		Trace(TR_MISC, "hostarg[%d] = %s", i, host_names[i]);
+	}
 
 	return (0);
 }

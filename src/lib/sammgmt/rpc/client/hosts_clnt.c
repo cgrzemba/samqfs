@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.16 $"
+#pragma ident	"$Revision: 1.17 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -493,6 +493,92 @@ int client_state
 	arg.int1 = client_state;
 
 	SAMRPC_CLNT_CALL(samrpc_set_host_state, string_strlst_int_arg_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+/*
+ * Function to unmount a shared file system on multiple clients.
+ */
+int
+remove_hosts(
+ctx_t *ctx,		/* client connection */
+char *fs_name,		/* file system name */
+char *hosts[],
+int host_count)
+{
+	int ret_val;
+	str_cnt_strarray_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:remove hosts";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, hosts)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.str = fs_name;
+	arg.cnt = (unsigned int)host_count;
+	arg.array = hosts;
+
+	SAMRPC_CLNT_CALL(samrpc_remove_hosts, str_cnt_strarray_t);
+
+	CHECK_FUNCTION_FAILURE(result, func_name);
+
+	ret_val = result.status;
+
+	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
+	PTRACE(2, "%s exit", func_name);
+	return (ret_val);
+}
+
+
+/*
+ * Function to unmount a shared file system on multiple clients.
+ */
+int
+add_hosts(
+ctx_t *ctx,		/* client connection */
+char *fs_name,		/* file system name */
+sqm_lst_t *host_infos)
+{
+	int ret_val;
+	string_hostlst_arg_t arg;
+	samrpc_result_t result;
+	char *func_name = "rpc:add hosts";
+	char *err_msg;
+	enum clnt_stat stat;
+
+	PTRACE(2, "%s entry", func_name);
+
+	CHECK_CLIENT_HANDLE(ctx, func_name);
+	if (ISNULL(fs_name, host_infos)) {
+		PTRACE(2, "%s exit %s", func_name, samerrmsg);
+		return (-1);
+	}
+
+	PTRACE(3, "%s calling RPC...", func_name);
+	memset((char *)&result, 0, sizeof (result));
+	arg.ctx = ctx;
+	arg.fs_name = fs_name;
+	arg.host_infos = host_infos;
+
+	SAMRPC_CLNT_CALL(samrpc_add_hosts, string_hostlst_arg_t);
 
 	CHECK_FUNCTION_FAILURE(result, func_name);
 

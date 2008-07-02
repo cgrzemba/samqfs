@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.35 $"
+#pragma ident	"$Revision: 1.36 $"
 
 #include "pub/mgmt/types.h"
 #include "pub/devstat.h"
@@ -624,5 +624,94 @@ string_string_int_group_arg_t *objp) {
 	if (!xdr_int(xdrs, &objp->int1))
 		return (FALSE);
 	XDR_PTR2STRUCT(objp->grp, striped_group_t);
+	return (TRUE);
+}
+
+
+bool_t
+xdr_charstararray(
+XDR *xdrs,
+caddr_t **addrp,
+uint_t *sizep,
+const uint_t maxsize) {
+
+	uint_t i;
+	caddr_t *target = *addrp;
+	uint_t c;  /* the actual element count */
+	bool_t stat = TRUE;
+	uint_t nodesize;
+
+	/* like strings, arrays are really counted arrays */
+	if (!xdr_u_int(xdrs, sizep)) {
+		return (FALSE);
+	}
+	c = *sizep;
+
+	/*
+	 * If count is bigger than the max size- only continue if
+	 * the x_op is free
+	 */
+	if ((c > maxsize) &&
+	    xdrs->x_op != XDR_FREE) {
+		return (FALSE);
+	}
+
+	/* calculate the size of the array in terms of char pointers */
+	nodesize = c * sizeof (char *);
+
+	/*
+	 * if we are deserializing, we may need to allocate an array.
+	 * We also save time by checking for a null array if we are freeing.
+	 */
+	if (target == NULL) {
+		switch (xdrs->x_op) {
+		case XDR_DECODE:
+			if (c == 0)
+				return (TRUE);
+			target = (char **)malloc(nodesize);
+			*addrp = target;
+			if (target == NULL) {
+				return (FALSE);
+			}
+			(void) memset(target, 0, nodesize);
+			break;
+
+		case XDR_FREE:
+			return (TRUE);
+		}
+	}
+
+	/*
+	 * now we xdr each element of array
+	 */
+	for (i = 0; (i < c) && stat; i++) {
+		stat = xdr_wrapstring(xdrs, &(target[i]));
+	}
+
+	/*
+	 * the array may need freeing. Note that the individual strings
+	 * are freed in wrapstring.
+	 */
+	if (xdrs->x_op == XDR_FREE) {
+		free(*addrp);
+		*addrp = NULL;
+	}
+	return (stat);
+}
+
+
+
+bool_t
+xdr_str_cnt_strarray_t(
+XDR *xdrs,
+str_cnt_strarray_t *objp) {
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str, ~0))
+		return (FALSE);
+	if (!xdr_u_int(xdrs, &objp->cnt))
+		return (FALSE);
+	if (!xdr_charstararray(xdrs, (char ***)&objp->array, &objp->cnt, ~0))
+		return (FALSE);
 	return (TRUE);
 }

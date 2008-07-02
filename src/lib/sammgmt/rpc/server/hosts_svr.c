@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.15 $"
+#pragma ident	"$Revision: 1.16 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -317,6 +317,60 @@ struct svc_req *req		/* ARGSUSED */
 	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
 
 	Trace(TR_DEBUG, "Set host state [%d]", ret);
+
+	return (&rpc_result);
+}
+
+samrpc_result_t *
+samrpc_add_hosts_5_0_svr(
+	string_hostlst_arg_t *arg,
+	struct svc_req *req		/* ARGSUSED */
+)
+{
+
+	int ret = -1;
+
+	Trace(TR_DEBUG, "add hosts");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library add hosts");
+	ret = add_hosts(arg->ctx,
+	    arg->fs_name,
+	    arg->host_infos);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "add hosts returning [%d]", ret);
+
+	return (&rpc_result);
+}
+
+samrpc_result_t *
+samrpc_remove_hosts_5_0_svr(
+	str_cnt_strarray_t *arg,
+	struct svc_req *req		/* ARGSUSED */
+)
+{
+
+	int ret = -1;
+
+	Trace(TR_DEBUG, "remove hosts");
+
+	/* free previous result */
+	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
+
+	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
+
+	Trace(TR_DEBUG, "Calling native library to remove hosts");
+	ret = remove_hosts(arg->ctx, arg->str, arg->array, arg->cnt);
+
+	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
+
+	Trace(TR_DEBUG, "remove hosts returning [%d]", ret);
 
 	return (&rpc_result);
 }

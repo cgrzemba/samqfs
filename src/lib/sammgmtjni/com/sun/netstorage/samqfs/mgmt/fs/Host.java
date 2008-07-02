@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.13 2008/06/25 15:57:16 pg125177 Exp $
+// ident	$Id: Host.java,v 1.14 2008/07/02 18:58:58 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -101,7 +101,7 @@ public class Host {
      * -1 for error
      * job_id will be returned if the job has not completed.
      */
-    public static native int addClients(String fsname,
+    public static native int addHosts(Ctx c, String fsname,
 					Host[] hosts)
 	throws SamFSException;
 
@@ -115,8 +115,8 @@ public class Host {
      * -1 for error
      * job ID will be returned if the job has not completed.
      */
-    public static native int removeClients(String fsname,
-					   String[] clients)
+    public static native int removeHosts(Ctx c, String fsname,
+					   String[] hostNames)
 	throws SamFSException;
 
     /*

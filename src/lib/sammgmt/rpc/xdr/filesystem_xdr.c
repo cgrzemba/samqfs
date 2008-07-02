@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.29 $"
+#pragma ident	"$Revision: 1.30 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -648,5 +648,43 @@ int_list_result_t *objp)
 
 	XDR_PTR2LST(objp->lst, int_list);
 	XDR_PTR2STRUCT(objp->first_free, int);
+	return (TRUE);
+}
+
+bool_t
+xdr_str_cnt_strarray_mntopts_t(
+XDR *xdrs,
+str_cnt_strarray_mntopts_t *objp)
+{
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->str, ~0))
+		return (FALSE);
+	if (!xdr_u_int(xdrs, &objp->cnt))
+		return (FALSE);
+	if (!xdr_charstararray(xdrs, (char ***)&objp->array, &objp->cnt, ~0))
+		return (FALSE);
+	XDR_PTR2STRUCT(objp->mo, mount_options_t);
+
+
+	return (TRUE);
+}
+
+bool_t
+xdr_add_storage_node_arg_t(
+XDR *xdrs,
+add_storage_node_arg_t *objp)
+{
+
+	XDR_PTR2CTX(objp->ctx);
+	if (!xdr_string(xdrs, (char **)&objp->fs_name, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->node_name, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->node_ip, ~0))
+		return (FALSE);
+	if (!xdr_string(xdrs, (char **)&objp->node_data, ~0))
+		return (FALSE);
+
+	XDR_PTR2STRUCT(objp->fs, fs_t);
 	return (TRUE);
 }

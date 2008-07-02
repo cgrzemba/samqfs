@@ -29,7 +29,7 @@
 #ifndef _FILESYSTEM_H
 #define	_FILESYSTEM_H
 
-#pragma ident	"$Revision: 1.53 $"
+#pragma ident	"$Revision: 1.54 $"
 
 
 
@@ -607,6 +607,7 @@ int is_fs_mounted(ctx_t *ctx, char *fs_name, boolean_t *mounted);
  */
 int is_any_fs_mounted(ctx_t *ctx, boolean_t *mounted);
 
+
 /*
  * A file system can be grown only when it is unmounted and drives related
  * to archiving the file system are idle.
@@ -699,6 +700,105 @@ shrink_replace_group(ctx_t *c, char *fs_name, int eq_to_replace,
 
 
 /*
+ * Mount the shared file system on the named clients.
+ *
+ * A positive non-zero return indicates that a background job has been
+ * started to complete this task. The return value is the job id.
+ * Information can be obtained about the job by using the
+ * list_activities function in process job with a filter on the job
+ * id.
+ */
+int
+mount_clients(ctx_t *ctx, char *fs_name, char *clients[], int client_count);
+
+
+/*
+ * Unmount the shared file system on the named clients.
+ *
+ * A positive non-zero return indicates that a background job has been
+ * started to complete this task. The return value is the job id.
+ * Information can be obtained about the job by using the
+ * list_activities function in process job with a filter on the job
+ * id.
+ */
+int
+unmount_clients(ctx_t *ctx, char *fs_name, char *clients[],
+    int client_count);
+
+
+/*
+ * Change the mount options for the named clients of the shared file system.
+ *
+ * A positive non-zero return indicates that a background job has been
+ * started to complete this task. The return value is the job id.
+ * Information can be obtained about the job by using the
+ * list_activities function in process job with a filter on the job
+ * id.
+ */
+int
+change_shared_fs_mount_options(ctx_t *ctx, char *fs_name, char *clients[],
+    int client_count, mount_options_t *mo);
+
+
+/*
+ * Create a prototype qfs with object storage nodes file system. After
+ * this function is called the user can proceed with the configuration of the
+ * storage nodes for the file system. The proto file system is a place holder
+ * for the configuration information prior to creating the file system.
+ */
+int
+create_proto_fs(ctx_t *c, char *name);
+
+
+/*
+ * Method to get summary status for a shared file system
+ * Status is returned as key value strings.
+ *
+ * The method potentially returns three strings. One each for the
+ * client status, pmds status and storage node status. If no storage
+ * nodes are present no storage node string will be returned.
+ *
+ * The format is as follows:
+ * clients=1024, unmounted=24, off=2, error=0
+ * storage_nodes=124, unmounted=0, off=1, error=0
+ * pmds = 8, unmounted=2, off=0, error=0
+ */
+int get_shared_fs_summary_status(ctx_t *c, char *fs_name, sqm_lst_t **lst);
+
+
+/*
+ * Add a storage node- This function should be called on the metadata
+ * server it will set up the file system on the storage node, create
+ * the iscsi target and then on the client set up the iscsi initiator
+ * and either add the new device to the file system or proto file
+ * system.
+ *
+ * nodeData is a key value string that includes the following keys:
+ * host = hostname
+ * dataip = ip address
+ * group = groupId (o1, o2, o3 etc.)
+ *
+ * A non-zero positive return indicates that a background job has been started
+ * to complete this task. Information can be obtained about this job by
+ * using the Job.getAllActivities function with a filter on the job id.
+ */
+int
+add_storage_node(ctx_t *c, char *fs_name, char *node_name, char *node_ip,
+    fs_t *backing_store, char *node_data);
+
+
+/*
+ * Remove a storage node from the shared fs configuration.
+ *
+ * A non-zero positive return indicates that a background job has been started
+ * to complete this task. Information can be obtained about this job by
+ * using the Job.getAllActivities function with a filter on the job id.
+ */
+int
+remove_storage_node(ctx_t *c, char *fs_name, char *node_name);
+
+
+/*
  * Deprecated. This function is only here to so that backwards compatible
  * libraries can be created. See create_arch_fs.
  */
@@ -759,7 +859,6 @@ ctx_t *ctx,		/* context for RPC */
 int eqs_needed,		/* number of ordinals that are needed */
 sqm_lst_t **in_use,	/* ordinals that are in use */
 int **first_free);	/* The first free value */
-
 
 
 /*

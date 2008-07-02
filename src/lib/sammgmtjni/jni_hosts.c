@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.15 $"
+#pragma ident	"$Revision: 1.16 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -74,7 +74,7 @@ host2Host(JNIEnv *env, void *v_host_info) {
 	return (newObj);
 }
 
-host_info_t *
+void *
 Host2host(JNIEnv *env, jobject hostObj) {
 
 	jclass cls;
@@ -83,8 +83,11 @@ Host2host(JNIEnv *env, jobject hostObj) {
 	memset(host->host_name, 0, sizeof (upath_t));
 
 	PTRACE(2, "jni:Host2host() entry");
+
 	cls = (*env)->GetObjectClass(env, hostObj);
 	getStrFld(env, cls, hostObj, "name", host->host_name);
+
+
 	PTRACE(2, "jni:Host2host() got hostname[%s]", host->host_name);
 	host->ip_addresses = jarray2lst(env,
 	    getJArrFld(env,
@@ -322,4 +325,89 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_Host_setClientState(JNIEnv *env,
 	REL_STR(fsName, cstr, isCopy);
 
 	PTRACE(1, "jni:Host_setAdvancedNetCfg() done");
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_Host_addHosts(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+    jobjectArray hostInfos) {
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	int ret;
+	sqm_lst_t *lst;
+	int len;
+	int i;
+
+	PTRACE(1, "jni:Host_addHosts(%s...) entry", Str(cstr1));
+
+	lst = jarray2lst(env, hostInfos, BASEPKG"/fs/Host", Host2host);
+
+	if (lst == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	ret = add_hosts(CTX, cstr1, lst);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	free_list_of_host_info(lst);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+
+	PTRACE(1, "jni:Host_add_hosts() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_Host_removeHosts(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+    jobjectArray clients) {
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	int ret;
+	char **c_clients;
+	int len;
+	int i;
+
+	PTRACE(1, "jni:Host_removeHosts(%s...) entry", Str(cstr1));
+
+	/* Determine the array length */
+	len = (int)(*env)->GetArrayLength(env, clients);
+
+
+	/* convert the array */
+	c_clients = (char **)jarray2arrOfPtrs(env, clients,
+	    "java/lang/String", String2charr);
+
+	if (c_clients == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:Host_removeHosts(%s...) converted clients", Str(cstr1));
+	ret = remove_hosts(CTX, cstr1, c_clients, len);
+
+	PTRACE(1, "jni:Host_removeHosts(%s...) converted clients", Str(cstr1));
+	REL_STR(fsName, cstr1, isCopy1);
+	for (i = 0; i < len; i++) {
+		free(c_clients[i]);
+	}
+	free(c_clients);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+
+	PTRACE(1, "jni:Host_remove_hosts() done");
+	return (ret);
 }

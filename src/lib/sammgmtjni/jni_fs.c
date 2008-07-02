@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.46 $"
+#pragma ident	"$Revision: 1.47 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -1338,4 +1338,266 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_FS_shrinkReplaceGroup(JNIEnv *env,
 
 	PTRACE(1, "jni:FS_shrinkReplaceDev() done");
 	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_mountClients(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+    jobjectArray clients) {
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	int ret;
+	char **c_clients;
+	int len;
+	int i;
+
+	PTRACE(1, "jni:FS_mountClients(%s...) entry", Str(cstr1));
+
+	/* Determine the array length */
+	len = (int)(*env)->GetArrayLength(env, clients);
+
+
+	/* convert the array */
+	c_clients = (char **)jarray2arrOfPtrs(env, clients,
+	    "java/lang/String", String2charr);
+
+	if (c_clients == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	ret = mount_clients(CTX, cstr1, c_clients, len);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	for (i = 0; i < len; i++) {
+		free(c_clients[i]);
+	}
+	free(c_clients);
+
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+
+	PTRACE(1, "jni:FS_mountClients() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_unmountClients(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+    jobjectArray clients) {
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	int ret;
+	char **c_clients;
+	int len;
+	int i;
+
+	PTRACE(1, "jni:FS_unmountClients(%s...) entry", Str(cstr1));
+
+	/* Determine the array length */
+	len = (int)(*env)->GetArrayLength(env, clients);
+
+
+	/* convert the array */
+	c_clients = (char **)jarray2arrOfPtrs(env, clients,
+	    "java/lang/String", String2charr);
+
+	if (c_clients == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	ret = unmount_clients(CTX, cstr1, c_clients, len);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	for (i = 0; i < len; i++) {
+		free(c_clients[i]);
+	}
+	free(c_clients);
+
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+
+	PTRACE(1, "jni:FS_unmountClients() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_setSharedFSMountOptions(JNIEnv *env,
+jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName, jobjectArray clients,
+jobject mountOpts) {
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char **c_clients;
+	mount_options_t *mount_opts;
+	int len;
+	int i;
+	int ret;
+
+	PTRACE(1, "jni:FS_setSharedFSMountOptions(%s...) entry", Str(cstr1));
+
+	/* Determine the array length */
+	len = (int)(*env)->GetArrayLength(env, clients);
+
+
+	/* convert the array */
+	c_clients = (char **)jarray2arrOfPtrs(env, clients,
+	    "java/lang/String", String2charr);
+
+	if (c_clients == NULL) {
+		REL_STR(fsName, cstr1, isCopy1);
+		ThrowEx(env);
+		return (NULL);
+	}
+	mount_opts = MountOptions2mntopts(env, mountOpts);
+
+	ret = change_shared_fs_mount_options(CTX, cstr1, c_clients, len,
+	    mount_opts);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	for (i = 0; i < len; i++) {
+		free(c_clients[i]);
+	}
+	free(c_clients);
+	free(mount_opts);
+
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_setSharedFSMountOptions() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_addStorageNode(JNIEnv *env,
+jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+jstring nodeName, jstring nodeIP, jobject fsInfo, jstring nodeData) {
+
+	fs_t *fs;
+	jboolean isCopy1;
+	jboolean isCopy2;
+	jboolean isCopy3;
+	jboolean isCopy4;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(nodeName, isCopy2);
+	char *cstr3 = GET_STR(nodeIP, isCopy3);
+	char *cstr4 = GET_STR(nodeData, isCopy4);
+	int ret;
+
+
+	PTRACE(1, "jni:FS_addStorageNode(%s...) entry", Str(cstr1));
+	fs = (fs_t *)FSInfo2fs(env, fsInfo);
+
+	ret = add_storage_node(CTX, cstr1, cstr2, cstr3, fs, cstr4);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(nodeName, cstr2, isCopy2);
+	REL_STR(nodeIP, cstr3, isCopy3);
+	REL_STR(nodeData, cstr4, isCopy4);
+	free_fs(fs);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_addStorageNode() done");
+	return (ret);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_removeStorageNode(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
+    jstring nodeName) {
+
+	jboolean isCopy1;
+	jboolean isCopy2;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(nodeName, isCopy2);
+	int ret;
+
+
+	PTRACE(1, "jni:FS_removeStorageNode(%s...) entry", Str(cstr1));
+
+	ret = remove_storage_node(CTX, cstr1, cstr2);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(nodeName, cstr2, isCopy2);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	PTRACE(1, "jni:FS_removeStorageNode() done");
+	return (ret);
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_createProtoFS(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName) {
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	int ret;
+
+
+	PTRACE(1, "jni:FS_createProtoFS(%s...) entry", Str(cstr1));
+
+	ret = create_proto_fs(CTX, cstr1);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return;
+	}
+
+	PTRACE(1, "jni:FS_createProtoFS() done");
+}
+
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_sun_netstorage_samqfs_mgmt_fs_FS_getSharedFSSummaryStatus(JNIEnv *env,
+    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName) {
+
+
+	jboolean isCopy1;
+	char *cstr1 = GET_STR(fsName, isCopy1);
+	sqm_lst_t *status_lst;
+	jobjectArray newArr;
+	int ret;
+
+
+
+	PTRACE(1, "jni:FS_getSharedFSSummaryStatus(%s...) entry", Str(cstr1));
+
+	ret = get_shared_fs_summary_status(CTX, cstr1, &status_lst);
+
+	REL_STR(fsName, cstr1, isCopy1);
+	if (-1 == ret) {
+		ThrowEx(env);
+		return (NULL);
+	}
+
+	newArr = lst2jarray(env, status_lst, "java/lang/String", charr2String);
+	lst_free_deep(status_lst);
+	PTRACE(1, "jni:FS_getSharedFSSummaryStatus() done");
+	return (newArr);
 }
