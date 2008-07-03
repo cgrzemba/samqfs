@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StripedGroup.java,v 1.8 2008/05/16 18:39:04 am143972 Exp $
+// ident	$Id: StripedGroup.java,v 1.9 2008/07/03 00:04:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -44,7 +44,6 @@ public interface StripedGroup extends BaseDevice {
     public DiskCache[] getMembers();
 
 
-    // TBD: we need to decide the unit of capacity returned
     public long getCapacity();
 
 

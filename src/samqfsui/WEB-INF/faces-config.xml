@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.8 2008/06/25 21:03:55 ronaldso Exp $ -->
+<!-- $Id: faces-config.xml,v 1.9 2008/07/03 00:04:27 ronaldso Exp $ -->
 
 <faces-config>
     <application>
@@ -151,5 +151,9 @@
     <converter>
         <converter-id>DeviceTypeConverter</converter-id>
         <converter-class>com.sun.netstorage.samqfs.web.fs.wizards.DeviceTypeConverter</converter-class>
+    </converter>
+    <converter>
+        <converter-id>DiskCacheTypeConverter</converter-id>
+        <converter-class>com.sun.netstorage.samqfs.web.fs.wizards.DiskCacheTypeConverter</converter-class>
     </converter>
 </faces-config>

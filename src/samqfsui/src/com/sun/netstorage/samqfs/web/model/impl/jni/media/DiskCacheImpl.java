@@ -27,18 +27,19 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.20 2008/06/25 21:03:58 ronaldso Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.21 2008/07/03 00:04:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
 
 import com.sun.netstorage.samqfs.mgmt.fs.AU;
-import com.sun.netstorage.samqfs.mgmt.fs.SCSIDevInfo;
 import com.sun.netstorage.samqfs.mgmt.fs.DiskDev;
+import com.sun.netstorage.samqfs.mgmt.fs.SCSIDevInfo;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
-import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
+import com.sun.netstorage.samqfs.web.model.media.DiskCache;
+import com.sun.netstorage.samqfs.web.model.media.StripedGroup;
 
 
 public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
@@ -51,12 +52,47 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
     private long availableSpace = -1;
     private int consumedSpace = -1;
     private int noOfInodesRemaining = -1;
-    private String vendor = new String();
-    private String productId = new String();
+    private String vendor = null;
+    private String productId = null;
     private boolean alloc = false;
+
+    // Only used for display purpose
+    private String devicePathDisplayString = null;
 
 
     public DiskCacheImpl() {
+    }
+
+    /**
+     * This constructor is built to convert a striped group into a diskCache
+     * object for the Shrink File System Wizard.
+     */
+    public DiskCacheImpl(StripedGroup group) {
+        if (group == null) {
+            return;
+        }
+        super.setDevicePath(group.getName());
+        capacity = group.getCapacity();
+        availableSpace = group.getAvailableSpace();
+        consumedSpace = group.getConsumedSpacePercentage();
+        diskCacheType = DiskCache.STRIPED_GROUP;
+
+        DiskCache[] members = group.getMembers();
+        StringBuffer buf = new StringBuffer(group.getName());
+        StringBuffer tab = new StringBuffer("&nbsp;&nbsp;&nbsp;&nbsp;");
+        for (int i = 0; i < members.length; i++) {
+            buf.append("<br>").append(tab).
+                append(members[i].getDevicePathDisplayString());
+        }
+        devicePathDisplayString = buf.toString();
+
+        if (members.length > 0) {
+            vendor = members[0].getVendor();
+            productId = members[0].getProductId();
+            
+            // Use first device's EQ when shrinking a striped group
+            super.setEquipOrdinal(members[0].getEquipOrdinal());
+        }
     }
 
 
@@ -93,7 +129,15 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
             }
 
             capacity = disk.getAU().getSize();
+            capacity = SamQFSUtil.convertSize(
+                            capacity, SamQFSSystemModel.SIZE_KB,
+                            SamQFSSystemModel.SIZE_MB);
+
             availableSpace = disk.getFreeSpace();
+            availableSpace = SamQFSUtil.convertSize(
+                                availableSpace, SamQFSSystemModel.SIZE_KB,
+                                SamQFSSystemModel.SIZE_MB);
+
             if (capacity != 0) {
                 consumedSpace = (int) ((capacity-availableSpace)*100/capacity);
             } else {
@@ -133,14 +177,11 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
     }
 
     public long getCapacity() {
-	return SamQFSUtil.convertSize(capacity, SamQFSSystemModel.SIZE_KB,
-                                      SamQFSSystemModel.SIZE_MB);
+	return capacity;
     }
 
     public long getAvailableSpace() {
-	return SamQFSUtil.convertSize(availableSpace,
-                                      SamQFSSystemModel.SIZE_KB,
-                                      SamQFSSystemModel.SIZE_MB);
+	return availableSpace;
     }
 
     public int getConsumedSpacePercentage() {
@@ -236,12 +277,21 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
     public boolean isAlloc() {
         return alloc;
     }
-    
+
+    public int getEquipOrdinal() {
+        return super.getEquipOrdinal();
+    }
+
     public String getDevicePath() {
         return super.getDevicePath();
     }
-    
+
     public String getDevicePathDisplayString() {
+        // striped group string has already been built
+        if (devicePathDisplayString != null) {
+            return devicePathDisplayString;
+        }
+
         String pathString = getDevicePath();
         String [] sliceElement = pathString.split("/");
         int type = getDiskType();
@@ -251,10 +301,11 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
             type == DiskCache.SVM_LOGICAL_VOLUME_MIRROR ||
             type == DiskCache.SVM_LOGICAL_VOLUME_RAID_5) &&
             sliceElement.length == 6) {
-            return sliceElement[3] + "/" + sliceElement[5];
+            devicePathDisplayString = sliceElement[3] + "/" + sliceElement[5];
         } else {
             int index = pathString.indexOf("/dsk/");
-            return pathString.substring(index + 5);
+            devicePathDisplayString = pathString.substring(index + 5);
         }
+        return devicePathDisplayString;
     }
 }

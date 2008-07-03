@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: ShrinkOption.java,v 1.1 2008/06/04 18:16:10 ronaldso Exp $
+// ident $Id: ShrinkOption.java,v 1.2 2008/07/03 00:04:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -35,12 +35,17 @@ package com.sun.netstorage.samqfs.web.model.fs;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
 /**
- * Options Keys:
- *  logfile = filename (default no logging)
- *  block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
- *  display_all_files = TRUE | FALSE (default FALSE)
- *  do_not_execute = TRUE | FALSE (default FALSE)
- *  streams = n  where 1 <= n <= 128 default 8
+  * Options Keys:
+  *  block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+  *  display_all_files = TRUE | FALSE (default FALSE)
+  *  do_not_execute = TRUE | FALSE (default FALSE)
+  *  logfile = filename (default no logging)
+  *  stage_files = TRUE | FALSE (default FALSE)
+  *  stage_partial = TRUE | FALSE (default FALSE)
+  *  streams = n  where 1 <= n <= 128 default 8
+  *
+  * The integer return is a job id that will be meaningful only for
+  * shared file systems.
  */
 public class ShrinkOption {
 
@@ -49,14 +54,18 @@ public class ShrinkOption {
     final String KEY_DISPLAY_ALL_FILES = "display_all_files";
     final String KEY_DO_NOT_EXECUTE = "do_not_execute";
     final String KEY_STREAMS = "streams";
+    final String KEY_STAGE_FILE = "stage_files";
+    final String KEY_STAGE_PARTIAL = "stage_partial";
 
     private String logFile;
     private boolean displayAllFiles, doNotExecute;
+    private boolean stageFile, stagePartial;
     private int blockSize, streams;
 
     public ShrinkOption(
         String logFile, int blockSize,
-        boolean displayAllFiles, boolean doNotExecute, int streams)
+        boolean displayAllFiles, boolean doNotExecute, int streams,
+        boolean stageFile, boolean stagePartial)
         throws SamFSException {
 
         logFile = logFile == null ? "" : logFile;
@@ -80,6 +89,9 @@ public class ShrinkOption {
                 "shrink option: streams is an integer between 1 & 128!");
         }
         this.streams = streams;
+
+        this.stageFile = stageFile;
+        this.stagePartial = stagePartial;
     }
 
     /**
@@ -108,6 +120,12 @@ public class ShrinkOption {
 
         // Do Not Execute
         buf.append(C).append(KEY_DO_NOT_EXECUTE).append(E).append(doNotExecute);
+
+        // Stage File
+        buf.append(C).append(KEY_STAGE_FILE).append(E).append(stageFile);
+
+        // Partial Stage File
+        buf.append(C).append(KEY_STAGE_PARTIAL).append(E).append(stagePartial);
 
         // Streams
         if (streams != -1) {

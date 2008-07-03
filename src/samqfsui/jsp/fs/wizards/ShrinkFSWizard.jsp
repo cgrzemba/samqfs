@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.1 2008/06/25 21:03:56 ronaldso Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.2 2008/07/03 00:04:29 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -43,8 +43,11 @@
 
     <ui:page>
         <ui:html>
-            <ui:head title="#{samBundle['fs.shrink.title']}" />
-            <ui:body>
+            <ui:head title="#{samBundle['fs.shrink.title']}">
+                <ui:script url="/js/fs/ShrinkFS.js"/>
+            </ui:head>
+            <ui:body styleClass="DefBdy"
+                     onLoad="wizOnLoad('ShrinkFSForm:ShrinkFSWizard')">
                 <ui:form id="ShrinkFSForm">
                     <ui:masthead id="Masthead" secondary="true"
                                  productImageURL="/com_sun_web_ui/images/SecondaryProductName.png"
@@ -52,7 +55,9 @@
                                  productImageWidth="162"
                                  productImageHeight="40"/>
 
-                    <ui:wizard id="ShrinkFSWizard" title="#{samBundle['fs.shrink.title']}"
+                    <ui:wizard id="ShrinkFSWizard"
+                               title="#{samBundle['fs.shrink.title']}"
+                               onPopupDismiss="handleWizardDismiss();"
                                eventListener="#{ShrinkFSBean.wizardEventListener}">
                         <!-- Step 1: Select Storage to Exclude -->
                         <ui:wizardStep id="step_id_selectstorage"
@@ -64,14 +69,22 @@
                                 <ui:staticText text="#{samBundle['fs.shrink.selectstorage.instruction.2']}"/>
                             </h:panelGrid>
                             <ui:markup tag="br" singleton="true"/>
+                            <ui:alert id="alert_selectstorage"
+                                      rendered="#{ShrinkFSBean.alertRendered}"
+                                      type="#{ShrinkFSBean.alertType}"
+                                      summary="#{ShrinkFSBean.alertSummary}"
+                                      detail="#{ShrinkFSBean.alertDetail}"/>
                             <ui:markup tag="p" extraAttributes="style='margin-left:2%'">
                                 <ui:table id="tableExclude"
                                           title="#{ShrinkFSBean.tableTitleExclude}"
                                           style="margin:10px"
+                                          clearSortButton="true"
+                                          sortPanelToggleButton="true"
                                           paginateButton="false"
                                           paginationControls="false">
 
                                     <ui:tableRowGroup id="TableRowsExclude"
+                                                      aboveColumnHeader="true"
                                                       selected="#{ShrinkFSBean.selectExclude.selectedState}"
                                                       binding="#{ShrinkFSBean.excludeTableRowGroup}"
                                                       sourceData="#{ShrinkFSBean.excludeSummaryList}"
@@ -79,9 +92,9 @@
                                         <!-- Selection Type -->
                                         <ui:tableColumn id="selection"
                                                         selectId="select"
+                                                        onClick="setTimeout('initExcludeTableRows()', 0);"
                                                         sort="#{ShrinkFSBean.selectExclude.selectedState}">
                                             <ui:radioButton id="selectExclude"
-                                                            onClick="setTimeout('initExcludeTableRows()', 0);"
                                                             name="radioSelect"
                                                             selected="#{ShrinkFSBean.selectExclude.selected}"
                                                             selectedValue="#{ShrinkFSBean.selectExclude.selectedValue}"/>
@@ -90,25 +103,27 @@
                                                         headerText="#{samBundle['fs.shrink.selectstorage.heading.name']}"
                                                         align="left"
                                                         valign="top"
-                                                        sort="name"
+                                                        sort="devicePathDisplayString"
                                                         rowHeader="true">
-                                            <ui:staticText text="#{excludeTable.value.devicePathDisplayString}"/>
-                                            <ui:staticText text="#{excludeTable.value.devicePath}" visible="false"/>
+                                            <ui:staticText text="#{excludeTable.value.devicePathDisplayString}"
+                                                           escape="false"/>
+                                            <ui:staticText text="#{excludeTable.value.equipOrdinal}"
+                                                           visible="false"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colType"
                                                         headerText="#{samBundle['fs.shrink.selectstorage.heading.type']}"
                                                         align="left"
                                                         valign="top"
-                                                        sort="type"
+                                                        sort="diskCacheType"
                                                         rowHeader="true">
-                                            <ui:staticText text="#{excludeTable.value.diskType}"
-                                                           converter="DeviceTypeConverter"/>
+                                            <ui:staticText text="#{excludeTable.value.diskCacheType}"
+                                                           converter="DiskCacheTypeConverter"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colCapacity"
                                                         headerText="#{samBundle['fs.shrink.selectstorage.heading.capacity']}"
                                                         align="left"
                                                         valign="top"
-                                                        sort="cap"
+                                                        sort="capacity"
                                                         rowHeader="true">
                                             <ui:staticText text="#{excludeTable.value.capacity}"
                                                            converter="CapacityInMbConverter"/>
@@ -125,7 +140,7 @@
                                                         headerText="#{samBundle['fs.shrink.selectstorage.heading.prodid']}"
                                                         align="left"
                                                         valign="top"
-                                                        sort="prodId"
+                                                        sort="productId"
                                                         rowHeader="true">
                                             <ui:staticText text="#{excludeTable.value.productId}"/>
                                         </ui:tableColumn>
@@ -133,51 +148,66 @@
                                 </ui:table>
                             </ui:markup>
                         </ui:wizardStep>
-                        <!-- Step 2: Specify how to move data off the device -->
-                        <ui:wizardStep id="step_id_method"
-                                       summary="#{samBundle['fs.shrink.method.steptitle']}"
-                                       title="#{samBundle['fs.shrink.method.steptitle']}"
-                                       detail="#{samBundle['fs.shrink.method.instruction.1']}"
-                                       help="#{samBundle['fs.shrink.method.help']}">
-                            <h:panelGrid columns="1" style="margin:10px">
-                                <ui:staticText text="#{samBundle['fs.shrink.method.instruction.2']}" />
-                                <ui:staticText text="#{samBundle['fs.shrink.method.instruction.3']}" />
-                                <ui:staticText text="#{samBundle['fs.shrink.method.instruction.4']}" />
-                            </h:panelGrid>
-                            <ui:markup tag="br" singleton="true"/>
-                            <ui:markup tag="p" extraAttributes="style='margin-left:2%'">
-                            <ui:markup tag="br" singleton="true"/>
-                            <ui:radioButton id="radioRelease"
-                                            name="methodRadio"
-                                            label="#{samBundle['fs.shrink.method.radio.release']}"
-                                            rendered="#{ShrinkFSBean.renderedMethodRelease}"
-                                            selected="#{ShrinkFSBean.selectedMethodRelease}"/>
-                            <ui:markup tag="br" singleton="true"/>
-                            <ui:radioButton id="radioDistribute"
-                                            name="methodRadio"
-                                            label="#{samBundle['fs.shrink.method.radio.distribute']}"
-                                            rendered="#{ShrinkFSBean.renderedMethodDistribute}"
-                                            selected="#{ShrinkFSBean.selectedMethodDistribute}"/>
-                            <ui:markup tag="br" singleton="true"/>
-                                <ui:radioButton id="radioMove"
-                                                name="methodRadio"
-                                                label="#{samBundle['fs.shrink.method.radio.move']}"
-                                                rendered="#{ShrinkFSBean.renderedMethodMove}"
-                                                selected="#{ShrinkFSBean.selectedMethodMove}"/>
-                            </ui:markup>
-                        </ui:wizardStep>
-                        <!-- Step 2.1 Specify a device to store the data -->
+                        <!-- Step 1.1: Specify how to move data off the device -->
+                        <ui:wizardSubstepBranch id="SubStepMethod"
+                                                taken='#{ShrinkFSBean.renderSubStepMethod}'>
+                            <ui:wizardStep id="step_id_method"
+                                           summary="#{samBundle['fs.shrink.method.steptitle']}"
+                                           title="#{samBundle['fs.shrink.method.steptitle']}"
+                                           detail="#{samBundle['fs.shrink.method.instruction.1']}"
+                                           help="#{samBundle['fs.shrink.method.help']}">
+                                <h:panelGrid columns="1" style="margin:10px">
+                                    <ui:staticText text="#{samBundle['fs.shrink.method.instruction.2']}" />
+                                    <ui:staticText text="#{samBundle['fs.shrink.method.instruction.3']}" />
+                                    <ui:staticText text="#{samBundle['fs.shrink.method.instruction.4']}" />
+                                </h:panelGrid>
+                                <ui:markup tag="br" singleton="true"/>
+                                <ui:alert id="alert_method"
+                                          rendered="#{ShrinkFSBean.alertRendered}"
+                                          type="#{ShrinkFSBean.alertType}"
+                                          summary="#{ShrinkFSBean.alertSummary}"
+                                          detail="#{ShrinkFSBean.alertDetail}"/>
+                                <ui:markup tag="p" extraAttributes="style='margin-left:2%'">
+                                    <ui:markup tag="br" singleton="true"/>
+                                    <ui:radioButton id="radioRelease"
+                                                    name="methodRadio"
+                                                    label="#{samBundle['fs.shrink.method.radio.release']}"
+                                                    rendered="#{ShrinkFSBean.renderedMethodRelease}"
+                                                    selected="#{ShrinkFSBean.selectedMethodRelease}"/>
+                                    <ui:markup tag="br" singleton="true"/>
+                                    <ui:radioButton id="radioDistribute"
+                                                    name="methodRadio"
+                                                    label="#{samBundle['fs.shrink.method.radio.distribute']}"
+                                                    rendered="#{ShrinkFSBean.renderedMethodDistribute}"
+                                                    selected="#{ShrinkFSBean.selectedMethodDistribute}"/>
+                                    <ui:markup tag="br" singleton="true"/>
+                                        <ui:radioButton id="radioMove"
+                                                        name="methodRadio"
+                                                        label="#{samBundle['fs.shrink.method.radio.move']}"
+                                                        rendered="#{ShrinkFSBean.renderedMethodMove}"
+                                                        selected="#{ShrinkFSBean.selectedMethodMove}"/>
+                                </ui:markup>
+                            </ui:wizardStep>
+                        </ui:wizardSubstepBranch>
+                        <!-- Step 1.2 Specify a device to store the data -->
                         <ui:wizardSubstepBranch id="SubStepSpecifyDevice"
-                                                taken='#{ShrinkFSBean.renderedSubStep}'>
+                                                taken='#{ShrinkFSBean.selectedMethodMove}'>
                             <ui:wizardStep id="step_id_specifydevice"
                                            summary="#{samBundle['fs.shrink.specifydevice.steptitle']}"
                                            title="#{samBundle['fs.shrink.specifydevice.steptitle']}"
                                            detail="#{samBundle['fs.shrink.specifydevice.instruction.1']}"
                                            help="#{samBundle['fs.shrink.specifydevice.help']}">
+                                <ui:alert id="alert_specifydevice"
+                                          rendered="#{ShrinkFSBean.alertRendered}"
+                                          type="#{ShrinkFSBean.alertType}"
+                                          summary="#{ShrinkFSBean.alertSummary}"
+                                          detail="#{ShrinkFSBean.alertDetail}"/>
                                 <ui:markup tag="p" extraAttributes="style='margin-left:2%'">
                                     <ui:table id="tableAvailable"
                                               title="#{samBundle['fs.shrink.specifydevice.tabletitle']}"
                                               style="margin:10px"
+                                              clearSortButton="true"
+                                              sortPanelToggleButton="true"
                                               paginateButton="false"
                                               paginationControls="false">
 
@@ -190,17 +220,24 @@
                                             <ui:tableColumn id="selection"
                                                             selectId="select"
                                                             sort="#{ShrinkFSBean.selectAvailable.selectedState}">
-                                                <ui:radioButton id="selectAvailable"
-                                                                onClick="setTimeout('initExcludeTableRows()', 0);"
+                                                <ui:radioButton id="selectAvailableRadio"
+                                                                onClick="setTimeout('initAvailableTableRows()', 0);"
                                                                 name="radioSelectAvail"
                                                                 selected="#{ShrinkFSBean.selectAvailable.selected}"
-                                                                selectedValue="#{ShrinkFSBean.selectAvailable.selectedValue}"/>
+                                                                selectedValue="#{ShrinkFSBean.selectAvailable.selectedValue}"
+                                                                rendered="#{ShrinkFSBean.selectedStripedGroup == null}" />
+                                                <ui:checkbox id="selectAvailableBox"
+                                                             onClick="setTimeout('initAvailableTableRows()', 0);"
+                                                             name="checkBoxSelectAvail"
+                                                             selected="#{ShrinkFSBean.selectAvailable.selected}"
+                                                             selectedValue="#{ShrinkFSBean.selectAvailable.selectedValue}"
+                                                             rendered="#{ShrinkFSBean.selectedStripedGroup != null}" />
                                             </ui:tableColumn>
                                             <ui:tableColumn id="colDeviceName"
                                                             headerText="#{samBundle['fs.shrink.specifydevice.heading.name']}"
                                                             align="left"
                                                             valign="top"
-                                                            sort="name"
+                                                            sort="devicePathDisplayString"
                                                             rowHeader="true">
                                                 <ui:staticText text="#{availableTable.value.devicePathDisplayString}"/>
                                                 <ui:staticText text="#{availableTable.value.devicePath}" visible="false"/>
@@ -209,7 +246,7 @@
                                                             headerText="#{samBundle['fs.shrink.specifydevice.heading.type']}"
                                                             align="left"
                                                             valign="top"
-                                                            sort="type"
+                                                            sort="diskType"
                                                             rowHeader="true">
                                                 <ui:staticText text="#{availableTable.value.diskType}"
                                                                converter="DeviceTypeConverter"/>
@@ -218,7 +255,7 @@
                                                             headerText="#{samBundle['fs.shrink.specifydevice.heading.capacity']}"
                                                             align="left"
                                                             valign="top"
-                                                            sort="cap"
+                                                            sort="capacity"
                                                             rowHeader="true">
                                                 <ui:staticText text="#{availableTable.value.capacity}"
                                                                converter="CapacityInMbConverter"/>
@@ -235,7 +272,7 @@
                                                             headerText="#{samBundle['fs.shrink.specifydevice.heading.prodid']}"
                                                             align="left"
                                                             valign="top"
-                                                            sort="prodId"
+                                                            sort="productId"
                                                             rowHeader="true">
                                                 <ui:staticText text="#{availableTable.value.productId}"/>
                                             </ui:tableColumn>
@@ -244,13 +281,18 @@
                                 </ui:markup>
                             </ui:wizardStep>
                         </ui:wizardSubstepBranch>
-                        <!-- Step 3:Specify Shrink Options -->
+                        <!-- Step 2:Specify Shrink Options -->
                         <ui:wizardStep id="step_id_options"
                                        summary="#{samBundle['fs.shrink.options.steptitle']}"
                                        title="#{samBundle['fs.shrink.options.steptitle']}"
                                        detail="#{samBundle['fs.shrink.options.instruction.1']}"
                                        help="#{samBundle['fs.shrink.options.help']}">
                             <ui:legend id="legend" />
+                            <ui:alert id="alert_options"
+                                      rendered="#{ShrinkFSBean.alertRendered}"
+                                      type="#{ShrinkFSBean.alertType}"
+                                      summary="#{ShrinkFSBean.alertSummary}"
+                                      detail="#{ShrinkFSBean.alertDetail}"/>
                             <ui:markup tag="p" extraAttributes="style='margin-left:2%'">
                                 <ui:label id="labelLogFile"
                                           for="fieldLogFile"
@@ -290,7 +332,14 @@
                                 <ui:checkbox id="boxStageBack"
                                              name="StageBackBox"
                                              selected="#{ShrinkFSBean.stageBack}"
+                                             rendered="#{ShrinkFSBean.selectedMethodRelease}"
                                              label="#{samBundle['fs.shrink.options.checkbox.bringonline']}" />
+                                <ui:markup tag="br" singleton="true"/>
+                                <ui:checkbox id="boxStagePartialBack"
+                                             name="StagePartialBackBox"
+                                             selected="#{ShrinkFSBean.stagePartialBack}"
+                                             rendered="#{ShrinkFSBean.selectedMethodRelease}"
+                                             label="#{samBundle['fs.shrink.options.checkbox.bringpartialonline']}" />
                                 <ui:markup tag="br" singleton="true"/>
                                 <h:panelGrid columns="2" style="margin-left:4%">
                                     <ui:label id="idBlockSize" for="blockSize" text="#{samBundle['fs.shrink.options.label.blocksize']}" />
@@ -316,36 +365,39 @@
                                 </h:panelGrid>
                             </ui:markup>
                         </ui:wizardStep>
-                        <!-- Step 4: Review Selections -->
+                        <!-- Step 3: Review Selections -->
                         <ui:wizardStep id="step_id_review"
                                        summary="#{samBundle['common.wizard.summary.title']}"
                                        title="#{samBundle['common.wizard.summary.title']}"
                                        detail="#{samBundle['common.wizard.summary.instruction']}"
                                        finish="true">
-                            <h:panelGrid columns="2" style="margin-left:2%">
+                            <ui:markup tag="br" singleton="true"/>
+                            <h:panelGrid columns="2" style="margin-left:2%;text-valign:top">
                                 <ui:label id="idSelectStorage"
                                           text="#{samBundle['fs.shrink.review.text.selectstorage']}" />
-                                <ui:staticText text="#{ShrinkFSBean.summarySelectStorage}" />
+                                <ui:staticText text="#{ShrinkFSBean.summarySelectStorage}"
+                                               escape="false" />
                                 <ui:label id="idMethod"
                                           text="#{samBundle['fs.shrink.review.text.method']}" />
                                 <ui:staticText text="#{ShrinkFSBean.summaryMethod}" />
                                 <ui:label id="idSpecifyDevice"
-                                          rendered="#{ShrinkFSBean.renderedSubStep}"
+                                          rendered="#{ShrinkFSBean.selectedMethodMove}"
                                           text="#{samBundle['fs.shrink.review.text.specifydevice']}" />
                                 <ui:staticText text="#{ShrinkFSBean.summarySpecifyDevice}"
-                                               rendered="#{ShrinkFSBean.renderedSubStep}" />
+                                               rendered="#{ShrinkFSBean.selectedMethodMove}"
+                                               escape="false" />
                                 <ui:label id="idOptions"
                                           text="#{samBundle['fs.shrink.review.text.options']}" />
                                 <ui:staticText text="#{ShrinkFSBean.summaryOptions}" />
                             </h:panelGrid>
                         </ui:wizardStep>
-                        <!-- Step 5: View Results -->
+                        <!-- Step 4: View Results -->
                         <ui:wizardStep id="step_id_results"
                                        summary="#{samBundle['common.wizard.viewresult.title']}"
                                        title="#{samBundle['common.wizard.viewresult.title']}"
                                        results="true">
                             <ui:markup tag="p" id="id_Alert" extraAttributes="style='margin:7%'">
-                                <ui:alert id="alert"
+                                <ui:alert id="alert_results"
                                           rendered="true"
                                           type="#{ShrinkFSBean.alertType}"
                                           summary="#{ShrinkFSBean.alertSummary}"

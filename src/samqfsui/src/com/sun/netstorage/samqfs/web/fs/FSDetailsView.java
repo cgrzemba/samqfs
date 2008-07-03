@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.46 2008/06/04 18:16:10 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.47 2008/07/03 00:04:29 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -123,9 +123,10 @@ public class FSDetailsView extends CommonTableContainerView {
     public static final int FS_MENUOPTION_CHECK_FS = 1;
     public static final int FS_MENUOPTION_MOUNT = 2;
     public static final int FS_MENUOPTION_UNMOUNT = 3;
-    public static final int FS_MENUOPTION_DELETE = 4;
-    public static final int FS_MENUOPTION_ARCHIVE_ACTIVITIES = 5;
-    public static final int FS_MENUOPTION_SCHEDULE_DUMP = 6;
+    public static final int FS_MENUOPTION_SHRINK = 4;
+    public static final int FS_MENUOPTION_DELETE = 5;
+    public static final int FS_MENUOPTION_ARCHIVE_ACTIVITIES = 6;
+    public static final int FS_MENUOPTION_SCHEDULE_DUMP = 7;
 
     private boolean sharedFlag = false;
 
@@ -367,7 +368,7 @@ public class FSDetailsView extends CommonTableContainerView {
                 menuOptions.append(FS_MENUOPTION_MOUNT - 1).append(',');
             }
             if (!fs.isHA()) {
-                menuOptions.append(FS_MENUOPTION_DELETE - 1).append(',');
+                menuOptions.append(FS_MENUOPTION_DELETE - 2).append(',');
             }
         }
 
@@ -407,6 +408,10 @@ public class FSDetailsView extends CommonTableContainerView {
             // cannot umount unix root file system
             if (!("/".equals(fs.getMountPoint()))) {
                 menuOptions.append(FS_MENUOPTION_UNMOUNT).append(',');
+            }
+            // Shrink enable only if fs is mounted and non-HA
+            if (!fs.isHA()) {
+                menuOptions.append(FS_MENUOPTION_SHRINK).append(',');
             }
         } else { // unmounted
             menuOptions.append(FS_MENUOPTION_MOUNT).append(',');
@@ -805,7 +810,13 @@ public class FSDetailsView extends CommonTableContainerView {
                     if (fsType == GenericFileSystem.FS_NONSAMQ &&
                         (fs.getFSTypeName().equals("ufs") ||
                             fs.getFSTypeName().equals("vxfs"))) {
-                        option = option + 1;
+                        
+                        // operation menu items recalculation
+                        if (3 == option) {
+                            option = FS_MENUOPTION_DELETE;
+                        } else {
+                            option = option + 1;
+                        }
                     }
                     // Option 5 is Edit NFS Properties, this is available for
                     // all mounted file systems (ufs, vxfs, qfs, qfs-archiving)

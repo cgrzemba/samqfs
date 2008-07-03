@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FSSummaryTable.xml,v 1.48 2008/05/16 19:39:19 am143972 Exp $ -->
+<!-- $Id: FSSummaryTable.xml,v 1.49 2008/07/03 00:04:28 ronaldso Exp $ -->
 
 <table>
 <actions>
@@ -74,6 +74,8 @@
             value="4" disabled="true" />
         <option label="FSSummary.GrowFSButton"
             value="5" disabled="true" />
+        <option label="FSSummary.button.shrink"
+            value="9" disabled="true" />
         <option label="FSSummary.actionMenu.delete"
             value="6" disabled="true" />
         <option label="FSSummary.actionMenu.archiveactivities"

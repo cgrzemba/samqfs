@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummary.jsp,v 1.45 2008/05/16 19:39:19 am143972 Exp $
+// ident	$Id: FSSummary.jsp,v 1.46 2008/07/03 00:04:28 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %> 
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -44,7 +44,7 @@
 <!-- Define the resource bundle, html, head, meta, stylesheet and body tags -->
 <cc:header
     pageTitle="FSSummary.title"
-    copyrightYear="2006"
+    copyrightYear="2008"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
         if (parent.serverName != null) {

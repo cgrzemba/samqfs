@@ -27,9 +27,9 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummary.js,v 1.25 2008/05/16 19:39:13 am143972 Exp $
+// ident	$Id: FSSummary.js,v 1.26 2008/07/03 00:04:28 ronaldso Exp $
 
-/** 
+/**
  * This is the javascript file of File System Summary page
  */
 
@@ -54,8 +54,8 @@ var dynamicButtons = samfsButtons;
 
 var dynamicActionMenu = "FSSummary.FileSystemSummaryView.ActionMenu";
 
-var MAX_MENU_OPTIONS     = 9;
-var MAX_MENU_OPTIONS_qfs = 7;
+var MAX_MENU_OPTIONS     = 10;
+var MAX_MENU_OPTIONS_qfs = 8;
 
 // NOTE: this field = num of options in dropdown menu minus the default one
 var maxMenuOptions;
@@ -133,6 +133,7 @@ function toggleDisabledState(field) {
     menuOptionStates[6] = true;
     menuOptionStates[7] = true;
     menuOptionStates[8] = true;
+    menuOptionStates[9] = true;
 
     var myForm   = document.FSSummaryForm;
     var prefix      = "FSSummary.FileSystemSummaryView.";
@@ -148,7 +149,7 @@ function toggleDisabledState(field) {
             modelIndex = field.value;
         }
     } else {
-        // check if there is row selected, since if user click 
+        // check if there is row selected, since if user click
         // cancel to close the popup window, the actiontable row
         // selection still should be retained
         // Get the selected row index
@@ -239,8 +240,6 @@ function showConfirmMsg(key) {
     var fm = document.FSSummaryForm;
     var str1 = fm.elements["FSSummary.ConfirmMsg1"].value;
     var str2 = fm.elements["FSSummary.ConfirmMsg2"].value;
- 
-    var fsName = getSelectedFSName();
 
     if (key == 1) {
         if (!confirm(str1)) {
@@ -257,7 +256,7 @@ function showConfirmMsg(key) {
     } else {
         return false; // this case should never be used
     }
-}        
+}
 
 function getServerKey() {
     return document.FSSummaryForm.elements["FSSummary.ServerName"].value;
@@ -281,6 +280,18 @@ function onClickGrowButton() {
     var hiddenGrowButton = document.FSSummaryForm.elements[
         "FSSummary.FileSystemSummaryView.SamQFSWizardGrowFSButton"];
     hiddenGrowButton.click();
+}
+
+function onClickShrinkButton() {
+    var fsName = getSelectedFSName();
+    var params = "&SAMQFS_FS_NAME=" + fsName;
+    var name = "shrink_" + fsName;
+    var uri = "/faces/jsp/fs/wizards/ShrinkFSWizard.jsp";
+
+    var win = launchPopup(
+                uri, name, getServerKey(), SIZE_WIZARD, encodeURI(params));
+    win.focus();
+    return false;
 }
 
 function handleDropDownOnChange(menu) {
@@ -315,6 +326,12 @@ function handleDropDownOnChange(menu) {
                 return false;
             }
             break;
+
+        // Shrink
+        case 9:
+            onClickShrinkButton();
+            resetDropDownMenu(menu);
+            return false;
 
         default:
             return true;

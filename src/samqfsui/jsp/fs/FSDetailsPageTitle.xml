@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FSDetailsPageTitle.xml,v 1.27 2008/05/16 19:39:19 am143972 Exp $ -->
+<!-- $Id: FSDetailsPageTitle.xml,v 1.28 2008/07/03 00:04:28 ronaldso Exp $ -->
 
 <pagetitle >
     <pageactions>
@@ -71,20 +71,25 @@
                             resetDropDownMenu();
                             return false;
                         }
-                    } else if (item == 4) {
+                    } else if (item == 5) {
                         if (!showConfirmMsg(1)) {
                             resetDropDownMenu();
                             return false;
                         }
+                    } else if (item == 4) {
+                        onClickShrinkButton();
+                        resetDropDownMenu();
+                        return false;
                     }
                 "/>
             <option label="FSDetails.PageActionsMenu.Operations" value="0"/>
             <option label="FSDetails.PageActionsMenu.CheckFS" value="1"/>
             <option label="FSDetails.PageActionsMenu.Mount" value="2"/>
             <option label="FSDetails.PageActionsMenu.Unmount" value="3"/>
-            <option label="FSDetails.PageActionsMenu.Delete" value="4"/>
-            <option label="FSSummary.actionMenu.archiveactivities" value="5"/>
-            <option label="FSDetails.PageActionsMenu.ScheduleDump" value="6"/>
+            <option label="FSSummary.button.shrink" value="4" />
+            <option label="FSDetails.PageActionsMenu.Delete" value="5"/>
+            <option label="FSSummary.actionMenu.archiveactivities" value="6"/>
+            <option label="FSDetails.PageActionsMenu.ScheduleDump" value="7"/>
         </cc> 
     </pageactions>
 </pagetitle>

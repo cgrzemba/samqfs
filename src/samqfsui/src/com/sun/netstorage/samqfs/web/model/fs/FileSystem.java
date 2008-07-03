@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystem.java,v 1.21 2008/06/04 18:16:10 ronaldso Exp $
+// ident	$Id: FileSystem.java,v 1.22 2008/07/03 00:04:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -86,7 +86,10 @@ public interface FileSystem extends GenericFileSystem {
     public DiskCache[] getMetadataDevices();
     public DiskCache[] getDataDevices();
     public StripedGroup[] getStripedGroups();
-
+    
+    // Strictly used only in Shrink File System Wizard
+    // get both metadata & data devices & wrap up striped groups
+    public DiskCache[] getAllDevices();
 
     // action methods
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryModel.java,v 1.67 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FileSystemSummaryModel.java,v 1.68 2008/07/03 00:04:29 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -81,6 +81,7 @@ public class FileSystemSummaryModel extends CCActionTableModel {
     public static final int DELETE = 6;
     public static final int ARCHIVE_ACTIVITIES = 7;
     public static final int SCHEDULE_DUMP = 8;
+    public static final int SHRINK_FS = 9;
 
     // The following integer arrays hold the sequence of menu items that are
     // shown in the page (physical location)
@@ -91,6 +92,7 @@ public class FileSystemSummaryModel extends CCActionTableModel {
         MOUNT,
         UNMOUNT,
         GROW_FS,
+        SHRINK_FS,
         DELETE
     };
 
@@ -101,6 +103,7 @@ public class FileSystemSummaryModel extends CCActionTableModel {
         MOUNT,
         UNMOUNT,
         GROW_FS,
+        SHRINK_FS,
         DELETE,
         ARCHIVE_ACTIVITIES,
         SCHEDULE_DUMP
@@ -210,6 +213,7 @@ public class FileSystemSummaryModel extends CCActionTableModel {
         int i = 0;
         boolean archiveEnabled  = false;
         boolean growEnabled = false;
+        boolean shrinkEnabled = false;
         boolean mountEnabled = false;
         boolean umountEnabled = false;
         boolean deleteEnabled = false;
@@ -344,10 +348,13 @@ public class FileSystemSummaryModel extends CCActionTableModel {
 
             if (SamUtil.isVersionCurrentOrLaterThan(serverAPIVersion, "1.6")) {
                 growEnabled = !fsList[i].isHA();
+                shrinkEnabled =
+                    !fsList[i].isHA() && fsState == FileSystem.MOUNTED;
             } else {
                 growEnabled = !fsList[i].isHA() &&
                     (fsState == FileSystem.UNMOUNTED) &&
                     (fsShareStatus == FileSystem.UNSHARED);
+                shrinkEnabled = false;
             }
 
             deleteEnabled =
@@ -361,6 +368,10 @@ public class FileSystemSummaryModel extends CCActionTableModel {
             // the file system is not type HA, and is unmounted, and unshared
             if (growEnabled) {
                 enabledMenuOptions.append(getPosition(GROW_FS)).append(',');
+            }
+
+            if (shrinkEnabled) {
+                enabledMenuOptions.append(getPosition(SHRINK_FS)).append(',');
             }
 
             if (systemSetup == FileSystemSummaryView.SETUP_QFS) {
@@ -546,7 +557,8 @@ public class FileSystemSummaryModel extends CCActionTableModel {
             StringBuffer enabledButtons = new StringBuffer();
             StringBuffer enabledMenuOptions = new StringBuffer();
 
-            growEnabled = (fsState == GenericFileSystem.UNMOUNTED);
+            // Grow & Shrink are both not available for non-SAM file systems
+
             deleteEnabled =
                 (fsState == GenericFileSystem.UNMOUNTED) &&
                 !UFS_ROOT.equals(point);

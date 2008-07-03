@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.5 2008/06/25 21:03:57 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.6 2008/07/03 00:04:29 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -45,8 +45,10 @@ import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
+import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.Select;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.component.DropDown;
 import com.sun.web.ui.component.Hyperlink;
 import com.sun.web.ui.component.TabSet;
@@ -132,7 +134,6 @@ public class SharedFSBean implements Serializable {
 
 
     public SharedFSBean() {
-System.out.println("Entering SharedFSBean()!");
         this.tabBean = new SharedFSTabBean();
         this.summaryBean = new SharedFSSummaryBean();
         this.clientBean = new SharedFSClientBean();
@@ -148,12 +149,11 @@ System.out.println("Entering SharedFSBean()!");
     // Remote Calls
 
     private void getSummaryData() {
-System.out.println("Calling to backend, getSummaryData()!");
         String fsName = getFSName();
         String serverName = JSFUtil.getServerName();
 
-System.out.println("serverName: " + serverName);
-System.out.println("fsName: " + fsName);
+        TraceUtil.trace3("REMOTE call: getSummaryData()");
+        TraceUtil.trace3("serverName: " + serverName + " fsName: " + fsName);
 
         timeSummary = Long.toString(System.currentTimeMillis());
 
@@ -179,7 +179,8 @@ System.out.println("fsName: " + fsName);
                 this.alertRendered = false;
 
             } catch (SamFSException sfe) {
-System.out.println("SamFSException caught!");
+                TraceUtil.trace1("SamFSException caught!", sfe);
+                LogUtil.error(this, sfe);
 sfe.printStackTrace();
                 SamUtil.processException(
                     sfe,
@@ -204,8 +205,8 @@ sfe.printStackTrace();
         String fsName = getFSName();
         String serverName = JSFUtil.getServerName();
 
-System.out.println("serverName: " + serverName);
-System.out.println("fsName: " + fsName);
+        TraceUtil.trace3("REMOTE call: getData()");
+        TraceUtil.trace3("serverName: " + serverName + " fsName: " + fsName);
 
         if (serverName != null) {
             try {
@@ -235,7 +236,8 @@ System.out.println("fsName: " + fsName);
                 this.alertRendered = false;
 
             } catch (SamFSException sfe) {
-System.out.println("SamFSException caught!");
+                TraceUtil.trace1("SamFSException caught!", sfe);
+                LogUtil.error(this, sfe);
 sfe.printStackTrace();
                 SamUtil.processException(
                     sfe,
@@ -282,7 +284,7 @@ sfe.printStackTrace();
     ////////////////////////////////////////////////////////////////////////////
     // Tab Set
     public TabSet getTabSet() {
-System.out.println("getTabSet: " + showStorageNodes);
+        TraceUtil.trace3("getTabSet: " + showStorageNodes);
         this.tabSet = tabBean.getMyTabSet(showStorageNodes);
         return tabSet;
     }
@@ -341,7 +343,6 @@ System.out.println("getTabSet: " + showStorageNodes);
     }
 
     public boolean isAlertRendered() {
-System.out.println("Calling isAlertRendered: " + alertRendered);
         return alertRendered;
     }
 
@@ -350,7 +351,6 @@ System.out.println("Calling isAlertRendered: " + alertRendered);
     }
 
     public void setAlertInfo(String type, String summary, String detail) {
-System.out.println("calling setAlertInfo!");
         alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
@@ -365,7 +365,6 @@ System.out.println("calling setAlertInfo!");
         // Call to the backend
         getSummaryData();
 
-System.out.println("Entering getJumpMenuOptions: mounted: " + mounted);
         return summaryBean.getJumpMenuOptions(showStorageNodes, mounted);
     }
 
@@ -404,11 +403,8 @@ System.out.println("Entering getJumpMenuOptions: mounted: " + mounted);
     }
 
     public void handleJumpMenuSelection(ActionEvent event) {
-System.out.println("handleJumpMenuSelection() called!");
-
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-System.out.println("selected: " + selected);
 
         if ("editmo".equals(selected)){
             forwardToMountOptionsPage();
@@ -774,8 +770,7 @@ System.out.println("selected: " + selected);
 
     public void handleRemoveClient(ActionEvent event) {
         String [] selectedClients = getSelectedKeys(true);
-System.out.println("Entering handleRemoveClient: selected: " +
-    selectedClients == null ? "null" : selectedClients.length);
+;
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
@@ -785,14 +780,14 @@ System.out.println("Entering handleRemoveClient: selected: " +
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     "SharedFS.message.removeclients.ok",
-                    ConversionUtil.arrayToStr(selectedClients, ' ')),
+                    ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     "SharedFS.message.removeclients.failed",
-                    ConversionUtil.arrayToStr(selectedClients, ' ')),
+                    ConversionUtil.arrayToStr(selectedClients, ',')),
                 samEx.getMessage());
         }
     }
@@ -836,12 +831,8 @@ System.out.println("Entering handleRemoveClient: selected: " +
 
     public void handleTableMenuSelection(ActionEvent event) {
         String [] selectedClients = getSelectedKeys(true);
-System.out.println("Entering handleTableMenuSelection: selected: " +
-    selectedClients == null ? "null" : selectedClients.length);
-
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-System.out.println("handleTableMenuSelection() called: " + selected);
 
         if (clientBean.menuOptions[0][1].equals(selected)) {
             forwardToMountOptionsPage();
@@ -885,14 +876,14 @@ System.out.println("handleTableMenuSelection() called: " + selected);
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     message,
-                    ConversionUtil.arrayToStr(selectedClients, ' ')),
+                    ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     errorMessage,
-                    ConversionUtil.arrayToStr(selectedClients, ' ')),
+                    ConversionUtil.arrayToStr(selectedClients, ',')),
                 samEx.getMessage());
         }
 
@@ -903,7 +894,7 @@ System.out.println("handleTableMenuSelection() called: " + selected);
     public void handleFilterChange(ActionEvent event) {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-System.out.println("Entering handleFilterChange! selected:" + selected);
+
         forwardToClientPage(Short.parseShort(selected));
     }
 
@@ -963,8 +954,7 @@ System.out.println("Entering handleFilterChange! selected:" + selected);
 
     public void handleRemoveStorageNode(ActionEvent event) {
         String [] selectedSns = getSelectedKeys(false);
-System.out.println("Entering handleRemoveStorageNode: selected: " +
-    selectedSns == null ? "null" : selectedSns.length);
+;
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
@@ -974,14 +964,14 @@ System.out.println("Entering handleRemoveStorageNode: selected: " +
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     "SharedFS.message.removesns.ok",
-                    ConversionUtil.arrayToStr(selectedSns, ' ')),
+                    ConversionUtil.arrayToStr(selectedSns, ',')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     "SharedFS.message.removesns.failed",
-                    ConversionUtil.arrayToStr(selectedSns, ' ')),
+                    ConversionUtil.arrayToStr(selectedSns, ',')),
                 samEx.getMessage());
         }
     }
@@ -1025,12 +1015,8 @@ System.out.println("Entering handleRemoveStorageNode: selected: " +
 
     public void handleSnTableMenuSelection(ActionEvent event) {
         String [] selectedSns = getSelectedKeys(false);
-System.out.println("Entering handleSnTableMenuSelection: selected: " +
-    selectedSns == null ? "null" : selectedSns.length);
-
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-System.out.println("handleTableMenuSelection() called: " + selected);
 
         if (snBean.menuOptions[0][1].equals(selected)) {
             forwardToMountOptionsPage();
@@ -1090,14 +1076,14 @@ System.out.println("handleTableMenuSelection() called: " + selected);
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     message,
-                    ConversionUtil.arrayToStr(selectedSns, ' ')),
+                    ConversionUtil.arrayToStr(selectedSns, ',')),
                 null);
         } catch (SamFSException samEx) {
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
                     errorMessage,
-                    ConversionUtil.arrayToStr(selectedSns, ' ')),
+                    ConversionUtil.arrayToStr(selectedSns, ',')),
                 samEx.getMessage());
         }
 
@@ -1108,7 +1094,8 @@ System.out.println("handleTableMenuSelection() called: " + selected);
     public void handleSnFilterChange(ActionEvent event) {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-System.out.println("Entering handleSnFilterChange! selected:" + selected);
+
+        TraceUtil.trace3("Entering handleSnFilterChange! selected:" + selected);
         forwardToSnPage(Short.parseShort(selected));
     }
 }

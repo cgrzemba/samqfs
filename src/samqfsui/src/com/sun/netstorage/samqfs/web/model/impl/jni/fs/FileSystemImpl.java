@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.47 2008/06/04 18:16:11 ronaldso Exp $
+// ident	$Id: FileSystemImpl.java,v 1.48 2008/07/03 00:04:30 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -204,9 +204,34 @@ public class FileSystemImpl extends GenericFileSystemImpl
         return dataDevices;
     }
 
-
     public StripedGroup[] getStripedGroups() {
         return stripedGrps;
+    }
+
+    /**
+     * Strictly used only in Shrink File System Wizard
+     * @return data, metadata devices, and striped groups
+     */
+    public DiskCache[] getAllDevices() {
+        DiskCache [] allDevices = new DiskCache[
+            metaDevices.length + dataDevices.length + stripedGrps.length];
+        System.arraycopy(
+            dataDevices, 0, allDevices, 0, dataDevices.length);
+        System.arraycopy(
+            metaDevices, 0, allDevices, dataDevices.length, metaDevices.length);
+        DiskCache [] stripedDevices = convertStripedGroups(stripedGrps);
+        System.arraycopy(
+            stripedDevices, 0, allDevices,
+            dataDevices.length + metaDevices.length, stripedDevices.length);
+        return allDevices;
+    }
+
+    private DiskCache [] convertStripedGroups(StripedGroup [] groups) {
+        DiskCache [] dcGroups = new DiskCache[groups.length];
+        for (int i = 0; i < groups.length; i++) {
+            dcGroups[i] = new DiskCacheImpl(groups[i]);
+        }
+        return dcGroups;
     }
 
     // overrides the definition in the parent class
@@ -866,7 +891,10 @@ public class FileSystemImpl extends GenericFileSystemImpl
      */
     public int shrinkRelease(int eqToRelease, ShrinkOption options)
         throws SamFSException {
-        
+System.out.println("shrinkRelease called!");
+System.out.println("eqToRelease: " + eqToRelease);
+System.out.println("ShrinkOptions: " + options.toString());
+
         return FS.shrinkRelease(
                     getJniContext(), fsInfo.getName(),
                     eqToRelease, options.toString());
@@ -893,7 +921,11 @@ public class FileSystemImpl extends GenericFileSystemImpl
     public int shrinkRemove(
         int eqToRemove, int replacementEq, ShrinkOption options)
 	throws SamFSException {
-        
+
+System.out.println("shrinkRemove called!");
+System.out.println("eqToRemove: " + eqToRemove);
+System.out.println("ShrinkOptions: " + options.toString());
+
         return FS.shrinkRemove(
                     getJniContext(), fsInfo.getName(),
                     eqToRemove, replacementEq, options.toString());
@@ -917,7 +949,12 @@ public class FileSystemImpl extends GenericFileSystemImpl
     public int shrinkReplaceDev(
         int eqToRemove, DiskCache replacement, ShrinkOption options)
 	throws SamFSException {
-        
+
+System.out.println("shrinkReplaceDev called!");
+System.out.println("eqToRemove: " + eqToRemove);
+System.out.println("replacement: " + replacement.getDevicePath());
+System.out.println("ShrinkOptions: " + options.toString());
+
         return FS.shrinkReplaceDev(
                     getJniContext(), fsInfo.getName(),
                     eqToRemove,
@@ -943,11 +980,16 @@ public class FileSystemImpl extends GenericFileSystemImpl
     public int shrinkReplaceGroup(
         int eqToRemove, StripedGroup replacement, ShrinkOption options)
 	throws SamFSException {
-        
+
+System.out.println("shrinkReplaceGroup called!");
+System.out.println("eqToRemove: " + eqToRemove);
+System.out.println("replacement: " + replacement.getMembers().length);
+System.out.println("ShrinkOptions: " + options.toString());
+
         return FS.shrinkReplaceGroup(
                     getJniContext(), fsInfo.getName(),
                     eqToRemove,
                     ((StripedGroupImpl) replacement).getJniStripedGroup(),
                     options.toString());
-    }
+     }
 }

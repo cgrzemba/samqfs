@@ -27,9 +27,9 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: FSDetails.js,v 1.3 2008/05/16 19:39:13 am143972 Exp $
+// ident    $Id: FSDetails.js,v 1.4 2008/07/03 00:04:28 ronaldso Exp $
 
-/** 
+/**
  * This is the javascript file for File System Details Page
  */
 
@@ -54,7 +54,7 @@
         // reset to Operation
         dropDownMenu.options[0].selected = true;
     }
-    
+
     function getServerKey() {
         return document.FSDetailsForm.elements["FSDetails.ServerName"].value;
     }
@@ -70,10 +70,6 @@
 
     function enableComponents() {
         var myForm = document.FSDetailsForm;
-        var enabledMenuOptions =
-            myForm.elements[
-                "FSDetails.FSDetailsView.HiddenDynamicMenuOptions"].value;
-
         var actionMenu = "FSDetails.FSDetailsView.PageActionsMenu";
         var formName      = "FSDetailsForm";
 
@@ -82,10 +78,11 @@
         menuOptionStates[1] = true; // fsck
         menuOptionStates[2] = true; // mount
         menuOptionStates[3] = true; // umount
-        menuOptionStates[4] = true; // delete
-        menuOptionStates[5] = true; // archive activities
-        menuOptionStates[6] = true; // schedule recovery points
-    
+        menuOptionStates[4] = true; // shrink
+        menuOptionStates[5] = true; // delete
+        menuOptionStates[6] = true; // archive activities
+        menuOptionStates[7] = true; // schedule recovery points
+
         var options =
             myForm.elements[
                 "FSDetails.FSDetailsView.HiddenDynamicMenuOptions"].value;
@@ -130,4 +127,17 @@
         } else {
             return false; // this case should never be used
         }
+    }
+
+    function onClickShrinkButton() {
+        var myForm = document.FSDetailsForm;
+        var fsName = myForm.elements["FSDetails.FSDetailsView.fsName"].value;
+        var params = "&SAMQFS_FS_NAME=" + fsName;
+        var name = "shrink_" + fsName;
+        var uri = "/faces/jsp/fs/wizards/ShrinkFSWizard.jsp";
+
+        var win = launchPopup(
+                    uri, name, getServerKey(), SIZE_WIZARD, encodeURI(params));
+        win.focus();
+        return false;
     }

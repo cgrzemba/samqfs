@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.1 2008/06/25 21:03:58 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.2 2008/07/03 00:04:29 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -41,8 +41,11 @@ import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
+import com.sun.netstorage.samqfs.web.model.fs.ShrinkOption;
+import com.sun.netstorage.samqfs.web.model.impl.jni.media.StripedGroupImpl;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.Select;
@@ -53,8 +56,10 @@ import com.sun.web.ui.event.WizardEvent;
 import com.sun.web.ui.event.WizardEventListener;
 import com.sun.web.ui.model.Option;
 import java.io.Serializable;
+import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
 
 public class ShrinkFSBean implements Serializable {
 
@@ -68,20 +73,28 @@ public class ShrinkFSBean implements Serializable {
     protected static final String STEP_OPTIONS = "step_id_options";
     protected static final String STEP_REVIEW = "step_id_review";
 
+    /** Holds archiving information of the file system */
+    protected boolean archive = false;
+
     /** Holds value of alert info. */
     protected boolean alertRendered = false;
     protected String alertType = null;
     protected String alertDetail = null;
     protected String alertSummary = null;
 
-    /** Holds table information in exclude device page. */
+    /** Holds data and metadata table information in exclude device page. */
     protected String tableTitleExclude = null;
     protected TableRowGroup excludeTableRowGroup = null;
     protected Select selectExclude = new Select("excludeTable");
+    private int eqToShrink = -1;
+    protected String selectedStripedGroup = null;
+    /** Holds the number of members in the striped group to be shrinked. */
+    private int numberOfMembers = -1;
     /** Holds the disk cache information of the tables. */
     private DiskCache [] allocUnits = null;
 
     /** Holds the radio button information of specify method step. */
+    protected boolean renderSubStepMethod = false;
     protected boolean renderedMethodRelease = true;
     protected boolean renderedMethodDistribute = true;
     protected boolean renderedMethodMove = true;
@@ -90,10 +103,10 @@ public class ShrinkFSBean implements Serializable {
     protected boolean selectedMethodMove = false;
 
     /** Holds table information in specify device page. */
-    protected boolean renderedSubStep = true;
     protected TableRowGroup availableTableRowGroup = null;
     protected Select selectAvailable = new Select("availableTable");
     private DiskCache [] availUnits = null;
+    private String [] replacementPaths = null;
 
     /** Hold information in specify shrink options step. */
     protected String textLogFile = null;
@@ -106,10 +119,12 @@ public class ShrinkFSBean implements Serializable {
     protected boolean displayName = false;
     protected boolean dryRun = false;
     protected boolean stageBack = false;
+    protected boolean stagePartialBack = false;
     protected String selectedBlockSize = null;
     protected Option [] blockSizeSelections = null;
     protected String textStreams = null;
     private static final int DEFAULT_STREAM_SIZE = 8;
+    private static final int DEFAULT_BLOCK_SIZE = 1;
     private static final int MINIMUM_BLOCK_SIZE = 1;
     private static final int MAXIMUM_BLOCK_SIZE = 16;
 
@@ -124,33 +139,27 @@ public class ShrinkFSBean implements Serializable {
     protected WizardEventListener wizardStepEventListener = null;
 
     public ShrinkFSBean() {
-System.out.println("Entering ShrinkFSBean()!");
-
-        tableTitleExclude =
-            JSFUtil.getMessage(
-                "fs.shrink.selectstorage.tabletitle", getFSName());
-
-        // Step 2: Default value set to release
-        selectedMethodRelease = true;
-
-        // Step 3: Default value to use default settings
-        selectedOptionDefault = true;
+        initWizard();
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // Remote Calls
+
     private DiskCache [] getAllocUnits() throws SamFSException {
-System.out.println("Getting alloc units from fs!");
+        TraceUtil.trace3("REMOTE CALL: Getting alloc units from fs!");
+
         FileSystem fs = getFileSystem();
         if (fs == null) {
             TraceUtil.trace1("fs is null, populateData()!");
             throw new SamFSException(null, -1000);
         }
 
-        return fs.getDataDevices();
+        return fs.getAllDevices();
     }
 
     private DiskCache [] getAvailUnits() throws SamFSException {
+        TraceUtil.trace3("REMOTE CALL: Getting avail units from fs!");
+
         SamQFSSystemModel sysModel = SamUtil.getModel(JSFUtil.getServerName());
         if (sysModel == null) {
             throw new SamFSException(null, -2501);
@@ -162,20 +171,13 @@ System.out.println("Getting alloc units from fs!");
 
     ////////////////////////////////////////////////////////////////////////////
     // Exclude Device Step
+
     public TableRowGroup getExcludeTableRowGroup() {
         return excludeTableRowGroup;
     }
 
     public void setExcludeTableRowGroup(TableRowGroup excludeTableRowGroup) {
         this.excludeTableRowGroup = excludeTableRowGroup;
-    }
-
-    public Select getSelectExclude() {
-        return selectExclude;
-    }
-
-    public void setSelectExclude(Select selectExclude) {
-        this.selectExclude = selectExclude;
     }
 
     public String getTableTitleExclude() {
@@ -186,13 +188,38 @@ System.out.println("Getting alloc units from fs!");
         this.tableTitleExclude = tableTitleExclude;
     }
 
+    public Select getSelectExclude() {
+        return selectExclude;
+    }
+
+    public void setSelectExclude(Select selectExclude) {
+        this.selectExclude = selectExclude;
+    }
+
+    public String getSelectedStripedGroup() {
+        return selectedStripedGroup;
+    }
+
+    public void setSelectedStripedGroup(String selectedStripedGroup) {
+        this.selectedStripedGroup = selectedStripedGroup;
+    }
+
     public TableDataProvider getExcludeSummaryList() {
         if (allocUnits == null) {
             try {
                 allocUnits = getAllocUnits();
             } catch (SamFSException samEx) {
                 samEx.printStackTrace();
-                // TODO: set error
+                TraceUtil.trace1(
+                    "Failed to retrieve device information of file system " +
+                    getFSName(), samEx);
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage(
+                        "fs.shrink.selectstorage.populate.failed",
+                        getFSName()),
+                    samEx.getMessage());
+                allocUnits = new DiskCache[0];
             }
         }
         return new ObjectArrayDataProvider(allocUnits);
@@ -200,34 +227,84 @@ System.out.println("Getting alloc units from fs!");
 
     /**
      * Retrieve the selected row keys form the table
-     * @param alloc true if used for selecting allocated device to shrink
-     * @return an array of Strings that hold the keys of selected rows
+     * @return the eq of the selected device
      */
-    protected String getSelectedKey(boolean alloc) {
-        TableDataProvider provider =
-            alloc ? getExcludeSummaryList() : getAvailableSummaryList();
-        RowKey[] rows =
-            alloc ?
-                getExcludeTableRowGroup().getSelectedRowKeys() :
-                getAvailableTableRowGroup().getSelectedRowKeys();
-        String selected = null;
-System.out.println("getSelectedKey(" + alloc + ") is called!");
+    protected int getSelectedPathExclude() {
+        int selectedEQ = -1;
+        TableDataProvider provider = getExcludeSummaryList();
+        RowKey[] rows = getExcludeTableRowGroup().getSelectedRowKeys();
+
         if (rows != null && rows.length > 0) {
-System.out.println("inside if case! selected:");
-            FieldKey field = provider.getFieldKey("devicePath");
-            selected = (String) provider.getValue(field, rows[0]);
+            // Get device display string and populate review selection page
+            // field
+            FieldKey field = provider.getFieldKey("devicePathDisplayString");
+            summarySelectStorage = (String) provider.getValue(field, rows[0]);
+
+            // Get the EQ of the selected device
+            field = provider.getFieldKey("equipOrdinal");
+            Integer selected = (Integer) provider.getValue(field, rows[0]);
+            // preserve EQ for method return value
+            selectedEQ = selected.intValue();
+
+System.out.println("getSelectedPathExclude EQ: " + selected.intValue());
+
+            // Check disk cache type and determine if "release" radio button
+            // needs to be rendered
+            field = provider.getFieldKey("diskCacheType");
+            selected = (Integer) provider.getValue(field, rows[0]);
+System.out.println("getSelectedPathExclude dc: " + selected.intValue());
+
+            if (DiskCache.STRIPED_GROUP == selected.intValue()) {
+                field = provider.getFieldKey("devicePath");
+                selectedStripedGroup =
+                    (String) provider.getValue(field, rows[0]);
+
+                // a backdoor way to save the number of members in a striped
+                // group
+                numberOfMembers = summarySelectStorage.split("<br>").length - 1;
+System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
+            } else {
+                selectedStripedGroup = null;
+            }
+
+            // Skip method step if striped group is selected
+            updateWizardSteps(selected.intValue());
+
+            // save the selection
+            getSelectExclude().setKeepSelected(true);
+        } else{
+            summarySelectStorage = null;
         }
 
-        // safe to clear the selection
-/*
-        if (alloc) {
-            getSelectExclude().clear();
+        return selectedEQ;
+    }
+
+    private void updateWizardSteps(int dcType) {
+        // do not render the method step if striped group is selected
+        if (DiskCache.STRIPED_GROUP == dcType) {
+            renderSubStepMethod = false;
+            selectedMethodMove = true;
+            selectedMethodRelease = false;
+            selectedMethodDistribute = false;
         } else {
-            getSelectAvailable().clear();
-        }
- */
+            renderSubStepMethod = true;
 
-        return selected;
+            // Release option in method step only shows up if the file system is
+            // an archiving file system, and the selected device must not be a
+            // metadata device or a striped group
+            if (archive &&
+                DiskCache.METADATA != dcType) {
+                renderedMethodRelease = true;
+                selectedMethodRelease = true;
+                selectedMethodDistribute = false;
+                selectedMethodMove = false;
+            } else {
+                renderedMethodRelease = false;
+                selectedMethodRelease = false;
+                selectedMethodDistribute = true;
+                selectedMethodMove = false;
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -247,6 +324,14 @@ System.out.println("inside if case! selected:");
 
     public void setRenderedMethodMove(boolean renderedMethodMove) {
         this.renderedMethodMove = renderedMethodMove;
+    }
+
+    public boolean isRenderSubStepMethod() {
+        return renderSubStepMethod;
+    }
+
+    public void setRenderSubStepMethod(boolean renderSubStepMethod) {
+        this.renderSubStepMethod = renderSubStepMethod;
     }
 
     public boolean isRenderedMethodRelease() {
@@ -305,18 +390,52 @@ System.out.println("inside if case! selected:");
                 availUnits = getAvailUnits();
             } catch (SamFSException samEx) {
                 samEx.printStackTrace();
-                // TODO: set error
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage(
+                        "fs.shrink.specifydevice.populate.failed"),
+                    samEx.getMessage());
+                availUnits = new DiskCache[0];
             }
         }
         return new ObjectArrayDataProvider(availUnits);
     }
 
-    public boolean isRenderedSubStep() {
-        return renderedSubStep;
-    }
+    /**
+     * Retrieve the selected row keys form the table
+     * @return the replacement path
+     */
+    protected String [] getSelectedReplacePath() {
+        TableDataProvider provider = getAvailableSummaryList();
+        RowKey[] rows = getAvailableTableRowGroup().getSelectedRowKeys();
 
-    public void setRenderedSubStep(boolean renderedSubStep) {
-        this.renderedSubStep = renderedSubStep;
+        if (rows != null && rows.length > 0) {
+            // save the selection
+            getSelectAvailable().setKeepSelected(true);
+
+            StringBuffer selectedPath = new StringBuffer();
+            StringBuffer summaryStr = new StringBuffer();
+
+            for (int i = 0; i < rows.length; i++) {
+                if (i > 0) {
+                    selectedPath.append("###");
+                    summaryStr.append("<br>");
+                }
+                FieldKey field = provider.getFieldKey("devicePath");
+                selectedPath.append(
+                    (String) provider.getValue(field, rows[i]));
+
+                field = provider.getFieldKey("devicePathDisplayString");
+                summaryStr.append(
+                    (String) provider.getValue(field, rows[i]));
+            }
+            summarySpecifyDevice = summaryStr.toString();
+            return selectedPath.toString().split("###");
+
+        } else{
+            summarySpecifyDevice = null;
+        }
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -352,11 +471,28 @@ System.out.println("inside if case! selected:");
     }
 
     public void validateLogFile(
-        FacesContext context, UIComponent component, Object value) {
+        FacesContext context, UIComponent component, Object value)
+        throws ValidatorException{
 
-        // TODO:
-        // Check empty spaces
-        // Check illegal characters
+        String errMsg = null;
+
+        if (((String) value).length() == 0) {
+            errMsg =
+                JSFUtil.getMessage("fs.shrink.options.logfile.required");
+        } else if (!SamUtil.isValidNonSpecialCharString((String) value)) {
+            errMsg =
+                JSFUtil.getMessage("fs.shrink.options.logfile.invalid");
+        } else {
+            clearAlertInfo();
+        }
+
+        if (errMsg != null) {
+            setAlertInfo(Constants.Alert.ERROR, errMsg, null);
+            FacesMessage message = new FacesMessage();
+            message.setDetail(errMsg);
+            message.setSeverity(FacesMessage.SEVERITY_ERROR);
+            throw new ValidatorException(message);
+        }
     }
 
     public boolean isDisplayName() {
@@ -381,6 +517,14 @@ System.out.println("inside if case! selected:");
 
     public void setStageBack(boolean stageBack) {
         this.stageBack = stageBack;
+    }
+
+    public boolean isStagePartialBack() {
+        return stagePartialBack;
+    }
+
+    public void setStagePartialBack(boolean stagePartialBack) {
+        this.stagePartialBack = stagePartialBack;
     }
 
     public Option[] getBlockSizeSelections() {
@@ -468,7 +612,6 @@ System.out.println("inside if case! selected:");
     }
 
     public String getSummarySelectStorage() {
-        summarySelectStorage = getSelectedKey(true);
         return summarySelectStorage;
     }
 
@@ -477,7 +620,6 @@ System.out.println("inside if case! selected:");
     }
 
     public String getSummarySpecifyDevice() {
-        summarySpecifyDevice = getSelectedKey(false);
         return summarySpecifyDevice;
     }
 
@@ -521,7 +663,6 @@ System.out.println("inside if case! selected:");
     }
 
     public boolean isAlertRendered() {
-        System.out.println("Calling isAlertRendered: " + alertRendered);
         return alertRendered;
     }
 
@@ -530,11 +671,17 @@ System.out.println("inside if case! selected:");
     }
 
     public void setAlertInfo(String type, String summary, String detail) {
-        System.out.println("calling setAlertInfo!");
         alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
         this.alertDetail = detail;
+    }
+
+    public void clearAlertInfo() {
+        alertRendered = false;
+        this.alertType = null;
+        this.alertSummary = null;
+        this.alertDetail = null;
     }
 
 
@@ -553,6 +700,66 @@ System.out.println("inside if case! selected:");
         SamQFSSystemModel sysModel = SamUtil.getModel(JSFUtil.getServerName());
         return sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
     }
+
+    private void initWizard() {
+        clearAlertInfo();
+
+        archive = false;
+        eqToShrink = -1;
+        replacementPaths = null;
+
+        tableTitleExclude = null;
+        excludeTableRowGroup = null;
+        selectExclude = new Select("excludeTable");
+        allocUnits = null;
+        selectedStripedGroup = null;
+        getSelectExclude().clear();
+
+        renderSubStepMethod = false;
+        renderedMethodRelease = true;
+        renderedMethodDistribute = true;
+        renderedMethodMove = true;
+        selectedMethodRelease = false;
+        selectedMethodDistribute = false;
+        selectedMethodMove = false;
+
+        availableTableRowGroup = null;
+        selectAvailable = new Select("availableTable");
+        availUnits = null;
+        getSelectAvailable().clear();
+
+        textLogFile = null;
+        selectedOptionDefault = false;
+        selectedOptionCustom = false;
+        displayName = false;
+        dryRun = false;
+        stageBack = false;
+        stagePartialBack = false;
+        selectedBlockSize = null;
+        blockSizeSelections = null;
+        textStreams = null;
+
+        summarySelectStorage = null;
+        summaryMethod = null;
+        summarySpecifyDevice = null;
+        summaryOptions = null;
+
+        tableTitleExclude =
+            JSFUtil.getMessage(
+                "fs.shrink.selectstorage.tabletitle", getFSName());
+
+        try {
+            FileSystem myFS = getFileSystem();
+            archive = myFS.getArchivingType() == FileSystem.ARCHIVING;
+        } catch (SamFSException samEx) {
+            archive = false;
+            TraceUtil.trace1("Error getting archive type!", samEx);
+        }
+
+        // Step 1.2: Default value to use default settings
+        selectedOptionDefault = true;
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Wizard Impl Control
@@ -577,21 +784,23 @@ System.out.println("inside if case! selected:");
 System.out.println("handleEvent called! " + event.getEvent());
             switch (event.getEvent()) {
                 case WizardEvent.START:
-                    break;
                 case WizardEvent.COMPLETE:
                 case WizardEvent.CLOSE:
                 case WizardEvent.CANCEL:
-                    event.getWizard().getChildren().clear();
+                    initWizard();
                     break;
                 case WizardEvent.NEXT:
                     return handleNextButton(event);
                 case WizardEvent.PREVIOUS:
+                    clearAlertInfo();
                     break;
                 case WizardEvent.FINISH:
                     return handleFinishButton(event);
-                case WizardEvent.HELPTAB:
                 case WizardEvent.STEPSTAB:
                 case WizardEvent.GOTOSTEP:
+                    clearAlertInfo();
+                    break;
+                case WizardEvent.HELPTAB:
                 case WizardEvent.NOEVENT:
                     break;
             }
@@ -617,13 +826,242 @@ System.out.println("handleEvent called! " + event.getEvent());
         private boolean handleNextButton(WizardEvent event) {
             WizardStep step = event.getStep();
             String id = step.getId();
-            System.out.println("NEXT: ID is " + id);
+System.out.println("NEXT: ID is " + id);
+            if (STEP_SELECT_STORAGE.equals(id)) {
+                return handleSelectStorage(event);
+            } else if (STEP_METHOD.equals(id)) {
+                return handleMethod(event);
+            } else if (STEP_SPECIFY_DEVICE.equals(id)) {
+                return handleSpecifyDevice(event);
+            } else if (STEP_OPTIONS.equals(id)) {
+                // no op
+            } else if (STEP_REVIEW.equals(id)) {
+                // no op
+            }
             return true;
         }
 
         private boolean handleFinishButton(WizardEvent event) {
-            setAlertInfo(Constants.Alert.INFO, "Summary", "Details!");
+            String messageSummary = null;
+            String messageDetails = null;
+            FileSystem myFS = null;
+System.out.println("selectedStripedGroup: " + selectedStripedGroup);
+            try {
+                myFS = getFileSystem();
+
+                ShrinkOption options =
+                    selectedOptionCustom ?
+                        new ShrinkOption(
+                            textLogFile,
+                            Integer.parseInt(selectedBlockSize),
+                            displayName,
+                            dryRun,
+                            Integer.parseInt(textStreams),
+                            stageBack,
+                            stagePartialBack) :
+                        new ShrinkOption(
+                            textLogFile,
+                            DEFAULT_BLOCK_SIZE,
+                            false,
+                            false,
+                            DEFAULT_STREAM_SIZE,
+                            false,
+                            false);
+
+                // OK message
+                messageSummary = JSFUtil.getMessage(
+                                    "fs.shrink.ok",
+                                    new String [] {
+                                        myFS.getName()});
+
+                // Shrink Release
+                if (selectedMethodRelease) {
+                    messageDetails = JSFUtil.getMessage(
+                                "fs.shrink.release.ok.details",
+                                new String [] {
+                                    summarySelectStorage});
+                    myFS.shrinkRelease(eqToShrink, options);
+
+                // Shrink Remove
+                } else if (selectedMethodDistribute) {
+                    messageDetails = JSFUtil.getMessage(
+                                "fs.shrink.remove.ok.details",
+                                new String [] {
+                                    summarySelectStorage});
+                    myFS.shrinkRemove(eqToShrink, -1, options);
+
+                // Shrink & Replace with newly discovered device
+                } else {
+                    DiskCache [] replacement = getReplacementPathObj();
+                    // non-striped group replacement
+                    if (selectedStripedGroup == null) {
+                        messageDetails = JSFUtil.getMessage(
+                                "fs.shrink.replace.ok.details",
+                                new String [] {
+                                    summarySelectStorage,
+                                    replacementPaths[0]});
+                        myFS.shrinkReplaceDev(
+                            eqToShrink,
+                            replacement[0],
+                            options);
+                    } else {
+                        messageDetails = JSFUtil.getMessage(
+                                "fs.shrink.replace.stripedgroup.ok.details",
+                                new String [] {
+                                    "<br>".concat(
+                                        summarySelectStorage).concat("<br>"),
+                                    "<br>&nbsp;&nbsp;&nbsp;&nbsp;".concat(
+                                        ConversionUtil.arrayToStr(
+                                            replacementPaths,
+                                            "<br>&nbsp;&nbsp;&nbsp;&nbsp;"))});
+                        myFS.shrinkReplaceGroup(
+                            eqToShrink,
+                            new StripedGroupImpl("", replacement),
+                            options);
+                    }
+                }
+                setAlertInfo(
+                    Constants.Alert.INFO, messageSummary, messageDetails);
+
+            } catch (SamFSException samEx) {
+samEx.printStackTrace();
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage(
+                        "fs.shrink.failed",
+                        myFS.getName()),
+                    samEx.getMessage());
+            }
             return true;
+        }
+
+        private boolean handleSelectStorage(WizardEvent event) {
+            eqToShrink = getSelectedPathExclude();
+
+            // User has to select at least one device
+            if (-1 == eqToShrink && null == selectedStripedGroup) {
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage("fs.shrink.selectstorage.error"),
+                    null);
+                return false;
+            } else {
+                clearAlertInfo();
+            }
+
+            return true;
+        }
+
+        private boolean handleMethod(WizardEvent event) {
+            // reset summary specify device
+            if (!selectedMethodMove) {
+                summarySpecifyDevice = null;
+            }
+            return true;
+        }
+
+        private boolean handleSpecifyDevice(WizardEvent event) {
+            replacementPaths = getSelectedReplacePath();
+
+            // User has to select at least one device
+            if (replacementPaths == null || replacementPaths.length == 0) {
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage("fs.shrink.specifydevice.error"),
+                    null);
+                return false;
+            } else {
+                clearAlertInfo();
+            }
+
+            if (!checkOverlapLuns()) {
+                return false;
+            } else if (!validateStripedGroupReplacement()) {
+                return false;
+            } else {
+                clearAlertInfo();
+                return true;
+            }
+        }
+
+        private boolean checkOverlapLuns() {
+            String [] overlapLUNs = null;
+            try {
+                SamQFSSystemModel sysModel =
+                    SamUtil.getModel(JSFUtil.getServerName());
+                if (sysModel == null) {
+                    throw new SamFSException(null, -2501);
+                }
+
+                overlapLUNs = sysModel.getSamQFSSystemFSManager().
+                                  checkSlicesForOverlaps(replacementPaths);
+            } catch (SamFSException ex) {
+                TraceUtil.trace1(
+                    "Failed to check if selected devices are overlapped!", ex);
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage("fs.shrink.checkoverlap.failed"),
+                    ex.getMessage());
+                return false;
+            }
+
+            if (null == overlapLUNs || overlapLUNs.length == 0) {
+                return true;
+            } else {
+                StringBuffer badLUNs = new StringBuffer();
+                for (int i = 0; i < overlapLUNs.length; i++) {
+                    if (i > 0) {
+                        badLUNs.append("<br>");
+                    }
+                    badLUNs.append(overlapLUNs[i]);
+                }
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage("FSWizard.error.overlapDataLUNs"),
+                    badLUNs.toString());
+                return false;
+            }
+        }
+
+        private boolean validateStripedGroupReplacement() {
+            // Not a striped group
+            if (-1 == numberOfMembers) {
+                return true;
+            }
+
+            // error if number of devices of replacement group doesn't match
+            // the number of members of striped group to be shrinked
+            if (numberOfMembers != replacementPaths.length) {
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage(
+                        "fs.shrink.replace.stripedgroup.error",
+                        Integer.toString(numberOfMembers)),
+                    null);
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        private DiskCache [] getReplacementPathObj() throws SamFSException {
+            boolean found = false;
+            DiskCache [] targetDc = new DiskCache[replacementPaths.length];
+            for (int i = 0; i < replacementPaths.length; i++) {
+                for (int j = 0; j < availUnits.length; j++) {
+                    if (availUnits[j].getDevicePath().
+                        equals(replacementPaths[i])) {
+                        targetDc[i] = availUnits[j];
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                throw new SamFSException(
+                    "Developer bug found in getReplacementPathObj!");
+            }
+            return targetDc;
         }
     }
 }

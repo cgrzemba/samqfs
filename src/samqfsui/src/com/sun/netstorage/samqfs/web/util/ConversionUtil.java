@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ConversionUtil.java,v 1.23 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: ConversionUtil.java,v 1.24 2008/07/03 00:04:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -233,6 +233,10 @@ public class ConversionUtil {
 
 
     public static String arrayToStr(Object[] objs, char sep) {
+        return arrayToStr(objs, Character.toString(sep));
+    }
+
+    public static String arrayToStr(Object[] objs, String sep) {
         StringBuffer s = new StringBuffer();
         if (null != objs) {
             for (int i = 0; i < objs.length; i++) {
