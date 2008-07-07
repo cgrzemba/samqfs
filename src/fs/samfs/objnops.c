@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 #include "sam/osversion.h"
 
@@ -460,6 +460,7 @@ sam_obj_read(struct objnode *objnodep, uint64_t offset, uint64_t len,
 	uio.uio_loffset = offset;
 	uio.uio_resid = (ssize_t)len;
 	uio.uio_fmode = FREAD;
+	uio.uio_llimit = SAM_MAXOFFSET_T;
 
 	/*
 	 * Directio or Page IO
@@ -520,6 +521,7 @@ sam_obj_write(struct objnode *objnodep, uint64_t offset, uint64_t len,
 	uio.uio_loffset = offset;
 	uio.uio_resid = (ssize_t)len;
 	uio.uio_fmode = FWRITE;
+	uio.uio_llimit = SAM_MAXOFFSET_T;
 
 	/*
 	 * Directio, Page IO or FSYNC
