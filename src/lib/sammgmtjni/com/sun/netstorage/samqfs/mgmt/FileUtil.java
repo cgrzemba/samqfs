@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileUtil.java,v 1.17 2008/06/04 22:23:28 pg125177 Exp $
+// ident	$Id: FileUtil.java,v 1.18 2008/07/08 21:40:31 ronaldso Exp $
 package com.sun.netstorage.samqfs.mgmt;
 
 import com.sun.netstorage.samqfs.mgmt.Ctx;
@@ -203,6 +203,13 @@ public class FileUtil {
      * USER		user=%s
      * GROUP		group=%s
      * MODE		mode=%o e.g. 0600
+     * WORM
+     *  (for directory)
+     *  worm=capable,worm_duration=%u
+     *  (for file)
+     *  worm=active|expired,worm_start=%u,worm_duration=%u|permanent,worm_end=%s
+     *  NOTE:duration is in min, start is in sec, end in MM DD YYYY HH:mm
+     *  
      * RELEASE_ATTS
      *  partial_release_sz=%lld release_atts==%d RL_ATT_NEVER | RL_ATT_WHEN1COPY
      * STAGE_ATTS	stage_atts=%d ST_ATT_NEVER | ST_ATT_ASSOC

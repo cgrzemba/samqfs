@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSSummaryBean.java,v 1.2 2008/06/17 16:04:27 ronaldso Exp $
+// ident        $Id: SharedFSSummaryBean.java,v 1.3 2008/07/08 21:40:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -167,12 +167,12 @@ public class SharedFSSummaryBean {
             clientInfo = getInfo(allInfo, SECTION_CLIENTS);
         }
         return
-            clientInfo.length > 0 ?
-                JSFUtil.getMessage(
-                    "SharedFS.title.clients",
-                    new String [] {
-                            Integer.toString(clientInfo[0].getClients())}) :
-                "";
+            JSFUtil.getMessage(
+                "SharedFS.title.clients",
+                new String [] {
+                    clientInfo.length > 0 ?
+                        Integer.toString(clientInfo[0].getClients()) :
+                    Integer.toString(0)});
     }
 
     public TableDataProvider getClientList() {

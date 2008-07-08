@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopupViewBean.java,v 1.22 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FileDetailsPopupViewBean.java,v 1.23 2008/07/08 21:40:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -53,6 +53,7 @@ import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
+import com.sun.netstorage.samqfs.web.util.TimeConvertor;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.model.CCPageTitleModel;
@@ -101,6 +102,9 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
 
     private CCPageTitleModel pageTitleModel = null;
     private CCActionTableModel tableModel   = null;
+
+    private StringBuffer lineBreak = new StringBuffer("<br>");
+    private StringBuffer tabSpace  = new StringBuffer(getSpace(8));
 
     public FileDetailsPopupViewBean() {
         super(PAGE_NAME, DEFAULT_URL);
@@ -479,6 +483,23 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
                     Integer.toString(
                         getCurrentFSMaxPartialReleaseSize(fsManager)));
 
+                // WORM information, only available in LIVE mode
+                if (liveMode &&
+                    stageFile.getWormState() != StageFile.WORM_DISABLED) {
+                    String [] wormEntry =
+                        createWormEntry(
+                            stageFile.isDirectory(),
+                            stageFile.getWormState(),
+                            stageFile.isWormPermanent(),
+                            stageFile.getWormDuration(),
+                            stageFile.getWormStart(),
+                            stageFile.getWormEnd());
+                    addEntry(
+                        wormEntry[0],
+                        wormEntry[1],
+                        wormEntry[2]);
+                }
+
                 FileCopyDetails [] allDetails = stageFile.getFileCopyDetails();
                 for (int j = 0; j < allDetails.length; j++) {
                     String [] copyStringKeyValue =
@@ -528,8 +549,6 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
     private String [] createCopyString(FileCopyDetails details) {
         StringBuffer keyBuf    = new StringBuffer();
         StringBuffer valueBuf  = new StringBuffer();
-        StringBuffer lineBreak = new StringBuffer("<br>");
-        StringBuffer tabSpace  = new StringBuffer(getSpace(8));
 
         keyBuf.append("&nbsp;").append(
             SamUtil.getResourceString(
@@ -606,6 +625,74 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
         return new String [] {
                 keyBuf.toString(),
                 valueBuf.toString()};
+    }
+
+    private String [] createWormEntry(
+        boolean dir,
+        short wormState,
+        boolean wormPermanent,
+        long wormDuration,
+        long wormStart,
+        long wormEnd) {
+
+        StringBuffer title = new StringBuffer();
+        StringBuffer content = new StringBuffer();
+
+        // Title
+        title.append(SamUtil.getResourceString("fs.filedetails.worm"));
+        switch (wormState) {
+            case StageFile.WORM_ACTIVE:
+                content.append(SamUtil.getResourceString(
+                    "fs.filedetails.worm.state.active"));
+                break;
+            case StageFile.WORM_EXPIRED:
+                content.append(SamUtil.getResourceString(
+                    "fs.filedetails.worm.state.expired"));
+                break;
+            case StageFile.WORM_CAPABLE:
+                content.append(SamUtil.getResourceString(
+                    "fs.filedetails.worm.state.capable"));
+                break;
+        }
+
+        // WORM policy Duration
+        title.append(lineBreak);
+        content.append(lineBreak);
+        title.append(tabSpace).append(
+            SamUtil.getResourceString("fs.filedetails.worm.duration"));
+        content.append(
+            wormPermanent ?
+                SamUtil.getResourceString(
+                    "fs.filedetails.worm.duration.permanent") :
+                TimeConvertor.newTimeConvertor(
+                    wormDuration, TimeConvertor.UNIT_MIN).toString());
+
+        if (!dir) {
+            // Start WORM policy time
+            title.append(lineBreak);
+            content.append(lineBreak);
+
+            title.append(tabSpace).append(
+                SamUtil.getResourceString("fs.filedetails.worm.start"));
+            content.append(SamUtil.getTimeString(wormStart));
+
+            // WORM end time (only if duration is not permanent)
+            if (!wormPermanent) {
+                title.append(lineBreak);
+                content.append(lineBreak);
+
+                title.append(tabSpace).append(
+                    SamUtil.getResourceString("fs.filedetails.worm.end"));
+                content.append(SamUtil.getTimeString(wormEnd));
+            }
+        }
+
+        return new String [] {
+            title.toString(),
+            content.toString(),
+            dir ?
+                Constants.Image.ICON_WORM :
+                Constants.Image.ICON_WORM};
     }
 
     /**
@@ -848,6 +935,7 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
             FileUtil.ACCESSED |
             FileUtil.USER |
             FileUtil.GROUP |
+            FileUtil.WORM |
             FileUtil.CHAR_MODE |
             FileUtil.SAM_STATE |
             FileUtil.ARCHIVE_ATTS |

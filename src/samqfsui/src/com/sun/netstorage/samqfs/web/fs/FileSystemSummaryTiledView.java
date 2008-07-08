@@ -27,14 +27,13 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryTiledView.java,v 1.35 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FileSystemSummaryTiledView.java,v 1.36 2008/07/08 21:40:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.RequestHandlingTiledViewBase;
 import com.iplanet.jato.view.View;
-import com.iplanet.jato.view.ViewBean;
 import com.iplanet.jato.view.event.ChildDisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.iplanet.jato.view.event.TiledViewRequestInvocationEvent;
@@ -43,6 +42,7 @@ import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
@@ -119,19 +119,15 @@ public class FileSystemSummaryTiledView extends RequestHandlingTiledViewBase {
      * Register each child view.
      */
     protected void registerChildren() {
-        TraceUtil.trace3("Entering");
         model.registerChildren(this);
-        TraceUtil.trace3("Exiting");
     }
 
     /**
      * Instantiate each child view.
      */
     protected View createChild(String name) {
-        TraceUtil.trace3("Entering");
         if (model.isChildSupported(name)) {
             // Create child from action table model.
-            TraceUtil.trace3("Exiting");
             return model.createChild(this, name);
         } else {
             throw new IllegalArgumentException(
@@ -242,7 +238,7 @@ public class FileSystemSummaryTiledView extends RequestHandlingTiledViewBase {
             target = FSDetailsViewBean.class;
         }
 
-        ViewBean vb = getParentViewBean();
+        CommonViewBeanBase vb = (CommonViewBeanBase) getParentViewBean();
 
         vb.setPageSessionAttribute(
             Constants.PageSessionAttributes.FILE_SYSTEM_NAME, fsName);
@@ -259,13 +255,25 @@ public class FileSystemSummaryTiledView extends RequestHandlingTiledViewBase {
             Constants.SessionAttributes.SHARED_MEMBER, "YES");
 
         // fsName changed, saved to session
-        SamUtil.setLastUsedFSName(
-            ((CommonViewBeanBase)getParentViewBean()).getServerName(), fsName);
+        SamUtil.setLastUsedFSName(vb.getServerName(), fsName);
 
-        BreadCrumbUtil.breadCrumbPathForward(
-            vb,
-            PageInfo.getPageInfo().getPageNumber(vb.getName()));
-        ((CommonViewBeanBase) vb).forwardTo(getViewBean(target));
+        // Forward to the JATO based non-shared fs pages if target is
+        // FSDetailsViewBean.class, otherwise, forward to the new JSF
+        // Shared File System Summary page.
+        if (FSDetailsViewBean.class == target) {
+            BreadCrumbUtil.breadCrumbPathForward(
+                vb,
+                PageInfo.getPageInfo().getPageNumber(vb.getName()));
+            ((CommonViewBeanBase) vb).forwardTo(getViewBean(target));
+        } else {
+            JSFUtil.forwardToJSFPage(
+                vb,
+                "/faces/jsp/fs/SharedFSSummary.jsp",
+                Constants.PageSessionAttributes.SAMFS_SERVER_NAME + "=" +
+                vb.getServerName() + "&" +
+                Constants.PageSessionAttributes.FS_NAME + "=" +
+                fsName);
+        }
 
         TraceUtil.trace3("Exiting");
     }

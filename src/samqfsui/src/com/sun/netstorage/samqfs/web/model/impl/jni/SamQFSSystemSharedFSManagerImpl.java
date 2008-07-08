@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.48 2008/07/02 18:58:59 pg125177 Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.49 2008/07/08 21:40:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -195,12 +195,9 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         if (model.isDown()) {
             throw new SamFSException("logic.hostIsDown");
         }
-System.out.println("options: " + options);
-boolean useInSN = (options & SharedHostInfo.TYPE_OSD) == SharedHostInfo.TYPE_OSD;
-System.out.println("useInSN: " + useInSN);
+
         String [] hostInfo =
-            // Host.getSharedFSHosts(model.getJniContext(), fsName, options);
-            createFakeHostInfo(useInSN);
+            Host.getSharedFSHosts(model.getJniContext(), fsName, options);
         hostInfo = hostInfo == null ? new String[0] : hostInfo;
         SharedHostInfo [] sharedHostInfo = new SharedHostInfo[hostInfo.length];
 
@@ -218,7 +215,7 @@ System.out.println("useInSN: " + useInSN);
 
     /**
      * TODO: Remove ME!
-     */
+
     private String [] createFakeHostInfo(boolean useInSN) {
         return
             !useInSN ?
@@ -235,7 +232,7 @@ System.out.println("useInSN: " + useInSN);
                     "hostName=jupiter,type=OSD,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
                     "hostName=venus,type=OSD,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"};
     }
-
+    */
     private SharedHostInfo [] filterHosts(
         SharedHostInfo [] infos, short filter) {
         ArrayList hostList = new ArrayList();
@@ -287,15 +284,18 @@ System.out.println("useInSN: " + useInSN);
         if (model.isDown()) {
             throw new SamFSException("logic.hostIsDown");
         }
-
+System.out.println("Calling FS.getSharedFSSummaryStatus:fsName: " + fsName);
         String [] info =
-            // FS.getSharedFSSummaryStatus(model.getJniContext(), fsName);
+            FS.getSharedFSSummaryStatus(model.getJniContext(), fsName);
+        /*
             new String [] {
                 "pmds=8,unmounted=2,off=0,error=0",
                 "storage_nodes=124,unmounted=0,off=1,error=0",
                 "clients=1024,unmounted=24,off=2,error=0"};
+         */
         MemberInfo [] memberInfos = new MemberInfo[info.length];
         for (int i = 0; i < memberInfos.length; i++) {
+System.out.println("info[" + i + "]: " + info[i]);
             memberInfos[i] = new MemberInfo(info[i]);
         }
 

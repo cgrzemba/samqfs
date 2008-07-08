@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: ShowPopUpPageTitle.xml,v 1.7 2008/05/16 19:39:16 am143972 Exp $ -->
+<!-- $Id: ShowPopUpPageTitle.xml,v 1.8 2008/07/08 21:40:32 ronaldso Exp $ -->
 
 <pagetitle>
     <pagebuttons>
@@ -35,7 +35,7 @@
             tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
             <attribute name="type" value="secondary"/>
             <attribute name="defaultValue" value="ShowLog.button.close" />
-            <attribute name="onClick" value="window.close();"/>
+            <attribute name="onClick" value="window.close();return false;"/>
         </cc>
     </pagebuttons>
 </pagetitle>

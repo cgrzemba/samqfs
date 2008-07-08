@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Constants.java,v 1.106 2008/06/18 20:28:08 ronaldso Exp $
+// ident	$Id: Constants.java,v 1.107 2008/07/08 21:40:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -254,6 +254,7 @@ public interface Constants {
             String ICON_OFFLINE = IMAGE_DIR.concat("offline.png");
         public static final String ICON_PARTIAL_ONLINE =
                                    IMAGE_DIR.concat("partially_online.png");
+        public static final String ICON_WORM = IMAGE_DIR.concat("worm_13x.png");
 
         /**
          * use concat to construct the GIF name

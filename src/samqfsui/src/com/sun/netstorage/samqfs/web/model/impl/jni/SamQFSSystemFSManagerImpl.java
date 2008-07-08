@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.81 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.82 2008/07/08 21:40:33 ronaldso Exp $
 
 
 
@@ -1063,6 +1063,50 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
         temp = properties.getProperty(StageFile.STATE_PARTIAL_ONLINE);
         file.setPartialOnlineCount(temp != null ? Integer.parseInt(temp) : 0);
 
+        // WORM
+        temp = properties.getProperty(StageFile.WORM);
+        if (null == temp) {
+            file.setWormState(StageFile.WORM_DISABLED);
+            file.setWormStart(-1);
+            file.setWormDuration(-1);
+            file.setWormEnd(-1);
+        } else {
+            if ("capable".equals(temp)) {
+                file.setWormState(StageFile.WORM_CAPABLE);
+            } else if ("active".equals(temp)) {
+                file.setWormState(StageFile.WORM_ACTIVE);
+            } else if ("expired".equals(temp)) {
+                file.setWormState(StageFile.WORM_EXPIRED);
+            } else {
+                file.setWormState(StageFile.WORM_DISABLED);
+            }
+
+            temp = properties.getProperty(StageFile.WORM_DURATION);
+            if (null == temp) {
+                file.setWormDuration(-1);
+                file.setWormPermanent(false);
+            } else if ("permanent".equals(temp)) {
+                file.setWormDuration(-1);
+                file.setWormPermanent(true);
+            } else {
+                // in minutes
+                file.setWormDuration(Long.parseLong(temp));
+                file.setWormPermanent(false);
+            }
+
+            temp = properties.getProperty(StageFile.WORM_START);
+            file.setWormStart(
+                null == temp ?
+                    -1 :
+                    // remains in sec
+                    Long.parseLong(temp));
+
+            file.setWormEnd(
+                file.isWormPermanent() ?
+                    -1 :
+                    file.getWormStart() +
+                    file.getWormDuration() * 60);
+        }
 
         file.setProperties(properties);
         file.setRawDetails(details);

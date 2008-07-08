@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StageFile.java,v 1.13 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: StageFile.java,v 1.14 2008/07/08 21:40:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -59,6 +59,16 @@ public class StageFile extends RemoteFile {
     public static final String SEGMENT_COUNT = "seg_count";
     public static final String ARCH_DONE = "archdone";
     public static final String STAGE_PENDING = "stage_pending";
+    public static final String WORM = "worm";
+    public static final String WORM_DURATION = "worm_duration";
+    public static final String WORM_START = "worm_start";
+    public static final String WORM_END = "worm_end";
+
+    // worm type
+    public static final short WORM_DISABLED = -1;
+    public static final short WORM_EXPIRED = 0;
+    public static final short WORM_CAPABLE = 1;
+    public static final short WORM_ACTIVE = 2;
 
     // sam state
     public static final int ONLINE = 0x01;
@@ -68,7 +78,6 @@ public class StageFile extends RemoteFile {
     // delimitor used to separate each copy information
     public static final String COPY_DELIMITOR = "@@@";
     public static final String COPY_CONTENT_DELIMITOR = "###";
-
 
     private int type, onlineStatus;
     private int archiveAttributes, stageAttributes, releaseAttributes;
@@ -85,6 +94,11 @@ public class StageFile extends RemoteFile {
     private long createdTime, accessedTime, partialReleaseSize;
     private long segmentSize, segmentStageAhead;
     private int archDone, stagePending, segCount;
+
+    private short wormState;
+    private boolean wormPermanent;
+    private long wormStart, wormEnd, wormDuration;
+
 
     // variable to keep track if entry contains copy information
     private FileCopyDetails [] copyDetails;
@@ -352,4 +366,61 @@ public class StageFile extends RemoteFile {
         return this.partialOnlineCount;
     }
 
+    /**
+     * @return true if "permanent" is returned for key "worm_duration"
+     */
+    public boolean isWormPermanent() {
+        return wormPermanent;
+    }
+
+    public void setWormPermanent(boolean wormPermanent) {
+        this.wormPermanent = wormPermanent;
+    }
+
+    /**
+     * @return number of minutes that represents the duration of worm, -1 if it
+     * is not being set or it is set to permanent
+     */
+    public long getWormDuration() {
+        return wormDuration;
+    }
+
+    public void setWormDuration(long wormDuration) {
+        this.wormDuration = wormDuration;
+    }
+
+    /**
+     * @return the string that denotes the end time of WORM in format
+     *  MM DD YYYY HH:mm (NOT used in the current GUI, calculation is done in
+     *  the logic layer)
+     */
+    public long getWormEnd() {
+        return wormEnd;
+    }
+
+    public void setWormEnd(long wormEnd) {
+        this.wormEnd = wormEnd;
+    }
+
+    /**
+     * @return the number of secs that WORM starts since Jan 1 1970
+     */
+    public long getWormStart() {
+        return wormStart;
+    }
+
+    public void setWormStart(long wormStart) {
+        this.wormStart = wormStart;
+    }
+
+    /**
+     * @return state of WORM, see WORM_CAPABLE, WORM_ACTIVE, etc
+     */
+    public short getWormState() {
+        return wormState;
+    }
+
+    public void setWormState(short wormState) {
+        this.wormState = wormState;
+    }
 }
