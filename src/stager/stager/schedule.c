@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1882,7 +1882,7 @@ isDriveAvailForCopy(
 	num_drives = GetNumLibraryDrives(library);
 	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
 		if (CopyInstanceList->cl_data[i].ci_vsnLib == library &&
-		    CopyInstanceList->cl_data[i].ci_busy == B_FALSE &&
+		    CopyInstanceList->cl_data[i].ci_busy == B_TRUE &&
 		    CopyInstanceList->cl_data[i].ci_created == B_TRUE) {
 			if (--num_drives <= 0) {
 				return (B_FALSE);
