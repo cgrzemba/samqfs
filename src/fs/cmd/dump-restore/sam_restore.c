@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 
 #include <sys/types.h>
@@ -64,6 +64,7 @@
 #include "sam/lib.h"
 
 extern void conv_to_v2inode(sam_perm_inode_t *);
+static void check_samfs_fs();
 static void sam_restore_a_file(char *, struct sam_perm_inode *,
 			struct sam_vsn_section *, char *, void *,
 			int, aclent_t *, int dflag, int *dread);
@@ -223,23 +224,15 @@ cs_restore(
 			char *check_name = ".";
 			char *next_name;
 
-			if (sam_stat(check_name, &sb, sizeof (sb)) < 0 ||
-			    ! SS_ISSAMFS(sb.attr)) {
-				BUMP_STAT(errors);
-				BUMP_STAT(errors_dir);
-				error(1, 0,
-				    catgets(catfd, SET, 259,
-				    "%s: Not a SAM-FS file."),
-				    check_name);
-			}
-
 			if ((save_path != (char *)NULL) &&
 			    (strcmp(check_name, save_path) != 0)) {
+				check_samfs_fs();
 				free(save_path);
 				(void) close(SAM_fd);
 				save_path = strdup(check_name);
 				SAM_fd = open_samfs(save_path);
 			} else if (save_path == (char *)NULL) {
+				check_samfs_fs();
 				save_path = strdup(check_name);
 				SAM_fd = open_samfs(save_path);
 			}
@@ -508,6 +501,25 @@ skip_file:
 
 
 /*
+ * ----- check_samfs_fs - verify path is in samfs file system.
+ */
+static void
+check_samfs_fs()
+{
+	char *check_name = ".";
+	struct sam_stat sb;
+
+	if (sam_stat(check_name, &sb,
+	    sizeof (sb)) < 0 || !SS_ISSAMFS(sb.attr)) {
+		BUMP_STAT(errors);
+		BUMP_STAT(errors_dir);
+		error(1, 0, catgets(catfd, SET, 259,
+		    "%s: Not a SAM-FS file."), check_name);
+	}
+}
+
+
+/*
  * ----- print_reslog - print a log for the benefit of restore.sh.
  */
 void
@@ -762,6 +774,11 @@ sam_restore_a_file(
 			if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
 				error(0, errno, "%s: ioctl(F_SAMRESTORE)",
 				    path);
+				if (errno == ENOTTY) {
+					error(1, 0, catgets(catfd, SET, 259,
+					    "%s: Not a SAM-FS file."),
+					    basename);
+				}
 			} else {
 				restored = 1;
 			}
