@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardMountView.java,v 1.34 2008/06/25 23:23:26 kilemba Exp $
+// ident	$Id: NewWizardMountView.java,v 1.35 2008/07/09 22:20:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -400,8 +400,15 @@ public class NewWizardMountView extends RequestHandlingViewBase
 
     private boolean isHAFS() {
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
+
+        /*
         Boolean hafs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HAFS);
 
         return hafs.booleanValue();
+        */
+
+        String hafs = (String)wm.getValue(NewWizardFSNameView.HAFS);
+
+        return "true".equals(hafs);
     }
 }

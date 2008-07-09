@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.6 2008/06/17 16:04:28 ronaldso Exp $
+// ident	$Id: JSFUtil.java,v 1.7 2008/07/09 22:20:58 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -107,6 +107,25 @@ public class JSFUtil {
         return req;
     }
 
+    /** 
+     * convenience method to retrieve the response object associated with the
+     * user request currently being handled
+     */
+    public static HttpServletResponse getResponse() {
+        HttpServletResponse response = null;
+        
+        FacesContext fcontext = FacesContext.getCurrentInstance();
+        if (fcontext != null) {
+            ExternalContext econtext = fcontext.getExternalContext();
+
+            if (econtext != null) {
+                response = (HttpServletResponse)econtext.getResponse();
+            }
+        }
+        
+        return response;
+    }
+    
     /** return the users current locale */
     public static Locale getLocale() {
         HttpServletRequest request = getRequest();

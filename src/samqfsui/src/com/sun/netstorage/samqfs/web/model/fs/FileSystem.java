@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystem.java,v 1.22 2008/07/03 00:04:30 ronaldso Exp $
+// ident	$Id: FileSystem.java,v 1.23 2008/07/09 22:20:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -47,6 +47,7 @@ public interface FileSystem extends GenericFileSystem {
     // file system type
     public static final int SEPARATE_METADATA = 0;
     public static final int COMBINED_METADATA = 1;
+    public static final int PROTO_FS = 5;
 
     // archiving type
     public static final int ARCHIVING = 2;
@@ -71,6 +72,12 @@ public interface FileSystem extends GenericFileSystem {
     public int getShareStatus();
 
     /**
+     * introduced in 5.0 to determine if this file system is a hpc shared qfs
+     * proto file system - partially configured.
+     */
+    public boolean isProtoFS();
+
+    /**
      * return metadata server name, in shared-QFS configs
      */
     public String getServerName();
@@ -86,7 +93,7 @@ public interface FileSystem extends GenericFileSystem {
     public DiskCache[] getMetadataDevices();
     public DiskCache[] getDataDevices();
     public StripedGroup[] getStripedGroups();
-    
+
     // Strictly used only in Shrink File System Wizard
     // get both metadata & data devices & wrap up striped groups
     public DiskCache[] getAllDevices();

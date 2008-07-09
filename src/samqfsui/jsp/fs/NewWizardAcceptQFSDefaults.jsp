@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardAcceptQFSDefaults.jsp,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewWizardAcceptQFSDefaults.jsp,v 1.2 2008/07/09 22:20:56 kilemba Exp $
 --%>
 
 <%@ page language="java" %> 
@@ -36,6 +36,29 @@
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <script language="javascript" src="/samqfsui/js/samqfsui.js"></script>
+<script>
+    function wizardPageInit() {
+        var disabled = false;
+        var tf = document.wizWinForm;
+        var string = tf.elements["WizardWindow.Wizard.NewWizardAcceptQFSDefaultsView.errorOccur"];
+        // var error = string.value;
+        if ((string != null) && (string.value == "exception"))
+            disabled = true;
+        WizardWindow_Wizard.setNextButtonDisabled(disabled, null);
+        WizardWindow_Wizard.setPreviousButtonDisabled(disabled, null);
+   }
+   
+    function customNextClicked() {
+        // display the disk discovery message
+        var theForm = document.wizWinForm;
+        var message = theForm.elements["WizardWindow.Wizard.NewWizardAcceptQFSDefaultsView.discoveryMessage"].value;
+        setTimeout(alert(message), 7000);
+
+        return true;
+    }
+   WizardWindow_Wizard.pageInit = wizardPageInit;
+   WizardWindow_Wizard.nextClicked = customNextClicked;
+</script>
 
 <jato:pagelet>
 

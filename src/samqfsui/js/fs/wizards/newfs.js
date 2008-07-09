@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: newfs.js,v 1.1 2008/06/25 23:23:24 kilemba Exp $
+// ident	$Id: newfs.js,v 1.2 2008/07/09 22:20:56 kilemba Exp $
 
 // handlers for the new file system wizard popup
 
@@ -176,9 +176,9 @@ function handleNewFileSystemPopupOk(button) {
 
     // update the fsTypeParams and launch the wizard
     fsTypeParams = params;
-    // launchNewFileSystemWizard(button);
+    launchNewFileSystemWizard(button);
     
-    alert("Coming soon ...");
+    // alert("Coming soon ...");
 
     window.close();
     return false;

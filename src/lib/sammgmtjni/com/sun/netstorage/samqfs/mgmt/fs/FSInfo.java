@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSInfo.java,v 1.20 2008/05/16 18:35:28 am143972 Exp $
+// ident	$Id: FSInfo.java,v 1.21 2008/07/09 22:20:54 kilemba Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -304,4 +304,9 @@ public class FSInfo {
     public static final String NFS_SHARED = "yes";
     public static final String NFS_NOTSHARED = "no";
     public static final String NFS_CONFIGURED = "config";
+
+    /* this is needed by the logic layer to identify proto file systems */
+    public String getEqType() {
+        return this.eqType;
+    }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryModel.java,v 1.68 2008/07/03 00:04:29 ronaldso Exp $
+// ident	$Id: FileSystemSummaryModel.java,v 1.69 2008/07/09 22:20:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -459,6 +459,7 @@ public class FileSystemSummaryModel extends CCActionTableModel {
                     .append(archiveEnabled).append(':')
                     .append(fsShareStatus).toString());
             setValue("FSHiddenField", name);
+            setValue("ProtoFSField", fsList[i].isProtoFS());
 
             initQueryParams();
 

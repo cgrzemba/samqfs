@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.48 2008/07/03 00:04:30 ronaldso Exp $
+// ident	$Id: FileSystemImpl.java,v 1.49 2008/07/09 22:20:58 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -94,7 +94,6 @@ public class FileSystemImpl extends GenericFileSystemImpl
     private DiskCache[] dataDevices = new DiskCache[0];
     private StripedGroup[] stripedGrps = new StripedGroup[0];
     private String logfile = new String();
-
 
     public FileSystemImpl() {
     }
@@ -166,6 +165,13 @@ public class FileSystemImpl extends GenericFileSystemImpl
         return shareStatus;
     }
 
+    /**
+     * introduced in 5.0 to determine if this file system is a hpc shared qfs
+     * proto file system - partially configured.
+     */
+    public boolean isProtoFS() {
+        return FSInfo.PROTO_OBJECT_BASED.equals(fsInfo.getEqType());
+    }
 
     public int getDAUSize() {
         return dauSize;
@@ -991,5 +997,5 @@ System.out.println("ShrinkOptions: " + options.toString());
                     eqToRemove,
                     ((StripedGroupImpl) replacement).getJniStripedGroup(),
                     options.toString());
-     }
+    }
 }

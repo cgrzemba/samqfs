@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardMetadataOptionsView.java,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewWizardMetadataOptionsView.java,v 1.2 2008/07/09 22:20:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -86,7 +86,7 @@ public class NewWizardMetadataOptionsView extends RequestHandlingViewBase
             rb.setOptions(new OptionList(
                 new String [] {"FSWizard.new.metadataoptions.separate",
                                "FSWizard.new.metadataoptions.same"},
-                new String [] {SAME_DEVICE, SEPARATE_DEVICE}));
+                new String [] {SEPARATE_DEVICE, SAME_DEVICE}));
 
             return rb;
         } else {

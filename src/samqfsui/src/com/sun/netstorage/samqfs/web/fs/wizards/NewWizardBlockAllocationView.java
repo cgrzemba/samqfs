@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardBlockAllocationView.java,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewWizardBlockAllocationView.java,v 1.2 2008/07/09 22:20:57 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -60,6 +60,9 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
     public static final String BLOCK_SIZE_UNIT = "blockSizeUnit";
     public static final String BLOCKS_PER_DEVICE = "blocksPerDeviceText";
     public static final String STRIPED_GROUPS = "stripedGroupText";
+
+    // key for the final block size used by the wizard model
+    public static final String BLOCK_SIZE_KB = "block_size_in_kb";
 
     // allocation method values
     public static final String SINGLE = "single";

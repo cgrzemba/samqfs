@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummary.js,v 1.26 2008/07/03 00:04:28 ronaldso Exp $
+// ident	$Id: FSSummary.js,v 1.27 2008/07/09 22:20:55 kilemba Exp $
 
 /**
  * This is the javascript file of File System Summary page
@@ -338,3 +338,38 @@ function handleDropDownOnChange(menu) {
     }
     return true;
 }
+
+/* navigate to proto-fs details if a proto-fs name is clicked */
+function handleFSNameClick(href) {
+  var index =
+    href.name.substring(href.name.indexOf("[") + 1, href.name.indexOf("[") + 2);
+
+  var prefix = "FSSummary.FileSystemSummaryView.FileSystemSummaryTiledView[";
+  var fieldName = prefix + index + "].ProtoFSField";  
+  var isProtoFS = document.FSSummaryForm.elements[fieldName].value;
+  
+  var fsNameField = prefix + index + "].FSHiddenField";
+  var fsName = document.FSSummaryForm.elements[fsNameField].value;
+  
+  if (fsName != null &&
+      fsName.length > 5 &&
+      fsName.substring(0, 5) == "hpcfs") {
+  //if (isProtoFS == "true") {
+    var url = "/samqfsui/faces/jsp/fs/ProtoFSDetails.jsp";
+    var params = "?SERVER_NAME=" + getServerKey();
+
+    // get the file system name
+    //var fsNameField = prefix + index + "].FSHiddenField";
+    //var fsName = document.FSSummaryForm.elements[fsNameField].value;
+
+    params +="&SAMQFS_FS_NAME=" + fsName;
+ 
+    url += params;
+
+    document.location = url;
+    return false;
+  }
+  
+  return true;
+}
+
