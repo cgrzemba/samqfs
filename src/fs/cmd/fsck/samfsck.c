@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 
 
 /* ----- Includes */
@@ -241,10 +241,11 @@ int dup_length = 512;
 int cur_length = 0;
 
 /* Hard link parent list */
+#define	HLP_COUNT 4
 struct hlp_list {
 	int	count;			/* # of allocated ids[] */
 	uint_t	n_ids;			/* Count of hard link parents */
-	sam_id_t ids[MAX_HLP_IDS_IN_INO]; /* An inode extension worth */
+	sam_id_t ids[HLP_COUNT];	/* start small */
 };
 
 /* Orphan status type defs */
@@ -5978,6 +5979,20 @@ fail:
 		if ((ep->hdr.file_id.ino == dp->di.id.ino) &&
 		    (ep->hdr.file_id.gen == dp->di.id.gen)) {
 			mark_inode(ep->hdr.id.ino, INVALID_INO);
+		} else {
+			printf(catgets(catfd, SET, 13353,
+			    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
+			    (int)dp->di.id.ino, dp->di.id.gen);
+			SETEXIT(ES_alert);
+			if (verbose_print || debug_print) {
+				printf("DEBUG:  \t . ino=%d.%d file id "
+				    "mismatch=%d.%d expected=%d.%d\n",
+				    (int)ep->hdr.id.ino, ep->hdr.id.gen,
+				    (int)ep->hdr.file_id.ino,
+				    ep->hdr.file_id.gen,
+				    (int)dp->di.id.ino, dp->di.id.gen);
+			}
+			break;
 		}
 		eid = ep->hdr.next_id;
 	}
@@ -7244,7 +7259,7 @@ save_hard_link_parent(
 		hlp = (struct hlp_list *)hp;
 		inop->hlp = hlp;
 		hlp->n_ids = 0;
-		hlp->count = MAX_HLP_IDS_IN_INO;
+		hlp->count = HLP_COUNT;
 	} else {
 		hlp = inop->hlp;
 		if (hlp->n_ids >= hlp->count) { /* enough space for ids ? */
@@ -7421,7 +7436,11 @@ get_inode(
 
 	offset = SAM_ITOD(ino);
 	dt = inode_ino->di.status.b.meta;
-	off = offset & ~(mp->mi.m_dau[dt].size[LG] - 1); /* align boundary */
+	/*
+	 * align boundary
+	 * careful here! mask needs to be a long long
+	 */
+	off = offset & ~(offset_t)(mp->mi.m_dau[dt].size[LG] - 1);
 	if (off != bio_buf_off) {
 		if (get_bn(inode_ino, offset, &bn, &ord, 1)) {
 			error(0, 0,
@@ -7494,7 +7513,11 @@ put_inode(
 
 	offset = SAM_ITOD(ino);
 	dt = inode_ino->di.status.b.meta;
-	off = offset & ~(mp->mi.m_dau[dt].size[LG] - 1); /* align boundary */
+	/*
+	 * align boundary
+	 * careful here! mask needs to be a long long
+	 */
+	off = offset & ~(offset_t)(mp->mi.m_dau[dt].size[LG] - 1);
 	if (off != bio_buf_off) {
 		if (get_bn(inode_ino, offset, &bn, &ord, 1)) {
 			error(0, 0,
