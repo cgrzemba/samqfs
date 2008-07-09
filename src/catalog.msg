@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.596 $"
+$ pragma ident "$Revision: 1.597 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -1157,7 +1157,7 @@ $ 4417 ** NOT USED ** Trace file name missing
 4418 '%s' is not a valid archiver directive
 $ 4419 ** NOT USED ** Drive count missing
 4420 '%s' is not a valid archive set parameter
-$ 4421 ** NOT USED ** Group name missing
+4421 -wS *** WARNING '%s' is deprecated and will be ignored
 $ 4422 ** NOT USED ** Maximum size value missing
 $ 4423 ** NOT USED ** Minimum size value missing
 $ 4424 ** NOT USED ** File name missing

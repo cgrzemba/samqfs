@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.112 $"
+#pragma ident "$Revision: 1.113 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -102,6 +102,7 @@ static void notDirective(void);
 static void notGlobalDirective(void);
 static void paramsDiskArchive(void);
 static void paramsInvalid(void);
+static void paramsDeprecated(void);
 static void paramsSetfield(void);
 static void paramsSetFillvsns(void);
 static void procParams(void);
@@ -795,7 +796,7 @@ static DirProc_t table[] = {
 	{ "-simread",		paramsInvalid,		DP_other },
 	{ "-tstovfl",		paramsInvalid,		DP_other },
 #endif /* !defined(DEBUG) | defined(lint) */
-	{ "-join",			paramsInvalid,		DP_other },
+	{ "-join",			paramsDeprecated,	DP_other },
 	{ "-fillvsns",		paramsSetFillvsns,  DP_other },
 	{ NULL,	paramsSetfield, DP_other }
 };
@@ -2386,6 +2387,29 @@ paramsInvalid(void)
 	ReadCfgError(CustMsg(4420), dirName);
 }
 
+/*
+ * Deprecated parameter, will be invalid in future release.
+ */
+static void
+paramsDeprecated(void)
+{
+	/* '%s' is deprecated and will be removed in the next release */
+	SendCustMsg(HERE, 4421, dirName);
+
+	/*
+	 * We need to see if the parameter has a value and ignore it.
+	 * First see if \0 value is invalid, and if so ignore next value.
+	 */
+	*token = '\0';
+	if (SetFieldValue(as, ArchSet, dirName+1, token,
+	    msgFuncSetField) != 0) {
+		if (errno != EINVAL) {
+			ReadCfgError(0, errMsg);
+		}
+		/* Parameter requires a value, read it and ignore it */
+		(void) ReadCfgGetToken();
+	}
+}
 
 /*
  * Process 'priority' for SetFieldValue().
