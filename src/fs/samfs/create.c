@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.152 $"
+#pragma ident "$Revision: 1.153 $"
 
 #include "sam/osversion.h"
 
@@ -896,7 +896,8 @@ sam_set_unit(
 	if (mask) {
 		for (ord = 0; ord < mp->mt.fs_count; ord++) {
 			if ((di->stripe_group|mask) ==
-			    mp->mi.m_fs[ord].part.pt_type) {
+			    mp->mi.m_fs[ord].part.pt_type &&
+			    mp->mi.m_fs[ord].part.pt_state == DEV_ON) {
 				di->unit = (uchar_t)ord;
 				striped = TRUE;
 				break;
@@ -909,7 +910,8 @@ sam_set_unit(
 	}
 	if (!striped)  {
 		ord = oldord = mp->mi.m_unit[i];	/* Round robin files */
-		while (mp->mi.m_sbp->eq[ord].fs.space == 0) {
+		while (mp->mi.m_sbp->eq[ord].fs.space == 0 ||
+		    mp->mi.m_fs[ord].part.pt_state != DEV_ON) {
 			if (mp->mi.m_fs[ord].next_ord) {
 				ord = mp->mi.m_fs[ord].next_ord;
 			} else {

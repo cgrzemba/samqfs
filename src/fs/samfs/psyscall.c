@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.182 $"
+#pragma ident "$Revision: 1.183 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2111,6 +2111,8 @@ sam_fseq_ord(
 				    (npt & ~DT_STRIPE_GROUP_MASK);
 			}
 			ip->di.unit = ib_args.new_ord;
+		} else {
+			sam_set_unit(ip->mp, &(ip->di));
 		}
 
 		error = sam_move_ip_extents(ip, &ib_args, &doipupdate, credp);
@@ -2186,7 +2188,11 @@ sam_fseq_ord(
 			args.on_ord = 1;
 			break;
 		} else if (args.cmd == SAM_FIND_ORD) {
-			error = ENOENT;
+			/*
+			 * Either ordinal was not found
+			 * or an error occured.
+			 */
+			args.on_ord = 0;
 		}
 	}
 

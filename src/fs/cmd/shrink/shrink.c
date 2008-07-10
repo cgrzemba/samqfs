@@ -50,7 +50,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -140,6 +140,7 @@ static void sam_check_inodes(work_t *wp);
 static boolean_t sam_ord_found(sam_perm_inode_t *ip);
 static int sam_ord_on_indirects(struct sam_fs_info *mp, sam_perm_inode_t *ip,
 	ushort_t ord);
+static int sam_move_file(struct sam_fs_info *mp, sam_perm_inode_t *ip);
 static int sam_process_file(struct sam_fs_info *mp, sam_perm_inode_t *ip);
 static void sam_write_log(sam_perm_inode_t *ip, int error);
 
@@ -160,6 +161,22 @@ static int sam_readdir(int dir_fd, char *dirbuf, offset_t *offset,
 	int dirent_size);
 
 /*
+ * Info about stripe groups if needed.
+ */
+typedef struct sginfo {
+	int first_ord;
+	int num_group;
+	int free_space;
+	int state;
+} sginfo_t;
+
+/*
+ * Max stripe group value
+ * Max 128 stripe groups numbered 0 - 127
+ */
+#define	MAX_STRIPE_GROUP	127
+
+/*
  * main - sam-shrink - Process remove eq or release eq.
  */
 int
@@ -172,6 +189,7 @@ main(int argc, char *argv[])
 	int		size_part;
 	int		eq;
 	int		ord;
+	dtype_t	oldpt;
 	int		error = 0;
 
 	/*
@@ -273,6 +291,7 @@ main(int argc, char *argv[])
 				    dev_state[pt->pt_state]);
 				exit(EXIT_FAILURE);
 			}
+			oldpt = pt->pt_type;
 			break;
 		}
 	}
@@ -283,8 +302,85 @@ main(int argc, char *argv[])
 	}
 	control.eq = (equ_t)eq;		/* Equipment */
 	control.ord = (ushort_t)ord;	/* Equipment ordinal */
+	control.ord2 = -1;
 	control.command = command;	/* Release or Remove command */
 	control.mp = &mnt_info;		/* Pointer to mount info */
+
+	if ((command == DK_CMD_remove) && is_stripe_group(oldpt)) {
+		int xord;
+		sginfo_t *sginfop;
+		int stripe_group;
+		int onum_group;
+		int tmp_ord2 = -1;
+		int	curr_sg = -1;
+		int last_sg = -1;
+		fsize_t curr_space = 0;
+		/*
+		 * If removing a stripe group find a matching one.
+		 */
+		sginfop = (sginfo_t *)calloc(
+		    MAX_STRIPE_GROUP+1 * sizeof (sginfo_t), sizeof (sginfo_t));
+
+		if (sginfop == NULL) {
+			SendCustMsg(HERE, 1606, "Stripe Group Info");
+			exit(EXIT_NOMEM);
+		}
+
+		onum_group = 0;
+		for (xord = 0, pt = part;
+		    xord < mnt_info.fs_count; xord++, pt++) {
+			/*
+			 * Collect stripe group info so a matching
+			 * stripe group can be found.
+			 */
+			if (is_stripe_group(pt->pt_type)) {
+				if (pt->pt_type == oldpt) {
+					onum_group++;
+				}
+				stripe_group =
+				    pt->pt_type & ~DT_STRIPE_GROUP_MASK;
+				if (stripe_group != curr_sg) {
+					/*
+					 * Starting a new stripe group.
+					 */
+					sginfop[stripe_group].first_ord = xord;
+					sginfop[stripe_group].free_space =
+					    pt->pt_space;
+					sginfop[stripe_group].state =
+					    pt->pt_state;
+				}
+				sginfop[stripe_group].num_group++;
+				curr_sg = stripe_group;
+				if (curr_sg > last_sg) {
+					last_sg = curr_sg;
+				}
+			}
+		}
+
+		while (last_sg >= 0) {
+			/*
+			 * Find the matching stripe group
+			 * with the most free space.
+			 */
+			if (sginfop[last_sg].num_group == onum_group &&
+			    sginfop[last_sg].state == DEV_ON) {
+
+				if (tmp_ord2 == -1 ||
+				    sginfop[last_sg].free_space > curr_space) {
+					tmp_ord2 = sginfop[last_sg].first_ord;
+					curr_space =
+					    sginfop[last_sg].free_space;
+				}
+			}
+			last_sg--;
+		}
+		free(sginfop);
+		if (tmp_ord2 < 0) {
+			SendCustMsg(HERE, 7011, control.eq);
+			exit(EXIT_FAILURE);
+		}
+		control.ord2 = tmp_ord2;
+	}
 
 	/*
 	 * Set up parameter block (pblock).
@@ -991,20 +1087,21 @@ sam_ord_found(sam_perm_inode_t *ip)
 	}
 	for (de = NDEXT; de < (NDEXT + NIEXT); de++) {
 		if (ip->di.extent[de]) {
+			errno = 0;
 			if ((sam_ord_on_indirects(mp, ip, control.ord))) {
-				if (errno == ENOENT) {
-					return (FALSE);
-				}
-				Trace(TR_ERR, "sam_ord_found indirects:"
-				    "%d.%d ord=%d, ERROR: %s",
-				    ip->di.id.ino, ip->di.id.gen, control.ord,
-				    strerror(errno));
-				return (FALSE);
-			} else {
-				Trace(TR_MISC, "sam_ord_found indirects:"
+				Trace(TR_MISC, "sam_ord_found: found indirects:"
 				    "%d.%d ord=%d",
 				    ip->di.id.ino, ip->di.id.gen, control.ord);
 				return (TRUE);
+			} else {
+				if (errno > 0) {
+					Trace(TR_ERR, "sam_ord_found:"
+					    "%d.%d ord=%d, ERROR: %s",
+					    ip->di.id.ino, ip->di.id.gen,
+					    control.ord,
+					    strerror(errno));
+				}
+				return (FALSE);
 			}
 		}
 	}
@@ -1033,7 +1130,10 @@ sam_ord_on_indirects(
 	fseq_arg.on_ord = 0;
 
 	err = sam_syscall(SC_fseq_ord, &fseq_arg, sizeof (fseq_arg));
-	return (err);
+	if (err < 0) {
+		fseq_arg.on_ord = 0;
+	}
+	return (fseq_arg.on_ord);
 }
 
 
@@ -1086,20 +1186,28 @@ sam_process_file(
 			control.busy_files++;
 			pthread_mutex_unlock(&log_lock);
 		}
+	} else if (control.command == DK_CMD_remove) {
+
+		error = sam_move_file(mp, ip);
+
+		if (error < 0) {
+			Trace(TR_ERR, "Remove failed for inode %d.%d, error %d",
+			    ip->di.id.ino, ip->di.id.gen, errno);
+			error = errno;
+
+		} else {
+			if (control.display_all_files) {
+				sam_write_log(ip, 0);
+			}
+			return (0);
+		}
+
 	} else {
-		Trace(TR_ERR, "Can't release inode %d.%d: no archive copy",
-		    ip->di.id.ino, ip->di.id.gen);
-		error = ENODATA;
-		pthread_mutex_lock(&log_lock);
-		control.unarchived_files++;
-		pthread_mutex_unlock(&log_lock);
+		Trace(TR_ERR, "sam_process_file: invalid command %d",
+		    control.command);
+		error = EINVAL;
 	}
 
-	/*
-	 * The remove code will write a mmap file and then execute
-	 * one thread per move to copy the file data.
-	 * XXX - Now just log the file that cannot be release.
-	 */
 	if (control.display_all_files) {
 		sam_write_log(ip, error);
 	}
@@ -1464,4 +1572,32 @@ sam_closedir(int *dir_fd)
 		*dir_fd = -1;
 		return;
 	}
+}
+
+/*
+ * sam_move_file - move any data for the specified file that
+ * is on the specified ordinal to another device.
+ */
+static int
+sam_move_file(
+	struct sam_fs_info *mp,
+	sam_perm_inode_t *ip)
+{
+	sam_fseq_arg_t	fseq_arg;
+	int err;
+
+	fseq_arg.cmd = SAM_MOVE_ORD;
+	fseq_arg.fseq = mp->fi_eq;
+	fseq_arg.eq = control.eq;
+	fseq_arg.ord = control.ord;
+	fseq_arg.id = ip->di.id;
+	fseq_arg.on_ord = 0;
+	/*
+	 * Valid device ordinal to move data to
+	 * otherwise -1.
+	 */
+	fseq_arg.new_ord = control.ord2;
+
+	err = sam_syscall(SC_fseq_ord, &fseq_arg, sizeof (fseq_arg));
+	return (err);
 }

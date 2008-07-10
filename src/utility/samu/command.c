@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.87 $"
+#pragma ident "$Revision: 1.88 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -1486,6 +1486,8 @@ CmdSetFsDskCmd(
 			command = DK_CMD_add;
 		} else if (strcmp(Argv[0], "release") == 0) {
 			command = DK_CMD_release;
+		} else if (strcmp(Argv[0], "remove") == 0) {
+			command = DK_CMD_remove;
 		} else if (strcmp(Argv[0], "alloc") == 0) {
 			command = DK_CMD_alloc;
 		} else if (strcmp(Argv[0], "noalloc") == 0) {

@@ -35,7 +35,7 @@
 #define	_SAM_FS_SHRINK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 #endif
 
 #ifndef MAXPATHLEN
@@ -80,6 +80,7 @@ typedef struct control {
 	boolean_t stage_partial;	/* Stage partial */
 	equ_t eq;			/* Equipment */
 	ushort_t ord;			/* Equipment ordinal */
+	int 	ord2;		/* Optional destination ordinal for remove */
 	char mountpoint[MAXPATHLEN];	/* Mount point */
 	char log_pathname[MAXPATHLEN];	/* Log pathname */
 	int display_all_files;		/* Display all processed files in log */

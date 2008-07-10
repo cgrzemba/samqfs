@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.598 $"
+$ pragma ident "$Revision: 1.599 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -1452,6 +1452,7 @@ $ ===================================================================
 7008 Invalid equipment %s for this command.
 7009 Cannot execute command %s for device %s.
 7010 Cannot change disk device state from client.
+7011 No suitable replacement found for eq %d.
 
 $  samu command help screen   (7050s)
 $ ===================================================================
