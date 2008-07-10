@@ -1,4 +1,4 @@
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 
 #    SAM-QFS_notice_begin
 #
@@ -39,9 +39,12 @@ PROG_SRC = \
 		sam_dump.c \
 		sam_getdent.c \
 		sam_ls.c \
+		sam_db.c \
 		sam_read.c \
 		sam_restore.c \
-		sam_write.c
+		sam_write.c \
+		readin.c \
+		parsetabs.c
 
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR)
 PROG_LIBS = ../../../fs/lib/$(OBJ_DIR)/libfscmd.a \

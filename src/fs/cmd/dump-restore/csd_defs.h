@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #include <sys/param.h>
 #include <sys/acl.h>
@@ -88,7 +88,7 @@ typedef struct csd_hardtbl {
 } csd_hardtbl_t;
 
 /* options must be integral powers of two so that we can do bitwise checking */
-typedef enum {NONE = 0, DUMP = 1, RESTORE = 2, LIST = 4}
+typedef enum {NONE = 0, DUMP = 1, RESTORE = 2, LIST = 4, LISTDUMP = 5}
 		major_function;
 
 typedef enum {false = 0, true = 1} boolean;
@@ -104,8 +104,10 @@ extern boolean quiet;
 extern boolean replace;
 extern boolean online_data;
 extern boolean partial_data;
+extern boolean scan_only;
 extern boolean swapped;
 extern boolean unarchived_data;
+extern boolean use_file_list;
 extern boolean verbose;
 extern boolean list_by_inode;
 extern int lower_inode;
@@ -126,6 +128,8 @@ extern int SAM_fd;
 extern int CSD_fd;
 
 extern FILE *log_st;
+extern FILE *DB_FILE;
+extern FILE *DL_FILE;
 
 extern csd_hdrx_t csd_header;
 
@@ -174,6 +178,8 @@ void	read_old_resource_record(struct sam_resource_file *resource,
 void	print_reslog(FILE *log_st, char *pathname,
 			struct sam_perm_inode *pid, char *status);
 int		sam_getdent(struct sam_dirent ** dirent);
+void	sam_db_list(char *path, struct sam_perm_inode *perm_inode,
+			char *link, sam_vsn_section_t *vsnp);
 void	sam_ls(char *path, struct sam_perm_inode *perm_inode, char *link);
 void	set_fa(char *path, struct sam_disk_inode *inode);
 void	set_lat(char *path, struct sam_perm_inode *inode);

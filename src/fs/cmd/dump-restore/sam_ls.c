@@ -49,7 +49,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 
 #include <limits.h>
@@ -157,6 +157,7 @@ cs_list(
 		}
 
 		sam_ls(name, &perm_inode, NULL);
+		sam_db_list(name, &perm_inode, linkname, vsnp);
 
 		/* If not already offline */
 		if (!perm_inode.di.status.b.offline) {
@@ -210,6 +211,8 @@ skip_seg_file:
 				csd_read_mve(&seg_inode, &seg_vsnp);
 				if (!skipping) {
 					sam_ls(name, &seg_inode, NULL);
+					sam_db_list(name, &seg_inode, NULL,
+					    seg_vsnp);
 				}
 				if (seg_vsnp) {
 					SamFree(seg_vsnp);
@@ -248,6 +251,10 @@ sam_ls(
 	int		copy;
 	offset_t	ii;
 	time_t	ls_base_time;	/* Current time */
+
+	if (scan_only) {
+		return;
+	}
 
 	ls_base_time = time(NULL);	/* Current time */
 	if (!(ls_options & (LS_LINE1 | LS_LINE2))) {	/* 0 */

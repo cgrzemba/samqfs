@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 
 #include <stdio.h>
@@ -61,6 +61,10 @@
 #include <sys/acl.h>
 
 extern	void WriteHeader(char *name, struct sam_stat *st, char type);
+
+extern	int	parsetabs(char *string, char **argv, int *argc, int argmax);
+extern	int	readin(FILE *, char *, int);
+extern	int	readin_ln;
 
 static void dump_file_data(char *, int partial, int file_fd);
 static void BuildHeader(char *, int, struct sam_stat *, int partial);
@@ -410,6 +414,13 @@ dump_directory_entry(
 		}
 	}
 
+	sam_db_list(name, &perm_inode, linkname, vsnp);
+
+	/* If scan only */
+	if (scan_only) {
+		goto clean_up;
+	}
+
 	/* Retrieve any access control list info for the inode */
 	if (perm_inode.di.status.b.acl && !S_ISLNK(perm_inode.di.mode)) {
 		if ((n_acls = acl(name, GETACLCNT, 0, (aclent_t *)NULL)) < 0) {
@@ -733,6 +744,51 @@ free_names:
 			names_space = cur_namesp;
 		} while (names_space != NULL);
 		free(inode_list);
+	}
+}
+
+void	csd_dump_files(
+	FILE		*DL,		/* File list descriptor		*/
+	char		*filename	/* File name			*/
+)
+
+{
+	char		buf[MAXPATHLEN + MAXPATHLEN + 60];
+	char		*argv[4];
+	int		argc;
+	sam_id_t	id;
+	char		*path;
+	char		*append_point;
+	char		*p;
+
+	readin_ln = 0;			/* reset line number		*/
+
+	while (readin(DL, buf, 2*MAXPATHLEN+59) == 0) {
+		if (parsetabs(buf, argv, &argc, 3)) {
+			error(0, 0, catgets(catfd, SET, 13507, "Format error"
+			    " on file:%s line:%d: insufficient fields"),
+			    filename, readin_ln);
+			continue;
+		}
+		id.ino = atol(argv[0]);
+		id.gen = atol(argv[1]);
+		path   = argv[2];
+		p = strrchr(path, '/');
+
+		if (p == NULL) {
+			error(0, 0, catgets(catfd, SET, 13511, "Format error"
+			    " on file: %s line:%d: no / in path"),
+			    filename, readin_ln);
+			continue;
+		}
+
+		*p = '\0';
+		if (SAM_fd == - 1) {
+			SAM_fd = open_samfs(path);
+		}
+		strcpy(name, path);
+		append_point = name + strlen(path);
+		dump_directory_entry(id, p+1, append_point, name);
 	}
 }
 

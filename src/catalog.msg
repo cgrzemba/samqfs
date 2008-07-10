@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.597 $"
+$ pragma ident "$Revision: 1.598 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2599,11 +2599,11 @@ $ ===================================================================
 13504 Error reading from file %s
 13505 Error writing to data file %s
 13506 Unable to sam_stat() file %s
-13507 XX-UNUSED-XX Unable to open file <%s> to dump data
+13507 Format error on file:%s line:%d: insufficient fields
 13508 Improper invocation of SAM-FS csd utility %s
 13509 Invalid buffer size, must be >= %d and <= %d, specified in 512b units
 13510 Invalid blocking factor, must be >= 0 and <= %d, specified in 512b units
-13511 XX-UNUSED-XX Cannot malloc buffer space %d bytes
+13511 Format error on file: %s line:%d: no / in path
 13512 %s: File data cannot be recovered (file is marked damaged).
 13513 %s: File data was not recoverable prior to dump (file is marked damaged).
 13514 %s: File data was previously not recoverable (file is marked damaged).
@@ -2632,6 +2632,7 @@ $ ===================================================================
 13537 Maximum -I (include file) entries exceeded, max. is %d.
 13538 -I (include file) entry <%s> invalid
 13539 %s: Cannot malloc space for hard link table.
+13540 Missing / in path: %s
 
 $  utility/robot and catalog commands
 $ ===================================================================

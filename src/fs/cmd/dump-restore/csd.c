@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -143,9 +143,9 @@
 
 /*	Local definitions */
 
-#define	RESTORE_OPT	"df:g:ilrRstTv2B:b:"
+#define	RESTORE_OPT	"df:g:ilrRsStTv2B:b:Z:"
 #define	QFSRESTORE_OPT	"df:ilrRstTv2B:b:D"
-#define	DUMP_OPT	"df:HI:nPqTuUvWB:b:X:"
+#define	DUMP_OPT	"df:HI:nPqSTuUvWB:b:X:YZ:"
 #define	QFSDUMP_OPT	"df:HI:qTvB:b:DX:"
 
 #define	STDIN	0	/* Ordinal of stdin */
@@ -167,6 +167,8 @@ int exit_status;
 int CSD_fd;			/* File descriptor for CSD file */
 int SAM_fd = -1;		/* File descriptor for SAM-FS file */
 FILE *log_st = NULL;		/* File handle for restore output */
+FILE *DB_FILE = NULL;		/* File handle for data base load file */
+FILE *DL_FILE = NULL;		/* File handle for dump file list */
 boolean verbose;		/* Verbose output flag */
 boolean quiet;			/* suppress Warnings */
 boolean debugging;		/* Debugging option */
@@ -176,8 +178,10 @@ boolean replace;		/* Replace file option */
 boolean qfs;			/* Dump for QFS (file data included) */
 boolean online_data;		/* Dump online data */
 boolean partial_data;		/* Dump partial-online data */
+boolean scan_only;		/* Scan file system/dump file for db */
 boolean swapped;		/* Dump is different endian than this machine */
 boolean unarchived_data;	/* Dump unarchived data */
+boolean use_file_list;		/* Dump using file list */
 boolean list_by_inode;		/* list inode range only */
 int csd_version = 0;		/* solaris csd format */
 int Directio = 0;		/* use direct io when reading */
@@ -218,6 +222,7 @@ static major_function operation;
 
 extern void *sam_mastershm_attach(int, int);		/* from libsamut */
 
+void csd_dump_files(FILE *DL, char *filename);
 
 /* Local function calls */
 
@@ -231,6 +236,7 @@ int
 main(int argc, char *argv[])
 {
 	char *dump_file = (char *)NULL;	/* Dump path/file name */
+	char *load_file = (char *)NULL;	/* DB load path/file name */
 	char *optstring;		/* Command option string */
 	char *logfile = NULL;	/* Log file name for samfsrestore -g option */
 	struct sam_stat sb;
@@ -253,7 +259,9 @@ main(int argc, char *argv[])
 	list_by_inode = false;
 	online_data = false;
 	partial_data = false;
+	scan_only = false;
 	unarchived_data = false;
+	use_file_list = false;
 	newest_hdr = false;
 	read_buffer_size = write_buffer_size = CSD_DEFAULT_BUFSZ;
 	block_size = 0;
@@ -426,6 +434,10 @@ main(int argc, char *argv[])
 			strip_slashes = true;
 			break;
 
+		case 'S':		/* scan only */
+			scan_only = true;
+			break;
+
 		case 't':		/* list dump file */
 			if (operation & DUMP) {
 				error(1, 0,
@@ -461,10 +473,22 @@ main(int argc, char *argv[])
 			ls_options |= LS_LINE2;
 			break;
 
+		case 'Y':		/* file list for dump */
+			use_file_list = true;
+			break;
+
+		case 'Z':		/* generate database load file	*/
+			load_file = optarg;
+			break;
+
 		case '?':
 			usage();	/* doesn't return */
 			break;
 		}
+	}
+
+	if (scan_only) {		/* clear dump related flags */
+		online_data = partial_data = unarchived_data = false;
 	}
 
 	if (block_size && (block_size > read_buffer_size)) {
@@ -474,6 +498,10 @@ main(int argc, char *argv[])
 	if (operation == DUMP &&
 	    (qfs || unarchived_data || online_data || partial_data)) {
 		newest_hdr = true;
+	}
+
+	if (operation == DUMP && use_file_list) {
+		operation = LISTDUMP;
 	}
 
 	if (debugging) {
@@ -495,9 +523,13 @@ main(int argc, char *argv[])
 		fprintf(stderr, "replace_newer = %d\n", replace_newer);
 		fprintf(stderr, "strip_slashes = %d\n", strip_slashes);
 		fprintf(stderr, "ls_options = 0x%x\n", ls_options);
+		fprintf(stderr, "load_file = %s\n",
+		    ((load_file != (char *)NULL) ? load_file : "UNDEFINED"));
 		fprintf(stderr, "online_data = %d\n", online_data);
 		fprintf(stderr, "partial_data = %d\n", partial_data);
+		fprintf(stderr, "scan_only = %d\n", scan_only);
 		fprintf(stderr, "unarchived_data = %d\n", unarchived_data);
+		fprintf(stderr, "use_file_list = %d\n", use_file_list);
 		fprintf(stderr, "read buffer size = %ld\n", read_buffer_size);
 		fprintf(stderr, "write buffer size = %ld\n",
 		    write_buffer_size);
@@ -515,7 +547,7 @@ main(int argc, char *argv[])
 	 *	If dump file has not been specified, exit with error and usage
 	 */
 
-	if (dump_file == (char *)NULL) {
+	if ((!scan_only) && dump_file == (char *)NULL) {
 		error(0, 0,
 		    catgets(catfd, SET, 5019,
 		    "%s: Dump file name not specified (-f)"),
@@ -569,21 +601,24 @@ main(int argc, char *argv[])
 		break;
 
 	case DUMP:
-		if (strcmp(dump_file, "-") == 0) {
-			CSD_fd = dup(STDOUT);
-		} else {
-			CSD_fd = open(dump_file,
-			    O_WRONLY|O_TRUNC|O_CREAT|SAM_O_LARGEFILE,
-			    0666 & ~umask(0));
-		}
+	case LISTDUMP:
+		if (!scan_only) {
+			if (strcmp(dump_file, "-") == 0) {
+				CSD_fd = dup(STDOUT);
+			} else {
+				CSD_fd = open(dump_file,
+				    O_WRONLY|O_TRUNC|O_CREAT|SAM_O_LARGEFILE,
+				    0666 & ~umask(0));
+			}
 
-		close(STDOUT);
+			close(STDOUT);
 
-		if (CSD_fd < 0) {
-			error(1, errno,
-			    catgets(catfd, SET, 216,
-			    "%s: Cannot create dump file"),
-			    dump_file);
+			if (CSD_fd < 0) {
+				error(1, errno,
+				    catgets(catfd, SET, 216,
+				    "%s: Cannot create dump file"),
+				    dump_file);
+			}
 		}
 
 		csd_header.csd_header.time = time(0l);
@@ -594,7 +629,7 @@ main(int argc, char *argv[])
 			    ctime((const time_t *)&csd_header.csd_header.time));
 		}
 
-		if (noheaders) {
+		if (noheaders || scan_only) {
 			break;
 		}
 
@@ -717,6 +752,13 @@ main(int argc, char *argv[])
 		    "Open failed on (%s)"), logfile);
 	}
 
+	if ((load_file != NULL) &&
+	    (DB_FILE = fopen64(load_file, "w")) == NULL) {
+		error(0, errno, "%s", load_file);
+		error(1, 0, catgets(catfd, SET, 1856,
+		    "Open failed on (%s)"), load_file);
+	}
+
 	switch (operation) {
 	case NONE:
 		break;
@@ -766,6 +808,37 @@ main(int argc, char *argv[])
 				    Initial_path);
 			}
 
+		}
+		}
+		bflush(CSD_fd);
+		break;
+
+	case LISTDUMP: {
+		char *filename;
+
+		if (debugging) {
+			fprintf(stderr, "dumping.  argc %d, initial "
+			    "path '%s' \n",
+			    optind, Initial_path);
+		}
+
+		while ((filename = get_path(argc, argv)) != NULL) {
+			if (debugging) {
+				fprintf(stderr, "dumping path '%s' \n",
+				    filename);
+			}
+
+			if ((DL_FILE = fopen(filename, "r")) == NULL) {
+				error(0, errno, "%s", load_file);
+				error(1, 0, catgets(catfd, SET, 1856,
+				    "Open failed on (%s)"), load_file);
+			}
+			if (SAM_fd != -1) {
+				close(SAM_fd);
+			}
+			csd_dump_files(DL_FILE, filename);
+			fclose(DL_FILE);
+			DL_FILE == NULL;
 		}
 		}
 		bflush(CSD_fd);
@@ -926,23 +999,25 @@ usage()
 	fprintf(stderr, "Usage: %s ", program_name);
 	switch (operation) {
 	case DUMP:
+	case LISTDUMP:
 		if (!qfs) {
-			fprintf(stderr, "[-dHnPqTuUvW] ");
+			fprintf(stderr, "[-dHnPqSTuUvW] ");
 		} else {
 			fprintf(stderr, "[-dHqTvD] ");
 		}
 		fprintf(stderr,
 		    "[-b size] [-B size] [-I include_dir] [-X excluded_dir] "
+		    "[-Y list_file] [-Z samdb_load_file] "
 		    "-f dump_file [file...]\n");
 		break;
 	case RESTORE:
 		if (!qfs) {
-			fprintf(stderr, "[-dilrRstTv2] ");
+			fprintf(stderr, "[-dilrRsStTv2] ");
 		} else {
 			fprintf(stderr, "[-dilrRstTv2D] ");
 		}
-		fprintf(stderr, "[-b size] [-B size] -f dump_file "
-		    "[file...]\n");
+		fprintf(stderr, "[-b size] [-B size] [-Z samdb_load_file] "
+		    "-f dump_file [file...]\n");
 		break;
 	default:
 		fprintf(stderr,
