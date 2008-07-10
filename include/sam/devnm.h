@@ -40,7 +40,7 @@
 #define	_SAM_DEVNM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 #endif
 
 
@@ -114,9 +114,9 @@ char *dev_nmsg[] = {
 
 int dev_nmsg_size = sizeof (dev_nmsg) / sizeof (dev_nmsg[0]);
 
-/* Define all possible target groups - o0 - o127 */
+/* Define all possible osd groups - o0 - o127 */
 
-char *dev_nmtg[] = {
+char *dev_nmog[] = {
 "o0  ", "o1  ", "o2  ", "o3  ", "o4  ", "o5  ", "o6  ", "o7  ", "o8  ", "o9  ",
 "o10 ", "o11 ", "o12 ", "o13 ", "o14 ", "o15 ", "o16 ", "o17 ", "o18 ", "o19 ",
 "o20 ", "o21 ", "o22 ", "o23 ", "o24 ", "o25 ", "o26 ", "o27 ", "o28 ", "o29 ",
@@ -131,16 +131,16 @@ char *dev_nmtg[] = {
 "o110", "o111", "o112", "o113", "o114", "o115", "o116", "o117", "o118", "o119",
 "o120", "o121", "o122", "o123", "o124", "o125", "o126", "o127" };
 
-#define	TG_CNT (sizeof (dev_nmtg)/sizeof (char *))
+#define	OG_CNT (sizeof (dev_nmog)/sizeof (char *))
 
-int dev_nmtg_size = sizeof (dev_nmtg) / sizeof (dev_nmtg[0]);
+int dev_nmog_size = sizeof (dev_nmog) / sizeof (dev_nmog[0]);
 
 #endif	/* DEC_INIT */
 
 #ifdef DEC_INIT
 
 char *dev_nmmd[] = {
-	"dk", "md", "mm", "mr", "cb", "ob", "??", "??", NULL
+	"dk", "md", "mm", "mr", "cb", "??", "??", "??", NULL
 };
 
 char *dev_nmfs[] = {
@@ -356,7 +356,7 @@ extern  char *dev_nmtp[];
 extern  char *dev_nmsg[];
 extern  int dev_nmsg_size;
 extern  char *dev_nmtg[];
-extern  int dev_nmtg_size;
+extern  int dev_nmog_size;
 extern  char *dev_nmod[];
 extern  char *dev_nmfs[];
 extern  char *dev_nmrb[];

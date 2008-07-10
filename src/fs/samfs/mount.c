@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.216 $"
+#pragma ident "$Revision: 1.217 $"
 #endif
 
 #include "sam/osversion.h"
@@ -321,7 +321,7 @@ sam_getdev(
 			continue;
 		}
 		TRACES(T_SAM_OPEN_DEV, mp, dp->part.pt_name);
-		if (is_target_group(dp->part.pt_type)) {
+		if (is_osd_group(dp->part.pt_type)) {
 			if ((dp->error = sam_open_osd_device(dp, filemode,
 			    credp))) {
 				continue;
@@ -501,7 +501,7 @@ sam_getdev(
 							dp->dmr_cap = 1;
 						}
 					}
-					if (is_target_group(dp->part.pt_type)) {
+					if (is_osd_group(dp->part.pt_type)) {
 						break;
 					}
 					switch (dp->part.pt_type) {
@@ -1226,6 +1226,11 @@ sam_build_allocation_links(
 	}
 	if (dp->part.pt_type == DT_META) {
 		disk_type = MM;
+	} else if (is_osd_group(dp->part.pt_type)) {
+		disk_type = DD;
+		if (num_group < 0) {
+			num_group = dp->num_group;
+		}
 	} else {
 		disk_type = DD;
 		/*
@@ -1248,6 +1253,10 @@ sam_build_allocation_links(
 			}
 		}
 	}
+
+	/*
+	 * Build forward link chain for MM or DD disks with state = ON/NOALLOC.
+	 */
 	if (mp->mi.m_dk_max[disk_type] == 0) {	/* First entry */
 		mp->mi.m_dk_start[disk_type] = (short)i;
 		mp->mi.m_unit[disk_type] = (short)i;
@@ -1271,6 +1280,14 @@ sam_build_allocation_links(
 				break;
 			}
 		}
+	}
+
+	/*
+	 * For OSD groups, return max. number of devices in the group.
+	 */
+	if (is_osd_group(dp->part.pt_type)) {
+		*num_group_ptr = num_group;
+		return (error);
 	}
 
 	/*
@@ -1546,7 +1563,7 @@ sam_validate_sblk(
 			goto setpart2;
 		}
 #ifdef sun
-		if (is_target_group(dp->part.pt_type)) {
+		if (is_osd_group(dp->part.pt_type)) {
 			buf = kmem_alloc(sizeof (struct sam_sblk), KM_SLEEP);
 			if ((error = sam_issue_object_io(dp->oh, FREAD,
 			    SAM_OBJ_SBLK_ID, UIO_SYSSPACE, buf,
@@ -1719,7 +1736,7 @@ sam_validate_sblk(
 setpart1:
 
 #ifdef sun
-		if (is_target_group(dp->part.pt_type)) {
+		if (is_osd_group(dp->part.pt_type)) {
 			kmem_free(buf, sizeof (struct sam_sblk));
 		} else {
 			bp->b_flags |= B_STALE | B_AGE;
@@ -2200,7 +2217,7 @@ sam_close_devices(
 		TRACE(T_SAM_DEV_CLOSE, mp, dp->part.pt_eq, dp->part.pt_state,
 		    dp->error);
 		if (dp->opened) {
-			if (is_target_group(dp->part.pt_type)) {
+			if (is_osd_group(dp->part.pt_type)) {
 				sam_close_osd_device(dp->oh, filemode, credp);
 				continue;
 			} else {

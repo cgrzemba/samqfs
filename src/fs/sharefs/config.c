@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -184,7 +184,7 @@ putLabel(
 	strncpy(lb->server, cfp->serverName, sizeof (lb->server));
 	strncpy(lb->serveraddr, cfp->serverAddr, sizeof (lb->serveraddr));
 
-	if (is_target_group(part[dpart].pt_type)) {
+	if (is_osd_group(part[dpart].pt_type)) {
 		uint64_t oh;
 
 		if ((open_obj_device(part[dpart].pt_name, OPEN_RDWR_RAWFLAGS,

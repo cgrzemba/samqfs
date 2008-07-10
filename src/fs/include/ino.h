@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 #endif
 
 #ifdef linux
@@ -321,24 +321,21 @@ typedef struct sam_di_ext {
 	uchar_t			stage_ahead;		/* Stage readahead */
 } sam_di_ext_t;
 
-#define	SAM_MAX_OSD_STRIPE	3
+#define	SAM_MAX_OSD_DIRECT	8	/* No. of stripes in dk inode */
+#define	SAM_MAX_OSD_EXTENT	48	/* No. of stripes in ext inode */
+#define	SAM_MAX_OSD_STRIPE_WIDTH	SAM_MAX_OSD_DIRECT + SAM_MAX_OSD_EXTENT
 
-typedef struct sam_obj_layout {
-	uint64_t		obj_id;		/* User object ID */
-	offset_t		eoo;		/* User obj written size */
-	ushort_t		ord;		/* Ordinal */
-	uchar_t			pad[6];
-} sam_obj_layout_t;
-
-typedef struct sam_di_obj {
-	sam_obj_layout_t	ol[SAM_MAX_OSD_STRIPE];	 /* Object layout */
-} sam_di_obj_t;
+typedef struct sam_di_osd {
+	sam_id_t		ext_id;
+	uint64_t		obj_id[SAM_MAX_OSD_DIRECT];
+	uchar_t			ord[SAM_MAX_OSD_DIRECT];
+} sam_di_osd_t;
 
 typedef union sam_di_ia {
 	char			i[((NOEXT * sizeof (int)) +
 				    (NOEXT * sizeof (char)) + 1)];
 	sam_di_ext_t		ext;
-	sam_di_obj_t		osd;
+	sam_di_osd_t		osd;
 } sam_di_ia_t;
 
 /* ----- Inode structure as it appears on a disk block. */

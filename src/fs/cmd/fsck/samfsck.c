@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 
 /* ----- Includes */
@@ -417,6 +417,8 @@ void offline_inode(ino_t ino, struct sam_perm_inode *dp);
 void free_inode(ino_t ino, struct sam_perm_inode *dp);
 int check_reg_file(struct sam_perm_inode *dp);
 int check_inode_exts(struct sam_perm_inode *dp);
+int verify_inode_ext(struct sam_perm_inode *dp, struct sam_inode_ext *ep,
+	sam_id_t eid);
 int check_multivolume_inode_exts(sam_perm_inode_v1_t *dp, int copy);
 int check_dir(struct sam_perm_inode *dp);
 int check_seg_inode(struct sam_perm_inode *sp);
@@ -1156,7 +1158,7 @@ check_fs(void)
 			devlp->mm = NULL;
 			continue;
 		}
-		if (is_target_group(devlp->type)) {
+		if (is_osd_group(devlp->type)) {
 			devlp->mm = NULL;
 			continue;
 		}
@@ -1203,7 +1205,7 @@ check_fs(void)
 		if (devlp->state == DEV_OFF || devlp->state == DEV_DOWN) {
 			continue;
 		}
-		if (is_target_group(devlp->type)) {
+		if (is_osd_group(devlp->type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1240,7 +1242,7 @@ check_fs(void)
 		if (devlp->state == DEV_OFF || devlp->state == DEV_DOWN) {
 			continue;
 		}
-		if (is_target_group(devlp->type)) {
+		if (is_osd_group(devlp->type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1699,7 +1701,7 @@ build_devices(void)
 	}
 	for (ord = 0, devlp = (struct devlist *)ndevp; ord < fs_count;
 	    ord++, devlp++) {
-		if (is_target_group(devlp->type)) {
+		if (is_osd_group(devlp->type)) {
 			continue;
 		}
 		if (d_read(devlp, (char *)sblk,
@@ -1748,7 +1750,7 @@ build_devices(void)
 			devlp->state = sblk->eq[ord].fs.state;
 			continue;
 		}
-		if (is_target_group(devlp->type)) {
+		if (is_osd_group(devlp->type)) {
 			if ((read_object(fsname, devlp->oh, ord,
 			    SAM_OBJ_SBLK_INO, (char *)&sblock, 0,
 			    SAM_DEV_BSIZE))) {
@@ -1935,8 +1937,6 @@ process_inodes()
 			}
 			if (S_ISDIR(dp->di.mode)) {
 				inop->type = DIRECTORY;
-			} else if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
-				inop->type = INO_OBJECT;
 			} else if (S_ISEXT(dp->di.mode)) {
 				ep = (struct sam_inode_ext *)dp;
 				inop->id = ep->hdr.id;
@@ -1957,6 +1957,8 @@ process_inodes()
 				} else {
 					inop->seg_lim = 0;
 				}
+			} else if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
+				inop->type = INO_OBJECT;
 			} else {
 				inop->type = REG_FILE;
 			}
@@ -1995,7 +1997,8 @@ process_inodes()
 				    ino);
 				clean_exit(ES_inodes);
 			}
-			if (inop->type == REG_FILE) {
+			if (inop->type == REG_FILE ||
+			    inop->type == INO_OBJECT) {
 				(void) check_reg_file(dp);
 			} else if (inop->type == DIRECTORY) {
 				(void) check_dir(dp);
@@ -2145,9 +2148,11 @@ process_inodes()
 			if (inop->prob == INVALID_INO) {
 				if (repair_files) {
 					(void) get_inode(inop->id.ino, dp);
-					quota_uncount_file(dp);
-					/* uncount the blocks */
-					count_inode_blocks(dp);
+					if (inop->type != INO_OBJECT) {
+						quota_uncount_file(dp);
+						/* uncount the blocks */
+						count_inode_blocks(dp);
+					}
 					free_inode(inop->id.ino, dp);
 				}
 				print_inode_prob(inop);
@@ -4680,8 +4685,10 @@ make_orphan(
 		zero_size++;
 	}
 	if (zero_size) {
-		quota_uncount_file(dp);
-		count_inode_blocks(dp);		/* uncount the blocks */
+		if (!(dp->di.rm.ui.flags & RM_OBJECT_FILE)) {
+			quota_uncount_file(dp);
+			count_inode_blocks(dp);		/* uncount the blocks */
+		}
 		free_inode(ino, dp);
 		printf(catgets(catfd, SET, 13322,
 		    "NOTICE: Orphan ino:        empty ino %d moved to "
@@ -5193,6 +5200,21 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 			}
 		}
 
+		/* Check for object inode extensions and validate */
+		if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
+			sam_di_osd_t	*oip;
+			sam_id_t ext_id;
+
+			oip = (sam_di_osd_t *)(void *)&dp->di.extent[2];
+			ext_id = oip->ext_id;
+			if (ext_id.ino != 0 || ext_id.gen != 0) {
+				if (check_inode_exts(dp)) {
+					err++;
+				}
+			}
+		}
+
+
 	} else if (dp->di.version == SAM_INODE_VERS_1) {
 		/* Previous version */
 		sam_perm_inode_v1_t *dp_v1 = (sam_perm_inode_v1_t *)dp;
@@ -5334,7 +5356,7 @@ check_inode_exts(struct sam_perm_inode *dp)		/* Base inode entry */
 	char *ip;
 	struct sam_perm_inode *xp;
 	struct sam_inode_ext *ep;
-	struct ino_list *inop;
+	sam_di_osd_t *oip;
 	int f_ext = 0;				/* extension types found */
 	int n_chars = 0;
 	int rfa_t_vsns = 0;
@@ -5346,7 +5368,6 @@ check_inode_exts(struct sam_perm_inode *dp)		/* Base inode entry */
 	int mva_t_vsns[MAX_ARCHIVE] = { 0, 0, 0, 0 };
 	int mva_n_vsns[MAX_ARCHIVE] = { 0, 0, 0, 0 };
 
-	eid = dp->di.ext_id;
 
 	/* Allocate space for reading inode extensions */
 	if ((ip = (char *)malloc(sizeof (struct sam_perm_inode))) == NULL) {
@@ -5358,60 +5379,48 @@ check_inode_exts(struct sam_perm_inode *dp)		/* Base inode entry */
 	xp = (struct sam_perm_inode *)ip;
 
 	/* Validate each inode extension in list */
+	if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
+		oip = (sam_di_osd_t *)(void *)&dp->di.extent[2];
+		eid = oip->ext_id;
+		while ((eid.ino >= min_usr_inum) && (eid.ino <= ino_count)) {
+			(void) get_inode(eid.ino, xp);
+			ep = (struct sam_inode_ext *)xp;
+			if (verify_inode_ext(dp, ep, eid) == -1) {
+				goto fail;
+			}
+			eid = ep->hdr.next_id;
+
+			/* Check that next inode extension number is in range */
+			if ((eid.ino != 0) && ((eid.ino < min_usr_inum) ||
+			    (eid.ino > ino_count))) {
+				printf(catgets(catfd, SET, 13353,
+			    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
+				    (int)dp->di.id.ino, dp->di.id.gen);
+				SETEXIT(ES_alert);
+				if (verbose_print || debug_print) {
+					printf("DEBUG:  \t . ino=%d.%d next "
+					    "id=%d.%d .lt. min=%ld or\n",
+					    (int)ep->hdr.id.ino, ep->hdr.id.gen,
+					    (int)eid.ino, eid.gen,
+					    min_usr_inum);
+					printf("DEBUG:  \t . ino=%d.%d next "
+					    "id=%d.%d .gt. max=%d\n",
+					    (int)ep->hdr.id.ino, ep->hdr.id.gen,
+					    (int)eid.ino, eid.gen,
+					    ino_count);
+				}
+				goto fail;
+			}
+		}
+	}
+
+	/* Validate each inode extension in list */
+	eid = dp->di.ext_id;
 	while ((eid.ino >= min_usr_inum) && (eid.ino <= ino_count)) {
 
 		(void) get_inode(eid.ino, xp);
 		ep = (struct sam_inode_ext *)xp;
-
-		/* Check that file id of inode extension is base inode */
-		if ((ep->hdr.file_id.ino != dp->di.id.ino) ||
-		    (ep->hdr.file_id.gen != dp->di.id.gen)) {
-			printf(catgets(catfd, SET, 13353,
-			    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
-			    (int)dp->di.id.ino, dp->di.id.gen);
-			SETEXIT(ES_alert);
-			if (verbose_print || debug_print) {
-				printf("DEBUG:  \t . ino=%d.%d file id "
-				    "mismatch=%d.%d expected=%d.%d\n",
-				    (int)ep->hdr.id.ino, ep->hdr.id.gen,
-				    (int)ep->hdr.file_id.ino,
-				    ep->hdr.file_id.gen,
-				    (int)dp->di.id.ino, dp->di.id.gen);
-			}
-			goto fail;
-		}
-
-		/* Mark inode extension as recognized */
-		inop = &ino_mm[eid.ino - 1];
-
-		if (inop->orphan == ORPHAN) {
-			inop->orphan = NOT_ORPHAN;
-		} else {
-			printf(catgets(catfd, SET, 13353,
-			    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
-			    (int)dp->di.id.ino, dp->di.id.gen);
-			SETEXIT(ES_alert);
-			if (verbose_print || debug_print) {
-				printf("DEBUG:  \t . ino=%d.%d already "
-				    "processed\n",
-				    (int)ep->hdr.id.ino, ep->hdr.id.gen);
-			}
-			goto fail;
-		}
-
-		/* Check that inode extension header version is okay */
-		/* Current version */
-		if ((ep->hdr.version == SAM_INODE_VERS_1) ||
-		    (ep->hdr.version != dp->di.version)) {
-			printf(catgets(catfd, SET, 13353,
-			    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
-			    (int)dp->di.id.ino, dp->di.id.gen);
-			SETEXIT(ES_alert);
-			if (verbose_print || debug_print) {
-				printf("DEBUG:  \t . ino=%d.%d vers=%d\n",
-				    (int)ep->hdr.id.ino, ep->hdr.id.gen,
-				    ep->hdr.version);
-			}
+		if (verify_inode_ext(dp, ep, eid) == -1) {
 			goto fail;
 		}
 
@@ -6001,6 +6010,67 @@ fail:
 	return (-1);
 }
 
+int					/* -1 if inode error, 0 otherwise */
+verify_inode_ext(
+	struct sam_perm_inode *dp,	/* Base inode entry */
+	struct sam_inode_ext *ep,	/* Extent inode entry */
+	sam_id_t eid)				/* Inode.gen for extention */
+{
+	struct ino_list *inop;
+
+	/* Check that file id of inode extension is base inode */
+	if ((ep->hdr.file_id.ino != dp->di.id.ino) ||
+	    (ep->hdr.file_id.gen != dp->di.id.gen)) {
+		printf(catgets(catfd, SET, 13353,
+		    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
+		    (int)dp->di.id.ino, dp->di.id.gen);
+		SETEXIT(ES_alert);
+		if (verbose_print || debug_print) {
+			printf("DEBUG:  \t . ino=%d.%d file id "
+			    "mismatch=%d.%d expected=%d.%d\n",
+			    (int)ep->hdr.id.ino, ep->hdr.id.gen,
+			    (int)ep->hdr.file_id.ino,
+			    ep->hdr.file_id.gen,
+			    (int)dp->di.id.ino, dp->di.id.gen);
+		}
+		return (-1);
+	}
+
+	/* Mark inode extension as recognized */
+	inop = &ino_mm[eid.ino - 1];
+
+	if (inop->orphan == ORPHAN) {
+		inop->orphan = NOT_ORPHAN;
+	} else {
+		printf(catgets(catfd, SET, 13353,
+		    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
+		    (int)dp->di.id.ino, dp->di.id.gen);
+		SETEXIT(ES_alert);
+		if (verbose_print || debug_print) {
+			printf("DEBUG:  \t . ino=%d.%d already "
+			    "processed\n",
+			    (int)ep->hdr.id.ino, ep->hdr.id.gen);
+		}
+		return (-1);
+	}
+
+	/* Check that inode extension header version is okay */
+	/* Current version */
+	if ((ep->hdr.version == SAM_INODE_VERS_1) ||
+	    (ep->hdr.version != dp->di.version)) {
+		printf(catgets(catfd, SET, 13353,
+		    "ALERT:  ino %d.%d,\tInvalid inode extension\n"),
+		    (int)dp->di.id.ino, dp->di.id.gen);
+		SETEXIT(ES_alert);
+		if (verbose_print || debug_print) {
+			printf("DEBUG:  \t . ino=%d.%d vers=%d\n",
+			    (int)ep->hdr.id.ino, ep->hdr.id.gen,
+			    ep->hdr.version);
+		}
+		return (-1);
+	}
+	return (0);
+}
 
 /*
  * ----- check_multivolume_inode_exts - check multivolume inode extensions

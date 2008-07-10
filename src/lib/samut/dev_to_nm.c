@@ -41,7 +41,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 
 #include <sys/types.h>
@@ -102,10 +102,11 @@ device_to_nm(
 		} else {
 			return (getMn((dt & DT_MEDIA_MASK), dev_nmmd));
 		}
-	case DT_TARGET:
-		if (is_target_group(dt)) {
-			if ((dt & DT_MEDIA_MASK) < dev_nmtg_size) {
-				return (dev_nmtg[dt & DT_MEDIA_MASK]);
+	case DT_OBJECT_DISK:
+		if (is_osd_group(dt)) {
+			int grp = dt & DT_OSD_MASK;
+			if ((grp >= 0) && (grp < dev_nmog_size)) {
+				return (dev_nmog[grp]);
 			}
 			return ("??");
 		} else {

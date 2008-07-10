@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 
 /* ANSI headers. */
@@ -715,6 +715,13 @@ dis_inode_ext(struct sam_inode_ext *node)	/* Inode extension image */
 			    node->ext.acl.ent[i].a_perm, aperm);
 		}
 		break;
+	case S_IFOBJ:
+		ln = fl;
+		Mvprintw(ln++, 40, "%.16llx object_id",
+		    node->ext.obj.obj_id[0]);
+		Mvprintw(ln++, 40, "%.4x      (%d)",
+		    node->ext.obj.ord[0], node->ext.obj.ord[0]);
+		break;
 	default:
 		break;
 	}
@@ -882,6 +889,20 @@ dis_inode_file(
 	    ino->stage_ahead, ino->stage_ahead);
 	ln = (ll > ln) ? ll : ln;
 	if (COLS > 24)  ln++;
+	if (ino->rm.ui.flags & RM_OBJECT_FILE) {
+		sam_di_osd_t *oip = (sam_di_osd_t *)&ino->extent[2];
+
+		Mvprintw(ln++, 0, "Object IDs  ext_id: %d.%d", oip->ext_id.ino,
+		    oip->ext_id.gen);
+		for (i = 0; i < SAM_MAX_OSD_DIRECT; i++) {
+			if (i % 3 == 0) {
+				Mvprintw(ln++, 0, "%.2d_ ", i);
+			}
+			Printw("%.16llx.%.2x ",
+			    oip->obj_id[i], oip->ord[i]);
+		}
+		return;
+	}
 	if (extent_factor != 0) {
 		if (extent_factor == 1024) {
 			extent_format = "1k";

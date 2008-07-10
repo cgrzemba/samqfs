@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.30 $"
+#pragma ident   "$Revision: 1.31 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -436,7 +436,7 @@ base_dev_t *fam_set_dev)	/* family set for which to check devices */
 
 		/* if mb file system, only mm and oXXX is allowed. */
 		if ((fam_set_type == DT_META_OBJECT_SET) &&
-		    (dev_type != DT_META) && !is_target_group(dev_type)) {
+		    (dev_type != DT_META) && !is_osd_group(dev_type)) {
 			/* File system %s has invalid devices. */
 			snprintf(err_msg, sizeof (err_msg), GetCustMsg(17215),
 			    fam_set_dev->name);
@@ -912,8 +912,8 @@ nm_to_dtclass(char *nm)
 	/* Target OSD groups - o0 - o127 */
 	if (*nm == 'o' && *nmp >= '0' && *nmp <= '9') {
 		dt = strtol(nmp, NULL, 10);
-		if (dt < dev_nmtg_size) {
-			dt = DT_TARGET_GROUP | dt;
+		if (dt >= 0 && dt < dev_nmog_size) {
+			dt = DT_OBJECT_DISK | dt;
 			return (dt);
 		}
 	}

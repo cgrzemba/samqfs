@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.183 $"
+#pragma ident "$Revision: 1.184 $"
 #endif
 
 #include "sam/osversion.h"
@@ -62,9 +62,6 @@
 #include <sys/policy.h>
 #include <sys/stat.h>
 #endif /* sun */
-#if defined(SAM_OSD_SUPPORT)
-#include <sys/osd.h>
-#endif
 
 #ifdef  linux
 /*
@@ -446,7 +443,7 @@ sam_osd_command(
 		goto out;
 	}
 	dp = &mp->mi.m_fs[args.ord];
-	if (!is_target_group(dp->part.pt_type)) {
+	if (!is_osd_group(dp->part.pt_type)) {
 		error = EINVAL;
 		goto out;
 	}

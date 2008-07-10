@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.210 $"
+#pragma ident "$Revision: 1.211 $"
 
 #include "sam/osversion.h"
 
@@ -315,6 +315,12 @@ sam_get_ino(
 
 	if ((error = sam_verify_ino(fp, flag, ip, TRUE))) {
 		goto out;
+	}
+
+	if (SAM_IS_OBJECT_FILE(ip)) {
+		if ((error = sam_osd_create_obj_layout(ip))) {
+			goto out;
+		}
 	}
 
 	/* Backwards support for residency time prior to 3.3.0-28 */
@@ -1409,6 +1415,10 @@ sam_destroy_ino(sam_node_t *ip, boolean_t locked)
 	}
 	if (--samgt.inocount < 0) {
 		samgt.inocount = 0;
+	}
+
+	if (ip->olp) {
+		sam_osd_destroy_obj_layout(ip);
 	}
 
 	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {

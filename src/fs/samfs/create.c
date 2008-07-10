@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.153 $"
+#pragma ident "$Revision: 1.154 $"
 
 #include "sam/osversion.h"
 
@@ -635,9 +635,17 @@ sam_restore_new_ino(
 		permip->di.status.b.on_large =
 		    (permp->di.rm.size > SM_OFF(mp, DD)) ? 1 : 0;
 	}
-	for (i = (NOEXT - 1); i >= 0; i--) {
-		permip->di.extent[i] = 0;
-		permip->di.extent_ord[i] = 0;
+	sam_set_unit(mp, &(permip->di));
+	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(permip->di.mode)) {
+		if ((error = sam_create_object_id(mp, &permip->di))) {
+			*bpp = bp;
+			return (error);
+		}
+	} else {
+		for (i = (NOEXT - 1); i >= 0; i--) {
+			permip->di.extent[i] = 0;
+			permip->di.extent_ord[i] = 0;
+		}
 	}
 	if (permip->di.rm.size != 0) {	/* if space in the original inode */
 		permip->di.status.b.offline = 1;
@@ -647,7 +655,6 @@ sam_restore_new_ino(
 	    0, S2QBLKS(permip->di.rm.size), CRED());
 	(void) sam_quota_falloc(mp, permip->di.uid,
 	    permip->di.gid, permip->di.admin_id, CRED());
-	sam_set_unit(mp, &(permip->di));
 	*bpp = bp;
 	*idp = id;
 	return (0);
@@ -845,6 +852,9 @@ sam_make_ino(
 		if ((error = sam_create_object_id(mp, &ip->di))) {
 			goto make_cleanup;
 		}
+		if ((error = sam_osd_create_obj_layout(ip))) {
+			goto make_cleanup;
+		}
 	}
 	return (0);
 
@@ -887,8 +897,9 @@ sam_set_unit(
 	mask = 0;
 	if (i == DD) {
 		if (SAM_IS_OBJECT_FS(mp)) {
-			di->status.b.stripe_group = 1;
-			mask = DT_TARGET_GROUP;
+			if (di->status.b.stripe_group) {
+				mask = DT_OBJECT_DISK;
+			}
 		} else if (di->status.b.stripe_group) {
 			mask = DT_STRIPE_GROUP;
 		}

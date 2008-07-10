@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 #endif
 
 
@@ -129,6 +129,7 @@ typedef struct {
 #endif /* linux */
 #ifdef sun
 	struct kmem_cache *inode_cache; /* incore inode cache pointer */
+	struct kmem_cache *object_cache; /* Object private cache pointer */
 	struct kmem_cache *msg_array_cache; /* cache for srvr msg array */
 	struct kmem_cache *item_cache; /* cache for incoming RPC msgs */
 	struct kmem_cache *client_msg_cache; /* cache for client msgs */

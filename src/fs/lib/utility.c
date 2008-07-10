@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.63 $"
+#pragma ident "$Revision: 1.64 $"
 
 #include "sam/osversion.h"
 
@@ -164,12 +164,11 @@ chk_devices(
 		strncpy(dp->eq_name, fsp->pt_name, sizeof (upath_t));
 		dp->eq = fsp->pt_eq;
 		dp->type = fsp->pt_type;
-		dp->num_group = 1;
 		dp->size = 0;
 		dp->state = fsp->pt_state;
 		dp->filemode = oflags;
 
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			if ((open_obj_device(fsp->pt_name, oflags,
 			    &dp->oh)) < 0) {
 				error(0, 0, catgets(catfd, SET, 17263,
@@ -177,12 +176,14 @@ chk_devices(
 				    fsp->pt_name);
 				return (TRUE);
 			}
+			dp->num_group = 0;
 			continue;
 		}
 		if ((dp->fd = get_blk_device(fsp, oflags)) < 0) {
 			return (TRUE);
 		}
 		dp->size = fsp->pt_size;
+		dp->num_group = 1;
 
 		if (dp->type == DT_META) {
 			if (mm_count == 0) {
@@ -210,11 +211,24 @@ chk_devices(
 	}
 
 	/*
+	 * Set num_group for object groups and stripe groups
 	 * Verify sizes for striped groups are the same.
 	 */
 	dp = (struct devlist *)devp;
 	for (i = 0; i < fs_count; i++) {
-		if (is_stripe_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
+			int ii;
+			struct devlist *ddp;
+
+			ddp = (struct devlist *)devp;
+			for (ii = 0; ii < fs_count; ii++) {
+				if (is_osd_group(ddp->type) &&
+				    (dp->type == ddp->type)) {
+					dp->num_group++;
+				}
+				ddp++;
+			}
+		} else if (is_stripe_group(dp->type)) {
 			int ii;
 			struct devlist *ddp;
 
@@ -536,7 +550,7 @@ write_sblk(
 		if (dp->state == DEV_OFF || dp->state == DEV_DOWN) {
 			continue;
 		}
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			err = write_obj_sblk(sbp, dp, ord);
 		} else {
 			err = write_blk_sblk(sbp, dp, ord);

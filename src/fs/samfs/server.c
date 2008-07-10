@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.287 $"
+#pragma ident "$Revision: 1.288 $"
 
 #include "sam/osversion.h"
 
@@ -3771,6 +3771,10 @@ sam_update_cl_attr(
 		if (set_size) {
 			attr->actions &= ~SR_SET_SIZE;
 			ip->di.rm.size = attr->real_size;
+			if (SAM_IS_OBJECT_FILE(ip)) {
+				(void) sam_set_end_of_obj(ip, ip->di.rm.size,
+				    0);
+			}
 			sam_set_size(ip);
 			ip->flags.b.changed = 1;
 			ip->updtime = SAM_SECOND();

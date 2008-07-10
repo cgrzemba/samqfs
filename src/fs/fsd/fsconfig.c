@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -901,13 +901,17 @@ gatherFsDevices(struct sam_mount_info *mi)
 			err++;
 			continue;
 		}
-		if ((mp->fi_type == DT_META_OBJECT_SET) &&
-		    (dev->type != DT_META) &&
-		    !is_target_group(dev->type)) {
-			/* File system %s has invalid devices. */
-			LibError(NULL, 0, 17215, mp->fi_name);
-			err++;
-			continue;
+		if (mp->fi_type == DT_META_OBJECT_SET) {
+			int tg = dev->type & DT_OSD_MASK;
+
+			if (!((is_osd_group(dev->type) &&
+			    tg >= 0 && tg < dev_nmog_size) ||
+			    (dev->type == DT_META))) {
+				/* File system %s has invalid devices. */
+				LibError(NULL, 0, 17215, mp->fi_name);
+				err++;
+				continue;
+			}
 		}
 		if (mp->fi_type == DT_META_OBJECT_SET) {
 			mp->fi_config1 |= MC_OBJECT_FS;
@@ -954,21 +958,21 @@ gatherFsDevices(struct sam_mount_info *mi)
 				fprintf(stderr, "\n");
 			}
 			err++;
-			continue;
+			goto adddev;
 		} else if (dev->state == DEV_ON || dev->state == DEV_NOALLOC) {
-			if (is_target_group(dev->type)) {
+			if (is_osd_group(dev->type)) {
 				if (!S_ISCHR(sb.st_mode)) {
 					/* %s must be character special file. */
 					LibError(NULL, 0, 17259, dev->name);
 					err++;
-					continue;
+					goto adddev;
 				}
 			} else {
 				if (!S_ISBLK(sb.st_mode)) {
 					/* %s must be block special file. */
 					LibError(NULL, 0, 17214, dev->name);
 					err++;
-					continue;
+					goto adddev;
 				}
 			}
 		}
@@ -977,14 +981,14 @@ gatherFsDevices(struct sam_mount_info *mi)
 		 * Open device to get size
 		 */
 		if (dev->state == DEV_ON || dev->state == DEV_NOALLOC) {
-			if (is_target_group(dev->type)) {
+			if (is_osd_group(dev->type)) {
 				uint64_t	oh;	/* osd_handle_t */
 
 				if ((open_obj_device(dev->name, O_RDONLY, &oh))
 				    < 0) {
 					LibError(NULL, 0, 17263, dev->name);
 					err++;
-					continue;
+					goto adddev;
 				}
 				close_obj_device(dev->name, O_RDONLY, oh);
 			} else {
@@ -992,7 +996,7 @@ gatherFsDevices(struct sam_mount_info *mi)
 					/* %s must be char special file. */
 					LibError(NULL, 0, 17214, dev->name);
 					err++;
-					continue;
+					goto adddev;
 				}
 				close(fd);
 			}

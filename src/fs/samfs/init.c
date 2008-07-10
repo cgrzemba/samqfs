@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.123 $"
+#pragma ident "$Revision: 1.124 $"
 
 #define	SAM_INIT
 
@@ -433,6 +433,7 @@ _fini(void)
 	sam_clean_cache();
 	sam_delete_sharefs_rpc_item_cache();
 	sam_delete_client_msg_cache();
+	sam_delete_object_cache();
 	kmem_free((void *)sam_zero_block, sam_zero_block_size);
 	sam_zero_block = NULL;
 	sam_zero_block_size = 0;
@@ -614,6 +615,7 @@ samfs_init(
 	sam_sc_daemon_init();	/* Initialize system call daemon processing. */
 	sam_init_sharefs_rpc_item_cache();
 	sam_init_client_msg_cache();
+	sam_init_object_cache();
 #if	SAM_TRACE
 	sam_trace_init();	/* Initialize the trace table. */
 #endif

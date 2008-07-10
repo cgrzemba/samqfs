@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.252 $"
+#pragma ident "$Revision: 1.253 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1469,6 +1469,9 @@ sam_set_cl_attr(
 		attr->seqno = ip->cl_attr_seqno = 1;
 	}
 	attr->real_size = ip->di.rm.size;
+	if (SAM_IS_OBJECT_FILE(ip)) {
+		(void) sam_set_end_of_obj(ip, ip->di.rm.size, 0);
+	}
 	if (!write_lock) {
 		mutex_exit(&ip->fl_mutex);
 	}

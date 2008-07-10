@@ -57,7 +57,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -388,7 +388,7 @@ McfLine(void)
 			break;
 
 		case DT_DISK:
-		case DT_TARGET: {
+		case DT_OBJECT_DISK: {
 #ifdef sun
 			char *rdsk;
 
@@ -514,8 +514,8 @@ nm_to_dtclass(char *nm)
 	/* Target groups - o0 - o127 */
 	if (*nm == 'o' && *nmp >= '0' && *nmp <= '9') {
 		dt = strtol(nmp, NULL, 10);
-		if (dt < dev_nmtg_size) {
-			dt = DT_TARGET_GROUP | dt;
+		if (dt >= 0 && dt < dev_nmog_size) {
+			dt = DT_OBJECT_DISK | dt;
 			return (dt);
 		}
 	}

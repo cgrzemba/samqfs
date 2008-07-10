@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 #endif
 
 #ifdef __KERNEL__
@@ -480,6 +480,7 @@ extern char *nfsd_thread_name;
 #define	sam_set_operation_nb(a)			(0)
 #define	sam_unset_operation_nb(a)		do { } while (0)
 #define	sam_map_osd(a, b, c, d, e)		(ENOTSUP)
+#define	sam_set_end_of_obj(a, b, c)		(0)
 
 /*
  * ----- Credential macros.

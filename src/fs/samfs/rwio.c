@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.171 $"
+#pragma ident "$Revision: 1.172 $"
 #endif
 
 #include "sam/osversion.h"
@@ -454,8 +454,7 @@ start:
 	}
 	if (SAM_IS_SHARED_CLIENT(ip->mp)) {
 		if ((error = sam_map_block(ip, uiop->uio_loffset,
-		    (offset_t)allocsz,
-		    SAM_ALLOC_BLOCK, NULL, credp))) {
+		    (offset_t)allocsz, SAM_ALLOC_BLOCK, NULL, credp))) {
 			if ((error == ELNRNG) && S_ISREG(ip->di.mode)) {
 				error = sam_get_sparse_blocks(ip,
 				    SPARSE_zeroall, uiop, ioflag, credp);
@@ -523,8 +522,8 @@ start:
 			int32_t no_blocks = ip->di.blocks;
 
 			if ((error = sam_map_block(ip, uiop->uio_loffset,
-			    (offset_t)nbytes,
-			    type, NULL, credp))) {
+			    (offset_t)nbytes, type, NULL, credp))) {
+
 				/*
 				 * Unless this is a QFS filesystem and we've
 				 * successfully allocated/mapped some storage,
@@ -686,8 +685,7 @@ start:
 		}
 		if (ip->di.rm.size < ip->size) {
 			(void) sam_truncate_ino(ip, ip->di.rm.size,
-			    SAM_TRUNCATE,
-			    credp);
+			    SAM_TRUNCATE, credp);
 		}
 	}
 
@@ -850,8 +848,8 @@ sam_dk_direct_io(
 			if (SAM_IS_SHARED_CLIENT(ip->mp)) {
 				if ((error = sam_map_block(ip,
 				    uiop->uio_loffset,
-				    (offset_t)uiop->uio_resid, SAM_WRITE_BLOCK,
-				    NULL, credp))) {
+				    (offset_t)uiop->uio_resid,
+				    SAM_WRITE_BLOCK, NULL, credp))) {
 					if ((error == ELNRNG) &&
 					    S_ISREG(ip->di.mode)) {
 						enum SPARSE_type
@@ -891,8 +889,8 @@ sam_dk_direct_io(
 				}
 
 				error = sam_map_block(ip, uiop->uio_loffset,
-				    (offset_t)uiop->uio_resid,
-				    mflag, NULL, credp);
+				    (offset_t)uiop->uio_resid, mflag, NULL,
+				    credp);
 
 				if (!error && (mflag == SAM_ALLOC_ZERO) &&
 				    (ip->size > prev_filesize)) {
@@ -1307,8 +1305,7 @@ sam_dk_fini_direct_io(
 			if (ip->di.rm.size < ip->size) {
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				(void) sam_truncate_ino(ip, ip->di.rm.size,
-				    SAM_TRUNCATE,
-				    CRED());
+				    SAM_TRUNCATE, CRED());
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
 		} else if (bdp->error == 0) {
@@ -1535,16 +1532,12 @@ sam_dk_issue_direct_io(
 			TRACE(T_SAM_GROUPIO1, SAM_ITOV(ip), iop->ord,
 			    (sam_tr_t)saved_uio_resid, (uint_t)iop->contig);
 		} else if (SAM_IS_OBJECT_FILE(ip)) {
-			sam_di_obj_t		*obj;
-
-			obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
 			iop->obji++;
 			if (iop->obji >= iop->num_group) {
 				iop->obji = 0;
 				iop->imap.blk_off0 += iop->bsize;
 			}
-			iop->ord = obj->ol[iop->obji].ord;
-			iop->pboff = 0;
+			iop->ord = ip->olp->ol[iop->obji].ord;
 			iop->blk_off = iop->imap.blk_off0;
 			iop->pboff = 0;
 			TRACE(T_SAM_GROUPIO2, SAM_ITOV(ip), iop->ord,

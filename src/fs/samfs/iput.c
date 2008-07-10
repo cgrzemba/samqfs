@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.124 $"
+#pragma ident "$Revision: 1.125 $"
 #endif
 
 #include "sam/osversion.h"
@@ -668,6 +668,13 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 		mutex_exit(&vp->v_lock);
 		mutex_exit(ihp);
 		return;
+	}
+
+	/*
+	 * If object file, remove object layout array.
+	 */
+	if (ip->olp) {
+		sam_osd_destroy_obj_layout(ip);
 	}
 
 	/*

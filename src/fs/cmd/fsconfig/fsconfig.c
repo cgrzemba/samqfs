@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 /* Feature test switches. */
 
@@ -641,7 +641,7 @@ ListFSet(struct DevInfo *dip, int n)
 			mr++;
 			break;
 		default:
-			if (is_target_group(dip->di_sblk->eq[j].fs.type)) {
+			if (is_osd_group(dip->di_sblk->eq[j].fs.type)) {
 				ob++;
 				break;
 			}

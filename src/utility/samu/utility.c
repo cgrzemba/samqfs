@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -541,6 +541,7 @@ ext_mode_string(mode_t mode)
 	if (S_ISRFA(mode)) str[0] = 'R'; /* resource file attr extension */
 	if (S_ISHLP(mode)) str[0] = 'H'; /* hard link parent extension */
 	if (S_ISACL(mode)) str[0] = 'A'; /* access control list extension */
+	if (S_ISOBJ(mode)) str[0] = 'O'; /* object layout inode extension */
 	return (str);
 }
 

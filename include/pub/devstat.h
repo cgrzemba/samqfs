@@ -38,7 +38,7 @@
 #define	SAM_DEVSTAT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 #endif
 
 #ifdef	linux
@@ -130,8 +130,8 @@ struct sam_ndevstat {
 
 /* Device types */
 #define	DT_CLASS_MASK		0xff00	/* Device class type mask */
+#define	DT_OSD_MASK		0x00ff	/* Device OSD type mask */
 #define	DT_STRIPE_GROUP_MASK	0xff80	/* Device class mask for striped grp */
-#define	DT_TARGET_GROUP_MASK	0xff80	/* Device class mask for target group */
 #define	DT_MEDIA_MASK		0x007f	/* Device media type mask */
 #define	DT_SCSI_ROBOT_MASK	0x1880	/* Device is a scsi robot */
 #define	DT_CLASS_SHIFT		8	/* Device class type shift */
@@ -165,8 +165,7 @@ struct sam_ndevstat {
 #define	DT_3592			0x213   /* IBM 3592 and TS1120 drives */
 #define	DT_TITAN		0x214	/* STK Titanium drive */
 
-#define	DT_TARGET		0x300	/* Target OSD storage */
-#define	DT_TARGET_GROUP		0x380	/* Object storage for striped target */
+#define	DT_OBJECT_DISK		0x300	/* Object storage device (OSD) */
 
 #define	DT_OPTICAL		0x500	/* Optical disk storage */
 #define	DT_WORM_OPTICAL_12	0x501	/* WORM optical disk (12) */
@@ -268,9 +267,8 @@ struct sam_ndevstat {
 #define	is_tapelib(a)		(((a) & DT_TAPE_R) == DT_TAPE_R)
 #define	is_third_party(a)	(((a) & DT_CLASS_MASK) == DT_THIRD_PARTY)
 #define	is_stripe_group(a)	(((a) & DT_STRIPE_GROUP_MASK) == \
-								DT_STRIPE_GROUP)
-#define	is_target_group(a)	(((a) & DT_TARGET_GROUP_MASK) == \
-								DT_TARGET_GROUP)
+				    DT_STRIPE_GROUP)
+#define	is_osd_group(a)		(((a) & DT_CLASS_MASK) == DT_OBJECT_DISK)
 #define	is_rsd(a)		((a) == DT_PSEUDO_RD)
 #define	is_stk5800(a)		((a) == DT_STK5800)
 

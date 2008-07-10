@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 
 /* ----- Include Files ---- */
@@ -231,7 +231,7 @@ main(int argc, char **argv)
 
 	writedau();
 	for (i = 0, dp = (struct devlist *)devp; i < fs_count; i++, dp++) {
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			close_obj_device(dp->eq_name, dp->filemode, dp->oh);
 		} else {
 			close(dp->fd);
@@ -652,7 +652,7 @@ new_fs(void)
 	for (ord = 0; ord < fs_count; ord++) {
 		int mord;
 
-		if (is_target_group(sblock.eq[ord].fs.type)) {
+		if (is_osd_group(sblock.eq[ord].fs.type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -698,7 +698,7 @@ new_fs(void)
 	    ord++, dp++) {
 		int len;
 
-		if (is_target_group(sblock.eq[ord].fs.type)) {
+		if (is_osd_group(sblock.eq[ord].fs.type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -792,7 +792,7 @@ grow_fs(void)
 
 	for (ord = 0, dp = (struct devlist *)ndevp; ord < fs_count;
 	    ord++, dp++) {
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			if ((read_object(fs_name, dp->oh, ord,
 			    SAM_OBJ_SBLK_INO, (char *)sblk,
 			    0, SAM_DEV_BSIZE))) {
@@ -1804,7 +1804,7 @@ debug_print(int idx)
 	int err = 0;
 
 	dp = &devp->device[idx];
-	if (is_target_group(dp->type)) {
+	if (is_osd_group(dp->type)) {
 		if ((read_object(fs_name, dp->oh, idx,
 		    SAM_OBJ_SBLK_INO, (char *)&slsblk,
 		    0, SAM_DEV_BSIZE))) {
@@ -1845,7 +1845,7 @@ debug_print(int idx)
 	blocks_per_read = SAM_DEV_BSIZE/32;
 	for (i = 0; i < fs_count; i++) {
 		dp = &devp->device[i];
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			if ((read_object(fs_name, dp->oh, i, SAM_OBJ_SBLK_INO,
 			    (char *)&slsblk, 0, SAM_DEV_BSIZE))) {
 				err = 1;
@@ -1890,7 +1890,7 @@ debug_print(int idx)
 	 * idx's metadata slice.
 	 */
 	for (ii = 0; ii < sblock.eq[ord].fs.l_allocmap; ii++) {
-		if (is_target_group(mdp->type)) {
+		if (is_osd_group(mdp->type)) {
 			continue;
 		}
 		if (d_read(mdp, (char *)dcp, 1,
@@ -1987,7 +1987,7 @@ clear_obj_label(
 		}
 	}
 	if (ord == 0 || ord == mnt_info.params.fs_count ||
-	    !is_target_group(dp->type)) {
+	    !is_osd_group(dp->type)) {
 		error(0, 0, catgets(catfd, SET, 13481,
 		    "FS %s: Filesystem has no object data partition"),
 		    mnt_info.params.fi_name);
@@ -2114,7 +2114,7 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 			struct sam_sblk slsblk;
 			struct sam_sbord *sbord;
 
-			if (is_target_group(dp->type)) {
+			if (is_osd_group(dp->type)) {
 				if (dp->oh == 0) {
 					goto nullentry;
 				}
@@ -2183,7 +2183,7 @@ read_existing_sblk(struct d_list *devp, struct sam_sblk *sblk, int sblk_size)
 	 */
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			if ((read_object(fs_name, dp->oh, ord, SAM_OBJ_SBLK_INO,
 			    (char *)sblk, 0, (sblk_size * SAM_DEV_BSIZE)))) {
 				err = 1;
@@ -2278,7 +2278,7 @@ check_fs_devices(char *fs_name)
 	num_sblks = num_sblks_worm = 0;
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			continue;		/* XXX --  Skip for objects */
 		} else {
 			if (d_read(dp, (char *)sblkp, 1, SUPERBLK)) {
@@ -2358,7 +2358,7 @@ check_lun_limits(char *fs_name)
 
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
-		if (is_target_group(dp->type)) {
+		if (is_osd_group(dp->type)) {
 			continue;
 		}
 		size_in_bytes = dp->size * (sam_offset_t)DEV_BSIZE;

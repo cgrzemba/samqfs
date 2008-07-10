@@ -38,16 +38,33 @@
 #define	_SAM_FS_INO_EXT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 #endif
 
 #include "acl.h"
 
+/*
+ * ----- Mode for inode extension types
+ */
+#define	S_IFMVA 0xff00		/* Multivolume archive extension inode */
+#define	S_IFSLN 0xfe00		/* Symbolic link name inode extension */
+#define	S_IFRFA 0xfd00		/* Removable media file attr inode ext */
+#define	S_IFHLP 0xfc00		/* Hard link parent inode extension */
+#define	S_IFACL 0xfb00		/* Access control list inode extension */
+#define	S_IFOBJ 0xfa00		/* Object striping array inode extension */
+
 
 /* ----- Inode header for inode extension types. */
 
-#define	S_IFEXT 0xff00			/* Mode mask for inode extensions */
-#define	S_IFORD 0x00ff			/* Extent ordinal in mode field */
+#define	S_IFEXT 0xff00		/* Mode mask for inode extensions */
+#define	S_IFORD 0x00ff		/* Extent ordinal in mode field */
+
+#define	EXT_HDR_ERR_DP(eip, eid, dp)					\
+		((((eip)->hdr.version != (dp)->version) ||		\
+		((eip)->hdr.id.ino != (eid).ino) ||			\
+		((eip)->hdr.id.gen != (eid).gen) ||			\
+		((eip)->hdr.file_id.ino != (dp)->id.ino) ||		\
+		((eip)->hdr.file_id.gen != (dp)->id.gen)))
 
 #define	EXT_HDR_ERR_DP(eip, eid, dp)					\
 		((((eip)->hdr.version != (dp)->version) ||		\
@@ -75,9 +92,10 @@ typedef struct sam_inode_ext_hdr {
 	sam_id_t	next_id;	/* next ext list id: i-num/gen */
 } sam_inode_ext_hdr_t;
 
-/* ----- Inode extension for archive of multiple VSNs. */
 
-#define	S_IFMVA 0xff00		/* multivolume archive extension inode mode */
+/*
+ * Inode extension for archive of multiple VSNs.
+ */
 #define	S_ISMVA(mode)  (((mode)&0xff00) == S_IFMVA)
 
 #define	MAX_VSNS_IN_INO	(8)
@@ -94,6 +112,7 @@ struct sam_mv1_inode {
 };
 
 /* Current inode version (2) multivolume archive extension */
+
 typedef struct sam_mva_inode {
 	sam_time_t	creation_time;	/* Time inode extension created */
 	sam_time_t	change_time;	/* Time extension info last changed */
@@ -104,7 +123,6 @@ typedef struct sam_mva_inode {
 	char		pad[4];
 	struct sam_vsn_array vsns;	/* Vsn section array */
 } sam_mva_inode_t;
-
 
 /* ----- Ioctl for setting multivolume archive information. */
 
@@ -125,9 +143,10 @@ int sam_get_multivolume(sam_node_t *bip, struct sam_vsn_section **vsnpp,
 void sam_fix_mva_inode_ext(sam_node_t *ip, int copy, sam_id_t *eidp);
 #endif	/* _KERNEL */
 
-/* ----- Inode extension for symbolic link name. */
 
-#define	S_IFSLN 0xfe00	/* Mode for symbolic link name inode extension */
+/*
+ * Inode extension for symbolic link name
+ */
 #define	S_ISSLN(mode)  (((mode)&0xff00) == S_IFSLN)
 
 #define	MAX_SLN_CHARS_IN_INO (464)
@@ -140,9 +159,10 @@ typedef struct sam_sln_inode {
 	uchar_t		chars[MAX_SLN_CHARS_IN_INO];	/* Symlk name chars */
 } sam_sln_inode_t;
 
-/* ----- Inode extension for removable media file attribute list. */
 
-#define	S_IFRFA 0xfd00	/* Mode for removable media file attr inode ext */
+/*
+ * Inode extension for removable media file attribute list
+ */
 #define	S_ISRFA(mode)  (((mode)&0xff00) == S_IFRFA)
 
 typedef struct sam_rfa_inode {
@@ -158,9 +178,9 @@ typedef struct sam_rfv_inode {
 } sam_rfv_inode_t;
 
 
-/* ----- Inode extension for hard link parent list. */
-
-#define	S_IFHLP 0xfc00		/* Mode for hard link parent inode extension */
+/*
+ * Inode extension for hard link parent list
+ */
 #define	S_ISHLP(mode)  (((mode)&0xff00) == S_IFHLP)
 
 #define	MAX_HLP_IDS_IN_INO	(58)
@@ -173,9 +193,10 @@ typedef struct sam_hlp_inode {
 	sam_id_t	ids[MAX_HLP_IDS_IN_INO]; /* Hard link parent id list */
 } sam_hlp_inode_t;
 
-/* ----- Inode extension for access control list. */
 
-#define	S_IFACL 0xfb00	/* Mode for access control list inode extension */
+/*
+ * Inode extension for access control list
+ */
 #define	S_ISACL(mode)  (((mode)&0xff00) == S_IFACL)
 
 #define	MAX_ACL_ENTS_IN_INO	(38)
@@ -190,13 +211,28 @@ typedef struct sam_acl_inode {
 	sam_acl_t	ent[MAX_ACL_ENTS_IN_INO]; /* Access ctrl list ents */
 } sam_acl_inode_t;
 
-/* ----- Composite inode extension type. */
 
+/*
+ * Inode extension for object striping array
+ * See sam_obj_layout_t in ino.h for struct
+ */
+#define	S_ISOBJ(mode)  (((mode)&0xff00) == S_IFOBJ)
+
+typedef struct sam_osd_ext_inode {
+	uint64_t		obj_id[SAM_MAX_OSD_EXTENT];
+	ushort_t		ord[SAM_MAX_OSD_EXTENT];
+} sam_osd_ext_inode_t;
+
+
+/*
+ * ----- Composite inode extension type
+ */
 #define	S_ISEXT(mode)  ((S_ISMVA(mode)) || \
 						(S_ISSLN(mode)) || \
 						(S_ISRFA(mode)) || \
 						(S_ISHLP(mode)) || \
-						(S_ISACL(mode)))
+						(S_ISACL(mode)) || \
+						(S_ISOBJ(mode)))
 
 struct sam_inode_ext {
 	struct sam_inode_ext_hdr	hdr;	/* Inode extension header */
@@ -208,6 +244,7 @@ struct sam_inode_ext {
 		struct sam_rfv_inode	rfv;	/* Resource file vsns ext */
 		struct sam_hlp_inode	hlp;	/* Hard link parent ext */
 		struct sam_acl_inode	acl;	/* Access control list ext */
+		struct sam_osd_ext_inode obj;	/* Object stripe extension */
 	} ext;
 };
 

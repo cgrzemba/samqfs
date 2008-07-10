@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.92 $"
+#pragma ident "$Revision: 1.93 $"
 
 #include "sam/osversion.h"
 
@@ -447,9 +447,9 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 			int stripe = 0;
 			int stripe_group = 0;
 			int stripe_shift = 0;
-			int target_group = 0;
-			uchar_t new_target_group, new_unit;
-			sam_di_obj_t *obj;
+			int osd_group = 0;
+			uchar_t new_osd_group, new_unit;
+			sam_di_osd_t *oip;
 			int ord;
 
 			switch (*op++) {
@@ -673,7 +673,7 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 					stripe = (10 * stripe) + *op - '0';
 					op++;
 				}
-				if (stripe > SAM_MAX_OSD_STRIPE) {
+				if (stripe > SAM_MAX_OSD_STRIPE_WIDTH) {
 					error = EINVAL;
 					break;
 				}
@@ -719,18 +719,19 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				}
 				while (*op != '\0' && '0' <= *op &&
 				    *op <= '9') {
-					target_group = (10 * target_group) +
+					osd_group = (10 * osd_group) +
 					    *op - '0';
 					op++;
 				}
-				if (target_group > dev_nmtg_size) {
+				if (osd_group < 0 ||
+				    osd_group  >= dev_nmog_size) {
 					error = EINVAL;
 					break;
 				}
-				new_target_group = (uchar_t)target_group;
-				target_group |= DT_TARGET_GROUP;
+				new_osd_group = (uchar_t)osd_group;
+				osd_group |= DT_OBJECT_DISK;
 				for (ord = 0; ord < mp->mt.fs_count; ord++) {
-					if (target_group == mp->mi.m_fs[
+					if (osd_group == mp->mi.m_fs[
 					    ord].part.pt_type) {
 						new_unit = (uchar_t)ord;
 						break;
@@ -741,15 +742,16 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 					break;
 				}
 				/*
-				 * Cannot set target group if object id's
+				 * Cannot set osd group if object id's
 				 * are already created. Do not return an
-				 * error if setting the same target group.
+				 * error if setting the same osd group.
 				 */
-				obj = (sam_di_obj_t *)(void *)&ip->di.extent[2];
-				if (S_ISREG(ip->di.mode) && obj->ol[0].obj_id) {
+				oip = (sam_di_osd_t *)
+				    (void *)&ip->di.extent[2];
+				if (S_ISREG(ip->di.mode) && oip->obj_id[0]) {
 					if (old_status.stripe_group &&
 					    ip->di.stripe_group !=
-					    new_target_group) {
+					    new_osd_group) {
 						error = EINVAL;
 						break;
 					}
@@ -760,7 +762,7 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				if (ip->di.status.b.meta == 0) {
 					ip->di.unit = new_unit;
 				}
-				ip->di.stripe_group = new_target_group;
+				ip->di.stripe_group = new_osd_group;
 				status.stripe_group = 1;
 				break;
 			default:

@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.203 $"
+#pragma ident "$Revision: 1.204 $"
 #endif
 
 #ifdef linux
@@ -179,6 +179,23 @@ typedef struct sam_inv_inos {
 	struct sam_inv_inos *next;
 } sam_inv_inos_t;
 
+
+/*
+ * ----- sam_obj_layout
+ *	Array of object id, end of object, and ordinal.
+ */
+typedef struct sam_obj_ent {
+	uint64_t		obj_id;		/* User object ID */
+	offset_t		eoo;		/* User obj written size */
+	ushort_t		ord;		/* Ordinal */
+	uchar_t			pad[6];
+} sam_obj_ent_t;
+
+typedef struct sam_obj_layout {
+	int		num_group;	/* Number of members in the array */
+	int		fill1;
+	sam_obj_ent_t	ol[1];		/* Object layout */
+} sam_obj_layout_t;
 
 /*
  * ----- sam_nchain_t is used to build a chain of inodes
@@ -515,6 +532,7 @@ typedef struct sam_node {
 	sam_time_t	updtime;	/* Time of last refresh, shared ino */
 
 	struct sam_mount *mp;		/* Mount table pointer */
+	sam_obj_layout_t *olp;		/* Pointer to object layout */
 	char		copy;		/* Arch copy number to start search */
 	char		daemon_busy;	/* Flag for daemon busy */
 	dev_t		rdev;		/* Raw device for resource file */
@@ -997,7 +1015,6 @@ int sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type);
 #ifdef sun
 int sam_set_operation_nb(struct sam_mount *mp);
 void sam_unset_operation_nb(struct sam_mount *mp);
-#endif
 
 int sam_issue_object_io(sam_osd_handle_t oh, uint32_t command,
 	uint64_t user_obj_id, enum uio_seg seg, char *data, offset_t offset,
@@ -1007,9 +1024,13 @@ int sam_create_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
 int sam_remove_object_id(struct sam_mount *mp, uint64_t user_obj_id,
 	uchar_t unit);
 int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
-	offset_t size, offset_t length, cred_t *credp);
+	offset_t size, offset_t length);
+int sam_set_end_of_obj(sam_node_t *ip, offset_t length, int update);
+int sam_osd_create_obj_layout(sam_node_t *ip);
+void sam_osd_destroy_obj_layout(sam_node_t *ip);
+void sam_init_object_cache(void);
+void sam_delete_object_cache(void);
 
-#ifdef sun
 extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
 #endif
 extern int sam_access_ino(sam_node_t *ip, int mode, boolean_t locked,

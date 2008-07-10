@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 
 #include "sam/osversion.h"
 
@@ -82,6 +82,8 @@ static buf_t *sam_pageio(sam_node_t *ip, sam_ioblk_t *iop, page_t *pp,
 	offset_t offset, uint_t pg_off, uint_t vn_len, int flags);
 static int sam_map(sam_node_t *ip, offset_t offset, struct sam_iohdr *iop);
 
+int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
+	sam_map_t flag, struct sam_ioblk *iop);
 
 /*
  * ----- sam_getpages - Get pages for a file.
@@ -563,6 +565,16 @@ sam_read_ahead(
 				if (iop->pboff >= iop->bsize) {
 					iop->pboff = 0;
 				}
+			} else if (SAM_IS_OBJECT_FILE(ip)) {
+				iop->obji++;
+				if (iop->obji >= iop->num_group) {
+					iop->obji = 0;
+					iop->imap.blk_off0 += iop->bsize;
+				}
+				iop->ord = ip->olp->ol[iop->obji].ord;
+				iop->blk_off = iop->imap.blk_off0;
+				iop->pboff = 0;
+
 			} else {
 				if (++iop->ord == (iop->imap.ord0 +
 				    iop->num_group)) {
@@ -699,7 +711,12 @@ sam_putapage(
 	 */
 	lb_off = iop->ioblk[0].blk_off;
 	if (iop->ioblk[0].num_group > 1) {
-		iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
+		if (iop->ioblk[i].imap.flags & M_OBJECT) {
+			iop->contig = MIN(iop->contig,
+			    iop->ioblk[0].bsize - iop->ioblk[0].pboff);
+		} else {
+			iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
+		}
 		iop->ioblk[0].contig = iop->contig;
 	}
 	pp = pvn_write_kluster(vp, pp, &vn_off, &vn_len, lb_off,
@@ -1188,6 +1205,14 @@ sam_map(
 	int error;
 	int i, dt;
 	int maxbp;
+
+	if (SAM_IS_OBJECT_FILE(ip)) {
+		error = sam_map_osd(ip, off, (offset_t)PAGESIZE, SAM_READ_PUT,
+		    &iop->ioblk[0]);
+		iop->nioblk = 1;
+		iop->contig = iop->ioblk[0].contig;
+		return (error);
+	}
 
 	dt = ip->di.status.b.meta;
 	if ((maxbp = (PAGESIZE >> SM_SHIFT(ip->mp, dt))) == 0) {
