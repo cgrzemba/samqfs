@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_EXT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 #endif
 
 #include "acl.h"
@@ -48,6 +48,13 @@
 
 #define	S_IFEXT 0xff00			/* Mode mask for inode extensions */
 #define	S_IFORD 0x00ff			/* Extent ordinal in mode field */
+
+#define	EXT_HDR_ERR_DP(eip, eid, dp)					\
+		((((eip)->hdr.version != (dp)->version) ||		\
+		((eip)->hdr.id.ino != (eid).ino) ||			\
+		((eip)->hdr.id.gen != (eid).gen) ||			\
+		((eip)->hdr.file_id.ino != (dp)->id.ino) ||		\
+		((eip)->hdr.file_id.gen != (dp)->id.gen)))
 
 #define	EXT_HDR_ERR(eip, eid, ip)					\
 		((((eip)->hdr.version != (ip)->di.version) ||		\

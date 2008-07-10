@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.231 $"
+#pragma ident "$Revision: 1.232 $"
 
 #include "sam/osversion.h"
 
@@ -208,8 +208,12 @@ void sam_wait_release_blk_list(struct sam_mount *mp);
 int sam_alloc_inode(sam_mount_t *mp, mode_t mode, sam_ino_t *ino);
 void sam_free_inode(sam_mount_t *mp, struct sam_disk_inode *dp);
 int sam_alloc_inode_ext(sam_node_t *bip, mode_t mode, int count,
-			sam_id_t *fid);
+	sam_id_t *fid);
+int sam_alloc_inode_ext_dp(sam_mount_t *mp, struct sam_disk_inode *dp,
+	mode_t mode, int count, sam_id_t *fid);
 void sam_free_inode_ext(sam_node_t *bip, mode_t mode, int copy, sam_id_t *fid);
+void sam_free_inode_ext_dp(sam_mount_t *mp, struct sam_disk_inode *dp,
+	mode_t mode, int copy, sam_id_t *fid);
 
 
 /* getdents.c function prototypes. */

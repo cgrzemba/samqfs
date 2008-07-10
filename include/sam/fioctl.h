@@ -38,7 +38,7 @@
 #define	_SAM_FIOCTL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 #endif
 
 #ifndef	linux
@@ -170,8 +170,8 @@ typedef struct {
 /*
  * Idrestore restores the saved inode into an already created file.
  * Idrestore also returns the id of a restored file (into the perm.
- * inode id field), if the inode being restored is a directory or
- * a segment index inode.
+ * inode id field), if the inode being restored is a directory,
+ * hardlink, or a segment index inode.
  */
 
 typedef struct sam_ioctl_idrestore {

@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include <sys/param.h>
 #include <sys/acl.h>
@@ -55,6 +55,8 @@ struct csd_stats	{
 	int	file_archives;	/* No. of file archive entries */
 	int	file_damaged;	/* No. of damaged files */
 	int	file_warnings;	/* No. of file damaged warnings */
+	int	hlink;		/* No. of hardlink files */
+	int	hlink_first;	/* No. of first hardlink files */
 	int	dirs;		/* No. of directories */
 	int	resources;	/* No. of resource files */
 	int	links;		/* No. of symbolic links */
@@ -77,15 +79,13 @@ struct csd_tar {
 
 typedef	struct csd_tar csd_tar_t;
 
-/* N_HARDLINKS is the initial size of the hardlink table */
-#define	N_HARDLINKS 100
+/* hardlink table, N_HARDLINKS is the initial size of the hardlink table */
 
-struct csd_hardlink {
-	int	ino;			/* inode number from dump */
-	char	*path;			/* first path from dump */
-};
+#define	N_HARDLINKS 10000000	/* 10 million inodes for each allocation */
 
-typedef struct csd_hardlink csd_hardlink_t;
+typedef struct csd_hardtbl {
+	sam_id_t	id[1];
+} csd_hardtbl_t;
 
 /* options must be integral powers of two so that we can do bitwise checking */
 typedef enum {NONE = 0, DUMP = 1, RESTORE = 2, LIST = 4}
@@ -119,6 +119,7 @@ extern long block_size;
 extern char *program_name;
 extern char *excluded[];
 extern int nexcluded;
+extern int prelinks;
 extern int stale_flags;
 
 extern int SAM_fd;

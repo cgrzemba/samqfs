@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.151 $"
+#pragma ident "$Revision: 1.152 $"
 
 #include "sam/osversion.h"
 
@@ -86,18 +86,19 @@ static const struct sam_empty_dir empty_directory_template = {
 };
 
 extern ushort_t sam_dir_gennamehash(int nl, char *np);
+static int sam_restore_new_ino(sam_node_t *pip, struct sam_perm_inode *permp,
+	struct buf **bpp, sam_id_t *idp);
 static int sam_make_dir(sam_node_t *pip, sam_node_t *ip, cred_t *credp);
 static int sam_make_dirslot(sam_node_t *ip, struct sam_name *namep,
-							struct fbuf **fbpp);
-static int sam_set_hardlink_parent(sam_node_t *bip);
+	struct fbuf **fbpp);
+static int sam_set_hardlink_parent(sam_mount_t *mp, sam_disk_inode_t *dp);
 static void sam_enter_dnlc(sam_node_t *pip, sam_node_t *ip, char *cp,
-				struct sam_name *namep, ushort_t slot_size);
+	struct sam_name *namep, ushort_t slot_size);
 static void sam_enter_dir_dnlc(sam_node_t *pip, sam_ino_t ino,
-			uint32_t slot_offset, char *cp, ushort_t slot_size);
+	uint32_t slot_offset, char *cp, ushort_t slot_size);
 
 extern int sam_fbzero(sam_node_t *ip, offset_t offset, int tlen,
-			sam_ioblk_t *iop, map_params_t *mapp,
-			struct fbuf **rfbp);
+	sam_ioblk_t *iop, map_params_t *mapp, struct fbuf **rfbp);
 
 /*
  * ----- sam_create_name - create an entry in the directory.
@@ -199,9 +200,18 @@ sam_create_name(
 			if (ip->di.version >= SAM_INODE_VERS_2 &&
 			    (operation != SAM_RENAME_LINK ||
 			    (ip->di.ext_attrs & ext_hlp))) {
-				if ((error = sam_set_hardlink_parent(ip)) !=
-				    0) {
+				ASSERT(RW_WRITE_HELD(&ip->inode_rwl));
+				if ((error = sam_set_hardlink_parent(ip->mp,
+				    &ip->di))) {
 					goto out;
+				}
+
+				/*
+				 * Note, set change time so the base inode
+				 * is flushed.
+				 */
+				if (!ip->di.status.b.worm_rdonly) {
+					sam_mark_ino(ip, SAM_CHANGED);
 				}
 			}
 			ip->di.parent_id = pip->di.id;
@@ -395,13 +405,11 @@ sam_restore_name(
 	sam_u_offset_t offset;
 	uint32_t slot_offset;
 	ushort_t slot_size;
-	buf_t *bp;
-	int error, i, inode_found;
+	buf_t *bp = NULL;
+	int error;
 	struct fbuf *fbp;
 	struct sam_dirent *dirp;
-	sam_mount_t *mp;
 	sam_id_t id;
-	struct sam_perm_inode *permip;
 
 	/*
 	 * Write access required to create in directory
@@ -432,81 +440,43 @@ sam_restore_name(
 	}
 
 	/*
-	 * Allocate an on-disk inode for the restore. Types can be taken from
-	 * the "passed in" prototype.
+	 * Create the new inode if nlink == 1. Otherwise, create the new
+	 * hard link.
 	 */
-	mp = pip->mp;
-	do {
-		sam_node_t *ip;
-
-		if (mp->mt.fi_status & FS_UMOUNT_IN_PROGRESS) {
-			TRACE(T_SAM_UMNT_IGET, NULL, mp->mt.fi_status,
-			    (sam_tr_t)mp,
-			    EBUSY);
-			error = EBUSY;
-			goto out;
-		}
-		inode_found = 0;
-		if ((error = sam_alloc_inode(mp, permp->di.mode, &id.ino))) {
-			goto out;
-		}
-		if ((error = sam_check_cache(&id, mp, IG_NEW, NULL, &ip))) {
-			SAMFS_PANIC_INO(mp->mt.fi_name, "inode allocation",
-			    id.ino);
-			goto out;
-		}
-		if (ip != NULL) {
-			VN_RELE(SAM_ITOV(ip));
-			inode_found = 1;
-			ASSERT(ip->di.free_ino == 0);
-		}
-	} while (inode_found);
-	if ((error = sam_read_ino(mp, id.ino, &bp, &permip))) {
-		goto out;
-	}
-
-	/*
-	 * Replace fields in the on-disk inode.
-	 * If you make a change here, you probably need to make it in
-	 * sammkfs -r and fioctl.c (IDRESTORE) also.
-	 */
-	id = permip->di.id;
-	if (++id.gen == 0) {
-		id.gen++;
-	}
-	*ridp = id;
-	bcopy((void *)permp, (void *)permip, sizeof (struct sam_perm_inode));
-	permip->di.version = pip->di.version;
-	permip->di.id = id;
-	permip->di.parent_id = pip->di.id;
-	permip->di.ext_id.ino = permip->di.ext_id.gen = 0;
-	permip->di.ext_attrs = 0;
-	permip->di.status.b.archdone = 0;
-	permip->di.blocks = 0;
-	if (S_ISREG(permip->di.mode) && !S_ISSEGI(&permip->di)) {
-		permip->di.status.b.on_large =
-		    (permp->di.rm.size > SM_OFF(mp, DD)) ? 1 : 0;
-	}
-	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(permip->di.mode)) {
-		if ((error = sam_create_object_id(mp, &permip->di))) {
-			brelse(bp);
+	if (permp->di.nlink == 1) {
+		if ((error = sam_restore_new_ino(pip, permp, &bp, &id))) {
 			goto out;
 		}
 	} else {
-		for (i = (NOEXT - 1); i >= 0; i--) {
-			permip->di.extent[i] = 0;
-			permip->di.extent_ord[i] = 0;
+		if (permp->di.version == SAM_INODE_VERSION) {
+			struct sam_perm_inode *permip;
+			sam_disk_inode_t di;
+
+			if ((error = sam_read_ino(pip->mp, permp->di.id.ino,
+			    &bp, &permip))) {
+				goto out;
+			}
+			bcopy(&permip->di, &di, sizeof (di));
+			brelse(bp);
+			bp = NULL;
+			if (di.id.ino != permp->di.id.ino ||
+			    di.id.gen != permp->di.id.gen) {
+				error = EINVAL;
+				goto out;
+			}
+			if ((error = sam_set_hardlink_parent(pip->mp, &di))) {
+				goto out;
+			}
+			if ((error = sam_read_ino(pip->mp, permp->di.id.ino,
+			    &bp, &permip))) {
+				goto out;
+			}
+			bcopy(&di, &permip->di, sizeof (di));
+			id = permip->di.id;
+			permip->di.nlink++;
 		}
 	}
-	if (permip->di.rm.size != 0) {	/* if space in the original inode */
-		permip->di.status.b.offline = 1;
-		permip->di.status.b.pextents = 0;
-	}
-	(void) sam_quota_balloc_perm(mp, permip,
-	    0, S2QBLKS(permip->di.rm.size), CRED());
-	(void) sam_quota_falloc(mp, permip->di.uid,
-	    permip->di.gid, permip->di.admin_id, CRED());
-	sam_set_unit(mp, &(permip->di));
+	*ridp = id;
 
 	/*
 	 * Write the directory entry.
@@ -524,7 +494,6 @@ sam_restore_name(
 		}
 		error = fbread(SAM_ITOV(pip), offset, bsize, S_WRITE, &fbp);
 		if (error) {
-			brelse(bp);
 			goto out;
 		}
 	}
@@ -539,8 +508,8 @@ sam_restore_name(
 		dirp = (struct sam_dirent *)
 		    (void *)((char *)dirp + SAM_DIRSIZ(dirp));
 	}
-	dirp->d_id = permip->di.id;
-	dirp->d_fmt = permip->di.mode & S_IFMT;
+	dirp->d_id = id;
+	dirp->d_fmt = permp->di.mode & S_IFMT;
 	dirp->d_namlen = strlen(cp);
 	dirp->d_reclen = reclen;
 	strcpy((char *)dirp->d_name, cp);
@@ -585,9 +554,103 @@ out:
 	if (fbp != NULL) {
 		fbrelse(fbp, S_OTHER);
 	}
+	if (bp) {
+		brelse(bp);
+	}
 	TRANS_INODE(pip->mp, pip);
 	RW_UNLOCK_OS(&pip->inode_rwl, RW_WRITER);
 	return (error);
+}
+
+
+/*
+ * ----- sam_restore_new_ino - create & restore an inode.
+ */
+
+static int			/* ERRNO if error, 0 if successful. */
+sam_restore_new_ino(
+	sam_node_t *pip,	/* Pointer to parent directory inode. */
+	struct sam_perm_inode *permp,	/* Pointer to sam permanent inode */
+	struct buf **bpp,
+	sam_id_t *idp)
+{
+	int i, inode_found;
+	sam_mount_t *mp;
+	sam_id_t id;
+	buf_t *bp;
+	struct sam_perm_inode *permip; /* Pointer to sam permanent inode */
+	int error = 0;
+
+	/*
+	 * Allocate an on-disk inode for the restore. Types can be taken from
+	 * the "passed in" prototype.
+	 */
+	mp = pip->mp;
+	do {
+		sam_node_t *ip;
+
+		if (mp->mt.fi_status & FS_UMOUNT_IN_PROGRESS) {
+			TRACE(T_SAM_UMNT_IGET, NULL, mp->mt.fi_status,
+			    (sam_tr_t)mp, EBUSY);
+			return (EBUSY);
+		}
+		inode_found = 0;
+		if ((error = sam_alloc_inode(mp, permp->di.mode, &id.ino))) {
+			return (error);
+		}
+		if ((error = sam_check_cache(&id, mp, IG_NEW, NULL, &ip))) {
+			SAMFS_PANIC_INO(mp->mt.fi_name, "inode allocation",
+			    id.ino);
+			return (error);
+		}
+		if (ip != NULL) {
+			VN_RELE(SAM_ITOV(ip));
+			inode_found = 1;
+			ASSERT(ip->di.free_ino == 0);
+		}
+	} while (inode_found);
+
+	if ((error = sam_read_ino(mp, id.ino, &bp, &permip))) {
+		return (error);
+	}
+
+	/*
+	 * Replace fields in the on-disk inode.
+	 * If you make a change here, you probably need to make it in
+	 * sammkfs -r and fioctl.c (IDRESTORE) also.
+	 */
+	id = permip->di.id;
+	if (++id.gen == 0) {
+		id.gen++;
+	}
+	bcopy((void *)permp, (void *)permip, sizeof (struct sam_perm_inode));
+	permip->di.version = pip->di.version;
+	permip->di.id = id;
+	permip->di.parent_id = pip->di.id;
+	permip->di.ext_id.ino = permip->di.ext_id.gen = 0;
+	permip->di.ext_attrs = 0;
+	permip->di.status.b.archdone = 0;
+	permip->di.blocks = 0;
+	if (S_ISREG(permip->di.mode) && !S_ISSEGI(&permip->di)) {
+		permip->di.status.b.on_large =
+		    (permp->di.rm.size > SM_OFF(mp, DD)) ? 1 : 0;
+	}
+	for (i = (NOEXT - 1); i >= 0; i--) {
+		permip->di.extent[i] = 0;
+		permip->di.extent_ord[i] = 0;
+	}
+	if (permip->di.rm.size != 0) {	/* if space in the original inode */
+		permip->di.status.b.offline = 1;
+		permip->di.status.b.pextents = 0;
+	}
+	(void) sam_quota_balloc_perm(mp, permip,
+	    0, S2QBLKS(permip->di.rm.size), CRED());
+	(void) sam_quota_falloc(mp, permip->di.uid,
+	    permip->di.gid, permip->di.admin_id, CRED());
+	sam_set_unit(mp, &(permip->di));
+	*bpp = bp;
+	*idp = id;
+	return (0);
 }
 
 
@@ -1240,7 +1303,9 @@ sam_get_old_symlink(
  */
 
 static int			/* ERRNO if error, 0 if successful */
-sam_set_hardlink_parent(sam_node_t *bip)
+sam_set_hardlink_parent(
+	sam_mount_t *mp,	/* Pointer to mount table */
+	sam_disk_inode_t *dp)	/* Pointer to disk inode */
 {
 	int error = 0, done = 0;
 	int i_changed = 0, e_changed = 0;
@@ -1248,25 +1313,23 @@ sam_set_hardlink_parent(sam_node_t *bip)
 	sam_id_t eid;
 	struct sam_inode_ext *eip;
 
-	ASSERT(RW_WRITE_HELD(&bip->inode_rwl));
-
-	if (bip->di.ext_attrs & ext_hlp) {
+	if (dp->ext_attrs & ext_hlp) {
 		/*
 		 * HLP extension inode(s) exist; if there's
 		 * an empty HLP slot find it and use it.
 		 */
-		eid = bip->di.ext_id;
+		eid = dp->ext_id;
 		while (eid.ino && !done && !error) {
-			if (error = sam_read_ino(bip->mp, eid.ino, &bp,
+			if (error = sam_read_ino(mp, eid.ino, &bp,
 					(struct sam_perm_inode **)&eip)) {
 				done = 1;
 				break;
 			}
 
-			if (EXT_HDR_ERR(eip, eid, bip)) {
-				sam_req_ifsck(bip->mp, -1,
+			if (EXT_HDR_ERR_DP(eip, eid, dp)) {
+				sam_req_ifsck(mp, -1,
 				    "sam_set_hardlink_parent: EXT_HDR",
-				    &bip->di.id);
+				    &dp->id);
 				error = ENOCSI;
 				brelse(bp);
 				done = 1;
@@ -1285,14 +1348,14 @@ sam_set_hardlink_parent(sam_node_t *bip)
 					    "SAM-QFS: %s: bad count in "
 					    "HLP extension (%d) [1..%d];"
 					    " inode %d.%d, HLP extension %d.%d",
-					    bip->mp->mt.fi_name, n_ids,
+					    mp->mt.fi_name, n_ids,
 					    MAX_HLP_IDS_IN_INO,
-					    bip->di.id.ino, bip->di.id.gen,
+					    dp->id.ino, dp->id.gen,
 					    eid.ino, eid.gen));
 					brelse(bp);
-					sam_req_ifsck(bip->mp, -1,
+					sam_req_ifsck(mp, -1,
 					    "sam_set_hardlink_parent: "
-					    "n_ids < 0", &bip->di.id);
+					    "n_ids < 0", &dp->id);
 					error = ENOCSI;
 					break;
 				}
@@ -1303,7 +1366,7 @@ sam_set_hardlink_parent(sam_node_t *bip)
 					 * to end of hardlink parents list.
 					 */
 					eip->ext.hlp.ids[n_ids] =
-					    bip->di.parent_id;
+					    dp->parent_id;
 					eip->ext.hlp.change_time = SAM_SECOND();
 					eip->ext.hlp.n_ids = ++n_ids;
 					e_changed = 1;
@@ -1315,14 +1378,14 @@ sam_set_hardlink_parent(sam_node_t *bip)
 					"SAM-QFS: %s: parent links (%d) "
 					    "overflowed HLP extension;"
 					    " inode %d.%d, HLP extension %d.%d",
-					    bip->mp->mt.fi_name, n_ids,
-					    bip->di.id.ino,
-					    bip->di.id.gen, eid.ino, eid.gen));
+					    mp->mt.fi_name, n_ids,
+					    dp->id.ino,
+					    dp->id.gen, eid.ino, eid.gen));
 					brelse(bp);
-					sam_req_ifsck(bip->mp, -1,
+					sam_req_ifsck(mp, -1,
 					    "sam_set_hardlink_parent: "
 					    "n_ids > MAX_HLP_IDS_IN_INO",
-					    &bip->di.id);
+					    &dp->id);
 					error = ENOCSI;
 					break;
 				}
@@ -1331,115 +1394,103 @@ sam_set_hardlink_parent(sam_node_t *bip)
 			brelse(bp);
 		}
 		if (e_changed) {
-			if (TRANS_ISTRANS(bip->mp)) {
+			if (TRANS_ISTRANS(mp)) {
 				sam_ioblk_t ioblk;
 
-				RW_LOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+				RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl,
 				    RW_READER);
-				error = sam_map_block(bip->mp->mi.m_inodir,
+				error = sam_map_block(mp->mi.m_inodir,
 				    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
 				    SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+				RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
 				    RW_READER);
 				if (!error) {
 					offset_t doff;
 
-					doff = ldbtob(fsbtodb(bip->mp,
+					doff = ldbtob(fsbtodb(mp,
 					    ioblk.blkno)) + ioblk.pboff;
-					TRANS_EXT_INODE(bip->mp, eid, doff,
+					TRANS_EXT_INODE(mp, eid, doff,
 					    ioblk.ord);
 				} else {
 					error = 0;
 				}
 				brelse(bp);
-			} else if (SAM_SYNC_META(bip->mp)) {
-				error = sam_write_ino_sector(bip->mp, bp,
-				    eid.ino);
+			} else if (SAM_SYNC_META(mp)) {
+				error = sam_write_ino_sector(mp, bp, eid.ino);
 			} else {
 				(void) sam_bwrite_noforcewait_dorelease(
-				    bip->mp, bp);
+				    mp, bp);
 			}
 		}
 		if (done || error) {
-			TRACE(T_SAM_SET_HLP_EXT, SAM_ITOV(bip),
-			    (int)bip->di.id.ino, eid.ino, error);
+			TRACE(T_SAM_SET_HLP_EXT, SAM_ITOV(mp->mi.m_inodir),
+			    (int)dp->id.ino, eid.ino, error);
 			return (error);
 		}
 	}
 
 	if (!done) {
-		sam_id_t org_ext = bip->di.ext_id;
+		sam_id_t org_ext = dp->ext_id;
 
 		/*
 		 * Either the file didn't have any HLP extensions, or there
 		 * wasn't an empty slot in it/them.  Allocate a new HLP
 		 * extension and save the parent link info into it.
 		 */
-		if ((error = sam_alloc_inode_ext(bip, S_IFHLP, 1,
-		    &bip->di.ext_id))) {
+		if ((error = sam_alloc_inode_ext_dp(mp, dp, S_IFHLP, 1,
+		    &dp->ext_id))) {
 			return (error);
 		}
-		bip->di.ext_attrs |= ext_hlp;
+		dp->ext_attrs |= ext_hlp;
 		i_changed++;
 
-		eid = bip->di.ext_id;
-		if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
-				(struct sam_perm_inode **)&eip)) == 0) {
+		eid = dp->ext_id;
+		if ((error = sam_read_ino(mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip)) == 0) {
 			eip->ext.hlp.creation_time = SAM_SECOND();
 			eip->ext.hlp.change_time = SAM_SECOND();
-			eip->ext.hlp.ids[0] = bip->di.parent_id;
+			eip->ext.hlp.ids[0] = dp->parent_id;
 			eip->ext.hlp.n_ids = 1;
 
-			if (TRANS_ISTRANS(bip->mp)) {
+			if (TRANS_ISTRANS(mp)) {
 				sam_ioblk_t ioblk;
 
-				RW_LOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+				RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl,
 					RW_READER);
-				error = sam_map_block(bip->mp->mi.m_inodir,
+				error = sam_map_block(mp->mi.m_inodir,
 					(offset_t)SAM_ITOD(eid.ino),
 					SAM_ISIZE, SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+				RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
 						RW_READER);
 				if (!error) {
 					offset_t doff;
 
-					doff = ldbtob(fsbtodb(bip->mp,
+					doff = ldbtob(fsbtodb(mp,
 						ioblk.blkno)) + ioblk.pboff;
-					TRANS_EXT_INODE(bip->mp, eid, doff,
+					TRANS_EXT_INODE(mp, eid, doff,
 							ioblk.ord);
 				} else {
 					error = 0;
 				}
 				brelse(bp);
-			} else if (SAM_SYNC_META(bip->mp)) {
-				error = sam_write_ino_sector(bip->mp, bp,
+			} else if (SAM_SYNC_META(mp)) {
+				error = sam_write_ino_sector(mp, bp,
 								eid.ino);
 			} else {
 				(void) sam_bwrite_noforcewait_dorelease(
-							bip->mp, bp);
+							mp, bp);
 			}
 		} else {
 			/*
 			 * If error, restore original extension pointer here,
 			 * and throw new extension away.
 			 */
-			bip->di.ext_id = org_ext;
+			dp->ext_id = org_ext;
 			i_changed = 0;
 		}
 	}
-
-	if (i_changed) {
-		/*
-		 * Note this so our caller flushes the base inode.
-		 */
-		if (!bip->di.status.b.worm_rdonly) {
-			TRANS_INODE(bip->mp, bip);
-			sam_mark_ino(bip, SAM_CHANGED);
-		}
-	}
-
-	TRACE(T_SAM_SET_HLP_EXT, SAM_ITOV(bip),
-	    (int)bip->di.id.ino, (int)eid.ino, error);
+	TRACE(T_SAM_SET_HLP_EXT, SAM_ITOV(mp->mi.m_inodir),
+	    (int)dp->id.ino, (int)eid.ino, error);
 	return (error);
 }
 

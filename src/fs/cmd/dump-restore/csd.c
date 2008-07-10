@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.9 $"
+#pragma ident "$Revision: 1.10 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -170,6 +170,7 @@ FILE *log_st = NULL;		/* File handle for restore output */
 boolean verbose;		/* Verbose output flag */
 boolean quiet;			/* suppress Warnings */
 boolean debugging;		/* Debugging option */
+int prelinks = 0;		/* Allocated hard links table */
 boolean replace_newer;		/* Replace file if dump is newer option */
 boolean replace;		/* Replace file option */
 boolean qfs;			/* Dump for QFS (file data included) */
@@ -896,6 +897,10 @@ print_stats()
 	fprintf(stderr, "    Directories:\t%d\n", csd_statistics.dirs);
 	fprintf(stderr, "    Symbolic links:\t%d\n", csd_statistics.links);
 	fprintf(stderr, "    Resource files:\t%d\n", csd_statistics.resources);
+	fprintf(stderr, "    Files as members of hard links :\t%d\n",
+	    csd_statistics.hlink);
+	fprintf(stderr, "    Files as first hard link :\t%d\n",
+	    csd_statistics.hlink_first);
 	fprintf(stderr, "    File segments:\t%d\n", csd_statistics.segments);
 	fprintf(stderr, "    File archives:\t%d\n",
 	    csd_statistics.file_archives);

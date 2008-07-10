@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.93 $"
+#pragma ident "$Revision: 1.94 $"
 
 #include <sam/osversion.h>
 
@@ -343,7 +343,7 @@ sam_restore_a_file(
 	struct vnode *pvp;
 	sam_id_t id;
 	sam_node_t *ip;
-	caddr_t ptr;
+	void *ptr;
 	struct buf *bp;
 	struct full_dirent {
 		struct sam_dirent dirnt;
@@ -447,21 +447,26 @@ sam_restore_a_file(
 	}
 
 	/*
-	 * Check the directory for the name.
+	 * Check the directory for the name. If not found, restore this name
+	 * and return the ID. If found, return EEXIST.
 	 */
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_RESTORE;
 	error = sam_lookup_name(pip, name_str, &ip, &name, credp);
 	if (error == ENOENT) {			/* file not found, make one. */
-		error = sam_restore_name(pip, name_str, &name, perm_ino,
-		    &id, credp);
+		if ((error = sam_restore_name(pip, name_str, &name, perm_ino,
+		    &id, credp)) == 0) {
+			if ((copyout((caddr_t)&id,
+			    (caddr_t)&((sam_perm_inode_t *)ptr)->di.id,
+			    sizeof (sam_id_t)))) {
+				error = EFAULT;
+			}
+		}
 	} else if (error == 0) {
-		/*
-		 *	File exists.  For now, give 'em EEXIST.
-		 */
 		error = EEXIST;
 		VN_RELE(SAM_ITOV(ip));
 	}
+
 	if (error == 0) {
 		/*
 		 * Symbolic link.

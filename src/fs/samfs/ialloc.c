@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 #include "sam/osversion.h"
 
@@ -75,7 +75,7 @@
 
 int				/* ERRNO if error, 0 if successful. */
 sam_alloc_inode(
-	sam_mount_t *mp,	/* The mount table pointer. */
+	sam_mount_t *mp,	/* The mount table pointer */
 	mode_t mode,		/* The mode of the new file */
 	sam_ino_t *ino)		/* The inode number (returned). */
 {
@@ -146,8 +146,8 @@ sam_alloc_inode(
 			}
 
 			TRACE(T_SAM_INO_ALLOC, SAM_ITOV(dip), *ino,
-			    dip->di.free_ino,
-			    inumber);
+			    dip->di.free_ino, inumber);
+
 			/*
 			 * We found and are returning an available i-node
 			 * number.  But, if we found a bad i-node during the
@@ -159,8 +159,8 @@ sam_alloc_inode(
 				mutex_exit(&mp->ms.m_inode_mutex);
 				return (error);		/* Success */
 			}
-
 			break;
+
 		} else {
 			ino_t first_user_inum = mp->mi.m_min_usr_inum;
 			boolean_t no_prealloc_inodes =
@@ -332,6 +332,7 @@ sam_alloc_inode(
 	return (error);
 }
 
+
 /*
  * ---- sam_free_inode - Process free inode.
  *
@@ -341,8 +342,8 @@ sam_alloc_inode(
 
 void
 sam_free_inode(
-	sam_mount_t *mp,		/* The mount table pointer. */
-	struct sam_disk_inode *dp)	/* The disk inode table pointer. */
+	sam_mount_t *mp,		/* The mount table pointer */
+	struct sam_disk_inode *dp)	/* The disk inode table pointer */
 {
 	sam_ino_t ino = dp->id.ino;
 
@@ -351,7 +352,7 @@ sam_free_inode(
 	ASSERT(MUTEX_HELD(&mp->ms.m_inode_mutex));
 
 	if (ino >= mp->mi.m_min_usr_inum) {
-		dp->free_ino =  mp->mi.m_inodir->di.free_ino;
+		dp->free_ino = mp->mi.m_inodir->di.free_ino;
 		mp->mi.m_inodir->di.free_ino = ino;
 		mp->mi.m_inodir->flags.b.changed = 1;
 	}
@@ -360,22 +361,42 @@ sam_free_inode(
 
 /*
  * ----- sam_alloc_inode_ext - allocate a list of inode extensions.
+ * Given incore base inode, call sam_alloc_inode_ext_dp with mount point
+ * and the disk inode pointer.
+ */
+
+int				/* ERRNO if error, 0 if successful. */
+sam_alloc_inode_ext(
+	sam_node_t *bip,	/* Pointer to base inode */
+	mode_t mode,		/* Mode for inode extension. */
+	int count,		/* No. of inode extensions to allocate/link */
+	sam_id_t *fidp)		/* Ptr to first inode extension id (updated) */
+{
+	int	error;
+
+	error = sam_alloc_inode_ext_dp(bip->mp, &bip->di, mode, count, fidp);
+	return (error);
+}
+
+
+/*
+ * ----- sam_alloc_inode_ext_dp - allocate a list of inode extensions.
  *
  *	Allocate and initialize a list of inode extensions for the base inode.
  *	Link the newly allocated list at head of any existing list.
  */
 
-int					/* ERRNO if error, 0 if successful. */
-sam_alloc_inode_ext(
-	sam_node_t *bip,		/* Pointer to base inode. */
-	mode_t mode,			/* Mode for inode extension. */
-	int count,			/* Number of inode extensions to */
-					/*   allocate/link. */
-	sam_id_t *fid)			/* out: first inode extension id */
+int				/* ERRNO if error, 0 if successful. */
+sam_alloc_inode_ext_dp(
+	sam_mount_t *mp,	/* The mount table pointer */
+	struct sam_disk_inode *dp,	/* The disk inode table pointer */
+	mode_t mode,		/* Mode for inode extension */
+	int count,		/* No. of inode extensions to allocate/link */
+	sam_id_t *fid)		/* Ptr to first inode extension id (updated) */
 {
-	int	error;
-	struct buf *bp;
-	sam_id_t first_id, eid;
+	int		error;
+	struct buf	*bp;
+	sam_id_t	first_id, eid;
 	struct sam_inode_ext *eip;
 
 	first_id.ino = first_id.gen = 0;
@@ -383,18 +404,18 @@ sam_alloc_inode_ext(
 	while (count > 0) {
 
 		/* Allocate and read inode extension */
-		if ((error = sam_alloc_inode(bip->mp, mode, &eid.ino))) {
+		if ((error = sam_alloc_inode(mp, mode, &eid.ino))) {
 			if (first_id.ino) {
-				sam_free_inode_ext(bip, mode,
+				sam_free_inode_ext_dp(mp, dp, mode,
 				    SAM_ALL_COPIES, &first_id);
 			}
 			return (error);
 		}
-		if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+		if (error = sam_read_ino(mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip)) {
 			if (first_id.ino) {
-				sam_free_inode_ext(bip, mode,
-						SAM_ALL_COPIES, &first_id);
+				sam_free_inode_ext_dp(mp, dp, mode,
+				    SAM_ALL_COPIES, &first_id);
 			}
 			return (error);
 		}
@@ -409,9 +430,9 @@ sam_alloc_inode_ext(
 		bzero((char *)eip, sizeof (*eip));
 		eip->hdr.mode = (mode | (count & S_IFORD));
 		/* Use version of base inode */
-		eip->hdr.version = bip->di.version;
+		eip->hdr.version = dp->version;
 		eip->hdr.id = eid;
-		eip->hdr.file_id = bip->di.id;
+		eip->hdr.file_id = dp->id;
 		if (first_id.ino == 0) {
 			eip->hdr.next_id = *fid;
 		} else {
@@ -419,8 +440,8 @@ sam_alloc_inode_ext(
 		}
 
 		first_id = eid;			/* new first extension id */
-		TRACE(T_SAM_INO_EXT_ALLOC, SAM_ITOV(bip), (int)bip->di.id.ino,
-		    (int)eip->hdr.id.ino, mode);
+		TRACE(T_SAM_INO_EXT_ALLOC, SAM_ITOV(mp->mi.m_inodir),
+		    (int)dp->id.ino, (int)eip->hdr.id.ino, mode);
 		bdwrite(bp);
 		count--;
 	}
@@ -431,18 +452,35 @@ sam_alloc_inode_ext(
 
 /*
  * ----- sam_free_inode_ext - free inode extensions.
+ * Given incore base inode, call sam_free_inode_ext_dp with mount point
+ * and the disk inode pointer.
+ */
+
+void
+sam_free_inode_ext(
+	sam_node_t *bip,	/* Pointer to base inode */
+	mode_t mode,		/* Mode of inode extension(s) to free */
+	int copy,		/* Copy no. of exts to free - mode == S_IFMVA */
+	sam_id_t *fidp)		/* Ptr to first inode extension id (updated) */
+{
+	sam_free_inode_ext_dp(bip->mp, &bip->di, mode, copy, fidp);
+}
+
+
+/*
+ * ----- sam_free_inode_ext_dp - free inode extensions.
  *
  * Free inode extension list for base inode.  Any list members with
  * different mode values will remain linked to base inode at completion.
  */
 
 void
-sam_free_inode_ext(
-	sam_node_t *bip,	/* Pointer to base inode. */
+sam_free_inode_ext_dp(
+	sam_mount_t *mp,	/* The mount table pointer */
+	struct sam_disk_inode *dp,	/* The disk inode table pointer */
 	mode_t mode,		/* Mode of inode extension(s) to free. */
-	int copy,		/* Copy number of exts to free for */
-				/*   mode == S_IFMVA. */
-	sam_id_t *fid)		/* out: first inode extension id. */
+	int copy,		/* Copy no. of exts to free - mode == S_IFMVA */
+	sam_id_t *fid)		/* Ptr to first inode extension id (updated) */
 {
 	int remove;
 	buf_t *bp;
@@ -454,14 +492,14 @@ sam_free_inode_ext(
 
 	eid = *fid;
 	while (eid.ino) {
-		mutex_enter(&bip->mp->ms.m_inode_mutex);
-		if (sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
-			mutex_exit(&bip->mp->ms.m_inode_mutex);
+		mutex_enter(&mp->ms.m_inode_mutex);
+		if (sam_read_ino(mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip)) {
+			mutex_exit(&mp->ms.m_inode_mutex);
 			return;
 		}
-		if (EXT_HDR_ERR(eip, eid, bip)) {	/* Validate header */
-			mutex_exit(&bip->mp->ms.m_inode_mutex);
+		if (EXT_HDR_ERR_DP(eip, eid, dp)) {	/* Validate header */
+			mutex_exit(&mp->ms.m_inode_mutex);
 			brelse(bp);
 			return;
 		}
@@ -489,30 +527,30 @@ sam_free_inode_ext(
 			}
 		}
 		if (remove) {			/* Take out of list */
-			TRACE(T_SAM_INO_EXT_FREE, SAM_ITOV(bip),
-			    (int)bip->di.id.ino,
-			    (int)eip->hdr.id.ino, eip->hdr.mode);
+			TRACE(T_SAM_INO_EXT_FREE, SAM_ITOV(mp->mi.m_inodir),
+			    (int)dp->id.ino, (int)eip->hdr.id.ino,
+			    eip->hdr.mode);
 			bzero((char *)eip, sizeof (union sam_ino_ext));
 			eip->hdr.id = eid;
-			sam_free_inode(bip->mp, (struct sam_disk_inode *)eip);
-			mutex_exit(&bip->mp->ms.m_inode_mutex);
-			if (TRANS_ISTRANS(bip->mp)) {
+			sam_free_inode(mp, (struct sam_disk_inode *)eip);
+			mutex_exit(&mp->ms.m_inode_mutex);
+			if (TRANS_ISTRANS(mp)) {
 				sam_ioblk_t ioblk;
 				int error;
 
-				RW_LOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+				RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl,
 				    RW_READER);
-				error = sam_map_block(bip->mp->mi.m_inodir,
+				error = sam_map_block(mp->mi.m_inodir,
 				    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
 				    SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+				RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
 				    RW_READER);
 				if (!error) {
 					offset_t doff;
 
-					doff = ldbtob(fsbtodb(bip->mp,
+					doff = ldbtob(fsbtodb(mp,
 					    ioblk.blkno)) + ioblk.pboff;
-					TRANS_EXT_INODE(bip->mp, eid,
+					TRANS_EXT_INODE(mp, eid,
 					    doff, ioblk.ord);
 				} else {
 					error = 0;
@@ -523,36 +561,36 @@ sam_free_inode_ext(
 			}
 
 		} else {				/* Keep in list */
-			mutex_exit(&bip->mp->ms.m_inode_mutex);
+			mutex_exit(&mp->ms.m_inode_mutex);
 			brelse(bp);
 			if (first_id.ino == 0) first_id = eid;
 			if (last_id.ino != 0) {		/* Link to last */
-				if (sam_read_ino(bip->mp, last_id.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+				if (sam_read_ino(mp, last_id.ino, &bp,
+				    (struct sam_perm_inode **)&eip)) {
 					return;
 				}
 				eip->hdr.next_id = eid;
-				if (TRANS_ISTRANS(bip->mp)) {
+				if (TRANS_ISTRANS(mp)) {
 					sam_ioblk_t ioblk;
 					int error;
 
 					RW_LOCK_OS(
-					    &bip->mp->mi.m_inodir->inode_rwl,
+					    &mp->mi.m_inodir->inode_rwl,
 					    RW_READER);
 					error = sam_map_block(
-					    bip->mp->mi.m_inodir,
+					    mp->mi.m_inodir,
 					    (offset_t)SAM_ITOD(eid.ino),
 					    SAM_ISIZE, SAM_READ, &ioblk,
 					    CRED());
 					RW_UNLOCK_OS(
-					    &bip->mp->mi.m_inodir->inode_rwl,
+					    &mp->mi.m_inodir->inode_rwl,
 					    RW_READER);
 					if (!error) {
 						offset_t doff;
 
-						doff = ldbtob(fsbtodb(bip->mp,
+						doff = ldbtob(fsbtodb(mp,
 						    ioblk.blkno)) + ioblk.pboff;
-						TRANS_EXT_INODE(bip->mp,
+						TRANS_EXT_INODE(mp,
 						    eid, doff, ioblk.ord);
 					} else {
 						error = 0;
@@ -569,27 +607,27 @@ sam_free_inode_ext(
 
 	/* Make sure list is terminated correctly */
 	if (last_id.ino != 0) {
-		if (sam_read_ino(bip->mp, last_id.ino, &bp,
-				(struct sam_perm_inode **)&eip)) {
+		if (sam_read_ino(mp, last_id.ino, &bp,
+		    (struct sam_perm_inode **)&eip)) {
 			return;
 		}
 		eip->hdr.next_id.ino = eip->hdr.next_id.gen = 0;
-		if (TRANS_ISTRANS(bip->mp)) {
+		if (TRANS_ISTRANS(mp)) {
 			sam_ioblk_t ioblk;
 			int error;
 
-			RW_LOCK_OS(&bip->mp->mi.m_inodir->inode_rwl, RW_READER);
-			error = sam_map_block(bip->mp->mi.m_inodir,
+			RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl, RW_READER);
+			error = sam_map_block(mp->mi.m_inodir,
 			    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
 			    SAM_READ, &ioblk, CRED());
-			RW_UNLOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
+			RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
 			    RW_READER);
 			if (!error) {
 				offset_t doff;
 
-				doff = ldbtob(fsbtodb(bip->mp,
+				doff = ldbtob(fsbtodb(mp,
 				    ioblk.blkno)) + ioblk.pboff;
-				TRANS_EXT_INODE(bip->mp, last_id, doff,
+				TRANS_EXT_INODE(mp, last_id, doff,
 				    ioblk.ord);
 			} else {
 				error = 0;
@@ -618,7 +656,7 @@ sam_free_inode_ext(
 
 void
 sam_fix_mva_inode_ext(
-	sam_node_t *bip,		/* Pointer to base inode. */
+	sam_node_t *bip,		/* Pointer to base inode */
 	int copy,			/* Copy number, 0..(MAX_ARCHIVE-1) */
 	sam_id_t *ret_eidp)		/* Returned extension id */
 {
