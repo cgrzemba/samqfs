@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.288 $"
+#pragma ident "$Revision: 1.289 $"
 
 #include "sam/osversion.h"
 
@@ -3105,7 +3105,7 @@ sam_process_inode_request(
 		break;
 
 	case INODE_samaid:
-		error = sam_set_aid(ip, arg->p.samaid.aid);
+		error = sam_set_aid(ip, &arg->p.samaid);
 		break;
 
 	case INODE_putquota:
@@ -3832,6 +3832,10 @@ sam_getcred(sam_cred_t *sam_credp)
 	    sam_credp->cr_sgid);
 	crsetgroups(cr, sam_credp->cr_ngroups, sam_credp->cr_groups);
 	crsetzone(cr, global_zone);
+	if (sam_credp->cr_projid == -1) {
+		sam_credp->cr_projid = SAM_NOPROJECT;
+	}
+	crsetprojid(cr, sam_credp->cr_projid);
 
 	return (cr);
 }

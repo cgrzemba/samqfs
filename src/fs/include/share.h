@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.129 $"
+#pragma ident "$Revision: 1.130 $"
 #endif
 
 
@@ -101,6 +101,8 @@ typedef struct sam_cred {
 	gid_t	cr_sgid;		/* "saved" group id (from exec) */
 	uint32_t cr_ngroups;		/* number of groups in cr_groups */
 	gid_t	cr_groups[NGROUPS_MAX_DEFAULT];	/* supplementary group list */
+	projid_t	cr_projid;	/* Task project ID */
+	char 	pad[4];
 } sam_cred_t;
 
 /*
@@ -508,6 +510,15 @@ typedef struct sam_inode_samarch {
 	char pad[5];		/* Force pad */
 	vsn_t vsn;		/* If not empty, VSN to affect */
 } sam_inode_samarch_t;
+
+/*
+ * Operation for INODE_samaid
+ *
+ * 0 change admin_id
+ * 1 change project ID
+ */
+#define	SAM_INODE_AID		0
+#define	SAM_INODE_PROJID	1
 
 typedef struct sam_inode_samaid {
 	int operation;

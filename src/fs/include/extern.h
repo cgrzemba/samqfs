@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.232 $"
+#pragma ident "$Revision: 1.233 $"
 
 #include "sam/osversion.h"
 
@@ -288,7 +288,7 @@ int sam_quota_chown(sam_mount_t *mp, sam_node_t *ip, uid_t uid, gid_t gid,
 	cred_t *cr);
 int sam_quota_fret(sam_mount_t *mp, sam_node_t *ip);
 int sam_set_admid(void *arg, int size, cred_t *credp);
-int sam_set_aid(sam_node_t *ip, uint32_t aid);
+int sam_set_aid(sam_node_t *ip, struct sam_inode_samaid *sa);
 void sam_quota_init(sam_mount_t *mp);
 int sam_quota_halt(sam_mount_t *mp);
 void sam_quota_fini(sam_mount_t *mp);

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.160 $"
+#pragma ident "$Revision: 1.161 $"
 #endif
 
 #include "sam/osversion.h"
@@ -141,6 +141,9 @@
 #endif /* linux */
 #include "trace.h"
 #include "debug.h"
+#ifdef sun
+#include "qfs_log.h"
+#endif
 
 #ifdef sun
 #ifdef METADATA_SERVER
@@ -178,6 +181,7 @@ static int sam_vsn_stat_segment(void *arg);
 static int sam_read_rminfo(void *arg);
 static int sam_read_rm(sam_node_t *ip, char *buf, int bufsize);
 static int sam_set_csum(void *arg);
+static int sam_set_projid(void *arg, int size);
 #endif /* sn */
 static int sam_vsn_stat_file(void *arg);
 
@@ -242,6 +246,10 @@ __sam_syscall(
 		case SC_setfa:
 		case SC_segment:
 			error = sam_file_operations(cmd, arg);
+			break;
+
+		case SC_projid:
+			error = sam_set_projid(arg, size);
 			break;
 
 		case SC_setcsum:
@@ -813,6 +821,11 @@ sam_proc_stat(
 		if (ip->di.version == SAM_INODE_VERS_2) {
 			sb.rperiod_start_time = ip->di2.rperiod_start_time;
 			sb.rperiod_duration = ip->di2.rperiod_duration;
+			if (ip->di2.p2flags & P2FLAGS_PROJID_VALID) {
+				sb.projid = ip->di2.projid;
+			} else {
+				sb.projid = SAM_NOPROJECT;
+			}
 		}
 #ifdef sun
 		brelse(bp);
@@ -2201,3 +2214,129 @@ sam_get_multivolume(
 
 	return (error);
 }
+
+
+/*
+ * ----- sam_set_projid - set the project ID of a file
+ *
+ */
+#ifdef sun
+int
+sam_set_projid(void *arg, int size)
+{
+	int follow, error = 0;
+	struct sam_projid_arg args;
+	char *path;
+	vnode_t *vp, *rvp;
+	sam_node_t *ip;
+	sam_mount_t *mp;
+	int issync;
+	int trans_size;
+	int terr = 0;
+	sam_inode_samaid_t sa;
+	cred_t *credp = CRED();
+
+	/*
+	 * Validate and copy in the arguments.
+	 */
+	if (size != sizeof (args) ||
+	    copyin(arg, (caddr_t)&args, sizeof (args))) {
+		return (EFAULT);
+	}
+
+	path = (void *)args.path.p32;
+	if (curproc->p_model != DATAMODEL_ILP32) {
+		path = (void *)args.path.p64;
+	}
+
+	follow = args.follow ? FOLLOW : NO_FOLLOW;
+	if ((error = lookupname((char *)path, UIO_USERSPACE, follow,
+	    NULLVPP, &vp))) {
+		return (error);
+	}
+
+	if (sam_set_realvp(vp, &rvp)) {
+		error = ENOTTY;
+		goto out;
+	}
+
+	ip = SAM_VTOI(rvp);
+	mp = ip->mp;
+
+	if (ip->di2.projid == args.projid) {		/* no-op */
+		goto out;
+	}
+
+	/*
+	 * Solaris user credentials do not include a user's set of authorized
+	 * project IDs.  That information is contained only within the file
+	 * /etc/project.
+	 *
+	 * Rather than make QFS cache that project information for every user,
+	 * to support policy enforcement here, it would be nice if Solaris some
+	 * day  did that in a more generic way for use by every file system
+	 * type.
+	 *
+	 * Until then, we enforce at user-level via a set-user-ID-root
+	 * application (/opt/SUNWsamfs/bin/chproj) the requirement that the
+	 * user must belong to the Solaris project that is being set on
+	 * the file/directory.  This interface is privileged-only to prevent
+	 * an unprivileged application from bypassing that policy.
+	 *
+	 * We also enforce the policy at user-level that the user must own
+	 * the file/directory whose project ID is being set, or must be
+	 * the (real) root user.  While that policy could instead be enforced
+	 * here, it is enforced at user-level to maintain the consistency
+	 * of the QFS secpolicy() implementation.
+	 *
+	 * If/when Solaris credentials carry the necessary project ID
+	 * information, this interface can become available to privilege
+	 * unaware processes, with all policy enforcement performed here,
+	 * and the user-level application can be installed as a
+	 * privilege-unaware application.
+	 */
+	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
+		error = EPERM;
+		goto out;
+	}
+
+	if ((error = sam_open_operation(ip)) != 0) {
+		goto out;
+	}
+
+	if (SAM_IS_SHARED_CLIENT(mp)) {
+
+		bzero((char *)&sa, sizeof (sa));
+		sa.operation = SAM_INODE_PROJID;
+		sa.aid = args.projid;
+
+		error = sam_proc_inode(ip, INODE_samaid, &sa, credp);
+
+	} else {
+
+		trans_size = (int)TOP_SETATTR_SIZE(ip);
+		TRANS_BEGIN_CSYNC(ip->mp, issync, TOP_SETATTR, trans_size);
+
+		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+
+		ip->di2.projid = args.projid;
+
+		TRANS_INODE(ip->mp, ip);
+		sam_mark_ino(ip, SAM_CHANGED);
+
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+
+		TRANS_END_CSYNC(ip->mp, terr, issync,
+		    TOP_SETATTR, trans_size);
+
+		if (error == 0) {
+			error = terr;
+		}
+	}
+	SAM_CLOSE_OPERATION(mp, error);
+
+out:
+	VN_RELE(vp);
+	return (error);
+}
+#endif

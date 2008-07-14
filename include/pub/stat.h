@@ -38,7 +38,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 #endif
 
 #ifndef	SAM_STAT_H
@@ -186,7 +186,7 @@ struct sam_stat {
 	/* WORM retention period start and duration. */
 	time_t		rperiod_start_time;
 	uint_t		rperiod_duration;
-	uint_t		pad11;
+	projid_t	projid;
 	u_longlong_t	attr;		/* File attributes */
 };
 
@@ -295,7 +295,7 @@ struct sam_stat {
 	time_t		rperiod_start_time;
 #endif	/* __i386 */
 	ulong_t		rperiod_duration;
-	ulong_t		pad11;
+	ulong_t		projid;
 	u_longlong_t	attr;		/* File attributes */
 };
 

@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 #endif
 
 #ifdef __KERNEL__
@@ -492,5 +492,10 @@ extern char *nfsd_thread_name;
  * ----- Security Policy macros.
  */
 #define	secpolicy_fs_config(credp, vfsp)	(suser(credp) ? 0 : EPERM)
+
+/*
+ * ----- Project ID.
+ */
+#define	sam_set_projid(a, b, c)				(ENOSYS)
 
 #endif /* _SAM_MACROS_LINUX_H */

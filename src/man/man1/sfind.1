@@ -1,4 +1,4 @@
-.\" $Revision: 1.26 $
+.\" $Revision: 1.27 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -97,6 +97,7 @@ tests are as follows:
 \fB\-ovfl3\fR,
 \fB\-ovfl4\fR,
 \fB\-partial_on\fR,
+\fB\-project\ \fIpname\fR,
 \fB\-release_a\fR,
 \fB\-release_d\fR,
 \fB\-release_n\fR,
@@ -709,6 +710,9 @@ All of the permission bits \fImode\fR are set for the file.
 .TP
 \fB\-perm +\fImode\fR
 Any of the permission bits \fImode\fR are set for the file.
+.TP
+\fB\-project \fIpname\fR
+File belongs to project \fIpname\fR.  A numeric project ID is allowed.
 .TP
 \fB\-regex \fIpattern\fR
 File name matches regular expression \fIpattern\fR.

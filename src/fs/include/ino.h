@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 #endif
 
 #ifdef linux
@@ -76,6 +76,11 @@
 
 #define	S_IFREQ 0xe000
 #define	S_ISREQ(m) (((m)&0xf000) == 0xe000)
+
+/*
+ * Same value as noproject in /etc/project.
+ */
+#define	SAM_NOPROJECT	2
 
 
 /* ----- Maximum symlink size that can be held in disk block area */
@@ -378,6 +383,7 @@ typedef struct sam_disk_inode {
 
 #define	P2FLAGS_XATTR	0x01
 #define	P2FLAGS_WORM_V2	0x02
+#define	P2FLAGS_PROJID_VALID	0x04
 
 typedef struct sam_disk_inode_part2 {
 	sam_id_t		xattr_id;

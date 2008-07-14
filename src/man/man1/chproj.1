@@ -1,0 +1,120 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH chproj 1 "07 Jun 2008"
+.SH NAME
+chproj \- change file project attribute
+.na
+.SH SYNOPSIS
+.B chproj
+[
+.B \-fhR
+]
+.RB project
+.IR filename .\|.\|.\|
+
+.B chproj
+.B \-R
+[
+.B \-H | -L  | -P
+]
+.RB project
+.IR filename .\|.\|.\|
+.ad b
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.PP
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+.B chproj
+sets the project attribute of files and directories.
+The project can be specified as either the project name
+or the numeric value from the project database /etc/project.
+The owner of a file or directory can change the project
+of a file or directory to any project of which the owner
+could be a member. The superuser can change the project of
+any file or directory to any project name or numeric value
+from the project database /etc/project.
+.LP
+.na
+.SH OPTIONS
+.TP
+.B \-f
+Force.
+Do not report errors.
+.TP
+.B \-h
+If the file is a symbolic link,
+this option changes the project of the symbolic link.
+Without this option,
+the project of the file referenced by the symbolic link is changed.
+.TP
+.B \-H
+If the file specified on the command line is a sym-
+bolic  link  that references a directory,
+this option changes  the  project  of  the  directory
+referenced  by  the symbolic link and all the files
+in the file hierarchy below it. If a symbolic  link
+is  encountered  when  traversing the file hierarchy,
+the project of the target file  is  changed,  but  no
+recursion takes place.
+.TP
+.B \-L
+If the file is a symbolic link, this option changes
+the project of the file referenced by the symbolic
+link. If the file specified on the command line, or
+encountered during the traversal of the file
+hierarchy, is a symbolic link that references a
+directory, then this option changes the project
+of the directory referenced by  the  symbolic  link
+and all files in the file hierarchy below it.
+.TP
+.B \-P
+If the file specified on the command line or
+encountered during the traversal of a file hierarchy
+is a symbolic link, this option changes the
+project of the symbolic link. This option does not
+follow the symbolic link to any other part of the
+file hierarchy.
+.LP
+Specifying more than one of the  mutually-exclusive  options
+-H,  -L,  or  -P is not considered an error. The last option
+specified determines the behavior of chproj.
+.TP
+.B \-R
+Recursive.
+chproj descends through the directory and any subdirectories,
+setting the specified project as it proceeds.
+When a symbolic link is encountered,
+the project of the target file is changed
+unless the -h  or -P option is specified. However
+no recursion takes place unless the -H or -L
+option is specified.
+.SH SEE ALSO
+\fBsls\fR(1),
+\fBsfind\fR(1),
+\fBproject\fB(4).

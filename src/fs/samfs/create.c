@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.154 $"
+#pragma ident "$Revision: 1.155 $"
 
 #include "sam/osversion.h"
 
@@ -685,11 +685,13 @@ sam_make_ino(
 	uid_t nuid;
 	gid_t ngid;
 	int type, naid;
+	projid_t nprojid;
 
 	*ipp = NULL;
 	mp = pip->mp;
 	type = vap->va_type;
 	nuid = crgetuid(credp);
+	nprojid = crgetprojid(credp);
 	/*
 	 * To determine the group-id of a newly created file or directory:
 	 *  1) if the gid is set in the attributes, use it if
@@ -752,6 +754,14 @@ sam_make_ino(
 	ip->di.gid = ngid;
 	ip->di.admin_id = naid;
 	ip->di.mode = mode;
+	ip->di2.projid = nprojid;
+	/*
+	 * Files that existed before project ID support
+	 * will not have this bit set which means that
+	 * the value in di2.projid is not valid and
+	 * should be reported as SAM_NOPROJECT.
+	 */
+	ip->di2.p2flags |= P2FLAGS_PROJID_VALID;
 
 	/*
 	 * Propagate the set-GID bit if creating a directory.  Otherwise,

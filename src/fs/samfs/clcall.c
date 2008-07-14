@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.250 $"
+#pragma ident "$Revision: 1.251 $"
 #endif
 
 #include "sam/osversion.h"
@@ -3751,6 +3751,7 @@ sam_set_cred(cred_t *credp, sam_cred_t *sam_credp)
 			sam_credp->cr_groups[i] = credp->cr_groups[i];
 		}
 	}
+	sam_credp->cr_projid = -1;
 #endif /* linux */
 #ifdef	sun
 	sam_credp->cr_ref = crgetref(credp);
@@ -3764,6 +3765,7 @@ sam_set_cred(cred_t *credp, sam_cred_t *sam_credp)
 	for (i = 0; i < sam_credp->cr_ngroups; i++) {
 		sam_credp->cr_groups[i] = crgetgroups(credp)[i];
 	}
+	sam_credp->cr_projid = crgetprojid(credp);
 #endif	/* sun */
 }
 

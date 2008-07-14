@@ -66,6 +66,9 @@
 #include <getopt.h>
 #include "system.h"
 #include <fnmatch.h>
+#ifdef sun
+#include <project.h>
+#endif /* sun */
 
 #include "ls.h"
 #include "version.h"
@@ -2176,6 +2179,13 @@ struct file *f)		/* File entry */
 	int any = 0;
 	int copy;
 	static char *archiveId = NULL;
+#ifdef sun
+	struct project proj;
+	char *buf = NULL;
+	int bufsize;
+	char *pname;
+	char *unknown = "unknown";
+#endif /* sun */
 
 
 	if (thisdir != NULL) {
@@ -2222,7 +2232,23 @@ struct file *f)		/* File entry */
 		printf("  admin id: %6u", (unsigned int) f->stat.admin_id);
 	}
 
+#ifdef sun
+	buf = calloc(4096, 1);
+	bufsize = 4096;
+	if (getprojbyid(f->stat.projid, &proj, buf, bufsize) == NULL) {
+		pname = unknown;
+	} else {
+		pname = strdup(proj.pj_name);
+	}
+#endif /* sun */
+
 	if (print_inode)  printf("  inode:   %6u.%u", f->stat.st_ino, f->stat.gen);
+	printf("\n");
+#ifdef sun
+	printf("  project: %s(%d)", pname, f->stat.projid);
+#else
+	printf("  project: %d", f->stat.projid);
+#endif /* sun */
 	printf("\n");
 
 	if (!SS_ISSAMFS(f->stat.attr)) {

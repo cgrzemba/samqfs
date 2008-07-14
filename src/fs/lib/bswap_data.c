@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 #endif
 
 /*
@@ -330,8 +330,8 @@ struct swap_descriptor sam_cl_attr_swap_descriptor[] = {
 };
 
 struct swap_descriptor sam_cred_swap_descriptor[] = {
-	{ 0, 4, 24 },
-	{ 96, 0, 0 },
+	{ 0, 4, 25 },
+	{ 104, 0, 0 },
 };
 
 struct swap_descriptor sam_dirent_swap_descriptor[] = {
@@ -731,8 +731,8 @@ struct swap_descriptor sam_san_inode_swap_descriptor[] = {
 	{ 12, 2, 1 },
 	{ 16, 4, 1 },
 	{ 24, 8, 1 },
-	{ 176, 4, 24 },
-	{ 272, 0, 0 },
+	{ 176, 4, 25 },
+	{ 280, 0, 0 },
 };
 
 struct swap_descriptor sam_san_inode2_swap_descriptor[] = {
@@ -740,56 +740,7 @@ struct swap_descriptor sam_san_inode2_swap_descriptor[] = {
 	{ 12, 2, 1 },
 	{ 16, 4, 1 },
 	{ 24, 8, 1 },
-	{ 176, 4, 24 },
-	{ 272, 8, 1 },
-	{ 280, 4, 2 },
-	{ 288, 2, 2 },
-	{ 292, 4, 1 },
-	{ 296, 8, 4 },
-	{ 328, 4, 6 },
-	{ 352, 8, 1 },
-	{ 360, 2, 2 },
-	{ 364, 4, 18 },
-	{ 446, 2, 4 },
-	{ 456, 4, 23 },
-	{ 568, 4, 2 },
-	{ 584, 4, 1 },
-	{ 592, 4, 2 },
-	{ 600, 0, 0 },
-};
-
-struct swap_descriptor sam_san_lease_swap_descriptor[] = {
-	{ 0, 4, 3 },
-	{ 12, 2, 1 },
-	{ 16, 4, 1 },
-	{ 24, 8, 1 },
-	{ 32, 2, 1 },
-	{ 36, 4, 1 },
-	{ 40, 8, 5 },
-	{ 80, 2, 2 },
-	{ 84, 4, 1 },
-	{ 92, 4, 3 },
-	{ 104, 2, 2 },
-	{ 112, 8, 2 },
-	{ 128, 4, 36 },
-	{ 272, 0, 0 },
-};
-
-struct swap_descriptor sam_san_lease2_swap_descriptor[] = {
-	{ 0, 4, 3 },
-	{ 12, 2, 1 },
-	{ 16, 4, 1 },
-	{ 24, 8, 1 },
-	{ 32, 2, 1 },
-	{ 36, 4, 1 },
-	{ 40, 8, 5 },
-	{ 80, 2, 2 },
-	{ 84, 4, 1 },
-	{ 92, 4, 3 },
-	{ 104, 2, 2 },
-	{ 112, 8, 2 },
-	{ 128, 4, 36 },
-	{ 272, 2, 1 },
+	{ 176, 4, 25 },
 	{ 280, 8, 1 },
 	{ 288, 4, 2 },
 	{ 296, 2, 2 },
@@ -807,6 +758,57 @@ struct swap_descriptor sam_san_lease2_swap_descriptor[] = {
 	{ 608, 0, 0 },
 };
 
+struct swap_descriptor sam_san_lease_swap_descriptor[] = {
+	{ 0, 4, 3 },
+	{ 12, 2, 1 },
+	{ 16, 4, 1 },
+	{ 24, 8, 1 },
+	{ 32, 2, 1 },
+	{ 36, 4, 1 },
+	{ 40, 8, 5 },
+	{ 80, 2, 2 },
+	{ 84, 4, 1 },
+	{ 92, 4, 3 },
+	{ 104, 2, 2 },
+	{ 112, 8, 2 },
+	{ 128, 4, 27 },
+	{ 240, 4, 10 },
+	{ 280, 0, 0 },
+};
+
+struct swap_descriptor sam_san_lease2_swap_descriptor[] = {
+	{ 0, 4, 3 },
+	{ 12, 2, 1 },
+	{ 16, 4, 1 },
+	{ 24, 8, 1 },
+	{ 32, 2, 1 },
+	{ 36, 4, 1 },
+	{ 40, 8, 5 },
+	{ 80, 2, 2 },
+	{ 84, 4, 1 },
+	{ 92, 4, 3 },
+	{ 104, 2, 2 },
+	{ 112, 8, 2 },
+	{ 128, 4, 27 },
+	{ 240, 4, 10 },
+	{ 280, 2, 1 },
+	{ 288, 8, 1 },
+	{ 296, 4, 2 },
+	{ 304, 2, 2 },
+	{ 308, 4, 1 },
+	{ 312, 8, 4 },
+	{ 344, 4, 6 },
+	{ 368, 8, 1 },
+	{ 376, 2, 2 },
+	{ 380, 4, 18 },
+	{ 462, 2, 4 },
+	{ 472, 4, 23 },
+	{ 584, 4, 2 },
+	{ 600, 4, 1 },
+	{ 608, 4, 2 },
+	{ 616, 0, 0 },
+};
+
 struct swap_descriptor sam_san_mount_swap_descriptor[] = {
 	{ 0, 4, 2 },
 	{ 168, 4, 4 },
@@ -815,8 +817,8 @@ struct swap_descriptor sam_san_mount_swap_descriptor[] = {
 
 struct swap_descriptor sam_san_name_swap_descriptor[] = {
 	{ 0, 4, 2 },
-	{ 120, 4, 24 },
-	{ 224, 0, 0 },
+	{ 120, 4, 25 },
+	{ 232, 0, 0 },
 };
 
 struct swap_descriptor sam_san_name2_swap_descriptor[] = {

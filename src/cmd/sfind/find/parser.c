@@ -29,6 +29,9 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#ifdef sun
+#include <project.h>
+#endif /* sun */
 
 #ifndef isascii
 #define isascii(c) 1
@@ -271,6 +274,7 @@ boolean parse_after(), pred_after();			/* SUN */
 boolean parse_remain(), pred_remain();			/* SUN */
 boolean parse_longer(), pred_retention();		/* SUN */
 boolean parse_permanent(), pred_retention();		/* SUN */
+boolean parse_project(), pred_project();		/* SUN */
 
 typedef	struct predicate	Predicate;
 typedef	enum comparison_type	Comparison_type;
@@ -447,6 +451,7 @@ static struct parser_table_t const parse_table[] =
   {"rremain", parse_remain},		/* SUN */
   {"rlonger", parse_longer},		/* SUN */
   {"rpermanent", parse_permanent},	/* SUN */
+  {"project", parse_project},
   {0, 0}
 };
 
@@ -3115,3 +3120,70 @@ boolean   parse_after  (argv, arg_ptr)
 	}
 	return (false);
 }
+
+#ifdef sun
+boolean   parse_project  (argv, arg_ptr)
+	char	*argv[];
+	int	*arg_ptr;
+{
+	char *pname;
+	Predicate *pred_ptr;
+	projid_t projid;
+	int projid_len;
+
+	if (argv == NULL || argv[*arg_ptr] == NULL) {
+		return (false);
+	}
+
+	pname = strdup(argv[*arg_ptr]);
+	projid = getprojidbyname(argv[*arg_ptr]);
+	if (projid < 0) {
+		projid_len = strspn(argv[*arg_ptr], "0123456789");
+
+		if ((projid_len == 0) || (argv[*arg_ptr][projid_len] != '\0')) {
+			return (false);
+		}
+
+		projid = (projid_t)atoi(argv[*arg_ptr]);
+	}
+
+	pred_ptr = insert_victim(pred_project);
+	pred_ptr->args.projid = projid;
+	(*arg_ptr)++;
+
+	return (true);
+}
+#endif /* sun */
+
+#ifdef linux
+	/*
+	 * Can only accept numeric project IDs on Linux
+	 */
+boolean   parse_project  (argv, arg_ptr)
+	char	*argv[];
+	int		*arg_ptr;
+{
+	Predicate *pred_ptr;
+	projid_t projid;
+	int projid_len;
+
+	if (argv == NULL || argv[*arg_ptr] == NULL) {
+		return (false);
+	}
+
+	projid_len = strspn(argv[*arg_ptr], "0123456789");
+
+	if ((projid_len == 0) || (argv[*arg_ptr][projid_len] != '\0')) {
+		return (false);
+	}
+
+	projid = (projid_t)atoi(argv[*arg_ptr]);
+
+	pred_ptr = insert_victim(pred_project);
+	pred_ptr->args.projid = projid;
+	(*arg_ptr)++;
+
+	return (true);
+
+}
+#endif /* linux */

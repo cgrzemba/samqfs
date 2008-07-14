@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 #endif
 
 #include "sam/types.h"
@@ -75,6 +75,7 @@ typedef enum {
 	SC_trace_tbl_data = 21,	/* an individual cpu's data */
 	SC_trace_global = 22,	/* samgt global table */
 	SC_trace_tbl_wait = 23,	/* an individual cpu's data (wait for data) */
+	SC_projid = 24,		/* takes struct sam_projid_arg */
 	SC_USER_MAX = 99,
 
 	SC_FS_MIN = 100,
@@ -204,6 +205,15 @@ struct sam_archive_copy_arg {
 struct sam_set_csum_arg {
 	SAM_POINTER(const char) path;	/* Path name of file */
 	csum_t csum;
+};
+
+/*
+ * Change the project ID of a file.
+ */
+struct sam_projid_arg {
+	SAM_POINTER(const char) path;	/* Path name of file */
+	uint32_t projid;		/* New project ID */
+	uint32_t follow;		/* Follow if target is symlink */
 };
 
 /* Release record of candidates to be released */
@@ -533,7 +543,6 @@ struct sam_chaid_arg {
 	uint32_t admin_id;		/* new admin ID */
 	uint32_t follow;		/* follow if target is symlink */
 };
-
 
 /*
  * File system call daemons (FSCD) - daemons that wait on an

@@ -1,4 +1,4 @@
-# $Revision: 1.10 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -30,44 +30,15 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-MAN_SRCS = \
-	alterfile.1 \
-	archive.1 \
-	chproj.1 \
-	dvt.1 \
-	genfile.1 \
-	pdvt.1 \
-	release.1 \
-	request.1        \
-	sdu.1 \
-	segment.1 \
-	setfa.1 \
-	sfind.1 \
-	sls.1 \
-	squota.1 \
-	ssum.1 \
-	stage.1
+PROG = chproj
+PROG_SRC = \
+	chproj.c
 
-MAN_RELEASED_SRCS = \
-	archive.1 \
-	chproj.1 \
-	release.1 \
-	request.1 \
-	sdu.1 \
-	segment.1 \
-	setfa.1   \
-	sfind.1 \
-	sls.1 \
-	squota.1 \
-	ssum.1 \
-	stage.1
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lproject -lsam -lsamut -lsamconf $(LIBSO)
 
-QFS_RELEASED_SRCS = \
-	chproj.1 \
-	setfa.1 \
-	sfind.1 \
-	sls.1
+LNOPTS = -u -x -Dlint 
+LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)
 
-include $(DEPTH)/mk/targets_man.mk
+include $(DEPTH)/mk/targets.mk
 
 include $(DEPTH)/mk/depend.mk

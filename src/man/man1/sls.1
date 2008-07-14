@@ -1,4 +1,4 @@
-." $Revision: 1.33 $
+." $Revision: 1.34 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -224,6 +224,7 @@ server# sls -D mickey.gif
 mickey.gif:
   mode: -rw-r--r--  links:   1  owner: root      group: other
   length:    319279  admin id:      7  inode: 1407.5
+  project: system(0)
   offline;  archdone;  stage -n;
   copy 1: ---- May 21 10:29     1e4b1.1    lt DLT001
   access:      May 21 09:25     modification: May 21 09:25
@@ -241,7 +242,10 @@ The second line indicates the file's length in bytes,
 the administrative ID number (see \fBsamchaid(1M)\fR), and
 the inode number plus generation number.
 .PP
-The third line shows the file states and attributes.
+The third line indicates the file's project name and project ID
+(see \fBchproj(1)\fR).
+.PP
+The fourth line shows the file states and attributes.
 Possible file states, which are set by the system, are as follows:
 .TP 10
 \fBState\fR
@@ -768,6 +772,7 @@ to disk:
 /sam1/testdir0/filea:
   mode: -rw-r-----  links:   1  owner: root      group: other
   length:    306581  admin id:      0  inode:    11748.11
+  project: system(0)
   copy 1: ---- Oct 31 13:52        15.0    dk disk01
   access:      Oct 31 13:50  modification: Oct 31 13:50
   changed:     Oct 31 13:50  attributes:   Oct 31 13:50
@@ -786,6 +791,7 @@ HP-UX \fBls\fR(1) program.
 \fBls\fR(1),
 \fBrelease\fR(1),
 \fBsamchaid\fR(1M),
+\fBchproj\fR(1),
 \fBssum\fR(1),
 \fBstage\fR(1),
 \fBtar\fR(1).

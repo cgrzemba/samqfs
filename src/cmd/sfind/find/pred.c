@@ -224,6 +224,7 @@ boolean pred_expired ();		/* SUN */
 boolean pred_retention ();		/* SUN */
 boolean pred_remain ();			/* SUN */
 boolean pred_after ();			/* SUN */
+boolean pred_project ();		/* SUN */
 
 
 boolean							/* SUN */
@@ -352,6 +353,7 @@ struct pred_assoc pred_table[] =
   {pred_retention, "retention"},
   {pred_remain, "rremain"},
   {pred_after, "rafter"},
+  {pred_project, "project"},
   {0, "none    "}
 };
 
@@ -2899,6 +2901,21 @@ Predicate *pred_ptr)
 			return (true);
 		}
 	}
+	return (false);
+}
+
+
+boolean
+pred_project(
+char *pathname,
+struct sam_stat *sb,
+Predicate *pred_ptr)
+{
+	if ((SS_ISSAMFS(sb->attr)) &&
+	    (pred_ptr->args.projid == sb->projid)) {
+		return (true);
+	}
+
 	return (false);
 }
 

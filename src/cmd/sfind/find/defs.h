@@ -196,6 +196,7 @@ struct predicate
     FILE *stream;		/* fprint fprint0 */
     struct vsn_mt vsn_mt;	/* vsn mt */
     struct format_val printf_vec; /* printf fprintf */
+    projid_t projid;		/* project ID */
   } args;
 
   /* The next predicate in the user input sequence,

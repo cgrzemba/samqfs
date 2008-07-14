@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 
 #include "sam/osversion.h"
 
@@ -946,6 +946,7 @@ sam_set_admid(void *arg, int size, cred_t *credp)
 	vnode_t *vp, *rvp;
 	sam_node_t *ip;
 	sam_mount_t *mp;
+	sam_inode_samaid_t sa;
 
 	/*
 	 * Validate and copy in the arguments.
@@ -991,16 +992,16 @@ sam_set_admid(void *arg, int size, cred_t *credp)
 		goto out;
 	}
 	mp = ip->mp;
-	if (SAM_IS_SHARED_CLIENT(mp)) {
-		sam_inode_samaid_t sa;
 
-		bzero((char *)&sa, sizeof (sa));
-		sa.operation = 0;
-		sa.aid = args.admin_id;
+	bzero((char *)&sa, sizeof (sa));
+	sa.operation = SAM_INODE_AID;
+	sa.aid = args.admin_id;
+
+	if (SAM_IS_SHARED_CLIENT(mp)) {
 		error = sam_proc_inode(ip, INODE_samaid, &sa, credp);
 	} else {
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-		error = sam_set_aid(ip, args.admin_id);
+		error = sam_set_aid(ip, &sa);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	}
 	SAM_CLOSE_OPERATION(mp, error);
@@ -1016,22 +1017,24 @@ out:
  * we've got the inode, we're good to go.
  */
 int
-sam_set_aid(sam_node_t *ip, uint32_t aid)
+sam_set_aid(sam_node_t *ip, struct sam_inode_samaid *sa)
 {
 	offset_t ndkblks, ntpblks;
 	struct sam_quot *aquot = NULL;
 	struct sam_dquot *aq;
+	uint32_t id = sa->aid;
 
 	/*
 	 * Adjust quota values if quotas are in force
 	 */
-	if ((ip->mp->mt.fi_config & MT_QUOTA) &&
+	if ((sa->operation == SAM_INODE_AID) &&
+	    (ip->mp->mt.fi_config & MT_QUOTA) &&
 	    ip->mp->mi.m_quota_ip[SAM_QUOTA_ADMIN]) {
 		sam_quota_inode_fini(ip);
 
 		ndkblks = D2QBLKS(ip->di.blocks);
 		ntpblks = TOTBLKS(ip);
-		aquot = sam_quot_get(ip->mp, NULL, SAM_QUOTA_ADMIN, aid);
+		aquot = sam_quot_get(ip->mp, NULL, SAM_QUOTA_ADMIN, id);
 		if (aquot != NULL) {
 			aq = &aquot->qt_dent;
 			aq->dq_folused++;
@@ -1058,7 +1061,19 @@ sam_set_aid(sam_node_t *ip, uint32_t aid)
 		}
 	}
 
-	ip->di.admin_id = aid;
+	if (sa->operation == SAM_INODE_AID) {
+		/*
+		 * Set admin_id.
+		 */
+		ip->di.admin_id = id;
+	} else if (sa->operation == SAM_INODE_PROJID) {
+		/*
+		 * Set project ID.
+		 */
+		ip->di2.projid = id;
+	} else {
+		return (EINVAL);
+	}
 	TRANS_INODE(ip->mp, ip);
 	sam_mark_ino(ip, SAM_CHANGED);
 

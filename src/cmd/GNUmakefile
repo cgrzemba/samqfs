@@ -1,4 +1,4 @@
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 
 #    SAM-QFS_notice_begin
 #
@@ -38,7 +38,8 @@ DIRS = 	\
 ifeq ($(OS), SunOS)
 DIRS += \
 	quota \
-	request 
+	request \
+	chproj
 endif
 
 include $(DEPTH)/mk/targets.mk

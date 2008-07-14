@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -69,7 +69,7 @@ CFLAGS += -g
 
 PROG_LIBS = $(STATIC_OPT) -L../lib/$(OBJ_DIR) -lfu $(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
 ifeq ($(OS), SunOS)
-PROG_LIBS += -lgen -lintl 
+PROG_LIBS += -lgen -lintl -lproject
 endif
 
 include $(DEPTH)/mk/targets.mk

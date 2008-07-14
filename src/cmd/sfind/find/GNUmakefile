@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -75,7 +75,7 @@ endif
 DEPCFLAGS = $(DEFS) -I../lib -I$(TARG_INC)$(DEPTH)/include
 PROG_LIBS = ../lib/$(OBJ_DIR)/libfind.a -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
 ifeq ($(OS), SunOS)
-PROG_LIBS += -lgen -lintl
+PROG_LIBS += -lgen -lintl -lproject
 endif
 
 include $(DEPTH)/mk/targets.mk
