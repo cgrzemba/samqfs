@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.599 $"
+$ pragma ident "$Revision: 1.600 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3467,6 +3467,7 @@ $  nrecycler      (20400-20699)
 20412 Error in recycler command %s.
 20413 Recycler exiting - new recycler not enabled (nrecycler = yes) in defaults.conf.
 20414 No valid SAM-QFS dump files were found.
+20415 Zero length SAM-QFS dump file '%s'.
 
 $ d2format		(21000s)
 $ ==========================================================

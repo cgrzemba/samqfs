@@ -29,7 +29,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -74,6 +74,8 @@ extern MediaTable_t ArchMedia;
 static char *errmsg1 = "Error reading samfs dump header";
 static char *errmsg2 = "Corrupt samfs dump file";
 
+static CsdDir_t *csdDir;
+
 static int readDumpHeader(char *filename, CsdFildes_t **dump_fildes,
 	csd_hdrx_t *dump_header);
 static int readFileHeader(CsdFildes_t *fildes, int version,
@@ -85,13 +87,16 @@ static int readExtInode(CsdFildes_t *fildes, struct sam_perm_inode *perm_inode,
 	void *data, int *n_aclp, aclent_t **aclpp);
 static int readCheck(CsdFildes_t *fildes, void *buffer, size_t size);
 
-static void walkDirectory(DIR *dirp, char *dirname, CsdDir_t *fsdump_dir);
+static void walkDirectory(DIR *dirp, char *dirname);
 static char *readDirectory(DIR *dirp, char *path, boolean_t *isdir);
+
+static void initCsdTable();
 
 static CsdFildes_t *openFildes(char *path);
 static int readFildes(CsdFildes_t *fildes, void *buffer, size_t size);
 static void closeFildes(CsdFildes_t *fildes);
 
+static void traceInode(char *name, struct sam_perm_inode *perm_inode);
 
 /*
  * Initialize samfsdump file by walking the specified directory and
@@ -102,11 +107,9 @@ CsdDir_t *
 CsdInit(
 	char *dirname)
 {
-	size_t size;
 	DIR *dirp;
 	int idx;
 	struct stat sb;
-	CsdDir_t *csdDir;
 	upath_t datPath;
 
 	csdDir = NULL;
@@ -119,12 +122,9 @@ CsdInit(
 		return (NULL);
 	}
 
-	size = sizeof (CsdDir_t) + (CSD_TABLE_INCREMENT * sizeof (CsdEntry_t));
-	SamMalloc(csdDir, size);
-	(void) memset(csdDir, 0, size);
-	csdDir->cd_alloc = CSD_TABLE_INCREMENT;
+	initCsdTable();
 
-	walkDirectory(dirp, dirname, csdDir);
+	walkDirectory(dirp, dirname);
 
 	for (idx = 0; idx < csdDir->cd_count; idx++) {
 		char *filename;
@@ -354,16 +354,12 @@ CsdAccumulate(
 	mt_name = fsdump->ce_table->mt_name;
 
 	if (fsdump->ce_exists == B_TRUE) {
-		fd = fsdump->ce_fd;
 
 		Trace(TR_MISC, "[%s] Accumulate samfs dat file", mt_name);
-
 		num_inodes = DatAccumulate(fsdump);
 
 		if (num_inodes == -1) {
-			(void) close(fsdump->ce_fd);
 			fsdump->ce_exists = B_FALSE;
-			fsdump->ce_fd = -1;
 		} else {
 			scan_time = time(NULL) - start_time;
 			Trace(TR_MISC,
@@ -438,6 +434,17 @@ CsdAccumulate(
 			goto out;
 		}
 
+		if (*TraceFlags & (1 << TR_debug)) {
+			traceInode(name, &inode.inode);
+		}
+
+		if (S_ISSEGI(&inode.inode.di) || S_ISSEGS(&inode.inode.di)) {
+			Trace(TR_MISC,
+			    "Error: segmented file '%s' read failed", name);
+			CANNOT_RECYCLE();
+			goto out;
+		}
+
 		data = NULL;
 		vsnp = NULL;
 		aclp = NULL;
@@ -474,7 +481,7 @@ CsdAccumulate(
 				CANNOT_RECYCLE();
 
 			} else {
-				if (FsInodeHandle(&inode, fsdump->ce_table,
+				if (FsInodeHandle(NULL, fsdump, &inode,
 				    pass) == -1) {
 					CANNOT_RECYCLE();
 				}
@@ -501,17 +508,48 @@ out:
 	Trace(TR_MISC, "[%s] End samfs dump, %d inodes accumulated in %ld secs",
 	    path, tot_inodes, scan_time);
 
-	fd = fsdump->ce_fd;
-	if (fd >= 0) {
-		rval = DatWriteTable(fsdump);
-		if (rval == -1) {
-			Trace(TR_MISC, "Error: write to dat file '%s' failed",
-			    fsdump->ce_datPath);
-			(void) unlink(fsdump->ce_datPath);
+	/*
+	 * Upon successful reading of the samfs dump file generated
+	 * the dat file.
+	 */
+	if (CannotRecycle == B_TRUE) {
+		Trace(TR_MISC,
+		    "Cannot recycle. No recycler dat file '%s' written",
+		    fsdump->ce_datPath);
+	} else {
+		Trace(TR_MISC, "Generating recycler dat file '%s'",
+		    fsdump->ce_datPath);
+
+		fd = DatCreate(fsdump->ce_datPath);
+		if (fd >= 0) {
+			rval = DatWriteHeader(fd, fsdump, getpid());
+			if (rval == 0) {
+				rval = DatWriteTable(fd, fsdump);
+			}
+			DatClose(fd);
+			if (rval == -1) {
+				Trace(TR_MISC,
+				    "Error: write to dat file '%s' failed",
+				    fsdump->ce_datPath);
+				(void) unlink(fsdump->ce_datPath);
+			}
 		}
 	}
 
 	return (NULL);
+}
+
+void
+CsdAssembleName(
+	char *path,
+	char d_name[1],
+	char *buf,
+	/* LINTED argument unused in function */
+	size_t buflen)
+{
+	(void) strcpy(buf, path);
+	(void) strcat(buf, "/");
+	(void) strcat(buf, d_name);
 }
 
 void
@@ -532,17 +570,34 @@ CsdCleanup(
 		}
 
 		for (j = 0; j < fsdump_dir->cd_count; j++) {
+			int rval;
+			int fd;
 			CsdEntry_t *fsdump;
 
 			fsdump = &fsdump_dir->cd_entry[j];
 			if (fsdump->ce_skip == B_TRUE) {
 				continue;
 			}
-			if ((fsdump->ce_exists == B_FALSE) &&
-			    (fsdump->ce_fd >= 0)) {
-				(void) DatWriteHeader(fsdump, 0);
-				(void) close(fsdump->ce_fd);
-				fsdump->ce_fd = -1;
+
+			if (fsdump->ce_exists == B_TRUE) {
+				continue;
+			}
+
+			rval = -1;
+			fd = DatWriteOpen(fsdump->ce_datPath);
+
+			if (fd >= 0) {
+				rval = DatWriteHeader(fd, fsdump, 0);
+				if (rval == 0) {
+					DatClose(fd);
+				}
+			}
+
+			if (rval == -1) {
+				Trace(TR_MISC,
+				    "Error: write to dat file '%s' failed",
+				    fsdump->ce_datPath);
+				(void) unlink(fsdump->ce_datPath);
 			}
 		}
 	}
@@ -595,7 +650,8 @@ readInode(
 	 * Read file name
 	 */
 	if (namelen <= 0 || namelen > MAXPATHLEN) {
-		Trace(TR_MISC, "%s, invalid name length", errmsg2);
+		Trace(TR_MISC, "%s, invalid name length %d",
+		    errmsg2, namelen);
 		return (-1);
 	}
 
@@ -718,9 +774,19 @@ readDumpHeader(
 	ngot = readFildes(fildes, &header, sizeof (csd_hdr_t));
 
 	if (ngot != sizeof (csd_hdr_t)) {
+		struct stat sb;
+
 		Trace(TR_MISC, "%s '%s', dump header record error "
 		    "(expected %d got %d)",
 		    errmsg1, filename, sizeof (csd_hdr_t), ngot);
+
+		if (stat(filename, &sb) == 0) {
+			/* Zero length samfs dump file. */
+			Log(20415, filename);
+		} else {
+			Trace(TR_MISC, "\tstat failed errno: %d", errno);
+		}
+
 		rval = -1;
 		goto out;
 	}
@@ -744,8 +810,10 @@ readDumpHeader(
 	}
 
 out:
-	if (rval == -1 || fildes == NULL) {
-		(void) closeFildes(fildes);
+	if (rval == -1 || dump_fildes == NULL) {
+		if (fildes != NULL) {
+			(void) closeFildes(fildes);
+		}
 		fildes = NULL;
 	}
 
@@ -782,8 +850,7 @@ readCheck(
 static void
 walkDirectory(
 	DIR *c_dirp,
-	char *c_dirname,
-	CsdDir_t *table)
+	char *c_dirname)
 {
 	char n_dirname[128];
 	DIR *n_dirp;
@@ -796,16 +863,26 @@ walkDirectory(
 		if (isdir == B_TRUE) {
 			(void) strcpy(n_dirname, name);
 			n_dirp = opendir(n_dirname);
-			walkDirectory(n_dirp, n_dirname, table);
+			walkDirectory(n_dirp, n_dirname);
 
 		} else {
-			idx = table->cd_count;
+			idx = csdDir->cd_count;
 			/*
 			 * Skip dat files.
 			 */
 			if (strstr(name, DAT_FILE_SUFFIX) == NULL) {
-				table->cd_entry[idx].ce_path = strdup(name);
-				table->cd_count++;
+
+				Trace(TR_DEBUG, "%d: 0x%x '%s'",
+				    idx, (int)&csdDir->cd_entry[idx], name);
+
+				/* Add dump file to table. */
+				csdDir->cd_entry[idx].ce_path = strdup(name);
+				csdDir->cd_count++;
+
+				/* Check if need to increase csd table size. */
+				if (csdDir->cd_count >= csdDir->cd_alloc) {
+					initCsdTable();
+				}
 			}
 		}
 		free(name);
@@ -842,19 +919,41 @@ readDirectory(
 	return (name);
 }
 
-void
-CsdAssembleName(
-	char *path,
-	char d_name[1],
-	char *buf,
-	/* LINTED argument unused in function */
-	size_t buflen)
+/*
+ *  Initialize or increase size of the csd table.
+ */
+static void
+initCsdTable()
 {
-	(void) strcpy(buf, path);
-	(void) strcat(buf, "/");
-	(void) strcat(buf, d_name);
+	int i;
+	size_t size;
+
+	if (csdDir == NULL) {
+		size = sizeof (CsdDir_t) +
+		    (CSD_TABLE_INCREMENT * sizeof (CsdEntry_t));
+		SamMalloc(csdDir, size);
+		Trace(TR_DEBUG, "Alloc csd table: 0x%x %d",
+		    (int)csdDir, size);
+		(void) memset(csdDir, 0, size);
+		csdDir->cd_alloc = CSD_TABLE_INCREMENT;
+	} else {
+		/* Increase table size. */
+		csdDir->cd_alloc += CSD_TABLE_INCREMENT;
+		i = csdDir->cd_count;
+
+		size = sizeof (CsdDir_t) +
+		    (csdDir->cd_alloc * sizeof (CsdEntry_t));
+		SamRealloc(csdDir, size);
+		Trace(TR_DEBUG, "Realloc csd table: 0x%x %d",
+		    (int)csdDir, size);
+		(void) memset(&csdDir->cd_entry[i], 0,
+		    CSD_TABLE_INCREMENT * sizeof (CsdEntry_t));
+	}
 }
 
+/*
+ * Open csd file.
+ */
 static CsdFildes_t *
 openFildes(
 	char *path)
@@ -880,9 +979,14 @@ openFildes(
 		return (NULL);
 	}
 
+	Trace(TR_DEBUG, "Csd open %x %d", (int)fildes->inf, fd);
+
 	return (fildes);
 }
 
+/*
+ * Read csd file.
+ */
 static int
 readFildes(
 	CsdFildes_t *fildes,
@@ -896,6 +1000,9 @@ readFildes(
 	return (ngot);
 }
 
+/*
+ * Close csd file.
+ */
 static void
 closeFildes(
 	CsdFildes_t *fildes)
@@ -906,4 +1013,27 @@ closeFildes(
 		}
 		SamFree(fildes);
 	}
+	Trace(TR_DEBUG, "Csd close %x", (int)fildes->inf);
+}
+
+/*
+ * Trace an inode.
+ */
+static void
+traceInode(
+	char *name,
+	struct sam_perm_inode *perm_inode)
+{
+	char type;
+
+	if (S_ISDIR(perm_inode->di.mode))	type = 'd';
+	else if (S_ISSEGI(&perm_inode->di))	type = 'I';
+	else if (S_ISSEGS(&perm_inode->di))	type = 'S';
+	else if (S_ISREQ(perm_inode->di.mode))	type = 'R';
+	else if (S_ISLNK(perm_inode->di.mode))	type = 'l';
+	else if (S_ISREG(perm_inode->di.mode))	type = 'f';
+	else if (S_ISBLK(perm_inode->di.mode))	type = 'b';
+	else type = '?';
+
+	Trace(TR_DEBUG, "%c %s", type, name);
 }

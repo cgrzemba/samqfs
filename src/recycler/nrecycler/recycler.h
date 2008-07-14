@@ -176,7 +176,6 @@ typedef struct CsdEntry {
 	boolean_t	ce_exists;	/* set true if valid dat file exists */
 	boolean_t	ce_skip;	/* set true if skipping file */
 	char		*ce_datPath;	/* path to dat file */
-	int		ce_fd;		/* open file descriptor for dat file */
 	MediaTable_t	*ce_table;	/* media table generated for dat file */
 } CsdEntry_t;
 
@@ -316,8 +315,11 @@ void CsdAssembleName(char *path, char d_name[1], char *buf, size_t buflen);
  */
 void DatInit(CsdDir_t *fsdump_dir);
 int DatAccumulate(CsdEntry_t *csd);
-int DatWriteHeader(CsdEntry_t *csd, pid_t pid);
-int DatWriteTable(CsdEntry_t *csd);
+int DatCreate(char *path);
+int DatWriteOpen(char *path);
+int DatWriteHeader(int fd, CsdEntry_t *csd, pid_t pid);
+int DatWriteTable(int fd, CsdEntry_t *csd);
+void DatClose(int fd);
 
 /*
  * Define prototypes in device.c
@@ -335,8 +337,8 @@ char *DeviceGetTypeMnemonic(dev_ent_t *dev);
 struct sam_fs_info *FsInit(int *numFs);
 void FsScan(Crew_t *crew, struct sam_fs_info *firstFs, int numFs,
 	int pass, void *(*worker)(void *arg));
-int FsInodeHandle(union sam_di_ino *inode, MediaTable_t *table,
-						int pass);
+int FsInodeHandle(struct sam_fs_info *fsp, CsdEntry_t *fsdump,
+    union sam_di_ino *inode, int pass);
 void *FsAccumulate(void *arg);
 void FsCleanup(struct sam_fs_info *firstFs, int numFs);
 

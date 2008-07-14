@@ -29,7 +29,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -75,7 +75,6 @@ extern MediaTable_t ArchMedia;
 static char *errmsg1 = "Error reading dat file";
 static char *errmsg2 = "Error writing dat file";
 
-static int writeOpen(char *path);
 static int readOpen(char *path);
 static int readHeader(int fd, char *path);
 
@@ -126,29 +125,27 @@ DatInit(
 			/*
 			 * Read and validate header.
 			 */
-			csdEntry->ce_fd = -1;
 			csdEntry->ce_exists = B_FALSE;
 
 			fd = readOpen(csdEntry->ce_datPath);
 			if (fd < 0) {
 				Trace(TR_MISC,
-				    "Failed to open data file '%s'",
-				    csdEntry->ce_datPath);
+				    "Failed to open dat file '%s' errno: %d",
+				    csdEntry->ce_datPath, errno);
 				continue;
 			}
 
 			rval = readHeader(fd, csdEntry->ce_datPath);
 			if (rval == 0) {
-				csdEntry->ce_fd = fd;
 				csdEntry->ce_exists = B_TRUE;
 			} else {
 				Trace(TR_MISC,
 				    "Invalid recycler dat file '%s'",
 				    csdEntry->ce_datPath);
 
-				(void) close(fd);
 				(void) unlink(csdEntry->ce_datPath);
 			}
+			(void) DatClose(fd);
 		}
 
 		/*
@@ -161,29 +158,6 @@ DatInit(
 			Trace(TR_MISC,
 			    "Error: media table initialization failed");
 			return;
-		}
-
-		if (csdEntry->ce_exists == B_FALSE) {
-			/*
-			 * Create new dat file for the samfsdump file.
-			 */
-			fd = writeOpen(csdEntry->ce_datPath);
-			if (fd >= 0) {
-				csdEntry->ce_fd = fd;
-
-				rval = DatWriteHeader(csdEntry, getpid());
-				if (rval != 0) {
-					(void) close(fd);
-					csdEntry->ce_fd = -1;
-				}
-			}
-
-			if (csdEntry->ce_fd == -1) {
-				Trace(TR_MISC,
-				    "Error: write to dat file '%s' failed",
-				    csdEntry->ce_datPath);
-				(void) unlink(csdEntry->ce_datPath);
-			}
 		}
 	}
 }
@@ -211,8 +185,13 @@ DatAccumulate(
 	char *path;
 	int fd;
 
-	fd = csd->ce_fd;		/* open file descriptor for dat file */
 	path = csd->ce_datPath;		/* path to dat file */
+	fd = readOpen(path);		/* open file descriptor for dat file */
+	if (fd < 0) {
+		Trace(TR_MISC, "%s '%s', dat file open failed, errno= %d",
+		    errmsg1, path, errno);
+		return (-1);
+	}
 	dat_table = csd->ce_table;	/* media table generated for dat file */
 
 	/*
@@ -221,7 +200,9 @@ DatAccumulate(
 	 */
 	rval = readHeader(fd, path);
 	if (rval != 0) {
-		Trace(TR_MISC, "%s '%s', dat file header error", errmsg1, path);
+		Trace(TR_MISC, "%s '%s', dat table header read failed",
+		    errmsg1, path);
+		DatClose(fd);
 		return (-1);
 	}
 
@@ -236,8 +217,9 @@ DatAccumulate(
 
 		ngot = read(fd, &table, sizeof (DatTable_t));
 		if (ngot != sizeof (DatTable_t)) {
-			Trace(TR_MISC, "%s '%s', failed to read table header",
+			Trace(TR_MISC, "%s '%s', dat table read failed",
 			    errmsg1, path);
+			DatClose(fd);
 			return (-1);
 		}
 
@@ -247,6 +229,7 @@ DatAccumulate(
 		if (table.dt_mapchunk != dat_table->mt_mapchunk) {
 			Trace(TR_MISC, "%s '%s', map chunk does not match",
 			    errmsg1, path);
+			DatClose(fd);
 			return (-1);
 		}
 
@@ -385,20 +368,60 @@ out:
 			}
 		}
 	}
+	DatClose(fd);
 	return (num_inodes);
+}
+
+/*
+ * Create dat file.
+ */
+int
+DatCreate(
+	char *path)
+{
+	int fd;
+
+	(void) unlink(path);
+
+	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+	if (fd == -1) {
+		Trace(TR_MISC,
+		    "Error: cannot create recycler dat file '%s', errno= %d",
+		    path, errno);
+	}
+	Trace(TR_DEBUG, "Dat create file %d", fd);
+	return (fd);
+}
+
+/*
+ * Open dat file for write.
+ */
+int
+DatWriteOpen(
+	char *path)
+{
+	int fd;
+
+	fd = open(path, O_WRONLY, 0664);
+	if (fd == -1) {
+		Trace(TR_MISC,
+		    "Error: cannot open recycler dat file '%s', errno= %d",
+		    path, errno);
+	}
+	Trace(TR_DEBUG, "Dat write open file %d", fd);
+	return (fd);
 }
 
 int
 DatWriteHeader(
+	int fd,
 	CsdEntry_t *csd,
 	pid_t pid)
 {
 	size_t num_written;
 	DatHeader_t dat;
 	char *path;
-	int fd;
 
-	fd = csd->ce_fd;		/* open file descriptor for dat file */
 	path = csd->ce_datPath;		/* path to dat file */
 
 	(void) lseek(fd, 0, SEEK_SET);
@@ -424,6 +447,7 @@ DatWriteHeader(
 
 int
 DatWriteTable(
+	int fd,
 	CsdEntry_t *csd)
 {
 	size_t num_written;
@@ -432,11 +456,9 @@ DatWriteTable(
 	int i;
 	MediaEntry_t *vsn;
 	off_t pos;
-	int fd;
 	char *path;
 	MediaTable_t *vsn_table;
 
-	fd = csd->ce_fd;		/* open file descriptor for dat file */
 	path = csd->ce_datPath;		/* path to dat file */
 	vsn_table = csd->ce_table;	/* media table generated for dat file */
 
@@ -489,6 +511,17 @@ DatWriteTable(
 	return (0);
 }
 
+/*
+ * Close dat file.
+ */
+void
+DatClose(
+	int fd)
+{
+	Trace(TR_DEBUG, "Dat close %d", fd);
+	close(fd);
+}
+
 static int
 readOpen(
 	char *path)
@@ -500,6 +533,7 @@ readOpen(
 		Trace(TR_MISC, "Error: cannot open recycler dat file '%s'",
 		    path);
 	}
+	Trace(TR_DEBUG, "Dat read open %d", fd);
 	return (fd);
 }
 
@@ -545,23 +579,4 @@ readHeader(
 	}
 
 	return (0);
-}
-
-/*
- * Open dat file for write.
- */
-static int
-writeOpen(
-	char *path)
-{
-	int fd;
-
-	(void) unlink(path);
-
-	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-	if (fd == -1) {
-		Trace(TR_MISC, "Error: cannot create recycler dat file '%s'",
-		    path);
-	}
-	return (fd);
 }

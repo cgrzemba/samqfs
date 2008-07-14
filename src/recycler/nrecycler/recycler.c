@@ -29,7 +29,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -181,6 +181,11 @@ main(
 		 * CC is the century, YY is the year, MM is the month,
 		 * DD is the day, HH is the hour, and MM is minutes(s).
 		 */
+			break;
+
+		case '?':
+		default:
+			err++;
 			break;
 		}
 	}

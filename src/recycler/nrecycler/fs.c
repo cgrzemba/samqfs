@@ -29,7 +29,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -362,7 +362,7 @@ FsAccumulate(
 
 			} else {
 
-				if (FsInodeHandle(&inodes[inode_i], NULL,
+				if (FsInodeHandle(fsp, NULL, &inodes[inode_i],
 				    pass) == -1) {
 					CANNOT_RECYCLE();
 				}
@@ -381,16 +381,31 @@ FsAccumulate(
 
 int
 FsInodeHandle(
+	struct sam_fs_info *fsp,
+	CsdEntry_t *fsdump,
 	union sam_di_ino *inode,
-	MediaTable_t *datTable,
 	int pass)
 {
 	int rval;
 	int copy;
 	int media_type;
+	char *fsname;
+	MediaTable_t *datTable;
 	sam_disk_inode_t *dp;
 
 	rval = 0;
+
+	fsname = NULL;
+	datTable = NULL;
+	if (fsp != NULL) {
+		fsname = fsp->fi_name;
+	} else if (fsdump != NULL) {
+		fsname = fsdump->ce_path;
+		datTable = fsdump->ce_table;
+	} else {
+		fsname = "Null";
+	}
+
 	dp = &inode->inode.di;
 
 	/*
@@ -412,8 +427,8 @@ FsInodeHandle(
 	 * Does the archive status flag look okay.
 	 */
 	if ((dp->arch_status & 0xf) != dp->arch_status) {
-		Trace(TR_MISC, "%s '%s', bad arch_status 0x%x inode: %d.%d",
-		    errmsg1, "???", dp->arch_status, dp->id.ino, dp->id.gen);
+		Trace(TR_MISC, "[%s] Error bad arch_status 0x%x inode: %d.%d",
+		    fsname, dp->arch_status, dp->id.ino, dp->id.gen);
 		return (-1);
 	}
 
@@ -457,19 +472,22 @@ FsInodeHandle(
 		}
 
 		if (dev_nm2mt[media_type].nm == NULL) {
-			Trace(TR_MISC, "Error: unknown archive media 0x%x "
-			    "inode: %d.%d copy: %d",
-			    dp->arch_status, dp->id.ino, dp->id.gen, copy);
+			Trace(TR_MISC,
+			    "[%s] Error invalid archive media: 0x%x "
+			    "status: 0x%x inode: %d.%d copy: %d",
+			    fsname, dp->media[copy],
+			    dp->arch_status, dp->id.ino, dp->id.gen, copy+1);
 			rval = -1;
 			continue;
 		}
 
 		if (inode->inode.ar.image[copy].n_vsns <= 0) {
 			Trace(TR_MISC,
-			    "Error: invalid n_vsns field %d "
+			    "[%s] Error invalid n_vsns: %d "
 			    "inode: %d.%d copy: %d",
+			    fsname,
 			    inode->inode.ar.image[copy].n_vsns,
-			    dp->id.ino, dp->id.gen, copy);
+			    dp->id.ino, dp->id.gen, copy+1);
 			rval = -1;
 			continue;
 
