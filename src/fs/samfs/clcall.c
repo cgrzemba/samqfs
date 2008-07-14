@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.249 $"
+#pragma ident "$Revision: 1.250 $"
 #endif
 
 #include "sam/osversion.h"
@@ -186,6 +186,11 @@ sam_share_mount(
 		return (ENOENT);
 	}
 
+	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+		error = EAGAIN;
+		goto out;
+	}
+
 	/*
 	 * For now, use secpolicy_fs_config() until the build server is
 	 * updated.	 The real routine to use is secpolicy_fs_owner().
@@ -219,6 +224,7 @@ sam_share_mount(
 		}
 	}
 
+out:
 	SAM_SYSCALL_DEC(mp, 0);
 	return (error);
 }

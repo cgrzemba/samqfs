@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.184 $"
+#pragma ident "$Revision: 1.185 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1254,6 +1254,10 @@ sam_set_fsconfig(
 
 	if ((mp = sam_find_filesystem(args.sp_fsname)) == NULL) {
 		return (ENOENT);
+	}
+
+	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+		return (EAGAIN);
 	}
 
 	error = secpolicy_fs_config(credp, mp->mi.m_vfsp);

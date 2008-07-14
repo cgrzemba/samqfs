@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 #include "sam/osversion.h"
 
@@ -127,6 +127,11 @@ sam_arfind_call(
 	while (error == 0) {
 		int		n;
 		int		retval;
+
+		if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+			error = EAGAIN;
+			goto out;
+		}
 
 		/*
 		 * Check number of entries in buffer.
