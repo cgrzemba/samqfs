@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 #include "sam/osversion.h"
 
@@ -274,9 +274,8 @@ fini:
  */
 int
 sam_get_osd_fs_attr(
-	sam_mount_t *mp,	/* Pointer to the mount table */
-	sam_osd_handle_t oh,	/* Object device handle */
-	struct sam_sbord *sop)	/* Pointer to device superblock entry */
+	sam_osd_handle_t oh,		/* Object device handle */
+	struct sam_fs_part *fsp)	/* Pointer to device partition table */
 {
 	sam_osd_req_priv_t	ior_priv;
 	sam_osd_req_priv_t	*iorp = &ior_priv;
@@ -299,14 +298,14 @@ sam_get_osd_fs_attr(
 		sam_osd_obj_req_wait(iorp);
 		if (iorp->result.err_code != OSD_SUCCESS) {
 			error = sam_osd_errno(iorp->result.err_code, iorp);
-			dcmn_err((CE_WARN, "SAM-QFS: %s: "
+			dcmn_err((CE_WARN, "SAM-QFS: "
 			    "OSD GET FS err=%d, errno=%d",
-			    mp->mt.fi_name, iorp->result.err_code, error));
+			    iorp->result.err_code, error));
 		} else {
 			sam_fsinfo_page_t *fap = &fs_attr;
 
-			sop->capacity = SFP_CAPACITY(fap);
-			sop->space = SFP_SPACE(fap);
+			fsp->pt_capacity = SFP_CAPACITY(fap);
+			fsp->pt_space = SFP_SPACE(fap);
 		}
 	} else {
 		error = sam_osd_errno(rc, iorp);
@@ -777,7 +776,7 @@ sam_osd_errno(
 		if (scsi_buf == NULL) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: OSD_CHECK_CONDITION "
-			    "w/no scsi_buf\n");
+			    "with no scsi_buf\n");
 			break;
 		}
 		scsi_len = iorp->result.sense_data_len;
@@ -1062,7 +1061,7 @@ sam_create_object_id(
 
 			/*
 			 * Replace OSD_USER_OBJECT_INFORMATION_USERNAME
-			 * w/ QFS vendor specific attribute for ino/gen.
+			 * with QFS vendor specific attribute for ino/gen.
 			 */
 			x.id.ino = BE_32(dp->id.ino);
 			x.id.gen = BE_32(dp->id.gen);
@@ -1226,8 +1225,8 @@ fini:
 	return (error);
 }
 
-#if SAM_ATTR_LIST
 
+#if SAM_ATTR_LIST
 /*
  * ----- sam_format_get_attr_list - Param for a single attribute.
  */

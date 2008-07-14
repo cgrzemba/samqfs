@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 
 /* ----- Includes */
@@ -1325,6 +1325,9 @@ check_fs(void)
 			    (sblock.eq[ord].fs.state == DEV_DOWN)) {
 				continue;
 			}
+			if (is_osd_group(sblock.eq[ord].fs.type)) {
+				continue;
+			}
 			if (is_stripe_group(sblock.eq[ord].fs.type)) {
 				/* If NOT first group member */
 				if (sblock.eq[ord].fs.num_group == 0) {
@@ -1342,6 +1345,9 @@ check_fs(void)
 	for (ord = 0; ord < fs_count; ord++) {
 		if ((sblock.eq[ord].fs.state == DEV_OFF) ||
 		    (sblock.eq[ord].fs.state == DEV_DOWN)) {
+			continue;
+		}
+		if (is_osd_group(sblock.eq[ord].fs.type)) {
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1438,6 +1444,9 @@ check_fs(void)
 			    (sblock.eq[ord].fs.state == DEV_DOWN)) {
 				continue;
 			}
+			if (is_osd_group(sblock.eq[ord].fs.type)) {
+				continue;
+			}
 			if (is_stripe_group(sblock.eq[ord].fs.type)) {
 				/* If NOT first group member */
 				if (sblock.eq[ord].fs.num_group == 0) {
@@ -1457,6 +1466,9 @@ check_fs(void)
 			for (ord = 0; ord < fs_count; ord++) {
 				if ((sblock.eq[ord].fs.state == DEV_OFF) ||
 				    (sblock.eq[ord].fs.state == DEV_DOWN)) {
+					continue;
+				}
+				if (is_osd_group(sblock.eq[ord].fs.type)) {
 					continue;
 				}
 				if (is_stripe_group(sblock.eq[ord].fs.type)) {

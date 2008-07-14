@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.9 $"
+#pragma ident "$Revision: 1.10 $"
 
 #include "sam/osversion.h"
 
@@ -177,7 +177,7 @@ typedef struct sam_objlist_page {
 /*
  * SAM-QFS Vendor Defined file system attribute page
  */
-#define	OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO 0x2ffffffd
+#define	OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO    0x2ffffffd
 
 typedef struct sam_fsinfo_page {
 	uint32_t	sfp_pgno;

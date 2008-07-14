@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.217 $"
+#pragma ident "$Revision: 1.218 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1731,8 +1731,26 @@ sam_validate_sblk(
 				/* not a fatal error */
 			}
 		}
-		dp->part.pt_space = (fsize_t)sblk->eq[i].fs.space;
+#ifdef sun
+		/*
+		 * Get capacity and space for OSD LUNs.
+		 */
+		if (is_osd_group(dp->part.pt_type)) {
+			struct sam_fs_part fs_part;
+
+			if ((error = sam_get_osd_fs_attr(dp->oh, &fs_part))) {
+				cmn_err(CE_WARN,
+				    "SAM-QFS: %s: Eq %d Error %d: cannot get "
+				    "superblock capacity and space",
+				    mp->mt.fi_name, dp->part.pt_eq, error);
+			} else {
+				sblk->eq[i].fs.capacity = fs_part.pt_capacity;
+				sblk->eq[i].fs.space = fs_part.pt_space;
+			}
+		}
+#endif /* sun */
 		dp->part.pt_capacity = (fsize_t)sblk->eq[i].fs.capacity;
+		dp->part.pt_space = (fsize_t)sblk->eq[i].fs.space;
 setpart1:
 
 #ifdef sun

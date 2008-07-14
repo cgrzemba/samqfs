@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 
 /* ----- Include Files ---- */
@@ -1014,23 +1014,34 @@ show_fs(void)
 void
 init_sblk()
 {
-	int sblk2;					/* Block number */
+	int sblk2;	/* Block number */
 	int ord, dt;
 	struct devlist *dp;
-	longlong_t t_size, m_size;	/* Total byte size of filsystem */
+	longlong_t m_size, t_size;
+	boolean_t object_devices = FALSE;
 
-	t_size = 0;
 	m_size = 0;
+	t_size = 0;
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
 		dt = (dp->type == DT_META) ? MM : DD;
 		dp->blocks = dp->size >> SAM2SUN_BSHIFT; /* Kilobyte blocks */
-		/* Large blocks */
-		dp->blocks = dp->blocks / LG_DEV_BLOCK(mp, dt);
 		if (dp->type == DT_META) {
+			dp->blocks = dp->blocks / LG_DEV_BLOCK(mp, dt);
+			/* Large blocks for metadata */
 			m_size += dp->blocks;
 		} else {
-			t_size += dp->blocks;
+			if (is_osd_group(dp->type)) {
+				object_devices = TRUE;
+				/* Kilobyte blocks for object data */
+				/* Increment before computing large blocks */
+				t_size += dp->blocks;
+				dp->blocks = dp->blocks / LG_DEV_BLOCK(mp, dt);
+			} else {
+				dp->blocks = dp->blocks / LG_DEV_BLOCK(mp, dt);
+				/* Large blocks for block data */
+				t_size += dp->blocks;
+			}
 		}
 	}
 
@@ -1046,11 +1057,22 @@ init_sblk()
 	sblock.info.sb.opt_mask = 0;
 	sblock.info.sb.eq = mnt_info.params.fi_eq;
 
-	sblock.info.sb.capacity = t_size * LG_DEV_BLOCK(mp, DD);
+	/*
+	 * Block devices were rounded down to a DAU multiple.
+	 * Object devices do not have the concept of a DAU.
+	 */
+	if (object_devices) {
+		sblock.info.sb.capacity = t_size;
+	} else {
+		sblock.info.sb.capacity = t_size * LG_DEV_BLOCK(mp, DD);
+	}
 	sblock.info.sb.space = sblock.info.sb.capacity;
 	sblock.info.sb.mm_capacity = m_size * LG_DEV_BLOCK(mp, MM);
 	sblock.info.sb.mm_space = sblock.info.sb.mm_capacity;
 
+	/*
+	 * FIXME: DAU not applicable for 'mb' filesystem.
+	 */
 	sblock.info.sb.dau_blks[SM] = SM_DEV_BLOCK(mp, DD);
 	sblock.info.sb.dau_blks[LG] = LG_DEV_BLOCK(mp, DD);
 	sblock.info.sb.mm_blks[SM]  = SM_DEV_BLOCK(mp, MM);
@@ -1072,8 +1094,8 @@ init_sblk()
 		args.ord = ord;
 		args.type = dp->type;
 		args.blocks = dp->blocks;
-		args.kblocks[DD] = mp->mi.m_dau[DD].kblocks[LG];
-		args.kblocks[MM] = mp->mi.m_dau[MM].kblocks[LG];
+		args.kblocks[DD] = LG_DEV_BLOCK(mp, DD);
+		args.kblocks[MM] = LG_DEV_BLOCK(mp, MM);
 		sam_init_sblk_dev(&sblock, &args);
 	}
 
@@ -1128,13 +1150,13 @@ grow_sblk()
 	int iblk;	/* Block number */
 	int ord, dt;
 	struct devlist *dp;
-	longlong_t t_size, m_size;	/* Incr byte size of filsystem */
-	int v_lbits;			/* No. of bits per logical blk */
+	longlong_t m_size, t_size;
+	int v_lbits;	/* No. of bits per logical blk */
 	int len;
 	int sblk_blks;
 
-	t_size = 0;
 	m_size = 0;
+	t_size = 0;
 	v_lbits = SAM_DEV_BSIZE * NBBY;
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
@@ -1155,12 +1177,12 @@ grow_sblk()
 		}
 	}
 
-	sblock.info.sb.capacity	+= (t_size * mp->mi.m_dau[DD].kblocks[LG]);
-	sblock.info.sb.space	+= (t_size * mp->mi.m_dau[DD].kblocks[LG]);
-	sblock.info.sb.mm_capacity += (m_size * mp->mi.m_dau[MM].kblocks[LG]);
-	sblock.info.sb.mm_space	+= (m_size * mp->mi.m_dau[MM].kblocks[LG]);
-	sblock.info.sb.sblk_size = L_SBINFO + (sblock.info.sb.fs_count *
-	    L_SBORD);
+	sblock.info.sb.capacity	+= t_size * LG_DEV_BLOCK(mp, DD);
+	sblock.info.sb.space	+= t_size * LG_DEV_BLOCK(mp, DD);
+	sblock.info.sb.mm_capacity += m_size * LG_DEV_BLOCK(mp, MM);
+	sblock.info.sb.mm_space	+= m_size * LG_DEV_BLOCK(mp, MM);
+	sblock.info.sb.sblk_size = L_SBINFO +
+	    (sblock.info.sb.fs_count * L_SBORD);
 
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
@@ -2076,7 +2098,7 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 		}
 		if (sblkp->opt_features & SBLK_FV1_MAPS_ALIGNED) {
 			printf(catgets(catfd, SET, 13484,
-			    "FEATURE: Aligned Maps\n"));
+			    "feature:  Aligned Maps\n"));
 		}
 	}
 	printf(catgets(catfd, SET, 769, "count:    %d\n"), sblkp->fs_count);

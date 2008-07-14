@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.101 $"
+#pragma ident "$Revision: 1.102 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -858,7 +858,8 @@ gatherFsDevices(struct sam_mount_info *mi)
 	 * Scan the devices link list and build the data devices array.
 	 * Verify the data devices (DT_DISK) exist and are block devices.
 	 * Check for md devices in the ms filesystem. Check for mr and or
-	 * gx devices in the ma filesystem.
+	 * gx devices in the ma and mat filesystems.  Check for ox devices
+	 * in the mb filesystem.
 	 */
 	fsp = &mi->part[0];
 	for (i = 0; i < DeviceNumof; i++) {
@@ -978,17 +979,31 @@ gatherFsDevices(struct sam_mount_info *mi)
 		}
 #ifdef sun
 		/*
-		 * Open device to get size
+		 * Open device to get size.
 		 */
 		if (dev->state == DEV_ON || dev->state == DEV_NOALLOC) {
 			if (is_osd_group(dev->type)) {
 				uint64_t	oh;	/* osd_handle_t */
 
-				if ((open_obj_device(dev->name, O_RDONLY, &oh))
+				if (check_mnttab(fsp->pt_name)) {
+					/* device %s is mounted. */
+					LibError(NULL, 0, 13422, dev->name);
+					err++;
+					continue;
+				}
+				if (open_obj_device(dev->name, O_RDONLY, &oh)
 				    < 0) {
+					/* Cannot open object device %s */
 					LibError(NULL, 0, 17263, dev->name);
 					err++;
 					goto adddev;
+				}
+				if (get_obj_dev_attr(dev->name, oh, fsp) < 0) {
+					/* Cannot get object device */
+					/* attributes %s */
+					LibError(NULL, 0, 17264, dev->name);
+					err++;
+					continue;
 				}
 				close_obj_device(dev->name, O_RDONLY, oh);
 			} else {

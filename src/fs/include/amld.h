@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 #endif
 
 
@@ -222,7 +222,7 @@ typedef struct samamld_cmd_queue {
 	kcondvar_t	cmd_cv;
 	char		pad[4];	/* for amd64 64bit alignment of cmd_mutex */
 	kmutex_t	cmd_mutex;
-#endif	/* linux */
+#endif	/* sun */
 	struct samamld_cmd_queue *forward;
 	struct samamld_cmd_queue *back;
 	int qcmd_error;
@@ -254,7 +254,7 @@ typedef struct {
 	kmutex_t cmd_lockout_mutex;
 	kcondvar_t cmd_lockout_cv;
 	kcondvar_t  cmd_queue_cv;
-#endif	/* linux */
+#endif	/* sun */
 	int cmd_lock_flag;
 	clock_t cmd_queue_timeout;
 } samamld_cmd_queue_hdr_t;
@@ -278,7 +278,7 @@ typedef struct samamld_cmd_table {
 	samamld_cmd_queue_hdr_t samamld_cmd_queue_hdr;
 #ifdef sun
 	kmutex_t queue_mutex;
-#endif	/* linux */
+#endif	/* sun */
 	int cmd_buffer_free_list_count;
 } samamld_cmd_table_t;
 

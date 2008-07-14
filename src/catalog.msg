@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.600 $"
+$ pragma ident "$Revision: 1.601 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2589,7 +2589,7 @@ $ ===================================================================
 13481 FS %s: Filesystem has no object data partition
 13482 FS %s: Cannot create object inode %d
 13483 WORM V2 files present\n
-13484 FEATURE: Aligned Maps\n
+13484 feature:  Aligned Maps\n
 
 $  utility/csd	(13500)
 $ ===================================================================
@@ -3084,6 +3084,7 @@ $ From fsd/fsconfig.c
 17261 %s: 'mat' filesystem cannot be shared
 17262 -wS Reconfigure mounted filesystem %s
 17263 Cannot open object device %s
+17264 Cannot get object device attributes %s
 
 $ From fsd/defaults.c
 17280 Invalid '%s' value '%s'

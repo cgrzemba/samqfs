@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 #endif
 
 #include "sam/types.h"
@@ -107,8 +107,9 @@ typedef enum {
 	SC_getfsclistat = 123,	/* takes sam_getfsclistat_arg_t */
 	SC_osd_device = 124,	/* takes sam_osd_dev_arg */
 	SC_osd_command = 125,	/* takes sam_osd_cmd_arg */
-	SC_fseq_ord = 126,	/* takes sam_fseq_arg */
-	SC_onoff_client = 127,	/* takes sam_onoff_client_arg */
+	SC_osd_attr = 126,	/* takes sam_osd_attr_arg */
+	SC_fseq_ord = 127,	/* takes sam_fseq_arg */
+	SC_onoff_client = 128,	/* takes sam_onoff_client_arg */
 	SC_FS_MAX = 149,
 
 	SC_SAM_MIN = 150,
@@ -428,7 +429,7 @@ struct sam_syscall_rdsock {
 #define	OSD_DEV_OPEN	1
 #define	OSD_DEV_CLOSE	2
 
-typedef struct sam_osd_dev_arg {	/* Filesystem device osd args */
+typedef struct sam_osd_dev_arg {	/* Filesystem osd device args */
 	upath_t	osd_name;	/* OSD device name */
 	sam_osd_handle_t oh;	/* OSD handle, returned--open/given--other */
 	int32_t param;		/* OSD_DEV_OPEN or OSD_DEV_CLOSE */
@@ -449,6 +450,16 @@ typedef struct sam_osd_cmd_arg {	/* Filesystem osd command args */
 	int64_t size;		/* Size */
 	SAM_POINTER(char) data; /* Data */
 } sam_osd_cmd_arg_t;
+
+#define	OSD_ATTR_DEV	1
+
+typedef struct sam_osd_attr_arg {	/* Filesystem osd attribute args */
+	upath_t	osd_name;		/* OSD device name */
+	sam_osd_handle_t oh;		/* OSD handle */
+	int32_t param;			/* OSD_ATTR_DEV */
+	int32_t unused;			/* Unused */
+	SAM_POINTER(struct sam_fs_part) fsp;	/* Device Info */
+} sam_osd_attr_arg_t;
 
 #define	SAM_ONOFF_CLIENT_OFF	0
 #define	SAM_ONOFF_CLIENT_ON	1

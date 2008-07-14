@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.147 $"
+#pragma ident "$Revision: 1.148 $"
 #endif
 
 #ifdef sun
@@ -399,8 +399,7 @@ void sam_mount_setwm_blocks(sam_mount_t *mp);
 
 int sam_open_osd_device(struct samdent *dp, int filemode, cred_t *credp);
 void sam_close_osd_device(sam_osd_handle_t oh, int filemode, cred_t *credp);
-int sam_get_osd_fs_attr(sam_mount_t *mp, sam_osd_handle_t oh,
-	struct sam_sbord *sop);
+int sam_get_osd_fs_attr(sam_osd_handle_t oh, struct sam_fs_part *fsp);
 #endif
 
 

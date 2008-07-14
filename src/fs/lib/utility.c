@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 #include "sam/osversion.h"
 
@@ -96,7 +96,7 @@ static int write_blk_sblk(struct sam_sblk *sbp, struct devlist *dp, int ord);
  * -----  chk_devices
  *
  *	Check filesystem devices. Open devices and get size.
- *  State of devices is not checked  ?????
+ *	FIXME: State of devices is not checked.
  */
 
 int
@@ -121,7 +121,7 @@ chk_devices(
 		error(0, 0, catgets(catfd, SET, 620,
 		    "Filesystem \"%s\" not found."),
 		    fs_name);
-		return (TRUE);
+		return (1);
 	}
 	fs_count = mp->params.fs_count;
 	da_count = fs_count - mp->params.mm_count;
@@ -130,11 +130,11 @@ chk_devices(
 		error(0, 0, catgets(catfd, SET, 1771,
 		    "No members in filesystem %s."),
 		    fs_name);
-		return (TRUE);
+		return (1);
 	}
 	if (getrlimit(RLIMIT_NOFILE, &rlimit) < 0) {
 		error(0, 0, catgets(catfd, SET, 13407, "Cannot getrlimit."));
-		return (TRUE);
+		return (1);
 	}
 	if ((rlimit.rlim_cur - 10) < fs_count) {
 		rlimit.rlim_cur = fs_count + 10;
@@ -143,19 +143,19 @@ chk_devices(
 			    catgets(catfd, SET, 13408,
 			    "Cannot open more than %d files."),
 			    rlimit.rlim_max);
-			return (TRUE);
+			return (1);
 		}
 		if (setrlimit(RLIMIT_NOFILE, &rlimit) < 0) {
 			error(0, 0,
 			    catgets(catfd, SET, 13409,
 			    "Cannot setrlimit:RLIMIT_NOFILE."));
-			return (TRUE);
+			return (1);
 		}
 	}
 	if ((devp = (struct d_list *)malloc(sizeof (struct devlist) *
 	    fs_count)) == NULL) {
 		error(0, 0, catgets(catfd, SET, 599, "Cannot malloc devp."));
-		return (TRUE);
+		return (1);
 	}
 	fsp = &mp->part[0];
 	dp = (struct devlist *)devp;
@@ -168,22 +168,36 @@ chk_devices(
 		dp->state = fsp->pt_state;
 		dp->filemode = oflags;
 
+		/*
+		 * Open device to get size.
+		 */
 		if (is_osd_group(dp->type)) {
-			if ((open_obj_device(fsp->pt_name, oflags,
-			    &dp->oh)) < 0) {
+			dp->num_group = 0;
+			if (check_mnttab(fsp->pt_name)) {
+				error(0, 0, catgets(catfd, SET, 13422,
+				    "device %s is mounted."), fsp->pt_name);
+				return (1);
+			}
+			if (open_obj_device(fsp->pt_name, oflags,
+			    &dp->oh) < 0) {
 				error(0, 0, catgets(catfd, SET, 17263,
 				    "Cannot open object device %s"),
 				    fsp->pt_name);
-				return (TRUE);
+				return (1);
 			}
-			dp->num_group = 0;
-			continue;
-		}
-		if ((dp->fd = get_blk_device(fsp, oflags)) < 0) {
-			return (TRUE);
+			if (get_obj_dev_attr(fsp->pt_name, dp->oh, fsp) < 0) {
+				error(0, 0, catgets(catfd, SET, 17264,
+				    "Cannot get object device attributes %s"),
+				    fsp->pt_name);
+				return (1);
+			}
+		} else {
+			dp->num_group = 1;
+			if ((dp->fd = get_blk_device(fsp, oflags)) < 0) {
+				return (1);
+			}
 		}
 		dp->size = fsp->pt_size;
-		dp->num_group = 1;
 
 		if (dp->type == DT_META) {
 			if (mm_count == 0) {
@@ -192,26 +206,34 @@ chk_devices(
 					    "Meta device must be "
 					    "ordinal 0 on filesystem %s."),
 					    fs_name);
-					return (TRUE);
+					return (1);
 				}
 			}
 			mm_count++;
 		}
 #ifdef	DEBUG
 		if (verbose) {
-			char *devrname;
+			if (is_osd_group(dp->type)) {
+				fprintf(stderr, "%s: size = %llx "
+				    "512-byte blocks\n",
+				    dp->eq_name, dp->size);
+			} else {
+				char *devrname;
 
-			if ((devrname = getfullrawname(fsp->pt_name))) {
-				fprintf(stderr, "%s: raw %s, size = %llx\n",
-				    dp->eq_name, devrname, dp->size);
-				free(devrname);
+				if ((devrname = getfullrawname(fsp->pt_name))) {
+					fprintf(stderr,
+					    "%s: raw %s, size = %llx "
+					    "512-byte blocks\n",
+					    dp->eq_name, devrname, dp->size);
+					free(devrname);
+				}
 			}
 		}
 #endif
 	}
 
 	/*
-	 * Set num_group for object groups and stripe groups
+	 * Set num_group for object groups and stripe groups.
 	 * Verify sizes for striped groups are the same.
 	 */
 	dp = (struct devlist *)devp;
@@ -245,7 +267,7 @@ chk_devices(
 						    SET, 13405,
 "Striped group eq %d size differs from other members for filesystem %s."),
 						    ddp->eq, fs_name);
-						return (TRUE);
+						return (1);
 					}
 					dp->num_group++;
 					ddp->num_group = 0;
@@ -259,7 +281,7 @@ chk_devices(
 		error(0, 0, catgets(catfd, SET, 1771,
 		    "No members in filesystem %s."),
 		    fs_name);
-		return (TRUE);
+		return (1);
 	}
 	return (0);
 }

@@ -39,7 +39,7 @@
 #define	_SAM_LIB_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 #endif
 
 #include "sam/types.h"
@@ -176,5 +176,8 @@ int write_object(char *fs_name, uint64_t obj_handle, int ord,
 	uint64_t obj_ino, char *data, uint64_t offset, uint64_t size);
 int read_object(char *fs_name, uint64_t obj_handle, int ord,
 	uint64_t obj_ino, char *data, uint64_t offset, uint64_t size);
+struct sam_fs_part;
+int get_obj_dev_attr(char *dev_name, uint64_t obj_handle,
+	struct sam_fs_part *fsp);
 
 #endif /* _SAM_LIB_H */

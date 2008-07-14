@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 #include "sam/osversion.h"
 
@@ -670,6 +670,36 @@ issue_obj_command(
 	if (sam_syscall(SC_osd_command, &arg, sizeof (arg)) < 0) {
 		return (-1);
 	}
+	return (0);
+}
+
+
+/*
+ * ----- get_obj_dev_attr - Get object device attributes
+ */
+
+int				/* 0 if successful, -1 if error */
+get_obj_dev_attr(
+	char *dev_name,
+	uint64_t obj_handle,
+	struct sam_fs_part *fsp)
+{
+	struct sam_osd_attr_arg arg;
+	struct sam_fs_part fs_part;
+	struct sam_fs_part *tfsp = &fs_part;
+
+	strncpy(arg.osd_name, dev_name, sizeof (arg.osd_name));
+	arg.oh = obj_handle;
+	arg.param = OSD_ATTR_DEV;
+	arg.fsp.ptr = tfsp;
+	if (sam_syscall(SC_osd_attr, &arg, sizeof (arg)) < 0) {
+		return (-1);
+	}
+	/*
+	 * pt_size is in units of 512 bytes.
+	 * pt_capacity is in units of 1024 bytes.
+	 */
+	fsp->pt_size = tfsp->pt_capacity << SAM2SUN_BSHIFT;
 	return (0);
 }
 
