@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 #include "sam/osversion.h"
 
@@ -1522,14 +1522,14 @@ sam_map_osd(
 	if (iop) {
 		bzero((char *)iop, sizeof (sam_ioblk_t));
 		iop->imap.flags = (M_OBJECT | M_VALID);
-		iop->contig = SAM_OSD_MAX_WR_CONTIG;
+		iop->contig = ip->mp->mi.m_maxphys;
 		if (flag <= SAM_RD_DIRECT_IO) {		/* If reading */
 			offset_t size;
 
 			size = (ip->size + PAGESIZE - 1) & PAGEMASK;
 			iop->contig = size - offset;
-			if (iop->contig > SAM_OSD_MAX_RD_CONTIG) {
-				iop->contig = SAM_OSD_MAX_RD_CONTIG;
+			if (iop->contig > ip->mp->mi.m_maxphys) {
+				iop->contig = ip->mp->mi.m_maxphys;
 			}
 		}
 		iop->imap.ord0 = ip->di.unit;

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 
 #include "sam/osversion.h"
 
@@ -1250,13 +1250,14 @@ sam_map(
 			sam_size_t contig;
 
 			if ((iop->ioblk[i].contig - iop->ioblk[i].pboff) >
-			    maxphys) {
+			    ip->mp->mi.m_maxphys) {
 				/*
 				 * Over the max allowed, set contig so we
 				 * get maxphys after subtracting pboff later.
 				 */
 				iop->ioblk[i].contig =
-				    contig = maxphys + iop->ioblk[i].pboff;
+				    contig = ip->mp->mi.m_maxphys +
+				    iop->ioblk[i].pboff;
 
 			} else {
 				/*

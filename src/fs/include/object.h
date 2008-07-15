@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include "sam/osversion.h"
 
@@ -58,11 +58,6 @@
 #include	<vm/seg_vn.h>
 #include	<vm/seg_map.h>
 
-
-/* Maxcontig for OSD I/O */
-
-#define	SAM_OSD_MAX_WR_CONTIG		0x800000
-#define	SAM_OSD_MAX_RD_CONTIG		0x800000
 
 /*
  *  Macros to keep sane (NTOH - network to host; HTON - host to network).
