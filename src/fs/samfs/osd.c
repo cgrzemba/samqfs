@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #include "sam/osversion.h"
 
@@ -1756,6 +1756,19 @@ sam_issue_object_io(
 	char *data,
 	offset_t offset,
 	offset_t length)
+{
+	return (EINVAL);
+}
+
+
+/*
+ * ----- sam_get_osd_fs_attr - Process get file system attribute call.
+ */
+/* ARGSUSED */
+int
+sam_get_osd_fs_attr(
+	sam_osd_handle_t oh,		/* Object device handle */
+	struct sam_fs_part *fsp)	/* Pointer to device partition table */
 {
 	return (EINVAL);
 }
