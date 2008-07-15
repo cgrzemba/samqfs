@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemJobManagerImpl.java,v 1.15 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSSystemJobManagerImpl.java,v 1.16 2008/07/15 17:19:46 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -40,6 +40,7 @@ import com.sun.netstorage.samqfs.mgmt.rel.ReleaserJob;
 import com.sun.netstorage.samqfs.mgmt.stg.job.StagerJob;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemJobManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.fs.MultiHostStatus;
 import com.sun.netstorage.samqfs.web.model.impl.jni.job.ArchiveJobImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.job.ArchiveScanJobImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.job.BaseJobImpl;
@@ -291,5 +292,22 @@ public class SamQFSSystemJobManagerImpl implements SamQFSSystemJobManager {
         int index = jobs.indexOf(job);
         if (index != -1)
             jobs.remove(index);
+    }
+
+    public MultiHostStatus getMultiHostStatus(long jobId)
+        throws  SamFSException {
+        // retrieve the specific job whose status we are interested in
+        String filter = "activity_id=" + jobId;
+
+        String [] status = Job.getAllActivities(theModel.getJniContext(),
+                                                5,
+                                                filter);
+        // there should be only one item in the list
+        if (status != null && status.length > 0) {
+            return new MultiHostStatus(status[0]);
+        }
+
+        // we shouldn't get here
+        return null;
     }
 }

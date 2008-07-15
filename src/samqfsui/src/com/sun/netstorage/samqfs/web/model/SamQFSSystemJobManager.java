@@ -27,11 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemJobManager.java,v 1.11 2008/05/16 18:38:58 am143972 Exp $
+// ident	$Id: SamQFSSystemJobManager.java,v 1.12 2008/07/15 17:19:45 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.model.fs.MultiHostStatus;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 
 /**
@@ -91,4 +92,12 @@ public interface SamQFSSystemJobManager {
      */
     public void cancelJob(BaseJob job) throws SamFSException;
 
+
+    /**
+     * This method is used by the MultiHostStatusDisplay view to display the
+     * status of jobs running in multiple shared HPC clients.
+     * @since 5.0
+     */
+    public MultiHostStatus getMultiHostStatus(long jobId)
+        throws SamFSException;
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.6 2008/07/03 00:04:29 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.7 2008/07/15 17:19:45 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -774,7 +774,9 @@ sfe.printStackTrace();
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
-            sharedFSManager.removeClients(getFSName(), selectedClients);
+            sharedFSManager.removeClients(JSFUtil.getServerName(),
+                                          getFSName(),
+                                          selectedClients);
 
             setAlertInfo(
                 Constants.Alert.INFO,

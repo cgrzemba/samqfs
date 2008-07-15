@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.49 2008/07/08 21:40:33 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.50 2008/07/15 17:19:46 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -44,8 +44,9 @@ import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.web.model.MDSAddresses;
 import com.sun.netstorage.samqfs.web.model.MemberInfo;
-import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
+import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteria;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
@@ -91,11 +92,11 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * -1 for error
      * job_id will be returned if the job has not completed.
      */
-    public int addClients(String fsName, String [] clients)
-	throws SamFSException {
+    public long addClients(String serverName,
+                           String fsName,
+                           String [] clients) throws SamFSException {
 
         // TODO: To be verified
-
         clients = clients == null ? new String[0] : clients;
 
         Host [] allClients = new Host[clients.length];
@@ -108,7 +109,14 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             allClients[i] = newHost;
         }
 
-        return Host.addHosts(null, fsName, allClients);
+        SamQFSSystemModelImpl sysModel = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(serverName);
+        
+        int rtnval = Host.addHosts(sysModel.getJniContext(),
+                                   fsName,
+                                   allClients);
+
+        return (long)rtnval;
     }
 
     /**
@@ -121,12 +129,19 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * -1 for error
      * job ID will be returned if the job has not completed.
      */
-    public int removeClients(String fsName, String[] clients)
-	throws SamFSException {
+    public long removeClients(String serverName,
+                              String fsName,
+                              String [] clients) throws SamFSException {
 
         // TODO: To be verified
-        // return Host.removeClients(fsName, clients);
-        return 0;
+
+        SamQFSSystemModelImpl sysModel = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(serverName);
+        
+        int rtnval = Host.removeHosts(sysModel.getJniContext(),
+                                        fsName,
+                                        clients);
+        return (long)rtnval;
 
     }
 

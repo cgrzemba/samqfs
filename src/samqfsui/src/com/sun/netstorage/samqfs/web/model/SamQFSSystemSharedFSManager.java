@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.18 2008/06/17 16:04:28 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.19 2008/07/15 17:19:45 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -35,7 +35,6 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.mgmt.fs.FSArchCfg;
-
 import com.sun.netstorage.samqfs.mgmt.fs.FSInfo;
 import com.sun.netstorage.samqfs.mgmt.fs.MountOptions;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
@@ -64,8 +63,9 @@ public interface SamQFSSystemSharedFSManager {
      * -1 for error
      * job_id will be returned if the job has not completed.
      */
-    public int addClients(String fsName, String[] clients)
-	throws SamFSException;
+    public long addClients(String serverName,
+                           String fsName,
+                           String [] clients) throws SamFSException;
 
     /**
      * The file system must be unmounted to remove clients. You can
@@ -77,8 +77,9 @@ public interface SamQFSSystemSharedFSManager {
      * -1 for error
      * job ID will be returned if the job has not completed.
      */
-    public int removeClients(String fsName, String[] clients)
-	throws SamFSException;
+    public long removeClients(String serverName,
+                              String fsName,
+                              String [] clients) throws SamFSException;
 
     /*
      * Enable or disable client access. This operation is performed on
