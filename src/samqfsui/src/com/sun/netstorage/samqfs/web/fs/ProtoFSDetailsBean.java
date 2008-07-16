@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ProtoFSDetailsBean.java,v 1.1 2008/07/09 22:20:56 kilemba Exp $
+// ident	$Id: ProtoFSDetailsBean.java,v 1.2 2008/07/16 23:43:55 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -59,5 +59,9 @@ public class ProtoFSDetailsBean {
         String serverName = JSFUtil.getServerName();
 
         return serverName;
+    }
+
+    public void setServerName(String name) {
+        // do nothing, server name is already saved by JSFUtil
     }
 }

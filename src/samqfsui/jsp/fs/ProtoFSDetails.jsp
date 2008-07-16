@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ProtoFSDetails.jsp,v 1.1 2008/07/09 22:20:56 kilemba Exp $ -->
+<!-- $Id: ProtoFSDetails.jsp,v 1.2 2008/07/16 23:43:55 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -44,10 +44,14 @@
 <ui:page>
 <ui:html>
 <ui:head title="#{msgs['protofs.title']}">
-<style>
-.taskhref{font-size:1.25em}                        
-</style>
+    <style>
+        .taskhref{font-size:1.25em}                        
+    </style>
+
+    <ui:script url="/js/popuphelper.js"/>
+    <ui:script url="/js/fs/protofs.js"/>
 </ui:head>
+
 <ui:body>
 <ui:form id="ProtoFSDetailsForm">
     <ui:breadcrumbs id="breadcrumbs">
@@ -96,7 +100,7 @@
                            text="#{msgs['protofs.details.storagenodehelp']}"/>
 
             <br/>
-            <ui:hyperlink id="viewStorageNodes" action="success">
+            <ui:hyperlink id="viewStorageNodes" action="success" rendered="false">
                 <ui:staticText text="#{msgs['protofs.details.viewstoragenodes']}"/>
             </ui:hyperlink>
         </div>
@@ -117,7 +121,10 @@
         </span>
     </div>
     
-    <ui:hyperlink id="addClientsHref" action="success">
+    <ui:hyperlink id="addClientsHref"
+                  url="wizards/AddClientsWizard.jsp"
+                  onClick="return launchAddClientsWizard(this);"
+                  action="success">
         <ui:image url="/images/required.gif"/>
         <ui:staticText id="addClientsText"
                        text="#{msgs['protofs.details.addclients']}"
@@ -129,7 +136,7 @@
                        rendered="true"
                        text="#{msgs['protofs.details.addclientshelp']}"/>
         <br/>
-        <ui:hyperlink id="viewClients" action="success">
+        <ui:hyperlink id="viewClients" action="success" rendered="false">
             <ui:staticText text="#{msgs['protofs.details.viewclients']}"/>
         </ui:hyperlink>
     </div>
@@ -146,6 +153,8 @@
                    rendered="true"
                    text="#{msgs['common.button.finish']}"/>
     </div>
+
+    <ui:hiddenField id="serverName" value="#{ProtoFSBean.serverName}"/>
 </ui:form>
 </ui:body>
 </ui:html>
