@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 #endif
 
 #include "sam/osversion.h"
@@ -142,8 +142,6 @@ static int sam_contig(int maxcontig, uint32_t *bnp, uchar_t *eip, int lblocks,
 #ifdef sun
 int sam_fbzero(sam_node_t *ip, offset_t offset, int tlen,
 	sam_ioblk_t *iop, map_params_t *mapp, struct fbuf **fbp);
-int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
-	sam_map_t flag, struct sam_ioblk *iop);
 #endif
 #ifdef linux
 void sam_linux_fbzero(sam_node_t *, offset_t, int);

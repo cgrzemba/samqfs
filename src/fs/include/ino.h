@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.63 $"
+#pragma ident "$Revision: 1.64 $"
 #endif
 
 #ifdef linux
@@ -326,14 +326,14 @@ typedef struct sam_di_ext {
 	uchar_t			stage_ahead;		/* Stage readahead */
 } sam_di_ext_t;
 
-#define	SAM_MAX_OSD_DIRECT	8	/* No. of stripes in dk inode */
-#define	SAM_MAX_OSD_EXTENT	48	/* No. of stripes in ext inode */
-#define	SAM_MAX_OSD_STRIPE_WIDTH	SAM_MAX_OSD_DIRECT + SAM_MAX_OSD_EXTENT
+#define	SAM_OSD_DIRECT			8	/* No. of stripes in disk ino */
+#define	SAM_OSD_EXTENT			48	/* No. of stripes in ext ino */
+#define	SAM_MAX_OSD_STRIPE_WIDTH	1024	/* Maximum OSDs in the stripe */
 
 typedef struct sam_di_osd {
 	sam_id_t		ext_id;
-	uint64_t		obj_id[SAM_MAX_OSD_DIRECT];
-	uchar_t			ord[SAM_MAX_OSD_DIRECT];
+	uint64_t		obj_id[SAM_OSD_DIRECT];
+	uchar_t			ord[SAM_OSD_DIRECT];
 } sam_di_osd_t;
 
 typedef union sam_di_ia {

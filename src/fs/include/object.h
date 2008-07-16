@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #include "sam/osversion.h"
 
@@ -49,7 +49,8 @@
 #include	<sys/conf.h>
 #include	<sys/ddi.h>
 #if defined(SAM_OSD_SUPPORT)
-#include	<sys/osd.h>
+#include	"scsi_osd.h"
+#include	"osd.h"
 #endif /* SAM_OSD_SUPPORT */
 #include	<sys/byteorder.h>
 
@@ -108,20 +109,27 @@ typedef union sam_osd_attr_page {
 
 #endif /* SAM_ATTR_LIST */
 
+#define	SAM_OBJ_PRIVATE_NAME	0x504f524a
+
 typedef struct sam_osd_req_priv {
-	ksema_t		osd_sema;	/* I/O Synchronization for io_task */
+	int		name;		/* Sanity check */
+	int		error;		/* Error -- set in interrupt routine */
 	int		obji;		/* Object layout index */
+	uint16_t	err_code;	/* OSD return code */
+	uint16_t	service_action;	/* OSD service action */
+	ksema_t		osd_sema;	/* I/O Synchronization for io_task */
+	osd_req_t	*reqp;		/* Pointer to request */
+	sam_mount_t	*mp;		/* Pointer to mount table */
 	struct sam_node	*ip;		/* Pointer to inode */
 	struct buf	*bp;		/* Pointer to optional buffer */
 	offset_t	offset;		/* Logical offset in object I/O */
-	osd_req_t	*reqp;		/* Pointer to request */
-	osd_result_t	result;		/* Results from I/O request */
-	osd_resid_t	resid;		/* If err_type == OSD_ERRTYPE_RESID */
 } sam_osd_req_priv_t;
 
-#define	sam_osd_setup_private(iorp) {  \
+#define	sam_osd_setup_private(iorp, mp) {  \
 	bzero(iorp, sizeof (sam_osd_req_priv_t)); \
 	sema_init(&((iorp)->osd_sema), 0, NULL, SEMA_DEFAULT, NULL); \
+	iorp->name = SAM_OBJ_PRIVATE_NAME; \
+	iorp->mp = mp; \
 }
 
 #define	sam_osd_remove_private(iorp)  \
@@ -167,6 +175,7 @@ typedef struct sam_objinfo_page {
 typedef struct sam_objlist_page {
 	uint32_t	solp_pgno;
 	uint32_t	solp_pglen;
+	uint64_t	solp_object_id[1];
 } sam_objlist_page_t;
 
 /*

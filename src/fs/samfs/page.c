@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 
 #include "sam/osversion.h"
 
@@ -82,8 +82,6 @@ static buf_t *sam_pageio(sam_node_t *ip, sam_ioblk_t *iop, page_t *pp,
 	offset_t offset, uint_t pg_off, uint_t vn_len, int flags);
 static int sam_map(sam_node_t *ip, offset_t offset, struct sam_iohdr *iop);
 
-int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
-	sam_map_t flag, struct sam_ioblk *iop);
 
 /*
  * ----- sam_getpages - Get pages for a file.
@@ -353,13 +351,19 @@ sam_getapage(
 					bp[i] = sam_pageio_object(ip,
 					    &iop->ioblk[i], pp, off, pg_off,
 					    len, B_READ);
+					if (bp[i] == NULL) {
+						if (!(iop->ioblk[i].imap.flags &
+						    M_OBJ_EOF)) {
+							error = EIO;
+						}
+					}
 				} else {
 					bp[i] = sam_pageio(ip,
 					    &iop->ioblk[i], pp, off, pg_off,
 					    len, B_READ);
-				}
-				if (bp[i] == NULL) {
-					error = EIO;
+					if (bp[i] == NULL) {
+						error = EIO;
+					}
 				}
 
 			} else {
@@ -379,8 +383,8 @@ sam_getapage(
 				    (pg_off + len <= PAGESIZE)) {
 					pagezero(pp, pg_off, len);
 				} else {
-					uint_t no_pages = len / PAGESIZE;
-					uint_t count;
+					int no_pages = len / PAGESIZE;
+					int count;
 					page_t *savep = pp->p_next;
 
 					pagezero(pp, pg_off,
@@ -407,7 +411,7 @@ sam_getapage(
 		 * and not offline.
 		 */
 		if (seq && !ip->di.status.b.offline &&
-		    (ip->ra_off < ip->size)) {
+		    (ip->ra_off < ip->size) && (error == 0)) {
 			sam_read_ahead(vp, offset, ip->ra_off, segp, addr,
 			    ip->mp->mt.fi_readahead);
 		}
@@ -711,12 +715,7 @@ sam_putapage(
 	 */
 	lb_off = iop->ioblk[0].blk_off;
 	if (iop->ioblk[0].num_group > 1) {
-		if (iop->ioblk[i].imap.flags & M_OBJECT) {
-			iop->contig = MIN(iop->contig,
-			    iop->ioblk[0].bsize - iop->ioblk[0].pboff);
-		} else {
-			iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
-		}
+		iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
 		iop->ioblk[0].contig = iop->contig;
 	}
 	pp = pvn_write_kluster(vp, pp, &vn_off, &vn_len, lb_off,
@@ -747,12 +746,18 @@ sam_putapage(
 			if (iop->ioblk[i].imap.flags & M_OBJECT) {
 				bp[i] = sam_pageio_object(ip, &iop->ioblk[i],
 				    pp, off, pg_off, len, B_WRITE|flags);
+				if (bp[i] == NULL) {
+					if (!(iop->ioblk[i].imap.flags &
+					    M_OBJ_EOF)) {
+						error = EIO;
+					}
+				}
 			} else {
 				bp[i] = sam_pageio(ip, &iop->ioblk[i],
 				    pp, off, pg_off, len, B_WRITE|flags);
-			}
-			if (bp[i] == NULL) {
-				error = EIO;
+				if (bp[i] == NULL) {
+					error = EIO;
+				}
 			}
 		} else {
 			bp[i] = NULL;

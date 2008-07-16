@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.161 $"
+#pragma ident "$Revision: 1.162 $"
 #endif
 
 #include "sam/osversion.h"
@@ -688,16 +688,18 @@ sam_proc_stat(
 	}
 	if (SAM_IS_OBJECT_FS(ip->mp)) {
 		sb.attr |= SS_OBJECT_FS;
+		sb.stripe_width = ip->di.status.b.stripe_width ?
+		    ip->di.rm.info.obj.stripe_width : ip->mp->mt.fi_stripe[DD];
 		if (ip->di.rm.info.obj.stripe_shift) {	/* Units of kilobytes */
 			sb.obj_depth =
 			    (1 << (ip->di.rm.info.obj.stripe_shift - 10));
 		}
 	} else {
 		sb.allocahead = ip->di.rm.info.dk.allocahead;
+		sb.stripe_width = ip->di.status.b.stripe_width ?
+		    ip->di.stripe : ip->mp->mt.fi_stripe[DD];
 	}
-	sb.old_attr = (ip->di.status.bits & SAM_ATTR_MASK) | SS_SAMFS;
-	sb.stripe_width = ip->di.status.b.stripe_width ?
-	    ip->di.stripe : ip->mp->mt.fi_stripe[DD];
+	sb.old_attr = (uint_t)sb.attr;
 	sb.stripe_group = ip->di.stripe_group;
 	sb.attribute_time = ip->di.attribute_time;
 	sb.creation_time = ip->di.creation_time;

@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_EXT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 #endif
 
 #include "acl.h"
@@ -219,8 +219,8 @@ typedef struct sam_acl_inode {
 #define	S_ISOBJ(mode)  (((mode)&0xff00) == S_IFOBJ)
 
 typedef struct sam_osd_ext_inode {
-	uint64_t		obj_id[SAM_MAX_OSD_EXTENT];
-	ushort_t		ord[SAM_MAX_OSD_EXTENT];
+	uint64_t		obj_id[SAM_OSD_EXTENT];
+	ushort_t		ord[SAM_OSD_EXTENT];
 } sam_osd_ext_inode_t;
 
 

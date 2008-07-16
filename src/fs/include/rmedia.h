@@ -38,7 +38,7 @@
 #define	_SAM_FS_RMEDIA_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 #endif
 
 #ifdef linux
@@ -112,8 +112,8 @@ typedef struct  {
 		} dk;
 		struct objinfo {
 			uint_t	stripe_shift;	/* Shift for stripe depth */
-			uint_t	num_group;
-			uint_t	pad1;
+			uint_t	num_group;	/* No. of OSDs in the group */
+			uint_t	stripe_width;	/* Horzontial stripe width */
 		} obj;
 	} info;
 } sam_rm_t;

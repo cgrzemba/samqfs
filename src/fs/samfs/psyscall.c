@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.186 $"
+#pragma ident "$Revision: 1.187 $"
 #endif
 
 #include "sam/osversion.h"
@@ -446,18 +446,18 @@ sam_osd_command(
 	switch (args.command) {
 
 	case OSD_CMD_CREATE:
-		error = sam_create_priv_object_id(args.oh,
+		error = sam_create_priv_object_id(mp, args.oh,
 		    args.obj_id);
 		break;
 
 	case OSD_CMD_WRITE:
-		error = sam_issue_object_io(args.oh, FWRITE,
+		error = sam_issue_object_io(mp, args.oh, FWRITE,
 		    args.obj_id, UIO_USERSPACE, data, args.offset,
 		    args.size);
 		break;
 
 	case OSD_CMD_READ:
-		error = sam_issue_object_io(args.oh, FREAD,
+		error = sam_issue_object_io(mp, args.oh, FREAD,
 		    args.obj_id, UIO_USERSPACE, data, args.offset,
 		    args.size);
 		break;
@@ -2157,7 +2157,7 @@ sam_fseq_ord(
 				ip->di.stripe_group =
 				    (npt & ~DT_STRIPE_GROUP_MASK);
 			}
-			ip->di.unit = ib_args.new_ord;
+			ip->di.unit = (uchar_t)ib_args.new_ord;
 		} else {
 			sam_set_unit(ip->mp, &(ip->di));
 		}
@@ -2375,7 +2375,7 @@ sam_move_ip_extents(
 				 * Save the new extent in the inode
 				 * and free the old one.
 				 */
-				ip->di.extent_ord[i] = nord;
+				ip->di.extent_ord[i] = (uchar_t)nord;
 				ip->di.extent[i] = nbn;
 				*doipupdate = 1;
 

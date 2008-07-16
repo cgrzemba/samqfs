@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #include "sam/osversion.h"
 
@@ -129,8 +129,11 @@ static void sam_dk_object_done(osd_req_t *reqp, void *ct_priv,
 	osd_result_t *resp);
 static void sam_pg_object_done(osd_req_t *reqp, void *ct_priv,
 	osd_result_t *resp);
-static int sam_osd_errno(int rc, sam_osd_req_priv_t *iorp);
+static int sam_osd_rc(int rc);
+static int sam_osd_errno(osd_result_t *resp, sam_osd_req_priv_t *iorp);
 static uint64_t sam_decode_scsi_buf(char *scsi_buf, int scsi_len);
+static int sam_get_object_id_ext(sam_mount_t *mp, struct sam_disk_inode	*dp,
+	int n, sam_id_t id, buf_t **bpp, struct sam_inode_ext **eipp);
 static int sam_osd_inode_extent(sam_mount_t *mp, struct sam_disk_inode *dp,
 	int *num_groupp);
 
@@ -161,7 +164,7 @@ sam_open_osd_device(
 	VN_RELE(svp);
 	rc = osd_open_by_name(dp->part.pt_name, filemode, credp, (void *)&oh);
 	if (rc != OSD_SUCCESS) {
-		error = sam_osd_errno(rc, NULL);
+		error = sam_osd_rc(rc);
 		return (error);
 	}
 	dp->oh = oh;
@@ -193,6 +196,7 @@ sam_close_osd_device(
  */
 int
 sam_issue_object_io(
+	sam_mount_t *mp,	/* Pointer to mount table */
 	sam_osd_handle_t oh,	/* Object device handle */
 	uint32_t command,	/* Object command: FWRITE, FREAD */
 	uint64_t object_id,	/* 64-bit user object identifier */
@@ -239,22 +243,19 @@ sam_issue_object_io(
 			goto fini;
 		}
 	}
-	sam_osd_setup_private(iorp);
+	sam_osd_setup_private(iorp, mp);
 	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);	/* Wait for completion */
-		rc = iorp->result.err_code;
-		if (rc == OSD_SUCCESS) {
+		if ((error = iorp->error) == 0) {
 			if (command == FREAD && seg == UIO_USERSPACE) {
 				if (copyout(bufp, data, length)) {
 					error = EFAULT;
 				}
 			}
-		} else {
-			error = sam_osd_errno(rc, iorp);
 		}
 	} else {
-		error = sam_osd_errno(rc, iorp);
+		error = sam_osd_rc(rc);
 	}
 	sam_osd_remove_private(iorp);
 fini:
@@ -283,6 +284,7 @@ sam_get_osd_fs_attr(
 	osd_req_t		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
 	int			rc;
+	sam_mount_t *mp = NULL;
 	int			error = 0;
 
 
@@ -292,23 +294,18 @@ sam_get_osd_fs_attr(
 	}
 	osd_add_get_page_attr_to_req(reqp, OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO,
 	    sizeof (sam_fsinfo_page_t), (void *) &fs_attr);
-	sam_osd_setup_private(iorp);
+	sam_osd_setup_private(iorp, mp);
 	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
-		if (iorp->result.err_code != OSD_SUCCESS) {
-			error = sam_osd_errno(iorp->result.err_code, iorp);
-			dcmn_err((CE_WARN, "SAM-QFS: "
-			    "OSD GET FS err=%d, errno=%d",
-			    iorp->result.err_code, error));
-		} else {
+		if ((error = iorp->error) == 0) {
 			sam_fsinfo_page_t *fap = &fs_attr;
 
 			fsp->pt_capacity = SFP_CAPACITY(fap);
 			fsp->pt_space = SFP_SPACE(fap);
 		}
 	} else {
-		error = sam_osd_errno(rc, iorp);
+		error = sam_osd_rc(rc);
 	}
 	sam_osd_remove_private(iorp);
 
@@ -335,11 +332,9 @@ sam_object_req_done(
 {
 	sam_osd_req_priv_t *iorp = (sam_osd_req_priv_t *)ct_priv;
 
-	iorp->result = *resp;
-	if (resp->err_code == OSD_RESIDUAL) {
-		osd_resid_t *rp = (osd_resid_t *)&resp->resid_data;
-
-		iorp->resid = *rp;
+	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
+	if (resp->err_code) {
+		iorp->error = sam_osd_errno(resp, iorp);
 	}
 	sam_osd_obj_req_done(iorp);	/* Wakeup caller */
 }
@@ -386,6 +381,8 @@ sam_issue_direct_object_io(
 		kmem_cache_free(samgt.object_cache, iorp);
 		return (EINVAL);
 	}
+	iorp->name = SAM_OBJ_PRIVATE_NAME;
+	iorp->mp = ip->mp;
 	iorp->obji = obji;	/* Object layout index */
 	iorp->offset = offset;	/* Logical offset in I/O request */
 	iorp->ip = ip;
@@ -394,9 +391,10 @@ sam_issue_direct_object_io(
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
+		bzero(&result, sizeof (result));
 		result.err_code = (uint8_t)rc;
 		sam_dk_object_done(reqp, iorp, &result);
-		error = sam_osd_errno(result.err_code, NULL);
+		error = sam_osd_rc(rc);
 	}
 	return (error);
 }
@@ -424,6 +422,7 @@ sam_dk_object_done(
 	int			obji;
 
 
+	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
 	bp = (buf_t *)iorp->bp;
 	sbp = (sam_buf_t *)bp;
 	bdp = (buf_descriptor_t *)(void *)bp->b_vp;
@@ -451,7 +450,6 @@ sam_dk_object_done(
 	/*
 	 * If no error, update end of object (eoo). Otherwise, set error.
 	 */
-	iorp->result = *resp;
 	if (bp->b_flags & B_READ) {	/* If reading */
 		TRACE(T_SAM_DIORDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
@@ -466,13 +464,13 @@ sam_dk_object_done(
 			mutex_exit(&ip->write_mutex);
 		}
 	}
-	if (resp->err_code != 0) {
-		bdp->error = sam_osd_errno(resp->err_code, iorp);
-		dcmn_err((CE_PANIC,
-		    "SAM-QFS: %s: DK er=%d, ip=%p, ino=%d, sa=%x, off=%llx"
+	if (resp->err_code != OSD_SUCCESS) {
+		bdp->error = sam_osd_errno(resp, iorp);
+		dcmn_err((CE_WARN,
+		    "SAM-QFS: %s: DK er=%d, ip=%p, ino=%d.%d, SA=%x, off=%llx"
 		    " len=%lx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
 		    ip->mp->mt.fi_name, resp->err_code, (void *)ip,
-		    ip->di.id.ino, resp->service_action, offset,
+		    ip->di.id.ino, ip->di.id.gen, resp->service_action, offset,
 		    bp->b_bcount, bp->b_resid, (offset + bp->b_bcount), obji,
 		    olp->ol[obji].eoo, ip->size));
 	}
@@ -524,6 +522,31 @@ sam_pageio_object(
 	oh = mp->mi.m_fs[olp->ol[iop->obji].ord].oh;
 	object_id = olp->ol[iop->obji].obj_id;
 
+	sam_osd_setup_private(iorp, mp);
+	iorp->obji = iop->obji;
+	iorp->offset = offset;
+	iorp->ip = ip;
+
+	if (flags & B_READ) {	/* If reading */
+		mutex_enter(&ip->write_mutex);
+		if ((offset + count) > olp->ol[iop->obji].eoo) {
+			mutex_exit(&ip->write_mutex);
+			pagezero(pp, pg_off, PAGESIZE);
+			iop->imap.flags |= M_OBJ_EOF;
+			dcmn_err((CE_NOTE,
+			    "SAM-QFS: %s: PAGEZERO ip=%p, ino=%d.%d, off=%llx "
+			    "count=%llx obji=%d eoo=%llx pg_off=%x, pp=%p",
+			    ip->mp->mt.fi_name, (void *)ip, ip->di.id.ino,
+			    ip->di.id.gen, offset, count, iop->obji,
+			    olp->ol[iop->obji].eoo, pg_off, (void *)pp));
+			sam_osd_remove_private(iorp);
+			kmem_cache_free(samgt.object_cache, iorp);
+			return (NULL);
+		} else {
+			mutex_exit(&ip->write_mutex);
+		}
+	}
+
 	bp = pageio_setup(pp, vn_len, mp->mi.m_fs[iop->ord].svp, flags);
 	bp->b_edev = mp->mi.m_fs[iop->ord].dev;
 	bp->b_dev = cmpdev(bp->b_edev);
@@ -531,35 +554,10 @@ sam_pageio_object(
 	bp->b_un.b_addr = (char *)pg_off;
 	bp->b_file = SAM_ITOP(ip);
 	bp->b_offset = off;
+	bp->b_bcount = (size_t)count;
 	bp->b_private = (void *)iorp;
 
-	sam_osd_setup_private(iorp);
-	iorp->obji = iop->obji;
-	iorp->offset = offset;
-	iorp->ip = ip;
-	iorp->bp = bp;
-
-	if (bp->b_flags & B_READ) {	/* If reading */
-		mutex_enter(&ip->write_mutex);
-		if ((offset + count) > olp->ol[iop->obji].eoo) {
-			count = olp->ol[iop->obji].eoo - offset;
-			mutex_exit(&ip->write_mutex);
-			bp->b_bcount = (size_t)count;
-			pagezero(pp, pg_off, PAGESIZE);
-			if ((count < 0) || (pg_off > PAGESIZE)) {
-				dcmn_err((CE_PANIC,
-				    "SAM-QFS: %s: PAGE COUNT off=%llx, "
-				    "cnt=%llx, obji=%d eoo=%llx pg_off=%x",
-				    mp->mt.fi_name, offset, count, iop->obji,
-				    olp->ol[iop->obji].eoo, pg_off));
-				sam_osd_remove_private(iorp);
-				kmem_cache_free(samgt.object_cache, iorp);
-				bp->b_error = EINVAL;
-				return (bp);
-			}
-		} else {
-			mutex_exit(&ip->write_mutex);
-		}
+	if (flags & B_READ) {
 		TRACE(T_SAM_PGRDOBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, count);
 		reqp = osd_setup_read_bp((void *)oh, partid, object_id,
@@ -571,12 +569,13 @@ sam_pageio_object(
 		    count, offset, bp);
 	}
 	if (reqp == NULL) {
+		pageio_done(bp);
 		sam_osd_remove_private(iorp);
 		kmem_cache_free(samgt.object_cache, iorp);
-		bp->b_error = EINVAL;
-		return (bp);
+		return (NULL);
 	}
 	iorp->reqp = reqp;
+	iorp->bp = bp;
 	if (!(bp->b_flags & B_READ)) {	/* If writing */
 		if (bp->b_flags & B_ASYNC) {
 			bp->b_iodone = (int (*) ())sam_page_wrdone;
@@ -591,6 +590,7 @@ sam_pageio_object(
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
+		bzero(&result, sizeof (result));
 		result.err_code = (uint8_t)rc;
 		sam_pg_object_done(reqp, iorp, &result);
 	}
@@ -617,6 +617,7 @@ sam_pg_object_done(
 	int			obji;
 
 
+	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
 	ip = iorp->ip;
 	olp = ip->olp;
 	ASSERT(olp);
@@ -624,10 +625,9 @@ sam_pg_object_done(
 	obji = iorp->obji;
 	offset = iorp->offset;
 	count = bp->b_bcount;
-	iorp->result = *resp;
 
 	/*
-	 * If no error, update end of object (eoo). Otherwise, set error.
+	 * If no error, update end of object for write. Otherwise, set error.
 	 */
 	if (bp->b_flags & B_READ) {	/* If reading */
 		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
@@ -644,14 +644,14 @@ sam_pg_object_done(
 		}
 	}
 	if (resp->err_code != OSD_SUCCESS) {
-		bp->b_error = sam_osd_errno(resp->err_code, iorp);
-		dcmn_err((CE_PANIC,
-		    "SAM-QFS: %s: PG1 er=%d %d, ip=%p ino=%d sa=%x off=%llx"
+		bp->b_error = sam_osd_errno(resp, iorp);
+		dcmn_err((CE_WARN,
+		    "SAM-QFS: %s: PG1 er=%d %d, ip=%p ino=%d.%d SA=%x off=%llx"
 		    " len=%llx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
 		    ip->mp->mt.fi_name, resp->err_code, bp->b_error, (void *)ip,
-		    ip->di.id.ino, resp->service_action, offset, count,
-		    bp->b_resid, (offset+count), obji, olp->ol[obji].eoo,
-		    ip->size));
+		    ip->di.id.ino, ip->di.id.gen, resp->service_action,
+		    offset, count, bp->b_resid, (offset+count), obji,
+		    olp->ol[obji].eoo, ip->size));
 	}
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
 	bp->b_iodone = NULL;
@@ -684,21 +684,17 @@ sam_pg_object_sync_done(
 	int			 error = 0;
 
 	iorp = (sam_osd_req_priv_t *)bp->b_private;
+	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
 	obji = iorp->obji;
 	sam_osd_obj_req_wait(iorp);	/* Wait for completion */
 	if (bp->b_error) {
-		offset_t		count;
-		offset_t		offset;
-
-		offset = iorp->offset;
-		count = bp->b_bcount;
-		dcmn_err((CE_PANIC,
-		    "SAM-QFS: %s: PG2 %s er=%d, ip=%p ino=%d off=%llx"
-		    " len=%llx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, str, bp->b_error,
-		    (void *)ip, ip->di.id.ino, offset, count, bp->b_resid,
-		    (offset+count), obji, ip->olp->ol[obji].eoo, ip->size));
 		error = bp->b_error;
+		dcmn_err((CE_WARN,
+		    "SAM-QFS: %s: PG2 %s er=%d, ip=%p ino=%d.%d off=%llx"
+		    " cnt=%lx r=%lx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, str, error, (void *)ip,
+		    ip->di.id.ino, ip->di.id.gen, iorp->offset, bp->b_bcount,
+		    bp->b_resid, obji, ip->olp->ol[obji].eoo, ip->size));
 	}
 	pageio_done(bp);
 	(void) osd_free_req(iorp->reqp);
@@ -709,61 +705,65 @@ sam_pg_object_sync_done(
 
 
 /*
+ * ----- sam_osd_rc - Return errno from sosd device driver.
+ */
+int
+sam_osd_rc(
+	int rc)
+{
+	static const int rc2errno[] = {0, EIO, 0, EIO, EINVAL, E2BIG, EINVAL,
+		EIO, EIO, EAGAIN, EIO, 0, EIO};
+
+	if (rc >= OSD_SUCCESS && rc <= OSD_NORESOURCES) {
+		dcmn_err((CE_WARN,
+		    "SAM-QFS:: 1. OSD ERROR rc=%d, err=%d, sz=%d ",
+		    rc, rc2errno[rc], sizeof (rc2errno)));
+		return (rc2errno[rc]);
+	} else {
+		dcmn_err((CE_WARN, "SAM-QFS:: 2. OSD ERROR rc=%d, err=%d ",
+		    rc, EINVAL));
+		return (EINVAL);
+	}
+}
+
+
+/*
  * ----- sam_osd_errno - Return errno given OSD error.
  */
 int
 sam_osd_errno(
-	int rc,
-	sam_osd_req_priv_t *iorp)
+	osd_result_t *resp,		/* Pointer to result struct */
+	sam_osd_req_priv_t *iorp)	/* Pointer to private struct */
 {
-	buf_t *bp = NULL;
-	int error = 0;
+	sam_mount_t *mp = iorp->mp;
+	buf_t *bp;
+	int rc;
+	int error;
 
-	if (iorp) {
-		bp = iorp->bp;
-		if (bp) {
-			bp->b_error = 0;
-		}
-	}
+	rc = resp->err_code;
+	error = sam_osd_rc(rc);
+	iorp->err_code = (uint16_t)rc;
+	iorp->service_action = resp->service_action;
+	bp = iorp->bp;
 
 	switch (rc) {
-	case OSD_SUCCESS:
-		if (bp) {
-			bp->b_resid = 0;
-		}
-		return (0);
-
 	case OSD_RESIDUAL: {
-		osd_resid_t *residp = (osd_resid_t *)&iorp->result.resid_data;
+		osd_resid_t *residp = (osd_resid_t *)&resp->resid_data;
 
 		ASSERT(residp != NULL);
 		if (residp == NULL) {
-			return (EINVAL);
+			error = EINVAL;
+		} else if (bp) {
+			bp->b_resid = (bp->b_flags & B_READ) ?
+			    residp->ot_in_command_resid :
+			    residp->ot_out_command_resid;
+			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD RESID SA=%x "
+			    "rc=%d, errno=%d, resid=%lx, off=%llx, cnt=%llx",
+			    mp ? mp->mt.fi_name : " ", resp->service_action,
+			    resp->err_code, error, bp->b_resid,
+			    (long long)bp->b_offset, (long long)bp->b_bcount));
 		}
-		bp->b_resid = (bp->b_flags & B_READ) ?
-		    residp->ot_in_command_resid :
-		    residp->ot_out_command_resid;
-		cmn_err(CE_NOTE,
-		    "SAM-QFS: OSD RESID resid=%lx, off=%llx, cnt=%lx",
-		    bp->b_resid, (long long)bp->b_offset, bp->b_bcount);
-		return (0);
 		}
-
-	case OSD_RESERVATION_CONFLICT:
-		error = EACCES;
-		break;
-
-	case OSD_BUSY:
-		error = EAGAIN;
-		break;
-
-	case OSD_INVALID:
-	case OSD_BADREQUEST:
-		error = EINVAL;
-		break;
-
-	case OSD_TOOBIG:
-		error = E2BIG;
 		break;
 
 	case OSD_CHECK_CONDITION: {
@@ -772,14 +772,14 @@ sam_osd_errno(
 		uint64_t	xfer;
 
 		error = EIO;
-		scsi_buf = (char *)iorp->result.sense_data;
+		scsi_buf = (char *)resp->sense_data;
 		if (scsi_buf == NULL) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: OSD_CHECK_CONDITION "
 			    "with no scsi_buf\n");
 			break;
 		}
-		scsi_len = iorp->result.sense_data_len;
+		scsi_len = resp->sense_data_len;
 		xfer = sam_decode_scsi_buf(scsi_buf, scsi_len);
 		if (xfer > 0) {
 			bp->b_resid = bp->b_bcount - xfer;
@@ -799,18 +799,25 @@ sam_osd_errno(
 		}
 		}
 		break;
-
-	case OSD_FAILURE:
-		error = EIO;
-		break;
-
 	default:
-		error = EIO;
 		break;
 	}
-	if (bp) {
-		bp->b_error = error;	/* Return error in buffer */
-		bp->b_flags |= B_ERROR;
+
+	if (error) {
+		int ino, gen;
+
+		ino = gen = 0;
+		if (iorp->ip != NULL) {
+			ino = iorp->ip->di.id.ino;
+			gen = iorp->ip->di.id.gen;
+		}
+		if (bp) {
+			bp->b_error = error;	/* Return error in buffer */
+			bp->b_flags |= B_ERROR;
+		}
+		dcmn_err((CE_WARN, "SAM-QFS: %s: ino %d.%d OSD error %d SA=%x "
+		    "rc=%d", mp ? mp->mt.fi_name : " ", ino, gen,
+		    error, resp->service_action, resp->err_code));
 	}
 	return (error);
 }
@@ -919,6 +926,7 @@ sam_osd_release_bp(
  */
 int
 sam_create_priv_object_id(
+	sam_mount_t		*mp,
 	sam_osd_handle_t	oh,
 	uint64_t		object_id)
 {
@@ -933,17 +941,14 @@ sam_create_priv_object_id(
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	sam_osd_setup_private(iorp);
+	sam_osd_setup_private(iorp, mp);
 
 	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
-		if (iorp->result.err_code != OSD_SUCCESS) {
-			error = sam_osd_errno(iorp->result.err_code, iorp);
-		}
+		error = iorp->error;
 	} else {
-		error = sam_osd_errno(rc, iorp);
-		ASSERT(error);
+		error = sam_osd_rc(rc);
 	}
 	(void) osd_free_req(reqp);
 	sam_osd_remove_private(iorp);
@@ -962,14 +967,11 @@ sam_create_object_id(
 	sam_osd_req_priv_t	ior_priv;
 	sam_osd_req_priv_t	*iorp = &ior_priv;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
-	uint64_t		numobj;
-	uint64_t		pglistsize;
-	uint64_t		*objlist;
-	uint64_t		*objlist_save;
+	sam_objlist_page_t	*objlist;
 	osd_req_t		*reqp = NULL;
 	sam_di_osd_t		*oip;
 	struct sam_inode_ext	*eip;
-	sam_osd_ext_inode_t	*oep;
+	sam_id_t		ext_id;
 	int			ord;
 	int			n, i;
 	int			num_group;
@@ -984,21 +986,19 @@ sam_create_object_id(
 
 	/*
 	 * Set up the create request and add in the Get Page Attributes
-	 * to get the list of object ids created.
+	 * to create an object ID.
 	 */
-	numobj = 1;
-	pglistsize = sizeof (struct sam_objlist_page) +
-	    ((sizeof (uint64_t) * numobj));
-	if ((objlist = (uint64_t *)kmem_alloc(pglistsize, KM_SLEEP)) == NULL) {
+	if ((objlist = (sam_objlist_page_t *)kmem_alloc(
+	    sizeof (sam_objlist_page_t), KM_SLEEP)) == NULL) {
 		return (ENOMEM);
 	}
-	objlist_save = objlist;
 	oip = (sam_di_osd_t *)(void *)&dp->extent[2];
 	ord = dp->unit;
 	obj_pt_type = mp->mi.m_fs[ord].part.pt_type;
+	sam_osd_setup_private(iorp, mp);
 
 	/*
-	 * Set the stripe width in num_group and get an optional inode extent.
+	 * Set the stripe width in num_group and get optional inode extent(s).
 	 */
 	if (error = sam_osd_inode_extent(mp, dp, &num_group)) {
 		goto fini;
@@ -1009,68 +1009,58 @@ sam_create_object_id(
 	 */
 	n = 0;
 	i = 0;
+	ext_id = oip->ext_id;
 	while (n < num_group) {
+		sam_id_attr_t	x;
+		uint64_t object_id;
+
 		reqp = osd_setup_create_object((void *)mp->mi.m_fs[ord].oh,
-		    partid, 0, numobj);
+		    partid, 0, 1);
 		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
 		}
-
-		objlist = objlist_save;
 		osd_add_get_page_attr_to_req(reqp,
 		    OSD_SAMQFS_VENDOR_CREATED_OBJECTS_LIST_PAGE,
-		    pglistsize, (void *) objlist);
-		sam_osd_setup_private(iorp);
+		    sizeof (sam_objlist_page_t), (void *) objlist);
 		rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 		if (rc != OSD_SUCCESS) {
-			error = sam_osd_errno(rc, iorp);
-			sam_osd_remove_private(iorp);
+			error = sam_osd_rc(rc);
 			break;
 		}
 		sam_osd_obj_req_wait(iorp);
-		if (iorp->result.err_code == OSD_SUCCESS) {
-			sam_id_attr_t	x;
-			uint64_t obj_id;
-
-			/*
-			 * Skip sam_objlist_page header.
-			 */
-			objlist++;
-			obj_id = BE_64(*objlist);
-			if (n < SAM_MAX_OSD_DIRECT) {
-				oip->obj_id[i] = obj_id;
-				oip->ord[i] = (ushort_t)ord;
-			} else {
-				if (bp == NULL) {
-					i = 0;
-					if (error = sam_read_ino(mp,
-					    oip->ext_id.ino, &bp,
-					    (struct sam_perm_inode **)&eip)) {
-						sam_osd_remove_private(iorp);
-						goto fini;
-					}
-					oep = (sam_osd_ext_inode_t *)
-					    &eip->ext.obj;
-				}
-				oep->obj_id[i] = obj_id;
-				oep->ord[i] = (ushort_t)ord;
-			}
-			dp->rm.info.obj.num_group = ++n;
-			i++;
-
-			/*
-			 * Replace OSD_USER_OBJECT_INFORMATION_USERNAME
-			 * with QFS vendor specific attribute for ino/gen.
-			 */
-			x.id.ino = BE_32(dp->id.ino);
-			x.id.gen = BE_32(dp->id.gen);
-			error = sam_set_user_object_attr(mp, dp, ord,
-			    obj_id, OSD_USER_OBJECT_INFO_USERNAME, x.attr);
-		} else {
-			error = sam_osd_errno(iorp->result.err_code, iorp);
+		if ((error = iorp->error) != 0) {
+			break;
 		}
-		sam_osd_remove_private(iorp);
+		object_id = BE_64(objlist->solp_object_id[0]);
+		if (n < SAM_OSD_DIRECT) {
+			oip->obj_id[n] = object_id;
+			oip->ord[n] = (ushort_t)ord;
+		} else {
+			if ((error = sam_get_object_id_ext(mp, dp, n, ext_id,
+			    &bp, &eip))) {
+				break;
+			}
+			eip->ext.obj.obj_id[i] = object_id;
+			eip->ext.obj.ord[i] = (ushort_t)ord;
+			i++;
+			if (i >= SAM_OSD_EXTENT) {
+				ext_id = eip->hdr.next_id;
+				bdwrite(bp);
+				bp = NULL;
+				i = 0;
+			}
+		}
+		dp->rm.info.obj.num_group = ++n;
+
+		/*
+		 * Replace OSD_USER_OBJECT_INFORMATION_USERNAME
+		 * w/ QFS vendor specific attribute for ino/gen.
+		 */
+		x.id.ino = BE_32(dp->id.ino);
+		x.id.gen = BE_32(dp->id.gen);
+		error = sam_set_user_object_attr(mp, dp, ord,
+		    object_id, OSD_USER_OBJECT_INFO_USERNAME, x.attr);
 		if (error) {
 			break;
 		}
@@ -1092,14 +1082,69 @@ sam_create_object_id(
 		}
 	}
 fini:
-	kmem_free(objlist_save, pglistsize);
+	sam_osd_remove_private(iorp);
+	kmem_free(objlist, sizeof (sam_objlist_page_t));
 	if (bp) {
 		bdwrite(bp);
 	}
 	if (reqp) {
-		(void) osd_free_req(reqp);
+		osd_free_req(reqp);
 	}
 	return (error);
+}
+
+
+/*
+ * ----- sam_get_object_id_ext - Get object inode extension.
+ */
+static int
+sam_get_object_id_ext(
+	sam_mount_t		*mp,	/* Pointer to the mount table */
+	struct sam_disk_inode	*dp,	/* Pointer to disk inode */
+	int			n,	/* Current index */
+	sam_id_t		eid,	/* Ext inode */
+	buf_t			**bpp,	/* Ptr ptr to buffer */
+	struct sam_inode_ext	**eipp)	/* Ptr ptr to inode ext */
+{
+	int		n_ext;
+	buf_t		*bp;
+	struct sam_inode_ext *eip;
+	int		error;
+
+	bp = *bpp;
+	eip = *eipp;
+	n_ext = (n - SAM_OSD_DIRECT + SAM_OSD_EXTENT) / SAM_OSD_EXTENT;
+	if (bp != NULL) {
+		if (n_ext == (eip->hdr.mode & S_IFORD)) {
+			return (0);
+		}
+		dcmn_err((CE_WARN, "SAM-QFS: %s: 1. Get Ext"
+		    " ino=%d.%d, n_ext=%d, cnt=%x, %d.%d\n",
+		    mp->mt.fi_name, dp->id.ino, dp->id.gen,
+		    n_ext, eip->hdr.mode & S_IFORD, eip->hdr.id.ino,
+		    eip->hdr.id.gen));
+		error = EINVAL;
+		return (error);
+	}
+
+	ASSERT(eid.ino);
+	error = sam_read_ino(mp, eid.ino, &bp, (struct sam_perm_inode **)&eip);
+	if (error) {
+		return (error);
+	}
+	*bpp = bp;
+	*eipp = eip;
+	if (EXT_HDR_ERR_DP(eip, eid, dp) || !S_ISOBJ(eip->hdr.mode)) {
+		sam_req_ifsck(mp, -1, "sam_set_object_id: EXT_HDR", &dp->id);
+		return (ENOCSI);
+	}
+	if (n_ext != (eip->hdr.mode & S_IFORD)) {
+		dcmn_err((CE_WARN, "SAM-QFS: %s: 2. Get Ext"
+		    " ino=%d.%d, n_ext=%d, cnt=%x, %d.%d\n",
+		    mp->mt.fi_name, dp->id.ino, dp->id.gen, n_ext,
+		    eip->hdr.mode & S_IFORD, eip->hdr.id.ino, eip->hdr.id.gen));
+	}
+	return (0);
 }
 
 
@@ -1108,8 +1153,8 @@ fini:
  */
 static int
 sam_osd_inode_extent(
-	sam_mount_t		*mp,	/* Pointer to the mount table */
-	struct sam_disk_inode	*dp,	/* Pointer to disk inode */
+	sam_mount_t		*mp,		/* Pointer to the mount table */
+	struct sam_disk_inode	*dp,		/* Pointer to disk inode */
 	int			*num_groupp)	/* Returned stripe width */
 {
 	sam_di_osd_t *oip;
@@ -1123,13 +1168,15 @@ sam_osd_inode_extent(
 	/*
 	 * Set horizontal stripe width to setfa -h. 0 defaults to all.
 	 */
-	num_group = (dp->status.b.stripe_width) ? dp->stripe : 1;
+	num_group = (dp->status.b.stripe_width) ?
+	    dp->rm.info.obj.stripe_width : 1;
 	num_group = (num_group == 0) ? mp->mi.m_fs[unit].num_group : num_group;
-	if (num_group > SAM_MAX_OSD_DIRECT) {
-		if (num_group > SAM_MAX_OSD_STRIPE_WIDTH) {
-			num_group = SAM_MAX_OSD_STRIPE_WIDTH;
-		}
-		error = sam_alloc_inode_ext_dp(mp, dp, S_IFOBJ, 1,
+	if (num_group > SAM_OSD_DIRECT) {
+		int n_exts, ng;
+
+		ng = num_group - SAM_OSD_DIRECT;
+		n_exts = howmany(ng, SAM_OSD_EXTENT);
+		error = sam_alloc_inode_ext_dp(mp, dp, S_IFOBJ, n_exts,
 		    &oip->ext_id);
 	}
 	*num_groupp = num_group;
@@ -1158,18 +1205,16 @@ sam_remove_object_id(
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	sam_osd_setup_private(iorp);
+	sam_osd_setup_private(iorp, mp);
 
 	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
-		if (iorp->result.err_code != OSD_SUCCESS) {
-			error = sam_osd_errno(iorp->result.err_code, iorp);
-		}
+		error = iorp->error;
 	} else {
-		error = sam_osd_errno(rc, iorp);
+		error = sam_osd_rc(rc);
 	}
-	(void) osd_free_req(reqp);
+	osd_free_req(reqp);
 	sam_osd_remove_private(iorp);
 	return (error);
 }
@@ -1202,25 +1247,24 @@ sam_get_user_object_attr(
 	osd_add_get_page_attr_to_req(reqp,
 	    OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO,
 	    sizeof (sam_objinfo_page_t), (void *) attrp);
-	sam_osd_setup_private(iorp);
+	sam_osd_setup_private(iorp, mp);
 	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
-		if (iorp->result.err_code != OSD_SUCCESS) {
-			error = sam_osd_errno(iorp->result.err_code, iorp);
+		if ((error = iorp->error) != 0) {
 			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD GET attr %x"
-			    " err=%d, errno=%d, ino=%d, setattr = 0x%llx",
-			    mp->mt.fi_name, attr_num, iorp->result.err_code,
-			    error, dp->id.ino, *attrp));
+			    " rc=%d, errno=%d, ino=%d.%d, setattr = 0x%llx",
+			    mp->mt.fi_name, attr_num, iorp->err_code,
+			    error, dp->id.ino, dp->id.gen, *attrp));
 		}
 	} else {
-		error = sam_osd_errno(rc, iorp);
+		error = sam_osd_rc(rc);
 	}
 	sam_osd_remove_private(iorp);
 
 fini:
 	if (reqp) {
-		(void) osd_free_req(reqp);
+		osd_free_req(reqp);
 	}
 	return (error);
 }
@@ -1330,28 +1374,23 @@ sam_set_user_object_attr(
 	osd_add_set_page_1attr_cdb(reqp,
 	    OSD_USER_OBJECT_INFORMATION_PAGE, attr_num,
 	    sizeof (attribute), (char *)&attribute);
-	sam_osd_setup_private(iorp);
+	sam_osd_setup_private(iorp, mp);
 	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
-		if (iorp->result.err_code != OSD_SUCCESS) {
-			error = sam_osd_errno(iorp->result.err_code, iorp);
+		if ((error = iorp->error) != 0) {
 			dcmn_err((CE_WARN, "SAM-QFS: %s: 1. OSD SET attr %x"
-			    " err=%d.%d, ino=%d.%d, setattr = 0x%llx",
-			    mp->mt.fi_name, attr_num, iorp->result.err_code, rc,
+			    " rc=%d errno=%d, ino=%d.%d, setattr = 0x%llx",
+			    mp->mt.fi_name, attr_num, iorp->err_code, error,
 			    dp->id.ino, dp->id.gen, (long long)attribute));
 		}
 	} else {
-		error = sam_osd_errno(rc, iorp);
-		dcmn_err((CE_WARN, "SAM-QFS: %s: 2. OSD SET attr %x"
-		    " err=%d.%d, ino=%d.%d, setattr = 0x%llx",
-		    mp->mt.fi_name, attr_num, iorp->result.err_code, rc,
-		    dp->id.ino, dp->id.gen, (long long)attribute));
+		error = sam_osd_rc(rc);
 	}
 	sam_osd_remove_private(iorp);
 fini:
 	if (reqp) {
-		(void) osd_free_req(reqp);
+		osd_free_req(reqp);
 	}
 	return (error);
 }
@@ -1391,7 +1430,7 @@ sam_truncate_object_file(
 	 * For PURGE (remove), remove any extention inodes.
 	 */
 	if ((length == 0) && (tflag == SAM_PURGE) && oip->ext_id.ino) {
-		sam_free_inode_ext(ip, S_IFOBJ, SAM_ALL_COPIES,
+		sam_free_inode_ext_dp(ip->mp, &ip->di, S_IFOBJ, SAM_ALL_COPIES,
 		    &oip->ext_id);
 	}
 
@@ -1446,7 +1485,7 @@ int
 sam_set_end_of_obj(
 	sam_node_t *ip,		/* Pointer to the inode */
 	offset_t length,	/* File size */
-	int	update)			/* Set if update OSD LUN */
+	int	update)		/* Set if update OSD LUN */
 {
 	sam_obj_layout_t	*olp;
 	int			num_group;
@@ -1456,8 +1495,8 @@ sam_set_end_of_obj(
 
 	olp = ip->olp;
 	ASSERT(olp);
-	if ((error = sam_map_block(ip, length, 0,
-	    update ? SAM_WRITE : SAM_ALLOC_BLOCK, &ioblk, CRED()))) {
+	if ((error = sam_map_osd(ip, length, 0,
+	    update ? SAM_WRITE : SAM_ALLOC_BLOCK, &ioblk))) {
 		return (error);
 	}
 	num_group = ip->di.rm.info.obj.num_group;
@@ -1471,15 +1510,13 @@ sam_set_end_of_obj(
 		} else {
 			eoo = ioblk.blk_off;
 		}
-		if (olp->ol[i].eoo != eoo) {
-			if (update) {
-				error = sam_set_user_object_attr(ip->mp,
-				    &ip->di, olp->ol[i].ord, olp->ol[i].obj_id,
-				    OSD_USER_OBJECT_INFO_LOGICAL_LENGTH,
-				    BE_64((int64_t)eoo));
-			}
-			olp->ol[i].eoo = eoo;
+		if (update && (olp->ol[i].eoo != eoo)) {
+			error = sam_set_user_object_attr(ip->mp,
+			    &ip->di, olp->ol[i].ord, olp->ol[i].obj_id,
+			    OSD_USER_OBJECT_INFO_LOGICAL_LENGTH,
+			    BE_64((int64_t)eoo));
 		}
+		olp->ol[i].eoo = eoo;
 	}
 	return (error);
 }
@@ -1508,7 +1545,7 @@ sam_map_osd(
 				/* SAM_WRITE_MMAP if memory mapped write. */
 				/* SAM_WRITE_BLOCK if get block */
 				/* SAM_WRITE_SPARSE if sparse block */
-				/* SAM_ALLOC_BLOCK alloc & don't update size */
+				/* SAM_ALLOC_BLOCK don't update size */
 				/* SAM_ALLOC_BITMAP alloc & bld bit map(srvr) */
 				/* SAM_ALLOC_ZERO allocate and zero. */
 	sam_ioblk_t *iop)	/* Ioblk array. */
@@ -1578,7 +1615,7 @@ sam_map_osd(
 	}
 
 	/*
-	 * If writing, increment filesize if no error.
+	 * If writing, increment filesize if no error & flag < SAM_WRITE_SPARSE.
 	 */
 	if (((offset + count) < ip->size) || (flag >= SAM_WRITE_SPARSE)) {
 		return (0);
@@ -1612,8 +1649,8 @@ sam_osd_create_obj_layout(sam_node_t *ip)
 {
 	sam_di_osd_t		*oip;
 	sam_obj_layout_t	*olp;
-	sam_osd_ext_inode_t	*oep;
 	struct sam_inode_ext	*eip;
+	sam_id_t		ext_id;
 	buf_t			*bp = NULL;
 	int			n, i;
 	int			num_group;
@@ -1642,29 +1679,35 @@ sam_osd_create_obj_layout(sam_node_t *ip)
 	if (olp == NULL) {
 		return (ENOMEM);
 	}
-	olp->num_group = num_group;
 	oip = (sam_di_osd_t *)(void *)&ip->di.extent[2];
+	i = 0;
+	ext_id = oip->ext_id;
 	for (n = 0; n < num_group; n++) {
-		if (n < SAM_MAX_OSD_DIRECT) {
+		if (n < SAM_OSD_DIRECT) {
 			olp->ol[n].obj_id = oip->obj_id[n];
 			olp->ol[n].eoo = 0;
 			olp->ol[n].ord = oip->ord[n];
 		} else {
-			if (bp == NULL) {
-				if (error = sam_read_ino(ip->mp,
-				    oip->ext_id.ino, &bp,
-				    (struct sam_perm_inode **)&eip)) {
-					return (error);
+			if ((error = sam_get_object_id_ext(ip->mp, &ip->di,
+			    n, ext_id, &bp, &eip))) {
+				if (bp) {
+					brelse(bp);
 				}
-				oep = (sam_osd_ext_inode_t *)&eip->ext.obj;
+				return (error);
+			}
+			olp->ol[n].obj_id = eip->ext.obj.obj_id[i];
+			olp->ol[n].eoo = 0;
+			olp->ol[n].ord = eip->ext.obj.ord[i];
+			i++;
+			if (i >= SAM_OSD_EXTENT) {
+				ext_id = eip->hdr.next_id;
+				brelse(bp);
+				bp = NULL;
 				i = 0;
 			}
-			olp->ol[n].obj_id = oep->obj_id[i];
-			olp->ol[n].eoo = 0;
-			olp->ol[n].ord = oep->ord[i];
-			i++;
 		}
 	}
+	olp->num_group = num_group;
 	if (bp) {
 		brelse(bp);
 	}
@@ -1750,6 +1793,7 @@ sam_close_osd_device(
 /* ARGSUSED */
 int
 sam_issue_object_io(
+	sam_mount_t *mp,
 	sam_osd_handle_t oh,
 	uint32_t command,
 	uint64_t object_id,
@@ -1830,6 +1874,7 @@ sam_pg_object_sync_done(
 /* ARGSUSED */
 int
 sam_create_priv_object_id(
+	sam_mount_t		*mp,
 	sam_osd_handle_t	oh,
 	uint64_t		object_id)
 {

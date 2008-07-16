@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.204 $"
+#pragma ident "$Revision: 1.205 $"
 #endif
 
 #ifdef linux
@@ -1016,15 +1016,18 @@ int sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type);
 int sam_set_operation_nb(struct sam_mount *mp);
 void sam_unset_operation_nb(struct sam_mount *mp);
 
-int sam_issue_object_io(sam_osd_handle_t oh, uint32_t command,
-	uint64_t user_obj_id, enum uio_seg seg, char *data, offset_t offset,
-	offset_t length);
-int sam_create_priv_object_id(sam_osd_handle_t oh, uint64_t user_obj_id);
+int sam_issue_object_io(struct sam_mount *mp, sam_osd_handle_t oh,
+	uint32_t command, uint64_t user_obj_id, enum uio_seg seg, char *data,
+	offset_t offset, offset_t length);
+int sam_create_priv_object_id(struct sam_mount *mp, sam_osd_handle_t oh,
+	uint64_t user_obj_id);
 int sam_create_object_id(struct sam_mount *mp, struct sam_disk_inode *dp);
 int sam_remove_object_id(struct sam_mount *mp, uint64_t user_obj_id,
 	uchar_t unit);
 int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
 	offset_t size, offset_t length);
+int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
+	sam_map_t flag, struct sam_ioblk *iop);
 int sam_set_end_of_obj(sam_node_t *ip, offset_t length, int update);
 int sam_osd_create_obj_layout(sam_node_t *ip);
 void sam_osd_destroy_obj_layout(sam_node_t *ip);

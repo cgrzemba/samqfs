@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 
 /* ANSI headers. */
@@ -717,10 +717,10 @@ dis_inode_ext(struct sam_inode_ext *node)	/* Inode extension image */
 		break;
 	case S_IFOBJ:
 		ln = fl;
-		Mvprintw(ln++, 40, "%.16llx object_id",
-		    node->ext.obj.obj_id[0]);
-		Mvprintw(ln++, 40, "%.4x      (%d)",
-		    node->ext.obj.ord[0], node->ext.obj.ord[0]);
+		for (i = 0; i < SAM_OSD_EXTENT; i++) {
+			Mvprintw(ln++, 40, "%.16llx.%.4x object_id.ord",
+			    node->ext.obj.obj_id[i], node->ext.obj.ord[i]);
+		}
 		break;
 	default:
 		break;
@@ -894,7 +894,7 @@ dis_inode_file(
 
 		Mvprintw(ln++, 0, "Object IDs  ext_id: %d.%d", oip->ext_id.ino,
 		    oip->ext_id.gen);
-		for (i = 0; i < SAM_MAX_OSD_DIRECT; i++) {
+		for (i = 0; i < SAM_OSD_DIRECT; i++) {
 			if (i % 3 == 0) {
 				Mvprintw(ln++, 0, "%.2d_ ", i);
 			}

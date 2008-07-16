@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.93 $"
+#pragma ident "$Revision: 1.94 $"
 
 #include "sam/osversion.h"
 
@@ -677,8 +677,9 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 					error = EINVAL;
 					break;
 				}
-				ip->di.stripe = (char)stripe;
 				ip->di.stride = 0;
+				ip->di.rm.info.obj.stripe_width = stripe;
+				ip->di.stripe = 0;
 				status.stripe_width = 1;
 				break;
 			case 'v': {
