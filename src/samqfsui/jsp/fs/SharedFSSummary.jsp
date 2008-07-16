@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.5 2008/06/25 21:03:55 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.6 2008/07/16 23:45:03 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -44,6 +44,7 @@
 <ui:page id="page">
 <ui:html id="html">
 <ui:head id="head" title="#{samBundle['SharedFS.title']}">
+    <ui:script url="/js/popuphelper.js"/>
     <ui:script url="/js/fs/SharedFS.js"/>
 </ui:head>
 <ui:body id="SharedFSBody">
@@ -65,16 +66,14 @@
                 text="#{samBundle['SharedFS.operation.addclients']}"
                 primary="true"
                 immediate="true"
-                onClick="alert('This will launch the Add Clients Wizard. Stay tuned!'); return false;"
-                actionListener="#{SharedFSBean.handleAddClients}" />
+                onClick="return launchAddClientsWizard(this);"/>
             <ui:button
                 id="ButtonAddSN"
                 text="#{samBundle['SharedFS.operation.addsn']}"
                 primary="true"
                 immediate="true"
                 rendered="#{SharedFSBean.showStorageNodes}"
-                onClick="alert('This will launch the Add Storage Nodes Wizard. Stay tuned!'); return false;"
-                actionListener="#{SharedFSBean.handleAddStorageNodes}" />
+                onClick="launchAddStorageNodeWizard(this); return false;"/>
             <ui:button
                 id="ButtonViewPolicies"
                 text="#{samBundle['SharedFS.operation.viewpolicies']}"
@@ -345,6 +344,10 @@
     </ui:propertySheet>
     </ui:contentPageTitle>
     <ui:hiddenField id="Time" value="#{SharedFSBean.timeSummary}"/>
+    <ui:hiddenField id="hiddenServerName" value="#{SharedFSBean.hiddenServerName}"/>
+    <ui:hiddenField id="hiddenFSName" value="#{SharedFSBean.hiddenFSName}"/>
+    <ui:hiddenField id="hiddenMountPoint" value="#{SharedFSBean.hiddenMountPoint}"/>
+    <ui:hiddenField id="hiddenIsMDSMounted" value="#{SharedFSBean.hiddenIsMDSMounted}"/>
     <ui:hiddenField id="ConfirmUnmountFS" value="#{SharedFSBean.confirmUnmountFS}"/>
 </ui:form>
 </ui:body>

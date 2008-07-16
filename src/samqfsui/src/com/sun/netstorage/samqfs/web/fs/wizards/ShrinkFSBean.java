@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.3 2008/07/16 17:09:31 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.4 2008/07/16 23:45:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -158,6 +158,11 @@ public class ShrinkFSBean implements Serializable {
     }
 
     private DiskCache [] getAvailUnits() throws SamFSException {
+        // Only calls to the backend if we know the step is going to render
+        if (!selectedMethodMove) {
+            return new DiskCache[0];
+        }
+
         TraceUtil.trace3("REMOTE CALL: Getting avail units from fs!");
 
         SamQFSSystemModel sysModel = SamUtil.getModel(JSFUtil.getServerName());
@@ -385,7 +390,7 @@ System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
     }
 
     public TableDataProvider getAvailableSummaryList() {
-        if (availUnits == null) {
+        if (availUnits == null || availUnits.length == 0) {
             try {
                 availUnits = getAvailUnits();
             } catch (SamFSException samEx) {

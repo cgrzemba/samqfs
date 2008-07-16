@@ -27,38 +27,20 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddStorageNode.js,v 1.1 2008/07/16 17:09:30 ronaldso Exp $
+// ident	$Id: AddStorageNode.js,v 1.2 2008/07/16 23:45:03 ronaldso Exp $
 
 var prefix = "AddStorageNodeForm:AddStorageNodeWizard";
 
 function handleWizardDismiss() {
-    var parentForm = opener.document.forms[0];
-
-    var popupHandler = ".RefreshHref";
-
-    // retrieve the container view name by removing the word form from the
-    // parent form name
-    var pfArray = parentForm.name.split("Form");
-    popupHandler = pfArray[0] + popupHandler;
-
-    // retrieve the action that loaded the parent form and remove the original
-    // query string
-    var pfaArray = parentForm.action.split("?");
-    var action = pfaArray[0];
-
-    // retrieve the page session string from the parent page and append it to
-    // the query string
-    var psString = parentForm.elements["jato.pageSession"].value;
-
-    var queryString = "?" + popupHandler + "=&jato.pageSession=" + psString;
-
-    // set the new action and submit the form
-    parentForm.action = action + queryString;
-
-    // finally submit the form
-    parentForm.submit();
-
-    window.close();
+    var parentFormId = opener.document.forms[0].id;
+    var url =
+        "SharedFSForm" == parentFormId ?
+            "/samqfsui/faces/jsp/fs/SharedFSSummary.jsp" :
+            "/samqfsui/faces/jsp/fs/SharedFSStorageNode.jsp";
+    Wizard_AddStorageNodeForm_AddStorageNodeWizard.closeAndForward(
+          parentFormId,
+          url,
+          true);
 }
 
 function getExcludeTable() {

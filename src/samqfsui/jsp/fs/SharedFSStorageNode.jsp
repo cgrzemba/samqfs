@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSStorageNode.jsp,v 1.4 2008/06/25 21:03:55 ronaldso Exp $ -->
+<!-- $Id: SharedFSStorageNode.jsp,v 1.5 2008/07/16 23:45:03 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -44,6 +44,7 @@
 <ui:page>
 <ui:html>
 <ui:head title="#{samBundle['SharedFS.pagetitle.sn']}">
+    <ui:script url="/js/popuphelper.js"/>
     <ui:script url="/js/fs/SharedFS.js"/>
 </ui:head>
 <ui:body id="SNBody">
@@ -78,7 +79,7 @@
             <f:subview id="actionsTop">
                 <ui:button id="buttonAdd"
                            text="#{samBundle['common.button.add']}"
-                           onClick="alert('Coming Soon'); return false;"/>
+                           onClick="launchAddStorageNodeWizard(this); return false;"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
                            onClick="if (handleButtonRemove(0) == false) return false;"
@@ -193,6 +194,8 @@
     <ui:hiddenField id="ConfirmDisableSn" value="#{SharedFSBean.confirmDisableSn}"/>
     <ui:hiddenField id="ConfirmUnmountSn" value="#{SharedFSBean.confirmUnmountSn}"/>
     <ui:hiddenField id="ConfirmClearFaultSn" value="#{SharedFSBean.confirmClearFaultSn}"/>
+    <ui:hiddenField id="hiddenServerName" value="#{SharedFSBean.hiddenServerName}"/>
+    <ui:hiddenField id="hiddenFSName" value="#{SharedFSBean.hiddenFSName}"/>
 </ui:form>
 </ui:body>
 </ui:html>

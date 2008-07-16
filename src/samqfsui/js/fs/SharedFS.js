@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.2 2008/06/18 20:28:06 ronaldso Exp $
+// ident	$Id: SharedFS.js,v 1.3 2008/07/16 23:45:03 ronaldso Exp $
 
 
 // Used by drop down menu in summary page
@@ -167,6 +167,51 @@ function handleOperation(client, allowMultiple) {
     }
 }
 
+function getServerName(formName) {
+    return document.getElementById(formName + ":" + "hiddenServerName").value;
+}
+
+function getFSName(formName) {
+    return document.getElementById(formName + ":" + "hiddenFSName").value;
+}
+
+function launchAddStorageNodeWizard(button) {
+    var infoArr = button.name.split(":");
+    var formName = infoArr[0];
+    var fsName = getFSName(formName);
+    var params = "&SAMQFS_FS_NAME=" + fsName;
+    var name = "addsn_" + fsName;
+    var uri = "/faces/jsp/fs/wizards/AddStorageNodeWizard.jsp";
+
+    var win = launchPopup(
+                uri, name, getServerName(formName),
+                SIZE_WIZARD, encodeURI(params));
+    win.focus();
+    return false;
+
+}
+
+/**
+ * Remove the following method when the new wizard (Add Clients) is ready
+ */
+function launchAddClientsWizard(button) {
+    var infoArr = button.name.split(":");
+    var formName = infoArr[0];
+
+    alert("Coming soon!");
+    return false;
+}
+
+function getMountPoint(formName) {
+    return document.getElementById(formName + ":" + "hiddenMountPoint").value;
+}
+
+function isMDSMounted(formName) {
+    return document.getElementById(formName + ":" + "hiddenIsMDSMounted").value;
+}
+
+// REMOVE ENDS HERE ///////////////////////////////////////////////////////////
+
 // Retrieve error message.
 // 0 ==> None selected
 // 1 ==> More than one selected
@@ -211,7 +256,7 @@ function getMessage(page, choice) {
         default:
             return "";
     }
-                      
+
 }
 
 // Resetting drop down menu to select top selection

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.8 2008/07/16 17:09:31 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.9 2008/07/16 23:45:03 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -127,6 +127,12 @@ public class SharedFSBean implements Serializable {
     protected String snTableSelectedOption = null;
     protected String snTableFilterSelectedOption = null;
 
+    /** Hidden field for javascript */
+    protected String hiddenServerName = null;
+    protected String hiddenFSName = null;
+    protected String hiddenMountPoint = null;
+    protected String hiddenIsMDSMounted = null;
+
     private SharedFSTabBean tabBean = null;
     private SharedFSSummaryBean summaryBean = null;
     private SharedFSClientBean clientBean = null;
@@ -166,6 +172,11 @@ public class SharedFSBean implements Serializable {
                 FileSystem thisFS = getFileSystem();
                 showArchive = thisFS.getArchivingType() == FileSystem.ARCHIVING;
                 mounted = thisFS.getState() == FileSystem.MOUNTED;
+
+                // TODO: Remove if new (Add Client) wizard is ready
+                hiddenMountPoint = thisFS.getMountPoint();
+                hiddenIsMDSMounted = Boolean.toString(mounted);
+                ////////////////////////////////////////////////////
 
                 for (int i = 0; i < infos.length; i++) {
                     if (infos[i].isStorageNodes()) {
@@ -378,14 +389,6 @@ sfe.printStackTrace();
         this.jumpMenuSelectedOption = jumpMenuSelectedOption;
     }
 
-    public void handleAddClients(ActionEvent event) {
-        System.out.println("handleAddClients() called!");
-    }
-
-    public void handleAddStorageNodes(ActionEvent event) {
-        System.out.println("handleAddStorageNodes() called!");
-    }
-
     public void handleViewPolicies(ActionEvent event) {
         System.out.println("handleViewPolicies() called!");
 
@@ -526,6 +529,7 @@ sfe.printStackTrace();
 
     ////////////////////////////////////////////////////////////////////////////
     // Helper methods
+
     private String getFSName() {
         return FSUtil.getFSName();
     }
@@ -748,6 +752,40 @@ sfe.printStackTrace();
         this.confirmUnmountSn = confirmUnmountSn;
     }
 
+    public String getHiddenServerName() {
+        hiddenServerName = JSFUtil.getServerName();
+        return hiddenServerName;
+    }
+
+    public void setHiddenServerName(String hiddenServerName) {
+        this.hiddenServerName = hiddenServerName;
+    }
+
+    public String getHiddenFSName() {
+        hiddenFSName = FSUtil.getFSName();
+        return hiddenFSName;
+    }
+
+    public void setHiddenFSName(String hiddenFSName) {
+        this.hiddenFSName = hiddenFSName;
+    }
+
+    public String getHiddenIsMDSMounted() {
+        return hiddenIsMDSMounted;
+    }
+
+    public void setHiddenIsMDSMounted(String hiddenIsMDSMounted) {
+        this.hiddenIsMDSMounted = hiddenIsMDSMounted;
+    }
+
+    public String getHiddenMountPoint() {
+        return hiddenMountPoint;
+    }
+
+    public void setHiddenMountPoint(String hiddenMountPoint) {
+        this.hiddenMountPoint = hiddenMountPoint;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Client Summary Page Methods (SharedFSClient.jsp)\
     public String getClientTableTitle() {
@@ -770,7 +808,7 @@ sfe.printStackTrace();
 
     public void handleRemoveClient(ActionEvent event) {
         String [] selectedClients = getSelectedKeys(true);
-;
+
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();

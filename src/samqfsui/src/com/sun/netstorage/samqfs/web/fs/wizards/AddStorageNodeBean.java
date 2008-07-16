@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddStorageNodeBean.java,v 1.1 2008/07/16 17:09:31 ronaldso Exp $
+// ident        $Id: AddStorageNodeBean.java,v 1.2 2008/07/16 23:45:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -135,7 +135,7 @@ public class AddStorageNodeBean implements Serializable {
 
     ////////////////////////////////////////////////////////////////////////////
     // Remote Calls
-    
+
     // TODO: Replace with real API call!
     private String [] getGroupNames() {
         return new String [] {
@@ -145,10 +145,15 @@ public class AddStorageNodeBean implements Serializable {
     }
 
     private DiskCache [] getAvailUnits() throws SamFSException {
+System.out.println("getAvailUnits called! " + textHostNameIP);
+        if (null == textHostNameIP){
+            return new DiskCache[0];
+        }
+
         TraceUtil.trace3("REMOTE CALL: Getting avail units from fs!");
 
         // TODO: sysModel for the host specified in first step
-        SamQFSSystemModel sysModel = SamUtil.getModel(JSFUtil.getServerName());
+        SamQFSSystemModel sysModel = SamUtil.getModel(textHostNameIP);
         if (sysModel == null) {
             throw new SamFSException(null, -2501);
         }
@@ -391,7 +396,7 @@ public class AddStorageNodeBean implements Serializable {
     }
 
     public TableDataProvider getMetaSummaryList() {
-        if (availUnits == null) {
+        if (availUnits == null || availUnits.length == 0) {
             try {
                 availUnits = getAvailUnits();
             } catch (SamFSException samEx) {
@@ -576,7 +581,7 @@ public class AddStorageNodeBean implements Serializable {
                 "addsn.summary.device",
                 new String [] {
                     Integer.toString(selectedMetaDevices.length),
-                    "1GB"});
+                    "<>"});
         return textSelectedMDevice;
     }
 
@@ -744,7 +749,7 @@ System.out.println("handleEvent called! " + event.getEvent());
             String id = step.getId();
 System.out.println("NEXT: ID is " + id);
             if (STEP_SPECIFY_HOST.equals(id)) {
-                // no op yet
+                return processSpecifyHost(event);
             } else if (STEP_SPECIFY_GROUP.equals(id)) {
                 // no op yet
             } else if (STEP_CREATE_GROUP.equals(id)) {
@@ -800,6 +805,25 @@ System.out.println("NEXT: ID is " + id);
             }
 
             return true;
+        }
+
+        private boolean processSpecifyHost(WizardEvent event) {
+System.out.println("process: textHostNameIP is " + textHostNameIP);
+
+            clearAlertInfo();
+
+            SamQFSSystemModel hostModel = null;
+            try {
+                hostModel = SamUtil.getModel(textHostNameIP);
+            } catch (SamFSException samEx) {
+                samEx.printStackTrace();
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage("common.specifydevice.failed"),
+                    samEx.getMessage());
+            }
+
+            return hostModel != null;
         }
 
         private boolean processSpecifyMetaDevices(WizardEvent event) {
