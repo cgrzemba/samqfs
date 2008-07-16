@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include "sam/osversion.h"
 
@@ -1456,7 +1456,8 @@ sam_set_end_of_obj(
 
 	olp = ip->olp;
 	ASSERT(olp);
-	if ((error = sam_map_block(ip, length, 0, SAM_WRITE, &ioblk, CRED()))) {
+	if ((error = sam_map_block(ip, length, 0,
+	    update ? SAM_WRITE : SAM_ALLOC_BLOCK, &ioblk, CRED()))) {
 		return (error);
 	}
 	num_group = ip->di.rm.info.obj.num_group;
@@ -1579,10 +1580,10 @@ sam_map_osd(
 	/*
 	 * If writing, increment filesize if no error.
 	 */
-	ASSERT(RW_WRITE_HELD(&ip->inode_rwl) || (flag == SAM_WR_DIRECT_IO));
 	if (((offset + count) < ip->size) || (flag >= SAM_WRITE_SPARSE)) {
 		return (0);
 	}
+	ASSERT(RW_WRITE_HELD(&ip->inode_rwl) || (flag == SAM_WR_DIRECT_IO));
 	if (flag == SAM_WR_DIRECT_IO) {
 		mutex_enter(&ip->fl_mutex);
 	}
