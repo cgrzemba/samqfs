@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.168 $"
+#pragma ident "$Revision: 1.169 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1243,12 +1243,24 @@ sam_process_callout_request(sam_mount_t *mp, sam_san_message_t *msg)
 			timeo = arg->p.relinquish_lease.timeo;
 			mutex_enter(&ip->ilease_mutex);
 			for (ltype = 0; ltype < MAX_EXPIRING_LEASES; ltype++) {
+				int64_t new_leasetime;
+
 				if (lease_mask & (1 << ltype)) {
-					ip->cl_leasetime[ltype] =
-					    lbolt + (hz * timeo);
+					/*
+					 * Calculate a new lease expiration
+					 * time. If the new time is earlier
+					 * than the current expiration
+					 * set it in leasetime.
+					 */
+					new_leasetime = lbolt + (hz * timeo);
+					if (new_leasetime <
+					    ip->cl_leasetime[ltype]) {
+						ip->cl_leasetime[ltype] =
+						    new_leasetime;
+					}
 				}
 			}
-			ip->cl_short_leases |= (lease_mask & ~ip->cl_leases);
+			ip->cl_short_leases |= (lease_mask & ip->cl_leases);
 			mutex_exit(&ip->ilease_mutex);
 			sam_taskq_add(sam_expire_client_leases, mp, NULL,
 			    (hz * timeo));
