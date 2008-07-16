@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardBlockAllocation.jsp,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewWizardBlockAllocation.jsp,v 1.2 2008/07/16 21:55:55 kilemba Exp $
 --%>
 
 <%@ page language="java" %> 
@@ -36,10 +36,9 @@
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <script language="javascript" src="/samqfsui/js/samqfsui.js"></script>
-<!--
 <script language="javascript" src="/samqfsui/js/fs/wizards/blockallocation.js">
 </script>
--->
+
 <jato:pagelet>
 
 <cc:i18nbundle id="samBundle"
@@ -55,7 +54,11 @@
               bundleID="samBundle"
               defaultValue="FSWizard.new.blockallocation.method"/>
 </td><td>
+    <cc:text name="allocationMethodText"
+             bundleID="samBundle"
+             defaultValue="FSWizard.new.allocationmethod.single" />
     <cc:radiobutton name="allocationMethodRadio"
+                    onChange="return handleAllocationMethodChange(this);"
                     styleLevel="3"
                     bundleID="samBundle" />
     <div id="strippedgroup" style="text-indent:20px">

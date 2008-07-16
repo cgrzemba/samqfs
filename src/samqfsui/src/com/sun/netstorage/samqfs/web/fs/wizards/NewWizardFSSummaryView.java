@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardFSSummaryView.java,v 1.28 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: NewWizardFSSummaryView.java,v 1.29 2008/07/16 21:55:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -98,7 +98,8 @@ public class NewWizardFSSummaryView extends RequestHandlingViewBase
     public static final String CHILD_ALERT = "Alert";
 
     private boolean previous_error = false;
-    private String sharedChecked = null;
+    // private String sharedChecked = null;
+    private boolean sharedEnabled = false;
 
     /**
      * Construct an instance with the specified properties.
@@ -212,11 +213,16 @@ public class NewWizardFSSummaryView extends RequestHandlingViewBase
         String url = null;
 
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
+        Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
+        sharedEnabled = temp.booleanValue();
+
+        /*
         sharedChecked = (String) wm.getWizardValue(
             NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
-
+        */
         if (!previous_error) {
-            if (sharedChecked != null && sharedChecked.equals("true")) {
+            // if (sharedChecked != null && sharedChecked.equals("true")) {
+            if (sharedEnabled) {
                 url = "/jsp/fs/NewWizardSharedFSSummary.jsp";
             } else {
                 url = "/jsp/fs/NewWizardFSSummary.jsp";
@@ -235,8 +241,15 @@ public class NewWizardFSSummaryView extends RequestHandlingViewBase
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
         String serverName = (String)
             wizardModel.getValue(Constants.Wizard.SERVER_NAME);
+
+        Boolean temp =
+            (Boolean)wizardModel.getValue(CreateFSWizardImpl.POPUP_SHARED);
+        sharedEnabled = temp.booleanValue();
+
+        /*
         sharedChecked = (String) wizardModel.getWizardValue(
             NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
+        */
 
         String dataDevice = (String) wizardModel.getWizardValue(
             NewWizardQFSSummaryView.CHILD_DATA_FIELD);
@@ -299,33 +312,27 @@ public class NewWizardFSSummaryView extends RequestHandlingViewBase
         TraceUtil.trace3("Exiting");
     }
 
-    private void assignFSTypeValue(SamWizardModel wizardModel) {
+    private void assignFSTypeValue(SamWizardModel wm) {
         String desc = null;
-        String fsTypeVal = (String) wizardModel.getValue(
-            NewWizardFSNameView.CHILD_FSTYPE_RADIOBUTTON);
-
-        if (fsTypeVal.equals("FSWizard.new.fstype.qfs")) {
+        String type = (String)wm.getValue(CreateFSWizardImpl.FSTYPE_KEY);
+        if (CreateFSWizardImpl.FSTYPE_QFS.equals(type)) {
             // QFS, check the type further
+            Boolean archiveEnabled =
+                (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_ARCHIVING);
+            Boolean sharedEnabled =
+                (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
 
-            boolean isArchive = Boolean.valueOf(
-                (String) wizardModel.getValue(
-                    NewWizardFSNameView.CHILD_ARCHIVE_CHECKBOX)).booleanValue();
-            boolean isShared = Boolean.valueOf(
-                (String) wizardModel.getValue(
-                    NewWizardFSNameView.CHILD_SHARED_CHECKBOX)).booleanValue();
-
-            if (isShared) {
-                // shared
+            if (sharedEnabled.booleanValue()) { // shared
                 desc = "filesystem.desc.qfs.server";
             } else {
                 // Non-shared
-                if (isArchive) {
+                if (archiveEnabled.booleanValue()) {
                     desc = "filesystem.desc.qfs.archiving";
                 } else {
                     desc = "filesystem.desc.qfs";
                 }
             }
-        } else if (fsTypeVal.equals("FSWizard.new.fstype.ufs")) {
+        } else if (CreateFSWizardImpl.FSTYPE_UFS.equals(type)) {
             // UFS
             desc = "filesystem.desc.ufs";
         } else {
@@ -364,14 +371,12 @@ public class NewWizardFSSummaryView extends RequestHandlingViewBase
         Boolean value = (Boolean)RequestManager.getRequest().getAttribute(key);
         if (value == null) {
             SamWizardModel wm = (SamWizardModel)getDefaultModel();
-            String hafs_str = (String)wm.getValue(NewWizardFSNameView.HAFS);
-            String shared_str = (String)
-                wm.getValue(NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
 
-            boolean hafs = (hafs_str != null) && hafs_str.equals("true");
-            boolean shared = (shared_str != null) && shared_str.equals("true");
+            Boolean hafs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HAFS);
+            Boolean shared =
+                (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
 
-            value = new Boolean(hafs && !shared);
+            value = new Boolean(hafs.booleanValue() && !shared.booleanValue());
             RequestManager.getRequest().setAttribute(key, value);
         }
 

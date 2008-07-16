@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummary.js,v 1.27 2008/07/09 22:20:55 kilemba Exp $
+// ident	$Id: FSSummary.js,v 1.28 2008/07/16 21:55:55 kilemba Exp $
 
 /**
  * This is the javascript file of File System Summary page
@@ -351,16 +351,16 @@ function handleFSNameClick(href) {
   var fsNameField = prefix + index + "].FSHiddenField";
   var fsName = document.FSSummaryForm.elements[fsNameField].value;
   
-  if (fsName != null &&
-      fsName.length > 5 &&
-      fsName.substring(0, 5) == "hpcfs") {
-  //if (isProtoFS == "true") {
+  //  if (fsName != null &&
+  //    fsName.length > 5 &&
+  //    fsName.substring(0, 5) == "hpcfs") {
+  if (isProtoFS == "true") {
     var url = "/samqfsui/faces/jsp/fs/ProtoFSDetails.jsp";
     var params = "?SERVER_NAME=" + getServerKey();
 
     // get the file system name
-    //var fsNameField = prefix + index + "].FSHiddenField";
-    //var fsName = document.FSSummaryForm.elements[fsNameField].value;
+    var fsNameField = prefix + index + "].FSHiddenField";
+    var fsName = document.FSSummaryForm.elements[fsNameField].value;
 
     params +="&SAMQFS_FS_NAME=" + fsName;
  

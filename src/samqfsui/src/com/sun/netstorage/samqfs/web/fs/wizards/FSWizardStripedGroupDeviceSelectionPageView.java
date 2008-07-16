@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardStripedGroupDeviceSelectionPageView.java,v 1.20 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: FSWizardStripedGroupDeviceSelectionPageView.java,v 1.21 2008/07/16 21:55:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -100,7 +100,8 @@ public class FSWizardStripedGroupDeviceSelectionPageView
 
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
         DiskCache[] devices;
-        if (sharedChecked != null && sharedChecked.equals("true")) {
+        // if (sharedChecked != null && sharedChecked.equals("true")) {
+        if (sharedEnabled) {
             devices = (SharedDiskCache[]) wizardModel.getValue(
                 Constants.Wizard.ALLOCATABLE_DEVICES);
         } else {
@@ -193,7 +194,8 @@ public class FSWizardStripedGroupDeviceSelectionPageView
             }
 
             tableModel.setValue("HiddenDevicePath", pathString);
-            if (!(sharedChecked != null && sharedChecked.equals("true"))) {
+            // if (!(sharedChecked != null && sharedChecked.equals("true"))) {
+            if (sharedEnabled) {
                 tableModel.setValue("Partition", partition);
             }
 
@@ -212,8 +214,8 @@ public class FSWizardStripedGroupDeviceSelectionPageView
 
             // If it is shared, adding available from column
             // so that the customer can know what is going on.
-            if (sharedChecked != null && sharedChecked.equals("true")) {
-
+            // if (sharedChecked != null && sharedChecked.equals("true")) {
+            if (sharedEnabled) {
                 String metaDataHostName = (String)
                     wizardModel.getValue(Constants.Wizard.SERVER_NAME);
 

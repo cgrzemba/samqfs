@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardQFSSummaryView.java,v 1.30 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: NewWizardQFSSummaryView.java,v 1.31 2008/07/16 21:55:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -98,7 +98,9 @@ public class NewWizardQFSSummaryView extends RequestHandlingViewBase
     public static final String CHILD_ALERT = "Alert";
     private boolean previous_error = false;
 
-    protected String sharedChecked = null;
+    // protected String sharedChecked = null;
+    protected boolean sharedEnabled = false;
+
     // max size for device selection list in summary page
     public static final int DEVICE_SELECTION_LIST_MAX_SIZE = 5;
 
@@ -218,8 +220,14 @@ public class NewWizardQFSSummaryView extends RequestHandlingViewBase
         String url = null;
 
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
+
+        /*
         sharedChecked = (String) wm.getWizardValue(
             NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
+        */
+        Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
+        sharedEnabled = temp.booleanValue();
+
         short fsLicense = SamQFSSystemModel.SAMQFS;
         Short fsLicenseValue = (Short)
             wm.getValue(Constants.Wizard.LICENSE_TYPE);
@@ -227,7 +235,8 @@ public class NewWizardQFSSummaryView extends RequestHandlingViewBase
             fsLicense = fsLicenseValue.shortValue();
         }
         if (!previous_error) {
-            if ((sharedChecked != null && sharedChecked.equals("true")) ||
+            // if ((sharedChecked != null && sharedChecked.equals("true")) ||
+            if (sharedEnabled ||
                 fsLicense == SamQFSSystemModel.QFS) {
                 url = "/jsp/fs/NewWizardSharedQFSSummary.jsp";
             } else {
@@ -373,31 +382,41 @@ public class NewWizardQFSSummaryView extends RequestHandlingViewBase
 
     private void assignFSTypeValue(SamWizardModel wizardModel) {
         String desc = null;
+        /*
         String fsTypeVal = (String) wizardModel.getValue(
             NewWizardFSNameView.CHILD_FSTYPE_RADIOBUTTON);
+        */
 
-        if (fsTypeVal.equals("FSWizard.new.fstype.qfs")) {
+        String fsType = (String)wizardModel
+            .getValue(CreateFSWizardImpl.FSTYPE_KEY);
+        // if (fsTypeVal.equals("FSWizard.new.fstype.qfs")) {
+        if (CreateFSWizardImpl.FSTYPE_QFS.equals(fsType)) {
             // QFS, check the type further
-
+            /*
             boolean isArchive = Boolean.valueOf(
                 (String) wizardModel.getValue(
                     NewWizardFSNameView.CHILD_ARCHIVE_CHECKBOX)).booleanValue();
             boolean isShared = Boolean.valueOf(
                 (String) wizardModel.getValue(
                     NewWizardFSNameView.CHILD_SHARED_CHECKBOX)).booleanValue();
-
-            if (isShared) {
+            */
+            Boolean sharedEnabled = (Boolean)wizardModel
+                .getValue(CreateFSWizardImpl.POPUP_SHARED);
+            Boolean archiveEnabled = (Boolean)wizardModel
+                .getValue(CreateFSWizardImpl.POPUP_ARCHIVING);
+            if (sharedEnabled.booleanValue()) {
                 // shared
                 desc = "filesystem.desc.qfs.server";
             } else {
                 // Non-shared
-                if (isArchive) {
+                if (archiveEnabled.booleanValue()) {
                     desc = "filesystem.desc.qfs.archiving";
                 } else {
                     desc = "filesystem.desc.qfs";
                 }
             }
-        } else if (fsTypeVal.equals("FSWizard.new.fstype.ufs")) {
+        } else if (CreateFSWizardImpl.FSTYPE_UFS.equals(fsType)) {
+            // if (fsTypeVal.equals("FSWizard.new.fstype.ufs")) {
             // UFS
             desc = "filesystem.desc.ufs";
         } else {

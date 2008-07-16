@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: newfs.js,v 1.2 2008/07/09 22:20:56 kilemba Exp $
+// ident	$Id: newfs.js,v 1.3 2008/07/16 21:55:55 kilemba Exp $
 
 // handlers for the new file system wizard popup
 
@@ -170,6 +170,10 @@ function handleNewFileSystemPopupOk(button) {
                 params += "&fsname=" + fsname;
                 // create the the proto fs by submitting the ok button
                 // return true;
+
+                alert("coming soon ...");
+                window.close();
+                return false;
             }
         }
     }
@@ -178,8 +182,6 @@ function handleNewFileSystemPopupOk(button) {
     fsTypeParams = params;
     launchNewFileSystemWizard(button);
     
-    // alert("Coming soon ...");
-
     window.close();
     return false;
 }
@@ -257,15 +259,14 @@ function handleHAFSCheckBox(checkbox) {
 
 /* */
 function handleArchivingCheckBox(checkbox) {
-
     var hafs = checkbox.form.elements[prefix + "HAFSCheckBox"];
     if (checkbox.checked) {
         // warn he user about creating an archiving file system without
         // configuring archiving media first.
-        if (hasArchiveMedia() == "false") {
-            alert(getErrorMessage(0));
-        }
-
+        //if (hasArchiveMedia() == "false") {
+        //    alert(getErrorMessage(0));
+        //}
+        
         // disable HAFS. Archiving HAFS is not supported
         if (hafs != null) {
             ccSetCheckBoxDisabled(prefix + "HAFSCheckBox", formName, 1);

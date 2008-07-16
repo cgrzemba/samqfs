@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.18 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.19 2008/07/16 21:55:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -78,7 +78,8 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         CHILD_TILED_VIEW = "FSWizardDeviceSelectionPageTiledView";
     private boolean error = false;
 
-    protected String sharedChecked = null;
+    // protected String sharedChecked = null;
+    protected boolean sharedEnabled = false;
 
     /**
      * Construct an instance with the specified properties.
@@ -187,12 +188,20 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         String url = null;
 
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
+
+        /*
         sharedChecked = (String) wm.getWizardValue(
             NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
+        */
+
+        Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
+        sharedEnabled = temp.booleanValue();
+
         String fsType = (String) wm.getValue(CreateFSWizardImpl.FSTYPE_KEY);
 
         if (!previous_error) {
-            if (sharedChecked != null && sharedChecked.equals("true")) {
+            if (sharedEnabled) {
+                // if (sharedChecked != null && sharedChecked.equals("true")) {
                 url = "/jsp/fs/FSWizardSharedDeviceSelectionPage.jsp";
             } else {
                 url = "/jsp/fs/FSWizardDeviceSelectionPage.jsp";
@@ -241,8 +250,11 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
             ((CCHiddenField) getChild(CHILD_ERROR)).setValue("success");
         }
 
-        sharedChecked = (String) wm.getWizardValue(
-            NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
+        //sharedChecked = (String) wm.getWizardValue(
+        //    NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
+        Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
+        sharedEnabled = temp.booleanValue();
+
         String t = (String) wm.getValue(Constants.Wizard.WIZARD_ERROR);
         if (t != null && t.equals(Constants.Wizard.WIZARD_ERROR_YES)) {
             String msgs =
@@ -299,9 +311,16 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         String samfsServerAPIVersion =
             (String) wm.getValue(Constants.Wizard.SERVER_API_VERSION);
 
+        Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
+        sharedEnabled = temp.booleanValue();
+
+        /*
         sharedChecked = (String) wm.getWizardValue(
             NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
         if (sharedChecked != null && sharedChecked.equals("true")) {
+        */
+        
+        if (sharedEnabled) {
             tableModel = new CCActionTableModel(
                RequestManager.getRequestContext().getServletContext(),
                "/jsp/fs/FSWizardSharedDeviceSelectionTable.xml");

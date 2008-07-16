@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.92 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.93 2008/07/16 21:55:55 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -68,6 +68,7 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.wizard.WizardModel;
 import com.sun.web.ui.model.CCWizardWindowModel;
 import com.sun.web.ui.model.CCWizardWindowModelInterface;
+import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCDropDownMenu;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCHref;
@@ -688,10 +689,10 @@ public class FileSystemSummaryView extends CommonTableContainerView {
 
         if (SecurityManagerFactory.getSecurityManager().
             hasAuthorization(Authorization.FILESYSTEM_OPERATOR)) {
-            ((CCWizardWindow)getChild("SamQFSWizardNewFSButton"))
+            ((CCButton)getChild("NewFSButton"))
                 .setDisabled(wizardNewLaunched);
         } else {
-            ((CCWizardWindow)getChild("SamQFSWizardNewFSButton"))
+            ((CCWizardWindow)getChild("NewFSButton"))
                 .setDisabled(true);
             model.setSelectionType("none");
         }
