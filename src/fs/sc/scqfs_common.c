@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1720,12 +1720,10 @@ get_qfsstate(char *fsname)
 		rc = ST_PENDING;
 	} else if (htb->info.ht.server == HOSTS_NOSRV) {
 		rc = ST_NOSRVR;
-	} else if (!(fsi.fi_status & FS_MOUNTED) ||
-	    (fsi.fi_status & (FS_MOUNTING | FS_UMOUNT_IN_PROGRESS))) {
-		rc = ST_ERROR;
 	}
 
 	scds_syslog_debug(1, "QFS device %s is in state %d.", fsname, rc);
+
 	return (rc);
 }
 
@@ -1740,7 +1738,6 @@ get_qfsstate(char *fsname)
  *		2.2) vfstype is "samfs"
  *		2.3) Options contain "shared" and not "bg"?
  *		2.4) Mount-at-boot is false
- *		2.5) The mount point actually exists
  * 3. Validate the Shared QFS configuration
  *		3.1) The fs is configured
  *		3.2) All devices for the filesystem are /dev/did
@@ -1789,14 +1786,6 @@ svc_validate(struct RgInfo *rgp, struct FsInfo *fip)
 			dprintf(stderr,
 			    "FS %s: validate_node() failed.", fip[i].fi_fs);
 			continue; /* Errors logged by validate_node */
-		}
-
-		/* Make sure the filesystem is mounted */
-		if (!validate_mounted(fip[i].fi_mntpt, B_TRUE)) {
-			err = 1;
-			dprintf(stderr,
-			    "FS %s: validate_mounted() failed.", fip[i].fi_fs);
-			continue; /* Errors logged by validate_mounted */
 		}
 
 		/* Make sure qfsdev is a valid QFS device */

@@ -34,7 +34,7 @@
  * server from a remote cluster node.
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -90,10 +90,6 @@ main(int argc, char *argv[])
 			scds_syslog(LOG_ERR,
 			    "Couldn't family set info for %s: %s",
 			    fi[i].fi_fs, strerror(errno));
-			unmounted++;
-		} else if ((fsi.fi_status & FS_MOUNTED) == 0) {
-			scds_syslog(LOG_ERR,
-			    "File system %s not mounted", fi[i].fi_fs);
 			unmounted++;
 		}
 	}
@@ -166,12 +162,20 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 	int				mode;
 	struct RgInfo	rg;
 	char			*curmaster = NULL;
+	struct sam_fs_info fsi;
 
 	if (!fp->fi_fs || !fp->fi_mntpt) {
 		return (1);
 	}
 
 	if (GetRgInfo(argc, argv, &rg) < 0) {
+		return (1);
+	}
+
+	if (GetFsInfo(fp->fi_fs, &fsi) < 0) {
+		scds_syslog(LOG_ERR,
+		    "%s: Couldn't get file system info",
+		    fp->fi_fs, strerror(errno));
 		return (1);
 	}
 
@@ -221,25 +225,25 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 				    "%s: Switching to involuntary failover.",
 				    fp->fi_fs);
 			} else {
-				struct sam_fs_info fsi;
-
-				if (GetFsInfo(fp->fi_fs, &fsi) < 0) {
-					scds_syslog(LOG_ERR,
-					    "%s: Couldn't get file system info",
-					    fp->fi_fs, strerror(errno));
-					rc = 1;
-					break;
-				}
 				/*
-				 * This shouldn't happen.  We checked for mount
-				 * status in main().
+				 * The file system should already be mounted,
+				 * The BOOT or INIT Method should have performed
+				 * the mount, however, there has been some cases
+				 * where the MDS was in failover so adding the
+				 * check and mount here is to cover this
+				 * situation.
 				 */
 				if ((fsi.fi_status & FS_MOUNTED) == 0) {
-					scds_syslog(LOG_ERR,
-					    "%s: File system not mounted",
+					scds_syslog(LOG_NOTICE,
+					    "%s: Mounting file system ",
 					    fp->fi_fs);
-					rc = 1;
-					break;
+					if ((rc = mount_qfs(fp->fi_fs)) != 0) {
+						scds_syslog(LOG_ERR,
+						    "%s: Error mounting %s.",
+						    fp->fi_fs, fp->fi_mntpt);
+						rc = 1;
+						break;
+					}
 				}
 
 				/*
@@ -279,6 +283,21 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 			    curmaster);
 			if (rc != 0) {
 				break;
+			}
+			/*
+			 * If the file system isn't mounted, it's ok, we
+			 * mount it here.
+			 */
+			if ((fsi.fi_status & FS_MOUNTED) == 0) {
+				scds_syslog(LOG_NOTICE,
+				    "%s: Mounting file system ",
+				    fp->fi_fs);
+				if ((rc = mount_qfs(fp->fi_fs)) != 0) {
+					scds_syslog(LOG_ERR,
+					    "%s: Error mounting %s.",
+					    fp->fi_fs, fp->fi_mntpt);
+					break;
+				}
 			}
 		} else {
 			/* 22653 */
