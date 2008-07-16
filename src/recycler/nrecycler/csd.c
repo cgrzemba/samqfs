@@ -29,11 +29,12 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.9 $"
+#pragma ident "$Revision: 1.10 $"
 
 static char *_SrcFile = __FILE__;
 
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <sys/stat.h>
 #include <sys/acl.h>
 #include <sys/ipc.h>
@@ -47,6 +48,8 @@ static char *_SrcFile = __FILE__;
 #include <fcntl.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <ctype.h>
+#include <errno.h>
 
 #include "sam/types.h"
 #include "aml/shm.h"
@@ -61,6 +64,7 @@ static char *_SrcFile = __FILE__;
 #include "sam/fs/ino_ext.h"
 #include "aml/diskvols.h"
 #include "aml/sam_rft.h"
+#include "aml/tar_hdr.h"
 #include "aml/id_to_path.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
@@ -97,6 +101,22 @@ static int readFildes(CsdFildes_t *fildes, void *buffer, size_t size);
 static void closeFildes(CsdFildes_t *fildes);
 
 static void traceInode(char *name, struct sam_perm_inode *perm_inode);
+
+#define	CSDTMAGIC "ustar"
+
+typedef struct csd_tar {
+	longlong_t	csdt_bytes;	/* file bytes to follow */
+	char		*csdt_name;	/* name */
+	struct sp_list	*csdt_sparse;	/* sparse list */
+} csd_tar_t;
+
+static void readTarHeader(CsdFildes_t *fildes, csd_tar_t *hdr_info);
+static void skipEmbeddedData(CsdFildes_t *fildes);
+static int skipData(CsdFildes_t *fildes, u_longlong_t nbytes);
+static longlong_t oct2ll(char *cp, int numch);
+static longlong_t str2ll(char *cp, int numch);
+
+static longlong_t file_offset;
 
 /*
  * Initialize samfsdump file by walking the specified directory and
@@ -374,6 +394,7 @@ CsdAccumulate(
 	path = fsdump->ce_path;
 	Trace(TR_MISC, "[%s] Accumulate samfs dump", mt_name);
 
+	file_offset = 0LL;
 	if (readDumpHeader(path, &fildes, &dump_header) == -1) {
 		CANNOT_RECYCLE();
 		return (NULL);
@@ -417,13 +438,6 @@ CsdAccumulate(
 	 * Read the dump file.
 	 */
 	while (readFileHeader(fildes, version, &file_header) == 0) {
-
-		if (file_header.flags & CSD_FH_DATA) {
-			Trace(TR_MISC,
-			    "Error: samfs dump file header failed '%s'", path);
-			CANNOT_RECYCLE();
-			goto out;
-		}
 
 		namelen = file_header.namelen;
 		rval = readInode(fildes, namelen, name, &inode.inode, &skip);
@@ -487,7 +501,9 @@ CsdAccumulate(
 				}
 			}
 		}
-
+		if (file_header.flags & CSD_FH_DATA) {
+			skipEmbeddedData(fildes);
+		}
 skip_file:
 		if (data != NULL) {
 			SamFree(data);
@@ -610,6 +626,7 @@ readFileHeader(
 	csd_fhdr_t *header)
 {
 	int namelen;
+	int corrupt_header = 0;
 
 	if (version <= CSD_VERS_3) {
 		Trace(TR_MISC, "Error: unknown samfs dump file version %d",
@@ -624,6 +641,31 @@ readFileHeader(
 			header->flags = 0;
 			header->namelen = (long)namelen;
 		} else {
+			return (-1);
+		}
+	} else if (version == CSD_VERS_5) {
+		if (readFildes(fildes, header,
+		    sizeof (csd_fhdr_t)) != sizeof (csd_fhdr_t)) {
+			return (-1);
+		}
+		/* some minor validation */
+		if (header->magic != CSD_FMAGIC) {
+			corrupt_header++;
+		} else if (header->flags & CSD_FH_PAD) {
+			if (header->namelen) {
+				if (skipData(fildes, header->namelen)) {
+					Trace(TR_MISC, "skip pad data failed ");
+					return (-1);
+				}
+			}
+			return (0);
+		} else if (header->namelen <= 0) {
+			corrupt_header++;
+		}
+		if (corrupt_header) {
+			Trace(TR_MISC,
+			    "Error:  samfsdump file header error <0x%x/%d>",
+			    header->magic, header->namelen);
 			return (-1);
 		}
 	} else {
@@ -848,6 +890,180 @@ readCheck(
 }
 
 static void
+skipEmbeddedData(
+CsdFildes_t *fildes)
+{
+	csd_tar_t	header;
+	u_longlong_t nbytes;
+	u_longlong_t nb;
+
+	readTarHeader(fildes, &header);
+	nb = roundup(file_offset, TAR_RECORDSIZE) - file_offset;
+	(void) skipData(fildes, nb);	/* skip to next 512 boundary */
+	nb = header.csdt_bytes;
+	nbytes = roundup(nb, TAR_RECORDSIZE);
+	(void) skipData(fildes, nbytes);
+}
+
+static int
+skipData(
+CsdFildes_t *fildes,
+u_longlong_t nbytes)
+{
+	u_longlong_t skipped, size;
+	char skipbuf[CSD_DEFAULT_BUFSZ];
+
+	while (nbytes > 0) {
+		errno = 0;
+		size =
+		    (nbytes > CSD_DEFAULT_BUFSZ) ? CSD_DEFAULT_BUFSZ : nbytes;
+		skipped = gzread(fildes->inf, skipbuf, size);
+		if (skipped <= 0) {
+			Trace(TR_MISC,
+			    "Error: gzread of samfsdump file, %s",
+			    strerror(errno));
+			return (errno);
+		}
+		file_offset += skipped;
+		nbytes -= skipped;
+	}
+	return (0);
+}
+
+static void
+readTarHeader(
+CsdFildes_t *fildes,
+csd_tar_t *hdr_info)
+{
+	union header_blk tarhdrblk;
+	char		tar_name[MAXPATHLEN+1];
+	struct header	*tarhdr = (struct header *)&tarhdrblk;
+	longlong_t	field_value;
+	int		linktype;
+	int		name_set = 0;
+	int		namelen;
+
+	hdr_info->csdt_bytes = 0;
+	for (;;) {
+		if (((gzread(fildes->inf, &tarhdrblk,
+		    sizeof (tarhdrblk))) !=
+		    TAR_RECORDSIZE) ||
+		    (memcmp(tarhdr->magic, CSDTMAGIC,
+		    sizeof (CSDTMAGIC)-1) != 0)) {
+			goto header_err;
+		}
+		file_offset += sizeof (tarhdrblk);
+		linktype = tarhdr->linkflag;
+
+		switch (linktype) {
+		case LF_LONGNAME:	/* looks like a file containing name */
+			field_value = oct2ll(tarhdr->size, 12);
+			if (field_value > MAXPATHLEN || name_set != 0) {
+				goto header_err;
+			}
+
+			namelen = (int)field_value;
+			if (gzread(fildes->inf, tar_name, namelen) !=
+			    namelen) {
+				goto header_err;
+			}
+			file_offset += namelen;
+			tar_name[namelen] = '\0';
+			hdr_info->csdt_name = tar_name;
+			name_set++;
+			break;
+		case LF_NORMAL:
+		case LF_PARTIAL:
+		case LF_OLDNORMAL:
+			hdr_info->csdt_bytes = str2ll(tarhdr->size, 12);
+			/* currently not dealing with GNU extra header */
+			hdr_info->csdt_sparse = NULL;
+			if (name_set == 0) {
+				strncpy(tar_name, tarhdr->arch_name, NAMSIZ);
+				hdr_info->csdt_name = tar_name;
+				name_set++;
+			}
+			return;
+		default:
+			goto header_err;
+		}
+	}
+
+header_err:
+	/*	Some error in the header has occurred. */
+	Trace(TR_ERR,
+	    "Corrupt samfs dump file, file tar header error.");
+	abort();
+	/* NOTREACHED */
+}
+
+static longlong_t
+oct2ll(char *cp, int numch)
+{
+	longlong_t	result;
+	int		tmp;
+
+	result = 0;
+	while (numch > 0) {
+		tmp = *cp;
+		cp++; numch--;
+		if (!isspace(tmp)) {
+			tmp -= (int)'0';
+			if (tmp >= 0 && tmp < 8) {
+				result = (result * 8) + tmp;
+			} else {
+				return (result);
+			}
+		} else {
+			if (result != 0) {
+				return (result);
+			}
+		}
+	}
+	return (result);
+}
+
+static longlong_t
+str2ll(char *cp, int numch)
+{
+	longlong_t	result;
+	int		digit;
+	int		tmp;
+	int		base = 8;
+
+	if (*cp == 'x') {
+		base = 16;
+		cp++;
+		numch--;
+	}
+	result = 0;
+	while (numch > 0) {
+		tmp = *cp;
+		cp++; numch--;
+		if (!isspace(tmp)) {
+			digit = tmp - (int)'0';
+			if (digit > base && base > 10) {
+				if (tmp >= (int)'a' && tmp <= (int)'z') {
+					tmp -= (int)'a' - (int)'A';
+				}
+				digit = tmp + 10 - (int)'A';
+			}
+			if (digit >= 0 && digit < base) {
+				result = (result * (longlong_t)base) +
+				    (longlong_t)digit;
+			} else {
+				return (result);
+			}
+		} else {
+			if (result != 0) {
+				return (result);
+			}
+		}
+	}
+	return (result);
+}
+
+static void
 walkDirectory(
 	DIR *c_dirp,
 	char *c_dirname)
@@ -996,6 +1212,7 @@ readFildes(
 	int ngot;
 
 	ngot = gzread(fildes->inf, buffer, size);
+	file_offset += ngot;
 
 	return (ngot);
 }
