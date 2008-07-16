@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 /* ----- UNIX Includes */
 
@@ -151,8 +151,12 @@ sam_init_sblk_dev(
 	sop->type = args->type;
 
 	if (sop->num_group) {
-		sop->capacity = args->blocks * args->kblocks[dt] *
-		    sop->num_group;
+		if (is_osd_group(args->type)) {
+			sop->capacity = args->blocks * args->kblocks[dt];
+		} else {
+			sop->capacity = args->blocks * args->kblocks[dt] *
+			    sop->num_group;
+		}
 		sop->space = sop->capacity;
 		sop->dau_size = args->blocks;
 		sop->l_allocmap = howmany(sop->dau_size,
