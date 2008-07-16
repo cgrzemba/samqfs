@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.50 2008/07/15 17:19:46 kilemba Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.51 2008/07/16 17:09:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -150,12 +150,16 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * the metadata server. The states CL_STATE_ON and CL_STATE_OFF are
      * supported.
      */
-    public void setClientState(String fsName,
+    public void setClientState(String mdServer, String fsName,
 	String[] hostNames, boolean on) throws SamFSException {
 
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
         hostNames = hostNames == null ? new String[0] : hostNames;
-        // Host.setClientState(
-        //      fsName, hostNames, on ? Host.CL_STATE_ON : Host.CL_STATE_OFF);
+        Host.setClientState(
+            model.getJniContext(), fsName, hostNames,
+            on ? Host.CL_STATE_ON : Host.CL_STATE_OFF);
         return;
 
     }
@@ -387,13 +391,53 @@ System.out.println("info[" + i + "]: " + info[i]);
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int addStorageNode(String hpcFSName, String nodeName,
-	String nodeIP, FSInfo backingStore, String nodeData)
+    public int addStorageNode(String mdServer, String hpcFSName,
+        String nodeName, String nodeIP,
+        DiskCache[] metadataDevices, DiskCache[] dataDevices, String nodeData)
 	throws SamFSException {
 
-        // TODO: To be verified
-        return FS.addStorageNode(null,
-                    hpcFSName, nodeName, nodeIP, backingStore, nodeData);
+        DiskDev[] meta = null;
+        DiskDev[] data = null;
+
+        // set equipment ordinals
+        if (metadataDevices != null) {
+            meta = new DiskDev[metadataDevices.length];
+            for (int i = 0; i < metadataDevices.length; i++) {
+                meta[i] = ((DiskCacheImpl) metadataDevices[i]).getJniDisk();
+            }
+        }
+
+        if (dataDevices != null) {
+            data = new DiskDev[dataDevices.length];
+            for (int i = 0; i < dataDevices.length; i++) {
+                data[i] = ((DiskCacheImpl) dataDevices[i]).getJniDisk();
+                data[i].setEquipType("md");
+            }
+        }
+
+        // TODO: Check to see what needs to be passed for mountProps
+        // TODO: Check equ
+        // TODO: Check DAUSize (Group DAU??)
+        // TODO: Check mountPoint
+        /**
+        MountOptions opt = ((FileSystemMountPropertiesImpl) mountProps).
+            getJniMountOptions();
+         */
+        MountOptions opt = null;
+        int DAUSize = -1;
+        String mountPoint = null;
+
+        FSInfo myFSInfo = new FSInfo(
+            hpcFSName, FSInfo.EQU_AUTO, DAUSize,
+            FSInfo.SEPARATE_METADATA,
+            meta, data, null, opt, mountPoint,
+            mdServer, false, false, null);
+
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        return FS.addStorageNode(model.getJniContext(),
+                    hpcFSName, nodeName, nodeIP, myFSInfo, nodeData);
     }
 
 

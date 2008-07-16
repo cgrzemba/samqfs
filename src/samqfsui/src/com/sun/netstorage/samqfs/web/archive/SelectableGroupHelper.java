@@ -27,13 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SelectableGroupHelper.java,v 1.29 2008/05/16 18:38:52 am143972 Exp $
+// ident	$Id: SelectableGroupHelper.java,v 1.30 2008/07/16 17:09:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
 import com.sun.netstorage.samqfs.mgmt.arc.Criteria;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
-import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteria;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.model.archive.GlobalArchiveDirective;
 import com.sun.netstorage.samqfs.web.util.Constants;

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.7 2008/07/15 17:19:45 kilemba Exp $
+// ident        $Id: SharedFSBean.java,v 1.8 2008/07/16 17:09:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -863,13 +863,15 @@ sfe.printStackTrace();
             // Enable Access
             } else if (clientBean.menuOptions[3][1].equals(selected)) {
                 sharedFSManager.setClientState(
-                        getFSName(), selectedClients, true);
+                    JSFUtil.getServerName(), getFSName(),
+                    selectedClients, true);
                 message = "SharedFS.message.enableclients.ok";
                 errorMessage = "SharedFS.message.enableclients.failed";
             // Disable Access
             } else if (clientBean.menuOptions[4][1].equals(selected)) {
                 sharedFSManager.setClientState(
-                        getFSName(), selectedClients, false);
+                    JSFUtil.getServerName(), getFSName(),
+                    selectedClients, false);
                 message = "SharedFS.message.disableclients.ok";
                 errorMessage = "SharedFS.message.disableclients.failed";
             }

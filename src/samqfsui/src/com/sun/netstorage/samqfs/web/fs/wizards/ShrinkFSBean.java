@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.2 2008/07/03 00:04:29 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.3 2008/07/16 17:09:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -393,7 +393,7 @@ System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
                 setAlertInfo(
                     Constants.Alert.ERROR,
                     JSFUtil.getMessage(
-                        "fs.shrink.specifydevice.populate.failed"),
+                        "common.specifydevice.failed"),
                     samEx.getMessage());
                 availUnits = new DiskCache[0];
             }
@@ -942,7 +942,7 @@ samEx.printStackTrace();
             if (-1 == eqToShrink && null == selectedStripedGroup) {
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    JSFUtil.getMessage("fs.shrink.selectstorage.error"),
+                    JSFUtil.getMessage("common.specifydevice.errorr"),
                     null);
                 return false;
             } else {
@@ -967,7 +967,7 @@ samEx.printStackTrace();
             if (replacementPaths == null || replacementPaths.length == 0) {
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    JSFUtil.getMessage("fs.shrink.specifydevice.error"),
+                    JSFUtil.getMessage("common.specifydevice.error"),
                     null);
                 return false;
             } else {
@@ -1000,7 +1000,8 @@ samEx.printStackTrace();
                     "Failed to check if selected devices are overlapped!", ex);
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    JSFUtil.getMessage("fs.shrink.checkoverlap.failed"),
+                    JSFUtil.getMessage(
+                        "common.specifydevice.checkoverlap.failed"),
                     ex.getMessage());
                 return false;
             }

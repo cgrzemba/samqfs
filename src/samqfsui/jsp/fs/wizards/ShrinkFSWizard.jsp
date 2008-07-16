@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.2 2008/07/03 00:04:29 ronaldso Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.3 2008/07/16 17:09:30 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -100,7 +100,7 @@
                                                             selectedValue="#{ShrinkFSBean.selectExclude.selectedValue}"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colDeviceName"
-                                                        headerText="#{samBundle['fs.shrink.selectstorage.heading.name']}"
+                                                        headerText="#{samBundle['common.columnheader.name']}"
                                                         align="left"
                                                         valign="top"
                                                         sort="devicePathDisplayString"
@@ -111,7 +111,7 @@
                                                            visible="false"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colType"
-                                                        headerText="#{samBundle['fs.shrink.selectstorage.heading.type']}"
+                                                        headerText="#{samBundle['common.columnheader.type']}"
                                                         align="left"
                                                         valign="top"
                                                         sort="diskCacheType"
@@ -120,7 +120,7 @@
                                                            converter="DiskCacheTypeConverter"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colCapacity"
-                                                        headerText="#{samBundle['fs.shrink.selectstorage.heading.capacity']}"
+                                                        headerText="#{samBundle['common.columnheader.capacity']}"
                                                         align="left"
                                                         valign="top"
                                                         sort="capacity"
@@ -129,7 +129,7 @@
                                                            converter="CapacityInMbConverter"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colVendor"
-                                                        headerText="#{samBundle['fs.shrink.selectstorage.heading.vendor']}"
+                                                        headerText="#{samBundle['common.columnheader.vendor']}"
                                                         align="left"
                                                         valign="top"
                                                         sort="vendor"
@@ -137,7 +137,7 @@
                                             <ui:staticText text="#{excludeTable.value.vendor}"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colProdID"
-                                                        headerText="#{samBundle['fs.shrink.selectstorage.heading.prodid']}"
+                                                        headerText="#{samBundle['common.columnheader.prodid']}"
                                                         align="left"
                                                         valign="top"
                                                         sort="productId"
@@ -156,9 +156,12 @@
                                            title="#{samBundle['fs.shrink.method.steptitle']}"
                                            detail="#{samBundle['fs.shrink.method.instruction.1']}"
                                            help="#{samBundle['fs.shrink.method.help']}">
-                                <h:panelGrid columns="1" style="margin:10px">
+                                <h:panelGrid columns="2" style="margin:10px">
+                                    <ui:staticText text="#{samBundle['common.asterisk']}"/>
                                     <ui:staticText text="#{samBundle['fs.shrink.method.instruction.2']}" />
+                                    <ui:staticText text="#{samBundle['common.asterisk']}"/>
                                     <ui:staticText text="#{samBundle['fs.shrink.method.instruction.3']}" />
+                                    <ui:staticText text="#{samBundle['common.asterisk']}"/>
                                     <ui:staticText text="#{samBundle['fs.shrink.method.instruction.4']}" />
                                 </h:panelGrid>
                                 <ui:markup tag="br" singleton="true"/>
@@ -234,7 +237,7 @@
                                                              rendered="#{ShrinkFSBean.selectedStripedGroup != null}" />
                                             </ui:tableColumn>
                                             <ui:tableColumn id="colDeviceName"
-                                                            headerText="#{samBundle['fs.shrink.specifydevice.heading.name']}"
+                                                            headerText="#{samBundle['common.columnheader.name']}"
                                                             align="left"
                                                             valign="top"
                                                             sort="devicePathDisplayString"
@@ -243,7 +246,7 @@
                                                 <ui:staticText text="#{availableTable.value.devicePath}" visible="false"/>
                                             </ui:tableColumn>
                                             <ui:tableColumn id="colType"
-                                                            headerText="#{samBundle['fs.shrink.specifydevice.heading.type']}"
+                                                            headerText="#{samBundle['common.columnheader.type']}"
                                                             align="left"
                                                             valign="top"
                                                             sort="diskType"
@@ -252,7 +255,7 @@
                                                                converter="DeviceTypeConverter"/>
                                             </ui:tableColumn>
                                             <ui:tableColumn id="colCapacity"
-                                                            headerText="#{samBundle['fs.shrink.specifydevice.heading.capacity']}"
+                                                            headerText="#{samBundle['common.columnheader.capacity']}"
                                                             align="left"
                                                             valign="top"
                                                             sort="capacity"
@@ -261,7 +264,7 @@
                                                                converter="CapacityInMbConverter"/>
                                             </ui:tableColumn>
                                             <ui:tableColumn id="colVendor"
-                                                            headerText="#{samBundle['fs.shrink.specifydevice.heading.vendor']}"
+                                                            headerText="#{samBundle['common.columnheader.vendor']}"
                                                             align="left"
                                                             valign="top"
                                                             sort="vendor"
@@ -269,7 +272,7 @@
                                                 <ui:staticText text="#{availableTable.value.vendor}"/>
                                             </ui:tableColumn>
                                             <ui:tableColumn id="colProdID"
-                                                            headerText="#{samBundle['fs.shrink.specifydevice.heading.prodid']}"
+                                                            headerText="#{samBundle['common.columnheader.prodid']}"
                                                             align="left"
                                                             valign="top"
                                                             sort="productId"

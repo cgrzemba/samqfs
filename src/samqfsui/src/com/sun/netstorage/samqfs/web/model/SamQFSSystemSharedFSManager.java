@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.19 2008/07/15 17:19:45 kilemba Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.20 2008/07/16 17:09:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -86,7 +86,7 @@ public interface SamQFSSystemSharedFSManager {
      * the metadata server. The states CL_STATE_ON and CL_STATE_OFF are
      * supported.
      */
-    public void setClientState(String fsName,
+    public void setClientState(String mdServer, String fsName,
 	String[] hostNames, boolean on) throws SamFSException;
 
     /*
@@ -192,8 +192,9 @@ public interface SamQFSSystemSharedFSManager {
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int addStorageNode(String hpcFSName, String nodeName,
-	String nodeIP, FSInfo backingStore, String nodeData)
+    public int addStorageNode(String mdServer, String hpcFSName,
+        String nodeName, String nodeIP,
+        DiskCache[] metadataDevices, DiskCache[] dataDevices, String nodeData)
 	throws SamFSException;
 
 
