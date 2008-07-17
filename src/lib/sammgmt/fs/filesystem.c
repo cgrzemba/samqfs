@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.77 $"
+#pragma ident   "$Revision: 1.78 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -149,8 +149,12 @@ static int shrink_replace(ctx_t *c, char *fs_name, int eq_to_replace,
 
 
 
-static int _grow_fs(ctx_t *ctx, fs_t *fs, const sqm_lst_t *new_meta,
-    const sqm_lst_t *new_data, const sqm_lst_t *new_stripe_groups);
+static int _grow_fs(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_meta,
+    sqm_lst_t *new_data, sqm_lst_t *new_stripe_groups);
+
+static int find_local_devices(sqm_lst_t *mms, sqm_lst_t *data, sqm_lst_t *sgs);
+
+
 
 
 
@@ -664,8 +668,6 @@ uname_t fs_name)	/* name of fs to remove */
 	mount_cfg_t *mnt_cfg;
 	node_t *n;
 	boolean_t found = B_FALSE;
-	boolean_t shared = B_FALSE;
-	boolean_t nodev = B_FALSE;
 	int ret = 0;
 	int dbres;
 	char buf[MAXPATHLEN + 1];
@@ -716,19 +718,8 @@ uname_t fs_name)	/* name of fs to remove */
 		if (strcmp(fs->fi_name, fs_name) == 0) {
 			found = B_TRUE;
 
-
-			/* determine if this is a shared fs */
-			if (fs->fi_shared_fs) {
-				shared = B_TRUE;
-			}
-
-			/* check for nodev entries */
-			if (fs->fi_status & FS_NODEVS) {
-				nodev = B_TRUE;
-			}
 		}
 	}
-
 	if (found != B_TRUE) {
 		samerrno = SE_NOT_FOUND;
 		/* %s not found */
@@ -784,21 +775,6 @@ uname_t fs_name)	/* name of fs to remove */
 		    fs_name, "returning success");
 	}
 
-	/*
-	 * if the fs is shared and contains metadata devices, remove the entry
-	 * for this host from the hosts.<fs_name> file.
-	 */
-	if (shared && !nodev) {
-		upath_t host_name;
-
-		gethostname(host_name, sizeof (host_name));
-
-		if (remove_host(NULL, fs_name, host_name) != 0) {
-			ret = -2;
-		}
-	}
-
-
 	if (init_library_config(ctx) != 0) {
 		Trace(TR_ERR, "remove fs failed: %d %s", samerrno,
 		    samerrmsg);
@@ -846,7 +822,7 @@ verify_fs_unmounted(uname_t fs_name)
 
 
 /*
- * Internal grow file system function. The only difference between thi
+ * Internal grow file system function. The only difference between this
  * and grow_fs is that this function trusts that the fs argument is
  * up to date.
  */
@@ -854,9 +830,9 @@ static int
 _grow_fs(
 ctx_t *ctx,
 fs_t *fs,				/* fs to grow */
-const sqm_lst_t *new_meta,		/* list of disk_t */
-const sqm_lst_t *new_data,		/* list of disk_t */
-const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
+sqm_lst_t *new_meta,		/* list of disk_t */
+sqm_lst_t *new_data,		/* list of disk_t */
+sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 {
 
 	mcf_cfg_t *mcf;
@@ -864,6 +840,7 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 	int num_type;
 	sqm_lst_t *res_devs = NULL;
 	boolean_t mounted = B_FALSE;
+	int ret_val = 0;
 
 	if (ISNULL(fs)) {
 		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
@@ -875,11 +852,26 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 		mounted = B_TRUE;
 	}
 
+
 	/* If the fs is mounted check that it will support the online grow */
 	if (mounted && fs->fi_version == 1) {
 		setsamerr(SE_ONLINE_GROW_FAILED_SBLK_V1);
 		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
 		return (-1);
+	}
+
+	/*
+	 * Check if this is a shared file system- if so and this is
+	 * not the metadata server, locate the devices on this host and
+	 * rewrite the device paths to match the local ones.
+	 */
+	if (fs->fi_shared_fs && !(fs->fi_status & FS_SERVER)) {
+		if (find_local_devices(new_meta, new_data,
+		    new_stripe_groups) != 0) {
+			Trace(TR_ERR, "Matching devices were not found: %d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
 	}
 
 	if (read_mcf_cfg(&mcf) != 0) {
@@ -949,6 +941,20 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 		goto err;
 	}
 
+
+	/*
+	 * If the file system is shared and this host is not the
+	 * metadata server there is no more work to do so clean up
+	 * and return.
+	 */
+	if (fs->fi_shared_fs && !(fs->fi_status & FS_SERVER)) {
+		lst_free_deep(res_devs);
+		free_mcf_cfg(mcf);
+		Trace(TR_MISC, "grew fs %s", Str(fs->fi_name));
+		return (0);
+	}
+
+
 	if (mounted) {
 		node_t *n;
 		char *last_group = NULL;
@@ -996,8 +1002,22 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 
 	lst_free_deep(res_devs);
 	free_mcf_cfg(mcf);
+
+
+	/*
+	 * If this is the mds of a shared file system setup the call to grow
+	 * on the clients.
+	 */
+	if (fs->fi_shared_fs && (fs->fi_status & FS_SERVER)) {
+
+		ret_val = grow_shared_fs_on_clients(ctx, fs, new_meta, new_data,
+		    new_stripe_groups);
+
+		Trace(TR_MISC, "growing shared fs returns jobid %d", ret_val);
+	}
+
 	Trace(TR_MISC, "grew fs %s", Str(fs->fi_name));
-	return (0);
+	return (ret_val);
 
 err:
 	lst_free_deep(res_devs);
@@ -1011,12 +1031,13 @@ int
 grow_fs(
 ctx_t *ctx,
 fs_t *fs,				/* fs to grow */
-const sqm_lst_t *new_meta,		/* list of disk_t */
-const sqm_lst_t *new_data,		/* list of disk_t */
-const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
+sqm_lst_t *new_meta,		/* list of disk_t */
+sqm_lst_t *new_data,		/* list of disk_t */
+sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 {
 
 	fs_t *live_fs;
+	int ret_val;
 
 	if (ISNULL(fs)) {
 		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
@@ -1036,16 +1057,13 @@ const sqm_lst_t *new_stripe_groups)	/* list of striped_group_t */
 	}
 
 
-	if (_grow_fs(ctx, live_fs, new_meta, new_data,
-	    new_stripe_groups) != 0) {
-		free_fs(live_fs);
-		Trace(TR_ERR, "growing fs failed: %s", samerrmsg);
-		return (-1);
-	}
+	ret_val = _grow_fs(ctx, live_fs, new_meta, new_data,
+	    new_stripe_groups);
 
 	free_fs(live_fs);
-	Trace(TR_MISC, "grew fs %s", Str(fs->fi_name));
-	return (0);
+	Trace(TR_MISC, "grow fs %s returning %d", Str(fs->fi_name),
+	    ret_val);
+	return (ret_val);
 }
 
 
@@ -1403,6 +1421,13 @@ fs_arch_cfg_t	*arc_info)
 	}
 
 	if (fs->fi_shared_fs) {
+		if (!(fs->fi_status & FS_SERVER)) {
+			if (find_local_devices(fs->meta_data_disk_list,
+			    fs->data_disk_list, fs->striped_group_list) != 0) {
+				return (-1);
+			}
+		}
+
 		if (precheck_shared_fs(fs) != 0) {
 			free_mcf_cfg(mcf);
 			Trace(TR_ERR, "create fs failed: %s", samerrmsg);
@@ -1642,7 +1667,6 @@ precheck_shared_fs(fs_t *fs) {
 				samerrno = SE_FS_HAS_NO_HOSTS_INFO;
 				snprintf(samerrmsg, MAX_MSG_LEN,
 					GetCustMsg(SE_FS_HAS_NO_HOSTS_INFO));
-
 				return (-1);
 			}
 		}
@@ -2041,6 +2065,7 @@ sqm_lst_t *eqs)		/* list of available eqs */
 		    *(equ_t *)eqs->head->data, dev->name);
 
 		dev->eq = *(equ_t *)eqs->head->data;
+		disk->base_info.eq = *(equ_t *)eqs->head->data;
 		free(eqs->head->data);
 		if (lst_remove(eqs, eqs->head) != 0) {
 			Trace(TR_ERR, "build device failed: %s", samerrmsg);
@@ -4239,189 +4264,171 @@ find_disk_by_path(fs_t *f, char *path) {
 
 
 /*
- * Mount the shared file system on the named clients.
+ * Function to locate devices for a shared file system client or potential
+ * metadata server.
  *
- * A positive non-zero return indicates that a background job has been
- * started to complete this task. The return value is the job id.
- * Information can be obtained about the job by using the
- * list_activities function in process job with a filter on the job
- * id.
- */
-int
-mount_clients(
-ctx_t *ctx,
-char *fs_name,
-char *clients[],
-int client_count) {
-	int i;
-
-	if (ISNULL(fs_name, clients)) {
-		Trace(TR_ERR, "mount clients failed: %s",
-		    samerrmsg);
-		return (-1);
-	}
-	for (i = 0; i < client_count; i++) {
-		Trace(TR_MISC, "client[%d] = %s", i, clients[i]);
-	}
-
-	return (0);
-}
-
-
-
-
-/*
- * Unmount the shared file system on the named clients.
+ * The input arguments are lists of disk_t structures required
+ * to either create or grow a file system. If matching devices are found
+ * the device paths of the input arguments will be overwritten with the
+ * local host's paths. Otherwise an error will be returned.
  *
- * A positive non-zero return indicates that a background job has been
- * started to complete this task. The return value is the job id.
- * Information can be obtained about the job by using the
- * list_activities function in process job with a filter on the job
- * id.
+ * If this host is a client in the shared file system set the mms input
+ * to NULL so that failure to discover the unneeded mm devices does not
+ * lead to an error.
  */
-int
-unmount_clients(
-ctx_t *ctx,
-char *fs_name,
-char *clients[],
-int client_count) {
+static int
+find_local_devices(sqm_lst_t *mms, sqm_lst_t *data, sqm_lst_t *sgs) {
+	sqm_lst_t *aus;
+	node_t *sg_n;
 
-
-	if (ISNULL(fs_name, clients)) {
-		Trace(TR_ERR, "unmount clients failed: %s",
+	if (discover_aus(NULL, &aus) != 0) {
+		Trace(TR_ERR, "Unable to match devices: %d %s", samerrno,
 		    samerrmsg);
 		return (-1);
 	}
 
+	if (mms != NULL && mms->length != 0) {
+		if (find_local_device_paths(mms, aus)  != 0) {
+			free_au_list(aus);
+			Trace(TR_ERR, "Unable to match devices: %d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
+	}
+
+	if (data != NULL && data->length != 0) {
+		if (find_local_device_paths(data, aus)  != 0) {
+			free_au_list(aus);
+			Trace(TR_ERR, "Unable to match devices: %d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
+	}
+	if (sgs != NULL && sgs->length != 0) {
+		for (sg_n = sgs->head; sg_n != NULL; sg_n = sg_n->data) {
+			striped_group_t *sg = (striped_group_t *)sg_n->data;
+			if (find_local_device_paths(sg->disk_list, aus) != 0) {
+				free_au_list(aus);
+				Trace(TR_ERR, "Unable to match devices: %d %s",
+				    samerrno, samerrmsg);
+				return (-1);
+			}
+		}
+	}
+	free_au_list(aus);
+	Trace(TR_MISC, "Found the local devices");
 	return (0);
 }
 
 
-/*
- * Change the mount options for the named clients of the shared file system.
- *
- * A positive non-zero return indicates that a background job has been
- * started to complete this task. The return value is the job id.
- * Information can be obtained about the job by using the
- * list_activities function in process job with a filter on the job
- * id.
- */
-int
-change_shared_fs_mount_options(
-ctx_t *ctx,
-char *fs_name,
-char *clients[],
-int client_count,
-mount_options_t *mo) {
 
-	if (ISNULL(fs_name, clients, mo)) {
-		Trace(TR_ERR, "change shared fs mount options failed: %s",
+
+mount_options_t *
+dup_mount_options(mount_options_t *mo) {
+	mount_options_t *copy;
+
+	if (ISNULL(mo)) {
+		Trace(TR_ERR, "dup mount options failed: %s",
 		    samerrmsg);
-		return (-1);
+		return (NULL);
 	}
 
-	return (0);
+	copy = (mount_options_t *)mallocer(sizeof (mount_options_t));
+	if (copy == NULL) {
+		Trace(TR_ERR, "dup mount options failed: %s",
+		    samerrmsg);
+		return (NULL);
+	}
+
+	memcpy(copy, mo, sizeof (mount_options_t));
+
+	return (copy);
 }
 
 
-/* place holders for HPC fs stubs */
-static char *proto_fs = NULL;
-static int proto_nodes = 0;
+fs_t *
+dup_fs(fs_t *src) {
+	fs_t *fs;
 
+	if (ISNULL(src)) {
+		Trace(TR_ERR, "dup fs failed: %s", samerrmsg);
+		return (NULL);
+	}
 
-/*
- * Create a prototype qfs with object storage nodes file system. After
- * this function is called the user can proceed with the configuration of the
- * storage nodes for the file system. The proto file system is a place holder
- * for the configuration information prior to creating the file system.
- */
-int
-create_proto_fs(ctx_t *c, char *fs_name) {
-	if (ISNULL(fs_name)) {
-		Trace(TR_ERR, "create proto fs failed: %s",
+	fs = (fs_t *)mallocer(sizeof (fs_t));
+	if (fs == NULL) {
+		Trace(TR_ERR, "dup fs failed: %s", samerrmsg);
+		return (NULL);
+	}
+
+	memcpy(fs, src, sizeof (fs_t));
+
+	/* reset pointers so free_fs can be used if an error is encountered */
+	fs->mount_options = NULL;
+	fs->meta_data_disk_list = NULL;
+	fs->data_disk_list = NULL;
+	fs->striped_group_list = NULL;
+	fs->hosts_config = NULL;
+
+	if (lst_dup_typed(src->meta_data_disk_list,
+	    &(fs->meta_data_disk_list),
+	    DUPFUNCCAST(dup_disk), FREEFUNCCAST(free_disk)) != 0) {
+		free_fs(fs);
+		Trace(TR_MISC, "dup fs failed: %d %s", samerrno,
 		    samerrmsg);
-		return (-1);
+		return (NULL);
 	}
-	if (proto_fs == NULL) {
-		proto_fs = strdup(fs_name);
+	if (lst_dup_typed(src->data_disk_list, &(fs->data_disk_list),
+	    DUPFUNCCAST(dup_disk), FREEFUNCCAST(free_disk)) != 0) {
+		free_fs(fs);
+		Trace(TR_MISC, "dup fs failed: %d %s", samerrno,
+		    samerrmsg);
+		return (NULL);
 	}
-	return (0);
+
+	if (lst_dup_typed(src->striped_group_list,
+	    &(fs->striped_group_list),
+	    DUPFUNCCAST(dup_striped_group),
+	    FREEFUNCCAST(free_striped_group)) != 0) {
+		free_fs(fs);
+
+		Trace(TR_MISC, "dup fs failed: %d %s", samerrno,
+		    samerrmsg);
+		return (NULL);
+	}
+
+	fs->mount_options = dup_mount_options(src->mount_options);
+	if (fs->mount_options == NULL) {
+		free_fs(fs);
+
+		Trace(TR_MISC, "dup fs failed: %d %s", samerrno,
+		    samerrmsg);
+		return (NULL);
+	}
+	return (fs);
 }
 
 
-/*
- * nodeData is a key value string that includes the following keys:
- * host = hostname
- * dataip = ip address
- * group = groupId (o1, o2, o3 etc.)
- *
- * A non-zero positive return indicates that a background job has been started
- * to complete this task. Information can be obtained about this job by
- * using the Job.getAllActivities function with a filter on the job id.
- */
-int
-add_storage_node(ctx_t *c, char *fs_name, char *node_name, char *node_ip,
-    fs_t *backing_store, char *node_data) {
+striped_group_t *
+dup_striped_group(striped_group_t *sg) {
+	striped_group_t *cpy;
 
-
-
-	if (ISNULL(fs_name, node_name, node_ip, backing_store, node_data)) {
-		Trace(TR_ERR, "add storage node failed: %s",
-		    samerrmsg);
-		return (-1);
+	if (ISNULL(sg)) {
+		return (NULL);
 	}
-
-	proto_nodes++;
-	return (0);
-}
-
-
-/*
- * Remove a storage node from the shared fs configuration.
- *
- * A non-zero positive return indicates that a background job has been started
- * to complete this task. Information can be obtained about this job by
- * using the Job.getAllActivities function with a filter on the job id.
- */
-int
-remove_storage_node(
-ctx_t *c,
-char *fs_name,
-char *node_name) {
-
-
-	if (ISNULL(fs_name, node_name)) {
-		Trace(TR_ERR, "remove storage node failed: %s",
-		    samerrmsg);
-		return (-1);
+	cpy = (striped_group_t *)mallocer(sizeof (striped_group_t));
+	if (cpy == NULL) {
+		return (NULL);
 	}
-	proto_nodes--;
-	return (0);
-}
+	strlcpy(cpy->name, sg->name, sizeof (devtype_t));
 
-int
-get_shared_fs_summary_status(ctx_t *c, char *fs_name, sqm_lst_t **lst) {
-	char buf[64];
+	if (lst_dup_typed(sg->disk_list,
+	    &(cpy->disk_list),
+	    DUPFUNCCAST(dup_disk),
+	    FREEFUNCCAST(free_disk)) != 0) {
 
-	if (ISNULL(fs_name, lst)) {
-		Trace(TR_ERR, "get shared fs summary status failed: %s",
-		    samerrmsg);
-		return (-1);
+		free(cpy);
+		return (NULL);
 	}
-	*lst = lst_create();
-	if (*lst == NULL) {
-		Trace(TR_ERR, "get shared fs summary status failed: %s",
-		    samerrmsg);
-		return (-1);
-	}
-
-	snprintf(buf, sizeof (buf), "storage_nodes=%d", proto_nodes);
-	if (lst_append(*lst, copystr(buf)) != 0) {
-		lst_free(*lst);
-		Trace(TR_ERR, "get shared fs summary status failed: %s",
-		    samerrmsg);
-		return (-1);
-	}
-
-	return (0);
+	return (cpy);
 }

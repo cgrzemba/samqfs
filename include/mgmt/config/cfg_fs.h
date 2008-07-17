@@ -30,7 +30,7 @@
 #ifndef _CFG_FS_H
 #define	_CFG_FS_H
 
-#pragma ident   "$Revision: 1.18 $"
+#pragma ident   "$Revision: 1.19 $"
 
 #include "pub/mgmt/sqm_list.h"
 #include "pub/mgmt/filesystem.h"
@@ -162,5 +162,25 @@ get_shrink_options(char *fs_name, char **kv_opts);
  */
 int
 set_shrink_options(char *fs_name, char *kv_opts);
+
+/*
+ * Internal function to call after growing the fs on the metadata server.
+ * This function will call all of the clients to update their mcf files.
+ */
+int
+grow_shared_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_meta,
+    sqm_lst_t *new_data, sqm_lst_t *new_stripe_groups);
+
+
+/*
+ * Function to create a Solaris Object Storage Device on a host. This
+ * funtion is not intended to be called from the client.
+ */
+int
+add_sosd_on_node(ctx_t *c, char *fs_name, char *node_name, char *node_ip,
+    fs_t *backing_store, char *node_data);
+
+int
+remove_sosd_on_node(ctx_t *c, char *fs_name, char *node_name);
 
 #endif /* _CFG_FS_H */

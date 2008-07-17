@@ -29,7 +29,7 @@
 #ifndef	_PROCESS_JOB_H
 #define	_PROCESS_JOB_H
 
-#pragma ident	"$Revision: 1.23 $"
+#pragma ident	"$Revision: 1.24 $"
 
 
 #include "pub/mgmt/types.h"
@@ -161,7 +161,7 @@ int destroy_process(ctx_t *ctx, pid_t pid, proctype_t ptype);
 #define	SAMAARCHIVEFILES "SAMAARCHIVEFILES"
 #define	SAMARUNEXPLORER	"SAMARUNEXPLORER"
 #define	SAMASTAGEFILES	"SAMASTAGEFILES"
-
+#define	SAMADISPATCHJOB "SAMADISPATCHJOB"
 
 /*
  * DESCRIPTION:
@@ -271,11 +271,12 @@ typedef enum {
 	SAMA_RELEASEFILES = 32, /* release files activity */
 	SAMA_ARCHIVEFILES = 33, /* archive files activity */
 	SAMA_RUNEXPLORER = 34,	/* samexplorer activity */
-	SAMA_STAGEFILES	 = 35,	/* samexplorer activity */
+	SAMA_STAGEFILES	 = 35,	/* stage files activity */
+	SAMA_DISPATCH_JOB = 36	/* command dispatcher job */
 } activitytype_t;
 
 /* Define max range of above enum */
-#define	activitytypemax SAMA_STAGEFILES+1
+#define	activitytypemax SAMA_DISPATCH_JOB+1
 
 /* Decompress datastructure */
 typedef struct decombuf_s {
@@ -339,6 +340,10 @@ typedef struct stagebuf_s {
 	int32_t options;
 } stagebuf_t;
 
+typedef struct dispatchbuf_s {
+	void *job;
+} dispatchbuf_t;
+
 
 /* Define a union of all the above structures */
 typedef union {
@@ -350,6 +355,7 @@ typedef union {
 	archivebuf_t a;		/* SAMA_ARCHIVE_FILES */
 	explorerbuf_t e;	/* SAMA_RUN_EXPLORER */
 	stagebuf_t st;		/* SAMA_STAGE_FILES */
+	dispatchbuf_t db;	/* SAMA_DISPATCH_JOB */
 } argbuf_t;
 
 void free_argbuf(int type, argbuf_t *args);
@@ -476,6 +482,8 @@ void * cleanup_after_exec_get_output(void *arg);
 int
 bounded_activity_wait(int *status, int threshold, char *jobid,
     pid_t pid, void *cl_args, void * (*cleanup_child)(void *));
+
+
 
 
 #endif	/* _PROCESS_JOB_H */

@@ -1,4 +1,4 @@
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 
 #    SAM-QFS_notice_begin
 #
@@ -64,7 +64,8 @@ LIB_SRC = \
 	arch_set_clnt.c \
 	restore_clnt.c \
 	file_util_clnt.c \
-	report_clnt.c
+	report_clnt.c \
+	cmd_dispatch_clnt.c
 
 LIB_SRC += \
 	log.c \
@@ -106,7 +107,8 @@ LIB_SRC += \
 	hosts_xdr.c \
 	arch_set_xdr.c \
 	restore_xdr.c \
-	report_xdr.c
+	report_xdr.c \
+	cmd_dispatch_xdr.c
 
 
 LIB_LIBS += \

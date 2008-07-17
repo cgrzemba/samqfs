@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.16 $"
+#pragma ident	"$Revision: 1.17 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -96,7 +96,7 @@ Host2host(JNIEnv *env, jobject hostObj) {
 	    String2charr);
 
 	host->server_priority = (int)getJIntFld(env, cls, hostObj, "srvPrio");
-	host->state = 0;
+	host->state = (int)getJIntFld(env, cls, hostObj, "state");
 	host->current_server = getBoolFld(env, cls, hostObj, "isCrtServer");
 
 	PTRACE(3, "jni:%s|%d|%d|%d|%d",

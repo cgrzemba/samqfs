@@ -29,7 +29,7 @@
 #ifndef _FILESYSTEM_H
 #define	_FILESYSTEM_H
 
-#pragma ident	"$Revision: 1.54 $"
+#pragma ident	"$Revision: 1.55 $"
 
 
 
@@ -618,9 +618,9 @@ int is_any_fs_mounted(ctx_t *ctx, boolean_t *mounted);
  */
 int grow_fs(ctx_t *ctx,
 	fs_t			*fs,
-	const sqm_lst_t	*additional_meta_data_disk,
-	const sqm_lst_t	*additional_data_disk,
-	const sqm_lst_t	*additional_striped_group);
+	sqm_lst_t	*additional_meta_data_disk,
+	sqm_lst_t	*additional_data_disk,
+	sqm_lst_t	*additional_striped_group);
 
 
 
@@ -973,6 +973,10 @@ int  nfs_remove_all(ctx_t *c, char *mnt_point);
 int  nfs_modify_active(sqm_lst_t *dirs, boolean_t share);
 
 // --------------------------------------------------------------------------
+
+mount_options_t *dup_mount_options(mount_options_t *src);
+striped_group_t *dup_striped_group(striped_group_t *src);
+fs_t *dup_fs(fs_t *src);
 
 
 /*

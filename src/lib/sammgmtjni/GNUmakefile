@@ -1,4 +1,4 @@
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 
 #    SAM-QFS_notice_begin
 #
@@ -172,10 +172,13 @@ JNATIVESRCS = \
 
 JTESTSRCS = \
 	${BASEPKG}/test/TUtil.java \
+	${BASEPKG}/test/TestDispatcher.java \
+	${BASEPKG}/test/TestHost.java \
 	${BASEPKG}/test/TestFSShrink.java \
 	${BASEPKG}/test/TestVSNPoolProps.java \
 	${BASEPKG}/test/TestDVolFlags.java \
 	${BASEPKG}/test/TestFScreate.java \
+	${BASEPKG}/test/TestSysInfo.java \
 	${BASEPKG}/test/TestTaskSchedule.java \
 	${BASEPKG}/test/TestArSet.java \
 	${BASEPKG}/test/TestReports.java \
@@ -184,7 +187,6 @@ JTESTSRCS = \
 	${BASEPKG}/test/TestStkMedia.java \
 	${BASEPKG}/test/TestNFSgetOpt.java \
 	${BASEPKG}/test/TestActivitygetall.java \
-	${BASEPKG}/test/TestSysInfo.java \
 	${BASEPKG}/test/TestFSEq.java \
 	${BASEPKG}/test/TestFSget.java \
 	${BASEPKG}/test/TestFSgetall.java \
@@ -193,7 +195,6 @@ JTESTSRCS = \
 	${BASEPKG}/test/TestFSgrow.java \
 	${BASEPKG}/test/TestFSremove.java \
 	${BASEPKG}/test/TestFSchk.java \
-	${BASEPKG}/test/TestHost.java \
 	${BASEPKG}/test/TestArcGetarfsd.java \
 	${BASEPKG}/test/TestArcResetarfsd.java \
 	${BASEPKG}/test/TestArcGlob.java \

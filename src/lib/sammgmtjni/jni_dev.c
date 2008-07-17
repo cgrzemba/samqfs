@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.18 $"
+#pragma ident	"$Revision: 1.19 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -39,6 +39,42 @@
 #include "com_sun_netstorage_samqfs_mgmt_fs_AU.h"
 #include "jni_util.h"
 
+void *
+SCSIDevInfo2scsiinfo(JNIEnv *env, jobject scObj) {
+	jclass cls;
+	scsi_info_t *scsi_info;
+	jboolean isCopy;
+	jstring js;
+	char *cs;
+	jfieldID fid;
+
+	PTRACE(2, "jni:SCSIDevInfo2scsiinfo() entry");
+	if (NULL == scObj) {
+		PTRACE(2, "jni:SCSIDevInfo2scsiinfo() done. (NULL)");
+		return (NULL);
+	}
+	scsi_info = (scsi_info_t *)malloc(sizeof (scsi_info_t));
+	if (scsi_info == NULL) {
+		PTRACE(2, "jni:SCSIDevInfo2scsiinfo() done. (no mem)");
+		return (NULL);
+	}
+	memset(scsi_info, 0, sizeof (scsi_info_t));
+	cls = (*env)->GetObjectClass(env, scObj);
+	getStrFld(env, cls, scObj, "vendor", scsi_info->vendor);
+	getStrFld(env, cls, scObj, "prodID", scsi_info->prod_id);
+	getStrFld(env, cls, scObj, "version", scsi_info->rev_level);
+	fid = (*env)->GetFieldID(env, cls, "devID", "Ljava/lang/String;");
+	if (NULL == fid)
+		(*env)->ExceptionDescribe(env);
+
+	js = (jstring)(*env)->GetObjectField(env, scObj, fid);
+	cs = GET_STR(js, isCopy);
+	scsi_info->dev_id = strdup(cs);
+	REL_STR(js, cs, isCopy);
+
+	PTRACE(2, "jni:SCSIDevInfo2scsiinfo() done");
+	return (scsi_info);
+}
 
 jobject
 scsiinfo2SCSIDevInfo(JNIEnv *env, void *v_scsi) {
@@ -113,7 +149,8 @@ AU2au(JNIEnv *env, jobject auObj) {
 	getStrFld(env, cls, auObj, "path", au->path);
 
 	au->raid = strdup("x");
-	au->scsiinfo = NULL;
+	au->scsiinfo = SCSIDevInfo2scsiinfo(env,
+	    getObjFld(env, cls, auObj, "scsi", "L"BASEPKG"/fs/SCSIDevInfo;"));
 	PTRACE(2, "jni:AU2au() done");
 	return (au);
 }

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.70 $"
+#pragma ident   "$Revision: 1.71 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -574,6 +574,20 @@ ctx_t *ctx	/* ARGSUSED */)
 	pid_t pid;
 	char *samd_start = SBIN_DIR"/samd start";
 	int status;
+
+	struct stat st;
+
+
+	/*
+	 * samd start is not valid for qfs only packages so check if
+	 * SAM is installed prior to calling. The stat test is the
+	 * same that is used in get_samfs_type from license.c. That
+	 * code is not available to everyone that includes util.h
+	 * so do it directly here.
+	 */
+	if (stat(SBIN_DIR"/sam-amld", &st) != 0) {
+		return (0);
+	}
 
 	pid = exec_get_output(samd_start, NULL, NULL);
 

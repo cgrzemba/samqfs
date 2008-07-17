@@ -33,13 +33,14 @@
 #ifndef _SQM_LIST_H
 #define	_SQM_LIST_H
 
-#pragma ident   "$Revision: 1.3 $"
+#pragma ident   "$Revision: 1.4 $"
 
 
 #include <sys/types.h>
 
 #define	FREEFUNCCAST(s) ((void (*)(void *))s)
 #define	CMPFUNCCAST(s) ((int (*)(void *, void *))s)
+#define	DUPFUNCCAST(s) ((void * (*)(void *))s)
 
 typedef struct node {
 	struct node *next;
@@ -118,6 +119,20 @@ void lst_free_deep(sqm_lst_t *lst);
  * function that frees the type of data member that the list contains.
  */
 void lst_free_deep_typed(sqm_lst_t *lst, void (*free_type)(void *));
+
+
+/*
+ * Function to make a copy of a typed list. The first function pointer
+ * is a pointer to a function that makes a copy of the type of
+ * elements contained in the list. The second function pointer is a
+ * pointer to a free function for the type so that this function can
+ * clean up in the face of errors.
+ *
+ * If lst is NULL this function will return 0 and set *ret_lst to NULL.
+ * If lst is empty an empty list is returned.
+ */
+int lst_dup_typed(sqm_lst_t *lst, sqm_lst_t **ret_lst,
+    void * (*dup) (void *), void (*free_type)(void *));
 
 
 /*

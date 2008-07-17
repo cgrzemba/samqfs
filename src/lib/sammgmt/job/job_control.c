@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.29 $"
+#pragma ident	"$Revision: 1.30 $"
 
 #include <sys/time.h>
 #include <stdio.h>
@@ -48,6 +48,7 @@
 #include "mgmt/util.h"
 #include <pub/mgmt/restore.h>
 #include <pub/mgmt/process_job.h>
+#include "mgmt/cmd_dispatch.h"
 
 #define	BUFFSIZ		MAXPATHLEN
 
@@ -109,7 +110,8 @@ char *activitytypes[activitytypemax] = {
 	SAMARELEASEFILES,	/* SAMA_RELEASEFILES */
 	SAMAARCHIVEFILES,	/* SAMA_ARCHIVEFILES */
 	SAMARUNEXPLORER,	/* SAMA_RUNEXPLORER */
-	SAMASTAGEFILES		/* SAMA_STAGEFILES */
+	SAMASTAGEFILES,		/* SAMA_STAGEFILES */
+	SAMADISPATCHJOB		/* SAMA_DISPATCHJOB */
 };
 
 /* RPC callable routine to get a list of what's going on */
@@ -207,7 +209,9 @@ kill_activity(
 	pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
 
 	/* destroy must be called outside of the lock */
-	ptr->destroy(ptr);
+	if (ptr->destroy(ptr) != 0) {
+		Trace(TR_ERR, "kill activity failed %s", activityid);
+	}
 
 	/*
 	 * Note that currently any type specific malloced fields in args
@@ -706,4 +710,188 @@ free_argbuf(int type, argbuf_t *args) {
 		 */
 		free(args);
 	}
+}
+
+
+/*
+ * Function to update the job struct when a host has been called
+ * asynchronously and did not return an error on the initial call.
+ * Note: this function is in job_control because it needs access to the
+ * samrlock mutex.
+ */
+int
+calling_host(char *job_id, char *host, int host_num) {
+
+	samrthread_t *ptr;
+	dispatch_job_t *dj;
+
+	if (ISNULL(job_id, host)) {
+		Trace(TR_ERR, "failed to find the job: %d %s",
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	Trace(TR_MISC, "updating dispatch job %s with response from %s", job_id,
+	    host);
+
+	pthread_mutex_lock(samrlock);	/* ++ LOCK samrtlist */
+	ptr = find_this_activity(job_id);
+
+	/* If we didn't find the job, return an error */
+	if (ptr == NULL) {
+		pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+		samrerr(SE_NO_SUCH_ACTIVITY, job_id);
+		Trace(TR_ERR, "failed to find the job: %d %s",
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	if (ptr->type != SAMA_DISPATCH_JOB) {
+		pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+		setsamerr(SE_INVALID_ACTIVITY_TYPE);
+		Trace(TR_ERR, "failed to find the job: %d %s",
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	dj = (dispatch_job_t *)ptr->args->db.job;
+	if (host_num >= dj->host_count) {
+		pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+		setsamerr(SE_INVALID_HOST_ID_IN_RESPONSE);
+		Trace(TR_ERR, "Host number outside of range");
+		return (-1);
+	}
+	dj->hosts_called++;
+
+
+	/*
+	 * Only upgrade the status if a higher status has not been set.
+	 * Otherwise leave it alone since there is no guarantee that host_called
+	 * will be executed prior to receiving an asychronous response.
+	 */
+	if (dj->responses[host_num].status == OP_NOT_YET_CALLED) {
+		dj->responses[host_num].status = OP_PENDING;
+	}
+	if (dj->overall_status == DJ_INITIALIZING) {
+		dj->overall_status = DJ_PENDING;
+	}
+	pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+
+	return (0);
+}
+
+
+
+/*
+ * Function to call when a host responds. It would also be appropriate
+ * if the responses are asynchronous but the host returns an error on
+ * the initial call to handle_request
+ *
+ * If passed with error_number != 0 the result will be
+ * interpreted as an error. Otherwise it is interpreted as a
+ * response.
+ */
+int
+host_responded(
+char *job_id,
+char *host,
+int host_num,
+int error_number,
+char *result) {
+
+	samrthread_t *ptr;
+	dispatch_job_t *dj;
+
+	/* result is checked for NULL later */
+	if (ISNULL(job_id, host)) {
+		Trace(TR_ERR, "failed to find the job: %d %s",
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	Trace(TR_DEBUG, "updating dispatch job %s with response from %s",
+	    job_id, host);
+
+	pthread_mutex_lock(samrlock);	/* ++ LOCK samrtlist */
+	ptr = find_this_activity(job_id);
+
+	if (ptr == NULL) {
+		pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+		Trace(TR_ERR, "failed to find the job: %d %s",
+		    samerrno, samerrmsg);
+
+		return (samrerr(SE_NO_SUCH_ACTIVITY, job_id));
+	}
+
+	dj = (dispatch_job_t *)ptr->args->db.job;
+
+	/* Set the error or response for the current host in the job */
+	if (host_num < dj->host_count) {
+		/* Increment the hosts that have responded */
+		dj->hosts_responded++;
+
+
+		dj->responses[host_num].error = error_number;
+		if (error_number == 0) {
+			dj->responses[host_num].status = OP_SUCCEEDED;
+		} else {
+			dj->responses[host_num].status = OP_FAILED;
+		}
+
+		/* A result is not mandatory */
+		if (result != NULL) {
+			dj->responses[host_num].result = copystr(result);
+			if (dj->responses[host_num].result == NULL) {
+				pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+				Trace(TR_ERR, "error duplicating result: %d %s",
+				    samerrno, samerrmsg);
+				return (-1);
+			}
+		}
+	} else {
+		pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+		Trace(TR_ERR, "Host number outside of range");
+		setsamerr(SE_INVALID_HOST_ID_IN_RESPONSE);
+		return (-1);
+	}
+
+
+	/*
+	 * If all hosts have responded, call the post_phase handler to do any
+	 * necessary work on this host and set the end time and
+	 * overall status.
+	 */
+	if (dj->hosts_responded == dj->host_count) {
+		if (dj->post_phase != NULL) {
+			int ret;
+
+			dj->overall_status = DJ_POST_PHASE_PENDING;
+
+			/*
+			 * It would be good to do the post phase handling
+			 * with the mutex unlocked but it is not currently
+			 * safe to do so.
+			 */
+			ret = dj->post_phase(dj);
+
+			/* Set status */
+			if (ret == -1) {
+				dj->overall_status = DJ_POST_PHASE_FAILED;
+				dj->overall_error_num = samerrno;
+				dj->overall_error_msg = copystr(samerrmsg);
+			} else {
+				dj->overall_status = DJ_POST_PHASE_SUCCEEDED;
+			}
+			dj->endtime = time(0);
+
+		} else {
+			dj->overall_status = DJ_DONE;
+			dj->endtime = time(0);
+		}
+	}
+
+
+	pthread_mutex_unlock(samrlock);	/* ++ UNLOCK */
+
+	return (0);
 }

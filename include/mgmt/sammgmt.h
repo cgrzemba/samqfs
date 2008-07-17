@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.116 $"
+#pragma ident	"$Revision: 1.117 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -61,6 +61,7 @@
 #include "pub/mgmt/task_schedule.h"
 #include "pub/mgmt/monitor.h"
 #include "pub/mgmt/csn_registration.h"
+#include "mgmt/cmd_dispatch.h"
 
 #ifdef SAMRPC_SERVER
 #include "sam/sam_trace.h"		/* for RPC Server Trace */
@@ -241,6 +242,34 @@ void get_rpc_server(ctx_t *ctx, upath_t svr);
 
 #endif
 
+/* ctx->handle->svr_name is used to store the architecture */
+#define	SERVERSIDE_CLIENT_SET_RPC_ERROR(ctx, func_name, stat, host) \
+	{ \
+		Trace(TR_ERR, \
+		    "%s: rpc call to server[%s] failed. stat = %d\n", \
+			func_name, host, stat); \
+		if (stat == RPC_TIMEDOUT) { \
+				samerrno = SE_RPC_TIMEDOUT; \
+				(void) snprintf(samerrmsg, MAX_MSG_LEN, \
+					GetCustMsg(SE_RPC_TIMEDOUT)); \
+		} else if (stat == RPC_PROCUNAVAIL) { \
+			samerrno = SE_PROC_UNAVAILABLE; \
+			err_msg = clnt_sperror(ctx.handle->clnt, host); \
+			(void) snprintf(samerrmsg, MAX_MSG_LEN, err_msg); \
+		} else if (stat == RPC_CANTRECV) { \
+			samerrno = SE_RPC_FAILED; \
+			(void) snprintf(samerrmsg, MAX_MSG_LEN, \
+				GetCustMsg(SE_RPC_FAILED)); \
+		} else { \
+			samerrno = SE_RPC_FAILED; \
+			err_msg = clnt_sperror(ctx.handle->clnt, host); \
+			(void) snprintf(samerrmsg, MAX_MSG_LEN, err_msg); \
+		} \
+		Trace(TR_ERR, "%s %s", func_name, samerrmsg); \
+	}
+
+
+
 /*
  * Rebuild tail
  *
@@ -263,17 +292,19 @@ void get_rpc_server(ctx_t *ctx, upath_t svr);
  */
 #define	SET_FS_ARCH_CFG_TAIL(afc) \
 	{ node_t *node_s; vsn_map_t *_mp; \
-		SET_LIST_TAIL(afc->copies); \
-		SET_LIST_TAIL(afc->vsn_maps); \
-		if (afc->vsn_maps != NULL) { \
-			node_s = afc->vsn_maps->head; \
-			while (node_s != NULL) { \
-				_mp = (vsn_map_t *)node_s->data; \
-				SET_LIST_TAIL(_mp->vsn_names); \
-				SET_LIST_TAIL(_mp->vsn_pool_names); \
-				node_s = node_s->next; \
+		if (afc != NULL) { \
+			SET_LIST_TAIL(afc->copies); \
+			SET_LIST_TAIL(afc->vsn_maps); \
+			if (afc->vsn_maps != NULL) { \
+				node_s = afc->vsn_maps->head; \
+				while (node_s != NULL) { \
+					_mp = (vsn_map_t *)node_s->data; \
+					SET_LIST_TAIL(_mp->vsn_names); \
+					SET_LIST_TAIL(_mp->vsn_pool_names); \
+					node_s = node_s->next; \
+				} \
 			} \
-		} \
+		}\
 	}
 
 /*
@@ -1368,6 +1399,12 @@ typedef struct file_details_result {
 	sqm_lst_t	*list;
 } file_details_result_t;
 
+
+typedef struct handle_request_arg {
+	ctx_t *ctx;
+	op_req_t *req;
+} handle_request_arg_t;
+
 /*
  * *****************************
  *  the RPC function prototypes
@@ -2364,6 +2401,9 @@ extern  samrpc_result_t *samrpc_remove_task_schedule_6_svr();
 #define	samrpc_get_specific_tasks 1413
 extern  samrpc_result_t *samrpc_get_specific_tasks_6_svr();
 
+#define	samrpc_handle_request		1414
+extern	samrpc_result_t *samrpc_handle_request_5_0_svr();
+
 
 /*
  * *******************
@@ -2789,6 +2829,11 @@ extern bool_t xdr_public_key_result_t();
 /* report */
 extern bool_t xdr_report_requirement_arg_t();
 extern bool_t xdr_file_metric_rpt_arg_t();
+
+/* cmd dispatcher */
+extern bool_t xdr_handle_request_arg_t();
+extern bool_t xdr_op_req_t();
+
 
 /* definition of macros for easier readability */
 

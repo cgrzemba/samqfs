@@ -1,4 +1,4 @@
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 
 #    SAM-QFS_notice_begin
 #
@@ -56,7 +56,8 @@ LIB_SRC = \
 	job_history_xdr.c \
 	restore_xdr.c \
 	report_xdr.c \
-	sammgmt_xdr.c
+	sammgmt_xdr.c \
+	cmd_dispatch_xdr.c
 
 DATAFILES = $(LIB_SRC) Makefile.inst
 

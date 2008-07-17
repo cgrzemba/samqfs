@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.14 2008/07/02 18:58:58 pg125177 Exp $
+// ident	$Id: Host.java,v 1.15 2008/07/17 14:27:10 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -57,6 +57,7 @@ public class Host {
 	this.ipAddrs = ipAddrs;
 	this.srvPrio = srvPrio;
 	this.isCrtServer = crtServer;
+	this.state = CL_STATE_ON;
     }
 
     public Host(String name, String ipAddrs[], int srvPrio,

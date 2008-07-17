@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.51 $"
+#pragma ident	"$Revision: 1.52 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -126,6 +126,9 @@ static int check_did_slices(sqm_lst_t *dids, sqm_lst_t **paus);
 static sqm_lst_t *get_diskset_slices(sqm_lst_t *aus);
 static sqm_lst_t *get_slices_from_stream(sqm_lst_t *slices,
 	FILE *res_stream, char *fsinfo);
+
+static int compare_aus(au_t *a1, au_t *a2);
+
 
 typedef struct fsdata {
 	char *path;	/* /dev[md|vx|did|zvol]/dsk...  */
@@ -2028,4 +2031,139 @@ get_diskset_slices(sqm_lst_t *aus) { // append them to this list
 	free(dirp);
 	Trace(TR_MISC, "%d disksets obtained", dsets->length);
 	return (aus);
+}
+
+
+int
+find_local_device_paths(sqm_lst_t *disks, sqm_lst_t *aus) {
+	node_t *dsk_n;
+	node_t *au_n;
+	boolean_t found;
+
+	if (disks == NULL) {
+		return (0);
+	}
+
+	for (dsk_n = disks->head; dsk_n != NULL; dsk_n = dsk_n->next) {
+
+		found = B_FALSE;
+
+		disk_t *dsk = (disk_t *)dsk_n->data;
+		if (dsk == NULL) {
+			continue;
+		}
+		for (au_n = aus->head; au_n != NULL && !found;
+			au_n = au_n->next) {
+
+			au_t *au = (au_t *)au_n->data;
+			if (au == NULL) {
+				continue;
+			}
+			if (compare_aus(&(dsk->au_info), au) == 0) {
+				/*
+				 * copy the new path from the discovered
+				 * au into the disk input
+				 */
+				strlcpy(dsk->au_info.path, au->path,
+				    sizeof (upath_t));
+				strlcpy(dsk->base_info.name, au->path,
+				    sizeof (upath_t));
+				found = B_TRUE;
+				break;
+			}
+		}
+		if (!found) {
+
+			/*
+			 * Did not find a match so return an error.
+			 */
+			samerrno = SE_NO_MATCHING_DEVICE;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(SE_NO_MATCHING_DEVICE),
+			    dsk->au_info.path);
+			Trace(TR_ERR, "mapping dev paths failed:%d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
+	}
+
+	return (0);
+}
+
+
+static int
+compare_aus(au_t *a1, au_t *a2) {
+	int slice_id_1;
+	int slice_id_2;
+
+	/* Does the data to make the comparison exist */
+	if (ISNULL(a1, a2, a1->scsiinfo, a1->scsiinfo->dev_id, a2->scsiinfo,
+	    a2->scsiinfo->dev_id)) {
+		Trace(TR_ERR, "Data needed for au comparison not present:%d %s",
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	if (strcmp(a1->scsiinfo->dev_id, a2->scsiinfo->dev_id) != 0) {
+		Trace(TR_DEBUG, "au's devids don't match");
+		return (-1);
+	}
+
+	/* It is the same disk so check the slice */
+	slice_id_1 = strlen(a1->path) - 1;
+	slice_id_2 = strlen(a1->path) - 1;
+
+	if (a1->path[slice_id_1] != a2->path[slice_id_2]) {
+		Trace(TR_DEBUG, "au's slices %c %c don't match:%d %s",
+		    a1->path[slice_id_1], a2->path[slice_id_2],
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+	return (0);
+}
+
+disk_t *
+dup_disk(disk_t *dk) {
+
+	disk_t *cpy;
+
+
+	if (ISNULL(dk)) {
+		return (NULL);
+	}
+
+	cpy = mallocer(sizeof (disk_t));
+	if (cpy == NULL) {
+		return (NULL);
+	}
+	memcpy(cpy, dk, sizeof (disk_t));
+	if (dk->au_info.raid) {
+		cpy->au_info.raid = copystr(dk->au_info.raid);
+		if (cpy->au_info.raid == NULL) {
+			free(cpy);
+			return (NULL);
+		}
+	}
+	if (dk->au_info.scsiinfo) {
+		cpy->au_info.scsiinfo = mallocer(sizeof (scsi_info_t));
+		if (cpy->au_info.scsiinfo == NULL) {
+			free(cpy->au_info.raid);
+			free(cpy);
+			return (NULL);
+		}
+		memcpy(cpy->au_info.scsiinfo, dk->au_info.scsiinfo,
+		    sizeof (scsi_info_t));
+
+		if (dk->au_info.scsiinfo->dev_id) {
+			cpy->au_info.scsiinfo->dev_id =
+			    copystr(dk->au_info.scsiinfo->dev_id);
+			if (cpy->au_info.scsiinfo->dev_id == NULL) {
+				free(cpy->au_info.scsiinfo);
+				free(cpy->au_info.raid);
+				free(cpy);
+				return (NULL);
+			}
+		}
+	}
+	return (cpy);
 }

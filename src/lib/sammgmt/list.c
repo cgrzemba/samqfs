@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident   "$Revision: 1.29 $"
+#pragma ident   "$Revision: 1.30 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -567,6 +567,50 @@ void (*free_type)(void *))	/* function to free the data members */
 		node = node->next;
 	}
 	lst_free(lst);
+}
+
+
+int
+lst_dup_typed(sqm_lst_t *lst, sqm_lst_t **ret_lst,
+    void * (*dup) (void *), void (*free_type) (void *)) {
+
+	node_t *n;
+
+	if (ISNULL(ret_lst, dup)) {
+		return (-1);
+	}
+
+	if (lst == NULL) {
+		*ret_lst = NULL;
+		return (0);
+	}
+	*ret_lst = lst_create();
+	if (*ret_lst == NULL) {
+		return (-1);
+	}
+
+	for (n = lst->head; n != NULL; n = n->next) {
+		void *copy;
+
+		if (n->data == NULL) {
+			lst_free_deep_typed(*ret_lst, free_type);
+			*ret_lst = NULL;
+			return (-1);
+		}
+		copy = dup(n->data);
+		if (copy == NULL) {
+			lst_free_deep_typed(*ret_lst, free_type);
+			*ret_lst = NULL;
+			return (-1);
+		}
+		if (lst_append(*ret_lst, copy) != 0) {
+			free_type(copy);
+			lst_free_deep_typed(*ret_lst, free_type);
+			*ret_lst = NULL;
+			return (-1);
+		}
+	}
+	return (0);
 }
 
 

@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.602 $"
+$ pragma ident "$Revision: 1.603 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -4007,7 +4007,7 @@ $ CSN Error messages
 
 
 $ rpc server side connection failures
-
+30806 Request is taking a long time to complete. Timed out
 30809 Unknown File System Manager client
 30810 Access from host %s denied. Please run /opt/SUNWsamfs/sbin/fsmadm on the SAM-FS/QFS server to add the File System Manager host name to the list of supported clients
 30811 Warning: Cannot access %s. Please ensure that host is accessible over the network. If host is in a different domain, specify hostname.domainname\n
@@ -4363,3 +4363,32 @@ $ Task Schedule Errors
 32162 The schedule requires a duration
 32163 %s is not a valid date specification
 32200 Could not get the time at which high water mark was exceeded
+$ Dispatcher errors
+32300 The dispatcher does not support function: %d
+32301 Internal error: The host number does not fall inside the expected range
+32302 Internal error: Unexpected job type
+32303 Thread pool initialization failed
+
+32304 Mounting the file system on the clients failed
+32305 Mounting the file system failed on some of the clients
+32306 Unmounting the file system on the clients failed
+32307 Unmounting the file system failed on some of the clients
+32308 Changing the mount options on the clients failed
+32309 Changing the mount options failed the some of the clients
+32310 The clients have been authorized to connect to the file system, but configuring the file system on the clients failed. 
+32311 The clients have been authorized to connect to the file system, but configuring the file system on some of the clients failed. 
+32312 The file system has been grown on the metadata server, but adding the new devices on the clients failed
+32313 The file system has been grown on the metadata server, but adding the new devices failed on some of the clients
+32314 The host's authorization to access the file system has been revoked but deconfiguring the file system on the hosts failed
+32315 The host's authorization to access the file system has been revoked but deconfiguring the file system failed on some of the hosts
+32316 Configuring the advanced network configuration on the hosts failed
+32317 Configuring the advanced network configuration failed on some of the hosts
+32318 The operation can not be canceled and has not completed. It cannot be removed until it completes
+32319 The operation was not attempted. No hosts were specified
+32320 Mounting the file system on the metadata server failed. Mounting the file system on other hosts requires the metadata server first be mounted
+32321 Unmounting the file system on the metadata server failed. Other hosts may still have the file system mounted
+32322 Invalid job id
+32323 Growing the file system failed on some of the clients. The device has been added to the shared file system but allocation is disabled. Check the job status for information about the failures on the clients.
+32324 Growing the file system succeeded on all hosts. However, enabling allocation failed. Re-try enabling allocation for the new devices
+32325 Hosts must be added on the metadata server
+32326 Hosts must be removed on the metadata server

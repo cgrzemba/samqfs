@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "	$Revision: 1.44 $"
+#pragma ident "	$Revision: 1.45 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -70,6 +70,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 /* client info headers */
 #include "sam/syscall.h"
 #include "sam/lib.h"
+
+
 /*
  *  Client status bit definitions - see src/fs/include/client.h
  */
@@ -97,6 +99,9 @@ static int get_host_kv(char **charhosts, sam_client_info_t *clnt_stat,
 
 static int get_host_struct(char **charhosts, upath_t server_name,
     host_info_t **h);
+
+static int get_charhosts(fs_t *fs, char ****charhosts);
+
 
 
 static int
@@ -979,11 +984,13 @@ set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
 	/* set the new config */
 	if (cfg_set_hosts_config(c, fs) != 0) {
 		free_fs(fs);
+		free_list_of_host_info(cfg_hosts);
 		Trace(TR_ERR, "Setting client state failed: %s",
 		    samerrmsg);
 
 		return (-1);
 	}
+	free_list_of_host_info(cfg_hosts);
 
 	if (fs->fi_status & FS_MOUNTED) {
 		mounted = B_TRUE;
@@ -1006,72 +1013,6 @@ set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
 }
 
 
-/*
- * Function to add multiple clients to a shared file system. This
- * function may be run to completion in the background.
- * Returns:
- * 0 for successful completion
- * -1 for error
- * job_id will be returned if the job has not completed.
- */
-int add_hosts(
-ctx_t *c,
-char *fs_name,
-sqm_lst_t *hosts) {
-
-	node_t *n;
-
-	if (ISNULL(fs_name, hosts)) {
-		Trace(TR_ERR, "remove clients failed: %s",
-		    samerrmsg);
-
-		return (-1);
-	}
-
-	for (n = hosts->head; n != NULL; n = n->next) {
-		host_info_t *hi = (host_info_t *)n->data;
-		if (hi != NULL) {
-			Trace(TR_MISC, "add_host: host = %s",
-			    Str(hi->host_name));
-		}
-	}
-	return (0);
-}
-
-
-
-/*
- * The file system must be unmounted to remove clients. You can
- * disable access from clients without unmounting the file system
- * with the setClientState function.
- *
- * Returns: 0, 1, job ID
- * 0 for successful completion
- * -1 for error
- * job ID will be returned if the job has not completed.
- */
-int remove_hosts(
-ctx_t *c,
-char *fs_name,
-char *host_names[],
-int host_count) {
-
-	int i;
-
-	Trace(TR_MISC, "remove hosts entry");
-	if (ISNULL(fs_name, host_names, host_count)) {
-		Trace(TR_ERR, "remove clients failed: %s",
-		    samerrmsg);
-
-		return (-1);
-	}
-
-	for (i = 0; i < host_count; i++) {
-		Trace(TR_MISC, "hostarg[%d] = %s", i, host_names[i]);
-	}
-
-	return (0);
-}
 
 
 /*
@@ -1288,7 +1229,6 @@ int32_t		kv_options)	/* what to fetch and include */
 	}
 
 
-
 	/*
 	 * Convert the information from essentially a char array to an
 	 * array of char arrays.
@@ -1331,6 +1271,177 @@ int32_t		kv_options)	/* what to fetch and include */
 	return (0);
 }
 
+static int
+get_charhosts(fs_t *fs, char ****charhosts) {
+
+	int htsize = SAM_LARGE_HOSTS_TABLE_SIZE;
+	struct sam_host_table_blk *host_tbl;
+	char	*errmsg;
+	int	errc = 0;
+	char	*devname = NULL;
+
+
+
+	if (ISNULL(fs, charhosts)) {
+		Trace(TR_ERR, "getting charhosts failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	/* Allocate space to hold the new large host table */
+	host_tbl = (struct sam_host_table_blk *)mallocer(htsize);
+	if (host_tbl == NULL) {
+		Trace(TR_ERR, "getting charhosts failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+	bzero((char *)host_tbl, htsize);
+
+
+	/* Get the host table from the file system or the raw device. */
+	if (!(fs->fi_status & FS_MOUNTED)) {
+		/*
+		 * file system is not mounted get the information from
+		 * the first metadata device.
+		 */
+		if (strcmp(fs->equ_type, "ma") == 0 &&
+		    (fs->meta_data_disk_list == NULL ||
+		    fs->meta_data_disk_list->length == 0)) {
+			samerrno = SE_UNABLE_TO_READ_RAW_HOSTS;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(SE_UNABLE_TO_READ_RAW_HOSTS),
+			    fs->fi_name, "no metadata devices");
+			free(host_tbl);
+			Trace(TR_ERR, "getting hosts config failed: %s",
+			    "no metadata devices");
+			return (-1);
+		} else {
+			disk_t *d;
+
+			/* select a device to read the hosts information from */
+			if (strcmp(fs->equ_type, "ma") == 0) {
+				d = (disk_t *)
+				    fs->meta_data_disk_list->head->data;
+			} else {
+				/* fs is shared ms, so use a data disk */
+				d = (disk_t *)fs->data_disk_list->head->data;
+			}
+			if (strcmp(d->base_info.name, NODEV_STR) == 0) {
+
+				samerrno = SE_CLIENTS_HAVE_NO_HOSTS_FILE;
+				snprintf(samerrmsg, MAX_MSG_LEN,
+				    GetCustMsg(SE_CLIENTS_HAVE_NO_HOSTS_FILE));
+				free(host_tbl);
+				Trace(TR_ERR,
+				    "getting hosts config failed: %s",
+				    samerrmsg);
+
+				return (-1);
+			}
+
+			dsk2rdsk(d->base_info.name, &devname);
+
+			if (devname == NULL) {
+				samerrno = SE_CANNOT_DETERMINE_RAW_SLICE;
+				snprintf(samerrmsg, MAX_MSG_LEN,
+				    GetCustMsg(SE_CANNOT_DETERMINE_RAW_SLICE),
+				    fs->fi_name);
+				free(host_tbl);
+				Trace(TR_ERR,
+				    "getting hosts config failed: %s",
+				    samerrmsg);
+
+				return (-1);
+			}
+		}
+
+		if (SamGetRawHosts(devname, host_tbl, htsize,
+		    &errmsg, &errc) < 0) {
+
+			Trace(TR_OPRMSG, "getting host from raw slice failed");
+			/*
+			 * This can fail if the mcf does not have
+			 * nodevs for the metadata but this host has a
+			 * different byte ordering than the host on
+			 * which the file system was created. In this case
+			 * we do not want to throw an error because
+			 * this host can only concievably be a client if
+			 * its architecture is different than the architecture
+			 * on which the file system was initially created.
+			 */
+			if (strstr(errmsg, "Foreign") != NULL ||
+			    strstr(errmsg, "byte-swapped") != NULL) {
+
+				Trace(TR_OPRMSG, "byte-swapped devs %s",
+				    "detected ");
+				*charhosts = NULL;
+				if (devname != NULL) {
+					free(devname);
+				}
+				free(host_tbl);
+				return (0);
+			}
+
+			samerrno = SE_UNABLE_TO_READ_RAW_HOSTS;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(SE_UNABLE_TO_READ_RAW_HOSTS),
+			    fs->fi_name, errmsg);
+
+			Trace(TR_ERR, "getting hosts config failed: %s",
+			    samerrmsg);
+			Trace(TR_ERR, "tried to read from %s", devname);
+
+			if (devname != NULL) {
+				free(devname);
+			}
+			free(host_tbl);
+			return (-1);
+		}
+
+	} else {
+		/*
+		 * The filesystem is mounted, so get the information from
+		 * the core
+		 */
+		if (sam_gethost(fs->fi_name, htsize,
+		    (char *)host_tbl) < 0) {
+
+			samerrno = SE_UNABLE_TO_GET_HOSTS_FROM_CORE;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(SE_UNABLE_TO_GET_HOSTS_FROM_CORE),
+			    fs->fi_name);
+
+			free(host_tbl);
+			Trace(TR_ERR, "getting hosts config failed: %s",
+			    samerrmsg);
+
+			return (-1);
+		}
+	}
+
+	/*
+	 * Convert the information from essentially a char array to an
+	 * array of char arrays.
+	 */
+	if ((*charhosts = SamHostsCvt(&host_tbl->info.ht, &errmsg,
+	    &errc)) == NULL) {
+		samerrno = SE_UNABLE_TO_CONVERT_HOSTS_FILE;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_UNABLE_TO_CONVERT_HOSTS_FILE),
+		    fs->fi_name);
+
+		SamHostsFree(*charhosts);
+		free(host_tbl);
+
+		Trace(TR_ERR, "getting hosts config failed: %s",
+		    samerrmsg);
+
+		return (-1);
+	}
+
+
+	return (0);
+}
 
 /*
  * from a hosts char *** make a list of host_info_t structs
@@ -2246,4 +2357,121 @@ char **mds_host)
 	free_list_of_fs(l);
 	Trace(TR_OPRMSG, "get mds host: no shared fs found");
 	return (0);
+}
+
+
+/*
+ * Make an array of the names of hosts participating in a shared file system.
+ * This function excludes the name of the local host.
+ */
+int
+make_host_name_array(fs_t *fs, char ***host_names)
+{
+
+	static char	local_host[MAXHOSTNAMELEN] = "";
+	int		local_host_len = 0;
+	boolean_t	found_local_host = B_FALSE;
+	char		***charhosts = NULL;
+	int		host_count = 0;
+	int		cur_host = 0;
+	int		i;
+
+	if (get_charhosts(fs, &charhosts) != 0 || charhosts == NULL) {
+		Trace(TR_ERR, "making the hosts name array failed: %d %s",
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	/* Count them to provide input to the calloc */
+	for (i = 0; charhosts[i] != NULL; i++) {
+		host_count++;
+	}
+
+	if (host_count == 0) {
+		Trace(TR_MISC, "Making host name array- no hosts");
+		return (0);
+	}
+
+	/* Fetch the host name the first time the function function executes */
+	if (local_host[0] == '\0') {
+		if (gethostname(local_host, MAXHOSTNAMELEN) != 0) {
+			setsamerr(SE_UNABLE_TO_GET_HOSTNAME);
+			Trace(TR_ERR, "Making dispatch hosts array failed:"
+			    "%d %s", samerrno, samerrmsg);
+			return (-1);
+		}
+	}
+	local_host_len = strlen(local_host);
+
+
+	*host_names = (char **)calloc(host_count, sizeof (char *));
+	if (*host_names == NULL) {
+		setsamerr(SE_NO_MEM);
+		Trace(TR_ERR, "Making dispatch hosts array failed:"
+		    "%d %s", samerrno, samerrmsg);
+		return (-1);
+	}
+	for (i = 0; i < host_count; i++) {
+		if (!found_local_host &&
+		    (strlen(charhosts[i][HOSTS_NAME]) == local_host_len) &&
+		    (strncmp(charhosts[i][HOSTS_NAME], local_host,
+		    local_host_len) == 0)) {
+			found_local_host = B_TRUE;
+			Trace(TR_DEBUG, "Omitting the local host");
+			continue;
+		}
+
+		(*host_names)[cur_host] = copystr(charhosts[i][HOSTS_NAME]);
+		if ((*host_names)[cur_host] == NULL) {
+			free_string_array(*host_names, cur_host);
+			Trace(TR_ERR, "Making dispatch hosts array failed:"
+			    "%d %s", samerrno, samerrmsg);
+			return (-1);
+		}
+		cur_host++;
+
+	}
+
+	/*
+	 * Since we are not returning the local host, free the array if
+	 * the only host found was the local host.
+	 */
+	if (cur_host == 0) {
+		free_string_array(*host_names, host_count);
+		host_count = 0;
+		*host_names = NULL;
+		Trace(TR_MISC, "Making host name array only found local host");
+	}
+	return (cur_host);
+}
+
+
+host_info_t *
+dup_host(host_info_t *src) {
+	host_info_t *dest;
+	if (src == NULL) {
+		return (NULL);
+	}
+
+	dest = (host_info_t *)mallocer(sizeof (host_info_t));
+	if (dest == NULL) {
+		return (NULL);
+	}
+	(dest->host_name) = copystr(src->host_name);
+	if (dest->host_name == NULL) {
+		free(dest);
+		return (NULL);
+	}
+
+	dest->server_priority = src->server_priority;
+	dest->state = src->state;
+
+	if (lst_dup_typed(src->ip_addresses, &(dest->ip_addresses),
+	    DUPFUNCCAST(copystr), FREEFUNCCAST(free)) != 0) {
+		free(dest->host_name);
+		free_host_info(dest);
+		return (NULL);
+	}
+
+	return (dest);
 }

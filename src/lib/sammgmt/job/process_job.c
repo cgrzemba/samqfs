@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.22 $"
+#pragma ident   "$Revision: 1.23 $"
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 
@@ -140,6 +140,7 @@ static char *activity_names[activitytypemax] = {
 	"archivefiles",		/* SAMA_ARCHIVEFILES */
 	"runexplorer",		/* SAMA_RUNEXPLORER */
 	"stagefiles",		/* SAMA_STAGEFILES */
+	"samadispatchjob"	/* SAMADISPATCHJOB */
 };
 
 #define	UNKNOWN_ACTIVITY "unknown_activity"

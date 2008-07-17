@@ -29,7 +29,7 @@
 #ifndef _HOSTS_H
 #define	_HOSTS_H
 
-#pragma ident "	$Revision: 1.20 $	"
+#pragma ident "	$Revision: 1.21 $	"
 
 
 
@@ -138,6 +138,7 @@ int get_shared_fs_hosts(ctx_t *c, char *fs_name, int32_t options,
  */
 int set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
     int client_state);
+
 
 /*
  * Function to add multiple clients to a shared file system. This
@@ -261,6 +262,8 @@ get_advanced_network_cfg(ctx_t *c, char *fs_name, sqm_lst_t **host_strs);
  * shared file system will be returned.
  */
 int get_mds_host(ctx_t *c, char *fs_name, char **mds_host);
+
+host_info_t *dup_host(host_info_t *h);
 
 void free_host_info(host_info_t *h);
 void free_list_of_host_info(sqm_lst_t *l);

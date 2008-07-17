@@ -1,4 +1,4 @@
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 
 #    SAM-QFS_notice_begin
 #
@@ -65,7 +65,8 @@ PROG_SRC = \
 	arch_set_svr.c \
 	restore_svr.c \
 	file_util_svr.c \
-	report_svr.c
+	report_svr.c \
+	cmd_dispatch_svr.c
 
 PROG_SRC += \
 	list_xdr.c \
@@ -93,7 +94,6 @@ PROG_SRC += \
 
 PROG_LIBS = \
 	-L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamapi -lgen -lfsmgmt -lnsl -lintl -ldl -lcsn -lcurl -lssl -lcrypto -lsocket $(LIBSO)
-
 
 MPROGS = clientmgmt
 clientmgmt_SRC = secure_cfg.c clientmgmt.c

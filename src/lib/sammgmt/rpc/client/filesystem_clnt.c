@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.33 $"
+#pragma ident	"$Revision: 1.34 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -682,9 +682,9 @@ int
 grow_fs(
 ctx_t *ctx,					/* client connection */
 fs_t *fs,					/* file system info */
-const sqm_lst_t *additional_meta_data_disk,
-const sqm_lst_t *additional_data_disk,
-const sqm_lst_t *additional_striped_group
+sqm_lst_t *additional_meta_data_disk,
+sqm_lst_t *additional_data_disk,
+sqm_lst_t *additional_striped_group
 )
 {
 	int ret_val;
@@ -1637,7 +1637,7 @@ char *node_data)
 	PTRACE(2, "%s entry", func_name);
 
 	CHECK_CLIENT_HANDLE(ctx, func_name);
-	if (ISNULL(fs_name, node_name, node_ip, backing_store, node_data)) {
+	if (ISNULL(fs_name, node_name, backing_store)) {
 		PTRACE(2, "%s exit %s", func_name, samerrmsg);
 		return (-1);
 	}

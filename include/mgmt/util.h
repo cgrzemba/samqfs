@@ -30,7 +30,7 @@
 #ifndef _UTIL_H
 #define	_UTIL_H
 
-#pragma ident	"$Revision: 1.42 $"
+#pragma ident	"$Revision: 1.43 $"
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -414,5 +414,6 @@ extern char *StrFromErrno(int errno_arg, char *buf, int buf_size);
  */
 void set_samdaemon_err(int errnum, int samerrnum, char *daemonmsg);
 
+void free_string_array(char **str_arr, int arr_len);
 
 #endif /* _UTIL_H */

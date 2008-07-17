@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.118 $"
+#pragma ident	"$Revision: 1.119 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -546,6 +546,9 @@ sammgmtprog_1(rqstp, transp)
 		string_arg_t samrpc_set_task_schedule_6_svr;
 		string_arg_t samrpc_remove_task_schedule_6_svr;
 		string_string_arg_t samrpc_get_specific_tasks_6_svr;
+
+		/* command dispatcher */
+		handle_request_arg_t samrpc_handle_request_5_0_svr;
 
 	} argument;
 
@@ -2489,6 +2492,12 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_argument = xdr_string_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_remove_task_schedule_6_svr;
+		break;
+
+	case samrpc_handle_request:
+		_xdr_argument = xdr_handle_request_arg_t;
+		_xdr_result = xdr_samrpc_result_t;
+		local = (char *(*)()) samrpc_handle_request_5_0_svr;
 		break;
 
 	default:

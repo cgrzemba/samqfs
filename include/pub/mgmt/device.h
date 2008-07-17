@@ -29,7 +29,7 @@
 #ifndef _DEVICE_H
 #define	_DEVICE_H
 
-#pragma	ident	"$Revision: 1.54 $"
+#pragma	ident	"$Revision: 1.55 $"
 
 /*
  *	device.h --  SAM-FS APIs for device configuration and control
@@ -646,8 +646,19 @@ int check_slices_for_overlaps(ctx_t *ctx,
 	sqm_lst_t **result);	/* overlapping slices */
 
 
-
-
+/*
+ * Function to match devices from another host with devices on
+ * this host. If matching devices are found, the device paths of the
+ * input arguments will be overwritten with the path on the local host.
+ *
+ * disks is a list of disk_t structures representing the disks from another
+ * host.
+ *
+ * aus is a list of aus on this host (returned by discover_aus).
+ *
+ * Returns an error if a matching device is not found.
+ */
+int find_local_device_paths(sqm_lst_t *disks, sqm_lst_t *aus);
 
 
 /*
@@ -1147,11 +1158,15 @@ int modify_stkdrive_share_status(ctx_t *ctx, equ_t lib_eq,
 
 int get_paths_in_mcf(int type, sqm_lst_t **lst);
 
+disk_t *dup_disk(disk_t *dk);
+
+
 /*
  *	free methods
  */
 void free_au(au_t *au);
 void free_au_list(sqm_lst_t *au_list);
+void free_disk(disk_t *disk);
 void free_drive(drive_t *drive);
 void free_list_of_drives(sqm_lst_t *drive_list);
 void free_library(library_t *library);

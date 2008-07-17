@@ -30,7 +30,7 @@
 #ifndef _CFG_HOSTS_H
 #define	_CFG_HOSTS_H
 
-#pragma ident "	$Revision: 1.13 $	"
+#pragma ident "	$Revision: 1.14 $	"
 
 #include "pub/mgmt/types.h"
 #include "pub/mgmt/filesystem.h"
@@ -118,6 +118,19 @@ int
 create_hosts_config(
 ctx_t *ctx,	/* context for RPC use */
 fs_t *fs);	/* The fs for which to create a host config */
+
+
+/*
+ * Function to create an array of strings containing the names of the
+ * hosts participating in a shared file system. This function excludes
+ * the current host. The number of hosts in the host_names array is returned.
+ *
+ * A return of -1 indicates an error occurred.
+ * A return of zero indicates no host other than the local host was found.
+ * A positive return is the number of hosts that were found.
+ */
+int make_host_name_array(fs_t *fs, char ***host_names);
+
 
 
 #endif /* _CFG_HOSTS_H */

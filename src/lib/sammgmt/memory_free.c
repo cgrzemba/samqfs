@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 /*
  *	memory_free.c -  memory free functions
@@ -1208,4 +1208,47 @@ medias_type_t *mtype)
 		free(mtype->product_id);
 	}
 	free(mtype);
+}
+
+void
+free_scsi_info(scsi_info_t *si) {
+	if (si == NULL) {
+		return;
+	}
+	if (si->dev_id != NULL) {
+		free(si->dev_id);
+	}
+	free(si);
+}
+
+void
+free_disk(disk_t *disk) {
+	if (disk == NULL) {
+		return;
+	}
+
+	if (disk->au_info.raid != NULL) {
+		free(disk->au_info.raid);
+	}
+	if (disk->au_info.scsiinfo != NULL) {
+		free_scsi_info(disk->au_info.scsiinfo);
+	}
+
+	free(disk);
+}
+
+void
+free_string_array(char **str_arr, int arr_len) {
+	int i;
+
+	if (str_arr == NULL || arr_len == 0) {
+		return;
+	}
+
+	for (i = 0; i < arr_len; i++) {
+		if (str_arr[i] != NULL) {
+			free(str_arr[i]);
+		}
+	}
+	free(str_arr);
 }

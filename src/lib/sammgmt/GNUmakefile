@@ -1,4 +1,4 @@
-# $Revision: 1.42 $
+# $Revision: 1.43 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -31,7 +31,7 @@ LIB_HOME = $(DEPTH)/src/lib/sammgmt
 include $(DEPTH)/mk/common.mk
 
 SRC_VPATH = csn job archiver fs mcf device recycler releaser stager monitor reports \
-	diskvols notification faults recyc_sh_wrap restore $(DEPTH)/src/fs/lib
+	diskvols notification faults recyc_sh_wrap restore rpc/xdr $(DEPTH)/src/fs/lib
 vpath %c $(SRC_VPATH)
 
 LIB = fsmgmt
@@ -45,8 +45,10 @@ LIB_SRC = \
 	log_info.c \
 	process_job.c \
 	job_control.c \
+	cmd_dispatch.c \
 	shared_fscmd.c \
 	hosts.c \
+	shared_fs_ops.c \
 	archive_sets.c \
 	string_hash.c \
 	arch_state.c \
@@ -113,6 +115,32 @@ LIB_SRC = \
 	task_schedule.c \
 	file_metrics_report.c \
 	shrink_opts.c
+
+LIB_SRC += \
+	list_xdr.c \
+	types_xdr.c \
+	archive_xdr.c \
+	device_xdr.c \
+	media_xdr.c \
+	catalog_xdr.c \
+	filesystem_xdr.c \
+	load_xdr.c \
+	recycle_xdr.c \
+	stage_xdr.c \
+	license_xdr.c \
+	release_xdr.c \
+	faults_xdr.c \
+	diskvols_xdr.c \
+	notify_summary_xdr.c \
+	job_history_xdr.c \
+	hosts_xdr.c \
+	sammgmt_xdr.c \
+	arch_set_xdr.c \
+	restore_xdr.c \
+	report_xdr.c \
+	cmd_dispatch_xdr.c
+
+
 
 # note that the -I for OBJ_DIR is required for version.h.
 ARCHIVER_INCLUDES =	-I$(DEPTH)/src/archiver/include \
