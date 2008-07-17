@@ -1,0 +1,125 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH samosdadm 1M "13 July 2008"
+.SH NAME
+samosdadm \- Administers Object Storage Devices (OSD) for a Sun StorEdge QFS or
+Sun StorEdge \%SAM-FS file system.
+.SH SYNOPSIS
+.nf
+.B samosdadm \fBhelp\fR
+.B samosdadm \fBlist\fR [-v] [-n entry_num ]
+.B samosdadm \fBcheckclient_sw\fR
+.B samosdadm \fBaddosd\fR -g guid -i iqn -o osd_ip -f fs_name [ -p port ]
+.B samosdadm \fBdeleteosd\fR -n entry_num
+.B samosdadm \fBcheckosd_sw\fR
+.B samosdadm \fBcreateosd\fR -f backing_store_fs
+.B samosdadm \fBdestroyosd\fR -f backing_store_fs
+.fi
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The
+.B samosdadm
+command assists administrators in creating and administering
+Sun StorEdge QFS Object Storage Devices (OSD).  It consists of
+several subcommands, some intended to be run on the OSD, and some
+intended to be run from a Sun StorEdge QFS client or server.
+.LP
+On the Sun StorEdge QFS client or server system, a configuration file
+is maintained (/etc/opt/SUNWsamfs/osd) which keeps persistently a
+list of OSD's that have been configured.  This configuration file
+can be displayed with the "list" subcommand.
+.LP
+The
+.B samosdadm
+command must be run as root.
+.SH SUBCOMMANDS
+The following subcommands can be run on any system:
+.TP 14
+\fIhelp\fR
+Displays help information.
+.TP
+Sun StorEdge QFS client or server subcommands:
+.TP 14
+\fIcheckclient_sw\fR
+Checks to see if the proper software is installed to support
+running a Sun StorEdge QFS Object file system.
+.TP 14
+\fIaddosd\fR
+This command registers an OSD to a Sun StorEdge QFS client or server
+and stores the info for it in the /etc/opt/SUNWsamfs/osd configuration
+file.  The OSD is registered with iscsi as a static target and
+placed online.
+.TP 14
+\fIdeleteosd\fR
+This command deletes a previously registered OSD from the configuration
+file and issues the necessary iscsi commands to delete it from the
+iscsi configuration also.
+.TP 14
+Sun StorEdge QFS OSD subcommands:
+.TP 14
+\fIcheckosd_sw\fR
+Checks to see if the proper software is installed to support
+running a Sun StorEdge OSD file system.
+.TP 14
+\fIcreateosd\fR
+Issues the necessary iscsi, stmf, and osdt commands to create
+an OSD target, online it, register it with stmf, and export it
+as a LUN with iscsi ready to be used with Sun StorEdge QFS as
+an object OSD.  It assumes that the backing store file system is
+already made and does not assist with that.  The "IQN" and "GUID"
+are printed out as they are created.  These are needed as input
+to the
+\fIaddosd\fR
+subcommand when registering the OSD on the StorEdge QFS client or server.
+.TP 14
+\fIdestroyosd\fR
+Issues the necessary iscsi, stmf, and osdt commands to delete
+an OSD target.
+.TP
+
+.SH EXAMPLE
+.SH EXAMPLE
+.ft CO
+.nf
+# samosdadm list -v
+Entry   Filesystem      OSD             GUID
+-----   ----------      ---             ----
+1       s3              192.168.25.9    6000AE401A000000000048654C130001
+	iqn = iqn.1986-03.com.sun:02:15290c79-431b-e3c8-f54f-fa13f49b8ea0
+	device = /dev/osd/osd6000AE401A000000000048654C130001,root
+	peer_ip = 192.168.25.9 ( )
+	peer_ip_port = 3260
+# samosdadm addosd -g guid -i iqn -o osd_ip -f fs_name
+# samosdadm deleteosd -n 3
+.fi
+.ft
