@@ -34,7 +34,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 #endif
 
 #ifndef	_SAM_FS_CLEXTERN_H
@@ -141,6 +141,8 @@ int sam_expire_client_leases(void *entry);
 #endif /* linux */
 
 int sam_init_inode(sam_mount_t *mp);
+void sam_sched_expire_client_leases(sam_mount_t *mp, clock_t ticks,
+	boolean_t force);
 
 /*
  * getdents.c function prototypes.

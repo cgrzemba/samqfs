@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.219 $"
+#pragma ident "$Revision: 1.220 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1995,8 +1995,7 @@ sam_unmount_fs(
 #ifdef	METADATA_SERVER
 	while ((mp->mi.m_sr_lease_chain.forw !=
 	    (sam_lease_ino_t *)(void *)&mp->mi.m_sr_lease_chain)) {
-
-		sam_taskq_add(sam_expire_server_leases, mp, NULL, 0);
+		sam_sched_expire_server_leases(mp, 0, TRUE);
 		delay(hz/4);
 	}
 #endif	/* METADATA_SERVER */

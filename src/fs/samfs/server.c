@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.289 $"
+#pragma ident "$Revision: 1.290 $"
 
 #include "sam/osversion.h"
 
@@ -1379,8 +1379,8 @@ sam_record_lease(
 	 */
 
 	if (!(l2p->irec.sr_attr.actions & SR_WAIT_LEASE)) {
-		sam_taskq_add(sam_expire_server_leases, mp, NULL,
-		    sam_calculate_lease_timeout(interval) * hz);
+		sam_sched_expire_server_leases(mp,
+		    sam_calculate_lease_timeout(interval) * hz, FALSE);
 	}
 	return (error);
 }
@@ -2130,12 +2130,12 @@ sam_remove_lease(
 {
 	sam_mount_t *mp = ip->mp;
 	sam_lease_ino_t *llp;
-	boolean_t write_lease_remains;
-	boolean_t append_lease_remains;
-	boolean_t removed_append_lease;
-	boolean_t removed_truncate_lease;
-	boolean_t removed_exclusive_lease;
-	boolean_t last_lease;
+	boolean_t write_lease_remains = FALSE;
+	boolean_t append_lease_remains = FALSE;
+	boolean_t removed_append_lease = FALSE;
+	boolean_t removed_truncate_lease = FALSE;
+	boolean_t removed_exclusive_lease = FALSE;
+	boolean_t last_lease = TRUE;
 	int no_clients;
 	int nl;
 	int append_client;
@@ -2151,12 +2151,6 @@ sam_remove_lease(
 	 * XXX - Could optimize the generation-mismatch case to avoid notifying
 	 *		other clients.
 	 */
-	last_lease = TRUE;
-	write_lease_remains = FALSE;
-	append_lease_remains = FALSE;
-	removed_append_lease = FALSE;
-	removed_truncate_lease = FALSE;
-	removed_exclusive_lease = FALSE;
 	mutex_enter(&ip->ilease_mutex);
 	if (ip->sr_leases) {
 		llp = ip->sr_leases;
@@ -2292,8 +2286,8 @@ sam_remove_lease(
 		TRACE(T_SAM_ABR_CLR, SAM_ITOV(ip), ip->di.id.ino,
 			no_clients, nl);
 		ip->flags.b.abr = 0;
-		sam_taskq_add(sam_expire_server_leases, mp, NULL,
-			SAM_EXPIRE_DELAY_SECS * hz);
+		sam_sched_expire_server_leases(mp,
+			(SAM_EXPIRE_DELAY_SECS * hz), FALSE);
 	}
 	return (error);
 }

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.187 $"
+#pragma ident "$Revision: 1.188 $"
 
 #include "sam/osversion.h"
 
@@ -858,8 +858,7 @@ sam_client_read_vn(
 		ip->cl_leaseused[LTYPE_read]--;
 		if ((ip->cl_leaseused[LTYPE_read] == 0) &&
 		    (ip->cl_leasetime[LTYPE_read] <= lbolt)) {
-			sam_taskq_add(sam_expire_client_leases, ip->mp,
-			    NULL, 0);
+			sam_sched_expire_client_leases(ip->mp, 0, FALSE);
 		}
 		mutex_exit(&ip->ilease_mutex);
 	}
@@ -995,8 +994,7 @@ sam_client_write_vn(
 		    (appending &&
 		    (ip->cl_leaseused[LTYPE_append] == 0) &&
 		    (ip->cl_leasetime[LTYPE_append] <= lbolt))) {
-			sam_taskq_add(sam_expire_client_leases, ip->mp,
-			    NULL, 0);
+			sam_sched_expire_client_leases(ip->mp, 0, FALSE);
 		}
 		mutex_exit(&ip->ilease_mutex);
 	}

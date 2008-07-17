@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 #endif
 
 
@@ -114,7 +114,8 @@ typedef struct sam_thr {
  * requests.  This value is 10 seconds for Solaris NFS clients.
  */
 
-#define	SAM_EXPIRE_MIN_TICKS (hz/4)	/* Throttle for expire tasks */
+#define	SAM_EXPIRE_MIN_TICKS (hz/2)	/* Throttle for expire tasks */
+#define	SAM_EXPIRE_MAX_TICKS (hz*45)	/* Most time between expire task runs */
 #define	SAM_INACTIVE_MIN_TICKS (hz*4)	/* Throttle for inactivate task */
 #define	SAM_INACTIVE_DEFER_SECS 15	/* Delay before inactivating inode */
 #define	SAM_RESYNCING_RETRY_SECS 2	/* Check ready-to-resync this often */
@@ -171,9 +172,7 @@ sam_schedule_entry_t *task_begin(void *);
 #define	SAM_SCHEDULE_EXIT 0x0001	/* Shutting down scheduling queue */
 
 #define	SAM_SCHEDULE_TASK_CLIENT_RECLAIM_RUNNING	0x00010000
-#define	SAM_SCHEDULE_TASK_CLIENT_RECLAIM_PENDING	0x00020000
 #define	SAM_SCHEDULE_TASK_SERVER_RECLAIM_RUNNING	0x00040000
-#define	SAM_SCHEDULE_TASK_SERVER_RECLAIM_PENDING	0x00080000
 #define	SAM_SCHEDULE_TASK_THAWING			0x00100000
 #define	SAM_SCHEDULE_TASK_RESYNCING			0x00200000
 

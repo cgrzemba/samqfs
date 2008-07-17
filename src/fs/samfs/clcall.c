@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.251 $"
+#pragma ident "$Revision: 1.252 $"
 #endif
 
 #include "sam/osversion.h"
@@ -942,10 +942,10 @@ sam_client_record_lease(
 	mutex_exit(&mp->mi.m_lease_mutex);
 
 	/*
-	 * Schedule client-lease reclamation for when this lease expires.
+	 * Schedule client lease reclamation thread if not already running.
 	 */
 
-	sam_taskq_add(sam_expire_client_leases, mp, NULL, (duration * hz));
+	sam_sched_expire_client_leases(mp, (duration * hz), FALSE);
 
 	return (new_lease);
 }

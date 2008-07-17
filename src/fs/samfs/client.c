@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.169 $"
+#pragma ident "$Revision: 1.170 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1262,8 +1262,7 @@ sam_process_callout_request(sam_mount_t *mp, sam_san_message_t *msg)
 			}
 			ip->cl_short_leases |= (lease_mask & ip->cl_leases);
 			mutex_exit(&ip->ilease_mutex);
-			sam_taskq_add(sam_expire_client_leases, mp, NULL,
-			    (hz * timeo));
+			sam_sched_expire_client_leases(mp, (hz * timeo), TRUE);
 			}
 			break;
 

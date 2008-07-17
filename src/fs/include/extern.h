@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.233 $"
+#pragma ident "$Revision: 1.234 $"
 
 #include "sam/osversion.h"
 
@@ -192,6 +192,8 @@ void sam_reestablish_leases(sam_schedule_entry_t *entry);
 void sam_start_relinquish_task(sam_node_t *ip, ushort_t removed_leases,
 	uint32_t *leasegen);
 void sam_relinquish_leases(sam_schedule_entry_t *entry);
+void sam_sched_expire_client_leases(sam_mount_t *mp, clock_t ticks,
+	boolean_t force);
 
 
 /* reclaim.c function prototypes. */
@@ -200,6 +202,8 @@ int sam_init_inode(sam_mount_t *mp);
 void sam_resync_server(sam_schedule_entry_t *entry);
 void sam_expire_client_leases(sam_schedule_entry_t *entry);
 void sam_expire_server_leases(sam_schedule_entry_t *entry);
+void sam_sched_expire_server_leases(sam_mount_t *mp, clock_t ticks,
+	boolean_t force);
 void sam_wait_release_blk_list(struct sam_mount *mp);
 
 

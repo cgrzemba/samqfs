@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.92 $"
+#pragma ident "$Revision: 1.93 $"
 #endif
 
 #include "sam/osversion.h"
@@ -419,6 +419,8 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 	clock_t new_wait_time, now;
 	int forced_expiration;
 	uint32_t saved_leasegen[SAM_MAX_LTYPE];
+	boolean_t rerun = FALSE;
+	clock_t ticks = (clock_t)0;
 
 	mp = entry->mp;
 
@@ -440,8 +442,6 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 	mutex_enter(&samgt.schedule_mutex);
 	if (mp->mi.m_schedule_flags &
 	    SAM_SCHEDULE_TASK_CLIENT_RECLAIM_RUNNING) {
-		mp->mi.m_schedule_flags |=
-		    SAM_SCHEDULE_TASK_CLIENT_RECLAIM_PENDING;
 		mutex_exit(&samgt.schedule_mutex);
 		sam_taskq_uncount(mp);
 		SAM_COUNT64(shared_client, expire_task_dup);
@@ -449,7 +449,6 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 		return;
 	}
 	mp->mi.m_schedule_flags |= SAM_SCHEDULE_TASK_CLIENT_RECLAIM_RUNNING;
-	mp->mi.m_schedule_flags &= ~SAM_SCHEDULE_TASK_CLIENT_RECLAIM_PENDING;
 	mutex_exit(&samgt.schedule_mutex);
 
 	SAM_COUNT64(shared_client, expire_task);
@@ -679,34 +678,29 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 	mutex_exit(&mp->mi.m_lease_mutex);
 
 	/*
-	 * If another instance was started while we were running, ensure that
-	 * we'll start again soon.  (We could just go back up and restart the
-	 * whole loop, but that could lead to excessive CPU utilization; it's
-	 * better on the system to delay running a little, in the hopes that
-	 * we can do more work when we do actually run.  The cost is that a
-	 * newly added lease which expires in less than a second or so may
-	 * not be expired immediately; but leases shouldn't be so short-lived.)
+	 * Schedule another run of sam_expire_client_leases unless
+	 * there is an additional copy scheduled, or unless there are
+	 * no more leases.
 	 */
 
 	mutex_enter(&samgt.schedule_mutex);
-	if (mp->mi.m_schedule_flags &
-	    SAM_SCHEDULE_TASK_CLIENT_RECLAIM_PENDING) {
-		mp->mi.m_schedule_flags &=
-		    ~SAM_SCHEDULE_TASK_CLIENT_RECLAIM_PENDING;
-		if (new_wait_time == LONG_MAX) {
-			new_wait_time = lbolt + hz;
-		}
-	}
 	mp->mi.m_schedule_flags &= ~SAM_SCHEDULE_TASK_CLIENT_RECLAIM_RUNNING;
-	mutex_exit(&samgt.schedule_mutex);
-
-	if (new_wait_time != LONG_MAX) {
-		clock_t ticks;
-
+	mp->mi.m_cl_leasecnt--;
+	if ((mp->mi.m_cl_leasecnt == 0) && (new_wait_time != LONG_MAX)) {
+		rerun = TRUE;
+		mp->mi.m_cl_leasecnt++;
 		ticks = new_wait_time - lbolt;
 		if (ticks < SAM_EXPIRE_MIN_TICKS) {
 			ticks = SAM_EXPIRE_MIN_TICKS;
 		}
+		if (ticks > SAM_EXPIRE_MAX_TICKS) {
+			ticks = SAM_EXPIRE_MAX_TICKS;
+		}
+		mp->mi.m_cl_leasenext = ticks + lbolt;
+	}
+	mutex_exit(&samgt.schedule_mutex);
+
+	if (rerun) {
 		sam_taskq_add(sam_expire_client_leases, mp, NULL, ticks);
 	}
 
@@ -748,6 +742,45 @@ sam_expire_client_leases(void *arg)
 	return (error);
 }
 #endif /* linux */
+
+
+/*
+ * Schedule a run of sam_expire_client_leases if there is not one running
+ * already, or if the next scheduled run is later than this request by
+ * at least SAM_EXPIRE_MIN_TICKS.  If the next scheduled run is sooner than
+ * this request, sam_expire_client_leases will schedule it at its next run.
+ * The SAM_EXPIRE_MIN_TICKS test ensures at least that many ticks between
+ * runs.
+ *
+ * Schedule this run not longer than SAM_EXPIRE_MAX_TICKS from now which
+ * gives some periodic behaviour in case a case was missed.
+ */
+
+void
+sam_sched_expire_client_leases(
+	sam_mount_t *mp,		/* Pointer to the mount point */
+	clock_t ticks,			/* Schedule tick count from now */
+	boolean_t force)		/* Force run at specified time */
+{
+	boolean_t run = FALSE;
+	clock_t next;
+
+	mutex_enter(&samgt.schedule_mutex);
+	if ((ticks > SAM_EXPIRE_MAX_TICKS) && !force) {
+		ticks = SAM_EXPIRE_MAX_TICKS;
+	}
+	next = ticks + lbolt;
+	if (force || (mp->mi.m_cl_leasecnt == 0) ||
+	    (next < (mp->mi.m_cl_leasenext - SAM_EXPIRE_MIN_TICKS))) {
+		mp->mi.m_cl_leasenext = next;
+		mp->mi.m_cl_leasecnt++;
+		run = TRUE;
+	}
+	mutex_exit(&samgt.schedule_mutex);
+	if (run) {
+		sam_taskq_add(sam_expire_client_leases, mp, NULL, ticks);
+	}
+}
 
 
 /*
