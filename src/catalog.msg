@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.601 $"
+$ pragma ident "$Revision: 1.602 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3257,6 +3257,7 @@ $ prevent flooding
 19035 Unable to create one or more removable media files. File system may be out of inodes. Please see the log files for additional information
 19036 -Sw Unexpected STK 5800 metadata query result, more than 1 OID (%d) found
 19037 -Sw Internal error: '%s'
+19038 directio directive must be 'on' or 'off'
 
 $ Operator messages
 19200 Loading VSN %s

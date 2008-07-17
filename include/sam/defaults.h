@@ -36,7 +36,7 @@
 #define	_SAM_DEFAULTS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 #endif
 
 #include "sam/types.h"
@@ -63,7 +63,6 @@ typedef struct sam_defaults {
 	int		stale_time;	/* Stale preview time */
 	int		idle_unload;	/* Idle time to force media unload */
 	int		shared_unload;	/* Idle time for shared drives */
-	int		dio_stage_file_size; /* Default filesize for directio */
 	int		remote_keepalive; /* SAMremote keepalive interval */
 	boolean_t	samstorade;	/* StorADE API */
 	boolean_t	archive_copy_retention;	/* Archive copy retention */

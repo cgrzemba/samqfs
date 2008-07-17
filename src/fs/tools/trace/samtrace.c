@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.162 $"
+#pragma ident "$Revision: 1.163 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -2377,8 +2377,6 @@ print_global_tbl(
 	printf("\t%08x inocount      (%d)\n", gt->inocount, gt->inocount);
 	printf("\t%08x inofree       (%d)\n", gt->inofree, gt->inofree);
 	printf("\t%08x fstype        (%d)\n", gt->fstype, gt->fstype);
-	printf("\t%08x dio_stage_file_size (%d)\n", gt->dio_stage_file_size,
-	    gt->dio_stage_file_size);
 	printf("\t%08x buf_wait      (%d)\n", gt->buf_wait, gt->buf_wait);
 	printf("\t%08x amld_pid      (%d)\n", gt->amld_pid, gt->amld_pid);
 #ifdef linux

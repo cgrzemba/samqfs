@@ -1,4 +1,4 @@
-.\" $Revision: 1.59 $
+.\" $Revision: 1.60 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -145,15 +145,6 @@ supplied with your software.
 Any device not in the example file defaults to \fB0\fR seconds.
 For information on supported \fIdev\fR arguments, see
 the \fBmcf\fR(4) man page.
-.TP 10
-\fBdio_min_file_size = \fIsize\fR
-Stages files larger \fIsize\fR megabytes with direct I/O.
-For \fIsize\fR, enter an integer number such
-that \fB0\fR \(<= \fIsize\fR \(<= \fB2147483647\fR megabytes.
-If \fIsize\fR = \fB0\fR, paged I/O is used to stage all files.
-The default \fIsize\fR is \fB100\fR megabytes.
-.sp 1
-NOTE: Staging on a shared QFS file system always uses direct I/O.
 .TP 10
 \fBexported_media = \fIvalue\fR
 Declares exported media to be available or unavailable to the

@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 /*
  *	This is the interface module that sits between the file system and
@@ -175,7 +175,6 @@ sam_sync_amld(sam_resync_arg_t *args)
 		 * max_stages will be set after the stages are restarted.
 		 */
 		mutex_enter(&samgt.global_mutex);
-		samgt.dio_stage_file_size = args->dio_stage_file_size;
 		samgt.amld_pid = args->sam_amld_pid;
 		mutex_exit(&samgt.global_mutex);
 		fifo.param.fs_resync.seq = args->seq;  /* time stamp */
@@ -971,7 +970,6 @@ clear_amld()
 	mutex_exit(&hdr->cmd_lockout_mutex);
 
 	mutex_enter(&samgt.global_mutex);
-	samgt.dio_stage_file_size = 0;
 	samgt.amld_pid = -1;
 	mutex_exit(&samgt.global_mutex);
 

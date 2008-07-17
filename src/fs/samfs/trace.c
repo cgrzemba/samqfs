@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 #endif
 
 #include "sam/osversion.h"
@@ -716,7 +716,6 @@ sam_trace_global(trace_global_tbl_t *in)
 	tgt.inocount = samgt.inocount;
 	tgt.inofree = samgt.inofree;
 	tgt.fstype = samgt.fstype;
-	tgt.dio_stage_file_size = samgt.dio_stage_file_size;
 	tgt.buf_wait = samgt.buf_wait;
 	tgt.amld_pid = samgt.amld_pid;
 	tgt.meta_minor = samgt.meta_minor;

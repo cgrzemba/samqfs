@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.85 $"
+#pragma ident "$Revision: 1.86 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -165,6 +165,13 @@ CreateFile(
 
 	fi.id = req->id;
 	fi.fseq = req->fseq;
+
+	/*
+	 * Set directio directive
+	 */
+	if (GetCfgDirectio) {
+		fi.directio = 1;
+	}
 
 	if (req->arcopy[req->copy].flags & STAGE_COPY_ARCHIVED) {
 		Trace(TR_MISC, "Request inode: %d.%d "
@@ -2133,6 +2140,9 @@ valRequest(
 	}
 	memset(&arg, 0, sizeof (arg));
 	arg.id = fi->id;
+	if (GetCfgDirectio) {
+		arg.flags |= IDO_direct_io;
+	}
 	if ((fd = ioctl(mpfd, F_IDOPEN, &arg)) < 0) {
 		/*
 		 * File not found.

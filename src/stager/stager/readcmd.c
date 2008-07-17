@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -83,6 +83,7 @@ static void setDrivesParams();
 static void setLogfileParam();
 static void setMaxActiveDefault(void *v);
 static int setMaxActiveParam(void *v, char *value, char *buf, int bufsize);
+static void setDirectioParam();
 static void setfieldErrmsg(int code, char *msg);
 static void readcfgErrmsg(char *msg, int lineno, char *line);
 static boolean_t verifyFile(char *file);
@@ -98,6 +99,7 @@ static DirProc_t commands[] = {
 	{ "logfile",		setLogfileParam,		DP_value },
 	{ "bufsize",		setBufsizeParams,		DP_value },
 	{ "drives",		setDrivesParams,		DP_value },
+	{ "directio",		setDirectioParam,		DP_value },
 	{ NULL, NULL }
 };
 
@@ -156,6 +158,15 @@ long
 GetCfgMaxRetries(void)
 {
 	return (config.maxretries);
+}
+
+/*
+ * Get directio directive
+ */
+int
+GetCfgDirectio(void)
+{
+	return (config.directio);
 }
 
 /*
@@ -349,6 +360,28 @@ setLogfileParam(void)
 			}
 		}
 	}
+}
+
+/*
+ * Set the directio directive
+ * on = 1, off = 0
+ */
+static void
+setDirectioParam(void)
+{
+
+	if (cfgToken != NULL && *cfgToken != '\0') {
+		if (strcmp(cfgToken, "on") == 0) {
+			config.directio = 1;
+		} else if (strcmp(cfgToken, "off") == 0) {
+			config.directio = 0;
+		} else {
+			ReadCfgError(CustMsg(19038));
+		}
+	} else {
+		ReadCfgError(CustMsg(14008), cfgToken);
+	}
+
 }
 
 /*

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.72 $"
+#pragma ident "$Revision: 1.73 $"
 
 #include "sam/osversion.h"
 
@@ -235,15 +235,13 @@ sam_build_stagerd_req(
 	*req_ext = NULL;
 
 	/*
-	 * If shared file system, always directio stage. Otherwise, if not
-	 * stage_n && filesize > dio_stage_file_size MB stage directio.
+	 * If shared file system, always directio stage. Otherwise, 
+	 * directio or pagedio is based on stagerd.cmd directive,
+	 * as set in syscall_stage_response().
 	 */
 	ip->flags.b.stage_directio = 0;
 	if (SAM_IS_SHARED_FS(ip->mp) ||
-	    (!ip->flags.b.stage_n && samgt.dio_stage_file_size &&
-	    (ip->di.rm.size >=
-	    ((offset_t)samgt.dio_stage_file_size*1024*1024)))) {
-
+	    (!ip->flags.b.stage_n && ip->flags.b.directio)) {
 		if (vn_has_cached_data(SAM_ITOV(ip))) {
 			sam_flush_pages(ip, B_INVAL);
 		}

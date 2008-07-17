@@ -34,7 +34,7 @@
 #if !defined(STAGER_H)
 #define	STAGER_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 /*
  * Stager start mode.
@@ -108,6 +108,7 @@ long GetCfgMaxRetries();
 char *GetCfgProbeDir();
 size_t GetCfgProbeBufsize();
 int GetCfgNumDrives();
+int GetCfgDirectio();
 sam_stager_drives_t *GetCfgDrives();
 
 #endif /* STAGER_H */

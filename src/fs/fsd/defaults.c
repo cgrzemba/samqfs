@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -103,6 +103,7 @@ static void dirTrace(void);
 static void dirValue(void);
 static void procTrace(void);
 static void dirTarFormat(void);
+static void dirDeprecated(void);
 
 /* Private data. */
 
@@ -123,6 +124,7 @@ static DirProc_t dirProcTable[] = {
 	{ "stage_retries",		dirObsolete,		DP_value },
 	{ "trace",			dirTrace,		DP_set   },
 	{ "tar_format",			dirTarFormat,		DP_value },
+	{ "dio_min_file_size",		dirDeprecated,		DP_other },
 	{ NULL,				dirValue,		DP_setfield }
 };
 
@@ -969,6 +971,16 @@ dirTarFormat(void)
 	(void) SetFieldValue(&defaults, Defaults, "pax_arch_format",
 	    "FALSE", msgFunc);
 #endif /* DEBUG */
+}
+
+/*
+ * Deprecated parameter, will be invalid in future release.
+ */
+static void
+dirDeprecated(void)
+{
+	SendCustMsg(HERE, 4421, token);
+
 }
 
 /*

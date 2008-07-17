@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -192,7 +192,6 @@ manage_fs_fifo(
 
 	resync_data.seq = time(NULL);
 	resync_data.sam_amld_pid = mypid;
-	resync_data.dio_stage_file_size = defaults->dio_stage_file_size;
 
 	if (sam_syscall(SC_amld_resync, &resync_data, sizeof (resync_data)) <
 	    0) {

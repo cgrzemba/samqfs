@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 
 /* ANSI headers. */
@@ -84,7 +84,6 @@ DisShm(void)
 	Mvprintw(ln++, 40, "previews        %d", def->previews);
 	Mvprintw(ln++, 40, "stages          %d", def->stages);
 	Mvprintw(ln++, 40, "log_facility    %d", def->log_facility);
-	Mvprintw(ln++, 40, "dio minfilesize %d", def->dio_stage_file_size);
 	Mvprintw(ln++, 40, "label barcode   %s",
 	    (def->flags & DF_LABEL_BARCODE) ? "TRUE":"FALSE");
 	Mvprintw(ln++, 40, "barcodes low    %s",

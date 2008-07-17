@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -441,6 +441,7 @@ openStage(
 	arg.handle.stage_off = file->fs.stage_off;
 	arg.handle.stage_len = file->len;
 	arg.handle.flags.b.stage_wait = file->fs.wait;
+	arg.directio = file->directio;
 	arg.ret_err = 0;
 
 	/*
@@ -534,6 +535,9 @@ openVerify(
 
 		memset(&arg, 0, sizeof (arg));
 		arg.id = file->id;
+		if (file->directio) {
+			arg.flags |= IDO_direct_io;
+		}
 
 		fd = ioctl(mpfd, F_IDOPEN, &arg);
 

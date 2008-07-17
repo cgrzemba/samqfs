@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 #endif
 
 
@@ -96,7 +96,6 @@ typedef struct {
 	int	inocount;		/* Count of allocated incore inodes */
 	int	inofree;		/* Count of inodes in free chain */
 	int	fstype;			/* SAM-FS module ordinal number */
-	int	dio_stage_file_size;	/* Min MB fsize for directio stage */
 	int	buf_wait;		/* Waiting for buffer */
 
 	/* sam-amld daemon pid.  0 => never started; -1 => not running */
@@ -112,6 +111,7 @@ typedef struct {
 	int		meta_minor;	/* Highest meta minor number */
 #endif /* linux */
 	int		samioc_major;	/* samioc major */
+	char		pad[4];
 	kmutex_t	buf_mutex;	/* Mutex for buffer header */
 	kmutex_t	global_mutex;	/* mutex for the global area */
 	kmutex_t	time_mutex;	/* mutex for the unique time */
@@ -159,7 +159,6 @@ typedef struct {
 	int		inocount;		/* Cnt alloc'd incore inodes */
 	int		inofree;		/* Cnt inodes in free chain */
 	int		fstype;			/* SAM-FS module ord number */
-	int		dio_stage_file_size; /* Min MB fsize, directio stage */
 	int		buf_wait;		/* Waiting for buffer */
 	int		amld_pid;		/* sam-amld, -1 not running */
 #ifdef linux

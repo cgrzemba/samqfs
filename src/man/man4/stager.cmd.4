@@ -1,4 +1,4 @@
-.\" $Revision: 1.29 $
+.\" $Revision: 1.30 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -47,6 +47,13 @@ Comment lines can appear in the \fBstager.cmd\fR file.
 A pound sign (\fB#\fR) in column 1 indicates a comment line.
 .PP
 The \fBstager.cmd\fR file accepts the following directives:
+.TP 10
+\fBdirectio = \fIon|off\fR
+Set the file reading method for staging. The directive \fIon\fR
+will set direct I/O for all staging. \fIoff\fR will cause paged
+I/O to be used. The default is on.
+.sp 1
+NOTE: Staging on a shared QFS file system always uses direct I/O.
 .TP 10
 \fBdrives =\fR \fIlibrary\fR \fIcount\fR
 Sets the number of drives to use for staging

@@ -34,7 +34,7 @@
 #if !defined(_AML_STAGER_H)
 #define	_AML_STAGER_H
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 #include "sam/param.h"
 #include "sam/types.h"
@@ -114,6 +114,11 @@ struct StagerControlRsp {
 #define	STAGER_DEFAULT_MAX_RETRIES	3
 
 /*
+ * Default is for directio rather than paged io
+ */
+#define	STAGER_DEFAULT_DIRECTIO		1
+
+/*
  * Maximum path length.
  */
 #define	STAGER_MAX_PATHLEN	sizeof (upath_t)
@@ -178,6 +183,7 @@ typedef struct sam_stager_config {
 	sam_stager_bufsize_t	bufsize;	/* bufsize config options */
 	int			num_drives;	/* number of drive configs */
 	sam_stager_drives_t	*drives;	/* drives config options */
+	int			directio;	/* directio = 1 pageio = 0 */
 } sam_stager_config_t;
 
 #define	STAGER_DISPLAY_ACTIVE	20	/* number of active stages to display */

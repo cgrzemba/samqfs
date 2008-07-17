@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 #endif
 
 #include "sam/types.h"
@@ -274,8 +274,6 @@ struct sam_setfsconfig_arg {	/* set filesystem config parameter */
 typedef struct {			/* resync fifo */
 	sam_time_t seq;			/* time stamp for uniqueness */
 	pid_t sam_amld_pid;		/* sam-amld's pid for validation */
-	offset_t dio_stage_file_size;	/* Minimum filesize to stage */
-					/* with directio */
 } sam_resync_arg_t;
 
 typedef enum {			/* Operation. */
@@ -500,6 +498,7 @@ typedef struct sam_stage_arg {
 
 typedef struct sam_fsstage_arg {
 	sam_handle_t handle;	/* file handle for stage */
+	int directio;		/* directio directive */
 	int ret_err;		/* error for stage */
 } sam_fsstage_arg_t;
 
