@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.79 $"
+#pragma ident "$Revision: 1.80 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -83,6 +83,7 @@ static int s_fd;		/* Source file descriptor */
 
 /* I/O buffer. */
 static char *bufFirst = NULL;	/* Start of buffer */
+static char *bufLast = NULL;	/* End of buffer */
 static size_t bufSize;		/* Integral multiple of media block size */
 
 /* Circular buffer controls. */
@@ -377,6 +378,10 @@ CopyFileReconfig(void)
 	} else {
 		SamMalloc(bufFirst, bufSize);
 	}
+
+	/* Last address in buffer. */
+	bufLast = bufFirst + bufSize;
+
 	if (prevBufFirst != NULL) {
 		if (bufOut != bufIn) {
 			char	*p;
@@ -725,6 +730,26 @@ WriteData(
 		buf += n;
 		nbytes -= n;
 	}
+}
+
+
+/*
+ * Returns first address in circular i/o buffer.
+ */
+char *
+GetBufFirst(void)
+{
+	return (bufFirst);
+}
+
+
+/*
+ * Returns last address in circular i/o buffer.
+ */
+char *
+GetBufLast(void)
+{
+	return (bufLast);
 }
 
 

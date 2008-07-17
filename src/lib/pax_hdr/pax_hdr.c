@@ -174,7 +174,7 @@ ph_destroy_hdr(
 		return;
 	}
 
-	pxp_destroy_pairs(hdr->xhdr_list);
+	(void) pxp_destroy_pairs(hdr->xhdr_list);
 
 	SamFree(hdr);
 }
@@ -187,6 +187,7 @@ ph_is_pax_hdr(
 	int status = PX_SUCCESS;
 	pax_ustar_hdr_t *uh = (pax_ustar_hdr_t *)block;
 	size_t xhdr_size;
+	int result;
 
 	if (additional_bytes) {
 		*additional_bytes = 0;
@@ -208,8 +209,10 @@ ph_is_pax_hdr(
 	if (PAX_TYPE_FILE <= uh->type && uh->type <= PAX_TYPE_HI_PERF) {
 		ABORT_ST(PX_SUCCESS_STD_HEADER);
 	} else if (uh->type == PAX_TYPE_GLOBAL_HEADER) {
-		ABORT_ST(PX_SUCCESS_GLOBAL_HEADER);
-	} else if (uh->type != PAX_TYPE_EXTENDED_HEADER) {
+		result = PX_SUCCESS_GLOBAL_HEADER;
+	} else if (uh->type == PAX_TYPE_EXTENDED_HEADER) {
+		result = PX_SUCCESS_EXT_HEADER;
+	} else {
 		ABORT_ST(PX_ERROR_NOT_PAX_HEADER);
 	}
 
@@ -220,13 +223,16 @@ ph_is_pax_hdr(
 
 	/*
 	 * set additional_bytes, including the xhdr size and the following
-	 * ustar header block
+	 * ustar header block if it's an 'x' header.
 	 */
 	if (additional_bytes) {
-		*additional_bytes = xhdr_size + PAX_HDR_BLK_SIZE;
+		*additional_bytes = xhdr_size;
+		if (result == PX_SUCCESS_EXT_HEADER) {
+			*additional_bytes += PAX_HDR_BLK_SIZE;
+		}
 	}
 
-	status = PX_SUCCESS_EXT_HEADER;
+	status = result;
 out:
 	/* global extended headers aren't supported yet */
 	if (status == PX_SUCCESS_GLOBAL_HEADER) {
@@ -335,12 +341,12 @@ int ph_write_header(
 		    defaults, 1, filename_callback);
 		TEST_AND_ABORT();
 
-		_ph_set_unsigned(NULL, xhdr_ustar_blk->hdr.size,
+		status = _ph_set_unsigned(NULL, xhdr_ustar_blk->hdr.size,
 		    sizeof (xhdr_ustar_blk->hdr.size), xhdr_exact_size, NULL);
 
 		TEST_AND_ABORT();
 
-		checksum(xhdr_ustar_blk);
+		status = checksum(xhdr_ustar_blk);
 
 		xhdr_data = buffer + PAX_HDR_BLK_SIZE;
 
@@ -358,7 +364,7 @@ int ph_write_header(
 	    defaults, 0, filename_callback);
 	TEST_AND_ABORT();
 
-	checksum(file_ustar_blk);
+	status = checksum(file_ustar_blk);
 	if (written) {
 		*written = min_buffer_size;
 	}
@@ -433,7 +439,9 @@ ph_basic_name_callback(
 		}
 	}
 out:
-	SamFree(gen_name);
+	if (gen_name != NULL) {
+		SamFree(gen_name);
+	}
 	return (status);
 }
 
@@ -498,13 +506,13 @@ ph_load_pax_hdr(
 	switch (status) {
 	case PX_SUCCESS_EXT_HEADER:
 		if (addl_bytes + PAX_HDR_BLK_SIZE != buffer_len) {
-			ABORT_ST(PX_ERROR_INVALID_HEADER);
+			ABORT_ST(PX_ERROR_INVALID_BUFFER);
 		}
 
 		xhdr = buffer + PAX_HDR_BLK_SIZE;
 		xhdr_len = addl_bytes - PAX_HDR_BLK_SIZE;
 
-		std_hdr = buffer + addl_bytes - PAX_HDR_BLK_SIZE;
+		std_hdr = buffer + addl_bytes;
 
 		/*
 		 * don't care about additional bytes here, std_hdr
@@ -869,7 +877,7 @@ _ph_set_string(
 
 	memset(dst, 0, dlen);
 	old_pairs = pxh_remove_pair(&hdr->xhdr_list, xhdr_key, &count);
-	pxp_destroy_pairs(old_pairs);
+	(void) pxp_destroy_pairs(old_pairs);
 
 	if (!dst || strlen(src) > dlen) {
 		if (!xhdr_key) {
@@ -901,7 +909,7 @@ _ph_set_unsigned(
 
 	if (hdr) {
 		old_pairs = pxh_remove_pair(&hdr->xhdr_list, xhdr_key, &count);
-		pxp_destroy_pairs(old_pairs);
+		(void) pxp_destroy_pairs(old_pairs);
 	}
 
 	if (!dst || snprintf(dst, dlen, "%.*llo", dlen - 1, src) >= dlen) {
@@ -934,7 +942,7 @@ _ph_set_signed(
 	int count;
 
 	old_pairs = pxh_remove_pair(&hdr->xhdr_list, xhdr_key, &count);
-	pxp_destroy_pairs(old_pairs);
+	(void) pxp_destroy_pairs(old_pairs);
 
 	if (!dst || src < 0 ||
 	    snprintf(dst, dlen, "%.*llo", dlen - 1, src) >= dlen) {
@@ -967,7 +975,7 @@ _ph_set_time(
 	int count;
 
 	old_pairs = pxh_remove_pair(&hdr->xhdr_list, xhdr_key, &count);
-	pxp_destroy_pairs(old_pairs);
+	(void) pxp_destroy_pairs(old_pairs);
 
 	/*
 	 * make an extended data entry for the time if any of the following

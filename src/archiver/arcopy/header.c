@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -113,18 +113,27 @@ BuildHeader(
 static void
 buildPaxHeader(
 	char *name,		/* File name. */
+	/* LINTED argument unused in function */
 	int name_l,		/* Length of file name. */
 	struct sam_stat *st)	/* File status. */
 {
-	int status = PX_SUCCESS;
-	pax_hdr_t *hdr = ph_create_hdr();
+	static char *hdrBuffer = NULL;
+	static int hdrBufLen = 0;
+
+	int status;
+	pax_hdr_t *hdr;
 	int has_xhdr;
 	size_t header_size;
 	char *buffer;
-	pax_pair_t *ctime_pair = NULL;
+	pax_pair_t *ctime_pair;
 	pax_time_t mtime;
 	pax_time_t atime;
 	pax_time_t ctime;
+	char *bufLast;
+
+	status = PX_SUCCESS;
+	hdr = ph_create_hdr();
+	ctime_pair = NULL;
 
 	if (!hdr) {
 		LibFatal(ph_create_header, "failed to create a header");
@@ -136,51 +145,36 @@ buildPaxHeader(
 	}
 
 	status += ph_set_name(hdr, name);
-	Trace(TR_DEBUG, "set name status was %x", status);
 	status += ph_set_mode(hdr, st->st_mode & STANDARDIZED_MODE_BITS);
-	Trace(TR_DEBUG, "set mode status was %x", status);
 	status += ph_set_uid(hdr, st->st_uid);
-	Trace(TR_DEBUG, "set uid status was %x", status);
 	status += ph_set_gid(hdr, st->st_gid);
-	Trace(TR_DEBUG, "set gid status was %x", status);
 	status += ph_set_uname(hdr, getuname(st->st_uid));
-	Trace(TR_DEBUG, "set uname status was %x", status);
 	status += ph_set_gname(hdr, getgname(st->st_gid));
-	Trace(TR_DEBUG, "set gname status was %x", status);
 	status += ph_set_size(hdr, st->st_size);
-	Trace(TR_DEBUG, "set size status was %x", status);
 
 	samTimeToPaxTime(st->st_mtime, &mtime);
 	samTimeToPaxTime(st->st_atime, &atime);
 	samTimeToPaxTime(st->st_ctime, &ctime);
 
 	status += ph_set_mtime(hdr, mtime);
-	Trace(TR_DEBUG, "set mtime status was %x", status);
 	status += ph_set_atime(hdr, atime);
-	Trace(TR_DEBUG, "set atime status was %x", status);
 
 	ctime_pair = pxp_mkpair_time(SAM_ctime, ctime);
 	status += pxh_put_pair(&hdr->xhdr_list, ctime_pair, 0);
-	Trace(TR_DEBUG, "set ctime status was %x", status);
 
 	if (S_ISLNK(st->st_mode)) {
 		snprintf(ScrPath, sizeof (ScrPath), "%s/%s", MntPoint, name);
 		if ((link_l =
 		    readlink(ScrPath, linkname, sizeof (linkname)-1)) < 0) {
-			Trace(TR_DEBUG, "readlink(%s)", ScrPath);
 			link_l = 0;
 		}
 		linkname[link_l] = '\0';
 		status += ph_set_linkname(hdr, linkname);
-		Trace(TR_DEBUG, "set linkname status was %x", status);
 		status += ph_set_type(hdr, PAX_TYPE_SYMLINK);
-		Trace(TR_DEBUG, "set type status was %x", status);
 	} else if (S_ISDIR(st->st_mode)) {
 		status += ph_set_type(hdr, PAX_TYPE_DIRECTORY);
-		Trace(TR_DEBUG, "set type status was %x", status);
 	} else {
 		status += ph_set_type(hdr, PAX_TYPE_FILE);
-		Trace(TR_DEBUG, "set type status was %x", status);
 	}
 
 	if (status) {
@@ -204,8 +198,47 @@ buildPaxHeader(
 
 	buffer = WaitRoom(header_size);
 
-	status = ph_write_header(hdr, buffer, header_size, NULL,
-	    DefaultHeader, ph_basic_name_callback);
+	/*
+	 * Check if the tar header write needs to wrap around to top
+	 * of the buffer.
+	 */
+	bufLast = GetBufLast();
+	if (((int)buffer + header_size) > (int)bufLast) {
+		int n;
+		char *bufFirst;
+
+		/* Allocate temp space to build tar header. */
+		if (hdrBuffer == NULL) {
+			SamMalloc(hdrBuffer, header_size);
+		} else if (header_size > hdrBufLen) {
+			SamRealloc(hdrBuffer, header_size);
+		}
+		hdrBufLen = header_size;
+
+		/* Write pax header to temp buffer. */
+		status = ph_write_header(hdr, hdrBuffer, header_size, NULL,
+		    DefaultHeader, ph_basic_name_callback);
+
+#if 0
+		ASSERT_WAIT_FOR_DBX(B_FALSE);
+#endif
+
+		/* Copy pax header to circular i/o buffer. */
+		if (PXSUCCESS(status)) {
+			n = (int)bufLast - (int)buffer;
+
+			memcpy(buffer, hdrBuffer, n);
+
+			bufFirst = GetBufFirst();
+			memcpy(bufFirst, hdrBuffer + n, header_size - n);
+		}
+
+	} else {
+		/* Write pax header to circular i/o buffer. */
+		status = ph_write_header(hdr, buffer, header_size, NULL,
+		    DefaultHeader, ph_basic_name_callback);
+	}
+
 	if (!PXSUCCESS(status)) {
 		LibFatal(ph_get_write_header, "failed to write header");
 	}

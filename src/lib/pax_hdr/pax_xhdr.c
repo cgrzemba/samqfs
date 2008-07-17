@@ -254,7 +254,7 @@ pxh_write_xheader(
 	char *line;
 	size_t len;
 
-	_reverse_list(hdr_list, &rev_pairs, &num_pairs);
+	(void) _reverse_list(hdr_list, &rev_pairs, &num_pairs);
 
 	for (ipair = 0; ipair < num_pairs; ++ipair) {
 		status = pxp_get_line(rev_pairs[ipair], &line, &len, 0);
@@ -297,7 +297,7 @@ pxh_mkpairs(
 		}
 		TEST_AND_ABORT();
 
-		pxh_put_pair(result_pairs, pair, 0);
+		status = pxh_put_pair(result_pairs, pair, 0);
 
 	}
 out:

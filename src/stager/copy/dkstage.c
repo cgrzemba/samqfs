@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -295,10 +295,10 @@ DkGetPosition(void)
 	u_longlong_t getPosition;
 	off64_t offset;
 
-	rval = SamrftSeek(IoThread->io_rftHandle, 0, SEEK_SET, &offset);
+	rval = SamrftSeek(IoThread->io_rftHandle, 0, SEEK_CUR, &offset);
 	if (rval < 0) {
 		FatalSyscallError(EXIT_NORESTART, HERE,
-		    "SamrftSeek", "SEEK_SET");
+		    "SamrftSeek", "SEEK_CUR");
 	}
 	getPosition = offset/IoThread->io_blockSize;
 

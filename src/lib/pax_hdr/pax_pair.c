@@ -202,9 +202,15 @@ pxp_mkpair_line(
 	pair->to_string = next_parse + 1;
 out:
 	if (status != PX_SUCCESS) {
-		SamFree(pair->keyword);
-		SamFree(pair->header_line);
-		SamFree(pair);
+		if (pair != NULL) {
+			if (pair->keyword != NULL) {
+				SamFree(pair->keyword);
+			}
+			if (pair->header_line != NULL) {
+				SamFree(pair->header_line);
+			}
+			SamFree(pair);
+		}
 		*pair_result = NULL;
 	} else {
 		*buffer += pair->line_len;
@@ -442,15 +448,16 @@ pxp_get_line(
 	}
 
 	if (IS_PXP_PARSED_TYPE(pair->val_type) && pair->header_line) {
-		*line = pair->header_line;
-		*len = pair->line_len;
+		ABORT_ST(PX_SUCCESS);
 	}
 
 	if (pair->header_line && !force) {
 		ABORT_ST(PX_SUCCESS);
 	}
 
-	SamFree(pair->header_line);
+	if (pair->header_line != NULL) {
+		SamFree(pair->header_line);
+	}
 	pair->header_line = NULL;
 	pair->to_string = NULL;
 	pair->line_len = 0;
@@ -465,7 +472,7 @@ pxp_get_line(
 	SamMalloc(pair->header_line, adj_len + 1);
 	pair->line_len = adj_len;
 
-	_format_line(pair, 1, &fmt_len);
+	status = _format_line(pair, 1, &fmt_len);
 
 out:
 	if (status == PX_SUCCESS) {

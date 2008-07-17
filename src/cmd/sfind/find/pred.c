@@ -161,6 +161,7 @@ boolean pred_xtype ();
 boolean pred_aid ();			/* SUN */
 boolean pred_admin_id ();		/* SUN */
 boolean pred_any_copy_d ();		/* SUN */
+boolean pred_any_copy_p ();		/* SUN */
 boolean pred_any_copy_r ();		/* SUN */
 boolean pred_any_copy_v ();		/* SUN */
 boolean pred_archived ();		/* SUN */
@@ -306,6 +307,7 @@ struct pred_assoc pred_table[] =
   {pred_aid, "aid     "},
   {pred_admin_id,   "admin_id  "},
   {pred_any_copy_d, "any_copy_d"},
+  {pred_any_copy_p, "any_copy_p"},
   {pred_any_copy_r, "any_copy_r"},
   {pred_any_copy_v, "any_copy_v"},
   {pred_archived, "archived"},
@@ -2104,6 +2106,31 @@ Predicate *pred_ptr)
 	} else {
 		return aggregate_test_over_segments(pathname, sb, pred_ptr,
 											TRUE_if_true_for_one, pred_copy_d);
+	}
+}
+
+boolean	pred_any_copy_p(
+char *pathname,
+struct sam_stat *sb,
+Predicate *pred_ptr)
+{
+	int copy;
+
+	if (!SS_ISSAMFS(sb->attr)) {
+		return(false);
+	}
+
+	for (copy = 0; copy < MAX_ARCHIVE; copy ++) {
+		if (sb->copy[copy].flags & CF_PAX_ARCH_FMT) {
+			return(true);
+		}
+	}
+
+	if (!SS_ISSEGMENT_F(sb->attr) || output_data_segments) {
+		return(false);
+	} else {
+		return aggregate_test_over_segments(pathname, sb, pred_ptr,
+										TRUE_if_true_for_one, pred_any_copy_p);
 	}
 }
 

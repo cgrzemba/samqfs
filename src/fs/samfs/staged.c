@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 
 #include "sam/osversion.h"
 
@@ -317,6 +317,11 @@ sam_build_stagerd_req(
 				    SAR_diskarch) {
 					req->arcopy[i].flags |=
 					    STAGE_COPY_DISKARCH;
+				}
+				if (permip->ar.image[i].arch_flags &
+				    SAR_pax_hdr) {
+					req->arcopy[i].flags |=
+					    STAGE_COPY_PAXHDR;
 				}
 			}
 		}

@@ -35,7 +35,7 @@
 #ifndef ARCOPY_H
 #define	ARCOPY_H
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 /* Sam includes */
 #include <pax_hdr/pax_hdr.h>
@@ -157,6 +157,8 @@ char *WaitRoom(int count);
 void *WriteBuffer(void *);
 void WriteData(void *buf, int count);
 void WriteInit(struct Threads *th);
+char *GetBufFirst(void);
+char *GetBufLast(void);
 void _IoFatal(const char *SrcFile, const int SrcLine, const char *FunctionName,
 	const char *functionArg);
 

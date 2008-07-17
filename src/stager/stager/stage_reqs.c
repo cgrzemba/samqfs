@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.84 $"
+#pragma ident "$Revision: 1.85 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -235,9 +235,14 @@ CreateFile(
 	fi.offset = req->offset;
 
 	/*
-	 * Check if copy offset points to tar hdr, not data.  This usage
-	 * appears to be obsolete and is currently not supported.
-	 *
+	 * If copy made with pax tar header.  If pax the copy pos/offset
+	 * points to tar hdr, not data.
+	 */
+	if (req->arcopy[fi.copy].flags & STAGE_COPY_PAXHDR) {
+		SET_FLAG(fi.flags, FI_PAX_TARHDR);
+	}
+
+	/*
 	 * If disk/honeycomb archiving, this flag indicates no
 	 * tar header was built.
 	 */

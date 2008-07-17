@@ -1,4 +1,4 @@
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 
 #    SAM-QFS_notice_begin
 #
@@ -52,7 +52,7 @@ DEPCFLAGS += -I../include $(HC_INCLUDE) $(THRCOMP)
 
 SYSLIBS = -ldl -lgen $(THRLIBS) -lsocket -lnsl
 SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut -lsam -lsamconf \
-	-lsamfs -lsamapi -lsamrft
+	-lsamfs -lsamapi -lsamrft -lpax_hdr
 PROG_LIBS = -L ../lib/$(OBJ_DIR) -lstager $(SAMLIBS) $(HC_LIB) \
 	$(SYSLIBS) $(LIBSO)
 

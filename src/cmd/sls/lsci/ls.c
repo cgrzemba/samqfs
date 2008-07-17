@@ -2390,11 +2390,10 @@ struct file *f)		/* File entry */
 			else printf("-");
 			if (f->stat.copy[copy].flags & CF_DAMAGED)  printf("D");
 			else printf("-");
-			#if DEBUG
-			if (f->stat.copy[copy].flags & CF_PAX_ARCH_FMT)  printf("P ");
-			#endif /* DEBUG */
+			if (f->stat.copy[copy].flags & CF_PAX_ARCH_FMT)  printf("p");
+			else printf("-");
 			printf(" ");
-		} else  printf("---- ");
+		} else  printf("------ ");
 		printf("%s", time_string(f->stat.copy[copy].creation_time,
 				current_time, time_str));
 		if (f->stat.copy[copy].n_vsns > 1) {

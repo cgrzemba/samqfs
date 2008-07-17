@@ -59,7 +59,7 @@
 #define	_SAM_RESOURCE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 #endif
 
 #include "sam/types.h"
@@ -254,6 +254,7 @@ typedef struct sam_stage_copy {
 #define	STAGE_COPY_DAMAGED	0x0004	/* Copy is damaged */
 #define	STAGE_COPY_DISKARCH	0x0010	/* Copy is disk archive */
 #define	STAGE_COPY_VERIFY	0x0020	/* Copy needs verification */
+#define	STAGE_COPY_PAXHDR	0x0040	/* Copy made with pax tar hdr */
 
 /*
  * Persistent data returned by stager daemon in filesystem response

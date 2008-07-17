@@ -34,7 +34,7 @@
 #if !defined(FILE_DEFS_H)
 #define	FILE_DEFS_H
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 #define	IF_COPY_DISKARCH(f, copy)  \
 	((f->ar[copy].flags & STAGE_COPY_DISKARCH) != 0)
@@ -63,7 +63,8 @@ enum {
 	FI_DCACHE_CLOSE	=	1 << 17, /* close dcache */
 	FI_NO_RETRY =		1 << 18, /* not retry stage */
 	FI_ORPHAN =		1 << 19, /* active in orphaned copy proc */
-	FI_DATA_VERIFY =	1 << 20	 /* data verification */
+	FI_DATA_VERIFY =	1 << 20, /* data verification */
+	FI_PAX_TARHDR =		1 << 21	 /* copy made with pax tar header */
 };
 
 /* Structures. */

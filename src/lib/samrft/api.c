@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -611,7 +611,7 @@ SamrftSeek(
 			}
 		}
 	} else {
-		*offset = lseek64(rftd->fd, setpos, SEEK_SET);
+		*offset = lseek64(rftd->fd, setpos, whence);
 		if (*offset != -1) {
 			rc = 0;
 		}

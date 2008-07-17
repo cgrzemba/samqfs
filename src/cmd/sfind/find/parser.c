@@ -207,6 +207,7 @@ boolean do_ovfl();
 boolean	parse_aid (), pred_aid ();			/* SUN */
 boolean	parse_admin_id (), pred_admin_id ();		/* SUN */
 boolean	parse_any_copy_d (), pred_any_copy_d ();	/* SUN */
+boolean parse_any_copy_p (), pred_any_copy_p ();	/* SUN */
 boolean	parse_any_copy_r (), pred_any_copy_r ();	/* SUN */
 boolean parse_any_copy_v (), pred_any_copy_v ();	/* SUN */
 boolean parse_archived (), pred_archived ();		/* SUN */
@@ -260,6 +261,7 @@ boolean parse_stage_d (), pred_stage_d();		/* SUN */
 boolean parse_stage_a (), pred_stage_a();		/* SUN */
 boolean parse_stage_n (), pred_stage_n();		/* SUN */
 boolean parse_verify (), pred_verify ();		/* SUN */
+boolean parse_paxhdr (), pred_paxhdr ();		/* SUN */
 boolean	parse_xmin (), pred_xmin ();			/* SUN */
 boolean	parse_xtime (), pred_xtime ();			/* SUN */
 boolean parse_vsn(), parse_mt ();			/* SUN */
@@ -378,6 +380,7 @@ static struct parser_table_t const parse_table[] =
   {"aid", parse_aid},				/* SUN */
   {"admin_id", parse_admin_id},			/* SUN */
   {"any_copy_d", parse_any_copy_d}, 		/* SUN */
+  {"any_copy_p", parse_any_copy_p}, 		/* SUN */
   {"any_copy_r", parse_any_copy_r}, 		/* SUN */
   {"any_copy_v", parse_any_copy_v}, 		/* SUN */
   {"archived", parse_archived},			/* SUN */
@@ -2383,6 +2386,14 @@ int *arg_ptr)
 	pred_ptr = insert_victim(pred_copy_d);
 	pred_ptr->args.type = copy - 1;
 	return(true);
+}
+
+boolean	parse_any_copy_p(
+char *argv[],
+int *arg_ptr)
+{
+	insert_victim (pred_any_copy_p);
+	return (true);
 }
 
 boolean	parse_any_copy_r(

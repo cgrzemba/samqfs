@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -78,6 +78,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/stager_defs.h"
 #include "aml/id_to_path.h"
 #include "aml/sam_rft.h"
+#include "pax_hdr/pax_hdr.h"
 #if defined(lint)
 #include "sam/lint.h"
 #endif /* defined(lint) */
@@ -106,6 +107,7 @@ static FileInfo_t *file;	/* file being staged */
 static int filePos;		/* position of file on media to be staged */
 static int fileOff;		/* block offset for file being staged */
 static int noTarhdr;		/* non-zero if no tar header */
+static int paxTarhdr;		/* non-zero if pax tar header */
 static longlong_t dataToRead;	/* total bytes to read from media */
 static int cancel;		/* non-zero if canceled by file system */
 static int readError;		/* -1 if read or positioning error */
@@ -114,13 +116,15 @@ static boolean_t firstRead;	/* set if first read on file being staged */
 static void findFirstBlock();
 static int readBlock(char *buf, int nbytes);
 
-static int validateTarHeader(char *ptr, int *residual);
-static int getTarHeaderSize(char *ptr);
+static int validateTarHeader(char *in, int nbytes, int *residual);
+static size_t getTarHeaderSize(char *buffer);
 static boolean_t isTarHeader(char *ptr);
 
 static boolean_t isStarHeader(char *ptr, longlong_t reqSize);
 static boolean_t validateStarFileSize(struct header *tarHeader,
 	longlong_t reqSize);
+static boolean_t isPaxTarHeader(char *buffer, longlong_t reqSize);
+static boolean_t ifVerifyFileSizeInTarhdr();
 
 static void notifyWorkers();
 
@@ -222,6 +226,7 @@ ArchiveRead(
 	 */
 	retry = GET_FLAG(file->flags, FI_RETRY) && (file->write_off > 0);
 	noTarhdr = GET_FLAG(file->flags, FI_NO_TARHDR);
+	paxTarhdr = GET_FLAG(file->flags, FI_PAX_TARHDR);
 
 	if (retry != 0) {
 		file->offset += file->write_off;
@@ -253,7 +258,8 @@ ArchiveRead(
 	 * to file's data.
 	 */
 	blockOff = file->ar[copy].section.offset;
-	if (noTarhdr == 0) {		/* if tar header to validate */
+	/* If star header to validate. */
+	if (noTarhdr == 0 && paxTarhdr == 0) {
 		blockOff = blockOff - 1; /* adjust for tar header */
 	}
 
@@ -282,8 +288,9 @@ ArchiveRead(
 	 */
 	fileOff = ((file->ar[copy].section.offset * TAR_RECORDSIZE) +
 	    file->offset) - (blockOff * IoThread->io_blockSize);
-	if (noTarhdr == 0) {
-		/* Adjust offset for star header. */
+
+	/* If star header, adjust offset for tar hdr. */
+	if (noTarhdr == 0 && paxTarhdr == 0) {
 		fileOff -= TAR_RECORDSIZE;
 	}
 
@@ -309,10 +316,6 @@ ArchiveRead(
 		 */
 		in = CircularIoWait(reader, &nbytes);
 
-		Trace(TR_MISC, "Read block: %d buf: %d [0x%x] len: %d",
-		    filePos, CircularIoSlot(reader, in),
-		    (int)in, nbytes);
-
 		readError = readBlock(in, nbytes);
 
 		if (readError == -1) {
@@ -332,13 +335,17 @@ ArchiveRead(
 		 * staged for the double buffer thread.
 		 */
 		if (firstRead == B_TRUE) {
+			int residual;
 
-			readError = validateTarHeader(in, &nbytes);
+			readError = validateTarHeader(in, nbytes, &residual);
 
 			if (readError == -1) {
 				/* Tar header validation failed. */
 				CircularIoSetError(reader, in, EIO);
 			}
+
+			/* Number of data bytes left in buffer. */
+			nbytes = residual;
 
 			/*
 			 * After skipping the tar header there may not be any
@@ -450,6 +457,7 @@ findFirstBlock()
 {
 	char *ptr;
 	int nbytes;
+	int residual;
 	int toPos;
 
 	ptr = CircularIoStartBlockSearch(reader, filePos, &nbytes);
@@ -460,7 +468,7 @@ findFirstBlock()
 		    filePos, CircularIoSlot(reader, ptr),
 		    (int)ptr, nbytes);
 
-		readError = validateTarHeader(ptr, &nbytes);
+		readError = validateTarHeader(ptr, nbytes, &residual);
 
 		if (readError == -1) {
 			/* Tar header validation failed. */
@@ -478,7 +486,7 @@ findFirstBlock()
 		notifyWorkers();
 
 		/* Number of bytes read for staged file from block. */
-		dataToRead -= nbytes;
+		dataToRead -= residual;
 		filePos++;
 
 		/* FIXME */
@@ -543,6 +551,9 @@ readBlock(
 	id = file->id;
 
 	/* FIXME SetTimeout(TO_read); */
+	Trace(TR_MISC, "Read block: %d buf: %d [0x%x] len: %d",
+	    filePos, CircularIoSlot(reader, buf),
+	    (int)buf, nbytes);
 
 retry:
 
@@ -613,63 +624,106 @@ retry:
  */
 static int
 validateTarHeader(
-	char *ptr,
+	char *in,
+	int nbytes,
 	int *residual)
 {
+	static char *hdrBuffer = NULL;
+	static int hdrBufLen = 0;
+
 	int retval;
-	int leftover;
+	char *buffer;
+	int bufLen;
 	int tarHeaderSize;
 	boolean_t validHeader;
 
-	/* Bytes remaining in buffer. */
-	leftover = *residual;
-
-	/* Adjust buffer pointer to tar header. */
-	ptr += fileOff;
-	leftover -= fileOff;
-
 	/* No tar header to validate. */
 	if (noTarhdr) {
-		*residual = leftover;
 		return (0);
 	}
 
-	Trace(TR_MISC, "Validate tar from: [0x%x] %d", (int)ptr, leftover);
+	/* Bytes in buffer. */
+	bufLen = nbytes;
 
-	/* Must have 512 bytes in buffer but this shouldn't happen. */
-	if (leftover < TAR_RECORDSIZE) {
-		Trace(TR_MISC, "Unable to validate tar header");
-		return (-1);
+	/* Adjust buffer pointer to tar header. */
+	buffer = in + fileOff;
+	bufLen -= fileOff;
+
+	Trace(TR_MISC, "Validate tar from: [0x%x] %d", (int)buffer, bufLen);
+
+	retval = 0;
+	tarHeaderSize = getTarHeaderSize(buffer);
+
+	/*
+	 * Check if block contains the complete tar header.
+	 * If not, save partial header and get the next block.
+	 */
+	if (tarHeaderSize > bufLen) {
+		if (hdrBuffer == NULL) {
+			SamMalloc(hdrBuffer, tarHeaderSize);
+		} else if (tarHeaderSize > hdrBufLen) {
+			SamRealloc(hdrBuffer, tarHeaderSize);
+		}
+
+		hdrBufLen = tarHeaderSize;
+		memcpy(hdrBuffer, buffer, bufLen);
+		tarHeaderSize -= bufLen;
+
+		buffer = hdrBuffer;
+
+		/* Read the next block. */
+		filePos++;
+		retval = readBlock(in, nbytes);
+		if (retval == 0) {
+			memcpy(buffer + bufLen, in, tarHeaderSize);
+		}
+
+		/*
+		 * Set buffer pointer and length for the next block.
+		 * After tar header validation, fileOff will point to
+		 * beginning of the file's data.  bufLen is returned as
+		 * count of residual data in the block.
+		 */
+		fileOff = 0;
+		bufLen = nbytes;
 	}
 
-	tarHeaderSize = getTarHeaderSize(ptr);
-
-	validHeader = isTarHeader(ptr);
-	if (validHeader == B_TRUE) {
-		retval = 0;
-
-		/* Adjusting buffer pointer to start of file's data. */
-		fileOff += tarHeaderSize;
-		leftover -= tarHeaderSize;
-	} else {
-		retval = -1;
+	if (retval == 0) {
+		validHeader = isTarHeader(buffer);
+		if (validHeader == B_TRUE) {
+			/* Adjusting buffer pointer to start of file's data. */
+			fileOff += tarHeaderSize;
+			bufLen -= tarHeaderSize;
+		} else {
+			retval = -1;
+		}
 	}
 
-	*residual = leftover;
+	*residual = bufLen;
 	return (retval);
 }
 
 /*
  * Returns size of tar header.
  */
-static int
+static size_t
 getTarHeaderSize(
-	/* LINTED argument unused in function */
-	char *ptr)
+	char *buffer)
 {
-	return (TAR_RECORDSIZE);
-}
+	size_t hdrSize;
 
+	/* No tar header to validate. */
+	if (noTarhdr) {
+		return (0);
+	}
+	if (paxTarhdr != 0) {
+		(void) ph_is_pax_hdr(buffer, &hdrSize);
+		hdrSize += PAX_HDR_BLK_SIZE;
+	} else {
+		hdrSize = TAR_RECORDSIZE;
+	}
+	return (hdrSize);
+}
 
 /*
  * Returns true if valid tar header.  Validate magic and request
@@ -677,14 +731,35 @@ getTarHeaderSize(
  */
 static boolean_t
 isTarHeader(
-	char *ptr)
+	char *buffer)
 {
+	boolean_t valid;
 
-	return (isStarHeader(ptr, dataToRead));
+	if (paxTarhdr != 0) {
+		valid = isPaxTarHeader(buffer, dataToRead);
+	} else {
+		valid = isStarHeader(buffer, dataToRead);
+	}
+
+	if (valid == B_FALSE) {
+		char pathBuffer[PATHBUF_SIZE];
+
+		Trace(TR_MISC, "Invalid tar header inode: %d.%d",
+		    file->id.ino, file->id.gen);
+
+		GetFileName(file, &pathBuffer[0], PATHBUF_SIZE, NULL);
+
+		SendCustMsg(HERE, 19032, pathBuffer, file->id.ino,
+		    file->id.gen, file->copy + 1);
+
+		SET_FLAG(file->flags, FI_TAR_ERROR);
+	}
+
+	return (valid);
 }
 
 /*
- * Returns true if validate star header.
+ * Returns true if valid star header.
  */
 static boolean_t
 isStarHeader(
@@ -710,20 +785,6 @@ isStarHeader(
 
 	}
 
-	if (valid == B_FALSE) {
-		char pathBuffer[PATHBUF_SIZE];
-
-		Trace(TR_MISC, "Invalid tar header inode: %d.%d",
-		    file->id.ino, file->id.gen);
-
-		GetFileName(file, &pathBuffer[0], PATHBUF_SIZE, NULL);
-
-		SendCustMsg(HERE, 19032, pathBuffer, file->id.ino,
-		    file->id.gen, file->copy + 1);
-
-		SET_FLAG(file->flags, FI_TAR_ERROR);
-	}
-
 	return (valid);
 }
 
@@ -737,12 +798,12 @@ validateStarFileSize(
 {
 	boolean_t valid;
 	u_longlong_t tarFileSize;
+	boolean_t verifySize;
 
-	if (GET_FLAG(file->flags, FI_MULTIVOL) ||
-	    GET_FLAG(file->flags, FI_STAGE_NEVER) ||
-	    GET_FLAG(file->flags, FI_STAGE_PARTIAL)) {
+	verifySize = ifVerifyFileSizeInTarhdr();
 
-		/* Unable to validate this type of request. */
+	if (verifySize == B_FALSE) {
+		/* Unable to validate size for this type of request. */
 		return (B_TRUE);
 	}
 
@@ -767,6 +828,93 @@ validateStarFileSize(
 	return (valid);
 }
 
+/*
+ * Returns true if valid pax tar header.
+ */
+static boolean_t
+isPaxTarHeader(
+	char *buffer,
+	longlong_t reqSize)
+{
+	boolean_t valid;
+	int type;
+	pax_hdr_t *hdr;
+	boolean_t verifySize;
+	size_t hdrSize;
+	offset_t tarFileSize;
+
+	Trace(TR_MISC, "Validate pax tar header inode: %d.%d",
+	    file->id.ino, file->id.gen);
+
+	valid = B_TRUE;
+	hdrSize = 0;
+
+	type = ph_is_pax_hdr(buffer, &hdrSize);
+	/* SAM only generates extended format. */
+	if (type != PX_SUCCESS_EXT_HEADER) {
+		valid = B_FALSE;
+		Trace(TR_MISC, "ph_is_pax_hdr failed %d", type);
+		TraceRawData(TR_MISC, buffer, PAX_HDR_BLK_SIZE);
+	}
+
+	/* Check if file size can be verified for this type of request. */
+	verifySize = ifVerifyFileSizeInTarhdr();
+
+	if (valid == B_TRUE && verifySize == B_TRUE) {
+		int rval;
+
+		hdrSize += PAX_HDR_BLK_SIZE;
+		hdr = ph_create_hdr();
+
+		rval = ph_load_pax_hdr(hdr, buffer, hdrSize);
+
+		if (rval == PX_SUCCESS) {
+			rval = ph_get_size(hdr, &tarFileSize);
+
+			if (rval != PX_SUCCESS || tarFileSize != reqSize) {
+				valid = B_FALSE;
+				Trace(TR_MISC, "Request length (%lld) does "
+				    "not match pax header (%lld) file size",
+				    reqSize, tarFileSize);
+			}
+		} else {
+			valid = B_FALSE;
+			Trace(TR_MISC, "ph_load_pax_hdr failed %d", rval);
+		}
+
+		if (valid == B_FALSE) {
+			/* Invalid header. Raw dump the pax header. */
+			TraceRawData(TR_MISC, buffer, hdrSize);
+		}
+
+		if (hdr != NULL) {
+			ph_destroy_hdr(hdr);
+		}
+	}
+
+	return (valid);
+}
+
+/*
+ * Set true if able to verify file size in tar header against
+ * stage request size.
+ */
+static boolean_t
+ifVerifyFileSizeInTarhdr()
+{
+	boolean_t verifySize;
+
+	verifySize = B_TRUE;
+
+	if (GET_FLAG(file->flags, FI_MULTIVOL) ||
+	    GET_FLAG(file->flags, FI_STAGE_NEVER) ||
+	    GET_FLAG(file->flags, FI_STAGE_PARTIAL)) {
+
+		/* Unable to validate this type of request. */
+		verifySize = B_FALSE;
+	}
+	return (verifySize);
+}
 
 /*
  * Start the stage pipeline. Each thread will wait for a data buffer
