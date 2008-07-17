@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.141 $"
+#pragma ident "$Revision: 1.142 $"
 #endif
 
 #include "sam/osversion.h"
@@ -119,10 +119,6 @@
 #include "clextern.h"
 #endif /* linux */
 
-#if defined(SAM_OSD_SUPPORT)
-#include "object.h"
-#endif
-
 static int sam_map_direct(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 static int sam_map_indirect(sam_node_t *ip, offset_t offset, offset_t count,
@@ -142,7 +138,7 @@ static int sam_contig(int maxcontig, uint32_t *bnp, uchar_t *eip, int lblocks,
 #ifdef sun
 int sam_fbzero(sam_node_t *ip, offset_t offset, int tlen,
 	sam_ioblk_t *iop, map_params_t *mapp, struct fbuf **fbp);
-#endif
+#endif /* defined sun */
 #ifdef linux
 void sam_linux_fbzero(sam_node_t *, offset_t, int);
 #endif

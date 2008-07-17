@@ -1,4 +1,4 @@
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 
 #    SAM-QFS_notice_begin
 #
@@ -37,7 +37,7 @@ MODULE = samfs
 SRCS1 = bio.c cacl.c clcall.c client.c clmisc.c clcomm.c clvnops.c\
 	copy_extents.c cquota.c creclaim.c ctrunc.c cvnops.c getdents.c \
 	iget.c init.c iput.c lqfs.c lqfs_debug.c lqfs_log.c lqfs_map.c \
-	lqfs_thread.c lqfs_top.c map.c mount.c osd.c page.c psyscall.c \
+	lqfs_thread.c lqfs_top.c map.c mount.c page.c psyscall.c \
 	qfs_log.c qfs_trans.c rwio.c scd.c stage.c syscall.c thread.c \
 	trace.c vfsops.c
 
@@ -53,7 +53,7 @@ endif
 ifeq ($(OS_REVISION), 5.11)
 OSD_SRCS = osdfs.c osdfsops.c objnode.c objnops.c objattrops.c \
 	objctl.c objnops_simops.c objnops_simmem.c objorphan.c \
-	objioctl.c
+	objioctl.c osd.c
 endif
 
 COMMON_SRCS = common_subr.c extent.c setdau.c

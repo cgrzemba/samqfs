@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.124 $"
+#pragma ident "$Revision: 1.125 $"
 
 #define	SAM_INIT
 
@@ -443,6 +443,9 @@ _fini(void)
 	lqfs_fini();
 
 	sam_objctl_fini();
+#if defined(SOL_511_ABOVE)
+	sam_sosd_unbind();
+#endif
 
 	return (mod_remove(&modlinkage));		/* Remove module */
 }
@@ -632,6 +635,10 @@ samfs_init(
 	lqfs_init();
 
 	sam_objctl_init();
+
+#if defined(SOL_511_ABOVE)
+	sam_sosd_bind();
+#endif
 
 	return (0);
 }

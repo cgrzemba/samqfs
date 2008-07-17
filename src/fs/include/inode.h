@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.205 $"
+#pragma ident "$Revision: 1.206 $"
 #endif
 
 #ifdef linux
@@ -1012,10 +1012,15 @@ void sam_open_operation_nb(struct sam_mount *mp);
 void sam_open_operation_rwl(sam_node_t *ip);
 int sam_idle_operation(sam_node_t *ip);
 int sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type);
+
 #ifdef sun
 int sam_set_operation_nb(struct sam_mount *mp);
 void sam_unset_operation_nb(struct sam_mount *mp);
+extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
 
+#if defined(SOL_511_ABOVE)
+int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
+	sam_map_t flag, struct sam_ioblk *iop);
 int sam_issue_object_io(struct sam_mount *mp, sam_osd_handle_t oh,
 	uint32_t command, uint64_t user_obj_id, enum uio_seg seg, char *data,
 	offset_t offset, offset_t length);
@@ -1033,9 +1038,26 @@ int sam_osd_create_obj_layout(sam_node_t *ip);
 void sam_osd_destroy_obj_layout(sam_node_t *ip);
 void sam_init_object_cache(void);
 void sam_delete_object_cache(void);
+void sam_sosd_unbind(void);
+void sam_sosd_bind(void);
+#else /* defined SOL_511_ABOVE */
+#define	sam_map_osd(a, b, c, d, e)			(ENOTSUP)
+#define	sam_issue_object_io(a, b, c, d, e, f, g, h)	(ENOTSUP)
+#define	sam_create_priv_object_id(a, b)			(ENOTSUP)
+#define	sam_create_object_id(a, b)			(ENOTSUP)
+#define	sam_remove_object_id(a, b, c)			(ENOTSUP)
+#define	sam_truncate_object_file(a, b, c, d)		(ENOTSUP)
+#define	sam_set_end_of_obj(a, b, c)			(ENOTSUP)
+#define	sam_osd_create_obj_layout(a)			(ENOTSUP)
+#define	sam_osd_destroy_obj_layout(a)
+#define	sam_init_object_cache()
+#define	sam_delete_object_cache()
+#define	sam_sosd_unbind()
+#define	sam_sosd_bind()
+#endif /* defined SOL_511_ABOVE */
 
-extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
-#endif
+#endif /* define sun */
+
 extern int sam_access_ino(sam_node_t *ip, int mode, boolean_t locked,
 		cred_t *credp);
 

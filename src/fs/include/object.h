@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #include "sam/osversion.h"
 
@@ -48,10 +48,7 @@
 #include	<sys/condvar.h>
 #include	<sys/conf.h>
 #include	<sys/ddi.h>
-#if defined(SAM_OSD_SUPPORT)
-#include	"scsi_osd.h"
 #include	"osd.h"
-#endif /* SAM_OSD_SUPPORT */
 #include	<sys/byteorder.h>
 
 #include	<vm/page.h>
@@ -194,5 +191,90 @@ typedef struct sam_fsinfo_page {
 #define	SFP_PGLEN(SFPP)		BE_32(SFPP->sfp_pglen)
 #define	SFP_CAPACITY(SFPP)	BE_64(SFPP->sfp_capacity)
 #define	SFP_SPACE(SFPP)		BE_64(SFPP->sfp_space)
+
+/*
+ * There are 2 driver interfaces.
+ *
+ * drv/sosd - Contains the Open/Close routines.
+ */
+#define	SCSI_SOSD_MOD_NAME	"misc/scsi_osd"
+#define	SOSD_MOD_NAME		"drv/sosd"
+
+#define	OSD_SETUP_CREATE_OBJECT		"osd_setup_create_object"
+#define	OSD_SETUP_REMOVE_OBJECT		"osd_setup_remove_object"
+#define	OSD_OPEN_BY_NAME		"osd_open_by_name"
+#define	OSD_CLOSE			"osd_close"
+#define	OSD_SETUP_READ			"osd_setup_read"
+#define	OSD_SETUP_WRITE			"osd_setup_write"
+#define	OSD_SETUP_WRITE_BP		"osd_setup_write_bp"
+#define	OSD_SETUP_READ_BP		"osd_setup_read_bp"
+#define	OSD_SUBMIT_REQ			"osd_submit_req"
+#define	OSD_FREE_REQ			"osd_free_req"
+#define	OSD_SETUP_SET_ATTR		"osd_setup_set_attr"
+#define	OSD_SETUP_GET_ATTR		"osd_setup_get_attr"
+#define	OSD_ADD_SET_PAGE_1ATTR_CDB	"osd_add_set_page_1attr_cdb"
+#define	OSD_ADD_SET_PAGE_1ATTR_TO_REQ	"osd_add_set_page_1attr_to_req"
+#define	OSD_ADD_SET_PAGE_ATTR_TO_REQ	"osd_add_get_page_attr_to_req"
+
+typedef struct sam_sosd_vec {
+
+	ddi_modhandle_t scsi_osd_hdl;
+	ddi_modhandle_t sosd_hdl;
+
+	/* osd_setup_create_object */
+	osd_req_t *(*setup_create_object)(osd_dev_t, uint64_t, uint64_t,
+	    uint16_t);
+
+	/* osd_setup_remove_object */
+	osd_req_t *(*setup_remove_object)(osd_dev_t, uint64_t, uint64_t);
+
+	/* osd_open_by_name */
+	int (*open_by_name)(char *, int, cred_t *, osd_dev_t *);
+
+	/* osd_close */
+	int (*close)(osd_dev_t, int, cred_t *);
+
+	/* osd_setup_read */
+	osd_req_t *(*setup_read)(osd_dev_t, uint64_t, uint64_t, uint64_t,
+	    uint64_t, uint8_t, iovec_t *);
+
+	/* osd_setup_write */
+	osd_req_t *(*setup_write)(osd_dev_t, uint64_t, uint64_t, uint64_t,
+	    uint64_t, uint8_t, iovec_t *);
+
+	/* osd_setup_write_bp */
+	osd_req_t *(*setup_write_bp)(osd_dev_t, uint64_t, uint64_t, uint64_t,
+	    uint64_t, struct buf *);
+
+	/* osd_setup_read_bp */
+	osd_req_t *(*setup_read_bp)(osd_dev_t, uint64_t, uint64_t, uint64_t,
+	    uint64_t, struct buf *);
+
+	/* osd_submit_req */
+	int (*submit_req)(osd_req_t *, void (* done)(osd_req_t  *, void *,
+	    osd_result_t *), void *ct_priv);
+
+	/* osd_free_req */
+	void (*free_req)(osd_req_t *);
+
+	/* osd_setup_set_attr */
+	osd_req_t *(*setup_set_attr)(osd_dev_t, uint64_t, uint64_t);
+
+	/* osd_setup_get_attr */
+	osd_req_t *(*setup_get_attr)(osd_dev_t, uint64_t, uint64_t);
+
+	/* osd_add_set_page_1attr_cdb */
+	void (*add_set_page_1attr_cdb)(osd_req_t *, uint32_t, uint32_t,
+	    uint16_t, char *);
+
+	/* osd_add_set_page_1attr_to_req */
+	void (*add_set_page_1attr_to_req)(osd_req_t *, uint32_t, uint32_t,
+	    uint32_t, void *);
+
+	/* osd_add_get_page_attr_to_req */
+	void (*add_get_page_attr_to_req)(osd_req_t *, uint32_t, uint32_t,
+	    void *);
+
+} sam_sosd_vec_t;
 
 #endif	/* _SAM_FS_OBJECT_H */

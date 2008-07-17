@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.148 $"
+#pragma ident "$Revision: 1.149 $"
 #endif
 
 #ifdef sun
@@ -396,12 +396,17 @@ void sam_close_devices(sam_mount_t *mp, int istart, int filemode,
 	cred_t *credp);
 void sam_report_initial_watermark(sam_mount_t *mp);
 void sam_mount_setwm_blocks(sam_mount_t *mp);
+#endif /* defined sun */
 
+#if defined(SOL_511_ABOVE)
 int sam_open_osd_device(struct samdent *dp, int filemode, cred_t *credp);
 void sam_close_osd_device(sam_osd_handle_t oh, int filemode, cred_t *credp);
 int sam_get_osd_fs_attr(sam_osd_handle_t oh, struct sam_fs_part *fsp);
-#endif
-
+#else
+#define	sam_open_osd_device(sdp, filemode, credp)	(ENOTSUP)
+#define	sam_close_osd_device(oh, filemode, credp)
+#define	sam_get_osd_fs_attr(oh, fsp)			(ENOTSUP)
+#endif /* defined(SOL_511_ABOVE) */
 
 /*
  * ----- sync function prototypes.

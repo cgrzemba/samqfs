@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 #include "sam/osversion.h"
 
@@ -56,10 +56,9 @@
 #include <vm/pvn.h>
 #include <sys/ddi.h>
 #include <sys/byteorder.h>
-#if defined(SAM_OSD_SUPPORT)
+#include <sys/modctl.h>
 #include "scsi_osd.h"
 #include "osd.h"
-#endif
 
 
 /* ----- SAMFS Includes */
@@ -75,35 +74,10 @@
 #include "extern.h"
 #include "trace.h"
 #include "debug.h"
-
-
-#if defined(SAM_OSD_SUPPORT)
 #include "object.h"
-
-/*
- * The following externals are resolved by the sosd device driver which will
- * be in Solaris 11. These externals only affect developers testing the new
- * object file system (mb).
- *
- * osd_handle_by_name
- * osd_close
- * osd_setup_write
- * osd_setup_read
- * osd_setup_write_bp
- * osd_setup_read_bp
- * osd_setup_get_page_attr
- * osd_setup_set_page_attr
- * osd_submit_req
- * osd_free_req
- */
 
 #define	SAM_OSD_STRIPE_DEPTH	128	/* Stripe depth default in kilobytes */
 #define	SAM_OSD_STRIPE_SHIFT	17	/* Stripe shift for stripe depth */
-
-/*
- * Remove the following after the device driver is in Solaris 11
- */
-char _depends_on[] = "drv/sosd drv/scsi misc/scsi_osd";
 
 static int sam_osd_bp_from_kva(caddr_t memp, size_t memlen, int rw,
 	struct buf **bpp);
@@ -138,6 +112,210 @@ static int sam_osd_inode_extent(sam_mount_t *mp, struct sam_disk_inode *dp,
 	int *num_groupp);
 
 
+struct sam_sosd_vec sam_sosd_vec;
+
+/*
+ * sam_sosd_bind - If the sosd module is loaded, retrieve the sosd external
+ * functions.
+ */
+void
+sam_sosd_bind(void)
+{
+
+	int err = 0;
+
+	bzero((char *)&sam_sosd_vec, sizeof (struct sam_sosd_vec));
+
+	/*
+	 * Verify if the scsi sosd module is loaded.
+	 */
+	sam_sosd_vec.scsi_osd_hdl =
+	    ddi_modopen(SCSI_SOSD_MOD_NAME, KRTLD_MODE_FIRST, &err);
+	if (sam_sosd_vec.scsi_osd_hdl == NULL) {
+		cmn_err(CE_WARN,
+		    "SAM-QFS: SCSI OSD Target Driver not avaliable\n");
+		goto failed;
+	}
+
+	/*
+	 * The sosd module is available.  Get the vectors of interest.
+	 */
+	sam_sosd_vec.setup_create_object =
+	    (osd_req_t *(*)(osd_dev_t, uint64_t, uint64_t, uint16_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_CREATE_OBJECT,
+	    &err);
+	if (!sam_sosd_vec.setup_create_object) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_CREATE_OBJECT, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_remove_object = (osd_req_t *(*)
+	    (osd_dev_t, uint64_t, uint64_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_REMOVE_OBJECT,
+	    &err);
+	if (!sam_sosd_vec.setup_remove_object) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_REMOVE_OBJECT, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_read = (osd_req_t *(*)(osd_dev_t, uint64_t,
+	    uint64_t, uint64_t, uint64_t, uint8_t, iovec_t *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_READ, &err);
+	if (!sam_sosd_vec.setup_read) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_READ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_write = (osd_req_t *(*)(osd_dev_t, uint64_t,
+	    uint64_t, uint64_t, uint64_t, uint8_t, iovec_t *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_WRITE, &err);
+	if (!sam_sosd_vec.setup_write) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_WRITE, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_write_bp = (osd_req_t *(*)(osd_dev_t, uint64_t,
+	    uint64_t, uint64_t, uint64_t, struct buf *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_WRITE_BP, &err);
+	if (!sam_sosd_vec.setup_write_bp) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_WRITE_BP, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_read_bp = (osd_req_t *(*)(osd_dev_t,
+	    uint64_t, uint64_t, uint64_t, uint64_t, struct buf *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_READ_BP, &err);
+	if (!sam_sosd_vec.setup_read_bp) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_READ_BP, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.submit_req = (int (*)(osd_req_t *, void (* done)
+	    (osd_req_t  *, void *, osd_result_t *), void *ct_priv))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SUBMIT_REQ, &err);
+	if (!sam_sosd_vec.submit_req) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SUBMIT_REQ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.free_req = (void (*)(osd_req_t *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_FREE_REQ, &err);
+	if (!sam_sosd_vec.free_req) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_FREE_REQ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_set_attr = (osd_req_t *(*)
+	    (osd_dev_t, uint64_t, uint64_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_SET_ATTR, &err);
+	if (!sam_sosd_vec.setup_set_attr) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_SET_ATTR, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_get_attr = (osd_req_t *(*)
+	    (osd_dev_t, uint64_t, uint64_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_GET_ATTR, &err);
+	if (!sam_sosd_vec.setup_get_attr) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_GET_ATTR, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.add_set_page_1attr_cdb = (void (*)
+	    (osd_req_t *, uint32_t, uint32_t, uint16_t, char *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_ADD_SET_PAGE_1ATTR_CDB,
+	    &err);
+	if (!sam_sosd_vec.add_set_page_1attr_cdb) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_ADD_SET_PAGE_1ATTR_CDB, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.add_set_page_1attr_to_req = (void (*)(osd_req_t *,
+	    uint32_t, uint32_t, uint32_t, void *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl,
+	    OSD_ADD_SET_PAGE_1ATTR_TO_REQ, &err);
+	if (!sam_sosd_vec.add_set_page_1attr_to_req) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_ADD_SET_PAGE_1ATTR_TO_REQ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.add_get_page_attr_to_req = (void (*)(osd_req_t *,
+	    uint32_t, uint32_t, void *))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_ADD_SET_PAGE_ATTR_TO_REQ,
+	    &err);
+	if (!sam_sosd_vec.add_get_page_attr_to_req) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_ADD_SET_PAGE_ATTR_TO_REQ, err);
+		goto failed;
+	}
+
+	/*
+	 * Verify if the sosd module is loaded.
+	 */
+	sam_sosd_vec.sosd_hdl =
+	    ddi_modopen(SOSD_MOD_NAME, KRTLD_MODE_FIRST, &err);
+	if (sam_sosd_vec.sosd_hdl == NULL) {
+		cmn_err(CE_WARN, "SAM-QFS: OSD Target Driver not avaliable\n");
+		return;
+	}
+
+	sam_sosd_vec.open_by_name = (int (*)(char *, int, cred_t *,
+	    osd_dev_t *))
+	    ddi_modsym(sam_sosd_vec.sosd_hdl, OSD_OPEN_BY_NAME, &err);
+	if (!sam_sosd_vec.open_by_name) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_OPEN_BY_NAME, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.close = (int (*)(osd_dev_t, int, cred_t *))
+	    ddi_modsym(sam_sosd_vec.sosd_hdl, OSD_CLOSE, &err);
+	if (!sam_sosd_vec.close) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_CLOSE, err);
+		goto failed;
+	}
+
+	return;
+
+failed:
+	if (sam_sosd_vec.scsi_osd_hdl) {
+		ddi_modclose(sam_sosd_vec.scsi_osd_hdl);
+	}
+
+	if (sam_sosd_vec.sosd_hdl) {
+		ddi_modclose(sam_sosd_vec.sosd_hdl);
+	}
+
+	bzero((char *)&sam_sosd_vec, sizeof (struct sam_sosd_vec));
+
+}
+
+/*
+ * sam_sosd_unbind - Release the hold on the sosd module.
+ */
+void
+sam_sosd_unbind(void)
+{
+	if (sam_sosd_vec.scsi_osd_hdl) {
+		ddi_modclose(sam_sosd_vec.scsi_osd_hdl);
+		bzero((char *)&sam_sosd_vec, sizeof (struct sam_sosd_vec));
+	}
+
+}
+
 /*
  * ----- sam_open_osd_device - Open an osd device. Return object handle.
  */
@@ -152,6 +330,13 @@ sam_open_osd_device(
 	dev_t dev;
 	int rc, error;
 
+	/*
+	 * Make sure that the sosd module has been initialized with SAMQFS.
+	 */
+	if (!sam_sosd_vec.sosd_hdl) {
+		return (EUNATCH);
+	}
+
 	error = lookupname(dp->part.pt_name, UIO_SYSSPACE, FOLLOW, NULL, &svp);
 	if (error) {
 		return (ENODEV);
@@ -162,7 +347,8 @@ sam_open_osd_device(
 	}
 	dev = svp->v_rdev;
 	VN_RELE(svp);
-	rc = osd_open_by_name(dp->part.pt_name, filemode, credp, (void *)&oh);
+	rc = (sam_sosd_vec.open_by_name)(dp->part.pt_name, filemode, credp,
+	    (void *)&oh);
 	if (rc != OSD_SUCCESS) {
 		error = sam_osd_rc(rc);
 		return (error);
@@ -187,7 +373,7 @@ sam_close_osd_device(
 	cred_t *credp)		/* Credentials pointer. */
 {
 	ASSERT(oh != NULL);
-	(void) osd_close((void *)oh, filemode, credp);
+	(void) (sam_sosd_vec.close)((void *)oh, filemode, credp);
 }
 
 
@@ -225,8 +411,9 @@ sam_issue_object_io(
 	iov.iov_base = (void *)bufp;
 	iov.iov_len = (long)length;
 	if (command == FWRITE) {
-		if ((reqp = osd_setup_write((void *)oh, partid, object_id,
-		    length, offset, 1, &iov)) == NULL) {
+		reqp = (sam_sosd_vec.setup_write)((void *)oh, partid, object_id,
+		    length, offset, 1, &iov);
+		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
 		}
@@ -237,14 +424,15 @@ sam_issue_object_io(
 			}
 		}
 	} else {
-		if ((reqp = osd_setup_read((void *)oh, partid, object_id,
-		    length, offset, 1, &iov)) == NULL) {
+		reqp = (sam_sosd_vec.setup_read)((void *)oh, partid, object_id,
+		    length, offset, 1, &iov);
+		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
 		}
 	}
 	sam_osd_setup_private(iorp, mp);
-	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);	/* Wait for completion */
 		if ((error = iorp->error) == 0) {
@@ -263,7 +451,7 @@ fini:
 		kmem_free(bufp, length);
 	}
 	if (reqp) {
-		(void) osd_free_req(reqp);
+		(sam_sosd_vec.free_req)(reqp);
 	}
 	return (error);
 }
@@ -288,14 +476,16 @@ sam_get_osd_fs_attr(
 	int			error = 0;
 
 
-	reqp = osd_setup_get_attr((void *)oh, partid, SAM_OBJ_SBLK_ID);
+	reqp = (sam_sosd_vec.setup_get_attr)((void *)oh, partid,
+	    SAM_OBJ_SBLK_ID);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	osd_add_get_page_attr_to_req(reqp, OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO,
+	(sam_sosd_vec.add_get_page_attr_to_req)(reqp,
+	    OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO,
 	    sizeof (sam_fsinfo_page_t), (void *) &fs_attr);
 	sam_osd_setup_private(iorp, mp);
-	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if ((error = iorp->error) == 0) {
@@ -311,7 +501,7 @@ sam_get_osd_fs_attr(
 
 fini:
 	if (reqp) {
-		(void) osd_free_req(reqp);
+		(sam_sosd_vec.free_req)(reqp);
 	}
 	return (error);
 }
@@ -371,11 +561,11 @@ sam_issue_direct_object_io(
 	oh = ip->mp->mi.m_fs[olp->ol[obji].ord].oh;
 	object_id = olp->ol[obji].obj_id;
 	if (rw == UIO_WRITE) {
-		reqp = osd_setup_write_bp((void *)oh, partid, object_id,
-		    contig, offset, bp);
+		reqp = (sam_sosd_vec.setup_write_bp)((void *)oh, partid,
+		    object_id, contig, offset, bp);
 	} else {
-		reqp = osd_setup_read_bp((void *)oh, partid, object_id,
-		    contig, offset, bp);
+		reqp = (sam_sosd_vec.setup_read_bp)((void *)oh, partid,
+		    object_id, contig, offset, bp);
 	}
 	if (reqp == NULL) {
 		kmem_cache_free(samgt.object_cache, iorp);
@@ -387,7 +577,7 @@ sam_issue_direct_object_io(
 	iorp->offset = offset;	/* Logical offset in I/O request */
 	iorp->ip = ip;
 	iorp->bp = bp;
-	rc = osd_submit_req(reqp, sam_dk_object_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_dk_object_done, iorp);
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
@@ -477,9 +667,8 @@ sam_dk_object_done(
 
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
 	sam_free_buf_header((sam_uintptr_t *)bp);
-	(void) osd_free_req(reqp);
+	(sam_sosd_vec.free_req)(reqp);
 	kmem_cache_free(samgt.object_cache, iorp);
-
 	if (async) {
 		sam_dk_aio_direct_done(ip, bdp, count);
 	}
@@ -560,13 +749,13 @@ sam_pageio_object(
 	if (flags & B_READ) {
 		TRACE(T_SAM_PGRDOBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, count);
-		reqp = osd_setup_read_bp((void *)oh, partid, object_id,
-		    count, offset, bp);
+		reqp = (sam_sosd_vec.setup_read_bp)((void *)oh, partid,
+		    object_id, count, iop->blk_off, bp);
 	} else {
 		TRACE(T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, count);
-		reqp = osd_setup_write_bp((void *)oh, partid, object_id,
-		    count, offset, bp);
+		reqp = (sam_sosd_vec.setup_write_bp)((void *)oh, partid,
+		    object_id, count, iop->blk_off, bp);
 	}
 	if (reqp == NULL) {
 		pageio_done(bp);
@@ -586,7 +775,8 @@ sam_pageio_object(
 			mutex_exit(&ip->write_mutex);
 		}
 	}
-	rc = osd_submit_req(reqp, sam_pg_object_done, iorp);
+
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_pg_object_done, iorp);
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
@@ -661,7 +851,7 @@ sam_pg_object_done(
 		} else {
 			biodone(bp);
 		}
-		(void) osd_free_req(reqp);
+		(sam_sosd_vec.free_req)(reqp);
 		sam_osd_remove_private(iorp);
 		kmem_cache_free(samgt.object_cache, iorp);
 	} else {
@@ -697,7 +887,7 @@ sam_pg_object_sync_done(
 		    bp->b_resid, obji, ip->olp->ol[obji].eoo, ip->size));
 	}
 	pageio_done(bp);
-	(void) osd_free_req(iorp->reqp);
+	(sam_sosd_vec.free_req)(iorp->reqp);
 	sam_osd_remove_private(iorp);
 	kmem_cache_free(samgt.object_cache, iorp);
 	return (error);
@@ -937,20 +1127,21 @@ sam_create_priv_object_id(
 	int			rc;
 	int			error = 0;
 
-	reqp = osd_setup_create_object((void *)oh, partid, object_id, 1);
+	reqp = (sam_sosd_vec.setup_create_object)((void *)oh, partid,
+	    object_id, 1);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
 	sam_osd_setup_private(iorp, mp);
 
-	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		error = iorp->error;
 	} else {
 		error = sam_osd_rc(rc);
 	}
-	(void) osd_free_req(reqp);
+	(sam_sosd_vec.free_req)(reqp);
 	sam_osd_remove_private(iorp);
 	return (error);
 }
@@ -1011,19 +1202,20 @@ sam_create_object_id(
 	i = 0;
 	ext_id = oip->ext_id;
 	while (n < num_group) {
-		sam_id_attr_t	x;
+		sam_id_attr_t x;
 		uint64_t object_id;
 
-		reqp = osd_setup_create_object((void *)mp->mi.m_fs[ord].oh,
-		    partid, 0, 1);
+		reqp = (sam_sosd_vec.setup_create_object)(
+		    (void *)mp->mi.m_fs[ord].oh, partid, 0, 1);
 		if (reqp == NULL) {
 			error = EINVAL;
 			goto fini;
 		}
-		osd_add_get_page_attr_to_req(reqp,
+		(sam_sosd_vec.add_get_page_attr_to_req)(reqp,
 		    OSD_SAMQFS_VENDOR_CREATED_OBJECTS_LIST_PAGE,
 		    sizeof (sam_objlist_page_t), (void *) objlist);
-		rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+		sam_osd_setup_private(iorp, mp);
+		rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 		if (rc != OSD_SUCCESS) {
 			error = sam_osd_rc(rc);
 			break;
@@ -1088,7 +1280,7 @@ fini:
 		bdwrite(bp);
 	}
 	if (reqp) {
-		osd_free_req(reqp);
+		(sam_sosd_vec.free_req)(reqp);
 	}
 	return (error);
 }
@@ -1200,21 +1392,21 @@ sam_remove_object_id(
 	int			rc;
 	int			error = 0;
 
-	reqp = osd_setup_remove_object((void *)mp->mi.m_fs[unit].oh, partid,
-	    object_id);
+	reqp = (sam_sosd_vec.setup_remove_object)((void *)mp->mi.m_fs[unit].oh,
+	    partid, object_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
 	sam_osd_setup_private(iorp, mp);
 
-	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		error = iorp->error;
 	} else {
 		error = sam_osd_rc(rc);
 	}
-	osd_free_req(reqp);
+	(sam_sosd_vec.free_req)(reqp);
 	sam_osd_remove_private(iorp);
 	return (error);
 }
@@ -1240,15 +1432,15 @@ sam_get_user_object_attr(
 	int			error = 0;
 
 
-	if ((reqp = osd_setup_get_attr((void *)mp->mi.m_fs[ord].oh, partid,
-	    object_id)) == NULL) {
+	if ((reqp = sam_sosd_vec.setup_get_attr((void *)mp->mi.m_fs[ord].oh,
+	    partid, object_id)) == NULL) {
 		return (EINVAL);
 	}
-	osd_add_get_page_attr_to_req(reqp,
+	(sam_sosd_vec.add_get_page_attr_to_req)(reqp,
 	    OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO,
 	    sizeof (sam_objinfo_page_t), (void *) attrp);
 	sam_osd_setup_private(iorp, mp);
-	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if ((error = iorp->error) != 0) {
@@ -1264,7 +1456,7 @@ sam_get_user_object_attr(
 
 fini:
 	if (reqp) {
-		osd_free_req(reqp);
+		(sam_sosd_vec.free_req)(reqp);
 	}
 	return (error);
 }
@@ -1366,16 +1558,16 @@ sam_set_user_object_attr(
 	int			rc;
 	int			error = 0;
 
-	reqp = osd_setup_set_attr((void *)mp->mi.m_fs[ord].oh,
+	reqp = (sam_sosd_vec.setup_set_attr)((void *)mp->mi.m_fs[ord].oh,
 	    partid, object_id);
 	if (reqp == NULL) {
 		return (EINVAL);
 	}
-	osd_add_set_page_1attr_cdb(reqp,
+	(sam_sosd_vec.add_set_page_1attr_cdb)(reqp,
 	    OSD_USER_OBJECT_INFORMATION_PAGE, attr_num,
 	    sizeof (attribute), (char *)&attribute);
 	sam_osd_setup_private(iorp, mp);
-	rc = osd_submit_req(reqp, sam_object_req_done, iorp);
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if ((error = iorp->error) != 0) {
@@ -1390,7 +1582,7 @@ sam_set_user_object_attr(
 	sam_osd_remove_private(iorp);
 fini:
 	if (reqp) {
-		osd_free_req(reqp);
+		(sam_sosd_vec.free_req)(reqp);
 	}
 	return (error);
 }
@@ -1755,225 +1947,3 @@ sam_delete_object_cache()
 		kmem_cache_destroy(samgt.object_cache);
 	}
 }
-
-
-#else /* SAM_OSD_SUPPORT */
-
-
-/*
- * ----- sam_open_osd_device - Open an osd device. Return object handle.
- */
-/* ARGSUSED */
-int
-sam_open_osd_device(
-	struct samdent *dp,	/* Pointer to device entr */
-	int filemode,		/* Filemode for open */
-	cred_t *credp)		/* Credentials pointer. */
-{
-	return (EINVAL);
-}
-
-
-/*
- * ----- sam_close_osd_device - Close an osd device.
- */
-/* ARGSUSED */
-void
-sam_close_osd_device(
-	sam_osd_handle_t oh,	/* Object device handle */
-	int filemode,		/* Filemode for open */
-	cred_t *credp)		/* Credentials pointer. */
-{
-}
-
-
-/*
- * ----- sam_issue_object_io - Issue object I/O.
- */
-/* ARGSUSED */
-int
-sam_issue_object_io(
-	sam_mount_t *mp,
-	sam_osd_handle_t oh,
-	uint32_t command,
-	uint64_t object_id,
-	enum uio_seg seg,
-	char *data,
-	offset_t offset,
-	offset_t length)
-{
-	return (EINVAL);
-}
-
-
-/*
- * ----- sam_get_osd_fs_attr - Process get file system attribute call.
- */
-/* ARGSUSED */
-int
-sam_get_osd_fs_attr(
-	sam_osd_handle_t oh,		/* Object device handle */
-	struct sam_fs_part *fsp)	/* Pointer to device partition table */
-{
-	return (EINVAL);
-}
-
-
-/*
- * ----- sam_issue_direct_object_io - Issue object direct async I/O.
- */
-/* ARGSUSED */
-int
-sam_issue_direct_object_io(
-	sam_node_t *ip,
-	enum uio_rw rw,
-	struct buf *bp,
-	sam_ioblk_t *iop,
-	offset_t contig)
-{
-	return (EIO);
-}
-
-
-/*
- * ----- sam_pageio_object - Start object I/O on a page.
- */
-/* ARGSUSED */
-buf_t *
-sam_pageio_object(
-	sam_node_t *ip,		/* Pointer to inode table */
-	sam_ioblk_t *iop,	/* Pointer to I/O entry */
-	page_t *pp,		/* Pointer to page list */
-	offset_t offset,	/* Logical file offset */
-	uint_t pg_off,		/* Offset within page */
-	uint_t vn_len,		/* Length of transfer */
-	int flags)		/* Flags --B_INVAL, B_DIRTY, B_FREE, */
-				/*   B_DONTNEED, B_FORCE, B_ASYNC. */
-{
-	return (NULL);
-}
-
-
-/*
- * ----- sam_pg_object_sync_done - Process object page sync I/O completion.
- */
-/* ARGSUSED */
-int
-sam_pg_object_sync_done(
-	sam_node_t *ip,		/* Pointer to inode table */
-	buf_t	*bp,		/* Pointer to the buffer */
-	char	*str)		/* "GETPAGE" OR "PUTPAGE" */
-{
-	return (EIO);
-}
-
-
-/*
- * ----- sam_create_priv_object_id - Process create of privileged object id.
- */
-/* ARGSUSED */
-int
-sam_create_priv_object_id(
-	sam_mount_t		*mp,
-	sam_osd_handle_t	oh,
-	uint64_t		object_id)
-{
-	return (EINVAL);
-}
-
-
-/*
- * ----- sam_create_object_id - Process create_object id.
- */
-/* ARGSUSED */
-int
-sam_create_object_id(
-	struct sam_mount *mp,
-	struct sam_disk_inode *dp)
-{
-	return (EINVAL);
-}
-
-
-/*
- * ----- sam_remove_object_id - Process remove_object id.
- */
-/* ARGSUSED */
-int
-sam_remove_object_id(
-	struct sam_mount *mp,
-	uint64_t object_id,
-	uchar_t unit)
-{
-	return (EINVAL);
-}
-
-
-/*
- * ----- sam_truncate_object_file - Truncate an osd file.
- */
-/* ARGSUSED */
-int
-sam_truncate_object_file(
-	sam_node_t *ip,
-	sam_truncate_t tflag,	/* Truncate file or Release file */
-	offset_t size,		/* Current size of the file */
-	offset_t length)	/* New file size */
-{
-	return (EINVAL);
-}
-
-
-/* ARGSUSED */
-int
-sam_set_end_of_obj(
-	sam_node_t *ip,		/* Pointer to the inode */
-	offset_t length,	/* File size */
-	int	update)			/* Set if update OSD LUN */
-{
-	return (EINVAL);
-}
-
-
-/* ARGSUSED */
-int					/* ERRNO, 0 if successful. */
-sam_map_osd(
-	sam_node_t *ip,		/* Pointer to the inode. */
-	offset_t offset,	/* Logical byte offset in file (longlong_t). */
-	offset_t count,		/* Requested byte count. */
-	sam_map_t flag,
-	sam_ioblk_t *iop)	/* Ioblk array. */
-{
-	return (EINVAL);
-}
-
-
-/* ARGSUSED */
-int
-sam_osd_create_obj_layout(sam_node_t *ip)
-{
-	return (EINVAL);
-}
-
-
-/* ARGSUSED */
-void
-sam_osd_destroy_obj_layout(sam_node_t *ip)
-{
-}
-
-
-void
-sam_init_object_cache()
-{
-	;
-}
-
-
-void
-sam_delete_object_cache()
-{
-	;
-}
-
-#endif /* SAM_OSD_SUPPORT */

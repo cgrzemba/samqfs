@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 #endif
 
 
@@ -199,14 +199,20 @@ int sam_process_zerodaus(sam_node_t *ip, sam_lease_data_t *dp, cred_t *credp);
 #ifdef	sun
 int sam_dk_direct_io(sam_node_t *ip, enum uio_rw rw, int ioflag,
 	uio_t *uiop, cred_t *credp);
-int sam_issue_direct_object_io(sam_node_t *ip, enum uio_rw rw, struct buf *bp,
-	sam_ioblk_t *iop, offset_t contig);
 void sam_dk_aio_direct_done(sam_node_t *ip, buf_descriptor_t *bdp,
 	offset_t count);
+#if defined(SOL_511_ABOVE)
+int sam_issue_direct_object_io(sam_node_t *ip, enum uio_rw rw, struct buf *bp,
+	sam_ioblk_t *iop, offset_t contig);
 buf_t *sam_pageio_object(sam_node_t *ip, sam_ioblk_t *iop, page_t *pp,
 	offset_t offset, uint_t pg_off, uint_t vn_len, int flags);
-void sam_page_wrdone(buf_t *bp);
 int sam_pg_object_sync_done(sam_node_t *ip, buf_t *bp, char *str);
+#else /* defined SOL_511_ABOVE */
+#define	sam_issue_direct_object_io(a, b, c, d, e)	(ENOTSUP)
+#define	sam_pageio_object(a, b, c, d, e, f, g)		(NULL)
+#define	sam_pg_object_sync_done(a, b, c)		(ENOTSUP)
+#endif /* defined (SOL_511_ABOVE) */
+void sam_page_wrdone(buf_t *bp);
 
 void sam_flush_behind(sam_node_t *ip, cred_t *credp);
 int sam_aphysio(vnode_t *vp, int ioflag, int rw, struct aio_req *aio, int *rvp,

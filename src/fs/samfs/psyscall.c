@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.187 $"
+#pragma ident "$Revision: 1.188 $"
 #endif
 
 #include "sam/osversion.h"
@@ -154,7 +154,7 @@ static int sam_get_fsinfo_common(void *arg, int size, int live);
 static int sam_get_fspart(void *arg, int size);
 static int sam_get_sblk(void *arg, int size);
 
-#if defined(SAM_OSD_SUPPORT)
+#if defined(SOL_511_ABOVE)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
 static int sam_osd_command(void *arg, int size, cred_t *credp);
 static int sam_osd_attr(void *arg, int size, cred_t *credp);
@@ -316,7 +316,7 @@ sam_priv_syscall(
 			error = sam_sys_shareops(arg, size, credp, rvp);
 			break;
 
-#if defined(SAM_OSD_SUPPORT)
+#if defined(SOL_511_ABOVE)
 		case SC_osd_device:
 			error = sam_osd_device(arg, size, credp);
 			break;
@@ -328,7 +328,7 @@ sam_priv_syscall(
 		case SC_osd_attr:
 			error = sam_osd_attr(arg, size, credp);
 			break;
-#endif
+#endif /* defined SOL_511_ABOVE */
 
 #ifdef METADATA_SERVER
 		case SC_onoff_client:
@@ -347,7 +347,7 @@ sam_priv_syscall(
 }
 
 
-#if defined(SAM_OSD_SUPPORT)
+#if defined(SOL_511_ABOVE)
 /*
  * ----- sam_osd_device - Process the user open & close osd system call.
  */
@@ -398,7 +398,6 @@ sam_osd_device(
 	}
 	return (error);
 }
-
 
 /*
  * ----- sam_osd_command - Process the user osd command system call.
@@ -472,7 +471,6 @@ out:
 	return (error);
 }
 
-
 /*
  * ----- sam_osd_attr - Process the user osd attribute system call.
  */
@@ -522,9 +520,7 @@ sam_osd_attr(
 	}
 	return (error);
 }
-
-#endif /* SAM_OSD_SUPPORT */
-
+#endif /* defined SOL_511_ABOVE */
 
 /*
  * ----- sam_fsd_call - Process the sam-fsd system call.
