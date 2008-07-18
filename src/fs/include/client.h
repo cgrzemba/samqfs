@@ -41,7 +41,7 @@
 #define	_SAM_FS_CLIENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 #endif
 
 #ifdef	linux
@@ -57,6 +57,7 @@
 #endif	/* linux */
 
 #define	SAM_FAILOVER_DELAY	(5)
+#define	SAM_QUICK_DELAY		(5)
 #define	SAM_MIN_DELAY		(15)
 #define	SAM_MAX_DELAY		(60)
 #define	SAM_MOUNT_TIMEOUT	(30)

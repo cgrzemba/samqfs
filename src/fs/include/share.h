@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.130 $"
+#pragma ident "$Revision: 1.131 $"
 #endif
 
 
@@ -259,8 +259,8 @@ enum LEASE_type {
 	LTYPE_frlock	= 4,
 	LTYPE_stage	= 5,
 	LTYPE_open	= 6,
-	LTYPE_rmap	= 7,
-	LTYPE_wmap	= 8,
+	LTYPE_mmap	= 7,
+	LTYPE_unused    = 8,
 	LTYPE_exclusive	= 9,
 	LTYPE_max_op	= 10
 };
@@ -274,18 +274,17 @@ enum LEASE_type {
 #define	CL_FRLOCK	(1 << LTYPE_frlock)	/* File/Record lock */
 #define	CL_STAGE	(1 << LTYPE_stage)	/* Stage in process */
 #define	CL_OPEN		(1 << LTYPE_open)	/* Outstanding open */
-#define	CL_RMAP		(1 << LTYPE_rmap)	/* Read-mapping */
-#define	CL_WMAP		(1 << LTYPE_wmap)	/* Write-mapping */
+#define	CL_MMAP		(1 << LTYPE_mmap)	/* Mmap lease */
 #define	CL_EXCLUSIVE	(1 << LTYPE_exclusive)	/* Exclusive access */
 
 #define	CL_CLOSE	(CL_READ | CL_WRITE | CL_APPEND | CL_TRUNCATE | \
-				CL_FRLOCK | CL_OPEN | CL_RMAP | CL_WMAP)
+				CL_FRLOCK | CL_OPEN | CL_MMAP)
 
 /* XXX - Should stage leases be non-expiring too? */
 
 #define	SAM_NON_EXPIRING_LEASES (CL_TRUNCATE|CL_FRLOCK|CL_OPEN| \
-				CL_RMAP|CL_WMAP|CL_EXCLUSIVE)
-#define	SAM_DATA_MODIFYING_LEASES (CL_WRITE|CL_WMAP|CL_APPEND|CL_STAGE)
+				CL_MMAP|CL_EXCLUSIVE)
+#define	SAM_DATA_MODIFYING_LEASES (CL_WRITE|CL_APPEND|CL_STAGE)
 
 enum TRUNC_flag {			/* Flag for LTYPE_truncate */
 	TRUNC_truncate	= 0,
@@ -302,9 +301,11 @@ typedef struct sam_shvfm_flags {
 #if defined(_BIT_FIELDS_HTOL)
 		abr:		1,		/* abr enabled */
 		directio:	1,		/* directio enabled */
-		unused:		14;
+		mmap:		1,		/* mmap in use */
+		unused:		13;
 #else /* defined(_BIT_FIELDS_HTOL) */
-		unused:		14,
+		unused:		13,
+		mmap:		1,		/* mmap in use */
 		directio:	1,		/* directio enabled */
 		abr:		1;		/* abr enabled */
 #endif
@@ -738,11 +739,12 @@ typedef struct sam_san_notify {
  * ----- Shared file system client initiated commands.
  */
 enum SHARE_flag {
-	SHARE_wait_one	= 1,
-	SHARE_wait	= 2,
-	SHARE_nothr	= 3,
-	SHARE_nowait	= 4,
-	SHARE_flag_max	= 5
+	SHARE_quickwait	= 1,
+	SHARE_wait_one	= 2,
+	SHARE_wait	= 3,
+	SHARE_nothr	= 4,
+	SHARE_nowait	= 5,
+	SHARE_flag_max	= 6
 };
 
 /* Begin: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

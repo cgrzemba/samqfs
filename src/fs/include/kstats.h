@@ -34,7 +34,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 #endif
 
 /* ----- General statistics.  */
@@ -128,6 +128,7 @@ struct sam_shared_client_statistics {
 	kstat_named_t notify_expire;	/* NOTIFY_lease_expire received */
 	kstat_named_t expired_inuse;	/* NOTIFY_lease_expire expired */
 					/*   in-use inode. */
+	kstat_named_t page_lease_retry;	/* getpage READ or WRITE lease retry */
 };
 
 extern struct sam_shared_client_statistics sam_shared_client_stats;

@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.150 $"
+#pragma ident "$Revision: 1.151 $"
 #endif
 
 #ifdef sun
@@ -230,6 +230,7 @@ typedef struct sam_mt_session {
 	int		m_shared_event;	/* errno to pass to sharefsd */
 #ifdef sun
 	uint_t		m_tsd_key;	/* thread-specific data key */
+	uint_t		m_tsd_leasekey;	/* thread-specific data lease key */
 	kmutex_t	m_fo_vnrele_mutex;
 	kcondvar_t	m_fo_vnrele_cv;
 	int			m_fo_vnrele_count;

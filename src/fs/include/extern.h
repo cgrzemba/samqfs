@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.234 $"
+#pragma ident "$Revision: 1.235 $"
 
 #include "sam/osversion.h"
 
@@ -505,7 +505,8 @@ int sam_flush_indirect_block(sam_node_t *ip, sam_bufcache_flag_t,
 int sam_share_mount(void *arg, int size, cred_t *credp);
 void sam_send_shared_mount(sam_mount_t *mp);
 int sam_proc_get_lease(sam_node_t *ip, sam_lease_data_t *dp,
-	sam_share_flock_t *flp, void *lmfcb, cred_t *credp);
+	sam_share_flock_t *flp, void *lmfcb, enum SHARE_flag wait_flag,
+	cred_t *credp);
 int sam_proc_relinquish_lease(sam_node_t *ip, ushort_t lease_mask,
 	boolean_t set_size, uint32_t *leasegen);
 boolean_t sam_client_record_lease(sam_node_t *ip, enum LEASE_type leasetype,

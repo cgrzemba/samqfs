@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.93 $"
+#pragma ident "$Revision: 1.94 $"
 #endif
 
 #include "sam/osversion.h"
@@ -582,6 +582,7 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 			}
 
 			if (initial_leases != remaining_leases) {
+				int flags = B_ASYNC;
 				if (remaining_leases != 0) {
 					/*
 					 * The inode still has leases so
@@ -601,24 +602,43 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 				/*
 				 * If we're expiring an append lease or write
 				 * lease, must write modified pages to disk.
+				 * If we still hold the mmap lease AND we're
+				 * expiring a write OR a read, we invalidate
+				 * pages so the mmap application doesn't use
+				 * potentially old data.
 				 */
-				if (removed_leases &
-				    SAM_DATA_MODIFYING_LEASES) {
+				if ((remaining_leases & CL_MMAP) &&
+				    (removed_leases & (CL_READ|CL_WRITE))) {
+					flags |= B_INVAL;
+				}
+				if ((removed_leases &
+				    SAM_DATA_MODIFYING_LEASES) ||
+				    (flags & B_INVAL)) {
+#ifdef linux
+					struct inode *li = SAM_SITOLI(ip);
+#endif /* linux */
+
 #ifdef	sun
 					(void) VOP_PUTPAGE_OS(SAM_ITOV(ip), 0,
-					    0, B_ASYNC, kcred, NULL);
+					    0, flags, kcred, NULL);
 					(void) sam_wait_async_io(ip, FALSE);
 #endif	/* sun */
 #ifdef linux
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 					rfs_filemap_write_and_wait(
-					    SAM_SITOLI(ip)->i_mapping);
+					    li->i_mapping);
+					if (flags & B_INVAL) {
+						invalidate_inode_pages(
+						    li->i_mapping);
+					}
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 #else
 					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-					fsync_inode_data_buffers(
-					    SAM_SITOLI(ip));
+					fsync_inode_data_buffers(li);
+					if (flags & B_INVAL) {
+						invalidate_inode_pages(li);
+					}
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 #endif
 #endif /* linux */

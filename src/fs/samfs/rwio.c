@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.172 $"
+#pragma ident "$Revision: 1.173 $"
 #endif
 
 #include "sam/osversion.h"
@@ -258,12 +258,16 @@ start:
 		ASSERT(nbytes > 0);
 		if (sam_vpm_enable) {
 
+			SAM_SET_LEASEFLG(ip->mp);
 			error = vpm_data_copy(vp, offset, nbytes, uiop, 1, NULL,
 			    0, S_READ);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 
 		} else {
+			SAM_SET_LEASEFLG(ip->mp);
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    1, S_READ);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 
 			/*
 			 * Move the data from the locked pages into the
@@ -579,11 +583,15 @@ start:
 
 		if (sam_vpm_enable) {
 
+			SAM_SET_LEASEFLG(ip->mp);
 			error = vpm_data_copy(vp, offset, nbytes, uiop,
 			    forcefault, NULL, 0, S_WRITE);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 		} else {
+			SAM_SET_LEASEFLG(ip->mp);
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    forcefault, S_WRITE);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 
 			if (forcefault == 0) {
 				pglock = segmap_pagecreate(segkmap, base,
@@ -644,7 +652,9 @@ start:
 			    ip->size;
 
 			if (zlen > 0) {
+				SAM_SET_LEASEFLG(ip->mp);
 				fbzero(SAM_ITOV(ip), ip->size, zlen, &fbp);
+				SAM_CLEAR_LEASEFLG(ip->mp);
 				fbrelse(fbp, S_WRITE);
 			}
 		}
@@ -1856,7 +1866,7 @@ sam_get_zerodaus(
 		dp->offset = off1;
 		dp->resid = off2 - off1;
 	}
-	error = sam_proc_get_lease(ip, dp, NULL, NULL, credp);
+	error = sam_proc_get_lease(ip, dp, NULL, NULL, SHARE_wait, credp);
 	return (error);
 }
 

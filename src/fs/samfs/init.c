@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.125 $"
+#pragma ident "$Revision: 1.126 $"
 
 #define	SAM_INIT
 
@@ -896,6 +896,7 @@ sam_init_kstats(void)
 	SAM_KSTAT64(shared_client, notify_ino);
 	SAM_KSTAT64(shared_client, notify_expire);
 	SAM_KSTAT64(shared_client, expired_inuse);
+	SAM_KSTAT64(shared_client, page_lease_retry);
 
 	sam_thread_kstats = kstat_create("sam-qfs", 0, "thread", "fs",
 	    KSTAT_TYPE_NAMED,

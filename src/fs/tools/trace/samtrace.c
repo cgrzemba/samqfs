@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.163 $"
+#pragma ident "$Revision: 1.164 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -1963,8 +1963,7 @@ decode_l(uint64_t value)
 	case LTYPE_frlock: return (" FRLOCK");
 	case LTYPE_stage: return (" STAGE");
 	case LTYPE_open: return (" OPEN");
-	case LTYPE_rmap: return (" RMAP");
-	case LTYPE_wmap: return (" WMAP");
+	case LTYPE_mmap: return (" MMAP");
 	default: return (" ???");
 	}
 }
@@ -1980,8 +1979,7 @@ decode_L(uint64_t value)
 		{ 1 << LTYPE_frlock, "FRLOCK" },
 		{ 1 << LTYPE_stage, "STAGE" },
 		{ 1 << LTYPE_open, "OPEN" },
-		{ 1 << LTYPE_rmap, "RMAP" },
-		{ 1 << LTYPE_wmap, "WMAP" },
+		{ 1 << LTYPE_mmap, "MMAP" },
 		{ 0, "" }
 	};
 
@@ -3184,6 +3182,7 @@ print_mount(
 
 #ifdef sun
 	printf("\t%08d tsd_key\n", mount->ms.m_tsd_key);
+	printf("\t%08d tsd_leasekey\n", mount->ms.m_tsd_leasekey);
 #endif
 	printf("\t%llu message list items\n", mount->ms.m_sharefs.queue.items);
 	printf("\t%llu items high water mark\n",

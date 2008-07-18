@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 
 #include "sam/osversion.h"
 
@@ -235,7 +235,7 @@ sam_build_stagerd_req(
 	*req_ext = NULL;
 
 	/*
-	 * If shared file system, always directio stage. Otherwise, 
+	 * If shared file system, always directio stage. Otherwise,
 	 * directio or pagedio is based on stagerd.cmd directive,
 	 * as set in syscall_stage_response().
 	 */
@@ -951,8 +951,10 @@ sam_stage_write_io(
 		}
 
 		if (!sam_vpm_enable) {
+			SAM_SET_LEASEFLG(ip->mp);
 			base = segmap_getmapflt(segkmap, vp, offset,
 			    nbytes, 0, S_WRITE);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 			lbase = (caddr_t)((sam_size_t)(base + reloff) &
 			    PAGEMASK);
 		}
@@ -995,8 +997,10 @@ sam_stage_write_io(
 
 				error = uiomove(lbase, n, UIO_WRITE, uiop);
 
+				SAM_SET_LEASEFLG(ip->mp);
 				(void) segmap_fault(kas.a_hat, segkmap, lbase,
 				    PAGESIZE, F_SOFTUNLOCK, S_WRITE);
+				SAM_CLEAR_LEASEFLG(ip->mp);
 
 				if (error) {
 					break;

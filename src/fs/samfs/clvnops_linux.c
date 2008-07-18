@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 #endif
 
 #include "sam/osversion.h"
@@ -227,7 +227,7 @@ samqfs_client_open_vn(
 			data.shflags.b.abr = ip->flags.b.abr;
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			error = sam_proc_get_lease(ip, &data, NULL, NULL,
-			    credp);
+			    SHARE_wait, credp);
 			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 		}
 	}
@@ -402,7 +402,8 @@ samqfs_client_read_vn(struct file *fp, char *buf, size_t count, loff_t *ppos)
 		data.cmd = 0;
 		data.shflags.b.directio = ip->flags.b.directio;
 		data.shflags.b.abr = ip->flags.b.abr;
-		error = sam_proc_get_lease(ip, &data, NULL, NULL, credp);
+		error = sam_proc_get_lease(ip, &data, NULL, NULL, SHARE_wait,
+		    credp);
 	}
 
 	if (error == 0) {
@@ -418,6 +419,10 @@ samqfs_client_read_vn(struct file *fp, char *buf, size_t count, loff_t *ppos)
 	if (using_lease) {
 		mutex_enter(&ip->ilease_mutex);
 		ip->cl_leaseused[LTYPE_read]--;
+		if ((ip->cl_leaseused[LTYPE_read] == 0) &&
+		    (ip->cl_leasetime[LTYPE_read] <= lbolt)) {
+			sam_sched_expire_client_leases(ip->mp, 0, FALSE);
+		}
 		mutex_exit(&ip->ilease_mutex);
 	}
 
@@ -545,7 +550,8 @@ samqfs_client_write_vn(struct file *fp, const char *buf, size_t count,
 		mutex_exit(&ip->ilease_mutex);
 		using_lease = TRUE;
 
-		error = sam_proc_get_lease(ip, &data, NULL, NULL, credp);
+		error = sam_proc_get_lease(ip, &data, NULL, NULL, SHARE_wait,
+		    credp);
 		/* XXX - Do we need to check again for writing past EOF? */
 	}
 	if (error == 0) {
@@ -563,6 +569,13 @@ samqfs_client_write_vn(struct file *fp, const char *buf, size_t count,
 		ip->cl_leaseused[LTYPE_write]--;
 		if (appending) {
 			ip->cl_leaseused[LTYPE_append]--;
+		}
+		if (((ip->cl_leaseused[LTYPE_write] == 0) &&
+		    (ip->cl_leasetime[LTYPE_write] <= lbolt)) ||
+		    (appending &&
+		    (ip->cl_leaseused[LTYPE_append] == 0) &&
+		    (ip->cl_leasetime[LTYPE_append] <= lbolt))) {
+			sam_sched_expire_client_leases(ip->mp, 0, FALSE);
 		}
 		mutex_exit(&ip->ilease_mutex);
 	}
@@ -589,15 +602,64 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
     qfs_nopage_arg3_t arg3)
 {
 	struct inode *li = area->vm_file->f_dentry->d_inode;
-	sam_node_t *ip;
+	sam_node_t *ip = SAM_LITOSI(li);
 	struct page *page;
+	enum LEASE_type ltype;
+	int64_t offset = 0;
+	int64_t length = 0;
 
-	ip = SAM_LITOSI(li);
+	mutex_enter(&ip->ilease_mutex);
+	if ((area->vm_flags & (VM_MAYSHARE|VM_SHARED)) &&
+	    (area->vm_flags & QFS_VM_WRITE)) {
+		ltype = LTYPE_write;
+	} else {
+		ltype = LTYPE_read;
+	}
+	ip->cl_leaseused[ltype]++;
+
+	if (!(ip->cl_leases & (1 << ltype))) {
+		sam_lease_data_t data;
+		int error;
+
+		mutex_exit(&ip->ilease_mutex);
+		bzero(&data, sizeof (data));
+
+		data.ltype = ltype;
+		data.lflag = 0;
+		data.sparse = SPARSE_none;
+		data.offset = offset;
+		data.resid = length;
+		data.alloc_unit = ip->cl_alloc_unit;
+		data.cmd = 0;
+		data.filemode = (ltype == LTYPE_read ? FREAD : FWRITE);
+		data.shflags.b.directio = 0;
+
+		if ((error = sam_proc_get_lease(ip, &data, NULL, NULL,
+		    SHARE_wait, CRED()))) {
+			mutex_enter(&ip->ilease_mutex);
+			ip->cl_leaseused[ltype]--;
+			mutex_exit(&ip->ilease_mutex);
+			return (NULL);
+		}
+	}
+	mutex_exit(&ip->ilease_mutex);
+
 	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 	page = filemap_nopage(area, address, arg3);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+
+	mutex_enter(&ip->ilease_mutex);
+	ip->cl_leaseused[ltype]--;
+	if ((ip->cl_leaseused[ltype] == 0) &&
+	    (ip->cl_leasetime[ltype] <= lbolt)) {
+		sam_taskq_add(sam_expire_client_leases, ip->mp,
+		    NULL, 1);
+	}
+	mutex_exit(&ip->ilease_mutex);
+
 	return (page);
 }
+
 
 /*
  * ----- samqfs_client_delmap_vn -
@@ -655,17 +717,7 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 	remaining_writable = ip->wmm_pages;
 	mutex_exit(&ip->fl_mutex);
 
-	if (is_write && (remaining_writable == 0) && (remaining_pages != 0)) {
-		/*
-		 * Last writable mapping has been removed, but we still have a
-		 * read mapping.  Relinquish the write mapping lease.
-		 */
-		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
-		sam_client_remove_leases(ip, CL_WMAP, 0);
-		sam_proc_relinquish_lease(ip, CL_WMAP, FALSE, ip->cl_leasegen);
-		goto out;
-
-	} else if (remaining_pages == 0) {
+	if (remaining_pages == 0) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */
@@ -684,8 +736,7 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 
 		/*
 		 * If the file is not open, we were the last reference, so close
-		 * the inode.  Otherwise, just relinquish the lease (which may
-		 * be for either a read or a write map).
+		 * the inode.  Otherwise, just relinquish the lease.
 		 */
 		if (ip->no_opens == 0) {
 			error = sam_proc_rm_lease(ip, CL_CLOSE, rw_type);
@@ -695,8 +746,8 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 			}
 		} else {
 			RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
-			sam_client_remove_leases(ip, CL_RMAP|CL_WMAP, 0);
-			(void) sam_proc_relinquish_lease(ip, CL_RMAP|CL_WMAP,
+			sam_client_remove_leases(ip, CL_MMAP, 0);
+			(void) sam_proc_relinquish_lease(ip, CL_MMAP,
 			    FALSE, ip->cl_leasegen);
 			goto out;
 		}
@@ -727,6 +778,7 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 	sam_lease_data_t *data;
 	offset_t orig_resid;
 	offset_t prev_size;
+	uint32_t ltype;
 
 
 	ip = SAM_LITOSI(li);
@@ -770,18 +822,22 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 	data->alloc_unit = ip->cl_alloc_unit;
 	data->shflags.b.directio = ip->flags.b.directio;
 	data->shflags.b.abr = ip->flags.b.abr;
+	data->ltype = LTYPE_mmap;
 	if (is_write) {
-		data->ltype = LTYPE_wmap;
+		ltype = LTYPE_write;
 		/*
 		 * Force blocks to be allocated and zeroed
 		 */
 		data->sparse = SPARSE_zeroall;
 		data->filemode = FWRITE;
 	} else {
-		data->ltype = LTYPE_rmap;
+		ltype = LTYPE_read;
 		data->sparse = SPARSE_none;
 		data->filemode = FREAD;
 	}
+	mutex_enter(&ip->ilease_mutex);
+	ip->cl_leaseused[ltype]++;
+	mutex_exit(&ip->ilease_mutex);
 
 	for (;;) {
 		error = sam_get_zerodaus(ip, data, credp);
@@ -833,6 +889,14 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 		}
 		break;
 	}
+	mutex_enter(&ip->ilease_mutex);
+	ip->cl_leaseused[ltype]--;
+	if ((ip->cl_leaseused[ltype] == 0) &&
+	    (ip->cl_leasetime[ltype] <= lbolt)) {
+		sam_taskq_add(sam_expire_client_leases, ip->mp,
+		    NULL, 1);
+	}
+	mutex_exit(&ip->ilease_mutex);
 
 	if (error == 0) {
 		ip->mm_pages += pages;

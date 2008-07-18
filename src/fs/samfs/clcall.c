@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.252 $"
+#pragma ident "$Revision: 1.253 $"
 #endif
 
 #include "sam/osversion.h"
@@ -535,6 +535,7 @@ sam_proc_get_lease(
 	sam_lease_data_t *dp,		/* Pointer to arguments */
 	sam_share_flock_t *flp,		/* Pointer to flock parameters */
 	void *lmfcb,
+	enum SHARE_flag wait_flag,	/* wait for server flag */
 	cred_t *credp)			/* Pointer to credentials */
 {
 	enum LEASE_type ltype;
@@ -624,14 +625,13 @@ sam_proc_get_lease(
 		check_lease_expiration = FALSE;
 		break;
 
-	case LTYPE_rmap:
-		rw_type = RW_READER;
-		break;
-
-	case LTYPE_wmap:
+	case LTYPE_mmap:
 		/*
 		 * Write mmap needs to allocate and clear range.
 		 */
+		if (dp->filemode == FREAD) {
+			rw_type = RW_READER;
+		}
 		check_lease_expiration = FALSE;
 		break;
 
@@ -732,7 +732,7 @@ sam_proc_get_lease(
 	sam_set_cred(credp, &msg->call.lease.cred);
 
 	for (;;) {
-		error = sam_issue_lease_request(ip, msg, SHARE_wait, 0, lmfcb);
+		error = sam_issue_lease_request(ip, msg, wait_flag, 0, lmfcb);
 		if (ltype == LTYPE_open) {
 			if (error == 0 &&
 			    msg->call.lease2.inp.data.shflags.b.abr) {
@@ -1313,8 +1313,8 @@ sam_issue_lease_request(sam_node_t *ip, sam_san_lease_msg_t *msg,
 	ltype = lp->data.ltype;
 	is_truncate = ((op == LEASE_get) && (ltype == LTYPE_truncate));
 
-	if ((op == LEASE_get) &&
-	    ((ltype == LTYPE_read) || (ltype == LTYPE_rmap))) {
+	if ((op == LEASE_get) && ((ltype == LTYPE_read) ||
+	    (ltype == LTYPE_mmap && lp->data.filemode == FREAD))) {
 		rw_type = RW_READER;
 	} else {
 		rw_type = RW_WRITER;
@@ -2674,13 +2674,19 @@ resend:
 
 /*
  * ----- sam_send_to_server - Send message to the server.
- * If the wait_flag is SHARE_wait, keep retrying to write to
- * the server forever. If the wait_flag is SHARE_wait_one,
- * only try for SAM_MIN_DELAY seconds to write to the server
- * and then return errno ETIME. NOTE, cannot hold up fsflush.
- * If SHARE_wait, retransmit forever, and delay for
- * SAM_MIN_DELAY * n up to SAM_MAX_DELAY where n is the
- * retransmit number.
+ * If wait_flag is:
+ *   SHARE_quickwait - wait for SAM_QUICK_DELAY seconds before
+ *                     returning ETIME.  This is used for lease
+ *                     requests that can't afford a long delay.
+ *   SHARE_wait_one  - wait one SAM_MIN_DELAY second interval
+ *                     before returning ETIME.
+ *   SHARE_wait	     - wait forever retransmiting at increasingly
+ *                     longer intervals betwen SAM_MIN_DELAY upto
+ *                     SAM_MAX_DELAY seconds.
+ *   SHARE_nothr     - no thread involved, do not wait.  These are
+ *                     advice messages that can return without error
+ *                     even if the server isn't responding.
+ *   SHARE_nowait    - do not wait on server response.
  */
 
 static int				/* ERRNO if error, 0 if successful. */
@@ -2695,7 +2701,11 @@ sam_send_to_server(
 	int wait;
 	int error;
 
-	wait = SAM_MIN_DELAY;
+	if (msg->hdr.wait_flag == SHARE_quickwait) {
+		wait = SAM_QUICK_DELAY;
+	} else {
+		wait = SAM_MIN_DELAY;
+	}
 	clp = NULL;
 	for (;;) {
 		if (clp == NULL) {

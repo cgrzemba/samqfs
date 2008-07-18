@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 #endif
 
 #ifdef __KERNEL__
@@ -467,6 +467,9 @@ extern char *nfsd_thread_name;
  */
 
 #define	SAM_SET_ABR(a)		do {} while (0)
+#define	SAM_SET_LEASEFLG(a)	do {} while (0)
+#define	SAM_CLEAR_LEASEFLG(a)	do {} while (0)
+
 #define	sam_start_stop_rmedia(a, b)	do { } while (0)
 #define	sam_mount_setwm_blocks(a)	do { } while (0)
 #define	sam_send_to_arfind(a, b, c)	do { } while (0)
@@ -481,6 +484,7 @@ extern char *nfsd_thread_name;
 #define	sam_unset_operation_nb(a)		do { } while (0)
 #define	sam_map_osd(a, b, c, d, e)		(ENOTSUP)
 #define	sam_set_end_of_obj(a, b, c)		(0)
+
 
 /*
  * ----- Credential macros.

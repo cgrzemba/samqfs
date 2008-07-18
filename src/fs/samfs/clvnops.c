@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.188 $"
+#pragma ident "$Revision: 1.189 $"
 
 #include "sam/osversion.h"
 
@@ -94,6 +94,7 @@
 #include "trace.h"
 #include "ino_ext.h"
 #include "listio.h"
+#include "kstats.h"
 
 #if defined(SOL_511_ABOVE)
 /*
@@ -355,6 +356,16 @@ const fs_operation_def_t samfs_client_vnode_staleops_template[] = {
 extern struct vnodeops *samfs_vnodeopsp;
 #endif
 
+#define	SAM_DECREMENT_LEASEUSED(ip, t) {				\
+	mutex_enter(&ip->ilease_mutex);					\
+	ip->cl_leaseused[t]--;						\
+	if ((ip->cl_leaseused[t] == 0) &&				\
+	    (ip->cl_leasetime[t] <= lbolt)) {				\
+		sam_taskq_add(sam_expire_client_leases, ip->mp,		\
+		    NULL, 1);						\
+	}								\
+	mutex_exit(&ip->ilease_mutex);					\
+}
 
 /*
  * ----- sam_client_open_vn - Open a SAM-QFS shared file.
@@ -452,7 +463,7 @@ sam_client_open_vn(
 			data.shflags.b.abr = ip->flags.b.abr;
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			error = sam_proc_get_lease(ip, &data,
-			    NULL, NULL, credp);
+			    NULL, NULL, SHARE_wait, credp);
 			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 		}
 	}
@@ -848,7 +859,8 @@ sam_client_read_vn(
 		data.cmd = 0;
 		data.shflags.b.directio = ip->flags.b.directio;
 		data.shflags.b.abr = ip->flags.b.abr;
-		error = sam_proc_get_lease(ip, &data, NULL, NULL, credp);
+		error = sam_proc_get_lease(ip, &data, NULL, NULL, SHARE_wait,
+		    credp);
 	}
 	if (error == 0) {
 		error = sam_read_vn(vp, uiop, ioflag, credp, ct);
@@ -977,7 +989,8 @@ sam_client_write_vn(
 		mutex_exit(&ip->ilease_mutex);
 		using_lease = TRUE;
 
-		error = sam_proc_get_lease(ip, &data, NULL, NULL, credp);
+		error = sam_proc_get_lease(ip, &data, NULL, NULL, SHARE_wait,
+		    credp);
 		/* XXX - Do we need to check again for writing past EOF? */
 	}
 	if (error == 0) {
@@ -2521,12 +2534,79 @@ sam_client_getpage_vn(
 	sam_size_t len = length;
 	sam_size_t plsz = plsize;
 	int error = 0;
+	uint32_t ltype;
+	boolean_t using_lease = FALSE;
 
 	TRACE(T_SAM_CL_GETPAGE, vp, (sam_tr_t)offset, length, rw);
 	if (vp->v_flag & VNOMAP) {
 		return (ENOSYS);
 	}
 	ip = SAM_VTOI(vp);
+	if (rw == S_WRITE) {
+		ltype = LTYPE_write;
+	} else {
+		ltype = LTYPE_read;
+	}
+
+	/*
+	 * In the mmap path, we may have lost the read-lease or
+	 * write-lease so check that we have it (under ilease_mutex
+	 * protection) and if needed, re-acquire it.
+	 *
+	 * Code paths not needing leases need to call SAM_SET_LEASEFLG
+	 * to avoid acquiring it here.
+	 */
+	if (vp->v_type == VDIR) {
+		goto start;
+	}
+	using_lease = TRUE;
+	mutex_enter(&ip->ilease_mutex);
+	ip->cl_leaseused[ltype]++;
+
+	if ((SAM_GET_LEASEFLG(ip->mp) == NULL) &&
+	    ((rw == S_WRITE) && !(ip->cl_leases & CL_WRITE)) ||
+	    ((rw == S_READ) && !(ip->cl_leases & CL_READ))) {
+		sam_lease_data_t data;
+
+		mutex_exit(&ip->ilease_mutex);
+		bzero(&data, sizeof (data));
+		data.ltype = ltype;
+		data.lflag = 0;
+		data.sparse = SPARSE_none;
+		data.offset = offset;
+		data.resid = length;
+		data.alloc_unit = ip->cl_alloc_unit;
+		data.cmd = 0;
+		data.filemode = (ltype == LTYPE_read ? FREAD : FWRITE);
+		data.shflags.b.directio = 0;
+		data.shflags.b.abr = ip->flags.b.abr;
+
+		/*
+		 * If it takes more then SAM_QUICK_DELAY seconds to
+		 * complete we fail with EDEADLK back to the VM
+		 * layer.  VM will re-try the getpage after a small
+		 * delay.  This is so we don't block for a long time
+		 * while holding the AS_LOCK that was acquired in
+		 * as_fault().
+		 */
+		if (error = sam_proc_get_lease(ip, &data, NULL, NULL,
+		    SHARE_quickwait, credp)) {
+			SAM_DECREMENT_LEASEUSED(ip, ltype);
+			if (error == ETIME) {
+				if (sam_check_sig()) {
+					return (EINTR);
+				} else {
+					SAM_COUNT64(shared_client,
+					    page_lease_retry);
+					return (EDEADLK);
+				}
+			} else {
+				return (error);
+			}
+		}
+	} else {
+		mutex_exit(&ip->ilease_mutex);
+	}
 
 start:
 	if (SAM_IS_SHARED_SERVER(ip->mp) || !S_ISDIR(ip->di.mode)) {
@@ -2542,8 +2622,14 @@ start:
 				goto start;
 			}
 		}
+		if (using_lease) {
+			SAM_DECREMENT_LEASEUSED(ip, ltype);
+		}
 		return (error);
 	}
+
+	ASSERT(S_ISDIR(ip->di.mode));
+	ASSERT(using_lease == FALSE);
 
 	if (pglist == NULL) {
 		return (0);
@@ -2681,6 +2767,7 @@ sam_client_map_vn(
 	sam_lease_data_t data;
 	offset_t orig_resid;
 	offset_t prev_size;
+	uint32_t ltype;
 
 	TRACE(T_SAM_MAP, vp, (sam_tr_t)offset, length, prot);
 	ip = SAM_VTOI(vp);
@@ -2763,18 +2850,22 @@ sam_client_map_vn(
 	data.alloc_unit = ip->cl_alloc_unit;
 	data.shflags.b.directio = ip->flags.b.directio;
 	data.shflags.b.abr = ip->flags.b.abr;
+	data.ltype = LTYPE_mmap;
 	if (is_write) {
-		data.ltype = LTYPE_wmap;
+		ltype = LTYPE_write;
 		/*
 		 * Force blocks to be allocated and zeroed
 		 */
 		data.sparse = SPARSE_zeroall;
 		data.filemode = FWRITE;
 	} else {
-		data.ltype = LTYPE_rmap;
+		ltype = LTYPE_read;
 		data.sparse = SPARSE_none;
 		data.filemode = FREAD;
 	}
+	mutex_enter(&ip->ilease_mutex);
+	ip->cl_leaseused[ltype]++;
+	mutex_exit(&ip->ilease_mutex);
 
 	for (;;) {
 		error = sam_get_zerodaus(ip, &data, credp);
@@ -2825,10 +2916,12 @@ sam_client_map_vn(
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
 		} else {
+			SAM_DECREMENT_LEASEUSED(ip, ltype);
 			return (error);
 		}
 		break;
 	}
+	SAM_DECREMENT_LEASEUSED(ip, ltype);
 
 	/* Create vnode mapped segment. */
 	bzero((char *)&vn_seg, sizeof (vn_seg));
@@ -3020,18 +3113,7 @@ sam_mmap_rmlease(
 	remaining_writable = ip->wmm_pages;
 	mutex_exit(&ip->fl_mutex);
 
-	if (is_write && (remaining_writable == 0) &&
-	    (remaining_pages != 0)) {
-		/*
-		 * Last writable mapping has been removed, but we
-		 * still have a read mapping. Relinquish the write
-		 * mapping lease.
-		 */
-		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
-		sam_client_remove_leases(ip, CL_WMAP, 0);
-		(void) sam_proc_relinquish_lease(ip,
-		    CL_WMAP, FALSE, ip->cl_leasegen);
-	} else if (remaining_pages == 0) {
+	if (remaining_pages == 0) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */
@@ -3049,8 +3131,7 @@ sam_mmap_rmlease(
 		/*
 		 * If the file is not open, we were the last
 		 * reference, so close the inode.  Otherwise,
-		 * just relinquish the lease (which may be
-		 * for either a read or a write map).
+		 * just relinquish the lease.
 		 */
 		if (ip->no_opens == 0) {
 			if (sam_proc_rm_lease(ip, CL_CLOSE, rw_type) == 0) {
@@ -3063,10 +3144,9 @@ sam_mmap_rmlease(
 			RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 		} else {
 			RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
-			sam_client_remove_leases(ip, CL_RMAP|CL_WMAP, 0);
+			sam_client_remove_leases(ip, CL_MMAP, 0);
 			(void) sam_proc_relinquish_lease(ip,
-			    CL_RMAP|CL_WMAP, FALSE,
-			    ip->cl_leasegen);
+			    CL_MMAP, FALSE, ip->cl_leasegen);
 		}
 	} else {
 		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);

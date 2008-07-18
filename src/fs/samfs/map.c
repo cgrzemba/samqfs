@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.142 $"
+#pragma ident "$Revision: 1.143 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1531,9 +1531,11 @@ sam_map_fault(sam_node_t *ip, sam_u_offset_t boff, sam_offset_t total_len,
 					sam_flush_map(ip->mp, mapp);
 				}
 			}
+			SAM_SET_LEASEFLG(ip->mp);
 			base = segmap_getmapflt(segkmap, vp, boff,
 			    this_len, 1, S_WRITE);
 			segmap_release(segkmap, base, 0);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 			TRACE(T_SAM_MAPFLT, vp, (sam_tr_t)boff,
 			    (sam_tr_t)this_len,
 			    (sam_tr_t)vp->v_pages);
@@ -1770,7 +1772,9 @@ sam_zero_sparse_blocks(
 			if (is_small) {
 #ifdef sun
 				sam_map_fault(ip, start, dau_size, NULL);
+				SAM_SET_LEASEFLG(mp);
 				fbzero(SAM_ITOV(ip), start, dau_size, &fbp);
+				SAM_CLEAR_LEASEFLG(mp);
 				fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -1791,9 +1795,11 @@ sam_zero_sparse_blocks(
 					 */
 					while (current_len < dau_size) {
 #ifdef sun
+						SAM_SET_LEASEFLG(mp);
 						fbzero(SAM_ITOV(ip),
 						    start + current_len,
 						    zlen, &fbp);
+						SAM_CLEAR_LEASEFLG(mp);
 						fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -1996,7 +2002,9 @@ sam_zero_dau(
 		if (bt == SM) {
 			sam_map_fault(ip, boff, len, NULL);
 		}
+		SAM_SET_LEASEFLG(ip->mp);
 		fbzero(SAM_ITOV(ip), boff, len, &fbp);
+		SAM_CLEAR_LEASEFLG(ip->mp);
 		fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -2091,6 +2099,7 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 		 * the end of the file so zero from size to the
 		 * end of the dau that contains size.
 		 */
+		SAM_SET_LEASEFLG(mp);
 		while (totlen) {
 			zlen = mp->mi.m_dau[dt].seg[bt] -
 			    (roff & (mp->mi.m_dau[dt].seg[bt] - 1));
@@ -2100,6 +2109,7 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 				    start & ~(mp->mi.m_dau[dt].seg[bt] - 1),
 				    mp->mi.m_dau[dt].seg[bt], NULL);
 				if (error != 0) {
+					SAM_CLEAR_LEASEFLG(mp);
 					return (error);
 				}
 			}
@@ -2113,6 +2123,7 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 			totlen -= zlen;
 			roff = 0;
 		}
+		SAM_CLEAR_LEASEFLG(mp);
 		ip->zero_end = start;
 	}
 
@@ -2555,7 +2566,9 @@ sam_fbzero(sam_node_t *ip, offset_t offset, int tlen, sam_ioblk_t *iop,
 		if (len > rlen) {
 			len = rlen;
 		}
+		SAM_SET_LEASEFLG(mp);
 		fbzero(SAM_ITOV(ip), off, len, &fbp);
+		SAM_CLEAR_LEASEFLG(mp);
 
 		rlen -= len;
 		off += len;

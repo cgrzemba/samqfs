@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.80 $"
+#pragma ident "$Revision: 1.81 $"
 
 #include "sam/osversion.h"
 
@@ -604,11 +604,13 @@ sam_allocate_block(
 				return (error);
 			}
 		}
+		SAM_SET_LEASEFLG(mp);
 		while (boff < bend) {
 			fbzero(SAM_ITOV(ip), boff, len, &fbp);
 			fbrelse(fbp, S_WRITE);
 			boff += len;
 		}
+		SAM_CLEAR_LEASEFLG(mp);
 	}
 	return (0);
 }

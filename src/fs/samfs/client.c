@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.170 $"
+#pragma ident "$Revision: 1.171 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1111,7 +1111,7 @@ __sam_remove_frlock(sam_schedule_entry_t *entry)
 	sam_open_operation_nb(mp);
 
 	error = sam_proc_get_lease(ip, &ep->lease_message.data,
-	    &ep->lease_message.flock, NULL, CRED());
+	    &ep->lease_message.flock, NULL, SHARE_wait, CRED());
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 

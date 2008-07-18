@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.290 $"
+#pragma ident "$Revision: 1.291 $"
 
 #include "sam/osversion.h"
 
@@ -812,7 +812,7 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 	 * ltype is actually a lease type for LEASE_get.
 	 */
 	ltype = lp->data.ltype;
-	if ((ltype != LTYPE_read) && (ltype != LTYPE_rmap)) {
+	if ((ltype != LTYPE_read) && (ltype != LTYPE_mmap)) {
 		ASSERT(rw_write_held(&ip->inode_rwl) != 0);
 	}
 
@@ -983,7 +983,10 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 				}
 				break;
 
-			case LTYPE_wmap:
+			case LTYPE_mmap:
+				if (l2p->inp.data.filemode & FREAD) {
+					break;
+				}
 				if (lp->data.sparse) {
 
 					/*
@@ -1353,6 +1356,23 @@ sam_record_lease(
 		}
 	}
 
+	/*
+	 * Provide implicit read or write lease with the mmap lease.
+	 */
+	if ((ltype == LTYPE_mmap) && is_get && lease_granted) {
+		if (l2p->inp.data.filemode & FREAD) {
+			clp->leases |= CL_READ;
+			clp->time[LTYPE_read] = clp->time[LTYPE_mmap];
+			implicit_read = TRUE;
+			granted_mask |= (1 << LTYPE_read);
+		} else {
+			clp->leases |= CL_WRITE;
+			clp->time[LTYPE_write] = clp->time[LTYPE_mmap];
+			implicit_write = TRUE;
+			granted_mask |= (1 << LTYPE_write);
+		}
+	}
+
 	if ((ltype == LTYPE_append) && is_get && lease_granted) {
 		clp->leases |= CL_WRITE;
 		clp->time[LTYPE_write] = clp->time[LTYPE_append];
@@ -1547,6 +1567,7 @@ sam_add_ino_lease(
 	struct sam_lease_ino *llp;	/* Ptr to lease entry for this inode */
 	int index;
 	uint32_t other_leases;
+	uint32_t mmap_leases;
 	uint32_t wt_leases;
 	uint16_t relinquish_lease_mask = 0; /* Ask client to relinq lease(s) */
 	uint16_t lease_mask;
@@ -1565,6 +1586,7 @@ sam_add_ino_lease(
 
 	index = -1;
 	other_leases = 0;
+	mmap_leases = 0;
 	wt_leases = 0;
 	for (i = 0; i < llp->no_clients; i++) {
 		if (llp->lease[i].client_ord == client_ord) {
@@ -1583,6 +1605,10 @@ sam_add_ino_lease(
 		} else {
 			other_leases |= llp->lease[i].leases;
 			wt_leases |= llp->lease[i].wt_leases;
+			if ((llp->lease[i].leases & (CL_READ|CL_WRITE)) &&
+			    (llp->lease[i].leases & CL_MMAP)) {
+				mmap_leases |= llp->lease[i].leases;
+			}
 		}
 	}
 
@@ -1625,6 +1651,7 @@ sam_add_ino_lease(
 			 */
 			index = -1;
 			other_leases = 0;
+			mmap_leases = 0;
 			wt_leases = 0;
 			for (i = 0; i < llp->no_clients; i++) {
 				if (llp->lease[i].client_ord == client_ord) {
@@ -1632,6 +1659,12 @@ sam_add_ino_lease(
 				} else {
 					other_leases |= llp->lease[i].leases;
 					wt_leases |= llp->lease[i].wt_leases;
+					if ((llp->lease[i].leases &
+					    (CL_READ|CL_WRITE)) &&
+					    (llp->lease[i].leases & CL_MMAP)) {
+						mmap_leases |=
+						    llp->lease[i].leases;
+					}
 				}
 			}
 
@@ -1698,10 +1731,18 @@ sam_add_ino_lease(
 				 */
 
 				other_leases = 0;
+				mmap_leases = 0;
 				for (i = 0; i < llp->no_clients; i++) {
-					if (llp->lease[i].client_ord !=
+					if (llp->lease[i].client_ord ==
 					    client_ord) {
-						other_leases |=
+						continue;
+					}
+					other_leases |= llp->lease[i].leases;
+					if ((llp->lease[i].leases &
+					    (CL_READ|CL_WRITE)) &&
+					    (llp->lease[i].leases &
+					    CL_MMAP)) {
+						mmap_leases |=
 						    llp->lease[i].leases;
 					}
 				}
@@ -1747,7 +1788,8 @@ sam_add_ino_lease(
 		 * No MH_WRITE - wait reader until writer's lease expires.
 		 * Writable mmaps always block reads.
 		 */
-		if (other_leases & (CL_WMAP|CL_TRUNCATE|CL_EXCLUSIVE)) {
+		if ((other_leases & (CL_TRUNCATE|CL_EXCLUSIVE)) ||
+		    (mmap_leases & CL_WRITE)) {
 			wait_lease = TRUE;
 		} else if (wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
@@ -1775,17 +1817,21 @@ sam_add_ino_lease(
 		 * Allow multiple readers/writers if MH_WRITE set on the server.
 		 * Otherwise only 1 writer at 1 time.
 		 * If readers and/or writers, put them in directio.
-		 * Memory maps, truncate, and stage always block writes.
+		 * Truncate and stage always block writes.
 		 */
 		if (other_leases &
-		    (CL_RMAP|CL_WMAP|CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
+		    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
 		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
-		} else if (other_leases & ~(CL_OPEN|CL_FRLOCK)) {
+		} else if (other_leases & ~(CL_OPEN|CL_FRLOCK|CL_MMAP)) {
 			if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
 				wait_lease = TRUE;
 				relinquish_lease_mask =
 				    other_leases & (CL_APPEND|CL_WRITE|CL_READ);
+			} else if ((mmap_leases & (CL_READ|CL_WRITE)) ||
+			    ((llp->lease[index].leases & CL_MMAP) &&
+			    (other_leases & (CL_APPEND|CL_WRITE)))) {
+				wait_lease = TRUE;
 			} else {
 				/*
 				 * If lease owner is in paged mode, wait until
@@ -1808,8 +1854,8 @@ sam_add_ino_lease(
 		 * directio.
 		 */
 		if (other_leases &
-		    (CL_RMAP|CL_WMAP|CL_APPEND|CL_TRUNCATE|
-		    CL_STAGE|CL_EXCLUSIVE) ||
+		    (CL_APPEND|CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
+		    (mmap_leases & (CL_READ|CL_WRITE)) ||
 		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
 			relinquish_lease_mask = other_leases & CL_APPEND;
@@ -1900,33 +1946,56 @@ sam_add_ino_lease(
 	case LTYPE_open:
 		break;
 
-	case LTYPE_rmap:
+	case LTYPE_mmap:
 		/*
-		 * Memory-mapping a file for read is allowed only if no clients
-		 * have write permission (including truncate and writable maps)
-		 * to the file.
+		 * We grant a read or write lease with the mmap lease so
+		 * we do the same checks as LTYPE_read and LTYPE_write leases.
+		 *
+		 * NEED BETTER COMMENT HERE - CWF
+		 *
+		 * In addition, we can't mix mmap'ed paged I/O with DIO (forced
+		 * with MH_WRITE) so we use the mmap_leases bitmap
+		 * to flag if others hold both a mmap lease AND either a
+		 * read|write lease.
 		 */
-		if (other_leases &
-		    (CL_APPEND|CL_WRITE|CL_TRUNCATE|CL_WMAP|CL_EXCLUSIVE) ||
-		    wt_leases & CL_EXCLUSIVE) {
-			wait_lease = TRUE;
+		if (l2p->inp.data.filemode & FWRITE) {
+			if (other_leases &
+			    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
+			    wt_leases & CL_EXCLUSIVE) {
+				wait_lease = TRUE;
+			} else if (other_leases &
+			    ~(CL_OPEN|CL_FRLOCK|CL_MMAP)) {
+				if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
+					wait_lease = TRUE;
+					relinquish_lease_mask =
+					    other_leases &
+					    (CL_APPEND|CL_WRITE|CL_READ);
+				} else if (mmap_leases & CL_READ|CL_WRITE) {
+					wait_lease = TRUE;
+				} else if (other_leases & CL_READ) {
+					wait_lease = TRUE;
+					relinquish_lease_mask =
+					    other_leases &
+					    (CL_APPEND|CL_WRITE|CL_READ);
+				} else if (other_leases & CL_WRITE) {
+					wait_lease = TRUE;
+				}
+			}
+			may_write = TRUE;
+		} else {
+			if (other_leases & (CL_TRUNCATE|CL_EXCLUSIVE)) {
+				wait_lease = TRUE;
+			} else if (wt_leases & CL_EXCLUSIVE) {
+				wait_lease = TRUE;
+			} else if (other_leases & (CL_WRITE|CL_APPEND)) {
+				wait_lease = TRUE;
+				if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
+					relinquish_lease_mask =
+					    other_leases & (CL_APPEND|CL_WRITE);
+				}
+			}
 		}
 		may_read = TRUE;
-		break;
-
-	case LTYPE_wmap:
-		/*
-		 * Memory-mapping a file for write is allowed only if no clients
-		 * have either read or write permission to the file.
-		 */
-		if (other_leases &
-		    (CL_WRITE|CL_APPEND|CL_WMAP|CL_TRUNCATE|CL_READ|
-		    CL_RMAP|CL_STAGE|CL_EXCLUSIVE) ||
-		    wt_leases & CL_EXCLUSIVE) {
-			wait_lease = TRUE;
-		}
-		may_read = TRUE;
-		may_write = TRUE;
 		break;
 
 	case LTYPE_exclusive:
@@ -1936,8 +2005,8 @@ sam_add_ino_lease(
 		 * will block other lease requests.
 		 */
 		if (other_leases &
-		    (CL_WRITE|CL_APPEND|CL_WMAP|CL_TRUNCATE|CL_READ|
-		    CL_RMAP|CL_STAGE|CL_EXCLUSIVE) ||
+		    (CL_WRITE|CL_APPEND|CL_TRUNCATE|CL_READ|
+		    CL_STAGE|CL_EXCLUSIVE) ||
 		    wt_leases & CL_EXCLUSIVE) {
 			wait_lease = TRUE;
 			relinquish_lease_mask =
@@ -3268,9 +3337,11 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 				ASSERT(len > 0);
 				bzero(&bnp->data[len], fblk->len - len);
 			}
+			SAM_SET_LEASEFLG(mp);
 			base = segmap_getmapflt(segkmap, vp, fblk->offset,
 			    len, 0,
 			    S_READ);
+			SAM_CLEAR_LEASEFLG(mp);
 
 			/*
 			 * Solaris (AMD and SPARC) clients always request

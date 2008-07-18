@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.188 $"
+#pragma ident "$Revision: 1.189 $"
 #endif
 
 #include "sam/osversion.h"
@@ -576,6 +576,7 @@ sam_mount_init(sam_mount_t *mp)
 	mp->ms.m_hostid = stoi(&hostid_cp);
 	ASSERT(mp->ms.m_tsd_key == 0);
 	tsd_create(&mp->ms.m_tsd_key, sam_tsd_destroy);
+	tsd_create(&mp->ms.m_tsd_leasekey, sam_tsd_destroy);
 #endif /* sun */
 
 	sam_mutex_init(&mp->ms.m_cl_init, NULL, MUTEX_DEFAULT, NULL);
@@ -682,6 +683,9 @@ sam_mount_destroy(sam_mount_t *mp)
 	ASSERT(mp->ms.m_tsd_key);
 	tsd_destroy(&mp->ms.m_tsd_key);
 	mp->ms.m_tsd_key = 0;
+	ASSERT(mp->ms.m_tsd_leasekey);
+	tsd_destroy(&mp->ms.m_tsd_leasekey);
+	mp->ms.m_tsd_leasekey = 0;
 #endif	/* sun */
 
 	kmem_free(mp, sizeof (sam_mount_t) +
@@ -2128,7 +2132,7 @@ sam_fseq_ord(
 			data.ltype = LTYPE_exclusive;
 
 			error = sam_proc_get_lease(ip, &data,
-			    NULL, NULL, credp);
+			    NULL, NULL, SHARE_wait, credp);
 
 			if (error != 0) {
 				goto transend;

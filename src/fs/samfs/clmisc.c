@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.253 $"
+#pragma ident "$Revision: 1.254 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1135,7 +1135,7 @@ sam_client_frlock_ino(
 	flock.l_pid = curthread->pid;
 #endif /* linux */
 
-	error = sam_proc_get_lease(ip, &data, &flock, lmfcb, credp);
+	error = sam_proc_get_lease(ip, &data, &flock, lmfcb, SHARE_wait, credp);
 	if ((cmd == F_GETLK) || (cmd == F_GETLK64)) {
 		/*
 		 * Replace flock struct. F_GETLK returns info.
