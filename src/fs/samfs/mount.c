@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.220 $"
+#pragma ident "$Revision: 1.221 $"
 #endif
 
 #include "sam/osversion.h"
@@ -485,6 +485,9 @@ sam_getdev(
 				if (dp->part.pt_state != DEV_ON) {
 					continue;
 				}
+				if (is_osd_group(dp->part.pt_type)) {
+					continue;
+				}
 				if (dp->opened) {
 					xret = 0;
 					dp->abr_cap = 0;
@@ -500,9 +503,6 @@ sam_getdev(
 						if (vc->vc_info & DKV_DMR_CAP) {
 							dp->dmr_cap = 1;
 						}
-					}
-					if (is_osd_group(dp->part.pt_type)) {
-						break;
 					}
 					switch (dp->part.pt_type) {
 					case DT_META:
