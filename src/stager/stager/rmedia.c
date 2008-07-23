@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -307,14 +307,17 @@ FindVsn(
 	first = B_TRUE;		/* first search */
 	ReconfigLock();		/* wait on reconfig */
 
+	if (vsnTable.catalog == B_TRUE &&
+	    removableMediaFound == B_TRUE && CatalogSync() > 0) {
+		Trace(TR_MISC, "Catalog invalid");
+		vsnTable.catalog = B_FALSE;
+		CatalogTerm();		/* remove mapped catalog table */
+	}
+
 	if (vsnTable.catalog == B_FALSE) {
 		if (initCatalog() == 0) {
 			Trace(TR_MISC, "Catalog initialized");
 		}
-		initVsnTable();
-
-	} else if (removableMediaFound == B_TRUE && CatalogSync() > 0) {
-		Trace(TR_MISC, "Catalog changed");
 		initVsnTable();
 	}
 
