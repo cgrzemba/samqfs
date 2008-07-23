@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.94 $"
+#pragma ident "$Revision: 1.95 $"
 
 #include "sam/osversion.h"
 
@@ -940,10 +940,10 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 			error = EINVAL;
 		}
 		/*
-		 * Checksum generation/use requires archiving and staging, and
+		 * Checksum use requires archiving and staging, and
 		 * cannot be done with partial release.
 		 */
-		if ((status.cs_gen || status.cs_use) &&
+		if ((status.cs_use) &&
 		    (status.direct || status.noarch || status.bof_online)) {
 			error = EINVAL;
 		}

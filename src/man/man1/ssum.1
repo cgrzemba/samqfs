@@ -1,4 +1,4 @@
-.\" $Revision: 1.20 $
+.\" $Revision: 1.21 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -65,12 +65,10 @@ The \fIgenerate\fP attribute must be set on a file
 before any archive copy has been made.  Likewise, the selected algorithm cannot
 be changed after an archive copy has been made.
 .LP
-Direct access (\fBstage \-n\fR) and partial
-release (\fBrelease \-p\fR)
-are not allowed on a file that has either of the checksum \fIgenerate\fP or
-\fIuse\fP attributes set.  Also, it is not valid to specify that a file
-never be archived (\fBarchive \-n\fP) as well as specify that a checksum
-be generated and/or used.
+Direct access (\fBstage \-n\fR) and partial release (\fBrelease \-p\fR)
+are not allowed on a file that has the checksum \fIuse\fP attribute set. 
+Also, it is not valid to specify that a file never be archived
+(\fBarchive \-n\fP) as well as specify that a checksum be used.
 Therefore, when a direct access, partial release, or archive never
 attribute is set on a file, attempting to set the checksum \fIgenerate\fP
 or \fIuse\fP attribute on the file will result in an error and the attributes
