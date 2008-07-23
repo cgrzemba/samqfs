@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModel.java,v 1.15 2008/05/16 18:38:58 am143972 Exp $
+// ident	$Id: SamQFSAppModel.java,v 1.16 2008/07/23 20:40:37 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -39,6 +39,8 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
 public interface SamQFSAppModel extends Model {
 
+    public static final String hostFileLocation = "/tmp/host.conf";
+    public static final String storageNodeSuffix = ",storagenode";
 
     public SamQFSSystemModel[] getAllSamQFSSystemModels();
 
