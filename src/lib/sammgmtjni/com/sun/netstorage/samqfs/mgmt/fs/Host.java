@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.15 2008/07/17 14:27:10 pg125177 Exp $
+// ident	$Id: Host.java,v 1.16 2008/07/23 21:40:18 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -144,7 +144,7 @@ public class Host {
      * status.
      *
      * Keys shared by all classes of host include:
-     * hostName = %s
+     * hostname = %s
      * type = OSD | client | mds | pmds
      * ip_addresses = space separated list of ips.
      * os = Operating System Version

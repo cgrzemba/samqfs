@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.5 2008/06/18 20:28:07 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.6 2008/07/23 21:40:19 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -42,7 +42,7 @@ import com.sun.netstorage.samqfs.web.util.JSFUtil;
  * this class encapsulates information about a shared file system host
  *
  * Keys shared by all classes of host include:
- * hostName = %s
+ * hostname = %s
  * type = OSD | client | mds | pmds
  * ip_addresses = space separated list of ips.
  * os = Operating System Version
@@ -68,7 +68,7 @@ import com.sun.netstorage.samqfs.web.util.JSFUtil;
  */
 public class SharedHostInfo {
 
-    private static final String KEY_NAME = "hostName";
+    private static final String KEY_NAME = "hostname";
     private static final String KEY_TYPE = "type";
     private static final String KEY_IP_ADDRESSES = "ip_addresses";
     private static final String KEY_OS = "os";
@@ -322,7 +322,7 @@ public class SharedHostInfo {
     public long getCapacityInKb() {
         return (long) 1325488;
     }
-    
+
     public String getIscsiid() {
         return "c1t2d3s4";
     }
