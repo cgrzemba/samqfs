@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 #include "sam/osversion.h"
 
@@ -1746,9 +1746,16 @@ sam_map_osd(
 	offset_t		n;
 
 
-	olp = ip->olp;
 	TRACE(T_SAM_OKMAP, SAM_ITOP(ip), (sam_tr_t)offset,
 	    (sam_tr_t)count, (sam_tr_t)flag);
+	if (ip->olp == NULL) {
+		int	error;
+
+		if ((error = sam_osd_create_obj_layout(ip))) {
+			return (error);
+		}
+	}
+	olp = ip->olp;
 	if (iop) {
 		bzero((char *)iop, sizeof (sam_ioblk_t));
 		iop->imap.flags = (M_OBJECT | M_VALID);
