@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModelImpl.java,v 1.97 2008/06/25 23:23:27 kilemba Exp $
+// ident	$Id: SamQFSSystemModelImpl.java,v 1.98 2008/07/23 21:25:28 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -684,7 +684,7 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
      */
     public boolean hasArchivingMedia() throws SamFSException {
         Configuration config =
-            getSamQFSSystemAdminManager().getConfigurationSummary();
+            getSamQFSSystemAdminManager().getConfigurationSummary(false);
 
         // A tape or disk volume will do
         return (config.getTapeCount() > 0) || (config.getDiskVolumeCount() > 0);
@@ -701,10 +701,15 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
 
          if (fs != null && fs.length > 0) {
              for (int i = 0; !found && i < fs.length; i++) {
-                 found = (fs[i].getFSType() == FileSystem.ARCHIVING);
+                 // make the file is archiving and if shared, then its the
+                 // metadata server - this is where archiving occurs.
+                 found = ((fs[i].getArchivingType() == FileSystem.ARCHIVING) &&
+                          ((fs[i].getShareStatus() == FileSystem.UNSHARED) ||
+                      (fs[i].getShareStatus() == FileSystem.SHARED_TYPE_MDS)));
              }
          }
 
-         return false;
+         return found;
     }
 }
+

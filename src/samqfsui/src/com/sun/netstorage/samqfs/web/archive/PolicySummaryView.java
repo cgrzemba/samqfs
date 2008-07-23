@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PolicySummaryView.java,v 1.24 2008/05/16 18:38:52 am143972 Exp $
+// ident	$Id: PolicySummaryView.java,v 1.25 2008/07/23 21:25:28 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -60,6 +60,7 @@ import com.sun.web.ui.model.CCWizardWindowModel;
 import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCRadioButton;
+import com.sun.web.ui.view.html.CCStaticTextField;
 import com.sun.web.ui.view.table.CCActionTable;
 import com.sun.web.ui.view.wizard.CCWizardWindow;
 import java.io.IOException;
@@ -69,6 +70,7 @@ public class PolicySummaryView extends CommonTableContainerView {
     public static String TILED_VIEW = "PolicySummaryTiledView";
 
     public static String WIZARD_FORWARDTO = "policyForwardToVB";
+    public static String WARNING = "SAMFSWarning";
 
     private CCWizardWindowModel policyWizardWindowModel = null;
 
@@ -76,6 +78,7 @@ public class PolicySummaryView extends CommonTableContainerView {
 
     // keeps track of whether the new policy wizard is already up or not
     private boolean newPolicyWizardRunning = false;
+    private boolean hasArchivingFS = false;
 
     public PolicySummaryView(View parent, String name) {
         super(parent, name);
@@ -105,6 +108,8 @@ public class PolicySummaryView extends CommonTableContainerView {
             return new BasicCommandField(this, name);
         } else if (name.equals(TILED_VIEW)) {
             return new PolicySummaryTiledView(this, tableModel,  name);
+        } else if (name.equals(WARNING)) {
+            return new CCStaticTextField(this, name, null);
         } else {
             return super.createChild(tableModel, name, TILED_VIEW);
         }
@@ -254,6 +259,9 @@ public class PolicySummaryView extends CommonTableContainerView {
                 // around
                 tableModel.setRowSelected(false);
             }
+
+            this.hasArchivingFS = sysModel.hasArchivingFileSystem();
+            System.out.println("has archiving fs = " + this.hasArchivingFS);
         } catch (SamFSWarnings sfw) {
             SamUtil.processException(sfw,
                                      this.getClass(),
@@ -330,12 +338,18 @@ public class PolicySummaryView extends CommonTableContainerView {
             (CCWizardWindow)getChild("SamQFSWizardNewPolicy");
 
         // set new wizard button
-        if (newPolicyWizardRunning || !hasPermission) {
+        if (newPolicyWizardRunning || !hasPermission || !this.hasArchivingFS) {
             button.setDisabled(true);
         } else {
             // explicitly enable the button to reverse disabling
             // from 'restoreStateData()
             button.setDisabled(false);
+        }
+
+        // if no archiving file systems found, show a message stating so
+        if (!this.hasArchivingFS) {
+            ((CCStaticTextField)getChild(WARNING)).setValue(
+              SamUtil.getResourceString("archiving.summary.nosamfs.warning"));
         }
 
         TraceUtil.trace3("Exiting");
@@ -445,3 +459,4 @@ public class PolicySummaryView extends CommonTableContainerView {
              getViewBean(PolicyDetailsViewBean.class));
     }
 }
+

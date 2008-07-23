@@ -29,7 +29,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PolicySummary.jsp,v 1.10 2008/05/16 19:39:17 am143972 Exp $
+// ident	$Id: PolicySummary.jsp,v 1.11 2008/07/23 21:25:27 kilemba Exp $
 --%>
 
 <%@page info="PolicySummary" language="java" %>
@@ -90,6 +90,11 @@
                 maxRows="25"
                 page="1"/>
 
+<div style="margin:10px">
+<cc:helpinline>
+    <cc:text bundleID="samBundle" name="SAMFSWarning"/>
+</cc:helpinline>
+</div>
 </jato:containerView>
 
 <!-- dynamic buttons helper -->

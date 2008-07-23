@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: newfs.js,v 1.3 2008/07/16 21:55:55 kilemba Exp $
+// ident	$Id: newfs.js,v 1.4 2008/07/23 21:25:27 kilemba Exp $
 
 // handlers for the new file system wizard popup
 
@@ -263,9 +263,9 @@ function handleArchivingCheckBox(checkbox) {
     if (checkbox.checked) {
         // warn he user about creating an archiving file system without
         // configuring archiving media first.
-        //if (hasArchiveMedia() == "false") {
-        //    alert(getErrorMessage(0));
-        //}
+        if (hasArchiveMedia() == "false") {
+            alert(getErrorMessage(0));
+        }
         
         // disable HAFS. Archiving HAFS is not supported
         if (hafs != null) {

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemAdminManagerImpl.java,v 1.38 2008/06/25 23:23:27 kilemba Exp $
+// ident	$Id: SamQFSSystemAdminManagerImpl.java,v 1.39 2008/07/23 21:25:28 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -67,6 +67,7 @@ public class SamQFSSystemAdminManagerImpl implements SamQFSSystemAdminManager {
 
     private SamQFSSystemModelImpl theModel;
     private HashMap notifications = new HashMap();
+    private Configuration config = null;
 
     public SamQFSSystemAdminManagerImpl(SamQFSSystemModel model) {
         theModel = (SamQFSSystemModelImpl) model;
@@ -515,15 +516,29 @@ public class SamQFSSystemAdminManagerImpl implements SamQFSSystemAdminManager {
      * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
      */
     public Configuration getConfigurationSummary() throws SamFSException {
-
-        // TODO: waiting for C-API implementation
-        // String rawConfig =
-        //    SysInfo.getConfigurationSummary(theModel.getJniContext());
-
-        String rawConfig = null;
+        String rawConfig =
+            SysInfo.getConfigurationSummary(theModel.getJniContext());
         Configuration config = new Configuration(rawConfig);
 
         return config;
+    }
+
+    /**
+     * This is method is used to support the first time configuration checklist.
+     * It provides the information needed to give the user feedback on the
+     * completion states of the various components on the checklist.
+     *
+     * @param boolean refresh - refresh the configuration from the back-end of
+     * use the cached values.
+     *
+     * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
+     */
+    public Configuration getConfigurationSummary(boolean refresh)
+        throws SamFSException {
+        if (this.config != null && !refresh)
+            return this.config;
+        else
+            return getConfigurationSummary();
     }
 
     // sample Configuration for testing purposes
@@ -544,3 +559,4 @@ public class SamQFSSystemAdminManagerImpl implements SamQFSSystemAdminManager {
         rawConfig = buf.toString();
     }
 }
+
