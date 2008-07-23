@@ -40,11 +40,15 @@
 extern "C" {
 #endif
 
+#include <sys/buf.h>
+#include <sys/cred.h>
+#include <sys/uio.h>
 #include "scsi_osd.h"
 
 /*
  * Standard Globals
  */
+#define OSD_API_REV	2
 #define	OSD_CDB_SIZE	224
 
 

@@ -1009,11 +1009,13 @@ typedef struct ocdb_set_key_cs_opts {
 		ocdb_rsvd2			: 2,
 		ocdb_getset_cdbfmt		: 2,
 		ocdb_rsvd6			: 2;
-#else
+#elif defined(_BIT_FIELDS_HTOL)
 	uint8_t	ocdb_rsvd6			: 2,
 		ocdb_getset_cdbfmt		: 2,
 		ocdb_rsvd2			: 2,
 		ocdb_key_to_set			: 2;
+#else
+#error	One of _BIT_FIELDS_LTOH or _BIT_FIELDS_HTOL must be defined
 #endif
 } ocdb_set_key_cs_options_t;
 
