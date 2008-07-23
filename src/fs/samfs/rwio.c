@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.173 $"
+#pragma ident "$Revision: 1.174 $"
 #endif
 
 #include "sam/osversion.h"
@@ -456,7 +456,7 @@ start:
 			    SAM_ONE_MEGABYTE);
 		}
 	}
-	if (SAM_IS_SHARED_CLIENT(ip->mp)) {
+	if (SAM_IS_SHARED_CLIENT(ip->mp) && !SAM_IS_OBJECT_FILE(ip)) {
 		if ((error = sam_map_block(ip, uiop->uio_loffset,
 		    (offset_t)allocsz, SAM_ALLOC_BLOCK, NULL, credp))) {
 			if ((error == ELNRNG) && S_ISREG(ip->di.mode)) {

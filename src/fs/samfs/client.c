@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.171 $"
+#pragma ident "$Revision: 1.172 $"
 #endif
 
 #include "sam/osversion.h"
@@ -776,6 +776,9 @@ sam_reset_client_ino(
 	if ((irec->sr_attr.size_owner != ip->mp->ms.m_client_ord) ||
 	    (irec->sr_attr.actions & SR_FORCE_SIZE)) {
 		ip->size = irec->sr_attr.current_size;
+		if (SAM_IS_OBJECT_FILE(ip)) {
+			(void) sam_set_end_of_obj(ip, ip->di.rm.size, 0);
+		}
 	} else {
 		ip->di.rm.size = real_size;
 	}

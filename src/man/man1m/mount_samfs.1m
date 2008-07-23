@@ -1,4 +1,4 @@
-.\" $Revision: 1.97 $
+.\" $Revision: 1.98 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -440,6 +440,10 @@ This makes the sparse file behavior the same as that for paged I/O.
 By default, sparse files written by direct I/O do not have the
 uninitialized areas zeroed for performance reasons.
 The default is \fBnodio_szero\fR.
+.sp
+The \fBdio_szero\fR option is ignored on the \fBmb\fR file system. If you
+want this behavior, you will need to set this option on the object storage
+nodes (\fBmat\fR file systems).
 .TP
 \fBforce_nfs_async\fR
 Causes the file system to cache nfs data written to the server even if nfs

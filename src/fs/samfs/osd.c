@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 #include "sam/osversion.h"
 
@@ -718,7 +718,7 @@ sam_pageio_object(
 
 	if (flags & B_READ) {	/* If reading */
 		mutex_enter(&ip->write_mutex);
-		if ((offset + count) > olp->ol[iop->obji].eoo) {
+		if (offset >= olp->ol[iop->obji].eoo) {
 			mutex_exit(&ip->write_mutex);
 			pagezero(pp, pg_off, PAGESIZE);
 			iop->imap.flags |= M_OBJ_EOF;
@@ -1685,8 +1685,9 @@ sam_set_end_of_obj(
 	sam_ioblk_t		ioblk;
 	int			error = 0;
 
-	olp = ip->olp;
-	ASSERT(olp);
+	if ((olp = ip->olp) == NULL) {
+		return (0);
+	}
 	if ((error = sam_map_osd(ip, length, 0,
 	    update ? SAM_WRITE : SAM_ALLOC_BLOCK, &ioblk))) {
 		return (error);

@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.291 $"
+#pragma ident "$Revision: 1.292 $"
 
 #include "sam/osversion.h"
 
@@ -926,10 +926,16 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 				ip->size_owner = client_ord;
 
 				/*
-				 * Don't do the allocate append if it's a
-				 * pre-allocated file (direct_map) or if it's
-				 * the server doing the request.
+				 * Don't do the allocate append if it's
+				 * an object file, pre-allocated file
+				 * (direct_map), or if it's the server
+				 * doing the request.
 				 */
+				if (SAM_IS_OBJECT_FILE(ip)) {
+					ip->cl_allocsz = ip->di.rm.size +
+					    ip->mp->mt.fi_maxallocsz;
+					break;
+				}
 				if (ip->di.status.b.direct_map ||
 				    (client_ord == ip->mp->ms.m_client_ord)) {
 					break;
@@ -3836,7 +3842,8 @@ sam_update_cl_attr(
 		if (set_size) {
 			attr->actions &= ~SR_SET_SIZE;
 			ip->di.rm.size = attr->real_size;
-			if (SAM_IS_OBJECT_FILE(ip)) {
+			if (SAM_IS_OBJECT_FILE(ip) &&
+			    (client_ord != ip->mp->ms.m_client_ord)) {
 				(void) sam_set_end_of_obj(ip, ip->di.rm.size,
 				    0);
 			}

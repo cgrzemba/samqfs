@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 
 #include "sam/osversion.h"
 
@@ -126,6 +126,13 @@ MountCheckParams(struct sam_fs_info *mp)
 		wr_throttle = (float)memsize * .02;
 		mp->fi_wr_throttle =
 		    (((int64_t)wr_throttle + 1023)/1024) * 1024;
+	}
+
+	/*
+	 * If object file system ("mb"), turn off dio_szero.
+	 */
+	if (mp->fi_config1 & MC_OBJECT_FS) {
+		mp->fi_config &= ~MT_ZERO_DIO_SPARSE;
 	}
 
 	/*

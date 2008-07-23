@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.253 $"
+#pragma ident "$Revision: 1.254 $"
 #endif
 
 #include "sam/osversion.h"
@@ -596,10 +596,11 @@ sam_proc_get_lease(
 		 * the lease expiration check and get the blocks now.
 		 */
 		mutex_enter(&ip->cl_apmutex);
-		if (!SAM_IS_SHARED_SERVER(ip->mp)) {
-			if ((dp->offset + dp->resid) > ip->cl_allocsz) {
-				check_lease_expiration = FALSE;
-			}
+		if (SAM_IS_SHARED_SERVER(ip->mp) || SAM_IS_OBJECT_FILE(ip)) {
+			break;
+		}
+		if ((dp->offset + dp->resid) > ip->cl_allocsz) {
+			check_lease_expiration = FALSE;
 		}
 		break;
 
@@ -648,64 +649,61 @@ sam_proc_get_lease(
 	}
 
 	/*
-	 * If check_lease_expiration, check to see if lease expired.
-	 * If not expired & appending, allocate ahead if nearing allocsz.
-	 * Otherwise, return.
+	 * For data expiring leases (read, write, and append), check to see
+	 * if the lease has expired. If expired, go create or extend the lease.
 	 */
-
 	RW_LOCK_OS(&ip->inode_rwl, rw_type);
-
 	if (check_lease_expiration) {
 		if ((ip->cl_leases & lease_mask) &&
 		    (ip->cl_leasetime[ltype] > lbolt)) {
-			error = 0;
-			if (!SAM_IS_SHARED_SERVER(ip->mp) &&
-			    (ltype == LTYPE_append)) {
-				if (!ip->di.status.b.direct_map &&
-				    (((dp->offset + dp->resid) +
-				    ip->cl_alloc_unit) >
-				    ip->cl_allocsz) &&
-				    (ip->cl_pend_allocsz == 0)) {
-					/*
-					 * Clients allocate ahead one additional
-					 * alloc_unit.  Do not wait.  We only do
-					 * this if we're not pre-allocated.
-					 */
-					ip->cl_pend_allocsz = ip->cl_allocsz;
-					msg = kmem_zalloc(sizeof (*msg),
-					    KM_SLEEP);
-					sam_build_header(ip->mp, &msg->hdr,
-					    SAM_CMD_LEASE,
-					    SHARE_nothr, LEASE_get,
-					    sizeof (sam_san_lease_t),
-					    sizeof (sam_san_lease2_t));
-					msg->call.lease.data = *dp;
-					msg->call.lease.data.offset =
-					    ip->cl_allocsz;
-					msg->call.lease.data.resid = 0;
-					sam_set_cred(credp,
-					    &msg->call.lease.cred);
-					error = sam_issue_lease_request(ip,
-					    msg, SHARE_nothr, 0,
-					    lmfcb);
-				}
 
-				/*
-				 * Append lease has not expired.  Check for
-				 * blocks under lock.
-				 */
-				if ((dp->offset + dp->resid) <=
-				    ip->cl_allocsz) {
-					mutex_exit(&ip->cl_apmutex);
-					RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
-					goto out;
-				}
-			} else {
+			/*
+			 * If not expired & not appending, server, or object
+			 * file, return. If not expired & appending, not
+			 * server, and not object file, allocate ahead if
+			 * nearing allocsz.
+			 */
+			error = 0;
+			if ((ltype != LTYPE_append) ||
+			    SAM_IS_SHARED_SERVER(ip->mp) ||
+			    SAM_IS_OBJECT_FILE(ip)) {
 				if (ltype == LTYPE_append) {
 					mutex_exit(&ip->cl_apmutex);
 				}
 				RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 				return (0); /* msg has not been allocated */
+			}
+
+			if (!ip->di.status.b.direct_map &&
+			    (((dp->offset + dp->resid) + ip->cl_alloc_unit) >
+			    ip->cl_allocsz) && (ip->cl_pend_allocsz == 0)) {
+				/*
+				 * Clients allocate ahead one additional
+				 * alloc_unit.  Do not wait.  We only do
+				 * this if we're not pre-allocated.
+				 */
+				ip->cl_pend_allocsz = ip->cl_allocsz;
+				msg = kmem_zalloc(sizeof (*msg), KM_SLEEP);
+				sam_build_header(ip->mp, &msg->hdr,
+				    SAM_CMD_LEASE, SHARE_nothr, LEASE_get,
+				    sizeof (sam_san_lease_t),
+				    sizeof (sam_san_lease2_t));
+				msg->call.lease.data = *dp;
+				msg->call.lease.data.offset = ip->cl_allocsz;
+				msg->call.lease.data.resid = 0;
+				sam_set_cred(credp, &msg->call.lease.cred);
+				error = sam_issue_lease_request(ip, msg,
+				    SHARE_nothr, 0, lmfcb);
+			}
+
+			/*
+			 * Append lease has not expired.  Check for
+			 * blocks under lock.
+			 */
+			if ((dp->offset + dp->resid) <= ip->cl_allocsz) {
+				mutex_exit(&ip->cl_apmutex);
+				RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
+				goto out;
 			}
 		}
 	}
@@ -723,8 +721,7 @@ sam_proc_get_lease(
 
 	bzero(msg, sizeof (*msg));
 	sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE, SHARE_wait,
-	    LEASE_get,
-	    sizeof (sam_san_lease_t), sizeof (sam_san_lease2_t));
+	    LEASE_get, sizeof (sam_san_lease_t), sizeof (sam_san_lease2_t));
 	msg->call.lease.data = *dp;
 	if (flp) {
 		msg->call.lease.flock = *flp;
@@ -737,8 +734,7 @@ sam_proc_get_lease(
 			if (error == 0 &&
 			    msg->call.lease2.inp.data.shflags.b.abr) {
 				TRACE(T_SAM_ABR_INIT, SAM_ITOP(ip),
-				    ip->di.id.ino,
-				    ip->flags.b.abr,
+				    ip->di.id.ino, ip->flags.b.abr,
 				    msg->call.lease2.inp.data.shflags.b.abr);
 				SAM_SET_ABR(ip);
 			}
@@ -754,19 +750,22 @@ sam_proc_get_lease(
 				}
 			}
 			if (!SAM_IS_SHARED_SERVER(ip->mp) && (error == 0)) {
-				if ((ip->cl_alloc_unit * 2) <=
-				    ip->mp->mt.fi_maxallocsz) {
-					ip->cl_alloc_unit *= 2;
-				}
-
 				if (!SAM_THREAD_IS_NFS()) {
 					ip->flags.b.ap_lease = 1;
 				}
 
-				if (dp->offset + dp->resid > ip->cl_allocsz) {
-					if ((ip->mp->mt.fi_config &
-					    MT_SAM_ENABLED) == 0) {
-						error = ENOSPC;
+				if (!SAM_IS_OBJECT_FILE(ip)) {
+					if ((ip->cl_alloc_unit * 2) <=
+					    ip->mp->mt.fi_maxallocsz) {
+						ip->cl_alloc_unit *= 2;
+					}
+
+					if (dp->offset + dp->resid >
+					    ip->cl_allocsz) {
+						if ((ip->mp->mt.fi_config &
+						    MT_SAM_ENABLED) == 0) {
+							error = ENOSPC;
+						}
 					}
 				}
 			}
