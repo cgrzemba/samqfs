@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -170,8 +170,10 @@ DisDiskvols(
 				header = B_TRUE;
 			}
 
-			(void) DiskVolsGetSpaceUsed(volname, dv, NULL,
-			    &spaceUsed);
+			if ((dv->DvFlags & DV_unavail) == 0) {
+				(void) DiskVolsGetSpaceUsed(volname, dv, NULL,
+				    &spaceUsed);
+			}
 			if (dv->DvCapacity == 0) {
 				/* Not initialized yet. */
 				capacity[0] = space[0] = used[0] = '-';

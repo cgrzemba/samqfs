@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.60 $"
+#pragma ident "$Revision: 1.61 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -394,7 +394,8 @@ retrySearch:
 			 * If disk volume, check existence of the
 			 * the diskvols.seqnum.
 			 */
-			if (media == DT_DISK) {
+			if (media == DT_DISK && vi != NULL &&
+			    IS_VSN_UNAVAIL(vi) == 0) {
 				extern char *program_name;
 				struct DiskVolumeInfo *dv;
 				DiskVolsDictionary_t *diskvols;
@@ -406,10 +407,13 @@ retrySearch:
 					(void) diskvols->Get(diskvols, vsn,
 					    &dv);
 					if (dv != NULL) {
+						if ((dv->DvFlags & DV_unavail)
+						    == 0) {
 						if (DiskVolsIsAvail(vsn, dv,
 						    B_FALSE, DVA_stager)
 						    == B_TRUE) {
 							avail = B_TRUE;
+						}
 						}
 					}
 				}
