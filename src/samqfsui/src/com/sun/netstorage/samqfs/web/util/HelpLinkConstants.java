@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: HelpLinkConstants.java,v 1.22 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: HelpLinkConstants.java,v 1.23 2008/07/23 17:38:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -42,6 +42,11 @@ public interface HelpLinkConstants {
         String FILE_BROWSER = "samqfs-filebrowser.html";
     public static final
         String RECOVERY_POINTS = "samqfs-recoverypoints.html";
+
+    // Getting Started
+    public static final String ABOUT_SAMQFS = "samqfs-aboutsamqfs.html";
+    public static final
+        String FIRST_TIME_CONFIG = "samqfs-firsttimeconfig.html";
 
     // FS pages
     public static final String FILESYSTEM_SUMMARY =
@@ -60,6 +65,12 @@ public interface HelpLinkConstants {
         "samqfs-filesystemeditnfsproperties.html";
     public static final String FILESYSTEM_ADVANCED_NETWORK_CONFIG =
         "samqfs-advancednetworkconfig.html";
+    public static final
+        String SHARED_FS_SUMMARY = "samqfs-hpcfilesystemsummary.html";
+    public static final String
+        SHARED_FS_STORAGE_NODES = "samqfs-storagenodes.html";
+    public static final String
+        SHARED_FS_CLIENTS = "samqfs-clientssummary.html ";
 
     // Archive pages
     public static final String ARCHIVE_SUMMARY =

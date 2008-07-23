@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModelImpl.java,v 1.29 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSAppModelImpl.java,v 1.30 2008/07/23 17:38:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -106,7 +106,6 @@ public class SamQFSAppModelImpl extends DefaultModel
      */
     public String getInetHostName(String hostName) throws UnknownHostException {
 
-        boolean existingHost = false;
         String inetHostName = "";
         String hostip = "";
 
@@ -164,7 +163,7 @@ public class SamQFSAppModelImpl extends DefaultModel
 
             try {
                 String path = SamUtil.getCurrentRequest().getSession()
-                    .getServletContext().getRealPath("/tmp/host.conf");
+                    .getServletContext().getRealPath(hostFileLocation);
 
                 PrintWriter out = new PrintWriter(new FileWriter(path, true));
                 if (out != null) {
@@ -194,7 +193,7 @@ public class SamQFSAppModelImpl extends DefaultModel
 
             try {
                 String path = SamUtil.getCurrentRequest().getSession()
-                    .getServletContext().getRealPath("/tmp/host.conf");
+                    .getServletContext().getRealPath(hostFileLocation);
                 in = new BufferedReader(new FileReader(path));
                 if (in != null) {
                     String host;

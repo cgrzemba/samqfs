@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NavigationNodes.java,v 1.22 2008/06/11 20:33:03 kilemba Exp $
+// ident	$Id: NavigationNodes.java,v 1.23 2008/07/23 17:38:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -160,7 +160,7 @@ public class NavigationNodes  {
             NODE_FB_RECOVERY, "node.dataaccess",
             "node.dataaccess.tooltip",
             "node.dataaccess.tooltip");
-        myNode.setValue(createURL("fs/FileBrowser.jsp"));
+        myNode.setValue(createURL("fs/RecoveryPoints.jsp"));
         myNode.setExpanded(false);
         nodeMap.put(new Integer(NODE_FB_RECOVERY), myNode);
 
@@ -177,7 +177,7 @@ public class NavigationNodes  {
         // Recovery Points (leaf)
         myNode =
             new CCNavNode(
-            NODE_FILE_BROWSER, "node.dataaccess.recoverypoints",
+            NODE_RECOVERY_POINTS, "node.dataaccess.recoverypoints",
             "node.dataaccess.recoverypoints.tooltip",
             "node.dataaccess.recoverypoints.tooltip");
         myNode.setValue(createURL("fs/RecoveryPoints.jsp"));

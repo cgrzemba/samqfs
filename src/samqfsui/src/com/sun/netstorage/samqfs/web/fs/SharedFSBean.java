@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.9 2008/07/16 23:45:03 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.10 2008/07/23 17:38:38 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -947,6 +947,7 @@ sfe.printStackTrace();
      * @return an array of Strings that hold the keys of selected rows
      */
     protected String [] getSelectedKeys(boolean client) {
+System.out.println("getSelectedKeys: client: " + client);
         TableDataProvider provider =
             client ?
                 getClientSummaryList() :
@@ -955,6 +956,7 @@ sfe.printStackTrace();
             client ?
                 getClientSummaryTableRowGroup().getSelectedRowKeys() :
                 getSnSummaryTableRowGroup().getSelectedRowKeys();
+System.out.println("RowKeys selected: " + rows.length);
         String [] selected = null;
         if (rows != null && rows.length >= 1) {
             selected = new String[rows.length];
@@ -962,6 +964,7 @@ sfe.printStackTrace();
             FieldKey field = provider.getFieldKey("name");
             for (int i = 0; i < rows.length; i++) {
                 selected[i] = (String) provider.getValue(field, rows[i]);
+System.out.println("Selected: " + selected[i]);
             }
         }
 
@@ -996,11 +999,12 @@ sfe.printStackTrace();
 
     public void handleRemoveStorageNode(ActionEvent event) {
         String [] selectedSns = getSelectedKeys(false);
-;
+
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
-            // sharedFSManager.removeStorageNode(getFSName(), selectedSns);
+            sharedFSManager.removeStorageNode(
+                JSFUtil.getServerName(), getFSName(), selectedSns);
 
             setAlertInfo(
                 Constants.Alert.INFO,

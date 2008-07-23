@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSStorageNode.jsp,v 1.5 2008/07/16 23:45:03 ronaldso Exp $ -->
+<!-- $Id: SharedFSStorageNode.jsp,v 1.6 2008/07/23 17:38:38 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -47,7 +47,11 @@
     <ui:script url="/js/popuphelper.js"/>
     <ui:script url="/js/fs/SharedFS.js"/>
 </ui:head>
-<ui:body id="SNBody">
+<ui:body id="SNBody"
+         onLoad="
+                if (parent.serverName != null) {
+                    parent.setSelectedNode('0', 'SharedFSStorageNode');
+                }">
 <ui:form id="SharedFSStorageNodeForm">
     <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsStorageNode}" />
     <ui:tabSet binding="#{SharedFSBean.tabSet}" selected="storagenode" />

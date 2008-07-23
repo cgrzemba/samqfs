@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.20 2008/07/16 17:09:32 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.21 2008/07/23 17:38:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -200,10 +200,10 @@ public interface SamQFSSystemSharedFSManager {
 
     /*
      * A non-zero return indicates that a background job has been started
-     * to complete this task. Information can be obtained about this job by
-     * using the Job.getAllActivities function with a filter on the job id.
+     * to complete this task.
      */
-    public int removeStorageNode(String hpcFSName, String nodeName)
+    public int removeStorageNode(
+        String mdServer, String hpcFSName, String [] nodeNames)
         throws SamFSException;
 
 

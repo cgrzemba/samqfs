@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddStorageNodeBean.java,v 1.2 2008/07/16 23:45:04 ronaldso Exp $
+// ident        $Id: AddStorageNodeBean.java,v 1.3 2008/07/23 17:38:39 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -45,6 +45,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.Select;
@@ -139,8 +140,7 @@ public class AddStorageNodeBean implements Serializable {
     // TODO: Replace with real API call!
     private String [] getGroupNames() {
         return new String [] {
-            "Group 1",
-            "Group 2"
+            "o1"
         };
     }
 
@@ -152,7 +152,7 @@ System.out.println("getAvailUnits called! " + textHostNameIP);
 
         TraceUtil.trace3("REMOTE CALL: Getting avail units from fs!");
 
-        // TODO: sysModel for the host specified in first step
+        // TODO: What if host is not in sysModel?
         SamQFSSystemModel sysModel = SamUtil.getModel(textHostNameIP);
         if (sysModel == null) {
             throw new SamFSException(null, -2501);
@@ -177,15 +177,22 @@ System.out.println("getAvailUnits called! " + textHostNameIP);
         FacesContext context, UIComponent component, Object value)
         throws ValidatorException{
 
+        String testString = (String) value;
         String errMsg = null;
-
-        // TODO: validate host name or IP
         clearAlertInfo();
+
+        // no space allowed after trimmed
+        if (!SamUtil.isValidString(testString)) {
+            errMsg = "AddServer.errMsg2";
+        // no special characters allowed
+        } else if (!SamUtil.isValidNonSpecialCharString(testString)) {
+            errMsg = "AddServer.errMsg3";
+        }
 
         if (errMsg != null) {
             setAlertInfo(Constants.Alert.ERROR, errMsg, null);
             FacesMessage message = new FacesMessage();
-            message.setDetail(errMsg);
+            message.setDetail(JSFUtil.getMessage(errMsg));
             message.setSeverity(FacesMessage.SEVERITY_ERROR);
             throw new ValidatorException(message);
         }
@@ -478,7 +485,8 @@ System.out.println("getAvailUnits called! " + textHostNameIP);
     public TableDataProvider getDataSummaryList() {
         selectedMetaDevices = selectedMetaDevices == null ?
                                 new String[0] : selectedMetaDevices;
-
+        availUnits = availUnits == null ?
+                                new DiskCache[0] : availUnits;
         DiskCache [] dataDevices =
             availUnits.length == 0  ||
             availUnits.length - selectedMetaDevices.length == 0 ?
@@ -764,14 +772,20 @@ System.out.println("NEXT: ID is " + id);
         }
 
         private boolean handleFinishButton(WizardEvent event) {
-            String messageSummary = "summary";
-            String messageDetails = "details";
-
             try {
                 SamQFSSystemSharedFSManager sharedFSManager =
                                                     getSharedFSManager();
 
                 boolean ipEntered = isIPAddress(textHostNameIP);
+
+System.out.println("handleFinishButton:");
+System.out.println("Server Name: " + JSFUtil.getServerName());
+System.out.println("FS Name: " + FSUtil.getFSName());
+System.out.println("IP Entered: " + ipEntered);
+System.out.println("textHostNameIP: " + textHostNameIP);
+System.out.println("Selected Meta: " + ConversionUtil.arrayToStr(selectedMetaDevices, ','));
+System.out.println("Selected Data: " + ConversionUtil.arrayToStr(selectedDataDevices, ','));
+System.out.println("Node String: " + createNodeDataString());
 
                 sharedFSManager.addStorageNode(
                     JSFUtil.getServerName(),
@@ -781,27 +795,30 @@ System.out.println("NEXT: ID is " + id);
                     getDiskCacheObj(selectedMetaDevices),
                     getDiskCacheObj(selectedDataDevices),
                     createNodeDataString());
-                /*
+
                 setAlertInfo(
                     Constants.Alert.INFO,
                     JSFUtil.getMessage(
-                        "SharedFS.message.removeclients.ok",
-                        ConversionUtil.arrayToStr(selectedClients, ',')),
+                        "addsn.msg.ok",
+                        new String [] {
+                            textHostNameIP,
+                            FSUtil.getFSName()}),
                     null);
-                 */
-                setAlertInfo(
-                    Constants.Alert.INFO, messageSummary, messageDetails);
             } catch (SamFSException samEx) {
-                /*
+                SamUtil.processException(
+                    samEx,
+                    this.getClass(),
+                    "AddStorageNodeBean.handleFinishButton()",
+                    "Failed to add storage node",
+                    JSFUtil.getServerName());
                 setAlertInfo(
                     Constants.Alert.ERROR,
                     JSFUtil.getMessage(
-                        "SharedFS.message.removeclients.failed",
-                        ConversionUtil.arrayToStr(selectedClients, ',')),
+                        "addsn.msg.failed",
+                        new String [] {
+                            textHostNameIP,
+                            FSUtil.getFSName()}),
                     samEx.getMessage());
-                 */
-                setAlertInfo(
-                    Constants.Alert.ERROR, "summary", samEx.getMessage());
             }
 
             return true;
@@ -956,9 +973,7 @@ System.out.println("process: textHostNameIP is " + textHostNameIP);
          * @return
          */
         private boolean isIPAddress(String textHostNameIP) {
-            // TODO: beef up this check
-            String [] ipArray = textHostNameIP.split("\\.");
-            return ipArray.length == 4;
+            return SamUtil.isValidIPAddress(textHostNameIP);
         }
 
         /**
@@ -974,7 +989,7 @@ System.out.println("process: textHostNameIP is " + textHostNameIP);
             StringBuffer buf = new StringBuffer("group=o");
             if (selectedExistingGroup) {
                 // Use existing group
-                String [] arr = selectedGroup.split("Group");
+                String [] arr = selectedGroup.split("o");
                 buf.append(arr[1]);
             } else {
                 // Create new group
@@ -985,6 +1000,7 @@ System.out.println("process: textHostNameIP is " + textHostNameIP);
                 isIPAddress(textHostNameIP) ?
                     "dataip=" + textHostNameIP :
                     "host=" + textHostNameIP);
+System.out.println("createNodeDataString: " + buf.toString());
             return buf.toString();
         }
     }

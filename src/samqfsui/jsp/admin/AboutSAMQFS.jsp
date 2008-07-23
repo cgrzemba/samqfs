@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AboutSAMQFS.jsp,v 1.2 2008/06/11 21:16:18 kilemba Exp $ -->
+<!-- $Id: AboutSAMQFS.jsp,v 1.3 2008/07/23 17:38:38 ronaldso Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -33,7 +33,7 @@
    xmlns:h="http://java.sun.com/jsf/html"
    xmlns:ui="http://www.sun.com/web/ui"
    xmlns:jsp="http://java.sun.com/JSP/Page">
-   <jsp:directive.page contentType="text/html;charset=ISO-8859-1" 
+   <jsp:directive.page contentType="text/html;charset=ISO-8859-1"
                        pageEncoding="UTF-8"/>
 
     <style>
@@ -43,14 +43,16 @@
    <f:view>
    <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
                  var="msgs"/>
-                 
+
    <ui:page>
    <ui:html>
    <ui:head title="#{msgs['node.aboutsamqfs']}"/>
-   <ui:body>
+   <ui:body onLoad="if (parent.serverName != null) {
+                        parent.setSelectedNode('200', 'AboutSAMQFS');
+                    }">
    <ui:form id="AboutSAMQFSForm">
         <ui:contentPageTitle id="pageTitle" title="#{msgs['node.aboutsamqfs']}"/>
-    
+
         <div class="txtbg">
             <ui:staticText text="#{msgs['gettingstarted.about.text']}"/>
         </div>

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.51 2008/07/16 17:09:32 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.52 2008/07/23 17:38:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -111,7 +111,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
         SamQFSSystemModelImpl sysModel = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(serverName);
-        
+
         int rtnval = Host.addHosts(sysModel.getJniContext(),
                                    fsName,
                                    allClients);
@@ -133,11 +133,9 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
                               String fsName,
                               String [] clients) throws SamFSException {
 
-        // TODO: To be verified
-
         SamQFSSystemModelImpl sysModel = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(serverName);
-        
+
         int rtnval = Host.removeHosts(sysModel.getJniContext(),
                                         fsName,
                                         clients);
@@ -232,26 +230,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         }
     }
 
-    /**
-     * TODO: Remove ME!
-
-    private String [] createFakeHostInfo(boolean useInSN) {
-        return
-            !useInSN ?
-                new String [] {
-                    "hostName=earth,type=mds,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
-                    "hostName=moon,type=pmds,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF,error=assumed_dead",
-                    "hostName=mars,type=client,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON,error=known_dead",
-                    "hostName=jupiter,type=client,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
-                    "hostName=venus,type=client,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"} :
-                new String [] {
-                    "hostName=earth,type=OSD,ip_addresses=10.54.24.10,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=312312,status=ON",
-                    "hostName=moon,type=OSD,ip_addresses=10.54.24.11,os=Solaris 10,version=SAM-QFS 5.0,arch=x86,mounted=644312,status=OFF",
-                    "hostName=mars,type=OSD,ip_addresses=10.54.24.12 192.168.0.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=342612,status=ON",
-                    "hostName=jupiter,type=OSD,ip_addresses=10.54.24.13 192.168.0.2,os=Solaris 11,version=SAM-QFS 5.0,arch=x86,mounted=-1,status=ON",
-                    "hostName=venus,type=OSD,ip_addresses=10.54.24.14 192.168.0.3 24.158.23.1,os=Solaris 11,version=SAM-QFS 5.0,arch=sparc,mounted=742612,status=OFF"};
-    }
-    */
     private SharedHostInfo [] filterHosts(
         SharedHostInfo [] infos, short filter) {
         ArrayList hostList = new ArrayList();
@@ -306,12 +284,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 System.out.println("Calling FS.getSharedFSSummaryStatus:fsName: " + fsName);
         String [] info =
             FS.getSharedFSSummaryStatus(model.getJniContext(), fsName);
-        /*
-            new String [] {
-                "pmds=8,unmounted=2,off=0,error=0",
-                "storage_nodes=124,unmounted=0,off=1,error=0",
-                "clients=1024,unmounted=24,off=2,error=0"};
-         */
+
         MemberInfo [] memberInfos = new MemberInfo[info.length];
         for (int i = 0; i < memberInfos.length; i++) {
 System.out.println("info[" + i + "]: " + info[i]);
@@ -329,7 +302,6 @@ System.out.println("info[" + i + "]: " + info[i]);
     public int mountClients(String mdServer, String fsName, String [] clients)
         throws SamFSException {
 
-        // TODO: To be verified
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(mdServer);
 
@@ -337,8 +309,7 @@ System.out.println("info[" + i + "]: " + info[i]);
             throw new SamFSException("logic.hostIsDown");
         }
 
-        // return FS.mountClients(model.getJniContext(), fsName, clients);
-        return 0;
+        return FS.mountClients(model.getJniContext(), fsName, clients);
     }
 
     /*
@@ -349,7 +320,6 @@ System.out.println("info[" + i + "]: " + info[i]);
     public int unmountClients(String mdServer, String fsName, String [] clients)
         throws SamFSException {
 
-        // TODO: To be verified
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(mdServer);
 
@@ -357,8 +327,7 @@ System.out.println("info[" + i + "]: " + info[i]);
             throw new SamFSException("logic.hostIsDown");
         }
 
-        // return FS.unmountClients(model.getJniContext(), fsName, clients);
-        return 0;
+        return FS.unmountClients(model.getJniContext(), fsName, clients);
     }
 
     /*
@@ -369,7 +338,6 @@ System.out.println("info[" + i + "]: " + info[i]);
     public int setSharedFSMountOptions(String mdServer, String fsName,
 	String [] clients, MountOptions mo) throws SamFSException {
 
-        // TODO: To be verified
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(mdServer);
 
@@ -438,6 +406,7 @@ System.out.println("info[" + i + "]: " + info[i]);
 
         return FS.addStorageNode(model.getJniContext(),
                     hpcFSName, nodeName, nodeIP, myFSInfo, nodeData);
+
     }
 
 
@@ -446,12 +415,16 @@ System.out.println("info[" + i + "]: " + info[i]);
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int removeStorageNode(String hpcFSName, String nodeName)
+    public int removeStorageNode(
+        String mdServer, String hpcFSName, String [] nodeNames)
         throws SamFSException {
 
-        // TODO: To be verifiedd
-        // return FS.removeStorageNode(hpcFSName, nodeName);
-        return 0;
+        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
+            this.appModel.getSamQFSSystemModel(mdServer);
+
+        // TODO: check to see if node removal is supported or not
+        return FS.removeStorageNode(
+            model.getJniContext(), hpcFSName, nodeNames[0]);
     }
 
 

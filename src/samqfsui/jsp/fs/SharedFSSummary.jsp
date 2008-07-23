@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.6 2008/07/16 23:45:03 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.7 2008/07/23 17:38:38 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -47,7 +47,11 @@
     <ui:script url="/js/popuphelper.js"/>
     <ui:script url="/js/fs/SharedFS.js"/>
 </ui:head>
-<ui:body id="SharedFSBody">
+<ui:body id="SharedFSBody"
+         onLoad="
+                if (parent.serverName != null) {
+                    parent.setSelectedNode('0', 'SharedFS');
+                }">
 <ui:form id="SharedFSForm">
     <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsSummary}" />
     <ui:tabSet binding="#{SharedFSBean.tabSet}" selected="summary" />

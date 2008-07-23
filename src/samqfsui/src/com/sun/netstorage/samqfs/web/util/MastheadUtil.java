@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MastheadUtil.java,v 1.48 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: MastheadUtil.java,v 1.49 2008/07/23 17:38:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -187,6 +187,16 @@ public class MastheadUtil {
             return HelpLinkConstants.FILE_SYSTEM_UTILIZATION;
         } else if (fileName.equals("Registration")) {
             return HelpLinkConstants.REGISTRATION;
+        } else if (fileName.equals("AboutSAMQFS")) {
+            return HelpLinkConstants.ABOUT_SAMQFS;
+        } else if (fileName.equals("FirstTimeConfig")) {
+            return HelpLinkConstants.FIRST_TIME_CONFIG;
+        } else if (fileName.equals("SharedFS")) {
+            return HelpLinkConstants.SHARED_FS_SUMMARY;
+        } else if (fileName.equals("SharedFSClient")) {
+            return HelpLinkConstants.SHARED_FS_CLIENTS;
+        } else if (fileName.equals("SharedFSStorageNode")) {
+            return HelpLinkConstants.SHARED_FS_STORAGE_NODES;
         } else {
             return "";
         }

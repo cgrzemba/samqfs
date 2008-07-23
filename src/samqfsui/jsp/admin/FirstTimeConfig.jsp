@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.2 2008/06/25 23:23:26 kilemba Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.3 2008/07/23 17:38:38 ronaldso Exp $
 --%>
 
 <%@page info="CommonTasks" language="java" %>
@@ -39,14 +39,18 @@
 <jato:useViewBean className="com.sun.netstorage.samqfs.web.admin.FirstTimeConfigViewBean">
 
 <script tyep="text/javascript" src="/samqfsui/js/popuphelper.js"></script>
-<script type="text/javascript" src="/samqfsui/js/admin/firsttimeconfig.js"/></script>
+<script type="text/javascript" src="/samqfsui/js/admin/firsttimeconfig.js"/>
 
 <cc:header
-    pageTitle="node.firsttimeconfig" 
-    copyrightYear="2007" 
+    pageTitle="node.firsttimeconfig"
+    copyrightYear="2007"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
+    onLoad="
+        if (parent.serverName != null) {
+            parent.setSelectedNode('201', 'FirstTimeConfig');
+        }"
     bundleID="samBundle">
-        
+
 
 <jato:form name="FirstTimeConfigForm">
 <cc:alertinline name="Alert" bundleID="samBundle"/>

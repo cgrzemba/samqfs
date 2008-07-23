@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.124 2008/06/17 16:04:28 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.125 2008/07/23 17:38:40 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -1659,6 +1659,29 @@ public class SamUtil {
         }
         // if we get this far, the path is well-formed
         return true;
+    }
+
+    /**
+     * A utility method to test if the input string is a valid IP address
+     * string.  This method only tests if the string is well-formed, but not
+     * checking if the address is valid.
+     *
+     * @param testString - the candidate IP address string
+     * @return boolean - true if string is a well-formed IP address
+     */
+    public static boolean isValidIPAddress(String testString) {
+        // No spaces allowed
+        if (!isValidString(testString)) {
+            return false;
+        }
+        String _255 = "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
+        Pattern p = Pattern.compile( "^(?:" + _255 + "\\.){3}" + _255 + "$");
+        Matcher matcher = p.matcher(testString);
+
+        if (matcher.matches()) {
+            return true;
+        }
+        return false;
     }
 
     /**
