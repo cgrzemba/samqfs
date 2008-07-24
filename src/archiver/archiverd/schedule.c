@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -2260,11 +2260,15 @@ requeueEntries(void)
 {
 	struct QueueEntry *qe, *qeNext;
 
+	PthreadMutexLock(&scheduleMutex);
+
 	for (qe = waitQ.QuHead.QeFwd; qe != &waitQ.QuHead; qe = qeNext) {
 		qeNext = qe->QeFwd;
 		QueueRemove(qe);
 		ComposeEnqueue(qe);
 	}
+
+	PthreadMutexUnlock(&scheduleMutex);
 }
 
 
