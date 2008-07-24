@@ -1,0 +1,254 @@
+libpax_hdr Documentation:
+
+Overview:
+---------
+
+libpax_hdr provides a facility for reading and writing pax
+archive headers.  Standard fields in the header can be
+manipulated using the functions in pax_hdr.h without getting into
+the underlying implementation of extended headers and the pairs
+they're made up of.  Extended headers are constructed of pax_pair
+structures, which can be manipulated using the functions in
+pax_pair.h.  Extended headers can be manipulated as a whole using
+the functions in pax_xhdr.h.  It is assumed that the reader has
+at least passing familiarity with the pax header format and the
+ustar format on which it is based.
+
+Headers:
+--------
+
+pax_hdr.h - high level handling of standardized header fields
+pax_xhdr.h - handling of extended headers as a whole
+pax_pair.h - provides low-level handling of individual extended
+header records
+pax_err.h - provides a list of the error codes returned by the
+library
+pax_util.h - low-level routines primarily for internal use that
+may be useful to external users
+
+High-level functionality overview:
+----------------------------------
+
+The functionality exposed in pax_hdr.h is designed to meet the
+needs of users who only need to manipulate standard fields in the
+pax header.  This section covers the creation of a pax header
+without non-standard fields.
+
+Building a header to write:
+
+An empty pax header is created using ph_create_hdr, a pax header
+is destroyed by calling ph_destroy_hdr.  An empty header can be
+filled using the provided set methods from information obtained
+from the system.  Set methods are provided for the standardized
+fields in the pax header.  These standard fields are: name,
+linkname, uname, gname, uid, gid, size, mtime, atime, type, mode,
+devmajor, and devminor.  With the exception of mode, devmajor,
+and devminor, which have no standardized extended header keyword,
+values that overflow the available space in the ustar header
+block are stored transparently in the extended header.  Values
+that could be interpreted ambiguously in the ustar header block
+are also stored in extended headers.  This notably applies to uid
+and gid, which don't have a standardized signedness.  Set
+functions are provided for all of the fields listed above.
+
+Typical prototypes are:
+
+int ph_set_name (pax_hdr_t *hdr, char *name);
+int ph_set_gid (pax_hdr_t *hdr, gid_t *gid);
+int ph_set_atime (pax_hdr_t *hdr, pax_time_t *atime);
+
+The only non-standard type taken by the set and get functions is
+pax_time_t, defined in pax_pair.h, which provides time up to
+2^63-1 seconds, with a resolution of nanoseconds.  System times
+must be converted to and from pax_time_t when using the time-
+related functions in the pax library.
+
+Once a header has been created, it needs to be written into a
+buffer in its on-medium form.  The required size of the buffer
+can be determined by calling ph_get_header_size, which will
+return the required size of the buffer rounded to an even block
+(512 byte) size, as well as the exact size of the data that will
+be written to this buffer.  The remaining space in the buffer
+will be zero filled.
+
+px_write_hdr takes as one of its parameters a callback function
+that it uses to generate appropriate names for files that have
+their name in the extended header data.  This is used so that a
+non-pax compliant archiver can extract the extended header data
+and the file data into 2 separate regular files with names that
+are related.  Please see the header file for comprehensive
+documentation of this feature.  A functioning sample
+implementation is provided as well.
+
+Reading a header to process:
+
+To determine if a buffer contains a pax header, use the function
+ph_is_pax_hdr, which must be passed a buffer of exactly 512
+bytes.  ph_is_pax_hdr will read this buffer, and then try to
+determine if it is a pax header, and if so, the type.  The return
+value of ph_is_pax_hdr is an error code determined by the type of
+header, or if the buffer does not contain a pax header, the
+return value will be PX_ERROR_NOT_PAX_HEADER.  The returns for
+valid header types are:
+
+PX_SUCCESS_STD_HEADER for a header without extended header data
+PX_SUCCESS_GLOBAL_HEADER for a header with extended header data
+that applies to the whole archive
+PX_SUCCESS_EXT_HEADER for a header with extended header data that
+applies to only the following file in the archive
+
+NOTE: global headers are not currently supported by the pax_hdr
+library.  If a global header is found, the return value will be
+PX_ERROR_NOT_SUPPORTED.
+
+For both extended and global headers, the number of additional
+bytes that comprise the header is returned.  This allows the
+correct number of bytes to be passed to ph_load_pax_hdr
+(described below), or allows the application to skip the
+unsupported global header and resume processing immediately
+thereafter.  According to the standard, a regular header or
+extended header should follow a global header, if not it is an
+invalid archive.
+
+If ph_is_pax_hdr returns PX_ERROR_NOT_SUPPORTED and 1024
+additional bytes, the end of the extended header data for the
+global header comes immediately before a pax header for a file
+like so:  [512 byte 'g' header block][1024 bytes of extended
+header data][pax header with or without extended data][file data]
+
+ph_load_pax_hdr is used to load a buffer containing a complete
+pax header.  This means that it must contain either a regular
+header block (for a header without extended data), or a header
+block for extended data, followed by extended data, followed by a
+regular header block for the file data that follows.
+ph_load_pax_hdr attempts to validate this format before trying to
+load the header, and will return an error if it does not find it.
+Additionally, if the total size of the buffer passed to
+ph_load_pax_hdr does not exactly match the required size for the
+form, an error is returned.  For example:
+
+If ph_is_pax_hdr returns PX_SUCCESS_STD_HEADER and zero
+additional bytes, the required buffer size is exactly 512 bytes
+in the form:
+[512 byte standard header block]
+
+If ph_is_pax_hdr returns PX_SUCCESS_EXT_HEADER and 1536
+additional bytes, the required buffer size is exactly 2048 bytes
+in the form:
+[512 byte 'x' header block][1024 bytes of extended header
+data][512 byte standard header block]
+
+Once the header is loaded, the standard fields in the header can
+be accessed with a set of get functions that match the set
+functions.
+
+Advanced use:
+-------------
+
+This section covers the use of entries in the extended header
+data that are not standardized.  Further low-level functionality
+is exposed, but not documented here.  For complete documentation,
+please refer to the header files.
+
+Extended headers consist of ordered collections of pairs of
+keywords and values.  The pax standard specifies a format for
+these pairs in the archive.  The functions in pax_pair.h are
+provided to do input and and output in the standard format, and
+the functions in pax_xhdr.h provide a way of manipulating the
+collection of pairs.
+
+lib_pax provides the concept of pairs that have types.  This is
+not a part of the standard, and is provided as a convenience to
+the user of the library.  The types of pairs supported are time,
+signed 64 bit integer, unsigned 64 bit integer, and string.
+Strings provide the bare implementation of a basic key/value
+pair.  The other types provide parsing and output appropriate to
+the type.  uid/gid and atime are stored in these types by the
+code in pax_hdr.c, for example.
+
+Important note:
+
+Before proceeding, note that modifying the extended headers for a
+pax_hdr_t for standardized keywords that can also be stored as
+fields in the ustar header block could cause surprising and
+unpleasant side-effects.
+
+To create a pair to add to a header, use the pxp_create_pair for
+the type you need.  Note that pxp_mkpair_line is used to create a
+pair from a correctly formatted line as it would be written to or
+read from a header.  pxp_mkpair_line probably isn't what you want
+to use, unless you're copying portions of a header that you've
+read from disk.
+
+Once you've created a pair, you can add it to an extended header
+with pxh_put_pair.  pxh_put_pair does not copy the pair; once you
+put a pair in an extended header, it is owned by the extended
+header until it is removed or destroyed.
+
+Pairs in an extended header can be queried with pxh_get_pair.
+pxh_get_pair returns one or all of the pairs that match the
+keyword provided.  Internally, it allocates an array of pointers
+to pairs to return.  This array must be freed EVEN IF ONLY ONE
+MATCH IS REQUESTED.  The pairs pointed to still belong to the
+header, and must NOT be freed.  Also of note, you should not
+iterate over the pairs that are returned by their internal
+pointers, otherwise, you will get other pairs in the extended
+header that don't match the requested keyword.
+
+Pairs in extended header are removed using pxh_remove_pair.  This
+function can remove either one or all of the pairs in the header.
+The list returned may then be destroyed, and all resources freed
+using pxp_destroy_pairs.
+
+In the case of both pxh_get_pair and pxh_remove_pair, the pairs
+are returned in order of most recently added first.  This is
+consistent with the pax standard, where the last occurrence of a
+keyword in a header is the one that is taken to be authoritative
+for the file.  When a header is loaded from a buffer, the last
+occurrence of a keyword will be the most recently added pair, and
+can be retrieved without querying all of the matches.
+
+When an extended header is loaded from media, the pairs assume a
+generic type.  Any of the pxp_parse functions may be called to
+try to parse the value appropriately.  They will return an error
+if the parse fails for some reason.  Parsing the pair as a string
+should always work given a valid line to parse.  Pairs that are
+created from a line (internally done with pxp_create_pair_line
+when a header is loaded) have mutable types, you may attempt to
+parse them as any type, and if the conversion is possible, the
+attempt will succeed.  Pairs that are created with
+pxp_create_pair_[type] have immutable types.
+
+To simplify this distinction, pxp_get_[type] is provided which
+will return an appropriate error if the type is immutable and the
+types don't match, and call the appropriate parse function if the
+type is mutable.  The same parse errors are returned for mutable
+types as if the parse function had been called directly.
+pxp_get_line is special; it is used to get the formatted line for
+a pair.  Internally, it is used when writing a pax_hdr for output
+to media.  However, its functionality is exposed so that the
+formatted line is available if needed.  Calling it for a parsed
+(mutable) type will return success and give back the current line
+without performing any reformatting.  The force option has no
+effect in this case.
+
+To manipulate the extended headers for a pax_hdr struct, use the
+pax_hdr_t.xhdr_list pointer.  An example from the SAM code:
+
+        pax_pair_t *ctime_pair = NULL;
+        pax_time_t ctime;
+
+        samTimeToPaxTime(st->st_ctime, &ctime);
+
+        ctime_pair = pxp_mkpair_time(SAM_ctime, ctime);
+        status = pxh_put_pair(&hdr->xhdr_list, ctime_pair, 0);
+        /* test status for failure */
+
+Further Information:
+--------------------
+
+Generally speaking, functions not documented here are not
+designed to be needed for common use of the pax library.
+Documentation for them is available in the header files listed at
+the beginning of the documentation if needed.
+

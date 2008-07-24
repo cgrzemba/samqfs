@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 #include "sam/osversion.h"
 
@@ -1329,7 +1329,7 @@ syscall_stage_response(
 					ip->stage_pid = SAM_CUR_PID;
 					ip->no_opens++;
 					opened = 1;
-					if (stage->directio) { 
+					if (stage->directio) {
 						sam_set_directio(ip,
 						    DIRECTIO_ON);
 					}
