@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -730,10 +730,8 @@ drive_state_change(
 		}
 
 	case DEV_DOWN:			/* switching to */
-		down_drive(drive, USER_STATE_CHANGE);
-		mutex_lock(&drive->un->mutex);
-		drive->un->state = DEV_DOWN;
-		mutex_unlock(&drive->un->mutex);
+		sam_syslog(LOG_WARNING, "Request to down device from user :"
+		    " Not supported.");
 		break;
 
 	default:

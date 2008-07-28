@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -47,6 +47,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 #include "sam/types.h"
 #include "sam/param.h"
+#include "sam/lib.h"
 #include "aml/device.h"
 #include "aml/dev_log.h"
 #include "aml/scsi.h"
@@ -72,24 +73,6 @@ down_library(
 	DownDevice(library->un, source);
 }
 
-
-/*
- * stop_use_of_drive - stop using a particular drive
- */
-void
-stop_use_of_drive(
-	drive_state_t *drive)
-{
-
-	/* Move the list to the library */
-	mutex_lock(&drive->list_mutex);
-	mutex_lock(&drive->library->list_mutex);
-	move_list(drive, drive->library);
-	mutex_unlock(&drive->library->list_mutex);
-	mutex_unlock(&drive->list_mutex);
-}
-
-
 /*
  * down_drive - shut down the use of a drive.
  *
@@ -101,14 +84,24 @@ down_drive(
 	drive_state_t *drive,
 	int source)
 {
-	drive->status.b.offline = TRUE;
+	if (source != USER_STATE_CHANGE) {
+		mutex_lock(&drive->list_mutex);
+		mutex_lock(&drive->library->list_mutex);
+		drive->status.b.offline = TRUE;
+	
+		mutex_lock(&drive->un->mutex);
+		DownDevice(drive->un, source);
+		drive->un->status.bits = 0;
+		mutex_unlock(&drive->un->mutex);
 
-	mutex_lock(&drive->un->mutex);
-	DownDevice(drive->un, source);
-	drive->un->status.bits = 0;
-	mutex_unlock(&drive->un->mutex);
-
-	stop_use_of_drive(drive);
+		/* Move the list to the library */
+		move_list(drive, drive->library);
+		mutex_unlock(&drive->library->list_mutex);
+		mutex_unlock(&drive->list_mutex);
+	} else {
+		sam_syslog(LOG_WARNING, "Request to down device from user :"
+		    " Not supported.");
+	}
 }
 
 /*
@@ -122,6 +115,8 @@ off_drive(
 	drive_state_t *drive,
 	int source)
 {
+	mutex_lock(&drive->list_mutex);
+	mutex_lock(&drive->library->list_mutex);
 	drive->status.b.offline = TRUE;
 
 	mutex_lock(&drive->un->mutex);
@@ -129,5 +124,8 @@ off_drive(
 	drive->un->status.bits = 0;
 	mutex_unlock(&drive->un->mutex);
 
-	stop_use_of_drive(drive);
+	/* Move the list to the library */
+	move_list(drive, drive->library);
+	mutex_unlock(&drive->library->list_mutex);
+	mutex_unlock(&drive->list_mutex);
 }

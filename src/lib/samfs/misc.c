@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 static char    *_SrcFile = __FILE__;
 
@@ -206,17 +206,21 @@ ChangeMode(const char *name, const int mode)
 void
 DownDevice(dev_ent_t *un, int source_flag)
 {
+	
 
-	DevLog(DL_ALL(1008));
 	if (source_flag != USER_STATE_CHANGE) {
+		DevLog(DL_ALL(1008));
 		SendCustMsg(HERE, 9301, un->eq);
 		un->state = DEV_DOWN;
 
 		HandleMediaInOffDevice(un);
 		send_notify_email(un, "dev_down.sh");
 	} else {
+		sam_syslog(LOG_WARNING, "Request to down device from user :"
+		    " Not supported.");
 		SendCustMsg(HERE, 9311, un->eq);
 	}
+
 }
 
 
