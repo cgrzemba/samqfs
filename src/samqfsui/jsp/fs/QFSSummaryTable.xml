@@ -27,15 +27,24 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: QFSSummaryTable.xml,v 1.18 2008/07/03 00:04:28 ronaldso Exp $ -->
+<!-- $Id: QFSSummaryTable.xml,v 1.19 2008/07/30 21:00:35 kilemba Exp $ -->
 
 <table>
 <actions>
-    <cc name="SamQFSWizardNewFSButton"
-        tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
-        <attribute name="dynamic" value="true" />
-        <attribute name="disabled" value="true" />
+    <cc name="NewFSButton"
+        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+        <attribute name="dynamic" value="true"/>
+        <attribute name="disabled" value="false"/>
+        <attribute name="defaultValue" value="FSSummary.NewFSButton"/>
+        <attribute name="onClick" value="
+            launchPopup('/fs/NewFileSystemPopup',
+                        'new_fs_popup',
+                        getServerKey(),
+                        SIZE_NORMAL,
+                        null);
+            return false; "/>
     </cc>
+
     <cc name="ViewFilesButton" 
 	tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
         <attribute name="dynamic" value="true" />
@@ -86,7 +95,7 @@
 
 <column name="fsName" sortname="fsNameText" extrahtml="valign='center'">
     <cc name="Href" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
-        <attribute name="submitFormData" value="true"/>
+        <attribute name="onClick" value="return handleFSNameClick(this);"/>
         <cc name="fsNameText"
             tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
     </cc>
@@ -96,6 +105,7 @@
         tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
     <cc name="HiddenDynamicMenuOptions"
         tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
+    <cc name="ProtoFSField" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
 </column>
 
 
