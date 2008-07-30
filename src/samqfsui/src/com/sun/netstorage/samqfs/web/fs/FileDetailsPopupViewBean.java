@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopupViewBean.java,v 1.23 2008/07/08 21:40:32 ronaldso Exp $
+// ident	$Id: FileDetailsPopupViewBean.java,v 1.24 2008/07/30 19:55:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -943,6 +943,12 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
             FileUtil.STAGE_ATTS |
             FileUtil.SEGMENT_ATTS |
             FileUtil.COPY_DETAIL;
+
+        TraceUtil.trace2(
+            "Getting File Information: fsName: " + fsName +
+            " recoveryPoint: " + getRecoveryPoint() +
+            " relativePathName: " + relativePathName +
+            " theseDetails: " + theseDetails);
 
         return fsManager.getFileInformation(
                     fsName,

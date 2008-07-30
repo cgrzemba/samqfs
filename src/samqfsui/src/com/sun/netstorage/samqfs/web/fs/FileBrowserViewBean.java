@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserViewBean.java,v 1.27 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FileBrowserViewBean.java,v 1.28 2008/07/30 19:55:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -131,6 +131,7 @@ public class FileBrowserViewBean extends CommonViewBeanBase {
 
     // Selected File Name
     public static final String SELECTED_FILE = "SelectedFile";
+    public static final String SELECTED_FILE_IS_DIR = "SelectedFileIsDir";
 
     // Role of the user
     public static final String ROLE = "Role";
@@ -218,6 +219,7 @@ public class FileBrowserViewBean extends CommonViewBeanBase {
         registerChild(MOUNT_MESSAGE, CCHiddenField.class);
         registerChild(MOUNT_HREF, CCHref.class);
         registerChild(SELECTED_FILE, CCHiddenField.class);
+        registerChild(SELECTED_FILE_IS_DIR, CCHiddenField.class);
         registerChild(ROLE, CCHiddenField.class);
 
         PageTitleUtil.registerChildren(this, pageTitleModel);
@@ -241,6 +243,7 @@ public class FileBrowserViewBean extends CommonViewBeanBase {
             name.equals(SNAP_PATH) ||
             name.equals(MOUNT_MESSAGE) ||
             name.equals(SELECTED_FILE) ||
+            name.equals(SELECTED_FILE_IS_DIR) ||
             name.equals(ROLE)) {
             return new CCHiddenField(this, name, null);
         } else if (name.equals(MODE_RADIO)) {

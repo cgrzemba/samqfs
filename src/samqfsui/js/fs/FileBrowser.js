@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: FileBrowser.js,v 1.13 2008/05/16 19:39:13 am143972 Exp $
+// ident    $Id: FileBrowser.js,v 1.14 2008/07/30 19:55:51 ronaldso Exp $
 
 /**
  * This is the javascript file for the File Brwoser Page
@@ -77,7 +77,7 @@
     function launchStagePopup(field) {
         var myForm      = document.FileBrowserForm;
         var fileNames   = field.form.elements[
-            "FileBrowser.fileNames"].value.split(";");
+            "FileBrowser.fileNames"].value.split(";#;");
         var fileToStage = fileNames[modelIndex];
 
         var prefixWithIndex = prefixTiled + modelIndex + "].";
@@ -89,16 +89,16 @@
         var snapPath    = myForm.elements["FileBrowser.snapPath"].value;
         if ("live" == snapPath) snapPath = "";
 
-        var params = "&filetostage=" + fileToStage +
+        var params = "&filetostage=" + encodeURIComponent(fileToStage) +
                      "&isdir=" + isDir +
                      "&fsname=" + getFSInfo(0) +
-                     "&mountpoint=" + getFSInfo(1) +
-                     "&snappath=" + snapPath;
+                     "&mountpoint=" + encodeURIComponent(getFSInfo(1)) +
+                     "&snappath=" + encodeURIComponent(snapPath);
         var name = "stage_file_popup";
         var uri = "/fs/StagePopup";
 
         // need to collect parameters : fs name, file name at the very least
-        var win = launchPopup(uri, name, null, null, encodeURI(params));
+        var win = launchPopup(uri, name, null, null, params);
         win.focus();
         return false;
     }
@@ -115,11 +115,11 @@
         if (entire) {
             params = "&filetorestore=" + "##all##" +
                      "&fsname=" + getFSInfo(0) +
-                     "&mountpoint=" + getFSInfo(1) +
-                     "&snappath=" + snapPath;
+                     "&mountpoint=" + encodeURIComponent(getFSInfo(1)) +
+                     "&snappath=" + encodeURIComponent(snapPath);
         } else {
             var fileNames   = field.form.elements[
-                "FileBrowser.fileNames"].value.split(";");
+                "FileBrowser.fileNames"].value.split(";#;");
             var fileToRestore = fileNames[modelIndex];
 
             var prefixWithIndex = prefixTiled + modelIndex + "].";
@@ -129,18 +129,17 @@
             var hiddenArr = hidden.split("###");
             var isDir     = hiddenArr[2] == "true";
 
-            var snapPath    = myForm.elements["FileBrowser.snapPath"].value;
             if ("live" == snapPath) snapPath = "";
 
-            params = "&filetorestore=" + fileToRestore +
+            params = "&filetorestore=" + encodeURIComponent(fileToRestore) +
                      "&fsname=" + getFSInfo(0) +
-                     "&mountpoint=" + getFSInfo(1) +
+                     "&mountpoint=" + encodeURIComponent(getFSInfo(1)) +
                      "&isdir=" + isDir +
-                     "&snappath=" + snapPath;
+                     "&snappath=" + encodeURIComponent(snapPath);
         }
 
         // need to collect parameters : fs name, file name at the very least
-        var win = launchPopup(uri, name, null, null, encodeURI(params));
+        var win = launchPopup(uri, name, null, null, params);
         win.focus();
         return false;
     }
@@ -163,7 +162,7 @@
         var isArchiving = field.form.elements[
             "FileBrowser.isArchiving"].value;
         var fileNames = field.form.elements[
-            "FileBrowser.fileNames"].value.split(";");
+            "FileBrowser.fileNames"].value.split(";#;");
         var fileToView = fileNames[modelIndex];
 
         // retrieve if the entry is a directory or a file
@@ -176,11 +175,11 @@
         if ("live" == snapPath) snapPath = "";
 
         var params = "&fsname=" + getFSInfo(0) +
-                     "&mountpoint=" + getFSInfo(1) +
-                     "&filetoview=" + fileToView +
+                     "&mountpoint=" + encodeURIComponent(getFSInfo(1)) +
+                     "&filetoview=" + encodeURIComponent(fileToView) +
                      "&isdir=" + isDir +
                      "&isarchiving=" + isArchiving +
-                     "&snappath=" + snapPath;
+                     "&snappath=" + encodeURIComponent(snapPath);
         var name = "file_details_popup_" + uniqueWindowKey;
         uniqueWindowKey++;
         var uri = "/fs/FileDetailsPopup";
@@ -257,7 +256,6 @@
 
     function handleFileSelection(field) {
         var disabled      = true;
-        var stageDisabled = true;
 
         var buttonView    = prefix + "ViewDetails";
         var actionMenu    = prefix + "ActionMenu";
@@ -321,9 +319,12 @@
 
             // save selectedFile for javascript pop up and java handler
             var fileNames   = myForm.elements[
-                                "FileBrowser.fileNames"].value.split(";");
-            selectedFile    = fileNames[modelIndex] + "###" + hiddenArr[2];
-            myForm.elements["FileBrowser.SelectedFile"].value = selectedFile;
+                                "FileBrowser.fileNames"].value.split(";#;");
+            selectedFile = fileNames[modelIndex];
+            myForm.elements[
+                "FileBrowser.SelectedFile"].value = selectedFile;
+            myForm.elements[
+                "FileBrowser.SelectedFileIsDir"].value = hiddenArr[2];
         }
 
         // Archive

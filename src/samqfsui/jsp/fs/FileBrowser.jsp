@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowser.jsp,v 1.15 2008/05/16 19:39:19 am143972 Exp $
+// ident	$Id: FileBrowser.jsp,v 1.16 2008/07/30 19:55:51 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %> 
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -135,6 +135,7 @@
 
 <!-- Selected File Entry Name -->
 <cc:hidden name="SelectedFile" />
+<cc:hidden name="SelectedFileIsDir" />
 
 <!-- Role of the user, for javascript to determine if drop down items need to
      be disabled -->

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserView.java,v 1.25 2008/07/08 21:40:32 ronaldso Exp $
+// ident	$Id: FileBrowserView.java,v 1.26 2008/07/30 19:55:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -258,7 +258,7 @@ public class FileBrowserView extends CommonTableContainerView {
 
                 if (fileNames.length() > 0) {
                     model.appendRow();
-                    fileNames.append(";").append(name);
+                    fileNames.append(";#;").append(name);
                 } else {
                     fileNames.append(name);
                 }
@@ -470,16 +470,15 @@ public class FileBrowserView extends CommonTableContainerView {
 
         int option = getDropDownMenuValue();
         FileBrowserViewBean parent = (FileBrowserViewBean) getParentViewBean();
-        String selectedFileInfo =
-            (String) parent.getDisplayFieldValue(parent.SELECTED_FILE);
-        String [] fileInfo = selectedFileInfo.split("###");
-        boolean dir =
-            fileInfo == null || fileInfo.length != 2 ?
-                false :
-                "true".equals(fileInfo[1]);
         String selectedFileName =
-            fileInfo == null || fileInfo.length != 2 ?
-                "" : fileInfo[0];
+            (String) parent.getDisplayFieldValue(parent.SELECTED_FILE);
+        String dirString =
+            (String) parent.getDisplayFieldValue(parent.SELECTED_FILE_IS_DIR);
+        boolean dir =
+            dirString == null ?
+                false :
+                "true".equals(dirString);
+
         long jobID = -1;
         String operation;
 

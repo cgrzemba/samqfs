@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopup.js,v 1.5 2008/05/16 19:39:13 am143972 Exp $
+// ident	$Id: FileDetailsPopup.js,v 1.6 2008/07/30 19:55:51 ronaldso Exp $
 
     /**
      * Scroll to the bottom of the page if user is editing file attributes.
@@ -68,13 +68,13 @@
         var prefix = "FileDetailsPopup.ChangeFileAttributesView.";
         var radio = myForm.elements[prefix + "Radio"];
         var elementName;
-
+        var subRadio;
         // no need to do anything for archive
         if (mode == 1) {
             elementName = prefix + "SubRadio";
             ccSetRadioButtonDisabled(
                 elementName, myForm.name, radio[0].checked);
-            var subRadio = myForm.elements[elementName];
+            subRadio = myForm.elements[elementName];
             if (subRadio.value == undefined) {
                 subRadio[0].checked = true;
             }
@@ -90,7 +90,7 @@
             elementName = prefix + "SubRadio";
             ccSetRadioButtonDisabled(
                 elementName, myForm.name, radio[0].checked);
-            var subRadio = myForm.elements[elementName];
+            subRadio = myForm.elements[elementName];
             if (subRadio.value == undefined) {
                 subRadio[0].checked = true;
             }
