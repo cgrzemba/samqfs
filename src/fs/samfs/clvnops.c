@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.189 $"
+#pragma ident "$Revision: 1.190 $"
 
 #include "sam/osversion.h"
 
@@ -389,6 +389,7 @@ sam_client_open_vn(
 	sam_node_t *ip;
 	vnode_t *vp = *vpp;
 	int error = 0;
+	int dec_no_opens = 0;
 
 	ip = SAM_VTOI(vp);
 	TRACE(T_SAM_CL_OPEN, vp, ip->di.id.ino, filemode, ip->di.status.bits);
@@ -447,30 +448,13 @@ sam_client_open_vn(
 	 * under the assumption that the file will soon be read.
 	 */
 	if (S_ISREG(ip->di.mode)) {
+		proc_t *p = ttoproc(curthread);
+
 		if (MANDLOCK(vp, ip->di.mode)) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			error = EACCES;
 			goto out;
 		}
-		if (ip->no_opens == 0) {
-			sam_lease_data_t data;
-
-			bzero(&data, sizeof (data));
-			data.ltype = LTYPE_open;
-			data.alloc_unit = ip->cl_alloc_unit;
-			data.filemode = filemode;
-			data.shflags.b.directio = ip->flags.b.directio;
-			data.shflags.b.abr = ip->flags.b.abr;
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-			error = sam_proc_get_lease(ip, &data,
-			    NULL, NULL, SHARE_wait, credp);
-			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
-		}
-	}
-
-	if (error == 0) {
-		proc_t *p = ttoproc(curthread);
-
 		/*
 		 * If exec'ed program, don't increment count because there is
 		 * no close. Note that this means we may request multiple open
@@ -480,20 +464,53 @@ sam_client_open_vn(
 		 *		when the inode was inactive except for holds
 		 *		due to leases.
 		 */
+		mutex_enter(&ip->fl_mutex);
 		if (!(p->p_proc_flag & P_PR_EXEC)) {
-			mutex_enter(&ip->fl_mutex);
 			ip->no_opens++;
+			dec_no_opens = 1;
+		}
+
+		if ((ip->no_opens == 0) || ((ip->no_opens == 1) && dec_no_opens)) {
+			sam_lease_data_t data;
+
+			mutex_exit(&ip->fl_mutex);
+			bzero(&data, sizeof (data));
+
+			data.ltype = LTYPE_open;
+			data.alloc_unit = ip->cl_alloc_unit;
+			data.filemode = filemode;
+			data.shflags.b.directio = ip->flags.b.directio;
+			data.shflags.b.abr = ip->flags.b.abr;
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+			error = sam_proc_get_lease(ip, &data,
+			    NULL, NULL, SHARE_wait, credp);
+			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+		} else {
 			mutex_exit(&ip->fl_mutex);
 		}
-	} else if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
-		/*
-		 * If error on open and no mmap pages, update
-		 * inode on the server and cancel lease. LEASE_remove waits
-		 * for the response. This allows the allocated pages to be
-		 * released.
-		 */
-		if (S_ISREG(ip->di.mode)) {
-			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
+	}
+
+	if (error != 0) {
+		mutex_enter(&ip->fl_mutex);
+		if (dec_no_opens) {
+			ip->no_opens--;
+			if (ip->no_opens < 0) {
+				ip->no_opens = 0;
+			}
+		}
+		if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
+			/*
+			 * If error on open and no mmap pages, update
+			 * inode on the server and cancel lease. LEASE_remove waits
+			 * for the response. This allows the allocated pages to be
+			 * released.
+			 */
+			mutex_exit(&ip->fl_mutex);
+			if (S_ISREG(ip->di.mode)) {
+				error = sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
+			}
+		} else {
+			mutex_exit(&ip->fl_mutex);
 		}
 	}
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
@@ -756,6 +773,14 @@ retry:
 			write_lock = TRUE;
 		}
 
+		if (S_ISREG(ip->di.mode) && vn_has_cached_data(vp)) {
+			/*
+			 * Will drop and reacquire the
+			 * inode_rwl, RW_WRITER lock.
+			 */
+			sam_flush_pages(ip, 0);
+		}
+
 		/*
 		 * Now that we hold inode_rwl,RW_WRITER we
 		 * need to check for a new open.
@@ -770,11 +795,6 @@ retry:
 		}
 		if (!last_close) {
 			goto done;
-		}
-
-		if (S_ISREG(ip->di.mode) && vn_has_cached_data(vp)) {
-
-			sam_flush_pages(ip, 0);
 		}
 	}
 
