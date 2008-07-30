@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 
 #include "sam/osversion.h"
 
@@ -88,6 +88,8 @@ static const struct sam_empty_dir empty_directory_template = {
 extern ushort_t sam_dir_gennamehash(int nl, char *np);
 static int sam_restore_new_ino(sam_node_t *pip, struct sam_perm_inode *permp,
 	struct buf **bpp, sam_id_t *idp);
+static int sam_restore_hardlink(sam_node_t *, struct sam_perm_inode *,
+    buf_t **, sam_id_t *);
 static int sam_make_dir(sam_node_t *pip, sam_node_t *ip, cred_t *credp);
 static int sam_make_dirslot(sam_node_t *ip, struct sam_name *namep,
 	struct fbuf **fbpp);
@@ -397,7 +399,7 @@ sam_restore_name(
 	sam_node_t *pip,		/* parent directory inode. */
 	char *cp,			/* Pointer to component name. */
 	struct sam_name *namep,		/* sam_dirent that holds the slot */
-	struct sam_perm_inode *permp,	/* Pointer to sam permanent inode */
+	struct sam_perm_inode *permp,	/* Pointer to old permanent inode */
 	sam_id_t *ridp,			/* Returned id pointer */
 	cred_t *credp)			/* Credentials pointer. */
 {
@@ -440,40 +442,19 @@ sam_restore_name(
 	}
 
 	/*
-	 * Create the new inode if nlink == 1. Otherwise, create the new
-	 * hard link.
+	 * Create the new inode if nlink == 1. (this file may have 
+	 * a link count > 1, but samfsrestore sets
+	 * nlink to 1 as a signal that this is the first instance of a 
+	 * hard link).  Otherwise, create the new hard link. samfsrestore
+	 * has put the new inode number in the old inode image.
 	 */
 	if (permp->di.nlink == 1) {
 		if ((error = sam_restore_new_ino(pip, permp, &bp, &id))) {
 			goto out;
 		}
 	} else {
-		if (permp->di.version == SAM_INODE_VERSION) {
-			struct sam_perm_inode *permip;
-			sam_disk_inode_t di;
-
-			if ((error = sam_read_ino(pip->mp, permp->di.id.ino,
-			    &bp, &permip))) {
-				goto out;
-			}
-			bcopy(&permip->di, &di, sizeof (di));
-			brelse(bp);
-			bp = NULL;
-			if (di.id.ino != permp->di.id.ino ||
-			    di.id.gen != permp->di.id.gen) {
-				error = EINVAL;
-				goto out;
-			}
-			if ((error = sam_set_hardlink_parent(pip->mp, &di))) {
-				goto out;
-			}
-			if ((error = sam_read_ino(pip->mp, permp->di.id.ino,
-			    &bp, &permip))) {
-				goto out;
-			}
-			bcopy(&di, &permip->di, sizeof (di));
-			id = permip->di.id;
-			permip->di.nlink++;
+		if (sam_restore_hardlink(pip, permp, &bp, &id)) {
+			goto out;
 		}
 	}
 	*ridp = id;
@@ -530,14 +511,16 @@ sam_restore_name(
 	sam_enter_dir_dnlc(pip, id.ino, slot_offset, cp, slot_size);
 
 	TRANS_DIR(pip, slot_offset);
-	if (TRANS_ISTRANS(pip->mp)) {
-		(void) sam_bwrite_noforcewait_dorelease(pip->mp, bp);
-		fbwrite(fbp);
-	} else if (pip->mp->mt.fi_config & MT_SHARED_WRITER) {
-		(void) sam_bwrite_noforcewait_dorelease(pip->mp, bp);
+	if (TRANS_ISTRANS(pip->mp) ||
+	    (pip->mp->mt.fi_config & MT_SHARED_WRITER)) {
+		if (bp) {
+			(void) sam_bwrite_noforcewait_dorelease(pip->mp, bp);
+		}
 		fbwrite(fbp);
 	} else {
-		bdwrite(bp);
+		if (bp) {
+			bdwrite(bp);
+		}
 		fbdwrite(fbp);
 	}
 	TRANS_INODE(pip->mp, pip);
@@ -562,6 +545,72 @@ out:
 	return (error);
 }
 
+/*
+ * ----- sam_restore_hardlink - restore a hard link to an existing file.
+ * If there was data on the dump, we opened the file and have an
+ * incore inode.  If so, get it and make the link.  Update the parent
+ * and link count and return the new inode number.  Otherwise 
+ * get the permanent inode and make the link.
+ */
+
+static int
+sam_restore_hardlink(
+	sam_node_t *pip,		/* parent directory inode. */
+	struct sam_perm_inode *permp,	/* the old inode image */
+	buf_t **bpp,
+	sam_id_t *id)
+{
+	int error = 0;
+	sam_node_t *ip;
+	struct sam_perm_inode *permip;
+
+	error = sam_check_cache(&permp->di.id, pip->mp, IG_EXISTS, NULL, &ip);
+	if (error != 0) {
+		if (ip) {
+			VN_RELE_OS(ip);
+		}
+		return (error);
+	}
+	if (ip != NULL) {
+		if ((error = sam_set_hardlink_parent(pip->mp, &ip->di))) {
+			VN_RELE_OS(ip);
+			return (error);
+		}
+		ip->di.parent_id = pip->di.id;
+		*id = ip->di.id;
+		ip->di.nlink++;
+		VN_RELE_OS(ip);
+	} else {
+		if (permp->di.version == SAM_INODE_VERSION) {
+			sam_disk_inode_t di;
+
+			if ((error = sam_read_ino(pip->mp, permp->di.id.ino,
+			    bpp, &permip))) {
+				return (error);
+			}
+			bcopy(&permip->di, &di, sizeof (di));
+			brelse(*bpp);
+			*bpp = NULL;
+			if (di.id.ino != permp->di.id.ino ||
+			    di.id.gen != permp->di.id.gen) {
+				error = EINVAL;
+				return (error);
+			}
+			if ((error = sam_set_hardlink_parent(pip->mp, &di))) {
+				return (error);
+			}
+			if ((error = sam_read_ino(pip->mp, permp->di.id.ino,
+			    bpp, &permip))) {
+				return (error);
+			}
+			bcopy(&di, &permip->di, sizeof (di));
+			permip->di.parent_id = pip->di.id;
+			*id = permip->di.id;
+			permip->di.nlink++;
+		}
+	}
+	return (0);
+}
 
 /*
  * ----- sam_restore_new_ino - create & restore an inode.
@@ -570,7 +619,7 @@ out:
 static int			/* ERRNO if error, 0 if successful. */
 sam_restore_new_ino(
 	sam_node_t *pip,	/* Pointer to parent directory inode. */
-	struct sam_perm_inode *permp,	/* Pointer to sam permanent inode */
+	struct sam_perm_inode *permp,	/* Pointer to old permanent inode */
 	struct buf **bpp,
 	sam_id_t *idp)
 {

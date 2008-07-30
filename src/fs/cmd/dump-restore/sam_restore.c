@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 
 #include <sys/types.h>
@@ -69,6 +69,10 @@ static void sam_restore_a_file(char *, struct sam_perm_inode *,
 			struct sam_vsn_section *, char *, void *,
 			int, aclent_t *, int dflag, int *dread);
 static void allocate_dirent_space();
+static boolean_t sam_check_nlink(sam_id_t id, char *path,
+    struct sam_perm_inode *);
+static void sam_res_by_name(char *, char *,
+    struct sam_perm_inode *, struct sam_vsn_section *);
 static void sam_set_dirent(char *);
 static int sam_open_directory(char *);
 static void pop_permissions_stack(void);
@@ -719,104 +723,34 @@ sam_restore_a_file(
 		int	open_flg = (O_CREAT | O_EXCL| SAM_O_LARGEFILE);
 		int nlink;
 		sam_id_t id;
+		boolean_t found = FALSE;
 
+		id = perm_inode->di.id;
+		nlink = perm_inode->di.nlink;
 		if (!dflag &&			/* Attempt F_SAMRESTORE */
 		    (perm_inode->di.status.b.acl == 0) &&
 		    !S_ISSEGI(&perm_inode->di)) {
-			struct sam_ioctl_samrestore samrestore =
-			    {NULL, NULL, NULL, NULL};
-			int dir_fd;
-
 			/*
-			 * If a hard link, see if we restored this inode
-			 * before. If so, link to the first one.
+			 * If this is the first occurrence of a hard link,
+			 * sam_check_nlink() sets di.nlink to 1 in the old
+			 * inode image.  Then sam_res_by_name will create
+			 * the disk inode.
+			 * If it's a hard link we've seen before,
+			 * sam_check_nlink() leaves di.nlink greater than 1,
+			 * but updates the inode number
+			 * from the hardp table.  Then we create the link.
 			 */
-			id = perm_inode->di.id;
-			nlink = perm_inode->di.nlink;
 			if (nlink != 1) {
-				if (hardp == NULL) {
-					prelinks = N_HARDLINKS;
-					if (id.ino > prelinks) {
-						prelinks = ((id.ino +
-						    N_HARDLINKS) >> 9) << 9;
-					}
-					SamMalloc(hardp,
-					    prelinks * sizeof (csd_hardtbl_t));
-					bzero(hardp, (prelinks *
-					    sizeof (csd_hardtbl_t)));
-				}
-				if (id.ino >= prelinks) {
-					int oldlinks = prelinks;
-					int i;
-
-					prelinks += N_HARDLINKS;
-					if (id.ino > prelinks) {
-						prelinks = ((id.ino +
-						    N_HARDLINKS) >> 9) << 9;
-					}
-					hardp = (csd_hardtbl_t *)realloc(hardp,
-					    prelinks * sizeof (csd_hardtbl_t));
-					if (hardp == NULL) {
-						error(0, errno, catgets(catfd,
-						    SET, 13539, "%s: Cannot "
-						    "malloc space for hard "
-						    "link table."), path);
-						return;
-					}
-					bzero(hardp + oldlinks,
-					    ((prelinks - oldlinks) *
-					    sizeof (csd_hardtbl_t)));
-				}
-				if (hardp->id[id.ino].ino != 0) {
-					perm_inode->di.id =
-					    hardp->id[perm_inode->di.id.ino];
-				} else {
-					perm_inode->di.nlink = 1;
-				}
+				found = sam_check_nlink(id, path, perm_inode);
 			}
-
-			/*
-			 * If a nodata, non-access-control-listed regular file,
-			 * just restore a file by name. Don't create
-			 * a file, nor an open file descriptor.
-			 */
-			if (namep == NULL) {
-				allocate_dirent_space();
-			}
-			sam_set_dirent(basename);
-			dir_fd = sam_open_directory(path);
-			samrestore.name.ptr = namep;
-			samrestore.lp.ptr = NULL;
-			samrestore.dp.ptr = perm_inode;
-			samrestore.vp.ptr = NULL;
-			if (perm_inode->di.version >= SAM_INODE_VERS_2) {
-				if (perm_inode->di.ext_attrs & ext_mva) {
-					samrestore.vp.ptr = (void *)vsnp;
-				}
-			} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
-				sam_perm_inode_v1_t *perm_inode_v1 =
-				    (sam_perm_inode_v1_t *)perm_inode;
-
-				for (copy = 0; copy < MAX_ARCHIVE; copy++) {
-					if (perm_inode_v1->aid[copy].ino) {
-						samrestore.vp.ptr =
-						    (void *)vsnp;
-						break;
-					}
-				}
-			}
-			if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
-				error(0, errno, "%s: ioctl(F_SAMRESTORE)",
-				    path);
-				if (errno == ENOTTY) {
-					error(1, 0, catgets(catfd, SET, 259,
-					    "%s: Not a SAM-FS file."),
-					    basename);
-				}
-			}
+			sam_res_by_name(basename, path, perm_inode, vsnp);
 
 			if (nlink != 1) {
 				BUMP_STAT(hlink);
+				/*
+				 * If first occurrence of a hard link,
+				 * save the new ino in the table.
+				 */
 				if (hardp->id[id.ino].ino == 0) {
 					BUMP_STAT(hlink_first);
 					hardp->id[id.ino] = perm_inode->di.id;
@@ -827,12 +761,44 @@ sam_restore_a_file(
 			if (dflag) {
 				open_flg |= O_WRONLY;
 			}
-			if ((entity_fd = open(path, open_flg,
-			    perm_inode->di.mode & 07777)) < 0) {
-				BUMP_STAT(errors);
-				error(0, errno, catgets(catfd, SET, 215,
-				    "%s: Cannot creat()"), path);
-				return;
+			/*
+			 * If this is the first occurrence of a hard link,
+			 * we create the file and put the new inode number
+			 * in the hard link lookup table.
+			 * If it's a hard link we've seen before,
+			 * sam_check_nlink() leaves di.nlink greater than 1,
+			 * but updates the inode number from the hardp table.
+			 * Then sam_res_by_name() creates the link.
+			 */
+			if (nlink != 1) {
+				found = sam_check_nlink(id, path, perm_inode);
+				BUMP_STAT(hlink);
+			}
+			if (!found) {
+				struct sam_stat sb;
+
+				if ((entity_fd = open(path, open_flg,
+				    mode & 07777)) < 0) {
+					BUMP_STAT(errors);
+					error(0, errno, catgets(catfd, SET, 215,
+					    "%s: Cannot creat()"), path);
+					return;
+				}
+				if (nlink != 1 && prelinks &&
+				    hardp->id[id.ino].ino == 0) {
+					/*
+					 * If first occurrence of a hard link,
+					 * save the new ino in the table.
+					 */
+					BUMP_STAT(hlink_first);
+					sam_stat(path, &sb, sizeof (sb));
+					hardp->id[id.ino].ino = sb.st_ino;
+					hardp->id[id.ino].gen = sb.gen;
+				}
+			} else {
+				sam_res_by_name(basename, path,
+				    perm_inode, vsnp);
+				restored = 1;
 			}
 		}
 		BUMP_STAT(files);
@@ -1079,6 +1045,97 @@ sam_restore_a_file(
 	}
 }
 
+static boolean_t
+sam_check_nlink(
+	sam_id_t id,
+	char *path,
+	struct sam_perm_inode *perm_inode)
+{
+	boolean_t found = FALSE;
+
+	if (hardp == NULL) {
+		prelinks = N_HARDLINKS;
+		if (id.ino > prelinks) {
+			prelinks = ((id.ino + N_HARDLINKS) >> 9) << 9;
+		}
+		SamMalloc(hardp, prelinks * sizeof (csd_hardtbl_t));
+		bzero(hardp, (prelinks * sizeof (csd_hardtbl_t)));
+	}
+	if (id.ino >= prelinks) {
+		int oldlinks = prelinks;
+		int i;
+
+		prelinks += N_HARDLINKS;
+		if (id.ino > prelinks) {
+			prelinks = ((id.ino + N_HARDLINKS) >> 9) << 9;
+		}
+		hardp = (csd_hardtbl_t *)realloc(hardp,
+		    prelinks * sizeof (csd_hardtbl_t));
+		if (hardp == NULL) {
+			error(0, errno, catgets(catfd, SET, 13539, "%s: Cannot "
+			    "malloc space for hard link table."), path);
+			return (found);
+		}
+		bzero(hardp + oldlinks, ((prelinks - oldlinks) *
+		    sizeof (csd_hardtbl_t)));
+	}
+	if (hardp->id[id.ino].ino != 0) {
+		perm_inode->di.id = hardp->id[perm_inode->di.id.ino];
+		found = TRUE;
+	} else {
+		perm_inode->di.nlink = 1;
+	}
+	return (found);
+}
+
+static void
+sam_res_by_name(
+	char *basename,
+	char *path,
+	struct sam_perm_inode *perm_inode,	/* image of the old inode */
+	struct sam_vsn_section *vsnp)
+{
+	struct sam_ioctl_samrestore samrestore = {NULL, NULL, NULL, NULL};
+	int copy;
+	int dir_fd;
+
+	/*
+	 * If a nodata, non-access-control-listed regular file,
+	 * just restore a file by name. Don't create
+	 * a file, nor an open file descriptor.
+	 */
+	if (namep == NULL) {
+		allocate_dirent_space();
+	}
+	sam_set_dirent(basename);
+	dir_fd = sam_open_directory(path);
+	samrestore.name.ptr = namep;
+	samrestore.lp.ptr = NULL;
+	samrestore.dp.ptr = perm_inode;
+	samrestore.vp.ptr = NULL;
+	if (perm_inode->di.version >= SAM_INODE_VERS_2) {
+		if (perm_inode->di.ext_attrs & ext_mva) {
+			samrestore.vp.ptr = (void *)vsnp;
+		}
+	} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
+		sam_perm_inode_v1_t *perm_inode_v1 =
+		    (sam_perm_inode_v1_t *)perm_inode;
+
+		for (copy = 0; copy < MAX_ARCHIVE; copy++) {
+			if (perm_inode_v1->aid[copy].ino) {
+				samrestore.vp.ptr = (void *)vsnp;
+				break;
+			}
+		}
+	}
+	if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
+		error(0, errno, "%s: ioctl(F_SAMRESTORE)", path);
+		if (errno == ENOTTY) {
+			error(1, 0, catgets(catfd, SET, 259,
+			    "%s: Not a SAM-FS file."), basename);
+		}
+	}
+}
 
 /*
  * ----- stack_times - remember inode times.
