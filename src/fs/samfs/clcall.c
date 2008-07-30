@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.254 $"
+#pragma ident "$Revision: 1.255 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2036,7 +2036,6 @@ sam_proc_inode(
 	int error;
 	int r;
 	boolean_t grabbed_mutex = FALSE;
-	int unset_nb = 0;
 
 	msg = kmem_zalloc(sizeof (*msg), KM_SLEEP);
 	inp = &msg->call.inode;
@@ -2270,20 +2269,9 @@ sam_proc_inode(
 
 	if ((ip->cl_leases & CL_APPEND) && force_sync && !sam_is_fsflush()) {
 		/*
-		 * Set this thread to non-blocking since
-		 * it will be holding a mutex across a call to
-		 * the server and INODE commands are not normally
-		 * non-blocking. This will prevent this thread from
-		 * being frozen during failover. Freezing a thread
-		 * that's holding a mutex during failover can cause
-		 * failover to fail to complete.
-		 *
-		 * This call will return 0 if the thread was
-		 * already set non-blocking which means we don't
-		 * want to unset it later.
+		 * Holding this mutex will make this thread
+		 * non-blocking in sam_idle_operation()..
 		 */
-		unset_nb = sam_set_operation_nb(ip->mp);
-
 		mutex_enter(&ip->cl_apmutex);
 		grabbed_mutex = TRUE;
 	}
@@ -2351,15 +2339,6 @@ sam_proc_inode(
 	}
 
 out:
-	if (unset_nb) {
-		/*
-		 * This thread should not continue
-		 * non-blocking unless it was already
-		 * non-blocking or it may cause failover
-		 * to hang.
-		 */
-		sam_unset_operation_nb(ip->mp);
-	}
 	kmem_free(msg, sizeof (*msg));
 	TRACE(T_SAM_CL_INODE, SAM_ITOP(ip), ip->cl_leases,
 	    ip->flags.bits, error);

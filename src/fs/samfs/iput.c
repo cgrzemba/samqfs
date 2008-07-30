@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.125 $"
+#pragma ident "$Revision: 1.126 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1425,10 +1425,14 @@ sam_idle_operation(sam_node_t *ip)
 	}
 
 	etsdhp.ptr = tsd_get(mp->ms.m_tsd_key);
-	if (etsdhp.ptr == NULL || (etsdhp.val.flags & SAM_FRZI_NOBLOCK)) {
+
+	if ((etsdhp.ptr == NULL) ||
+	    (etsdhp.val.flags & SAM_FRZI_NOBLOCK) ||
+	    (mutex_owner(&ip->cl_apmutex) == curthread)) {
 		/*
 		 * Don't block.  Either thread has no context (worker thread?
-		 * ioctl?) or thread is set non-blocking.
+		 * ioctl?), thread is set non-blocking or is holding
+		 * the append lease mutex.
 		 */
 		if (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
 			if (curthread->t_flag & T_DONTBLOCK) {
@@ -1638,35 +1642,6 @@ sam_open_operation_rwl(sam_node_t *ip)
 	ep.val.module = mp->ms.m_tsd_key;
 	SAM_INC_OPERATION(mp);
 	tsd_set(mp->ms.m_tsd_key, ep.ptr);
-}
-
-
-/*
- *	----	sam_set_operation_nb
- *
- * Changes an existing open operation to be non-blocking.
- *
- */
-int
-sam_set_operation_nb(sam_mount_t *mp)
-{
-	sam_operation_t ep;
-
-	ep.ptr = tsd_get(mp->ms.m_tsd_key);
-	ASSERT(ep.ptr != NULL);
-	ASSERT(ep.val.depth > 0);
-	ASSERT(mp->ms.m_cl_active_ops > 0);
-	if (!(ep.val.flags & SAM_FRZI_NOBLOCK)) {
-		ep.val.flags |= SAM_FRZI_NOBLOCK;
-		tsd_set(mp->ms.m_tsd_key, ep.ptr);
-		/*
-		 * Tell the caller that SAM_FRZI_NOBLOCK was
-		 * set here.
-		 */
-		return (1);
-	}
-
-	return (0);
 }
 
 
