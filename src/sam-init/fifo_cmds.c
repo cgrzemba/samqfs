@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 /* ANSI C headers. */
 #include <stdlib.h>
@@ -389,7 +389,8 @@ set_state(
 	if (device->fseq) {
 		robot = DEV_ENT(device->fseq);
 	}
-	if (command->state >= DEV_ON && command->state <= DEV_DOWN) {
+	if (command->state >= DEV_ON && command->state <= DEV_DOWN &&
+	    command->state != DEV_NOALLOC) {
 		old_state = device->state;
 		if (robot != NULL) {
 			device = robot;

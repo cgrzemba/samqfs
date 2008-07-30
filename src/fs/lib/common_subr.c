@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 /* ----- UNIX Includes */
 
@@ -193,13 +193,15 @@ sam_init_sblk_dev(
 		 */
 		if (sbp->mm_count) {
 			for (;;) {
+				struct sam_sbord *mop;
+
 				sbp->mm_ord++;
 				if (sbp->mm_ord >= sbp->fs_count) {
 					sbp->mm_ord = 0;
 				}
-				if ((sblk->eq[sbp->mm_ord].fs.type !=
-				    DT_META) ||
-				    (sblk->eq[sbp->mm_ord].fs.allocmap == 0)) {
+				mop = &sblk->eq[sbp->mm_ord].fs;
+				if ((mop->type != DT_META) ||
+				    (mop->state != DEV_ON)) {
 					continue;
 				}
 				break;
