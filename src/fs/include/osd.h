@@ -48,7 +48,7 @@ extern "C" {
 /*
  * Standard Globals
  */
-#define OSD_API_REV	2
+#define	OSD_API_REV	2
 #define	OSD_CDB_SIZE	224
 
 
