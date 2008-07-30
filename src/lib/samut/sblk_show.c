@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -380,6 +380,9 @@ sam_sbinfo_format(
 
 	sprintf(vp, "%s", sbip->fs_name);
 	(void) sam_format_element_append(&bp, "fset_name", vp);
+
+	sprintf(vp, "0x%x", sbip->fi_type);
+	(void) sam_format_element_append(&bp, "fset_type", vp);
 
 	sprintf(vp, "%d", sbip->ord);
 	(void) sam_format_element_append(&bp, "fset_ord", vp);

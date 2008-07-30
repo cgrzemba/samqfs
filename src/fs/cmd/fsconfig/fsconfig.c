@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 /* Feature test switches. */
 
@@ -580,7 +580,7 @@ ListFSet(struct DevInfo *dip, int n)
 	int lfset[L_FSET];
 	char typbuf[12];
 	char fsbuf[sizeof (uname_t)+8];
-	int md, mm, mr, ob, g, bad;
+	int md, mm, mr, oXXX, gXXX, bad;
 	int missing_meta_message = 0;
 	char *template;
 
@@ -602,7 +602,7 @@ ListFSet(struct DevInfo *dip, int n)
 	}
 	printf("#\n");
 	dups = holes = 0;
-	md = mm = mr = ob = g = bad = 0;
+	md = mm = mr = oXXX = gXXX = bad = 0;
 	for (j = 0; j < n; j++) {
 		lfset[dip[j].di_sblk->info.sb.ord]++;
 	}
@@ -642,11 +642,11 @@ ListFSet(struct DevInfo *dip, int n)
 			break;
 		default:
 			if (is_osd_group(dip->di_sblk->eq[j].fs.type)) {
-				ob++;
+				oXXX++;
 				break;
 			}
 			if (is_stripe_group(dip->di_sblk->eq[j].fs.type)) {
-				g++;
+				gXXX++;
 				break;
 			}
 			/* Unrecognized device type:  %#x */
@@ -664,12 +664,29 @@ ListFSet(struct DevInfo *dip, int n)
 		char *sh, *typ;
 
 		sh = (dip->di_sblk->info.sb.hosts) ? " shared" : "";
-		if (ob) {
-			typ = "mb";
-		} else {
-			typ = (md && !mm && !mr && !g) ? "ms" : "ma";
-		}
 		FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
+
+		switch (dip->di_sblk->info.sb.fi_type) {
+		case DT_DISK_SET:
+			typ = "ms";
+			break;
+		case DT_META_SET:
+			typ = "ma";
+			break;
+		case DT_META_OBJECT_SET:
+			typ = "mb";
+			break;
+		case DT_META_OBJ_TGT_SET:
+			typ = "mat";
+			break;
+		default:
+			/* Backwards compatibility for new fi_type field. */
+			if (oXXX) {
+				typ = "mb";
+			} else {
+				typ = (md && !mm && !mr && !gXXX) ? "ms" : "ma";
+			}
+		}
 
 		printf("%s %d %s %s -%s\n",
 		    fsbuf, dip->di_sblk->info.sb.eq, typ, fsbuf, sh);
@@ -709,7 +726,7 @@ ListFSet(struct DevInfo *dip, int n)
 }
 
 /*
- * convert a unit type to a slice code (e.g., 'mm', 'mr', 'md', 'ob', gXXX
+ * convert a unit type to a slice code (e.g., 'mm', 'mr', 'md', 'oXXX', gXXX)
  */
 static void
 TypeStr(dtype_t typ, char *buf)

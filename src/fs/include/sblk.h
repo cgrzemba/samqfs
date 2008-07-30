@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.72 $"
+#pragma ident "$Revision: 1.73 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -189,15 +189,16 @@ typedef struct sam_sbinfo {
 	ushort_t	opt_mask_ver;	/* Option mask version */
 	ushort_t	hosts_ord;	/* dev ordinal of the hosts file */
 	int32_t		opt_mask;	/* Option mask */
-	ushort_t	fill2;		/* Unused */
+	dtype_t		fi_type;	/* Family set type, 5.0 and above */
 	ushort_t	mm_ord;		/* Last mm ord for data device */
 	u_longlong_t	logbno;		/* LQFS: log blkno */
 	uint32_t	qfs_rolled;	/* LQFS: log fully rolled */
 	ushort_t	logord;		/* LQFS: log ordinal */
 	char		qfs_clean;	/* LQFS: detailed FS state flags */
-	char		pad2;		/* LQFS: Pad to 8-byte boundary */
+	char		pad1;		/* Unused: Pad to 8-byte boundary */
 	uint32_t	opt_features;	/* Opt features - backward compatible */
-	uchar_t		fill3[4];	/* Unused */
+	uchar_t		pad2[4];	/* Unused: Pad to 8-byte boundary */
+	uchar_t		fill2[56];	/* Unused: MAX size of sam_sbinfo_t */
 } sam_sbinfo_t;
 
 /*

@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 
 /* ----- Include Files ---- */
@@ -1048,6 +1048,7 @@ init_sblk()
 	(void *) memcpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblock.info.sb.name));
 	sblock.info.sb.magic = SAM_MAGIC_V2;
+	sblock.info.sb.fi_type = mnt_info.params.fi_type;
 	sblock.info.sb.min_usr_inum = SAM_MIN_USER_INO;
 	sblock.info.sb.ext_bshift = SAM_SHIFT;
 	sblock.info.sb.time = fstime;
@@ -1390,7 +1391,7 @@ iino(void)
 
 	/*
 	 * Build .inodes file for all file system types.
-	 * For the "mat" object target file system, build object inodes --
+	 * For the "mat" object file system, build object inodes;
 	 * all these object inodes do not have names.
 	 */
 	memset(dcp, 0, mp->mi.m_dau[dt].size[LG]);

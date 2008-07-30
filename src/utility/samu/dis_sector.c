@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 
 /* ANSI C headers. */
@@ -246,6 +246,7 @@ dis_sblk(
 	/* LINTED pointer cast may result in improper alignment */
 	w = (int *)sp->fs_name;
 	Mvprintw(ln++, 0, "%.8x fs_name: %s", *w, string(sp->fs_name));
+	Mvprintw(ln++, 0, "%.8x fi_type", sp->fi_type);
 	Mvprintw(ln++, 0, "%.8x magic", sp->magic);
 	Mvprintw(ln++, 0, "%.8x init: %s", sp->init,
 	    ctime((time_t *)&sp->init));

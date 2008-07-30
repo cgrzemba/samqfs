@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 #endif
 
 /*
@@ -879,7 +879,7 @@ struct swap_descriptor sam_sbinfo_swap_descriptor[] = {
 	{ 184, 4, 1 },
 	{ 188, 2, 1 },
 	{ 192, 4, 1 },
-	{ 200, 0, 0 },
+	{ 256, 0, 0 },
 };
 
 struct swap_descriptor sam_sbord_swap_descriptor[] = {

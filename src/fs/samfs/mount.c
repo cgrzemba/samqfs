@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.221 $"
+#pragma ident "$Revision: 1.222 $"
 #endif
 
 #include "sam/osversion.h"
@@ -961,6 +961,23 @@ sam_set_mount(sam_mount_t *mp)
 	ASSERT((sblk->info.sb.ext_bshift == SAM_DEV_BSHIFT) ||
 	    (sblk->info.sb.ext_bshift == SAM_SHIFT));
 	mp->mi.m_bn_shift = sblk->info.sb.ext_bshift - SAM_DEV_BSHIFT;
+
+	/*
+	 * Backwards compatibility for new (5.0) fi_type field.
+	 */
+	if (sblk->info.sb.fi_type == 0) {
+		sblk->info.sb.fi_type = mp->mt.fi_type;
+	}
+	if ((sblk->info.sb.fi_type != DT_DISK_SET) &&
+	    (sblk->info.sb.fi_type != DT_META_SET) &&
+	    (sblk->info.sb.fi_type != DT_META_OBJECT_SET) &&
+	    (sblk->info.sb.fi_type != DT_META_OBJ_TGT_SET)) {
+		cmn_err(CE_WARN,
+		    "SAM-QFS: %s: Unrecognized family set type 0x%x , "
+		    "resetting to 0x%x", mp->mt.fi_name, sblk->info.sb.fi_type,
+		    mp->mt.fi_type);
+		sblk->info.sb.fi_type = mp->mt.fi_type;
+	}
 
 	/*
 	 * Set lowest inumber to be assigned to a user inode.
