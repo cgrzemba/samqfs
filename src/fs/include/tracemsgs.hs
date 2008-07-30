@@ -1,4 +1,4 @@
-# $Revision: 1.127 $
+# $Revision: 1.128 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -280,8 +280,8 @@ T_SAM_DIORDBLK_ST	"DioRdBkSt:blk=%x,off=%x,len=%x"
 T_SAM_DIOWRBLK_ST	"DioWrBkSt:blk=%x,off=%x,len=%x"
 T_SAM_DIORDOBJ_ST	"DioRdObSt:cnt=%x,off=%x,len=%x"
 T_SAM_DIOWROBJ_ST	"DioWrObSt:cnt=%x,off=%x,len=%x"
-T_SAM_PGRDOBJ_ST	"PgRdObSt: iorp=%x,off=%x,len=%x"
-T_SAM_PGWROBJ_ST	"PgWrObSt: iorp=%x,off=%x,len=%x"
+T_SAM_PGRDOBJ_ST	"PgRdObSt: loff=%x,off=%x,len=%x"
+T_SAM_PGWROBJ_ST	"PgWrObSt: loff=%x,off=%x,len=%x"
 T_SAM_DIORDBLK_COMP	"DioRdBkCo:blk=%x,cnt=%d,bdp=%x"
 T_SAM_DIOWRBLK_COMP	"DioWrBkCo:blk=%x,cnt=%d,bdp=%x"
 T_SAM_DIORDOBJ_COMP	"DioRdObCo:iorp=%x,off=%x,len=%x"
@@ -461,3 +461,4 @@ T_SAM_STALE_INO		"stale ino ino=%d,cnt=%d,flags=%x^[$f]"
 T_SAM_STALE_PP		"wr stalep ino=%d,flg=%x^[$p],p3=%d"
 T_SAM_TRACE_READ	"trace rd  nent=%d,cpu=%x,err=%d^[$e]"
 T_SAM_CL_EXP_INUSE	"ClExpUsed:expmask=%x^[$L],used=%x^[$L]"
+T_SAM_OBJ_PAGEZERO	"ObjPgZero:loff=%x,off=%x,eoo=%x"

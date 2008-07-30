@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.143 $"
+#pragma ident "$Revision: 1.144 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2372,9 +2372,7 @@ sam_map_truncate(
 		 * Truncate up.
 		 */
 		if (SAM_IS_OBJECT_FILE(ip)) {
-			offset_t nbytes;
-			nbytes = length - size;
-			error = sam_map_block(ip, size, nbytes, SAM_WRITE,
+			error = sam_map_block(ip, length, 0, SAM_WRITE,
 			    NULL, credp);
 			goto out;
 		}

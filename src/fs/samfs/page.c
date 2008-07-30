@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 
 #include "sam/osversion.h"
 
@@ -713,7 +713,11 @@ sam_putapage(
 	/*
 	 * Find a set of pages that fit in the kluster of blocks.
 	 */
-	lb_off = iop->ioblk[0].blk_off;
+	if (SAM_IS_OBJECT_FILE(ip)) {
+		lb_off = off;
+	} else {
+		lb_off = iop->ioblk[0].blk_off;
+	}
 	if (iop->ioblk[0].num_group > 1) {
 		iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
 		iop->ioblk[0].contig = iop->contig;

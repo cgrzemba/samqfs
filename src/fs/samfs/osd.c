@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 #include "sam/osversion.h"
 
@@ -642,10 +642,10 @@ sam_dk_object_done(
 	 */
 	if (bp->b_flags & B_READ) {	/* If reading */
 		TRACE(T_SAM_DIORDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
-		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
+		    offset, (((offset_t)obji << 32)|count));
 	} else {			/* If writing */
 		TRACE(T_SAM_DIOWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
-		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
+		    offset, (((offset_t)obji << 32)|count));
 		if (resp->err_code == OSD_SUCCESS) {
 			mutex_enter(&ip->write_mutex);
 			if ((offset + count) > olp->ol[obji].eoo) {
@@ -695,7 +695,7 @@ sam_pageio_object(
 	sam_mount_t		*mp;	/* Pointer to mount table */
 	buf_t 			*bp;
 	offset_t		count;
-	offset_t		offset = iop->blk_off + iop->pboff;
+	offset_t		offset;
 	uint64_t		object_id;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
 	sam_obj_layout_t	*olp;
@@ -713,6 +713,7 @@ sam_pageio_object(
 
 	sam_osd_setup_private(iorp, mp);
 	iorp->obji = iop->obji;
+	offset = iop->blk_off + iop->pboff;
 	iorp->offset = offset;
 	iorp->ip = ip;
 
@@ -722,16 +723,15 @@ sam_pageio_object(
 			mutex_exit(&ip->write_mutex);
 			pagezero(pp, pg_off, PAGESIZE);
 			iop->imap.flags |= M_OBJ_EOF;
-			dcmn_err((CE_NOTE,
-			    "SAM-QFS: %s: PAGEZERO ip=%p, ino=%d.%d, off=%llx "
-			    "count=%llx obji=%d eoo=%llx pg_off=%x, pp=%p",
-			    ip->mp->mt.fi_name, (void *)ip, ip->di.id.ino,
-			    ip->di.id.gen, offset, count, iop->obji,
-			    olp->ol[iop->obji].eoo, pg_off, (void *)pp));
+			TRACE(T_SAM_OBJ_PAGEZERO, SAM_ITOP(ip), off, offset,
+			    olp->ol[iop->obji].eoo);
 			sam_osd_remove_private(iorp);
 			kmem_cache_free(samgt.object_cache, iorp);
 			return (NULL);
 		} else {
+			if ((offset + count) > olp->ol[iop->obji].eoo) {
+				count = olp->ol[iop->obji].eoo - offset;
+			}
 			mutex_exit(&ip->write_mutex);
 		}
 	}
@@ -747,15 +747,15 @@ sam_pageio_object(
 	bp->b_private = (void *)iorp;
 
 	if (flags & B_READ) {
-		TRACE(T_SAM_PGRDOBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
-		    offset, count);
+		TRACE(T_SAM_PGRDOBJ_ST, SAM_ITOV(ip), off, offset,
+			(((offset_t)iop->obji << 32)|count));
 		reqp = (sam_sosd_vec.setup_read_bp)((void *)oh, partid,
-		    object_id, count, iop->blk_off, bp);
+		    object_id, count, offset, bp);
 	} else {
-		TRACE(T_SAM_PGWROBJ_ST, SAM_ITOV(ip), (sam_tr_t)iorp,
-		    offset, count);
+		TRACE(T_SAM_PGWROBJ_ST, SAM_ITOV(ip), off, offset,
+		    (((offset_t)iop->obji << 32)|count));
 		reqp = (sam_sosd_vec.setup_write_bp)((void *)oh, partid,
-		    object_id, count, iop->blk_off, bp);
+		    object_id, count, offset, bp);
 	}
 	if (reqp == NULL) {
 		pageio_done(bp);
@@ -1608,22 +1608,24 @@ sam_truncate_object_file(
 	int			error;
 
 	oip = (sam_di_osd_t *)(void *)&ip->di.extent[2];
-	ASSERT(oip->obj_id[0] != 0);
 	bcopy((char *)oip, (char *)&oino, sizeof (sam_di_osd_t));
 	num_group = ip->di.rm.info.obj.num_group;
-	olp = ip->olp;
-	if (olp == NULL) {		/* Rare, but can happen */
-		if ((error = sam_osd_create_obj_layout(ip))) {
-			return (error);
+	if (num_group) {
+		ASSERT(oip->obj_id[0] != 0);
+		olp = ip->olp;
+		if (olp == NULL) {		/* Rare, but can happen */
+			if ((error = sam_osd_create_obj_layout(ip))) {
+				return (error);
+			}
 		}
-	}
 
-	/*
-	 * For PURGE (remove), remove any extention inodes.
-	 */
-	if ((length == 0) && (tflag == SAM_PURGE) && oip->ext_id.ino) {
-		sam_free_inode_ext_dp(ip->mp, &ip->di, S_IFOBJ, SAM_ALL_COPIES,
-		    &oip->ext_id);
+		/*
+		 * For PURGE (remove), remove any extention inodes.
+		 */
+		if ((length == 0) && (tflag == SAM_PURGE) && oip->ext_id.ino) {
+			sam_free_inode_ext_dp(ip->mp, &ip->di, S_IFOBJ,
+			    SAM_ALL_COPIES, &oip->ext_id);
+		}
 	}
 
 	/*
@@ -1648,7 +1650,7 @@ sam_truncate_object_file(
 	 * For PURGE (remove), delete all objects on the OSDs.
 	 * Note, disk inode was zeroed in sam_sync_inode.
 	 */
-	if ((length == 0) && (tflag == SAM_PURGE)) {
+	if ((length == 0) && (tflag == SAM_PURGE) && num_group) {
 		olp = ip->olp;
 		ASSERT(olp);
 		ASSERT(olp->num_group == num_group);

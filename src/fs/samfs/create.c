@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 
 #include "sam/osversion.h"
 
@@ -808,6 +808,7 @@ sam_make_ino(
 	if (type == VDIR) {
 		/*
 		 * Propagate worm_rdonly and retention period to directories.
+		 * Propagate object stripe width to directories for mb fs.
 		 */
 		ip->di.status.bits = pip->di.status.bits & SAM_DIRINHERIT_MASK;
 		if (pip->di.status.b.worm_rdonly &&
@@ -815,6 +816,10 @@ sam_make_ino(
 			ip->di2.rperiod_duration = pip->di2.rperiod_duration;
 			ip->di2.rperiod_start_time =
 			    pip->di2.rperiod_start_time;
+		}
+		if (SAM_IS_OBJECT_FS(mp)) {
+			ip->di.rm.info.obj.stripe_width =
+			    pip->di.rm.info.obj.stripe_width;
 		}
 	} else {
 		ip->di.status.bits = pip->di.status.bits & SAM_INHERIT_MASK;
