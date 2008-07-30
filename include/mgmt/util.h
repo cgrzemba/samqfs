@@ -30,7 +30,7 @@
 #ifndef _UTIL_H
 #define	_UTIL_H
 
-#pragma ident	"$Revision: 1.43 $"
+#pragma ident	"$Revision: 1.44 $"
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -121,6 +121,15 @@ exec_get_output(const char *shcmd,	/* execute: sh -c shcmd */
     FILE **output_stream,		/* output is redirected here */
     FILE **stderr_stream);		/* stderr is redirected here */
 
+
+/*
+ * Helper function to exec a command, optionally returning
+ * messages written to stdout/stderr if 'outstr' and 'errstr' are non-NULL.
+ *
+ * The 'cmd' array must have the executable as the first entry, and *must*
+ * have a NULL as the last entry.
+ */
+int exec_mgmt_cmd(FILE **outstr, FILE **errstr, char *cmd[]);
 
 int cp_file(const char *old, const char *new);
 int backup_cfg(char *src_file);

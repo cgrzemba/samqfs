@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.71 $"
+#pragma ident   "$Revision: 1.72 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -347,6 +347,129 @@ FILE **stderr_stream) // if NULL then stderr ignored
 	Trace(TR_PROC, "cmd exec-ed by process %ld", pid);
 	return (pid);
 }
+
+
+/*
+ * exec_mgmt_cmd()
+ *
+ * Helper function to execute an external program, optionally returning
+ * messages written to stdout/stderr and exec()ing as a different UID.
+ *
+ * The 'cmd' array must have the executable as the first entry, and *must*
+ * have a NULL as the last entry.
+ */
+int
+exec_mgmt_cmd(
+FILE	**outstr,
+FILE	**errstr,
+char	*cmd[])
+{
+	int	fdo[2] = {-1, -1}; /* pipe for reading stdout */
+	int	fde[2] = {-1, -1}; /* pipe for reading stderr */
+	pid_t	pid;
+
+
+	if (ISNULL(cmd, cmd[0])) {
+		Trace(TR_ERR, "exec_mgmt_cmd failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	/* The path to the executable must be fully-qualified */
+	if (cmd[0][0] != '/') {
+		setsamerr(SE_NO_RELATIVE_PATHS);
+		Trace(TR_ERR, "exec_mgmt_cmd failed:%s", samerrmsg);
+		return (-1);
+	}
+
+	if (outstr != NULL) {
+		if (pipe(fdo) < 0) {
+			Trace(TR_ERR, "stdout pipe creation failed:%s",
+			    Str(strerror(errno)));
+			samerrno = SE_CANNOT_CREATE_PIPE;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(samerrno), "");
+			strlcat(samerrmsg, strerror(errno), MAX_MSG_LEN);
+			return (-1);
+		}
+	}
+
+	if (errstr != NULL) {
+		if (pipe(fde) < 0) {
+			close(fdo[0]);
+			close(fdo[1]);
+			Trace(TR_ERR, "stderr pipe creation failed:%s",
+			    Str(strerror(errno)));
+			samerrno = SE_CANNOT_CREATE_PIPE;
+			snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(samerrno), "");
+			strlcat(samerrmsg, strerror(errno), MAX_MSG_LEN);
+			return (-1);
+		}
+	}
+
+	if ((pid = fork()) < 0) {
+		close(fdo[0]);
+		close(fdo[1]);
+		close(fde[0]);
+		close(fde[1]);
+		samerrno = SE_FORK_FAILED;
+		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno));
+		Trace(TR_ERR, "fork failed:%s", Str(strerror(errno)));
+		return (-1);
+	}
+
+	if (pid == 0) {
+		/* child */
+		/* redirect stdout and stderr */
+		int    ret;
+
+		if (!outstr) {
+			fdo[1] = open("/dev/null", O_WRONLY);
+		}
+
+		if (!errstr) {
+			fde[1] = open("/dev/null", O_WRONLY);
+		}
+
+		if ((fde[1] == -1) || (fdo[1] == -1)) {
+			Trace(TR_DEBUG,
+			    "exec_mgmt_cmd: pipes not open");
+			exit(9);
+		}
+
+		dup2(fdo[1], STDOUT_FILENO);
+		dup2(fde[1], STDERR_FILENO);
+
+		/* close the ends of the pipes we're not using */
+		close(fdo[0]);
+		close(fde[0]);
+
+		/* Close stdin to prevent child processes from inheriting it. */
+		close(STDIN_FILENO);
+
+		/* close open fds > stderr */
+		closefrom(3);
+
+		ret = execv(cmd[0], cmd);
+
+		if (0 != ret) {
+			return (ret);
+		}
+	}
+
+	/* parent */
+	if (outstr) {
+		close(fdo[1]);
+		*outstr = fdopen(fdo[0], "r");
+	}
+
+	if (errstr) {
+		close(fde[1]);
+		*errstr = fdopen(fde[0], "r");
+	}
+	return (pid);
+}
+
 
 
 /*

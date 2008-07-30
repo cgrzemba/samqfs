@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.34 $"
+#pragma ident   "$Revision: 1.35 $"
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 
@@ -1842,9 +1842,8 @@ int32_t options,
 char **job_id) /* ARGSUSED */ {
 
 
-
 	char		buf[32];
-	char		*cmd;
+	char		**command;
 	node_t		*n;
 	argbuf_t 	*arg;
 	size_t		len = MAXPATHLEN * 2;
@@ -1855,6 +1854,8 @@ char **job_id) /* ARGSUSED */ {
 	FILE		*out;
 	FILE		*err;
 	exec_cleanup_info_t *cl;
+	int arg_cnt;
+	int cur_arg = 0;
 
 	if (ISNULL(files, job_id)) {
 		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
@@ -1866,54 +1867,90 @@ char **job_id) /* ARGSUSED */ {
 		return (-1);
 	}
 
-	cmd = (char *)mallocer(len);
-	if (cmd == NULL) {
-		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
-		return (-1);
-	}
-	cmd[0] = '\0';
-	STRLCATGROW(cmd, STAGE_FILES_CMD, len);
-	STRLCATGROW(cmd, " ", len);
-
-	expand_stage_options(options, buf, sizeof (buf));
 	if (options & ST_OPT_ASSOCIATIVE &&
 	    options & ST_OPT_NEVER) {
 		setsamerr(SE_MUTUALLY_EXCLUSIVE_STG_OPTS);
-		free(cmd);
 		return (-1);
 	}
 
-	STRLCATGROW(cmd, buf, len);
+
+	/*
+	 * Determine how many args to the command and create the command
+	 * array. Note that command is malloced because the number of files
+	 * is not known prior to execution. The arguments themselves need
+	 * not be malloced because the child process will get a copy.
+	 * Include space in the command array for:
+	 * - the command
+	 * - all possible options
+	 * - an entry for each file in the list.
+	 * - an entry for the NULL
+	 */
+	arg_cnt = 1 + 5 + files->length + 1;
+
+	command = (char **)calloc(arg_cnt, sizeof (char *));
+	if (command == NULL) {
+		setsamerr(SE_NO_MEM);
+		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
+		return (-1);
+	}
+	command[cur_arg++] = STAGE_FILES_CMD;
+	if (options & ST_OPT_COPY_1) {
+		command[cur_arg++] = "-c1";
+	} else if (options & ST_OPT_COPY_2) {
+		command[cur_arg++] = "-c2";
+	} else if (options & ST_OPT_COPY_3) {
+		command[cur_arg++] = "-c3";
+	} else if (options & ST_OPT_COPY_4) {
+		command[cur_arg++] = "-c4";
+	}
+	if (options & ST_OPT_RESET_DEFAULTS) {
+		command[cur_arg++] = "-d";
+	}
+	if (options & ST_OPT_NEVER) {
+		command[cur_arg++] = "-n";
+	} else if (options & ST_OPT_ASSOCIATIVE) {
+		command[cur_arg++] = "-a";
+	}
+	if (options & ST_OPT_PARTIAL) {
+		command[cur_arg++] = "-p";
+	}
+	if (options & ST_OPT_RECURSIVE) {
+		command[cur_arg++] = "-r";
+	}
 
 	/* make the argument buffer for the activity */
 	arg = (argbuf_t *)mallocer(sizeof (stagebuf_t));
 	if (arg == NULL) {
-		free(cmd);
+		free(command);
 		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
 		return (-1);
 	}
 
 	arg->st.filepaths = lst_create();
+	if (arg->st.filepaths == NULL) {
+		free(command);
+		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
+		return (-1);
+	}
 	arg->st.options = options;
 
 	/* add the file names to the cmd string and the argument buffer */
 	for (n = files->head; n != NULL; n = n->next) {
 		if (n->data != NULL) {
 			char *cur_file;
-			STRLCATGROW(cmd, (char *)n->data, len);
-			STRLCATGROW(cmd, " ", len);
+			command[cur_arg++] = (char *)n->data;
 
 			found_one = B_TRUE;
 			cur_file = copystr(n->data);
 			if (cur_file == NULL) {
-				free(cmd);
+				free(command);
 				free_argbuf(SAMA_STAGEFILES, arg);
 				Trace(TR_ERR, "stage files failed:%s",
 				    samerrmsg);
 				return (-1);
 			}
 			if (lst_append(arg->st.filepaths, cur_file) != 0) {
-				free(cmd);
+				free(command);
 				free_argbuf(SAMA_STAGEFILES, arg);
 				Trace(TR_ERR, "stage files failed:%s",
 				    samerrmsg);
@@ -1923,17 +1960,10 @@ char **job_id) /* ARGSUSED */ {
 	}
 
 	/*
-	 * Check that at least one file was found and that the STRLCATGROWS
-	 * have succeeded
+	 * Check that at least one file was found.
 	 */
-	if (cmd == NULL) {
-		setsamerr(SE_NO_MEM); /* the reason STRLCATGROW can fail */
-		free_argbuf(SAMA_STAGEFILES, arg);
-		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
-		return (-1);
-	}
 	if (!found_one) {
-		free(cmd);
+		free(command);
 		free_argbuf(SAMA_STAGEFILES, arg);
 		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
 		return (-1);
@@ -1943,7 +1973,7 @@ char **job_id) /* ARGSUSED */ {
 	ret = start_activity(display_stage_activity, kill_fork,
 	    SAMA_STAGEFILES, arg, job_id);
 	if (ret != 0) {
-		free(cmd);
+		free(command);
 		free_argbuf(SAMA_STAGEFILES, arg);
 		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
 		return (-1);
@@ -1955,7 +1985,7 @@ char **job_id) /* ARGSUSED */ {
 	 */
 	cl = (exec_cleanup_info_t *)mallocer(sizeof (exec_cleanup_info_t));
 	if (cl == NULL) {
-		free(cmd);
+		free(command);
 		lst_free_deep(arg->st.filepaths);
 		end_this_activity(*job_id);
 		Trace(TR_ERR, "stage files failed, error:%d %s",
@@ -1964,19 +1994,20 @@ char **job_id) /* ARGSUSED */ {
 	}
 
 	/* exec the process */
-	pid = exec_get_output(cmd, &out, &err);
+	pid = exec_mgmt_cmd(&out, &err, command);
 	if (pid < 0) {
-		free(cmd);
+		free(command);
 		lst_free_deep(arg->st.filepaths);
 		end_this_activity(*job_id);
 		Trace(TR_ERR, "stage files failed:%s", samerrmsg);
 		return (-1);
 	}
+	free(command);
 	set_pid_or_tid(*job_id, pid, 0);
 
 
 	/* setup struct for call to cleanup */
-	strlcpy(cl->func, cmd, sizeof (cl->func));
+	strlcpy(cl->func, STAGE_FILES_CMD, sizeof (cl->func));
 	cl->pid = pid;
 	strlcpy(cl->job_id, *job_id, MAXNAMELEN);
 	cl->streams[0] = out;

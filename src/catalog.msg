@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.603 $"
+$ pragma ident "$Revision: 1.604 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3672,6 +3672,7 @@ $ ignoring the last argument %s for 4.1
 30039 Unable to delete file %s. The path must be a fully qualified absolute path
 30040 ioctl failed: %s 
 30041 Invalid SCSI response
+30043 Cannot execute a command with a relative path
 30100 Disk/volume discovery failed
 30101 Invalid AU (Allocatable Unit) type: %s
 30102 Invalid NULL parameter %s
@@ -3775,6 +3776,7 @@ $ ignoring the last argument %s for 4.1
 30230 Acsls
 30231 File system
 30232 System Notification
+30233 Buffer too small for result
 30305 Sam remote configuration file %s has no media VSN defined
 30309 Open (read mode) failed for file %s
 30310 Close failed for file %s

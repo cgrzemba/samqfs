@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.32 $"
+#pragma ident   "$Revision: 1.33 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -123,6 +123,8 @@ copydetails_to_string(
 	char		*buf,
 	int		buflen);
 
+static int escape_quotes(char *in, char *buf, int buf_len);
+
 
 extern void MinToStr(time_t chgtime, long num_mins,
     char *gtime, char *str);
@@ -156,6 +158,64 @@ extern void MinToStr(time_t chgtime, long num_mins,
 		break;						\
 	}							\
 }
+
+
+/*
+ * '\"' appearing in a file name must be escaped by including an
+ * extra '\"'.
+ */
+static int
+escape_quotes(char *in, char *buf, int buf_len) {
+	int in_len;
+	int i;
+	int j;
+
+	if (ISNULL(in, buf)) {
+		return (-1);
+	}
+
+	in_len = strlen(in);
+
+	for (i = 0, j = 0; i < in_len && j < buf_len; i++, j++) {
+
+		if (in[i] == '\"') {
+			/* Make sure there is space for the extra quotes */
+			if ((j + 1) >= buf_len) {
+				setsamerr(SE_BUFFER_TOO_SMALL);
+				return (-1);
+			}
+
+			/* add an additional \"  */
+			buf[j++] = '\"';
+		}
+		/* add the regular char */
+		buf[j] = in[i];
+	}
+
+	/* Was the whole input consumed? If not an error has occurred */
+	if (i < in_len) {
+		setsamerr(SE_BUFFER_TOO_SMALL);
+		return (-1);
+	}
+
+
+	/*
+	 * Is there space in buf for the null terminator? If not the
+	 * buf passed in was too small.
+	 */
+	if (j >= buf_len) {
+		setsamerr(SE_BUFFER_TOO_SMALL);
+		return (-1);
+	}
+
+	buf[j] = '\0';
+
+	/* return the number of quotes added */
+	return (j - i);
+}
+
+
+
 
 /* OBSOLETE Get details about a file. */
 int
@@ -1052,16 +1112,29 @@ filedetails_to_string(
 		det = (filedetails_t *)node->data;
 
 		if (which_details & FD_FNAME) {
-			if (strchr(det->file_name, ',') == NULL) {
-				total += snprintf(cur, len,
-				    "file_name=%s,", det->file_name);
-			} else {
+			char tmp_name_buf[MAXPATHLEN];
+			int quotes = escape_quotes(det->file_name,
+			    tmp_name_buf, sizeof (tmp_name_buf));
+
+			if (quotes < 0) {
+				Trace(TR_ERR, "%s failed: %d %s",
+				    funcnam, samerrno, samerrmsg);
+				lst_free_deep(*results);
+				*results = NULL;
+				return (-1);
+			}
+
+			if (quotes || strchr(det->file_name, ',') != NULL) {
 				/*
-				 * commas in filenames break the kv parser if
-				 * not enclosed in quotes
+				 * commas and quotes in filenames
+				 * break the kv parser if not enclosed
+				 * in quotes
 				 */
 				total += snprintf(cur, len,
-				    "file_name=\"%s\",", det->file_name);
+				    "file_name=\"%s\",", tmp_name_buf);
+			} else {
+				total += snprintf(cur, len,
+				    "file_name=%s,", tmp_name_buf);
 			}
 		}
 

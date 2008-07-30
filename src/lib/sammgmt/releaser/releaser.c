@@ -31,7 +31,7 @@
  *	It calls functions of cfg_release.c and process
  *	the detailed releaser.cmd operation.
  */
-#pragma	ident	"$Revision: 1.25 $"
+#pragma	ident	"$Revision: 1.26 $"
 /* ANSI headers. */
 #include <stdio.h>
 #include <stdlib.h>
@@ -552,10 +552,10 @@ error:
  *
  * PARAMS:
  *   sqm_lst_t  *files,	 IN - list of fully quallified file names
- *   int32_t options	 IN - bit fields indicate stage options (see above).
+ *   int32_t options	 IN - bit fields indicate release options (see above).
  *   int32_t *partial_sz IN -
  * RETURNS:
- *   success -  0	operation successfully issued staging not necessarily
+ *   success -  0	operation successfully issued release not necessarily
  *			complete.
  *   error   -  -1
  */
@@ -564,7 +564,7 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
     int32_t partial_sz, char **job_id) {
 
 	char		buf[32];
-	char		*cmd;
+	char		**command;
 	node_t		*n;
 	argbuf_t 	*arg;
 	size_t		len = MAXPATHLEN * 2;
@@ -575,6 +575,9 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	FILE		*out;
 	FILE		*err;
 	exec_cleanup_info_t *cl;
+	char release_s_buf[32];
+	int arg_cnt;
+	int cur_arg = 0;
 
 	if (ISNULL(files, job_id)) {
 		Trace(TR_ERR, "release files failed:%s", samerrmsg);
@@ -582,28 +585,63 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	}
 
 
-	/* check the arguments and construct the command string */
-	cmd = (char *)mallocer(len);
-	if (cmd == NULL) {
+	/*
+	 * Determine how many args to the command and create the command
+	 * array. Note that command is malloced because the number of files
+	 * is not known prior to execution. The arguments themselves need
+	 * not be malloced because the child process will get a copy.
+	 * Include space in the command array for:
+	 * - the command
+	 * - all possible options
+	 * - an entry for each file in the list.
+	 * - entry for the NULL
+	 */
+	arg_cnt = 1 + 6 + files->length + 1;
+	command = (char **)calloc(arg_cnt, sizeof (char *));
+	if (command == NULL) {
+		setsamerr(SE_NO_MEM);
 		Trace(TR_ERR, "release files failed:%s", samerrmsg);
 		return (-1);
 	}
-	cmd[0] = '\0';
-	STRLCATGROW(cmd, RELEASE_FILES_CMD, len);
-	STRLCATGROW(cmd, " ", len);
+	command[cur_arg++] = RELEASE_FILES_CMD;
 
-	expand_releaser_options(options, partial_sz, buf, sizeof (buf));
-	STRLCATGROW(cmd, buf, len);
+	*buf = '\0';
+	if (partial_sz) {
+		snprintf(release_s_buf, sizeof (release_s_buf), "-s%d ",
+		    partial_sz);
+		command[cur_arg++] = release_s_buf;
+	}
+	if (options & RL_OPT_NEVER) {
+		command[cur_arg++] = "-n";
+	}
+	if (options & RL_OPT_WHEN_1) {
+		command[cur_arg++] = "-a";
+	}
+	if (options & RL_OPT_PARTIAL) {
+		command[cur_arg++] = "-p";
+	}
+	if (options & RL_OPT_DEFAULTS) {
+		command[cur_arg++] = "-d";
+	}
+	/* Recursive must be specified last */
+	if (options & RL_OPT_RECURSIVE) {
+		command[cur_arg++] = "-r";
+	}
 
 	/* make the argument buffer for the activity */
 	arg = (argbuf_t *)mallocer(sizeof (releasebuf_t));
 	if (arg == NULL) {
-		free(cmd);
+		free(command);
 		Trace(TR_ERR, "release files failed:%s", samerrmsg);
 		return (-1);
 	}
 
 	arg->rl.filepaths = lst_create();
+	if (arg->rl.filepaths == NULL) {
+		free(command);
+		Trace(TR_ERR, "release files failed:%s", samerrmsg);
+		return (-1);
+	}
 	arg->rl.options = options;
 	arg->rl.partial_sz = partial_sz;
 
@@ -611,20 +649,19 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	for (n = files->head; n != NULL; n = n->next) {
 		if (n->data != NULL) {
 			char *cur_file;
-			STRLCATGROW(cmd, (char *)n->data, len);
-			STRLCATGROW(cmd, " ", len);
+			command[cur_arg++] = (char *)n->data;
 
 			found_one = B_TRUE;
 			cur_file = copystr(n->data);
 			if (cur_file == NULL) {
-				free(cmd);
+				free(command);
 				free_argbuf(SAMA_RELEASEFILES, arg);
 				Trace(TR_ERR, "release files failed:%s",
 				    samerrmsg);
 				return (-1);
 			}
 			if (lst_append(arg->rl.filepaths, cur_file) != 0) {
-				free(cmd);
+				free(command);
 				free(cur_file);
 				free_argbuf(SAMA_RELEASEFILES, arg);
 				Trace(TR_ERR, "release files failed:%s",
@@ -635,17 +672,10 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	}
 
 	/*
-	 * Check that at least one file was found and that the STRLCATGROWS
-	 * have succeeded
+	 * Check that at least one file was found.
 	 */
-	if (cmd == NULL) {
-		setsamerr(SE_NO_MEM); /* the reason STRLCATGROW can fail */
-		free_argbuf(SAMA_RELEASEFILES, arg);
-		Trace(TR_ERR, "release files failed:%s", samerrmsg);
-		return (-1);
-	}
 	if (!found_one) {
-		free(cmd);
+		free(command);
 		free_argbuf(SAMA_RELEASEFILES, arg);
 		Trace(TR_ERR, "release files failed:%s", samerrmsg);
 		return (-1);
@@ -655,7 +685,7 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	ret = start_activity(display_release_activity, kill_fork,
 	    SAMA_RELEASEFILES, arg, job_id);
 	if (ret != 0) {
-		free(cmd);
+		free(command);
 		free_argbuf(SAMA_RELEASEFILES, arg);
 		Trace(TR_ERR, "release files failed:%s", samerrmsg);
 		return (-1);
@@ -667,7 +697,7 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	 */
 	cl = (exec_cleanup_info_t *)mallocer(sizeof (exec_cleanup_info_t));
 	if (cl == NULL) {
-		free(cmd);
+		free(command);
 		lst_free_deep(arg->rl.filepaths);
 		end_this_activity(*job_id);
 		Trace(TR_ERR, "release files failed, error:%d %s",
@@ -676,19 +706,20 @@ release_files(ctx_t *c /* ARGSUSED */, sqm_lst_t *files, int32_t options,
 	}
 
 	/* exec the process */
-	pid = exec_get_output(cmd, &out, &err);
+	pid = exec_mgmt_cmd(&out, &err, command);
 	if (pid < 0) {
-		free(cmd);
+		free(command);
 		lst_free_deep(arg->rl.filepaths);
 		end_this_activity(*job_id);
 		Trace(TR_ERR, "release files failed:%s", samerrmsg);
 		return (-1);
 	}
+	free(command);
 	set_pid_or_tid(*job_id, pid, 0);
 
 
 	/* setup struct for call to cleanup */
-	strlcpy(cl->func, cmd, sizeof (cl->func));
+	strlcpy(cl->func, RELEASE_FILES_CMD, sizeof (cl->func));
 	cl->pid = pid;
 	strlcpy(cl->job_id, *job_id, MAXNAMELEN);
 	cl->streams[0] = out;

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.47 $"
+#pragma ident   "$Revision: 1.48 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -3145,7 +3145,7 @@ char	**job_id)
 {
 
 	char		buf[35];
-	char		*cmd;
+	char		**command;
 	node_t		*n;
 	argbuf_t 	*arg;
 	size_t		len = MAXPATHLEN * 2;
@@ -3156,6 +3156,8 @@ char	**job_id)
 	FILE		*out;
 	FILE		*err;
 	exec_cleanup_info_t *cl;
+	int arg_cnt;
+	int cur_arg = 0;
 
 	if (ISNULL(files, job_id)) {
 		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
@@ -3164,41 +3166,83 @@ char	**job_id)
 	Trace(TR_MISC, "archive files: %d files options %d",
 	    files->length, options);
 
-	/* check the arguments and construct the command string */
-	cmd = (char *)mallocer(len);
-	if (cmd == NULL) {
+	/*
+	 * Determine how many args to the command and create the command
+	 * array. Note that command is malloced because the number of files
+	 * is not known prior to execution. The arguments themselves need
+	 * not be malloced because the child process will get a copy.
+	 * Include space in the command array for:
+	 * - the command
+	 * - all possible options
+	 * - an entry for each file in the list
+	 * - an entry for the NULL
+	 */
+	arg_cnt = 1 + 9 + files->length + 1;
+
+	command = (char **)calloc(arg_cnt, sizeof (char *));
+	if (command == NULL) {
+		setsamerr(SE_NO_MEM);
 		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
 		return (-1);
 	}
-	cmd[0] = '\0';
-	STRLCATGROW(cmd, ARCHIVE_FILES_CMD, len);
-	STRLCATGROW(cmd, " ", len);
+	command[cur_arg++] = ARCHIVE_FILES_CMD;
+	/* Multiple copies can be specified */
+	if (options & AR_OPT_COPY_1) {
+		command[cur_arg++] = "-c1";
+	}
+	if (options & AR_OPT_COPY_2) {
+		command[cur_arg++] = "-c2";
+	}
+	if (options & AR_OPT_COPY_3) {
+		command[cur_arg++] = "-c3";
+	}
+	if (options & AR_OPT_COPY_4) {
+		command[cur_arg++] = "-c4";
+	}
+	if (options & AR_OPT_DEFAULTS) {
+		command[cur_arg++] = "-d";
+	}
+	if (options & AR_OPT_NEVER) {
+		command[cur_arg++] = "-n";
+	}
+	if (options & AR_OPT_CONCURRENT) {
+		command[cur_arg++] = "-C";
+	}
+	if (options & AR_OPT_INCONSISTENT) {
+		command[cur_arg++] = "-I";
+	}
+	/* Recursive must be specified last */
+	if (options & AR_OPT_RECURSIVE) {
+		command[cur_arg++] = "-r";
+	}
 
-	expand_archive_options(options, buf, sizeof (buf));
-	STRLCATGROW(cmd, buf, len);
 
 	/* make the argument buffer for the activity */
 	arg = (argbuf_t *)mallocer(sizeof (archivebuf_t));
 	if (arg == NULL) {
-		free(cmd);
+		free(command);
 		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
 		return (-1);
 	}
 
 	arg->a.filepaths = lst_create();
+	if (arg->a.filepaths == NULL) {
+		free(command);
+		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
+		return (-1);
+	}
 	arg->a.options = options;
 
-	/* add the file names to the cmd string and the argument buffer */
+	/* add the file names to the command and the argument buffer */
 	for (n = files->head; n != NULL; n = n->next) {
 		if (n->data != NULL) {
 			char *cur_file;
-			STRLCATGROW(cmd, (char *)n->data, len);
-			STRLCATGROW(cmd, " ", len);
+			command[cur_arg++] = (char *)n->data;
 
 			found_one = B_TRUE;
 			cur_file = copystr(n->data);
 			if (cur_file == NULL) {
-				free(cmd);
+				free(command);
 				free_argbuf(SAMA_ARCHIVEFILES, arg);
 				Trace(TR_ERR, "archive files failed:%s",
 				    samerrmsg);
@@ -3206,7 +3250,7 @@ char	**job_id)
 			}
 			if (lst_append(arg->a.filepaths, n->data) != 0) {
 				free(cur_file);
-				free(cmd);
+				free(command);
 				free_argbuf(SAMA_ARCHIVEFILES, arg);
 				Trace(TR_ERR, "archive files failed:%s",
 				    samerrmsg);
@@ -3216,18 +3260,10 @@ char	**job_id)
 	}
 
 	/*
-	 * Check that at least one file was found and that the STRLCATGROWS
-	 * have succeeded
+	 * Check that at least one file was found.
 	 */
-	if (cmd == NULL) {
-		samerrno = SE_NO_MEM; /* the reason STRLCATGROW can fail */
-		setsamerr(SE_NO_MEM);
-		free_argbuf(SAMA_ARCHIVEFILES, arg);
-		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
-		return (-1);
-	}
 	if (!found_one) {
-		free(cmd);
+		free(command);
 		free_argbuf(SAMA_ARCHIVEFILES, arg);
 		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
 		return (-1);
@@ -3237,7 +3273,7 @@ char	**job_id)
 	ret = start_activity(display_archive_activity, kill_fork,
 	    SAMA_ARCHIVEFILES, arg, job_id);
 	if (ret != 0) {
-		free(cmd);
+		free(command);
 		free_argbuf(SAMA_ARCHIVEFILES, arg);
 		Trace(TR_ERR, "archive files failed:%s", samerrmsg);
 		return (-1);
@@ -3245,7 +3281,7 @@ char	**job_id)
 
 	cl = (exec_cleanup_info_t *)mallocer(sizeof (exec_cleanup_info_t));
 	if (cl == NULL) {
-		free(cmd);
+		free(command);
 		lst_free_deep(arg->a.filepaths);
 
 		/* end_this_activity frees the main arg struct */
@@ -3257,9 +3293,9 @@ char	**job_id)
 
 
 	/* exec the process */
-	pid = exec_get_output(cmd, &out, &err);
+	pid = exec_mgmt_cmd(&out, &err, command);
 	if (pid < 0) {
-		free(cmd);
+		free(command);
 		lst_free_deep(arg->a.filepaths);
 
 		/* end_this_activity frees the main arg struct */
@@ -3269,10 +3305,10 @@ char	**job_id)
 		return (-1);
 	}
 	set_pid_or_tid(*job_id, pid, 0);
-
+	free(command);
 
 	/* setup struct for call to cleanup */
-	strlcpy(cl->func, cmd, sizeof (cl->func));
+	strlcpy(cl->func, ARCHIVE_FILES_CMD, sizeof (cl->func));
 	cl->pid = pid;
 	strlcpy(cl->job_id, *job_id, MAXNAMELEN);
 	cl->streams[0] = out;

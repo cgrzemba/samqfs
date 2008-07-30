@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.146 $"
+#pragma	ident	"$Revision: 1.147 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */
@@ -80,6 +80,7 @@ typedef enum samapi_errno {
 	SE_IOCTL_FAILED				= 30040,
 	SE_INVALID_SCSI_RESPONSE		= 30041,
 	SE_INVALID_PARAMETER			= 30042,
+	SE_NO_RELATIVE_PATHS			= 30043,
 
 	SE_AU_DISCOVERY_FAILED			= 30100,
 	SE_INVALID_AU_TYPE			= 30101,
@@ -186,6 +187,7 @@ typedef enum samapi_errno {
 	SE_ACSLS_TITLE				= 30230,
 	SE_FS_TITLE				= 30231,
 	SE_ALERT_TITLE				= 30232,
+	SE_BUFFER_TOO_SMALL			= 30233,
 
 	SE_MEDIA_API_BEGIN			= 30300,
 	SE_LIST_HAS_NO_MEMBER			= 30305,

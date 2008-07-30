@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ConversionUtil.java,v 1.24 2008/07/03 00:04:31 ronaldso Exp $
+// ident	$Id: ConversionUtil.java,v 1.25 2008/07/30 20:16:02 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -161,54 +161,147 @@ public class ConversionUtil {
 
 
     /**
-     * convert a String that contains comma separated name=value pairs
+     * Convert a String that contains comma separated name=value pairs
      * to a Properties object.
+     *
+     * Keys must not contain quotes, commas or equals signs.
+     *
+     * If a value being passed in contains commas, leading or trailing spaces,
+     * or a double quote the entire value must be enclosed in double quotes.
+     * Also a " inside of a value must be escaped as ""
+     *
+     * Note that split is not used because it makes it difficult to
+     * handle strings that can contain the delimiter around which you
+     * are splitting. For example trailing delimiters that are part of
+     * a value are lost. Splitting on multiple delimiters resulted in
+     * in too much record keeping since the values strings can contain
+     * '=' ',' and '\"'.
      */
     public static Properties strToProps(String str) {
-
-	TraceUtil.trace3("props str: " + str);
-
+	CharSequence quotes = "\"\"".subSequence(0, 2);
+	CharSequence quote = "\"".subSequence(0, 1);
 	Properties props = new Properties();
-        if (str == null)
-            return props;
 
-        String[] parts = str.split("\"");
-        // quoted substrings have odd indices. will not parse these
-        // " is escaped by using ""
+	if (str == null) {
+	    return (props);
+	}
 
-        String crtKey = null, val = null;
-        String[] pairs; // name=value pairs
-        int idx; // index of '=' in a name[=value] pair
+	int strLen = str.length();
+	int i = 0;
+	do {
+	    String key;
+	    String value;
+	    boolean enclosed = false;
+	    int valStart;
+	    int valEnd = 0;
+	    int quoteCnt = 0;
+	    int keyStart = i;
 
-        for (int i = 0, j; i < parts.length; i++) {
-            if (parts[i].length() == 0) { // as a result of encountering ""
-                if (i % 2 == 0)
-                    val += "\""; // add back one " to the value
-                continue;
-            }
+	    while (i < strLen && str.charAt(i) != '=') {
+		i++;
+	    }
 
-            if (i % 2 == 1) { // parts[i] is [part of] a quoted string
-                val += parts[i];
-                props.setProperty(crtKey, val);
+	    if (i == 0 || i == strLen) {
+		/* error */
+		return (props);
+	    }
 
-            } else {
-                if (i > 0)
-                    parts[i] = parts[i].replaceFirst(",", "");
-                pairs = parts[i].split(",");
-                for (j = 0; j < pairs.length; j++) {
-                    idx = pairs[j].indexOf('=');
-                    if (idx == -1) {
-                        idx = pairs[j].length();
-                        val = "";
-                    } else
-                        val = pairs[j].substring(idx + 1).trim();
-                    crtKey = pairs[j].substring(0, idx).trim();
-                    props.setProperty(crtKey, val);
-                }
-            }
-        }
+	    key = str.substring(keyStart, i);
+	    key = key.trim();
 
-	return props;
+	    i++; // move past the '='
+	    while (i < strLen &&
+		   (str.charAt(i) == ' ' || str.charAt(i) == '\t')) {
+		i++;
+	    }
+	    if (i > strLen) {
+		/* key with no value */
+		return (props);
+	    }
+
+	    /*
+	     * valStart intentionally includes any leading double quotes to
+	     * allow subsequent trimming.
+	     */
+	    valStart = i;
+	    if (str.charAt(i) == '\"') {
+		/*
+		 * The value is quoted. Move past the quote before beginning to
+		 * count quotes in the next loop
+		 */
+		i++;
+		enclosed = true;
+	    }
+
+	    /*
+	     * Now find the end of the value. Note that a comma could
+	     * occur in the value but if so, the entire value must be
+	     * enclosed in quotes. Also note that quotes could occur
+	     * in the value but they must be escaped by doubling them
+	     * so " in the value would be "". This allows the % 2 test
+	     * to work.
+	     */
+	    while (i < strLen) {
+		char curChar = str.charAt(i);
+
+		if (enclosed && curChar == '\"') {
+		    quoteCnt++;
+		    i++;
+		} else if (enclosed && curChar == ',' &&
+			   ((quoteCnt % 2) == 1)) {
+
+		    /*
+		     * Found valEnd since ',' comes after an odd number
+		     * of quotes
+		     */
+		    valEnd = i;
+		    break;
+
+		} else if (!enclosed && curChar == ',') {
+		    /* Found comma ending the value since it is not enclosed */
+		    valEnd = i;
+		    break;
+		} else {
+		    i++;
+		}
+	    }
+
+	    if (i == strLen) {
+		/* If end of input found, value goes to last char */
+		valEnd = i;
+	    }
+
+	    if (valEnd <= valStart) {
+		/* No value found */
+		return (props);
+	    }
+
+	    /*
+	     * Found val but must:
+	     * 1. Remove trailing whitespace
+	     * 2. Replace any "" with "
+	     * 3. If enclosed remove the trailing "
+	     */
+	    value = str.substring(valStart, valEnd);
+
+	    /* Remove trailing whitespace */
+	    value = value.trim();
+
+	    /*
+	     * Now that whitespace is gone remove any enclosing quotes and
+	     * translate any escaped "" to ".
+	     */
+	    if (enclosed) {
+		value = value.substring(1, value.length() - 1);
+		value = value.replace(quotes, quote);
+	    }
+
+	    props.setProperty(key, value);
+
+	    i++;
+	} while (i < strLen);
+
+	return (props);
     }
 
     /**
