@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 #endif
 
 #include "sam/osversion.h"
@@ -116,7 +116,6 @@ sam_bread(
 {
 	int error = 0;
 	struct file *fp = NULL;
-	int blk;
 	loff_t offset;
 	ssize_t ret;
 	mm_segment_t save_state;
@@ -130,8 +129,7 @@ sam_bread(
 	/*
 	 * Convert block offset to bytes
 	 */
-	blk = blkno;
-	offset = blk * SAM_DEV_BSIZE;
+	offset = blkno * SAM_DEV_BSIZE;
 
 	save_state = get_fs();
 	set_fs(KERNEL_DS);
@@ -220,15 +218,9 @@ sam_sbread(
 	char *bufp)		/* buffer */
 {
 	sam_mount_t *mp = ip->mp;
-	sam_daddr_t block;
-	int blk;
 	int error;
 	sam_block_getbuf_t getbuf;
 	sam_iecache_t *iecachep;
-
-	block = (blkno << SAM2SUN_BSHIFT);
-	blk = (daddr_t)block;
-	ASSERT(blk == block);
 
 	/*
 	 * Grab iecache mutex.  Use cached block if available.

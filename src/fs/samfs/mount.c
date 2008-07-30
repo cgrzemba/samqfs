@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.222 $"
+#pragma ident "$Revision: 1.223 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1546,7 +1546,6 @@ sam_validate_sblk(
 	int i;
 	int ord;
 	sam_time_t time = 0;
-	daddr_t	last_block;
 #ifdef sun
 	buf_t *bp;
 #endif /* sun */
@@ -1724,29 +1723,13 @@ sam_validate_sblk(
 			    sblk->info.sb.mm_count, mm_count);
 			err_line = __LINE__;
 			error = EINVAL;
-		} else {
-			last_block = (daddr_t)sblk->eq[ord].fs.capacity;
-			if ((sam_daddr_t)sblk->eq[ord].fs.capacity >
-			    (sam_daddr_t)last_block) {
-				cmn_err(CE_WARN,
-				    "SAM-QFS: %s: mcf eq %d: size "
-				    "exceeds sizeof (daddr_t)",
-				    mp->mt.fi_name, dp->part.pt_eq);
-				err_line = __LINE__;
-#ifdef sun
-				error = EFBIG;
-#endif /* sun */
-#ifdef linux
-				error = EINVAL;
-#endif /* linux */
-			} else if (dp->part.pt_eq != sblk->eq[ord].fs.eq) {
-				cmn_err(CE_WARN,
-				"SAM-QFS: %s: mcf eq %d: eq mismatch "
-				"in superblock (eq = %d)",
-				    mp->mt.fi_name, dp->part.pt_eq,
-				    sblk->eq[ord].fs.eq);
-				/* not a fatal error */
-			}
+		} else if (dp->part.pt_eq != sblk->eq[ord].fs.eq) {
+			cmn_err(CE_WARN,
+			"SAM-QFS: %s: mcf eq %d: eq mismatch "
+			"in superblock (eq = %d)",
+			    mp->mt.fi_name, dp->part.pt_eq,
+			    sblk->eq[ord].fs.eq);
+			/* not a fatal error */
 		}
 #ifdef sun
 		/*
