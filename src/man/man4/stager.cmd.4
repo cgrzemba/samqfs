@@ -1,4 +1,4 @@
-.\" $Revision: 1.30 $
+.\" $Revision: 1.31 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -82,8 +82,8 @@ Sets the stage buffer size for a specific media type.
 For \fImedia\fR, specify a media type from the \fBmcf\fR(4) man page.
 .sp
 For \fIbuffer_size\fR, specify an integer value in the
-range \fB2\fR \(<= \fIbuffer_size\fR \(<= \fB1024\fR.
-The default is \fB4\fR.
+range \fB2\fR \(<= \fIbuffer_size\fR \(<= \fB8192\fR.
+The default is \fB16\fR.
 The \fIbuffer_size\fR specified is multiplied by the default block
 size for \fImedia\fR.
 For more information on default block sizes, see the

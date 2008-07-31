@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -205,7 +205,7 @@ setBufsizeParams(void)
 {
 	static char *keyword = "bufsize";
 	static int64_t minBufsize = 2;
-	static int64_t maxBufsize = 1024;
+	static int64_t maxBufsize = 8192;
 
 	char *p;
 	mtype_t media;

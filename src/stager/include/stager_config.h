@@ -34,7 +34,7 @@
 #if !defined(CONFIG_H)
 #define	CONFIG_H
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 #define	STAGERD_PROGRAM_NAME	"sam-stagerd"
 #define	COPY_PROGRAM_NAME	"sam-stagerd_copy"
@@ -115,11 +115,6 @@
  * Max number of copy errors in a stream before rejecting it.
  */
 #define	MAX_COPY_STREAM_ERRORS	10
-
-/*
- * Default number of i/o buffers.
- */
-#define	COPY_NUMOF_BUFFERS	4
 
 /*
  * Number of streams to allocate for each disk archive volume.

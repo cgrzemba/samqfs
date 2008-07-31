@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -274,7 +274,7 @@ FindCopyInstanceInfo(
 
 	if (instance->ci_created == B_FALSE) {
 		instance->ci_media = media;
-		instance->ci_numBuffers = COPY_NUMOF_BUFFERS;
+		instance->ci_numBuffers = STAGER_DEFAULT_MC_BUFSIZE;
 	}
 	return (instance);
 }

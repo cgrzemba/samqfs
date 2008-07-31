@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -45,6 +45,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <time.h>
 #include <values.h>
 #include <assert.h>
+#include <inttypes.h>
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -105,6 +106,8 @@ CircularIoConstructor(
 	int i;
 	char *ptr;
 	CircularBuffer_t *buffer;
+	int numBuffs;
+	longlong_t bufSize;
 
 	SamMalloc(buffer, sizeof (CircularBuffer_t));
 	memset(buffer, 0, sizeof (CircularBuffer_t));
@@ -116,6 +119,19 @@ CircularIoConstructor(
 
 	buffer->cb_notFull = B_TRUE;
 	PthreadCondInit(&buffer->cb_full, NULL);
+
+	/* Check bufsize */
+	numBuffs = numBuffers;
+	bufSize = (longlong_t)numBuffs * (longlong_t)blockSize;
+	while (bufSize >= SIZE_MAX) {
+		numBuffs >>= 1;
+		bufSize = (longlong_t)numBuffs * (longlong_t)blockSize;
+	}
+	if (numBuffs != numBuffers) {
+		Trace(TR_MISC,
+		    "bufsize %d too big, adjusted to %d", numBuffers, numBuffs);
+		numBuffers = numBuffs;
+	}
 
 	buffer->cb_numBuffers = numBuffers;
 	buffer->cb_bufSize = numBuffers * blockSize;
@@ -516,3 +532,10 @@ CircularIoSlot(
 
 	return (index);
 }
+
+#if	0
+/*
+ * Allocate buffer for circular io.
+ */
+circularBufferAlloc(
+#endif

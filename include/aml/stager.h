@@ -34,7 +34,7 @@
 #if !defined(_AML_STAGER_H)
 #define	_AML_STAGER_H
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 #include "sam/param.h"
 #include "sam/types.h"
@@ -131,7 +131,7 @@ struct StagerControlRsp {
 /*
  * Default media characteristics buffer size.
  */
-#define	STAGER_DEFAULT_MC_BUFSIZE	4
+#define	STAGER_DEFAULT_MC_BUFSIZE	16
 
 /*
  * Log file enumerations and default logging value.
