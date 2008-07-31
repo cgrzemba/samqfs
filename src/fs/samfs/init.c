@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.126 $"
+#pragma ident "$Revision: 1.127 $"
 
 #define	SAM_INIT
 
@@ -91,7 +91,11 @@ int sam_trace_size = 0;			/* <= 0 means compute a default */
 char *sam_zero_block = NULL;		/* a block of zeros */
 int sam_zero_block_size = 0;		/* size of a block of zeros */
 int panic_on_fs_error = 1;		/* a debug variable */
-int sam_vpm_enable = 0;			/* non-zero use Solaris VPM */
+#if defined(SOL_511_ABOVE)
+int sam_vpm_enable = 1;			/* non-zero use Solaris VPM */
+#else
+int sam_vpm_enable = 0;			/* zero means don't use Solaris VPM */
+#endif
 
 const char sam_version[] = SAM_BUILD_INFO;
 const char sam_build_uname[] = SAM_BUILD_UNAME;
@@ -566,9 +570,13 @@ samfs_init(
 
 #if defined(SOL_511_ABOVE)
 	/*
-	 * Initialize to the Solaris default value.
+	 * Default is on for x64, off for SPARC.
 	 */
-	sam_vpm_enable = vpm_enable;
+	if (sam_vpm_enable) {
+		sam_vpm_enable = vpm_enable;
+	}
+#else
+	sam_vpm_enable = 0;
 #endif
 
 	/*
