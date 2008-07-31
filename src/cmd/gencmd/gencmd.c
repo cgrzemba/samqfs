@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 /* Feature test switches. */
 	/* None. */
@@ -59,6 +59,9 @@
 
 /* OS headers. */
 #include <libgen.h>
+#ifdef sun
+#include <zone.h>
+#endif
 #include <sys/param.h>
 
 /* SAM-FS headers. */
@@ -528,6 +531,12 @@ main(
 static void
 Archive(void)
 {
+#ifdef sun
+	if (n_opt && (getzoneid() != GLOBAL_ZONEID)) {
+		prerror(2, 0, catgets(catfd, SET, 5113,
+		    "cannot specify -n in the non-global zone."));
+	}
+#endif
 	if (args.ncopies != 0) {
 		int		n;
 
@@ -588,6 +597,12 @@ Release(void)
 	if (Default)  *opn++ = 'd';
 	if (a_opt)  *opn++ = 'a';
 	if (n_opt) {
+#ifdef sun
+		if (getzoneid() != GLOBAL_ZONEID) {
+			prerror(2, 0, catgets(catfd, SET, 5113,
+			    "cannot specify -n in the non-global zone."));
+		}
+#endif
 		if (a_opt) {
 			prerror(2, 0, catgets(catfd, SET, 5108,
 			    "cannot specify -n with -a."));
@@ -700,6 +715,12 @@ Ssum(void)
 	if (u_opt)  *opn++ = 'u';
 	if (G_opt)  *opn++ = 'G';
 	if (e_opt) {
+#ifdef sun
+		if (getzoneid() != GLOBAL_ZONEID) {
+			prerror(2, 0, catgets(catfd, SET, 5114,
+			    "cannot specify -e in the non-global zone."));
+		}
+#endif
 		if (!g_opt)	*opn++ = 'g';
 		if (!u_opt)	*opn++ = 'u';
 		*opn++ = 'e';

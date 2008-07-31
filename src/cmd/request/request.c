@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 /* Feature test switches. */
 /* PRrminfo	If defined, print sam_rminfo to stdout */
@@ -58,6 +58,7 @@
 
 /* OS headers. */
 #include <libgen.h>
+#include <zone.h>
 
 /* SAM-FS headers. */
 #include <sam/types.h>
@@ -216,6 +217,12 @@ main(
 				error(2, 0, catgets(catfd, SET, 13210,
 				    "%s and %s are mutually exclusive."),
 				    "p", "l");
+			}
+			if (getzoneid() != GLOBAL_ZONEID) {
+				error(0, 0, catgets(catfd, SET, 5039,
+				    "cannot specify -p in"
+				    " the non-global zone"));
+				errors++;
 			}
 			if (getuid() != 0) {
 				error(0, 0, catgets(catfd, SET, 2975,

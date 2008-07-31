@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.604 $"
+$ pragma ident "$Revision: 1.605 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -1413,6 +1413,7 @@ $ ===================================================================
 5036 StorADE support is on.
 5037 StorADE support is off.
 5038 usage: samstorade [-r hostname] [-t timeout] [-s xml_message] [-d]
+5039 cannot specify -p in the non-global zone
 
 
 $  gencmd
@@ -1430,6 +1431,8 @@ $  gencmd
 5110 -e and -E are mutually exclusive
 5111 You must be root to set data verification
 5112 Data verification error %d for %s
+5113 cannot specify -n in the non-global zone
+5114 cannot specify -e in the non-global zone
 
 $  odlabel/tplabel
 
