@@ -34,7 +34,7 @@
 #if !defined(_AML_STAGER_DEFS_H)
 #define	_AML_STAGER_DEFS_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #include "sam/types.h"
 #include "aml/device.h"
@@ -88,7 +88,7 @@ typedef struct FileInfo {
 	uint_t		flags;
 	int		error;		/* errno if staging error */
 	short		retry;		/* retry counter for error recovery */
-	short		namelen;	/* length of file full path */
+	short		namelen;	/* length of file name */
 	int		se_ord;		/* section ordinal */
 
 	uchar_t		csum_algo;	/* checksum algorithm */
