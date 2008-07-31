@@ -1,4 +1,4 @@
-# $Revision: 1.20 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,56 +26,23 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../..
+DEPTH = ../../../../..
+OBJDEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-DIRS = \
-	sam \
-	samconf \
-	samspm \
-	samut
-
-ifeq ($(OS), SunOS)
-BDB = bdb
-SAMCAT = samcat
-SAMRFT = samrft
-DIRS += \
-	bdb \
-	fsmdb \
-	honeycomb \
-	mysql \
-	samrft \
-	samcat \
-	samfs \
-	samapi \
-	sammig \
-	ssl \
-	curl \
-	csn \
-	sammgmt \
-	sammgmt/stkapi \
-	sammgmtjni \
-	samsanergy \
-	pax_hdr
-endif
+#BUILD_64BIT = yes
 
 include $(DEPTH)/mk/targets.mk
 
-#
-# List any parallel build directory dependencies here
-# or .NOTPARALLEL: for sequential directory builds
-#
-sam:		$(SAMCAT) samconf samspm samut
-samspm:		samconf
-samfs:		sam samut $(SAMCAT)
-sammgmt:	sam samut $(SAMCAT) samfs samapi fsmdb csn
-samrft:		samspm
-samut:		samconf $(SAMRFT) $(BDB)
-samcat samapi:	samut
-sammgmt/stkapi:	sammgmt
-sammgmtjni:	sammgmt
-csn:		samut curl ssl
-pax_hdr:	samut
+all:
+	rm -f $(DEPTH)/lib/$(OBJ_DIR)/libmysqlclient.so
+	rm -f $(DEPTH)/lib/$(OBJ_DIR)/libmysqlclient.so.15
+	rm -f $(DEPTH)/lib/$(OBJ_DIR)/libmysqlclient_r.so
+	rm -f $(DEPTH)/lib/$(OBJ_DIR)/libmysqlclient_r.so.15
+	ln -s $(OBJDEPTH)/src/lib/mysql/V5/5.0.51a/$(MYSQL_ARCH)/lib/libmysqlclient.so $(DEPTH)/lib/$(OBJ_DIR)/
+	ln -s $(OBJDEPTH)/src/lib/mysql/V5/5.0.51a/$(MYSQL_ARCH)/lib/libmysqlclient.so $(DEPTH)/lib/$(OBJ_DIR)/libmysqlclient.so.15
+	ln -s $(OBJDEPTH)/src/lib/mysql/V5/5.0.51a/$(MYSQL_ARCH)/lib/libmysqlclient_r.so $(DEPTH)/lib/$(OBJ_DIR)/
+	ln -s $(OBJDEPTH)/src/lib/mysql/V5/5.0.51a/$(MYSQL_ARCH)/lib/libmysqlclient_r.so $(DEPTH)/lib/$(OBJ_DIR)/libmysqlclient_r.so.15
 
 include $(DEPTH)/mk/depend.mk

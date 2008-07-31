@@ -1,4 +1,4 @@
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 
 #    SAM-QFS_notice_begin
 #
@@ -209,6 +209,19 @@ endif
 DB_VERSION = V4/4.4.20
 DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(DB_ARCH)/include
 DB_LIB = -ldb
+
+#
+# MySQL DB definitions
+#
+ifeq ($(PLATFORM), i386)
+	MYSQL_ARCH = i386
+else
+	MYSQL_ARCH = sparc
+endif
+MYSQL_VERSION = V5/5.0.51a
+MYSQL_INCLUDE = -I$(DEPTH)/src/lib/mysql/$(MYSQL_VERSION)/$(MYSQL_ARCH)/include
+MYSQL_LIB = -lmysqlclient
+MYSQL_LIB_R = -lmysqlclient_r
 
 #
 # StorageTek 5800 API definitions

@@ -1,0 +1,8 @@
+This directory contains versions of MySQL from Sun.
+The source and binaries were obtained from the MySQL
+software download page:
+http://dev.mysql.com/downloads/mysql/5.0.html#downloads
+
+In order to build the current version of SAM-QFS you will need to
+include version 5.0.51a of MySQL according to the instructions 
+in V5/5.0.51a/README.

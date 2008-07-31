@@ -1,4 +1,4 @@
-# $Revision: 1.20 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,56 +26,30 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../..
+DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-DIRS = \
-	sam \
-	samconf \
-	samspm \
-	samut
-
-ifeq ($(OS), SunOS)
-BDB = bdb
-SAMCAT = samcat
-SAMRFT = samrft
-DIRS += \
-	bdb \
-	fsmdb \
-	honeycomb \
-	mysql \
-	samrft \
-	samcat \
-	samfs \
-	samapi \
-	sammig \
-	ssl \
-	curl \
-	csn \
-	sammgmt \
-	sammgmt/stkapi \
-	sammgmtjni \
-	samsanergy \
-	pax_hdr
-endif
+DIRS = $(MYSQL_VERSION)
 
 include $(DEPTH)/mk/targets.mk
 
 #
-# List any parallel build directory dependencies here
-# or .NOTPARALLEL: for sequential directory builds
+# Create target install directory if it doesn't exist
 #
-sam:		$(SAMCAT) samconf samspm samut
-samspm:		samconf
-samfs:		sam samut $(SAMCAT)
-sammgmt:	sam samut $(SAMCAT) samfs samapi fsmdb csn
-samrft:		samspm
-samut:		samconf $(SAMRFT) $(BDB)
-samcat samapi:	samut
-sammgmt/stkapi:	sammgmt
-sammgmtjni:	sammgmt
-csn:		samut curl ssl
-pax_hdr:	samut
+.NOTPARALLEL:
+
+.INIT:
+	[ -d $(DEPTH)/lib/$(OBJ_DIR) ] || mkdir -p $(DEPTH)/lib/$(OBJ_DIR)
+
+clean: 		clean_more
+clean_more:
+	rm -rf lib/$(OBJ_DIR)
+	rm -rf bin/$(OBJ_DIR)
+
+clobberall: 	clobber_more
+clobber_more:
+	rm -rf lib
+	rm -rf bin
 
 include $(DEPTH)/mk/depend.mk

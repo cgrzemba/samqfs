@@ -1,0 +1,50 @@
+This version of MySQL, V5.0.51a, is available at:
+Binaries: http://dev.mysql.com/downloads/mysql/5.0.html#solaris
+Source: http://dev.mysql.com/downloads/mysql/5.0.html#source
+
+If you wish to build SAM-QFS you will need to download the
+MySQL binaries for your architecture or build MySQL from the
+source package. 
+
+To package MySQL for each architecture:
+1. Download the package from the site specified above to 
+   a directory outside the SAM-QFS source tree.  If using prebuilt
+   binaries goto step 4.
+
+2. If building from source set the CFLAGS environment variable to 
+   the appropriate setting for your architecture (e.g. -xarch=i386)
+
+3. Build the code according to the instructions found in the source
+   package. There is no need to run make install as the resulting 
+   binaries are what is needed.
+
+4. Create the architecture specific directories in the SAM-QFS tree.
+   At sam-qfs/src/lib/mysql/V5/5.0.51a create a directory for each
+   architecture needed:
+	i386/
+	sparc/
+
+   In each of these directories create 2 subdirectories:
+	include/
+	lib/
+
+5. Copy the MySQL header files and client libraries to the 
+   architecture specific directories in the SAM-QFS tree.
+	
+   For example: The i386 version should be copied from the download's 
+   build_unix directory to: sam-qfs/src/lib/bdb/V4/4.4.20/i386/
+   directory as follows:
+   
+	a. Copy the following header files from MySQL package to the 
+	   i386/include directory.
+			errmsg.h
+			my_alloc.h
+			my_list.h
+			mysql_com.h
+			mysql_time.h
+			mysql_version.h
+			mysql.h
+			typelib.h
+	
+	b. Copy libmysqlclient.so and libmysqlclient_r.so to the
+	   i386/lib directory
