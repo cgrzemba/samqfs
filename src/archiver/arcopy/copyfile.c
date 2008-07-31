@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.80 $"
+#pragma ident "$Revision: 1.81 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -43,6 +43,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <string.h>
 #include <utime.h>
+#include <inttypes.h>
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -338,6 +339,8 @@ CopyFileReconfig(void)
 	static int blockCount;
 	char	*prevBufFirst;
 	size_t	prevBufSize;
+	int	blkCnt;
+	longlong_t bSize;
 
 	PthreadMutexLock(&bufInuse);
 	prevBufFirst = bufFirst;
@@ -359,6 +362,17 @@ CopyFileReconfig(void)
 		    (mp != NULL && (mp->MpFlags & MP_lockbuf))) {
 			lockBuffer = TRUE;
 		}
+	}
+	blkCnt = blockCount;
+	bSize = (longlong_t)blkCnt * (longlong_t)WriteCount;
+	while (bSize >= SIZE_MAX) {
+		blkCnt >>= 1;
+		bSize = (longlong_t)blkCnt * (longlong_t)WriteCount;
+	}
+	if (blkCnt < blockCount) {
+		Trace(TR_MISC,
+		    "bufsize %d too big, adjusted to %d", blockCount, blkCnt);
+		blockCount = blkCnt;
 	}
 	bufSize = blockCount * WriteCount;
 	if (bufSize <= prevBufSize) {

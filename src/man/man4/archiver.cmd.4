@@ -1,4 +1,4 @@
-.\" $Revision: 1.88 $
+.\" $Revision: 1.89 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -193,8 +193,8 @@ and (optionally) lock the buffer.
 For \fImedia\fR, specify a valid media type from the list
 on the \fBmcf\fR(4) man page.
 
-For \fIbuffer_size\fR, specify a number from 2 through 1024.  The
-default is 4.  This value is multiplied by the \fBdev_blksize\fR
+For \fIbuffer_size\fR, specify a number from 2 through 8192.  The
+default is 16.  This value is multiplied by the \fBdev_blksize\fR
 value for the media type, and the resulting buffer size
 is used.  The \fBdev_blksize\fR can be specified in
 the \fBdefaults.conf\fR file.
@@ -769,8 +769,8 @@ value for the media is used.
 Set the archive buffer size to
 .IR buffer_size " *"
 .BR dev_blksize .
-The default \fIbuffer_size\fR is 4.
-Valid values are 2 through 1024.
+The default \fIbuffer_size\fR is 16.
+Valid values are 2 through 8192.
 .RS
 .LP
 If not specified, the default

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.106 $"
+#pragma ident "$Revision: 1.107 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -403,7 +403,7 @@ makeMediaParams(void)
 		ASSERT(sizeof (mp->MpMtype) > strlen(dp->nm));
 		strncpy(mp->MpMtype, dp->nm, sizeof (mp->MpMtype));
 		mp->MpType = dp->dt;
-		mp->MpBufsize = 4;
+		mp->MpBufsize = 16;
 		mp->MpTimeout = WRITE_TIMEOUT;
 
 		/*

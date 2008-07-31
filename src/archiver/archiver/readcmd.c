@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.113 $"
+#pragma ident "$Revision: 1.114 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -473,7 +473,7 @@ dirBufsize(void)
 		/* Invalid '%s' value '%s' */
 		ReadCfgError(CustMsg(14101), dirName, token);
 	}
-	checkRange(dirName, val, 2, 1024);
+	checkRange(dirName, val, 2, 8192);
 	mp->MpBufsize = val;
 	if (ReadCfgGetToken() != 0) {
 		if (strcmp(token, "lock") == 0) {
