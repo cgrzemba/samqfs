@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 /*
  * static char *_SrcFile = __FILE__;$* Using __FILE__ makes duplicate strings
@@ -272,7 +272,7 @@ Nomem(
 	char msg_buf[MAXLINE];
 	char *msg;
 
-	snprintf(msg_buf, sizeof (msg_buf), "%s: %s(%s, %d)", GetCustMsg(14081),
+	snprintf(msg_buf, sizeof (msg_buf), "%s: %s(%s, %u)", GetCustMsg(14081),
 	    functionName, objectName, size);
 	msg = sendMsg(14081, msg_buf);
 	_Trace(TR_err, NULL, 0, "%s", msg);

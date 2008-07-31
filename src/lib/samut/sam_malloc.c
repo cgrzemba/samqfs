@@ -43,7 +43,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 /* Feature test switches. */
 /* DEBUG  If defined, allocated memory will be filled with a pattern. */
@@ -56,6 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 /* SAM-FS headers. */
 #include "sam/types.h"
@@ -65,11 +66,6 @@
 
 /* Macros. */
 
-#ifdef linux
-#undef SIZE_MAX
-#endif /* linux */
-
-#define	SIZE_MAX 0x7fffffff
 #define	FREE_FILL   0x3a
 #define	MALLOC_FILL 0xa3
 
@@ -168,10 +164,10 @@ _SamMalloc(
 	if (size == 0 || size >= SIZE_MAX) {
 #if defined(DEBUG)
 		AssertAlloc(SrcFile, SrcLine,
-		    "SamMalloc(%s, %ld): invalid size", ObjectName, size);
+		    "SamMalloc(%s, %u): invalid size", ObjectName, size);
 #endif /* defined(DEBUG) */
 		_Trace(TR_err, SrcFile, SrcLine,
-		    "SamMalloc(%s, %d) failed, invalid size",
+		    "SamMalloc(%s, %u) failed, invalid size",
 		    ObjectName, size);
 		*Object = NULL;
 		return;
@@ -183,13 +179,13 @@ _SamMalloc(
 		*Object = malloc(size);
 	}
 	if (NULL == *Object) {
-		_Trace(TR_err, SrcFile, SrcLine, "SamMalloc(%s, %d) failed",
+		_Trace(TR_err, SrcFile, SrcLine, "SamMalloc(%s, %u) failed",
 		    ObjectName, size);
 		Nomem("SamMalloc", ObjectName, size);
 		/* No Return */
 	}
 
-	_Trace(TR_alloc, SrcFile, SrcLine, "SamMalloc(%s, %d)",
+	_Trace(TR_alloc, SrcFile, SrcLine, "SamMalloc(%s, %u)",
 	    ObjectName, size);
 #if defined(DEBUG)
 	memset(*Object, MALLOC_FILL, size);
@@ -214,7 +210,7 @@ _SamRealloc(
 	if (size == 0 || size >= SIZE_MAX) {
 #if defined(DEBUG)
 		AssertAlloc(SrcFile, SrcLine,
-		    "SamMalloc(%s, %ld): invalid size", ObjectName, size);
+		    "SamMalloc(%s, %u): invalid size", ObjectName, size);
 #endif /* defined(DEBUG) */
 		return;
 	}
@@ -225,12 +221,12 @@ _SamRealloc(
 	ChgRef(ObjectName, p, *Object, size);
 #endif /* defined(DEBUG) */
 	if (NULL == *Object) {
-		_Trace(TR_err, SrcFile, SrcLine, "SamRealloc(%s, %d) failed",
+		_Trace(TR_err, SrcFile, SrcLine, "SamRealloc(%s, %u) failed",
 		    ObjectName, size);
 		Nomem("SamRealloc", ObjectName, size);
 		/* No Return */
 	}
-	_Trace(TR_alloc, SrcFile, SrcLine, "SamRealloc(%s, %d)",
+	_Trace(TR_alloc, SrcFile, SrcLine, "SamRealloc(%s, %u)",
 	    ObjectName, size);
 }
 
