@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.7 2008/07/23 17:38:38 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.8 2008/08/06 23:44:07 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -184,16 +184,6 @@
                             sort="OS"
                             rowHeader="true">
                 <ui:staticText text="#{clientTable.value.OS}"/>
-            </ui:tableColumn>
-            <ui:tableColumn id="colMounted"
-                            headerText="#{samBundle['SharedFS.client.table.heading.mounted']}"
-                            align="left"
-                            valign="top"
-                            sort="mounted"
-                            rowHeader="true">
-                <ui:staticText text="#{clientTable.value.mounted}"
-                               escape="false"
-                               converter="TimeInSecConverter"/>
             </ui:tableColumn>
             <ui:tableColumn id="colStatus"
                             headerText="#{samBundle['SharedFS.client.table.heading.status']}"

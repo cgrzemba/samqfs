@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.93 2008/07/16 21:55:55 kilemba Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.94 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -393,6 +393,12 @@ public class FileSystemSummaryView extends CommonTableContainerView {
                         new StringBuffer("Done deleting filesystem ").
                             append(fsName).toString());
 
+                    // Now the fs is deleted, make sure we clear the last used
+                    // file system name in the session
+                    if (fsName.equals(
+                        SamUtil.getLastUsedFSName(getServerName()))) {
+                        SamUtil.setLastUsedFSName(getServerName(), null);
+                    }
                     break;
 
                 case FileSystemSummaryModel.ARCHIVE_ACTIVITIES:

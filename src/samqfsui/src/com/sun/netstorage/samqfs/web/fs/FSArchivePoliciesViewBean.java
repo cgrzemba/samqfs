@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesViewBean.java,v 1.33 2008/06/11 16:58:00 ronaldso Exp $
+// ident	$Id: FSArchivePoliciesViewBean.java,v 1.34 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -93,6 +93,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
     public static final String CHILD_FS_DETAILS_HREF = "FileSystemDetailsHref";
     public static final String CHILD_SHARED_FS_HREF = "SharedFSDetailsHref";
     public static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
+    public static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
 
     // handler for archive pages (v44)
     public static final String POLICY_SUMMARY_HREF   = "PolicySummaryHref";
@@ -134,6 +135,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         registerChild(CHILD_FS_SUMMARY_HREF, CCHref.class);
         registerChild(CHILD_SHARED_FS_HREF, CCHref.class);
         registerChild(CHILD_FS_DETAILS_HREF, CCHref.class);
+        registerChild(FS_ARCHIVEPOL_HREF, CCHref.class);
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_DETAILS_HREF, CCHref.class);
         registerChild(CRITERIA_DETAILS_HREF, CCHref.class);
@@ -216,6 +218,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         } else if (name.equals(CHILD_FS_SUMMARY_HREF) ||
                    name.equals(CHILD_FS_DETAILS_HREF) ||
                    name.equals(CHILD_SHARED_FS_HREF) ||
+                   name.equals(FS_ARCHIVEPOL_HREF) ||
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(SHARED_FS_SUMMARY_HREF) ||
@@ -641,6 +644,19 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
             PageInfo.getPageInfo().getPageNumber(targetView.getName()), s);
         forwardTo(targetView);
         TraceUtil.trace3("Exiting");
+    }
+
+    // handle breadcrumb to the fs archive policies
+    public void handleFSArchivePolicyHrefRequest(RequestInvocationEvent evt)
+        throws ServletException, IOException {
+        String s = (String)getDisplayFieldValue(FS_ARCHIVEPOL_HREF);
+        CommonViewBeanBase target =
+            (CommonViewBeanBase)getViewBean(FSArchivePoliciesViewBean.class);
+
+        BreadCrumbUtil.breadCrumbPathBackward(this,
+            PageInfo.getPageInfo().getPageNumber(target.getName()), s);
+
+        this.forwardTo(target);
     }
 
     // handle breadcrumb to the policy summary page

@@ -27,12 +27,13 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.4 2008/06/18 20:28:07 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.5 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.data.provider.TableDataProvider;
 import com.sun.data.provider.impl.ObjectArrayDataProvider;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.util.Constants;
@@ -41,6 +42,7 @@ import com.sun.web.ui.component.Hyperlink;
 import com.sun.web.ui.model.Option;
 import com.sun.web.ui.model.OptionTitle;
 import javax.servlet.http.HttpServletRequest;
+
 
 public class SharedFSClientBean {
 
@@ -112,8 +114,8 @@ public class SharedFSClientBean {
     }
 
     public TableDataProvider getClientList() {
-System.out.println("client: getClientList: info is " +
-    (infos != null ? "not " : "") + "null!");
+        TraceUtil.trace3("client: getClientList: info is " +
+            (infos != null ? "not " : "") + "null!");
         return
             infos == null?
                 new ObjectArrayDataProvider(new SharedHostInfo[0]) :
@@ -172,7 +174,7 @@ System.out.println("client: getClientList: info is " +
     }
 
     public String getClientTableTitle() {
-        if (0 == getFilter()) {
+        if (0 == getFilter() || 10 == getFilter()) {
             return JSFUtil.getMessage("SharedFS.title.table.clients");
         } else {
             return JSFUtil.getMessage(

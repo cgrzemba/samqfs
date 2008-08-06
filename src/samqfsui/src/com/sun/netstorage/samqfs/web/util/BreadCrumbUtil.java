@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BreadCrumbUtil.java,v 1.13 2008/06/11 16:58:01 ronaldso Exp $
+// ident	$Id: BreadCrumbUtil.java,v 1.14 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -262,10 +262,7 @@ public class BreadCrumbUtil {
         // Only look at the last Constants.BreadCrumb.MAX_LINKS in the array
         Integer [] previousPagesDisplay =
             BreadCrumbUtil.getBreadCrumbDisplay(previousPages);
-System.out.println("Printing BREADCRUMB!");
-for (int i = 0; i < previousPagesDisplay.length; i++){
-    System.out.println(i + ": " + previousPagesDisplay[i].intValue());
-}
+
         if (TraceUtil.isOnLevel3()) {
             for (int k = 0; k < previousPagesDisplay.length; k++) {
                 TraceUtil.trace3(new StringBuffer().append(
@@ -280,7 +277,6 @@ for (int i = 0; i < previousPagesDisplay.length; i++){
         // for the page
         for (int i = 0; i < previousPagesDisplay.length; i++) {
             int j = previousPagesDisplay[i].intValue();
-System.out.println("j is " + j);
             if (i != 0) {
                 model.appendRow();
             }

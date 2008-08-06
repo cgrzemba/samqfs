@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.7 2008/07/09 22:20:58 kilemba Exp $
+// ident	$Id: JSFUtil.java,v 1.8 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -278,6 +278,10 @@ System.out.println("Forward to URL: " + targetURL);
             TraceUtil.trace1(
             "Exception caught while forwarding back to JSF Page " + url,
                 se);
+            se.printStackTrace();
+            System.out.println(
+                "Exception caught while forwarding back to JSF Page. url: " +
+                url + " params: " + params);
             vb.forwardTo(vb.getRequestContext());
         }
     }

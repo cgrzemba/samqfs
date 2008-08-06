@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.47 2008/07/03 00:04:29 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.48 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -810,7 +810,7 @@ public class FSDetailsView extends CommonTableContainerView {
                     if (fsType == GenericFileSystem.FS_NONSAMQ &&
                         (fs.getFSTypeName().equals("ufs") ||
                             fs.getFSTypeName().equals("vxfs"))) {
-                        
+
                         // operation menu items recalculation
                         if (3 == option) {
                             option = FS_MENUOPTION_DELETE;
@@ -1048,7 +1048,6 @@ public class FSDetailsView extends CommonTableContainerView {
         TraceUtil.trace3("Entering");
 
         ViewBean vb = getParentViewBean();
-        boolean error = false;
         try {
             SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
 
@@ -1081,6 +1080,13 @@ public class FSDetailsView extends CommonTableContainerView {
                 this.getClass(),
                 "handleDeleteButtonRequest",
                 "Done deleting filesystem " + fsName);
+
+            // Now the fs is deleted, make sure we clear the last used
+            // file system name in the session
+            if (fsName.equals(
+                SamUtil.getLastUsedFSName(serverName))) {
+                SamUtil.setLastUsedFSName(serverName, null);
+            }
         } catch (SamFSMultiHostException e) {
             SamUtil.doPrint(new StringBuffer().
                 append("error code is ").
@@ -1094,8 +1100,6 @@ public class FSDetailsView extends CommonTableContainerView {
                 err_msg,
                 serverName);
         } catch (SamFSException ex) {
-            error = true;
-
             String processMsg = null;
             String errMsg = null;
             String errCause = null;

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSStorageNodeBean.java,v 1.3 2008/06/18 20:28:07 ronaldso Exp $
+// ident        $Id: SharedFSStorageNodeBean.java,v 1.4 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -170,7 +170,7 @@ System.out.println("sn: getSnList: info is " +
     }
 
     public String getSnTableTitle() {
-        if (0 == getFilter()) {
+        if (0 == getFilter() || 10 == getFilter()) {
             return JSFUtil.getMessage("SharedFS.title.table.sns");
         // special case because faults == 5, otherwise 0-4 will go well with
         // the last else case

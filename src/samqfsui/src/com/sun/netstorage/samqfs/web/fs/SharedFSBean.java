@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.10 2008/07/23 17:38:38 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.11 2008/08/06 23:44:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -787,7 +787,7 @@ sfe.printStackTrace();
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Client Summary Page Methods (SharedFSClient.jsp)\
+    // Client Summary Page Methods (SharedFSClient.jsp)
     public String getClientTableTitle() {
         return clientBean.getClientTableTitle();
     }
