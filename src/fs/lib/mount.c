@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 #include "sam/osversion.h"
 
@@ -133,6 +133,24 @@ MountCheckParams(struct sam_fs_info *mp)
 	 */
 	if (mp->fi_config1 & MC_OBJECT_FS) {
 		mp->fi_config &= ~MT_ZERO_DIO_SPARSE;
+	}
+
+	/*
+	 * If 'mat' file system, disallow 'sam'
+	 * If 'mat' file system, disallow shared
+	 */
+	if (mp->fi_type == DT_META_OBJ_TGT_SET) {
+		if (mp->fi_config1 & MC_SHARED_FS) {
+			snprintf(msg_buf, sizeof (msg_buf), GetCustMsg(17261),
+			    mp->fi_name);
+			return (msg_buf);
+		}
+
+		if (mp->fi_config & MT_SAM_ENABLED) {
+			snprintf(msg_buf, sizeof (msg_buf), GetCustMsg(17265),
+			    mp->fi_name);
+			return (msg_buf);
+		}
 	}
 
 	/*
