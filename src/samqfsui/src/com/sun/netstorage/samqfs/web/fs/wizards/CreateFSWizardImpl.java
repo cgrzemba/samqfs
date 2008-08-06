@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident      $Id: CreateFSWizardImpl.java,v 1.103 2008/07/16 21:55:56 kilemba Exp $
+// ident      $Id: CreateFSWizardImpl.java,v 1.104 2008/08/06 23:17:24 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -3416,9 +3416,13 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 
         ArrayList clientHosts = (ArrayList)wizardModel.getValue(
             Constants.Wizard.SELECTED_CLIENT);
-
         ArrayList potentialHosts = (ArrayList)wizardModel.getValue(
             Constants.Wizard.SELECTED_POTENTIAL_METADATA_SERVER_VALUE);
+
+        // initialize these if null
+        if (clientHosts == null) clientHosts = new ArrayList<String>();
+        if (potentialHosts == null) potentialHosts = new ArrayList<String>();
+
         String[] clients = (String[]) clientHosts.toArray(new String[0]);
         String[] potentialServers = (String[])
             potentialHosts.toArray(new String[0]);
