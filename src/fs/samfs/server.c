@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.292 $"
+#pragma ident "$Revision: 1.293 $"
 
 #include "sam/osversion.h"
 
@@ -1596,7 +1596,8 @@ sam_add_ino_lease(
 	wt_leases = 0;
 	for (i = 0; i < llp->no_clients; i++) {
 		if (llp->lease[i].client_ord == client_ord) {
-			if (llp->lease[i].leases == 0) {
+			if (llp->lease[i].leases == 0 &&
+			    llp->lease[i].wt_leases == 0) {
 				/*
 				 * Reusing an old lease entry for this
 				 * client_ord, so clean it up. The stale
@@ -1760,7 +1761,8 @@ sam_add_ino_lease(
 		}
 	}
 
-	llp->lease[index].actions |= l2p->irec.sr_attr.actions;
+	llp->lease[index].actions |=
+	    (l2p->irec.sr_attr.actions & ~SR_WAIT_LEASE);
 	lease_mask = 1 << ltype;
 	if (lease_mask & (CL_READ|CL_WRITE|CL_APPEND)) {
 		llp->lease[index].shflags.b.directio =
@@ -2043,7 +2045,6 @@ sam_add_ino_lease(
 		    client_ord);
 	} else {
 		llp->lease[index].leases |= lease_mask;
-		llp->lease[index].actions &= ~SR_WAIT_LEASE;
 		llp->lease[index].time[ltype] = lbolt +
 		    (sam_calculate_lease_timeout(interval) * hz);
 
@@ -2074,9 +2075,23 @@ sam_add_ino_lease(
 			ip->sr_write_seqno++;
 			llp->lease[index].wr_seq = ip->sr_write_seqno;
 		}
-		l2p->irec.sr_attr.actions = llp->lease[index].actions;
-		llp->lease[index].actions = 0;
 
+		/*
+		 * Don't send SR_WAIT_LEASE when a lease
+		 * is being granted, it can still be set if
+		 * the client is still waiting for some other lease.
+		 */
+		l2p->irec.sr_attr.actions =
+		    llp->lease[index].actions & ~SR_WAIT_LEASE;
+
+		if (llp->lease[index].wt_leases == 0) {
+			llp->lease[index].actions = 0;
+		} else {
+			/*
+			 * Set this if leases are still being waited for.
+			 */
+			llp->lease[index].actions = SR_WAIT_LEASE;
+		}
 	}
 
 	*out_clp = &llp->lease[index];
