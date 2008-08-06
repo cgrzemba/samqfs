@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -387,39 +387,6 @@ retrySearch:
 							break;
 						}
 					}
-				}
-			}
-
-			/*
-			 * If disk volume, check existence of the
-			 * the diskvols.seqnum.
-			 */
-			if (media == DT_DISK && vi != NULL &&
-			    IS_VSN_UNAVAIL(vi) == 0) {
-				extern char *program_name;
-				struct DiskVolumeInfo *dv;
-				DiskVolsDictionary_t *diskvols;
-				boolean_t avail = B_FALSE;
-
-				diskvols = DiskVolsNewHandle(program_name,
-				    DISKVOLS_VSN_DICT, DISKVOLS_RDONLY);
-				if (diskvols != NULL) {
-					(void) diskvols->Get(diskvols, vsn,
-					    &dv);
-					if (dv != NULL) {
-						if ((dv->DvFlags & DV_unavail)
-						    == 0) {
-						if (DiskVolsIsAvail(vsn, dv,
-						    B_FALSE, DVA_stager)
-						    == B_TRUE) {
-							avail = B_TRUE;
-						}
-						}
-					}
-				}
-				(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
-				if (avail == B_FALSE) {
-					vi = NULL;
 				}
 			}
 			break;

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -355,7 +355,7 @@ initRemoteStage(void)
 	}
 
 	if (DiskVolsIsAvail(NULL, diskVolume, B_FALSE, DVA_stager) != B_TRUE) {
-		return (ENODEV);
+		return (ETIME);
 	}
 
 	return (0);
