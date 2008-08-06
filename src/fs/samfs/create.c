@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.158 $"
+#pragma ident "$Revision: 1.159 $"
 
 #include "sam/osversion.h"
 
@@ -442,9 +442,9 @@ sam_restore_name(
 	}
 
 	/*
-	 * Create the new inode if nlink == 1. (this file may have 
+	 * Create the new inode if nlink == 1. (this file may have
 	 * a link count > 1, but samfsrestore sets
-	 * nlink to 1 as a signal that this is the first instance of a 
+	 * nlink to 1 as a signal that this is the first instance of a
 	 * hard link).  Otherwise, create the new hard link. samfsrestore
 	 * has put the new inode number in the old inode image.
 	 */
@@ -549,7 +549,7 @@ out:
  * ----- sam_restore_hardlink - restore a hard link to an existing file.
  * If there was data on the dump, we opened the file and have an
  * incore inode.  If so, get it and make the link.  Update the parent
- * and link count and return the new inode number.  Otherwise 
+ * and link count and return the new inode number.  Otherwis
  * get the permanent inode and make the link.
  */
 

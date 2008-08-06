@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 static char    *_SrcFile = __FILE__;
 
@@ -206,7 +206,6 @@ ChangeMode(const char *name, const int mode)
 void
 DownDevice(dev_ent_t *un, int source_flag)
 {
-	
 
 	if (source_flag != USER_STATE_CHANGE) {
 		DevLog(DL_ALL(1008));

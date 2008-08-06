@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.190 $"
+#pragma ident "$Revision: 1.191 $"
 
 #include "sam/osversion.h"
 
@@ -470,7 +470,8 @@ sam_client_open_vn(
 			dec_no_opens = 1;
 		}
 
-		if ((ip->no_opens == 0) || ((ip->no_opens == 1) && dec_no_opens)) {
+		if ((ip->no_opens == 0) ||
+		    ((ip->no_opens == 1) && dec_no_opens)) {
 			sam_lease_data_t data;
 
 			mutex_exit(&ip->fl_mutex);
@@ -501,13 +502,15 @@ sam_client_open_vn(
 		if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
 			/*
 			 * If error on open and no mmap pages, update
-			 * inode on the server and cancel lease. LEASE_remove waits
-			 * for the response. This allows the allocated pages to be
-			 * released.
+			 * inode on the server and cancel lease.
+			 * LEASE_remove waits
+			 * for the response. This allows the allocated pages
+			 * to be released.
 			 */
 			mutex_exit(&ip->fl_mutex);
 			if (S_ISREG(ip->di.mode)) {
-				error = sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
+				error =
+				    sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
 			}
 		} else {
 			mutex_exit(&ip->fl_mutex);

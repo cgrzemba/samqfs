@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -88,7 +88,7 @@ down_drive(
 		mutex_lock(&drive->list_mutex);
 		mutex_lock(&drive->library->list_mutex);
 		drive->status.b.offline = TRUE;
-	
+
 		mutex_lock(&drive->un->mutex);
 		DownDevice(drive->un, source);
 		drive->un->status.bits = 0;
