@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -981,6 +981,7 @@ checkStateFile(void)
 	if (fd < 0) {
 		LibFatal(open-CREAT, ARCHIVER_STATE);
 	}
+	memset(ae, 0, sizeof (ae));
 	for (i = AdState->AdCount; i < ArchLibTable->AlDriveCount; i++) {
 		if (write(fd, ae, sizeof (ae)) != sizeof (ae)) {
 			LibFatal(write, ARCHIVER_STATE);

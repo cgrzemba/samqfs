@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -289,7 +289,7 @@ ScheduleDequeue(
 	for (qe = schedQ.QuHead.QeFwd; qe != &schedQ.QuHead; qe = qe->QeFwd) {
 		if (strcmp(qe->QeArname, dequeueArname) == 0) {
 			Trace(TR_MISC, "schedQ Dequeue(%s 0x%x)",
-			    dequeueArname, qe);
+			    dequeueArname, (int)qe);
 			QueueRemove(qe);
 			goto out;
 		}
