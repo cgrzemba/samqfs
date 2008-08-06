@@ -26,17 +26,17 @@
 #
 #    SAM-QFS_notice_end
 #
-# ident	$Id: fsmgr,v 1.11 2008/05/16 18:39:08 am143972 Exp $
+# ident	$Id: fsmgr,v 1.12 2008/08/06 17:38:07 ronaldso Exp $
 #
 # fsmgr:
-# It is used to set the trace level of the File System Manager.
+# It is used to set the trace level of the SAM-QFS Manager.
 #
 #
 # Accepts trace
 # Exits with a value 1 on error
 #
 #
-# trace {level} set trace level of File System Manager
+# trace {level} set trace level of SAM-QFS Manager
 #
 #
 # Get Solaris major revision.
@@ -48,7 +48,7 @@ if [ "${SOLREV}" == "" ]; then
 	exit 1
 fi
 
-# for File System Manager smcwebserver
+# for SAM-QFS Manager smcwebserver
 USR_SBIN_DIR=/usr/sbin
 SMREG=${USR_SBIN_DIR}/smreg
 WCADMIN=${USR_SBIN_DIR}/wcadmin
@@ -104,7 +104,7 @@ usage_detail_samfsui() {
 	#
 	$ECHO "Sub-command:"
 	$ECHO
-	$ECHO "trace {level}\tTrace File System Manager execution"
+	$ECHO "trace {level}\tTrace SAM-QFS Manager execution"
 	$ECHO
 	$ECHO "\t1\tTrace important messages only"
 	$ECHO "\t2\tTrace moderately important message, include"
@@ -287,7 +287,7 @@ fi
 
 case "$1" in
 #####################################################
-#	File System Manager (client side tracing)   #
+#	SAM-QFS Manager (client side tracing)   #
 #####################################################
 'trace')
 

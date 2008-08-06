@@ -26,9 +26,9 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident        $Id: fsmgr_report,v 1.6 2008/05/16 18:39:08 am143972 Exp $
+#  ident        $Id: fsmgr_report,v 1.7 2008/08/06 17:38:07 ronaldso Exp $
 #
-#  This program generates a system report explicitly for File System Manager.
+#  This program generates a system report explicitly for SAM-QFS Manager.
 #  The report is designed to gather all the necessary information
 #  from customer's machine for debug purposes.
 #
@@ -40,7 +40,7 @@
 #
 ############################################
 #
-APP_NAME="File System Manager"
+APP_NAME="SAM-QFS Manager"
 SECTION=""
 SECTION_DESC=""
 MY_LOG="/var/tmp/fsmgr.overall.log"

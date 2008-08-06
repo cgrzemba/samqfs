@@ -1,42 +1,42 @@
 <!-- Version content page -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
-<head>
-  <title>File System Manager</title>
-  <meta name="Copyright" content="Copyright &copy; 2006 by Sun Microsystems, Inc. All Rights Reserved." />
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <script type="text/javascript" src="/com_sun_web_ui/js/browserVersion.js"></script>
-  <script type="text/javascript" src="/com_sun_web_ui/js/stylesheet.js"></script>
-  <script type="text/javascript"><!-- Empty script so IE5.0 Windows will draw table and button borders --></script>
-</head>
-
-<body class="DefBdy">
-  <div class="VrsMgn">
-    <div class="VrsHdrTxt">Version 5.0 (<!--#include file="versionDate.txt"-->)</div>
-
-    <div class="VrsTxt">Copyright &copy; 2006 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, U.S.A. All rights reserved.
-<p>Sun Microsystems, Inc. has intellectual property rights relating to
-technology embodied in this product. In particular, and without limitation,
-these intellectual property rights may include one or more of the U.S. patents
-listed at http://www.sun.com/patents and one or more additional patents or
-pending patent applications in the U.S. and other countries.
-</p>
-<p>
-This product is distributed under licenses restricting its use, copying
-distribution, and decompilation. No part of this product may be reproduced in
-any form by any means without prior written authorization of Sun and its
-licensors, if any.
-</p>
-<p>
-Third-party software, including font technology, is copyrighted and licensed
-from Sun suppliers.
-</p>
-<p>
-Sun, Sun Microsystems, the Sun logo, Java, and Solaris are trademarks or
-registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries.
-</p>
-<p>
-Federal Acquisitions: Commercial Software - Government Users Subject to Standard License Terms and Conditions. </p></div>
-</div>
-</body>
+    <head>
+        <title>SAM-QFS Manager</title>
+        <meta name="Copyright" content="Copyright &copy; 2008 by Sun Microsystems, Inc. All Rights Reserved." />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script type="text/javascript" src="/com_sun_web_ui/js/browserVersion.js"></script>
+        <script type="text/javascript" src="/com_sun_web_ui/js/stylesheet.js"></script>
+        <script type="text/javascript"><!-- Empty script so IE5.0 Windows will draw table and button borders --></script>
+    </head>
+    
+    <body class="DefBdy">
+        <div class="VrsMgn">
+            <div class="VrsHdrTxt">(<!--#include file="versionDate.txt"--></div>
+            
+            <div class="VrsTxt">Copyright &copy; 2008 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, U.S.A. All rights reserved.
+                <p>Sun Microsystems, Inc. has intellectual property rights relating to
+                    technology embodied in this product. In particular, and without limitation,
+                    these intellectual property rights may include one or more of the U.S. patents
+                    listed at http://www.sun.com/patents and one or more additional patents or
+                    pending patent applications in the U.S. and other countries.
+                </p>
+                <p>
+                    This product is distributed under licenses restricting its use, copying
+                    distribution, and decompilation. No part of this product may be reproduced in
+                    any form by any means without prior written authorization of Sun and its
+                    licensors, if any.
+                </p>
+                <p>
+                    Third-party software, including font technology, is copyrighted and licensed
+                    from Sun suppliers.
+                </p>
+                <p>
+                    Sun, Sun Microsystems, the Sun logo, Java, and Solaris are trademarks or
+                    registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries.
+                </p>
+                <p>
+            Federal Acquisitions: Commercial Software - Government Users Subject to Standard License Terms and Conditions. </p></div>
+        </div>
+    </body>
 </html>

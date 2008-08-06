@@ -26,12 +26,12 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_setup,v 1.27 2008/05/16 18:39:08 am143972 Exp $
+#  ident	$Id: fsmgr_setup,v 1.28 2008/08/06 17:38:07 ronaldso Exp $
 #
 #  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
 #
-#  Note: This script is explicitly used by File System Manager only (English)
+#  Note: This script is explicitly used by SAM-QFS Manager only (English)
 #
 #
 
@@ -43,7 +43,7 @@
 
 MY_SCRIPT_NAME="fsmgr_setup"
 ARCH=`/usr/bin/uname -p`
-APP_NAME="File System Manager"
+APP_NAME="SAM-QFS Manager"
 MAJOR_REV="5"
 MINOR_REV="0"
 ZIP_FILE="fsmgr_${MAJOR_REV}.${MINOR_REV}.zip"
@@ -608,7 +608,7 @@ install_gui()
     echo " " >> ${MY_LOG}
 
  
-    # Add the File System Manager packages
+    # Add the SAM-QFS Manager packages
     /usr/sbin/pkgadd -a $ADMINFILE \
 	-d ${TMPDIR}/2.${SOLREV}/${ARCH} SUNWfsmgrr | tee -a ${MY_LOG}
 
@@ -1029,29 +1029,29 @@ create_users()
     /usr/bin/egrep -v '(com.sun.netstorage.fsmgr|com.sun.netstorage.samqfs)' \
         /etc/security/auth_attr > /tmp/auth_attr.fsmgr.1
     /usr/bin/egrep -v \
-        '(File System Manager Authorizations|SAM-FS/QFS UI Authorizations)' \
+        '(File System Manager Authorizations|SAM-FS/QFS UI Authorizations|SAM-QFS Manager Authorizations)' \
         /tmp/auth_attr.fsmgr.1 > /tmp/auth_attr.fsmgr.2
 
-    echo "# File System Manager Authorizations" >> /tmp/auth_attr.fsmgr.2
+    echo "# SAM-QFS Manager Authorizations" >> /tmp/auth_attr.fsmgr.2
 
     ## ALL ACCESS
-    echo "$AUTH_PREFIX.config:::File System Manager All Access::" >> \
+    echo "$AUTH_PREFIX.config:::SAM-QFS Manager All Access::" >> \
         /tmp/auth_attr.fsmgr.2
 
     ## MEDIA ACCESS
-    echo "$AUTH_PREFIX.operator.media:::File System Manager Media Related Operation Access::" >> \
+    echo "$AUTH_PREFIX.operator.media:::SAM-QFS Manager Media Related Operation Access::" >> \
         /tmp/auth_attr.fsmgr.2
 
     ## START/STOP/IDLE ARCHIVING
-    echo "$AUTH_PREFIX.operator.sam.control:::File System Manager Start/Stop/Idle Archiving Access::" >> \
+    echo "$AUTH_PREFIX.operator.sam.control:::SAM-QFS Manager Start/Stop/Idle Archiving Access::" >> \
         /tmp/auth_attr.fsmgr.2
 
     ## FILE LEVEL OPS
-    echo "$AUTH_PREFIX.operator.file:::File System Manager File Level Operation Access::" >> \
+    echo "$AUTH_PREFIX.operator.file:::SAM-QFS Manager File Level Operation Access::" >> \
         /tmp/auth_attr.fsmgr.2
 
     ## FILE SYSTEM OPS
-    echo "$AUTH_PREFIX.operator.filesystem:::File System Manager File System Level Operation Access::" >> \
+    echo "$AUTH_PREFIX.operator.filesystem:::SAM-QFS Manager File System Level Operation Access::" >> \
         /tmp/auth_attr.fsmgr.2
 
     mv /tmp/auth_attr.fsmgr.2 /etc/security/auth_attr
@@ -1119,7 +1119,9 @@ remove_users() {
         /tmp/auth_attr.fsmgr.2 > /tmp/auth_attr.fsmgr.3
     /usr/bin/grep -v "File System Manager Authorizations" \
         /tmp/auth_attr.fsmgr.3 > /tmp/auth_attr.fsmgr.4
-    /usr/bin/mv /tmp/auth_attr.fsmgr.4 /etc/security/auth_attr
+    /usr/bin/grep -v "SAM-QFS Manager Authorizations" \
+        /tmp/auth_attr.fsmgr.4 > /tmp/auth_attr.fsmgr.5
+    /usr/bin/mv /tmp/auth_attr.fsmgr.5 /etc/security/auth_attr
 
     echo "Done taking out entries in /etc/security/auth_attr" >> ${MY_LOG}
 

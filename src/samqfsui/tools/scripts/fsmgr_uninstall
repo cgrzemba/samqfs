@@ -26,12 +26,12 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_uninstall,v 1.15 2008/05/16 18:39:08 am143972 Exp $
+#  ident	$Id: fsmgr_uninstall,v 1.16 2008/08/06 17:38:07 ronaldso Exp $
 #
 #  This program uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
 #
-#  Note: This script is explicitly used by File System Manager 2.1
+#  Note: This script is explicitly used by SAM-QFS Manager 5.0
 #        only (English only).
 #
 #
@@ -43,7 +43,7 @@
 ############################################
 #
 
-APP_NAME="File System Manager"
+APP_NAME="SAM-QFS Manager"
 APP_MAJOR_VERSION="5"
 APP_MINOR_VERSION="0"
 
@@ -358,7 +358,9 @@ remove_users() {
         /tmp/auth_attr.fsmgr.2 > /tmp/auth_attr.fsmgr.3
     /usr/bin/grep -v "File System Manager Authorizations" \
         /tmp/auth_attr.fsmgr.3 > /tmp/auth_attr.fsmgr.4
-    /usr/bin/mv /tmp/auth_attr.fsmgr.4 /etc/security/auth_attr
+    /usr/bin/grep -v "SAM-QFS Manager Authorizations" \
+        /tmp/auth_attr.fsmgr.4 > /tmp/auth_attr.fsmgr.5
+    /usr/bin/mv /tmp/auth_attr.fsmgr.5 /etc/security/auth_attr
 
     echo "Done taking out entries in /etc/security/auth_attr" >> ${MY_LOG}
 
@@ -487,7 +489,7 @@ uninstall()
     # generate the admin file
     generate_admin_file
 
-    # remove all File System Manager packages if they exist, including 4.3
+    # remove all SAM-QFS Manager packages if they exist, including 4.3
     # or prior packages if they exist
 
     if [ ${OLD_U_PACKAGE_EXIST} -eq 1 ]; then
