@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ShrinkFS.js,v 1.1 2008/07/03 00:04:28 ronaldso Exp $
+// ident	$Id: ShrinkFS.js,v 1.2 2008/08/06 17:41:48 ronaldso Exp $
 
 function handleWizardDismiss() {
     var parentForm = opener.document.forms[0];
@@ -77,3 +77,38 @@ function initExcludeTableRows() {
 function initAvailableTableRows() {
     getAvailableTable().initAllRows();
 }
+
+function init() {
+    // When enter is pressed, click OK
+    document.onkeypress = onKeyPressEnter;
+}
+
+function onKeyPressEnter(theEvent) {
+    if (theEvent != null) {
+        // Mozilla support
+        if (theEvent.which == 13) {
+            // Enter key pressed.
+            clickNext();
+        }
+    } else if (event != null) {
+        // IE support
+        if (event.keyCode == 13) {
+            // Enter key pressed.
+            clickNext();
+        }
+    }
+}
+
+function clickNext() {
+    var button = document.getElementById(
+        "ShrinkFSForm:ShrinkFSWizard:ShrinkFSWizard_next");
+    if (null == button) {
+        button = document.getElementById(
+        "ShrinkFSForm:ShrinkFSWizard:ShrinkFSWizard_finish");
+    }
+    
+    if (null != button) {
+        button.click();
+    }
+}
+

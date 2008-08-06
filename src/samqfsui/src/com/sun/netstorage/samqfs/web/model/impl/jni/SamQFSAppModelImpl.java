@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModelImpl.java,v 1.30 2008/07/23 17:38:39 ronaldso Exp $
+// ident	$Id: SamQFSAppModelImpl.java,v 1.31 2008/08/06 17:41:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -69,12 +69,24 @@ public class SamQFSAppModelImpl extends DefaultModel
         throws SamFSException {
 
         if (hostname == null) {
-            TraceUtil.trace1("cannot get model for null hostname");
+            TraceUtil.trace1("Failed to get sysModel. Hostname is null!");
             throw new SamFSException(null, -2001);
         }
 
+        String inetHostName = null;
+        try {
+            inetHostName = getInetHostName(hostname);
+        } catch (UnknownHostException e) {
+            throw new SamFSException("logic.unknownHost");
+        }
+
+        TraceUtil.trace2("getSamQFSSystemModel: hostname: " + hostname);
+        TraceUtil.trace2("getSamQFSSystemModel: inetHostName: " + inetHostName);
+
         HashMap map = getHostModelMap();
-        SamQFSSystemModel model = (SamQFSSystemModel) map.get(hostname);
+        SamQFSSystemModel model =
+            (SamQFSSystemModel) map.get(
+                inetHostName == null ? hostname : inetHostName);
 
         // If the model is null look for a model that has a serverHostname
         // that matches the input. This can be important for shared file sytems
@@ -86,7 +98,9 @@ public class SamQFSAppModelImpl extends DefaultModel
                 for (int i = 0; i < list.length; i++) {
                     storedName = list[i].getServerHostname();
                     if (storedName != null)
-                        if (storedName.compareToIgnoreCase(hostname) == 0) {
+                        if (storedName.compareToIgnoreCase(
+                            inetHostName == null ? hostname : inetHostName)
+                            == 0) {
                             model = list[i];
                             break;
                         }
@@ -138,11 +152,13 @@ public class SamQFSAppModelImpl extends DefaultModel
         return null;
     }
 
-    public void addHost(String host) throws SamFSException {
-        addNewHost(host);
+    public void addHost(String host, boolean writeToFile)
+        throws SamFSException {
+        addNewHost(host, writeToFile);
     }
 
-    protected synchronized void addNewHost(String host) throws SamFSException {
+    protected synchronized void addNewHost(String host, boolean writeToFile)
+        throws SamFSException {
         // if already exists, then reconnect.
         String inetHostName = null;
 
@@ -152,81 +168,106 @@ public class SamQFSAppModelImpl extends DefaultModel
             throw new SamFSException("logic.unknownHost");
         }
 
+        TraceUtil.trace2("host: "+ host + " inetHostName: " + inetHostName);
 
         HashMap map = getHostModelMap();
         if (inetHostName != null) {
-            map.remove(inetHostName);
-            map.put(inetHostName, new SamQFSSystemModelImpl(inetHostName));
-            throw new SamFSException("logic.existingHost");
-        } else {
-            map.put(host, new SamQFSSystemModelImpl(host));
+            SamQFSSystemModel sysModel =
+                (SamQFSSystemModel) map.get(inetHostName);
 
-            try {
-                String path = SamUtil.getCurrentRequest().getSession()
-                    .getServletContext().getRealPath(hostFileLocation);
-
-                PrintWriter out = new PrintWriter(new FileWriter(path, true));
-                if (out != null) {
-                    out.println(host);
-                    out.close();
+            // If the host exists in the map and it is a storage node,
+            // * writeToFile == true, write the host to the host file and
+            //   flip the sysModel isStorageNode bit to false.
+            // * writeToFile == false, nothing change, no exception is thrown
+            // ---------------------------------------------------------------
+            // If the host exists in the map and it is a server,
+            // * writeToFile == true, server is in host file already, throw
+            //   exception
+            // * writeToFile == false, server is in host file already, no need
+            //   to change the isStorageNode bit at all.
+            TraceUtil.trace3("sysModel sn: " + sysModel.isStorageNode() +
+                             " write: " + writeToFile);
+            if (sysModel.isStorageNode()) {
+                if (writeToFile) {
+                    rewriteHostFile(null, host);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                map.remove(inetHostName);
+                map.put(
+                    inetHostName,
+                    new SamQFSSystemModelImpl(inetHostName, !writeToFile));
+            } else{
+                if (writeToFile) {
+                    throw new SamFSException("logic.existingHost");
+                }
+            }
+        } else {
+            map.put(host, new SamQFSSystemModelImpl(host, !writeToFile));
+            if (writeToFile) {
+                rewriteHostFile(null, host);
             }
         }
+        saveToHostModelMap(map);
     }
 
-    public void removeHost(String hostname) throws SamFSException {
+    public void removeHost(String hostname)
+        throws SamFSException {
         removeExistingHost(hostname);
     }
 
     public synchronized void removeExistingHost(String hostname)
         throws SamFSException {
         HashMap map = getHostModelMap();
-        if (SamQFSUtil.isValidString(hostname)) {
-
-            map.remove(hostname);
-
-            ArrayList hostnames = new ArrayList();
-            BufferedReader in = null;
-            PrintWriter out = null;
-
-            try {
-                String path = SamUtil.getCurrentRequest().getSession()
-                    .getServletContext().getRealPath(hostFileLocation);
-                in = new BufferedReader(new FileReader(path));
-                if (in != null) {
-                    String host;
-                    while ((host = in.readLine()) != null) {
-                        hostnames.add(host);
-                    }
-                    in.close();
-                }
-
-                out = new PrintWriter(new FileWriter(path, false));
-                if (out != null) {
-                    for (int i = 0; i < hostnames.size(); i++) {
-                        String host = (String) hostnames.get(i);
-                        if (!host.equals(hostname))
-                            out.println(host);
-                    }
-                    out.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        map.remove(hostname);
+        rewriteHostFile(hostname, null);
     }
 
+    private synchronized void rewriteHostFile(
+        String hostToRemove, String hostToAdd) {
+
+        ArrayList hostnames = new ArrayList();
+        BufferedReader in = null;
+        PrintWriter out = null;
+
+        try {
+            String path = SamUtil.getCurrentRequest().getSession()
+                .getServletContext().getRealPath(hostFileLocation);
+            in = new BufferedReader(new FileReader(path));
+            if (in != null) {
+                String host;
+                while ((host = in.readLine()) != null) {
+                    hostnames.add(host);
+                }
+                in.close();
+            }
+
+            out = new PrintWriter(new FileWriter(path, false));
+            if (out != null) {
+                for (int i = 0; i < hostnames.size(); i++) {
+                    String hostEntry = (String) hostnames.get(i);
+                    if (hostToRemove == null) {
+                        out.println(hostEntry);
+                    } else {
+                        continue;
+                    }
+                }
+
+                if (hostToAdd != null) {
+                    out.println(hostToAdd);
+                }
+                out.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void updateDownServers() {
         HashMap map = getHostModelMap();
 
         SamQFSSystemModel[] models = getAllSamQFSSystemModels();
         if ((models != null) && (models.length > 0)) {
-            // SamQFSUtil.doPrint("No of hosts found: " + models.length);
             for (int i = 0; i < models.length; i++) {
-                if (models[i].isDown()) {
+                if (!models[i].isStorageNode() && models[i].isDown()) {
                     String hostname = models[i].getHostname();
                     SamQFSUtil.doPrint(hostname + " was down!");
                     map.remove(hostname);
@@ -236,7 +277,6 @@ public class SamQFSAppModelImpl extends DefaultModel
         }
 
     }
-
 
     public String toString() {
         HashMap map = getHostModelMap();
@@ -300,5 +340,15 @@ public class SamQFSAppModelImpl extends DefaultModel
         }
 
         return result;
+    }
+
+    private void saveToHostModelMap(HashMap map) {
+        HttpServletRequest request = SamUtil.getCurrentRequest();
+        ServletContext sc = request.getSession().getServletContext();
+
+        if (map == null) {
+            map = new HashMap();
+        }
+        sc.setAttribute(Constants.sc.HOST_MODEL_MAP, map);
     }
 }

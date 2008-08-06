@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: UtilServlet.java,v 1.11 2008/05/16 18:39:07 am143972 Exp $
+// ident	$Id: UtilServlet.java,v 1.12 2008/08/06 17:41:51 ronaldso Exp $
 
 
 package com.sun.netstorage.samqfs.web.util;
@@ -35,6 +35,7 @@ package com.sun.netstorage.samqfs.web.util;
 import com.iplanet.jato.RequestContext;
 import com.iplanet.jato.RequestContextImpl;
 import com.iplanet.jato.ViewBeanManager;
+import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSSystemModelImpl;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
 import java.io.BufferedReader;
@@ -85,7 +86,8 @@ public class UtilServlet extends AppServletBase {
         if (hostModelMap == null) {
             hostModelMap = new HashMap();
             try {
-                String realPath = sc.getRealPath("/tmp/host.conf");
+                String realPath =
+                    sc.getRealPath(SamQFSAppModel.hostFileLocation);
                 File file = new File(realPath);
 
                 BufferedReader in =
@@ -95,10 +97,10 @@ public class UtilServlet extends AppServletBase {
                 if (in != null) {
                     while ((hostName = in.readLine()) != null) {
                         if (SamQFSUtil.isValidString(hostName)) {
-                            hostModelMap.put(
+                                hostModelMap.put(
                                 hostName,
                                 new SamQFSSystemModelImpl(hostName));
-                        }
+                            }
                     } // end while
                 } // end if
                 in.close();

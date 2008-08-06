@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddServerViewBean.java,v 1.20 2008/05/16 18:39:05 am143972 Exp $
+// ident	$Id: AddServerViewBean.java,v 1.21 2008/08/06 17:41:51 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
@@ -260,7 +260,7 @@ public class AddServerViewBean extends CommonSecondaryViewBeanBase {
             LogUtil.info(this.getClass(), "handleCancelHrefRequest",
                 new NonSyncStringBuffer().append("Start adding host ").append(
                 nameInput).toString());
-            appModel.addHost(nameInput);
+            appModel.addHost(nameInput, true);
             LogUtil.info(this.getClass(), "handleCancelHrefRequest",
                 new NonSyncStringBuffer().append("Done adding host ").append(
                 nameInput).toString());
@@ -369,7 +369,7 @@ public class AddServerViewBean extends CommonSecondaryViewBeanBase {
                     "addClusterHosts",
                     new NonSyncStringBuffer("Start adding node ").append(
                         serverArray[i]).toString());
-                appModel.addHost(serverArray[i]);
+                appModel.addHost(serverArray[i], true);
                 LogUtil.info(
                     this.getClass(),
                     "addClusterHosts",

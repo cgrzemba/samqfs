@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddStorageNodeBean.java,v 1.3 2008/07/23 17:38:39 ronaldso Exp $
+// ident        $Id: AddStorageNodeBean.java,v 1.4 2008/08/06 17:41:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -145,14 +145,17 @@ public class AddStorageNodeBean implements Serializable {
     }
 
     private DiskCache [] getAvailUnits() throws SamFSException {
-System.out.println("getAvailUnits called! " + textHostNameIP);
+        TraceUtil.trace2("getAvailUnits called! " + textHostNameIP);
+
         if (null == textHostNameIP){
+            return new DiskCache[0];
+        } else if (alertRendered) {
+            TraceUtil.trace2("alertRendered: " + alertRendered);
             return new DiskCache[0];
         }
 
         TraceUtil.trace3("REMOTE CALL: Getting avail units from fs!");
 
-        // TODO: What if host is not in sysModel?
         SamQFSSystemModel sysModel = SamUtil.getModel(textHostNameIP);
         if (sysModel == null) {
             throw new SamFSException(null, -2501);
@@ -575,7 +578,7 @@ System.out.println("getAvailUnits called! " + textHostNameIP);
                 "addsn.summary.device",
                 new String [] {
                     Integer.toString(selectedDataDevices.length),
-                    "1GB"});
+                    getSizeString(selectedDataDevices)});
         return textSelectedDataDevice;
     }
 
@@ -589,12 +592,27 @@ System.out.println("getAvailUnits called! " + textHostNameIP);
                 "addsn.summary.device",
                 new String [] {
                     Integer.toString(selectedMetaDevices.length),
-                    "<>"});
+                    getSizeString(selectedMetaDevices)});
         return textSelectedMDevice;
     }
 
     public void setTextSelectedMDevice(String textSelectedMDevice) {
         this.textSelectedMDevice = textSelectedMDevice;
+    }
+    
+    private String getSizeString(String [] selectedDevices) {
+        long size = 0;
+        for (int i = 0; i < availUnits.length; i++) {
+            for (int j = 0; j < selectedDevices.length; j++) {
+                if (availUnits[i].getDevicePath().equals(selectedDevices[j])) {
+                    size += availUnits[i].getCapacity();
+                    break;
+                }
+            }
+        }
+
+        return Capacity.newCapacityInJSF(
+                    size, SamQFSSystemModel.SIZE_MB).toString();
     }
 
 
@@ -710,7 +728,6 @@ System.out.println("getAvailUnits called! " + textHostNameIP);
     class AddStorageNodeWizardEventListener implements WizardEventListener {
 
         public boolean handleEvent(WizardEvent event) {
-System.out.println("handleEvent called! " + event.getEvent());
             switch (event.getEvent()) {
                 case WizardEvent.START:
                 case WizardEvent.COMPLETE:
@@ -755,7 +772,6 @@ System.out.println("handleEvent called! " + event.getEvent());
         private boolean handleNextButton(WizardEvent event) {
             WizardStep step = event.getStep();
             String id = step.getId();
-System.out.println("NEXT: ID is " + id);
             if (STEP_SPECIFY_HOST.equals(id)) {
                 return processSpecifyHost(event);
             } else if (STEP_SPECIFY_GROUP.equals(id)) {
@@ -825,22 +841,70 @@ System.out.println("Node String: " + createNodeDataString());
         }
 
         private boolean processSpecifyHost(WizardEvent event) {
-System.out.println("process: textHostNameIP is " + textHostNameIP);
+            TraceUtil.trace3("process: textHostNameIP is " + textHostNameIP);
 
             clearAlertInfo();
 
-            SamQFSSystemModel hostModel = null;
             try {
-                hostModel = SamUtil.getModel(textHostNameIP);
+                // Need to add the host to the host map first, but not writing
+                // the host to the host file.  After that, retrieve the sysModel
+                SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
+                appModel.addHost(textHostNameIP, false);
+
+                // Exception should be thrown already if the host that user
+                // enters is not reachable
+
+                // Now check if fsmgmtd is running and the management station
+                // can communicate to the server specified by the user
+                SamQFSSystemModel sysModel = SamUtil.getModel(textHostNameIP);
+                if (sysModel.isDown()) {
+                    switch (sysModel.getVersionStatus()) {
+                        case SamQFSSystemModel.VERSION_SAME:
+                            throw new SamFSException(
+                                JSFUtil.getMessage(
+                                    "ErrorHandle.alertElement2"));
+                        // If the RPC library is either newer or older, show the
+                        // appropriate messages
+                        case SamQFSSystemModel.VERSION_CLIENT_NEWER:
+                            throw new SamFSException(
+                                JSFUtil.getMessage(
+                                    "ErrorHandle.alertElementFailedDetail4",
+                                    textHostNameIP));
+                        default:
+                            throw new SamFSException(
+                                JSFUtil.getMessage(
+                                    "ErrorHandle.alertElementFailedDetail3",
+                                    textHostNameIP));
+                    }
+                } else if (sysModel.isAccessDenied()) {
+                    throw new SamFSException(
+                        JSFUtil.getMessage(
+                            "ErrorHandle.accessDeniedDetail", textHostNameIP));
+                } else if (!sysModel.isObjectBasedFSSupported()) {
+                    throw new SamFSException(
+                        JSFUtil.getMessage(
+                            "ErrorHandle.objectbasedfsnotsupported"));
+                }
             } catch (SamFSException samEx) {
                 samEx.printStackTrace();
+                String errorMessage = samEx.getMessage();
+                if (null == errorMessage) {
+                    if (-2803 == samEx.getSAMerrno()) {
+                        errorMessage = JSFUtil.getMessage(
+                            "ErrorHandle.accessDeniedDetail",
+                            textHostNameIP);
+                    } else {
+                        errorMessage = JSFUtil.getMessage(
+                            "ErrorHandle.alertElement2");
+                    }
+                }
                 setAlertInfo(
                     Constants.Alert.ERROR,
                     JSFUtil.getMessage("common.specifydevice.failed"),
-                    samEx.getMessage());
+                    errorMessage);
+                return false;
             }
-
-            return hostModel != null;
+            return true;
         }
 
         private boolean processSpecifyMetaDevices(WizardEvent event) {
@@ -1000,7 +1064,7 @@ System.out.println("process: textHostNameIP is " + textHostNameIP);
                 isIPAddress(textHostNameIP) ?
                     "dataip=" + textHostNameIP :
                     "host=" + textHostNameIP);
-System.out.println("createNodeDataString: " + buf.toString());
+
             return buf.toString();
         }
     }

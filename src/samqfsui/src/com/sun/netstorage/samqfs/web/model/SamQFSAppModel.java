@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModel.java,v 1.16 2008/07/23 20:40:37 ronaldso Exp $
+// ident	$Id: SamQFSAppModel.java,v 1.17 2008/08/06 17:41:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -40,7 +40,6 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 public interface SamQFSAppModel extends Model {
 
     public static final String hostFileLocation = "/tmp/host.conf";
-    public static final String storageNodeSuffix = ",storagenode";
 
     public SamQFSSystemModel[] getAllSamQFSSystemModels();
 
@@ -55,7 +54,8 @@ public interface SamQFSAppModel extends Model {
     public String getInetHostName(String hostName) throws UnknownHostException;
 
 
-    public void addHost(String hostname) throws SamFSException;
+    public void addHost(String hostname, boolean writeToFile)
+        throws SamFSException;
 
 
     public void removeHost(String hostname) throws SamFSException;

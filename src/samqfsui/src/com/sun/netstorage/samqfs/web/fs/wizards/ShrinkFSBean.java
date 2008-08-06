@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.4 2008/07/16 23:45:04 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.5 2008/08/06 17:41:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -947,7 +947,7 @@ samEx.printStackTrace();
             if (-1 == eqToShrink && null == selectedStripedGroup) {
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    JSFUtil.getMessage("common.specifydevice.errorr"),
+                    JSFUtil.getMessage("common.specifydevice.error"),
                     null);
                 return false;
             } else {

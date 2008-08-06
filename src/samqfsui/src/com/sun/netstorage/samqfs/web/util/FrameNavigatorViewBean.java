@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameNavigatorViewBean.java,v 1.26 2008/05/22 13:42:33 kilemba Exp $
+// ident	$Id: FrameNavigatorViewBean.java,v 1.27 2008/08/06 17:41:51 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -301,6 +301,9 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
         if (node != null) {
             node.removeAllChildren();
 
+            node.addChild(
+                naviNodes.getNavigationNode(NavigationNodes.NODE_FILE_BROWSER));
+
             if (isQFSStandAlone) {
                 node.setLabel("node.dataaccess.qfs");
                 node.setTooltip("node.dataaccess.tooltip.qfs");
@@ -312,9 +315,6 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
                 node.addChild(naviNodes.getNavigationNode(
                         NavigationNodes.NODE_SCHEDULED_TASKS));
             }
-
-            node.addChild(
-                naviNodes.getNavigationNode(NavigationNodes.NODE_FILE_BROWSER));
         }
 
         /**
@@ -342,24 +342,6 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
             // Jobs
             node.addChild(naviNodes.getNavigationNode(
                             NavigationNodes.NODE_JOBS));
-            /*
-            // Jobs
-            child = naviNodes.getNavigationNode(NavigationNodes.NODE_JOB);
-            if (child != null) {
-                child.removeAllChildren();
-
-                // Current, Pending, All Jobs
-                child.addChild(naviNodes.getNavigationNode(
-                            NavigationNodes.NODE_JOB_CURRENT));
-                child.addChild(naviNodes.getNavigationNode(
-                            NavigationNodes.NODE_JOB_PENDING));
-                child.addChild(naviNodes.getNavigationNode(
-                            NavigationNodes.NODE_JOB_ALL));
-                node.addChild(child);
-            }
-	    */
-
-
         }
 
         /**
@@ -419,16 +401,19 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
             return new OptionList();
         }
 
-        String [] labels = new String[allSystemModel.length];
-        String [] values = new String[allSystemModel.length];
-
+        StringBuffer serverBuf = new StringBuffer();
+        // Filter out the servers that are storage nodes, not meant to be
+        // managable by the GUI
         for (int i = 0; i < allSystemModel.length; i++) {
-            String serverName = allSystemModel[i].getHostname();
-            labels[i] = serverName;
-            values[i] = serverName;
+            if (!allSystemModel[i].isStorageNode()) {
+                if (serverBuf.length() > 0) {
+                    serverBuf.append("###");
+                }
+                serverBuf.append(allSystemModel[i].getHostname());
+            }
         }
-
-        return new OptionList(labels, values);
+        String [] serverArray = serverBuf.toString().split("###");
+        return new OptionList(serverArray, serverArray);
     }
 
     private String getServerName() {
@@ -445,8 +430,6 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
     }
 
     private void setSessionServerInfo() {
-        boolean isQFSStandAlone =
-            SamUtil.getSystemType(getServerName()) == SamQFSSystemModel.QFS;
         try {
             ServerInfo serverInfo = SamUtil.getServerInfo(getServerName());
         } catch (SamFSException samEx) {

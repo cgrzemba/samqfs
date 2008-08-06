@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModelImpl.java,v 1.98 2008/07/23 21:25:28 kilemba Exp $
+// ident	$Id: SamQFSSystemModelImpl.java,v 1.99 2008/08/06 17:41:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -84,6 +84,7 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
     private boolean down = false;
     private boolean accessDenied = false;
     private boolean serverSupported = true;
+    private boolean objectBasedFSSupported = true;
 
     private SamFSConnection connection = null;
     private String serverAPIVersion = new String();
@@ -103,6 +104,13 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
 
     private String scVersion = "N/A", scName = "N/A";
 
+    private boolean storageNode = false;
+
+    public SamQFSSystemModelImpl(String hostname, boolean storageNode) {
+
+        this(hostname);
+        this.storageNode = storageNode;
+    }
 
     public SamQFSSystemModelImpl(String hostname) {
 
@@ -121,9 +129,14 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
                 serverAPIVersion = connection.getServerAPIver();
                 serverProductVersion = connection.getServerVer();
             } catch (Exception e) {
+                TraceUtil.trace1(
+                    "Exception caught while retrieving api & product version!",
+                    e);
                 serverAPIVersion = "1.0";
                 serverProductVersion = "4.1";
             }
+
+            TraceUtil.trace1("Server API Version: " + serverAPIVersion);
 
             down = false;
             accessDenied = false;
@@ -132,6 +145,14 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
             // Show "Not supported" when it's out of the support rev range
             serverSupported = serverAPIVersion.compareTo("1.5") >= 0;
 
+            // Assign flag to determine if host is capable of creating object
+            // based file system
+            objectBasedFSSupported = serverAPIVersion.compareTo("1.6") >= 0;
+
+            TraceUtil.trace3("serverSupported: " + serverSupported);
+            TraceUtil.trace3(
+                "objectBasedFSSupported: " + objectBasedFSSupported);
+
             if (serverSupported) {
                 try {
                     scVersion = SysInfo.getSCVersion(context);
@@ -139,22 +160,33 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
                         if (scVersion.length() > 0) // if SC present
                             scName = SysInfo.getSCName(context);
                 } catch (SamFSException e) {
-                    TraceUtil.trace1("[ignored]" + e);
+                    TraceUtil.trace1(
+                        "Exception caught while retrieving cluster info!",
+                        e);
                 }
             } else {
                 scVersion = "";
             }
+            TraceUtil.trace3("scVersion: " + scVersion);
 
         } catch (Exception e) {
+            TraceUtil.trace1(
+                "Exception caught in main sysModel constructor!",
+                e);
             down = true;
+            scVersion = "";
             if (e instanceof SamFSIncompatVerException) {
-                if (((SamFSIncompatVerException) e).isClientVerNewer())
+                if (((SamFSIncompatVerException) e).isClientVerNewer()) {
                     versionStatus = SamQFSSystemModel.VERSION_CLIENT_NEWER;
-                else
+                } else {
                     versionStatus = SamQFSSystemModel.VERSION_SERVER_NEWER;
+                }
             } else if (e instanceof SamFSAccessDeniedException) {
                 accessDenied = true;
             }
+
+            TraceUtil.trace3("accessDenied: " + accessDenied);
+            TraceUtil.trace3("versionStatus: " + versionStatus);
         }
 
         processLicense();
@@ -514,7 +546,6 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
 
 
     private void processLicense() {
-
         if (!down) {
             try {
                 getLicenseTypeFromJni();
@@ -522,9 +553,11 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
                 license = -1;
                 processException(se);
             }
-        } else
+        } else {
             license = -1;
+        }
 
+        TraceUtil.trace3("license: " + license);
     }
 
 
@@ -559,6 +592,11 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
     public boolean isServerSupported() {
 
         return serverSupported;
+    }
+
+    public boolean isObjectBasedFSSupported() {
+
+        return objectBasedFSSupported;
     }
 
     /**
@@ -710,6 +748,15 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
          }
 
          return found;
+    }
+
+    /**
+     * @since 5.0
+     * @return boolean - true if the server is a storage node server that is not
+     * meant to be managed as a full blown SAM-QFS server.
+     */
+    public boolean isStorageNode() {
+        return storageNode;
     }
 }
 

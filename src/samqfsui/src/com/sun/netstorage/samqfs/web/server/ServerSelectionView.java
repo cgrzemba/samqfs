@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: ServerSelectionView.java,v 1.38 2008/05/16 18:39:05 am143972 Exp $
+// ident    $Id: ServerSelectionView.java,v 1.39 2008/08/06 17:41:51 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
@@ -290,9 +290,15 @@ public class ServerSelectionView extends MultiTableViewBase {
             return;
         }
 
+        int numOfServers = 0;
         for (int i = 0; i < allSystemModel.length; i++) {
+            // Skip all storage node entries
+            if (allSystemModel[i].isStorageNode()) {
+                continue;
+            }
+
             // append new row
-            if (i > 0) {
+            if (numOfServers > 0) {
                 model.appendRow();
             }
 
@@ -301,25 +307,17 @@ public class ServerSelectionView extends MultiTableViewBase {
                 model.setValue("NameText", hostName);
 
                 // VERSION check 4.5+ ONLY (Cluster)
-                String samfsServerAPIVersion =
-                    allSystemModel[i].getServerAPIVersion();
+                // String samfsServerAPIVersion =
+                //    allSystemModel[i].getServerAPIVersion();
 
-                // If the server api version cannot be obtained,
-                // samfsServerAPIVersion defaults to the previous version
-                samfsServerAPIVersion = (samfsServerAPIVersion == null) ?
-                    "1.3" : samfsServerAPIVersion;
-
-                if (SamUtil.isVersionCurrentOrLaterThan(
-                    samfsServerAPIVersion, "1.4")) {
-                    if (allSystemModel[i].isClusterNode()) {
-                        model.setValue(
-                            "NameText",
-                            SamUtil.getResourceString(
-                                "ServerSelection.host.clusterword",
-                                new String [] {
-                                    hostName,
-                                    allSystemModel[i].getClusterName()}));
-                    }
+                if (allSystemModel[i].isClusterNode()) {
+                    model.setValue(
+                        "NameText",
+                        SamUtil.getResourceString(
+                            "ServerSelection.host.clusterword",
+                            new String [] {
+                                hostName,
+                                allSystemModel[i].getClusterName()}));
                 }
 
                 TraceUtil.trace2(
@@ -418,6 +416,7 @@ public class ServerSelectionView extends MultiTableViewBase {
                                append(mediaConsumed).append(".gif").toString();
                     }
                 }
+                numOfServers++;
             } catch (SamFSAccessDeniedException denyEx) {
                 // DO NOT need to call processException
                 // We do not need to try to reconnect to the server

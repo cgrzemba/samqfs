@@ -27,9 +27,9 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddServer.js,v 1.11 2008/05/16 19:39:15 am143972 Exp $
+// ident	$Id: AddServer.js,v 1.12 2008/08/06 17:41:49 ronaldso Exp $
 
-/** 
+/**
  * This is the javascript file of Add Server Page
  */
 
@@ -82,40 +82,67 @@
         return (item != null);
     }
 
-    /* 
-     * handler function for : 
-     * Server Selection Page -> Add -> Submit 
-     */ 
+    /*
+     * handler function for :
+     * Server Selection Page -> Add -> Submit
+     */
     function preSubmitHandler(field) {
         var viewName   = "AddServer.AddClusterView";
-        var prefix     = viewName + ".AddClusterTable.SelectionCheckbox"; 
-        var theForm    = field.form; 
-        var node_names =  
-            theForm.elements[viewName + ".NodeNames"].value.split(";"); 
+        var prefix     = viewName + ".AddClusterTable.SelectionCheckbox";
+        var theForm    = field.form;
+        var node_names =
+            theForm.elements[viewName + ".NodeNames"].value.split(";");
 
-        // there is actually n-1 node names since there is a trailing ';' 
-        node_count = node_names.length - 1; 
+        // there is actually n-1 node names since there is a trailing ';'
+        node_count = node_names.length - 1;
 
-        var selected_node_names = ""; 
-        // loop through the check boxes and determine which ones are selected 
-        for (var i = 0; i < node_count; i++) { 
-            var check_box_name = prefix + i; 
-            var theCheckBox = theForm.elements[check_box_name]; 
+        var selected_node_names = "";
+        // loop through the check boxes and determine which ones are selected
+        for (var i = 0; i < node_count; i++) {
+            var check_box_name = prefix + i;
+            var theCheckBox = theForm.elements[check_box_name];
 
             if (theCheckBox.checked) {
                 if (selected_node_names != "") {
                     selected_node_names += ", ";
                 }
-                selected_node_names += node_names[i]; 
-            } 
-        } 
+                selected_node_names += node_names[i];
+            }
+        }
 
-        if (selected_node_names.length == 0) { 
-            alert(getErrorString(4)); 
-            return false; 
-        } else { 
+        if (selected_node_names.length == 0) {
+            alert(getErrorString(4));
+            return false;
+        } else {
             theForm.elements["AddServer.SelectedNodes"].value
-                = selected_node_names; 
-            return true; 
-        } 
-    } 
+                = selected_node_names;
+            return true;
+        }
+    }
+
+    function init() {
+        // When enter is pressed, click OK
+        document.onkeypress = onKeyPressEnter;
+    }
+
+    function onKeyPressEnter(theEvent) {
+        if (theEvent != null) {
+            // Mozilla support
+            if (theEvent.which == 13) {
+                // Enter key pressed.
+                clickAdd();
+            }
+        } else if (event != null) {
+            // IE support
+            if (event.keyCode == 13) {
+                // Enter key pressed.
+                clickAdd();
+            }
+        }
+    }
+
+    function clickAdd() {
+        var addButton = document.AddServerForm.elements["AddServer.Submit"];
+        addButton.click();
+    }
+

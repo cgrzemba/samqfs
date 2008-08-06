@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModel.java,v 1.56 2008/06/25 23:23:27 kilemba Exp $
+// ident	$Id: SamQFSSystemModel.java,v 1.57 2008/08/06 17:41:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -84,6 +84,9 @@ public interface SamQFSSystemModel {
     public static final
         String CIS_REPORT_DIR = "/var/opt/SUNWsamfs/CIS-reports";
 
+    // Determine if this node is a storage node (not controlled in host
+    // selection page)
+    public boolean isStorageNode();
 
     // This API return whether client and server version are the same or
     // different. The other method getServerAPIVersion() gives the actual
@@ -147,6 +150,8 @@ public interface SamQFSSystemModel {
     public boolean isAccessDenied();
 
     public boolean isServerSupported();
+    
+    public boolean isObjectBasedFSSupported();
 
     public SystemCapacity getCapacity() throws SamFSException;
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddStorageNode.js,v 1.2 2008/07/16 23:45:03 ronaldso Exp $
+// ident	$Id: AddStorageNode.js,v 1.3 2008/08/06 17:41:48 ronaldso Exp $
 
 var prefix = "AddStorageNodeForm:AddStorageNodeWizard";
 
@@ -56,4 +56,38 @@ function clearTextFields() {
     var stepPrefix = prefix + ":SubStepCreateGroup:step_id_create_group:";
     document.getElementById(stepPrefix + "fieldBlockSize").value = "";
     document.getElementById(stepPrefix + "fieldBlockPerDevice").value = "";
+}
+
+function init() {
+    // When enter is pressed, click OK
+    document.onkeypress = onKeyPressEnter;
+}
+
+function onKeyPressEnter(theEvent) {
+    if (theEvent != null) {
+        // Mozilla support
+        if (theEvent.which == 13) {
+            // Enter key pressed.
+            clickNext();
+        }
+    } else if (event != null) {
+        // IE support
+        if (event.keyCode == 13) {
+            // Enter key pressed.
+            clickNext();
+        }
+    }
+}
+
+function clickNext() {
+    var button = document.getElementById(
+        "AddStorageNodeForm:AddStorageNodeWizard:AddStorageNodeWizard_next");
+    if (null == button) {
+        button = document.getElementById(
+        "AddStorageNodeForm:AddStorageNodeWizard:AddStorageNodeWizard_finish");
+    }
+    
+    if (null != button) {
+        button.click();
+    }
 }

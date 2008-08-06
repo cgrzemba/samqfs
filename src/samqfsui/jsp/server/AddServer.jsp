@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddServer.jsp,v 1.17 2008/05/16 19:39:24 am143972 Exp $
+// ident	$Id: AddServer.jsp,v 1.18 2008/08/06 17:41:49 ronaldso Exp $
 --%>
 <%@ page language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -48,7 +48,8 @@
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
         initializePopup(this);
-        document.AddServerForm.elements['AddServer.nameValue'].focus();"
+        document.AddServerForm.elements['AddServer.nameValue'].focus();
+        init();"
     bundleID="samBundle">
 
 

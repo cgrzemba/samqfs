@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.3 2008/07/16 17:09:30 ronaldso Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.4 2008/08/06 17:41:49 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -47,7 +47,8 @@
                 <ui:script url="/js/fs/ShrinkFS.js"/>
             </ui:head>
             <ui:body styleClass="DefBdy"
-                     onLoad="wizOnLoad('ShrinkFSForm:ShrinkFSWizard')">
+                     onLoad="wizOnLoad('ShrinkFSForm:ShrinkFSWizard');
+                             init();">
                 <ui:form id="ShrinkFSForm">
                     <ui:masthead id="Masthead" secondary="true"
                                  productImageURL="/com_sun_web_ui/images/SecondaryProductName.png"
