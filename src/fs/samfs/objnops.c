@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 #include "sam/osversion.h"
 
@@ -285,8 +285,6 @@ sam_obj_col_create(objnode_t *pobjp, mode_t mode, uint64_t *oidp,
 
 /*
  * sam_obj_create - Creates an OSD User Object.
- *  Parent object on entry and exit vnode held.
- *  Created object is returned vnode HELD.
  */
 /* ARGSUSED */
 int

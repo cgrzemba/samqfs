@@ -55,7 +55,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -392,8 +392,6 @@ sam_objctl_create(struct sam_mount *mp)
 	 */
 	vp->v_flag &= ~(VROOT | VNOCACHE | VNOMAP | VNOSWAP | VNOMOUNT);
 
-	cmn_err(CE_WARN, "objctl_create: vn 0s%llx vn_count = %d\n",
-	    vp, vp->v_count);
 	mp->mi.m_vn_objctl = vp;
 }
 

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 #include "sam/osversion.h"
 
@@ -87,19 +87,27 @@ sam_objattr_set_file_samid(objnode_t *objnodep, uint16_t len, void *buf,
 	sam_node_t *ip = NULL;
 	sam_mount_t *mp;
 	sam_id_t *samid;
+	int error = 0;
 
 	samid = (sam_id_t *)buf;
 	ip = (struct sam_node *)(objnodep->obj_data);
-	mp = ip->mp;
 	RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+	if (ip->di.parent_id.ino != SAM_OBJ_ORPHANS_INO) {
+		/* Not a known orphan inode for 'mat' file system */
+		error = ENOENT;
+		goto fini;
+	}
+	mp = ip->mp;
 	ip->di.parent_id.ino = BE_32(samid->ino);
 	ip->di.parent_id.gen = BE_32(samid->gen);
 	TRANS_INODE(mp, ip);
 	sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
+
+fini:
 	RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-	return (0);
+	return (error);
 }
 
 /*
@@ -312,7 +320,6 @@ sam_obj_get_fsinfo_pg(objnode_t *objnodep, uint32_t pagenum, uint64_t len,
 	struct sam_sblk *sblk;
 	struct sam_fsinfo_page *obj_fsinfop;
 
-	cmn_err(CE_WARN, "sam_obj_get_fsinfo_pg: Called\n");
 	ip = (struct sam_node *)(objnodep->obj_data);
 	mp = ip->mp;
 	sblk = mp->mi.m_sbp;

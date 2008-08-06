@@ -32,7 +32,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 #endif
 
 #include "sam/osversion.h"
@@ -85,7 +85,6 @@
 #include "trace.h"
 #include "qfs_log.h"
 #include "osdfs.h"
-#include "objorphan.h"
 
 /*
  * ----- sam_osdfs_verify - Verify the handle in the osdfs.
@@ -170,14 +169,6 @@ sam_osdfs_lunattach(
 		return (EINVAL);
 	}
 
-	error = sam_obj_orphan_init(mp, (void **)&mp->mi.m_orphan_hdl);
-	if (error) {
-		cmn_err(CE_WARN,
-		    "sam_osdfs_lunattach: obj_orphan_init failed 0x%x\n",
-		    error);
-		error = 0; /* Let it continue .. */
-	}
-
 	mp->mi.m_osdt_lun = osdfsp->osdfs_lun;
 	osdfsp->osdfs_data = (void *)mp;
 	mutex_exit(&samgt.global_mutex);
@@ -225,22 +216,10 @@ sam_osdfs_lundetach(
 		return (error);
 	}
 
-	if (mp->mi.m_orphan_hdl) {
-		error = sam_obj_orphan_close(mp->mi.m_orphan_hdl);
-		if (error) {
-			cmn_err(CE_WARN,
-			    "sam_osdfs_lundetach: obj_orphan_close "
-			    "failed 0x%x\n",
-			    error);
-			error = 0;
-		}
-	}
-
 	osdfsp->osdfs_data = NULL;
 	osdfsp->osdfs_lun = ~0ULL;
 	mp->mi.m_osdt_lun = ~0ULL;
 	mutex_exit(&samgt.global_mutex);
-	cmn_err(CE_WARN, "Lun detach successful\n");
 	return (error);
 }
 

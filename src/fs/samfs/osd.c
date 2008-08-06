@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 #include "sam/osversion.h"
 
@@ -132,8 +132,6 @@ sam_sosd_bind(void)
 	sam_sosd_vec.scsi_osd_hdl =
 	    ddi_modopen(SCSI_SOSD_MOD_NAME, KRTLD_MODE_FIRST, &err);
 	if (sam_sosd_vec.scsi_osd_hdl == NULL) {
-		cmn_err(CE_WARN,
-		    "SAM-QFS: SCSI OSD Target Driver not avaliable\n");
 		goto failed;
 	}
 

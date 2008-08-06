@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 
 
 /* ----- Includes */
@@ -2361,8 +2361,6 @@ process_inodes()
 		}
 	}
 
-
-
 			/*
 			 * Make inode an orphan if valid with no parent or
 			 * parent didn't know inode. Skip orphan processing
@@ -2413,6 +2411,17 @@ check_inode(
 	struct sam_perm_inode *dp)	/* Inode entry */
 {
 	int err = 0;
+
+	/*
+	 * Inodes in file system type "mat" with parent of SAM_OBJ_ORPHANS_INO
+	 * are freed.
+	 */
+	if (mnt_info.params.fi_type == DT_META_OBJ_TGT_SET) {
+		if (dp->di.parent_id.ino == SAM_OBJ_ORPHANS_INO) {
+			err++;
+			goto out;
+		}
+	}
 
 	/* Process free inodes. Rebuild ino free link list */
 	if (dp->di.mode == 0 || dp->di.id.ino == 0) {
