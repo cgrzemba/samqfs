@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.87 $"
+#pragma ident "$Revision: 1.88 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -465,7 +465,8 @@ CancelRequest(
 			copy = file->copy;
 
 			if (req->id.ino == file->id.ino &&
-			    req->fseq == file->fseq) {
+			    req->fseq == file->fseq &&
+			    (GET_FLAG(file->flags, FI_DUPLICATE) == 0)) {
 
 				if (is_third_party(file->ar[copy].media)) {
 					CancelThirdPartyRequest(i);
