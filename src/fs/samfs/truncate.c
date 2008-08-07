@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.145 $"
+#pragma ident "$Revision: 1.146 $"
 
 #include "sam/osversion.h"
 
@@ -165,7 +165,7 @@ sam_drop_ino(sam_node_t *ip, cred_t *credp)
 			ip->flags.b.changed = 1;
 
 			if (!ip->di.status.b.offline) {
-				sam_quota_foffline(ip->mp, ip, NULL);
+				(void) sam_quota_foffline(ip->mp, ip, NULL);
 			}
 			ip->di.status.b.offline = 1;
 			ip->stage_off = 0;
@@ -177,7 +177,7 @@ sam_drop_ino(sam_node_t *ip, cred_t *credp)
 				ip->di.status.b.on_large = 1;
 			}
 			if (ip->mp->ms.m_fsev_buf) {
-				sam_send_event(ip, ev_offline, 0,
+				sam_send_event(ip->mp, &ip->di, ev_offline, 0,
 				    ip->di.residence_time);
 			}
 		} else if (error == ENOCSI) {	/* Corrupted file */
@@ -689,7 +689,7 @@ sam_sync_inode(
 
 	case SAM_RELEASE:
 		if (!ip->di.status.b.offline) {
-			sam_quota_foffline(ip->mp, ip, NULL);
+			(void) sam_quota_foffline(ip->mp, ip, NULL);
 		}
 		ip->di.status.b.offline = 1;
 		sync_type = SAM_SYNC_ONE;

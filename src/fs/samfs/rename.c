@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 
 #include "sam/osversion.h"
 
@@ -106,6 +106,7 @@ sam_rename_inode(
 	cred_t *credp)		/* credentials pointer. */
 {
 	ino_t ino = 0;
+	sam_mount_t *mp = opip->mp;
 	struct sam_node *oip = NULL;
 	struct sam_node *nip = NULL;
 	struct sam_node *enip = NULL;
@@ -115,6 +116,8 @@ sam_rename_inode(
 	boolean_t target_is_a_dir = FALSE;
 	boolean_t parents_are_different = FALSE;
 	struct vnode *vp;
+	sam_id_t oid, poid;
+	sam_time_t otime;
 	int error_line = 0;
 	int error;
 	int new_error;
@@ -135,6 +138,7 @@ sam_rename_inode(
 	if (opip != npip) {
 		parents_are_different = TRUE;
 	}
+	oid.ino = 0;
 
 	/*
 	 * Start an LQFS rename transaction
@@ -143,7 +147,7 @@ sam_rename_inode(
 	if (ulp) {
 #endif /* LQFS_TODO_LOCKFS */
 		trans_size = (int)TOP_RENAME_SIZE(opip);
-		TRANS_BEGIN_CSYNC(opip->mp, issync, TOP_RENAME, trans_size);
+		TRANS_BEGIN_CSYNC(mp, issync, TOP_RENAME, trans_size);
 #ifdef LQFS_TODO_LOCKFS
 	}
 #endif /* LQFS_TODO_LOCKFS */
@@ -357,14 +361,9 @@ sam_rename_inode(
 		error_line = __LINE__;
 		goto out14;
 	}
-
-	/*
-	 * If parents are different and event logging on, send 1st of
-	 * 2 events for rename. 1 = old parent, 2 = new parent.
-	 */
-	if (parents_are_different && oip->mp->ms.m_fsev_buf) {
-		sam_send_event(oip, ev_rename, 1, opip->di.modify_time.tv_sec);
-	}
+	oid = oip->di.id;
+	poid = oip->di.parent_id;
+	otime = opip->di.modify_time.tv_sec;
 
 	/*
 	 * Link the new file to the existing old file.
@@ -386,18 +385,18 @@ sam_rename_inode(
 					error_line = __LINE__;
 				RW_LOCK_OS(&opip->inode_rwl, RW_WRITER);
 				opip->di.nlink--;
-				TRANS_INODE(opip->mp, opip);
+				TRANS_INODE(mp, opip);
 				RW_UNLOCK_OS(&opip->inode_rwl, RW_WRITER);
 				RW_LOCK_OS(&npip->inode_rwl, RW_WRITER);
 				npip->di.nlink++;
-				TRANS_INODE(npip->mp, npip);
+				TRANS_INODE(mp, npip);
 				RW_UNLOCK_OS(&npip->inode_rwl, RW_WRITER);
 			}
 		}
 		if (!oip_unlocked) {
 			RW_UNLOCK_OS(&oip->inode_rwl, RW_WRITER);
 		}
-		if (SAM_SYNC_META(npip->mp)) {
+		if (SAM_SYNC_META(mp)) {
 			sam_ilock_two(npip, oip, RW_WRITER);
 			sam_sync_meta(npip, oip, credp);
 			sam_iunlock_two(npip, oip, RW_WRITER);
@@ -414,7 +413,7 @@ sam_rename_inode(
 			/* Entry does not exist or error. */
 			goto out15;
 		}
-		if (SAM_IS_SHARED_SERVER(opip->mp)) {
+		if (SAM_IS_SHARED_SERVER(mp)) {
 			sam_notify_arg_t *notify;
 
 			/*
@@ -441,14 +440,24 @@ sam_rename_inode(
 		 * Notify arfind and event daemon of file/directory rename.
 		 */
 		sam_send_to_arfind(oip, AE_rename, 0);
-		if (oip->mp->ms.m_fsev_buf == NULL) {
+		if (mp->ms.m_fsev_buf == NULL) {
 			goto out15;
 		}
+
+		/*
+		 * If parents are different and event logging on, send 1st of
+		 * 2 events for rename. 1 = old parent, 2 = new parent.
+		 */
 		if (parents_are_different) {
-			sam_send_event(oip, ev_rename, 2,
+			sam_disk_inode_t di;
+
+			di.id = oid;
+			di.parent_id = poid;
+			sam_send_event(mp, &di, ev_rename, 1, otime);
+			sam_send_event(mp, &oip->di, ev_rename, 2,
 			    npip->di.modify_time.tv_sec);
 		} else {
-			sam_send_event(oip, ev_rename, 0,
+			sam_send_event(mp, &oip->di, ev_rename, 0,
 			    npip->di.modify_time.tv_sec);
 		}
 		goto out15;
@@ -457,10 +466,6 @@ sam_rename_inode(
 		 * At this point nip may be null or set, but v_count has already
 		 * been dealt with accordingly.
 		 */
-		if (parents_are_different && oip->mp->ms.m_fsev_buf) {
-			sam_send_event(oip, ev_rename, 2,
-			    opip->di.modify_time.tv_sec);
-		}
 		error_line = __LINE__;
 		goto out14;
 	}
@@ -478,7 +483,7 @@ out15:
 #ifdef LQFS_TODO_LOCKFS
 	if (ulp) {
 #endif /* LQFS_TODO_LOCKFS */
-		TRANS_END_CSYNC(opip->mp, terr, issync, TOP_RENAME, trans_size);
+		TRANS_END_CSYNC(mp, terr, issync, TOP_RENAME, trans_size);
 		if (error == 0) {
 			error = terr;
 		}

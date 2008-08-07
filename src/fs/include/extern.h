@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.235 $"
+#pragma ident "$Revision: 1.236 $"
 
 #include "sam/osversion.h"
 
@@ -155,8 +155,8 @@ int sam_event_open(void *arg, int size, cred_t *credp);
 int sam_event_init(sam_mount_t *mp, int bufsize);
 void sam_event_fini(sam_mount_t *mp);
 void sam_event_umount(sam_mount_t *mp);
-void sam_send_event(sam_node_t *ip, enum sam_event_num event, ushort_t param,
-	sam_time_t time);
+void sam_send_event(sam_mount_t *mp, sam_disk_inode_t *dp,
+	enum sam_event_num event, ushort_t param, sam_time_t time);
 
 /* iget.c */
 

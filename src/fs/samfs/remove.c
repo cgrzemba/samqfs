@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.85 $"
+#pragma ident "$Revision: 1.86 $"
 
 #include "sam/osversion.h"
 
@@ -355,7 +355,8 @@ sam_remove_name(
 	 */
 	sam_send_to_arfind(ip, AE_remove, 0);
 	if (ip->mp->ms.m_fsev_buf) {
-		sam_send_event(ip, ev_remove, 0, ip->di.change_time.tv_sec);
+		sam_send_event(ip->mp, &ip->di, ev_remove, 0,
+		    ip->di.change_time.tv_sec);
 	}
 
 out:

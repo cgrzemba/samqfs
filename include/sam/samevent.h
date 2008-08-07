@@ -48,6 +48,7 @@ enum sam_event_num {
 	ev_archive,			/* Archive copy made */
 	ev_modify,			/* Archive copies stale */
 	ev_archange,			/* Archive copy changed */
+	ev_restore,			/* File was restored */
 	ev_umount,			/* File system umount */
 	ev_max
 };

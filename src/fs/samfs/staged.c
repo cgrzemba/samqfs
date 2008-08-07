@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 
 #include "sam/osversion.h"
 
@@ -776,7 +776,8 @@ sam_close_stage(sam_node_t *ip, cred_t *credp)
 					ip->segment_ip->flags.b.changed = 1;
 					}
 					if (ip->mp->ms.m_fsev_buf) {
-						sam_send_event(ip, ev_online, 0,
+						sam_send_event(ip->mp, &ip->di,
+						    ev_online, 0,
 						    ip->di.residence_time);
 					}
 

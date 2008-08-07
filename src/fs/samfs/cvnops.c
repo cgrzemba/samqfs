@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.143 $"
+#pragma ident "$Revision: 1.144 $"
 
 #include "sam/osversion.h"
 
@@ -102,7 +102,7 @@ void sam_rwlock_common(vnode_t *vp, int w);
 
 extern int qfs_fiologenable(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
 extern int qfs_fiologdisable(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
-extern int qfs_fioislog(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
+extern int qfs_fioislog(vnode_t *vp, uint32_t *islog, cred_t *cr, int flags);
 extern uint_t lqfs_debug;
 
 /*
@@ -290,9 +290,9 @@ sam_close_vn(
 	if (last_close && write_mode &&
 	    (ip->mp->mt.fi_config & MT_SHARED_WRITER)) {
 #if defined(SOL_511_ABOVE)
-		sam_fsync_vn(vp, FSYNC, credp, ct);
+		(void) sam_fsync_vn(vp, FSYNC, credp, ct);
 #else
-		sam_fsync_vn(vp, FSYNC, credp);
+		(void) sam_fsync_vn(vp, FSYNC, credp);
 #endif
 	}
 	/*
@@ -303,7 +303,7 @@ sam_close_vn(
 		sam_send_to_arfind(ip, AE_close, 0);
 		if (ip->mp->ms.m_fsev_buf &&
 		    (filemode & (FWRITE|FAPPEND|FCREAT|FTRUNC))) {
-			sam_send_event(ip, ev_close, filemode,
+			sam_send_event(ip->mp, &ip->di, ev_close, filemode,
 			    ip->di.modify_time.tv_sec);
 		}
 	}
@@ -1455,7 +1455,7 @@ sam_inactive_vn(
 
 	TRACE(T_SAM_INACTIVE, vp, vp->v_count, ip->flags.bits, ip->di.id.ino);
 
-	if (!SAM_IS_SHARED_CLIENT(mp) && (ip->di.nlink <= 0)) {
+	if (!SAM_IS_SHARED_CLIENT(mp) && (ip->di.nlink == 0)) {
 		/*
 		 * A transaction is only needed if this file has been
 		 * removed. This logs the final on-disk inode

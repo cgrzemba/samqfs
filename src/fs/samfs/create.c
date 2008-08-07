@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.159 $"
+#pragma ident "$Revision: 1.160 $"
 
 #include "sam/osversion.h"
 
@@ -323,7 +323,8 @@ sam_create_name(
 	 * Notify event daemon of file/directory creation.
 	 */
 	if (ip->mp->ms.m_fsev_buf && operation != SAM_RENAME_LINK) {
-		sam_send_event(ip, ev_create, 0, ip->di.creation_time);
+		sam_send_event(ip->mp, &ip->di, ev_create, 0,
+		    ip->di.creation_time);
 	}
 
 	/*
@@ -338,7 +339,7 @@ sam_create_name(
 		fbrelse(fbp, S_OTHER);
 		/* sync will be done by sam_rename_vn */
 		if (operation != SAM_RENAME_LINK) {
-			sam_sync_meta(pip, ip, credp);
+			(void) sam_sync_meta(pip, ip, credp);
 		}
 	} else {
 		fbdwrite(fbp);
@@ -510,6 +511,20 @@ sam_restore_name(
 	slot_size = dirp->d_reclen - SAM_DIRSIZ(dirp);
 	sam_enter_dir_dnlc(pip, id.ino, slot_offset, cp, slot_size);
 
+	/*
+	 * Send restore event with old inode entry and new inode entry
+	 */
+	if (pip->mp->ms.m_fsev_buf && bp) {
+		struct sam_perm_inode *newpp;
+
+		sam_send_event(pip->mp, &permp->di, ev_restore, 1,
+		    permp->di.modify_time.tv_sec);
+		newpp = (struct sam_perm_inode *)
+		    (void *)SAM_ITOO(id.ino, bp->b_bcount, bp);
+		sam_send_event(pip->mp, &newpp->di, ev_restore, 2,
+		    newpp->di.modify_time.tv_sec);
+	}
+
 	TRANS_DIR(pip, slot_offset);
 	if (TRANS_ISTRANS(pip->mp) ||
 	    (pip->mp->mt.fi_config & MT_SHARED_WRITER)) {
@@ -524,6 +539,7 @@ sam_restore_name(
 		fbdwrite(fbp);
 	}
 	TRANS_INODE(pip->mp, pip);
+
 	RW_UNLOCK_OS(&pip->inode_rwl, RW_WRITER);
 	return (0);
 
@@ -549,7 +565,7 @@ out:
  * ----- sam_restore_hardlink - restore a hard link to an existing file.
  * If there was data on the dump, we opened the file and have an
  * incore inode.  If so, get it and make the link.  Update the parent
- * and link count and return the new inode number.  Otherwis
+ * and link count and return the new inode number.  Otherwise
  * get the permanent inode and make the link.
  */
 
@@ -686,7 +702,7 @@ sam_restore_new_ino(
 	}
 	sam_set_unit(mp, &(permip->di));
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(permip->di.mode)) {
-		if ((error = sam_create_object_id(mp, &permip->di))) {
+		if ((error = sam_create_object_id(mp, &permip->di)) != 0) {
 			*bpp = bp;
 			return (error);
 		}
@@ -915,10 +931,10 @@ sam_make_ino(
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(ip->di.mode)) {
 		ip->di.rm.info.obj.stripe_width =
 		    pip->di.rm.info.obj.stripe_width;
-		if ((error = sam_create_object_id(mp, &ip->di))) {
+		if ((error = sam_create_object_id(mp, &ip->di)) != 0) {
 			goto make_cleanup;
 		}
-		if ((error = sam_osd_create_obj_layout(ip))) {
+		if ((error = sam_osd_create_obj_layout(ip)) != 0) {
 			goto make_cleanup;
 		}
 	}

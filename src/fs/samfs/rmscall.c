@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.95 $"
+#pragma ident "$Revision: 1.96 $"
 
 #include "sam/osversion.h"
 
@@ -1448,7 +1448,8 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 						cn = 0;
 					}
 					if (ip->mp->ms.m_fsev_buf) {
-						sam_send_event(ip, event, cn,
+						sam_send_event(ip->mp, &ip->di,
+						    event, cn,
 						    ip->di.modify_time.tv_sec);
 					}
 				}

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.136 $"
+#pragma ident "$Revision: 1.137 $"
 
 #include "sam/osversion.h"
 
@@ -1466,7 +1466,7 @@ sam_set_archive(
 
 		SAM_COUNT64(sam, archived);
 		if (ip->mp->ms.m_fsev_buf) {
-			sam_send_event(ip, ev_archive, (copy + 1),
+			sam_send_event(ip->mp, &ip->di, ev_archive, (copy + 1),
 			    permip->ar.image[copy].creation_time);
 		}
 

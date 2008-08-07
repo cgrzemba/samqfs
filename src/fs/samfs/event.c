@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 #include "sam/osversion.h"
 
@@ -404,19 +404,18 @@ sam_event_init(
  */
 void
 sam_send_event(
-	sam_node_t *ip,			/* Pointer to inode */
+	sam_mount_t *mp,		/* Poiner to mount point */
+	sam_disk_inode_t *dp,		/* Pointer to disk inode */
 	enum sam_event_num event,	/* The file event */
 	ushort_t param,			/* Optional parameter */
 	sam_time_t time)		/* Event time */
 {
-	sam_mount_t		*mp;	/* Pointer to mount table */
 	struct sam_event_em	*em;
 	struct sam_event_buffer *eb;
 	struct sam_event	*ev;
 	timespec_t		system_time;
 	int			in;
 
-	mp = ip->mp;
 	em = mp->ms.m_fsev_buf;
 	if (em == NULL) {
 		return;
@@ -474,8 +473,8 @@ sam_send_event(
 	} else {
 		ev->ev_time = time;
 	}
-	ev->ev_id = ip->di.id;
-	ev->ev_pid = ip->di.parent_id;
+	ev->ev_id = dp->id;
+	ev->ev_pid = dp->parent_id;
 	ev->ev_param = param;
 	if (++em->em_seqno == 0) {
 		em->em_seqno = 1;
@@ -520,7 +519,8 @@ sam_event_umount(
 		em->em_buffer->eb_umount = 1;
 		mutex_exit(&em->em_mutex);
 		if ((em->em_mask & ev_umount)) {
-			sam_send_event(mp->mi.m_inodir, ev_umount, 0, 0);
+			sam_send_event(mp, &mp->mi.m_inodir->di, ev_umount,
+			    0, 0);
 		}
 	}
 	/*

@@ -1,4 +1,4 @@
-.\" $Revision: 1.1 $
+.\" $Revision: 1.2 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -51,7 +51,7 @@ associated with this file system and logs them. Events include:
 .ta 0n 26n 36n  48
 Event       Description        Parameter        Time\fR
 ev_none     -                  -                -
-ev_create   File created       -                creation time
+ev_create   file created       -                creation time
 ev_change   uid/gid changed    -                change time
 ev_close    modified & closed  filemode         modify time
 ev_rename   renamed            0=same parent    parent modify time
@@ -63,6 +63,8 @@ ev_online   marked online      -                residence time
 ev_archive  copy archived      copy number      copy creation time
 ev_modify   copies stale       -                modify time
 ev_archange copies changed     -                modify time
+ev_restore  file restored      1=old file       old modify time
+ev_restore  file restored      2=new file       new modify time
 ev_umount   umount fs          -                now
 .TE
 .PP

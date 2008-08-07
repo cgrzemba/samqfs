@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.94 $"
+#pragma ident "$Revision: 1.95 $"
 
 #include <sam/osversion.h>
 
@@ -645,6 +645,8 @@ sam_restore_inode(
 	int copy;
 	int error;
 	int i;
+	sam_id_t oid, poid;
+	sam_time_t otime;
 	offset_t old_size;
 	int old_on_large;
 	void *ptr;
@@ -670,7 +672,13 @@ sam_restore_inode(
 		old_on_large = ip->di.status.b.on_large;
 	}
 
-	/* Replace fields in the argument inode from the incore inode */
+	/*
+	 * Replace fields in the argument inode from the incore inode
+	 * Save old inode.gen for possible restore event.
+	 */
+	oid = inode->di.id;
+	poid = inode->di.parent_id;
+	otime = inode->di.modify_time.tv_sec;
 	inode->di.version = ip->di.version;
 	inode->di.id = ip->di.id;
 	inode->di.parent_id = ip->di.parent_id;
@@ -975,6 +983,19 @@ sam_restore_inode(
 		}
 	}
 	ip->flags.b.changed = 1;
+
+	/*
+	 * Send restore event with old inode entry and new inode entry
+	 */
+	if (mp->ms.m_fsev_buf) {
+		struct sam_disk_inode di;
+
+		di.id = oid;
+		di.parent_id = poid;
+		sam_send_event(mp, &di, ev_restore, 1, otime);
+		sam_send_event(mp, &ip->di, ev_restore, 2,
+		    ip->di.modify_time.tv_sec);
+	}
 	bdwrite(bp);
 
 	/*
