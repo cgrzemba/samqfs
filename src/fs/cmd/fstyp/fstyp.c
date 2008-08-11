@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +51,8 @@
 #include <sam/param.h>
 #include <sam/types.h>
 
+#include "sam/nl_samfs.h"
+#include "sam/custmsg.h"
 #include <sam/format.h>
 #include <sam/fs/ino.h>
 #include <sam/fs/samhost.h>
@@ -67,7 +69,7 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	int errflag = 0;
+	int err, errflag = 0;
 	int vflag = 0;
 	char *devp;
 	struct sam_sblk sb;
@@ -75,6 +77,9 @@ main(int argc, char *argv[])
 	unsigned long fstype;
 	char fsname[16];
 	int error;
+	size_t len;
+	char *osd_dev = "/dev/osd/";
+	char *osd_devices = "/devices/scsi_vhci/object-store@";
 
 	(void) setlocale(LC_ALL, "");
 #if !defined(TEXT_DOMAIN)
@@ -94,31 +99,47 @@ main(int argc, char *argv[])
 	}
 	if (errflag || argc <= optind) {
 		usage();
-		exit(31+1);
+		exit(30);
 	}
 
 	devp = argv[optind];
 
 	/* Get SAM-FS/QFS superblock and associated file descriptor (0). */
 	close(0);
-	if (sam_dev_sb_get(devp, &sb, &fd) != 0) {
-		/* Not a SAM-FS/QFS Superblock. */
-		exit(31+1);
+	if ((err = strncmp(osd_dev, devp, strlen(osd_dev))) == 0) {
+		(void) fprintf(stderr, catgets(catfd, SET, 5051,
+		    "/dev/osd devices are not supported.\n"));
+		exit(31);
+	}
+	if ((err = strncmp(osd_devices, devp, strlen(osd_devices))) == 0) {
+		(void) fprintf(stderr, catgets(catfd, SET, 5052,
+		    "/devices/scsi_vhci/object-store devices are not "
+		    "supported.\n"));
+		exit(32);
+	}
+	if ((err = sam_dev_sb_get(devp, &sb, &fd)) != 0) {
+		(void) fprintf(stderr, catgets(catfd, SET, 5052,
+		    "Unrecognized Superblock.  error = %d\n"));
+		exit(33);
 	}
 	if (fd != 0) {
-		exit(31+1);
+		(void) fprintf(stderr, catgets(catfd, SET, 5052,
+		    "Invalid File Descriptor.  fd = %d\n"));
+		exit(34);
 	}
 
 	/* Determine SAM-FS/QFS filesystem type. */
-	if (sam_sb_fstype_get(&sb, &fstype) != 0) {
-		/* Unrecognized SAM-FS/QFS Filesystem Type. */
-		exit(31+1);
+	if ((err = sam_sb_fstype_get(&sb, &fstype)) != 0) {
+		(void) fprintf(stderr, catgets(catfd, SET, 5052,
+		    "Unrecognized Filesystem Type.  error = %d\n"));
+		exit(35);
 	}
 
 	/* Convert SAM-FS/QFS filesystem type to string. */
-	if (sam_fstype_to_str(fstype, fsname, 16) != 0) {
-		/* Couldn't Convert SAM-FS/QFS Filesystem Type to String. */
-		exit(31+1);
+	if ((err = sam_fstype_to_str(fstype, fsname, 16)) != 0) {
+		(void) fprintf(stderr, catgets(catfd, SET, 5052,
+		    "String conversion failure.  error = %d\n"));
+		exit(36);
 	}
 
 	/* Print fstype name to stdout. */
@@ -238,5 +259,6 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void) fprintf(stderr, gettext("samfs usage: fstyp [-v] special\n"));
+	(void) fprintf(stderr, catgets(catfd, SET, 5050,
+	    "usage: samfstyp [-v] special\n"));
 }

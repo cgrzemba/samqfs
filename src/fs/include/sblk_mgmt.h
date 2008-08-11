@@ -35,7 +35,7 @@
 #define	SAM_SBLK_MGMT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 #endif
 
 /* Flags for device open restrictions. */
@@ -45,13 +45,9 @@
 
 /* Filesystem type definitions */
 #define	FSTYPE_UNKNOWN		0	/* Unknown filesystem type */
-#define	FSTYPE_SAM_FS_SBV1	1	/* SAM-FS w/ Superblock v1 */
-#define	FSTYPE_SAM_FS_SBV2	2	/* SAM-FS w/ Superblock v2 */
-#define	FSTYPE_SAM_QFS_SBV1	3	/* SAM-QFS w/ Superblock v1 */
-#define	FSTYPE_SAM_QFS_SBV2	4	/* SAM-QFS w/ Superblock v2 */
-
-#define	FSTYPE_SAM_FS_SBV2A	5	/* SAM-FS w/ Superblock v2A */
-#define	FSTYPE_SAM_QFS_SBV2A	6	/* SAM-QFS w/ Superblock v2A */
+#define	FSTYPE_SAM_QFS_SBV1	1	/* SAM-QFS w/ Superblock v1 */
+#define	FSTYPE_SAM_QFS_SBV2	2	/* SAM-QFS w/ Superblock v2 */
+#define	FSTYPE_SAM_QFS_SBV2A	3	/* SAM-QFS w/ Superblock v2A */
 
 /* Declarations for superblock management library functions. */
 

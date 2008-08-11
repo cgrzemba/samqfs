@@ -35,7 +35,7 @@
 #define	_SAM_DISK_SHOW_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 #endif
 
 #ifdef sun
@@ -47,9 +47,6 @@
 /* Unrecognized disk type */
 #define	DKC_UNKNOWN_STR		"unknown"
 #define	DT_UNKNOWN_STR		"unknown"
-
-/* Stripe group string */
-#define	DT_STRIPE_GROUP_STR	"g"
 
 /* Declarations of DKIO management library functions */
 

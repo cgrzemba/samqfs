@@ -38,7 +38,7 @@
 #define	SAM_DEVSTAT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 #endif
 
 #ifdef	linux
@@ -273,6 +273,8 @@ struct sam_ndevstat {
 #define	is_stripe_group(a)	(((a) & DT_STRIPE_GROUP_MASK) == \
 				    DT_STRIPE_GROUP)
 #define	is_osd_group(a)		(((a) & DT_CLASS_MASK) == DT_OBJECT_DISK)
+#define	is_rss(a)		((a) == DT_PSEUDO_SS)
+#define	is_rsc(a)		((a) == DT_PSEUDO_SC)
 #define	is_rsd(a)		((a) == DT_PSEUDO_RD)
 #define	is_stk5800(a)		((a) == DT_STK5800)
 

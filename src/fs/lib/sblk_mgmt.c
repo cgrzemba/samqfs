@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,37 +298,6 @@ sam_sb_version_get(
 }
 
 /*
- * ----- sam_sbord_devtype_get -  Get superblock ordinal entry device type
- */
-int					/* Errno status code */
-sam_sbord_devtype_get(
-	struct sam_sbord *sbop,		/* Superblock ordinal entry */
-	unsigned long *devtype)		/* Saved device type */
-{
-	if ((sbop == NULL) || (devtype == NULL)) {
-		return (EINVAL);
-	}
-
-	switch (sbop->type) {
-	case DT_DATA:
-	case DT_META:
-	case DT_RAID:
-		*devtype = sbop->type;
-		break;
-	default:
-		if (is_stripe_group(sbop->type)) {
-			*devtype = DT_STRIPE_GROUP;
-			break;
-		}
-		*devtype = DT_UNKNOWN;
-		return (ENODEV);
-		/* NOTREACHED */
-	}
-
-	return (0);
-}
-
-/*
  * ----- sam_sb_name_get - Get SAM-FS/QFS superblock name as a string
  */
 int					/* Errno status code */
@@ -362,10 +331,6 @@ sam_sb_fstype_get(
 {
 	unsigned long version;
 	int err;
-	int i;
-
-	int qfs = 0;
-	int samfs = 0;
 
 	if ((sbp == NULL) || (ftp == NULL)) {
 		return (EINVAL);
@@ -377,64 +342,13 @@ sam_sb_fstype_get(
 		return (err);
 	}
 
-	/* A host table indicates a QFS (shared) filesystem. */
-	if (sbp->info.sb.hosts != 0) {
-		qfs++;
-	} else {
-		int md = 0;
-		int qd = 0;
-
-		/*
-		 * Search ordinal entries.  If we find an md device without
-		 * any mm, mr, or g devices, then we're qfs.  Otherwise samfs.
-		 */
-		for (i = 0; i < sbp->info.sb.fs_count; i++) {
-			unsigned long dtype;
-
-			if (sam_sbord_devtype_get(&sbp->eq[i].fs, &dtype)
-			    != 0) {
-				*ftp = FSTYPE_UNKNOWN;
-				return (ENODEV);
-				/* NOTREACHED */
-			}
-
-			switch (dtype) {
-			case DT_META:
-			case DT_RAID:
-			case DT_STRIPE_GROUP:
-				qd++;
-				break;
-			case DT_DATA:
-				md++;
-				break;
-			default:
-				*ftp = FSTYPE_UNKNOWN;
-				return (ENODEV);
-				/* NOTREACHED */
-			}
-		}
-		if (md & !qd) {
-			samfs++;
-		} else {
-			qfs++;
-		}
-	}
-
 	/* Determine specific type based on version. */
 	switch (version) {
 	case SAMFS_SBLKV1:
-		if (samfs) {
-			*ftp = FSTYPE_SAM_FS_SBV1;
-		} else {
-			*ftp = FSTYPE_SAM_QFS_SBV1;
-		}
+		*ftp = FSTYPE_SAM_QFS_SBV1;
 		break;
 	case SAMFS_SBLKV2:
-		if (samfs) {
-			*ftp = FSTYPE_SAM_FS_SBV2;
-		} else {
-			*ftp = FSTYPE_SAM_QFS_SBV2;
-		}
+		*ftp = FSTYPE_SAM_QFS_SBV2;
 		break;
 	default:
 		*ftp = FSTYPE_UNKNOWN;

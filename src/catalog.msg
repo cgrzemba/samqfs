@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.606 $"
+$ pragma ident "$Revision: 1.607 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -1414,6 +1414,14 @@ $ ===================================================================
 5037 StorADE support is off.
 5038 usage: samstorade [-r hostname] [-t timeout] [-s xml_message] [-d]
 5039 cannot specify -p in the non-global zone
+
+5050 usage: samfstyp [-v] special
+5051 /dev/osd devices are not supported.
+5052 /devices/scsi_vhci/object-store devices are not supported.
+5053 Unrecognized Superblock.  error = %d
+5054 Invalid File Descriptor.  fd = %d
+5055 Unrecognized Filesystem Type.  error = %d
+5056 String conversion failure.  error = %d
 
 
 $  gencmd

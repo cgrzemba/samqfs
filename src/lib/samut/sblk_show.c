@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +55,7 @@
 
 #include <sys/inttypes.h>
 
+#include <sam/lib.h>
 #include <sam/param.h>
 #include <sam/types.h>
 #include <sam/format.h>
@@ -166,6 +167,7 @@ sam_devtype_to_str(
 	int len)		/* String buffer length (bytes) */
 {
 	dev_nm_t *dnp;
+	char *nm;
 
 	if (strp == NULL) {
 		return (EINVAL);
@@ -183,26 +185,9 @@ sam_devtype_to_str(
 		}
 	}
 
-	if (dnp->nm == NULL) {   /* Not found in dev_nm2mt table. */
-		/*
-		 * The dev_nm2mt table doesn't have an entry for
-		 * a stripe group device name "g", nor does it facilitate
-		 * managing a device type that has an "unknown" type/name.
-		 * Handle that here, until we can improve the table.
-		 */
-		if (is_stripe_group(devtype)) {
-			if (len < (strlen(DT_STRIPE_GROUP_STR)+1)) {
-				return (EINVAL);
-				/* NOTREACHED */
-			}
-			strcpy(strp, DT_STRIPE_GROUP_STR);
-		} else {	/* Unknown device type. */
-			if (len >= (strlen(DT_UNKNOWN_STR)+1)) {
-				strcpy(strp, DT_UNKNOWN_STR);
-			}
-			return (EINVAL);
-			/* NOTREACHED */
-		}
+	if (dnp->nm == NULL) {   /* Not found in dev_nm2dt table. */
+		nm = device_to_nm(devtype);
+		strcpy(strp, nm);
 	}
 
 	return (0);
@@ -262,24 +247,6 @@ sam_fstype_to_str(
 			return (EINVAL);
 		}
 		strcpy(strp, FSNAME_SAM_QFS_SBV2A);
-		break;
-	case FSTYPE_SAM_FS_SBV1:
-		if (len < sizeof (FSNAME_SAM_FS_SBV1)) {
-			return (EINVAL);
-		}
-		strcpy(strp, FSNAME_SAM_FS_SBV1);
-		break;
-	case FSTYPE_SAM_FS_SBV2:
-		if (len < sizeof (FSNAME_SAM_FS_SBV2)) {
-			return (EINVAL);
-		}
-		strcpy(strp, FSNAME_SAM_FS_SBV2);
-		break;
-	case FSTYPE_SAM_FS_SBV2A:
-		if (len < sizeof (FSNAME_SAM_FS_SBV2A)) {
-			return (EINVAL);
-		}
-		strcpy(strp, FSNAME_SAM_FS_SBV2A);
 		break;
 	default:
 		if (len < sizeof (FSNAME_UNKNOWN)) {
@@ -381,7 +348,9 @@ sam_sbinfo_format(
 	sprintf(vp, "%s", sbip->fs_name);
 	(void) sam_format_element_append(&bp, "fset_name", vp);
 
-	sprintf(vp, "0x%x", sbip->fi_type);
+	if (sam_devtype_to_str(sbip->fi_type, vp, SAM_FORMAT_WIDTH_MAX) != 0) {
+		strcpy(vp, DT_UNKNOWN_STR);
+	}
 	(void) sam_format_element_append(&bp, "fset_type", vp);
 
 	sprintf(vp, "%d", sbip->ord);

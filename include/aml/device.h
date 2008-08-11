@@ -38,7 +38,7 @@
 #if !defined(_AML_DEVICE_H)
 #define	_AML_DEVICE_H
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 
 #ifdef sun
@@ -114,9 +114,12 @@
 #define	IS_THIRD_PARTY(a) (((a)->equ_type & DT_CLASS_MASK) == DT_THIRD_PARTY)
 #define	IS_STRIPE_GROUP(a) (((a)->equ_type & DT_STRIPE_GROUP_MASK == \
 	DT_STRIPE_GROUP)
+#define	IS_OSD_GROUP(a) (((a)->equ_type & DT_CLASS_MASK == \
+	DT_OBJECT_DISK)
 #define	IS_RSS(a)	((a)->equ_type == DT_PSEUDO_SS)
 #define	IS_RSC(a)	((a)->equ_type == DT_PSEUDO_SC)
 #define	IS_RSD(a)	((a)->equ_type == DT_PSEUDO_RD)
+#define	IS_STK5800(a)	((a)->equ_type == DT_STK5800)
 
 
 /* Returns true if this is a generic API interface to the robot */

@@ -35,20 +35,17 @@
 #define	_SAM_SBLK_SHOW_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 #endif
 
 /* Unrecognized superblock version */
 #define	SAMFS_SBLK_UNKNOWN_STR  "unknown"
 
 /* Filesystem name definitions */
-#define	FSNAME_SAM_FS_SBV1	"sam-fs-sbv1"
-#define	FSNAME_SAM_FS_SBV2	"sam-fs-sbv2"
-#define	FSNAME_SAM_FS_SBV2A	"sam-fs-sbv2A"
+#define	FSNAME_UNKNOWN		"unknown"
 #define	FSNAME_SAM_QFS_SBV1	"sam-qfs-sbv1"
 #define	FSNAME_SAM_QFS_SBV2	"sam-qfs-sbv2"
 #define	FSNAME_SAM_QFS_SBV2A	"sam-qfs-sbv2A"
-#define	FSNAME_UNKNOWN		"unknown"
 
 /* Unrecognized superblock name */
 #define	SAMFS_SB_NAME_UNKNOWN_STR	""
