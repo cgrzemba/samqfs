@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 
 #include "sam/osversion.h"
 
@@ -1556,7 +1556,8 @@ sam_request_file(void *arg)
 	 * not opened or busy. Filesystem must not be read-only.
 	 * File must have write permission.
 	 */
-	if (!S_ISREQ(ip->di.mode) && (ip->di.extent[0] != 0)) {
+	if ((!S_ISREQ(ip->di.mode)) && !(S_ISREG(ip->di.mode) &&
+	    ((ip->di.blocks == 0) && !ip->di.status.b.offline))) {
 		error = EEXIST;
 	} else if (ip->flags.b.rm_opened) {
 		error = EBUSY;
