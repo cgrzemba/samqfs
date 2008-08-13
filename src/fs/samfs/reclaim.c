@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.130 $"
+#pragma ident "$Revision: 1.131 $"
 
 #include "sam/osversion.h"
 
@@ -103,6 +103,9 @@ static int sam_free_indirect_block(struct sam_mount *mp, struct sam_sblk *sblk,
 	struct sam_rel_blks *block, int kptr[], uint32_t *extent_bn,
 	uchar_t *extent_ord, int level);
 void sam_release_vnodes(sam_schedule_entry_t *entry);
+static void sam_release_blocks(sam_mount_t *mp, sam_fb_pool_t *fbp, int bt,
+	int active);
+static void sam_drain_blocks(sam_mount_t *mp);
 
 #define	SAM_RECLAIM_DEFAULT_SECS 120
 
@@ -166,6 +169,7 @@ sam_reclaim_thread(sam_mount_t *mp)
 			if (!(mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) ||
 			    (mp->mi.m_inode.flag == SAM_THR_UMOUNTING)) {
 				sam_free_extents(mp);
+				sam_drain_blocks(mp);
 				if (SAM_IS_SHARED_WRITER(mp)) {
 					(void) sam_update_sblk(mp, 0, 0, TRUE);
 				}
@@ -1525,4 +1529,120 @@ sam_wait_release_blk_list(
 		mp->mi.m_inode.wait--;
 	}
 	mutex_exit(&mp->mi.m_inode.mutex);
+}
+
+
+/*
+ * ----- sam_free_block - process free block.
+ *
+ * Put the block in the release table.  If release table is full, update
+ * the file system.
+ */
+
+void
+sam_free_block(
+	sam_mount_t *mp,	/* The mount table pointer. */
+	int bt,			/* The block type: small or large. */
+	sam_bn_t bn,		/* The block number. */
+	int ord)		/* The ordinal in the disk family set. */
+{
+	int i;
+	int dt;			/* The disk type: data or meta. */
+	sam_fb_pool_t *fbp;
+	int active;
+
+	fbp = &mp->mi.m_fb_pool[bt];
+	active = fbp->active;
+	ASSERT(active < SAM_NO_FB_ARRAY);
+	mutex_enter(&fbp->array[active].fb_mutex);
+	i = fbp->array[active].fb_count;
+	ASSERT(i < SAM_FB_ARRAY_LEN);
+	dt = (mp->mi.m_fs[ord].part.pt_type == DT_META) ? MM : DD;
+	if ((mp->mi.m_blk_bn == 0) && (bt != SM) &&
+	    (dt == mp->mi.m_inoblk->di.status.b.meta)) {
+		/*
+		 * Keep in reserve 1 large meta block for the .blocks file.
+		 */
+		mp->mi.m_blk_bn = bn;
+		mp->mi.m_blk_ord = ord;
+	} else {
+		fbp->array[active].fb_ord[i] = (uchar_t)ord;
+		fbp->array[active].fb_bn[i] = bn;
+		fbp->array[active].fb_count++;
+
+		/*
+		 * Release blocks if array is full
+		 */
+		if (fbp->array[active].fb_count >= SAM_FB_ARRAY_LEN) {
+			sam_release_blocks(mp, fbp, bt, active);
+		}
+	}
+	mutex_exit(&fbp->array[active].fb_mutex);
+}
+
+
+/*
+ * ----- sam_drain_blocks - flush all blocks to disk.
+ *
+ */
+
+static void
+sam_drain_blocks(
+	sam_mount_t *mp)	/* The mount table pointer. */
+{
+	int bt;
+	sam_fb_pool_t *fbp;
+	int active;
+
+	for (bt = 0; bt < SAM_MAX_DAU; bt++) {
+		fbp = &mp->mi.m_fb_pool[bt];
+		for (active = 0; active < SAM_NO_FB_ARRAY; active++) {
+			mutex_enter(&fbp->array[active].fb_mutex);
+			sam_release_blocks(mp, fbp, bt, active);
+			mutex_exit(&fbp->array[active].fb_mutex);
+		}
+	}
+}
+
+
+/*
+ * ----- sam_release_blocks - process release blocks in free pool
+ * Move active to the alternate array for removal use. Process the
+ * release blocks SM or LG array. After the array has been released,
+ * set the fb_count to zero in the array.
+ */
+
+static void
+sam_release_blocks(
+	sam_mount_t *mp,	/* The mount table pointer. */
+	sam_fb_pool_t *fbp,
+	int bt,
+	int active)
+{
+	sam_node_t *ip = mp->mi.m_inoblk;
+	int j;
+	int inoblk_lock	= 0;
+
+	fbp->active = (active + 1) & 1;
+	for (j = 0; j < fbp->array[active].fb_count; j++) {
+		if (bt == SM) {
+			if (inoblk_lock == 0) {
+				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+				inoblk_lock = 1;
+			}
+			(void) sam_merge_sm_blks(mp->mi.m_inoblk,
+			    fbp->array[active].fb_bn[j],
+			    fbp->array[active].fb_ord[j]);
+		} else {
+			(void) sam_free_lg_block(mp,
+			    fbp->array[active].fb_bn[j],
+			    fbp->array[active].fb_ord[j]);
+		}
+	}
+	fbp->array[active].fb_count = 0;
+	if (inoblk_lock == 1) {
+		TRANS_INODE(mp, ip);
+		ip->flags.b.updated = 1;
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+	}
 }
