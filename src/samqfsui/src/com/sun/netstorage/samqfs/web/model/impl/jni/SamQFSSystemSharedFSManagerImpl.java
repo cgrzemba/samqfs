@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.52 2008/07/23 17:38:40 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.53 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -44,7 +44,6 @@ import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.web.model.MDSAddresses;
 import com.sun.netstorage.samqfs.web.model.MemberInfo;
-import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
@@ -223,7 +222,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         }
 
         // Show All
-        if (SamQFSSystemSharedFSManager.FILTER_NONE == filter) {
+        if (SamQFSSystemSharedFSManager.FILTER_NONE == filter ||
+            SamQFSSystemSharedFSManager.FILTER_REMOVE == filter) {
             return sharedHostInfo;
         } else {
             return filterHosts(sharedHostInfo, filter);

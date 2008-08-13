@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopupViewBean.java,v 1.24 2008/07/30 19:55:52 ronaldso Exp $
+// ident	$Id: FileDetailsPopupViewBean.java,v 1.25 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -207,9 +207,13 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
                 stageFile.isDirectory() ?
                     "fs.filedetails.directory" :
                     "fs.filedetails.file",
-                stageFile.isDirectory() ?
-                    Constants.Image.DIR_ICON :
-                    Constants.Image.FILE_ICON);
+                stageFile.getWormState() == StageFile.WORM_DISABLED ?
+                    (stageFile.isDirectory() ?
+                        Constants.Image.DIR_ICON :
+                        Constants.Image.FILE_ICON) :
+                    (stageFile.isDirectory() ?
+                        Constants.Image.ICON_DIR_WORM :
+                        Constants.Image.ICON_WORM));
 
             // Size
             addEntry(
@@ -691,7 +695,7 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
             title.toString(),
             content.toString(),
             dir ?
-                Constants.Image.ICON_WORM :
+                Constants.Image.ICON_DIR_WORM :
                 Constants.Image.ICON_WORM};
     }
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesModel.java,v 1.23 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSArchivePoliciesModel.java,v 1.24 2008/08/13 20:56:12 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -287,10 +287,10 @@ public final class FSArchivePoliciesModel extends CCActionTableModel {
             setValue("DefaultImage", Constants.Image.ICON_REQUIRED);
         } else if (isGlobalCriteria) {
             setValue("GlobalImage", Constants.Image.ICON_REQUIRED);
-            setValue("DefaultImage", Constants.Image.ICON_BLANK);
+            setValue("DefaultImage", Constants.Image.ICON_BLANK_ONE_PIXEL);
         } else {
-            setValue("GlobalImage", Constants.Image.ICON_BLANK);
-            setValue("DefaultImage", Constants.Image.ICON_BLANK);
+            setValue("GlobalImage", Constants.Image.ICON_BLANK_ONE_PIXEL);
+            setValue("DefaultImage", Constants.Image.ICON_BLANK_ONE_PIXEL);
         }
         setValue("PolicyName", policyName);
         setValue("PolicyHref",

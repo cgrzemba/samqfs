@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSReorderPoliciesViewBean.java,v 1.22 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSReorderPoliciesViewBean.java,v 1.23 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -80,9 +80,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
 
     // Child View Names used to set Javascript Values
     public static final String
-        CHILD_COMMAND_REORDER_POLICIES_HREF = "ReorderPoliciesHref";
-    public static final String CHILD_COMMAND_CANCEL_HREF = "CancelHref";
-    public static final String
         CHILD_REORDER_NEWORDER_HIDDEN_FIELD = "ReorderNewOrderHiddenField";
     public static final String
         CHILD_REORDER_SAVEDIR_HIDDEN_FIELD = "ReorderSaveDirectoryHiddenField";
@@ -119,9 +116,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         super.registerChildren();
         registerChild(CHILD_IDIOMSIZE, CCStaticTextField.class);
         registerChild(CHILD_BUTTON, CCButton.class);
-        registerChild(CHILD_COMMAND_REORDER_POLICIES_HREF,
-            CCStaticTextField.class);
-        registerChild(CHILD_COMMAND_CANCEL_HREF, CCStaticTextField.class);
         registerChild(CHILD_REORDER_NEWORDER_HIDDEN_FIELD,
             CCStaticTextField.class);
         registerChild(CHILD_REORDER_SAVEDIR_HIDDEN_FIELD,
@@ -159,17 +153,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         } else if (name.equals(CHILD_BUTTON)) {
             TraceUtil.trace3("Exiting");
             return (new CCButton(this, name, null));
-        } else if (name.equals(CHILD_COMMAND_CANCEL_HREF)) {
-            ViewBean vb = getViewBean(FSArchivePoliciesViewBean.class);
-            CCStaticTextField child = new CCStaticTextField(
-                this,
-                name,
-                ((CommonTableContainerView) vb.getChild(
-                    FSArchivePoliciesViewBean.CHILD_CONTAINER_VIEW)).getChild(
-                        FSArchivePoliciesView.CHILD_CANCEL_HREF).
-                            getQualifiedName());
-            TraceUtil.trace3("Exiting");
-            return child;
         } else if (name.equals(CHILD_REORDER_NEWORDER_HIDDEN_FIELD)) {
             ViewBean vb = getViewBean(FSArchivePoliciesViewBean.class);
             CCStaticTextField child = new CCStaticTextField(
@@ -282,6 +265,19 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         }
 
         return urc;
+    }
+
+    /**
+     * Avoid error message in console_debug_log for not implementing this
+     * method.
+     * @param event
+     * @throws javax.servlet.ServletException
+     * @throws java.io.IOException
+     */
+    public void handleCancelRequest(RequestInvocationEvent event)
+        throws ServletException, IOException {
+
+        this.forwardTo(getRequestContext());
     }
 
     public void handleSubmitRequest(RequestInvocationEvent event)

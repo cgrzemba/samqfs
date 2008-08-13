@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: FileBrowser.js,v 1.14 2008/07/30 19:55:51 ronaldso Exp $
+// ident    $Id: FileBrowser.js,v 1.15 2008/08/13 20:56:12 ronaldso Exp $
 
 /**
  * This is the javascript file for the File Brwoser Page
@@ -113,8 +113,7 @@
 
         // Restore entire recovery point
         if (entire) {
-            params = "&filetorestore=" + "##all##" +
-                     "&fsname=" + getFSInfo(0) +
+            params = "&fsname=" + getFSInfo(0) +
                      "&mountpoint=" + encodeURIComponent(getFSInfo(1)) +
                      "&snappath=" + encodeURIComponent(snapPath);
         } else {

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PolicyDetailsViewBean.java,v 1.17 2008/05/16 18:38:52 am143972 Exp $
+// ident	$Id: PolicyDetailsViewBean.java,v 1.18 2008/08/13 20:56:12 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -47,6 +47,7 @@ import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
@@ -74,6 +75,7 @@ public class PolicyDetailsViewBean extends CommonViewBeanBase {
     public static final String FS_SUMMARY_HREF = "FileSystemSummaryHref";
     public static final String FS_DETAILS_HREF = "FileSystemDetailsHref";
     public static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
+    public static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
 
     // add/remove button state helpers
     public static final String CRITERIA_DELETABLE = "isCriteriaDeletable";
@@ -140,6 +142,7 @@ public class PolicyDetailsViewBean extends CommonViewBeanBase {
         registerChild(POLICY_DESCRIPTION, CCStaticTextField.class);
         registerChild(MEDIA_TYPES, CCHiddenField.class);
         registerChild(SELECTED_COPY_MEDIA, CCHiddenField.class);
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
 
         TraceUtil.trace3("Exiting");
     }
@@ -169,6 +172,7 @@ public class PolicyDetailsViewBean extends CommonViewBeanBase {
                    name.equals(CRITERIA_DETAILS_HREF) ||
                    name.equals(FS_SUMMARY_HREF) ||
                    name.equals(FS_DETAILS_HREF) ||
+                   name.equals(SHARED_FS_SUMMARY_HREF) ||
                    name.equals(FS_ARCHIVEPOL_HREF)) {
             return new CCHref(this, name, null);
         } else if (super.isChildSupported(name)) {
@@ -423,5 +427,23 @@ public class PolicyDetailsViewBean extends CommonViewBeanBase {
             PageInfo.getPageInfo().getPageNumber(target.getName()), s);
 
         this.forwardTo(target);
+    }
+
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
+        throws ServletException, IOException {
+
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
+
+        TraceUtil.trace2("FSArchivePolicy: Navigate back to URL: " + url);
+
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + (String) getPageSessionAttribute(
+                             Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        JSFUtil.forwardToJSFPage(this, url, params);
     }
 }

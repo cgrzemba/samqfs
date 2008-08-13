@@ -28,11 +28,10 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSReorderPolicies.jsp,v 1.16 2008/05/16 19:39:19 am143972 Exp $
+// ident	$Id: FSReorderPolicies.jsp,v 1.17 2008/08/13 20:56:12 ronaldso Exp $
 --%>
 
-<%@ page info="Index" language="java" %> 
-<%@ page import="com.iplanet.jato.view.ViewBean" %>
+<%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
@@ -40,11 +39,11 @@
 
 <script language="javascript" src="/samqfsui/js/samqfsui.js"></script>
 <script language="javascript" src="/samqfsui/js/popuphelper.js"></script>
-        
+
 <!-- Define the resource bundle, html, head, meta, stylesheet and body tags -->
 <cc:header
     pageTitle="FSReorderPolicies.pagetitle"
-    copyrightYear="2006"
+    copyrightYear="2008"
     baseName="com.sun.netstorage.samqfs.web.resources.Resources"
     onLoad="
         window.opener.document.FSArchivePoliciesForm.target='_self';
@@ -140,11 +139,6 @@
         return upDownVal.join(separator);
     }
 
-
-    function validate() {
-        return true;
-    }
-
     function getErrorString(index) {
 
         var str1 = "<cc:text name='StaticText' bundleID='samBundle' defaultValue='FSReorderPolicies.errMsg1'/>";
@@ -163,33 +157,11 @@
 
         // Form Name
         var tf   = document.FSReorderPoliciesForm;
-        var pf   = window.opener.document.FSArchivePoliciesForm;
-
-        // Command Child Name
-        var reorderHref = "<cc:text name='ReorderPoliciesHref' />";
-
-        // Parent window Hidden field name
-        var newOrderField  = "<cc:text name='ReorderNewOrderHiddenField' />";
-        
         tf.elements["FSReorderPolicies.newOrder"].value = getResultString();
         // Element Names in Reorder Policy Page
 
         // save the new order and submit the form
         return true;
-    }
-
-    function resetURL() {
-
-        var pf   = window.opener.document.FSArchivePoliciesForm;
-        // Command Child Name
-        var cancelHref = "<cc:text name='CancelHref' />";
-
-        // Set Form action URL and submit
-        pf.action = pf.action + "?" + cancelHref +
-                "=&jato.pageSession=" +
-        pf.elements["<%=ViewBean.PAGE_SESSION_ATTRIBUTE_NVP_NAME %>"].value;
-
-        pf.submit();
     }
 
 </script>
@@ -258,4 +230,4 @@
 <cc:hidden name="newOrder"/>
 </jato:form>
 </cc:header>
-</jato:useViewBean> 
+</jato:useViewBean>

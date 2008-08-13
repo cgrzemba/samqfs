@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameHelper.js,v 1.11 2008/05/16 19:39:12 am143972 Exp $
+// ident	$Id: FrameHelper.js,v 1.12 2008/08/13 20:56:11 ronaldso Exp $
 
 /** 
  * This file is used to construct the frames format, and it also contains
@@ -133,7 +133,7 @@
         var changeTo = menu.value;
         top.serverName = changeTo;
         parent.Content.location.href =
-            '/samqfsui/util/CommonTasks?SERVER_NAME=' + changeTo;
+            '/samqfsui/fs/FSSummary?SERVER_NAME=' + changeTo;
         parent.FrameNavigator.location.href =
             '/samqfsui/util/FrameNavigator?SERVER_NAME=' + changeTo;
         parent.FrameHeader.location.href =

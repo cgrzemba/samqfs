@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.11 2008/08/06 23:44:08 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.12 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -35,6 +35,7 @@ import com.sun.data.provider.FieldKey;
 import com.sun.data.provider.RowKey;
 import com.sun.data.provider.TableDataProvider;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.mgmt.fs.Host;
 import com.sun.netstorage.samqfs.web.model.MemberInfo;
 import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
@@ -200,7 +201,8 @@ sfe.printStackTrace();
                     serverName);
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    "L10N: Failed to populate summary info",
+                    JSFUtil.getMessage(
+                        "SharedFS.message.populate.summary.failed"),
                     sfe.getMessage());
             }
         }
@@ -218,7 +220,6 @@ sfe.printStackTrace();
 
         TraceUtil.trace3("REMOTE call: getData()");
         TraceUtil.trace3("serverName: " + serverName + " fsName: " + fsName);
-
         if (serverName != null) {
             try {
                 SamQFSSystemSharedFSManager sharedFSManager =
@@ -229,10 +230,9 @@ sfe.printStackTrace();
                         serverName,
                         fsName,
                             client ?
-                                SharedHostInfo.TYPE_MDS |
-                                SharedHostInfo.TYPE_PMDS |
-                                SharedHostInfo.TYPE_CLIENT :
-                                SharedHostInfo.TYPE_OSD,
+                                Host.MDS |
+                                Host.CLIENTS :
+                                Host.STORAGE_NODE,
                         filter);
 
                 if (client) {
@@ -259,8 +259,10 @@ sfe.printStackTrace();
                 setAlertInfo(
                     Constants.Alert.ERROR,
                     client ?
-                        "L10N: Failed to populate client info" :
-                        "L10N: Failed to populate sn info",
+                        JSFUtil.getMessage(
+                            "SharedFS.message.populate.client.failed") :
+                        JSFUtil.getMessage(
+                            "SharedFS.message.populate.sn.failed"),
                     sfe.getMessage());
             }
         }

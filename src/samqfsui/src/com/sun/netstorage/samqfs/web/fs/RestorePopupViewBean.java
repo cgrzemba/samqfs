@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RestorePopupViewBean.java,v 1.11 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: RestorePopupViewBean.java,v 1.12 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -82,9 +82,6 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String MOUNT_POINT = "mountpoint";
     public static final String IS_DIR = "isdir";
     public static final String RECOVERY_POINT_PATH = "snappath";
-
-    // Flag to indicate restore entire recovery point
-    public static final String ENTIRE_RECOVERY_POINT = "##all##";
 
     // File Chooser
     public static final String RESTORE_PATH_CHOOSER = "restoreToPathnameValue";
@@ -157,6 +154,10 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
         String serverName = getServerName();
         String file = getFileToRestore();
 
+        // Do not remove the following 2 lines. Saving request params.
+        String fsName = getFSName();
+        String recoveryPoint = getRecoveryPoint();
+
         // Restore the entire recovery point?
         boolean restoreEntire = false;
 
@@ -165,7 +166,7 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
 
         CCDropDownMenu replaceType =
             (CCDropDownMenu) getChild(REPLACE_TYPE_TEXT);
-        if (ENTIRE_RECOVERY_POINT.equals(file)) {
+        if (null == file) {
             restoreEntire = true;
             replaceType.setValue("FSRestore.restore.type.filesystem");
         } else {
@@ -274,8 +275,6 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
         String serverName = getServerName();
         String file = getFileToRestore();
         String recoveryPoint = getRecoveryPoint();
-        boolean dir = isDirectory();
-
         RestoreFile restoreFile = null;
 
         try {
@@ -285,7 +284,7 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
             // Instantiate RestoreFile object and fill in the blanks
 
             // Restore Entire Recovery Point
-            if (ENTIRE_RECOVERY_POINT.equals(file)) {
+            if (null == file) {
                 restoreFile = fsManager.getEntireFSRestoreFile();
                 if (restoreFile == null) {
                     throw new SamFSException(
@@ -374,7 +373,7 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
             String restoreWhat;
             if (job != null) {
                 // Restore Entire Recovery Point
-                if (ENTIRE_RECOVERY_POINT.equals(file)) {
+                if (null == file) {
                     alertMsg = "FSRestore.restore.successWithJobFileSystem";
                     restoreWhat = restoreFile.getAbsolutePath();
                 } else {
@@ -396,7 +395,7 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
                    serverName);
             } else {
                 // Restore Entire Recovery Point
-                if (ENTIRE_RECOVERY_POINT.equals(file)) {
+                if (null == file) {
                     alertMsg = "FSRestore.restore.successFileSystem";
                     restoreWhat = restoreFile.getAbsolutePath();
                 } else {
@@ -499,7 +498,7 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
 
         // First check if users want to restore the entire recovery point.
         // If yes, set file name to an empty string
-        if (ENTIRE_RECOVERY_POINT.equals(fullPath)) {
+        if (null == fullPath) {
             return "";
         }
 

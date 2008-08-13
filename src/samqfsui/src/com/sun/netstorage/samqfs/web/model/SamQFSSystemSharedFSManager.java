@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.21 2008/07/23 17:38:39 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.22 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -141,6 +141,7 @@ public interface SamQFSSystemSharedFSManager {
     public static final short FILTER_IN_ERROR = 4;
     public static final short FILTER_FAULTS = 5;
     public static final short FILTER_CUSTOM = 6;
+    public static final short FILTER_REMOVE = 10;
 
     /*
      * Method to get summary status for a shared file system

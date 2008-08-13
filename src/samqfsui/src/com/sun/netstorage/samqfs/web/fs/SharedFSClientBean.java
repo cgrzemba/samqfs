@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.5 2008/08/06 23:44:08 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.6 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -174,7 +174,8 @@ public class SharedFSClientBean {
     }
 
     public String getClientTableTitle() {
-        if (0 == getFilter() || 10 == getFilter()) {
+        if (SamQFSSystemSharedFSManager.FILTER_NONE == getFilter() ||
+            SamQFSSystemSharedFSManager.FILTER_REMOVE == getFilter()) {
             return JSFUtil.getMessage("SharedFS.title.table.clients");
         } else {
             return JSFUtil.getMessage(
@@ -185,7 +186,8 @@ public class SharedFSClientBean {
     }
 
     public String getClientTableFilterSelectedOption() {
-        if (getFilter() <= 0) {
+        if (getFilter() <= SamQFSSystemSharedFSManager.FILTER_NONE ||
+            getFilter() == SamQFSSystemSharedFSManager.FILTER_REMOVE) {
             return OptionTitle.NONESELECTED;
         } else {
             return Short.toString(getFilter());

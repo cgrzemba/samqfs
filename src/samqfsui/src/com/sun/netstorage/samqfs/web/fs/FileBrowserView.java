@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserView.java,v 1.26 2008/07/30 19:55:52 ronaldso Exp $
+// ident	$Id: FileBrowserView.java,v 1.27 2008/08/13 20:56:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -265,7 +265,11 @@ public class FileBrowserView extends CommonTableContainerView {
 
                 if (file.isDirectory()) {
                     model.setValue("NameHref", file.getName());
-                    model.setValue("IconDir", Constants.Image.DIR_ICON);
+                    model.setValue(
+                        "IconDir",
+                        file.getWormState() == StageFile.WORM_DISABLED ?
+                            Constants.Image.DIR_ICON :
+                            Constants.Image.ICON_DIR_WORM);
                     model.setValue("DirNameText", file.getName());
                     model.setValue(
                         "IconFile", Constants.Image.ICON_BLANK_ONE_PIXEL);
