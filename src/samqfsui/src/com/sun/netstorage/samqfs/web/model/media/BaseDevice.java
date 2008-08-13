@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseDevice.java,v 1.20 2008/06/04 18:10:13 ronaldso Exp $
+// ident	$Id: BaseDevice.java,v 1.21 2008/08/13 20:16:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -75,7 +75,7 @@ public interface BaseDevice {
     public static final int MTYPE_DT_QUANTUMC4 = 135;
     public static final int MTYPE_DT_TITAN = 136;
     public static final int MTYPE_HP_SL48 = 138;
-
+    public static final int MTYPE_IBM_3592 = 141;
 
     // for network attached libraries
     public static final int MTYPE_STK_ACSLS = 117;

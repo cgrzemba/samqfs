@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.125 2008/07/23 17:38:40 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.126 2008/08/13 20:16:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -420,6 +420,9 @@ public class SamUtil {
             case BaseDevice.MTYPE_LT270_250:
                 mediaTypeString = getResourceString("media.type.lt270");
                 break;
+            case BaseDevice.MTYPE_IBM_3592:
+                mediaTypeString = getResourceString("media.type.ibm3592");
+                break;
             default:
                 mediaTypeString = getResourceString("media.type.unknown");
                 break;
@@ -518,6 +521,8 @@ public class SamUtil {
             mediaType = BaseDevice.MTYPE_STK_SL3000;
         } else if (mValue.equals(getResourceString("media.type.lt270"))) {
             mediaType = BaseDevice.MTYPE_LT270_250;
+        } else if (mValue.equals(getResourceString("media.type.ibm3592"))) {
+            mediaType = BaseDevice.MTYPE_IBM_3592;
         }
 
         return (mediaType);
