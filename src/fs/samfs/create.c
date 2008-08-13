@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.160 $"
+#pragma ident "$Revision: 1.161 $"
 
 #include "sam/osversion.h"
 
@@ -934,7 +934,7 @@ sam_make_ino(
 		if ((error = sam_create_object_id(mp, &ip->di)) != 0) {
 			goto make_cleanup;
 		}
-		if ((error = sam_osd_create_obj_layout(ip)) != 0) {
+		if ((error = sam_osd_create_obj_layout(ip, 0)) != 0) {
 			goto make_cleanup;
 		}
 	}

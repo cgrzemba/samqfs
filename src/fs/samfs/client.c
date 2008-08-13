@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.172 $"
+#pragma ident "$Revision: 1.173 $"
 #endif
 
 #include "sam/osversion.h"
@@ -777,7 +777,11 @@ sam_reset_client_ino(
 	    (irec->sr_attr.actions & SR_FORCE_SIZE)) {
 		ip->size = irec->sr_attr.current_size;
 		if (SAM_IS_OBJECT_FILE(ip)) {
-			(void) sam_set_end_of_obj(ip, ip->di.rm.size, 0);
+			/*
+			 * Set end of object (eoo) for each stripe and update
+			 * on the OSN(s) if the computed eoo changed.
+			 */
+			(void) sam_set_end_of_obj(ip, ip->di.rm.size, 1);
 		}
 	} else {
 		ip->di.rm.size = real_size;

@@ -1,4 +1,4 @@
-.\" $Revision: 1.29 $
+.\" $Revision: 1.30 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -57,12 +57,12 @@ setfa \- Sets file attributes for block or object file systems
 .RB [ \-d ]
 .RB [ \-D ]
 .RB [ \-f ]
-.RB [ \-h " horizontal_stripe_width" ]
+.RB [ \-h " obj_width" ]
 .br
-.RB [ \-o " object_target_group" ]
+.RB [ \-o " object_group" ]
 .RB [ \-r " dirname" ]
 .br
-.RB [ \-v " vertical_stripe_depth[k|m|g]" ]
+.RB [ \-v " obj_depth[k|m|g]" ]
 .RB [ \-V\fR]
 \fIfilename .\|.\|.\|
 .SH AVAILABILITY
@@ -220,30 +220,29 @@ Striping across mismatched stripe groups is not allowed.
 .SH OBJECT FILE SYSTEM OPTIONS
 This command accepts the following options for object-based file systems only:
 .TP 10
-\fB\-h\ \fIhorizontal_stripe_width\fR
-Specifies the number of OSD units to be in the stripe.
+\fB\-h\ \fIobj_width\fR
+Specifies the number of object storage devices (OSD) in the stripe.
 The OSD units to be striped for this file are in the
-\fItarget_object_group\fR specified by the \fBo\fR option.
-If \fIhorizontal_stripe_width\fR is  0, the file is striped across all the
-units in the target object group. If \fIhorizontal_stripe_width\fR is >= 1,
-the file is striped across \fIhorizontal_stripe_width\fR
-units. The default stripe is specified when the file system is mounted.
-For more information, see \fBmount_samfs\fR(1M)\fR).
+\fIobject_group\fR specified by the \fBo\fR option.
+If \fIobj_width\fR is 0, the file is striped across all the
+units in the object group. If \fIobj_width\fR is >= 1,
+the file is striped across \fIobj_width\fR units.
 .sp
-Note that the \fIhorizontal_stripe_width\fP attribute is inherited.  It is
-possible to create a directory and set the stripe width for that directory.
-Then, all files created in that directory are striped across the
-specified number of units in the target object group.
+The \fIobj_width\fR may only be set on directories. Files inherit the
+\fIobj_width\fR on creation.
+All files created in the directory are striped across the
+specified number of OSD units in the object group.
+The default stripe width is specified by the \fIobj_width\fR
+mount option.  For more information, see \fBmount_samfs\fR(1M)\fR).
 .sp
 The length of allocation on one unit before
 changing to the next unit is specified by the \fIv\fR option.
-The default \fIhorizontal_stripe_width\fR is 1.
 .sp
 In the following example, files created in \fBaudio\fR are
-created on one target in the target object group \fB0\fR,
+created on one object storage device (OSD) in the object group \fB0\fR,
 and files created in \fBvideo\fR are striped across 8 units with a
 512KB allocation on each unit before switching to the next unit in the
-target object group \fB1\fR:
+object group \fB1\fR:
 .sp
 .nf
 .ft CO
@@ -252,30 +251,36 @@ setfa -o 1 -h 8 -v 512k video
 .fi
 .ft
 .TP
-\fB\-o\ \fItarget_object_group\fR
-Specifies the number of the target object group on which the file is to be
+\fB\-o\ \fIobject_group\fR
+Specifies the number of the object group on which the file is to be
 created.
-For \fItarget_object_group\fR, specify a number such
-that 0\ \(<=\ \fItarget_object_group\fR\ \(<=\ 127
-and is a target object group defined in the object-based file system.
-The default target object group is the first group defined in the file system.
+For \fIobject_group\fR, specify a number such
+that 0\ \(<=\ \fIobject_group\fR\ \(<=\ 127
+and is a object group defined in the object-based file system.
+The default object group is the first group defined in the file system.
 .sp
-Note that the \fItarget_object_group\fP attribute is inherited.  It is
-possible to create a directory and set a target object group for that
+Note that the \fIobject_group\fP attribute is inherited.  It is
+possible to create a directory and set a object group for that
 directory. Then, all files created in that directory are allocated on the
-specified target object group.
+specified object group.
 .TP
-\fB\-v\ \fIvertical_stripe_depth\fR
-Specifies the number of bytes to be allocated to a unit before
-switching to the next unit in the stripe.
-The \fIvertical_stripe_depth\fR must be an integer.
-\fIvertical_stripe_depth\fR is rounded down
-to the nearest power of 2 integer.
+\fB\-v\ \fIobj_depth\fR
+Specifies the number of bytes to be allocated to one OSD unit before
+switching to the next OSD unit in the stripe.
+The \fIobj_depth\fR may only be set on directories. Files inherit the
+\fIobj_depth\fR on creation.
+The default stripe depth is specified by the \fIobj_depth\fR
+mount option.  For more information, see \fBmount_samfs\fR(1M)\fR).
+.sp
+The \fIobj_depth\fR must be an integer.
 The integer specified may be followed by \fBk\fR (for
 kilobytes), \fBm\fR (for megabytes), or \fBg\fR (for gigabytes).
 For example:
 .sp
 \fB\-v 1m\fR
+.sp
+\fIobj_depth\fR is rounded down
+to the nearest power of 2 integer.
 .SH SEE ALSO
 \fBarchive\fR(1),
 \fBrelease\fR(1),

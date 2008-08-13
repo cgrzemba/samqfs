@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.165 $"
+#pragma ident "$Revision: 1.166 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -3098,6 +3098,7 @@ print_mount(
 	printf("\t%s mnt_point\n", mount->mt.fi_mnt_point);
 	printf("\t%8x fs version\n", mount->mt.fi_version);
 	printf("\t%8x fam_set type\n", mount->mt.fi_type);
+	printf("\t%8x maxphys type\n", mount->mi.m_maxphys);
 	printf("\t%12p mp_next\n", mount->ms.m_mp_next);
 	printf("\t%12p m_fsev_buf\n", mount->ms.m_fsev_buf);
 	printf("\t%12p next\n", mount->mi.m_next);
@@ -3123,6 +3124,11 @@ print_mount(
 	    (Decode) ? decode_fi_config(mount->mt.fi_config) : "");
 	printf("\t%08x config1%s\n", mount->mt.fi_config1,
 	    (Decode) ? decode_fi_config1(mount->mt.fi_config1) : "");
+	printf("\t%08x stripe\n", mount->mt.fi_stripe[0]);
+	printf("\t%08x mm_stripe\n", mount->mt.fi_stripe[1]);
+	printf("\t%08x obj_width\n", mount->mt.fi_obj_width);
+	printf("\t%08x obj_depth\n", mount->mt.fi_obj_depth);
+	printf("\t%08x obj_depth_shift\n", mount->mt.fi_obj_depth_shift);
 	printf("\t%012llx wr_throttle\n", mount->mt.fi_wr_throttle);
 	printf("\t%08llx readahead   (%lld)\n",
 	    mount->mt.fi_readahead, mount->mt.fi_readahead);

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 
 
 /* ANSI headers. */
@@ -242,9 +242,19 @@ DisMount()
 	snprintf(sbuf, 20, "%d", fi.fi_atime);
 	Mvprintw(ln++, col, "atime          : %s",
 	    (fi.fi_atime == 0) ? "default" : sbuf);
-	snprintf(sbuf, 20, "%d", fi.fi_stripe[0]);
-	Mvprintw(ln++, col, "stripe         : %s",
-	    (fi.fi_stripe[0] < 0) ? "default" : sbuf);
+	if (fi.fi_type == DT_META_OBJECT_SET) {
+		snprintf(sbuf, 20, "%d", fi.fi_obj_width);
+		Mvprintw(ln++, col, "obj_width      : %s",
+		    (fi.fi_obj_width < 0) ? "default" : sbuf);
+		snprintf(sbuf, 20, "%d", fi.fi_obj_depth);
+		Mvprintw(ln++, col, "obj_depth      : %s", sbuf);
+		snprintf(sbuf, 20, "%d", fi.fi_obj_depth_shift);
+		Mvprintw(ln++, col, "obj_depth_shift: %s", sbuf);
+	} else {
+		snprintf(sbuf, 20, "%d", fi.fi_stripe[0]);
+		Mvprintw(ln++, col, "stripe         : %s",
+		    (fi.fi_stripe[0] < 0) ? "default" : sbuf);
+	}
 	Mvprintw(ln++, col, "mm_stripe      : %d", fi.fi_stripe[1]);
 	Mvprintw(ln++, col, "high  low      : %3d%% %3d%%",
 	    fi.fi_high, fi.fi_low);
@@ -253,6 +263,7 @@ DisMount()
 	Mvprintw(ln++, col, "wr_throttle    : %lld", fi.fi_wr_throttle);
 	Mvprintw(ln++, col, "rd_ino_buf_size: %d", fi.fi_rd_ino_buf_size);
 	Mvprintw(ln++, col, "wr_ino_buf_size: %d", fi.fi_wr_ino_buf_size);
+	Mvprintw(ln++, col, "maxphys        : %llx", fi.fi_wr_throttle);
 	next_line = ln;
 
 	/* Filesystem parameters in second column */

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 
 #include "sam/osversion.h"
 
@@ -664,7 +664,8 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				}
 				break;
 			case 'h':
-				if (!SAM_IS_OBJECT_FS(mp)) {
+				if (!SAM_IS_OBJECT_FS(mp) ||
+				    !S_ISDIR(ip->di.mode)) {
 					error = EINVAL;
 					break;
 				}
@@ -686,7 +687,8 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				offset_t stripe_depth = 0;
 				offset_t value;
 
-				if (!SAM_IS_OBJECT_FS(mp)) {
+				if (!SAM_IS_OBJECT_FS(mp) ||
+				    !S_ISDIR(ip->di.mode)) {
 					error = EINVAL;
 					break;
 				}

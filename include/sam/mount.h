@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.133 $"
+#pragma ident "$Revision: 1.134 $"
 #endif
 
 #include <sam/types.h>
@@ -78,6 +78,10 @@ struct sam_fs_info {	/* File system information */
 	short	fi_stripe[SAM_MAX_DD];	/* Stripe width */
 	ushort_t fi_high;	/* High water threshold */
 	ushort_t fi_low;	/* Low water % threshold for releaser */
+	ushort_t fi_pad;
+	ushort_t fi_obj_width;	/* Object stripe width in # of OSDs */
+	int fi_obj_depth_shift; /* Object depth shift -- power of 2 */
+	long long fi_obj_depth;	/* Object allocation depth in kilobytes */
 	long long fi_wr_throttle; /* High write byte count outstanding */
 	long long fi_readahead;	/* Maximum readahead size */
 	long long fi_writebehind; /* Maximum writebehind size */

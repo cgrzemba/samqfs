@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #include "sam/osversion.h"
 
@@ -76,8 +76,6 @@
 #include "debug.h"
 #include "object.h"
 
-#define	SAM_OSD_STRIPE_DEPTH	128	/* Stripe depth default in kilobytes */
-#define	SAM_OSD_STRIPE_SHIFT	17	/* Stripe shift for stripe depth */
 
 static int sam_osd_bp_from_kva(caddr_t memp, size_t memlen, int rw,
 	struct buf **bpp);
@@ -581,6 +579,12 @@ sam_issue_direct_object_io(
 
 		bzero(&result, sizeof (result));
 		result.err_code = (uint8_t)rc;
+		dcmn_err((CE_WARN,
+		    "SAM-QFS: %s: DK SUBMIT ERROR rc=%d, ip=%p, ino=%d.%d, "
+		    "off=%llx len=%lx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, rc, (void *)ip,
+		    ip->di.id.ino, ip->di.id.gen, offset,
+		    bp->b_bcount, obji, olp->ol[obji].eoo, ip->size));
 		sam_dk_object_done(reqp, iorp, &result);
 		error = sam_osd_rc(rc);
 	}
@@ -727,8 +731,9 @@ sam_pageio_object(
 			kmem_cache_free(samgt.object_cache, iorp);
 			return (NULL);
 		} else {
-			if ((offset + count) > olp->ol[iop->obji].eoo) {
+			if ((offset + count) >= olp->ol[iop->obji].eoo) {
 				count = olp->ol[iop->obji].eoo - offset;
+				iop->imap.flags |= M_OBJ_EOF;
 			}
 			mutex_exit(&ip->write_mutex);
 		}
@@ -755,6 +760,7 @@ sam_pageio_object(
 		reqp = (sam_sosd_vec.setup_write_bp)((void *)oh, partid,
 		    object_id, count, offset, bp);
 	}
+	ASSERT(count > 0);
 	if (reqp == NULL) {
 		pageio_done(bp);
 		sam_osd_remove_private(iorp);
@@ -778,6 +784,12 @@ sam_pageio_object(
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
+		dcmn_err((CE_WARN,
+		    "SAM-QFS: %s: PG SUBMIT ERROR rc=%d, ip=%p, ino=%d.%d, "
+		    "off=%llx len=%lx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, rc, (void *)ip,
+		    ip->di.id.ino, ip->di.id.gen, offset,
+		    bp->b_bcount, iop->obji, olp->ol[iop->obji].eoo, ip->size));
 		bzero(&result, sizeof (result));
 		result.err_code = (uint8_t)rc;
 		sam_pg_object_done(reqp, iorp, &result);
@@ -904,8 +916,7 @@ sam_osd_rc(
 
 	if (rc >= OSD_SUCCESS && rc <= OSD_NORESOURCES) {
 		dcmn_err((CE_WARN,
-		    "SAM-QFS:: 1. OSD ERROR rc=%d, err=%d, sz=%d ",
-		    rc, rc2errno[rc], sizeof (rc2errno)));
+		    "SAM-QFS:: 1. OSD ERROR rc=%d, err=%d", rc, rc2errno[rc]));
 		return (rc2errno[rc]);
 	} else {
 		dcmn_err((CE_WARN, "SAM-QFS:: 2. OSD ERROR rc=%d, err=%d ",
@@ -1194,6 +1205,14 @@ sam_create_object_id(
 	}
 
 	/*
+	 * Vertical object stripe depth set with setfa -v.
+	 * Defaults to mount parameter obj_depth;.
+	 */
+	if (dp->rm.info.obj.stripe_shift == 0) {
+		dp->rm.info.obj.stripe_shift = mp->mt.fi_obj_depth_shift;
+	}
+
+	/*
 	 * Get object IDs for each member of the stripe.
 	 */
 	n = 0;
@@ -1356,10 +1375,11 @@ sam_osd_inode_extent(
 	unit = dp->unit;
 
 	/*
-	 * Set horizontal stripe width to setfa -h. 0 defaults to all.
+	 * Horizontal object stripe width set with setfa -h.
+	 * Defaults to mount parameter obj_width;.
 	 */
 	num_group = (dp->status.b.stripe_width) ?
-	    dp->rm.info.obj.stripe_width : 1;
+	    dp->rm.info.obj.stripe_width : mp->mt.fi_obj_width;
 	num_group = (num_group == 0) ? mp->mi.m_fs[unit].num_group : num_group;
 	if (num_group > SAM_OSD_DIRECT) {
 		int n_exts, ng;
@@ -1612,7 +1632,7 @@ sam_truncate_object_file(
 		ASSERT(oip->obj_id[0] != 0);
 		olp = ip->olp;
 		if (olp == NULL) {		/* Rare, but can happen */
-			if ((error = sam_osd_create_obj_layout(ip))) {
+			if ((error = sam_osd_create_obj_layout(ip, 1))) {
 				return (error);
 			}
 		}
@@ -1688,8 +1708,7 @@ sam_set_end_of_obj(
 	if ((olp = ip->olp) == NULL) {
 		return (0);
 	}
-	if ((error = sam_map_osd(ip, length, 0,
-	    update ? SAM_WRITE : SAM_ALLOC_BLOCK, &ioblk))) {
+	if ((error = sam_map_osd(ip, length, 0, SAM_ALLOC_BLOCK, &ioblk))) {
 		return (error);
 	}
 	num_group = ip->di.rm.info.obj.num_group;
@@ -1752,7 +1771,7 @@ sam_map_osd(
 	if (ip->olp == NULL) {
 		int	error;
 
-		if ((error = sam_osd_create_obj_layout(ip))) {
+		if ((error = sam_osd_create_obj_layout(ip, 1))) {
 			return (error);
 		}
 	}
@@ -1777,7 +1796,7 @@ sam_map_osd(
 			iop->num_group = ip->di.rm.info.obj.num_group;
 			stripe_shift = ip->di.rm.info.obj.stripe_shift;
 			if (stripe_shift == 0) {
-				stripe_shift = SAM_OSD_STRIPE_SHIFT;
+				stripe_shift = ip->mp->mt.fi_obj_depth_shift;
 			}
 			iop->bsize = (1 << stripe_shift);
 			iop->blk_off = (offset /
@@ -1845,7 +1864,9 @@ sam_map_osd(
  *  object id, ordinal, and end of object (eoo).
  */
 int
-sam_osd_create_obj_layout(sam_node_t *ip)
+sam_osd_create_obj_layout(
+	sam_node_t *ip,		/* Pointer to the inode. */
+	int	update)		/* Set if update OSD LUN */
 {
 	sam_di_osd_t		*oip;
 	sam_obj_layout_t	*olp;
@@ -1911,7 +1932,7 @@ sam_osd_create_obj_layout(sam_node_t *ip)
 	if (bp) {
 		brelse(bp);
 	}
-	error = sam_set_end_of_obj(ip, ip->di.rm.size, 0);
+	error = sam_set_end_of_obj(ip, ip->di.rm.size, update);
 	return (error);
 }
 

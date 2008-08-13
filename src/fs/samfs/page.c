@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 
 #include "sam/osversion.h"
 
@@ -715,12 +715,20 @@ sam_putapage(
 	 */
 	if (SAM_IS_OBJECT_FILE(ip)) {
 		lb_off = off;
+		if (iop->ioblk[0].pboff) {
+			iop->contig -= iop->ioblk[0].pboff;
+		}
+		if (iop->ioblk[0].num_group > 1) {
+			iop->contig = MIN(iop->contig,
+			    iop->ioblk[0].bsize - iop->ioblk[0].pboff);
+			iop->ioblk[0].contig = iop->contig;
+		}
 	} else {
 		lb_off = iop->ioblk[0].blk_off;
-	}
-	if (iop->ioblk[0].num_group > 1) {
-		iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
-		iop->ioblk[0].contig = iop->contig;
+		if (iop->ioblk[0].num_group > 1) {
+			iop->contig = MIN(iop->contig, iop->ioblk[0].bsize);
+			iop->ioblk[0].contig = iop->contig;
+		}
 	}
 	pp = pvn_write_kluster(vp, pp, &vn_off, &vn_len, lb_off,
 	    iop->contig, flags);

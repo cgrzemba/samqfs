@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.211 $"
+#pragma ident "$Revision: 1.212 $"
 
 #include "sam/osversion.h"
 
@@ -318,7 +318,7 @@ sam_get_ino(
 	}
 
 	if (SAM_IS_OBJECT_FILE(ip)) {
-		if ((error = sam_osd_create_obj_layout(ip))) {
+		if ((error = sam_osd_create_obj_layout(ip, 1))) {
 			goto out;
 		}
 	}

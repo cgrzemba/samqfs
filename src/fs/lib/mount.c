@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 #include "sam/osversion.h"
 
@@ -130,8 +130,25 @@ MountCheckParams(struct sam_fs_info *mp)
 
 	/*
 	 * If object file system ("mb"), turn off dio_szero.
+	 * Set object stripe depth to power of 2. Compute obj depth shift.
 	 */
 	if (mp->fi_config1 & MC_OBJECT_FS) {
+		offset_t stripe_depth = 0;
+		offset_t value;
+		int stripe_shift;
+
+		stripe_depth = mp->fi_obj_depth;
+		value = SAM_DEV_BSIZE;
+		stripe_shift = SAM_DEV_BSHIFT;
+		for (;;) {
+			if (value >= stripe_depth) {
+				stripe_depth = value;
+				break;
+			}
+			stripe_shift++;
+			value <<= 1;
+		}
+		mp->fi_obj_depth_shift = stripe_shift;
 		mp->fi_config &= ~MT_ZERO_DIO_SPARSE;
 	}
 
