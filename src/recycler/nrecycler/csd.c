@@ -29,7 +29,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -116,7 +116,6 @@ static int skipData(CsdFildes_t *fildes, u_longlong_t nbytes);
 static longlong_t oct2ll(char *cp, int numch);
 static longlong_t str2ll(char *cp, int numch);
 
-static longlong_t file_offset;
 
 /*
  * Initialize samfsdump file by walking the specified directory and
@@ -394,7 +393,6 @@ CsdAccumulate(
 	path = fsdump->ce_path;
 	Trace(TR_MISC, "[%s] Accumulate samfs dump", mt_name);
 
-	file_offset = 0LL;
 	if (readDumpHeader(path, &fildes, &dump_header) == -1) {
 		CANNOT_RECYCLE();
 		return (NULL);
@@ -813,6 +811,7 @@ readDumpHeader(
 		goto out;
 	}
 
+	fildes->offset = 0LL;
 	ngot = readFildes(fildes, &header, sizeof (csd_hdr_t));
 
 	if (ngot != sizeof (csd_hdr_t)) {
@@ -894,15 +893,22 @@ skipEmbeddedData(
 CsdFildes_t *fildes)
 {
 	csd_tar_t	header;
-	u_longlong_t nbytes;
+	u_longlong_t to_block;
 	u_longlong_t nb;
 
 	readTarHeader(fildes, &header);
-	nb = roundup(file_offset, TAR_RECORDSIZE) - file_offset;
-	(void) skipData(fildes, nb);	/* skip to next 512 boundary */
 	nb = header.csdt_bytes;
-	nbytes = roundup(nb, TAR_RECORDSIZE);
-	(void) skipData(fildes, nbytes);
+	to_block = roundup(fildes->offset, TAR_RECORDSIZE) - fildes->offset;
+	if (nb > to_block) {
+		/*
+		 * data doesn't fit in current block,
+		 * starts on tar block boundary.
+		 */
+		(void) skipData(fildes, to_block);
+	}
+	(void) skipData(fildes, nb);	/* skip file data */
+	nb = roundup(fildes->offset, TAR_RECORDSIZE) - fildes->offset;
+	(void) skipData(fildes, nb);	/* skip to next 512 boundary */
 }
 
 static int
@@ -924,7 +930,7 @@ u_longlong_t nbytes)
 			    strerror(errno));
 			return (errno);
 		}
-		file_offset += skipped;
+		fildes->offset += skipped;
 		nbytes -= skipped;
 	}
 	return (0);
@@ -952,7 +958,7 @@ csd_tar_t *hdr_info)
 		    sizeof (CSDTMAGIC)-1) != 0)) {
 			goto header_err;
 		}
-		file_offset += sizeof (tarhdrblk);
+		fildes->offset += sizeof (tarhdrblk);
 		linktype = tarhdr->linkflag;
 
 		switch (linktype) {
@@ -967,7 +973,7 @@ csd_tar_t *hdr_info)
 			    namelen) {
 				goto header_err;
 			}
-			file_offset += namelen;
+			fildes->offset += namelen;
 			tar_name[namelen] = '\0';
 			hdr_info->csdt_name = tar_name;
 			name_set++;
@@ -1212,7 +1218,7 @@ readFildes(
 	int ngot;
 
 	ngot = gzread(fildes->inf, buffer, size);
-	file_offset += ngot;
+	fildes->offset += ngot;
 
 	return (ngot);
 }

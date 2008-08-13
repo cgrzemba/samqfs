@@ -204,6 +204,7 @@ typedef struct CsdTable {
 typedef struct CsdFildes {
 	int	flags;		/* file descriptor flags */
 	gzFile	inf;		/* zlib inflate/decompression descriptor */
+	longlong_t offset;	/* current file offset */
 } CsdFildes_t;
 
 /*
