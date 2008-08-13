@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.138 $"
+#pragma ident "$Revision: 1.139 $"
 
 #include "sam/osversion.h"
 
@@ -204,19 +204,17 @@ sam_update_filsys(
 	}
 
 	/*
-	 * Get capacity and space for OSD LUNs.
+	 * Get capacity and space for OSD LUNs in this file system.
 	 */
 	if (SAM_IS_OBJECT_FS(mp)) {
-		for (i = 0; i < mp->mt.fs_count; i++) {
+		for (i = 0; i < sblk->info.sb.fs_count; i++) {
 			struct samdent *dp;
 
 			dp = &mp->mi.m_fs[i];
 			if (is_osd_group(dp->part.pt_type)) {
-				struct sam_fs_part fs_part;
-
 				object_devices = TRUE;
 				if ((error =
-				    sam_get_osd_fs_attr(dp->oh, &fs_part))) {
+				    sam_get_osd_fs_attr(dp->oh, &dp->part))) {
 					cmn_err(CE_WARN,
 					    "SAM-QFS: %s: Eq %d Error %d: "
 					    "cannot get superblock capacity "
@@ -224,9 +222,9 @@ sam_update_filsys(
 					    dp->part.pt_eq, error);
 				} else {
 					sblk->eq[i].fs.capacity =
-					    fs_part.pt_capacity;
+					    dp->part.pt_capacity;
 					sblk->eq[i].fs.space =
-					    fs_part.pt_space;
+					    dp->part.pt_space;
 					space += sblk->eq[i].fs.space;
 				}
 			}

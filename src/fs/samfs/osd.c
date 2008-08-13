@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 #include "sam/osversion.h"
 
@@ -489,6 +489,7 @@ sam_get_osd_fs_attr(
 
 			fsp->pt_capacity = SFP_CAPACITY(fap);
 			fsp->pt_space = SFP_SPACE(fap);
+			fsp->pt_size = fsp->pt_capacity << SAM2SUN_BSHIFT;
 		}
 	} else {
 		error = sam_osd_rc(rc);

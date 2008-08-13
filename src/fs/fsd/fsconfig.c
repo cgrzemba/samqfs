@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.102 $"
+#pragma ident "$Revision: 1.103 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -979,7 +979,8 @@ gatherFsDevices(struct sam_mount_info *mi)
 		}
 #ifdef sun
 		/*
-		 * Open device to get size.
+		 * Open device. Block devices get size in get_blk_device.
+		 * Object devices get size in fs (sam_getdev) on SC_setmount.
 		 */
 		if (dev->state == DEV_ON || dev->state == DEV_NOALLOC) {
 			if (is_osd_group(dev->type)) {
@@ -997,13 +998,6 @@ gatherFsDevices(struct sam_mount_info *mi)
 					LibError(NULL, 0, 17263, dev->name);
 					err++;
 					goto adddev;
-				}
-				if (get_obj_dev_attr(dev->name, oh, fsp) < 0) {
-					/* Cannot get object device */
-					/* attributes %s */
-					LibError(NULL, 0, 17264, dev->name);
-					err++;
-					continue;
 				}
 				close_obj_device(dev->name, O_RDONLY, oh);
 			} else {

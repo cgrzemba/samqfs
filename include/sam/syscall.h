@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 #endif
 
 #include "sam/types.h"
@@ -437,27 +437,19 @@ typedef struct sam_osd_dev_arg {	/* Filesystem osd device args */
 #define	OSD_CMD_CREATE	1
 #define	OSD_CMD_WRITE	2
 #define	OSD_CMD_READ	3
+#define	OSD_CMD_ATTR	4
 
 typedef struct sam_osd_cmd_arg {	/* Filesystem osd command args */
 	uname_t fs_name;	/* Mount point name */
 	sam_osd_handle_t oh;	/* OSD handle */
 	int32_t ord;		/* OSD ordinal, given */
-	int32_t command;	/* Command - create, write, or read */
+	int32_t command;	/* Command - create, write, read, or get attr */
 	int64_t obj_id;		/* User object id */
 	int64_t offset;		/* Offset */
 	int64_t size;		/* Size */
 	SAM_POINTER(char) data; /* Data */
 } sam_osd_cmd_arg_t;
 
-#define	OSD_ATTR_DEV	1
-
-typedef struct sam_osd_attr_arg {	/* Filesystem osd attribute args */
-	upath_t	osd_name;		/* OSD device name */
-	sam_osd_handle_t oh;		/* OSD handle */
-	int32_t param;			/* OSD_ATTR_DEV */
-	int32_t unused;			/* Unused */
-	SAM_POINTER(struct sam_fs_part) fsp;	/* Device Info */
-} sam_osd_attr_arg_t;
 
 #define	SAM_ONOFF_CLIENT_OFF	0
 #define	SAM_ONOFF_CLIENT_ON	1

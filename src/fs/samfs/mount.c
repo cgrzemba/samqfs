@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.223 $"
+#pragma ident "$Revision: 1.224 $"
 #endif
 
 #include "sam/osversion.h"
@@ -323,9 +323,18 @@ sam_getdev(
 		TRACES(T_SAM_OPEN_DEV, mp, dp->part.pt_name);
 		if (is_osd_group(dp->part.pt_type)) {
 			if ((dp->error = sam_open_osd_device(dp, filemode,
-			    credp))) {
+			    credp)) != 0) {
 				continue;
 			}
+			if ((dp->error = sam_get_osd_fs_attr(dp->oh,
+			    &dp->part)) != 0) {
+				cmn_err(CE_WARN,
+				    "SAM-QFS: %s: Eq %d Error %d: cannot get "
+				    "OSD capacity and space",
+				    mp->mt.fi_name, dp->part.pt_eq, error);
+				continue;
+			}
+
 			/*
 			 * OSD devices handle sparse correctly.
 			 */
@@ -1583,7 +1592,7 @@ sam_validate_sblk(
 			buf = kmem_alloc(sizeof (struct sam_sblk), KM_SLEEP);
 			if ((error = sam_issue_object_io(mp, dp->oh, FREAD,
 			    SAM_OBJ_SBLK_ID, UIO_SYSSPACE, buf,
-			    0, sizeof (struct sam_sblk)))) {
+			    0, sizeof (struct sam_sblk))) != 0) {
 				err_line = __LINE__;
 				goto setpart1;
 			}
@@ -1731,24 +1740,15 @@ sam_validate_sblk(
 			    sblk->eq[ord].fs.eq);
 			/* not a fatal error */
 		}
-#ifdef sun
+
 		/*
-		 * Get capacity and space for OSD LUNs.
+		 * Set capacity & space for OSDs in sblk. Set in sam_getdev.
 		 */
 		if (is_osd_group(dp->part.pt_type)) {
-			struct sam_fs_part fs_part;
-
-			if ((error = sam_get_osd_fs_attr(dp->oh, &fs_part))) {
-				cmn_err(CE_WARN,
-				    "SAM-QFS: %s: Eq %d Error %d: cannot get "
-				    "superblock capacity and space",
-				    mp->mt.fi_name, dp->part.pt_eq, error);
-			} else {
-				sblk->eq[i].fs.capacity = fs_part.pt_capacity;
-				sblk->eq[i].fs.space = fs_part.pt_space;
-			}
+			sblk->eq[i].fs.capacity = dp->part.pt_capacity;
+			sblk->eq[i].fs.space = dp->part.pt_space;
 		}
-#endif /* sun */
+
 		dp->part.pt_capacity = (fsize_t)sblk->eq[i].fs.capacity;
 		dp->part.pt_space = (fsize_t)sblk->eq[i].fs.space;
 setpart1:

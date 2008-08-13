@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 
 #include "sam/osversion.h"
 
@@ -185,7 +185,8 @@ chk_devices(
 				    fsp->pt_name);
 				return (1);
 			}
-			if (get_obj_dev_attr(fsp->pt_name, dp->oh, fsp) < 0) {
+			if (get_object_fs_attributes(fs_name, dp->oh, i,
+			    (char *)fsp, sizeof (fsp)) < 0) {
 				error(0, 0, catgets(catfd, SET, 17264,
 				    "Cannot get object device attributes %s"),
 				    fsp->pt_name);

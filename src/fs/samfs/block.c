@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.108 $"
+#pragma ident "$Revision: 1.109 $"
 
 #include "sam/osversion.h"
 
@@ -2566,8 +2566,11 @@ sam_update_the_sblks(struct sam_mount *mp)
 
 	sblk = mp->mi.m_sbp;
 	for (ord = (sblk->info.sb.fs_count - 1); ord >= 0; ord--) {
-		if (sblk->eq[ord].fs.state == DEV_OFF ||
-		    sblk->eq[ord].fs.state == DEV_DOWN) {
+		if (sblk->eq[ord].fs.state == DEV_DOWN) {
+			continue;
+		}
+		if (sblk->eq[ord].fs.state == DEV_OFF &&
+		    !mp->mi.m_fs[ord].opened) {
 			continue;
 		}
 		if (ord == 0) {

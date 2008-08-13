@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.189 $"
+#pragma ident "$Revision: 1.190 $"
 #endif
 
 #include "sam/osversion.h"
@@ -157,7 +157,6 @@ static int sam_get_sblk(void *arg, int size);
 #if defined(SOL_511_ABOVE)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
 static int sam_osd_command(void *arg, int size, cred_t *credp);
-static int sam_osd_attr(void *arg, int size, cred_t *credp);
 #endif
 
 
@@ -324,10 +323,6 @@ sam_priv_syscall(
 		case SC_osd_command:
 			error = sam_osd_command(arg, size, credp);
 			break;
-
-		case SC_osd_attr:
-			error = sam_osd_attr(arg, size, credp);
-			break;
 #endif /* defined SOL_511_ABOVE */
 
 #ifdef METADATA_SERVER
@@ -461,6 +456,15 @@ sam_osd_command(
 		    args.size);
 		break;
 
+	case OSD_CMD_ATTR:
+		if ((error = sam_get_osd_fs_attr(args.oh, &dp->part)) == 0) {
+			if (copyout(&dp->part, data,
+			    sizeof (struct sam_fs_part))) {
+				return (EFAULT);
+			}
+		}
+		break;
+
 	default:
 		error = EINVAL;
 		break;
@@ -470,57 +474,8 @@ out:
 	SAM_SYSCALL_DEC(mp, 0);
 	return (error);
 }
-
-/*
- * ----- sam_osd_attr - Process the user osd attribute system call.
- */
-
-/* ARGSUSED2 */
-static int			/* ERRNO if error, 0 if successful. */
-sam_osd_attr(
-	void *arg,		/* Pointer to arguments. */
-	int size,
-	cred_t *credp)
-{
-	sam_osd_attr_arg_t args;
-	struct sam_fs_part *fsp;
-	int error = 0;
-
-	/*
-	 * Validate and copyin the arguments.
-	 */
-	if (size != sizeof (args) ||
-	    copyin(arg, (caddr_t)&args, sizeof (args))) {
-		return (EFAULT);
-	}
-
-	fsp = (void *)args.fsp.p32;
-	if (curproc->p_model != DATAMODEL_ILP32) {
-		fsp = (void *)args.fsp.p64;
-	}
-
-	switch (args.param) {
-
-	case OSD_ATTR_DEV: {
-		struct sam_fs_part fs_part;
-
-		bzero((caddr_t)&fs_part, sizeof (struct sam_fs_part));
-		if ((error = sam_get_osd_fs_attr(args.oh, &fs_part)) == 0) {
-			if (copyout(&fs_part, fsp,
-			    sizeof (struct sam_fs_part))) {
-				return (EFAULT);
-			}
-		}
-		}
-		break;
-
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
 #endif /* defined SOL_511_ABOVE */
+
 
 /*
  * ----- sam_fsd_call - Process the sam-fsd system call.
