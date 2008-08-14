@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.137 $"
+#pragma ident "$Revision: 1.138 $"
 
 #include "sam/osversion.h"
 
@@ -1561,36 +1561,32 @@ sam_set_archive(
 		sam_stage_request_t *req_ext;
 
 		req = kmem_alloc(sizeof (*req), KM_SLEEP);
-		if (req == NULL) {
-			error = ENOMEM;
-		} else {
-			error = sam_build_stagerd_req(ip, copy, req,
-			    &req_ext_cnt, &req_ext, credp);
-			if (!error) {
-				req->arcopy[copy].flags |= STAGE_COPY_VERIFY;
-				req->copy = copy;
-				req->len = ip->di.rm.size;
-				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-				TRACES(T_SAM_FIFO_STAGEV, SAM_ITOV(ip),
-				    (char *)req->arcopy[0].section[0].vsn);
-				error = sam_send_stage_cmd(ip->mp, SCD_stager,
-				    req, sizeof (*req));
-				/*
-				 * Send any request extension, used for
-				 * multivolume.
-				 */
-				for (i = 0; i < req_ext_cnt; i++) {
-					if (error == 0) {
-						req_ext[i].arcopy[copy].flags |=
-						    STAGE_COPY_VERIFY;
-						error = sam_send_stage_cmd(
-						    ip->mp,
-						    SCD_stager, &req_ext[i],
-						    sizeof (*req));
-					}
+		error = sam_build_stagerd_req(ip, copy, req,
+		    &req_ext_cnt, &req_ext, credp);
+		if (!error) {
+			req->arcopy[copy].flags |= STAGE_COPY_VERIFY;
+			req->copy = copy;
+			req->len = ip->di.rm.size;
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+			TRACES(T_SAM_FIFO_STAGEV, SAM_ITOV(ip),
+			    (char *)req->arcopy[0].section[0].vsn);
+			error = sam_send_stage_cmd(ip->mp, SCD_stager,
+			    req, sizeof (*req));
+			/*
+			 * Send any request extension, used for
+			 * multivolume.
+			 */
+			for (i = 0; i < req_ext_cnt; i++) {
+				if (error == 0) {
+					req_ext[i].arcopy[copy].flags |=
+					    STAGE_COPY_VERIFY;
+					error = sam_send_stage_cmd(
+					    ip->mp,
+					    SCD_stager, &req_ext[i],
+					    sizeof (*req));
 				}
-				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
+			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
 		if (req_ext_cnt > 0) {
 			kmem_free((void *)req_ext,
@@ -1997,13 +1993,7 @@ sam_ioctl_oper_cmd(
 
 		buffer = kmem_alloc(sizeof (upath_t) *
 		    MAX_DEVS_SAMQFS, KM_SLEEP);
-		if (buffer == NULL) {
-			error = ENOMEM;
-			break;
-		} else {
-			error = sam_get_devices(fs_name, buffer);
-		}
-
+		error = sam_get_devices(fs_name, buffer);
 		if (error == 0) {
 			if (copyout((char *)buffer, (char *)(void *)outbuf,
 			    (sizeof (upath_t) * MAX_DEVS_SAMQFS))) {

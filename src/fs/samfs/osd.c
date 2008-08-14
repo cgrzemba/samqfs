@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 #include "sam/osversion.h"
 
@@ -398,9 +398,6 @@ sam_issue_object_io(
 
 	if (seg == UIO_USERSPACE) {
 		bufp = kmem_alloc(length, KM_SLEEP);
-		if (!bufp) {
-			return (ENOMEM);
-		}
 	} else {
 		bufp = data;
 	}
@@ -550,9 +547,7 @@ sam_issue_direct_object_io(
 	int			error = 0;
 
 
-	if ((iorp = kmem_cache_alloc(samgt.object_cache, KM_SLEEP)) == NULL) {
-		return (ENOMEM);
-	}
+	iorp = kmem_cache_alloc(samgt.object_cache, KM_SLEEP);
 	olp = ip->olp;
 	ASSERT(olp);
 	oh = ip->mp->mi.m_fs[olp->ol[obji].ord].oh;
@@ -704,9 +699,7 @@ sam_pageio_object(
 	sam_obj_layout_t	*olp;
 	int			rc;
 
-	if ((iorp = kmem_cache_alloc(samgt.object_cache, KM_SLEEP)) == NULL) {
-		return (NULL);
-	}
+	iorp = kmem_cache_alloc(samgt.object_cache, KM_SLEEP);
 	mp = ip->mp;
 	count = vn_len;
 	olp = ip->olp;
@@ -1189,10 +1182,8 @@ sam_create_object_id(
 	 * Set up the create request and add in the Get Page Attributes
 	 * to create an object ID.
 	 */
-	if ((objlist = (sam_objlist_page_t *)kmem_alloc(
-	    sizeof (sam_objlist_page_t), KM_SLEEP)) == NULL) {
-		return (ENOMEM);
-	}
+	objlist = (sam_objlist_page_t *)kmem_alloc(
+	    sizeof (sam_objlist_page_t), KM_SLEEP);
 	oip = (sam_di_osd_t *)(void *)&dp->extent[2];
 	ord = dp->unit;
 	obj_pt_type = mp->mi.m_fs[ord].part.pt_type;
@@ -1898,9 +1889,6 @@ sam_osd_create_obj_layout(
 		    (sizeof (sam_obj_ent_t) * (num_group - 1)), KM_SLEEP);
 	}
 	olp = ip->olp;
-	if (olp == NULL) {
-		return (ENOMEM);
-	}
 	oip = (sam_di_osd_t *)(void *)&ip->di.extent[2];
 	i = 0;
 	ext_id = oip->ext_id;

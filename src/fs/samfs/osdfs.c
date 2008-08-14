@@ -32,7 +32,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 #endif
 
 #include "sam/osversion.h"
@@ -78,9 +78,6 @@ samfs_osdfs_alloc(
 	}
 
 	osdfsp = (struct osdfs *)kmem_zalloc(sizeof (struct osdfs), KM_SLEEP);
-	if (!osdfsp) {
-		return (ENOMEM);
-	}
 	osdfsp->osdfs_op = osdfsopsp;
 	*osdfspp = osdfsp;
 

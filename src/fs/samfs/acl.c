@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.60 $"
+#pragma ident "$Revision: 1.61 $"
 
 #include "sam/osversion.h"
 
@@ -221,11 +221,7 @@ sam_acl_inherit(
 	if (S_ISDIR(bip->di.mode)) {
 		acl_size += (paclp->dfacl.cnt * sizeof (sam_acl_t));
 	}
-	if ((aclp = kmem_zalloc(acl_size, KM_SLEEP)) == NULL) {
-		errline = __LINE__ - 1;
-		error = ENOMEM;
-		goto out;
-	}
+	aclp = kmem_zalloc(acl_size, KM_SLEEP);
 	aclp->id = bip->di.id;			/* Base inode id */
 	aclp->size = acl_size;			/* Incore ACL structure size */
 
@@ -505,11 +501,7 @@ sam_acl_set_vsecattr(
 	 */
 	acl_size = sizeof (sam_ic_acl_t) + (cnt + dfcnt - 1) *
 	    sizeof (sam_acl_t);
-	if ((aclp = kmem_zalloc(acl_size, KM_SLEEP)) == NULL) {
-		errline = __LINE__ - 1;
-		error = ENOMEM;
-		goto out;
-	}
+	aclp = kmem_zalloc(acl_size, KM_SLEEP);
 	aclp->id = ip->di.id;		/* Base inode id */
 	aclp->flags |= ACL_MODIFIED;	/* New incore needs update */
 	aclp->size = acl_size;		/* New incore ACL structure size */

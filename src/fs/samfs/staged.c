@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 
 #include "sam/osversion.h"
 
@@ -112,9 +112,6 @@ sam_stagerd_file(
 	int i;
 
 	req = kmem_alloc(sizeof (*req), KM_SLEEP);
-	if (req == NULL) {
-		return (ENOMEM);
-	}
 
 	/*
 	 * Start associative staging if stage_all enabled.

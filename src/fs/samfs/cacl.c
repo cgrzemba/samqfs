@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 #include "sam/osversion.h"
 
@@ -295,13 +295,8 @@ sam_acl_get_vsecattr(
 			/* USER/GROUP/OTHER/CLASS */
 			vsap->vsa_aclcnt = aclcnt = 4;
 			if (vsap->vsa_mask & VSA_ACL) {
-				if ((aclentp = kmem_zalloc((aclcnt *
-				    sizeof (aclent_t)),
-				    KM_SLEEP)) == NULL) {
-					errline = __LINE__ - 1;
-					error = ENOMEM;
-					goto out;
-				}
+				aclentp = kmem_zalloc((aclcnt *
+				    sizeof (aclent_t)), KM_SLEEP);
 				vsap->vsa_aclentp = aclentp;
 
 				sam_synth_acl(ip, (sam_acl_t *)aclentp);
@@ -358,13 +353,8 @@ sam_acl_get_vsecattr(
 	if (vsap->vsa_mask & (VSA_ACLCNT | VSA_ACL)) {
 		vsap->vsa_aclcnt = aclcnt;
 		if (vsap->vsa_mask & VSA_ACL) {
-			if ((aclentp = kmem_zalloc((aclcnt *
-			    sizeof (aclent_t)),
-			    KM_SLEEP)) == NULL) {
-				errline = __LINE__ - 1;
-				error = ENOMEM;
-				goto out;
-			}
+			aclentp = kmem_zalloc((aclcnt *
+			    sizeof (aclent_t)), KM_SLEEP);
 			vsap->vsa_aclentp = entp = aclentp;
 
 			ACL_VSEC(USER_OBJ, 1, aclp->acl.owner, entp);
@@ -405,13 +395,8 @@ sam_acl_get_vsecattr(
 		if (vsap->vsa_mask & (VSA_DFACLCNT | VSA_DFACL)) {
 			vsap->vsa_dfaclcnt = dfaclcnt;
 			if (vsap->vsa_mask & VSA_DFACL) {
-				if ((dfaclentp = kmem_zalloc((dfaclcnt *
-				    sizeof (aclent_t)),
-				    KM_SLEEP)) == NULL) {
-					errline = __LINE__ - 2;
-					error = ENOMEM;
-					goto out;
-				}
+				dfaclentp = kmem_zalloc((dfaclcnt *
+				    sizeof (aclent_t)), KM_SLEEP);
 				vsap->vsa_dfaclentp = entp = dfaclentp;
 
 				ACL_VSEC(DEF_USER_OBJ, 1, aclp->dfacl.owner,
@@ -579,11 +564,7 @@ sam_get_acl_ext(
 	 */
 	acl_size = sizeof (sam_ic_acl_t) +
 	    ((cnt + dfcnt - 1) * sizeof (sam_acl_t));
-	if ((aclp = kmem_zalloc(acl_size, KM_SLEEP)) == NULL) {
-		errline = __LINE__ - 1;
-		error = ENOMEM;
-		goto out;
-	}
+	aclp = kmem_zalloc(acl_size, KM_SLEEP);
 	aclp->id = bip->di.id;			/* Base inode id */
 	aclp->size = acl_size;			/* Incore ACL structure size */
 

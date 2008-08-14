@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.110 $"
+#pragma ident "$Revision: 1.111 $"
 
 #include "sam/osversion.h"
 
@@ -105,7 +105,7 @@ static int sam_shrink_fs(sam_mount_t *mp, struct samdent *dp, int command);
 static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t state);
 static void sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
-static int sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
+static void sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
 int sam_update_the_sblks(sam_mount_t *mp);
 
 extern int sam_bfmap(sam_caller_t caller, struct sam_sblk *sblk, int ord,
@@ -1725,10 +1725,7 @@ sam_init_block(sam_mount_t *mp)
 		    is_osd_group(dp->part.pt_type)) {
 			continue;
 		}
-		if (sam_init_blocklist(mp, ord) != 0) {
-			error = ENOMEM;
-			goto out;
-		}
+		sam_init_blocklist(mp, ord);
 	}
 	/*
 	 * Initialize the block thread for this filesystem mount.
@@ -1789,7 +1786,7 @@ sam_delete_blocklist(struct sam_block **blockp)
  * adjusted for number of partitions in the file system.
  */
 
-static int
+static void
 sam_init_blocklist(
 	sam_mount_t *mp,	/* The pointer to the mount table */
 	uchar_t ord)		/* Partition ordinal */
@@ -1817,12 +1814,10 @@ sam_init_blocklist(
 			 * Allocate and set up circular queues for the block
 			 * pools.
 			 */
-			if ((block = (struct sam_block *)kmem_zalloc(
+			block = (struct sam_block *)kmem_zalloc(
 			    sizeof (struct sam_block) +
 			    ((limit-1) * sizeof (sam_bn_t)),
-			    KM_SLEEP)) == NULL) {
-				return (1);
-			}
+			    KM_SLEEP);
 			mp->mi.m_fs[ord].block[bt] = block;
 			block->mp = mp;
 			block->ord = (short)ord;
@@ -1849,7 +1844,6 @@ sam_init_blocklist(
 		}
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 	}
-	return (0);
 }
 
 /*
@@ -2018,7 +2012,7 @@ sam_change_state(
 		(void) sam_build_allocation_links(mp, sblk, ord, &prev_num_grp);
 		mutex_enter(&mp->mi.m_block.mutex);
 		if (dp->block[LG] == NULL) {
-			(void) sam_init_blocklist(mp, ord);
+			sam_init_blocklist(mp, ord);
 		}
 		dp->skip_ord = 0;
 		dp->part.pt_state = DEV_ON;

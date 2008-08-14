@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.162 $"
+#pragma ident "$Revision: 1.163 $"
 
 #include "sam/osversion.h"
 
@@ -158,12 +158,8 @@ samfs_mount(
 		error = EINVAL;
 		goto done;
 	}
-	if ((mip = (sam_mount_info_t *)kmem_zalloc(
-	    sizeof (sam_mount_info_t), KM_SLEEP)) == NULL) {
-		err_line = __LINE__;
-		error = ENOMEM;
-		goto done;
-	}
+	mip = (sam_mount_info_t *)kmem_zalloc(sizeof (sam_mount_info_t),
+	    KM_SLEEP);
 	if (copyin(pp->dataptr, (char *)mip, pp->datalen)) {
 		err_line = __LINE__;
 		error = EFAULT;

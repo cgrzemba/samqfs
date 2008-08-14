@@ -109,11 +109,6 @@ sam_obj_read_simmem(struct objnode *objnodep, uint64_t offset, uint64_t len,
 		    KM_SLEEP);
 	}
 	membuf = objnodep->obj_membuf;
-	if (!membuf) {
-		cmn_err(CE_WARN,
-		    "sam_obj_read_simmem: Memory was not allocated\n");
-		return (ENOMEM);
-	}
 
 	if (segflg == UIO_USERSPACE) {
 		flags = 0;
@@ -164,11 +159,6 @@ sam_obj_write_simmem(struct objnode *objnodep, uint64_t offset, uint64_t len,
 		    KM_SLEEP);
 	}
 	membuf = objnodep->obj_membuf;
-	if (!membuf) {
-		cmn_err(CE_WARN,
-		    "sam_obj_write_simmem: Memory was not allocated\n");
-		return (ENOMEM);
-	}
 
 	if (segflg == UIO_USERSPACE) {
 		flags = 0;
@@ -243,11 +233,6 @@ sam_obj_append_simmem(struct objnode *objnodep, uint64_t len, void *bufp,
 		    KM_SLEEP);
 	}
 	membuf = objnodep->obj_membuf;
-	if (!membuf) {
-		cmn_err(CE_WARN,
-		    "sam_obj_append_simmem: Memory was not allocated\n");
-		return (ENOMEM);
-	}
 
 	if (segflg == UIO_USERSPACE) {
 		flags = 0;

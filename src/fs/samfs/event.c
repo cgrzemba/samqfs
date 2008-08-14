@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
 
 #include "sam/osversion.h"
 
@@ -333,11 +333,6 @@ sam_event_init(
 	}
 	em = (struct sam_event_em *)
 	    kmem_zalloc(sizeof (struct sam_event_em), KM_SLEEP);
-	if (em == NULL) {
-		cmn_err(CE_WARN, "SAM-QFS: %s: fsalogd event control "
-		    "structure allocation failed", mp->mt.fi_name);
-		return (ENOMEM);
-	}
 
 	/*
 	 * Allocate shared memory event buffer.
