@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesViewBean.java,v 1.34 2008/08/06 23:44:08 ronaldso Exp $
+// ident	$Id: FSArchivePoliciesViewBean.java,v 1.35 2008/08/14 14:00:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -92,6 +92,8 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
     public static final String CHILD_FS_SUMMARY_HREF = "FileSystemSummaryHref";
     public static final String CHILD_FS_DETAILS_HREF = "FileSystemDetailsHref";
     public static final String CHILD_SHARED_FS_HREF = "SharedFSDetailsHref";
+
+    // HREF to navigate back to Shared FS Summary Page
     public static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
     public static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
 
