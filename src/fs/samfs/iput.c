@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.127 $"
+#pragma ident "$Revision: 1.128 $"
 #endif
 
 #include "sam/osversion.h"
@@ -128,7 +128,7 @@
 #ifdef sun
 static void sam_free_incore_inode(sam_node_t *ip);
 #endif
-int sam_freeze_ino(sam_node_t *ip, int force_freeze);
+int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 
 #ifdef linux
 extern char *statfs_thread_name;
@@ -1240,13 +1240,14 @@ sam_mark_ino(
  */
 
 int				/* ERRNO, else 0 if successful. */
-sam_freeze_ino(sam_node_t *ip, int force_freeze)
+sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze)
 {
-	sam_mount_t *mp = ip->mp;
 	int error = 0;
 
-	TRACE(T_SAM_FREEZE_INO, SAM_ITOP(ip), ip->di.id.ino, ip->di.id.gen,
-	    ip->flags.bits);
+	if (ip) {
+		TRACE(T_SAM_FREEZE_INO, SAM_ITOP(ip), ip->di.id.ino,
+		    ip->di.id.gen, ip->flags.bits);
+	}
 
 	/*
 	 * If the caller is fsflush, don't freeze. Cannot hold up fsflush.
@@ -1289,8 +1290,10 @@ sam_freeze_ino(sam_node_t *ip, int force_freeze)
 	}
 	mutex_exit(&mp->ms.m_waitwr_mutex);
 
-	TRACE(T_SAM_UNFREEZE_INO, SAM_ITOP(ip), ip->di.id.ino, ip->di.id.gen,
-	    ip->flags.bits);
+	if (ip) {
+		TRACE(T_SAM_UNFREEZE_INO, SAM_ITOP(ip), ip->di.id.ino,
+		    ip->di.id.gen, ip->flags.bits);
+	}
 	return (error);
 }
 
@@ -1304,7 +1307,7 @@ sam_await_umount_complete(sam_node_t *ip)
 	sam_mount_t *mp = ip->mp;
 
 	while (mp->mt.fi_status & FS_UMOUNT_IN_PROGRESS) {
-		(void) sam_freeze_ino(ip, 0);
+		(void) sam_freeze_ino(mp, ip, 0);
 	}
 }
 
@@ -1340,7 +1343,7 @@ sam_open_operation(sam_node_t *ip)
 		if (IS_SHAREFS_THREAD_OS) { /* Do not freeze shared fs thread */
 			break;
 		}
-		if ((error = sam_freeze_ino(ip, 0)) != 0) {
+		if ((error = sam_freeze_ino(mp, ip, 0)) != 0) {
 			return (error);
 		}
 	}
@@ -1389,7 +1392,7 @@ sam_open_ino_operation(sam_node_t *ip, krw_t lock_type)
 			break;
 		}
 		RW_UNLOCK_OS(&ip->inode_rwl, lock_type);
-		if ((error = sam_freeze_ino(ip, 0)) != 0) {
+		if ((error = sam_freeze_ino(mp, ip, 0)) != 0) {
 			RW_LOCK_OS(&ip->inode_rwl, lock_type);
 			return (error);
 		}
@@ -1449,7 +1452,7 @@ sam_idle_operation(sam_node_t *ip)
 
 	SAM_DEC_OPERATION(mp);
 	while (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
-		if ((error = sam_freeze_ino(ip, 1)) != 0) {
+		if ((error = sam_freeze_ino(mp, ip, 1)) != 0) {
 			SAM_INC_OPERATION(mp);
 			return (error);
 		}
@@ -1503,7 +1506,7 @@ sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type)
 	SAM_DEC_OPERATION(mp);
 	while (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
 		RW_UNLOCK_OS(&ip->inode_rwl, lock_type);
-		if ((error = sam_freeze_ino(ip, 0)) != 0) {
+		if ((error = sam_freeze_ino(mp, ip, 0)) != 0) {
 			RW_LOCK_OS(&ip->inode_rwl, lock_type);
 			SAM_INC_OPERATION(mp);
 			return (error);
@@ -1533,7 +1536,7 @@ sam_open_operation(sam_node_t *ip)
 	int error;
 
 	while (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
-		if ((error = sam_freeze_ino(ip, 0)) != 0) {
+		if ((error = sam_freeze_ino(mp, ip, 0)) != 0) {
 			return (error);
 		}
 	}
@@ -1635,7 +1638,7 @@ sam_open_operation_rwl(sam_node_t *ip)
 		if (IS_SHAREFS_THREAD_OS || sam_is_fsflush()) {
 			break;
 		}
-		(void) sam_freeze_ino(ip, 1);
+		(void) sam_freeze_ino(mp, ip, 1);
 	}
 
 	ep.val.depth = 1;

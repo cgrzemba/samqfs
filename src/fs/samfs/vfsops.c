@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.163 $"
+#pragma ident "$Revision: 1.164 $"
 
 #include "sam/osversion.h"
 
@@ -86,9 +86,9 @@
 #include "objctl.h"
 extern int ncsize;
 
-extern int sam_freeze_ino(sam_node_t *ip, int force_freeze);
+extern int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 static int sam_clients_mounted(sam_mount_t *mp);
-static int sam_open_vfs_operation(sam_mount_t *mp);
+static int sam_open_vfs_operation(sam_mount_t *mp, sam_fid_t *sam_fidp);
 
 /*
  * ----- Module Loading/Unloading and Autoconfiguration declarations
@@ -1480,7 +1480,7 @@ again:
 	 * file systems on the NFS client, these may get "connection timed out"
 	 * errors if the freeze lasts too long.
 	 */
-	error = sam_open_vfs_operation(mp);
+	error = sam_open_vfs_operation(mp, sam_fidp);
 
 	if (error) {
 		return (error);
@@ -1594,10 +1594,9 @@ sam_clients_mounted(sam_mount_t *mp)
  * Set the task specific data for a VFS operation.
  */
 static int
-sam_open_vfs_operation(sam_mount_t *mp)
+sam_open_vfs_operation(sam_mount_t *mp, sam_fid_t *sam_fidp)
 {
 	sam_operation_t ep;
-	sam_node_t *ip;
 	int error = 0;
 	int force_freeze = 0;
 
@@ -1616,7 +1615,6 @@ sam_open_vfs_operation(sam_mount_t *mp)
 			return (EAGAIN);
 		}
 
-		ip = SAM_VTOI(mp->mi.m_vn_root);
 		if (SAM_THREAD_IS_NFS()) {
 			/*
 			 * Hard freeze NFS threads.
@@ -1624,7 +1622,14 @@ sam_open_vfs_operation(sam_mount_t *mp)
 			 */
 			force_freeze = 1;
 		}
-		if ((error = sam_freeze_ino(ip, force_freeze)) != 0) {
+
+		TRACE(T_SAM_VGET_FREEZE, mp, sam_fidp->un._fid.id.ino,
+		    sam_fidp->un._fid.id.gen, 0);
+		error = sam_freeze_ino(mp, NULL, force_freeze);
+		TRACE(T_SAM_VGET_UNFREEZE, mp, sam_fidp->un._fid.id.ino,
+		    sam_fidp->un._fid.id.gen, error);
+
+		if (error != 0) {
 			return (error);
 		}
 	}
