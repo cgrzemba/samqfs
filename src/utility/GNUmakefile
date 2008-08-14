@@ -1,4 +1,4 @@
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 
 #    SAM-QFS_notice_begin
 #
@@ -53,6 +53,7 @@ DIRS = 	audit \
 		unload   \
 		mccfg \
 		tapealert \
+		samdb \
 		samrestore \
 		samstorade
 

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -67,6 +67,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 static void cmd_fs(void);
 static void cmd_log_file(void);
 static void cmd_log_rollover(void);
+static void cmd_log_expire(void);
 static void cmd_event_interval(void);
 static void cmd_event_buffer(void);
 static void cmd_open_retry(void);
@@ -79,6 +80,7 @@ static DirProc_t dirProcTable[] = {
 	{ "fs",				cmd_fs,			DP_value },
 	{ "log_path",			cmd_log_file,		DP_value },
 	{ "log_rollover_interval",	cmd_log_rollover,	DP_value },
+	{ "log_expire",			cmd_log_expire,		DP_value },
 	{ "event_interval",		cmd_event_interval,	DP_value },
 	{ "event_buffer_size",		cmd_event_buffer,	DP_value },
 	{ "event_open_retry",		cmd_open_retry,		DP_value },
@@ -97,6 +99,7 @@ extern char	*fs_name;		/* File system name		*/
 extern int	Daemon;			/* TRUE if started by sam-fsd	*/
 extern	char	*Logfile_Path;		/* Logfile path			*/
 extern	int	Log_Rollover;		/* Log rollover interval	*/
+extern	int	Log_Expire;		/* Log inactivity expiration	*/
 extern	int	Event_Interval;		/* Event interval time		*/
 extern	int	Event_Buffer_Size;	/* Event buffer size		*/
 extern	int	Event_Open_Retry;	/* Open syscall retry count	*/
@@ -168,6 +171,23 @@ cmd_log_rollover(void)
 	Log_Rollover = intv;
 }
 
+static void
+cmd_log_expire(void)
+{
+	char		*endptr;
+	int		intv;
+
+	if (not_for_this_fs) {
+		return;
+	}
+	intv = strtol(token, &endptr, 10);
+	if (endptr && *endptr != '\0') {
+		ReadCfgError(8020, token, fs_name);
+		return;
+	}
+
+	Log_Expire = intv;
+}
 
 static void
 cmd_event_interval(void)

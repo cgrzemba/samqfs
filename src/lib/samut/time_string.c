@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -55,17 +55,19 @@
  * Calendar time zone info used by the date/time manipulation subroutines
  * for WORM.
  */
-char *Month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
+static char *Month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
 	"Sep", "Oct", "Nov", "Dec"};
-int days_in_month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-int ldays_in_month[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+static int days_in_month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+static int ldays_in_month[12] = {31, 29, 31, 30, 31, 30, 31, 31,
+	30, 31, 30, 31};
 
 /*
  * The epoch starts on 1/1/1970 UTC which is a Thursday. Sunday is the
  * fourth element in the array (third by index).
  */
 #define	SUNDAY	3
-char *days_in_week[] = {"Thur", "Fri", "Sat", "Sun", "Mon", "Tues", "Wed"};
+static char *days_in_week[] = {"Thur", "Fri", "Sat", "Sun",
+	"Mon", "Tues", "Wed"};
 
 
 /*

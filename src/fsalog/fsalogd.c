@@ -38,7 +38,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -47,6 +47,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <libgen.h>
 #include <inttypes.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -80,7 +81,10 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/uioctl.h"
 #include "sam/samevent.h"
 
+/* Logs are rolled over every 8 hours */
 #define	FSA_ROLLOVER_INTERVAL	28800
+/* Logs expire after 48 hours */
+#define	FSA_EXPIRE_INTERVAL	172800
 #define	FSA_SYSLOG_NAME		"sam-fsalogd"
 #define	FSA_CMD_FILE		SAM_CONFIG_PATH"/fsalogd.cmd"
 #define	FSA_LOG_PATH		SAM_VARIABLE_PATH"/fsalogd/"
@@ -105,6 +109,7 @@ static	void	fsalogdTraceInit(void);
 static	void	fsalogdInit(void);
 static	int	Open_FSA_log_file(char *);
 static	int	Write_FSA_log_file(char *, sam_event_t *, int);
+static	void	check_log_expire(void);
 static	void	print_event(FILE *, sam_event_t *);
 
 int	EventNotifies = 0;	/* Number of  notifies			*/
@@ -122,6 +127,7 @@ int		Daemon		= 0;	/* Running as sam-fsd child	*/
 char		*Logfile_Path	= NULL;	/* Logfile path			*/
 char		*fs_name;		/* File system name		*/
 int		Log_Rollover;		/* Log rollover interval	*/
+int		Log_Expire;		/* Log modification expiration 	*/
 int		Event_Interval;		/* Event interval time		*/
 int		Event_Buffer_Size;	/* Event buffer size		*/
 int		Event_Open_Retry;	/* Open syscall retry count	*/
@@ -137,6 +143,7 @@ static	int	caught_TERM	= 0;	/* number of SIGTERMs pending	*/
 static	int	running		= 1;	/* Daemon running flag		*/
 static	int	abort_daemon	= 0;	/* Abort daemon flag		*/
 static	int	log_rollover	= 0;	/* Log file rollover flag	*/
+static	int	check_expire	= 0;	/* Flag to check log expiration */
 static	time_t	logtime;		/* Log open time		*/
 static	int	fsa;			/* FSAlog file descriptor	*/
 
@@ -192,6 +199,7 @@ int	main(
 	Event_Interval = EVENT_INTERVAL;
 	Event_Open_Retry = EVENT_SYSCALL_RETRY;
 	Log_Rollover = FSA_ROLLOVER_INTERVAL;
+	Log_Expire = FSA_EXPIRE_INTERVAL;
 
 	Daemon = strcmp(GetParentName(), SAM_FSD) == 0;
 
@@ -285,6 +293,7 @@ int	main(
 		exit(EXIT_FAILURE);
 	}
 
+	check_log_expire();
 	Event_Processor(mnt_info.fi_name);
 	exit(abort_daemon ? EXIT_FAILURE : EXIT_SUCCESS);
 	return (0);
@@ -374,6 +383,11 @@ Event_Processor(
 				abort_daemon = 1;
 				running = 0;
 			}
+		}
+
+		if (check_expire) {
+			check_expire = 0;
+			check_log_expire();
 		}
 	}
 }
@@ -712,6 +726,7 @@ sigCatcher(int signal_caught)
 	case    SIGALRM:
 		caught_ALRM++;
 		log_rollover |= (time(0l) - logtime > Log_Rollover);
+		check_expire = log_rollover;
 		break;
 
 	case    SIGTERM:
@@ -839,6 +854,99 @@ Write_FSA_log_file(
 	}
 
 	return (n != len);
+}
+
+/*
+ * Checks each logfile in 'Logfile_Path' directory.  If the
+ * logfile timestamp is older than the calculated expired
+ * time (current time - expire interval), then the log is
+ * deleted.
+ */
+static void
+check_log_expire(void)
+{
+	int logdir_fd = -1;
+	DIR *logdir = NULL;
+	dirent_t *ent = NULL;
+	int fs_len;
+	time_t expire_time;
+	struct tm log_time;
+
+	fs_len = strlen(fs_name);
+	expire_time = time(0) - Log_Expire;
+
+	if ((logdir_fd = open(Logfile_Path, O_RDONLY, 0)) < 0) {
+		Trace(TR_ERR, "Error opening %s", Logfile_Path);
+		goto out;
+	}
+
+	if ((logdir = fdopendir(logdir_fd)) == NULL) {
+		Trace(TR_ERR, "Error opening %s from fd.",
+		    Logfile_Path);
+		goto out;
+	}
+
+	SamMalloc(ent, sizeof (dirent_t) +
+	    fpathconf(logdir_fd, _PC_NAME_MAX));
+
+	while (readdir_r(logdir, ent) != NULL) {
+		int ent_len = strlen(ent->d_name);
+		char *dot1 = strchr(ent->d_name, '.');
+		char *dot2 = strrchr(ent->d_name, '.');
+
+		if (ent_len < fs_len + 5) {
+			/* length at least fs_name..log */
+			continue;
+		}
+
+		if (strncmp(fs_name, ent->d_name, fs_len) != 0) {
+			/* fs_name needs to be prefix */
+			continue;
+		}
+
+		if (strncmp(".log", &ent->d_name[ent_len-4], 4) != 0) {
+			/* .log needs to be suffix */
+			continue;
+		}
+
+		if (dot1 == dot2) {
+			/* must be at least two dots */
+			continue;
+		}
+
+		/* Timestamp starts after dot1 and ends at dot2 */
+		dot1 = strptime(dot1+1, "%Y%m%d%H%M", &log_time);
+
+		if (dot1 != dot2) {
+			/* didn't end up at dot2 */
+			continue;
+		}
+
+		/* If log timestamp is expired, delete the file */
+		if (mktime(&log_time) < expire_time) {
+			unlinkat(logdir_fd, ent->d_name, 0);
+		}
+	}
+
+	if (errno != 0) {
+		if (errno != ENOENT) {
+			Trace(TR_ERR, "Error reading log directory");
+		}
+		errno = 0;
+	}
+
+out:
+	if (ent != NULL) {
+		SamFree(ent);
+	}
+
+	if (logdir != NULL) {
+		closedir(logdir);
+	}
+
+	if (logdir_fd >= 0) {
+		close(logdir_fd);
+	}
 }
 
 

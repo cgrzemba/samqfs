@@ -1,4 +1,4 @@
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 
 #    SAM-QFS_notice_begin
 #
@@ -48,7 +48,7 @@ MAN_SRCS =  archive_audit.1m archive_mark.1m archiver.1m archiver.sh.1m \
 	sam-rftd.1m sam-robotsd.1m sam-rpcd.1m sam-sonyd.1m       \
 	sam-scannerd.1m sam-shrink.1m sam-stagealld.1m sam-stkd.1m \
 	sam-stagerd.1m sam-stagerd_copy.1m \
-	samtrace.1m samchaid.1m samcmd.1m samd.1m samdev.1m     \
+	samtrace.1m samchaid.1m samcmd.1m samd.1m samdb.1m samdev.1m     \
 	samgetvol.1m samexport.1m samfsck.1m samfsconfig.1m         \
 	samfsdump.1m samfsinfo.1m samfsrestore.1m samfstyp.1m samgetmap.1m \
 	samgetvol.1m samgrowfs.1m samload.1m sammkfs.1m             \
@@ -76,7 +76,7 @@ MAN_RELEASED_SRCS = $( shell echo archive_audit.1m \
 	sam-rftd.1m sam-robotsd.1m sam-rpcd.1m sam-scannerd.1m  \
 	sam-shrink.1m sam-stagerd.1m sam-stagerd_copy.1m \
 	sam-stagealld.1m samtrace.1m samunhold.1m sam-sonyd.1m      \
-	samchaid.1m samcmd.1m samd.1m samdev.1m samfsck.1m          \
+	samchaid.1m samcmd.1m samd.1m samdb.1m samdev.1m samfsck.1m          \
 	samfsconfig.1m samfsdump.1m samfstyp.1m             \
 	samgrowfs.1m sammkfs.1m samncheck.1m                        \
 	samquota.1m samquotastat.1m                                 \

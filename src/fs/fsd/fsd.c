@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.163 $"
+#pragma ident "$Revision: 1.164 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -191,6 +191,7 @@ static void sigReset(void);
 static void countMountedFS(void);
 static void startStopHsm(int cmd, char *fs);
 static void startSamamld(int fsMounted);
+static void startStopSamdb(char *, boolean_t);
 static void startSamrftd(void);
 
 /* LQFS: Logging control functions */
@@ -889,17 +890,10 @@ main(int argc, char *argv[])
 			if (!QfsOnly) {
 				sendFsMount(args->fs_name);
 #ifdef sun
-				if (args->start_fsalogd) {
-					/*
-					 * Start sam-fsalogd for this fs.
-					 */
-					Trace(TR_MISC,
-					    "Start %s (fsalogd) for %s",
-					    SAM_FSALOGD, args->fs_name);
-					argv[0] = SAM_FSALOGD;
-					argv[1] = args->fs_name;
-					StartProcess(2, argv, 0, 0);
+				if (args->start_samdb) {
+					startStopSamdb(args->fs_name, TRUE);
 				}
+
 				startStopHsm(FSD_mount, args->fs_name);
 #endif /* sun */
 			}
@@ -971,6 +965,8 @@ main(int argc, char *argv[])
 						    "on %s to unmount",
 						    args->fs_name);
 					}
+
+					startStopSamdb(args->fs_name, FALSE);
 				}
 			}
 #endif
@@ -2780,6 +2776,29 @@ startSamamld(int hsmfs)			/* Mounted HSM file systems */
 	}
 }
 
+/*
+ * ----	startStopSamdb
+ *
+ * Start or stop processes required for samdb.  This method
+ * is called on filesystems with the sam_db mount option
+ * enabled.
+ */
+void
+startStopSamdb(char *fs, boolean_t is_start)
+{
+	char *fsa_argv[3] = { SAM_FSALOGD, fs, NULL };
+	char *dbup_argv[3] = { SAM_DBUPD, fs, NULL };
+
+	if (is_start) {
+		/* Start sam-fsalogd and sam-dbupd for this fs. */
+		StartProcess(2, fsa_argv, CP_respawn, 0);
+		StartProcess(2, dbup_argv, CP_respawn, 0);
+	} else {
+		/* Stop sam-dbupd and sam-dbupd for this fs. */
+		StopProcess(fsa_argv, TRUE, SIGINT);
+		StopProcess(dbup_argv, TRUE, SIGINT);
+	}
+}
 
 /*
  * Start/stop remote file transfer daemon (old sam-ftpd)

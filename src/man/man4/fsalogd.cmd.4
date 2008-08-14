@@ -1,4 +1,4 @@
-.\" $Revision: 1.1 $
+.\" $Revision: 1.2 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -60,7 +60,7 @@ the \fBfsalogd.cmd\fR file:
 .B "log_path = " \fIn\fR
 Specifies the path of the log file directory.  The default is
 /var/opt/SUNWsamfs/fsalogd/\fIfamily_set_name\fR.  Log files are created 
-with the name \Fifamilyset.YYYYMMDDhhmm.log\fR.
+with the name \fIfamilyset.YYYYMMDDhhmm.log\fR.
 .TP
 .B "fs = " \fIfile_system_family_set_name\fR
 Specifies that the subsequent directives apply to the
@@ -70,6 +70,13 @@ indicated \fIfile_system_family_set_name\fR only.
 Sets the log file rollover interval time to \fIn\fR seconds. When the
 interval time since the creation of the log file has elapsed a new log file
 will be created.  The default is 28800 seconds (8 hours).
+.TP
+.B "log_expire = " \fIn\fR
+Sets the log file expiration time to \fIn\fR seconds. When the
+time since the creation of the log file has exceeded log_expire,
+the log file is eligible for deletion.  The default is 172800
+seconds (48 hours).  Expired log files are checked every 
+log rollover interval.
 .TP
 .B "event_interval = " \fIn\fR
 Sets the event interval time used by SAM-FS to call out to sam-fsalogd with
@@ -84,7 +91,7 @@ Sets the number of allowable retries when sam-fsalogd is establishing its
 connection with the file system.  The default retry count is 5.
 .TP
 Example 1.  This
-example file sets the \fBevent_interval\fR and \fBlog_path\fB directive for
+example file sets the \fBevent_interval\fR and \fBlog_path\fR directive for
 the \fBsamfs1\fR file system.
 .ft CO
 .nf

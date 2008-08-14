@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.5 $"
+#pragma ident "$Revision: 1.6 $"
 
 #include "sam/osversion.h"
 
@@ -416,6 +416,9 @@ sam_send_event(
 		return;
 	}
 	if ((em->em_mask & (1 << event)) == 0) {
+		return;
+	}
+	if (SAM_PRIVILEGE_INO(dp->version, dp->id.ino)) {
 		return;
 	}
 

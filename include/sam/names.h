@@ -36,7 +36,7 @@
 #define	_SAM_NAMES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 #endif
 
 #define	SAM_CONFIG_PATH "/etc/opt/SUNWsamfs"		/* configuration data */
@@ -59,6 +59,7 @@
 #define	SAM_ARCHIVER "sam-archiverd"	/* archiver daemon */
 #define	SAM_CATSERVER "sam-catserverd"	/* catalog server daemon */
 #define	SAM_FSALOGD	"sam-fsalogd"	/* file system activity log daemon */
+#define	SAM_DBUPD	"sam-dbupd"	/* sideband database update daemon */
 #define	SAM_FSD	"sam-fsd"		/* file system daemon */
 #define	SAM_RELEASER "sam-releaser"	/* releaser process */
 #define	SAM_RECYCLER "sam-recycler"	/* recycler process */

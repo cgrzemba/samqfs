@@ -1,0 +1,117 @@
+; One entry for each path/object.  Multiple entries with identical
+; ino/gen represents a file with multiple hard links.
+
+CREATE TABLE IF NOT EXISTS sam_path (
+ino		 INT     UNSIGNED NOT NULL,
+gen		 INT     UNSIGNED NOT NULL,
+type		 TINYINT UNSIGNED NOT NULL,
+deleted		 TINYINT UNSIGNED NOT NULL DEFAULT 0,
+delete_time	 INT     UNSIGNED NOT NULL DEFAULT 0,
+path		 VARCHAR(4096),
+obj		 VARCHAR(256),
+initial_path	 VARCHAR(4096),
+initial_obj	 VARCHAR(256),
+INDEX		 (ino),
+INDEX		 (gen),
+INDEX		 (type),
+INDEX		 (path))
+COMMENT		 'SAM path-ino mapping table';
+
+; One entry for each symbolic link.
+
+CREATE TABLE IF NOT EXISTS sam_link (
+ino		 INT     UNSIGNED NOT NULL,
+gen		 INT     UNSIGNED NOT NULL,
+link		 VARCHAR(4096),
+INDEX		 (ino),
+INDEX		 (gen))
+COMMENT		 'SAM symbolic link table';
+
+; One entry for each "data entity" i.e, file incarnation.
+; Deleted indicates all path references to this file has been deleted.
+; ino/gen/modify_time uniquely identifies an incarnation of data.
+
+CREATE TABLE IF NOT EXISTS sam_inode (
+ino		 INT     UNSIGNED NOT NULL,
+gen		 INT     UNSIGNED NOT NULL,
+type		 TINYINT UNSIGNED NOT NULL,
+deleted		 TINYINT UNSIGNED NOT NULL DEFAULT 0,
+size		 BIGINT  UNSIGNED DEFAULT 0,
+create_time	 INT     UNSIGNED DEFAULT 0,
+modify_time	 INT     UNSIGNED DEFAULT 0,
+delete_time	 INT     UNSIGNED DEFAULT 0,
+uid		 INT     UNSIGNED NOT NULL,
+gid		 INT     UNSIGNED NOT NULL,
+INDEX		 (ino),
+INDEX		 (gen))
+COMMENT		 'SAM inode entry table';
+
+; one sam_archive entry for each copy of a given ino/gen.
+; Entry is stall if not modify_time different than sam_inode.
+; Recycled indicates that this copy has been recycled to a different VSN.
+;
+; Will most likely need to add position information and MD5.
+
+CREATE TABLE IF NOT EXISTS sam_archive (
+ino		 INT     UNSIGNED NOT NULL,
+gen		 INT     UNSIGNED NOT NULL,
+copy		 TINYINT UNSIGNED NOT NULL,
+seq		 TINYINT UNSIGNED NOT NULL,
+recycled	 TINYINT UNSIGNED NOT NULL DEFAULT 0,
+vsn_id		 INT     UNSIGNED NOT NULL,
+size		 BIGINT  UNSIGNED DEFAULT 0,
+modify_time	 INT     UNSIGNED DEFAULT 0,
+create_time	 INT     UNSIGNED DEFAULT 0,
+recycle_time	 INT     UNSIGNED DEFAULT 0,
+stale		 TINYINT UNSIGNED DEFAULT 0,
+INDEX		 (ino),
+INDEX		 (gen),
+INDEX		 (vsn_id),
+INDEX		 (copy))
+COMMENT		 'SAM archive entry table';
+
+; One entry for each media type/vsn being used.
+; Recycled indicates that the entire VSN has been recycled.
+; Destroy_time indicates time of media unavailability.
+; Expire time is dormant/expired policy threshold.
+
+CREATE TABLE IF NOT EXISTS sam_vsns (
+id		 INT UNSIGNED NOT NULL AUTO_INCREMENT,		
+media_type	 CHAR(4)  NOT NULL,
+vsn		 CHAR(32) NOT NULL,
+recycled	 TINYINT UNSIGNED NOT NULL DEFAULT 0,
+files_active	 INT     UNSIGNED DEFAULT 0,
+files_dorment	 INT     UNSIGNED DEFAULT 0,
+files_expired	 INT     UNSIGNED DEFAULT 0,
+files_recycled	 INT     UNSIGNED DEFAULT 0,
+size_active	 BIGINT  UNSIGNED DEFAULT 0,
+size_dorment	 BIGINT  UNSIGNED DEFAULT 0,
+size_expired	 BIGINT  UNSIGNED DEFAULT 0,
+size_recycled	 BIGINT  UNSIGNED DEFAULT 0,
+expire_time	 INT     UNSIGNED DEFAULT 0,
+destroy_time	 INT     UNSIGNED DEFAULT 0,
+copy		 TINYINT UNSIGNED DEFAULT 0,
+uid		 INT     UNSIGNED DEFAULT 0,
+gid		 INT     UNSIGNED DEFAULT 0,
+PRIMARY KEY	 (id),
+INDEX		 (media_type),
+INDEX		 (vsn))
+COMMENT		 'SAM VSN entry table';
+
+; One entry for each media type.  Primarily used for computation of
+; utilization percentages.
+
+CREATE TABLE IF NOT EXISTS sam_media (
+id		 INT UNSIGNED AUTO_INCREMENT,		
+media_type	 CHAR(4) UNIQUE NOT NULL,
+size		 BIGINT  UNSIGNED DEFAULT 0,
+		 PRIMARY KEY (media_type),
+		 INDEX (id) )
+COMMENT		 'SAM media types table';
+
+; Version information for future upgrade paths
+
+CREATE TABLE IF NOT EXISTS sam_version (
+version		DOUBLE NOT NULL)
+COMMENT		'SAM version table';
+INSERT INTO sam_version VALUES (1.0);

@@ -1,0 +1,171 @@
+#!/bin/ksh
+
+#    SAM-QFS_notice_begin
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at pkg/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
+
+#
+# samdb - see help entry below for details.
+#
+#	$Revision: 1.1 $
+#
+
+#
+# Initial stuff.
+#
+CMDNAME=$0
+
+#
+# Samdb programs we need
+#
+CATVSN=/opt/SUNWsamfs/priv/samdb_catvsn
+CHECK=/opt/SUNWsamfs/priv/samdb_check
+CREATE=/opt/SUNWsamfs/priv/samdb_create
+DUMP=/opt/SUNWsamfs/priv/samdb_dump
+LISTINODE=/opt/SUNWsamfs/priv/samdb_listinode
+LISTPATH=/opt/SUNWsamfs/priv/samdb_listpath
+LISTVSN=/opt/SUNWsamfs/priv/samdb_listvsn
+LOAD=/opt/SUNWsamfs/priv/samdb_load
+
+#
+# Echo error message with prepended command name and subcommand.
+#
+echoe()
+{
+	if [ -z "$SUBCMD" ]
+	then
+		echo `basename $CMDNAME`: $*
+	else
+		echo `basename $CMDNAME`: "$SUBCMD:" $*
+	fi
+}
+
+
+#
+# Echo error message with prepended command name and subcommand to stderr.
+#
+echoee()
+{
+	echoe $* 1>&2
+}
+
+#
+# Check to see that a set of binaries are installed.
+#
+check_bin()
+{
+	for B in $*
+	do
+		if [ ! -x $B ]
+		then
+			echoee "$B command not installed."
+			exit 1
+		fi
+	done
+}
+
+CATVSN=/opt/SUNWsamfs/priv/samdb_catvsn
+CHECK=/opt/SUNWsamfs/priv/samdb_check
+CREATE=/opt/SUNWsamfs/priv/samdb_create
+DUMPLIST=/opt/SUNWsamfs/priv/samdb_dumplist
+LISTINODE=/opt/SUNWsamfs/priv/samdb_listinode
+LISTPATH=/opt/SUNWsamfs/priv/samdb_listpath
+LISTVSN=/opt/SUNWsamfs/priv/samdb_listvsn
+LOAD=/opt/SUNWsamfs/priv/samdb_load
+
+#
+# ===== Start of samdb main script =====
+#
+# Process subcommand.
+#
+if [[ $# -le 1 ]];then
+	SUBCMD=help
+else
+	SUBCMD=$1
+	shift
+fi
+
+case $SUBCMD in
+	""|help)
+		echo "Usage: " `basename $CMDNAME` "subcommand fs_name [arguments] [-v]"
+		echo "	fs_name = filesystem family set name"
+		echo "	-v = verbose"
+		echo "Subcommands:"
+		echo "	help - show help (this output)."
+		echo "	catvsn vsn(s) list all files on specified vsns."
+		echo "		vsn = volume identifer"
+		echo "	check - consistency check against filesystem (expensive)."
+		echo "	create - create database for filesystem"
+		echo "	dump -f dumpfile - dump a list of files "\
+			 "from the database for samfsdump."
+		echo "	listinode inum(s) - list inode information in database"
+		echo "	listpath [-p|-e|-b] paths(s) - list path "\
+			 "information stored in database"
+		echo "		-p = partial match"
+		echo "		-e = exact match"
+		echo "		-b = match both path and file name"
+		echo "	listvsn - list vsns stored in database"
+		echo "	load [-g] [-r] loadfile(s) - list vsns stored in database"
+		echo "		-g = generate progress marks"
+		echo "		-r = restore logic, use after samfsrestore"
+		exit 0
+		;;
+	catvsn)
+		check_bin $CATVSN
+		$CATVSN $*
+		;;
+	check)
+		check_bin $CHECK
+		$CHECK $*
+		;;
+	create)
+		check_bin $CREATE
+		$CREATE $*
+		;;
+	dump)
+		check_bin $DUMP
+		$DUMP $*
+		;;
+	listinode)
+		check_bin $LISTINODE
+		$LISTINODE $*
+		;;
+	listpath)
+		check_bin $LISTPATH
+		$LISTPATH $*
+		;;
+	listvsn)
+		check_bin $LISTVSN
+		$LISTVSN $*
+		;;
+	load)
+		check_bin $LOAD
+		$LOAD $*
+		;;	
+	*)
+		echo "$CMDNAME: Illegal subcommand \"$SUBCMD\"." 1>&2
+		exit 2
+		;;
+esac

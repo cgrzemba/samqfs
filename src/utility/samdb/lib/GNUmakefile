@@ -1,4 +1,4 @@
-# $Revision: 1.21 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,58 +26,37 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../..
+DEPTH = ../../../..
 
 include $(DEPTH)/mk/common.mk
 
-DIRS = \
-	sam \
-	samconf \
-	samspm \
-	samut
+LIB = samdbutil 
+LIB_SRC = \
+	arg.c \
+	atobytes.c \
+	atosecs.c \
+	buffin.c \
+	error.c \
+	get_vsn.c \
+	logfile.c \
+	logtime.c \
+	mtrlog.c \
+	parsespaces.c \
+	parsetabs.c \
+	print_table.c \
+	rename.c \
+	update.c \
+	xstrdup.c 
 
-ifeq ($(OS), SunOS)
-BDB = bdb
-SAMCAT = samcat
-SAMRFT = samrft
-DIRS += \
-	bdb \
-	fsmdb \
-	honeycomb \
-	mysql \
-	samrft \
-	samcat \
-	samfs \
-	samapi \
-	samdb \
-	sammig \
-	ssl \
-	curl \
-	csn \
-	sammgmt \
-	sammgmt/stkapi \
-	sammgmtjni \
-	samsanergy \
-	pax_hdr
-endif
+DEPCFLAGS += -I../include $(MYSQL_INCLUDE)
+LIB_LIBS = $(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamdb -lsamut $(MYSQL_LIB) $(LIBSO)
+
+LNOPTS = $(LIBS_LFLAGS32)
+LNLIBS =
 
 include $(DEPTH)/mk/targets.mk
 
-#
-# List any parallel build directory dependencies here
-# or .NOTPARALLEL: for sequential directory builds
-#
-sam:		$(SAMCAT) samconf samspm samut
-samspm:		samconf
-samfs:		sam samut $(SAMCAT)
-sammgmt:	sam samut $(SAMCAT) samfs samapi fsmdb csn
-samrft:		samspm
-samut:		samconf $(SAMRFT) $(BDB)
-samcat samapi:	samut
-sammgmt/stkapi:	sammgmt
-sammgmtjni:	sammgmt
-csn:		samut curl ssl
-pax_hdr:	samut
-samdb:		samut mysql
+install: all
+	$(INSTALL) $(USERINST) $(OBJ_DIR)/libsamdbutil.so $(LIBDEST)
 
 include $(DEPTH)/mk/depend.mk

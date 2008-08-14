@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.50 $
+# $Revision: 1.51 $
 #
 
 #  INPUT OPTIONS
@@ -464,6 +464,8 @@ STAGDATA="$VARDIR/stager"
 settrace AML  sam-amld
 settrace ARCH sam-archiverd
 settrace CAT  sam-catserverd
+settrace DBUP sam-dbupd
+settrace FSA  sam-fsalogd
 settrace FSD  sam-fsd
 settrace RCY  sam-recycler
 settrace NRCY sam-nrecycler
@@ -510,6 +512,8 @@ echo "Archiver Trace:             $ARCHTRC"  >>$REPORT
 echo "Archiver Data:              $ARCHDATA" >>$REPORT
 echo "Catalog Trace:              $CATTRC"   >>$REPORT
 echo "Device Logs:                $DEVLOGS"  >>$REPORT
+echo "DBUPD Trace:		  $DBUPTRC"  >>$REPORT
+echo "FSALOGD Trace:              $FSATRC"   >>$REPORT
 echo "FSD Service Log:            $SVCFSDLOG" >>$REPORT
 echo "FSD Trace:                  $FSDTRC"   >>$REPORT
 echo "Shared Mount Service Log:   $SVCSHMNTLOG" >>$REPORT
@@ -875,7 +879,7 @@ else
 	showenuf $SAMLOG\*
 fi
 
-for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $NRECYLOGS $RCYTRC $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
+for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $DBUPTRC $FSATRC $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $NRECYLOGS $RCYTRC $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
 do
 	showtails $FILES
 done

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 #include <errno.h>
 #include <limits.h>
@@ -103,25 +103,19 @@ sam_db_list(
 	}
 
 	p = path;
-	while (*p != '/') {
-		p++;		/* skip leading noise in path	*/
-	}
-
 	pp  = strrchr(p, '/');
 	if (pp == p && *(p+1) == '\0') {
 		return; /* path is / only	*/
-	}
-
-	if (pp == NULL) {
-		error(0, 0, catgets(catfd, SET, 13540,
-		    "Missing / in path: %s"), path);
-		return;
 	}
 
 	obj[0] = '\0';
 
 	if (S_ISSEGS(&perm_inode->di)) {
 		sprintf(obj, "%d", perm_inode->di.rm.info.dk.seg.ord + 1);
+	} else if (pp == NULL) {
+		/* File is in the root directory with relative path */
+		strncpy(obj, p, MAX_FILE_LENGTH);
+		p = ".";
 	} else {
 		strncpy(obj, pp+1, MAX_FILE_LENGTH);
 		*pp = '\0';
@@ -138,7 +132,9 @@ sam_db_list(
 	    perm_inode->di.creation_time,
 	    perm_inode->di.modify_time.tv_sec);
 
-	*pp = '/';
+	if (pp != NULL) {
+		*pp = '/';
+	}
 
 	if (ftype == 4) {		/* If symbolic link	*/
 		fprintf(DB_FILE, "%s\n", link != NULL?link:"");

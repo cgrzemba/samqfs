@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.164 $"
+#pragma ident "$Revision: 1.165 $"
 
 #include "sam/osversion.h"
 
@@ -687,9 +687,9 @@ samfs_mount(
 		bcopy(mp->mt.fi_name, cmd.args.mount.fs_name,
 		    sizeof (cmd.args.mount.fs_name));
 		cmd.args.mount.init = mp->mi.m_sbp->info.sb.init;
-		cmd.args.mount.start_fsalogd = FALSE;
+		cmd.args.mount.start_samdb = FALSE;
 		if (mp->mt.fi_config1 & MC_SAM_DB) {
-			cmd.args.mount.start_fsalogd = TRUE;
+			cmd.args.mount.start_samdb = TRUE;
 		}
 		(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 	}

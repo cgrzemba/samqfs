@@ -1,4 +1,4 @@
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 
 #    SAM-QFS_notice_begin
 #
@@ -32,11 +32,11 @@ include $(DEPTH)/mk/common.mk
 
 MAN_SRCS =  archiver.cmd.4 \
 	defaults.conf.4 diskvols.conf.4 ftp.cmd.4 \
-	hosts.fs.4 hosts.fs.local.4 inquiry.conf.4 \
-	mcf.4 preview.cmd.4 \
+	fsalogd.cmd.4 hosts.fs.4 hosts.fs.local.4 \
+	inquiry.conf.4 mcf.4 preview.cmd.4 \
 	recycler.cmd.4 rft.cmd.4 \
-	releaser.cmd.4 samfs.cmd.4 sefdata.4 sefsysevent.4 \
-	shrink.cmd.4
+	releaser.cmd.4 samdb.conf.4 samfs.cmd.4 sefdata.4 \
+	sefsysevent.4 shrink.cmd.4
 
 MAN_RELEASED_SRCS = archiver.cmd.4 \
 	defaults.conf.4 diskvols.conf.4 ftp.cmd.4 \
