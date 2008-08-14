@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 #include "sam/osversion.h"
 
@@ -200,6 +200,7 @@ typedef struct sam_fsinfo_page {
 #define	SCSI_SOSD_MOD_NAME	"misc/scsi_osd"
 #define	SOSD_MOD_NAME		"drv/sosd"
 
+#define	OSD_GET_API_VERSION		"osd_get_api_version"
 #define	OSD_SETUP_CREATE_OBJECT		"osd_setup_create_object"
 #define	OSD_SETUP_REMOVE_OBJECT		"osd_setup_remove_object"
 #define	OSD_OPEN_BY_NAME		"osd_open_by_name"
@@ -220,6 +221,9 @@ typedef struct sam_sosd_vec {
 
 	ddi_modhandle_t scsi_osd_hdl;
 	ddi_modhandle_t sosd_hdl;
+
+	/* osd_get_api_version */
+	uint32_t (*get_api_version)();
 
 	/* osd_setup_create_object */
 	osd_req_t *(*setup_create_object)(osd_dev_t, uint64_t, uint64_t,

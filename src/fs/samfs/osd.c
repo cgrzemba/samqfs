@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 #include "sam/osversion.h"
 
@@ -120,6 +120,7 @@ void
 sam_sosd_bind(void)
 {
 
+	uint32_t api_version;
 	int err = 0;
 
 	bzero((char *)&sam_sosd_vec, sizeof (struct sam_sosd_vec));
@@ -130,6 +131,24 @@ sam_sosd_bind(void)
 	sam_sosd_vec.scsi_osd_hdl =
 	    ddi_modopen(SCSI_SOSD_MOD_NAME, KRTLD_MODE_FIRST, &err);
 	if (sam_sosd_vec.scsi_osd_hdl == NULL) {
+		goto failed;
+	}
+
+	/*
+	 * Get the api version and make sure that we match.
+	 */
+	sam_sosd_vec.get_api_version =
+	    (uint32_t (*)())ddi_modsym(sam_sosd_vec.scsi_osd_hdl,
+	    OSD_GET_API_VERSION, &err);
+	if (!sam_sosd_vec.get_api_version) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_GET_API_VERSION, err);
+		goto failed;
+	}
+	api_version = (sam_sosd_vec.get_api_version)();
+	if (OSD_API_REV != api_version) {
+		cmn_err(CE_WARN, "SAM-QFS: Expected API REV %d but found %d\n",
+		    OSD_API_REV, api_version);
 		goto failed;
 	}
 
@@ -1028,7 +1047,7 @@ sam_decode_scsi_buf(
 	uint64_t len;
 
 	if (scsi_buf[0] != 0x72) {
-		return (-1);
+		return (0);
 	}
 	if (scsi_buf[1] == 1) {		/* Recovered error */
 		/*
@@ -1051,7 +1070,7 @@ sam_decode_scsi_buf(
 			}
 		}
 	}
-	return (-1);
+	return (0);
 }
 
 

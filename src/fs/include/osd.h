@@ -48,8 +48,8 @@ extern "C" {
 /*
  * Standard Globals
  */
-#define	OSD_API_REV	2
 #define	OSD_CDB_SIZE	224
+#define	OSD_API_REV	3
 
 
 /*
@@ -122,8 +122,6 @@ typedef struct osd_result {
 	uint16_t	err_field_offset;
 	uint16_t	service_action;
 	osd_resid_t	resid_data;
-	uint32_t	errp_len;
-	void		*errp;
 	uint32_t	sense_data_len;
 	void		*sense_data;
 } osd_result_t;
