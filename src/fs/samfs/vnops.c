@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 
 #include "sam/osversion.h"
 
@@ -794,14 +794,25 @@ sam_rename_vn(
 {
 	vnode_t *realvp;
 	int error;
+	int pass = 0;
 
 	TRACES(T_SAM_RENAME1, opvp, onm);
 	if (VOP_REALVP_OS(npvp, &realvp, NULL) == 0) {
 		npvp = realvp;
 	}
 	TRACES(T_SAM_RENAME2, npvp, nnm);
+retry:
 	error = sam_rename_inode(SAM_VTOI(opvp), onm, SAM_VTOI(npvp), nnm,
 	    NULL, credp);
+	if (error == EDEADLK) {
+		if (pass >= 10) {
+			pass += 4;
+		} else {
+			pass++;
+		}
+		delay(pass);
+		goto retry;
+	}
 	return (error);
 }
 

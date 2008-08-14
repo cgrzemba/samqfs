@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.293 $"
+#pragma ident "$Revision: 1.294 $"
 
 #include "sam/osversion.h"
 
@@ -2759,7 +2759,9 @@ lost_it:
 	case NAME_rename: {
 		vnode_t *realvp, *npvp;
 		sam_node_t *npip;
+		int pass = 0;
 
+retry:
 		if ((error = sam_get_ino(pip->mp->mi.m_vfsp, IG_EXISTS,
 		    &np->arg.p.rename.new_parent_id, &npip)) == 0) {
 			TRACES(T_SAM_RENAME1, SAM_ITOV(pip), np->component);
@@ -2784,6 +2786,15 @@ lost_it:
 			 * Inactivate the new parent inode.
 			 */
 			VN_RELE(SAM_ITOV(npip));
+			if (error == EDEADLK) {
+				if (pass >= 10) {
+					pass += 4;
+				} else {
+					pass++;
+				}
+				delay(pass);
+				goto retry;
+			}
 		}
 		}
 		break;

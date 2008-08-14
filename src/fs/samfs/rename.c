@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 
 #include "sam/osversion.h"
 
@@ -321,7 +321,11 @@ sam_rename_inode(
 
 		if (target_is_a_dir) {
 			nname.operation = SAM_RMDIR;
-			RW_LOCK_OS(&nip->data_rwl, RW_WRITER);
+			if (RW_TRYENTER_OS(&nip->data_rwl, RW_WRITER) == 0) {
+				error = EDEADLK;
+				error_line = __LINE__;
+				goto out1;
+			}
 		} else {
 			nname.operation = SAM_REMOVE;
 		}
@@ -603,7 +607,12 @@ sam_check_path(
 				ip = NULL;
 				break;
 			}
-			RW_LOCK_OS(&ip->data_rwl, RW_READER);
+			if (RW_TRYENTER_OS(&ip->data_rwl, RW_READER) == 0) {
+				error = EDEADLK;
+				VN_RELE(SAM_ITOV(ip));
+				ip = NULL;
+				break;
+			}
 		}
 	}
 	if (ip && (ip != npip) && (ip != opip)) {
