@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: samqfs.tld,v 1.14 2008/05/16 19:39:11 am143972 Exp $ -->
+<!-- $Id: samqfs.tld,v 1.15 2008/08/20 20:46:51 kilemba Exp $ -->
 
 
 <taglib>
@@ -327,29 +327,4 @@
       <rtexprvalue>true</rtexprvalue>
     </attribute>
   </tag>
-
-  <!-- ===================== Scope Tag ================ -->
-  <tag>
-    <name>scope</name>
-    <tagclass>com.sun.netstorage.samqfs.web.ui.taglib.scope.Scope</tagclass>
-    <bodycontent>JSP</bodycontent>
-    <info>a tag for changing server scope</info>
-    <attribute>
-      <name>serverName</name>
-      <required>false</required> 
-      <rtexprvalue>true</rtexprvalue>
-    </attribute>
-  </tag>
-
-  <!-- =============== Common Tasks Tag ========== -->
-  <tag>
-    <name>taskssection</name>
-    <tagclass>com.sun.netstorage.samqfs.web.ui.taglib.TasksSectionTag</tagclass>
-    <info> implements the JATO-Based common tasks component </info>
-    <attribute>
-        <name>name</name>
-        <required>true</required>
-        <rtexprvalue>true</rtexprvalue>
-    </attribute>
-  </tag> 
 </taglib>

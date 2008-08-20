@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointScheduleView.java,v 1.17 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: RecoveryPointScheduleView.java,v 1.18 2008/08/20 20:46:50 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -306,7 +306,7 @@ public class RecoveryPointScheduleView extends RequestHandlingViewBase {
         String taskName = (String)
         parent.getPageSessionAttribute(Constants.admin.TASK_NAME);
 
-        // workaround for common tasks
+        // incase we came from the first time config page
         if (taskId == null) {
             taskId = ScheduleTaskID.SNAPSHOT.getId();
         }
@@ -735,7 +735,7 @@ public class RecoveryPointScheduleView extends RequestHandlingViewBase {
         // we must have come from the common tasks page.
         RecoveryPointScheduleViewBean parent =
             (RecoveryPointScheduleViewBean)getParentViewBean();
-        parent.setFromCommonTasks(true);
+        parent.setFromFirstTimeConfig(true);
         return fsName;
     }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointScheduleViewBean.java,v 1.12 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: RecoveryPointScheduleViewBean.java,v 1.13 2008/08/20 20:46:50 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -37,13 +37,13 @@ import com.iplanet.jato.view.ViewBean;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.admin.FirstTimeConfigViewBean;
 import com.sun.netstorage.samqfs.web.admin.ScheduledTasksViewBean;
 import com.sun.netstorage.samqfs.web.archive.CriteriaDetailsViewBean;
 import com.sun.netstorage.samqfs.web.archive.PolicyDetailsViewBean;
 import com.sun.netstorage.samqfs.web.archive.PolicySummaryViewBean;
 import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
-import com.sun.netstorage.samqfs.web.util.CommonTasksViewBean;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
@@ -59,8 +59,8 @@ import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCHref;
 import com.sun.web.ui.view.pagetitle.CCPageTitle;
 import java.io.IOException;
-import javax.servlet.ServletException;
 import java.util.List;
+import javax.servlet.ServletException;
 
 public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
     public static final String PAGE_NAME = "RecoveryPointSchedule";
@@ -83,7 +83,8 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
     public static final String FS_ARCHIVE_POLICY_HREF = "FSArchivePolicyHref";
     public static final String SCHEDULED_TASKS_HREF   = "ScheduledTasksHref";
 
-    private static final String COMMON_TASKS = "from.common.tasks.page";
+    private static final String FIRSTTIME_CONFIG =
+        "from.first.time.config.page";
 
     private CCPageTitleModel ptModel;
 
@@ -225,9 +226,9 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
     /** handle cancel request */
     public void handleCancelRequest(RequestInvocationEvent evt)
         throws ModelControlException {
-        if (isFromCommonTasks()) {
+        if (isFromFirstTimeConfig()) {
             CommonViewBeanBase parent =
-                (CommonViewBeanBase)getViewBean(CommonTasksViewBean.class);
+                (CommonViewBeanBase)getViewBean(FirstTimeConfigViewBean.class);
             forwardTo(parent);
         } else {
             forwardToTargetPage(false);
@@ -239,7 +240,7 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
         CommonViewBeanBase target = null;
         String s = null;
 
-        if (isFromCommonTasks()) {
+        if (isFromFirstTimeConfig()) {
             target = (CommonViewBeanBase)getViewBean(FSSummaryViewBean.class);
             if (showAlert) {
                 SamUtil.setInfoAlert(
@@ -404,9 +405,9 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
         forwardTo(target);
     }
 
-    public boolean isFromCommonTasks() {
+    public boolean isFromFirstTimeConfig() {
         boolean result = false;
-        Boolean b = (Boolean)getPageSessionAttribute(COMMON_TASKS);
+        Boolean b = (Boolean)getPageSessionAttribute(FIRSTTIME_CONFIG);
         if (b != null) {
             result = b.booleanValue();
         }
@@ -414,7 +415,7 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
         return result;
     }
 
-    public void setFromCommonTasks(boolean b) {
-        setPageSessionAttribute(COMMON_TASKS, new Boolean(b));
+    public void setFromFirstTimeConfig(boolean b) {
+        setPageSessionAttribute(FIRSTTIME_CONFIG, new Boolean(b));
     }
 }

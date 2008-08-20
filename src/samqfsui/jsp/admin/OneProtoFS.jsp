@@ -28,10 +28,10 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: OneProtoFS.jsp,v 1.2 2008/06/11 21:16:18 kilemba Exp $
+// ident	$Id: OneProtoFS.jsp,v 1.3 2008/08/20 20:46:49 kilemba Exp $
 --%>
 
-<%@page info="CommonTasks" language="java" %>
+<%@page info="OneProtoFSPagelet" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc" %>
 

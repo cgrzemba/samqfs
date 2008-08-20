@@ -29,7 +29,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: LibrarySelector.jsp,v 1.5 2008/05/16 19:39:24 am143972 Exp $
+// ident	$Id: LibrarySelector.jsp,v 1.6 2008/08/20 20:46:49 kilemba Exp $
 --%>
 
 <%@page info="LibrarySelector" language="java" %>
@@ -42,15 +42,31 @@
 <!-- helper javascript -->
 <script type="text/javascript" src="/samqfsui/js/samqfsui.js"></script>
 <script type="text/javascript" src="/samqfsui/js/popuphelper.js"></script>
-<script type="text/javascript" src="/samqfsui//js/CommonTasks.js"></script>
 <script>
 function doSubmit(button) {
-    return handleImportTapeVSNs(button);
+  var theForm = button.form;
+  var s = theForm.elements["LibrarySelector.library"].value;
+
+  var tokens = s.split(":");
+  var driverType = tokens[1];
+
+  if (driverType == "1001") { // samst
+    return true;
+  } else { // go to the import vsn page
+    var serverName =
+      opener.document.FirstTimeConfigForm.elements["FirstTimeConfig.serverName"].value;
+    var url = "/samqfsui/media/ImportVSN" +
+      "?SERVER_NAME=" + serverName +
+      "&LIBRARY_NAME=" + tokens[0];
+
+    opener.document.location.href = url;
+    window.close();
+  }
 }
 </script>
 
 <!-- header -->
-<cc:header pageTitle="commontasks.selector.library.pagetitle"
+<cc:header pageTitle="firsttime.selector.library.pagetitle"
            copyrightYear="2007"
            baseName="com.sun.netstorage.samqfs.web.resources.Resources"
            bundleID="samBundle"
@@ -68,7 +84,7 @@ function doSubmit(button) {
 <!-- page title -->
 <cc:pagetitle name="pageTitle"
               bundleID="samBundle"
-              pageTitleText="commontasks.selector.library.pagetitle"
+              pageTitleText="firsttime.selector.library.pagetitle"
               showPageTitleSeparator="true"
               showPageButtonsTop="false"
               showPageButtonsBottom="true">
@@ -76,7 +92,7 @@ function doSubmit(button) {
 <table cellspacing="10"><tr><td>
 <cc:label name="libraryLabel"
           elementName="library"
-          defaultValue="commontasks.selector.library.label"
+          defaultValue="firsttime.selector.library.label"
           bundleID="samBundle"/>
 </td><td>
 <cc:dropdownmenu name="library"/>

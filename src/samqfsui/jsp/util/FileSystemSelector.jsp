@@ -29,7 +29,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSelector.jsp,v 1.4 2008/05/16 19:39:24 am143972 Exp $
+// ident	$Id: FileSystemSelector.jsp,v 1.5 2008/08/20 20:46:49 kilemba Exp $
 --%>
 
 <%@page info="FileSystemSelector" language="java" %>
@@ -43,12 +43,13 @@
 <script type="text/javascript" src="/samqfsui/js/samqfsui.js"></script>
 <script type="text/javascript" src="/samqfsui/js/popuphelper.js"></script>
 <script>
+
 function doSubmit(button) {
     var theForm = button.form;
     var fsName = theForm.elements["FileSystemSelector.fileSystem"].value;
     if (fsName != null) {
         var serverName =
-            opener.document.CommonTasksForm.elements["CommonTasks.serverName"].value;
+            opener.document.FirstTimeConfigForm.elements["FirstTimeConfig.serverName"].value;
         
         var url = "/samqfsui/fs/RecoveryPointSchedule" +
                   "?SERVER_NAME=" + serverName +
@@ -60,7 +61,7 @@ function doSubmit(button) {
 }
 </script>
 <!-- header -->
-<cc:header pageTitle="commontasks.selector.fs.pagetitle"
+<cc:header pageTitle="firsttime.selector.fs.pagetitle"
            copyrightYear="2007"
            baseName="com.sun.netstorage.samqfs.web.resources.Resources"
            bundleID="samBundle"
@@ -75,7 +76,7 @@ function doSubmit(button) {
 <!-- page title -->
 <cc:pagetitle name="pageTitle"
               bundleID="samBundle"
-              pageTitleText="commontasks.selector.fs.pagetitle"
+              pageTitleText="firsttime.selector.fs.pagetitle"
               showPageTitleSeparator="true"
               showPageButtonsTop="false"
               showPageButtonsBottom="true">
@@ -83,7 +84,7 @@ function doSubmit(button) {
 <table cellspacing="10"><tr><td>
 <cc:label name="fileSystemLabel"
           elementName="fileSystem"
-          defaultValue="commontasks.selector.fs.label"
+          defaultValue="firsttime.selector.fs.label"
           bundleID="samBundle"/>
 </td><td>
 <cc:dropdownmenu name="fileSystem"/>

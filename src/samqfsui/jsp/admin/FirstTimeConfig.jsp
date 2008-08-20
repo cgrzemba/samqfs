@@ -28,10 +28,10 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.3 2008/07/23 17:38:38 ronaldso Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.4 2008/08/20 20:46:49 kilemba Exp $
 --%>
 
-<%@page info="CommonTasks" language="java" %>
+<%@page info="FirstTimeConfig" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 <%@taglib uri="samqfs.tld" prefix="samqfs"%>

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSelectorViewBean.java,v 1.5 2008/05/16 18:39:06 am143972 Exp $
+// ident	$Id: FileSystemSelectorViewBean.java,v 1.6 2008/08/20 20:46:50 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -35,6 +35,7 @@ import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
+import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
@@ -44,7 +45,9 @@ import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCDropDownMenu;
 import com.sun.web.ui.view.html.CCLabel;
 import com.sun.web.ui.view.pagetitle.CCPageTitle;
+import java.io.IOException;
 import java.util.ArrayList;
+import javax.servlet.ServletException;
 
 public class FileSystemSelectorViewBean extends CommonSecondaryViewBeanBase {
     private static final String PAGE_NAME = "FileSystemSelector";
@@ -92,6 +95,18 @@ public class FileSystemSelectorViewBean extends CommonSecondaryViewBeanBase {
                                     .getRequestContext()
                                     .getServletContext(),
                                     "/jsp/util/SelectorPopupPageTitle.xml");
+    }
+
+    // handlers for OK and Cancel buttons to prevent stack traces incase of bad
+    // or disabled javascript
+    public void handleOKButtonRequest(RequestInvocationEvent rie)
+        throws ServletException, IOException {
+        forwardTo(getRequestContext());
+    }
+
+    public void handleCancelButtonRequest(RequestInvocationEvent rie)
+        throws ServletException, IOException {
+        forwardTo(getRequestContext());
     }
 
     public void beginDisplay(DisplayEvent evt) throws ModelControlException {
