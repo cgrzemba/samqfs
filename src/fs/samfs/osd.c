@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 #include "sam/osversion.h"
 
@@ -1292,7 +1292,9 @@ sam_create_object_id(
 		}
 		while (obj_pt_type != mp->mi.m_fs[ord].part.pt_type ||
 		    mp->mi.m_fs[ord].part.pt_state != DEV_ON) {
-			ord++;
+			if (++ord >= mp->mt.fs_count) {
+				ord = 0;
+			}
 			if (ord == dp->unit) {
 				break;
 			}
