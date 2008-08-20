@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.190 $"
+#pragma ident "$Revision: 1.191 $"
 #endif
 
 #include "sam/osversion.h"
@@ -146,6 +146,7 @@ static int sam_get_fsclistat(void *arg, int size);
 static int sam_fseq_ord(void *arg, int size, cred_t *credp);
 static int sam_move_ip_extents(sam_node_t *ip, sam_ib_arg_t *ib_args,
     int *doipupdate, cred_t *credp);
+static int sam_reset_unit(sam_mount_t *mp, struct sam_disk_inode *di);
 #endif
 static int sam_get_fsstatus(void *arg, int size);
 static int sam_get_fsinfo(void *arg, int size);
@@ -2114,7 +2115,10 @@ sam_fseq_ord(
 			}
 			ip->di.unit = (uchar_t)ib_args.new_ord;
 		} else {
-			sam_set_unit(ip->mp, &(ip->di));
+			error = sam_reset_unit(ip->mp, &(ip->di));
+			if (error != 0) {
+				goto outunlock;
+			}
 		}
 
 		error = sam_move_ip_extents(ip, &ib_args, &doipupdate, credp);
@@ -2340,5 +2344,65 @@ sam_move_ip_extents(
 	}
 
 	return (error);
+}
+
+
+/*
+ * ----- sam_reset_unit -
+ *
+ * Reset the unit for space allocation for the
+ * specified inode. The new unit must be of the same
+ * type as the existing unit and have available space.
+ */
+static int
+sam_reset_unit(
+	sam_mount_t *mp,
+	struct sam_disk_inode *di)
+{
+	int i, ord, oldord, curord;
+	mode_t	mode = di->mode;
+	dtype_t oldpt;
+	offset_t curspace;
+	int fs_count = mp->mi.m_sbp->info.sb.fs_count;
+
+	i = di->status.b.meta;	/* Device type: data (DD) or meta (MM) */
+
+	oldord = di->unit;
+	oldpt = mp->mi.m_fs[oldord].part.pt_type;
+
+	if (is_stripe_group(oldpt)) {
+		/*
+		 * Don't do stripe groups here.
+		 */
+		return (EINVAL);
+	}
+
+	/*
+	 * Find an available device that matches the
+	 * old unit (partition type) and has space.
+	 */
+	curord = -1;
+	curspace = 0;
+	for (ord = 0; ord < fs_count; ord++) {
+		if (mp->mi.m_fs[ord].part.pt_type == oldpt &&
+		    mp->mi.m_fs[ord].part.pt_state == DEV_ON) {
+
+			if (curord == -1 ||
+			    mp->mi.m_sbp->eq[ord].fs.space > curspace) {
+
+				curord = ord;
+				curspace = mp->mi.m_sbp->eq[ord].fs.space;
+			}
+		}
+	}
+	if (curord == -1 || curspace == 0) {
+		/*
+		 * Didn't find a matching unit
+		 * with available space.
+		 */
+		return (ENODEV);
+	}
+	di->unit = curord;
+	return (0);
 }
 #endif
