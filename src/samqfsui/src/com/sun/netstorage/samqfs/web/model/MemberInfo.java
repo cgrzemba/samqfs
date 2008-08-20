@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: MemberInfo.java,v 1.1 2008/06/04 18:16:10 ronaldso Exp $
+// ident $Id: MemberInfo.java,v 1.2 2008/08/20 19:36:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -56,6 +56,12 @@ public class MemberInfo {
     protected String infoStr = null;
     protected Properties props = null;
 
+    public int ok = -1;
+    public int off = -1;
+    public int error = -1;
+    public int unmounted = -1;
+    public int total = -1;
+
     /**
      * Class constructor
      * @param infoStr initial string got from the backend
@@ -64,13 +70,61 @@ public class MemberInfo {
         TraceUtil.trace3("MemberInfo: " + infoStr);
         this.infoStr = infoStr;
         this.props = ConversionUtil.strToProps(infoStr);
+
+        // off
+        String propStr = props.getProperty(KEY_OFF);
+        try {
+            off = Integer.parseInt(propStr);
+        } catch (NumberFormatException numEx) {
+            TraceUtil.trace1(
+                "NumberFormatException caught in MemberInfo::getOff()!",
+                numEx);
+        }
+
+        // unmounted
+        propStr = props.getProperty(KEY_UNMOUNTED);
+        try {
+            unmounted = Integer.parseInt(propStr);
+        } catch (NumberFormatException numEx) {
+            TraceUtil.trace1(
+                "NumberFormatException caught in MemberInfo::getUnmounted()!",
+                numEx);
+        }
+
+        // error
+        propStr = props.getProperty(KEY_ERROR);
+        try {
+            error = Integer.parseInt(propStr);
+        } catch (NumberFormatException numEx) {
+            TraceUtil.trace1(
+                "NumberFormatException caught in MemberInfo::getError()!",
+                numEx);
+        }
+
+        // ok
+        if (isPmds()) {
+            ok = getPmds() - getUnmounted() - getOff() - getError();
+        } else if (isClients()) {
+            ok = getClients() - getUnmounted() - getOff() - getError();
+        } else if (isStorageNodes()) {
+            ok = getStorageNodes() - getUnmounted() - getOff() - getError();
+        }
+
+    }
+
+    public MemberInfo(int ok, int unmounted, int off, int error, int total) {
+        this.ok = ok;
+        this.unmounted = unmounted;
+        this.off = off;
+        this.error = error;
+        this.total = total;
     }
 
     /**
      * Determine if the input string is used in the summary section
      * @return true if the input string is used in the summary section
      */
-    public boolean isSummary() {
+    public boolean isPmds() {
         return infoStr.indexOf(KEY_PMDS) != -1;
     }
 
@@ -98,7 +152,7 @@ public class MemberInfo {
      */
     public int getPmds() {
         // Only applicable in summary section
-        if (!isSummary()) {
+        if (!isPmds()) {
             return -1;
         }
         String propStr = props.getProperty(KEY_PMDS);
@@ -160,17 +214,6 @@ public class MemberInfo {
      * @return number of servers that are OK
      */
     public int getOk() {
-        // Not applicable in the summary section
-        if (isSummary()) {
-            return -1;
-        }
-
-        int ok = -1;
-        if (isClients()) {
-            ok = getClients() - getUnmounted() - getOff() - getError();
-        } else if (isStorageNodes()) {
-            ok = getStorageNodes() - getUnmounted() - getOff() - getError();
-        }
         return ok;
     }
 
@@ -179,15 +222,7 @@ public class MemberInfo {
      * @return number of unmounted servers
      */
     public int getUnmounted() {
-        String propStr = props.getProperty(KEY_UNMOUNTED);
-        try {
-            return Integer.parseInt(propStr);
-        } catch (NumberFormatException numEx) {
-            TraceUtil.trace1(
-                "NumberFormatException caught in MemberInfo::getUnmounted()!",
-                numEx);
-        }
-        return -1;
+        return unmounted;
     }
 
     /**
@@ -195,15 +230,7 @@ public class MemberInfo {
      * @return number of disabled servers
      */
     public int getOff() {
-        String propStr = props.getProperty(KEY_OFF);
-        try {
-            return Integer.parseInt(propStr);
-        } catch (NumberFormatException numEx) {
-            TraceUtil.trace1(
-                "NumberFormatException caught in MemberInfo::getOff()!",
-                numEx);
-        }
-        return -1;
+        return off;
     }
 
     /**
@@ -211,15 +238,11 @@ public class MemberInfo {
      * @return number of erroneus servers
      */
     public int getError() {
-        String propStr = props.getProperty(KEY_ERROR);
-        try {
-            return Integer.parseInt(propStr);
-        } catch (NumberFormatException numEx) {
-            TraceUtil.trace1(
-                "NumberFormatException caught in MemberInfo::getError()!",
-                numEx);
-        }
-        return -1;
+        return error;
+    }
+
+    public int getTotal() {
+        return total;
     }
 
     /**

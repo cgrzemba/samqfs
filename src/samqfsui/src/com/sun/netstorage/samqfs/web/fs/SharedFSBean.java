@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.12 2008/08/13 20:56:13 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.13 2008/08/20 19:36:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -82,8 +82,6 @@ public class SharedFSBean implements Serializable {
     protected String textHWM = null;
     /** Holds value of the file system archiving status. */
     protected String textArchiving = null;
-    /** Holds value of the file system potential metadata server number. */
-    protected String textPMDS = null;
     /** Holds value of the page title of clients section. */
     protected String titleClients = null;
     /** Holds value of the page title of storage nodes section. */
@@ -433,14 +431,6 @@ sfe.printStackTrace();
 
     public void setTextArchiving(String textArchiving) {
         this.textArchiving = textArchiving;
-    }
-
-    public String getTextPMDS() {
-        return summaryBean.getTextPMDS();
-    }
-
-    public void setTextPMDS(String textPMDS) {
-        this.textPMDS = textPMDS;
     }
 
     public String getTextHWM() {

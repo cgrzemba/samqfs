@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSSummaryBean.java,v 1.3 2008/07/08 21:40:32 ronaldso Exp $
+// ident        $Id: SharedFSSummaryBean.java,v 1.4 2008/08/20 19:36:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -46,9 +46,8 @@ import com.sun.web.ui.model.OptionTitle;
 public class SharedFSSummaryBean {
 
     /** Section IDs definitions. */
-    private static final short SECTION_SUMMARY = 0;
-    private static final short SECTION_CLIENTS = 1;
-    private static final short SECTION_STORAGE_NODES = 2;
+    private static final short SECTION_ALL_MEMBERS = 0;
+    private static final short SECTION_STORAGE_NODES = 1;
 
     /** Page Menu Options (with storage nodes) */
     protected String [][] menuOptionsWithSN = new String [][] {
@@ -81,7 +80,7 @@ public class SharedFSSummaryBean {
     /** Holds value of the page title of clients section. */
 
     protected MemberInfo [] allInfo = null;
-    protected MemberInfo [] summaryInfo = null;
+    protected MemberInfo [] mdsInfo = null;
     protected MemberInfo [] clientInfo = null;
     protected MemberInfo [] snInfo = null;
 
@@ -138,10 +137,6 @@ public class SharedFSSummaryBean {
         return textArchiving;
     }
 
-    public String getTextPMDS() {
-        return textPMDS;
-    }
-
     public String getTextHWM() {
         return textHWM;
     }
@@ -164,20 +159,20 @@ public class SharedFSSummaryBean {
 
     public String getTitleClients() {
         if (clientInfo == null) {
-            clientInfo = getInfo(allInfo, SECTION_CLIENTS);
+            clientInfo = getInfo(allInfo, SECTION_ALL_MEMBERS);
         }
         return
             JSFUtil.getMessage(
                 "SharedFS.title.clients",
                 new String [] {
                     clientInfo.length > 0 ?
-                        Integer.toString(clientInfo[0].getClients()) :
+                        Integer.toString(clientInfo[0].getTotal()) :
                     Integer.toString(0)});
     }
 
     public TableDataProvider getClientList() {
         if (clientInfo == null) {
-            clientInfo = getInfo(allInfo, SECTION_CLIENTS);
+            clientInfo = getInfo(allInfo, SECTION_ALL_MEMBERS);
         }
 
         return
@@ -213,7 +208,6 @@ public class SharedFSSummaryBean {
         MemberInfo [] infos, FileSystem thisFS, boolean showStorageNodes) {
 
         allInfo = infos;
-        summaryInfo = getInfo(infos, SECTION_SUMMARY);
 
         int hwm = thisFS.getMountProperties().getHWM();
         boolean archive = thisFS.getArchivingType() == FileSystem.ARCHIVING;
@@ -224,8 +218,6 @@ public class SharedFSSummaryBean {
         }
 
         textType = FSUtil.getFileSystemDescriptionString(thisFS, true);
-        textPMDS = summaryInfo.length > 0 ?
-            Integer.toString(summaryInfo[0].getPmds()) : "";
 
         if (thisFS.getState() == FileSystem.MOUNTED) {
             textMountPoint = thisFS.getMountPoint() + " " +
@@ -253,15 +245,27 @@ public class SharedFSSummaryBean {
     }
 
     private MemberInfo [] getInfo(MemberInfo [] infos, short sectionId) {
+        int ok = 0, off = 0, unmounted = 0, error = 0, total = 0;
+
         for (int i = 0; i < infos.length; i++) {
-            if (
-                (infos[i].isSummary() && sectionId == SECTION_SUMMARY) ||
-                (infos[i].isClients() && sectionId == SECTION_CLIENTS) ||
-                (infos[i].isStorageNodes() &&
-                       sectionId == SECTION_STORAGE_NODES)) {
-                return new MemberInfo [] {infos[i]};
+            if (infos[i].isStorageNodes()) {
+                if (sectionId == SECTION_STORAGE_NODES) {
+                    return new MemberInfo [] {infos[i]};
+                }
+            } else {
+                if (infos[i].isClients()) {
+                    total += infos[i].getClients();
+                } else if (infos[i].isPmds()) {
+                    total += infos[i].getPmds();
+                }
+                ok += infos[i].getOk();
+                off += infos[i].getOff();
+                unmounted += infos[i].getUnmounted();
+                error += infos[i].getError();
             }
         }
-        return new MemberInfo[0];
+
+        MemberInfo info = new MemberInfo(ok, unmounted, off, error, total);
+        return new MemberInfo [] {info};
     }
 }

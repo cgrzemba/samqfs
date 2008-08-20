@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.7 2008/07/23 17:38:38 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.8 2008/08/20 19:36:51 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -146,19 +146,6 @@
         rendered="#{SharedFSBean.showArchive}"
         overlapLabel="false">
     <ui:staticText id="textArchiving" text="#{SharedFSBean.textArchiving}" />
-    </ui:property>
-    <ui:property
-        id="propertyTextPMDS"
-        labelAlign="left"
-        label="#{samBundle['SharedFS.label.pmds']}"
-        noWrap="true"
-        overlapLabel="false">
-    <ui:hyperlink id="viewPMDSLink"
-                  url="/faces/jsp/fs/SharedFSClient.jsp"
-                  immediate="true">
-        <ui:staticText id="textPMDS" text="#{SharedFSBean.textPMDS}" />
-        <f:param name="mode" value="0"/>
-    </ui:hyperlink>
     </ui:property>
     <ui:markup tag="br" singleton="true"/>
     </ui:propertySheetSection>

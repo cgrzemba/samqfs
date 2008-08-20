@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.16 2008/07/23 21:40:18 ronaldso Exp $
+// ident	$Id: Host.java,v 1.17 2008/08/20 19:36:51 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -40,9 +40,9 @@ public class Host {
     public static final int CL_STATE_ON  = 1;
 
     /* Shared FS Host Function options must match options in pub/mgmt/hosts.h */
-    public static final int STORAGE_NODE	= 0x0001;
-    public static final int MDS			= 0x0002;
-    public static final int CLIENTS		= 0x0004;
+    public static final int MDS                 = 0x0001;
+    public static final int CLIENTS             = 0x0002;
+    public static final int STORAGE_NODE        = 0x0004;
     public static final int HOST_DETAILS	= 0x0008;
 
     String name;
