@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.191 $"
+#pragma ident "$Revision: 1.192 $"
 
 #include "sam/osversion.h"
 
@@ -2587,8 +2587,8 @@ sam_client_getpage_vn(
 	ip->cl_leaseused[ltype]++;
 
 	if ((SAM_GET_LEASEFLG(ip->mp) == NULL) &&
-	    ((rw == S_WRITE) && !(ip->cl_leases & CL_WRITE)) ||
-	    ((rw == S_READ) && !(ip->cl_leases & CL_READ))) {
+	    (((rw == S_WRITE) && !(ip->cl_leases & CL_WRITE)) ||
+	    ((rw == S_READ) && !(ip->cl_leases & CL_READ)))) {
 		sam_lease_data_t data;
 
 		mutex_exit(&ip->ilease_mutex);
