@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -140,7 +140,7 @@ serve_client(
 	    TrNullString(client->host_name));
 
 	mutex_lock(&srvr_clnt->sc_mutex);
-	srvr_clnt->flags = 0;
+	srvr_clnt->flags &= ~SRVR_CLNT_CONNECTED;
 	mutex_unlock(&srvr_clnt->sc_mutex);
 
 	mutex_lock(&un->mutex);

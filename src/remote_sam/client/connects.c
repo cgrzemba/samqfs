@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -525,7 +525,15 @@ readn(
 
 	nleft = nbytes;
 
-	tv.tv_sec = defaults->remote_keepalive;
+	if (defaults->remote_keepalive > 0) {
+		tv.tv_sec = defaults->remote_keepalive;
+	} else {
+		/*
+		 * remote_keepalive == 0 means disable the heartbeat.
+		 * we still need to set the select timer however.
+		 */
+		tv.tv_sec = 300;
+	}
 	tv.tv_usec = 0;
 
 	FD_ZERO(&allfds);
