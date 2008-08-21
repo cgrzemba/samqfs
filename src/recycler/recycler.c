@@ -36,7 +36,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.84 $"
+#pragma ident "$Revision: 1.85 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -163,6 +163,8 @@ static void sync_and_sleep(void);
 static int  getMultiVsnInfo(char *, union sam_di_ino *, int,
 	struct sam_section *, size_t);
 static int  getMinGain(ROBOT_TABLE *robot, VSN_TABLE *vsn);
+static boolean_t found_dk_candidate(ROBOT_TABLE *robot,
+	VSN_TABLE *vsn, FILE *mail_file);
 
 void
 main(
@@ -1029,11 +1031,9 @@ summarize_dk_vsn(
 		 * written to the media.  Adjust size so we don't generate
 		 * incorrect usage percentages (good, junk and free).
 		 */
-		Trace(TR_MISC,
-		    "[%s] size accumulated %lld > space written %lld",
-		    vsn->vsn, active_space, written_space);
+		Trace(TR_MISC, "[%s] active space > than written", vsn->vsn);
 
-		active_space = written_space;
+		written_space = active_space + (offset_t)(active_space *.05);
 	}
 
 	if (written_space > 0) {
@@ -1508,6 +1508,29 @@ select_dk_candidates(void)
 			}
 
 			/*
+			 * Log if VSN already recycling, 'c' flag set.
+			 */
+			if (vsn_entry->is_recycling) {
+				cemit(TO_FILE, 0, 20270, vsn_entry->vsn);
+
+				if (vsn_entry->has_request_files == 0 &&
+				    vsn_entry->no_recycle == 0 &&
+				    vsn_entry->has_noarchive_files == 0) {
+
+					cemit(TO_FILE, 0, 20222,
+					    vsn_entry->vsn);
+
+					any = found_dk_candidate(robot_entry,
+					    vsn_entry, mail_file);
+				} else {
+					cemit(TO_FILE, 0, 20271,
+					    vsn_entry->vsn);
+				}
+
+				continue;	/* done, next volume */
+			}
+
+			/*
 			 * Test disqualifying conditions against this VSN.
 			 */
 
@@ -1562,44 +1585,16 @@ select_dk_candidates(void)
 				/* VSN doesn't meet min-gain... skipping */
 				cemit(TO_FILE, 0, 20231, vsn_entry->junk,
 				    getMinGain(robot_entry, vsn_entry));
+
+				continue;
 			} else {
 				cemit(TO_FILE, 0, 20228, vsn_entry->junk,
 				    getMinGain(robot_entry, vsn_entry));
 			}
 
-			/*
-			 * Found recycling candidate.  If recycling is not
-			 * ignored on this archive set mark the VSN for
-			 * recycling.
-			 */
-
-			if (robot_entry->ignore == FALSE) {
-				/*
-				 * Mark VSN for recycling.
-				 */
-				vsn_entry->needs_recycling = TRUE;
-				cemit(TO_FILE, 0, 20236);
-
-				select_this_candidate(vsn_entry, robot_entry,
-				    mail_file);
-				any = TRUE;
-
-			} else {
-				/*
-				 * Recycling is ignored on this archive set.
-				 * VSN is not marked for recycling.  Set flag
-				 * to indicate this VSN would be a candidate
-				 * for recycling if ignore was not set on
-				 * this archive set.
-				 */
-				cemit(TO_FILE, 0, 20338);
-				vsn_entry->candidate = TRUE;
-				/*
-				 * Set flag so we log remove actions as if
-				 * recycling is occurring.
-				 */
-				vsn_entry->log_action = TRUE;
-			}
+			/* Found recycling candidate. */
+			any = found_dk_candidate(robot_entry, vsn_entry,
+			    mail_file);
 		}
 
 		if (any == B_FALSE) {
@@ -2052,7 +2047,10 @@ display_dk_vsns(void)
 		strcpy(countbuf, s2a(vsn_entry->count));
 		strcpy(sizebuf,  s2a(vsn_entry->size));
 
-		if (vsn_entry->needs_recycling) {
+		if (vsn_entry->is_recycling) {
+			tag = catgets(catfd, SET, 20357, "old candidate");
+
+		} else if (vsn_entry->needs_recycling) {
 			tag = catgets(catfd, SET, 20340, "recycle candidate");
 
 		} else if (vsn_entry->no_recycle) {
@@ -2928,4 +2926,59 @@ getMinGain(ROBOT_TABLE *robot, VSN_TABLE *vsn)
 	}
 
 	return (mingain);
+}
+
+/*
+ * Found dk recycling candidate.
+ */
+static boolean_t
+found_dk_candidate(
+	ROBOT_TABLE *robot,
+	VSN_TABLE *vsn,
+	FILE *mail_file)
+{
+	boolean_t any;
+
+	any = B_FALSE;
+
+	/*
+	 * If recycling is not ignored on this archive set mark
+	 * the VSN for recycling.
+	 */
+	if (robot->ignore == FALSE) {
+		/*
+		 * Mark VSN for recycling.
+		 */
+		vsn->needs_recycling = TRUE;
+		cemit(TO_FILE, 0, 20236);
+
+		select_this_candidate(vsn, robot, mail_file);
+		any = B_TRUE;
+
+	} else {
+		/*
+		 * Recycling is ignored on this archive set.
+		 * VSN is not marked for recycling.  Set flag
+		 * to indicate this VSN would be a candidate
+		 * for recycling if ignore was not set on
+		 * this archive set.
+		 */
+		cemit(TO_FILE, 0, 20338);
+		vsn->candidate = TRUE;
+
+		/*
+		 * Set flag so we log remove actions as if
+		 * recycling is occurring.
+		 */
+		vsn->log_action = TRUE;
+
+		/*
+		 * Clear is_recycling flag ("c") if recycling is ignored
+		 * on this archive set.
+		 */
+		vsn->is_recycling = FALSE;
+
+	}
+
+	return (any);
 }

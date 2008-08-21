@@ -34,7 +34,7 @@
 #if !defined(_AML_DISKVOLS_H)
 #define	_AML_DISKVOLS_H
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 #define	DISKVOLS_FILENAME "diskvols.db"	/* Disk volume database names */
 #define	DISKVOLS_VSN_DBNAME "vsn"
@@ -100,7 +100,8 @@ enum {
 	DV_read_only	= 1 << 3,	/* User set volume read only */
 	DV_bad_media	= 1 << 4,	/* Volume is unusable */
 	DV_needs_audit	= 1 << 5,	/* Need audit to calculate space used */
-	DV_archfull	= 1 << 6	/* Archiver found volume full */
+	DV_archfull	= 1 << 6,	/* Archiver found volume full */
+	DV_recycle	= 1 << 7	/* Schedule volume for recycling */
 };
 #define	DISKVOLS_IS_HONEYCOMB(x) ((x->DvMedia == DT_STK5800) ? B_TRUE : B_FALSE)
 #define	DISKVOLS_IS_DISK(x) ((x->DvMedia == DT_DISK) ? B_TRUE : B_FALSE)

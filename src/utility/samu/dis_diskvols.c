@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -131,7 +131,7 @@ DisDiskvols(
 		idx = 0;
 		vsnDict->BeginIterator(vsnDict);
 		while (vsnDict->GetIterator(vsnDict, &volname, &dv) == 0) {
-			char flags[] = "xxxxxxx";
+			char flags[] = "xxxxxxxx";
 
 			honeycomb = B_FALSE;
 			/*
@@ -158,10 +158,11 @@ DisDiskvols(
 			flags[4] = (dv->DvFlags & DV_bad_media) ? 'E' : '-';
 			flags[5] = (dv->DvFlags & DV_needs_audit) ? 'A' : '-';
 			flags[6] = (dv->DvFlags & DV_archfull)  ? 'F' : '-';
+			flags[7] = (dv->DvFlags & DV_recycle)  ? 'c' : '-';
 
 			if (header == B_FALSE) {
 				Mvprintw(ln++, 0, "index        space     "
-				    "capacity         used flags  volume");
+				    "capacity         used flags    volume");
 				if (details) {
 					Mvprintw(ln++, 0,
 					"                                 "

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -63,7 +63,7 @@ static char *_SrcFile = __FILE__;
 #include "fsd.h"
 
 #define	DV_FLAGS_TO_PRESERVE (DV_labeled | DV_unavail | DV_read_only | \
-				DV_bad_media | DV_needs_audit | DV_archfull)
+	DV_bad_media | DV_needs_audit | DV_archfull | DV_recycle)
 
 /*
  * Disk volume dictionary type.

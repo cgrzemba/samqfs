@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -223,10 +223,13 @@ AssignDiskVol(
 			return;
 		}
 
-		/*
-		 * Set space and capacity for disk volume.
-		 */
+		/* Set space and capacity for disk volume. */
 		setDiskArchiveStats(vsn);
+
+		/* Set is_recycling flag for disk volume if 'c' flag set. */
+		if (diskVolume->DvFlags & DV_recycle) {
+			vsn->is_recycling = 1;
+		}
 
 		/*
 		 * Get disk volume's sequence number.  Accumulate in use
@@ -292,7 +295,7 @@ RecycleDiskArchives(void)
 		VSN_TABLE *vsn_entry = &vsn_table[vsn_permute[vsn_i]];
 
 		/*
-		 *	If it's not disk media, skip it.
+		 * If it's not disk media, skip it.
 		 */
 		if (IS_DISK_MEDIA(vsn_entry->media) == FALSE) {
 			continue;
@@ -301,13 +304,13 @@ RecycleDiskArchives(void)
 		ignoreRecycling = B_FALSE;
 
 		/*
-		 *	Disk media, check if it needs recycling.
+		 * Disk media, check if it needs recycling.  Recycle
+		 * this disk volume if is_recycling, 'c', flag is set.
 		 */
-		if (vsn_entry->needs_recycling == FALSE) {
-			ignoreRecycling = B_TRUE;
+		if (vsn_entry->needs_recycling == FALSE &&
+		    vsn_entry->is_recycling == FALSE) {
 
-		} else if (vsn_entry->needs_recycling == FALSE) {
-			continue;
+			ignoreRecycling = B_TRUE;
 		}
 
 		recycle(vsn_entry);
@@ -423,8 +426,8 @@ recycle(
 	    StrFromFsize(robot->dataquantity, 3, NULL, 0),
 	    robot->limit_quantity);
 
-	Trace(TR_MISC, "[%s] Needs recycling: %d ignore: %d",
-	    vsn->vsn, vsn->needs_recycling, ignoreRecycling);
+	Trace(TR_MISC, "[%s] Needs recycling: %d ignore: %d candidate: %d",
+	    vsn->vsn, vsn->needs_recycling, ignoreRecycling, vsn->candidate);
 
 	/* Recycling disk archive set */
 	cemit(TO_FILE, 0, 20308, robot->name, vsn->vsn);
@@ -617,6 +620,10 @@ recycleSeqNumbers(
 
 			if (diskVolume->DvFlags & DV_archfull) {
 				clearDiskVolsFlag(vsn->vsn, DV_archfull);
+			}
+
+			if (diskVolume->DvFlags & DV_recycle) {
+				clearDiskVolsFlag(vsn->vsn, DV_recycle);
 			}
 		}
 

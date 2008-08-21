@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.88 $"
+#pragma ident "$Revision: 1.89 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -1612,6 +1612,10 @@ CmdDiskvols(
 
 	case 'F':
 		mask = DV_archfull;
+		break;
+
+	case 'c':
+		mask = DV_recycle;
 		break;
 
 	default:

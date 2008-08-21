@@ -35,7 +35,7 @@
  */
 
 /*
- * $Revision: 1.33 $
+ * $Revision: 1.34 $
  */
 
 #if !defined(_RECYCLER_H)
@@ -162,7 +162,6 @@ typedef struct VSN_TABLE {		/* VSN table: */
 	struct CatalogEntry *chtable;	/* catalog table - catalog entries */
 					/*    for robot this VSN in */
 	struct CatalogEntry *ce;	/* actual catalog entry for this VSN */
-	DiskVolumeInfo_t *dv;		/* disk volume dictionary element */
 	DiskVolumeSeqnum_t maxSeqnum;	/* max disk archive seqnum to recycle */
 	int		disk_archsets;	/* number of archsets belong to */
 

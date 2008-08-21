@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -608,14 +608,20 @@ PrintDiskArchsets()
 					    vsn_entry->vsn);
 
 					Trace(TR_MISC,
-					    "[%s] '%s' active space %lld",
+					    "[%s] '%s' active space: %lld "
+					    "(%s)",
 					    robot_entry->name, vsn_entry->vsn,
-					    vsn_entry->size);
+					    vsn_entry->size,
+					    StrFromFsize(vsn_entry->size, 3,
+					    NULL, 0));
 
 					Trace(TR_MISC,
-					    "[%s] '%s' written space %lld",
+					    "[%s] '%s' written space: %lld "
+					    "(%s)",
 					    robot_entry->name, vsn_entry->vsn,
-					    vsn_entry->written);
+					    vsn_entry->written,
+					    StrFromFsize(vsn_entry->written, 3,
+					    NULL, 0));
 				}
 			}
 		}
@@ -625,14 +631,17 @@ PrintDiskArchsets()
 			 * Amount of data for this ARCHIVE SET as
 			 * accumulated from the inodes on all the file systems
 			 * greater than the space written to the media.
-			 * Adjust space so we don't generate incorrect
+			 * Adjust space so we don't generate negative
 			 * usage percentages.
 			 */
-			Trace(TR_MISC,
-			    "[%s] size accumulated %lld > space written %lld",
-			    robot_entry->name, active_space, written_space);
+			Trace(TR_MISC, "[%s] active space > written",
+			    robot_entry->name);
 
-			active_space = written_space;
+			written_space = active_space +
+			    (offset_t)(active_space *.05);
+
+			/* Make sure this archive set is a candidate. */
+			robot_entry->needs_work = 1;
 		}
 
 		if (written_space > 0) {
