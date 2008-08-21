@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseDev.java,v 1.11 2008/05/16 18:35:26 am143972 Exp $
+// ident	$Id: BaseDev.java,v 1.12 2008/08/21 13:09:23 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt;
 
@@ -44,12 +44,13 @@ public class BaseDev {
 
     // valid device states. must match the dstate_t enum defined in devstat.h
     public static final int DEV_ON = 0; /* Normal operations */
-    public static final int DEV_RO = 1; /* Read only operations */
-    public static final int DEV_IDLE = 2; /* No new opens allowed */
-    public static final int DEV_UNAVAIL = 3; /* Unavailable for file system */
-    public static final int DEV_OFF  = 4; /* Off to this machine */
-    public static final int DEV_DOWN = 5; /* Maintenance use only */
-    public static final int DEV_NOALLOC = 6; /* Allocation Disabled */
+    public static final int DEV_NOALLOC = 1; /* Allocation Disabled */
+    public static final int DEV_RO = 2; /* Read only operations */
+    public static final int DEV_IDLE = 3; /* No new opens allowed */
+    public static final int DEV_UNAVAIL = 4; /* Unavailable for file system */
+    public static final int DEV_OFF  = 5; /* Off to this machine */
+    public static final int DEV_DOWN = 6; /* Maintenance use only */
+
 
     /* private constructors */
     protected BaseDev() {; }

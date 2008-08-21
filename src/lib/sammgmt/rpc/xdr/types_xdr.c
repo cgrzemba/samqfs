@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.36 $"
+#pragma ident	"$Revision: 1.37 $"
 
 #include "pub/mgmt/types.h"
 #include "pub/devstat.h"
@@ -251,8 +251,57 @@ dstate_t *objp)
 {
 
 
+	/*
+	 * The dstate_t enum changed in QFS in 5.0. To support a 4.6
+	 * server we must convert between the 4.6 and 5.0 values
+	 * that are used in the GUI layer. If the current operation
+	 * is encode, convert the value prior to translation to xdr. If
+	 * the current operation is decode, convert the value after
+	 * translating from xdr.
+	 *
+	 * Name		5.0 Value		4.6 Value
+	 * DEV_ON	0			0
+	 * DEV_NOALLOC	1			6
+	 * DEV_RO	2			1
+	 * DEV_IDLE	3			2
+	 * DEV_UNAVAIL	4			3
+	 * DEV_OFF	5			4
+	 * DEV_DOWN	6			5
+	 */
+
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6") < 0)) {
+			if (*objp == DEV_NOALLOC) {
+				*objp = 6;
+			}
+
+			if (*objp > 1 && *objp <= 6) {
+				*objp -= 1;
+			}
+		}
+	}
+#endif /* samrpc_client */
+
+
 	if (!xdr_enum(xdrs, (enum_t *)objp))
 		return (FALSE);
+
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6") < 0)) {
+			if (*objp == 6) {
+				*objp = DEV_NOALLOC;
+			}
+			if (*objp >= 1 && *objp < 6) {
+				*objp += 1;
+			}
+		}
+	}
+#endif /* samrpc_client */
+
 	return (TRUE);
 }
 
