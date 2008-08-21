@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.191 $"
+#pragma ident "$Revision: 1.192 $"
 #endif
 
 #include "sam/osversion.h"
@@ -428,10 +428,12 @@ sam_osd_command(
 	if ((mp = sam_find_filesystem(args.fs_name)) == NULL) {
 		return (ENOENT);
 	}
-	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
-		error = EAGAIN;
-		goto out;
-	}
+
+	/*
+	 * We need to issue OSD commands during failover because
+	 * sam-sharefsd needs to write the label block.
+	 */
+
 	dp = &mp->mi.m_fs[args.ord];
 	if (!is_osd_group(dp->part.pt_type)) {
 		error = EINVAL;

@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.224 $"
+#pragma ident "$Revision: 1.225 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2233,30 +2233,38 @@ sam_close_devices(
 		(void) VOP_PUTPAGE_OS(svp, 0, 0, B_INVAL, credp, NULL);
 		TRACE(T_SAM_DEV_CLOSE, mp, dp->part.pt_eq, dp->part.pt_state,
 		    dp->error);
-		if (dp->opened) {
-			if (is_osd_group(dp->part.pt_type)) {
-				sam_close_osd_device(dp->oh, filemode, credp);
+		if (is_osd_group(dp->part.pt_type)) {
+			if (!dp->opened) {
 				continue;
-			} else {
+			}
+			sam_close_osd_device(dp->oh, filemode, credp);
+			if (!(mp->mt.fi_status & FS_FAILOVER)) {
+				dp->opened = 0;
+				continue;
+			}
+			dp->error = sam_open_osd_device(dp, filemode, credp);
+		} else {
+			if (dp->opened) {
 				VOP_CLOSE_OS(svp, filemode, 1, (offset_t)0,
 				    credp, NULL);
+			} else {
+				VN_RELE(svp);		/* "nodev" specvp */
 			}
-		} else {
-			VN_RELE(svp);		/* "nodev" specvp */
-		}
-		dev = dp->dev;
-		bflush(dev);
-		bfinval(dev, 1);
-		if (dp->opened) {
+			dev = dp->dev;
+			bflush(dev);
+			bfinval(dev, 1);
+			if (!dp->opened) {
+				continue;
+			}
 			if (!(mp->mt.fi_status & FS_FAILOVER)) {
 				VN_RELE(svp);
-			} else {
-				(void) VOP_OPEN_OS(&dp->svp, filemode, credp,
-				    NULL);
-				TRACE(T_SAM_DEV_OPEN, mp, dp->part.pt_eq,
-				    dp->part.pt_state, dp->error);
+				dp->opened = 0;
+				continue;
 			}
+			(void) VOP_OPEN_OS(&dp->svp, filemode, credp, NULL);
 		}
+		TRACE(T_SAM_DEV_OPEN, mp, dp->part.pt_eq,
+		    dp->part.pt_state, dp->error);
 	}
 }
 #endif /* sun */

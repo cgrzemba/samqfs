@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -95,9 +95,9 @@ static char *htp[2] = {NULL, NULL};
  */
 static int tryDevs(char *fs);
 
-static int getRootInfo(int rfd, uint64_t oh, char *fs, int ord,
+static int getRootInfo(int rfd, sam_osd_handle_t oh, char *fs, int ord,
 	struct sam_sblk *sb, struct cfdata *cfp);
-static int getLabelInfo(int rfd, uint64_t oh, char *fs, int ord,
+static int getLabelInfo(int rfd, sam_osd_handle_t oh, char *fs, int ord,
 	struct sam_label_blk *lb);
 static int checkPartOrdinal(struct sam_sblk *sb, int part);
 
@@ -300,7 +300,7 @@ GetConfig(char *fs, struct sam_sblk *sb)
 	struct sam_mount_info mnt;
 	int d;
 	int rfd = -1;
-	uint64_t oh = 0;
+	sam_osd_handle_t oh = 0;
 	int err = 0;
 
 	cfp = &config.cp[config.freeTab];
@@ -440,9 +440,9 @@ GetConfig(char *fs, struct sam_sblk *sb)
 		}
 		if (checkPartOrdinal(sb, d)) {
 			errno = 0;
-			SysError(HERE, "FS %s: mcf doesn't match fs config",
-			    fs);
 			cfp->flags |= R_LBLK_ERR;
+			SysError(HERE, "FS %s: mcf doesn't match fs config, "
+			    "Label error flags=%x", fs, cfp->flags);
 		}
 	}
 
@@ -473,9 +473,9 @@ GetConfig(char *fs, struct sam_sblk *sb)
 			(void) close(rfd);
 			if (checkPartOrdinal(sb, 0)) {
 				errno = 0;
-				SysError(HERE, "FS %s: mcf doesn't match "
-				    "sblk config", fs);
 				cfp->flags |= R_SBLK_ERR;
+				SysError(HERE, "FS %s: mcf doesn't match "
+				    "sblk config, flags=%x", fs, cfp->flags);
 			}
 		}
 		if ((cfp->flags & R_SBLK_BITS) == R_SBLK) {
@@ -522,7 +522,7 @@ GetConfig(char *fs, struct sam_sblk *sb)
 static int
 getRootInfo(
 	int rfd,
-	uint64_t oh,
+	sam_osd_handle_t oh,
 	char *fs,
 	int ord,
 	struct sam_sblk *sb,
@@ -724,7 +724,7 @@ again:
 static int
 getLabelInfo(
 	int rfd,
-	uint64_t oh,
+	sam_osd_handle_t oh,
 	char *fs,
 	int ord,
 	struct sam_label_blk *lb)

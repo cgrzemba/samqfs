@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.72 $"
+#pragma ident "$Revision: 1.73 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -185,7 +185,7 @@ putLabel(
 	strncpy(lb->serveraddr, cfp->serverAddr, sizeof (lb->serveraddr));
 
 	if (is_osd_group(part[dpart].pt_type)) {
-		uint64_t oh;
+		sam_osd_handle_t oh;
 
 		if ((open_obj_device(part[dpart].pt_name, OPEN_RDWR_RAWFLAGS,
 		    &oh)) < 0) {
@@ -539,16 +539,14 @@ updateConfig(char *fs)
 	if (diff & CH_LC_HOSTS) {
 		r = 1;
 		Trace(TR_MISC, "FS %s: hosts.%s.local modtime changed; "
-		    "flags=%x",
-		    fs, fs, nfp->flags);
+		    "flags=%x", fs, fs, nfp->flags);
 	}
 
 out:
 	if (diff) {
 		Trace(TR_MISC, "FS %s: Config changed: "
 		    "diff=%x, flags=%x, oflags=%x",
-		    fs,
-		    diff, nfp->flags, cfp->flags);
+		    fs, diff, nfp->flags, cfp->flags);
 	}
 	return (r);
 }
