@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.255 $"
+#pragma ident "$Revision: 1.256 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1651,7 +1651,7 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 	}
 
 /*
- * XXX - rh - several secondary byte swap calls use msg->hdr.length
+ * XXX - several secondary byte swap calls use msg->hdr.length
  * XXX - as their length argument.  They should probably be damped
  * XXX - down to the minimum of the expected length and the sent
  * XXX - length (msg->hdr.length - offsetof(call.xxx.data, msg))
@@ -1666,6 +1666,19 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 		if (reply) {
 			r = sam_byte_swap(sam_san_lease2_swap_descriptor,
 			    &msg->call.lease2, msg->hdr.length);
+			if (r) {
+				break;
+			}
+			if (msg->call.lease2.irec.di.rm.ui.flags &
+			    RM_OBJECT_FILE) {
+				sam_disk_inode_t *di;
+
+				di = (sam_disk_inode_t *)
+				    &msg->call.lease2.irec.di;
+				sam_bswap4((void *)di->extent, NOEXT);
+				r = sam_byte_swap(sam_di_osd_swap_descriptor,
+				    &di->extent[0], sizeof (sam_di_osd_t));
+			}
 		} else {
 			r = sam_byte_swap(sam_san_lease_swap_descriptor,
 			    &msg->call.lease, msg->hdr.length);
@@ -1721,6 +1734,16 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 				    di->extent[0]) {
 					sam_bswap4((void *)di->extent, NOEXT);
 				}
+			}
+			if (msg->call.name2.nrec.di.rm.ui.flags &
+			    RM_OBJECT_FILE) {
+				sam_disk_inode_t *di;
+
+				di = (sam_disk_inode_t *)
+				    &msg->call.name2.nrec.di;
+				sam_bswap4((void *)di->extent, NOEXT);
+				r = sam_byte_swap(sam_di_osd_swap_descriptor,
+				    &di->extent[0], sizeof (sam_di_osd_t));
 			}
 		} else {
 			switch (operation) {
@@ -1870,6 +1893,16 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 				    di->extent[0]) {
 					sam_bswap4((void *)di->extent, NOEXT);
 				}
+			}
+			if (msg->call.inode2.irec.di.rm.ui.flags &
+			    RM_OBJECT_FILE) {
+				sam_disk_inode_t *di;
+
+				di = (sam_disk_inode_t *)
+				    &msg->call.inode2.irec.di;
+				sam_bswap4((void *)di->extent, NOEXT);
+				r = sam_byte_swap(sam_di_osd_swap_descriptor,
+				    &di->extent[0], sizeof (sam_di_osd_t));
 			}
 		}
 		break;
@@ -2076,12 +2109,29 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 						}
 						break;
 
+					case S_IFOBJ:
+						/*
+						 * Multivolume archive
+						 */
+			r = sam_byte_swap(sam_osd_ext_inode_swap_descriptor,
+			    &eip->ext.obj,
+			    msg->hdr.length);
+			if (r) {
+				cmn_err(CE_WARN, "SAM-QFS: "
+				    "osd_ext_inode_swap error");
+			}
+						break;
+
 					default:
 						r = -1;
 						break;
 					}
 
 				} else {
+					sam_disk_inode_t *di;
+
+					di = (sam_disk_inode_t *)
+					    (void *)&msg->call.block.data;
 					size_t bsize =
 					    msg->call.block.arg.p.getino.bsize;
 
@@ -2109,11 +2159,6 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 					 * mistake.  Undo it.
 					 */
 					if (S_ISLNK(mode)) {
-						sam_disk_inode_t *di;
-
-					di = (sam_disk_inode_t *)
-					    (void *)&msg->call.block.data;
-
 						if (di->psize.symlink <=
 						    SAM_SYMLINK_SIZE &&
 						    di->extent[0]) {
@@ -2121,6 +2166,12 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 							    (void *)di->extent,
 							    NOEXT);
 						}
+					}
+					if (di->rm.ui.flags
+					    & RM_OBJECT_FILE) {
+			sam_bswap4((void *)di->extent, NOEXT);
+			r = sam_byte_swap(sam_di_osd_swap_descriptor,
+			    &di->extent[0], sizeof (sam_di_osd_t));
 					}
 				}
 			}

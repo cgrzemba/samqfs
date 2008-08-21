@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 
 /* ----- Includes */
@@ -5226,7 +5226,7 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 			sam_di_osd_t	*oip;
 			sam_id_t ext_id;
 
-			oip = (sam_di_osd_t *)(void *)&dp->di.extent[2];
+			oip = (sam_di_osd_t *)(void *)&dp->di.extent[0];
 			ext_id = oip->ext_id;
 			if (ext_id.ino != 0 || ext_id.gen != 0) {
 				if (check_inode_exts(dp)) {
@@ -5401,7 +5401,7 @@ check_inode_exts(struct sam_perm_inode *dp)		/* Base inode entry */
 
 	/* Validate each inode extension in list */
 	if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
-		oip = (sam_di_osd_t *)(void *)&dp->di.extent[2];
+		oip = (sam_di_osd_t *)(void *)&dp->di.extent[0];
 		eid = oip->ext_id;
 		while ((eid.ino >= min_usr_inum) && (eid.ino <= ino_count)) {
 			(void) get_inode(eid.ino, xp);

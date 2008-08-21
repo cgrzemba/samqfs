@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 
 /* ANSI headers. */
@@ -890,7 +890,7 @@ dis_inode_file(
 	ln = (ll > ln) ? ll : ln;
 	if (COLS > 24)  ln++;
 	if (ino->rm.ui.flags & RM_OBJECT_FILE) {
-		sam_di_osd_t *oip = (sam_di_osd_t *)&ino->extent[2];
+		sam_di_osd_t *oip = (sam_di_osd_t *)&ino->extent[0];
 
 		Mvprintw(ln++, 0, "Object IDs  ext_id: %d.%d", oip->ext_id.ino,
 		    oip->ext_id.gen);

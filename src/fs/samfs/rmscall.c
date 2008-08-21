@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 
 #include "sam/osversion.h"
 
@@ -750,7 +750,7 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 				 * error if setting the same osd group.
 				 */
 				oip = (sam_di_osd_t *)
-				    (void *)&ip->di.extent[2];
+				    (void *)&ip->di.extent[0];
 				if (S_ISREG(ip->di.mode) && oip->obj_id[0]) {
 					if (old_status.stripe_group &&
 					    ip->di.stripe_group !=

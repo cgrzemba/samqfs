@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 #endif
 
 #ifdef linux
@@ -331,7 +331,8 @@ typedef struct sam_di_ext {
 #define	SAM_MAX_OSD_STRIPE_WIDTH	1024	/* Maximum OSDs in the stripe */
 
 typedef struct sam_di_osd {
-	sam_id_t		ext_id;
+	int32_t			fill[2];	/* Skip first 2 extents */
+	sam_id_t		ext_id;		/* Extension ino - object id */
 	uint64_t		obj_id[SAM_OSD_DIRECT];
 	uchar_t			ord[SAM_OSD_DIRECT];
 } sam_di_osd_t;

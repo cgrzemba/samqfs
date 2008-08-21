@@ -1,5 +1,5 @@
 #
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 #
 #    SAM-QFS_notice_begin
 #
@@ -75,6 +75,7 @@ type = DEFINE
 	sam_dirent
 	sam_disk_inode
 	sam_disk_inode_part2
+	sam_di_osd
 	sam_dquot
 	sam_fsid_t
 	sam_hlp_inode
@@ -110,6 +111,7 @@ type = DEFINE
 	sam_old_resource
 	sam_old_resource_file
 	sam_old_section
+	sam_osd_ext_inode
 	sam_perm_inode
 	sam_perm_inode_v1
 	sam_quota_group

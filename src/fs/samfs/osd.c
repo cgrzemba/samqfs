@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 #include "sam/osversion.h"
 
@@ -1203,7 +1203,7 @@ sam_create_object_id(
 	 */
 	objlist = (sam_objlist_page_t *)kmem_alloc(
 	    sizeof (sam_objlist_page_t), KM_SLEEP);
-	oip = (sam_di_osd_t *)(void *)&dp->extent[2];
+	oip = (sam_di_osd_t *)(void *)&dp->extent[0];
 	ord = dp->unit;
 	obj_pt_type = mp->mi.m_fs[ord].part.pt_type;
 	sam_osd_setup_private(iorp, mp);
@@ -1384,7 +1384,7 @@ sam_osd_inode_extent(
 	int unit;
 	int error = 0;
 
-	oip = (sam_di_osd_t *)(void *)&dp->extent[2];
+	oip = (sam_di_osd_t *)(void *)&dp->extent[0];
 	unit = dp->unit;
 
 	/*
@@ -1638,7 +1638,7 @@ sam_truncate_object_file(
 	int			num_group;
 	int			error;
 
-	oip = (sam_di_osd_t *)(void *)&ip->di.extent[2];
+	oip = (sam_di_osd_t *)(void *)&ip->di.extent[0];
 	bcopy((char *)oip, (char *)&oino, sizeof (sam_di_osd_t));
 	num_group = ip->di.rm.info.obj.num_group;
 	if (num_group) {
@@ -1910,7 +1910,7 @@ sam_osd_create_obj_layout(
 		    (sizeof (sam_obj_ent_t) * (num_group - 1)), KM_SLEEP);
 	}
 	olp = ip->olp;
-	oip = (sam_di_osd_t *)(void *)&ip->di.extent[2];
+	oip = (sam_di_osd_t *)(void *)&ip->di.extent[0];
 	i = 0;
 	ext_id = oip->ext_id;
 	for (n = 0; n < num_group; n++) {
