@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 #include "sam/osversion.h"
 
@@ -650,8 +650,12 @@ sam_change_dotdot(
 		fbrelse(fbp, S_WRITE);
 	} else {
 		dp->dotdot.d_id = npip->di.id;
-		TRANS_DIR(ip, (sam_u_offset_t)0);
-		if ((TRANS_ISTRANS(ip->mp)) || (SAM_SYNC_META(ip->mp))) {
+		if (TRANS_ISTRANS(ip->mp)) {
+			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+			TRANS_DIR(ip, (sam_u_offset_t)0);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+			fbwrite(fbp);
+		} else if (SAM_SYNC_META(ip->mp)) {
 			fbwrite(fbp);
 		} else {
 			fbdwrite(fbp);

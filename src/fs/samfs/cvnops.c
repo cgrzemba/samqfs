@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.144 $"
+#pragma ident "$Revision: 1.145 $"
 
 #include "sam/osversion.h"
 
@@ -1445,10 +1445,9 @@ sam_inactive_vn(
 )
 {
 	sam_node_t *ip;
-	int do_trans_end = 0;
-	int error = 0;
-	int trans_size;
+	int trans_size = 0;
 	sam_mount_t *mp;
+	int issync;
 
 	ip = SAM_VTOI(vp);
 	mp = ip->mp;
@@ -1467,14 +1466,15 @@ sam_inactive_vn(
 		 */
 
 		trans_size = (int)TOP_REMOVE_SIZE(ip);
-		TRANS_BEGIN_SYNC(mp, TOP_REMOVE, trans_size, error);
-		do_trans_end++;
+		TRANS_BEGIN_CSYNC(mp, issync, TOP_REMOVE, trans_size);
 	}
 
 	sam_inactive_ino(ip, credp);
 
-	if (do_trans_end) {
-		TRANS_END_SYNC(mp, error, TOP_REMOVE, trans_size);
+	if (trans_size) {
+		int terr;
+
+		TRANS_END_CSYNC(mp, terr, issync, TOP_REMOVE, trans_size);
 	}
 }
 

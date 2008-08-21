@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.158 $"
+#pragma ident "$Revision: 1.159 $"
 
 #include "sam/osversion.h"
 
@@ -586,6 +586,7 @@ sam_remove_vn(
 	struct ulockfs *ulp;
 #endif /* LQFS_TODO_LOCKFS */
 	int trans_size;
+	int issync;
 
 	TRACES(T_SAM_REMOVE, pvp, cp);
 	pip = SAM_VTOI(pvp);
@@ -598,7 +599,7 @@ sam_remove_vn(
 	if (ulp) {
 #endif /* LQFS_TODO_LOCKFS */
 		trans_size = (int)TOP_REMOVE_SIZE(pip);
-		TRANS_BEGIN_SYNC(pip->mp, TOP_REMOVE, trans_size, error);
+		TRANS_BEGIN_CSYNC(pip->mp, issync, TOP_REMOVE, trans_size);
 #ifdef LQFS_TODO_LOCKFS
 	}
 #endif /* LQFS_TODO_LOCKFS */
@@ -616,7 +617,7 @@ sam_remove_vn(
 #ifdef LQFS_TODO_LOCKFS
 	if (ulp) {
 #endif /* LQFS_TODO_LOCKFS */
-		TRANS_END_SYNC(pip->mp, error, TOP_REMOVE, trans_size);
+		TRANS_END_CSYNC(pip->mp, error, issync, TOP_REMOVE, trans_size);
 #ifdef LQFS_TODO_LOCKFS
 		ufs_lockfs_end(ulp);
 	}
