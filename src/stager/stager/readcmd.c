@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -42,6 +42,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 /*
  * POSIX headers.
@@ -87,6 +88,11 @@ static void setDirectioParam();
 static void setfieldErrmsg(int code, char *msg);
 static void readcfgErrmsg(char *msg, int lineno, char *line);
 static boolean_t verifyFile(char *file);
+static void dirNoBegin(void);
+static void dirEndStreams(void);
+static void dirStreams(void);
+static void procStreams(void);
+static void asmSize(fsize_t *size, char *valstr, char *name);
 
 #include "aml/stager.hc"
 
@@ -100,6 +106,8 @@ static DirProc_t commands[] = {
 	{ "bufsize",		setBufsizeParams,		DP_value },
 	{ "drives",		setDrivesParams,		DP_value },
 	{ "directio",		setDirectioParam,		DP_value },
+	{ "streams",		dirStreams,			DP_set },
+	{ "endstreams",		dirNoBegin,			DP_set },
 	{ NULL, NULL }
 };
 
@@ -107,6 +115,8 @@ static sam_stager_config_t config;
 
 static char cfgName[TOKEN_SIZE];
 static char cfgToken[TOKEN_SIZE];
+
+static char *noEnd = NULL;	/* which end statement is missing */
 
 /*
  * Read stager command file.
@@ -185,6 +195,23 @@ sam_stager_drives_t *
 GetCfgDrives(void)
 {
 	return (config.drives);
+}
+
+/*
+ * Get stream configuration parameter.
+ */
+sam_stager_streams_t *
+GetCfgStreamParams(
+	/* LINTED argument unused in function */
+	media_t media)
+{
+	sam_stager_streams_t *sp;
+
+	sp = NULL;
+	if (config.num_streams > 0) {
+		sp = config.streams;
+	}
+	return (sp);
 }
 
 /*
@@ -508,4 +535,151 @@ setMaxActiveParam(void *v, char *value, char *buf, int bufsize)
 
 	*(int *)v = val;
 	return (0);
+}
+
+/*
+ * No beginning statement for * 'streams' directive.
+ */
+static void
+dirNoBegin(void)
+{
+	/* No preceding '%s' statement */
+	ReadCfgError(CustMsg(4447), cfgName + 3);
+}
+
+
+/*
+ * 'streams' directive.
+ */
+static void
+dirStreams(void)
+{
+	static DirProc_t table[] = {
+		{ "endstreams",	dirEndStreams,	DP_set },
+		{ NULL,		procStreams,	DP_other }
+	};
+
+	char *msg;
+
+	ReadCfgSetTable(table);
+	msg = noEnd;
+	noEnd = "endstreams";
+	if (msg != NULL) {
+		/* '%s' missing */
+		ReadCfgError(CustMsg(4462), msg);
+	}
+}
+
+/*
+ * 'endstreams' directive.
+ */
+static void
+dirEndStreams(void)
+{
+	ReadCfgSetTable(commands);
+	noEnd = NULL;
+}
+
+/*
+ * Process 'streams' parameters.
+ */
+static void
+procStreams(void)
+{
+	sam_stager_streams_t sp;
+	boolean_t paramsDefined;
+	char *p;
+	size_t size;
+	int idx;
+
+	/*
+	 * Assemble media specifier.
+	 * Validate media, error if not disk archive media.
+	 */
+	if (strcmp(cfgName, "dk") != 0) {
+		/* Invalid media type */
+		ReadCfgError(CustMsg(19039), cfgName);
+		return;
+	}
+
+	if (GetCfgStreamParams(sam_atomedia(cfgName)) != NULL) {
+		/* Duplicate stream parameter definition '%s' */
+		ReadCfgError(CustMsg(19040), cfgName);
+	}
+
+	memset(&sp, 0, sizeof (sam_stager_streams_t));
+	sp.ss_media = sam_atomedia(cfgName);
+
+	paramsDefined = B_FALSE;
+
+	while (ReadCfgGetToken() != 0) {
+
+		paramsDefined = B_TRUE;
+		if (strcmp(cfgToken, "-drives") == 0) {
+			if (ReadCfgGetToken() == 0) {
+				/* Missing value */
+				ReadCfgError(CustMsg(14113), "-drives");
+			}
+			errno = 0;
+			sp.ss_drives = strtoll(cfgToken, &p, 0);
+			if (errno != 0 || *p != '\0') {
+				/* Invalid '%s' value '%s' */
+				ReadCfgError(CustMsg(14101),
+				    "-drives", cfgToken);
+			}
+
+		} else if (strcmp(cfgToken, "-maxsize") == 0) {
+			if (ReadCfgGetToken() == 0) {
+				/* Missing value */
+				ReadCfgError(CustMsg(14113), "-maxsize");
+			}
+			asmSize(&sp.ss_maxSize, cfgToken, "-maxsize");
+
+		} else if (strcmp(cfgToken, "-maxcount") == 0) {
+			if (ReadCfgGetToken() == 0) {
+				/* Missing value */
+				ReadCfgError(CustMsg(14113), "-maxcount");
+			}
+			errno = 0;
+			sp.ss_maxCount = strtoll(cfgToken, &p, 0);
+			if (errno != 0 || *p != '\0') {
+				/* Invalid '%s' value '%s' */
+				ReadCfgError(CustMsg(14101),
+				    "-maxcount", cfgToken);
+			}
+		} else {
+			paramsDefined = B_FALSE;
+		}
+	}
+
+	if (paramsDefined == B_TRUE) {
+		config.num_streams++;
+		size = config.num_streams * sizeof (sam_stager_streams_t);
+		SamRealloc(config.streams, size);
+
+		idx = config.num_streams - 1;
+		memmove(&config.streams[idx], &sp,
+		    sizeof (sam_stager_streams_t));
+	} else {
+		/* No stream parameters were defined. */
+		ReadCfgError(CustMsg(19041));
+	}
+}
+
+/*
+ * Assemble size of string.
+ */
+static void
+asmSize(
+	fsize_t *size,
+	char *valstr,
+	char *name)
+{
+	uint64_t value;
+
+	if (StrToFsize(valstr, &value) == -1) {
+		/* Invalid '%s' value ('%s') */
+		ReadCfgError(CustMsg(14101), name, valstr);
+	}
+	*size = value;
 }

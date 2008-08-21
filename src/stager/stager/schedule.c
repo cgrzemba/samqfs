@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -91,7 +91,7 @@ static boolean_t infiniteLoop = B_TRUE;
 
 static void scheduleWork();
 static void startWork(boolean_t copy_assigned);
-static int insertWork(int id);
+static boolean_t insertWork(int id);
 static void checkWork();
 static void requeueWork(pid_t pid);
 static void updateWorkState();
@@ -109,7 +109,7 @@ static int startCopy(StreamInfo_t *stream);
 static CopyInstanceInfo_t *findCopy(int library, media_t media);
 static CopyInstanceInfo_t *findCopyByPid(pid_t pid);
 static boolean_t isCopyIdle(VsnInfo_t *vi);
-static boolean_t isCopyBusy(VsnInfo_t *vi, u_longlong_t position);
+static boolean_t isCopyBusy(VsnInfo_t *vi);
 static boolean_t isDriveAvailForCopy(int library);
 static void initCopyInstanceList(boolean_t recover);
 static void startCopyProcess(CopyInstanceInfo_t *instance);
@@ -270,7 +270,7 @@ Scheduler(
 				 */
 				if (GET_FLAG(file->flags, FI_CANCEL) == 0 ||
 				    GET_FLAG(file->flags, FI_DCACHE_CLOSE)) {
-					if (insertWork(id) == 0) {
+					if (insertWork(id) == B_FALSE) {
 						AddCompose(id);
 					}
 				} else {
@@ -362,7 +362,6 @@ scheduleWork(void)
 	int i;
 
 	/*
-	 * TODO
 	 * Sort work queue based on staging priority.
 	 * Ordering based on stage priority of all files in stream.
 	 */
@@ -849,20 +848,22 @@ updateStreamState(
 	}
 }
 
+
 /*
  * Check if a new stage file request can be inserted in an
  * existing stream on the work queue.
  */
-static int
+static boolean_t
 insertWork(
 	int id)
 {
 	int i;
 	FileInfo_t *file;
 	StreamInfo_t *stream;
-	int added = 0;
+	boolean_t added;
 	int copy;
 
+	added = B_FALSE;
 	file = GetFile(id);
 	copy = file->copy;
 
@@ -887,8 +888,8 @@ insertWork(
 			}
 		} else if ((strcmp(file->ar[copy].section.vsn,
 		    stream->vsn) == 0) &&
-		    (file->ar[copy].media == stream->media) &&
-		    !(IF_COPY_DISKARCH(file, copy))) {
+		    (file->ar[copy].media == stream->media)) {
+/*		    !(IF_COPY_DISKARCH(file, copy))) { */
 
 			added = AddStream(stream, id, ADD_STREAM_SORT);
 
@@ -1394,7 +1395,7 @@ findResources(
 	 * Set resource to busy if copy already working on this VSN or
 	 * if there are no idle copy available for library.
 	 */
-	if (isCopyBusy(&stream->vi, file->ar[copy].section.position)) {
+	if (isCopyBusy(&stream->vi)) {
 		priority = SP_busy;
 
 	} else if (isCopyIdle(&stream->vi) == B_FALSE) {
@@ -1417,8 +1418,9 @@ findResources(
 			 * Check if drives are available in the library
 			 * holding the VSN.
 			 */
-			if (GetNumLibraryDrives(stream->vi.lib) > 0)
+			if (GetNumLibraryDrives(stream->vi.lib) > 0) {
 				priority = SP_start;
+			}
 
 			/*
 			 * Check if there's a drive free to use.
@@ -1806,8 +1808,8 @@ isCopyIdle(
 	/*
 	 * Attempt to find idle thread for specified library.
 	 * The CopyInstanceList structure has an entry for all drives
-	 * allowed (not just available) * so also check to make sure not
-	 * to oversubscribe the copy threads and number of drives
+	 * allowed (not just available) so also check to make sure not
+	 * to oversubscribe the copy processes and number of drives
 	 * available for the library.
 	 */
 	library = vi->lib;
@@ -1831,19 +1833,25 @@ isCopyIdle(
 
 /*
  * Check if the copy proc for specified library and media type
- * is busy.
+ * is busy.  Only check for a busy copy process for removable media.
+ * A disk archive volume is never busy.
  */
 static boolean_t
 isCopyBusy(
-	VsnInfo_t *vi,
-	u_longlong_t position)
+	VsnInfo_t *vi)
 {
 	boolean_t busy;
 	int i;
 	int library;
 
 	busy = B_FALSE;
+
 	initCopyInstanceList(B_FALSE);
+
+	/* A disk archive volume is never busy. */
+	if (IS_DISKARCHIVE_MEDIA(vi->media)) {
+		return (B_FALSE);
+	}
 
 /*
  * FIXME - detect if trying to schedule flip side of two-sided media
@@ -1857,9 +1865,7 @@ isCopyBusy(
 		ci = &CopyInstanceList->cl_data[i];
 		if (ci->ci_busy == B_TRUE &&
 		    ci->ci_lib == library &&
-		    strcmp(ci->ci_vsn, vi->vsn) == 0 &&
-		    ci->ci_dkPosition == position) {
-
+		    strcmp(ci->ci_vsn, vi->vsn) == 0) {
 			busy = B_TRUE;
 			break;
 		}

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -134,17 +134,17 @@ Compose(void)
 	int i;
 	int copy;
 	int retry;
-	u_longlong_t position;
+	boolean_t added;
 
-	if (composeList.entries == 0)
+	if (composeList.entries == 0) {
 		return;
+	}
 
 	sortList = makeSortList();
 	separateVsns(sortList);
 
 	currentVsn = NULL;
 	stream = NULL;
-	position = 0;
 
 	for (i = 0; i < composeList.entries; i++) {
 
@@ -159,10 +159,7 @@ Compose(void)
 		 */
 		if (currentVsn == NULL ||
 		    (strcmp(file->ar[copy].section.vsn, currentVsn) != 0) ||
-		    GET_FLAG(file->flags, FI_DCACHE) ||
-		    (IF_COPY_DISKARCH(file, copy) &&
-		    strcmp(file->ar[copy].section.vsn, currentVsn) == 0 &&
-		    file->ar[copy].section.position != position)) {
+		    GET_FLAG(file->flags, FI_DCACHE)) {
 
 			retry = 3;
 			stream = NULL;
@@ -176,26 +173,33 @@ Compose(void)
 			}
 			if (stream == NULL) {
 				FatalSyscallError(EXIT_FATAL, HERE,
-				    "Create stream", currentVsn);
+				    "Compose create stream", currentVsn);
 			}
-			AddWork(stream);
 
-			if (stream->diskarch) {
-				position = file->ar[copy].section.position;
-				currentVsn = file->ar[copy].section.vsn;
-			}
+			AddWork(stream);
 
 			if (GET_FLAG(file->flags, FI_DCACHE_CLOSE) == 0) {
 				currentVsn = file->ar[copy].section.vsn;
-				position = file->ar[copy].section.position;
 			}
 		}
 
 		/*
 		 * Add stage request to the stream.
 		 */
-		(void) AddStream(stream, composeList.data[i],
+		added = AddStream(stream, composeList.data[i],
 		    ADD_STREAM_NOSORT);
+		if (added == B_FALSE) {
+			SetErrno = 0;	/* set for trace */
+			Trace(TR_ERR,
+			    "Compose add stream '%s.%d' 0x%x failed",
+			    stream->vsn, stream->seqnum, (int)stream);
+			SET_FLAG(stream->flags, SR_full);
+		}
+
+		/* Stream is full, create a new one. */
+		if (GET_FLAG(stream->flags, SR_full)) {
+			currentVsn = NULL;
+		}
 	}
 
 	/*

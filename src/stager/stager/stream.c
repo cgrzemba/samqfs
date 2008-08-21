@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -77,6 +77,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "stream.h"
 #include "copy_defs.h"
 
+#include "stager.h"
 #include "stage_reqs.h"
 
 static upath_t fullpath;
@@ -86,8 +87,10 @@ static FileInfo_t **makeSortList(StreamInfo_t *stream);
 static void separatePositions(StreamInfo_t *stream, FileInfo_t **sortList);
 static void sortStream(StreamInfo_t *stream, FileInfo_t **sortList);
 static int comparePosition(const void *p1, const void *p2);
-static int addActiveStream(StreamInfo_t *stream, int id);
-static int appendActiveStream(StreamInfo_t *stream, FileInfo_t *last, int id);
+static boolean_t addActiveStream(StreamInfo_t *stream, int id);
+static boolean_t appendActiveStream(StreamInfo_t *stream, FileInfo_t *last,
+    int id);
+static void checkStreamLimits(StreamInfo_t *stream, FileInfo_t *file);
 
 int Seqnum = 1;		/* Stream sequence number */
 
@@ -130,6 +133,22 @@ CreateStream(
 	if (GET_FLAG(file->flags, FI_DCACHE)) {
 		stream->context = file->context;
 	}
+
+	/* Set stream limit parameters for disk archives. */
+	if (stream->diskarch == B_TRUE) {
+		sam_stager_streams_t *params;
+
+		params = GetCfgStreamParams(stream->media);
+		if (params != NULL) {
+			stream->sr_params.sr_flags = SP_maxsize | SP_maxcount;
+			stream->sr_params.sr_maxCount = params->ss_maxCount;
+			stream->sr_params.sr_maxSize = params->ss_maxSize;
+		} else {
+			stream->sr_params.sr_flags = SP_maxsize;
+			stream->sr_params.sr_maxSize = GIGA;
+		}
+	}
+
 	stream->seqnum = Seqnum;
 	stream->first = stream->last = EOS;
 
@@ -290,14 +309,21 @@ DeleteStream(
  * be active, if this is the case then this request may fail.  Returns
  * FALSE if the request could not be added to the stream.
  */
-int
+boolean_t
 AddStream(
 	StreamInfo_t *stream,
 	int id,
 	int sort)
 {
-	int added = FALSE;
+	boolean_t added;
 	ASSERT(stream != NULL);
+
+	added = B_FALSE;
+
+	/* Stream already at capacity. */
+	if (GET_FLAG(stream->flags, SR_full)) {
+		return (added);
+	}
 
 	/*
 	 * Add request to inactive stream.  We don't need to lock
@@ -317,7 +343,7 @@ AddStream(
 		if (GET_FLAG(file->flags, FI_DCACHE) &&
 		    (stream->context != NULL &&
 		    stream->context != file->context)) {
-			return (FALSE);
+			return (B_FALSE);
 		}
 
 		/*
@@ -328,7 +354,7 @@ AddStream(
 		PthreadMutexLock(&stream->mutex);
 		if (GET_FLAG(stream->flags, SR_ERROR)) {
 			PthreadMutexUnlock(&stream->mutex);
-			return (FALSE);
+			return (B_FALSE);
 		}
 
 		if (IS_STREAM_EMPTY(stream)) {
@@ -351,8 +377,8 @@ AddStream(
 			stream->context = last->context;
 		}
 
-		added = TRUE;
-		stream->count++;
+		added = B_TRUE;
+		checkStreamLimits(stream, file);
 
 		/*
 		 * If requested, sort inactive stream by position.  If a disk
@@ -372,6 +398,7 @@ AddStream(
 		 */
 		added = addActiveStream(stream, id);
 	}
+
 	return (added);
 }
 
@@ -472,7 +499,7 @@ SetStreamDone(
  * Attempt to add a stage file request to an active
  * stream.
  */
-static int
+static boolean_t
 addActiveStream(
 	StreamInfo_t *stream,
 	int id)
@@ -482,16 +509,22 @@ addActiveStream(
 	int fid;
 	int lid;
 	FileInfo_t *last;
-	int added = FALSE;
+	boolean_t added;
 
+	added = B_FALSE;
 	file = GetFile(id);
+
+	/* Stream already at capacity. */
+	if (GET_FLAG(stream->flags, SR_full)) {
+		return (B_FALSE);
+	}
 
 	/*
 	 * If disk cache already open on this file do not add
 	 * it to an active stream.
 	 */
 	if (GET_FLAG(file->flags, FI_DCACHE)) {
-		return (FALSE);
+		return (B_FALSE);
 	}
 
 	PthreadMutexLock(&stream->mutex);
@@ -503,7 +536,7 @@ addActiveStream(
 	if (GET_FLAG(stream->flags, SR_DONE) ||
 	    stream->first == EOS || stream->last == EOS) {
 		PthreadMutexUnlock(&stream->mutex);
-		return (FALSE);
+		return (B_FALSE);
 	}
 
 	fid = stream->first;
@@ -535,8 +568,8 @@ addActiveStream(
 
 			file->next = fid;
 			stream->first = id;
-			stream->count++;
-			added = TRUE;
+			checkStreamLimits(stream, file);
+			added = B_TRUE;
 		}
 		PthreadMutexUnlock(&stream->mutex);
 		PthreadMutexUnlock(&first->mutex);
@@ -578,8 +611,8 @@ addActiveStream(
 
 					f1->next = id;
 					file->next = id2;
-					stream->count++;
-					added = TRUE;
+					checkStreamLimits(stream, file);
+					added = B_TRUE;
 
 				}
 				PthreadMutexUnlock(&stream->mutex);
@@ -617,23 +650,24 @@ out:
  * Stream and last file should be locked on entry to
  * this function.
  */
-static int
+static boolean_t
 appendActiveStream(
 	StreamInfo_t *stream,
 	FileInfo_t *last,
 	int id)
 {
 	FileInfo_t *file;
-	int added = FALSE;
+	boolean_t added;
 
+	added = B_FALSE;
 	file = GetFile(id);
 	if (GET_FLAG(last->flags, FI_DONE) == 0) {
 
 		last->next = id;
 		stream->last = id;
 		file->next = EOS;
-		stream->count++;
-		added = TRUE;
+		checkStreamLimits(stream, file);
+		added = B_TRUE;
 	}
 	return (added);
 }
@@ -799,4 +833,32 @@ comparePosition(
 	    (*f2)->id.ino, (*f2)->id.gen, copy2);
 
 	return (1);
+}
+
+/*
+ * Check stream limit parameters.  Mark the stream full if any of the
+ * stream limits have been met.
+ */
+static void
+checkStreamLimits(
+	StreamInfo_t *stream,
+	FileInfo_t *file
+)
+{
+	stream->count++;
+	stream->size += file->len;
+
+	if (GET_FLAG(stream->sr_params.sr_flags, SP_maxcount)) {
+		if (stream->count >= stream->sr_params.sr_maxCount) {
+			/* Max number of files limit hit. */
+			SET_FLAG(stream->flags, SR_full);
+		}
+	}
+
+	if (GET_FLAG(stream->sr_params.sr_flags, SP_maxsize)) {
+		if (stream->size >= stream->sr_params.sr_maxSize) {
+			/* Max size of stream limit hit. */
+			SET_FLAG(stream->flags, SR_full);
+		}
+	}
 }

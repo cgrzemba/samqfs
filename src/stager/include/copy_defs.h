@@ -34,7 +34,7 @@
 #if !defined(COPY_DEFS_H)
 #define	COPY_DEFS_H
 
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 
 /* Structures. */
 
@@ -72,8 +72,6 @@ typedef struct CopyInstanceInfo {
 	int		ci_vsnLib;	/* library table num where vsn exists */
 	int		ci_seqnum;	/* current or last active sequence */
 					/*    number */
-
-	u_longlong_t	ci_dkPosition;	/* position of disk arch stage req */
 
 	int		ci_numBuffers;	/* number of i/o buffers */
 	boolean_t	ci_lockbuf;	/* lock buffers */

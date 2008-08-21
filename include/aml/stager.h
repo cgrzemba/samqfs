@@ -34,7 +34,7 @@
 #if !defined(_AML_STAGER_H)
 #define	_AML_STAGER_H
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 #include "sam/param.h"
 #include "sam/types.h"
@@ -158,12 +158,23 @@ typedef struct sam_stager_bufsize {
 } sam_stager_bufsize_t;
 
 /*
- * Stager's drives configuration options.
+ * Stager's removable drives configuration options.
  */
 typedef struct sam_stager_drives {
 	uname_t		robot;			/* robot name */
 	int		count;			/* number of drives to use */
 } sam_stager_drives_t;
+
+/*
+ * Stager's stream parameters configuration options.
+ */
+typedef struct sam_stager_streams {
+	media_t		ss_media;	/* media type */
+	ushort_t	ss_flags;
+	int		ss_drives;	/* number of streams to use */
+	fsize_t		ss_maxSize;	/* max size of stream to create */
+	int		ss_maxCount;	/* max number of files in stream */
+} sam_stager_streams_t;
 
 /*
  * Stager's log file configuration options.
@@ -184,6 +195,8 @@ typedef struct sam_stager_config {
 	int			num_drives;	/* number of drive configs */
 	sam_stager_drives_t	*drives;	/* drives config options */
 	int			directio;	/* directio = 1 pageio = 0 */
+	int			num_streams;	/* number of stream params */
+	sam_stager_streams_t	*streams;	/* stream parameters */
 } sam_stager_config_t;
 
 #define	STAGER_DISPLAY_ACTIVE	20	/* number of active stages to display */

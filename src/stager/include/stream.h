@@ -34,7 +34,7 @@
 #ifndef _STREAM_H
 #define	_STREAM_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +53,7 @@ extern "C" {
 /* Functions */
 StreamInfo_t *CreateStream(FileInfo_t *file);
 void DeleteStream(StreamInfo_t *stream);
-int AddStream(StreamInfo_t *stream, int fid, int sort);
+boolean_t AddStream(StreamInfo_t *stream, int fid, int sort);
 void ErrorStream(StreamInfo_t *stream, int error);
 boolean_t CancelStream(StreamInfo_t *stream, int id);
 void ClearStream(StreamInfo_t *stream);

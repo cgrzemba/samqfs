@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -112,7 +112,6 @@ StageInit(
 	 */
 	if (strcmp(Instance->ci_vsn, new_vsn) != 0) {
 		Instance->ci_vsn[0] = '\0';
-		Instance->ci_dkPosition = 0;
 	}
 
 	/*

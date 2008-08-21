@@ -34,7 +34,7 @@
 #if !defined(RMEDIA_H)
 #define	RMEDIA_H
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 /* Enums. */
 
@@ -78,8 +78,9 @@ enum {
 	MC_DEFAULT =	1 << 0		/* default */
 };
 
-#define	IS_DISKARCHIVE_MEDIA(x)	(x == DT_DISK || x == DT_STK5800)
-#define	IS_RMARCHIVE_MEDIA(x)	!(IS_DISKARCHIVE_MEDIA(x))
+#define	IS_DISKARCHIVE_MEDIA(x)		(x == DT_DISK)
+#define	IS_5800ARCHIVE_MEDIA(x)		(x == DT_STK5800)
+#define	IS_RMARCHIVE_MEDIA(x)		!(x == DT_DISK && x == DT_STK5800)
 
 #define	IS_VSN_LOADED(x)	(x->flags & VI_LOADED)
 #define	IS_VSN_UNUSABLE(x)	(x->flags & VI_UNUSABLE)
@@ -148,7 +149,7 @@ typedef struct LibraryInfo {
 
 /*
  * Removable media parameters table.
- * Used to hold media dependent parameters information.
+ * Used to hold removable media dependent parameters information.
  */
 typedef struct MediaParamsInfo {
 	mtype_t		mp_name;	/* media name */

@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.608 $"
+$ pragma ident "$Revision: 1.609 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3270,6 +3270,9 @@ $ prevent flooding
 19036 -Sw Unexpected STK 5800 metadata query result, more than 1 OID (%d) found
 19037 -Sw Internal error: '%s'
 19038 directio directive must be 'on' or 'off'
+19039 Invalid media type for stream parameter definition '%s'
+19040 Duplicate stream parameter definition '%s'
+19041 No stream parameters were defined
 
 $ Operator messages
 19200 Loading VSN %s

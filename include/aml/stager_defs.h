@@ -34,7 +34,7 @@
 #if !defined(_AML_STAGER_DEFS_H)
 #define	_AML_STAGER_DEFS_H
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 #include "sam/types.h"
 #include "aml/device.h"
@@ -159,7 +159,16 @@ enum {
 	SR_ERROR =		1 << 5,		/* unable to mount vsn */
 	SR_CLEAR =		1 << 6,		/* clearing stage requests */
 	SR_UNAVAIL =		1 << 7,		/* media unavailable */
-	SR_DCACHE_CLOSE	=	1 << 8		/* close file descriptor */
+	SR_DCACHE_CLOSE	=	1 << 8,		/* close file descriptor */
+	SR_full	=		1 << 9		/* met full stream params */
+};
+
+/*
+ * Stream parameter flags.
+ */
+enum {
+	SP_maxsize =		1 << 0,		/* use max size */
+	SP_maxcount	=	1 << 1,		/* use max count */
 };
 
 /*
@@ -168,6 +177,7 @@ enum {
  */
 typedef struct StreamInfo {
 	size_t		count;		/* number of request files in stream */
+	offset_t	size;		/* size of stream */
 	time_t		create;		/* time stream req was created */
 	VsnInfo_t	vi;		/* VSN information */
 	vsn_t		vsn;		/* VSN label */
@@ -186,6 +196,14 @@ typedef struct StreamInfo {
 	int		first;		/* start of request file indices */
 	int		last;		/* last of request file indices */
 	int		error;		/* error for all files in stream */
+	/*
+	 * Stream parameters.
+	 */
+	struct {
+		ushort_t sr_flags;
+		size_t   sr_maxCount;	/* max files in stream */
+		offset_t sr_maxSize;	/* max size of stream */
+	} sr_params;
 	/*
 	 * Fields used for canceling load exported vol.
 	 */
