@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.79 $"
+#pragma ident "$Revision: 1.80 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -324,6 +324,15 @@ main(int argc, char **argv)
 
 	if ((msg = MountCheckParams(mp)) != NULL) {
 		FatalError(0, 0, msg);
+	}
+
+	/*
+	 * If 'mat' file system, disallow 'sam'
+	 */
+	if (mp->fi_type == DT_META_OBJ_TGT_SET) {
+		if (mp->fi_config & MT_SAM_ENABLED) {
+			FatalError(0, 17265, mp->fi_name);
+		}
 	}
 
 #ifdef sun
