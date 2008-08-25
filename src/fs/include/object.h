@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 #include "sam/osversion.h"
 
@@ -185,12 +185,16 @@ typedef struct sam_fsinfo_page {
 	uint32_t	sfp_pglen;
 	offset_t	sfp_capacity;
 	offset_t	sfp_space;
+	uint64_t	sfp_sm_dau;		/* bytes */
+	uint64_t	sfp_lg_dau;		/* bytes */
 } sam_fsinfo_page_t;
 
 #define	SFP_PGNO(SFPP)		BE_32(SFPP->sfp_pgno)
 #define	SFP_PGLEN(SFPP)		BE_32(SFPP->sfp_pglen)
 #define	SFP_CAPACITY(SFPP)	BE_64(SFPP->sfp_capacity)
 #define	SFP_SPACE(SFPP)		BE_64(SFPP->sfp_space)
+#define	SFP_SM_DAU(SFPP)	BE_64(SFPP->sfp_sm_dau)
+#define	SFP_LG_DAU(SFPP)	BE_64(SFPP->sfp_lg_dau)
 
 /*
  * There are 2 driver interfaces.

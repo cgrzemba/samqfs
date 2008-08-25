@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 #include "sam/osversion.h"
 
@@ -329,6 +329,10 @@ sam_obj_get_fsinfo_pg(objnode_t *objnodep, uint32_t pagenum, uint64_t len,
 	obj_fsinfop->sfp_pglen = BE_32(sizeof (struct sam_fsinfo_page));
 	obj_fsinfop->sfp_capacity = BE_64(sblk->info.sb.capacity);
 	obj_fsinfop->sfp_space = BE_64(sblk->info.sb.space);
+	obj_fsinfop->sfp_sm_dau = sblk->info.sb.dau_blks[SM] * SAM_DEV_BSIZE;
+	obj_fsinfop->sfp_sm_dau = BE_64(obj_fsinfop->sfp_sm_dau);
+	obj_fsinfop->sfp_lg_dau = sblk->info.sb.dau_blks[LG] * SAM_DEV_BSIZE;
+	obj_fsinfop->sfp_lg_dau = BE_64(obj_fsinfop->sfp_lg_dau);
 	return (0);
 
 }
