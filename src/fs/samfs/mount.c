@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.225 $"
+#pragma ident "$Revision: 1.226 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1963,12 +1963,6 @@ sam_unmount_fs(
 	vfsp = mp->mi.m_vfsp;
 
 	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
-		if (mp->mi.m_osdt_lun != ~0ULL) {
-			cmn_err(CE_WARN, "SAM-QFS: %s: Busy - "
-			    "OSD LU Provider has FS attached", mp->mt.fi_name);
-			return (EBUSY);
-		}
-
 		if (mp->mi.m_osdfs_root) {
 			vp = SAM_ITOV(mp->mi.m_osdfs_root);
 			VN_RELE(vp);

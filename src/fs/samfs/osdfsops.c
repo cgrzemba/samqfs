@@ -32,7 +32,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 #endif
 
 #include "sam/osversion.h"
@@ -169,7 +169,7 @@ sam_osdfs_lunattach(
 		return (EINVAL);
 	}
 
-	mp->mi.m_osdt_lun = osdfsp->osdfs_lun;
+	mp->mt.fi_status |= FS_OSDT_MOUNTED;
 	osdfsp->osdfs_data = (void *)mp;
 	mutex_exit(&samgt.global_mutex);
 	return (error);
@@ -218,7 +218,7 @@ sam_osdfs_lundetach(
 
 	osdfsp->osdfs_data = NULL;
 	osdfsp->osdfs_lun = ~0ULL;
-	mp->mi.m_osdt_lun = ~0ULL;
+	mp->mt.fi_status = mp->mt.fi_status & ~FS_OSDT_MOUNTED;
 	mutex_exit(&samgt.global_mutex);
 	return (error);
 }
@@ -231,7 +231,7 @@ sam_osdfs_get_rootobj(osdfs_t *osdfsp, objnode_t **robjpp, cred_t *credp)
 	int error = 0;
 
 	mp = (sam_mount_t *)osdfsp->osdfs_data;
-	if (!mp || (mp->mi.m_osdt_lun == ~0ULL)) {
+	if (!mp || (!(mp->mt.fi_status & FS_OSDT_MOUNTED))) {
 		error = EINVAL;
 		cmn_err(CE_WARN,
 		    "sam_osdfs_get_rootobj: Not Attached 0x%llx\n", mp);
@@ -275,7 +275,7 @@ sam_osdfs_oget(osdfs_t *osdfsp, uint64_t partition_id,
 	}
 
 	mp = (sam_mount_t *)osdfsp->osdfs_data;
-	if (!mp || (mp->mi.m_osdt_lun == ~0ULL)) {
+	if (!mp || (!(mp->mt.fi_status & FS_OSDT_MOUNTED))) {
 		error = EINVAL;
 		cmn_err(CE_WARN, "sam_osdfs_oget: Not attached 0x%llx\n", mp);
 		return (error);
@@ -318,7 +318,7 @@ sam_osdfs_paroget(osdfs_t *osdfsp, uint64_t partition_id, objnode_t **objpp)
 	}
 
 	mp = (sam_mount_t *)osdfsp->osdfs_data;
-	if (!mp || (mp->mi.m_osdt_lun == ~0ULL)) {
+	if (!mp || (!(mp->mt.fi_status & FS_OSDT_MOUNTED))) {
 		error = EINVAL;
 		cmn_err(CE_WARN,
 		    "sam_osdfs_paroget: Not attached 0x%llx\n", mp);
@@ -357,7 +357,7 @@ sam_osdfs_sync(osdfs_t *osdfsp, short flag, cred_t *credp)
 	int error = 0;
 
 	mp = (sam_mount_t *)osdfsp->osdfs_data;
-	if (!mp || (mp->mi.m_osdt_lun == ~0ULL)) {
+	if (!mp || (!(mp->mt.fi_status & FS_OSDT_MOUNTED))) {
 		error = EINVAL;
 		cmn_err(CE_WARN,
 		    "sam_osdfs_sync: Not attached 0x%llx\n", mp);
@@ -412,7 +412,7 @@ osdfs_ioctl_register(
 		return (ENODEV);
 	}
 
-	if (mp->mi.m_osdt_lun == ~0ULL) {
+	if (!(mp->mt.fi_status & FS_OSDT_MOUNTED)) {
 		mutex_exit(&samgt.global_mutex);
 		return (ENODEV);
 	}

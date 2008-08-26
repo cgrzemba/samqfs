@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.152 $"
+#pragma ident "$Revision: 1.153 $"
 #endif
 
 #ifdef sun
@@ -271,7 +271,6 @@ typedef struct sam_mt_instance {
 	int		m_xmsg_state;	/* State at last transition message */
 
 	uint64_t	m_osdt_sim;	/* OSD target simulation mode */
-	uint64_t	m_osdt_lun;	/* Logical Unit Number of this Target */
 	uint64_t	m_osdt_ioctlref; /* Number active ioctl references */
 	struct vnode	*m_vn_objctl;	/* /[MOUNT_POINT]/.objects vnode */
 

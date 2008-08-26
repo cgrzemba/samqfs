@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.165 $"
+#pragma ident "$Revision: 1.166 $"
 
 #include "sam/osversion.h"
 
@@ -438,7 +438,6 @@ samfs_mount(
 	/*
 	 * OSD FS specific Initialization
 	 */
-	mp->mi.m_osdt_lun = ~0ULL;	/* 0 is a valid LUN */
 	mp->mi.m_osdfs_root = NULL;
 	mp->mi.m_osdfs_part = NULL;
 
@@ -807,8 +806,8 @@ samfs_umount(
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 		TRACE(T_SAM_UMNT_RET, vfsp, 11, (sam_tr_t)mp, EBUSY);
 		return (EBUSY);
-	} else if ((mp->mt.fi_status & FS_OSDT_MOUNTED) &&
-	    !(fflag & MS_FORCE)) {
+	} else if (mp->mt.fi_status & FS_OSDT_MOUNTED) {
+		/* We cannot force umount if it is online to LU */
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 		cmn_err(CE_NOTE,
 		"SAM-QFS: %s: Umount ignored - OSD Target Service is still "
