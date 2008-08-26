@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.105 $"
+#pragma ident "$Revision: 1.106 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -140,9 +140,17 @@ Scanfs(
 	while (Exec < ES_term) {
 		struct ScanListEntry *se;
 		time_t	waitTime;
+		int numOfEntries;
+		int freeEntries;
 
 		timeNow = time(NULL);
 		waitTime = seScan.SeTime;
+
+		PthreadMutexLock(&scanListMutex);
+		numOfEntries = scanList->SlCount;
+		freeEntries = scanList->SlFree;
+		PthreadMutexUnlock(&scanListMutex);
+
 		if (Exec != ES_run || FsFd == -1) {
 
 			/*
@@ -150,7 +158,7 @@ Scanfs(
 			 */
 			(void) kill(getpid(), SIGALRM);
 			waitTime = timeNow + LONG_TIME;
-		} else if ((scanList->SlCount - scanList->SlFree) > 1 ||
+		} else if ((numOfEntries - freeEntries) > 1 ||
 		    State->AfExamine < EM_noscan) {
 			char	ts[ISO_STR_FROM_TIME_BUF_SIZE];
 			char	*path;
