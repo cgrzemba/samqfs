@@ -27,32 +27,75 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ProtoFSDetailsBean.java,v 1.2 2008/07/16 23:43:55 kilemba Exp $
+// ident	$Id: ProtoFSDetailsBean.java,v 1.3 2008/08/27 22:17:27 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import javax.servlet.http.HttpServletRequest;
+import com.sun.netstorage.samqfs.web.model.MemberInfo;
+import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
+import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 
 public class ProtoFSDetailsBean {
     private String fsName = null;
 
+    private int clientCount = 0;
+    private int storageNodeCount = 0;
+
     public ProtoFSDetailsBean() {
+
+        initBean();
+    }
+
+    private void initBean() {
+        String serverName = JSFUtil.getServerName();
+
+        try {
+            SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
+
+            MemberInfo [] memberInfo = appModel.getSamQFSSystemSharedFSManager()
+                .getSharedFSSummaryStatus(JSFUtil.getServerName(),
+                                          getFileSystemName());
+
+            if (memberInfo != null) {
+                for (int i = 0; i < memberInfo.length; i++) {
+                    if (memberInfo[i].isClients()) {
+                        clientCount = memberInfo[i].getClients();
+                    } else if (memberInfo[i].isStorageNodes()) {
+                        storageNodeCount = memberInfo[i].getStorageNodes();
+                    }           
+                }
+            }
+        } catch (SamFSException sfe) {
+            //
+        }
     }
 
     public String getPageTitleText() {
+        return JSFUtil.getMessage("protofs.details.title", getFileSystemName());
+
+    }
+
+    protected String getFileSystemName() {
+        if (this.fsName != null)
+            return this.fsName;
+
+        // must be the first time on this page, retrieve the fs name from the
+        // request
         String FS_NAME = Constants.PageSessionAttributes.FS_NAME;
         HttpServletRequest request = JSFUtil.getRequest();
-        String fsname = request.getParameter(FS_NAME);
-        if (fsname == null) {
-            fsname = (String)JSFUtil.getAttribute(FS_NAME);
+        this.fsName = request.getParameter(FS_NAME);
+        if (this.fsName == null) {
+            this.fsName = (String)JSFUtil.getAttribute(FS_NAME);
         } else {
             // this is the first time into the page, store away the fs name
-            JSFUtil.setAttribute(FS_NAME, fsname);
+            JSFUtil.setAttribute(FS_NAME, fsName);
         }
 
-        return JSFUtil.getMessage("protofs.details.title", fsname);
+        return this.fsName;
     }
 
     public String getServerName() {
@@ -61,7 +104,19 @@ public class ProtoFSDetailsBean {
         return serverName;
     }
 
-    public void setServerName(String name) {
-        // do nothing, server name is already saved by JSFUtil
+    public String getAddStorageNodeHelpText() {
+        return JSFUtil.getMessage("protofs.details.storagenodehelp",
+                                  "" + this.storageNodeCount);
+    }
+    
+    public String getCreateFSHelpText() {
+        return JSFUtil.getMessage("protofs.details.createfshelp",
+                                  new String [] {getFileSystemName(),
+                                                 getServerName()});
+    }
+
+    public String getAddClientsHelpText() {
+        return JSFUtil.getMessage("protofs.details.addclientshelp",
+                                 "" + this.clientCount);
     }
 }

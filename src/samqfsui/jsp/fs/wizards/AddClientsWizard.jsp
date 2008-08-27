@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AddClientsWizard.jsp,v 1.1 2008/07/16 23:47:28 kilemba Exp $ -->
+<!-- $Id: AddClientsWizard.jsp,v 1.2 2008/08/27 22:17:27 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -46,6 +46,11 @@
 <ui:head title="#{msgs['fs.addclients.title']}">
     <ui:script url="/js/samqfsui.js"/>
     <ui:script url="/js/fs/wizards/addclients.js"/>
+    <ui:script>
+        function validate(button) {
+            alert("next clicked : " + button.value);
+        }
+    </ui:script>
 </ui:head>
 <ui:body styleClass="DefBody"
          onLoad="wizOnLoad('AddclientsWizardForm:AddClientsWizard')">
@@ -56,7 +61,9 @@
              productImageDescription=""
              productImageWidth="162"
              productImageHeight="40"/>
-<ui:wizard id="AddClientsWizard" title="#{msgs['fs.addclients.title']}">
+<ui:wizard id="AddClientsWizard"
+           eventListener="#{AddClientsBean.wizardEventListener}"
+           title="#{msgs['fs.addclients.title']}">
     <ui:wizardStep id="selectionMethodPage"
                    summary="#{msgs['fs.addclients.selectionmethod.summary']}"
                    title="#{msgs['fs.addclients.selectionmethod.title']}"
@@ -75,7 +82,7 @@
                        help="#{msgs['fs.addclients.hostname.help']}"
                        detail="#{msgs['fs.addclients.hostname.detail']}">
 
-            <jsp:include page="AddClientsHostSelection.jsp" />            
+            <jsp:include page="AddClientsHostSelection.jsp" />
         </ui:wizardStep>
     </ui:wizardSubstepBranch>
     
@@ -101,7 +108,7 @@
         <h:panelGrid columns="4">
             <ui:label for="filenameText"
                       text="#{msgs['fs.addclients.file.filename']}"/>
-            <ui:textField id="filenameText"/>
+            <ui:textField id="filenameText" text="#{AddClientsBean.fileName}"/>
 
             <!--
             <ui:fileChooser id="filechooser"
@@ -136,12 +143,13 @@
         <ui:label for="mountPointText"
                   text="#{msgs['fs.addclients.mountoptions.mountpoint']}"/>
     </td><td>
-        <ui:textField id="mountPointText"/>
+        <ui:textField id="mountPointText" text="#{AddClientsBean.mountPoint}"/>
     </td></tr>
     
     <tr><td>
     </td><td>
         <ui:checkbox id="mountAfterAdd"
+                  selected="#{AddClientsBean.mountAfterAdd}"
                   label="#{msgs['fs.addclients.mountoptions.mountafteradd']}"/>
     </td></tr>
     <tr><td/><td/></tr>
@@ -156,12 +164,56 @@
     </table>
     </ui:wizardStep>
     
+    <ui:wizardStep id="reviewPage"
+                   summary="#{msgs['fs.addclients.review.summary']}"
+                   title="#{msgs['fs.addclients.review.title']}"
+                   help="#{msgs['fs.addclients.review.help']}"
+                   finish="true">
+
+        <table cellspacing="10">
+            <tr><td colspan="2" valign="top">
+            <ui:label for="selectedHosts"
+                      text="#{msgs['fs.addclients.hostname.selectedhosts']}"/>
+            <ui:listbox id="selectedHosts"
+                        items="#{AddClientsBean.selectedHostSummary}"/>
+            </td></tr>
+
+            <tr><td>
+            <ui:label text="#{msgs['fs.addclients.mountoptions.mountpoint']}"/>
+            </td><td>
+            <ui:staticText text="#{AddClientsBean.mountPoint}"/>
+            </td></tr>
+
+            <tr><td>
+            <ui:label text="#{msgs['fs.addclients.mountoptions.mountafteradd']}"/>
+            </td><td>
+            <ui:staticText text="#{AddClientsBean.mountAfterAddText}"/>
+            </td></tr>
+            
+            <tr><td>
+            <ui:label text="#{msgs['fs.addclients.mountoptions.readonly']}"/>
+            </td><td>
+            <ui:staticText text="#{AddClientsBean.mountReadOnlyText}"/>
+            </td></tr>
+
+            <tr><td>
+            <ui:label text="#{msgs['fs.addclients.mountoptions.boottime']}"/>
+            </td><td>
+            <ui:staticText text="#{AddClientsBean.mountAtBootTimeText}"/>
+            </td></tr>
+
+            <tr><td>
+            <ui:label text="#{msgs['fs.addclients.mountoptions.background']}"/>
+            </td><td>
+            <ui:staticText text="#{AddClientsBean.mountInTheBackgroundText}"/>
+            </td></tr>
+        </table>
+    </ui:wizardStep>
+
     <ui:wizardStep id="resultsPage"
                    summary="#{msgs['fs.addclients.results.summary']}"
                    title="#{msgs['fs.addclients.results.title']}"
                    results="true">
-
-        <jsp:include page="../MultiHostStatusDisplay.jsp"/>
     </ui:wizardStep>
 </ui:wizard>
 </ui:form>

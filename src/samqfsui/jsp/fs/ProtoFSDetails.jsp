@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ProtoFSDetails.jsp,v 1.2 2008/07/16 23:43:55 kilemba Exp $ -->
+<!-- $Id: ProtoFSDetails.jsp,v 1.3 2008/08/27 22:17:27 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -97,8 +97,7 @@
         <div style="margin-left:30px">
             <ui:staticText id="addStorageNodeHelp"
                            rendered="true"
-                           text="#{msgs['protofs.details.storagenodehelp']}"/>
-
+                           text="#{ProtoFSBean.addStorageNodeHelpText}"/>
             <br/>
             <ui:hyperlink id="viewStorageNodes" action="success" rendered="false">
                 <ui:staticText text="#{msgs['protofs.details.viewstoragenodes']}"/>
@@ -117,7 +116,7 @@
         <span style="margin-left:30px">
             <ui:staticText id="createFSHelp"
                            rendered="true"
-                           text="#{msgs['protofs.details.createfshelp']}"/>
+                           text="#{ProtoFSBean.createFSHelpText}"/>
         </span>
     </div>
     
@@ -134,7 +133,7 @@
     <div style="margin-left:30px">
         <ui:staticText id="addClientsHelp"
                        rendered="true"
-                       text="#{msgs['protofs.details.addclientshelp']}"/>
+                       text="#{ProtoFSBean.addClientsHelpText}"/>
         <br/>
         <ui:hyperlink id="viewClients" action="success" rendered="false">
             <ui:staticText text="#{msgs['protofs.details.viewclients']}"/>

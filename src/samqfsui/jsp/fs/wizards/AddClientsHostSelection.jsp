@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AddClientsHostSelection.jsp,v 1.1 2008/07/16 23:47:28 kilemba Exp $ -->
+<!-- $Id: AddClientsHostSelection.jsp,v 1.2 2008/08/27 22:17:27 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -36,23 +36,11 @@
    <jsp:directive.page contentType="text/html;charset=ISO-8859-1" 
                        pageEncoding="UTF-8"/>
 
-      <div style="margin-left:10px">              
-        <h:panelGrid columns="3" style="vertical-align:top;margin-left:10px">
-            <ui:label for="hostNammeText"
-                      text="#{msgs['fs.addclients.hostname.hostname']}" />
-            <ui:textField id="hostNameText" />
-            <ui:button id="add"
-                       onClick="return handleAddButton(this);"
-                       text="#{msgs['common.button.add']}" />
-                       
-            <ui:label for="selectedHostList"
-                      text="#{msgs['fs.addclients.hostname.selectedhosts']}" />
-            <ui:listbox id="selectedHostList"
-                        items="#{AddClientsBean.hostList}" />
-            <ui:button id="remove"
-                       onClick="return handleRemoveButton(this);"
-                       text="#{msgs['common.button.remove']}" />
-        </h:panelGrid>
-    </div>
+      <div style="margin-left:10px">
+        <ui:editableList id="editableHostList"
+                        list="#{AddClientsBean.selectedHosts}"
+                        fieldLabel="#{msgs['fs.addclients.hostname.hostname']}"
+                        listLabel="#{msgs['fs.addclients.hostname.selectedhosts']}"/>
+      </div>
 
 </jsp:root>
