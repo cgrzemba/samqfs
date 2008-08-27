@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.107 $"
+#pragma ident "$Revision: 1.108 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -404,7 +404,15 @@ makeMediaParams(void)
 		strncpy(mp->MpMtype, dp->nm, sizeof (mp->MpMtype));
 		mp->MpType = dp->dt;
 		mp->MpBufsize = 16;
-		mp->MpTimeout = WRITE_TIMEOUT;
+
+		/*
+		 * Set default write timeout based on media type.
+		 */
+		if (is_disk(mp->MpType)) {
+			mp->MpTimeout = 0;	/* no timeout */
+		} else {
+			mp->MpTimeout = WRITE_TIMEOUT;
+		}
 
 		/*
 		 * Set media for the site defaults.

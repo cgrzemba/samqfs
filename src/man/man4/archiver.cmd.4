@@ -1,4 +1,4 @@
-.\" $Revision: 1.89 $
+.\" $Revision: 1.90 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -436,7 +436,8 @@ Requesting the archive media.  Default = 15 minutes.
 Staging the file to be archived.  Default = 0 (no timeout).
 .TP
 .B write
-Writing to the archive media.  Default = 15 minutes.
+Writing to the archive media.  Default = 15 minutes for removable archive
+media. Default = 0 (no timeout) for disk archive media.
 .RE
 .SH ARCHIVE SET ASSIGNMENTS SECTION
 Archive Set assignments are made by describing the characteristics of the
