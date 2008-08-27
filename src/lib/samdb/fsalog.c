@@ -47,7 +47,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -489,8 +489,15 @@ int	FSA_open_log_file(
 	fd_log = open(path_log, O_RDONLY, 0);
 
 	if (fd_log == -1) {
-		Trace(TR_ERR, "open(%s) failed", path_log);
-		return (-1);
+		Trace(TR_MISC, "errno = %d", errno);
+		if (errno == ENOENT) {
+			Trace(TR_MISC, "file removed(%s)", path_log);
+			T->logs[ord].status = fstat_removed;
+			return (-1);
+		} else {
+			Trace(TR_ERR, "open(%s) failed", path_log);
+			return (-1);
+		}
 	}
 
 	if (pos || T->logs[ord].status == fstat_part) {

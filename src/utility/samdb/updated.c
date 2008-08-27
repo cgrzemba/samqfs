@@ -33,7 +33,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -303,8 +303,13 @@ int main(
 advance: /* Advance to next log file */
 	if (FSA_open_log_file(T, ord, 0) < 0) {
 		Trace(TR_ERR, "Error opening log file");
-		ret = EXIT_FAILURE;
-		goto out;
+		if (T->logs[ord].status == fstat_removed) {
+			Trace(TR_MISC, "file removed");
+			goto next_log;
+		} else {
+			ret = EXIT_FAILURE;
+			goto out;
+		}
 	}
 	if (SAMDB_Verbose) {
 		Trace(TR_MISC, "%s\n", T->logs[ord].file_name);
@@ -387,7 +392,8 @@ next_log:
 			}
 		}
 		if (next >= 0) {
-			if (FSA_close_log_file(T, 1) < 0) { /* mark done */
+			if (T->logs[ord].status != fstat_removed &&
+			    (FSA_close_log_file(T, 1) < 0)) { /* mark done */
 				Trace(TR_ERR, "Error closing logfile");
 				ret = EXIT_FAILURE;
 				goto out;

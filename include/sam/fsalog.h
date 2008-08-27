@@ -34,7 +34,8 @@ typedef	enum	{
 	fstat_done,
 	fstat_part,
 	fstat_error,
-	fstat_missing
+	fstat_missing,
+	fstat_removed
 }	fstatus_t;
 
 typedef	struct	{			/* FSA log file table entry:	*/
