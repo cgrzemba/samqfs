@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.226 $"
+#pragma ident "$Revision: 1.227 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1152,10 +1152,15 @@ sam_set_mount(sam_mount_t *mp)
 		    "SAM-QFS: %s: data eq capacity %llx "
 		    "does not match fs capacity %llx\n",
 		    mp->mt.fi_name, capacity, sblk->info.sb.capacity);
-		err_line = __LINE__;
-		error = EINVAL;
-		TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
-		return (error);
+		/*
+		 * Do not fail the mount for object fs data capacity mismatch.
+		 */
+		if (sblk->info.sb.fi_type != DT_META_OBJECT_SET) {
+			err_line = __LINE__;
+			error = EINVAL;
+			TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
+			return (error);
+		}
 	}
 
 	/* compute high and low block counts. */

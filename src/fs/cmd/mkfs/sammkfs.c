@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 
 /* ----- Include Files ---- */
@@ -2403,7 +2403,7 @@ check_lun_limits(char *fs_name)
 	}
 	if (lun_ge_1tb) {
 		printf(catgets(catfd, SET, 13456,
-		    "%s: %s: One or more partition exceeds %d TB in size\n"),
+		    "%s: %s: One or more partitions exceeds %d TB in size\n"),
 		    program_name, fs_name, 1);
 		printf(catgets(catfd, SET, 13458,
 		    "%s: file system %s will not mount on 32 bit Solaris "

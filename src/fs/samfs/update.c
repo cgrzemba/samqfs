@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.139 $"
+#pragma ident "$Revision: 1.140 $"
 
 #include "sam/osversion.h"
 
@@ -157,7 +157,38 @@ sam_update_filsys(
 	}
 
 	/*
-	 * Update timestamp. Write first superblock if not SYNC_ATTR.
+	 * Get capacity and space for OSD LUNs in this file system.
+	 */
+	if (SAM_IS_OBJECT_FS(mp)) {
+		for (i = 0; i < sblk->info.sb.fs_count; i++) {
+			struct samdent *dp;
+
+			dp = &mp->mi.m_fs[i];
+			if (is_osd_group(dp->part.pt_type)) {
+				object_devices = TRUE;
+				if ((error =
+				    sam_get_osd_fs_attr(dp->oh, &dp->part))) {
+					cmn_err(CE_WARN,
+					    "SAM-QFS: %s: Eq %d Error %d: "
+					    "cannot get superblock capacity "
+					    "and space", mp->mt.fi_name,
+					    dp->part.pt_eq, error);
+				} else {
+					sblk->eq[i].fs.capacity =
+					    dp->part.pt_capacity;
+					sblk->eq[i].fs.space =
+					    dp->part.pt_space;
+					space += sblk->eq[i].fs.space;
+				}
+			}
+		}
+		if (object_devices) {
+			sblk->info.sb.space = space;
+		}
+	}
+
+	/*
+	 * Update timestamp. Write primary superblock if not SYNC_ATTR.
 	 */
 	sblk->info.sb.time = SAM_SECOND();
 	if (!(flag & SYNC_ATTR)) {
@@ -204,39 +235,8 @@ sam_update_filsys(
 	}
 
 	/*
-	 * Get capacity and space for OSD LUNs in this file system.
-	 */
-	if (SAM_IS_OBJECT_FS(mp)) {
-		for (i = 0; i < sblk->info.sb.fs_count; i++) {
-			struct samdent *dp;
-
-			dp = &mp->mi.m_fs[i];
-			if (is_osd_group(dp->part.pt_type)) {
-				object_devices = TRUE;
-				if ((error =
-				    sam_get_osd_fs_attr(dp->oh, &dp->part))) {
-					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: Eq %d Error %d: "
-					    "cannot get superblock capacity "
-					    "and space", mp->mt.fi_name,
-					    dp->part.pt_eq, error);
-				} else {
-					sblk->eq[i].fs.capacity =
-					    dp->part.pt_capacity;
-					sblk->eq[i].fs.space =
-					    dp->part.pt_space;
-					space += sblk->eq[i].fs.space;
-				}
-			}
-		}
-		if (object_devices) {
-			sblk->info.sb.space = space;
-		}
-	}
-
-	/*
-	 * Write first superblock if SYNC_ATTR. Otherwise, write second
-	 * superblock.
+	 * Write primary superblock if SYNC_ATTR. Otherwise, write backup
+	 * superblock (since we already wrote the primary superblock above.)
 	 */
 	if (flag & SYNC_ATTR) {
 		sblk_no = 0;
@@ -1351,11 +1351,11 @@ sam_sync_meta(
 /*
  * ----- sam_update_sblk - update super block.
  * sam_update_sblk synchronously updates the specified super block.
- *   sblk_no = 0 is the first superblock; sblk_no = 1 is the second superblock
+ *   sblk_no = 0 is the primary superblock; sblk_no = 1 is the backup superblock
  *   force_update TRUE always writes the superblock.
  *   force_update FALSE writes the superblock only if the space or state was
  *     changed..
- * Note: Only ordinal 0 can update a second super block.
+ * Note: Only ordinal 0 can update a backup super block.
  *
  */
 
