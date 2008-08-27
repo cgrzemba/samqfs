@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.58 $"
+#pragma ident "$Revision: 1.59 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -571,9 +571,12 @@ obsoleteFsExamine(
 					 * Enter a scan for it in case it
 					 * fits new file properties.
 					 */
+					seAdd.SeId = dinode->id;
 					seAdd.SeCopies = 0;
 					seAdd.SeAsn = 0;
+					seAdd.SeFlags = SE_subdir;
 					seAdd.SeTime = TIME_NOW(dinode);
+
 					ScanfsAddEntry(&seAdd);
 				}
 				}

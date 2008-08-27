@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -252,7 +252,9 @@ ExamInodes(
 						seAdd.SeId = (dinode->id);
 						seAdd.SeCopies = 0;
 						seAdd.SeAsn = 0;
+						seAdd.SeFlags = SE_subdir;
 						seAdd.SeTime = TIME_NOW(dinode);
+
 						ScanfsAddEntry(&seAdd);
 					} else if (event == AE_archive &&
 					    pb->PbPath != pb->PbEnd) {
