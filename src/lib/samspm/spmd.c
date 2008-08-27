@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 
 /*
@@ -65,6 +65,7 @@
  */
 #define	SPM_REQUEST_MAX		SPM_SERVICE_NAME_MAX + 16
 #define	SPM_PATH_MAX		108
+#define	SPM_POLL_MAX		1000
 
 typedef struct service_table_entry {
 	int fd;
@@ -303,7 +304,7 @@ do_register(int fd, char *service, char *path)
 	}
 
 	/* Update the poll() data structure */
-	for (i = SERVICES; i < OPEN_MAX; i++) {
+	for (i = SERVICES; i < SPM_POLL_MAX; i++) {
 		if (spm_poll[i].fd == -1) {
 			ste->poll_index = i;
 			spm_poll[i].fd = fd;
@@ -312,6 +313,11 @@ do_register(int fd, char *service, char *path)
 			}
 			break;
 		}
+	}
+	if (i == SPM_POLL_MAX) {
+		response_len = sprintf(response, "11 poll table full\r\n");
+		(void) spm_writen(fd, response, response_len);
+		return;
 	}
 
 	/* Respond to caller */
@@ -625,8 +631,9 @@ spm(void *arg)
 	spm_signo = (int)arg;
 
 	/* Set up the data structure for poll */
-	spm_poll = (struct pollfd *)malloc(OPEN_MAX * sizeof (struct pollfd));
-	for (i = 0; i < OPEN_MAX; i++) {
+	spm_poll = (struct pollfd *)
+	    malloc(SPM_POLL_MAX * sizeof (struct pollfd));
+	for (i = 0; i < SPM_POLL_MAX; i++) {
 		spm_poll[i].fd = -1;
 		spm_poll[i].events = POLLRDNORM;
 	}
