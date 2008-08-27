@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.111 $"
+#pragma ident "$Revision: 1.112 $"
 
 #include "sam/osversion.h"
 
@@ -107,6 +107,7 @@ static void sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
 static void sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
 int sam_update_the_sblks(sam_mount_t *mp);
+static int sam_remove_from_allocation_links(sam_mount_t *mp, int ord);
 
 extern int sam_bfmap(sam_caller_t caller, struct sam_sblk *sblk, int ord,
 	dev_t meta_dev, char *dcp, char *cptr, int bits);
@@ -2043,6 +2044,7 @@ sam_change_state(
 			    mp->mt.fi_name, ord, space,
 			    sblk->eq[ord].fs.capacity);
 		} else {
+			sam_remove_from_allocation_links(mp, ord);
 			dp->skip_ord = 1;
 			dp->part.pt_state = DEV_OFF;
 			mutex_enter(&mp->mi.m_sblk_mutex);
@@ -2482,5 +2484,61 @@ sam_update_the_sblks(struct sam_mount *mp)
 			return (1);
 		}
 	}
+	return (0);
+}
+
+
+/*
+ * ----- sam_remove_from_allocation_links -
+ *
+ * Remove the specified ordinal from the allocation links.
+ */
+
+static int
+sam_remove_from_allocation_links(
+	sam_mount_t *mp,
+	int ord)
+{
+	struct samdent *dp;
+	int disk_type;
+	int error = 0;
+	int dk_max;
+	int prev_ord = -1;
+	int cur_ord;
+
+	dp = &mp->mi.m_fs[ord];
+
+	if (dp->part.pt_type == DT_META) {
+		disk_type = MM;
+	} else {
+		/*
+		 * Includes is_osd_group(dp->part.pt_type).
+		 */
+		disk_type = DD;
+	}
+
+	cur_ord = mp->mi.m_dk_start[disk_type];
+	for (dk_max = mp->mi.m_dk_max[disk_type];
+	    dk_max > 0; dk_max--) {
+
+		if (cur_ord == ord) {
+			if (prev_ord == -1) {
+				mp->mi.m_dk_start[disk_type] =
+				    mp->mi.m_fs[ord].next_ord;
+			} else {
+				mp->mi.m_fs[prev_ord].next_ord =
+				    mp->mi.m_fs[ord].next_ord;
+			}
+			mp->mi.m_fs[ord].next_ord = 0;
+			mp->mi.m_dk_max[disk_type]--;
+			break;
+		}
+		prev_ord = cur_ord;
+		cur_ord = mp->mi.m_fs[cur_ord].next_ord;
+		if (cur_ord == 0) {
+			break;
+		}
+	}
+
 	return (0);
 }
