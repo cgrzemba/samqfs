@@ -1,4 +1,4 @@
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 
 #    SAM-QFS_notice_begin
 #
@@ -86,7 +86,7 @@ LNLIBS = -L lib/$(OBJ_DIR) -lsamdbutil -L $(DEPTH)/lib/$(OBJ_DIR) $(MYSQL_LIB)
 
 include $(DEPTH)/mk/targets.mk
 
-catalog_vsn.c create.c dump.c list_vsn.c: lib
+catalog_vsn.c check.c create.c dump.c list_vsn.c: lib
 load.c list_inode.c list_path.c updated.c update_vsn.c: lib 
 
 include $(DEPTH)/mk/depend.mk
