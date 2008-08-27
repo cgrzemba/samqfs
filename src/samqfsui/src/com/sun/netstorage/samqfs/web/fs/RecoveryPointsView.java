@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointsView.java,v 1.17 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: RecoveryPointsView.java,v 1.18 2008/08/27 19:48:29 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -37,7 +37,6 @@ import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.jobs.JobsDetailsViewBean;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.RecoveryPointSchedule;
@@ -587,15 +586,10 @@ public class RecoveryPointsView extends CommonTableContainerView {
             Constants.PageSessionAttributes.SNAPSHOT_PATH,
             parent.getCurrentSnapShotPath());
 
-        CommonViewBeanBase targetView =
-            (CommonViewBeanBase) getViewBean(JobsDetailsViewBean.class);
-        BreadCrumbUtil.breadCrumbPathForward(
-            parent, PageInfo.getPageInfo().getPageNumber(parent.getName()));
-
         // Copy page session attributes so that if they click on the
         // breadcrumb to come back the state of the page is restored.
         // These attributes are not the "sticky" kind with teh SAMQFS prefix.
-        parent.forwardTo(targetView);
+        // parent.forwardTo(targetView);
         TraceUtil.trace3("Exiting");
     }
 

@@ -28,7 +28,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: web.xml,v 1.14 2008/06/11 16:57:59 ronaldso Exp $ -->
+<!-- $Id: web.xml,v 1.15 2008/08/27 19:48:26 kilemba Exp $ -->
 
 <web-app>
 
@@ -58,10 +58,6 @@
     <context-param>
         <param-name>jato:com.sun.netstorage.samqfs.web.alarms.*:moduleURL</param-name>
         <param-value>../alarms</param-value>
-    </context-param>
-    <context-param>
-        <param-name>jato:com.sun.netstorage.samqfs.web.jobs.*:moduleURL</param-name>
-        <param-value>../jobs</param-value>
     </context-param>
     <context-param>
         <param-name>jato:com.sun.netstorage.samqfs.web.admin.*:moduleURL</param-name>
@@ -213,9 +209,6 @@
         <servlet-class>com.sun.netstorage.samqfs.web.alarms.AlarmsServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>JobsServlet</servlet-name>
-        <servlet-class>com.sun.netstorage.samqfs.web.jobs.JobsServlet</servlet-class> </servlet>
-    <servlet>
         <servlet-name>AdminServlet</servlet-name>
         <servlet-class>com.sun.netstorage.samqfs.web.admin.AdminServlet</servlet-class>
     </servlet>
@@ -303,10 +296,6 @@
     <servlet-mapping>
         <servlet-name>AlarmsServlet</servlet-name>
         <url-pattern>/alarms/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>JobsServlet</servlet-name>
-        <url-pattern>/jobs/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>AdminServlet</servlet-name>

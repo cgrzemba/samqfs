@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.48 2008/08/06 23:44:08 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.49 2008/08/27 19:48:29 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -44,7 +44,6 @@ import com.sun.netstorage.samqfs.mgmt.SamFSMultiMsgException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
 import com.sun.netstorage.samqfs.web.archive.ArchiveActivityViewBean;
 import com.sun.netstorage.samqfs.web.fs.wizards.GrowWizardImpl;
-import com.sun.netstorage.samqfs.web.jobs.JobsDetailsViewBean;
 import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
@@ -1301,16 +1300,6 @@ public class FSDetailsView extends CommonTableContainerView {
         //   jobId,jobType,jobCondition
         // For samfs chk jobs, the job type is:
         //   Jobs.jobType6
-
-        ViewBean vb = getParentViewBean();
-        ViewBean targetView = getViewBean(JobsDetailsViewBean.class);
-        BreadCrumbUtil.breadCrumbPathForward(
-            vb,
-            PageInfo.getPageInfo().getPageNumber(vb.getName()));
-        vb.setPageSessionAttribute(
-            Constants.PageSessionAttributes.JOB_ID, jobID);
-
-        ((CommonViewBeanBase) vb).forwardTo(targetView);
         TraceUtil.trace3("Exiting");
     }
 
