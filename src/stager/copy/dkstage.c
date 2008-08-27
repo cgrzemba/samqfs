@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -335,10 +335,12 @@ initRemoteStage(void)
 {
 	char *hostname;
 	extern StagerStateInfo_t *State;
+	int rval;
 
 	/*
 	 * Establish connection to remote host.
 	 */
+	rval = 0;
 	hostname = DiskVolsGetHostname(diskVolume);
 	IoThread->io_rftHandle = (void *) SamrftConnect(hostname);
 
@@ -351,12 +353,13 @@ initRemoteStage(void)
 			sleep(5);
 			ClearOprMsg(State->errmsg);
 		}
-		LibFatal(SamrftConnect, hostname);
+		rval = ETIME;
+	} else {
+		if (DiskVolsIsAvail(NULL, diskVolume, B_FALSE,
+		    DVA_stager) != B_TRUE) {
+			rval = ENODEV;
+		}
 	}
 
-	if (DiskVolsIsAvail(NULL, diskVolume, B_FALSE, DVA_stager) != B_TRUE) {
-		return (ETIME);
-	}
-
-	return (0);
+	return (rval);
 }
