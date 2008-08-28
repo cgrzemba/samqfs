@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.8 2008/08/20 19:36:51 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.9 2008/08/28 02:01:34 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -180,7 +180,7 @@
                             rowHeader="true">
                 <ui:imageHyperlink id="imagehyperlinkClient"
                                    imageURL="/images/client.png"
-                                   url="/faces/jsp/fs/SharedFSClient.jsp?mode=0"
+                                   url="/faces/jsp/fs/SharedFSClient.jsp?filter="
                                    hspace="2"
                                    vspace="0"
                                    immediate="true" />
@@ -188,7 +188,7 @@
                               url="/faces/jsp/fs/SharedFSClient.jsp"
                               immediate="true"
                               text="#{samBundle['SharedFS.text.viewall']}">
-                    <f:param name="mode" value="0"/>
+                    <f:param name="filter" value="#{SharedFSBean.paramCriteriaAll}"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colOK"
@@ -199,7 +199,7 @@
                               url="/faces/jsp/fs/SharedFSClient.jsp"
                               immediate="true">
                     <ui:staticText text="#{clients.value.ok}"/>
-                    <f:param name="mode" value="1"/>
+                    <f:param name="filter" value="#{SharedFSBean.paramCriteriaOk}"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colUnmounted"
@@ -210,7 +210,7 @@
                               url="/faces/jsp/fs/SharedFSClient.jsp"
                               immediate="true">
                     <ui:staticText text="#{clients.value.unmounted}"/>
-                    <f:param name="mode" value="2"/>
+                    <f:param name="filter" value="#{SharedFSBean.paramCriteriaUnmounted}"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colDisabled"
@@ -221,7 +221,7 @@
                               url="/faces/jsp/fs/SharedFSClient.jsp"
                               immediate="true">
                     <ui:staticText text="#{clients.value.off}"/>
-                    <f:param name="mode" value="3"/>
+                    <f:param name="filter" value="#{SharedFSBean.paramCriteriaOff}"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colInError"
@@ -232,7 +232,7 @@
                               url="/faces/jsp/fs/SharedFSClient.jsp"
                               immediate="true">
                     <ui:staticText text="#{clients.value.error}"/>
-                    <f:param name="mode" value="4"/>
+                    <f:param name="filter" value="#{SharedFSBean.paramCriteriaInError}"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colSpacer" spacerColumn="true" width="40%"/>
@@ -272,7 +272,7 @@
                             rowHeader="true">
                 <ui:imageHyperlink id="imagehyperlinkSN"
                                    imageURL="/images/storagenode.png"
-                                   url="/faces/jsp/fs/SharedFSStorageNode.jsp?mode=0"
+                                   url="/faces/jsp/fs/SharedFSStorageNode.jsp?filter="
                                    hspace="2"
                                    vspace="0"
                                    immediate="true" />
@@ -280,7 +280,7 @@
                               url="/faces/jsp/fs/SharedFSStorageNode.jsp"
                               immediate="true"
                               text="#{samBundle['SharedFS.text.viewall']}">
-                    <f:param name="mode" value="0"/>
+                    <f:param name="filter" value="0"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colOK"
@@ -291,7 +291,7 @@
                               url="/faces/jsp/fs/SharedFSStorageNode.jsp"
                               immediate="true">
                     <ui:staticText text="#{sns.value.ok}"/>
-                    <f:param name="mode" value="1"/>
+                    <f:param name="filter" value="1"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colUnmounted"
@@ -302,7 +302,7 @@
                               url="/faces/jsp/fs/SharedFSStorageNode.jsp"
                               immediate="true">
                     <ui:staticText text="#{sns.value.unmounted}"/>
-                    <f:param name="mode" value="2"/>
+                    <f:param name="filter" value="2"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colDisabled"
@@ -313,7 +313,7 @@
                               url="/faces/jsp/fs/SharedFSStorageNode.jsp"
                               immediate="true">
                     <ui:staticText text="#{sns.value.off}"/>
-                    <f:param name="mode" value="3"/>
+                    <f:param name="filter" value="3"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colInError"
@@ -324,7 +324,7 @@
                               url="/faces/jsp/fs/SharedFSStorageNode.jsp"
                               immediate="true">
                     <ui:staticText text="#{sns.value.error}"/>
-                    <f:param name="mode" value="5"/>
+                    <f:param name="filter" value="5"/>
                 </ui:hyperlink>
             </ui:tableColumn>
             <ui:tableColumn id="colSpacer" spacerColumn="true" width="40%"/>

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.22 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.23 2008/08/28 02:01:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -35,10 +35,10 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.mgmt.fs.FSArchCfg;
-import com.sun.netstorage.samqfs.mgmt.fs.FSInfo;
 import com.sun.netstorage.samqfs.mgmt.fs.MountOptions;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
+import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.SharedDiskCache;
@@ -128,20 +128,12 @@ public interface SamQFSSystemSharedFSManager {
      * mnt_cfg1 = <hex 32bit map>
      * no_msgs= int32
      * low_msg = uint32
+     *
+     * See model/fs/SharedFSFilter for the variable filters.
      */
     public SharedHostInfo [] getSharedFSHosts(
-        String mdServer, String fsName, int options, short filter)
+        String mdServer, String fsName, int options, SharedFSFilter [] filters)
         throws SamFSException;
-
-    /** Filters for target pages */
-    public static final short FILTER_NONE = 0;
-    public static final short FILTER_OK = 1;
-    public static final short FILTER_UNMOUNTED = 2;
-    public static final short FILTER_DISABLED = 3;
-    public static final short FILTER_IN_ERROR = 4;
-    public static final short FILTER_FAULTS = 5;
-    public static final short FILTER_CUSTOM = 6;
-    public static final short FILTER_REMOVE = 10;
 
     /*
      * Method to get summary status for a shared file system

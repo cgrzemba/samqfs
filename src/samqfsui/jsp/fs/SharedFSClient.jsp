@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.8 2008/08/06 23:44:07 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.9 2008/08/28 02:01:34 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -46,6 +46,7 @@
 <ui:head title="#{samBundle['SharedFS.pagetitle.client']}">
     <ui:script url="/js/popuphelper.js"/>
     <ui:script url="/js/fs/SharedFS.js"/>
+    <ui:script url="/js/fs/SharedFSClientFilterPanel.js"/>
 </ui:head>
 <ui:body onLoad="
                 if (parent.serverName != null) {
@@ -125,9 +126,14 @@
                          immediate="true"
                          actionListener="#{SharedFSBean.handleFilterChange}"
                          items="#{SharedFSBean.clientTableFilterOptions}"
+                         onChange="if (!handleFilterChange(this)) return false;"
                          selected="#{SharedFSBean.clientTableFilterSelectedOption}" />
         </f:facet>
-
+        <f:facet name="filterPanel">
+            <f:subview id="filterPanel">
+                <jsp:include page="SharedFSClientFilterPanel.jsp"/>
+            </f:subview>
+        </f:facet>
         <ui:tableRowGroup id="clientTableRows"
                           selected="#{SharedFSBean.selectClient.selectedState}"
                           binding="#{SharedFSBean.clientSummaryTableRowGroup}"

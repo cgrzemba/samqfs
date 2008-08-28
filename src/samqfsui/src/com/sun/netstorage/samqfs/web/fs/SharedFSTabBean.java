@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSTabBean.java,v 1.1 2008/06/11 16:58:00 ronaldso Exp $
+// ident        $Id: SharedFSTabBean.java,v 1.2 2008/08/28 02:01:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -45,9 +45,10 @@ public class SharedFSTabBean {
         {TAB_SUMMARY, "SharedFS.tab.summary",
                     "/faces/jsp/fs/SharedFSSummary.jsp"},
         {TAB_CLIENT, "SharedFS.tab.clients",
-                    "/faces/jsp/fs/SharedFSClient.jsp"},
+                    "/faces/jsp/fs/SharedFSClient.jsp?" +
+                    SharedFSBean.PARAM_FILTER + "="},
         {TAB_STORAGE_NODE, "SharedFS.tab.sn",
-                    "/faces/jsp/fs/SharedFSStorageNode.jsp"}
+                    "/faces/jsp/fs/SharedFSStorageNode.jsp?criteria"}
     };
 
     public SharedFSTabBean() {

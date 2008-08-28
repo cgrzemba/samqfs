@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.13 2008/08/20 19:36:52 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.14 2008/08/28 02:01:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -43,6 +43,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
+import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
@@ -58,6 +59,7 @@ import com.sun.web.ui.model.Option;
 import com.sun.web.ui.model.OptionTitle;
 import java.io.Serializable;
 import javax.faces.event.ActionEvent;
+import javax.servlet.http.HttpServletRequest;
 
 
 public class SharedFSBean implements Serializable {
@@ -137,6 +139,7 @@ public class SharedFSBean implements Serializable {
     private SharedFSClientBean clientBean = null;
     private SharedFSStorageNodeBean snBean = null;
 
+    public static final String PARAM_FILTER = "filter";
 
     public SharedFSBean() {
         this.tabBean = new SharedFSTabBean();
@@ -212,17 +215,19 @@ sfe.printStackTrace();
      * @param client true if getting data for client summary apge
      * @param filter page filter short number
      */
-    private void getData(boolean client, short filter) {
+    private void getData(boolean client) {
         String fsName = getFSName();
         String serverName = JSFUtil.getServerName();
 
         TraceUtil.trace3("REMOTE call: getData()");
         TraceUtil.trace3("serverName: " + serverName + " fsName: " + fsName);
+System.out.println("REMOTE call: getData()");
+System.out.println("serverName: " + serverName + " fsName: " + fsName);
         if (serverName != null) {
             try {
                 SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
-
+                SharedFSFilter [] filters = getFilters();
                 SharedHostInfo [] infos =
                     sharedFSManager.getSharedFSHosts(
                         serverName,
@@ -231,13 +236,13 @@ sfe.printStackTrace();
                                 Host.MDS |
                                 Host.CLIENTS :
                                 Host.STORAGE_NODE,
-                        filter);
-
+                        filters);
+System.out.println("info length: " + (infos == null ? "0" : Integer.toString(infos.length)));
                 if (client) {
-                    clientBean.populate(infos, showArchive);
+                    clientBean.populate(infos, showArchive, filters);
                     timeClient = Long.toString(System.currentTimeMillis());
                 } else {
-                    snBean.populate(infos);
+                    snBean.populate(infos, filters);
                     timeStorageNode = Long.toString(System.currentTimeMillis());
                 }
 
@@ -416,9 +421,9 @@ sfe.printStackTrace();
         } else if ("unmount".equals(selected)) {
             executeCommand(false);
         } else if ("removesn".equals(selected)) {
-            forwardToSnPage((short) 10);
+            forwardToSnPage(SharedFSFilter.FILTER_NONE);
         } else if ("removecn".equals(selected)) {
-            forwardToClientPage((short)10);
+            forwardToClientPage(SharedFSFilter.FILTER_NONE);
         }
     }
 
@@ -580,14 +585,16 @@ sfe.printStackTrace();
         JSFUtil.redirectPage("/fs/FSMount", params);
     }
 
-    private void forwardToSnPage(short filter){
+    private void forwardToSnPage(String filter){
         JSFUtil.redirectPage(
-            "/faces/jsp/fs/SharedFSStorageNode.jsp", "mode=" + filter);
+            "/faces/jsp/fs/SharedFSStorageNode.jsp",
+            PARAM_FILTER + "=" + filter);
     }
 
-    private void forwardToClientPage(short filter) {
+    private void forwardToClientPage(String filter) {
         JSFUtil.redirectPage(
-            "/faces/jsp/fs/SharedFSClient.jsp", "mode=" + filter);
+            "/faces/jsp/fs/SharedFSClient.jsp",
+            PARAM_FILTER + "=" + filter);
     }
 
     private void executeCommand(boolean mount){
@@ -785,7 +792,7 @@ sfe.printStackTrace();
     }
 
     public TableDataProvider getClientSummaryList() {
-        getData(true, clientBean.getFilter());
+        getData(true);
         return clientBean.getClientList();
     }
 
@@ -843,6 +850,7 @@ sfe.printStackTrace();
     public String getClientTableFilterSelectedOption() {
         this.clientTableFilterSelectedOption =
             clientBean.getClientTableFilterSelectedOption();
+System.out.println("filter: getClientTableFilter: " + clientTableFilterSelectedOption);
         return clientTableFilterSelectedOption;
     }
 
@@ -859,6 +867,26 @@ sfe.printStackTrace();
     /** Return the array of filter menu options */
     public Option[] getClientTableFilterOptions() {
         return clientBean.getFilterMenuOptions();
+    }
+
+    public String getParamCriteriaAll() {
+        return SharedFSFilter.FILTER_NONE;
+    }
+
+    public String getParamCriteriaOk() {
+        return SharedFSFilter.FILTER_OK;
+    }
+
+    public String getParamCriteriaUnmounted() {
+        return SharedFSFilter.FILTER_UNMOUNTED;
+    }
+
+    public String getParamCriteriaOff() {
+        return SharedFSFilter.FILTER_DISABLED;
+    }
+
+    public String getParamCriteriaInError() {
+        return SharedFSFilter.FILTER_IN_ERROR;
     }
 
     public void handleTableMenuSelection(ActionEvent event) {
@@ -928,8 +956,7 @@ sfe.printStackTrace();
     public void handleFilterChange(ActionEvent event) {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
-
-        forwardToClientPage(Short.parseShort(selected));
+        forwardToClientPage(selected);
     }
 
     /**
@@ -976,7 +1003,7 @@ System.out.println("Selected: " + selected[i]);
     }
 
     public TableDataProvider getSnSummaryList() {
-        getData(false, snBean.getFilter());
+        getData(false);
         return snBean.getSnList();
     }
 
@@ -1134,6 +1161,44 @@ System.out.println("Selected: " + selected[i]);
         String selected = (String) dropDown.getSelected();
 
         TraceUtil.trace3("Entering handleSnFilterChange! selected:" + selected);
-        forwardToSnPage(Short.parseShort(selected));
+        forwardToSnPage(selected);
+    }
+
+    /**
+     * Method to retrieve filter criteria from the request, and save it in the
+     * session.
+     */
+    public SharedFSFilter [] getFilters() {
+        HttpServletRequest request = JSFUtil.getRequest();
+        String criteria = request.getParameter(PARAM_FILTER);
+
+System.out.println("getFilters: request criteria:" + criteria + "end");
+        // criteria is null, means request contains no param
+        if (criteria == null) {
+            criteria = (String) JSFUtil.getAttribute(PARAM_FILTER);
+            if (criteria == null || criteria.length() == 0) {
+                return new SharedFSFilter[0];
+            } else {
+                return convertStrToFilter(criteria);
+            }
+        } else if (criteria.length() == 0) {
+            return new SharedFSFilter[0];
+        } else {
+            JSFUtil.setAttribute(PARAM_FILTER, criteria);
+            return convertStrToFilter(criteria);
+        }
+    }
+
+    private SharedFSFilter [] convertStrToFilter(String criteria) {
+System.out.println("convert:<criteria>" + criteria + "</criteria>");
+        String [] filterArr =
+            criteria.split(SharedFSFilter.FILTER_DELIMITOR);
+System.out.println("filterArr length: " + filterArr.length);
+        SharedFSFilter [] filters =
+            new SharedFSFilter[filterArr.length];
+        for (int i = 0; i < filterArr.length; i++) {
+            filters[i] = new SharedFSFilter(filterArr[i]);
+        }
+        return filters;
     }
 }

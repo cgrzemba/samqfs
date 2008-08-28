@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.7 2008/08/13 20:56:13 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.8 2008/08/28 02:01:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
+import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import java.util.Properties;
@@ -325,6 +326,143 @@ public class SharedHostInfo {
 
     public String getIscsiid() {
         return "c1t2d3s4";
+    }
+
+    public boolean suffices(SharedFSFilter filter) {
+        if (filter.getTarget().
+            equals(SharedFSFilter.TARGET_IP_ADDRESS)) {
+            return checkIPAddress(filter);
+        } else if (filter.getTarget().
+            equals(SharedFSFilter.TARGET_STATUS)) {
+            return checkStatus(filter);
+        } else if (filter.getTarget().
+            equals(SharedFSFilter.TARGET_TYPE)) {
+            return checkType(filter);
+        } else {
+            return checkString(filter);
+        }
+    }
+
+    private boolean checkStatus(SharedFSFilter filter) {
+        boolean is = filter.getCondition().equals(SharedFSFilter.COND_IS);
+
+        String content = filter.getContent();
+        if (content.equals(SharedFSFilter.STATUS_OK)) {
+            return
+                is ?
+                    SharedHostInfo.STATUS_OK == getStatusValue() :
+                    SharedHostInfo.STATUS_OK != getStatusValue();
+        } else if (content.equals(SharedFSFilter.STATUS_MOUNTED)) {
+            return
+                // Note: since we have to check against "STATUS_UNMOUNTED", the
+                // conditions are flipped.
+                is ?
+                    SharedHostInfo.STATUS_UNMOUNTED != getStatusValue() :
+                    SharedHostInfo.STATUS_UNMOUNTED == getStatusValue();
+        } else if (content.equals(SharedFSFilter.STATUS_ACCESS_ENABLED)) {
+            return
+                // Note: since we have to check against "STATUS_DISABLED", the
+                // conditions are flipped.
+                is ?
+                    SharedHostInfo.STATUS_ACCESS_DISABLED != getStatusValue() :
+                    SharedHostInfo.STATUS_ACCESS_DISABLED == getStatusValue();
+        } else if (content.equals(SharedFSFilter.STATUS_IN_ERROR)) {
+            return
+                is ?
+                    SharedHostInfo.STATUS_ASSUMED_DEAD == getStatusValue() ||
+                    SharedHostInfo.STATUS_KNOWN_DEAD == getStatusValue() :
+                    SharedHostInfo.STATUS_ASSUMED_DEAD != getStatusValue() ||
+                    SharedHostInfo.STATUS_KNOWN_DEAD != getStatusValue();
+        } else {
+            // Should not get here
+            return false;
+        }
+    }
+
+    private boolean checkType(SharedFSFilter filter) {
+        boolean is = filter.getCondition().equals(SharedFSFilter.COND_IS);
+
+        String content = filter.getContent();
+        if (content.equals(SharedFSFilter.TYPE_MDS_PMDS)) {
+            return
+                is ?
+                    SharedHostInfo.TYPE_MDS == getType() ||
+                    SharedHostInfo.TYPE_PMDS == getType() :
+                    SharedHostInfo.TYPE_MDS != getType() ||
+                    SharedHostInfo.TYPE_PMDS != getType();
+        } else if (content.equals(SharedFSFilter.TYPE_CLIENTS)) {
+            return
+                is ?
+                    SharedHostInfo.TYPE_CLIENT == getType() :
+                    SharedHostInfo.TYPE_CLIENT != getType();
+        } else {
+            // Should not get here
+            return false;
+        }
+    }
+
+    private boolean checkString(SharedFSFilter filter) {
+        String target = filter.getTarget();
+        String checkAgainst = null;
+
+        if (SharedFSFilter.TARGET_HOST_NAME.equals(target)) {
+            checkAgainst = getName();
+        } else if (SharedFSFilter.TARGET_ARCH.equals(target)) {
+            checkAgainst = getArch();
+        } else if (SharedFSFilter.TARGET_OS.equals(target)) {
+            checkAgainst = getOS();
+        } else {
+            // Should not get here
+            return false;
+        }
+        if (filter.getCondition().
+            equals(SharedFSFilter.COND_CONTAINS)) {
+            return checkAgainst.contains(filter.getContent());
+        } else if (filter.getCondition().
+            equals(SharedFSFilter.COND_DOES_NOT_CONTAIN)) {
+            return !checkAgainst.contains(filter.getContent());
+        } else if (filter.getCondition().
+            equals(SharedFSFilter.COND_STARTS_WITH)) {
+            return checkAgainst.startsWith(filter.getContent());
+        } else if (filter.getCondition().
+            equals(SharedFSFilter.COND_ENDS_WITH)) {
+            return checkAgainst.endsWith(filter.getContent());
+        } else {
+            // Should not get here
+            return false;
+        }
+    }
+
+    private boolean checkIPAddress(SharedFSFilter filter) {
+        String [] ipAddresses = getIPAddresses();
+
+        boolean returnValue = false;
+
+        for (int i = 0; i < ipAddresses.length; i++) {
+            if (filter.getCondition().
+                equals(SharedFSFilter.COND_CONTAINS)) {
+                returnValue = ipAddresses[i].contains(filter.getContent());
+            } else if (filter.getCondition().
+                equals(SharedFSFilter.COND_DOES_NOT_CONTAIN)) {
+                returnValue = !ipAddresses[i].contains(filter.getContent());
+            } else if (filter.getCondition().
+                equals(SharedFSFilter.COND_STARTS_WITH)) {
+                returnValue = ipAddresses[i].startsWith(filter.getContent());
+            } else if (filter.getCondition().
+                equals(SharedFSFilter.COND_ENDS_WITH)) {
+                returnValue = ipAddresses[i].endsWith(filter.getContent());
+            }
+
+            // Once if returnValue is true, at least one of the IP matches
+            // the criteria.  Means we need to include this SharedHostInfo
+            // object for the filter.
+            if (returnValue) {
+                return true;
+            }
+        }
+        // If code reaches here, nothing is found.  Do not include this object
+        // for the filter
+        return false;
     }
 
     public String toString() {

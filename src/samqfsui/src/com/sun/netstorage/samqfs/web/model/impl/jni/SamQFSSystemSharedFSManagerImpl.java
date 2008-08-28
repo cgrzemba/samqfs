@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.53 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.54 2008/08/28 02:01:36 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -50,6 +50,7 @@ import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteria;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
+import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.SharedDiskCache;
@@ -202,8 +203,16 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * low_msg = uint32
      */
     public SharedHostInfo [] getSharedFSHosts(
-        String mdServer, String fsName, int options, short filter)
+        String mdServer, String fsName, int options, SharedFSFilter []  filters)
         throws SamFSException {
+System.out.println("Logic: getSharedFSHosts!");
+if (filters == null || filters.length == 0) {
+    System.out.println("filter null or zero length!");
+} else {
+    for (int i = 0; i < filters.length; i++) {
+        System.out.println("filter " + i + ": " + filters[i].toString());
+    }
+}
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(mdServer);
@@ -220,40 +229,25 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         for (int i = 0; i < hostInfo.length; i++) {
             sharedHostInfo[i] = new SharedHostInfo(hostInfo[i]);
         }
-
+System.out.println("After calling Host.getSharedFSHosts, shared host #: " + sharedHostInfo.length);
         // Show All
-        if (SamQFSSystemSharedFSManager.FILTER_NONE == filter ||
-            SamQFSSystemSharedFSManager.FILTER_REMOVE == filter) {
+        if (filters.length == 0) {
             return sharedHostInfo;
         } else {
-            return filterHosts(sharedHostInfo, filter);
+            return filterHosts(sharedHostInfo, filters);
         }
     }
 
     private SharedHostInfo [] filterHosts(
-        SharedHostInfo [] infos, short filter) {
+        SharedHostInfo [] infos, SharedFSFilter [] filters) {
         ArrayList hostList = new ArrayList();
-        // TODO: Add FILTER_CUSTOM
+
         for (int i = 0; i < infos.length; i++) {
-            if (
-                (FILTER_OK == filter &&
-                    SharedHostInfo.STATUS_OK == infos[i].getStatusValue()) ||
-                (FILTER_UNMOUNTED == filter &&
-                    SharedHostInfo.STATUS_UNMOUNTED ==
-                                    infos[i].getStatusValue()) ||
-                (FILTER_DISABLED == filter &&
-                    SharedHostInfo.STATUS_ACCESS_DISABLED ==
-                                    infos[i].getStatusValue()) ||
-                (FILTER_IN_ERROR == filter &&
-                    SharedHostInfo.STATUS_ASSUMED_DEAD ==
-                                    infos[i].getStatusValue()) ||
-                (FILTER_IN_ERROR == filter &&
-                    SharedHostInfo.STATUS_KNOWN_DEAD ==
-                                    infos[i].getStatusValue()) ||
-                (FILTER_FAULTS == filter &&
-                    infos[i].getFaults() > 0)) {
-                // Matched
-                hostList.add(infos[i]);
+            for (int j = 0; j < filters.length; j++) {
+                if (infos[i].suffices(filters[j])) {
+                    hostList.add(infos[i]);
+                    break;
+                }
             }
         }
         return (SharedHostInfo []) hostList.toArray(new SharedHostInfo[0]);

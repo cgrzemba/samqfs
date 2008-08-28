@@ -27,21 +27,20 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.6 2008/08/13 20:56:13 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.7 2008/08/28 02:01:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.data.provider.TableDataProvider;
 import com.sun.data.provider.impl.ObjectArrayDataProvider;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
-import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
+import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.web.ui.component.Hyperlink;
 import com.sun.web.ui.model.Option;
 import com.sun.web.ui.model.OptionTitle;
-import javax.servlet.http.HttpServletRequest;
 
 
 public class SharedFSClientBean {
@@ -57,21 +56,17 @@ public class SharedFSClientBean {
 
     // Basic Filter Menu
     protected String [][] filterOptions = new String [][] {
-        {"SharedFS.filter.all",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_NONE)},
-        {"SharedFS.state.ok",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_OK)},
-        {"SharedFS.state.unmounted",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_UNMOUNTED)},
-        {"SharedFS.state.accessdisabled",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_DISABLED)},
-        {"SharedFS.state.inerror",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_IN_ERROR)}
+        {"SharedFS.filter.all", SharedFSFilter.FILTER_NONE},
+        {"SharedFS.state.ok", SharedFSFilter.FILTER_OK},
+        {"SharedFS.state.unmounted", SharedFSFilter.FILTER_UNMOUNTED},
+        {"SharedFS.state.accessdisabled", SharedFSFilter.FILTER_DISABLED},
+        {"SharedFS.state.inerror", SharedFSFilter.FILTER_IN_ERROR},
+        {"SharedFS.filter.custom", SharedFSFilter.FILTER_CUSTOM}
     };
 
     protected boolean archive = false;
-
     private SharedHostInfo [] infos = null;
+    private SharedFSFilter [] filters = null;
 
     public SharedFSClientBean() {
     }
@@ -108,9 +103,12 @@ public class SharedFSClientBean {
         return links;
     }
 
-    public void populate(SharedHostInfo [] infos, boolean showArchive) {
+    public void populate(
+        SharedHostInfo [] infos,
+        boolean showArchive, SharedFSFilter [] filters) {
         this.archive = showArchive;
         this.infos = infos;
+        this.filters = filters;
     }
 
     public TableDataProvider getClientList() {
@@ -148,49 +146,47 @@ public class SharedFSClientBean {
         return filterMenuOptions;
     }
 
-    /**
-     * Method to retrieve page mode from the request, and save it in the
-     * session.
-     */
-    public short getFilter() {
-        HttpServletRequest request = JSFUtil.getRequest();
-        String mode = request.getParameter("mode");
-        try {
-            if (mode == null) {
-                mode = (String) JSFUtil.getAttribute("mode");
-                if (mode == null) {
-                    return 0;
-                } else {
-                    return Short.parseShort(mode);
-                }
-            } else {
-                JSFUtil.setAttribute("mode", mode);
-                return Short.parseShort(mode);
-            }
-        } catch (NumberFormatException numEx) {
-            System.out.println("NumberFormatException in getMode()");
-            return -1;
-        }
-    }
-
     public String getClientTableTitle() {
-        if (SamQFSSystemSharedFSManager.FILTER_NONE == getFilter() ||
-            SamQFSSystemSharedFSManager.FILTER_REMOVE == getFilter()) {
-            return JSFUtil.getMessage("SharedFS.title.table.clients");
-        } else {
+        if (filters.length == 1) {
+            String criteria = filters[0].toString();
+            String optionSelected = null;
+            if (SharedFSFilter.FILTER_OK.equals(criteria)) {
+                optionSelected = filterOptions[1][0];
+            } else if (SharedFSFilter.FILTER_UNMOUNTED.equals(criteria)) {
+                optionSelected = filterOptions[2][0];
+            } else if (SharedFSFilter.FILTER_DISABLED.equals(criteria)) {
+                optionSelected = filterOptions[3][0];
+            } else if (SharedFSFilter.FILTER_IN_ERROR.equals(criteria)) {
+                optionSelected = filterOptions[4][0];
+            } else {
+                // custom filter with one criterion
+                return JSFUtil.getMessage(
+                    "SharedFS.title.table.clients.filtered",
+                    new String [] {
+                        JSFUtil.getMessage(filterOptions[5][0])});
+            }
+
+            // for preset criteria
             return JSFUtil.getMessage(
                 "SharedFS.title.table.clients.filtered",
                 new String [] {
-                    JSFUtil.getMessage(filterOptions[getFilter()][0])});
+                    JSFUtil.getMessage(optionSelected)});
+        } else if (filters.length > 1) {
+            return JSFUtil.getMessage(
+                "SharedFS.title.table.clients.filtered",
+                new String [] {
+                    JSFUtil.getMessage(filterOptions[5][0])});
         }
+
+        // Otherwise return the generic title
+        return JSFUtil.getMessage("SharedFS.title.table.clients");
     }
 
     public String getClientTableFilterSelectedOption() {
-        if (getFilter() <= SamQFSSystemSharedFSManager.FILTER_NONE ||
-            getFilter() == SamQFSSystemSharedFSManager.FILTER_REMOVE) {
-            return OptionTitle.NONESELECTED;
+        if (filters.length == 1) {
+            return filters[0].toString();
         } else {
-            return Short.toString(getFilter());
+            return OptionTitle.NONESELECTED;
         }
     }
 }

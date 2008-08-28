@@ -27,20 +27,19 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSStorageNodeBean.java,v 1.4 2008/08/06 23:44:08 ronaldso Exp $
+// ident        $Id: SharedFSStorageNodeBean.java,v 1.5 2008/08/28 02:01:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.data.provider.TableDataProvider;
 import com.sun.data.provider.impl.ObjectArrayDataProvider;
-import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
+import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.web.ui.component.Hyperlink;
 import com.sun.web.ui.model.Option;
 import com.sun.web.ui.model.OptionTitle;
-import javax.servlet.http.HttpServletRequest;
 
 public class SharedFSStorageNodeBean {
 
@@ -56,19 +55,15 @@ public class SharedFSStorageNodeBean {
 
     // Basic Filter Menu
     protected String [][] filterOptions = new String [][] {
-        {"SharedFS.filter.all",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_NONE)},
-        {"SharedFS.state.ok",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_OK)},
-        {"SharedFS.state.unmounted",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_UNMOUNTED)},
-        {"SharedFS.state.allocdisabled",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_DISABLED)},
-        {"SharedFS.state.faults",
-             Short.toString(SamQFSSystemSharedFSManager.FILTER_FAULTS)}
+        {"SharedFS.filter.all", SharedFSFilter.FILTER_NONE},
+        {"SharedFS.state.ok", SharedFSFilter.FILTER_OK},
+        {"SharedFS.state.unmounted", SharedFSFilter.FILTER_UNMOUNTED},
+        {"SharedFS.state.allocdisabled", SharedFSFilter.FILTER_DISABLED},
+        {"SharedFS.state.faults", SharedFSFilter.FILTER_FAULTS}
     };
 
     private SharedHostInfo [] infos = null;
+    private SharedFSFilter [] filters = null;
 
     public SharedFSStorageNodeBean() {
     }
@@ -105,8 +100,9 @@ public class SharedFSStorageNodeBean {
         return links;
     }
 
-    public void populate(SharedHostInfo [] infos) {
+    public void populate(SharedHostInfo [] infos, SharedFSFilter [] filters) {
         this.infos = infos;
+        this.filters = filters;
     }
 
     public TableDataProvider getSnList() {
@@ -144,33 +140,9 @@ System.out.println("sn: getSnList: info is " +
         return filterMenuOptions;
     }
 
-    /**
-     * Method to retrieve page mode from the request, and save it in the
-     * session.
-     */
-    public short getFilter() {
-        HttpServletRequest request = JSFUtil.getRequest();
-        String mode = request.getParameter("mode");
-        try {
-            if (mode == null) {
-                mode = (String) JSFUtil.getAttribute("mode");
-                if (mode == null) {
-                    return 0;
-                } else {
-                    return Short.parseShort(mode);
-                }
-            } else {
-                JSFUtil.setAttribute("mode", mode);
-                return Short.parseShort(mode);
-            }
-        } catch (NumberFormatException numEx) {
-            System.out.println("NumberFormatException in getMode()");
-            return -1;
-        }
-    }
-
     public String getSnTableTitle() {
-        if (0 == getFilter() || 10 == getFilter()) {
+        /*
+        if (filters.length == 0) {
             return JSFUtil.getMessage("SharedFS.title.table.sns");
         // special case because faults == 5, otherwise 0-4 will go well with
         // the last else case
@@ -185,13 +157,20 @@ System.out.println("sn: getSnList: info is " +
                 new String [] {
                     JSFUtil.getMessage(filterOptions[getFilter()][0])});
         }
+         */
+        // TODO: evaluate
+        return JSFUtil.getMessage("SharedFS.title.table.sns");
     }
 
     public String getSnTableFilterSelectedOption() {
+        /*
         if (getFilter() <= 0) {
             return OptionTitle.NONESELECTED;
         } else {
             return Short.toString(getFilter());
         }
+         */
+        // TODO: Reevaluate this
+        return OptionTitle.NONESELECTED;
     }
 }
