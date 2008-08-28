@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -35,7 +35,7 @@ MAN_SRCS =  archive_audit.1m archive_mark.1m archiver.1m archiver.sh.1m \
 	arcopy.1m arfind.1m auditslot.1m build_cat.1m chmed.1m \
 	cleandrive.1m clri.1m damage.1m dev_down.sh.1m   \
 	dmpshm.1m dump_cat.1m dump_log.1m exarchive.1m export.1m    \
-	generic.1m gnutar.1m import.1m samexplorer.1m   \
+	generic.1m gnutar.1m samimport.1m import.1m samexplorer.1m   \
 	itemize.1m load.1m load_notify.sh.1m log_rotate.sh.1m   \
 	mccfg.1m mount_samfs.1m move.1m odlabel.1m  \
 	qfsdump.1m qfsrestore.1m                                    \
