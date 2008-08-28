@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsBean.java,v 1.2 2008/08/27 22:17:28 kilemba Exp $
+// ident        $Id: AddClientsBean.java,v 1.3 2008/08/28 14:19:33 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -73,8 +73,8 @@ public class AddClientsBean {
 
     private String fileName = null;
 
-    // alert message
-    private AlertBean alertBean = null;
+    // alert messages
+    private AlertBean alertBean = new AlertBean();
 
     // the current file system
     private String fsName = null;
@@ -283,6 +283,27 @@ public class AddClientsBean {
     public AlertBean getAlertBean() {
         return this.alertBean;
     }
+
+    // alert messages
+    public String getAlertRendered() {
+        return this.alertBean.getRendered();
+    }
+
+    public String getAlertSummary() {
+        return this.alertBean.getSummary();
+    }
+
+    public String getAlertDetail() {
+        return this.alertBean.getDetail();
+    }
+
+    public String getAlertType() {
+        return this.alertBean.getType();
+    }
+
+    public String getAlertString() {
+        return this.alertBean.toString();
+    }
 }
 
 /**
@@ -292,11 +313,14 @@ class AlertBean {
     private boolean render;
     private String summary;
     private String detail;
+    private int type = 0; // alert types are 0, 1, 2, or 3 for "information",
+    // "success", "warning", "error". Refactor this class out
+    // and define these as an enum.
 
     AlertBean(){}
 
-    public boolean isRendered() {
-        return this.render;
+    public String getRendered() {
+        return this.render ? "true" : "false";
     }
 
     public void setRendered(boolean r) {
@@ -317,6 +341,49 @@ class AlertBean {
 
     public void setDetail(String d) {
         this.detail = d;
+    }
+
+    public String getType() {
+        switch (this.type) {
+        case 0:
+            return "information";
+        case 1:
+            return "success";
+        case 2:
+            return "warning";
+        case 3:
+            return "error";
+        }
+
+        // if we get this far, return the default which is information
+        return "information";
+    }
+
+    public void setType(int t) {
+        this.type = t;
+    }
+
+    // Re-initialize the alert bean to its infant state. This is more efficient
+    // that creating a new object.
+    public void reset() {
+        this.render = false;
+        this.summary = null;
+        this.detail = null;
+        this.type = 0;
+    }
+
+    public String toString() {
+        StringBuffer buf = new StringBuffer();
+        buf.append("render = ")
+            .append(getRendered())
+            .append("; type = ")
+            .append(getType())
+            .append("; summary = ")
+            .append(getSummary())
+            .append("; detail = ")
+            .append(getDetail());
+
+        return buf.toString();
     }
 }
 

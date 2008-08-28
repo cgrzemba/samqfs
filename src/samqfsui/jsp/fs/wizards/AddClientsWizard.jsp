@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AddClientsWizard.jsp,v 1.2 2008/08/27 22:17:27 kilemba Exp $ -->
+<!-- $Id: AddClientsWizard.jsp,v 1.3 2008/08/28 14:19:32 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -46,14 +46,9 @@
 <ui:head title="#{msgs['fs.addclients.title']}">
     <ui:script url="/js/samqfsui.js"/>
     <ui:script url="/js/fs/wizards/addclients.js"/>
-    <ui:script>
-        function validate(button) {
-            alert("next clicked : " + button.value);
-        }
-    </ui:script>
 </ui:head>
 <ui:body styleClass="DefBody"
-         onLoad="wizOnLoad('AddclientsWizardForm:AddClientsWizard')">
+         onLoad="wizOnLoad('AddclientsWizardForm:AddClientsWizard');">
 
 <ui:form id="AddClientsWizardForm">
 <ui:masthead id="Masthead" secondary="true"
@@ -63,7 +58,8 @@
              productImageHeight="40"/>
 <ui:wizard id="AddClientsWizard"
            eventListener="#{AddClientsBean.wizardEventListener}"
-           title="#{msgs['fs.addclients.title']}">
+           title="#{msgs['fs.addclients.title']}"
+           onPopupDismiss="dismissWizard();">
     <ui:wizardStep id="selectionMethodPage"
                    summary="#{msgs['fs.addclients.selectionmethod.summary']}"
                    title="#{msgs['fs.addclients.selectionmethod.title']}"
@@ -81,6 +77,11 @@
                        title="#{msgs['fs.addclients.hostname.title']}"
                        help="#{msgs['fs.addclients.hostname.help']}"
                        detail="#{msgs['fs.addclients.hostname.detail']}">
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
 
             <jsp:include page="AddClientsHostSelection.jsp" />
         </ui:wizardStep>
@@ -92,6 +93,11 @@
                        title="#{msgs['fs.addclients.byip.title']}"
                        help="#{msgs['fs.addclients.byip.help']}"
                        detail="#{msgs['fs.addclients.byip.detail']}">
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
         
             <jsp:include page="AddClientsHostSelection.jsp" />            
         </ui:wizardStep>
@@ -103,8 +109,12 @@
                        title="#{msgs['fs.addclients.file.title']}"
                        help="#{msgs['fs.addclients.file.help']}"
                        detail="#{msgs['fs.addclients.file.detail']}">
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
                            
-
         <h:panelGrid columns="4">
             <ui:label for="filenameText"
                       text="#{msgs['fs.addclients.file.filename']}"/>
@@ -129,6 +139,12 @@
                    help="#{msgs['fs.addclients.clientlist.help']}"
                    detail="#{msgs['fs.addclients.clientlist.detail']}">
         
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
+
         <jsp:include page="AddClientsHostSelection.jsp" />
     </ui:wizardStep>
     
@@ -138,6 +154,12 @@
                    help="#{msgs['fs.addclients.mountoptions.help']}"
                    detail="#{msgs['fs.addclients.mountoptions.detail']}">
         
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
+
     <table cellspacing="10">
     <tr><td>
         <ui:label for="mountPointText"
@@ -169,6 +191,12 @@
                    title="#{msgs['fs.addclients.review.title']}"
                    help="#{msgs['fs.addclients.review.help']}"
                    finish="true">
+
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
 
         <table cellspacing="10">
             <tr><td colspan="2" valign="top">
@@ -213,7 +241,14 @@
     <ui:wizardStep id="resultsPage"
                    summary="#{msgs['fs.addclients.results.summary']}"
                    title="#{msgs['fs.addclients.results.title']}"
+                   help="#{msgs['fs.addclients.results.help']}"
                    results="true">
+
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
     </ui:wizardStep>
 </ui:wizard>
 </ui:form>

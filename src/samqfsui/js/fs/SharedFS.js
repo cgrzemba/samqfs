@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.3 2008/07/16 23:45:03 ronaldso Exp $
+// ident	$Id: SharedFS.js,v 1.4 2008/08/28 14:19:31 kilemba Exp $
 
 
 // Used by drop down menu in summary page
@@ -197,8 +197,16 @@ function launchAddStorageNodeWizard(button) {
 function launchAddClientsWizard(button) {
     var infoArr = button.name.split(":");
     var formName = infoArr[0];
+    var fsName = getFSName(formName);
+    var serverName = getServerName(formName);
+    var params = "&SAMQFS_FS_NAME=" + fsName;
+    var name = "addclients_" + fsName;
+    var uri = "/faces/jsp/fs/wizards/AddClientsWizard.jsp";
 
-    alert("Coming soon!");
+    var win = launchPopup(uri, name, serverName, SIZE_WIZARD, null);
+
+    win.focus();
+
     return false;
 }
 

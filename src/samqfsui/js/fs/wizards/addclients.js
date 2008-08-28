@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: addclients.js,v 1.1 2008/07/16 23:47:27 kilemba Exp $
+// ident	$Id: addclients.js,v 1.2 2008/08/28 14:19:31 kilemba Exp $
 
 function $(id) {
   return document.getElementById(id);
@@ -83,4 +83,20 @@ function insertHostIntoList(hostname, listBoxName) {
   
   options.length = optionCount + 1;
   options[optionCount] = new Option(hostname, hostname);
+}
+
+/*
+ * this function is called when the user clicks on the 'close' button on the
+ * wizard popup.
+ */
+function dismissWizard() {
+  var forwardTo = "/samqfsui/faces/jsp/SharedFSSummary.jsp";
+  var parentFormId = opener.document.forms[0].id;
+  
+  if (parentFormId == "SharedFSClientForm") {
+    forwardTo = "/samqfsui/faces/jsp/SharedFSClient.jsp";
+  }
+  Wizard_AddClientsWizardForm_AddClientsWizard.closeAndForward(parentFormId,
+                                                               forwardTo,
+                                                               true);
 }

@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.9 2008/08/28 02:01:34 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.10 2008/08/28 14:19:32 kilemba Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -83,7 +83,7 @@
             <f:subview id="actionsTop">
                 <ui:button id="buttonAdd"
                            text="#{samBundle['common.button.add']}"
-                           onClick="alert('Coming Soon'); return false;"/>
+                           onClick="return launchAddClientsWizard(this);"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
                            onClick="if (handleButtonRemove(1) == false) return false;"

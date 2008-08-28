@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsWizardEventListener.java,v 1.1 2008/08/27 22:17:28 kilemba Exp $
+// ident        $Id: AddClientsWizardEventListener.java,v 1.2 2008/08/28 14:19:33 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -87,6 +87,9 @@ public class AddClientsWizardEventListener implements WizardEventListener {
         Wizard wizard = event.getWizard();
         WizardStep step = event.getStep();
      
+        // reset the wizard alert mesages
+        this.wizardBean.getAlertBean().reset();
+
         int id = event.getEvent();
         if (id == WizardEvent.FINISH) {
             boolean result = finishWizard();
@@ -135,9 +138,15 @@ public class AddClientsWizardEventListener implements WizardEventListener {
     protected boolean processByHostName() {
         // resolve the host names to ip addresses
         String [] rawList = this.wizardBean.getSelectedHosts();
+        AlertBean alertBean = this.wizardBean.getAlertBean();
+        alertBean.reset();
 
         // there must be atleast one host name entered.
         if (rawList == null) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
+            alertBean.setRendered(true);
             return false;
         }
 
@@ -158,6 +167,11 @@ public class AddClientsWizardEventListener implements WizardEventListener {
         }
         
         if (list.size() == 0) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
+            alertBean.setRendered(true);
+
             return false;
         }
 
@@ -171,9 +185,17 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
     protected boolean processByIpAddress() {
         String [] rawList = this.wizardBean.getSelectedHosts();
+        AlertBean alertBean = this.wizardBean.getAlertBean();
+        alertBean.reset();
 
         // there must be atleast one host selected
-        if (rawList == null) return false;
+        if (rawList == null) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
+            alertBean.setRendered(true);
+            return false;
+        }
 
         // verify the ip addresses are correct
         ArrayList<String>list = new ArrayList<String>();
@@ -197,6 +219,10 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
         // there must be atleast one valid host selected
         if (list.size() == 0) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
+            alertBean.setRendered(true);
             return false;
         }
 
@@ -210,9 +236,16 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
     protected boolean processLoadHostsFromFile() {
         String fileName = this.wizardBean.getFileName();
+        AlertBean alertBean = this.wizardBean.getAlertBean();
+        alertBean.reset();
 
         // a file name must be supplied
         if (fileName == null) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nofsname"));
+            alertBean.setRendered(true);
+
             return false;
         }
 
@@ -244,6 +277,11 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             
             // make sure atleast one valid host was found
             if (validHosts.size() == 0) {
+                alertBean.setType(3);
+                alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+                alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.filenohosts"));
+                alertBean.setRendered(true);
+
                 result = false;
             } else {
                 result = true;
@@ -254,10 +292,16 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 this.wizardBean.setSelectedHosts(temp);
             }
         } catch (FileNotFoundException fnfe) {
-            System.out.println("Error: fnfe : " + fnfe.getMessage());
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.readinfile"));
+            alertBean.setDetail(fnfe.getMessage());
+            alertBean.setRendered(true);
             result = false;
         } catch (IOException ioe) {
-            System.out.println("Error: ioe : " + ioe.getMessage());
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.readinfile"));
+            alertBean.setDetail(ioe.getMessage());
+            alertBean.setRendered(true);
             result = false;
         } finally {
             if (reader != null) {
@@ -363,10 +407,15 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
     /** handler for the finish button */
     protected boolean finishWizard() {
-        boolean result = false;
+        AlertBean alertBean = this.wizardBean.getAlertBean();
+        alertBean.reset();
+
         try {
             String serverName = JSFUtil.getServerName();
             String fsName = (String)JSFUtil.getAttribute(FS_NAME);
+
+            System.out.println("server name = " + serverName);
+            System.out.println("fs name = " + fsName);
 
             SamQFSSystemModel model = SamUtil.getModel(serverName);
             String [] displayHost = wizardBean.getSelectedHosts();
@@ -385,9 +434,25 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
             long jobId = fsManager.addClients(serverName, fsName, hostList);
             JSFUtil.setAttribute(AddClientsBean.JOB_ID_KEY, jobId);
-        } catch (SamFSException sfe) {
+            
+            // if we get this far, we were successful
+            alertBean.setType(1);
+            alertBean.setSummary(JSFUtil.getMessage("success.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.success.detail"));
+            alertBean.setRendered(true);
+         } catch (SamFSException sfe) {
             // do nothing for now
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(sfe.getMessage());
+            alertBean.setRendered(true);
+
+        } finally {
+            // clear the wizard bean so that its ready for the next launch
+            this.wizardBean.clearWizardValues();
         }
-        return result;
+
+        // always return true so we can display the results page
+        return true;
     }
 }
