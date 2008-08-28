@@ -1,4 +1,4 @@
-# $Revision: 1.129 $
+# $Revision: 1.130 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -120,7 +120,7 @@ T_SAM_VFS_AVAIL3	""
 T_SAM_MAX_VFS		""
 T_SAM_OPEN		"Open:     ino=%d,mode=%x^[$o],st=%x^[$s]"
 T_SAM_OPEN_RET		"Open-     size=%x,flg=%x^[$f],err=%d^[$e]"
-T_SAM_CLOSE		"Close:    ino=%d,bits=%x,rdev=%x"
+T_SAM_CLOSE		"Close:    ino=%d,flg=%x^[$f],rdev=%x"
 T_SAM_CLOSE_RET		"Close-    rdev=%x,flg=%x^[$f],err=%d^[$e]"
 T_SAM_READ		"Read:     ino=%d,off=%x,resid=%x"
 T_SAM_READ_RET		"Read-     ino=%d,resid=%x,err=%d^[$e]"

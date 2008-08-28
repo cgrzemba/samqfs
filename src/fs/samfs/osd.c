@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 
 #include "sam/osversion.h"
 
@@ -1897,8 +1897,10 @@ sam_osd_create_obj_layout(
 	 */
 	if (ip->olp) {
 		if (num_group != ip->olp->num_group) {
+			int ow = ip->olp->num_group;
+
 			kmem_free(ip->olp, sizeof (sam_obj_layout_t) +
-			    (sizeof (sam_obj_ent_t) * (num_group - 1)));
+			    (sizeof (sam_obj_ent_t) * (ow - 1)));
 			ip->olp = NULL;
 		} else {
 			bzero((char *)ip->olp, sizeof (sam_obj_layout_t) +
