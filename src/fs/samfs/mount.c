@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.227 $"
+#pragma ident "$Revision: 1.228 $"
 #endif
 
 #include "sam/osversion.h"
@@ -326,7 +326,7 @@ sam_getdev(
 			    credp)) != 0) {
 				continue;
 			}
-			if ((dp->error = sam_get_osd_fs_attr(dp->oh,
+			if ((dp->error = sam_get_osd_fs_attr(mp, dp->oh,
 			    &dp->part)) != 0) {
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: Eq %d Error %d: cannot get "

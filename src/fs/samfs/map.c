@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.145 $"
+#pragma ident "$Revision: 1.146 $"
 #endif
 
 #include "sam/osversion.h"
@@ -423,6 +423,8 @@ sam_map_direct(
 	int num_group, bsize;
 	int error = 0;
 
+	ASSERT(!SAM_IS_OBJECT_FILE(ip));
+
 	/*
 	 * Build ioblk array given offset and count.
 	 */
@@ -661,6 +663,8 @@ sam_map_indirect(
 #ifdef sun
 	offset_t prev_filesize = ip->size;
 #endif
+
+	ASSERT(!SAM_IS_OBJECT_FILE(ip));
 
 	zerodau[0] = zerodau[1] = 0;
 	bzero(&params, sizeof (params));

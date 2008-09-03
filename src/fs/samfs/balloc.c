@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.81 $"
+#pragma ident "$Revision: 1.82 $"
 
 #include "sam/osversion.h"
 
@@ -324,6 +324,8 @@ sam_copy_to_large(sam_node_t *ip, int size)
 	sam_bn_t old_extent[NSDEXT];
 	uchar_t old_ord[NSDEXT];
 
+	ASSERT(!SAM_IS_OBJECT_FILE(ip));
+
 	if (TRANS_ISTRANS(ip->mp)) {
 		return;
 	}
@@ -488,6 +490,8 @@ sam_allocate_block(
 	int i;
 	int len;
 	int error = 0;
+
+	ASSERT(!SAM_IS_OBJECT_FILE(ip));
 
 	mp = ip->mp;
 	if (iop->imap.bt != SM) {

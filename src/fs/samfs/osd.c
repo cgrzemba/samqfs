@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 #include "sam/osversion.h"
 
@@ -88,13 +88,11 @@ static char *sam_get_attr_addr(osd_attributes_list_t *list,
 	uint32_t attr_num);
 static uint64_t sam_get_8_byte_attr_val(char *listp, uint32_t attr_num);
 #endif /* SAM_ATTR_LIST */
-static int sam_get_user_object_attr(struct sam_mount *mp,
-	struct sam_disk_inode *dp, int ord, uint64_t object_id,
-	uint32_t attr_num, int64_t *attrp);
+static int sam_get_user_object_attr(sam_mount_t *mp, sam_osd_handle_t oh,
+	uint64_t object_id, int64_t *attrp);
 static int sam_set_user_object_attr(struct sam_mount *mp,
 	struct sam_disk_inode *dp, int ord, uint64_t object_id,
 	uint32_t attr_num, int64_t attribute);
-
 static void sam_object_req_done(osd_req_t *reqp, void *ct_priv,
 	osd_result_t *resp);
 static void sam_dk_object_done(osd_req_t *reqp, void *ct_priv,
@@ -475,6 +473,7 @@ fini:
  */
 int
 sam_get_osd_fs_attr(
+	sam_mount_t *mp,		/* Pointer to the mount table */
 	sam_osd_handle_t oh,		/* Object device handle */
 	struct sam_fs_part *fsp)	/* Pointer to device partition table */
 {
@@ -484,9 +483,7 @@ sam_get_osd_fs_attr(
 	osd_req_t		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
 	int			rc;
-	sam_mount_t *mp = NULL;
 	int			error = 0;
-
 
 	reqp = (sam_sosd_vec.setup_get_attr)((void *)oh, partid,
 	    SAM_OBJ_SBLK_ID);
@@ -506,6 +503,10 @@ sam_get_osd_fs_attr(
 			fsp->pt_capacity = SFP_CAPACITY(fap);
 			fsp->pt_space = SFP_SPACE(fap);
 			fsp->pt_size = fsp->pt_capacity << SAM2SUN_BSHIFT;
+		} else {
+			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD GET fs attr"
+			    " rc=%d, errno=%d", mp->mt.fi_name, iorp->err_code,
+			    error));
 		}
 	} else {
 		error = sam_osd_rc(rc);
@@ -1444,41 +1445,43 @@ sam_remove_object_id(
 
 
 /*
- * ----- sam_get_user_object_attr - Process get attribute call.
+ * ----- sam_get_user_object_attr - Process get user attribute call.
  */
 static int
 sam_get_user_object_attr(
 	sam_mount_t		*mp,		/* Pointer to the mount table */
-	struct sam_disk_inode	*dp,		/* Pointer to disk inode */
-	int			ord,		/* OSD group ordinal */
+	sam_osd_handle_t	oh,		/* Object device handle */
 	uint64_t		object_id,	/* OSD group object id */
-	uint32_t		attr_num,	/* Attribute number */
 	int64_t			*attrp)		/* Returned attribute */
 {
 	sam_osd_req_priv_t	ior_priv;
 	sam_osd_req_priv_t	*iorp = &ior_priv;
+	sam_objinfo_page_t	user_attr;
 	osd_req_t		*reqp;
 	uint64_t		partid = SAM_OBJ_PAR_ID;
 	int			rc;
 	int			error = 0;
 
-
-	if ((reqp = sam_sosd_vec.setup_get_attr((void *)mp->mi.m_fs[ord].oh,
-	    partid, object_id)) == NULL) {
+	reqp = (sam_sosd_vec.setup_get_attr)((void *)oh, partid, object_id);
+	if (reqp == NULL) {
 		return (EINVAL);
 	}
 	(sam_sosd_vec.add_get_page_attr_to_req)(reqp,
 	    OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO,
-	    sizeof (sam_objinfo_page_t), (void *) attrp);
+	    sizeof (sam_objinfo_page_t), (void *) &user_attr);
 	sam_osd_setup_private(iorp, mp);
 	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
-		if ((error = iorp->error) != 0) {
-			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD GET attr %x"
-			    " rc=%d, errno=%d, ino=%d.%d, setattr = 0x%llx",
-			    mp->mt.fi_name, attr_num, iorp->err_code,
-			    error, dp->id.ino, dp->id.gen, *attrp));
+		if ((error = iorp->error) == 0) {
+			sam_objinfo_page_t *uap = &user_attr;
+
+			/* Return blocks allocated (4K units). */
+			*attrp = SOP_BYTES_ALLOC(uap) >> SAM_SHIFT;
+		} else {
+			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD GET user attr"
+			    " rc=%d, errno=%d", mp->mt.fi_name, iorp->err_code,
+			    error));
 		}
 	} else {
 		error = sam_osd_rc(rc);
@@ -1696,6 +1699,18 @@ sam_truncate_object_file(
 	}
 
 	/*
+	 * For RELEASE, update allocated block count.  Need to query
+	 * the storage nodes for partial release.
+	 */
+	if (tflag == SAM_RELEASE) {
+		if (length == 0) {
+			ip->di.blocks = 0;
+		} else {
+			sam_osd_update_blocks(ip, 1);
+		}
+	}
+
+	/*
 	 * Truncate up/down, reset end of object for all appropriate stripes.
 	 */
 	error = sam_set_end_of_obj(ip, length, 1);
@@ -1885,6 +1900,61 @@ sam_map_osd(
 		mutex_exit(&ip->fl_mutex);
 	}
 	return (0);
+}
+
+
+/*
+ * ----- sam_update_blocks - update inode allocated block count.
+ */
+void
+sam_osd_update_blocks(
+	sam_node_t *ip,		/* Pointer to the inode. */
+	int pflag)		/* Partial release block count flag. */
+{
+	sam_obj_layout_t *olp;
+	sam_osd_handle_t oh;
+	uint64_t object_id;
+	int64_t attr;
+	int32_t blocks;
+	int bn_shift = ip->mp->mi.m_bn_shift;
+	int error;
+	int i;
+	int num_group;
+	int partial = ip->di.psize.partial;
+
+	attr = 0;
+	blocks = 0;
+	num_group = ip->di.rm.info.obj.num_group;
+	ASSERT(num_group);
+	olp = ip->olp;
+	ASSERT(olp);
+	for (i = 0; i < num_group; i++) {
+		object_id = olp->ol[i].obj_id;
+		if (object_id == 0) {
+			continue;
+		}
+		oh = ip->mp->mi.m_fs[olp->ol[i].ord].oh;
+		error = sam_get_user_object_attr(ip->mp,
+		    oh, object_id, &attr);
+		if (error == 0) {
+			blocks += (int32_t)attr;
+		} else {
+			cmn_err(CE_WARN,
+			    "SAM-QFS: %s: Error=%d, Eq=%d, ino=%d.%d, "
+			    "Cannot get allocated block count.",
+			    ip->mp->mt.fi_name, error,
+			    ip->mp->mi.m_fs[i].part.pt_eq,
+			    ip->di.id.ino, ip->di.id.gen);
+		}
+		/*
+		 * For partial release optimization, only count the number
+		 * of blocks for the partial release size.
+		 */
+		if (pflag && ((blocks << bn_shift) >= partial)) {
+			break;
+		}
+	}
+	ip->di.blocks = blocks;
 }
 
 

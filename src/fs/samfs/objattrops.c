@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 #include "sam/osversion.h"
 
@@ -276,7 +276,7 @@ sam_obj_get_userinfo_pg(objnode_t *objnodep, uint32_t pagenum, uint64_t len,
 
 	if (pagenum != OSD_SAMQFS_VENDOR_USERINFO_ATTR_PAGE_NO) {
 		cmn_err(CE_WARN,
-		    "sam_obj_getattrpage: Page 0x%llx not supported\n",
+		    "sam_obj_get_userinfo_pg: Page 0x%llx not supported\n",
 		    pagenum);
 		return (ENOTSUP);
 	}
@@ -319,6 +319,13 @@ sam_obj_get_fsinfo_pg(objnode_t *objnodep, uint32_t pagenum, uint64_t len,
 	sam_mount_t *mp;
 	struct sam_sblk *sblk;
 	struct sam_fsinfo_page *obj_fsinfop;
+
+	if (pagenum != OSD_SAMQFS_VENDOR_FS_ATTR_PAGE_NO) {
+		cmn_err(CE_WARN,
+		    "sam_obj_get_fsinfo_pg: Page 0x%llx not supported\n",
+		    pagenum);
+		return (ENOTSUP);
+	}
 
 	ip = (struct sam_node *)(objnodep->obj_data);
 	mp = ip->mp;

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.192 $"
+#pragma ident "$Revision: 1.193 $"
 #endif
 
 #include "sam/osversion.h"
@@ -460,7 +460,8 @@ sam_osd_command(
 		break;
 
 	case OSD_CMD_ATTR:
-		if ((error = sam_get_osd_fs_attr(args.oh, &dp->part)) == 0) {
+		error = sam_get_osd_fs_attr(mp, args.oh, &dp->part);
+		if (error == 0) {
 			if (copyout(&dp->part, data,
 			    sizeof (struct sam_fs_part))) {
 				return (EFAULT);

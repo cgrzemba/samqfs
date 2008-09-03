@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 #endif
 
 #include "sam/osversion.h"
@@ -425,6 +425,8 @@ sam_allocate_and_copy_directmap(
 	int32_t save_blocks;
 	offset_t save_size;
 	sam_rel_blks_t rl;
+
+	ASSERT(!SAM_IS_OBJECT_FILE(ip));
 
 	dt = ip->di.status.b.meta;
 	bsize = LG_BLK(mp, dt);

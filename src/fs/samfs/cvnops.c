@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.145 $"
+#pragma ident "$Revision: 1.146 $"
 
 #include "sam/osversion.h"
 
@@ -274,8 +274,17 @@ sam_close_vn(
 			ip->flags.b.stage_n = ip->di.status.b.direct;
 			ip->flags.b.stage_all = ip->di.status.b.stage_all;
 		}
-
 	}
+
+	/*
+	 * For object files on last close of a file operation that changes
+	 * allocation, update allocated block count.
+	 */
+	if (SAM_IS_OBJECT_FILE(ip) && last_close &&
+	    (filemode & (FWRITE|FAPPEND|FTRUNC))) {
+		sam_osd_update_blocks(ip, 0);
+	}
+
 	if (write_lock) {
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	} else {

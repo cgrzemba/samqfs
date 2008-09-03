@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 
 #include "sam/osversion.h"
 
@@ -90,14 +90,14 @@ sam_update_filsys(
 	int flag)			/* Sync flag */
 {
 	struct sam_sblk *sblk;
+	struct samdent *dp;
 	uint_t sblk_size;
 	buf_t *bp;
 	int i;
 	int error;
 	int sblk_no;
-	offset_t space = 0;
+	offset_t space;
 	boolean_t force_update;
-	boolean_t object_devices = FALSE;
 
 	/*
 	 * For shared client in a shared file system, update superblock
@@ -160,31 +160,28 @@ sam_update_filsys(
 	 * Get capacity and space for OSD LUNs in this file system.
 	 */
 	if (SAM_IS_OBJECT_FS(mp)) {
+		space = 0;
 		for (i = 0; i < sblk->info.sb.fs_count; i++) {
-			struct samdent *dp;
-
 			dp = &mp->mi.m_fs[i];
 			if (is_osd_group(dp->part.pt_type)) {
-				object_devices = TRUE;
-				if ((error =
-				    sam_get_osd_fs_attr(dp->oh, &dp->part))) {
-					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: Eq %d Error %d: "
-					    "cannot get superblock capacity "
-					    "and space", mp->mt.fi_name,
-					    dp->part.pt_eq, error);
-				} else {
+				error = sam_get_osd_fs_attr(mp, dp->oh,
+				    &dp->part);
+				if (error == 0) {
 					sblk->eq[i].fs.capacity =
 					    dp->part.pt_capacity;
 					sblk->eq[i].fs.space =
 					    dp->part.pt_space;
 					space += sblk->eq[i].fs.space;
+				} else {
+					cmn_err(CE_WARN,
+					    "SAM-QFS: %s: Eq %d Error %d: "
+					    "cannot get superblock capacity "
+					    "and space", mp->mt.fi_name,
+					    dp->part.pt_eq, error);
 				}
 			}
 		}
-		if (object_devices) {
-			sblk->info.sb.space = space;
-		}
+		sblk->info.sb.space = space;
 	}
 
 	/*
@@ -466,11 +463,15 @@ sam_update_inode(
 		/*
 		 * If purging inode, acquire inode allocation mutex prior
 		 * to reading inode. Otherwise, this inode can be allocated
-		 * prior to the disk copy update.
+		 * prior to the disk copy update.  If not purging inode,
+		 * update allocated block count for object files.
 		 */
 		if (st == SAM_SYNC_PURGE) {
 			mutex_enter(&mp->ms.m_inode_mutex);
 			sam_free_inode(mp, &ip->di);
+		} else if (SAM_IS_OBJECT_FILE(ip) &&
+		    (ip->flags.bits & SAM_UPDATED)) {
+			sam_osd_update_blocks(ip, 0);
 		}
 		if ((error = sam_read_ino(mp, ino, &bp, &permip)) != 0) {
 			TRACE(T_SAM_UPDATE1, SAM_ITOV(ip), ino, error, 0);

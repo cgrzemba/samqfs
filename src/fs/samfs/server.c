@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.294 $"
+#pragma ident "$Revision: 1.295 $"
 
 #include "sam/osversion.h"
 
@@ -967,6 +967,13 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 
 				/* LINTED [fallthrough on case statement] */
 			case LTYPE_stage:
+				/*
+				 * Don't do the allocate append if it's
+				 * an object file.
+				 */
+				if (SAM_IS_OBJECT_FILE(ip)) {
+					break;
+				}
 				error = sam_client_allocate_append(ip, msg);
 				break;
 
@@ -978,7 +985,6 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 				/*
 				 * Truncate is immediate, remove the lease now
 				 */
-
 				rmv_err = sam_remove_lease(ip, client_ord,
 				    &l2p->irec.sr_attr,	CL_TRUNCATE, NULL);
 

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.146 $"
+#pragma ident "$Revision: 1.147 $"
 
 #include "sam/osversion.h"
 
@@ -536,24 +536,21 @@ sam_reduce_ino(
 			}
 			for (i = 0; i <= de; i++) {
 				if (ip->di.extent[i]) {
-					int32_t blocks;
+	/* N.B. Bad indentation here to meet cstyle requirements */
+	int32_t blocks;
 
-					dt = ip->di.status.b.meta;
-					bt = LG;
-					if (i < NSDEXT) {
-						bt = ip->di.status.b.on_large ?
-						    LG : SM;
-					}
-				blocks = mp->mi.m_fs[ip->di.unit].num_group ==
-				    1 ?
-				    mp->mi.m_dau[dt].blocks[bt] :
-				    (mp->mi.m_dau[dt].blocks[bt] *
-				    mp->mi.m_fs[ip->di.unit].num_group);
-					ip->di.blocks += blocks;
-					if (S_ISSEGS(&ip->di)) {
-						ip->segment_ip->di.blocks +=
-						    blocks;
-					}
+	dt = ip->di.status.b.meta;
+	bt = LG;
+	if (i < NSDEXT) {
+		bt = ip->di.status.b.on_large ? LG : SM;
+	}
+	blocks = mp->mi.m_fs[ip->di.unit].num_group == 1 ?
+	    mp->mi.m_dau[dt].blocks[bt] :
+	    (mp->mi.m_dau[dt].blocks[bt] * mp->mi.m_fs[ip->di.unit].num_group);
+	ip->di.blocks += blocks;
+	if (S_ISSEGS(&ip->di)) {
+		ip->segment_ip->di.blocks += blocks;
+	}
 				}
 			}
 		}

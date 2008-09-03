@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 #include "sam/osversion.h"
 
@@ -568,15 +568,15 @@ sam_obj_flush(struct objnode *objnodep, uint64_t offset, uint64_t len,
 		error = VOP_FSYNC(vp, FSYNC, credp, NULL);
 		if (error) {
 			cmn_err(CE_WARN, "sam_obj_flush errror %d\n", error);
-			return (error);
 		}
+		return (error);
 	}
 
 	/*
 	 * Always flush attributes.
 	 */
 	cmn_err(CE_WARN,
-	    "sam_obj_flush: Attributes flushed NOT implemented.\n");
+	    "sam_obj_flush: Attributes flush NOT implemented.\n");
 
 	return (error);
 }
@@ -599,7 +599,7 @@ sam_obj_colflush(struct objnode *objnodep, char flush_scope,
 	 * Always flush attributes.
 	 */
 	cmn_err(CE_WARN,
-	    "sam_obj_colflush: Attributes flushed NOT implemented.\n");
+	    "sam_obj_colflush: Attributes flush NOT implemented.\n");
 	error = ENOTSUP;
 	return (error);
 }
