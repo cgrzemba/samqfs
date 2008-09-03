@@ -25,35 +25,37 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: Jobs.jsp,v 1.3 2008/05/22 13:42:32 kilemba Exp $ -->
+<!-- $Id: Jobs.jsp,v 1.4 2008/09/03 19:46:03 ronaldso Exp $ -->
 
 <jsp:root version="1.2"
    xmlns:f="http://java.sun.com/jsf/core"
    xmlns:h="http://java.sun.com/jsf/html"
    xmlns:ui="http://www.sun.com/web/ui"
    xmlns:jsp="http://java.sun.com/JSP/Page">
-   <jsp:directive.page contentType="text/html;charset=ISO-8859-1" 
+   <jsp:directive.page contentType="text/html;charset=ISO-8859-1"
                        pageEncoding="UTF-8"/>
    <f:view>
    <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
                  var="samBundle"/>
-                 
+
    <ui:page>
    <ui:html>
    <ui:head title="#{samBundle['node.admin.jobs']}"/>
-   <ui:body>
+   <ui:body onLoad="if (parent.serverName != null) {
+                        parent.setSelectedNode('113', 'JobsSummary');
+                    }">
    <ui:form id="JobsForm">
-    
+
     <!-- page alert -->
     <!--
-    <ui:alert id="alert" 
+    <ui:alert id="alert"
               rendered="#{JobsBean.showAlert}"
               type="#{JobsBean.alertType}"
               summary="#{JobsBean.alertSummary}"
               detail="#{JobsBean.alertDetails}"/>
     -->
 
-    <ui:contentPageTitle id="pageTitle" 
+    <ui:contentPageTitle id="pageTitle"
                          title="#{samBundle['admin.jobs.summary.pagetitle']}"/>
 
     <ui:table id="jobsTable"
@@ -64,16 +66,16 @@
               deselectSingleButton="true"
               deselectSingleButtonOnClick="xxdeselect javascriptxxx"
               style="margin:10px">
-  
+
     <!-- action buttons -->
     <f:facet name="actionsTop">
-    <f:subview id="actionsTop">			  
-        <ui:button id="cancel" 
+    <f:subview id="actionsTop">
+        <ui:button id="cancel"
                    text="#{samBundle['common.button.cancel']}"
                    action="cancel"/>
     </f:subview>
     </f:facet>
-    
+
     <!-- filter -->
     <!--
     <f:facet name="filter">
@@ -90,38 +92,38 @@
                       binding="#{JobController.tableRowGroup}"
                       sourceData="#{JobController.jobList}"
                       sourceVar="jobs">
-        
-        <ui:tableColumn id="selection" selectId="radio" 
+
+        <ui:tableColumn id="selection" selectId="radio"
                         sort="#{JobController.select.selectedState}">
             <ui:radioButton id="radio"
                             name="same"
                             selected="#{JobController.select.selected}"
                             selectedValue="#{JobController.select.selectedValue}"/>
         </ui:tableColumn>
-        
+
         <ui:tableColumn id="id" headerText="#{samBundle['admin.jobs.table.id']}">
             <ui:hyperlink id="idLink" action="#{JobController.handleJobHref}">
                 <ui:staticText id="idvalue"  text="#{jobs.value.jobId}"/>
             </ui:hyperlink>
         </ui:tableColumn>
-        
-        <ui:tableColumn id="type" 
+
+        <ui:tableColumn id="type"
                         headerText="#{samBundle['admin.jobs.table.type']}">
             <ui:staticText id="typeText" text="#{jobs.value.type}" converter="JobTypeConverter"/>
         </ui:tableColumn>
-        
-        <ui:tableColumn id="initTime" 
+
+        <ui:tableColumn id="initTime"
                         headerText="#{samBundle['admin.jobs.table.inittime']}">
             <ui:staticText id="initTimeText" text="#{jobs.value.startTime}">
                 <f:convertDateTime dateStyle="medium" timeStyle="medium"/>
             </ui:staticText>
         </ui:tableColumn>
-        
+
         <ui:tableColumn id="description"
                         headerText="#{samBundle['admin.jobs.table.description']}">
             <ui:staticText id="descriptionText" text="#{jobs.value.description}"/>
         </ui:tableColumn>
-        
+
         <ui:tableColumn id="status"
                         headerText="#{samBundle['admin.jobs.table.status']}">
             <ui:staticText id="statusText" text="#{jobs.value.condition}" converter="JobStatusConverter" />

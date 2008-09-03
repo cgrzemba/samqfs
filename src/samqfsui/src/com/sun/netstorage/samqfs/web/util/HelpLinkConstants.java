@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: HelpLinkConstants.java,v 1.23 2008/07/23 17:38:40 ronaldso Exp $
+// ident	$Id: HelpLinkConstants.java,v 1.24 2008/09/03 19:46:06 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -59,18 +59,14 @@ public interface HelpLinkConstants {
         "samqfs-filesystemdevices.html";
     public static final String FILESYSTEM_MOUNTOPTIONS =
         "samqfs-filesystemeditmountoptions.html";
-    public static final String FILESYSTEM_FAULTS =
-        "samqfs-filesystemfaultsummary.html";
     public static final String NFS_DETAILS =
         "samqfs-filesystemeditnfsproperties.html";
     public static final String FILESYSTEM_ADVANCED_NETWORK_CONFIG =
         "samqfs-advancednetworkconfig.html";
     public static final
-        String SHARED_FS_SUMMARY = "samqfs-hpcfilesystemsummary.html";
+        String SHARED_FS_SUMMARY = "samqfs-sharedfssummary.html";
     public static final String
-        SHARED_FS_STORAGE_NODES = "samqfs-storagenodes.html";
-    public static final String
-        SHARED_FS_CLIENTS = "samqfs-clientssummary.html ";
+        SHARED_FS_MEMBERS = "samqfs-members.html";
 
     // Archive pages
     public static final String ARCHIVE_SUMMARY =
@@ -89,8 +85,6 @@ public interface HelpLinkConstants {
         "samqfs-generalarchivingsetup.html";
     public static final String CRITERIA_DETAILS =
         "samqfs-policycriteriadetails.html";
-    public static final String GENERAL_ARCHIVING_SETUP =
-        "samqfs-generalarchivingsetupfilesystems.html";
     public static final String DISK_VSN_SUMMARY = "samqfs-diskvsns.html";
     public static final String COPY_VSNS = "samqfs-policycopyvsns.html";
     public static final String RECYCLER = "samqfs-recycler.html";
@@ -112,10 +106,8 @@ public interface HelpLinkConstants {
     public static final String MEDIA_IMPORT_VSN = "samqfs-importvsn.html";
 
     // Job pages
-    public static final String JOB_CURRENT = "samqfs-currentjobssummary.html";
+    public static final String JOB_SUMMARY = "samqfs-jobssummary.html";
     public static final String JOB_DETAILS = "samqfs-jobdetails.html";
-    public static final String JOB_PENDING = "samqfs-pendingjobs.html";
-    public static final String JOB_ALL = "samqfs-alljobssummary.html";
 
     // Fault pages
     public static final String FAULT_CURRENT = "samqfs-faultsummary.html";

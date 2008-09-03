@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCache.java,v 1.14 2008/07/03 00:04:30 ronaldso Exp $
+// ident	$Id: DiskCache.java,v 1.15 2008/09/03 19:46:06 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -48,6 +48,9 @@ public interface DiskCache extends BaseDevice {
 
     // ZVol support is added in 5.0
     public static final int ZFS_ZVOL = 110;
+    
+    // OSD support is added in 5.0
+    public static final int OSD = 111;
 
 
     // cache type strings

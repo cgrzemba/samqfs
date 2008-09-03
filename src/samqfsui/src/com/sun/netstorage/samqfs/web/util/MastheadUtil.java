@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MastheadUtil.java,v 1.49 2008/07/23 17:38:40 ronaldso Exp $
+// ident	$Id: MastheadUtil.java,v 1.50 2008/09/03 19:46:06 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -97,8 +97,7 @@ public class MastheadUtil {
     public static String setFileName(String fileName) {
         if (fileName.equals("FSSummary")) {
             return HelpLinkConstants.FILESYSTEM_SUMMARY;
-        } else if (fileName.equals("FSDetails") ||
-            fileName.equals("SharedFSDetails")) {
+        } else if (fileName.equals("FSDetails")) {
             return HelpLinkConstants.FILESYSTEM_DETAILS;
         } else if (fileName.equals("FSArchivePolicies")) {
             return HelpLinkConstants.FILESYSTEM_ARCHIVEPOLICIES;
@@ -106,8 +105,6 @@ public class MastheadUtil {
             return HelpLinkConstants.FILESYSTEM_DEVICES;
         } else if (fileName.equals("FSMount")) {
             return HelpLinkConstants.FILESYSTEM_MOUNTOPTIONS;
-        } else if (fileName.equals("FSFaultsSummary")) {
-            return HelpLinkConstants.FILESYSTEM_FAULTS;
         } else if (fileName.equals("FileBrowser")) {
             return HelpLinkConstants.FILE_BROWSER;
         } else if (fileName.equals("RecoveryPoints")) {
@@ -130,8 +127,6 @@ public class MastheadUtil {
             return HelpLinkConstants.ARCHIVE_VSNPOOLDETAILS;
         } else if (fileName.equals("ArchiveSetUp")) {
             return HelpLinkConstants.ARCHIVE_SETUP;
-        } else if (fileName.equals("GeneralArchivingSetup")) {
-            return HelpLinkConstants.GENERAL_ARCHIVING_SETUP;
         } else if (fileName.equals("CriteriaDetails")) {
             return HelpLinkConstants.CRITERIA_DETAILS;
         } else if (fileName.equals("DiskVSNSummary")) {
@@ -160,15 +155,10 @@ public class MastheadUtil {
             return HelpLinkConstants.MEDIA_HISTORIAN;
         } else if (fileName.equals("ImportVSN")) {
             return HelpLinkConstants.MEDIA_IMPORT_VSN;
-        } else if (fileName.equals("CurrentJobs")) {
-            return HelpLinkConstants.JOB_CURRENT;
-        } else if (fileName.equals("JobsDetails") ||
-            fileName.equals("StageJobs")) {
+        } else if (fileName.equals("JobsSummary")) {
+            return HelpLinkConstants.JOB_SUMMARY;
+        } else if (fileName.equals("JobDetails")) {
             return HelpLinkConstants.JOB_DETAILS;
-        } else if (fileName.equals("PendingJobs")) {
-            return HelpLinkConstants.JOB_PENDING;
-        } else if (fileName.equals("AllJobs")) {
-            return HelpLinkConstants.JOB_ALL;
         } else if (fileName.equals("CurrentAlarmSummary")) {
             return HelpLinkConstants.FAULT_CURRENT;
         } else if (fileName.equals("AdminNotification")) {
@@ -193,10 +183,8 @@ public class MastheadUtil {
             return HelpLinkConstants.FIRST_TIME_CONFIG;
         } else if (fileName.equals("SharedFS")) {
             return HelpLinkConstants.SHARED_FS_SUMMARY;
-        } else if (fileName.equals("SharedFSClient")) {
-            return HelpLinkConstants.SHARED_FS_CLIENTS;
-        } else if (fileName.equals("SharedFSStorageNode")) {
-            return HelpLinkConstants.SHARED_FS_STORAGE_NODES;
+        } else if (fileName.equals("SharedFSMembers")) {
+            return HelpLinkConstants.SHARED_FS_MEMBERS;
         } else {
             return "";
         }

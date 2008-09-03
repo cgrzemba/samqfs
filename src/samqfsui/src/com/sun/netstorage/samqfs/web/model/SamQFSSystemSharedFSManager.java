@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.23 2008/08/28 02:01:34 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.24 2008/09/03 19:46:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -96,7 +96,7 @@ public interface SamQFSSystemSharedFSManager {
      * of hosts will be included and what data will be returned.
      *
      * The options field supports the flags:
-     * STORAGE_NODE | MDS | CLIENTS | HOST_DETAILS
+     * MDS | CLIENTS | HOST_DETAILS
      *
      * Where MDS returns the potential metadata information too.
      *
@@ -106,7 +106,7 @@ public interface SamQFSSystemSharedFSManager {
      *
      * Keys shared by all classes of host include:
      * hostName = %s
-     * type = OSD | client | mds | pmds
+     * type = client | mds | pmds
      * ip_addresses = space separated list of ips.
      * os = Operating System Version
      * version = sam/qfs version
@@ -145,7 +145,6 @@ public interface SamQFSSystemSharedFSManager {
      *
      * The format is as follows:
      * clients=1024, unmounted=24, off=2, error=0
-     * storage_nodes=124, unmounted=0, off=1, error=0
      * pmds = 8, unmounted=2, off=0, error=0
      */
     public MemberInfo [] getSharedFSSummaryStatus(
@@ -174,30 +173,6 @@ public interface SamQFSSystemSharedFSManager {
      */
     public int setSharedFSMountOptions(String mdServer, String fsName,
 	String [] clients, MountOptions mo) throws SamFSException;
-
-    /*
-     * nodeData is a key value string that includes the following keys:
-     * host = hostname
-     * dataip = ip address
-     * group = groupId (o1, o2, o3 etc.)
-     *
-     * A non-zero return indicates that a background job has been started
-     * to complete this task. Information can be obtained about this job by
-     * using the Job.getAllActivities function with a filter on the job id.
-     */
-    public int addStorageNode(String mdServer, String hpcFSName,
-        String nodeName, String nodeIP,
-        DiskCache[] metadataDevices, DiskCache[] dataDevices, String nodeData)
-	throws SamFSException;
-
-
-    /*
-     * A non-zero return indicates that a background job has been started
-     * to complete this task.
-     */
-    public int removeStorageNode(
-        String mdServer, String hpcFSName, String [] nodeNames)
-        throws SamFSException;
 
 
     /**

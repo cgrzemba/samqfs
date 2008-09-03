@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevicesViewBean.java,v 1.24 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSDevicesViewBean.java,v 1.25 2008/09/03 19:46:03 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
+import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBean;
@@ -42,6 +43,7 @@ import com.sun.netstorage.samqfs.web.archive.PolicySummaryViewBean;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
@@ -68,8 +70,7 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
 
     public static final String CHILD_BREADCRUMB  = "BreadCrumb";
     public static final String CHILD_FS_SUM_HREF = "FileSystemSummaryHref";
-    public static final String CHILD_FS_DET_HREF = "FileSystemDetailsHref";
-    public static final String CHILD_SHARED_FS_HREF   = "SharedFSDetailsHref";
+    public static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
 
     // handler for archive pages (v44)
     public static final String POLICY_SUMMARY_HREF   = "PolicySummaryHref";
@@ -99,8 +100,7 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
         registerChild(CHILD_CONTAINER_VIEW, FSDevicesView.class);
         registerChild(CHILD_BREADCRUMB, CCBreadCrumbs.class);
         registerChild(CHILD_FS_SUM_HREF, CCHref.class);
-        registerChild(CHILD_FS_DET_HREF, CCHref.class);
-        registerChild(CHILD_SHARED_FS_HREF, CCHref.class);
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_DETAILS_HREF, CCHref.class);
         registerChild(CRITERIA_DETAILS_HREF, CCHref.class);
@@ -118,16 +118,52 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
         } else if (super.isChildSupported(name)) {
             return super.createChild(name);
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
+            String serverName = (String) getPageSessionAttribute(
+                Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+            if (serverName == null){
+                serverName = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME,
+                    serverName);
+            }
+            String fsName = (String) getPageSessionAttribute(
+                Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+            if (fsName == null){
+                fsName = RequestManager.getRequest().getParameter(
+                    Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+                setPageSessionAttribute(
+                    Constants.PageSessionAttributes.FILE_SYSTEM_NAME,
+                    fsName);
+            }
             return new FSDevicesView(this, name);
         } else if (name.equals(CHILD_BREADCRUMB)) {
+            Integer [] pagePath = (Integer []) getPageSessionAttribute(
+                                Constants.SessionAttributes.PAGE_PATH);
+            if (pagePath == null){
+                String pathString = RequestManager.getRequest().getParameter(
+                                        Constants.SessionAttributes.PAGE_PATH);
+                pathString = pathString == null ? "" : pathString;
+                String [] pathStringArr =
+                    pathString == null ?
+                        new String[0] :
+                        pathString.split(",");
+                Integer [] path = new Integer[pathStringArr.length];
+                for (int i = 0; i < pathStringArr.length; i++){
+                    path[i] = new Integer(pathStringArr[i]);
+                }
+
+                setPageSessionAttribute(
+                    Constants.SessionAttributes.PAGE_PATH,
+                    path);
+            }
             CCBreadCrumbsModel model =
                 new CCBreadCrumbsModel("FSDevices.pageTitle");
             BreadCrumbUtil.createBreadCrumbs(this, name, model);
             CCBreadCrumbs child = new CCBreadCrumbs(this, model, name);
             return child;
-        } else if (name.equals(CHILD_FS_SUM_HREF) ||
-                   name.equals(CHILD_FS_DET_HREF) ||
-                   name.equals(CHILD_SHARED_FS_HREF) ||
+        } else if (name.equals(SHARED_FS_SUMMARY_HREF) ||
+                   name.equals(CHILD_FS_SUM_HREF) ||
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF)) {
@@ -185,40 +221,22 @@ public class FSDevicesViewBean extends CommonViewBeanBase {
         TraceUtil.trace3("Exiting");
     }
 
-    /**
-     * Handle request for backto detail href
-     * @param event RequestInvocationEvent event
-     */
-    public void handleFileSystemDetailsHrefRequest(RequestInvocationEvent event)
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
         throws ServletException, IOException {
 
-        TraceUtil.trace3("Entering");
-        String s = (String) getDisplayFieldValue(CHILD_FS_DET_HREF);
-        ViewBean targetView = getViewBean(FSDetailsViewBean.class);
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
 
-        BreadCrumbUtil.breadCrumbPathBackward(
-            this,
-            PageInfo.getPageInfo().getPageNumber(targetView.getName()), s);
-        forwardTo(targetView);
-        TraceUtil.trace3("Exiting");
-    }
+        TraceUtil.trace2("FSDevices: Navigate back to URL: " + url);
 
-    /**
-     * Handle request for backto detail href
-     * @param event RequestInvocationEvent event
-     */
-    public void handleSharedFSDetailsHrefRequest(RequestInvocationEvent event)
-        throws ServletException, IOException {
-
-        TraceUtil.trace3("Entering");
-        String s = (String) getDisplayFieldValue(CHILD_SHARED_FS_HREF);
-        ViewBean targetView = getViewBean(SharedFSDetailsViewBean.class);
-        BreadCrumbUtil.breadCrumbPathBackward(
-            this,
-            PageInfo.getPageInfo().getPageNumber(targetView.getName()), s);
-        forwardTo(targetView);
-
-        TraceUtil.trace3("Exiting");
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + (String) getPageSessionAttribute(
+                             Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        JSFUtil.forwardToJSFPage(this, url, params);
     }
 
     // handle breadcrumb to the policy summary page

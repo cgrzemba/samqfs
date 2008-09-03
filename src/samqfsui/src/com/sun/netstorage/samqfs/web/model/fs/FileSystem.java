@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystem.java,v 1.23 2008/07/09 22:20:57 kilemba Exp $
+// ident	$Id: FileSystem.java,v 1.24 2008/09/03 19:46:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -76,6 +76,30 @@ public interface FileSystem extends GenericFileSystem {
      * proto file system - partially configured.
      */
     public boolean isProtoFS();
+
+    /**
+     * Determine if file system is a mb type file system.  It is a
+     * Sun StorageTek QFS or Sun SAM-QFS disk cache family set with one or more
+     * meta devices.  Metadata resides on these meta devices.  File data resides
+     * on the object storage device(s) (OSDs).
+     *
+     * @since 5.0
+     * @return true if file system is a "mb" type file system
+     */
+    public boolean isMbFS();
+
+    /**
+     * Determine if file system is a mat type file system.  It is a
+     * Sun StorEdge QFS disk cache family set with one or more meta devices.
+     * Metadata resides on these meta devices.  File data resides on the data
+     * device(s). This standalone file system has no namespace and is only used
+     * as the OSD target backing store of an object storage device (OSD) in an
+     * mb file system.
+     *
+     * @since 5.0
+     * @return true if file system is a "mat" type file system
+     */
+    public boolean isMatFS();
 
     /**
      * return metadata server name, in shared-QFS configs

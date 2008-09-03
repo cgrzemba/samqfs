@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.9 2008/08/28 02:01:34 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.10 2008/09/03 19:46:03 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -72,19 +72,18 @@
                 immediate="true"
                 onClick="return launchAddClientsWizard(this);"/>
             <ui:button
-                id="ButtonAddSN"
-                text="#{samBundle['SharedFS.operation.addsn']}"
-                primary="true"
-                immediate="true"
-                rendered="#{SharedFSBean.showStorageNodes}"
-                onClick="launchAddStorageNodeWizard(this); return false;"/>
-            <ui:button
                 id="ButtonViewPolicies"
                 text="#{samBundle['SharedFS.operation.viewpolicies']}"
                 primary="true"
                 immediate="true"
                 rendered="#{SharedFSBean.showArchive}"
                 actionListener="#{SharedFSBean.handleViewPolicies}" />
+            <ui:button
+                id="ButtonViewDevices"
+                text="#{samBundle['SharedFS.operation.viewdevices']}"
+                primary="true"
+                immediate="true"
+                actionListener="#{SharedFSBean.handleViewDevices}" />
             <ui:dropDown
                 id="Menu"
                 toolTip="#{samBundle['SharedFS.dropdown.tooltip']}"
@@ -240,105 +239,11 @@
     </ui:table>
     </ui:property>
     </ui:propertySheetSection>
-    <!-- storage nodes section -->
-    <ui:propertySheetSection
-        id="sectionStorageNodes"
-        label="#{SharedFSBean.titleStorageNodes}"
-        rendered="#{SharedFSBean.showStorageNodes}">
-    <ui:property
-        id="propertySNHelp"
-        labelAlign="left"
-        noWrap="false"
-        overlapLabel="false"
-        helpText="#{samBundle['SharedFS.help.snsection']}"/>
-    <ui:property
-        id="propertyStorageNodesTable"
-        labelAlign="left"
-        noWrap="true"
-        overlapLabel="false">
-    <!-- Storage Node Table -->
-    <ui:table id="tableStorageNodes">
-        <f:facet name="title">
-            <ui:staticText text="#{samBundle['SharedFS.title.table.sns']}"/>
-        </f:facet>
-        <ui:tableRowGroup id="snsRows"
-                          binding="#{SharedFSBean.snTableRowGroup}"
-                          sourceData="#{SharedFSBean.storageNodeList}"
-                          sourceVar="sns">
-
-            <ui:tableColumn id="colAllClients"
-                            headerText="#{samBundle['SharedFS.table.heading.allsns']}"
-                            align="center"
-                            rowHeader="true">
-                <ui:imageHyperlink id="imagehyperlinkSN"
-                                   imageURL="/images/storagenode.png"
-                                   url="/faces/jsp/fs/SharedFSStorageNode.jsp?filter="
-                                   hspace="2"
-                                   vspace="0"
-                                   immediate="true" />
-                <ui:hyperlink id="viewAllSnsLink"
-                              url="/faces/jsp/fs/SharedFSStorageNode.jsp"
-                              immediate="true"
-                              text="#{samBundle['SharedFS.text.viewall']}">
-                    <f:param name="filter" value="0"/>
-                </ui:hyperlink>
-            </ui:tableColumn>
-            <ui:tableColumn id="colOK"
-                            headerText="#{samBundle['SharedFS.table.heading.ok']}"
-                            align="center"
-                            rowHeader="true">
-                <ui:hyperlink id="viewOkSnssLink"
-                              url="/faces/jsp/fs/SharedFSStorageNode.jsp"
-                              immediate="true">
-                    <ui:staticText text="#{sns.value.ok}"/>
-                    <f:param name="filter" value="1"/>
-                </ui:hyperlink>
-            </ui:tableColumn>
-            <ui:tableColumn id="colUnmounted"
-                            headerText="#{samBundle['SharedFS.table.heading.unmounted']}"
-                            align="center"
-                            rowHeader="true">
-                <ui:hyperlink id="viewUnmountedSnsLink"
-                              url="/faces/jsp/fs/SharedFSStorageNode.jsp"
-                              immediate="true">
-                    <ui:staticText text="#{sns.value.unmounted}"/>
-                    <f:param name="filter" value="2"/>
-                </ui:hyperlink>
-            </ui:tableColumn>
-            <ui:tableColumn id="colDisabled"
-                            headerText="#{samBundle['SharedFS.table.heading.disabled']}"
-                            align="center"
-                            rowHeader="true">
-                <ui:hyperlink id="viewDisabledSnsLink"
-                              url="/faces/jsp/fs/SharedFSStorageNode.jsp"
-                              immediate="true">
-                    <ui:staticText text="#{sns.value.off}"/>
-                    <f:param name="filter" value="3"/>
-                </ui:hyperlink>
-            </ui:tableColumn>
-            <ui:tableColumn id="colInError"
-                            headerText="#{samBundle['SharedFS.table.heading.faults']}"
-                            align="center"
-                            rowHeader="true">
-                <ui:hyperlink id="viewErrorSnsLink"
-                              url="/faces/jsp/fs/SharedFSStorageNode.jsp"
-                              immediate="true">
-                    <ui:staticText text="#{sns.value.error}"/>
-                    <f:param name="filter" value="5"/>
-                </ui:hyperlink>
-            </ui:tableColumn>
-            <ui:tableColumn id="colSpacer" spacerColumn="true" width="40%"/>
-        </ui:tableRowGroup>
-    </ui:table>
-    </ui:property>
-    </ui:propertySheetSection>
     </ui:propertySheet>
     </ui:contentPageTitle>
     <ui:hiddenField id="Time" value="#{SharedFSBean.timeSummary}"/>
     <ui:hiddenField id="hiddenServerName" value="#{SharedFSBean.hiddenServerName}"/>
     <ui:hiddenField id="hiddenFSName" value="#{SharedFSBean.hiddenFSName}"/>
-    <ui:hiddenField id="hiddenMountPoint" value="#{SharedFSBean.hiddenMountPoint}"/>
-    <ui:hiddenField id="hiddenIsMDSMounted" value="#{SharedFSBean.hiddenIsMDSMounted}"/>
     <ui:hiddenField id="ConfirmUnmountFS" value="#{SharedFSBean.confirmUnmountFS}"/>
 </ui:form>
 </ui:body>

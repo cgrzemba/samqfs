@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.4 2008/08/28 14:19:31 kilemba Exp $
+// ident	$Id: SharedFS.js,v 1.5 2008/09/03 19:46:02 ronaldso Exp $
 
 
 // Used by drop down menu in summary page
@@ -50,25 +50,14 @@ function getClientTable() {
              "SharedFSClientForm:pageTitle:tableClientSummary");
 }
 
-function getSNTable() {
-    return document.getElementById(
-             "SharedFSStorageNodeForm:pageTitle:tableStorageNodeSummary");
-}
-
 function initClientTableRows() {
     getClientTable().initAllRows();
 }
 
-function initSnTableRows() {
-    getSNTable().initAllRows();
-}
-
-function handleButtonRemove(client) {
-    if (handleOperation(client, true) == false) {
+function handleButtonRemove() {
+    if (handleOperation(true) == false) {
         return false;
-    } else if (client == 1 && !confirm(getMessage(1, 2))) {
-        return false;
-    } else if (client == 0 && !confirm(getMessage(0, 5))) {
+    } else if (!confirm(getMessage(2))) {
         return false;
     } else {
         return true;
@@ -80,21 +69,21 @@ function handleClientDropDownMenu(menu) {
 
     if (selectedValue == "editmo") {
         // Edit Mount Option only allows one selection
-        if (handleOperation(1, false) == false) {
+        if (handleOperation(false) == false) {
             resetDropDownMenu(menu);
             return false;
         }
     } else {
         // show confirm messages if needed
         if (selectedValue == "unmount") {
-            if (!confirm(getMessage(1, 4))) {
+            if (!confirm(getMessage(4))) {
                 resetDropDownMenu(menu);
                 return false;
             } else {
                 return true;
             }
         } else if (selectedValue == "disableaccess") {
-            if (!confirm(getMessage(1, 3))) {
+            if (!confirm(getMessage(3))) {
                 resetDropDownMenu(menu);
                 return false;
             } else {
@@ -102,7 +91,7 @@ function handleClientDropDownMenu(menu) {
             }
         }
         // Otherwise everything else allows multiple selection
-        if (handleOperation(1, true) == false) {
+        if (handleOperation(true) == false) {
             resetDropDownMenu(menu);
             return false;
         }
@@ -110,57 +99,13 @@ function handleClientDropDownMenu(menu) {
     return true;
 }
 
-function handleSnDropDownMenu(menu) {
-    var selectedValue = menu.value;
-    if (selectedValue == "editmo") {
-        // Edit Mount Option only allows one selection
-        if (handleOperation(0, false) == false) {
-            resetDropDownMenu(menu);
-            return false;
-        }
-    } else {
-        // show confirm messages if needed
-        if (selectedValue == "unmount") {
-            if (!confirm(getMessage(0, 7))) {
-                resetDropDownMenu(menu);
-                return false;
-            } else {
-                return true;
-            }
-        } else if (selectedValue == "disablealloc") {
-            if (!confirm(getMessage(0, 6))) {
-                resetDropDownMenu(menu);
-                return false;
-            } else {
-                return true;
-            }
-        } else if (selectedValue == "clearfault") {
-            if (!confirm(getMessage(0, 8))) {
-                resetDropDownMenu(menu);
-                return false;
-            } else {
-                return true;
-            }
-        }
-        // Otherwise everything else allows multiple selection
-        if (handleOperation(0, true) == false) {
-            resetDropDownMenu(menu);
-            return false;
-        }
-    }
-    return true;
-}
-
-function handleOperation(client, allowMultiple) {
-    var selections =
-        client == 1 ?
-          getClientTable().getAllSelectedRowsCount() :
-          getSNTable().getAllSelectedRowsCount();
+function handleOperation(allowMultiple) {
+    var selections = getClientTable().getAllSelectedRowsCount();
     if (selections <= 0) {
-        alert(getMessage(client, 1));
+        alert(getMessage(1));
         return false;
     } else if (!allowMultiple && selections > 1) {
-        alert(getMessage(client, 0));
+        alert(getMessage(0));
         return false;
     } else {
         return true;
@@ -173,22 +118,6 @@ function getServerName(formName) {
 
 function getFSName(formName) {
     return document.getElementById(formName + ":" + "hiddenFSName").value;
-}
-
-function launchAddStorageNodeWizard(button) {
-    var infoArr = button.name.split(":");
-    var formName = infoArr[0];
-    var fsName = getFSName(formName);
-    var params = "&SAMQFS_FS_NAME=" + fsName;
-    var name = "addsn_" + fsName;
-    var uri = "/faces/jsp/fs/wizards/AddStorageNodeWizard.jsp";
-
-    var win = launchPopup(
-                uri, name, getServerName(formName),
-                SIZE_WIZARD, encodeURI(params));
-    win.focus();
-    return false;
-
 }
 
 /**
@@ -226,13 +155,9 @@ function isMDSMounted(formName) {
 // 2 ==> Confirm message for remove
 // 3 ==> Confirm message for disable
 // 4 ==> Confirm message for unmount
-function getMessage(page, choice) {
-    var thisFormId;
-    if (page == 1) {
-        thisFormId = 'SharedFSClientForm';
-    } else {
-        thisFormId = 'SharedFSStorageNodeForm';
-    }
+function getMessage(choice) {
+    var thisFormId = 'SharedFSClientForm';
+
     switch (choice) {
         case 0:
             return document.getElementById(

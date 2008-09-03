@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: MemberInfo.java,v 1.2 2008/08/20 19:36:52 ronaldso Exp $
+// ident $Id: MemberInfo.java,v 1.3 2008/09/03 19:46:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -52,7 +52,6 @@ public class MemberInfo {
     protected String KEY_OFF = "off";
     protected String KEY_ERROR = "error";
     protected String KEY_CLIENTS = "clients";
-    protected String KEY_STORAGE_NODES = "storage_nodes";
     protected String infoStr = null;
     protected Properties props = null;
 
@@ -106,10 +105,7 @@ public class MemberInfo {
             ok = getPmds() - getUnmounted() - getOff() - getError();
         } else if (isClients()) {
             ok = getClients() - getUnmounted() - getOff() - getError();
-        } else if (isStorageNodes()) {
-            ok = getStorageNodes() - getUnmounted() - getOff() - getError();
         }
-
     }
 
     public MemberInfo(int ok, int unmounted, int off, int error, int total) {
@@ -137,11 +133,13 @@ public class MemberInfo {
     }
 
     /**
+     * TODO: Remove this call when underlying call stops returning storage_node
+     * string!!!
      * Determine if the input string is used in the storage nodes section
      * @return true if the input string is used in the storage nodes section
      */
     public boolean isStorageNodes() {
-        return infoStr.indexOf(KEY_STORAGE_NODES) != -1;
+        return infoStr.indexOf("storage_nodes") != -1;
     }
 
     /**
@@ -183,26 +181,6 @@ public class MemberInfo {
         } catch (NumberFormatException numEx) {
             TraceUtil.trace1(
                 "NumberFormatException caught in MemberInfo::getClients()!",
-                numEx);
-        }
-        return -1;
-    }
-
-    /**
-     * Return the number of storage nodes.
-     * @return number of storage nodes
-     */
-    public int getStorageNodes() {
-        // Only applicable in clients section
-        if (!isStorageNodes()) {
-            return -1;
-        }
-        String propStr = props.getProperty(KEY_STORAGE_NODES);
-        try {
-            return Integer.parseInt(propStr);
-        } catch (NumberFormatException numEx) {
-            TraceUtil.trace1(
-                "NumberFormatException caught in MemberInfo:getStorageNodes()!",
                 numEx);
         }
         return -1;

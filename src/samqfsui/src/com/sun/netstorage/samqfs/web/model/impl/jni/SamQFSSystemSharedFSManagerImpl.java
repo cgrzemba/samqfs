@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.54 2008/08/28 02:01:36 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.55 2008/09/03 19:46:05 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -169,7 +169,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * of hosts will be included and what data will be returned.
      *
      * The options field supports the flags:
-     * STORAGE_NODE | MDS | CLIENTS | HOST_DETAILS
+     * MDS | CLIENTS | HOST_DETAILS
      *
      * Where MDS returns the potential metadata information too.
      *
@@ -179,7 +179,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      *
      * Keys shared by all classes of host include:
      * hostName = %s
-     * type = OSD | client | mds | pmds
+     * type = client | mds | pmds
      * ip_addresses = space separated list of ips.
      * os = Operating System Version
      * version = sam/qfs version
@@ -205,14 +205,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
     public SharedHostInfo [] getSharedFSHosts(
         String mdServer, String fsName, int options, SharedFSFilter []  filters)
         throws SamFSException {
-System.out.println("Logic: getSharedFSHosts!");
-if (filters == null || filters.length == 0) {
-    System.out.println("filter null or zero length!");
-} else {
-    for (int i = 0; i < filters.length; i++) {
-        System.out.println("filter " + i + ": " + filters[i].toString());
-    }
-}
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(mdServer);
@@ -229,7 +221,6 @@ if (filters == null || filters.length == 0) {
         for (int i = 0; i < hostInfo.length; i++) {
             sharedHostInfo[i] = new SharedHostInfo(hostInfo[i]);
         }
-System.out.println("After calling Host.getSharedFSHosts, shared host #: " + sharedHostInfo.length);
         // Show All
         if (filters.length == 0) {
             return sharedHostInfo;
@@ -263,7 +254,6 @@ System.out.println("After calling Host.getSharedFSHosts, shared host #: " + shar
      *
      * The format is as follows:
      * clients=1024, unmounted=24, off=2, error=0
-     * storage_nodes=124, unmounted=0, off=1, error=0
      * pmds = 8, unmounted=2, off=0, error=0
      */
     public MemberInfo [] getSharedFSSummaryStatus(
@@ -275,13 +265,12 @@ System.out.println("After calling Host.getSharedFSHosts, shared host #: " + shar
         if (model.isDown()) {
             throw new SamFSException("logic.hostIsDown");
         }
-System.out.println("Calling FS.getSharedFSSummaryStatus:fsName: " + fsName);
+
         String [] info =
             FS.getSharedFSSummaryStatus(model.getJniContext(), fsName);
 
         MemberInfo [] memberInfos = new MemberInfo[info.length];
         for (int i = 0; i < memberInfos.length; i++) {
-System.out.println("info[" + i + "]: " + info[i]);
             memberInfos[i] = new MemberInfo(info[i]);
         }
 
@@ -342,85 +331,6 @@ System.out.println("info[" + i + "]: " + info[i]);
         return FS.setSharedFSMountOptions(
                     model.getJniContext(), fsName, clients, mo);
     }
-
-    /*
-     * nodeData is a key value string that includes the following keys:
-     * host = hostname
-     * dataip = ip address
-     * group = groupId (o1, o2, o3 etc.)
-     *
-     * A non-zero return indicates that a background job has been started
-     * to complete this task. Information can be obtained about this job by
-     * using the Job.getAllActivities function with a filter on the job id.
-     */
-    public int addStorageNode(String mdServer, String hpcFSName,
-        String nodeName, String nodeIP,
-        DiskCache[] metadataDevices, DiskCache[] dataDevices, String nodeData)
-	throws SamFSException {
-
-        DiskDev[] meta = null;
-        DiskDev[] data = null;
-
-        // set equipment ordinals
-        if (metadataDevices != null) {
-            meta = new DiskDev[metadataDevices.length];
-            for (int i = 0; i < metadataDevices.length; i++) {
-                meta[i] = ((DiskCacheImpl) metadataDevices[i]).getJniDisk();
-            }
-        }
-
-        if (dataDevices != null) {
-            data = new DiskDev[dataDevices.length];
-            for (int i = 0; i < dataDevices.length; i++) {
-                data[i] = ((DiskCacheImpl) dataDevices[i]).getJniDisk();
-                data[i].setEquipType("md");
-            }
-        }
-
-        // TODO: Check to see what needs to be passed for mountProps
-        // TODO: Check equ
-        // TODO: Check DAUSize (Group DAU??)
-        // TODO: Check mountPoint
-        /**
-        MountOptions opt = ((FileSystemMountPropertiesImpl) mountProps).
-            getJniMountOptions();
-         */
-        MountOptions opt = null;
-        int DAUSize = -1;
-        String mountPoint = null;
-
-        FSInfo myFSInfo = new FSInfo(
-            hpcFSName, FSInfo.EQU_AUTO, DAUSize,
-            FSInfo.SEPARATE_METADATA,
-            meta, data, null, opt, mountPoint,
-            mdServer, false, false, null);
-
-        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
-            this.appModel.getSamQFSSystemModel(mdServer);
-
-        return FS.addStorageNode(model.getJniContext(),
-                    hpcFSName, nodeName, nodeIP, myFSInfo, nodeData);
-
-    }
-
-
-    /*
-     * A non-zero return indicates that a background job has been started
-     * to complete this task. Information can be obtained about this job by
-     * using the Job.getAllActivities function with a filter on the job id.
-     */
-    public int removeStorageNode(
-        String mdServer, String hpcFSName, String [] nodeNames)
-        throws SamFSException {
-
-        SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
-            this.appModel.getSamQFSSystemModel(mdServer);
-
-        // TODO: check to see if node removal is supported or not
-        return FS.removeStorageNode(
-            model.getJniContext(), hpcFSName, nodeNames[0]);
-    }
-
 
     public void freeResources() {
         threadPool.destroy();

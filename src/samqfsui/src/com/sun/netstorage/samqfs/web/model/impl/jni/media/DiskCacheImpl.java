@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.21 2008/07/03 00:04:30 ronaldso Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.22 2008/09/03 19:46:05 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
@@ -258,6 +258,11 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
             case AU.ZFS_ZVOL:
                 type = DiskCache.ZFS_ZVOL;
                 break;
+                
+            case AU.OSD:
+                type = DiskCache.OSD;
+                break;
+            
         }
 
         return type;
@@ -302,6 +307,9 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
             type == DiskCache.SVM_LOGICAL_VOLUME_RAID_5) &&
             sliceElement.length == 6) {
             devicePathDisplayString = sliceElement[3] + "/" + sliceElement[5];
+        } else if (type == DiskCache.OSD) {
+            int index = pathString.indexOf("/dsk/osd/");
+            devicePathDisplayString = pathString.substring(index + 9);
         } else {
             int index = pathString.indexOf("/dsk/");
             devicePathDisplayString = pathString.substring(index + 5);

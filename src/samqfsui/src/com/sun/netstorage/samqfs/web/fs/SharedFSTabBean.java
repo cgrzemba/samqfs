@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSTabBean.java,v 1.2 2008/08/28 02:01:34 ronaldso Exp $
+// ident        $Id: SharedFSTabBean.java,v 1.3 2008/09/03 19:46:03 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -39,29 +39,23 @@ public class SharedFSTabBean {
 
     public static final String TAB_SUMMARY = "summary";
     public static final String TAB_CLIENT = "client";
-    public static final String TAB_STORAGE_NODE = "storagenode";
 
     private static final String [][] tabsInfo = new String [][] {
         {TAB_SUMMARY, "SharedFS.tab.summary",
                     "/faces/jsp/fs/SharedFSSummary.jsp"},
         {TAB_CLIENT, "SharedFS.tab.clients",
                     "/faces/jsp/fs/SharedFSClient.jsp?" +
-                    SharedFSBean.PARAM_FILTER + "="},
-        {TAB_STORAGE_NODE, "SharedFS.tab.sn",
-                    "/faces/jsp/fs/SharedFSStorageNode.jsp?criteria"}
+                    SharedFSBean.PARAM_FILTER + "="}
     };
 
     public SharedFSTabBean() {
     }
 
-    public TabSet getMyTabSet(boolean showStorageNodes) {
+    public TabSet getMyTabSet() {
         TabSet tabSet = new TabSet();
         tabSet.setId("SharedFSTabSet");
 
         for (int i = 0; i < tabsInfo.length; i++) {
-            if (tabsInfo[i][0].equals(tabsInfo[2][0]) && !showStorageNodes) {
-                break;
-            }
             Tab tab = new Tab(JSFUtil.getMessage(tabsInfo[i][1]));
             tab.setId(tabsInfo[i][0]);
             tab.setUrl(tabsInfo[i][2]);

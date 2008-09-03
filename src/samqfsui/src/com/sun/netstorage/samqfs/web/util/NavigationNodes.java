@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NavigationNodes.java,v 1.24 2008/08/06 17:41:51 ronaldso Exp $
+// ident	$Id: NavigationNodes.java,v 1.25 2008/09/03 19:46:06 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -84,10 +84,6 @@ public class NavigationNodes  {
     public static final int NODE_DASHBOARD = 100;
     public static final int NODE_FAULT = 32;
     public static final int NODE_NOTIFICATION = 38;
-    public static final int NODE_JOB = 33;
-    public static final int NODE_JOB_CURRENT = 34;
-    public static final int NODE_JOB_PENDING = 35;
-    public static final int NODE_JOB_ALL = 36;
     public static final int NODE_JOBS = 113;
 
     // Node under Metrics & Reports
@@ -342,41 +338,6 @@ public class NavigationNodes  {
         nodeMap.put(new Integer(NODE_FAULT), myNode);
 
         // Jobs
-        myNode =
-            new CCNavNode(
-            NODE_JOB, "node.admin.job",
-            "node.admin.job.tooltip",
-            "node.admin.job.tooltip");
-        myNode.setValue(createURL("jobs/CurrentJobs.jsp"));
-        nodeMap.put(new Integer(NODE_JOB), myNode);
-
-        // Current Jobs
-        myNode = new CCNavNode(
-            NODE_JOB_CURRENT, "node.admin.job.current",
-            "node.admin.job.current.tooltip",
-            "node.admin.job.current.tooltip");
-        myNode.setValue(createURL("jobs/CurrentJobs.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_JOB_CURRENT), myNode);
-
-        // Pending Jobs
-        myNode = new CCNavNode(
-            NODE_JOB_PENDING, "node.admin.job.pending",
-            "node.admin.job.pending.tooltip",
-            "node.admin.job.pending.tooltip");
-        myNode.setValue(createURL("jobs/PendingJobs.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_JOB_PENDING), myNode);
-
-        // All Jobs
-        myNode = new CCNavNode(
-            NODE_JOB_ALL, "node.admin.job.all",
-            "node.admin.job.all.tooltip",
-            "node.admin.job.all.tooltip");
-        myNode.setValue(createURL("jobs/AllJobs.jsp"));
-        myNode.setAcceptsChildren(false);
-        nodeMap.put(new Integer(NODE_JOB_ALL), myNode);
-
         // jobs summary page
         myNode = new CCNavNode(NODE_JOBS,
                               "node.admin.job",

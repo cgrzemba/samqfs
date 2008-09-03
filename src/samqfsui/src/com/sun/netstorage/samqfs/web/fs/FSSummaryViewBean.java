@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummaryViewBean.java,v 1.25 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: FSSummaryViewBean.java,v 1.26 2008/09/03 19:46:03 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -53,7 +53,7 @@ import com.sun.web.ui.view.html.CCHiddenField;
 public class FSSummaryViewBean extends CommonViewBeanBase {
 
     // Page information...
-    private static final String PAGE_NAME = "FSSummary";
+    public static final String PAGE_NAME = "FSSummary";
     private static final String DEFAULT_DISPLAY_URL = "/jsp/fs/FSSummary.jsp";
 
     // cc components from the corresponding jsp page(s)...

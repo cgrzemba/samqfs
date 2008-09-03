@@ -27,13 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskDev.java,v 1.13 2008/05/16 18:35:28 am143972 Exp $
+// ident	$Id: DiskDev.java,v 1.14 2008/09/03 19:46:02 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
 import com.sun.netstorage.samqfs.mgmt.BaseDev;
-import com.sun.netstorage.samqfs.mgmt.fs.AU;
-import com.sun.netstorage.samqfs.mgmt.fs.FSInfo;
 
 public class DiskDev extends BaseDev {
 

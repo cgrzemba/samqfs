@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSSummaryBean.java,v 1.4 2008/08/20 19:36:52 ronaldso Exp $
+// ident        $Id: SharedFSSummaryBean.java,v 1.5 2008/09/03 19:46:03 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -45,19 +45,10 @@ import com.sun.web.ui.model.OptionTitle;
 
 public class SharedFSSummaryBean {
 
-    /** Section IDs definitions. */
-    private static final short SECTION_ALL_MEMBERS = 0;
-    private static final short SECTION_STORAGE_NODES = 1;
+    public static final String PAGE_NAME = "SharedFSSummary";
 
-    /** Page Menu Options (with storage nodes) */
-    protected String [][] menuOptionsWithSN = new String [][] {
-        {"SharedFS.operation.editmo", "editmo"},
-        {"SharedFS.operation.mount", "mount"},
-        {"SharedFS.operation.unmount", "unmount"},
-        {"SharedFS.operation.removesn", "removesn"},
-        {"SharedFS.operation.removecn", "removecn"}
-    };
     /** Page Menu Options (without storage nodes) */
+
     protected String [][] menuOptions = new String [][] {
         {"SharedFS.operation.editmo", "editmo"},
         {"SharedFS.operation.mount", "mount"},
@@ -109,12 +100,8 @@ public class SharedFSSummaryBean {
         return links;
     }
 
-    public Option [] getJumpMenuOptions(
-        boolean showStorageNodes, boolean mounted) {
-        String [][] options =
-            showStorageNodes ?
-                menuOptionsWithSN :
-                menuOptions;
+    public Option [] getJumpMenuOptions(boolean mounted) {
+        String [][] options = menuOptions;
         Option[] jumpMenuOptions = new Option[options.length + 1];
         jumpMenuOptions[0] =
                 new OptionTitle(JSFUtil.getMessage("common.dropdown.header"));
@@ -159,7 +146,7 @@ public class SharedFSSummaryBean {
 
     public String getTitleClients() {
         if (clientInfo == null) {
-            clientInfo = getInfo(allInfo, SECTION_ALL_MEMBERS);
+            clientInfo = getInfo(allInfo);
         }
         return
             JSFUtil.getMessage(
@@ -172,7 +159,7 @@ public class SharedFSSummaryBean {
 
     public TableDataProvider getClientList() {
         if (clientInfo == null) {
-            clientInfo = getInfo(allInfo, SECTION_ALL_MEMBERS);
+            clientInfo = getInfo(allInfo);
         }
 
         return
@@ -181,31 +168,7 @@ public class SharedFSSummaryBean {
                 new ObjectArrayDataProvider(clientInfo);
     }
 
-    public String getTitleStorageNodes() {
-        if (snInfo == null) {
-            snInfo = getInfo(allInfo, SECTION_STORAGE_NODES);
-        }
-        return
-            snInfo.length > 0 ?
-                JSFUtil.getMessage(
-                    "SharedFS.title.sns",
-                    new String [] {
-                            Integer.toString(snInfo[0].getStorageNodes())}) :
-                "";
-    }
-
-    public TableDataProvider getStorageNodeList() {
-        if (snInfo == null) {
-            snInfo = getInfo(allInfo, SECTION_STORAGE_NODES);
-        }
-        return
-            snInfo.length > 0 ?
-                new ObjectArrayDataProvider(snInfo) :
-            null;
-    }
-
-    public void populateSummary(
-        MemberInfo [] infos, FileSystem thisFS, boolean showStorageNodes) {
+    public void populateSummary(MemberInfo [] infos, FileSystem thisFS) {
 
         allInfo = infos;
 
@@ -244,25 +207,21 @@ public class SharedFSSummaryBean {
         }
     }
 
-    private MemberInfo [] getInfo(MemberInfo [] infos, short sectionId) {
+    private MemberInfo [] getInfo(MemberInfo [] infos) {
         int ok = 0, off = 0, unmounted = 0, error = 0, total = 0;
 
         for (int i = 0; i < infos.length; i++) {
-            if (infos[i].isStorageNodes()) {
-                if (sectionId == SECTION_STORAGE_NODES) {
-                    return new MemberInfo [] {infos[i]};
-                }
+            if (infos[i].isClients()) {
+                total += infos[i].getClients();
+            } else if (infos[i].isPmds()) {
+                total += infos[i].getPmds();
             } else {
-                if (infos[i].isClients()) {
-                    total += infos[i].getClients();
-                } else if (infos[i].isPmds()) {
-                    total += infos[i].getPmds();
-                }
-                ok += infos[i].getOk();
-                off += infos[i].getOff();
-                unmounted += infos[i].getUnmounted();
-                error += infos[i].getError();
+                continue;
             }
+            ok += infos[i].getOk();
+            off += infos[i].getOff();
+            unmounted += infos[i].getUnmounted();
+            error += infos[i].getError();
         }
 
         MemberInfo info = new MemberInfo(ok, unmounted, off, error, total);

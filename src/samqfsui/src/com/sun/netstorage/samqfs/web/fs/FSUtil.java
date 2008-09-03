@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSUtil.java,v 1.24 2008/06/17 16:04:27 ronaldso Exp $
+// ident	$Id: FSUtil.java,v 1.25 2008/09/03 19:46:03 ronaldso Exp $
 
 /**
  * This util class contains a few declaration of the file system
@@ -65,6 +65,8 @@ public class FSUtil {
     public static final int FS_DESC_NFS_CLIENT = 9;
     public static final int FS_DESC_ZFS = 10;
     public static final int FS_DESC_VXFS = 11;
+    public static final int FS_DESC_MAT = 12;
+    public static final int FS_DESC_MB = 13;
 
     public static final String DOTDOTDOT = "...";
     public static final int MAX_MOUNT_POINT_LENGTH = 20;
@@ -74,9 +76,7 @@ public class FSUtil {
      * that is used for display in FS Summary, and FS Details.
      * MUST BE MODIFIED. NO REMOTE CALL NECESSARY IF FileSystem OBJ AVAILABLE.
      */
-
     public static int getFileSystemDescription(GenericFileSystem myGenericFS) {
-        TraceUtil.trace3("Entering");
         int fsDesc = FS_DESC_UNKNOWN;
 
         switch (myGenericFS.getFSTypeByProduct()) {
@@ -86,19 +86,26 @@ public class FSUtil {
                 if (myGenericFS.getFSTypeName().equalsIgnoreCase("ufs")) {
                     fsDesc = FS_DESC_UFS;
                 } else if (myGenericFS.getFSTypeName().
-                    equalsIgnoreCase("vxfs")) {
+                        equalsIgnoreCase("vxfs")) {
                     fsDesc = FS_DESC_VXFS;
                 } else if (myGenericFS.getFSTypeName().
-                    equalsIgnoreCase("zfs")) {
+                        equalsIgnoreCase("zfs")) {
                     fsDesc = FS_DESC_ZFS;
                 } else {
                     TraceUtil.trace1(
-                        "Unknown fs desc: Non-SAM, non-ufs, non-vxfs.");
+                            "Unknown fs desc: Non-SAM, non-ufs, non-vxfs.");
                 }
                 break;
 
             default:
                 FileSystem myFS = (FileSystem) myGenericFS;
+
+                // Special cases added for 5.0 object based file systems
+                if (myFS.isMbFS()) {
+                    return FS_DESC_MB;
+                } else if (myFS.isMatFS()) {
+                    return FS_DESC_MAT;
+                }
 
                 // SAM/Q file system
                 switch (myFS.getShareStatus()) {
@@ -117,7 +124,7 @@ public class FSUtil {
                             default:
                                 TraceUtil.trace1(new StringBuffer(
                                     "Unknown fs desc: shared-SAM, ").append(
-                                        "archiving status unknown").toString());
+                                    "archiving status unknown").toString());
                                 break;
                         }
                         break;
@@ -136,24 +143,23 @@ public class FSUtil {
                             default:
                                 TraceUtil.trace1(new StringBuffer(
                                     "Unknown fs desc: unshared-SAM, ").append(
-                                        "archiving status unknown").toString());
+                                    "archiving status unknown").toString());
                                 break;
                         }
                         break;
 
                     default:
                         TraceUtil.trace1(
-                            "Unknown fs type: shared status unknown");
+                                "Unknown fs type: shared status unknown");
                         break;
                 }
         }
 
-        TraceUtil.trace3("Exiting");
         return fsDesc;
     }
 
     private static int getSharedFSDescription(
-        FileSystem myFS, boolean isArchiving) {
+            FileSystem myFS, boolean isArchiving) {
 
         switch (myFS.getShareStatus()) {
             case FileSystem.SHARED_TYPE_MDS:
@@ -176,19 +182,19 @@ public class FSUtil {
                 }
             default:
                 TraceUtil.trace1(
-                    "Shared_FS_STATUS is " + myFS.getShareStatus());
+                        "Shared_FS_STATUS is " + myFS.getShareStatus());
                 TraceUtil.trace1("Unknown fs desc: Unknown share type!");
                 return FS_DESC_UNKNOWN;
         }
     }
 
     public static String getFileSystemDescriptionString(
-        GenericFileSystem myGenericFS) {
+            GenericFileSystem myGenericFS) {
         return getFileSystemDescriptionString(myGenericFS, false);
     }
 
     public static String getFileSystemDescriptionString(
-        GenericFileSystem myGenericFS, boolean jsf) {
+            GenericFileSystem myGenericFS, boolean jsf) {
 
         StringBuffer myBuffer = new StringBuffer();
 
@@ -196,93 +202,110 @@ public class FSUtil {
         switch (description) {
 
             case FS_DESC_QFS:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.qfs") :
                         SamUtil.getResourceString("filesystem.desc.qfs"));
-                 break;
+                break;
             case FS_DESC_QFS_ARCHIVING:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.qfs.archiving") :
                         SamUtil.getResourceString(
                             "filesystem.desc.qfs.archiving"));
-                 break;
+                break;
             case FS_DESC_QFS_CLIENT:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.qfs.client") :
                         SamUtil.getResourceString(
                             "filesystem.desc.qfs.client"));
-                 break;
+                break;
             case FS_DESC_QFS_CLIENT_ARCHIVING:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage(
                             "filesystem.desc.qfs.client.archiving") :
                         SamUtil.getResourceString(
                             "filesystem.desc.qfs.client.archiving"));
-                 break;
+                break;
             case FS_DESC_QFS_SERVER:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.qfs.server") :
-                        SamUtil.getResourceString("filesystem.desc.qfs.server"));
-                 break;
+                        SamUtil.getResourceString(
+                            "filesystem.desc.qfs.server"));
+                break;
             case FS_DESC_QFS_SERVER_ARCHIVING:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage(
                             "filesystem.desc.qfs.server.archiving") :
                         SamUtil.getResourceString(
                             "filesystem.desc.qfs.server.archiving"));
-                 break;
+                break;
             case FS_DESC_QFS_POTENTIAL_SERVER:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage(
                             "filesystem.desc.qfs.potential.server") :
                         SamUtil.getResourceString(
                             "filesystem.desc.qfs.potential.server"));
-                 break;
+                break;
             case FS_DESC_QFS_POTENTIAL_SERVER_ARCHIVING:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage(
                             "filesystem.desc.qfs.potential.server.archiving") :
                         SamUtil.getResourceString(
                             "filesystem.desc.qfs.potential.server.archiving"));
-                 break;
+                break;
             case FS_DESC_UFS:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.ufs") :
                         SamUtil.getResourceString("filesystem.desc.ufs"));
-                 break;
+                break;
             case FS_DESC_ZFS:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.zfs") :
                         SamUtil.getResourceString("filesystem.desc.zfs"));
-                 break;
+                break;
             case FS_DESC_VXFS:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.vxfs") :
                         SamUtil.getResourceString("filesystem.desc.vxfs"));
-                 break;
+                break;
             case FS_DESC_NFS_CLIENT:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.nfs.client") :
-                        SamUtil.getResourceString("filesystem.desc.nfs.client"));
-                 break;
+                        SamUtil.getResourceString(
+                            "filesystem.desc.nfs.client"));
+                break;
+
+            case FS_DESC_MB:
+                myBuffer.append(
+                    jsf ?
+                        JSFUtil.getMessage("filesystem.desc.mb") :
+                        SamUtil.getResourceString("filesystem.desc.mb"));
+                break;
+
+            case FS_DESC_MAT:
+                myBuffer.append(
+                    jsf ?
+                        JSFUtil.getMessage("filesystem.desc.mat") :
+                        SamUtil.getResourceString("filesystem.desc.mat"));
+                break;
+
             default:
-                 myBuffer.append(
-                     jsf ?
+                myBuffer.append(
+                    jsf ?
                         JSFUtil.getMessage("filesystem.desc.unknown") :
                         SamUtil.getResourceString("filesystem.desc.unknown"));
-                 return myBuffer.toString();
+                return myBuffer.toString();
         }
 
         // determine if the fs is ha
@@ -313,7 +336,7 @@ public class FSUtil {
 
         // NOTE: MOUNT POINT has to start with a SLASH!
 
-        String [] mountPointArray = mountPoint.split("/");
+        String[] mountPointArray = mountPoint.split("/");
         StringBuffer myBuffer = null;
 
         try {
@@ -321,10 +344,10 @@ public class FSUtil {
             // follow by the last 16 characters.
             if (mountPointArray.length == 2) {
                 return new StringBuffer("/").append(
-                    mountPointArray[1].substring(0, 8)).
-                    append(DOTDOTDOT).append(mountPointArray[1].substring(
+                        mountPointArray[1].substring(0, 8)).
+                        append(DOTDOTDOT).append(mountPointArray[1].substring(
                         mountPointArray[1].length() -
-                            (MAX_MOUNT_POINT_LENGTH - 12),
+                        (MAX_MOUNT_POINT_LENGTH - 12),
                         mountPointArray[1].length())).toString();
             }
 
@@ -354,18 +377,18 @@ public class FSUtil {
 
             int lastSize = 0;
             if (MAX_MOUNT_POINT_LENGTH - myBuffer.length() <
-                mountPointArray[mountPointArray.length - 1].length()) {
+                    mountPointArray[mountPointArray.length - 1].length()) {
                 lastSize =
-                    mountPointArray[mountPointArray.length - 1].length() -
+                        mountPointArray[mountPointArray.length - 1].length() -
                         (MAX_MOUNT_POINT_LENGTH - myBuffer.length() + 1);
             }
 
             myBuffer.append(
-                mountPointArray[mountPointArray.length - 1].substring(
+                    mountPointArray[mountPointArray.length - 1].substring(
                     lastSize,
                     mountPointArray[mountPointArray.length - 1].length()));
         } catch (StringIndexOutOfBoundsException ex) {
-            TraceUtil.trace1("StringIndexOutOfBoundsException CAUGHT!");
+            TraceUtil.trace1("StringIndexOutOfBoundsException CAUGHT!", ex);
             TraceUtil.trace1("Reason: ex.getMessage()");
             return mountPoint;
         }
@@ -384,8 +407,8 @@ public class FSUtil {
             case SharedMember.TYPE_CLIENT:
                 return SamUtil.getResourceString("SharedFSDetails.type.client");
             default:
-                return
-                    SamUtil.getResourceString("SharedFSDetails.type.unknown");
+                return SamUtil.getResourceString(
+                    "SharedFSDetails.type.unknown");
         }
     }
 
@@ -395,9 +418,9 @@ public class FSUtil {
      * file systems to call the setNFSOptions API.
      */
     public static GenericFileSystem getRootFileSystem(
-        SamQFSSystemModel sysModel) throws SamFSException {
-        GenericFileSystem [] genfs =
-            sysModel.getSamQFSSystemFSManager().getNonSAMQFileSystems();
+            SamQFSSystemModel sysModel) throws SamFSException {
+        GenericFileSystem[] genfs =
+                sysModel.getSamQFSSystemFSManager().getNonSAMQFileSystems();
         for (int i = 0; i < genfs.length; i++) {
             if ("/".equals(genfs[i].getMountPoint())) {
                 return genfs[i];
@@ -413,30 +436,27 @@ public class FSUtil {
      * Used in File Browser View and File Details Pop Up
      */
     public static String getImage(
-        String copyStr, int mediaType, boolean isDamaged) {
+            String copyStr, int mediaType, boolean isDamaged) {
         if (BaseDevice.MTYPE_DISK == mediaType) {
             // Disk Copy
-            return isDamaged ?
-                Constants.Image.ICON_DISK_PREFIX.concat(copyStr).
+            return isDamaged ? Constants.Image.ICON_DISK_PREFIX.concat(copyStr).
                     concat(Constants.Image.ICON_DAMAGED_SUFFIX) :
-                Constants.Image.ICON_DISK_PREFIX.concat(copyStr).
+                    Constants.Image.ICON_DISK_PREFIX.concat(copyStr).
                     concat(Constants.Image.ICON_SUFFIX);
         } else if (BaseDevice.MTYPE_STK_5800 == mediaType) {
             // Honeycomb ST5800 Copy
-            return isDamaged ?
-                Constants.Image.ICON_HONEYCOMB.concat(copyStr).
+            return isDamaged ? Constants.Image.ICON_HONEYCOMB.concat(copyStr).
                     concat(Constants.Image.ICON_DAMAGED_SUFFIX) :
-                Constants.Image.ICON_HONEYCOMB.concat(copyStr).
+                    Constants.Image.ICON_HONEYCOMB.concat(copyStr).
                     concat(Constants.Image.ICON_SUFFIX);
         } else if (-1 == mediaType) {
             // Developer's bug
             return "";
         } else {
             // Tape Copy
-            return isDamaged ?
-                Constants.Image.ICON_TAPE_PREFIX.concat(copyStr).
+            return isDamaged ? Constants.Image.ICON_TAPE_PREFIX.concat(copyStr).
                     concat(Constants.Image.ICON_DAMAGED_SUFFIX) :
-                Constants.Image.ICON_TAPE_PREFIX.concat(copyStr).
+                    Constants.Image.ICON_TAPE_PREFIX.concat(copyStr).
                     concat(Constants.Image.ICON_SUFFIX);
         }
     }
@@ -448,15 +468,16 @@ public class FSUtil {
     public static String getFSName() {
         HttpServletRequest request = JSFUtil.getRequest();
         String fsName =
-            request.getParameter(Constants.PageSessionAttributes.FS_NAME);
+                request.getParameter(Constants.PageSessionAttributes.FS_NAME);
         if (fsName != null) {
-System.out.println("Getting fsName from request, set to session: " + fsName);
+            System.out.println(
+                "Getting fsName from request, set to session: " + fsName);
             JSFUtil.setAttribute(
-                Constants.PageSessionAttributes.FS_NAME, fsName);
+                    Constants.PageSessionAttributes.FS_NAME, fsName);
         } else {
             fsName = (String) JSFUtil.getAttribute(
-                Constants.PageSessionAttributes.FS_NAME);
-System.out.println("Retrieivng fsName from session: " + fsName);
+                    Constants.PageSessionAttributes.FS_NAME);
+            System.out.println("Retrieivng fsName from session: " + fsName);
         }
 
         return fsName;

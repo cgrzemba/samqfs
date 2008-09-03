@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ProtoFSDetailsBean.java,v 1.3 2008/08/27 22:17:27 kilemba Exp $
+// ident	$Id: ProtoFSDetailsBean.java,v 1.4 2008/09/03 19:46:03 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -43,7 +43,6 @@ public class ProtoFSDetailsBean {
     private String fsName = null;
 
     private int clientCount = 0;
-    private int storageNodeCount = 0;
 
     public ProtoFSDetailsBean() {
 
@@ -64,9 +63,7 @@ public class ProtoFSDetailsBean {
                 for (int i = 0; i < memberInfo.length; i++) {
                     if (memberInfo[i].isClients()) {
                         clientCount = memberInfo[i].getClients();
-                    } else if (memberInfo[i].isStorageNodes()) {
-                        storageNodeCount = memberInfo[i].getStorageNodes();
-                    }           
+                    }
                 }
             }
         } catch (SamFSException sfe) {
@@ -104,11 +101,6 @@ public class ProtoFSDetailsBean {
         return serverName;
     }
 
-    public String getAddStorageNodeHelpText() {
-        return JSFUtil.getMessage("protofs.details.storagenodehelp",
-                                  "" + this.storageNodeCount);
-    }
-    
     public String getCreateFSHelpText() {
         return JSFUtil.getMessage("protofs.details.createfshelp",
                                   new String [] {getFileSystemName(),

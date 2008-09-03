@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: JobDetails.jsp,v 1.4 2008/05/22 13:42:32 kilemba Exp $ -->
+<!-- $Id: JobDetails.jsp,v 1.5 2008/09/03 19:46:03 ronaldso Exp $ -->
 
 <jsp:root version="1.2"
    xmlns:f="http://java.sun.com/jsf/core"
@@ -42,7 +42,9 @@
    <ui:page>
    <ui:html>
    <ui:head title="#{samBundle['node.admin.job']}"/>
-   <ui:body>
+   <ui:body onLoad="if (parent.serverName != null) {
+                        parent.setSelectedNode('113', 'JobDetails');
+                    }">
    <ui:form id="JobDetailsForm">
        <ui:contentPageTitle title="#{samBundle['job.details.title']}" />
        <h:panelGrid columns="2" style="margin-left:10px" cellspacing="10">

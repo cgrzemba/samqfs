@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.10 2008/08/28 14:19:32 kilemba Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.11 2008/09/03 19:46:03 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -86,7 +86,7 @@
                            onClick="return launchAddClientsWizard(this);"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
-                           onClick="if (handleButtonRemove(1) == false) return false;"
+                           onClick="if (handleButtonRemove() == false) return false;"
                            actionListener="#{SharedFSBean.handleRemoveClient}"/>
                 <ui:dropDown
                     id="Menu"
@@ -106,7 +106,7 @@
                            onClick="return launchAddClientsWizard(this);"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
-                           onClick="if (handleOperation(1, true) == false) return false;"
+                           onClick="if (handleOperation(true) == false) return false;"
                            actionListener="#{SharedFSBean.handleRemoveClient}"/>
                 <ui:dropDown
                     id="Menu"
@@ -211,8 +211,6 @@
     <ui:hiddenField id="ConfirmUnmount" value="#{SharedFSBean.confirmUnmount}"/>
     <ui:hiddenField id="hiddenServerName" value="#{SharedFSBean.hiddenServerName}"/>
     <ui:hiddenField id="hiddenFSName" value="#{SharedFSBean.hiddenFSName}"/>
-    <ui:hiddenField id="hiddenMountPoint" value="#{SharedFSBean.hiddenMountPoint}"/>
-    <ui:hiddenField id="hiddenIsMDSMounted" value="#{SharedFSBean.hiddenIsMDSMounted}"/>
 </ui:form>
 </ui:body>
 </ui:html>

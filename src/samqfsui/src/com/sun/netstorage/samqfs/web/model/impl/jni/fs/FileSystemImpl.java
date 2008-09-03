@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.49 2008/07/09 22:20:58 kilemba Exp $
+// ident	$Id: FileSystemImpl.java,v 1.50 2008/09/03 19:46:05 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -171,6 +171,34 @@ public class FileSystemImpl extends GenericFileSystemImpl
      */
     public boolean isProtoFS() {
         return FSInfo.PROTO_OBJECT_BASED.equals(fsInfo.getEqType());
+    }
+
+    /**
+     * Determine if file system is a mb type file system.  It is a
+     * Sun StorageTek QFS or Sun SAM-QFS disk cache family set with one or more
+     * meta devices.  Metadata resides on these meta devices.  File data resides
+     * on the object storage device(s) (OSDs).
+     *
+     * @since 5.0
+     * @return true if file system is a "mb" type file system
+     */
+    public boolean isMbFS() {
+        return FSInfo.OBJECT_BASED_QFS.equals(fsInfo.getEqType());
+    }
+
+    /**
+     * Determine if file system is a mat type file system.  It is a
+     * Sun StorEdge QFS disk cache family set with one or more meta devices.
+     * Metadata resides on these meta devices.  File data resides on the data
+     * device(s). This standalone file system has no namespace and is only used
+     * as the OSD target backing store of an object storage device (OSD) in an
+     * mb file system.
+     *
+     * @since 5.0
+     * @return true if file system is a "mat" type file system
+     */
+    public boolean isMatFS() {
+        return FSInfo.OBJECT_TARGET.equals(fsInfo.getEqType());
     }
 
     public int getDAUSize() {
@@ -605,15 +633,12 @@ public class FileSystemImpl extends GenericFileSystemImpl
             new FileSystemMountPropertiesImpl(fsInfo.getMountOptions());
         mountProps.setFileSystem(this);
 
-        int dataCacheType = DiskCache.MD;
         DiskDev[] list = null;
         this.setHA(true); // will stay true if all devs are ha
 
         list = fsInfo.getMetadataDevices();
         if (list != null) {
             metaDevices = new DiskCache[list.length];
-            if (list.length > 0)
-                dataCacheType = DiskCache.MR;
             for (int i = 0; i < list.length; i++) {
                 metaDevices[i] = new DiskCacheImpl(list[i]);
                 ((DiskCacheImpl) metaDevices[i]).
@@ -956,11 +981,6 @@ System.out.println("ShrinkOptions: " + options.toString());
         int eqToRemove, DiskCache replacement, ShrinkOption options)
 	throws SamFSException {
 
-System.out.println("shrinkReplaceDev called!");
-System.out.println("eqToRemove: " + eqToRemove);
-System.out.println("replacement: " + replacement.getDevicePath());
-System.out.println("ShrinkOptions: " + options.toString());
-
         return FS.shrinkReplaceDev(
                     getJniContext(), fsInfo.getName(),
                     eqToRemove,
@@ -986,11 +1006,6 @@ System.out.println("ShrinkOptions: " + options.toString());
     public int shrinkReplaceGroup(
         int eqToRemove, StripedGroup replacement, ShrinkOption options)
 	throws SamFSException {
-
-System.out.println("shrinkReplaceGroup called!");
-System.out.println("eqToRemove: " + eqToRemove);
-System.out.println("replacement: " + replacement.getMembers().length);
-System.out.println("ShrinkOptions: " + options.toString());
 
         return FS.shrinkReplaceGroup(
                     getJniContext(), fsInfo.getName(),

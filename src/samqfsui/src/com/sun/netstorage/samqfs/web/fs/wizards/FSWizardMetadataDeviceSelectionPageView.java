@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardMetadataDeviceSelectionPageView.java,v 1.26 2008/07/16 21:55:56 kilemba Exp $
+// ident	$Id: FSWizardMetadataDeviceSelectionPageView.java,v 1.27 2008/09/03 19:46:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -101,15 +101,10 @@ public class FSWizardMetadataDeviceSelectionPageView
 
         TraceUtil.trace3("before getting sharedChecked");
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
-        /*
-        sharedChecked = (String) wizardModel.getWizardValue(
-            NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
-        */
         Boolean temp = (Boolean)wizardModel
             .getValue(CreateFSWizardImpl.POPUP_SHARED);
         sharedEnabled = temp.booleanValue();
         DiskCache[] devices;
-        // if (sharedChecked != null && sharedChecked.equals("true")) {
         if (sharedEnabled) {
             devices = (SharedDiskCache[]) wizardModel.getValue(
                 Constants.Wizard.ALLOCATABLE_DEVICES);
@@ -131,13 +126,8 @@ public class FSWizardMetadataDeviceSelectionPageView
         ArrayList selectedMetadataDevices = (ArrayList)wizardModel.getValue(
             Constants.Wizard.SELECTED_METADEVICES);
 
-        TraceUtil.trace3("after getting selectedMetadataDevices");
-        String samfsServerAPIVersion =
-            (String) wizardModel.getValue(Constants.Wizard.SERVER_API_VERSION);
-
-        TraceUtil.trace3("after getting samfsServerAPIVersion");
         for (int i = 0; i < devices.length; i++) {
-        TraceUtil.trace3("device string is " + devices[i].toString());
+            TraceUtil.trace3("device string is " + devices[i].toString());
             if (i > 0) {
                 tableModel.appendRow();
             }
@@ -166,29 +156,18 @@ public class FSWizardMetadataDeviceSelectionPageView
                 case DiskCache.VXVM_LOGICAL_VOLUME_RAID_5:
                     partition = "FSWizard.diskType.vxvm.raid5";
                     break;
+                case DiskCache.OSD:
+                    partition = "FSWizard.diskType.osd";
+                    break;
                 default:
+System.out.println("Unknown Partition Type! type: " + diskType);
                     partition = "";
                     break;
             }
 
-            String pathString = devices[i].getDevicePath();
-            String [] sliceElement = pathString.split("/");
-
-            // if the slice is a SVM volume, we need to show the disk group
-            if ((diskType == DiskCache.SVM_LOGICAL_VOLUME ||
-                diskType == DiskCache.SVM_LOGICAL_VOLUME_MIRROR ||
-                diskType == DiskCache.SVM_LOGICAL_VOLUME_RAID_5) &&
-                sliceElement.length == 6) {
-                tableModel.setValue(
-                    "DevicePath", sliceElement[3] + "/" + sliceElement[5]);
-            } else {
-                int index = pathString.indexOf("/dsk/");
-                tableModel.setValue(
-                    "DevicePath", pathString.substring(index + 5));
-            }
-
-            tableModel.setValue("HiddenDevicePath", pathString);
-            // if (!(sharedChecked != null && sharedChecked.equals("true"))) {
+            tableModel.setValue(
+                "HiddenDevicePath",
+                devices[i].getDevicePathDisplayString());
             if (sharedEnabled) {
                 tableModel.setValue("Partition", partition);
             }
@@ -197,7 +176,6 @@ public class FSWizardMetadataDeviceSelectionPageView
             tableModel.setValue(
                 "Capacity", new Capacity(dCap, SamQFSSystemModel.SIZE_MB));
 
-            // if (sharedChecked != null && sharedChecked.equals("true")) {
             if (sharedEnabled) {
                 String metaDataHostName = (String)
                     wizardModel.getValue(Constants.Wizard.SERVER_NAME);
@@ -208,9 +186,6 @@ public class FSWizardMetadataDeviceSelectionPageView
                     ((SharedDiskCache) devices[i]).availFromClients();
                 ArrayList potentialHosts = (ArrayList)wizardModel.getValue(
                     Constants.Wizard.SELECTED_POTENTIAL_METADATA_SERVER_VALUE);
-                ArrayList seleectedClientHosts =
-                    (ArrayList)wizardModel.getValue(
-                    Constants.Wizard.SELECTED_CLIENT);
                 String displayHosts = metaDataHostName;
                 for (int ii = 0; ii < serverHosts.length; ii++) {
                     displayHosts = displayHosts + ";" + serverHosts[ii];

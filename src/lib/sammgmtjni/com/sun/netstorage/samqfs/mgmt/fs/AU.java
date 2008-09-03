@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AU.java,v 1.18 2008/05/16 18:35:28 am143972 Exp $
+// ident	$Id: AU.java,v 1.19 2008/09/03 19:46:02 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -41,6 +41,7 @@ public class AU {
     public static final int SVM_LOGICAL_VOLUME  = 1;
     public static final int VXVM_LOGICAL_VOLUME = 2;
     public static final int ZFS_ZVOL = 3;
+    public static final int OSD = 4;
 
     private String path;
     private int type;

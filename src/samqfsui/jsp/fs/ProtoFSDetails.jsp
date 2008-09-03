@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ProtoFSDetails.jsp,v 1.3 2008/08/27 22:17:27 kilemba Exp $ -->
+<!-- $Id: ProtoFSDetails.jsp,v 1.4 2008/09/03 19:46:03 ronaldso Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -93,16 +93,6 @@
                            text="#{msgs['protofs.details.addstoragenode']}"
                            styleClass="taskhref"/>
         </ui:hyperlink> <br/>
-    
-        <div style="margin-left:30px">
-            <ui:staticText id="addStorageNodeHelp"
-                           rendered="true"
-                           text="#{ProtoFSBean.addStorageNodeHelpText}"/>
-            <br/>
-            <ui:hyperlink id="viewStorageNodes" action="success" rendered="false">
-                <ui:staticText text="#{msgs['protofs.details.viewstoragenodes']}"/>
-            </ui:hyperlink>
-        </div>
     </div>
 
     <div style="margin:0px 0px 30px 0px">

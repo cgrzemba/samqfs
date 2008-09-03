@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.30 2008/07/16 21:55:56 kilemba Exp $
+// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.31 2008/09/03 19:46:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -198,29 +198,18 @@ public class FSWizardDataDeviceSelectionPageView
                 case DiskCache.ZFS_ZVOL:
                     partition = "FSWizard.diskType.zvol";
                     break;
+                case DiskCache.OSD:
+                    partition = "FSWizard.diskType.osd";
+                    break;
                 default:
+System.out.println("Unknown Partition Type! type: " + diskType);
                     partition = "";
                     break;
             }
 
-            String pathString = devices[i].getDevicePath();
-
-            String [] sliceElement = pathString.split("/");
-
-            // if the slice is a SVM volume, we need to show the disk group
-            if ((diskType == DiskCache.SVM_LOGICAL_VOLUME ||
-                diskType == DiskCache.SVM_LOGICAL_VOLUME_MIRROR ||
-                diskType == DiskCache.SVM_LOGICAL_VOLUME_RAID_5) &&
-                sliceElement.length == 6) {
-                tableModel.setValue(
-                    "DevicePath", sliceElement[3] + "/" + sliceElement[5]);
-            } else {
-                int index = pathString.indexOf("/dsk/");
-                tableModel.setValue(
-                    "DevicePath", pathString.substring(index + 5));
-            }
-            tableModel.setValue("HiddenDevicePath", pathString);
-            // if (!(sharedChecked != null && sharedChecked.equals("true"))) {
+            tableModel.setValue(
+                "HiddenDevicePath",
+                devices[i].getDevicePathDisplayString());
             if (sharedEnabled) {
                 tableModel.setValue("Partition", partition);
             }
@@ -229,7 +218,6 @@ public class FSWizardDataDeviceSelectionPageView
             tableModel.setValue(
                 "Capacity", new Capacity(dCap, SamQFSSystemModel.SIZE_MB));
 
-            // if (sharedChecked != null && sharedChecked.equals("true")) {
             if (sharedEnabled) {
                 String metaDataHostName = (String)
                     wizardModel.getValue(Constants.Wizard.SERVER_NAME);
@@ -240,8 +228,6 @@ public class FSWizardDataDeviceSelectionPageView
                     ((SharedDiskCache) devices[i]).availFromClients();
                 TraceUtil.trace3("client host is " + clientHosts.toString());
 
-                ArrayList chosenClientHosts = (ArrayList)wizardModel.getValue(
-                    Constants.Wizard.SELECTED_CLIENT_INDEX);
                 String displayHosts = metaDataHostName;
                 for (int ii = 0; ii < clientHosts.length; ii++) {
                     displayHosts = displayHosts + ";" + clientHosts[ii];
