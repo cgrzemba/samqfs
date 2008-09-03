@@ -1,4 +1,4 @@
-# $Revision: 1.17 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,37 +26,22 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../..
+DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-DATAFILES = samexplorer set_admin
+PROG = samadm
+PROG_SRC = \
+	samadm.c \
+	cmdparse.c \
+	addremove_cmd.c \
+	servicetag_cmd.c
 
-DIRS = 	audit \
-		auditslot \
-		chmed \
-		cleandrive \
-		dmpshm \
-		export \
-		fsmdb \
-		fsmupd \
-		import \
-		itemize \
-		label \
-		load \
-		move \
-		samadm \
-		samdev \
-		samset \
-		samu \
-		sefreport \
-		set_state \
-		unload   \
-		mccfg \
-		tapealert \
-		samdb \
-		samrestore \
-		samstorade
+DEPCFLAGS += -I.
+
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut $(LIBSO)
+
+LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut
 
 include $(DEPTH)/mk/targets.mk
 
