@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.256 $"
+#pragma ident "$Revision: 1.257 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2129,10 +2129,11 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 
 				} else {
 					sam_disk_inode_t *di;
+					size_t bsize;
 
 					di = (sam_disk_inode_t *)
 					    (void *)&msg->call.block.data;
-					size_t bsize =
+					bsize =
 					    msg->call.block.arg.p.getino.bsize;
 
 					/*
