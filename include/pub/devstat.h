@@ -38,7 +38,7 @@
 #define	SAM_DEVSTAT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 #endif
 
 #ifdef	linux
@@ -234,6 +234,7 @@ struct sam_ndevstat {
 #define	DT_ODI_NEO	(DT_TAPE_SR | 36)	/* Overland Data Neo Series */
 #define	DT_QUANTUMC4	(DT_TAPE_SR | 38)	/* Sun C4/Quantum PX500 */
 #define	DT_SL3000	(DT_TAPE_SR | 39)	/* STK SL3000 library */
+#define	DT_SLPYTHON	(DT_TAPE_SR | 40)	/* Spectra Logic Python libs */
 
 
 

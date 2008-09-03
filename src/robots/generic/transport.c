@@ -30,7 +30,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -495,6 +495,8 @@ move(
 	case DT_FJNMXX:
 		/* FALLTHROUGH */
 	case DT_SL3000:
+		/* FALLTHROUGH */
+	case DT_SLPYTHON:
 		timeout = 10 * 60;
 		break;
 

@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -561,6 +561,8 @@ init_import(
 	case DT_SL3000:
 		/* Fallthrough */
 	case DT_ODI_NEO:
+		/* Fallthrough */
+	case DT_SLPYTHON:
 		iport->library->im_ele = iport;
 		iport->library->ex_ele = iport;
 		break;
@@ -716,6 +718,7 @@ process_multi_import(
 			    (equ_type == DT_HPSLXX) ||
 			    (equ_type == DT_FJNMXX) ||
 			    (equ_type == DT_SL3000) ||
+			    (equ_type == DT_SLPYTHON) ||
 			    (equ_type == DT_STKLXX &&
 			    strncmp((char *)un->product_id,
 			    "SL500", 5) == 0)) ||

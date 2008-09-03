@@ -42,7 +42,7 @@
 #define	SAM_DEVINFO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 #endif
 
 #define	INQUIRY_CONF    SAM_CONFIG_PATH"/inquiry.conf"
@@ -128,6 +128,7 @@ typedef enum {
 	M_QUANTUMC4,		/* Sun C4/ Quantumm PX500 */
 	M_HPSLXX,		/* Sun HP SL48 Library */
 	M_STKSL3000,		/* STK SL3000 library */
+	M_SLPYTHON,		/* Spectra Logic Python Series */
 	M_LAST
 } MODEL;
 
@@ -280,6 +281,8 @@ sam_model_t sam_model[] = {
 		"HP SL48 Tape Library" },
 	{"stksl3000", DT_SL3000, M_STKSL3000, DTYPE_CHANGER,
 		"STK SL3000 Library" },
+	{"spcpyth", DT_SLPYTHON, M_SLPYTHON, DTYPE_CHANGER,
+		"Spectra Logic Series Libraries" },
 	{(char *)NULL, 0, 0, 0, (char *)NULL}
 };
 

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -340,6 +340,7 @@ success:
 						case DT_HPSLXX:
 						case DT_FJNMXX:
 						case DT_SL3000:
+						case DT_SLPYTHON:
 
 						un->dt.rb.status.b.barcodes =
 						    TRUE;

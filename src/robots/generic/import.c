@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -346,6 +346,8 @@ import_media(
 			case DT_STK97XX:
 				/* FALLTHROUGH */
 			case DT_FJNMXX:
+				/* FALLTHROUGH */
+			case DT_SLPYTHON:
 				/* attempt to lock the import/export door */
 				mutex_lock(&library->un->io_mutex);
 				TAPEALERT(library->open_fd, library->un);
@@ -559,6 +561,8 @@ generic_export_media(
 	case DT_FJNMXX:
 		/* FALLTHROUGH */
 	case DT_SL3000:
+		/* FALLTHROUGH */
+	case DT_SLPYTHON:
 		/*
 		 * Media changers must support init_element_range command
 		 * (0xe7) to use find_empty_export.
@@ -847,6 +851,7 @@ generic_export_media(
 	    (library->un->type != DT_HPSLXX) &&
 	    (library->un->type != DT_FJNMXX) &&
 	    (library->un->type != DT_SL3000) &&
+	    (library->un->type != DT_SLPYTHON) &&
 	    (library->un->type != DT_ATLP3000)) {
 		mutex_lock(&library->un->mutex);
 		library->un->status.bits |= (DVST_ATTENTION | DVST_I_E_PORT);
