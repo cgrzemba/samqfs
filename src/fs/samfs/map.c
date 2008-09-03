@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.144 $"
+#pragma ident "$Revision: 1.145 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2099,7 +2099,6 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 		 * the end of the file so zero from size to the
 		 * end of the dau that contains size.
 		 */
-		SAM_SET_LEASEFLG(mp);
 		while (totlen) {
 			zlen = mp->mi.m_dau[dt].seg[bt] -
 			    (roff & (mp->mi.m_dau[dt].seg[bt] - 1));
@@ -2109,11 +2108,12 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 				    start & ~(mp->mi.m_dau[dt].seg[bt] - 1),
 				    mp->mi.m_dau[dt].seg[bt], NULL);
 				if (error != 0) {
-					SAM_CLEAR_LEASEFLG(mp);
 					return (error);
 				}
 			}
+			SAM_SET_LEASEFLG(mp);
 			fbzero(SAM_ITOV(ip), start, zlen, &fbp);
+			SAM_CLEAR_LEASEFLG(mp);
 			fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -2123,7 +2123,6 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 			totlen -= zlen;
 			roff = 0;
 		}
-		SAM_CLEAR_LEASEFLG(mp);
 		ip->zero_end = start;
 	}
 
