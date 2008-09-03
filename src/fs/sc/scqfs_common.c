@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -621,7 +621,7 @@ get_qfshosts(char *fsname,
 			int method)
 {
 	struct sam_fs_part pt;
-	char errbuf[256], *errstr = &errbuf[0];
+	char *errstr;
 	char *devrname;
 	int rc, errnum;
 
@@ -671,10 +671,10 @@ get_qfshosts(char *fsname,
 			/* 22671 */
 			scds_syslog(LOG_ERR,
 			    "%s: Unable to get QFS hosts table.  Error: %s",
-			    fsname, errbuf);
+			    fsname, errstr);
 			dprintf(stderr, catgets(catfd, SET, 22671,
 			    "%s: Unable to get QFS hosts table.  Error: %s"),
-			    fsname, errbuf);
+			    fsname, errstr);
 			return (rc);
 		}
 	}
