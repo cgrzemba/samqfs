@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 #include "sam/osversion.h"
 
@@ -1848,11 +1848,28 @@ sam_map_osd(
 
 	/*
 	 * If writing, increment filesize if no error & flag < SAM_WRITE_SPARSE.
+	 * If paged write past size, clear beginning of page.
 	 */
 	if (((offset + count) < ip->size) || (flag >= SAM_WRITE_SPARSE)) {
 		return (0);
 	}
 	ASSERT(RW_WRITE_HELD(&ip->inode_rwl) || (flag == SAM_WR_DIRECT_IO));
+	if (flag == SAM_WRITE && offset > ip->size) {
+		struct fbuf *fbp;
+		offset_t off = offset & PAGEMASK;
+		offset_t len;
+
+		if (off < ip->size) {
+			off = ip->size;
+		}
+		len = (offset & PAGEOFFSET) - (off & PAGEOFFSET);
+		if (len > 0) {
+			SAM_SET_LEASEFLG(ip->mp);
+			fbzero(SAM_ITOV(ip), off, len, &fbp);
+			SAM_CLEAR_LEASEFLG(ip->mp);
+			fbrelse(fbp, S_WRITE);
+		}
+	}
 	if (flag == SAM_WR_DIRECT_IO) {
 		mutex_enter(&ip->fl_mutex);
 	}
