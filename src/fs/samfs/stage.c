@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 #endif
 
 #include "sam/osversion.h"
@@ -119,6 +119,9 @@
 #include "kstats_linux.h"
 #endif /* linux */
 
+#ifdef sun
+extern int sam_mask_signals;
+#endif /* sun */
 
 /*
  * ----- sam_read_proc_offline - process offline file.
@@ -877,7 +880,16 @@ sam_wait_rm(sam_node_t *ip, int flag)
 	if (ip->stage_err == EREMCHG) {
 		error = EREMCHG;
 	} else if (!SAM_THREAD_IS_NFS()) {		/* if not NFS access */
-		if ((ret = sam_cv_wait_sig(&ip->rm_cv, &ip->rm_mutex)) == 0) {
+#ifdef sun
+		if (sam_mask_signals) {
+			ret = sam_cv_wait_sig(&ip->rm_cv, &ip->rm_mutex);
+		} else {
+			ret = cv_wait_sig(&ip->rm_cv, &ip->rm_mutex);
+		}
+#else
+		ret = sam_cv_wait_sig(&ip->rm_cv, &ip->rm_mutex);
+#endif
+		if (ret == 0) {
 			error = EINTR;
 		}
 	} else {		/* If NFS access */

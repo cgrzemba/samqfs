@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.212 $"
+#pragma ident "$Revision: 1.213 $"
 
 #include "sam/osversion.h"
 
@@ -78,6 +78,7 @@
 #include "qfs_log.h"
 #include "objnode.h"
 
+extern int sam_mask_signals;
 
 #ifdef METADATA_SERVER
 extern struct vnodeops *samfs_vnodeopsp;
@@ -1651,14 +1652,22 @@ sam_wait_space(
 		block_ran = (last_alloc_time < mp->mi.m_blkth_alloc);
 		mutex_exit(&mp->mi.m_block.mutex);
 		if (!block_ran) {
+			int ret = 0;
+
 			/*
 			 * If the block thread has not allocated since we
 			 * started, wait until the block thread has run.
 			 */
 			mutex_enter(&mp->ms.m_waitwr_mutex);
 			mp->mi.m_wait_write++;
-			if (sam_cv_wait_sig(&mp->ms.m_waitwr_cv,
-			    &mp->ms.m_waitwr_mutex) == 0) {
+			if (sam_mask_signals) {
+				ret = sam_cv_wait_sig(&mp->ms.m_waitwr_cv,
+				    &mp->ms.m_waitwr_mutex);
+			} else {
+				ret = cv_wait_sig(&mp->ms.m_waitwr_cv,
+				    &mp->ms.m_waitwr_mutex);
+			}
+			if (ret == 0) {
 				error = EINTR;
 			}
 			mp->mi.m_wait_write--;

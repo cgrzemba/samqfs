@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.127 $"
+#pragma ident "$Revision: 1.128 $"
 
 #define	SAM_INIT
 
@@ -96,6 +96,12 @@ int sam_vpm_enable = 1;			/* non-zero use Solaris VPM */
 #else
 int sam_vpm_enable = 0;			/* zero means don't use Solaris VPM */
 #endif
+
+/*
+ * One means all signals except the critical ones are masked while waiting on
+ * condition variable. Currently used only while staging.
+ */
+int sam_mask_signals = 0;
 
 const char sam_version[] = SAM_BUILD_INFO;
 const char sam_build_uname[] = SAM_BUILD_UNAME;
