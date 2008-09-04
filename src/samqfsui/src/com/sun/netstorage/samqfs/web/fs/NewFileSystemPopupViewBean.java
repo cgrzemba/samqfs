@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewFileSystemPopupViewBean.java,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewFileSystemPopupViewBean.java,v 1.2 2008/09/04 19:30:34 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -70,7 +70,7 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String SHARED = "sharedCheckBox";
     public static final String HPC = "HPCCheckBox";
     public static final String HAFS = "HAFSCheckBox";
-    public static final String FS_NAME = "FSName";
+    public static final String MATFS = "matfsCheckBox";
     public static final String WIZARD_VIEW = "NewFileSystemPopupView";
 
     // its not necessary to register labels and static fields
@@ -81,7 +81,6 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String ARCHIVE_MEDIA = "hasArchiveMedia";
     public static final String SERVER_NAME = "serverName";
     public static final String MESSAGES = "messages";
-    public static final String FS_NAMES = "existingFSNames";
 
     public NewFileSystemPopupViewBean() {
         super(PAGE_NAME, DEFAULT_URL);
@@ -103,11 +102,10 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
         registerChild(SHARED, CCCheckBox.class);
         registerChild(HPC, CCCheckBox.class);
         registerChild(HAFS, CCCheckBox.class);
-        registerChild(FS_NAME, CCTextField.class);
+        registerChild(MATFS, CCCheckBox.class);
         registerChild(ARCHIVE_MEDIA, CCHiddenField.class);
         registerChild(SERVER_NAME, CCHiddenField.class);
         registerChild(MESSAGES, CCHiddenField.class);
-        registerChild(FS_NAMES, CCHiddenField.class);
         registerChild(WIZARD_VIEW, NewFileSystemPopupView.class);
         TraceUtil.trace3("Exiting");
     }
@@ -135,16 +133,14 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
         } else if (name.equals(ARCHIVING)||
             name.equals(SHARED)||
             name.equals(HPC) ||
-            name.equals(HAFS)) {
+            name.equals(HAFS) ||
+            name.equals(MATFS)) {
             return new CCCheckBox(this, name, "true", "false", false);
-        } else if (name.equals(FS_NAME)) {
-            return new CCTextField(this, name, null);
         } else if (super.isChildSupported(name)) {
             return super.createChild(name);
         } else if (name.contains(ARCHIVE_MEDIA)||
             name.equals(SERVER_NAME) ||
-            name.equals(MESSAGES) ||
-            name.equals(FS_NAMES)) {
+            name.equals(MESSAGES)) {
             return new CCHiddenField(this, name, null);
         } else if (name.equals(WIZARD_VIEW)) {
             return new NewFileSystemPopupView(this, name);
@@ -167,7 +163,7 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
         forwardTo(getRequestContext());
     }
 
-
+    /* called before this container generating its display content */
     public void beginDisplay(DisplayEvent evt) throws ModelControlException {
         String serverName = getServerName();
         try {
@@ -184,26 +180,16 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
             messages.append(SamUtil.getResourceString(
                 "fs.newfs.archivemedia.missing"))
                 .append(";")
-                .append(SamUtil.getResourceString("FSWizard.new.error.fsname"))
-                .append(";")
-                .append(SamUtil.getResourceString(
-                    "FSWizard.new.error.invalidfsname"))
-                .append(";")
-                .append(SamUtil.getResourceString(
-                    "FSWizard.new.error.fsnameExists"))
-                .append(";")
                 .append(SamUtil.getResourceString(
                     "fs.newfs.hahpc.unsupported"));
 
             ((CCHiddenField)getChild(MESSAGES)).setValue(messages.toString());
-
-            // existing file system names. For GUI validation
-            String []fsnames =
-                model.getSamQFSSystemFSManager().getAllFileSystemNames();
-            String fsnameString = ConversionUtil.arrayToStr(fsnames, ';');
-            ((CCHiddenField)getChild(FS_NAMES)).setValue(fsnameString);
         } catch (SamFSException sfe) {
-            //
+            SamUtil.processException(sfe,
+                                     this.getClass(),
+                                     "beginDisplay",
+                                     "Unable to retrieve archive media",
+                                     serverName);
         }
     }
 

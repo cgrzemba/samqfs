@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardMountView.java,v 1.35 2008/07/09 22:20:57 kilemba Exp $
+// ident	$Id: NewWizardMountView.java,v 1.36 2008/09/04 19:30:34 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -232,22 +232,32 @@ public class NewWizardMountView extends RequestHandlingViewBase
     public boolean beginOptimizeCheckBoxDisplay(ChildDisplayEvent event)
         throws ModelControlException {
         TraceUtil.trace3("Entering");
+        boolean result = true;
 
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
-        // String metaLocationVal = (String) wizardModel.getValue(
-        // NewWizardFSNameView.CHILD_META_LOCATION_RADIOBUTTON);
         String mdStorage = (String)
             wizardModel.getValue(NewWizardMetadataOptionsView.METADATA_STORAGE);
+        Boolean hpc =
+            (Boolean)wizardModel.getValue(CreateFSWizardImpl.POPUP_HPC);
+        Boolean matfs =
+            (Boolean)wizardModel.getValue(CreateFSWizardImpl.POPUP_MATFS);
+
         if (NewWizardMetadataOptionsView.SAME_DEVICE.equals(mdStorage)) {
             // if (metaLocationVal.equals("FSWizard.new.fstype.qfs.metaSame")) {
             // Reset this value to no in case user goes back and forth in
             // the wizard.  This call will ensure the qwrite and force-directio
             // do not get enabled accidentally
             wizardModel.setValue(CHILD_OPTIMIZE_CHECKBOX, "samqfsui.no");
-            return false;
-        } else {
-            return true;
+            result = false;
         }
+
+        // hide the optimize for oracle checkbox if creating an hpc (mb) or a
+        // mat file system.
+        if (hpc.booleanValue() || matfs.booleanValue()) {
+            result = false;
+        }
+
+        return result;
     }
 
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
@@ -400,12 +410,6 @@ public class NewWizardMountView extends RequestHandlingViewBase
 
     private boolean isHAFS() {
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
-
-        /*
-        Boolean hafs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HAFS);
-
-        return hafs.booleanValue();
-        */
 
         String hafs = (String)wm.getValue(NewWizardFSNameView.HAFS);
 

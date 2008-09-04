@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModelImpl.java,v 1.99 2008/08/06 17:41:50 ronaldso Exp $
+// ident	$Id: SamQFSSystemModelImpl.java,v 1.100 2008/09/04 19:30:35 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -65,6 +65,7 @@ import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.NFSOptions;
 import com.sun.netstorage.samqfs.web.model.fs.StageFile;
+import com.sun.netstorage.samqfs.web.model.media.DiskVolume;
 import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.Filter;
@@ -721,6 +722,12 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
      * archiving media configured otherwize false.
      */
     public boolean hasArchivingMedia() throws SamFSException {
+        // a disk volume check returns faster, check for a disk volume first
+        DiskVolume [] diskVolume = getSamQFSSystemMediaManager().getDiskVSNs();
+        if (diskVolume != null && diskVolume.length > 0)
+            return true;
+
+        // if no disk volumes found, load configuration
         Configuration config =
             getSamQFSSystemAdminManager().getConfigurationSummary(false);
 
@@ -759,4 +766,3 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
         return storageNode;
     }
 }
-

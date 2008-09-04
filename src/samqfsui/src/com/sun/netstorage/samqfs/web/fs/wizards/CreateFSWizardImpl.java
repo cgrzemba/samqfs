@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident      $Id: CreateFSWizardImpl.java,v 1.104 2008/08/06 23:17:24 kilemba Exp $
+// ident      $Id: CreateFSWizardImpl.java,v 1.105 2008/09/04 19:30:34 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -409,7 +409,7 @@ interface CreateFSWizardImplData {
         PAGE_FS_SUMMARY,
         PAGE_RESULT
     };
-    
+
     /*
     // 2. non-shared, archiving, non-hpc qfs
     final int [] samqfs_pages = {
@@ -495,7 +495,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     public static final String POPUP_SHARED = "newfspopup.shared";
     public static final String POPUP_HAFS = "newfspopup.hafs";
     public static final String POPUP_HPC = "newfspopup.hpc";
-    public static final String POPUP_HPC_FSNAME = "newfspopup.hpc.fsname";
+    public static final String POPUP_MATFS = "newfspopup.matfs";
 
     // NEW: constant string for wizard
     public static final String WIZARDPAGEMODELNAME = "CreateFSPageModelName";
@@ -542,6 +542,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     private boolean sharedEnabled  = false;  // shared feature enabled ?
     private boolean hafsEnabled = false; // HAFS enabled
     private boolean hpcEnabled = false; // HCP FS enabled
+    private boolean matfsEnabled = false; // mat fs is enabled
 
     // boolean to keep track of which version of dau page to process
     private boolean newDAUPage = false;
@@ -787,6 +788,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 return result3;
         }
 
+        System.out.println("---Next Page = " + getNextPageId(pageId) + "---");
         return true;
     }
 
@@ -1266,7 +1268,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             Constants.Wizard.WIZARD_ERROR,
             Constants.Wizard.WIZARD_ERROR_NO);
         wizardModel.clear();
-        
+
 	return true;
     }
 
@@ -1329,18 +1331,21 @@ public class CreateFSWizardImpl extends SamWizardImpl {
         Boolean shared = new Boolean(request.getParameter("shared"));
         Boolean hpc = new Boolean(request.getParameter("hpc"));
         Boolean hafs = new Boolean(request.getParameter("hafs"));
+        Boolean matfs = new Boolean(request.getParameter("matfs"));
 
         wizardModel.setValue(POPUP_FSTYPE, fsType);
         wizardModel.setValue(POPUP_ARCHIVING, archiving);
         wizardModel.setValue(POPUP_SHARED, shared);
         wizardModel.setValue(POPUP_HAFS, hafs);
         wizardModel.setValue(POPUP_HPC, hpc);
+        wizardModel.setValue(POPUP_MATFS, matfs);
 
         // 5.0
         this.archivingEnabled = archiving.booleanValue();
         this.sharedEnabled = shared.booleanValue();
         this.hafsEnabled = hafs.booleanValue();
         this.hpcEnabled = hpc.booleanValue();
+        this.matfsEnabled = matfs.booleanValue();
 
         if (FSTYPE_UFS.equals(fsType)) {
             // ufs file system
@@ -1380,15 +1385,16 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             }
 
             initializeMetadataStorage(hafs, hpc);
-            initializeBlockAllocation();            
+            initializeBlockAllocation();
         }
 
 
 
         setShowResultsPage(true);
         initializeWizardPages(pages);
-
-        printPages();
+        if (hasStripedGroups()) {
+            striped_group_base = getStripedGroupBase();
+        }
         TraceUtil.trace2("wizard initialized!");
     }
 
@@ -1523,7 +1529,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             this.pages = WizardUtil.insertPagesBefore(this.pages,
                           new int [] {CreateFSWizardImplData.PAGE_METADATA_LUN},
                                            CreateFSWizardImplData.PAGE_DATA_LUN,
-                                                      true);       
+                                                      true);
         */
 
         } else {
@@ -1532,14 +1538,14 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                  NewWizardMetadataOptionsView.SAME_DEVICE);
         }
 
-        // if accepting 
+        // if accepting
         if (NewWizardAcceptQFSDefaultsView.ACCEPT.equals(defaults)) {
             // 2. update the block allocation default values
             processMetadataOptionsPage(evt);
 
         } else {
             // 1. update pages to insert metadata options & block allocation
-            
+
             int [] pagesToInsert =
                 new int [] {CreateFSWizardImplData.PAGE_METADATA_OPTIONS,
                             CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION};
@@ -1555,6 +1561,10 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                                       false);
 
             initializeWizardPages(this.pages);
+            if (hasStripedGroups()) {
+                striped_group_base = getStripedGroupBase();
+            }
+
         }
 
         // update block allocation values
@@ -1567,7 +1577,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
      * process the Metadata options page
      */
     private boolean processMetadataOptionsPage(WizardEvent evt) {
-        // if separate data and metadata 
+        // if separate data and metadata
         String mdStorage = (String)wizardModel
             .getValue(NewWizardMetadataOptionsView.METADATA_STORAGE);
         if (NewWizardMetadataOptionsView.SEPARATE_DEVICE.equals(mdStorage)) {
@@ -1577,6 +1587,10 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                                       true);
 
             initializeWizardPages(this.pages);
+            if (hasStripedGroups()) {
+                striped_group_base = getStripedGroupBase();
+            }
+
         }
 
         populateDefaultBlockAllocation();
@@ -1587,18 +1601,17 @@ public class CreateFSWizardImpl extends SamWizardImpl {
      * validate the block allocation page
      */
     private boolean processBlockAllocationPage(WizardEvent evt) {
-
         // validate blocks per device
         String stripeStr = (String)wizardModel
             .getValue(NewWizardBlockAllocationView.BLOCKS_PER_DEVICE);
         stripeStr = stripeStr != null ? stripeStr.trim() : "";
-        
+
         if (stripeStr.length() == 0) {
             // blocks per device is blank
             setWizardAlert(evt, "FSWizard.new.error.stripeValue");
             return false;
         }
-            
+
         boolean valid = true;
         int blockSizeInKB = 16;
         try {
@@ -1612,12 +1625,12 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 return false;
             }
         }
-    
-        
+
+
         // allocation method
         String method = (String)wizardModel
             .getValue(NewWizardBlockAllocationView.ALLOCATION_METHOD);
-        
+
         // if using striped groups validate block size and number of striped
         // groups
         if (NewWizardBlockAllocationView.STRIPED.equals(method)) {
@@ -1650,7 +1663,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             } finally {
                 if (!valid) {
                     setWizardAlert(evt, "FSWizard.new.error.dauSize");
-                    return false; 
+                    return false;
                 }
             }
 
@@ -1689,11 +1702,10 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                                       true);
             // copy all the pages except DATA_LUN
             int [] newPages = new int[this.pages.length - 1];
-            for (int i = 0, j = 0; i < newPages.length; i++, j++) {
-                if (this.pages[j] == CreateFSWizardImplData.PAGE_DATA_LUN)
-                    continue;
-
-                newPages[i] = this.pages[j];
+            for (int i = 0, j = 0; i < this.pages.length; i++) {
+                if (this.pages[i] != CreateFSWizardImplData.PAGE_DATA_LUN) {
+                    newPages[j++] = this.pages[i];
+                }
             }
 
             this.pages = newPages;
@@ -1711,8 +1723,12 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 
         wizardModel.setValue(NewWizardBlockAllocationView.BLOCK_SIZE_KB,
                              new Integer(blockSizeInKB));
-                             
+
         initializeWizardPages(this.pages);
+        if (hasStripedGroups()) {
+            striped_group_base = getStripedGroupBase();
+        }
+
 
         // page is valid
         return true;
@@ -4039,4 +4055,26 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             }
         }
     }
+
+    private boolean hasStripedGroups() {
+        String method = (String)
+            wizardModel.getValue(NewWizardBlockAllocationView.ALLOCATION_METHOD);
+
+        return NewWizardBlockAllocationView.STRIPED.equals(method);
+    }
+
+    private int getStripedGroupBase() {
+        int base = -1;
+        boolean found = false;
+
+        for (int i = 0; !found && i < pages.length; i++) {
+            if (pages[i] == CreateFSWizardImplData.PAGE_STRIPED_GROUP) {
+                base = i;
+                found = true;
+            }
+        }
+
+        return base;
+    }
+
 }

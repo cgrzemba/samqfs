@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: newfs.js,v 1.4 2008/07/23 21:25:27 kilemba Exp $
+// ident	$Id: newfs.js,v 1.5 2008/09/04 19:30:33 kilemba Exp $
 
 // handlers for the new file system wizard popup
 
@@ -56,10 +56,7 @@ var fsNames = null;
 
 /* errors messages in the following order
  * 0 - archiving media is not configured
- * 1 - fs name is blank
- * 2 - fs name is invalid (not well-formed)
- * 3 - a fs with the given name already exists
- * 4 - warns that HPC HA is not supported
+ * 1 - warns that HPC HA is not supported
  */
 var errorMessages = null;
 
@@ -81,29 +78,6 @@ function getErrorMessage(index) {
     }
 
     return errorMessages[index];
-}
-
-/* return an array of the currently configured file system names
- */
-function isFSNameUsed(name) {
-    if (name == null)
-        return false;
-    
-    if (fsNames == null) {
-        var theForm = document.forms[formName];
-        var fsNameString = theForm.elements[prefix + "existingFSNames"].value;
-        if (fsNameString != null) {
-            fsNames = fsNameString.split(";");
-        }
-    }
-    
-    var found  = false;
-    var i = 0;
-    for (i = 0; !found && i < fsNames.length; i++) {
-        found = (fsNames[i] == name);
-    }
-    
-    return found;
 }
 
 /* handle the cancel button on the new file system popup */
@@ -158,23 +132,13 @@ function handleNewFileSystemPopupOk(button) {
             
             // check for hpc
             var hpc = theForm.elements[prefix + "HPCCheckBox"].checked;
-            if (hpc) {
-                var fsname = theForm.elements[prefix + "FSName"].value;
-                
-                // check the validity of the file system name
-                if (!isFSNameValid(fsname)) {
-                    return false;
-                }
-                
-                params += "&hpc=" + hpc;
-                params += "&fsname=" + fsname;
-                // create the the proto fs by submitting the ok button
-                // return true;
+            params += "&hpc=" + hpc;
+        }
 
-                alert("coming soon ...");
-                window.close();
-                return false;
-            }
+        // check matfs
+        var matfs = theForm.elements[prefix + "matfsCheckBox"].checked;
+        if (matfs) {
+            params +="&matfs=" + matfs;
         }
     }
 
@@ -184,31 +148,6 @@ function handleNewFileSystemPopupOk(button) {
     
     window.close();
     return false;
-}
-
-function isFSNameValid(fsname) {
-    var theForm = document.forms[formName];
-    
-    // make sure the name field is not blank
-    if (fsname == null || fsname.length == 0) {
-        alert(getErrorMessage(1));
-        return false;
-    }
-    
-    // make sure the file system name is well formed
-    if (!isValidFileSystemName(trim(fsname))) {
-        alert(getErrorMessage(2));
-        return false;
-    }
-    
-    // check if a file system name with this name already exists
-    if (isFSNameUsed(fsname)) {
-        alert(getErrorMessage(3));
-        return false;
-    }
-    
-    // if we get this far, the file system name is ok.
-    return true;
 }
 
 /* launch the wizard */
@@ -244,7 +183,6 @@ function handleHAFSCheckBox(checkbox) {
         if (shared.checked) {
             hpc.checked = false;
             ccSetCheckBoxDisabled(prefix + "HPCCheckBox", formName, 1);
-            ccSetTextFieldDisabled(prefix + "FSName", formName, 1);
         }
     } else {
         // enable archiving
@@ -316,15 +254,12 @@ function handleHPCCheckBox(checkbox) {
     var hafs = checkbox.form.elements[prefix + "HAFSCheckBox"];
 
     if (checkbox.checked) {
-        ccSetTextFieldDisabled(prefix + "FSName", formName, 0);
-        
         // disable HAFS, its not supported under HPC
         if (hafs != null) {
             hafs.checked = false;
             ccSetCheckBoxDisabled(prefix + "HAFSCheckBox", formName, 1);
         }            
     } else {
-        ccSetTextFieldDisabled(prefix + "FSName", formName, 1);
         if (hafs != null) {
             ccSetCheckBoxDisabled(prefix + "HAFSCheckBox", formName, 0);
         }
@@ -359,4 +294,14 @@ function hasArchiveMedia() {
     var archiveMedia = theForm.elements[prefix + "hasArchiveMedia"].value;
     
     return archiveMedia;
+}
+
+/* handler for the matfs check box */
+function handleMATFSCheckBox(button) {
+    if (button.checked) {
+        alert("coming soon ...");
+        button.checked = false;
+    }
+
+    return false;
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.32 2008/09/04 02:59:52 ronaldso Exp $
+// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.33 2008/09/04 19:30:34 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -209,9 +209,7 @@ public class FSWizardDataDeviceSelectionPageView
             tableModel.setValue(
                 "DevicePath",
                 devices[i].getDevicePathDisplayString());
-            tableModel.setValue(
-                "HiddenDevicePath",
-                devices[i].getDevicePathDisplayString());
+            tableModel.setValue("HiddenDevicePath", devices[i].getDevicePath());
             tableModel.setValue("Partition", partition);
 
             long dCap = devices[i].getCapacity();

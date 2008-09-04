@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewFileSystemPopup.jsp,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewFileSystemPopup.jsp,v 1.2 2008/09/04 19:30:34 kilemba Exp $
 --%>
 
 <%@ page info="Index" language="java" %> 
@@ -114,11 +114,11 @@
          defaultValue="fs.newfs.popup.help.hpc.text"/>
 <cc:spacer name="spacer" height="10" newline="true"/>
 
-<cc:label name="hpcFSNameLabel" bundleID="samBundle"
-          defaultValue="fs.newfs.popup.help.fsname.label"/>
-<br/>
-<cc:text name="hpcFSNameText" bundleID="samBundle"
-         defaultValue="fs.newfs.popup.help.fsname.text"/>
+<cc:label name="matfsLabel" bundleID="samBundle"
+         defaultValue="fs.newfs.popup.help.matfs.label"/>
+</br>
+<cc:text name="matfsText" bundleID="samBundle"
+         defaultValue="fs.newfs.popup.help.matfs.text"/>
 </div>     
 </div>
 
@@ -162,14 +162,11 @@
              bundleID="samBundle"
              onChange="return handleHPCCheckBox(this);"
              label="fs.newfs.popup.hpc"/>
-<div style="margin:20px;margin-left:30px">
-<cc:label name="hpcFSNameLabel"
-          bundleID="samBundle"						
-          elementName="FSName"
-          defaultValue="fs.newfs.popup.hpc.fsname"/> 
-<cc:textfield name="FSName" dynamic="true" disabled="true"/>         
 </div>
-</div>
+<cc:checkbox name="matfsCheckBox"
+             bundleID="samBundle"
+             onChange="return handleMATFSCheckBox(this);"
+             label="fs.newfs.popup.matfs"/>
 </div>
 <cc:radiobutton name="UFSRadioButton" bundleID="samBundle"/>
 </div>
@@ -198,7 +195,6 @@
 <cc:hidden name="hasArchiveMedia"/>
 <cc:hidden name="serverName"/>
 <cc:hidden name="messages" />
-<cc:hidden name="existingFSNames"/>
 
 <!-- wizard -->
 <div style="display:none">
