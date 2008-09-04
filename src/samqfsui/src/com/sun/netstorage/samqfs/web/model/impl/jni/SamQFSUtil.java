@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSUtil.java,v 1.59 2008/08/13 20:16:09 ronaldso Exp $
+// ident	$Id: SamQFSUtil.java,v 1.60 2008/09/04 19:26:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -378,6 +378,9 @@ public class SamQFSUtil {
 
             else if ((equipType.equals("m2")) || (equipType.equals("M2")))
                 type = BaseDevice.MTYPE_IBM_3592;
+            else if ((equipType.equals("sp")) || (equipType.equals("SP")))
+                type = BaseDevice.MTYPE_SPECTRA_LOGIC_PYTHON;
+
         }
 
         return type;
@@ -456,6 +459,9 @@ public class SamQFSUtil {
             break;
         case BaseDevice.MTYPE_IBM_3592:
             s = "m2";
+            break;
+        case BaseDevice.MTYPE_SPECTRA_LOGIC_PYTHON:
+            s = "sp";
             break;
         case BaseDevice.MTYPE_STK_T9940:
             s = "sf";
