@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardStripedGroupDeviceSelectionPageView.java,v 1.22 2008/09/03 19:46:04 ronaldso Exp $
+// ident	$Id: FSWizardStripedGroupDeviceSelectionPageView.java,v 1.23 2008/09/04 02:59:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -177,16 +177,15 @@ public class FSWizardStripedGroupDeviceSelectionPageView
                 partition = "FSWizard.diskType.vxvm.raid5";
             } else if (diskType == DiskCache.OSD) {
                 partition = "FSWizard.diskType.osd";
-            } else {
-System.out.println("Unknown Partition Type! type: " + diskType);
             }
 
             tableModel.setValue(
+                "DevicePath",
+                devices[i].getDevicePathDisplayString());
+            tableModel.setValue(
                 "HiddenDevicePath",
                 devices[i].getDevicePathDisplayString());
-            if (sharedEnabled) {
-                tableModel.setValue("Partition", partition);
-            }
+            tableModel.setValue("Partition", partition);
 
             long dCap = devices[i].getCapacity();
             tableModel.setValue(

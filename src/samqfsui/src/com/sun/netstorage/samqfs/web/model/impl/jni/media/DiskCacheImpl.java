@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.22 2008/09/03 19:46:05 ronaldso Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.23 2008/09/04 02:59:53 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
@@ -85,11 +85,11 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
                 append(members[i].getDevicePathDisplayString());
         }
         devicePathDisplayString = buf.toString();
-
+System.out.println("DiskCacheImpl: displayStr: " + devicePathDisplayString);
         if (members.length > 0) {
             vendor = members[0].getVendor();
             productId = members[0].getProductId();
-            
+
             // Use first device's EQ when shrinking a striped group
             super.setEquipOrdinal(members[0].getEquipOrdinal());
         }
@@ -258,11 +258,11 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
             case AU.ZFS_ZVOL:
                 type = DiskCache.ZFS_ZVOL;
                 break;
-                
+
             case AU.OSD:
                 type = DiskCache.OSD;
                 break;
-            
+
         }
 
         return type;
@@ -296,7 +296,6 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
         if (devicePathDisplayString != null) {
             return devicePathDisplayString;
         }
-
         String pathString = getDevicePath();
         String [] sliceElement = pathString.split("/");
         int type = getDiskType();

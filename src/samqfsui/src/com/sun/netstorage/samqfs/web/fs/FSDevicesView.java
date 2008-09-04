@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevicesView.java,v 1.12 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSDevicesView.java,v 1.13 2008/09/04 02:59:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -71,6 +71,8 @@ public class FSDevicesView extends CommonTableContainerView {
     private static final String SELECTED_DEVICES = "SelectedDevices";
     private static final String NO_SELECTION_MSG = "NoSelectionMsg";
     private static final String DISABLE_MSG = "DisableMsg";
+    private static final String NO_MOUNT_MSG = "NoMountMsg";
+    private static final String NO_SHARED_CLIENT_MSG = "NoSharedClientMsg";
 
     private static final String BUTTON_ENABLE = "ButtonEnable";
     private static final String BUTTON_DISABLE = "ButtonDisable";
@@ -102,6 +104,8 @@ public class FSDevicesView extends CommonTableContainerView {
         registerChild(SELECTED_DEVICES, CCHiddenField.class);
         registerChild(NO_SELECTION_MSG, CCHiddenField.class);
         registerChild(DISABLE_MSG, CCHiddenField.class);
+        registerChild(NO_MOUNT_MSG, CCHiddenField.class);
+        registerChild(NO_SHARED_CLIENT_MSG, CCHiddenField.class);
     }
 
     /**
@@ -113,7 +117,9 @@ public class FSDevicesView extends CommonTableContainerView {
         if (name.equals(ALL_DEVICES)
             || name.equals(SELECTED_DEVICES)
             || name.equals(NO_SELECTION_MSG)
-            || name.equals(DISABLE_MSG)) {
+            || name.equals(DISABLE_MSG)
+            || name.equals(NO_MOUNT_MSG)
+            || name.equals(NO_SHARED_CLIENT_MSG)) {
             return new CCHiddenField(this, name, null);
         } else {
             return super.createChild(model, name);
@@ -229,8 +235,22 @@ public class FSDevicesView extends CommonTableContainerView {
             TraceUtil.trace1("fs is null, populateData()!");
             throw new SamFSException(null, -1000);
         }
+System.out.println("populateData: type: " + fs.getShareStatus());
 
         boolean isMounted = fs.getState() == FileSystem.MOUNTED;
+
+        // populate javascript error message if file system is unmounted because
+        // enable/disable allocation is not allowed
+        // Also if file system is located in a shared client, same limitation
+        // applies
+        ((CCHiddenField) getChild(NO_MOUNT_MSG)).setValue(
+            isMounted ?
+                "" :
+                SamUtil.getResourceString("fs.devices.notmounted"));
+         ((CCHiddenField) getChild(NO_SHARED_CLIENT_MSG)).setValue(
+             fs.getShareStatus() == FileSystem.SHARED_TYPE_CLIENT ?
+                 SamUtil.getResourceString("fs.devices.sharedclient") :
+                 "");
 
         DiskCache [] showDiskCache = fs.getMetadataDevices();
         int entryCounter = 0;

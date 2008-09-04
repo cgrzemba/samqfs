@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.50 2008/09/03 19:46:05 ronaldso Exp $
+// ident	$Id: FileSystemImpl.java,v 1.51 2008/09/04 02:59:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -460,8 +460,12 @@ public class FileSystemImpl extends GenericFileSystemImpl
 
         if ((data != null) && (data.length > 0)) {
             diskDevs = new DiskDev[data.length];
-            for (int i = 0; i < data.length; i++)
+System.out.println("data length: " + data.length);
+            for (int i = 0; i < data.length; i++) {
+System.out.print("i: " + i + " getting jni disk!");
                 diskDevs[i] = ((DiskCacheImpl) data[i]).getJniDisk();
+System.out.println(" done");
+            }
         }
 
         if ((metadata != null) && (metadata.length > 0)) {
@@ -922,9 +926,6 @@ public class FileSystemImpl extends GenericFileSystemImpl
      */
     public int shrinkRelease(int eqToRelease, ShrinkOption options)
         throws SamFSException {
-System.out.println("shrinkRelease called!");
-System.out.println("eqToRelease: " + eqToRelease);
-System.out.println("ShrinkOptions: " + options.toString());
 
         return FS.shrinkRelease(
                     getJniContext(), fsInfo.getName(),
@@ -952,10 +953,6 @@ System.out.println("ShrinkOptions: " + options.toString());
     public int shrinkRemove(
         int eqToRemove, int replacementEq, ShrinkOption options)
 	throws SamFSException {
-
-System.out.println("shrinkRemove called!");
-System.out.println("eqToRemove: " + eqToRemove);
-System.out.println("ShrinkOptions: " + options.toString());
 
         return FS.shrinkRemove(
                     getJniContext(), fsInfo.getName(),

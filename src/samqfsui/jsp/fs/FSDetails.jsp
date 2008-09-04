@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetails.jsp,v 1.33 2008/05/16 19:39:19 am143972 Exp $
+// ident	$Id: FSDetails.jsp,v 1.34 2008/09/04 02:59:51 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -112,6 +112,8 @@
     <cc:hidden name="SelectedDevices"/>
     <cc:hidden name="NoSelectionMsg"/>
     <cc:hidden name="DisableMsg"/>
+    <cc:hidden name="NoMountMsg"/>
+    <cc:hidden name="NoSharedClientMsg"/>
 </jato:containerView>
 
 <cc:hidden name="ServerName" />

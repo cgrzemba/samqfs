@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.20 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.21 2008/09/04 02:59:52 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -188,18 +188,11 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         String url = null;
 
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
-
-        /*
-        sharedChecked = (String) wm.getWizardValue(
-            NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
-        */
-
         Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
         sharedEnabled = temp == null ? false : temp.booleanValue();
 
         if (!previous_error) {
             if (sharedEnabled) {
-                // if (sharedChecked != null && sharedChecked.equals("true")) {
                 url = "/jsp/fs/FSWizardSharedDeviceSelectionPage.jsp";
             } else {
                 url = "/jsp/fs/FSWizardDeviceSelectionPage.jsp";
@@ -248,8 +241,6 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
             ((CCHiddenField) getChild(CHILD_ERROR)).setValue("success");
         }
 
-        //sharedChecked = (String) wm.getWizardValue(
-        //    NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
         Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
         sharedEnabled = temp == null ? false : temp.booleanValue();
 
@@ -313,12 +304,6 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         sharedEnabled =
             temp == null ? false : temp.booleanValue();
 
-        /*
-        sharedChecked = (String) wm.getWizardValue(
-            NewWizardFSNameView.CHILD_SHARED_CHECKBOX);
-        if (sharedChecked != null && sharedChecked.equals("true")) {
-        */
-        
         if (sharedEnabled) {
             tableModel = new CCActionTableModel(
                RequestManager.getRequestContext().getServletContext(),

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
 */
 
-// ident    $Id: FSDevices.js,v 1.2 2008/05/16 19:39:13 am143972 Exp $
+// ident    $Id: FSDevices.js,v 1.3 2008/09/04 02:59:51 ronaldso Exp $
 
 /**
 * This is the javascript file for the File System Devices View
@@ -69,12 +69,22 @@ function handleButton(enable) {
         }
     }
 
+    var noMountMsg = theForm.elements[getViewName() + ".NoMountMsg"].value;
+    var sharedClientMsg =
+        theForm.elements[getViewName() + ".NoSharedClientMsg"].value;
+
     // Show error message if nothing is selected
     if (selected_devs.length == 0) {
         alert(theForm.elements[getViewName() + ".NoSelectionMsg"].value);
         return false;
         // Otherwise warn user that he/she is about to delete the selected
         // expressions
+    } else if (noMountMsg.length != 0) {
+        alert(noMountMsg);
+        return false;
+    } else if (sharedClientMsg.length != 0) {
+        alert(sharedClientMsg);
+        return false;
     } else {
         // Remove trailing semi-colon
         selected_devs =
