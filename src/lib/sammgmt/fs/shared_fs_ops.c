@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.1 $"
+#pragma ident   "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -249,6 +249,18 @@ create_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_hosts) {
 	/* Clear the server bit if set and set the fs to be a client */
 	cafs->fs_info->fi_status &= ~FS_SERVER;
 	cafs->fs_info->fi_status |= FS_NODEVS | FS_CLIENT;
+
+	/* set the metadata devices to nodev */
+	if (cafs->fs_info->meta_data_disk_list != NULL) {
+		for (n = cafs->fs_info->meta_data_disk_list->head;
+			n != NULL; n = n->next) {
+
+			disk_t *dsk = (disk_t *)n->data;
+			strlcpy(dsk->base_info.name, NODEV_STR,
+			    sizeof (upath_t));
+		}
+	}
+
 	cafs->mount_at_boot = B_FALSE;
 	cafs->create_mnt_point = B_TRUE;
 	cafs->mount = (fs->fi_status & FS_MOUNTED);

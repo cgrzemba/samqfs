@@ -30,7 +30,7 @@
 #ifndef	_MASTER_CONFIG_H
 #define	_MASTER_CONFIG_H
 
-#pragma ident   "$Revision: 1.18 $"
+#pragma ident   "$Revision: 1.19 $"
 
 
 /*
@@ -186,7 +186,7 @@ int verify_mcf_cfg(mcf_cfg_t *mcf);
  */
 int
 get_available_striped_group_id(mcf_cfg_t *mcf, uname_t fs_name,
-	sqm_lst_t **ret_list, int count);
+	sqm_lst_t **ret_list, int count, boolean_t object_group);
 
 
 /*

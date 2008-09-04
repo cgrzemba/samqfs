@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.55 2008/09/03 19:46:05 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.56 2008/09/04 18:53:25 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -381,7 +381,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
 	    for (i = 0; i < allDCs[0].length; i++) {
 		/* construct SharedDiskCache from DiskCache */
-		if (allDCs[0][i].getJniDisk().getAU().getType() == AU.SLICE) {
+		if (allDCs[0][i].getJniDisk().getAU().getType() == AU.SLICE ||
+		    allDCs[0][i].getJniDisk().getAU().getType() == AU.OSD) {
 		    /* skip volumes (cannot use them for shared fs) */
 		    sdcLst.add(new SharedDiskCacheImpl(allDCs[0][i]));
                 }
@@ -483,7 +484,9 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 		au1.getSCSIDevInfo().devID.compareTo(
 		au2.getSCSIDevInfo().devID)) {
                 /* if same slice (compare last char of the path) */
-		if (au1.getPath().charAt(au1.getPath().length() - 1) ==
+		if (au1.getType() == AU.OSD && au2.getType() == AU.OSD) {
+		    match = true;
+		} else if (au1.getPath().charAt(au1.getPath().length() - 1) ==
 		    au2.getPath().charAt(au2.getPath().length() - 1)) {
 		    match = true;
                 }
@@ -584,7 +587,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 	threadPool.releaseAllToPool();
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    // ////////////////////////////////////////////////////////////////////////
     // 4.6 ONLY METHODS
 
     public FileSystem createSharedFileSystem(String fsName,

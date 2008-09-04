@@ -29,7 +29,7 @@
 #ifndef _DEVICE_H
 #define	_DEVICE_H
 
-#pragma	ident	"$Revision: 1.55 $"
+#pragma	ident	"$Revision: 1.56 $"
 
 /*
  *	device.h --  SAM-FS APIs for device configuration and control
@@ -49,9 +49,6 @@
 #define	DISK_MEDIA	"dk"
 #define	STK5800_MEDIA	"cb"
 
-/*
- *	newly added.
- */
 #define	PATH_LEN		256
 #define	UNDEFINED_MEDIA_TYPE	"99"
 #define	UNDEFINED_SAM_DT	99
@@ -59,7 +56,7 @@
 #define	TAPE_DEVTYPE		1
 #define	MAXIMUM_WWN		10
 #define	WWN_LENGTH		128
-
+#define	GUIDBUFLEN		33
 
 /* from tapealert.c */
 #define	CLEAN_NOW		0x080000
@@ -301,20 +298,23 @@ typedef enum AU_TYPE {
 	AU_SLICE,			/* disk slice			 */
 	AU_SVM,				/* Solaris Volume Manager volume */
 	AU_VXVM,			/* Veritas Volume Manager volume */
-	AU_ZVOL				/* ZFS zvols */
+	AU_ZVOL,			/* ZFS zvols */
+	AU_OSD				/* OSD */
 } au_type_t;
 
 typedef unsigned long long	dsize_t; /* device size (see below) */
 
 
 /*
- *	information gathered via SCSI inquiries. fields are NULL-terminated
+ * information gathered via SCSI inquiries. fields are NULL-terminated
+ * The devid field will either contain information from page code 83 for
+ * disk slices or the device GUID for the case of osd luns.
  */
 typedef struct {
 	char vendor[9];			/* vendor identification	*/
 	char prod_id[17];		/* product identification	*/
 	char rev_level[5];		/* product revision level	*/
-	char *dev_id;			/* device identification pg.83h */
+	char *dev_id;			/* device identification(See above) */
 } scsi_info_t;
 
 

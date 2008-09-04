@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.84 $"
+#pragma ident   "$Revision: 1.85 $"
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 
@@ -1703,9 +1703,9 @@ fs_t *f)				/* IN/OUT - filled fs_t */
 		 * the first partition is a nodev
 		 */
 		if (i == 0 || (need_client)) {
-			if (strcmp(f->equ_type, "ma") == 0 &&
-			    (strcmp(pt->pt_name, "nodev") == 0)) {
-
+			if (strcmp(pt->pt_name, "nodev") == 0 ||
+			    (strcmp(f->equ_type, "mb") == 0 &&
+			    strstr(pt->pt_name, "/dev/osd") != NULL)) {
 				f->fi_status |= FS_CLIENT;
 				f->fi_status |= FS_NODEVS;
 
@@ -1758,9 +1758,13 @@ fs_t *f)				/* IN/OUT - filled fs_t */
 
 	Trace(TR_MISC, "filling fs part");
 
-	if (is_disk(pt->pt_type)) {
+	/*
+	 * Note that is_disk returns true for striped groups but not
+	 * osd groups.
+	 */
+	if (is_disk(pt->pt_type) || is_osd_group(pt->pt_type)) {
 		pname = device_to_nm(pt->pt_type);
-		if (is_stripe_group(pt->pt_type)) {
+		if (is_stripe_group(pt->pt_type) || is_osd_group(pt->pt_type)) {
 			group = find_striped_group(f, pname);
 			if (group == NULL) {
 				Trace(TR_ERR, "find striped group failed");
@@ -1812,6 +1816,8 @@ fs_t *f)				/* IN/OUT - filled fs_t */
 		disk->au_info.type = AU_SVM;
 	} else if (strncmp(pt->pt_name, "/dev/vx/", 8) == 0) {
 		disk->au_info.type = AU_VXVM;
+	} else if (strncmp(pt->pt_name, "/dev/osd/", 9) == 0) {
+		disk->au_info.type = AU_OSD;
 	} else {
 		disk->au_info.type = AU_SLICE;
 	}

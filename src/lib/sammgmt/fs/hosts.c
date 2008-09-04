@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "	$Revision: 1.45 $"
+#pragma ident "	$Revision: 1.46 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1084,7 +1084,8 @@ int32_t		kv_options)	/* what to fetch and include */
 			disk_t *d;
 
 			/* select a device to read the hosts information from */
-			if (strcmp(fs->equ_type, "ma") == 0) {
+			if (strcmp(fs->equ_type, "ma") == 0 ||
+			    strcmp(fs->equ_type, "mb") == 0) {
 				d = (disk_t *)
 				    fs->meta_data_disk_list->head->data;
 			} else {

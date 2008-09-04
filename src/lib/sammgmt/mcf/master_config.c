@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.40 $"
+#pragma ident   "$Revision: 1.41 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -51,8 +51,11 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 #include "pub/mgmt/types.h"
 #include "sam/sam_trace.h"
-#include "sam/devnm.h"
 #include "pub/devstat.h"
+#define	DEC_INIT
+#include "sam/devnm.h"
+#undef DEC_INIT
+
 #include "pub/mgmt/device.h"
 #include "mgmt/config/master_config.h"
 #include "mgmt/config/cfg_fs.h"
@@ -533,7 +536,8 @@ get_available_striped_group_id(
 mcf_cfg_t *mcf,		/* mcf to check against */
 uname_t fs_name,	/* name of fs that the striped group is for */
 sqm_lst_t **ret_list,	/* malloced list of devtype_t */
-int count)		/* how many ids to return */
+int count,		/* how many ids to return */
+boolean_t object_group) /* Set to true if this is for an object group */
 {
 
 	devtype_t *val;
@@ -541,6 +545,8 @@ int count)		/* how many ids to return */
 	sqm_lst_t *g_ids;
 	node_t *n;
 	int i, num_type;
+	char **dev_names;
+	int dev_name_cnt;
 
 	Trace(TR_OPRMSG, "getting available striped group ids");
 	if (ISNULL(mcf, fs_name, ret_list)) {
@@ -584,8 +590,11 @@ int count)		/* how many ids to return */
 				if (val == NULL) {
 					goto err;
 				}
-
-				cpy_group_id(*val, dev_nmsg[i]);
+				if (object_group) {
+					cpy_group_id(*val, dev_nmog[i]);
+				} else {
+					cpy_group_id(*val, dev_nmsg[i]);
+				}
 				if (lst_append(*ret_list, val) != 0) {
 					free(val);
 					goto err;
@@ -598,15 +607,16 @@ int count)		/* how many ids to return */
 
 
 	/*
-	 * build a list of all ids found, there will be no striped groups
-	 * if this is for create. But some may exist for a grow.
+	 * Build a list of all ids found in the existing file system.
+	 * There will be no striped groups if this is for create. But
+	 * some may exist for a grow.
 	 */
 	for (n = fs_devs->head; n != NULL; n = n->next) {
 		base_dev_t *dt = (base_dev_t *)n->data;
 		num_type = nm_to_dtclass(dt->equ_type);
 
 
-		if (is_stripe_group(num_type)) {
+		if (is_stripe_group(num_type) || is_osd_group(num_type)) {
 			int *nt = (int *)mallocer(sizeof (int));
 			if (nt == NULL) {
 				goto err;
@@ -624,9 +634,16 @@ int count)		/* how many ids to return */
 	 * start at 0 and work up through group ids.  If its a free id
 	 * append it to ret_list
 	 */
-	for (i = 0; i <= dev_nmsg_size; i++) {
+	if (object_group) {
+		dev_names = dev_nmog;
+		dev_name_cnt = OG_CNT;
+	} else {
+		dev_names = dev_nmsg;
+		dev_name_cnt = SG_CNT;
+	}
+	for (i = 0; i <= dev_name_cnt; i++) {
 		for (n = g_ids->head; n != NULL; n = n->next) {
-			num_type = nm_to_dtclass(dev_nmsg[i]);
+			num_type = nm_to_dtclass(dev_names[i]);
 			if (num_type == *(int *)n->data) {
 				break;
 			}
@@ -642,7 +659,7 @@ int count)		/* how many ids to return */
 				goto err;
 			}
 
-			cpy_group_id(*val, dev_nmsg[i]);
+			cpy_group_id(*val, dev_names[i]);
 			if (lst_append(*ret_list, val) != 0) {
 				free(val);
 				goto err;
@@ -1062,6 +1079,7 @@ sqm_lst_t *ret_lst)	/* optional return of malloced valid device types */
 		/* check valid sam qfs devices. */
 		if ((fam_set_type == DT_META_SET) &&
 		    (!is_stripe_group(dev_type)) &&
+		    (!is_osd_group(dev_type)) &&
 		    (dev_type != DT_META) &&
 		    (dev_type != DT_DATA) &&
 		    (dev_type != DT_RAID)) {
@@ -1111,7 +1129,7 @@ sqm_lst_t *ret_lst)	/* optional return of malloced valid device types */
 		}
 
 		/* can't mix stripe with md */
-		if (is_stripe_group(dev_type)) {
+		if (is_stripe_group(dev_type) || is_osd_group(dev_type)) {
 			str_grp_fnd = B_TRUE;
 			if (md_fnd) {
 				samerrno = SE_INVALID_DEVICE_MIX_IN_FS;

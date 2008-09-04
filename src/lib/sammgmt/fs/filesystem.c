@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.78 $"
+#pragma ident   "$Revision: 1.79 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -517,7 +517,8 @@ fs_t **fs)	/* malloced return */
 					goto err;
 				}
 
-			} else if (is_stripe_group(num_type)) {
+			} else if (is_stripe_group(num_type) ||
+			    is_osd_group(num_type)) {
 				if (find_striped_group(
 				    (*fs)->striped_group_list,
 				    tmp->equ_type, &sg) != 0) {
@@ -1306,9 +1307,16 @@ sqm_lst_t **res_devs)		/* list of striped_group_t */
 		 * Get striped group ids if needed. This block must be outside
 		 * build_striped_group to support multiple new striped groups.
 		 */
+
+		int num_type = nm_to_dtclass(fs->equ_type);
+		boolean_t object_groups = B_FALSE;
+
 		Trace(TR_DEBUG, "about to build stiped groups");
+		if (num_type == DT_META_OBJECT_SET) {
+			object_groups = B_TRUE;
+		}
 		if (get_available_striped_group_id(mcf, fs->fi_name,
-		    &group_ids, striped_groups->length) != 0) {
+		    &group_ids, striped_groups->length, object_groups) != 0) {
 
 			lst_free_deep(eqs);
 			Trace(TR_ERR, "grow qfs struct failed: %s",
@@ -1489,7 +1497,9 @@ fs_arch_cfg_t	*arc_info)
 		if (build_samfs(mcf, fs) != 0) {
 			goto err;
 		}
-	} else if (num_type == DT_META_SET) {
+	} else if (num_type == DT_META_SET ||
+	    num_type == DT_META_OBJECT_SET ||
+	    num_type == DT_META_OBJ_TGT_SET) {
 		Trace(TR_DEBUG, "build qfs");
 		/* its qfs or sam-qfs */
 		if (build_qfs(mcf, fs) != 0) {
@@ -1505,7 +1515,8 @@ fs_arch_cfg_t	*arc_info)
 
 
 	/* now check the devices in the fs against the super blocks on them */
-	if (fs->fi_shared_fs && !(fs->fi_status & FS_SERVER)) {
+	if (fs->fi_shared_fs && !(fs->fi_status & FS_SERVER) &&
+	    num_type != DT_META_OBJECT_SET) {
 		if (shared_fs_check(ctx, fs->fi_name, mcf) != 0) {
 			goto err;
 		}
@@ -2145,7 +2156,11 @@ upath_t name)
 		return (B_TRUE);
 	}
 
-	if (stat(name, &st) != 0 || !S_ISBLK(st.st_mode)) {
+	if (stat(name, &st) != 0) {
+		Trace(TR_DEBUG, "stat failed for disk %s", name);
+		return (B_FALSE);
+	}
+	if (strncmp(name, "/dev/osd", 8) != 0 && !S_ISBLK(st.st_mode)) {
 		Trace(TR_DEBUG, "disk name %s was not valid", name);
 		return (B_FALSE);
 	}
@@ -2296,9 +2311,16 @@ fs_t *fs)
 	 */
 	if (fs->striped_group_list != NULL &&
 	    fs->striped_group_list->length != 0) {
+		int num_type = nm_to_dtclass(fs->equ_type);
+		boolean_t object_groups = B_FALSE;
+
+		if (num_type == DT_META_OBJECT_SET) {
+			object_groups = B_TRUE;
+		}
 
 		if (get_available_striped_group_id(mcf, fs->fi_name,
-		    &group_ids, fs->striped_group_list->length) != 0) {
+		    &group_ids, fs->striped_group_list->length,
+		    object_groups) != 0) {
 
 			lst_free_deep(eqs);
 			Trace(TR_ERR, "build qfs failed: %s", samerrmsg);
@@ -2357,7 +2379,7 @@ sqm_lst_t *eqs)		/* list of available eqs */
 	}
 
 	num_type = nm_to_dtclass(sg->name);
-	if (!is_stripe_group(num_type)) {
+	if (!is_stripe_group(num_type) && !is_osd_group(num_type)) {
 		if (group_ids == NULL || group_ids->length == 0) {
 			samerrno = SE_INSUFFICIENT_FREE_STRIPED_GROUP_IDS;
 			/* Filesystem %s has no free striped group ids */
@@ -4305,7 +4327,7 @@ find_local_devices(sqm_lst_t *mms, sqm_lst_t *data, sqm_lst_t *sgs) {
 		}
 	}
 	if (sgs != NULL && sgs->length != 0) {
-		for (sg_n = sgs->head; sg_n != NULL; sg_n = sg_n->data) {
+		for (sg_n = sgs->head; sg_n != NULL; sg_n = sg_n->next) {
 			striped_group_t *sg = (striped_group_t *)sg_n->data;
 			if (find_local_device_paths(sg->disk_list, aus) != 0) {
 				free_au_list(aus);

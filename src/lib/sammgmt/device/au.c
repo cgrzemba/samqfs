@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.52 $"
+#pragma ident	"$Revision: 1.53 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -60,13 +60,19 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "mgmt/config/common.h"
 #include "mgmt/config/media.h"
 #include "mgmt/util.h"
+#include "mgmt/config/master_config.h"
 #include "sam/sam_trace.h"
+#include "sam/lib.h" /* for osd checking */
+#include "sam/mount.h" /* for osd checking */
+
+
 
 /* device paths */
 #define	SLICE_RPATH	"/dev/rdsk"
 #define	SVM_RPATH	"/dev/md/rdsk"
 #define	VXVM_RPATH	"/dev/vx/rdsk"
 #define	ZVOL_RPATH	"/dev/zvol/rdsk"
+#define	OSD_PATH	"/dev/osd"
 #define	ROOTDG_DIR	"/dev/vx/rdsk/rootdg"
 #define	VXVM_PATH_LEN	12
 
@@ -94,6 +100,9 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	PREFMAXLEN	strlen(PREFRDID)
 
 #define	INUSE	"*"
+
+/* PREFOSD is used differently than the other prefixes */
+#define	PREFOSD		"/dev/osd/osd"
 
 // ------------------ private declarations -------------------------------
 
@@ -126,7 +135,8 @@ static int check_did_slices(sqm_lst_t *dids, sqm_lst_t **paus);
 static sqm_lst_t *get_diskset_slices(sqm_lst_t *aus);
 static sqm_lst_t *get_slices_from_stream(sqm_lst_t *slices,
 	FILE *res_stream, char *fsinfo);
-
+static int add_osd_guid(au_t *au);
+static int get_osd_au(char *path, au_t **au);
 static int compare_aus(au_t *a1, au_t *a2);
 
 
@@ -190,7 +200,7 @@ sqm_lst_t **plst)	/* discovered AU-s are put in this list */
 {
 
 	sqm_lst_t *lst = lst_create();
-	sqm_lst_t *lst1, *lst2, *lst3, *lst4;
+	sqm_lst_t *lst1, *lst2, *lst3, *lst4, *lst5;
 	int ok, res = 0;
 
 	if (NULL == lst || ISNULL(plst))
@@ -202,12 +212,15 @@ sqm_lst_t **plst)	/* discovered AU-s are put in this list */
 	discover_aus_by_type(AU_SVM,   &lst2);
 	discover_aus_by_type(AU_VXVM,  &lst3);
 	discover_aus_by_type(AU_ZVOL,  &lst4);
-	// concatenate all four lists and put the result in lst
-	if (-1 != lst_concat(lst3, lst4))
-		if (-1 != lst_concat(lst2, lst3))
-			if (-1 != lst_concat(lst1, lst2))
-				if (-1 != lst_concat(lst, lst1))
-					ok = 1;
+	discover_aus_by_type(AU_OSD,   &lst5);
+
+	// concatenate all lists and put the result in lst
+	if (-1 != lst_concat(lst4, lst5))
+		if (-1 != lst_concat(lst3, lst4))
+			if (-1 != lst_concat(lst2, lst3))
+				if (-1 != lst_concat(lst1, lst2))
+					if (-1 != lst_concat(lst, lst1))
+						ok = 1;
 	if (!ok) {
 		Trace(TR_ERR, "AU discovery failed - concat err");
 		return (-1);
@@ -355,6 +368,25 @@ sqm_lst_t **paus)
 			return (res);
 		}
 		break;
+	case AU_OSD:
+		if (stat(OSD_PATH, &buf) < 0) {
+			Trace(TR_MISC, "osd device dir not found - %s",
+			    OSD_PATH);
+			return (-1);
+		} else if (! S_ISDIR(buf.st_mode)) {
+			Trace(TR_MISC, "osd device dir not found - %s",
+			    OSD_PATH);
+			return (-1);
+		}
+
+		if (-1 == (res = walkdir(OSD_PATH, type, aus))) {
+			samerrno = SE_AU_DISCOVERY_FAILED;
+			strlcpy(samerrmsg, GetCustMsg(SE_AU_DISCOVERY_FAILED),
+			    MAX_MSG_LEN);
+			return (res);
+		}
+		break;
+
 	default:
 		samerrno = SE_INVALID_AU_TYPE;
 		strlcpy(samerrmsg, GetCustMsg(SE_INVALID_AU_TYPE),
@@ -420,6 +452,18 @@ au_t *au)
 	upath_t pathbuf;
 	char *beg;
 
+
+	if (ISNULL(au)) {
+		return (-1);
+	}
+
+	if (au->type == AU_OSD) {
+		if (add_osd_guid(au) != 0) {
+			return (-1);
+		}
+		return (0);
+	}
+
 	if (au->type != AU_SLICE) {
 		return (0); // skip volumes
 	}
@@ -445,6 +489,54 @@ au_t *au)
 
 	au->scsiinfo = get_scsi_info_for_au(rdsk);
 	free(rdsk);
+
+	return (0);
+}
+
+static int
+add_osd_guid(au_t *au) {
+
+	char tmp_guid[GUIDBUFLEN] = "";
+	char *guid_start;
+	size_t guid_chars;
+
+
+	if (ISNULL(au)) {
+		Trace(TR_ERR, "failed to add guid for NULL au");
+		return (-1);
+	}
+	/*
+	 * Check that this is an OSD. Then extract the GUID from the /dev/osd/
+	 * path.
+	 */
+	if (strstr(au->path, PREFOSD) == NULL) {
+		Trace(TR_ERR, "failed to add guid for %s", Str(au->path));
+		return (-1);
+	}
+	guid_start = au->path + strlen(PREFOSD);
+
+	guid_chars = strcspn(guid_start, ",");
+	if (guid_chars <= 0 || guid_chars >= GUIDBUFLEN) {
+		Trace(TR_ERR, "Obtained too short/long guid name for osd: %s",
+		    au->path);
+		return (-1);
+	}
+	strlcpy(tmp_guid, guid_start, guid_chars + 1);
+
+	if (au->scsiinfo == NULL) {
+		au->scsiinfo = (scsi_info_t *)mallocer(sizeof (scsi_info_t));
+		if (au->scsiinfo == NULL) {
+			Trace(TR_ERR, "Adding guid failed: %d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
+	}
+	au->scsiinfo->dev_id = copystr(tmp_guid);
+	if (au->scsiinfo->dev_id == NULL) {
+		Trace(TR_ERR, "Adding guid failed: %d %s", samerrno, samerrmsg);
+		free(au->scsiinfo);
+		return (-1);
+	}
 
 	return (0);
 }
@@ -521,15 +613,18 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 {
 
 	dsize_t capacity = 0;
-	char rslice[MAXPATHLEN+1];
+	char devpath[MAXPATHLEN + 1];
 	DIR *dp;
 	dirent64_t *dirp;
 	dirent64_t *dirpp;
 	int status;
 	struct stat buf;
-	au_t *au;
 
 	Trace(TR_MISC, "analyzing %s", Str(dir));
+	if (ISNULL(dir, lst)) {
+		return (-1);
+	}
+
 	if ((dp = opendir(dir)) == NULL) {
 		Trace(TR_ERR, "failed to open dir %s", Str(dir));
 		return (-1);
@@ -537,10 +632,13 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 
 	dirp = mallocer(sizeof (dirent64_t) + MAXPATHLEN + 1);
 	if (dirp == NULL) {
+		closedir(dp);
 		return (-1);
 	}
 
 	while ((readdir64_r(dp, dirp, &dirpp)) == 0) {
+		au_t *au = NULL;
+
 		if (dirpp == NULL) {
 			break;
 		}
@@ -550,11 +648,27 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 			continue;
 		}
 
-		snprintf(rslice, sizeof (rslice), "%s/%s", dir, dirp->d_name);
+		snprintf(devpath, sizeof (devpath), "%s/%s", dir, dirp->d_name);
+
+		/*
+		 * If it is an object device get it and continue without
+		 * performing the block checks.
+		 */
+		if (autype == AU_OSD) {
+			if (get_osd_au(devpath, &au) != 0 || au == NULL) {
+				continue;
+			}
+			if (-1 == lst_append(lst, au)) {
+				closedir(dp);
+				free(dirp);
+				return (-1);
+			}
+			continue;
+		}
 
 		/* if in /dev/vx/rdsk then check for subdirs (diskgroups) */
 		if (0 == strcmp(dir, VXVM_RPATH)) {
-			if (stat(rslice, &buf) < 0) {
+			if (stat(devpath, &buf) < 0) {
 				continue;
 			} else {
 				/*
@@ -565,8 +679,8 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 				 * Therefore we do not look under rootdg.
 				 */
 				if ((S_ISDIR(buf.st_mode)) &&
-				    (strcmp(rslice, ROOTDG_DIR) != 0)) {
-					walkdir(rslice, autype, lst);
+				    (strcmp(devpath, ROOTDG_DIR) != 0)) {
+					walkdir(devpath, autype, lst);
 					continue;
 				}
 			}
@@ -574,24 +688,26 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 
 		/* if in /dev/zvol/rdsk, check subdirs for zvols */
 		if (0 == strcmp(dir, ZVOL_RPATH)) {
-			if (stat(rslice, &buf) < 0) {
+			if (stat(devpath, &buf) < 0) {
 				continue;
 			} else {
 				if (S_ISDIR(buf.st_mode)) {
-					walkdir(rslice, autype, lst);
+					walkdir(devpath, autype, lst);
 					continue;
 				}
 			}
 		}
 
-		if ((status = checkslice(rslice, autype, &capacity)) >= 0) {
-			// printf(">%-50s %10.2fMB\n",
-			// slice, (float)capacity / MEGA);
-			au = create_au_elem(rslice, autype, capacity,
+		if ((status = checkslice(devpath, autype, &capacity)) >= 0) {
+			au = create_au_elem(devpath, autype, capacity,
 			    status);
-			/* check au for NULL? */
+			if (au == NULL) {
+				closedir(dp);
+				free(dirp);
+				return (-1);
+			}
 			if (AU_SLICE == autype) {
-				au->scsiinfo = get_scsi_info_for_au(rslice);
+				au->scsiinfo = get_scsi_info_for_au(devpath);
 			}
 			if (-1 == lst_append(lst, au)) {
 				closedir(dp);
@@ -602,6 +718,73 @@ sqm_lst_t *lst)		/* append available AU-s to this list */
 	}
 	closedir(dp);
 	free(dirp);
+	return (0);
+}
+
+
+static int
+get_osd_au(
+char *path,
+au_t **au) {
+
+	uint64_t	oh;	/* osd_handle_t */
+	boolean_t inuse;
+
+	if (ISNULL(path, au)) {
+		Trace(TR_ERR, "failed to open osd for %s", path);
+		return (-1);
+	}
+
+	/*
+	 * Check the mnttab. This seems odd but the qfs checkdevices
+	 * code does this check for osd.
+	 */
+	if (checkmnttab(path) == 0) {
+		inuse = B_TRUE; /* the slice is mounted */
+	} else {
+		inuse = B_FALSE;
+	}
+
+	if (open_obj_device(path, O_RDONLY, &oh) < 0) {
+		/* Cannot open object device %s */
+		Trace(TR_ERR, "failed to open osd for %s", path);
+		return (-1);
+	}
+
+	close_obj_device(path, O_RDONLY, oh);
+
+	*au = (au_t *)mallocer(sizeof (au_t));
+	if (*au == NULL) {
+		Trace(TR_ERR, "failed to create osd au %s: %d %s", path,
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+	strlcpy((*au)->path, path, sizeof (upath_t));
+	(*au)->type = AU_OSD;
+	(*au)->scsiinfo = (scsi_info_t *)mallocer(sizeof (scsi_info_t));
+	if ((*au)->scsiinfo == NULL) {
+		free_au(*au);
+		Trace(TR_ERR, "failed to create osd au %s: %d %s", path,
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	strlcpy((*au)->scsiinfo->prod_id, "OSD",
+	    sizeof ((*au)->scsiinfo->prod_id));
+
+	if (add_osd_guid(*au) != 0) {
+		free_au(*au);
+		Trace(TR_ERR, "failed to create osd au %s: %d %s", path,
+		    samerrno, samerrmsg);
+		return (-1);
+	}
+
+	if (inuse) {
+		strcpy((*au)->fsinfo, INUSE);
+	} else {
+		strcpy((*au)->fsinfo, "");
+	}
+
 	return (0);
 }
 
@@ -685,6 +868,11 @@ dsize_t *capacity)	/* put its size in here */
 	 */
 
 	if (autype == AU_ZVOL) {
+		char bdev[MAXPATHLEN + 1];
+		if (rdsk2dsk(slice, bdev) != 0) {
+			return (-1);
+		}
+
 		if (checkmnttab(slice) == 0) {
 			status = 1; /* the slice is mounted */
 		} else {
@@ -1043,96 +1231,89 @@ sqm_lst_t *vfstablst)	/* append all devices in vfstab to this list */
  * used for checking for mounted zvols that aren't in the
  * /etc/vfstab.
  */
-
-
 static int
 checkmnttab(const char *device) {
 
-	char	*bdev;
 	int	ret;
 	struct	mnttab	mref, mget;
 	FILE	*mntfile;
 
-	Trace(TR_DEBUG, "checking mnttab");
-
-	bdev = (char *)mallocer(strlen(device));
-	if (NULL == bdev) {
+	if (ISNULL(device)) {
+		Trace(TR_ERR, "checking mnttab with null device");
 		return (-1);
 	}
 
-	rdsk2dsk(device, bdev);
+	Trace(TR_DEBUG, "checking mnttab");
+
 
 	mntnull(&mref);
-	mref.mnt_special = bdev;
+	mref.mnt_special = (char *)device;
 
 	if ((mntfile = fopen(MNTTAB, "r")) == NULL) {
-		free(bdev);
 		return (-1);
 	}
 
 	ret = getmntany(mntfile, &mget, &mref);
 	(void) fclose(mntfile);
-	free(bdev);
 
 	Trace(TR_OPRMSG, "done checking /etc/mnttab");
 	/* return 0, if the device is found the the mnmttab */
 	return (ret);
 }
 
+
 static int
 checkmcf(
 sqm_lst_t *lst)	/* append all mcf devices to this list */
 {
 
-	FILE *res_stream;
-	upath_t path;
-	uname_t fsinfo;
+	mcf_cfg_t *mcf_cfg;
+	node_t *n;
+	char did_path[MAXPATHLEN + 1];
 	fsdata_t *fsd = NULL;
-	char cmd[] = "/usr/bin/awk '/^\\/dev/ && /dsk/ {print $1, $4}' "MCF_CFG;
-	int status, res = 0;
-	pid_t pid;
-	char line[256], *tmp;
-	int num;
-	char *pathp;
-	upath_t	gpath;
+	int res = 0;
 
-	Trace(TR_DEBUG, "get mcf slices");
-	if (-1 == (pid = exec_get_output(cmd, &res_stream, NULL))) {
-		Trace(TR_ERR, "no mcf slices processed");
+	if (ISNULL(lst)) {
+		Trace(TR_ERR, "mcf checking failed with NULL list");
 		return (-1);
 	}
-#ifdef TEST
-	printf("mcf information:\n");
-#endif
-	while (NULL != fgets(line, 256, res_stream)) {
-		num = sscanf(line, "%s %s", path, fsinfo);
-		if (num != 2) {
-			if (num == 1) {
-				/* ok to not specify the fsname? */
-				strcpy(fsinfo, "n/a");
-			} else {
-				/* bad input line */
-				continue;
-			}
+
+	if (read_mcf_cfg(&mcf_cfg) != 0) {
+		Trace(TR_ERR, "Error reading mcf to check for inuse devices");
+		return (-1);
+	}
+
+	for (n = mcf_cfg->mcf_devs->head; n != NULL; n = n->next) {
+		base_dev_t *dev = (base_dev_t *)n->data;
+		int dev_type = nm_to_dtclass(dev->equ_type);
+		char *path;
+		char *tmp;
+
+		/* If current dev is neither disk nor object device continue */
+		if ((dev_type & DT_CLASS_MASK) != DT_DISK &&
+		    (dev_type & DT_CLASS_MASK) != DT_OBJECT_DISK) {
+			continue;
 		}
-#ifdef TEST
-		printf("path=%s fsinfo=%s\n", path, fsinfo);
-#endif
 
-		tmp = strstr(path, "/global/");
+		/*
+		 * If a "global" device is found replace "global" with
+		 * "did" (for dev. matching
+		 */
+		tmp = strstr(dev->name, "/global/");
 		if (tmp == NULL) {
-			pathp = path;
+			path = dev->name;
 		} else {
-			// replace "global" with "did" (for dev. matching)
-			gpath[0] = '\0';
+			did_path[0] = '\0';
 
-			if (tmp > path) {
-				strlcpy(gpath, path, PTRDIFF(tmp, path) + 1);
+			/* handle prefixes */
+			if (tmp > dev->name) {
+				strlcpy(did_path, dev->name,
+				    PTRDIFF(tmp, dev->name) + 1);
 			}
-			strlcat(gpath, "/did/", sizeof (gpath));
+			strlcat(did_path, "/did/", sizeof (did_path));
 			tmp += strlen("/global/");
-			strlcat(gpath, tmp, sizeof (gpath));
-			pathp = gpath;
+			strlcat(did_path, tmp, sizeof (did_path));
+			path = did_path;
 		}
 
 		fsd = (fsdata_t *)mallocer(sizeof (fsdata_t));
@@ -1140,24 +1321,21 @@ sqm_lst_t *lst)	/* append all mcf devices to this list */
 			res = -1;
 			break;
 		}
-		fsd->path = (char *)mallocer(strlen(pathp) + 1);
-		fsd->fsinfo = (char *)mallocer(strlen(fsinfo) + 1);
+		fsd->path = copystr(path);
+		fsd->fsinfo = copystr(dev->set);
 		if (NULL == fsd->path || NULL == fsd->fsinfo) {
 			res = -1;
 			break;
 		}
-		strcpy(fsd->path, pathp);
-		strcpy(fsd->fsinfo, fsinfo);
 		if (-1 == lst_append(lst, fsd)) {
 			res = -1;
 			break;
 		}
+
 		fsd = NULL;
 	}
-	fclose(res_stream);
-	waitpid(pid, &status, 0);
-	Trace(TR_OPRMSG, "done checking mcf slices");
 
+	/* Any non-null fsd has not been inserted into the list so free it */
 	if (fsd != NULL) {
 		if (fsd->fsinfo != NULL) {
 			free(fsd->fsinfo);
@@ -1168,6 +1346,11 @@ sqm_lst_t *lst)	/* append all mcf devices to this list */
 		free(fsd);
 	}
 
+	free_mcf_cfg(mcf_cfg);
+	/*
+	 * Don't free lst on error as cleanup is handled outside of this
+	 * function
+	 */
 	return (res);
 }
 
@@ -2052,6 +2235,9 @@ find_local_device_paths(sqm_lst_t *disks, sqm_lst_t *aus) {
 		if (dsk == NULL) {
 			continue;
 		}
+		if (strcmp(dsk->base_info.name, NODEV_STR) == 0) {
+			continue;
+		}
 		for (au_n = aus->head; au_n != NULL && !found;
 			au_n = au_n->next) {
 
@@ -2107,6 +2293,11 @@ compare_aus(au_t *a1, au_t *a2) {
 	if (strcmp(a1->scsiinfo->dev_id, a2->scsiinfo->dev_id) != 0) {
 		Trace(TR_DEBUG, "au's devids don't match");
 		return (-1);
+	}
+
+	if (a1->type == AU_OSD && a2->type == AU_OSD) {
+		/* OSDs with matching guid are a match */
+		return (0);
 	}
 
 	/* It is the same disk so check the slice */

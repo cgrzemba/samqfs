@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.610 $"
+$ pragma ident "$Revision: 1.611 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3759,6 +3759,7 @@ $ ignoring the last argument %s for 4.1
 30178 Retreiving package information failed
 30179 Unable to view the file: %s
 30180 Release files failed
+30185 No matching device found for %s
 
 30200 Unable to retrieve fault information from file %s
 30201 Invalid request
