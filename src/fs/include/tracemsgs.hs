@@ -1,4 +1,4 @@
-# $Revision: 1.130 $
+# $Revision: 1.131 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -94,7 +94,7 @@ T_SAM_VGET_FREEZE	"VgetFreeze:   ino=%d,gen=%d"
 T_SAM_VGET_UNFREEZE	"VgetUnFreeze- ino=%d,gen=%d,err=%d^[$e]"
 T_SAM_MAX_MP		""
 T_SAM_MOUNT		"Mount:    vfsp=%x, mount point vp=%x"
-T_SAM_MNT_RET		"Mount-    mp=%x, root vp=%x"
+T_SAM_MNT_RET		"Mount-    mp=%x,rootvp=%x,cfg1=%x"
 T_SAM_MNT_ERRLN		"MountErr: line=%d,err=%d^[$e],%d"
 T_SAM_UMOUNT		"Unmount:  mp=%x, root vp=%x, cnt=%d"
 T_SAM_UMNT_RET		"Unmount-  #%d,mp=%x,err=%d^[$e]"
@@ -464,3 +464,10 @@ T_SAM_STALE_PP		"wr stalep ino=%d,flg=%x^[$p],p3=%d"
 T_SAM_TRACE_READ	"trace rd  nent=%d,cpu=%x,err=%d^[$e]"
 T_SAM_CL_EXP_INUSE	"ClExpUsed:expmask=%x^[$L],used=%x^[$L]"
 T_SAM_OBJ_PAGEZERO	"ObjPgZero:loff=%x,off=%x,eoo=%x"
+T_SAM_LOOKUP_XATTR	"LookupX:  pino=%d,xattr=%x,flg=%x^[$F],"
+T_SAM_LOOKUP_XA_RET	"LookupX-  vp=%x,ino=%d,nl=%d"
+T_SAM_LOOKUP_XA_ERR	"LookupXEr-pino=%d,err=%d^[$e]"
+T_SAM_XA_FREE		"XAFree:   ino=%d,gen=%d,d1=%d"
+T_SAM_XA_FREE_RET	"XAFree-:  ino=%d,gen=%d,err=%d^[$e]"
+T_SAM_SR_LOOKX_RET	"SrLookX-  ino=%d,gen=%d,size=%lld"
+T_SAM_SR_LOOK_ERR	"SrLook-   flags=%x,err=%d^[$e]"

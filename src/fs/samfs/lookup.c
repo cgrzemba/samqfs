@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.80 $"
+#pragma ident "$Revision: 1.81 $"
 
 #include "sam/osversion.h"
 
@@ -63,8 +63,10 @@
  * ----- SAMFS Includes
  */
 
+#include "sam/param.h"
 #include "sam/types.h"
 
+#include "sblk.h"
 #include "inode.h"
 #include "mount.h"
 #include "dirent.h"
@@ -73,6 +75,7 @@
 #include "trace.h"
 #include "kstats.h"
 #include "qfs_log.h"
+#include "arfind.h"
 
 extern ushort_t sam_dir_gennamehash(int nl, char *np);
 
@@ -81,6 +84,7 @@ static int sam_find_component(sam_node_t *pip, char *cp, sam_node_t **ipp,
 static void sam_rm_dir_entry(sam_node_t *pip, char *cp, sam_u_offset_t offset,
 	int in, int bsize, sam_id_t id);
 static void sam_shrink_zerodirblk(sam_node_t *ip, sam_u_offset_t offset);
+static int sam_xattr_mkdir(sam_node_t *pip, sam_node_t **ipp, cred_t *credp);
 
 boolean_t sam_use_negative_dnlc = TRUE;		/* non-zero use negative DNLC */
 boolean_t sam_trust_enhanced_dnlc = TRUE;	/* non-zero trust dir cache */
@@ -1101,6 +1105,230 @@ sam_validate_dir_blk(sam_node_t *pip, offset_t offset, int bsize,
 			sam_shrink_zerodirblk(pip, offset);
 			error = ENOENT;
 		}
+	}
+	return (error);
+}
+
+
+/*
+ * ----- sam_xattr_mkdir -
+ * Create the unnamed directory that hangs off of pip and acts as the
+ * root of the xattr directory tree for that file.
+ */
+static int
+sam_xattr_mkdir(
+	sam_node_t *pip,
+	sam_node_t **ipp,
+	cred_t *credp)
+{
+	int error;
+	vattr_t va;
+	sam_mount_t *mp;
+
+	if (SAM_INODE_HAS_XATTR(pip)) {
+		return (EEXIST);
+	}
+	if ((error = sam_access_ino(pip, S_IWRITE, TRUE, credp)) != 0) {
+		return (error);
+	}
+	if (vn_is_readonly(SAM_ITOV(pip))) {
+		return (EROFS);
+	}
+	va.va_type = VDIR;
+	va.va_uid = pip->di.uid;
+	va.va_gid = pip->di.gid;
+
+	if ((pip->di.mode & S_IFMT) == S_IFDIR) {
+		va.va_mode = S_IFATTRDIR;
+		va.va_mode |= pip->di.mode & 0777;
+	} else {
+		va.va_mode = S_IFATTRDIR|0700;
+		if (pip->di.mode & 0040) {
+			va.va_mode |= 0750;
+		}
+		if (pip->di.mode & 0004) {
+			va.va_mode |= 0705;
+		}
+	}
+	va.va_mask = AT_TYPE|AT_MODE;
+	mp = pip->mp;
+	error = sam_make_ino(pip, &va, ipp, credp);
+	if (!error) {
+		sam_node_t *ip;
+
+		ip = *ipp;
+
+		error = sam_make_dir(pip, ip, credp);
+		if (!error) {
+			ASSERT(RW_OWNER_OS(&pip->inode_rwl) == curthread);
+			pip->di2.xattr_id = ip->di.id;
+			sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
+			TRANS_INODE(mp, pip);
+			ip->di2.p2flags |= P2FLAGS_XATTR;
+			SAM_ITOV(ip)->v_flag |= V_XATTRDIR;
+			TRANS_INODE(mp, ip);
+			sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
+			sam_send_to_arfind(ip, AE_create, 0);
+			if (TRANS_ISTRANS(mp) || SAM_SYNC_META(mp)) {
+				sam_sync_meta(pip, ip, credp);
+			}
+
+		} else {
+			ip->di.nlink = 0;
+			TRANS_INODE(mp, ip);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+			sam_inactive_ino(ip, credp);
+			return (error);
+		}
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+	}
+	if (error == 0) {
+		sam_sbinfo_t *sbp;
+
+		sbp = &mp->mi.m_sbp->info.sb;
+		if (SBLK_XATTR(sbp) == 0) {
+			sbp->opt_mask |= SBLK_OPTV1_XATTR;
+			sbp->magic = SAM_MAGIC_V2A;
+			if ((sam_update_the_sblks(mp)) != 0) {
+				cmn_err(CE_WARN, "SAM-QFS: %s: Error writing "
+				    "superblock to update extended "
+				    "attributes\n", mp->mt.fi_name);
+			}
+		}
+	}
+	return (error);
+}
+
+
+/*
+ * ----- sam_xattr_getattrdir -
+ * Process extended attributes flags: LOOKUP_ATTR & CREATE_XATTR_DIR.
+ */
+int
+sam_xattr_getattrdir(
+	vnode_t *pvp,
+	sam_node_t **ipp,
+	int flags,
+	cred_t *credp)
+{
+	sam_node_t *pip, *sdp;
+	int error;
+
+	pip = SAM_VTOI(pvp);
+	if (flags & LOOKUP_XATTR) {
+		if (pip && SAM_INODE_HAS_XATTR(pip)) {
+			error = sam_get_ino(pvp->v_vfsp, IG_EXISTS,
+			    &pip->di2.xattr_id, ipp);
+			if (error) {
+				return (error);
+			}
+			sdp = *ipp;
+			if (!S_ISATTRDIR(sdp->di.mode)) {
+				cmn_err(CE_WARN,
+				    "sam_getattrdir: inode %d.%d "
+				    "points to non-attribute "
+				    "directory %d.%d; run fsck",
+				    pip->di.id.ino, pip->di.id.gen,
+				    sdp->di.id.ino, sdp->di.id.gen);
+				VN_RELE(SAM_ITOV(sdp));
+				return (ENOENT);
+			}
+			SAM_ITOV(sdp)->v_type = VDIR;
+			SAM_ITOV(sdp)->v_flag |= V_XATTRDIR;
+			error = 0;
+		} else if (flags & CREATE_XATTR_DIR) {
+			error = sam_xattr_mkdir(pip, ipp, credp);
+		} else {
+			error = ENOENT;
+		}
+	} else if (flags & CREATE_XATTR_DIR) {
+		error = sam_xattr_mkdir(pip, ipp, credp);
+	} else {
+		error = ENOENT;
+	}
+	return (error);
+}
+
+
+/*
+ * ----- sam_lookup_xattr -
+ * Process extended attributes flags: LOOKUP_ATTR & CREATE_XATTR_DIR.
+ */
+int
+sam_lookup_xattr(
+	vnode_t *pvp,		/* Pointer to parent directory vnode */
+	vnode_t **vpp,		/* Pointer pointer to the vnode (returned). */
+	int flags,		/* Flags. */
+	cred_t *credp)		/* credentials pointer. */
+{
+	int error = 0;
+	sam_node_t *pip, *ip;
+	vnode_t *vp;
+	int issync;
+	int trans_size;
+	int terr = 0;
+
+	pip = SAM_VTOI(pvp);
+	TRACE(T_SAM_LOOKUP_XATTR, pvp, pip->di.id.ino, SAM_INODE_IS_XATTR(pip),
+	    flags);
+	ASSERT(flags & LOOKUP_XATTR);
+	if (pip->mp->mt.fi_config1 & MC_NOXATTR) {
+		/*
+		 * Extended attributes are disabled on this mount.
+		 */
+		return (EINVAL);
+	}
+	trans_size = (int)TOP_MKDIR_SIZE(pip);
+	TRANS_BEGIN_CSYNC(pip->mp, issync, TOP_MKDIR, trans_size);
+
+	RW_LOCK_OS(&pip->inode_rwl, RW_WRITER);
+
+	if (SAM_INODE_IS_XATTR(pip)) {
+		/*
+		 * We don't allow recursive extended attributes.
+		 */
+		error = EINVAL;
+		goto out;
+	}
+
+	if ((vp = dnlc_lookup(pvp, XATTR_DIR_NAME)) == NULL) {
+		error = sam_xattr_getattrdir(pvp, &ip, flags, credp);
+		if (error) {
+			*vpp = NULL;
+			goto out;
+		}
+		vp = SAM_ITOV(ip);
+		dnlc_update(pvp, XATTR_DIR_NAME, vp);
+	}
+
+	if (vp == DNLC_NO_VNODE) {
+		VN_RELE(vp);
+		error = ENOENT;
+		goto out;
+	}
+
+	/*
+	 * Check accessibility of directory.
+	 */
+	error = sam_access_ino(SAM_VTOI(vp), S_IEXEC, FALSE, credp);
+	if (error) {
+		VN_RELE(vp);
+		goto out;
+	}
+	*vpp = vp;
+
+out:
+	RW_UNLOCK_OS(&pip->inode_rwl, RW_WRITER);
+	TRANS_END_CSYNC(pip->mp, terr, issync, TOP_MKDIR, trans_size);
+	if (error == 0) {
+		error = terr;
+	}
+	if (error) {
+		TRACE(T_SAM_LOOKUP_XA_ERR, pvp, pip->di.id.ino, error, 0);
+	} else {
+		ip = SAM_VTOI(vp);
+		TRACE(T_SAM_LOOKUP_XA_RET, pvp, (sam_tr_t)*vpp, ip->di.id.ino,
+		    ip->di.nlink);
 	}
 	return (error);
 }

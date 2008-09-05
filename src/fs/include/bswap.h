@@ -35,7 +35,7 @@
 #define	_SAM_FS_BSWAP_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 #endif
 
 typedef struct swap_descriptor {
@@ -76,6 +76,7 @@ extern struct swap_descriptor sam_name_remove_swap_descriptor[];
 extern struct swap_descriptor sam_name_link_swap_descriptor[];
 extern struct swap_descriptor sam_name_rename_swap_descriptor[];
 extern struct swap_descriptor sam_name_symlink_swap_descriptor[];
+extern struct swap_descriptor sam_name_lookup_swap_descriptor[];
 extern struct swap_descriptor sam_name_acl_swap_descriptor[];
 extern struct swap_descriptor sam_san_lease_swap_descriptor[];
 extern struct swap_descriptor sam_san_inode_swap_descriptor[];

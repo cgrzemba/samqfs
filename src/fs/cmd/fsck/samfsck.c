@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 
 /* ----- Includes */
@@ -4737,6 +4737,16 @@ make_orphan(
 		dp->di.rm.info.dk.seg.ord = 0;
 	}
 
+
+	/*
+	 * The extended attribute directory will now be put into the namespace
+	 * so we make it into a normal directory under lost+found.  Otherwise
+	 * fsck would complain about link counts.
+	 */
+	if (S_ISATTRDIR(dp->di.mode)) {
+		dp->di.mode &= ~S_IFATTRDIR;
+	}
+
 	if (orphan_inumber <= 0) {
 		if (orphan_inumber == 0) {
 			orphan_inumber = -1;
@@ -5235,6 +5245,87 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 			}
 		}
 
+		/* Check for absence of extended attribute dir inode */
+		if (dp->di2.xattr_id.ino == 0) {
+			/* ino is 0 but gen is not */
+			if (dp->di2.xattr_id.gen != 0) {
+				printf(catgets(catfd, SET, 13982,
+				    "ALERT:  ino %d.%d,\tInvalid "
+				    "extended attr directory "
+				    "inode\n"), (int)dp->di.id.ino,
+				    dp->di.id.gen);
+				SETEXIT(ES_alert);
+				if (verbose_print || debug_print) {
+					printf("DEBUG:  \t . ext attr "
+					    "dir id=%d.%d not expected\n",
+					    (int)dp->di2.xattr_id.ino,
+					    dp->di2.xattr_id.gen);
+				}
+				err++;
+			}
+
+		/* Check for presence of extended attribute dir inode */
+		} else {
+			/*
+			 * Check that extended attribute directory inode number
+			 * is in range
+			 */
+			if ((dp->di2.xattr_id.ino < min_usr_inum) ||
+			    (dp->di2.xattr_id.ino > ino_count)) {
+				printf(catgets(catfd, SET, 13982,
+				    "ALERT: ino %d.%d,\tInvalid extended "
+				    "attr directory "
+				    "inode\n"), (int)dp->di2.xattr_id.ino,
+				    dp->di2.xattr_id.gen);
+				SETEXIT(ES_alert);
+				if (verbose_print || debug_print) {
+					printf("DEBUG:  \t . ext attr "
+					    "dir id=%d.%d .lt. min=%ld "
+					    "or\n", (int)dp->di2.xattr_id.ino,
+					    dp->di2.xattr_id.gen,
+					    min_usr_inum);
+					printf("DEBUG:  \t . ext attr "
+					    "dir id=%d.%d .gt. max=%d\n",
+					    (int)dp->di2.xattr_id.ino,
+					    dp->di2.xattr_id.gen,
+					    ino_count);
+				}
+				err++;
+
+			} else {
+				struct ino_list *inop;
+
+				/*
+				 * Mark extended attribute dir inode
+				 * NOT_ORPHANED and fix link count
+				 */
+				inop = &ino_mm[dp->di2.xattr_id.ino - 1];
+
+				if (inop->orphan == ORPHAN) {
+					inop->orphan = NOT_ORPHAN;
+					/*
+					 * We count the base inode ref to the EA
+					 * dir
+					 */
+					inop->link_cnt++;
+				} else {
+					printf(catgets(catfd, SET, 13982,
+					    "ALERT:  ino %d.%d,\tInvalid "
+					    "extended attribute "
+					    "directory inode\n"),
+					    (int)dp->di.id.ino, dp->di.id.gen);
+					SETEXIT(ES_alert);
+					if (verbose_print || debug_print) {
+						printf("DEBUG:  \t . "
+						    "ino=%d.%d already "
+						    "processed\n",
+						    (int)dp->di2.xattr_id.ino,
+						    dp->di2.xattr_id.gen);
+					}
+					err++;
+				}
+			}
+		}
 
 	} else if (dp->di.version == SAM_INODE_VERS_1) {
 		/* Previous version */
@@ -6386,6 +6477,89 @@ check_dir(struct sam_perm_inode *dp)		/* Inode entry */
 			}
 			err = 0;
 		}
+
+		/* Check for absence of inode extended attr dir inode */
+		if (dp->di2.xattr_id.ino == 0) {
+
+			if (dp->di2.xattr_id.gen != 0) {
+				printf(catgets(catfd, SET, 13982,
+				    "ALERT:  ino %d.%d,\tInvalid "
+				    "extended attr directory "
+				    "inode\n"), (int)dp->di.id.ino,
+				    dp->di.id.gen);
+				SETEXIT(ES_alert);
+				if (verbose_print || debug_print) {
+					printf("DEBUG:  \t . ext attr "
+					    "dir id=%d.%d not expected\n",
+					    (int)dp->di2.xattr_id.ino,
+					    dp->di2.xattr_id.gen);
+				}
+				err++;
+			}
+
+		/* Check for presence of xattr dir and validate */
+		} else {
+			/* Check that xattr is in range */
+			if ((dp->di2.xattr_id.ino < min_usr_inum) ||
+			    (dp->di2.xattr_id.ino > ino_count)) {
+				printf(catgets(catfd, SET, 13982,
+				    "ALERT:  ino %d.%d,\tInvalid extended "
+				    "attr directory "
+				    "inode\n"), (int)dp->di2.xattr_id.ino,
+				    dp->di2.xattr_id.gen);
+				SETEXIT(ES_alert);
+				if (verbose_print || debug_print) {
+					printf("DEBUG:  \t . ext attr "
+					    "dir id=%d.%d .lt. min=%ld"
+					    " or\n", (int)dp->di2.xattr_id.ino,
+					    dp->di2.xattr_id.gen,
+					    min_usr_inum);
+					printf("DEBUG:  \t . ext attr "
+					    "dir id=%d.%d .gt. max=%d\n",
+					    (int)dp->di2.xattr_id.ino,
+					    dp->di2.xattr_id.gen,
+					    ino_count);
+				}
+				err++;
+
+			} else {
+				struct ino_list *inop;
+
+				/* Mark inode as recognized */
+				inop = &ino_mm[dp->di2.xattr_id.ino - 1];
+
+				if (inop->orphan == ORPHAN) {
+					inop->orphan = NOT_ORPHAN;
+					/*
+					 * We count the base inode ref to the EA
+					 * dir
+					 */
+					inop->link_cnt++;
+				} else {
+					printf(catgets(catfd, SET, 13982,
+					    "ALERT:  ino %d.%d,\tInvalid "
+					    "inode extended "
+					    "attribute\n"),
+					    (int)dp->di.id.ino, dp->di.id.gen);
+					SETEXIT(ES_alert);
+					if (verbose_print || debug_print) {
+						printf("DEBUG:  \t . "
+						    "ino=%d.%d already "
+						    "processed\n",
+						    (int)dp->di2.xattr_id.ino,
+						    dp->di2.xattr_id.gen);
+					}
+					err++;
+				}
+			}
+		}
+		if (err) {  /* Clear our reference to the extended attribute */
+			if (repair_files) {
+				dp->di2.xattr_id.ino = dp->di2.xattr_id.gen = 0;
+				put_inode(dp->di.id.ino, dp);
+			}
+			err = 0;
+		}
 	}
 
 	/* Verify good directory blocks */
@@ -6498,8 +6672,19 @@ check_dir(struct sam_perm_inode *dp)		/* Inode entry */
 				inop = &ino_mm[ino - 1];
 
 				if (first && in <= 20) { /* Skip .  & .. */
-					inop->link_cnt++;
-
+					/*
+					 * Update link count unless this is ..
+					 * of an extended attribute directory.
+					 * EAs are not in the namespace so the
+					 * parent inode does not show a link
+					 * count for the EA directory.
+					 */
+					if (!(S_ISATTRDIR(dp->di.mode) &&
+					    (dirp->d_namlen == 2) &&
+					    (dirp->d_name[0] == '.') &&
+					    (dirp->d_name[1] == '.'))) {
+						inop->link_cnt++;
+					}
 #if defined(STALEFMT)
 				/*
 				 * If directory entry format is invalid,
@@ -8058,6 +8243,44 @@ damage_fs()
 			    devp->device[ord].eq, (sam_offset_t)bn);
 		}
 	}
+#endif
+/* Damage base inode link to extended attribute */
+#if	1
+	ino = 1025;
+	offset = SAM_ITOD(ino);
+	dt = inode_ino->di.status.b.meta;
+	if (get_bn(inode_ino, offset, &bn, &ord, 1)) {
+		return (1);
+	}
+	bn &= ~(LG_DEV_BLOCK(mp, dt) - 1);	/* align boundary */
+	if (check_bn(ino, bn, ord)) {
+		return (1);
+	}
+	if (d_read(&devp->device[ord], (char *)dcp, LG_DEV_BLOCK(mp, dt),
+	    bn)) {
+		error(0, 0,
+		    catgets(catfd, SET, 13391,
+		    "Read failed on eq %d at block 0x%llx"),
+		    devp->device[ord].eq, (sam_offset_t)bn);
+		return (1);
+	}
+	dp = (struct sam_perm_inode *)(((char *)dcp) +
+	    (offset & (mp->mi.m_dau[dt].size[LG]-1)));
+
+	if (dp->di.id.ino == ino) {
+		printf("extended attribute id %d.%d\n",
+		    dp->xattr_id.ino, dp->xattr_id.gen);
+		dp->xattr_id.ino = 0;
+		dp->xattr_id.gen = 1;
+		if (d_write(&devp->device[ord], (char *)dcp,
+		    LG_DEV_BLOCK(mp, dt), bn)) {
+			error(0, 0,
+			    catgets(catfd, SET, 13398,
+			    "Write failed on eq %d at block 0x%llx"),
+			    devp->device[ord].eq, (sam_offset_t)bn);
+		}
+	}
+	clean_exit(ES_error);
 #endif
 	return (0);
 }

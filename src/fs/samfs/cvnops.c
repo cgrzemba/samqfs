@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.146 $"
+#pragma ident "$Revision: 1.147 $"
 
 #include "sam/osversion.h"
 
@@ -2275,14 +2275,14 @@ sam_pathconf_vn(
 #endif
 )
 {
-	caddr_t		cmd = (caddr_t)cmd_a;
 	sam_node_t	*ip = SAM_VTOI(vp);
 
 	*valp = 0;
 	/*
 	 * Special case any file system specific pathconf() call.
 	 */
-	if (cmd == (caddr_t)_PC_FILESIZEBITS) {
+	switch (cmd_a) {
+	case _PC_FILESIZEBITS:
 		/*
 		 * Return bits of significance for _PC_FILESIZEBITS.
 		 *
@@ -2304,10 +2304,57 @@ sam_pathconf_vn(
 		 */
 		*valp = 36 + ip->mp->mi.m_sbp->info.sb.ext_bshift;
 		return (0);
-	} else if (cmd == (caddr_t)_PC_ACL_ENABLED) {
+	case _PC_ACL_ENABLED:
 		*valp = _ACL_ACLENT_ENABLED;
 		return (0);
+	case _PC_XATTR_EXISTS:
+		/*
+		 * Does this vnode have any extended attributes?
+		 */
+		if (vp->v_vfsp->vfs_flag & VFS_XATTR) {
+			sam_node_t *ip;
+			sam_node_t *pip = SAM_VTOI(vp);
+			int error;
+
+			if (pip->mp->mt.fi_config1 & MC_NOXATTR) {
+				*valp = 0;
+				return (0);
+			}
+			ip = NULL;
+			RW_LOCK_OS(&pip->inode_rwl, RW_READER);
+			error = sam_xattr_getattrdir(vp, &ip,
+			    LOOKUP_XATTR, credp);
+			RW_UNLOCK_OS(&pip->inode_rwl, RW_READER);
+			if (error == 0 && ip != NULL) {
+				/*
+				 * Check empty directory only if MDS. Otherwise,
+				 * return extended attributes exists on shared
+				 * client even if there is an empty hidden
+				 * extended attributes directory.
+				 */
+				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+				error = sam_empty_dir(ip);
+				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+				if (error == 0) {
+					*valp = 0;
+				} else if (error == ENOTEMPTY) {
+					*valp = 1;
+					error = 0;
+				}
+				VN_RELE(SAM_ITOV(ip));
+				return (error);
+			} else if (error == ENOENT) {
+				*valp = 0;
+				return (0);
+			}
+		} else {
+			*valp = 0;
+			return (0);
+		}
+		/* NOTREACHED */
+		break;
 	}
+
 	return (FS_PATHCONF_OS(vp, cmd_a, valp, credp, NULL));
 }
 

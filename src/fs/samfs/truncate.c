@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.147 $"
+#pragma ident "$Revision: 1.148 $"
 
 #include "sam/osversion.h"
 
@@ -72,11 +72,15 @@
 #include "debug.h"
 #include "qfs_log.h"
 #include "copy_extents.h"
+#include "arfind.h"
 
 
 static void sam_delete_archive(sam_node_t *ip);
 static int sam_reduce_ino(sam_node_t *ip, offset_t length,
 	sam_truncate_t tflag);
+static int sam_free_xattr_group(sam_node_t *pip, caddr_t base, ssize_t len,
+	cred_t *credp);
+static int sam_free_xattr_tree(sam_node_t *ip, cred_t *credp);
 
 extern int sam_map_truncate(sam_node_t *ip, offset_t length, cred_t *credp);
 
@@ -272,6 +276,9 @@ sam_proc_truncate(
 				    &ip->di.ext_id);
 				ip->di.ext_attrs &= ~ext_acl;
 			}
+		}
+		if (SAM_INODE_HAS_XATTR(ip)) {
+			error = sam_free_xattr_tree(ip, credp);
 		}
 		sam_delete_archive(ip);
 		if (!S_ISSEGS(&ip->di)) {
@@ -986,7 +993,6 @@ sam_space_ino(
  * Clear removable media information in the inode. Remove any archive inodes
  * and clear the archive status. Clear damaged and offline status bits.
  */
-
 static void			/* ERRNO if error, 0 if successful. */
 sam_delete_archive(sam_node_t *ip)
 {
@@ -1033,4 +1039,127 @@ sam_delete_archive(sam_node_t *ip)
 			}
 		}
 	}
+}
+
+
+/*
+ * ----- sam_free_xattr_group - Given a len-sized chunk of entries,
+ * call VOP_REMOVE for each one (except . and ..).
+ */
+static int
+sam_free_xattr_group(
+	sam_node_t *pip,
+	caddr_t base,
+	ssize_t len,
+	cred_t *credp)
+{
+	ssize_t offset = 0;
+	sam_dirent_t *dp;
+	int error = 0;
+
+	while (offset < len) {
+		dp = (sam_dirent_t *)(void *)(base + offset);
+		if (!IS_DOT_OR_DOTDOT(dp->d_name)) {
+#if defined(SOL_511_ABOVE)
+			error = VOP_REMOVE(SAM_ITOV(pip),
+			    (char *)dp->d_name, credp, NULL, 0);
+#else
+			error = VOP_REMOVE(SAM_ITOV(pip),
+			    (char *)dp->d_name, credp);
+#endif
+			if (error) {
+				break;
+			}
+		}
+		offset += SAM_DIRSIZ(dp);
+	}
+	return (error);
+}
+
+
+/*
+ * ----- sam_free_xattr_tree - We're removing an object with extended
+ * attributes.  Walk the xattr directory and remove each attribute.
+ */
+static int
+sam_free_xattr_tree(
+	sam_node_t *pip,
+	cred_t *credp)
+{
+	int error;
+	sam_node_t *ip;
+	uio_t uio;
+	iovec_t iov;
+	int eof;
+	size_t alloc_len;
+	caddr_t bsave;
+
+	ASSERT(RW_OWNER_OS(&pip->data_rwl) == curthread);
+	ASSERT(RW_OWNER_OS(&pip->inode_rwl) == curthread);
+	ASSERT(SAM_INODE_HAS_XATTR(pip));
+	ASSERT(!SAM_INODE_IS_XATTR(pip));
+
+	TRACE(T_SAM_XA_FREE, SAM_ITOV(pip), pip->di.id.ino, pip->di.id.gen, 0);
+
+	/*
+	 * Get the unnamed xattr directory.
+	 */
+	error = sam_get_ino(SAM_ITOV(pip)->v_vfsp, IG_EXISTS,
+	    &pip->di2.xattr_id, &ip);
+	if (error) {
+		TRACE(T_SAM_XA_FREE_RET, SAM_ITOV(pip), pip->di.id.ino,
+		    pip->di.id.gen, error);
+		return (error);
+	}
+
+	alloc_len = DIR_BLK;
+	bsave = iov.iov_base = (caddr_t)kmem_alloc(alloc_len, KM_SLEEP);
+	iov.iov_len = alloc_len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_loffset = 0;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_fmode = FREAD;
+	uio.uio_limit = 0;
+	uio.uio_resid = alloc_len;
+
+	eof = 0;
+
+	RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
+	while (!eof) {
+		error = sam_getdents(ip, &uio, credp, &eof, FMT_SAM);
+		if (!error) {
+			error = sam_free_xattr_group(ip, bsave,
+			    alloc_len - uio.uio_resid, credp);
+		}
+		iov.iov_base = bsave;
+		iov.iov_len = alloc_len;
+		uio.uio_resid = alloc_len;
+	}
+	RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
+
+	kmem_free(bsave, alloc_len);
+
+	if (!error) {
+		pip->di2.xattr_id.ino = 0;
+		pip->di2.xattr_id.gen = 0;
+		sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
+		TRANS_INODE(pip->mp, pip);
+
+		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		ASSERT(sam_empty_dir(ip) != ENOTEMPTY);
+		ip->di.nlink = 0;
+		sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
+		TRANS_INODE(ip->mp, ip);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+
+		sam_send_to_arfind(ip, AE_remove, 0);
+		sam_inactive_ino(ip, credp);
+	} else {
+		VN_RELE(SAM_ITOV(ip));
+	}
+
+	TRACE(T_SAM_XA_FREE_RET, SAM_ITOV(pip), pip->di.id.ino,
+	    pip->di.id.gen, error);
+	return (error);
 }

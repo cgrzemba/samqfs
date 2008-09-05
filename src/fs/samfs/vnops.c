@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.159 $"
+#pragma ident "$Revision: 1.160 $"
 
 #include "sam/osversion.h"
 
@@ -406,6 +406,11 @@ sam_lookup_vn(
 	sam_node_t *ip;
 
 	TRACES(T_SAM_LOOKUP, pvp, cp);
+
+	if (flags & LOOKUP_XATTR) {
+		return (sam_lookup_xattr(pvp, vpp, flags, credp));
+	}
+
 	pip = SAM_VTOI(pvp);
 
 	/*
@@ -586,6 +591,7 @@ sam_remove_vn(
 	struct ulockfs *ulp;
 #endif /* LQFS_TODO_LOCKFS */
 	int trans_size;
+	int recursive;
 	int issync;
 
 	TRACES(T_SAM_REMOVE, pvp, cp);
@@ -604,7 +610,17 @@ sam_remove_vn(
 	}
 #endif /* LQFS_TODO_LOCKFS */
 
-	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
+	/*
+	 * sam_free_xattr_tree calls VOP_REMOVE to clean up orphaned xattrs. It
+	 * already holds the directory data_rwl. We will already be in the
+	 * middle of a transaction, so we don't want to start a new one.
+	 */
+	recursive = (RW_OWNER_OS(&pip->data_rwl) == curthread);
+
+	if (!recursive) {
+		RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
+	}
+
 	name.operation = SAM_REMOVE;
 	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == 0) {
 		ino = ip->di.id.ino;
@@ -613,7 +629,9 @@ sam_remove_vn(
 		error = sam_remove_name(pip, cp, ip, &name, credp);
 		rmvp = SAM_ITOV(ip);
 	}
-	RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);
+	if (!recursive) {
+		RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);
+	}
 #ifdef LQFS_TODO_LOCKFS
 	if (ulp) {
 #endif /* LQFS_TODO_LOCKFS */
@@ -861,6 +879,13 @@ sam_mkdir_vn(
 		vap->va_mode &= ~VSVTX;
 	}
 	pip = SAM_VTOI(pvp);
+
+	/*
+	 * Can't make directory in xattr hidden dir.
+	 */
+	if (S_ISATTRDIR(pip->di.mode)) {
+		return (EINVAL);
+	}
 
 lookup_name:
 #ifdef LQFS_TODO_LOCKFS

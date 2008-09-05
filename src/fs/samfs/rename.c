@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 
 #include "sam/osversion.h"
 
@@ -208,6 +208,15 @@ sam_rename_inode(
 			error_line = __LINE__;
 			goto out15;
 		}
+	}
+
+	/*
+	 * It's not OK to rename extended attributes beyond attribute space.
+	 */
+	if (S_ISATTRDIR(opip->di.mode) != S_ISATTRDIR(npip->di.mode)) {
+		error = EINVAL;
+		error_line = __LINE__;
+		goto out15;
 	}
 
 	/*

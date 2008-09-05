@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 #endif
 
 #ifdef linux
@@ -76,6 +76,13 @@
 
 #define	S_IFREQ 0xe000
 #define	S_ISREQ(m) (((m)&0xf000) == 0xe000)
+
+/*
+ * Extended attribute directory field. Indicates the unnamed directory
+ * that holds the extended attribute namespace for a filesystem object.
+ */
+#define	S_IFATTRDIR	0x10000
+#define	S_ISATTRDIR(m)	(((m) & S_IFATTRDIR) == S_IFATTRDIR)
 
 /*
  * Same value as noproject in /etc/project.

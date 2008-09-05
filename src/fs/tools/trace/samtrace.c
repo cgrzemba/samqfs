@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.166 $"
+#pragma ident "$Revision: 1.167 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -222,6 +222,7 @@ static char *decode_m(uint64_t value);
 static char *decode_M(uint64_t value);
 static char *decode_o(uint64_t value);
 static char *decode_f(uint64_t value);
+static char *decode_F(uint64_t value);
 static char *decode_s(uint64_t value);
 static char *decode_S(uint64_t value);
 static char *decode_l(uint64_t value);
@@ -1485,6 +1486,9 @@ do_decode_one(
 		case 'f':
 			sub = decode_f(value);
 			break;
+		case 'F':
+			sub = decode_F(value);
+			break;
 		case 's':
 			sub = decode_s(value);
 			break;
@@ -1871,6 +1875,20 @@ decode_f(uint64_t value)
 		{ SAM_UPDATED, "UPDATED" },
 		{ SAM_ACCESSED, "ACCESSED" },
 		{ SAM_CHANGED, "CHANGED" },
+		{ 0, "" }
+	};
+
+	return (decodemask(value, tbl));
+}
+
+
+static char *
+decode_F(uint64_t value)
+{
+	static sam_flagtext_t tbl[] = {
+		{ 0x01, "LOOKUP_DIR" },
+		{ 0x02, "LOOKUP_XATTR" },
+		{ 0x04, "CREATE_XATTR_DIR" },
 		{ 0, "" }
 	};
 
@@ -2291,6 +2309,7 @@ decode_fi_config1(uint64_t value)
 		{ MC_CLUSTER_FASTSW, "MC_CLUSTER_FASTSW" },
 		{ MC_OBJECT_FS, "MC_OBJECT_FS" },
 		{ MC_SAM_DB, "MC_SAM_DB" },
+		{ MC_NOXATTR, "MC_NOXATTR" },
 		{ 0, "" }
 	};
 

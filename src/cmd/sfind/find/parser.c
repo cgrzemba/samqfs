@@ -277,6 +277,7 @@ boolean parse_remain(), pred_remain();			/* SUN */
 boolean parse_longer(), pred_retention();		/* SUN */
 boolean parse_permanent(), pred_retention();		/* SUN */
 boolean parse_project(), pred_project();		/* SUN */
+boolean parse_xattr(), pred_xattr();			/* SUN */
 
 typedef	struct predicate	Predicate;
 typedef	enum comparison_type	Comparison_type;
@@ -455,6 +456,7 @@ static struct parser_table_t const parse_table[] =
   {"rlonger", parse_longer},		/* SUN */
   {"rpermanent", parse_permanent},	/* SUN */
   {"project", parse_project},
+  {"xattr", parse_xattr},		/* SUN */
   {0, 0}
 };
 
@@ -3165,6 +3167,14 @@ boolean   parse_project  (argv, arg_ptr)
 	return (true);
 }
 #endif /* sun */
+
+boolean    parse_xattr   (argv, arg_ptr)
+    char    *argv[];
+    int     *arg_ptr;
+{
+    insert_victim (pred_xattr);
+    return (true);
+}
 
 #ifdef linux
 	/*

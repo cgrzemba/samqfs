@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.166 $"
+#pragma ident "$Revision: 1.167 $"
 
 #include "sam/osversion.h"
 
@@ -85,6 +85,7 @@
 #include "qfs_log.h"
 #include "objctl.h"
 extern int ncsize;
+extern int sam_xattr;
 
 extern int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 static int sam_clients_mounted(sam_mount_t *mp);
@@ -322,6 +323,14 @@ samfs_mount(
 
 	if (pp->flags & MS_NOSUID) {
 		vfs_setmntopt(vfsp, MNTOPT_NOSUID, NULL, 0);
+	}
+
+	TRACE(T_SAM_GENERIC, NULL, 101, sam_xattr, mp->mt.fi_config1);
+	if ((sam_xattr == 0) || (mp->mt.fi_config1 & MC_NOXATTR)) {
+		vfs_clearmntopt(vfsp, MNTOPT_XATTR);
+		vfs_setmntopt(vfsp, MNTOPT_NOXATTR, NULL, 0);
+		mp->mt.fi_config1 |= MC_NOXATTR;
+		TRACE(T_SAM_GENERIC, NULL, 102, sam_xattr, mp->mt.fi_config1);
 	}
 
 	mp->mi.m_fsact_buf = NULL;
@@ -594,7 +603,8 @@ samfs_mount(
 				 */
 				if (!(vfsp->vfs_flag & VFS_RDONLY)) {
 					cmn_err(CE_WARN, "Error accessing QFS "
-					"log for %s; Please run fsck(1M)", pnp);
+					    "log for %s; Please run fsck(1M)",
+					    (char *)pnp);
 					goto done;
 				}
 			}
@@ -721,7 +731,7 @@ done:
 		 */
 		sam_quota_init(mp);
 		TRACE(T_SAM_MNT_RET, vfsp, (sam_tr_t)mp,
-		    (sam_tr_t)mp->mi.m_vn_root, 0);
+		    (sam_tr_t)mp->mi.m_vn_root, mp->mt.fi_config1);
 		cmn_err(CE_NOTE,
 		    "SAM-QFS: %s: Completed mount filesystem", fsname);
 		if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {

@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -264,9 +264,11 @@ typedef struct sam_sbinfo {
 #define	SBLK_OPTV1_WORM_EMUL	0x00000008	/* Emulation Mode */
 
 #define	SBLK_OPTV1_EMUL_LITE	0x00000010	/* Emulation lite */
+#define	SBLK_OPTV1_XATTR	0x00000020	/* Extended attributes exist */
 #define	SBLK_OPTV1_LG_HOSTS	0x00000040	/* Large host table */
 #define	SBLK_OPTV1_CONV_WORMV2	0x00000080	/* Convert to WORM V2 */
 
+#define	SBLK_XATTR(sb)		(((sb)->opt_mask & SBLK_OPTV1_XATTR) != 0)
 
 /*
  * Superblock WORM macros.
@@ -284,7 +286,7 @@ typedef struct sam_sbinfo {
 #define	SBLK_OPTV1_LITE_WORM	(SBLK_OPTV1_WORM_LITE|			\
 					SBLK_OPTV1_EMUL_LITE)
 #define	SBLK_ALL_OPTV1	(SBLK_OPTV1_ALL_WORM|SBLK_OPTV1_SPARSE|	\
-	SBLK_OPTV1_LG_HOSTS|SBLK_OPTV1_CONV_WORMV2)
+	SBLK_OPTV1_XATTR|SBLK_OPTV1_LG_HOSTS|SBLK_OPTV1_CONV_WORMV2)
 
 #define	SBLK_UPDATE(sb, ip)						\
 		((((sb)->opt_mask & SBLK_OPTV1_ALL_WORM) == 0) ||	\

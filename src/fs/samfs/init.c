@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.128 $"
+#pragma ident "$Revision: 1.129 $"
 
 #define	SAM_INIT
 
@@ -96,6 +96,7 @@ int sam_vpm_enable = 1;			/* non-zero use Solaris VPM */
 #else
 int sam_vpm_enable = 0;			/* zero means don't use Solaris VPM */
 #endif
+int sam_xattr = 0;			/* Enable extended attributes */
 
 /*
  * One means all signals except the critical ones are masked while waiting on
@@ -217,6 +218,8 @@ static char *quota_cancel[] = { MNTOPT_NOQUOTA, NULL };
 static char *noquota_cancel[] = { MNTOPT_QUOTA, NULL };
 static char *nologging_cancel[] = { MNTOPT_LOGGING, NULL };
 static char *logging_cancel[] = { MNTOPT_NOLOGGING, NULL };
+static char *xattr_cancel[] = { MNTOPT_NOXATTR, NULL };
+static char *noxattr_cancel[] = { MNTOPT_XATTR, NULL };
 
 #define	SAMFSMNT_ONERROR_PANIC_STR		"panic"
 
@@ -234,7 +237,9 @@ static mntopt_t mntopts[] = {
 							MO_DEFAULT|MO_HASVALUE,
 									NULL},
 	{ MNTOPT_NOLOGGING,	nologging_cancel, NULL,	MO_DEFAULT,	NULL},
-	{ MNTOPT_LOGGING,	logging_cancel,	NULL,	NULL,		NULL}
+	{ MNTOPT_LOGGING,	logging_cancel,	NULL,	NULL,		NULL},
+	{ MNTOPT_XATTR,		xattr_cancel,	NULL,	MO_DEFAULT,	NULL},
+	{ MNTOPT_NOXATTR,	noxattr_cancel,	NULL,	NULL,		NULL}
 };
 
 

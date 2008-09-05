@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.76 $"
+#pragma ident "$Revision: 1.77 $"
 
 #include "sam/osversion.h"
 
@@ -1103,7 +1103,7 @@ sam_quota_init(sam_mount_t *mp)
 		mp->mi.m_quota_ip[i] = NULL;
 		if (SAM_IS_SHARED_CLIENT(mp)) {
 			error = sam_client_lookup_name(dip, quota_files[i],
-			    0, &ip, CRED());
+			    0, 0, &ip, CRED());
 		} else {
 			error = sam_lookup_name(dip, quota_files[i], &ip, NULL,
 			    CRED());

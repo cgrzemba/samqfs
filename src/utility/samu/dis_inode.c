@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 
 
 /* ANSI headers. */
@@ -106,7 +106,8 @@ void
 DisInode()
 {
 	struct sam_ioctl_inode rq_inode;	/* Inode request parameters */
-	struct sam_disk_inode *dp;		/* File arch image */
+	struct sam_disk_inode *dp;		/* File disk image */
+	struct sam_perm_inode *permp;	/* Perm image */
 	struct sam_inode_ext *ap;		/* Inode extension image */
 
 	memset(ip, 0, SAMNODE_SIZE);
@@ -124,6 +125,7 @@ DisInode()
 	Mvprintw(1, 50, "%s: %c",
 	    catgets(catfd, SET, 7305, "incore"), incore ? 'y' : 'n');
 	dp = (struct sam_disk_inode *)pip;
+	permp = (struct sam_perm_inode *)pip;
 
 	switch (format[fmt].sel) {
 	case 'F':			/* file/directory inode */
@@ -135,7 +137,7 @@ DisInode()
 			ap = (struct sam_inode_ext *)pip;
 			dis_inode_ext(ap);
 		} else {
-			dis_inode_file(dp, rq_inode.extent_factor);
+			dis_inode_file(permp, rq_inode.extent_factor);
 		}
 		break;
 
@@ -789,9 +791,10 @@ dis_inode_arch(
  */
 void
 dis_inode_file(
-	struct sam_disk_inode *ino,	/* Inode image */
+	struct sam_perm_inode *permp,
 	int extent_factor)		/* 0 for raw extents */
 {
+	struct sam_disk_inode *ino = (struct sam_disk_inode *)permp;
 	char *m_str;		/* File mode string */
 	char *a_str;		/* Attribute string */
 	char *e_str;		/* Extension attribute string */
@@ -846,6 +849,9 @@ dis_inode_file(
 	    ino->nlink, ino->nlink);
 	Mvprintw(ln++, 0, "%.8x status %s",
 	    ino->status.bits, a_str);
+	Mvprintw(ln++, 0, "%.2x%.2x%.2x%.2x obty/-/-/p2flg",
+	    permp->di2.objtype, 0, 0, permp->di2.p2flags);
+	Mvprintw(ln++, 0, "%.8x projid", permp->di2.projid);
 	if (ino->status.b.segment) {
 		Mvprintw(ln++, 0, "%.8x seg size   (%d)",
 		    ino->rm.info.dk.seg_size, ino->rm.info.dk.seg_size);
@@ -871,6 +877,7 @@ dis_inode_file(
 	Mvprintw(ln++, 40, "%.8x residence_time", ino->residence_time);
 	Mvprintw(ln++, 40, "%.2x%.2x%.2x%.2x unit/cs/arch/flg",
 	    ino->unit, ino->cs_algo, ino->arch_status, ino->lextent);
+
 	arp = (void *)&ino->ar_flags[0];
 	Mvprintw(ln++, 40, "%.8x ar_flags", *arp);
 	Mvprintw(ln++, 40, "%.2x%.2x%.2x00 stripe/stride/sg",
@@ -887,6 +894,10 @@ dis_inode_file(
 	    ino->free_ino, ino->free_ino);
 	Mvprintw(ln++, 40, "%.8x stage ahd  (%d)",
 	    ino->stage_ahead, ino->stage_ahead);
+	Mvprintw(ln++, 40, "%.8x xattr.ino    (%d)",
+	    permp->di2.xattr_id.ino, permp->di2.xattr_id.ino);
+	Mvprintw(ln++, 40, "%.8x xattr.gen    (%d)",
+	    permp->di2.xattr_id.gen, permp->di2.xattr_id.gen);
 	ln = (ll > ln) ? ll : ln;
 	if (COLS > 24)  ln++;
 	if (ino->rm.ui.flags & RM_OBJECT_FILE) {

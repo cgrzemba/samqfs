@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.86 $"
+#pragma ident "$Revision: 1.87 $"
 
 #include "sam/osversion.h"
 
@@ -200,6 +200,17 @@ sam_remove_name(
 
 	RW_UPGRADE_OS(&ip->inode_rwl);
 	write_lock = TRUE;
+
+	/*
+	 * If ip has extended attributes, remove the DNLC entry for
+	 * the unnamed directory.  This will allow the vnode to become
+	 * inactive, at which point we will clean up the orphaned
+	 * EA tree.
+	 */
+	if (SAM_INODE_HAS_XATTR(ip)) {
+		dnlc_remove(vp, XATTR_DIR_NAME);
+	}
+
 	if (operation == SAM_RMDIR) {
 		/*
 		 * Check for current directory

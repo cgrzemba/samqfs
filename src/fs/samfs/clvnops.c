@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.192 $"
+#pragma ident "$Revision: 1.193 $"
 
 #include "sam/osversion.h"
 
@@ -1262,26 +1262,13 @@ sam_client_lookup_vn(
 	sam_node_t *pip;
 	sam_node_t *ip;
 
-	/*
-	 * Check flags for type of lookup. If the lookup
-	 * is for extended attributes then just return
-	 * as we don't support extended attributes.
-	 */
-
-	if (flags & LOOKUP_XATTR) {
-		return (ENOTSUP);
-	}
-
 	TRACES(T_SAM_CL_LOOKUP, pvp, cp);
 	pip = SAM_VTOI(pvp);
-	if (error = sam_access_ino(pip, S_IEXEC, FALSE, credp)) {
-		return (error);
-	}
 
 	/*
-	 * Return parent if lookup for "" or ".".
+	 * Return parent if lookup for ".".
 	 */
-	if ((*cp == '\0') || (*(cp+1) == '\0' && *cp == '.')) {
+	if ((*(cp+1) == '\0' && *cp == '.')) {
 		VN_HOLD(pvp);
 		*vpp = pvp;
 		return (0);
@@ -1308,7 +1295,7 @@ sam_client_lookup_vn(
 #endif
 
 	if ((error = sam_client_lookup_name(pip, cp,
-	    pip->mp->mt.fi_meta_timeo, &ip, credp)) == 0) {
+	    pip->mp->mt.fi_meta_timeo, flags, &ip, credp)) == 0) {
 		*vpp = SAM_ITOV(ip);
 		if (((ip->di.rm.ui.flags & RM_CHAR_DEV_FILE) &&
 		    S_ISREG(ip->di.mode)) || SAM_ISVDEV((*vpp)->v_type)) {
@@ -1337,6 +1324,9 @@ sam_client_lookup_vn(
 				}
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+		}
+		if (flags & LOOKUP_XATTR) {
+			(*vpp)->v_flag |= V_XATTRDIR;
 		}
 		TRACE(T_SAM_CL_LOOKUP_RET, pvp, (sam_tr_t)*vpp, ip->di.id.ino,
 		    ip->di.nlink);
@@ -1596,7 +1586,7 @@ sam_client_remove_vn(
 #endif
 
 	remove.id.ino = 0;
-	if ((error = sam_client_lookup_name(pip, cp, 0, &ip, credp)) == 0) {
+	if ((error = sam_client_lookup_name(pip, cp, 0, 0, &ip, credp)) == 0) {
 		sam_ino_record_t *nrec;
 		vnode_t *rmvp;
 
@@ -1822,7 +1812,7 @@ sam_client_rename_vn(
 	/*
 	 * Old file must exist.
 	 */
-	if ((error = sam_client_lookup_name(opip, onm, 0, &oip, credp))) {
+	if ((error = sam_client_lookup_name(opip, onm, 0, 0, &oip, credp))) {
 		goto out;
 	}
 	rename.oid = oip->di.id;
@@ -1830,7 +1820,8 @@ sam_client_rename_vn(
 	/*
 	 * New file may exist.
 	 */
-	if ((error = sam_client_lookup_name(npip, nnm, 0, &nip, credp)) == 0) {
+	error = sam_client_lookup_name(npip, nnm, 0, 0, &nip, credp);
+	if (error == 0) {
 		rename.nid = nip->di.id;
 	} else {
 		nip = NULL;
@@ -2031,7 +2022,7 @@ sam_client_rmdir_vn(
 #endif
 
 	rmdir.id.ino = 0;
-	if ((error = sam_client_lookup_name(pip, cp, 0, &ip, credp)) == 0) {
+	if ((error = sam_client_lookup_name(pip, cp, 0, 0, &ip, credp)) == 0) {
 		sam_ino_record_t *nrec;
 		vnode_t *rmvp;
 
@@ -2188,7 +2179,7 @@ sam_client_symlink_vn(
 #endif
 
 	if ((error = sam_client_lookup_name(pip, cp,
-	    0, &ip, credp)) == ENOENT) {
+	    0, 0, &ip, credp)) == ENOENT) {
 
 		sam_name_symlink_t symlink;
 		sam_ino_record_t *nrec;

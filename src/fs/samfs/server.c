@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.295 $"
+#pragma ident "$Revision: 1.296 $"
 
 #include "sam/osversion.h"
 
@@ -2911,13 +2911,32 @@ retry:
 		}
 		break;
 
-	case NAME_lookup:
-		error = sam_lookup_name(pip, np->component, &ip, NULL, cred);
+	case NAME_lookup: {
+		int flags = np->arg.p.lookup.flags;
+		int itrc;
+
+		if ((flags & (LOOKUP_XATTR|CREATE_XATTR_DIR)) != 0) {
+			vnode_t *vp;
+
+			itrc = T_SAM_SR_LOOKX_RET;
+			if ((error = sam_lookup_xattr(SAM_ITOV(pip), &vp, flags,
+			    cred)) == 0) {
+				ip = SAM_VTOI(vp);
+			}
+		} else  {
+			itrc = T_SAM_SR_LOOK_RET;
+			error = sam_lookup_name(pip, np->component,
+			    &ip, NULL, cred);
+		}
 		if (error == 0) {
 			sam_set_sr_ino(ip, &n2p->new_id, &n2p->nrec);
-			TRACE(T_SAM_SR_LOOK_RET, SAM_ITOV(ip), ip->di.id.ino,
-			    ip->di.id.gen, ip->di.rm.size);
+			TRACE(itrc, SAM_ITOV(ip), ip->di.id.ino, ip->di.id.gen,
+			    ip->di.rm.size);
 			VN_RELE(SAM_ITOV(ip));
+		} else {
+			TRACE(T_SAM_SR_LOOK_ERR, SAM_ITOV(pip), flags, error,
+			    0);
+		}
 		}
 		break;
 

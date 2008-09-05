@@ -1,5 +1,5 @@
 #
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 #
 #    SAM-QFS_notice_begin
 #
@@ -160,6 +160,7 @@ type = OBJECT
 	sam_name_rename
 	sam_name_rmdir
 	sam_name_symlink
+	sam_name_lookup
 #	sam_notify_arg
 	sam_notify_dnlc
 	sam_notify_lease

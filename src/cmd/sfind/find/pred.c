@@ -226,6 +226,7 @@ boolean pred_retention ();		/* SUN */
 boolean pred_remain ();			/* SUN */
 boolean pred_after ();			/* SUN */
 boolean pred_project ();		/* SUN */
+boolean pred_xattr ();			/* SUN */
 
 
 boolean							/* SUN */
@@ -356,6 +357,7 @@ struct pred_assoc pred_table[] =
   {pred_remain, "rremain"},
   {pred_after, "rafter"},
   {pred_project, "project"},
+  {pred_xattr, "xattr"},
   {0, "none    "}
 };
 
@@ -2944,6 +2946,20 @@ Predicate *pred_ptr)
 	}
 
 	return (false);
+}
+
+
+boolean
+pred_xattr(
+char *pathname,
+struct sam_stat *sb,
+Predicate *pred_ptr)
+{
+#if sun
+	return (pathconf(pathname, _PC_XATTR_EXISTS) == 1);
+#else /* sun */
+	return (false);
+#endif /* sun */
 }
 
 

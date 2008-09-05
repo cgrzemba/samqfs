@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 
 /* ANSI C headers. */
@@ -123,7 +123,7 @@ DisSector(void)
 
 	case Sinode:	/* File inode */
 		/* LINTED pointer cast may result in improper alignment */
-		dis_inode_file((struct sam_disk_inode *)buffer, 0);
+		dis_inode_file((struct sam_perm_inode *)buffer, 0);
 		break;
 
 	case Ssblk:			/* Superblock */

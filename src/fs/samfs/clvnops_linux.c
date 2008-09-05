@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1757,8 +1757,7 @@ __samqfs_client_lookup_vn(struct inode *dir, struct dentry *de)
 	}
 
 	error = sam_client_lookup_name(pip,
-	    &de->d_name, pip->mp->mt.fi_meta_timeo, &ip, NULL);
-
+	    &de->d_name, pip->mp->mt.fi_meta_timeo, 0, &ip, NULL);
 	if (error == 0) {
 		ASSERT(ip);
 		li = SAM_SITOLI(ip);

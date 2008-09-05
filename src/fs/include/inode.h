@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.208 $"
+#pragma ident "$Revision: 1.209 $"
 #endif
 
 #ifdef linux
@@ -924,6 +924,16 @@ extern long long load_double(long long *);
 
 enum sam_sync_type {SAM_SYNC_ALL, SAM_SYNC_ONE, SAM_SYNC_PURGE};
 typedef enum {IG_NEW, IG_EXISTS, IG_STALE, IG_SET, IG_DNLCDIR} sam_iget_t;
+
+#define	SAM_INO_IS_XATTR(dip2)	((dip2)->p2flags & P2FLAGS_XATTR)
+#define	SAM_INODE_IS_XATTR(ip)	SAM_INO_IS_XATTR(&((ip)->di2))
+#define	SAM_INODE_HAS_XATTR(ip)	((ip)->di2.xattr_id.ino != 0)
+
+/*
+ * The DNLC name we use for the unnamed directory at the root of the
+ * extended attribute tree. This is the same name as UFS uses.
+ */
+#define	XATTR_DIR_NAME	"/@/"
 
 /*
  * ----- Inode function prototypes.

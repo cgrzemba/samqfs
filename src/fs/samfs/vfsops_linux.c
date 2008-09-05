@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 #endif
 
 #include "sam/osversion.h"
@@ -262,7 +262,7 @@ samqfs_get_parent(struct dentry *cde)
 	comp.len = 2;
 
 	error = sam_client_lookup_name(cip, &comp,
-	    cip->mp->mt.fi_meta_timeo, &pip, NULL);
+	    cip->mp->mt.fi_meta_timeo, 0, &pip, NULL);
 
 	if (error == 0) {
 		pli = SAM_SITOLI(pip);

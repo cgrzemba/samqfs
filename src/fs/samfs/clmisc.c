@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.257 $"
+#pragma ident "$Revision: 1.258 $"
 #endif
 
 #include "sam/osversion.h"
@@ -538,24 +538,29 @@ sam_client_lookup_name(
 	sam_node_t *pip,	/* parent directory inode */
 	char *cp,		/* component name to lookup. */
 	int meta_timeo,		/* stale interval time */
+	int flags,		/* VOP_LOOKUP flags */
 	sam_node_t **ipp,	/* pointer pointer to inode (returned). */
 	cred_t *credp)		/* credentials. */
 {
 	sam_ino_record_t *irec;
 	int error;
 	vnode_t *vp;
+	sam_name_lookup_t args;
 
-	if (S_ISDIR(pip->di.mode) == 0) {	/* Parent must be a directory */
-		return (ENOTDIR);
-	}
-	/* Execute access required to search a directory */
-	if ((error = sam_access_ino(pip, S_IEXEC, FALSE, credp))) {
-		return (error);
-	}
-	if (*cp == '\0') {		/* Null name is this directory */
-		VN_HOLD(SAM_ITOV(pip));
-		*ipp = pip;
-		return (0);
+	if ((flags & LOOKUP_XATTR|CREATE_XATTR_DIR) == 0) {
+		/* Parent must be a directory */
+		if (S_ISDIR(pip->di.mode) == 0) {
+			return (ENOTDIR);
+		}
+		/* Execute access required to search a directory */
+		if ((error = sam_access_ino(pip, S_IEXEC, FALSE, credp))) {
+			return (error);
+		}
+		if (*cp == '\0') {	/* Null name is this directory */
+			VN_HOLD(SAM_ITOV(pip));
+			*ipp = pip;
+			return (0);
+		}
 	}
 
 	/*
@@ -599,13 +604,14 @@ sam_client_lookup_name(
 	/*
 	 * Lookup the name OTW.
 	 */
+	args.flags = flags;
 	irec = kmem_alloc(sizeof (*irec), KM_SLEEP);
-	if ((error = sam_proc_name(pip, NAME_lookup, NULL, 0, cp, NULL,
-	    credp, irec)) == 0) {
+	if ((error = sam_proc_name(pip, NAME_lookup, &args, sizeof (args),
+	    cp, NULL, credp, irec)) == 0) {
 		sam_node_t *ip;
 
-		if ((error = sam_get_client_ino(irec, pip, cp,
-		    &ip, credp)) == 0) {
+		error = sam_get_client_ino(irec, pip, cp, &ip, credp);
+		if (error == 0) {
 			*ipp = ip;
 		}
 	} else {
@@ -617,12 +623,14 @@ sam_client_lookup_name(
 }
 #endif /* sun */
 
+
 #ifdef linux
 int				/* ERRNO if error, 0 if successful. */
 sam_client_lookup_name(
 	sam_node_t *pip,	/* parent directory inode */
 	struct qstr *cp,
 	int meta_timeo,		/* stale interval time */
+	int flags,		/* VOP_LOOKUP flags (Solaris only) */
 	sam_node_t **ipp,	/* pointer pointer to inode (returned). */
 	cred_t *credp)		/* credentials. */
 {
@@ -1820,6 +1828,15 @@ __sam_byte_swap_message(sam_san_message_t *msg)
 				break;
 
 			case NAME_lookup:
+				r = sam_byte_swap(
+				    sam_name_lookup_swap_descriptor,
+				    &msg->call.name.arg.p.lookup,
+				    msg->hdr.length);
+				if (r) {
+					cmn_err(CE_WARN,
+					    "SAM-QFS: clmisc: "
+					    "NAME_lookup byte swap error");
+				}
 				break;
 
 			default:

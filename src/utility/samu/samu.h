@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 
 #if !defined(SAMU_H)
@@ -123,7 +123,7 @@ void DisplayStageStreams(boolean_t display_active, int file_first,
 	int display_filename, media_t display_media);
 
 #if defined(_SAM_FS_INO_H)
-void dis_inode_file(struct sam_disk_inode *ino, int extent_factor);
+void dis_inode_file(struct sam_perm_inode *permp, int extent_factor);
 #endif /* defined(_SAM_FS_INO_H) */
 
 

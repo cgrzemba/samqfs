@@ -34,7 +34,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 #endif
 
 #ifndef	_SAM_FS_CLEXTERN_H
@@ -422,14 +422,14 @@ int sam_update_shared_sblk(sam_mount_t *mp, enum SHARE_flag wait_flag);
 
 #ifdef sun
 int sam_client_lookup_name(sam_node_t *pip, char *cp, int stale_interval,
-	sam_node_t **ipp, cred_t *credp);
+	int flags, sam_node_t **ipp, cred_t *credp);
 int sam_get_client_ino(sam_ino_record_t *irec, sam_node_t *pip, char *cp,
 	sam_node_t **ipp, cred_t *credp);
 #endif /* sun */
 
 #ifdef linux
 int sam_client_lookup_name(sam_node_t *pip, struct qstr *cp,
-	int stale_interval, sam_node_t **ipp, cred_t *credp);
+	int stale_interval, int flags, sam_node_t **ipp, cred_t *credp);
 int sam_get_client_ino(sam_ino_record_t *irec, sam_node_t *pip,
 	struct qstr *cp, sam_node_t **ipp, cred_t *credp);
 #endif /* linux */

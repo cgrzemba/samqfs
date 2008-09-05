@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.255 $"
+#pragma ident "$Revision: 1.256 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1925,8 +1925,20 @@ __sam_proc_name(
 
 		case NAME_lookup:
 			/*
-			 * Nothing to do
+			 * Byte swap the name lookup arg
 			 */
+			r = sam_byte_swap(sam_name_lookup_swap_descriptor,
+			    (void *)&msg->call.name.arg.p.lookup,
+			    sizeof (sam_name_lookup_t));
+
+			if (r) {
+				cmn_err(CE_WARN,
+				    "SAM-QFS: %s: sam_proc_name "
+				    "name_lookup byte swap error",
+				    ip->mp->mt.fi_name);
+				error = EIO;
+				goto out;
+			}
 			break;
 
 		default:

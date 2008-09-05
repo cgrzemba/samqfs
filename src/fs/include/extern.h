@@ -38,7 +38,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.236 $"
+#pragma ident "$Revision: 1.237 $"
 
 #include "sam/osversion.h"
 
@@ -235,6 +235,8 @@ int sam_lookup_name(sam_node_t *pip, char *cp, sam_node_t **ipp,
 void sam_invalidate_dnlc(vnode_t *vp);
 int sam_validate_dir_blk(sam_node_t *pip, offset_t offset, int bsize,
 			struct fbuf **fbpp);
+int sam_lookup_xattr(vnode_t *pvp, vnode_t **vpp, int flags, cred_t *credp);
+int sam_xattr_getattrdir(vnode_t *, sam_node_t **, int, cred_t *);
 
 
 /* mount.c function prototypes. */
@@ -248,6 +250,7 @@ int sam_create_name(sam_node_t *pip, char *cp, sam_node_t **ipp,
 	struct sam_name *namep, vattr_t *vap, cred_t *credp);
 int sam_make_ino(sam_node_t *pip, vattr_t *vap, sam_node_t **ipp,
 	cred_t *credp);
+int sam_make_dir(sam_node_t *pip, sam_node_t *ip, cred_t *credp);
 int sam_restore_name(sam_node_t *pip, char *cp, struct sam_name *namep,
 	struct sam_perm_inode *perm_ino, sam_id_t *id, cred_t *credp);
 void sam_set_unit(sam_mount_t *mp, struct sam_disk_inode *di);
@@ -564,7 +567,7 @@ int sam_update_shared_ino(sam_node_t *ip, enum sam_sync_type st,
 int sam_update_shared_sblk(sam_mount_t *mp, enum SHARE_flag wait_flag);
 int sam_client_get_acl(sam_node_t *ip, cred_t *credp);
 int sam_client_lookup_name(sam_node_t *pip, char *cp, int stale_interval,
-	sam_node_t **ipp, cred_t *credp);
+	int flags, sam_node_t **ipp, cred_t *credp);
 int sam_refresh_client_ino(sam_node_t *ip, int interval, cred_t *credp);
 int	sam_stale_hash_ino(sam_id_t *id, sam_mount_t *mp, sam_node_t **ipp);
 void sam_directed_actions(sam_node_t *ip, ushort_t actions, offset_t offset,

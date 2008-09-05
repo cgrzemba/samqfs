@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 #endif
 
 
@@ -411,6 +411,11 @@ typedef struct sam_name_acl {
 	int32_t set;			/* set/get ACLs (1) | get ACLs (0) */
 } sam_name_acl_t;
 
+typedef struct sam_name_lookup {
+	int flags;			/* VOP_LOOKUP flags */
+	char	fill[12];
+} sam_name_lookup_t;
+
 typedef struct sam_name_arg {
 	union {
 		sam_name_create_t	create;
@@ -421,6 +426,7 @@ typedef struct sam_name_arg {
 		sam_name_rename_t	rename;
 		sam_name_symlink_t	symlink;
 		sam_name_acl_t		acl;
+		sam_name_lookup_t	lookup;
 	} p;
 } sam_name_arg_t;
 

@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.611 $"
+$ pragma ident "$Revision: 1.612 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2601,6 +2601,7 @@ $ ===================================================================
 13482 FS %s: Cannot create object inode %d
 13483 WORM V2 files present\n
 13484 feature:  Aligned Maps\n
+13485 Extended attribute files present\n
 
 $  utility/csd	(13500)
 $ ===================================================================
@@ -2796,7 +2797,7 @@ $ ===================================================================
 13943 INFO:  FS %s repaired:\n\tstart:  %s\tfinish: %s
 13944 NOTICE:  Updating inode %d.%d ext attr flags (%#x->%#x)\n
 13945 NOTICE:  Would update inode %d.%d ext attr flags (%#x->%#x)\n
-$ 13946 ** NOT USED **
+13946 ALERT:  ino %d.%d,\tInvalid extended attr directory inode\n
 13947 NOTICE:  inode %d.%d HLP extension inode %d.%d n_ids (%d) out-of-range [0..%d]\n
 13948 NOTICE:  inode %d.%d HLP extension inode %d.%d slot %d: bad entry (%d.%d)\n
 13949 ALERT:  Directory inode %d.%d has HLP extension inode attached (%d.%d)\n

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.69 $"
+#pragma ident "$Revision: 1.70 $"
 
 
 /* ANSI headers. */
@@ -106,8 +106,10 @@ sam_flagtext_t confTable[] = {
 int	confTableSize = sizeof (confTable)/sizeof (sam_flagtext_t);
 
 sam_flagtext_t conf1Table[] = {
+	MC_NOXATTR, "NOXATTR",
 	MC_SAM_DB, "SAM_DB",
 	MC_OBJECT_FS, "OBJECT_FS",
+	MC_LOGGING, "LOGGING",
 	MC_CLUSTER_FASTSW, "CLUSTER_FASTSW",
 	MC_CLUSTER_MGMT, "CLUSTER_MGMT",
 	MC_STRIPE_GROUPS, "STRIPE_GROUPS",
@@ -116,8 +118,7 @@ sam_flagtext_t conf1Table[] = {
 	MC_SMALL_DAUS, "SMALL_DAUS",
 	MC_MISMATCHED_GROUPS, "MISMATCHED_GROUPS",
 	MC_SHARED_MOUNTING, "SHARED_MOUNTING",
-	MC_SHARED_FS, "SHARED_FS",
-	MC_LOGGING, "LOGGING"
+	MC_SHARED_FS, "SHARED_FS"
 };
 int	conf1TableSize = sizeof (conf1Table)/sizeof (sam_flagtext_t);
 

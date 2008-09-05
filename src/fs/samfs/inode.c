@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.154 $"
+#pragma ident "$Revision: 1.155 $"
 
 #include "sam/osversion.h"
 
@@ -181,7 +181,9 @@ lookup_name:
 		error = EEXIST;
 
 		if (ex == NONEXCL) {	/* If non-exclusive create */
-			if (S_ISDIR(ip->di.mode) && (mode & S_IWRITE)) {
+			if ((S_ISDIR(ip->di.mode) ||
+			    S_ISATTRDIR(ip->di.mode)) &&
+			    (mode & S_IWRITE)) {
 				/* Cannot create over an existing dir. */
 				error = EISDIR;
 			} else if (SAM_PRIVILEGE_INO(ip->di.version,
@@ -686,6 +688,9 @@ sam_setattr_ino(
 			}
 		}
 		TRANS_INODE(ip->mp, ip);
+		if (S_ISATTRDIR(oldmode)) {
+			ip->di.mode |= S_IFATTRDIR;
+		}
 		sam_mark_ino(ip, SAM_CHANGED);
 	}
 

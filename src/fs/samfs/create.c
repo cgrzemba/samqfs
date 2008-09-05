@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.161 $"
+#pragma ident "$Revision: 1.162 $"
 
 #include "sam/osversion.h"
 
@@ -90,7 +90,6 @@ static int sam_restore_new_ino(sam_node_t *pip, struct sam_perm_inode *permp,
 	struct buf **bpp, sam_id_t *idp);
 static int sam_restore_hardlink(sam_node_t *, struct sam_perm_inode *,
     buf_t **, sam_id_t *);
-static int sam_make_dir(sam_node_t *pip, sam_node_t *ip, cred_t *credp);
 static int sam_make_dirslot(sam_node_t *ip, struct sam_name *namep,
 	struct fbuf **fbpp);
 static int sam_set_hardlink_parent(sam_mount_t *mp, sam_disk_inode_t *dp);
@@ -128,6 +127,17 @@ sam_create_name(
 	struct sam_dirent *dp;
 	ushort_t dirsize, slot_size;
 
+	operation = namep->operation;
+
+	/*
+	 * In extended attribute space, we only allow regular files.
+	 */
+	if (S_ISATTRDIR(pip->di.mode)) {
+		if (operation == SAM_CREATE && vap->va_type != VREG) {
+			return (EINVAL);
+		}
+	}
+
 	/*
 	 * Write access required to create in directory
 	 */
@@ -161,7 +171,6 @@ sam_create_name(
 	/*
 	 * For create, make new inode unless creating a hard link.
 	 */
-	operation = namep->operation;
 	if ((operation != SAM_LINK) && (operation != SAM_RENAME_LINK)) {
 		if ((error = sam_make_ino(pip, vap, &ip, credp))) {
 			/*
@@ -720,6 +729,10 @@ sam_restore_new_ino(
 	    0, S2QBLKS(permip->di.rm.size), CRED());
 	(void) sam_quota_falloc(mp, permip->di.uid,
 	    permip->di.gid, permip->di.admin_id, CRED());
+	permip->di2.xattr_id.ino = 0;
+	permip->di2.xattr_id.gen = 0;
+	permip->di2.p2flags &= ~P2FLAGS_XATTR;
+
 	*bpp = bp;
 	*idp = id;
 	return (0);
@@ -926,6 +939,19 @@ sam_make_ino(
 			goto make_cleanup;
 		}
 	}
+	ip->di2.xattr_id.ino = 0;
+	ip->di2.xattr_id.gen = 0;
+	if (S_ISATTRDIR(pip->di.mode)) {
+		/*
+		 * Attribute files are created on the meta devices.
+		 */
+		ip->di2.p2flags |= P2FLAGS_XATTR;
+		if (mp->mt.mm_count) {
+			ip->di.status.b.meta = 1;
+		}
+	} else {
+		ip->di2.p2flags &= ~P2FLAGS_XATTR;
+	}
 
 	sam_set_unit(ip->mp, &ip->di);
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(ip->di.mode)) {
@@ -970,9 +996,10 @@ sam_set_unit(
 
 	/*
 	 * Set the slice based on round robin and then set the next ordinal.
+	 * Directories are on meta devices. Attributes are on data devices.
 	 */
 	if (S_ISDIR(mode) && mp->mt.mm_count) {
-		di->status.b.meta = 1;		/* Directories on meta device */
+		di->status.b.meta = 1;
 	}
 	i = di->status.b.meta;	/* Device type: data (DD) or meta (MM) */
 	di->stride = 0;		/* Reset stride to 0 */
@@ -1039,7 +1066,7 @@ sam_set_unit(
  *	Allocate a block and fill in an empty directory entry.
  */
 /*ARGSUSED2*/
-static int			/* ERRNO if error, 0 if successful. */
+int				/* ERRNO if error, 0 if successful. */
 sam_make_dir(
 	sam_node_t *pip,	/* Pointer to parent inode. */
 	sam_node_t *ip,		/* Pointer to inode. */

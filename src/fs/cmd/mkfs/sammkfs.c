@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 
 /* ----- Include Files ---- */
@@ -2096,6 +2096,10 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 		if (sblkp->opt_mask & SBLK_OPTV1_CONV_WORMV2) {
 			printf(catgets(catfd, SET, 13483,
 			    "WORM V2 files present\n"));
+		}
+		if (sblkp->opt_mask & SBLK_OPTV1_XATTR) {
+			printf(catgets(catfd, SET, 13485,
+			    "Extended attribute files present\n"));
 		}
 		if (sblkp->opt_features & SBLK_FV1_MAPS_ALIGNED) {
 			printf(catgets(catfd, SET, 13484,
