@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -923,11 +923,15 @@ DoUpdate(char *fs)
 	if (ShutdownDaemon && ServerHost && !clientSet) {
 		clientSet = 1;
 
-		if (status == 0) {
+		if (status <= 0) {
 			goto out;
 		}
 
-		if (status < 0) {
+		/*
+		 * Check to see if failover is being called for.
+		 * If none, skip out and just exit sam-sharefsd.
+		 */
+		if (nfp->ht->info.ht.server == nfp->ht->info.ht.pendsrv) {
 			goto out;
 		}
 
