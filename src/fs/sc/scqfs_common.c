@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1347,13 +1347,12 @@ mount_qfs(char *qfsfs)
 		if (rc != EXIT_RETRY) {
 			break;
 		}
-		count++;
-		if (count == 2) {
-			count = 0;
+		if (count % 2 == 0) {
 			scds_syslog(LOG_ERR,
 			    "%s: Unable to mount qfs: %s. Retrying",
 			    qfsfs, strerror(ENOTCONN));
 		}
+		count++;
 	}
 	return (rc);
 }
