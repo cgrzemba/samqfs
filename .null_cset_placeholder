@@ -1,3 +1,3 @@
-Fri Sep 26 11:21:01 CDT 2008
-f92374e9677c
-pkg/samproto
+Fri Sep 26 11:27:26 CDT 2008
+4a09de10c45f
+misc/copyright/copyright.cf pkg/qfsproto-snmp src/notify/snmp/mibs/RFC-1215.txt src/notify/snmp/mibs/RFC1155-SMI.txt src/notify/snmp/mibs/RFC1213-MIB.txt src/notify/snmp/mibs/SNMPv2-CONF.txt src/notify/snmp/mibs/SNMPv2-MIB.txt src/notify/snmp/mibs/SNMPv2-SMI.txt src/notify/snmp/mibs/SNMPv2-TC.txt src/notify/snmp/mibs/SNMPv2-TM.txt src/notify/snmp/sendtrap
