@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "	$Revision: 1.46 $"
+#pragma ident "	$Revision: 1.47 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -991,7 +991,7 @@ set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
 		return (-1);
 	}
 	free_list_of_host_info(cfg_hosts);
-
+	fs->hosts_config = NULL;
 	if (fs->fi_status & FS_MOUNTED) {
 		mounted = B_TRUE;
 	}
