@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardMetadataDeviceSelectionPageView.java,v 1.29 2008/09/04 19:30:34 kilemba Exp $
+// ident	$Id: FSWizardMetadataDeviceSelectionPageView.java,v 1.30 2008/09/10 17:40:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -103,7 +103,8 @@ public class FSWizardMetadataDeviceSelectionPageView
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
         Boolean temp = (Boolean)wizardModel
             .getValue(CreateFSWizardImpl.POPUP_SHARED);
-        sharedEnabled = temp.booleanValue();
+        sharedEnabled =
+            temp == null ? false : temp.booleanValue();
         DiskCache[] devices;
         if (sharedEnabled) {
             devices = (SharedDiskCache[]) wizardModel.getValue(

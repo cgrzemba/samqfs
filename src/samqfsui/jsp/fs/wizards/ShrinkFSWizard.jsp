@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.4 2008/08/06 17:41:49 ronaldso Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.5 2008/09/10 17:40:23 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -201,6 +201,9 @@
                                            title="#{samBundle['fs.shrink.specifydevice.steptitle']}"
                                            detail="#{samBundle['fs.shrink.specifydevice.instruction.1']}"
                                            help="#{samBundle['fs.shrink.specifydevice.help']}">
+                                <h:panelGrid columns="1" style="margin:10px">
+                                    <ui:staticText id="addInstr" text="#{ShrinkFSBean.shrinkSharedFSText}" />
+                                </h:panelGrid>
                                 <ui:alert id="alert_specifydevice"
                                           rendered="#{ShrinkFSBean.alertRendered}"
                                           type="#{ShrinkFSBean.alertType}"

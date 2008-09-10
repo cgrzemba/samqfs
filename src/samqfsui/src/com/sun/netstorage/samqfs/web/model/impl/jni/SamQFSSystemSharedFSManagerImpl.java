@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.56 2008/09/04 18:53:25 pg125177 Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.57 2008/09/10 17:40:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -344,7 +344,6 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 	    SharedDiskCacheImpl[] sdcArr;
 	    ArrayList sdcLst = new ArrayList();
             int i, j, clientsLen, serversLen;
-	    SamQFSSystemModelImpl model;
             ArrayList errorHostNames = new ArrayList();
             ArrayList errorExceptions = new ArrayList();
 

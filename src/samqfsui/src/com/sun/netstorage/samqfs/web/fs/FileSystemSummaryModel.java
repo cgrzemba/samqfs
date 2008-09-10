@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryModel.java,v 1.69 2008/07/09 22:20:56 kilemba Exp $
+// ident	$Id: FileSystemSummaryModel.java,v 1.70 2008/09/10 17:40:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -346,10 +346,18 @@ public class FileSystemSummaryModel extends CCActionTableModel {
                 TraceUtil.trace1("Error getting samfs version!", samEx);
             }
 
+            // 5.0
             if (SamUtil.isVersionCurrentOrLaterThan(serverAPIVersion, "1.6")) {
-                growEnabled = !fsList[i].isHA();
+                growEnabled =
+                    !fsList[i].isHA() &&
+                    (fsShareStatus == FileSystem.UNSHARED ||
+                     fsShareStatus == FileSystem.SHARED_TYPE_MDS);
                 shrinkEnabled =
-                    !fsList[i].isHA() && fsState == FileSystem.MOUNTED;
+                    !fsList[i].isHA() &&
+                    fsState == FileSystem.MOUNTED &&
+                    (fsShareStatus == FileSystem.UNSHARED ||
+                     fsShareStatus == FileSystem.SHARED_TYPE_MDS);
+            // 4.6
             } else {
                 growEnabled = !fsList[i].isHA() &&
                     (fsState == FileSystem.UNMOUNTED) &&

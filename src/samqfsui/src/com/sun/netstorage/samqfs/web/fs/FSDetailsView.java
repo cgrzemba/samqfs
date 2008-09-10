@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.49 2008/08/27 19:48:29 kilemba Exp $
+// ident	$Id: FSDetailsView.java,v 1.50 2008/09/10 17:40:23 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -280,6 +280,19 @@ public class FSDetailsView extends CommonTableContainerView {
             }
         }
 
+        String serverAPIVersion = "1.5";
+        try {
+            serverAPIVersion =
+                SamUtil.getServerInfo(serverName).
+                            getSamfsServerAPIVersion();
+            TraceUtil.trace3("API Version: " + serverAPIVersion);
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Error getting samfs version!", samEx);
+        }
+
+        boolean is50orlater =
+            SamUtil.isVersionCurrentOrLaterThan(serverAPIVersion, "1.6");
+
         loadPropertySheetModel(fs);
 
         // calculate state info to pass to client side javascript to
@@ -294,9 +307,9 @@ public class FSDetailsView extends CommonTableContainerView {
                 qfsStandalone ||
                 fsType == GenericFileSystem.FS_SAM &&
                     !isArchived.booleanValue()) {
-                setQFSOptions((FileSystem) fs);
+                setQFSOptions((FileSystem) fs, is50orlater);
             } else {
-                setSAMFSOptions((FileSystem) fs);
+                setSAMFSOptions((FileSystem) fs, is50orlater);
             }
         }
 
@@ -320,25 +333,19 @@ public class FSDetailsView extends CommonTableContainerView {
         ((CCDropDownMenu) getChild("PageActionsMenu")).setValue("0");
 
         boolean growEnabled = false;
-        String serverAPIVersion = "1.5";
-        try {
-            serverAPIVersion =
-                SamUtil.getServerInfo(serverName).
-                            getSamfsServerAPIVersion();
-            TraceUtil.trace3("API Version: " + serverAPIVersion);
-        } catch (SamFSException samEx) {
-            TraceUtil.trace1("Error getting samfs version!", samEx);
-        }
+        int sharedStatus = ((FileSystem) fs).getShareStatus();
 
         if (fsType == GenericFileSystem.FS_NONSAMQ) {
             growEnabled = false;
-        } else if (
-            SamUtil.isVersionCurrentOrLaterThan(serverAPIVersion, "1.6")) {
-            growEnabled = !fs.isHA();
+        } else if (is50orlater) {
+            growEnabled =
+                    !fs.isHA() &&
+                    (sharedStatus == FileSystem.UNSHARED ||
+                     sharedStatus == FileSystem.SHARED_TYPE_MDS);
         } else {
             growEnabled = !fs.isHA() &&
                 fs.getState() == FileSystem.UNMOUNTED &&
-                ((FileSystem) fs).getShareStatus() == FileSystem.UNSHARED;
+                sharedStatus == FileSystem.UNSHARED;
         }
         ((CCWizardWindow)
                 getChild("SamQFSWizardGrowFSButton")).setDisabled(!growEnabled);
@@ -384,7 +391,7 @@ public class FSDetailsView extends CommonTableContainerView {
         propertySheetModel.setVisible("sharedSection", false);
     }
 
-    protected void setQFSOptions(FileSystem fs) {
+    protected void setQFSOptions(FileSystem fs, boolean is50orlater) {
         int state = fs.getState();
         int fsShared = fs.getShareStatus();
         boolean noDeleteFlag = false;
@@ -409,7 +416,13 @@ public class FSDetailsView extends CommonTableContainerView {
                 menuOptions.append(FS_MENUOPTION_UNMOUNT).append(',');
             }
             // Shrink enable only if fs is mounted and non-HA
-            if (!fs.isHA()) {
+            boolean shrinkEnabled =
+                    is50orlater &&
+                    !fs.isHA() &&
+                    state == FileSystem.MOUNTED &&
+                    (fsShared == FileSystem.UNSHARED ||
+                     fsShared == FileSystem.SHARED_TYPE_MDS);
+            if (shrinkEnabled) {
                 menuOptions.append(FS_MENUOPTION_SHRINK).append(',');
             }
         } else { // unmounted
@@ -433,7 +446,7 @@ public class FSDetailsView extends CommonTableContainerView {
         }
     }
 
-    protected void setSAMFSOptions(FileSystem fs) {
+    protected void setSAMFSOptions(FileSystem fs, boolean is50orlater) {
         int state = fs.getState();
         int fsShared = fs.getShareStatus();
         boolean noDeleteFlag = false;
@@ -457,6 +470,16 @@ public class FSDetailsView extends CommonTableContainerView {
             // cannot umount unix root file system
             if (!("/".equals(fs.getMountPoint()))) {
                 menuOptions.append(FS_MENUOPTION_UNMOUNT).append(',');
+            }
+            // Shrink enable only if fs is mounted and non-HA
+            boolean shrinkEnabled =
+                    is50orlater &&
+                    !fs.isHA() &&
+                    state == FileSystem.MOUNTED &&
+                    (fsShared == FileSystem.UNSHARED ||
+                     fsShared == FileSystem.SHARED_TYPE_MDS);
+            if (shrinkEnabled) {
+                menuOptions.append(FS_MENUOPTION_SHRINK).append(',');
             }
         } else {
             menuOptions.append(FS_MENUOPTION_MOUNT).append(',');

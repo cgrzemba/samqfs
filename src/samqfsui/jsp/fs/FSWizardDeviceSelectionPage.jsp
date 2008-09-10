@@ -29,11 +29,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPage.jsp,v 1.14 2008/05/16 19:39:19 am143972 Exp $
+// ident	$Id: FSWizardDeviceSelectionPage.jsp,v 1.15 2008/09/10 17:40:23 ronaldso Exp $
 --%>
-<%@ page language="java" %> 
+<%@ page language="java" %>
 <%@ page import="com.iplanet.jato.view.ViewBean" %>
-<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%> 
+<%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
 <%@taglib uri="/WEB-INF/tld/com_sun_web_ui/cc.tld" prefix="cc"%>
 
 <script type="text/javascript">
@@ -81,7 +81,7 @@
             return;
         }
 
-        
+
         if (viewName == "") {
             getPageViewName();
         }
@@ -126,7 +126,7 @@
     function wizardNextClicked() {
         return true;
     }
-     
+
     WizardWindow_Wizard.nextClicked = wizardNextClicked;
 
 </script>
@@ -136,10 +136,15 @@
 <cc:i18nbundle id="samBundle"
  baseName="com.sun.netstorage.samqfs.web.resources.Resources" />
 
-<%-- For now assume we're still presenting the components in a table
-     which is output by the framework and components are
-     in rows and cells
---%>
+<table>
+    <tr>
+        <td><cc:spacer name="Spacer" width="5" /></td>
+        <td><cc:text name="AdditionalInstruction"
+                     bundleID="samBundle"
+                     defaultValue="fs.selectedevice.sharedfsgrow"/></td>
+    </tr>
+</table>
+
 <table width="500">
 <tr>
 <td>

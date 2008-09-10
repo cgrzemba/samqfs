@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardImpl.java,v 1.42 2008/05/16 18:38:55 am143972 Exp $
+// ident	$Id: GrowWizardImpl.java,v 1.43 2008/09/10 17:40:24 ronaldso Exp $
 
 
 // Possible Steps:
@@ -200,6 +200,10 @@ public class GrowWizardImpl extends SamWizardImpl {
     public static final String WIZARDIMPLNAME_PREFIX = "GrowWizardImpl";
     public static final String WIZARDCLASSNAME =
         "com.sun.netstorage.samqfs.web.fs.wizards.GrowWizardImpl";
+
+    // Flag to set if a view is used in the grow wizard to grow a shared
+    // file system
+    public static final String ATTR_GROW_SHARED_FS = "attr_grow_shared_fs";
 
     // Wizard model value to determine if file system has combined
     public static final String ATTR_COMBINED = "attr_combined";
@@ -1146,6 +1150,38 @@ public class GrowWizardImpl extends SamWizardImpl {
      */
     private void populateFSInfoInWizardModel() throws SamFSException {
         FileSystem myFS = getFileSystem();
+
+        boolean growSharedFS =
+            myFS.getShareStatus() == FileSystem.SHARED_TYPE_MDS;
+        wizardModel.setValue(
+            ATTR_GROW_SHARED_FS,
+            Boolean.toString(growSharedFS));
+        TraceUtil.trace2("GrowFS, growing shared fs: " + growSharedFS);
+
+        // Need to populate the next six wizard parameters for the device
+        // selection views because the views are shared between the Grow
+        // wizard and the New File System Wizard.
+
+        // fs type is always going to be qfs. ufs is non-growable.
+        wizardModel.setValue(CreateFSWizardImpl.POPUP_FSTYPE, "qfs");
+
+        wizardModel.setValue(
+            CreateFSWizardImpl.POPUP_ARCHIVING,
+            Boolean.toString(myFS.getArchivingType() == FileSystem.ARCHIVING));
+        wizardModel.setValue(
+            CreateFSWizardImpl.POPUP_SHARED,
+            Boolean.toString(
+                myFS.getShareStatus() == FileSystem.SHARED_TYPE_MDS));
+        wizardModel.setValue(
+            CreateFSWizardImpl.POPUP_HAFS, Boolean.toString(false));
+        wizardModel.setValue(
+            CreateFSWizardImpl.POPUP_HPC,
+            Boolean.toString(myFS.isMbFS()));
+        wizardModel.setValue(
+            CreateFSWizardImpl.POPUP_MATFS,
+            Boolean.toString(myFS.isMatFS()));
+
+        ////////////////////////////////////////////////////////////////////////
 
         StripedGroup[] group = myFS.getStripedGroups();
 

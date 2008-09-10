@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.21 2008/09/04 02:59:52 ronaldso Exp $
+// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.22 2008/09/10 17:40:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -48,6 +48,7 @@ import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.view.alert.CCAlertInline;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCLabel;
+import com.sun.web.ui.view.html.CCStaticTextField;
 import com.sun.web.ui.view.html.CCTextField;
 import com.sun.web.ui.view.table.CCActionTable;
 import com.sun.web.ui.view.wizard.CCWizardPage;
@@ -69,16 +70,18 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
     public static final String CHILD_LABEL = "counterLabel";
     public static final String CHILD_INIT_SELECTED = "initSelected";
     public static final String CHILD_COUNTER = "counter";
+    public static final String INSTRUCTION = "AdditionalInstruction";
 
     protected CCActionTableModel tableModel = null;
     protected int initSelected = 0, totalItems = 0;
     protected boolean previous_error = false;
 
+    private boolean useForMeta = false;
+
     private static final String
         CHILD_TILED_VIEW = "FSWizardDeviceSelectionPageTiledView";
     private boolean error = false;
 
-    // protected String sharedChecked = null;
     protected boolean sharedEnabled = false;
 
     /**
@@ -100,6 +103,11 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         setDefaultModel(model);
         createActionTableModel();
         registerChildren();
+
+        useForMeta =
+            name.equals(FSWizardMetadataDeviceSelectionPageView.PAGE_NAME);
+        TraceUtil.trace3("Device Selection View: useForMeta: " + useForMeta);
+
         TraceUtil.trace3("Exiting");
     }
 
@@ -120,6 +128,7 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         registerChild(CHILD_LABEL, CCLabel.class);
         registerChild(CHILD_INIT_SELECTED, CCHiddenField.class);
         registerChild(CHILD_COUNTER, CCTextField.class);
+        registerChild(INSTRUCTION, CCStaticTextField.class);
         tableModel.registerChildren(this);
         TraceUtil.trace3("Exiting");
     }
@@ -164,6 +173,8 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
         } else if (name.equals(CHILD_INIT_SELECTED)) {
             TraceUtil.trace3("Exiting");
             return new CCHiddenField(this, name, null);
+        } else if (name.equals(INSTRUCTION)) {
+            return new CCStaticTextField(this, name, null);
         } else if (tableModel.isChildSupported(name)) {
             // Create child from action table model.
             View child = tableModel.createChild(this, name);
@@ -297,8 +308,6 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
      */
     protected void createActionTableModel() {
         SamWizardModel wm = (SamWizardModel)getDefaultModel();
-        String samfsServerAPIVersion =
-            (String) wm.getValue(Constants.Wizard.SERVER_API_VERSION);
 
         Boolean temp = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_SHARED);
         sharedEnabled =
@@ -405,5 +414,50 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
 
         TraceUtil.trace3("Exiting");
         return true;
+    }
+
+    /**
+     * This method decides if the additional instruction will be shown in this
+     * device selection view or not.  This message only shows if the view is
+     * used by the Grow FS Wizard to grow the data (NOT metadata) devices for
+     * a SHARED file system.  The GUI is NOT going to filter the devices that
+     * are known to be viewable by ALL participating members of the shared
+     * file system because it is not feasible to do so in some reasonable amount
+     * of time.  Say if the shared file system has 1000 clients, it is
+     * impossible to check if the slice is viewable by all clients.  Thus,
+     * this additional instruction will be shown to remind user to pick devices
+     * that are shared among all participating members of the shared file
+     * system.
+     *
+     * For the time when user is creating a NEW file system, it will fall into
+     * a different path (SharedDeviceSelectionView) and the device filtering
+     * will take place (only allow selecting devices that are shared among all
+     * participants.  It is feasible to check the validity of the devices there
+     * because the New FS Wizard only allows user to select 4 clients.
+     *
+     * @param event
+     * @return
+     * @throws com.iplanet.jato.model.ModelControlException
+     */
+    public boolean beginAdditionalInstructionDisplay(ChildDisplayEvent event)
+        throws ModelControlException {
+
+        // If the view is used for selecting metadata devices, the additional
+        // instruction does not need to be shown.  Metadata does not need to
+        // be viewable by other shared member of a shared file system
+        if (useForMeta) {
+            return false;
+        }
+
+        SamWizardModel wm = (SamWizardModel) getDefaultModel();
+
+        // Check if this view is used by the grow wizard
+        String growSharedFSStr =
+            (String) wm.getValue(GrowWizardImpl.ATTR_GROW_SHARED_FS);
+        boolean growSharedFS =
+            growSharedFSStr == null ?
+                false :
+                Boolean.toString(true).equals(growSharedFSStr);
+        return growSharedFS;
     }
 }

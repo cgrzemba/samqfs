@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.5 2008/08/06 17:41:50 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.6 2008/09/10 17:40:25 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -108,6 +108,8 @@ public class ShrinkFSBean implements Serializable {
     private DiskCache [] availUnits = null;
     private String [] replacementPaths = null;
 
+    protected String shrinkSharedFSText = null;
+
     /** Hold information in specify shrink options step. */
     protected String textLogFile = null;
     protected boolean selectedOptionDefault = false;
@@ -172,6 +174,30 @@ public class ShrinkFSBean implements Serializable {
         return
             sysModel.getSamQFSSystemFSManager().
                 discoverAvailableAllocatableUnits(null);
+    }
+
+    private boolean isFSSharedMD() {
+        // To determine if we need to show additional instruction to user and
+        // remind him/her to select a replaceable device that can be accessed
+        // by all participating shared members.
+        try {
+            FileSystem fs = getFileSystem();
+            if (fs == null) {
+                TraceUtil.trace1("fs is null, populateData()!");
+                throw new SamFSException(null, -1000);
+            }
+            return fs.getShareStatus() == FileSystem.SHARED_TYPE_MDS;
+        } catch (SamFSException samEx) {
+            SamUtil.processException(
+                samEx,
+                this.getClass(),
+                "isFSSharedMD()",
+                "Failed to determine the shared fs status!",
+                JSFUtil.getServerName());
+            TraceUtil.trace1(
+                "Failed to determine the shared fs status!", samEx);
+        }
+        return false;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -441,6 +467,18 @@ System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
             summarySpecifyDevice = null;
         }
         return null;
+    }
+
+    public String getShrinkSharedFSText() {
+        shrinkSharedFSText =
+            isFSSharedMD() ?
+                JSFUtil.getMessage("fs.selectedevice.sharedfsreplace") :
+                "";
+        return shrinkSharedFSText;
+    }
+
+    public void setShrinkSharedFSText(String shrinkSharedFSText) {
+        this.shrinkSharedFSText = shrinkSharedFSText;
     }
 
     ////////////////////////////////////////////////////////////////////////////

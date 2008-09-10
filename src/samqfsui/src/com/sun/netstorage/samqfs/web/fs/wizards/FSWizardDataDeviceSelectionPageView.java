@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.33 2008/09/04 19:30:34 kilemba Exp $
+// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.34 2008/09/10 17:40:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -135,7 +135,6 @@ public class FSWizardDataDeviceSelectionPageView
 
         SamWizardModel wizardModel = (SamWizardModel) getDefaultModel();
         DiskCache[] devices;
-        // if (sharedChecked != null && sharedChecked.equals("true")) {
         if (sharedEnabled) {
             devices = (SharedDiskCache[]) wizardModel.getValue(
                 Constants.Wizard.ALLOCATABLE_DEVICES);
@@ -153,9 +152,6 @@ public class FSWizardDataDeviceSelectionPageView
             Constants.Wizard.SELECTED_METADEVICES);
         ArrayList selectedDevices = (ArrayList)wizardModel.getValue(
             Constants.Wizard.SELECTED_DATADEVICES);
-
-        String samfsServerAPIVersion =
-            (String) wizardModel.getValue(Constants.Wizard.SERVER_API_VERSION);
 
         for (int i = 0; i < devices.length; i++) {
             // Skip the devices that are already selected by the user
