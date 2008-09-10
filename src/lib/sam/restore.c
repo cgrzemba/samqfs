@@ -38,7 +38,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -115,7 +115,8 @@ sam_create_file(char *path, int type, struct sam_stat *s_buf, size_t bufsize)
 	inode.di.access_time.tv_sec = s_buf->st_atime;
 	inode.di.modify_time.tv_sec = s_buf->st_mtime;
 	inode.di.change_time.tv_sec = s_buf->st_ctime;
-	inode.di.creation_time = time(NULL);
+	inode.di.creation_time = (s_buf->creation_time == 0) ?
+	    time(NULL) : s_buf->creation_time;
 	inode.di.attribute_time = time(NULL);
 	inode.di.residence_time = time(NULL);
 
