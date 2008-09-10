@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.76 $"
+#pragma ident "$Revision: 1.77 $"
 
 #include "sam/osversion.h"
 
@@ -807,6 +807,9 @@ sam_close_stage(sam_node_t *ip, cred_t *credp)
 		} else if (ip->di.rm.ui.flags & RM_VOLUMES) {
 			/* Process next section for stage_n */
 			process_stage = 1;
+		}
+		if (SAM_IS_OBJECT_FILE(ip)) {
+			sam_osd_update_blocks(ip, 0);
 		}
 	} else {
 		if (ip->stage_err == 0)  {

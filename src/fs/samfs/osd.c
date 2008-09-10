@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 #include "sam/osversion.h"
 
@@ -1699,6 +1699,11 @@ sam_truncate_object_file(
 	}
 
 	/*
+	 * Truncate up/down, reset end of object for all appropriate stripes.
+	 */
+	error = sam_set_end_of_obj(ip, length, 1);
+
+	/*
 	 * For RELEASE, update allocated block count.  Need to query
 	 * the storage nodes for partial release.
 	 */
@@ -1710,10 +1715,6 @@ sam_truncate_object_file(
 		}
 	}
 
-	/*
-	 * Truncate up/down, reset end of object for all appropriate stripes.
-	 */
-	error = sam_set_end_of_obj(ip, length, 1);
 	return (error);
 }
 
