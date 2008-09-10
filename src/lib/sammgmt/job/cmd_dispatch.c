@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.1 $"
+#pragma ident   "$Revision: 1.2 $"
 
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
@@ -383,6 +383,8 @@ static void *worker_thread(void *arg) {
 
 			wpool->qsize--;
 			wpool->index++;
+
+			/* Unlock the mutex to do the actual work */
 			Trace(TR_DEBUG, "worker[%u] - unlock mutex", tid);
 			st = pthread_mutex_unlock(&wpool->mutex);
 			if (st != 0) {
@@ -431,11 +433,11 @@ wpool_destroy(wpool_t *wp) {
 	 * condition variable
 	 */
 	while (wp->tpool->current > 0 || wp->tpool->started == 0) {
-		Trace(TR_DEBUG, "destroy pool: current threads[%d]",
-		    wp->tpool->current);
+		Trace(TR_MISC, "destroy pool: current threads[%d] started[%d]",
+		    wp->tpool->current, wp->tpool->started);
 		st = pthread_cond_wait(&wp->cond_que, &wp->mutex);
 		if (st != 0) {
-			Trace(TR_DEBUG, "wpool_destroy:"
+			Trace(TR_ERR, "wpool_destroy:"
 			    "Failed trying to wait for signal");
 			pthread_mutex_unlock(&wp->mutex);
 			return (st);
@@ -445,7 +447,7 @@ wpool_destroy(wpool_t *wp) {
 
 	st = pthread_mutex_unlock(&wp->mutex);
 	if (st != 0) {
-		Trace(TR_DEBUG, "wpool_destory: Failed to unlock mutex");
+		Trace(TR_ERR, "wpool_destory: Failed to unlock mutex");
 		return (st);
 	}
 
@@ -454,7 +456,7 @@ wpool_destroy(wpool_t *wp) {
 
 	free_wpool(wp);
 
-	Trace(TR_DEBUG, "destroy pool: exiting");
+	Trace(TR_MISC, "destroy pool: exiting");
 	return (st ? st : st1);
 
 }
@@ -670,7 +672,7 @@ int (post_phase)(dispatch_job_t *)) {
 	}
 
 	/* start a thread to wait for the job to finish */
-	st = pthread_create(&cleanup_thread, NULL,
+	st = pthread_create(&cleanup_thread, &dsp_attr,
 	    ((void * (*)(void *))wpool_destroy), wp);
 	if (st != 0) {
 		/*

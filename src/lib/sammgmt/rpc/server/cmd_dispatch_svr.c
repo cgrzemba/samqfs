@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.1 $"
+#pragma ident   "$Revision: 1.2 $"
 
 #include <stdlib.h>
 #include "mgmt/cmd_dispatch.h"
@@ -51,12 +51,12 @@ struct svc_req *req		/* ARGSUSED */
 	int	ret	= -1;
 
 
-	Trace(TR_DEBUG, "Multiplex requests...");
+	Trace(TR_MISC, "Handle request...");
 
 	/* free previous result */
 	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
 
-	Trace(TR_DEBUG, "Calling native library to multiplex requests");
+	Trace(TR_DEBUG, "Calling native library to handle request");
 
 
 	/*
@@ -156,6 +156,6 @@ struct svc_req *req		/* ARGSUSED */
 
 	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
 
-	Trace(TR_DEBUG, "Multiplex requests return[%d]", ret);
+	Trace(TR_MISC, "Handle request return[%d]", ret);
 	return (&rpc_result);
 }
