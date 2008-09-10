@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.174 $"
+#pragma ident "$Revision: 1.175 $"
 #endif
 
 #include "sam/osversion.h"
@@ -216,9 +216,8 @@ start:
 			return (EFBIG);
 		}
 		buff_off = offset & (offset_t)MAXBMASK;
-		reloff = offset & ((sam_u_offset_t)MAXBSIZE - 1);
-		nbytes = MIN(((sam_u_offset_t)MAXBSIZE - reloff),
-		    uiop->uio_resid);
+		reloff = offset & ((offset_t)MAXBSIZE - 1);
+		nbytes = MIN(((offset_t)MAXBSIZE - reloff), uiop->uio_resid);
 		if (nbytes > (ip->size - offset)) {
 			nbytes = ip->size - offset;
 		}
@@ -282,7 +281,7 @@ start:
 				seg_flags = SM_FREE | SM_ASYNC | SM_DONTNEED;
 			}
 			if (sam_vpm_enable) {
-				error = vpm_sync_pages(vp, buff_off, nbytes,
+				error = vpm_sync_pages(vp, buff_off, MAXBSIZE,
 				    seg_flags);
 			} else {
 				error = segmap_release(segkmap, base,
@@ -290,7 +289,8 @@ start:
 			}
 		} else {
 			if (sam_vpm_enable) {
-				(void) vpm_sync_pages(vp, buff_off, nbytes, 0);
+				(void) vpm_sync_pages(vp, buff_off,
+				    MAXBSIZE, 0);
 			} else {
 				(void) segmap_release(segkmap, base, 0);
 			}
@@ -477,10 +477,9 @@ start:
 		 * acquired.
 		 */
 		offset = uiop->uio_loffset;
-		reloff = offset & ((sam_u_offset_t)MAXBSIZE - 1);
+		reloff = offset & ((offset_t)MAXBSIZE - 1);
 		buff_off = offset & (offset_t)MAXBMASK;
-		nbytes = MIN(((sam_u_offset_t)MAXBSIZE - reloff),
-		    uiop->uio_resid);
+		nbytes = MIN(((offset_t)MAXBSIZE - reloff), uiop->uio_resid);
 
 		TRACE(T_SAM_WRITEIO1, vp, (sam_tr_t)offset,
 		    (sam_tr_t)reloff, nbytes);
@@ -617,7 +616,8 @@ start:
 			seg_flags = SM_WRITE | SM_ASYNC | SM_DONTNEED;
 		}
 		if (sam_vpm_enable) {
-			(void) vpm_sync_pages(vp, buff_off, nbytes, seg_flags);
+			(void) vpm_sync_pages(vp, buff_off, MAXBSIZE,
+			    seg_flags);
 		} else {
 			if (pglock) {
 				segmap_pageunlock(segkmap, base, nbytes,
