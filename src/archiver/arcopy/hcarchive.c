@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -113,7 +113,9 @@ static struct {
 					/* record exists */
 	boolean_t	dupcheck;	/* set true if checked for dup */
 					/* metadata entry */
-} seqnumMetadata;
+} seqnumMetadata = {
+	B_FALSE, B_FALSE
+};
 
 /* Private functions. */
 static void createSamMeta(hc_nvr_t *nvr, DiskVolumeSeqnum_t seqnum);
