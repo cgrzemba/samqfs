@@ -32,14 +32,13 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 #include "sam/osversion.h"
 
 /*
  * #define	MEM_DEBUG
  */
-#define	MAX(x, y)	(((x) > (y)) ? (x) : (y))
 
 #ifdef MEM_DEBUG
 #define	KMA(x, y)	sam_quota_local_kma(x, y)
@@ -49,6 +48,13 @@
 #define	OPTRACE(w, x, y, z)
 #endif
 
+#define	MAX(x, y)	(((x) > (y)) ? (x) : (y))
+
+#if defined(SOL_11_ABOVE)
+#define	GTE_ZERO(a)	(a)
+#else
+#define	GTE_ZERO(a)	((a) >= 0 ? (a) : (-1))
+#endif
 
 /* ----- UNIX Includes */
 
@@ -413,10 +419,10 @@ sam_quota_get_index_di(sam_disk_inode_t *di, int type)
 		return (MAX(-1, di->admin_id));
 
 	case SAM_QUOTA_GROUP:
-		return (MAX(-1, di->gid));
+		return (GTE_ZERO(di->gid));
 
 	case SAM_QUOTA_USER:
-		return (MAX(-1, di->uid));
+		return (GTE_ZERO(di->uid));
 
 	default:
 		cmn_err(CE_WARN, "bad quota type: %d", type);
