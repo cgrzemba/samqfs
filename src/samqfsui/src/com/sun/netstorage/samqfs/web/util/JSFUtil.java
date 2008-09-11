@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.8 2008/08/06 23:44:08 ronaldso Exp $
+// ident	$Id: JSFUtil.java,v 1.9 2008/09/11 00:00:19 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -107,13 +107,13 @@ public class JSFUtil {
         return req;
     }
 
-    /** 
+    /**
      * convenience method to retrieve the response object associated with the
      * user request currently being handled
      */
     public static HttpServletResponse getResponse() {
         HttpServletResponse response = null;
-        
+
         FacesContext fcontext = FacesContext.getCurrentInstance();
         if (fcontext != null) {
             ExternalContext econtext = fcontext.getExternalContext();
@@ -122,10 +122,10 @@ public class JSFUtil {
                 response = (HttpServletResponse)econtext.getResponse();
             }
         }
-        
+
         return response;
     }
-    
+
     /** return the users current locale */
     public static Locale getLocale() {
         HttpServletRequest request = getRequest();
@@ -179,8 +179,9 @@ public class JSFUtil {
         try {
             message = bundle.getString(key);
         } catch (MissingResourceException mre) {
-            // do nothing for now.
-            // TODO: log this
+            TraceUtil.trace1("Missing Resource Exception caught! key: " + key);
+            LogUtil.error("Missing Resource Exception caught! key: " + key);
+            return key;
         }
 
         return formatMessage((message != null ? message : key), arg);
@@ -240,7 +241,7 @@ public class JSFUtil {
         String targetURL = request.getContextPath() + url + params;
 
         try {
-System.out.println("Forward to URL: " + targetURL);
+            TraceUtil.trace2("Forward to URL: " + targetURL);
             // Redirect to the particular JATO page
             response.sendRedirect(targetURL);
 

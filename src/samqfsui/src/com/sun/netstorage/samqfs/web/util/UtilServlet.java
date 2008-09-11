@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: UtilServlet.java,v 1.12 2008/08/06 17:41:51 ronaldso Exp $
+// ident	$Id: UtilServlet.java,v 1.13 2008/09/11 00:00:19 ronaldso Exp $
 
 
 package com.sun.netstorage.samqfs.web.util;
@@ -108,8 +108,6 @@ public class UtilServlet extends AppServletBase {
                 TraceUtil.trace1(
                     "Error reading host.conf : " + e.getMessage());
             }
-        } else { // initalize an empty map
-            hostModelMap = new HashMap();
         }
 
         // save the host model map

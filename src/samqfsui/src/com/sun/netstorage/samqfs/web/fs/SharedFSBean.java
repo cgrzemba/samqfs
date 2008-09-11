@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.15 2008/09/03 19:46:03 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.16 2008/09/11 00:00:18 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -111,6 +111,7 @@ public class SharedFSBean implements Serializable {
     protected String confirmClearFaultSn = null;
 
     /** Holds table information in Client Summary Page. */
+    protected String clientPageTitle = null;
     protected TableRowGroup clientSummaryTableRowGroup = null;
     protected Select selectClient = new Select("clientTable");
     protected String clientTableSelectedOption = null;
@@ -375,7 +376,7 @@ public class SharedFSBean implements Serializable {
         params += "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
              + "=" + getFSName();
 
-        // Check util/PageInfo.java, 36 is the number for SharedFSSummary
+        // Construct necessary information for breadcrumb links
         params += "&" + Constants.SessionAttributes.PAGE_PATH + "=" +
             // FS Summary
             PageInfo.getPageInfo().
@@ -391,13 +392,13 @@ public class SharedFSBean implements Serializable {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
 
-        if ("editmo".equals(selected)){
+        if (summaryBean.menuOptions[0][1].equals(selected)){
             forwardToMountOptionsPage();
-        } else if ("mount".equals(selected)) {
+        } else if (summaryBean.menuOptions[1][1].equals(selected)) {
             executeCommand(true);
-        } else if ("unmount".equals(selected)) {
+        } else if (summaryBean.menuOptions[2][1].equals(selected)) {
             executeCommand(false);
-        } else if ("removecn".equals(selected)) {
+        } else if (summaryBean.menuOptions[3][1].equals(selected)) {
             forwardToClientPage(SharedFSFilter.FILTER_NONE);
         }
     }
@@ -476,6 +477,15 @@ public class SharedFSBean implements Serializable {
         this.clientTableRowGroup = clientTableRowGroup;
     }
 
+    public String getClientPageTitle() {
+        clientPageTitle = clientBean.getPageTitle(getFSName());
+        return clientPageTitle;
+    }
+
+    public void setClientPageTitle(String clientPageTitle) {
+        this.clientPageTitle = clientPageTitle;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Helper methods
 
@@ -485,6 +495,9 @@ public class SharedFSBean implements Serializable {
 
     private FileSystem getFileSystem() throws SamFSException {
         String fsName = getFSName();
+
+        TraceUtil.trace3("Remote Call: Retrieve fs object: " + fsName);
+
         SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
         if (appModel == null) {
             throw new SamFSException("App model is null");
@@ -495,6 +508,9 @@ public class SharedFSBean implements Serializable {
 
     private SamQFSSystemSharedFSManager getSharedFSManager()
         throws SamFSException {
+
+        TraceUtil.trace3("Remote Call: Retrieve shared fs mgr obj!");
+
         SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
 
         if (appModel == null) {
@@ -554,9 +570,29 @@ public class SharedFSBean implements Serializable {
             FileSystem thisFS = getFileSystem();
 
             if (mount) {
+                LogUtil.info(
+                    this.getClass(),
+                    "executeCommand",
+                    "Start mounting shared fs: " + thisFS.getName());
+
                 thisFS.mount();
+
+                LogUtil.info(
+                    this.getClass(),
+                    "executeCommand",
+                    "Done mounting shared fs: " + thisFS.getName());
             } else {
+                LogUtil.info(
+                    this.getClass(),
+                    "executeCommand",
+                    "Start un-mounting shared fs: " + thisFS.getName());
+
                 thisFS.unmount();
+
+                LogUtil.info(
+                    this.getClass(),
+                    "executeCommand",
+                    "Done un-mounting shared fs: " + thisFS.getName());
             }
             setAlertInfo(
                 Constants.Alert.INFO,
@@ -568,11 +604,14 @@ public class SharedFSBean implements Serializable {
                 null);
 
         } catch (SamFSException samEx){
+            TraceUtil.trace1("SamFSException caught!", samEx);
+            LogUtil.error(this, samEx);
             SamUtil.processException(
-                    samEx,
-                    this.getClass(),
-                    "executeCommand",samEx.getMessage(),
-                    JSFUtil.getServerName());
+                samEx,
+                this.getClass(),
+                "getSummaryData",
+                samEx.getMessage(),
+                JSFUtil.getServerName());
             setAlertInfo(
                 Constants.Alert.ERROR,
                 mount ?
@@ -705,9 +744,23 @@ public class SharedFSBean implements Serializable {
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
+            LogUtil.info(
+                    this.getClass(),
+                    "handleRemoveClient",
+                    "Start removing client for shared fs: " + getFSName() +
+                    " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
             sharedFSManager.removeClients(JSFUtil.getServerName(),
                                           getFSName(),
                                           selectedClients);
+            LogUtil.info(
+                    this.getClass(),
+                    "handleRemoveClient",
+                    "Done removing client for shared fs: " + getFSName() +
+                    " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
 
             setAlertInfo(
                 Constants.Alert.INFO,
@@ -716,6 +769,14 @@ public class SharedFSBean implements Serializable {
                     ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
         } catch (SamFSException samEx) {
+            TraceUtil.trace1("SamFSException caught!", samEx);
+            LogUtil.error(this, samEx);
+            SamUtil.processException(
+                samEx,
+                this.getClass(),
+                "handleRemoveClient",
+                samEx.getMessage(),
+                JSFUtil.getServerName());
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(
@@ -784,8 +845,9 @@ public class SharedFSBean implements Serializable {
 
     public void handleTableMenuSelection(ActionEvent event) {
         String [] selectedClients = getSelectedKeys();
-        DropDown dropDown = (DropDown) event.getComponent();
-        String selected = (String) dropDown.getSelected();
+        String selected = getClientTableSelectedOption();
+
+        TraceUtil.trace3("handleTableMenuSelection: selected: " + selected);
 
         if (clientBean.menuOptions[0][1].equals(selected)) {
             forwardToMountOptionsPage();
@@ -799,32 +861,95 @@ public class SharedFSBean implements Serializable {
                                                 getSharedFSManager();
             // mount
             if (clientBean.menuOptions[1][1].equals(selected)) {
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Start mounting clients for shared fs: " + getFSName() +
+                    " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 sharedFSManager.mountClients(
                     JSFUtil.getServerName(), getFSName(), selectedClients);
+
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Done mounting clients for shared fs: " + getFSName() +
+                    " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 message = "SharedFS.message.mountclients.ok";
                 errorMessage = "SharedFS.message.mountclients.failed";
 
             // unmount
             } else if (clientBean.menuOptions[2][1].equals(selected)) {
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Start un-mounting clients for shared fs: " + getFSName() +
+                    " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 sharedFSManager.unmountClients(
                     JSFUtil.getServerName(), getFSName(), selectedClients);
+
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Done un-mounting clients for shared fs: " + getFSName() +
+                    " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 message = "SharedFS.message.unmountclients.ok";
                 errorMessage = "SharedFS.message.unmountclients.failed";
 
             // Enable Access
             } else if (clientBean.menuOptions[3][1].equals(selected)) {
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Start enabling access clients for shared fs: " +
+                    getFSName() + " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 sharedFSManager.setClientState(
                     JSFUtil.getServerName(), getFSName(),
                     selectedClients, true);
+
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Done enabling access clients for shared fs: " +
+                    getFSName() + " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 message = "SharedFS.message.enableclients.ok";
                 errorMessage = "SharedFS.message.enableclients.failed";
             // Disable Access
             } else if (clientBean.menuOptions[4][1].equals(selected)) {
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Start disabling access clients for shared fs: " +
+                    getFSName() + " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 sharedFSManager.setClientState(
                     JSFUtil.getServerName(), getFSName(),
                     selectedClients, false);
+
+                LogUtil.info(
+                    this.getClass(),
+                    "handleTableMenuSelection",
+                    "Done disabling access clients for shared fs: " +
+                    getFSName() + " Clients: " +
+                    ConversionUtil.arrayToStr(selectedClients, ','));
+
                 message = "SharedFS.message.disableclients.ok";
                 errorMessage = "SharedFS.message.disableclients.failed";
+            } else {
+                // Should never happen!
+                TraceUtil.trace1("Client Bean: Unknown operation: " + selected);
             }
 
             setAlertInfo(
@@ -834,6 +959,14 @@ public class SharedFSBean implements Serializable {
                     ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
         } catch (SamFSException samEx) {
+            TraceUtil.trace1("SamFSException caught!", samEx);
+            LogUtil.error(this, samEx);
+            SamUtil.processException(
+                samEx,
+                this.getClass(),
+                "handleTableMenuSelection",
+                samEx.getMessage(),
+                JSFUtil.getServerName());
             setAlertInfo(
                 Constants.Alert.ERROR,
                 JSFUtil.getMessage(

@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.11 2008/09/03 19:46:03 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.12 2008/09/11 00:00:18 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -62,7 +62,7 @@
               detail="#{SharedFSBean.alertDetail}"/>
     <ui:contentPageTitle
         id="pageTitle"
-        title="#{samBundle['SharedFS.pagetitle.client']}">
+        title="#{SharedFSBean.clientPageTitle}">
 
     <ui:markup tag="br" singleton="true"/>
     <ui:staticText id="textInstruction" text="#{samBundle['SharedFS.help.client.pageinstruction']}" style="margin:10px"/>
@@ -89,9 +89,8 @@
                            onClick="if (handleButtonRemove() == false) return false;"
                            actionListener="#{SharedFSBean.handleRemoveClient}"/>
                 <ui:dropDown
-                    id="Menu"
+                    id="MenuTop"
                     submitForm="true"
-                    forgetValue="true"
                     onChange="if (handleClientDropDownMenu(this) == false) return false;"
                     selected="#{SharedFSBean.clientTableSelectedOption}"
                     items="#{SharedFSBean.clientTableMenuOptions}"
@@ -106,12 +105,11 @@
                            onClick="return launchAddClientsWizard(this);"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
-                           onClick="if (handleOperation(true) == false) return false;"
+                           onClick="if (handleButtonRemove() == false) return false;"
                            actionListener="#{SharedFSBean.handleRemoveClient}"/>
                 <ui:dropDown
-                    id="Menu"
+                    id="MenuBottom"
                     submitForm="true"
-                    forgetValue="true"
                     onChange="if (handleClientDropDownMenu(this) == false) return false;"
                     selected="#{SharedFSBean.clientTableSelectedOption}"
                     items="#{SharedFSBean.clientTableMenuOptions}"
