@@ -34,7 +34,7 @@
  * server from a remote cluster node.
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -127,9 +127,13 @@ checkInodesFile(struct FsInfo *fp)
 	int		l, rc;
 	char	cmd[MAXPATHLEN+64];
 
+	scds_syslog_debug(DBG_LVL_HIGH, "checkInodesFile - Begin");
+
 	l = snprintf(cmd, sizeof (cmd), "/bin/ls -l %s/.inodes", fp->fi_mntpt);
 	if (l >= sizeof (cmd)) {
 		scds_syslog(LOG_ERR, "%s: mount pathname too long", fp->fi_fs);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "checkInodesFile - End/Err");
 		return (1);
 	}
 	/* Suppress ls command output */
@@ -137,6 +141,7 @@ checkInodesFile(struct FsInfo *fp)
 
 	rc = run_system(LOG_ERR, cmd);
 
+	scds_syslog_debug(DBG_LVL_HIGH, "checkInodesFile - End");
 	return (rc);
 }
 
@@ -164,18 +169,28 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 	char			*curmaster = NULL;
 	struct sam_fs_info fsi;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "switchOver - Begin");
+
 	if (!fp->fi_fs || !fp->fi_mntpt) {
+		scds_syslog_debug(DBG_LVL_MED,
+		    "Null file set or mount point name");
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "switchOver - End/Err");
 		return (1);
 	}
 
 	if (GetRgInfo(argc, argv, &rg) < 0) {
-		return (1);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "switchOver - End/Err");
+		return (1);		/* error logged by GetRgInfo */
 	}
 
 	if (GetFsInfo(fp->fi_fs, &fsi) < 0) {
 		scds_syslog(LOG_ERR,
 		    "%s: Couldn't get file system info",
 		    fp->fi_fs, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "switchOver - End/Err");
 		return (1);
 	}
 
@@ -317,6 +332,8 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 				mode = FX_INVOLUNTARY;
 			}
 		}
+		scds_syslog_debug(DBG_LVL_MED,
+		    "Sleep 2 seconds then check qfs state");
 		(void) sleep(2);
 
 		/* Wait for stable state */
@@ -334,6 +351,7 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 		free(curmaster);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "switchOver - End rc = %d", rc);
 	return (rc);
 }
 
@@ -343,15 +361,19 @@ failVoluntary(char *qfsdev, char *newmaster)
 {
 	int rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "failVoluntary - Begin");
 	/* Set new master */
 	if ((rc = set_server(qfsdev, newmaster, FSD)) != 0) {
 		/* 22664 */
 		scds_syslog(LOG_ERR,
 		    "%s: Error failing over to new server (%s): %s.",
 		    qfsdev, newmaster, strerror(rc));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "failVoluntary - End/Err");
 		return (rc);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "failVoluntary - End");
 	return (0);
 }
 
@@ -364,6 +386,8 @@ failInvoluntary(struct RgInfo *rgp,
 {
 	int		rc;
 	int		used_prevsrv = 0;
+
+	scds_syslog_debug(DBG_LVL_HIGH, "failInvoluntary - Begin");
 
 	/*
 	 * If we don't have an oldmaster and this is an involuntary
@@ -403,6 +427,8 @@ failInvoluntary(struct RgInfo *rgp,
 				scds_syslog(LOG_ERR, "%s: Error clearing ",
 				    "the metadata server, err=%s.",
 				    qfsdev, strerror(rc));
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "failInvoluntary - End/Err rc = %d", rc);
 				return (rc);
 			}
 		}
@@ -417,6 +443,8 @@ failInvoluntary(struct RgInfo *rgp,
 			/* 22661 */
 			scds_syslog(LOG_ERR, "%s: Error waiting for fencing.",
 			    qfsdev);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "failInvoluntary - End/Err rc = %d", rc);
 			return (rc);
 		}
 	}
@@ -427,8 +455,11 @@ failInvoluntary(struct RgInfo *rgp,
 		scds_syslog(LOG_ERR,
 		    "%s: Error failing over to new server (%s): %s",
 		    qfsdev, newmaster, strerror(rc));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "failInvoluntary - End/Err rc = %d", rc);
 		return (rc);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "failInvoluntary - End");
 	return (0);
 }

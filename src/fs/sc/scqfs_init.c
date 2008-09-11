@@ -40,7 +40,7 @@
  * symlink to scqfs_init).
  */
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #include <strings.h>
 #include <unistd.h>
@@ -145,7 +145,13 @@ ProcFS(
 	int rc, leader;
 	int fenced = FALSE;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - Begin");
+
 	if (!fp->fi_fs || !fp->fi_mntpt) {
+		scds_syslog_debug(DBG_LVL_MED,
+		    "Null file set or mount point name");
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS - End/Err");
 		return (1);
 	}
 
@@ -153,11 +159,15 @@ ProcFS(
 		scds_syslog(LOG_NOTICE,
 		    "FS %s: devices not available; waiting.",
 		    fp->fi_fs);
+		scds_syslog_debug(DBG_LVL_MED,
+		    "ProcFS - Device unavailable/sleeping for 15 seconds");
 		(void) sleep(15);
 	}
 
 	if (GetRgInfo(argc, argv, &rg) < 0) {
-		return (1);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS - End/Err");
+		return (1);		/* errors logged by GetRgInfo */
 	}
 
 	/*
@@ -170,7 +180,9 @@ ProcFS(
 restart:
 	for (;;) {
 		if (GetMdsInfo(&rg, fp) < 0) {
-			return (1);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "ProcFS - End/Err");
+			return (1);		/* error logged by GetMdsInfo */
 		}
 
 		if (fp->fi_deadmds && !fenced) {
@@ -179,6 +191,8 @@ restart:
 				scds_syslog(LOG_ERR,
 				    "%s: Error waiting for fencing.",
 				    fp->fi_fs);
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "ProcFS - End/Err");
 				return (1);
 			}
 			if (rc == 0) {
@@ -202,6 +216,8 @@ restart:
 		scds_syslog(LOG_ERR,
 		    "%s: Error failing over to new server (%s): %s",
 		    fp->fi_fs, rg.rg_nodename, strerror(rc));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS - End/Err");
 		return (1);
 	}
 
@@ -217,11 +233,15 @@ restart:
 			 */
 			while (fp->fi_deadmds) {
 				if (GetMdsInfo(&rg, fp) < 0) {
+					scds_syslog_debug(DBG_LVL_HIGH,
+					    "ProcFS - End/Err");
 					return (1);
 				}
 				if (fp->fi_deadmds) {
 					if (++count > 15) {
 						/* leader left? */
+						scds_syslog_debug(DBG_LVL_MED,
+						    "Server wait timeout");
 						goto restart;
 					}
 					(void) sleep(2);
@@ -256,5 +276,6 @@ restart:
 	 */
 	(void) set_cluster_lease_mount_opts(&rg, fp->fi_fs);
 
+	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - End");
 	return (rc == 0 ? 0 : 1);
 }

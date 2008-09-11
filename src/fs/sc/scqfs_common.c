@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,6 +91,8 @@ GetRgInfo(int ac, char **av, struct RgInfo *rgp)
 		return (-1);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - Begin");
+
 	/*
 	 * Get Cluster handle.
 	 */
@@ -99,6 +101,7 @@ GetRgInfo(int ac, char **av, struct RgInfo *rgp)
 		/* 22644 */
 		scds_syslog(LOG_ERR,
 		    "Unable to get cluster handle: %s.", scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End/Err");
 		return (-1);
 	}
 
@@ -111,6 +114,7 @@ GetRgInfo(int ac, char **av, struct RgInfo *rgp)
 		/* 22645 */
 		scds_syslog(LOG_ERR, "Unable to get local node name: %s.",
 		    scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End/Err");
 		return (-1);
 	}
 
@@ -121,6 +125,7 @@ GetRgInfo(int ac, char **av, struct RgInfo *rgp)
 	if (!rgp->rg_name) {
 		/* 22688 */
 		scds_syslog(LOG_ERR, "Unable to get resource group name.");
+		scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End/Err");
 		return (-1);
 	}
 
@@ -130,6 +135,7 @@ retry:
 		/* 22697 */
 		scds_syslog(LOG_ERR, "Unable to open resource group '%s': %s.",
 		    rgp->rg_name, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End/Err");
 		return (-1);
 	}
 
@@ -154,6 +160,7 @@ retry:
 		scds_syslog(LOG_ERR,
 		    "Unable to get nodelist for resource group %s.",
 		    rgp->rg_name);
+		scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End/Err");
 		return (-1);
 	}
 
@@ -170,6 +177,7 @@ retry:
 		scds_syslog(LOG_ERR,
 		    "Failed to retrieve the property %s: %s.",
 		    QFSFS, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End/Err");
 		return (-1);
 	}
 	rgp->rg_mntpts = xprop->val.val_strarray;
@@ -217,6 +225,8 @@ retry:
 		scds_free_ext_property(mprop);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "GetRgInfo - End");
+
 	return (0);
 }
 
@@ -229,6 +239,8 @@ void
 RelRgInfo(struct RgInfo *rgp)
 {
 	scha_err_t e;
+
+	scds_syslog_debug(DBG_LVL_HIGH, "RelRgInfo - Begin");
 
 	if ((e = scha_resourcegroup_close(rgp->rg_rgh)) != SCHA_ERR_NOERR) {
 		scds_syslog(LOG_ERR,
@@ -243,6 +255,8 @@ RelRgInfo(struct RgInfo *rgp)
 	scds_close(&rgp->rg_scdsh);
 
 	bzero((char *)rgp, sizeof (*rgp));
+
+	scds_syslog_debug(DBG_LVL_HIGH, "RelRgInfo - End");
 }
 
 
@@ -255,6 +269,8 @@ int
 IsLeader(struct RgInfo *rgp)
 {
 	int i, leader = FALSE;
+
+	scds_syslog_debug(DBG_LVL_HIGH, "IsLeader - Begin");
 
 	for (i = 0; i < rgp->rg_nodes->array_cnt; i++) {
 		scha_node_state_t	nstate;
@@ -278,6 +294,9 @@ IsLeader(struct RgInfo *rgp)
 		}
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "IsLeader - End: Leader = %d",
+	    leader);
+
 	return (leader);
 }
 
@@ -298,6 +317,8 @@ IsNodeUp(
 	scha_err_t		e;
 	scha_node_state_t	nstate;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "IsNodeUp - Begin");
+
 	/* Find out the membership status of the node */
 	e = scha_cluster_get(rgp->rg_cl, SCHA_NODESTATE_NODE, hostname,
 	    &nstate);
@@ -306,6 +327,7 @@ IsNodeUp(
 		scds_syslog(LOG_ERR,
 		    "Failed to get nodeid for node <%s>: %s.",
 		    hostname, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH, "IsNodeUp - End/Err");
 		return (-1);
 	}
 
@@ -314,6 +336,8 @@ IsNodeUp(
 	} else {
 		*is_up = B_FALSE;
 	}
+
+	scds_syslog_debug(DBG_LVL_HIGH, "IsNodeUp - End");
 
 	return (0);
 }
@@ -329,6 +353,8 @@ FreeFileSystemInfo(struct FsInfo *fip)
 {
 	int i;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "FreeFileSystemInfo - Begin");
+
 	for (i = 0; fip[i].fi_mntpt != NULL; i++) {
 		free((void *)fip[i].fi_mntpt);
 		if (fip[i].fi_fs != NULL) {
@@ -336,6 +362,8 @@ FreeFileSystemInfo(struct FsInfo *fip)
 		}
 	}
 	free((void *)fip);
+
+	scds_syslog_debug(DBG_LVL_HIGH, "FreeFileSystemInfo - End");
 }
 
 
@@ -358,6 +386,8 @@ get_qfsdev(char *qfsfs)
 	int found = FALSE;
 	struct vfstab vp;
 	FILE *fp;
+
+	scds_syslog_debug(DBG_LVL_HIGH, "get_qfsdev - Begin");
 
 	/* Check for this entry in /etc/vfstab */
 	fp = fopen(VFSTAB, "r");
@@ -456,9 +486,11 @@ get_qfsdev(char *qfsfs)
 		goto finished;
 	}
 
-	scds_syslog_debug(1, "QFSDEV is <%s>.", qfsdev);
+	scds_syslog_debug(DBG_LVL_LOW, "QFSDEV is <%s>.", qfsdev);
 
 finished:
+
+	scds_syslog_debug(DBG_LVL_HIGH, "get_qfsdev - End");
 
 	return (qfsdev);
 }
@@ -539,11 +571,15 @@ GetFileSystemInfo(struct RgInfo *rgp)
 	int i, j, fscount;
 	struct FsInfo *fip;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "GetFileSystemInfo - Begin");
+
 	fscount = rgp->rg_mntpts->array_cnt;
 	fip = (struct FsInfo *)malloc((fscount + 1) * sizeof (*fip));
 	if (fip == NULL) {
 		/* 22602 */
 		scds_syslog(LOG_ERR, "Out of Memory");
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "GetFileSystemInfo - End/Err");
 		return (NULL);
 	}
 	bzero((char *)fip, (fscount + 1) * sizeof (*fip));
@@ -591,6 +627,9 @@ GetFileSystemInfo(struct RgInfo *rgp)
 				fip[i].fi_dep = j;
 				fip[i].fi_flags |= FS_FL_DEPDS;
 				fip[j].fi_flags |= FS_FL_DEPDON;
+				scds_syslog_debug(DBG_LVL_LOW,
+				    "fs %s nested under fs %s",
+				    fip[i].fi_mntpt, fip[j].fi_mntpt);
 				break;
 			}
 		}
@@ -600,10 +639,12 @@ GetFileSystemInfo(struct RgInfo *rgp)
  */
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "GetFileSystemInfo - End");
 	return (fip);
 
 err:
 	FreeFileSystemInfo(fip);
+	scds_syslog_debug(DBG_LVL_HIGH, "GetFileSystemInfo - End/Err");
 	return (NULL);
 }
 
@@ -625,6 +666,8 @@ get_qfshosts(char *fsname,
 	char *devrname;
 	int rc, errnum;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "get_qfshosts - Begin");
+
 	switch (method) {
 	case FSD:
 		/* Use the FS to retrieve the hosts table */
@@ -640,6 +683,8 @@ get_qfshosts(char *fsname,
 				    "%s:  Filesystem %s not mounted."),
 				    program_name, fsname);
 			}
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "get_qfshosts - End/Err");
 			return (errno);
 		}
 		break;
@@ -656,12 +701,16 @@ get_qfshosts(char *fsname,
 			dprintf(stderr, catgets(catfd, SET, 22675,
 			    "%s: Unable to get partition information: %s."),
 			    fsname, strerror(errno));
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "get_qfshosts - End/Err");
 			return (rc);
 		}
 
 		/* Get hosts table */
 		if ((devrname = getfullrawname(pt.pt_name)) == NULL) {
 			scds_syslog(LOG_ERR, "Out of Memory");
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "get_qfshosts - End/Err");
 			return (ENOMEM);
 		}
 		rc = SamGetRawHosts(devrname, htp, htbufsize,
@@ -675,6 +724,8 @@ get_qfshosts(char *fsname,
 			dprintf(stderr, catgets(catfd, SET, 22671,
 			    "%s: Unable to get QFS hosts table.  Error: %s"),
 			    fsname, errstr);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "get_qfshosts - End/Err");
 			return (rc);
 		}
 	}
@@ -688,6 +739,8 @@ get_qfshosts(char *fsname,
 		dprintf(stderr, catgets(catfd, SET, 13728,
 		    "%s: Unrecognized version in host file (%d)."),
 		    program_name, htp->info.ht.version);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "get_qfshosts - End/Err");
 		return (EINVAL);
 	}
 
@@ -700,8 +753,12 @@ get_qfshosts(char *fsname,
 		dprintf(stderr, catgets(catfd, SET, 13732,
 		    "%s:  Host table length out of range (%d)."),
 		    program_name, htp->info.ht.length);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "get_qfshosts - End/Err");
 		return (EINVAL);
 	}
+
+	scds_syslog_debug(DBG_LVL_HIGH, "get_qfshosts - End");
 
 	return (0);
 }
@@ -726,6 +783,8 @@ get_serverinfo(char *fs,
 	upath_t host;
 	int rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "get_serverinfo - Begin");
+
 	if (htb == NULL) {
 		htb =
 		    (sam_host_table_blk_t *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
@@ -734,6 +793,8 @@ get_serverinfo(char *fs,
 	}
 
 	if ((rc = get_qfshosts(fs, htb, htbufsize, RAW)) < 0) {
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "get_serverinfo - End/Err");
 		return (-1);		/* Errors logged by get_qfshosts */
 	}
 
@@ -747,6 +808,8 @@ get_serverinfo(char *fs,
 				scds_syslog(LOG_ERR,
 				    "FS %s: No previous master for QFS device.",
 				    fs);
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "get_serverinfo - End/Err");
 				return (-1);
 			}
 			*prevsrv = strdup(&host[0]);
@@ -762,6 +825,8 @@ get_serverinfo(char *fs,
 				/* 22629 */
 				scds_syslog(LOG_ERR,
 				    "FS %s: No master for QFS device.", fs);
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "get_serverinfo - End/Err");
 				return (-1);
 			}
 			*server = strdup(&host[0]);
@@ -778,11 +843,15 @@ get_serverinfo(char *fs,
 				scds_syslog(LOG_ERR,
 				    "FS %s: No pending master for QFS device.",
 				    fs);
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "get_serverinfo - End/Err");
 				return (-1);
 			}
 			*pendsrv = strdup(&host[0]);
 		}
 	}
+
+	scds_syslog_debug(DBG_LVL_HIGH, "get_serverinfo - End");
 
 	return (0);
 }
@@ -810,13 +879,19 @@ GetMdsState(scha_cluster_t cl,
 	scha_node_state_t nstate;
 	scha_err_t e;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "GetMdsState - Begin");
+
 	*dead = FALSE;
 	if (server == NULL || streq(server, NO_SERVER)) {
 		*dead = TRUE;
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "GetMdsState - End/Err: MDS dead");
 		return (0);
 	}
 	if (pendsrv == NULL || streq(pendsrv, NO_SERVER)) {
 		*dead = TRUE;
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "GetMdsState - End/Err: Pending MDS dead");
 		return (0);
 	}
 	e = scha_cluster_get(cl, SCHA_NODESTATE_NODE, server, &nstate);
@@ -825,9 +900,13 @@ GetMdsState(scha_cluster_t cl,
 		scds_syslog(LOG_ERR,
 		    "Failed to get state for node <%s>: %s.",
 		    server, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "GetMdsState - End/Err");
 		return (-1);
 	}
 	if (nstate == SCHA_NODE_DOWN) {
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "GetMdsState - MDS dead");
 		*dead = TRUE;
 	} else if (!streq(server, pendsrv)) {
 		/*
@@ -842,6 +921,8 @@ GetMdsState(scha_cluster_t cl,
 			scds_syslog(LOG_ERR,
 			    "Failed to get state for node <%s>: %s.",
 			    pendsrv, scds_error_string(e));
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "GetMdsState - End/Err");
 			return (-1);
 		}
 		if (nstate == SCHA_NODE_DOWN) {
@@ -849,6 +930,7 @@ GetMdsState(scha_cluster_t cl,
 		}
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "GetMdsState - End");
 	return (0);
 }
 
@@ -864,6 +946,8 @@ GetMdsState(scha_cluster_t cl,
 int
 GetMdsInfo(struct RgInfo *rgp, struct FsInfo *fp)
 {
+	scds_syslog_debug(DBG_LVL_HIGH, "GetMdsInfo - Begin");
+
 	if (fp->fi_server) {
 		free(fp->fi_server);
 		fp->fi_server = NULL;
@@ -876,6 +960,7 @@ GetMdsInfo(struct RgInfo *rgp, struct FsInfo *fp)
 		/* 22691 */
 		scds_syslog(LOG_ERR, "FS %s: Can't determine server.",
 		    fp->fi_fs);
+		scds_syslog_debug(DBG_LVL_HIGH, "GetMdsInfo - End/Err");
 		return (-1);
 	}
 
@@ -884,8 +969,10 @@ GetMdsInfo(struct RgInfo *rgp, struct FsInfo *fp)
 		/* 22692 */
 		scds_syslog(LOG_ERR,
 		    "FS %s: Can't get cluster state for server.", fp->fi_fs);
+		scds_syslog_debug(DBG_LVL_HIGH, "GetMdsInfo - End/Err");
 		return (-1);
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "GetMdsInfo - End");
 	return (0);
 }
 
@@ -900,21 +987,34 @@ CheckFsDevs(char *fs)		/* QFS family set name (not mount point) */
 	struct sam_mount_info mp;
 	char rdbuf[DEV_BSIZE];
 
+	scds_syslog_debug(DBG_LVL_HIGH, "CheckFsDevs - Begin");
+
 	if (GetFsMount(fs, &mp) < 0) {
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "CheckFsDevs - End/Err");
 		return (-1);
 	}
 
 	for (i = 0; i < mp.params.fs_count; i++) {
 		if ((fd = open(mp.part[i].pt_name, O_RDONLY|O_LARGEFILE)) < 0) {
+			scds_syslog_debug(DBG_LVL_LOW,
+			    "File open error: %s", mp.part[i].pt_name);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "CheckFsDevs - End/Err");
 			return (-1);
 		}
 		n = read(fd, rdbuf, DEV_BSIZE);
 		if (n != DEV_BSIZE) {
 			(void) close(fd);
+			scds_syslog_debug(DBG_LVL_LOW,
+			    "File read error: %s",  mp.part[i].pt_name);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "CheckFsDevs - End/Err");
 			return (-1);
 		}
 		(void) close(fd);
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "CheckFsDevs - End");
 	return (0);
 }
 
@@ -940,16 +1040,21 @@ fork_proc(int ac,
 	pid_t pid;
 	int rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "fork_proc - Begin");
+
 	switch (pid = fork()) {
 	case (pid_t)-1:			/* error */
 		/* 22641 */
 		scds_syslog(LOG_ERR,
 		    "%s: Fork failed.  Error: %s",
 		    fip->fi_mntpt, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH, "fork_proc - End/Err");
 		return (-1);
 
 	case 0:					/* child */
 		rc = (*fn)(ac, av, fip);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "fork_proc - Child end ret=%d", rc);
 		exit(rc);
 		/*NOTREACHED*/
 
@@ -957,6 +1062,7 @@ fork_proc(int ac,
 		fip->fi_pid = pid;
 		fip->fi_flags |= FS_FL_STARTED;
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "fork_proc - End");
 	return (0);
 }
 
@@ -984,6 +1090,8 @@ ForkProcs(int ac,
 {
 	int nfs, i, rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "Forkprocs - Begin");
+
 	/*
 	 * We've got the FS names, their mount points, and
 	 * the list of nodes that can serve as MDSes.  Now
@@ -1000,11 +1108,14 @@ ForkProcs(int ac,
 		/*
 		 * Don't bother forking if there's only one filesystem
 		 */
+		scds_syslog_debug(DBG_LVL_HIGH, "Forkprocs - End");
 		return (*fn)(ac, av, &fip[0]);
 	}
 
 	for (i = 0; i < nfs; i++) {
 		if (fork_proc(ac, av, &fip[i], fn) < 0) {
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "Forkprocs %d - End/Err", i);
 			return (FORK_EFORK);	/* error logged by fork_proc */
 		}
 	}
@@ -1061,6 +1172,7 @@ ForkProcs(int ac,
 			    "(pid %d, status=%#x)", pid, status);
 		}
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "Forkprocs - End");
 	return (rc);
 }
 
@@ -1086,6 +1198,8 @@ DepForkProcs(int ac,
 {
 	int nfs, i, rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "DepForkprocs - Begin");
+
 	for (nfs = 0; fip[nfs].fi_mntpt != NULL; ) {
 		nfs++;
 	}
@@ -1093,6 +1207,7 @@ DepForkProcs(int ac,
 		/*
 		 * Don't bother forking if there's only one filesystem
 		 */
+		scds_syslog_debug(DBG_LVL_HIGH, "DepForkprocs - End");
 		return (*fn)(ac, av, &fip[0]);
 	}
 
@@ -1109,6 +1224,8 @@ DepForkProcs(int ac,
 		if ((fip[i].fi_flags & FS_FL_DEPDS) == 0) {
 			if (fork_proc(ac, av, &fip[i], fn) < 0) {
 				/* error logged by fork_proc */
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "DepForkprocs %d - End/Err", i);
 				return (FORK_EFORK);
 			}
 		}
@@ -1169,6 +1286,9 @@ DepForkProcs(int ac,
 					if (status == 0) {
 						if (fork_proc(ac,
 						    av, &fip[j], fn) < 0) {
+							scds_syslog_debug(
+							    DBG_LVL_HIGH,
+						    "DepForkprocs - End/Err");
 							return (FORK_EFORK);
 						}
 					}
@@ -1192,6 +1312,7 @@ DepForkProcs(int ac,
 			    "(pid %d, status=%#x)", pid, status);
 		}
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "DepForkprocs - End");
 	return (rc);
 }
 
@@ -1218,6 +1339,8 @@ RevDepForkProcs(int ac,
 {
 	int nfs, i, rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "RevDepForkprocs - Begin");
+
 	for (nfs = 0; fip[nfs].fi_mntpt != NULL; ) {
 		nfs++;
 	}
@@ -1225,6 +1348,8 @@ RevDepForkProcs(int ac,
 		/*
 		 * Don't bother forking if there's only one filesystem
 		 */
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "RevDepForkprocs - End");
 		return (*fn)(ac, av, &fip[0]);
 	}
 
@@ -1241,6 +1366,8 @@ RevDepForkProcs(int ac,
 		if ((fip[i].fi_flags & FS_FL_DEPDON) == 0) {
 			if (fork_proc(ac, av, &fip[i], fn) < 0) {
 				/* error logged by fork_proc */
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "RevDepForkprocs - End/Err");
 				return (FORK_EFORK);
 			}
 		}
@@ -1309,6 +1436,8 @@ RevDepForkProcs(int ac,
 				if (fip[j].fi_mntpt == NULL) {
 					if (fork_proc(ac, av,
 					    &fip[fip[i].fi_dep], fn) < 0) {
+						scds_syslog_debug(DBG_LVL_HIGH,
+					    "RevDepForkprocs - End/Err");
 						return (FORK_EFORK);
 					}
 				}
@@ -1322,6 +1451,7 @@ RevDepForkProcs(int ac,
 			    "(pid %d, status=%#x)", pid, status);
 		}
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "RevDepForkprocs - End");
 	return (rc);
 }
 
@@ -1340,6 +1470,8 @@ mount_qfs(char *qfsfs)
 	int	count = 0;
 	char cmd[2048];
 
+	scds_syslog_debug(DBG_LVL_HIGH, "mount_qfs - Begin");
+
 	(void) snprintf(cmd, sizeof (cmd),
 	    "/usr/sbin/mount -F samfs %s", qfsfs);
 	while (TRUE) {
@@ -1354,6 +1486,7 @@ mount_qfs(char *qfsfs)
 		}
 		count++;
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "mount_qfs - End");
 	return (rc);
 }
 
@@ -1371,6 +1504,7 @@ umount_qfs(struct RgInfo *rgp, struct FsInfo *fip)
 	int	rc;
 	char cmd[PATH_MAX+64];
 
+	scds_syslog_debug(DBG_LVL_HIGH, "umount_qfs - Begin");
 	if (rgp->rg_umnt_wait == 0) {
 		(void) snprintf(cmd, sizeof (cmd),
 		    "/usr/sbin/umount -f %s", fip->fi_fs);
@@ -1380,6 +1514,7 @@ umount_qfs(struct RgInfo *rgp, struct FsInfo *fip)
 		    rgp->rg_umnt_wait, fip->fi_fs);
 	}
 	rc = run_system(LOG_ERR, cmd);
+	scds_syslog_debug(DBG_LVL_HIGH, "umount_qfs - End");
 	return (rc);
 }
 
@@ -1401,6 +1536,8 @@ validate_qfsdevs(char *qfsdev)
 	int i;
 	struct sam_mount_info mi;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_qfsdevs - Begin");
+
 	if (GetFsInfo(qfsdev, &mi.params) < 0) {
 		/* 22632 */
 		scds_syslog(LOG_ERR,
@@ -1409,6 +1546,8 @@ validate_qfsdevs(char *qfsdev)
 		dprintf(stderr, catgets(catfd, SET, 22632,
 		    "Couldn't get FS %s param info: %s."),
 		    qfsdev, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "validate_qfsdevs - End/Err");
 		return (B_FALSE);
 	}
 
@@ -1420,6 +1559,8 @@ validate_qfsdevs(char *qfsdev)
 		dprintf(stderr, catgets(catfd, SET, 22675,
 		    "%s: Unable to get partition information: %s."),
 		    qfsdev, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "validate_qfsdevs - End/Err");
 		return (B_FALSE);
 	}
 
@@ -1463,9 +1604,12 @@ validate_qfsdevs(char *qfsdev)
 			dprintf(stderr, catgets(catfd, SET, 22634,
 			    "Inappropriate path in FS %s device component: %s"),
 			    qfsdev, &mi.part[i].pt_name[0]);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "validate_qfsdevs - End/Err");
 			return (B_FALSE);
 		}
 	}
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_qfsdevs - End");
 	return (B_TRUE);
 }
 
@@ -1494,6 +1638,8 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 
 	char	***ATab;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_node - Begin");
+
 	if (htb == NULL) {
 		htb =
 		    (sam_host_table_blk_t *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
@@ -1508,6 +1654,7 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 		    "Error: %s", qfsdev, strerror(errno));
 		dprintf(stderr, "%s: Unable to get the QFS hosts table.  "
 		    "Error: %s", qfsdev, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
 		return (B_FALSE); /* Errors logged by get_qfshosts() */
 	}
 
@@ -1518,6 +1665,7 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 		    program_name, errmsg, errc);
 		dprintf(stderr, "%s:  Cannot convert hosts file (%s/%d).",
 		    program_name, errmsg, errc);
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
 		return (B_FALSE);
 	}
 
@@ -1537,6 +1685,7 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 		dprintf(stderr,
 		    "%s: Unable to find the host %s in the QFS hosts table.",
 		    qfsdev, nodename);
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
 		return (B_FALSE);
 	}
 
@@ -1553,6 +1702,7 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 		dprintf(stderr, "%s: Unable to find private link %s "
 		    "for host %s in the QFS hosts table.",
 		    qfsdev, nodepriv, nodename);
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
 		return (B_FALSE);
 	}
 
@@ -1563,9 +1713,11 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 		    qfsdev, priority, server);
 		dprintf(stderr, "%s: Invalid priority (%s) for server %s",
 		    qfsdev, priority, server);
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
 		return (B_FALSE);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End");
 	return (B_TRUE);
 }
 
@@ -1589,6 +1741,7 @@ validate_qfshosts(struct RgInfo *rgp, char *qfsdev)
 
 	scha_err_t		err;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_qfshosts - Begin");
 	if (htb == NULL) {
 		htb =
 		    (sam_host_table_blk_t *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
@@ -1603,6 +1756,7 @@ validate_qfshosts(struct RgInfo *rgp, char *qfsdev)
 		    "Error: %s", qfsdev, strerror(errno));
 		dprintf(stderr, "%s: Unable to get the QFS hosts table.  "
 		    "Error: %s", qfsdev, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_qfshosts - End/Err");
 		return (B_FALSE); /* Errors logged by get_qfshosts() */
 	}
 
@@ -1613,6 +1767,7 @@ validate_qfshosts(struct RgInfo *rgp, char *qfsdev)
 		    program_name, errmsg, errc);
 		dprintf(stderr, "%s:  Cannot convert hosts file (%s/%d).",
 		    program_name, errmsg, errc);
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_qfshosts - End/Err");
 		return (B_FALSE);
 	}
 
@@ -1665,6 +1820,7 @@ validate_qfshosts(struct RgInfo *rgp, char *qfsdev)
 	/* Free memory */
 	SamHostsFree(ATab);
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_qfshosts - End");
 	return (ecount ? B_FALSE : B_TRUE);
 }
 
@@ -1690,6 +1846,8 @@ get_qfsstate(char *fsname)
 	struct sam_fs_info fsi;
 	int	rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "get_qfsstate - Begin");
+
 	if (htb == NULL) {
 		htb =
 		    (sam_host_table_blk_t *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
@@ -1705,10 +1863,12 @@ get_qfsstate(char *fsname)
 		dprintf(stderr, catgets(catfd, SET, 22608,
 		    "Failed to get state of QFS filesystem %s: %s."),
 		    fsname, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH, "get_qfsstate - End/Err");
 		return (ST_ERROR);
 	}
 	if (get_qfshosts(fsname, htb, htbufsize, RAW)) {
 		/* Errors logged by get_qfshosts(); */
+		scds_syslog_debug(DBG_LVL_HIGH, "get_qfsstate - End/Err");
 		return (ST_ERROR);
 	}
 
@@ -1721,7 +1881,9 @@ get_qfsstate(char *fsname)
 		rc = ST_NOSRVR;
 	}
 
-	scds_syslog_debug(1, "QFS device %s is in state %d.", fsname, rc);
+	scds_syslog_debug(DBG_LVL_LOW,
+	    "QFS device %s is in state %d.", fsname, rc);
+	scds_syslog_debug(DBG_LVL_HIGH, "get_qfsstate - End");
 
 	return (rc);
 }
@@ -1754,6 +1916,8 @@ svc_validate(struct RgInfo *rgp, struct FsInfo *fip)
 	scha_err_t e;
 	int r, err = 0;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "svc_validate - Begin");
+
 	/* Get this node's private link name */
 	e = scha_cluster_get(rgp->rg_cl,
 	    SCHA_PRIVATELINK_HOSTNAME_LOCAL, &nodepriv);
@@ -1765,6 +1929,7 @@ svc_validate(struct RgInfo *rgp, struct FsInfo *fip)
 		dprintf(stderr,
 		    "Unable to get local private link name: %s.",
 		    scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH, "svc_validate - End/Err");
 		return (1);
 	}
 
@@ -1804,6 +1969,7 @@ svc_validate(struct RgInfo *rgp, struct FsInfo *fip)
 		}
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "svc_validate - End err = %d", err);
 	return (err);
 }
 
@@ -1837,6 +2003,8 @@ wait_for_stable_qfsstate(struct RgInfo *rgp,
 	int					iterations = 0;
 	boolean_t			stable = B_TRUE;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "wait_for_stable_qfsstate - Begin");
+
 	/*
 	 * Wait for error or success
 	 */
@@ -1852,6 +2020,8 @@ wait_for_stable_qfsstate(struct RgInfo *rgp,
 			}
 			scds_syslog(LOG_NOTICE,
 			    "%s: Switchover complete.", qfsdev);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "wait_for_stable_qfsstate - End");
 			return (FO_DONE);
 
 		case ST_NOSRVR:
@@ -1859,6 +2029,8 @@ wait_for_stable_qfsstate(struct RgInfo *rgp,
 			scds_syslog(LOG_NOTICE,
 			    "%s: Switchover completed to server (NONE).",
 			    qfsdev);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "wait_for_stable_qfsstate - End");
 			return (FO_NOSRVR);
 
 		case ST_PENDING:
@@ -1885,6 +2057,8 @@ wait_for_stable_qfsstate(struct RgInfo *rgp,
 				scds_syslog(LOG_ERR,
 				    "Failed to get state for node <%s>: %s.",
 				    oldmaster, scds_error_string(e));
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "wait_for_stable_qfsstate - End/Err");
 				return (FO_ERROR);
 			}
 
@@ -1898,6 +2072,8 @@ wait_for_stable_qfsstate(struct RgInfo *rgp,
 				    "%s: Previous metadata server %s left "
 				    "cluster during a voluntary switchover.",
 				    qfsdev, oldmaster);
+				scds_syslog_debug(DBG_LVL_HIGH,
+				    "wait_for_stable_qfsstate - End/Err");
 				return (FO_MDSDIED);
 			}
 		}
@@ -1922,15 +2098,19 @@ wait_for_stable_qfsstate(struct RgInfo *rgp,
 int
 mon_start(struct RgInfo *rgp)
 {
+	scds_syslog_debug(DBG_LVL_HIGH, "mon_start - Begin");
+
 	if (scds_pmf_start(rgp->rg_scdsh, SCDS_PMF_TYPE_MON,
 	    SCDS_PMF_SINGLE_INSTANCE, "scqfs_probe", 0) != SCHA_ERR_NOERR) {
 		/* 22612 */
 		scds_syslog(LOG_ERR, "Failed to start fault monitor.");
+		scds_syslog_debug(DBG_LVL_HIGH, "mon_start - End/Err");
 		return (1);
 	}
 
 	/* 22618 */
 	scds_syslog(LOG_INFO, "Started the fault monitor.");
+	scds_syslog_debug(DBG_LVL_HIGH, "mon_start - End");
 	return (0);
 }
 
@@ -1948,14 +2128,17 @@ mon_start(struct RgInfo *rgp)
 int
 mon_stop(struct RgInfo *rgp)
 {
+	scds_syslog_debug(DBG_LVL_HIGH, "mon_stop - Begin");
 	if (scds_pmf_stop(rgp->rg_scdsh, SCDS_PMF_TYPE_MON,
 	    SCDS_PMF_SINGLE_INSTANCE, SIGKILL, -1) != SCHA_ERR_NOERR) {
 		/* 22619 */
 		scds_syslog(LOG_ERR, "Failed to stop fault monitor.");
+		scds_syslog_debug(DBG_LVL_HIGH, "mon_stop - End/Err");
 		return (1);
 	}
 
 	/* 22620 */
+	scds_syslog_debug(DBG_LVL_HIGH, "mon_stop - End");
 	scds_syslog(LOG_INFO, "Stopped the fault monitor.");
 	return (0);
 }
@@ -1982,11 +2165,14 @@ run_cmd(int pri, char *cmd)
 	char	msg[1024];
 	int		p = LOG_ERR;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "run_cmd - Begin");
+
 	rc = system(cmd);
 	if (rc == -1) {
 		/* 22621 */
 		scds_syslog(LOG_ERR,
 		    "Cannot execute %s: %s.", cmd, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH, "run_cmd - End/Err");
 		return (rc);
 	}
 
@@ -2018,7 +2204,7 @@ run_cmd(int pri, char *cmd)
 
 	/* 22622 */
 	scds_syslog(p, "Command %s failed to run: %s.", cmd, msg);
-
+	scds_syslog_debug(DBG_LVL_HIGH, "run_cmd - End rc = %d", rc);
 	return (rc);
 }
 
@@ -2044,6 +2230,8 @@ run_system(int pri, char *cmd)
 	FILE	*fp = NULL;
 	int		n, rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "run_system - Begin");
+
 	(void) snprintf(outfile, sizeof (outfile),
 	    "%s/scqfs_run.out.%d", SCQFS_TMP_DIR, (int)getpid());
 	(void) snprintf(runcmd, sizeof (runcmd), "%s > %s 2>&1", cmd, outfile);
@@ -2051,6 +2239,7 @@ run_system(int pri, char *cmd)
 	rc = run_cmd(pri, runcmd);
 	if (rc == -1) {
 		(void) unlink(outfile);
+		scds_syslog_debug(DBG_LVL_HIGH, "run_system - End/Err");
 		return (rc);
 	}
 
@@ -2078,6 +2267,7 @@ run_system(int pri, char *cmd)
 		(void) fclose(fp);
 	}
 	(void) unlink(outfile);
+	scds_syslog_debug(DBG_LVL_HIGH, "run_system - End");
 	return (rc);
 }
 
@@ -2103,6 +2293,8 @@ set_server(char *qfsdev, char *master, int mode)
 
 	int newhtsize;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "set_server - Begin");
+
 	if (htb == NULL) {
 		htb =
 		    (sam_host_table_blk_t *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
@@ -2119,6 +2311,8 @@ set_server(char *qfsdev, char *master, int mode)
 		/* 22671 */
 		scds_syslog(LOG_ERR, "%s: Unable to get the QFS hosts table.",
 		    qfsdev);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "set_server - End/Err rc = %d", rc);
 		return (rc); /* Errors logged by get_qfshosts() */
 	}
 
@@ -2129,6 +2323,8 @@ set_server(char *qfsdev, char *master, int mode)
 			scds_syslog(LOG_ERR,
 			    "%s:  Cannot convert hosts file (%s/%d).",
 			    qfsdev, errmsg, rc);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End/Err rc = %d", rc);
 			return (rc);
 		}
 
@@ -2152,6 +2348,8 @@ set_server(char *qfsdev, char *master, int mode)
 			scds_syslog(LOG_ERR,
 			    "%s: Server %s is not a valid metadata server.",
 			    qfsdev, master);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End/Err");
 			return (ENOENT);
 		}
 	}
@@ -2180,6 +2378,8 @@ set_server(char *qfsdev, char *master, int mode)
 			scds_syslog(LOG_ERR,
 			    "%s: Unable to get partition information: %s.",
 			    qfsdev, strerror(errno));
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End/Err");
 			return (errno);
 		}
 
@@ -2187,6 +2387,8 @@ set_server(char *qfsdev, char *master, int mode)
 		rdevname = getfullrawname(slice0.pt_name);
 		if ((rdevname = getfullrawname(slice0.pt_name)) == NULL) {
 			scds_syslog(LOG_ERR, "Out of Memory");
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End/Err");
 			return (ENOMEM);
 		}
 
@@ -2209,6 +2411,8 @@ set_server(char *qfsdev, char *master, int mode)
 			    "%s  Cannot write hosts file -- %s",
 			    qfsdev, errmsg);
 			free(rdevname);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End/Err");
 			return (rc);
 		}
 		free(rdevname);
@@ -2218,6 +2422,8 @@ set_server(char *qfsdev, char *master, int mode)
 			/* 22679 */
 			scds_syslog(LOG_ERR,
 			    "%s:  Host failover already pending.", qfsdev);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End");
 			return (0);
 		}
 
@@ -2241,6 +2447,8 @@ set_server(char *qfsdev, char *master, int mode)
 			scds_syslog(LOG_ERR,
 			    "%s:  Cannot write hosts file -- %s",
 			    qfsdev, strerror(errno));
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "set_server - End/Err");
 			return (rc);
 		}
 	}
@@ -2255,9 +2463,11 @@ set_server(char *qfsdev, char *master, int mode)
 		    " failed",
 		    qfsdev, qfsdev);
 
+		scds_syslog_debug(DBG_LVL_HIGH, "set_server - End/Err");
 		return (rc);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "set_server - End");
 	return (0);
 }
 
@@ -2285,6 +2495,8 @@ validate_mounted(char *qfsfs, boolean_t log)
 	FILE	*mfp;
 	struct mnttab  mget;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_mounted - Begin");
+
 	mfp = fopen(MNTTAB, "r");
 	if (mfp == NULL) {
 		/* 22610 */
@@ -2292,11 +2504,15 @@ validate_mounted(char *qfsfs, boolean_t log)
 		    "Unable to open %s: %s", MNTTAB, strerror(errno));
 		dprintf(stderr, catgets(catfd, SET, 22610,
 		    "Unable to open %s: %s"), MNTTAB, strerror(errno));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "validate_mounted - End/Err");
 		return (B_FALSE);
 	}
 	while (getmntent(mfp, &mget) != -1) {
 		if (streq(mget.mnt_mountp, qfsfs)) {
 			(void) fclose(mfp);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "validate_mounted - End");
 			return (B_TRUE);
 		}
 	}
@@ -2309,6 +2525,7 @@ validate_mounted(char *qfsfs, boolean_t log)
 		    "%s: Filesystem is not mounted."), qfsfs);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH, "validate_mounted - End");
 	return (B_FALSE);
 }
 
@@ -2324,6 +2541,9 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 {
 	int err = 0;
 	char *flag, *msg;
+
+	scds_syslog_debug(DBG_LVL_HIGH,
+	    "set_cluster_lease_mount_opts - Begin");
 
 	/*
 	 * Set/clear cluster-managed flag on the FS.  This tells
@@ -2366,6 +2586,8 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 		    fs, fs, flag, msg);
 	}
 
+	scds_syslog_debug(DBG_LVL_HIGH,
+	    "set_cluster_lease_mount_opts - End err = %d", err);
 	return (err);
 }
 
@@ -2393,6 +2615,8 @@ is_node_fenced(char *node)
 {
 	int		rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "is_node_fenced - Begin");
+
 	/* 22637 */
 	scds_syslog(LOG_NOTICE, "Waiting for fencing to complete on %s",
 	    node ? node : "(NONE)");
@@ -2400,6 +2624,8 @@ is_node_fenced(char *node)
 	/* 22638 */
 	scds_syslog(LOG_NOTICE, "Fencing is complete on %s",
 	    node ? node : "(NONE)");
+
+	scds_syslog_debug(DBG_LVL_HIGH, "is_node_fenced - End rc = %d", rc);
 	return (rc);
 }
 
@@ -2423,12 +2649,15 @@ wait_for_fence(struct RgInfo *rgp, char *node)
 	scha_node_state_t	nstate;
 	int					rc;
 
+	scds_syslog_debug(DBG_LVL_HIGH, "wait_for_fence - Begin");
+
 	for (;;) {
 		rc = is_node_fenced(node);
 		if (rc == 0) {
 			/* 22638 */
 			scds_syslog(LOG_NOTICE, "Fencing complete on node %s.",
 			    node ? node : "(NONE)");
+			scds_syslog_debug(DBG_LVL_HIGH, "wait_for_fence - End");
 			return (0);
 		}
 		if (node == NULL) {
@@ -2444,12 +2673,16 @@ wait_for_fence(struct RgInfo *rgp, char *node)
 			dprintf(stderr, catgets(catfd, SET, 22616,
 			    "Failed to get state for node <%s>: %s."),
 			    node, scds_error_string(e));
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "wait_for_fence - End/Err");
 			return (-1);
 		}
 		if (nstate == SCHA_NODE_UP) {
 			/* 22630 */
 			scds_syslog(LOG_NOTICE,
 			    "The old master node %s came back online.", node);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "wait_for_fence - End/Err");
 			return (1);
 		}
 		/* Keep looping */

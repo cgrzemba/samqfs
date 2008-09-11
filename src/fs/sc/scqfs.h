@@ -34,7 +34,7 @@
 #ifndef _SCQFS_H
 #define	_SCQFS_H
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,6 +93,18 @@ extern "C" {
 #define		RG_LEASEPOLICY_AUTO			0x0
 #define		RG_LEASEPOLICY_TIMEOUT		0x1
 #define		RG_LEASEPOLICY_CLUSTER		0x2
+
+/*
+ * Debug level values.
+ *
+ * LOW - Minimal debug messages. meant for low level debug messages
+ *		with specific error capture data.
+ * MED - Use for tracing execution path.
+ * HIGH - Very high level messages (e.g.entrance to/exit from functions).
+ */
+#define		DBG_LVL_LOW	1
+#define		DBG_LVL_MED	5
+#define		DBG_LVL_HIGH	9
 
 /*
  * ds/cluster/rg info describing everything about the

@@ -36,7 +36,7 @@
  * is done in scqfs_prenet_start.
  */
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #include <strings.h>
 #include <libgen.h>
@@ -101,16 +101,26 @@ MasterFS(
 	struct RgInfo rg;
 	char cmd[2048];
 
+	scds_syslog_debug(DBG_LVL_HIGH, "MasterFS - Begin");
+
 	if (!fp->fi_fs || !fp->fi_mntpt) {
+		scds_syslog_debug(DBG_LVL_MED,
+		    "Null file set or mount point name");
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "MasterFS - End/Err");
 		return (1);
 	}
 
 	if (GetRgInfo(argc, argv, &rg) < 0) {
-		return (1);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "MasterFS - End/Err");
+		return (1);		/* error logged by GetRgInfo */
 	}
 
 	if (get_serverinfo(fp->fi_fs, NULL, &master, NULL) < 0 ||
 	    master == NULL) {
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "MasterFS - End/Err");
 		return (1);		/* error logged by get_serverinfo */
 	}
 
@@ -120,6 +130,8 @@ MasterFS(
 			    "%s: This node is not the metadata server. "
 			    "Current metadata server is %s.",
 			    fp->fi_fs, master);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "MasterFS - End/Err");
 			return (1);
 	}
 
@@ -127,6 +139,8 @@ MasterFS(
 	if (l >= sizeof (cmd)) {
 		scds_syslog(LOG_ERR,
 		    "%s: Mount pathname too long", fp->fi_fs);
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "MasterFS - End/Err");
 		return (1);
 	}
 	rc = run_system(LOG_ERR, cmd);
@@ -134,5 +148,6 @@ MasterFS(
 	free(master);
 	RelRgInfo(&rg);
 
+	scds_syslog_debug(DBG_LVL_HIGH, "MasterFS - End rc = %d", rc);
 	return (rc);
 }
