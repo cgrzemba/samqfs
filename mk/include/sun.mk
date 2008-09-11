@@ -1,4 +1,4 @@
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 
 #    SAM-QFS_notice_begin
 #
@@ -206,8 +206,8 @@ ifeq ($(PLATFORM), i386)
 		DB_ARCH = i386
 	endif
 endif
-DB_VERSION = V4/4.4.20
-DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(DB_ARCH)/include
+DB_VERSION = V4/4.5.20
+DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(OS_ARCH)/include
 DB_LIB = -ldb
 
 #

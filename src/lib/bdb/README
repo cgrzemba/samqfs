@@ -1,7 +1,5 @@
-This directory contains versions of Berkeley DB from Oracle.
-The source was downloaded from the Oracle Berkeley DB software
-download page:
-http://www.oracle.com/technology/software/products/berkeley-db/db/index.html
+Sleepycat Software: Berkeley DB
 
-In order to build the current version of SAM-QFS you will need to include 
-version 4.4.20 of Berkeley DB according to the instructions in V4/4.4.20/README.
+This directory contains versions of Berkeley DB
+The 4.5.20 binaries and header files were downloaded from Sun's internal data base site:
+http://clustra.norway.sun.com/twiki/bin/view/DatabasesAtSun/BerkeleyDbDownload45

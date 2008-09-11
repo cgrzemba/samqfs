@@ -1,4 +1,4 @@
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 
 #    SAM-QFS_notice_begin
 #
@@ -39,7 +39,6 @@ vpath %.c $(SRC_VPATH)
 
 #BUILD_64BIT = yes
 
-DB_INCLUDE = $(DEPTH)/src/lib/bdb/V4/4.4.20/$(DB_ARCH)/include
 CSD_INCLUDE = $(DEPTH)
 BSWAP_INCLUDE = $(DEPTH)/src/fs/include
 
@@ -87,7 +86,7 @@ PROG_SRC = \
 	vsn.c
 
 PROG_LIBS = $(ALIGN) -L$(DEPTH)/lib/$(OBJ_DIR) \
-		-ladm -ldoor -ldb-4.4 -lgen -lz -lnsl -lrt -lpthread $(LIBSO)
+		-ladm -ldoor $(DB_LIB) -lgen -lz -lnsl -lrt -lpthread $(LIBSO)
 
 
 LNOPTS += -a -m -o$(LIB)
