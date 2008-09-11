@@ -27,13 +27,15 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: WizardUtil.java,v 1.10 2008/06/25 23:23:28 kilemba Exp $
+// ident	$Id: WizardUtil.java,v 1.11 2008/09/11 05:28:53 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.wizard;
 
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.web.ui.model.CCWizardWindowModel;
 import com.sun.web.ui.model.CCWizardWindowModelInterface;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class WizardUtil {
 
@@ -143,5 +145,32 @@ public class WizardUtil {
 
         // if before, then copy the insert array into result
         return result;
+    }
+
+    /** 
+     * remove the given page id from the array of pages provided.
+     *
+     * @param int pageId - page to remove
+     *                     NOTE: If pageId is a striped group or object group
+     *                     page, all occurences of the page will be removed.
+     * @param in [] pages - the array to remove the page from
+     */
+    public static int [] removePage(int pageId, int [] pages) {
+        ArrayList<Integer> list =  new ArrayList<Integer>();
+        for (int i = 0; i < pages.length; i++) {
+            if (pages[i] != pageId)
+                list.add(pages[i]);
+        }
+
+        int [] newPages = new int[list.size()];
+        Iterator<Integer> it = list.iterator();
+        int counter = 0;
+
+        // copy the list back to the arrary
+        while (it.hasNext()) {
+            newPages[counter++] = it.next();
+        }
+
+        return newPages;
     }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.82 2008/07/08 21:40:33 ronaldso Exp $
+// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.83 2008/09/11 05:28:52 kilemba Exp $
 
 
 
@@ -297,7 +297,8 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
                                 mountAtBoot,
                                 createMountPoint,
                                 mountAfterCreate,
-                                null);
+                                null,
+                                false);
     }
 
     public FileSystem createFileSystem(String fsName, int fsType, int archType,
@@ -311,7 +312,8 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
                                        boolean mountAtBoot,
                                        boolean createMountPoint,
                                        boolean mountAfterCreate,
-                                       FSArchCfg archiveConfig)
+                                       FSArchCfg archiveConfig,
+                                       boolean isMATFS)
         throws SamFSMultiStepOpException, SamFSException {
 
         if ((!SamQFSUtil.isValidString(fsName)) ||
@@ -360,6 +362,9 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
 
         MountOptions opt = ((FileSystemMountPropertiesImpl) mountProps).
             getJniMountOptions();
+
+        // create a mat fs
+        if (isMATFS) type = FSInfo.OBJECT_TARGET;
 
         FSInfo fsInfo = new FSInfo(fsName, equ, DAUSize, type, meta, data,
                                    grp, opt, mountPoint);

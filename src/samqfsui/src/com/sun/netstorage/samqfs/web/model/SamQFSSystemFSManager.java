@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemFSManager.java,v 1.46 2008/05/16 18:38:58 am143972 Exp $
+// ident	$Id: SamQFSSystemFSManager.java,v 1.47 2008/09/11 05:28:51 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -214,7 +214,8 @@ public interface SamQFSSystemFSManager {
                                        boolean mountAtBoot,
                                        boolean createMountPoint,
                                        boolean mountAfterCreate,
-                                       FSArchCfg archiveConfig)
+                                       FSArchCfg archiveConfig,
+                                       boolean isMATFS)
         throws SamFSMultiStepOpException, SamFSException;
 
 

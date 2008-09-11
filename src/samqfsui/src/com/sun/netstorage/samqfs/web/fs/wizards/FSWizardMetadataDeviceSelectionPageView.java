@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardMetadataDeviceSelectionPageView.java,v 1.30 2008/09/10 17:40:24 ronaldso Exp $
+// ident	$Id: FSWizardMetadataDeviceSelectionPageView.java,v 1.31 2008/09/11 05:28:51 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -39,6 +39,7 @@ import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.SharedDiskCache;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.wizard.SamWizardModel;
 import java.util.ArrayList;
@@ -116,6 +117,8 @@ public class FSWizardMetadataDeviceSelectionPageView
 
         TraceUtil.trace3("after getting sharedChecked");
 
+        // filter out osd devices
+        devices = SamUtil.filterInOSDDevices(devices, false);
         if (devices == null) {
             totalItems = 0;
             TraceUtil.trace2("Device List is Null from Impl class");

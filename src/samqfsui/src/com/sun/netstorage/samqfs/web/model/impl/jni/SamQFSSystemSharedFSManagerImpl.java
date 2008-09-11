@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.58 2008/09/11 00:00:18 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.59 2008/09/11 05:28:52 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -602,7 +602,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
                                        boolean mountAtBoot,
                                        boolean createMountPoint,
                                        boolean mountAfterCreate,
-                                       FSArchCfg archiveConfig)
+                                       FSArchCfg archiveConfig,
+                                       boolean hpc)
         throws SamFSMultiStepOpException, SamFSMultiHostException {
 
         ArrayList errorHostNames = new ArrayList();
@@ -647,6 +648,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
         StripedGrp[] grp = null;
 
         String eqTypeForJni = single ? "mr" : "md";
+        if (hpc)
+            eqTypeForJni = "mb";
 
         // find a block of equipment ordinals that are available on all hosts
 
@@ -706,21 +709,29 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
         Host[] hosts = membersToHosts(members, models);
 
+        String fsEquipmentType = null;
+        if (hpc) {
+            fsEquipmentType = FSInfo.OBJECT_BASED_QFS;
+        } else {
+            fsEquipmentType =
+                isMetaSame ? FSInfo.COMBINED_METADATA : FSInfo.SEPARATE_METADATA;
+        }
+
         FSInfo fsInfoMDS = new FSInfo(
             fsName, equ, DAUSize,
-            isMetaSame ? FSInfo.COMBINED_METADATA : FSInfo.SEPARATE_METADATA,
+            fsEquipmentType,
             meta, data, grp, opt, mountPoint,
             mdServerName, true, false, hosts);
 
         FSInfo fsInfoPMDS = new FSInfo(
             fsName, equ, DAUSize,
-            isMetaSame ? FSInfo.COMBINED_METADATA : FSInfo.SEPARATE_METADATA,
+            fsEquipmentType,
             meta, data, grp, opt, mountPoint,
             mdServerName, true, true, hosts);
 
         FSInfo fsInfoClient = new FSInfo(
             fsName, equ, DAUSize,
-            isMetaSame ? FSInfo.COMBINED_METADATA : FSInfo.SEPARATE_METADATA,
+            fsEquipmentType,
             meta, data, grp, opt, mountPoint,
             mdServerName, false, false, hosts);
 

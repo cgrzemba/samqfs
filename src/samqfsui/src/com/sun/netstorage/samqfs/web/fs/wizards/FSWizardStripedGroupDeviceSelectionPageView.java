@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardStripedGroupDeviceSelectionPageView.java,v 1.24 2008/09/04 19:30:34 kilemba Exp $
+// ident	$Id: FSWizardStripedGroupDeviceSelectionPageView.java,v 1.25 2008/09/11 05:28:51 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -39,6 +39,7 @@ import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.SharedDiskCache;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.wizard.SamWizardModel;
 import java.util.ArrayList;
@@ -108,6 +109,12 @@ public class FSWizardStripedGroupDeviceSelectionPageView
             devices = (DiskCache[]) wizardModel.getValue(
                 Constants.Wizard.ALLOCATABLE_DEVICES);
         }
+
+        // filter osd-devices
+        Boolean hpc = (Boolean)
+            wizardModel.getValue(CreateFSWizardImpl.POPUP_HPC);
+        devices = SamUtil.filterInOSDDevices(devices, hpc != null ?
+                                             hpc.booleanValue() : false);
 
         totalItems   = 0;
         if (devices == null) {

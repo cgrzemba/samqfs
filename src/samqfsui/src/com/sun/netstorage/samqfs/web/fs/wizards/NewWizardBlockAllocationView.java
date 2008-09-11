@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardBlockAllocationView.java,v 1.3 2008/07/16 21:55:56 kilemba Exp $
+// ident	$Id: NewWizardBlockAllocationView.java,v 1.4 2008/09/11 05:28:51 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -63,6 +63,7 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
     public static final String BLOCK_SIZE_UNIT = "blockSizeUnit";
     public static final String BLOCKS_PER_DEVICE = "blocksPerDeviceText";
     public static final String STRIPED_GROUPS = "stripedGroupText";
+    public static final String OBJECT_GROUPS = "objectGroupText";
 
     // key for the final block size used by the wizard model
     public static final String BLOCK_SIZE_KB = "block_size_in_kb";
@@ -95,6 +96,7 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
         registerChild(BLOCK_SIZE_UNIT, CCDropDownMenu.class);
         registerChild(BLOCKS_PER_DEVICE, CCTextField.class);
         registerChild(STRIPED_GROUPS, CCTextField.class);
+        registerChild(OBJECT_GROUPS, CCTextField.class);
         TraceUtil.trace3("Exiting");
     }
 
@@ -113,11 +115,12 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
         } else if (name.endsWith(LABEL)) {
             return new CCLabel(this, name, null);
         } else if (name.equals(BLOCK_SIZE) ||
-            name.equals(BLOCKS_PER_DEVICE) ||
-            name.equals(STRIPED_GROUPS)) {
+                   name.equals(BLOCKS_PER_DEVICE) ||
+                   name.equals(STRIPED_GROUPS) ||
+                   name.equals(OBJECT_GROUPS)) {
             return new CCTextField(this, name, null);
         } else if (name.equals(BLOCK_SIZE_UNIT) ||
-            name.equals(BLOCK_SIZE_DROPDOWN)) {
+                   name.equals(BLOCK_SIZE_DROPDOWN)) {
             return new CCDropDownMenu(this, name, null);
         } else if (name.equals(ALLOCATION_METHOD_TEXT)) {
             return new CCStaticTextField(this, name, null);
@@ -151,15 +154,32 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
             String displayNone = "style=\"display:none\"";
             ((CCLabel)getChild("stripedGroupLabel")).setExtraHtml(displayNone);
             ((CCTextField)getChild(STRIPED_GROUPS)).setExtraHtml(displayNone);
-            ((CCTextField)getChild(BLOCK_SIZE)).setExtraHtml(displayNone);
-            ((CCDropDownMenu)getChild(BLOCK_SIZE_UNIT)).setExtraHtml(displayNone);
+
+            if (!isHPCFS()) {
+                ((CCTextField)getChild(BLOCK_SIZE))
+                    .setExtraHtml(displayNone);
+                ((CCDropDownMenu)getChild(BLOCK_SIZE_UNIT))
+                    .setExtraHtml(displayNone);
+            }
         }
             
     }
 
     // implement CCWizardPage
     public String getPageletUrl() {
-        return "/jsp/fs/NewWizardBlockAllocation.jsp";
+        String url = "/jsp/fs/NewWizardBlockAllocation.jsp";
+        
+        SamWizardModel wm = (SamWizardModel)getDefaultModel();
+        Boolean hpcfs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HPC);
+        if (hpcfs.booleanValue()) {
+            url = "/jsp/fs/NewWizardDataAllocation.jsp";
+
+            // init metadata storage
+            wm.setValue(NewWizardMetadataOptionsView.METADATA_STORAGE,
+                        NewWizardMetadataOptionsView.SEPARATE_DEVICE);
+        }
+
+        return url;
     }
 
     private void populateDefaultValues(SamWizardModel wm) {
@@ -173,6 +193,12 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
         return NewWizardMetadataOptionsView.SEPARATE_DEVICE.equals(mdOptions);
     }
 
+    private boolean isHPCFS() {
+        SamWizardModel wm = (SamWizardModel)getDefaultModel();
+        Boolean hpcfs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HPC);
+
+        return hpcfs.booleanValue();
+    }
 
     // only display the following fields when separate data/metadata is
     // selected

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewFileSystemPopupViewBean.java,v 1.2 2008/09/04 19:30:34 kilemba Exp $
+// ident	$Id: NewFileSystemPopupViewBean.java,v 1.3 2008/09/11 05:28:50 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -217,4 +217,6 @@ public class NewFileSystemPopupViewBean extends CommonSecondaryViewBeanBase {
 
         return isClusterNode;
     }
+    
+
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.22 2008/09/10 17:40:24 ronaldso Exp $
+// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.23 2008/09/11 05:28:51 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -57,7 +57,8 @@ import com.sun.web.ui.view.wizard.CCWizardPage;
  * A ContainerView object for the pagelet for device selection page.
  *
  */
-public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
+public abstract class FSWizardDeviceSelectionPageView
+    extends RequestHandlingViewBase
     implements CCWizardPage {
 
     // The "logical" name for this page.
@@ -368,12 +369,13 @@ public class FSWizardDeviceSelectionPageView extends RequestHandlingViewBase
      * made during the course of the wizard, and will he helpful to remove
      * those entries for the Metadata LUN selection page.
      */
-    protected void populateActionTableModel() throws SamFSException {
+    protected abstract void populateActionTableModel() throws SamFSException;
+    /*
         TraceUtil.trace3("Entering");
         // This method should be over-written by the derived class
         TraceUtil.trace3("Exiting");
     }
-
+    */
     public boolean beginCounterLabelDisplay(ChildDisplayEvent event)
         throws ModelControlException {
         TraceUtil.trace3("Entering");

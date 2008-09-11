@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.127 2008/09/04 19:26:34 ronaldso Exp $
+// ident	$Id: SamUtil.java,v 1.128 2008/09/11 05:28:53 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -49,18 +49,22 @@ import com.sun.netstorage.samqfs.web.model.alarm.Alarm;
 import com.sun.netstorage.samqfs.web.model.fs.RecoveryPointSchedule;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
+import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.server.ServerUtil;
 import com.sun.web.ui.common.CCI18N;
 import com.sun.web.ui.view.alert.CCAlertInline;
 import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -70,7 +74,6 @@ import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
 
 public class SamUtil {
 
@@ -2104,5 +2107,52 @@ public class SamUtil {
         }
 
         return response;
+    }
+
+    /**
+     * This method is used to filter-in (or out) OSD devices from a given
+     * list.
+     * USAGE: if you wish to return OSD devices only, call this method with a
+     * true value for the osd variable. To return non-OSD devices only, call
+     * this method with a false value for the osd variable. 
+     * 
+     * @param DiskCache [] allDevice - the list of all discovered devices.
+     * @param boolean osd - This variable determines if OSD devices are
+     *                      filtered in or out of the list returned. Pass in
+     *                      <code>true</code> to return OSD devices only or
+     *                      <code>false</code> to return non-OSD devices only.
+     * @param List<DiskCache> - the subset of devices that match the provided
+     *                          criteria.
+     *
+     */
+    public static DiskCache [] filterInOSDDevices(DiskCache [] allDevice,
+                                                     boolean osd) {
+        List<DiskCache> deviceList = new ArrayList<DiskCache>();
+
+        if (allDevice != null) { // make sure that allDevice is not null
+        for (int i = 0; i < allDevice.length; i++) {
+            if ((allDevice[i].getDiskType() == DiskCache.OSD) && osd) {
+                // current device is an osd device and we are looking for osd
+                // devices
+                deviceList.add(allDevice[i]);
+            } else if ((allDevice[i].getDiskType() != DiskCache.OSD) && !osd) {
+                // current device is not an osd device and we are looking for
+                // the non-osd devices
+                deviceList.add(allDevice[i]);
+            }
+        }
+        }
+
+        // copy the device list to an since all the methods that use it require
+        // an array
+        DiskCache [] result = new DiskCache[deviceList.size()];
+        Iterator<DiskCache> it = deviceList.iterator();
+
+        int counter = 0;
+        while (it.hasNext()) {
+            result[counter++] = it.next();
+        }
+
+        return result;
     }
 }

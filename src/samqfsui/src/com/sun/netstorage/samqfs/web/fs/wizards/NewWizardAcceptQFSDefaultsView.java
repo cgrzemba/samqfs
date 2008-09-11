@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardAcceptQFSDefaultsView.java,v 1.1 2008/06/25 23:23:25 kilemba Exp $
+// ident	$Id: NewWizardAcceptQFSDefaultsView.java,v 1.2 2008/09/11 05:28:51 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -127,6 +127,7 @@ public class NewWizardAcceptQFSDefaultsView extends RequestHandlingViewBase
 
         Boolean hpc = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HPC);
         Boolean hafs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_HAFS);
+        Boolean matfs = (Boolean)wm.getValue(CreateFSWizardImpl.POPUP_MATFS);
 
         String blockSizeString = new StringBuffer("64 ")
             .append(SamUtil.getResourceString("common.unit.size.kb"))
@@ -136,7 +137,7 @@ public class NewWizardAcceptQFSDefaultsView extends RequestHandlingViewBase
         ((CCStaticTextField)getChild(BLOCK_SIZE)).setValue(blockSizeString);
 
         // metadata and data on separate devices
-        if (hpc.booleanValue() || hafs.booleanValue()) {
+        if (hpc.booleanValue() || hafs.booleanValue() || matfs) {
             // metadata storage
             ((CCStaticTextField)getChild(METADATA_STORAGE))
                 .setValue("FSWizard.new.blockallocation.mdstorage.separate");
