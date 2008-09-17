@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.69 $"
+#pragma ident "$Revision: 1.70 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -589,7 +589,7 @@ createSharedMapFile(void)
 					SetErrno = 0;
 					rv = FindProc(STAGERD_PROGRAM_NAME, "");
 					if (rv > 0) {
-						Trace(TR_MISC,
+						Trace(TR_ERR,
 						    "Another stagerd %ld is "
 						    "already running.",
 						    shared->si_parentPid);
@@ -776,7 +776,7 @@ filesystemReader(void)
 			continue;
 		}
 
-		Trace(TR_MISC, "Received file inode: %d.%d fseq: %d",
+		Trace(TR_FILES, "Received file inode: %d.%d fseq: %d",
 		    request.id.ino, request.id.gen, request.fseq);
 
 		/*

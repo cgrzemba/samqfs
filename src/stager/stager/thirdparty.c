@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -277,6 +277,7 @@ InitMigration(
 				SendCustMsg(HERE, 19025, entryPointName);
 				errmsg = dlerror();
 				if (errmsg != NULL) {
+					SetErrno = 0;	/* set for trace */
 					Trace(TR_ERR, "\t%s", errmsg);
 				}
 				rc = -1;
@@ -291,6 +292,7 @@ InitMigration(
 
 		errmsg = dlerror();
 		if (errmsg != NULL) {
+			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "\t%s", errmsg);
 		}
 		rc = -1;
@@ -387,7 +389,7 @@ stageFile(
 	file->dcache = -1;		/* initialize stage file descriptor */
 	what_device = migfile->dev = (void *)mig->dev;
 
-	Trace(TR_MISC, "[t@%d] Third party inode: %ld\n\tlen: %lld "
+	Trace(TR_FILES, "[t@%d] Third party inode: %ld\n\tlen: %lld "
 	    "offset: %lld\n\tmedia: '%s' pos: %llx vsn: '%s'",
 	    pthread_self(), migfile->req.inode, migfile->req.size,
 	    migfile->req.offset, sam_mediatoa(migfile->req.media_type),
@@ -445,7 +447,8 @@ addThirdPartyRequest(
 
 	media = file->ar[file->copy].media;
 
-	Trace(TR_MISC, "Add third party stage request inode: %d.%d media: '%s'",
+	Trace(TR_FILES,
+	    "Add third party stage request inode: %d.%d media: '%s'",
 	    file->id.ino, file->id.gen, sam_mediatoa(media));
 
 	/*
@@ -490,6 +493,7 @@ thirdPartyStage(
 
 	mig = &toolkitList.data[idx];
 	if (idx < 0 || mig == NULL) {
+		SetErrno = 0;	/* set for trace */
 		Trace(TR_ERR, "Invalid argument to start third party thread");
 		return (NULL);
 	}

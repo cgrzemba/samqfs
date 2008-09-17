@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.88 $"
+#pragma ident "$Revision: 1.89 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -375,7 +375,7 @@ AddFile(
 		StageError(file, EINVAL);
 		GetFileName(file, &pathBuffer[0], PATHBUF_SIZE, NULL);
 
-		Trace(TR_ERR, "Cannot stage file: all copies are damaged '%s'",
+		Trace(TR_MISC, "Cannot stage file: all copies are damaged '%s'",
 		    pathBuffer);
 		SendCustMsg(HERE, 19033, pathBuffer);
 
@@ -390,7 +390,7 @@ AddFile(
 	 */
 	if (id < 0) {
 		*status = REQUEST_LIST_FULL;
-		Trace(TR_MISC, "Request list full");
+		Trace(TR_FILES, "Request list full");
 
 	} else {
 		*status = REQUEST_READY;
@@ -411,9 +411,9 @@ AddFile(
 		 */
 		copy = GetArcopy(file, file->copy);
 		if (copy != file->copy) {
-			file->copy = copy;
 
-			Trace(TR_MISC, "Set copy inode: %d.%d "
+			file->copy = copy;
+			Trace(TR_FILES, "Set copy inode: %d.%d "
 			    "len: %lld offset: %lld copy: %d vsn: '%s.%s'",
 			    file->id.ino, file->id.gen,
 			    file->len, file->offset,
@@ -606,7 +606,7 @@ CheckRequests(
 					file->copy = -1;
 				} else {
 					file->copy = copy;
-					Trace(TR_MISC, "%s inode: %d.%d "
+					Trace(TR_FILES, "%s inode: %d.%d "
 					    "error: %d next copy: %d",
 					    damaged ? "Damaged" : "Error",
 					    file->id.ino, file->id.gen,
@@ -629,7 +629,7 @@ CheckRequests(
 					*id = i;
 					err = CHECK_REQUEST_SCHED;
 
-					Trace(TR_MISC,
+					Trace(TR_FILES,
 					    "Resched inode: %d.%d "
 					    "len: %lld offset: %lld copy: %d "
 					    "vsn: '%s.%s'",
@@ -666,7 +666,7 @@ CheckRequests(
 					    file->ar[copy].ext_ord);
 					exit(EXIT_FAILURE);
 				}
-				Trace(TR_MISC,
+				Trace(TR_FILES,
 				    "Get file extent: inode: %d.%d "
 				    "ext_ord: %d",
 				    file->id.ino, file->id.gen,
@@ -869,7 +869,7 @@ SetStageDone(
 	SET_FLAG(file->flags, FI_DONE);
 	PthreadMutexUnlock(&file->mutex);
 
-	Trace(TR_DEBUG, "SetStageDone: ino: %d.%d fseq: %d",
+	Trace(TR_DEBUG, "Set stage done: inode: %d.%d fseq: %d",
 	    file->id.ino, file->id.gen, file->fseq);
 
 	id = file->sort;
@@ -966,7 +966,7 @@ DeleteRequest(
 {
 	extern StagerStateInfo_t *State;
 
-	if (id >= 0 && isFree(id) == 0) {
+	if (id >= 0) {
 		(void) memset(&StageReqs.data[id], 0, sizeof (FileInfo_t));
 		markFree(id);
 		PthreadMutexLock(&StageReqs.entries_mutex);
@@ -1269,8 +1269,8 @@ createMultiVolume(
 			SysError(HERE, "Failed to allocate multivolume extent");
 			exit(EXIT_FAILURE);
 		}
-		Trace(TR_MISC, "Add file extent: inode: %d.%d "
-		    "count: %d", req->id.ino, req->id.gen,
+		Trace(TR_FILES, "Add file extent: inode: %d.%d fseq: %d "
+		    "count: %d", req->id.ino, req->id.gen, req->fseq,
 		    extent.fe_id.ino != 0 ? extent.fe_count : 0);
 	}
 	return (multivol);
@@ -1368,9 +1368,9 @@ getFileExtent(
 					strcpy(ar->section[k].vsn,
 					    req->arcopy[j].section[k].vsn);
 
-				if (*TraceFlags & (1 << TR_misc) &&
+				if (*TraceFlags & (1 << TR_files) &&
 				    ar->section[k].vsn[0] != '\0') {
-					Trace(TR_MISC, "[%d, %d] pos: "
+					Trace(TR_FILES, "[%d, %d] pos: "
 					    "%llx.%llx len: %lld vsn: '%s'",
 					    j, k,
 					    ar->section[k].position,
@@ -1485,7 +1485,7 @@ deleteFileExtent(
 	int i;
 
 	if (stageExtents.hdr == NULL || stageExtents.data == NULL) {
-		Trace(TR_ERR, "No extentions initialized yet");
+		Trace(TR_FILES, "No extentions initialized yet");
 		return;
 	}
 
@@ -1500,7 +1500,7 @@ deleteFileExtent(
 			    entry->fe_id.gen == id.gen &&
 			    entry->fe_fseq == fseq &&
 			    entry->fe_extOrd == ext_ord) {
-				Trace(TR_MISC, "Delete file extent: "
+				Trace(TR_FILES, "Delete file extent: "
 				    "inode: %d.%d ext_ord: %d count: %d",
 				    entry->fe_id.ino, entry->fe_id.gen,
 				    entry->fe_extOrd, entry->fe_count);
@@ -1634,7 +1634,7 @@ StageError(
 
 	arg.ret_err = error;
 
-	Trace(TR_MISC, "Filesys resp inode: %d.%d fseq: %d ret_err: %d",
+	Trace(TR_FILES, "Filesys resp inode: %d.%d fseq: %d ret_err: %d",
 	    file->id.ino, file->id.gen, file->fseq, arg.ret_err);
 
 	rc = sam_syscall(SC_fsstage, &arg, sizeof (arg));
@@ -1728,7 +1728,7 @@ recoverRequestList(void)
 	StageReqs.data = (FileInfo_t *)MapInFile(
 	    SharedInfo->si_stageReqsFile, O_RDWR, &size);
 	if (StageReqs.data == NULL) {
-		Trace(TR_DEBUG, "MapInFile(%s) failed",
+		Trace(TR_ERR, "MapInFile(%s) failed",
 		    SharedInfo->si_stageReqsFile);
 		return (-1);
 	}
@@ -1804,7 +1804,7 @@ SeparateMultiVolReq(void)
 			/*
 			 * Multivolume request found.
 			 */
-			Trace(TR_MISC,
+			Trace(TR_FILES,
 			    "Multivolume request file inode: %d.%d "
 			    "se_ord: %d ext_ord: %d n_vsns: %d flags: 0x%x",
 			    fi->id.ino, fi->id.gen, fi->se_ord,
@@ -2051,6 +2051,7 @@ recoverFileExtent(void)
 	sz = sizeof (FileExtentHdrInfo_t);
 	sz += stageExtents.hdr->fh_alloc * sizeof (FileExtentInfo_t);
 	if (sz != buf.st_size) {
+		SetErrno = 0;		/* set for trace */
 		Trace(TR_ERR, "Corrupted header size %s",
 		    SharedInfo->si_stageReqExtents);
 		RemoveMapFile(SharedInfo->si_stageReqExtents, stageExtents.hdr,

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -155,7 +155,7 @@ ChecksumInit(
 		}
 	}
 
-	Trace(TR_MISC, "Checksum init inode: %d.%d algo: %d seed: %lld",
+	Trace(TR_FILES, "Checksum init inode: %d.%d algo: %d seed: %lld",
 	    file->id.ino, file->id.gen, file->csum_algo & ~CS_USER_BIT,
 	    checksum->seed);
 
@@ -254,7 +254,7 @@ ChecksumCompare(
 			retval = 0;
 			Trace(TR_MISC, "Trying alternate-endian checksum "
 			    "inode: %d.%d", id->ino, id->gen);
-			Trace(TR_MISC, "Checksum inode: %d.%d "
+			Trace(TR_FILES, "Checksum inode: %d.%d "
 			    "length: %lld cookie: %lld",
 			    id->ino, id->gen, (u_longlong_t)pi.di.rm.size,
 			    checksum->seed);
@@ -270,12 +270,13 @@ ChecksumCompare(
 		}
 
 		if (retval == EDVVCMP) {
-			Trace(TR_MISC, "Checksum error inode: %d.%d",
+			SetErrno = 0;		/* set for trace */
+			Trace(TR_ERR, "Checksum error inode: %d.%d",
 			    id->ino, id->gen);
-			Trace(TR_MISC, "Checksum value: %.8x %.8x %.8x %.8x",
+			Trace(TR_ERR, "Checksum value: %.8x %.8x %.8x %.8x",
 			    pi.csum.csum_val[0], pi.csum.csum_val[1],
 			    pi.csum.csum_val[2], pi.csum.csum_val[3]);
-			Trace(TR_MISC, "Checksum calc: %.8x %.8x %.8x %.8x",
+			Trace(TR_ERR, "Checksum calc: %.8x %.8x %.8x %.8x",
 			    checksum->val.csum_val[0],
 			    checksum->val.csum_val[1],
 			    checksum->val.csum_val[2],

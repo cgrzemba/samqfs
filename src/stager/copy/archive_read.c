@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -205,7 +205,7 @@ ArchiveRead(
 		dataToRead = (longlong_t)file->len;
 	}
 
-	Trace(TR_MISC,
+	Trace(TR_FILES,
 	    "Archive read inode: %d.%d\n\tpos: %llx.%llx len: %lld",
 	    file->id.ino, file->id.gen, file->ar[copy].section.position,
 	    file->ar[copy].section.offset, dataToRead);
@@ -294,8 +294,8 @@ ArchiveRead(
 		fileOff -= TAR_RECORDSIZE;
 	}
 
-	Trace(TR_MISC, "File position: %d", filePos);
-	Trace(TR_MISC, "File offset: %d", fileOff);
+	Trace(TR_DEBUG, "File position: %d", filePos);
+	Trace(TR_DEBUG, "File offset: %d", fileOff);
 
 	/* First read for file.  Used to notify double buffer thread. */
 	firstRead = B_TRUE;
@@ -385,11 +385,11 @@ ArchiveRead(
 		 */
 		cancel = GET_FLAG(IoThread->io_flags, IO_cancel);
 
-		Trace(TR_MISC, "Read %d bytes left: %lld (%d/%d)",
+		Trace(TR_DEBUG, "Read %d bytes left: %lld (%d/%d)",
 		    nbytes, dataToRead, readError, cancel);
 	}
 
-	Trace(TR_MISC, "Archive read complete inode: %d.%d",
+	Trace(TR_FILES, "Archive read complete inode: %d.%d",
 	    file->id.ino, file->id.gen);
 
 	/* Update current block position on media. */
@@ -421,9 +421,9 @@ SetPosition(
 	int position;
 
 	if (from == -1) {
-		Trace(TR_MISC, "Set position to: %d", to);
+		Trace(TR_FILES, "Set position to: %d", to);
 	} else {
-		Trace(TR_MISC, "Set position from: %d to: %d", from, to);
+		Trace(TR_FILES, "Set position from: %d to: %d", from, to);
 	}
 
 	position = from;
@@ -464,7 +464,7 @@ findFirstBlock()
 
 	if (ptr != NULL) {
 
-		Trace(TR_MISC, "Reuse block: %d buf: %d [0x%x] len: %d",
+		Trace(TR_DEBUG, "Reuse block: %d buf: %d [0x%x] len: %d",
 		    filePos, CircularIoSlot(reader, ptr),
 		    (int)ptr, nbytes);
 
@@ -551,7 +551,7 @@ readBlock(
 	id = file->id;
 
 	/* FIXME SetTimeout(TO_read); */
-	Trace(TR_MISC, "Read block: %d buf: %d [0x%x] len: %d",
+	Trace(TR_DEBUG, "Read block: %d buf: %d [0x%x] len: %d",
 	    filePos, CircularIoSlot(reader, buf),
 	    (int)buf, nbytes);
 
@@ -649,7 +649,7 @@ validateTarHeader(
 	buffer = in + fileOff;
 	bufLen -= fileOff;
 
-	Trace(TR_MISC, "Validate tar from: [0x%x] %d", (int)buffer, bufLen);
+	Trace(TR_DEBUG, "Validate tar from: [0x%x] %d", (int)buffer, bufLen);
 
 	retval = 0;
 	tarHeaderSize = getTarHeaderSize(buffer);
@@ -744,7 +744,8 @@ isTarHeader(
 	if (valid == B_FALSE) {
 		char pathBuffer[PATHBUF_SIZE];
 
-		Trace(TR_MISC, "Invalid tar header inode: %d.%d",
+		SetErrno = 0;		/* set for trace */
+		Trace(TR_ERR, "Invalid tar header inode: %d.%d",
 		    file->id.ino, file->id.gen);
 
 		GetFileName(file, &pathBuffer[0], PATHBUF_SIZE, NULL);
@@ -769,7 +770,7 @@ isStarHeader(
 	boolean_t valid;
 	struct header *tarHeader;
 
-	Trace(TR_MISC, "Validate star header inode: %d.%d",
+	Trace(TR_DEBUG, "Validate star header inode: %d.%d",
 	    file->id.ino, file->id.gen);
 
 	valid = B_TRUE;
@@ -843,7 +844,7 @@ isPaxTarHeader(
 	size_t hdrSize;
 	offset_t tarFileSize;
 
-	Trace(TR_MISC, "Validate pax tar header inode: %d.%d",
+	Trace(TR_DEBUG, "Validate pax tar header inode: %d.%d",
 	    file->id.ino, file->id.gen);
 
 	valid = B_TRUE;
@@ -853,7 +854,8 @@ isPaxTarHeader(
 	/* SAM only generates extended format. */
 	if (type != PX_SUCCESS_EXT_HEADER) {
 		valid = B_FALSE;
-		Trace(TR_MISC, "ph_is_pax_hdr failed %d", type);
+		SetErrno = 0;		/* set for trace */
+		Trace(TR_ERR, "ph_is_pax_hdr failed %d", type);
 		TraceRawData(TR_MISC, buffer, PAX_HDR_BLK_SIZE);
 	}
 
@@ -873,13 +875,15 @@ isPaxTarHeader(
 
 			if (rval != PX_SUCCESS || tarFileSize != reqSize) {
 				valid = B_FALSE;
-				Trace(TR_MISC, "Request length (%lld) does "
+				SetErrno = 0;		/* set for trace */
+				Trace(TR_ERR, "Request length (%lld) does "
 				    "not match pax header (%lld) file size",
 				    reqSize, tarFileSize);
 			}
 		} else {
 			valid = B_FALSE;
-			Trace(TR_MISC, "ph_load_pax_hdr failed %d", rval);
+			SetErrno = 0;		/* set for trace */
+			Trace(TR_ERR, "ph_load_pax_hdr failed %d", rval);
 		}
 
 		if (valid == B_FALSE) {

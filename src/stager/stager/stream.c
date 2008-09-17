@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -168,7 +168,7 @@ CreateStream(
 	SamFree(stream);
 	stream = (StreamInfo_t *)MapInFile(fullpath, O_RDWR, NULL);
 	if (stream != NULL) {
-		Trace(TR_MISC, "Create stream: '%s.%d' 0x%x "
+		Trace(TR_QUEUE, "Create stream: '%s.%d' 0x%x "
 		    "media: '%s' context: %d",
 		    stream->vsn, Seqnum, (int)stream,
 		    sam_mediatoa(stream->media), (int)stream->context);
@@ -295,7 +295,7 @@ void
 DeleteStream(
 	StreamInfo_t *stream)
 {
-	Trace(TR_MISC, "Delete stream: '%s.%d' 0x%x",
+	Trace(TR_QUEUE, "Delete stream: '%s.%d' 0x%x",
 	    stream->vsn, stream->seqnum, (int)stream);
 
 	(void) sprintf(fullpath, "%s/%s.%d", SharedInfo->si_streamsDir,
@@ -766,6 +766,7 @@ comparePosition(
 	FileInfo_t **f2 = (FileInfo_t **)p2;
 
 	if ((*f1) == NULL || (*f2) == NULL) {
+		SetErrno = 0;	/* set for trace */
 		Trace(TR_ERR, "Compare position error: 0x%x 0x%x",
 		    (int)(*f1), (int)(*f2));
 		return (1);

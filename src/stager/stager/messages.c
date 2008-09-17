@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -260,6 +260,7 @@ static void
 srvrLogit(
 	char *msg)
 {
+	SetErrno = 0;	/* set for trace */
 	Trace(TR_ERR, "%s", msg);
 }
 

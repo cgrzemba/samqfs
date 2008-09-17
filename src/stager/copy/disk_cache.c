@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -124,17 +124,17 @@ DiskCacheOpen(
 	if (GET_FLAG(file->flags, FI_DCACHE) && file->dcache > 0) {
 
 		fd = file->dcache;
-		Trace(TR_MISC, "Restore disk cache fd: %d", fd);
+		Trace(TR_FILES, "Restore disk cache fd: %d", fd);
 
 	} else if (ifVerify(file) == B_TRUE) {
 
 		fd = openVerify(file);
-		Trace(TR_MISC, "Verify disk cache fd: %d", fd);
+		Trace(TR_FILES, "Verify disk cache fd: %d", fd);
 
 	} else {
 
 		fd = openStage(file);
-		Trace(TR_MISC, "Stage disk cache fd: %d", fd);
+		Trace(TR_FILES, "Stage disk cache fd: %d", fd);
 	}
 
 	return (fd);
@@ -189,7 +189,7 @@ DiskCacheWrite(
 	readErrno = 0;
 	position = 0;		/* block written to disk for file */
 
-	Trace(TR_MISC, "Write disk inode: %d.%d len: %lld",
+	Trace(TR_FILES, "Write disk inode: %d.%d len: %lld",
 	    file->id.ino, file->id.gen, dataToWrite);
 
 	while (DATA_TO_WRITE()) {
@@ -208,7 +208,7 @@ DiskCacheWrite(
 			nbytes = dataToWrite;
 		}
 
-		Trace(TR_MISC,
+		Trace(TR_DEBUG,
 		    "Write block: %d buf: %d [0x%x] offset: %lld len: %d",
 		    position, CircularIoSlot(IoThread->io_writer, out),
 		    (int)out, swrite.offset, nbytes);
@@ -252,11 +252,11 @@ DiskCacheWrite(
 
 		position++;
 
-		Trace(TR_MISC, "Write %d bytes left: %lld (%d/%d)",
+		Trace(TR_DEBUG, "Write %d bytes left: %lld (%d/%d)",
 		    nbytes, dataToWrite, readErrno, cancel);
 	}
 
-	Trace(TR_MISC, "Write disk complete inode: %d.%d",
+	Trace(TR_FILES, "Write disk complete inode: %d.%d",
 	    file->id.ino, file->id.gen);
 
 	/*
@@ -321,6 +321,7 @@ DiskCacheWrite(
 				swrite.offset = 0;
 
 				if (verify == B_TRUE) {
+					SetErrno = 0;	/* set for trace */
 					Trace(TR_ERR, "Unable to verify "
 					    "inode: %d.%d copy: %d errno: %d",
 					    file->id.ino, file->id.gen,
@@ -336,7 +337,8 @@ DiskCacheWrite(
 
 		} else {
 			if (verify == B_TRUE) {
-				Trace(TR_MISC, "Unable to verify "
+				SetErrno = 0;	/* set for trace */
+				Trace(TR_ERR, "Unable to verify "
 				    "inode: %d.%d copy: %d errno: %d",
 				    file->id.ino, file->id.gen,
 				    copy + 1, errno);
@@ -524,7 +526,8 @@ openVerify(
 	if (mount_name == NULL ||
 	    (mpfd = open(mount_name, O_RDONLY)) < 0) {
 
-		Trace(TR_MISC, "Unable to determine mount point "
+		SetErrno = 0;	/* set for trace */
+		Trace(TR_ERR, "Unable to determine mount point "
 		    "inode: %d.%d fseq: %d mp: \"%s\" errno: %d",
 		    file->id.ino, file->id.gen, file->fseq,
 		    mount_name == NULL ? "null" : mount_name, errno);
@@ -549,7 +552,8 @@ openVerify(
 			 */
 			NumOpenFiles++;
 		} else {
-			Trace(TR_MISC, "Idopen failed inode: %d.%d "
+			SetErrno = 0;	/* set for trace */
+			Trace(TR_ERR, "Idopen failed inode: %d.%d "
 			    "copy: %d errno: %d",
 			    file->id.ino, file->id.gen,
 			    file->copy + 1, errno);

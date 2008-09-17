@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -151,6 +151,7 @@ RmLoadVolume(void)
 	 * were in the stream.
 	 */
 	if (file == NULL) {
+		SetErrno = 0;	/* set for trace */
 		Trace(TR_MISC, "Load rm volume canceled, no files in stream");
 		return (ECANCELED);
 	}
@@ -261,7 +262,7 @@ RmSeekVolume(
 {
 	int position = -1;
 
-	Trace(TR_MISC, "Start positioning: %d", to);
+	Trace(TR_DEBUG, "Start positioning: %d", to);
 
 	if (Instance->ci_flags & CI_samremote) {
 		if (SamrftSeekVol(IoThread->io_rftHandle, to) < 0) {

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -316,7 +316,7 @@ FindVsn(
 
 	if (vsnTable.catalog == B_FALSE) {
 		if (initCatalog() == 0) {
-			Trace(TR_MISC, "Catalog initialized");
+			Trace(TR_DEBUG, "Catalog initialized");
 		}
 		initVsnTable();
 	}
@@ -666,7 +666,7 @@ initLibraryTable(void)
 	if (numHoneycombVols > 0) {
 		libraryTable.entries++;
 		driveTable.entries += numHoneycombVols;
-		Trace(TR_MISC, "Honeycomb volumes: %d", numHoneycombVols);
+		Trace(TR_MISC, "Stk5800 volumes: %d", numHoneycombVols);
 	}
 
 	/*
@@ -978,6 +978,7 @@ initCatalog(void)
 	}
 
 	if (removableMediaFound && CatalogInit(program_name) == -1) {
+		SetErrno = 0;	/* set for trace */
 		Trace(TR_ERR, "Catalog initialization failed");
 		rc = -1;
 	} else {

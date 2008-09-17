@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -180,7 +180,7 @@ DkNextArchiveFile(void)
 		snprintf(fullpath, sizeof (fullpath), "%s/%s",
 		    diskVolume->DvPath, tarFileName);
 
-		Trace(TR_MISC, "Open file '%s' (0x%llx)", fullpath, seqnum);
+		Trace(TR_FILES, "Open file '%s' (0x%llx)", fullpath, seqnum);
 
 		if (lastdvavail == B_FALSE &&
 		    strncmp(fullpath, lastdv, sizeof (fullpath)) == 0) {
@@ -199,6 +199,7 @@ DkNextArchiveFile(void)
 			if (rc == 0) {
 				error = 0;
 			} else {
+				SetErrno = 0;
 				Trace(TR_ERR, "Unable to open file: %s "
 				    "errno: %d", fullpath, errno);
 				if (retry > 0) {

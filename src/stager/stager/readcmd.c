@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -511,7 +511,7 @@ setMaxActiveDefault(void *v)
 		maxactive = STAGER_MAX_ACTIVE;
 	}
 
-	Trace(TR_PROC, "Setting maxactive default %d", maxactive);
+	Trace(TR_MISC, "Setting maxactive default %d", maxactive);
 	*(int *)v = maxactive;
 }
 

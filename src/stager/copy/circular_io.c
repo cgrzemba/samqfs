@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -158,10 +158,10 @@ CircularIoConstructor(
 
 	CircularIoReset(buffer);
 
-	Trace(TR_MISC, "Circular buffer");
+	Trace(TR_DEBUG, "Circular buffer");
 	for (i = 0; i < numBuffers; i++) {
 		ptr = buffer->cb_first + (blockSize * i);
-		Trace(TR_MISC, "%d [0x%x]", i, (int)ptr);
+		Trace(TR_DEBUG, "%d [0x%x]", i, (int)ptr);
 	}
 
 	return (buffer);

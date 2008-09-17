@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.106 $"
+#pragma ident "$Revision: 1.107 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -184,6 +184,7 @@ CopyFiles(void)
 
 			/* Exit if parent, stager daemon, died. */
 			if (getppid() == 1) {
+				SetErrno = 0;	/* set for trace */
 				Trace(TR_ERR, "Detected stager daemon exit");
 				SET_FLAG(Instance->ci_flags, CI_shutdown);
 				break;
@@ -219,7 +220,7 @@ CopyFiles(void)
 
 		/* If shutdown requested exit loop. */
 		if (IF_SHUTDOWN(Instance)) {
-			Trace(TR_MISC, "Shutdown instance: 0x%x first: 0x%x",
+			Trace(TR_PROC, "Shutdown instance: 0x%x first: 0x%x",
 			    (int)Instance, (int)Instance->ci_first);
 			PthreadMutexUnlock(&Instance->ci_requestMutex);
 			break;
@@ -251,7 +252,7 @@ CopyFiles(void)
 			Instance->ci_last = NULL;
 		}
 
-		Trace(TR_MISC, "Got request: '%s.%d' 0x%x",
+		Trace(TR_QUEUE, "Got request: '%s.%d' 0x%x",
 		    Request->cr_vsn, Request->cr_seqnum, (int)Request);
 
 		/* Generate path name and map in the stream. */
@@ -302,7 +303,7 @@ CopyFiles(void)
 void
 ResetBuffers(void)
 {
-	Trace(TR_MISC, "Reset buffers");
+	Trace(TR_DEBUG, "Reset buffers");
 
 	CircularIoReset(IoThread->io_reader);
 	CircularIoReset(IoThread->io_writer);
@@ -326,9 +327,9 @@ SetFileError(
 		}
 		file->context = Instance->ci_pid;
 		SET_FLAG(file->flags, FI_DCACHE);
-		Trace(TR_MISC, "Set file dcache: %d write_off: %lld error: %d",
+		Trace(TR_FILES, "Set file dcache: %d write_off: %lld error: %d",
 		    fd, write_off, error);
-		Trace(TR_MISC, "\tvsn_cnt: %d context: %d",
+		Trace(TR_FILES, "\tvsn_cnt: %d context: %d",
 		    file->vsn_cnt, (int)file->context);
 }
 
@@ -347,6 +348,7 @@ allocBuffers(void)
 
 	blockSize = GetBlockSize();
 	if (blockSize == 0) {
+		SetErrno = 0;		/* set for trace */
 		Trace(TR_ERR, "Block size is zero");
 		blockSize = 16 *1024;
 	}
@@ -359,7 +361,7 @@ allocBuffers(void)
 	IoThread->io_writer = CircularIoConstructor(numBuffers, blockSize,
 	    lockbuf);
 
-	Trace(TR_MISC, "Alloc buffers num: %d block size: %d %s",
+	Trace(TR_FILES, "Alloc buffers num: %d block size: %d %s",
 	    numBuffers, blockSize, lockbuf ? "(lock)" : "");
 
 	/*
@@ -378,7 +380,6 @@ allocBuffers(void)
 static void
 freeBuffers(void)
 {
-	Trace(TR_MISC, "Free buffers");
 	CircularIoDestructor(IoThread->io_reader);
 	CircularIoDestructor(IoThread->io_writer);
 
@@ -414,7 +415,7 @@ checkBuffers(
 	/* Get current position of removable media file. */
 	currentPos = GetPosition();
 
-	Trace(TR_MISC, "Get position %lld block size %d",
+	Trace(TR_FILES, "Get position %lld block size %d",
 	    currentPos, GetBlockSize());
 
 	/*
@@ -517,6 +518,7 @@ copyStream()
 
 		/* Stop staging if parent died. */
 		if (getppid() == 1) {
+			SetErrno = 0;		/* set for trace */
 			Trace(TR_ERR, "Detected stager daemon exit");
 
 			Stream->first = EOS;
@@ -561,7 +563,8 @@ copyStream()
 
 		} else {
 			/* Unable to open disk archive.  Error request. */
-			Trace(TR_MISC, "Unable to open disk archive "
+			SetErrno = 0;	/* set for trace */
+			Trace(TR_ERR, "Unable to open disk archive "
 			    "copy: %d inode: %d.%d errno: %d",
 			    file->copy + 1, file->id.ino, file->id.gen, errno);
 			dcache = -1;
@@ -603,6 +606,7 @@ copyStream()
 		/* Device not available. */
 		if (file->error == ENODEV) {
 			CLEAR_FLAG(file->flags, FI_DCACHE);
+			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "No device available");
 
 			Stream->first = EOS;

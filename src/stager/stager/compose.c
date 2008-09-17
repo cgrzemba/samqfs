@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -167,6 +167,7 @@ Compose(void)
 			while (stream == NULL && retry-- > 0) {
 				stream = CreateStream(file);
 				if (stream == NULL) {
+					SetErrno = 0;	/* set for trace */
 					Trace(TR_ERR, "Create stream failed");
 					sleep(5);
 				}

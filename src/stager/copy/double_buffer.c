@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -179,7 +179,7 @@ DoubleBuffer(
 	firstMove = B_TRUE;
 	CircularIoReset(writer);
 
-	Trace(TR_MISC, "Double buffer inode: %d.%d offset: %d len: %lld",
+	Trace(TR_DEBUG, "Double buffer inode: %d.%d offset: %d len: %lld",
 	    file->id.ino, file->id.gen, offset, dataToMove);
 
 	/* Move data from read buffer to write buffer for a file. */
@@ -267,7 +267,7 @@ DoubleBuffer(
 			nbytes = dataToMove;
 		}
 
-		Trace(TR_MISC, "Move from: [0x%x] %d to: [0x%x] %d nbytes: %d",
+		Trace(TR_DEBUG, "Move from: [0x%x] %d to: [0x%x] %d nbytes: %d",
 		    (int)from, fromResidual, (int)to, toResidual, nbytes);
 
 		memcpy(to, from, nbytes);
@@ -317,11 +317,11 @@ DoubleBuffer(
 		 */
 		cancel = GET_FLAG(IoThread->io_flags, IO_cancel);
 
-		Trace(TR_MISC, "Move %d bytes left: %lld (%d/%d)",
+		Trace(TR_DEBUG, "Move %d bytes left: %lld (%d/%d)",
 		    nbytes, dataToMove, readErrno, cancel);
 	}
 
-	Trace(TR_MISC, "Double buffer complete inode: %d.%d",
+	Trace(TR_DEBUG, "Double buffer complete inode: %d.%d",
 	    file->id.ino, file->id.gen);
 
 	/* Wait for write to complete */

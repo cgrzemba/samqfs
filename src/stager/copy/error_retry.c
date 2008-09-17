@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -250,7 +250,7 @@ RetryOptical(
 	/*
 	 * Retry bus reset on optical.
 	 */
-	Trace(TR_ERR, "Optical read error retry");
+	Trace(TR_MISC, "Optical read error retry");
 
 	count = bufSize;
 	error = B_TRUE;

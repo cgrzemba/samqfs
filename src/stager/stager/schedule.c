@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -485,7 +485,8 @@ CancelWork(
 
 	file = GetFile(id);
 	copy = file->copy;
-	Trace(TR_MISC, "Request to cancel inode: %d.%d (%d)",
+
+	Trace(TR_FILES, "Request to cancel inode: %d.%d fseq: %d",
 	    file->id.ino, file->id.gen, file->fseq);
 
 	stream = workQueue.first;
@@ -932,13 +933,13 @@ ShutdownCopy(
 		return;
 	}
 
-	Trace(TR_MISC, "ShutdownCopy: sig: %d", stopSignal);
+	Trace(TR_PROC, "Shutdown copy procs");
 
 	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
 		pid = CopyInstanceList->cl_data[i].ci_pid;
 		if (pid != 0) {
 			(void) kill(pid, stopSignal);
-			Trace(TR_MISC, "Sent signal %d to copy[%d]",
+			Trace(TR_PROC, "Sent signal %d to copy[%d]",
 			    stopSignal, (int)pid);
 		}
 	}
@@ -1009,26 +1010,27 @@ CopyProcExit(
 	int signum;
 	boolean_t restart = B_TRUE;
 
-	SetErrno = 0;	/* clear for trace */
-	Trace(TR_ERR, "Copy process exit signal: %d", sig);
-	if (sig != SIGCLD)
+	Trace(TR_PROC, "Copy process exit signal: %d", sig);
+	if (sig != SIGCLD) {
 		return;
+	}
 
 	while ((pid = waitpid(-1, &stat, WNOHANG)) > 0) {
 		exitstatus = WEXITSTATUS(stat);
 		signum = WTERMSIG(stat);
 		if (exitstatus != 0 ||
 		    (signum != 0 && (signum != SIGTERM && signum != SIGINT))) {
+			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "Copy ERR exit "
 			    "pid: %d stat: %04x exit: %d sig: %d",
 			    (int)pid, stat, exitstatus, signum);
 			if (exitstatus == EXIT_NORESTART ||
 			    ShutdownStager == SIGUSR1) {
-				Trace(TR_ERR, "Copy process not restarted");
+				Trace(TR_PROC, "Copy process not restarted");
 				restart = B_FALSE;
 			}
 		} else {
-			Trace(TR_MISC, "Copy normal exit pid: %d stat: %04x",
+			Trace(TR_PROC, "Copy normal exit pid: %d stat: %04x",
 			    (int)pid, stat);
 
 			/*
@@ -1336,6 +1338,7 @@ findResources(
 		priority = SP_noresources;
 
 		if (attended == B_FALSE) {
+			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "Volume '%s.%s' not available",
 			    sam_mediatoa(file->ar[copy].media),
 			    file->ar[copy].section.vsn);
@@ -1371,7 +1374,7 @@ findResources(
 	if (IS_VSN_BADMEDIA(vi)) {
 		priority = SP_noresources;
 
-		SetErrno = ENOSPC;	/* Set errno for trace */
+		SetErrno = 0;	/* set for trace */
 		Trace(TR_ERR, "Volume '%s.%s' is bad media",
 		    sam_mediatoa(file->ar[copy].media),
 		    file->ar[copy].section.vsn);
@@ -1472,9 +1475,11 @@ startCopy(
 			 * Copy process has exited, no need to close file
 			 * descriptors but clear the stream.
 			 */
-			Trace(TR_MISC, "Find copy failed "
+			SetErrno = ESRCH;	/* set for trace */
+			Trace(TR_ERR, "Find copy failed "
 			    "pid: %d stream '%s.%d'",
 			    (int)stream->context, stream->vsn, stream->seqnum);
+
 			SET_FLAG(stream->flags, SR_CLEAR);
 			return (0);
 		}
@@ -1482,12 +1487,12 @@ startCopy(
 		 * Make sure copy process is not already busy.
 		 */
 		if (instance != NULL && instance->ci_busy == B_TRUE) {
-			Trace(TR_MISC, "Copy process %d busy",
+			Trace(TR_PROC, "Copy process %d busy",
 			    (int)stream->context);
 			instance = NULL;
 		}
 		if (instance == NULL) {
-			Trace(TR_MISC, "Find copy failed "
+			Trace(TR_PROC, "Find copy failed "
 			    "pid: %d stream '%s.%d'",
 			    (int)stream->context, stream->vsn, stream->seqnum);
 		}
@@ -1506,7 +1511,7 @@ startCopy(
 		return (0);
 	}
 
-	Trace(TR_MISC, "Found copy-rm%d instance: 0x%x media: '%s'",
+	Trace(TR_DEBUG, "Found copy-rm%d instance: 0x%x media: '%s'",
 	    instance->ci_rmfn, (int)instance, sam_mediatoa(instance->ci_media));
 
 	PthreadMutexLock(&instance->ci_requestMutex);
@@ -1516,7 +1521,7 @@ startCopy(
 	 */
 	if (IF_SHUTDOWN(instance) || instance->ci_created == 0) {
 		stream->priority = SP_start;
-		Trace(TR_MISC, "\ttimed out");
+		Trace(TR_DEBUG, "\ttimed out");
 		PthreadMutexUnlock(&instance->ci_requestMutex);
 		return (0);
 	}
@@ -1563,7 +1568,7 @@ startCopy(
 		return (0);
 	}
 
-	Trace(TR_MISC, "Schedule copy-rm%d: '%s.%d' 0x%x",
+	Trace(TR_DEBUG, "Schedule copy-rm%d: '%s.%d' 0x%x",
 	    instance->ci_rmfn, stream->vsn, stream->seqnum, (int)request);
 
 	if (instance->ci_first == NULL) {
@@ -1696,7 +1701,7 @@ findCopy(
 	while (trylock != 0) {
 		trylock = pthread_mutex_trylock(&instance->ci_requestMutex);
 		if (trylock != 0) {
-			Trace(TR_MISC, "Request mutex locked %d "
+			Trace(TR_ERR, "Request mutex locked %d "
 			    "instance: 0x%x, errno: %d",
 			    trylock, (int)instance, errno);
 			if (--retry > 0) {
@@ -1786,7 +1791,7 @@ findCopyByPid(
 			break;
 		}
 	}
-	Trace(TR_MISC, "Find copy: 0x%x by pid: %d", (int)instance, (int)pid);
+	Trace(TR_DEBUG, "Find copy: 0x%x by pid: %d", (int)instance, (int)pid);
 	return (instance);
 }
 
@@ -2044,7 +2049,7 @@ startCopyProcess(
 	pid_t pid;
 	int i;
 
-	Trace(TR_MISC, "Starting copy-rm%d media: '%s'",
+	Trace(TR_PROC, "Starting copy-rm%d media: '%s'",
 	    instance->ci_rmfn, sam_mediatoa(instance->ci_media));
 
 	/*
@@ -2125,6 +2130,7 @@ sendLoadNotify(
 
 	mount_name = GetMountPointName(fseq);
 	if (mount_name == NULL) {
+		SetErrno = 0;	/* set for trace */
 		Trace(TR_ERR, "Load exported volume error fseq: %d", fseq);
 		return (B_FALSE);
 	}
@@ -2618,7 +2624,7 @@ CheckCopyProcs(void)
 		while (trylock != 0) {
 			trylock = pthread_mutex_trylock(&cs->mutex);
 			if (trylock != 0) {
-				Trace(TR_MISC, "Stream mutex locked %d "
+				Trace(TR_ERR, "Stream mutex locked %d "
 				    "pid: %d, errno: %d",
 				    trylock, (int)cs->pid, errno);
 				if (--retry > 0) {
@@ -2659,7 +2665,7 @@ CheckCopyProcs(void)
 			while (trylock != 0) {
 				trylock = pthread_mutex_trylock(&fi->mutex);
 				if (trylock != 0) {
-					Trace(TR_MISC, "File mutex locked %d "
+					Trace(TR_ERR, "File mutex locked %d "
 					    "inode: %d.%d, errno: %d",
 					    trylock, fi->id.ino, fi->id.gen,
 					    errno);
@@ -2733,8 +2739,8 @@ recoverCopyInstanceList(
 	    (CopyInstanceList_t *)MapInFile(SharedInfo->si_copyInstancesFile,
 	    O_RDWR, NULL);
 	if (CopyInstanceList == NULL) {
-		Trace(TR_ERR, "Cannot map in file %s",
-		    SharedInfo->si_copyInstancesFile);
+		Trace(TR_ERR, "Cannot map in file '%s' errno: %d",
+		    SharedInfo->si_copyInstancesFile, errno);
 		return (-1);
 	}
 
@@ -2881,6 +2887,7 @@ KillCopyProc(
 			}
 		}
 		if (cc == NULL) {
+			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "No CopyInstanceList for pid: %d found",
 			    (int)pid);
 			return;
