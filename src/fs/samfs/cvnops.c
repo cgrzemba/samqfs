@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.147 $"
+#pragma ident "$Revision: 1.148 $"
 
 #include "sam/osversion.h"
 
@@ -1463,28 +1463,7 @@ sam_inactive_vn(
 
 	TRACE(T_SAM_INACTIVE, vp, vp->v_count, ip->flags.bits, ip->di.id.ino);
 
-	if (!SAM_IS_SHARED_CLIENT(mp) && (ip->di.nlink == 0)) {
-		/*
-		 * A transaction is only needed if this file has been
-		 * removed. This logs the final on-disk inode
-		 * update as well as any extention inodes that will
-		 * be removed.
-		 *
-		 * XXX what about failover where this machine changes
-		 * from a server to a client?
-		 */
-
-		trans_size = (int)TOP_REMOVE_SIZE(ip);
-		TRANS_BEGIN_CSYNC(mp, issync, TOP_REMOVE, trans_size);
-	}
-
 	sam_inactive_ino(ip, credp);
-
-	if (trans_size) {
-		int terr;
-
-		TRANS_END_CSYNC(mp, terr, issync, TOP_REMOVE, trans_size);
-	}
 }
 
 

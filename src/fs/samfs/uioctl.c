@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.138 $"
+#pragma ident "$Revision: 1.139 $"
 
 #include "sam/osversion.h"
 
@@ -107,6 +107,8 @@ sam_ioctl_util_cmd(
 {
 	sam_mount_t *mp;
 	int	error	= 0;
+	int issync;
+	int trans_size = 0;
 
 	mp  = ioctl_ip->mp;
 	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
@@ -124,12 +126,24 @@ sam_ioctl_util_cmd(
 		} else {
 			if ((error = sam_find_ino(mp->mi.m_vfsp,
 			    IG_EXISTS, &pp->id, &ip)) == 0) {
+				trans_size = (int)TOP_SETATTR_SIZE(ip);
+				TRANS_BEGIN_CSYNC(mp, issync, TOP_SETATTR,
+				    trans_size);
 				RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				error = sam_set_archive(ip, pp, credp);
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 				RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 				sam_rele_ino(ip);
+				if (trans_size) {
+					int terr = 0;
+
+					TRANS_END_CSYNC(mp, terr, issync,
+					    TOP_SETATTR, trans_size);
+					if (error == 0) {
+						error = terr;
+					}
+				}
 			}
 		}
 		}
@@ -161,12 +175,25 @@ sam_ioctl_util_cmd(
 				}
 				if ((error = sam_find_ino(mp->mi.m_vfsp,
 				    IG_EXISTS, &sa.id, &ip)) == 0) {
+					trans_size = (int)TOP_SETATTR_SIZE(ip);
+					TRANS_BEGIN_CSYNC(mp, issync,
+					    TOP_SETATTR, trans_size);
 					RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 					error = sam_set_archive(ip, &sa, credp);
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 					RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 					sam_rele_ino(ip);
+					if (trans_size) {
+						int terr = 0;
+
+						TRANS_END_CSYNC(mp, terr,
+						    issync, TOP_SETATTR,
+						    trans_size);
+						if (error == 0) {
+							error = terr;
+						}
+					}
 				}
 				if (error != 0) {
 					sa.flags |= SA_error;
@@ -551,6 +578,9 @@ sam_ioctl_util_cmd(
 		}
 		error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS, &pp->id, &ip);
 		if (error == 0) {
+			trans_size = (int)TOP_SETATTR_SIZE(ip);
+			TRANS_BEGIN_CSYNC(mp, issync, TOP_SETATTR,
+			    trans_size);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			if ((ip->di.arch_status & (1 << pp->copy)) ||
 			    (ip->di.ar_flags[pp->copy]) & AR_stale) {
@@ -558,6 +588,7 @@ sam_ioctl_util_cmd(
 				    & ip->di.ar_flags[pp->copy]) |
 				    (pp->c_flags & pp->flags);
 				ip->di.status.b.archdone = 0;
+				TRANS_INODE(mp, ip);
 				ip->flags.b.changed = 1;
 
 				/*
@@ -570,6 +601,15 @@ sam_ioctl_util_cmd(
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			sam_rele_ino(ip);
+			if (trans_size) {
+				int terr = 0;
+
+				TRANS_END_CSYNC(mp, terr, issync,
+				    TOP_SETATTR, trans_size);
+				if (error == 0) {
+					error = terr;
+				}
+			}
 		}
 		}
 		break;
@@ -584,6 +624,8 @@ sam_ioctl_util_cmd(
 			int mask;
 			int	n;
 
+			trans_size = (int)TOP_SETATTR_SIZE(ip);
+			TRANS_BEGIN_CSYNC(mp, issync, TOP_SETATTR, trans_size);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			ip->di.status.b.archnodrop = (pp->archnodrop != 0) ?
 			    1 : 0;
@@ -608,6 +650,7 @@ sam_ioctl_util_cmd(
 			}
 
 			ip->di.status.b.archdone = (pp->archdone != 0) ? 1 : 0;
+			TRANS_INODE(mp, ip);
 			ip->flags.b.changed = 1;
 
 			/*
@@ -622,6 +665,15 @@ sam_ioctl_util_cmd(
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			sam_rele_ino(ip);
+			if (trans_size) {
+				int terr = 0;
+
+				TRANS_END_CSYNC(mp, terr, issync, TOP_SETATTR,
+				    trans_size);
+				if (error == 0) {
+					error = terr;
+				}
+			}
 		}
 		}
 		break;
@@ -639,6 +691,8 @@ sam_ioctl_util_cmd(
 		}
 		error = sam_get_ino(mp->mi.m_vfsp, IG_EXISTS, &pp->id, &ip);
 		if (error == 0) {
+			trans_size = (int)TOP_SETATTR_SIZE(ip);
+			TRANS_BEGIN_CSYNC(mp, issync, TOP_SETATTR, trans_size);
 			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 			if (pp->size < ip->di.psize.rmfile) {
 				error = EINVAL;
@@ -690,6 +744,15 @@ sam_ioctl_util_cmd(
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			VN_RELE(SAM_ITOV(ip));
+			if (trans_size) {
+				int terr = 0;
+
+				TRANS_END_CSYNC(mp, terr, issync, TOP_SETATTR,
+				    trans_size);
+				if (error == 0) {
+					error = terr;
+				}
+			}
 		}
 		}
 		break;
@@ -702,6 +765,8 @@ sam_ioctl_util_cmd(
 		pp = (struct sam_ioctl_idstage *)(void *)arg;
 		error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS, &pp->id, &ip);
 		if (error == 0) {
+			trans_size = (int)TOP_SETATTR_SIZE(ip);
+			TRANS_BEGIN_CSYNC(mp, issync, TOP_SETATTR, trans_size);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			if (ip->di.status.b.offline) {
 				if (pp->copy != 0) {
@@ -787,6 +852,15 @@ stage_inode:
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			sam_rele_ino(ip);
+			if (trans_size) {
+				int terr = 0;
+
+				TRANS_END_CSYNC(mp, terr, issync, TOP_SETATTR,
+				    trans_size);
+				if (error == 0) {
+					error = terr;
+				}
+			}
 		}
 		}
 		break;
@@ -1544,6 +1618,7 @@ sam_set_archive(
 			}
 		}
 
+		TRANS_INODE(ip->mp, ip);
 		ip->flags.b.changed = 1;
 		bdwrite(bp);
 	}
