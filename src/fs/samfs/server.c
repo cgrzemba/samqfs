@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.296 $"
+#pragma ident "$Revision: 1.297 $"
 
 #include "sam/osversion.h"
 
@@ -1161,10 +1161,24 @@ sam_process_rm_lease(sam_node_t *ip, sam_san_message_t *msg)
 	sam_san_lease2_t *l2p = &msg->call.lease2;
 	int client_ord;
 	int error;
+	uint32_t *gen_table = NULL;
 
 	client_ord = msg->hdr.client_ord;
+	if (lp->data.ltype & CL_OPEN) {
+		/*
+		 * Use the lease generation numbers
+		 * if an open lease (plus probably others)
+		 * is being removed so we don't
+		 * remove more recently acquired
+		 * leases.
+		 *
+		 * It is possible we should do this
+		 * for all cases.
+		 */
+		gen_table = lp->gen;
+	}
 	error = sam_remove_lease(ip, client_ord,
-	    &l2p->irec.sr_attr, lp->data.ltype, NULL);
+	    &l2p->irec.sr_attr, lp->data.ltype, gen_table);
 	return (error);
 }
 

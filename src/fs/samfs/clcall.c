@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.256 $"
+#pragma ident "$Revision: 1.257 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1152,6 +1152,8 @@ sam_proc_rm_lease(
 	ushort_t actions = 0;
 	boolean_t close;
 	int error;
+	enum LEASE_type ltype;
+	uint32_t saved_leasegen[SAM_MAX_LTYPE];
 
 	close = (lease_mask == CL_CLOSE);
 	if (close) {
@@ -1178,6 +1180,12 @@ sam_proc_rm_lease(
 		if ((ip->cl_leases | ip->cl_saved_leases) & CL_APPEND) {
 			actions = SR_SET_SIZE;
 		}
+		/*
+		 * Grab the lease generation numbers.
+		 */
+		for (ltype = 0; ltype < SAM_MAX_LTYPE; ltype++) {
+			saved_leasegen[ltype] = ip->cl_leasegen[ltype];
+		}
 		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 		sam_client_remove_all_leases(ip);
 		RW_LOCK_OS(&ip->inode_rwl, rw_type);
@@ -1195,6 +1203,15 @@ sam_proc_rm_lease(
 	sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE, SHARE_wait,
 	    LEASE_remove, sizeof (sam_san_lease_t), sizeof (sam_san_lease2_t));
 	msg->call.lease.data.ltype = lease_mask;
+	if (close) {
+		/*
+		 * It is possible that this should be done
+		 * for all cases, not just close.
+		 */
+		for (ltype = 0; ltype < SAM_MAX_LTYPE; ltype++) {
+			msg->call.lease.gen[ltype] = saved_leasegen[ltype];
+		}
+	}
 	if (rw_type == RW_READER) {
 		if (!RW_TRYUPGRADE_OS(&ip->inode_rwl)) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
