@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.95 2008/08/27 19:48:29 kilemba Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.96 2008/09/17 23:33:24 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -694,10 +694,10 @@ public class FileSystemSummaryView extends CommonTableContainerView {
 
         if (SecurityManagerFactory.getSecurityManager().
             hasAuthorization(Authorization.FILESYSTEM_OPERATOR)) {
-            ((CCButton)getChild("NewFSButton"))
+            ((CCButton)getChild("SamQFSWizardNewFSButton"))
                 .setDisabled(wizardNewLaunched);
         } else {
-            ((CCWizardWindow)getChild("NewFSButton"))
+            ((CCWizardWindow)getChild("SamQFSWizardNewFSButton"))
                 .setDisabled(true);
             model.setSelectionType("none");
         }

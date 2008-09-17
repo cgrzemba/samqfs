@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.13 2008/08/28 02:01:33 ronaldso Exp $ -->
+<!-- $Id: faces-config.xml,v 1.14 2008/09/17 23:33:21 kilemba Exp $ -->
 
 <faces-config>
     <application>
@@ -91,13 +91,6 @@
         <description>Job Details Bean</description>
         <managed-bean-name>JobDetailsBean</managed-bean-name>
         <managed-bean-class>com.sun.netstorage.samqfs.web.jobs.JobDetailsBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-
-    <managed-bean>
-        <description>HPC Phase II Create - Check list Bean</description>
-        <managed-bean-name>ProtoFSBean</managed-bean-name>
-        <managed-bean-class>com.sun.netstorage.samqfs.web.fs.ProtoFSDetailsBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
     

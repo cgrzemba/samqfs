@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: firsttimeconfig.js,v 1.2 2008/06/25 23:23:26 kilemba Exp $
+// ident	$Id: firsttimeconfig.js,v 1.3 2008/09/17 23:33:21 kilemba Exp $
 
 var formName = "FirstTimeConfigForm";
 var prefix = "FirstTimeConfig.";
@@ -67,6 +67,17 @@ function launchAddLibraryWizard() {
   }
 }
 
+/* handler for the Create File System href */
+function createFileSystem() {
+    var theForm = document.forms[formName];
+    var buttonName = "FirstTimeConfig.FirstTimeConfigView.newFileSystemWizard";
+    var button = theForm.elements[buttonName];
+
+    if (button != null) {
+        button.click();
+    }
+}
+
 /* create disk vsn handler */
 function addDiskVolume() {
   return launchPopup("/archive/NewDiskVSN",
@@ -91,17 +102,6 @@ function importTapeVolumes() {
               "library_selector",
               getServerName(),
               SIZE_SMALL,
-              null);
-
-  return false;
-}
-
-/* handler for the create file system link */
-function createFileSystem() {
-  launchPopup("/fs/NewFileSystemPopup",
-              "new_fs_popup",
-              getServerName(),
-              SIZE_NORMAL,
               null);
 
   return false;
@@ -155,55 +155,3 @@ function forwardToPage(uri) {
   return false;
 }
 
-/* handler for the proto fs names */
-function handleProtoFS(field) {
-  alert("coming soon ...");
-
-  return false;
-}
-
-/* handler for the add storage node href */
-function addStorageNode() {
-  alert("coming soon ...");
-
-  return false;
-}
-
-/* handler for the create the fs on the metadata server href */
-function createFSOnMDS() {
-  var theForm = document.forms[formName];
-  var buttonName = "FirstTimeConfig.FirstTimeConfigView.newFileSystemWizard";
-  var button = theForm.elements[buttonName];
-  alert("launching wizard ...");
-  
-  if (button != null) {
-      button.click();
-  } else {
-      alert("button is null :" + button);
-  }
-
-  return false;
-}
-
-// eventual helper to launch JATO-based wizards from JSF-based pages.
-var geometry='height=650, width=900,top='+((screen.height-(screen.height/1.618))-(650/2))+', left='+((screen.width-900)/2)+'scrollbars=no,resizable';
-var url="/samqfsui/wizard/WizardWindow?" +
-"WizardWindow.wizWinMsthdSrc=secondaryMasthead.productNameSrc&amp;"+ 
-"WizardWindow.wizWinMsthdAlt=secondaryMasthead.productNameAlt&amp;" +
-"WizardWindow.wizWinBaseName=com.sun.netstorage.samqfs.web.resources.Resources&amp;" +
-"WizardWindow.wizWinBundleId=testBundle&amp;"+
-"WizardWindow.wizWinTitle=AddLibrary.title&amp;" +
-"WizardWindow.wizName=AddLibraryImpl&amp;" +
-"WizardWindow.wizClassName=com.sun.netstorage.samqfs.web.media.wizards.AddLibraryImpl&amp;" +
-"com_sun_web_ui_popup=true&amp;"+
-"SERVER_NAME=nws-bur-24-96&amp;" +
-"WizardWindow.wizWinName=CommonTasks.CommonTasksWizardsView&amp; "+
-"WizardWindow.wizBtnForm=CommonTasksForm&amp;"+
-"WizardWindow.wizRefreshCmdChild=CommonTasks.CommonTasksWizardsView.addLibraryWizardForward&amp;"+
-"WizardWindow.cmdField=;";
-function launchWizard() {
-    var win = window.open(url, 'wizard-name', geometry);
-    win.focus();
-   
-    return false;
-}

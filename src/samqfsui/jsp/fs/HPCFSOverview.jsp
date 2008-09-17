@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: HPCFSOverview.jsp,v 1.1 2008/07/09 22:20:56 kilemba Exp $ -->
+<!-- $Id: HPCFSOverview.jsp,v 1.2 2008/09/17 23:33:23 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -41,6 +41,7 @@
 <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
               var="msgs" />
 
+<%-- TODO: Link this page from first time config instead of removing it --%>
 <ui:page>
 <ui:html>
 <ui:head title="#{msgs['hpcoverview.title']}"/>
@@ -85,3 +86,4 @@
 </ui:page>
 </f:view>
 </jsp:root>
+

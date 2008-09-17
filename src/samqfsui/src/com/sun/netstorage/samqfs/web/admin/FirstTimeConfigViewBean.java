@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FirstTimeConfigViewBean.java,v 1.1 2008/06/11 20:33:02 kilemba Exp $
+// ident	$Id: FirstTimeConfigViewBean.java,v 1.2 2008/09/17 23:33:23 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -57,7 +57,6 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
 
     // child views
     public static final String VIEW_NAME = "FirstTimeConfigView";
-    public static final String PAGELET_VIEW = "CreateFileSystemView";
     public static final String PAGE_TITLE = "PageTitle";
     public static final String MORE_HREF = "moreHref";
     public static final String MORE_TEXT = "moreText";
@@ -103,7 +102,6 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
         TraceUtil.trace3("Entering");
         super.registerChildren();
         registerChild(VIEW_NAME, FirstTimeConfigView.class);
-        registerChild(PAGELET_VIEW, CreateFileSystemView.class);
         registerChild(PAGE_TITLE, CCPageTitle.class);
         registerChild(MORE_HREF, CCHref.class);
         registerChild(ADD_LIBRARY_HREF, CCHref.class);
@@ -138,8 +136,6 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
             return new CCHiddenField(this, name, null);
         } else if (name.equals(VIEW_NAME)) {
             return new FirstTimeConfigView(this, name);
-        } else if (name.equals(PAGELET_VIEW)) {
-            return new CreateFileSystemView(this, name);
         } else if (super.isChildSupported(name)) {
             return super.createChild(name);
         } else if (name.equals(PAGE_TITLE)) {
@@ -159,6 +155,11 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
                     .getConfigurationSummary();
             } catch (SamFSException sfe) {
                 // log
+                SamUtil.processException(sfe,
+                                         this.getClass(),
+                                         "getConfiguration",
+                                 "Unable to retrieve configuration summary",
+                                         serverName);
             }
         }
 

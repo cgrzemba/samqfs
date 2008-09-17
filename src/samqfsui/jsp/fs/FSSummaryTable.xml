@@ -27,22 +27,14 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FSSummaryTable.xml,v 1.50 2008/07/16 21:55:55 kilemba Exp $ -->
+<!-- $Id: FSSummaryTable.xml,v 1.51 2008/09/17 23:33:23 kilemba Exp $ -->
 
 <table>
 <actions>
-    <cc name="NewFSButton"
-        tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
+    <cc name="SamQFSWizardNewFSButton"
+    tagclass="com.sun.web.ui.taglib.wizard.CCWizardWindowTag">
         <attribute name="dynamic" value="true"/>
         <attribute name="disabled" value="false"/>
-        <attribute name="defaultValue" value="FSSummary.NewFSButton"/>
-        <attribute name="onClick" value="
-            launchPopup('/fs/NewFileSystemPopup',
-                        'new_fs_popup',
-                        getServerKey(),
-                        SIZE_NORMAL,
-                        null);
-            return false; "/>
     </cc>
 
     <cc name="ViewPolicyButton" 
@@ -108,7 +100,6 @@
 
 <column name="fsName" sortname="fsNameText" extrahtml="valign='center'">
     <cc name="Href" tagclass="com.sun.web.ui.taglib.html.CCHrefTag">
-        <attribute name="onClick" value="return handleFSNameClick(this);"/>
         <cc name="fsNameText"
             tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag"/>
     </cc>
@@ -118,7 +109,6 @@
         tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
     <cc name="HiddenDynamicMenuOptions"
         tagclass="com.sun.web.ui.taglib.html.CCHiddenTag" />
-    <cc name="ProtoFSField" tagclass="com.sun.web.ui.taglib.html.CCHiddenTag"/>
 </column>
 
 <column name="mountPoint" sortname="mountPointText" extrahtml="valign='center'">
@@ -163,3 +153,4 @@
 </column>
 
 </table>
+

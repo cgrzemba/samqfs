@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident      $Id: CreateFSWizardImpl.java,v 1.106 2008/09/11 05:28:51 kilemba Exp $
+// ident	$Id: CreateFSWizardImpl.java,v 1.107 2008/09/17 23:33:24 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -77,7 +77,6 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.StringTokenizer;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 interface CreateFSWizardImplData {
@@ -86,7 +85,7 @@ interface CreateFSWizardImplData {
     final String title = "FSWizard.new.title";
 
     final Class[] pageClass = {
-        //        NewWizardFSNameView.class,
+        NewWizardFSTypeView.class,
         FSWizardSharedMemberSelectionPageView.class,
         FSWizardMetadataDeviceSelectionPageView.class,
         FSWizardStripedGroupDeviceSelectionPageView.class,
@@ -107,7 +106,7 @@ interface CreateFSWizardImplData {
     };
 
     final String[] pageTitle = {
-        //        "FSWizard.new.fsNamePage.title",
+        "FSWizard.new.fstype.title",
         "FSWizard.sharedMemberPage.title",
         "FSWizard.metadataDevicePage.title",
         "FSWizard.stripedGroupDevicePage.title",
@@ -128,19 +127,12 @@ interface CreateFSWizardImplData {
     };
 
     final String[][] stepHelp = {
-        /*
-        {"FSWizard.new.fsNamePage.help.text1",
-         "FSWizard.new.fsNamePage.help.text2",
-         "FSWizard.new.fsNamePage.help.text3",
-         "FSWizard.new.fsNamePage.help.text4",
-         "FSWizard.new.fsNamePage.help.text5",
-         "FSWizard.new.fsNamePage.help.text6",
-         "FSWizard.new.fsNamePage.help.text7",
-         "FSWizard.new.fsNamePage.help.text8",
-         "FSWizard.new.fsNamePage.help.text9",
-         "FSWizard.new.fsNamePage.help.text10",
-         "FSWizard.new.fsNamePage.help.text11"},
-        */
+        {"FSWizard.new.fstype.help.fstype",
+         "FSWizard.new.fstype.help.hafs",
+         "FSWizard.new.fstype.help.archiving",
+         "FSWizard.new.fstype.help.shared",
+         "FSWizard.new.fstype.help.hpc",
+         "FSWizard.new.fstype.help.matfs"},
         {"FSWizard.sharedMemberPage.help.text1",
          "FSWizard.sharedMemberPage.help.text2",
          "FSWizard.sharedMemberPage.help.text3",
@@ -212,7 +204,7 @@ interface CreateFSWizardImplData {
     };
 
     final String[] stepText = {
-        // "FSWizard.new.fsNamePage.step.text",
+        "FSWizard.new.fstype.step.text",
         "FSWizard.sharedMemberPage.step.text",
         "FSWizard.metadataDevicePage.step.text",
         "FSWizard.stripedGroupDevicePage.step.text",
@@ -233,7 +225,7 @@ interface CreateFSWizardImplData {
     };
 
     final String[] stepInstruction = {
-        // "FSWizard.new.fsNamePage.instruction.text",
+        "FSWizard.new.fstype.instruction.text",
         "FSWizard.sharedMemberPage.instruction.text",
         "FSWizard.metadataDevicePage.instruction.text",
         "FSWizard.stripedGroupDevicePage.instruction.text",
@@ -253,231 +245,40 @@ interface CreateFSWizardImplData {
         "wizard.result.instruction"
     };
 
-    // final int PAGE_FS_NAME = 0;
-    final int PAGE_SHARED_MEMBER  = 0;
-    final int PAGE_METADATA_LUN   = 1;
-    final int PAGE_STRIPED_GROUP  = 2;
-    final int PAGE_DATA_LUN = 3;
-    final int PAGE_MOUNT = 4;
-    final int PAGE_STD_MOUNT = 5;
-    final int PAGE_QFS_SUMMARY = 6;
-    final int PAGE_FS_SUMMARY = 7;
-    final int PAGE_FS_STD_SUMMARY = 8;
-    final int PAGE_CLUSTER_NODES = 9;
-    final int PAGE_ARCHIVE_CONFIG = 10;
-    final int PAGE_QFS_DEFAULTS = 11;
-    final int PAGE_METADATA_OPTIONS = 12;
-    final int PAGE_BLOCK_ALLOCATION = 13;
-    final int PAGE_ARCHIVE_POLICY = 14;
-    final int PAGE_ARCHIVE_MEDIA = 15;
-    final int PAGE_RESULT = 16;
+    final int PAGE_FS_TYPE = 0;
+    final int PAGE_SHARED_MEMBER  = 1;
+    final int PAGE_METADATA_LUN   = 2;
+    final int PAGE_STRIPED_GROUP  = 3;
+    final int PAGE_DATA_LUN = 4;
+    final int PAGE_MOUNT = 5;
+    final int PAGE_STD_MOUNT = 6;
+    final int PAGE_QFS_SUMMARY = 7;
+    final int PAGE_FS_SUMMARY = 8;
+    final int PAGE_FS_STD_SUMMARY = 9;
+    final int PAGE_CLUSTER_NODES = 10;
+    final int PAGE_ARCHIVE_CONFIG = 11;
+    final int PAGE_QFS_DEFAULTS = 12;
+    final int PAGE_METADATA_OPTIONS = 13;
+    final int PAGE_BLOCK_ALLOCATION = 14;
+    final int PAGE_ARCHIVE_POLICY = 15;
+    final int PAGE_ARCHIVE_MEDIA = 16;
+    final int PAGE_RESULT = 17;
 
-    final int[] qfsSingleDAUPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_METADATA_LUN,
-        PAGE_DATA_LUN,
-        PAGE_QFS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int[] qfsDualDAUPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_METADATA_LUN,
-        PAGE_DATA_LUN,
-        PAGE_QFS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int[] fsPages  = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_DATA_LUN,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int[] sharedqfsPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_SHARED_MEMBER,
-        PAGE_METADATA_LUN,
-        PAGE_DATA_LUN,
-        PAGE_QFS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int[] sharedqfsSingleDAUPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_SHARED_MEMBER,
-        PAGE_METADATA_LUN,
-        PAGE_DATA_LUN,
-        PAGE_QFS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // The following is used by Shared FS with metadata and data on the
-    // same device
-    final int[] sharedfsPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_SHARED_MEMBER,
-        PAGE_DATA_LUN,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // This is an example of what the striped group pages may look like.
-    // It contains multiple PAGE_STRIPED_GROUP pages.
-    final int[] stripedGroupPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_METADATA_LUN,
-        PAGE_STRIPED_GROUP,
-        PAGE_STRIPED_GROUP,
-        PAGE_QFS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int[] ufsPages  = {
-        // PAGE_FS_NAME,
-        PAGE_STD_MOUNT,
-        PAGE_DATA_LUN,
-        PAGE_FS_STD_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // Non-Shared QFS on Sun Cluster
-    final int [] HAFSPages = {
-        // PAGE_FS_NAME,
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_CLUSTER_NODES,
-        PAGE_METADATA_LUN,
-        PAGE_DATA_LUN,
-        PAGE_QFS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int [] HPCPages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_METADATA_OPTIONS,
-        PAGE_BLOCK_ALLOCATION,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int [] HPCDefaultsPages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_METADATA_OPTIONS,
-        PAGE_BLOCK_ALLOCATION,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    final int [] HPCNoDefaultsPages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_METADATA_OPTIONS,
-        PAGE_BLOCK_ALLOCATION,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-
-    // striped group base is the index of the first occurance of
-    // striped group page in the pages array
-    /*
-    final int NON_SHARED_STRIPED_GROUP_BASE = 3;
-    final int SHARED_STRIPED_GROUP_BASE = 4;
-    final int NONSHARED_HAFS_STRIPED_GROUP_BASE = 4;
-    */
     // 5.0 Pages
     // 1. non-shared, non-archiving, non-hpc qfs
     // the rest of the pages will be inserted dynamically : for now
     final int [] qfs_pages = {
+        PAGE_FS_TYPE,
         PAGE_QFS_DEFAULTS,
         PAGE_MOUNT,
         PAGE_DATA_LUN,
         PAGE_FS_SUMMARY,
         PAGE_RESULT
     };
-
-    /*
-    // 2. non-shared, archiving, non-hpc qfs
-    final int [] samqfs_pages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_DATA_LUN,
-        PAGE_ARCHIVE_CONFIG,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // 3. shared, non-archiving, non-hpc qfs
-    final int [] shared_qfs_pages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_SHARED_MEMBER,
-        PAGE_DATA_LUN,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // 4. shared, archiving, non-hpc qfs
-    final int [] shared_samqfs_pages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_SHARED_MEMBER,
-        PAGE_DATA_LUN,
-        PAGE_ARCHIVE_CONFIG,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // 5. non-shared hafs
-    final int [] ha_qfs_pages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_CLUSTER_NODES,
-        PAGE_DATA_LUN,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // 6. shared hafs
-    final int [] shared_ha_qfs_pages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_CLUSTER_NODES,
-        PAGE_SHARED_MEMBER, // verify that this is needed
-        PAGE_DATA_LUN,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-
-    // 7. hpc
-    final int [] hpc_pages = {
-        PAGE_QFS_DEFAULTS,
-        PAGE_MOUNT,
-        PAGE_METADATA_LUN,
-        PAGE_DATA_LUN,
-        PAGE_ARCHIVE_CONFIG,
-        PAGE_FS_SUMMARY,
-        PAGE_RESULT
-    };
-    */
 
     // ufs pages
     final int [] ufs_pages = {
+        PAGE_FS_TYPE,
         PAGE_STD_MOUNT,
         PAGE_DATA_LUN,
         PAGE_FS_STD_SUMMARY,
@@ -536,6 +337,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     // api 1.3 = samfs 4.4
     // api 1.4 = samfs 4.5
     // api 1.5 = samfs 4.6
+    // api 1.6 = samfs 5.0
     private String samfsServerAPIVersion = "1.5";
 
     private short fsLicense = SamQFSSystemModel.SAMQFS; // default license type
@@ -625,7 +427,9 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 
         int page = pageIdToPage(pageId);
         String[] futurePages = null;
-        if (pages[page] == CreateFSWizardImplData.PAGE_QFS_DEFAULTS ||
+
+        if (pages[page] == CreateFSWizardImplData.PAGE_FS_TYPE ||
+            pages[page] == CreateFSWizardImplData.PAGE_QFS_DEFAULTS ||
             pages[page] == CreateFSWizardImplData.PAGE_METADATA_OPTIONS ||
             pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION) {
             futurePages = new String[0];
@@ -645,7 +449,8 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 
         int page = pageIdToPage(pageId);
         String[] futureSteps = null;
-        if (pages[page] == CreateFSWizardImplData.PAGE_QFS_DEFAULTS ||
+        if (pages[page] == CreateFSWizardImplData.PAGE_FS_TYPE ||
+            pages[page] == CreateFSWizardImplData.PAGE_QFS_DEFAULTS ||
             pages[page] == CreateFSWizardImplData.PAGE_METADATA_OPTIONS ||
             pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION) {
             futureSteps = new String[0];
@@ -693,7 +498,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 new String[] { Integer.toString(
                     page - striped_group_base) });
             }
-        } else if ((hpcEnabled) && 
+        } else if ((hpcEnabled) &&
                    (pages[page] ==
                     CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION)) {
             text = "FSWizard.new.dataallocation.step.text";
@@ -716,7 +521,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 stepInstruction[pages[page]],
                 serverName);
         } else if ((hpcEnabled) &&
-                   (pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION)) {
+           (pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION)) {
             text = "FSWizard.new.dataallocation.instruction.text";
         } else {
             text = stepInstruction[pages[page]];
@@ -742,7 +547,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 new String[] { Integer.toString(
                     page - striped_group_base) });
             }
-        } else if ((hpcEnabled) && 
+        } else if ((hpcEnabled) &&
                    (pages[page] ==
                     CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION)) {
             title = "FSWizard.new.dataallocation.step.text";
@@ -776,9 +581,10 @@ public class CreateFSWizardImpl extends SamWizardImpl {
         super.nextStep(wizardEvent);
 
         int page = pageIdToPage(pageId);
-        boolean hafs = isHAFS(wizardModel);
 
         switch (pages[page]) {
+            case CreateFSWizardImplData.PAGE_FS_TYPE:
+                return processFSTypePage(wizardEvent);
             case CreateFSWizardImplData.PAGE_QFS_DEFAULTS:
                 boolean result = processAcceptQFSDefaultsPage(wizardEvent);
                 if (result && !isHAFS(wizardModel) && !sharedEnabled) {
@@ -789,15 +595,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 return processMetadataOptionsPage(wizardEvent);
             case CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION:
                 return processBlockAllocationPage(wizardEvent);
-                /*
-            case CreateFSWizardImplData.PAGE_FS_NAME:
-                boolean result =  processFSNamePage(wizardEvent);
-                // populate devices in Model if fsname page is processed ok
-                if (result && !sharedEnabled && !hafs) {
-                    result = populateDevicesInWizardModel();
-                }
-                return result;
-                */
             case CreateFSWizardImplData.PAGE_SHARED_MEMBER:
                 boolean result2 = processSharedMemberPage(wizardEvent);
                 if (result2 && sharedEnabled) {
@@ -833,7 +630,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 return result3;
         }
 
-        System.out.println("---Next Page = " + getNextPageId(pageId) + "---");
         return true;
     }
 
@@ -875,12 +671,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
         String fsName = ((String) wizardModel.getValue(
             NewWizardMountView.CHILD_FSNAME_FIELD)).trim();
         int intFSType   = FileSystem.COMBINED_METADATA;
-
-        /*
-        if (!(fsType.equals(FSTYPE_FS) || fsType.equals(FSTYPE_SHAREDFS))) {
-            intFSType = FileSystem.SEPARATE_METADATA;
-        }
-        */
 
         String t = (String)wizardModel
             .getValue(NewWizardMetadataOptionsView.METADATA_STORAGE);
@@ -925,23 +715,11 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             if (NewWizardBlockAllocationView.SINGLE.equals(allocationMethod)) {
                 boolSingleAllocation = true;
             }
-            /*
-            String singleAllocation = (String) wizardModel.getValue(
-                NewWizardFSNameView.CHILD_ALLOC_RADIOBUTTON);
-            if (singleAllocation != null &&
-                singleAllocation.equals("FSWizard.new.qfs.singleAllocation")) {
-                boolSingleAllocation = true;
-            }
-            */
         }
 
         TraceUtil.trace2("QFS Single Allocation: " + boolSingleAllocation);
         int intDAU = 16;
         try {
-            /*
-            intDAU = Integer.parseInt((String)wizardModel.getValue(
-                NewWizardBlockAllocationView.BLOCK_SIZE_KB));
-            */
             Integer i = (Integer)wizardModel
                 .getValue(NewWizardBlockAllocationView.BLOCK_SIZE_KB);
             if (i != null) intDAU = i.intValue();
@@ -1370,91 +1148,19 @@ public class CreateFSWizardImpl extends SamWizardImpl {
         wizardModel.setValue(
             Constants.Wizard.LICENSE_TYPE, new Short(fsLicense));
 
-        // retrieve parameters passed in from the new file system popup and
-        // and set them in the wizard model
-        HttpServletRequest request = requestContext.getRequest();
-        String  fsType = request.getParameter("fsType");
-        Boolean archiving = new Boolean(request.getParameter("archiving"));
-        Boolean shared = new Boolean(request.getParameter("shared"));
-        Boolean hpc = new Boolean(request.getParameter("hpc"));
-        Boolean hafs = new Boolean(request.getParameter("hafs"));
-        Boolean matfs = new Boolean(request.getParameter("matfs"));
-
-        wizardModel.setValue(POPUP_FSTYPE, fsType);
-        wizardModel.setValue(POPUP_ARCHIVING, archiving);
-        wizardModel.setValue(POPUP_SHARED, shared);
-        wizardModel.setValue(POPUP_HAFS, hafs);
-        wizardModel.setValue(POPUP_HPC, hpc);
-        wizardModel.setValue(POPUP_MATFS, matfs);
-
-        // 5.0
-        this.archivingEnabled = archiving.booleanValue();
-        this.sharedEnabled = shared.booleanValue();
-        this.hafsEnabled = hafs.booleanValue();
-        this.hpcEnabled = hpc.booleanValue();
-        this.matfsEnabled = matfs.booleanValue();
-
-        if (FSTYPE_UFS.equals(fsType)) {
-            // ufs file system
-            this.fsType = FSTYPE_UFS;
-            wizardModel.setValue(FSTYPE_KEY, FSTYPE_UFS);
-            pages = CreateFSWizardImplData.ufs_pages;
-        } else {
-            // standard qfs
-            this.fsType = FSTYPE_QFS;
-            wizardModel.setValue(FSTYPE_KEY, FSTYPE_QFS);
-
-            // 5.0 initialize pages depending on the selected qfs type
-            pages = CreateFSWizardImplData.qfs_pages;
-
-            // insert shared pages
-            if (sharedEnabled) {
-                pages = WizardUtil.insertPagesBefore(pages,
-                       new int [] {CreateFSWizardImplData.PAGE_SHARED_MEMBER},
-                                            CreateFSWizardImplData.PAGE_MOUNT,
-                                                     false);
-            }
-
-            // insert archiving pages
-            if (archivingEnabled) {
-                pages = WizardUtil.insertPagesBefore(pages,
-                      new int [] {CreateFSWizardImplData.PAGE_ARCHIVE_CONFIG},
-                                       CreateFSWizardImplData.PAGE_FS_SUMMARY,
-                                                     true);
-            }
-
-            // insert ha pages
-            if (hafsEnabled) {
-                pages = WizardUtil.insertPagesBefore(pages,
-                      new int [] {CreateFSWizardImplData.PAGE_CLUSTER_NODES},
-                                           CreateFSWizardImplData.PAGE_MOUNT,
-                                                     false);
-            }
-
-            // initialize the pages
-            initializeMetadataStorage(hafs, hpc, matfs);
-            initializeBlockAllocation();
-        }
-
-
+        // default the pages wizard pages to qfs
+        pages = CreateFSWizardImplData.qfs_pages;
 
         setShowResultsPage(true);
         initializeWizardPages(pages);
-        //        if (hasStripedGroups()) {
         striped_group_base = getStripedGroupBase();
-            //        }
+
         TraceUtil.trace2("wizard initialized!");
     }
 
-    // TODO: for debugging purposes only
-    private void printPages() {
-        System.out.println("hpc="+hpcEnabled+";shared="+sharedEnabled+";archiving="+archivingEnabled+";hafs="+hafsEnabled);
-        for (int i = 0; i < this.pages.length; i++) {
-            System.out.println(pageClass[this.pages[i]]);
-        }
-    }
-
-    private void initializeMetadataStorage(boolean hafs, boolean hpc, boolean matfs) {
+    private void initializeMetadataStorage(boolean hafs,
+                                           boolean hpc,
+                                           boolean matfs) {
         // default values for metadata storage
         if (hpc || hafs || matfs) {
             // metadata and data in separate devices
@@ -1559,9 +1265,86 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     }
 
     /**
+     * process the File System Type Page
+     */
+    private boolean processFSTypePage(WizardEvent evt) {
+        TraceUtil.trace2("Entering");
+
+        String fsType = (String)wizardModel.getValue(NewWizardFSTypeView.QFS);
+
+        // UFS file system
+        if (FSTYPE_UFS.equals(fsType)) {
+            this.fsType = FSTYPE_UFS;
+            wizardModel.setValue(FSTYPE_KEY, FSTYPE_UFS);
+            pages = CreateFSWizardImplData.ufs_pages;
+        } else if (FSTYPE_QFS.equals(fsType)) {
+            // standard qfs
+            this.fsType = FSTYPE_QFS;
+            wizardModel.setValue(FSTYPE_KEY, FSTYPE_QFS);
+            this.pages = CreateFSWizardImplData.qfs_pages;
+
+            // shared
+            String temp = (String)
+                wizardModel.getValue(NewWizardFSTypeView.SHARED);
+            this.sharedEnabled = new Boolean(temp);
+            wizardModel.setValue(POPUP_SHARED, this.sharedEnabled);
+            if (this.sharedEnabled) {
+                pages = WizardUtil.insertPagesBefore(this.pages,
+                       new int [] {CreateFSWizardImplData.PAGE_SHARED_MEMBER},
+                                            CreateFSWizardImplData.PAGE_MOUNT,
+                                                     false);
+            }
+
+            // archiving
+            temp = (String)wizardModel.getValue(NewWizardFSTypeView.ARCHIVING);
+            this.archivingEnabled = new Boolean(temp);
+            wizardModel.setValue(POPUP_ARCHIVING, this.archivingEnabled);
+            if (this.archivingEnabled) {
+                pages = WizardUtil.insertPagesBefore(this.pages,
+                      new int [] {CreateFSWizardImplData.PAGE_ARCHIVE_CONFIG},
+                                       CreateFSWizardImplData.PAGE_FS_SUMMARY,
+                                                     true);
+            }
+
+            // hpc (mb-fs)
+            temp = (String)wizardModel.getValue(NewWizardFSTypeView.HPC);
+            this.hpcEnabled = new Boolean(temp);
+            wizardModel.setValue(POPUP_HPC, this.hpcEnabled);
+
+            // ha-fs
+            temp = (String)wizardModel.getValue(NewWizardFSTypeView.HAFS);
+            this.hafsEnabled = new Boolean(temp);
+            wizardModel.setValue(POPUP_HAFS, this.hafsEnabled);
+            if (this.hafsEnabled) {
+                pages = WizardUtil.insertPagesBefore(this.pages,
+                      new int [] {CreateFSWizardImplData.PAGE_CLUSTER_NODES},
+                                           CreateFSWizardImplData.PAGE_MOUNT,
+                                                     false);
+            }
+
+            // mat-fs
+            temp = (String)wizardModel.getValue(NewWizardFSTypeView.MATFS);
+            this.matfsEnabled = new Boolean(temp);
+            wizardModel.setValue(POPUP_MATFS, this.matfsEnabled);
+
+            // initialize the pages
+            initializeMetadataStorage(this.hafsEnabled,
+                                      this.hpcEnabled,
+                                      this.matfsEnabled);
+            initializeBlockAllocation();
+        }
+
+        initializeWizardPages(this.pages);
+        this.striped_group_base = getStripedGroupBase();
+
+        TraceUtil.trace2("Exiting");
+        return true;
+    }
+
+    /**
      * private method to process the qfs defaults page
      */
-    public boolean processAcceptQFSDefaultsPage(WizardEvent evt) {
+    private boolean processAcceptQFSDefaultsPage(WizardEvent evt) {
         String defaults = (String)
             wizardModel.getValue(NewWizardAcceptQFSDefaultsView.ACCEPT_CHANGE);
 
@@ -1571,15 +1354,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             // default to data and metadata on separate devices
             wizardModel.setValue(NewWizardMetadataOptionsView.METADATA_STORAGE,
                                  NewWizardMetadataOptionsView.SEPARATE_DEVICE);
-
-        /*
-            // insert metadata devices
-            this.pages = WizardUtil.insertPagesBefore(this.pages,
-                          new int [] {CreateFSWizardImplData.PAGE_METADATA_LUN},
-                                           CreateFSWizardImplData.PAGE_DATA_LUN,
-                                                      true);
-        */
-
         } else {
             // default to data and metadata on same device
             wizardModel.setValue(NewWizardMetadataOptionsView.METADATA_STORAGE,
@@ -1591,8 +1365,8 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             if (hpcEnabled || matfsEnabled) { // must pass through the data
                                               // allocation page
                 this.pages = WizardUtil.insertPagesBefore(this.pages,
-                       new int [] {CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION},
-                                       CreateFSWizardImplData.PAGE_QFS_DEFAULTS,
+                    new int [] {CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION},
+                                  CreateFSWizardImplData.PAGE_QFS_DEFAULTS,
                                                          false); // after
             }
 
@@ -1620,17 +1394,9 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                                  // metadata device selection
                                                  // page to the list
             initializeWizardPages(this.pages);
-            //            if (hasStripedGroups()) {
             striped_group_base = getStripedGroupBase();
-            //}
-            
         }
 
-        // update block allocation values
-        // populateDefaultBlockAllocation();
-
-        System.out.println("---proccess AcceptQFSDefaults()---");
-        printPages();
         return true;
     }
 
@@ -1651,13 +1417,11 @@ public class CreateFSWizardImpl extends SamWizardImpl {
         }
 
         populateDefaultBlockAllocation();
-        //        if (hasStripedGroups()) {
         striped_group_base = getStripedGroupBase();
-        //}
 
         return true;
     }
-    
+
     /**
      * validate the block allocation page
      */
@@ -1774,17 +1538,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                                       stripedGroupPages,
                                           CreateFSWizardImplData.PAGE_DATA_LUN,
                                                       true);
-            // copy all the pages except DATA_LUN
-            /*
-            int [] newPages = new int[this.pages.length - 1];
-            for (int i = 0, j = 0; i < this.pages.length; i++) {
-                if (this.pages[i] != CreateFSWizardImplData.PAGE_DATA_LUN) {
-                    newPages[j++] = this.pages[i];
-                }
-            }
-
-            this.pages = newPages;
-            */
             this.pages =
                 WizardUtil.removePage(CreateFSWizardImplData.PAGE_DATA_LUN,
                                       this.pages);
@@ -1805,131 +1558,11 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                              new Integer(blockSizeInKB));
 
         initializeWizardPages(this.pages);
-        //        if (hasStripedGroups()) {
-            striped_group_base = getStripedGroupBase();
-            //        }
-
+        striped_group_base = getStripedGroupBase();
 
         // page is valid
         return true;
     }
-
-
-    /**
-     * Private method to validate the data entered in the FS Name and Type page
-     */
-    /*
-    private boolean processFSNamePage(WizardEvent wizardEvent) {
-        // initialize numStripedGroups
-        int numStripedGroups = 0;
-        String fsTypeVal = (String) wizardModel.getWizardValue(
-            NewWizardFSNameView.CHILD_FSTYPE_RADIOBUTTON);
-
-        // Check if fsType is selected
-        if (fsTypeVal == null)  {
-            setWizardAlert(wizardEvent, "FSWizard.new.error.fstype");
-            return false;
-        }
-
-        // update fsType
-        fsType = (String) wizardModel.getValue(FSTYPE_KEY);
-        fsType = fsType == null ? FSTYPE_FS : fsType;
-
-        String allocation = "";
-        striped_group_base =
-            CreateFSWizardImplData.NON_SHARED_STRIPED_GROUP_BASE;
-
-        // Set the appropriate fsType selection in the wizardModel and also the
-        // private datamember fs type for fast access in this class.
-        if (fsTypeVal.equals("FSWizard.new.fstype.qfs")) {
-            String metaLocationVal = (String) wizardModel.getWizardValue(
-                NewWizardFSNameView.CHILD_META_LOCATION_RADIOBUTTON);
-            TraceUtil.trace2(new NonSyncStringBuffer(
-                "metaLocationVal = ").append(metaLocationVal).toString());
-
-            archivingEnabled = Boolean.valueOf(
-                (String) wizardModel.getValue(
-                    NewWizardFSNameView.CHILD_ARCHIVE_CHECKBOX)).booleanValue();
-            sharedEnabled  = Boolean.valueOf(
-                (String) wizardModel.getValue(
-                    NewWizardFSNameView.CHILD_SHARED_CHECKBOX)).booleanValue();
-
-            if (metaLocationVal.equals("FSWizard.new.fstype.qfs.metaSame")) {
-                newDAUPage = false;
-
-                pages = CreateFSWizardImplData.fsPages;
-
-                if (sharedEnabled) {
-                    fsType = FSTYPE_SHAREDFS;
-                    pages = CreateFSWizardImplData.sharedfsPages;
-                } else {
-                    fsType = FSTYPE_FS;
-                }
-            } else {
-                fsType = FSTYPE_QFS;
-
-                if (sharedEnabled) {
-                    fsType = FSTYPE_SHAREDQFS;
-                    striped_group_base =
-                        CreateFSWizardImplData.SHARED_STRIPED_GROUP_BASE;
-                    pages = CreateFSWizardImplData.sharedqfsSingleDAUPages;
-                } else {
-                    fsType = FSTYPE_QFS;
-                    pages = CreateFSWizardImplData.qfsSingleDAUPages;
-                }
-            }
-            wizardModel.setValue(
-                ARCHIVE_ENABLED_KEY, new Boolean(archivingEnabled));
-
-            // check if we are creating a hafs
-            String hafs = (String)
-                wizardModel.getValue(NewWizardFSNameView.HAFS);
-            // If HA is selected, metadata and data have to be in separate
-            // device
-            if (hafs != null && hafs.equals("true")) { // if hafs
-                striped_group_base =
-                    CreateFSWizardImplData.NONSHARED_HAFS_STRIPED_GROUP_BASE;
-                if (sharedEnabled) {
-                    pages = CreateFSWizardImplData.sharedqfsPages;
-                } else {
-                    pages = CreateFSWizardImplData.HAFSPages;
-                }
-            }
-        } else if (fsTypeVal.equals("FSWizard.new.fstype.ufs")) {
-            fsType = FSTYPE_UFS;
-            pages = CreateFSWizardImplData.ufsPages;
-            newDAUPage = false;
-        } else {
-            // Some mismatch between radiobutton values in jsp.. check jsp file.
-            setWizardAlert(wizardEvent, "FSWizard.new.error.fstype");
-            return false;
-        }
-
-        // Set the fsType
-        wizardModel.setValue(FSTYPE_KEY, fsType);
-
-        // If no errors until now, then return true
-        wizardModel.setValue("fsTypeSelect", fsTypeVal);
-
-        // If UFS is about to create, skip the rest of the code & return true
-        if (fsTypeVal.equals("FSWizard.new.fstype.ufs")) {
-            // update wizard pages
-            initializeWizardPages(pages);
-            return true;
-        }
-
-        // if archiving, insert the archive config page
-        if (archivingEnabled) {
-            pages = insertArchiveConfigPage(pages);
-        }
-
-        // update wizard pages
-        initializeWizardPages(pages);
-
-        // If no errors are catched, move on to save DAU data
-        return processDAUSection(wizardEvent);
-    }
-    */
 
     /**
      * Private method to process the shared member page
@@ -2826,235 +2459,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     }
 
     /**
-     * Private method to process the DAU section in step 1
-     */
-    /*
-    private boolean processDAUSection(WizardEvent wizardEvent) {
-        String allocation = "";
-        int numStripedGroups = 0;
-
-        // process allocation if fsType is not FSTYPE_FS or FSTYPE_SHAREDFS
-        if (!(fsType.equals(FSTYPE_FS) || fsType.equals(FSTYPE_SHAREDFS))) {
-            // Check for the allocation type, when fsType is QFS
-            allocation = (String) wizardModel.getValue(
-                NewWizardFSNameView.CHILD_ALLOC_RADIOBUTTON);
-            if ((allocation == null) || allocation.equals("")) {
-                // should never happen as radio button cannot be deselected
-                setWizardAlert(wizardEvent,
-                    "FSWizard.new.error.allocation");
-                return false;
-            } else if (allocation.equals("FSWizard.new.qfs.singleAllocation")) {
-                newDAUPage = true;
-                if (sharedEnabled) {
-                    pages = CreateFSWizardImplData.sharedqfsSingleDAUPages;
-                    TraceUtil.trace3("page is single shared dau");
-                } else {
-                    if (isHAFS(wizardModel))
-                        pages = CreateFSWizardImplData.HAFSPages;
-                    else
-                        pages = CreateFSWizardImplData.qfsSingleDAUPages;
-                }
-            } else if (allocation.equals(
-                "FSWizard.new.qfs.dualAllocation.label")) {
-                newDAUPage = false;
-                if (sharedEnabled) {
-                    pages = CreateFSWizardImplData.sharedqfsPages;
-                    TraceUtil.trace3("page is dual shared dau");
-                } else {
-                    if (isHAFS(wizardModel))
-                        pages = CreateFSWizardImplData.HAFSPages;
-                    else
-                        pages = CreateFSWizardImplData.qfsDualDAUPages;
-                }
-            } else if (allocation.equals("FSWizard.new.qfs.stripedGroup")) {
-                newDAUPage = true;
-                String numGroups = (String) wizardModel.getValue(
-                    NewWizardFSNameView.CHILD_NUM_OF_STRIPED_GROUP_TEXTFIELD);
-
-                if (numGroups != null) {
-                    try {
-                        numStripedGroups = Integer.parseInt(numGroups);
-                    } catch (NumberFormatException nfe) {
-                    }
-                }
-
-                if (numStripedGroups < 1 || numStripedGroups > 126) {
-                    setWizardAlert(wizardEvent,
-                        "FSWizard.new.error.numStripedGroup");
-                    return false;
-                }
-
-                int totalPages = 0;
-                if (sharedEnabled) {
-                    totalPages = 6 + numStripedGroups;
-                    pages = new int[totalPages];
-
-                    pages[0] = CreateFSWizardImplData.PAGE_FS_NAME;
-                    pages[1] = CreateFSWizardImplData.PAGE_MOUNT;
-                    pages[2] = CreateFSWizardImplData.PAGE_SHARED_MEMBER;
-                    pages[3] = CreateFSWizardImplData.PAGE_METADATA_LUN;
-                    for (int i = 0; i < numStripedGroups; i++) {
-                        pages[4 + i] =
-                            CreateFSWizardImplData.PAGE_STRIPED_GROUP;
-                    }
-                    pages[numStripedGroups + 4] =
-                        CreateFSWizardImplData.PAGE_QFS_SUMMARY;
-                    pages[numStripedGroups + 5] =
-                        CreateFSWizardImplData.PAGE_RESULT;
-                } else if (isHAFS(wizardModel)) {
-                    totalPages = 6 + numStripedGroups;
-                    pages = new int[totalPages];
-
-                    pages[0] = CreateFSWizardImplData.PAGE_FS_NAME;
-                    pages[1] = CreateFSWizardImplData.PAGE_MOUNT;
-                    pages[2] = CreateFSWizardImplData.PAGE_CLUSTER_NODES;
-                    pages[3] = CreateFSWizardImplData.PAGE_METADATA_LUN;
-                    for (int i = 0; i < numStripedGroups; i++) {
-                        pages[4 + i] =
-                            CreateFSWizardImplData.PAGE_STRIPED_GROUP;
-                    }
-                    pages[numStripedGroups + 4] =
-                        CreateFSWizardImplData.PAGE_QFS_SUMMARY;
-                    pages[numStripedGroups + 5] =
-                        CreateFSWizardImplData.PAGE_RESULT;
-                } else {
-                    totalPages = 5 + numStripedGroups;
-                    pages = new int[totalPages];
-
-                    pages[0] = CreateFSWizardImplData.PAGE_FS_NAME;
-                    pages[1] = CreateFSWizardImplData.PAGE_MOUNT;
-                    pages[2] = CreateFSWizardImplData.PAGE_METADATA_LUN;
-                    for (int i = 0; i < numStripedGroups; i++) {
-                        pages[3 + i] =
-                            CreateFSWizardImplData.PAGE_STRIPED_GROUP;
-                    }
-
-                    pages[numStripedGroups + 3] =
-                        CreateFSWizardImplData.PAGE_QFS_SUMMARY;
-
-                    pages[numStripedGroups + 4] =
-                        CreateFSWizardImplData.PAGE_RESULT;
-                }
-            }
-
-            // The pages may be changed due to the addition of strip group
-            // pages.  Need to call insertArchiveConfigPage again here.
-            // if archiving is enabled, insert archive config page
-            if (archivingEnabled) {
-                pages = insertArchiveConfigPage(pages);
-            }
-
-            // set wizard steps
-            initializeWizardPages(pages);
-            wizardModel.setValue("qfsSelect", allocation);
-        }
-
-        TraceUtil.trace2("allocation = " + allocation);
-        TraceUtil.trace2("archivingEnabled = " + archivingEnabled);
-        TraceUtil.trace2("newDAUPage = " + newDAUPage);
-
-        if (newDAUPage) {
-            String dauString = ((String) wizardModel.getValue(
-                NewWizardFSNameView.CHILD_DAU_SIZE_FIELD)).trim();
-            String dauUnit = (String) wizardModel.getWizardValue(
-                NewWizardFSNameView.CHILD_DAU_SIZE_DROP_DOWN);
-
-            TraceUtil.trace2("Entered with dauSize = " + dauString +
-                ", and dauUnit = " + dauUnit);
-
-            // Check if the FS name is entered or not
-            if (dauString.length() <= 0) {
-                setWizardAlert(wizardEvent, "FSWizard.new.error.dauSize");
-                return false;
-            }
-
-            int dauSize;
-            try {
-                dauSize = Integer.parseInt(dauString);
-            } catch (NumberFormatException nfe) {
-                setWizardAlert(wizardEvent, "FSWizard.new.error.dauSize");
-                return false;
-            }
-
-            if (dauUnit.equals("mb")) {
-                dauSize *= 1024;
-            }
-            if (dauSize < 16 || dauSize > (64 * 1024) || (dauSize % 8) != 0) {
-                setWizardAlert(wizardEvent, "FSWizard.new.error.dauSize");
-                return false;
-            }
-
-            wizardModel.setWizardContextValue(
-                NewWizardFSNameView.CHILD_DAU_DROPDOWN,
-                Integer.toString(dauSize));
-            TraceUtil.trace2("Set dauSize = " + dauSize);
-        }
-
-        String stripeValue = (String) wizardModel.getWizardValue(
-            NewWizardFSNameView.CHILD_STRIPE_FIELD);
-        stripeValue = (stripeValue != null) ? stripeValue.trim() : "";
-
-        // Check the validity of Stripe Value
-        if (stripeValue.length() > 0) {
-            try {
-                intStripe = Integer.parseInt(stripeValue);
-            } catch (NumberFormatException e) {
-                setWizardAlert(
-                    wizardEvent, "FSWizard.new.error.stripeValueRange");
-                return false;
-            }
-            if (intStripe < 0 || intStripe > 255) {
-                setWizardAlert(
-                    wizardEvent, "FSWizard.new.error.stripeValueRange");
-                return false;
-            }
-        }
-
-        // if user changes fs type, clear previously selected devices
-        String oldFSType = (String) wizardModel.getValue(OLD_FS_TYPE);
-        if (oldFSType != null) {
-            if (!oldFSType.equals(fsType)) {
-                // fs type changed, clear all device selection lists
-                wizardModel.setValue(
-                    Constants.Wizard.SELECTED_METADEVICES, null);
-                wizardModel.setValue(
-                    Constants.Wizard.SELECTED_DATADEVICES, null);
-                wizardModel.setValue(
-                    Constants.Wizard.SELECTED_STRIPED_GROUP_DEVICES, null);
-                if (selectedStripedGroupDevicesList != null) {
-                    selectedStripedGroupDevicesList.clear();
-                }
-            } else if (fsType.equals(FSTYPE_QFS) &&
-                       allocation.equals("FSWizard.new.qfs.stripedGroup")) {
-                Integer oldNumGroups = (Integer)
-                    wizardModel.getValue(OLD_NUM_STRIPED_GROUPS);
-                if (oldNumGroups != null) {
-                    int oldNum = oldNumGroups.intValue();
-                    if (oldNum > numStripedGroups &&
-                        selectedStripedGroupDevicesList != null) {
-                        TraceUtil.trace2("Clearing out striped group devices");
-                        // clear striped group devices
-                        int oldSize = selectedStripedGroupDevicesList.size();
-                        for (int i = oldSize; i > numStripedGroups; i--) {
-                            selectedStripedGroupDevicesList.remove(i-1);
-                        }
-                        wizardModel.setValue(
-                            Constants.Wizard.SELECTED_STRIPED_GROUP_DEVICES,
-                            selectedStripedGroupDevicesList);
-                    }
-                }
-            }
-        }
-
-        wizardModel.setValue(OLD_FS_TYPE, fsType);
-        wizardModel.setValue(
-            OLD_NUM_STRIPED_GROUPS, new Integer(numStripedGroups));
-
-        return true;
-    }
-    */
-
-    /**
      * Private method to validate the data entered in the Std Mount Options page
      */
     private boolean processStdMountOptionsPage(WizardEvent wizardEvent) {
@@ -3110,17 +2514,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             invalidFSName = true;
         }
 
-        // reset DAU dropdown and return false if invalid FS Name entered
-        // TODO: WHY?!
-        /*
-        if (invalidFSName) {
-            wizardModel.setValue(
-                NewWizardFSNameView.CHILD_DAU_DROPDOWN,
-                "");
-            return false;
-        }
-        */
-
         if (mountPoint == null || mountPoint.length() < 1) {
             setWizardAlert(wizardEvent, "FSWizard.new.error.mountpoint");
             return false;
@@ -3151,11 +2544,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             // Get default HWM and LWM if necessary
             if (hwmString.length() <= 0 || lwmString.length() <= 0) {
                 int intFSType   = FileSystem.COMBINED_METADATA;
-                /*
-                if (!fsType.equals(FSTYPE_FS)) {
-                    intFSType = FileSystem.SEPARATE_METADATA;
-                }
-                */
                 String t = (String)wizardModel
                     .getValue(NewWizardMetadataOptionsView.METADATA_STORAGE);
                 if (NewWizardMetadataOptionsView.SEPARATE_DEVICE.equals(t)) {
@@ -3656,7 +3044,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     private void processMultiStepException(SamFSMultiStepOpException msex) {
         String fsType = (String)wizardModel.getValue(FSTYPE_KEY);
 
-        //NewWizardFSNameView.CHILD_FSTYPE_RADIOBUTTON);
         // Check if fsType is selected
         String fsName = "";
         if (FSTYPE_UFS.equals(fsType)) {
@@ -3887,7 +3274,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             .getValue(NewWizardArchiveConfigView.POLICY_TYPE_EXISTING);
 
         // log file is valid for existing policies and new ones
-	// so get it here and use it for either one.
+        // so get it here and use it for either one.
         String logFile = (String)wizardModel
             .getValue(NewWizardArchiveConfigView.LOG_FILE);
 
@@ -4139,15 +3526,6 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             }
         }
     }
-
-    /*
-    private boolean hasStripedGroups() {
-        String method = (String)
-            wizardModel.getValue(NewWizardBlockAllocationView.ALLOCATION_METHOD);
-
-        return NewWizardBlockAllocationView.STRIPED.equals(method);
-    }
-    */
 
     private int getStripedGroupBase() {
         int base = -1;

@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.5 2008/08/27 22:17:27 kilemba Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.6 2008/09/17 23:33:22 kilemba Exp $
 --%>
 
 <%@page info="FirstTimeConfig" language="java" %>
@@ -147,10 +147,7 @@
     <cc:text name="createFSText" bundleID="samBundle" defaultValue="firsttime.fs.create"/>
 </cc:href>
 
-<div style="margin-left:20px">
-<cc:includepagelet name="CreateFileSystemView"/>
-</div>
-<cc:spacer name="spacer3-1" newline="true" height="30"/>
+<cc:spacer name="spacer4" newline="true" height="30"/>
 
 <cc:href name="rpsHref" bundleID="samBundle"
          onClick="return scheduleRecoveryPoint();"
@@ -189,3 +186,4 @@
 </jato:form>
 </cc:header>
 </jato:useViewBean>
+
