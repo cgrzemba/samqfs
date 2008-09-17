@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.77 $"
+#pragma ident "$Revision: 1.78 $"
 
 #include "sam/osversion.h"
 
@@ -86,8 +86,6 @@ int sam_stagerd_file(sam_node_t *ip, offset_t length, cred_t *credp);
 static int sam_build_stager_multivolume_copy(sam_node_t *ip, sam_id_t id,
 				int copy, sam_stage_request_t *req,
 				sam_stage_request_t *req_ext);
-
-int sam_stage_n_umem = 1;
 
 /*
  * ----- sam_stagerd_file - stage an archived file via stager daemon.
