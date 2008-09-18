@@ -1414,7 +1414,8 @@ check_vfstab(
 					return (B_FALSE);
 				}
 
-				if (strstr(vp.vfs_mntopts, option) == NULL) {
+				if (vp.vfs_mntopts == NULL ||
+				    strstr(vp.vfs_mntopts, option) == NULL) {
 					scds_syslog(LOG_ERR,
 					    "Set \"shared\" mount opt for %s",
 					    fs_mntpt);
@@ -1439,7 +1440,8 @@ check_vfstab(
 				 * This check is required for catalog,
 				 * stager etc but NOT required for samfs !
 				 */
-				if (strstr(vp.vfs_mntopts, option) == NULL) {
+				if (vp.vfs_mntopts == NULL ||
+				    strstr(vp.vfs_mntopts, option) == NULL) {
 					scds_syslog(LOG_ERR,
 					    "Set \"global\" mount opt for %s",
 					    fs_mntpt);
