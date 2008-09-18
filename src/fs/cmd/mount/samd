@@ -44,7 +44,7 @@
 # For start, stop and hastop, if /opt/SUNWsamfs/sbin/sam-amld is not present,
 # this must be a SUNWqfs package, so issue a usage message.
 #
-#	$Revision: 1.36 $
+#	$Revision: 1.37 $
 
 TREE=/tmp/sam-amld.tree.$$
 
@@ -201,6 +201,12 @@ case "$1" in
 	echo "Configuring SAM-FS"
 	if [ "${pid}" = "" ]; then
 		/opt/SUNWsamfs/sbin/sam-fsd -C
+		/opt/SUNWsamfs/sbin/sam-fsd -N 2>/dev/null
+		numfs=$?
+		if [ "${numfs}" = 0 ]; then
+			echo "No filesystem configured, sam-fsd not started."
+			exit 0
+		fi
 		sleep 5
 		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
 		sleep 2

@@ -40,6 +40,7 @@
 #define	EXIT_FATAL	4	/* Bad error, may fail again */
 #define	EXIT_NOMEM	5	/* Out of memory, could fail again */
 #define	EXIT_RETRY	6	/* Caller should retry command */
+#define	EXIT_NOFS	7	/* Let caller to know no FS configured */
 
 
 #endif /* EXIT_H */

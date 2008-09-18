@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.164 $"
+#pragma ident "$Revision: 1.165 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -708,7 +708,14 @@ main(int argc, char *argv[])
 	 */
 	if (FsCfgOnly) {
 		Trace(TR_MISC, "Configuration completed - exiting");
-		exit(EXIT_SUCCESS);
+		if (FileSysNumof == 0) {
+			/*
+			 * Let parent to exit, if no FS configured.
+			 */
+			exit(EXIT_NOFS);
+		} else {
+			exit(EXIT_SUCCESS);
+		}
 	}
 #endif /* sun */
 
@@ -1041,7 +1048,8 @@ main(int argc, char *argv[])
  *
  * The parent here should exit only when either:
  * (a) FS initialization has completed (GetFsStatus() > 0), or
- * (b) we've timed out.
+ * (b) we've timed out, or
+ * (c) no FS configured (child's exit status == EXIT_NOFS).
  *
  */
 static void
@@ -1052,6 +1060,7 @@ daemonize(void)
 	int r, status;
 	struct sam_get_fsstatus_arg arg;
 	int numfs = 0;
+	int exitstat = 0;
 
 	/*
 	 * Initialize message (i.e. signal) processing.
@@ -1104,7 +1113,12 @@ daemonize(void)
 		wt = MAX(wt, 1);
 		(void) alarm(wt);
 		if (child) {	/* Always TRUE on first iteration */
+
 			r = waitpid(child, &status, 0);	/* await child */
+			exitstat = (status >> 8) & 0xf;
+			if (exitstat == EXIT_NOFS) {
+				break;
+			}
 			if (r >= 0) {
 				child = 0;
 			}
@@ -1125,7 +1139,9 @@ daemonize(void)
 	} while ((numfs <= 0) &&
 	    (time(NULL) - start_time < INIT_TIMEOUT));
 
-	if (numfs <= 0) {
+	if (exitstat == EXIT_NOFS) {
+		Trace(TR_MISC, "Parent No FS configured - exiting");
+	} else if (numfs <= 0) {
 		Trace(TR_MISC,
 		    "Parent timed out waiting for configuration - exiting");
 	} else {
