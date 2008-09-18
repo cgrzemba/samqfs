@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.193 $"
+#pragma ident "$Revision: 1.194 $"
 #endif
 
 #include "sam/osversion.h"
@@ -846,6 +846,8 @@ sam_mount_info(
 				error = EFAULT;
 				goto done;
 			}
+			sam_mutex_init(&mp->mi.m_fs[i].eq_mutex, NULL,
+			    MUTEX_DEFAULT, NULL);
 			if (istart) {
 				mp->mi.m_fs[i].num_group = 1;
 				mp->mi.m_fs[i].skip_ord = 1;

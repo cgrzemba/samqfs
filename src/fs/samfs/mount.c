@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.228 $"
+#pragma ident "$Revision: 1.229 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1248,7 +1248,6 @@ sam_build_allocation_links(
 	dp->system = sblk->eq[i].fs.system;
 	dp->part.pt_state = sblk->eq[i].fs.state;
 	dp->num_group = sblk->eq[i].fs.num_group;
-	sam_mutex_init(&dp->eq_mutex, NULL, MUTEX_DEFAULT, NULL);
 	if (((dp->part.pt_state != DEV_ON) &&
 	    (dp->part.pt_state != DEV_NOALLOC)) ||
 	    (dp->num_group == 0)) {
