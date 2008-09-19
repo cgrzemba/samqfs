@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.163 $"
+#pragma ident "$Revision: 1.164 $"
 
 #include "sam/osversion.h"
 
@@ -958,13 +958,9 @@ sam_make_ino(
 		ip->di.rm.info.obj.stripe_width =
 		    pip->di.rm.info.obj.stripe_width;
 		if ((error = sam_create_object_id(mp, &ip->di)) != 0) {
-			sam_osd_destroy_obj_layout(ip);
-			dcmn_err((CE_NOTE, "SAM-QFS: %s: %d.%d OBJ CREATE "
-			    " err %d", mp->mt.fi_name,
-			    ip->di.id.ino, ip->di.id.gen, error));
 			goto make_cleanup;
 		}
-		if ((error = sam_osd_create_obj_layout(ip, 0)) != 0) {
+		if ((error = sam_osd_create_obj_layout(ip)) != 0) {
 			goto make_cleanup;
 		}
 	}

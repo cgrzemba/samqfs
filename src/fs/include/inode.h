@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.209 $"
+#pragma ident "$Revision: 1.210 $"
 #endif
 
 #ifdef linux
@@ -192,6 +192,7 @@ typedef struct sam_obj_ent {
 } sam_obj_ent_t;
 
 typedef struct sam_obj_layout {
+	sam_id_t	id;		/* For debug only */
 	int		num_group;	/* Number of members in the array */
 	int		fill1;
 	sam_obj_ent_t	ol[1];		/* Object layout */
@@ -390,6 +391,7 @@ typedef struct sam_ichain	{
  *    di.{access|modify|change|creation|attributes}time
  *    flags
  *    no_opens
+ *    olp & sam_obj_layout_t contents
  *    rw_count
  *    mm_pages
  *    wmm_pages
@@ -835,6 +837,7 @@ sam_node_t *sam_vtoi(vnode_t *vp);
 	ip->flags.b.hash = 1; \
 }
 
+
 /*
  * -----	sam_unhash_ino	- Remove inode from the hashlist.
  *				  Assumes lock set.
@@ -847,6 +850,17 @@ sam_node_t *sam_vtoi(vnode_t *vp);
 	(ip)->chain.hash.forw = (ip); \
 	(ip)->chain.hash.back = (ip); \
 	(ip)->flags.b.hash = 0; \
+}
+
+
+/*
+ * -----	sam_destroy_obj_layout	- Free object layout
+ */
+#define	SAM_DESTROY_OBJ_LAYOUT(ip) \
+{ \
+	if (SAM_IS_OBJECT_FILE(ip)) { \
+		sam_osd_destroy_obj_layout(ip); \
+	} \
 }
 
 
@@ -1043,7 +1057,7 @@ int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
 int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 int sam_set_end_of_obj(sam_node_t *ip, offset_t length, int update);
-int sam_osd_create_obj_layout(sam_node_t *ip, int update);
+int sam_osd_create_obj_layout(sam_node_t *ip);
 void sam_osd_destroy_obj_layout(sam_node_t *ip);
 void sam_init_object_cache(void);
 void sam_delete_object_cache(void);
@@ -1057,7 +1071,7 @@ void sam_sosd_bind(void);
 #define	sam_remove_object_id(a, b, c)			(ENOTSUP)
 #define	sam_truncate_object_file(a, b, c, d)		(ENOTSUP)
 #define	sam_set_end_of_obj(a, b, c)			(ENOTSUP)
-#define	sam_osd_create_obj_layout(a, b)			(ENOTSUP)
+#define	sam_osd_create_obj_layout(a)			(ENOTSUP)
 #define	sam_osd_destroy_obj_layout(a)
 #define	sam_init_object_cache()
 #define	sam_delete_object_cache()

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.173 $"
+#pragma ident "$Revision: 1.174 $"
 #endif
 
 #include "sam/osversion.h"
@@ -778,10 +778,21 @@ sam_reset_client_ino(
 		ip->size = irec->sr_attr.current_size;
 		if (SAM_IS_OBJECT_FILE(ip)) {
 			/*
-			 * Set end of object (eoo) for each stripe and update
-			 * on the OSN(s) if the computed eoo changed.
+			 * When we move the disk image into the incore inode,
+			 * this is the first time the object file bit is set.
+			 * This is why the layout was not set in sam_get_ino.
+			 * If this is a reset for a NAME_create, we need to
+			 * create the object layout. Otherwise the object
+			 * layout exists and we just need to set the end
+			 * of object (eoo) for each stripe. Note, the end of
+			 * object is set if we are creating the object layout.
 			 */
-			(void) sam_set_end_of_obj(ip, ip->di.rm.size, 1);
+			if (ip->olp == NULL) {
+				sam_osd_create_obj_layout(ip);
+			} else {
+				(void) sam_set_end_of_obj(ip,
+				    ip->di.rm.size, 1);
+			}
 		}
 	} else {
 		ip->di.rm.size = real_size;

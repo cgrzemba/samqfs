@@ -1,4 +1,4 @@
-# $Revision: 1.131 $
+# $Revision: 1.132 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -471,3 +471,5 @@ T_SAM_XA_FREE		"XAFree:   ino=%d,gen=%d,d1=%d"
 T_SAM_XA_FREE_RET	"XAFree-:  ino=%d,gen=%d,err=%d^[$e]"
 T_SAM_SR_LOOKX_RET	"SrLookX-  ino=%d,gen=%d,size=%lld"
 T_SAM_SR_LOOK_ERR	"SrLook-   flags=%x,err=%d^[$e]"
+T_SAM_OBJ_LAY_CRE	"ObjLayCre:ino=%d,gen=%d,ngrp=%d"
+T_SAM_OBJ_LAY_DES	"ObjLayDes:ino=%d,gen=%d,olp=%x"

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.213 $"
+#pragma ident "$Revision: 1.214 $"
 
 #include "sam/osversion.h"
 
@@ -319,9 +319,11 @@ sam_get_ino(
 	}
 
 	if (SAM_IS_OBJECT_FILE(ip)) {
-		if ((error = sam_osd_create_obj_layout(ip, 1))) {
+		if ((error = sam_osd_create_obj_layout(ip))) {
 			goto out;
 		}
+	} else {
+		ASSERT(ip->olp == NULL);
 	}
 
 	/* Backwards support for residency time prior to 3.3.0-28 */
@@ -471,6 +473,7 @@ out:
 	ihp = &samgt.ihashlock[SAM_IHASH(ip->di.id.ino, ip->dev)];
 	mutex_enter(ihp);
 	if (ip->flags.b.hash) {
+		SAM_DESTROY_OBJ_LAYOUT(ip);
 		SAM_UNHASH_INO(ip);
 	}
 	mutex_exit(ihp);
@@ -589,6 +592,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->cl_closing = 0;
 	ip->zero_end = 0;
 	sam_clear_map_cache(ip);
+	SAM_DESTROY_OBJ_LAYOUT(ip);
 }
 
 
@@ -968,6 +972,7 @@ sam_check_cache(
 					 * If it's stale and still hashed
 					 * unhash it if it's on the freelist
 					 */
+					SAM_DESTROY_OBJ_LAYOUT(ip);
 					SAM_UNHASH_INO(ip);
 				}
 				mutex_exit(ihp);
@@ -1236,6 +1241,7 @@ start:
 		 * chain
 		 */
 		if (ip->flags.b.hash) {
+			SAM_DESTROY_OBJ_LAYOUT(ip);
 			SAM_UNHASH_INO(ip);
 		}
 		mutex_exit(ihp);
@@ -1258,6 +1264,7 @@ sam_unhash_ino(sam_node_t *ip)
 	ihp = &samgt.ihashlock[SAM_IHASH(ip->di.id.ino, ip->dev)];
 	mutex_enter(ihp);
 	if (ip->flags.b.hash) {
+		SAM_DESTROY_OBJ_LAYOUT(ip);
 		SAM_UNHASH_INO(ip);
 	}
 	mutex_exit(ihp);
@@ -1416,10 +1423,6 @@ sam_destroy_ino(sam_node_t *ip, boolean_t locked)
 	}
 	if (--samgt.inocount < 0) {
 		samgt.inocount = 0;
-	}
-
-	if (ip->olp) {
-		sam_osd_destroy_obj_layout(ip);
 	}
 
 	if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {

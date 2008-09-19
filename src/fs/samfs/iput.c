@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.128 $"
+#pragma ident "$Revision: 1.129 $"
 #endif
 
 #include "sam/osversion.h"
@@ -657,6 +657,7 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 	if (purge_flag) {
 		if (vp->v_count <= 1) {
 			if (ip->flags.bits & SAM_HASH) {
+				SAM_DESTROY_OBJ_LAYOUT(ip);
 				SAM_UNHASH_INO(ip);
 			}
 		}
@@ -668,13 +669,6 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 		mutex_exit(&vp->v_lock);
 		mutex_exit(ihp);
 		return;
-	}
-
-	/*
-	 * If object file, remove object layout array.
-	 */
-	if (ip->olp) {
-		sam_osd_destroy_obj_layout(ip);
 	}
 
 	/*
@@ -702,6 +696,7 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 		 */
 		if (vn_has_cached_data(vp) == 0) {
 			if (ip->flags.bits & SAM_HASH) {
+				SAM_DESTROY_OBJ_LAYOUT(ip);
 				SAM_UNHASH_INO(ip);
 			}
 		} else {
@@ -1032,6 +1027,7 @@ sam_free_incore_inode(
 		return;
 	}
 	if (ip->flags.bits & SAM_HASH) {
+		SAM_DESTROY_OBJ_LAYOUT(ip);
 		SAM_UNHASH_INO(ip);
 	}
 	TRACE(T_SAM_RMINCORE, NULL, ip->di.id.ino, vp->v_count, ip->flags.bits);

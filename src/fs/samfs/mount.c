@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.229 $"
+#pragma ident "$Revision: 1.230 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2588,6 +2588,8 @@ sam_flush_ino(
 						 * its soon-to-be-staled mp.
 						 */
 						if (ip->flags.b.hash) {
+							SAM_DESTROY_OBJ_LAYOUT(
+							    ip);
 							SAM_UNHASH_INO(ip);
 						}
 						sam_stale_inode(ip);
@@ -2710,6 +2712,7 @@ sam_delete_ino(vnode_t *vp)
 		got_mutex = 1;
 	}
 	if (ip->flags.b.hash) {
+		SAM_DESTROY_OBJ_LAYOUT(ip);
 		SAM_UNHASH_INO(ip);		/* Remove from hash queue */
 	}
 	VN_HOLD(vp);
