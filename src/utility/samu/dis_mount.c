@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 
 
 /* ANSI headers. */
@@ -247,7 +247,7 @@ DisMount()
 		snprintf(sbuf, 20, "%d", fi.fi_obj_width);
 		Mvprintw(ln++, col, "obj_width      : %s",
 		    (fi.fi_obj_width < 0) ? "default" : sbuf);
-		snprintf(sbuf, 20, "%d", fi.fi_obj_depth);
+		snprintf(sbuf, 20, "%lld", fi.fi_obj_depth);
 		Mvprintw(ln++, col, "obj_depth      : %s", sbuf);
 		snprintf(sbuf, 20, "%d", fi.fi_obj_depth_shift);
 		Mvprintw(ln++, col, "obj_depth_shift: %s", sbuf);
