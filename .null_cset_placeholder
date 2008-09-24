@@ -1,3 +1,3 @@
-Fri Sep 26 11:49:19 CDT 2008
-ec3f2a32cc67
-patch/qfs_prebackout patch/qfs_prepatch patch/samfs_prebackout patch/samfs_prepatch pkg/qfspreremove pkg/sampreremove
+Fri Sep 26 11:52:45 CDT 2008
+c51375e10b72
+pkg-linux/QFS_License_EA pkg-linux/makeiso.sh pkg/QFS_License_EA pkg/qfsproto pkg/samproto
