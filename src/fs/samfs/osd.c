@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 #include "sam/osversion.h"
 
@@ -2005,6 +2005,8 @@ sam_osd_create_obj_layout(
 	TRACE(T_SAM_OBJ_LAY_CRE, SAM_ITOP(ip), ip->di.id.ino,
 	    ip->di.id.gen, num_group);
 	ASSERT(num_group > 0);
+	ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread) ||
+	    MUTEX_HELD(&ip->fl_mutex));
 
 	/*
 	 * Get object layout array. Use existing one if the length is the same
@@ -2074,12 +2076,13 @@ sam_osd_destroy_obj_layout(sam_node_t *ip)
 
 	TRACE(T_SAM_OBJ_LAY_DES, SAM_ITOP(ip), ip->di.id.ino,
 	    ip->di.id.gen, (sam_tr_t)ip->olp);
-	if (ip->olp) {
-		num_group = ip->olp->num_group;
-		kmem_free(ip->olp, sizeof (sam_obj_layout_t) +
-		    (sizeof (sam_obj_ent_t) * (num_group - 1)));
-		ip->olp = NULL;
-	}
+	num_group = ip->olp->num_group;
+	ASSERT(num_group > 0);
+	ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread) ||
+	    MUTEX_HELD(&ip->fl_mutex));
+	kmem_free(ip->olp, sizeof (sam_obj_layout_t) +
+	    (sizeof (sam_obj_ent_t) * (num_group - 1)));
+	ip->olp = NULL;
 }
 
 

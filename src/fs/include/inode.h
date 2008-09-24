@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.210 $"
+#pragma ident "$Revision: 1.211 $"
 #endif
 
 #ifdef linux
@@ -858,7 +858,7 @@ sam_node_t *sam_vtoi(vnode_t *vp);
  */
 #define	SAM_DESTROY_OBJ_LAYOUT(ip) \
 { \
-	if (SAM_IS_OBJECT_FILE(ip)) { \
+	if (ip->olp != NULL) { \
 		sam_osd_destroy_obj_layout(ip); \
 	} \
 }
