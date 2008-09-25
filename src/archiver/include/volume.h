@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(ARCH_VOLUME_H)
+#ifndef ARCH_VOLUME_H
 #define	ARCH_VOLUME_H
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 /* SAM-FS headers. */
 #include "aml/device.h"
@@ -84,4 +84,4 @@ int VolumeCatalog(void);
 void VolumeCheck(void);
 void VolumeConfig(void);
 
-#endif /* !defined(ARCH_VOLUME_H) */
+#endif /* ARCH_VOLUME_H */

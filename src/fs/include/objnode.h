@@ -30,11 +30,10 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef _OBJNODE_H
 #define	_OBJNODE_H
+
+#pragma ident "$Revision: 1.2 $"
 
 #include "pub/objnops.h"
 

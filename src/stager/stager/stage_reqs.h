@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(STAGE_REQS_H)
+#ifndef STAGE_REQS_H
 #define	STAGE_REQS_H
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 /* SAM-FS headers. */
 #include "aml/stager_defs.h"

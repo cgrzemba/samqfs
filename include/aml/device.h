@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_DEVICE_H)
+#ifndef _AML_DEVICE_H
 #define	_AML_DEVICE_H
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 
 #ifdef sun
@@ -768,4 +768,4 @@ typedef struct sam_act_io {
 #endif /* sun */
 
 
-#endif /* !defined(_AML_DEVICE_H) */
+#endif /* _AML_DEVICE_H */

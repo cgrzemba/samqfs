@@ -34,10 +34,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.10 $"
-
-#if !defined(_AML_DEVLOG_H)
+#ifndef _AML_DEVLOG_H
 #define	_AML_DEVLOG_H
+
+#pragma ident "$Revision: 1.11 $"
 
 #define	DEVLOG_NAME "/var/opt/SUNWsamfs/devlog"
 
@@ -145,4 +145,4 @@ void DevLogSense(dev_ent_t *un);
 void AttachDevLog(dev_ent_t *un);
 void InitDevLog(dev_ent_t *un);
 
-#endif /* !defined(_AML_DEVLOG_H) */
+#endif /* _AML_DEVLOG_H */

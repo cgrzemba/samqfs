@@ -30,11 +30,10 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef _OBJIOCTL_H
 #define	_OBJIOCTL_H
+
+#pragma ident "$Revision: 1.2 $"
 
 #include <sys/ioccom.h>
 /* Begin: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

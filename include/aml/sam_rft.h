@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(AML_RFT_H)
+#ifndef AML_RFT_H
 #define	AML_RFT_H
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -336,4 +336,4 @@ int SamrftGetVolInfo(SamrftImpl_t *rftd, struct sam_rminfo *getrm, int *eq);
 int SamrftSeekVol(SamrftImpl_t *rftd, int block);
 int SamrftUnloadVol(SamrftImpl_t *rftd, struct sam_ioctl_rmunload *unload);
 
-#endif /* !defined(AML_RFT_H) */
+#endif /* AML_RFT_H */

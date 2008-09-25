@@ -31,11 +31,10 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.7 $"
-
 #ifndef	SAM_CSD_H
 #define	SAM_CSD_H
+
+#pragma ident "$Revision: 1.8 $"
 
 #include "aml/tar.h"
 

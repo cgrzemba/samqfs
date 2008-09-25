@@ -41,7 +41,7 @@
 #define	_SAM_FS_CLIENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.76 $"
+#pragma ident "$Revision: 1.77 $"
 #endif
 
 #ifdef	linux
@@ -263,4 +263,4 @@ typedef struct sam_client_msg {
 } sam_client_msg_t;
 
 
-#endif  /* _SAM_FS_CLIENT_H */
+#endif /* _SAM_FS_CLIENT_H */

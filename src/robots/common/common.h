@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_COMMON_H)
+#ifndef _COMMON_H
 #define	_COMMON_H
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include "aml/device.h"
 #include "aml/preview.h"

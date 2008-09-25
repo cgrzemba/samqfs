@@ -32,7 +32,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
+#ifndef _DUMP_RESTORE_CSD_DEFS_H
+#define	_DUMP_RESTORE_CSD_DEFS_H
+
+#pragma ident "$Revision: 1.13 $"
 
 #include <sys/param.h>
 #include <sys/acl.h>
@@ -189,3 +192,5 @@ void	skip_pad_data(long nbytes);
 int		strip_path_items(char *cp, char **start_ptr);
 void	writecheck(void *buffer, size_t size, int msgNum);
 u_longlong_t write_embedded_file_data(int fildes, char *name);
+
+#endif /* _DUMP_RESTORE_CSD_DEFS_H */

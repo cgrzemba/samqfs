@@ -32,10 +32,10 @@
  */
 
 
-#if !defined(_AML_PARSECMD_H)
+#ifndef _AML_PARSECMD_H
 #define	_AML_PARSECMD_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 
 #include <stdio.h>    /* for FILE definition */
@@ -65,4 +65,4 @@ void *parse_init(char *, char *, int, FILE *);
 void parse_fini(void *);
 int parse_cmd_file(void *, cmd_ent_t *);
 
-#endif /* !defined(_AML_PARSECMD_H) */
+#endif /* _AML_PARSECMD_H */

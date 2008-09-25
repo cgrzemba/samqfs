@@ -36,13 +36,13 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.23 $"
-#endif
-
-
 #ifndef	_SAM_FS_AMLD_H
 #define	_SAM_FS_AMLD_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.24 $"
+#endif
+
 
 /* Begin: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */
 #if _LONG_LONG_ALIGNMENT == 8 && _LONG_LONG_ALIGNMENT_32 == 4
@@ -288,4 +288,4 @@ typedef struct samamld_cmd_table {
 #pragma pack()
 #endif
 
-#endif  /* _SAM_FS_AMLD_H */
+#endif /* _SAM_FS_AMLD_H */

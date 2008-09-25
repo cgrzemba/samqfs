@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.25 $
+ * $Revision: 1.26 $
  */
 
-#if !defined(_GENERIC_H)
+#ifndef _GENERIC_H
 #define	_GENERIC_H
 
 #include "aml/device.h"
@@ -363,4 +363,4 @@ boolean_t	drive_is_local(library_t *, drive_state_t *);
 
 robo_event_t   *get_free_event(library_t *);
 
-#endif				/* _GENERIC_H */
+#endif	/* _GENERIC_H */

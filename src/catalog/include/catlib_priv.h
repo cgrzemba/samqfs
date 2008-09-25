@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(CATLIB_PRIV_H)
+#ifndef CATLIB_PRIV_H
 #define	CATLIB_PRIV_H
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #define	CT_MAGIC 0030124240214
 
@@ -87,4 +87,4 @@ struct CatalogEntry *CS_CatalogGetCeByBarCode(int eq, char *media_type,
 extern struct CatalogTableHdr *CatalogTable;
 extern struct CatalogMap *Catalogs;
 
-#endif /* defined(CATLIB_PRIV_H) */
+#endif /* CATLIB_PRIV_H */

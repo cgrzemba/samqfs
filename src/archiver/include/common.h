@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(COMMON_H)
+#ifndef COMMON_H
 #define	COMMON_H
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 /* Solaris headers. */
 #include <sys/param.h>

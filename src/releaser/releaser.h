@@ -27,7 +27,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#ifndef _RELEASER_RELEASER_H
+#define	_RELEASER_RELEASER_H
+
+#pragma ident "$Revision: 1.17 $"
 
 #include <sam/fs/ino.h>
 
@@ -57,3 +60,5 @@ int finish();
 void add_entry(float priority, struct data *data);
 void init();
 int read_cmd_file(char *cfgFname);
+
+#endif /* _RELEASER_RELEASER_H */

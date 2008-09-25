@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(READCFG_H)
+#ifndef READCFG_H
 #define	READCFG_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 #endif
 
 #define	TOKEN_SIZE 256

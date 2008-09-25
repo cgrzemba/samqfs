@@ -111,11 +111,11 @@
  *    setfield.c to process the new type.
  */
 
-#if !defined(SETFIELD_H)
+#ifndef SETFIELD_H
 #define	SETFIELD_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 #endif
 
 #include <limits.h>

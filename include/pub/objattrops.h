@@ -30,11 +30,11 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef _OBJATTROPS_H
 #define	_OBJATTROPS_H
+
+#pragma ident "$Revision: 1.2 $"
+
 
 extern int sam_obj_setattr(objnode_t *objnodep, uint32_t pagenum, uint32_t
     attrnum, uint64_t len, void *buf, void *cap, void *sec, cred_t *credp);

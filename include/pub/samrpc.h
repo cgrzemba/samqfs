@@ -33,14 +33,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.16 $"
-#endif
-
-
 #ifndef SAMFS_H_RPCGEN
 #define	SAMFS_H_RPCGEN
+
+#ifdef sun
+#pragma ident "$Revision: 1.17 $"
+#endif
 
 #include <rpc/rpc.h>
 #include <sys/types.h>

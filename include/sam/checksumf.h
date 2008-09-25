@@ -30,9 +30,11 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef _SAM_CHECKSUMF_H
+#define	_SAM_CHECKSUMF_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 #endif
 
 
@@ -62,3 +64,5 @@ csum_func csum[] = {
 #else	/* defined(DEC_INIT) */
 extern csum_func csum[];
 #endif	/* defined(DEC_INIT) */
+
+#endif /* _SAM_CHECKSUMF_H */

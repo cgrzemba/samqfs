@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_H)
+#ifndef _AML_H
 #define	_AML_H
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #include "stdio.h"
 #include "sam/defaults.h"
@@ -183,4 +183,4 @@ int will_use_up_slots(dtype_t rtype);
 #define	sema_post (void)sema_post
 #endif /* defined(lint) */
 
-#endif  /* _AML_H */
+#endif /* _AML_H */

@@ -34,8 +34,11 @@
  *    SAM-QFS_notice_end
  */
 
+#ifndef _SAM_CHECKSUM_H
+#define	_SAM_CHECKSUM_H
+
 #ifdef sun
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 #endif
 
 
@@ -54,3 +57,5 @@
 #define	CS_SIMPLE	1
 
 #define	CS_FUNCS	2	/* number of SAM-defined checksum functions */
+
+#endif /* _SAM_CHECKSUM_H */

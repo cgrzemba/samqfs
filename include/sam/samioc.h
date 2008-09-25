@@ -1,10 +1,3 @@
-#ifndef	_SAMIOC_H
-#define	_SAMIOC_H
-
-#ifdef sun
-#pragma ident "$Revision: 1.10 $"
-#endif
-
 /*
  *    SAM-QFS_notice_begin
  *
@@ -33,6 +26,12 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef	_SAMIOC_H
+#define	_SAMIOC_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.11 $"
+#endif
 
 /*
  *	Definitions needed for the ioctl() interface that implements
@@ -75,4 +74,4 @@ struct sam_syscall_args {
 
 #endif	/* linux */
 
-#endif	// _SAMIOC_H
+#endif /* _SAMIOC_H */

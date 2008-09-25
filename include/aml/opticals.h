@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AMLOPTICALS_H)
+#ifndef _AMLOPTICALS_H
 #define	_AMLOPTICALS_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 /* Define the default optical sector size */
 #define	OD_SS_DEFAULT 1024
@@ -52,4 +52,4 @@
 #define	OD_ANCHOR_POS 256		/* optical anchor block position */
 #define	OD_SPACE_UNAVAIL (OD_ANCHOR_POS*2)	/* anchor space is not usable */
 
-#endif /* !defined(_AMLOPTICALS_H) */
+#endif /* _AMLOPTICALS_H */

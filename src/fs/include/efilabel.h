@@ -31,6 +31,9 @@
  *    SAM-QFS_notice_end
  */
 
+#ifndef _INCLUDE_EFILABEL_H
+#define	_INCLUDE_EFILABEL_H
+
 #ifdef sun
 
 int is_efi_present(void);
@@ -39,3 +42,5 @@ int call_efi_alloc_and_read(int, struct dk_gpt **);
 void call_efi_free(struct dk_gpt *);
 
 #endif /* sun */
+
+#endif /* _INCLUDE_EFILABEL_H */

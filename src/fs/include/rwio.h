@@ -34,13 +34,13 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.44 $"
-#endif
-
-
 #ifndef	_SAM_FS_MMAP_H
 #define	_SAM_FS_MMAP_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.45 $"
+#endif
+
 
 #ifdef	sun
 #include	<sys/types.h>
@@ -226,6 +226,5 @@ int sam_putapage(vnode_t *vp, page_t *pp, u_offset_t *offset, size_t *length,
 int sam_putpages(vnode_t *vp, offset_t offset, size_t length, int flags,
 	cred_t *credp);
 #endif	/* sun */
-
 
 #endif	/* _SAM_FS_MMAP_H */

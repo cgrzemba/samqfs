@@ -30,11 +30,10 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef _OSDFS_H
 #define	_OSDFS_H
+
+#pragma ident "$Revision: 1.2 $"
 
 extern osdfsops_t *osdfsopsp;
 extern int samfs_osdfs_alloc(osdfs_t **osdfspp, cred_t *credp);

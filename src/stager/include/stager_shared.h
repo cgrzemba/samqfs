@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(STAGER_SHARED_H)
+#ifndef STAGER_SHARED_H
 #define	STAGER_SHARED_H
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 /*
  * Stager's shared data definition.  This structure defines common data

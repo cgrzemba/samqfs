@@ -37,14 +37,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.14 $"
-#endif
-
-
 #ifndef	_SAM_FS_ATTRIBUTES_H
 #define	_SAM_FS_ATTRIBUTES_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.15 $"
+#endif
 
 #include	<sam/fs/ino.h>
 
@@ -94,4 +92,4 @@ typedef struct	sam_file_attr	{
 	ino_st_t	status;		/*  File status flags--see fs/ino.h */
 } sam_file_attr_t;
 
-#endif	/* _SAM_FS_ATTRIBUTES_ */
+#endif	/* _SAM_FS_ATTRIBUTES_H */

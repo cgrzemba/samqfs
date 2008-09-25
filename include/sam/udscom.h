@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(UDSCOM_H)
+#ifndef UDSCOM_H
 #define	UDSCOM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 #endif
 
 /* Basic message types. */

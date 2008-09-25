@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SCSI_ERROR_H)
+#ifndef	_AML_SCSI_ERROR_H
 #define	_AML_SCSI_ERROR_H
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -220,4 +220,4 @@ typedef struct sam_scsi_err {
 }
 #endif
 
-#endif /* !defined(_AML_SCSI_ERROR_H) */
+#endif /* _AML_SCSI_ERROR_H */

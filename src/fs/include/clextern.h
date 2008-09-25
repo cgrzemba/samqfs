@@ -32,13 +32,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.62 $"
-#endif
-
 #ifndef	_SAM_FS_CLEXTERN_H
 #define	_SAM_FS_CLEXTERN_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.63 $"
+#endif
 
 #ifdef sun
 #include <sys/types.h>

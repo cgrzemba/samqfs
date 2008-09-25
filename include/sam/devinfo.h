@@ -36,13 +36,13 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_KERNEL)
-
-#if !defined(SAM_DEVINFO_H)
+#ifndef SAM_DEVINFO_H
 #define	SAM_DEVINFO_H
 
+#if !defined(_KERNEL)
+
 #ifdef sun
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 #endif
 
 #define	INQUIRY_CONF    SAM_CONFIG_PATH"/inquiry.conf"
@@ -295,6 +295,6 @@ extern inquiry_id_t  *inquiry_info;
 extern sam_model_t  sam_model[];
 #endif	/* DEC_INIT */
 
-#endif  /* SAM_DEVINFO_H */
-
 #endif /* _KERNEL */
+
+#endif /* SAM_DEVINFO_H */

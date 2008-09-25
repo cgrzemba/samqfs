@@ -26,11 +26,11 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.5 $"
 
 #ifndef _scrkd_xml_H
 #define	_scrkd_xml_H
 
+#pragma ident   "$Revision: 1.6 $"
 #include "scrkd_xml_string.h"
 #include "csn/scrkd.h"
 

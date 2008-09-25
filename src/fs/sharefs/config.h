@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SHFS_CONFIG_H)
+#ifndef SHFS_CONFIG_H
 #define	SHFS_CONFIG_H
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 /*
  * These bits + structure keeps track of all the items that

@@ -33,13 +33,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.18 $"
-#endif
-
 #ifndef	_SAM_QUOTA_H
 #define	_SAM_QUOTA_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.19 $"
+#endif
 
 /*
  * General stuff:

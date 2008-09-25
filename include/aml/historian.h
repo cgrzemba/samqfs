@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_HISTORIAN_H)
+#ifndef _AML_HISTORIAN_H
 #define	_AML_HISTORIAN_H
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #include "sam/types.h"
 
@@ -52,4 +52,4 @@
 #define	HIST_ENTRY_FOUND   0
 #define	HIST_ENTRY_NOTFND  1
 
-#endif /* !defined(_AML_HISTORIAN_H) */
+#endif /* _AML_HISTORIAN_H */

@@ -58,4 +58,4 @@
 #define	QFS_TAG_VFSSTAT_V2	0x0001
 
 
-#endif  /* _SAM_FS_TAGS_H */
+#endif /* _SAM_FS_TAGS_H */

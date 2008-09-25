@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.22 $
+ * $Revision: 1.23 $
  */
 
-#if !defined(_IBM3494_H)
+#ifndef _IBM3494_H
 #define	_IBM3494_H
 
 #include "aml/device.h"

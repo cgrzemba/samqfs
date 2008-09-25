@@ -33,14 +33,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.132 $"
-#endif
-
-
 #ifndef	_SAM_FS_SHARE_H
 #define	_SAM_FS_SHARE_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.133 $"
+#endif
 
 #ifdef sun
 #include	<sys/vnode.h>

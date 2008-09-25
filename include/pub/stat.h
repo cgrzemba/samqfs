@@ -37,12 +37,12 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.44 $"
-#endif
-
 #ifndef	SAM_STAT_H
 #define	SAM_STAT_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.45 $"
+#endif
 
 #ifdef linux
 #include <sam/linux_types.h>	/* u_longlong_t */

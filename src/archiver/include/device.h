@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(ARCH_DEVICE_H)
+#ifndef ARCH_DEVICE_H
 #define	ARCH_DEVICE_H
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 /* Local headers. */
 #include "volume.h"
@@ -90,4 +90,4 @@ struct ArchLib {
 void DeviceCheck(void);
 void DeviceConfig(ArchProg_t caller);
 
-#endif /* !defined(ARCH_DEVICE_H) */
+#endif /* ARCH_DEVICE_H */

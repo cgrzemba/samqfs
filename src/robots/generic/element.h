@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
-
-#if !defined(ELEMENT_H)
+#ifndef ELEMENT_H
 #define	ELEMENT_H
+
+#pragma ident "$Revision: 1.17 $"
 
 /* Element types */
 
@@ -284,4 +284,4 @@ typedef struct {
 	uint8_t	 resv[4];
 }		data_transfer_element_ext_t;
 
-#endif				/* ELEMENT_H */
+#endif	/* ELEMENT_H */

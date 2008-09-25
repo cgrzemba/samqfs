@@ -33,7 +33,7 @@
 #ifndef _TAPEALERT_VALS_H
 #define	_TAPEALERT_VALS_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 /* sysevent class, subclass, vendor, publisher */
 #define	TAPEALERT_SE_CLASS "Device"    /* class */
@@ -64,4 +64,4 @@
 /* vsn or barcode empty string */
 #define	TAPEALERT_EMPTY_STR "\"\""
 
-#endif
+#endif /* _TAPEALERT_VALS_H */

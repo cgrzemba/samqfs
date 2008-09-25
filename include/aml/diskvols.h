@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_DISKVOLS_H)
+#ifndef _AML_DISKVOLS_H
 #define	_AML_DISKVOLS_H
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 #define	DISKVOLS_FILENAME "diskvols.db"	/* Disk volume database names */
 #define	DISKVOLS_VSN_DBNAME "vsn"
@@ -242,4 +242,4 @@ char *DiskVolsGenMetadataQuery(char *volname, DiskVolumeSeqnum_t seqnum,
 char *DiskVolsGenMetadataArchiveId(char *volname, DiskVolumeSeqnum_t seqnum,
 	char *archiveId);
 
-#endif /* !defined(_AML_DISKVOLS_H) */
+#endif /* _AML_DISKVOLS_H */

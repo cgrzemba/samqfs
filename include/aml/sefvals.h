@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SEFVALS_H)
+#ifndef	_AML_SEFVALS_H
 #define	_AML_SEFVALS_H
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #define	SEF_INITED 1		/* sef_inited dev ready */
 #define	SEF_NOT_SUPPORTED 2	/* sef_inited dev log sns pgs not supported */
@@ -125,4 +125,4 @@
 /* vsn or barcode empty string */
 #define	SEF_EMPTY_STR "\"\""
 
-#endif /* !defined(_AML_SEFVALS_H) */
+#endif /* _AML_SEFVALS_H */

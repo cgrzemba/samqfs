@@ -48,11 +48,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
-
-
-#if	!defined(CATALOG_H)
+#ifndef CATALOG_H
 #define	CATALOG_H
+
+#pragma ident "$Revision: 1.15 $"
 
 #define	CF_MAGIC 03640030124
 #define	CF_VERSION 349		/* Increment whenever catalog format changes */
@@ -177,4 +176,4 @@ struct CatalogHdr {
 	struct CatalogEntry ChTable[1];	/* Catalog table - Catalog entry(s) */
 };
 
-#endif /* defined(CATALOG_H) */
+#endif /* CATALOG_H */

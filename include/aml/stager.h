@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_STAGER_H)
+#ifndef _AML_STAGER_H
 #define	_AML_STAGER_H
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 #include "sam/param.h"
 #include "sam/types.h"
@@ -274,4 +274,4 @@ char *_StagerControl(const char *SrcFile, const int SrcLine, char *ident,
 
 int StagerStreamGetFiles(void *stream, void *stageReqs, void **files);
 
-#endif /* !defined(_AML_STAGER_H) */
+#endif /* _AML_STAGER_H */

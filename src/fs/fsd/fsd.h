@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(FSD_H)
+#ifndef FSD_H
 #define	FSD_H
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 /* SAM-FS includes. */
 #include "sam/custmsg.h"

@@ -33,10 +33,10 @@
  */
 
 
-#if !defined(_AML_EXIT_FIFO_H)
+#ifndef _AML_EXIT_FIFO_H
 #define	_AML_EXIT_FIFO_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #define	EXIT_FIFO_PATH "/tmp/.EXIT-FIFO-p%dt%d.%d"
 
@@ -77,4 +77,4 @@ int timeout_factor(equ_t);
 extern char *exit_completed;
 extern char *exit_unknown;
 
-#endif /* !defined(_AML_EXIT_FIFO_H) */
+#endif /* _AML_EXIT_FIFO_H */

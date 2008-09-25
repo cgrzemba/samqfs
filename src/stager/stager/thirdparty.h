@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(THIRDPARTY_H)
+#ifndef THIRDPARTY_H
 #define	THIRDPARTY_H
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 /*
  * SAM-FS headers.
@@ -71,4 +71,4 @@ void *Migrator(void *arg);
 void MigrationRequest(FileInfo_t *file);
 void CancelThirdPartyRequest(int id);
 
-#endif /* Migration_H */
+#endif /* THIRDPARTY_H */

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(COPY_H)
+#ifndef COPY_H
 #define	COPY_H
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 #include "aml/sam_rft.h"
 
@@ -163,4 +163,4 @@ void SetStageDone(FileInfo_t *file);
 void MapInRequestList();
 void UnMapRequestList();
 
-#endif
+#endif /* COPY_H */

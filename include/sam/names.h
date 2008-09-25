@@ -32,11 +32,11 @@
  */
 
 
-#if !defined(_SAM_NAMES_H)
+#ifndef _SAM_NAMES_H
 #define	_SAM_NAMES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 #endif
 
 #define	SAM_CONFIG_PATH "/etc/opt/SUNWsamfs"		/* configuration data */
@@ -97,4 +97,4 @@
 #define	SAM_RESFILE "sam-defaults"
 #define	SAM_DOTFILE ".samfs"
 
-#endif   /* _SAM_NAMES_H */
+#endif /* _SAM_NAMES_H */

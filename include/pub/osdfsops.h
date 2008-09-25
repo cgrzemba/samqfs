@@ -30,11 +30,11 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef _OSDFSOPS_H
 #define	_OSDFSOPS_H
+
+#pragma ident "$Revision: 1.2 $"
+
 
 /*
  * Object File System level operation vector.

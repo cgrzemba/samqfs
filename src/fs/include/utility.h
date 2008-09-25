@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SAM_UTILITY_H)
+#ifndef SAM_UTILITY_H
 #define	SAM_UTILITY_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 #endif
 
 /* Declaration/initialization macros. */

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(RMEDIA_H)
+#ifndef RMEDIA_H
 #define	RMEDIA_H
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 /* Enums. */
 

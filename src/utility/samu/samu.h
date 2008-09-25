@@ -34,12 +34,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
-
-
-#if !defined(SAMU_H)
+#ifndef SAMU_H
 #define	SAMU_H
 
+#pragma ident "$Revision: 1.37 $"
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -203,4 +201,4 @@ DCL boolean IsSam IVAL(FALSE);	/* TRUE if sam_init binary is present */
 DCL boolean IsSamRunning IVAL(FALSE);
 				/* TRUE if shared memory is present */
 
-#endif /* !defined(SAMU_H) */
+#endif /* SAMU_H */

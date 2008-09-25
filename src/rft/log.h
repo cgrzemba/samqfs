@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(RFTD_LOG_H)
+#ifndef RFTD_LOG_H
 #define	RFTD_LOG_H
 
-#pragma ident "$Revision: 1.9 $"
+#pragma ident "$Revision: 1.10 $"
 
 typedef struct LogInfo {
     FILE	*file;

@@ -31,10 +31,10 @@
  */
 
 /*
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  */
 
-#if !defined(SERVER_H)
+#ifndef SERVER_H
 #define	SERVER_H
 
 #include "aml/remote.h"

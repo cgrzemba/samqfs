@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(CIRCULAR_IO_H)
+#ifndef CIRCULAR_IO_H
 #define	CIRCULAR_IO_H
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 /* Forward declarations. */
 struct BlockState; typedef struct BlockState BlockState_t;

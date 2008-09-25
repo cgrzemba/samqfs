@@ -34,12 +34,12 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
-
-#include "sam/osversion.h"
-
 #ifndef	_SAM_FS_OBJECT_H
 #define	_SAM_FS_OBJECT_H
+
+#pragma ident "$Revision: 1.17 $"
+
+#include "sam/osversion.h"
 
 #include	<sys/types.h>
 #include	<sys/vnode.h>

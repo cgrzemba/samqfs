@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SCSI_H)
+#ifndef _AML_SCSI_H
 #define	_AML_SCSI_H
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #include <sys/scsi/generic/commands.h>
 #include "aml/scsi_error.h"
@@ -229,4 +229,4 @@ extern    "C" {
 }
 #endif
 
-#endif	/* !defined(_AML_SCSI_H) */
+#endif	/* _AML_SCSI_H */

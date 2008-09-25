@@ -27,7 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.12 $"
+#ifndef _SAMCLI_SAMCLI_H
+#define	_SAMCLI_SAMCLI_H
+
+#pragma ident	"$Revision: 1.13 $"
+
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
@@ -83,3 +87,5 @@ extern sqm_lst_t *cpylist;		/* Integer list */
 extern sqm_lst_t *entrylist;	/* Integer list */
 extern v_command_t command;
 extern int no_action;
+
+#endif /* _SAMCLI_SAMCLI_H */

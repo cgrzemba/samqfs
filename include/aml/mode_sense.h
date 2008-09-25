@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_MODE_SENSE_H)
+#ifndef _AML_MODE_SENSE_H
 #define	_AML_MODE_SENSE_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 /*
  * Mode Sense Header.
@@ -2517,4 +2517,4 @@ typedef struct {
 } fmt_mode_select_t;
 
 
-#endif	/* !defined(_AML_MODE_SENSE_H) */
+#endif	/* _AML_MODE_SENSE_H */

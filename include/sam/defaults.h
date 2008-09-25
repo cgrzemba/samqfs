@@ -36,7 +36,7 @@
 #define	_SAM_DEFAULTS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 #endif
 
 #include "sam/types.h"
@@ -108,4 +108,4 @@ sam_defaults_t *GetDefaults(void);
 sam_defaults_t *GetDefaultsRw(void);
 
 
-#endif  /* _SAM_DEFAULTS_H */
+#endif /* _SAM_DEFAULTS_H */

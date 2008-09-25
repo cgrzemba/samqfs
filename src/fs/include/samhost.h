@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SAM_HOST_H)
+#ifndef SAM_HOST_H
 #define	SAM_HOST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 #endif
 
 #include "sam/types.h"

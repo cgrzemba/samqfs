@@ -35,13 +35,14 @@
  *    SAM-QFS_notice_end
  */
 
+#ifndef	_SAM_FS_THREAD_H
+#define	_SAM_FS_THREAD_H
+
 #ifdef sun
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 #endif
 
 
-#ifndef	_SAM_FS_THREAD_H
-#define	_SAM_FS_THREAD_H
 
 
 /*
@@ -188,4 +189,4 @@ void sam_taskq_uncount(struct sam_mount *mp);
 int sam_taskq_dispatch(sam_schedule_entry_t *entry);
 void sam_init_schedule_entry(sam_schedule_entry_t *entry, struct sam_mount *mp,
 	sam_task_func_t func, void *arg);
-#endif  /* _SAM_FS_THREAD_H */
+#endif /* _SAM_FS_THREAD_H */

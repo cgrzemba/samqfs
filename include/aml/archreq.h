@@ -33,10 +33,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_ARCHREQ_H)
+#ifndef _AML_ARCHREQ_H
 #define	_AML_ARCHREQ_H
 
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 
 /* Macros. */
 #define	ARCHREQ_MAGIC 0122031022	/* ArchReq file magic number */
@@ -345,4 +345,4 @@ static int msgSentTable[] = {
 struct ArchReq *ArchReqAttach(char *fsname, char *arname, int mode);
 int ArchReqDetach(struct ArchReq *);
 
-#endif /* !defined(_AML_ARCHREQ_H) */
+#endif /* _AML_ARCHREQ_H */

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(FILEPROPS_H)
+#ifndef FILEPROPS_H
 #define	FILEPROPS_H
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 /* Macros. */
 #define	FP_MAGIC 0062010		/* File properties magic number */

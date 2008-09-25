@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(RECYCLER_THREADS_H)
+#ifndef RECYCLER_THREADS_H
 #define	RECYCLER_THREADS_H
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 #include "sam/custmsg.h"
 

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(ARCHIVER_H)
+#ifndef ARCHIVER_H
 #define	ARCHIVER_H
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 /* Local headers. */
 #include "common.h"

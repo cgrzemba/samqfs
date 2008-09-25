@@ -30,11 +30,10 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef _OBJNOPS_H
 #define	_OBJNOPS_H
+
+#pragma ident "$Revision: 1.2 $"
 
 typedef struct objnodeops objnodeops_t;
 

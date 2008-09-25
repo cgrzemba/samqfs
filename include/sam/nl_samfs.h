@@ -34,14 +34,12 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef _SAM_NL_SAMFS_H
+#define	_SAM_NL_SAMFS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 #endif
-
-
-#if !defined(_SAM_NL_SAMFS_H)
-#define	_SAM_NL_SAMFS_H
 
 #include <locale.h>
 #include <nl_types.h>
@@ -55,4 +53,4 @@
 
 nl_catd catfd;
 
-#endif  /* _SAM_NL_SAMFS_H */
+#endif /* _SAM_NL_SAMFS_H */

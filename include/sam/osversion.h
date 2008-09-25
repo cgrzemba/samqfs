@@ -34,15 +34,15 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_SAM_OSVERSION_H)
+#ifndef _SAM_OSVERSION_H
 #define	_SAM_OSVERSION_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 #endif
 
 #if defined(SOL5_11)
 #define	SOL_511_ABOVE
 #endif
 
-#endif /* !defined(_SAM_OSVERSION_H) */
+#endif /* _SAM_OSVERSION_H */

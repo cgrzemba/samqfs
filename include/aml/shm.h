@@ -32,10 +32,10 @@
  */
 
 
-#if !defined(_AML_SHM_H)
+#ifndef _AML_SHM_H
 #define	_AML_SHM_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #include <semaphore.h>
 #include "aml/device.h"
@@ -174,4 +174,4 @@ typedef struct {
 	preview_tbl_t	preview_table;		/* the preview table itself */
 }shm_preview_tbl_t;
 
-#endif /* !defined(_AML_SHM_H) */
+#endif /* _AML_SHM_H */

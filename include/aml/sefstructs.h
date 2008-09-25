@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SEFSTRUCTS_H)
+#ifndef _AML_SEFSTRUCTS_H
 #define	_AML_SEFSTRUCTS_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 /*
  * In the SCSI spec, the possible page codes returned in the "list of
@@ -100,4 +100,4 @@ struct sef_supp_pgs {
 	uchar_t			supp_pgs[SEF_MAX_PAGES];
 };
 
-#endif /* !defined(_AML_SEFSTRUCTS_H) */
+#endif /* _AML_SEFSTRUCTS_H */

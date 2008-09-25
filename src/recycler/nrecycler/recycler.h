@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(RECYCLER_H)
+#ifndef RECYCLER_H
 #define	RECYCLER_H
 
 #define	RECYCLER_DIRNAME	"nrecycler"

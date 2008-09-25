@@ -27,8 +27,10 @@
  *    SAM-QFS_notice_end
  */
 
+#ifndef _LICENSE_LIC_H
+#define	_LICENSE_LIC_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 
 /* read_license() return codes: */
@@ -54,3 +56,5 @@
 /* verify_platform return codes: */
 #define	VP_OK			0
 #define	VP_NO_MATCH		1
+
+#endif /* _LICENSE_LIC_H */

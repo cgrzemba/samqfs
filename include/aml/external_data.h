@@ -38,10 +38,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_EXTERNAL_DATA_H)
+#ifndef _AML_EXTERNAL_DATA_H
 #define	_AML_EXTERNAL_DATA_H
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 /*
  * Multi-byte integer transfers between host and external data structures.
@@ -187,4 +187,4 @@ void HtoLE64(uint64_t *s, uint64_t *d);
 
 #endif	/* !defined(EXTERNAL_DATA_FUNCTIONS); */
 
-#endif	/* !defined(_AML_EXTERNAL_DATA_H) */
+#endif	/* _AML_EXTERNAL_DATA_H */

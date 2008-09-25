@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_PROTO_H)
+#ifndef _AML_PROTO_H
 #define	_AML_PROTO_H
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 #include "sam/osversion.h"
 #include "aml/robots.h"
@@ -177,4 +177,4 @@ int timeout_factor(equ_t);
 extern char *ctime_r(const time_t *, char *, int);
 extern struct tm *localtime_r(const time_t *, struct tm *);
 
-#endif /* !defined(_AML_PROTO_H) */
+#endif /* _AML_PROTO_H */

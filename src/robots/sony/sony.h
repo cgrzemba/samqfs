@@ -32,11 +32,11 @@
  */
 
 /*
- * $Revision: 1.21 $
+ * $Revision: 1.22 $
  */
 
-#if !defined(_STK_H)
-#define	_STK_H
+#ifndef _SONY_H
+#define	_SONY_H
 
 #include "aml/device.h"
 #include "aml/preview.h"

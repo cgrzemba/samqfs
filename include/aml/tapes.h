@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_TAPES_H)
+#ifndef _AML_TAPES_H
 #define	_AML_TAPES_H
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 #include "aml/labels.h"
 #include "sam/resource.h"
@@ -293,4 +293,4 @@ void tapeclean_active(dev_ent_t *un, int required, int requested,
 void tapeclean_media(dev_ent_t *un);
 int tapeclean_drive(dev_ent_t *un);
 
-#endif /* !defined(_AML_TAPES_H) */
+#endif /* _AML_TAPES_H */

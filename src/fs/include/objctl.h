@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
-
 #ifndef	_OBJCTL_H
 #define	_OBJCTL_H
+
+#pragma ident "$Revision: 1.2 $"
 
 #define	OBJCTL_NAME		".objects"
 #define	OBJCTL_INO_ROOT		0x1

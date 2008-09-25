@@ -33,15 +33,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.18 $"
-#endif
-
-
 #ifndef SAM_RMINFO_H
 #define	SAM_RMINFO_H
 
+#ifdef sun
+#pragma ident "$Revision: 1.19 $"
+#endif
 
 #ifdef	linux
 #include <linux/types.h>
@@ -140,4 +137,4 @@ int sam_request(const char *path, struct sam_rminfo *buf, size_t bufsize);
 }
 #endif
 
-#endif  /* SAM_RMINFO_H */
+#endif /* SAM_RMINFO_H */

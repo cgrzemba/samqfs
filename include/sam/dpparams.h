@@ -87,4 +87,4 @@ static struct {
 
 #endif  /* defined(DEVICE_DEFAULTS) */
 
-#endif  /* _SAM_DPPARAMS_H */
+#endif /* _SAM_DPPARAMS_H */

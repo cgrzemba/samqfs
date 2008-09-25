@@ -36,13 +36,13 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.54 $"
-#endif
-
-
 #ifndef	_SAM_FS_GLOBAL_H
 #define	_SAM_FS_GLOBAL_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.55 $"
+#endif
+
 
 #ifdef	sun
 #include	<sys/pathname.h>
@@ -184,4 +184,4 @@ typedef struct {
 #endif
 
 
-#endif  /* _SAM_FS_GLOBAL_H */
+#endif /* _SAM_FS_GLOBAL_H */

@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.154 $"
+#pragma ident "$Revision: 1.155 $"
 #endif
 
 #ifdef sun
@@ -489,4 +489,4 @@ int sam_update_filsys(sam_mount_t *mp, int flag);
 #define	LQFS_GET_IOTSTAMP(mp) \
 		(LQFS_CAPABLE(mp) ? (mp)->mi.m_vfs_iotstamp : 0)
 
-#endif  /* _SAM_FS_MOUNT_H */
+#endif /* _SAM_FS_MOUNT_H */

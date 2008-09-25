@@ -34,10 +34,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.10 $"
-
-#if	!defined(_AML_CATALOG_H)
+#ifndef _AML_CATALOG_H
 #define	_AML_CATALOG_H
+
+#pragma ident "$Revision: 1.11 $"
 
 #define	CF_MAGIC 03640030124
 #define	CF_VERSION 351		/* Increment whenever catalog format changes */
@@ -122,4 +122,4 @@ struct CatalogHdr {
 	struct CatalogEntry ChTable[1]; /* Catalog table - Catalog entry(s) */
 };
 
-#endif /* defined(_AML_CATALOG_H) */
+#endif /* _AML_CATALOG_H */

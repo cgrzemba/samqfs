@@ -34,13 +34,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.14 $"
-#endif
-
 #ifndef SAM_CATALOG_H
 #define	SAM_CATALOG_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.15 $"
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -125,4 +124,4 @@ int	sam_closecat(int cat_handle);
 }
 #endif
 
-#endif  /* SAM_CATALOG_H */
+#endif /* SAM_CATALOG_H */

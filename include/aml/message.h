@@ -32,10 +32,10 @@
  */
 
 
-#if !defined(_AML_MESSAGE_H)
+#ifndef _AML_MESSAGE_H
 #define	_AML_MESSAGE_H
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #include "sam/types.h"
 #include "sam/resource.h"
@@ -328,4 +328,4 @@ typedef struct message_request {
 } message_request_t;
 #endif
 
-#endif				/* !defined(_AML_MESSAGE_H) */
+#endif /* _AML_MESSAGE_H */

@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
-
 #ifndef _SAM_OLD_RESOURCE_H
 #define	_SAM_OLD_RESOURCE_H
+
+#pragma ident "$Revision: 1.8 $"
 
 #include "sam/types.h"
 

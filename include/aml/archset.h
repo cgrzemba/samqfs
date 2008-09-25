@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_ARCHSET_H)
+#ifndef _AML_ARCHSET_H
 #define	_AML_ARCHSET_H
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 /* Macros. */
 #define	ARCHSETS_MAGIC 01222230524	/* Archive sets file magic number */
@@ -445,4 +445,4 @@ static struct EnumEntry Timeouts[] = {
 
 #endif /* defined(ARCHIVER_PRIVATE) */
 
-#endif /* !defined(_AML_ARCHSET_H) */
+#endif /* _AML_ARCHSET_H */

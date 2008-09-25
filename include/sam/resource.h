@@ -59,7 +59,7 @@
 #define	_SAM_RESOURCE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 #endif
 
 #include "sam/types.h"
@@ -299,4 +299,4 @@ typedef struct sam_stage_request {
 #pragma pack()
 #endif
 
-#endif  /* _SAM_RESOURCE_H */
+#endif /* _SAM_RESOURCE_H */

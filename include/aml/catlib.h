@@ -33,10 +33,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_CATLIB_H)
+#ifndef _AML_CATLIB_H
 #define	_AML_CATLIB_H
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #if !defined(HERE)
 #define	HERE _SrcFile, __LINE__
@@ -221,4 +221,4 @@ int _CatalogVolumeUnloaded(const char *SrcFile, const int SrcLine,
 char *CatalogStatusToStr(uint32_t status, char buf[]);
 char *CatalogStrFromEntry(struct CatalogEntry *ce, char *string, size_t len);
 
-#endif /* !defined(_AML_CATLIB_H) */
+#endif /* _AML_CATLIB_H */

@@ -34,12 +34,12 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.24 $"
-#endif
-
 #ifndef	_SAM_FS_QUOTA_H
 #define	_SAM_FS_QUOTA_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.25 $"
+#endif
 
 #include "sam/quota.h"
 

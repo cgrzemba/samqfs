@@ -34,7 +34,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
+#ifndef _DUMP_RESTORE_SAM_LS_H
+#define	_DUMP_RESTORE_SAM_LS_H
+
+#pragma ident "$Revision: 1.8 $"
 
 
 #define	LS_FILE		0000		/* Print file name only	*/
@@ -46,3 +49,5 @@
 
 extern	int	ls_options;		/* Options */
 extern	time_t	ls_base_time;		/* Current time	*/
+
+#endif /* _DUMP_RESTORE_SAM_LS_H */

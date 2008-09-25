@@ -38,15 +38,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.25 $"
-#endif
-
-
 #ifndef	_SAM_FS_BLOCK_H
 #define	_SAM_FS_BLOCK_H
 
+#ifdef sun
+#pragma ident "$Revision: 1.26 $"
+#endif
 
 /*
  * ----- sam_block is the block structure: SM and LG block tables.
@@ -210,4 +207,4 @@ typedef struct sam_dau {
 #define	LG_DEV_BLOCK(mp, dt)  mp->mi.m_dau[dt].kblocks[LG]
 
 
-#endif  /* _SAM_FS_BLOCK_H */
+#endif /* _SAM_FS_BLOCK_H */

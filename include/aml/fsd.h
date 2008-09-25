@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_FSD_H)
+#ifndef _AML_FSD_H
 #define	_AML_FSD_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 /* Solaris headers. */
 #include <syslog.h>			/* Notify() uses syslog priorities */
@@ -76,4 +76,4 @@ struct FsdGeneralRsp {
 
 #endif /* defined(FSD_PRIVATE) */
 
-#endif /* !defined(_AML_FSD_H) */
+#endif /* _AML_FSD_H */

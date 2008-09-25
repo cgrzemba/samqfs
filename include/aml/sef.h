@@ -30,10 +30,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SEF_H)
+#ifndef _AML_SEF_H
 #define	_AML_SEF_H
 
-#pragma   ident  "@(#)$Revision: 1.12 $"
+#pragma   ident  "@(#)$Revision: 1.13 $"
 
 typedef enum {
 	SEF_UNLOAD,
@@ -47,4 +47,4 @@ int sef_data(dev_ent_t *un, int fd);
 void get_supports_sef(dev_ent_t *un, int fd);
 int sef_data_sample(int fd, dev_ent_t *un, sef_where_t where);
 
-#endif /* !defined(_AML_SEF_H) */
+#endif /* _AML_SEF_H */

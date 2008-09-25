@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SAMLIVE_H)
+#ifndef _AML_SAMLIVE_H
 #define	_AML_SAMLIVE_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include <sys/types.h>
 
@@ -67,4 +67,4 @@ int samlive_mntreqhandle(int *max_count, int **active_count);
 
 int samlive_mntreqlist(int handle, preview_t **mntreq_ptr, int count);
 
-#endif /* !defined(_AML_SAMLIVE_H) */
+#endif /* _AML_SAMLIVE_H */

@@ -32,10 +32,10 @@
  */
 
 
-#if !defined(_SAM_REMOTE_H)
+#ifndef _SAM_REMOTE_H
 #define	_SAM_REMOTE_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #include <netinet/in.h>
 
@@ -294,4 +294,4 @@ typedef struct rmt_message {
 } rmt_message_t;
 
 
-#endif	/* !defined(_SAM_REMOTE_H) */
+#endif	/* _SAM_REMOTE_H */

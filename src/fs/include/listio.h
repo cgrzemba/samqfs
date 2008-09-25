@@ -33,14 +33,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.12 $"
-#endif
-
-
 #ifndef	_SAM_FS_LISTIO_H
 #define	_SAM_FS_LISTIO_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.13 $"
+#endif
 
 #include	<sam/fioctl.h>
 

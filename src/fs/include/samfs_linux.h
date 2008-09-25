@@ -36,13 +36,12 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.20 $"
-#endif
-
-
 #ifndef	_SAMFS_LINUX_H
 #define	_SAMFS_LINUX_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.21 $"
+#endif
 
 #ifdef	__KERNEL__
 #include "linux/types.h"

@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  */
 
-#if !defined(_ROBOTSD_H)
+#ifndef _ROBOTSD_H
 #define	_ROBOTSD_H
 
 #include "aml/device.h"
@@ -115,4 +115,4 @@ void reap_child(rob_child_pids_t *);
 void start_a_process(rob_child_pids_t *);
 void start_children(rob_child_pids_t *);
 
-#endif  /* _ROBOTSD_H */
+#endif /* _ROBOTSD_H */

@@ -32,12 +32,12 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_TRACE_H)
+#ifndef _AML_TRACE_H
 #define	_AML_TRACE_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 
 #define	ETRACE(X) if (DBG_LVL(SAM_DBG_EVENT)) sam_syslog X
 
-#endif /* !defined(_AML_TRACE_H) */
+#endif /* _AML_TRACE_H */

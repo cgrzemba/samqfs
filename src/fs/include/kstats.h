@@ -32,9 +32,11 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef _INCLUDE_KSTATS_H
+#define	_INCLUDE_KSTATS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 #endif
 
 /* ----- General statistics.  */
@@ -219,3 +221,5 @@ extern struct sam_debug_statistics sam_debug_stats;
 #define	SAM_DEBUG_ADD_LOCKED(stat, n)
 #define	SAM_DEBUG_ADD64_LOCKED(stat, n)
 #endif
+
+#endif /* _INCLUDE_KSTATS_H */

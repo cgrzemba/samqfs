@@ -34,7 +34,7 @@
 #ifndef _TAPEALERT_H
 #define	_TAPEALERT_H
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 /* probe for tapealert support then setup 0x1c mode page */
 void get_supports_tapealert(dev_ent_t *un, int fd);
@@ -65,4 +65,4 @@ int tapealert_mts(char *fn, int ln, int fd, dev_ent_t *un, short erreg);
 #define	TAPEALERT_MTS(_fd, _un, _erreg)\
 	(void) tapealert_mts(_SrcFile, __LINE__, _fd, _un, _erreg)
 
-#endif
+#endif /* _TAPEALERT_H */

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SCHEDULE_H)
+#ifndef SCHEDULE_H
 #define	SCHEDULE_H
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 /*
  * Schedule request.

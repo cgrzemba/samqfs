@@ -38,7 +38,7 @@
 #define	_SAM_FS_INDIRECT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 #endif
 
 #ifdef	linux
@@ -73,4 +73,4 @@ struct sam_get_extent_rval {
 int  sam_get_extent(struct sam_get_extent_args *arg, int kptr[],
 					struct sam_get_extent_rval *rval);
 
-#endif	/*  _SAM_FS_INDIRECT_H */
+#endif	/* _SAM_FS_INDIRECT_H */

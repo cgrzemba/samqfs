@@ -26,9 +26,13 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef _AML_ID_TO_PATH
+#define	_AML_ID_TO_PATH
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include <sam/fs/ino.h>
 
 char *id_to_path(char *mnt_point, sam_id_t id);
+
+#endif /* _AML_ID_TO_PATH */

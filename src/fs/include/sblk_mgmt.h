@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SAM_SBLK_MGMT_H)
+#ifndef SAM_SBLK_MGMT_H
 #define	SAM_SBLK_MGMT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 #endif
 
 /* Flags for device open restrictions. */

@@ -26,11 +26,11 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.5 $"
 
 #ifndef __SCRKD_XML_STRING_H__
 #define	__SCRKD_XML_STRING_H__
 
+#pragma ident   "$Revision: 1.6 $"
 
 
 #ifdef	__cplusplus

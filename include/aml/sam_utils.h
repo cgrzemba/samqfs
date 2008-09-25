@@ -34,10 +34,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SAM_UTILS_H)
+#ifndef _AML_SAM_UTILS_H
 #define	_AML_SAM_UTILS_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 
 /* Define maximum lengths for parameters */
@@ -53,4 +53,4 @@ int sam_get_dev(ushort_t eq_ord, dev_ent_t **dev, char **fifo_path,
 	operator_t *operator);
 int sam_send_cmd(sam_cmd_fifo_t *cmd_block, int wait_resp, char *fifo_path);
 
-#endif /* !defined(_AML_SAM_UTILS_H) */
+#endif /* _AML_SAM_UTILS_H */

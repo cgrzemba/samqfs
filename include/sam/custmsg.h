@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(CUSTMSG_H)
+#ifndef CUSTMSG_H
 #define	CUSTMSG_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 #endif
 
 #include "sam/types.h"

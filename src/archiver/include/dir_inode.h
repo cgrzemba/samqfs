@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(DIR_INODE_H)
+#ifndef DIR_INODE_H
 #define	DIR_INODE_H
 
-#pragma ident "$Revision: 1.5 $"
+#pragma ident "$Revision: 1.6 $"
 
 /* Solaris headers. */
 #include <sys/vfs.h>

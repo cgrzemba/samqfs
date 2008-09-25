@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_FIFO_H)
+#ifndef _AML_FIFO_H
 #define	_AML_FIFO_H
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include "sam/types.h"
 #include "pub/devstat.h"

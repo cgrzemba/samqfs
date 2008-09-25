@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_TRAP_H)
+#ifndef _AML_TRAP_H
 #define	_AML_TRAP_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 /*
  * Values for thread_type
@@ -64,4 +64,4 @@
  */
 int initialize_fatal_trap_processing(int thread_type, void (*cleanup)());
 
-#endif /* !defined(_AML_TRAP_H) */
+#endif /* _AML_TRAP_H */

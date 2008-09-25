@@ -32,9 +32,11 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef _INCLUDE_KSTATS_LINUX_H
+#define	_INCLUDE_KSTATS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 #endif
 
 #ifndef _KERNEL
@@ -131,3 +133,5 @@ extern struct sam_debug_statistics sam_debug_stats;
 #else
 #define	SAM_DEBUG_COUNT64(stat)
 #endif
+
+#endif /* _INCLUDE_KSTATS_LINUX_H */

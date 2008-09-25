@@ -32,18 +32,18 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef	_SAM_FS_EXTERN_H
+#define	_SAM_FS_EXTERN_H
 
 #ifdef linux
 /* This is more a note for the human reader rather than the compiler. */
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.237 $"
+#pragma ident "$Revision: 1.238 $"
 
 #include "sam/osversion.h"
 
-#ifndef	_SAM_FS_EXTERN_H
-#define	_SAM_FS_EXTERN_H
 
 #include <sys/types.h>
 #include <sys/buf.h>

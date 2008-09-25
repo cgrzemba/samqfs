@@ -27,10 +27,15 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.13 $"
+#ifndef _RELEASER_PLIST_H
+#define	_RELEASER_PLIST_H
+
+#pragma ident "$Revision: 1.14 $"
 
 int finish();
 void remake_lists(int size);
 int remove_entry(float *priority, struct data *data);
 void add_entry(float priority, struct data *data);
 void init();
+
+#endif /* _RELEASER_PLIST_H */

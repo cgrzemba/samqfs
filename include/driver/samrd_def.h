@@ -32,7 +32,7 @@
  */
 
 /*
- * $Revision: 1.12 $
+ * $Revision: 1.13 $
  */
 
 #ifndef _SAMRD_DEF_H
@@ -57,4 +57,4 @@ extern "C" {
 
 #define	SAMRD_TIMEOUT	120
 
-#endif  /* _SAMRD_DEF_H */
+#endif /* _SAMRD_DEF_H */

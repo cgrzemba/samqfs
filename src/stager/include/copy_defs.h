@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(COPY_DEFS_H)
+#ifndef COPY_DEFS_H
 #define	COPY_DEFS_H
 
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 
 /* Structures. */
 

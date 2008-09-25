@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  */
 
-#if !defined(CLIENT_H)
+#ifndef CLIENT_H
 #define	CLIENT_H
 
 #include "aml/remote.h"

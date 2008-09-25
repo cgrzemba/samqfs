@@ -27,11 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.12 $"
-
-
-#if !defined(_API_ERRORS_H)
+#ifndef _API_ERRORS_H
 #define	_API_ERRORS_H
+
+#pragma ident "$Revision: 1.13 $"
+
+
 
 typedef enum {
 	API_ERR_OK = 0,
@@ -56,4 +57,4 @@ char	   *api_return_message(dtype_t type, int errorcode);
 uint_t	   api_return_sleep(dtype_t type, int errorcode);
 int		api_valid_error(dtype_t type, int errorcode, dev_ent_t *un);
 
-#endif				/* _API_ERRORS_H */
+#endif	/* _API_ERRORS_H */

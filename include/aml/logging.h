@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_LOGGING_H)
+#ifndef _AML_LOGGING_H
 #define	_AML_LOGGING_H
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 #include "sam/fioctl.h"
 #include "sam/syscall.h"
@@ -109,4 +109,4 @@ extern ioctl_fet_t *ioctl_fet;
 #define	FS_FIFO_LOG	SAM_AMLD_HOME"/fs_fifo_log"
 #define	FS_IOCTL_LOG	SAM_AMLD_HOME"/fs_ioctl_log"
 
-#endif /* !defined(_AML_LOGGING_H) */
+#endif /* _AML_LOGGING_H */

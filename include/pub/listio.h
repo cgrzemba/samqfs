@@ -34,13 +34,12 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.10 $"
-#endif
-
-
 #ifndef	QFS_LISTIO_H
 #define	QFS_LISTIO_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.11 $"
+#endif
 
 #include <sys/types.h>
 
@@ -65,4 +64,4 @@ int qfs_lio_wait(qfs_lio_handle_t *hdl);
 }
 #endif
 
-#endif /* _QFS_LISTIO_H */
+#endif /* QFS_LISTIO_H */

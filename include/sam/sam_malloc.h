@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SAM_MALLOC_H)
+#ifndef SAM_MALLOC_H
 #define	SAM_MALLOC_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 #endif
 
 /* Memory allocation macros to pass source line information. */

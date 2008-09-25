@@ -30,8 +30,10 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef _DVT_DVT_H
+#define	_DVT_DVT_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 
 
@@ -115,3 +117,5 @@ typedef struct parameter_block {
 	int verify_data;	/* Set to verify data */
 	char file_name[MAXNAMELEN];	/* Full filename */
 } pblock_t;
+
+#endif /* _DVT_DVT_H */

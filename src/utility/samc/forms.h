@@ -27,9 +27,10 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.9 $"
 #ifndef _FORMS_H
 #define	_FORMS_H
+
+#pragma ident	"$Revision: 1.10 $"
 
 #include <form.h>
 
@@ -186,4 +187,4 @@ field_val(FIELD *fld);
 /* return first space-terminated substring in a newly allocated string */
 char *
 getfirststr(const char *str);
-#endif
+#endif /* _FORMS_H */

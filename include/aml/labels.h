@@ -36,10 +36,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_LABELS_H)
+#ifndef _AML_LABELS_H
 #define	_AML_LABELS_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #define	LEN_TAPE_VSN   6    /* length of tape vsn */
 #define	LEN_OPTIC_VSN  31    /* length of optical vsn */
@@ -77,4 +77,4 @@ typedef struct {
 } format_req_t;
 
 
-#endif  /* !defined(_AML_LABELS_H) */
+#endif	/* _AML_LABELS_H */

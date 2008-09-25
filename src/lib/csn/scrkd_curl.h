@@ -26,11 +26,11 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.6 $"
 
 #ifndef __SCRKD_CURL_H__
 #define	__SCRKD_CURL_H__
 
+#pragma ident   "$Revision: 1.7 $"
 #pragma ident	"@(#)scrkd_curl.h	1.1	06/09/25 SMI"
 
 #ifdef	__cplusplus

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(STAGE_DONE_H)
+#ifndef STAGE_DONE_H
 #define	STAGE_DONE_H
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 /* Structures. */
 

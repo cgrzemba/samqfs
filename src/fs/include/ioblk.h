@@ -34,15 +34,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.33 $"
-#endif
-
-
 #ifndef	_SAM_FS_IOBLK_H
 #define	_SAM_FS_IOBLK_H
 
+#ifdef sun
+#pragma ident "$Revision: 1.34 $"
+#endif
 
 #ifdef linux
 #ifdef __KERNEL__

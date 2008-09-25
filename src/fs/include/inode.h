@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.211 $"
+#pragma ident "$Revision: 1.212 $"
 #endif
 
 #ifdef linux
@@ -1132,4 +1132,4 @@ int sam_obj_ioctl_cmd(sam_node_t *ip, int, int *, int *rvp, cred_t *credp);
 
 #endif /* _KERNEL */
 
-#endif	/*  _SAM_FS_INODE_H */
+#endif	/* _SAM_FS_INODE_H */

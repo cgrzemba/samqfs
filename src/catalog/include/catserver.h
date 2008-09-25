@@ -31,11 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-
-#if !defined(CATSERVER_H)
+#ifndef CATSERVER_H
 #define	CATSERVER_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #define	SERVER_NAME "Catalog"
 #define	SERVER_MAGIC 003012423
@@ -191,4 +190,4 @@ struct CsrGeneralRsp {
 	int		GrErrno;
 };
 
-#endif /* !defined(CATSERVER_H) */
+#endif /* CATSERVER_H */

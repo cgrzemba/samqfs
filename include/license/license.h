@@ -34,13 +34,13 @@
  *    SAM-QFS_notice_end
  */
 
+#ifndef _SAM_LICENSE_H
+#define	_SAM_LICENSE_H
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 #include <sam/types.h>
 
-#ifndef _SAM_LICENSE_H
-#define	_SAM_LICENSE_H
 
 typedef struct {
 	union  {
@@ -137,4 +137,4 @@ typedef struct {
 		sum ^= *p++;\
 }
 
-#endif
+#endif /* _SAM_LICENSE_H */

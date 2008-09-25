@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.13 $
+ * $Revision: 1.14 $
  */
 
-#if !defined(_SAM_LIBROBOTS_H)
+#ifndef _SAM_LIBROBOTS_H
 #define	_SAM_LIBROBOTS_H
 #include "aml/robots.h"
 
@@ -54,4 +54,4 @@ robo_event_t *add_active_list(robo_event_t *, robo_event_t *);
 
 void clear_un_fields(dev_ent_t *);
 
-#endif  /* defined _SAM_LIBROBOTS_H */
+#endif /* _SAM_LIBROBOTS_H */

@@ -34,10 +34,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_ARCHIVER_H)
+#ifndef _AML_ARCHIVER_H
 #define	_AML_ARCHIVER_H
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 /* SAM-FS headers. */
 #include "sam/defaults.h"

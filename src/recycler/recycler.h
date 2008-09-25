@@ -35,10 +35,10 @@
  */
 
 /*
- * $Revision: 1.34 $
+ * $Revision: 1.35 $
  */
 
-#if !defined(_RECYCLER_H)
+#ifndef _RECYCLER_H
 #define	_RECYCLER_H
 
 

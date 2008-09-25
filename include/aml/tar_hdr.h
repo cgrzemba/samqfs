@@ -28,7 +28,10 @@
  * which version of the GPL is applied is otherwise unspecified.
  */
 
-#pragma ident "$Id: tar_hdr.h,v 1.3 2007/12/18 18:33:17 dr161460 Exp $"
+#ifndef _AML_TAR_HDR_H
+#define	_AML_TAR_HDR_H
+
+#pragma ident "$Id: tar_hdr.h,v 1.4 2008/09/25 18:05:54 am143972 Exp $"
 
 /*
  * Header block on tape.
@@ -75,3 +78,5 @@ struct extended_header {
 	struct sparse sp[21];
 	char isextended;
 };
+
+#endif /* _AML_TAR_HDR_H */

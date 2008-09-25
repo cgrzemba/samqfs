@@ -34,14 +34,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.30 $"
-#endif
-
-
 #ifndef	_SAM_FS_SCD_H
 #define	_SAM_FS_SCD_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.31 $"
+#endif
 
 #include	<sam/sys_types.h>
 #include	<sam/resource.h>

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(RFT_DEFS_H)
+#ifndef RFT_DEFS_H
 #define	RFT_DEFS_H
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 #include <assert.h>
 

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(UTILITY_H)
+#ifndef UTILITY_H
 #define	UTILITY_H
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 /* Macros. */
 #define	ISO_STR_FROM_TIME_BUF_SIZE 32

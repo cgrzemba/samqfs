@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.15 $
+ * $Revision: 1.16 $
  */
 
-#if !defined(_DRIVE_H)
+#ifndef _DRIVE_H
 #define	_DRIVE_H
 
 /* function prototypes */

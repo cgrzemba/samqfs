@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_STAGER_DEFS_H)
+#ifndef _AML_STAGER_DEFS_H
 #define	_AML_STAGER_DEFS_H
 
-#pragma ident "$Revision: 1.26 $"
+#pragma ident "$Revision: 1.27 $"
 
 #include "sam/types.h"
 #include "aml/device.h"
@@ -228,4 +228,4 @@ typedef struct MigFileInfo {
 	void		*dev;	/* device entry */
 } MigFileInfo_t;
 
-#endif /* !defined(_AML_STAGER_DEFS_H) */
+#endif /* _AML_STAGER_DEFS_H */

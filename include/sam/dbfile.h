@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SAM_DBFILE_H)
+#ifndef SAM_DBFILE_H
 #define	SAM_DBFILE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 #endif
 
 /*

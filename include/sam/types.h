@@ -40,7 +40,7 @@
 #define	_SAM_TYPES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 #endif
 
 #ifdef linux
@@ -269,4 +269,4 @@ typedef enum sam_round {
 	SAM_ROUND_UP = 1
 } sam_round_t;
 
-#endif  /* _SAM_TYPES_H */
+#endif /* _SAM_TYPES_H */

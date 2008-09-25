@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_PREVIEW_H)
+#ifndef _AML_PREVIEW_H
 #define	_AML_PREVIEW_H
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 #ifdef linux
 #include <pthread.h>
@@ -231,4 +231,4 @@ typedef struct {
 
 void prv_fswm_priority(equ_t fseq, fs_wmstate_e fswm_state);
 
-#endif /* !defined(_AML_PREVIEW_H) */
+#endif /* _AML_PREVIEW_H */

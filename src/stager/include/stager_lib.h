@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(STAGER_LIB_H)
+#ifndef STAGER_LIB_H
 #define	STAGER_LIB_H
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 /*
  * Macros for manipulating a bit mask used as flags.

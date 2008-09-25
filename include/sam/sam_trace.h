@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SAM_TRACE_H)
+#ifndef SAM_TRACE_H
 #define	SAM_TRACE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 #endif
 
 /* Debug Macros. */

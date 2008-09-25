@@ -38,7 +38,7 @@
 #define	_SAM_FS_DIRENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 #endif
 
 #ifdef	linux
@@ -197,4 +197,4 @@ struct sam_name {
 	uint64_t slot_handle;	/* Slot handle (Directory Cache) */
 };
 
-#endif	/* _SAM_DIRENT_H */
+#endif	/* _SAM_FS_DIRENT_H */

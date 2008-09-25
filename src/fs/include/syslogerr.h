@@ -34,13 +34,12 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.16 $"
-#endif
-
-
 #ifndef	_SAM_FS_SYSLOGERR_H
 #define	_SAM_FS_SYSLOGERR_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.17 $"
+#endif
 
 struct syslog_errors {
 	char *message;

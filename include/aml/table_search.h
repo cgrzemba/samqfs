@@ -34,8 +34,10 @@
  *
  *    SAM-QFS_notice_end
  */
+#ifndef	_AML_TABLE_SEARCH_H
+#define	_AML_TABLE_SEARCH_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 typedef struct table {
 	uint_t	type;
@@ -43,3 +45,5 @@ typedef struct table {
 } table_t;
 
 extern const char *table_search(uint_t type, table_t *table);
+
+#endif	/* _AML_TABLE_SEARCH_H */

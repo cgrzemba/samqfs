@@ -27,11 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SPM_H)
+#ifndef SPM_H
 #define	SPM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 #endif
 
 

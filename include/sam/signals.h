@@ -31,11 +31,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SIGNALS_H)
+#ifndef SIGNALS_H
 #define	SIGNALS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 #endif
 
 /* Signal handling table entry. */

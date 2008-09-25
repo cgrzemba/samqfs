@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(STAGER_THREADS_H)
+#ifndef STAGER_THREADS_H
 #define	STAGER_THREADS_H
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 /* Pthread functions macros with error checking. */
 #define	PthreadMutexLock(a) \

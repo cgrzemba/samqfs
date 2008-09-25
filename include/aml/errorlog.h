@@ -32,10 +32,10 @@
  */
 
 
-#if !defined(_AML_ERRORLOG_H)
+#ifndef _AML_ERRORLOG_H
 #define	_AML_ERRORLOG_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 
 typedef struct errlog {
@@ -52,4 +52,4 @@ typedef struct errlog {
 #define	TO_ALL	TO_TTY|TO_SYS|TO_FILE
 
 
-#endif /* !defined(_AML_ERRORLOG_H) */
+#endif /* _AML_ERRORLOG_H */

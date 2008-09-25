@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(FILE_DEFS_H)
+#ifndef FILE_DEFS_H
 #define	FILE_DEFS_H
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 #define	IF_COPY_DISKARCH(f, copy)  \
 	((f->ar[copy].flags & STAGE_COPY_DISKARCH) != 0)

@@ -26,10 +26,11 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.9 $"
 
 #ifndef _SAMC_H
 #define	_SAMC_H
+
+#pragma ident	"$Revision: 1.10 $"
 
 #define	SAM_VERSION "4.1"
 

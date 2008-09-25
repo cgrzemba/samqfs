@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_SAMAPI_H)
+#ifndef _AML_SAMAPI_H
 #define	_AML_SAMAPI_H
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include <sys/types.h>
 #include "pub/devstat.h"
@@ -201,4 +201,4 @@ char *sam_errno(int err);
 }
 #endif
 
-#endif /* !defined(_AML_SAMAPI_H) */
+#endif /* _AML_SAMAPI_H */

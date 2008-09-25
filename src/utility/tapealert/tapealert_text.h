@@ -36,7 +36,7 @@
 #ifndef _TAPEALERT_TEXT_H
 #define	_TAPEALERT_TEXT_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include "aml/tapealert_vals.h"
 
@@ -73,4 +73,4 @@ void tapealert_text(int version, int type, int len, uint64_t flags,
 void tapealert_text_done(tapealert_text_t *text);
 
 
-#endif
+#endif /* _TAPEALERT_TEXT_H */

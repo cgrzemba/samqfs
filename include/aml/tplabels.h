@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AM_AMLLABELS_H)
+#ifndef _AML_TPLABELS_H
 #define	_AML_TPLABELS_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include "aml/labels.h"
 
@@ -484,4 +484,4 @@ typedef struct {
 } uvln_label_t;
 
 
-#endif /* !defined(_AML_TPLABELS_H) */
+#endif /* _AML_TPLABELS_H */

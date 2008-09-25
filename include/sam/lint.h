@@ -36,11 +36,11 @@
  * unexpected, and erroneous lint errors.
  */
 
-#if !defined(LINT_H)
+#ifndef LINT_H
 #define	LINT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 #endif
 
 #if defined(lint)

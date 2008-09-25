@@ -33,11 +33,11 @@
  *    SAM-QFS_notice_end
  */
 
-#if	!defined(_AML_LINUX_ROBOTS_H)
+#ifndef _AML_LINUX_ROBOTS_H
 #define	_AML_LINUX_ROBOTS_H
 
 /* Misc constants */
 
 #define	INITIAL_MOUNT_TIME	30	/* Seconds before newly mounted */
 					/* media is available for dismount */
-#endif	/* !defined(_AML_LINUX_ROBOTS_H) */
+#endif	/* _AML_LINUX_ROBOTS_H */

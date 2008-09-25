@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_ODLABELS_H)
+#ifndef _AML_ODLABELS_H
 #define	_AML_ODLABELS_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #include "aml/labels.h"
 #include "aml/opticals.h"
@@ -320,4 +320,4 @@ offset_t compute_size_from_sectors(dev_ent_t *un, offset_t sector_cnt);
 #define	GET_TOTAL_SECTORS(un) (compute_sectors_from_size(un, un->capacity) \
 	+ OD_SPACE_UNAVAIL)
 
-#endif				/* !defined(_AML_ODLABELS_H) */
+#endif	/* _AML_ODLABELS_H */

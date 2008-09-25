@@ -31,7 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#ifndef _FND_FX_CSD_H
+#define	_FND_FX_CSD_H
+
+#pragma ident "$Revision: 1.15 $"
 
 #include <sam/fs/ino_ext.h>
 #include <sys/param.h>
@@ -149,3 +152,5 @@ void	stack_directory(char *path,
 			struct sam_perm_inode *perm_inode);
 void	usage(void);
 void	writecheck(void *buffer, size_t size, char *explanation);
+
+#endif /* _FND_FX_CSD_H */

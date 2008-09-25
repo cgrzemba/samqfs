@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.117 $"
+#pragma ident	"$Revision: 1.118 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -2853,4 +2853,4 @@ extern bool_t xdr_op_req_t();
 		sizeof (type), (xdrproc_t)xdr_ ## type)) \
 		return (FALSE);
 
-#endif /* !_SAMMGMT_H_RPCGEN */
+#endif /* _SAMMGMT_H_RPCGEN */

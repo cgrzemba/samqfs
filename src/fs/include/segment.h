@@ -31,12 +31,12 @@
  *    SAM-QFS_notice_end
  */
 
-#ifdef sun
-#pragma ident "$Revision: 1.16 $"
-#endif
-
 #ifndef	_SAM_FS_SEGMENT_H
 #define	_SAM_FS_SEGMENT_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.17 $"
+#endif
 
 /*
  * ----- Segment Call Back type
@@ -95,4 +95,4 @@ typedef struct sam_callback_segment {
 	} p;
 } sam_callback_segment_t;
 
-#endif  /* _SAM_FS_SEGMENT_H */
+#endif /* _SAM_FS_SEGMENT_H */

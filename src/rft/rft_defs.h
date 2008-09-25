@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(RFTD_H)
+#ifndef RFTD_H
 #define	RFTD_H
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 #include <sys/types.h>
 #include <sys/socket.h>

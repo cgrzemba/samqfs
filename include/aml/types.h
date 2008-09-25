@@ -35,10 +35,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_TYPES_H)
+#ifndef _AML_TYPES_H
 #define	_AML_TYPES_H
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 #include "sam/types.h"
 
@@ -212,4 +212,4 @@ void (*debug_dummy) (void) = debug_init; /* force the so library if used */
 #endif
 #endif
 
-#endif /* !defined(_AML_TYPES_H) */
+#endif /* _AML_TYPES_H */

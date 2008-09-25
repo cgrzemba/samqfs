@@ -30,7 +30,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#ifndef _GENERIC_DERRNO_H
+#define	_GENERIC_DERRNO_H
+
+#pragma ident "$Revision: 1.15 $"
 
 
 #ifndef D_ERROR_INCL
@@ -200,3 +203,5 @@ extern api_messages_t grau_messages[NO_ECODES];
 #endif
 
 #endif				/* D_ERROR_INCL   */
+
+#endif /* _GENERIC_DERRNO_H */

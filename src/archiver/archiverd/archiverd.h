@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(ARCHIVERD_H)
+#ifndef ARCHIVERD_H
 #define	ARCHIVERD_H
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 /* Solaris headers. */
 #include <sys/param.h>

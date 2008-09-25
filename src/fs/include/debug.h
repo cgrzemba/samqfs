@@ -32,14 +32,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.21 $"
-#endif
-
-
 #ifndef	_SAM_FS_DEBUG_H
 #define	_SAM_FS_DEBUG_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.22 $"
+#endif
 
 /*
  * ----- samfs debug.

@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(CONFIG_H)
+#ifndef CONFIG_H
 #define	CONFIG_H
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 #define	STAGERD_PROGRAM_NAME	"sam-stagerd"
 #define	COPY_PROGRAM_NAME	"sam-stagerd_copy"

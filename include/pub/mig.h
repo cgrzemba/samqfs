@@ -30,13 +30,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.16 $"
-#endif
-
 #ifndef _SAM_MIG_H
 #define	_SAM_MIG_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.17 $"
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -115,4 +114,4 @@ int sam_mig_rearchive(char *, char **, char *);
 }
 #endif
 
-#endif  /* _SAM_MIG_H */
+#endif /* _SAM_MIG_H */

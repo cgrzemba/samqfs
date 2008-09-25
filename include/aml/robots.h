@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(_AML_ROBOTS_H)
+#ifndef _AML_ROBOTS_H
 #define	_AML_ROBOTS_H
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #if !defined(_KERNEL)
 
@@ -216,4 +216,4 @@ typedef struct robo_event_s {
 error
 #endif /* !defined(_KERNEL) */
 
-#endif  /* !defined(_AML_ROBOTS_H) */
+#endif /* _AML_ROBOTS_H */

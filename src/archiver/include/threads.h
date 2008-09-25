@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(THREADS_H)
+#ifndef THREADS_H
 #define	THREADS_H
 
-#pragma ident "$Revision: 1.20 $"
+#pragma ident "$Revision: 1.21 $"
 
 /* Function macros. */
 

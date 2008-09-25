@@ -26,7 +26,11 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.9 $"
+
+#ifndef _SAMC_FORMDEFS_H
+#define	_SAMC_FORMDEFS_H
+
+#pragma ident	"$Revision: 1.10 $"
 
 /* API header files */
 #include "devstat.h"
@@ -691,3 +695,5 @@ FIELD_RECORD sdrive_FORM[] = {
 
 	REC_TERM
 };
+
+#endif /* _SAMC_FORMDEFS_H */

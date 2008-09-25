@@ -32,10 +32,10 @@
  */
 
 
-#if !defined(_AML_SCAN_H)
+#ifndef _AML_SCAN_H
 #define	_AML_SCAN_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include <thread.h>
 
@@ -50,4 +50,4 @@ enum scan_cmds {
 	SCAN_QCMD_TODO		/* todo request */
 };
 
-#endif /* !defined(_AML_SCAN_H) */
+#endif /* _AML_SCAN_H */

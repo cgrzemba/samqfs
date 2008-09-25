@@ -39,7 +39,7 @@
 #define	_SAM_PARAM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.63 $"
+#pragma ident "$Revision: 1.64 $"
 #endif
 
 #define	L_FSET 252			/* Maximum family set size */
@@ -212,4 +212,4 @@
 /* ----- Sam quota types (admin, group, user) */
 #define	SAM_QUOTA_MAX	(3)
 
-#endif  /* _SAM_PARAM_H */
+#endif /* _SAM_PARAM_H */

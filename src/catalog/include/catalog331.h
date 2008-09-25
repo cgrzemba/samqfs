@@ -31,11 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.15 $"
-
-
 #ifndef CATALOG331_H
 #define	CATALOG331_H
+
+#pragma ident "$Revision: 1.16 $"
 
 #if !defined(_KERNEL)
 
@@ -162,4 +161,4 @@ typedef struct catalog_tbl {
 
 #endif /* !defined(_KERNEL) */
 
-#endif  /* defined CATALOG331_H */
+#endif /* CATALOG331_H */

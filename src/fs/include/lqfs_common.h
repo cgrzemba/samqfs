@@ -31,7 +31,7 @@
 #define	_SYS_FS_LQFS_COMMON_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.5 $"
+#pragma ident "$Revision: 1.6 $"
 #endif /* sun */
 
 #ifdef LUFS
@@ -278,4 +278,4 @@ typedef	timespec_t	timeval_lqfs_common_t;
 
 #endif /* LUFS */
 
-#endif	/* _SYS_FS_LOG_COMMON_H */
+#endif	/* _SYS_FS_LQFS_COMMON_H */

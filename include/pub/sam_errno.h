@@ -34,14 +34,12 @@
  *
  *    SAM-QFS_notice_end
  */
-
-#ifdef sun
-#pragma ident "$Revision: 1.22 $"
-#endif
-
-
 #ifndef	_SAMERRNO_H
 #define	_SAMERRNO_H
+
+#ifdef sun
+#pragma ident "$Revision: 1.23 $"
+#endif
 
 #ifdef  __cplusplus
 extern "C" {

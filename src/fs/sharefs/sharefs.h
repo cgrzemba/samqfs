@@ -31,10 +31,10 @@
  *    SAM-QFS_notice_end
  */
 
-#if !defined(SHAREFS_H)
+#ifndef SHAREFS_H
 #define	SHAREFS_H
 
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 
 #include "sam/custmsg.h"
 #include "sam/sam_trace.h"

@@ -32,10 +32,10 @@
  */
 
 /*
- * $Revision: 1.25 $
+ * $Revision: 1.26 $
  */
 
-#if !defined(_STK_H)
+#ifndef _STK_H
 #define	_STK_H
 
 #include "aml/device.h"

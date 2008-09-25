@@ -113,4 +113,4 @@ typedef struct saminit_cmd_table {
 #define	SAM_INIT_CANT_TELL	(4)
 #define	SAM_INIT_SHM_GOOD	(5)
 
-#endif
+#endif /* SAMCMD */

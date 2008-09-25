@@ -34,7 +34,7 @@
 #ifndef _SAMST_DEF_H
 #define	_SAMST_DEF_H
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -205,4 +205,4 @@ typedef struct {
 }
 #endif
 
-#endif  /* _SAMST_DEF_H */
+#endif /* _SAMST_DEF_H */
