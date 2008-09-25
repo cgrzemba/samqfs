@@ -1,4 +1,4 @@
-# $Revision: 1.132 $
+# $Revision: 1.133 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -295,8 +295,8 @@ T_SAM_DIOKERN		"DioKernel:uio=%x,rdev=%x,bdp=%x"
 T_SAM_DIOPAGES		"DioPages: off=%x,adj_len=%x"
 T_SAM_AIODONE		"AioDone:  rdev=%x,cnt=%x,bdp=%x"
 T_SAM_AIOERR		"AioError: rdev=%x,cnt=%x,bdp=%x"
-T_SAM_RMINCORE		"RmIncore: ino=%d,cnt=%d,flags=%x"
-T_SAM_KPINCORE		"KpIncore: ino=%d,cnt=%d,flags=%x"
+T_SAM_RMINCORE		"RmIncore: ino=%d,cnt=%d,flags=%x^[$f]"
+T_SAM_KPINCORE		"KpIncore: ino=%d,cnt=%d,flags=%x^[$f]"
 T_SAM_DDMAP		"DdMap:    off=%x,ct=%x,flag=%x^[$q]"
 T_SAM_DDMAP1		"DdMap1:   off=%x,size=%x,pboff=%x"
 T_SAM_DDBLK		"DdBlk:    ino=%d,blk=%x,ord=%d"

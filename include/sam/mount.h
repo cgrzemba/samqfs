@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 #endif
 
 #include <sam/types.h>
@@ -74,11 +74,12 @@ struct sam_fs_info {	/* File system information */
 	dstate_t fi_state;	/* state - on/ro/idle/off/down */
 	int	fi_mflag;	/* vfs mount flags -- see mount.h */
 	short	fi_sync_meta;	/* Flag to sync meta */
+	short	fi_obj_sync_data;  /* Flag to sync data, objects only */
 	short	fi_atime;	/* Flag to update, defer, no update atime */
 	short	fi_stripe[SAM_MAX_DD];	/* Stripe width */
 	ushort_t fi_high;	/* High water threshold */
 	ushort_t fi_low;	/* Low water % threshold for releaser */
-	ushort_t fi_pad;
+	short	fi_obj_pool;	/* Object pool of OSDs */
 	ushort_t fi_obj_width;	/* Object stripe width in # of OSDs */
 	int fi_obj_depth_shift; /* Object depth shift -- power of 2 */
 	long long fi_obj_depth;	/* Object allocation depth in kilobytes */

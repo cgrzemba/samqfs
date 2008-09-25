@@ -1,4 +1,4 @@
-.\" $Revision: 1.99 $
+.\" $Revision: 1.100 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -199,62 +199,6 @@ The default is \fBquota\fR.
 For more information on quotas, see the
 \fISun StorEdge QFS Configuration and Administration
  Guide\fR.
-.TP 10
-\fBstripe=\fIn\fR
-Sets the stripe width for the block-based file system to \fIn\fP disk
-allocation units (DAUs).  The stripe width means that \fIn\fR * DAU bytes
-are written to one data device logical equipment number (LUN)
-before switching to the next LUN.
-The DAU size is set on the \fBsammkfs\fR(1M) command's \fB\-a\fR option
-when the file system is initialized.
-For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 255.
-If \fIn\fR=0, files are round robined on each slice.
-.sp
-The default \fIn\fR on file systems with an \fBms\fR Equipment Type and
-on file systems with an \fIma\fR Equipment Type with no
-striped group (\fBg\fIx\fR) components is as follows:
-.PP
-.RS 10
-.TP 3
-\(bu
-128 kilobytes/DAU for DAUs < 128 kilobytes
-.TP 3
-\(bu
-1 for DAUs \(>= 128 kilobytes
-.RE
-.PP
-.RS 10
-By default, \fIn\fR=0 on a Sun StorEdge QFS shared file system.
-By default, \fIn\fR=0 on file systems with an \fBma\fR
-Equipment Type with any striped group (\fBg\fIXXX\fR) components.
-.sp
-NOTE:  The system sets \fBstripe=0\fR if mismatched
-striped groups exist.
-.sp
-This option is only valid on block-based (\fBms\fR, \fBma\fR, and \fBmat\fR)
-file system types, see the \fBmcf\fR(4)\fR man page.
-.RE
-.TP 10
-\fBobj_width=\fIn\fR
-For an object-based (\fBmb\fR) file system, \fBobj_width\fR
-sets the default stripe width for the file system to \fIn\fP OSD units.
-The stripe width means the file is horzontially striped across \fIn\fR
-OSD units.
-If \fIn\fR=0, then all the units in the object group \fBo\fIXXX\fR are
-selected. The default \fIn\fR is 1.
-.sp
-This option is only valid on object-based (\fBmb\fR) file systems.
-For more information on file system types, see the \fBmcf\fR(4)\fR man page.
-.TP 10
-\fBobj_depth=\fIn\fR
-For an object-based (\fBmb\fR) file system, \fBobj_depth\fR
-specifies the number of bytes to be allocated to an object storage device (OSD)
-before switching to the next unit in the object group  \fBo\fIXXX\fR.
-The \fIn\fR must be an integer in units of kilobytes. The default is
-256 kilobytes. The \fIn\fR is rounded down to the nearest power of 2 integer.
-.sp
-This option is only valid on object-based (\fBmb\fR) file systems.
-For more information on file system types, see the \fBmcf\fR(4)\fR man page.
 .RE
 .TP 10
 \fBsync_meta=\fIn\fR
@@ -352,6 +296,93 @@ For \fIn\fR, specify an integer such that
 512 \(<= \fIn\fR \(<= \fBrd_ino_buf_size\fR.
 \fIn\fR is in units of bytes and rounded down to the nearest power of 2.
 The default is 512 bytes.
+.RE
+.PP
+.SH BLOCK FILE SYSTEM GENERIC OPTIONS
+The following options are available for Sun StorEdge QFS and SAM-QFS
+file systems.
+The following options are only valid on block-based (\fBms\fR, \fBma\fR,
+and \fBmat\fR) file system types, see the \fBmcf\fR(4)\fR man page.
+.TP 10
+\fBstripe=\fIn\fR
+Sets the stripe width for the block-based file system to \fIn\fP disk
+allocation units (DAUs).  The stripe width means that \fIn\fR * DAU bytes
+are written to one data device logical equipment number (LUN)
+before switching to the next LUN.
+The DAU size is set on the \fBsammkfs\fR(1M) command's \fB\-a\fR option
+when the file system is initialized.
+For \fIn\fR, specify an integer such that 0 \(<= \fIn\fR \(<= 255.
+If \fIn\fR=0, files are round robined on each slice.
+.sp
+The default \fIn\fR on file systems with an \fBms\fR Equipment Type and
+on file systems with an \fIma\fR Equipment Type with no
+striped group (\fBg\fIx\fR) components is as follows:
+.PP
+.RS 10
+.TP 3
+\(bu
+128 kilobytes/DAU for DAUs < 128 kilobytes
+.TP 3
+\(bu
+1 for DAUs \(>= 128 kilobytes
+.RE
+.PP
+.RS 10
+By default, \fIn\fR=0 on a Sun StorEdge QFS shared file system.
+By default, \fIn\fR=0 on file systems with an \fBma\fR
+Equipment Type with any striped group (\fBg\fIXXX\fR) components.
+.sp
+NOTE:  The system sets \fBstripe=0\fR if mismatched
+striped groups exist.
+.RE
+.PP
+.SH OBJECT FILE SYSTEM GENERIC OPTIONS
+The following options are available for Sun StorEdge QFS and SAM-QFS
+file systems.
+The following options are only valid on on object-based (\fBmb\fR) file systems.
+For more information on file system types, see the \fBmcf\fR(4)\fR man page.
+.RE
+.TP 10
+\fBobj_pool=\fIn\fR
+For an object-based (\fBmb\fR) file system, \fBobj_pool\fR
+sets the default object pool for the file system to \fIn\fP.
+The object pool selected means all new files are created on
+OSD unit(s) in the \fBobj_pool=\fIn\fR.
+If \fBobj_pool\fR is not specified or not a valid pool, then
+the first object pool in the file system is selected.
+.TP 10
+\fBobj_width=\fIn\fR
+For an object-based (\fBmb\fR) file system, \fBobj_width\fR
+sets the default stripe width for the file system to \fIn\fP OSD units.
+The stripe width means the file is horzontially striped across \fIn\fR
+OSD units in the selected object pool \fBo\fIXXX\fR.
+If \fIn\fR=0, then all the units in the object pool \fBo\fIXXX\fR are
+selected. The default \fIn\fR is 1.
+.TP 10
+\fBobj_depth=\fIn\fR
+For an object-based (\fBmb\fR) file system, \fBobj_depth\fR
+specifies the number of bytes to be allocated to an object storage device (OSD)
+before switching to the next unit in the object pool \fBo\fIXXX\fR.
+The \fIn\fR must be an integer in units of kilobytes. The default is
+256 kilobytes. The \fIn\fR is rounded down to the nearest power of 2 integer.
+.TP 10
+\fBobj_sync_data=\fIn\fR
+For an object-based (\fBmb\fR) file system, \fBobj_sync_data\fR
+specifies whether or not application direct I/O data is written through
+to the disks on the object storage node (OSN).
+.PP
+.RS 10
+.TP 3
+\(bu
+If \fBobj_sync_data=0\fR, data on the OSN resides in the page cache before
+being written to disk at a later time.  This delayed write may deliver
+higher performance, but has data consistency risk if the OSN fails.
+.TP
+\(bu
+If \fBobj_sync_data=1\fR, data on the OSN bypasses the page cache
+and is written through to disk for every I/O request written to the OSN.
+This may slow performance, but it ensures data consistency if the OSN fails.
+The default \fIn\fR is 1.
 .RE
 .PP
 .SH I/O OPTIONS

@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.92 $
+.\" $Revision: 1.93 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -367,14 +367,14 @@ However, it is possible to add additional striped groups.
 An object-based storage device that is part of an
 \fBmb\fR disk cache family set.
 These devices store file data.
-The \fIXXX\fR identifies a group of "like" devices that are
+The \fIXXX\fR identifies a pool of "like" devices that are
 used for a stripe. Note, a file will be optionally striped
-across members in the \fBo\fIXXX\fR OSD group. There is no striping
-across different groups of OSD devices.
+across members in the \fBo\fIXXX\fR OSD pool. There is no striping
+across OSDs belonging to different pools.
 The \fIXXX\fR must be a decimal number in the
 range \fB0\fR \(<= \fIXXX\fR \(<= \fB127\fR.
 These devices are recommended to be the same type of block devices.
-For example, one group could be FC and another group could be SATA.
+For example, one pool could be FC and another pool could be SATA.
 At least one \fBo\fIXXX\fR device is required in an
 \fBmb\fR file system.
 .PP

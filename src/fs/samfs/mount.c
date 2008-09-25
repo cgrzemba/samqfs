@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.230 $"
+#pragma ident "$Revision: 1.231 $"
 #endif
 
 #include "sam/osversion.h"
@@ -723,6 +723,7 @@ sam_set_mount(sam_mount_t *mp)
 {
 	int i, dau, num_group;
 	int err_line = 0;
+	int obj_pool = -1;
 	int error = 0;
 	offset_t capacity = 0;
 	offset_t mm_capacity = 0;
@@ -1118,25 +1119,37 @@ sam_set_mount(sam_mount_t *mp)
 		return (error);
 	}
 
-	num_group = -1;
-	mp->mi.m_dk_max[MM] = 0;
-	mp->mi.m_dk_max[DD] = 0;
+	/*
+	 * Get meta and data capacity. Set default object pool for mb fs
+	 */
 	for (i = 0; i < sblk->info.sb.fs_count; i++) {
-		if ((sblk->eq[i].fs.state == DEV_ON) ||
-		    (sblk->eq[i].fs.state == DEV_NOALLOC)) {
-			if (sblk->eq[i].fs.type == DT_META) {
-				mm_capacity += sblk->eq[i].fs.capacity;
-			} else {
-				capacity += sblk->eq[i].fs.capacity;
+		if ((sblk->eq[i].fs.state != DEV_ON) &&
+		    (sblk->eq[i].fs.state != DEV_NOALLOC)) {
+			continue;
+		}
+		if (sblk->eq[i].fs.type == DT_META) {
+			mm_capacity += sblk->eq[i].fs.capacity;
+		} else {
+			capacity += sblk->eq[i].fs.capacity;
+			/*
+			 * Set type for default object pool.
+			 */
+			if (obj_pool < 0) {
+				obj_pool = sblk->eq[i].fs.type & DT_OSD_MASK;
+			}
+			if (SAM_IS_OBJECT_FS(mp)) {
+				if (mp->mt.fi_obj_pool ==
+				    (sblk->eq[i].fs.type & DT_OSD_MASK)) {
+					obj_pool =
+					    sblk->eq[i].fs.type & DT_OSD_MASK;
+				}
 			}
 		}
-		if ((error = sam_build_allocation_links(mp, sblk, i,
-		    &num_group))) {
-			err_line = __LINE__;
-			TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
-			return (error);
-		}
 	}
+	if (SAM_IS_OBJECT_FS(mp)) {
+		mp->mt.fi_obj_pool = obj_pool;
+	}
+
 	if (mm_capacity != sblk->info.sb.mm_capacity) {
 		cmn_err(CE_WARN,
 		    "SAM-QFS: %s: metadata eq capacity %llx "
@@ -1163,7 +1176,24 @@ sam_set_mount(sam_mount_t *mp)
 		}
 	}
 
-	/* compute high and low block counts. */
+	/*
+	 * Build allocation links for meta and data devices.
+	 */
+	num_group = -1;
+	mp->mi.m_dk_max[MM] = 0;
+	mp->mi.m_dk_max[DD] = 0;
+	for (i = 0; i < sblk->info.sb.fs_count; i++) {
+		if ((error = sam_build_allocation_links(mp, sblk, i,
+		    &num_group))) {
+			err_line = __LINE__;
+			TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
+			return (error);
+		}
+	}
+
+	/*
+	 * Compute high and low block counts.
+	 */
 	sam_mount_setwm_blocks(mp);
 	mp->mi.m_fsfullmsg = 0;
 
@@ -1634,7 +1664,7 @@ sam_validate_sblk(
 				goto setpart1;
 			}
 		}
-		if (fs_count == 0) {		/* First device */
+		if (fs_count == 0) {	/* Get count of devices in the fs */
 			int j;
 
 			/*
@@ -1644,6 +1674,13 @@ sam_validate_sblk(
 			 * ordinals may be reordered.
 			 */
 			fs_count = sblk->info.sb.fs_count;
+			if ((bcmp(sblk->info.sb.name, "SBLK", 4) != 0) ||
+			    (fs_count > L_FSET)) {
+				dcmn_err((CE_WARN, "SAM-QFS: %s: mcf eq %d: "
+				    "illegal superblock",
+				    mp->mt.fi_name, dp->part.pt_eq));
+				fs_count = 0;
+			}
 			mm_count = sblk->info.sb.mm_count;
 			for (j = 0; j < fs_count; j++) {
 				mp->mi.m_fs[j].part.pt_state =

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 
 
 /* ANSI headers. */
@@ -244,13 +244,16 @@ DisMount()
 	Mvprintw(ln++, col, "atime          : %s",
 	    (fi.fi_atime == 0) ? "default" : sbuf);
 	if (fi.fi_type == DT_META_OBJECT_SET) {
+		snprintf(sbuf, 20, "%d", fi.fi_obj_pool);
+		Mvprintw(ln++, col, "obj_pool       : %s",
+		    (fi.fi_obj_pool < 0) ? "default" : sbuf);
+		snprintf(sbuf, 20, "%d", fi.fi_obj_sync_data);
+		Mvprintw(ln++, col, "obj_sync_data  : %s", sbuf);
 		snprintf(sbuf, 20, "%d", fi.fi_obj_width);
 		Mvprintw(ln++, col, "obj_width      : %s",
 		    (fi.fi_obj_width < 0) ? "default" : sbuf);
 		snprintf(sbuf, 20, "%lld", fi.fi_obj_depth);
 		Mvprintw(ln++, col, "obj_depth      : %s", sbuf);
-		snprintf(sbuf, 20, "%d", fi.fi_obj_depth_shift);
-		Mvprintw(ln++, col, "obj_depth_shift: %s", sbuf);
 	} else {
 		snprintf(sbuf, 20, "%d", fi.fi_stripe[0]);
 		Mvprintw(ln++, col, "stripe         : %s",

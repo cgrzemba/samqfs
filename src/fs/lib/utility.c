@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 
 #include "sam/osversion.h"
 
@@ -234,7 +234,7 @@ chk_devices(
 	}
 
 	/*
-	 * Set num_group for object groups and stripe groups.
+	 * Set num_group for object pools and stripe groups.
 	 * Verify sizes for striped groups are the same.
 	 */
 	dp = (struct devlist *)devp;

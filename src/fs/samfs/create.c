@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.164 $"
+#pragma ident "$Revision: 1.165 $"
 
 #include "sam/osversion.h"
 
@@ -990,7 +990,9 @@ sam_set_unit(
 	sam_mount_t *mp,			/* Mount table pointer. */
 	struct sam_disk_inode *di)		/* Disk inode pointer. */
 {
-	int i, ord, oldord, mask;
+	int i, ord, oldord;
+	dtype_t pool;
+	int def_pool;
 	mode_t	mode = di->mode;
 	boolean_t striped = FALSE;
 
@@ -1003,23 +1005,28 @@ sam_set_unit(
 	}
 	i = di->status.b.meta;	/* Device type: data (DD) or meta (MM) */
 	di->stride = 0;		/* Reset stride to 0 */
-	mask = 0;
+	pool = 0;
+	def_pool = 0;
 	if (i == DD) {
 		if (SAM_IS_OBJECT_FS(mp)) {
 			if (di->status.b.stripe_group) {
-				mask = DT_OBJECT_DISK;
+				pool = DT_OBJECT_DISK | di->stripe_group;
+			} else {
+				pool = DT_OBJECT_DISK | mp->mt.fi_obj_pool;
+				def_pool = 1;
 			}
 		} else if (di->status.b.stripe_group) {
-			mask = DT_STRIPE_GROUP;
+			pool = DT_STRIPE_GROUP | di->stripe_group;
 		}
 	}
-	if (mask) {
+	if (pool) {
 		for (ord = 0; ord < mp->mt.fs_count; ord++) {
-			if ((di->stripe_group|mask) ==
-			    mp->mi.m_fs[ord].part.pt_type &&
+			if ((pool == mp->mi.m_fs[ord].part.pt_type) &&
 			    mp->mi.m_fs[ord].part.pt_state == DEV_ON) {
-				di->unit = (uchar_t)ord;
 				striped = TRUE;
+				if (def_pool == 0) {
+					di->unit = (uchar_t)ord;
+				}
 				break;
 			}
 		}
@@ -1028,10 +1035,11 @@ sam_set_unit(
 			di->stripe_group = 0;
 		}
 	}
-	if (!striped)  {
+	if (!striped || def_pool)  {
 		ord = oldord = mp->mi.m_unit[i];	/* Round robin files */
 		while (mp->mi.m_sbp->eq[ord].fs.space == 0 ||
-		    mp->mi.m_fs[ord].part.pt_state != DEV_ON) {
+		    mp->mi.m_fs[ord].part.pt_state != DEV_ON ||
+		    (def_pool && mp->mi.m_fs[ord].part.pt_type != pool)) {
 			if (mp->mi.m_fs[ord].next_ord) {
 				ord = mp->mi.m_fs[ord].next_ord;
 			} else {

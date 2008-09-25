@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 #include "sam/osversion.h"
 
@@ -287,6 +287,14 @@ sam_sosd_bind(void)
 	if (!sam_sosd_vec.add_get_page_attr_to_req) {
 		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
 		    OSD_ADD_SET_PAGE_ATTR_TO_REQ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.add_flags_to_req = (void (*)(osd_req_t *, uint32_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_ADD_FLAGS_TO_REQ, &err);
+	if (!sam_sosd_vec.add_flags_to_req) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_ADD_FLAGS_TO_REQ, err);
 		goto failed;
 	}
 
@@ -598,6 +606,9 @@ sam_issue_direct_object_io(
 	if (reqp == NULL) {
 		kmem_cache_free(samgt.object_cache, iorp);
 		return (EINVAL);
+	}
+	if (ip->mp->mt.fi_obj_sync_data) {
+		(sam_sosd_vec.add_flags_to_req)(reqp, OSD_O_DPO);
 	}
 	iorp->name = SAM_OBJ_PRIVATE_NAME;
 	iorp->mp = ip->mp;
@@ -2005,8 +2016,6 @@ sam_osd_create_obj_layout(
 	TRACE(T_SAM_OBJ_LAY_CRE, SAM_ITOP(ip), ip->di.id.ino,
 	    ip->di.id.gen, num_group);
 	ASSERT(num_group > 0);
-	ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread) ||
-	    MUTEX_HELD(&ip->fl_mutex));
 
 	/*
 	 * Get object layout array. Use existing one if the length is the same
@@ -2078,8 +2087,6 @@ sam_osd_destroy_obj_layout(sam_node_t *ip)
 	    ip->di.id.gen, (sam_tr_t)ip->olp);
 	num_group = ip->olp->num_group;
 	ASSERT(num_group > 0);
-	ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread) ||
-	    MUTEX_HELD(&ip->fl_mutex));
 	kmem_free(ip->olp, sizeof (sam_obj_layout_t) +
 	    (sizeof (sam_obj_ent_t) * (num_group - 1)));
 	ip->olp = NULL;

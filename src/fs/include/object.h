@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #include "sam/osversion.h"
 
@@ -220,6 +220,7 @@ typedef struct sam_fsinfo_page {
 #define	OSD_ADD_SET_PAGE_1ATTR_CDB	"osd_add_set_page_1attr_cdb"
 #define	OSD_ADD_SET_PAGE_1ATTR_TO_REQ	"osd_add_set_page_1attr_to_req"
 #define	OSD_ADD_SET_PAGE_ATTR_TO_REQ	"osd_add_get_page_attr_to_req"
+#define	OSD_ADD_FLAGS_TO_REQ		"osd_add_flags_to_req"
 
 typedef struct sam_sosd_vec {
 
@@ -282,6 +283,9 @@ typedef struct sam_sosd_vec {
 	/* osd_add_get_page_attr_to_req */
 	void (*add_get_page_attr_to_req)(osd_req_t *, uint32_t, uint32_t,
 	    void *);
+
+	/* osd_add_flags_to_req */
+	void (*add_flags_to_req)(osd_req_t *, uint32_t);
 
 } sam_sosd_vec_t;
 

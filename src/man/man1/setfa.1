@@ -1,4 +1,4 @@
-.\" $Revision: 1.30 $
+.\" $Revision: 1.31 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -59,7 +59,7 @@ setfa \- Sets file attributes for block or object file systems
 .RB [ \-f ]
 .RB [ \-h " obj_width" ]
 .br
-.RB [ \-o " object_group" ]
+.RB [ \-o " object_pool" ]
 .RB [ \-r " dirname" ]
 .br
 .RB [ \-v " obj_depth[k|m|g]" ]
@@ -223,15 +223,15 @@ This command accepts the following options for object-based file systems only:
 \fB\-h\ \fIobj_width\fR
 Specifies the number of object storage devices (OSD) in the stripe.
 The OSD units to be striped for this file are in the
-\fIobject_group\fR specified by the \fBo\fR option.
+\fIobject_pool\fR specified by the \fBo\fR option.
 If \fIobj_width\fR is 0, the file is striped across all the
-units in the object group. If \fIobj_width\fR is >= 1,
-the file is striped across \fIobj_width\fR units.
+units in the object pool. If \fIobj_width\fR is >= 1,
+the file is striped across \fIobj_width\fR units in the object pool.
 .sp
 The \fIobj_width\fR may only be set on directories. Files inherit the
 \fIobj_width\fR on creation.
 All files created in the directory are striped across the
-specified number of OSD units in the object group.
+specified number of OSD units in the object pool.
 The default stripe width is specified by the \fIobj_width\fR
 mount option.  For more information, see \fBmount_samfs\fR(1M)\fR).
 .sp
@@ -239,10 +239,10 @@ The length of allocation on one unit before
 changing to the next unit is specified by the \fIv\fR option.
 .sp
 In the following example, files created in \fBaudio\fR are
-created on one object storage device (OSD) in the object group \fB0\fR,
+created on one object storage device (OSD) in the object pool \fB0\fR,
 and files created in \fBvideo\fR are striped across 8 units with a
 512KB allocation on each unit before switching to the next unit in the
-object group \fB1\fR:
+object pool \fB1\fR:
 .sp
 .nf
 .ft CO
@@ -251,18 +251,18 @@ setfa -o 1 -h 8 -v 512k video
 .fi
 .ft
 .TP
-\fB\-o\ \fIobject_group\fR
-Specifies the number of the object group on which the file is to be
+\fB\-o\ \fIobject_pool\fR
+Specifies the number of the object pool on which the file is to be
 created.
-For \fIobject_group\fR, specify a number such
-that 0\ \(<=\ \fIobject_group\fR\ \(<=\ 127
-and is a object group defined in the object-based file system.
-The default object group is the first group defined in the file system.
+For \fIobject_pool\fR, specify a number such
+that 0\ \(<=\ \fIobject_pool\fR\ \(<=\ 127
+and is a object pool defined in the object-based file system.
+The default object pool is the first pool defined in the file system.
 .sp
-Note that the \fIobject_group\fP attribute is inherited.  It is
-possible to create a directory and set a object group for that
+Note that the \fIobject_pool\fP attribute is inherited.  It is
+possible to create a directory and set a object pool for that
 directory. Then, all files created in that directory are allocated on the
-specified object group.
+specified object pool.
 .TP
 \fB\-v\ \fIobj_depth\fR
 Specifies the number of bytes to be allocated to one OSD unit before
