@@ -29,7 +29,7 @@
 #
 # samdb - see help entry below for details.
 #
-#	$Revision: 1.1 $
+#	$Revision: 1.2 $
 #
 
 #
@@ -86,6 +86,32 @@ check_bin()
 	done
 }
 
+#
+# Print help
+#
+print_help()
+{
+	echo "Usage: " `basename $CMDNAME` "subcommand fs_name [arguments] [-v]"
+	echo "	fs_name = filesystem family set name"
+	echo "	-v = verbose"
+	echo "Subcommands:"
+	echo "	help - show help (this output)"
+	echo "	catvsn vsn(s) - list files on specified vsns"
+	echo "		vsn = volume identifer"
+	echo "	check - consistency check against filesystem (expensive)"
+	echo "	create - create database for filesystem"
+	echo "	dump -f filelist - create a file list for samfsdump"
+	echo "	listinode inum(s) - list inode information in database"
+	echo "	listpath [-p|-e|-b] path(s) - list path information stored in database"
+	echo "		-p = partial match"
+	echo "		-e = exact match"
+	echo "		-b = match both path and file name"
+	echo "	listvsn - list vsns stored in database"
+	echo "	load [-g] [-r] loadfile(s) - initialize database using loadfile"
+	echo "		-g = generate progress marks"
+	echo "		-r = restore logic, used after a samfsrestore"
+}
+
 CATVSN=/opt/SUNWsamfs/priv/samdb_catvsn
 CHECK=/opt/SUNWsamfs/priv/samdb_check
 CREATE=/opt/SUNWsamfs/priv/samdb_create
@@ -109,27 +135,7 @@ fi
 
 case $SUBCMD in
 	""|help)
-		echo "Usage: " `basename $CMDNAME` "subcommand fs_name [arguments] [-v]"
-		echo "	fs_name = filesystem family set name"
-		echo "	-v = verbose"
-		echo "Subcommands:"
-		echo "	help - show help (this output)."
-		echo "	catvsn vsn(s) list all files on specified vsns."
-		echo "		vsn = volume identifer"
-		echo "	check - consistency check against filesystem (expensive)."
-		echo "	create - create database for filesystem"
-		echo "	dump -f dumpfile - dump a list of files "\
-			 "from the database for samfsdump."
-		echo "	listinode inum(s) - list inode information in database"
-		echo "	listpath [-p|-e|-b] paths(s) - list path "\
-			 "information stored in database"
-		echo "		-p = partial match"
-		echo "		-e = exact match"
-		echo "		-b = match both path and file name"
-		echo "	listvsn - list vsns stored in database"
-		echo "	load [-g] [-r] loadfile(s) - list vsns stored in database"
-		echo "		-g = generate progress marks"
-		echo "		-r = restore logic, use after samfsrestore"
+		print_help
 		exit 0
 		;;
 	catvsn)
@@ -166,6 +172,7 @@ case $SUBCMD in
 		;;	
 	*)
 		echo "$CMDNAME: Illegal subcommand \"$SUBCMD\"." 1>&2
+		print_help
 		exit 2
 		;;
 esac
