@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.146 $"
+#pragma ident "$Revision: 1.147 $"
 #endif
 
 #include "sam/osversion.h"
@@ -580,7 +580,7 @@ sam_map_direct(
 		iop->imap.flags = ioflags;
 		iop->imap.dt = (uchar_t)dt;
 		iop->imap.bt = LG;
-		iop->dev_bsize = mp->mi.m_fs[iop->ord].dev_bsize;
+		iop->dev_bsize = DEV_BSIZE;
 		iop->bsize = bsize;
 		iop->num_group = num_group;
 		iop->count = (size > count) ? count : size;
@@ -1254,7 +1254,7 @@ sam_set_blk_off(
 	iop->num_group = mp->mi.m_fs[ip->di.unit].num_group;
 	ASSERT(iop->num_group >= 1);
 	dt = iop->imap.dt;
-	iop->dev_bsize = mp->mi.m_fs[iop->ord].dev_bsize;
+	iop->dev_bsize = DEV_BSIZE; /* dynamic in future? */
 	iop->bsize = mp->mi.m_dau[dt].size[iop->imap.bt]; /* -a size in bytes */
 	mapp->dau_size = iop->bsize;
 	mapp->dau_mask = mp->mi.m_dau[dt].mask[iop->imap.bt];
