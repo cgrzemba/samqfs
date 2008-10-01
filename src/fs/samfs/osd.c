@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 #include "sam/osversion.h"
 
@@ -295,6 +295,23 @@ sam_sosd_bind(void)
 	if (!sam_sosd_vec.add_flags_to_req) {
 		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
 		    OSD_ADD_FLAGS_TO_REQ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_flush_obj = (osd_req_t *(*)(osd_dev_t, uint8_t,
+	    uint64_t, uint64_t, uint64_t, uint64_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_FLUSH_OBJ, &err);
+	if (!sam_sosd_vec.setup_flush_obj) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_FLUSH_OBJ, err);
+		goto failed;
+	}
+
+	sam_sosd_vec.setup_flush_osd = (osd_req_t *(*)(osd_dev_t, uint8_t))
+	    ddi_modsym(sam_sosd_vec.scsi_osd_hdl, OSD_SETUP_FLUSH_OSD, &err);
+	if (!sam_sosd_vec.setup_flush_osd) {
+		cmn_err(CE_WARN, "SAM-QFS: Unable to get %s %d\n",
+		    OSD_SETUP_FLUSH_OSD, err);
 		goto failed;
 	}
 
@@ -2134,4 +2151,71 @@ sam_delete_object_cache()
 	if (samgt.object_cache) {
 		kmem_cache_destroy(samgt.object_cache);
 	}
+}
+
+/*
+ * ----- sam_flush_object - Process flush object.
+ */
+int
+sam_flush_object(
+	sam_mount_t		*mp,	/* Pointer to the mount table */
+	sam_osd_handle_t	oh,	/* OSD Open Handle */
+	uint64_t	object_id)	/* 64-bit user object identifier */
+{
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t		*reqp;
+	uint64_t		partid = SAM_OBJ_PAR_ID;
+	int			rc;
+	int			error = 0;
+
+	reqp = (sam_sosd_vec.setup_flush_obj)((void *)oh, 0, partid,
+	    object_id, 0, 0);
+	if (reqp == NULL) {
+		return (EINVAL);
+	}
+	sam_osd_setup_private(iorp, mp);
+
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
+	if (rc == OSD_SUCCESS) {
+		sam_osd_obj_req_wait(iorp);
+		error = iorp->error;
+	} else {
+		error = sam_osd_map_errno(rc);
+	}
+	(sam_sosd_vec.free_req)(reqp);
+	sam_osd_remove_private(iorp);
+	return (error);
+}
+
+/*
+ * ----- sam_flush_osd - Process flush OSD.
+ */
+int
+sam_flush_osd(
+	sam_mount_t		*mp,	/* Pointer to the mount table */
+	sam_osd_handle_t	oh)	/* OSD Open handle */
+{
+	sam_osd_req_priv_t	ior_priv;
+	sam_osd_req_priv_t	*iorp = &ior_priv;
+	osd_req_t		*reqp;
+	int			rc;
+	int			error = 0;
+
+	reqp = (sam_sosd_vec.setup_flush_osd)((void *)oh, 0);
+	if (reqp == NULL) {
+		return (EINVAL);
+	}
+	sam_osd_setup_private(iorp, mp);
+
+	rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
+	if (rc == OSD_SUCCESS) {
+		sam_osd_obj_req_wait(iorp);
+		error = iorp->error;
+	} else {
+		error = sam_osd_map_errno(rc);
+	}
+	(sam_sosd_vec.free_req)(reqp);
+	sam_osd_remove_private(iorp);
+	return (error);
 }

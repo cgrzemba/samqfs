@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.213 $"
+#pragma ident "$Revision: 1.214 $"
 #endif
 
 #ifdef linux
@@ -1057,6 +1057,9 @@ int sam_truncate_object_file(sam_node_t *ip, sam_truncate_t tflag,
 int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 int sam_set_end_of_obj(sam_node_t *ip, offset_t length, int update);
+int sam_flush_object(struct sam_mount *mp, sam_osd_handle_t oh,
+	uint64_t object_id);
+int sam_flush_osd(struct sam_mount *mp, sam_osd_handle_t oh);
 int sam_osd_create_obj_layout(sam_node_t *ip);
 void sam_osd_destroy_obj_layout(sam_node_t *ip, int lock_held);
 void sam_init_object_cache(void);

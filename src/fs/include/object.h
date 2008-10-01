@@ -37,7 +37,7 @@
 #ifndef	_SAM_FS_OBJECT_H
 #define	_SAM_FS_OBJECT_H
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 #include "sam/osversion.h"
 
@@ -221,6 +221,8 @@ typedef struct sam_fsinfo_page {
 #define	OSD_ADD_SET_PAGE_1ATTR_TO_REQ	"osd_add_set_page_1attr_to_req"
 #define	OSD_ADD_SET_PAGE_ATTR_TO_REQ	"osd_add_get_page_attr_to_req"
 #define	OSD_ADD_FLAGS_TO_REQ		"osd_add_flags_to_req"
+#define	OSD_SETUP_FLUSH_OBJ		"osd_setup_flush"
+#define	OSD_SETUP_FLUSH_OSD		"osd_setup_flush_osd"
 
 typedef struct sam_sosd_vec {
 
@@ -286,6 +288,14 @@ typedef struct sam_sosd_vec {
 
 	/* osd_add_flags_to_req */
 	void (*add_flags_to_req)(osd_req_t *, uint32_t);
+
+	/* osd_setup_flush */
+	osd_req_t *(*setup_flush_obj)(osd_dev_t oh, uint8_t flush_scope,
+	    uint64_t partition_id, uint64_t object_id, uint64_t flush_len,
+	    uint64_t flush_start_byte_addr);
+
+	/* osd_setup_flush_osd */
+	osd_req_t *(*setup_flush_osd)(osd_dev_t oh, uint8_t flush_scope);
 
 } sam_sosd_vec_t;
 
