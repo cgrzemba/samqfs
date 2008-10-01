@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.112 $"
+#pragma ident "$Revision: 1.113 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -2136,8 +2136,8 @@ MoveCartridge(
 		ced->CeEq = eq;
 		ced->CeMid = mid;
 		ced->CeSlot = slot;
+		ced->CeStatus |= CES_occupied;
 		if (cat_num == Historian) {
-			ced->CeStatus |= CES_occupied;
 			SendCustMsg(HERE, 18020, VolStringFromCe(ce));
 		} else {
 			SendCustMsg(HERE, 18021, VolStringFromCe(ce), eq);

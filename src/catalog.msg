@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.612 $"
+$ pragma ident "$Revision: 1.613 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3158,7 +3158,7 @@ $ Example: -SNw  sends a "warning" to both syslog and the notify executable.
 18006 -nS Bad catalog file %s renamed to %s
 
 18020 -nS Volume %s exported to historian.
-18021 -nS Historian volume %s moved to catalog %d.
+18021 -nS Volume %s moved to catalog %d.
 18022 -nS Volume %s exported from all catalogs.
 18023 -nS Volume %s exists in %d
 18024 -wS Catalog entry %s VSN mismatch with %s from loaded media.
