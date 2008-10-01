@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.167 $"
+#pragma ident "$Revision: 1.168 $"
 
 #include "sam/osversion.h"
 
@@ -325,12 +325,10 @@ samfs_mount(
 		vfs_setmntopt(vfsp, MNTOPT_NOSUID, NULL, 0);
 	}
 
-	TRACE(T_SAM_GENERIC, NULL, 101, sam_xattr, mp->mt.fi_config1);
 	if ((sam_xattr == 0) || (mp->mt.fi_config1 & MC_NOXATTR)) {
 		vfs_clearmntopt(vfsp, MNTOPT_XATTR);
 		vfs_setmntopt(vfsp, MNTOPT_NOXATTR, NULL, 0);
 		mp->mt.fi_config1 |= MC_NOXATTR;
-		TRACE(T_SAM_GENERIC, NULL, 102, sam_xattr, mp->mt.fi_config1);
 	}
 
 	mp->mi.m_fsact_buf = NULL;
@@ -1164,23 +1162,34 @@ samfs_statvfs(
 	    ((sblk = mp->mi.m_sbp) != NULL)) {
 		int free_blks;
 
-		sam_open_operation_nb(mp);
-		if (SAM_IS_SHARED_CLIENT(mp)) {
-			(void) sam_proc_block_vfsstat(mp, SHARE_wait_one);
-		} else if (SAM_IS_SHARED_READER(mp)) {
-			sam_update_filsys(mp, 0);
-		}
 		if (sblk->info.sb.magic != SAM_MAGIC_V1 &&
 		    sblk->info.sb.magic != SAM_MAGIC_V2 &&
 		    sblk->info.sb.magic != SAM_MAGIC_V2A) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Superblock magic invalid <%x>",
 			    mp->mt.fi_name, sblk->info.sb.magic);
-			error = EINVAL;
-			goto out;
+			return (EINVAL);
 		}
-		bzero((void *)sp, sizeof (sam_statvfs_t));
 
+		sam_open_operation_nb(mp);
+		if (SAM_IS_SHARED_CLIENT(mp)) {
+			(void) sam_proc_block_vfsstat(mp, SHARE_wait_one);
+		} else if (SAM_IS_SHARED_READER(mp)) {
+			sam_update_filsys(mp, 0);
+		} else if (SAM_IS_OBJECT_FS(mp)) {
+			/*
+			 * Get capacity and space for OSDs in this file
+			 * system if it hasn't been done for 2 seconds.
+			 */
+			if (((mp->ms.m_sr_vfs_time + (2*hz)) < lbolt) ||
+			    (mp->ms.m_sr_vfs_time == 0)) {
+				sam_osd_update_sblk(mp);
+				mp->ms.m_sr_vfs_time = lbolt;
+			}
+
+		}
+
+		bzero((void *)sp, sizeof (sam_statvfs_t));
 		sp->f_bsize = LG_BLK(mp, DD);	/* file system block size */
 		sp->f_frsize = SAM_DEV_BSIZE;	/* fragment size */
 		sp->f_blocks = sblk->info.sb.capacity;	/* total # of blocks */

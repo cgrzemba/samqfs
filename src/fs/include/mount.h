@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.155 $"
+#pragma ident "$Revision: 1.156 $"
 #endif
 
 #ifdef sun
@@ -171,7 +171,8 @@ typedef struct sam_mt_session {
 	client_entry_t	**m_clienti;	/* List of shared clnts, server only */
 #endif
 	struct sam_client_msg *m_cl_head; /* chain of outstanding messages */
-	int64_t		m_vfs_time;	/* Time sblk last updated for vfsstat */
+	int64_t		m_cl_vfs_time; /* Time sblk last updated clnt vfsstat */
+	int64_t		m_sr_vfs_time; /* Time sblk last updated srvr vfsstat */
 	int64_t		m_sblk_failed;	/* Time BLOCK_vfsstat fail, from srvr */
 	int64_t		m_sblk_time;	/* Time sblk last updated */
 	int		m_cl_server_wait; /* Num waiting for srvr operation */
@@ -407,11 +408,13 @@ void sam_close_osd_device(sam_osd_handle_t oh, int filemode, cred_t *credp);
 int sam_get_osd_fs_attr(sam_mount_t *mp, sam_osd_handle_t oh,
 	struct sam_fs_part *fsp);
 void sam_osd_update_blocks(sam_node_t *ip, int pflag);
+void sam_osd_update_sblk(sam_mount_t *mp);
 #else
 #define	sam_open_osd_device(sdp, filemode, credp)		(ENOTSUP)
 #define	sam_close_osd_device(oh, filemode, credp)
 #define	sam_get_osd_fs_attr(mp, oh, fsp)			(ENOTSUP)
 #define	sam_osd_update_blocks(ip, pflag)
+#define	sam_osd_update_sblk(mp)
 #endif /* defined(SOL_511_ABOVE) */
 
 /*

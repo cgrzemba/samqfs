@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.174 $"
+#pragma ident "$Revision: 1.175 $"
 #endif
 
 #include "sam/osversion.h"
@@ -631,7 +631,8 @@ sam_set_block_response(sam_mount_t *mp, sam_san_message_t *msg)
 				rsize = (int)sblk->bsize;
 				memcpy(sblk_addr, mbp->data, rsize);
 #endif /* linux */
-				mp->ms.m_vfs_time = mp->ms.m_sblk_time = lbolt;
+				mp->ms.m_cl_vfs_time = mp->ms.m_sblk_time =
+				    lbolt;
 			}
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
@@ -648,7 +649,7 @@ sam_set_block_response(sam_mount_t *mp, sam_san_message_t *msg)
 				sblk->info.sb.mm_capacity = sp->mm_capacity;
 				sblk->info.sb.mm_space = sp->mm_space;
 			}
-			mp->ms.m_vfs_time = lbolt;
+			mp->ms.m_cl_vfs_time = lbolt;
 			}
 			break;
 

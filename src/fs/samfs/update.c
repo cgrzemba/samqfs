@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.141 $"
+#pragma ident "$Revision: 1.142 $"
 
 #include "sam/osversion.h"
 
@@ -90,13 +90,11 @@ sam_update_filsys(
 	int flag)			/* Sync flag */
 {
 	struct sam_sblk *sblk;
-	struct samdent *dp;
 	uint_t sblk_size;
 	buf_t *bp;
 	int i;
 	int error;
 	int sblk_no;
-	offset_t space;
 	boolean_t force_update;
 
 	/*
@@ -156,32 +154,16 @@ sam_update_filsys(
 		return (error);	/* No sync if read-only */
 	}
 
-	/*
-	 * Get capacity and space for OSD LUNs in this file system.
-	 */
 	if (SAM_IS_OBJECT_FS(mp)) {
-		space = 0;
-		for (i = 0; i < sblk->info.sb.fs_count; i++) {
-			dp = &mp->mi.m_fs[i];
-			if (is_osd_group(dp->part.pt_type)) {
-				error = sam_get_osd_fs_attr(mp, dp->oh,
-				    &dp->part);
-				if (error == 0) {
-					sblk->eq[i].fs.capacity =
-					    dp->part.pt_capacity;
-					sblk->eq[i].fs.space =
-					    dp->part.pt_space;
-					space += sblk->eq[i].fs.space;
-				} else {
-					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: Eq %d Error %d: "
-					    "cannot get superblock capacity "
-					    "and space", mp->mt.fi_name,
-					    dp->part.pt_eq, error);
-				}
-			}
+		/*
+		 * Get capacity and space for OSDs in this file
+		 * system if it hasn't been done for 2 seconds.
+		 */
+		if (((mp->ms.m_sr_vfs_time + (2*hz)) < lbolt) ||
+		    (mp->ms.m_sr_vfs_time == 0)) {
+			sam_osd_update_sblk(mp);
+			mp->ms.m_sr_vfs_time = lbolt;
 		}
-		sblk->info.sb.space = space;
 	}
 
 	/*

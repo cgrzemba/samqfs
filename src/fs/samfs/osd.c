@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 #include "sam/osversion.h"
 
@@ -1785,7 +1785,7 @@ int
 sam_set_end_of_obj(
 	sam_node_t *ip,		/* Pointer to the inode */
 	offset_t length,	/* File size */
-	int	update)		/* Set if update OSD LUN */
+	int	update)		/* Set if update OSD */
 {
 	sam_obj_layout_t	*olp;
 	int			num_group;
@@ -1957,7 +1957,7 @@ sam_map_osd(
 
 
 /*
- * ----- sam_update_blocks - update inode allocated block count.
+ * ----- sam_osd_update_blocks - update inode allocated block count.
  */
 void
 sam_osd_update_blocks(
@@ -2008,6 +2008,46 @@ sam_osd_update_blocks(
 		}
 	}
 	ip->di.blocks = blocks;
+}
+
+
+/*
+ * ----- sam_osd_update_sblk - Update sblk capacity and space for OSDs.
+ */
+void
+sam_osd_update_sblk(
+	sam_mount_t *mp)	/* Pointer to the mount table */
+{
+	struct sam_sblk *sblk;
+	struct samdent *dp;
+	int error;
+	int i;
+	offset_t capacity;
+	offset_t space;
+
+	capacity = 0;
+	space = 0;
+	sblk = mp->mi.m_sbp;
+	for (i = 0; i < sblk->info.sb.fs_count; i++) {
+		dp = &mp->mi.m_fs[i];
+		if (is_osd_group(dp->part.pt_type)) {
+			error = sam_get_osd_fs_attr(mp, dp->oh, &dp->part);
+			if (error == 0) {
+				sblk->eq[i].fs.capacity = dp->part.pt_capacity;
+				sblk->eq[i].fs.space = dp->part.pt_space;
+				capacity += sblk->eq[i].fs.capacity;
+				space += sblk->eq[i].fs.space;
+			} else {
+				cmn_err(CE_WARN,
+				    "SAM-QFS: %s: Eq %d Error %d: "
+				    "cannot get superblock capacity "
+				    "and space", mp->mt.fi_name,
+				    dp->part.pt_eq, error);
+			}
+		}
+	}
+	sblk->info.sb.capacity = capacity;
+	sblk->info.sb.space = space;
 }
 
 

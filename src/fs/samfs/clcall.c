@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.257 $"
+#pragma ident "$Revision: 1.258 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2449,8 +2449,8 @@ sam_proc_block(
 		/*
 		 * Don't update sblk if last update is within 1 second.
 		 */
-		if (((mp->ms.m_vfs_time + hz) > lbolt) &&
-		    (mp->ms.m_vfs_time != 0)) {
+		if (((mp->ms.m_cl_vfs_time + hz) > lbolt) &&
+		    (mp->ms.m_cl_vfs_time != 0)) {
 			error = 0;
 			goto done;
 		}

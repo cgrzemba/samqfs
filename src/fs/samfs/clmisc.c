@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.258 $"
+#pragma ident "$Revision: 1.259 $"
 #endif
 
 #include "sam/osversion.h"
@@ -284,7 +284,7 @@ sam_update_shared_filsys(
 	sblk = mp->mi.m_sbp;
 	if ((sblk == NULL) || (sblk->info.sb.fs_count != mp->mt.fs_count)) {
 		error = sam_update_shared_sblk(mp, wait_flag);
-		mp->ms.m_vfs_time = 0;	/* Update sblk now */
+		mp->ms.m_cl_vfs_time = 0;	/* Update sblk now */
 	}
 
 	/*
