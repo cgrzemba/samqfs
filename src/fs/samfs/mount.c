@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.232 $"
+#pragma ident "$Revision: 1.233 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2798,11 +2798,12 @@ sam_destroy_vnode(vnode_t *vp, int fflag)
 	ASSERT(ip != NULL);
 	TRACE(T_SAM_FLUSH, vp, ip->di.id.ino, vp->v_count, ip->flags.bits);
 	if ((fflag & MS_FORCE) == 0) {
-		ASSERT(!vn_has_cached_data(vp));
+		ASSERT(vn_has_cached_data(vp) == 0);
 	}
 	if ((error = sam_delete_ino(vp)) != 0) {
 		return (error);
 	}
+	SAM_DESTROY_OBJ_LAYOUT(ip);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	sam_destroy_ino(ip, FALSE);
 	return (0);

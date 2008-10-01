@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.77 $"
+#pragma ident "$Revision: 1.78 $"
 
 #include "sam/osversion.h"
 
@@ -1316,6 +1316,7 @@ sam_quota_common_done(sam_mount_t *mp, int close)
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			mp->mi.m_quota_ip[i] = NULL;
 			sam_flush_pages(ip, B_INVAL);
+			SAM_DESTROY_OBJ_LAYOUT(ip);
 			if (vp->v_count || sam_delete_ino(vp)) {
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 				cmn_err(CE_WARN,

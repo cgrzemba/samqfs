@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.214 $"
+#pragma ident "$Revision: 1.215 $"
 
 #include "sam/osversion.h"
 
@@ -592,6 +592,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->cl_closing = 0;
 	ip->zero_end = 0;
 	sam_clear_map_cache(ip);
+	ASSERT(vn_has_cached_data(SAM_ITOV(ip)) == 0);
 	SAM_DESTROY_OBJ_LAYOUT(ip);
 }
 
@@ -1471,6 +1472,7 @@ sam_delete_ino_cache(void)
 		if (--samgt.inofree < 0) {
 			samgt.inofree = 0;
 		}
+		sam_osd_destroy_obj_layout(ip, 0);
 		sam_destroy_ino(ip, TRUE);
 		ip = nip;
 	}

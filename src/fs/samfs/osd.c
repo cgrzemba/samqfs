@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 #include "sam/osversion.h"
 
@@ -1997,7 +1997,9 @@ sam_osd_update_blocks(
 /*
  * ----- sam_osd_create_obj_layout - build the object layout.
  *  For the given inode, allocate the object layout array which contains the
- *  object id, ordinal, and end of object (eoo).
+ *  object id, ordinal, and end of object (eoo). sam_osd_create_obj_layout
+ *  is called when we call SAM_HASH_INO.
+ *
  */
 int
 sam_osd_create_obj_layout(
@@ -2016,6 +2018,8 @@ sam_osd_create_obj_layout(
 	TRACE(T_SAM_OBJ_LAY_CRE, SAM_ITOP(ip), ip->di.id.ino,
 	    ip->di.id.gen, num_group);
 	ASSERT(num_group > 0);
+	ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread) ||
+	    MUTEX_HELD(&ip->fl_mutex));
 
 	/*
 	 * Get object layout array. Use existing one if the length is the same
@@ -2076,10 +2080,22 @@ sam_osd_create_obj_layout(
 
 
 /*
- * ----- sam_osd_destory_obj_layout - free the object layout array.
+ * ----- sam_osd_destroy_obj_layout - free the object layout array.
+ *  sam_osd_destroy_obj_layout is called when we call SAM_UNHASH_INO.
+ *  It is also called when we call sam_destroy_ino because the inode
+ *  may have been put on the freelist with pages. Note, we need the
+ *  object layout if dirty pages are flushed while the inode is on
+ *  the freelist.
+ *
+ *  Generally this function should be called via the macro,
+ *  SAM_DESTROY_OBJ_LAYOUT which does not destroy the object layout
+ *  if any pages exist, and asserts proper locking is in place.
+ *  You may call this function directly if you are sure no pages exist.
  */
 void
-sam_osd_destroy_obj_layout(sam_node_t *ip)
+sam_osd_destroy_obj_layout(
+	sam_node_t *ip,
+	int lock_held)
 {
 	int num_group;
 
@@ -2087,6 +2103,10 @@ sam_osd_destroy_obj_layout(sam_node_t *ip)
 	    ip->di.id.gen, (sam_tr_t)ip->olp);
 	num_group = ip->olp->num_group;
 	ASSERT(num_group > 0);
+	if (lock_held) {
+		ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread) ||
+		    MUTEX_HELD(&ip->fl_mutex));
+	}
 	kmem_free(ip->olp, sizeof (sam_obj_layout_t) +
 	    (sizeof (sam_obj_ent_t) * (num_group - 1)));
 	ip->olp = NULL;

@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.212 $"
+#pragma ident "$Revision: 1.213 $"
 #endif
 
 #ifdef linux
@@ -858,8 +858,8 @@ sam_node_t *sam_vtoi(vnode_t *vp);
  */
 #define	SAM_DESTROY_OBJ_LAYOUT(ip) \
 { \
-	if (ip->olp != NULL) { \
-		sam_osd_destroy_obj_layout(ip); \
+	if ((ip->olp != NULL) && (vn_has_cached_data(SAM_ITOV(ip)) == 0)) { \
+		sam_osd_destroy_obj_layout(ip, 1); \
 	} \
 }
 
@@ -1058,7 +1058,7 @@ int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 int sam_set_end_of_obj(sam_node_t *ip, offset_t length, int update);
 int sam_osd_create_obj_layout(sam_node_t *ip);
-void sam_osd_destroy_obj_layout(sam_node_t *ip);
+void sam_osd_destroy_obj_layout(sam_node_t *ip, int lock_held);
 void sam_init_object_cache(void);
 void sam_delete_object_cache(void);
 void sam_sosd_unbind(void);
@@ -1072,7 +1072,7 @@ void sam_sosd_bind(void);
 #define	sam_truncate_object_file(a, b, c, d)		(ENOTSUP)
 #define	sam_set_end_of_obj(a, b, c)			(ENOTSUP)
 #define	sam_osd_create_obj_layout(a)			(ENOTSUP)
-#define	sam_osd_destroy_obj_layout(a)
+#define	sam_osd_destroy_obj_layout(a, b)
 #define	sam_init_object_cache()
 #define	sam_delete_object_cache()
 #define	sam_sosd_unbind()

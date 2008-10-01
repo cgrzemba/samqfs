@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.129 $"
+#pragma ident "$Revision: 1.130 $"
 #endif
 
 #include "sam/osversion.h"
@@ -491,7 +491,7 @@ sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp)
 		/* Free in-core access control list */
 		(void) sam_free_acl(ip);
 	}
-	ASSERT(!vn_has_cached_data(vp));
+	ASSERT(vn_has_cached_data(vp) == 0);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 	mutex_enter(&vp->v_lock);
@@ -508,6 +508,7 @@ sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp)
 	} else {
 		mutex_exit(&vp->v_lock);
 		ASSERT(!rw_write_held(&ip->data_rwl));
+		sam_osd_destroy_obj_layout(ip, 0);
 		sam_destroy_ino(ip, FALSE);	/* calls inode destructor */
 	}
 
@@ -1042,6 +1043,7 @@ sam_free_incore_inode(
 		    vp->v_count);
 	}
 	ASSERT(vn_has_cached_data(vp) == 0);
+	SAM_DESTROY_OBJ_LAYOUT(ip);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	sam_destroy_ino(ip, FALSE);
 }
