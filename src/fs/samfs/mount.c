@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.231 $"
+#pragma ident "$Revision: 1.232 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2606,7 +2606,6 @@ sam_flush_ino(
 				}
 				if (sam_flush_and_destroy_vnode(vp, ihp,
 				    &hash_dropped) != 0) {
-					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 					error = EBUSY;
 					if (fflag & MS_FORCE) {
 						if (!hash_dropped) {
@@ -2631,6 +2630,7 @@ sam_flush_ino(
 						}
 						sam_stale_inode(ip);
 					}
+					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 				}
 
 				/*
