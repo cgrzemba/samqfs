@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -106,10 +106,10 @@ static struct dst {
 	int wmonth;
 	int whour;
 } dsttable[] = {
-"EST", "EDT", "US/Eastern",	1,  3, 2,  9,  9, 2, /* US Eastern */
-"CST", "CDT", "US/Central",	1,  3, 2,  9,  9, 2, /* US Central */
-"MST", "MDT", "US/Mountain",	1,  3, 2,  9,  9, 2, /* US Mountain */
-"PST", "PDT", "US/Pacific",	1,  3, 2,  9,  9, 2, /* US Pacific */
+"EST", "EDT", "US/Eastern",	2,  2, 2,  1,  10, 2, /* US Eastern */
+"CST", "CDT", "US/Central",	2,  2, 2,  1,  10, 2, /* US Central */
+"MST", "MDT", "US/Mountain",	2,  2, 2,  1,  10, 2, /* US Mountain */
+"PST", "PDT", "US/Pacific",	2,  2, 2,  1,  10, 2, /* US Pacific */
 "MST", "MST", "US/Arizona",	0,  0, 0,  0,  0, 0, /* Arizona */
 "HST", "HST", "US/Hawaii",	0,  0, 0,  0,  0, 0, /* Hawaiian */
 "NZ", "NZ", "NZ",		3,  2, 3,  1,  9, 2, /* New Zealand */
