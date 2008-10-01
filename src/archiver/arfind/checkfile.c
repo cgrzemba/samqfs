@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -187,6 +187,9 @@ CheckFile(
 		 * The segments may by archived independently.
 		 * checkSegments() calls checkAnInode() for each segment.
 		 */
+		if (State->AfFlags & ASF_archivemeta) {
+			checkAnInode(pb, pinode, fp, se);
+		}
 		checkSegments(pb, pinode, fp, se);
 	}
 }
