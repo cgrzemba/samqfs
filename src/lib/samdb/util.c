@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -65,6 +65,7 @@ sam_db_connect(
 	    con->SAM_client_flag) == NULL) {
 		Trace(TR_ERR, "mysql connect fail: %s",
 		    mysql_error(SAMDB_conn));
+		return (-1);
 	}
 
 	SamMalloc(SAMDB_qbuf, SAMDB_QBUF_LEN);
