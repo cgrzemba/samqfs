@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNSummaryModel.java,v 1.24 2008/05/16 18:38:57 am143972 Exp $
+// ident	$Id: VSNSummaryModel.java,v 1.25 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -38,14 +38,12 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.media.VSN;
-import com.sun.netstorage.samqfs.web.util.Authorization;
 
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LDSTableModel;
 import com.sun.netstorage.samqfs.web.util.LargeDataSet;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
-import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 
@@ -55,8 +53,10 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 public final class VSNSummaryModel extends LDSTableModel {
 
+    private boolean hasPermission = false;
+
     // Constructor
-    public VSNSummaryModel(LargeDataSet data) {
+    public VSNSummaryModel(LargeDataSet data, boolean hasPermission) {
 
         // Construct a new instance using XML file.
         super(RequestManager.getRequestContext().getServletContext(),
@@ -65,7 +65,8 @@ public final class VSNSummaryModel extends LDSTableModel {
         TraceUtil.initTrace();
         TraceUtil.trace3("Entering");
 
-        dataSet = data;
+        this.dataSet = data;
+        this.hasPermission = hasPermission;
 
         initActionButtons();
         initActionMenu();
@@ -179,7 +180,7 @@ public final class VSNSummaryModel extends LDSTableModel {
             // Show "Reserved" in plain text if it is the only word in this
             // column
             boolean showInHref =
-                hasPermission() && !reservedString.equals(flagsInfo);
+                hasPermission && !reservedString.equals(flagsInfo);
             setValue(
                 "MediaAttributesLinkText", showInHref ? flagsInfo : "");
             setValue(
@@ -199,10 +200,5 @@ public final class VSNSummaryModel extends LDSTableModel {
                 Integer.toString(slotNumber));
         }
         TraceUtil.trace3("Exiting");
-    }
-
-    private boolean hasPermission() throws SamFSException {
-        return SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.CONFIG);
     }
 }

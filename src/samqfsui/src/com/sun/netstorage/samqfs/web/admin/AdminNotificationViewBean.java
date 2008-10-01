@@ -27,30 +27,19 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AdminNotificationViewBean.java,v 1.25 2008/05/16 19:39:25 am143972 Exp $
+// ident	$Id: AdminNotificationViewBean.java,v 1.26 2008/10/01 22:43:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
-import com.iplanet.jato.view.ViewBean;
 import com.iplanet.jato.view.event.DisplayEvent;
-import com.iplanet.jato.view.event.RequestInvocationEvent;
-
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.fs.FSDetailsViewBean;
-import com.sun.netstorage.samqfs.web.fs.FSSummaryViewBean;
-import com.sun.netstorage.samqfs.web.fs.SharedFSDetailsViewBean;
-import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
-import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
-import com.sun.web.ui.view.breadcrumb.CCBreadCrumbs;
-import com.sun.web.ui.model.CCBreadCrumbsModel;
 import com.sun.web.ui.view.html.CCHiddenField;
-import com.sun.web.ui.view.html.CCHref;
 
 /**
  *  This class is the view bean for the Admin Notification Summary page
@@ -62,10 +51,6 @@ public class AdminNotificationViewBean extends CommonViewBeanBase {
     private static final
         String DISPLAY_URL = "/jsp/admin/AdminNotification.jsp";
     private static final String PAGE_NAME = "AdminNotification";
-    private static final String CHILD_BREADCRUMB  = "BreadCrumb";
-    public static final String CHILD_FS_SUM_HREF = "FileSystemSummaryHref";
-    public static final String CHILD_FS_DET_HREF = "FileSystemDetailsHref";
-    public static final String CHILD_SHARED_FS_HREF = "SharedFSDetailsHref";
     // child that used in popup to pass server name
     public static final String SERVER_NAME = "ServerName";
     // child that used in javascript confirm messages
@@ -98,10 +83,6 @@ public class AdminNotificationViewBean extends CommonViewBeanBase {
         super.registerChildren();
         TraceUtil.trace3("Entering");
         registerChild(CONTAINER_VIEW, AdminNotificationView.class);
-        registerChild(CHILD_BREADCRUMB, CCBreadCrumbs.class);
-        registerChild(CHILD_FS_SUM_HREF, CCHref.class);
-        registerChild(CHILD_FS_DET_HREF, CCHref.class);
-        registerChild(CHILD_SHARED_FS_HREF, CCHref.class);
         registerChild(CONFIRM_MESSAGE, CCHiddenField.class);
         registerChild(SERVER_NAME, CCHiddenField.class);
         TraceUtil.trace3("Exiting");
@@ -123,12 +104,6 @@ public class AdminNotificationViewBean extends CommonViewBeanBase {
         if (super.isChildSupported(name)) {
             child = super.createChild(name);
 
-        } else if (name.equals(CHILD_BREADCRUMB)) {
-            CCBreadCrumbsModel model =
-                new CCBreadCrumbsModel("emailAlert.title");
-            BreadCrumbUtil.createBreadCrumbs(this, name, model);
-            child = new CCBreadCrumbs(this, model, name);
-
         // Javascript used Hidden Field
         } else if (name.equals(CONFIRM_MESSAGE)) {
             child = new CCHiddenField(this, name,
@@ -141,12 +116,6 @@ public class AdminNotificationViewBean extends CommonViewBeanBase {
 
         } else if (name.equals(CONTAINER_VIEW)) {
             child = new AdminNotificationView(this, name);
-
-        // Breadcrumb HREFs
-        } else if (name.equals(CHILD_FS_SUM_HREF) ||
-                   name.equals(CHILD_FS_DET_HREF) ||
-                   name.equals(CHILD_SHARED_FS_HREF)) {
-            child = new CCHref(this, name, null);
 
         } else {
             throw new IllegalArgumentException(
@@ -185,52 +154,6 @@ public class AdminNotificationViewBean extends CommonViewBeanBase {
                 getServerName());
         }
 
-        TraceUtil.trace3("Exiting");
-    }
-
-    public void handleFileSystemSummaryHrefRequest(
-        RequestInvocationEvent event) {
-
-        TraceUtil.trace3("Entering");
-        ViewBean targetView = getViewBean(FSSummaryViewBean.class);
-        String s = (String) getDisplayFieldValue(CHILD_FS_SUM_HREF);
-        BreadCrumbUtil.breadCrumbPathBackward(
-            this,
-            PageInfo.getPageInfo().getPageNumber(targetView.getName()), s);
-        forwardTo(targetView);
-        TraceUtil.trace3("Exiting");
-    }
-
-    /**
-     * Handle request for back to FS detail (4.3) href
-     * @param event RequestInvocationEvent event
-     */
-    public void handleSharedFSDetailsHrefRequest(RequestInvocationEvent event) {
-
-        TraceUtil.trace3("Entering");
-        String s = (String) getDisplayFieldValue(CHILD_SHARED_FS_HREF);
-        ViewBean targetView = getViewBean(SharedFSDetailsViewBean.class);
-        BreadCrumbUtil.breadCrumbPathBackward(
-            this,
-            PageInfo.getPageInfo().getPageNumber(targetView.getName()), s);
-        forwardTo(targetView);
-        TraceUtil.trace3("Exiting");
-    }
-
-    /**
-     * Handle request for backto detail page link
-     * @param event RequestInvocationEvent event
-     */
-    public void handleFileSystemDetailsHrefRequest(
-        RequestInvocationEvent event) {
-
-        TraceUtil.trace3("Entering");
-        ViewBean targetView = getViewBean(FSDetailsViewBean.class);
-        String s = (String) getDisplayFieldValue(CHILD_FS_DET_HREF);
-        BreadCrumbUtil.breadCrumbPathBackward(
-            this,
-            PageInfo.getPageInfo().getPageNumber(targetView.getName()), s);
-        forwardTo(targetView);
         TraceUtil.trace3("Exiting");
     }
 }

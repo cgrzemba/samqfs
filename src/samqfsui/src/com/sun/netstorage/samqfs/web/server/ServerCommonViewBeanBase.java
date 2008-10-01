@@ -27,34 +27,26 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerCommonViewBeanBase.java,v 1.14 2008/05/16 18:39:05 am143972 Exp $
+// ident	$Id: ServerCommonViewBeanBase.java,v 1.15 2008/10/01 22:43:34 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBeanBase;
 import com.iplanet.jato.view.event.ChildContentDisplayEvent;
 import com.iplanet.jato.view.event.JspEndChildDisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 
-import com.sun.netstorage.samqfs.mgmt.SamFSException;
-import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
-import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.ui.taglib.WizardWindowTag;
-import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.HelpLinkConstants;
-import com.sun.netstorage.samqfs.web.util.SamUtil;
-import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 import com.sun.web.ui.model.CCMastheadModel;
 import com.sun.web.ui.model.CCTabsModel;
 import com.sun.web.ui.taglib.html.CCButtonTag;
 import com.sun.web.ui.view.alert.CCAlertInline;
-import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCHref;
 import com.sun.web.ui.view.masthead.CCPrimaryMasthead;
 import com.sun.web.ui.view.tabs.CCNodeEventHandlerInterface;

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StagePopupViewBean.java,v 1.18 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: StagePopupViewBean.java,v 1.19 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -55,7 +55,9 @@ import com.sun.netstorage.samqfs.web.model.fs.FileCopyDetails;
 import com.sun.netstorage.samqfs.web.model.fs.StageFile;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -216,6 +218,12 @@ public class StagePopupViewBean extends CommonSecondaryViewBeanBase {
         String file = getFileToStage();
 
         try {
+            // Check Permission (IE7)
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.FILE_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            }
+
 	    SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
             SamQFSSystemFSManager fsManager =
                 sysModel.getSamQFSSystemFSManager();

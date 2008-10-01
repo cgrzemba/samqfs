@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: JobController.java,v 1.4 2008/05/22 13:42:33 kilemba Exp $
+// ident        $Id: JobController.java,v 1.5 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.jobs;
 
@@ -52,8 +52,10 @@ import com.sun.netstorage.samqfs.web.model.job.EnableDumpJob;
 import com.sun.netstorage.samqfs.web.model.job.SamfsckJob;
 import com.sun.netstorage.samqfs.web.model.job.StageJob;
 import com.sun.netstorage.samqfs.web.model.job.StageJobFileData;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.Select;
 import com.sun.web.ui.component.TableRowGroup;
 import javax.faces.context.FacesContext;
@@ -143,6 +145,14 @@ public class JobController {
 
         System.out.println("cancel job : " + id);
         try {
+            // First check if user has permission
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.SAM_CONTROL)) {
+System.out.println("No permission!");
+                throw new SamFSException(
+                    JSFUtil.getMessage("common.nopermission"));
+            }
+
             String serverName = JSFUtil.getServerName();
             SamQFSSystemModel model = SamUtil.getModel(serverName);
             if (model == null)
@@ -156,6 +166,7 @@ public class JobController {
             BaseJob theJob = jobManager.getJobById(selectedJobId);
             jobManager.cancelJob(theJob);
         } catch (SamFSException sfe) {
+            System.out.println("Exception caught! " + sfe.getMessage());
             // update alert message
         }
         return "redisplay";

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: EditVSNViewBean.java,v 1.28 2008/05/16 18:38:56 am143972 Exp $
+// ident	$Id: EditVSNViewBean.java,v 1.29 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -43,6 +43,7 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.model.media.VSN;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.CommonSecondaryViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.PropertySheetUtil;
@@ -51,6 +52,7 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.model.CCPropertySheetModel;
 import com.sun.web.ui.view.html.CCButton;
@@ -286,6 +288,12 @@ public class EditVSNViewBean extends CommonSecondaryViewBeanBase {
         String vsnName = "";
 
         try {
+            // Check Permission
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.CONFIG)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             try {
                 myVSN = getThisVSN();
                 vsnName = myVSN.getVSN();

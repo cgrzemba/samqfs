@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: HistorianModel.java,v 1.22 2008/05/16 18:38:56 am143972 Exp $
+// ident	$Id: HistorianModel.java,v 1.23 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -38,13 +38,11 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.media.VSN;
-import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.util.LDSTableModel;
 import com.sun.netstorage.samqfs.web.util.LargeDataSet;
-import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 
 /**
  * This is the Model Class of Historian page
@@ -52,8 +50,10 @@ import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 
 public final class HistorianModel extends LDSTableModel {
 
+    private boolean hasPermission = false;
+
     // Constructor
-    public HistorianModel(LargeDataSet data) {
+    public HistorianModel(LargeDataSet data, boolean hasPermission) {
         // Construct a new instance using XML file.
         super(RequestManager.getRequestContext().getServletContext(),
             "/jsp/media/HistorianTable.xml");
@@ -61,7 +61,8 @@ public final class HistorianModel extends LDSTableModel {
         TraceUtil.initTrace();
         TraceUtil.trace3("Entering");
 
-        dataSet = data;
+        this.dataSet = data;
+        this.hasPermission = hasPermission;
 
         initActionButtons();
         initHeaders();
@@ -155,9 +156,9 @@ public final class HistorianModel extends LDSTableModel {
             }
 
             setValue(
-                "MediaAttributesLinkText", hasPermission() ? flagsInfo : "");
+                "MediaAttributesLinkText", hasPermission ? flagsInfo : "");
             setValue(
-                "MediaAttributesText", hasPermission() ? "" : flagsInfo);
+                "MediaAttributesText", hasPermission ? "" : flagsInfo);
 
             String delimitor = "###";
             setValue("InformationHidden",
@@ -171,10 +172,5 @@ public final class HistorianModel extends LDSTableModel {
         }
 
         TraceUtil.trace3("Exiting");
-    }
-
-    private boolean hasPermission() throws SamFSException {
-        return SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.CONFIG);
     }
 }

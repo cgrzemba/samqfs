@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNSummaryView.java,v 1.50 2008/05/16 18:38:57 am143972 Exp $
+// ident	$Id: VSNSummaryView.java,v 1.51 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -102,7 +102,11 @@ public class VSNSummaryView extends CommonTableContainerView {
         this.serverName = serverName;
         this.libraryName = libraryName;
         LargeDataSet dataSet = new VSNSummaryData(serverName, libraryName);
-        model = new VSNSummaryModel(dataSet);
+        model =
+            new VSNSummaryModel(
+                dataSet,
+                SecurityManagerFactory.getSecurityManager().
+                    hasAuthorization(Authorization.CONFIG));
 
         // initialize reservation wizard
         initializeWizard();
@@ -167,6 +171,16 @@ public class VSNSummaryView extends CommonTableContainerView {
         String errMsg = null;
 
         try {
+            // Check Permission
+            // Export needs MEDIA, otherwise CONFIG is required
+            if (3 == value && !SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.MEDIA_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            } else if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.CONFIG)){
+                throw new SamFSException("common.nopermission");
+            }
+
             VSN myVSN = getSelectedVSN(slotKey);
             String op = null;
 

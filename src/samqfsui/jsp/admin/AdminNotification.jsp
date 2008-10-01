@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AdminNotification.jsp,v 1.27 2008/05/16 19:39:15 am143972 Exp $
+// ident	$Id: AdminNotification.jsp,v 1.28 2008/10/01 22:43:31 ronaldso Exp $
 --%> 
 <%@ page info="Index" language="java" %> 
 <%@ page import="com.iplanet.jato.view.ViewBean" %>
@@ -58,9 +58,6 @@
     src="/samqfsui/js/admin/AdminNotification.js"></script>
 
 <jato:form name="AdminNotificationForm" method="post">
-
-<!-- Bread Crumb component-->
-<cc:breadcrumbs name="BreadCrumb" bundleID="samBundle" />
 
 <cc:alertinline name="Alert" bundleID="samBundle" />
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserView.java,v 1.27 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: FileBrowserView.java,v 1.28 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -46,12 +46,14 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileCopyDetails;
 import com.sun.netstorage.samqfs.web.model.fs.StageFile;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.CommonTableContainerView;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.Filter;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.view.html.CCHiddenField;
@@ -487,6 +489,12 @@ public class FileBrowserView extends CommonTableContainerView {
         String operation;
 
         try {
+            // Check Permission (IE7)
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.FILE_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             SamQFSSystemModel sysModel =
                 SamUtil.getModel(parent.getServerName());
             SamQFSSystemFSManager fsManager =

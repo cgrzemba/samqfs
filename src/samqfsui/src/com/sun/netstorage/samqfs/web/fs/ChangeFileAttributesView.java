@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ChangeFileAttributesView.java,v 1.10 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: ChangeFileAttributesView.java,v 1.11 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -43,7 +43,9 @@ import com.sun.netstorage.samqfs.mgmt.arc.Archiver;
 import com.sun.netstorage.samqfs.mgmt.rel.Releaser;
 import com.sun.netstorage.samqfs.mgmt.stg.Stager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 import com.sun.web.ui.common.CCPagelet;
@@ -419,6 +421,12 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
         int newOption = -1, existingOption = -1, partialSize = -1;
 
         try {
+            // Check Permission (IE7)
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.FILE_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             try {
                 existingOption = Integer.parseInt(existingAttArray[pageMode]);
             } catch (NumberFormatException numEx) {

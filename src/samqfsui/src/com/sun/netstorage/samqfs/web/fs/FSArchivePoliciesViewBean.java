@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesViewBean.java,v 1.35 2008/08/14 14:00:24 ronaldso Exp $
+// ident	$Id: FSArchivePoliciesViewBean.java,v 1.36 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -59,6 +59,7 @@ import com.sun.web.ui.model.CCBreadCrumbsModel;
 import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.model.CCPropertySheetModel;
 import com.sun.web.ui.view.breadcrumb.CCBreadCrumbs;
+import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCHref;
 import com.sun.web.ui.view.html.CCImageField;
@@ -278,6 +279,15 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
      */
     public void beginDisplay(DisplayEvent event) throws ModelControlException {
         TraceUtil.trace3("Entering");
+
+        // Check permission
+        if (!SecurityManagerFactory.getSecurityManager().
+            hasAuthorization(Authorization.FILESYSTEM_OPERATOR)) {
+            ((CCButton) getChild("SaveButton")).setDisabled(true);
+            ((CCButton) getChild("ResetButton")).setDisabled(true);
+            ((CCButton) getChild("CancelButton")).setDisabled(true);
+        }
+
 
         String serverName = (String) getPageSessionAttribute(
                 Constants.PageSessionAttributes.SAMFS_SERVER_NAME);

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.50 2008/09/10 17:40:23 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.51 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -297,8 +297,13 @@ public class FSDetailsView extends CommonTableContainerView {
 
         // calculate state info to pass to client side javascript to
         // dynamically enable/disable buttons and dropdown menu options
+        boolean hasPermission = false;
         if (SecurityManagerFactory.getSecurityManager().
             hasAuthorization(Authorization.FILESYSTEM_OPERATOR)) {
+
+            hasPermission = true;
+            TraceUtil.trace3("User has FILESYSTEM_OPERATOR permission.");
+
             if (fsType == GenericFileSystem.FS_NONSAMQ) {
                 setUFSOptions(fs);
                 getParentViewBean().
@@ -311,6 +316,12 @@ public class FSDetailsView extends CommonTableContainerView {
             } else {
                 setSAMFSOptions((FileSystem) fs, is50orlater);
             }
+
+            // set the drop-down menu to default value
+            ((CCDropDownMenu) getChild("PageActionsMenu")).setValue("0");
+        } else {
+            // No permission, disable drop down menu for IE7
+            ((CCDropDownMenu) getChild("PageActionsMenu")).setDisabled(true);
         }
 
         // User "File System Details" as the title for UFS
@@ -329,9 +340,6 @@ public class FSDetailsView extends CommonTableContainerView {
 
         ((CCHiddenField) getChild(CHILD_HIDDEN_FS_NAME)).setValue(fsName);
 
-        // set the drop-down menu to default value
-        ((CCDropDownMenu) getChild("PageActionsMenu")).setValue("0");
-
         boolean growEnabled = false;
         int sharedStatus = ((FileSystem) fs).getShareStatus();
 
@@ -347,8 +355,8 @@ public class FSDetailsView extends CommonTableContainerView {
                 fs.getState() == FileSystem.UNMOUNTED &&
                 sharedStatus == FileSystem.UNSHARED;
         }
-        ((CCWizardWindow)
-                getChild("SamQFSWizardGrowFSButton")).setDisabled(!growEnabled);
+        ((CCWizardWindow) getChild("SamQFSWizardGrowFSButton")).
+            setDisabled(!growEnabled || !hasPermission);
 
         TraceUtil.trace3("Exiting");
     }
@@ -400,8 +408,6 @@ public class FSDetailsView extends CommonTableContainerView {
             // this is for shared fs
             noDeleteFlag = checkDeleteFlag(fs);
         }
-
-        ((CCButton) getChild("EditMountOptionsButton")).setDisabled(false);
 
         // calculate state info for dropdown menu options
 
@@ -458,7 +464,6 @@ public class FSDetailsView extends CommonTableContainerView {
 
         // disable view policy button if file system is HA
         ((CCButton) getChild("ViewPolicyButton")).setDisabled(fs.isHA());
-        ((CCButton) getChild("EditMountOptionsButton")).setDisabled(false);
 
         // calculate state info for dropdown menu options
         StringBuffer menuOptions = new StringBuffer();

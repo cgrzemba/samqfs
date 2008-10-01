@@ -27,14 +27,12 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FSDetailsPageTitle.xml,v 1.28 2008/07/03 00:04:28 ronaldso Exp $ -->
+<!-- $Id: FSDetailsPageTitle.xml,v 1.29 2008/10/01 22:43:31 ronaldso Exp $ -->
 
 <pagetitle >
     <pageactions>
         <cc name="ViewPolicyButton" 
             tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
-            <attribute name="dynamic" value="true" />
-            <attribute name="disabled" value="true" />
             <attribute name="defaultValue"
                 value="FSDetails.button.viewPolicy" />
         </cc>
@@ -47,8 +45,6 @@
 
         <cc name="EditMountOptionsButton"
             tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
-            <attribute name="dynamic" value="true" />
-            <attribute name="disabled" value="true" />
             <attribute name="defaultValue"
                 value="FSDetails.button.editMount" />
         </cc>

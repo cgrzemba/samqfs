@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointsView.java,v 1.18 2008/08/27 19:48:29 kilemba Exp $
+// ident	$Id: RecoveryPointsView.java,v 1.19 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -44,14 +44,11 @@ import com.sun.netstorage.samqfs.web.model.fs.RestoreDumpFile;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControl;
 import com.sun.netstorage.samqfs.web.util.Authorization;
-import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.CommonTableContainerView;
-import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
-import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
@@ -609,6 +606,12 @@ public class RecoveryPointsView extends CommonTableContainerView {
 
         // Set Data
         try {
+            // Check Permission
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.FILE_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
             SamQFSSystemFSManager fsMgr =
                 sysModel.getSamQFSSystemFSManager();

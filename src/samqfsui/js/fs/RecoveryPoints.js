@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: RecoveryPoints.js,v 1.11 2008/05/16 19:39:13 am143972 Exp $
+// ident    $Id: RecoveryPoints.js,v 1.12 2008/10/01 22:43:30 ronaldso Exp $
 
 /** 
  * This is the javascript file for Recovery Points Page
@@ -86,7 +86,6 @@
         var buttonDelete         = prefix + "deleteIndex";
         var buttonDeleteSnapshot = prefix + "deleteDump";
 
-        var formName      = "RecoveryPointsForm";
         var myForm        = document.RecoveryPointsForm;
 
         // checkbox or radioButton for row selection

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ImportVSNView.java,v 1.14 2008/05/16 18:38:56 am143972 Exp $
+// ident	$Id: ImportVSNView.java,v 1.15 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -41,10 +41,12 @@ import com.sun.netstorage.samqfs.mgmt.media.StkVSN;
 import com.sun.netstorage.samqfs.web.archive.MultiTableViewBase;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.media.Library;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 import com.sun.web.ui.common.CCPagelet;
@@ -345,6 +347,14 @@ public class ImportVSNView extends MultiTableViewBase
                 Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
 
         try {
+            // Check Permission
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.CONFIG) &&
+                !SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.MEDIA_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
             Library myLibrary =
                 sysModel.getSamQFSSystemMediaManager().

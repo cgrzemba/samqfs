@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: AdvancedNetworkConfigDisplayView.java,v 1.9 2008/05/16 18:38:53 am143972 Exp $
+// ident    $Id: AdvancedNetworkConfigDisplayView.java,v 1.10 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -43,7 +43,6 @@ import com.sun.netstorage.samqfs.web.model.SamQFSAppModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
-import com.sun.netstorage.samqfs.web.server.ServerCommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.CommonTableContainerView;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
@@ -189,17 +188,6 @@ public class AdvancedNetworkConfigDisplayView
         ((CCHiddenField) getChild(FS_NAME)).setValue(getFSName());
         ((CCHiddenField) getChild(MDS_NAME)).setValue(MDServerName);
 
-        TraceUtil.trace3("Exiting");
-    }
-
-    private void setSuccessAlert(String msg, String item) {
-        TraceUtil.trace3("Entering");
-        SamUtil.setInfoAlert(
-            getParentViewBean(),
-            ServerCommonViewBeanBase.CHILD_COMMON_ALERT,
-            "success.summary",
-            SamUtil.getResourceString(msg, item),
-            "");
         TraceUtil.trace3("Exiting");
     }
 

@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.10 2008/09/03 19:46:03 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.11 2008/10/01 22:43:31 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -70,6 +70,7 @@
                 text="#{samBundle['SharedFS.operation.addclients']}"
                 primary="true"
                 immediate="true"
+                disabled="#{!SharedFSBean.hasPermission}"
                 onClick="return launchAddClientsWizard(this);"/>
             <ui:button
                 id="ButtonViewPolicies"

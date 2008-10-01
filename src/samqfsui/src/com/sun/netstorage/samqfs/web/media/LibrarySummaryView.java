@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: LibrarySummaryView.java,v 1.54 2008/05/16 18:38:57 am143972 Exp $
+// ident	$Id: LibrarySummaryView.java,v 1.55 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -299,6 +299,11 @@ public class LibrarySummaryView extends CommonTableContainerView {
             SamUtil.getResourceString("library.driver.samst"))) {
             // Driver is SAMST
             try {
+                if (!SecurityManagerFactory.getSecurityManager().
+                    hasAuthorization(Authorization.MEDIA_OPERATOR)) {
+                    throw new SamFSException("common.nopermission");
+                }
+
                 Library myLibrary = MediaUtil.getLibraryObject(
                     getServerName(), getSelectedRowKey(0));
 
@@ -367,6 +372,12 @@ public class LibrarySummaryView extends CommonTableContainerView {
         }
 
         try {
+            // Check Permission
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.CONFIG)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             Library myLibrary = MediaUtil.getLibraryObject(
                 getServerName(), getSelectedRowKey(0));
             switch (value) {

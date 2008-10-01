@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RestorePopupViewBean.java,v 1.12 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: RestorePopupViewBean.java,v 1.13 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -58,8 +58,10 @@ import com.sun.netstorage.samqfs.web.model.job.BaseJob;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControl;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserModel;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.PropertySheetUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.web.ui.view.html.CCStaticTextField;
 import java.io.File;
 
@@ -278,6 +280,12 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
         RestoreFile restoreFile = null;
 
         try {
+            // Check Permission (IE7)
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.FILE_OPERATOR)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             SamQFSSystemFSManager fsManager =
                 SamUtil.getModel(serverName).getSamQFSSystemFSManager();
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: HistorianView.java,v 1.39 2008/05/16 18:38:56 am143972 Exp $
+// ident	$Id: HistorianView.java,v 1.40 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -95,7 +95,7 @@ public class HistorianView extends CommonTableContainerView {
 
         CHILD_ACTION_TABLE = "HistorianTable";
         LargeDataSet dataSet = new HistorianData(getServerName());
-        model = new HistorianModel(dataSet);
+        model = new HistorianModel(dataSet, hasConfigPermission());
 
         // initialize reservation wizard
         initializeWizard();
@@ -180,6 +180,11 @@ public class HistorianView extends CommonTableContainerView {
             }
 
             if (buttonName.equals("ExportButton")) {
+                // Check Permission
+                if (!(hasMediaOpPermission() || hasConfigPermission())) {
+                    throw new SamFSException("common.nopermission");
+                }
+
                 LogUtil.info(
                     this.getClass(),
                     "handleExportButtonRequest",
@@ -195,6 +200,10 @@ public class HistorianView extends CommonTableContainerView {
                         append(slotNum).toString());
                 setSuccessAlert("Historian.action.export", slotNum);
             } else if (buttonName.equals("UnreserveButton")) {
+                // Check Permission
+                if (!hasConfigPermission()) {
+                    throw new SamFSException("common.nopermission");
+                }
                 LogUtil.info(
                     this.getClass(),
                     "handleUnreserveButtonRequest",
@@ -444,18 +453,26 @@ public class HistorianView extends CommonTableContainerView {
     }
 
     private void checkRolePrivilege() {
-        if (SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.CONFIG)) {
+        if (hasConfigPermission()) {
             ((CCHiddenField) getChild(ROLE)).setValue("CONFIG");
             ((CCWizardWindow) getChild(
                 "SamQFSWizardReserveButton")).setDisabled(wizardLaunched);
-        } else if (SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.MEDIA_OPERATOR)) {
+        } else if (hasMediaOpPermission()) {
             ((CCHiddenField) getChild(ROLE)).setValue("MEDIA");
         } else {
             // disable the radio button row selection column
             model.setSelectionType(CCActionTableModelInterface.NONE);
         }
+    }
+
+    private boolean hasConfigPermission() {
+        return SecurityManagerFactory.getSecurityManager().
+            hasAuthorization(Authorization.CONFIG);
+    }
+
+    private boolean hasMediaOpPermission() {
+        return SecurityManagerFactory.getSecurityManager().
+            hasAuthorization(Authorization.CONFIG);
     }
 
     private String getServerName() {

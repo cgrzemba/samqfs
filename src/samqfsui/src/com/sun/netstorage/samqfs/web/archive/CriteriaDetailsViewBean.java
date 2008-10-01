@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CriteriaDetailsViewBean.java,v 1.22 2008/05/16 19:39:27 am143972 Exp $
+// ident	$Id: CriteriaDetailsViewBean.java,v 1.23 2008/10/01 22:43:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -739,7 +739,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
             hasAuthorization(Authorization.CONFIG)) {
 
             ((CCButton)getChild("Save")).setDisabled(true);
-            ((CCButton)getChild("Reset")).setDisabled(true);
         }
 
         // set delete confirmation messages
@@ -1016,55 +1015,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
         TraceUtil.trace3("Exiting");
     }
 
-    public void handleResetRequest(RequestInvocationEvent rie)
-        throws ServletException, IOException {
-        TraceUtil.trace3("Entering");
-
-        // server name
-        String serverName = getServerName();
-
-        try {
-            SamQFSSystemArchiveManager archiveManager =
-                SamUtil.getModel(serverName).getSamQFSSystemArchiveManager();
-
-            archiveManager.getAllArchivePolicies();
-        } catch (SamFSWarnings sfw) {
-            SamUtil.processException(sfw,
-                                     this.getClass(),
-                                     "handleResetRequest",
-                                     "Unable to reset policy criteria",
-                                    serverName);
-
-            SamUtil.setWarningAlert(this,
-                                    CHILD_COMMON_ALERT,
-                                    "ArchiveConfig.error",
-                                    "ArchiveConfig.warning.detail");
-        } catch (SamFSMultiMsgException sme) {
-            SamUtil.processException(sme,
-                                     this.getClass(),
-                                     "handleResetRequest",
-                                     "Unable to reset policy criteria",
-                                    serverName);
-
-            SamUtil.setErrorAlert(this,
-                                  CHILD_COMMON_ALERT,
-                                  "ArchiveConfig.error",
-                                  sme.getSAMerrno(),
-                                  "ArchiveConfig.error.detail",
-                                serverName);
-        } catch (SamFSException sfe) {
-            // process exception
-            SamUtil.processException(sfe,
-                                     this.getClass(),
-                                     "handleResetRequest",
-                                     "Unable to reset policy criteria",
-                                    serverName);
-        }
-
-        forwardTo(getRequestContext());
-        TraceUtil.trace3("Exiting");
-    }
-
     public void handleCancelRequest(RequestInvocationEvent rie)
         throws ServletException, IOException {
         TraceUtil.trace3("Entering");
@@ -1078,7 +1028,7 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
             SamUtil.processException(sfw,
                                      this.getClass(),
                                      "handleCancelRequest",
-                                     "Unable to reset policy criteria",
+                                     "Unable to cancel policy criteria",
                                     serverName);
 
             SamUtil.setWarningAlert(this,
@@ -1089,7 +1039,7 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
             SamUtil.processException(sme,
                                      this.getClass(),
                                      "handleCancelRequest",
-                                     "Unable to reset policy criteria",
+                                     "Unable to cancel policy criteria",
                                     serverName);
 
             SamUtil.setErrorAlert(this,
@@ -1103,7 +1053,7 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
             SamUtil.processException(sfe,
                                      this.getClass(),
                                      "handleCancelRequest",
-                                     "Unable to reset policy criteria",
+                                     "Unable to cancel policy criteria",
                                     serverName);
         }
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNsViewBean.java,v 1.29 2008/05/16 19:39:27 am143972 Exp $
+// ident	$Id: CopyVSNsViewBean.java,v 1.30 2008/10/01 22:43:31 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -47,6 +47,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.archive.ArchiveCopy;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.model.archive.ArchiveVSNMap;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
@@ -54,6 +55,7 @@ import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCBreadCrumbsModel;
 import com.sun.web.ui.model.CCPageTitleModel;
@@ -271,6 +273,13 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
     private void populateMediaTypeMenu(ArchiveVSNMap vsnMap)
         throws SamFSException {
         CCDropDownMenu menu = (CCDropDownMenu) getChild(MEDIA_TYPE);
+
+        // Check Permission
+        if (!SecurityManagerFactory.getSecurityManager().
+            hasAuthorization(Authorization.CONFIG)) {
+            menu.setDisabled(true);
+        }
+
         int mediaType = vsnMap.getArchiveMediaType();
 
         SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());

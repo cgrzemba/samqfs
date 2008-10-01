@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.12 2008/09/11 00:00:18 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.13 2008/10/01 22:43:31 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -83,9 +83,11 @@
             <f:subview id="actionsTop">
                 <ui:button id="buttonAdd"
                            text="#{samBundle['common.button.add']}"
+                           disabled="#{!SharedFSBean.hasPermission}"
                            onClick="return launchAddClientsWizard(this);"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
+                           disabled="#{!SharedFSBean.hasPermission}"
                            onClick="if (handleButtonRemove() == false) return false;"
                            actionListener="#{SharedFSBean.handleRemoveClient}"/>
                 <ui:dropDown
@@ -102,9 +104,11 @@
             <f:subview id="actionsBottom">
                 <ui:button id="buttonAdd"
                            text="#{samBundle['common.button.add']}"
+                           disabled="#{!SharedFSBean.hasPermission}"
                            onClick="return launchAddClientsWizard(this);"/>
                 <ui:button id="buttonRemove"
                            text="#{samBundle['common.button.remove']}"
+                           disabled="#{!SharedFSBean.hasPermission}"
                            onClick="if (handleButtonRemove() == false) return false;"
                            actionListener="#{SharedFSBean.handleRemoveClient}"/>
                 <ui:dropDown

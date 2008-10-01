@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaExpressionView.java,v 1.4 2008/05/16 18:38:51 am143972 Exp $
+// ident	$Id: MediaExpressionView.java,v 1.5 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -95,6 +95,7 @@ public class MediaExpressionView extends CommonTableContainerView {
 
     private CCActionTableModel model = null;
     private static final String BUTTON_ADD = "ButtonAdd";
+    private static final String BUTTON_DELETE = "ButtonDelete";
 
     // Maximum number of volumes shown in the matching volume column
     private static final int MAX_VOL_SHOWN = 5;
@@ -214,9 +215,9 @@ public class MediaExpressionView extends CommonTableContainerView {
 
     private boolean hasPermission() {
     	if (SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.MEDIA_OPERATOR)) {
+            hasAuthorization(Authorization.CONFIG)) {
             TraceUtil.trace2(
-                "User has " + Authorization.MEDIA_OPERATOR + " permission.");
+                "User has " + Authorization.CONFIG + " permission.");
             return true;
         } else {
             return false;
@@ -259,6 +260,7 @@ public class MediaExpressionView extends CommonTableContainerView {
         // settings here
         boolean permission = hasPermission();
         ((CCButton) getChild(BUTTON_ADD)).setDisabled(!permission);
+        ((CCButton) getChild(BUTTON_DELETE)).setDisabled(!permission);
         ((CCHiddenField) getChild(HAS_PERMISSION)).setValue(
             Boolean.toString(permission));
 

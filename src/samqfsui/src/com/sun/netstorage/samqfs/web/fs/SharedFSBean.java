@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.16 2008/09/11 00:00:18 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.17 2008/10/01 22:43:32 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -44,12 +44,14 @@ import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.model.SharedHostInfo;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.Select;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.component.DropDown;
@@ -68,6 +70,14 @@ public class SharedFSBean implements Serializable {
     /** Holds value of time loaded for each page. */
     protected String timeSummary = null;
     protected String timeClient = null;
+
+    /** Holds value if user has permission to perform operations. */
+    protected boolean hasPermission = false;
+    
+    // Flag to indicate that an error needs to be shown, say after calling
+    // an operation and fails, we do not want this alert to be reset by the
+    // getData() call when the page is refreshed
+    private boolean needToShowError = false;
 
     /** Holds value of tab set. */
     protected TabSet tabSet = null;
@@ -132,6 +142,10 @@ public class SharedFSBean implements Serializable {
         this.summaryBean = new SharedFSSummaryBean();
         this.clientBean = new SharedFSClientBean();
 
+        hasPermission =
+            SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.CONFIG);
+
         // Call to the backend for first time page display
         getSummaryData();
 
@@ -162,8 +176,9 @@ public class SharedFSBean implements Serializable {
 
                 summaryBean.populateSummary(infos, thisFS);
 
-                // no error found
-                this.alertRendered = false;
+                if (!needToShowError) {
+                    this.alertRendered = false;
+                }
 
             } catch (SamFSException sfe) {
                 TraceUtil.trace1("SamFSException caught!", sfe);
@@ -180,6 +195,7 @@ public class SharedFSBean implements Serializable {
                         "SharedFS.message.populate.summary.failed"),
                     sfe.getMessage());
             }
+            needToShowError = false;
         }
     }
 
@@ -212,8 +228,9 @@ public class SharedFSBean implements Serializable {
                 clientBean.populate(infos, showArchive, filters);
                 timeClient = Long.toString(System.currentTimeMillis());
 
-                // no error found
-                this.alertRendered = false;
+                if (!needToShowError) {
+                    this.alertRendered = false;
+                }
 
             } catch (SamFSException sfe) {
                 TraceUtil.trace1("SamFSException caught!", sfe);
@@ -231,7 +248,18 @@ public class SharedFSBean implements Serializable {
                             "SharedFS.message.populate.client.failed"),
                     sfe.getMessage());
             }
+            needToShowError = false;
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Permission
+    public boolean isHasPermission() {
+        return hasPermission;
+    }
+
+    public void setHasPermission(boolean hasPermission) {
+        this.hasPermission = hasPermission;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -317,6 +345,9 @@ public class SharedFSBean implements Serializable {
     }
 
     public void setAlertInfo(String type, String summary, String detail) {
+        if (!Constants.Alert.INFO.equals(type)) {
+            needToShowError = true;
+        }
         alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
@@ -567,6 +598,11 @@ public class SharedFSBean implements Serializable {
 
     private void executeCommand(boolean mount){
         try {
+            // Check if user has permission to perform this operation
+            if (!hasPermission) {
+                throw new SamFSException("common.nopermission");
+            }
+
             FileSystem thisFS = getFileSystem();
 
             if (mount) {
@@ -586,7 +622,7 @@ public class SharedFSBean implements Serializable {
                     this.getClass(),
                     "executeCommand",
                     "Start un-mounting shared fs: " + thisFS.getName());
-
+                // TODO: Check if any clients are mounted
                 thisFS.unmount();
 
                 LogUtil.info(
@@ -609,7 +645,7 @@ public class SharedFSBean implements Serializable {
             SamUtil.processException(
                 samEx,
                 this.getClass(),
-                "getSummaryData",
+                "executeCommand",
                 samEx.getMessage(),
                 JSFUtil.getServerName());
             setAlertInfo(
@@ -857,10 +893,18 @@ public class SharedFSBean implements Serializable {
         String message = "", errorMessage = "";
 
         try {
+System.out.println("Entering handleTableMenuSelection!");
+
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
             // mount
             if (clientBean.menuOptions[1][1].equals(selected)) {
+                message = "SharedFS.message.mountclients.ok";
+                errorMessage = "SharedFS.message.mountclients.failed";
+                if (!hasPermission) {
+System.out.println("No permission!");
+                   throw new SamFSException("common.nopermission");
+                }
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -878,11 +922,14 @@ public class SharedFSBean implements Serializable {
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                message = "SharedFS.message.mountclients.ok";
-                errorMessage = "SharedFS.message.mountclients.failed";
-
             // unmount
             } else if (clientBean.menuOptions[2][1].equals(selected)) {
+                message = "SharedFS.message.unmountclients.ok";
+                errorMessage = "SharedFS.message.unmountclients.failed";
+                if (!hasPermission) {
+System.out.println("No permission!");
+                   throw new SamFSException("common.nopermission");
+                }
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -900,11 +947,14 @@ public class SharedFSBean implements Serializable {
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                message = "SharedFS.message.unmountclients.ok";
-                errorMessage = "SharedFS.message.unmountclients.failed";
-
             // Enable Access
             } else if (clientBean.menuOptions[3][1].equals(selected)) {
+                message = "SharedFS.message.enableclients.ok";
+                errorMessage = "SharedFS.message.enableclients.failed";
+                if (!hasPermission) {
+System.out.println("No permission!");
+                   throw new SamFSException("common.nopermission");
+                }
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -923,10 +973,14 @@ public class SharedFSBean implements Serializable {
                     getFSName() + " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                message = "SharedFS.message.enableclients.ok";
-                errorMessage = "SharedFS.message.enableclients.failed";
             // Disable Access
             } else if (clientBean.menuOptions[4][1].equals(selected)) {
+                message = "SharedFS.message.disableclients.ok";
+                errorMessage = "SharedFS.message.disableclients.failed";
+                if (!hasPermission) {
+System.out.println("No permission!");
+                   throw new SamFSException("common.nopermission");
+                }
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -945,8 +999,6 @@ public class SharedFSBean implements Serializable {
                     getFSName() + " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                message = "SharedFS.message.disableclients.ok";
-                errorMessage = "SharedFS.message.disableclients.failed";
             } else {
                 // Should never happen!
                 TraceUtil.trace1("Client Bean: Unknown operation: " + selected);
@@ -959,6 +1011,7 @@ public class SharedFSBean implements Serializable {
                     ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
         } catch (SamFSException samEx) {
+System.out.println("Exception caught! " + samEx.getMessage());
             TraceUtil.trace1("SamFSException caught!", samEx);
             LogUtil.error(this, samEx);
             SamUtil.processException(

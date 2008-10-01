@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: LibraryFaultsSummaryView.java,v 1.26 2008/05/16 18:38:56 am143972 Exp $
+// ident	$Id: LibraryFaultsSummaryView.java,v 1.27 2008/10/01 22:43:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -72,7 +72,6 @@ public class LibraryFaultsSummaryView extends CommonTableContainerView {
     private ArrayList updatedModelIndex = new ArrayList();
     private LibraryFaultsSummaryModel model = null;
     private String showType = null;
-    private String selectedFault = null;
 
     /**
      * Construct an instance with the specified properties.
@@ -258,6 +257,11 @@ public class LibraryFaultsSummaryView extends CommonTableContainerView {
         long alarmIndex = -1;
 
         try {
+            if (!SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.SAM_CONTROL)) {
+                throw new SamFSException("common.nopermission");
+            }
+
             for (int k = 0; k < selectedRows.length; k++) {
                 int row = selectedRows[k].intValue();
                 alarmModel.setRowIndex(row);
@@ -275,35 +279,35 @@ public class LibraryFaultsSummaryView extends CommonTableContainerView {
                 buffer.append(alarmIndex);
             }
 
-                // Set Acknowledge of each selected alarms
-                SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
+            // Set Acknowledge of each selected alarms
+            SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());
 
-                switch (buttonID) {
-                    case 0:
-                        op = "LibraryFaultsSummary.action.acknowledge";
-                        LogUtil.info(this.getClass(), idString,
-                            new NonSyncStringBuffer(
-                            "Start acknowledging the alarm").append(alarmIndex).
-                            toString());
-                        sysModel.getSamQFSSystemAlarmManager().
-                            acknowledgeAlarm(alarmIndexes);
-                        LogUtil.info(this.getClass(), idString,
-                            "Done acknowledging the alarm");
+            switch (buttonID) {
+                case 0:
+                    op = "LibraryFaultsSummary.action.acknowledge";
+                    LogUtil.info(this.getClass(), idString,
+                        new NonSyncStringBuffer(
+                        "Start acknowledging the alarm").append(alarmIndex).
+                        toString());
+                    sysModel.getSamQFSSystemAlarmManager().
+                        acknowledgeAlarm(alarmIndexes);
+                    LogUtil.info(this.getClass(), idString,
+                        "Done acknowledging the alarm");
+                    break;
+
+                case 1:
+                    op = "LibraryFaultsSummary.action.delete";
+                    LogUtil.info(this.getClass(), idString,
+                        new NonSyncStringBuffer(
+                        "Start deleting alarm ID ").append(alarmIndex).
+                        toString());
+                    sysModel.getSamQFSSystemAlarmManager().
+                        deleteAlarm(alarmIndexes);
+                    LogUtil.info(this.getClass(), idString,
+                        new NonSyncStringBuffer("Done deleting the alarm ").
+                        append(alarmIndex).toString());
                         break;
-
-                    case 1:
-                        op = "LibraryFaultsSummary.action.delete";
-                        LogUtil.info(this.getClass(), idString,
-                            new NonSyncStringBuffer(
-                            "Start deleting alarm ID ").append(alarmIndex).
-                            toString());
-                        sysModel.getSamQFSSystemAlarmManager().
-                            deleteAlarm(alarmIndexes);
-                        LogUtil.info(this.getClass(), idString,
-                            new NonSyncStringBuffer("Done deleting the alarm ").
-                            append(alarmIndex).toString());
-                            break;
-                }
+            }
         } catch (SamFSException ex) {
             hasError = true;
             String errString = (buttonID == 0) ?
