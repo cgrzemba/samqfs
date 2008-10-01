@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -930,14 +930,14 @@ IsClusterNodeUp(char *nodename)
 		if ((stat("/var/run/scrpc", &statbuf) < 0) &&
 		    (stat("/var/run/rgmd_receptionist_door", &statbuf) < 0)) {
 			Trace(TR_MISC,
-			    "FS %s: Not cluster or RGM unstarted\n",
+			    "FS %s: Not cluster or RGM unstarted",
 			    Host.fs.fi_name);
 			return (-1);
 		}
 		/* We have not checked if we are a cluster */
 		if ((clfp = popen("/usr/sbin/clinfo", "w")) == NULL) {
 			Trace(TR_MISC,
-			    "FS %s: Not in cluster, clinfo not avail\n",
+			    "FS %s: Not in cluster, clinfo not avail",
 			    Host.fs.fi_name);
 			return (-1);
 		}
@@ -957,7 +957,7 @@ IsClusterNodeUp(char *nodename)
 		if (dlptr == NULL) {
 			Trace(TR_MISC,
 			    "FS %s: SunCluster API Library not found "
-			    "(not a suncluster node?): %s\n",
+			    "(not a suncluster node?): %s",
 			    Host.fs.fi_name, strerror(errno));
 			return (-1);
 		}
@@ -967,7 +967,7 @@ IsClusterNodeUp(char *nodename)
 		if (d_cl_open == NULL) {
 			/* This should not happen */
 			Trace(TR_MISC, "FS %s: Unable to resolve "
-			    "scha_cluster_open\n",
+			    "scha_cluster_open",
 			    Host.fs.fi_name);
 			return (-1);
 		}
@@ -977,7 +977,7 @@ IsClusterNodeUp(char *nodename)
 		if (d_cl_get == NULL) {
 			/* This should not happen */
 			Trace(TR_MISC, "FS %s: Unable to resolve "
-			    "scha_cluster_get\n",
+			    "scha_cluster_get",
 			    Host.fs.fi_name);
 			return (-1);
 		}
@@ -987,7 +987,7 @@ IsClusterNodeUp(char *nodename)
 		if (d_cl_err == NULL) {
 			/* This should not happen */
 			Trace(TR_MISC, "FS %s: Unable to resolve "
-			    "scha_strerror\n",
+			    "scha_strerror",
 			    Host.fs.fi_name);
 			return (-1);
 		}
@@ -996,7 +996,7 @@ IsClusterNodeUp(char *nodename)
 	if (cl == NULL) {
 		if ((e = d_cl_open(&cl)) != SCHA_ERR_NOERR) {
 			Trace(TR_MISC, "FS %s: Failed to open cluster "
-			    "handle: %s\n",
+			    "handle: %s",
 			    Host.fs.fi_name, d_cl_err(e));
 			cl = NULL;
 			return (-1);
@@ -1004,7 +1004,7 @@ IsClusterNodeUp(char *nodename)
 	}
 	if ((e = d_cl_get(cl, SCHA_NODESTATE_NODE, nodename,
 	    &nstate)) != SCHA_ERR_NOERR) {
-		Trace(TR_MISC, "FS %s: Get status of node %s failed: %s\n",
+		Trace(TR_MISC, "FS %s: Get status of node %s failed: %s",
 		    Host.fs.fi_name, nodename, d_cl_err(e));
 		return (-1);
 	}

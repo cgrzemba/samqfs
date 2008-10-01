@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.62 $"
+#pragma ident "$Revision: 1.63 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -673,7 +673,6 @@ ipSockAddrCmp(void *ipp, int iplen, void *clip, int clilen)
  *
  */
 
-static int hostGen = 0;
 static struct cache_ent *cacheAddrs = NULL;
 
 static int
@@ -698,19 +697,10 @@ samHostsValidateIpAddr(
 		return (-1);
 	}
 
-	if (ht->gen != hostGen) {
-		if (hostGen != 0) {
-			errno = 0;
-			free(htab);
-			SysError(HERE, "FS %s: stale host table information "
-			    "(%d/%d)\n",
-			    Host.fs.fi_name, ht->gen, hostGen);
-			return (-1);
-		}
-		hostGen = ht->gen;
+	if (cacheAddrs == NULL) {
 		cacheAddrs = (struct cache_ent *)
 		    malloc(ht->count * sizeof (*cacheAddrs));
-		if (!cacheAddrs) {
+		if (cacheAddrs == NULL) {
 			errno = 0;
 			free(htab);
 			SysError(HERE, "cannot alloc space for IP addr "

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -878,21 +878,7 @@ ValidateFs(
 
 
 /*
- * External version of the above.  We're called with a U_
- * flag (U_TIMER, U_EVENT), and take action
- * accordingly.
- *
- * U_EVENT		something has happened, and we want to
- *				update our config information.  if something
- *				in the config has changed, however, we
- *				will need to exit and restart.
- *
- * U_TIMER		the ten-second timer expired, and we
- *				should either do nothing (if a client)
- *				or check the configuration (if we're
- *				the metadata server).  The client is
- *				mostly driven by the server exiting
- *				(i.e., closing the client's connexion).
+ * Update config information and swap config pointers.
  */
 void
 DoUpdate(char *fs)
@@ -1053,4 +1039,19 @@ out:
 			exit(EXIT_NORESTART);		/* fer shure */
 		}
 	}
+
+#ifdef METADATA_SERVER
+	/*
+	 * If we're the server, and the generation number of the host
+	 * file changed, update the label block generation number also
+	 * to keep it up to date.  (putLabel() updates gen number)
+	 */
+	if (!ShutdownDaemon && ServerHost && status >= 0) {
+		if (cfp->ht->info.ht.gen != nfp->ht->info.ht.gen) {
+			putLabel(fs, nfp);
+		}
+	}
+#endif /* METADATA_SERVER */
+
+	swapConfig(fs);
 }

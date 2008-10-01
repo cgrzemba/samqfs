@@ -34,7 +34,7 @@
 #ifndef SHAREFS_H
 #define	SHAREFS_H
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 #include "sam/custmsg.h"
 #include "sam/sam_trace.h"
@@ -145,11 +145,5 @@ void DeCommaStrFree(char **);		/* free list from DeCommaStr  */
 #define	CFG_CLIENT	(0)	/* definitely a client */
 #define	CFG_ERROR	(-1)	/* problem */
 #define	CFG_FATAL	(-2)	/* definitely a prob; exit w/o restart */
-
-/*
- * Action codes for UpdateConfig
- */
-#define	U_TIMER		1
-#define	U_EVENT		2
 
 #endif /* SHAREFS_H */
