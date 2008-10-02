@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.17 2008/10/01 22:43:32 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.18 2008/10/02 03:00:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -81,6 +81,8 @@ public class SharedFSBean implements Serializable {
 
     /** Holds value of tab set. */
     protected TabSet tabSet = null;
+    /** Holds value of summary page title. */
+    protected String summaryPageTitle = null;
     /** Holds value of property jumpMenuSelectedOption. */
     protected String jumpMenuSelectedOption = null;
     /** Holds value of the file system type text. */
@@ -92,8 +94,6 @@ public class SharedFSBean implements Serializable {
     protected String textCapacity = null;
     /** Holds value of the file system high water mark. */
     protected String textHWM = null;
-    /** Holds value of the file system archiving status. */
-    protected String textArchiving = null;
     /** Holds value of the page title of clients section. */
     protected String titleClients = null;
     /** Holds value of the client table row group. */
@@ -280,6 +280,15 @@ public class SharedFSBean implements Serializable {
         this.timeClient = timeClient;
     }
 
+    public String getSummaryPageTitle() {
+        summaryPageTitle = JSFUtil.getMessage("SharedFS.title", getFSName());
+        return summaryPageTitle;
+    }
+
+    public void setSummaryPageTitle(String summaryPageTitle) {
+        this.summaryPageTitle = summaryPageTitle;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Tab Set
     public TabSet getTabSet() {
@@ -351,7 +360,7 @@ public class SharedFSBean implements Serializable {
         alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
-        this.alertDetail = detail;
+        this.alertDetail = JSFUtil.getMessage(detail);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -436,14 +445,6 @@ public class SharedFSBean implements Serializable {
 
     ////////////////////////////////////////////////////////////////////////////
     // Property Sheet Section ONE
-
-    public String getTextArchiving() {
-        return summaryBean.getTextArchiving();
-    }
-
-    public void setTextArchiving(String textArchiving) {
-        this.textArchiving = textArchiving;
-    }
 
     public String getTextHWM() {
         return summaryBean.getTextHWM();
@@ -912,9 +913,9 @@ System.out.println("No permission!");
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                sharedFSManager.mountClients(
+                int jobId = sharedFSManager.mountClients(
                     JSFUtil.getServerName(), getFSName(), selectedClients);
-
+System.out.println("Mounting Clients Job ID: " + jobId);
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -937,9 +938,9 @@ System.out.println("No permission!");
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                sharedFSManager.unmountClients(
+                int jobId = sharedFSManager.unmountClients(
                     JSFUtil.getServerName(), getFSName(), selectedClients);
-
+System.out.println("Unounting Clients Job ID: " + jobId);
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",

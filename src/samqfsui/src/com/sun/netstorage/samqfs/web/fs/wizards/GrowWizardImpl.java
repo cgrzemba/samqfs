@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: GrowWizardImpl.java,v 1.43 2008/09/10 17:40:24 ronaldso Exp $
+// ident	$Id: GrowWizardImpl.java,v 1.44 2008/10/02 03:00:25 ronaldso Exp $
 
 
 // Possible Steps:
@@ -1167,19 +1167,21 @@ public class GrowWizardImpl extends SamWizardImpl {
 
         wizardModel.setValue(
             CreateFSWizardImpl.POPUP_ARCHIVING,
-            Boolean.toString(myFS.getArchivingType() == FileSystem.ARCHIVING));
+            new Boolean(myFS.getArchivingType() == FileSystem.ARCHIVING));
+        
+        // We want to set POPUP_SHARED "sharedEnabled" to "false" because we do
+        // not want the AllocatableDevices to be casted into SharedDiskCache [].
         wizardModel.setValue(
-            CreateFSWizardImpl.POPUP_SHARED,
-            Boolean.toString(
-                myFS.getShareStatus() == FileSystem.SHARED_TYPE_MDS));
+            CreateFSWizardImpl.POPUP_SHARED, new Boolean(false));
+
         wizardModel.setValue(
-            CreateFSWizardImpl.POPUP_HAFS, Boolean.toString(false));
+            CreateFSWizardImpl.POPUP_HAFS, new Boolean(false));
         wizardModel.setValue(
             CreateFSWizardImpl.POPUP_HPC,
-            Boolean.toString(myFS.isMbFS()));
+            new Boolean(myFS.isMbFS()));
         wizardModel.setValue(
             CreateFSWizardImpl.POPUP_MATFS,
-            Boolean.toString(myFS.isMatFS()));
+            new Boolean(myFS.isMatFS()));
 
         ////////////////////////////////////////////////////////////////////////
 

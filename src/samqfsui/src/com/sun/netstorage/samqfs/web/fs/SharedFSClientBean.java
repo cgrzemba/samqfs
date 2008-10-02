@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.8 2008/09/11 00:00:18 ronaldso Exp $
+// ident        $Id: SharedFSClientBean.java,v 1.9 2008/10/02 03:00:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -86,7 +86,7 @@ public class SharedFSClientBean {
                     JSFUtil.getServerName());
             } else if (i == 1){
                 // Back to Shared FS Summary
-                links[i].setText(JSFUtil.getMessage("SharedFS.title"));
+                links[i].setText(JSFUtil.getMessage("SharedFS.pagetitle"));
                 links[i].setUrl(
                     "SharedFSSummary.jsp?" +
                      Constants.PageSessionAttributes.SAMFS_SERVER_NAME + "=" +

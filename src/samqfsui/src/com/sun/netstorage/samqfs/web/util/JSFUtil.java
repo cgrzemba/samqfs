@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.9 2008/09/11 00:00:19 ronaldso Exp $
+// ident	$Id: JSFUtil.java,v 1.10 2008/10/02 03:00:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -176,14 +176,21 @@ public class JSFUtil {
 
         // try to resolve the given key.
         String message = null;
+System.out.println("POINT A");
         try {
             message = bundle.getString(key);
+System.out.println("POINT B");            
         } catch (MissingResourceException mre) {
+System.out.println("POINT C");           
             TraceUtil.trace1("Missing Resource Exception caught! key: " + key);
             LogUtil.error("Missing Resource Exception caught! key: " + key);
             return key;
+        } catch (NullPointerException nullEx) {
+System.out.println("POINT D");
+            // code falls into this case if the key is not found
+            return key;
         }
-
+System.out.println("POINT E");
         return formatMessage((message != null ? message : key), arg);
     }
 
@@ -197,10 +204,11 @@ public class JSFUtil {
                 MessageFormat messageFormat = new MessageFormat(msg);
                 formattedMessage = messageFormat.format(arg);
             } catch (NullPointerException npe) {
+System.out.println("POINT F");
                 // TODO: log this
             }
         }
-
+System.out.println("POINT G: " + formattedMessage + "," + msg);
         return formattedMessage == null ? msg : formattedMessage;
     }
 

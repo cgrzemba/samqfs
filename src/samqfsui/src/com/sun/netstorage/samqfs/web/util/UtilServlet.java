@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: UtilServlet.java,v 1.13 2008/09/11 00:00:19 ronaldso Exp $
+// ident	$Id: UtilServlet.java,v 1.14 2008/10/02 03:00:27 ronaldso Exp $
 
 
 package com.sun.netstorage.samqfs.web.util;
@@ -97,10 +97,10 @@ public class UtilServlet extends AppServletBase {
                 if (in != null) {
                     while ((hostName = in.readLine()) != null) {
                         if (SamQFSUtil.isValidString(hostName)) {
-                                hostModelMap.put(
+                            hostModelMap.put(
                                 hostName,
                                 new SamQFSSystemModelImpl(hostName));
-                            }
+                        }
                     } // end while
                 } // end if
                 in.close();

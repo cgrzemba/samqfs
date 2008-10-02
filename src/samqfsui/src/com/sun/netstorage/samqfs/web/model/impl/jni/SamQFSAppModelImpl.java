@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSAppModelImpl.java,v 1.31 2008/08/06 17:41:50 ronaldso Exp $
+// ident	$Id: SamQFSAppModelImpl.java,v 1.32 2008/10/02 03:00:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -172,36 +172,11 @@ public class SamQFSAppModelImpl extends DefaultModel
 
         HashMap map = getHostModelMap();
         if (inetHostName != null) {
-            SamQFSSystemModel sysModel =
-                (SamQFSSystemModel) map.get(inetHostName);
-
-            // If the host exists in the map and it is a storage node,
-            // * writeToFile == true, write the host to the host file and
-            //   flip the sysModel isStorageNode bit to false.
-            // * writeToFile == false, nothing change, no exception is thrown
-            // ---------------------------------------------------------------
-            // If the host exists in the map and it is a server,
-            // * writeToFile == true, server is in host file already, throw
-            //   exception
-            // * writeToFile == false, server is in host file already, no need
-            //   to change the isStorageNode bit at all.
-            TraceUtil.trace3("sysModel sn: " + sysModel.isStorageNode() +
-                             " write: " + writeToFile);
-            if (sysModel.isStorageNode()) {
-                if (writeToFile) {
-                    rewriteHostFile(null, host);
-                }
-                map.remove(inetHostName);
-                map.put(
-                    inetHostName,
-                    new SamQFSSystemModelImpl(inetHostName, !writeToFile));
-            } else{
-                if (writeToFile) {
-                    throw new SamFSException("logic.existingHost");
-                }
+            if (writeToFile) {
+                throw new SamFSException("logic.existingHost");
             }
         } else {
-            map.put(host, new SamQFSSystemModelImpl(host, !writeToFile));
+            map.put(host, new SamQFSSystemModelImpl(host));
             if (writeToFile) {
                 rewriteHostFile(null, host);
             }
@@ -262,12 +237,26 @@ public class SamQFSAppModelImpl extends DefaultModel
     }
 
     public void updateDownServers() {
-        HashMap map = getHostModelMap();
+        TraceUtil.trace2("Entering updateDownServers!!!");
 
+        HashMap map = getHostModelMap();
         SamQFSSystemModel[] models = getAllSamQFSSystemModels();
         if ((models != null) && (models.length > 0)) {
             for (int i = 0; i < models.length; i++) {
-                if (!models[i].isStorageNode() && models[i].isDown()) {
+                // reconnect to servers
+                try {
+                    models[i].reconnect();
+                } catch (SamFSException samEx) {
+                    samEx.printStackTrace();
+                    TraceUtil.trace1(
+                        "Exception caught while reconnecting to server " +
+                        models[i].getHostname(), samEx);
+                }
+
+                if (models[i].isDown()) {
+                    TraceUtil.trace2(
+                        "Model is down! " + models[i].getHostname());
+
                     String hostname = models[i].getHostname();
                     SamQFSUtil.doPrint(hostname + " was down!");
                     map.remove(hostname);
@@ -276,6 +265,8 @@ public class SamQFSAppModelImpl extends DefaultModel
             }
         }
 
+        // update map in session
+        saveToHostModelMap(map);
     }
 
     public String toString() {
@@ -303,6 +294,8 @@ public class SamQFSAppModelImpl extends DefaultModel
     }
 
     public void cleanup() {
+        TraceUtil.trace2("Clean up connections appModel!");
+
         SamQFSSystemModel[] models = getAllSamQFSSystemModels();
         if (models != null) {
             for (int i = 0; i < models.length; i++) {

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: ServerSelectionView.java,v 1.39 2008/08/06 17:41:51 ronaldso Exp $
+// ident    $Id: ServerSelectionView.java,v 1.40 2008/10/02 03:00:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
@@ -292,11 +292,6 @@ public class ServerSelectionView extends MultiTableViewBase {
 
         int numOfServers = 0;
         for (int i = 0; i < allSystemModel.length; i++) {
-            // Skip all storage node entries
-            if (allSystemModel[i].isStorageNode()) {
-                continue;
-            }
-
             // append new row
             if (numOfServers > 0) {
                 model.appendRow();
@@ -305,10 +300,6 @@ public class ServerSelectionView extends MultiTableViewBase {
             try {
                 hostName = allSystemModel[i].getHostname();
                 model.setValue("NameText", hostName);
-
-                // VERSION check 4.5+ ONLY (Cluster)
-                // String samfsServerAPIVersion =
-                //    allSystemModel[i].getServerAPIVersion();
 
                 if (allSystemModel[i].isClusterNode()) {
                     model.setValue(

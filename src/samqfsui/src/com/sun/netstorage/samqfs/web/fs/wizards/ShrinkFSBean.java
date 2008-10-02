@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.6 2008/09/10 17:40:25 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.7 2008/10/02 03:00:25 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -44,10 +44,12 @@ import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.ShrinkOption;
 import com.sun.netstorage.samqfs.web.model.impl.jni.media.StripedGroupImpl;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
+import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.Select;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.component.TableRowGroup;
@@ -714,11 +716,16 @@ System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
     }
 
     public void setAlertInfo(String type, String summary, String detail) {
+System.out.println("Entering setAlertInfo()");
+System.out.println("type:" + type + ",summary:" + summary + ",detail:" + detail);
         alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
-        this.alertDetail = detail;
+System.out.println("summary: " + summary);
+        this.alertDetail = JSFUtil.getMessage(detail);
+System.out.println("AFTER JSFUTIL!!");
     }
+
 
     public void clearAlertInfo() {
         alertRendered = false;
@@ -824,7 +831,8 @@ System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
     class ShrinkFSWizardEventListener implements WizardEventListener {
 
         public boolean handleEvent(WizardEvent event) {
-System.out.println("handleEvent called! " + event.getEvent());
+            TraceUtil.trace3("handleEvent called! " + event.getEvent());
+
             switch (event.getEvent()) {
                 case WizardEvent.START:
                 case WizardEvent.COMPLETE:
@@ -869,7 +877,7 @@ System.out.println("handleEvent called! " + event.getEvent());
         private boolean handleNextButton(WizardEvent event) {
             WizardStep step = event.getStep();
             String id = step.getId();
-System.out.println("NEXT: ID is " + id);
+
             if (STEP_SELECT_STORAGE.equals(id)) {
                 return handleSelectStorage(event);
             } else if (STEP_METHOD.equals(id)) {
@@ -888,8 +896,14 @@ System.out.println("NEXT: ID is " + id);
             String messageSummary = null;
             String messageDetails = null;
             FileSystem myFS = null;
-System.out.println("selectedStripedGroup: " + selectedStripedGroup);
+
             try {
+                // Check permission
+                if (!SecurityManagerFactory.getSecurityManager().
+                    hasAuthorization(Authorization.CONFIG)) {
+                    throw new SamFSException("common.nopermission");
+                }
+
                 myFS = getFileSystem();
 
                 ShrinkOption options =
@@ -967,13 +981,14 @@ System.out.println("selectedStripedGroup: " + selectedStripedGroup);
                     Constants.Alert.INFO, messageSummary, messageDetails);
 
             } catch (SamFSException samEx) {
-samEx.printStackTrace();
+System.out.println("EXCEPTIONCAUGHT!");
                 setAlertInfo(
                     Constants.Alert.ERROR,
                     JSFUtil.getMessage(
                         "fs.shrink.failed",
                         myFS.getName()),
                     samEx.getMessage());
+System.out.println("HERE2");
             }
             return true;
         }

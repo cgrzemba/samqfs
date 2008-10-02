@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModelImpl.java,v 1.100 2008/09/04 19:30:35 kilemba Exp $
+// ident	$Id: SamQFSSystemModelImpl.java,v 1.101 2008/10/02 03:00:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -104,14 +104,6 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
     private SamQFSSystemAdminManager adminManager = null;
 
     private String scVersion = "N/A", scName = "N/A";
-
-    private boolean storageNode = false;
-
-    public SamQFSSystemModelImpl(String hostname, boolean storageNode) {
-
-        this(hostname);
-        this.storageNode = storageNode;
-    }
 
     public SamQFSSystemModelImpl(String hostname) {
 
@@ -755,14 +747,5 @@ public class SamQFSSystemModelImpl implements SamQFSSystemModel {
          }
 
          return found;
-    }
-
-    /**
-     * @since 5.0
-     * @return boolean - true if the server is a storage node server that is not
-     * meant to be managed as a full blown SAM-QFS server.
-     */
-    public boolean isStorageNode() {
-        return storageNode;
     }
 }

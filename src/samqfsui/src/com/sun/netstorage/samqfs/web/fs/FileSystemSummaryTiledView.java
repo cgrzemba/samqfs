@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryTiledView.java,v 1.36 2008/07/08 21:40:32 ronaldso Exp $
+// ident	$Id: FileSystemSummaryTiledView.java,v 1.37 2008/10/02 03:00:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -231,8 +231,7 @@ public class FileSystemSummaryTiledView extends RequestHandlingTiledViewBase {
         } else if ((fsType == FileSystem.FS_SAM ||
                     fsType == FileSystem.FS_QFS ||
                     fsType == FileSystem.FS_SAMQFS) &&
-                   (sharedStatus == FileSystem.SHARED_TYPE_MDS ||
-                    sharedStatus == FileSystem.SHARED_TYPE_PMDS)) {
+                    sharedStatus == FileSystem.SHARED_TYPE_MDS) {
             target = SharedFSDetailsViewBean.class;
         } else {
             target = FSDetailsViewBean.class;

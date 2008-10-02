@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameNavigatorViewBean.java,v 1.27 2008/08/06 17:41:51 ronaldso Exp $
+// ident	$Id: FrameNavigatorViewBean.java,v 1.28 2008/10/02 03:00:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -402,15 +402,11 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
         }
 
         StringBuffer serverBuf = new StringBuffer();
-        // Filter out the servers that are storage nodes, not meant to be
-        // managable by the GUI
         for (int i = 0; i < allSystemModel.length; i++) {
-            if (!allSystemModel[i].isStorageNode()) {
-                if (serverBuf.length() > 0) {
-                    serverBuf.append("###");
-                }
-                serverBuf.append(allSystemModel[i].getHostname());
+            if (serverBuf.length() > 0) {
+                serverBuf.append("###");
             }
+            serverBuf.append(allSystemModel[i].getHostname());
         }
         String [] serverArray = serverBuf.toString().split("###");
         return new OptionList(serverArray, serverArray);

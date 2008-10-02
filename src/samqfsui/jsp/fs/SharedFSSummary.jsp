@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSSummary.jsp,v 1.11 2008/10/01 22:43:31 ronaldso Exp $ -->
+<!-- $Id: SharedFSSummary.jsp,v 1.12 2008/10/02 03:00:24 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -43,7 +43,7 @@
 
 <ui:page id="page">
 <ui:html id="html">
-<ui:head id="head" title="#{samBundle['SharedFS.title']}">
+<ui:head id="head" title="#{samBundle['SharedFS.pagetitle']}">
     <ui:script url="/js/popuphelper.js"/>
     <ui:script url="/js/fs/SharedFS.js"/>
 </ui:head>
@@ -62,7 +62,7 @@
               detail="#{SharedFSBean.alertDetail}"/>
     <ui:contentPageTitle
         id="pageTitle"
-        title="#{samBundle['SharedFS.title']}">
+        title="#{SharedFSBean.summaryPageTitle}">
     <f:facet name="pageActions">
         <ui:panelGroup id="pageActionsGroup">
             <ui:button
@@ -137,15 +137,6 @@
         rendered="#{SharedFSBean.showArchive}"
         overlapLabel="false">
     <ui:staticText id="textHWM" text="#{SharedFSBean.textHWM}" />
-    </ui:property>
-    <ui:property
-        id="propertyTextArchiving"
-        labelAlign="left"
-        label="#{samBundle['SharedFS.label.archiving']}"
-        noWrap="true"
-        rendered="#{SharedFSBean.showArchive}"
-        overlapLabel="false">
-    <ui:staticText id="textArchiving" text="#{SharedFSBean.textArchiving}" />
     </ui:property>
     <ui:markup tag="br" singleton="true"/>
     </ui:propertySheetSection>

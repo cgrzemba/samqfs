@@ -27,12 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SecurityManagerFactory.java,v 1.6 2008/05/16 18:39:07 am143972 Exp $
+// ident	$Id: SecurityManagerFactory.java,v 1.7 2008/10/02 03:00:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
 
-import com.iplanet.jato.RequestManager;
+import javax.servlet.http.HttpSession;
 
 public class SecurityManagerFactory {
 
@@ -55,22 +55,22 @@ public class SecurityManagerFactory {
     public static SecurityManager getSecurityManager() {
         if (factory == null) {
             factory = new SecurityManagerFactory();
-            factory.retrieveSecurityManager();
         }
 
         return factory.retrieveSecurityManager();
     }
 
     protected SecurityManager retrieveSecurityManager() {
-        SecurityManager manager = (SecurityManager)
-            RequestManager.getSession().getAttribute(SECURITY_MANAGER);
+        HttpSession session = SamUtil.getCurrentRequest().getSession();
+        SecurityManager manager =
+            (SecurityManager) session.getAttribute(SECURITY_MANAGER);
 
         if (manager == null) {
             // instantiate the RBAC version of the security manager - future
             // imlementations can instantiate the Acess Manager based security
             // manager here instead
             manager = new RBACSecurityManagerImpl();
-            RequestManager.getSession().setAttribute(SECURITY_MANAGER, manager);
+            session.setAttribute(SECURITY_MANAGER, manager);
         }
 
         return manager;

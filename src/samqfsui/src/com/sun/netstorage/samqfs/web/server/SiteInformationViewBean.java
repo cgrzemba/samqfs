@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SiteInformationViewBean.java,v 1.12 2008/08/06 17:41:51 ronaldso Exp $
+// ident	$Id: SiteInformationViewBean.java,v 1.13 2008/10/02 03:00:27 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 import com.iplanet.jato.model.ModelControlException;
@@ -254,8 +254,7 @@ public class SiteInformationViewBean extends ServerCommonViewBeanBase {
         // Cluster Node goes first, always skip storage nodes
         for (int i = 0; i < allSystemModel.length; i++) {
             if (allSystemModel[i].isDown() ||
-                !allSystemModel[i].isClusterNode() ||
-                allSystemModel[i].isStorageNode()) {
+                !allSystemModel[i].isClusterNode()) {
                 continue;
             }
 
@@ -286,8 +285,7 @@ public class SiteInformationViewBean extends ServerCommonViewBeanBase {
         // always skip storage nodes
         for (int i = 0; i < allSystemModel.length; i++) {
             if (allSystemModel[i].isDown() ||
-                allSystemModel[i].isClusterNode() ||
-                allSystemModel[i].isStorageNode()) {
+                allSystemModel[i].isClusterNode()) {
                 continue;
             }
 

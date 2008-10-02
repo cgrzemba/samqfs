@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.5 2008/09/03 19:46:02 ronaldso Exp $
+// ident	$Id: SharedFS.js,v 1.6 2008/10/02 03:00:23 ronaldso Exp $
 
 
 // Used by drop down menu in summary page
@@ -74,6 +74,14 @@ function handleClientDropDownMenu(menu) {
             return false;
         }
     } else {
+        // Mount / Unmount / Enable Access / Disable Access
+
+        // Make sure user selects something before disabling access hosts
+        if (handleOperation(true) == false) {
+            resetDropDownMenu(menu);
+            return false;
+        }
+
         // show confirm messages if needed
         if (selectedValue == "unmount") {
             if (!confirm(getMessage(4))) {
@@ -89,11 +97,6 @@ function handleClientDropDownMenu(menu) {
             } else {
                 return true;
             }
-        }
-        // Otherwise everything else allows multiple selection
-        if (handleOperation(true) == false) {
-            resetDropDownMenu(menu);
-            return false;
         }
     }
     return true;

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.59 2008/09/11 05:28:52 kilemba Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.60 2008/10/02 03:00:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -66,7 +66,6 @@ import com.sun.netstorage.samqfs.web.model.impl.mt.Barrier;
 import com.sun.netstorage.samqfs.web.model.impl.mt.MethodInfo;
 import com.sun.netstorage.samqfs.web.model.impl.mt.ThreadPool;
 import com.sun.netstorage.samqfs.web.model.impl.mt.ThreadPoolMember;
-import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -211,7 +210,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             this.appModel.getSamQFSSystemModel(mdServer);
 
         if (model.isDown()) {
-            throw new SamFSException(JSFUtil.getMessage("logic.hostIsDown"));
+            throw new SamFSException("logic.hostIsDown");
         }
 
         String [] hostInfo =
@@ -264,7 +263,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             this.appModel.getSamQFSSystemModel(mdServer);
 
         if (model.isDown()) {
-            throw new SamFSException(JSFUtil.getMessage("logic.hostIsDown"));
+            throw new SamFSException("logic.hostIsDown");
         }
 
         String [] info =
@@ -290,7 +289,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             this.appModel.getSamQFSSystemModel(mdServer);
 
         if (model.isDown()) {
-            throw new SamFSException(JSFUtil.getMessage("logic.hostIsDown"));
+            throw new SamFSException("logic.hostIsDown");
         }
 
         return FS.mountClients(model.getJniContext(), fsName, clients);
@@ -308,7 +307,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             this.appModel.getSamQFSSystemModel(mdServer);
 
         if (model.isDown()) {
-            throw new SamFSException(JSFUtil.getMessage("logic.hostIsDown"));
+            throw new SamFSException("logic.hostIsDown");
         }
 
         return FS.unmountClients(model.getJniContext(), fsName, clients);
@@ -326,7 +325,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             this.appModel.getSamQFSSystemModel(mdServer);
 
         if (model.isDown()) {
-            throw new SamFSException(JSFUtil.getMessage("logic.hostIsDown"));
+            throw new SamFSException("logic.hostIsDown");
         }
 
         return FS.setSharedFSMountOptions(

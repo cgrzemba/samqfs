@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSSummaryBean.java,v 1.5 2008/09/03 19:46:03 ronaldso Exp $
+// ident        $Id: SharedFSSummaryBean.java,v 1.6 2008/10/02 03:00:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -64,8 +64,6 @@ public class SharedFSSummaryBean {
     protected String textCapacity = null;
     /** Holds value of the file system high water mark. */
     protected String textHWM = null;
-    /** Holds value of the file system archiving status. */
-    protected String textArchiving = null;
     /** Holds value of the file system potential metadata server number. */
     protected String textPMDS = null;
     /** Holds value of the page title of clients section. */
@@ -93,7 +91,7 @@ public class SharedFSSummaryBean {
                     JSFUtil.getServerName());
             } else {
                 // shared fs summary
-                links[i].setText(JSFUtil.getMessage("SharedFS.title"));
+                links[i].setText(JSFUtil.getMessage("SharedFS.pagetitle"));
             }
         }
 
@@ -118,10 +116,6 @@ public class SharedFSSummaryBean {
             jumpMenuOptions[3].setDisabled(true);
         }
         return jumpMenuOptions;
-    }
-
-    public String getTextArchiving() {
-        return textArchiving;
     }
 
     public String getTextHWM() {
@@ -177,7 +171,6 @@ public class SharedFSSummaryBean {
 
         if (archive) {
             textHWM = Integer.toString(hwm);
-            textArchiving = "TODO:";
         }
 
         textType = FSUtil.getFileSystemDescriptionString(thisFS, true);
