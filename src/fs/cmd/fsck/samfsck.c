@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 
 
 /* ----- Includes */
@@ -386,6 +386,7 @@ int check_duplicate(ino_t ino, int dt, int bt, sam_daddr_t bn, int ord);
 void init_dup(void);
 void extend_dup(void);
 void write_map(int ord);
+void update_block_counts_object(int ord);
 void build_sm_block(sam_daddr_t bn, int ord, int mask);
 void write_sm_block();
 void read_sys_inodes();
@@ -1342,6 +1343,7 @@ check_fs(void)
 			continue;
 		}
 		if (is_osd_group(sblock.eq[ord].fs.type)) {
+			update_block_counts_object(ord);
 			continue;
 		}
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -3575,7 +3577,7 @@ check_duplicate(
  * ----- init_dup - Initialize the duplicate block file.
  */
 
-void			/* ERRNO if error */
+void
 init_dup(void)
 {
 	struct dup_inoblk *smp;
@@ -3614,7 +3616,7 @@ init_dup(void)
  * ----- extend_dup - Extend duplicate block file.
  */
 
-void			/* ERRNO if error */
+void
 extend_dup(void)
 {
 
@@ -3643,7 +3645,7 @@ extend_dup(void)
  * Build the new bit maps from the allocated blocks and existing inodes.
  */
 
-void			/* ERRNO if error */
+void
 write_map(int ord)	/* Disk ordinal */
 {
 	int ii, dt;
@@ -3741,6 +3743,28 @@ write_map(int ord)	/* Disk ordinal */
 
 
 /*
+ * ----- update_block_counts_object
+ * Update superblock block counts from OSN counts.  Only for object.
+ */
+
+void
+update_block_counts_object(int ord)	/* Disk ordinal */
+{
+	struct sam_mount_info *mp = &mnt_info;
+	struct sam_fs_part *fsp = &mp->part[ord];
+	offset_t used;
+
+	/*
+	 * space & capacity returned from OSN by get_object_fs_attributes()
+	 * in chk_devices().
+	 */
+	used = fsp->pt_capacity - fsp->pt_space;
+	nblock.info.sb.space -= used;
+	nblock.eq[ord].fs.space -= used;
+}
+
+
+/*
  * ----- build_sm_block - Build .blocks file.
  * Write entry with free small blocks mask.
  */
@@ -3771,7 +3795,7 @@ build_sm_block(
  * Get block and write out .blocks data.
  */
 
-void		/* ERRNO if error */
+void
 write_sm_block()
 {
 	sam_daddr_t bn, nbn;
@@ -3813,7 +3837,7 @@ write_sm_block()
  * Read and validate special inodes for .inodes and .blocks files.
  */
 
-void		/* ERRNO if error */
+void
 read_sys_inodes()
 {
 	sam_daddr_t bn;
