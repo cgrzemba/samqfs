@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.112 $"
+#pragma ident "$Revision: 1.113 $"
 
 #include "sam/osversion.h"
 
@@ -103,7 +103,7 @@ static void sam_drain_free_list(sam_mount_t *mp, struct samdent *dp);
 static void sam_change_state(sam_mount_t *mp, struct samdent *dp, int ord);
 static int sam_shrink_fs(sam_mount_t *mp, struct samdent *dp, int command);
 static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t state);
-static void sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
+static int sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
 static void sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
 int sam_update_the_sblks(sam_mount_t *mp);
@@ -1868,12 +1868,15 @@ sam_change_state(
 	struct sam_sblk *sblk;	/* Pointer to the superblock */
 	boolean_t sblk_modified = FALSE;
 	int bt;
+	int rtnerr = 0;
 
 	/*
 	 * If busy, cannot change state
 	 */
 	dp = &mp->mi.m_fs[ord];
+	TRACE(T_SAM_CHG_STATE, mp, ord, dp->part.pt_state, dp->num_group);
 	if (dp->busy || dp->modified)  {
+		TRACE(T_SAM_CHG_STATE_ERR, mp, ord, dp->part.pt_state, 1);
 		return;		/* Ordinal is busy with I/O */
 	}
 
@@ -1890,16 +1893,16 @@ sam_change_state(
 			    " Cannot remove/release eq %d lun %s",
 			    mp->mt.fi_name, dp->part.pt_eq,
 			    dp->part.pt_name);
-			dp->command = DK_CMD_null;
-			return;
+			rtnerr = 2;
+			break;
 		}
 		if ((dp->part.pt_type == DT_META) ||
 		    (mp->mt.mm_count == 0)) {
 			cmn_err(CE_WARN, "SAM-QFS: %s: shrink only "
 			    "supported for data devices in a ma file system",
 			    mp->mt.fi_name);
-			dp->command = DK_CMD_null;
-			return;
+			rtnerr = 3;
+			break;
 		}
 
 		/* LINTED [fallthrough on case statement] */
@@ -1918,8 +1921,8 @@ sam_change_state(
 
 		if (dp->command != DK_CMD_noalloc) {
 			if (sam_shrink_fs(mp, dp, dp->command)) {
-				dp->command = DK_CMD_null;
-				return;
+				rtnerr = 4;
+				break;
 			}
 		}
 		sblk_modified = TRUE;
@@ -1935,10 +1938,10 @@ sam_change_state(
 			    " Cannot add eq %d lun %s",
 			    mp->mt.fi_name, dp->part.pt_eq,
 			    dp->part.pt_name);
-			dp->command = DK_CMD_null;
-			return;
+			rtnerr = 5;
+			break;
 		} else {
-			sam_grow_fs(mp, dp, ord);
+			rtnerr = sam_grow_fs(mp, dp, ord);
 		}
 
 		/*
@@ -1947,14 +1950,15 @@ sam_change_state(
 		 * must type alloc command.
 		 */
 		if (SAM_IS_SHARED_FS(mp)) {
+			if (rtnerr == 0) {
+				sblk_modified = TRUE;
+			}
 			break;
 		}
 
 		/* LINTED [fallthrough on case statement] */
 	case DK_CMD_alloc: {
 		int i;
-		int prev_num_grp;
-		int dt, dev_type;
 
 		sblk = mp->mi.m_sbp;
 		if (SAM_IS_SHARED_FS(mp)) {
@@ -1977,8 +1981,8 @@ sam_change_state(
 					    "package must be updated to "
 					    "support online grow",
 					    mp->mt.fi_name, ord, clp->hname);
-					dp->command = DK_CMD_null;
-					return;
+					rtnerr = 6;
+					break;
 				}
 
 				if ((clp->cl_status & FS_MOUNTED) &&
@@ -1990,9 +1994,12 @@ sam_change_state(
 					    mp->mt.fi_name, ord, clp->hname,
 					    sblk->info.sb.fs_count,
 					    clp->fs_count);
-					dp->command = DK_CMD_null;
-					return;
+					rtnerr = 7;
+					break;
 				}
+			}
+			if (rtnerr) {
+				break;
 			}
 		}
 
@@ -2000,17 +2007,12 @@ sam_change_state(
 		 * Build the allocation link for this new LUN.
 		 * Initialize the block pool for this new LUN;
 		 */
-		prev_num_grp = -1;
-		dt = (dp->part.pt_type == DT_META) ? MM : DD;
-		for (i = 0; i < sblk->info.sb.fs_count; i++) {
-			dev_type = (mp->mi.m_fs[i].part.pt_type ==
-			    DT_META) ? MM : DD;
-			if (dt == dev_type) {
-				prev_num_grp = mp->mi.m_fs[i].num_group;
+		if (dp->alloc_link == 0) {
+			if ((sam_build_allocation_links(mp, sblk, ord))) {
+				rtnerr = 8;
 				break;
 			}
 		}
-		(void) sam_build_allocation_links(mp, sblk, ord, &prev_num_grp);
 		mutex_enter(&mp->mi.m_block.mutex);
 		if (dp->block[LG] == NULL) {
 			sam_init_blocklist(mp, ord);
@@ -2043,9 +2045,9 @@ sam_change_state(
 			    " is not equal to capacity 0x%llx KB",
 			    mp->mt.fi_name, ord, space,
 			    sblk->eq[ord].fs.capacity);
+			rtnerr = 9;
 		} else {
 			sam_remove_from_allocation_links(mp, ord);
-			dp->skip_ord = 1;
 			dp->part.pt_state = DEV_OFF;
 			mutex_enter(&mp->mi.m_sblk_mutex);
 			sblk->eq[ord].fs.state = DEV_OFF;
@@ -2056,12 +2058,13 @@ sam_change_state(
 			sblk->eq[ord].fs.system = 0;
 			sblk->eq[ord].fs.dau_next = 0;
 			mutex_exit(&mp->mi.m_sblk_mutex);
+			sblk_modified = TRUE;
 		}
-		sblk_modified = TRUE;
 		break;
 		}
 
 	default:
+		rtnerr = 10;
 		break;
 	}
 
@@ -2079,6 +2082,16 @@ sam_change_state(
 			    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
 		}
 		mutex_exit(&mp->mi.m_sblk_mutex);
+		TRACE(T_SAM_CHG_STATE_OK, mp, ord, dp->part.pt_state,
+		    dp->num_group);
+	} else {
+		if (rtnerr) {
+			TRACE(T_SAM_CHG_STATE_ERR, mp, ord, dp->part.pt_state,
+			    rtnerr);
+		} else {
+			TRACE(T_SAM_NO_CHG_STATE, mp, ord, dp->part.pt_state,
+			    dp->num_group);
+		}
 	}
 	dp->command = DK_CMD_null;
 }
@@ -2140,7 +2153,7 @@ sam_shrink_fs(
  * ----- sam_grow_fs - Add this eq to the file system
  * Build the bit maps and add this partition to the file system
  */
-static void
+static int
 sam_grow_fs(
 	sam_mount_t *mp,	/* Pointer to the mount table. */
 	struct samdent *dp,	/* Pointer to device entry in mount table */
@@ -2169,7 +2182,7 @@ sam_grow_fs(
 		    " state %d is not OFF",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name,
 		    dp->part.pt_state);
-		return;
+		return (21);
 	}
 
 	/*
@@ -2180,14 +2193,13 @@ sam_grow_fs(
 		cmn_err(CE_WARN, "SAM-QFS: %s: Cannot add object eq %d "
 		    "lun %s",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-		return;
+		return (22);
 	}
 
 	/*
 	 * Check for validity of stripe group. Can only grow first
-	 * member of the stripe group. Set num_group.
+	 * member of the stripe group.
 	 */
-	dp->num_group = 1;
 	if (is_stripe_group(type)) {
 		for (i = 0; i < ord; i++) {
 			if (type != mp->mi.m_fs[i].part.pt_type) {
@@ -2197,32 +2209,7 @@ sam_grow_fs(
 			    "lun %s,"
 			    " eq is not first member of the stripe group",
 			    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-			return;
-		}
-
-		ddp = &mp->mi.m_fs[ord+1];
-		for (i = (ord+1); i < mp->mt.fs_count; i++) {
-			if (is_stripe_group(ddp->part.pt_type) &&
-			    (type == ddp->part.pt_type)) {
-				if (dp->part.pt_size != ddp->part.pt_size) {
-					ddp->error = EFBIG;
-					dp->error = EFBIG;
-					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: Error adding "
-					    "eq %d lun %s,"
-					    " eq %d is not same size as "
-					    "the stripe group",
-					    mp->mt.fi_name, dp->part.pt_eq,
-					    dp->part.pt_name,
-					    ddp->part.pt_eq);
-					return;
-				}
-				dp->num_group++;
-				ddp->num_group = 0;
-			} else {
-				break;
-			}
-			ddp++;
+			return (23);
 		}
 	}
 
@@ -2235,7 +2222,7 @@ sam_grow_fs(
 		    "SAM-QFS: %s: Cannot add meta eq %d lun %s to ms "
 		    "file system",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-		return;
+		return (24);
 	}
 	/* No. log blks (1024 bytes) */
 	blocks = dp->part.pt_size >> SAM2SUN_BSHIFT;
@@ -2271,7 +2258,7 @@ sam_grow_fs(
 				    mp->mt.fi_name, dp->part.pt_eq,
 				    dp->part.pt_name,
 				    sblk->eq[mm_ord].fs.eq, pa.error);
-				return;
+				return (25);
 			}
 		}
 	} else {
@@ -2416,13 +2403,14 @@ sam_grow_fs(
 	mutex_exit(&mp->mi.m_sblk_mutex);
 
 done:
-	if (error == 0) {
-		kmem_free(old_sblk, old_sblk_size);
-	} else {
+	if (error) {
 		kmem_free(sblk, new_sblk_size);
 		mp->mi.m_sbp = old_sblk;
 		mp->mi.m_sblk_size = old_sblk_size;
+		return (26);
 	}
+	kmem_free(old_sblk, old_sblk_size);
+	return (0);
 }
 
 
@@ -2501,7 +2489,6 @@ sam_remove_from_allocation_links(
 {
 	struct samdent *dp;
 	int disk_type;
-	int error = 0;
 	int dk_max;
 	int prev_ord = -1;
 	int cur_ord;
@@ -2531,6 +2518,8 @@ sam_remove_from_allocation_links(
 			}
 			mp->mi.m_fs[ord].next_ord = 0;
 			mp->mi.m_dk_max[disk_type]--;
+			dp->alloc_link = 0;	/* Not in allocation list */
+			dp->skip_ord = 1;	/* Don't allocate on this ord */
 			break;
 		}
 		prev_ord = cur_ord;

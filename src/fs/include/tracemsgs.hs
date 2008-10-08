@@ -1,4 +1,4 @@
-# $Revision: 1.133 $
+# $Revision: 1.134 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -92,6 +92,13 @@ T_SAM_MPGEN		"MP-HEX:   p1=%d,p2=%x,p3=%x"
 T_SAM_OPEN_DEV		"OpenDev:  name=%s"
 T_SAM_VGET_FREEZE	"VgetFreeze:   ino=%d,gen=%d"
 T_SAM_VGET_UNFREEZE	"VgetUnFreeze- ino=%d,gen=%d,err=%d^[$e]"
+T_SAM_CHG_STATE		"ChgState: ord=%d,st=%d,ng=%d"
+T_SAM_CHG_STATE_ERR	"ChgStErr- ord=%d,st=%d,err=%d"
+T_SAM_CHG_STATE_OK	"ChgState- ord=%d,st=%d,ng=%d"
+T_SAM_NO_CHG_STATE	"NoChgSt-  ord=%d,st=%d,ng=%d"
+T_SAM_MNT_AVAIL1	""
+T_SAM_MNT_AVAIL2	""
+T_SAM_MNT_AVAIL3	""
 T_SAM_MAX_MP		""
 T_SAM_MOUNT		"Mount:    vfsp=%x, mount point vp=%x"
 T_SAM_MNT_RET		"Mount-    mp=%x,rootvp=%x,cfg1=%x"

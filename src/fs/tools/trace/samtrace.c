@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.167 $"
+#pragma ident "$Revision: 1.168 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -3682,8 +3682,8 @@ skipclient:
 		printf("\t    %012llx size\n", dp->part.pt_size);
 		printf("\t    %012llx capacity\n", dp->part.pt_capacity);
 		printf("\t    %012llx space\n", dp->part.pt_space);
-		printf("\t    %04x%04x opened/skip_ord\n",
-		    dp->opened, dp->skip_ord);
+		printf("\t    %02x%02x%02x%02x open/busy/skip_ord/alloc_link\n",
+		    dp->opened, dp->busy, dp->skip_ord, dp->alloc_link);
 		printf("\t    %04x%04x busy/map_empty\n",
 		    dp->busy, dp->map_empty);
 		printf("\t    %08x dt\n", dp->dt);

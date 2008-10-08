@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.259 $"
+#pragma ident "$Revision: 1.260 $"
 #endif
 
 #include "sam/osversion.h"
@@ -335,7 +335,6 @@ sam_update_shared_sblk(
 	struct sam_sblk *sblk, *old_sblk;
 	int32_t sblk_size, old_sblk_size, s;
 	int ord;
-	int old_fs_count;
 	int error = 0;
 
 	/*
@@ -347,13 +346,9 @@ sam_update_shared_sblk(
 	sblk_size = mp->mi.m_sblk_size;
 	old_sblk_size = sblk_size;
 
-	old_fs_count = 0;
 	if ((old_sblk == NULL) ||
 	    (mp->mt.fs_count > old_sblk->info.sb.fs_count)) {
 		sblk_size = DEV_BSIZE;
-		if (old_sblk != NULL) {
-			old_fs_count = old_sblk->info.sb.fs_count;
-		}
 	}
 
 refetch:
@@ -425,29 +420,6 @@ refetch:
 	bp->b_flags |= B_STALE | B_AGE;
 	brelse(bp);
 #endif /* sun */
-
-	/*
-	 * Update allocation links if sblk increased.
-	 */
-	if (old_fs_count) {
-		int prev_num_grp = -1;
-		int dt, dev_type;
-		int i, j;
-
-		for (i = old_fs_count; i < sblk->info.sb.fs_count; i++) {
-			dt = (mp->mi.m_fs[i].part.pt_type == DT_META) ? MM : DD;
-			for (j = 0; j < sblk->info.sb.fs_count; j++) {
-				dev_type = (mp->mi.m_fs[j].part.pt_type ==
-				    DT_META) ? MM : DD;
-				if (dt == dev_type) {
-					prev_num_grp = mp->mi.m_fs[j].num_group;
-					break;
-				}
-			}
-			(void) sam_build_allocation_links(mp, sblk, i,
-			    &prev_num_grp);
-		}
-	}
 
 	/*
 	 * Update state of LUNs in superblock.

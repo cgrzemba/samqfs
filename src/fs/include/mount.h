@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.156 $"
+#pragma ident "$Revision: 1.157 $"
 #endif
 
 #ifdef sun
@@ -81,7 +81,8 @@ struct samdent {
 		skip_ord:	1,	/* Secondary mem of striped group */
 		abr_cap:	1,	/* supports App. Based Recovery */
 		dmr_cap:	1,	/* supports Directed Mirror Reads */
-		unused:		11;
+		alloc_link:	1,	/* Device is in allocation link list */
+		unused:		10;
 	short	dt;			/* Device type */
 	int	error;			/* Error getting device */
 	int	map_empty;		/* No blocks left in device map */
@@ -382,8 +383,7 @@ int sam_set_mount(sam_mount_t *mp);
 typedef enum {SAM_UNMOUNT_FS, SAM_FAILOVER_OLD_SRVR, SAM_FAILOVER_NEW_SRVR,
 	SAM_FAILOVER_POST_PROCESSING} sam_unmount_flag_t;
 
-int sam_build_allocation_links(sam_mount_t *mp, struct sam_sblk *sblk, int i,
-	int *num_group_ptr);
+int sam_build_allocation_links(sam_mount_t *mp, struct sam_sblk *sblk, int i);
 
 #ifdef linux
 void sam_cleanup_mount(sam_mount_t *mp, void *pn, cred_t *credp);

@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.233 $"
+#pragma ident "$Revision: 1.234 $"
 #endif
 
 #include "sam/osversion.h"
@@ -721,9 +721,9 @@ sam_mount_fs(sam_mount_t *mp)
 int					/* ERRNO if error, 0 if successful. */
 sam_set_mount(sam_mount_t *mp)
 {
-	int i, dau, num_group;
+	int i, dau;
 	int err_line = 0;
-	int obj_pool = -1;
+	short obj_pool = -1;
 	int error = 0;
 	offset_t capacity = 0;
 	offset_t mm_capacity = 0;
@@ -1120,9 +1120,13 @@ sam_set_mount(sam_mount_t *mp)
 	}
 
 	/*
-	 * Get meta and data capacity. Set default object pool for mb fs
+	 * Clear next_ord and alloc_link so the device allocation links are
+	 * correctly rebuilt after a failover.
+	 * Get meta and data capacity. Set default object pool for mb fs.
 	 */
 	for (i = 0; i < sblk->info.sb.fs_count; i++) {
+		mp->mi.m_fs[i].next_ord = 0;
+		mp->mi.m_fs[i].alloc_link = 0;
 		if ((sblk->eq[i].fs.state != DEV_ON) &&
 		    (sblk->eq[i].fs.state != DEV_NOALLOC)) {
 			continue;
@@ -1179,12 +1183,10 @@ sam_set_mount(sam_mount_t *mp)
 	/*
 	 * Build allocation links for meta and data devices.
 	 */
-	num_group = -1;
 	mp->mi.m_dk_max[MM] = 0;
 	mp->mi.m_dk_max[DD] = 0;
 	for (i = 0; i < sblk->info.sb.fs_count; i++) {
-		if ((error = sam_build_allocation_links(mp, sblk, i,
-		    &num_group))) {
+		if ((error = sam_build_allocation_links(mp, sblk, i))) {
 			err_line = __LINE__;
 			TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
 			return (error);
@@ -1265,51 +1267,63 @@ int				/* ERRNO if error, 0 if successful. */
 sam_build_allocation_links(
 	sam_mount_t *mp,	/* Pointer to the mount table */
 	struct sam_sblk *sblk,	/* Pointer to the superblock */
-	int i,			/* Ordinal */
-	int *num_group_ptr)	/* Pointer to num_group */
+	int i)			/* Ordinal */
 {
 	struct samdent *dp;
-	int j, disk_type, num_group;
-	int error = 0;
+	int ord, disk_type;
 
-	num_group = *num_group_ptr;
 	dp = &mp->mi.m_fs[i];
 	dp->dt = (dp->part.pt_type == DT_META) ? MM : DD;
 	dp->system = sblk->eq[i].fs.system;
 	dp->part.pt_state = sblk->eq[i].fs.state;
 	dp->num_group = sblk->eq[i].fs.num_group;
+	dp->skip_ord = 1;		/* skip it */
 	if (((dp->part.pt_state != DEV_ON) &&
 	    (dp->part.pt_state != DEV_NOALLOC)) ||
 	    (dp->num_group == 0)) {
-		dp->skip_ord = 1;		/* skip it */
 		return (0);
 	}
 	if (dp->part.pt_type == DT_META) {
 		disk_type = MM;
 	} else if (is_osd_group(dp->part.pt_type)) {
 		disk_type = DD;
-		if (num_group < 0) {
-			num_group = dp->num_group;
-		}
 	} else {
 		disk_type = DD;
+
 		/*
-		 * If mismatched number of elements in the striped groups, must
-		 * round robin.
+		 * If mismatched number of elements in the striped groups,
+		 * must round robin.
 		 */
-		if (num_group < 0) {
-			num_group = dp->num_group;
-		} else {
-			if (dp->num_group != num_group) {
+		for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
+			if (((sblk->eq[ord].fs.state != DEV_ON) &&
+			    (sblk->eq[ord].fs.state != DEV_NOALLOC)) ||
+			    (sblk->eq[ord].fs.num_group == 0)) {
+				continue;
+			}
+			if (dp->num_group != sblk->eq[ord].fs.num_group) {
 				mp->mt.fi_config1 |= MC_MISMATCHED_GROUPS;
 				if (mp->mt.fi_stripe[DD] > 0) {
 					mp->mt.fi_stripe[DD] = 0;
-					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: mismatched "
-					    "striped groups,"
+					cmn_err(CE_WARN, "SAM-QFS: %s: "
+					    "mismatched striped groups,"
 					    " stripe set to round robin",
 					    mp->mt.fi_name);
 				}
+			}
+		}
+
+		/*
+		 * Make sure that stripe group elements have adjacent
+		 * ordinals.  Code in r/w paths increment the ordinal
+		 * to move to the next device.
+		 */
+		for (ord = 1; ord < dp->num_group; ord++) {
+			if (i+ord >= mp->mt.fs_count ||
+			    mp->mi.m_fs[i+ord].part.pt_type !=
+			    dp->part.pt_type) {
+				cmn_err(CE_WARN, "SAM-QFS: %s: non-contiguous "
+				    "stripe element ordinals", mp->mt.fi_name);
+				return (EINVAL);
 			}
 		}
 	}
@@ -1321,6 +1335,8 @@ sam_build_allocation_links(
 		mp->mi.m_dk_start[disk_type] = (short)i;
 		mp->mi.m_unit[disk_type] = (short)i;
 		mp->mi.m_dk_max[disk_type]++;
+		dp->alloc_link = 1;	/* In allocation list */
+		dp->skip_ord = 0;	/* Allocate on this ord */
 	} else {
 		int ord;
 
@@ -1337,36 +1353,13 @@ sam_build_allocation_links(
 			if (mp->mi.m_fs[ord].next_ord == 0) {
 				mp->mi.m_fs[ord].next_ord = i;
 				mp->mi.m_dk_max[disk_type]++;
+				dp->alloc_link = 1;  /* In allocation list */
+				dp->skip_ord = 0;    /* Allocate on this ord */
 				break;
 			}
 		}
 	}
-
-	/*
-	 * For OSD groups, return max. number of devices in the group.
-	 */
-	if (is_osd_group(dp->part.pt_type)) {
-		*num_group_ptr = num_group;
-		return (error);
-	}
-
-	/*
-	 * Make sure that stripe group elements have adjacent
-	 * ordinals.  Code in r/w paths increment the ordinal
-	 * to move to the next device.
-	 */
-	for (j = 1; j < dp->num_group; j++) {
-		if (i+j >= mp->mt.fs_count ||
-		    mp->mi.m_fs[i+j].part.pt_type != dp->part.pt_type) {
-			cmn_err(CE_WARN,
-			    "SAM-QFS: %s: non-contiguous stripe "
-			    "element ordinals",
-			    mp->mt.fi_name);
-			error = EINVAL;
-		}
-	}
-	*num_group_ptr = num_group;
-	return (error);
+	return (0);
 }
 
 
@@ -1498,6 +1491,7 @@ sam_read_sblk(sam_mount_t *mp)
 	bcopy((void *)sbp->b_un.b_addr, mp->mi.m_sbp, sblk_size);
 	mp->mi.m_sblk_fsid = mp->mi.m_sbp->info.sb.init;
 	mp->mi.m_sblk_fsgen = mp->mi.m_sbp->info.sb.gen;
+	sbp->b_flags |= B_STALE | B_AGE;
 	brelse(sbp);
 
 out:
@@ -2624,6 +2618,7 @@ sam_flush_ino(
 						 * its soon-to-be-staled mp.
 						 */
 						if (ip->flags.b.hash) {
+				/* LINTED [statement has no consequent: if] */
 							SAM_DESTROY_OBJ_LAYOUT(
 							    ip);
 							SAM_UNHASH_INO(ip);
@@ -2749,6 +2744,7 @@ sam_delete_ino(vnode_t *vp)
 		got_mutex = 1;
 	}
 	if (ip->flags.b.hash) {
+		/* LINTED [statement has no consequent: if] */
 		SAM_DESTROY_OBJ_LAYOUT(ip);
 		SAM_UNHASH_INO(ip);		/* Remove from hash queue */
 	}
@@ -2803,6 +2799,7 @@ sam_destroy_vnode(vnode_t *vp, int fflag)
 	if ((error = sam_delete_ino(vp)) != 0) {
 		return (error);
 	}
+	/* LINTED [statement has no consequent: if] */
 	SAM_DESTROY_OBJ_LAYOUT(ip);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	sam_destroy_ino(ip, FALSE);

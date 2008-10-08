@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 
 /* ANSI C headers. */
@@ -285,13 +285,13 @@ dis_sblk(
 	Mvprintw(ln++, 0, "                            ");
 	Printw("       allocmap");
 	Mvprintw(ln++, 0, "ty   eq capacity  space    ");
-	Printw("mmord start length dau_next system fst st");
+	Printw("mmord start length dau_next system ng fst st");
 	if (strncmp(sp->name, "SBLK", 4) != 0)
 		return;
 	for (i = 0; i < sp->fs_count; i++) {
 		Mvprintw(ln++, 0,
 		    "%.5s%5d %.8x  %.8x  %.3d  %.5x  "
-		    "%.5x %.8x  %.5x  %.2x %s",
+		    "%.5x %.8x  %.5x %.3x %.2x %s",
 		    device_to_nm(sblock->eq[i].fs.type),
 		    sblock->eq[i].fs.eq,
 		    (int)sblock->eq[i].fs.capacity,
@@ -301,6 +301,7 @@ dis_sblk(
 		    (int)sblock->eq[i].fs.l_allocmap,
 		    (int)sblock->eq[i].fs.dau_next,
 		    (int)sblock->eq[i].fs.system,
+		    (int)sblock->eq[i].fs.num_group,
 		    (int)sblock->eq[i].fs.fsck_stat,
 		    dev_state[sblock->eq[i].fs.state]);
 		if (ln > LINES - 2)  break;

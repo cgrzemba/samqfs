@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.194 $"
+#pragma ident "$Revision: 1.195 $"
 #endif
 
 #include "sam/osversion.h"
@@ -154,6 +154,7 @@ static int sam_get_fsinfo_def(void *arg, int size);
 static int sam_get_fsinfo_common(void *arg, int size, int live);
 static int sam_get_fspart(void *arg, int size);
 static int sam_get_sblk(void *arg, int size);
+static int sam_check_stripe_group(sam_mount_t *mp, int istart);
 
 #if defined(SOL_511_ABOVE)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
@@ -781,7 +782,7 @@ sam_mount_info(
 	 */
 	if (mt != NULL) {
 		int istart;
-		short prev_mm_count;
+		short prev_mm_count = 0;
 		sam_mount_info_t *mntp;
 
 		/*
@@ -818,8 +819,7 @@ sam_mount_info(
 			samgt.num_fs_configured++;
 			istart = 0;
 		} else {		/* File system exists, add devices */
-			if (mp->mt.fi_status &
-			    (FS_MOUNTED | FS_MOUNTING |
+			if (mp->mt.fi_status & (FS_MOUNTED | FS_MOUNTING |
 			    FS_UMOUNT_IN_PROGRESS)) {
 				struct sam_sblk *sblk;
 
@@ -849,20 +849,27 @@ sam_mount_info(
 			sam_mutex_init(&mp->mi.m_fs[i].eq_mutex, NULL,
 			    MUTEX_DEFAULT, NULL);
 			if (istart) {
-				mp->mi.m_fs[i].num_group = 1;
-				mp->mi.m_fs[i].skip_ord = 1;
-				mp->mi.m_fs[i].part.pt_state = DEV_OFF;
+				struct samdent *dp;
+
+				dp = &mp->mi.m_fs[i];
+				dp->num_group = 1;
+				dp->skip_ord = 1;
+				dp->part.pt_state = DEV_OFF;
 				mp->mt.fs_count++;
 				mp->orig_mt.fs_count++;
-				if (mp->mi.m_fs[i].part.pt_type == DT_META) {
+				if (dp->part.pt_type == DT_META) {
 					mp->mt.mm_count++;
 					mp->orig_mt.mm_count++;
 				}
 			}
 		}
+		error = 0;
+		if (istart) {
+			error = sam_check_stripe_group(mp, istart);
+		}
 #ifdef sun
-		{
-		int npart;
+		if (error == 0) {
+			int npart;
 
 			error = sam_getdev(mp, istart, (FREAD | FWRITE),
 			    &npart, credp);
@@ -873,10 +880,6 @@ sam_mount_info(
 				if (error) {
 					sam_close_devices(mp, istart,
 					    (FREAD | FWRITE), credp);
-					mp->mt.fs_count = (short)istart;
-					mp->orig_mt.fs_count = (short)istart;
-					mp->mt.mm_count = prev_mm_count;
-					mp->orig_mt.mm_count = prev_mm_count;
 				} else if (SAM_IS_SHARED_CLIENT(mp) &&
 				    (mp->mt.fi_status & FS_MOUNTED)) {
 					error = sam_update_shared_filsys(mp,
@@ -886,10 +889,97 @@ sam_mount_info(
 			}
 		}
 #endif
+		if (istart && error) {
+			mp->mt.fs_count = (short)istart;
+			mp->orig_mt.fs_count = (short)istart;
+			mp->mt.mm_count = prev_mm_count;
+			mp->orig_mt.mm_count = prev_mm_count;
+		}
 	}
 done:
 	mutex_exit(&samgt.global_mutex);
 	return (error);
+}
+
+
+/*
+ *	----	sam_check_stripe_group
+ * Check for addition of a stripe group and verify size is the same.
+ */
+static int
+sam_check_stripe_group(
+	sam_mount_t *mp,
+	int istart)
+{
+	struct samdent	*dp, *ddp;
+	dtype_t		type;	/* Device type */
+	int		ord;
+	int		i;
+	int		num_group;
+
+	for (i = istart; i < mp->mt.fs_count; i++) {
+		dp = &mp->mi.m_fs[i];
+		if (dp->num_group == 0) {
+			continue;
+		}
+		type = dp->part.pt_type;
+		if (!is_stripe_group(type)) {
+			continue;
+		}
+		for (ord = i+1; ord < mp->mt.fs_count; ord++) {
+			ddp = &mp->mi.m_fs[ord];
+			if (is_stripe_group(ddp->part.pt_type) &&
+			    (type == ddp->part.pt_type)) {
+				dp->num_group++;
+				ddp->num_group = 0;
+			} else {
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Check for validity of stripe group.
+	 * All members must be the same size and must be adajcent.
+	 */
+	for (i = istart; i < mp->mt.fs_count; i++) {
+		dp = &mp->mi.m_fs[i];
+		if (dp->num_group == 0) {
+			continue;
+		}
+		type = dp->part.pt_type;
+		if (!is_stripe_group(type)) {
+			continue;
+		}
+		num_group = 1;
+		for (ord = i+1; ord < mp->mt.fs_count; ord++) {
+			ddp = &mp->mi.m_fs[ord];
+			if (type == ddp->part.pt_type) {
+				num_group++;
+				if (dp->part.pt_size != ddp->part.pt_size) {
+					ddp->error = EFBIG;
+					dp->error = EFBIG;
+					cmn_err(CE_WARN,
+					    "SAM-QFS: %s: Error: "
+					    "eq %d lun %s,"
+					    " eq %d is not same size as "
+					    "the stripe group",
+					    mp->mt.fi_name, dp->part.pt_eq,
+					    dp->part.pt_name,
+					    ddp->part.pt_eq);
+					return (EFBIG);
+				}
+			}
+		}
+		if (num_group != dp->num_group) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: Error: eq %d "
+			    "is not adjacent to other members of this "
+			    "stripe group", mp->mt.fi_name,
+			    dp->part.pt_eq);
+			return (EINVAL);
+		}
+	}
+	return (0);
 }
 
 
@@ -2364,13 +2454,10 @@ sam_reset_unit(
 	sam_mount_t *mp,
 	struct sam_disk_inode *di)
 {
-	int i, ord, oldord, curord;
-	mode_t	mode = di->mode;
+	int ord, oldord, curord;
 	dtype_t oldpt;
 	offset_t curspace;
 	int fs_count = mp->mi.m_sbp->info.sb.fs_count;
-
-	i = di->status.b.meta;	/* Device type: data (DD) or meta (MM) */
 
 	oldord = di->unit;
 	oldpt = mp->mi.m_fs[oldord].part.pt_type;
@@ -2407,7 +2494,7 @@ sam_reset_unit(
 		 */
 		return (ENODEV);
 	}
-	di->unit = curord;
+	di->unit = (uchar_t)curord;
 	return (0);
 }
 #endif
