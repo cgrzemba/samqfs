@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummary.jsp,v 1.46 2008/07/03 00:04:28 ronaldso Exp $
+// ident	$Id: FSSummary.jsp,v 1.47 2008/10/08 22:33:32 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %> 
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -59,6 +59,7 @@
 
 <cc:pagetitle name="PageTitle" bundleID="samBundle"
         pageTitleText="FSSummary.title"
+        pageTitleHelpMessage="fs.instruction"
         showPageTitleSeparator="true"
         showPageButtonsTop="false"
         showPageButtonsBottom="false">

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.18 2008/10/02 03:00:24 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.19 2008/10/08 22:33:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -73,7 +73,7 @@ public class SharedFSBean implements Serializable {
 
     /** Holds value if user has permission to perform operations. */
     protected boolean hasPermission = false;
-    
+
     // Flag to indicate that an error needs to be shown, say after calling
     // an operation and fails, we do not want this alert to be reset by the
     // getData() call when the page is refreshed
@@ -187,7 +187,8 @@ public class SharedFSBean implements Serializable {
                 SamUtil.processException(
                     sfe,
                     this.getClass(),
-                    "getSummaryData",sfe.getMessage(),
+                    "getSummaryData",
+                    sfe.getMessage(),
                     serverName);
                 setAlertInfo(
                     Constants.Alert.ERROR,
@@ -894,8 +895,6 @@ public class SharedFSBean implements Serializable {
         String message = "", errorMessage = "";
 
         try {
-System.out.println("Entering handleTableMenuSelection!");
-
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
             // mount
@@ -903,8 +902,9 @@ System.out.println("Entering handleTableMenuSelection!");
                 message = "SharedFS.message.mountclients.ok";
                 errorMessage = "SharedFS.message.mountclients.failed";
                 if (!hasPermission) {
-System.out.println("No permission!");
-                   throw new SamFSException("common.nopermission");
+                    TraceUtil.trace1(
+                        "User has no permission to mount fs " + getFSName());
+                    throw new SamFSException("common.nopermission");
                 }
                 LogUtil.info(
                     this.getClass(),
@@ -928,8 +928,9 @@ System.out.println("Mounting Clients Job ID: " + jobId);
                 message = "SharedFS.message.unmountclients.ok";
                 errorMessage = "SharedFS.message.unmountclients.failed";
                 if (!hasPermission) {
-System.out.println("No permission!");
-                   throw new SamFSException("common.nopermission");
+                    TraceUtil.trace1(
+                        "User has no permission to unmount fs " + getFSName());
+                    throw new SamFSException("common.nopermission");
                 }
                 LogUtil.info(
                     this.getClass(),
@@ -953,8 +954,10 @@ System.out.println("Unounting Clients Job ID: " + jobId);
                 message = "SharedFS.message.enableclients.ok";
                 errorMessage = "SharedFS.message.enableclients.failed";
                 if (!hasPermission) {
-System.out.println("No permission!");
-                   throw new SamFSException("common.nopermission");
+                    TraceUtil.trace1(
+                        "User has no permission to enable access fs " +
+                        getFSName());
+                    throw new SamFSException("common.nopermission");
                 }
                 LogUtil.info(
                     this.getClass(),
@@ -979,8 +982,10 @@ System.out.println("No permission!");
                 message = "SharedFS.message.disableclients.ok";
                 errorMessage = "SharedFS.message.disableclients.failed";
                 if (!hasPermission) {
-System.out.println("No permission!");
-                   throw new SamFSException("common.nopermission");
+                    TraceUtil.trace1(
+                        "User has no permission to disable access fs " +
+                        getFSName());
+                    throw new SamFSException("common.nopermission");
                 }
                 LogUtil.info(
                     this.getClass(),
@@ -1012,7 +1017,6 @@ System.out.println("No permission!");
                     ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
         } catch (SamFSException samEx) {
-System.out.println("Exception caught! " + samEx.getMessage());
             TraceUtil.trace1("SamFSException caught!", samEx);
             LogUtil.error(this, samEx);
             SamUtil.processException(

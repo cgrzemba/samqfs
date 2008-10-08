@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevicesView.java,v 1.13 2008/09/04 02:59:52 ronaldso Exp $
+// ident	$Id: FSDevicesView.java,v 1.14 2008/10/08 22:33:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -235,7 +235,8 @@ public class FSDevicesView extends CommonTableContainerView {
             TraceUtil.trace1("fs is null, populateData()!");
             throw new SamFSException(null, -1000);
         }
-System.out.println("populateData: type: " + fs.getShareStatus());
+
+        TraceUtil.trace3("populateData: type: " + fs.getShareStatus());
 
         boolean isMounted = fs.getState() == FileSystem.MOUNTED;
 

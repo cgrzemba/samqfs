@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowser.jsp,v 1.16 2008/07/30 19:55:51 ronaldso Exp $
+// ident	$Id: FileBrowser.jsp,v 1.17 2008/10/08 22:33:32 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %> 
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -66,6 +66,7 @@
     name="PageTitle"
     bundleID="samBundle"
     pageTitleText="fs.filebrowser.pagetitle"
+    pageTitleHelpMessage="fs.browser.instruction"
     showPageTitleSeparator="true"
     showPageButtonsTop="false"
     showPageButtonsBottom="false"/>

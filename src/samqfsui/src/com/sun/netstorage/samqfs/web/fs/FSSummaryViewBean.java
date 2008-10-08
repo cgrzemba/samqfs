@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummaryViewBean.java,v 1.26 2008/09/03 19:46:03 ronaldso Exp $
+// ident	$Id: FSSummaryViewBean.java,v 1.27 2008/10/08 22:33:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -110,25 +110,20 @@ public class FSSummaryViewBean extends CommonViewBeanBase {
     protected View createChild(String name) {
         TraceUtil.trace3("Entering");
         if (super.isChildSupported(name)) {
-            TraceUtil.trace3("Exiting");
             return super.createChild(name);
         // Action table Container.
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
             FileSystemSummaryView child =
                 new FileSystemSummaryView(this, name, getServerName());
-            TraceUtil.trace3("Exiting");
             return child;
         } else if (name.equals(CHILD_HIDDEN_LICENSE_TYPE) ||
                    name.equals(SERVER_NAME)) {
-            TraceUtil.trace3("Exiting");
             return new CCHiddenField(this, name, null);
         } else if (name.equals(CHILD_CONFIRM_MSG1)
                     || name.equals(CHILD_CONFIRM_MSG2)) {
-            TraceUtil.trace3("Exiting");
             return new CCHiddenField(this, name, null);
         // PageTitle Child
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
-            TraceUtil.trace3("Exiting");
             return PageTitleUtil.createChild(this, pageTitleModel, name);
         } else {
             throw new IllegalArgumentException(

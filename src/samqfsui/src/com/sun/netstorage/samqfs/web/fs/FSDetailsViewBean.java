@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsViewBean.java,v 1.63 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSDetailsViewBean.java,v 1.64 2008/10/08 22:33:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -134,13 +134,11 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
      * @return View The instantiated child view
      */
     protected View createChild(String name) {
-        TraceUtil.trace3("Entering");
         if (name.equals(CLUSTER_VIEW)) {
             return new FSDClusterView(this, name);
         } else if (name.equals(SUNPLEX_VIEW)) {
             return new SunPlexManagerView(this, name);
         } else if (super.isChildSupported(name)) {
-            TraceUtil.trace3("Exiting");
             return super.createChild(name);
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
             return new FSDetailsView(this, name);
@@ -148,11 +146,9 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
             return new FSDevicesView(this, name);
         } else if (name.equals(CHILD_HIDDEN_SERVERNAME) ||
             name.equals(CONFIRM_MESSAGES)) {
-            TraceUtil.trace3("Exiting");
             return new CCHiddenField(this, name, null);
         } else if (name.equals(CHILD_STATICTEXT)) {
             CCStaticTextField child = new CCStaticTextField(this, name, null);
-            TraceUtil.trace3("Exiting");
             return child;
             // PageTitle Child
         } else if (name.equals(CHILD_BREADCRUMB)) {
@@ -161,7 +157,6 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
             BreadCrumbUtil.createBreadCrumbs(this, name, breadCrumbsModel);
             CCBreadCrumbs child =
                 new CCBreadCrumbs(this, breadCrumbsModel, name);
-            TraceUtil.trace3("Exiting");
             return child;
         } else if (name.equals(CHILD_FS_SUM_HREF) ||
                    name.equals(CHILD_FS_ARCH_POL_HREF) ||
@@ -170,7 +165,6 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF)) {
-            TraceUtil.trace3("Exiting");
             return new CCHref(this, name, null);
         } else if (name.equals(CHILD_ROLE)) {
             CCStaticTextField child = null;
@@ -181,7 +175,6 @@ public class FSDetailsViewBean extends CommonViewBeanBase {
             } else {
                 child = new CCStaticTextField(this, name, "oper");
             }
-            TraceUtil.trace3("Exiting");
             return child;
         } else {
             throw new IllegalArgumentException(

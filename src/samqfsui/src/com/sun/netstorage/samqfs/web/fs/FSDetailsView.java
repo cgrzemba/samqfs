@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.51 2008/10/01 22:43:32 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.52 2008/10/08 22:33:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -209,25 +209,20 @@ public class FSDetailsView extends CommonTableContainerView {
             name.equals(HIDDEN_DYNAMIC_MENUOPTIONS) ||
             name.equals(CHILD_HIDDEN_FSCK_ACTION) ||
             name.equals(CHILD_HIDDEN_FSCK_LOG)) {
-            TraceUtil.trace3("Exiting");
             return new CCHiddenField(this, name, null);
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
-            TraceUtil.trace3("Exiting");
             return PageTitleUtil.createChild(this, pageTitleModel, name);
             // PropertySheet Child
         } else if (PropertySheetUtil.isChildSupported(
             propertySheetModel, name)) {
-            TraceUtil.trace3("Exiting");
             return PropertySheetUtil.createChild(
                 this, propertySheetModel, name);
         } else if (name.equals(CHILD_CANCEL_HREF) ||
                    name.equals(CHILD_SAMFSCK_HREF) ||
                    name.equals(CHILD_JOBID_HREF)) {
-            TraceUtil.trace3("Exiting");
             return new CCHref(this, name, null);
         } else if (name.equals(CHILD_FRWD_TO_CMDCHILD)) {
             BasicCommandField bcf = new BasicCommandField(this, name);
-            TraceUtil.trace3("Exiting");
             return bcf;
         } else {
             throw new IllegalArgumentException(

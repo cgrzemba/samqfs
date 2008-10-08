@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FileBrowserPropertySheet.xml,v 1.6 2008/05/16 19:39:19 am143972 Exp $ -->
+<!-- $Id: FileBrowserPropertySheet.xml,v 1.7 2008/10/08 22:33:32 ronaldso Exp $ -->
 
 <propertysheet>
     <section name="BrowseCriteria" defaultValue="">
@@ -42,20 +42,7 @@
                     </cc>
                 &lt;/td>
                 &lt;td nowrap='nowrap'>
-                    <cc name="BasePath"
-                        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
-                        <attribute name="escape" value="false" />
-                        <attribute name="onChange"
-                            value="handlePathMenuChange(this)"/>
-                        <attribute name="commandChild"
-                            value="BasePathMenuHref" />
-                        <attribute name="type" value="jump" />
-                    </cc>
-                    <cc name="spacer"
-                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
-                        <attribute name="width" value="5" />
-                    </cc>
-                    <cc name="Dir" 
+                    <cc name="Dir"
                         tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
                         <attribute name="maxLength" value="150" />
                         <attribute name="size" value="60" />
@@ -64,6 +51,19 @@
                                        handleEnterBasePath(this);
                                        return false;
                                    }" />
+                    </cc>
+                    <cc name="spacer"
+                        tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
+                        <attribute name="width" value="5" />
+                    </cc>
+                    <cc name="BasePath"
+                        tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag">
+                        <attribute name="escape" value="false" />
+                        <attribute name="onChange"
+                            value="handlePathMenuChange(this)"/>
+                        <attribute name="commandChild"
+                            value="BasePathMenuHref" />
+                        <attribute name="type" value="jump" />
                     </cc>
                 &lt;/td>
             &lt;/tr>
@@ -76,14 +76,14 @@
                     </cc>
                 &lt;/td>
                 &lt;td colspan='4' nowrap='nowrap'>
-                    <cc name="FilterCriteria" 
+                    <cc name="FilterCriteria"
                         tagclass="com.sun.web.ui.taglib.html.CCStaticTextFieldTag" >
                     </cc>
                     <cc name="spacer"
                         tagclass="com.sun.web.ui.taglib.spacer.CCSpacerTag">
                         <attribute name="width" value="5" />
                     </cc>
-                    <cc name="ChangeFilter" 
+                    <cc name="ChangeFilter"
                         tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
                         <attribute name="defaultValue"
                             value="fs.filebrowser.changefilter" />
@@ -101,7 +101,7 @@
                         <attribute name="defaultValue"
                             value="fs.filebrowser.maxentries"/>
                     </cc>
-                    <cc name="Entries" 
+                    <cc name="Entries"
                         tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag" >
                         <attribute name="maxLength" value="4" />
                         <attribute name="size" value="6" />
@@ -110,7 +110,7 @@
             &lt;/tr>
             &lt;tr>
                 &lt;td nowrap='nowrap'>
-                    <cc name="Apply" 
+                    <cc name="Apply"
                         tagclass="com.sun.web.ui.taglib.html.CCButtonTag" >
                         <attribute name="defaultValue"
                             value="fs.filebrowser.apply" />
@@ -121,5 +121,5 @@
             &lt;/tr>
             &lt;/table>
         </property>
-    </section>   
+    </section>
 </propertysheet>

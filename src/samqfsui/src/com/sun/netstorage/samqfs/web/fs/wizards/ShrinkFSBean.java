@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.7 2008/10/02 03:00:25 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.8 2008/10/08 22:33:33 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -48,6 +48,7 @@ import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
+import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.Select;
@@ -58,6 +59,7 @@ import com.sun.web.ui.event.WizardEvent;
 import com.sun.web.ui.event.WizardEventListener;
 import com.sun.web.ui.model.Option;
 import java.io.Serializable;
+import java.util.HashMap;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -158,7 +160,16 @@ public class ShrinkFSBean implements Serializable {
             throw new SamFSException(null, -1000);
         }
 
-        return fs.getAllDevices();
+        // Show file system devices only if they are allocation enabled
+        DiskCache [] allDevices = fs.getAllDevices();
+        HashMap modelMap = new HashMap();
+        int counter = 0;
+        for (int i = 0; i < allDevices.length; i++) {
+            if (allDevices[i].isAlloc()) {
+                modelMap.put(new Integer(counter++), allDevices[i]);
+            }
+        }
+        return (DiskCache[]) modelMap.values().toArray(new DiskCache[0]);
     }
 
     private DiskCache [] getAvailUnits() throws SamFSException {
@@ -279,13 +290,15 @@ public class ShrinkFSBean implements Serializable {
             // preserve EQ for method return value
             selectedEQ = selected.intValue();
 
-System.out.println("getSelectedPathExclude EQ: " + selected.intValue());
+            TraceUtil.trace3(
+                "getSelectedPathExclude EQ: " + selected.intValue());
 
             // Check disk cache type and determine if "release" radio button
             // needs to be rendered
             field = provider.getFieldKey("diskCacheType");
             selected = (Integer) provider.getValue(field, rows[0]);
-System.out.println("getSelectedPathExclude dc: " + selected.intValue());
+            TraceUtil.trace3(
+                "getSelectedPathExclude dc: " + selected.intValue());
 
             if (DiskCache.STRIPED_GROUP == selected.intValue()) {
                 field = provider.getFieldKey("devicePath");
@@ -295,7 +308,8 @@ System.out.println("getSelectedPathExclude dc: " + selected.intValue());
                 // a backdoor way to save the number of members in a striped
                 // group
                 numberOfMembers = summarySelectStorage.split("<br>").length - 1;
-System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
+            TraceUtil.trace3(
+                "getSelectedPathExclude: # of members: " + numberOfMembers);
             } else {
                 selectedStripedGroup = null;
             }
@@ -716,14 +730,10 @@ System.out.println("getSelectedPathExclude: # of members: " + numberOfMembers);
     }
 
     public void setAlertInfo(String type, String summary, String detail) {
-System.out.println("Entering setAlertInfo()");
-System.out.println("type:" + type + ",summary:" + summary + ",detail:" + detail);
         alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
-System.out.println("summary: " + summary);
         this.alertDetail = JSFUtil.getMessage(detail);
-System.out.println("AFTER JSFUTIL!!");
     }
 
 
@@ -929,7 +939,7 @@ System.out.println("AFTER JSFUTIL!!");
                 messageSummary = JSFUtil.getMessage(
                                     "fs.shrink.ok",
                                     new String [] {
-                                        myFS.getName()});
+                                        getFSName()});
 
                 // Shrink Release
                 if (selectedMethodRelease) {
@@ -981,14 +991,19 @@ System.out.println("AFTER JSFUTIL!!");
                     Constants.Alert.INFO, messageSummary, messageDetails);
 
             } catch (SamFSException samEx) {
-System.out.println("EXCEPTIONCAUGHT!");
+                TraceUtil.trace1("SamFSException caught!", samEx);
+                LogUtil.error(this, samEx);
+                samEx.printStackTrace();
+                SamUtil.processException(
+                    samEx,
+                    this.getClass(),
+                    "handleFinishButton",
+                    samEx.getMessage(),
+                    JSFUtil.getServerName());
                 setAlertInfo(
                     Constants.Alert.ERROR,
-                    JSFUtil.getMessage(
-                        "fs.shrink.failed",
-                        myFS.getName()),
+                    JSFUtil.getMessage("fs.shrink.failed", getFSName()),
                     samEx.getMessage());
-System.out.println("HERE2");
             }
             return true;
         }
