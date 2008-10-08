@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.175 $"
+#pragma ident "$Revision: 1.176 $"
 #endif
 
 #include "sam/osversion.h"
@@ -266,7 +266,6 @@ start:
 			SAM_SET_LEASEFLG(ip->mp);
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    1, S_READ);
-			SAM_CLEAR_LEASEFLG(ip->mp);
 
 			/*
 			 * Move the data from the locked pages into the
@@ -274,6 +273,7 @@ start:
 			 */
 			error = UIOMOVE((base + reloff), nbytes, UIO_READ, uiop,
 			    is_lio);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 		}
 		if (error == 0) {
 			if (((reloff + nbytes) == MAXBSIZE) && free_page &&
@@ -388,7 +388,9 @@ sam_read_stage_n_io(
 	 * Move the data from the stage_n memory pages into the user's buffer.
 	 */
 	ASSERT(nbytes > 0);
+	SAM_SET_LEASEFLG(ip->mp);
 	error = uiomove((base + reloff), nbytes, UIO_READ, uiop);
+	SAM_CLEAR_LEASEFLG(ip->mp);
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 	if (ip->stage_err) {
@@ -590,7 +592,6 @@ start:
 			SAM_SET_LEASEFLG(ip->mp);
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    forcefault, S_WRITE);
-			SAM_CLEAR_LEASEFLG(ip->mp);
 
 			if (forcefault == 0) {
 				pglock = segmap_pagecreate(segkmap, base,
@@ -603,6 +604,7 @@ start:
 			 */
 			error = UIOMOVE((base + reloff), nbytes, UIO_WRITE,
 			    uiop, is_lio);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 		}
 
 		if (error) {
@@ -1144,8 +1146,10 @@ unallocated_read:
 				ioblk.count = MIN(ioblk.count,
 				    sam_zero_block_size);
 				ASSERT(ioblk.count > 0);
+				SAM_SET_LEASEFLG(ip->mp);
 				error = uiomove(sam_zero_block, ioblk.count,
 				    UIO_READ, uiop);
+				SAM_CLEAR_LEASEFLG(ip->mp);
 				if (error) {
 					goto done;
 				}
@@ -1184,8 +1188,10 @@ unallocated_read:
 				    (DEV_BSIZE - ioblk.pboff));
 				ASSERT(ioblk.count > 0);
 
+				SAM_SET_LEASEFLG(ip->mp);
 				error = uiomove((bp->b_un.b_addr + ioblk.pboff),
 				    ioblk.count, rw, uiop);
+				SAM_CLEAR_LEASEFLG(ip->mp);
 				if (rw == UIO_WRITE && error == 0) {
 					error = SAM_BWRITE2(ip->mp, bp);
 				}

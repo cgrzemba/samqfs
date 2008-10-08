@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.78 $"
+#pragma ident "$Revision: 1.79 $"
 
 #include "sam/osversion.h"
 
@@ -984,19 +984,21 @@ sam_stage_write_io(
 			}
 
 			if (sam_vpm_enable) {
+				SAM_SET_LEASEFLG(ip->mp);
 				error = vpm_data_copy(vp, offset, n, uiop,
 				    0, NULL, 0, S_WRITE);
+				SAM_CLEAR_LEASEFLG(ip->mp);
 
 				if (error) {
 					break;
 				}
 			} else {
+				SAM_SET_LEASEFLG(ip->mp);
 				segmap_pagecreate(segkmap, lbase,
 				    PAGESIZE, F_SOFTLOCK);
 
 				error = uiomove(lbase, n, UIO_WRITE, uiop);
 
-				SAM_SET_LEASEFLG(ip->mp);
 				(void) segmap_fault(kas.a_hat, segkmap, lbase,
 				    PAGESIZE, F_SOFTUNLOCK, S_WRITE);
 				SAM_CLEAR_LEASEFLG(ip->mp);
@@ -1101,7 +1103,9 @@ sam_stage_n_write_io(
 	 * Move the data from the stager daemon pages into the stage_n
 	 * memory buffer.
 	 */
+	SAM_SET_LEASEFLG(ip->mp);
 	error = uiomove((base + reloff), nbytes, UIO_WRITE, uiop);
+	SAM_CLEAR_LEASEFLG(ip->mp);
 	TRACE(T_SAM_STNWRIO2, vp, (sam_tr_t)base,
 	    (sam_tr_t)uiop->uio_resid, error);
 	if ((error == 0) && !ip->flags.b.staging) {

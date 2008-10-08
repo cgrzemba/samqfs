@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 #include "sam/osversion.h"
 
@@ -1345,8 +1345,10 @@ sam_rm_buffered_io(
 			int bvalid = ip->stage_len - ip->stage_n_off;
 			int blength = MIN(uiop->uio_resid, bvalid - boff);
 
+			SAM_SET_LEASEFLG(ip->mp);
 			error = uiomove(ip->lbase + boff,
 			    blength, UIO_READ, uiop);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 			if ((ip->di.rm.media & DT_CLASS_MASK) == DT_OPTICAL) {
 				uiop->uio_loffset = offset + blength;
 						ip->stage_off += blength;
@@ -1448,7 +1450,9 @@ sam_rm_buffered_io(
 
 			/* transfer data to the user buffer */
 			length = MIN(length, rmio_buf_len);
+			SAM_SET_LEASEFLG(ip->mp);
 			error = uiomove(ip->lbase, length, UIO_READ, uiop);
+			SAM_CLEAR_LEASEFLG(ip->mp);
 			if (error) {
 				uiop->uio_resid += resid;
 				ip->rm_err = error;
