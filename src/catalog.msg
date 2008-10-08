@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.613 $"
+$ pragma ident "$Revision: 1.614 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3098,6 +3098,7 @@ $ From fsd/fsconfig.c
 17263 Cannot open object device %s
 17264 Cannot get object device attributes %s
 17265 %s: 'mat' filesystem must be mounted with nosam mount option
+17266 Cannot close device %s
 
 $ From fsd/defaults.c
 17280 Invalid '%s' value '%s'

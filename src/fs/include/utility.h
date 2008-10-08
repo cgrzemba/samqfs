@@ -35,7 +35,7 @@
 #define	SAM_UTILITY_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 #endif
 
 /* Declaration/initialization macros. */
@@ -113,6 +113,7 @@ DCL	int	verbose IVAL(0);
 extern void sam_set_dau(sam_dau_t *dau, int lg_kblocks, int sm_kblocks);
 
 int chk_devices(char *fs_name, int oflags, struct sam_mount_info *mp);
+void close_devices(struct sam_mount_info *mp);
 void get_mem(int exit_status);
 int bfmap(int caller, int ord, int bits);
 int cablk(int caller, int ord, int bits);

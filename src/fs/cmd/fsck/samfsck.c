@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.58 $"
+#pragma ident "$Revision: 1.59 $"
 
 
 /* ----- Includes */
@@ -581,9 +581,6 @@ usage_exit(int excode)
 static void
 clean_exit(int excode)
 {
-	struct devlist *devlp;
-	int i;
-
 	/* Clean-up dup blk file */
 	if (dup_fd >= 0) {
 		close(dup_fd);
@@ -597,10 +594,7 @@ clean_exit(int excode)
 	}
 
 	/* Clean-up device info */
-	for (i = 0, devlp = (struct devlist *)devp; devlp && (i < fs_count);
-	    i++, devlp++) {
-		close(devlp->fd);
-	}
+	close_devices(&mnt_info);
 
 	exit(excode);
 }
@@ -6940,7 +6934,6 @@ int						/* -1 if error, 0 otherwise */
 check_seg_inode(struct sam_perm_inode *dp)	/* Inode entry */
 {
 	struct ino_list *inop;
-	int modified = 0;
 
 	/* Check that segment attribute is set on segment inode */
 	if (!dp->di.status.b.segment) {
@@ -9224,14 +9217,17 @@ again:
 				error(0, 0, catgets(catfd, SET, 13977,
 				    "%s: Bad hostname in %s: name too short"),
 				    fsname, path);
+				break;
 			case HOST_FILE_ETOOLONG:
 				error(0, 0, catgets(catfd, SET, 13978,
 				    "%s: Bad hostname in %s: name too long"),
 				    fsname, path);
+				break;
 			case HOST_FILE_EBADCHAR:
 				error(0, 0, catgets(catfd, SET, 13999,
 				    "%s: Hostname has bad character in %s"),
 				    fsname, path);
+				break;
 		}
 		error(0, 0, catgets(catfd, SET, 13904,
 		    "getHostName() failed -- can't get local hostname"));

@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 
 
 /* ----- Include Files ---- */
@@ -111,6 +111,7 @@ char ***HostTab = NULL;		/* host table for -S option */
 struct sam_host_table *hostbuf = NULL;
 int hostbuflen = 0;
 boolean_t host_is_server = TRUE;
+int devices_open = 0;		/* Have the devices been opened yet */
 
 sam_mount_info_t mnt_info;	/* Mount info from mcf file */
 int fs_count;			/* Count of devices in filesystem */
@@ -140,6 +141,10 @@ void debug_print(int idx);
 #endif	/* DEBUG */
 extern int getHostName(char *host, int len, char *fs);
 
+static struct sigaction sig_action;	/* Signal actions */
+static void catch_signals(int sig);
+static void clean_exit(int excode);
+
 /*
  * Flag argument to print_sblk(); indicates source for ordinal ordering
  */
@@ -155,14 +160,22 @@ extern int getHostName(char *host, int len, char *fs);
 void
 main(int argc, char **argv)
 {
-	int i;
 	int err;
 	int length;
 	mkfscmd_t cmd;
-	struct devlist *dp;
 
 	CustmsgInit(0, NULL);
 	program_name = basename(argv[0]);
+
+	/*
+	 * Catch signals.
+	 */
+	sig_action.sa_handler = catch_signals;
+	sigemptyset(&sig_action.sa_mask);
+	sig_action.sa_flags = 0;
+	(void) sigaction(SIGHUP,  &sig_action, NULL);
+	(void) sigaction(SIGINT,  &sig_action, NULL);
+	(void) sigaction(SIGTERM, &sig_action, NULL);
 
 	/*
 	 * Check filesystem - will configure it if necessary.
@@ -187,34 +200,38 @@ main(int argc, char **argv)
 		cmd = SAM_FSINFO;
 		usagestring = SAM_FSINFO_USAGE;
 	} else {  /* program was invoked with invalid name */
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 712,
-	"This command must be invoked as sammkfs, samgrowfs "
-	"or samfsinfo, not %s"),
-		    program_name);
+		    "This command must be invoked as sammkfs, samgrowfs "
+		    "or samfsinfo, not %s"), program_name);
+		clean_exit(1);
 	}
 	time(&fstime);			/* File system initialize time */
 
 	super_blk = SUPERBLK;
 	if ((length = sizeof (struct sam_sbinfo)) > L_SBINFO) {
-		error(1, 0, catgets(catfd, SET, 2437,
+		error(0, 0, catgets(catfd, SET, 2437,
 		    "Superblock information record size GT L_SBINFO (%x)"),
 		    length);
+		clean_exit(1);
 	}
 	if ((length = sizeof (struct sam_sbord)) > L_SBORD) {
-		error(1, 0, catgets(catfd, SET, 2438,
+		error(0, 0, catgets(catfd, SET, 2438,
 		    "Superblock ordinal record size GT L_SBORD (%x)"), length);
+		clean_exit(1);
 	}
 
 	if (argc < 2) {
 		fprintf(stderr, catgets(catfd, SET, 13001, "Usage: %s %s\n"),
 		    program_name, usagestring);
-		exit(1);
+		clean_exit(1);
 	}
 
-	if (process_args(argc, argv, cmd))
-		error(1, 0, catgets(catfd, SET, 722,
+	if (process_args(argc, argv, cmd)) {
+		error(0, 0, catgets(catfd, SET, 722,
 		    "Configuration error."), 0);
+		clean_exit(1);
+	}
 
 	if (growfs) {
 		err = grow_fs();
@@ -224,19 +241,13 @@ main(int argc, char **argv)
 		err = new_fs();
 	}
 	if (err) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 1032,
 		    "Error during initialization"), 0);
+		clean_exit(1);
 	}
 
 	writedau();
-	for (i = 0, dp = (struct devlist *)devp; i < fs_count; i++, dp++) {
-		if (is_osd_group(dp->type)) {
-			close_obj_device(dp->eq_name, dp->filemode, dp->oh);
-		} else {
-			close(dp->fd);
-		}
-	}
 
 	/*
 	 * Notify any sam-sharefsd that the FS may have changed.
@@ -244,7 +255,42 @@ main(int argc, char **argv)
 	 */
 	(void) sam_shareops(fs_name, SHARE_OP_WAKE_SHAREDAEMON, 0);
 
-	exit(0);
+	clean_exit(0);
+}
+
+
+/*
+ * ----- clean_exit - Clean up leftovers and exit with the
+ * specified exit code.
+ */
+static void
+clean_exit(
+	int excode)		/* Exit code to exit with */
+{
+	/* Clean-up device info */
+	if (devices_open) {
+		close_devices(&mnt_info);
+	}
+	exit(excode);
+}
+
+
+/*
+ * ----- catch_signals
+ */
+static void
+catch_signals(int sig)
+{
+	switch (sig) {
+	case SIGHUP:
+	case SIGINT:
+	case SIGTERM:
+		error(0, 0, catgets(catfd, SET, 13968, "Stopped."));
+		clean_exit(0);
+		/* NOTREACHED */
+	default:
+		break;
+	}
 }
 
 
@@ -347,9 +393,10 @@ process_args(
 				break;
 			default:
 				if (cmd == SAM_FSINFO) {
-					error(1, 0, catgets(catfd, SET, 13415,
+					error(0, 0, catgets(catfd, SET, 13415,
 					"no options valid on samfsinfo "
 					"command."));
+					clean_exit(1);
 				} else {
 					error(0, 0, catgets(catfd, SET, 2799,
 					    "Unrecognized argument %s."),
@@ -434,23 +481,26 @@ process_args(
 			hostbuflen = SAM_LARGE_HOSTS_TABLE_SIZE;
 			hostbuf = (struct sam_host_table *)malloc(hostbuflen);
 			if (hostbuf == NULL) {
-				error(1, 0, "Hosts file memory allocation"
+				error(0, 0, "Hosts file memory allocation"
 				    "failed for (%s)", fs_name);
+				clean_exit(1);
 			}
 			memset((char *)hostbuf, 0, hostbuflen);
 			if (SamStoreHosts(hostbuf, hostbuflen,
 			    HostTab, 1) < 0) {
 				free(hostbuf);
-				error(1, 0, catgets(catfd, SET, 13450,
+				error(0, 0, catgets(catfd, SET, 13450,
 				    "Can't store FS %s hosts file "
 				    "into FS (check hosts file size)."),
 				    fs_name);
+				clean_exit(1);
 			}
 		}
 	}
 
 	if (err) {
-		error(1, 0, catgets(catfd, SET, 445, "Argument error."), 0);
+		error(0, 0, catgets(catfd, SET, 445, "Argument error."), 0);
+		clean_exit(1);
 	}
 	if (check_mnttab(fs_name)) {
 		char *msg_str;
@@ -458,7 +508,8 @@ process_args(
 		msg_str = catgets(catfd, SET, 13421,
 		    "filesystem %s is mounted.");
 		if (cmd != SAM_FSINFO) {
-			error(1, 0, msg_str, fs_name);
+			error(0, 0, msg_str, fs_name);
+			clean_exit(1);
 		} else {
 			fprintf(stderr, "%s: ", program_name);
 			fprintf(stderr, msg_str, fs_name);
@@ -467,6 +518,7 @@ process_args(
 	}
 
 	err = chk_devices(fs_name, open_mode, &mnt_info);
+	devices_open = 1;
 	if (err == 0) {
 		fs_count = mnt_info.params.fs_count;
 		mm_count = mnt_info.params.mm_count;
@@ -474,17 +526,19 @@ process_args(
 
 		if ((mnt_info.params.fi_type == DT_META_OBJ_TGT_SET) &&
 		    shared) {
-			error(1, 0, catgets(catfd, SET, 17261,
+			error(0, 0, catgets(catfd, SET, 17261,
 			    "%s: 'mat' filesystem cannot be shared"),
 			    fs_name);
+			clean_exit(1);
 		}
 		if (mnt_info.params.fi_type == DT_META_SET ||
 		    mnt_info.params.fi_type == DT_META_OBJECT_SET ||
 		    mnt_info.params.fi_type == DT_META_OBJ_TGT_SET) {
 			if (mm_count == 0) {
-				error(1, 0, catgets(catfd, SET, 13411,
+				error(0, 0, catgets(catfd, SET, 13411,
 				    "%s has no meta devices"),
 				    fs_name);
+				clean_exit(1);
 			}
 		}
 		if (cmd == SAM_MKFS || cmd == QFS_MKFS) {
@@ -510,10 +564,11 @@ process_args(
 			if (mnt_info.params.fi_config1 & MC_MD_DEVICES) {
 				if (allocation != 16 && allocation != 32 &&
 				    allocation != 64) {
-					error(1, 0, catgets(catfd, SET, 13460,
+					error(0, 0, catgets(catfd, SET, 13460,
 					    "%s (md) allocation = %d, "
 					    "must be 16, 32, or 64"),
 					    fs_name, allocation);
+					clean_exit(1);
 				}
 				/* Default data SM dau */
 				SM_DEV_BLOCK(mp, DD) = SAM_LOG_BLOCK;
@@ -521,10 +576,11 @@ process_args(
 				LG_DEV_BLOCK(mp, DD) = allocation;
 			} else {
 				if (allocation < 8 || allocation >= 65536) {
-					error(1, 0, catgets(catfd, SET, 13461,
+					error(0, 0, catgets(catfd, SET, 13461,
 					    "%s (ma) allocation = %d, "
 					    "must be >= 8 and <= 65528"),
 					    fs_name, allocation);
+					clean_exit(1);
 				}
 				/* Default data SM dau */
 				SM_DEV_BLOCK(mp, DD) = allocation;
@@ -549,32 +605,36 @@ process_args(
 		case SAM_GROWFS:
 			if (mnt_info.params.fi_config1 & MC_SHARED_FS) {
 				if (!shared && !growfs) {
-					error(1, 0, catgets(catfd, SET, 13447,
+					error(0, 0, catgets(catfd, SET, 13447,
 					    "%s: %s is a shared filesystem; "
 					    "use -S option."),
 					    program_name, fs_name);
+					clean_exit(1);
 				}
 				/*
 				 * Only let server mkfs a shared file system.
 				 */
 				if (host_is_server == 0) {
-					error(1, 0, catgets(catfd, SET, 13453,
+					error(0, 0, catgets(catfd, SET, 13453,
 					    "Cannot run sammkfs from a "
 					    "client"));
+					clean_exit(1);
 				}
 			} else {
 				if (shared) {
-					error(1, 0, catgets(catfd, SET, 13448,
+					error(0, 0, catgets(catfd, SET, 13448,
 	"%s: %s is not a shared filesystem; -S option specified."),
 					    program_name, fs_name);
+					clean_exit(1);
 				}
 			}
 		}
 	} else {
 		if (errno == EBUSY) {
-			error(1, 0, catgets(catfd, SET, 13416,
+			error(0, 0, catgets(catfd, SET, 13416,
 			    "%s needs to be run on an unmounted filesystem."),
 			    program_name);
+			clean_exit(1);
 		}
 	}
 	return (err);
@@ -623,7 +683,7 @@ new_fs(void)
 		printf(catgets(catfd, SET, 13430,
 		    "Not building '%s'.  Exiting.\n"),
 		    fs_name);
-		exit(2);
+		clean_exit(2);
 	}
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
@@ -638,7 +698,7 @@ new_fs(void)
 		printf(catgets(catfd, SET, 13470,
 		    "Omitting the -V option will create filesystem '%s'.\n"),
 		    fs_name);
-		exit(0);
+		clean_exit(0);
 	}
 
 	/*
@@ -689,7 +749,8 @@ new_fs(void)
 		}
 	}
 	if (err) {
-		exit(1); /* Don't write superblock if things have gone wrong */
+		/* Don't write superblock if things have gone wrong */
+		clean_exit(1);
 	}
 	/*
 	 * Clear allocated blocks for all the FS devices except objects.
@@ -712,7 +773,7 @@ new_fs(void)
 		if (err) {
 			printf("eq%d: system %x != computed len %x\n",
 			    dp->eq, sblock.eq[ord].fs.system, len);
-			exit(1);
+			clean_exit(1);
 		}
 	}
 	err |= iino();			/* Initialize inodes */
@@ -765,29 +826,32 @@ grow_fs(void)
 	i = old_count;
 
 	if (old_count == 0) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 583,
 		    "Cannot find ordinal 0 for filesystem %s"),
 		    fs_name);
+		clean_exit(1);
 	}
 	if (old_count >= fs_count) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 13424,
 		    "No new devices added to filesystem %s."),
 		    fs_name);
+		clean_exit(1);
 	}
 	if (mm_count && mm_count <= old_mm_count) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 13433,
 	"Cannot grow Sun QFS filesytem %s without adding metadata "
-	"partitions."),
-		    fs_name);
+	"partitions."), fs_name);
+		clean_exit(1);
 	}
 	if (fs_count > L_FSET) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 13440,
 		    "Too many devices (%d total) added to filesystem %s."),
 		    fs_count, fs_name);
+		clean_exit(1);
 	}
 
 	for (ord = 0, dp = (struct devlist *)ndevp; ord < fs_count;
@@ -804,10 +868,11 @@ grow_fs(void)
 			}
 		}
 		if (err) {
-			error(1, 0,
+			error(0, 0,
 			    catgets(catfd, SET, 2439,
 			    "superblock read failed on eq (%d)"),
 			    dp->eq);
+			clean_exit(1);
 		}
 		/* Validate label is same for all members & not duplicated. */
 		if (strncmp(sblk->info.sb.name, SAMFS_SB_NAME_STR,
@@ -820,20 +885,22 @@ grow_fs(void)
 			(void *) memcpy((char *)&devp->device[i], (char *)dp,
 			    sizeof (struct devlist));
 			if (++i > fs_count) {
-				error(1, 0,
+				error(0, 0,
 				    catgets(catfd, SET, 1017,
 				    "Equipment for filesystem %s is not "
 				    "all present"),
 				    fs_name);
+				clean_exit(1);
 			}
 		} else {
 			/* Old partitions for filesystem fs_name */
 			if (devp->device[sblk->info.sb.ord].eq != 0) {
-				error(1, 0,
+				error(0, 0,
 				    catgets(catfd, SET, 1627,
 				    "mcf eq (%d) duplicate ordinal %d in "
 				    "filesystem %s"),
 				    dp->eq, sblk->info.sb.ord, fs_name);
+				clean_exit(1);
 			}
 			(void *) memcpy((char *)&devp->device[
 			    sblk->info.sb.ord], (char *)dp,
@@ -856,26 +923,28 @@ grow_fs(void)
 		printf(catgets(catfd, SET, 13432,
 		    "Not growing '%s'.  Exiting.\n"),
 		    fs_name);
-		exit(2);
+		clean_exit(2);
 	}
 
 	/* Make sure all members of the storage set are present. */
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
 		if (dp->eq == 0) {
-			error(1, 0,
+			error(0, 0,
 			    catgets(catfd, SET, 1628,
 			    "mcf eq (%d) ordinal %d not present in %s"),
 			    dp->eq, ord, fs_name);
+			clean_exit(1);
 		}
 	}
 	dp = (struct devlist *)devp;
 	i = howmany(L_SBINFO + (fs_count * L_SBORD), SAM_DEV_BSIZE);
 	if (d_read(dp, (char *)&sblock, i, SUPERBLK)) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 2439,
 		    "superblock read failed on eq (%d)"),
 		    dp->eq);
+		clean_exit(1);
 	}
 	sblock.info.sb.fs_count = fs_count;
 	sblock.info.sb.da_count = fs_count - mm_count;
@@ -887,15 +956,16 @@ grow_fs(void)
 		sblock.eq[ord].fs.eq = dp->eq;
 		if (ord < old_count) {
 			if (sblock.eq[ord].fs.type != dp->type) {
-				error(1, 0,
+				error(0, 0,
 				    catgets(catfd, SET, 13424,
-				    "Cannot change type for eq %d"),
-				    dp->eq);
+				    "Cannot change type for eq %d"), dp->eq);
+				clean_exit(1);
 			} else if (sblock.eq[ord].fs.num_group !=
 			    dp->num_group) {
-				error(1, 0, catgets(catfd, SET, 13446,
+				error(0, 0, catgets(catfd, SET, 13446,
 				    "Cannot change striped group for eq %d"),
 				    dp->eq);
+				clean_exit(1);
 			}
 		} else {
 			sblock.eq[ord].fs.type = dp->type;
@@ -908,7 +978,7 @@ grow_fs(void)
 		printf(catgets(catfd, SET, 13471,
 		    "Omitting the -V option will extend filesystem '%s'.\n"),
 		    fs_name);
-		exit(0);
+		clean_exit(0);
 	}
 	/*
 	 * Build bit maps for the new FS devices.  Note that
@@ -956,7 +1026,8 @@ grow_fs(void)
 		}
 	}
 	if (err) {
-		exit(1); /* don't write superblock if things have gone wrong */
+		/* don't write superblock if things have gone wrong */
+		clean_exit(1);
 	}
 	for (ord = old_count; ord < fs_count; ord++) {
 		int len;
@@ -971,7 +1042,7 @@ grow_fs(void)
 		if (err) {
 			printf("eq%d: system %x != computed len %x\n",
 			    dp->eq, sblock.eq[ord].fs.system, len);
-			exit(1);
+			clean_exit(1);
 		}
 	}
 	err |= write_sblk(&sblock, devp);
@@ -1198,12 +1269,13 @@ grow_sblk()
 			    (longlong_t)(mp->mi.m_dau[dt].kblocks[LG] *
 			    dp->num_group);
 			if (sblock.eq[ord].fs.capacity > t_size) {
-				error(1, 0, catgets(catfd, SET, 1626,
+				error(0, 0, catgets(catfd, SET, 1626,
 				    "Superblock size=%lld exceeds mcf "
 				    "eq %d size=%lld"),
 				    sblock.eq[ord].fs.capacity, dp->eq,
 				    (dp->blocks *
 				    mp->mi.m_dau[dt].kblocks[LG]));
+				clean_exit(1);
 			}
 		} else {
 			has_no_bitmaps = 0;
@@ -1237,11 +1309,12 @@ grow_sblk()
 					sblock.eq[ord].fs.mm_ord = mm_ord;
 					iblk += sblock.eq[ord].fs.l_allocmap;
 					if (sblock.eq[ord].fs.allocmap < 0) {
-						error(1, 0, catgets(catfd,
+						error(0, 0, catgets(catfd,
 						    SET, 13433,
 		"Cannot grow QFS filesytem %s without adding metadata "
 		"partitions."),
 						    fs_name);
+						clean_exit(1);
 					}
 				}
 			} else {
@@ -1262,11 +1335,11 @@ grow_sblk()
 		len = roundup(iblk, LG_DEV_BLOCK(mp, MM));
 		sblock.eq[mm_ord].fs.system = len;
 		if ((offset_t)len > sblock.eq[mm_ord].fs.capacity) {
-			error(1, 0, catgets(catfd, SET, 13452,
+			error(0, 0, catgets(catfd, SET, 13452,
 			    "Cannot grow QFS filesytem %s without adding "
-			    "a metadata"
-			    " partition of %d 1k blocks"),
+			    "a metadata partition of %d 1k blocks"),
 			    fs_name, len);
+			clean_exit(1);
 		}
 	}
 }
@@ -1301,9 +1374,9 @@ iino(void)
 
 	ino_version = SAM_INODE_VERS_2;
 	if ((length = sizeof (struct sam_perm_inode)) > SAM_ISIZE) {
-		error(1, 0, catgets(catfd, SET, 1377,
-		    "Inode size GT SAM_ISIZE (%x)"),
-		    length);
+		error(0, 0, catgets(catfd, SET, 1377,
+		    "Inode size GT SAM_ISIZE (%x)"), length);
+		clean_exit(1);
 	}
 	fblk_to_extent = sblock.info.sb.ext_bshift - SAM_DEV_BSHIFT;
 	dt = (devp->device[mm_ord].type == DT_META) ? MM : DD;
@@ -1507,7 +1580,7 @@ iino(void)
 				    "Do you wish to continue? [y/N] "), 'n')) {
 					printf(catgets(catfd, SET, 13430,
 				    "Not building '%s'.  Exiting.\n"), fs_name);
-					exit(2);
+					clean_exit(2);
 				}
 
 			} else {
@@ -1590,26 +1663,28 @@ iino(void)
 				if (ndau *
 				    (offset_t)mp->mi.m_dau[dt].size[LG] !=
 				    dp->di.rm.size) {
-						error(1, 0, catgets(catfd, SET,
+						error(0, 0, catgets(catfd, SET,
 						    13402,
 						    "failed to allocate %d "
 						    "inodes on eq %d"),
 						    ninodes,
 						    devp->device[mm_ord].eq);
+						clean_exit(1);
 				}
 			}
 			if ((fblk = getdau(mm_ord, ndau, 0, 1)) < 0) {
 				if (ino == SAM_HOST_INO) {
-					error(1, 0,
+					error(0, 0,
 					    "Host table allocation "
-					    "failed for (%s)",
-					    fs_name);
+					    "failed for (%s)", fs_name);
+					clean_exit(1);
 				} else {
-					error(1, errno, catgets(catfd, SET,
+					error(0, errno, catgets(catfd, SET,
 					    13402,
 					    "failed to allocate %d "
 					    "inodes on eq %d"),
 					    ninodes, devp->device[mm_ord].eq);
+					clean_exit(1);
 				}
 			}
 			dp->di.extent[0] = (int)(fblk >> fblk_to_extent);
@@ -1686,8 +1761,10 @@ iino(void)
 				/*
 				 * No hosts table.
 				 */
-				error(1, 0, "No host table for (%s)", fs_name);
+				error(0, 0, "No host table for (%s)", fs_name);
+				clean_exit(1);
 			}
+			/* NOTREACHED */
 		case SAM_ARCH_INO:
 		case SAM_STAGE_INO:
 			length = DIR_LOG_BLOCK;
@@ -1918,10 +1995,11 @@ debug_print(int idx)
 		}
 		if (d_read(mdp, (char *)dcp, 1,
 		    (sam_daddr_t)(sblock.eq[ord].fs.allocmap + ii))) {
-				error(1, 0,
+				error(0, 0,
 				    catgets(catfd, SET, 798,
 				    "Dau map read failed on eq %d"),
 				    mdp->eq);
+				clean_exit(1);
 		}
 		wptr = (uint_t *)dcp;
 		for (i = 0; i < blocks_per_read; i++) {
@@ -2052,7 +2130,6 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 {
 	struct sam_sbinfo *sblkp;
 	int i;
-	char *shared_str;
 	char ver_str[20];
 	struct devlist *dp;
 	time_t init_time;
@@ -2221,10 +2298,10 @@ read_existing_sblk(struct d_list *devp, struct sam_sblk *sblk, int sblk_size)
 			}
 		}
 		if (err) {
-			error(1, 0,
+			error(0, 0,
 			    catgets(catfd, SET, 2439,
-			    "superblock read failed on eq (%d)"),
-			    dp->eq);
+			    "superblock read failed on eq (%d)"), dp->eq);
+			clean_exit(1);
 		}
 		if (strncmp(sblk->info.sb.fs_name, fs_name,
 		    sizeof (uname_t)) == 0) {
@@ -2241,10 +2318,10 @@ read_existing_sblk(struct d_list *devp, struct sam_sblk *sblk, int sblk_size)
 	    strncmp(sblk->info.sb.fs_name, fs_name, sizeof (uname_t)) != 0 ||
 	    strncmp(sblk->info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblk->info.sb.name)) != 0) {
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 583,
-		    "Cannot find ordinal 0 for filesystem %s"),
-		    fs_name);
+		    "Cannot find ordinal 0 for filesystem %s"), fs_name);
+		clean_exit(1);
 	}
 
 	switch (sblk->info.sb.magic) {
@@ -2261,17 +2338,17 @@ read_existing_sblk(struct d_list *devp, struct sam_sblk *sblk, int sblk_size)
 	case SAM_MAGIC_V1_RE:
 	case SAM_MAGIC_V2_RE:
 	case SAM_MAGIC_V2A_RE:
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 13472,
-		    "FS %s built with non-native byte order\n"),
-		    fs_name);
+		    "FS %s built with non-native byte order\n"), fs_name);
+		clean_exit(1);
 		/* NOTREACHED */
 
 	default:
-		error(1, 0,
+		error(0, 0,
 		    catgets(catfd, SET, 13473,
-		    "FS %s: not a recognized QFS file system type\n"),
-		    fs_name);
+		    "FS %s: not a recognized QFS file system type\n"), fs_name);
+		clean_exit(1);
 	}
 
 	sam_set_dau(&mp->mi.m_dau[DD], sblk->info.sb.dau_blks[SM],
@@ -2313,10 +2390,10 @@ check_fs_devices(char *fs_name)
 			}
 		}
 		if (err) {
-			error(1, 0,
+			error(0, 0,
 			    catgets(catfd, SET, 2439,
-			    "superblock read failed on eq (%d)"),
-			    dp->eq);
+			    "superblock read failed on eq (%d)"), dp->eq);
+			clean_exit(1);
 		}
 
 		if ((strncmp(sblkp->name,
@@ -2356,11 +2433,13 @@ check_fs_devices(char *fs_name)
 		abort_on_error = 1;
 #endif	/* DEBUG */
 		if (strict_worm || worm_v2) {
-			error(abort_on_error, 0,
-			    catgets(catfd, SET, 13465,
+			error(0, 0, catgets(catfd, SET, 13465,
 			    "Write Once Read Many partitions detected "
 			    "<%d of %d>"),
 			    num_sblks_worm, num_sblks);
+			if (abort_on_error) {
+				clean_exit(abort_on_error);
+			}
 		} else if (worm_lite) {
 			printf(catgets(catfd, SET, 13465,
 			    "Write Once Read Many partitions detected <%d "
@@ -2400,9 +2479,8 @@ check_lun_limits(char *fs_name)
 			    program_name, fs_name, 16);
 			printf(catgets(catfd, SET, 13457,
 			    "%s: SAM-QFS allows a maximum of 16 TB per "
-			    "partition\n"),
-			    program_name);
-			exit(1);
+			    "partition\n"), program_name);
+			clean_exit(1);
 		}
 	}
 	if (lun_ge_1tb) {

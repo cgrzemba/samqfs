@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 #include "sam/osversion.h"
 
@@ -285,6 +285,36 @@ chk_devices(
 		return (1);
 	}
 	return (0);
+}
+
+
+/*
+ * -----  close_devices
+ *
+ *	Close file system devices.
+ *	Nice for block devices.  Necessary for object devices.
+ */
+
+void
+close_devices(
+	struct sam_mount_info *mp)	/* Mount info struct */
+{
+	struct devlist *dp = (struct devlist *)devp;
+	int i, r = 0, fs_count;
+
+	fs_count = mp->params.fs_count;
+	for (i = 0; i < fs_count; i++, dp++) {
+		if (is_osd_group(dp->type) && (dp->oh != NULL)) {
+			r = close_obj_device(dp->eq_name, dp->filemode, dp->oh);
+		}
+		if (!is_osd_group(dp->type) && (dp->fd > 0)) {
+			r = close(dp->fd);
+		}
+		if (r < 0) {
+			error(0, errno, catgets(catfd, SET, 17266,
+			    "Cannot close device %s"), dp->eq_name);
+		}
+	}
 }
 
 
