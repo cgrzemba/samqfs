@@ -38,7 +38,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -281,6 +281,9 @@ sam_restore_copy(const char *path, int copy, struct sam_stat *s_buf,
 	sa.ar.position = ar->position & 0xffffffff;
 	sa.ar.file_offset = ar->offset;
 	sa.ar.arch_flags |= SAR_size_block;
+	if (media == DT_DISK) {
+		sa.ar.arch_flags |= SAR_diskarch;
+	}
 	memcpy(sa.ar.vsn, ar->vsn, sizeof (vsn_t));
 	if (ioctl(fd, F_SETARCH, &sa) < 0) {
 		(void) close(fd);
