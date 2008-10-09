@@ -38,7 +38,7 @@
 #define	_SAM_FS_INO_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 #endif
 
 #ifdef linux
@@ -397,8 +397,8 @@ typedef struct sam_disk_inode_part2 {
 	sam_id_t		xattr_id;
 	uchar_t			pad1[8];
 	projid_t		projid;			/* project ID */
-	uchar_t			objtype;		/* object type */
 	uchar_t			pad2[2];
+	uchar_t			objtype;		/* object type */
 	uchar_t			p2flags;
 	sam_time_t		rperiod_start_time;		/* WORM */
 	uint32_t		rperiod_duration;		/* WORM */
