@@ -29,7 +29,7 @@
 #ifndef	_RECYCLER_SH_WRAPPER_H
 #define	_RECYCLER_SH_WRAPPER_H
 
-#pragma ident	"$Revision: 1.15 $"
+#pragma ident	"$Revision: 1.16 $"
 
 /*
  * recycler_sh_wrapper.h.
@@ -82,7 +82,7 @@
 /* Store the label text */
 #define	LABEL_ON_BLOCK "set stat=0" \
 "\nif ( $6 != hy ) then" \
-"\n    "SBIN_DIR"chmed -R $5.$2" \
+"\n    "SBIN_DIR"/chmed -R $5.$2" \
 "\n    "SBIN_DIR"/chmed -W $5.$2" \
 "\n    if ( $5 != \"d2\" ) then" \
 "\n        if ( $1 != \"od\" ) then" \
