@@ -140,7 +140,7 @@ const char *SMI_BCL[] = {
  */
 
 #if 0
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 #endif
 
 #define	EXPORT_SYMTAB
@@ -680,24 +680,24 @@ QFS_d_rehash(struct dentry *dentry)
 	d_rehash(dentry);
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+#if defined(RHE_LINUX) && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 9))
 int
-QFS_filemap_fdatawrite(struct address_space *mapping)
+QFS_rfs_write_inode_now(struct inode *inode, int sync)
 {
-	return (filemap_fdatawrite(mapping));
+	return (write_inode_now_err(inode, sync));
 }
-EXPORT_SYMBOL(QFS_filemap_fdatawrite);
-
-extern int rfs_filemap_write_and_wait(struct address_space *mapping);
-
-int
-QFS_rfs_filemap_write_and_wait(struct address_space *mapping)
-{
-	return (rfs_filemap_write_and_wait(mapping));
-}
-EXPORT_SYMBOL(QFS_rfs_filemap_write_and_wait);
-
 #else
+int
+QFS_rfs_write_inode_now(struct inode *inode, int sync)
+{
+	return (write_inode_now(inode, sync));
+}
+#endif
+EXPORT_SYMBOL(QFS_rfs_write_inode_now);
+#endif
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
 int
 QFS_filemap_fdatasync(struct address_space *mapping)
 {

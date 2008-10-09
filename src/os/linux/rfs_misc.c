@@ -52,7 +52,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 #endif
 
 #include <linux/module.h>
@@ -258,25 +258,6 @@ rfs_block_read_full_page(struct page *page, get_block_t *get_block)
 	return (block_read_full_page(page, get_block));
 }
 #endif /* LINUX_VERSION_CODE >= 2.6.9 */
-
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
-/* From SLES9/SP2, mm/filemap.c:filemap_write_and_wait() */
-int
-rfs_filemap_write_and_wait(struct address_space *mapping)
-{
-	int retval = 0;
-
-	if (mapping->nrpages) {
-		retval = filemap_fdatawrite(mapping);
-		if (retval == 0) {
-			retval = filemap_fdatawait(mapping);
-		}
-	}
-	return (retval);
-}
-#endif /* >= 2.6.0 */
-
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
 #ifndef MAX_BUF_PER_PAGE

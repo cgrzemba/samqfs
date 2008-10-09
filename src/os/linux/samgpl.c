@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 #endif
 
 #define	EXPORT_SYMTAB
@@ -107,8 +107,6 @@ EXPORT_SYMBOL(rfs_generic_direct_IO);
 #endif /* KERNEL_MAJOR */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
-extern int rfs_filemap_write_and_wait(struct address_space *mapping);
-EXPORT_SYMBOL(rfs_filemap_write_and_wait);
 extern ssize_t rfs_generic_file_write(struct file *file, const char *buf,
 					size_t count, loff_t *ppos);
 EXPORT_SYMBOL(rfs_generic_file_write);

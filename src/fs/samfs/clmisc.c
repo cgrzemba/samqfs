@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.260 $"
+#pragma ident "$Revision: 1.261 $"
 #endif
 
 #include "sam/osversion.h"
@@ -928,7 +928,7 @@ sam_directed_actions(
 #endif /* sun */
 #ifdef linux
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
-			error = rfs_filemap_write_and_wait(li->i_mapping);
+			error = rfs_write_inode_now(li, 0);
 			if (flags & B_INVAL) {
 				invalidate_inode_pages(li->i_mapping);
 			}
@@ -1409,7 +1409,7 @@ sam_set_cl_attr(
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				}
-				rfs_filemap_write_and_wait(li->i_mapping);
+				rfs_write_inode_now(li, 0);
 				if (!write_lock) {
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 					RW_LOCK_OS(&ip->inode_rwl, RW_READER);

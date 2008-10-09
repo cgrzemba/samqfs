@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 #endif
 
 #include "sam/osversion.h"
@@ -303,7 +303,7 @@ samqfs_client_close_vn(
 		 * Flush and invalidate any dirty data buffers.
 		 */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
-		error = rfs_filemap_write_and_wait(SAM_SITOLI(ip)->i_mapping);
+		error = rfs_write_inode_now(SAM_SITOLI(ip), 0);
 		invalidate_inode_pages(SAM_SITOLI(ip)->i_mapping);
 #else
 		error = fsync_inode_data_buffers(SAM_SITOLI(ip));
@@ -726,7 +726,7 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 		rw_type = RW_WRITER;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
-		error = rfs_filemap_write_and_wait(li->i_mapping);
+		error = rfs_write_inode_now(li, 0);
 #else
 		error = filemap_fdatasync(li->i_mapping);
 		if (error == 0) {
@@ -956,7 +956,7 @@ __samqfs_client_flush(struct file *fp)
 	int error = 0;
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-	error = rfs_filemap_write_and_wait(li->i_mapping);
+	error = rfs_write_inode_now(li, 0);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 	if (error > 0) {
@@ -996,7 +996,7 @@ samqfs_client_fsync_vn(struct file *fp, struct dentry *de, int ds)
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-	error = rfs_filemap_write_and_wait(li->i_mapping);
+	error = rfs_write_inode_now(li, 0);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 #else
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);

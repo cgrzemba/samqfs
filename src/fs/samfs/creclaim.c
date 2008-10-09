@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.94 $"
+#pragma ident "$Revision: 1.95 $"
 #endif
 
 #include "sam/osversion.h"
@@ -626,8 +626,7 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 #ifdef linux
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
 					RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-					rfs_filemap_write_and_wait(
-					    li->i_mapping);
+					rfs_write_inode_now(li, 0);
 					if (flags & B_INVAL) {
 						invalidate_inode_pages(
 						    li->i_mapping);

@@ -36,7 +36,7 @@
 #define	_SAM_FS_CLEXTERN_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.63 $"
+#pragma ident "$Revision: 1.64 $"
 #endif
 
 #ifdef sun
@@ -537,7 +537,7 @@ void rfs_d_drop(struct dentry *de);
 unsigned int rfs_full_name_hash(const unsigned char *name, unsigned int len);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
-int rfs_filemap_write_and_wait(struct address_space *mapping);
+int rfs_write_inode_now(struct inode *inode, int sync);
 int rfs_try_module_get(struct module *module);
 void rfs_module_put(struct module *module);
 #endif /* KERNEL_MAJOR */
