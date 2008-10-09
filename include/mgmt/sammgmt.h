@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.118 $"
+#pragma ident	"$Revision: 1.119 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -652,15 +652,6 @@ typedef struct str_cnt_strarray_mntopts {
 	char	**array;
 	mount_options_t *mo;
 } str_cnt_strarray_mntopts_t;
-
-typedef struct add_storage_node_arg {
-	ctx_t *ctx;
-	char *fs_name;
-	char *node_name;
-	char *node_ip;
-	char *node_data;
-	fs_t *fs;
-} add_storage_node_arg_t;
 
 typedef struct string_hostlst_arg {
 	ctx_t *ctx;
@@ -1874,15 +1865,6 @@ extern samrpc_result_t *samrpc_unmount_clients_5_0_svr();
 #define	samrpc_change_shared_fs_mount_options 336
 extern samrpc_result_t *samrpc_change_shared_fs_mount_options_5_0_svr();
 
-#define	samrpc_create_proto_fs 337
-extern samrpc_result_t *samrpc_create_proto_fs_5_0_svr();
-
-#define	samrpc_add_storage_node 338
-extern samrpc_result_t *samrpc_add_storage_node_5_0_svr();
-
-#define	samrpc_remove_storage_node 339
-extern samrpc_result_t *samrpc_remove_storage_node_5_0_svr();
-
 #define	samrpc_get_shared_fs_summary_status 340
 extern samrpc_result_t *samrpc_get_shared_fs_summary_status_5_0_svr();
 
@@ -2714,7 +2696,6 @@ extern bool_t xdr_string_strlst_int_arg_t();
 extern bool_t xdr_charstararray();
 extern bool_t xdr_str_cnt_strarray_t();
 extern bool_t xdr_str_cnt_strarray_mntopts_t();
-extern bool_t xdr_add_storage_node_arg_t();
 extern bool_t xdr_string_hostlst_arg_t();
 
 /* license.h */

@@ -29,7 +29,7 @@
 #ifndef _HOSTS_H
 #define	_HOSTS_H
 
-#pragma ident "	$Revision: 1.21 $	"
+#pragma ident "	$Revision: 1.22 $	"
 
 
 
@@ -83,7 +83,6 @@ typedef struct host_info {
 
 #define	HOSTS_MDS	0x0001
 #define	HOSTS_CLIENTS	0x0002
-#define	HOSTS_STORAGE_NODES 0x0004
 #define	HOSTS_DETAILS	0x0008
 
 /*
@@ -93,27 +92,21 @@ typedef struct host_info {
  * of hosts will be included and what data will be returned.
  *
  * The options field supports the flags:
- * HOSTS_STORAGE_NODE | HOSTS_MDS | HOSTS_CLIENTS | HOSTS_DETAILS
+ * HOSTS_MDS | HOSTS_CLIENTS | HOSTS_DETAILS
  *
  * If the HOST_MDS option is set the function returns the potential
  * metadata information too.
  *
- * For Storage Nodes the capacity is reported in the devices of the file
- * system. This call only returns information about the host, ip and
- * status.
  *
  * Keys shared by all classes of host include:
  * hostName = %s
- * type = OSD | client | mds | pmds
+ * type = client | mds | pmds
  * ip_addresses = space separated list of ips.
  * os = Operating System Version
  * version = sam/qfs version
  * arch = x86 | sparc
  * mounted = %d ( -1 means not mounted otherwise time mounted in seconds)
  * status = ON | OFF | ERROR
- *
- * faults = %d (only on storage nodes. This key only present if faults
- *		    exist)
  *
  * If HOST_DETAILS flag is set in options the following will be obtained
  * for clients and real and potential metadata servers. Information

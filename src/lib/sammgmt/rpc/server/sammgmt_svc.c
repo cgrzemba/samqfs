@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.119 $"
+#pragma ident	"$Revision: 1.120 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -372,9 +372,6 @@ sammgmtprog_1(rqstp, transp)
 		str_cnt_strarray_t samrpc_unmount_clients_5_0_arg;
 		str_cnt_strarray_mntopts_t
 			samrpc_change_shared_fs_mount_options_5_0_arg;
-		string_arg_t samrpc_create_proto_fs_5_0_arg;
-		add_storage_node_arg_t samrpc_add_storage_node_5_0_arg;
-		string_string_arg_t samrpc_remove_storage_node_5_0_arg;
 		string_arg_t samrpc_get_shared_fs_summary_status_5_0_arg;
 
 		/* license.h */
@@ -1617,24 +1614,6 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)())
 		    samrpc_change_shared_fs_mount_options_5_0_svr;
-		break;
-
-	case samrpc_create_proto_fs:
-		_xdr_argument = xdr_string_arg_t;
-		_xdr_result = xdr_samrpc_result_t;
-		local = (char *(*)()) samrpc_create_proto_fs_5_0_svr;
-		break;
-
-	case samrpc_add_storage_node:
-		_xdr_argument = xdr_add_storage_node_arg_t;
-		_xdr_result = xdr_samrpc_result_t;
-		local = (char *(*)()) samrpc_add_storage_node_5_0_svr;
-		break;
-
-	case samrpc_remove_storage_node:
-		_xdr_argument = xdr_string_string_arg_t;
-		_xdr_result = xdr_samrpc_result_t;
-		local = (char *(*)()) samrpc_remove_storage_node_5_0_svr;
 		break;
 
 	case samrpc_get_shared_fs_summary_status:

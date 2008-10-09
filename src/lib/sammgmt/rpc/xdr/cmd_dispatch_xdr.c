@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.1 $"
+#pragma ident   "$Revision: 1.2 $"
 
 
 #include "mgmt/sammgmt.h"
@@ -53,8 +53,6 @@ static struct {
 		sizeof (string_arg_t)},
 	{ 6, samrpc_set_advanced_network_cfg, "set advanced network config",
 		xdr_string_strlst_arg_t, sizeof (string_strlst_arg_t)},
-	{ 7, samrpc_add_storage_node, "add storage node",
-		xdr_add_storage_node_arg_t, sizeof (add_storage_node_arg_t)}
 };
 
 

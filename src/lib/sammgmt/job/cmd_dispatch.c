@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.2 $"
+#pragma ident   "$Revision: 1.3 $"
 
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
@@ -131,7 +131,6 @@ char *dipspatch_op_names[MAX_DISPATCH_ID] = {
 	DSP_GROW_FS,
 	DSP_REMOVE_CLIENTS,
 	DSP_SET_ADV_NET_CONFIG,
-	DSP_ADD_SOSD
 };
 
 
@@ -1010,12 +1009,6 @@ get_type_specific_output(dispatch_job_t *dj, char *buf, int buf_size) {
 		fs_name = advnet_arg->str;
 		break;
 	}
-	case CMD_ADD_SOSD: {
-		add_storage_node_arg_t *adsna =
-		    (add_storage_node_arg_t *)dj->args;
-		fs_name = adsna->fs_name;
-		break;
-	}
 	default: {
 		Trace(TR_ERR, "There is no support for the function's specific"
 		    " options %d", dj->func_id);
@@ -1070,10 +1063,6 @@ free_dispatch_func_args(void *args, dispatch_id_t func_id) {
 	case CMD_SET_ADV_NET_CONFIG: {
 		xdr_free(xdr_string_strlst_arg_t,
 		    (char *)args);
-		break;
-	}
-	case CMD_ADD_SOSD: {
-		xdr_free(xdr_add_storage_node_arg_t, (char *)args);
 		break;
 	}
 	default: {

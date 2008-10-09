@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.17 2008/08/20 19:36:51 ronaldso Exp $
+// ident	$Id: Host.java,v 1.18 2008/10/09 14:32:35 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -40,10 +40,9 @@ public class Host {
     public static final int CL_STATE_ON  = 1;
 
     /* Shared FS Host Function options must match options in pub/mgmt/hosts.h */
-    public static final int MDS                 = 0x0001;
-    public static final int CLIENTS             = 0x0002;
-    public static final int STORAGE_NODE        = 0x0004;
-    public static final int HOST_DETAILS	= 0x0008;
+    public static final int MDS		= 0x0001;
+    public static final int CLIENTS	= 0x0002;
+    public static final int HOST_DETAILS = 0x0008;
 
     String name;
     String ipAddrs[];
@@ -135,17 +134,13 @@ public class Host {
      * of hosts will be included and what data will be returned.
      *
      * The options field supports the flags:
-     * STORAGE_NODE | MDS | CLIENTS | HOST_DETAILS
+     * MDS | CLIENTS | HOST_DETAILSS
      *
      * Where MDS returns the potential metadata information too.
      *
-     * For Storage Nodes the capacity is reported in the devices of the file
-     * system. This call only returns information about the host, ip and
-     * status.
-     *
      * Keys shared by all classes of host include:
      * hostname = %s
-     * type = OSD | client | mds | pmds
+     * type = client | mds | pmds
      * ip_addresses = space separated list of ips.
      * os = Operating System Version
      * version = sam/qfs version
@@ -153,9 +148,6 @@ public class Host {
      * mounted = %d ( -1 means not mounted otherwise time mounted in seconds)
      * status = ON | OFF
      * error = assumed_dead | known_dead
-     *
-     * faults = %d (only on storage nodes. This key only present if faults
-     *		    exist)
      *
      * If HOST_DETAILS flag is set in options the following will be obtained
      * for clients and real and potential metadata servers. Information

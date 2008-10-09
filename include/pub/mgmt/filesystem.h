@@ -29,7 +29,7 @@
 #ifndef _FILESYSTEM_H
 #define	_FILESYSTEM_H
 
-#pragma ident	"$Revision: 1.55 $"
+#pragma ident	"$Revision: 1.56 $"
 
 
 
@@ -741,61 +741,17 @@ change_shared_fs_mount_options(ctx_t *ctx, char *fs_name, char *clients[],
 
 
 /*
- * Create a prototype qfs with object storage nodes file system. After
- * this function is called the user can proceed with the configuration of the
- * storage nodes for the file system. The proto file system is a place holder
- * for the configuration information prior to creating the file system.
- */
-int
-create_proto_fs(ctx_t *c, char *name);
-
-
-/*
  * Method to get summary status for a shared file system
  * Status is returned as key value strings.
  *
- * The method potentially returns three strings. One each for the
- * client status, pmds status and storage node status. If no storage
- * nodes are present no storage node string will be returned.
+ * The method potentially returns two strings. One for the
+ * client status and one for the pmds status.
  *
  * The format is as follows:
  * clients=1024, unmounted=24, off=2, error=0
- * storage_nodes=124, unmounted=0, off=1, error=0
  * pmds = 8, unmounted=2, off=0, error=0
  */
 int get_shared_fs_summary_status(ctx_t *c, char *fs_name, sqm_lst_t **lst);
-
-
-/*
- * Add a storage node- This function should be called on the metadata
- * server it will set up the file system on the storage node, create
- * the iscsi target and then on the client set up the iscsi initiator
- * and either add the new device to the file system or proto file
- * system.
- *
- * nodeData is a key value string that includes the following keys:
- * host = hostname
- * dataip = ip address
- * group = groupId (o1, o2, o3 etc.)
- *
- * A non-zero positive return indicates that a background job has been started
- * to complete this task. Information can be obtained about this job by
- * using the Job.getAllActivities function with a filter on the job id.
- */
-int
-add_storage_node(ctx_t *c, char *fs_name, char *node_name, char *node_ip,
-    fs_t *backing_store, char *node_data);
-
-
-/*
- * Remove a storage node from the shared fs configuration.
- *
- * A non-zero positive return indicates that a background job has been started
- * to complete this task. Information can be obtained about this job by
- * using the Job.getAllActivities function with a filter on the job id.
- */
-int
-remove_storage_node(ctx_t *c, char *fs_name, char *node_name);
 
 
 /*

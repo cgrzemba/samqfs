@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.30 $"
+#pragma ident	"$Revision: 1.31 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -666,25 +666,5 @@ str_cnt_strarray_mntopts_t *objp)
 	XDR_PTR2STRUCT(objp->mo, mount_options_t);
 
 
-	return (TRUE);
-}
-
-bool_t
-xdr_add_storage_node_arg_t(
-XDR *xdrs,
-add_storage_node_arg_t *objp)
-{
-
-	XDR_PTR2CTX(objp->ctx);
-	if (!xdr_string(xdrs, (char **)&objp->fs_name, ~0))
-		return (FALSE);
-	if (!xdr_string(xdrs, (char **)&objp->node_name, ~0))
-		return (FALSE);
-	if (!xdr_string(xdrs, (char **)&objp->node_ip, ~0))
-		return (FALSE);
-	if (!xdr_string(xdrs, (char **)&objp->node_data, ~0))
-		return (FALSE);
-
-	XDR_PTR2STRUCT(objp->fs, fs_t);
 	return (TRUE);
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FS.java,v 1.26 2008/07/02 18:58:58 pg125177 Exp $
+// ident	$Id: FS.java,v 1.27 2008/10/09 14:32:35 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -218,26 +218,14 @@ public class FS {
     // --------------- shared file system methods ----------------
 
     /*
-     * Create a prototype of a qfs with object storage nodes. After
-     * this function is called the user can proceed with the
-     * configuration of the storage nodes for the file system. The
-     * proto file system is a place holder for the configuration
-     * information prior to creating the file system.
-     */
-    public static native void createProtoFS(Ctx c, String fsName)
-	throws SamFSException;
-
-    /*
      * Method to get summary status for a shared file system
      * Status is returned as key value strings.
      *
-     * The method potentially returns three strings. One each for the
-     * client status, pmds status and storage node status. If no storage
-     * nodes are present no storage node string will be returned.
+     * The method potentially returns two strings. One each for the
+     * client status, pmds status
      *
      * The format is as follows:
      * clients=1024, unmounted=24, off=2, error=0
-     * storage_nodes=124, unmounted=0, off=1, error=0
      * pmds = 8, unmounted=2, off=0, error=0
      */
     public static native String[] getSharedFSSummaryStatus(Ctx c, String fsName)
@@ -266,29 +254,6 @@ public class FS {
      */
     public static native int setSharedFSMountOptions(Ctx c, String fsName,
 	String[] clients, MountOptions mo) throws SamFSException;
-
-    /*
-     * nodeData is a key value string that includes the following keys:
-     * host = hostname
-     * dataip = ip address
-     * group = groupId (o1, o2, o3 etc.)
-     *
-     * A non-zero return indicates that a background job has been started
-     * to complete this task. Information can be obtained about this job by
-     * using the Job.getAllActivities function with a filter on the job id.
-     */
-    public static native int addStorageNode(Ctx c, String hpcFSName,
-	String nodeName, String nodeIP, FSInfo backingStore, String nodeData)
-	throws SamFSException;
-
-
-    /*
-     * A non-zero return indicates that a background job has been started
-     * to complete this task. Information can be obtained about this job by
-     * using the Job.getAllActivities function with a filter on the job id.
-     */
-    public static native int removeStorageNode(Ctx c, String hpcFSName,
-	String nodeName) throws SamFSException;
 
 
     // --------------- generic methods (non-samq specific) -------------------

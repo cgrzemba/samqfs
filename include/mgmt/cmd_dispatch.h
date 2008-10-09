@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.1 $"
+#pragma ident   "$Revision: 1.2 $"
 
 #ifndef	_CMD_DISPATCH_H
 #define	_CMD_DISPATCH_H
@@ -60,7 +60,6 @@ typedef enum dispatch_id_s {
 	CMD_GROW_FS,
 	CMD_REMOVE_FS,
 	CMD_SET_ADV_NET_CONFIG,
-	CMD_ADD_SOSD,
 	MAX_DISPATCH_ID
 } dispatch_id_t;
 
@@ -71,8 +70,6 @@ typedef enum dispatch_id_s {
 #define	DSP_GROW_FS "DSP_GROW_FS"
 #define	DSP_REMOVE_CLIENTS "DSP_REMOVE_CLIENTS"
 #define	DSP_SET_ADV_NET_CONFIG "DSP_SET_ADV_NET_CONFIG"
-#define	DSP_ADD_SOSD "DSP_ADD_SOSD"
-
 
 
 /*

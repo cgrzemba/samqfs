@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: TestDispatcher.java,v 1.1 2008/07/17 14:27:10 pg125177 Exp $
+// ident	$Id: TestDispatcher.java,v 1.2 2008/10/09 14:32:36 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.test;
 
@@ -73,43 +73,7 @@ public class TestDispatcher {
 	    System.out.println("done\n");
 
 
-	    if (op.equals("addsn") && args.length > -0) {
-
-		/* nws-bur-24-67 addsn fsname nodeName  disk1 disk2... */
-
-
-		String nodeName = args[3];
-
-		/*
-		 * get the real disks from the node to avoid having
-		 * to build them
-		 */
-		SamFSConnection nodeConn =
-		    SamFSConnection.getNewSetTimeout(nodeName, 300);
-		Ctx nodeCtx = new Ctx(nodeConn);
-		AU[] aus = AU.discoverAvailAUs(nodeCtx);
-		DiskDev[] ddev = new DiskDev[args.length - 4];
-		System.out.println("looking for disks on " + nodeName);
-		for (int i = 4; i < args.length; i++) {
-		    for (int j = 0; j < aus.length; j++) {
-			System.out.println(aus[j].getPath());
-			if (args[i].equals(aus[j].getPath())) {
-			    ddev[i - 4] = new DiskDev(aus[j]);
-			}
-		    }
-		    if (ddev[i-4] == null) {
-			System.out.println("Did not find the disk: " + args[i]);
-			System.exit(-1);
-		    }
-		}
-		FSInfo backingStore = new FSInfo("hpcfs1", 0, 64, "ms",
-						 null, ddev, null,
-						 new MountOptions(), "/hpcfs1");
-
-		FS.addStorageNode(ctx, fsname, nodeName, null,
-				  backingStore, null);
-
-	    } else if (op.equals("remove")) {
+	    if (op.equals("remove")) {
 		/* mds remove fsname hostname hostname hostname */
 
 		String[] hostNames = new String[args.length - 3];

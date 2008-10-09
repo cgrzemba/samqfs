@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSInfo.java,v 1.21 2008/07/09 22:20:54 kilemba Exp $
+// ident	$Id: FSInfo.java,v 1.22 2008/10/09 14:32:35 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -42,11 +42,6 @@ public class FSInfo {
     public static final String COMBINED_METADATA = "ms";
     public static final String OBJECT_TARGET = "mat";
     public static final String OBJECT_BASED_QFS	= "mb";
-
-    // A proto object based qfs is one that is still in the
-    // process of being configured.
-    public static final String PROTO_OBJECT_BASED = "mbp";
-
 
 
     /**
@@ -305,7 +300,7 @@ public class FSInfo {
     public static final String NFS_NOTSHARED = "no";
     public static final String NFS_CONFIGURED = "config";
 
-    /* this is needed by the logic layer to identify proto file systems */
+    // Get the type of the file system
     public String getEqType() {
         return this.eqType;
     }

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.30 $"
+#pragma ident	"$Revision: 1.31 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -1087,94 +1087,6 @@ samrpc_change_shared_fs_mount_options_5_0_svr(
 	return (&rpc_result);
 }
 
-
-samrpc_result_t *
-samrpc_create_proto_fs_5_0_svr(
-	string_arg_t *arg,
-	struct svc_req *req	/* ARGSUSED */
-)
-{
-	int ret = -1;
-
-	Trace(TR_DEBUG, "create proto fs");
-
-	/* free previous result */
-	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
-
-	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
-
-	Trace(TR_DEBUG, "Calling native library to create proto fs");
-
-	ret = create_proto_fs(arg->ctx, arg->str);
-
-	SAMRPC_UPDATE_TIMESTAMP(ret);
-
-	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
-
-	Trace(TR_DEBUG, "create proto fs return[%d]", ret);
-	return (&rpc_result);
-}
-
-
-samrpc_result_t *
-samrpc_add_storage_node_5_0_svr(
-	add_storage_node_arg_t *arg,
-	struct svc_req *req	/* ARGSUSED */
-)
-{
-	int ret = -1;
-
-	Trace(TR_DEBUG, "add storage node");
-
-	/* free previous result */
-	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
-
-	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
-	Trace(TR_DEBUG, "Calling native library add storage node");
-
-	ret = add_storage_node(arg->ctx,
-	    arg->fs_name,
-	    arg->node_name,
-	    arg->node_ip,
-	    arg->fs,
-	    arg->node_data);
-
-	SAMRPC_UPDATE_TIMESTAMP(ret);
-
-	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
-
-	Trace(TR_DEBUG, "add storage node return[%d]", ret);
-	return (&rpc_result);
-}
-
-
-samrpc_result_t *
-samrpc_remove_storage_node_5_0_svr(
-	string_string_arg_t *arg,
-	struct svc_req *req	/* ARGSUSED */
-)
-{
-	int ret = -1;
-
-	Trace(TR_DEBUG, "remove storage node");
-
-	/* free previous result */
-	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
-
-	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
-	Trace(TR_DEBUG, "Calling native library remove storage node");
-
-	ret = remove_storage_node(arg->ctx,
-	    arg->str1,
-	    arg->str2);
-
-	SAMRPC_UPDATE_TIMESTAMP(ret);
-
-	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
-
-	Trace(TR_DEBUG, "remove storage node return[%d]", ret);
-	return (&rpc_result);
-}
 
 samrpc_result_t *
 samrpc_get_shared_fs_summary_status_5_0_svr(

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.2 $"
+#pragma ident   "$Revision: 1.3 $"
 
 #include <stdlib.h>
 #include "mgmt/cmd_dispatch.h"
@@ -135,16 +135,6 @@ struct svc_req *req		/* ARGSUSED */
 		SET_LIST_TAIL(advnet_arg->strlst);
 		ret = set_advanced_network_cfg(hr_arg->ctx, advnet_arg->str,
 		    advnet_arg->strlst);
-		break;
-	}
-	case CMD_ADD_SOSD: {
-		add_storage_node_arg_t *asn =
-		    (add_storage_node_arg_t *)hr_arg->req->args;
-
-		SET_FS_TAIL(asn->fs);
-
-		ret = add_sosd_on_node(asn->ctx, asn->fs_name, asn->node_name,
-		    asn->node_ip, asn->fs, asn->node_data);
 		break;
 	}
 	default:

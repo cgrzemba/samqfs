@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.47 $"
+#pragma ident	"$Revision: 1.48 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -1482,94 +1482,6 @@ jobject mountOpts) {
 
 	PTRACE(1, "jni:FS_setSharedFSMountOptions() done");
 	return (ret);
-}
-
-
-JNIEXPORT jint JNICALL
-Java_com_sun_netstorage_samqfs_mgmt_fs_FS_addStorageNode(JNIEnv *env,
-jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
-jstring nodeName, jstring nodeIP, jobject fsInfo, jstring nodeData) {
-
-	fs_t *fs;
-	jboolean isCopy1;
-	jboolean isCopy2;
-	jboolean isCopy3;
-	jboolean isCopy4;
-	char *cstr1 = GET_STR(fsName, isCopy1);
-	char *cstr2 = GET_STR(nodeName, isCopy2);
-	char *cstr3 = GET_STR(nodeIP, isCopy3);
-	char *cstr4 = GET_STR(nodeData, isCopy4);
-	int ret;
-
-
-	PTRACE(1, "jni:FS_addStorageNode(%s...) entry", Str(cstr1));
-	fs = (fs_t *)FSInfo2fs(env, fsInfo);
-
-	ret = add_storage_node(CTX, cstr1, cstr2, cstr3, fs, cstr4);
-
-	REL_STR(fsName, cstr1, isCopy1);
-	REL_STR(nodeName, cstr2, isCopy2);
-	REL_STR(nodeIP, cstr3, isCopy3);
-	REL_STR(nodeData, cstr4, isCopy4);
-	free_fs(fs);
-	if (-1 == ret) {
-		ThrowEx(env);
-		return (NULL);
-	}
-
-	PTRACE(1, "jni:FS_addStorageNode() done");
-	return (ret);
-}
-
-
-JNIEXPORT jint JNICALL
-Java_com_sun_netstorage_samqfs_mgmt_fs_FS_removeStorageNode(JNIEnv *env,
-    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
-    jstring nodeName) {
-
-	jboolean isCopy1;
-	jboolean isCopy2;
-	char *cstr1 = GET_STR(fsName, isCopy1);
-	char *cstr2 = GET_STR(nodeName, isCopy2);
-	int ret;
-
-
-	PTRACE(1, "jni:FS_removeStorageNode(%s...) entry", Str(cstr1));
-
-	ret = remove_storage_node(CTX, cstr1, cstr2);
-
-	REL_STR(fsName, cstr1, isCopy1);
-	REL_STR(nodeName, cstr2, isCopy2);
-	if (-1 == ret) {
-		ThrowEx(env);
-		return (NULL);
-	}
-
-	PTRACE(1, "jni:FS_removeStorageNode() done");
-	return (ret);
-}
-
-
-JNIEXPORT void JNICALL
-Java_com_sun_netstorage_samqfs_mgmt_fs_FS_createProtoFS(JNIEnv *env,
-    jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName) {
-
-	jboolean isCopy1;
-	char *cstr1 = GET_STR(fsName, isCopy1);
-	int ret;
-
-
-	PTRACE(1, "jni:FS_createProtoFS(%s...) entry", Str(cstr1));
-
-	ret = create_proto_fs(CTX, cstr1);
-
-	REL_STR(fsName, cstr1, isCopy1);
-	if (-1 == ret) {
-		ThrowEx(env);
-		return;
-	}
-
-	PTRACE(1, "jni:FS_createProtoFS() done");
 }
 
 

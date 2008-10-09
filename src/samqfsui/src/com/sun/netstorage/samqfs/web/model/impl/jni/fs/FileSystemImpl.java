@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.51 2008/09/04 02:59:52 ronaldso Exp $
+// ident	$Id: FileSystemImpl.java,v 1.52 2008/10/09 14:32:35 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -170,7 +170,7 @@ public class FileSystemImpl extends GenericFileSystemImpl
      * proto file system - partially configured.
      */
     public boolean isProtoFS() {
-        return FSInfo.PROTO_OBJECT_BASED.equals(fsInfo.getEqType());
+	return false;
     }
 
     /**

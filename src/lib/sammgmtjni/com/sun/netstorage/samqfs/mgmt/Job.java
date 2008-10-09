@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Job.java,v 1.18 2008/07/17 14:27:10 pg125177 Exp $
+// ident	$Id: Job.java,v 1.19 2008/10/09 14:32:34 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt;
 
@@ -197,8 +197,7 @@ public abstract class Job {
      * Multi-Host operations will share the same set of key value pairs.
      * These key-value pairs will apply for the following operation types:
      *		UnmountClients, MountClients AddClients, RemoveClients,
-     *		AddStorageNode, RemoveStorageNode, SharedGrow, SharedShrink
-     *		SharedFSMountOptions
+     *		SharedGrow, SharedShrink, SharedFSMountOptions
      *
      * Multi-Host Operation Keys:
      * activityid=%s (This matches the job id returned by the functions)

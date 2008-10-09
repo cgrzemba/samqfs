@@ -29,7 +29,7 @@
 #ifndef _MGMT_H
 #define	_MGMT_H
 
-#pragma	ident	"$Revision: 1.67 $"
+#pragma	ident	"$Revision: 1.68 $"
 
 /*
  * mgmt.h - SAMFS APIs for misc operations.
@@ -321,11 +321,6 @@ get_configuration_status(ctx_t *ctx, sqm_lst_t **l);
  * qfs_count = int
  * disk_vols_count = int
  * volume_pools = int
- * object_qfs_protos = int (number of HPC file systems currently partially
- *	created)
- * ojbect_qfs_names = space separated list of names.
- * Storage_nodes = int (only provided if object_qfs_proto_count == 1)
- * clients = int (only provided if object_qfs_proto_count == 1)
  */
 int
 get_config_summary(ctx_t *c, char **res);
