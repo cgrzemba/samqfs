@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: MultiHostStatusDisplay.jsp,v 1.1 2008/07/16 23:47:28 kilemba Exp $ -->
+<!-- $Id: MultiHostStatusDisplay.jsp,v 1.2 2008/10/09 14:27:59 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -35,15 +35,31 @@
    xmlns:jsp="http://java.sun.com/JSP/Page">
    <jsp:directive.page contentType="text/html;charset=ISO-8859-1" 
                        pageEncoding="UTF-8"/>
-   <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
-                 var="msgs"/>
-                 
-   <ui:form id="MultiHostStatusDisplayForm">
+
+<f:view>
+<f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"
+              var="msgs"/>
+<ui:head title="#{MultiHoststatusBean.titleText}">
+   <ui:script url="/js/samqfsui.js"/>
+   <ui:script url="/js/fs/multihoststatus.js"/>
+
+   <ui:meta httpEquiv="refresh" content="10"/>
+</ui:head>
+
+<ui:body styleClass="defBody" id="mhs">
+<ui:form id="MultiHostStatusForm">
+<ui:masthead id="Masthead"
+             secondary="true"
+             productImageURL="/com_sun_web_ui/images/SecondaryProductName.png"
+             productImageDescription=""
+             productImageWidth="162"
+             productImageHeight="40" />
+
        <div style="margin:10px">
-        <ui:label id="title" text="#{MultiHostStatusBean.titleText}"/>
+            <ui:label id="title" text="#{MultiHostStatusBean.titleText}"/>
        </div>
        
-       <h:panelGrid columns="2" width="50%" style="text-ident:10px">
+       <h:panelGrid columns="2" width="30%" style="margin:10px">
            <ui:label for="totalText" text="#{msgs['fs.multihoststatus.total']}"/>
            <ui:staticText id="totalText" text="#{MultiHostStatusBean.total}"/>
            
@@ -56,13 +72,33 @@
            <ui:label for="pendingText" text="#{msgs['fs.multihoststatus.pending']}"/>
            <ui:staticText id="pendingText" text="#{MultiHostStatusBean.pending}"/>
        </h:panelGrid>
-       
-       <h:panelGrid columns="2" style="margin:10px">
+
+       <table style="margin:10px">
+        <tr><td style="width:50%">
            <ui:label text="#{MultiHostStatusBean.failedHostLabel}"/>
+        </td><td>
            <ui:label text="#{msgs['fs.multihoststatus.hosterrordetail']}"/>
-           
-           <ui:listbox id="failedHostList" items="#{MultiHostStatusBean.failedHostList}"/>
-           <ui:textArea id="hostErrorDetail" text="#{MultiHostStatusBean.hostErrorDetail}"/>
-       </h:panelGrid>
-   </ui:form>
+        </td></tr>
+
+        <tr><td>
+           <ui:listbox id="failedHostList"
+                       onChange="return hostWithErrorSelected(this);"
+                       items="#{MultiHostStatusBean.failedHostList}"/>
+        </td><td style="vertical-align:top">
+           <ui:staticText id="hostErrorDetail"/>
+        </td></tr>
+       </table>
+
+       <div style="margin:30px">
+           <ui:button id="closeButton"
+                      text="#{msgs['common.button.close']}"
+                      onClick="return handleCloseButton(this);"/>
+       </div>
+
+   <ui:hiddenField id="serverName" value="#{MultiHostStatusBean.serverName}" />
+   <ui:hiddenField id="jobId" value="#{MultiHostStatusBean.jobId}" />
+   <ui:hiddenField id="hostError" value="#{MultiHostStatusBean.hostErrorList}"/>
+</ui:form>
+</ui:body>
+</f:view>
 </jsp:root>

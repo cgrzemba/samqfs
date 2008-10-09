@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MultiHostStatus.java,v 1.1 2008/07/15 17:19:45 kilemba Exp $
+// ident	$Id: MultiHostStatus.java,v 1.2 2008/10/09 14:28:01 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
+import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +57,9 @@ public class MultiHostStatus {
             PARTIAL_FAILURE,
             FAILURE,
             PENDING}
-            
+    
+    public static final char sep = 0x20;
+    
     // the raw status string
     private String rawStatus = null;
 
@@ -70,10 +73,10 @@ public class MultiHostStatus {
     private STATUS status = null;
 
     // map of host -> error
-    private Map<String,String> hostErrorMap = null;
+    // private Map<String,String> hostErrorMap = null;
 
     // a list of hosts with errors
-    private List<String> hostsWithError = null;
+    // private List<String> hostsWithError = null;
 
     /** 
      * hide the default constructor since an instance of this class would be
@@ -143,55 +146,45 @@ public class MultiHostStatus {
         return hosts == -1 ? 0 : hosts;
     }
 
-    /** parse and store the list of host with errors as well as the error codes
-     * each host
-     */
-    private void parseHostErrors() {
-        // retrieve the list of error codes in the status
-        String rawErrors = (String)this.props.get("host_errors");
-        if (rawErrors != null) {
-            this.hostsWithError = new ArrayList<String>();
-            this.hostErrorMap = new HashMap<String,String>();
-
-            String [] codes = rawErrors.split(Character.toString(' '));
-
-            // for each error code, find the associated hosts and append to the
-            // list
-            for (int i = 0; i < codes.length; i++) {
-                String rawHosts = (String)this.props.get(codes[i]);
-                
-                if (rawHosts != null) {
-                    String [] hosts = rawHosts.split(Character.toString(' '));
-                    for (int j = 0; j < hosts.length; j++) {
-                        this.hostsWithError.add(hosts[j]);
-
-                        // save the host name and its corresponding error for
-                        // later use
-                        this.hostErrorMap.put(hosts[j], codes[i]);
-                    } // end for j
-                } // if rawHosts 
-            } // end for i
-        } // end if rawErrors
-    }
-
     /** return the list of hosts with errors */
     public List<String> getHostsWithError() {
-        if (this.hostsWithError == null)
-            parseHostErrors();
-
-        return this.hostsWithError;
+        List<String>hostsWithError = new ArrayList<String>();
+        
+        try {
+            String raw = props.getProperty("error_hosts");
+            String [] hostToken = ConversionUtil.strToArray(raw, sep);
+            if (hostToken != null){
+                for (int i = 0; i < hostToken.length; i++) {
+                    hostsWithError.add(hostToken[i].trim());
+                }
+            }
+        } catch (SamFSException sfe) {
+            System.out.println("Error parsing error host list : " + sfe.getMessage());
+        }
+        
+        return hostsWithError;
     }
 
     /** return the error for the given host */
     public String getHostError(String host) {
-        if (this.hostErrorMap == null) 
-            parseHostErrors();
-
-        String error = null;
-        if (this.hostErrorMap != null)
-            error = this.hostErrorMap.get(host);
-
-
-        return error;
+        String rawError = props.getProperty(host);
+        
+        try {
+            // TODO: ConversionUtil.strToArray(...) doesn't seem to be
+            // splitting quoted strings properly.
+            String [] errorToken = ConversionUtil.strToArray(rawError, sep);
+            if (errorToken != null && errorToken.length > 0) {
+                // errorToken[0] - contains error code
+                // errorToken[1] - contains error string
+           
+                return errorToken[0];
+            }
+        } catch (SamFSException sfe) {
+            System.out.println("Error Parsing host error : " + sfe.getMessage());
+        }
+        
+        return ""; // we shouldn't get here unless something is wrong wiht the
+                   // encoded string
     }
 }
+

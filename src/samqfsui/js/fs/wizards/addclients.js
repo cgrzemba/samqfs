@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: addclients.js,v 1.2 2008/08/28 14:19:31 kilemba Exp $
+// ident	$Id: addclients.js,v 1.3 2008/10/09 14:27:59 kilemba Exp $
 
 function $(id) {
   return document.getElementById(id);
@@ -99,4 +99,8 @@ function dismissWizard() {
   Wizard_AddClientsWizardForm_AddClientsWizard.closeAndForward(parentFormId,
                                                                forwardTo,
                                                                true);
+}
+
+function launchMHSPopup(field) {
+
 }

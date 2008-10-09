@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: samqfsui.js,v 1.26 2008/06/25 23:23:26 kilemba Exp $
+// ident	$Id: samqfsui.js,v 1.27 2008/10/09 14:27:58 kilemba Exp $
 
 
    // trim (STRING myString)
@@ -624,3 +624,49 @@
     }
     
 
+// The following functions are needed to support asynchronous (AJAX)
+// GUI functionality
+/** create the XMLHttpRequest Object */
+function createRequest() {
+    try { // try ghecko and 
+        request = new XMLHttpRequest();
+    } catch (e) {
+        try { // IE 5+
+            request = new ActiveXObject("msxml2.XMLHTTP");
+        } catch (e) {
+            try { // try older IE
+                request = new ActiveXObject("Microsoft.XMLHTTP");
+            } catch (e) {
+                request = null;
+            }
+        } // end older IE
+    } // end IE 5+
+    
+    return request;
+}
+
+/** xml parsing section */
+function loadXMLString(xmlString) {
+    try { // try ghecko based
+        var parser = new DOMParser();
+        xmlDoc = parser.parseFromString(xmlString, "text/xml");
+        return xmlDoc;
+    } catch (e) {
+        try { // try for IE
+            xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.async = false;
+            xmlDoc.loadXML(xmlString);
+            return xmlDoc;
+        } catch (e) {
+            //
+        }
+    }
+    
+    // if we get here, we cannot recover, exit
+    return null;
+}
+
+/* retrieve the dom-object with the given id */
+function $(id) {
+    return document.getElementById(id);
+}

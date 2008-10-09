@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CreateFSWizardImpl.java,v 1.107 2008/09/17 23:33:24 kilemba Exp $
+// ident	$Id: CreateFSWizardImpl.java,v 1.108 2008/10/09 14:28:01 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -3264,7 +3264,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
     public static final boolean isHAFS(SamWizardModel model) {
         Boolean hafs =  (Boolean)model.getValue(POPUP_HAFS);
 
-        return hafs.booleanValue();
+        return hafs != null ? hafs : false;
     }
 
     private FSArchCfg getArchiveConfig() {

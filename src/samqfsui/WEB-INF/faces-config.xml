@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.14 2008/09/17 23:33:21 kilemba Exp $ -->
+<!-- $Id: faces-config.xml,v 1.15 2008/10/09 14:27:58 kilemba Exp $ -->
 
 <faces-config>
     <application>
@@ -105,7 +105,7 @@
         <description>Multi-Host Status Display Bean</description>
         <managed-bean-name>MultiHostStatusBean</managed-bean-name>
         <managed-bean-class>com.sun.netstorage.samqfs.web.fs.MultiHostStatusDisplayBean</managed-bean-class>
-        <managed-bean-scope>session</managed-bean-scope>
+        <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
     
     <!-- navigation rules -->

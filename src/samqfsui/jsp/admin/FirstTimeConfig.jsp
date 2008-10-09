@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.6 2008/09/17 23:33:22 kilemba Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.7 2008/10/09 14:27:59 kilemba Exp $
 --%>
 
 <%@page info="FirstTimeConfig" language="java" %>
@@ -39,7 +39,7 @@
 <jato:useViewBean className="com.sun.netstorage.samqfs.web.admin.FirstTimeConfigViewBean">
 
 <script tyep="text/javascript" src="/samqfsui/js/popuphelper.js"></script>
-<script type="text/javascript" src="/samqfsui/js/admin/firsttimeconfig.js"/>
+<script type="text/javascript" src="/samqfsui/js/admin/firsttimeconfig.js"></script>
 
 <cc:header
     pageTitle="node.firsttimeconfig"

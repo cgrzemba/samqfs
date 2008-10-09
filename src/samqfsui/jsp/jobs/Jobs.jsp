@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: Jobs.jsp,v 1.4 2008/09/03 19:46:03 ronaldso Exp $ -->
+<!-- $Id: Jobs.jsp,v 1.5 2008/10/09 14:28:00 kilemba Exp $ -->
 
 <jsp:root version="1.2"
    xmlns:f="http://java.sun.com/jsf/core"
@@ -71,8 +71,7 @@
     <f:facet name="actionsTop">
     <f:subview id="actionsTop">
         <ui:button id="cancel"
-                   text="#{samBundle['common.button.cancel']}"
-                   action="cancel"/>
+                   text="#{samBundle['common.button.cancel']}"/>
     </f:subview>
     </f:facet>
 

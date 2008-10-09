@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemJobManager.java,v 1.12 2008/07/15 17:19:45 kilemba Exp $
+// ident	$Id: SamQFSSystemJobManager.java,v 1.13 2008/10/09 14:28:01 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -97,6 +97,38 @@ public interface SamQFSSystemJobManager {
      * This method is used by the MultiHostStatusDisplay view to display the
      * status of jobs running in multiple shared HPC clients.
      * @since 5.0
+     *
+     * SAMADISPATCHJOB:-
+     * Multi-Host operations will share the same set of key value pairs.
+     * These key-value pairs will apply for the following operation types:
+     *		UnmountClients, MountClients AddClients, RemoveClients,
+     *		AddStorageNode, RemoveStorageNode, SharedGrow, SharedShrink
+     *		SharedFSMountOptions
+     *
+     * Multi-Host Operation Keys:
+     * activityid=%s (This matches the job id returned by the functions)
+     * type=SAMADISPATCHJOB
+     * operation=%s (sub type for each type of dispatch job)
+     * starttime=%d
+     * fsname=%s
+     * host_count = int
+     * hosts_responding = int
+     * hosts_pending = int
+     * status=success|partial_failure|failure|pending
+     * error = overall_error_number (only present when failure or
+     *			partial_failure set)
+     * error_msg = overall_error_message
+     * ok_hosts = hostf hoste hostc hostb hostn hostr
+     * error_hosts = hosta hostd hostg
+     * hosta = 31001 error message
+     * hostd = 32200 error message
+     * hostg = 34000 error message
+     *
+     * A note about multi-host error keys: The numbers used for the
+     * error reporting keys map to error numbers. Error numbers are
+     * returned to potentially allow localization of the messages in
+     * the GUI even when the backend servers are running in the C
+     * locale.
      */
     public MultiHostStatus getMultiHostStatus(long jobId)
         throws SamFSException;

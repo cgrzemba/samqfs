@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsBean.java,v 1.3 2008/08/28 14:19:33 kilemba Exp $
+// ident        $Id: AddClientsBean.java,v 1.4 2008/10/09 14:28:01 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -80,6 +80,10 @@ public class AddClientsBean {
     private String fsName = null;
     private String serverName = null;
 
+    // used by the results page to determine if the HMS link should be
+    // display
+    private String displayMHSLink = "false";
+
     public AddClientsBean() {
         this.selectedMethod = METHOD_NAME;
     }
@@ -96,7 +100,7 @@ public class AddClientsBean {
     /** re-initialize the wizard to its initial settings */
     public void clearWizardValues() {
         this.selectedMethod = METHOD_NAME;
-        this.selectedHosts =  null;
+        this.selectedHosts = null;
         this.mountPoint = null;
         this.mountAfterAdd = false;
         this.mountReadOnly = false;
@@ -304,6 +308,27 @@ public class AddClientsBean {
     public String getAlertString() {
         return this.alertBean.toString();
     }
+
+    // The following methods are required by the multi-host
+    // status window
+
+    // determine if the link to the MultiHostStatus Display page
+    // should be displayed 
+    public String getDisplayMHSLink() {
+	return this.displayMHSLink;
+    }
+
+    public void setDisplayMHSLink(String b) {
+	this.displayMHSLink = b;
+    }
+
+    public long getJobId() {
+	Long jobId = (Long)JSFUtil.getAttribute(JOB_ID_KEY);
+
+	return jobId != null ? (long)jobId : -1L;
+    }
+
+    public String getServerName() {return JSFUtil.getServerName();}
 }
 
 /**

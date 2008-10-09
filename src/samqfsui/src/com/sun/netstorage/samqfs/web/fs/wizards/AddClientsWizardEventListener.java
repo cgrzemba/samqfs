@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsWizardEventListener.java,v 1.2 2008/08/28 14:19:33 kilemba Exp $
+// ident        $Id: AddClientsWizardEventListener.java,v 1.3 2008/10/09 14:28:01 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -434,12 +434,15 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
             long jobId = fsManager.addClients(serverName, fsName, hostList);
             JSFUtil.setAttribute(AddClientsBean.JOB_ID_KEY, jobId);
-            
+
             // if we get this far, we were successful
             alertBean.setType(1);
             alertBean.setSummary(JSFUtil.getMessage("success.summary"));
             alertBean.setDetail(JSFUtil.getMessage("fs.addclients.success.detail"));
             alertBean.setRendered(true);
+
+	    // since the job was submitted successfully, display the HMS link
+	    this.wizardBean.setDisplayMHSLink("true");
          } catch (SamFSException sfe) {
             // do nothing for now
             alertBean.setType(3);
@@ -447,6 +450,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             alertBean.setDetail(sfe.getMessage());
             alertBean.setRendered(true);
 
+	    this.wizardBean.setDisplayMHSLink("false");
         } finally {
             // clear the wizard bean so that its ready for the next launch
             this.wizardBean.clearWizardValues();

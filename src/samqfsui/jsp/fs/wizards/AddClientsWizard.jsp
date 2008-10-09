@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AddClientsWizard.jsp,v 1.3 2008/08/28 14:19:32 kilemba Exp $ -->
+<!-- $Id: AddClientsWizard.jsp,v 1.4 2008/10/09 14:28:00 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -249,6 +249,16 @@
                   type="#{AddClientsBean.alertType}"
                   summary="#{AddClientsBean.alertSummary}"
                   detail="#{AddClientsBean.alertDetail}" />
+
+        <div style="margin:40px">
+            <ui:hyperlink id="tomhs"
+                          rendered="#{AddClientsBean.displayMHSLink}"
+                          url="/faces/jsp/fs/MultiHostStatusDisplay.jsp">
+                <f:param name="SERVER_NAME" value="#{AddClientsBean.serverName}" />
+                <f:param name="SAMQFS_JOB_ID" value="#{AddClientsBean.jobId}" />
+                <ui:staticText text="#{msgs['fs.addclients.results.mhs']}"/>
+            </ui:hyperlink>
+        </div>					  
     </ui:wizardStep>
 </ui:wizard>
 </ui:form>

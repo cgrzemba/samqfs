@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.52 2008/10/08 22:33:33 ronaldso Exp $
+// ident	$Id: FSDetailsView.java,v 1.53 2008/10/09 14:28:00 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -336,7 +336,10 @@ public class FSDetailsView extends CommonTableContainerView {
         ((CCHiddenField) getChild(CHILD_HIDDEN_FS_NAME)).setValue(fsName);
 
         boolean growEnabled = false;
-        int sharedStatus = ((FileSystem) fs).getShareStatus();
+        int sharedStatus = fs.getFSTypeByProduct() ==
+            GenericFileSystem.FS_NONSAMQ ? FileSystem.UNSHARED
+            : ((FileSystem)fs).getShareStatus();
+
 
         if (fsType == GenericFileSystem.FS_NONSAMQ) {
             growEnabled = false;

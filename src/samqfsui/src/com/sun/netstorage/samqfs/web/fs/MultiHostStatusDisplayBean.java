@@ -27,21 +27,31 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MultiHostStatusDisplayBean.java,v 1.1 2008/07/16 23:47:28 kilemba Exp $
+// ident	$Id: MultiHostStatusDisplayBean.java,v 1.2 2008/10/09 14:28:00 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
+import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
-import java.util.ArrayList;
-import java.util.List;
 import com.sun.netstorage.samqfs.web.model.fs.MultiHostStatus;
+import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.AsyncServlet;
+import com.sun.web.ui.model.Option;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+
 
 /** add clients */
 public class MultiHostStatusDisplayBean {
-    
-    private int total, succeeded, failed, pending;
     private String selectedHost;
     private MultiHostStatus status = null;
+
+    private String serverName;
+    private long jobId = -1;
 
     public MultiHostStatusDisplayBean() {
 
@@ -50,12 +60,60 @@ public class MultiHostStatusDisplayBean {
 
     /** return the current job */
     private long getCurrentJobId() {
-        return 0;
+        if (jobId == -1) {
+            // if this is the first time the page is loaded, look for the job
+            // id in the request object.
+            HttpServletRequest request = JSFUtil.getRequest();
+            String id =
+                request.getParameter(Constants.PageSessionAttributes.JOB_ID);
+            if (id != null && !id.trim().equals("")) {
+                try {
+                    Long longId = Long.parseLong(id);
+                    jobId = longId;
+                } catch (NumberFormatException nfe) {
+                    System.out.println("getCurrentJobI: bad job id " + id);
+                }
+            }
+        }
+        
+        return jobId;
     }
 
     /** return the MultiHostStatus object for the current job */
     private MultiHostStatus initializeStatus(long jobId) {
-        return null;
+        MultiHostStatus mhs = null;
+
+        try {
+            String server = getServerName();
+            if (jobId == -1)
+                throw new SamFSException("No Job ID provided.");
+
+            if (server != null) {
+                SamQFSSystemModel model = SamUtil.getModel(server);
+                if (model == null)
+                    throw new SamFSException("unable to retrieve system model" +
+                        " for '" + server + "'");
+                
+                // begin testing
+                /*  
+                if (jobId > -1 && jobId < 5) {
+                    int index = (int)jobId;
+                    mhs = new MultiHostStatus(AsyncServlet.samples[index]);
+                    return mhs;
+                }
+                */
+                // end testing
+
+                // if we get this far, all is well.
+                mhs = model.getSamQFSSystemJobManager()
+                    .getMultiHostStatus(jobId);
+            }
+        } catch (SamFSException sfe) {
+            System.out.println("initializeStatus : unable to initialize status " +
+                sfe.getMessage());
+        }
+        
+        return mhs;
     }
 
     // resource strings
@@ -73,23 +131,40 @@ public class MultiHostStatusDisplayBean {
     
     // status data
     public int getTotal() {
-        return total;
+        return (status != null ? status.getTotalHostCount() : 0);
     }
     
     public int getSucceeded() {
-        return succeeded;
+        return (status != null ? status.getSucceededHostCount() : 0);
     }
     
     public int getFailed() {
-        return failed;
+        return (status != null ? status.getFailedHostCount() : 0);
     }
     
     public int getPending() {
-        return pending;
+        return (status != null ? status.getPendingHostCount() : 0);
     }
     
-    public List<String> getFailedHostList() {
-        return new ArrayList<String>();
+    public List<Option> getFailedHostList() {
+	List<Option> optionList = new ArrayList<Option>();
+
+	if (status == null) {
+	    optionList.add(new Option("--------------------"));
+	} else {
+	    List<String> l = status.getHostsWithError();
+	    if (l != null|| l.size() > 0) {
+		Iterator<String> it = l.iterator();
+	    
+		while (it.hasNext()) {
+		    optionList.add(new Option(it.next()));
+		}
+	    } else {
+	    optionList.add(new Option("--------------------"));
+	    }
+	}
+
+	return optionList;
     }
     
     public String getHostErrorDetails() {
@@ -103,4 +178,42 @@ public class MultiHostStatusDisplayBean {
     public void setSelectedHost(String host) {
         selectedHost = host;
     }
+
+    // hidden fields
+    public String getServerName() {
+        // initialize servername if this is the first time we are loading it
+        // the page
+        if (serverName == null) {
+            serverName = JSFUtil.getServerName();
+        }
+
+        return serverName;
+    }
+
+    public long getJobId() {
+        return getCurrentJobId();
+    }
+    
+    public void setServerName(String name) {serverName = name;}
+    public void setJobId(long id) {jobId = id;}
+
+    // hosts and errors
+    public String getHostErrorList() {
+        List<String> hostList =
+            status != null ? status.getHostsWithError() : null;
+        StringBuffer buf = new StringBuffer();
+        if (hostList != null) {
+            Iterator<String>it = hostList.iterator();
+            while (it.hasNext()) {
+                String hostName = it.next();
+                String hostError = status.getHostError(hostName);
+                buf.append(hostName)
+                    .append(":")
+                    .append(hostError)
+                    .append(",");
+            }
+        }
+
+        return buf.toString();
+    }        
 }

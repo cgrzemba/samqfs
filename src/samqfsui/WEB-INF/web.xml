@@ -28,7 +28,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: web.xml,v 1.15 2008/08/27 19:48:26 kilemba Exp $ -->
+<!-- $Id: web.xml,v 1.16 2008/10/09 14:27:58 kilemba Exp $ -->
 
 <web-app>
 
@@ -320,6 +320,18 @@
     <servlet-mapping>
         <servlet-name>RemoteFileChooserServlet</servlet-name>
         <url-pattern>/remotefilechooser/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- AsyncServlet. This servlet is used for all the AJAX-initiated requests
+         e.g. multihost status report
+    -->
+    <servlet>
+        <servlet-name>AsyncServlet</servlet-name>
+        <servlet-class>com.sun.netstorage.samqfs.web.util.AsyncServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AsyncServlet</servlet-name>
+        <url-pattern>/async</url-pattern>
     </servlet-mapping>
 
     <!-- The taglibs are only specified once -->
