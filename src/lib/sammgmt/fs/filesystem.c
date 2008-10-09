@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.79 $"
+#pragma ident   "$Revision: 1.80 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -4300,13 +4300,86 @@ find_disk_by_path(fs_t *f, char *path) {
  */
 static int
 find_local_devices(sqm_lst_t *mms, sqm_lst_t *data, sqm_lst_t *sgs) {
-	sqm_lst_t *aus;
-	node_t *sg_n;
 
-	if (discover_aus(NULL, &aus) != 0) {
-		Trace(TR_ERR, "Unable to match devices: %d %s", samerrno,
-		    samerrmsg);
-		return (-1);
+	sqm_lst_t *aus;
+	node_t *n;
+	node_t *sg_n;
+	boolean_t need_ha_devs = B_FALSE;
+
+	/*
+	 * Determine if the file system uses did devices. If so
+	 * perform discover_ha_aus too.
+	 */
+	if (mms != NULL) {
+		for (n = mms->head; n != NULL; n = n->next) {
+			disk_t *dsk = (disk_t *)n->data;
+
+			if (dsk == NULL) {
+				continue;
+			}
+
+			if (strstr(dsk->base_info.name,
+			    "/dev/did/") != NULL) {
+				need_ha_devs = B_TRUE;
+				break;
+			}
+		}
+	}
+
+	if (!need_ha_devs && data != NULL) {
+		for (n = data->head; n != NULL; n = n->next) {
+			disk_t *dsk = (disk_t *)n->data;
+
+			if (dsk == NULL) {
+				continue;
+			}
+
+			if (strstr(dsk->base_info.name,
+			    "/dev/did/") != NULL) {
+				need_ha_devs = B_TRUE;
+				break;
+			}
+		}
+	}
+
+
+	if (!need_ha_devs && sgs != NULL) {
+		for (sg_n = sgs->head; !need_ha_devs && sg_n != NULL;
+			sg_n = sg_n->next) {
+			striped_group_t *sg = (striped_group_t *)sg_n->data;
+
+			if (sg == NULL) {
+				continue;
+			}
+
+			for (n = sg->disk_list->head; n != NULL; n = n->next) {
+				disk_t *dsk = (disk_t *)n->data;
+
+				if (dsk == NULL) {
+					continue;
+				}
+
+				if (strstr(dsk->base_info.name,
+				    "/dev/did/") != NULL) {
+					need_ha_devs = B_TRUE;
+					break;
+				}
+			}
+		}
+	}
+
+	if (need_ha_devs) {
+		if (discover_ha_aus(NULL, NULL,  B_TRUE, &aus) != 0) {
+			Trace(TR_ERR, "Unable to match devices: %d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
+	} else {
+		if (discover_aus(NULL, &aus) != 0) {
+			Trace(TR_ERR, "Unable to match devices: %d %s",
+			    samerrno, samerrmsg);
+			return (-1);
+		}
 	}
 
 	if (mms != NULL && mms->length != 0) {

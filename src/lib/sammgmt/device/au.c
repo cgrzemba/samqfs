@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.53 $"
+#pragma ident	"$Revision: 1.54 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -83,6 +83,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	METASTAT_S_CMD	"/usr/sbin/metastat -p -s"
 #define	METADB_CMD	"/usr/sbin/metadb"
 #define	SCDIDADM_CMD	"/usr/cluster/bin/scdidadm -L -o name -o host"
+#define	SCDIDADM_LOCAL  "/usr/cluster/bin/scdidadm -l -o name -o host"
 #define	ZVOL_CMD	"/usr/sbin/zfs list -H -t volume"
 
 /* filter for raw slice (prefix may be missing) */
@@ -2064,24 +2065,39 @@ get_did_dsks(sqm_lst_t *hosts, sqm_lst_t **dids) {
 
 	FILE *res_stream;
 	sqm_lst_t *res;
-	char cmd[] = SCDIDADM_CMD;
+	char *cmd;
 	int status;
 	pid_t pid;
 	char did[16], prevdid[16], host[MAXHOSTNAMELEN];
 	int hostcnt;
 	char *tmpstr = NULL;
 
-	if (ISNULL(hosts, dids))
+	if (ISNULL(dids)) {
+		Trace(TR_ERR, "no did-s processed: %s", samerrmsg);
 		return (NULL);
+	}
 	*dids = lst_create();
+	if (*dids == NULL) {
+		Trace(TR_ERR, "no did-s processed: %s", samerrmsg);
+		return (NULL);
+	}
 	res = *dids;
 
-	tmpstr = lst2str(hosts, ",");
-	Trace(TR_MISC, "get did-s visible from %s", Str(tmpstr));
-	free(tmpstr);
+
+	if (hosts == NULL) {
+		cmd = SCDIDADM_LOCAL;
+		Trace(TR_MISC, "get did-s just from the local host");
+	} else {
+		cmd = SCDIDADM_CMD;
+		tmpstr = lst2str(hosts, ",");
+		Trace(TR_MISC, "get did-s visible from %s", Str(tmpstr));
+		free(tmpstr);
+	}
 	if (-1 == (pid = exec_get_output(cmd, &res_stream, NULL))) {
-		Trace(TR_OPRMSG, "no did-s processed. SC not present?");
-		return (res);
+		lst_free(*dids);
+		*dids = NULL;
+		Trace(TR_ERR, "no did-s processed. SC not present?");
+		return (NULL);
 	}
 
 	prevdid[0] = '\0';
@@ -2093,29 +2109,44 @@ get_did_dsks(sqm_lst_t *hosts, sqm_lst_t **dids) {
 			continue;
 		}
 
-		if (0 != strcmp(did, prevdid)) {
-			strlcpy(prevdid, did, sizeof (prevdid));
-			hostcnt = 0;
+		if (hosts != NULL) {
+			if (0 != strcmp(did, prevdid)) {
+				strlcpy(prevdid, did, sizeof (prevdid));
+				hostcnt = 0;
+			}
+			if (NULL != lst_search(hosts, host,
+			    (lstsrch_t)strcmp)) {
+				hostcnt++;
+			}
 		}
-		// printf("\t%s %s %d", did, host, hostcnt);
-		if (NULL != lst_search(hosts, host, (lstsrch_t)strcmp)) {
-			hostcnt++;
-		}
-		// printf(" %d. ", hostcnt);
-		// if did accessible from all specified hosts, add it to res
-		if (hostcnt == hosts->length) {
-			lst_append(res, strdup(did));
+
+		/*
+		 * If hosts were specified, put the did in the list only
+		 * if they are available on all hosts. If hosts is NULL
+		 * put in all of the returned dids.
+		 */
+		if (hosts == NULL || hostcnt == hosts->length) {
+			char *dup_did = copystr(did);
+
+			if (dup_did == NULL || lst_append(res, dup_did) != 0) {
+				fclose(res_stream);
+				waitpid(pid, &status, 0);
+				lst_free_deep(*dids);
+				*dids = NULL;
+				Trace(TR_OPRMSG, "appending did failed: %s",
+				    samerrmsg);
+				return (NULL);
+			}
 			hostcnt = 0; // so we won't append same did again
-			// printf("did %s added!", did);
 		}
-		// printf("\n");
+
 	}
 	fclose(res_stream);
 	waitpid(pid, &status, 0);
 
 	Trace(TR_OPRMSG,
-	    "did-s processed. %d accessible from the %d specified hosts",
-	    res->length, hosts->length);
+	    "did-s processed. %d accessible from the specified hosts",
+	    res->length);
 	return (res);
 }
 
