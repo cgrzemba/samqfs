@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 
 #include "sam/osversion.h"
 
@@ -2146,8 +2146,9 @@ sam_osd_create_obj_layout(
  *
  *  Generally this function should be called via the macro,
  *  SAM_DESTROY_OBJ_LAYOUT which does not destroy the object layout
- *  if any pages exist, and asserts proper locking is in place.
- *  You may call this function directly if you are sure no pages exist.
+ *  if any pages exist, and asserts proper locking is in place via
+ *  the lock_held flag.  You may call this function directly if you
+ *  are sure no pages exist.
  */
 void
 sam_osd_destroy_obj_layout(
@@ -2156,8 +2157,13 @@ sam_osd_destroy_obj_layout(
 {
 	int num_group;
 
-	TRACE(T_SAM_OBJ_LAY_DES, SAM_ITOP(ip), ip->di.id.ino,
-	    ip->di.id.gen, (sam_tr_t)ip->olp);
+	if (SAM_IS_OBJECT_FILE(ip)) {
+		TRACE(T_SAM_OBJ_LAY_DES, SAM_ITOP(ip), ip->di.id.ino,
+		    ip->di.id.gen, (sam_tr_t)ip->olp);
+	}
+	if (ip->olp == NULL) {
+		return;
+	}
 	num_group = ip->olp->num_group;
 	ASSERT(num_group > 0);
 	if (lock_held) {

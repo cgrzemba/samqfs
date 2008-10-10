@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.214 $"
+#pragma ident "$Revision: 1.215 $"
 #endif
 
 #ifdef linux
@@ -854,11 +854,11 @@ sam_node_t *sam_vtoi(vnode_t *vp);
 
 
 /*
- * -----	sam_destroy_obj_layout	- Free object layout
+ * -----	sam_destroy_obj_layout	- Free object layout if no pages exist.
  */
 #define	SAM_DESTROY_OBJ_LAYOUT(ip) \
 { \
-	if ((ip->olp != NULL) && (vn_has_cached_data(SAM_ITOV(ip)) == 0)) { \
+	if (vn_has_cached_data(SAM_ITOV(ip)) == 0) { \
 		sam_osd_destroy_obj_layout(ip, 1); \
 	} \
 }
