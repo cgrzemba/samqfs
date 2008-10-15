@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.60 2008/10/02 03:00:26 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.61 2008/10/15 22:22:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -292,6 +292,25 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             throw new SamFSException("logic.hostIsDown");
         }
 
+        // Check if MDS is mounted before mounting PMDS or clients
+        // User CANNOT mount anything unless MDS is mounted, not even when
+        // user wants to mount everything including the MDS at the same time.
+        // User HAS to mount the MDS before being able to mount all other hosts.
+        // Throw exception with appropriate error message
+
+        // skip checking if user only chooses to mount the MDS
+        if (clients.length != 1 || !clients[0].equals(mdServer)) {
+            SamQFSSystemModelImpl sysModel = (SamQFSSystemModelImpl)
+                this.appModel.getSamQFSSystemModel(mdServer);
+            FileSystem myFS =
+                sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
+
+            // cannot mount if mds is not mounted
+            if (myFS.getState() != FileSystem.MOUNTED) {
+                throw new SamFSException("logic.mdsnotmounted");
+            }
+        }
+
         return FS.mountClients(model.getJniContext(), fsName, clients);
     }
 
@@ -308,6 +327,37 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
         if (model.isDown()) {
             throw new SamFSException("logic.hostIsDown");
+        }
+
+        // Check if all clients and PMDS are unmounted before unmounting MDS
+        // If MDS is not one of the selected hosts, ok to unmount all the hosts
+        // If MDS is one of the selected hosts, make sure all clients and
+        // PMDS are unmounted.
+        // Otherwise throw exception with appropriate error message
+        boolean mdsIncluded = false;
+        for (int i = 0; i < clients.length; i++) {
+            if (clients[i].equals(mdServer)) {
+                mdsIncluded = true;
+                break;
+            }
+        }
+
+        if (mdsIncluded) {
+            SharedHostInfo [] infos =
+                getSharedFSHosts(
+                    mdServer,
+                    fsName,
+                    Host.MDS | Host.CLIENTS,
+                    new SharedFSFilter[0]);
+            for (int i = 0; i < infos.length; i++) {
+                // If participating host is NOT a MDS and it is mounted,
+                // unmounting operation should fail because you cannot unmount
+                // the MDS without unmounting everything else!
+                if (infos[i].getType() != SharedHostInfo.TYPE_MDS &&
+                    infos[i].getMounted() > 0) {
+                    throw new SamFSException("logic.somehostsmounted");
+                }
+            }
         }
 
         return FS.unmountClients(model.getJniContext(), fsName, clients);

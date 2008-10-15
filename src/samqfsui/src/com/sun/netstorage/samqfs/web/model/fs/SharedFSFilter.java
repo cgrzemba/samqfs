@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedFSFilter.java,v 1.1 2008/08/28 02:01:36 ronaldso Exp $
+// ident $Id: SharedFSFilter.java,v 1.2 2008/10/15 22:22:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -53,8 +53,6 @@ public class SharedFSFilter {
     public static final String TARGET_HOST_NAME = "hostname";
     public static final String TARGET_TYPE = "type";
     public static final String TARGET_IP_ADDRESS = "ipaddress";
-    public static final String TARGET_ARCH = "arch";
-    public static final String TARGET_OS = "os";
     public static final String TARGET_STATUS = "status";
 
     // filter conditions definitions

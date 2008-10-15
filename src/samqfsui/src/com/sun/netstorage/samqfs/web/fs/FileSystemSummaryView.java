@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.97 2008/10/01 22:43:32 ronaldso Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.98 2008/10/15 22:22:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -272,8 +272,31 @@ public class FileSystemSummaryView extends CommonTableContainerView {
         int option = getDropDownMenuValue();
         String fsName = getSelectedFileSystemName();
 
+        String samfsServerAPIVersion = "1.5";
+        try {
+            samfsServerAPIVersion =
+                SamUtil.getServerInfo(getServerName()).
+                getSamfsServerAPIVersion();
+            TraceUtil.trace3("API Version: " + samfsServerAPIVersion);
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Error getting samfs version!", samEx);
+        }
+
         try {
             GenericFileSystem fileSystem = getSelectedFileSystem();
+            int fsType = fileSystem.getFSTypeByProduct();
+            int sharedStatus =
+                fsType == GenericFileSystem.FS_NONSAMQ ?
+                    -1 : ((FileSystem) fileSystem).getShareStatus();
+            boolean sharedMDS50 =
+                SamUtil.isVersionCurrentOrLaterThan(
+                    samfsServerAPIVersion, "1.6") &&
+                    (fsType == FileSystem.FS_SAM ||
+                    fsType == FileSystem.FS_QFS ||
+                    fsType == FileSystem.FS_SAMQFS) &&
+                    sharedStatus == FileSystem.SHARED_TYPE_MDS;
+
+            TraceUtil.trace3("Shared selected? " + sharedMDS50);
 
             switch (option) {
 
@@ -296,7 +319,17 @@ public class FileSystemSummaryView extends CommonTableContainerView {
                         "handleActionMenuHrefRequest",
                         new StringBuffer("Start mounting filesystem ").
                             append(fsName).toString());
-                    fileSystem.mount();
+
+                    if (sharedMDS50) {
+                        SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
+                        sharedFSManager.mountClients(
+                            getServerName(),
+                            fsName,
+                            new String [] {getServerName()});
+                    } else {
+                        fileSystem.mount();
+                    }
 
                     if (fileSystem.getState() == FileSystem.UNMOUNTED) {
                          throw new SamFSException(
@@ -321,7 +354,18 @@ public class FileSystemSummaryView extends CommonTableContainerView {
                         new StringBuffer(
                             "Start unmounting filesystem ").
                             append(fsName).toString());
-                    fileSystem.unmount();
+
+                    if (sharedMDS50) {
+                        SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
+                        sharedFSManager.unmountClients(
+                            getServerName(),
+                            fsName,
+                            new String [] {getServerName()});
+                    } else {
+                        fileSystem.unmount();
+                    }
+
                     LogUtil.info(
                         this.getClass(),
                         "handleActionMenuHrefRequest",
@@ -1159,6 +1203,25 @@ public class FileSystemSummaryView extends CommonTableContainerView {
         }
 
         throw new ModelControlException("Exception occurred within framework");
+    }
+
+    private SamQFSSystemSharedFSManager getSharedFSManager()
+        throws SamFSException {
+
+        TraceUtil.trace3("Remote Call: Retrieve shared fs mgr obj!");
+
+        SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
+
+        if (appModel == null) {
+            throw new SamFSException("App model is null");
+        }
+
+        SamQFSSystemSharedFSManager sharedFSManager =
+                        appModel.getSamQFSSystemSharedFSManager();
+        if (sharedFSManager == null) {
+            throw new SamFSException("shared fs manager is null");
+        }
+        return sharedFSManager;
     }
 
     private GenericFileSystem getSelectedFileSystem()

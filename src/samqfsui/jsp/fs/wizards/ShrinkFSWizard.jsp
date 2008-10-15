@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.5 2008/09/10 17:40:23 ronaldso Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.6 2008/10/15 22:22:12 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -66,10 +66,6 @@
                                        title="#{samBundle['fs.shrink.selectstorage.steptitle']}"
                                        detail="#{samBundle['fs.shrink.selectstorage.instruction.1']}"
                                        help="#{samBundle['fs.shrink.selectstorage.help']}">
-                            <h:panelGrid columns="1" style="margin:10px">
-                                <ui:staticText text="#{samBundle['fs.shrink.selectstorage.instruction.2']}"/>
-                            </h:panelGrid>
-                            <ui:markup tag="br" singleton="true"/>
                             <ui:alert id="alert_selectstorage"
                                       rendered="#{ShrinkFSBean.alertRendered}"
                                       type="#{ShrinkFSBean.alertType}"
@@ -157,15 +153,6 @@
                                            title="#{samBundle['fs.shrink.method.steptitle']}"
                                            detail="#{samBundle['fs.shrink.method.instruction.1']}"
                                            help="#{samBundle['fs.shrink.method.help']}">
-                                <h:panelGrid columns="2" style="margin:10px">
-                                    <ui:staticText text="#{samBundle['common.asterisk']}"/>
-                                    <ui:staticText text="#{samBundle['fs.shrink.method.instruction.2']}" />
-                                    <ui:staticText text="#{samBundle['common.asterisk']}"/>
-                                    <ui:staticText text="#{samBundle['fs.shrink.method.instruction.3']}" />
-                                    <ui:staticText text="#{samBundle['common.asterisk']}"/>
-                                    <ui:staticText text="#{samBundle['fs.shrink.method.instruction.4']}" />
-                                </h:panelGrid>
-                                <ui:markup tag="br" singleton="true"/>
                                 <ui:alert id="alert_method"
                                           rendered="#{ShrinkFSBean.alertRendered}"
                                           type="#{ShrinkFSBean.alertType}"
@@ -377,9 +364,10 @@
                                        summary="#{samBundle['common.wizard.summary.title']}"
                                        title="#{samBundle['common.wizard.summary.title']}"
                                        detail="#{samBundle['common.wizard.summary.instruction']}"
+                                       help="#{samBundle['fs.shrink.result.help']}"
                                        finish="true">
                             <ui:markup tag="br" singleton="true"/>
-                            <h:panelGrid columns="2" style="margin-left:2%;text-valign:top">
+                            <h:panelGrid columns="2" style="margin-left:2%">
                                 <ui:label id="idSelectStorage"
                                           text="#{samBundle['fs.shrink.review.text.selectstorage']}" />
                                 <ui:staticText text="#{ShrinkFSBean.summarySelectStorage}"

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PageInfo.java,v 1.34 2008/06/11 16:58:01 ronaldso Exp $
+// ident	$Id: PageInfo.java,v 1.35 2008/10/15 22:22:14 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -241,7 +241,7 @@ public class PageInfo {
         
         pagePaths[36] = new PagePath(
             "SharedFSSummaryHref",
-            "SharedFS.title",
+            "SharedFS.pagetitle",
             "SharedFS.title.breadcrumbmouseover");
 
         pageNames = new HashMap();

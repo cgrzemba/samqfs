@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.13 2008/10/01 22:43:31 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.14 2008/10/15 22:22:12 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -64,9 +64,9 @@
         id="pageTitle"
         title="#{SharedFSBean.clientPageTitle}">
 
-    <ui:markup tag="br" singleton="true"/>
-    <ui:staticText id="textInstruction" text="#{samBundle['SharedFS.help.client.pageinstruction']}" style="margin:10px"/>
-    <ui:markup tag="br" singleton="true"/>
+    <h:panelGrid columns="1" style="margin:10px">
+        <ui:staticText id="textInstruction" text="#{samBundle['SharedFS.client.instruction']}"/>
+    </h:panelGrid>
 
     <ui:table id="tableClientSummary"
               title="#{SharedFSBean.clientTableTitle}"
@@ -176,22 +176,6 @@
                 <ui:staticText text="#{clientTable.value.IPAddressesStr}"
                                escape="false"
                                converter="SpaceDelimiterConverter"/>
-            </ui:tableColumn>
-            <ui:tableColumn id="colArch"
-                            headerText="#{samBundle['SharedFS.client.table.heading.arch']}"
-                            align="left"
-                            valign="top"
-                            sort="arch"
-                            rowHeader="true">
-                <ui:staticText text="#{clientTable.value.arch}"/>
-            </ui:tableColumn>
-            <ui:tableColumn id="colOS"
-                            headerText="#{samBundle['SharedFS.client.table.heading.os']}"
-                            align="left"
-                            valign="top"
-                            sort="OS"
-                            rowHeader="true">
-                <ui:staticText text="#{clientTable.value.OS}"/>
             </ui:tableColumn>
             <ui:tableColumn id="colStatus"
                             headerText="#{samBundle['SharedFS.client.table.heading.status']}"

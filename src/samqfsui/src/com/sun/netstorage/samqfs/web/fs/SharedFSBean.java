@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.19 2008/10/08 22:33:33 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.20 2008/10/15 22:22:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -605,40 +605,47 @@ public class SharedFSBean implements Serializable {
                 throw new SamFSException("common.nopermission");
             }
 
-            FileSystem thisFS = getFileSystem();
+            SamQFSSystemSharedFSManager sharedFSManager =
+                                                getSharedFSManager();
 
             if (mount) {
                 LogUtil.info(
                     this.getClass(),
                     "executeCommand",
-                    "Start mounting shared fs: " + thisFS.getName());
+                    "Start mounting shared fs: " + getFSName());
 
-                thisFS.mount();
+                sharedFSManager.mountClients(
+                    JSFUtil.getServerName(),
+                    getFSName(),
+                    new String [] {JSFUtil.getServerName()});
 
                 LogUtil.info(
                     this.getClass(),
                     "executeCommand",
-                    "Done mounting shared fs: " + thisFS.getName());
+                    "Done mounting shared fs: " + getFSName());
             } else {
                 LogUtil.info(
                     this.getClass(),
                     "executeCommand",
-                    "Start un-mounting shared fs: " + thisFS.getName());
-                // TODO: Check if any clients are mounted
-                thisFS.unmount();
+                    "Start un-mounting shared fs: " + getFSName());
+
+                sharedFSManager.unmountClients(
+                    JSFUtil.getServerName(),
+                    getFSName(),
+                    new String [] {JSFUtil.getServerName()});
 
                 LogUtil.info(
                     this.getClass(),
                     "executeCommand",
-                    "Done un-mounting shared fs: " + thisFS.getName());
+                    "Done un-mounting shared fs: " + getFSName());
             }
             setAlertInfo(
                 Constants.Alert.INFO,
                 mount ?
                     JSFUtil.getMessage("SharedFS.message.mount.ok",
-                                       thisFS.getName()):
+                                       getFSName()):
                     JSFUtil.getMessage("SharedFS.message.unmount.ok",
-                                       thisFS.getName()),
+                                       getFSName()),
                 null);
 
         } catch (SamFSException samEx){

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.8 2008/08/28 02:01:34 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.9 2008/10/15 22:22:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -153,7 +153,7 @@ public class SharedHostInfo {
         } else if ("OSD".equals(str)) {
             return TYPE_OSD;
         }
-        return -1;
+        return (short) -1;
     }
 
     public String getTypeString() {
@@ -407,10 +407,6 @@ public class SharedHostInfo {
 
         if (SharedFSFilter.TARGET_HOST_NAME.equals(target)) {
             checkAgainst = getName();
-        } else if (SharedFSFilter.TARGET_ARCH.equals(target)) {
-            checkAgainst = getArch();
-        } else if (SharedFSFilter.TARGET_OS.equals(target)) {
-            checkAgainst = getOS();
         } else {
             // Should not get here
             return false;

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSFilterBean.java,v 1.1 2008/08/28 02:01:34 ronaldso Exp $
+// ident        $Id: SharedFSFilterBean.java,v 1.2 2008/10/15 22:22:13 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -72,10 +72,6 @@ public class SharedFSFilterBean {
          SharedFSFilter.TARGET_TYPE},
         {"SharedFS.client.table.heading.ipaddress",
          SharedFSFilter.TARGET_IP_ADDRESS},
-        {"SharedFS.client.table.heading.arch",
-         SharedFSFilter.TARGET_ARCH},
-        {"SharedFS.client.table.heading.os",
-         SharedFSFilter.TARGET_OS},
         {"SharedFS.client.table.heading.status",
          SharedFSFilter.TARGET_STATUS},
     };
