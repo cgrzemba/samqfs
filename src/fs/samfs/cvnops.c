@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.150 $"
+#pragma ident "$Revision: 1.151 $"
 
 #include "sam/osversion.h"
 
@@ -425,6 +425,9 @@ segment_file:
 		if (SAM_THREAD_IS_NFS() &&
 		    !S_ISSEGI(&bip->di) && ip->flags.b.stage_n) {
 			ip->no_opens++;
+		}
+		if (uiop->uio_loffset >= ip->di.rm.size) {
+			goto out;
 		}
 		if ((error = sam_read_proc_offline(ip, bip, uiop, credp,
 		    &stage_n_set))) {
