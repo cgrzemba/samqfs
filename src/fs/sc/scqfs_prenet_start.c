@@ -34,7 +34,7 @@
  * server from a remote cluster node.
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -259,6 +259,13 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 						rc = 1;
 						break;
 					}
+					if (GetFsInfo(fp->fi_fs, &fsi) < 0) {
+						scds_syslog(LOG_ERR,
+						    "%s: Couldn't get FS info",
+						    fp->fi_fs, strerror(errno));
+						rc = 1;
+						break;
+					}
 				}
 
 				/*
@@ -311,6 +318,13 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 					scds_syslog(LOG_ERR,
 					    "%s: Error mounting %s.",
 					    fp->fi_fs, fp->fi_mntpt);
+					break;
+				}
+				if (GetFsInfo(fp->fi_fs, &fsi) < 0) {
+					scds_syslog(LOG_ERR,
+					    "%s: Couldn't get FS info",
+					    fp->fi_fs, strerror(errno));
+					rc = 1;
 					break;
 				}
 			}
