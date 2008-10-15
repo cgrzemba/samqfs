@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.148 $"
+#pragma ident "$Revision: 1.149 $"
 
 #include "sam/osversion.h"
 
@@ -1454,15 +1454,9 @@ sam_inactive_vn(
 )
 {
 	sam_node_t *ip;
-	int trans_size = 0;
-	sam_mount_t *mp;
-	int issync;
 
 	ip = SAM_VTOI(vp);
-	mp = ip->mp;
-
 	TRACE(T_SAM_INACTIVE, vp, vp->v_count, ip->flags.bits, ip->di.id.ino);
-
 	sam_inactive_ino(ip, credp);
 }
 
@@ -1978,13 +1972,27 @@ sam_putpage_vn(
 	 * address all the pages of the vnode. B_ASYNC flag is cleared
 	 * to prevent unnecessary extra processing as the vnode is stale.
 	 */
+	ip = SAM_VTOI(vp);
 	if (SAM_VP_IS_STALE(vp)) {
 		offset = 0;
 		length = 0;
 		flags &= ~(B_ASYNC);
+
+		/*
+		 * Pages exist because we were not able to write to the OSN.
+		 * Invalidate them because we still won't be able to flush them.
+		 */
+		if (SAM_IS_OBJECT_FILE(ip)) {
+			dcmn_err((CE_WARN, "SAM-QFS: %s: STALE INODE %d.%d "
+			    "iflags=%x, flags=%x, %x",
+			    ip->mp->mt.fi_name, ip->di.id.ino, ip->di.id.gen,
+			    ip->flags.bits, flags, B_INVAL));
+			if (ip->flags.b.hash == 0) {
+				flags = B_INVAL;
+			}
+		}
 	}
 
-	ip = SAM_VTOI(vp);
 	if (S_ISREQ(ip->di.mode)) {
 		cmn_err(SAMFS_DEBUG_PANIC,
 		    "SAM-QFS: %s: "

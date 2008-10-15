@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.234 $"
+#pragma ident "$Revision: 1.235 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2616,11 +2616,14 @@ sam_flush_ino(
 						 * procs finding this inode and
 						 * picking up the reference to
 						 * its soon-to-be-staled mp.
+						 * Do not destroy object layout
+						 * because this is a forced
+						 * umount and we may have I/0
+						 * outstanding. It will be
+						 * destroyed when the inode is
+						 * destroyed.
 						 */
 						if (ip->flags.b.hash) {
-				/* LINTED [statement has no consequent: if] */
-							SAM_DESTROY_OBJ_LAYOUT(
-							    ip);
 							SAM_UNHASH_INO(ip);
 						}
 						sam_stale_inode(ip);

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.130 $"
+#pragma ident "$Revision: 1.131 $"
 #endif
 
 #include "sam/osversion.h"
@@ -483,7 +483,9 @@ sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp)
 	 */
 	sam_await_umount_complete(ip);
 
-	/* don't let mp/vfsp get away from us yet */
+	/*
+	 * Don't let mp/vfsp get away from us yet
+	 */
 	SAM_VFS_HOLD(mp);
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -491,9 +493,12 @@ sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp)
 		/* Free in-core access control list */
 		(void) sam_free_acl(ip);
 	}
-	ASSERT(vn_has_cached_data(vp) == 0);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
+	/*
+	 * It is possible to have pages for this vnode if there was an error
+	 * flushing them. The stale vnops calls sam_putpage_vn.
+	 */
 	mutex_enter(&vp->v_lock);
 	ASSERT(!ip->flags.b.hash);
 	ASSERT(!ip->flags.b.free);

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.101 $"
+#pragma ident "$Revision: 1.102 $"
 
 #include "sam/osversion.h"
 
@@ -543,6 +543,9 @@ sam_read_ahead(
 			}
 			if (ra_buf == NULL) {
 				pvn_read_done(pp, B_ERROR);
+				if (SAM_IS_OBJECT_FILE(ip)) {
+					return;
+				}
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_read_ahead, "
 				    "ip=%p, ino=%d.%d,"
