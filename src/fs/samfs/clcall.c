@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.259 $"
+#pragma ident "$Revision: 1.260 $"
 #endif
 
 #include "sam/osversion.h"
@@ -961,7 +961,19 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 {
 	sam_mount_t *mp = ip->mp;
 	boolean_t release = FALSE;
+	int unlock = 0;
 
+	/*
+	 * This thread must not hold inode_rwl
+	 * as a reader on entry.
+	 *
+	 * Holding inode_rwl as a writer prevents a race
+	 * condition with open().
+	 */
+	if (RW_OWNER_OS(&ip->inode_rwl) != curthread) {
+		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		unlock = 1;
+	}
 	mutex_enter(&ip->ilease_mutex);
 
 	if (notify_expire) {
@@ -989,6 +1001,9 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 
 	if (ip->cl_leases == 0) {
 		mutex_exit(&ip->ilease_mutex);
+		if (unlock) {
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+		}
 		return;
 	}
 
@@ -1023,7 +1038,23 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 	mutex_exit(&mp->mi.m_lease_mutex);
 
 	if (release) {
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		VN_RELE_OS(ip);
+		if (!unlock) {
+			/*
+			 * Entered with the lock held so
+			 * reacquire it before exit.
+			 */
+			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		}
+		return;
+	}
+	if (unlock) {
+		/*
+		 * Entered without the lock held
+		 * so unlock before exit.
+		 */
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	}
 }
 
@@ -1035,6 +1066,19 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 void
 sam_client_remove_all_leases(sam_node_t *ip)
 {
+	int unlock = 0;
+
+	/*
+	 * This thread must not hold inode_rwl
+	 * as a reader on entry.
+	 *
+	 * Holding inode_rwl as a writer prevents a race
+	 * condition with open().
+	 */
+	if (RW_OWNER_OS(&ip->inode_rwl) != curthread) {
+		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		unlock = 1;
+	}
 	if (ip->cl_leases != 0) {
 		sam_mount_t *mp = ip->mp;
 		boolean_t release;
@@ -1042,6 +1086,7 @@ sam_client_remove_all_leases(sam_node_t *ip)
 		release = FALSE;
 		mutex_enter(&mp->mi.m_lease_mutex);
 		mutex_enter(&ip->ilease_mutex);
+
 		if (ip->cl_leases != 0) {
 			ip->cl_leases = 0;
 			sam_client_remove_lease_chain(ip);
@@ -1055,8 +1100,24 @@ sam_client_remove_all_leases(sam_node_t *ip)
 		mutex_exit(&ip->ilease_mutex);
 		mutex_exit(&mp->mi.m_lease_mutex);
 		if (release) {
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			VN_RELE_OS(ip);
+			if (!unlock) {
+				/*
+				 * Entered with the lock held so
+				 * reacquire it before exit.
+				 */
+				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+			}
+			return;
 		}
+	}
+	if (unlock) {
+		/*
+		 * Entered without the lock held
+		 * so unlock before exit.
+		 */
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	}
 }
 
@@ -1157,16 +1218,26 @@ sam_proc_rm_lease(
 	uint32_t saved_leasegen[SAM_MAX_LTYPE];
 
 	close = (lease_mask == CL_CLOSE);
+
+	/*
+	 * The inode_rwl must held as a writer
+	 * in order to prevent a race condition with open().
+	 */
+	if (rw_type == RW_READER) {
+		if (!rw_tryupgrade(&ip->inode_rwl)) {
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		}
+		if (close && ip->no_opens > 0) {
+			RW_DOWNGRADE_OS(&ip->inode_rwl);
+			return (0);
+		}
+	}
+
 	if (close) {
 		if (ip->flags.b.ap_lease) {
-			if (rw_type == RW_READER) {
-				mutex_enter(&ip->fl_mutex);
-			}
 			ip->flags.b.ap_lease = 0;
 			ip->flags.b.updated = 1;
-			if (rw_type == RW_READER) {
-				mutex_exit(&ip->fl_mutex);
-			}
 		}
 		/*
 		 * Force the size update on the server for a close with the
@@ -1187,23 +1258,38 @@ sam_proc_rm_lease(
 		for (ltype = 0; ltype < SAM_MAX_LTYPE; ltype++) {
 			saved_leasegen[ltype] = ip->cl_leasegen[ltype];
 		}
-		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 		sam_client_remove_all_leases(ip);
-		RW_LOCK_OS(&ip->inode_rwl, rw_type);
+
+		/*
+		 * sam_client_remove_all_leases() will drop the
+		 * inode_rwl, RW_WRITER lock before calling VN_RELE,
+		 * this can allow another open to complete.
+		 */
+		if (ip->no_opens > 0) {
+			if (rw_type == RW_READER) {
+				RW_DOWNGRADE_OS(&ip->inode_rwl);
+			}
+			return (0);
+		}
 
 	} else {
 		if (lease_mask & CL_APPEND) {
 			actions = SR_SET_SIZE;
 		}
-		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 		sam_client_remove_leases(ip, lease_mask, 0);
-		RW_LOCK_OS(&ip->inode_rwl, rw_type);
+		/*
+		 * May still be a race condition here. If VN_RELE
+		 * was called by sam_client_remove_leases() this allows
+		 * another thread to acquire new leases which we shouldn't
+		 * remove here.
+		 */
 	}
 
 	msg = kmem_zalloc(sizeof (*msg), KM_SLEEP);
 	sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE, SHARE_wait,
 	    LEASE_remove, sizeof (sam_san_lease_t), sizeof (sam_san_lease2_t));
 	msg->call.lease.data.ltype = lease_mask;
+
 	if (close) {
 		/*
 		 * It is possible that this should be done
@@ -1213,13 +1299,9 @@ sam_proc_rm_lease(
 			msg->call.lease.gen[ltype] = saved_leasegen[ltype];
 		}
 	}
-	if (rw_type == RW_READER) {
-		if (!RW_TRYUPGRADE_OS(&ip->inode_rwl)) {
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-		}
-	}
+
 	error = sam_issue_lease_request(ip, msg, SHARE_wait, actions, NULL);
+
 	if (rw_type == RW_READER) {
 		RW_DOWNGRADE_OS(&ip->inode_rwl);
 	}
