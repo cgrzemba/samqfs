@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -202,6 +202,13 @@ DiskCacheWrite(
 		 * the error flag will be set in io thead control structure.
 		 */
 		out = CircularIoAvail(writer, &nbytes, &readErrno);
+		if (readErrno != 0) {
+			Trace(TR_ERR,
+			    "Error in writer buffer, slot:%d readErrno:%d",
+			    CircularIoSlot(IoThread->io_writer, out),
+			    readErrno);
+			break;
+		}
 
 		/* If not a full block of data left to write. */
 		if (dataToWrite < nbytes) {
@@ -225,8 +232,28 @@ DiskCacheWrite(
 		if (verify == B_FALSE) {
 			nwritten = ioctl(fd, F_SWRITE, &swrite);
 
-			/* FIXME write fails */
-			ASSERT_WAIT_FOR_DBX(nwritten == nbytes);
+			if (nwritten != nbytes) {
+				Trace(TR_ERR,
+				    "Write error: %d fd: %d nbyte: %d "
+				    "offset: %lld",
+				    errno, fd, swrite.nbyte, swrite.offset);
+				/*
+				 * Cancel stage request, this will be picked
+				 * up in the reader and doublebuffer threads.
+				 */
+				Trace(TR_MISC,
+				    "Cancelled(write error) inode: %d.%d",
+				    file->id.ino, file->id.gen);
+				SET_FLAG(IoThread->io_flags, IO_cancel);
+
+				readErrno = errno;
+				if (readErrno == ECANCELED) {
+					cancel = B_TRUE;
+					SET_FLAG(file->flags, FI_CANCEL);
+				} else {
+					SET_FLAG(file->flags, FI_WRITE_ERROR);
+				}
+			}
 		}
 
 		/*

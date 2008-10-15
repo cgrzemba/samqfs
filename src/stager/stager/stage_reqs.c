@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.89 $"
+#pragma ident "$Revision: 1.90 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -587,7 +587,11 @@ CheckRequests(
 			if (file->error) {
 				boolean_t damaged;
 
-				damaged = DamageArcopy(file);
+				if (GET_FLAG(file->flags, FI_WRITE_ERROR)) {
+					damaged = B_FALSE;
+				} else {
+					damaged = DamageArcopy(file);
+				}
 				copy = GetArcopy(file, file->copy + 1);
 
 				/*

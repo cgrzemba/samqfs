@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -200,6 +200,11 @@ DoubleBuffer(
 			 */
 			from = CircularIoAvail(reader, &fromResidual,
 			    &readErrno);
+			if (readErrno != 0) {
+				Trace(TR_DEBUG, "Reader found an error, "
+				    "slot: %d, readErrno: %d",
+				    CircularIoSlot(reader, from), readErrno);
+			}
 		} else {
 			/*
 			 * Get 'out' pointer for read buffer,
@@ -307,6 +312,11 @@ DoubleBuffer(
 			 * set block error for writer thread.
 			 */
 			CircularIoSetError(writer, to, readErrno);
+			if (readErrno != 0) {
+				Trace(TR_DEBUG, "Set error to writer buffer, "
+				    "slot: %d readErrno: %d",
+				    CircularIoSlot(writer, to), readErrno);
+			}
 			CircularIoAdvanceIn(writer);
 		}
 

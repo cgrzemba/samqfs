@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -321,6 +321,8 @@ ArchiveRead(
 		if (readError == -1) {
 			/* Media read failed. */
 			CircularIoSetError(reader, in, errno);
+			Trace(TR_DEBUG, "Read error, slot: %d errno: %d",
+			    CircularIoSlot(reader, in), errno);
 
 			SendCustMsg(HERE, 19031,
 			    IoThread->io_drive, errno);
@@ -335,27 +337,35 @@ ArchiveRead(
 		 * staged for the double buffer thread.
 		 */
 		if (firstRead == B_TRUE) {
-			int residual;
+			if (readError != 0) {
+				notifyWorkers();
+			} else {
+				int residual;
 
-			readError = validateTarHeader(in, nbytes, &residual);
+				readError =
+				    validateTarHeader(in, nbytes, &residual);
 
-			if (readError == -1) {
-				/* Tar header validation failed. */
-				CircularIoSetError(reader, in, EIO);
+				if (readError == -1) {
+					/* Tar header validation failed. */
+					CircularIoSetError(reader, in, EIO);
+					Trace(TR_DEBUG, "Tar header error, "
+					    "slot: %d errno: %d",
+					    CircularIoSlot(reader, in), errno);
+				}
+
+				/* Number of data bytes left in buffer. */
+				nbytes = residual;
+
+				/*
+				 * After skipping the tar header there may
+				 * not be any any file data in the buffer,
+				 * nbytes = 0.  Start thread pipeline but
+				 * there will be no data to move or write.
+				 *
+				 * Start thread pipeline to other threads.
+				 */
+				notifyWorkers();
 			}
-
-			/* Number of data bytes left in buffer. */
-			nbytes = residual;
-
-			/*
-			 * After skipping the tar header there may not be any
-			 * any file data in the buffer, nbytes = 0.  Start
-			 * thread pipeline but there will be no data to move
-			 * or write.
-			 *
-			 * Start thread pipeline to other threads.
-			 */
-			notifyWorkers();
 		}
 
 		/*
@@ -473,6 +483,9 @@ findFirstBlock()
 		if (readError == -1) {
 			/* Tar header validation failed. */
 			CircularIoSetError(reader, ptr, EIO);
+			Trace(TR_DEBUG, "Positioning error to 0x%x, slot: %d "
+			    " errno: %d",
+			    filePos, CircularIoSlot(reader, ptr), errno);
 		}
 
 		/*
@@ -518,19 +531,32 @@ findFirstBlock()
 			/* Media has been positioned for read. */
 			filePos = toPos;
 		} else {
+			char *ptr;
+			int nbytes;
 
 			/* Positioning failed. Set read error. */
-			readError = B_TRUE;
-			SendCustMsg(HERE, 19030, filePos,
-			    IoThread->io_drive, errno);
+			Trace(TR_DEBUG, "Positioning err: %d", errno);
+			if (errno == 0) {
+				SetErrno = EIO;
+			}
 
-			/* FIXME */
-#if 0
 			/*
 			 * Notify move thread that the buffer
 			 * is not empty so error is detected.
 			 */
-#endif
+			ptr = CircularIoWait(reader, &nbytes);
+			CircularIoSetBlock(reader, ptr, filePos);
+			CircularIoSetError(reader, ptr, errno);
+			Trace(TR_DEBUG, "Positioning error to 0x%x, slot: %d "
+			    " errno: %d",
+			    filePos, CircularIoSlot(reader, ptr), errno);
+			CircularIoAdvanceIn(reader);
+			readError = -1;
+			SendCustMsg(HERE, 19030, filePos,
+			    IoThread->io_drive, errno);
+			if (firstRead == B_TRUE) {
+				notifyWorkers();
+			}
 		}
 	}
 }
@@ -573,7 +599,6 @@ retry:
 
 /* FIXME */
 	ngot = simReadError(ngot);
-
 	/*
 	 * Check if read was successful.  Either read the entire block
 	 * or a short read at end of tarball is okay.
