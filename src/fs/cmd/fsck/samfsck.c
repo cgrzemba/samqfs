@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.60 $"
+#pragma ident "$Revision: 1.61 $"
 
 
 /* ----- Includes */
@@ -127,6 +127,7 @@
  * 36   = fatal: Malloc errors.
  * 37   = fatal: Device errors.
  * 40   = fatal: Filesystem superblock is invalid.
+ * 41   = fatal: Filesystem option mask has non-backwards compatible options.
  * 45   = fatal: Filesystem .inodes file is invalid.
  * 46	= fatal: Filesystem log contains transactions that should be replayed
  * 50   = Fatal I/O errors terminated processing.
@@ -144,6 +145,7 @@
 #define	ES_malloc	36
 #define	ES_device	37
 #define	ES_sblk		40
+#define	ES_opt_mask	41
 #define	ES_inodes	45
 #define	ES_log		46
 #define	ES_io		50
@@ -925,6 +927,42 @@ check_fs(void)
 		if (sblock.info.sb.time == nblock.info.sb.time) {
 			memcpy((char *)&sblock, (char *)&nblock,
 			    sizeof (sblock));
+		}
+	}
+
+	/*
+	 * Check superblock options mask.  If the option mask version
+	 * has advanced beyond this version of samfsck's capability or
+	 * the option mask has new bits set, fail the samfsck.
+	 */
+	if (sblock.info.sb.opt_mask_ver > 0) {	/* Versioning in use */
+		if (sblock.info.sb.opt_mask_ver == SBLK_OPT_VER1) {
+			if (sblock.info.sb.opt_mask & ~SBLK_ALL_OPTV1) {
+				/*
+				 * This version of samfsck only understands
+				 * SBLK_ALL_OPTV1 options in option mask
+				 * version 1.
+				 */
+				error(0, 0, catgets(catfd, SET, 13299,
+				    "ALERT:  Option version or mask mismatch "
+				    "(vers %d, mask %x), cannot "
+				    "check file system.\n"),
+				    sblock.info.sb.opt_mask_ver,
+				    sblock.info.sb.opt_mask);
+				clean_exit(ES_opt_mask);
+			}
+		} else {
+			/*
+			 * This version of samfsck does not
+			 * understand option mask versions
+			 * greater than SBLK_OPT_VER1.
+			 */
+			error(0, 0, catgets(catfd, SET, 13299,
+			    "ALERT:  Option version or mask mismatch "
+			    "(vers %d, mask %x), cannot check file system.\n"),
+			    sblock.info.sb.opt_mask_ver,
+			    sblock.info.sb.opt_mask);
+			clean_exit(ES_opt_mask);
 		}
 	}
 

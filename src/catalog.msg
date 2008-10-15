@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.614 $"
+$ pragma ident "$Revision: 1.615 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2405,7 +2405,8 @@ $ ===================================================================
 13287 block %s (%lld.%d) is an invalid ordinal
 13288 block %s (%lld.%d) usage is unknown
 13289 ALERT:  ino %d,\tblock 0x%llx ord %d dt %d mismatch type %d\n
-$ 13290-13299 are open to add more messages
+$ 13290-13298 are open to add more messages
+13299 ALERT:  Option version or mask mismatch (vers %d, mask %x), cannot check file system.\n
 13300 eq %d bn=%.8llx allocated in bit maps, but free\n
 13301 NOTICE: Orphan ino:        -F will move ino %d to lost+found\n
 13302 NOTICE: Cannot process orphans. Please create ./lost+found directory\n
