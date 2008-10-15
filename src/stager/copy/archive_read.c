@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -606,6 +606,7 @@ retry:
 	if ((ngot == nbytes) ||
 	    (ngot > 0 && ngot >= dataToRead && errno == 0)) {
 
+		file->read += ngot;
 		retval = 0;	/* successful read */
 
 	} else {
