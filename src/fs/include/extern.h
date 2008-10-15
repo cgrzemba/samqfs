@@ -40,7 +40,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.238 $"
+#pragma ident "$Revision: 1.239 $"
 
 #include "sam/osversion.h"
 
@@ -148,6 +148,7 @@ void sam_kill_block(sam_mount_t *mp);
 /* cvnops.c */
 
 int sam_remove_listio(sam_node_t *ip);
+void sam_rwdlock_ino(sam_node_t *ip, krw_t rw_type, int flag);
 
 /* event.c */
 

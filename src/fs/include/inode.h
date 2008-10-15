@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.215 $"
+#pragma ident "$Revision: 1.216 $"
 #endif
 
 #ifdef linux
@@ -1038,6 +1038,7 @@ int sam_idle_operation(sam_node_t *ip);
 int sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type);
 
 #ifdef sun
+void sam_open_mutex_operation(sam_node_t *ip, kmutex_t *mup);
 void sam_unset_operation_nb(struct sam_mount *mp);
 extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
 

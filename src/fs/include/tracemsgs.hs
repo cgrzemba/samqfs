@@ -1,4 +1,4 @@
-# $Revision: 1.134 $
+# $Revision: 1.135 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -180,6 +180,8 @@ T_SAM_RWLOCK		"Rwlock:   flag=%d^[$r],actual=%d^[$r]"
 T_SAM_RWLOCK_RET	"Rwlock-   flag=%d^[$r]"
 T_SAM_UNRWLOCK		"Unrwlock: flag=%d^[$r]"
 T_SAM_UNRWLOCK_RET	"Unrwlock- flag=%d^[$r]"
+T_SAM_RWDLOCK		"Rwdlock:  type=%d,use=%d"
+T_SAM_RWDLOCK_RET	"Rwdlock-  type=%d,use=%d"
 T_SAM_FRLOCK		"Frlock:   cmd=%d,flg=%x,off=%x"
 T_SAM_FRLOCK_RET	"Frlock-   cmd=%d,flg=%x,err=%d^[$e]"
 T_SAM_SPACE		"Space:    cmd=%x,off=%x,len=%x"

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1434,12 +1434,10 @@ sam_idle_operation(sam_node_t *ip)
 	etsdhp.ptr = tsd_get(mp->ms.m_tsd_key);
 
 	if ((etsdhp.ptr == NULL) ||
-	    (etsdhp.val.flags & SAM_FRZI_NOBLOCK) ||
-	    (mutex_owner(&ip->cl_apmutex) == curthread)) {
+	    (etsdhp.val.flags & SAM_FRZI_NOBLOCK)) {
 		/*
 		 * Don't block.  Either thread has no context (worker thread?
-		 * ioctl?), thread is set non-blocking or is holding
-		 * the append lease mutex.
+		 * ioctl?), thread is set non-blocking.
 		 */
 		if (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
 			if (curthread->t_flag & T_DONTBLOCK) {
@@ -1668,6 +1666,58 @@ sam_unset_operation_nb(sam_mount_t *mp)
 		ASSERT(mp->ms.m_cl_active_ops > 0);
 		ep.val.flags &= ~SAM_FRZI_NOBLOCK;
 		tsd_set(mp->ms.m_tsd_key, ep.ptr);
+	}
+}
+
+
+/*
+ * -----    sam_open_mutex_operation -
+ *
+ * Used instead of mutex_enter() directly.
+ * Allows a thread to sleep waiting for the mutex
+ * and not hold up failover.
+ */
+void
+sam_open_mutex_operation(sam_node_t *ip, kmutex_t *mup)
+{
+	sam_mount_t *mp = ip->mp;
+	int error;
+
+	if (SAM_IS_SHARED_CLIENT(mp)) {
+#ifdef DEBUG
+		sam_operation_t ep;
+		ep.ptr = tsd_get(mp->ms.m_tsd_key);
+		ASSERT(ep.ptr != NULL);
+#endif
+
+		if (!mutex_tryenter(mup)) {
+			/*
+			 * Can't get the mutex so drop m_cl_active_ops
+			 * while we wait, this prevents failover from hanging
+			 * should failover occur while we wait.
+			 */
+			SAM_DEC_OPERATION(mp);
+			mutex_enter(mup);
+
+			/*
+			 * Before incrementing m_cl_active_ops
+			 * check for failover. Failover may already
+			 * be proceeding with m_cl_active_ops of zero.
+			 */
+			while (mp->mt.fi_status &
+			    (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
+				/*
+				 * If failover started while we acquired
+				 * the mutex freeze here.
+				 */
+				(void) sam_freeze_ino(mp, ip, 1);
+			}
+			SAM_INC_OPERATION(mp);
+		}
+
+	} else {
+
+		mutex_enter(mup);
 	}
 }
 #endif	/* sun */

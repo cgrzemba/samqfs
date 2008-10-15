@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.193 $"
+#pragma ident "$Revision: 1.194 $"
 
 #include "sam/osversion.h"
 
@@ -1478,8 +1478,8 @@ sam_client_create_vn(
 			 *	 sam_get_client_ino....
 			 */
 
-			RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
-			mutex_enter(&ip->cl_apmutex);
+			sam_rwdlock_ino(ip, RW_WRITER, 0);
+			sam_open_mutex_operation(ip, &ip->cl_apmutex);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 			if (S_ISREG(ip->di.mode) && (vap->va_mask & AT_SIZE) &&
@@ -2468,8 +2468,8 @@ sam_client_space_vn(
 				 */
 				bzero(&data, sizeof (data));
 
-				RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
-				mutex_enter(&ip->cl_apmutex);
+				sam_rwdlock_ino(ip, RW_WRITER, 0);
+				sam_open_mutex_operation(ip, &ip->cl_apmutex);
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				if (vn_has_cached_data(vp)) {
 					sam_flush_pages(ip, 0);

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.95 $"
+#pragma ident "$Revision: 1.96 $"
 
 #include <sam/osversion.h>
 
@@ -141,7 +141,7 @@ sam_ioctl_sam_cmd(
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_resid = gdp->size;
 		uio.uio_fmode = 0;
-		RW_LOCK_OS(&ip->data_rwl, RW_READER);
+		sam_rwdlock_ino(ip, RW_READER, 0);
 		error = sam_getdents(ip, &uio, credp, &gdp->eof, FMT_SAM);
 		RW_UNLOCK_OS(&ip->data_rwl, RW_READER);
 

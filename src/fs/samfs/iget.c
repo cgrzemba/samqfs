@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.215 $"
+#pragma ident "$Revision: 1.216 $"
 
 #include "sam/osversion.h"
 
@@ -1909,14 +1909,14 @@ void
 sam_dlock_two(sam_node_t *ip1, sam_node_t *ip2, krw_t rw)
 {
 	if (ip1 == ip2) {
-		RW_LOCK_OS(&ip1->data_rwl, rw);
+		sam_rwdlock_ino(ip1, rw, 0);
 	} else {
 		if (ip1->di.id.ino < ip2->di.id.ino) {
-			RW_LOCK_OS(&ip1->data_rwl, rw);
-			RW_LOCK_OS(&ip2->data_rwl, rw);
+			sam_rwdlock_ino(ip1, rw, 0);
+			sam_rwdlock_ino(ip2, rw, 0);
 		} else {
-			RW_LOCK_OS(&ip2->data_rwl, rw);
-			RW_LOCK_OS(&ip1->data_rwl, rw);
+			sam_rwdlock_ino(ip2, rw, 0);
+			sam_rwdlock_ino(ip1, rw, 0);
 		}
 	}
 }

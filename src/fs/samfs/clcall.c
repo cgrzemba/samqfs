@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.258 $"
+#pragma ident "$Revision: 1.259 $"
 #endif
 
 #include "sam/osversion.h"
@@ -595,7 +595,8 @@ sam_proc_get_lease(
 		 * Serialized with the apmutex. If more blocks are needed, skip
 		 * the lease expiration check and get the blocks now.
 		 */
-		mutex_enter(&ip->cl_apmutex);
+		sam_open_mutex_operation(ip, &ip->cl_apmutex);
+
 		if (SAM_IS_SHARED_SERVER(ip->mp) || SAM_IS_OBJECT_FILE(ip)) {
 			break;
 		}
@@ -616,7 +617,7 @@ sam_proc_get_lease(
 		 * The stage lease is granted when any other lease is present.
 		 */
 		check_lease_expiration = FALSE;
-		mutex_enter(&ip->cl_apmutex);
+		sam_open_mutex_operation(ip, &ip->cl_apmutex);
 		break;
 
 	case LTYPE_open:
@@ -1264,7 +1265,7 @@ sam_proc_relinquish_lease(
 	}
 
 	if (lease_mask & CL_APPEND) {
-		mutex_enter(&ip->cl_apmutex);
+		sam_open_mutex_operation(ip, &ip->cl_apmutex);
 	}
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 
@@ -2297,11 +2298,7 @@ sam_proc_inode(
 	}
 
 	if ((ip->cl_leases & CL_APPEND) && force_sync && !sam_is_fsflush()) {
-		/*
-		 * Holding this mutex will make this thread
-		 * non-blocking in sam_idle_operation()..
-		 */
-		mutex_enter(&ip->cl_apmutex);
+		sam_open_mutex_operation(ip, &ip->cl_apmutex);
 		grabbed_mutex = TRUE;
 	}
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);

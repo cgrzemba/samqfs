@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.60 $"
+#pragma ident "$Revision: 1.61 $"
 #endif
 
 #ifdef __KERNEL__
@@ -117,6 +117,8 @@ void rfs_up(struct semaphore *sem);
 #define	mutex_exit(sem)			mutex_unlock(sem)
 #endif /* >= 2.6.16 */
 
+#define	sam_open_mutex_operation(ip, sem)	mutex_enter(sem)
+
 typedef enum {
 	RW_OPEN,
 	RW_WRITER,
@@ -142,6 +144,8 @@ typedef enum {
 #endif
 #define	RW_WRITE_HELD_OS(rwl)		rw_write_held_linux(rwl)
 #define	RW_TRYENTER_OS(rwl, state)	rw_trylock_linux(rwl, state)
+
+#define	sam_rwdlock_ino(ip, ls, f)	RW_LOCK_OS(&ip->data_rwl, ls)
 
 #ifdef DEBUG
 #define	MUTEX_HELD(sem)		(1)

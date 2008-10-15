@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.149 $"
+#pragma ident "$Revision: 1.150 $"
 
 #include "sam/osversion.h"
 
@@ -99,6 +99,7 @@ static int sam_wait_listio(sam_node_t *ip, void *arg, pid_t pid);
 static void sam_free_listio(struct sam_listio_call *callp);
 
 void sam_rwlock_common(vnode_t *vp, int w);
+extern int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 
 extern int qfs_fiologenable(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
 extern int qfs_fiologdisable(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags);
@@ -762,8 +763,14 @@ segment_file:
 		}
 		error = sam_clear_ino(ip, ip->di.rm.size, MAKE_ONLINE, credp);
 		if (vp->v_type != VCHR) {
+			krw_t rw_type;
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-			sam_rwlock_common(SAM_ITOV(ip), rwl_mode);
+			if (rwl_mode) {
+				rw_type = RW_WRITER;
+			} else {
+				rw_type = RW_READER;
+			}
+			sam_rwdlock_ino(ip, rw_type, 1);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
 		if (error) {
@@ -1595,6 +1602,93 @@ sam_rwlock_vn(
 
 
 /*
+ * ----- sam_rwdlock_ino - Set r/w data lock for vnode.
+ *
+ * Used instead of sam_rwlock_ino(&ip->data_rwl, rw_type).
+ * Allows a thread to sleep waiting for the data_rwl lock
+ * and not hold up failover.
+ *
+ */
+void
+sam_rwdlock_ino(
+	sam_node_t *ip,	/* Pointer to vnode. */
+	krw_t rw_type,	/* Lock type. */
+	int vop_eq)		/* Need VOP_RWLOCK behaviour */
+{
+	sam_mount_t *mp;
+	krw_t use_rw_type = rw_type;
+
+	mp = ip->mp;
+
+	if (vop_eq && (rw_type == RW_WRITER)) {
+		if (!SAM_THREAD_IS_NFS() && (ip->flags.b.qwrite ||
+		    (ip->mp->mt.fi_config & MT_QWRITE))) {
+
+			use_rw_type = RW_READER;
+		}
+	}
+
+	if (SAM_IS_SHARED_CLIENT(mp)) {
+#ifdef DEBUG
+		sam_operation_t ep;
+		ep.ptr = tsd_get(mp->ms.m_tsd_key);
+		ASSERT(ep.ptr != NULL);
+#endif
+		/*
+		 * An existing tsd entry means we were called
+		 * from within QFS which should have an active operation.
+		 */
+		ASSERT(mp->ms.m_cl_active_ops > 0);
+
+		TRACE(T_SAM_RWDLOCK, SAM_ITOV(ip), rw_type, use_rw_type, 0);
+
+		if (rw_tryenter(&ip->data_rwl, use_rw_type) == 0) {
+
+			SAM_DEC_OPERATION(mp);
+			RW_LOCK_OS(&ip->data_rwl, use_rw_type);
+
+			/*
+			 * Before incrementing m_cl_active_ops
+			 * check for failover. Failover may already
+			 * be proceeding with m_cl_active_ops
+			 * of zero.
+			 */
+			while (mp->mt.fi_status &
+			    (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
+
+				if (sam_is_fsflush()) {
+					break;
+				}
+				/*
+				 * If failover started while we acquired
+				 * the lock freeze here.
+				 */
+				(void) sam_freeze_ino(mp, ip, 1);
+			}
+			SAM_INC_OPERATION(mp);
+		}
+		TRACE(T_SAM_RWDLOCK_RET, SAM_ITOV(ip), rw_type, use_rw_type, 0);
+
+	} else {
+
+		RW_LOCK_OS(&ip->data_rwl, use_rw_type);
+
+	}
+
+	/*
+	 * If shared and SAN is holding a lock,
+	 * flush+invalidate any pages hanging around.
+	 */
+	if (vop_eq && (rw_type == RW_WRITER) &&
+	    ip->flags.b.hold_blocks) {
+
+		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		sam_flush_pages(ip, B_INVAL);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+	}
+}
+
+/*
  * ----- sam_rwunlock_vn - Clear r/w lock for vnode.
  *
  * Clear r/w lock for vnode.
@@ -2383,7 +2477,7 @@ sam_ioctl_file_cmd(
 		int i = 0;
 
 		op = (char *)(void *)arg;
-		RW_LOCK_OS(&ip->data_rwl, RW_READER);
+		sam_rwdlock_ino(ip, RW_READER, 0);
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		while (*op != '\0' && error == 0 && ++i <= 4) {
 			switch (*op++) {
@@ -2425,7 +2519,7 @@ sam_ioctl_file_cmd(
 		uint64_t *flag;
 
 		flag = (uint64_t *)(void *)arg;
-		RW_LOCK_OS(&ip->data_rwl, RW_READER);
+		sam_rwdlock_ino(ip, RW_READER, 0);
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		sam_set_directio(ip, (int)*flag);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -2724,7 +2818,7 @@ sam_process_listio_call(
 {
 	int error;
 
-	RW_LOCK_OS(&ip->data_rwl, RW_READER);
+	sam_rwdlock_ino(ip, RW_READER, 0);
 	if (mode == FREAD) {
 		aiop->uio.uio_fmode = FREAD;
 		error = VOP_READ_OS(SAM_ITOV(ip), (struct uio *)aiop,

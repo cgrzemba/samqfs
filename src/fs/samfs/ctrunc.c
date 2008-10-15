@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.31 $"
+#pragma ident "$Revision: 1.32 $"
 #endif
 
 #include "sam/osversion.h"
@@ -293,8 +293,8 @@ sam_clear_ino(
 			sam_truncate_t tflag;
 
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-			RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
-			mutex_enter(&ip->cl_apmutex);
+			sam_rwdlock_ino(ip, RW_WRITER, 0);
+			sam_open_mutex_operation(ip, &ip->cl_apmutex);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 #ifdef sun
 			/*
