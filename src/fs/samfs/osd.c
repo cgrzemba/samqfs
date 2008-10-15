@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 
 #include "sam/osversion.h"
 
@@ -679,8 +679,6 @@ sam_dk_object_done(
 	sbp = (sam_buf_t *)bp;
 	bdp = (buf_descriptor_t *)(void *)bp->b_vp;
 	ip = bdp->ip;
-	olp = ip->olp;
-	ASSERT(olp);
 	obji = iorp->obji;
 	async = (bdp->aiouiop != NULL);
 	bp->b_vp = NULL;
@@ -700,15 +698,22 @@ sam_dk_object_done(
 	mutex_exit(&bdp->bdp_mutex);
 
 	/*
-	 * If no error, update end of object (eoo). Otherwise, set error.
+	 * If writing & no error, update end of object (eoo).
+	 * It is possible to have I/O complete on an inode that has been
+	 * unhashed. If this is the case, the object layout has been
+	 * destroyed and we don't need to update end-of-object.
 	 */
+	olp = ip->olp;
+	if (ip->flags.b.hash) {
+		ASSERT(olp);
+	}
 	if (bp->b_flags & B_READ) {	/* If reading */
 		TRACE(T_SAM_DIORDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, (((offset_t)obji << 32)|count));
 	} else {			/* If writing */
 		TRACE(T_SAM_DIOWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, (((offset_t)obji << 32)|count));
-		if (resp->err_code == OSD_SUCCESS) {
+		if (resp->err_code == OSD_SUCCESS && olp) {
 			mutex_enter(&ip->write_mutex);
 			if ((offset + count) > olp->ol[obji].eoo) {
 				olp->ol[obji].eoo = (offset + count);
@@ -716,6 +721,10 @@ sam_dk_object_done(
 			mutex_exit(&ip->write_mutex);
 		}
 	}
+
+	/*
+	 * Check for error. Then free buffer, request and private struct.
+	 */
 	if (resp->err_code != OSD_SUCCESS) {
 		bdp->error = sam_osd_errno(resp, iorp);
 		dcmn_err((CE_WARN,
@@ -724,7 +733,7 @@ sam_dk_object_done(
 		    ip->mp->mt.fi_name, resp->err_code, (void *)ip,
 		    ip->di.id.ino, ip->di.id.gen, resp->service_action, offset,
 		    bp->b_bcount, bp->b_resid, (offset + bp->b_bcount), obji,
-		    olp->ol[obji].eoo, ip->size));
+		    olp ? olp->ol[obji].eoo : -1, ip->size));
 	}
 
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
@@ -877,23 +886,28 @@ sam_pg_object_done(
 
 	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
 	ip = iorp->ip;
-	olp = ip->olp;
-	ASSERT(olp);
 	bp = iorp->bp;
 	obji = iorp->obji;
 	offset = iorp->offset;
 	count = bp->b_bcount;
 
 	/*
-	 * If no error, update end of object for write. Otherwise, set error.
+	 * If writing & no error, update end of object (eoo).
+	 * It is possible to have I/O complete on an inode that has been
+	 * unhashed. If this is the case, the object layout has been
+	 * destroyed and we don't need to update end-of-object.
 	 */
+	olp = ip->olp;
+	if (ip->flags.b.hash) {
+		ASSERT(olp);
+	}
 	if (bp->b_flags & B_READ) {	/* If reading */
 		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
 	} else {			/* If writing */
 		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
 		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
-		if (resp->err_code == OSD_SUCCESS) {
+		if ((resp->err_code == OSD_SUCCESS) && olp) {
 			mutex_enter(&ip->write_mutex);
 			if ((offset + count) > olp->ol[obji].eoo) {
 				olp->ol[obji].eoo = (offset + count);
@@ -901,6 +915,10 @@ sam_pg_object_done(
 			mutex_exit(&ip->write_mutex);
 		}
 	}
+
+	/*
+	 * Check for error. Then free buffer, request and private struct.
+	 */
 	if (resp->err_code != OSD_SUCCESS) {
 		bp->b_error = sam_osd_errno(resp, iorp);
 		dcmn_err((CE_WARN,
@@ -909,7 +927,7 @@ sam_pg_object_done(
 		    ip->mp->mt.fi_name, resp->err_code, bp->b_error, (void *)ip,
 		    ip->di.id.ino, ip->di.id.gen, resp->service_action,
 		    offset, count, bp->b_resid, (offset+count), obji,
-		    olp->ol[obji].eoo, ip->size));
+		    olp ? olp->ol[obji].eoo : -1, ip->size));
 	}
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
 	bp->b_iodone = NULL;
