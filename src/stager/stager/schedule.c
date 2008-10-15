@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -604,15 +604,18 @@ updateWorkState(void)
 	last_active_state = workQueue.entries;
 	(void) memset(update.active, 0, sizeof (update.active));
 
-	if (workQueue.entries == 0 && OrphanProcs <= 0) {
+	if (IdleStager != last_idle_state) {
 		if (IdleStager) {
 			PostOprMsg(State->errmsg, 4300, ":strun");
 		} else {
 			ClearOprMsg(State->errmsg);
 		}
+	}
+	last_idle_state = IdleStager;
+
+	if (workQueue.entries == 0 && OrphanProcs <= 0) {
 		memcpy(State->active,  update.active,  sizeof (State->active));
 		memcpy(State->streams, update.streams, sizeof (State->streams));
-		last_idle_state = IdleStager;
 		return;
 	}
 
