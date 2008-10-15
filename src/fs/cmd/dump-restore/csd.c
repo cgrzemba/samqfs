@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -838,7 +838,7 @@ main(int argc, char *argv[])
 			}
 			csd_dump_files(DL_FILE, filename);
 			fclose(DL_FILE);
-			DL_FILE == NULL;
+			DL_FILE = NULL;
 		}
 		}
 		bflush(CSD_fd);
