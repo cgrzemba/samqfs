@@ -1,4 +1,4 @@
-.\" $Revision: 1.100 $
+.\" $Revision: 1.101 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -655,7 +655,7 @@ this is the size that is staged in to the
 application's buffer at any one time.
 For \fIn\fR, specify an integer such
 that 64 \(<= \fIn\fR \(<= 2097152.
-The default is 256. If the total number of outstanding stage_n buffers is
+The default is 8192. If the total number of outstanding stage_n buffers is
 less than physical memory, the access is not NFS, and the stage_n_window is
 less than 1% physical memory, then the buffer
 is allocated in pageable memory. Otherwise, blocks are allocated for

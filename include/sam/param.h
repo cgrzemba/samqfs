@@ -39,7 +39,7 @@
 #define	_SAM_PARAM_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 #endif
 
 #define	L_FSET 252			/* Maximum family set size */
@@ -125,7 +125,7 @@
 
 #define	SAM_MINSWINDOW	64		/* Minimum stage window in kilobytes */
 #define	SAM_MAXSWINDOW	2097152		/* Maximum stage window in kilobytes */
-#define	SAM_DEFSWINDOW	256		/* Default stage window in kilobytes */
+#define	SAM_DEFSWINDOW	8192		/* Default stage window in kilobytes */
 
 #define	SAM_MINPARTIAL	8		/* Minimum partial kilobytes */
 #define	SAM_MAXPARTIAL	2097152		/* Maximum partial kilobytes */
