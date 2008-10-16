@@ -1,4 +1,4 @@
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 
 #    SAM-QFS_notice_begin
 #
@@ -53,7 +53,7 @@ endif
 ifeq ($(OS_REVISION), 5.11)
 OSD_SRCS = osdfs.c osdfsops.c objnode.c objnops.c objattrops.c \
 	objctl.c objnops_simops.c objnops_simmem.c \
-	objioctl.c osd.c
+	objioctl.c osd.c osdmisc.c
 endif
 
 COMMON_SRCS = common_subr.c extent.c setdau.c

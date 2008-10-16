@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 #include "sam/osversion.h"
 
@@ -99,30 +99,15 @@ static void sam_dk_object_done(osd_req_t *reqp, void *ct_priv,
 	osd_result_t *resp);
 static void sam_pg_object_done(osd_req_t *reqp, void *ct_priv,
 	osd_result_t *resp);
-static int sam_osd_map_errno(int sosd_errcodes);
-static int sam_osd_errno(osd_result_t *resp, sam_osd_req_priv_t *iorp);
 static uint64_t sam_decode_scsi_buf(char *scsi_buf, int scsi_len);
 static int sam_get_object_id_ext(sam_mount_t *mp, struct sam_disk_inode	*dp,
 	int n, sam_id_t id, buf_t **bpp, struct sam_inode_ext **eipp);
 static int sam_osd_inode_extent(sam_mount_t *mp, struct sam_disk_inode *dp,
 	int *num_groupp);
 
-static const int sosd_errcodes2errno[] = {
-	0,		/* OSD_SUCCESS */
-	EIO,		/* OSD_FAILURE */
-	0,		/* OSD_RECOVERED_ERROR */
-	EIO,		/* OSD_CHECK_CONDITION */
-	EINVAL,		/* OSD_INVALID */
-	E2BIG,		/* OSD_TOOBIG */
-	EINVAL,		/* OSD_BADREQUEST */
-	EIO,		/* OSD_LUN_ERROR */
-	EIO,		/* OSD_LUN_FAILURE */
-	EBUSY,		/* OSD_BUSY */
-	EACCES,		/* OSD_RESERVATION_CONFLICT */
-	EIO,		/* OSD_RESIDUAL */
-	EAGAIN		/* OSD_NORESOURCES */
-};
-
+extern int sam_osd_map_errno(int sosd_errcodes);
+extern int sam_osd_sense_data(osd_result_t *osd_result,
+	sam_osd_req_priv_t *iorp, uint64_t *bytes_xfer);
 
 struct sam_sosd_vec sam_sosd_vec;
 
@@ -576,10 +561,11 @@ sam_object_req_done(
 	osd_result_t *resp)
 {
 	sam_osd_req_priv_t *iorp = (sam_osd_req_priv_t *)ct_priv;
+	uint64_t bytes_xfer;
 
 	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
 	if (resp->err_code) {
-		iorp->error = sam_osd_errno(resp, iorp);
+		iorp->error = sam_osd_sense_data(resp, iorp, &bytes_xfer);
 	}
 	sam_osd_obj_req_done(iorp);	/* Wakeup caller */
 }
@@ -629,8 +615,9 @@ sam_issue_direct_object_io(
 	}
 	iorp->name = SAM_OBJ_PRIVATE_NAME;
 	iorp->mp = ip->mp;
-	iorp->obji = obji;	/* Object layout index */
-	iorp->offset = offset;	/* Logical offset in I/O request */
+	iorp->obji = obji;		/* Object layout index */
+	iorp->offset = offset;		/* Logical offset in I/O request */
+	iorp->object_id = object_id;	/* Object ID (OSD ino.gen) */
 	iorp->ip = ip;
 	iorp->bp = bp;
 	rc = (sam_sosd_vec.submit_req)(reqp, sam_dk_object_done, iorp);
@@ -640,10 +627,11 @@ sam_issue_direct_object_io(
 		bzero(&result, sizeof (result));
 		result.err_code = (uint8_t)rc;
 		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: DK SUBMIT ERROR rc=%d, ip=%p, ino=%d.%d, "
-		    "off=%llx len=%lx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, rc, (void *)ip,
-		    ip->di.id.ino, ip->di.id.gen, offset,
+		    "SAM-QFS: %s: DK issue error ec=%d OID=%d.%d ip=%p "
+		    "ino=%d.%d off=%llx len=%lx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, rc, (uint32_t)(object_id & 0xffffffff),
+		    (uint32_t)((object_id >> 32) & 0xffffffff),
+		    (void *)ip, ip->di.id.ino, ip->di.id.gen, offset,
 		    bp->b_bcount, obji, olp->ol[obji].eoo, ip->size));
 		sam_dk_object_done(reqp, iorp, &result);
 		error = sam_osd_map_errno(rc);
@@ -708,10 +696,10 @@ sam_dk_object_done(
 		ASSERT(olp);
 	}
 	if (bp->b_flags & B_READ) {	/* If reading */
-		TRACE(T_SAM_DIORDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
+		TRACE(T_SAM_DIORDOBJ_COMP, SAM_ITOV(ip), iorp->object_id,
 		    offset, (((offset_t)obji << 32)|count));
 	} else {			/* If writing */
-		TRACE(T_SAM_DIOWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
+		TRACE(T_SAM_DIOWROBJ_COMP, SAM_ITOV(ip), iorp->object_id,
 		    offset, (((offset_t)obji << 32)|count));
 		if (resp->err_code == OSD_SUCCESS && olp) {
 			mutex_enter(&ip->write_mutex);
@@ -726,13 +714,18 @@ sam_dk_object_done(
 	 * Check for error. Then free buffer, request and private struct.
 	 */
 	if (resp->err_code != OSD_SUCCESS) {
-		bdp->error = sam_osd_errno(resp, iorp);
+		uint64_t bytes_xfer;
+
+		bdp->error = sam_osd_sense_data(resp, iorp, &bytes_xfer);
 		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: DK er=%d, ip=%p, ino=%d.%d, SA=%x, off=%llx"
-		    " len=%lx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, resp->err_code, (void *)ip,
-		    ip->di.id.ino, ip->di.id.gen, resp->service_action, offset,
-		    bp->b_bcount, bp->b_resid, (offset + bp->b_bcount), obji,
+		    "SAM-QFS: %s: DK er=%d OID=%d.%d ip=%p ino=%d.%d SA=%x "
+		    "off=%llx len=%lx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, resp->err_code,
+		    (uint32_t)(iorp->object_id & 0xffffffff),
+		    (uint32_t)((iorp->object_id >> 32) & 0xffffffff),
+		    (void *)ip, ip->di.id.ino, ip->di.id.gen,
+		    resp->service_action, offset, bp->b_bcount, bp->b_resid,
+		    (offset + bp->b_bcount), obji,
 		    olp ? olp->ol[obji].eoo : -1, ip->size));
 	}
 
@@ -783,7 +776,8 @@ sam_pageio_object(
 	sam_osd_setup_private(iorp, mp);
 	iorp->obji = iop->obji;
 	offset = iop->blk_off + iop->pboff;
-	iorp->offset = offset;
+	iorp->offset = offset;		/* Logical offset in I/O request */
+	iorp->object_id = object_id;	/* Object ID (OSD ino.gen) */
 	iorp->ip = ip;
 
 	if (flags & B_READ) {	/* If reading */
@@ -851,10 +845,11 @@ sam_pageio_object(
 	if (rc != OSD_SUCCESS) {
 		osd_result_t result;
 
-		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: PG SUBMIT ERROR rc=%d, ip=%p, ino=%d.%d, "
-		    "off=%llx len=%lx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, rc, (void *)ip,
+		dcmn_err((CE_WARN, "SAM-QFS: %s: PG issue error ec=%d "
+		    "OID=%d.%d ip=%p ino=%d.%d off=%llx len=%lx obji=%d "
+		    "eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, rc, (uint32_t)(object_id & 0xffffffff),
+		    (uint32_t)((object_id >> 32) & 0xffffffff), (void *)ip,
 		    ip->di.id.ino, ip->di.id.gen, offset,
 		    bp->b_bcount, iop->obji, olp->ol[iop->obji].eoo, ip->size));
 		bzero(&result, sizeof (result));
@@ -902,10 +897,10 @@ sam_pg_object_done(
 		ASSERT(olp);
 	}
 	if (bp->b_flags & B_READ) {	/* If reading */
-		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
+		TRACE(T_SAM_PGRDOBJ_COMP, SAM_ITOV(ip), iorp->object_id,
 		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
 	} else {			/* If writing */
-		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), (sam_tr_t)iorp,
+		TRACE(T_SAM_PGWROBJ_COMP, SAM_ITOV(ip), iorp->object_id,
 		    offset, (sam_tr_t)(((offset_t)obji << 32)|count));
 		if ((resp->err_code == OSD_SUCCESS) && olp) {
 			mutex_enter(&ip->write_mutex);
@@ -920,14 +915,19 @@ sam_pg_object_done(
 	 * Check for error. Then free buffer, request and private struct.
 	 */
 	if (resp->err_code != OSD_SUCCESS) {
-		bp->b_error = sam_osd_errno(resp, iorp);
+		uint64_t bytes_xfer;
+
+		bp->b_error = sam_osd_sense_data(resp, iorp, &bytes_xfer);
 		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: PG1 er=%d %d, ip=%p ino=%d.%d SA=%x off=%llx"
-		    " len=%llx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, resp->err_code, bp->b_error, (void *)ip,
-		    ip->di.id.ino, ip->di.id.gen, resp->service_action,
-		    offset, count, bp->b_resid, (offset+count), obji,
-		    olp ? olp->ol[obji].eoo : -1, ip->size));
+		    "SAM-QFS: %s: PG1 er=%d %d OID=%d.%d ip=%p ino=%d.%d SA=%x "
+		    "off=%llx len=%llx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, resp->err_code, bp->b_error,
+		    (uint32_t)(iorp->object_id & 0xffffffff),
+		    (uint32_t)((iorp->object_id >> 32) & 0xffffffff),
+		    (void *)ip, ip->di.id.ino, ip->di.id.gen,
+		    resp->service_action, offset, count, bp->b_resid,
+		    (offset+count), obji, olp ? olp->ol[obji].eoo : -1,
+		    ip->size));
 	}
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
 	bp->b_iodone = NULL;
@@ -966,176 +966,20 @@ sam_pg_object_sync_done(
 	if (bp->b_error) {
 		error = bp->b_error;
 		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: PG2 %s er=%d, ip=%p ino=%d.%d off=%llx"
-		    " cnt=%lx r=%lx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, str, error, (void *)ip,
-		    ip->di.id.ino, ip->di.id.gen, iorp->offset, bp->b_bcount,
-		    bp->b_resid, obji, ip->olp->ol[obji].eoo, ip->size));
+		    "SAM-QFS: %s: PG2 %s err=%d OID=%d.%d ip=%p ino=%d.%d "
+		    "off=%llx cnt=%lx r=%lx obji=%d eoo=%llx sz=%llx",
+		    ip->mp->mt.fi_name, str, error,
+		    (uint32_t)(iorp->object_id & 0xffffffff),
+		    (uint32_t)((iorp->object_id >> 32) & 0xffffffff),
+		    (void *)ip, ip->di.id.ino, ip->di.id.gen, iorp->offset,
+		    bp->b_bcount, bp->b_resid, obji,
+		    ip->olp ? ip->olp->ol[obji].eoo : -1, ip->size));
 	}
 	pageio_done(bp);
 	(sam_sosd_vec.free_req)(iorp->reqp);
 	sam_osd_remove_private(iorp);
 	kmem_cache_free(samgt.object_cache, iorp);
 	return (error);
-}
-
-
-/*
- * ----- sam_osd_map_errno - Map sosd device driver error codes to generic
- * errno in sys/errno.h
- * This routine should only be called to map sychronous error codes(rc)
- * returned when calling sosd routines e.g.
- * rc = (sam_sosd_vec.submit_req)(reqp, sam_object_req_done, iorp);
- */
-static int
-sam_osd_map_errno(int sosd_errcode)
-{
-	if ((sosd_errcode >= OSD_SUCCESS) &&
-	    (sosd_errcode <= OSD_NORESOURCES)) {
-		return (sosd_errcodes2errno[sosd_errcode]);
-	} else {
-		dcmn_err((CE_WARN, "SAM-QFS: Unknown SOSD ERROR sosd_errcode "
-		    "=%d", sosd_errcode));
-		return (EIO);
-	}
-}
-
-
-/*
- * ----- sam_osd_errno - Return errno given OSD error.
- */
-int
-sam_osd_errno(
-	osd_result_t *resp,		/* Pointer to result struct */
-	sam_osd_req_priv_t *iorp)	/* Pointer to private struct */
-{
-	sam_mount_t *mp = iorp->mp;
-	buf_t *bp;
-	int rc;
-	int error;
-
-	rc = resp->err_code;
-	error = sam_osd_map_errno(rc);
-	iorp->err_code = (uint16_t)rc;
-	iorp->service_action = resp->service_action;
-	bp = iorp->bp;
-
-	switch (rc) {
-	case OSD_RESIDUAL: {
-		osd_resid_t *residp = (osd_resid_t *)&resp->resid_data;
-
-		ASSERT(residp != NULL);
-		if (residp == NULL) {
-			error = EINVAL;
-		} else if (bp) {
-			bp->b_resid = (bp->b_flags & B_READ) ?
-			    residp->ot_in_command_resid :
-			    residp->ot_out_command_resid;
-			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD RESID SA=%x "
-			    "rc=%d, errno=%d, resid=%lx, off=%llx, cnt=%llx",
-			    mp ? mp->mt.fi_name : " ", resp->service_action,
-			    resp->err_code, error, bp->b_resid,
-			    (long long)bp->b_offset, (long long)bp->b_bcount));
-		}
-		}
-		break;
-
-	case OSD_CHECK_CONDITION: {
-		char		*scsi_buf;
-		uint32_t	scsi_len;
-		uint64_t	xfer;
-
-		error = EIO;
-		scsi_buf = (char *)resp->sense_data;
-		if (scsi_buf == NULL) {
-			cmn_err(CE_WARN,
-			    "SAM-QFS: OSD_CHECK_CONDITION "
-			    "with no scsi_buf\n");
-			break;
-		}
-		scsi_len = resp->sense_data_len;
-		xfer = sam_decode_scsi_buf(scsi_buf, scsi_len);
-		if (xfer > 0) {
-			error = 0;
-			if (bp) {
-				bp->b_resid = bp->b_bcount - xfer;
-				cmn_err(CE_NOTE,
-				    "SAM-QFS: OSD SCSI resid=%lx, off=%llx, "
-				    "cnt=%lx", bp->b_resid,
-				    (long long)bp->b_offset, bp->b_bcount);
-			}
-		} else {
-			int64_t *sb = (int64_t *)(void *)scsi_buf;
-			int64_t *sb1 = sb + 1;
-			int64_t *sb2 = sb + 2;
-
-			cmn_err(CE_WARN,
-			    "SAM-QFS: OSD SCSI BUF = %16.16llx "
-			    "%16.16llx %16.16llx\n",
-			    *sb, *sb1, *sb2);
-		}
-		}
-		break;
-	default:
-		break;
-	}
-
-	if (error) {
-		if (iorp->ip != NULL) {
-			dcmn_err((CE_WARN, "SAM-QFS: %s: ino %d.%d OSD "
-			    "error %d SA=%x rc=%d", mp ? mp->mt.fi_name : " ",
-			    iorp->ip->di.id.ino, iorp->ip->di.id.gen,
-			    error, resp->service_action, resp->err_code));
-		} else {
-			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD error %d SA=%x "
-			    "rc=%d", mp ? mp->mt.fi_name : " ",
-			    error, resp->service_action, resp->err_code));
-		}
-		if (bp) {
-			bp->b_error = error;	/* Return error in buffer */
-			bp->b_flags |= B_ERROR;
-		}
-	}
-	return (error);
-}
-
-
-/*
- * ----- sam_decode_scsi_buf - Return errno given OSD error.
- */
-/* ARGSUSED */
-static uint64_t
-sam_decode_scsi_buf(
-	char *scsi_buf,
-	int scsi_len)
-{
-	uint64_t len;
-
-	if (scsi_buf[0] != 0x72) {
-		return (0);
-	}
-	if (scsi_buf[1] == 1) {		/* Recovered error */
-		/*
-		 * Check for reading past end of object
-		 */
-		if ((scsi_buf[2] == 0x3b) && (scsi_buf[3] == 0x17)) {
-			if ((scsi_buf[8] == 1) && (scsi_buf[9] == 0xa)) {
-				/*
-				 * Bytes 12-19 is no. of bytes transferred
-				 */
-				len = ((uint64_t)(scsi_buf[12]) << 56) |
-				    ((uint64_t)(scsi_buf[13]) << 48) |
-				    ((uint64_t)(scsi_buf[14]) << 40) |
-				    ((uint64_t)(scsi_buf[15]) << 32) |
-				    ((uint64_t)(scsi_buf[16]) << 24) |
-				    ((uint64_t)(scsi_buf[17]) << 16) |
-				    ((uint64_t)(scsi_buf[18]) << 8) |
-				    (scsi_buf[19]);
-				return (len);
-			}
-		}
-	}
-	return (0);
 }
 
 
@@ -1544,8 +1388,9 @@ sam_get_user_object_attr(
 			*attrp = SOP_BYTES_ALLOC(uap) >> SAM_SHIFT;
 		} else {
 			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD GET user attr"
-			    " rc=%d, errno=%d", mp->mt.fi_name, iorp->err_code,
-			    error));
+			    " rc=%d OID=%d.%d errno=%d", mp->mt.fi_name,
+			    iorp->err_code, (uint32_t)(object_id & 0xffffffff),
+			    (uint32_t)((object_id >> 32) & 0xffffffff), error));
 		}
 	} else {
 		error = sam_osd_map_errno(rc);
@@ -1669,9 +1514,11 @@ sam_set_user_object_attr(
 	if (rc == OSD_SUCCESS) {
 		sam_osd_obj_req_wait(iorp);
 		if ((error = iorp->error) != 0) {
-			dcmn_err((CE_WARN, "SAM-QFS: %s: 1. OSD SET attr %x"
-			    " rc=%d errno=%d, ino=%d.%d, setattr = 0x%llx",
-			    mp->mt.fi_name, attr_num, iorp->err_code, error,
+			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD SET attr %x "
+			    "rc=%d OID=%d.%d errno=%d, ino=%d.%d "
+			    "setattr = 0x%llx", mp->mt.fi_name, attr_num,
+			    iorp->err_code, (uint32_t)(object_id & 0xffffffff),
+			    (uint32_t)((object_id >> 32) & 0xffffffff), error,
 			    dp->id.ino, dp->id.gen, (long long)attribute));
 		}
 	} else {
@@ -1886,6 +1733,14 @@ sam_map_osd(
 			iop->contig = size - offset;
 			if (iop->contig > ip->mp->mi.m_maxphys) {
 				iop->contig = ip->mp->mi.m_maxphys;
+			}
+			if (iop->contig <= 0) {
+				iop->contig = offset + count;
+				dcmn_err((CE_NOTE,
+				    "SAM-QFS: %s: sam_map_osd: CONTIG ino=%d.%d"
+				    " offset=%llx sz=%llx, isz=%llx",
+				    ip->mp->mt.fi_name, ip->di.id.ino,
+				    ip->di.id.gen, offset, size, ip->size));
 			}
 		}
 		iop->imap.ord0 = ip->di.unit;

@@ -37,7 +37,7 @@
 #ifndef	_SAM_FS_OBJECT_H
 #define	_SAM_FS_OBJECT_H
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 #include "sam/osversion.h"
 
@@ -119,6 +119,7 @@ typedef struct sam_osd_req_priv {
 	sam_mount_t	*mp;		/* Pointer to mount table */
 	struct sam_node	*ip;		/* Pointer to inode */
 	struct buf	*bp;		/* Pointer to optional buffer */
+	uint64_t	object_id;	/* Object ID */
 	offset_t	offset;		/* Logical offset in object I/O */
 } sam_osd_req_priv_t;
 
