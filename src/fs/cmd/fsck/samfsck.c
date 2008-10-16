@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 
 
 /* ----- Includes */
@@ -2445,6 +2445,7 @@ check_inode(
 	struct sam_perm_inode *dp)	/* Inode entry */
 {
 	int err = 0;
+	char *s1 = NULL, *s2 = NULL;
 
 	/*
 	 * Inodes in file system type "mat" with parent of SAM_OBJ_ORPHANS_INO
@@ -2455,6 +2456,52 @@ check_inode(
 			err++;
 			goto out;
 		}
+	}
+
+	/*
+	 * Regular files on an object file system should all be of type
+	 * object (unless di.status.b.meta is set).  Likewise,
+	 * regular files on a block file system should all be non-object.
+	 */
+	if (S_ISREG(dp->di.mode)) {
+		if (mnt_info.params.fi_type == DT_META_OBJECT_SET) {
+			/* Object (mb) file system */
+			if (dp->di.status.b.meta) {
+				/* Extended attribute file */
+				if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
+					/* Object flag set, should be clear */
+					err++;
+					s1 = "set";
+					s2 = "clear";
+				}
+			} else {
+				/* Object file */
+				if ((dp->di.rm.ui.flags & RM_OBJECT_FILE)
+				    == 0) {
+					/* Object flag clear, should be set */
+					err++;
+					s1 = "clear";
+					s2 = "set";
+				}
+			}
+		} else {
+			/* Block (non-mb) file system */
+			if (dp->di.rm.ui.flags & RM_OBJECT_FILE) {
+				/* Object flag set, should be clear */
+				err++;
+				s1 = "set";
+				s2 = "clear";
+			}
+		}
+	}
+	if (err) {
+		printf(catgets(catfd, SET, 13958,
+		    "ALERT:  ino %d.%d, Object flag %s, should be %s%s, "
+		    "meta_flag %d, size %lld\n"), (int)dp->di.id.ino,
+		    dp->di.id.gen, s1, s2,
+		    repair_files ? "" : " (-F to repair)",
+		    dp->di.status.b.meta, dp->di.rm.size);
+		goto out;
 	}
 
 	/* Process free inodes. Rebuild ino free link list */
@@ -2669,6 +2716,10 @@ count_inode_blocks(struct sam_perm_inode *dp)	/* Inode entry */
 		}
 		if (S_ISREQ(dp->di.mode)) {
 			return;
+		}
+		if (S_ISREG(dp->di.mode) && (dp->di.status.b.meta == 0) &&
+		    (dp->di.rm.ui.flags & RM_OBJECT_FILE)) {
+			return;		/* No blocks for object files */
 		}
 	}
 	if (S_ISEXT(dp->di.mode)) {
@@ -3240,6 +3291,19 @@ count_block(
 		}
 		return (1);
 	}
+
+	/*
+	 * devlp->mm must not be NULL - bit map must be available.
+	 * Internal error if NULL.  Most likely trying to count blocks
+	 * on an object file.
+	 */
+	if (devlp->mm == NULL) {
+		printf(catgets(catfd, SET, 13290,
+		    "ALERT:  ino %d,\tblock 0x%llx ord %d dt %d "
+		    "devlp->mm NULL\n"), (int)ino, (sam_offset_t)bn, ord, dt);
+		return (-1);
+	}
+
 	cptr = devlp->mm;
 	bit = bn;
 
