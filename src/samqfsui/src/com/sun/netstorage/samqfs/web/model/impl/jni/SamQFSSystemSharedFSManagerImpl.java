@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.61 2008/10/15 22:22:13 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.62 2008/10/16 14:53:59 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -114,7 +114,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
 
         int rtnval = Host.addHosts(sysModel.getJniContext(),
                                    fsName,
-                                   allClients);
+                                   allClients,
+				   null);
 
         return (long)rtnval;
     }
@@ -763,7 +764,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             fsEquipmentType = FSInfo.OBJECT_BASED_QFS;
         } else {
             fsEquipmentType =
-                isMetaSame ? FSInfo.COMBINED_METADATA : FSInfo.SEPARATE_METADATA;
+                isMetaSame ? FSInfo.COMBINED_METADATA :
+		FSInfo.SEPARATE_METADATA;
         }
 
         FSInfo fsInfoMDS = new FSInfo(

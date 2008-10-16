@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.119 $"
+#pragma ident	"$Revision: 1.120 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -653,11 +653,12 @@ typedef struct str_cnt_strarray_mntopts {
 	mount_options_t *mo;
 } str_cnt_strarray_mntopts_t;
 
-typedef struct string_hostlst_arg {
+typedef struct string_string_hostlst_arg {
 	ctx_t *ctx;
 	char *fs_name;
 	sqm_lst_t *host_infos;
-} string_hostlst_arg_t;
+	char *options;
+} string_string_hostlst_arg_t;
 
 typedef struct string_strlst_int_arg {
 	ctx_t *ctx;
@@ -2696,7 +2697,7 @@ extern bool_t xdr_string_strlst_int_arg_t();
 extern bool_t xdr_charstararray();
 extern bool_t xdr_str_cnt_strarray_t();
 extern bool_t xdr_str_cnt_strarray_mntopts_t();
-extern bool_t xdr_string_hostlst_arg_t();
+extern bool_t xdr_string_string_hostlst_arg_t();
 
 /* license.h */
 extern bool_t xdr_license_info_t();

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.17 $"
+#pragma ident	"$Revision: 1.18 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -555,10 +555,11 @@ int
 add_hosts(
 ctx_t *ctx,		/* client connection */
 char *fs_name,		/* file system name */
-sqm_lst_t *host_infos)
+sqm_lst_t *host_infos,
+char *options)
 {
 	int ret_val;
-	string_hostlst_arg_t arg;
+	string_string_hostlst_arg_t arg;
 	samrpc_result_t result;
 	char *func_name = "rpc:add hosts";
 	char *err_msg;
@@ -577,8 +578,9 @@ sqm_lst_t *host_infos)
 	arg.ctx = ctx;
 	arg.fs_name = fs_name;
 	arg.host_infos = host_infos;
+	arg.options = options;
 
-	SAMRPC_CLNT_CALL(samrpc_add_hosts, string_hostlst_arg_t);
+	SAMRPC_CLNT_CALL(samrpc_add_hosts, string_string_hostlst_arg_t);
 
 	CHECK_FUNCTION_FAILURE(result, func_name);
 

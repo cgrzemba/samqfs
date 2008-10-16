@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.120 $"
+#pragma ident	"$Revision: 1.121 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -486,7 +486,7 @@ sammgmtprog_1(rqstp, transp)
 		ctx_arg_t samrpc_discover_ip_addresses_3_arg;
 		int_string_arg_t samrpc_get_shared_fs_hosts_5_0_arg;
 		string_strlst_int_arg_t samrpc_set_host_state_5_0_arg;
-		string_hostlst_arg_t samrpc_add_hosts_5_0_arg;
+		string_string_hostlst_arg_t samrpc_add_hosts_5_0_arg;
 		str_cnt_strarray_t samrpc_remove_hosts_5_0_arg;
 
 		/* restore.h */
@@ -2191,7 +2191,7 @@ sammgmtprog_1(rqstp, transp)
 		break;
 
 	case samrpc_add_hosts:
-		_xdr_argument = xdr_string_hostlst_arg_t;
+		_xdr_argument = xdr_string_string_hostlst_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_add_hosts_5_0_svr;
 		break;

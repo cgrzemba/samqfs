@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.3 $"
+#pragma ident   "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -43,7 +43,17 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/sam_trace.h"
 #include "sam/mount.h"
 
-static int create_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_hosts);
+typedef struct add_host_opts {
+	upath_t	mnt_point;
+	boolean_t mount_fs;
+	boolean_t bg_mount;
+	boolean_t read_only;
+	boolean_t mount_at_boot;
+	boolean_t pmds;
+} add_host_opts_t;
+
+static int create_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_hosts,
+    add_host_opts_t *opts);
 
 static int remove_fs_on_clients(ctx_t *ctx, char *fs_name,
     char **client_names, int client_count);
@@ -52,10 +62,30 @@ static int compare_host_names(host_info_t *a, host_info_t *b);
 static int post_grow_shared_fs(dispatch_job_t *dj);
 
 
+#define	host_offset(name) (offsetof(add_host_opts_t, name))
+
+static parsekv_t add_hosts_kvoptions[] = {
+	{"mount_point",	host_offset(mnt_point), parsekv_string_1024},
+	{"mount_fs",	host_offset(mount_fs), parsekv_bool_YN},
+	{"bg_mount",	host_offset(bg_mount), parsekv_bool_YN},
+	{"read_only",	host_offset(read_only), parsekv_bool_YN},
+	{"mount_at_boot", host_offset(mount_at_boot), parsekv_bool_YN},
+	{"potential_mds", host_offset(pmds), parsekv_bool_YN}
+};
+
 
 /*
  * Function to add multiple clients to a shared file system. This
  * function may be run to completion in the background.
+ *
+ * kv_options is a key value string supporting the following options:
+ * mount_point="/fully/qualified/path"
+ * mount_fs= yes | no
+ * mount_at_boot = yes | no
+ * bg_mount = yes | no
+ * read_only = yes | no
+ * potential_mds = yes | no
+ *
  * Returns:
  * 0 for successful completion
  * -1 for error
@@ -65,15 +95,25 @@ int
 add_hosts(
 ctx_t *c,
 char *fs_name,
-sqm_lst_t *new_hosts) {
+sqm_lst_t *new_hosts,
+char *kv_opts) {
 
 	fs_t *fs;
 	sqm_lst_t *cfg_hosts;
 	node_t *n;
 	int ret_val;
 	boolean_t mounted = B_FALSE;
+	add_host_opts_t opts;
 
 	if (ISNULL(fs_name, new_hosts)) {
+		Trace(TR_ERR, "adding hosts failed: %s",
+		    samerrmsg);
+		return (-1);
+	}
+
+	memset(&opts, 0, sizeof (add_host_opts_t));
+	if (kv_opts != NULL &&
+	    parse_kv(kv_opts, add_hosts_kvoptions, &opts) != 0) {
 		Trace(TR_ERR, "adding hosts failed: %s",
 		    samerrmsg);
 		return (-1);
@@ -100,7 +140,6 @@ sqm_lst_t *new_hosts) {
 		free_fs(fs);
 		return (-1);
 	}
-
 
 	if (cfg_get_hosts_config(c, fs, &cfg_hosts, 0) != 0) {
 		free_fs(fs);
@@ -169,7 +208,7 @@ sqm_lst_t *new_hosts) {
 		return (-1);
 	}
 
-	ret_val = create_fs_on_clients(c, fs, new_hosts);
+	ret_val = create_fs_on_clients(c, fs, new_hosts, &opts);
 	Trace(TR_ERR, "adding hosts returning: %d", ret_val);
 
 	return (ret_val);
@@ -177,14 +216,16 @@ sqm_lst_t *new_hosts) {
 
 
 static int
-create_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_hosts) {
+create_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_hosts,
+    add_host_opts_t *opts) {
+
 	char **host_names;
 	create_arch_fs_arg_t *cafs;
 	node_t *n;
 	int i = 0;
 	int job_id;
 
-	if (ISNULL(fs, new_hosts)) {
+	if (ISNULL(fs, new_hosts, opts)) {
 		Trace(TR_ERR, "creating fs on hosts failed: %d %s",
 		    samerrno, samerrmsg);
 		return (-1);
@@ -246,24 +287,44 @@ create_fs_on_clients(ctx_t *ctx, fs_t *fs, sqm_lst_t *new_hosts) {
 		return (-1);
 	}
 
-	/* Clear the server bit if set and set the fs to be a client */
+	/*
+	 * Clear the server bit and set the fs info to be a client. If
+	 * the opts structure does not have the pmds flag set, set
+	 * the nodevs flag. NOTE that potential metadata servers do
+	 * have their FS_CLIENT flag set.
+	 */
 	cafs->fs_info->fi_status &= ~FS_SERVER;
-	cafs->fs_info->fi_status |= FS_NODEVS | FS_CLIENT;
+	cafs->fs_info->fi_status |= FS_CLIENT;
+	if (!opts->pmds) {
+		cafs->fs_info->fi_status |= FS_NODEVS;
 
-	/* set the metadata devices to nodev */
-	if (cafs->fs_info->meta_data_disk_list != NULL) {
-		for (n = cafs->fs_info->meta_data_disk_list->head;
-			n != NULL; n = n->next) {
+		/* set the metadata devices to nodev */
+		if (cafs->fs_info->meta_data_disk_list != NULL) {
+			for (n = cafs->fs_info->meta_data_disk_list->head;
+				n != NULL; n = n->next) {
 
-			disk_t *dsk = (disk_t *)n->data;
-			strlcpy(dsk->base_info.name, NODEV_STR,
-			    sizeof (upath_t));
+				disk_t *dsk = (disk_t *)n->data;
+				strlcpy(dsk->base_info.name, NODEV_STR,
+				    sizeof (upath_t));
+			}
 		}
 	}
 
-	cafs->mount_at_boot = B_FALSE;
+	/*
+	 * If opts has a mount point specified, use it. Otherwise use
+	 * the mount point that is already in the fs.
+	 */
+	if (*opts->mnt_point != '\0') {
+		strlcpy(cafs->fs_info->fi_mnt_point, opts->mnt_point,
+		    sizeof (upath_t));
+	}
+
+	cafs->mount = opts->mount_fs;
+	cafs->fs_info->mount_options->sharedfs_opts.bg = opts->bg_mount;
+	cafs->fs_info->mount_options->readonly = opts->read_only;
+	cafs->mount_at_boot = opts->mount_at_boot;
 	cafs->create_mnt_point = B_TRUE;
-	cafs->mount = (fs->fi_status & FS_MOUNTED);
+
 	cafs->arch_cfg = NULL;
 
 	Trace(TR_DEBUG, "About to multiplex request to create fs on clients");

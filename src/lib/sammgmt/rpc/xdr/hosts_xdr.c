@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.11 $"
+#pragma ident	"$Revision: 1.12 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -112,14 +112,27 @@ string_strlst_int_arg_t *objp)
 
 
 bool_t
-xdr_string_hostlst_arg_t(
+xdr_string_string_hostlst_arg_t(
 XDR *xdrs,
-string_hostlst_arg_t *objp)
+string_string_hostlst_arg_t *objp)
 {
 	XDR_PTR2CTX(objp->ctx);
 	if (!xdr_string(xdrs, (char **)&objp->fs_name, ~0))
 		return (FALSE);
 	XDR_PTR2LST(objp->host_infos, host_info_list);
+
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6") <= 0)) {
+
+			return (TRUE); /* versions 1.6 or lower */
+		}
+	}
+#endif /* samrpc_client */
+
+	if (!xdr_string(xdrs, (char **)&objp->options, ~0))
+		return (FALSE);
 
 	return (TRUE);
 }

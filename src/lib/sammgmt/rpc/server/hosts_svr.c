@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.16 $"
+#pragma ident	"$Revision: 1.17 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -323,7 +323,7 @@ struct svc_req *req		/* ARGSUSED */
 
 samrpc_result_t *
 samrpc_add_hosts_5_0_svr(
-	string_hostlst_arg_t *arg,
+	string_string_hostlst_arg_t *arg,
 	struct svc_req *req		/* ARGSUSED */
 )
 {
@@ -340,7 +340,8 @@ samrpc_add_hosts_5_0_svr(
 	Trace(TR_DEBUG, "Calling native library add hosts");
 	ret = add_hosts(arg->ctx,
 	    arg->fs_name,
-	    arg->host_infos);
+	    arg->host_infos,
+	    arg->options);
 
 	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
 

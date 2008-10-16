@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Host.java,v 1.18 2008/10/09 14:32:35 pg125177 Exp $
+// ident	$Id: Host.java,v 1.19 2008/10/16 14:53:59 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -96,14 +96,24 @@ public class Host {
     /**
      * Function to add multiple clients to a shared file system. This
      * function may be run to completion in the background.
+     *
+     * options is a key value string supporting the following options:
+     * mount_point="/fully/qualified/path"
+     * mount_fs= yes | no
+     * mount_at_boot = yes | no
+     * bg_mount = yes | no
+     * read_only = yes | no
+     * potential_mds = yes | no
+     *
      * Returns:
      * 0 for successful completion
      * -1 for error
      * job_id will be returned if the job has not completed.
      */
     public static native int addHosts(Ctx c, String fsname,
-					Host[] hosts)
+					Host[] hosts, String options)
 	throws SamFSException;
+
 
     /**
      * The file system must be unmounted to remove clients. You can

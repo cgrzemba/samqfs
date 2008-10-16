@@ -29,7 +29,7 @@
 #ifndef _HOSTS_H
 #define	_HOSTS_H
 
-#pragma ident "	$Revision: 1.22 $	"
+#pragma ident "	$Revision: 1.23 $	"
 
 
 
@@ -136,12 +136,21 @@ int set_host_state(ctx_t *c, char *fs_name, sqm_lst_t *host_names,
 /*
  * Function to add multiple clients to a shared file system. This
  * function may be run to completion in the background.
+ *
+ * kv_options is a key value string supporting the following options:
+ * mount_point="/fully/qualified/path"
+ * mount_fs= yes | no
+ * mount_at_boot = yes | no
+ * bg_mount = yes | no
+ * read_only = yes | no
+ * potential_mds = yes | no
+ *
  * Returns:
  * 0 for successful completion
  * -1 for error
  * job_id will be returned if the job has not completed.
  */
-int add_hosts(ctx_t *c, char *fs_name, sqm_lst_t *hosts);
+int add_hosts(ctx_t *c, char *fs_name, sqm_lst_t *hosts, char *kv_options);
 
 
 /*

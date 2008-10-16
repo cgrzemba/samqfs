@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.17 $"
+#pragma ident	"$Revision: 1.18 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -331,10 +331,11 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_Host_setClientState(JNIEnv *env,
 JNIEXPORT jint JNICALL
 Java_com_sun_netstorage_samqfs_mgmt_fs_Host_addHosts(JNIEnv *env,
     jclass cls /*ARGSUSED*/, jobject ctx, jstring fsName,
-    jobjectArray hostInfos) {
+    jobjectArray hostInfos, jstring options) {
 
-	jboolean isCopy1;
+	jboolean isCopy1, isCopy2;
 	char *cstr1 = GET_STR(fsName, isCopy1);
+	char *cstr2 = GET_STR(options, isCopy2);
 	int ret;
 	sqm_lst_t *lst;
 	int len;
@@ -346,13 +347,15 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_Host_addHosts(JNIEnv *env,
 
 	if (lst == NULL) {
 		REL_STR(fsName, cstr1, isCopy1);
+		REL_STR(options, cstr2, isCopy2);
 		ThrowEx(env);
 		return (NULL);
 	}
 
-	ret = add_hosts(CTX, cstr1, lst);
+	ret = add_hosts(CTX, cstr1, lst, cstr2);
 
 	REL_STR(fsName, cstr1, isCopy1);
+	REL_STR(options, cstr2, isCopy2);
 	free_list_of_host_info(lst);
 	if (-1 == ret) {
 		ThrowEx(env);

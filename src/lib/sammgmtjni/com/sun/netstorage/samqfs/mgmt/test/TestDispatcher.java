@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: TestDispatcher.java,v 1.2 2008/10/09 14:32:36 pg125177 Exp $
+// ident	$Id: TestDispatcher.java,v 1.3 2008/10/16 14:53:59 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.test;
 
@@ -103,7 +103,9 @@ public class TestDispatcher {
 		fs = FS.get(ctx, fsname);
 
 		System.out.println("Calling add host " + args[3]);
-		jobId = Host.addHosts(ctx, fsname, hosts);
+		jobId = Host.addHosts(ctx, fsname, hosts,
+			"mount_point=/fsn,read_only=yes,mount_fs=yes," +
+			"mount_at_boot=yes,potential_mds=yes");
 
 		System.out.println("added host " + args[3] +
 			" returned: " + jobId);
