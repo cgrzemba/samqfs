@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsWizardEventListener.java,v 1.3 2008/10/09 14:28:01 kilemba Exp $
+// ident        $Id: AddClientsWizardEventListener.java,v 1.4 2008/10/16 13:43:38 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -36,6 +36,7 @@ import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemSharedFSManager;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.web.ui.component.Wizard;
@@ -172,6 +173,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
             alertBean.setRendered(true);
 
+            this.wizardBean.setSelectedHosts(null);
             return false;
         }
 
@@ -190,6 +192,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
         // there must be atleast one host selected
         if (rawList == null) {
+
             alertBean.setType(3);
             alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
             alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
@@ -205,6 +208,15 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 continue;
             }
 
+            // If the current entry that has not been validated is not
+            // a single ip address or an ip address range drop it
+            // (Users have already elected to make entries based on ip
+            // address and ip ranges
+            boolean isValidIpOrRange= isValidIPOrIPRange(rawList[i]);
+            if (!isValidIpOrRange) {
+               continue;
+            }
+
             // determine if this a range or a single ip
             List<String> hosts = resolveIPAddressRange(rawList[i]);
             Iterator<String> it = hosts.iterator();
@@ -216,13 +228,14 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 }
             }
         }
-
         // there must be atleast one valid host selected
         if (list.size() == 0) {
             alertBean.setType(3);
             alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
             alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
             alertBean.setRendered(true);
+
+            this.wizardBean.setSelectedHosts(null);
             return false;
         }
 
@@ -370,17 +383,22 @@ public class AddClientsWizardEventListener implements WizardEventListener {
         if (range != null && range.indexOf("-") == -1) {
             ipAddress.add(range);
         } else {
-            String prefix = range.substring(0, range.lastIndexOf(".") + 1);
-            String suffix = range.substring(range.lastIndexOf(".") + 1,
-                                            range.length());
+            try {
+                String prefix = range.substring(0, range.lastIndexOf(".") + 1);
+                String suffix = range.substring(range.lastIndexOf(".") + 1,
+                                                range.length());
 
-            String [] suffixRange = suffix.split("-");
-            int start = Integer.parseInt(suffixRange[0]);
-            int end = Integer.parseInt(suffixRange[1]);
+                String [] suffixRange = suffix.split("-");
+                int start = Integer.parseInt(suffixRange[0]);
+                int end = Integer.parseInt(suffixRange[1]);
             
-            for (int i = start; i <= end; i++) {
-                String ip = prefix + i;
-                ipAddress.add(ip);
+                for (int i = start; i <= end; i++) {
+                    String ip = prefix + i;
+                    ipAddress.add(ip);
+                }
+            } catch (NumberFormatException nfe) {
+                System.out.println("Unable to translate range: "
+                                   + nfe.getMessage());
             }
         }
 
@@ -414,9 +432,6 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             String serverName = JSFUtil.getServerName();
             String fsName = (String)JSFUtil.getAttribute(FS_NAME);
 
-            System.out.println("server name = " + serverName);
-            System.out.println("fs name = " + fsName);
-
             SamQFSSystemModel model = SamUtil.getModel(serverName);
             String [] displayHost = wizardBean.getSelectedHosts();
 
@@ -433,17 +448,24 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 .getSamQFSAppModel().getSamQFSSystemSharedFSManager();
 
             long jobId = fsManager.addClients(serverName, fsName, hostList);
-            JSFUtil.setAttribute(AddClientsBean.JOB_ID_KEY, jobId);
 
+
+            // if -1 is return, an error occured during job
+            // submission. Inform the user
+            if (jobId == -1)
+                throw new SamFSException("An error occured while submitting job");
+
+            JSFUtil.setAttribute(AddClientsBean.JOB_ID_KEY, jobId);
+            
             // if we get this far, we were successful
             alertBean.setType(1);
             alertBean.setSummary(JSFUtil.getMessage("success.summary"));
             alertBean.setDetail(JSFUtil.getMessage("fs.addclients.success.detail"));
             alertBean.setRendered(true);
-
+            
 	    // since the job was submitted successfully, display the HMS link
 	    this.wizardBean.setDisplayMHSLink("true");
-         } catch (SamFSException sfe) {
+        } catch (SamFSException sfe) {
             // do nothing for now
             alertBean.setType(3);
             alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
@@ -458,5 +480,62 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
         // always return true so we can display the results page
         return true;
+    }
+
+    /** validate that the given string is a valid ip address or a valid ip
+     * address range of the format xx.xx.xx.xx-xx
+     */
+    private boolean isValidIPOrIPRange(String s) {
+        // if the string is null or empty, return false
+        if (s == null || s.length()  == 0)
+            return false;
+
+        try {
+            String [] tokens = s.split("\\."); // dot-delimited
+            // both ip addresses and ip ranges should have a have 4 dot
+            // delimited tokens
+            if (tokens == null || tokens.length != 4)
+                return false;
+
+            // the first three tokens should be numbers
+            boolean valid = true;
+            for (int i = 0; valid && i < 3; i++) {
+                // will through a SamFSException if token[i] is not a number
+                Integer num = ConversionUtil.strToInteger(tokens[i]);
+            }
+
+            // the last token should be either a number or two numbers
+            // separated by a dash. i.e nn or nn-nn
+            if (tokens[3].indexOf("-") != -1) { // we have a range
+                String [] range = tokens[3].split("-"); // dash-delimited
+
+                // a range should only have two tokens
+                if (range == null || range.length != 2)
+                    return false;
+
+                // check that the two tokens are numbers. NOTE, a
+                // SamFSException exception will be thrown if the token is not
+                // a number.
+                Integer num = ConversionUtil.strToInteger(range[0]);
+                num = ConversionUtil.strToInteger(range[1]);
+
+                // if we get this far, we must have a valid ip address range
+                return true;
+            } else {
+                // we must have a single ip, check if the last token is a valid
+                // number
+                Integer num = ConversionUtil.strToInteger(tokens[3]);
+                
+                // if we get this far, we must have a valid single ip address
+                return true;
+            }
+
+        } catch (SamFSException sfe) {
+            System.out.println("Error in 'isValidIPOrIPRange(...)' " +
+                               sfe.getMessage());
+            return false;
+        }
+
+        // we really should have return by now.
     }
 }

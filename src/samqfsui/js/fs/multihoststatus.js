@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: multihoststatus.js,v 1.1 2008/10/09 14:27:59 kilemba Exp $
+// ident	$Id: multihoststatus.js,v 1.2 2008/10/16 13:43:38 kilemba Exp $
 
 // NOTE: This file MUST be used in conjunction with the samqfsui.js
 
@@ -61,7 +61,7 @@ function start() {
   var url ="/samqfsui/ansyc?" + params;
 
   // request for data updates every 3 seconds
-  interval = setInterval("submitRequest(url)", 3000);
+  interval = setInterval("submitRequest('"+url+"')", 1000);
 }
 
 /* end the process of repeatedly requesting updates */
@@ -71,7 +71,7 @@ function stop() {
 }
 
 /* submit a ajax request */
-function sumbitRequest(url) {
+function submitRequest(url) {
   request = createRequest();
 
   if (request != null) {

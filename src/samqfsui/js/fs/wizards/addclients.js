@@ -27,36 +27,61 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: addclients.js,v 1.3 2008/10/09 14:27:59 kilemba Exp $
+// ident	$Id: addclients.js,v 1.4 2008/10/16 13:43:38 kilemba Exp $
 
 function $(id) {
   return document.getElementById(id);
 }
 
 function handleAddButton(button) {
+  var valid = false;
   var prefix = getFieldPrefix(button.name);
+  var addValue = trim($(prefix + "editableHostList_field").value);
 
-  var textFieldName = prefix + "hostNameText";
-  var listBoxName = prefix + "selectedHostList";
 
-  var textField = $(textFieldName);
-  var hostname = textField.value;
-  
-  if (hostname != null) {
-    hostname = trim(hostname); // trim defined in samqfsui.js
-    
-    if (hostname.length > 0) {
-      insertHostIntoList(hostname, listBoxName);
-      textField.value = "";
-      textField.focus();
+  if ((addValue != null) && (addValue != "")) {
+    if (button.name.indexOf("byipaddress") != -1) { // the ip address page
+      // verify that its a valid ip range
+      var ipTokens = addValue.split(".");
+
+      if ((ipTokens != null) && (ipTokens.length == 4)) {
+        if (ipTokens[3].indexOf("-") == -1) { // single ip address
+          valid = isValidIP(addValue);
+        } else { // ip range
+          var aNumber = true;
+          for (var i = 0; aNumber && i < 3; i++) { // test for the 3 entries
+            aNumber = isInteger(ipTokens[i]);
+          }
+
+          if (aNumber) {
+            // validate the last value to make its  a range i.e. NN-NN          
+            var lastTokens = ipTokens[3].split("-");
+
+            if (lastTokens != null && lastTokens.length == 2) {
+              for (var j = 0; aNumber && j < lastTokens.length;j++) {
+                aNumber = isInteger(lastTokens[j]);
+              }
+            }
+          }
+
+          valid = aNumber;
+        }
+      }
+
+      // alert the user if not a valid ip address
+      if (!valid) {
+        alert(addValue + " is not a valid ip address or ip address range");
+      }
+    } else { // by host name
+      // let the back end handle this
+      valid = true;
     }
+  } else {
+    alert("Host Name cannot be empty");
   }
 
-
-  // do not submit the form
-  return false;
+  return valid;
 }
-
 
 function handleRemoveButton(button) {
   // do not submit the form
