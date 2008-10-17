@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.260 $"
+#pragma ident "$Revision: 1.261 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1016,6 +1016,9 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 
 	if (ip->cl_leases) {
 		mutex_exit(&ip->ilease_mutex);
+		if (unlock) {
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+		}
 		return;
 	}
 
@@ -1224,7 +1227,7 @@ sam_proc_rm_lease(
 	 * in order to prevent a race condition with open().
 	 */
 	if (rw_type == RW_READER) {
-		if (!rw_tryupgrade(&ip->inode_rwl)) {
+		if (!RW_TRYUPGRADE_OS(&ip->inode_rwl)) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
