@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.5 $"
+#pragma ident "$Revision: 1.6 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -665,6 +665,7 @@ validateTarHeader(
 
 	/* No tar header to validate. */
 	if (noTarhdr) {
+		*residual = nbytes - fileOff;
 		return (0);
 	}
 
