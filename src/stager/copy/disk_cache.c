@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -179,6 +179,10 @@ DiskCacheWrite(
 
 	memset(&swrite, 0, sizeof (sam_ioctl_swrite_t));
 
+	if (GET_FLAG(file->flags, FI_DCACHE)) {
+		swrite.offset += file->write_off;
+	}
+
 	checksum = ifChecksum(file);
 	verify = ifVerify(file);
 	multivolume = ifMultiVolume(file);
@@ -189,8 +193,8 @@ DiskCacheWrite(
 	readErrno = 0;
 	position = 0;		/* block written to disk for file */
 
-	Trace(TR_FILES, "Write disk inode: %d.%d len: %lld",
-	    file->id.ino, file->id.gen, dataToWrite);
+	Trace(TR_FILES, "Write disk inode: %d.%d offset: %lld len: %lld",
+	    file->id.ino, file->id.gen, swrite.offset, dataToWrite);
 
 	while (DATA_TO_WRITE()) {
 
@@ -279,7 +283,7 @@ DiskCacheWrite(
 
 		position++;
 
-		Trace(TR_DEBUG, "Write %d bytes left: %lld (%d/%d)",
+		Trace(TR_DEBUG, "Wrote %d bytes left: %lld (%d/%d)",
 		    nbytes, dataToWrite, readErrno, cancel);
 	}
 

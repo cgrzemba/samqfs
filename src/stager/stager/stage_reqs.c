@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.90 $"
+#pragma ident "$Revision: 1.91 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -699,6 +699,11 @@ CheckRequests(
 					next->vsn_cnt   = file->vsn_cnt;
 					next->context   = file->context;
 					SET_FLAG(next->flags, FI_DCACHE);
+
+					/* Read count for samu */
+					next->read = file->read;
+					/* Residual length for multivolume */
+					next->residlen = file->residlen;
 
 					if (GET_FLAG(file->flags,
 					    FI_EXTENSION)) {

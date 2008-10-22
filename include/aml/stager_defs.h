@@ -34,7 +34,7 @@
 #ifndef _AML_STAGER_DEFS_H
 #define	_AML_STAGER_DEFS_H
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 #include "sam/types.h"
 #include "aml/device.h"
@@ -82,6 +82,8 @@ typedef struct FileInfo {
 	u_longlong_t	len;		/* length of staging request */
 	u_longlong_t	offset;		/* offset of staging request */
 	u_longlong_t	stage_size;	/* size of staged bytes */
+	u_longlong_t	residlen;	/* resudial length for multivolume */
+					/*	and stage_n file */
 	int		copy;		/* stage from this archive copy */
 	int		directio;	/* directio = 1, pagedio = 0 */
 

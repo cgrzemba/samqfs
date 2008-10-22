@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -195,27 +195,58 @@ ArchiveRead(
 	SetErrno = 0;
 
 	/*
-	 * If this is a multivolume stage request the stage length
-	 * may be greater than data available on this volume.  Set
-	 * data to read based on section length.
+	 * If this is a multivolume stage request and stage -n set,
+	 * find a vsn based on the offset, and adjust the offset
+	 * and data to read in section.
+	 *
+	 * If this is a multivolume stage request and not stage -n,
+	 * the stage length may be greater than data available on
+	 * this volume. Set data to read based on section length.
 	 */
-	if (file->len > file->ar[copy].section.length) {
-		dataToRead = file->ar[copy].section.length;
+
+	if ((file->ar[copy].n_vsns > 1) &&
+	    GET_FLAG(file->flags, FI_STAGE_NEVER)) {
+		if (file->offset >= file->ar[copy].section.length) {
+			/* Skip this section */
+			file->offset -= file->ar[copy].section.length;
+			dataToRead = 0;
+		} else {
+			if ((file->offset + file->residlen) >
+			    file->ar[copy].section.length) {
+				dataToRead = file->ar[copy].section.length -
+				    file->offset;
+			} else {
+				dataToRead = (longlong_t)file->residlen;
+			}
+			file->residlen -= (u_longlong_t)dataToRead;
+		}
 	} else {
-		dataToRead = (longlong_t)file->len;
+		if (file->len > file->ar[copy].section.length) {
+			dataToRead = file->ar[copy].section.length;
+		} else {
+			dataToRead = (longlong_t)file->len;
+		}
 	}
 
 	Trace(TR_FILES,
-	    "Archive read inode: %d.%d\n\tpos: %llx.%llx len: %lld",
+	    "Archive read inode: %d.%d\n\tpos: %llx.%llx len: %lld "
+	    "offset: %lld residlen: %lld",
 	    file->id.ino, file->id.gen, file->ar[copy].section.position,
-	    file->ar[copy].section.offset, dataToRead);
+	    file->ar[copy].section.offset, dataToRead, file->offset,
+	    file->residlen);
 
 	/*
 	 * If zero length file there is no data to read.
+	 * Notify disk cache write thread that there is
+	 * no data to write.
 	 * Go back to while loop and wait for next file
 	 * to stage.
 	 */
 	if (dataToRead == 0) {
+		fileOff = 0;
+		filePos = -1;
+		notifyWorkers();
+
 		ThreadStatePost(&IoThread->io_readDone);
 		continue;
 	}
@@ -337,9 +368,7 @@ ArchiveRead(
 		 * staged for the double buffer thread.
 		 */
 		if (firstRead == B_TRUE) {
-			if (readError != 0) {
-				notifyWorkers();
-			} else {
+			if (readError == 0) {
 				int residual;
 
 				readError =
@@ -349,8 +378,8 @@ ArchiveRead(
 					/* Tar header validation failed. */
 					CircularIoSetError(reader, in, EIO);
 					Trace(TR_DEBUG, "Tar header error, "
-					    "slot: %d errno: %d",
-					    CircularIoSlot(reader, in), errno);
+					    "slot: %d",
+					    CircularIoSlot(reader, in));
 				}
 
 				/* Number of data bytes left in buffer. */
@@ -361,11 +390,12 @@ ArchiveRead(
 				 * not be any any file data in the buffer,
 				 * nbytes = 0.  Start thread pipeline but
 				 * there will be no data to move or write.
-				 *
-				 * Start thread pipeline to other threads.
 				 */
-				notifyWorkers();
 			}
+			/*
+			 * Start thread pipeline to other threads.
+			 */
+			notifyWorkers();
 		}
 
 		/*
@@ -397,6 +427,17 @@ ArchiveRead(
 
 		Trace(TR_DEBUG, "Read %d bytes left: %lld (%d/%d)",
 		    nbytes, dataToRead, readError, cancel);
+	}
+
+	/*
+	 * If multivolume, no read error and stage -n set,
+	 * read on next volume starts at offset 0.
+	 * If read error, don't clear the offset for retry
+	 * from the next available copy.
+	 */
+	if ((file->residlen > 0) && (readError == 0) &&
+	    GET_FLAG(file->flags, FI_STAGE_NEVER)) {
+		file->offset = 0;
 	}
 
 	Trace(TR_FILES, "Archive read complete inode: %d.%d",
@@ -431,9 +472,10 @@ SetPosition(
 	int position;
 
 	if (from == -1) {
-		Trace(TR_FILES, "Set position to: %d", to);
+		Trace(TR_FILES, "Set position to: %d(0x%x)", to, to);
 	} else {
-		Trace(TR_FILES, "Set position from: %d to: %d", from, to);
+		Trace(TR_FILES, "Set position from: %d(0x%x) to: %d(0x%x)",
+		    from, from, to, to);
 	}
 
 	position = from;
@@ -474,18 +516,18 @@ findFirstBlock()
 
 	if (ptr != NULL) {
 
-		Trace(TR_DEBUG, "Reuse block: %d buf: %d [0x%x] len: %d",
+		Trace(TR_DEBUG, "Reuse block: %d buf: %d [0x%x] len: %d "
+		    "error: %d",
 		    filePos, CircularIoSlot(reader, ptr),
-		    (int)ptr, nbytes);
+		    (int)ptr, nbytes, readError);
 
 		readError = validateTarHeader(ptr, nbytes, &residual);
 
 		if (readError == -1) {
 			/* Tar header validation failed. */
 			CircularIoSetError(reader, ptr, EIO);
-			Trace(TR_DEBUG, "Positioning error to 0x%x, slot: %d "
-			    " errno: %d",
-			    filePos, CircularIoSlot(reader, ptr), errno);
+			Trace(TR_DEBUG, "Tar header error, slot: %d",
+			    CircularIoSlot(reader, ptr));
 		}
 
 		/*
@@ -974,10 +1016,18 @@ notifyWorkers()
 	CLEAR_FLAG(IoThread->io_flags, IO_cancel);
 
 	/*
-	 * Notify double buffer thread that next file
-	 * in stream is ready to be staged.
+	 * If zero length file, no need to notify
+	 * double buffer thread but need to notify
+	 * disk cache write thread.
+	 * Otherwise, notify double buffer thread that
+	 * next file in stream is ready to be staged.
 	 */
-	ThreadStatePost(&IoThread->io_moveReady);
+	if (dataToRead == 0) {
+		ThreadStatePost(&IoThread->io_writeReady);
+		ThreadStateWait(&IoThread->io_writeDone);
+	} else {
+		ThreadStatePost(&IoThread->io_moveReady);
+	}
 
 	firstRead = B_FALSE;
 }

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -327,7 +327,7 @@ DoubleBuffer(
 		 */
 		cancel = GET_FLAG(IoThread->io_flags, IO_cancel);
 
-		Trace(TR_DEBUG, "Move %d bytes left: %lld (%d/%d)",
+		Trace(TR_DEBUG, "Moved %d bytes left: %lld (%d/%d)",
 		    nbytes, dataToMove, readErrno, cancel);
 	}
 

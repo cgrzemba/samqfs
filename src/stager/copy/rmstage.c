@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -262,7 +262,7 @@ RmSeekVolume(
 {
 	int position = -1;
 
-	Trace(TR_DEBUG, "Start positioning: %d", to);
+	Trace(TR_DEBUG, "Start positioning: %d(0x%x)", to, to);
 
 	if (Instance->ci_flags & CI_samremote) {
 		if (SamrftSeekVol(IoThread->io_rftHandle, to) < 0) {
@@ -332,7 +332,7 @@ RmSeekVolume(
 		}
 	}
 
-	Trace(TR_DEBUG, "Positioning complete: %d", position);
+	Trace(TR_DEBUG, "Positioning complete: %d(0x%x)", position, position);
 	return (position);
 }
 

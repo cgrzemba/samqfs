@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.107 $"
+#pragma ident "$Revision: 1.108 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -527,10 +527,24 @@ copyStream()
 		}
 
 		file = GetFile(Stream->first);
-		file->read = 0;
 
 		PthreadMutexLock(&file->mutex);
 		PthreadMutexUnlock(&Stream->mutex);
+
+		/*
+		 * If the first vsn, clear bytes read count.
+		 * And if multivolume and stage -n set, initialize
+		 * residual length.
+		 */
+		if (file->vsn_cnt == 0) {
+			file->read = 0;
+			if (GET_FLAG(file->flags, FI_MULTIVOL) &&
+			    GET_FLAG(file->flags, FI_STAGE_NEVER)) {
+				file->residlen = file->len;
+			} else {
+				file->residlen = 0;
+			}
+		}
 
 		SET_FLAG(file->flags, FI_ACTIVE);
 

@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -480,7 +480,8 @@ CircularIoStartBlockSearch(
 		out += buffer->cb_blockSize;
 	}
 
-	if (slot < buffer->cb_numBuffers) {
+	if ((slot < buffer->cb_numBuffers) &&
+	    (buffer->cb_state[slot].bs_errno) == 0) {
 		/*
 		 * Found block. Set circular buffer's 'out' pointer.
 		 * Return the 'out' pointer.
@@ -505,7 +506,8 @@ CircularIoStartBlockSearch(
 
 	} else {
 		/*
-		 * Block not found.  Reset circular buffer's pointers.
+		 * Block not found or has an error. Reset circular
+		 * buffer's pointers.
 		 * Return NULL.
 		 */
 		CircularIoReset(buffer);
