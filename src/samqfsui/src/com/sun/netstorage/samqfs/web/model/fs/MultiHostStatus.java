@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MultiHostStatus.java,v 1.2 2008/10/09 14:28:01 kilemba Exp $
+// ident	$Id: MultiHostStatus.java,v 1.3 2008/10/22 20:57:05 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -86,6 +86,9 @@ public class MultiHostStatus {
     public MultiHostStatus(String status) {
         this.rawStatus = status;
         this.props = ConversionUtil.strToProps(status);
+
+        // debuging 
+        this.props.list(System.out);
     }
 
     /** return the integer represented by the given key */
@@ -99,7 +102,8 @@ public class MultiHostStatus {
         try {
             rtnval = Integer.parseInt((String)this.props.get(key));
         } catch (NumberFormatException nfe) {
-            // do nothing
+            System.out.println("Error converting string to a number :" +
+                               nfe.getMessage());
         }
 
         return rtnval;
@@ -168,23 +172,8 @@ public class MultiHostStatus {
     /** return the error for the given host */
     public String getHostError(String host) {
         String rawError = props.getProperty(host);
-        
-        try {
-            // TODO: ConversionUtil.strToArray(...) doesn't seem to be
-            // splitting quoted strings properly.
-            String [] errorToken = ConversionUtil.strToArray(rawError, sep);
-            if (errorToken != null && errorToken.length > 0) {
-                // errorToken[0] - contains error code
-                // errorToken[1] - contains error string
-           
-                return errorToken[0];
-            }
-        } catch (SamFSException sfe) {
-            System.out.println("Error Parsing host error : " + sfe.getMessage());
-        }
-        
-        return ""; // we shouldn't get here unless something is wrong wiht the
-                   // encoded string
+
+        return rawError;
     }
 }
 

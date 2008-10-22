@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AddClientsWizard.jsp,v 1.4 2008/10/09 14:28:00 kilemba Exp $ -->
+<!-- $Id: AddClientsWizard.jsp,v 1.5 2008/10/22 20:57:04 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -65,6 +65,12 @@
                    title="#{msgs['fs.addclients.selectionmethod.title']}"
                    help="#{msgs['fs.addclients.selectionmethod.help']}"
                    detail="#{msgs['fs.addclients.selectionmethod.detail']}">
+
+        <ui:alert id="alert"
+                  rendered="#{AddClientsBean.alertRendered}"
+                  type="#{AddClientsBean.alertType}"
+                  summary="#{AddClientsBean.alertSummary}"
+                  detail="#{AddClientsBean.alertDetail}" />
 
         <ui:radioButtonGroup items="#{AddClientsBean.hostSelectionItems}"
                      selected="#{AddClientsBean.selectedMethod}"
@@ -145,7 +151,16 @@
                   summary="#{AddClientsBean.alertSummary}"
                   detail="#{AddClientsBean.alertDetail}" />
 
-        <jsp:include page="AddClientsHostSelection.jsp" />
+        <div style="margin-left:10px">
+        <ui:editableList id="editableHostList"
+                        list="#{AddClientsBean.selectedHosts}"
+                        fieldLabel="#{msgs['fs.addclients.hostname.hostname']}"
+                        listLabel="#{msgs['fs.addclients.hostname.selectedhosts']}"/>
+            <f:facet name="addButton">
+                <ui:staticText id="add" rendered="false"/>
+            </f:facet>
+        </div>
+
     </ui:wizardStep>
     
     <ui:wizardStep id="mountOptionsPage"
@@ -182,6 +197,12 @@
         <ui:checkboxGroup id="mountOptions"
                           items="#{AddClientsBean.mountOptionList}"
                           selected="#{AddClientsBean.selectedMountOptions}"/>
+    </td></tr>
+    
+    <tr><td colspan="2" style="margin-top:10px">
+        <ui:checkbox id="pmds"
+                     label="#{msgs['fs.addclients.mountoptions.pmds']}"
+                     selected="#{AddClientsBean.makePMDS}"/>
     </td></tr>
     </table>
     </ui:wizardStep>
@@ -234,6 +255,12 @@
             <ui:label text="#{msgs['fs.addclients.mountoptions.background']}"/>
             </td><td>
             <ui:staticText text="#{AddClientsBean.mountInTheBackgroundText}"/>
+            </td></tr>
+
+            <tr><td>
+            <ui:label text="#{msgs['fs.addclients.mountoptions.pmds']}"/>
+            </td><td>
+            <ui:staticText text="#{AddClientsBean.PMDSText}"/>
             </td></tr>
         </table>
     </ui:wizardStep>

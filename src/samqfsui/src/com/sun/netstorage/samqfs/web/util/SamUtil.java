@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.128 2008/09/11 05:28:53 kilemba Exp $
+// ident	$Id: SamUtil.java,v 1.129 2008/10/22 20:57:06 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -2154,5 +2154,15 @@ public class SamUtil {
         }
 
         return result;
+    }
+
+    /** 
+     * Determine if the given string is well formed mount point
+     */
+    public static boolean isValidMountPoint(String mountPoint) {
+        return (mountPoint != null && 
+                mountPoint.trim().length() != 0 &&
+                SamUtil.isValidNonSpecialCharString(mountPoint) &&
+                mountPoint.startsWith("/"));
     }
 }

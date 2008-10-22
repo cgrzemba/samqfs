@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.25 2008/09/11 05:28:51 kilemba Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.26 2008/10/22 20:57:04 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
+import com.sun.netstorage.samqfs.mgmt.fs.Host;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
@@ -58,6 +59,15 @@ public interface SamQFSSystemSharedFSManager {
     /**
      * Function to add multiple clients to a shared file system. This
      * function may be run to completion in the background.
+     *
+     * options is a key value string supporting the following options:
+     * mount_point="/fully/qualified/path"
+     * mount_fs= yes | no
+     * mount_at_boot = yes | no
+     * bg_mount = yes | no
+     * read_only = yes | no
+     * potential_mds = yes | no
+     *
      * Returns:
      * 0 for successful completion
      * -1 for error
@@ -65,7 +75,8 @@ public interface SamQFSSystemSharedFSManager {
      */
     public long addClients(String serverName,
                            String fsName,
-                           String [] clients) throws SamFSException;
+                           Host [] clients,
+                           String options) throws SamFSException;
 
     /**
      * The file system must be unmounted to remove clients. You can

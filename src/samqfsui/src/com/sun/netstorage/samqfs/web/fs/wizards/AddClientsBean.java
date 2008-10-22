@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsBean.java,v 1.4 2008/10/09 14:28:01 kilemba Exp $
+// ident        $Id: AddClientsBean.java,v 1.5 2008/10/22 20:57:04 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -66,6 +66,7 @@ public class AddClientsBean {
     private boolean  mountReadOnly = false;
     private boolean  mountAtBootTime = false;
     private boolean mountInBackground = false;
+    private boolean pmds = false;
 
     // file chooser
     private File currentDirectory = null;
@@ -169,6 +170,16 @@ public class AddClientsBean {
         return this.mountAfterAdd;
     }
 
+    /* this method is to be called by
+     * AddClientsWizardEventListener.createMountOptionsString() only. The order
+     * of the elements in the returned should NOT be changed without changing
+     * the implemention of
+     * AddClientsWizardEventListener.createMountOptionsString()
+     */
+    public boolean [] getMountOptionSettings() {
+        return new boolean [] {mountReadOnly, mountAtBootTime, mountInBackground};
+    }
+
     public String [] getSelectedMountOptions() {
         ArrayList<String> options = new ArrayList<String>();
         if (mountReadOnly) {
@@ -200,6 +211,14 @@ public class AddClientsBean {
                 }
             }
         }
+    }
+
+    public Boolean getMakePMDS() {
+        return this.pmds;
+    }
+
+    public void setMakePMDS(Boolean b) {
+        this.pmds = b;
     }
 
     // TODO: integrate file chooser
@@ -283,6 +302,11 @@ public class AddClientsBean {
                 JSFUtil.getMessage("samqfsui.no"));
     }
 
+    public String getPMDSText() {
+        return (this.pmds ? JSFUtil.getMessage("samqfsui.yes") :
+                JSFUtil.getMessage("samqfsui.no"));
+    }
+
     // alert bean
     public AlertBean getAlertBean() {
         return this.alertBean;
@@ -315,20 +339,22 @@ public class AddClientsBean {
     // determine if the link to the MultiHostStatus Display page
     // should be displayed 
     public String getDisplayMHSLink() {
-	return this.displayMHSLink;
+        return this.displayMHSLink;
     }
-
+    
     public void setDisplayMHSLink(String b) {
-	this.displayMHSLink = b;
+        this.displayMHSLink = b;
     }
 
     public long getJobId() {
-	Long jobId = (Long)JSFUtil.getAttribute(JOB_ID_KEY);
-
-	return jobId != null ? (long)jobId : -1L;
+        Long jobId = (Long)JSFUtil.getAttribute(JOB_ID_KEY);
+        
+        return jobId != null ? (long)jobId : -1L;
     }
-
-    public String getServerName() {return JSFUtil.getServerName();}
+    
+    public String getServerName() {
+        return JSFUtil.getServerName();
+    }
 }
 
 /**

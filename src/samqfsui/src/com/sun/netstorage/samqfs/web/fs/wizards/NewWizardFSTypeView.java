@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardFSTypeView.java,v 1.1 2008/09/17 23:33:24 kilemba Exp $
+// ident	$Id: NewWizardFSTypeView.java,v 1.2 2008/10/22 20:57:04 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -39,12 +39,14 @@ import com.iplanet.jato.view.event.ChildDisplayEvent;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.wizard.SamWizardModel;
 import com.sun.web.ui.view.alert.CCAlertInline;
 import com.sun.web.ui.view.html.CCCheckBox;
+import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCRadioButton;
 import com.sun.web.ui.view.wizard.CCWizardPage;
 import java.io.IOException;
@@ -65,6 +67,8 @@ public class NewWizardFSTypeView extends RequestHandlingViewBase
     public static final String HPC = "HPCCheckBox";
     public static final String HAFS = "HAFSCheckBox";
     public static final String MATFS = "matfsCheckBox";
+    public static final String ARCHIVE_MEDIA = "hasArchiveMedia";
+    public static final String ARCHIVE_MEDIA_WARNING = "archiveMediaWarning";
 
     public NewWizardFSTypeView(View parent, Model model) {
         this(parent, model, PAGE_NAME);
@@ -90,7 +94,8 @@ public class NewWizardFSTypeView extends RequestHandlingViewBase
         registerChild(HPC, CCCheckBox.class);
         registerChild(HAFS, CCCheckBox.class);
         registerChild(MATFS, CCCheckBox.class);
-
+        registerChild(ARCHIVE_MEDIA, CCHiddenField.class);
+        registerChild(ARCHIVE_MEDIA_WARNING, CCHiddenField.class);
         TraceUtil.trace3("Exiting");
     }
 
@@ -115,12 +120,31 @@ public class NewWizardFSTypeView extends RequestHandlingViewBase
             name.equals(HAFS) ||
             name.equals(MATFS)) {
             return new CCCheckBox(this, name, "true", "false", false);
+        } else if (name.equals(ARCHIVE_MEDIA) ||
+                   name.equals(ARCHIVE_MEDIA_WARNING)) {
+            return new CCHiddenField(this, name, null);
         } else {
             throw new IllegalArgumentException("Invalid child '" + "'");
         }
     }
 
     public void beginDisplay(DisplayEvent evt) throws ModelControlException {
+        // determine if the server currently being managed has access to
+        // archiving media. This is necessary inorder to warn the user in cases
+        // where this is not the case.
+        try {
+            SamQFSSystemModel model = SamUtil.getModel(getServerName());
+            boolean hasMedia = model.hasArchivingMedia();
+
+            String msg = SamUtil
+                .getResourceString("FSWizard.new.fstype.archivemedia.missing");
+            ((CCHiddenField)getChild(ARCHIVE_MEDIA)).setValue(hasMedia);
+            ((CCHiddenField)getChild(ARCHIVE_MEDIA_WARNING)).setValue(msg);
+        } catch (SamFSException sfe) {
+            TraceUtil.trace1("An Exception was caught while trying to check"
+                             + " for availability of archiving media.");
+            TraceUtil.trace2("Reason:" + sfe.getMessage());
+        }
     }
 
     // implement CCWizardPage

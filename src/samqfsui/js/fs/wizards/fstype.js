@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: fstype.js,v 1.1 2008/09/17 23:33:22 kilemba Exp $
+// ident	$Id: fstype.js,v 1.2 2008/10/22 20:57:03 kilemba Exp $
 
 var formName = "wizWinForm";
 var theForm = document.wizWinForm;
@@ -84,6 +84,13 @@ function handleArchivingCheckBox(checkbox) {
         if (matfs != null) {
             matfs.checked = false;
             ccSetCheckBoxDisabled(prefix + "matfsCheckBox", formName, 1);
+        }
+
+        // if the current server has no archive media, warn the user
+        var hasArchiveMedia =
+          checkbox.form.elements[prefix + "hasArchiveMedia"].value;
+        if (hasArchiveMedia != "true") {
+          alert(checkbox.form.elements[prefix + "archiveMediaWarning"].value);
         }
     }  else {
         if (hafs != null) {

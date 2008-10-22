@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MultiHostStatusDisplayBean.java,v 1.2 2008/10/09 14:28:00 kilemba Exp $
+// ident	$Id: MultiHostStatusDisplayBean.java,v 1.3 2008/10/22 20:57:04 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -95,7 +95,7 @@ public class MultiHostStatusDisplayBean {
                         " for '" + server + "'");
                 
                 // begin testing
-                /*  
+                /*
                 if (jobId > -1 && jobId < 5) {
                     int index = (int)jobId;
                     mhs = new MultiHostStatus(AsyncServlet.samples[index]);
@@ -197,7 +197,9 @@ public class MultiHostStatusDisplayBean {
     public void setServerName(String name) {serverName = name;}
     public void setJobId(long id) {jobId = id;}
 
-    // hosts and errors
+    /* ruturns a comma delimited 'hostname=error message' string for all the
+       hosts that have returned errors. This method attempts 
+    */
     public String getHostErrorList() {
         List<String> hostList =
             status != null ? status.getHostsWithError() : null;
@@ -206,14 +208,38 @@ public class MultiHostStatusDisplayBean {
             Iterator<String>it = hostList.iterator();
             while (it.hasNext()) {
                 String hostName = it.next();
+
+                // hostError is of the format NNNN "ssssss" where NNNN is an
+                // error code whose localized text can be looked up from the
+                // resource bundle.
                 String hostError = status.getHostError(hostName);
+
+                // split error code from key
+                int index = hostError.indexOf("\"");
+                String errorCode = hostError.substring(0, index);
+                String errorString =
+                    hostError.substring(index + 1, hostError.lastIndexOf("\""));
+                
+
+                // try to retrieve the error message from the resource
+                // bundle. If found, return the localized error message, if not 
+                // found, the return the unlocalized error message returned by
+                // the C-API
+                String errorMessage = JSFUtil.getMessage(errorCode.trim());
+
+                if (errorMessage.trim().equals(errorCode.trim())) {
+                    errorMessage = errorString.trim();
+                }
+
+                // append the host and errorMessage to the message string
                 buf.append(hostName)
-                    .append(":")
-                    .append(hostError)
+                    .append("=")
+                    .append(errorMessage)
                     .append(",");
             }
         }
 
+        // return the encoded error string
         return buf.toString();
-    }        
+    }     
 }

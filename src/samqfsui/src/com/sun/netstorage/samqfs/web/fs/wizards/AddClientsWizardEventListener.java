@@ -27,10 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsWizardEventListener.java,v 1.4 2008/10/16 13:43:38 kilemba Exp $
+// ident        $Id: AddClientsWizardEventListener.java,v 1.5 2008/10/22 20:57:04 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
+import com.sun.netstorage.samqfs.mgmt.fs.Host;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSFactory;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
@@ -97,7 +98,10 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             this.wizardBean.clearWizardValues();
             return result;
         } else if (id == WizardEvent.NEXT) { // hanle the next button
-            if (SELECTION_BY_HOSTNAME.equals(step.getId())) {
+            if (HOST_SELECTION_METHOD.equals(step.getId())) {
+                System.out.println("validating host selection method ...");
+                return processHostSelectionMethod();
+            }else if (SELECTION_BY_HOSTNAME.equals(step.getId())) {
                 System.out.println("validing host names ...");
                 return processByHostName();
             } else if (SELECTION_BY_IPADDRESS.equals(step.getId())) {
@@ -134,6 +138,23 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
     public Object saveState(FacesContext arg0) {
         return null;
+    }
+
+    protected boolean processHostSelectionMethod() {
+        AlertBean alertBean = this.wizardBean.getAlertBean();
+        alertBean.reset();
+        String sm = this.wizardBean.getSelectedMethod();
+
+        if (sm == null) {
+            alertBean.setType(3);
+            alertBean.setSummary("fs.addclients.error.summary");
+            alertBean.setDetail("fs.addclients.selectionmethod.null");
+            alertBean.setRendered(true);
+
+            return false;
+        }
+
+        return true;
     }
 
     protected boolean processByHostName() {
@@ -330,16 +351,39 @@ public class AddClientsWizardEventListener implements WizardEventListener {
     }
 
     protected boolean processReviewClientList() {
+        AlertBean alertBean = this.wizardBean.getAlertBean();
         String [] rawList = this.wizardBean.getSelectedHosts();
-        
-        List<String> list = new ArrayList<String>();
-        
+
+        if (rawList == null || rawList.length == 0) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.error.nohosts"));
+            alertBean.setRendered(true);
+
+            this.wizardBean.setSelectedHosts(null);
+
+            return false;
+        }
+
         // new entries could be hosts, ips, or ip ranges.
         return true;
     }
 
     protected boolean processMountOptions() {
-        return true;
+        AlertBean alertBean = this.wizardBean.getAlertBean();
+        alertBean.reset();
+
+        boolean valid =
+            SamUtil.isValidMountPoint(this.wizardBean.getMountPoint());
+
+        if (!valid) {
+            alertBean.setType(3);
+            alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
+            alertBean.setDetail(JSFUtil.getMessage("fs.addclients.mountoptions.mountpoint.invalid"));
+            alertBean.setRendered(true);
+        }
+
+        return valid;
     }
 
     /**
@@ -363,13 +407,17 @@ public class AddClientsWizardEventListener implements WizardEventListener {
      * convert a string of the format hostname(ip1;ip2) to an array of an array 
      * of hostnames to be used by the finishWizard function
      */
-    private String formattedStringToHostName(String s) {
+    private Host formattedStringToHostName(String s) {
         String hostname = null;
         if (s != null && s.length() > 0 && s.indexOf("(") != -1) {
             hostname = s.substring(0, s.indexOf("("));
         }
 
-        return hostname;
+        // now retrieve the ip addresses
+        String ipFragment = s.substring(s.indexOf("(") + 1, s.length() - 1);
+        String [] ipAddress = ipFragment.split(",");
+
+        return new Host(hostname, ipAddress, 0, false);
     }
 
     /**
@@ -437,17 +485,21 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
             // the list contains hosts string(ip address) strings. Convert it
             // back to ip addresses
-            String [] hostList = new String[displayHost.length];
-
+            Host [] hostList = new Host[displayHost.length];
             for (int i = 0; i < displayHost.length; i++) {
                 hostList[i] = formattedStringToHostName(displayHost[i]);
             }
             
+            String options = createMountOptionsString();
+
             // add the client list
             SamQFSSystemSharedFSManager fsManager = SamQFSFactory
                 .getSamQFSAppModel().getSamQFSSystemSharedFSManager();
 
-            long jobId = fsManager.addClients(serverName, fsName, hostList);
+            long jobId = fsManager.addClients(serverName,
+                                              fsName,
+                                              hostList,
+                                              options);
 
 
             // if -1 is return, an error occured during job
@@ -537,5 +589,40 @@ public class AddClientsWizardEventListener implements WizardEventListener {
         }
 
         // we really should have return by now.
+    }
+
+
+    /**
+     * create an options key=value pair string.
+     *
+     * options is a key value string supporting the following options:
+     * mount_point="/fully/qualified/path"
+     * mount_fs= yes | no
+     * mount_at_boot = yes | no
+     * bg_mount = yes | no
+     * read_only = yes | no
+     * potential_mds = yes | no
+     *
+     */
+    private String createMountOptionsString() {
+        StringBuffer buf = new StringBuffer();
+        
+        buf.append("mount_point=")
+            .append(this.wizardBean.getMountPoint())
+            .append(",mount_fs=")
+            .append(this.wizardBean.getMountAfterAdd() ? "yes" : "no")
+            .append(",potential_mds=")
+            .append(this.wizardBean.getMakePMDS() ? "yes" : "no");
+
+        // append the check box group
+        boolean [] mo = this.wizardBean.getMountOptionSettings();
+        buf.append(",read_only=")
+            .append(mo[0] ? "yes" : "no") // mount read only
+            .append(",mount_at_boot=")
+            .append(mo[1] ? "yes" : "no") // mount at boot time
+            .append(",bg_mount=")
+            .append(mo[2] ? "yes" : "no"); // mount in the background
+
+        return buf.toString();
     }
 }

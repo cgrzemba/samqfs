@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: multihoststatus.js,v 1.2 2008/10/16 13:43:38 kilemba Exp $
+// ident	$Id: multihoststatus.js,v 1.3 2008/10/22 20:57:03 kilemba Exp $
 
 // NOTE: This file MUST be used in conjunction with the samqfsui.js
 
@@ -210,7 +210,7 @@ function parseHostErrorArray() {
   var hostError = raw.split(",");
   
   for (var i = 0; hostError != null && i < hostError.length;i++) {
-    var rawHostError = hostError[i].split(":");
+    var rawHostError = hostError[i].split("=");
     var host = rawHostError[0];
     var error = rawHostError[1];
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.62 2008/10/16 14:53:59 pg125177 Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.63 2008/10/22 20:57:05 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -94,29 +94,19 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      */
     public long addClients(String serverName,
                            String fsName,
-                           String [] clients) throws SamFSException {
+                           Host [] clients,
+                           String options) throws SamFSException {
 
         // TODO: To be verified
-        clients = clients == null ? new String[0] : clients;
-
-        Host [] allClients = new Host[clients.length];
-        for (int i = 0; i < clients.length; i++) {
-            Host newHost =
-                new Host(clients[i],
-                         getIPAddresses(clients[i]),
-                         0,
-                         false);
-            allClients[i] = newHost;
-        }
+        clients = clients == null ? new Host[0] : clients;
 
         SamQFSSystemModelImpl sysModel = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(serverName);
 
         int rtnval = Host.addHosts(sysModel.getJniContext(),
                                    fsName,
-                                   allClients,
-				   null);
-
+                                   clients,
+                                   options);
         return (long)rtnval;
     }
 

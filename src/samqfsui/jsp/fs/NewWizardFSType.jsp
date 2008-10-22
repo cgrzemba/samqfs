@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardFSType.jsp,v 1.1 2008/09/17 23:33:23 kilemba Exp $
+// ident	$Id: NewWizardFSType.jsp,v 1.2 2008/10/22 20:57:03 kilemba Exp $
 --%>
 
 <%@ page language="java" %> 
@@ -98,5 +98,7 @@
 </td></tr>
 </table>
 
+<cc:hidden name="hasArchiveMedia"/>
+<cc:hidden name="archiveMediaWarning"/>
 </jato:pagelet>
 
