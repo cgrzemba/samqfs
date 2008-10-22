@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.20 2008/10/15 22:22:13 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.21 2008/10/22 19:52:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -115,10 +115,6 @@ public class SharedFSBean implements Serializable {
     protected String confirmDisable = null;
     protected String confirmUnmount = null;
     protected String confirmUnmountFS = null;
-    protected String confirmRemoveSn = null;
-    protected String confirmDisableSn = null;
-    protected String confirmUnmountSn = null;
-    protected String confirmClearFaultSn = null;
 
     /** Holds table information in Client Summary Page. */
     protected String clientPageTitle = null;
@@ -386,7 +382,6 @@ public class SharedFSBean implements Serializable {
     }
 
     public void handleViewPolicies(ActionEvent event) {
-        System.out.println("handleViewPolicies() called!");
 
         String params =
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME
@@ -408,8 +403,6 @@ public class SharedFSBean implements Serializable {
     }
 
     public void handleViewDevices(ActionEvent event) {
-        System.out.println("handleViewDevices() called!");
-
         String params =
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME
                  + "=" + JSFUtil.getServerName();
@@ -675,7 +668,6 @@ public class SharedFSBean implements Serializable {
         confirmDisable = JSFUtil.getMessage("SharedFS.message.disable");
         confirmUnmount = JSFUtil.getMessage("SharedFS.message.unmount");
         confirmUnmountFS = JSFUtil.getMessage("SharedFS.message.unmountfs");
-        confirmClearFaultSn = JSFUtil.getMessage("SharedFS.message.clearfault");
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -813,6 +805,10 @@ public class SharedFSBean implements Serializable {
                     "SharedFS.message.removeclients.ok",
                     ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
+
+            // Reset Filter
+            resetFilter();
+
         } catch (SamFSException samEx) {
             TraceUtil.trace1("SamFSException caught!", samEx);
             LogUtil.error(this, samEx);
@@ -895,6 +891,9 @@ public class SharedFSBean implements Serializable {
         TraceUtil.trace3("handleTableMenuSelection: selected: " + selected);
 
         if (clientBean.menuOptions[0][1].equals(selected)) {
+            // Reset Filter
+            JSFUtil.removeAttribute(PARAM_FILTER);
+
             forwardToMountOptionsPage();
             return;
         }
@@ -1023,6 +1022,10 @@ System.out.println("Unounting Clients Job ID: " + jobId);
                     message,
                     ConversionUtil.arrayToStr(selectedClients, ',')),
                 null);
+
+            // Reset Filter
+            resetFilter();
+
         } catch (SamFSException samEx) {
             TraceUtil.trace1("SamFSException caught!", samEx);
             LogUtil.error(this, samEx);
@@ -1058,8 +1061,9 @@ System.out.println("Unounting Clients Job ID: " + jobId);
         TableDataProvider provider = getClientSummaryList();
         RowKey [] rows = getClientSummaryTableRowGroup().getSelectedRowKeys();
 
-        TraceUtil.trace3("RowKeys selected: " + rows.length);
-
+        TraceUtil.trace3(
+            "RowKeys selected: " + (rows == null ? 0 : rows.length));
+System.out.println("RowKeys selected: " + (rows == null ? 0 : rows.length));
         String [] selected = null;
         if (rows != null && rows.length >= 1) {
             selected = new String[rows.length];
@@ -1100,6 +1104,13 @@ System.out.println("getFilters: request criteria:" + criteria + "end");
             JSFUtil.setAttribute(PARAM_FILTER, criteria);
             return convertStrToFilter(criteria);
         }
+    }
+
+    private void resetFilter() {
+        JSFUtil.removeAttribute(PARAM_FILTER);
+
+        // safe to clear the selection
+        getSelectClient().clear();
     }
 
     private SharedFSFilter [] convertStrToFilter(String criteria) {

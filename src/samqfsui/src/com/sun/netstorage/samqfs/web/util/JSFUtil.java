@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: JSFUtil.java,v 1.11 2008/10/08 22:33:34 ronaldso Exp $
+// ident	$Id: JSFUtil.java,v 1.12 2008/10/22 19:52:11 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -224,6 +224,13 @@ public class JSFUtil {
             value = session.getAttribute(name);
 
         return value;
+    }
+
+    public static void removeAttribute(String name) {
+        HttpSession session = getRequest().getSession();
+
+        if (name != null)
+            session.removeAttribute(name);
     }
 
     /**

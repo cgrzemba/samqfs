@@ -29,7 +29,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: app.xml,v 1.29 2008/06/11 16:57:58 ronaldso Exp $ -->
+<!-- $Id: app.xml,v 1.30 2008/10/22 19:52:08 ronaldso Exp $ -->
 
 
 <registrationInfo version="3.0">
@@ -57,7 +57,7 @@
 
         <!--Arbitrary length description of this management application-->
         <description localizable="true">
-            Sun StorageTek Storage Archive Manager (SAM) software provides policy-based archiving services that help you automate management of your information assets based on business value. It provides a powerful, easily managed, cost-effective way to access, archive, and protect business data over its entire lifecycle.  This self-protecting file system offers continuous archiving and fast recovery features to help enhance productivity resource utilization.
+            Sun Storage Archive Manager (SAM) software provides policy-based archiving services that help you automate management of your information assets based on business value. It provides a powerful, easily managed, cost-effective way to access, archive, and protect business data over its entire lifecycle.  This self-protecting file system offers continuous archiving and fast recovery features to help enhance productivity resource utilization.  SAM-QFS Manager is the graphical user interface that configs and controls SAM servers.
         </description>
 
         <!--Description of common masthead properties-->

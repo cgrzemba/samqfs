@@ -26,7 +26,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: VersionHighlightContent.xml,v 1.15 2008/05/16 19:39:24 am143972 Exp $ -->
+<!-- $Id: VersionHighlightContent.xml,v 1.16 2008/10/22 19:52:10 ronaldso Exp $ -->
 
 <!DOCTYPE content [
     <!ELEMENT content (feature+)>
@@ -56,10 +56,18 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.43
+            version.highlight.versionnumber.41
         </version-number>
         <version-status>
             version.highlight.versionstatus.available
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
         </version-status>
     </version>
 </feature>
@@ -88,9 +96,9 @@
     <server-version>
         version.highlight.server.version.41
     </server-version>
-    <version>
+     <version>
         <version-number>
-            version.highlight.versionnumber.43
+            version.highlight.versionnumber.41
         </version-number>
         <version-status>
             version.highlight.versionstatus.available
@@ -104,46 +112,12 @@
             version.highlight.versionstatus.upgrade
         </version-status>
     </version>
-</feature>
-
-<feature type="detail">
-    <feature-name>
-        version.highlight.featurename.fs.provisioning.sharedqfs
-    </feature-name>
-    <server-version>
-        version.highlight.server.version.43
-    </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.45
+            version.highlight.versionnumber.50
         </version-number>
         <version-status>
             version.highlight.versionstatus.upgrade
-        </version-status>
-    </version>
-</feature>
-
-<feature type="detail">
-    <feature-name>
-        version.highlight.featurename.fs.provisioning.sharedsamqfs
-    </feature-name>
-    <server-version>
-        version.highlight.server.version.46
-    </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.46
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
         </version-status>
     </version>
 </feature>
@@ -163,6 +137,14 @@
             version.highlight.versionstatus.new
         </version-status>
     </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
 </feature>
 
 <feature type="detail">
@@ -178,6 +160,40 @@
         </version-number>
         <version-status>
             version.highlight.versionstatus.available
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.growmountedfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.shrinkmountedfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
         </version-status>
     </version>
 </feature>
@@ -218,6 +234,147 @@
 
 <feature type="summary">
     <feature-name>
+        version.highlight.featurename.sharedfs.provisioning
+    </feature-name>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.sharedqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.43
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.45
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.sharedsamqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.46
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.alloc
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.clients
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.manyclients
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.oneglance
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.fs.provisioning.mat
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="summary">
+    <feature-name>
         version.highlight.featurename.fs.recovery
     </feature-name>
 </feature>
@@ -231,15 +388,15 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.44
+            version.highlight.versionnumber.45
         </version-number>
         <version-status>
-            version.highlight.versionstatus.new
+            version.highlight.versionstatus.upgrade
         </version-status>
     </version>
     <version>
         <version-number>
-            version.highlight.versionnumber.45
+            version.highlight.versionnumber.50
         </version-number>
         <version-status>
             version.highlight.versionstatus.upgrade
@@ -256,14 +413,6 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
-    <version>
-        <version-number>
             version.highlight.versionnumber.45
         </version-number>
         <version-status>
@@ -278,6 +427,14 @@
             version.highlight.versionstatus.upgrade
         </version-status>
     </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
 </feature>
 
 <feature type="detail">
@@ -287,14 +444,6 @@
     <server-version>
         version.highlight.server.version.44
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.45
@@ -312,14 +461,6 @@
     <server-version>
         version.highlight.server.version.44
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.45
@@ -347,14 +488,6 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
-    <version>
-        <version-number>
             version.highlight.versionnumber.45
         </version-number>
         <version-status>
@@ -370,14 +503,6 @@
     <server-version>
         version.highlight.server.version.44
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.45
@@ -405,14 +530,6 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
-    <version>
-        <version-number>
             version.highlight.versionnumber.45
         </version-number>
         <version-status>
@@ -428,14 +545,6 @@
     <server-version>
         version.highlight.server.version.44
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.45
@@ -796,14 +905,6 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
-    <version>
-        <version-number>
             version.highlight.versionnumber.45
         </version-number>
         <version-status>
@@ -920,6 +1021,14 @@
             version.highlight.versionstatus.new
         </version-status>
     </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
 </feature>
 
 <feature type="summary">
@@ -935,22 +1044,6 @@
     <server-version>
         version.highlight.server.version.41
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.available
-        </version-status>
-    </version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.upgrade
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.44
@@ -970,14 +1063,6 @@
     </server-version>
     <version>
     	<version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.available
-        </version-status>
-    </version>
-    <version>
-    	<version-number>
             version.highlight.versionnumber.44
         </version-number>
         <version-status>
@@ -993,14 +1078,6 @@
     <server-version>
         version.highlight.server.version.43
     </server-version>
-    <version>
-    	<version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
     <version>
     	<version-number>
             version.highlight.versionnumber.44
@@ -1026,6 +1103,14 @@
             version.highlight.versionstatus.available
         </version-status>
     </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
 </feature>
 
 <feature type="summary">
@@ -1041,14 +1126,6 @@
     <server-version>
         version.highlight.server.version.41
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.available
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.44
@@ -1072,6 +1149,14 @@
         </version-number>
         <version-status>
             version.highlight.versionstatus.new
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
         </version-status>
     </version>
 </feature>
@@ -1175,14 +1260,6 @@
     <server-version>
         version.highlight.server.version.44
     </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
     <version>
         <version-number>
             version.highlight.versionnumber.45
@@ -1491,6 +1568,57 @@
 
 <feature type="detail">
     <feature-name>
+        version.highlight.featurename.other.i18n
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.firsttime
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
+        version.highlight.featurename.other.aboutsamqfs
+    </feature-name>
+    <server-version>
+        version.highlight.server.version.50
+    </server-version>
+    <version>
+    	<version-number>
+            version.highlight.versionnumber.50
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.new
+        </version-status>
+    </version>
+</feature>
+
+<feature type="detail">
+    <feature-name>
         version.highlight.featurename.other.datavalidation
     </feature-name>
     <server-version>
@@ -1498,35 +1626,10 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.available
-        </version-status>
-    </version>
-    <version>
-        <version-number>
             version.highlight.versionnumber.44
         </version-number>
         <version-status>
             version.highlight.versionstatus.upgrade
-        </version-status>
-    </version>
-</feature>
-
-<feature type="detail">
-    <feature-name>
-        version.highlight.featurename.other.redirect
-    </feature-name>
-    <server-version>
-        version.highlight.server.version.41
-    </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.43
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.available
         </version-status>
     </version>
 </feature>
@@ -1574,14 +1677,6 @@
     </server-version>
     <version>
         <version-number>
-            version.highlight.versionnumber.44
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.upgrade
-        </version-status>
-    </version>
-    <version>
-        <version-number>
             version.highlight.versionnumber.45
         </version-number>
         <version-status>
@@ -1591,6 +1686,14 @@
     <version>
         <version-number>
             version.highlight.versionnumber.46
+        </version-number>
+        <version-status>
+            version.highlight.versionstatus.upgrade
+        </version-status>
+    </version>
+    <version>
+        <version-number>
+            version.highlight.versionnumber.50
         </version-number>
         <version-status>
             version.highlight.versionstatus.upgrade

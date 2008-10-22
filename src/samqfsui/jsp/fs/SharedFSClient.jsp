@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.14 2008/10/15 22:22:12 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.15 2008/10/22 19:52:09 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -50,7 +50,7 @@
 </ui:head>
 <ui:body onLoad="
                 if (parent.serverName != null) {
-                    parent.setSelectedNode('0', 'SharedFSClient');
+                    parent.setSelectedNode('0', 'SharedFSMembers');
                 }">
 <ui:form id="SharedFSClientForm">
     <ui:breadcrumbs id="breadcrumbs" pages="#{SharedFSBean.breadCrumbsClient}" />

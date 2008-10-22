@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: HelpLinkConstants.java,v 1.24 2008/09/03 19:46:06 ronaldso Exp $
+// ident	$Id: HelpLinkConstants.java,v 1.25 2008/10/22 19:52:11 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -37,7 +37,7 @@ public interface HelpLinkConstants {
     public static final String SERVERS = "samqfs-serversummary.html";
     public static final String SITE_CONFIG = "samqfs-siteinformation.html";
     public static final
-        String VERSION_HIGHLIGHT = "samqfs-releasehighlights.html";
+        String VERSION_HIGHLIGHT = "samqfs-versionhighlights.html";
     public static final
         String FILE_BROWSER = "samqfs-filebrowser.html";
     public static final
@@ -93,7 +93,7 @@ public interface HelpLinkConstants {
     public static final String MEDIA_LIBSUMMARY =
         "samqfs-librarysummary.html";
     public static final String MEDIA_DEVICEFAULT =
-        "samqfs-devicefaultsummary.html";
+        "samqfs-faultsummary.html";
     public static final String MEDIA_VSNSUMMARY =
         "samqfs-libraryvsnsummary.html";
     public static final String MEDIA_VSNSEARCH = "samqfs-vsnsearch.html";
@@ -102,7 +102,7 @@ public interface HelpLinkConstants {
     public static final String MEDIA_VSNDETAILS = "samqfs-vsndetails.html";
     public static final String MEDIA_HISTORIAN = "samqfs-historian.html";
     public static final String MEDIA_LIBRARYDRIVESUMMARY =
-        "samqfs-drivessummaryofalibrary.html";
+        "samqfs-drivedetails.html";
     public static final String MEDIA_IMPORT_VSN = "samqfs-importvsn.html";
 
     // Job pages

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.6 2008/10/02 03:00:23 ronaldso Exp $
+// ident	$Id: SharedFS.js,v 1.7 2008/10/22 19:52:09 ronaldso Exp $
 
 
 // Used by drop down menu in summary page
@@ -177,18 +177,6 @@ function getMessage(choice) {
         case 4:
             return document.getElementById(
                       thisFormId + ":" + "ConfirmUnmount").value;
-        case 5:
-            return document.getElementById(
-                      thisFormId + ":" + "ConfirmRemoveSn").value;
-        case 6:
-            return document.getElementById(
-                      thisFormId + ":" + "ConfirmDisableSn").value;
-        case 7:
-            return document.getElementById(
-                      thisFormId + ":" + "ConfirmUnmountSn").value;
-        case 8:
-            return document.getElementById(
-                      thisFormId + ":" + "ConfirmClearFaultSn").value;
         default:
             return "";
     }

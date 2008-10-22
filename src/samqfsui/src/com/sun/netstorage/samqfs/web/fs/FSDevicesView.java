@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevicesView.java,v 1.14 2008/10/08 22:33:33 ronaldso Exp $
+// ident	$Id: FSDevicesView.java,v 1.15 2008/10/22 19:52:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -39,6 +39,7 @@ import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
+import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
 import com.sun.netstorage.samqfs.web.model.media.DiskCache;
 import com.sun.netstorage.samqfs.web.model.media.StripedGroup;
@@ -153,24 +154,53 @@ public class FSDevicesView extends CommonTableContainerView {
         CCActionTable myTable =
             (CCActionTable) getChild(CHILD_ACTION_TABLE);
 
+        boolean hasPermission =
+            SecurityManagerFactory.getSecurityManager().
+                hasAuthorization(Authorization.CONFIG);
+        TraceUtil.trace3("FSDevice: has permission? " + hasPermission);
+
         String serverName = getServerName();
+        String fsName = getFSName();
         String samfsServerAPIVersion = "1.5";
+        FileSystem fs = null;
+        boolean shared = false;
+        boolean isMDS = false;
+
         try {
             samfsServerAPIVersion =
                 SamUtil.getServerInfo(serverName).getSamfsServerAPIVersion();
             TraceUtil.trace3("API Version: " + samfsServerAPIVersion);
+
+            SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
+            fs =
+                sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
+            if (fs == null) {
+                TraceUtil.trace1("fs is null, beginDisplay()!");
+                throw new SamFSException(null, -1000);
+            }
+
+            int fsType = fs.getFSTypeByProduct();
+
+            boolean samqfs = fsType != GenericFileSystem.FS_NONSAMQ;
+            int sharedStatus = !samqfs ? -1 : fs.getShareStatus();
+
+            shared = sharedStatus != FileSystem.UNSHARED;
+            isMDS =
+                samqfs && sharedStatus == FileSystem.SHARED_TYPE_MDS;
+
+
+            TraceUtil.trace3("samqfs type? " + samqfs);
+            TraceUtil.trace3("shared? " + shared);
+            TraceUtil.trace3("sharedMDS50? " + isMDS);
+
         } catch (SamFSException samEx) {
-            TraceUtil.trace1("Error getting samfs version!", samEx);
+            TraceUtil.trace1("Error in FSDevice beginDisplay!", samEx);
         }
 
-        if (SecurityManagerFactory.getSecurityManager().
-            hasAuthorization(Authorization.CONFIG) &&
-            SamUtil.isVersionCurrentOrLaterThan(
-                    samfsServerAPIVersion, "1.6")) {
+        if (hasPermission && (isMDS || !shared)) {
             // Disable Tooltip
             disableTableSelectionToolTip();
 
-            TraceUtil.trace3("User has permission to change device settings!");
         } else {
             // disable the radio button row selection column
             // if user has no permission to change device
@@ -182,15 +212,10 @@ public class FSDevicesView extends CommonTableContainerView {
             // Disable table buttons as well
             ((CCButton) getChild(BUTTON_ENABLE)).setDisabled(true);
             ((CCButton) getChild(BUTTON_DISABLE)).setDisabled(true);
-
-            TraceUtil.trace3(
-                "User has no permission to change device settings!");
         }
 
-        String fsName = getFSName();
-
         try {
-            populateData(serverName, fsName);
+            populateData(fs);
         } catch (SamFSException ex) {
             SamUtil.processException(
                 ex,
@@ -217,24 +242,13 @@ public class FSDevicesView extends CommonTableContainerView {
      * Populating page data
      * @throws com.sun.netstorage.samqfs.mgmt.SamFSException
      */
-    public void populateData(String serverName, String fsName)
+    public void populateData(FileSystem fs)
         throws SamFSException {
-        TraceUtil.trace3(
-            "In FS Device, populating data. serverName: " + serverName +
-            " fsName: " + fsName);
 
         StringBuffer buf = new StringBuffer();
 
         // Clear table model
         model.clear();
-
-        SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
-        FileSystem fs =
-            sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
-        if (fs == null) {
-            TraceUtil.trace1("fs is null, populateData()!");
-            throw new SamFSException(null, -1000);
-        }
 
         TraceUtil.trace3("populateData: type: " + fs.getShareStatus());
 

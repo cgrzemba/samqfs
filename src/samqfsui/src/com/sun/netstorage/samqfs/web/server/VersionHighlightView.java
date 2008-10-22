@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VersionHighlightView.java,v 1.13 2008/05/16 18:39:05 am143972 Exp $
+// ident	$Id: VersionHighlightView.java,v 1.14 2008/10/22 19:52:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.server;
 
@@ -216,12 +216,12 @@ public class VersionHighlightView extends MultiTableViewBase {
                     String [] versionInfo = versionInfoArray[j].split(",");
 
                     if (versionInfo[0].equals(
-                        "version.highlight.versionnumber.46")) {
+                        "version.highlight.versionnumber.50")) {
                         model.setValue(
                             "FirstImage",
                             getImage(versionInfo[1]));
                     } else if (versionInfo[0].equals(
-                        "version.highlight.versionnumber.45")) {
+                        "version.highlight.versionnumber.46")) {
                         model.setValue(
                             "SecondImage",
                             getImage(versionInfo[1]));
@@ -229,7 +229,7 @@ public class VersionHighlightView extends MultiTableViewBase {
                             "FirstImage",
                             Constants.Image.ICON_AVAILABLE);
                     } else if (versionInfo[0].equals(
-                        "version.highlight.versionnumber.44")) {
+                        "version.highlight.versionnumber.45")) {
                         model.setValue(
                             "ThirdImage",
                             getImage(versionInfo[1]));
