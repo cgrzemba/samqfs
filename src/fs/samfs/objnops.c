@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
 
 #include "sam/osversion.h"
 
@@ -125,7 +125,8 @@ sam_obj_unbusy(objnode_t *objnodep, cred_t *cr, caller_context_t *ct)
 
 /*
  * sam_obj_rele - Releases a hold on the given object.  It does nothing more
- * then a VN_RELE on the vnode of the object.
+ * then a VN_RELE on the vnode of the object. Increment obj_ios to flag
+ * a delayed inactivate.
  */
 /* ARGSUSED */
 int
@@ -133,8 +134,11 @@ sam_obj_rele(objnode_t *objnodep)
 {
 
 	vnode_t *vp;
+	sam_node_t *ip;
 
 	vp = ((struct sam_node *)(objnodep->obj_data))->vnode;
+	ip = SAM_VTOI(vp);
+	atomic_add_32((uint32_t *)&ip->obj_ios, 1);
 	VN_RELE(vp);
 	return (0);
 }
@@ -356,12 +360,16 @@ sam_obj_create(objnode_t *pobjp, mode_t mode, uint64_t *created,
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		temp = (void *)&ip->di.id;
 		*objlist = *temp;
-		num--; *created++; objlist++;
+		num--;
+		*created++;
+		objlist++;
+		atomic_add_32((uint32_t *)&ip->obj_ios, 1);
 		VN_RELE(SAM_ITOV(ip));
 	} /* while .. */
 
-	if (!*created)
+	if (!*created) {
 		return (error);
+	}
 
 	return (0);
 }
@@ -440,6 +448,7 @@ sam_obj_read(struct objnode *objnodep, uint64_t offset, uint64_t len,
 	struct uio uio;
 	int ioflag = 0;
 	int error = 0;
+	uint64_t resid = len;
 
 	vp = ((struct sam_node *)(objnodep->obj_data))->vnode;
 	ip = SAM_VTOI(vp);
@@ -467,7 +476,6 @@ sam_obj_read(struct objnode *objnodep, uint64_t offset, uint64_t len,
 		/*
 		 * Set Directio Flag
 		 */
-		ip = SAM_VTOI(vp);
 		ip->flags.bits |= SAM_DIRECTIO;
 	}
 
@@ -476,10 +484,18 @@ sam_obj_read(struct objnode *objnodep, uint64_t offset, uint64_t len,
 	/*
 	 * Turn off direct io.
 	 */
-	if (io_option == OBJECTIO_OPTION_DPO)
+	if (io_option == OBJECTIO_OPTION_DPO) {
 		ip->flags.bits &= ~SAM_DIRECTIO;
+	}
 
 	*size_read = len - uio.uio_resid;
+	if (*size_read != len) {
+		ip = SAM_VTOI(vp);
+		dcmn_err((CE_NOTE, "SAM-QFS: %s: OSN RESID ino=%d.%d ip=%p "
+		    "off=%llx len=%llx sz=%llx %llx",
+		    ip->mp->mt.fi_name, ip->di.id.ino, ip->di.id.gen,
+		    (void *)ip, offset, resid, ip->di.rm.size, ip->size));
+	}
 
 	VOP_RWUNLOCK(vp, V_WRITELOCK_FALSE, NULL);
 
@@ -527,15 +543,17 @@ sam_obj_write(struct objnode *objnodep, uint64_t offset, uint64_t len,
 	if (io_option == OBJECTIO_OPTION_DPO) { /* By Pass Cache */
 		ip = SAM_VTOI(vp);
 		ip->flags.bits |= SAM_DIRECTIO;
-	} else if (io_option == OBJECTIO_OPTION_FUA) /* Flush to disk */
+	} else if (io_option == OBJECTIO_OPTION_FUA) { /* Flush to disk */
 		ioflag = FSYNC;
+	}
 
 	error = VOP_WRITE(vp, &uio, ioflag, CRED(), NULL);
 	/*
 	 * Turn off direct io.
 	 */
-	if (io_option == OBJECTIO_OPTION_DPO)
+	if (io_option == OBJECTIO_OPTION_DPO) {
 		ip->flags.bits &= ~SAM_DIRECTIO;
+	}
 
 	*size_written = len - uio.uio_resid;
 	VOP_RWUNLOCK(vp, V_WRITELOCK_TRUE, NULL);
@@ -622,10 +640,10 @@ sam_obj_truncate(struct objnode *objnodep, uint64_t offset,
 	error = sam_truncate_ino(ip, offset, SAM_TRUNCATE, CRED());
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
-	if (error)
+	if (error) {
 		cmn_err(CE_WARN, "sam_obj_truncate: Error %d offset %d\n",
 		    error, offset);
-
+	}
 	return (error);
 }
 
@@ -672,25 +690,27 @@ sam_obj_append(struct objnode *objnodep, uint64_t len, void *bufp, int segflg,
 		 */
 		ip = SAM_VTOI(vp);
 		ip->flags.bits |= SAM_DIRECTIO;
-	} else if (io_option == OBJECTIO_OPTION_FUA)
-			ioflag |= FSYNC;
+	} else if (io_option == OBJECTIO_OPTION_FUA) {
+		ioflag |= FSYNC;
+	}
 
 	error = VOP_WRITE(vp, &uio, ioflag, CRED(), NULL);
 
 	/*
 	 * Turn off direct io.
 	 */
-	if (io_option == OBJECTIO_OPTION_DPO)
+	if (io_option == OBJECTIO_OPTION_DPO) {
 		ip->flags.bits &= ~SAM_DIRECTIO;
+	}
 
 	*start_appended_addr = uio.uio_loffset; /* Append offset set by QFS */
 	*size_written = len - uio.uio_resid;
 	VOP_RWUNLOCK(vp, V_WRITELOCK_TRUE, NULL);
 
 out:
-	if (error)
+	if (error) {
 		cmn_err(CE_WARN, "sam_obj_append: Error %d\n", error);
-
+	}
 	return (error);
 
 }

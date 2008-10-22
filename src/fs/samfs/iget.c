@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.216 $"
+#pragma ident "$Revision: 1.217 $"
 
 #include "sam/osversion.h"
 
@@ -569,6 +569,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->rm_wait = 0;
 	ip->accstm_pnd = 0;
 	ip->nfs_ios = 0;
+	ip->obj_ios = 0;
 	ip->rd_consec = 0;
 	ip->wr_consec = 0;
 	ip->wr_thresh = 0;

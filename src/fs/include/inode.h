@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.216 $"
+#pragma ident "$Revision: 1.217 $"
 #endif
 
 #ifdef linux
@@ -578,6 +578,7 @@ typedef struct sam_node {
 	int		rm_wait;	/* Number waiting for stage/rm */
 	int		accstm_pnd;	/* Num access time updates deferred */
 	int		nfs_ios;	/* NFS I/Os have been processed */
+	int		obj_ios;	/* Obj I/Os since delayed inactivate */
 	int		rd_consec;  /* num read consec. auto-qualified I/Os */
 	int		wr_consec;  /* num write consec. auto-qualified I/Os */
 	int		wr_thresh;  /* Wait cnt, outstanding write threshold */

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.133 $"
+#pragma ident "$Revision: 1.134 $"
 #endif
 
 #include "sam/osversion.h"
@@ -327,7 +327,9 @@ sam_inactive_ino(
 	/*
 	 * Defer the inactivate for inodes accessed via NFS.  Defer the
 	 * inactivate for all inodes that are staging (local and NFS) to
-	 * prevent duplicate stage requests.
+	 * prevent duplicate stage requests. Defer inodes in the mat OSN
+	 * file system if inode is busy or I/O operations have occurred since
+	 * the last inactivate.
 	 */
 	if ((ip->di.nlink > 0) && (ino != 0) &&
 	    !(ip->flags.bits & SAM_STALE) &&
@@ -337,7 +339,9 @@ sam_inactive_ino(
 	    !S_ISSEGS(&ip->di)) {
 
 		if (((ip->nfs_ios != 0) && SAM_THREAD_IS_NFS()) ||
-		    (ip->flags.bits & SAM_STAGING)) {
+		    (ip->flags.bits & SAM_STAGING) ||
+		    ((mp->mt.fi_type == DT_META_OBJ_TGT_SET) && ip->objnode &&
+		    (ip->objnode->obj_busy || ip->obj_ios))) {
 
 			struct sam_inv_inos *rip, *ripn;
 
@@ -349,6 +353,10 @@ sam_inactive_ino(
 			rip->ip = ip;
 			rip->id = ip->di.id;
 			rip->entry_time = lbolt;
+			/*
+			 * Clear mat object I/O ops at delayed inactivate time.
+			 */
+			ip->obj_ios = 0;
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 			mutex_enter(&mp->mi.m_inode.mutex);
