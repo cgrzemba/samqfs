@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.132 $"
+#pragma ident "$Revision: 1.133 $"
 #endif
 
 #include "sam/osversion.h"
@@ -782,6 +782,8 @@ int
 sam_inactivate_ino(vnode_t *vp, int flag)
 {
 	sam_node_t *ip = SAM_VTOI(vp);
+	int err;
+	int error;
 
 	if (ip->di.status.b.direct) {
 		sam_free_stage_n_blocks(ip);
@@ -795,9 +797,12 @@ sam_inactivate_ino(vnode_t *vp, int flag)
 		(void) sam_trunc_excess_blocks(ip);
 	}
 	sam_reset_default_options(ip);
-	sam_flush_pages(ip, flag);
-	(void) sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
-	return (0);
+	err = sam_flush_pages(ip, flag);
+	error = sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
+	if (error == 0) {
+		error = err;
+	}
+	return (error);
 }
 
 
@@ -992,7 +997,7 @@ sam_free_incore_inode(
 	if (SAM_IS_SHARED_CLIENT(ip->mp) && S_ISDIR(ip->di.mode)) {
 		flags = B_INVAL|B_TRUNC;
 	}
-	error = sam_flush_pages(ip, flags);
+	error = sam_inactivate_ino(vp, flags);
 
 	mutex_enter(ihp);
 	mutex_enter(&vp->v_lock);
