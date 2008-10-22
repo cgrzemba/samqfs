@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_setup,v 1.28 2008/08/06 17:38:07 ronaldso Exp $
+#  ident	$Id: fsmgr_setup,v 1.29 2008/10/22 19:48:07 ronaldso Exp $
 #
 #  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
@@ -49,8 +49,8 @@ MINOR_REV="0"
 ZIP_FILE="fsmgr_${MAJOR_REV}.${MINOR_REV}.zip"
 LOCKHART_EXTERNAL_NAME="Sun Java(TM) Web Console"
 LH_MAJOR_VERSION=3
-LH_MINOR_VERSION=0
-LH_UPDATE_NUMBER=2
+LH_MINOR_VERSION=1
+LH_UPDATE_NUMBER=0
 LOCKHART_VERSION="${LH_MAJOR_VERSION}.${LH_MINOR_VERSION}.${LH_UPDATE_NUMBER}"
 
 BIN_DIR=/usr/sbin
@@ -463,7 +463,7 @@ unzip_files()
 	do_exit
     fi
 
-    /usr/sbin/tar xf ${LOCKHART_TARBALL}
+    # /usr/sbin/tar xf ${LOCKHART_TARBALL}
 
     if [ $? -eq 0 ]; then
 	echo "Untar ${LOCKHART_TARBALL} successfully performed!\n" >> ${MY_LOG}
@@ -826,15 +826,20 @@ install()
     # Unzip the ${ZIP_FILE} first
     unzip_files
 
-    check_install_lockhart
+    # check_install_lockhart
 
     if [ ${NEED_TO_INSTALL_LH} -eq 1 ]; then
-        # Check if Tomcat needs to be removed before LH setup kicks in
-        check_tomcat
-
-        # Kick in lockhart setup
-        install_lockhart
+        echo "OpenSolaris 2008.11 is required in this release!"
+        exit 1
     fi
+
+    # TODO: REMOVE THIS
+    #    # Check if Tomcat needs to be removed before LH setup kicks in
+    #    check_tomcat
+
+    #    # Kick in lockhart setup
+    #    install_lockhart
+    # fi
 
     # always install new GUI packages
     # update flags if the GUI packages exist
@@ -1236,7 +1241,7 @@ show_complete_install_message() {
     echo "is installed successfully.\n\n"
 
     echo "******************* PLEASE READ **********************************\n"
-    echo "Please telnet to each Sun StorEdge(TM) QFS servers to be"
+    echo "Please telnet to each Sun Storage Archive Manager (SAM) servers to be"
     echo "managed and run the following command:\n"
     echo "    /opt/SUNWsamfs/sbin/fsmadm status\n\n"
     echo "This will determine if the ${APP_NAME} daemon is running.\n"
@@ -1244,11 +1249,11 @@ show_complete_install_message() {
     echo "    /opt/SUNWsamfs/sbin/fsmadm config -a\n\n"
     echo "This command will start the ${APP_NAME} daemon that communicates with"
     echo "the ${APP_NAME}. Failure to do so will prevent ${APP_NAME}"
-    echo "from communicating with the Sun StorEdge QFS servers.\n"
+    echo "from communicating with the Sun Storage Archive Manager servers.\n"
 
     echo "Remote access to the servers used by the ${APP_NAME} is now"
     echo "restricted based on host name or IP address.  If you are managing"
-    echo "a Sun StorEdge(TM) QFS Server from a remote management station,"
+    echo "a Sun Storage Archive Manager Server from a remote management station,"
     echo "please telnet to the server and run the following command:\n"
     echo "    /opt/SUNWsamfs/sbin/fsmadm add <management_station_host_name>.<domain>"
 
@@ -1258,9 +1263,9 @@ show_complete_install_message() {
     echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} supports the following browsers:\n"
     echo "  Browser Type                          Operating System"
     echo "  ========================================================================"
-    echo "  Netscape 7.1/Mozilla 1.7/Firefox 1.5  Solaris OS,"
-    echo "                                        MS Windows 98SE, ME, 2000, and XP"
-    echo "  Internet Explorer 6.0                 MS Windows 98SE, ME, 2000, and XP\n"
+    echo "  Netscape 7.1/Mozilla 1.7/Firefox 2.0  Solaris OS,"
+    echo "                                        MS Windows 2000, and XP"
+    echo "  Internet Explorer 6.0                 MS Windows 2000, and XP\n"
 
     echo "Now launch your web browser and type the following URL:"
     echo "     https://<hostname>.<domain>:6789\n"
@@ -1706,6 +1711,20 @@ turn_trace_on_if_needed()
     /usr/bin/rm -rf /etc/opt/SUNWsamqfsui
 }
 
+prompt_enable_connection()
+{ 
+    connection=`/usr/bin/svcprop -C -p options/tcp_listen system/webconsole`
+    if [ "z${connection}" = "zfalse" ]; then
+        msg1="External connections to the Java Web Console are currently disabled.  This will stop your browser from communicating to the Java Web Console and SAM-QFS Manager will not work properly.\n\nDo you want to enable external connections?"
+        ans=`/bin/ckyorn -Q -d "yes" -W 60 -p "${msg1}?"`
+
+        if [ "${ans}" = "y" -o "${ans}" = "yes" -o "${ans}" = "Y" -o \
+             "${ans}" = "YES" ]; then
+            /opt/SUNWfsmgr/bin/fsmgr connection enable
+        fi
+    fi
+}
+
 #
 # The method writes a dummy file to create a hook for the SUNWfsmgr packages
 # to check if the user is pkgadding the packages without running the
@@ -1741,7 +1760,7 @@ case $# in
 
         create_users
         fix_users_account_if_needed
-
+        prompt_enable_connection
         show_configuration_files
         show_complete_install_message
         turn_trace_on_if_needed

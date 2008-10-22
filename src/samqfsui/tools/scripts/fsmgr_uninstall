@@ -26,10 +26,9 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_uninstall,v 1.16 2008/08/06 17:38:07 ronaldso Exp $
+#  ident	$Id: fsmgr_uninstall,v 1.17 2008/10/22 19:48:07 ronaldso Exp $
 #
-#  This program uninstalls the SUNWfsmgrr & SUNWfsmgru package
-#  along with all other necessary applications such as JATO/Lockhart/J2SE.
+#  This program uninstalls the SUNWfsmgrr & SUNWfsmgru packages
 #
 #  Note: This script is explicitly used by SAM-QFS Manager 5.0
 #        only (English only).

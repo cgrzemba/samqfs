@@ -1,5 +1,5 @@
 #!/bin/ksh
-
+#
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-# ident	$Id: fsmgr,v 1.12 2008/08/06 17:38:07 ronaldso Exp $
+# ident	$Id: fsmgr,v 1.13 2008/10/22 19:48:07 ronaldso Exp $
 #
 # fsmgr:
 # It is used to set the trace level of the SAM-QFS Manager.
@@ -42,11 +42,6 @@
 # Get Solaris major revision.
 #
 RELEASE=`grep Solaris /etc/release`
-SOLREV=`echo $RELEASE | sed -e "s/^.*Sol/Sol/" | cut -f2 -d' '`
-if [ "${SOLREV}" == "" ]; then
-	echo "Could not get Solaris version from /etc/release. Exiting"
-	exit 1
-fi
 
 # for SAM-QFS Manager smcwebserver
 USR_SBIN_DIR=/usr/sbin
@@ -120,6 +115,8 @@ usage_detail_samfsui() {
 	$ECHO "\t{timeout_value_in_minutes} has to be an integer greater than"
 	$ECHO "\tor equals to 10"
 	$ECHO
+        $ECHO "connection {enable|disable}\tEnable external connection to the Java Web Console"
+        $ECHO
 
 }
 
@@ -131,8 +128,9 @@ check_su()
 	id=`/bin/id | awk -F"(" '{print $1}' | awk -F"=" '{print $2}'`
 
 	if [ "${id}" != "0" ]; then
-		EXIT_STATUS=$EXIT_CODE_NOT_SUPERUSER
-		do_exit
+            (echo "Root privilege is required to run \c"
+             echo "this installer.")
+            exit 1
 	fi
 }
 
@@ -208,6 +206,14 @@ show_current_session_timeout_value() {
 }
 
 #
+# Show current connection value
+#
+show_current_connection_value() {
+    connection=`/usr/bin/svcprop -C -p options/tcp_listen system/webconsole`
+    echo "External connections to the Java Web Console (system/webconsole:console) is set to ${connection}"
+}
+
+#
 # Change session timeout to specific value
 #
 set_timeout() {
@@ -218,8 +224,8 @@ set_timeout() {
 
     is_running=`${SMCWEBSERVER} status -p | cut -d"=" -f2`
     if [ ${is_running} = "yes" ]; then
-        $ECHO "The Web Server is currently running."
-        P="Are you sure you want to stop the Web Server in order to"
+        $ECHO "The Java Web Console is currently running."
+        P="Are you sure you want to stop the console in order to"
         P="${P} config the session timeout value?"
         REPLY=`/bin/ckyorn -Q -d "no" -p "${P}"`
 
@@ -252,6 +258,42 @@ set_timeout_value() {
     fi
 }
 
+set_connection() {
+    is_running=`${SMCWEBSERVER} status -p | cut -d"=" -f2`
+    connection=`/usr/bin/svcprop -C -p options/tcp_listen system/webconsole`
+    need_restart=0
+
+    if [ $1 = "enable" ]; then
+        if [ ${connection} = "true" ]; then
+            echo "External connections to the Java Web Console is already enabled"
+        else
+            if [ ${is_running} = "yes" ]; then
+                ${SMCWEBSERVER} stop
+            fi
+
+            /usr/sbin/svccfg -s system/webconsole setprop options/tcp_listen = \
+              true
+            need_restart=1
+        fi
+    else
+        if [ ${connection} = "false" ]; then
+            echo "External connections to the Java Web Console is already disabled"
+        else
+            if [ ${is_running} = "yes" ]; then
+                ${SMCWEBSERVER} stop
+            fi
+
+            /usr/sbin/svccfg -s system/webconsole setprop options/tcp_listen = \
+              false
+            need_restart=1
+        fi
+    fi
+
+    if [ ${need_restart} -eq 1 ]; then
+        ${SMCWEBSERVER} start
+    fi
+}
+
 # ----------------------------------
 #	MAIN PROGRAM EXECUTION
 # ----------------------------------
@@ -274,6 +316,10 @@ if [ $# -gt 0 ]; then
 		if [ $# != 1 -a $# != 2 ]; then
 			usage
 		fi
+        elif  [ "$1" = "connection" ]; then
+                if [ $# != 1 -a $# != 2 ]; then
+                        usage
+                fi
 	else 
 		usage
 	fi
@@ -282,7 +328,6 @@ else
 	# arg count = 0
 	usage
 fi
-
 
 
 case "$1" in
@@ -331,8 +376,32 @@ case "$1" in
 	esac
 			;;
 
+##################################################
+#  Enable/Disable connection to Java Web Console #
+##################################################
+'connection')
+
+        if [ $# == 1 ]; then
+                show_current_connection_value
+                $ECHO
+                exit 0
+        fi
+
+        case $2 in
+        'enable')   set_connection $2
+                    ;;
+        'disable')  set_connection $2
+                    ;;
+        *)          $ECHO "Invalid connection value entered"
+                    $ECHO
+                    usage
+                    ;;
+        esac
+        ;;
+
 *)
-	usage
-	;;
+        usage
+        ;;
+
 esac
 exit 0
