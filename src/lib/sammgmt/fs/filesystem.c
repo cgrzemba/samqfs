@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.80 $"
+#pragma ident   "$Revision: 1.81 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1670,10 +1670,10 @@ precheck_shared_fs(fs_t *fs) {
 		}
 
 		/*
-		 * Make sure hosts information is present if this is not a
-		 * client.
+		 * Make sure hosts information is present if this is the
+		 * metadata server.
 		 */
-		if (!(fs->fi_status & FS_NODEVS)) {
+		if (fs->fi_status & FS_SERVER) {
 			if (fs->hosts_config == NULL) {
 				samerrno = SE_FS_HAS_NO_HOSTS_INFO;
 				snprintf(samerrmsg, MAX_MSG_LEN,

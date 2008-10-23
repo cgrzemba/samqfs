@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.4 $"
+#pragma ident   "$Revision: 1.5 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -104,6 +104,7 @@ char *kv_opts) {
 	int ret_val;
 	boolean_t mounted = B_FALSE;
 	add_host_opts_t opts;
+	int high_srv_prio = 0;
 
 	if (ISNULL(fs_name, new_hosts)) {
 		Trace(TR_ERR, "adding hosts failed: %s",
@@ -147,6 +148,16 @@ char *kv_opts) {
 		return (-1);
 	}
 
+	if (opts.pmds) {
+		/* Find the current highest server priority. */
+		for (n = cfg_hosts->head; n != NULL; n = n->next) {
+			host_info_t *h = (host_info_t *)n->data;
+			if (h->server_priority > high_srv_prio) {
+				high_srv_prio = h->server_priority;
+			}
+		}
+	}
+
 	for (n = new_hosts->head; n != NULL; n = n->next) {
 		node_t *sn;
 		host_info_t *h = (host_info_t *)n->data;
@@ -166,6 +177,15 @@ char *kv_opts) {
 				    samerrmsg);
 				return (-1);
 			}
+
+			if (opts.pmds) {
+				/*
+				 * Assign the next highest priorty
+				 * to this server.
+				 */
+				copy->server_priority = ++high_srv_prio;
+			}
+
 			if (lst_append(cfg_hosts, copy) != 0) {
 				free_list_of_host_info(cfg_hosts);
 				free_fs(fs);
