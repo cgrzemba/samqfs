@@ -40,7 +40,7 @@
 # In all cases, if service tags is not installed on the system, this
 # command is a noop.
 #
-#	$Revision: 1.3 $
+#	$Revision: 1.4 $
 #
 
 #
@@ -48,8 +48,6 @@
 #
 CMDNAME=$0
 USAGE="usage: $CMDNAME add|delete"
-T=/tmp/st.$$
-trap "rm -f $T" 0
 
 #
 # QFS and SAM Product URN's
@@ -99,16 +97,22 @@ fi
 # Find out which package is installed.
 #
 PKG=""
-pkginfo -l SUNWqfsr   >$T  2>/dev/null && PKG=SUNWqfs
-pkginfo -l SUNWsamfsr >>$T 2>/dev/null && PKG=SUNWsamfs
+if [ -x /opt/SUNWsamfs/sbin/qfsdump ]
+then
+	PKG=SUNWqfs
+else
+	if [ -x /opt/SUNWsamfs/sbin/samfsdump ]
+	then
+		PKG=SUNWsamfs
+	fi
+fi
 
 #
 # Get version, arch, rel.
 #
-VERS=`awk <$T '/VERSION:/ { print $2 }'`
-ARCH=`awk <$T '/ARCH:/    { print $2 }'`
+VERS=`/opt/SUNWsamfs/sbin/samcmd l | awk '/^Usage information/{ print $4 }'`
+ARCH=`uname -p`
 REL=`echo $VERS | sed -e 's/\(...\).*/\1/'`	# First 3 char of VERS
-rm -f $T
 
 #
 # Check release level - remind us to update URNs if level changes.
