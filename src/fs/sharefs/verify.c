@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -927,8 +927,11 @@ IsClusterNodeUp(char *nodename)
 		FILE *clfp;
 		struct stat statbuf;
 
+		/* quick check for SC currently active on this node */
 		if ((stat("/var/run/scrpc", &statbuf) < 0) &&
-		    (stat("/var/run/rgmd_receptionist_door", &statbuf) < 0)) {
+		    ((stat("/var/run/rgmd_receptionist_door", &statbuf)) < 0) &&
+		    ((stat("/var/run/rgmd_receptionist_doorglobal", &statbuf))
+		    < 0)) {
 			Trace(TR_MISC,
 			    "FS %s: Not cluster or RGM unstarted",
 			    Host.fs.fi_name);
