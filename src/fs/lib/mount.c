@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 #include "sam/osversion.h"
 
@@ -311,7 +311,7 @@ ChkFs(void)
 		close(fd);
 	}
 	/*
-	 * Add appropriate service tags
+	 * Add appropriate service tags.
 	 */
 	printf("%s: Adding service tags.\n", program_name);
 	pid = fork();
@@ -328,8 +328,10 @@ ChkFs(void)
 		exit(0);
 	} else {
 		waitpid(pid, &status, 0);
-		close(fd);
 	}
+
+	close(fd);
+
 #endif /* sun */
 }
 
