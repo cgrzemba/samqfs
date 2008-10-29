@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.87 $"
+#pragma ident "$Revision: 1.88 $"
 
 #include "sam/osversion.h"
 
@@ -56,6 +56,7 @@
 #include <sys/user.h>
 #include <sys/cmn_err.h>		/* for debug only */
 #include <sys/policy.h>
+#include <sys/sysmacros.h>
 
 /* ----- SAMFS Includes */
 
@@ -522,29 +523,8 @@ sam_get_hardlink_parent(
 					eip->ext.hlp.ids[0] = bip->di.parent_id;
 					eip->ext.hlp.n_ids = 1;
 					if (TRANS_ISTRANS(bip->mp)) {
-						sam_ioblk_t ioblk;
-
-		RW_LOCK_OS(&bip->mp->mi.m_inodir->inode_rwl, RW_READER);
-						error = sam_map_block(
-						    bip->mp->mi.m_inodir,
-						    (offset_t)SAM_ITOD(
-						    eid.ino), SAM_ISIZE,
-						    SAM_READ, &ioblk, CRED());
-		RW_UNLOCK_OS(&bip->mp->mi.m_inodir->inode_rwl, RW_READER);
-						if (!error) {
-							offset_t doff;
-
-							doff = ldbtob(
-							    fsbtodb(bip->mp,
-							    ioblk.blkno)) +
-							    ioblk.pboff;
-							TRANS_EXT_INODE(
-							    bip->mp, eid,
-							    doff, ioblk.ord);
-						} else {
-							error = 0;
-						}
-						brelse(ebp);
+						TRANS_WRITE_DISK_INODE(bip->mp,
+						    ebp, eip, eid);
 					} else {
 			(void) sam_bwrite_noforcewait_dorelease(bip->mp, ebp);
 					}
@@ -654,24 +634,7 @@ sam_get_hardlink_parent(
 		eip->ext.hlp.n_ids = n_ids;
 
 		if (TRANS_ISTRANS(bip->mp)) {
-			sam_ioblk_t ioblk;
-
-			RW_LOCK_OS(&bip->mp->mi.m_inodir->inode_rwl, RW_READER);
-			error = sam_map_block(bip->mp->mi.m_inodir,
-			    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
-			    SAM_READ, &ioblk, CRED());
-			RW_UNLOCK_OS(&bip->mp->mi.m_inodir->inode_rwl,
-			    RW_READER);
-			if (!error) {
-				offset_t doff;
-
-				doff = ldbtob(fsbtodb(bip->mp, ioblk.blkno)) +
-				    ioblk.pboff;
-				TRANS_EXT_INODE(bip->mp, eid, doff, ioblk.ord);
-			} else {
-				error = 0;
-			}
-			brelse(ebp);
+			TRANS_WRITE_DISK_INODE(bip->mp, ebp, eip, eid);
 		} else if (SAM_SYNC_META(bip->mp)) {
 			error = sam_write_ino_sector(bip->mp, ebp, eid.ino);
 		} else {

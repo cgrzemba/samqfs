@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.148 $"
+#pragma ident "$Revision: 1.149 $"
 
 #include "sam/osversion.h"
 
@@ -1022,7 +1022,11 @@ sam_delete_archive(sam_node_t *ip)
 		permip->di.status.b.damaged = ip->di.status.b.damaged = 0;
 		permip->di.status.b.offline = ip->di.status.b.offline = 0;
 
-		bdwrite(bp);
+		if (TRANS_ISTRANS(ip->mp)) {
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
+		} else {
+			bdwrite(bp);
+		}
 		if (ip->di.version >= SAM_INODE_VERS_2) {
 			if (ip->di.ext_attrs & ext_mva) {
 				sam_free_inode_ext(ip, S_IFMVA, SAM_ALL_COPIES,
@@ -1143,14 +1147,14 @@ sam_free_xattr_tree(
 	if (!error) {
 		pip->di2.xattr_id.ino = 0;
 		pip->di2.xattr_id.gen = 0;
-		sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
 		TRANS_INODE(pip->mp, pip);
+		sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
 
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		ASSERT(sam_empty_dir(ip) != ENOTEMPTY);
 		ip->di.nlink = 0;
-		sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
 		TRANS_INODE(ip->mp, ip);
+		sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 		sam_send_to_arfind(ip, AE_remove, 0);

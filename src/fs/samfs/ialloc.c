@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 #include "sam/osversion.h"
 
@@ -50,6 +50,7 @@
 #include <sys/cred.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/sysmacros.h>
 
 /* ----- SAMFS Includes */
 
@@ -136,9 +137,15 @@ sam_alloc_inode(
 			} else {
 				dip->di.free_ino = ++inumber;
 			}
+			TRANS_INODE(mp, dip);
 			dip->flags.b.changed = 1;
 
-			bdwrite(bp);
+			if (TRANS_ISTRANS(mp)) {
+				TRANS_WRITE_DISK_INODE(mp, bp, permip,
+				    permip->di.id);
+			} else {
+				bdwrite(bp);
+			}
 
 			if ((SAM_SYNC_META(mp)) || (TRANS_ISTRANS(mp))) {
 				(void) sam_update_inode(dip, SAM_SYNC_ONE,
@@ -354,6 +361,7 @@ sam_free_inode(
 	if (ino >= mp->mi.m_min_usr_inum) {
 		dp->free_ino = mp->mi.m_inodir->di.free_ino;
 		mp->mi.m_inodir->di.free_ino = ino;
+		TRANS_INODE(mp, mp->mi.m_inodir);
 		mp->mi.m_inodir->flags.b.changed = 1;
 	}
 }
@@ -402,7 +410,6 @@ sam_alloc_inode_ext_dp(
 	first_id.ino = first_id.gen = 0;
 
 	while (count > 0) {
-
 		/* Allocate and read inode extension */
 		if ((error = sam_alloc_inode(mp, mode, &eid.ino))) {
 			if (first_id.ino) {
@@ -442,7 +449,11 @@ sam_alloc_inode_ext_dp(
 		first_id = eid;			/* new first extension id */
 		TRACE(T_SAM_INO_EXT_ALLOC, SAM_ITOV(mp->mi.m_inodir),
 		    (int)dp->id.ino, (int)eip->hdr.id.ino, mode);
-		bdwrite(bp);
+		if (TRANS_ISTRANS(mp)) {
+			TRANS_WRITE_DISK_INODE(mp, bp, eip, eid);
+		} else {
+			bdwrite(bp);
+		}
 		count--;
 	}
 	*fid = first_id;			/* return success */
@@ -535,27 +546,8 @@ sam_free_inode_ext_dp(
 			sam_free_inode(mp, (struct sam_disk_inode *)eip);
 			mutex_exit(&mp->ms.m_inode_mutex);
 			if (TRANS_ISTRANS(mp)) {
-				sam_ioblk_t ioblk;
-				int error;
-
-				RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl,
-				    RW_READER);
-				error = sam_map_block(mp->mi.m_inodir,
-				    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
-				    SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
-				    RW_READER);
-				if (!error) {
-					offset_t doff;
-
-					doff = ldbtob(fsbtodb(mp,
-					    ioblk.blkno)) + ioblk.pboff;
-					TRANS_EXT_INODE(mp, eid,
-					    doff, ioblk.ord);
-				} else {
-					error = 0;
-				}
-				brelse(bp);
+				TRANS_WRITE_DISK_INODE(mp, bp, eip,
+				    eip->hdr.id);
 			} else {
 				bdwrite(bp);
 			}
@@ -571,31 +563,8 @@ sam_free_inode_ext_dp(
 				}
 				eip->hdr.next_id = eid;
 				if (TRANS_ISTRANS(mp)) {
-					sam_ioblk_t ioblk;
-					int error;
-
-					RW_LOCK_OS(
-					    &mp->mi.m_inodir->inode_rwl,
-					    RW_READER);
-					error = sam_map_block(
-					    mp->mi.m_inodir,
-					    (offset_t)SAM_ITOD(eid.ino),
-					    SAM_ISIZE, SAM_READ, &ioblk,
-					    CRED());
-					RW_UNLOCK_OS(
-					    &mp->mi.m_inodir->inode_rwl,
-					    RW_READER);
-					if (!error) {
-						offset_t doff;
-
-						doff = ldbtob(fsbtodb(mp,
-						    ioblk.blkno)) + ioblk.pboff;
-						TRANS_EXT_INODE(mp,
-						    eid, doff, ioblk.ord);
-					} else {
-						error = 0;
-					}
-					brelse(bp);
+					TRANS_WRITE_DISK_INODE(mp, bp, eip,
+					    last_id);
 				} else {
 					bdwrite(bp);
 				}
@@ -613,26 +582,7 @@ sam_free_inode_ext_dp(
 		}
 		eip->hdr.next_id.ino = eip->hdr.next_id.gen = 0;
 		if (TRANS_ISTRANS(mp)) {
-			sam_ioblk_t ioblk;
-			int error;
-
-			RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl, RW_READER);
-			error = sam_map_block(mp->mi.m_inodir,
-			    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
-			    SAM_READ, &ioblk, CRED());
-			RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
-			    RW_READER);
-			if (!error) {
-				offset_t doff;
-
-				doff = ldbtob(fsbtodb(mp,
-				    ioblk.blkno)) + ioblk.pboff;
-				TRANS_EXT_INODE(mp, last_id, doff,
-				    ioblk.ord);
-			} else {
-				error = 0;
-			}
-			brelse(bp);
+			TRANS_WRITE_DISK_INODE(mp, bp, eip, last_id);
 		} else {
 			bdwrite(bp);
 		}
@@ -701,7 +651,16 @@ sam_fix_mva_inode_ext(
 					    (struct sam_perm_inode **)&eip) !=
 					    0) {
 						eip->hdr.next_id = next_eid;
-						bdwrite(bp); /* write it back */
+						if (TRANS_ISTRANS(bip->mp)) {
+							TRANS_WRITE_DISK_INODE(
+							    bip->mp, bp, eip,
+							    eip->hdr.id);
+						} else {
+							/*
+							 * write it back
+							 */
+							bdwrite(bp);
+						}
 					}
 				}
 				*ret_eidp = next_eid;
@@ -722,7 +681,13 @@ sam_fix_mva_inode_ext(
 						sam_free_inode(bip->mp,
 						    (struct sam_disk_inode *)
 						    eip);
-						bdwrite(bp);
+						if (TRANS_ISTRANS(bip->mp)) {
+							TRANS_WRITE_DISK_INODE(
+							    bip->mp, bp, eip,
+							    eip->hdr.id);
+						} else {
+							bdwrite(bp);
+						}
 					} else {
 						brelse(bp);
 					}

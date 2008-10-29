@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.99 $"
+#pragma ident "$Revision: 1.100 $"
 
 #include "sam/osversion.h"
 
@@ -1457,7 +1457,11 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				}
 			}
 		}
-		bdwrite(bp);
+		if (TRANS_ISTRANS(ip->mp)) {
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
+		} else {
+			bdwrite(bp);
+		}
 		for (copy = 0; copy < MAX_ARCHIVE; copy++) {
 			if (id[copy].ino) {
 				if (ip->di.version >= SAM_INODE_VERS_2) {
@@ -1782,7 +1786,11 @@ sam_request_file(void *arg)
 	    sizeof (struct sam_vsn_section));
 
 	TRACES(T_SAM_REQ_RM, rvp, (char *)rfp->resource.archive.vsn);
-	bdwrite(bp);
+	if (TRANS_ISTRANS(ip->mp)) {
+		TRANS_WRITE_DISK_INODE(ip->mp, bp, eip, ip->di.ext_id);
+	} else {
+		bdwrite(bp);
+	}
 
 	/* Copy rest of vsn info from arg buf to remaining inode extensions */
 	urb = (struct sam_rminfo *)buf;
@@ -1827,7 +1835,11 @@ sam_request_file(void *arg)
 		}
 		vsnp += ino_vsns;
 		vsns += ino_vsns;
-		bdwrite(bp);
+		if (TRANS_ISTRANS(ip->mp)) {
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, eip, eid);
+		} else {
+			bdwrite(bp);
+		}
 	}
 
 	ip->di.mode = (ip->di.mode & ~S_IFMT) | S_IFREQ;

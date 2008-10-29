@@ -31,7 +31,7 @@
 #define	_SYS_FS_QFS_TRANS_H
 
 #ifdef sun
-#pragma ident	"$Revision: 1.5 $"
+#pragma ident	"$Revision: 1.6 $"
 #endif /* sun */
 
 /*
@@ -395,10 +395,27 @@ struct sam_mount;
 	TRANS_INODE_DELTA(qfsvfsp, (caddr_t)&ip->i_atime - (caddr_t)&ip->i_ic, \
 		sizeof (struct timeval32) * 3, ip)
 
-#define	TRANS_EXT_INODE(qfsvfsp, iid, doff, dord)			\
+#define	TRANS_DISK_INODE(qfsvfsp, iid, doff, dord)			\
 	TRANS_DELTA(qfsvfsp, doff, dord, sizeof (struct sam_perm_inode), \
 			DT_INODE, qfs_trans_push_ext_inode,		\
 			((((uint64_t)(iid.ino)) << 32) | iid.gen))
+
+#define	TRANS_WRITE_DISK_INODE(qfsvfsp, bp, iip, iid)			\
+	{								\
+		offset_t doff;						\
+		uchar_t dord;						\
+									\
+		dord = lqfs_find_ord(qfsvfsp, bp);			\
+		doff = ldbtob(bp->b_blkno) + (SAM_ISIZE *		\
+		    ((iid.ino - 1) & (INO_BLK_FACTOR - 1)));		\
+		TRANS_DISK_INODE(qfsvfsp, iid, doff, dord);		\
+		TRANS_LOG(qfsvfsp, (caddr_t)iip, doff,			\
+		    dord, sizeof (struct sam_perm_inode),		\
+		    (caddr_t)P2ALIGN((uintptr_t)iip, DEV_BSIZE),	\
+		    DEV_BSIZE);						\
+		brelse(bp);						\
+	}
+
 
 /*
  * Check if we need to log cylinder group summary info.
@@ -611,13 +628,14 @@ struct sam_mount;
 #define	FRAGSIZE(IP)		(FS_FSIZE((IP)->mp) + HEADERSIZE)
 /*
  * QFS WORK TO DO - ACLs
- * #define	MAXACLSIZE		((MAX_ACL_ENTRIES << 1) * \
- *					    sizeof (sam_acl_t))
- * #define	ACLSIZE(IP)		(((((MAX_ACL_ENTRIES / 38) + 1) * \
- *					    512) + HEADERSIZE) + INODESIZE)
+ * #define	MAXACLSIZE	((MAX_ACL_ENTRIES << 1) * \
+ *				    sizeof (sam_acl_t))
+ * #define	ACLSIZE(IP)	(((((MAX_ACL_ENTRIES / 38) + 1) * \
+ *				512) + HEADERSIZE) + INODESIZE)
  */
-#define	MAXACLSIZE		(0)
-#define	ACLSIZE(IP)		(0)
+#define		MAXACLSIZE	(0)
+#define		ACLSIZE(IP)	(0)
+
 /*
  * QFS WORK TO DO - EXTENDED ATTRIBUTES
  */

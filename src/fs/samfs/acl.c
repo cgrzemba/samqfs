@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.61 $"
+#pragma ident "$Revision: 1.62 $"
 
 #include "sam/osversion.h"
 
@@ -51,6 +51,7 @@
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/acl.h>
+#include <sys/sysmacros.h>
 
 /* ----- SAMFS Includes */
 
@@ -840,31 +841,8 @@ sam_set_acl_ext(
 
 				eid = eip->hdr.next_id;
 				if (TRANS_ISTRANS(bip->mp)) {
-					sam_ioblk_t ioblk;
-
-					RW_LOCK_OS(
-					    &bip->mp->mi.m_inodir->inode_rwl,
-					    RW_READER);
-					error =
-					    sam_map_block(bip->mp->mi.m_inodir,
-					    (offset_t)SAM_ITOD(
-					    eip->hdr.id.ino), SAM_ISIZE,
-					    SAM_READ, &ioblk, CRED());
-					RW_UNLOCK_OS(
-					    &bip->mp->mi.m_inodir->inode_rwl,
-					    RW_READER);
-					if (!error) {
-						offset_t doff;
-
-						doff = ldbtob(fsbtodb(bip->mp,
-						    ioblk.blkno)) + ioblk.pboff;
-						TRANS_EXT_INODE(bip->mp,
-						    eip->hdr.id, doff,
-						    ioblk.ord);
-					} else {
-						error = 0;
-					}
-					brelse(bp);
+					TRANS_WRITE_DISK_INODE(bip->mp, bp, eip,
+					    eip->hdr.id);
 				} else if (SAM_SYNC_META(bip->mp)) {
 					if (error = sam_write_ino_sector(
 					    bip->mp, bp, ino)) {

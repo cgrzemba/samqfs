@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.162 $"
+#pragma ident "$Revision: 1.163 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1875,7 +1875,12 @@ sam_set_csum(void *arg)
 	ip->di.status.b.cs_val = 1;
 	ip->di.cs_algo = CS_SIMPLE;
 	permip->csum = args.csum;
-	bdwrite(bp);
+	if (TRANS_ISTRANS(ip->mp)) {
+		TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
+	} else {
+		bdwrite(bp);
+	}
+	TRANS_INODE(ip->mp, ip);
 	ip->flags.b.changed = 1;
 	error = 0;
 

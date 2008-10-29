@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 
 #include "sam/osversion.h"
 
@@ -791,7 +791,12 @@ sam_alloc_segment_ino(
 			permip->ar.image[0].creation_time = SAM_SECOND();
 			bip->di.ar_flags[0] |= AR_stale;
 			bip->di.ar_flags[0] &= ~AR_verified;
-			bdwrite(bp);
+			if (TRANS_ISTRANS(bip->mp)) {
+				TRANS_WRITE_DISK_INODE(bip->mp, bp, permip,
+				    bip->di.id);
+			} else {
+				bdwrite(bp);
+			}
 		}
 		sam_send_to_arfind(bip, AE_modify, 0);
 		if (bip->mp->ms.m_fsev_buf) {

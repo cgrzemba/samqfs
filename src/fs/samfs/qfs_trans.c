@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.7 $"
+#pragma ident	"$Revision: 1.8 $"
 #endif
 
 #include <sys/sysmacros.h>
@@ -397,35 +397,29 @@ qfs_trans_push_inode(qfsvfs_t *qfsvfsp, delta_t dtyp, uint64_t ino)
 int
 qfs_trans_push_ext_inode(qfsvfs_t *qfsvfsp, delta_t dtyp, uint64_t ino)
 {
-	int		error;
-	sam_id_t id;
+	int error;
+	sam_id_t eid;
 	buf_t *bp;
 	struct sam_inode_ext *eip;
-	sam_ioblk_t ioblk;
-	offset_t doff;
 
-	id.ino = (ino >> 32);
-	id.gen = (ino & UINT32_MAX);
-	error = sam_read_ino(qfsvfsp, id.ino, &bp,
+	eid.ino = (ino >> 32);
+	eid.gen = (ino & UINT32_MAX);
+	error = sam_read_ino(qfsvfsp, eid.ino, &bp,
 	    (struct sam_perm_inode **)&eip);
 
-	if (error) {
-		return (ENOENT);
-	}
-
-	RW_LOCK_OS(&qfsvfsp->mi.m_inodir->inode_rwl, RW_READER);
-	error = sam_map_block(qfsvfsp->mi.m_inodir,
-	    (offset_t)SAM_ITOD(id.ino), SAM_ISIZE, SAM_READ, &ioblk, CRED());
-	RW_UNLOCK_OS(&qfsvfsp->mi.m_inodir->inode_rwl, RW_READER);
-
 	if (!error) {
-		doff = ldbtob(fsbtodb(qfsvfsp, ioblk.blkno)) + ioblk.pboff;
+		offset_t doff;
+		uchar_t dord;
 
-		TRANS_LOG(qfsvfsp, (caddr_t)eip, doff, ioblk.ord,
+		dord = lqfs_find_ord(qfsvfsp, bp);
+		doff = ldbtob(bp->b_blkno) + (SAM_ISIZE *
+		    ((eid.ino - 1) & (INO_BLK_FACTOR - 1)));
+
+		TRANS_LOG(qfsvfsp, (caddr_t)eip, doff, dord,
 		    sizeof (struct sam_perm_inode),
 		    (caddr_t)P2ALIGN((uintptr_t)eip, DEV_BSIZE), DEV_BSIZE);
+		brelse(bp);
 	}
-	brelse(bp);
 
 	return (error);
 }

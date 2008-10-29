@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 
 #include "sam/osversion.h"
 
@@ -956,7 +956,12 @@ sam_set_rm_info(
 				size += ino_size;
 
 				eid = eip->hdr.next_id;
-				bdwrite(bp);
+				if (TRANS_ISTRANS(bip->mp)) {
+					TRANS_WRITE_DISK_INODE(bip->mp, bp, eip,
+					    eip->hdr.id);
+				} else {
+					bdwrite(bp);
+				}
 			} else {
 				eid = eip->hdr.next_id;
 				brelse(bp);

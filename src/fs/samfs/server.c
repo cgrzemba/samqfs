@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.297 $"
+#pragma ident "$Revision: 1.298 $"
 
 #include "sam/osversion.h"
 
@@ -3335,7 +3335,11 @@ sam_update_inode_buffer_rw(sam_node_t *ip)
 	if (error == 0) {
 		permip->di = ip->di;
 		permip->di2 = ip->di2;
-		bdwrite(bp);
+		if (TRANS_ISTRANS(ip->mp)) {
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
+		} else {
+			bdwrite(bp);
+		}
 	}
 	return (error);
 }

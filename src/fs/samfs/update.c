@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.142 $"
+#pragma ident "$Revision: 1.143 $"
 
 #include "sam/osversion.h"
 
@@ -473,55 +473,8 @@ sam_update_inode(
 			mutex_exit(&mp->ms.m_inode_mutex);
 		}
 
-		if (TRANS_ISTRANS(ip->mp)) {
-			/*
-			 * Pass only a sector size buffer containing
-			 * the inode, otherwise when the buffer is copied
-			 * into a cached roll buffer then too much memory
-			 * gets consumed if 8KB inode buffers are passed.
-			 */
-
-			/*
-			 * LQFS kludge for know:  If reserved inode, get doff.
-			 */
-			if (ip->doff == 0) {
-				sam_node_t *dip;
-				offset_t offset;
-				sam_ioblk_t ioblk;
-				offset_t size;
-
-				dip = ip->mp->mi.m_inodir;
-				offset = (offset_t)SAM_ITOD(ip->di.id.ino);
-				size = SAM_ISIZE;
-
-				/*
-				 * Might want to check if inode lock is already
-				 * held here for LQFS ?
-				 */
-				RW_LOCK_OS(&dip->inode_rwl, RW_READER);
-				error = sam_map_block(dip, offset, size,
-				    SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&dip->inode_rwl, RW_READER);
-				if (!error) {
-					/* Save as disk byte offset */
-					ip->doff = ldbtob(fsbtodb(ip->mp,
-					    ioblk.blkno)) + ioblk.pboff;
-					ip->dord = ioblk.ord;
-				} else {
-					ip->doff = 0;
-					ip->dord = 0;
-				}
-			}
-			TRANS_LOG(ip->mp, (caddr_t)permip,
-			    ip->doff, ip->dord,
-			    sizeof (struct sam_perm_inode),
-			    (caddr_t)P2ALIGN((uintptr_t)permip, DEV_BSIZE),
-			    DEV_BSIZE);
-			/*
-			 * Might need to flush segments and extents here for
-			 * LQFS?
-			 */
-			brelse(bp);
+		if (TRANS_ISTRANS(mp)) {
+			TRANS_WRITE_DISK_INODE(mp, bp, permip, permip->di.id);
 		} else if (st == SAM_SYNC_ALL) {
 			bdwrite(bp);
 		} else {
@@ -636,24 +589,7 @@ sam_flush_inode_ext(sam_node_t *ip)
 		}
 		eid = eip->hdr.next_id;
 		if (TRANS_ISTRANS(ip->mp)) {
-			sam_ioblk_t ioblk;
-
-			RW_LOCK_OS(&ip->mp->mi.m_inodir->inode_rwl, RW_READER);
-			error = sam_map_block(ip->mp->mi.m_inodir,
-			    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
-			    SAM_READ, &ioblk, CRED());
-			RW_UNLOCK_OS(&ip->mp->mi.m_inodir->inode_rwl,
-			    RW_READER);
-			if (!error) {
-				offset_t doff;
-
-				doff = ldbtob(fsbtodb(ip->mp, ioblk.blkno))
-				    + ioblk.pboff;
-				TRANS_EXT_INODE(ip->mp, eid, doff, ioblk.ord);
-			} else {
-				error = 0;
-			}
-			brelse(bp);
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, eip, eip->hdr.id);
 		} else if ((error = sam_write_ino_sector(ip->mp, bp,
 		    eip->hdr.id.ino))) {
 			cmn_err(CE_WARN,

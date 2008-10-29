@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.165 $"
+#pragma ident "$Revision: 1.166 $"
 
 #include "sam/osversion.h"
 
@@ -1279,36 +1279,11 @@ sam_set_symlink(
 
 				eid = eip->hdr.next_id;
 				if (TRANS_ISTRANS(bip->mp)) {
-					sam_ioblk_t ioblk;
-
-					RW_LOCK_OS(
-					    &bip->mp->mi.m_inodir->inode_rwl,
-					    RW_READER);
-					error = sam_map_block(
-					    bip->mp->mi.m_inodir,
-					    (offset_t)SAM_ITOD(
-					    eip->hdr.id.ino),
-					    SAM_ISIZE, SAM_READ, &ioblk,
-					    CRED());
-					RW_UNLOCK_OS(
-					    &bip->mp->mi.m_inodir->inode_rwl,
-					    RW_READER);
-					if (!error) {
-						offset_t doff;
-
-						doff = ldbtob(
-						    fsbtodb(bip->mp,
-						    ioblk.blkno)) + ioblk.pboff;
-						TRANS_EXT_INODE(bip->mp,
-						    eip->hdr.id, doff,
-						    ioblk.ord);
-					} else {
-						error = 0;
-					}
-					brelse(bp);
+					TRANS_WRITE_DISK_INODE(bip->mp, bp, eip,
+					    eip->hdr.id);
 				} else if (SAM_SYNC_META(bip->mp)) {
-					error = sam_write_ino_sector(bip->mp,
-					    bp, ino);
+					error = sam_write_ino_sector(
+					    bip->mp, bp, ino);
 				} else {
 					bdwrite(bp);
 				}
@@ -1525,31 +1500,11 @@ sam_set_hardlink_parent(
 		}
 		if (e_changed) {
 			if (TRANS_ISTRANS(mp)) {
-				sam_ioblk_t ioblk;
-
-				RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl,
-				    RW_READER);
-				error = sam_map_block(mp->mi.m_inodir,
-				    (offset_t)SAM_ITOD(eid.ino), SAM_ISIZE,
-				    SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
-				    RW_READER);
-				if (!error) {
-					offset_t doff;
-
-					doff = ldbtob(fsbtodb(mp,
-					    ioblk.blkno)) + ioblk.pboff;
-					TRANS_EXT_INODE(mp, eid, doff,
-					    ioblk.ord);
-				} else {
-					error = 0;
-				}
-				brelse(bp);
+				TRANS_WRITE_DISK_INODE(mp, bp, eip, eid);
 			} else if (SAM_SYNC_META(mp)) {
 				error = sam_write_ino_sector(mp, bp, eid.ino);
 			} else {
-				(void) sam_bwrite_noforcewait_dorelease(
-				    mp, bp);
+				(void) sam_bwrite_noforcewait_dorelease(mp, bp);
 			}
 		}
 		if (done || error) {
@@ -1583,32 +1538,11 @@ sam_set_hardlink_parent(
 			eip->ext.hlp.n_ids = 1;
 
 			if (TRANS_ISTRANS(mp)) {
-				sam_ioblk_t ioblk;
-
-				RW_LOCK_OS(&mp->mi.m_inodir->inode_rwl,
-					RW_READER);
-				error = sam_map_block(mp->mi.m_inodir,
-					(offset_t)SAM_ITOD(eid.ino),
-					SAM_ISIZE, SAM_READ, &ioblk, CRED());
-				RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl,
-						RW_READER);
-				if (!error) {
-					offset_t doff;
-
-					doff = ldbtob(fsbtodb(mp,
-						ioblk.blkno)) + ioblk.pboff;
-					TRANS_EXT_INODE(mp, eid, doff,
-							ioblk.ord);
-				} else {
-					error = 0;
-				}
-				brelse(bp);
+				TRANS_WRITE_DISK_INODE(mp, bp, eip, eid);
 			} else if (SAM_SYNC_META(mp)) {
-				error = sam_write_ino_sector(mp, bp,
-								eid.ino);
+				error = sam_write_ino_sector(mp, bp, eid.ino);
 			} else {
-				(void) sam_bwrite_noforcewait_dorelease(
-							mp, bp);
+				(void) sam_bwrite_noforcewait_dorelease(mp, bp);
 			}
 		} else {
 			/*

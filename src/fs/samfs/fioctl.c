@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 
 #include <sam/osversion.h>
 
@@ -76,6 +76,7 @@
 #include "quota.h"
 #include "syslogerr.h"
 #include "trace.h"
+#include "qfs_log.h"
 
 #define	TAR_RECORDSIZE	512
 
@@ -573,7 +574,12 @@ sam_restore_a_file(
 				continue;
 			}
 			if (permip->di.version >= SAM_INODE_VERS_2) {
-				bdwrite(bp);
+				if (TRANS_ISTRANS(ip->mp)) {
+					TRANS_WRITE_DISK_INODE(ip->mp, bp,
+					    permip, permip->di.id);
+				} else {
+					bdwrite(bp);
+				}
 				id = ip->di.ext_id;
 				if (error = sam_set_multivolume(ip, &vsnp,
 				    copy, n_vsns, &id)) {
@@ -595,7 +601,12 @@ sam_restore_a_file(
 				/*
 				 * Previous inode version (1)
 				 */
-				bdwrite(bp);
+				if (TRANS_ISTRANS(ip->mp)) {
+					TRANS_WRITE_DISK_INODE(ip->mp, bp,
+					    permip, permip->di.id);
+				} else {
+					bdwrite(bp);
+				}
 				id.ino = id.gen = 0;
 				if (error = sam_set_multivolume(ip, &vsnp,
 				    copy, n_vsns, &id)) {
@@ -611,9 +622,15 @@ sam_restore_a_file(
 			}
 		}
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		TRANS_INODE(ip->mp, ip);
 		ip->flags.b.changed = 1;
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-		bdwrite(bp);
+		if (TRANS_ISTRANS(ip->mp)) {
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, permip,
+			    permip->di.id);
+		} else {
+			bdwrite(bp);
+		}
 		VN_RELE(SAM_ITOV(ip));
 	}
 out:
@@ -947,7 +964,12 @@ sam_restore_inode(
 			 * Store mva info as inode extensions linked thru ext_id
 			 * field
 			 */
-			bdwrite(bp);
+			if (TRANS_ISTRANS(ip->mp)) {
+				TRANS_WRITE_DISK_INODE(ip->mp, bp, permip,
+				    permip->di.id);
+			} else {
+				bdwrite(bp);
+			}
 			id = ip->di.ext_id;
 			if (error = sam_set_multivolume(ip, &vsnp, copy,
 			    n_vsns, &id)) {
@@ -969,7 +991,12 @@ sam_restore_inode(
 			 * Store mva info as old format ids in the inode aid
 			 * table
 			 */
-			bdwrite(bp);
+			if (TRANS_ISTRANS(ip->mp)) {
+				TRANS_WRITE_DISK_INODE(ip->mp, bp, permip,
+				    permip->di.id);
+			} else {
+				bdwrite(bp);
+			}
 			id.ino = id.gen = 0;
 			if (error = sam_set_multivolume(ip, &vsnp, copy,
 			    n_vsns, &id)) {
@@ -982,6 +1009,7 @@ sam_restore_inode(
 			((sam_perm_inode_v1_t *)permip)->aid[copy] = id;
 		}
 	}
+	TRANS_INODE(ip->mp, ip);
 	ip->flags.b.changed = 1;
 
 	/*
@@ -996,7 +1024,11 @@ sam_restore_inode(
 		sam_send_event(mp, &ip->di, ev_restore, 2,
 		    ip->di.modify_time.tv_sec);
 	}
-	bdwrite(bp);
+	if (TRANS_ISTRANS(ip->mp)) {
+		TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, permip->di.id);
+	} else {
+		bdwrite(bp);
+	}
 
 	/*
 	 *	Restore quota counts for inode.
@@ -1132,7 +1164,12 @@ sam_set_rm_info_file(
 				size += ino_size;
 
 				eid = eip->hdr.next_id;
-				bdwrite(bp);
+				if (TRANS_ISTRANS(bip->mp)) {
+					TRANS_WRITE_DISK_INODE(bip->mp, bp, eip,
+					    eip->hdr.id);
+				} else {
+					bdwrite(bp);
+				}
 			} else {
 				brelse(bp);
 				break;
@@ -1318,6 +1355,7 @@ sam_stage_write(
 				ip->stage_size = ip->size;
 			}
 			ip->stage_size = ip->stage_size & ~(SAM_STAGE_SIZE - 1);
+			TRANS_INODE(ip->mp, ip);
 			ip->flags.b.changed = 1;
 			count -= uio.uio_resid;
 			if (error == EINTR && count != 0) {

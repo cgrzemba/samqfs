@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.139 $"
+#pragma ident "$Revision: 1.140 $"
 
 #include "sam/osversion.h"
 
@@ -1620,7 +1620,11 @@ sam_set_archive(
 
 		TRANS_INODE(ip->mp, ip);
 		ip->flags.b.changed = 1;
-		bdwrite(bp);
+		if (TRANS_ISTRANS(ip->mp)) {
+			TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
+		} else {
+			bdwrite(bp);
+		}
 	}
 
 	/*
@@ -1777,7 +1781,12 @@ sam_set_multivolume(
 				vsns -= ino_vsns;
 
 				eid = eip->hdr.next_id;
-				bdwrite(bp);
+				if (TRANS_ISTRANS(bip->mp)) {
+					TRANS_WRITE_DISK_INODE(bip->mp, bp, eip,
+					    eip->hdr.id);
+				} else {
+					bdwrite(bp);
+				}
 			}
 			if (error) {
 				sam_free_inode_ext(bip, S_IFMVA, copy, fid);
@@ -2016,7 +2025,12 @@ sam_ioctl_oper_cmd(
 			if (cmd == C_ZAPINO) {
 				bzero((char *)permip,
 				    sizeof (struct sam_perm_inode));
-				bdwrite(bp);
+				if (TRANS_ISTRANS(ip->mp)) {
+					TRANS_WRITE_DISK_INODE(ip->mp, bp,
+					    permip, id);
+				} else {
+					bdwrite(bp);
+				}
 			} else {
 				brelse(bp);
 			}
