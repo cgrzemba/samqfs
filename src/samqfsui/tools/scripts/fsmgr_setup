@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_setup,v 1.29 2008/10/22 19:48:07 ronaldso Exp $
+#  ident	$Id: fsmgr_setup,v 1.30 2008/10/29 21:23:06 ronaldso Exp $
 #
 #  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
@@ -56,9 +56,13 @@ LOCKHART_VERSION="${LH_MAJOR_VERSION}.${LH_MINOR_VERSION}.${LH_UPDATE_NUMBER}"
 BIN_DIR=/usr/sbin
 SMCWEBSERVER=${BIN_DIR}/smcwebserver
 LOCKHART_TARBALL="JavaWebConsole_${LOCKHART_VERSION}_${ARCH}.tar"
+L10N_TARBALL="LH_L10N.tar"
 ARG1=""
 SOLREV=""
 NEED_TO_INSTALL_LH=1
+NEED_TO_INSTALL_LH_L10N_CHINESE=1
+NEED_TO_INSTALL_LH_L10N_JAPANESE=1
+NEED_TO_INSTALL_LH_L10N_FRENCH=1
 IS_LOCKHART_CURRENT_OR_ABOVE=0
 SAMADMIN_EXIST=0
 
@@ -66,7 +70,7 @@ EXIT_STATUS=""
 CURRENTDIR=`/usr/bin/pwd`
 UNINSTALL_FLAG="-u"
 AUTH_PREFIX="com.sun.netstorage.fsmgr"
-TMPDIR=/tmp/File_System_Manager
+TMPDIR=/tmp/SAM-QFS_Manager
 ADMINFILE=${TMPDIR}/admin.SUNWfsmgr
 MY_LOG="/var/tmp/fsmgr.setup.log"
 DATE="`date +%m.%d.%Y.%H:%M`"
@@ -79,8 +83,8 @@ IS_UPGRADE="no"
 TRACE_LEVEL=""
 
 JAVA_MAJOR_REV="1"
-JAVA_INTER_REV="4"
-JAVA_MINOR_REV="2"
+JAVA_INTER_REV="5"
+JAVA_MINOR_REV="0"
 
 
 ############################################
@@ -115,6 +119,7 @@ EXIT_CODE_FAIL_TO_REMOVE_R_PACKAGE="50"
 EXIT_CODE_FAIL_TO_REMOVE_U_PACKAGE="51"
 
 EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE="100"
+EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N="101"
 
 prepare_log_file()
 {
@@ -188,7 +193,7 @@ generate_admin_file()
     echo "End of $ADMINFILE\n" >> ${MY_LOG}
 }
 
-show_contact_support() 
+show_contact_support()
 {
     echo "Please email ${MY_LOG}.${DATE} to Sun's product support team."
 }
@@ -235,7 +240,7 @@ do_exit()
              echo "this installer.") | tee -a ${MY_LOG}
             exit 2
             ;;
-  
+
         $EXIT_CODE_ABORT_BY_USER )
             echo "Program aborted by user." |tee -a ${MY_LOG}
             exit 3
@@ -246,7 +251,7 @@ do_exit()
             show_contact_support
             exit 4
             ;;
-                                       
+
         $EXIT_CODE_CREATE_TMPDIR_FAIL )
             echo "Failed to create ${TMPDIR}." | tee -a ${MY_LOG}
             show_contact_support
@@ -262,7 +267,7 @@ do_exit()
         $EXIT_CODE_UNSUPPORTED_PLATFORM )
             echo "Unsupported platform." \
                 | tee -a ${MY_LOG}
-            echo "Please upgrade the Operating System to Solaris 10 or above." \
+            echo "Please upgrade the Operating System to Solaris 10 Update 6 or above." \
                 | tee -a ${MY_LOG}
             exit 7
             ;;
@@ -404,8 +409,8 @@ show_configuration_files()
     show_separator
     /usr/bin/cat /etc/security/auth_attr >> ${MY_LOG}
     show_separator
-    
-    echo "/usr/sbin/smreg list" >> ${MY_LOG}   
+
+    echo "/usr/sbin/smreg list" >> ${MY_LOG}
     show_separator
     /usr/sbin/smreg list >> ${MY_LOG}
     show_separator
@@ -429,7 +434,7 @@ show_configuration_files()
 
     echo "\n" >> ${MY_LOG}
 }
-   
+
 
 unzip_files()
 {
@@ -445,7 +450,7 @@ unzip_files()
         # Failed to create ${TMPDIR}
 	EXIT_STATUS=${EXIT_CODE_CREATE_TMPDIR_FAIL}
 	do_exit
-    fi 
+    fi
 
     echo "\nUnzipping ${CURRENTDIR}/${ZIP_FILE} ..." >> ${MY_LOG}
 
@@ -463,12 +468,22 @@ unzip_files()
 	do_exit
     fi
 
-    # /usr/sbin/tar xf ${LOCKHART_TARBALL}
+    /usr/sbin/tar xf ${LOCKHART_TARBALL}
 
     if [ $? -eq 0 ]; then
 	echo "Untar ${LOCKHART_TARBALL} successfully performed!\n" >> ${MY_LOG}
     else
 	# Failed to untar ${LOCKHART_TARBALL}
+	EXIT_STATUS=${EXIT_CODE_FAIL_TO_UNTAR}
+	do_exit
+    fi
+
+    /usr/sbin/tar xf ${L10N_TARBALL}
+
+    if [ $? -eq 0 ]; then
+	echo "Untar ${L10N_TARBALL} successfully performed!\n" >> ${MY_LOG}
+    else
+	# Failed to untar ${L10N_TARBALL}
 	EXIT_STATUS=${EXIT_CODE_FAIL_TO_UNTAR}
 	do_exit
     fi
@@ -483,12 +498,12 @@ unzip_files()
 check_java_sdk_jre()
 {
     echo "\nNow start checking Java RE and SDK ...\n" >> ${MY_LOG}
-    jre_version=`pkginfo -l SUNWj3rt |grep VERSION | awk -F" " '{print $2}' | awk -F"," '{print $1}'`
-    sdk_version=`pkginfo -l SUNWj3dev |grep VERSION | awk -F" " '{print $2}' | awk -F"," '{print $1}'`
+    jre_version=`pkginfo -l SUNWj5rt |grep VERSION | awk -F" " '{print $2}' | awk -F"," '{print $1}'`
+    sdk_version=`pkginfo -l SUNWj5dev |grep VERSION | awk -F" " '{print $2}' | awk -F"," '{print $1}'`
 
-    echo "SUNWj3rt (J2SDK runtime environment) Version: ${jre_version}" \
+    echo "SUNWj5rt (J2SDK runtime environment) Version: ${jre_version}" \
         >> ${MY_LOG}
-    echo "SUNWj3dev (J2SDK development tools) Version: ${sdk_version}" \
+    echo "SUNWj5dev (J2SDK development tools) Version: ${sdk_version}" \
         >> ${MY_LOG}
 
     if [ "a${jre_version}" = "a${sdk_version}" ]; then
@@ -505,7 +520,7 @@ check_java_sdk_jre()
         echo "Java Runtime Environment (JRE): Version ${jre_version}" \
                                                            | tee -a ${MY_LOG}
         echo "Java Development Kit (JDK)    : Version ${sdk_version}\n" \
-                                                           | tee -a ${MY_LOG} 
+                                                           | tee -a ${MY_LOG}
 
         echo "To fix this problem, search for all the J2SDK related packages by running" | tee -a ${MY_LOG}
         echo "          /usr/bin/pkginfo |grep J2\n "      | tee -a ${MY_LOG}
@@ -513,7 +528,7 @@ check_java_sdk_jre()
                                                            | tee -a ${MY_LOG}
         echo "          /usr/bin/pkgrm <list of J2SDK packages found>\n" \
                                                            | tee -a ${MY_LOG}
-        
+
         echo "then re-run ${MY_SCRIPT_NAME} again." | tee -a ${MY_LOG}
         EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE}
         do_exit
@@ -551,7 +566,7 @@ install_lockhart()
     # framework version issues
     #
     # Case 1) If the host does not have Lockhart installed, Lockhart setup
-    #         script will go ahead and install the Lockhart framework v2.2 
+    #         script will go ahead and install the Lockhart framework v2.2
     # Case 2) If the host already has Lockhart v2.2 or older installed,
     #         Lockhart setup script will prompt you if you want to overwrite
     #         or upgrade the existing Lockhart framework.
@@ -581,6 +596,97 @@ install_lockhart()
     fi
 }
 
+install_lockhart_l10n()
+{
+    if [ ${NEED_TO_INSTALL_LH_L10N_JAPANESE} -eq 1 ] ;then
+        echo "Installing console Japanese localization package .." | tee -a ${MY_LOG}
+        /usr/sbin/pkgadd -d 2.${SOLREV}/${ARCH} SUNWjmcon | tee -a ${MY_LOG}
+        if [ $? -eq 0 ]; then
+            echo "SUNWjmcon package has been successfully installed!" >> ${MY_LOG}
+        else
+            echo "Failed to install console Japanese localization package!" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+            do_exit
+        fi
+
+        /usr/sbin/pkgadd -d 2.${SOLREV}/${ARCH} SUNWjmctg | tee -a ${MY_LOG}
+        if [ $? -eq 0 ]; then
+            echo "SUNWjmctg has been successfully installed!" >> ${MY_LOG}
+        else
+            echo "Failed to install console Japanese localization package!" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+            do_exit
+        fi
+    fi
+
+    if [ ${NEED_TO_INSTALL_LH_L10N_CHINESE} -eq 1 ] ;then
+        echo "Installing console Chinese localization package .." | tee -a ${MY_LOG}
+        /usr/sbin/pkgadd -d 2.${SOLREV}/${ARCH} SUNWcmcon | tee -a ${MY_LOG}
+        if [ $? -eq 0 ]; then
+            echo "SUNWcmcon package has been successfully installed!" >> ${MY_LOG}
+        else
+            echo "Failed to install console Chinese localization package!" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+            do_exit
+        fi
+
+        /usr/sbin/pkgadd -d 2.${SOLREV}/${ARCH} SUNWcmctg | tee -a ${MY_LOG}
+        if [ $? -eq 0 ]; then
+            echo "SUNWcmctg has been successfully installed!" >> ${MY_LOG}
+        else
+            echo "Failed to install console Chinese localization package!" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+            do_exit
+        fi
+    fi
+
+    if [ ${NEED_TO_INSTALL_LH_L10N_FRENCH} -eq 1 ] ;then
+        echo "Installing console French localization package .." | tee -a ${MY_LOG}
+        /usr/sbin/pkgadd -d 2.${SOLREV}/${ARCH} SUNWfmcon | tee -a ${MY_LOG}
+        if [ $? -eq 0 ]; then
+            echo "SUNWfmcon package has been successfully installed!" >> ${MY_LOG}
+        else
+            echo "Failed to install console Chinese localization package!" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+            do_exit
+        fi
+
+        /usr/sbin/pkgadd -d 2.${SOLREV}/${ARCH} SUNWfmctg | tee -a ${MY_LOG}
+        if [ $? -eq 0 ]; then
+            echo "SUNWfmctg has been successfully installed!" >> ${MY_LOG}
+        else
+            echo "Failed to install console French localization package!" | tee -a ${MY_LOG}
+            EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+            do_exit
+        fi
+    fi
+
+    # Install Patch if machine is S10
+    if [ ${SOLREV} -eq 10 ]; then
+        if [ ${ARCH} = "sparc" ]; then
+            echo "Patching Console L10N packages (sparc)..." | tee -a ${MY_LOG}
+            /usr/sbin/patchadd 2.10/sparc/138355-01 | tee -a ${MY_LOG}
+            if [ $? -eq 0 ]; then
+                echo "Patch 138355-01 (SPARC) has been successfully installed!" >> ${MY_LOG}
+            else
+                echo "Failed to install console localization patch!" | tee -a ${MY_LOG}
+                EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+                do_exit
+            fi
+        else
+            echo "Patching Console L10N packages (i386)..." | tee -a ${MY_LOG}
+            /usr/sbin/patchadd 2.10/sparc/138354-01 | tee -a ${MY_LOG}
+            if [ $? -eq 0 ]; then
+                echo "Patch 138354-01 (SPARC) has been successfully installed!" >> ${MY_LOG}
+            else
+                echo "Failed to install console localization patch!" | tee -a ${MY_LOG}
+                EXIT_STATUS=${EXIT_CODE_FAIL_TO_INSTALL_SUN_WEB_CONSOLE_L10N}
+                do_exit
+            fi
+        fi
+    fi
+}
+
 install_gui()
 {
     # Stop installation if server has no Lockhart framework installed, or it has
@@ -607,7 +713,7 @@ install_gui()
 
     echo " " >> ${MY_LOG}
 
- 
+
     # Add the SAM-QFS Manager packages
     /usr/sbin/pkgadd -a $ADMINFILE \
 	-d ${TMPDIR}/2.${SOLREV}/${ARCH} SUNWfsmgrr | tee -a ${MY_LOG}
@@ -633,90 +739,6 @@ install_gui()
 
     echo "Done installing ${APP_NAME} packages." | tee -a ${MY_LOG}
     echo " " >> ${MY_LOG}
-}
-
-#
-# Function:    check_tomcat
-# Description: This function will prompt the users if they know Tomcat is version 4.0.5 or above.
-#              This function will suggest user to allow the script to remove the existing Tomcat
-#              packages if they are not sure about the Tomcat version.  The Lockhart installation
-#              script will install Tomcat that comes with the CD Image if SUNWtcatu is not found
-#
-check_tomcat()
-{
-    # If Lockhart 2 is installed, Tomcat should be good to use.  Return right away.
-    /usr/bin/pkginfo SUNWmcon >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        pkgVersion=`env LANG=C LC_ALL=C pkgparam SUNWmcon VERSION | \
-                awk -F',' '{print $1}'`
-        versionMajor=`echo $pkgVersion | awk -F'.' '{print $1}'`
-        if [ ! ${pkgVersion} -lt 2 ]; then
-            return
-        fi
-    fi
-
-    # If script reaches here, need to check tomcat
-    # Tomcat may exist even if Lockhart is not installed
-    # Lockhart only cares about SUNWtcatu, other form of Tomcat will not affect Lockhart at all
-
-    # Check if TomCat package already exists
-    # There is no way we can check the version of TomCat
-    # Prompt user if TomCat version 4.0.5 of later is installed
-    # If yes, don't remove Tomcat and keep the flow of the script
-    # if no, remove SUNWtcatu package and run lockhart setup
-    # lockhart setup should automatically install TomCat 4.0.5
-
-    /usr/bin/pkginfo SUNWtcatu > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        # package is installed
-        echo "TomCat package detected.  Remove it? [y]" >> ${MY_LOG}
-
-        msg1="TomCat package is already installed, but this installer is not"
-        msg1="$msg1 able to determine the version number of TomCat."
-        msg1="$msg1 ${APP_NAME} ${MAJOR_REV}.${MINOR_REV} needs TomCat 4.0.5 or"
-        msg1="$msg1 later to run correctly. \n\n"
-        msg1="$msg1 If you know the installed version is at least 4.0.5, you can"
-        msg1="$msg1 elect to use the current version by answering 'n' in the"
-        msg1="$msg1 question below. If you are not sure about it, answer 'y'"
-        msg1="$msg1 and let this installer to un-install the existing"
-        msg1="$msg1 TomCat package and install version 4.0.5 for you. \n\n"
-        msg1="$msg1 Do you want this installer to install TomCat 4.0.5 for you"
-
-         
-        ans=`/bin/ckyorn -Q -d "yes" -W 80 -p "${msg1}?"`
-
-        if [ "${ans}" = "y" -o "${ans}" = "yes" -o "${ans}" = "Y" -o "${ans}" = "YES" ]; then
-            echo "YES! Remove Tomcat .." >> ${MY_LOG}
-            echo "Start removing TomCat package(s)..." | tee -a ${MY_LOG}
-
-            # if Tomcat Servlet/JSP Container (root) exists, remove first
-            /usr/bin/pkginfo SUNWtcatr > /dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                echo "SUNWtcatr detected as well. Remove it too." >> ${MY_LOG}
-                # package is installed
-                /usr/sbin/pkgrm -n -a $ADMINFILE SUNWtcatr
-
-                if [ $? -eq 0 ]; then
-                    echo "SUNWtcatr has been removed successfully!" >> ${MY_LOG}
-                else
-                    echo "Failed to remove SUNWtcatr!" >> ${MY_LOG}
-                fi
-            fi
-
-            /usr/sbin/pkgrm -n -a $ADMINFILE SUNWtcatu
-            if [ $? -eq 0 ]; then
-                echo "SUNWtcatu has been removed successfully!" >> ${MY_LOG}
-            else
-                echo "Failed to remove SUNWtcatu!" >> ${MY_LOG}
-            fi
-
-            echo "Finish removing TomCat package(s)" | tee -a ${MY_LOG}
-        else
-            echo "NO! DO NOT remove TomCat!" >> ${MY_LOG}
-        fi
-    else
-        echo "No TomCat package(s) exists in the host!" >> ${MY_LOG}
-    fi
 }
 
 #
@@ -748,7 +770,6 @@ deal_with_lockhart_version_1()
             echo "Failed to remove ${LOCKHART_EXTERNAL_NAME} 1.0!"  >> ${MY_LOG}
         fi
 
-        check_tomcat
     else
         EXIT_STATUS=${EXIT_CODE_ABORT_BY_USER}
         do_exit
@@ -787,7 +808,7 @@ is_lockhart_current_or_above()
     echo "IS_LOCKHART_CURRENT_OR_ABOVE is ${IS_LOCKHART_CURRENT_OR_ABOVE}" \
         >> ${MY_LOG}
 
-    ## SPECIAL CASE: Prompt user to remove LH 1.0 if it is found 
+    ## SPECIAL CASE: Prompt user to remove LH 1.0 if it is found
     if [ ${LH_MAJOR} -eq 1 ]; then
         deal_with_lockhart_version_1
     fi
@@ -795,7 +816,7 @@ is_lockhart_current_or_above()
 
 check_install_lockhart()
 {
-    # Check if SUNWmcon exists for both S9 and S10
+    # Check if SUNWmcon exists for S10
     # If yes and LH is not up-to-date, run Lockhart installation
     # if yes and LH is up-to-date, skip Lockhart installation
 
@@ -821,25 +842,57 @@ check_install_lockhart()
     fi
 }
 
+check_install_lockhart_l10n()
+{
+    # Check if localization packages exist
+
+    /usr/bin/pkginfo SUNWcmcon >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        NEED_TO_INSTALL_LH_L10N_CHINESE=0
+    else
+        echo "SUNWcmcon is not found in the root directory!" >> ${MY_LOG}
+        NEED_TO_INSTALL_LH_L10N_CHINESE=1
+    fi
+
+    /usr/bin/pkginfo SUNWfmcon >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        NEED_TO_INSTALL_LH_L10N_FRENCH=0
+    else
+        echo "SUNWfmcon is not found in the root directory!" >> ${MY_LOG}
+        NEED_TO_INSTALL_LH_L10N_FRENCH=1
+    fi
+
+    /usr/bin/pkginfo SUNWjmcon >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        NEED_TO_INSTALL_LH_L10N_JAPANESE=0
+    else
+        echo "SUNWjmcon is not found in the root directory!" >> ${MY_LOG}
+        NEED_TO_INSTALL_LH_L10N_JAPANESE=1
+    fi
+}
+
 install()
 {
     # Unzip the ${ZIP_FILE} first
     unzip_files
 
-    # check_install_lockhart
+    check_install_lockhart
 
     if [ ${NEED_TO_INSTALL_LH} -eq 1 ]; then
-        echo "OpenSolaris 2008.11 is required in this release!"
-        exit 1
+        # User needs at least S10 update 6 that comes with Lockhart 3.1!
+        if [ $SOLREV -eq 10 ]; then
+            EXIT_STATUS=${EXIT_CODE_UNSUPPORTED_PLATFORM}
+            do_exit
+        fi
+
+        # Kick in lockhart setup
+        install_lockhart
     fi
 
-    # TODO: REMOVE THIS
-    #    # Check if Tomcat needs to be removed before LH setup kicks in
-    #    check_tomcat
+    check_install_lockhart_l10n
 
-    #    # Kick in lockhart setup
-    #    install_lockhart
-    # fi
+    # Kick in lockhart l10n setup
+    install_lockhart_l10n
 
     # always install new GUI packages
     # update flags if the GUI packages exist
@@ -889,86 +942,54 @@ associate_root_to_admin_privilege() {
 
     echo "Start editing /etc/user_attr ..." |tee -a ${MY_LOG}
 
-    # Save a copy of /etc/user_attr
-    /usr/bin/cp /etc/user_attr /etc/user_attr.samqfsui
-
-    # First remove the old root line 
-    /usr/bin/grep -v root /etc/user_attr > /tmp/user_attr.fsmgr.3
-    /usr/bin/grep -v samadmin /tmp/user_attr.fsmgr.3 > /tmp/user_attr.fsmgr.2
-
     # Give administrator permission to root
-    myString=`/usr/bin/cat /etc/user_attr |grep root`
-    addOn=",com.sun.netstorage.fsmgr.*"
+    myString=`/usr/bin/cat /etc/user_attr |grep root:`
+    # First remove the old root line
+    /usr/bin/grep -v root: /etc/user_attr > ${TMP_DIR}/user_attr.fsmgr.3
+    /usr/bin/grep -v samadmin ${TMP_DIR}/user_attr.fsmgr.3 > ${TMP_DIR}/user_attr.fsmgr.2
 
-    touch /tmp/user_attr.fsmgr.1
-
-    flag=0
-
-    echo ${myString} | tr ':' '\n' | while read field;
+    # Extract the existing auth attributes
+    echo ${myString} | while read field;
     do
-        ## root
+        echo ${field} | tr ':' '\n' | while read field2;
         ## auths=solaris.*,solaris.grant;profile=abc;roles=myRole
-
-        str=`echo ${field} |grep auths=`
-        if [ ! "a${str}" = "a" ]; then
-            echo ${str} | tr ';' '\n' | while read field2;
-            ## auths=solaris.*,solaris.grant
-            ## profile=abc
-            ## roles=myRole
-            do
-                if [ `echo ${field2} | cut -c1-6` = "auths=" ]; then
-                    addOnExist=`echo ${field2} | grep ${addOn}`
-                    if [ ! "a${addOnExist}" = "a" ]; then
-                        if [ ${flag} -eq 0 ]; then
-			    echo ":${field2}\c" >> \
-                                /tmp/user_attr.fsmgr.1
-                        else
-			    echo ";${field2}\c" >> \
-                                /tmp/user_attr.fsmgr.1
-                        fi
-                    else
-                        if [ ${flag} -eq 0 ]; then
-                            echo ":${field2}${addOn}\c" >> \
-                                /tmp/user_attr.fsmgr.1
-                        else
-                            echo ";${field2}${addOn}\c" >> \
-                                /tmp/user_attr.fsmgr.1
-                        fi
+        do
+            str2=`echo ${field2} |grep auths=`
+            if [ ! "a${str2}" = "a" ]; then
+                echo ${str2} | tr ';' '\n' | while read field3;
+                ## auths=solaris.*,solaris.grant
+                ## profile=abc
+                ## roles=myRole
+                do
+                    if [ `echo ${field3} | cut -c1-6` = "auths=" ]; then
+                        echo ${field3} | cut -c7- > ${TMPDIR}/samq-auth
+                        break
                     fi
-                else
-                    if [ ${flag} -eq 0 ]; then
-                        echo ":${field2}\c" >> /tmp/user_attr.fsmgr.1
-                    else
-                        echo ";${field2}\c" >> /tmp/user_attr.fsmgr.1
-                    fi
-                fi
-                flag=1
-            done
-        else
-            str2=`cat /tmp/user_attr.fsmgr.1`
-            if [ a${str2} = "a" ]; then
-                echo "${field}\c" >> /tmp/user_attr.fsmgr.1
-            else
-                echo ":${field}\c" >> /tmp/user_attr.fsmgr.1
+                done
             fi
-        fi
+        done
     done
 
-    echo "" >> /tmp/user_attr.fsmgr.1
+    addOn=`echo com.sun.netstorage.fsmgr.\*`
+    existingAuth=`/usr/bin/cat ${TMPDIR}/samq-auth`
+
+    exist=`echo ${existingAuth} | grep ${addOn}`
+    if [ "a${exist}" = "a" ]; then
+        echo ${myString} | sed "s/auths=/auths=${addOn},/g" \
+            >> ${TMP_DIR}/user_attr.fsmgr.2
+    else
+        echo ${myString} >> ${TMP_DIR}/user_attr.fsmgr.2
+    fi
+
+    /usr/bin/cp ${TMP_DIR}/user_attr.fsmgr.2 /etc/user_attr
 
     # Preserve samadmin and make it act as root
     if [ ${SAMADMIN_EXIST} -eq 1 ]; then
-        echo "Adding samadmin account back to /etc/user_attr"
-        echo "samadmin::::auths=com.sun.netstorage.fsmgr.*" >> \
-            /tmp/user_attr.fsmgr.1
+        echo "Adding samadmin account back to /etc/user_attr" |tee -a ${MY_LOG}
+        echo "samadmin::::auths=com.sun.netstorage.fsmgr.*" >> /etc/user_attr
     fi
 
-    /usr/bin/cat /tmp/user_attr.fsmgr.1 >> /tmp/user_attr.fsmgr.2
-
-    /usr/bin/mv /tmp/user_attr.fsmgr.2 /etc/user_attr
-    echo "Done editing /etc/user_attr" |tee -a ${MY_LOG}
-
-    /usr/bin/rm -rf /tmp/user_attr.fsmgr*
+    echo "Done editing /etc/user_attr" >> ${MY_LOG}
 }
 
 remove_old_users()
@@ -1069,8 +1090,7 @@ create_users()
     # Make a backup of the file
     echo "Backing up /etc/user_attr to /etc/user_attr.old" |tee -a ${MY_LOG}
     cp /etc/user_attr /etc/user_attr.old
-    echo "Start editing /etc/user_attr ..." |tee -a ${MY_LOG}
-    
+
     associate_root_to_admin_privilege
 
 }
@@ -1106,7 +1126,6 @@ prompt_remove_users() {
     fi
 }
 
-
 remove_users() {
 
     # remove old users if they exist
@@ -1130,75 +1149,72 @@ remove_users() {
 
     echo "Done taking out entries in /etc/security/auth_attr" >> ${MY_LOG}
 
-    echo "Start taking out entries in /etc/user_attr..." >> ${MY_LOG}
-    /usr/bin/grep -v samadmin /etc/user_attr > /tmp/user_attr.fsmgr.3
-    /usr/bin/grep -v root /tmp/user_attr.fsmgr.3 > /tmp/user_attr.fsmgr.1
+    ############################################################################
+    echo "Start editing /etc/user_attr ..." |tee -a ${MY_LOG}
 
-    myString=`/usr/bin/cat /etc/user_attr |grep root`
+    # Give administrator permission to root
+    myString=`/usr/bin/cat /etc/user_attr |grep root:`
+    # First remove the old root line
+    /usr/bin/grep -v root: /etc/user_attr > ${TMP_DIR}/user_attr.fsmgr.3
+    /usr/bin/grep -v samadmin ${TMP_DIR}/user_attr.fsmgr.3 > ${TMP_DIR}/user_attr.fsmgr.2
 
-    touch /tmp/user_attr.fsmgr.2
-
-    flag=0
-    authflag=0
-
-    echo ${myString} | tr ':' '\n' | while read field;
+    # Extract the existing auth attributes
+    echo ${myString} | while read field;
     do
-        ## root
+        echo ${field} | tr ':' '\n' | while read field2;
         ## auths=solaris.*,solaris.grant;profile=abc;roles=myRole
-
-        str=`echo ${field} |grep auths=`
-
-        if [ ! "a${str}" = "a" ]; then
-            echo ${str} | tr ';' '\n' | while read field2;
-            ## auths=solaris.*,solaris.grant
-            ## profile=abc
-            ## roles=myRole
-            do
-                if [ `echo ${field2} | cut -c1-6` = "auths=" ]; then
-                    if [ ${flag} -eq 0 ]; then
-                        echo ":auths=\c" >> /tmp/user_attr.fsmgr.2
-                    else
-                        echo ";auths=\c" >> /tmp/user_attr.fsmgr.2
+        do
+            str2=`echo ${field2} |grep auths=`
+            if [ ! "a${str2}" = "a" ]; then
+                echo ${str2} | tr ';' '\n' | while read field3;
+                ## auths=solaris.*,solaris.grant
+                ## profile=abc
+                ## roles=myRole
+                do
+                    if [ `echo ${field3} | cut -c1-6` = "auths=" ]; then
+                        echo ${field3} | cut -c7- > ${TMPDIR}/samq-auth
+                        break
                     fi
-
-                    str3=`echo ${field2} | cut -f2 -d'='`
-                    echo ${str3} | tr ',' '\n' | while read field3
-                    do
-                        exist=`echo ${field3} | grep com.sun.netstorage.fsmgr.\*`
-                        if [ "a${exist}" = "a" ]; then
-                             if [ ${authflag} -eq 0 ]; then
-                                 echo "${field3}\c" >> /tmp/user_attr.fsmgr.2
-                             else
-                                 echo ",${field3}\c" >> /tmp/user_attr.fsmgr.2
-                             fi
-                        fi
-                        authflag=1
-                    done
-                else
-                    if [ ${flag} -eq 0 ]; then
-                        echo ":${field2}\c" >> /tmp/user_attr.fsmgr.2
-                    else
-                        echo ";${field2}\c" >> /tmp/user_attr.fsmgr.2
-                    fi
-                fi
-                flag=1
-            done
-        else
-            str2=`cat /tmp/user_attr.fsmgr.2`
-            if [ a${str2} = "a" ]; then
-                echo "${field}\c" >> /tmp/user_attr.fsmgr.2
-            else
-                echo ":${field}\c" >> /tmp/user_attr.fsmgr.2
+                done
             fi
+        done
+    done
+
+    touch ${TMPDIR}/newsamq-auth
+    addOn="com.sun.netstorage.fsmgr.*"
+    existingAuth=`/usr/bin/cat ${TMPDIR}/samq-auth`
+
+    echo "Existing root AUTH: ${existingAuth}" | tee -a ${MY_LOG}
+
+    echo ${existingAuth} | tr ',' '\n'| while read field;
+    do
+        str=`echo ${field} |grep ${addOn}`
+        if [ "a${str}" = "a" ]; then
+            echo ${field} >> ${TMPDIR}/newsamq-auth
         fi
     done
 
-    echo "" >> /tmp/user_attr.fsmgr.2
-    cat /tmp/user_attr.fsmgr.2 >> /tmp/user_attr.fsmgr.1
-    /usr/bin/mv /tmp/user_attr.fsmgr.1 /etc/user_attr
+    newString=`/usr/bin/cat ${TMPDIR}/newsamq-auth | tr '\n' ','`
 
-    /usr/bin/rm -f /tmp/auth_attr.fsmgr*
-    /usr/bin/rm -f /tmp/user_attr.fsmgr*
+    # Remove trailing comma if there are any
+    newString=`echo ${newString} | sed 's/\,$//g'`
+
+    echo "new root AUTH is ${newString}" | tee -a ${MY_LOG}
+
+    # Escaping all asterisks in existingAuth
+    existingAuth=`echo ${existingAuth} | sed 's/\*/\\\*/g'`
+
+    # Next three lines are for tracking purpose
+    echo "existingAuth: ${existingAuth}" >> ${MY_LOG}
+    echo old: ${myString} >> ${MY_LOG}
+    echo new: ${myString} | sed "s/${existingAuth}/${newString}/g" >> ${MY_LOG}
+
+    echo ${myString} | sed "s/${existingAuth}/${newString}/g" \
+           >> ${TMP_DIR}/user_attr.fsmgr.2
+
+    /usr/bin/cp ${TMP_DIR}/user_attr.fsmgr.2 /etc/user_attr
+
+    echo "Done editing /etc/user_attr" | tee -a ${MY_LOG}
 }
 
 
@@ -1218,7 +1234,9 @@ check_os() {
     /usr/bin/uname -a >> ${MY_LOG}
     /usr/bin/uname -p >> ${MY_LOG}
 
-    if [ $SOLREV -eq 6 -o $SOLREV -eq 7 -o $SOLREV -eq 8 -o $SOLREV -eq 9 ]; then
+    if [ $SOLREV -eq 10 -o $SOLREV -eq 11 ]; then
+        echo "This is a supported OS, ${SOLREV}" >> ${MY_LOG}
+    else
 	# Unsupported OS detected
 	EXIT_STATUS=${EXIT_CODE_UNSUPPORTED_OS}
 	do_exit
@@ -1227,7 +1245,7 @@ check_os() {
 
 show_log_file_location() {
 
-    echo "\nInstall/Uninstall log file named ${MY_LOG}.${DATE} is created.\n\n" 
+    echo "\nInstall/Uninstall log file named ${MY_LOG}.${DATE} is created.\n\n"
 }
 
 show_complete_uninstall_message() {
@@ -1429,7 +1447,7 @@ check_software_version()
 
     CURRENT_R_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $1}'`
     CURRENT_R_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}'`
- 
+
     CURRENT_U_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $1}'`
     CURRENT_U_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}'`
 
@@ -1504,7 +1522,7 @@ check_if_packages_exist() {
 
     # Check if packages are only partially installed
     # If yes, set flag so cleanup method will clean both packages up
-    
+
     if [ "z${s1}" = "zpartially" -o "z${s2}" = "zpartially" ]; then
         PARTIAL_INSTALL_DETECTED="yes"
     fi
@@ -1645,7 +1663,7 @@ uninstall()
         echo "SUNWsamqfsuir package is not found in the host." \
                                                         >> ${MY_LOG}
     fi
-  
+
 
     # remove SUNWfsmgrr & SUNWfsmgru package if they exist
     if [ "${U_PACKAGE_EXIST}" = "yes" ]; then
@@ -1685,7 +1703,7 @@ uninstall()
     fi
 }
 
-show_env_value() 
+show_env_value()
 {
     echo "Printing system environment variables, including mount pts" \
 				>> ${MY_LOG}
@@ -1712,7 +1730,7 @@ turn_trace_on_if_needed()
 }
 
 prompt_enable_connection()
-{ 
+{
     connection=`/usr/bin/svcprop -C -p options/tcp_listen system/webconsole`
     if [ "z${connection}" = "zfalse" ]; then
         msg1="External connections to the Java Web Console are currently disabled.  This will stop your browser from communicating to the Java Web Console and SAM-QFS Manager will not work properly.\n\nDo you want to enable external connections?"

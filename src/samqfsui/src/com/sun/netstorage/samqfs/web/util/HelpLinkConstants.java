@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: HelpLinkConstants.java,v 1.25 2008/10/22 19:52:11 ronaldso Exp $
+// ident	$Id: HelpLinkConstants.java,v 1.26 2008/10/29 21:23:04 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -65,8 +65,8 @@ public interface HelpLinkConstants {
         "samqfs-advancednetworkconfig.html";
     public static final
         String SHARED_FS_SUMMARY = "samqfs-sharedfssummary.html";
-    public static final String
-        SHARED_FS_MEMBERS = "samqfs-members.html";
+    public static final
+        String SHARED_FS_MEMBERS = "samqfs-participatinghosts.html";
 
     // Archive pages
     public static final String ARCHIVE_SUMMARY =
