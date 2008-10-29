@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.194 $"
+#pragma ident "$Revision: 1.195 $"
 
 #include "sam/osversion.h"
 
@@ -2193,15 +2193,19 @@ sam_client_symlink_vn(
 		symlink.comp_size = strlen(cp);
 		symlink.path_size = strlen(tnm);
 		nrec = kmem_alloc(sizeof (*nrec), KM_SLEEP);
+		sam_rwdlock_ino(pip, RW_WRITER, 0);
 		if ((error = sam_proc_name(pip, NAME_symlink,
 		    &symlink, sizeof (symlink), cp, tnm,
 		    credp, nrec)) == 0) {
 
+			RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);
 			if ((error = sam_get_client_ino(nrec, pip,
 			    cp, &ip, credp)) == 0) {
 				SAM_ITOV(ip)->v_type = VLNK; /* set as a link */
 				VN_RELE(SAM_ITOV(ip));
 			}
+		} else {
+			RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);
 		}
 		kmem_free(nrec, sizeof (*nrec));
 	} else if (error == 0) {	/* If entry already exists. */
