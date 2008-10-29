@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 #endif
 
 #include "sam/osversion.h"
@@ -610,13 +610,13 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 	mutex_exit(&vp->v_lock);
 	mutex_enter(ihp);
 	mutex_enter(&vp->v_lock);
+
 #ifdef DEBUG
 	{
 		sam_node_t *tip, *dip;
 		sam_id_t id;
 		sam_ihead_t *hip;
 		int match_found = 0, match_stale = 0, match_client_dup = 0;
-
 
 		/*
 		 * Verify that a dev/inode only lives on its chain once.
@@ -650,14 +650,24 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 			tip = tip->chain.hash.forw;
 		}
 		if ((match_found - (match_stale + match_client_dup)) > 1) {
-			cmn_err(SAMFS_DEBUG_PANIC,
-			    "SAM-QFS: %s: sam_check_cache: duplicate "
-			    "dev/inum found"
-			    " ip=%p, ino=%d duplicates found %d stale "
-			    "dups found %d "
-			    "client dups found %d",
+			/*
+			 * If this is a client, also panic the metadata server.
+			 */
+			if (SAM_IS_SHARED_FS(dip->mp) &&
+			    !SAM_IS_SHARED_SERVER(dip->mp)) {
+				(void) sam_proc_block(dip->mp,
+				    dip->mp->mi.m_inodir,
+				    BLOCK_panic, SHARE_nowait, NULL);
+				delay(hz);
+			}
+			cmn_err(CE_PANIC,
+			    "SAM-QFS: %s: sam_return_this_ino: duplicate "
+			    "dev/inum found ip=%p ino.gen=%d.%d "
+			    "duplicates found: %d stale dups found: %d "
+			    "client dups found: %d",
 			    dip->mp->mt.fi_name, (void *)dip, dip->di.id.ino,
-			    match_found, match_stale, match_client_dup);
+			    dip->di.id.gen, match_found, match_stale,
+			    match_client_dup);
 		}
 	}
 #endif /* DEBUG */

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 #include "sam/osversion.h"
 
@@ -951,16 +951,18 @@ sam_pg_object_done(
  */
 int
 sam_pg_object_sync_done(
-	sam_node_t *ip,		/* Pointer to inode table */
 	buf_t	*bp,		/* Pointer to the buffer */
 	char	*str)		/* "GETPAGE" OR "PUTPAGE" */
 {
 	sam_osd_req_priv_t	*iorp;
+	sam_node_t		*ip;
 	int			obji;
 	int			 error = 0;
 
 	iorp = (sam_osd_req_priv_t *)bp->b_private;
 	ASSERT(iorp->name == SAM_OBJ_PRIVATE_NAME);
+	ip = iorp->ip;
+	ASSERT(ip != NULL);
 	obji = iorp->obji;
 	sam_osd_obj_req_wait(iorp);	/* Wait for completion */
 	if (bp->b_error) {

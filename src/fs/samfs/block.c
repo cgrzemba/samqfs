@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.113 $"
+#pragma ident "$Revision: 1.114 $"
 
 #include "sam/osversion.h"
 
@@ -2186,7 +2186,7 @@ sam_grow_fs(
 	}
 
 	/*
-	 * Currently cannot add object device ("ob").
+	 * Currently cannot add object device ("oXXX").
 	 */
 	type = dp->part.pt_type;
 	if (is_osd_group(type)) {

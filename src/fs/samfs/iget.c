@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.217 $"
+#pragma ident "$Revision: 1.218 $"
 
 #include "sam/osversion.h"
 
@@ -810,14 +810,24 @@ sam_check_cache(
 			ip = ip->chain.hash.forw;
 		}
 		if ((match_found - (match_stale + match_client_dup)) > 1) {
-			cmn_err(SAMFS_DEBUG_PANIC,
+			/*
+			 * If this is a client, also panic the metadata server.
+			 */
+			if (SAM_IS_SHARED_FS(dip->mp) &&
+			    !SAM_IS_SHARED_SERVER(dip->mp)) {
+				(void) sam_proc_block(dip->mp,
+				    dip->mp->mi.m_inodir,
+				    BLOCK_panic, SHARE_nowait, NULL);
+				delay(hz);
+			}
+			cmn_err(CE_PANIC,
 			    "SAM-QFS: %s: sam_check_cache: duplicate "
-			    "dev/inum found"
-			    " ip=%p, ino=%d duplicates found %d stale "
-			    "dups found %d "
-			    "client dups found %d",
+			    "dev/inum found ip=%p ino.gen=%d.%d "
+			    "duplicates found: %d stale dups found: %d "
+			    "client dups found: %d",
 			    dip->mp->mt.fi_name, (void *)dip, dip->di.id.ino,
-			    match_found, match_stale, match_client_dup);
+			    dip->di.id.gen, match_found, match_stale,
+			    match_client_dup);
 		}
 	}
 #endif /* DEBUG */

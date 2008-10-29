@@ -37,7 +37,7 @@
 #ifndef	_SAM_FS_OBJECT_H
 #define	_SAM_FS_OBJECT_H
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 #include "sam/osversion.h"
 
@@ -135,8 +135,7 @@ typedef struct sam_osd_req_priv {
 
 #define	sam_osd_obj_req_wait(iorp)	sema_p(&(iorp)->osd_sema)
 
-#define	sam_osd_obj_req_done(iorp)  \
-	sema_v(&(iorp)->osd_sema)
+#define	sam_osd_obj_req_done(iorp)	sema_v(&(iorp)->osd_sema)
 
 /*
  * SAM-QFS Vendor Defined OSD Page

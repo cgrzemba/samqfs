@@ -1,4 +1,4 @@
-# $Revision: 1.136 $
+# $Revision: 1.137 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -235,8 +235,8 @@ T_SAM_IOCTL_STERR	"D StErr:  ino=%d,gen=%d,sterr=%d^[$e]"
 T_SAM_IOCTL_ERR		"D Error:  ino=%d,size=%d,fd=%d"
 T_SAM_RMMAP		"RMMap:    size=%x,off=%x,cnt=%x"
 T_SAM_RMMAP1		"RMMap1:   pboff=%x,dev=%x,blk=%x"
-T_SAM_CACHE_INO1	"Cache1:   ino=%d,cnt=%d,flags=%x^[$f]"
-T_SAM_CACHE_INO2	"Cache2:   ino=%d,cnt=%d,flags=%x^[$f]"
+T_SAM_CACHE_INO1	"CacheIno1:ino=%d,cnt=%d,flags=%x^[$f]"
+T_SAM_CACHE_INO2	"CacheIno2:ino=%d,cnt=%d,flags=%x^[$f]"
 T_SAM_FREE_LIST		"Freelist: ino=%d,free=%x,IREF=%x"
 T_SAM_ARCHIVE_MARK	"Arch mark:media=%x,cp=%d,err=%d^[$e]"
 T_SAM_WRITEIO1		"Writeio1- off=%x,roff=%x,n=%x"

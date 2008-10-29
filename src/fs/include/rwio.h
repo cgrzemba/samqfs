@@ -38,7 +38,7 @@
 #define	_SAM_FS_MMAP_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 #endif
 
 
@@ -206,11 +206,11 @@ int sam_issue_direct_object_io(sam_node_t *ip, enum uio_rw rw, struct buf *bp,
 	sam_ioblk_t *iop, offset_t contig);
 buf_t *sam_pageio_object(sam_node_t *ip, sam_ioblk_t *iop, page_t *pp,
 	offset_t offset, uint_t pg_off, uint_t vn_len, int flags);
-int sam_pg_object_sync_done(sam_node_t *ip, buf_t *bp, char *str);
+int sam_pg_object_sync_done(buf_t *bp, char *str);
 #else /* defined SOL_511_ABOVE */
 #define	sam_issue_direct_object_io(a, b, c, d, e)	(ENOTSUP)
 #define	sam_pageio_object(a, b, c, d, e, f, g)		(NULL)
-#define	sam_pg_object_sync_done(a, b, c)		(ENOTSUP)
+#define	sam_pg_object_sync_done(a, b)			(ENOTSUP)
 #endif /* defined (SOL_511_ABOVE) */
 void sam_page_wrdone(buf_t *bp);
 

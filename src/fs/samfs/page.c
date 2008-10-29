@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.102 $"
+#pragma ident "$Revision: 1.103 $"
 
 #include "sam/osversion.h"
 
@@ -418,8 +418,8 @@ sam_getapage(
 		for (i = 0; i < (int)iop->nioblk; i++) {
 			if (bp[i] != NULL) {
 				if (iop->ioblk[i].imap.flags & M_OBJECT) {
-					error = sam_pg_object_sync_done(ip,
-					    bp[i], "GETPAGE");
+					error = sam_pg_object_sync_done(bp[i],
+					    "GETPAGE");
 				} else {
 					int err;
 
@@ -788,8 +788,8 @@ sam_putapage(
 		for (i = 0; i < (int)iop->nioblk; i++) {
 			if (bp[i] != NULL) {
 				if (iop->ioblk[i].imap.flags & M_OBJECT) {
-					error = sam_pg_object_sync_done(ip,
-					    bp[i], "PUTPAGE");
+					error = sam_pg_object_sync_done(bp[i],
+					    "PUTPAGE");
 				} else {
 					int err;
 
