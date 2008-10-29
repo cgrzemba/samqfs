@@ -81,7 +81,7 @@
  *	Note that "-", "0", and blank are acceptable alternatives in
  *	the Hostonoff field and all denote "on" (for backwards compatibility).
  */
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 
 /* ANSI C headers. */
@@ -925,24 +925,22 @@ GetSharedHostInfo(
 
 
 /*
- * ----- OpenFsDevOrd
- *
- * Given the name of a filesystem and a device ordinal,
- * return an open file descriptor for the raw device.
+ * Extract the filesystem/ord-value device name and return the
+ * matching RAW device path name.
  */
-int
-OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag)
+char *
+GetRawDevName(char *fs, ushort_t ord)
 {
 	struct sam_fs_part slice[252];
 	char devname[sizeof (slice[0].pt_name)+1],
 	    rdevname[sizeof (slice[0].pt_name)+2];
 	int r, j, k, n;
 	int npt;
-	int fd;
 	extern int errno;
 
 	if (ord > 251) {
-		return (EINVAL);
+		errno = EINVAL;
+		return (NULL);
 	}
 
 	/*
@@ -955,13 +953,14 @@ OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag)
 	npt = ord + 1;
 	r = GetFsParts(fs, npt, &slice[0]);
 	if (r < 0) {
-		return (errno);
+		return (NULL);
 	}
 	if (strcmp((char *)&slice[0].pt_name, "nodev") == 0) {
 		/*
 		 * The requested ordinal is a nodev.
 		 */
-		return (EINVAL);
+		errno = EINVAL;
+		return (NULL);
 	}
 	bzero((char *)devname, sizeof (devname));
 	strncpy(devname, (char *)&slice[ord].pt_name,
@@ -981,10 +980,30 @@ OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag)
 	}
 	rdevname[j] = '\0';
 	if (j == k) {
-		return (ENODEV);
+		errno = ENODEV;
+		return (NULL);
 	}
+	return (strdup(rdevname));
+}
 
+/*
+ * ----- OpenFsDevOrd
+ *
+ * Given the name of a filesystem and a device ordinal,
+ * return an open file descriptor for the raw device.
+ */
+int
+OpenFsDevOrd(char *fs, ushort_t ord, int *devfd, int oflag)
+{
+	char *rdevname;
+	int fd;
+	extern int errno;
+
+	if ((rdevname = GetRawDevName(fs, ord)) == NULL) {
+		return (errno);
+	}
 	fd = open(rdevname, oflag);
+	free(rdevname);
 
 	if (fd < 0) {
 		return (errno);

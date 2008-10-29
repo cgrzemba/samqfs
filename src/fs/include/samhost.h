@@ -35,7 +35,7 @@
 #define	SAM_HOST_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 #endif
 
 #include "sam/types.h"
@@ -129,6 +129,7 @@ int SamGetRawHosts(char *dev, struct sam_host_table_blk *ht,
 		int htbufsize, char **errmsg, int *errc);
 int SamPutRawHosts(char *dev, struct sam_host_table_blk *ht,
 		int htbufsize, char **errmsg, int *errc);
+char *GetRawDevName(char *fs, ushort_t ord);
 
 /*
  * Extract the host name from a host table and an index

@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +70,6 @@ extern char *strtok_r(char *, const char *, char **);
 static sam_host_table_blk_t *htb = NULL;
 static int htbufsize = 0;
 
-extern char *getfullrawname();
 
 /*
  * Get all the ds/cluster/rg information we need to handle
@@ -692,26 +691,17 @@ get_qfshosts(char *fsname,
 	case RAW:
 		/* Use the raw device to retrieve the hosts table */
 		/* Get partition information */
-		rc = GetFsParts(fsname, 1, &pt);
-		if (rc < 0) {
+		if ((devrname = GetRawDevName(fsname, 0)) == NULL) {
 			/* 22675 */
 			scds_syslog(LOG_ERR,
-			    "%s: Unable to get partition information: %s.",
+			    "%s: Unable to get QFS host table device: %s.",
 			    fsname, strerror(errno));
 			dprintf(stderr, catgets(catfd, SET, 22675,
-			    "%s: Unable to get partition information: %s."),
+			    "%s: Unable to get QFS host table device: %s."),
 			    fsname, strerror(errno));
 			scds_syslog_debug(DBG_LVL_HIGH,
 			    "get_qfshosts - End/Err");
-			return (rc);
-		}
-
-		/* Get hosts table */
-		if ((devrname = getfullrawname(pt.pt_name)) == NULL) {
-			scds_syslog(LOG_ERR, "Out of Memory");
-			scds_syslog_debug(DBG_LVL_HIGH,
-			    "get_qfshosts - End/Err");
-			return (ENOMEM);
+			return (errno);
 		}
 		rc = SamGetRawHosts(devrname, htp, htbufsize,
 		    &errstr, &errnum);
@@ -2369,27 +2359,18 @@ set_server(char *qfsdev, char *master, int mode)
 
 	/* Configure server */
 	if (mode == RAW) {	/* Involuntary failover */
-		struct sam_fs_part slice0;
 		char *rdevname;
 
-		/* Get device name */
-		if (GetFsParts(qfsdev, 1, &slice0)) {
+		/* Get raw device name */
+		if ((rdevname = GetRawDevName(qfsdev, 0)) == NULL) {
 			/* 22675 */
 			scds_syslog(LOG_ERR,
-			    "%s: Unable to get partition information: %s.",
+			    "%s: Set Server unable to get QFS host table device"
+			    ": %s.",
 			    qfsdev, strerror(errno));
 			scds_syslog_debug(DBG_LVL_HIGH,
 			    "set_server - End/Err");
 			return (errno);
-		}
-
-		/* Switch "dsk" for "rdsk" */
-		rdevname = getfullrawname(slice0.pt_name);
-		if ((rdevname = getfullrawname(slice0.pt_name)) == NULL) {
-			scds_syslog(LOG_ERR, "Out of Memory");
-			scds_syslog_debug(DBG_LVL_HIGH,
-			    "set_server - End/Err");
-			return (ENOMEM);
 		}
 
 		/*
