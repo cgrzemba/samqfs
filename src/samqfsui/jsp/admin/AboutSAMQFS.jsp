@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AboutSAMQFS.jsp,v 1.3 2008/07/23 17:38:38 ronaldso Exp $ -->
+<!-- $Id: AboutSAMQFS.jsp,v 1.4 2008/10/29 21:18:56 kilemba Exp $ -->
 
 
 <jsp:root version="1.2"
@@ -37,7 +37,7 @@
                        pageEncoding="UTF-8"/>
 
     <style>
-        div.txtbg{margin:5px 20px 10px 10px;background:#D9D9D9}
+        div.txtbg{margin:5px 20px 10px 10px;width:80%}
     </style>
 
    <f:view>
@@ -54,17 +54,20 @@
         <ui:contentPageTitle id="pageTitle" title="#{msgs['node.aboutsamqfs']}"/>
 
         <div class="txtbg">
-            <ui:staticText text="#{msgs['gettingstarted.about.text']}"/>
+            <ui:staticText text="#{msgs['gettingstarted.about.text1']}"/>
         </div>
 
-        <ui:contentPageTitle id="st1" title="#{msgs['gettingstarted.cando']}"/>
         <div class="txtbg">
-            <ui:staticText text="#{msgs['gettingstarted.cando.text']}"/>
+            <ui:staticText text="#{msgs['gettingstarted.about.text2']}"/>
         </div>
 
-        <ui:contentPageTitle id="st2" title="#{msgs['gettingstarted.help']}"/>
         <div class="txtbg">
-            <ui:staticText text="#{msgs['gettingstarted.help.text']}"/>
+            <ui:staticText text="#{msgs['gettingstarted.about.text3']}"/>
+        </div>
+
+        <div class="txtbg">
+            <ui:hyperlink text="#{msgs['gettingstarted.about.text4']}"
+                          onClick="window.open('http://wikis.sun.com/display/SAMQFSDocs/Home');return false;"/>
         </div>
    </ui:form>
    </ui:body>

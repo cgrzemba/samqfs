@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CreateFSWizardImpl.java,v 1.108 2008/10/09 14:28:01 kilemba Exp $
+// ident	$Id: CreateFSWizardImpl.java,v 1.109 2008/10/29 21:18:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -128,15 +128,11 @@ interface CreateFSWizardImplData {
 
     final String[][] stepHelp = {
         {"FSWizard.new.fstype.help.fstype",
-         "FSWizard.new.fstype.help.hafs",
          "FSWizard.new.fstype.help.archiving",
-         "FSWizard.new.fstype.help.shared",
          "FSWizard.new.fstype.help.hpc",
          "FSWizard.new.fstype.help.matfs"},
         {"FSWizard.sharedMemberPage.help.text1",
-         "FSWizard.sharedMemberPage.help.text2",
-         "FSWizard.sharedMemberPage.help.text3",
-         "FSWizard.sharedMemberPage.help.text4"},
+         "FSWizard.sharedMemberPage.help.text2"},
         {"FSWizard.devicePage.help.text1",
          "FSWizard.devicePage.help.text2",
          "FSWizard.devicePage.help.text3",
@@ -178,12 +174,9 @@ interface CreateFSWizardImplData {
          "FSWizard.new.mountOptionsPage.help.qfs.text4"},
         {"FSWizard.new.mountOptionsPage.help.common.text1",
          "FSWizard.new.mountOptionsPage.help.ufs.text2"},
-        {"FSWizard.new.summaryPage.help.text1",
-         "FSWizard.new.summaryPage.help.text2"},
-        {"FSWizard.new.summaryPage.help.text1",
-         "FSWizard.new.summaryPage.help.text2"},
-        {"FSWizard.new.summaryPage.help.text1",
-         "FSWizard.new.summaryPage.help.text2"},
+        {"FSWizard.new.summaryPage.help.text1"},
+        {"FSWizard.new.summaryPage.help.text1"},
+        {"FSWizard.new.summaryPage.help.text1"},
         {"FSWizard.new.clusternodes.help.text1",
          "FSWizard.new.clusternodes.help.text2"},
         {"FSWizard.new.archiving.help.text1",
@@ -193,10 +186,21 @@ interface CreateFSWizardImplData {
          "FSWizard.new.archiving.help.text5",
          "FSWizard.new.archiving.help.text6",
          "FSWizard.new.archiving.help.text7",
-         "FSWizard.new.archiving.help.text8"},
-        {"FSWizard.new.qfsdefaults.help.text1"},
+         "FSWizard.new.archiving.help.text8",
+         "FSWizard.new.archiving.help.text9",
+         "FSWizard.new.archiving.help.text10",
+         "FSWizard.new.archiving.help.text11"},
+        {"FSWizard.new.qfsdefaults.help.text1",
+         "FSWizard.new.qfsdefaults.help.text2",
+         "FSWizard.new.qfsdefaults.help.text3",
+         "FSWizard.new.qfsdefaults.help.text4",
+         "FSWizard.new.qfsdefaults.help.text5"},
         {"FSWizard.new.metadataoptions.help.text1"},
-        {"FSWizard.new.blockallocation.help.text1"},
+        {"FSWizard.new.blockallocation.help.text2",
+         "FSWizard.new.blockallocation.help.text3",
+         "FSWizard.new.blockallocation.help.text4",
+         "FSWizard.new.blockallocation.help.text5",
+         "FSWizard.new.blockallocation.help.text6"},
         {"FSWizard.new.archivepolicy.help.text1"},
         {"FSWizard.new.archivemedia.help.text1"},
         {"wizard.result.help.text1",
@@ -520,9 +524,15 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             text = SamUtil.getResourceString(
                 stepInstruction[pages[page]],
                 serverName);
-        } else if ((hpcEnabled) &&
-           (pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION)) {
-            text = "FSWizard.new.dataallocation.instruction.text";
+        } else if (hpcEnabled) {
+            if (pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION) {
+                text = "FSWizard.new.dataallocation.instruction.text";
+            } else if (pages[page] ==
+                       CreateFSWizardImplData.PAGE_STRIPED_GROUP) {
+                text = "FSWizard.osdpooldevicepage.instruction.text";
+            } else {
+                text = stepInstruction[pages[page]];
+            }
         } else {
             text = stepInstruction[pages[page]];
         }
@@ -563,7 +573,9 @@ public class CreateFSWizardImpl extends SamWizardImpl {
         int page = pageIdToPage(pageId);
         if ((hpcEnabled) &&
             (pages[page] == CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION)) {
-            return new String [] {"FSWizard.new.dataallocation.help.text"};
+            return new String [] {"FSWizard.new.dataallocation.help.text1",
+                                  "FSWizard.new.dataallocation.help.text2",
+                                  "FSWizard.new.dataallocation.help.text3"};
         } else {
             return super.getStepHelp(pageId);
         }
