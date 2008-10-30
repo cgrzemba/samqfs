@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -1176,9 +1176,9 @@ makeDiskVolRef(void)
 		diskVolRefTable = NULL;
 	}
 	numofDiskVols = 0;
+	ThreadsDiskVols(B_TRUE);
 	if ((ArchLibTable->AlDkDrives != 0) ||
 	    (ArchLibTable->AlHcDrives != 0)) {
-		ThreadsDiskVols(B_TRUE);
 		diskVols = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT,
 		    DISKVOLS_RDONLY);
 		if (diskVols != NULL) {
@@ -1196,8 +1196,8 @@ makeDiskVolRef(void)
 		diskVolRefTable->count = 0;
 		if (diskVols != NULL) {
 			(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
-			ThreadsDiskVols(B_FALSE);
 		}
+		ThreadsDiskVols(B_FALSE);
 		return;
 	}
 
