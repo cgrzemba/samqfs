@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 #include "sam/osversion.h"
 
@@ -529,6 +529,8 @@ sam_get_osd_fs_attr(
 			fsp->pt_capacity = SFP_CAPACITY(fap);
 			fsp->pt_space = SFP_SPACE(fap);
 			fsp->pt_size = fsp->pt_capacity << SAM2SUN_BSHIFT;
+			fsp->pt_sm_dau = SFP_SM_DAU(fap);
+			fsp->pt_lg_dau = SFP_LG_DAU(fap);
 		} else {
 			dcmn_err((CE_WARN, "SAM-QFS: %s: OSD GET fs attr"
 			    " rc=%d, errno=%d", mp->mt.fi_name, iorp->err_code,

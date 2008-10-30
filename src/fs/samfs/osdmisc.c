@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.1 $"
+#pragma ident "$Revision: 1.2 $"
 
 #include "sam/osversion.h"
 
@@ -392,4 +392,54 @@ sam_osd_sense_data(
 		error = sam_osd_map_errno(resp->err_code);
 	}
 	return (error);
+}
+
+
+/*
+ *	----	sam_check_osd_daus
+ * Verify that all object pool members have matching DAUs.
+ */
+int			/* errno if error */
+sam_check_osd_daus(
+	sam_mount_t *mp)
+{
+	struct sam_fs_part	*fsp, *fspp;
+	int			i, j;
+	int			r = 0;
+
+	/*
+	 * Scan over all object devices.
+	 */
+	for (i = 0; i < mp->mt.fs_count; i++) {
+		fsp = &mp->mi.m_fs[i].part;
+		if (!is_osd_group(fsp->pt_type)) {
+			continue;
+		}
+		/*
+		 * Check all following devices of same object pool for DAU match
+		 */
+		for (j = i+1; j < mp->mt.fs_count; j++) {
+			fspp = &mp->mi.m_fs[j].part;
+			if (fsp->pt_type != fspp->pt_type) {
+				continue;
+			}
+			if (fsp->pt_sm_dau != fspp->pt_sm_dau) {
+				cmn_err(CE_WARN, "SAM-QFS, %s: Error eq %d and "
+				    "eq %d, same object pool, but small DAUs "
+				    "mismatch (%lld vs. %lld)", mp->mt.fi_name,
+				    fsp->pt_eq, fspp->pt_eq, fsp->pt_sm_dau,
+				    fspp->pt_sm_dau);
+				r = EINVAL;
+			}
+			if (fsp->pt_lg_dau != fspp->pt_lg_dau) {
+				cmn_err(CE_WARN, "SAM-QFS, %s: Error eq %d and "
+				    "eq %d, same object pool, but large DAUs "
+				    "mismatch (%lld vs. %lld)", mp->mt.fi_name,
+				    fsp->pt_eq, fspp->pt_eq, fsp->pt_lg_dau,
+				    fspp->pt_lg_dau);
+				r = EINVAL;
+			}
+		}
+	}
+	return (r);
 }

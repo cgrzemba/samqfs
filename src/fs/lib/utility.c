@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 
 #include "sam/osversion.h"
 
@@ -91,6 +91,8 @@ extern char *getfullrawname();
 
 static int write_obj_sblk(struct sam_sblk *sbp, struct devlist *dp, int ord);
 static int write_blk_sblk(struct sam_sblk *sbp, struct devlist *dp, int ord);
+static int check_osd_daus(char *fs_name, struct sam_mount_info *mp,
+    int fs_count);
 
 /*
  * -----  chk_devices
@@ -218,6 +220,9 @@ chk_devices(
 				fprintf(stderr, "%s: size = %llx "
 				    "512-byte blocks\n",
 				    dp->eq_name, dp->size);
+				fprintf(stderr, "\tsmall dau %lld, "
+				    "large dau %lld\n", fsp->pt_sm_dau,
+				    fsp->pt_lg_dau);
 			} else {
 				char *devrname;
 
@@ -284,7 +289,11 @@ chk_devices(
 		    fs_name);
 		return (1);
 	}
-	return (0);
+
+	/*
+	 * Check that object pool DAU's are all the same.
+	 */
+	return (check_osd_daus(fs_name, mp, fs_count));
 }
 
 
@@ -1057,4 +1066,56 @@ update_sblk_to_40(
 			}
 		}
 	}
+}
+
+
+/*
+ * ----- check_osd_daus() - Check to see if all members of an osd
+ * object pool have the same DAU.
+ */
+static int				/* nonzero if error, 0 if ok */
+check_osd_daus(
+	char	*fs_name,		/* File system name */
+	struct sam_mount_info *mp,	/* mount parameter pointer */
+	int	fs_count)		/* devlist count */
+{
+	struct sam_fs_part *fsp, *fspp;
+	int i, j;
+	int r = 0;
+
+	/*
+	 * Scan over all object devices.
+	 */
+	for (i = 0; i < fs_count; i++) {
+		fsp = &mp->part[i];
+		if (!is_osd_group(fsp->pt_type)) {
+			continue;
+		}
+		/*
+		 * Check all following devices of same object pool for DAU match
+		 */
+		for (j = i+1; j < fs_count; j++) {
+			fspp = &mp->part[j];
+			if (fsp->pt_type != fspp->pt_type) {
+				continue;
+			}
+			if (fsp->pt_sm_dau != fspp->pt_sm_dau) {
+				error(0, 0, catgets(catfd, SET, 13036, "%s: "
+				    "Error eq %d and eq %d, same object pool, "
+				    "but %s DAUs mismatch (%lld vs. %lld)\n"),
+				    fs_name, fsp->pt_eq, fspp->pt_eq, "small",
+				    fsp->pt_sm_dau, fspp->pt_sm_dau);
+				r++;
+			}
+			if (fsp->pt_lg_dau != fspp->pt_lg_dau) {
+				error(0, 0, catgets(catfd, SET, 13036, "%s: "
+				    "Error eq %d and eq %d, same object pool, "
+				    "but %s DAUs mismatch (%lld vs. %lld)\n"),
+				    fs_name, fsp->pt_eq, fspp->pt_eq, "large",
+				    fsp->pt_lg_dau, fspp->pt_lg_dau);
+				r++;
+			}
+		}
+	}
+	return (r);
 }

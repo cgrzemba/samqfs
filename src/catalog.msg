@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.616 $"
+$ pragma ident "$Revision: 1.617 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2305,6 +2305,7 @@ $ 13014 Catalog file name missing
 13033 with a sample rate of
 13034 sef
 13035 %s: equipment %d is not tape device.\n
+13036 %s: Error eq %d and eq %d, same object pool, but %s DAUs mismatch (%lld vs. %lld)\n
 13100 Invalid samstorade setting '%s'
 13101 Resync sam-amld succeeded.
 13102 Invalid sef equipment ordinal '%s'

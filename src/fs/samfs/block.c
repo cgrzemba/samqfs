@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.114 $"
+#pragma ident "$Revision: 1.115 $"
 
 #include "sam/osversion.h"
 
@@ -114,6 +114,7 @@ extern int sam_bfmap(sam_caller_t caller, struct sam_sblk *sblk, int ord,
 extern int sam_cablk(sam_caller_t caller, struct sam_sblk *sblk, void *vp,
 	int ord, int bits, int mbits, uint_t dd_kblocks, uint_t mm_kblocks,
 	int *lenp);
+extern int sam_check_osd_daus(sam_mount_t *mp);
 
 #pragma rarely_called(sam_block_thread_exit, sam_process_prealloc_req)
 #pragma does_not_return(sam_block_thread_exit)
@@ -2195,6 +2196,16 @@ sam_grow_fs(
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
 		return (22);
 	}
+
+#if defined(SOL_511_ABOVE)
+	/*
+	 * Check for validity of object pool group.  All members of an
+	 * object pool must have the same DAU.
+	 */
+	if (sam_check_osd_daus(mp)) {
+		return (27);
+	}
+#endif
 
 	/*
 	 * Check for validity of stripe group. Can only grow first

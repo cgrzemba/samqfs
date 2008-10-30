@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.136 $"
+#pragma ident "$Revision: 1.137 $"
 #endif
 
 #include <sam/types.h>
@@ -264,6 +264,8 @@ struct sam_fs_part {
 	offset_t	pt_size;	/* size - if ram device */
 	fsize_t		pt_capacity;	/* Total bytes in partition */
 	fsize_t		pt_space;	/* Total free bytes in partition */
+	offset_t	pt_sm_dau;	/* Small DAU (object only) in bytes */
+	offset_t	pt_lg_dau;	/* Large DAU (object only) in bytes */
 };
 
 typedef struct sam_mount_info {

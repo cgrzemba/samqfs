@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.195 $"
+#pragma ident "$Revision: 1.196 $"
 #endif
 
 #include "sam/osversion.h"
@@ -159,6 +159,7 @@ static int sam_check_stripe_group(sam_mount_t *mp, int istart);
 #if defined(SOL_511_ABOVE)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
 static int sam_osd_command(void *arg, int size, cred_t *credp);
+extern int sam_check_osd_daus(sam_mount_t *mp);
 #endif
 
 
@@ -873,6 +874,11 @@ sam_mount_info(
 
 			error = sam_getdev(mp, istart, (FREAD | FWRITE),
 			    &npart, credp);
+#if defined(SOL_511_ABOVE)
+			if (error == 0) {
+				error = sam_check_osd_daus(mp);
+			}
+#endif
 			if (istart == 0) {
 				sam_close_devices(mp, 0, (FREAD | FWRITE),
 				    credp);

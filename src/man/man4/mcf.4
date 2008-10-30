@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.93 $
+.\" $Revision: 1.94 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -375,6 +375,10 @@ The \fIXXX\fR must be a decimal number in the
 range \fB0\fR \(<= \fIXXX\fR \(<= \fB127\fR.
 These devices are recommended to be the same type of block devices.
 For example, one pool could be FC and another pool could be SATA.
+It is required that all members of an \fBo\fIXXX\fR
+pool (all those with the same \fIXXX\fR number) have the same
+DAU size.  The DAU size is set when the \fBmat\fR file system
+is built on the OSD.
 At least one \fBo\fIXXX\fR device is required in an
 \fBmb\fR file system.
 .PP
