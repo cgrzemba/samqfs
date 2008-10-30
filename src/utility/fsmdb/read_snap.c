@@ -431,7 +431,7 @@ done:
 	fmtsd->fsent = NULL;
 	fmtsd->snapdata = NULL;
 
-	free_metrics_results(fmtsd->arg, fmtsd->res);
+	free_metrics_results(&fmtsd->arg, &fmtsd->res);
 
 	fmtsd->arg = NULL;
 	fmtsd->res = NULL;
