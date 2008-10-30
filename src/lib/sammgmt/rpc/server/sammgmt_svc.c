@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.121 $"
+#pragma ident	"$Revision: 1.122 $"
 
 #include <stdio.h>
 #include <stdlib.h> /* getenv, exit */
@@ -252,9 +252,6 @@ sammgmtprog_1(rqstp, transp)
 		arch_set_arg_t samrpc_create_arch_set_3_arg;
 		arch_set_arg_t samrpc_modify_arch_set_3_arg;
 		string_arg_t samrpc_delete_arch_set_3_arg;
-		string_string_arg_t samrpc_associate_class_with_policy_6_svr;
-		string_arg_t samrpc_delete_data_class_6_svr;
-		str_critlst_arg_t samrpc_set_class_order_6_svr;
 
 		/* archive.h - control APIs */
 		string_arg_t samrpc_ar_run_1_arg;
@@ -951,25 +948,6 @@ sammgmtprog_1(rqstp, transp)
 		local = (char *(*)())
 			samrpc_delete_arch_set_3_svr;
 		break;
-
-	case samrpc_associate_class_with_policy:
-		_xdr_argument = xdr_string_string_arg_t;
-		_xdr_result = xdr_samrpc_result_t;
-		local = (char *(*)()) samrpc_associate_class_with_policy_6_svr;
-		break;
-
-	case samrpc_delete_data_class:
-		_xdr_argument = xdr_string_arg_t;
-		_xdr_result = xdr_samrpc_result_t;
-		local = (char *(*)()) samrpc_delete_data_class_6_svr;
-		break;
-
-	case samrpc_set_class_order:
-		_xdr_argument = xdr_str_critlst_arg_t;
-		_xdr_result = xdr_samrpc_result_t;
-		local = (char *(*)()) samrpc_set_class_order_6_svr;
-		break;
-
 
 	/*
 	 * archive.h - control APIs

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: MountOptions.java,v 1.24 2008/05/16 18:35:28 am143972 Exp $
+// ident    $Id: MountOptions.java,v 1.25 2008/10/30 14:42:29 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.fs;
 
@@ -228,6 +228,30 @@ public class MountOptions {
     private static final int CLR_ATIME = 0x04000400;
     private static final int CLR_MIN_POOL = 0x08000800;
 
+    /* rel_5_0_options_t change_flags */
+    private static final int MNT_OBJ_WIDTH		= 0x00000001;
+    private static final int MNT_OBJ_DEPTH		= 0x00000002;
+    private static final int MNT_OBJ_POOL		= 0x00000004;
+    private static final int MNT_OBJ_SYNC_DATA		= 0x00000008;
+    private static final int MNT_LOGGING		= 0x00000010;
+    private static final int MNT_NOLOGGING		= 0x00000020;
+    private static final int MNT_SAM_DB			= 0x00000040;
+    private static final int MNT_NOSAM_DB		= 0x00000080;
+    private static final int MNT_XATTR			= 0x00000100;
+    private static final int MNT_NOXATTR		= 0x00000200;
+
+    private static final int 	CLR_OBJ_WIDTH		= 0x00010001;
+    private static final int 	CLR_OBJ_DEPTH		= 0x00020002;
+    private static final int 	CLR_OBJ_POOL		= 0x00040004;
+    private static final int 	CLR_OBJ_SYNC_DATA	= 0x00080008;
+    private static final int 	CLR_LOGGING		= 0x00300030;
+    private static final int 	CLR_NOLOGGING		= 0x00300030;
+    private static final int 	CLR_SAM_DB		= 0x00C000C0;
+    private static final int 	CLR_NOSAM_DB		= 0x00C000C0;
+    private static final int 	CLR_XATTR		= 0x03000300;
+    private static final int 	CLR_NOXATTR		= 0x03000300;
+
+
 
     /* private instance fields */
 
@@ -292,6 +316,17 @@ public class MountOptions {
     private short atime;
     private int min_pool;
 
+    // Release 5.0 options
+    private int rel50ChgFlags;
+    private int objWidth;
+    private long objDepth;
+    private int objPool;
+    private int objSyncData;
+    private boolean logging;
+    private boolean samDB;
+    private boolean xattr;
+
+
     /**
      * private constructor
      */
@@ -337,7 +372,16 @@ public class MountOptions {
         boolean clusterfastsw,
         boolean noatime,
         short atime,
-        int min_pool) {
+        int min_pool,
+	// Release 5.0 Options
+	int rel50ChgFlags,
+	int objWidth,
+	long objDepth,
+	int objPool,
+	int objSyncData,
+	boolean logging,
+	boolean samDB,
+	boolean xattr) {
             this.readOnly = readOnly;
             this.syncMeta = syncMeta;
             this.noSetUID = noSetUID;
@@ -370,7 +414,7 @@ public class MountOptions {
             this.multiWrite = multiWrite;
             this.nStreams = nStreams;
             this.metaTimeout = metaTimeout;
-        this.leaseTimeout = leaseTimeout;
+	    this.leaseTimeout = leaseTimeout;
             this.sharedfsChgFlags = sharedfsChgFlags;
             // multi reader
             this.writer  = writer;
@@ -395,7 +439,7 @@ public class MountOptions {
             this.rdAheadKb  = rdAheadKb;
             this.wrBehindKb = wrBehindKb;
             this.wrThrottleKb = wrThrottleKb;
-        this.forceNFSAsync  = forceNFSAsync;
+	    this.forceNFSAsync  = forceNFSAsync;
             this.ioChgFlags = ioChgFlags;
             // Post4.2
             this.defRetention = defRetention;
@@ -415,6 +459,14 @@ public class MountOptions {
             this.noatime = noatime;
             this.atime  = atime;
             this.min_pool = min_pool;
+	    this.rel50ChgFlags = rel50ChgFlags;
+	    this.objWidth = objWidth;
+	    this.objDepth = objDepth;
+	    this.objPool = objPool;
+	    this.objSyncData = objSyncData;
+	    this.logging = logging;
+	    this.samDB = samDB;
+	    this.xattr = xattr;
     }
 
 
@@ -947,6 +999,74 @@ public class MountOptions {
     public void setMinPool(int minPool) {
     this.min_pool = minPool;
     rel46ChgFlags = rel46ChgFlags & ~CLR_MIN_POOL | MNT_MIN_POOL;
+    }
+
+
+    public int getObjWidth() { return objWidth; }
+    public void resetObjWidth() {
+	rel50ChgFlags |= CLR_OBJ_WIDTH;
+    }
+    public void setObjWidth(int objWidth) {
+	    this.objWidth = objWidth;
+	    rel50ChgFlags = rel50ChgFlags & ~CLR_OBJ_WIDTH | MNT_OBJ_WIDTH;
+    }
+
+    public long getObjDepth() { return objDepth; }
+    public void resetObjDepth() {
+	rel50ChgFlags |= CLR_OBJ_DEPTH;
+    }
+    public void setObjDepth(long objDepth) {
+	this.objDepth = objDepth;
+	rel50ChgFlags = rel50ChgFlags & ~CLR_OBJ_DEPTH | MNT_OBJ_DEPTH;
+    }
+
+    public int getObjPool() { return objPool; }
+    public void resetObjPool() {
+	rel50ChgFlags |= CLR_OBJ_POOL;
+    }
+    public void setObjPool(int objPool) {
+	this.objPool = objPool;
+	rel50ChgFlags = rel50ChgFlags & ~CLR_OBJ_POOL | MNT_OBJ_POOL;
+    }
+
+    public int getObjSyncData() { return objSyncData; }
+    public void resetObjSyncData() {
+	rel50ChgFlags |= CLR_OBJ_SYNC_DATA;
+    }
+    public void setObjSyncData(int objSyncData) {
+	this.objSyncData = objSyncData;
+	rel50ChgFlags = rel50ChgFlags & ~CLR_OBJ_SYNC_DATA | MNT_OBJ_SYNC_DATA;
+    }
+
+    public boolean getLogging() { return logging; }
+    public void resetLogging() {
+	rel50ChgFlags |= CLR_LOGGING;
+    }
+    public void setLogging(boolean logging) {
+	    this.logging = logging;
+	    rel50ChgFlags &= ~CLR_LOGGING;
+	    rel50ChgFlags |= ((logging) ? MNT_LOGGING : MNT_LOGGING);
+    }
+
+    public boolean getSamDB() { return samDB; }
+    public void resetSamDB() {
+	rel50ChgFlags |= CLR_SAM_DB;
+    }
+    public void setSamDB(boolean samDB) {
+	this.samDB = samDB;
+	rel50ChgFlags &= ~CLR_SAM_DB;
+	rel50ChgFlags |= ((samDB) ? MNT_SAM_DB : MNT_NOSAM_DB);
+    }
+
+    public boolean getXattr() { return xattr; }
+    public void resetXattr() {
+	rel50ChgFlags |= CLR_XATTR;
+    }
+    public void setXattr(boolean xattr) {
+	this.xattr = xattr;
+	rel50ChgFlags |= MNT_XATTR;
+	rel50ChgFlags &= ~CLR_XATTR;
+	rel50ChgFlags |= ((xattr) ? MNT_XATTR : MNT_NOXATTR);
     }
 
     /*

@@ -29,7 +29,7 @@
 #ifndef _CFG_ARCHIVER_FIELDS_H
 #define	_CFG_ARCHIVER_FIELDS_H
 
-#pragma ident	"$Revision: 1.19 $"
+#pragma ident	"$Revision: 1.20 $"
 
 #include <limits.h>
 #include <sys/types.h>
@@ -39,11 +39,11 @@
 
 static int params_tbl0;
 static struct fieldInt params_tbl1 = { 0, 0, LLONG_MAX, 0 };
-static struct fieldInt params_tbl2 = { 4, 2, 1024, 0 };
+static struct fieldInt params_tbl2 = { 16, 2, 8192, 0 };
 static struct fieldInt params_tbl_drivemax = { 0, 0, LLONG_MAX, 0 };
 static struct fieldInt params_tbl3 = { 0, 0, LLONG_MAX, 0 };
 static struct fieldInt params_tbl4 = { 1, 1, SHRT_MAX, 0 };
-static struct fieldFlag params_tbl5 = { B_TRUE,  "off", "on", "off" };
+static struct fieldInt params_tbl5 = { 0, 0, LLONG_MAX, 0 };
 static struct fieldEnum params_tbl6 = { "none", Joins };
 static struct fieldFlag params_tbl7 = { B_TRUE, "off", "on", "off" };
 static struct fieldEnum params_tbl8 = { "none", OfflineCopies };
@@ -52,7 +52,7 @@ static struct fieldInt params_tbl10 = { 0, 0, INT_MAX, 0 };
 static struct fieldFunc params_tbl11 = { NULL, NULL, paramsReserveSet,
 		paramsReserveTostr };
 static struct fieldEnum params_tblRsort = { "none", Sorts };
-static struct fieldEnum params_tbl12 = { "none", Sorts };
+static struct fieldEnum params_tbl12 = { "path", Sorts };
 static struct fieldInt params_tbl13 = { 0, 0, INT_MAX, 0 };
 static struct fieldInt params_tbl14 = { 0, 0, INT_MAX, 0 };
 static struct fieldInt params_tbl15 = { 0, 0, LLONG_MAX, 0 };
@@ -89,8 +89,8 @@ static struct fieldVals params_tbl[] = {
 		drivemin), &params_tbl3, AR_PARAM_drivemin },
 	{ "drives", INT, offsetof(struct ar_set_copy_params, drives),
 		&params_tbl4, AR_PARAM_drives },
-	{ "fillvsns", SETFLAG, offsetof(struct ar_set_copy_params,
-		fillvsns), &params_tbl5, AR_PARAM_fillvsns },
+	{ "fillvsns", FSIZE, offsetof(struct ar_set_copy_params,
+		fillvsns_min), &params_tbl5, AR_PARAM_fillvsns },
 	{ "join", ENUM, offsetof(struct ar_set_copy_params, join),
 		&params_tbl6, AR_PARAM_join},
 	{ "lock", SETFLAG, offsetof(struct ar_set_copy_params, buflock),
@@ -161,12 +161,10 @@ static struct fieldVals params_tbl[] = {
 static int criteria_tbl0;
 static struct fieldString cr_policy = { "", 32 };
 static struct fieldString cr_path = { "", 128 };
-static struct fieldInt cr_priority = { 0, 0, LONG_MAX, 0 };
 static struct fieldFunc criteria_tbl1 = { NULL, NULL, propGroupSet,
 	propGroupTostr };
 static struct fieldFunc criteria_tbl2 = { NULL, NULL, propNameSet,
 	propNameTostr };
-static struct fieldEnum cr_regexptype = { "regexp", RegExpTypes };
 static struct fieldInt criteria_tbl3 = { 0, 0, LLONG_MAX, 0 };
 static struct fieldInt criteria_tbl4 = { 0, 0, LLONG_MAX, 0 };
 static struct fieldFunc criteria_tbl5 = { NULL, NULL, propUserSet,
@@ -184,14 +182,10 @@ static struct fieldVals criteria_tbl[] = {
 	set_name), &cr_policy, },
 { "dir", STRING, offsetof(struct ar_set_criteria,
 	path), &cr_path, AR_ST_path},
-{ "priority", INT,  offsetof(struct ar_set_criteria,
-	priority), &cr_priority, AR_ST_priority },
 { "group", FUNC, offsetof(struct ar_set_criteria, group),
 	&criteria_tbl1, AR_ST_group },
 { "name", FUNC, offsetof(struct ar_set_criteria, name),
 	&criteria_tbl2, AR_ST_name },
-{ "regexptype", ENUM, offsetof(struct ar_set_criteria, regexp_type),
-	&cr_regexptype, },
 { "maxsize", FSIZE, offsetof(struct ar_set_criteria, maxsize),
 	&criteria_tbl3, AR_ST_maxsize },
 { "minsize", FSIZE, offsetof(struct ar_set_criteria, minsize),

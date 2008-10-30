@@ -29,7 +29,7 @@
 #ifndef _STAGE_H
 #define	_STAGE_H
 
-#pragma	ident	"$Revision: 1.28 $"
+#pragma	ident	"$Revision: 1.29 $"
 
 /*
  * stage.h - SAMFS APIs for staging operations.
@@ -56,8 +56,17 @@
 #define	ST_LOG_CANCEL	0x00000004
 #define	ST_LOG_FINISH	0x00000008
 #define	ST_LOG_ALL	0x00000010
-
+#define	ST_DIRECTIO_ON  0x00000020
 #define	ST_LOG_DEFAULTS 0x0000000e
+
+
+typedef struct stream_cfg {
+	mtype_t media;		/* dk for now */
+	int	drives;		/* number of streams to use */
+	fsize_t max_size;	/* max stream size */
+	int	max_count;	/* max number of files per stream */
+	uint32_t change_flag;
+} stream_cfg_t;
 
 /*
  * structure for the stager directives.
@@ -70,6 +79,7 @@ typedef struct stager_cfg {
 	sqm_lst_t	*stage_drive_list;	/* list of drive_directive_t */
 	uint32_t	change_flag;
 	uint32_t	options;		/* Added 4.5 */
+	stream_cfg_t	*dk_stream;
 } stager_cfg_t;
 
 
@@ -78,7 +88,7 @@ typedef struct stager_cfg {
 #define	ST_max_active		0x00000002
 #define	ST_max_retries		0x00000004
 #define	ST_log_events		0x00000008	/* For all ST_LOG flags */
-
+#define	ST_directio		0x00000010
 
 /* Use StagerStateDetail_t instead of stager_detail_t */
 
@@ -420,6 +430,9 @@ int clear_stage_request(ctx_t *ctx, mtype_t media, vsn_t vsn);
 #define	ST_OPT_COPY_3		0x4000
 #define	ST_OPT_COPY_4		0x8000
 
+#define	ST_SS_DRIVES		0x0001
+#define	ST_SS_MAX_SIZE		0x0002
+#define	ST_SS_MAX_COUNT		0x0004
 
 /*
  * API for staging files and setting stager attributes on files and directories

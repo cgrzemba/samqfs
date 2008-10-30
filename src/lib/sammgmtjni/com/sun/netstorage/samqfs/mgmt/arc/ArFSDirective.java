@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArFSDirective.java,v 1.13 2008/05/16 18:35:27 am143972 Exp $
+// ident	$Id: ArFSDirective.java,v 1.14 2008/10/30 14:42:29 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc;
 
@@ -37,12 +37,13 @@ public class ArFSDirective {
 
     private static final long AR_FS_log_path    = 0x00000001;
     private static final long AR_FS_fs_interval = 0x00000002;
-    private static final long AR_FS_wait = 0x00000004;
+    private static final long AR_FS_wait	= 0x00000004;
     private static final long AR_FS_scan_method = 0x00000008;
     private static final long AR_FS_archivemeta = 0x00000010;
     private static final long AR_FS_scan_squash = 0x00000040;
     private static final long AR_FS_setarchdone = 0x00000080;
-
+    private static final long AR_FS_bg_interval	= 0x00000100;
+    private static final long AR_FS_bg_time	= 0x00000200;
 
     // Flags for the options field must match those in pub/mgmt/archive.h
     private static final int SCAN_SQUASH_ON = 0x00000001;
@@ -61,6 +62,8 @@ public class ArFSDirective {
     private Copy metadataCopies[];
     private long chgFlags;
     private int options;
+    private long backgroundInterval;
+    private int backgroundTime; // hhmm
 
     // valid values for examine(scan) method
     public static final int EM_NOT_SET = -1;
@@ -74,7 +77,8 @@ public class ArFSDirective {
      */
     private ArFSDirective(String fsName, Criteria[] crit, String logPath,
         short examMethod, long interval, boolean wait, boolean arcMeta,
-        int numCopies, Copy[] metadataCopies, long chgFlags, int options) {
+        int numCopies, Copy[] metadataCopies, long chgFlags, int options,
+	long backgroundInterval, int backgroundTime) {
             this.fsName = fsName;
             this.crit = crit;
             this.logPath = logPath;
@@ -86,6 +90,8 @@ public class ArFSDirective {
             this.metadataCopies = metadataCopies;
             this.chgFlags = chgFlags;
 	    this.options = options;
+	    this.backgroundInterval = backgroundInterval;
+	    this.backgroundTime = backgroundTime;
     }
 
     /**
@@ -166,6 +172,26 @@ public class ArFSDirective {
     public void resetScanListSquash() {
         chgFlags &= ~AR_FS_scan_squash;
     }
+
+    public long getBackgroundInterval() { return backgroundInterval; }
+    public void setBackgroundInterval(long backgroundInterval) {
+        this.backgroundInterval = backgroundInterval;
+        chgFlags |= AR_FS_bg_interval;
+    }
+    public void resetBackgroundInterval() {
+        chgFlags &= ~AR_FS_bg_interval;
+    }
+
+    public int getBackgroundTime() { return backgroundTime; }
+    public void setBackgroundTime(int backgroundTime) {
+        this.backgroundTime = backgroundTime;
+        chgFlags |= AR_FS_bg_time;
+    }
+    public void resetBackgroundTime() {
+        chgFlags &= ~AR_FS_bg_time;
+    }
+
+
 
     public String toString() {
         int i;

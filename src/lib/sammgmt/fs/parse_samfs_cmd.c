@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.31 $"
+#pragma ident   "$Revision: 1.32 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -479,6 +479,7 @@ reset_mount_options_change_flag(mount_options_t *mo)
 	mo->qfs_opts.change_flag = 0;
 	mo->post_4_2_opts.change_flag = 0;
 	mo->rel_4_6_opts.change_flag = 0;
+	mo->rel_5_0_opts.change_flag = 0;
 	return (0);
 }
 
@@ -509,6 +510,7 @@ get_default_mount_opts(mount_options_t **defs)
 	(*defs)->qfs_opts.change_flag = (uint32_t)0;
 	(*defs)->post_4_2_opts.change_flag = (uint32_t)0;
 	(*defs)->rel_4_6_opts.change_flag = (uint32_t)0;
+	(*defs)->rel_5_0_opts.change_flag = (uint32_t)0;
 
 	set_dependent_default_values(*defs);
 
@@ -895,6 +897,10 @@ fs_t *input)		/* mount options to merge */
 	    fs_to_file->mount_options->rel_4_6_opts.change_flag;
 	fs_to_file->mount_options->rel_4_6_opts.change_flag = 0;
 
+	save.rel_5_0_opts.change_flag =
+	    fs_to_file->mount_options->rel_5_0_opts.change_flag;
+	fs_to_file->mount_options->rel_5_0_opts.change_flag = 0;
+
 
 	save.change_flag = fs_to_file->mount_options->change_flag;
 	fs_to_file->mount_options->change_flag = 0;
@@ -1027,6 +1033,9 @@ fs_t *input)		/* mount options to merge */
 
 	fs_to_file->mount_options->rel_4_6_opts.change_flag |=
 	    save.rel_4_6_opts.change_flag;
+
+	fs_to_file->mount_options->rel_5_0_opts.change_flag |=
+	    save.rel_5_0_opts.change_flag;
 
 	fs_to_file->mount_options->change_flag |= save.change_flag;
 

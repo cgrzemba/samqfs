@@ -29,7 +29,7 @@
 #ifndef _CFG_MOUNT_OPTIONS_H
 #define	_CFG_MOUNT_OPTIONS_H
 
-#pragma ident	"$Revision: 1.22 $"
+#pragma ident	"$Revision: 1.23 $"
 
 
 /*
@@ -208,6 +208,17 @@ static struct fieldFlag mp_noatime = { (uint32_t)B_TRUE,
 	"off", "on", "off" };
 static struct fieldInt mp_atime = { 0, -1, 1, 0 };
 static struct fieldInt mp_min_pool = { 64, 8, 2048, 0 };
+
+static struct fieldInt mp_obj_width = { 1, 0, 255, 0 };
+static struct fieldInt mp_obj_depth = { 256, 128, 33554432, 0 };
+static struct fieldInt mp_obj_pool = { -1, 0, 127, 0 };
+static struct fieldInt mp_obj_sync_data = { 1, 0, 1, 0 };
+static struct fieldFlag mp_logging = { (uint32_t)B_TRUE, "on", "on", "off" };
+static struct fieldFlag mp_nologging = { (uint32_t)B_TRUE, "on", "on", "off" };
+static struct fieldFlag mp_sam_db = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_nosam_db = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_xattr = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_noxattr = { (uint32_t)B_TRUE, "off", "on", "off" };
 static int mount_params_defbits;
 
 static struct fieldVals cfg_mount_params[] = {
@@ -511,6 +522,41 @@ static struct fieldVals cfg_mount_params[] = {
 { "min_pool", INT, offsetof(struct mount_options, rel_4_6_opts) +
 	offsetof(struct rel_4_6_options, min_pool), &mp_min_pool,
 	MNT_MIN_POOL},
+
+/* 5.0 opts defbits line */
+{ "", DEFBITS, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, change_flag),
+	&mount_params_defbits, },
+{ "obj_width", INT16, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, obj_width), &mp_obj_width,
+	MNT_OBJ_WIDTH},
+{ "obj_depth", INT64, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, obj_depth), &mp_obj_depth,
+	MNT_OBJ_DEPTH},
+{ "obj_pool", INT16, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, obj_pool), &mp_obj_pool,
+	MNT_OBJ_POOL},
+{ "obj_sync_data", INT16, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, obj_sync_data), &mp_obj_sync_data,
+	MNT_OBJ_SYNC_DATA},
+{ "logging", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, logging), &mp_logging,
+	MNT_LOGGING},
+{ "nologging", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, logging), &mp_nologging,
+	MNT_NOLOGGING},
+{ "sam_db", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, sam_db), &mp_sam_db,
+	MNT_SAM_DB},
+{ "nosam_db", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, sam_db), &mp_nosam_db,
+	MNT_NOSAM_DB},
+{ "xattr", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, xattr), &mp_xattr,
+	MNT_XATTR},
+{ "xattr", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, xattr), &mp_noxattr,
+	MNT_NOXATTR},
 { NULL }
 };
 
@@ -522,7 +568,7 @@ static struct fieldVals cfg_mount_params[] = {
  * is important for the implementation of vfstab mount options and is used
  * to determine if either the flag or its pair has been set in the vfstab.
  */
-static int32_t flag_pairs[98] = {
+static int32_t flag_pairs[110] = {
 	/* general paired flags */
 	0, 0, MNT_SUID, MNT_NOSUID, MNT_NOTRACE,
 	MNT_TRACE, 0, 0, MNT_NOQUOTA, MNT_QUOTA,
@@ -557,10 +603,14 @@ static int32_t flag_pairs[98] = {
 	MNT_DMR, MNT_NODIO_SZERO, MNT_DIO_SZERO, MNT_NOCATTR, MNT_CATTR,
 
 	/* rel 4.6 Mount Options */
-	0, 0, 0, MNT_NOCDEVID, MNT_CDEVID,
-	MNT_NOCLMGMT, MNT_CLMGMT, MNT_NOCLFASTSW, MNT_CLFASTSW, 0,
-	0, 0
+	0, 0, 0, 0, MNT_NOCDEVID,
+	MNT_CDEVID, MNT_NOCLMGMT, MNT_CLMGMT, MNT_NOCLFASTSW, MNT_CLFASTSW,
+	0, 0, 0,
 
+	/* release 5.0 mount options */
+	0, 0, 0, 0, 0,
+	MNT_NOLOGGING, MNT_LOGGING, MNT_NOSAM_DB, MNT_SAM_DB, MNT_NOXATTR,
+	MNT_XATTR
 };
 
 

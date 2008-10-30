@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.21 $"
+#pragma ident	"$Revision: 1.22 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -78,8 +78,42 @@ stager_cfg_t *objp)
 	if (!xdr_uint32_t(xdrs, &objp->options))
 		return (FALSE);
 
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6.1") <= 0)) {
+
+			return (TRUE); /* versions 1.6.1 and lower */
+		}
+	}
+#endif /* samrpc_client */
+	if (!xdr_pointer(xdrs, (char **)&objp->dk_stream,
+	    sizeof (stream_cfg_t),
+	    (xdrproc_t)xdr_stream_cfg_t))
+		return (FALSE);
+
 	return (TRUE);
 }
+
+bool_t
+xdr_stream_cfg_t(
+XDR *xdrs,
+stream_cfg_t *objp) {
+
+	if (!xdr_mtype_t(xdrs, objp->media))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->drives))
+		return (FALSE);
+	if (!xdr_fsize_t(xdrs, &objp->max_size))
+		return (FALSE);
+	if (!xdr_int(xdrs, &objp->max_count))
+		return (FALSE);
+	if (!xdr_uint32_t(xdrs, &objp->change_flag))
+		return (FALSE);
+
+	return (TRUE);
+}
+
 
 bool_t
 xdr_StagerStateFlags_t(

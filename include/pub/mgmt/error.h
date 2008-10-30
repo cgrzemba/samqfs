@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.147 $"
+#pragma	ident	"$Revision: 1.148 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */
@@ -157,6 +157,7 @@ typedef enum samapi_errno {
 	SE_INVALID_DRIVE_NAME			= 30183,
 	SE_UNSUPPORTED_DRIVE			= 30184,
 	SE_NO_MATCHING_DEVICE			= 30185,
+	SE_STREAMS_ONLY_DISK			= 30186,
 
 	SE_MMAP_FAILED				= 30200,
 	SE_INVALID_REQ				= 30201,

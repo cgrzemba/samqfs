@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.27 $"
+#pragma ident	"$Revision: 1.28 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -83,8 +83,18 @@ static void setDrivesParams(void);
 static void setLogfileParam(void);
 static void setfield_err_msg(int code, char *msg);
 static void readcfg_err_msg(char *msg, int lineno, char *line);
+static void setDirectioParam(void);
+static void dirNoBegin(void);
+static void dirEndStreams(void);
+static void dirStreams(void);
+static void procStreams(void);
 static int init_static_variables(void);
 
+static void write_stager_stream(FILE *f, stream_cfg_t *ss_cfg);
+
+
+static char *noEnd = NULL;	/* which end statement is missing */
+static char *endStreamsStr = "endstreams";
 
 #include "mgmt/config/stager_setfields.h"
 
@@ -97,6 +107,9 @@ static DirProc_t commands[] = {
 	{ "logfile",		setLogfileParam,		DP_value },
 	{ "bufsize",		setBufsizeParams,		DP_value },
 	{ "drives",		setDrivesParams,		DP_value },
+	{ "directio",		setDirectioParam,		DP_value },
+	{ "streams",		dirStreams,			DP_set },
+	{ "endstreams",		dirNoBegin,			DP_set },
 	{ NULL, NULL }
 };
 
@@ -511,6 +524,166 @@ setLogfileParam(void)
 	Trace(TR_DEBUG, "set logfile");
 }
 
+/*
+ *  Set directio parameter from stager's command file.
+ */
+static void
+setDirectioParam(void)
+{
+	if (token != NULL && *token != '\0') {
+		if (strcmp(token, "on") == 0) {
+			stage_cfg->options |= ST_DIRECTIO_ON;
+			stage_cfg->change_flag |= ST_directio;
+		} else if (strcmp(token, "off") == 0) {
+			/*
+			 * Set the change_flag to indicate directio
+			 * was explicitly set to off.
+			 */
+			stage_cfg->change_flag |= ST_directio;
+		} else {
+			ReadCfgError(CustMsg(19038));
+		}
+	} else {
+		ReadCfgError(CustMsg(14008), token);
+	}
+}
+
+/*
+ * Handle the streams directive.
+ */
+static void
+dirStreams(void)
+{
+	static DirProc_t table[] = {
+		{ "endstreams", dirEndStreams,	DP_set },
+		{ NULL,		procStreams,	DP_other }
+	};
+
+	char *msg;
+
+	/*  Set the table to handle the streams directives */
+	ReadCfgSetTable(table);
+	msg = noEnd;
+	noEnd = endStreamsStr;
+	if (msg != NULL) {
+		/* '%s' missing */
+		ReadCfgError(CustMsg(4462), msg);
+	}
+}
+
+/*
+ * No beginning statement for * 'streams' directive.
+ */
+static void
+dirNoBegin(void)
+{
+	/* No preceding '%s' statement */
+	ReadCfgError(CustMsg(4447), "streams");
+}
+
+
+/*
+ * Handle the endstreams directive.
+ */
+static void
+dirEndStreams(void)
+{
+	ReadCfgSetTable(commands);
+	noEnd = NULL;
+}
+
+static void
+procStreams(void) {
+	boolean_t params_defined;
+	char *end_ptr;
+
+	/*
+	 * Streams are only supported for disk in 5.0.
+	 * Check that the media type (contained in dirName) is for disk.
+	 */
+	if (strcmp(dirName, "dk") != 0) {
+		/* Invalid media type */
+		ReadCfgError(CustMsg(19039), dirName);
+		return;
+	}
+
+	/* Check to see if a dk_stream has already been parsed */
+	if (stage_cfg->dk_stream->change_flag != 0) {
+		ReadCfgError(CustMsg(19040), dirName);
+	}
+
+	params_defined = B_FALSE;
+
+	while (ReadCfgGetToken() != 0) {
+		stream_cfg_t *ss_cfg = stage_cfg->dk_stream;
+		params_defined = B_TRUE;
+
+		if (strcmp(token, "-drives") == 0) {
+			if (ReadCfgGetToken() == 0) {
+				/* Missing value */
+				ReadCfgError(CustMsg(14113), "-drives");
+			}
+
+			errno = 0;
+			ss_cfg->drives =
+			    strtoll(token, &end_ptr, 10);
+
+			if (errno != 0 || *end_ptr != '\0' ||
+			    ss_cfg->drives < 0 || ss_cfg->drives > INT_MAX) {
+
+				/* Invalid '%s' value '%s' */
+				ReadCfgError(CustMsg(14101), "-drives",
+				    token);
+			}
+			ss_cfg->change_flag |= ST_SS_DRIVES;
+
+		} else if (strcmp(token, "-maxsize") == 0) {
+			uint64_t value;
+
+			if (ReadCfgGetToken() == 0) {
+
+				/* Missing %s value */
+				ReadCfgError(CustMsg(14113), "-maxsize");
+			}
+			if (StrToFsize(token, &value) == -1) {
+
+				/* Invalid '%s' value ('%s') */
+				ReadCfgError(CustMsg(14101), "-maxsize",
+				    token);
+			}
+			ss_cfg->max_size = value;
+			ss_cfg->change_flag |= ST_SS_MAX_SIZE;
+
+		} else if (strcmp(token, "-maxcount") == 0) {
+			if (ReadCfgGetToken() == 0) {
+
+				/* Missing value */
+				ReadCfgError(CustMsg(14113), "-maxcount");
+			}
+			errno = 0;
+			ss_cfg->max_count = strtoll(token, &end_ptr, 0);
+			if (errno != 0 || *end_ptr != '\0' ||
+			    ss_cfg->max_count < 0 ||
+			    ss_cfg->max_count > INT_MAX) {
+
+				/* Invalid '%s' value '%s' */
+				ReadCfgError(CustMsg(14101),
+				    "-maxcount", token);
+			}
+			ss_cfg->change_flag |= ST_SS_MAX_COUNT;
+		} else {
+			/* %s is not a recognized directive name */
+			ReadCfgError(CustMsg(14101), token);
+		}
+
+	}
+	if (!params_defined) {
+		/* No stream parameters were defined. */
+		ReadCfgError(CustMsg(19041));
+	}
+}
+
+
 
 /*
  *	Error handler for SetField function.
@@ -645,6 +818,14 @@ const stager_cfg_t *s)	/* cfg to write */
 		fprintf(f, "\nmaxretries = %d", s->max_retries);
 	}
 
+	if (s->change_flag && ST_directio) {
+		if (s->options & ST_DIRECTIO_ON) {
+			fprintf(f, "\ndirectio = on");
+		} else {
+			fprintf(f, "\ndirectio = off");
+		}
+	}
+
 	if (s->stage_drive_list != NULL && s->stage_drive_list->length != 0) {
 		drive_directive_t *d;
 		for (node = s->stage_drive_list->head;
@@ -687,6 +868,8 @@ const stager_cfg_t *s)	/* cfg to write */
 		}
 	}
 
+	write_stager_stream(f, s->dk_stream);
+
 	fprintf(f, "\n");
 	fflush(f);
 
@@ -694,6 +877,36 @@ const stager_cfg_t *s)	/* cfg to write */
 
 	Trace(TR_DEBUG, "wrote stager.cmd");
 	return (0);
+}
+
+static void
+write_stager_stream(FILE *f, stream_cfg_t *ss_cfg) {
+
+	if (f == NULL || ss_cfg == NULL || *ss_cfg->media == '\0' ||
+	    ss_cfg->change_flag == 0) {
+		return;
+	}
+
+	fprintf(f, "\nstreams\n%s", ss_cfg->media);
+
+	if (ss_cfg->change_flag & ST_SS_DRIVES &&
+	    ss_cfg->drives != 0) {
+		fprintf(f, " -drives %d", ss_cfg->drives);
+	}
+
+	if (ss_cfg->change_flag & ST_SS_MAX_COUNT &&
+	    ss_cfg->max_count != 0) {
+		fprintf(f, "-maxcount %d", ss_cfg->max_count);
+	}
+
+	if (ss_cfg->change_flag & ST_SS_MAX_SIZE &&
+	    ss_cfg->max_size != 0) {
+		char fsizestr[FSIZE_STR_LEN];
+		fprintf(f, "-maxsize %s",  fsize_to_str(ss_cfg->max_size,
+		    fsizestr, FSIZE_STR_LEN));
+	}
+
+	fprintf(f, "\nendstreams\n");
 }
 
 
@@ -934,5 +1147,43 @@ const char *logfile)
 		return (-1);
 	}
 	Trace(TR_DEBUG, "checked logfile %s", Str(logfile));
+	return (0);
+}
+
+
+int
+check_stager_stream(stream_cfg_t *ss_cfg) {
+
+
+	/* Not having a stream config is OK */
+	if (ss_cfg == NULL || ss_cfg->change_flag == 0) {
+		return (0);
+	}
+
+	if (strcmp(ss_cfg->media, "dk") != 0) {
+		setsamerr(SE_STREAMS_ONLY_DISK);
+		return (-1);
+	}
+	if (ss_cfg->change_flag & ST_SS_DRIVES && ss_cfg->drives < 0) {
+		samerrno = SE_INVALID_VALUE;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_INVALID_VALUE), "-drives",
+		    ss_cfg->drives);
+		return (-1);
+	}
+	if (ss_cfg->change_flag & ST_SS_MAX_SIZE && ss_cfg->max_size < 0) {
+		samerrno = SE_INVALID_FSIZE;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_INVALID_FSIZE), ss_cfg->max_size);
+		return (-1);
+	}
+	if (ss_cfg->change_flag & ST_SS_MAX_COUNT && ss_cfg->max_count < 0) {
+		samerrno = SE_INVALID_VALUE;
+		snprintf(samerrmsg, MAX_MSG_LEN,
+		    GetCustMsg(SE_INVALID_VALUE), "-maxcount",
+		    ss_cfg->max_count);
+		return (-1);
+	}
+
 	return (0);
 }

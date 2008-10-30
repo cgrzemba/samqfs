@@ -1,4 +1,4 @@
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -37,7 +37,6 @@ vpath %c $(SRC_VPATH)
 LIB = fsmgmt
 LIB_SRC = \
 	csn.c \
-	data_class.c \
 	sam_file_util.c \
 	explorer.c \
 	tail.c \

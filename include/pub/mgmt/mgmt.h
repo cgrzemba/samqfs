@@ -29,7 +29,7 @@
 #ifndef _MGMT_H
 #define	_MGMT_H
 
-#pragma	ident	"$Revision: 1.69 $"
+#pragma	ident	"$Revision: 1.70 $"
 
 /*
  * mgmt.h - SAMFS APIs for misc operations.
@@ -60,7 +60,7 @@
  * API_VERSION "1.5.6"	Thu Sep 21 3:28:15 EDT 2006
  * API_VERSION "1.5.9"	Mon Oct 2 2:28:15 EDT 2006
  */
-#define	API_VERSION "1.6.1"	/* Thu Oct 16 10:39:30 EDT 2008 */
+#define	API_VERSION "1.6.2"	/* Thu Oct 16 10:39:30 EDT 2008 */
 
 
 #include "pub/mgmt/types.h"

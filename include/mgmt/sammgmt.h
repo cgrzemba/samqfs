@@ -30,7 +30,7 @@
 #ifndef	_SAMMGMT_H_RPCGEN
 #define	_SAMMGMT_H_RPCGEN
 
-#pragma ident	"$Revision: 1.120 $"
+#pragma ident	"$Revision: 1.121 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -366,15 +366,15 @@ void get_rpc_server(ctx_t *ctx, upath_t svr);
 	switch (ret) { \
 	case -1: \
 		rpc_result.samrpc_result_u.err.errcode = samerrno; \
-		(void) strcpy(rpc_result.samrpc_result_u.err.errmsg,\
-		    samerrmsg);\
+		(void) strcpy(rpc_result.samrpc_result_u.err.errmsg, \
+		    samerrmsg); \
 		Trace(TR_DEBUG, "[%s]", samerrmsg); \
 		break; \
 	case -2: \
 	case -3: \
 		rpc_result.samrpc_result_u.err.errcode = samerrno; \
-		(void) strcpy(rpc_result.samrpc_result_u.err.errmsg,\
-		    samerrmsg);\
+		(void) strcpy(rpc_result.samrpc_result_u.err.errmsg, \
+		    samerrmsg); \
 		Trace(TR_DEBUG, "[%s]", samerrmsg); \
 		/* FALLTHRU */ \
 	default: \
@@ -1574,15 +1574,6 @@ extern  samrpc_result_t *samrpc_is_valid_user_3_svr();
 #define	samrpc_ar_rerun_all	155
 extern  samrpc_result_t *samrpc_ar_rerun_all_4_svr();
 
-#define	samrpc_associate_class_with_policy	156
-extern  samrpc_result_t *samrpc_associate_class_with_policy_6_svr();
-
-#define	samrpc_delete_data_class	157
-extern  samrpc_result_t *samrpc_delete_data_class_6_svr();
-
-#define	samrpc_set_class_order	158
-extern  samrpc_result_t *samrpc_set_class_order_6_svr();
-
 #define	samrpc_archive_files	159
 extern  samrpc_result_t *samrpc_archive_files_6_svr();
 
@@ -2734,6 +2725,7 @@ extern bool_t xdr_stager_stream_t();
 extern bool_t xdr_stager_info_t();
 extern bool_t xdr_staging_file_info_t();
 extern bool_t xdr_st_sort_key_t();
+extern bool_t xdr_stream_cfg_t();
 
 extern bool_t xdr_set_stager_cfg_arg_t();
 extern bool_t xdr_drive_directive_arg_t();

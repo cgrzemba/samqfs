@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyParams.java,v 1.16 2008/05/16 18:35:27 am143972 Exp $
+// ident	$Id: CopyParams.java,v 1.17 2008/10/30 14:42:29 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc;
 
@@ -89,6 +89,7 @@ public class CopyParams {
     private short rearch_stage_copy;
     private long chgFlags;
     private long queue_time_limit;
+    private long fillvsnsMin;
 
     /**
      * private constructor
@@ -100,7 +101,8 @@ public class CopyParams {
         short reserve, long age, int count, String startSize,
         String overflowMinSz, RecyclerParams recParams,
         int simdelay, boolean tstovfl, boolean directio,
-	short rearch_stage_copy, long chgFlags, long queue_time_limit) {
+	short rearch_stage_copy, long chgFlags,
+	long queue_time_limit, long fillvsnsMin) {
             this.copyName = copyName;
             this.bufSize = bufSize;
             this.bufLocked = bufLocked;
@@ -129,6 +131,7 @@ public class CopyParams {
 	    this.rearch_stage_copy = rearch_stage_copy;
             this.chgFlags = chgFlags;
             this.queue_time_limit = queue_time_limit;
+	    this.fillvsnsMin = fillvsnsMin;
     }
 
     /**
@@ -140,7 +143,7 @@ public class CopyParams {
         cp.arPrios, cp.unarchAge, cp.join, cp.rsort, cp.sort, cp.offlineCp,
         cp.reserve, cp.age, cp.count, cp.startSize, cp.overflowMinSz,
         cp.recParams, cp.simdelay, cp.tstovfl, cp.directio,
-	cp.rearch_stage_copy, cp.chgFlags, cp.queue_time_limit);
+	cp.rearch_stage_copy, cp.chgFlags, cp.queue_time_limit, cp.fillvsnsMin);
     }
 
     // these values must match those defined in pub/mgmt/archive.h

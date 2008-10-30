@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.22 $"
+#pragma ident	"$Revision: 1.23 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -57,13 +57,25 @@ stgcfg2StagerParams(JNIEnv *env, void *v_stgcfg) {
 	jmethodID mid;
 	jobject newObj;
 	stager_cfg_t *stg = (stager_cfg_t *)v_stgcfg;
+	int	dkDrives = 0;
+	fsize_t dkMaxSize = 0;
+	int	dkMaxCount = 0;
+	uint32_t dkChgFlags = 0;
+
+	if (stg->dk_stream != NULL) {
+		dkDrives = stg->dk_stream->drives;
+		dkMaxSize = stg->dk_stream->max_size;
+		dkMaxCount = stg->dk_stream->max_count;
+		dkChgFlags = stg->dk_stream->change_flag;
+	}
+
 
 	PTRACE(2, "jni:stgcfg2StagerParams() entry");
 	cls = (*env)->FindClass(env, BASEPKG"/stg/StagerParams");
 	/* call the private constructor to initialize all fields */
 	mid = (*env)->GetMethodID(env, cls, "<init>",
 	    "(Ljava/lang/String;II[L"BASEPKG"/arc/BufDirective;"
-	    "[L"BASEPKG"/arc/DrvDirective;JJ)V");
+	    "[L"BASEPKG"/arc/DrvDirective;JJIJIJ)V");
 	newObj = (*env)->NewObject(env, cls, mid,
 	    JSTRING(stg->stage_log),
 	    (jint)stg->max_active,
@@ -73,7 +85,12 @@ stgcfg2StagerParams(JNIEnv *env, void *v_stgcfg) {
 	    lst2jarray(env, stg->stage_drive_list,
 		BASEPKG"/arc/DrvDirective", drvdir2DrvDirective),
 	    (jlong)stg->options,
-	    (jlong)stg->change_flag);
+	    (jlong)stg->change_flag,
+	    (jint)dkDrives,
+	    (jlong)dkMaxSize,
+	    (jint)dkMaxCount,
+	    (jlong)dkChgFlags);
+
 	PTRACE(2, "jni:stgcfg2StagerParams() done");
 	return (newObj);
 }
@@ -82,7 +99,23 @@ void *
 StagerParams2stgcfg(JNIEnv *env, jobject stgObj) {
 
 	jclass cls;
-	stager_cfg_t *stg = (stager_cfg_t *)malloc(sizeof (stager_cfg_t));
+	stager_cfg_t *stg;
+	stream_cfg_t *stream;
+
+	stg = (stager_cfg_t *)malloc(sizeof (stager_cfg_t));
+	if (stg == NULL) {
+		return (NULL);
+	}
+	stream = (stream_cfg_t *)malloc(sizeof (stream_cfg_t));
+	if (stream == NULL) {
+		free(stg);
+		return (NULL);
+	}
+	memset(stg, 0, sizeof (stager_cfg_t));
+	memset(stream, 0, sizeof (stream_cfg_t));
+
+	stg->dk_stream = stream;
+	strlcpy(stg->dk_stream->media, "dk", 5);
 
 	PTRACE(2, "jni:StagerParams2stgcfg() entry");
 	cls = (*env)->GetObjectClass(env, stgObj);
@@ -104,6 +137,15 @@ StagerParams2stgcfg(JNIEnv *env, jobject stgObj) {
 	    (uint32_t)getJLongFld(env, cls, stgObj, "chgFlags");
 	stg->options =
 	    (uint32_t)getJLongFld(env, cls, stgObj, "options");
+	stg->dk_stream->drives = (int)getJIntFld(env, cls,
+	    stgObj, "dkDrives");
+	stg->dk_stream->max_size = (fsize_t)getJLongFld(env, cls,
+		stgObj, "dkMaxSize") * 1024;
+	stg->dk_stream->max_count = (int)getJIntFld(env, cls,
+	    stgObj, "dkMaxCount");
+	stg->dk_stream->change_flag =
+	    (uint32_t)getJLongFld(env, cls, stgObj, "dkChgFlags");
+
 	PTRACE(2, "jni:StagerParams2stgcfg() done");
 	return (stg);
 }
@@ -256,6 +298,10 @@ Java_com_sun_netstorage_samqfs_mgmt_stg_Stager_setParams(JNIEnv *env,
 
 	PTRACE(1, "jni:Stager_setParams() entry");
 	stg = StagerParams2stgcfg(env, stgObj);
+	if (stg == NULL) {
+		ThrowEx(env);
+		return;
+	}
 	res = set_stager_cfg(CTX, stg);
 	free_stager_cfg(stg);
 	if (-1 == res) {

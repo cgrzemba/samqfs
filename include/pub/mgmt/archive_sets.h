@@ -29,7 +29,7 @@
 #ifndef	_ARCHIVE_SETS_H
 #define	_ARCHIVE_SETS_H
 
-#pragma ident "	$Revision: 1.16 $	"
+#pragma ident "	$Revision: 1.17 $	"
 
 
 /*
@@ -55,14 +55,9 @@ typedef enum set_type {
 	GENERAL_SET,
 	NO_ARCHIVE_SET,
 	ALLSETS_PSEUDO_SET,
-	UNASSIGNED_SET,
 	EXPLICIT_DEFAULT
 } set_type_t;
 
-
-#define	UNASSIGNED_POL_PATH "no__classes__assigned"
-#define	DEFAULT_CLASS_NAME "DefaultClass"
-#define	EXPLICIT_DEFAULT_POLICY_NAME "DefaultPolicy"
 
 /*
  * arch_set_t
@@ -71,7 +66,6 @@ typedef enum set_type {
  * 2. no_archive set
  * 3. Default archive set
  * 4. Allsets pseudo archive sets
- * 5. Unassigned Archive Set
  *
  * There are different rules based on what type of arch_set is being
  * handled.
@@ -98,13 +92,6 @@ typedef enum set_type {
  *	the other archive sets. Settings for an specific set always
  *	override those made on an allset. Any criteria contained in
  *	an allset archive set will be ignored.
- *
- * unassigned archive sets:
- * 	unassigned archive sets will have a single criteria entry
- *	to hold its arch_copy array, all other criteria
- *	information will be ignored. The vsn_maps and copy_params can
- *	be set. The name will be the name of the archive set
- *      if it is assigned to a data class.
  *
  * Both the General Archive Set and the no_archive set can contain global
  * archiving criteria that will apply to all filesystems.
@@ -212,56 +199,6 @@ int
 delete_arch_set(
 ctx_t *ctx,		/* contains optional dump path */
 set_name_t name);	/* the name of the set to delete */
-
-
-
-/*
- * Associate a data class with an archive set. This can result in the
- * set to which the class was previously assigned becoming an unassigned
- * set.
- *
- * Limits: It is unclear at this time if this function will be
- * supported outside of the limited environment of an
- * intellistore.
- */
-int
-associate_class_with_policy(
-ctx_t *c,
-char *class_name,
-char *set_name);
-
-
-/*
- * Modifies the archiver configuration so that the data class criteria
- * are applied in the order that the classes appear in the list.
- * If fs_name is null the new order is applied to all file systems,
- * otherwise the order is applied only to the named file system.
- *
- * Limits: It is unclear at this time if this function will be
- * supported outside of the limited environment of an
- * intellistore.
- */
-int
-set_class_order(
-ctx_t *ctx,
-char *fs_name,
-sqm_lst_t *ordered);
-
-
-/*
- * Delete a data class. This function deletes a data class from the archiver
- * configuration and also clears any class related attributes supported in the
- * intellistore environment. This can result in the set to which the class was
- * previously assigned becoming unassigned.
- *
- * Limits: It is unclear at this time if this function will be
- * supported outside of the limited environment of an
- * intellistore.
- */
-int
-delete_data_class(
-ctx_t *c,
-char *class_name);
 
 
 void free_arch_set(arch_set_t *);

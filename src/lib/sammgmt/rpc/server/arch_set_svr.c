@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.12 $"
+#pragma ident	"$Revision: 1.13 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>
@@ -178,86 +178,6 @@ struct svc_req *req	/* ARGSUSED */
 	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
 
 	Trace(TR_DEBUG, "Delete archive set return[%d]", ret);
-
-	return (&rpc_result);
-}
-
-
-samrpc_result_t *
-samrpc_associate_class_with_policy_6_svr(
-string_string_arg_t *arg,	/* argument to api */
-struct svc_req *req		/* ARGSUSED */
-)
-{
-
-	int ret = -1;
-
-	Trace(TR_DEBUG, "Associate class [%s] with policy [%s]",
-	    arg->str1, arg->str2);
-
-	/* free previous result */
-	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
-
-	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
-
-	Trace(TR_DEBUG, "Calling native library to assoc class with pol");
-	ret = associate_class_with_policy(arg->ctx, arg->str1, arg->str2);
-
-	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
-
-	Trace(TR_DEBUG, "Associate class with policy return[%d]", ret);
-	return (&rpc_result);
-}
-
-
-samrpc_result_t *
-samrpc_delete_data_class_6_svr(
-string_arg_t *arg,	/* arguments to api */
-struct svc_req *req	/* ARGSUSED */
-)
-{
-
-	int ret = -1;
-
-	Trace(TR_DEBUG, "Delete data class");
-
-	/* free previous result */
-	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
-
-	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
-
-	Trace(TR_DEBUG, "Call native lib delete data class");
-	ret = delete_data_class(arg->ctx, arg->str);
-
-	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
-
-	Trace(TR_DEBUG, "Delete data class return[%d]", ret);
-
-	return (&rpc_result);
-}
-
-samrpc_result_t *
-samrpc_set_class_order_6_svr(
-str_critlst_arg_t *arg,	/* arguments to api */
-struct svc_req *req	/* ARGSUSED */
-)
-{
-
-	int ret = -1;
-
-	Trace(TR_DEBUG, "Setting class order");
-
-	/* free previous result */
-	xdr_free(xdr_samrpc_result_t, (char *)&rpc_result);
-
-	SAMRPC_CHECK_TIMESTAMP(arg->ctx->handle->timestamp);
-
-	Trace(TR_DEBUG, "Call native lib set class order");
-	ret = set_class_order(arg->ctx, arg->str, arg->critlst);
-
-	SAMRPC_SET_RESULT(ret, SAM_VOID, 0);
-
-	Trace(TR_DEBUG, "Set class order return[%d]", ret);
 
 	return (&rpc_result);
 }

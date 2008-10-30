@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.617 $"
+$ pragma ident "$Revision: 1.618 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -3766,6 +3766,7 @@ $ ignoring the last argument %s for 4.1
 30179 Unable to view the file: %s
 30180 Release files failed
 30185 No matching device found for %s
+30186 'streams' directive is only valid for disk media
 
 30200 Unable to retrieve fault information from file %s
 30201 Invalid request

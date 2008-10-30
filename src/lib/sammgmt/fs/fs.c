@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.85 $"
+#pragma ident   "$Revision: 1.86 $"
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 
@@ -1637,7 +1637,19 @@ fs_t *f)				/* IN/OUT - filled fs_t */
 	mnt_options->rel_4_6_opts.atime = fi->fi_atime;
 	mnt_options->rel_4_6_opts.min_pool = fi->fi_min_pool;
 
+	/* release 5.0 options */
+	mnt_options->rel_5_0_opts.obj_width = fi->fi_obj_width;
+	mnt_options->rel_5_0_opts.obj_depth =
+	    fi->fi_obj_depth / (long long)1024;
+	mnt_options->rel_5_0_opts.obj_pool = fi->fi_obj_pool;
+	mnt_options->rel_5_0_opts.obj_sync_data = fi->fi_obj_sync_data;
 
+	mnt_options->rel_5_0_opts.logging =
+	    (fi->fi_config1 & MC_LOGGING) ? B_TRUE : B_FALSE;
+	mnt_options->rel_5_0_opts.sam_db =
+	    (fi->fi_config1 & MC_SAM_DB) ? B_TRUE : B_FALSE;
+	mnt_options->rel_5_0_opts.xattr =
+	    (fi->fi_config1 & MC_NOXATTR) ? B_FALSE : B_TRUE;
 
 	f->mount_options = mnt_options;
 

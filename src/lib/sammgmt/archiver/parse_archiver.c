@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.57 $"
+#pragma ident	"$Revision: 1.58 $"
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 
@@ -117,6 +117,8 @@ static void dirVsnpools(void);
 static void dirVsns(void);
 static void dirWait(void);
 static void dirSetarchdone(void);
+static void dirBackGndInterval(void);
+static void dirBackGndTime(void);
 static void copyNorelease(void);
 static void copyRelease(void);
 static void notDirective(void);
@@ -124,6 +126,8 @@ static void notGlobalDirective(void);
 static void paramsDiskArchive(void);
 static void paramsInvalid(void);
 static void paramsSetfield(void);
+static void paramsFillvsns(void);
+
 static void procParams(void);
 static void procVsnpools(void);
 static void procVsns(void);
@@ -161,16 +165,19 @@ static DirProc_t directives[] = {
 	{ "wait",		dirWait,	DP_set	 },
 	{ "scanlist_squash",	dirScanlist,	DP_value },
 	{ "setarchdone",	dirSetarchdone,	DP_value },
+	{ "background_interval", dirBackGndInterval, DP_value,	4548 },
+	{ "background_time",	dirBackGndTime,	DP_value,	4549 },
 	{ NULL,			notDirective,	DP_other }
 };
 
 static char dirName[TOKEN_SIZE];
 static char errMsg[256];
 static char token[TOKEN_SIZE];
+static boolean_t peekedToken = B_FALSE;
 
 static set_name_t asname;	/* Current archive set criteria name */
-static boolean_t noGlobal = FALSE;	/* Don't allow a global directive */
-static boolean_t noDefine = FALSE;	/* Don't define an archive set */
+static boolean_t noGlobal = B_FALSE;	/* Don't allow a global directive */
+static boolean_t noDefine = B_FALSE;	/* Don't define an archive set */
 
 static boolean_t defining_metadata_copy;
 static char *cmdFname;
@@ -256,7 +263,6 @@ static int paramsReserveSet(void *v, char *value, char *buf, int bufsize);
 #define	paramsReserveTostr NULL
 
 #include "aml/archset.hc"
-#include "mgmt/config/data_class.h"
 
 static int propGroupSet(void *v, char *value, char *buf, int bufsize);
 #define	propGroupTostr NULL
@@ -357,9 +363,12 @@ archiver_cfg_t *cfg)		/* malloced return value */
 				/*
 				 * The absence of a cmd file is not an error
 				 * return 0 and the cfg that was initialized
-				 * above
+				 * above. Also set the global wait directive
+				 * since this is the new default behavior as
+				 * of 5.0.
 				 */
 				setup_global_directives_from_fs();
+				arch_cfg->global_dirs.wait = B_TRUE;
 				Trace(TR_OPRMSG, "parsed archiver no file");
 
 				return (0);
@@ -419,148 +428,6 @@ archiver_cfg_t *cfg)		/* malloced return value */
 
 
 static void
-dirClass(void) {
-	ar_set_criteria_t *new_cr;
-
-	/* create a new class object. */
-	new_cr = mallocer(sizeof (ar_set_criteria_t));
-	if (new_cr == NULL) {
-		ReadCfgError(samerrno);
-	}
-	memset(new_cr, 0, sizeof (ar_set_criteria_t));
-
-	/* token contains the class name */
-	strlcpy(new_cr->class_name, token, sizeof (new_cr->class_name));
-
-	if (lst_append(classes, new_cr) != 0) {
-		ReadCfgError(samerrno);
-	}
-	cur_crit = new_cr;
-}
-
-
-void
-dirClassFs(void) {
-	*(cur_crit->fs_name) = '\0';
-
-	strlcat(cur_crit->fs_name, token, sizeof (uname_t));
-
-	while (ReadCfgGetToken() != 0) {
-		strlcat(cur_crit->fs_name, token, sizeof (uname_t));
-	}
-}
-
-
-/*
- * The description must be the last tag on the line when it is used in
- * the policy.cmd file!
- */
-void
-dirDesc(void) {
-	char tmpbuf[1024] = "";
-
-	strlcat(tmpbuf, token, sizeof (tmpbuf));
-
-	/* assemble the description from the remainder of the line */
-	while (ReadCfgGetToken() != 0) {
-		strlcat(tmpbuf, " ", sizeof (tmpbuf));
-		strlcat(tmpbuf, token, sizeof (tmpbuf));
-	}
-
-	cur_crit->description = strdup(tmpbuf);
-}
-
-int
-parse_class_file(
-	char	*class_file,
-	sqm_lst_t	**cl_list) {
-
-	/* Class Porperities Table. */
-	static DirProc_t classTable[] = {
-		{ "class",	dirClass,	DP_value },
-		{ "fs",		dirClassFs,	DP_value },
-		{ "desc",	dirDesc,	DP_value },
-		{ NULL,		propSetfield,  DP_other }
-	};
-
-
-	Trace(TR_FILES, "parsing class file %s", class_file);
-	if (ISNULL(cl_list)) {
-		Trace(TR_OPRMSG, "parsing class file failed: %s", samerrmsg);
-		return (-1);
-	}
-
-	*cl_list = lst_create();
-	classes = *cl_list;
-	if (classes == NULL) {
-		Trace(TR_OPRMSG, "parsing class file failed: %s", samerrmsg);
-		return (-1);
-	}
-
-	if (init_static_variables() != 0) {
-		lst_free(classes);
-		Trace(TR_OPRMSG, "parsing class file failed: %s", samerrmsg);
-		return (-1);
-	}
-
-	parsing_class_file = B_TRUE;
-	errors = ReadCfg(class_file, classTable, dirName, token, msgFunc);
-	if (errors != 0) {
-		parsing_class_file = B_FALSE;
-		Trace(TR_OPRMSG, "parsing class file failed: %s", samerrmsg);
-
-		if (errors == -1) {
-
-			if (no_cmd_file) {
-				/*
-				 * The absence of a cmd file is not an error
-				 * return 0 and the cfg that was initialized
-				 * above
-				 */
-				Trace(TR_OPRMSG, "parsed classes no file");
-
-				return (0);
-			}
-
-			samerrno = SE_CFG_OPEN_FAILED;
-			snprintf(samerrmsg, MAX_MSG_LEN,
-			    GetCustMsg(SE_CFG_OPEN_FAILED), cmdFname,
-			    open_error);
-			free_ar_set_criteria_list(classes);
-			Trace(TR_OPRMSG, "parsing class file failed: %s",
-			    samerrmsg);
-			return (-1);
-
-		} else if (mem_err != 0) {
-			setsamerr(mem_err);
-			free_ar_set_criteria_list(classes);
-			Trace(TR_OPRMSG, "parsing class file failed: %s",
-			    samerrmsg);
-			return (-1);
-
-		} else {
-			samerrno = SE_CONFIG_CONTAINED_ERRORS;
-
-			/* %s configuration contained %d errors */
-			snprintf(samerrmsg, MAX_MSG_LEN,
-			    GetCustMsg(SE_CONFIG_CONTAINED_ERRORS),
-			    class_file, errors);
-			free_ar_set_criteria_list(classes);
-			Trace(TR_OPRMSG, "parsing class file failed: %s",
-			    samerrmsg);
-
-			return (-1);
-
-		}
-
-	}
-
-	parsing_class_file = B_FALSE;
-	return (0);
-}
-
-
-static void
 setup_global_directives_from_fs(void)
 {
 
@@ -587,6 +454,8 @@ setup_global_directives_from_fs(void)
 	}
 	arch_cfg->global_dirs.change_flag |= global_props->change_flag;
 	arch_cfg->global_dirs.options |= global_props->options;
+	arch_cfg->global_dirs.bg_interval = global_props->bg_interval;
+	arch_cfg->global_dirs.bg_time = global_props->bg_time;
 
 	free_ar_fs_directive(global_props);
 	global_props = NULL;
@@ -1074,9 +943,6 @@ char *criteria_name)
 	c->nftv = flag_reset;
 	*(c->after) = '\0';
 
-	/* temporary name for data classes. */
-	snprintf(c->class_name, sizeof (c->class_name), "Class_%d",
-	    criteria_index++);
 
 	if (strcmp(criteria_name, NO_ARCHIVE) != 0) {
 		/* all non no_archive criteria gets one copy by default */
@@ -1176,6 +1042,7 @@ init_static_variables(void)
 	noEnd = NULL;
 	mem_err = 0;
 	no_cmd_file = B_FALSE;
+	peekedToken = B_FALSE;
 	memset(&tmp_arch_set, 0, sizeof (struct ArchSet));
 
 
@@ -1442,7 +1309,7 @@ dirBufsize(void)
 
 	if (ReadCfgGetToken() != 0) {
 		if (strcmp(token, "lock") == 0) {
-			buf->lock = TRUE;
+			buf->lock = B_TRUE;
 			buf->change_flag |= BD_lock;
 		} else {
 			free(buf);
@@ -1657,7 +1524,7 @@ dirFs(void)
 	copy = 0;
 	snprintf(name, sizeof (name), "%s.%d", token, copy + 1);
 	find_arch_cp_params(name);  /* Set the archive set */
-	noGlobal = TRUE;
+	noGlobal = B_TRUE;
 }
 
 
@@ -1790,6 +1657,63 @@ dirSetarchdone(void)
 	if (cur_fs == global_props) {
 		for (n = arch_cfg->ar_fs_p->head; n != NULL; n = n->next) {
 			((ar_fs_directive_t *)n->data)->options |= flag;
+		}
+	}
+}
+
+/*
+ * background_interval = interval
+ */
+static void
+dirBackGndInterval(void)
+{
+	uint_t	v;
+	node_t *n;
+
+	assemble_age(&v, "background_interval", SCAN_INTERVAL_MAX);
+
+	cur_fs->bg_interval = v;
+	cur_fs->change_flag |= AR_FS_bg_interval;
+	if (cur_fs == global_props) {
+		for (n = arch_cfg->ar_fs_p->head; n != NULL; n = n->next) {
+			((ar_fs_directive_t *)n->data)->bg_interval = v;
+		}
+	}
+}
+
+
+/*
+ * background_time = hhmm
+ */
+static void
+dirBackGndTime(void)
+{
+	int	error;
+	int	i;
+	int	tm[4];
+	node_t *n;
+
+	error = strlen(token) != 4;
+	for (i = 0; i < 4; i++) {
+		error += !isdigit(token[i]);
+		tm[i] = token[i] - '0';
+	}
+	if (error != 0) {
+		/* Invalid background time */
+		ReadCfgError(CustMsg(4550));
+	}
+	tm[0] = 10 * tm[0] + tm[1];
+	tm[2] = 10 * tm[2] + tm[3];
+	if (tm[2] > 59 || tm[0] > 23) {
+		/* Invalid background time */
+		ReadCfgError(CustMsg(4550));
+	}
+	cur_fs->bg_time = (tm[0] * 100) + tm[2];
+	cur_fs->change_flag |= AR_FS_bg_time;
+	if (cur_fs == global_props) {
+		for (n = arch_cfg->ar_fs_p->head; n != NULL; n = n->next) {
+			((ar_fs_directive_t *)n->data)->bg_time =
+			    cur_fs->bg_time;
 		}
 	}
 }
@@ -1942,7 +1866,7 @@ dirParams(void)
 	Trace(TR_DEBUG, "handling params");
 
 	ReadCfgSetTable(table);
-	noDefine = TRUE;
+	noDefine = B_TRUE;
 	msg = noEnd;
 	noEnd = "endparams";
 	if (msg != NULL) {
@@ -1986,7 +1910,8 @@ procParams(void)
 	    /* CSTYLED */ { "-simdelay", paramsInvalid, DP_other },
 	    /* CSTYLED */ { "-tstovfl", paramsInvalid, DP_other },
 #endif /* !defined(DEBUG) | defined(lint) */
-		{ NULL,	paramsSetfield, DP_other }
+	    {"-fillvsns",	paramsFillvsns, DP_other },
+	    { NULL,	paramsSetfield, DP_other }
 	};
 
 
@@ -2035,23 +1960,29 @@ procParams(void)
 				 * allsets.copy encountered no more allsets
 				 * params are allowed except for copies
 				 */
-				p_allsets = FALSE;
+				p_allsets = B_FALSE;
 				setDefaultParams(1);
 			}
 		} else {
 			if (p_allsets || p_allsets_copy) {
-				p_allsets = FALSE;
-				p_allsets_copy = FALSE;
+				p_allsets = B_FALSE;
+				p_allsets_copy = B_FALSE;
 				setDefaultParams(1);
 				setDefaultParams(0);
 			}
 		}
 	}
-	paramsDefined = FALSE;
-	while (ReadCfgGetToken() != 0) {
+	paramsDefined = B_FALSE;
+	peekedToken = B_FALSE;
+	while (peekedToken || ReadCfgGetToken() != 0) {
+		if (peekedToken && token[0] == '\0') {
+			/* peeked the end of the line */
+			break;
+		}
+		peekedToken = B_FALSE;
 		strlcpy(dirName, token, sizeof (dirName)-1);
 		ReadCfgLookupDirname(dirName, table);
-		paramsDefined = TRUE;
+		paramsDefined = B_TRUE;
 	}
 
 
@@ -2081,7 +2012,7 @@ dirVsnpools(void)
 	Trace(TR_DEBUG, "handling vsnpools");
 
 	ReadCfgSetTable(table);
-	noDefine = TRUE;
+	noDefine = B_TRUE;
 	msg = noEnd;
 	noEnd = "endvsnpools";
 	if (msg != NULL) {
@@ -2205,7 +2136,7 @@ dirVsns(void)
 	Trace(TR_DEBUG, "handling vsns");
 
 	ReadCfgSetTable(table);
-	noDefine = TRUE;
+	noDefine = B_TRUE;
 	msg = noEnd;
 	noEnd = "endvsns";
 	if (msg != NULL) {
@@ -2274,12 +2205,12 @@ procVsns(void)
 				ReadCfgError(CustMsg(4505), ALL_SETS);
 			}
 			if (v_allsets) {
-				v_allsets = FALSE;
+				v_allsets = B_FALSE;
 			}
 		} else {
 			if (v_allsets || v_allsets_copy) {
-				v_allsets = FALSE;
-				v_allsets_copy = FALSE;
+				v_allsets = B_FALSE;
+				v_allsets_copy = B_FALSE;
 			}
 		}
 	}
@@ -2523,7 +2454,6 @@ defineArchset(char *name)
 	static DirProc_t table[] = {
 		{ "-release",	propRelease,	DP_param,	4475 },
 		{ "-stage",	propStage,	DP_param,	4476 },
-		{ "-desc",	dirDesc,	DP_param, },
 		{ NULL,		propSetfield,	DP_other }
 	};
 	Trace(TR_DEBUG, "defining Archset(%s)", Str(name));
@@ -2666,17 +2596,11 @@ defineArchset(char *name)
 		}
 	}
 
-	/*
-	 * At this point we know the fs name, the archive set name and
-	 * the criteria. This is everything we would need to know to assign
-	 * the class name. If the archiver.cmd has not been edited by hand.
-	 */
 	if (lst_append(cur_fs->ar_set_criteria, crit) != 0) {
 		cur_crit = err_crit;
 		free_ar_set_criteria(crit);
 		ReadCfgError(samerrno);
 	}
-	crit->priority = cur_fs->ar_set_criteria->length;
 }
 
 
@@ -2931,6 +2855,7 @@ propRelease(void)
 {
 
 	char	*p;
+	char	*end_ptr;
 
 	Trace(TR_DEBUG, "handling release directive");
 
@@ -2942,17 +2867,43 @@ propRelease(void)
 		ReadCfgError(CustMsg(4440), "-release", NO_ARCHIVE);
 	}
 
+
 	p = token;
 	while (*p != 0) {
 		switch (*p) {
-		case 'd':
+		case SET_DEFAULT_RELEASE:
+			cur_crit->attr_flags |= ATTR_RELEASE_DEFAULT;
 			break;
-		case 'a':
+		case ALWAYS_RELEASE:
+			cur_crit->attr_flags |= ATTR_RELEASE_ALWAYS;
 			break;
-		case 'n':
+		case NEVER_RELEASE:
+			cur_crit->attr_flags |= ATTR_RELEASE_NEVER;
 			break;
-		case 'p':
+		case PARTIAL_RELEASE:
+			cur_crit->attr_flags |= ATTR_RELEASE_PARTIAL;
 			break;
+		case PARTIAL_SIZE:
+			cur_crit->attr_flags |= ATTR_PARTIAL_SIZE;
+			errno = 0;
+			cur_crit->partial_size =
+			    (int32_t)strtol((p + 1), &end_ptr, 10);
+
+			if (errno != 0 || ((p+1) == end_ptr)) {
+				ReadCfgError(CustMsg(4477), *p);
+			}
+
+			/*
+			 * p gets incremented after the switch.
+			 * So decrement end_ptr here to point to the last
+			 * character converted by strtol.
+			 */
+			p = end_ptr - 1;
+
+			checkRange("partial_size", cur_crit->partial_size,
+			    SAM_MINPARTIAL, SAM_MAXPARTIAL);
+			break;
+
 		default: {
 				free_ar_set_criteria(cur_crit);
 				cur_crit = err_crit;
@@ -2962,10 +2913,8 @@ propRelease(void)
 			}
 		}
 		p++;
-	}
 
-	cur_crit->release = token[0];
-	cur_crit->change_flag |= AR_ST_release;
+	} /* End while (*p != 0) */
 }
 
 
@@ -3060,10 +3009,13 @@ propStage(void)
 	while (*p != 0) {
 		switch (*p) {
 		case SET_DEFAULT_STAGE:
+			cur_crit->attr_flags |= ATTR_STAGE_DEFAULT;
 			break;
 		case ASSOCIATIVE_STAGE:
+			cur_crit->attr_flags |= ATTR_STAGE_ASSOCIATIVE;
 			break;
 		case NEVER_STAGE:
+			cur_crit->attr_flags |= ATTR_STAGE_NEVER;
 			break;
 		default: {
 				free_ar_set_criteria(cur_crit);
@@ -3075,10 +3027,7 @@ propStage(void)
 			}
 		}
 		p++;
-	}
-	cur_crit->stage = token[0];
-	cur_crit->change_flag |= AR_ST_stage;
-
+	} /* End while (*p != 0) */
 }
 
 
@@ -3619,6 +3568,24 @@ paramsSetfield(void)
 	}
 }
 
+static void
+paramsFillvsns(void) {
+
+
+	/* Try to use the token value if it isn't a parameter */
+	if (ReadCfgGetToken() != 0 && token[0] != '-') {
+		Trace(TR_DEBUG, "Setting fillvsnsmin, token: %s", token);
+		if (SetFieldValue(cur_params, params_tbl, dirName+1,
+		    token, msgFuncSetField) != 0) {
+			ReadCfgError(0, errMsg);
+		}
+	} else {
+		/* Tell procParams we peeked, but didn't use the token */
+		peekedToken = B_TRUE;
+	}
+	cur_params->fillvsns = B_TRUE;
+	cur_params->change_flag |= AR_PARAM_fillvsns;
+}
 
 /*
  * Compare two file properties descriptions

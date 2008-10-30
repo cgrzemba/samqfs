@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: StagerParams.java,v 1.11 2008/05/16 18:35:30 am143972 Exp $
+// ident	$Id: StagerParams.java,v 1.12 2008/10/30 14:42:30 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.stg;
 
@@ -43,13 +43,19 @@ public class StagerParams {
     private long chgFlags;
     private long options;
 
+    // Disk Stream Configuration
+    private int dkDrives;
+    private long dkMaxSize; // KB
+    private int dkMaxCount;
+    private long dkChgFlags;
+
     // options flags must match those defined in pub/mgmt/stage.h
     public static final int ST_LOG_START   = 0x00000001;
     public static final int ST_LOG_ERROR   = 0x00000002;
     public static final int ST_LOG_CANCEL  = 0x00000004;
     public static final int ST_LOG_FINISH  = 0x00000008;
     public static final int ST_LOG_ALL = 0x00000010;
-
+    public static final int ST_DIRECTIO_ON = 0x00000020;
 
     // these values must match those defined in pub/mgmt/stage.h
     public static final int ST_stage_log   = 0x00000001;
@@ -59,7 +65,8 @@ public class StagerParams {
 
     private StagerParams(String logPath, int maxActive, int maxRetries,
         BufDirective[] bufDirs, DrvDirective[] drvDirs, long options,
-	long chgFlags) {
+	long chgFlags, int dkDrives, long dkMaxSize, int dkMaxCount,
+	long dkChgFlags) {
             this.logPath = logPath;
             this.maxActive = maxActive;
             this.maxRetries = maxRetries;
@@ -67,6 +74,10 @@ public class StagerParams {
             this.drvDirs = drvDirs;
 	    this.options = options;
             this.chgFlags = chgFlags;
+	    this.dkDrives = dkDrives;
+	    this.dkMaxSize = dkMaxSize;
+	    this.dkMaxCount = dkMaxCount;
+	    this.dkChgFlags = dkChgFlags;
     }
 
     public StagerParams(BufDirective[] bufDirs, DrvDirective[] drvDirs) {

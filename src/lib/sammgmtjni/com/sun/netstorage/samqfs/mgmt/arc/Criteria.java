@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: Criteria.java,v 1.20 2008/05/16 18:35:27 am143972 Exp $
+// ident	$Id: Criteria.java,v 1.21 2008/10/30 14:42:29 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc;
 
@@ -49,19 +49,14 @@ public class Criteria {
     private static final long	AR_ST_access  = 0x00000100;
     private static final long	AR_ST_nftv    = 0x00000200;
     private static final long	AR_ST_after   = 0x00000400;
-    private static final long	AR_ST_class_name = 0x00000800;
-    private static final long	AR_ST_priority = 0x00001000;
     private static final long	AR_ST_default_criteria  = 0x00004000;
 
     public static final short MAX_COPIES = 4;
 
     // private fields
-    private String dataClassName;
     private String fsysName, /* may be GLOBAL */
         setName;
-    private int priority;
     private String rootDir, regExp;
-    private int regExpType;
     private String minSize, maxSize; // bytes. converted from a fsize_t
     private String user;
     private String group;
@@ -73,29 +68,23 @@ public class Criteria {
     private long chgFlags;
     private boolean nftv;
     private String after;
-    private String description;
-    private String classAttrs;
-    private int classID = -1;
+    private int attrFlags;
+    private int partialSize;
 
     /**
      * private constructor
      */
-    private Criteria(String dataClassName, String description,
-        int priority, String fsysName,
-	String setName, String rootDir, String regExp, int regExpType,
+    private Criteria(String fsysName,
+	String setName, String rootDir, String regExp,
 	String minSize, String maxSize,
         String user, String group, char releaseAttr, char stageAttr,
         int accessAge, Copy[] copies, short numCopies, byte key[],
-        boolean nftv, String after, long initialFlags, int classID,
-        String classAttrs) {
-	    this.dataClassName = dataClassName;
-            this.description = description;
-	    this.priority = priority;
+        boolean nftv, String after, long initialFlags, int attrFlags,
+	int partialSize) {
             this.fsysName = fsysName;
             this.setName = setName;
             this.rootDir = rootDir;
             this.regExp = regExp;
-	    this.regExpType = regExpType;
             this.minSize = minSize;
             this.maxSize = maxSize;
             this.user = user;
@@ -108,9 +97,9 @@ public class Criteria {
             this.key = key;
             this.nftv = nftv;
 	    this.after = after;
+	    this.setStageAttrs(attrFlags & STAGE_ATTR_SET);
+	    this.setReleaseAttrs(attrFlags & RELEASE_ATTR_SET, partialSize);
             this.chgFlags = initialFlags;
-	    this.classID = classID;
-	    this.classAttrs = classAttrs;
     }
 
     // public constructors
@@ -119,45 +108,27 @@ public class Criteria {
      *  create a brand-new Criteria
      */
     public Criteria(String fsysName, String setName) {
-            this.fsysName = fsysName;
-            this.setName = setName;
-            this.chgFlags = 0;
+	this.fsysName = fsysName;
+	this.setName = setName;
+	this.chgFlags = 0;
     }
 
     /**
-     *  create a brand-new Criteria with a class name
+     *  create a brand-new Criteria. Method ignores the class name.
      */
     public Criteria(String dataClassName, String fsysName, String setName) {
-	    this.dataClassName = dataClassName;
-            this.fsysName = fsysName;
-            this.setName = setName;
-            this.chgFlags = 0;
+	this(fsysName, setName);
     }
 
-
-    /**
-     *  create a brand-new Criteria with a class name and description. Once
-     *  this constructor gets used the constructor that includes a class name
-     *  but not a description should be removed.
-     */
-    public Criteria(String dataClassName, String description,
-		    String fsysName, String setName) {
-            this.dataClassName = dataClassName;
-            this.description = description;
-            this.fsysName = fsysName;
-            this.setName = setName;
-            this.chgFlags = 0;
-    }
 
     /**
      *  create a Criteria based on an existing one
      */
     public Criteria(String fsName, Criteria c) {
-        this(c.dataClassName, c.description, c.priority, fsName, c.setName,
-             c.rootDir, c.regExp, c.regExpType, c.minSize, c.maxSize, c.user,
-             c.group, c.releaseAttr, c.stageAttr, c.accessAge, c.copies,
-             c.numCopies, c.key, c.nftv, c.after, c.chgFlags, c.classID,
-             c.classAttrs);
+        this(fsName, c.setName, c.rootDir, c.regExp, c.minSize,
+		c.maxSize, c.user, c.group, c.releaseAttr, c.stageAttr,
+		c.accessAge, c.copies, c.numCopies, c.key, c.nftv, c.after,
+		c.chgFlags, c.attrFlags, c.partialSize);
     }
 
     // valid values for regExpType
@@ -171,6 +142,7 @@ public class Criteria {
     public static final char PARTIAL_RELEASE = 'p';
     public static final char ALWAYS_RELEASE = 'a';
     public static final char SET_DEFAULT_RELEASE = 'd';
+    public static final char PARTIAL_RELEASE_SIZE = 's';
     public static final char RELEASE_NOT_DEFINED = '0';
 
     // stage attributes. Must match the definitions in pub/mgmt/archive.h
@@ -178,6 +150,22 @@ public class Criteria {
     public static final char ASSOCIATIVE_STAGE = 'a';
     public static final char SET_DEFAULT_STAGE = 'd';
     public static final char STAGE_NOT_DEFINED = '0';
+
+
+
+    /* Flag values for use in the attrFlags field */
+    public static final int ATTR_RESET_RELEASE_DEFAULT	= 0x00000001;
+    public static final int ATTR_RELEASE_NEVER		= 0x00000002;
+    public static final int ATTR_RELEASE_PARTIAL	= 0x00000004;
+    public static final int ATTR_PARTIAL_SIZE		= 0x00000008;
+    public static final int ATTR_RELEASE_ALWAYS		= 0x00000010;
+    public static final int RELEASE_ATTR_SET		= 0x0000001f;
+
+    public static final int ATTR_RESET_STAGE_DEFAULT   	= 0x00000020;
+    public static final int ATTR_STAGE_NEVER		= 0x00000040;
+    public static final int ATTR_STAGE_ASSOCIATIVE	= 0x00000080;
+    public static final int STAGE_ATTR_SET		= 0x000000E0;
+
 
     /**
      * fsysName may have this special value
@@ -200,59 +188,17 @@ public class Criteria {
     // distinguish it from other criteria using the method above, until the
     // criteria is re-read from SAM-FS/QFS
 
-    public String getDataClassName() { return dataClassName; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    /* Intellistore methods that are still referenced from the logic tier. */
+    public String getDataClassName() { return null; }
+    public String getDescription() { return null; }
+    public void setDescription(String description) {; }
+    public int getRegExpType() { return 0; }
+    public void setRegExpType(int regExpType) {; }
+    public int getPriority() { return 0; }
+    public String getClassAttrStr() { return null; }
+    public void setClassAttrStr(String classAttrs) {; }
+    public int getClassID() { return 0; }
 
-    public int getPriority() { return priority; }
-
-
-    /*
-     * classAttrs is a string of key=value pairs that describe how
-     * the data class will be handled by Intellistore's archiver tasklets.
-     * If no attributes are set or the Criteria object comes from a system
-     * that is not an intellistore this will return null.
-     *
-     * The supported keys are:
-     * classid=<int>
-     * autoworm=<Y|N>
-     * absolute_expiration_time=<date> | relative_expiration_time=<duration>
-     * autodelete=<Y|N>
-     * dedup= <Y|N>
-     * bitbybit=<Y|N>
-     * periodicaudit=<enum none/disk_only/all>
-     * auditperiod=<period>
-     * log_data_audti=<Y|N>
-     * log_deduplication=<Y|N>
-     * log_autoworm=<Y|N>
-     * log_autodeletion=<Y|N>
-     *
-     * <date> format is: YYYYMMDDhhmm
-     * <duration> and <period> are an integer value, followed by a unit among:
-     * "s" (seconds)
-     * "m" (minutes, 60s)
-     * "h" (hours, 3 600s)
-     * "d" (days, 86 400s)
-     * "w" (weeks, 604 800s)
-     * "y" (years, 31 536 000s)
-     *
-     * Only one of absolute_expiration or relative expiration is allowed
-     * at a time.
-     *
-     * classid must be present and equal to the classid returned by
-     * getClassID. For a data class that has not yet been created in
-     * the backend the class id will be -1.
-     */
-    public String getClassAttrStr() {
-	return classAttrs;
-    }
-    public void setClassAttrStr(String classAttrs) {
-	this.classAttrs = classAttrs;
-    }
-
-    public int getClassID() { return classID; }
 
     public String getFilesysName() { return fsysName; }
 
@@ -275,11 +221,6 @@ public class Criteria {
     }
     public void resetRegExp() {
         chgFlags &= ~AR_ST_name;
-    }
-
-    public int getRegExpType() { return regExpType; }
-    public void setRegExpType(int regExpType) {
-        this.regExpType = regExpType;
     }
 
     public String getMinSize() { return minSize; } /* bytes */
@@ -318,24 +259,6 @@ public class Criteria {
         chgFlags &= ~AR_ST_group;
     }
 
-    public char getReleaseAttr() { return releaseAttr; }
-    public void setReleaseAttr(char releaseAttr) {
-        this.releaseAttr = releaseAttr;
-        chgFlags |= AR_ST_release;
-    }
-    public void resetReleaseAttr() {
-        chgFlags &= ~AR_ST_release;
-    }
-
-    public char getStageAttr() { return stageAttr; }
-    public void setStageAttr(char stageAttr) {
-        this.stageAttr = stageAttr;
-        chgFlags |= AR_ST_stage;
-    }
-    public void resetStageAttr() {
-        chgFlags &= ~AR_ST_stage;
-    }
-
     public int getAccessAge() { return accessAge; }
     public void setAccessAge(int accessAge) {
         this.accessAge = accessAge;
@@ -363,6 +286,195 @@ public class Criteria {
     public boolean isForDefaultPolicy() {
 	return ((chgFlags & AR_ST_default_criteria) == AR_ST_default_criteria);
     }
+
+    /**
+     * Partial size is only set if the attrFlags also has ATTR_PARTIAL_SIZE
+     * set.
+     */
+    public int getPartialSize() {
+	if ((attrFlags & ATTR_PARTIAL_SIZE) != 0) {
+	    return partialSize;
+	} else {
+	    return 0;
+	}
+    }
+
+    /**
+     * Partial size is only set if the attrFlags also has ATTR_PARTIAL_SIZE
+     * set. This function sets both the flag and the newPartialSize passed in.
+     */
+    public void setPartialSize(int newPartialSize) {
+	attrFlags |= ATTR_PARTIAL_SIZE;
+	partialSize = newPartialSize;
+    }
+
+    /*
+     * Returns the attrFlags. Check with the ATTR_xxxx flags to
+     * see what release attributes are set.
+     */
+    public int getReleaseAttrs() {
+	return (attrFlags & RELEASE_ATTR_SET);
+    }
+    /*
+     * getReleaseAttr and setReleaseAttr should not be used. Instead
+     * getReleaseAttrs and setReleaseAttrs should be called.
+     */
+    public char getReleaseAttr() { return releaseAttr; }
+    public void setReleaseAttr(char attr) {
+
+	int newAttrFlags = 0;
+	if (attr == SET_DEFAULT_RELEASE) {
+	    newAttrFlags |= ATTR_RESET_RELEASE_DEFAULT;
+	}
+
+	if (attr == NEVER_RELEASE) {
+	    newAttrFlags |= ATTR_RELEASE_NEVER;
+	}
+
+	if (attr == PARTIAL_RELEASE) {
+	    newAttrFlags |= ATTR_RELEASE_PARTIAL;
+	}
+
+	if (attr == ALWAYS_RELEASE) {
+	    newAttrFlags |= ATTR_RELEASE_ALWAYS;
+	}
+
+	/*
+	 * Note that this function does not support setting
+	 * partial size because it must match the old method
+	 * signature.
+	 */
+
+	setReleaseAttrs(newAttrFlags, 0);
+    }
+
+
+
+    /**
+     * set the release attributes to match the passed in
+     * newAttrFlags. This overwrites all existing attributes
+     * release attributes.
+     */
+    public void setReleaseAttrs(int newAttrFlags, int newPartialSize) {
+
+	// clear the old release flags while preserving other flags
+        this.attrFlags &= ~RELEASE_ATTR_SET;
+
+	// Set the new release flags
+	this.attrFlags |= newAttrFlags;
+
+	/*
+	 * For the purpose of interacting with un-patched servers the
+	 * old way needs to be set aswell. However it only supports
+	 * a single attribute. So track the number set. If more than one
+	 * set the attribute to Z which will result in an error.
+	 */
+	int release_attr_set = 0;
+
+	if ((attrFlags & ATTR_RESET_RELEASE_DEFAULT) != 0) {
+	    releaseAttr = SET_DEFAULT_RELEASE;
+	    release_attr_set++;
+	}
+	if ((attrFlags & ATTR_RELEASE_NEVER) != 0) {
+	    releaseAttr = NEVER_RELEASE;
+	    release_attr_set++;
+	}
+	if ((attrFlags & ATTR_RELEASE_PARTIAL) != 0) {
+	    releaseAttr = PARTIAL_RELEASE;
+	    release_attr_set++;
+	}
+	if ((attrFlags & ATTR_PARTIAL_SIZE) != 0) {
+	    releaseAttr = PARTIAL_RELEASE_SIZE;
+	    partialSize = newPartialSize;
+	    release_attr_set++;
+	}
+	if ((attrFlags & ATTR_RELEASE_ALWAYS) != 0) {
+	    releaseAttr = ALWAYS_RELEASE;
+	    release_attr_set++;
+	}
+
+	if (release_attr_set != 0) {
+	    chgFlags |= AR_ST_release;
+	}
+
+	/*
+	 * If more than one release attribute set put an Z in release
+	 * This will prevent overwriting the configuration on an unpatched
+	 * server that does not support multiple attributes.
+	 */
+	if (release_attr_set > 1) {
+	    releaseAttr = 'Z';
+	}
+    }
+    public void resetReleaseAttr() {
+        chgFlags &= ~AR_ST_release;
+        attrFlags &= ~RELEASE_ATTR_SET;
+	releaseAttr = '\0';
+    }
+
+    public int getStageAttrs() {
+	return (attrFlags & STAGE_ATTR_SET);
+    }
+    /*
+     * getStageAttr and setStageAttr should not be used. Instead
+     * getStageAttrs and setStageAttrs should be called.
+     */
+    public char getStageAttr() { return stageAttr; }
+    public void setStageAttr(char attr) {
+	int newAttrFlags = 0;
+	if (attr == SET_DEFAULT_STAGE) {
+	    newAttrFlags |= ATTR_RESET_STAGE_DEFAULT;
+	}
+	if (attr == NEVER_STAGE) {
+	    newAttrFlags |= ATTR_STAGE_NEVER;
+	}
+	if (attr == ASSOCIATIVE_STAGE) {
+	    newAttrFlags |= ATTR_STAGE_ASSOCIATIVE;
+	}
+
+	setStageAttrs(newAttrFlags);
+    }
+
+    public void setStageAttrs(int newAttrFlags) {
+	// clear the old stage flags while preserving other flags
+        this.attrFlags &= ~STAGE_ATTR_SET;
+
+	// Add in the new stage flags
+	this.attrFlags |= newAttrFlags;
+
+	/*
+	 * For the purpose of interacting with un-patched servers the
+	 * old way needs to be set aswell.
+	 */
+	int stage_attr_set = 0;
+
+	if ((attrFlags & ATTR_RESET_STAGE_DEFAULT) != 0) {
+	    stageAttr = SET_DEFAULT_STAGE;
+	    stage_attr_set++;
+	}
+	if ((attrFlags & ATTR_STAGE_NEVER) != 0) {
+	    stageAttr = NEVER_STAGE;
+	    stage_attr_set++;
+	}
+	if ((attrFlags & ATTR_STAGE_ASSOCIATIVE) != 0) {
+	    stageAttr = ASSOCIATIVE_STAGE;
+	    stage_attr_set++;
+	}
+
+	if (stage_attr_set != 0) {
+	    chgFlags |= AR_ST_stage;
+	}
+
+	if (stage_attr_set > 1) {
+	    stageAttr = 'Z';
+	}
+    }
+    public void resetStageAttr() {
+	attrFlags &= ~STAGE_ATTR_SET;
+        chgFlags &= ~AR_ST_stage;
+	stageAttr = '\0';
+    }
+
 
     public String toString() {
         String s = setName + ": " + fsysName + "," + rootDir + "," +

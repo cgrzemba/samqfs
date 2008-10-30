@@ -26,13 +26,10 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.26 $"
+#pragma ident   "$Revision: 1.27 $"
 
 static char *_SrcFile = __FILE__;
 
-/*
- * Data class handling was removed from this file in version 1.17
- */
 
 #include <stdlib.h>
 #include <string.h>
@@ -47,7 +44,6 @@ static char *_SrcFile = __FILE__;
 #include "pub/mgmt/error.h"
 #include "sam/sam_trace.h"
 #include "mgmt/util.h"
-#include "mgmt/config/data_class.h"
 
 static int populate_hashtables(archiver_cfg_t *cfg, hashtable_t **criteria,
 	hashtable_t **maps, hashtable_t **params, boolean_t disconnect);
@@ -361,7 +357,6 @@ arch_set_t **set)
 		tmp->rearch_vsn_maps[MAX_COPY] = (vsn_map_t *)vp;
 	}
 
-	tmp->description = strdup("test description");
 	*set = tmp;
 	return (0);
 }
@@ -1787,79 +1782,4 @@ free_vsn_map_void(void *v) {
 static void
 lst_free_void(void *v) {
 	lst_free((sqm_lst_t *)v);
-}
-
-/*
- * Associate a data class with an archive set. This can result in the
- * set to which the class was previously assigned becoming an unassigned
- * set.
- *
- * Limits: It is unclear at this time if this function will be
- * supported outside of the limited environment of an
- * intellistore.
- * cases:
- * 1. class does not exist or is NULL
- *	this is an error
- * 2. policy does not exist
- *	a. this is an error
- *	b. or is NULL this is equivalent to deleting the class
- * 3. class is currently assigned a real policy
- *    a. old policy applies to other classes.
- *	  i. copy the new policy into the classes criteria.
- *	ii. if target was unassigned handle xx below
- *    b. old policy does not apply to other classes (will become
- *	  unassigned)
- *	i. create a new criteria in the global list that
- *	  has all of the policy information but has the unassigned
- *	  criteria markers
- *	ii. copy the new policy into the classes criteria.
- *	iii. if target was unnasigned handle xx.
- *
- *    XX. if target was unassinged
- *	 remove it from the global region
- *	 copy new policy into class criteria.
- *
- * 4. class is assigned to an explicit Intellistor
- *	  default policy
- *
- *	- copy the new policy into the classes criteria
- *
- */
-int
-associate_class_with_policy(
-ctx_t *c,
-char *class_name,
-char *policy_name) /* ARGSUSED */
-{
-	Trace(TR_ERR, "associate class with policy called %s", class_name);
-	samerrno = -1;
-	strcpy(samerrmsg, "associate class with policy not supported");
-	return (-1);
-}
-
-
-int
-delete_data_class(ctx_t *c /* ARGSUSED */, char *class_name) {
-	Trace(TR_ERR, "NOT SUPPORTED delete data class called %s", class_name);
-	samerrno = -1;
-	strcpy(samerrmsg, "delete data class not supported");
-	return (-1);
-}
-
-/*
- * Modifies the archiver configuration so that the data class criteria
- * are applied in the order that the classes appear in the list.
- * If fs_name is null the order is applied to all file systems,
- * otherwise the order is applied only to the named file system.
- */
-int
-set_class_order(
-ctx_t *ctx,
-char *fs_name,
-sqm_lst_t *ordered) /* ARGSUSED */
-{
-	Trace(TR_ERR, "NOT SUPPPORTED reordering data classes");
-	samerrno = -1;
-	strcpy(samerrmsg, "reordering data classes not supported");
-	return (-1);
 }

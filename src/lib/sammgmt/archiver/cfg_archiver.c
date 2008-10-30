@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.63 $"
+#pragma ident   "$Revision: 1.64 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -96,7 +96,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "mgmt/config/cfg_diskvols.h"
 #include "parser_utils.h"
 #include "pub/mgmt/filesystem.h"
-#include "mgmt/config/data_class.h"
 #include "mgmt/config/cfg_fs.h"
 
 /* full path to the archiver.cmd file */
@@ -132,6 +131,11 @@ static int cfg_add_default_fs_vsn_map(archiver_cfg_t *cfg,
 	uname_t fs_name, mtype_t mt);
 
 static int set_fs_directive_indicators(archiver_cfg_t *cfg, sqm_lst_t *fs_list);
+static int get_release_str(int32_t attr_flags, int32_t partial_size,
+    char *buf, int buf_length);
+
+static int get_stage_str(int32_t attr_flags, char *buf, int buf_length);
+
 static int _get_ar_timeouts(sqm_lst_t **artimeout_lst);
 
 void get_diskvols_ctx(ctx_t *ctx, ctx_t *dv_ctx);
@@ -1445,6 +1449,19 @@ ar_global_directive_t *g)	/* globals to write */
 		}
 	}
 
+	if (g->change_flag & AR_GL_bg_interval &&
+	    g->bg_interval != uint_reset) {
+		already_done = cond_print(f, global_dir_head, already_done);
+		fprintf(f, "\nbackground_interval = %s",
+		    StrFromInterval(g->bg_interval, NULL, 0));
+	}
+
+	if (g->change_flag & AR_GL_bg_time &&
+	    g->bg_time != 0) {
+		already_done = cond_print(f, global_dir_head, already_done);
+		fprintf(f, "\nbackground_time = %d", g->bg_time);
+	}
+
 	/* if any ar_bufs print them */
 	if (g->ar_bufs != NULL) {
 		for (node = g->ar_bufs->head;
@@ -1695,6 +1712,20 @@ ar_fs_directive_t *fs)
 		    (fs->options & SETARCHDONE_ON) ? "on" : "off");
 	}
 
+	if (fs->change_flag & AR_FS_bg_interval &&
+	    fs->bg_interval != uint_reset) {
+		printed = cond_print(f, name_line, printed);
+		fprintf(f, "\nbackground_interval = %s",
+		    StrFromInterval(fs->bg_interval, NULL, 0));
+	}
+
+	if (fs->change_flag & AR_GL_bg_time &&
+	    fs->bg_time != 0) {
+		printed = cond_print(f, name_line, printed);
+		fprintf(f, "\nbackground_time = %d", fs->bg_time);
+	}
+
+
 	if (fs->ar_set_criteria != NULL && fs->ar_set_criteria->length != 0) {
 		printed = cond_print(f, name_line, printed);
 		for (node = fs->ar_set_criteria->head; node != NULL;
@@ -1732,8 +1763,8 @@ ar_set_criteria_t *crit)
 
 	/* put the new key into the criteria */
 	get_key(str, strlen(str), &(crit->key));
-	Trace(TR_OPRMSG, "wrote ar_set_criteria classname = %s",
-	    Str(crit->class_name));
+	Trace(TR_OPRMSG, "wrote ar_set_criteria for set = %s",
+	    Str(crit->set_name));
 
 
 	return (0);
@@ -1952,6 +1983,11 @@ archiver_cfg_t *cfg)
 
 			done = cond_print(arch_p, param_head, done);
 			fprintf(arch_p, "\n%s -fillvsns", name);
+			if (a->fillvsns_min != 0) {
+				fprintf(arch_p, " %s",
+				    fsize_to_str(a->fillvsns_min,
+				    fsizestr, FSIZE_STR_LEN));
+			}
 		}
 
 		if (a->change_flag &  AR_PARAM_tapenonstop && a->tapenonstop) {
@@ -2405,11 +2441,6 @@ ar_set_criteria_t **out)	/* malloced copy of in */
 				return (-1);
 			}
 		}
-	}
-
-	/* If the source description is non-null duplicate it */
-	if (in->description != NULL) {
-		(*out)->description = strdup(in->description);
 	}
 
 	Trace(TR_DEBUG, "duplicated ar_set_criteria");
@@ -3071,15 +3102,15 @@ ar_set_criteria_t *crit)	/* criteria to translate to a string */
 	if (crit->change_flag & AR_ST_name &&
 	    *(crit->name) != char_array_reset) {
 
-
-		strlcat(tmp, " -name ", sizeof (tmp));
-		cur_length += 7;
-
-		compose_regex(crit->name, crit->regexp_type, tmp + cur_length,
-		    sizeof (tmp) - cur_length);
-
-		cur_length = strlen(tmp);
+		added = snprintf(tmp + cur_length, sizeof (tmp) - cur_length,
+		    " -name %s", crit->name);
+		if (added > sizeof (tmp) - cur_length) {
+			/* could not copy entire str */
+			return (&err);
+		}
+		cur_length += added;
 	}
+
 	if (crit->change_flag & AR_ST_user &&
 	    *(crit->user) != char_array_reset) {
 
@@ -3131,12 +3162,15 @@ ar_set_criteria_t *crit)	/* criteria to translate to a string */
 		cur_length += added;
 	}
 
-
-	if (crit->change_flag & AR_ST_release &&
-	    crit->release != char_array_reset) {
+	if (crit->attr_flags & RELEASE_ATTR_SET) {
+		char attr_buf[16] = "";
+		if (get_release_str(crit->attr_flags, crit->partial_size,
+		    attr_buf, 16) != 0) {
+			return (&err);
+		}
 
 		added = snprintf(tmp + cur_length, sizeof (tmp) - cur_length,
-		    " -release %c", crit->release);
+		    " -release %s", attr_buf);
 
 		if (added > sizeof (tmp) - cur_length) {
 			/* could not copy entire str */
@@ -3144,11 +3178,15 @@ ar_set_criteria_t *crit)	/* criteria to translate to a string */
 		}
 		cur_length += added;
 	}
-	if (crit->change_flag & AR_ST_stage &&
-	    crit->stage != char_array_reset) {
+
+	if (crit->attr_flags & STAGE_ATTR_SET) {
+		char attr_buf[6] = "";
+		if (get_stage_str(crit->attr_flags, attr_buf, 6) != 0) {
+			return (&err);
+		}
 
 		added = snprintf(tmp + cur_length, sizeof (tmp) - cur_length,
-		    " -stage %c", crit->stage);
+		    " -stage %s", attr_buf);
 
 		if (added > sizeof (tmp) - cur_length) {
 			/* could not copy entire str */
@@ -3854,10 +3892,10 @@ get_archreq_qtimeout(int *timeout)
  * If no Timeouts are configured in archiver.cmd, an empty list is returned
  *
  * defaults:
- * READ_TIMEOUT               = 1 minute
- * REQUEST_TIMEOUT    = 15 minutes
- * STAGE_TIMEOUT      = 15 minutes
- * WRITE_TIMEOUT      = 15 minutes
+ * READ_TIMEOUT = 1 minute
+ * REQUEST_TIMEOUT = 15 minutes
+ * STAGE_TIMEOUT = 15 minutes
+ * WRITE_TIMEOUT = 15 minutes
  */
 static int
 _get_ar_timeouts(sqm_lst_t **artimeout_lst)
@@ -3958,5 +3996,112 @@ _get_ar_timeouts(sqm_lst_t **artimeout_lst)
 	free_ar_global_directive(ar_global);
 
 	Trace(TR_MISC, "archiver timeout obtained");
+	return (0);
+}
+
+
+static int
+get_release_str(int32_t attr_flags, int32_t partial_size,
+    char *buf, int buf_len) {
+
+	int cnt = 0;
+	int max_chars = buf_len - 1;
+
+	if (buf == NULL || buf_len <= 0) {
+		return (-1);
+	}
+
+	memset(buf, 0, (size_t)buf_len);
+	Trace(TR_DEBUG, "release attributes = 0x%x partial = %d",
+	    attr_flags, partial_size);
+
+	if (attr_flags & ATTR_RELEASE_DEFAULT && cnt < max_chars) {
+		*buf = SET_DEFAULT_RELEASE;
+		buf++;
+		cnt++;
+	}
+
+	if (attr_flags & ATTR_RELEASE_NEVER && cnt < max_chars) {
+		*buf = NEVER_RELEASE;
+		buf++;
+		cnt++;
+	} else {
+		if (attr_flags & ATTR_RELEASE_ALWAYS && cnt < max_chars) {
+			*buf = ALWAYS_RELEASE;
+			buf++;
+			cnt++;
+		}
+		if (attr_flags & ATTR_RELEASE_PARTIAL && cnt < max_chars) {
+			*buf = PARTIAL_RELEASE;
+			buf++;
+			cnt++;
+		}
+		if (attr_flags & ATTR_PARTIAL_SIZE && cnt < max_chars) {
+			*buf = PARTIAL_SIZE;
+			buf++;
+			cnt++;
+
+			/*
+			 * snprintf accounts for the \0 so use buf_len
+			 * not max_chars
+			 */
+			cnt += snprintf(buf, (size_t)(buf_len - cnt),
+			    "%d", partial_size);
+		}
+	}
+
+	/*
+	 * Check that sufficient space was available for the attribute
+	 * settings and the partial size including for the terminator.
+	 */
+	if (cnt >= buf_len) {
+		Trace(TR_ERR, "Buffer too short for release attributes "
+		    "length:%d flags:%x size:%d", buf_len, attr_flags,
+		    partial_size);
+		return (-1);
+	}
+	if (cnt == 0) {
+		Trace(TR_ERR, "No release attributes to convert");
+		return (-1);
+	}
+	return (0);
+}
+
+static int
+get_stage_str(int32_t attr_flags, char *buf, int buf_len) {
+
+	int cnt = 0;
+	int max_chars = buf_len - 1;
+
+	if (buf == NULL || buf_len <= 0) {
+		return (-1);
+	}
+
+	memset(buf, 0, (size_t)buf_len);
+	Trace(TR_ERR, "stage attributes = 0x%x", attr_flags);
+
+	if (attr_flags & ATTR_STAGE_DEFAULT && cnt < max_chars) {
+		*buf = SET_DEFAULT_STAGE;
+		buf++;
+		cnt++;
+	}
+
+	if (attr_flags & ATTR_STAGE_NEVER && cnt < max_chars) {
+		*buf = NEVER_STAGE;
+		buf++;
+		cnt++;
+	}
+	if (attr_flags & ATTR_STAGE_ASSOCIATIVE && cnt < max_chars) {
+		*buf = ASSOCIATIVE_STAGE;
+		buf++;
+		cnt++;
+	}
+
+	if (cnt == 0) {
+		Trace(TR_ERR, "No stage attributes to convert");
+		return (-1);
+	}
+
+
 	return (0);
 }

@@ -29,7 +29,7 @@
 #ifndef _FILESYSTEM_H
 #define	_FILESYSTEM_H
 
-#pragma ident	"$Revision: 1.56 $"
+#pragma ident	"$Revision: 1.57 $"
 
 
 
@@ -189,6 +189,20 @@ typedef struct rel_4_6_options {
 } rel_4_6_options_t;
 
 /*
+ * post 4.6 mount options structure.
+ */
+typedef struct rel_5_0_options {
+	uint32_t	change_flag;
+	int16_t		obj_width;
+	int64_t		obj_depth;
+	int16_t		obj_pool;
+	int16_t		obj_sync_data;
+	boolean_t	logging;
+	boolean_t	sam_db;
+	boolean_t	xattr;
+} rel_5_0_options_t;
+
+/*
  * Mount options of a file system.
  */
 typedef struct mount_options {
@@ -231,6 +245,9 @@ typedef struct mount_options {
 
 	/* 4.6 mount options */
 	rel_4_6_options_t	rel_4_6_opts;
+
+	/* 5.0 mount options */
+	rel_5_0_options_t	rel_5_0_opts;
 
 } mount_options_t;
 
@@ -1156,6 +1173,29 @@ void free_list_of_samfsck_info(sqm_lst_t *info_list);
 #define	CLR_NOATIME		0x02000200 /* Not a flag pair with atime */
 #define	CLR_ATIME		0x04000400
 #define	CLR_MIN_POOL		0x08000800
+
+/* rel_5_0_options_t change_flags */
+#define	MNT_OBJ_WIDTH		0x00000001
+#define	MNT_OBJ_DEPTH		0x00000002
+#define	MNT_OBJ_POOL		0x00000004
+#define	MNT_OBJ_SYNC_DATA	0x00000008
+#define	MNT_LOGGING		0x00000010
+#define	MNT_NOLOGGING		0x00000020
+#define	MNT_SAM_DB		0x00000040
+#define	MNT_NOSAM_DB		0x00000080
+#define	MNT_XATTR		0x00000100
+#define	MNT_NOXATTR		0x00000200
+
+#define	CLR_OBJ_WIDTH		0x00010001
+#define	CLR_OBJ_DEPTH		0x00020002
+#define	CLR_OBJ_POOL		0x00040004
+#define	CLR_OBJ_SYNC_DATA	0x00080008
+#define	CLR_LOGGING		0x00300030
+#define	CLR_NOLOGGING		0x00300030
+#define	CLR_SAM_DB		0x00C000C0
+#define	CLR_NOSAM_DB		0x00C000C0
+#define	CLR_XATTR		0x03000300
+#define	CLR_NOXATTR		0x03000300
 
 
 #endif	/* _FILESYSTEM_H */

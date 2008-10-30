@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.36 $"
+#pragma ident	"$Revision: 1.37 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -210,49 +210,60 @@ ar_set_criteria_t *objp)
 	if (!xdr_uname_t(xdrs, objp->after))
 		return (FALSE);
 
-
 #ifdef SAMRPC_CLIENT
-	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
-		if ((xdrs->x_public != NULL) &&
-		    (strcmp(xdrs->x_public, "1.5.0") <= 0)) {
 
-			return (TRUE); /* versions 1.5.0 or lower */
+	/*
+	 * This client block handles servers that have different
+	 * data in the struct than what is present from 4.6 patch 04 and
+	 * more recent.
+	 */
+	if ((xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) &&
+	    (xdrs->x_public != NULL)) {
+
+		/*
+		 * First Case: Server does not have the attr flags and
+		 * partial size nor the data class information. This
+		 * is for 4.5 servers that have not been patched to
+		 * support attr_flags and partial_size.
+		 */
+		if ((strcmp(xdrs->x_public, "1.4.4") <= 0)) {
+			return (TRUE); /* versions 1.4.4 or lower */
+		}
+
+		/*
+		 * Second Case: Server has the attr flags and partial
+		 * size but not the data class information. This is for 4.5
+		 * servers that have had patch 07 or greater applied.
+		 */
+		if ((strcmp(xdrs->x_public, "1.4.5") >= 0) &&
+		    (strcmp(xdrs->x_public, "1.5.0") < 0)) {
+			if (!xdr_int32_t(xdrs, &objp->attr_flags))
+				return (FALSE);
+			if (!xdr_int32_t(xdrs, &objp->partial_size))
+				return (FALSE);
+			return (TRUE);
+		}
+		/*
+		 * Third Case: This is for 4.6 servers running code from
+		 * prior to the -04 patch that have data class fields
+		 * but do not have attr_flags nor partial_size. It also
+		 * is triggered by 5.0 development builds which will not
+		 * be released.
+		 */
+		if (((strcmp(xdrs->x_public, "1.5.0") >= 0) &&
+		    (strcmp(xdrs->x_public, "1.5.9") <= 0)) ||
+		    ((strcmp(xdrs->x_public, "1.6.0") >= 0) &&
+		    (strcmp(xdrs->x_public, "1.6.2") < 0))) {
+			return (FALSE);
 		}
 	}
 #endif /* samrpc_client */
-	if (!xdr_uname_t(xdrs, objp->class_name))
-		return (FALSE);
-	if (!xdr_int32_t(xdrs, &objp->priority))
-		return (FALSE);
 
-	if (!xdr_regexp_type_t(xdrs, &objp->regexp_type))
+
+	if (!xdr_int32_t(xdrs, &objp->attr_flags))
 		return (FALSE);
 
-#ifdef SAMRPC_CLIENT
-	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
-		if ((xdrs->x_public != NULL) &&
-		    (strcmp(xdrs->x_public, "1.5.2") <= 0)) {
-
-			return (TRUE); /* versions 1.5.2 or lower */
-		}
-	}
-#endif /* samrpc_client */
-	if (!xdr_string(xdrs, (char **)&objp->description, ~0))
-		return (FALSE);
-
-
-#ifdef SAMRPC_CLIENT
-	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
-		if ((xdrs->x_public != NULL) &&
-		    (strcmp(xdrs->x_public, "1.5.3") <= 0)) {
-
-			return (TRUE); /* versions 1.5.3 or lower */
-		}
-	}
-#endif /* samrpc_client */
-	if (!xdr_int32_t(xdrs, &objp->class_id))
-		return (FALSE);
-	if (!xdr_string(xdrs, (char **)&objp->class_attrs, ~0))
+	if (!xdr_int32_t(xdrs, &objp->partial_size))
 		return (FALSE);
 
 	return (TRUE);
@@ -309,9 +320,26 @@ ar_global_directive_t *objp)
 	}
 #endif /* samrpc_client */
 	if (!xdr_pointer(xdrs, (char **)&objp->timeouts,
-	    sizeof (sqm_lst_t), (xdrproc_t)xdr_string_list))
+	    sizeof (sqm_lst_t), (xdrproc_t)xdr_string_list)) {
 		return (FALSE);
+	}
 
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6.1") <= 0)) {
+			return (TRUE);	/* no more translation required */
+		}
+	}
+#endif /* samrpc_client */
+
+	if (!xdr_uint_t(xdrs, &objp->bg_interval)) {
+		return (FALSE);
+	}
+
+	if (!xdr_int(xdrs, &objp->bg_time)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -358,6 +386,25 @@ ar_fs_directive_t *objp)
 	 */
 	if (!xdr_int32_t(xdrs, &objp->options))
 		return (FALSE);
+
+
+
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6.1") <= 0)) {
+			return (TRUE);	/* no more translation required */
+		}
+	}
+#endif /* samrpc_client */
+
+	if (!xdr_uint_t(xdrs, &objp->bg_interval)) {
+		return (FALSE);
+	}
+
+	if (!xdr_int(xdrs, &objp->bg_time)) {
+		return (FALSE);
+	}
 
 	return (TRUE);
 }
@@ -489,6 +536,19 @@ ar_set_copy_params_t *objp)
 #endif /* samrpc_client */
 
 	if (!xdr_uint_t(xdrs, &objp->queue_time_limit))
+		return (FALSE);
+
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6.1") <= 0)) {
+
+			return (TRUE); /* versions 1.6.1 or lower */
+		}
+	}
+#endif /* samrpc_client */
+
+	if (!xdr_fsize_t(xdrs, &objp->fillvsns_min))
 		return (FALSE);
 
 

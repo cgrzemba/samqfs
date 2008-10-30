@@ -31,12 +31,13 @@
  *	It calls functions of cfg_stager.c and process
  *	the detailed stager.cmd operation.
  */
-#pragma	ident	"$Revision: 1.23 $"
+#pragma	ident	"$Revision: 1.24 $"
 #include <sys/types.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <unistd.h>
 #include "aml/stager.h"
 #include "mgmt/util.h"
 #include "pub/mgmt/error.h"
@@ -63,6 +64,9 @@ uint32_t *TraceFlags;
 #define	STAGER_DEFAULT_LOG	""
 
 static char *stager_file = STAGE_CFG;
+
+static int get_default_max_active();
+
 
 /*
  *	ctx structure is used sed by RPC clients to specify which
@@ -688,6 +692,33 @@ buffer_directive_t **stage_buffer)	/* must be freed by caller */
 
 
 /*
+ * Gets the default max_active based on the system memory size
+ * using the same calculation that the stager uses.
+ */
+static int
+get_default_max_active() {
+	long pages, pgsize;
+	int64_t memsize;
+	int maxactive;
+
+	pages = sysconf(_SC_PHYS_PAGES);
+	pgsize = sysconf(_SC_PAGESIZE);
+	memsize = (int64_t)pages * (int64_t)pgsize;
+
+	/* Number of GB (rounded nearest) * maxactive per GB */
+	maxactive = (((memsize>>29)+1)>>1) * STAGER_MAX_ACTIVE_PER_GB;
+
+	/* Make sure we calculated something that makes sense */
+	if (maxactive < STAGER_MAX_ACTIVE_PER_GB) {
+		maxactive = STAGER_MAX_ACTIVE_PER_GB;
+	} else if (maxactive > STAGER_MAX_ACTIVE) {
+		maxactive = STAGER_MAX_ACTIVE;
+	}
+
+	return (maxactive);
+}
+
+/*
  *	get_default_staging_cfg()
  *	get stager.cmd's default value.
  */
@@ -723,7 +754,8 @@ stager_cfg_t **stager_config)	/* must be freed by caller */
 	}
 	memset(*stager_config, 0, sizeof (stager_cfg_t));
 
-	(*stager_config)->max_active = STAGER_DEFAULT_MAX_ACTIVE;
+	(*stager_config)->max_active = get_default_max_active();
+
 	(*stager_config)->max_retries = STAGER_DEFAULT_MAX_RETRIES;
 	(*stager_config)->change_flag = STAGER_DEFAULT_CHANGE_FLAG;
 	strlcpy((*stager_config)->stage_log, STAGER_DEFAULT_LOG,
@@ -744,6 +776,17 @@ stager_cfg_t **stager_config)	/* must be freed by caller */
 		Trace(TR_ERR, "%s", samerrmsg);
 		return (-1);
 	}
+
+	(*stager_config)->dk_stream = mallocer(sizeof (stream_cfg_t));
+	if ((*stager_config)->dk_stream == NULL) {
+		free_stager_cfg(*stager_config);
+		*stager_config = NULL;
+		Trace(TR_ERR, "%s", samerrmsg);
+		return (-1);
+	}
+	strlcpy((*stager_config)->dk_stream->media, "dk", sizeof (mtype_t));
+	(*stager_config)->dk_stream->max_size = GIGA;
+
 	/*
 	 *	get a list with all available media type.
 	 */
@@ -815,6 +858,8 @@ stager_cfg_t **stager_config)	/* must be freed by caller */
 		}
 		node_lib = node_lib->next;
 	}
+
+
 	free_list_of_libraries(lib_list);
 	lst_free_deep(media_type_list);
 	Trace(TR_MISC, "get stager's default configuration success");

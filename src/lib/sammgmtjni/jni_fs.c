@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.48 $"
+#pragma ident	"$Revision: 1.49 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -182,7 +182,7 @@ mntopts2MountOptions(JNIEnv *env, void *v_mntopts) {
 	cls = (*env)->FindClass(env, BASEPKG"/fs/MountOptions");
 	mid = (*env)->GetMethodID(env, cls, "<init>",
 	    "(ZSZSZZIIISSIIJJIIZZZIZSJJIIIZIIIIZZIZIZSIIIIIIIZZIJJJZIIIZ"
-	    "ZZZIZZZZZZZSI)V");
+	    "ZZZIZZZZZZZSIIIJIIZZZ)V");
 
 	newObj = (*env)->NewObject(env, cls, mid,
 	    // general options
@@ -264,7 +264,16 @@ mntopts2MountOptions(JNIEnv *env, void *v_mntopts) {
 	    JBOOL(opts->rel_4_6_opts.clusterfastsw),
 	    JBOOL(opts->rel_4_6_opts.noatime),
 	    (jshort)opts->rel_4_6_opts.atime,
-	    (jint)opts->rel_4_6_opts.min_pool);
+	    (jint)opts->rel_4_6_opts.min_pool,
+	    // release 5.0 options
+	    (jint)opts->rel_5_0_opts.change_flag,
+	    (jint)opts->rel_5_0_opts.obj_width,
+	    (jlong)opts->rel_5_0_opts.obj_depth,
+	    (jint)opts->rel_5_0_opts.obj_pool,
+	    (jint)opts->rel_5_0_opts.obj_sync_data,
+	    JBOOL(opts->rel_5_0_opts.logging),
+	    JBOOL(opts->rel_5_0_opts.sam_db),
+	    JBOOL(opts->rel_5_0_opts.xattr));
 
 	PTRACE(2, "jni:mntopts2MountOptions() done");
 	return (newObj);
@@ -424,6 +433,23 @@ MountOptions2mntopts(JNIEnv *env, jobject moObj) {
 	opts->rel_4_6_opts.min_pool = (int)getJIntFld(env, cls,
 		moObj, "min_pool");
 
+	// Release 5.0 options
+	opts->rel_5_0_opts.change_flag = (uint32_t)getJIntFld(env, cls,
+	    moObj, "rel50ChgFlags");
+	opts->rel_5_0_opts.obj_width = (int16_t)getJIntFld(env, cls,
+		moObj, "objWidth");
+	opts->rel_5_0_opts.obj_depth = (int64_t)getJLongFld(env, cls,
+		moObj, "objDepth");
+	opts->rel_5_0_opts.obj_pool = (int16_t)getJIntFld(env, cls,
+		moObj, "objPool");
+	opts->rel_5_0_opts.obj_sync_data = (int16_t)getJIntFld(env, cls,
+		moObj, "objSyncData");
+	opts->rel_5_0_opts.logging = getBoolFld(env, cls,
+		moObj, "logging");
+	opts->rel_5_0_opts.sam_db = getBoolFld(env, cls,
+		moObj, "samDB");
+	opts->rel_5_0_opts.xattr = getBoolFld(env, cls,
+		moObj, "xattr");
 
 	PTRACE(2, "jni:MountOptions2mntopts() done");
 	return (opts);

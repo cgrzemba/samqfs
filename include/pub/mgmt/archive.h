@@ -29,7 +29,7 @@
 #ifndef	_ARCHIVE_H
 #define	_ARCHIVE_H
 
-#pragma ident	"$Revision: 1.40 $"
+#pragma ident	"$Revision: 1.41 $"
 
 /*
  * archive.h - SAM-FS APIs for archiving operations.
@@ -48,10 +48,33 @@
 #include "aml/archset.h"
 #include "aml/archreq.h"
 
+/*
+ * Note: The attribute setting fields do not require change flags
+ * because there is no way for them to be explicity set to their
+ * inverse. The presence of the flag means the attribute was set.
+ *
+ * The char release/stage fields in ar_set_criteria cannot go away
+ * because they must still be supported for backwards compatibility
+ * earlier 4.5 and 4.6 versions. They could be eliminated when support
+ * for version 4.6 is dropped.
+ */
+#define	ATTR_RELEASE_DEFAULT	0x00000001
+#define	ATTR_RELEASE_NEVER	0x00000002
+#define	ATTR_RELEASE_PARTIAL	0x00000004
+#define	ATTR_PARTIAL_SIZE	0x00000008
+#define	ATTR_RELEASE_ALWAYS	0x00000010
+#define	RELEASE_ATTR_SET	0x0000001f
+
+#define	ATTR_STAGE_DEFAULT	0x00000020
+#define	ATTR_STAGE_NEVER	0x00000040
+#define	ATTR_STAGE_ASSOCIATIVE	0x00000080
+#define	STAGE_ATTR_SET		0x000000E0
+
 #define	NEVER_RELEASE	'n'
 #define	PARTIAL_RELEASE	'p'
 #define	ALWAYS_RELEASE	'a'
 #define	SET_DEFAULT_RELEASE	'd'
+#define	PARTIAL_SIZE	's'
 #define	RELEASE_NOT_DEFINED	'0'
 
 #define	NEVER_STAGE	'n'
@@ -169,8 +192,8 @@ typedef struct ar_set_criteria {
 	upath_t name;		/* regexp selecting files. */
 	uname_t user;		/* not '\0' == -user is set */
 	uname_t group;		/* not '\0' == -group is set */
-	char	release;
-	char	stage;
+	char	release;	/* not used, see attr flags */
+	char	stage;		/* not used, see attr flags */
 	int	access;
 	int			num_copies; /* the number of arch_copies */
 	ar_set_copy_cfg_t	*arch_copy[MAX_COPY];
@@ -185,13 +208,9 @@ typedef struct ar_set_criteria {
 	boolean_t		nftv;
 	uname_t			after; /* added 4.5 */
 
-	/* added for data classification for IS in 1.4.5 version of the lib */
-	uname_t			class_name;
-	int32_t			priority;
-	regexp_type_t		regexp_type; /* regexp type for name field */
-	char			*description;
-	char			*class_attrs;	/* added in 1.5.4 */
-	int32_t			class_id;	/* added in 1.5.4 */
+	/* attr_flags supercede the release and stage fields */
+	int32_t			attr_flags; /* see XXX_ATTR defines */
+	int32_t			partial_size;
 } ar_set_criteria_t;
 
 /*
@@ -227,6 +246,8 @@ typedef struct ar_global_directive {
 	uint32_t	change_flag;
 	int32_t		options;	/* see options flags above */
 	sqm_lst_t	*timeouts;	/* string timeout directives */
+	uint_t		bg_interval;
+	int		bg_time;	/* hhmm */
 } ar_global_directive_t;
 
 
@@ -253,6 +274,8 @@ typedef struct ar_fs_directive {
 	ar_set_copy_cfg_t *fs_copy[MAX_COPY];
 	uint32_t	change_flag;
 	int32_t		options;	/* see options flags above */
+	uint_t		bg_interval;
+	int		bg_time;	/* hhmm */
 } ar_fs_directive_t;
 
 
@@ -276,7 +299,7 @@ typedef struct ar_set_copy_params {
 	short		reserve;	/* see Reserves in aml/archset.h */
 	sqm_lst_t	*priority_lst;	/* list of priority_t */
 	boolean_t	unarchage;	/* if true modify age else access */
-	join_method_t	join;
+	join_method_t	join;		/* No longer used as of 5.0 */
 	sort_method_t	rsort;
 	sort_method_t	sort;
 	offline_copy_method_t	offline_copy;
@@ -297,6 +320,7 @@ typedef struct ar_set_copy_params {
 	boolean_t	directio;	/* 4.2 directio not used if false */
 	short		rearch_stage_copy; /* added 4.5, 0 if not specified */
 	uint_t		queue_time_limit;	/* added 4.6 */
+	fsize_t		fillvsns_min;
 } ar_set_copy_params_t;
 
 
@@ -878,6 +902,8 @@ void free_list_of_arcopy_status(sqm_lst_t *arcopy_status);
 #define	AR_FS_archivemeta	0x00000010
 #define	AR_FS_scan_squash	0x00000040
 #define	AR_FS_setarchdone	0x00000080
+#define	AR_FS_bg_interval	0x00000100
+#define	AR_FS_bg_time		0x00000200
 
 /* flags used to indicate the nature of the fs */
 #define	AR_FS_shared_fs		0x10000000
@@ -892,6 +918,8 @@ void free_list_of_arcopy_status(sqm_lst_t *arcopy_status);
 #define	AR_GL_notify_script	0x00000020
 #define	AR_GL_scan_squash	0x00000040
 #define	AR_GL_setarchdone	0x00000080
+#define	AR_GL_bg_interval	0x00000100
+#define	AR_GL_bg_time		0x00000200
 
 /* ar_set_criteria_t flags */
 #define	AR_ST_path		0x00000001
@@ -905,13 +933,7 @@ void free_list_of_arcopy_status(sqm_lst_t *arcopy_status);
 #define	AR_ST_access		0x00000100
 #define	AR_ST_nftv		0x00000200
 #define	AR_ST_after		0x00000400
-#define	AR_ST_class_name	0x00000800
-#define	AR_ST_priority		0x00001000
-#define	AR_ST_default_criteria	0x00004000
-
-#define	AR_ST_CLASS_MASK	0x00003f3f
-#define	AR_ST_POLICY_MASK	0x000000c0
-
+#define	AR_ST_default_criteria  0x00004000
 
 /* ar_set_copy_cfg_t and ar_general_copy_cfg_t flags */
 #define	AR_CP_ar_age		0x00000001

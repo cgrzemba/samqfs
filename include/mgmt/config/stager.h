@@ -29,7 +29,7 @@
 #ifndef _CFG_STAGER_H
 #define	_CFG_STAGER_H
 
-#pragma	ident	"$Revision: 1.11 $"
+#pragma	ident	"$Revision: 1.12 $"
 /*
  * stager.h
  * used to read and change the stager configuration.
@@ -87,6 +87,8 @@ int check_stage_drives(const drive_directive_t *d, sqm_lst_t *libraries);
 int check_maxretries(const stager_cfg_t *s);
 int check_maxactive(const stager_cfg_t *s);
 int check_logfile(const char *logfile);
+int check_stager_stream(stream_cfg_t *ss_cfg);
+
 int write_stager_cmd(const char *location, const stager_cfg_t *s);
 int parse_stager_cmd(char *cmd_file, sqm_lst_t *libraries, stager_cfg_t **cfg);
 

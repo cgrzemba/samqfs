@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 /*
  *	memory_free.c -  memory free functions
@@ -380,6 +380,7 @@ free_stager_cfg(stager_cfg_t *cfg)
 		return;
 	free_stage_drive_list(cfg->stage_drive_list);
 	free_stage_buffer_list(cfg->stage_buf_list);
+	free(cfg->dk_stream);
 	free(cfg);
 	cfg = NULL;
 	Trace(TR_ALLOC, "finished freeing stager_cfg");
@@ -655,8 +656,6 @@ free_ar_set_criteria(ar_set_criteria_t *as)
 		if (as->arch_copy[i] != NULL)
 			free(as->arch_copy[i]);
 	}
-	free(as->description);
-	free(as->class_attrs);
 
 	free(as);
 	Trace(TR_ALLOC, "finished freeing ar_set_criteria");
@@ -1189,7 +1188,7 @@ free_crypt_str(crypt_str_t *cs) {
 }
 
 /*
- *      free_medias_type().
+ *  free_medias_type().
  */
 void
 free_medias_type(

@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.14 $"
+#pragma ident	"$Revision: 1.15 $"
 
 #include "mgmt/sammgmt.h"
 #include "pub/mgmt/sammgmt_rpc.h"
@@ -42,9 +42,9 @@
 /*
  * Get a list of all arch_set_t structures, describing all archive sets.
  * This includes:
- *      All defined archive sets (policies and legacy policies),
- *      A single no_archive set that may contain many criteria,
- *      Default sets for each archiving filesystem.
+ * All defined archive sets (policies and legacy policies),
+ * A single no_archive set that may contain many criteria,
+ * Default sets for each archiving filesystem.
  *
  * There is no order to the returned list.
  */
@@ -267,130 +267,6 @@ set_name_t name)	/* the name of the set to delete */
 	PTRACE(3, " %s calling RPC...", func_name);
 
 	SAMRPC_CLNT_CALL(samrpc_delete_arch_set, string_arg_t);
-
-	CHECK_FUNCTION_FAILURE(result, func_name);
-
-	ret_val = result.status;
-
-	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
-	PTRACE(2, "%s exit", func_name);
-	return (ret_val);
-}
-
-
-int
-delete_data_class(
-ctx_t *ctx,		/* is ignored */
-char *name)		/* the name of the class to delete */
-{
-
-	int ret_val;
-	string_arg_t arg;
-	samrpc_result_t result;
-	char *func_name = "rpc:delete data class";
-	char *err_msg;
-	enum clnt_stat stat;
-
-	PTRACE(2, "%s entry", func_name);
-
-	CHECK_CLIENT_HANDLE(ctx, func_name);
-	if (ISNULL(name)) {
-		PTRACE(2, "%s exit %s", func_name, samerrmsg);
-		return (-1);
-	}
-
-	memset((char *)&result, 0, sizeof (result));
-	arg.ctx = ctx;
-	arg.str = (char *)name;
-
-	PTRACE(3, " %s calling RPC...", func_name);
-
-	SAMRPC_CLNT_CALL(samrpc_delete_data_class, string_arg_t);
-
-	CHECK_FUNCTION_FAILURE(result, func_name);
-
-	ret_val = result.status;
-
-	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
-	PTRACE(2, "%s exit", func_name);
-	return (ret_val);
-}
-
-
-int
-associate_class_with_policy(
-ctx_t *ctx,		/* client connection */
-char *class_name,	/* name of data class */
-char *policy_name	/* name of policy to associate class with */
-)
-{
-
-	int ret_val;
-	string_string_arg_t arg;
-	samrpc_result_t result;
-	char *func_name = "rpc:associate class with policy";
-	char *err_msg;
-	enum clnt_stat stat;
-
-	PTRACE(2, "%s entry", func_name);
-
-	CHECK_CLIENT_HANDLE(ctx, func_name);
-	if (ISNULL(class_name, policy_name)) {
-		PTRACE(2, "%s exit %s", func_name, samerrmsg);
-		return (-1);
-	}
-
-	PTRACE(3, "%s calling RPC...", func_name);
-
-	memset((char *)&result, 0, sizeof (result));
-	arg.ctx = ctx;
-	arg.str1 = class_name;
-	arg.str2 = policy_name;
-
-	SAMRPC_CLNT_CALL(samrpc_associate_class_with_policy,
-	    string_string_arg_t);
-
-	CHECK_FUNCTION_FAILURE(result, func_name);
-
-	ret_val = result.status;
-
-	PTRACE(2, "%s returning with status [%d]...", func_name, ret_val);
-	PTRACE(2, "%s exit", func_name);
-	return (ret_val);
-}
-
-int
-set_class_order(
-ctx_t *ctx,		/* client connection */
-char *fs_name,		/* name of fs to change class order */
-sqm_lst_t *criteria_lst	/* new class order */
-)
-{
-
-	int ret_val;
-	str_critlst_arg_t arg;
-	samrpc_result_t result;
-	char *func_name = "rpc:set class order";
-	char *err_msg;
-	enum clnt_stat stat;
-
-	PTRACE(2, "%s entry", func_name);
-
-	CHECK_CLIENT_HANDLE(ctx, func_name);
-	if (ISNULL(criteria_lst)) {
-		PTRACE(2, "%s exit %s", func_name, samerrmsg);
-		return (-1);
-	}
-
-	PTRACE(3, "%s calling RPC...", func_name);
-
-	memset((char *)&result, 0, sizeof (result));
-	arg.ctx = ctx;
-	arg.str = fs_name;
-	arg.critlst = criteria_lst;
-
-	SAMRPC_CLNT_CALL(samrpc_set_class_order,
-	    str_critlst_arg_t);
 
 	CHECK_FUNCTION_FAILURE(result, func_name);
 

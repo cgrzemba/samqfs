@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.20 $"
+#pragma ident   "$Revision: 1.21 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 /*
@@ -158,6 +158,12 @@ verify_stager_cfg(const stager_cfg_t *cfg)	/* cfg to verify */
 				return (-1);
 			}
 		}
+	}
+
+	/* check the dk stager stream */
+	if (check_stager_stream(cfg->dk_stream) != 0) {
+		Trace(TR_OPRMSG, "verify stager cfg failed: %s", samerrmsg);
+		return (-1);
 	}
 
 	Trace(TR_OPRMSG, "stager cfg is valid");

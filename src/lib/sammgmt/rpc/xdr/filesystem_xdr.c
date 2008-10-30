@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.31 $"
+#pragma ident	"$Revision: 1.32 $"
 
 #include "mgmt/sammgmt.h"
 
@@ -285,6 +285,32 @@ rel_4_6_options_t *objp)
 }
 
 bool_t
+xdr_rel_5_0_options_t(
+XDR *xdrs,
+rel_5_0_options_t *objp)
+{
+
+	if (!xdr_uint32_t(xdrs, &objp->change_flag))
+		return (FALSE);
+	if (!xdr_int16_t(xdrs, &objp->obj_width))
+		return (FALSE);
+	if (!xdr_int64_t(xdrs, &objp->obj_depth))
+		return (FALSE);
+	if (!xdr_int16_t(xdrs, &objp->obj_pool))
+		return (FALSE);
+	if (!xdr_int16_t(xdrs, &objp->obj_sync_data))
+		return (FALSE);
+	if (!xdr_boolean_t(xdrs, &objp->logging))
+		return (FALSE);
+	if (!xdr_boolean_t(xdrs, &objp->sam_db))
+		return (FALSE);
+	if (!xdr_boolean_t(xdrs, &objp->xattr))
+		return (FALSE);
+
+	return (TRUE);
+}
+
+bool_t
 xdr_mount_options_t(
 XDR *xdrs,
 mount_options_t *objp)
@@ -340,6 +366,7 @@ mount_options_t *objp)
 	if (!xdr_post_4_2_options_t(xdrs, &objp->post_4_2_opts))
 		return (FALSE);
 
+
 #ifdef SAMRPC_CLIENT
 	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
 		if ((xdrs->x_public != NULL) &&
@@ -351,6 +378,19 @@ mount_options_t *objp)
 #endif /* samrpc_client */
 	if (!xdr_rel_4_6_options_t(xdrs, &objp->rel_4_6_opts))
 		return (FALSE);
+
+#ifdef SAMRPC_CLIENT
+	if (xdrs->x_op == XDR_DECODE || xdrs->x_op == XDR_ENCODE) {
+		if ((xdrs->x_public != NULL) &&
+		    (strcmp(xdrs->x_public, "1.6.1") <= 0)) {
+
+			return (TRUE); /* versions 1.6.1 or lower */
+		}
+	}
+#endif /* samrpc_client */
+	if (!xdr_rel_5_0_options_t(xdrs, &objp->rel_5_0_opts))
+		return (FALSE);
+
 	return (TRUE);
 }
 

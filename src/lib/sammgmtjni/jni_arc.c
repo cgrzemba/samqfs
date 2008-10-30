@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.36 $"
+#pragma ident	"$Revision: 1.37 $"
 
 /* Solaris header files */
 #include <stdio.h>
@@ -194,21 +194,17 @@ crit2Criteria(JNIEnv *env, void *v_arcrit) {
 	PTRACE(2, "jni:crit2Criteria() entry");
 	cls = (*env)->FindClass(env, BASEPKG"/arc/Criteria");
 	mid = (*env)->GetMethodID(env, cls, "<init>",
-	    "(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;"
+	    "(Ljava/lang/String;"
 	    "Ljava/lang/String;"
-	    "Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;"
 	    "Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;"
-	    "CCI[L"BASEPKG"/arc/Copy;S[BZLjava/lang/String;J"
-	    "ILjava/lang/String;)V");
+	    "Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;"
+	    "CCI[L"BASEPKG"/arc/Copy;S[BZLjava/lang/String;"
+	    "JII)V");
 	newObj = (*env)->NewObject(env, cls, mid,
-	    JSTRING(crit->class_name),
-	    JSTRING(crit->description),
-	    (jint)crit->priority,
 	    JSTRING(crit->fs_name),
 	    JSTRING(crit->set_name),
 	    JSTRING(crit->path),
 	    JSTRING(crit->name), /* regexp */
-	    (jint)crit->regexp_type,
 	    (crit->minsize == fsize_reset) ? NULL :
 	    ull2jstr(env, crit->minsize),
 	    (crit->maxsize == fsize_reset) ? NULL :
@@ -225,8 +221,9 @@ crit2Criteria(JNIEnv *env, void *v_arcrit) {
 	    JBOOL(crit->nftv),
 	    JSTRING(crit->after),
 	    (jlong)(crit->change_flag),
-	    (jint)(crit->class_id),
-	    JSTRING(crit->class_attrs));
+	    (jint)(crit->attr_flags),
+	    (jint)(crit->partial_size));
+
 	PTRACE(2, "jni:crit2Criteria() done");
 	return (newObj);
 }
@@ -245,6 +242,8 @@ Criteria2crit(JNIEnv *env, jobject critObj) {
 		return (NULL);
 
 	crit = (ar_set_criteria_t *)malloc(sizeof (ar_set_criteria_t));
+
+	memset(crit, 0, sizeof (ar_set_criteria_t));
 
 	PTRACE(2, "jni:Criteria2crit() entry");
 	cls = (*env)->GetObjectClass(env, critObj);
@@ -273,13 +272,10 @@ Criteria2crit(JNIEnv *env, jobject critObj) {
 	crit->num_copies = -1; // this should be ignored by the API
 	crit->nftv = getBoolFld(env, cls, critObj, "nftv");
 	getStrFld(env, cls, critObj, "after", crit->after);
-	getStrFld(env, cls, critObj, "dataClassName", crit->class_name);
-	crit->priority = (int32_t)getJIntFld(env, cls, critObj, "priority");
-	crit->regexp_type = (regexp_type_t)getJIntFld(env, cls, critObj,
-		"regExpType");
-	getCharStarFld(env, cls, critObj, "description", &(crit->description));
-	crit->class_id = (int32_t)getJIntFld(env, cls, critObj, "classID");
-	getCharStarFld(env, cls, critObj, "classAttrs", &(crit->class_attrs));
+	crit->attr_flags =
+	    (int32_t)getJIntFld(env, cls, critObj, "attrFlags");
+	crit->partial_size =
+	    (int32_t)getJIntFld(env, cls, critObj, "partialSize");
 
 	PTRACE(2, "jni:Criteria2crit() done");
 	return (crit);
@@ -383,7 +379,7 @@ arglobd2ArGlobalDirective(JNIEnv *env, void *v_arglobd) {
 	    "([L"BASEPKG"/arc/BufDirective;[L"BASEPKG"/arc/BufDirective;"
 	    "[L"BASEPKG"/arc/BufDirective;[L"BASEPKG"/arc/DrvDirective;"
 	    "JSLjava/lang/String;Ljava/lang/String;ZZ"
-	    "[L"BASEPKG"/arc/Criteria;JI[Ljava/lang/String;)V");
+	    "[L"BASEPKG"/arc/Criteria;JI[Ljava/lang/String;JI)V");
 
 	newObj = (*env)->NewObject(env, cls, mid,
 	    lst2jarray(env, argd->ar_bufs,
@@ -405,7 +401,10 @@ arglobd2ArGlobalDirective(JNIEnv *env, void *v_arglobd) {
 	    (jlong)(argd->change_flag),
 	    (jint)(argd->options),
 	    lst2jarray(env, argd->timeouts, "java/lang/String",
-		charr2String));
+		charr2String),
+	    (jlong)(argd->bg_interval),
+	    (jint)(argd->bg_time));
+
 	PTRACE(2, "jni:arglobd2ArGlobalDirective() done");
 	return (newObj);
 }
@@ -461,6 +460,9 @@ ArGlobalDirective2arglobd(JNIEnv *env, jobject argdObj) {
 		    "timeouts", "[Ljava/lang/String;"),
 		    "java/lang/String",
 		    String2charr);
+	argd->bg_interval = (int32_t)getJLongFld(env, cls,
+	    argdObj, "backgroundInterval");
+	argd->bg_time = (int)getJIntFld(env, cls, argdObj, "backgroundTime");
 	PTRACE(2, "jni:ArGlobalDirective2arglobd() done");
 	return (argd);
 }
@@ -478,7 +480,7 @@ arfsd2ArFSDirective(JNIEnv *env, void *v_arfsd) {
 	cls = (*env)->FindClass(env, BASEPKG"/arc/ArFSDirective");
 	mid = (*env)->GetMethodID(env, cls, "<init>",
 		"(Ljava/lang/String;[L"BASEPKG"/arc/Criteria;Ljava/lang/String;"
-		"SJZZI[L"BASEPKG"/arc/Copy;JI)V");
+		"SJZZI[L"BASEPKG"/arc/Copy;JIJI)V");
 	newObj = (*env)->NewObject(env, cls, mid,
 	    JSTRING(arfsd->fs_name),
 	    lst2jarray(env, arfsd->ar_set_criteria,
@@ -492,7 +494,9 @@ arfsd2ArFSDirective(JNIEnv *env, void *v_arfsd) {
 	    arrOfPtrs2jarray(env, (void**)arfsd->fs_copy, /* metadata copies */
 		MAX_COPY, BASEPKG"/arc/Copy", copy2Copy),
 	    (jlong)(arfsd->change_flag),
-	    (jint)(arfsd->options));
+	    (jint)(arfsd->options),
+	    (jlong)(arfsd->bg_interval),
+	    (jint)(arfsd->bg_time));
 	PTRACE(2, "jni:arfsd2ArFSDirective() done");
 	return (newObj);
 }
@@ -536,6 +540,11 @@ ArFSDirective2arfsd(JNIEnv *env, jobject arfsdObj) {
 		(uint32_t)getJLongFld(env, cls, arfsdObj, "chgFlags");
 
 	arfsd->options = (int32_t)getJIntFld(env, cls, arfsdObj, "options");
+
+	arfsd->bg_interval = (int32_t)getJLongFld(env, cls,
+	    arfsdObj, "backgroundInterval");
+
+	arfsd->bg_time = (int)getJIntFld(env, cls, arfsdObj, "backgroundTime");
 
 	PTRACE(2, "jni:ArFSDirective2arfsd() done");
 	return (arfsd);
@@ -604,7 +613,7 @@ cparams2CopyParams(JNIEnv *env, void *v_cparams) {
 	    "(Ljava/lang/String;IZLjava/lang/String;ILjava/lang/String;"
 	    "Ljava/lang/String;Ljava/lang/String;ZZ[L"BASEPKG"/arc/ArPriority;"
 	    "ZIIIISJILjava/lang/String;Ljava/lang/String;"
-	    "L"BASEPKG"/rec/RecyclerParams;IZZSJJ)V");
+	    "L"BASEPKG"/rec/RecyclerParams;IZZSJJJ)V");
 
 	newObj = (*env)->NewObject(env, cls, mid,
 	    JSTRING(cp->ar_set_copy_name),
@@ -636,7 +645,8 @@ cparams2CopyParams(JNIEnv *env, void *v_cparams) {
 	    JBOOL(cp->directio),
 	    (jshort)(cp->rearch_stage_copy),
 	    (jlong)(cp->change_flag),
-	    (jlong)(cp->queue_time_limit));
+	    (jlong)(cp->queue_time_limit),
+	    (jlong)(cp->fillvsns_min));
 	PTRACE(2, "jni:cparams2CopyParams() done");
 	return (newObj);
 }
@@ -704,6 +714,9 @@ CopyParams2cparams(JNIEnv *env, jobject cpObj) {
 	    "rearch_stage_copy");
 	cp->queue_time_limit =
 	    (uint32_t)getJLongFld(env, cls, cpObj, "queue_time_limit");
+
+	cp->fillvsns_min =
+	    (uint32_t)getJLongFld(env, cls, cpObj, "fillvsnsMin");
 
 	PTRACE(2, "jni:CopyParams2cparams() done");
 	return (cp);
@@ -1485,78 +1498,6 @@ Java_com_sun_netstorage_samqfs_mgmt_arc_Archiver_deleteArSet(JNIEnv *env,
 		return;
 	}
 	PTRACE(1, "jni:Archiver_deleteArSet() done");
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_netstorage_samqfs_mgmt_arc_Archiver_associateClassWithPolicy(
-	JNIEnv *env, jclass cls /*ARGSUSED*/, jobject ctx,
-	jstring class_name, jstring pol_name) {
-
-	jboolean isCopy;
-	jboolean isCopy2;
-	char *cstr = GET_STR(class_name, isCopy);
-	char *pstr = GET_STR(pol_name, isCopy2);
-	int res;
-
-	PTRACE(1, "jni:Archiver_assoc_class_w_pol(...,%s,%s) entry",
-	    Str(cstr), Str(pstr));
-	res = associate_class_with_policy(CTX, cstr, pstr);
-	REL_STR(class_name, cstr, isCopy);
-	REL_STR(pol_name, pstr, isCopy2);
-
-	if (-1 == res) {
-		ThrowEx(env);
-		return;
-	}
-
-	PTRACE(1, "jni:Archiver_assoc_class_w_pol() done");
-
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_netstorage_samqfs_mgmt_arc_Archiver_deleteClass(JNIEnv *env,
-	jclass cls /*ARGSUSED*/, jobject ctx, jstring jname) {
-
-	int res;
-	jboolean isCopy;
-	char *name;
-
-	PTRACE(1, "jni:Archiver_deleteClass() entry");
-	name = GET_STR(jname, isCopy);
-	res = delete_data_class(CTX, name);
-	REL_STR(jname, name, isCopy);
-	if (-1 == res) {
-		ThrowEx(env);
-		return;
-	}
-	PTRACE(1, "jni:Archiver_deleteClass() done");
-}
-
-
-
-JNIEXPORT void JNICALL
-Java_com_sun_netstorage_samqfs_mgmt_arc_Archiver_setClassOrder
-(JNIEnv *env, jclass cls /* ARGSUSED */, jobject ctx, jstring jname,
-    jobjectArray classes) {
-
-	int res;
-	jboolean isCopy;
-	char *name;
-	sqm_lst_t *l;
-
-	PTRACE(1, "jni:Archiver_setClassOrder() entry");
-	name = GET_STR(jname, isCopy);
-
-	res = set_class_order(CTX, name, jarray2lst(env, classes,
-	    BASEPKG"/arc/Criteria", Criteria2crit));
-
-
-	REL_STR(jname, name, isCopy);
-	if (-1 == res) {
-		ThrowEx(env);
-		return;
-	}
-	PTRACE(1, "jni:Archiver_setClassOrder() done");
 }
 
 

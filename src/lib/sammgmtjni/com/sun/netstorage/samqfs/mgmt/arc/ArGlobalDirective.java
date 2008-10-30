@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArGlobalDirective.java,v 1.14 2008/05/16 18:35:27 am143972 Exp $
+// ident	$Id: ArGlobalDirective.java,v 1.15 2008/10/30 14:42:29 pg125177 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc;
 
@@ -43,6 +43,8 @@ public class ArGlobalDirective {
     private static final long AR_GL_notify_script = 0x00000020;
     private static final long AR_GL_scan_squash   = 0x00000040;
     private static final long AR_GL_setarchdone   = 0x00000080;
+    private static final long AR_FS_bg_interval	= 0x00000100;
+    private static final long AR_FS_bg_time	= 0x00000200;
 
     // Flags for the options field must match those in pub/mgmt/archive.h
     private static final int SCAN_SQUASH_ON = 0x00000001;
@@ -62,13 +64,15 @@ public class ArGlobalDirective {
     private long chgFlags;
     private int options;
     private String timeouts[];
+    private long backgroundInterval;
+    private int backgroundTime; // hhmm
 
     /* private constructor */
     private ArGlobalDirective(BufDirective[] bufDirs, BufDirective[] maxDirs,
         BufDirective[] overflowDirs, DrvDirective[] drvDirs, long interval,
         short examMethod, String logFile, String notifyScript, boolean wait,
         boolean arcMeta, Criteria[] crit, long chgFlags, int options,
-        String[] timeouts) {
+	String[] timeouts, long backgroundInterval, int backgroundTime) {
             this.bufDirs = bufDirs;
             this.maxDirs = maxDirs;
             this.overflowDirs = overflowDirs;
@@ -83,6 +87,8 @@ public class ArGlobalDirective {
             this.chgFlags = chgFlags;
 	    this.options = options;
             this.timeouts = timeouts;
+	    this.backgroundInterval = backgroundInterval;
+	    this.backgroundTime = backgroundTime;
     }
 
     public ArGlobalDirective() {
@@ -186,6 +192,24 @@ public class ArGlobalDirective {
     }
 
     public String[] getTimeouts() { return timeouts; }
+
+    public long getBackgroundInterval() { return backgroundInterval; }
+    public void setBackgroundInterval(long backgroundInterval) {
+        this.backgroundInterval = backgroundInterval;
+        chgFlags |= AR_FS_bg_interval;
+    }
+    public void resetBackgroundInterval() {
+        chgFlags &= ~AR_FS_bg_interval;
+    }
+
+    public int getBackgroundTime() { return backgroundTime; }
+    public void setBackgroundTime(int backgroundTime) {
+        this.backgroundTime = backgroundTime;
+        chgFlags |= AR_FS_bg_time;
+    }
+    public void resetBackgroundTime() {
+        chgFlags &= ~AR_FS_bg_time;
+    }
 
     public String toString() {
         int i;
