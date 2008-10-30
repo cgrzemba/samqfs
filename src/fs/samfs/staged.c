@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.79 $"
+#pragma ident "$Revision: 1.80 $"
 
 #include "sam/osversion.h"
 
@@ -87,6 +87,8 @@ static int sam_build_stager_multivolume_copy(sam_node_t *ip, sam_id_t id,
 				int copy, sam_stage_request_t *req,
 				sam_stage_request_t *req_ext);
 
+int sam_stage_n_umem = 1;
+
 /*
  * ----- sam_stagerd_file - stage an archived file via stager daemon.
  *
@@ -131,12 +133,45 @@ sam_stagerd_file(
 	 */
 	cur_size = ip->size;
 	if (length && !ip->flags.b.nowaitspc) {
+		offset_t size;
 
 		/*
 		 *  Set stage wait flag on request.
 		 */
 		req->filesys.wait = 1;
 
+		/*
+		 * If stage -n, not NFS, total allocated umem is <
+		 * physmem, and buffer is less than 1% of physmem,
+		 * allocate buffer in memory pages which flush to swap.
+		 */
+		size = ip->stage_len;
+		if (sam_stage_n_umem &&
+		    ip->flags.b.stage_n && !SAM_THREAD_IS_NFS() &&
+		    ((size + ip->mp->mi.m_umem_size) <=
+		    (physmem * PAGESIZE)) &&
+		    (size <= ((physmem * PAGESIZE) / 100))) {
+			if (ip->st_buf) {
+				if (size > ip->st_umem_len) {
+					atomic_add_64(
+					    &ip->mp->mi.m_umem_size,
+					    -ip->st_umem_len);
+					ddi_umem_free(ip->st_cookie);
+					ip->st_buf = NULL;
+					ip->st_umem_len = 0;
+				}
+			}
+			if (ip->st_buf == NULL) {
+				if ((ip->st_buf =
+				    ddi_umem_alloc((size_t)size,
+				    (DDI_UMEM_PAGEABLE|DDI_UMEM_SLEEP),
+				    &ip->st_cookie))) {
+					ip->st_umem_len = size;
+					atomic_add_64(
+					    &ip->mp->mi.m_umem_size, size);
+				}
+			}
+		}
 	}
 
 	if (error == 0) {
