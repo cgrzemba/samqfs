@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.151 $"
+#pragma ident "$Revision: 1.152 $"
 
 #include "sam/osversion.h"
 
@@ -853,7 +853,35 @@ segment_file:
 				if (vp->v_type != VCHR) {
 					RW_UNLOCK_CURRENT_OS(&ip->data_rwl);
 				}
+				/*
+				 * Close the LQFS transaction.
+				 */
+				if (ioflag & (FSYNC|FDSYNC)) {
+					int terr = 0;
+
+					TRANS_END_SYNC(ip->mp, terr,
+					    TOP_WRITE_SYNC, resv);
+					if (error == 0) {
+						error = terr;
+					}
+				} else {
+					TRANS_END_ASYNC(ip->mp, TOP_WRITE,
+					    resv);
+				}
 				error = sam_wait_space(ip, error);
+				/*
+				 * Re-open the LQFS transaction.
+				 */
+				if (ioflag & (FSYNC|FDSYNC)) {
+					int terr = 0;
+
+					TRANS_BEGIN_SYNC(ip->mp, TOP_WRITE_SYNC,
+					    resv, terr);
+					ASSERT(!terr);
+				} else {
+					TRANS_BEGIN_ASYNC(ip->mp, TOP_WRITE,
+					    resv);
+				}
 				if (vp->v_type != VCHR) {
 					sam_rwlock_common(SAM_ITOV(ip),
 					    rwl_mode);
@@ -873,7 +901,33 @@ segment_file:
 		    IS_SAM_ENOSPC(error)) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			RW_UNLOCK_CURRENT_OS(&ip->data_rwl);
+			/*
+			 * Close the LQFS transaction.
+			 */
+			if (ioflag & (FSYNC|FDSYNC)) {
+				int terr = 0;
+
+				TRANS_END_SYNC(ip->mp, terr, TOP_WRITE_SYNC,
+				    resv);
+				if (error == 0) {
+					error = terr;
+				}
+			} else {
+				TRANS_END_ASYNC(ip->mp, TOP_WRITE, resv);
+			}
 			error = sam_wait_space(ip, error);
+			/*
+			 * Re-open the LQFS transaction.
+			 */
+			if (ioflag & (FSYNC|FDSYNC)) {
+				int terr = 0;
+
+				TRANS_BEGIN_SYNC(ip->mp, TOP_WRITE_SYNC, resv,
+				    terr);
+				ASSERT(!terr);
+			} else {
+				TRANS_BEGIN_ASYNC(ip->mp, TOP_WRITE, resv);
+			}
 			sam_rwlock_common(SAM_ITOV(ip), rwl_mode);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			if (error) {
