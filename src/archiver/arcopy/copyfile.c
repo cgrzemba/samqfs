@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.81 $"
+#pragma ident "$Revision: 1.82 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -104,6 +104,7 @@ static pthread_cond_t bufWrite = PTHREAD_COND_INITIALIZER;
 static boolean_t bufEndArchive = FALSE;
 static boolean_t bufEmpty = FALSE;
 static boolean_t bufFull = FALSE;
+static boolean_t bufWriteEnd = FALSE;
 
 /* Private functions. */
 static void beginArchiveFile(void);
@@ -531,6 +532,7 @@ WriteBuffer(
 
 		PthreadMutexLock(&bufLock);
 		bufEndArchive = FALSE;
+		bufWriteEnd = TRUE;
 		PthreadCondSignal(&bufRead);
 		PthreadMutexUnlock(&bufLock);
 	}
@@ -630,7 +632,7 @@ EndArchiveFile(
 	PthreadMutexLock(&bufLock);
 	bufEndArchive = TRUE;
 	PthreadCondSignal(&bufWrite);
-	while (bufEndArchive) {
+	while (bufEndArchive && !bufWriteEnd) {
 		PthreadCondWait(&bufRead, &bufLock);
 	}
 	PthreadMutexUnlock(&bufLock);
