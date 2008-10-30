@@ -1,4 +1,4 @@
-." $Revision: 1.34 $
+." $Revision: 1.35 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -28,7 +28,7 @@
 .\"
 .na
 .nh
-.TH sls 1  "07 Feb 2007"
+.TH sls 1  "29 Oct 2008"
 .SH NAME
 sls \- Lists directory content
 .SH SYNOPSIS
@@ -374,7 +374,7 @@ This archive copy will not be rearchived.
 Dash 3 is unused.
 .TP
 \(bu
-Dash 4 indicates either a damaged or undamaged status, as
+Dash 4 indicates a damaged, undamaged, or verified status, as
 follows:
 .RS 2
 .TP 8
@@ -385,9 +385,14 @@ follows:
 The archive copy is damaged.
 This archive copy will not be staged.
 .TP
+\fBV\fR
+The archive copy has been verified. The file is 
+flagged for data verification and this copy has been verified.
+.TP
 \fB\-\fR
-The archive copy is not damaged.
-It is a candidate for staging.
+The archive copy is not damaged, and if the file is flagged for 
+data verification, this copy has not yet been
+verified. It is a candidate for staging.
 .RE
 .PP
 The third field shows the date and time when the archive copy was
