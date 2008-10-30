@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.54 $"
+#pragma ident	"$Revision: 1.55 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -730,9 +730,10 @@ au_t **au) {
 
 	uint64_t	oh;	/* osd_handle_t */
 	boolean_t inuse;
+	int fd;
 
 	if (ISNULL(path, au)) {
-		Trace(TR_ERR, "failed to open osd for %s", path);
+		Trace(TR_ERR, "failed to get osd for %s", Str(path));
 		return (-1);
 	}
 
@@ -746,13 +747,28 @@ au_t **au) {
 		inuse = B_FALSE;
 	}
 
-	if (open_obj_device(path, O_RDONLY, &oh) < 0) {
-		/* Cannot open object device %s */
-		Trace(TR_ERR, "failed to open osd for %s", path);
-		return (-1);
-	}
 
-	close_obj_device(path, O_RDONLY, oh);
+	if (open_obj_device(path, O_RDONLY, &oh) < 0) {
+
+		/*
+		 * open_obj_device will fail and return ENOPKG if
+		 * sam-fsd is not running in this case try a simple open.
+		 * For any other values of errno return -1.
+		 */
+		if (errno != ENOPKG) {
+			Trace(TR_ERR, "failed to open osd for %s", path);
+			return (-1);
+		}
+
+		if ((fd = open(path, O_RDONLY | O_NDELAY)) < 0) {
+			Trace(TR_ERR, "cannot open %s for rd, errno=%d:%s",
+			    path, errno, strerror(errno));
+			return (-1);
+		}
+		close(fd);
+	} else {
+		close_obj_device(path, O_RDONLY, oh);
+	}
 
 	*au = (au_t *)mallocer(sizeof (au_t));
 	if (*au == NULL) {
@@ -2314,8 +2330,8 @@ compare_aus(au_t *a1, au_t *a2) {
 	int slice_id_2;
 
 	/* Does the data to make the comparison exist */
-	if (ISNULL(a1, a2, a1->scsiinfo, a1->scsiinfo->dev_id, a2->scsiinfo,
-	    a2->scsiinfo->dev_id)) {
+	if (ISNULL(a1, a2) || ISNULL(a1->scsiinfo, a2->scsiinfo) ||
+	    ISNULL(a1->scsiinfo->dev_id, a2->scsiinfo->dev_id)) {
 		Trace(TR_ERR, "Data needed for au comparison not present:%d %s",
 		    samerrno, samerrmsg);
 		return (-1);

@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.3 $"
+#pragma ident   "$Revision: 1.4 $"
 
 
 static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
@@ -707,7 +707,7 @@ display_multihost_job_status(samrthread_t *ptr, char **result) {
 	int i;
 	int error_num;
 
-	if (ISNULL(ptr, result, ptr->args, ptr->args->db)) {
+	if (ISNULL(ptr, result) || ISNULL(ptr->args) || ISNULL(ptr->args->db)) {
 		Trace(TR_ERR, "failed creating multi-host job status: %d %s",
 		    samerrno, samerrmsg);
 		return (-1);
@@ -1311,7 +1311,7 @@ static int
 destroy_rpc_client(samrpc_client_t *rc) {
 
 	if (ISNULL(rc)) {
-		Trace(TR_ERR, "snd:destroy clnt failed: %d %s",
+		Trace(TR_ERR, "snd:destroy clnt failed: %d %s", samerrno,
 		    samerrmsg);
 		return (-1);
 	}

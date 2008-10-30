@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.5 $"
+#pragma ident   "$Revision: 1.6 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -70,7 +70,8 @@ static parsekv_t add_hosts_kvoptions[] = {
 	{"bg_mount",	host_offset(bg_mount), parsekv_bool_YN},
 	{"read_only",	host_offset(read_only), parsekv_bool_YN},
 	{"mount_at_boot", host_offset(mount_at_boot), parsekv_bool_YN},
-	{"potential_mds", host_offset(pmds), parsekv_bool_YN}
+	{"potential_mds", host_offset(pmds), parsekv_bool_YN},
+	{"", 0, NULL}
 };
 
 

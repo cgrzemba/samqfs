@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.81 $"
+#pragma ident   "$Revision: 1.82 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1429,17 +1429,17 @@ fs_arch_cfg_t	*arc_info)
 	}
 
 	if (fs->fi_shared_fs) {
+		if (precheck_shared_fs(fs) != 0) {
+			free_mcf_cfg(mcf);
+			Trace(TR_ERR, "create fs failed: %s", samerrmsg);
+			return (-1);
+		}
+
 		if (!(fs->fi_status & FS_SERVER)) {
 			if (find_local_devices(fs->meta_data_disk_list,
 			    fs->data_disk_list, fs->striped_group_list) != 0) {
 				return (-1);
 			}
-		}
-
-		if (precheck_shared_fs(fs) != 0) {
-			free_mcf_cfg(mcf);
-			Trace(TR_ERR, "create fs failed: %s", samerrmsg);
-			return (-1);
 		}
 	}
 
@@ -1681,7 +1681,27 @@ precheck_shared_fs(fs_t *fs) {
 				return (-1);
 			}
 		}
+		/*
+		 * If this is for a client ensure that nodev has been
+		 * set for the metadata devices.
+		 */
+		if (fs->fi_status & FS_NODEVS) {
+			node_t *n;
 
+			for (n = fs->meta_data_disk_list->head;
+				n != NULL; n = n->next) {
+
+				disk_t *d = (disk_t *)n->data;
+
+				if (d == NULL) {
+					continue;
+				}
+
+				strlcpy(d->base_info.name, NODEV_STR,
+				    sizeof (upath_t));
+				d->base_info.additional_params[0] = '\0';
+			}
+		}
 	}
 
 	return (0);
