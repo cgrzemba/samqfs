@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.176 $"
+#pragma ident "$Revision: 1.177 $"
 #endif
 
 #include "sam/osversion.h"
@@ -731,7 +731,6 @@ sam_flush_behind(
 	ip->flush_off += (offset_t)ip->flush_len;
 	ip->flush_len = 0;
 }
-#endif /* sun */
 
 
 /*
@@ -743,7 +742,6 @@ sam_flush_behind(
  * the cache buffers or the device driver.
  */
 
-#ifdef sun
 int				/* ERRNO if error, 0 if successful. */
 sam_dk_direct_io(
 	sam_node_t *ip,		/* Pointer to inode */

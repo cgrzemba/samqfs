@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 #include "sam/osversion.h"
 
@@ -274,11 +274,7 @@ sam_event_fini(
 	 * "os/schedctl.c". The kernel mapping of the page is released
 	 * and the page is unlocked.
 	 */
-#if defined(ANON_LOCK_ENTER)
 	ANON_LOCK_ENTER(&amp->a_rwlock, RW_WRITER);
-#else	/* ANON_LOCK_ENTER */
-	mutex_enter(&amp->lock);
-#endif	/* ANON_LOCK_ENTER */
 	segkp_release(segkp, kaddr);
 
 	/*
@@ -291,18 +287,10 @@ sam_event_fini(
 		 * as_free do the work.
 		 */
 		anon_free(amp->ahp, 0, PAGESIZE);
-#if defined(ANON_LOCK_ENTER)
 		ANON_LOCK_EXIT(&amp->a_rwlock);
-#else	/* ANON_LOCK_ENTER */
-		mutex_exit(&amp->lock);
-#endif	/* ANON_LOCK_ENTER */
 		anonmap_free(amp);
 	} else {
-#if defined(ANON_LOCK_ENTER)
 		ANON_LOCK_EXIT(&amp->a_rwlock);
-#else	/* ANON_LOCK_ENTER */
-		mutex_exit(&amp->lock);
-#endif	/* ANON_LOCK_ENTER */
 	}
 	mutex_destroy(&em->em_mutex);
 	cv_destroy(&em->em_waitcv);
@@ -345,11 +333,7 @@ sam_event_init(
 		bufsize = EV_BUFFER_SIZE * 1024;
 	}
 	size = roundup(bufsize, PAGESIZE);
-#if defined(SOL_511_ABOVE)
 	amp = anonmap_alloc(size, size, ANON_SLEEP);
-#else
-	amp = anonmap_alloc(size, size);
-#endif
 	kaddr = segkp_get_withanonmap(segkp, size, KPD_LOCKED | KPD_ZERO, amp);
 	if (kaddr == NULL) {
 		amp->refcnt--;
