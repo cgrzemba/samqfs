@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.143 $"
+#pragma ident "$Revision: 1.144 $"
 
 #include "sam/osversion.h"
 
@@ -615,7 +615,8 @@ sam_flush_extents(sam_node_t *ip)
 	int kptr[NIEXT + 1];
 	int error = 0;
 
-	if (ip->di.status.b.direct_map || S_ISLNK(ip->di.mode)) {
+	if (ip->di.status.b.direct_map || S_ISLNK(ip->di.mode) ||
+	    SAM_IS_OBJECT_FILE(ip)) {
 		return (0);
 	}
 
@@ -639,10 +640,11 @@ sam_flush_extents(sam_node_t *ip)
 		set = 0;
 		kptr_index = i - NDEXT;
 		error = sam_flush_indirect_block(ip, SAM_FLUSH_BC,
-		    kptr, kptr_index,
-		    &ip->di.extent[i], &ip->di.extent_ord[i],
+		    kptr, kptr_index, &ip->di.extent[i], &ip->di.extent_ord[i],
 		    (i - (NDEXT + 1)), &set);
-		if (error)  break;
+		if (error) {
+			break;
+		}
 	}
 	return (error);
 }
