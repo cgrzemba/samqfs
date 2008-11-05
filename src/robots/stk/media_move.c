@@ -59,10 +59,11 @@ static char *_SrcFile = __FILE__;
 #include "sam/nl_samfs.h"
 #include "stk.h"
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 /*	Function prototypes */
 void LogApiStatus(char *entry_ptr, int error);
+void down_lsm(library_t *, int);
 
 extern shm_alloc_t master_shm, preview_shm;
 
@@ -164,7 +165,8 @@ retry:
 				    DRIVE_LOC(drive->drive_id),
 				    sam_acs_status(err));
 				if (err == STATUS_LSM_OFFLINE) {
-					down_library(library, SAM_STATE_CHANGE);
+				down_lsm(library,
+				    drive->drive_id.panel_id.lsm_id.lsm);
 				}
 				if (err == STATUS_DRIVE_IN_USE && retry > 0) {
 					sam_syslog(LOG_INFO,
@@ -296,7 +298,8 @@ retry:
 				    sam_acs_status(err));
 
 				if (err == STATUS_LSM_OFFLINE) {
-					down_library(library, SAM_STATE_CHANGE);
+				down_lsm(library,
+				    drive->drive_id.panel_id.lsm_id.lsm);
 				}
 
 				if (err == STATUS_DRIVE_IN_USE && retry > 0) {
@@ -427,7 +430,8 @@ load_media(
 				    DRIVE_LOC(drive->drive_id),
 				    sam_acs_status(err));
 				if (err == STATUS_LSM_OFFLINE) {
-					down_library(library, SAM_STATE_CHANGE);
+				down_lsm(library,
+				    drive->drive_id.panel_id.lsm_id.lsm);
 				}
 			} else {
 				drive->un->dt.tp.default_capacity
@@ -547,10 +551,6 @@ onestep_eject(
 					sam_syslog(LOG_INFO, "%s returned:%s",
 					    ent_pnt,
 					    sam_acs_status(err));
-					if (err == STATUS_LSM_OFFLINE) {
-						down_library(library,
-						    SAM_STATE_CHANGE);
-					}
 				}
 			} else {
 				sam_syslog(LOG_INFO, "%s status:%s", ent_pnt,
@@ -755,10 +755,6 @@ view_media(
 				} else {
 					sam_syslog(LOG_INFO, "%s returned:%s",
 					    ent_pnt, sam_acs_status(err));
-					if (err == STATUS_LSM_OFFLINE) {
-						down_library(library,
-						    SAM_STATE_CHANGE);
-					}
 				}
 			} else {
 				sam_syslog(LOG_INFO, "%s status:%s", ent_pnt,
@@ -1166,5 +1162,28 @@ LogApiStatus(
 		sam_syslog(LOG_INFO,
 		    "helper failed on %s request, error(%#x).",
 		    ent_ptr, err);
+	}
+}
+
+
+/*
+ * Down all the drives in an lsm which is down or off line
+ *
+ */
+void
+down_lsm(
+	library_t *library,
+	int lsm)
+{
+	drive_state_t *drive;
+
+	for (drive = library->drive; drive != NULL; drive = drive->next) {
+
+		if (drive->drive_id.panel_id.lsm_id.lsm = lsm) {
+			down_drive(drive, SAM_STATE_CHANGE);
+		}
+	}
+	if (!library->status.b.passthru) {
+		down_library(library, SAM_STATE_CHANGE);
 	}
 }
