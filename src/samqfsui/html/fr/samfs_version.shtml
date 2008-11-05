@@ -1,0 +1,42 @@
+<!-- Version content page -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <title>SAM-QFS Manager</title>
+        <meta name="Copyright" content="Copyright &copy; 2008 by Sun Microsystems, Inc. All Rights Reserved." />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script type="text/javascript" src="/com_sun_web_ui/js/browserVersion.js"></script>
+        <script type="text/javascript" src="/com_sun_web_ui/js/stylesheet.js"></script>
+        <script type="text/javascript"><!-- Empty script so IE5.0 Windows will draw table and button borders --></script>
+    </head>
+
+    <body class="DefBdy">
+        <div class="VrsMgn">
+            <div class="VrsHdrTxt">(<!--#include file="versionDate.txt"--></div>
+
+            <div class="VrsTxt">
+                <p>
+                    Copyright &copy; 2008 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, États-Unis. Tous droits réservés.
+                </p>
+                <p>
+                    Sun Microsystems, Inc. détient les droits de propriété intellectuelle relatifs à la technologie incorporée dans le produit qui est décrit dans ce document. En particulier, et ce sans limitation, ces droits de propriété intellectuelle peuvent inclure un ou plusieurs des brevets américains listés à l'adresse suivante:  http://www.sun.com/patents et un ou plusiers  brevets supplémentaires ou les applications de brevet en attente aux États - Unis et dans les autres pays.
+                </p>
+                <p>
+                    CE PRODUIT CONTIENT DES INFORMATIONS CONFIDENTIELLES ET DES SECRETS COMMERCIAUX DE SUN MICROSYSTEMS, INC. SON UTILISATION, SA DIVULGATION ET SA REPRODUCTION SONT INTERDITES SANS L' AUTORISATION EXPRESSE, ÉCRITE ET PREALABLE DE SUN MICROSYSTEMS, INC.
+                </p>
+                <p>
+                    L'utilisation est soumise aux termes de licence.
+                </p>
+                <p>
+                    Cette distribution peut inclure des éléments développés par des tiers.
+                </p>
+                <p>
+                    Sun, Sun Microsystems et le logo Sun sont des marques de fabrique ou des marques déposées enregistrées  de Sun Microsystems, Inc. ou ses filiales aux États-Unis et dans d'autres pays.
+                </p>
+                <p>
+                    Ce produit est soumis à la législation américaine en matière de contrôle des exportations et peut être soumis à la règlementation en vigueur dans d'autres pays dans le domaine des exportations et importations. Les utilisations finales, ou utilisateurs finaux, pour des armes nucléaires,des missiles, des armes biologiques et chimiques ou du nucléaire maritime, directement ou indirectement, sont strictement interdites. Les exportations ou réexportations vers les pays sous embargo américain, ou vers des entités figurant sur les listes d'exclusion d'exportation américaines, y compris, mais de manière non exhaustive, la liste de personnes qui font objet d'un ordre de ne pas participer, d'une façon directe ou indirecte, aux exportations de des produits ou des services qui sont régis par la législation américaine sur le contrôle des exportations et la liste de ressortissants spécifiquement désignés, sont rigoureusement interdites.
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
