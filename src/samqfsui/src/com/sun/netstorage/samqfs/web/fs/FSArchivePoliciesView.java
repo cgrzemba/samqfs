@@ -27,15 +27,13 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesView.java,v 1.32 2008/06/11 16:58:00 ronaldso Exp $
+// ident	$Id: FSArchivePoliciesView.java,v 1.33 2008/11/05 20:26:48 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.HtmlUtil;
 import com.iplanet.jato.view.BasicCommandField;
 import com.iplanet.jato.view.View;
-import com.iplanet.jato.view.ViewBean;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
@@ -561,41 +559,6 @@ public class FSArchivePoliciesView extends CommonTableContainerView {
             CHILD_ADD_POLICY_BUTTON, policyWizardWindowModel);
         policyWizardWindowModel.setValue(
             CHILD_ADD_POLICY_BUTTON, "FSArchivePolicies.button.AddPolicy");
-        policyWizardWindowModel.setValue(
-            Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
-
-        TraceUtil.trace3("Exiting");
-    }
-
-    private void setWizardState() {
-        TraceUtil.trace3("Entering");
-        CommonViewBeanBase view = (CommonViewBeanBase) getParentViewBean();
-
-        String temp = (String)view.getPageSessionAttribute
-            (NewPolicyWizardImpl.WIZARDPAGEMODELNAME);
-        String modelName = (String) view.getPageSessionAttribute(
-             NewPolicyWizardImpl.WIZARDPAGEMODELNAME);
-        String implName = (String) view.getPageSessionAttribute(
-             NewPolicyWizardImpl.WIZARDIMPLNAME);
-        if (modelName == null) {
-            modelName = NewPolicyWizardImpl.WIZARDPAGEMODELNAME_PREFIX + "_" +
-                HtmlUtil.getUniqueValue();
-            view.setPageSessionAttribute(
-                NewPolicyWizardImpl.WIZARDPAGEMODELNAME, modelName);
-        }
-
-        if (implName == null) {
-            implName = NewPolicyWizardImpl.WIZARDIMPLNAME_PREFIX + "_" +
-                HtmlUtil.getUniqueValue();
-            view.setPageSessionAttribute(
-                NewPolicyWizardImpl.WIZARDIMPLNAME, implName);
-        }
-
-        policyWizardWindowModel.setValue(
-            NewPolicyWizardImpl.WIZARDPAGEMODELNAME, modelName);
-        policyWizardWindowModel.setValue(
-            CCWizardWindowModel.WIZARD_NAME, implName);
-
         policyWizardWindowModel.setValue(
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
 

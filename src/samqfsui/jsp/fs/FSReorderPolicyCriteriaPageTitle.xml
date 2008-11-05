@@ -27,20 +27,14 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: FSReorderPolicyCriteriaPageTitle.xml,v 1.8 2008/05/16 19:39:19 am143972 Exp $ -->
+<!-- $Id: FSReorderPolicyCriteriaPageTitle.xml,v 1.9 2008/11/05 20:26:47 ronaldso Exp $ -->
 
 <pagetitle>
     <pagebuttons>
         <cc name="Submit" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
             <!-- See the CCButton class for button types. -->
             <attribute name="type" value="primary"/>
-            <attribute name="onClick"	value="
-                if (validate()) {
-                    return doSubmit();
-    		    } else {
-                    return false;
-                }"
-            />
+            <attribute name="onClick" value="return doSubmit();"/>
         </cc>
         <cc name="Cancel" tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
             <!-- See the CCButton class for button types. -->

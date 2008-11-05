@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSReorderPolicies.jsp,v 1.17 2008/08/13 20:56:12 ronaldso Exp $
+// ident	$Id: FSReorderPolicies.jsp,v 1.18 2008/11/05 20:26:47 ronaldso Exp $
 --%>
 
 <%@ page info="Index" language="java" %>
@@ -133,24 +133,11 @@
         var upDownObj = tf.upDownIdiom;
 
         while (upDownObj[option]) {
-            upDownVal[option] = upDownObj[option++].value;
+            upDownVal[option] = upDownObj[option].value;
+            option++;
         }
 
         return upDownVal.join(separator);
-    }
-
-    function getErrorString(index) {
-
-        var str1 = "<cc:text name='StaticText' bundleID='samBundle' defaultValue='FSReorderPolicies.errMsg1'/>";
-        var str2 = "<cc:text name='StaticText' bundleID='samBundle' defaultValue='FSReorderPolicies.errMsg2'/>";
-
-        if (index == 1) {
-            return str1;
-        } else if (index == 2) {
-            return str2;
-        } else {
-            return null;
-        }
     }
 
     function doSubmit() {
@@ -218,12 +205,6 @@
 
 </table>
 </center>
-
-
-<!-- PropertySheet -->
-<cc:propertysheet name="PropertySheet"
-	bundleID="samBundle"
-	showJumpLinks="false"/>
 
 </cc:pagetitle>
 

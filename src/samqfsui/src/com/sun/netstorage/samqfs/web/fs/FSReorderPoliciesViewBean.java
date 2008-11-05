@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSReorderPoliciesViewBean.java,v 1.23 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: FSReorderPoliciesViewBean.java,v 1.24 2008/11/05 20:26:48 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -43,23 +43,19 @@ import com.sun.netstorage.samqfs.mgmt.SamFSMultiMsgException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteria;
-import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.util.CommonSecondaryViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.CommonTableContainerView;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
-import com.sun.netstorage.samqfs.web.util.PropertySheetUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCPageTitleModel;
-import com.sun.web.ui.model.CCPropertySheetModel;
 import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCHiddenField;
 import com.sun.web.ui.view.html.CCStaticTextField;
 import java.io.IOException;
-import java.util.StringTokenizer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
@@ -76,7 +72,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
 
     // Page Title Attributes and Components.
     private CCPageTitleModel pageTitleModel = null;
-    private CCPropertySheetModel propertySheetModel = null;
 
     // Child View Names used to set Javascript Values
     public static final String
@@ -103,7 +98,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         TraceUtil.initTrace();
         TraceUtil.trace3("Entering");
         pageTitleModel = createPageTitleModel();
-        propertySheetModel = createPropertySheetModel();
         registerChildren();
         TraceUtil.trace3("Exiting");
     }
@@ -123,7 +117,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         registerChild(CHILD_RADIO, CCStaticTextField.class);
         registerChild(CHILD_STATICTEXT, CCStaticTextField.class);
         PageTitleUtil.registerChildren(this, pageTitleModel);
-        PropertySheetUtil.registerChildren(this, propertySheetModel);
 
         registerChild(NEW_ORDER, CCHiddenField.class);
         TraceUtil.trace3("Exiting");
@@ -179,11 +172,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
             TraceUtil.trace3("Exiting");
             return PageTitleUtil.createChild(this, pageTitleModel, name);
-        } else if (PropertySheetUtil.isChildSupported(
-            propertySheetModel, name)) {
-            TraceUtil.trace3("Exiting");
-            return PropertySheetUtil.createChild(
-                this, propertySheetModel, name);
         } else {
             throw new IllegalArgumentException(
                 "Invalid child name [" + name + "]");
@@ -198,6 +186,7 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         TraceUtil.trace3("Entering");
         super.beginDisplay(event);
 
+        // preserve request attributes
         String serverName = getServerName();
         String fsName = getFSName();
 
@@ -215,29 +204,6 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
         }
         TraceUtil.trace3("Exiting");
         return pageTitleModel;
-    }
-
-    /**
-     * Function to create the PropertySheet model
-     * based on the xml file.
-     */
-    private CCPropertySheetModel createPropertySheetModel() {
-        TraceUtil.trace3("Entering");
-        propertySheetModel = PropertySheetUtil
-            .createModel("/jsp/fs/FSReorderPolEmptyProperty.xml");
-        TraceUtil.trace3("Exiting");
-        return propertySheetModel;
-    }
-
-    /**
-     * Function to retrieve the real data from API,
-     * then assign these data to propertysheet model to display
-     */
-    private void loadPropertySheetModel(
-        CCPropertySheetModel propertySheetModel) {
-        TraceUtil.trace3("Entering");
-        propertySheetModel.clear();
-        TraceUtil.trace3("Exiting");
     }
 
     private String getFSName() {
@@ -292,34 +258,13 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
             (String) getDisplayFieldValue(NEW_ORDER);
         TraceUtil.trace2("Reorder string = " + newPolicyOrder);
 
-        // Convert value into an array
-        StringTokenizer tokens1 = new StringTokenizer(newPolicyOrder, ",");
-        int count1 = tokens1.countTokens();
+        // e.g.Reorder string = DeleteMe:0,Data:0
+        String [] reorderables = newPolicyOrder.split(",");
+
         // get non-reorderable criteria
         String nonReorderString = getUnreorderableCriteriaString();
-
         TraceUtil.trace2("noReorderString = " + nonReorderString);
 
-        StringTokenizer tokens2 = new StringTokenizer(nonReorderString, ",");
-        int count2 = tokens2.countTokens();
-        String[] policyNames = new String[count1 + count2];
-        int[] criteriaNumbers = new int[count1 + count2];
-        int ii;
-        for (ii = 0; ii < count1; ii++) {
-            String token = tokens1.nextToken();
-            int index = token.indexOf(':');
-            policyNames[ii] = token.substring(0, index);
-            criteriaNumbers[ii] = Integer.parseInt(token.substring(index + 1));
-        }
-        for (int jj = 0; jj < count2; jj++) {
-            String token = tokens2.nextToken();
-            int index = token.indexOf(':');
-            policyNames[ii + jj] = token.substring(0, index);
-            criteriaNumbers[ii + jj] =
-                Integer.parseInt(token.substring(index + 1));
-        }
-
-        int count = count1 + count2;
         try {
             SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
             FileSystem fs =
@@ -328,24 +273,31 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
                 throw new SamFSException(null, -1000);
             }
 
-            ArchivePolCriteria[] policyCriteria = new ArchivePolCriteria[count];
-            for (int i = 0; i < count; i++) {
-                TraceUtil.trace2(
-                    "handle submit policy name : " + policyNames[i]);
+            ArchivePolCriteria [] policyCriteria =
+                                fs.getArchivePolCriteriaForFS();
+            ArchivePolCriteria [] newPolicyCritera =
+                new ArchivePolCriteria[policyCriteria.length];
 
-                ArchivePolicy policy =
-                    sysModel.getSamQFSSystemArchiveManager().getArchivePolicy(
-                        policyNames[i]);
-                if (policy == null) {
-                    throw new SamFSException(null, -1001);
+            // Simply put the criteria in the right order
+            for (int i = 0; i < reorderables.length; i++) {
+                String [] eachCriteria = reorderables[i].split(":");
+                String policyName = eachCriteria[0];
+                int critNumber = Integer.parseInt(eachCriteria[1]);
+
+                for (int j = 0; j < policyCriteria.length; j++) {
+                    if (policyName.equals(
+                        policyCriteria[j].getArchivePolicy().getPolicyName())
+                        &&
+                        critNumber == policyCriteria[j].getIndex()) {
+                        newPolicyCritera[i] = policyCriteria[j];
+                        break;
+                    }
                 }
+            }
 
-                policyCriteria[i] = policy.getArchivePolCriteria(
-                        criteriaNumbers[i]);
-
-                if (policyCriteria[i] == null) {
-                    throw new SamFSException(null, -1001);
-                }
+            // Copy the rest of criteria back in, default policy, etc.
+            for (int i = reorderables.length; i < policyCriteria.length; i++) {
+                newPolicyCritera[i] = policyCriteria[i];
             }
 
             LogUtil.info(
@@ -353,7 +305,7 @@ public class FSReorderPoliciesViewBean extends CommonSecondaryViewBeanBase {
                 "handleReorderPoliciesHrefRequest",
                 "Start reordering policy criteria");
 
-            fs.reorderPolCriteria(policyCriteria);
+            fs.reorderPolCriteria(newPolicyCritera);
 
             LogUtil.info(
                 this.getClass(),
