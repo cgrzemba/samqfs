@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.235 $"
+#pragma ident "$Revision: 1.236 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1333,7 +1333,7 @@ sam_build_allocation_links(
 	 */
 	if (mp->mi.m_dk_max[disk_type] == 0) {	/* First entry */
 		mp->mi.m_dk_start[disk_type] = (short)i;
-		mp->mi.m_unit[disk_type] = (short)i;
+		mp->mi.m_fs[i].dk_unit = (short)i;
 		mp->mi.m_dk_max[disk_type]++;
 		dp->alloc_link = 1;	/* In allocation list */
 		dp->skip_ord = 0;	/* Allocate on this ord */
@@ -2747,7 +2747,6 @@ sam_delete_ino(vnode_t *vp)
 		got_mutex = 1;
 	}
 	if (ip->flags.b.hash) {
-		/* LINTED [statement has no consequent: if] */
 		SAM_DESTROY_OBJ_LAYOUT(ip);
 		SAM_UNHASH_INO(ip);		/* Remove from hash queue */
 	}
@@ -2802,7 +2801,6 @@ sam_destroy_vnode(vnode_t *vp, int fflag)
 	if ((error = sam_delete_ino(vp)) != 0) {
 		return (error);
 	}
-	/* LINTED [statement has no consequent: if] */
 	SAM_DESTROY_OBJ_LAYOUT(ip);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	sam_destroy_ino(ip, FALSE);

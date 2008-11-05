@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 
 #include "sam/osversion.h"
 
@@ -1945,7 +1945,8 @@ sam_old_request_file(sam_node_t *ip, vnode_t *vp,
 		ip->di.rm.info.dk.seg_size = 0;
 	}
 	if (ip->di.psize.rmfile == 0) {
-		int dt;
+		int dt, first_unit;
+
 		if (ip->mp->mt.mm_count) {
 			dt = MM;
 			ip->di.status.b.meta = 1;
@@ -1953,7 +1954,8 @@ sam_old_request_file(sam_node_t *ip, vnode_t *vp,
 			dt = DD;
 		}
 		rm_size = SM_BLK(ip->mp, dt);
-		ip->di.unit = ip->mp->mi.m_unit[dt];
+		first_unit = ip->mp->mi.m_dk_start[dt];
+		ip->di.unit = ip->mp->mi.m_fs[first_unit].dk_unit;
 		if (SAM_RESOURCE_SIZE(rb.n_vsns) > rm_size) {
 			rm_size = LG_BLK(ip->mp, dt);
 			ip->di.status.b.on_large = 1;

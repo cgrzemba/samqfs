@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.166 $"
+#pragma ident "$Revision: 1.167 $"
 
 #include "sam/osversion.h"
 
@@ -992,9 +992,8 @@ sam_set_unit(
 {
 	int i, ord, oldord;
 	dtype_t pool;
-	int def_pool;
 	mode_t	mode = di->mode;
-	boolean_t striped = FALSE;
+	int unit, first_unit;
 
 	/*
 	 * Set the slice based on round robin and then set the next ordinal.
@@ -1006,14 +1005,12 @@ sam_set_unit(
 	i = di->status.b.meta;	/* Device type: data (DD) or meta (MM) */
 	di->stride = 0;		/* Reset stride to 0 */
 	pool = 0;
-	def_pool = 0;
 	if (i == DD) {
 		if (SAM_IS_OBJECT_FS(mp)) {
 			if (di->status.b.stripe_group) {
 				pool = DT_OBJECT_DISK | di->stripe_group;
 			} else {
 				pool = DT_OBJECT_DISK | mp->mt.fi_obj_pool;
-				def_pool = 1;
 			}
 		} else if (di->status.b.stripe_group) {
 			pool = DT_STRIPE_GROUP | di->stripe_group;
@@ -1023,10 +1020,12 @@ sam_set_unit(
 		for (ord = 0; ord < mp->mt.fs_count; ord++) {
 			if ((pool == mp->mi.m_fs[ord].part.pt_type) &&
 			    mp->mi.m_fs[ord].part.pt_state == DEV_ON) {
-				striped = TRUE;
-				if (def_pool == 0) {
-					di->unit = (uchar_t)ord;
+				first_unit = ord;
+				if (mp->mi.m_fs[ord].dk_unit == 0) {
+					mp->mi.m_fs[ord].dk_unit =
+					    (ushort_t)ord;
 				}
+				unit = mp->mi.m_fs[ord].dk_unit;
 				break;
 			}
 		}
@@ -1034,28 +1033,30 @@ sam_set_unit(
 			di->status.b.stripe_group = 0;
 			di->stripe_group = 0;
 		}
+	} else {
+		first_unit = mp->mi.m_dk_start[i];
+		unit = mp->mi.m_fs[first_unit].dk_unit;
 	}
-	if (!striped || def_pool)  {
-		ord = oldord = mp->mi.m_unit[i];	/* Round robin files */
-		while (mp->mi.m_sbp->eq[ord].fs.space == 0 ||
-		    mp->mi.m_fs[ord].part.pt_state != DEV_ON ||
-		    (def_pool && mp->mi.m_fs[ord].part.pt_type != pool)) {
-			if (mp->mi.m_fs[ord].next_ord) {
-				ord = mp->mi.m_fs[ord].next_ord;
-			} else {
-				ord = mp->mi.m_dk_start[i];
-			}
-			if (ord == oldord) {
-				break;		/* give up, out of space */
-			}
-		}
-		di->unit = (uchar_t)ord;
+	oldord = ord = unit;
+	while (mp->mi.m_sbp->eq[ord].fs.space == 0 ||
+	    mp->mi.m_fs[ord].part.pt_state != DEV_ON ||
+	    (pool && mp->mi.m_fs[ord].part.pt_type != pool)) {
 		if (mp->mi.m_fs[ord].next_ord) {
-			mp->mi.m_unit[i] = mp->mi.m_fs[ord].next_ord;
+			ord = mp->mi.m_fs[ord].next_ord;
 		} else {
-			mp->mi.m_unit[i] = mp->mi.m_dk_start[i];
+			ord = mp->mi.m_dk_start[i];
+		}
+		if (ord == oldord) {
+			break;		/* give up, out of space */
 		}
 	}
+	di->unit = (uchar_t)ord;
+	if (mp->mi.m_fs[ord].next_ord) {
+		mp->mi.m_fs[first_unit].dk_unit = mp->mi.m_fs[ord].next_ord;
+	} else {
+		mp->mi.m_fs[first_unit].dk_unit = (ushort_t)first_unit;
+	}
+
 	if (mp->mi.m_fs[ord].part.pt_type != DT_DATA) {
 		di->status.b.on_large = 1;
 	}

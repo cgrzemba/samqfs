@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.168 $"
+#pragma ident "$Revision: 1.169 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -3607,8 +3607,6 @@ skipclient:
 	    mount->mi.m_dk_max[MM]);
 	printf("\t%08x %08x dk_start\n", mount->mi.m_dk_start[DD],
 	    mount->mi.m_dk_start[MM]);
-	printf("\t%08x %08x unit\n", mount->mi.m_unit[DD],
-	    mount->mi.m_unit[MM]);
 
 	printf("\t  DD SM    DD LG  DATA DAU SETTINGS\n");
 	printf("\t%012llx %012llx mask\n",
@@ -3695,6 +3693,7 @@ skipclient:
 		printf("\t    %08x num_group\n", dp->num_group);
 		printf("\t    %08x modified\n", dp->modified);
 		printf("\t    %08x next_dau\n", dp->next_dau);
+		printf("\t    %08x dk_unit\n", dp->dk_unit);
 		printf("\t    %08x system\n", dp->system);
 		printf("\t    %012p SM block\n", dp->block[0]);
 		printf("\t    %012p LG block\n", dp->block[1]);

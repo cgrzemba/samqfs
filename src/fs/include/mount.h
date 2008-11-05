@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.157 $"
+#pragma ident "$Revision: 1.158 $"
 #endif
 
 #ifdef sun
@@ -93,6 +93,8 @@ struct samdent {
 	int32_t system;			/* First block for user data */
 	uint32_t dev_bsize;		/* Device block size for r/m/w */
 	uchar_t	command;		/* Partition allocation command */
+	uchar_t	fill1;
+	ushort_t dk_unit;		/* Next ord in this pool allocation */
 	dev_t   dev;			/* Device number for partition */
 #ifdef sun
 	vnode_t *svp;			/* Vnode for special device */
@@ -315,7 +317,6 @@ typedef struct sam_mt_instance {
 	clock_t		m_fsfullmsg;	/* Time file system full msg issued */
 	short		m_dk_start[SAM_MAX_DD]; /* Start for devs for DD/MM */
 	short		m_dk_max[SAM_MAX_DD]; /* Count of devices for DD/MM */
-	short		m_unit[SAM_MAX_DD]; /* Current unit for Round robin */
 	sam_dau_t	m_dau[SAM_MAX_DD]; /* Dau setting, data and meta devs */
 	sam_thr_t	m_inode;	/* Ino allocator&reclaim thread info */
 #ifdef sun
