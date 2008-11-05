@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident        $Id: fsmgr_report,v 1.7 2008/08/06 17:38:07 ronaldso Exp $
+#  ident        $Id: fsmgr_report,v 1.8 2008/11/05 18:57:30 ronaldso Exp $
 #
 #  This program generates a system report explicitly for SAM-QFS Manager.
 #  The report is designed to gather all the necessary information
@@ -46,7 +46,8 @@ SECTION_DESC=""
 MY_LOG="/var/tmp/fsmgr.overall.log"
 DATE="`date +%m.%d.%Y.%H:%M`"
 LOG_DIR="/var/log/webconsole/console"
-LH_VERSION=2
+LH_VERSION=3
+CORE_FOUND=0
 
 
 #
@@ -74,6 +75,8 @@ check_lockhart()
     LH_VERSION=`/usr/bin/echo ${LH_VERSION_STRING} | cut -d" " -f2 | cut -d"." -f1`
 
     if [ ${LH_VERSION} -eq 2 ]; then
+        echo "Lockhart version is 2.  This is WRONG.  SAM-QFS 5.0 requires LH 3.1!"\
+            | tee -a ${MY_LOG}
         LOG_DIR="/var/log/webconsole"
     else
         LOG_DIR="/var/log/webconsole/console"
@@ -103,7 +106,7 @@ prepare_log_file()
     fi
 
     echo "${APP_NAME} Software Support\n" > ${MY_LOG}
- 
+
     echo "Created on: \c" >> ${MY_LOG}
     /usr/bin/date >> ${MY_LOG}
     echo "Created by: \c" >> ${MY_LOG}
@@ -116,6 +119,10 @@ prepare_log_file()
 show_log_file_location() {
 
     echo "\n${APP_NAME} report named ${MY_LOG}.${DATE} is generated.\n\n"
+
+    if [ ${CORE_FOUND} -eq 1 ]; then
+        echo "CORE file found in root '/' directory.  Send this core file along with this fsmgr report to the support team!"
+    fi
 }
 
 
@@ -477,6 +484,13 @@ generate_section_3() {
     echo "\n" >> ${MY_LOG}
     echo "\tls -al /var/log/webconsole/host.conf :\n" >> ${MY_LOG}
     ls -al /var/log/webconsole/host.conf >> ${MY_LOG} 2>&1
+
+    echo "\t/usr/bin/cat /opt/SUNWfsmgr/samqfsui/tmp/host.conf :\n" >> ${MY_LOG}
+    /usr/bin/cat /opt/SUNWfsmgr/samqfsui/tmp/host.conf >> ${MY_LOG} 2>&1
+    echo "\n" >> ${MY_LOG}
+    echo "\tls -al /opt/SUNWfsmgr/samqfsui/tmp/host.conf :\n" >> ${MY_LOG}
+    ls -al /opt/SUNWfsmgr/samqfsui/tmp/host.conf >> ${MY_LOG} 2>&1
+
     print_footer
 
     SECTION="3.5"
@@ -491,13 +505,15 @@ generate_section_3() {
     SECTION_DESC="SMREG OUTPUT"
     print_header
 
-    echo "\t/usr/sbin/smreg list :\n" >> ${MY_LOG}
-    /usr/sbin/smreg list >> ${MY_LOG}
+    echo "\t/usr/sbin/wcadmin list :\n" >> ${MY_LOG}
+    /usr/sbin/wcadmin list >> ${MY_LOG}
     print_footer
 
     SECTION="3.7"
     SECTION_DESC="GUI - PREFERENCE SETTING"
     print_header
+
+    echo "pref.conf file is deprecated!" >> ${MY_LOG}
 
     echo "\t/usr/bin/cat /var/log/webconsole/pref.conf :\n" >> ${MY_LOG}
     /usr/bin/cat /var/log/webconsole/pref.conf >> ${MY_LOG} 2>&1
@@ -533,7 +549,7 @@ generate_section_4() {
 
     print_footer
 
-    if [ ${LH_VERSION} -ne 2 ]; then
+    if [ ${LH_VERSION} -gt 2 ]; then
         SECTION="4.1.1"
         SECTION_DESC="CONSOLE_CONFIG_LOG  (LAST 2000 LINES)"
         print_header
@@ -623,6 +639,69 @@ generate_section_4() {
         echo "\t/usr/bin/tail -5000 ${TRACE_FILE} :\n" >> ${MY_LOG}
         /usr/bin/tail -5000 ${TRACE_FILE} >> ${MY_LOG} 2>&1
     fi
+
+    print_footer
+
+    SECTION="4.7"
+    SECTION_DESC="FSMDB.LOG"
+    print_header
+
+    if [ -f /var/opt/SUNWsamfs/fsmdb.log ]; then
+        echo "\t/usr/bin/cat /var/opt/SUNWsamfs/fsmdb.log :\n" >> ${MY_LOG}
+        /usr/bin/cat /var/opt/SUNWsamfs/fsmdb.log >> ${MY_LOG} 2>&1
+    else
+	echo "No fsmdb log found!" >> ${MY_LOG}
+    fi
+
+    print_footer
+
+    echo "Done!"
+
+    SECTION="4.8"
+    SECTION_DESC="SCHEDULING CONFIGURATION"
+    print_header
+
+    if [ -f /etc/opt/SUNWsamfs/mgmt_sched.conf ]; then
+        echo "\t/usr/bin/cat /etc/opt/SUNWsamfs/mgmt_sched.conf :\n" >> ${MY_LOG}
+        /usr/bin/cat /etc/opt/SUNWsamfs/mgmt_sched.conf >> ${MY_LOG} 2>&1
+    else
+	echo "No mgmt_sched.conf found!" >> ${MY_LOG}
+    fi
+
+    print_footer
+
+    SECTION="4.9"
+    SECTION_DESC="CORE FILES"
+    print_header
+
+    if [ -f /core ]; then
+        echo "\tfile /core :\n" >> ${MY_LOG}
+        /usr/bin/file /core >> ${MY_LOG} 2>&1
+        ls -al /core >> ${MY_LOG} 2>&1
+
+        whosecore=`file /core | grep fsmgmtd`
+        if [ ! "a${whosecore}" = "a" ]; then
+            echo "fsmgmtd core file found!" >> ${MY_LOG}
+            CORE_FOUND=1
+        fi
+
+        whosecore=`file /core | grep fsmdb`
+        if [ ! "a${whosecore}" = "a" ]; then
+            echo "fsmdb core file found!" >> ${MY_LOG}
+            CORE_FOUND=1
+        fi
+    else
+	echo "No core file found in root directory!" >> ${MY_LOG}
+    fi
+
+    print_footer
+
+    SECTION="4.10"
+    SECTION_DESC="Running Daemons"
+    print_header
+
+    echo "\tps -ef |grep sam :\n" >> ${MY_LOG}
+    ps -ef |grep sam >> ${MY_LOG} 2>&1
 
     print_footer
 
