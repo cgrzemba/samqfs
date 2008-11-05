@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.26 2008/10/22 20:57:04 kilemba Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.27 2008/11/05 20:26:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -166,7 +166,7 @@ public interface SamQFSSystemSharedFSManager {
      * to complete this task.  Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int mountClients(String mdServer, String fsName, String [] clients)
+    public long mountClients(String mdServer, String fsName, String [] clients)
         throws SamFSException;
 
     /*
@@ -174,7 +174,8 @@ public interface SamQFSSystemSharedFSManager {
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int unmountClients(String mdServer, String fsName, String [] clients)
+    public long unmountClients(
+        String mdServer, String fsName, String [] clients)
         throws SamFSException;
 
     /*
@@ -182,7 +183,7 @@ public interface SamQFSSystemSharedFSManager {
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int setSharedFSMountOptions(String mdServer, String fsName,
+    public long setSharedFSMountOptions(String mdServer, String fsName,
 	String [] clients, MountOptions mo) throws SamFSException;
 
 
@@ -216,7 +217,7 @@ public interface SamQFSSystemSharedFSManager {
      */
     public SharedDiskCache[] discoverAllocatableUnitsForShared(
         String[] servers,
-	String[] clients,
+        String[] clients,
         boolean ignoreHA)
         throws SamFSMultiHostException;
 
@@ -389,7 +390,6 @@ public interface SamQFSSystemSharedFSManager {
 
 
     /**
-     * This is probably 4.6 only
      * @param hostNames
      * @param fsName
      * @param mdsName

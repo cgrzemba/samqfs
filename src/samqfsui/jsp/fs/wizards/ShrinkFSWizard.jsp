@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.6 2008/10/15 22:22:12 ronaldso Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.7 2008/11/05 20:26:07 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -171,12 +171,14 @@
                                                     label="#{samBundle['fs.shrink.method.radio.distribute']}"
                                                     rendered="#{ShrinkFSBean.renderedMethodDistribute}"
                                                     selected="#{ShrinkFSBean.selectedMethodDistribute}"/>
+                                    <!--
                                     <ui:markup tag="br" singleton="true"/>
-                                        <ui:radioButton id="radioMove"
-                                                        name="methodRadio"
-                                                        label="#{samBundle['fs.shrink.method.radio.move']}"
-                                                        rendered="#{ShrinkFSBean.renderedMethodMove}"
-                                                        selected="#{ShrinkFSBean.selectedMethodMove}"/>
+                                    <ui:radioButton id="radioMove"
+                                                    name="methodRadio"
+                                                    label="#{samBundle['fs.shrink.method.radio.move']}"
+                                                    rendered="#{ShrinkFSBean.renderedMethodMove}"
+                                                    selected="#{ShrinkFSBean.selectedMethodMove}"/>
+                                    -->
                                 </ui:markup>
                             </ui:wizardStep>
                         </ui:wizardSubstepBranch>

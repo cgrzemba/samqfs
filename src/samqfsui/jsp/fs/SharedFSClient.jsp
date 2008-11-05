@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.15 2008/10/22 19:52:09 ronaldso Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.16 2008/11/05 20:26:07 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -59,7 +59,20 @@
               rendered="#{SharedFSBean.alertRendered}"
               type="#{SharedFSBean.alertType}"
               summary="#{SharedFSBean.alertSummary}"
-              detail="#{SharedFSBean.alertDetail}"/>
+              detail="#{SharedFSBean.alertDetail}">
+        <f:facet name="alertLink">
+            <ui:imageHyperlink id="imageLink"
+                               rendered="#{SharedFSBean.alertLinkRendered}"
+                               icon="HREF_LINK"
+                               target="#{SharedFSBean.alertLinkTarget}"
+                               url="#{SharedFSBean.alertLinkURL}"
+                               text="#{SharedFSBean.alertLinkText}"
+                               toolTip=""
+                               onMouseOver=""
+                               onMouseOut=""
+                               onClick="javascript: var win = window.open('','#{SharedFSBean.alertLinkTarget}','height=500,width=750,top='+((screen.height-(screen.height/1.618))-(500/2))+',left='+((screen.width-650)/2)+',resizable'); win.focus();"/>
+        </f:facet>
+    </ui:alert>
     <ui:contentPageTitle
         id="pageTitle"
         title="#{SharedFSBean.clientPageTitle}">

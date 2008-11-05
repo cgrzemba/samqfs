@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.63 2008/10/22 20:57:05 kilemba Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.64 2008/11/05 20:26:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -273,7 +273,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * to complete this task.  Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int mountClients(String mdServer, String fsName, String [] clients)
+    public long mountClients(String mdServer, String fsName, String [] clients)
         throws SamFSException {
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
@@ -310,7 +310,8 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int unmountClients(String mdServer, String fsName, String [] clients)
+    public long unmountClients(
+        String mdServer, String fsName, String [] clients)
         throws SamFSException {
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
@@ -359,7 +360,7 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public int setSharedFSMountOptions(String mdServer, String fsName,
+    public long setSharedFSMountOptions(String mdServer, String fsName,
 	String [] clients, MountOptions mo) throws SamFSException {
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)

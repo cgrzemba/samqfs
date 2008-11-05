@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.21 2008/10/22 19:52:10 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.22 2008/11/05 20:26:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -107,6 +107,10 @@ public class SharedFSBean implements Serializable {
     protected String alertType = null;
     protected String alertDetail = null;
     protected String alertSummary = null;
+    protected String alertLinkText = null;
+    protected String alertLinkURL = null;
+    protected String alertLinkTarget = null;
+    protected boolean alertLinkRendered = false;
 
     /** Hidden fields for javascript messages */
     protected String noMultipleOpMsg = null;
@@ -350,7 +354,47 @@ public class SharedFSBean implements Serializable {
         this.alertRendered = alertRendered;
     }
 
+    public String getAlertLinkText() {
+        return alertLinkText;
+    }
+
+    public void setAlertLinkText(String alertLinkText) {
+        this.alertLinkText = alertLinkText;
+    }
+
+    public String getAlertLinkURL() {
+        return alertLinkURL;
+    }
+
+    public void setAlertLinkURL(String alertLinkURL) {
+        this.alertLinkURL = alertLinkURL;
+    }
+
+    public boolean isAlertLinkRendered() {
+        return alertLinkRendered;
+    }
+
+    public void setAlertLinkRendered(boolean alertLinkRendered) {
+        this.alertLinkRendered = alertLinkRendered;
+    }
+
+    public String getAlertLinkTarget() {
+        return alertLinkTarget;
+    }
+
+    public void setAlertLinkTarget(String alertLinkTarget) {
+        this.alertLinkTarget = alertLinkTarget;
+    }
+
     public void setAlertInfo(String type, String summary, String detail) {
+        setAlertInfo(type, summary, detail, null, null, -1);
+    }
+
+    public void setAlertInfo(
+        String type, String summary, String detail,
+        String alertLinkURL, String alertLinkText, long jobId) {
+        alertLinkRendered = jobId > 0 ? true : false;
+
         if (!Constants.Alert.INFO.equals(type)) {
             needToShowError = true;
         }
@@ -358,6 +402,9 @@ public class SharedFSBean implements Serializable {
         this.alertType = type;
         this.alertSummary = summary;
         this.alertDetail = JSFUtil.getMessage(detail);
+        this.alertLinkURL = alertLinkURL;
+        this.alertLinkText = JSFUtil.getMessage(alertLinkText);
+        this.alertLinkTarget = "SAMQFSManager" + jobId;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -778,6 +825,8 @@ public class SharedFSBean implements Serializable {
     public void handleRemoveClient(ActionEvent event) {
         String [] selectedClients = getSelectedKeys();
 
+        long jobId = -1;
+
         try {
             SamQFSSystemSharedFSManager sharedFSManager =
                                                 getSharedFSManager();
@@ -788,7 +837,7 @@ public class SharedFSBean implements Serializable {
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-            sharedFSManager.removeClients(JSFUtil.getServerName(),
+            jobId = sharedFSManager.removeClients(JSFUtil.getServerName(),
                                           getFSName(),
                                           selectedClients);
             LogUtil.info(
@@ -798,13 +847,21 @@ public class SharedFSBean implements Serializable {
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-
             setAlertInfo(
                 Constants.Alert.INFO,
                 JSFUtil.getMessage(
                     "SharedFS.message.removeclients.ok",
                     ConversionUtil.arrayToStr(selectedClients, ',')),
-                null);
+                null,
+                jobId <= 0 ?
+                    null :
+                    "/faces/jsp/fs/MultiHostStatusDisplay.jsp?" +
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME + "=" +
+                    JSFUtil.getServerName() + "&" +
+                    Constants.PageSessionAttributes.JOB_ID + "=" +
+                    jobId,
+                jobId <= 0 ? null : "fs.recoverypoints.jobIdLink",
+                jobId);
 
             // Reset Filter
             resetFilter();
@@ -887,6 +944,7 @@ public class SharedFSBean implements Serializable {
     public void handleTableMenuSelection(ActionEvent event) {
         String [] selectedClients = getSelectedKeys();
         String selected = getClientTableSelectedOption();
+        long jobId = -1;
 
         TraceUtil.trace3("handleTableMenuSelection: selected: " + selected);
 
@@ -919,9 +977,9 @@ public class SharedFSBean implements Serializable {
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                int jobId = sharedFSManager.mountClients(
+                jobId = sharedFSManager.mountClients(
                     JSFUtil.getServerName(), getFSName(), selectedClients);
-System.out.println("Mounting Clients Job ID: " + jobId);
+                TraceUtil.trace3("Mounting Clients Job ID: " + jobId);
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -945,9 +1003,9 @@ System.out.println("Mounting Clients Job ID: " + jobId);
                     " Clients: " +
                     ConversionUtil.arrayToStr(selectedClients, ','));
 
-                int jobId = sharedFSManager.unmountClients(
+                jobId = sharedFSManager.unmountClients(
                     JSFUtil.getServerName(), getFSName(), selectedClients);
-System.out.println("Unounting Clients Job ID: " + jobId);
+                TraceUtil.trace3("Unounting Clients Job ID: " + jobId);
                 LogUtil.info(
                     this.getClass(),
                     "handleTableMenuSelection",
@@ -1021,7 +1079,16 @@ System.out.println("Unounting Clients Job ID: " + jobId);
                 JSFUtil.getMessage(
                     message,
                     ConversionUtil.arrayToStr(selectedClients, ',')),
-                null);
+                null,
+                jobId <= 0 ?
+                    null :
+                    "/faces/jsp/fs/MultiHostStatusDisplay.jsp?" +
+                    Constants.PageSessionAttributes.SAMFS_SERVER_NAME + "=" +
+                    JSFUtil.getServerName() + "&" +
+                    Constants.PageSessionAttributes.JOB_ID + "=" +
+                    jobId,
+                jobId <= 0 ? null : "fs.recoverypoints.jobIdLink",
+                jobId);
 
             // Reset Filter
             resetFilter();
@@ -1063,7 +1130,6 @@ System.out.println("Unounting Clients Job ID: " + jobId);
 
         TraceUtil.trace3(
             "RowKeys selected: " + (rows == null ? 0 : rows.length));
-System.out.println("RowKeys selected: " + (rows == null ? 0 : rows.length));
         String [] selected = null;
         if (rows != null && rows.length >= 1) {
             selected = new String[rows.length];
@@ -1089,7 +1155,8 @@ System.out.println("RowKeys selected: " + (rows == null ? 0 : rows.length));
         HttpServletRequest request = JSFUtil.getRequest();
         String criteria = request.getParameter(PARAM_FILTER);
 
-System.out.println("getFilters: request criteria:" + criteria + "end");
+        TraceUtil.trace3("getFilters: request criteria:" + criteria + "end");
+
         // criteria is null, means request contains no param
         if (criteria == null) {
             criteria = (String) JSFUtil.getAttribute(PARAM_FILTER);
