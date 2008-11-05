@@ -1,4 +1,4 @@
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 
 #    SAM-QFS_notice_begin
 #
@@ -70,7 +70,7 @@ PROG_LIBS += -lsamconf
 endif
 PROG_LIBS += $(DYNAMIC_OPT) -lpthread -ldl -lrt $(LIBSO)
 ifeq ($(OS), SunOS)
-PROG_LIBS += -lsysevent -lnvpair
+PROG_LIBS += -lsysevent -lnvpair -lcontract
 endif
 
 fsd_LIBS = $(PROG_LIBS)

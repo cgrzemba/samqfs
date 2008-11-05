@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.18 $"
+#pragma ident "$Revision: 1.19 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -111,6 +111,9 @@ char *argv[])
 		fprintf(stderr,
 		    "program_name may only be executed from sam-fsd\n");
 		exit(EXIT_USAGE);
+	}
+	if (FindProc(SAM_STAGEALL, "") > 0) {
+		error(EXIT_FAILURE, 0, "another stagealld is already running");
 	}
 
 	/*

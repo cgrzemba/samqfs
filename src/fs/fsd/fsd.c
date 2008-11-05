@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.165 $"
+#pragma ident "$Revision: 1.166 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -60,6 +60,9 @@ static char *_SrcFile = __FILE__;
 #ifdef sun
 #include <sys/systeminfo.h>
 #include <sys/mount.h>
+#include <libcontract.h>
+#include <sys/contract/process.h>
+#include <sys/ctfs.h>
 #endif /* sun */
 
 /* Solaris headers. */
@@ -193,6 +196,8 @@ static void startStopHsm(int cmd, char *fs);
 static void startSamamld(int fsMounted);
 static void startStopSamdb(char *, boolean_t);
 static void startSamrftd(void);
+static int initChildContract(void);
+static void cancelChildContract(int ct_fd);
 
 /* LQFS: Logging control functions */
 static void disable_journaling(char *mp, char *special);
@@ -200,6 +205,11 @@ static void enable_journaling(char *mp, char *special);
 static int checkisjournal(char *mp);
 static void initJournaling(char *fsname);
 #endif /* sun */
+
+#ifdef linux
+#define	initChildContract() -1
+#define	cancelChildContract(a) do { } while (0)
+#endif /* linux */
 
 #define	NO_FATAL_ERR_FLAG	0
 #define	FATAL_ERR_FLAG		1
@@ -1362,6 +1372,7 @@ StartProcess(
 	struct ChildProcEntry *cpNew;
 	char	*arg[5];
 	int		i;
+	boolean_t	checkadopt = B_TRUE;
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i] != NULL) {
@@ -1376,6 +1387,7 @@ StartProcess(
 		return;
 	}
 
+retry:
 	cpNew = NULL;
 	for (i = 0; i < childProcTable->count; i++) {
 		struct ChildProcEntry *cp;
@@ -1388,14 +1400,28 @@ StartProcess(
 			/*
 			 * Already have one of these.
 			 */
-			cp->CpFlags = flags;
-			if (cp->CpPid == 0 || cp->CpPid == (pid_t)-1) {
+			if (cp->CpFlags & CP_stopping) {
 				/*
-				 * Not running; restart
+				 * Stop adopted process is pending,
+				 * check its status once.
 				 */
-				cp->CpPid = 0;
-				cp->CpRestartTime = time(NULL);
-				checkChildren();
+				if (checkadopt == B_TRUE) {
+					checkadopt = B_FALSE;
+					if (ready && !FsCfgOnly) {
+						checkChildren();
+						goto retry;
+					}
+				}
+			} else {
+				cp->CpFlags = flags;
+				if (cp->CpPid == 0 || cp->CpPid == (pid_t)-1) {
+					/*
+					 * Not running; restart
+					 */
+					cp->CpPid = 0;
+					cp->CpRestartTime = time(NULL);
+					checkChildren();
+				}
 			}
 			return;
 		}
@@ -1487,6 +1513,9 @@ StopProcess(char *argv[], boolean_t erase, int sig)
 		    strcmp(cp->CpFsname, arg) == 0) {
 			if (cp->CpPid != 0 && cp->CpPid != (pid_t)-1) {
 				kill(cp->CpPid, sig);
+				if (cp->CpFlags & CP_adopted) {
+					cp->CpFlags |= CP_stopping;
+				}
 			}
 			cp->CpFlags &= ~CP_respawn;
 			Trace(TR_MISC, "Stopped %s[%d](%s) sig: %d",
@@ -1796,6 +1825,49 @@ checkChildren(void)
 		if (cp->CpFlags & CP_norestart) {
 			continue;
 		}
+		if (*cp->CpName != '\0' && cp->CpFlags & CP_adopted) {
+			/*
+			 * Adopted process.
+			 * Check to see that it is still running.
+			 */
+			if (kill(cp->CpPid, 0) != 0) {
+				if (errno != ESRCH && errno != ECONNREFUSED) {
+					Trace(TR_MISC, "kill(0, %d) failed "
+					    "- %s", (int)cp->CpPid, cp->CpName);
+				}
+			} else {
+				uname_t pname;
+
+				/*
+				 * Check the process name.
+				 * Just after the fork, the name may be
+				 * "sam-fsd".
+				 */
+				(void) GetProcName(cp->CpPid, pname,
+				    sizeof (pname));
+				if (strcmp(pname, cp->CpName) == 0 ||
+				    strcmp(pname, SAM_FSD) == 0) {
+					continue;
+				}
+			}
+
+			/*
+			 * Not running.
+			 * Start a new one.
+			 */
+			if (cp->CpFlags & CP_adopted) {
+				Trace(TR_MISC, "Adopted %s[%ld] exited",
+				    cp->CpName, cp->CpPid);
+			}
+			if (cp->CpFlags & CP_respawn) {
+				cp->CpPid = 0;
+				cp->CpFlags &= ~(CP_adopted|CP_stopping);
+				Trace(TR_MISC, "Restarting %s", cp->CpName);
+				cp->CpRestartTime = time(NULL);
+			} else {
+				memset(cp, 0, sizeof (*cp));
+			}
+		}
 		if (*cp->CpName != '\0' && cp->CpPid == 0) {
 			if (time(NULL) >= cp->CpRestartTime) {
 				static boolean_t exePathFirst = TRUE;
@@ -1803,6 +1875,7 @@ checkChildren(void)
 				static upath_t path;
 				char	*argv[6];
 				int		i;
+				int	ct_fd;
 
 				/*
 				 * Time to restart child.
@@ -1822,6 +1895,13 @@ checkChildren(void)
 					break;
 				}
 				exePathFirst = TRUE;
+				cp->CpPid = FindProc(cp->CpName, cp->CpFsname);
+				if (cp->CpPid != 0) {
+					Trace(TR_MISC, "adopted %s %ld",
+					    cp->CpName, cp->CpPid);
+					cp->CpFlags |= CP_adopted;
+					continue;
+				}
 				argv[0] = cp->CpName;
 				argv[1] = cp->CpFsname;
 				i = 2;
@@ -1849,6 +1929,7 @@ checkChildren(void)
 				snprintf(path, sizeof (path), "%s/%s",
 				    SAM_EXECUTE_PATH, argv[0]);
 
+				ct_fd = initChildContract();
 				if ((cp->CpPid = fork1()) < 0) {
 					LibFatal(fork1, argv[0]);
 					/*NOTREACHED*/
@@ -1864,6 +1945,7 @@ checkChildren(void)
 				}
 
 				/* Parent. */
+				cancelChildContract(ct_fd);
 				Trace(TR_MISC, "Started %s[%d](%s%s)",
 				    argv[0], (int)cp->CpPid,
 				    argv[1], (argv[2] ? " mcf" : ""));
@@ -2834,6 +2916,113 @@ startSamrftd(void)
 	} else {
 		StopProcess(argv, FALSE, SIGINT);
 	}
+}
+
+/*
+ * Initialize contract(4) template to start children in separate
+ * contract.  This allows smf to detect that fsd needs to be restarted.
+ */
+static int
+initChildContract(void)
+{
+	int ct_fd;
+
+	ct_fd = open64("/system/contract/process/template", O_RDWR);
+
+	if (ct_fd == -1) {
+		Trace(TR_ERR, "Can't open /system/contract/process/template");
+		return (-1);
+	}
+	if (ct_pr_tmpl_set_fatal(ct_fd,
+	    CT_PR_EV_HWERR|CT_PR_EV_SIGNAL) != 0) {
+		Trace(TR_ERR, "Can't set process contract fatal events");
+		goto error;
+	}
+	if (ct_tmpl_set_critical(ct_fd, CT_PR_EV_HWERR) != 0) {
+		Trace(TR_ERR, "Can't set process contract critical events");
+		goto error;
+	}
+	if (ct_tmpl_activate(ct_fd) != 0) {
+		Trace(TR_ERR, "Can't activate process contract template");
+		goto error;
+	}
+
+	return (ct_fd);
+error:
+	close(ct_fd);
+	return (-1);
+}
+
+/*
+ * Cancel new child contracts after spawning children so that we do not
+ * leak contract handles.
+ */
+static void
+cancelChildContract(int ct_fd)
+{
+	char ctl_path[PATH_MAX];
+	int pathlen;
+	ctid_t ctid;
+	ct_stathdl_t stathdl;
+	int ctl_fd;
+	int stat_fd;
+
+	if (ct_fd < 0) {
+		return;
+	}
+
+	/*
+	 * First clear the active template.
+	 */
+	if (ct_tmpl_clear(ct_fd) != 0) {
+		Trace(TR_ERR, "Can't clear active template");
+		close(ct_fd);
+		return;
+	}
+	close(ct_fd);
+
+	/*
+	 * Now abandon the contract we've created.  This involves the
+	 * following steps:
+	 * - Get the contract id (ct_status_read(), ct_status_get_id())
+	 * - Get an fd for the ctl file for this contract
+	 *   (/system/contract/process//ctl)
+	 * - Abandon the contract (ct_ctl_abandon(fd))
+	 */
+	stat_fd = open64(CTFS_ROOT "/process/latest", O_RDONLY);
+
+	if (stat_fd == -1) {
+		Trace(TR_ERR, "Can't open latest");
+		return;
+	}
+	if (ct_status_read(stat_fd, CTD_COMMON, &stathdl) != 0) {
+		Trace(TR_ERR, "Can't read contract status");
+		close(stat_fd);
+		return;
+	}
+	if ((ctid = ct_status_get_id(stathdl)) < 0) {
+		Trace(TR_ERR, "ct_status_get_id() failed");
+		ct_status_free(stathdl);
+		close(stat_fd);
+		return;
+	}
+	ct_status_free(stathdl);
+	close(stat_fd);
+
+	pathlen = snprintf(ctl_path, PATH_MAX,
+	    CTFS_ROOT "/process/%ld/ctl", ctid);
+	if (pathlen > PATH_MAX) {
+		return;
+	}
+	ctl_fd = open64(ctl_path, O_WRONLY);
+	if (ctl_fd < 0) {
+		Trace(TR_ERR, "Can't open control for child.");
+		return;
+	}
+	if (ct_ctl_abandon(ctl_fd) < 0) {
+		Trace(TR_ERR, "Can't abandon contract");
+	}
+	close(ctl_fd);
 }
 
 #endif /* sun */

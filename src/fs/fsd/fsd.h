@@ -34,7 +34,7 @@
 #ifndef FSD_H
 #define	FSD_H
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 /* SAM-FS includes. */
 #include "sam/custmsg.h"
@@ -54,6 +54,8 @@ int sam_syscall(int cmd, void *arg, int size);	/* lib/samconf/sam_syscall.c */
 #define	CP_norestart	0x02	/* proc requested no restart */
 #define	CP_qstart	0x04	/* quick start, wait 10s from last start  */
 #define	CP_nosignal	0x08	/* proc requested no signal */
+#define	CP_adopted	0x10	/* Process found executing */
+#define	CP_stopping	0x20	/* Process requested stop */
 
 #ifdef linux
 #define	GETFSIND			1
