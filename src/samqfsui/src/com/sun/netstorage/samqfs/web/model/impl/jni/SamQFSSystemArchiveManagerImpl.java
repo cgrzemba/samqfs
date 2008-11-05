@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemArchiveManagerImpl.java,v 1.14 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: SamQFSSystemArchiveManagerImpl.java,v 1.15 2008/11/05 20:24:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -214,7 +214,10 @@ public class SamQFSSystemArchiveManagerImpl
 
     public ArchivePolicy getArchivePolicy(String policyName)
         throws SamFSException {
-
+        // Retrieve policy information again from the backend, and update
+        // policyMap to make sure the latest information is returned
+        ArSet jniSet = Archiver.getArSet(theModel.getJniContext(), policyName);
+        policyMap.put(policyName, new ArchivePolicyImpl(theModel, jniSet));
         return (ArchivePolicy) policyMap.get(policyName);
     }
 

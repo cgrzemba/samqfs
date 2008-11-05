@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ISPolicyDetailsView.java,v 1.13 2008/05/16 18:38:51 am143972 Exp $
+// ident	$Id: ISPolicyDetailsView.java,v 1.14 2008/11/05 20:24:48 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -475,7 +475,7 @@ public class ISPolicyDetailsView extends RequestHandlingViewBase
             theCriteria[i].getArchivePolCriteriaProperties()
                 .setStageAttributes(stage);
             theCriteria[i].getArchivePolCriteriaProperties()
-                .setReleaseAttributes(release);
+                .setReleaseAttributes(release, -1);
         }
         TraceUtil.trace3("Exiting");
         return errors;

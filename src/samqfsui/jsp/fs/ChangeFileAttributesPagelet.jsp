@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ChangeFileAttributesPagelet.jsp,v 1.6 2008/05/16 19:39:19 am143972 Exp $ 
+// ident	$Id: ChangeFileAttributesPagelet.jsp,v 1.7 2008/11/05 20:24:48 ronaldso Exp $
 --%>
 
 <%@ page info="Index" language="java" %>
@@ -44,7 +44,7 @@
 <cc:alertinline name="Alert" bundleID="samBundle" />
 
 <cc:pagetitle
-    name="PageTitle" 
+    name="PageTitle"
     bundleID="samBundle"
     pageTitleText="<insert title>"
     showPageTitleSeparator="true"
@@ -53,7 +53,7 @@
 
 <br />
 
-<table style="margin-left:10px">
+<table style="margin-left:10px" border="0">
 <tr>
     <td colspan="2">
         <cc:checkbox
@@ -77,8 +77,8 @@
     <td rowspan="2">
         <cc:spacer
             name="Spacer"
-            width="20"
-            height="20" />
+            width="10"
+            height="10" />
     </td>
     <td>
         <cc:radiobutton
@@ -133,9 +133,14 @@
         <br />
         <cc:button
             name="Submit"
-            bundleID="samBundle" 
+            bundleID="samBundle"
             defaultValue="common.button.submit"
             type="primary" />
+        <cc:checkbox
+            name="Override"
+            styleLevel="2"
+            label="fs.filedetails.overridesettings"
+            bundleID="samBundle"/>
     </td>
 </tr>
 </table>

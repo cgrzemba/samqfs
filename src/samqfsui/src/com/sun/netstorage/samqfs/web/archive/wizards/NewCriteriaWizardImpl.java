@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewCriteriaWizardImpl.java,v 1.29 2008/05/16 18:38:52 am143972 Exp $
+// ident	$Id: NewCriteriaWizardImpl.java,v 1.30 2008/11/05 20:24:49 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
 
@@ -665,7 +665,7 @@ public class NewCriteriaWizardImpl extends SamWizardImpl {
             int releasing =  -1;
             if (!releasingStr.equals(SelectableGroupHelper.NOVAL))
                 releasing = Integer.parseInt(releasingStr);
-            properties.setReleaseAttributes(releasing);
+            properties.setReleaseAttributes(releasing, -1);
             wizardModel.setValue(
                 NewCriteriaSummary.RELEASING_TEXT,
                 getReleasingOptionString(releasing));

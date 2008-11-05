@@ -27,13 +27,12 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CriteriaDetailsViewBean.java,v 1.23 2008/10/01 22:43:31 ronaldso Exp $
+// ident	$Id: CriteriaDetailsViewBean.java,v 1.24 2008/11/05 20:24:48 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
 import com.iplanet.jato.RequestManager;
 import com.iplanet.jato.model.ModelControlException;
-import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
@@ -100,7 +99,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
     public static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
 
     // children
-    private static final String PAGE_TITLE = "PageTitle";
     private static final String MESSAGE = "message";
     public static final String GLOBAL_CRITERIA_TEXT = "globalCriteriaText";
 
@@ -108,8 +106,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
     public static final String PS_ATTRIBUTES = "psAttributes";
     public static final String FS_LIST = "fsList";
     public static final String FS_NAME = "fsname";
-    private static final String DUMP_PATH = "dumpPath";
-    private static final String APPLYFS_HREF = "ApplyCriteriaHref";
 
     // field to keep track of is fs is removeable or not
     public static final String FS_DELETABLE = "fsDeletable";
@@ -128,8 +124,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
     public static final String GROUP = "Group";
     public static final String ACCESS_AGE = "AccessAge";
     public static final String ACCESS_AGE_UNITS = "AccessAgeUnits";
-    public static final String STAGING = "Staging";
-    public static final String RELEASING = "Releasing";
 
     // table models
     private Map models = null;
@@ -156,7 +150,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
     public void registerChildren() {
         super.registerChildren();
         registerChild(BREADCRUMB, CCBreadCrumbs.class);
-        registerChild(APPLYFS_HREF, CCHref.class);
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
         registerChild(POLICY_DETAILS_HREF, CCHref.class);
         registerChild(CRITERIA_DETAILS_HREF, CCHref.class);
@@ -164,7 +157,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
         registerChild(FS_DETAILS_HREF, CCHref.class);
         registerChild(FS_ARCHIVEPOL_HREF, CCHref.class);
         registerChild(FS_NAME, CCHiddenField.class);
-        registerChild(DUMP_PATH, CCHiddenField.class);
         registerChild(FS_DELETABLE, CCHiddenField.class);
         registerChild(PS_ATTRIBUTES, CCHiddenField.class);
         registerChild(FS_LIST, CCHiddenField.class);
@@ -185,8 +177,7 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
                 new CCBreadCrumbsModel("CriteriaDetails.title");
             BreadCrumbUtil.createBreadCrumbs(this, name, bcModel);
             return new CCBreadCrumbs(this, bcModel, name);
-        } else if (name.equals(APPLYFS_HREF) ||
-                   name.equals(POLICY_SUMMARY_HREF) ||
+        } else if (name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF) ||
                    name.equals(FS_SUMMARY_HREF) ||
@@ -194,7 +185,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
                    name.equals(FS_ARCHIVEPOL_HREF)) {
             return new CCHref(this, name, null);
         } else if (name.equals(FS_NAME) ||
-                   name.equals(DUMP_PATH) ||
                    name.equals(FS_DELETABLE) ||
                    name.equals(FS_DELETE_CONFIRMATION) ||
                    name.equals(PS_ATTRIBUTES) ||
@@ -251,18 +241,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
         dropDown.setOptions(new OptionList(
             SelectableGroupHelper.Times.labels,
             SelectableGroupHelper.Times.values));
-
-        // staging drop down
-        dropDown = (CCDropDownMenu)getChild(STAGING);
-        dropDown.setOptions(new OptionList(
-            SelectableGroupHelper.Staging.labels,
-            SelectableGroupHelper.Staging.values));
-
-        // releasing drop down
-        dropDown = (CCDropDownMenu)getChild(RELEASING);
-        dropDown.setOptions(new OptionList(
-            SelectableGroupHelper.Releasing.labels,
-            SelectableGroupHelper.Releasing.values));
     }
 
     /**
@@ -346,25 +324,23 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
 
         // releasing & staging only make sense when dealing w/ custom policies
         if (thePolicy.getPolicyType() == ArSet.AR_SET_TYPE_GENERAL) {
-        // staging
-        dropDown = (CCDropDownMenu)getChild(STAGING);
-        dropDown.setValue(
-            (new Integer(property.getStageAttributes())).toString());
+            CriteriaDetailsView view =
+                (CriteriaDetailsView)getChild(DETAILS_VIEW);
+            StageAttributesView stageView =
+                (StageAttributesView) view.getChild(view.STAGE_ATTR_VIEW);
+            // staging
+            stageView.populateStageAttributes(property);
 
-        // releasing
-        dropDown = (CCDropDownMenu)getChild(RELEASING);
-        dropDown.setValue(
-            (new Integer(property.getReleaseAttributes())).toString());
-        } // end if custom policy
+            // releasing
+            ReleaseAttributesView releaseView =
+                (ReleaseAttributesView) view.getChild(view.RELEASE_ATTR_VIEW);
+            releaseView.populateReleaseAttributes(property);
+        }
     }
 
     private List savePolicyMatchCriteria(ArchivePolCriteria criteria) {
         // track all the errors in this section
         List errors = new ArrayList();
-
-        // get policyName from session
-        String policyName =
-            (String)getPageSessionAttribute(Constants.Archive.POLICY_NAME);
 
         ArchivePolCriteriaProp property =
             criteria.getArchivePolCriteriaProperties();
@@ -606,22 +582,27 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
         }
 
         // validate staging and releasing only policy != no_archive
-        if (!policyName.equals("no_archive")) {
-            String stagingStr = getDisplayFieldStringValue(STAGING);
-            int staging = -1;
-            if (!stagingStr.equals(SelectableGroupHelper.NOVAL)) {
-                staging = Integer.parseInt(stagingStr);
+        String policyName =
+            (String)getPageSessionAttribute(Constants.Archive.POLICY_NAME);
+        if (!policyName.equals(ArchivePolicy.POLICY_NAME_NOARCHIVE)) {
+            CriteriaDetailsView view =
+                (CriteriaDetailsView) getChild(DETAILS_VIEW);
+            ReleaseAttributesView releaseView =
+                (ReleaseAttributesView) view.getChild(view.RELEASE_ATTR_VIEW);
+            StageAttributesView stageView =
+                (StageAttributesView) view.getChild(view.STAGE_ATTR_VIEW);
+            String errorMsg = releaseView.saveReleaseSettings(property);
+            if (errorMsg != null) {
+                errors.add(errorMsg);
+                label = (CCLabel) releaseView.getChild(releaseView.LABEL);
+                label.setShowError(true);
             }
-            property.setStageAttributes(staging);
-
-            // validate releasing
-            String releasingStr = getDisplayFieldStringValue(RELEASING);
-            int releasing = -1;
-            if (!releasingStr.equals(SelectableGroupHelper.NOVAL)) {
-                releasing = Integer.parseInt(releasingStr);
+            errorMsg = stageView.saveStageSettings(property);
+            if (errorMsg != null) {
+                errors.add(errorMsg);
             }
-            property.setReleaseAttributes(releasing);
         }
+
         return errors;
     }
 
@@ -632,33 +613,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
 
         return theView.saveCopySettings(criteria);
     }
-
-    private void disablePolicyMatchCriteria() {
-        String [] textFields = {STARTING_DIR, NAME_PATTERN, MIN_SIZE, MAX_SIZE,
-                                OWNER, GROUP};
-        String [] dropDowns = {MIN_SIZE_UNITS, MAX_SIZE_UNITS, STAGING,
-                               RELEASING};
-
-        // loop through all the fields and disble them
-        for (int i = 0; i < textFields.length; i++) {
-            ((CCTextField)getChild(textFields[i])).setDisabled(true);
-        }
-
-        for (int i = 0; i < dropDowns.length; i++) {
-            ((CCDropDownMenu)getChild(dropDowns[i])).setDisabled(true);
-        }
-
-        // let users know that most of these sections are disabled
-        CCStaticTextField field = (CCStaticTextField)getChild(MESSAGE);
-        field.setValue("archiving.criteriadetails.default.message");
-    }
-
-    private void disableCriteriaFS() {
-        CriteriaDetailsView view =
-            (CriteriaDetailsView)getChild(DETAILS_VIEW);
-        ((CCButton)view.getChild("AddFS")).setDisabled(true);
-    }
-
 
     private void populateTableModels() throws SamFSException {
         CriteriaDetailsView view = (CriteriaDetailsView)getChild(DETAILS_VIEW);
@@ -720,8 +674,13 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
                                     "loadPolicyMatchCriteria",
                                     "Unload to load the policy match criteria",
                                     serverName);
-
-            // TODO: need set error alert here
+            SamUtil.setErrorAlert(
+                this,
+                CHILD_COMMON_ALERT,
+                "-2002",
+                sfe.getSAMerrno(),
+                sfe.getMessage(),
+                getServerName());
         }
 
         // set page title string
@@ -747,7 +706,7 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
             SamUtil.getResourceString("archiving.fs.delete.confirm"));
 
         // save the server name for the apply criteria popup
-        NonSyncStringBuffer buf = new NonSyncStringBuffer();
+        StringBuffer buf = new StringBuffer();
         buf.append(getServerName()).append("-_-")
            .append(policyName).append("-_-")
            .append(criteriaNumber.toString());
@@ -757,103 +716,6 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
 
         TraceUtil.trace3("Exiting");
     }
-
-    public void handleApplyCriteriaHrefRequest(RequestInvocationEvent rie)
-        throws ServletException, IOException {
-        TraceUtil.trace3("Entering");
-
-        boolean refreshModel = true;
-        String fsname = getDisplayFieldStringValue(FS_NAME);
-        String dumpPath = getDisplayFieldStringValue(DUMP_PATH);
-
-        // get the server name
-        String serverName = getServerName();
-
-        try {
-            // retrieve the model
-            SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
-
-            // add the new filesystem to the policy
-            ArchivePolicy policy = getCurrentPolicy();
-
-            // retrieve current criteria
-            Integer criteriaNumber = (Integer)
-                getPageSessionAttribute(Constants.Archive.CRITERIA_NUMBER);
-
-            ArchivePolCriteria criteria =
-                policy.getArchivePolCriteria(criteriaNumber.intValue());
-
-            FileSystem fs =
-                sysModel.getSamQFSSystemFSManager().getFileSystem(fsname);
-            fs.addPolCriteria(new ArchivePolCriteria[] {criteria});
-
-            // if we get here, everything worked.
-            SamUtil.setInfoAlert(this,
-                                 CHILD_COMMON_ALERT,
-                                 "success.summary",
-                                 SamUtil.getResourceString(
-                                    "PolFileSystem.operation",
-                                    new String[] {fsname}),
-                                        serverName);
-        } catch (SamFSException ex) {
-            String processMsg = null;
-            String errMsg = null;
-            String errCause = null;
-            boolean warning = false;
-
-            // catch exceptions where the archiver.cmd has errors
-            if (ex instanceof SamFSMultiMsgException) {
-                processMsg = Constants.Config.ARCHIVE_CONFIG;
-                errMsg = "ArchiveConfig.error";
-                errCause = "ArchiveConfig.error.detail";
-            } else if (ex instanceof SamFSWarnings) {
-                warning = true;
-                processMsg = Constants.Config.ARCHIVE_CONFIG_WARNING;
-                errMsg = "ArchiveConfig.error";
-                errCause = "ArchiveConfig.warning.detail";
-            } else {
-                processMsg = "Failed to add the file system";
-                errMsg = "PolFileSystem.error.failedAddFs";
-                errCause = ex.getMessage();
-            }
-
-            SamUtil.processException(
-                ex,
-                this.getClass(),
-                "handleApplyCriteriaHrefRequest",
-                processMsg,
-                serverName);
-
-            if (!warning) {
-                SamUtil.setErrorAlert(
-                    this,
-                    CHILD_COMMON_ALERT,
-                    errMsg,
-                    ex.getSAMerrno(),
-                    errCause,
-                    serverName);
-            } else {
-                SamUtil.setWarningAlert(
-                    this,
-                    CHILD_COMMON_ALERT,
-                    errMsg,
-                    errCause);
-            }
-        }
-
-        // repopulate table models
-
-        if (refreshModel) {
-            CriteriaDetailsView view =
-                (CriteriaDetailsView)getChild(DETAILS_VIEW);
-
-            view.populateTableModels();
-        }
-
-        forwardTo();
-        TraceUtil.trace3("Exiting");
-    }
-
 
     public void handleSaveRequest(RequestInvocationEvent rie)
         throws ServletException, IOException {
@@ -897,7 +759,7 @@ public class CriteriaDetailsViewBean extends CommonViewBeanBase {
 
             // see if there were any validation errors
             if (errors.size() > 0) {
-                NonSyncStringBuffer buffer = new NonSyncStringBuffer();
+                StringBuffer buffer = new StringBuffer();
                 Iterator it = errors.iterator();
 
                 buffer.append("<ul>");

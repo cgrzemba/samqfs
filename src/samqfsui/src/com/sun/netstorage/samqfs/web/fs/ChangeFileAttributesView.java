@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ChangeFileAttributesView.java,v 1.11 2008/10/01 22:43:32 ronaldso Exp $
+// ident	$Id: ChangeFileAttributesView.java,v 1.12 2008/11/05 20:24:49 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -40,8 +40,10 @@ import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.arc.Archiver;
+import com.sun.netstorage.samqfs.mgmt.arc.Criteria;
 import com.sun.netstorage.samqfs.mgmt.rel.Releaser;
 import com.sun.netstorage.samqfs.mgmt.stg.Stager;
+import com.sun.netstorage.samqfs.web.archive.CriteriaDetailsViewBean;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
@@ -73,22 +75,32 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
 
     // Main radio button group for Archive/Release/Stage
     public static final String RADIO = "Radio";
+    // values
+    public static final String RELEASE = "release";
+    public static final String STAGE = "stage";
 
     // Sub-radio button group for Release & Stage
     public static final String SUB_RADIO = "SubRadio";
 
     // Check box to determine if new attributes are applied recursively
     // to all files in directory (reset to default before applying new flag)
-    public static final String RECURSIVE  = "Recursive";
+    // This checkbox only shows up in the File Details Pop Up.
+    public static final String RECURSIVE = "Recursive";
+
+    // Check box to determine if new attributes are applied to the files that
+    // match the criteria and override individual file settings.  The check box
+    // only shows up when the pagelet is used in the Criteria Details page
+    public static final String OVERRIDE = "Override";
+
+
 
     // Other page components
     public static final String PARTIAL_RELEASE  = "PartialRelease";
     public static final String LABEL = "Label";
     public static final String PARTIAL_RELEASE_SIZE = "PartialReleaseSize";
-    public static final String ALERT  = "Alert";
+    public static final String ALERT = "Alert";
     public static final String SUBMIT = "Submit";
     public static final String HELP_TEXT = "HelpText";
-
 
     // private models for various components
     private CCPageTitleModel pageTitleModel;
@@ -98,16 +110,48 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
 
     private boolean directory;
 
+    // Page Session Attributes to keep track of current file attributes in the
+    // form of Archiver_Att###Releaser_Att###Stager_Att
+    public static final String PSA_FILE_ATT = "psa_file_att";
+
+    // Keep track of the viewbean that uses this view
+    public static final short PAGE_FILE_DETAIL = 0;
+    public static final short PAGE_CRITERIA_DETAIL = 1;
+    private short parentPage = -1;
+
+    // Keep track on the mode of the page (archive, release, or stage)
+    // NOTE: This variable is used only when this pagelet is used in the
+    // Criteria Details Page.  getPageMode() retrieves the page mode information
+    // from the FileDetails view bean because the pagelet can be in different
+    // mode within the same pop up when it reloads.  If we pass the pageMode
+    // in the ChangeFileAttributesView constructor, the pageMode will not
+    // contain the updated information because createChild() in File Details
+    // View Bean does not pass the latest
+    // -1 == Empty
+    // 0  == Change Archive Attribute mode
+    // 1  == Change Release Attribute mode
+    // 2  == Change Stage   Attribute mode
+    private int pageMode = -1;
+    public static final int MODE_ARCHIVE = 0;
+    public static final int MODE_RELEASE = 1;
+    public static final int MODE_STAGE = 2;
+
 
     public ChangeFileAttributesView(
-        View parent, String name, String serverName, boolean directory) {
+        View parent, String name, String serverName,
+        boolean directory, short parentPage, int pageMode) {
         super(parent, name);
-
+        TraceUtil.trace3("Entering ChangeFileAttributesView()");
+        TraceUtil.trace3("serverName: " + serverName);
+        TraceUtil.trace3("parentPage: " + parentPage);
+        TraceUtil.trace3("pageMode: " + pageMode);
         TraceUtil.initTrace();
         TraceUtil.trace3("Entering");
 
         this.serverName = serverName;
         this.directory  = directory;
+        this.parentPage = parentPage;
+        this.pageMode = pageMode;
         pageTitleModel  = createPageTitleModel();
 
         registerChildren();
@@ -131,6 +175,7 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
         registerChild(SUBMIT, CCButton.class);
         registerChild(HELP_TEXT, CCStaticTextField.class);
         registerChild(RECURSIVE, CCCheckBox.class);
+        registerChild(OVERRIDE, CCCheckBox.class);
         TraceUtil.trace3("Exiting");
     }
 
@@ -168,6 +213,10 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
             return new CCCheckBox(
                 this, name, Boolean.toString(true),
                 Boolean.toString(false), true);
+        } else if (name.equals(OVERRIDE)) {
+            return new CCCheckBox(
+                this, name, Boolean.toString(true),
+                Boolean.toString(false), false);
         } else {
             // Error if get here
             throw new IllegalArgumentException("Invalid Child '" + name + "'");
@@ -177,13 +226,29 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
         return (View) child;
     }
 
+    /**
+     * Called when the view is displayed
+     * @param evt
+     * @throws com.iplanet.jato.model.ModelControlException
+     */
     public void beginDisplay(DisplayEvent evt) throws ModelControlException {
         TraceUtil.trace3("Entering");
 
         int pageMode = getPageMode();
-        if (getPageMode() != -1) {
+        TraceUtil.trace3("Entering beginDisplay: pageMode is " + pageMode);
+        if (pageMode != -1) {
             populatePageTitleModel(pageMode);
+            // Initialize all radio button groups.
+            // Radio button setValues for criteria details page are taking
+            // place in Release/StageAttributesView.java
             populateRadioButtonGroup(pageMode);
+        }
+
+        // Change release help text if pagelet is used in Criteria Details page
+        if (parentPage == PAGE_CRITERIA_DETAIL && pageMode == MODE_RELEASE) {
+            ((CCStaticTextField) getChild(HELP_TEXT)).setValue(
+                SamUtil.getResourceString(
+                "fs.filedetails.releasing.releaseSize.criteriadetails.help"));
         }
 
         TraceUtil.trace3("Exiting");
@@ -220,7 +285,8 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
     private void populatePageTitleModel(int pageMode) {
         // set page title
         switch (pageMode) {
-            case SamQFSSystemFSManager.ARCHIVE:
+            case MODE_ARCHIVE:
+                // This case is used only in the File Details Pop Up
                 pageTitleModel.setPageTitleText(
                     "fs.filedetails.editattributes.archive");
                 pageTitleModel.setPageTitleHelpMessage(
@@ -228,19 +294,27 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                         "fs.filedetails.editattributes.archive.dir.help" :
                         "fs.filedetails.editattributes.archive.help");
                 break;
-            case SamQFSSystemFSManager.RELEASE:
+            case MODE_RELEASE:
+                // Switch the page title text based on where this pagelet is
+                // used
                 pageTitleModel.setPageTitleText(
                     "fs.filedetails.editattributes.release");
                 pageTitleModel.setPageTitleHelpMessage(
-                    directory ?
+                    parentPage == PAGE_CRITERIA_DETAIL ?
+                    "fs.filedetails.editattributes.release.criteriadetails.help"
+                        : directory ?
                         "fs.filedetails.editattributes.release.dir.help" :
                         "fs.filedetails.editattributes.release.help");
                 break;
-            case SamQFSSystemFSManager.STAGE:
+            case MODE_STAGE:
+                // Switch the page title text based on where this pagelet is
+                // used
                 pageTitleModel.setPageTitleText(
                     "fs.filedetails.editattributes.stage");
                 pageTitleModel.setPageTitleHelpMessage(
-                    directory ?
+                    parentPage == PAGE_CRITERIA_DETAIL ?
+                    "fs.filedetails.editattributes.stage.criteriadetails.help"
+                    : directory ?
                         "fs.filedetails.editattributes.stage.dir.help" :
                         "fs.filedetails.editattributes.stage.help");
                 break;
@@ -251,6 +325,8 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
      * Populate radio button group contents
      */
     private void populateRadioButtonGroup(int pageMode) {
+        TraceUtil.trace3(
+            "Entering populateRadioButtonGroup: pageMode is " + pageMode);
         OptionList optionList    = null;
         CCRadioButton myRadio  = (CCRadioButton) getChild(RADIO);
         CCRadioButton subRadio = (CCRadioButton) getChild(SUB_RADIO);
@@ -259,7 +335,7 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
 
         int currentSetting = -1;
         switch (pageMode) {
-            case SamQFSSystemFSManager.ARCHIVE:
+            case MODE_ARCHIVE:
                 // Archive contains "Never Archive" &
                 // "When file matches policy(s) criterias"
                 optionList =
@@ -272,16 +348,15 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                             Integer.toString(Archiver.DEFAULTS)});
                 myRadio.setOptions(optionList);
 
+                // This option only applies to the File Details Pop Up
                 // default to archive when file matches policy criterias
                 // myRadio.setValue(Integer.toString(Archiver.DEFAULTS));
                 myRadio.setValue(existingAttArray[pageMode]);
                 myRadio.resetStateData();
 
                 break;
-            case SamQFSSystemFSManager.RELEASE:
+            case MODE_RELEASE:
                 // Release contains "Never Release" & "Release"
-                ((CCCheckBox) getChild(PARTIAL_RELEASE)).setDisabled(false);
-
                 optionList =
                     new OptionList(
                         new String [] {
@@ -289,8 +364,23 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                             "fs.filedetails.releasing.release"},
                         new String [] {
                             Integer.toString(Releaser.NEVER),
-                            "release"});
+                            RELEASE});
                 myRadio.setOptions(optionList);
+
+                // default to release when space is required
+                subRadio.setOptions(
+                    new OptionList(
+                        new String [] {
+                            "fs.filedetails.releasing.default",
+                            "fs.filedetails.releasing.onecopy"},
+                        new String [] {
+                            Integer.toString(Releaser.RESET_DEFAULTS),
+                            Integer.toString(Releaser.WHEN_1)}));
+
+                // Only setValues when this is used in File Details Pop Up
+                if (parentPage == PAGE_CRITERIA_DETAIL) {
+                    return;
+                }
 
                 try {
                     currentSetting =
@@ -306,19 +396,10 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                     ((CCTextField) getChild(
                         PARTIAL_RELEASE_SIZE)).setDisabled(true);
                 } else {
-                    myRadio.setValue("release");
+                    ((CCCheckBox) getChild(PARTIAL_RELEASE)).setDisabled(false);
+                    myRadio.setValue(RELEASE);
                 }
                 myRadio.resetStateData();
-
-                // default to release when space is required
-                subRadio.setOptions(
-                    new OptionList(
-                        new String [] {
-                            "fs.filedetails.releasing.default",
-                            "fs.filedetails.releasing.onecopy"},
-                        new String [] {
-                            Integer.toString(Releaser.RESET_DEFAULTS),
-                            Integer.toString(Releaser.WHEN_1)}));
 
                 if (currentSetting != Releaser.NEVER) {
                     subRadio.setValue(existingAttArray[pageMode]);
@@ -352,7 +433,7 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                         existingAttArray[3]));
 
                 break;
-            case SamQFSSystemFSManager.STAGE:
+            case MODE_STAGE:
                 // Stage contains "Never Stage" & Stage
                 optionList =
                     new OptionList(
@@ -360,9 +441,24 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                             "fs.filedetails.staging.never",
                             "fs.filedetails.staging.stage"},
                         new String [] {
-                            Integer.toString(Releaser.NEVER),
-                            "stage"});
+                            Integer.toString(Stager.NEVER),
+                            STAGE});
                 myRadio.setOptions(optionList);
+
+                // default to stage when a file is accessed
+                subRadio.setOptions(
+                    new OptionList(
+                        new String [] {
+                            "fs.filedetails.staging.default",
+                            "fs.filedetails.staging.associative"},
+                        new String [] {
+                            Integer.toString(Stager.RESET_DEFAULTS),
+                            Integer.toString(Stager.ASSOCIATIVE)}));
+
+                // Only setValues when this is used in File Details Pop Up
+                if (parentPage == PAGE_CRITERIA_DETAIL) {
+                    return;
+                }
 
                 try {
                     currentSetting =
@@ -375,19 +471,9 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                     myRadio.setValue(existingAttArray[pageMode]);
                     subRadio.setDisabled(true);
                 } else {
-                    myRadio.setValue("stage");
+                    myRadio.setValue(STAGE);
                 }
                 myRadio.resetStateData();
-
-                // default to stage when a file is accessed
-                subRadio.setOptions(
-                    new OptionList(
-                        new String [] {
-                            "fs.filedetails.staging.default",
-                            "fs.filedetails.staging.associative"},
-                        new String [] {
-                            Integer.toString(Stager.RESET_DEFAULTS),
-                            Integer.toString(Stager.ASSOCIATIVE)}));
 
                 if (currentSetting != Releaser.NEVER) {
                     subRadio.setValue(existingAttArray[pageMode]);
@@ -401,17 +487,20 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
     public void handleSubmitRequest(RequestInvocationEvent event)
         throws ServletException, IOException, ModelControlException {
         TraceUtil.trace3("Entering");
-
-        int pageMode = getPageMode();
+        TraceUtil.trace3("Entering handleSubmitRequest()");
+        int pageMode =
+            Integer.parseInt((String) getParentViewBean().getDisplayFieldValue(
+            FileDetailsPopupViewBean.PAGE_MODE));
+        TraceUtil.trace3("pageMode is " + pageMode);
 
         String successMsg = null, errorMsg   = null;
         String [] existingAttArray = getFileAttributes().split("###");
         boolean recursive = false;
-
+        TraceUtil.trace3("fileAttributes: " + getFileAttributes());
         SamQFSSystemFSManager fsManager = null;
         String radioValue =
             (String) ((CCRadioButton) getChild(RADIO)).getValue();
-
+        TraceUtil.trace3("radioValue: " + radioValue);
         // If entry is a directory, check if RECURSIVE is checked
         if (directory) {
             CCCheckBox checkBox = (CCCheckBox) getChild(RECURSIVE);
@@ -435,8 +524,8 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
             }
             fsManager = SamUtil.getModel(serverName).getSamQFSSystemFSManager();
 
-            switch (pageMode) {
-                case SamQFSSystemFSManager.ARCHIVE:
+            switch(pageMode) {
+                case MODE_ARCHIVE:
                     successMsg = "fs.filedetails.archiving.success";
                     errorMsg   = "fs.filedetails.archiving.failed";
 
@@ -449,12 +538,12 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                     }
                     break;
 
-                case SamQFSSystemFSManager.RELEASE:
+                case MODE_RELEASE:
                     successMsg = "fs.filedetails.releasing.success";
                     errorMsg   = "fs.filedetails.releasing.failed";
 
                     if ("release".equals(radioValue)) {
-                        String subRadioValue = (String)
+                        String subRadioValue =( String)
                             ((CCRadioButton) getChild(SUB_RADIO)).getValue();
                         try {
                             newOption = Integer.parseInt(subRadioValue);
@@ -488,12 +577,12 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                     }
                     break;
 
-                case SamQFSSystemFSManager.STAGE:
+                case MODE_STAGE:
                     successMsg = "fs.filedetails.staging.success";
                     errorMsg   = "fs.filedetails.staging.failed";
 
                     if ("stage".equals(radioValue)) {
-                        String subRadioValue = (String)
+                        String subRadioValue =( String)
                             ((CCRadioButton) getChild(SUB_RADIO)).getValue();
                         try {
                             newOption = Integer.parseInt(subRadioValue);
@@ -534,7 +623,6 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
             // error message makes no sense in this case
             // SE_RELEASE_FILES_FAILED = 30180,
             // SE_ARCHIVE_FILES_FAILED = 30629,
-
             SamUtil.setErrorAlert(
                 this,
                 ALERT,
@@ -549,21 +637,53 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
         TraceUtil.trace3("Exiting");
     }
 
-    private int getPageMode() {
-        return ((FileDetailsPopupViewBean)
-            getParentViewBean()).getPageMode();
+    /**
+     * The definitions of the page mode can be one of the following:
+     * 0     == Change Archive Attribute mode
+     * 1     == Change Release Attribute mode
+     * 2     == Change Stage   Attribute mode
+     * @return the mode of the page
+     */
+    public int getPageMode() {
+        /*
+        if (parentPage == PAGE_FILE_DETAIL) {
+            return ((FileDetailsPopupViewBean)
+                getParentViewBean()).getPageMode();
+        } else {
+            return pageMode;
+        }
+         */
+        return pageMode;
     }
 
+    public void setPageMode(int pageMode) {
+        this.pageMode = pageMode;
+    }
+
+
+    /**
+     *  This method is only needed in the File Details Pop Up.
+     * @return the name of the file of which user is changing the file attrs.
+     */
     private String getFileName() {
         return ((FileDetailsPopupViewBean)
             getParentViewBean()).getFileNameWithPath();
     }
 
+    /**
+     *  This method is only needed in the File Details Pop Up.
+     * @return the current file attributes of which user is viewing
+     */
     private String getFileAttributes() {
-        return (String) ((FileDetailsPopupViewBean)
-            getParentViewBean()).getPageSessionAttribute(
-            FileDetailsPopupViewBean.PSA_FILE_ATT);
-
+        TraceUtil.trace3(
+            "Entering getFileAttributes(): parentPage: " + parentPage);
+        if (parentPage == PAGE_FILE_DETAIL) {
+            return (String) ((FileDetailsPopupViewBean)
+                getParentViewBean()).getPageSessionAttribute(PSA_FILE_ATT);
+        } else {
+            return (String) ((CriteriaDetailsViewBean)
+                getParentViewBean()).getPageSessionAttribute(PSA_FILE_ATT);
+        }
     }
 
     /**
@@ -576,12 +696,12 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
         try {
             maxPartial = Integer.parseInt(existingAttArray[3]);
         } catch (NumberFormatException numEx) {
-            // error
             TraceUtil.trace1("NumberFormatException: " + numEx.getMessage() +
                 " in isValidPartialSize(int)!");
+            return false;
         }
 
-        return !(size < 8 || size > maxPartial || size % 8 != 0);
+        return !(size < 8 || size > maxPartial);
     }
 
     /**
@@ -592,4 +712,94 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
         return directory;
     }
 
+    /**
+     * Hide Override check box if this pagelet is used for the File Details
+     * Pop up.
+     * @param event
+     * @return boolean to indicate if this component is visible or not
+     * @throws com.iplanet.jato.model.ModelControlException
+     */
+    public boolean beginOverrideDisplay(ChildDisplayEvent event)
+        throws ModelControlException {
+        return parentPage == PAGE_CRITERIA_DETAIL;
+    }
+
+    /**
+     * This method determines if the managed server has the capability to set
+     * multiple release/stage attributes.  This method is used only in the
+     * Criteria Details Page.
+     * @return if the server can support multiple attributes
+     */
+    protected boolean isServerPatched() {
+        // Boolean to determine if multiple flags are allowed.
+        // Multiple Release Attribute flag is allowed in:
+        // Version 5.0
+        // Version 4.6 with patch 04 (API Version 1.5.9.1 or later)
+        try {
+            String apiVersion = SamUtil.getAPIVersion(serverName);
+            TraceUtil.trace3("isServerPatched: apiVersion: " + apiVersion);
+            if (apiVersion.startsWith("1.5")) {
+                return
+                    SamUtil.isVersionCurrentOrLaterThan(apiVersion, "1.5.9.1");
+            } else {
+                // This is a 5.0 GUI managing a 5.0 server
+                return true;
+            }
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1(
+                "Failed to determine if the server can support multi-attr!");
+            TraceUtil.trace1("Reason: " + samEx.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Helper method to determine if the attribute that user sets contains
+     * multiple flags.  This method is used only in the Criteria Details page.
+     * @param attr Attribute of which that needs to be tested
+     * @param releaseMode Boolean to define if it is used to check the release
+     * or stage attribute
+     * @return if the attribute is multi-flagged
+     */
+    protected boolean isMultiFlag(int attr, boolean releaseMode) {
+        if (attr == 0) {
+            return false;
+        }
+
+        int counter = 0;
+        if (releaseMode) {
+            // Release
+            if ((attr & Criteria.ATTR_RESET_RELEASE_DEFAULT)
+                        == Criteria.ATTR_RESET_RELEASE_DEFAULT) {
+                counter++;
+            }
+            if ((attr & Criteria.ATTR_RELEASE_ALWAYS)
+                        == Criteria.ATTR_RELEASE_ALWAYS) {
+                counter++;
+            }
+            if ((attr & Criteria.ATTR_RELEASE_NEVER)
+                        == Criteria.ATTR_RELEASE_NEVER) {
+                counter++;
+            }
+            if ((attr & Criteria.ATTR_RELEASE_PARTIAL)
+                        == Criteria.ATTR_RELEASE_PARTIAL) {
+                counter++;
+            }
+        } else {
+            // Stage
+            if ((attr & Criteria.ATTR_RESET_STAGE_DEFAULT)
+                        == Criteria.ATTR_RESET_STAGE_DEFAULT) {
+                counter++;
+            }
+            if ((attr & Criteria.ATTR_STAGE_ASSOCIATIVE)
+                        == Criteria.ATTR_STAGE_ASSOCIATIVE) {
+                counter++;
+            }
+            if ((attr & Criteria.ATTR_STAGE_NEVER)
+                        == Criteria.ATTR_STAGE_NEVER) {
+                counter++;
+            }
+        }
+        return counter > 1;
+    }
 }

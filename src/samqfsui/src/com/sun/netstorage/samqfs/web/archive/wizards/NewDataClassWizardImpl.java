@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewDataClassWizardImpl.java,v 1.23 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: NewDataClassWizardImpl.java,v 1.24 2008/11/05 20:24:49 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
 
@@ -1504,7 +1504,8 @@ public class NewDataClassWizardImpl extends SamWizardImpl {
             // Releasing Behavior
             if (!migrateFrom.equals(SelectableGroupHelper.NOVAL)) {
                 // Store information
-                properties.setReleaseAttributes(Integer.parseInt(migrateFrom));
+                properties.setReleaseAttributes(
+                    Integer.parseInt(migrateFrom), -1);
             }
         } catch (NumberFormatException numEx) {
             // This should not happen, try/catch just in case.

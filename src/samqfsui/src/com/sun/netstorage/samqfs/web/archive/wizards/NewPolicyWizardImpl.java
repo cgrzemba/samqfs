@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewPolicyWizardImpl.java,v 1.34 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: NewPolicyWizardImpl.java,v 1.35 2008/11/05 20:24:49 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
 
@@ -1386,7 +1386,7 @@ public class NewPolicyWizardImpl extends SamWizardImpl {
                             Integer.parseInt(releaseAttributes)));
                     // Store information
                     criteriaProperty.setReleaseAttributes(
-                        Integer.parseInt(releaseAttributes));
+                        Integer.parseInt(releaseAttributes), -1);
                 }
 
                 // Staging Behavior

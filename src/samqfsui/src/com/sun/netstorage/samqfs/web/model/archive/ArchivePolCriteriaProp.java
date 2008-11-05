@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArchivePolCriteriaProp.java,v 1.4 2008/05/16 18:38:59 am143972 Exp $
+// ident	$Id: ArchivePolCriteriaProp.java,v 1.5 2008/11/05 20:24:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.archive;
 
@@ -101,9 +101,17 @@ public interface ArchivePolCriteriaProp {
 
     public void setStageAttributes(int attribs);
 
+    public void resetStageAttributes();
+
     public int getReleaseAttributes();
 
-    public void setReleaseAttributes(int attribs);
+    public void setReleaseAttributes(int attribs, int partialSize);
+
+    public void resetReleaseAttributes();
+
+    public int getPartialSize();
+
+    public void setPartialSize(int partialSize);
 
     public long getAccessAge();
 

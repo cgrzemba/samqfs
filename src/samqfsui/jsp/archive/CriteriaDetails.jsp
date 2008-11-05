@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CriteriaDetails.jsp,v 1.14 2008/05/16 19:39:17 am143972 Exp $
+// ident	$Id: CriteriaDetails.jsp,v 1.15 2008/11/05 20:24:48 ronaldso Exp $
 --%>
 
 <%@page info="CriteriaDetails" language="java"%>
@@ -104,7 +104,27 @@ if (policyType.intValue() == ArSet.AR_SET_TYPE_GENERAL) {
                 showPaginationIcon="false"
                 showSelectionIcons="false"/>
 
+<br /><br />
+<cc:spacer name="spacer1" width="10"/>
+<cc:label name="SectionLabel"
+          styleLevel="1"
+          bundleID="samBundle"
+          defaultValue="archiving.stagerreleaser.section.title" />
+
+<table width="90%" border="0">
+<colgroup span="2" width="45%"></colgroup>
+<tr>
+    <td valign="top">
+        <cc:includepagelet name="ReleaseAttributesView"/>
+    </td>
+    <td valign="top">
+        <cc:includepagelet name="StageAttributesView"/>
+    </td>
+</tr>
+</table>
+
 <cc:spacer name="spacer2" height="20" newline="true"/>
+
 <% } %>
 
 <cc:actiontable name="CriteriaDetailsFSTable"
@@ -130,7 +150,6 @@ if (policyType.intValue() == ArSet.AR_SET_TYPE_GENERAL) {
 </div>
 
 <cc:hidden name="fsname"/>
-<cc:hidden name="dumpPath"/>
 <cc:hidden name="fsDeletable"/>
 <cc:hidden name="fsDeleteConfirmation"/>
 <cc:hidden name="psAttributes"/>

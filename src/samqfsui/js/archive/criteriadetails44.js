@@ -27,14 +27,14 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: criteriadetails44.js,v 1.7 2008/05/16 19:39:13 am143972 Exp $
+// ident	$Id: criteriadetails44.js,v 1.8 2008/11/05 20:24:47 ronaldso Exp $
 
 /*
- * Javascript for the Criteria Details Page 
+ * Javascript for the Criteria Details Page
  */
 
 /*
- * useful fields 
+ * useful fields
  */
 var property = "scrollbars=no,resizable=yes,height=500,width=700";
 
@@ -50,7 +50,7 @@ var selectedIndex = null;
  * Criteria Details Page -> Files Systems Table -> Add
  */
 function old_launchApplyCriteriaPopup(field) {
-    var url = 
+    var url =
     "/samqfsui/archive/ApplyCriteriaToFileSystem?com_sun_web_ui_popup=true";
 
     var psAttributes = field.form["CriteriaDetails.psAttributes"].value;
@@ -92,7 +92,7 @@ function handleApplyCriteriaPopupTableSelection(field) {
 function preSubmitHandler(field) {
     var prefix = "ApplyCriteriaToFileSystem.filesystemTable.SelectionCheckbox";
     var theForm = field.form;
-    var fs_names = 
+    var fs_names =
         theForm.elements["ApplyCriteriaToFileSystem.filenames"].value.split(";");
 
     // there is actually n-1 fs names since there is a trailing ';'
@@ -108,7 +108,7 @@ function preSubmitHandler(field) {
           selected_fs_names +=fs_names[i] + ";";
         }
     }
-    
+
     if (selected_fs_names.length == 0) {
       alert(theForm.elements["ApplyCriteriaToFileSystem.error_no_fs_selected"].value);
       return false;
@@ -119,32 +119,32 @@ function preSubmitHandler(field) {
     }
 }
 
-/* 
+/*
  * handler function for :
  * Criteria Details Page -> File Systems Table -> Add -> Submit
  */
 function handleApplyCriteriaToFileSystemPopupSubmit(field) {
     // parse errors just incase we need them
-    errorMessages = 
+    errorMessages =
         field.form["ApplyCriteriaToFileSystem.errorMessages"].value.split(";");
-   
+
     // initialize the forms
     var theForm = field.form;
     var parentForm = window.opener.document.CriteriaDetailsForm;
     var valid = true;
     var message = "";
-    
+
     // validate the form
     if (selected_fs == null) {
         message += errorMessages[0] + "\n";
         valid = false;
     }
 
-    // just in case the user didn't click on the 
+    // just in case the user didn't click on the
     if (isDumping(theForm) && dumpvalues == null)
         dumpvalues = true;
 
-    if (isDumping(theForm) && dumpvalues) { 
+    if (isDumping(theForm) && dumpvalues) {
         // validate the path
         var path = trim(theForm["ApplyCriteriaToFileSystem.dumpView.savePath"].value);
         if (path == null || path.length == 0) {
@@ -163,7 +163,7 @@ function handleApplyCriteriaToFileSystemPopupSubmit(field) {
     if (isDumping(theForm) && !dumpvalues) {
         parentForm["CriteriaDetails.dumpPath"].value = null;
     }
-   
+
     if (!valid) {
         alert(message);
         return false;
@@ -171,15 +171,15 @@ function handleApplyCriteriaToFileSystemPopupSubmit(field) {
 
     // if we get this far everything should be correct
     parentForm["CriteriaDetails.fsname"].value = selected_fs;
-    
+
     // now prepare and submit the form
     var handler = "CriteriaDetails.ApplyCriteriaHref";
     var pageSession = parentForm.elements["jato.pageSession"].value;
 
     var actionArray = parentForm.action.split("?");
     var action = actionArray[0];
-   
-    parentForm.action = 
+
+    parentForm.action =
         action + "?" + handler + "=&jato.pageSession=" + pageSession;
 
     // submit the form
@@ -214,7 +214,7 @@ function isDumping(theForm) {
 }
 
 /*
- * handler function for : 
+ * handler function for :
  * Criteria Details Page -> File Systems Table -> Radio Button Selection
  */
 function handleCriteriaDetailsFSTableSelection(field) {
@@ -223,7 +223,7 @@ function handleCriteriaDetailsFSTableSelection(field) {
     var viewPolicies = "CriteriaDetails.CriteriaDetailsView.ViewPolicies";
 
     var formName = "CriteriaDetailsForm";
-    
+
     if (field.name == deselect) {
         ccSetButtonDisabled(fsRemove, formName, 1);
         ccSetButtonDisabled(viewPolicies, formName, 1);
@@ -265,4 +265,44 @@ function handleViewPolicies(field) {
     var allFS = field.form["CriteriaDetails.fsList"].value.split(",");
 
     field.form["CriteriaDetails.fsname"].value = allFS[selectedIndex];
+}
+
+// The following methods are used in the Release/StageAttributePagelet
+/**
+ * Disable the unrelevant contents if never is selected
+ */
+function handleRadioSelection(field) {
+    var myForm = field.form;
+    var myFieldArray = field.name.split(".");
+    var prefix = myFieldArray[0] + "." + myFieldArray[1] + "." +
+                 myFieldArray[2];
+    var elementName = prefix + ".SubRadio";
+    ccSetRadioButtonDisabled(
+        elementName, myForm.name, field.value == "2");
+    var subRadio = myForm.elements[elementName];
+    if (subRadio.value == undefined) {
+        subRadio[0].checked = true;
+    }
+    // Diable partial release component if this pagelet is used by
+    // setting release attributes
+    if (myFieldArray[2] == "ReleaseAttributesView") {
+        elementName = prefix + ".PartialRelease";
+        ccSetCheckBoxDisabled(
+            elementName, myForm.name, field.value == "2");
+        elementName = prefix + ".PartialReleaseSize";
+        var checkBox = myForm.elements[prefix + ".PartialRelease"];
+        ccSetTextFieldDisabled(
+            elementName, myForm.name,
+            field.value == "2" || !checkBox.checked);
+    }
+}
+
+/**
+ * Disable partial release size text field if partial release is not checked
+ */
+function handlePartialRelease(field) {
+    ccSetTextFieldDisabled(
+        "CriteriaDetails.CriteriaDetailsView." +
+        "ReleaseAttributesView.PartialReleaseSize",
+        field.form.name, !field.checked);
 }

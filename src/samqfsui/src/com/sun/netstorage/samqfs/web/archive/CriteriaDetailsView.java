@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CriteriaDetailsView.java,v 1.16 2008/05/16 19:39:27 am143972 Exp $
+// ident	$Id: CriteriaDetailsView.java,v 1.17 2008/11/05 20:24:48 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -41,6 +41,10 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiMsgException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
 import com.sun.netstorage.samqfs.mgmt.arc.ArSet;
+import com.sun.netstorage.samqfs.mgmt.arc.Archiver;
+import com.sun.netstorage.samqfs.mgmt.rel.Releaser;
+import com.sun.netstorage.samqfs.mgmt.stg.Stager;
+import com.sun.netstorage.samqfs.web.fs.ChangeFileAttributesView;
 import com.sun.netstorage.samqfs.web.fs.FSArchivePoliciesViewBean;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteria;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteriaCopy;
@@ -57,6 +61,7 @@ import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCActionTableModel;
 import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCHiddenField;
+import com.sun.web.ui.view.html.CCLabel;
 import com.sun.web.ui.view.html.CCRadioButton;
 import com.sun.web.ui.view.html.CCStaticTextField;
 import com.sun.web.ui.view.table.CCActionTable;
@@ -72,6 +77,13 @@ public class CriteriaDetailsView extends MultiTableViewBase {
     public static final String COPY_TILED_VIEW = "CopySettingsTiledView";
     public static final String FS_TILED_VIEW = "FSTiledView";
 
+    // Pagelets for release and stage attributes
+    public static final String RELEASE_ATTR_VIEW = "ReleaseAttributesView";
+    public static final String STAGE_ATTR_VIEW = "StageAttributesView";
+
+    // section label for releasing and staging
+    public static final String SECTION_LABEL = "SectionLabel";
+
     public CriteriaDetailsView(View parent, Map models, String name) {
         super(parent, models, name);
 
@@ -86,14 +98,19 @@ public class CriteriaDetailsView extends MultiTableViewBase {
         TraceUtil.trace3("Entering");
 
         super.registerChildren();
+        registerChild(SECTION_LABEL, CCLabel.class);
         registerChild(COPY_TILED_VIEW, CriteriaDetailsCopyTiledView.class);
         registerChild(FS_TILED_VIEW, CriteriaDetailsFSTiledView.class);
+        registerChild(RELEASE_ATTR_VIEW, ReleaseAttributesView.class);
+        registerChild(STAGE_ATTR_VIEW, StageAttributesView.class);
 
         TraceUtil.trace3("Exiting");
     }
 
     public View createChild(String name) {
-        if (name.equals(COPY_TILED_VIEW)) {
+        if (name.equals(SECTION_LABEL)) {
+            return new CCLabel(this, name, null);
+        } else if (name.equals(COPY_TILED_VIEW)) {
             return new CriteriaDetailsCopyTiledView(
                 this, getTableModel(COPY_TABLE), name);
         } else if (name.equals(FS_TILED_VIEW)) {
@@ -103,6 +120,12 @@ public class CriteriaDetailsView extends MultiTableViewBase {
             return createTable(name, COPY_TILED_VIEW);
         } else if (name.equals(FS_TABLE)) {
             return createTable(name, FS_TILED_VIEW);
+        } else if (name.equals(RELEASE_ATTR_VIEW)) {
+            return new ReleaseAttributesView(
+                this, name, getServerName());
+        } else if (name.equals(STAGE_ATTR_VIEW)) {
+            return new StageAttributesView(
+                this, name, getServerName());
         } else {
             CCActionTableModel model = super.isChildSupported(name);
             if (model != null)
@@ -264,6 +287,25 @@ public class CriteriaDetailsView extends MultiTableViewBase {
             hf = (CCHiddenField)
                 parent.getChild(CriteriaDetailsViewBean.FS_LIST);
             hf.setValue(buffer.toString());
+
+            // Set up attributes that is used by the release/stage attributes
+            // pagelet
+            StringBuffer fileAttBuf = new StringBuffer();
+            fileAttBuf.append(Integer.toString(
+                                Archiver.NEVER)).append("###");
+            fileAttBuf.append(Integer.toString(
+                                Releaser.WHEN_1)).append("###");
+            fileAttBuf.append(Stager.NEVER);
+            fileAttBuf.append("###").append(
+                    Integer.toString(16));
+            // Add partial release size to the buffer, -1 if not set
+            fileAttBuf.append("###").append(Long.toString(-1));
+
+            // Save file attributes to page session + max partial size of fs
+            parent.setPageSessionAttribute(
+                ChangeFileAttributesView.PSA_FILE_ATT,
+                fileAttBuf.toString());
+
         } catch (SamFSWarnings sfw) {
             SamUtil.processException(sfw,
                                      this.getClass(),
@@ -568,5 +610,9 @@ public class CriteriaDetailsView extends MultiTableViewBase {
             PageInfo.getPageInfo().getPageNumber(source.getName()));
 
         source.forwardTo(target);
+    }
+
+    private String getServerName() {
+        return ((CommonViewBeanBase) getParentViewBean()).getServerName();
     }
 }

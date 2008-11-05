@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: CriteriaDetailsPropertySheet.xml,v 1.7 2008/05/16 19:39:17 am143972 Exp $                                                                -->
+<!-- $Id: CriteriaDetailsPropertySheet.xml,v 1.8 2008/11/05 20:24:48 ronaldso Exp $                                                                -->
 
 <propertysheet>
 <section name="FileMatchCriteria" 
@@ -124,37 +124,6 @@
 <cc name="AccessAge"
     tagclass="com.sun.web.ui.taglib.html.CCTextFieldTag"/>
 <cc name="AccessAgeUnits"
-    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
-
-&lt;/td> &lt;/tr> &lt;/table>
-</property>
-</section>
-
-<section name="StagerReleaser"
-         defaultValue="archiving.stagerreleaser.section.title">
-
-<property span="true">
-&lt;table style="width:100%">
-&lt;tr> &lt;td nowrap="nowrap">
-<cc name="StagingLabel"
-    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
-    <attribute name="defaultValue" value="archiving.staging"/>
-    <attribute name="elementName" value="Staging"/>
-</cc>
-
-&lt;/td> &lt;td nowrap="nowrap">
-<cc name="Staging"
-    tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
-
-&lt;/td> &lt;td nowrap="nowrap">
-<cc name="ReleasingLabel"
-    tagclass="com.sun.web.ui.taglib.html.CCLabelTag">
-    <attribute name="defaultValue" value="archiving.releasing"/>
-    <attribute name="elementName" value="Releasing"/>
-</cc>
-
-&lt;/td> &lt;td nowrap="nowrap">
-<cc name="Releasing"
     tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag"/>
 
 &lt;/td> &lt;/tr> &lt;/table>

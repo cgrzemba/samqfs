@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopupViewBean.java,v 1.25 2008/08/13 20:56:13 ronaldso Exp $
+// ident	$Id: FileDetailsPopupViewBean.java,v 1.26 2008/11/05 20:24:49 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -44,7 +44,6 @@ import com.sun.netstorage.samqfs.mgmt.stg.Stager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileCopyDetails;
-import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
 import com.sun.netstorage.samqfs.web.model.fs.StageFile;
 import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.Capacity;
@@ -84,18 +83,6 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
 
     // Change HREF value for archive/release/stage
     public static final String CHANGE_HREF  = "ChangeHref";
-
-    // Page Session Attributes to keep track of the mode of the page
-    // (Need to show ChangeFileAttributesView or not)
-    // empty == not change mode
-    // 0 == Change Archive Attribute mode
-    // 1 == Change Release Attribute mode
-    // 2 == Change Stage   Attribute mode
-    public static final String PSA_MODE = "psa_mode";
-
-    // Page Session Attributes to keep track of current file attributes in the
-    // form of Archiver_Att###Releaser_Att###Stager_Att
-    public static final String PSA_FILE_ATT = "psa_file_att";
 
     // Change File Attributes View (Pagelet)
     public static final String CHANGE_VIEW = "ChangeFileAttributesView";
@@ -149,7 +136,8 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
         // Pagelet
         } else if (name.equals(CHANGE_VIEW)) {
             return new ChangeFileAttributesView(
-                this, name, getServerName(), isDirectory());
+                this, name, getServerName(), isDirectory(),
+                 ChangeFileAttributesView.PAGE_FILE_DETAIL, -1);
         } else {
             throw new IllegalArgumentException("Invalid child '" + name + "'");
         }
@@ -485,7 +473,8 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
                 // Add Max Partial Size to the end of the File att string
                 fileAttBuf.append("###").append(
                     Integer.toString(
-                        getCurrentFSMaxPartialReleaseSize(fsManager)));
+                        FSUtil.getCurrentFSMaxPartialReleaseSize(
+                        fsManager, getFSName())));
 
                 // WORM information, only available in LIVE mode
                 if (liveMode &&
@@ -521,7 +510,9 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
                 fileAttBuf.append("###").append(Long.toString(partialRelease));
 
                 // Save file attributes to page session + max partial size of fs
-                setPageSessionAttribute(PSA_FILE_ATT, fileAttBuf.toString());
+                setPageSessionAttribute(
+                    ChangeFileAttributesView.PSA_FILE_ATT,
+                    fileAttBuf.toString());
 
             } // end if archiving
         } catch (SamFSException samEx) {
@@ -708,7 +699,8 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
         TraceUtil.trace3("Entering");
 
         CCHref myHref = (CCHref) getChild(CHANGE_HREF);
-        setPageSessionAttribute(PSA_MODE, (String) myHref.getValue());
+        ((ChangeFileAttributesView) getChild(CHANGE_VIEW)).
+            setPageMode(Integer.parseInt((String) myHref.getValue()));
         getParentViewBean().forwardTo(getRequestContext());
 
         TraceUtil.trace3("Exiting");
@@ -722,15 +714,8 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
      * 2  == Change Stage   Attribute mode
      */
     public int getPageMode() {
-        String mode = (String) getPageSessionAttribute(PSA_MODE);
-        int returnValue = -1;
-        try {
-            if (mode != null) {
-                returnValue = Integer.parseInt(mode);
-            }
-        } catch (NumberFormatException numEx) {
-            TraceUtil.trace1("Developer's bug in getPageMode()!");
-        }
+        int returnValue =
+            ((ChangeFileAttributesView) getChild(CHANGE_VIEW)).getPageMode();
         return returnValue;
     }
 
@@ -959,34 +944,5 @@ public class FileDetailsPopupViewBean extends CommonSecondaryViewBeanBase {
                     getRecoveryPoint(), // snapPath
                     relativePathName,
                     theseDetails);
-    }
-
-    /**
-     * Return current file system maximum partial release size in kB
-     */
-    private int getCurrentFSMaxPartialReleaseSize(
-        SamQFSSystemFSManager fsManager) throws SamFSException {
-
-        FileSystemMountProperties prop =
-            fsManager.getFileSystem(getFSName()).getMountProperties();
-        int size = prop.getDefaultMaxPartialReleaseSize();
-        int unit = prop.getDefaultMaxPartialReleaseSizeUnit();
-
-        switch (unit) {
-            case SamQFSSystemModel.SIZE_B:
-                return size / 1024;
-            case SamQFSSystemModel.SIZE_KB:
-                return size;
-            case SamQFSSystemModel.SIZE_MB:
-                return size * 1024;
-            case SamQFSSystemModel.SIZE_GB:
-                return size * 1024 * 1024;
-            case SamQFSSystemModel.SIZE_TB:
-                return size * 1024 * 1024 * 1024;
-            case SamQFSSystemModel.SIZE_PB:
-                return size * 1024 * 1024 * 1024 * 1024;
-        }
-
-        return -1;
     }
 }

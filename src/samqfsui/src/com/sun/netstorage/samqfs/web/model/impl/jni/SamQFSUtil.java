@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSUtil.java,v 1.60 2008/09/04 19:26:34 ronaldso Exp $
+// ident	$Id: SamQFSUtil.java,v 1.61 2008/11/05 20:24:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -556,79 +556,6 @@ public class SamQFSUtil {
         }
 
         return ret;
-
-    }
-
-    public static int convertStageAttribFromJni(char jniVal) {
-
-        int type = -1;
-
-        if (jniVal == Criteria.NEVER_STAGE)
-            type = ArchivePolicy.STAGE_NEVER;
-        else if (jniVal == Criteria.ASSOCIATIVE_STAGE)
-            type = ArchivePolicy.STAGE_ASSOCIATIVE;
-        else if (jniVal == Criteria.SET_DEFAULT_STAGE)
-            type = ArchivePolicy.STAGE_DEFAULTS;
-        else if (jniVal == Criteria.STAGE_NOT_DEFINED)
-            type = ArchivePolicy.STAGE_NO_OPTION_SET;
-
-        return type;
-
-    }
-
-
-    public static char convertStageAttribToJni(long logicVal) {
-
-        char c = ' ';
-
-        if (logicVal == ArchivePolicy.STAGE_NEVER)
-            c = Criteria.NEVER_STAGE;
-        else if (logicVal == ArchivePolicy.STAGE_ASSOCIATIVE)
-            c = Criteria.ASSOCIATIVE_STAGE;
-        else if (logicVal == ArchivePolicy.STAGE_DEFAULTS)
-            c = Criteria.SET_DEFAULT_STAGE;
-        else if (logicVal == ArchivePolicy.STAGE_NO_OPTION_SET)
-            c = Criteria.STAGE_NOT_DEFINED;
-
-        return c;
-
-    }
-
-
-    public static int convertReleaseAttribFromJni(char jniVal) {
-
-        int type = -1;
-
-        if (jniVal == Criteria.NEVER_RELEASE)
-            type = ArchivePolicy.RELEASE_NEVER;
-        else if (jniVal == Criteria.PARTIAL_RELEASE)
-            type = ArchivePolicy.RELEASE_PARTIAL;
-        else if (jniVal == Criteria.ALWAYS_RELEASE)
-            type = ArchivePolicy.RELEASE_AFTER_ONE;
-        else if (jniVal == Criteria.SET_DEFAULT_RELEASE)
-            type = ArchivePolicy.RELEASE_DEFAULTS;
-        else if (jniVal == Criteria.RELEASE_NOT_DEFINED)
-            type = ArchivePolicy.RELEASE_NO_OPTION_SET;
-
-        return type;
-    }
-
-    public static char convertReleaseAttribToJni(long logicVal) {
-
-        char c = ' ';
-
-        if (logicVal == ArchivePolicy.RELEASE_NEVER)
-            c = Criteria.NEVER_RELEASE;
-        else if (logicVal == ArchivePolicy.RELEASE_PARTIAL)
-            c = Criteria.PARTIAL_RELEASE;
-        else if (logicVal == ArchivePolicy.RELEASE_DEFAULTS)
-            c = Criteria.SET_DEFAULT_STAGE;
-        else if (logicVal == ArchivePolicy.RELEASE_AFTER_ONE)
-            c = Criteria.ALWAYS_RELEASE;
-        else if (logicVal == ArchivePolicy.RELEASE_NO_OPTION_SET)
-            c = Criteria.RELEASE_NOT_DEFINED;
-
-        return c;
 
     }
 

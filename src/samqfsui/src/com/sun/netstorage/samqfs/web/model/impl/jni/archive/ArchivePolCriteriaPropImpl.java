@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArchivePolCriteriaPropImpl.java,v 1.4 2008/05/16 18:39:01 am143972 Exp $
+// ident	$Id: ArchivePolCriteriaPropImpl.java,v 1.5 2008/11/05 20:24:50 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.archive;
 
@@ -37,6 +37,7 @@ import com.sun.netstorage.samqfs.web.model.archive.ArchivePolCriteriaProp;
 import com.sun.netstorage.samqfs.web.model.archive.ArchivePolicy;
 import com.sun.netstorage.samqfs.web.model.archive.DataClassAttributes;
 import com.sun.netstorage.samqfs.web.model.impl.jni.SamQFSUtil;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 
 public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
     private ArchivePolCriteria archPolCriteria = null;
@@ -60,6 +61,7 @@ public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
     private String description = null;
     private int priority = -1;
     private DataClassAttributes classAttributes;
+    private int partialSize = -1;
 
     // For all but CIS
     public ArchivePolCriteriaPropImpl(ArchivePolCriteria archPolCriteria,
@@ -91,11 +93,20 @@ public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
             this.namePattern = criteria.getRegExp();
             this.owner = criteria.getUser();
             this.group = criteria.getGroup();
-            this.stageAttribs =
-                SamQFSUtil.convertStageAttribFromJni(criteria.getStageAttr());
-            this.releaseAttribs =
-                SamQFSUtil.convertReleaseAttribFromJni(criteria.
-                                                       getReleaseAttr());
+
+            this.stageAttribs = criteria.getStageAttr();
+            this.releaseAttribs = criteria.getReleaseAttrs();
+
+            if ((this.releaseAttribs & Criteria.ATTR_PARTIAL_SIZE) != 0) {
+                this.partialSize = criteria.getPartialSize();
+            }
+
+            TraceUtil.trace3(
+                "Get from JNI: stageAttribs: " + this.stageAttribs);
+            TraceUtil.trace3(
+                "Get from JNI: releaseAttribs: " + this.releaseAttribs);
+            TraceUtil.trace3("Get from JNI: partialSize: " + this.partialSize);
+
             this.accessAge = criteria.getAccessAge();
             sec = criteria.getAccessAge();
             if (sec >= 0) {
@@ -152,11 +163,8 @@ public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
 
             this.owner = criteria.getUser();
             this.group = criteria.getGroup();
-            this.stageAttribs =
-                SamQFSUtil.convertStageAttribFromJni(criteria.getStageAttr());
-            this.releaseAttribs =
-                SamQFSUtil.convertReleaseAttribFromJni(criteria.
-                                                       getReleaseAttr());
+            this.stageAttribs = criteria.getStageAttr();
+            this.releaseAttribs = criteria.getReleaseAttrs();
             this.accessAge = criteria.getAccessAge();
             sec = criteria.getAccessAge();
             if (sec >= 0) {
@@ -189,7 +197,8 @@ public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
     }
 
     public int getPriority() {
-        return criteria.getPriority();
+        priority = criteria.getPriority();
+        return priority;
     }
 
     /**
@@ -396,23 +405,43 @@ public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
             (attribs == ArchivePolicy.STAGE_NO_OPTION_SET)) {
             criteria.resetStageAttr();
         } else {
-            criteria.setStageAttr(SamQFSUtil.convertStageAttribToJni(attribs));
+            criteria.setStageAttrs(attribs);
         }
+    }
+
+    public void resetStageAttributes() {
+
+        if (stageAttribs != 0) {
+            criteria.resetStageAttr();
+        }
+
     }
 
     public int getReleaseAttributes() {
         return releaseAttribs;
     }
 
-    public void setReleaseAttributes(int attribs) {
+    public void setReleaseAttributes(int attribs, int partialSize) {
+
         this.releaseAttribs = attribs;
+        this.partialSize = partialSize;
+
         if ((attribs == -1) ||
             (attribs == ArchivePolicy.RELEASE_NO_OPTION_SET)) {
             criteria.resetReleaseAttr();
         } else {
-            criteria.setReleaseAttr(SamQFSUtil.
-                                    convertReleaseAttribToJni(attribs));
+            criteria.setReleaseAttrs(attribs, partialSize);
+
         }
+
+    }
+
+    public void resetReleaseAttributes() {
+
+        if (releaseAttribs != 0) {
+            criteria.resetReleaseAttr();
+        }
+
     }
 
     public long getAccessAge() {
@@ -460,6 +489,17 @@ public class ArchivePolCriteriaPropImpl implements ArchivePolCriteriaProp {
         } else {
             return false;
         }
+    }
+
+    public int getPartialSize() {
+
+        return this.partialSize;
+    }
+
+    public void setPartialSize(int partialSize) {
+
+        this.partialSize = partialSize;
+        criteria.setPartialSize(partialSize);
     }
 
     public String toString() {

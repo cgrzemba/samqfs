@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSUtil.java,v 1.26 2008/09/11 00:00:18 ronaldso Exp $
+// ident	$Id: FSUtil.java,v 1.27 2008/11/05 20:24:49 ronaldso Exp $
 
 /**
  * This util class contains a few declaration of the file system
@@ -39,8 +39,10 @@
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
+import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
 import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.SharedMember;
 import com.sun.netstorage.samqfs.web.model.media.BaseDevice;
@@ -481,5 +483,34 @@ public class FSUtil {
         }
 
         return fsName;
+    }
+
+    /**
+     * Return current file system maximum partial release size in kB
+     */
+    public static int getCurrentFSMaxPartialReleaseSize(
+        SamQFSSystemFSManager fsManager, String fsName) throws SamFSException {
+
+        FileSystemMountProperties prop =
+            fsManager.getFileSystem(fsName).getMountProperties();
+        int size = prop.getDefaultMaxPartialReleaseSize();
+        int unit = prop.getDefaultMaxPartialReleaseSizeUnit();
+
+        switch (unit) {
+            case SamQFSSystemModel.SIZE_B:
+                return size / 1024;
+            case SamQFSSystemModel.SIZE_KB:
+                return size;
+            case SamQFSSystemModel.SIZE_MB:
+                return size * 1024;
+            case SamQFSSystemModel.SIZE_GB:
+                return size * 1024 * 1024;
+            case SamQFSSystemModel.SIZE_TB:
+                return size * 1024 * 1024 * 1024;
+            case SamQFSSystemModel.SIZE_PB:
+                return size * 1024 * 1024 * 1024 * 1024;
+        }
+
+        return -1;
     }
 }
