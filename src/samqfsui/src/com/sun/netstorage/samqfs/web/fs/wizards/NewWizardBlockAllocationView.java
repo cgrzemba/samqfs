@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardBlockAllocationView.java,v 1.4 2008/09/11 05:28:51 kilemba Exp $
+// ident	$Id: NewWizardBlockAllocationView.java,v 1.5 2008/11/06 14:59:05 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -122,7 +122,8 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
         } else if (name.equals(BLOCK_SIZE_UNIT) ||
                    name.equals(BLOCK_SIZE_DROPDOWN)) {
             return new CCDropDownMenu(this, name, null);
-        } else if (name.equals(ALLOCATION_METHOD_TEXT)) {
+        } else if (name.equals(ALLOCATION_METHOD_TEXT) ||
+                   name.equals("blocksPerDeviceHelp")) {
             return new CCStaticTextField(this, name, null);
         } else {
             throw new IllegalArgumentException("Invalid child '" + "'");
@@ -230,5 +231,10 @@ public class NewWizardBlockAllocationView extends RequestHandlingViewBase
     public boolean beginBlockSizeUnitDisplay(ChildDisplayEvent evt)
         throws ModelControlException {
         return isSeparateMetadata();
+    }
+
+    public boolean beginBlocksPerDeviceHelpDisplay(ChildDisplayEvent evt)
+        throws ModelControlException {
+        return isHPCFS();
     }
 }

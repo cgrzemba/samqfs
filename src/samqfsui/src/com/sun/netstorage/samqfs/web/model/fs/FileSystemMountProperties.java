@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemMountProperties.java,v 1.17 2008/05/16 18:39:00 am143972 Exp $
+// ident	$Id: FileSystemMountProperties.java,v 1.18 2008/11/06 14:59:06 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -231,4 +231,10 @@ public interface FileSystemMountProperties extends GenericMountOptions {
 
     // unsupported mount options
     public String getUnsupportedMountOptions();
+
+    // OSD mount options
+    public long getObjectDepth();
+    public void setObjectDepth(long depth);
+    public int getObjectWidth();
+    public void setObjectWidth(int width);
 }

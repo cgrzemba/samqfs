@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemMountPropertiesImpl.java,v 1.20 2008/05/16 18:39:02 am143972 Exp $
+// ident	$Id: FileSystemMountPropertiesImpl.java,v 1.21 2008/11/06 14:59:06 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -848,6 +848,18 @@ public class FileSystemMountPropertiesImpl extends FileSystemMountPropsBase
     }
 
 
+    // OSD Mount options
+    public void setObjectDepth(long depth) {
+	objectDepth = depth;
+	if (opt != null) 
+	    opt.setObjDepth(depth);
+    }
+
+    public void setObjectWidth(int width) {
+	objectWidth = width;
+	if (opt != null) 
+	    opt.setObjWidth(width);
+    }
 
     private void setup() {
 
@@ -965,6 +977,9 @@ public class FileSystemMountPropertiesImpl extends FileSystemMountPropsBase
         misAlignedWriteMinUnit = SamQFSSystemModel.SIZE_KB;
         setUpUnit(UNIT_MALGN_WR_MIN, misAlignedWriteMin);
 
+	// OSD mount options
+	objectDepth = opt.getObjDepth();
+	objectWidth = opt.getObjWidth();
     }
 
 
@@ -1108,4 +1123,5 @@ public class FileSystemMountPropertiesImpl extends FileSystemMountPropsBase
     public String getUnsupportedMountOptions() {
         return opt.getUnsupportedMountOptions();
     }
+
 }

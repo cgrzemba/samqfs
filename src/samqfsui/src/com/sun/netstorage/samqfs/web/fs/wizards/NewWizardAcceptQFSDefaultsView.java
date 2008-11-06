@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardAcceptQFSDefaultsView.java,v 1.2 2008/09/11 05:28:51 kilemba Exp $
+// ident	$Id: NewWizardAcceptQFSDefaultsView.java,v 1.3 2008/11/06 14:59:05 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -137,7 +137,7 @@ public class NewWizardAcceptQFSDefaultsView extends RequestHandlingViewBase
         ((CCStaticTextField)getChild(BLOCK_SIZE)).setValue(blockSizeString);
 
         // metadata and data on separate devices
-        if (hpc.booleanValue() || hafs.booleanValue() || matfs) {
+        if (hpc || hafs || matfs) {
             // metadata storage
             ((CCStaticTextField)getChild(METADATA_STORAGE))
                 .setValue("FSWizard.new.blockallocation.mdstorage.separate");
@@ -147,7 +147,7 @@ public class NewWizardAcceptQFSDefaultsView extends RequestHandlingViewBase
                 .setValue("FSWizard.new.allocationmethod.dual");
 
             // blocks per device
-            if (hafs.booleanValue()) {
+            if (hafs) {
                 ((CCStaticTextField)getChild(BLOCKS_PER_DEVICE)).setValue("2");
             } else {
                 ((CCStaticTextField)getChild(BLOCKS_PER_DEVICE)).setValue("0");
@@ -163,6 +163,20 @@ public class NewWizardAcceptQFSDefaultsView extends RequestHandlingViewBase
 
             // blocks per device
             ((CCStaticTextField)getChild(BLOCKS_PER_DEVICE)).setValue("0");
+        }
+
+        // set the labels for an OSD-based file system
+        if (hpc) {
+            ((CCLabel)getChild("blockSizeLabel")).setValue(SamUtil.
+                getResourceString("FSWizard.new.dataallocation.objectdepth"));
+            ((CCLabel)getChild("blocksPerDeviceLabel")).setValue(SamUtil.
+                getResourceString("FSWizard.new.dataallocation.objectwidth"));          
+        
+            // default block size
+            String objectDepth = new StringBuffer("256 ")
+                .append(SamUtil.getResourceString("common.unit.size.kb"))
+                .toString();
+            ((CCStaticTextField)getChild(BLOCK_SIZE)).setValue(objectDepth);
         }
     }
 

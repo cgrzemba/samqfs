@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MultiHostStatusDisplayBean.java,v 1.3 2008/10/22 20:57:04 kilemba Exp $
+// ident	$Id: MultiHostStatusDisplayBean.java,v 1.4 2008/11/06 14:59:05 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -118,15 +118,92 @@ public class MultiHostStatusDisplayBean {
 
     // resource strings
     public String getTitleText() {
-        return JSFUtil.getMessage("fs.multihoststatus.addclients.title");
+        String key = null;
+        
+        if (status != null) {
+            MultiHostStatus.TYPE type = status.getJobType();
+            boolean succeeded =
+                status.getJobStatus() == MultiHostStatus.STATUS.SUCCESS;
+
+            if (type != null) {
+                switch(type) {
+                case DSP_MOUNT:
+                    key = succeeded ? "fs.multihoststatus.mount.allsuccess" :
+                        "fs.multihoststatus.mount.title";
+                    break;
+                case DSP_UMOUNT:
+                    key = succeeded ? "fs.multihoststatus.umount.allsuccess" :
+                        "fs.multihoststatus.umount.title";
+                    break;
+                case DSP_CHANGE_MOUNT_OPTIONS:
+                    key = succeeded ?
+                        "fs.multihoststatus.changeoptions.allsuccess" :
+                        "fs.multihoststatus.changeoptions.title";
+                    break;
+                case DSP_ADD_CLIENTS:
+                    key = succeeded ?
+                        "fs.multihoststatus.addclients.allsuccess" :
+                        "fs.multihoststatus.addclients.title";
+                    break;
+                case DSP_GROW_FS:
+                    key = succeeded ?
+                        "fs.multihoststatus.growfs.allsuccess" :
+                        "fs.multihoststatus.growfs.title";
+                    break;
+                case DSP_REMOVE_CLIENTS:
+                    key = succeeded ?
+                        "fs.multihoststatus.removeclients.allsuccess" :
+                        "fs.multihoststatus.removeclients.title";
+                    break;
+                case DSP_SET_ADV_NET_CONFIG:
+                    key = succeeded ?
+                        "fs.multihoststatus.netconfig.allsuccess" :
+                        "fs.multihoststatus.netconfig.title";
+                    break;
+                }
+            }
+        } // end if (mhs)
+        
+        return JSFUtil.getMessage(key);
     }
     
     public String getFailedHostLabel() {
-        return JSFUtil.getMessage("fs.multihoststatus.addclients.failedlabel");
+        String key = null;
+        
+        if (status != null) {
+            MultiHostStatus.TYPE type = status.getJobType();
+            if (type != null) {
+                switch(type) {
+                case DSP_MOUNT:
+                    key = "fs.multihoststatus.mount.failedlabel";
+                    break;
+                case DSP_UMOUNT:
+                    key = "fs.multihoststatus.umount.failedlabel";
+                    break;
+                case DSP_CHANGE_MOUNT_OPTIONS:
+                    key = "fs.multihoststatus.changeoptions.failedlabel";
+                    break;
+                case DSP_ADD_CLIENTS:
+                    key = "fs.multihoststatus.addclients.failedlabel";
+                    break;
+                case DSP_GROW_FS:
+                    key = "fs.multihoststatus.growfs.failedlabel";
+                    break;
+                case DSP_REMOVE_CLIENTS:
+                    key = "fs.multihoststatus.removeclients.failedlabel";
+                    break;
+                case DSP_SET_ADV_NET_CONFIG:
+                    key = "fs.multihoststatus.netconfig.failedlabel";
+                    break;
+                }
+            }
+        } // end if (mhs)
+        
+        return JSFUtil.getMessage(key);
     }
     
     public String getHostErrorLabel() {
-        return JSFUtil.getMessage("fs.multihoststatus.addclients.hosterrorlabel");
+        return JSFUtil.getMessage("fs.multihoststatus.hosterrordetail");
     }
     
     // status data

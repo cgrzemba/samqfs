@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CreateFSWizardImpl.java,v 1.109 2008/10/29 21:18:56 kilemba Exp $
+// ident	$Id: CreateFSWizardImpl.java,v 1.110 2008/11/06 14:59:05 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -577,7 +577,14 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                                   "FSWizard.new.dataallocation.help.text2",
                                   "FSWizard.new.dataallocation.help.text3"};
         } else {
-            return super.getStepHelp(pageId);
+            String [] help = super.getStepHelp(pageId);
+            if ((hpcEnabled) &&
+                (pages[page] == CreateFSWizardImplData.PAGE_QFS_DEFAULTS)) {
+                help[2] = "FSWizard.new.dataallocation.objectdepth";
+                help[3] = "FSWizard.new.dataallocation.objectwidth";
+            }
+
+            return help;
         }
     }
 
@@ -889,10 +896,19 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 if (archivingEnabled) {
                     archiveConfig = getArchiveConfig();
                 }
+
+		// set object depth and width
+		if (hpcEnabled) {
+		    properties.setObjectWidth(intStripe);
+		    properties.setObjectDepth(intDAU);
+		    properties.setStripeWidth(0);
+		}
+
                 FileSystem fs = fsManager.createSharedFileSystem(
                     fsName,
                     mountPoint,
-                    intDAU,
+                    hpcEnabled ? 0 : intDAU, // set DAU to 0 when
+					     // creating an OSD-based file system.
                     memList,
                     properties,
                     (fsType.equals(FSTYPE_SHAREDFS) ?
@@ -1192,8 +1208,13 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             // default to single allocation
             wizardModel.setValue(NewWizardBlockAllocationView.ALLOCATION_METHOD,
 				 NewWizardBlockAllocationView.SINGLE);
+
+            String blockSize = "64";
+            if (hpcEnabled)
+                blockSize = "256";
+
             wizardModel.setValue(NewWizardBlockAllocationView.BLOCK_SIZE,
-				 "64");
+				 blockSize);
             wizardModel.setValue(NewWizardBlockAllocationView.BLOCK_SIZE_UNIT,
 				 "1");
             wizardModel.setValue(NewWizardBlockAllocationView.BLOCKS_PER_DEVICE,
@@ -1272,6 +1293,12 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 properties.setAppendLeaseDuration(300);
             }
         }
+
+	// set OSD mount options
+	if (hpcEnabled) {
+	    // device depth
+	    
+	}
 
         return properties;
     }
@@ -1374,8 +1401,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 
         // if accepting
         if (NewWizardAcceptQFSDefaultsView.ACCEPT.equals(defaults)) {
-            if (hpcEnabled || matfsEnabled) { // must pass through the data
-                                              // allocation page
+            if (hpcEnabled) { // must pass through the data allocation page
                 this.pages = WizardUtil.insertPagesBefore(this.pages,
                     new int [] {CreateFSWizardImplData.PAGE_BLOCK_ALLOCATION},
                                   CreateFSWizardImplData.PAGE_QFS_DEFAULTS,
@@ -1565,6 +1591,29 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 // dropdown menu
             }
         }
+
+	// blocks per device
+	// NOTE: for hpc fs this value holds the device width.
+	String blocksPerDeviceStr = (String)wizardModel
+	    .getValue(NewWizardBlockAllocationView.BLOCKS_PER_DEVICE);
+	blocksPerDeviceStr =
+	    blocksPerDeviceStr != null ? blocksPerDeviceStr.trim() : "";
+	if ("".equals(blocksPerDeviceStr)) {
+	    setWizardAlert(evt, "FSWizard.new.error.stripeValue");
+	    return false;
+	} else {
+	    // parse int
+	    int x = 1;
+	    try {
+		x = Integer.parseInt(blocksPerDeviceStr);
+		
+		// if the value parses correctly, save it.
+		intStripe = x;
+	    } catch (NumberFormatException nfe) {
+		setWizardAlert(evt, "FSWizard.new.error.stripeValueRange");
+		return false;
+	    }
+	}
 
         wizardModel.setValue(NewWizardBlockAllocationView.BLOCK_SIZE_KB,
                              new Integer(blockSizeInKB));
@@ -3536,6 +3585,14 @@ public class CreateFSWizardImpl extends SamWizardImpl {
                 wizardModel.setValue(
                     NewWizardBlockAllocationView.BLOCKS_PER_DEVICE, "0");
             }
+
+
+            // set the default block size (which in HPC FS holds object depth)
+            if (hpcEnabled) {
+                wizardModel.setValue(NewWizardBlockAllocationView.BLOCK_SIZE,
+                                     "256");
+            }
+
         }
     }
 
