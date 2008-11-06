@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.168 $"
+#pragma ident "$Revision: 1.169 $"
 
 #include "sam/osversion.h"
 
@@ -806,6 +806,13 @@ samfs_umount(
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 		cmn_err(CE_NOTE,
 	"SAM-QFS: %s: Umount ignored - failover in progress (%x)",
+		    mp->mt.fi_name, mp->mt.fi_status);
+		return (EBUSY);
+	} else if ((SAM_IS_SHARED_SERVER(mp) || !SAM_IS_SHARED_FS(mp)) &&
+	    mp->mt.fi_status & FS_RECONFIG) {
+		mutex_exit(&mp->ms.m_waitwr_mutex);
+		cmn_err(CE_NOTE, "SAM-QFS: %s: Umount ignored - "
+		    "reconfig in progress (%x)",
 		    mp->mt.fi_name, mp->mt.fi_status);
 		return (EBUSY);
 	} else if (SAM_IS_SHARED_SERVER(mp) &&

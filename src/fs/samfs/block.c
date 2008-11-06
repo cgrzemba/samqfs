@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.115 $"
+#pragma ident "$Revision: 1.116 $"
 
 #include "sam/osversion.h"
 
@@ -1943,6 +1943,9 @@ sam_change_state(
 			break;
 		} else {
 			rtnerr = sam_grow_fs(mp, dp, ord);
+			if (rtnerr) {
+				break;
+			}
 		}
 
 		/*
@@ -2279,6 +2282,17 @@ sam_grow_fs(
 		    LG_DEV_BLOCK(mp, dt)) * LG_DEV_BLOCK(mp, dt);
 	}
 
+	mutex_enter(&mp->ms.m_waitwr_mutex);
+	if (mp->mt.fi_status & FS_RECONFIG) {
+		mutex_exit(&mp->ms.m_waitwr_mutex);
+		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s, "
+		    "config in progress", mp->mt.fi_name,
+		    dp->part.pt_eq, dp->part.pt_name);
+		return (26);
+	}
+	mp->mt.fi_status |= FS_RECONFIG;
+	mutex_exit(&mp->ms.m_waitwr_mutex);
+
 	/*
 	 * Get the new sblk. Set the new size, but do not set the
 	 * new device count until the free map has been built and cleared.
@@ -2418,9 +2432,15 @@ done:
 		kmem_free(sblk, new_sblk_size);
 		mp->mi.m_sbp = old_sblk;
 		mp->mi.m_sblk_size = old_sblk_size;
+		mutex_enter(&mp->ms.m_waitwr_mutex);
+		mp->mt.fi_status &= ~FS_RECONFIG;
+		mutex_exit(&mp->ms.m_waitwr_mutex);
 		return (26);
 	}
 	kmem_free(old_sblk, old_sblk_size);
+	mutex_enter(&mp->ms.m_waitwr_mutex);
+	mp->mt.fi_status &= ~FS_RECONFIG;
+	mutex_exit(&mp->ms.m_waitwr_mutex);
 	return (0);
 }
 

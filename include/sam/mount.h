@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.137 $"
+#pragma ident "$Revision: 1.138 $"
 #endif
 
 #include <sam/types.h>
@@ -133,6 +133,7 @@ struct sam_fs_info {	/* File system information */
 #define	FS_MOUNTED	  0x00000001	/* Filesystem is mounted */
 #define	FS_MOUNTING	  0x00000002	/* Filesystem is currently mounting */
 #define	FS_UMOUNT_IN_PROGRESS 0x00000004 /* Filesystem is currently umounting */
+#define	FS_RECONFIG	  0x00000008	/* Filesystem is doing live reconfig */
 
 #define	FS_SERVER	  0x00000010	/* Host is now metadata server */
 #define	FS_CLIENT	  0x00000020	/* Host is not metadata server */

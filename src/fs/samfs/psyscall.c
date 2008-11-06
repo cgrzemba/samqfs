@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.196 $"
+#pragma ident "$Revision: 1.197 $"
 #endif
 
 #include "sam/osversion.h"
@@ -783,6 +783,7 @@ sam_mount_info(
 	 */
 	if (mt != NULL) {
 		int istart;
+		short mm_count = 0;
 		short prev_mm_count = 0;
 		sam_mount_info_t *mntp;
 
@@ -818,25 +819,48 @@ sam_mount_info(
 			    sizeof (mp->orig_mt));
 			*lastmp = mp;
 			samgt.num_fs_configured++;
-			istart = 0;
-		} else {		/* File system exists, add devices */
-			if (mp->mt.fi_status & (FS_MOUNTED | FS_MOUNTING |
-			    FS_UMOUNT_IN_PROGRESS)) {
+			istart = 0; /* new filesystem, copy all entries */
+		} else {
+			/* File system exists, add devices */
+			mutex_enter(&mp->ms.m_waitwr_mutex);
+			if (mp->mt.fi_status &
+			    (FS_MOUNTING|FS_UMOUNT_IN_PROGRESS)) {
+				mutex_exit(&mp->ms.m_waitwr_mutex);
+				error = EBUSY;
+				goto done;
+			}
+			if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+				mutex_exit(&mp->ms.m_waitwr_mutex);
+				error = EAGAIN;
+				goto done;
+			}
+			if (mp->mt.fi_status & FS_MOUNTED) {
 				struct sam_sblk *sblk;
+				if (mp->mt.fi_status & FS_RECONFIG) {
+					mutex_exit(&mp->ms.m_waitwr_mutex);
+					error = EBUSY;
+					goto done;
+				}
 
 				sblk = mp->mi.m_sbp;
 				if (sblk->info.sb.fs_count >= args.fs_count) {
+					mutex_exit(&mp->ms.m_waitwr_mutex);
 					error = EINVAL;
 					goto done;
 				}
+				istart = sblk->info.sb.fs_count;
+				mm_count = sblk->info.sb.mm_count;
+				prev_mm_count = mm_count;
+
+				mp->mt.fi_status |= FS_RECONFIG;
 				mp->mt.fs_count = sblk->info.sb.fs_count;
 				mp->orig_mt.fs_count = sblk->info.sb.fs_count;
-				istart = sblk->info.sb.fs_count;
 				mp->mt.mm_count = sblk->info.sb.mm_count;
 				mp->orig_mt.mm_count = sblk->info.sb.mm_count;
-				prev_mm_count = sblk->info.sb.mm_count;
+				mutex_exit(&mp->ms.m_waitwr_mutex);
 			} else {
-				istart = 0;
+				istart = 0; /* Unmounted, overwrite entries */
+				mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
 		}
 		for (i = istart; i < args.fs_count; i++) {
@@ -844,6 +868,9 @@ sam_mount_info(
 			if (copyin(&mntp->part[i], &mp->mi.m_fs[i],
 					sizeof (struct sam_fs_part))) {
 				kmem_free((void *)mp, mount_size);
+				mutex_enter(&mp->ms.m_waitwr_mutex);
+				mp->mt.fi_status &= ~FS_RECONFIG;
+				mutex_exit(&mp->ms.m_waitwr_mutex);
 				error = EFAULT;
 				goto done;
 			}
@@ -856,16 +883,16 @@ sam_mount_info(
 				dp->num_group = 1;
 				dp->skip_ord = 1;
 				dp->part.pt_state = DEV_OFF;
-				mp->mt.fs_count++;
-				mp->orig_mt.fs_count++;
 				if (dp->part.pt_type == DT_META) {
-					mp->mt.mm_count++;
-					mp->orig_mt.mm_count++;
+					mm_count++;
 				}
 			}
 		}
 		error = 0;
 		if (istart) {
+			mp->mt.fs_count = args.fs_count;
+			mp->orig_mt.fs_count = args.fs_count;
+			mp->mt.mm_count = mm_count;
 			error = sam_check_stripe_group(mp, istart);
 		}
 #ifdef sun
@@ -895,11 +922,16 @@ sam_mount_info(
 			}
 		}
 #endif
-		if (istart && error) {
-			mp->mt.fs_count = (short)istart;
-			mp->orig_mt.fs_count = (short)istart;
-			mp->mt.mm_count = prev_mm_count;
-			mp->orig_mt.mm_count = prev_mm_count;
+		if (istart) {
+			if (error) {
+				mp->mt.fs_count = (short)istart;
+				mp->orig_mt.fs_count = (short)istart;
+				mp->mt.mm_count = prev_mm_count;
+				mp->orig_mt.mm_count = prev_mm_count;
+			}
+			mutex_enter(&mp->ms.m_waitwr_mutex);
+			mp->mt.fi_status &= ~FS_RECONFIG;
+			mutex_exit(&mp->ms.m_waitwr_mutex);
 		}
 	}
 done:
@@ -1943,10 +1975,6 @@ sam_setfspartcmd(
 		error = ENOTSUP;
 		goto out;
 	}
-	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
-		error = EAGAIN;
-		goto out;
-	}
 
 	/*
 	 * Search partitions for matching eq.
@@ -1955,6 +1983,14 @@ sam_setfspartcmd(
 	locked = 1;
 	error = 0;
 	ord = -1;
+	if (mp->mt.fi_status & (FS_MOUNTING|FS_UMOUNT_IN_PROGRESS)) {
+		error = EBUSY;
+		goto out;
+	}
+	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING|FS_RECONFIG)) {
+		error = EAGAIN;
+		goto out;
+	}
 	for (i = 0; i < mp->mt.fs_count; i++) {
 		dp = &mp->mi.m_fs[i];
 		pt = &dp->part;
