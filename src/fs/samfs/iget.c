@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.218 $"
+#pragma ident "$Revision: 1.219 $"
 
 #include "sam/osversion.h"
 
@@ -186,10 +186,6 @@ sam_get_ino(
 	if (ip == NULL) {
 		ip = (sam_node_t *)kmem_cache_alloc(samgt.inode_cache,
 		    KM_SLEEP);
-		if (mp->mt.fi_type == DT_META_OBJ_TGT_SET) {
-			sam_objnode_alloc(ip);
-		}
-
 		ip->mp = NULL;
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		ip->flags.bits = 0;
@@ -212,6 +208,10 @@ sam_get_ino(
 	ip->dev = vfsp->vfs_dev;
 	ip->di.id.ino = 0;
 	sam_clear_incore_inode(ip);
+	if ((mp->mt.fi_type == DT_META_OBJ_TGT_SET) && (!ip->objnode)) {
+		/* 'mat' FS and this inode does not have an object node */
+		sam_objnode_alloc(ip);
+	}
 
 	/*
 	 * Verify inode was not created in the hash chain since last check.
