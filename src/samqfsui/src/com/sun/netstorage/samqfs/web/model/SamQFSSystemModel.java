@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemModel.java,v 1.58 2008/10/02 03:00:25 ronaldso Exp $
+// ident	$Id: SamQFSSystemModel.java,v 1.59 2008/11/06 00:47:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -146,7 +146,7 @@ public interface SamQFSSystemModel {
     public boolean isAccessDenied();
 
     public boolean isServerSupported();
-    
+
     public boolean isObjectBasedFSSupported();
 
     public SystemCapacity getCapacity() throws SamFSException;

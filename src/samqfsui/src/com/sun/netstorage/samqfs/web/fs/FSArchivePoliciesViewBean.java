@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSArchivePoliciesViewBean.java,v 1.36 2008/10/01 22:43:32 ronaldso Exp $
+// ident	$Id: FSArchivePoliciesViewBean.java,v 1.37 2008/11/06 00:47:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -167,7 +167,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
             String serverName = (String) getPageSessionAttribute(
                 Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
-            if (serverName == null){
+            if (serverName == null) {
                 serverName = RequestManager.getRequest().getParameter(
                     Constants.PageSessionAttributes.SAMFS_SERVER_NAME);
                 setPageSessionAttribute(
@@ -176,7 +176,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
             }
             String fsName = (String) getPageSessionAttribute(
                 Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
-            if (fsName == null){
+            if (fsName == null) {
                 fsName = RequestManager.getRequest().getParameter(
                     Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
                 setPageSessionAttribute(
@@ -193,7 +193,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
         } else if (name.equals(CHILD_BREADCRUMB)) {
             Integer [] pagePath = (Integer []) getPageSessionAttribute(
                                 Constants.SessionAttributes.PAGE_PATH);
-            if (pagePath == null){
+            if (pagePath == null) {
                 String pathString = RequestManager.getRequest().getParameter(
                                         Constants.SessionAttributes.PAGE_PATH);
                 pathString = pathString == null ? "" : pathString;
@@ -202,7 +202,7 @@ public class FSArchivePoliciesViewBean extends CommonViewBeanBase {
                         new String[0] :
                         pathString.split(",");
                 Integer [] path = new Integer[pathStringArr.length];
-                for (int i = 0; i < pathStringArr.length; i++){
+                for (int i = 0; i < pathStringArr.length; i++) {
                     path[i] = new Integer(pathStringArr[i]);
                 }
 

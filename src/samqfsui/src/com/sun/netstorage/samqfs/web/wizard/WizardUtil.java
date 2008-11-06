@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: WizardUtil.java,v 1.11 2008/09/11 05:28:53 kilemba Exp $
+// ident	$Id: WizardUtil.java,v 1.12 2008/11/06 00:47:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.wizard;
 
@@ -147,12 +147,12 @@ public class WizardUtil {
         return result;
     }
 
-    /** 
+    /**
      * remove the given page id from the array of pages provided.
      *
      * @param int pageId - page to remove
-     *                     NOTE: If pageId is a striped group or object group
-     *                     page, all occurences of the page will be removed.
+     *  NOTE: If pageId is a striped group or object group
+     *  page, all occurences of the page will be removed.
      * @param in [] pages - the array to remove the page from
      */
     public static int [] removePage(int pageId, int [] pages) {

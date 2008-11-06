@@ -1,4 +1,3 @@
-
 /*
  *    SAM-QFS_notice_begin
  *
@@ -28,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: EditDiskVSNFlagsViewBean.java,v 1.11 2008/05/16 19:39:27 am143972 Exp $
+// ident	$Id: EditDiskVSNFlagsViewBean.java,v 1.12 2008/11/06 00:47:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 

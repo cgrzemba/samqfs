@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PolicySummaryView.java,v 1.25 2008/07/23 21:25:28 kilemba Exp $
+// ident	$Id: PolicySummaryView.java,v 1.26 2008/11/06 00:47:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -459,4 +459,3 @@ public class PolicySummaryView extends CommonTableContainerView {
              getViewBean(PolicyDetailsViewBean.class));
     }
 }
-

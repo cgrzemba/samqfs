@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNDetailsViewBean.java,v 1.54 2008/10/01 22:43:33 ronaldso Exp $
+// ident	$Id: VSNDetailsViewBean.java,v 1.55 2008/11/06 00:47:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -664,7 +664,7 @@ public class VSNDetailsViewBean extends CommonViewBeanBase {
                 hasAuthorization(Authorization.MEDIA_OPERATOR)) {
                 throw new SamFSException("common.nopermission");
             } else if (!SecurityManagerFactory.getSecurityManager().
-                hasAuthorization(Authorization.CONFIG)){
+                hasAuthorization(Authorization.CONFIG)) {
                 throw new SamFSException("common.nopermission");
             }
 

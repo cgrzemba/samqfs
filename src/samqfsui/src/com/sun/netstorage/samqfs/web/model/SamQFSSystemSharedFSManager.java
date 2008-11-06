@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.28 2008/11/06 00:38:59 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.29 2008/11/06 00:47:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -230,7 +230,7 @@ public interface SamQFSSystemSharedFSManager {
     public void freeResources();
 
     // The following methods are used strictly for 4.6 servers for backward
-    // compatibility purpose
+    // compatibility purpose. TODO: Remove?
 
     /**
      *

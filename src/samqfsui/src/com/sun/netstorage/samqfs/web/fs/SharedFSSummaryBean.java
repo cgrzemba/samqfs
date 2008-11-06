@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSSummaryBean.java,v 1.6 2008/10/02 03:00:24 ronaldso Exp $
+// ident        $Id: SharedFSSummaryBean.java,v 1.7 2008/11/06 00:47:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -76,13 +76,13 @@ public class SharedFSSummaryBean {
     public SharedFSSummaryBean() {
     }
 
-    public Hyperlink [] getBreadCrumbs(){
+    public Hyperlink [] getBreadCrumbs() {
         Hyperlink [] links = new Hyperlink[2];
-        for (int i = 0; i < links.length; i++){
+        for (int i = 0; i < links.length; i++) {
             links[i] = new Hyperlink();
             links[i].setImmediate(true);
             links[i].setId("breadcrumbid" + i);
-            if (i == 0){
+            if (i == 0) {
                 // Back to FS Summary
                 links[i].setText(JSFUtil.getMessage("FSSummary.title"));
                 links[i].setUrl(

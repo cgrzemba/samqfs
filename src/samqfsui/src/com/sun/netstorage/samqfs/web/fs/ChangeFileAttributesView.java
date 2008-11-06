@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ChangeFileAttributesView.java,v 1.12 2008/11/05 20:24:49 ronaldso Exp $
+// ident	$Id: ChangeFileAttributesView.java,v 1.13 2008/11/06 00:47:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -524,7 +524,7 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
             }
             fsManager = SamUtil.getModel(serverName).getSamQFSSystemFSManager();
 
-            switch(pageMode) {
+            switch (pageMode) {
                 case MODE_ARCHIVE:
                     successMsg = "fs.filedetails.archiving.success";
                     errorMsg   = "fs.filedetails.archiving.failed";
@@ -543,14 +543,14 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                     errorMsg   = "fs.filedetails.releasing.failed";
 
                     if ("release".equals(radioValue)) {
-                        String subRadioValue =( String)
+                        String subRadioValue = (String)
                             ((CCRadioButton) getChild(SUB_RADIO)).getValue();
                         try {
                             newOption = Integer.parseInt(subRadioValue);
                         } catch (NumberFormatException numEx) {
                             // Developer's bug
                             throw new SamFSException(
-                                "Invalid subRadioValue detected!");
+                                "Invalid subRadioValue detected!", numEx);
                         }
                     } else {
                         newOption = Releaser.NEVER;
@@ -582,14 +582,14 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
                     errorMsg   = "fs.filedetails.staging.failed";
 
                     if ("stage".equals(radioValue)) {
-                        String subRadioValue =( String)
+                        String subRadioValue = (String)
                             ((CCRadioButton) getChild(SUB_RADIO)).getValue();
                         try {
                             newOption = Integer.parseInt(subRadioValue);
                         } catch (NumberFormatException numEx) {
                             // Developer's bug
                             throw new SamFSException(
-                                "Invalid subRadioValue detected!");
+                                "Invalid subRadioValue detected!", numEx);
                         }
                     } else {
                         newOption = Stager.NEVER;
@@ -639,20 +639,12 @@ public class ChangeFileAttributesView extends RequestHandlingViewBase
 
     /**
      * The definitions of the page mode can be one of the following:
-     * 0     == Change Archive Attribute mode
-     * 1     == Change Release Attribute mode
-     * 2     == Change Stage   Attribute mode
+     * 0 == Change Archive Attribute mode
+     * 1 == Change Release Attribute mode
+     * 2 == Change Stage   Attribute mode
      * @return the mode of the page
      */
     public int getPageMode() {
-        /*
-        if (parentPage == PAGE_FILE_DETAIL) {
-            return ((FileDetailsPopupViewBean)
-                getParentViewBean()).getPageMode();
-        } else {
-            return pageMode;
-        }
-         */
         return pageMode;
     }
 

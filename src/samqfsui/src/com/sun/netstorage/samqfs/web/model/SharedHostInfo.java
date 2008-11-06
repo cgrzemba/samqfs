@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: SharedHostInfo.java,v 1.9 2008/10/15 22:22:13 ronaldso Exp $
+// ident $Id: SharedHostInfo.java,v 1.10 2008/11/06 00:47:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -259,7 +259,7 @@ public class SharedHostInfo {
             return STATUS_KNOWN_DEAD;
         } else if (STATE_OFF == getStatus()) {
             return STATUS_ACCESS_DISABLED;
-        } else if (0 >= getMounted()){
+        } else if (0 >= getMounted()) {
             return STATUS_UNMOUNTED;
         } else {
             return STATUS_OK;

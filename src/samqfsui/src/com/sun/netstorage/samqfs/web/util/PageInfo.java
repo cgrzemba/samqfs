@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: PageInfo.java,v 1.36 2008/11/06 00:38:59 ronaldso Exp $
+// ident	$Id: PageInfo.java,v 1.37 2008/11/06 00:47:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -36,7 +36,7 @@ import java.util.HashMap;
 /**
  * This class contains all of the breadcrumb information for all the pages
  * within the application.
- * This class utilizes two data structures. The first is an array which holds
+ * This class utilizes two data structures. The first is an array that holds
  * references to the PagePaths which, in turn, holds the breadcrumb
  * display information for a page.  The second is a hash table which
  * allows callers to get the number associated with a particular page

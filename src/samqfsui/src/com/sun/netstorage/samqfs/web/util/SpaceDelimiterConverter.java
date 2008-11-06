@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SpaceDelimiterConverter.java,v 1.2 2008/06/25 21:04:00 ronaldso Exp $
+// ident	$Id: SpaceDelimiterConverter.java,v 1.3 2008/11/06 00:47:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -62,7 +62,7 @@ public class SpaceDelimiterConverter implements Converter {
         }
 
         StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < ipAddresses.length; i++){
+        for (int i = 0; i < ipAddresses.length; i++) {
             if (buf.length() > 0) {
                 buf.append("<br />");
             }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNSummaryView.java,v 1.51 2008/10/01 22:43:33 ronaldso Exp $
+// ident	$Id: VSNSummaryView.java,v 1.52 2008/11/06 00:47:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -177,7 +177,7 @@ public class VSNSummaryView extends CommonTableContainerView {
                 hasAuthorization(Authorization.MEDIA_OPERATOR)) {
                 throw new SamFSException("common.nopermission");
             } else if (!SecurityManagerFactory.getSecurityManager().
-                hasAuthorization(Authorization.CONFIG)){
+                hasAuthorization(Authorization.CONFIG)) {
                 throw new SamFSException("common.nopermission");
             }
 

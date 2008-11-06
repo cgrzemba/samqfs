@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemAdminManager.java,v 1.31 2008/07/23 21:25:28 kilemba Exp $
+// ident	$Id: SamQFSSystemAdminManager.java,v 1.32 2008/11/06 00:47:08 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -272,4 +272,3 @@ public interface SamQFSSystemAdminManager {
     public Configuration getConfigurationSummary(boolean refresh)
         throws SamFSException;
 }
-

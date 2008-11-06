@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.129 2008/10/22 20:57:06 kilemba Exp $
+// ident	$Id: SamUtil.java,v 1.130 2008/11/06 00:47:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -1688,7 +1688,7 @@ public class SamUtil {
             return false;
         }
         String _255 = "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
-        Pattern p = Pattern.compile( "^(?:" + _255 + "\\.){3}" + _255 + "$");
+        Pattern p = Pattern.compile("^(?:" + _255 + "\\.){3}" + _255 + "$");
         Matcher matcher = p.matcher(testString);
 
         if (matcher.matches()) {
@@ -2114,15 +2114,15 @@ public class SamUtil {
      * list.
      * USAGE: if you wish to return OSD devices only, call this method with a
      * true value for the osd variable. To return non-OSD devices only, call
-     * this method with a false value for the osd variable. 
-     * 
+     * this method with a false value for the osd variable.
+     *
      * @param DiskCache [] allDevice - the list of all discovered devices.
      * @param boolean osd - This variable determines if OSD devices are
-     *                      filtered in or out of the list returned. Pass in
-     *                      <code>true</code> to return OSD devices only or
-     *                      <code>false</code> to return non-OSD devices only.
+     *  filtered in or out of the list returned. Pass in
+     *  <code>true</code> to return OSD devices only or
+     *  <code>false</code> to return non-OSD devices only.
      * @param List<DiskCache> - the subset of devices that match the provided
-     *                          criteria.
+     *  criteria.
      *
      */
     public static DiskCache [] filterInOSDDevices(DiskCache [] allDevice,
@@ -2156,11 +2156,11 @@ public class SamUtil {
         return result;
     }
 
-    /** 
+    /**
      * Determine if the given string is well formed mount point
      */
     public static boolean isValidMountPoint(String mountPoint) {
-        return (mountPoint != null && 
+        return (mountPoint != null &&
                 mountPoint.trim().length() != 0 &&
                 SamUtil.isValidNonSpecialCharString(mountPoint) &&
                 mountPoint.startsWith("/"));

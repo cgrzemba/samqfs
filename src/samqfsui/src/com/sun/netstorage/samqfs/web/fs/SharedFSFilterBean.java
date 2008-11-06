@@ -27,12 +27,13 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSFilterBean.java,v 1.2 2008/10/15 22:22:13 ronaldso Exp $
+// ident        $Id: SharedFSFilterBean.java,v 1.3 2008/11/06 00:47:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
 import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.Option;
 import javax.faces.event.ActionEvent;
 
@@ -148,7 +149,7 @@ public class SharedFSFilterBean {
             JSFUtil.getMessage("SharedFS.text.mdspmds") +
                 delimitor +
             JSFUtil.getMessage("SharedFS.text.client");
-   
+
         menuContentValue1 =
             SharedFSFilter.STATUS_OK +
                 delimitor +
@@ -157,19 +158,18 @@ public class SharedFSFilterBean {
             SharedFSFilter.STATUS_ACCESS_ENABLED +
                 delimitor +
             SharedFSFilter.STATUS_IN_ERROR;
-            
+
         menuContentValue2 =
             SharedFSFilter.TYPE_MDS_PMDS +
                 delimitor +
             SharedFSFilter.TYPE_CLIENTS;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Action Event Listener
 
     public void okButtonClicked(ActionEvent event) {
-        System.out.println("okButtonClicked! " + getSubmitValue());
-System.out.println("submitted: " + getSubmitValue());
+        TraceUtil.trace2("submitted: " + getSubmitValue());
+
         String param = "";
         String [] inUsed = getSubmitValue().split(",");
         if (inUsed == null || inUsed.length == 0) {
@@ -218,7 +218,7 @@ System.out.println("submitted: " + getSubmitValue());
                 }
             }
         }
-System.out.println("param: " + param);
+
         JSFUtil.redirectPage(
             "/faces/jsp/fs/SharedFSClient.jsp",
             SharedFSBean.PARAM_FILTER + "=" + param);
@@ -293,7 +293,8 @@ System.out.println("param: " + param);
         return selectedMenuFilterCondition2;
     }
 
-    public void setSelectedMenuFilterCondition2(String selectedMenuFilterCondition2) {
+    public void setSelectedMenuFilterCondition2(
+        String selectedMenuFilterCondition2) {
         this.selectedMenuFilterCondition2 = selectedMenuFilterCondition2;
     }
 
@@ -301,7 +302,8 @@ System.out.println("param: " + param);
         return selectedMenuFilterCondition3;
     }
 
-    public void setSelectedMenuFilterCondition3(String selectedMenuFilterCondition3) {
+    public void setSelectedMenuFilterCondition3(
+        String selectedMenuFilterCondition3) {
         this.selectedMenuFilterCondition3 = selectedMenuFilterCondition3;
     }
 
