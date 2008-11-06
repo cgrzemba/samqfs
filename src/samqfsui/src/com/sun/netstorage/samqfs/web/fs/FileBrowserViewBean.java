@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserViewBean.java,v 1.28 2008/07/30 19:55:52 ronaldso Exp $
+// ident	$Id: FileBrowserViewBean.java,v 1.29 2008/11/06 00:38:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -528,8 +528,10 @@ public class FileBrowserViewBean extends CommonViewBeanBase {
 
         for (int i = 0; i < fs.length; i++) {
             String mountPoint = fs[i].getMountPoint();
-            if (mountPoint == null || mountPoint.length() == 0) {
-                // skip problematic file system
+            if (mountPoint == null ||
+                mountPoint.length() == 0 ||
+                fs[i].isMatFS()) {
+                // skip problematic file system or MAT typed file systems
                 continue;
             }
             labelBuf.append("###").append(mountPoint).

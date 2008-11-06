@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryModel.java,v 1.71 2008/09/17 23:33:24 kilemba Exp $
+// ident	$Id: FileSystemSummaryModel.java,v 1.72 2008/11/06 00:38:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -383,9 +383,13 @@ public class FileSystemSummaryModel extends CCActionTableModel {
             }
 
             if (systemSetup == FileSystemSummaryView.SETUP_QFS) {
-                enabledButtons.append(ViewFilesButton_QFS);
+                if (!fsList[i].isMatFS()) {
+                    enabledButtons.append(ViewFilesButton_QFS);
+                }
             } else {
-                enabledButtons.append(ViewFilesButton).append(',');
+                if (!fsList[i].isMatFS()) {
+                    enabledButtons.append(ViewFilesButton).append(',');
+                }
                 if (archiveEnabled) {
                     enabledButtons.append(ViewPolicyButton).append(',');
                     enabledButtons.append(SamQFSWizardNewPolicyButton);

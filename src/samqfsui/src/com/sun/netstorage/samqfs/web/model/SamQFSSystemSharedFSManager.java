@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.27 2008/11/05 20:26:08 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManager.java,v 1.28 2008/11/06 00:38:59 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model;
 
@@ -36,7 +36,6 @@ import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiHostException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiStepOpException;
 import com.sun.netstorage.samqfs.mgmt.fs.FSArchCfg;
-import com.sun.netstorage.samqfs.mgmt.fs.MountOptions;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystemMountProperties;
 import com.sun.netstorage.samqfs.web.model.fs.SharedFSFilter;
@@ -183,8 +182,10 @@ public interface SamQFSSystemSharedFSManager {
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public long setSharedFSMountOptions(String mdServer, String fsName,
-	String [] clients, MountOptions mo) throws SamFSException;
+    public long setSharedFSMountOptions(
+        String mdServer, String fsName,
+        String [] clients, FileSystemMountProperties options)
+            throws SamFSException;
 
 
     /**
@@ -228,7 +229,6 @@ public interface SamQFSSystemSharedFSManager {
      */
     public void freeResources();
 
-    ////////////////////////////////////////////////////////////////////////////
     // The following methods are used strictly for 4.6 servers for backward
     // compatibility purpose
 
@@ -381,7 +381,7 @@ public interface SamQFSSystemSharedFSManager {
         FileSystemMountProperties options)
         throws SamFSMultiHostException;
 
-        /**
+    /**
      * Call this method to set how a shared member of a shared file system
      * talks to the metadata/potential metadata server.
      */

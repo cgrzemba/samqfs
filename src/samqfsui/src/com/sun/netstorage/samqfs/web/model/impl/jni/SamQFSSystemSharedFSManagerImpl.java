@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.64 2008/11/05 20:26:08 ronaldso Exp $
+// ident	$Id: SamQFSSystemSharedFSManagerImpl.java,v 1.65 2008/11/06 00:38:59 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -360,8 +360,10 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
      * to complete this task. Information can be obtained about this job by
      * using the Job.getAllActivities function with a filter on the job id.
      */
-    public long setSharedFSMountOptions(String mdServer, String fsName,
-	String [] clients, MountOptions mo) throws SamFSException {
+    public long setSharedFSMountOptions(
+        String mdServer, String fsName,
+        String [] clients, FileSystemMountProperties options)
+        throws SamFSException {
 
         SamQFSSystemModelImpl model = (SamQFSSystemModelImpl)
             this.appModel.getSamQFSSystemModel(mdServer);
@@ -370,8 +372,14 @@ public class SamQFSSystemSharedFSManagerImpl extends MultiHostUtil implements
             throw new SamFSException("logic.hostIsDown");
         }
 
-        return FS.setSharedFSMountOptions(
-                    model.getJniContext(), fsName, clients, mo);
+        FileSystemMountPropertiesImpl jniOptions =
+            (FileSystemMountPropertiesImpl) options;
+        return
+            FS.setSharedFSMountOptions(
+                model.getJniContext(),
+                fsName,
+                clients,
+                jniOptions.getJniMountOptions());
     }
 
     public void freeResources() {

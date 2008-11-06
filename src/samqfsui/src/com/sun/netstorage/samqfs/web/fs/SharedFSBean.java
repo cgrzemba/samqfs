@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSBean.java,v 1.22 2008/11/05 20:26:08 ronaldso Exp $
+// ident        $Id: SharedFSBean.java,v 1.23 2008/11/06 00:38:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -135,6 +135,9 @@ public class SharedFSBean implements Serializable {
     private SharedFSSummaryBean summaryBean = null;
     private SharedFSClientBean clientBean = null;
 
+    /** Special attribute used by Edit Mount Option page */
+    public static String RA_FROM_EMO_PAGE = "ra_from_emo_page";
+
     public static final String PARAM_FILTER = "filter";
 
     public SharedFSBean() {
@@ -148,11 +151,9 @@ public class SharedFSBean implements Serializable {
 
         // Call to the backend for first time page display
         getSummaryData();
-
         populateHiddenFields();
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Remote Calls
 
     private void getSummaryData() {
@@ -253,7 +254,6 @@ public class SharedFSBean implements Serializable {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Permission
     public boolean isHasPermission() {
         return hasPermission;
@@ -263,7 +263,6 @@ public class SharedFSBean implements Serializable {
         this.hasPermission = hasPermission;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Time when page is loaded
     public String getTimeSummary() {
         return timeSummary;
@@ -290,29 +289,26 @@ public class SharedFSBean implements Serializable {
         this.summaryPageTitle = summaryPageTitle;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Tab Set
     public TabSet getTabSet() {
         this.tabSet = tabBean.getMyTabSet();
         return tabSet;
     }
-    public void setTabSet(TabSet tabSet){
+
+    public void setTabSet(TabSet tabSet) {
         this.tabSet = tabSet;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Breadcrumbs
-    public Hyperlink [] getBreadCrumbsSummary(){
+    public Hyperlink [] getBreadCrumbsSummary() {
         return summaryBean.getBreadCrumbs();
     }
 
-    public Hyperlink [] getBreadCrumbsClient(){
+    public Hyperlink [] getBreadCrumbsClient() {
         return clientBean.getBreadCrumbs(getFSName());
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Alert
-
     public String getAlertDetail() {
         if (!alertRendered) {
             alertDetail = null;
@@ -336,7 +332,7 @@ public class SharedFSBean implements Serializable {
     }
 
     public String getAlertType() {
-        if (!alertRendered){
+        if (!alertRendered) {
             alertType = Constants.Alert.INFO;
         }
         return alertType;
@@ -347,6 +343,22 @@ public class SharedFSBean implements Serializable {
     }
 
     public boolean isAlertRendered() {
+        // Special Case
+        // Check to see if user comes back from the Edit Mount
+        // Option page
+        Boolean fromEMO = (Boolean) JSFUtil.getAttribute(RA_FROM_EMO_PAGE);
+        if (fromEMO != null) {
+            alertRendered = true;
+            this.alertType = Constants.Alert.INFO;
+            this.alertSummary = JSFUtil.getMessage("success.summary");
+            this.alertDetail = JSFUtil.getMessage("FSMountParams.save.success");
+            this.alertLinkRendered = false;
+            this.alertLinkURL = null;
+            this.alertLinkText = null;
+            this.alertLinkTarget = null;
+
+            JSFUtil.removeAttribute(RA_FROM_EMO_PAGE);
+        }
         return alertRendered;
     }
 
@@ -393,12 +405,12 @@ public class SharedFSBean implements Serializable {
     public void setAlertInfo(
         String type, String summary, String detail,
         String alertLinkURL, String alertLinkText, long jobId) {
-        alertLinkRendered = jobId > 0 ? true : false;
+        this.alertLinkRendered = jobId > 0 ? true : false;
 
         if (!Constants.Alert.INFO.equals(type)) {
             needToShowError = true;
         }
-        alertRendered = true;
+        this.alertRendered = true;
         this.alertType = type;
         this.alertSummary = summary;
         this.alertDetail = JSFUtil.getMessage(detail);
@@ -407,7 +419,6 @@ public class SharedFSBean implements Serializable {
         this.alertLinkTarget = "SAMQFSManager" + jobId;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Property Sheet Components
 
     /** Return the array of jump menu options */
@@ -473,8 +484,8 @@ public class SharedFSBean implements Serializable {
         DropDown dropDown = (DropDown) event.getComponent();
         String selected = (String) dropDown.getSelected();
 
-        if (summaryBean.menuOptions[0][1].equals(selected)){
-            forwardToMountOptionsPage();
+        if (summaryBean.menuOptions[0][1].equals(selected)) {
+            forwardToMountOptionsPage(null);
         } else if (summaryBean.menuOptions[1][1].equals(selected)) {
             executeCommand(true);
         } else if (summaryBean.menuOptions[2][1].equals(selected)) {
@@ -484,7 +495,6 @@ public class SharedFSBean implements Serializable {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Property Sheet Section ONE
 
     public String getTextHWM() {
@@ -527,7 +537,6 @@ public class SharedFSBean implements Serializable {
         this.textType = textType;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Property Sheet Client Table
 
     public String getTitleClients() {
@@ -559,7 +568,6 @@ public class SharedFSBean implements Serializable {
         this.clientPageTitle = clientPageTitle;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Helper methods
 
     private String getFSName() {
@@ -598,8 +606,8 @@ public class SharedFSBean implements Serializable {
         return sharedFSManager;
     }
 
-    private void forwardToMountOptionsPage() {
-        // TODO: NEED TO pass more attributes for shared fs
+    private void forwardToMountOptionsPage(String [] selectedHosts) {
+
         String params =
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME
                  + "=" + JSFUtil.getServerName();
@@ -608,26 +616,33 @@ public class SharedFSBean implements Serializable {
         params += "&" + Constants.PageSessionAttributes.ARCHIVE_TYPE
              + "=" + (isShowArchive() ? FileSystem.ARCHIVING :
                                         FileSystem.NONARCHIVING);
-        // TODO: Need to pass the correct attribute for shared fs
-        /*
         params += "&" + Constants.SessionAttributes.MOUNT_PAGE_TYPE
-             + "=" + (isShowArchive()? FSMountViewBean.TYPE_SHAREDQFS :
-                                      FSMountViewBean.TYPE_SHAREDSAMQFS);
-         */
-        params += "&" + Constants.SessionAttributes.MOUNT_PAGE_TYPE
-             + "=" + (isShowArchive()? FSMountViewBean.TYPE_UNSHAREDQFS :
-                                      FSMountViewBean.TYPE_UNSHAREDSAMQFS);
+             + "=" + (isShowArchive() ? FSMountViewBean.TYPE_SHAREDSAMQFS :
+                                      FSMountViewBean.TYPE_SHAREDQFS);
         params += "&" + Constants.SessionAttributes.SHARED_CLIENT_HOST
-             + "=" + "PUT_SOMETHING";
-        // Check util/PageInfo.java, 36 is the number for SharedFSSummary
-        params += "&" + Constants.SessionAttributes.PAGE_PATH + "=" +
-            // FS Summary
-            PageInfo.getPageInfo().
-                getPageNumber(FSSummaryViewBean.PAGE_NAME).toString() +
-            "," +
-            // Shared FS Summary
-            PageInfo.getPageInfo().
-                getPageNumber(SharedFSSummaryBean.PAGE_NAME).toString();
+             + "=" + "MDS";
+
+        if (selectedHosts != null && selectedHosts.length > 0) {
+            params += "&" + Constants.SessionAttributes.SHARED_METADATA_CLIENT
+                + "=" + selectedHosts[0];
+            params += "&" + Constants.SessionAttributes.PAGE_PATH + "=" +
+                // FS Summary
+                PageInfo.getPageInfo().
+                    getPageNumber(FSSummaryViewBean.PAGE_NAME).toString() +
+                "," +
+                // Participating Hosts
+                PageInfo.getPageInfo().
+                    getPageNumber(SharedFSClientBean.PAGE_NAME).toString();
+        } else {
+            params += "&" + Constants.SessionAttributes.PAGE_PATH + "=" +
+                // FS Summary
+                PageInfo.getPageInfo().
+                    getPageNumber(FSSummaryViewBean.PAGE_NAME).toString() +
+                "," +
+                // Shared FS Summary
+                PageInfo.getPageInfo().
+                    getPageNumber(SharedFSSummaryBean.PAGE_NAME).toString();
+        }
 
         JSFUtil.redirectPage("/fs/FSMount", params);
     }
@@ -638,7 +653,7 @@ public class SharedFSBean implements Serializable {
             PARAM_FILTER + "=" + filter);
     }
 
-    private void executeCommand(boolean mount){
+    private void executeCommand(boolean mount) {
         try {
             // Check if user has permission to perform this operation
             if (!hasPermission) {
@@ -688,7 +703,7 @@ public class SharedFSBean implements Serializable {
                                        getFSName()),
                 null);
 
-        } catch (SamFSException samEx){
+        } catch (SamFSException samEx) {
             TraceUtil.trace1("SamFSException caught!", samEx);
             LogUtil.error(this, samEx);
             SamUtil.processException(
@@ -717,7 +732,6 @@ public class SharedFSBean implements Serializable {
         confirmUnmountFS = JSFUtil.getMessage("SharedFS.message.unmountfs");
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Bean getters and setters
 
     public boolean isShowArchive() {
@@ -802,7 +816,6 @@ public class SharedFSBean implements Serializable {
         this.hiddenFSName = hiddenFSName;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Client Summary Page Methods (SharedFSClient.jsp)
     public String getClientTableTitle() {
         return clientBean.getClientTableTitle();
@@ -952,7 +965,11 @@ public class SharedFSBean implements Serializable {
             // Reset Filter
             JSFUtil.removeAttribute(PARAM_FILTER);
 
-            forwardToMountOptionsPage();
+            forwardToMountOptionsPage(selectedClients);
+            // reset menu
+            clientTableSelectedOption = OptionTitle.NONESELECTED;
+            // Reset Filter
+            resetFilter();
             return;
         }
 

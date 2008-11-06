@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: SharedFSClientBean.java,v 1.9 2008/10/02 03:00:24 ronaldso Exp $
+// ident    $Id: SharedFSClientBean.java,v 1.10 2008/11/06 00:38:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -44,6 +44,8 @@ import com.sun.web.ui.model.OptionTitle;
 
 
 public class SharedFSClientBean {
+
+    public static final String PAGE_NAME = "SharedFSClients";
 
     /** Page Menu Options */
     protected String [][] menuOptions = new String [][] {
@@ -71,20 +73,20 @@ public class SharedFSClientBean {
     public SharedFSClientBean() {
     }
 
-    public Hyperlink [] getBreadCrumbs(String fsName){
+    public Hyperlink [] getBreadCrumbs(String fsName) {
         Hyperlink [] links = new Hyperlink[3];
-        for (int i = 0; i < links.length; i++){
+        for (int i = 0; i < links.length; i++) {
             links[i] = new Hyperlink();
             links[i].setImmediate(true);
             links[i].setId("breadcrumbid" + i);
-            if (i == 0){
+            if (i == 0) {
                 // Back to FS Summary
                 links[i].setText(JSFUtil.getMessage("FSSummary.title"));
                 links[i].setUrl(
                     "/fs/FSSummary?" +
                     Constants.PageSessionAttributes.SAMFS_SERVER_NAME + "=" +
                     JSFUtil.getServerName());
-            } else if (i == 1){
+            } else if (i == 1) {
                 // Back to Shared FS Summary
                 links[i].setText(JSFUtil.getMessage("SharedFS.pagetitle"));
                 links[i].setUrl(

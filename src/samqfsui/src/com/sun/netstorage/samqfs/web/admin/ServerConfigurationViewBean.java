@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerConfigurationViewBean.java,v 1.31 2008/05/16 19:39:26 am143972 Exp $
+// ident	$Id: ServerConfigurationViewBean.java,v 1.32 2008/11/06 00:38:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -63,6 +63,7 @@ import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.model.CCPropertySheetModel;
 import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCHiddenField;
+import java.util.GregorianCalendar;
 
 /**
  *  This class is the view bean for the Host Configuration page
@@ -412,8 +413,18 @@ public class ServerConfigurationViewBean extends CommonViewBeanBase {
                         "LogTraceStatusText",
                         SamUtil.getResourceString(
                             "ServerConfiguration.logtrace.on"));
+
+                    GregorianCalendar modTime =
+                        myLogAndTraceArray[i].getModtime();
+                    actionTableModel.setValue(
+                        "LogTraceModTimeText",
+                        modTime.getTimeInMillis() <= 0 ?
+                            "" :
+                            SamUtil.getTimeString(modTime));
+
                     if (myLogAndTraceArray[i].getPath() != null &&
-                        myLogAndTraceArray[i].getPath().indexOf('/') == 0) {
+                        myLogAndTraceArray[i].getPath().indexOf('/') == 0 &&
+                        modTime.getTimeInMillis() > 0) {
                         actionTableModel.setValue(
                             "LogTracePathText",
                             myLogAndTraceArray[i].getPath());
@@ -436,10 +447,6 @@ public class ServerConfigurationViewBean extends CommonViewBeanBase {
                         "LogTraceSizeText",
                          Capacity.newCapacity(myLogAndTraceArray[i].getSize(),
                              SamQFSSystemModel.SIZE_B).toString());
-                    actionTableModel.setValue(
-                        "LogTraceModTimeText",
-                        SamUtil.getTimeString(
-                            myLogAndTraceArray[i].getModtime()));
                 } else {
                     actionTableModel.setValue(
                         "LogTraceStatusText",

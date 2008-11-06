@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSMountView.java,v 1.38 2008/06/11 16:58:00 ronaldso Exp $
+// ident	$Id: FSMountView.java,v 1.39 2008/11/06 00:38:58 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -146,15 +146,8 @@ public class FSMountView extends RequestHandlingViewBase {
      */
     public void loadPropertySheetModel() throws SamFSException {
         propertySheetModel.clear();
-        String sharedMetaClient = (String)
-        getParentViewBean().getPageSessionAttribute(
-            Constants.SessionAttributes.SHARED_METADATA_CLIENT);
-        SamQFSSystemModel model = null;
-        if (sharedMetaClient != null) {
-            model = SamUtil.getModel(sharedMetaClient);
-        } else {
-            model = SamUtil.getModel(serverName);
-        }
+
+        SamQFSSystemModel model = SamUtil.getModel(serverName);
         FileSystem fs =
             model.getSamQFSSystemFSManager().getFileSystem(fsName);
         if (fs == null) {
@@ -171,13 +164,14 @@ public class FSMountView extends RequestHandlingViewBase {
 
         // Unshared QFS has only the above four properties sections.
         // So, check for all other types and fill in the properties.
-        if (isArchive()) {
-            loadArchiveProperties(properties);
-        } else if (getPageType().equals(FSMountViewBean.TYPE_SHAREDQFS)) {
+        if (getPageType().equals(FSMountViewBean.TYPE_SHAREDQFS)) {
             loadSharedQFSProperties(properties, mountState);
         } else if (getPageType().equals(FSMountViewBean.TYPE_SHAREDSAMQFS)) {
             loadArchiveProperties(properties);
             loadSharedQFSProperties(properties, mountState);
+        // Non-shared archiving file system
+        } else if (isArchive()) {
+            loadArchiveProperties(properties);
         }
 
         // if force direct io is set to on, disable io discovery properties
@@ -569,26 +563,12 @@ public class FSMountView extends RequestHandlingViewBase {
     /**
      * Handle request for Button 'Save'
      */
-    public void handleSaveButtonRequest(
-        RequestInvocationEvent event, String host)
+    public void handleSaveButtonRequest(RequestInvocationEvent event)
         throws ServletException, IOException, SamFSException {
 
-        TraceUtil.trace3("Entering");
-        FileSystem fs = null;
-
-        String exceHost = null;
-        if (host == null) {
-            exceHost = serverName;
-            TraceUtil.trace3("set page session for exechost " + exceHost);
-
-            SamQFSSystemModel sysModel = SamUtil.getModel(exceHost);
-            fs = sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
-        } else {
-            exceHost = host;
-            SamQFSSystemModel model = SamUtil.getModel(host);
-
-            fs = model.getSamQFSSystemFSManager().getFileSystem(fsName);
-        }
+        SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
+        FileSystem fs =
+            sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
 
         if (fs == null) {
             throw new SamFSException(null, -1000);
@@ -597,6 +577,10 @@ public class FSMountView extends RequestHandlingViewBase {
         FileSystemMountProperties properties = fs.getMountProperties();
         int mountState = fs.getState();
 
+        String client = (String) getParentViewBean().getPageSessionAttribute(
+            Constants.SessionAttributes.SHARED_METADATA_CLIENT);
+        TraceUtil.trace3("Change EMO on client " + client);
+
         LogUtil.info(
             this.getClass(),
             "handleSaveButtonRequest",
@@ -604,43 +588,34 @@ public class FSMountView extends RequestHandlingViewBase {
 
         saveBasicProperties(properties);
         saveGeneralProperties(properties, mountState);
-
-        if (!getSharedClientType().equals("Shared Client")) {
-            savePerformanceProperties(properties);
-        }
-        if (!getSharedClientType().equals("Shared Client") && !directIO) {
+        savePerformanceProperties(properties);
+        if (!directIO) {
             saveIODiscoveryProperties(properties);
         }
 
         // Unshared QFS has only the above four properties sections.
         // So, check for all other types and fill in the properties.
-        if (isArchive()) {
-            saveArchiveProperties(properties);
-        } else if (getPageType().equals(FSMountViewBean.TYPE_SHAREDQFS)) {
-            if (!getSharedClientType().equals("Shared Client")) {
-                saveSharedQFSProperties(properties, mountState);
-            }
+        if (getPageType().equals(FSMountViewBean.TYPE_SHAREDQFS)) {
+            saveSharedQFSProperties(properties, mountState);
         } else if (getPageType().equals(FSMountViewBean.TYPE_SHAREDSAMQFS)) {
-            if (!getSharedClientType().equals("Shared Client")) {
-                saveArchiveProperties(properties);
-                saveSharedQFSProperties(properties, mountState);
-            }
+            saveArchiveProperties(properties);
+            saveSharedQFSProperties(properties, mountState);
+         // Non-shared archiving file systems
+        } else if (isArchive()) {
+            saveArchiveProperties(properties);
         }
 
-        if ((host == null && getSharedClientType().equals("Shared Server")) ||
-            (host != null && !getSharedClientType().equals("Shared Client"))) {
-            TraceUtil.trace3("Begining editing SharedMountOptions");
-            SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
-            SamQFSSystemSharedFSManager fsManager =
-                appModel.getSamQFSSystemSharedFSManager();
-            if (host != null) {
-                fsManager.setSharedMountOptions(host, fsName, properties);
-            } else {
-                fsManager.setSharedMountOptions(
-                    exceHost, fsName, properties);
-            }
-        } else {
+        if (client == null) {
+            TraceUtil.trace2("Editing mount options for non-shared or MDS!");
             fs.changeMountOptions();
+        } else {
+            TraceUtil.trace2(
+                "Editing mount options for shared in clients page!");
+            SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
+            SamQFSSystemSharedFSManager sharedManager =
+                appModel.getSamQFSSystemSharedFSManager();
+            sharedManager.setSharedFSMountOptions(
+                serverName, fsName, new String [] {client}, properties);
         }
 
         TraceUtil.trace3("Exiting");
@@ -658,9 +633,7 @@ public class FSMountView extends RequestHandlingViewBase {
                 getDisplayFieldValue("hwmValue")).trim();
             if (hwmString.length() > 0) {
                 int hwm = Integer.parseInt(hwmString);
-                if (hwm != properties.getHWM()) {
-                    properties.setHWM(hwm);
-                }
+                properties.setHWM(hwm);
             } else {
                 properties.setHWM(-1);
             }
@@ -669,37 +642,24 @@ public class FSMountView extends RequestHandlingViewBase {
             getDisplayFieldValue("lwmValue")).trim();
             if (lwmString.length() > 0) {
                 int lwm = Integer.parseInt(lwmString);
-                if (lwm != properties.getLWM()) {
-                    properties.setLWM(lwm);
-                }
+                properties.setLWM(lwm);
             } else {
                 properties.setLWM(-1);
             }
         }
 
-        if (!getSharedClientType().equals("Shared Client")) {
-            String stripeString =
-                ((String) getDisplayFieldValue("stripeValue")).trim();
-            if (stripeString.length() > 0) {
-                int stripe = Integer.parseInt(stripeString);
-                if (stripe != properties.getStripeWidth()) {
-                    properties.setStripeWidth(stripe);
-                }
-            } else {
-                properties.setStripeWidth(-1);
-            }
-
-            String trace = (String) getDisplayFieldValue("traceValue");
-            if ("yes".equals(trace)) {
-                if (!properties.isTrace()) {
-                    properties.setTrace(true);
-                }
-            } else {
-                if (properties.isTrace()) {
-                    properties.setTrace(false);
-                }
-            }
+        String stripeString =
+            ((String) getDisplayFieldValue("stripeValue")).trim();
+        if (stripeString.length() > 0) {
+            int stripe = Integer.parseInt(stripeString);
+            properties.setStripeWidth(stripe);
+        } else {
+            properties.setStripeWidth(-1);
         }
+
+        String trace = (String) getDisplayFieldValue("traceValue");
+        properties.setTrace("yes".equals(trace));
+
         TraceUtil.trace3("Exiting");
     }
 
@@ -712,25 +672,16 @@ public class FSMountView extends RequestHandlingViewBase {
         // mount in background and mount retries can be changed only
         // when fs is unmounted
         if (mountState != FileSystem.MOUNTED) {
-            String mntbck = (String)
-            getDisplayFieldValue("mountBackgroundValue");
-            if ("yes".equals(mntbck)) {
-                if (!properties.isMountInBackground()) {
-                    properties.setMountInBackground(true);
-                }
-            } else {
-                if (properties.isMountInBackground()) {
-                    properties.setMountInBackground(false);
-                }
-            }
+            String mntbck =
+                (String) getDisplayFieldValue("mountBackgroundValue");
+
+            properties.setMountInBackground("yes".equals(mntbck));
 
             String mntretriesStr =
                 ((String) getDisplayFieldValue("mountretriesValue")).trim();
             if (mntretriesStr.length() > 0) {
                 int mountretries = Integer.parseInt(mntretriesStr);
-                if (mountretries != properties.getNoOfMountRetries()) {
-                    properties.setNoOfMountRetries(mountretries);
-                }
+                properties.setNoOfMountRetries(mountretries);
             } else {
                 properties.setNoOfMountRetries(-1);
             }
@@ -740,9 +691,7 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("metarefreshValue")).trim();
         if (metarefreshStr.length() > 0) {
             int metarefresh = Integer.parseInt(metarefreshStr);
-            if (metarefresh != properties.getMetadataRefreshRate()) {
-                properties.setMetadataRefreshRate(metarefresh);
-            }
+            properties.setMetadataRefreshRate(metarefresh);
         } else {
             properties.setMetadataRefreshRate(-1);
         }
@@ -751,43 +700,33 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("minblockValue")).trim();
         if (minblockStr.length() > 0) {
             long minblock = Long.parseLong(minblockStr);
-            if (minblock != properties.getMinBlockAllocation()) {
-                properties.setMinBlockAllocation(minblock);
-            }
+            properties.setMinBlockAllocation(minblock);
         } else {
             properties.setMinBlockAllocation(-1);
         }
 
         int minblockUnit = SamUtil.getSizeUnit(
             (String)getDisplayFieldValue("minblockUnit"));
-        if (minblockUnit != properties.getMinBlockAllocationUnit()) {
-            properties.setMinBlockAllocationUnit(minblockUnit);
-        }
+        properties.setMinBlockAllocationUnit(minblockUnit);
 
         String maxblockStr =
             ((String)getDisplayFieldValue("maxblockValue")).trim();
         if (maxblockStr.length() > 0) {
             long maxblock = Long.parseLong(maxblockStr);
-            if (maxblock != properties.getMaxBlockAllocation()) {
-                properties.setMaxBlockAllocation(maxblock);
-            }
+            properties.setMaxBlockAllocation(maxblock);
         } else {
             properties.setMaxBlockAllocation(-1);
         }
 
         int maxblockUnit = SamUtil.getSizeUnit(
             (String)getDisplayFieldValue("maxblockUnit"));
-        if (maxblockUnit != properties.getMaxBlockAllocationUnit()) {
-            properties.setMaxBlockAllocationUnit(maxblockUnit);
-        }
+        properties.setMaxBlockAllocationUnit(maxblockUnit);
 
         String readleaseStr =
             ((String) getDisplayFieldValue("readleaseValue")).trim();
         if (readleaseStr.length() > 0) {
             int readlease = Integer.parseInt(readleaseStr);
-            if (readlease != properties.getReadLeaseDuration()) {
-                properties.setReadLeaseDuration(readlease);
-            }
+            properties.setReadLeaseDuration(readlease);
         } else {
             properties.setReadLeaseDuration(-1);
         }
@@ -796,9 +735,7 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("writeleaseValue")).trim();
         if (writeleaseStr.length() > 0) {
             int writelease = Integer.parseInt(writeleaseStr);
-            if (writelease != properties.getWriteLeaseDuration()) {
-                properties.setWriteLeaseDuration(writelease);
-            }
+            properties.setWriteLeaseDuration(writelease);
         } else {
             properties.setWriteLeaseDuration(-1);
         }
@@ -807,9 +744,7 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("appendleaseValue")).trim();
         if (appendleaseStr.length() > 0) {
             int appendlease = Integer.parseInt(appendleaseStr);
-            if (appendlease != properties.getAppendLeaseDuration()) {
-                properties.setAppendLeaseDuration(appendlease);
-            }
+            properties.setAppendLeaseDuration(appendlease);
         } else {
             properties.setAppendLeaseDuration(-1);
         }
@@ -818,53 +753,25 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("minPoolValue")).trim();
         if (minPoolStr.length() > 0) {
             int minPool = Integer.parseInt(minPoolStr);
-            if (minPool != properties.getMinPool()) {
-                properties.setMinPool(minPool);
-            }
+            properties.setMinPool(minPool);
         } else {
             properties.setMinPool(-1);
         }
 
         String multihost = (String) getDisplayFieldValue("multihostValue");
-        if ("yes".equals(multihost)) {
-            if (!properties.isMultiHostWrite()) {
-                properties.setMultiHostWrite(true);
-            }
-        } else {
-            if (properties.isMultiHostWrite()) {
-                properties.setMultiHostWrite(false);
-            }
-        }
+        properties.setMultiHostWrite("yes".equals(multihost));
 
         String sync = (String)getDisplayFieldValue("syncValue");
-        if ("yes".equals(sync)) {
-            if (!properties.isSynchronizedMetadata()) {
-                properties.setSynchronizedMetadata(true);
-            }
-        } else {
-            if (properties.isSynchronizedMetadata()) {
-                properties.setSynchronizedMetadata(false);
-            }
-        }
+        properties.setSynchronizedMetadata("yes".equals(sync));
 
         String cattr = (String) getDisplayFieldValue("cattrValue");
-        if ("yes".equals(cattr)) {
-            if (!properties.isConsistencyChecking()) {
-                properties.setConsistencyChecking(true);
-            }
-        } else {
-            if (properties.isConsistencyChecking()) {
-                properties.setConsistencyChecking(false);
-            }
-        }
+        properties.setConsistencyChecking("yes".equals(cattr));
 
         String metadataStripeStr =
             ((String) getDisplayFieldValue("metastripeValue")).trim();
         if (metadataStripeStr.length() > 0) {
             int metadataStripe = Integer.parseInt(metadataStripeStr);
-            if (metadataStripe != properties.getMetadataStripeWidth()) {
-                properties.setMetadataStripeWidth(metadataStripe);
-            }
+            properties.setMetadataStripeWidth(metadataStripe);
         } else {
             properties.setMetadataStripeWidth(-1);
         }
@@ -873,9 +780,7 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("leaseTimeoValue")).trim();
         if (leaseTimeoValue.length() > 0) {
             int leaseTimeo = Integer.parseInt(leaseTimeoValue);
-            if (leaseTimeo != properties.getLeaseTimeout()) {
-                properties.setLeaseTimeout(leaseTimeo);
-            }
+            properties.setLeaseTimeout(leaseTimeo);
         } else {
             properties.setLeaseTimeout(-1);
         }
@@ -891,44 +796,18 @@ public class FSMountView extends RequestHandlingViewBase {
         if (mountState != FileSystem.MOUNTED) {
             String mountReadonly =
                 (String)getDisplayFieldValue("mountreadonlyValue");
-
-            if ("yes".equals(mountReadonly)) {
-                if (!properties.isReadOnlyMount()) {
-                    properties.setReadOnlyMount(true);
-                }
-            } else {
-                if (properties.isReadOnlyMount()) {
-                    properties.setReadOnlyMount(false);
-                }
-            }
+            properties.setReadOnlyMount("yes".equals(mountReadonly));
         }
 
-        if (!getSharedClientType().equals("Shared Client")) {
-            String noSetuid = (String) getDisplayFieldValue("nouidValue");
-            if ("yes".equals(noSetuid)) {
-                if (!properties.isNoSetUID()) {
-                    properties.setNoSetUID(true);
-                }
-            } else {
-                if (properties.isNoSetUID()) {
-                    properties.setNoSetUID(false);
-                }
-            }
-        }
 
-        if (!getPageType().equals(FSMountViewBean.TYPE_UNSHAREDSAMFS) &&
-            !getSharedClientType().equals("Shared Client")) {
-            String quickWrite = (String)
-            getDisplayFieldValue("quickwriteValue");
-            if ("yes".equals(quickWrite)) {
-                if (!properties.isQuickWrite()) {
-                    properties.setQuickWrite(true);
-                }
-            } else {
-                if (properties.isQuickWrite()) {
-                    properties.setQuickWrite(false);
-                }
-            }
+        String noSetuid = (String) getDisplayFieldValue("nouidValue");
+        properties.setNoSetUID("yes".equals(noSetuid));
+
+
+        if (!getPageType().equals(FSMountViewBean.TYPE_UNSHAREDSAMFS)) {
+            String quickWrite =
+                (String) getDisplayFieldValue("quickwriteValue");
+            properties.setQuickWrite("yes".equals(quickWrite));
         }
     }
 
@@ -942,69 +821,53 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("readaheadValue")).trim();
         if (readaheadStr.length() > 0) {
             long readahead = Long.parseLong(readaheadStr);
-            if (readahead != properties.getReadAhead()) {
-                properties.setReadAhead(readahead);
-            }
+            properties.setReadAhead(readahead);
         } else {
             properties.setReadAhead(-1);
         }
 
         int readaheadUnit = SamUtil.getSizeUnit(
             (String)getDisplayFieldValue("readaheadUnit"));
-        if (readaheadUnit != properties.getReadAheadUnit()) {
-            properties.setReadAheadUnit(readaheadUnit);
-        }
+        properties.setReadAheadUnit(readaheadUnit);
 
         String writebehindStr =
             ((String) getDisplayFieldValue("writebehindValue")).trim();
         if (writebehindStr.length() > 0) {
             long writebehind = Long.parseLong(writebehindStr);
-            if (writebehind != properties.getWriteBehind()) {
-                properties.setWriteBehind(writebehind);
-            }
+            properties.setWriteBehind(writebehind);
         } else {
             properties.setWriteBehind(-1);
         }
 
         int writebehindUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("writebehindUnit"));
-        if (writebehindUnit != properties.getWriteBehindUnit()) {
-            properties.setWriteBehindUnit(writebehindUnit);
-        }
+        properties.setWriteBehindUnit(writebehindUnit);
 
         String writethrottleStr =
             ((String) getDisplayFieldValue("writethroValue")).trim();
         if (writethrottleStr.length() > 0) {
             long writethrottle = Long.parseLong(writethrottleStr);
-            if (writethrottle != properties.getWriteThrottle()) {
-                properties.setWriteThrottle(writethrottle);
-            }
+            properties.setWriteThrottle(writethrottle);
         } else {
             properties.setWriteThrottle(-1);
         }
 
         int writethroUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("writethroUnit"));
-        if (writethroUnit != properties.getWriteThrottleUnit()) {
-            properties.setWriteThrottleUnit(writethroUnit);
-        }
+        properties.setWriteThrottleUnit(writethroUnit);
 
         String flushbehindStr =
             ((String) getDisplayFieldValue("flushbehindValue")).trim();
         if (flushbehindStr.length() > 0) {
             int flushbehind = Integer.parseInt(flushbehindStr);
-            if (flushbehind != properties.getFlushBehind()) {
-                properties.setFlushBehind(flushbehind);
-            }
+            properties.setFlushBehind(flushbehind);
         } else {
             properties.setFlushBehind(-1);
         }
 
         int flushbehindUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("flushbehindUnit"));
-        if (flushbehindUnit != properties.getFlushBehindUnit()) {
-            properties.setFlushBehindUnit(flushbehindUnit);
-        }
+        properties.setFlushBehindUnit(flushbehindUnit);
 
         if (!(getPageType().equals(FSMountViewBean.TYPE_SHAREDQFS) ||
             getPageType().equals(FSMountViewBean.TYPE_UNSHAREDQFS))) {
@@ -1012,43 +875,21 @@ public class FSMountView extends RequestHandlingViewBase {
                 ((String) getDisplayFieldValue("stageflushValue")).trim();
             if (stageflushStr.length() > 0) {
                 int stageflush = Integer.parseInt(stageflushStr);
-                if (stageflush != properties.getStageFlushBehind()) {
-                    properties.setStageFlushBehind(stageflush);
-                }
+                properties.setStageFlushBehind(stageflush);
             } else {
                 properties.setStageFlushBehind(-1);
             }
 
             int stageflushUnit = SamUtil.getSizeUnit(
                 (String) getDisplayFieldValue("stageflushUnit"));
-            if (stageflushUnit != properties.getStageFlushBehindUnit()) {
-                properties.setStageFlushBehindUnit(stageflushUnit);
-            }
+            properties.setStageFlushBehindUnit(stageflushUnit);
         }
 
         String raid = (String)getDisplayFieldValue("softwareValue");
-        if ("on".equals(raid)) {
-            if (!properties.isSoftRAID()) {
-                properties.setSoftRAID(true);
-            }
-        } else {
-            if (properties.isSoftRAID()) {
-                properties.setSoftRAID(false);
-            }
-        }
+        properties.setSoftRAID("on".equals(raid));
 
         String forceio = (String)getDisplayFieldValue("forceValue");
-        if ("on".equals(forceio)) {
-            directIO = true;
-            if (!properties.isForceDirectIO()) {
-                properties.setForceDirectIO(true);
-            }
-        } else {
-            directIO = false;
-            if (properties.isForceDirectIO()) {
-                properties.setForceDirectIO(false);
-            }
-        }
+        properties.setForceDirectIO("on".equals(forceio));
 
         // force_nfs_async is for all fs
         String forceNFSAsync =
@@ -1067,9 +908,7 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("consecreadValue")).trim();
         if (consecreadStr.length() > 0) {
             int consecread = Integer.parseInt(consecreadStr);
-            if (consecread != properties.getConsecutiveReads()) {
-                properties.setConsecutiveReads(consecread);
-            }
+            properties.setConsecutiveReads(consecread);
         } else {
             properties.setConsecutiveReads(-1);
         }
@@ -1078,9 +917,7 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("consecwriteValue")).trim();
         if (consecwriteStr.length() > 0) {
             int consecwrite = Integer.parseInt(consecwriteStr);
-            if (consecwrite != properties.getConsecutiveWrites()) {
-                properties.setConsecutiveWrites(consecwrite);
-            }
+            properties.setConsecutiveWrites(consecwrite);
         } else {
             properties.setConsecutiveWrites(-1);
         }
@@ -1089,80 +926,56 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("wellreadminValue")).trim();
         if (wellreadminStr.length() > 0) {
             int wellreadmin = Integer.parseInt(wellreadminStr);
-            if (wellreadmin != properties.getWellAlignedReadMin()) {
-                properties.setWellAlignedReadMin(wellreadmin);
-            }
+            properties.setWellAlignedReadMin(wellreadmin);
         } else {
             properties.setWellAlignedReadMin(-1);
         }
 
         int wellreadminUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("wellreadminUnit"));
-        if (wellreadminUnit != properties.getWellAlignedReadMinUnit()) {
-            properties.setWellAlignedReadMinUnit(wellreadminUnit);
-        }
+        properties.setWellAlignedReadMinUnit(wellreadminUnit);
 
         String misreadminStr =
             ((String) getDisplayFieldValue("misreadminValue")).trim();
         if (misreadminStr.length() > 0) {
             int misreadmin = Integer.parseInt(misreadminStr);
-            if (misreadmin != properties.getMisAlignedReadMin()) {
-                properties.setMisAlignedReadMin(misreadmin);
-            }
+            properties.setMisAlignedReadMin(misreadmin);
         } else {
             properties.setMisAlignedReadMin(-1);
         }
 
         int misreadminUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("misreadminUnit"));
-        if (misreadminUnit != properties.getMisAlignedReadMinUnit()) {
-            properties.setMisAlignedReadMinUnit(misreadminUnit);
-        }
+        properties.setMisAlignedReadMinUnit(misreadminUnit);
 
         String wellwriteminStr =
             ((String) getDisplayFieldValue("wellwriteminValue")).trim();
         if (wellwriteminStr.length() > 0) {
             int wellwritemin = Integer.parseInt(wellwriteminStr);
-            if (wellwritemin != properties.getWellAlignedWriteMin()) {
-                properties.setWellAlignedWriteMin(wellwritemin);
-            }
+            properties.setWellAlignedWriteMin(wellwritemin);
         } else {
             properties.setWellAlignedWriteMin(-1);
         }
 
         int wellwriteminUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("wellwriteminUnit"));
-        if (wellwriteminUnit != properties.getWellAlignedWriteMinUnit()) {
-            properties.setWellAlignedWriteMinUnit(wellwriteminUnit);
-        }
+        properties.setWellAlignedWriteMinUnit(wellwriteminUnit);
 
         String miswriteminStr =
             ((String) getDisplayFieldValue("miswriteminValue")).trim();
         if (miswriteminStr.length() > 0) {
             int miswritemin = Integer.parseInt(miswriteminStr);
-            if (miswritemin != properties.getMisAlignedWriteMin()) {
-                properties.setMisAlignedWriteMin(miswritemin);
-            }
+            properties.setMisAlignedWriteMin(miswritemin);
         } else {
             properties.setMisAlignedWriteMin(-1);
         }
 
         int miswriteminUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("miswriteminUnit"));
-        if (miswriteminUnit != properties.getMisAlignedWriteMinUnit()) {
-            properties.setMisAlignedWriteMinUnit(miswriteminUnit);
-        }
+        properties.setMisAlignedWriteMinUnit(miswriteminUnit);
 
         String dioszero = (String) getDisplayFieldValue("dioszeroValue");
-        if ("yes".equals(dioszero)) {
-            if (!properties.isDirectIOZeroing()) {
-                properties.setDirectIOZeroing(true);
-            }
-        } else {
-            if (properties.isDirectIOZeroing()) {
-                properties.setDirectIOZeroing(false);
-            }
-        }
+        properties.setDirectIOZeroing("yes".equals(dioszero));
     }
 
     /**
@@ -1174,60 +987,46 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("partreleaseValue")).trim();
         if (partialRelStr.length() > 0) {
             int partialRel = Integer.parseInt(partialRelStr);
-            if (partialRel != properties.getDefaultPartialReleaseSize()) {
-                properties.setDefaultPartialReleaseSize(partialRel);
-            }
+            properties.setDefaultPartialReleaseSize(partialRel);
         } else {
             properties.setDefaultPartialReleaseSize(-1);
         }
 
         int partreleaseUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("partreleaseUnit"));
-        if (partreleaseUnit != properties.getDefaultPartialReleaseSizeUnit()) {
-            properties.setDefaultPartialReleaseSizeUnit(partreleaseUnit);
-        }
+        properties.setDefaultPartialReleaseSizeUnit(partreleaseUnit);
 
         String maxpartialRelStr =
             ((String) getDisplayFieldValue("maxpartValue")).trim();
         if (maxpartialRelStr.length() > 0) {
             int maxpartialRel = Integer.parseInt(maxpartialRelStr);
-            if (maxpartialRel != properties.getDefaultMaxPartialReleaseSize()) {
-                properties.setDefaultMaxPartialReleaseSize(maxpartialRel);
-            }
+            properties.setDefaultMaxPartialReleaseSize(maxpartialRel);
         } else {
             properties.setDefaultMaxPartialReleaseSize(-1);
         }
 
         int maxpartUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("maxpartUnit"));
-        if (maxpartUnit != properties.getDefaultMaxPartialReleaseSizeUnit()) {
-            properties.setDefaultMaxPartialReleaseSizeUnit(maxpartUnit);
-        }
+        properties.setDefaultMaxPartialReleaseSizeUnit(maxpartUnit);
 
         String partialStageStr =
             ((String) getDisplayFieldValue("partstageValue")).trim();
         if (partialStageStr.length() > 0) {
             long partialStage = Long.parseLong(partialStageStr);
-            if (partialStage != properties.getPartialStageSize()) {
-                properties.setPartialStageSize(partialStage);
-            }
+            properties.setPartialStageSize(partialStage);
         } else {
             properties.setPartialStageSize(-1);
         }
 
         int partstageUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("partstageUnit"));
-        if (partstageUnit != properties.getPartialStageSizeUnit()) {
-            properties.setPartialStageSizeUnit(partstageUnit);
-        }
+        properties.setPartialStageSizeUnit(partstageUnit);
 
         String stagetryStr =
             ((String) getDisplayFieldValue("stageretriesValue")).trim();
         if (stagetryStr.length() > 0) {
             int stagetry = Integer.parseInt(stagetryStr);
-            if (stagetry != properties.getNoOfStageRetries()) {
-                properties.setNoOfStageRetries(stagetry);
-            }
+            properties.setNoOfStageRetries(stagetry);
         } else {
             properties.setNoOfStageRetries(-1);
         }
@@ -1236,29 +1035,17 @@ public class FSMountView extends RequestHandlingViewBase {
             ((String) getDisplayFieldValue("stagewindowValue")).trim();
         if (windowStr.length() > 0) {
             long window = Long.parseLong(windowStr);
-            if (window != properties.getStageWindowSize()) {
-                properties.setStageWindowSize(window);
-            }
+            properties.setStageWindowSize(window);
         } else {
             properties.setStageWindowSize(-1);
         }
 
         int stagewindowUnit = SamUtil.getSizeUnit(
             (String) getDisplayFieldValue("stagewindowUnit"));
-        if (stagewindowUnit != properties.getStageWindowSizeUnit()) {
-            properties.setStageWindowSizeUnit(stagewindowUnit);
-        }
+        properties.setStageWindowSizeUnit(stagewindowUnit);
 
         String runArchive = (String)getDisplayFieldValue("questionValue");
-        if ("yes".equals(runArchive)) {
-            if (!properties.isArchiverAutoRun()) {
-                properties.setArchiverAutoRun(true);
-            }
-        } else {
-            if (properties.isArchiverAutoRun()) {
-                properties.setArchiverAutoRun(false);
-            }
-        }
+        properties.setArchiverAutoRun("yes".equals(runArchive));
     }
 
     private String getPageType() {
