@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.82 $"
+#pragma ident "$Revision: 1.83 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -532,7 +532,6 @@ WriteBuffer(
 
 		PthreadMutexLock(&bufLock);
 		bufEndArchive = FALSE;
-		bufWriteEnd = TRUE;
 		PthreadCondSignal(&bufRead);
 		PthreadMutexUnlock(&bufLock);
 	}
@@ -562,6 +561,11 @@ out:
 		SamrftDisconnect(RemoteArchive.rft);
 		RemoteArchive.rft = NULL;
 	}
+
+	PthreadMutexLock(&bufLock);
+	bufWriteEnd = TRUE;
+	PthreadCondSignal(&bufRead);
+	PthreadMutexUnlock(&bufLock);
 
 	ThreadsExit();
 	/*NOTREACHED*/
