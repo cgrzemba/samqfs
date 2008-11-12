@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNsViewBean.java,v 1.30 2008/10/01 22:43:31 ronaldso Exp $
+// ident	$Id: CopyVSNsViewBean.java,v 1.31 2008/11/12 23:01:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -52,6 +52,7 @@ import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
@@ -93,6 +94,7 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
     private static final String POLICY_TAPECOPY_HREF = "PolicyTapeCopyHref";
     private static final String FS_SUMMARY_HREF = "FileSystemSummaryHref";
     private static final String FS_DETAILS_HREF = "FileSystemDetailsHref";
+    private static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
     private static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
     private static final String COPY_VSNS_HREF = "CopyVSNsHref";
 
@@ -143,6 +145,7 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
         registerChild(FS_SUMMARY_HREF, CCHref.class);
         registerChild(FS_DETAILS_HREF, CCHref.class);
         registerChild(FS_ARCHIVEPOL_HREF, CCHref.class);
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
         registerChild(COPY_VSNS_HREF, CCHref.class);
         registerChild(POLICY_NAME, CCHiddenField.class);
         registerChild(COPY_NUMBER, CCHiddenField.class);
@@ -178,6 +181,7 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
                    name.equals(FS_SUMMARY_HREF) ||
                    name.equals(FS_DETAILS_HREF) ||
                    name.equals(FS_ARCHIVEPOL_HREF) ||
+                   name.equals(SHARED_FS_SUMMARY_HREF) ||
                    name.equals(COPY_VSNS_HREF)) {
             return new CCHref(this, name, null);
         } else if (PageTitleUtil.isChildSupported(ptModel, name)) {
@@ -422,5 +426,23 @@ public class CopyVSNsViewBean extends CommonViewBeanBase {
             PageInfo.getPageInfo().getPageNumber(target.getName()), s);
 
         forwardTo(target);
+    }
+
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
+        throws ServletException, IOException {
+
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
+
+        TraceUtil.trace2("FSArchivePolicy: Navigate back to URL: " + url);
+
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + (String) getPageSessionAttribute(
+                             Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        JSFUtil.forwardToJSFPage(this, url, params);
     }
 }

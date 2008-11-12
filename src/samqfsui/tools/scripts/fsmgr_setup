@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_setup,v 1.30 2008/10/29 21:23:06 ronaldso Exp $
+#  ident	$Id: fsmgr_setup,v 1.31 2008/11/12 23:01:25 ronaldso Exp $
 #
 #  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
@@ -945,8 +945,8 @@ associate_root_to_admin_privilege() {
     # Give administrator permission to root
     myString=`/usr/bin/cat /etc/user_attr |grep root:`
     # First remove the old root line
-    /usr/bin/grep -v root: /etc/user_attr > ${TMP_DIR}/user_attr.fsmgr.3
-    /usr/bin/grep -v samadmin ${TMP_DIR}/user_attr.fsmgr.3 > ${TMP_DIR}/user_attr.fsmgr.2
+    /usr/bin/grep -v root: /etc/user_attr > ${TMPDIR}/user_attr.fsmgr.3
+    /usr/bin/grep -v samadmin ${TMPDIR}/user_attr.fsmgr.3 > ${TMPDIR}/user_attr.fsmgr.2
 
     # Extract the existing auth attributes
     echo ${myString} | while read field;
@@ -976,12 +976,12 @@ associate_root_to_admin_privilege() {
     exist=`echo ${existingAuth} | grep ${addOn}`
     if [ "a${exist}" = "a" ]; then
         echo ${myString} | sed "s/auths=/auths=${addOn},/g" \
-            >> ${TMP_DIR}/user_attr.fsmgr.2
+            >> ${TMPDIR}/user_attr.fsmgr.2
     else
-        echo ${myString} >> ${TMP_DIR}/user_attr.fsmgr.2
+        echo ${myString} >> ${TMPDIR}/user_attr.fsmgr.2
     fi
 
-    /usr/bin/cp ${TMP_DIR}/user_attr.fsmgr.2 /etc/user_attr
+    /usr/bin/cp ${TMPDIR}/user_attr.fsmgr.2 /etc/user_attr
 
     # Preserve samadmin and make it act as root
     if [ ${SAMADMIN_EXIST} -eq 1 ]; then
@@ -1155,8 +1155,8 @@ remove_users() {
     # Give administrator permission to root
     myString=`/usr/bin/cat /etc/user_attr |grep root:`
     # First remove the old root line
-    /usr/bin/grep -v root: /etc/user_attr > ${TMP_DIR}/user_attr.fsmgr.3
-    /usr/bin/grep -v samadmin ${TMP_DIR}/user_attr.fsmgr.3 > ${TMP_DIR}/user_attr.fsmgr.2
+    /usr/bin/grep -v root: /etc/user_attr > ${TMPDIR}/user_attr.fsmgr.3
+    /usr/bin/grep -v samadmin ${TMPDIR}/user_attr.fsmgr.3 > ${TMPDIR}/user_attr.fsmgr.2
 
     # Extract the existing auth attributes
     echo ${myString} | while read field;
@@ -1210,9 +1210,9 @@ remove_users() {
     echo new: ${myString} | sed "s/${existingAuth}/${newString}/g" >> ${MY_LOG}
 
     echo ${myString} | sed "s/${existingAuth}/${newString}/g" \
-           >> ${TMP_DIR}/user_attr.fsmgr.2
+           >> ${TMPDIR}/user_attr.fsmgr.2
 
-    /usr/bin/cp ${TMP_DIR}/user_attr.fsmgr.2 /etc/user_attr
+    /usr/bin/cp ${TMPDIR}/user_attr.fsmgr.2 /etc/user_attr
 
     echo "Done editing /etc/user_attr" | tee -a ${MY_LOG}
 }

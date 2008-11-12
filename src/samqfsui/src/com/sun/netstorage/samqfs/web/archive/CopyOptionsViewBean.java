@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyOptionsViewBean.java,v 1.21 2008/05/16 19:39:26 am143972 Exp $
+// ident	$Id: CopyOptionsViewBean.java,v 1.22 2008/11/12 23:01:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -47,6 +47,7 @@ import com.sun.netstorage.samqfs.web.util.Authorization;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
@@ -69,9 +70,6 @@ public class CopyOptionsViewBean extends CommonViewBeanBase {
     public static final String PAGE_NAME = "CopyOptions";
     private static final String DEFAULT_URL = "/jsp/archive/CopyOptions.jsp";
 
-    // children
-    private static final String PAGE_TITLE = "PageTitle";
-
     // bread crumbing
     public static final String BREADCRUMB = "BreadCrumb";
     private static final String POLICY_SUMMARY_HREF = "PolicySummaryHref";
@@ -81,8 +79,7 @@ public class CopyOptionsViewBean extends CommonViewBeanBase {
     private static final String FS_DETAILS_HREF = "FileSystemDetailsHref";
     private static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
     private static final String COPY_OPTIONS_HREF = "CopyOptionsHref";
-    private static final String IS_POLICY_DETAILS_HREF = "ISPolicyDetailsHref";
-    private static final String DATACLASS_SUMMARY_HREF = "DataClassSummaryHref";
+    private static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
     // the two pagelet views
     public static final String DISK_VIEW = "DiskCopyOptionsView";
     public static final String TAPE_VIEW = "TapeCopyOptionsView";
@@ -115,8 +112,7 @@ public class CopyOptionsViewBean extends CommonViewBeanBase {
         registerChild(FS_DETAILS_HREF, CCHref.class);
         registerChild(FS_ARCHIVEPOL_HREF, CCHref.class);
         registerChild(COPY_OPTIONS_HREF, CCHref.class);
-        registerChild(IS_POLICY_DETAILS_HREF, CCHref.class);
-        registerChild(DATACLASS_SUMMARY_HREF, CCHref.class);
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
         registerChild(DISK_VIEW, DiskCopyOptionsView.class);
         registerChild(TAPE_VIEW, TapeCopyOptionsView.class);
         registerChild(HARD_RESET, CCHiddenField.class);
@@ -132,8 +128,7 @@ public class CopyOptionsViewBean extends CommonViewBeanBase {
             name.equals(FS_DETAILS_HREF) ||
             name.equals(FS_ARCHIVEPOL_HREF) ||
             name.equals(COPY_OPTIONS_HREF) ||
-            name.equals(IS_POLICY_DETAILS_HREF) ||
-            name.equals(DATACLASS_SUMMARY_HREF)) {
+            name.equals(SHARED_FS_SUMMARY_HREF)) {
             return new CCHref(this, name, null);
         } else if (name.equals(BREADCRUMB)) {
             CCBreadCrumbsModel bcModel =
@@ -393,17 +388,22 @@ public class CopyOptionsViewBean extends CommonViewBeanBase {
     }
 
 
-    // handle breadcrumb to the policy summary page
-    public void handleDataClassSummaryHrefRequest(RequestInvocationEvent evt)
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
         throws ServletException, IOException {
-        String s = (String)getDisplayFieldValue(DATACLASS_SUMMARY_HREF);
-        ViewBean target = getViewBean(DataClassSummaryViewBean.class);
 
-        // breadcrumb
-        BreadCrumbUtil.breadCrumbPathBackward(this,
-            PageInfo.getPageInfo().getPageNumber(target.getName()), s);
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
 
-        forwardTo(target);
+        TraceUtil.trace2("FSArchivePolicy: Navigate back to URL: " + url);
+
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + (String) getPageSessionAttribute(
+                             Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        JSFUtil.forwardToJSFPage(this, url, params);
     }
 
     // handle breadcrumb to the policy  summary page - incase we loop
@@ -426,19 +426,6 @@ public class CopyOptionsViewBean extends CommonViewBeanBase {
         throws ServletException, IOException {
         String s = (String)getDisplayFieldValue(POLICY_DETAILS_HREF);
         ViewBean target = getViewBean(PolicyDetailsViewBean.class);
-
-        // breadcrumb
-        BreadCrumbUtil.breadCrumbPathBackward(this,
-            PageInfo.getPageInfo().getPageNumber(target.getName()), s);
-
-        forwardTo(target);
-    }
-
-    // handle ISPolicyDetails view bean
-    public void handleISPolicyDetailsHrefRequest(RequestInvocationEvent evt)
-        throws ServletException, IOException {
-        String s = (String)getDisplayFieldValue(IS_POLICY_DETAILS_HREF);
-        ViewBean target = getViewBean(ISPolicyDetailsViewBean.class);
 
         // breadcrumb
         BreadCrumbUtil.breadCrumbPathBackward(this,

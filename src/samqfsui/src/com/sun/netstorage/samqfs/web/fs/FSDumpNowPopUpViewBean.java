@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDumpNowPopUpViewBean.java,v 1.14 2008/05/16 18:38:53 am143972 Exp $
+// ident	$Id: FSDumpNowPopUpViewBean.java,v 1.15 2008/11/12 23:01:25 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -356,7 +356,6 @@ public class FSDumpNowPopUpViewBean extends CommonSecondaryViewBeanBase {
     public void loadPropertySheetModel() throws SamFSException {
         TraceUtil.trace3("Entering");
 
-        String serverName = getServerName();
         String fileSystemName = getFSName();
         String location = getSelectedPathName();
 
@@ -388,5 +387,13 @@ public class FSDumpNowPopUpViewBean extends CommonSecondaryViewBeanBase {
         }
 
         TraceUtil.trace3("Exiting");
+    }
+
+    /**
+     * handler for the Dump Popup 'Cancel' button
+     */
+    public void handleCancelRequest(RequestInvocationEvent event)
+        throws ServletException, IOException {
+        forwardTo(getRequestContext());
     }
 }

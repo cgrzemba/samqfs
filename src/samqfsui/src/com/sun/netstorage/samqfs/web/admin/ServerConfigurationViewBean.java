@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ServerConfigurationViewBean.java,v 1.32 2008/11/06 00:38:58 ronaldso Exp $
+// ident	$Id: ServerConfigurationViewBean.java,v 1.33 2008/11/12 23:01:24 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -598,6 +598,8 @@ public class ServerConfigurationViewBean extends CommonViewBeanBase {
             "ConfigNameColumn", "ServerConfiguration.config.name");
         actionTableModel.setActionValue(
             "ConfigStatusColumn", "ServerConfiguration.config.status");
+        actionTableModel.setActionValue(
+            "BlankColumn", "                                                 ");
 
         try {
             SamQFSSystemModel sysModel = SamUtil.getModel(getServerName());

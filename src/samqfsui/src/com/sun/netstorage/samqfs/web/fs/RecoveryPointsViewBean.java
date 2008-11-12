@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointsViewBean.java,v 1.13 2008/05/16 18:38:54 am143972 Exp $
+// ident	$Id: RecoveryPointsViewBean.java,v 1.14 2008/11/12 23:01:25 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -298,18 +298,24 @@ public class RecoveryPointsViewBean extends CommonViewBeanBase {
                 if (fsName.charAt(0) == '/') {
                     fsName = null;
                 } else {
-                    // Check to see if fsName is an archiving file system,
+                    // Check to see if fsName is an archiving file system
                     try {
                         SamQFSSystemFSManager fsMgr =
                             SamUtil.getModel(getServerName()).
                                         getSamQFSSystemFSManager();
-                        if (fsMgr.getFileSystem(fsName).
-                                getArchivingType() != FileSystem.ARCHIVING) {
+                        FileSystem fs = fsMgr.getFileSystem(fsName);
+
+                        // reset fsName to null so user has to choose a file
+                        // system from the menu
+                        if (fs == null) {
+                            fsName = null;
+                        } else if (
+                            fs.getArchivingType() != FileSystem.ARCHIVING) {
                             fsName = null;
                         }
                     } catch (SamFSException samEx) {
                         TraceUtil.trace1(
-                            "Exception caught while checking fs type!");
+                            "Exception caught while checking fs type!", samEx);
                         fsName = null;
                     }
                 }
