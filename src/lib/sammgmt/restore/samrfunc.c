@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.48 $"
+#pragma ident	"$Revision: 1.49 $"
 
 #include <sys/time.h>
 #include <string.h>
@@ -1193,6 +1193,11 @@ get_indexed_snapshot_directories(
 
 		/* reject snaps with invalid paths */
 		if ((dirp == NULL) || (strcmp(dirp, ".") == 0)) {
+			continue;
+		}
+
+		/* Weed out metrics-only snapshots */
+		if (snapArray[i].snapState == METRICS) {
 			continue;
 		}
 
