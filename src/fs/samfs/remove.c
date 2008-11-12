@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.88 $"
+#pragma ident "$Revision: 1.89 $"
 
 #include "sam/osversion.h"
 
@@ -334,6 +334,7 @@ sam_remove_name(
 			kmem_free(notify, sizeof (*notify));
 		}
 	}
+	TRANS_INODE(ip->mp, ip);
 	sam_mark_ino(ip, SAM_CHANGED);
 	/*
 	 * LQFS: Need inode lock around TRANS_DIR.  There might be
@@ -359,8 +360,6 @@ sam_remove_name(
 		fbdwrite(fbp);
 	}
 	fbp = NULL;
-	TRANS_INODE(pip->mp, pip);
-	TRANS_INODE(ip->mp, ip);
 
 	/*
 	 * Notify arfind and event daemon of removal.

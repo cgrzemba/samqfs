@@ -28,7 +28,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.14 $"
+#pragma ident	"$Revision: 1.15 $"
 #endif
 
 #include <sys/systm.h>
@@ -609,7 +609,7 @@ lqfs_initialize(qfsvfs_t *qfsvfsp, daddr_t bno, int ord, size_t nb,
  * Free log space
  *	Assumes the file system is write locked and is not logging
  */
-static int
+int
 lqfs_free(qfsvfs_t *qfsvfsp)
 {
 	int		error = 0, i, j;

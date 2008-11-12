@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.82 $"
+#pragma ident "$Revision: 1.83 $"
 
 #include "sam/osversion.h"
 
@@ -57,6 +57,7 @@
 #include <sys/mount.h>
 #include <nfs/lm.h>
 #include <sys/policy.h>
+#include <sys/mntent.h>
 
 /* ----- SAMFS Includes */
 
@@ -82,6 +83,9 @@ static void sam_start_failover(sam_mount_t *mp, boolean_t new_server,
 static void sam_failover_new_server(sam_mount_t *mp, cred_t *credp);
 extern void sam_clear_cmd(enum SCD_daemons scdi);
 static void sam_onoff_client_delay(sam_schedule_entry_t *entry);
+
+extern	kmutex_t	qfs_scan_lock;
+extern	int		lqfs_free(sam_mount_t *mp);
 
 
 /*
@@ -686,6 +690,7 @@ sam_failover_old_server(
 	int ord;
 	int no_ord;
 	int error;
+	int journal = 0;
 
 
 	cmn_err(CE_NOTE,
@@ -806,6 +811,25 @@ sam_failover_old_server(
 	(void) sam_update_inode(mp->mi.m_inodir, SAM_SYNC_ONE, FALSE);
 	RW_UNLOCK_OS(&mp->mi.m_inodir->inode_rwl, RW_WRITER);
 
+	/*
+	 * Roll the journal, release journal accounting resources, and
+	 * update this new client's visible mount state to 'nologging'.
+	 */
+	if ((LQFS_GET_LOGP(mp) != NULL) &&
+	    (LQFS_GET_LOGBNO(VFS_FS_PTR(mp)) != 0)) {
+		journal = 1;
+		(void) lqfs_flush(mp);
+		if (LQFS_GET_LOGP(mp)) {
+			logmap_start_roll(LQFS_GET_LOGP(mp));
+		}
+		TRANS_MATA_UMOUNT(mp);
+		LQFS_SET_DOMATAMAP(mp, 0);
+		mutex_enter(&qfs_scan_lock);
+		(void) lqfs_unsnarf(mp);
+		mutex_exit(&qfs_scan_lock);
+		vfs_setmntopt(mp->vfs_vfs, MNTOPT_NOLOGGING, NULL, 0);
+	}
+
 	sam_cleanup_mount(mp, NULL, credp);
 	sam_set_mount(mp);
 
@@ -816,6 +840,15 @@ sam_failover_old_server(
 	mp->mt.fi_status |= FS_CLIENT;
 
 	vfs_unlock(vfsp);
+
+	/*
+	 * Mark the journal as rolled, and free the space.
+	 */
+	if (journal) {
+		LQFS_SET_FS_ROLLED(VFS_FS_PTR(mp), FS_ALL_ROLLED);
+		LQFS_SET_NOLOG_SI(mp, 0);
+		(void) lqfs_free(mp);
+	}
 
 	mp->mi.m_fs_syncing = 0;
 	mutex_exit(&mp->ms.m_waitwr_mutex);

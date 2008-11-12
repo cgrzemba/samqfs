@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.144 $"
+#pragma ident "$Revision: 1.145 $"
 
 #include "sam/osversion.h"
 
@@ -379,6 +379,7 @@ sam_update_inode(
 	int error = 0;
 	buf_t *bp;
 	sam_mount_t *mp;
+	int doflush = 0;
 
 	mp = ip->mp;
 	ino = ip->di.id.ino;
@@ -475,6 +476,7 @@ sam_update_inode(
 
 		if (TRANS_ISTRANS(mp)) {
 			TRANS_WRITE_DISK_INODE(mp, bp, permip, permip->di.id);
+			doflush = 1;
 		} else if (st == SAM_SYNC_ALL) {
 			bdwrite(bp);
 		} else {
@@ -484,7 +486,9 @@ sam_update_inode(
 				    mp->mt.fi_name, ino, ip->di.id.gen);
 				return (error);
 			}
-
+			doflush = 1;
+		}
+		if (doflush) {
 			/*
 			 * Flush inode extents, segment index, and indirect
 			 * blocks if file modified or changed.

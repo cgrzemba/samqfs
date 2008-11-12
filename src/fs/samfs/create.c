@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.167 $"
+#pragma ident "$Revision: 1.168 $"
 
 #include "sam/osversion.h"
 
@@ -538,7 +538,14 @@ sam_restore_name(
 	if (TRANS_ISTRANS(pip->mp) ||
 	    (pip->mp->mt.fi_config & MT_SHARED_WRITER)) {
 		if (bp) {
-			(void) sam_bwrite_noforcewait_dorelease(pip->mp, bp);
+			if (TRANS_ISTRANS(pip->mp)) {
+				TRANS_WRITE_DISK_INODE(pip->mp, bp,
+				    SAM_ITOO(id.ino,
+				    pip->mp->mt.fi_rd_ino_buf_size, bp), id);
+			} else {
+				(void) sam_bwrite_noforcewait_dorelease(pip->mp,
+				    bp);
+			}
 		}
 		fbwrite(fbp);
 	} else {

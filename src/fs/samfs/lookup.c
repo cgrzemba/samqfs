@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.81 $"
+#pragma ident "$Revision: 1.82 $"
 
 #include "sam/osversion.h"
 
@@ -1162,8 +1162,8 @@ sam_xattr_mkdir(
 		if (!error) {
 			ASSERT(RW_OWNER_OS(&pip->inode_rwl) == curthread);
 			pip->di2.xattr_id = ip->di.id;
-			sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
 			TRANS_INODE(mp, pip);
+			sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
 			ip->di2.p2flags |= P2FLAGS_XATTR;
 			SAM_ITOV(ip)->v_flag |= V_XATTRDIR;
 			TRANS_INODE(mp, ip);

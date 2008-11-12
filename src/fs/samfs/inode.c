@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.155 $"
+#pragma ident "$Revision: 1.156 $"
 
 #include "sam/osversion.h"
 
@@ -1810,7 +1810,11 @@ sam_inode_freelist_build(
 				brelse(bp);
 				break;
 			}
-			bdwrite(bp);
+			if (TRANS_ISTRANS(mp)) {
+				TRANS_WRITE_DISK_INODE(mp, bp, pip, pip->di.id);
+			} else {
+				bdwrite(bp);
+			}
 			freed_count++;
 		}
 
