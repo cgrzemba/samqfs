@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNPoolDetailsViewBean.java,v 1.35 2008/05/16 18:38:52 am143972 Exp $
+// ident	$Id: VSNPoolDetailsViewBean.java,v 1.36 2008/11/19 22:30:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -39,12 +39,16 @@ import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.mgmt.SamFSMultiMsgException;
 import com.sun.netstorage.samqfs.mgmt.SamFSWarnings;
+import com.sun.netstorage.samqfs.web.fs.FSArchivePoliciesViewBean;
+import com.sun.netstorage.samqfs.web.fs.FSDetailsViewBean;
+import com.sun.netstorage.samqfs.web.fs.FSSummaryViewBean;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.archive.VSNPool;
 import com.sun.netstorage.samqfs.web.util.BreadCrumbUtil;
 import com.sun.netstorage.samqfs.web.util.Capacity;
 import com.sun.netstorage.samqfs.web.util.CommonViewBeanBase;
 import com.sun.netstorage.samqfs.web.util.Constants;
+import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.PropertySheetUtil;
@@ -55,6 +59,8 @@ import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.model.CCPropertySheetModel;
 import com.sun.web.ui.view.breadcrumb.CCBreadCrumbs;
 import com.sun.web.ui.view.html.CCHref;
+import java.io.IOException;
+import javax.servlet.ServletException;
 
 /**
  * ViewBean used to display the details of a VSN Pool.
@@ -66,6 +72,10 @@ public class VSNPoolDetailsViewBean extends CommonViewBeanBase {
         "/jsp/archive/VSNPoolDetails.jsp";
 
     private static final String CHILD_BREADCRUMB = "BreadCrumb";
+    private static final String FS_SUMMARY_HREF = "FileSystemSummaryHref";
+    private static final String SHARED_FS_SUMMARY_HREF = "SharedFSSummaryHref";
+    private static final String FS_DETAILS_HREF = "FileSystemDetailsHref";
+    private static final String FS_ARCHIVEPOL_HREF = "FSArchivePolicyHref";
     private static final String CHILD_BACKTOVSNSUM_HREF = "VSNPoolSummaryHref";
     private static final String CHILD_EDITVSNPOOL_HREF = "EditVSNPoolHref";
     private static final String POLICY_SUMMARY_HREF = "PolicySummaryHref";
@@ -100,6 +110,10 @@ public class VSNPoolDetailsViewBean extends CommonViewBeanBase {
         PropertySheetUtil.registerChildren(this, propertySheetModel);
         registerChild(CHILD_BREADCRUMB, CCBreadCrumbs.class);
         registerChild(CHILD_CONTAINER_VIEW, MediaExpressionView.class);
+        registerChild(FS_SUMMARY_HREF, CCHref.class);
+        registerChild(FS_DETAILS_HREF, CCHref.class);
+        registerChild(SHARED_FS_SUMMARY_HREF, CCHref.class);
+        registerChild(FS_ARCHIVEPOL_HREF, CCHref.class);
     	registerChild(CHILD_BACKTOVSNSUM_HREF, CCHref.class);
         registerChild(CHILD_EDITVSNPOOL_HREF, CCHref.class);
         registerChild(POLICY_SUMMARY_HREF, CCHref.class);
@@ -132,6 +146,10 @@ public class VSNPoolDetailsViewBean extends CommonViewBeanBase {
         } else if (name.equals(CHILD_CONTAINER_VIEW)) {
             return new MediaExpressionView(this, name, true);
         } else if (name.equals(CHILD_BACKTOVSNSUM_HREF)
+                || name.equals(FS_SUMMARY_HREF)
+                || name.equals(FS_DETAILS_HREF)
+                || name.equals(SHARED_FS_SUMMARY_HREF)
+                || name.equals(FS_ARCHIVEPOL_HREF)
                 || name.equals(CHILD_EDITVSNPOOL_HREF)
                 || name.equals(POLICY_SUMMARY_HREF)
                 || name.equals(POLICY_DETAILS_HREF)
@@ -286,4 +304,57 @@ public class VSNPoolDetailsViewBean extends CommonViewBeanBase {
         this.forwardTo(target);
     }
 
+    // handle breadcrumb to the filesystem page
+    public void handleFileSystemSummaryHrefRequest(RequestInvocationEvent evt) {
+        String s = (String)getDisplayFieldValue(FS_SUMMARY_HREF);
+        CommonViewBeanBase target =
+            (CommonViewBeanBase)getViewBean(FSSummaryViewBean.class);
+
+        BreadCrumbUtil.breadCrumbPathBackward(this,
+            PageInfo.getPageInfo().getPageNumber(target.getName()), s);
+
+        this.forwardTo(target);
+    }
+
+    // handle breadcrumb to the filesystem details page
+    public void handleFileSystemDetailsHrefRequest(RequestInvocationEvent evt) {
+        String s = (String)getDisplayFieldValue(FS_DETAILS_HREF);
+        CommonViewBeanBase target =
+            (CommonViewBeanBase)getViewBean(FSDetailsViewBean.class);
+
+        BreadCrumbUtil.breadCrumbPathBackward(this,
+            PageInfo.getPageInfo().getPageNumber(target.getName()), s);
+
+        this.forwardTo(target);
+    }
+
+    // Handler to navigate back to Shared File System Summary Page
+    public void handleSharedFSSummaryHrefRequest(
+        RequestInvocationEvent evt)
+        throws ServletException, IOException {
+
+        String url = "/faces/jsp/fs/SharedFSSummary.jsp";
+
+        TraceUtil.trace2("FSArchivePolicy: Navigate back to URL: " + url);
+
+        String params =
+            Constants.PageSessionAttributes.SAMFS_SERVER_NAME
+                 + "=" + getServerName()
+                 + "&" + Constants.PageSessionAttributes.FILE_SYSTEM_NAME
+                 + "=" + (String) getPageSessionAttribute(
+                             Constants.PageSessionAttributes.FILE_SYSTEM_NAME);
+        JSFUtil.forwardToJSFPage(this, url, params);
+    }
+
+    // handle breadcrumb to the fs archive policies
+    public void handleFSArchivePolicyHrefRequest(RequestInvocationEvent evt) {
+        String s = (String)getDisplayFieldValue(FS_ARCHIVEPOL_HREF);
+        CommonViewBeanBase target =
+            (CommonViewBeanBase)getViewBean(FSArchivePoliciesViewBean.class);
+
+        BreadCrumbUtil.breadCrumbPathBackward(this,
+            PageInfo.getPageInfo().getPageNumber(target.getName()), s);
+
+        this.forwardTo(target);
+    }
 }

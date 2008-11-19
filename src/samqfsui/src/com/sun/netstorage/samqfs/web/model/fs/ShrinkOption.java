@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident $Id: ShrinkOption.java,v 1.2 2008/07/03 00:04:30 ronaldso Exp $
+// ident $Id: ShrinkOption.java,v 1.3 2008/11/19 22:30:43 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -35,17 +35,17 @@ package com.sun.netstorage.samqfs.web.model.fs;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 
 /**
-  * Options Keys:
-  *  block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
-  *  display_all_files = TRUE | FALSE (default FALSE)
-  *  do_not_execute = TRUE | FALSE (default FALSE)
-  *  logfile = filename (default no logging)
-  *  stage_files = TRUE | FALSE (default FALSE)
-  *  stage_partial = TRUE | FALSE (default FALSE)
-  *  streams = n  where 1 <= n <= 128 default 8
-  *
-  * The integer return is a job id that will be meaningful only for
-  * shared file systems.
+ * Options Keys:
+ *  block_size = n where 1 <= n <= 16 n is in units of mb(default=1)
+ *  display_all_files = TRUE | FALSE (default FALSE)
+ *  do_not_execute = TRUE | FALSE (default FALSE)
+ *  logfile = filename (default no logging)
+ *  stage_files = TRUE | FALSE (default FALSE)
+ *  stage_partial = TRUE | FALSE (default FALSE)
+ *  streams = n  where 1 <= n <= 128 default 8
+ *
+ * The integer return is a job id that will be meaningful only for
+ * shared file systems.
  */
 public class ShrinkOption {
 

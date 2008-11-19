@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.23 2008/09/11 05:28:51 kilemba Exp $
+// ident	$Id: FSWizardDeviceSelectionPageView.java,v 1.24 2008/11/19 22:30:43 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -370,12 +370,7 @@ public abstract class FSWizardDeviceSelectionPageView
      * those entries for the Metadata LUN selection page.
      */
     protected abstract void populateActionTableModel() throws SamFSException;
-    /*
-        TraceUtil.trace3("Entering");
-        // This method should be over-written by the derived class
-        TraceUtil.trace3("Exiting");
-    }
-    */
+
     public boolean beginCounterLabelDisplay(ChildDisplayEvent event)
         throws ModelControlException {
         TraceUtil.trace3("Entering");

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.8 2008/10/08 22:33:33 ronaldso Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.9 2008/11/19 22:30:43 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -148,7 +148,6 @@ public class ShrinkFSBean implements Serializable {
         initWizard();
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Remote Calls
 
     private DiskCache [] getAllocUnits() throws SamFSException {
@@ -213,7 +212,6 @@ public class ShrinkFSBean implements Serializable {
         return false;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Exclude Device Step
 
     public TableRowGroup getExcludeTableRowGroup() {
@@ -319,7 +317,7 @@ public class ShrinkFSBean implements Serializable {
 
             // save the selection
             getSelectExclude().setKeepSelected(true);
-        } else{
+        } else {
             summarySelectStorage = null;
         }
 
@@ -354,7 +352,6 @@ public class ShrinkFSBean implements Serializable {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Specify Method Radio Button Step
 
     public boolean isRenderedMethodDistribute() {
@@ -413,13 +410,13 @@ public class ShrinkFSBean implements Serializable {
         this.selectedMethodRelease = selectedMethodRelease;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Step 2.1 Specify device to store data step
     public TableRowGroup getAvailableTableRowGroup() {
         return availableTableRowGroup;
     }
 
-    public void setAvailableTableRowGroup(TableRowGroup availableTableRowGroup) {
+    public void setAvailableTableRowGroup(
+        TableRowGroup availableTableRowGroup) {
         this.availableTableRowGroup = availableTableRowGroup;
     }
 
@@ -479,7 +476,7 @@ public class ShrinkFSBean implements Serializable {
             summarySpecifyDevice = summaryStr.toString();
             return selectedPath.toString().split("###");
 
-        } else{
+        } else {
             summarySpecifyDevice = null;
         }
         return null;
@@ -497,7 +494,6 @@ public class ShrinkFSBean implements Serializable {
         this.shrinkSharedFSText = shrinkSharedFSText;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Step 3: Specify Shrink Options
 
     public boolean isSelectedOptionCustom() {
@@ -631,7 +627,6 @@ public class ShrinkFSBean implements Serializable {
         return menuOptions;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Step 4: Review Selections
 
     public String getSummaryMethod() {
@@ -686,7 +681,6 @@ public class ShrinkFSBean implements Serializable {
         this.summarySpecifyDevice = summarySpecifyDevice;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
     // Alert
     public String getAlertDetail() {
         if (!alertRendered) {
@@ -745,7 +739,6 @@ public class ShrinkFSBean implements Serializable {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////
     // Helper methods
     private String getFSName() {
         return FSUtil.getFSName();
@@ -821,7 +814,6 @@ public class ShrinkFSBean implements Serializable {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////
     // Wizard Impl Control
 
     public WizardEventListener getWizardEventListener() {

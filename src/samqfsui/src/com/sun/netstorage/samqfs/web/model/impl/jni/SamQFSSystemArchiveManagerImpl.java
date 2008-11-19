@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemArchiveManagerImpl.java,v 1.15 2008/11/05 20:24:50 ronaldso Exp $
+// ident	$Id: SamQFSSystemArchiveManagerImpl.java,v 1.16 2008/11/19 22:30:43 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni;
 
@@ -254,10 +254,6 @@ public class SamQFSSystemArchiveManagerImpl
 
         if (policyMap.size() == 0)
             getAllArchivePolicies(); // just to be doubly sure
-
-        ArchivePolicy existingPol = getArchivePolicy(policyName);
-        if (existingPol != null)
-            throw new SamFSException("logic.existingPol");
 
         if ((fsNames == null) || (fsNames.length == 0))
             throw new SamFSException("logic.oneFSNeededForPol");

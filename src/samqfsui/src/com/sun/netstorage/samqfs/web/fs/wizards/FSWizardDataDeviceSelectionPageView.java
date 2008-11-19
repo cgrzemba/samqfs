@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.35 2008/09/11 05:28:51 kilemba Exp $
+// ident	$Id: FSWizardDataDeviceSelectionPageView.java,v 1.36 2008/11/19 22:30:43 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -151,8 +151,8 @@ public class FSWizardDataDeviceSelectionPageView
 
         Boolean hpc =
             (Boolean)wizardModel.getValue(CreateFSWizardImpl.POPUP_HPC);
-        
-        devices = SamUtil.filterInOSDDevices(devices, 
+
+        devices = SamUtil.filterInOSDDevices(devices,
                               hpc != null ? hpc.booleanValue() : false);
 
         ArrayList selectedMetadataDevices = (ArrayList)wizardModel.getValue(
