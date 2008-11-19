@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.83 $"
+#pragma ident "$Revision: 1.84 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -958,15 +958,26 @@ copyRegular(
 				File->AfFlags |= AF_error;
 				if (n == -1) {
 					Trace(TR_ERR,
-					    "Read(%s/%s) error",
+					    "Read(%s/%s) error.",
 					    MntPoint, File->f->FiName);
 					n = 0;
 				} else  {
-					errno = 0;
-					Trace(TR_ERR,
-					    "Read(%s/%s, %d) %d returned -"
-					    " file truncated",
-					    MntPoint, File->f->FiName, l, n);
+					if (n < 0) {
+						Trace(TR_ERR,
+						    "Read(%s/%s) error."
+						    "Read %d bytes.",
+						    MntPoint, File->f->FiName,
+						    n);
+						n = 0;
+					} else {
+						errno = 0;
+						Trace(TR_ERR,
+						    "Read(%s/%s) expected %d,"
+						    "returned %d."
+						    "File truncated.",
+						    MntPoint, File->f->FiName,
+						    l, n);
+					}
 				}
 			}
 		} else {
@@ -1000,8 +1011,8 @@ copyRegular(
 		if (read(s_fd, &buf, 1) != 0) {
 			File->AfFlags |= AF_error;
 			errno = 0;
-			Trace(TR_ERR, "Read(%s/%s) - file extended",
-			    MntPoint, File->f->FiName);
+			Trace(TR_ERR, "Read(%s/%s) beyond original size."
+			    "File extended", MntPoint, File->f->FiName);
 		}
 	}
 
