@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.177 $"
+#pragma ident "$Revision: 1.178 $"
 #endif
 
 #include "sam/osversion.h"
@@ -813,12 +813,12 @@ sam_dk_direct_io(
 	}
 
 	if (rw == UIO_READ) {
-		ssize_t rem = MAX(ip->size - uiop->uio_loffset, 0);
+		offset_t rem = MAX(ip->size - uiop->uio_loffset, 0);
 
 		map_flag = SAM_RD_DIRECT_IO;
 		rw_type = RW_READER;
-		if (uiop->uio_resid > rem) {	/* If reading past EOF */
-			bdp->rem = uiop->uio_resid - rem;
+		if ((offset_t)uiop->uio_resid > rem) { /* If reading past EOF */
+			bdp->rem = (offset_t)uiop->uio_resid - rem;
 			uiop->uio_resid = (ssize_t)rem;
 		}
 		if (ip->di.id.ino == SAM_INO_INO) {
