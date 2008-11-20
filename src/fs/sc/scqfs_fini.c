@@ -37,7 +37,7 @@
  * contains the Metadata server resource).
  */
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -92,15 +92,15 @@ UmountFS(int argc,
 	if (!fp->fi_fs || ! fp->fi_mntpt) {
 		return (1);
 	}
-	if (GetRgInfo(argc, argv, &rg) < 0) {
-		return (1);
-	}
-
-	if (GetMdsInfo(&rg, fp) < 0) {
-		return (1);
-	}
-
 	if (validate_mounted(fp->fi_mntpt, B_FALSE)) {
+		if (GetRgInfo(argc, argv, &rg) < 0) {
+			return (1);
+		}
+
+		if (GetMdsInfo(&rg, fp) < 0) {
+			return (1);
+		}
+
 		if (umount_qfs(&rg, fp) != 0) {
 			/* 22686 */
 			scds_syslog(LOG_ERR,
