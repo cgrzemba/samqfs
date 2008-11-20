@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.298 $"
+#pragma ident "$Revision: 1.299 $"
 
 #include "sam/osversion.h"
 
@@ -943,22 +943,18 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 
 				/*
 				 * If the offset is less than the current file
-				 * size, issue a SAM_WRITE so an allocated block
-				 * is cleared before the offset.  This handles
-				 * the case where a client begins writing in the
-				 * middle of an unallocated DAU (a hole) prior
-				 * to the current end of file, AND the write
-				 * extends past the end of file, requiring us to
-				 * go through the append code rather than the
-				 * usual write code (which handles this
-				 * already).
+				 * size, issue a SAM_ALLOC_ZERO so an
+				 * allocated block is cleared. This handles
+				 * the case where a client begins writing in
+				 * the middle of an unallocated DAU
+				 * (a hole) prior to the current end of file.
 				 */
 				if (lp->data.offset < ip->di.rm.size) {
 					error = sam_map_block(ip,
 					    lp->data.offset,
 					    (ip->di.rm.size -
-					    lp->data.offset), SAM_WRITE, NULL,
-					    credp);
+					    lp->data.offset), SAM_ALLOC_ZERO,
+					    NULL, credp);
 					sam_flush_pages(ip, B_INVAL);
 					if (error) {
 						break;
