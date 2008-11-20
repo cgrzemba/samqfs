@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.91 $"
+#pragma ident "$Revision: 1.92 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -280,15 +280,12 @@ CreateFile(
 	 * Set file's checksum attributes.
 	 */
 	if (req->flags & STAGE_CSUSE) {
-		char *filename;
+		char *mountname;
 		SET_FLAG(fi.flags, FI_USE_CSUM);
 		fi.csum_algo = req->cs_algo;
 		GetFileName(&fi, pathBuffer, PATHBUF_SIZE, NULL);
-		fi.namelen = strlen(pathBuffer);
-		filename = strrchr(pathBuffer, '/');
-		if (filename != NULL) {
-			fi.namelen = strlen(filename);
-		}
+		mountname = GetMountPointName(fi.fseq);
+		fi.namelen = strlen(pathBuffer) - strlen(mountname);
 	}
 
 	/*
