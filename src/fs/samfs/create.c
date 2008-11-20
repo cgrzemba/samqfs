@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.168 $"
+#pragma ident "$Revision: 1.169 $"
 
 #include "sam/osversion.h"
 
@@ -905,6 +905,8 @@ sam_make_ino(
 		if (SAM_IS_OBJECT_FS(mp)) {
 			ip->di.rm.info.obj.stripe_width =
 			    pip->di.rm.info.obj.stripe_width;
+			ip->di.rm.info.obj.stripe_shift =
+			    pip->di.rm.info.obj.stripe_shift;
 		}
 	} else {
 		ip->di.status.bits = pip->di.status.bits & SAM_INHERIT_MASK;
@@ -964,6 +966,8 @@ sam_make_ino(
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(ip->di.mode)) {
 		ip->di.rm.info.obj.stripe_width =
 		    pip->di.rm.info.obj.stripe_width;
+		ip->di.rm.info.obj.stripe_shift =
+		    pip->di.rm.info.obj.stripe_shift;
 		if ((error = sam_create_object_id(mp, &ip->di)) != 0) {
 			goto make_cleanup;
 		}
