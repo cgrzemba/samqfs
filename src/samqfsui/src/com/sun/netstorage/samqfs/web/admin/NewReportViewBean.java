@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewReportViewBean.java,v 1.11 2008/05/16 19:39:25 am143972 Exp $
+// ident	$Id: NewReportViewBean.java,v 1.12 2008/11/20 03:13:07 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -271,6 +271,11 @@ public class NewReportViewBean extends CommonSecondaryViewBeanBase {
                 getServerName());
         }
 
+        forwardTo(getRequestContext());
+    }
+
+    public void handleCancelRequest(RequestInvocationEvent rie)
+        throws ModelControlException {
         forwardTo(getRequestContext());
     }
 }

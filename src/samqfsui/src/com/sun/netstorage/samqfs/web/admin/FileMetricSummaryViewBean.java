@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileMetricSummaryViewBean.java,v 1.23 2008/05/16 19:39:25 am143972 Exp $
+// ident	$Id: FileMetricSummaryViewBean.java,v 1.24 2008/11/20 03:13:07 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -226,7 +226,10 @@ public class FileMetricSummaryViewBean extends CommonViewBeanBase {
                 sysModel.getSamQFSSystemFSManager().getAllFileSystems();
             // metrics are available for all filesystems
             for (int i = 0; i < fss.length; i++) {
-                fsnameOptions.add(fss[i].getName(), fss[i].getName());
+                // prune out MAT file systems
+                if (!fss[i].isMatFS()) {
+                    fsnameOptions.add(fss[i].getName(), fss[i].getName());
+                }
             }
             if (selFsName ==  null) {
                 // page displayed for the first time, try from the session

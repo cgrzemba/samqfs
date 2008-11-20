@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FsReportView.java,v 1.11 2008/05/16 19:39:25 am143972 Exp $
+// ident	$Id: FsReportView.java,v 1.12 2008/11/20 03:13:07 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -119,6 +119,17 @@ public class FsReportView extends CommonTableContainerView {
 
         ((CCHref)getChild(CHILD_SAMPLEFS_HREF)).setValue(reportPath);
 
+        boolean archiving = false;
+        String serverName =
+            ((CommonViewBeanBase)getParentViewBean()).getServerName();
+        try {
+            archiving = SamUtil.getModel(serverName).hasArchivingFileSystem();
+        } catch (SamFSException sfe) {
+            // trace
+            TraceUtil.trace1("ERROR: " + sfe.getMessage());
+        }
+
+        ((CCButton)getChild("NewButton")).setDisabled(!archiving);
         TraceUtil.trace3("Exiting");
     }
 

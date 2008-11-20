@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: MediaReportView.java,v 1.13 2008/05/16 19:39:25 am143972 Exp $
+// ident	$Id: MediaReportView.java,v 1.14 2008/11/20 03:13:07 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -138,6 +138,18 @@ public class MediaReportView extends CommonTableContainerView {
         ((CCHref)getChild(CHILD_SAMPLESTK_HREF)).
             setValue(SAMPLE_ACSLS_REPORT);
 
+        boolean archiving = false;
+        String serverName =
+            ((CommonViewBeanBase)getParentViewBean()).getServerName();
+
+        try {
+            archiving = SamUtil.getModel(serverName).hasArchivingFileSystem();
+        } catch (SamFSException sfe) {
+            // trace
+            TraceUtil.trace1("ERROR: " + sfe.getMessage());
+        }
+
+        ((CCButton)getChild("NewButton")).setDisabled(!archiving);
         TraceUtil.trace3("Exiting");
     }
 

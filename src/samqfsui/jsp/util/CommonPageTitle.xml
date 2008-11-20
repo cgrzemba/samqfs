@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: CommonPageTitle.xml,v 1.5 2008/05/22 13:42:32 kilemba Exp $ -->
+<!-- $Id: CommonPageTitle.xml,v 1.6 2008/11/20 03:13:07 kilemba Exp $ -->
 
 <!-- common page title with 2 buttons Submit and Cancel for all main pages.  -->
 <pagetitle>
@@ -42,7 +42,7 @@
             tagclass="com.sun.web.ui.taglib.html.CCButtonTag">
             <attribute name="type" value="secondary"/>
             <attribute name="defaultValue" value="common.button.cancel"/>
-            <attribute name="onClick" value="cleanupPopup(this);"/>
+            <attribute name="onClick" value="return cleanupPopup(this);"/>
         </cc>
     </pagebuttons>
 </pagetitle>
