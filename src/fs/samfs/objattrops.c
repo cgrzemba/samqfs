@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
 
 #include "sam/osversion.h"
 
@@ -93,18 +93,12 @@ sam_objattr_set_file_samid(objnode_t *objnodep, uint16_t len, void *buf,
 	ip = (struct sam_node *)(objnodep->obj_data);
 	RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-	if (ip->di.parent_id.ino != SAM_OBJ_ORPHANS_INO) {
-		/* Not a known orphan inode for 'mat' file system */
-		error = ENOENT;
-		goto fini;
-	}
 	mp = ip->mp;
+
 	ip->di.parent_id.ino = BE_32(samid->ino);
 	ip->di.parent_id.gen = BE_32(samid->gen);
 	TRANS_INODE(mp, ip);
-	sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
-
-fini:
+	sam_mark_ino(ip, SAM_CHANGED);
 	RW_UNLOCK_OS(&ip->data_rwl, RW_WRITER);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	return (error);
