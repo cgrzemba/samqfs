@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.147 $"
+#pragma ident "$Revision: 1.148 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1476,7 +1476,8 @@ sam_clear_append(
 		 * Clear from off up to a .seg boundary past offset +
 		 * mapp->size_left.
 		 */
-		len = offset + mapp->size_left - off;
+		seg_size = mp->mi.m_dau[iop->imap.dt].seg[iop->imap.bt];
+		len = roundup(offset + mapp->size_left, seg_size) - off;
 		if (len > 0) {
 			TRACE(T_SAM_DKMAP5, SAM_ITOP(ip), (sam_tr_t)off,
 			    len, offset);
