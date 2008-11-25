@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -356,7 +356,7 @@ main(int argc, char *argv[])
 				    CSD_MAX_INCLUDED);
 			}
 			included[nincluded] = optarg;
-			len = strip_path_items(optarg, &included[nincluded]);
+			len = strlen(optarg);
 			if (len > 0) {
 				*(included[nincluded] + len) = '\0';
 				nincluded++;
@@ -377,7 +377,7 @@ main(int argc, char *argv[])
 				    CSD_MAX_EXCLUDED);
 			}
 			excluded[nexcluded] = optarg;
-			len = strip_path_items(optarg, &excluded[nexcluded]);
+			len = strlen(optarg);
 			if (len > 0) {
 				*(excluded[nexcluded] + len) = '\0';
 				nexcluded++;
@@ -905,8 +905,11 @@ char *argv[])
 				int trim;
 
 				path += strspn(path, "\t\n ");
-				trim = strcspn(path, "\t\n ");
-				path[trim] = '\0';
+				trim = strcspn(path, "\t\n");
+				path[trim--] = '\0';
+				while (trim > 0 && path[trim] == ' ') {
+					path[trim--] = '\0';
+				}
 				return (path);
 			} else {
 				fclose(I_str);
