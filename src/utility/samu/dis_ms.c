@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.28 $"
+#pragma ident "$Revision: 1.29 $"
 
 /* ANSI headers. */
 #include <errno.h>
@@ -66,8 +66,8 @@ static int DisParts(struct sam_fs_info *fi, int first_part);
 
 /* Private data. */
 static int numfs;		/* Number of filesystems */
-static int fsfirst;		/* first filesystem on screen */
-static int devfirst;		/* first partition on screen */
+static int fsfirst = 0;		/* first filesystem on screen */
+static int devfirst = 0;	/* first partition on screen */
 static struct sam_fs_info   *finfo = NULL;
 
 void
