@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.124 $"
+#pragma ident "$Revision: 1.125 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -1498,6 +1498,7 @@ idListCompress(
 		}
 	}
 	il->IlCount = j;
+	il->IlSize = sizeof (struct IdList) + (j-1) * sizeof (struct IdRef);
 }
 
 

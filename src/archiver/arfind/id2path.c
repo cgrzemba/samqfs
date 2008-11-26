@@ -44,7 +44,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.45 $"
+#pragma ident "$Revision: 1.46 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -109,6 +109,8 @@ struct DirCache {
 
 #define	CACHE_INCR (128 * 1024)
 #define	CACHE_MAX (32 * CACHE_INCR)
+#define	CACHE_MAX_TABLE_COUNT 32
+
 #define	CE_SIZE(ce) (STRUCT_RND(sizeof (struct CacheEntry)) + \
 	STRUCT_RND((ce)->CeName_l))
 
@@ -163,7 +165,7 @@ static struct CacheEntry *cacheLookup(sam_id_t id);
 static struct DirCache *createDirCache(void);
 static struct IdRef *idListAdd(sam_id_t id);
 static struct IdRef *idListLookup(sam_id_t id);
-static int readDir(sam_id_t id);
+static int readDir(sam_id_t parent_id, sam_id_t id);
 static void removeDirCache(int dci);
 
 
@@ -225,9 +227,10 @@ IdToPath(
 
 			/*
 			 * Read parent directory which adds all inodes in
-			 * directory to the cache.
+			 * directory to the cache.  Guarantees that entry
+			 * for id is cached.
 			 */
-			if (readDir(parent_id) == -1) {
+			if (readDir(parent_id, id) == -1) {
 				break;
 			}
 
@@ -545,37 +548,20 @@ static struct DirCache *
 createDirCache(void)
 {
 	struct DirCache *dc;
-	int dci;
+	int dci = dirCacheIndex + 1;
 
 #if defined(I2P_TRACE)
 	Trace(TR_DEBUG, "Create dircache");
 #endif /* defined(I2P_TRACE) */
 
-	for (dci = 1; dci < dirCacheTableCount; dci++) {
-
-		if (dirCacheTable[dci] == NULL) {
-			break;		/* found empty table slot */
+	if (dirCacheTableCount >= CACHE_MAX_TABLE_COUNT) {
+		if (dci >= CACHE_MAX_TABLE_COUNT) {
+			dci = 0;
 		}
-
-		dc = dirCacheTable[dci];
-		if (dc->DcFree > (int)((float)dc->DcCount * 0.3)) {
-			Trace(TR_DEBUG,
-			    "[%d] Dircache free count: %d free: %d",
-			    dci, dc->DcCount, dc->DcFree);
-/*
- * FIXME. Cannot remove cache entry during a create.
- * Need to cleanup unused directory cache entries at
- * some other point.
- */
-#if 0
+		if (dirCacheTable[dci] != NULL) {
 			removeDirCache(dci);
-			ASSERT(dirCacheTable[dci] == NULL);
-			break;		/* use recently freed table slot */
-#endif
 		}
-	}
-
-	if (dci >= dirCacheTableCount) {
+	} else if (dci >= dirCacheTableCount) {
 		dci = dirCacheTableCount;
 		dirCacheTableCount += DIR_CACHE_TABLE_INCR;
 		SamRealloc(dirCacheTable,
@@ -726,13 +712,17 @@ idListLookup(
 
 /*
  * Read directory.
+ * Guarantees that the entry with id is in the cache after return.
  */
 static int
 readDir(
-	sam_id_t parent_id)
+	sam_id_t parent_id,
+	sam_id_t id)
 {
 	static struct DirRead dr;
 	struct sam_dirent *dp;
+	char id_name[MAXNAMELEN];
+	int id_namelen = 0;
 
 	if (OpenDir(parent_id, NULL, &dr) < 0) {
 		return (-1);
@@ -759,7 +749,18 @@ readDir(
 				continue;
 			}
 		}
-		cacheAddEntry(dp->d_id, parent_id, name, dp->d_namlen);
+
+		if (dp->d_id.ino == id.ino) {
+			strncpy(id_name, name, dp->d_namlen);
+			id_namelen = dp->d_namlen;
+		} else {
+			cacheAddEntry(dp->d_id, parent_id, name, dp->d_namlen);
+		}
+	}
+
+	/* Guarantee that id's entry is cached */
+	if (id_namelen != 0) {
+		cacheAddEntry(id, parent_id, id_name, id_namelen);
 	}
 
 	if (errno != 0) {
@@ -801,7 +802,9 @@ removeDirCache(
 	for (i = 0; i < idList->IlCount; i++) {
 		if (idList->IlEntry[i].IrDcIndex != 0 &&
 		    idList->IlEntry[i].IrDcIndex != dci) {
-			idList->IlEntry[j] = idList->IlEntry[i];
+			if (i != j) {
+				idList->IlEntry[j] = idList->IlEntry[i];
+			}
 			j++;
 		}
 	}
@@ -810,6 +813,7 @@ removeDirCache(
 	    dci, dcName, idList->IlCount, j);
 
 	idList->IlCount = j;
+	idList->IlSize = sizeof (struct IdList) + (j-1) * sizeof (struct IdRef);
 
 	(void) unlink(dcName);
 	(void) ArMapFileDetach(dirCacheTable[dci]);
