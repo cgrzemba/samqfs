@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -50,6 +50,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 /* POSIX headers. */
 #include <dirent.h>
@@ -77,9 +78,11 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 /* Macros. */
 #define	EXAMLIST_INCR 1000000
 #define	EXAMLIST_START 10000
+#define	EXAMLIST_FREEMAX 3*EXAMLIST_INCR
+#define	EXAMLIST_PRUNEBUF 2048
+#define	EXAMLIST_TMP "ExamTmp"
 
 /* Private data. */
-
 static struct ExamList *examList;
 
 /*
@@ -99,6 +102,7 @@ static struct IdList {
 } *idList;
 
 #define	IDLIST "idlist_exam"
+#define	IDLIST_TMP "idlist_tmp"
 #define	IDLIST_MAGIC 0110414112324
 #define	IDLIST_INCR 1000
 #define	ID_LOC(ir) ((void *)((char *)examList + *ir))
@@ -118,7 +122,8 @@ static void initExaminodes();
 static struct ExamList *initExamList(char *name);
 static void addExamList(sam_id_t id, int event, sam_time_t xeTime,
     char *caller);
-static void pruneExamList(void);
+static int pruneExamList(int prev_i);
+static int cmpIdList(const void *p1, const void *p2);
 static void wakeup(void);
 
 
@@ -147,7 +152,6 @@ ExamInodes(
 		boolean_t noActiveMsg = TRUE;
 		boolean_t backgroundPaused;
 		int	active;
-		int	elFree;
 		int	i;
 
 		timeNow = time(NULL);
@@ -176,10 +180,9 @@ ExamInodes(
 		 */
 		PthreadMutexLock(&examListMutex);
 		active = 0;
-		elFree = 0;
 		backgroundPaused = FALSE;
 
-		for (i = 0; i < examList->ElCount; i++) {
+		for (i = 0; i < examList->ElCount && Exec < ES_term; i++) {
 			struct ExamListEntry *xe;
 			sam_id_t id;
 			int	event;
@@ -187,7 +190,6 @@ ExamInodes(
 
 			xe = &examList->ElEntry[i];
 			if (xe->XeFlags & XE_free) {
-				elFree++;
 				continue;
 			}
 			if (xe->XeTime > timeNow + EPSILON_TIME) {
@@ -199,6 +201,7 @@ ExamInodes(
 			event = xe->XeEvent;
 			flags = xe->XeFlags;
 			xe->XeFlags |= XE_free;
+			examList->ElFree++;
 			xe->XeTime = TIME_MAX;
 			PthreadMutexUnlock(&examListMutex);
 
@@ -267,6 +270,10 @@ ExamInodes(
 				}
 			}
 			PthreadMutexLock(&examListMutex);
+			if (examList->ElFree >= EXAMLIST_FREEMAX) {
+				i = pruneExamList(i);
+				PthreadMutexLock(&examListMutex);
+			}
 			noActiveMsg = FALSE;
 		}
 
@@ -275,12 +282,7 @@ ExamInodes(
 			backgroundPaused = FALSE;
 		}
 
-		examList->ElFree = elFree;
-		if (examList->ElFree >= EXAMLIST_INCR) {
-			pruneExamList();
-		} else {
-			PthreadMutexUnlock(&examListMutex);
-		}
+		PthreadMutexUnlock(&examListMutex);
 
 		ThreadsReconfigSync(RC_allow);
 		if (active == 0 && !noActiveMsg) {
@@ -333,6 +335,7 @@ ExamInodesRmInode(
 		xe = (struct ExamListEntry *)ID_LOC(ir);
 		xe->XeFlags |= XE_free;
 		xe->XeTime = TIME_MAX;
+		examList->ElFree++;
 #if defined(FILE_TRACE)
 		Trace(TR_DEBUG, "Examlist remove inode: %d.%d event: '%s'",
 		    xe->XeId.ino, xe->XeId.gen,
@@ -668,48 +671,191 @@ addExamList(
 /*
  * Prune the examine list.
  * examListMutex locked on entry.  Unlocked on exit.
+ * Returns index adjusted for removed entries.
  */
-static void
-pruneExamList(void)
+static int
+pruneExamList(int cur_idx)
 {
-	struct ExamList *el, *elTmp;
-	struct ExamListEntry *xe;
+	struct ExamListEntry *buf = NULL; /* Buffer for writing new Examlist */
+	struct ExamListEntry *xe;	/* Iterator over existing examlist */
+	struct IdList *new_il = NULL;	/* New exam id list */
+	struct ExamList *el;		/* Temp var to create new Examlist */
+	int	el_fd = -1;		/* File descriptor for new Examlist */
+	uint_t	el_lenoff;		/* Offset to length in mmap file */
+	uint_t	el_offset;		/* Current pos in new Examlist file */
 	int	i;
+	int	j;
+	int	buf_i;			/* Current index into buffer */
+	int	nwritten;		/* Number of bytes written */
+	int	new_idx;		/* Updated index from removed items */
+
+	new_idx = cur_idx;
 
 	if (examList->ElCount == 0 || examList->ElFree == 0) {
 		PthreadMutexUnlock(&examListMutex);
-		return;
+		return (new_idx);
 	}
 
-	/*
-	 * Create a new examlist.
-	 */
-	elTmp = initExamList("ExamTmp");
-	if (elTmp == NULL) {
-		LibFatal(create, "ExamTmp");
-	}
+	SamMalloc(buf, EXAMLIST_PRUNEBUF * sizeof (struct ExamListEntry));
+	buf_i = 0;
 
-	el = examList;
-	examList = elTmp;
-	if (MapFileRename(examList, EXAMLIST) == -1) {
-		LibFatal(MapFileRename, EXAMLIST);
+	/* Create new id list */
+	new_il = MapFileCreate(IDLIST_TMP, IDLIST_MAGIC,
+	    IDLIST_INCR * sizeof (uint_t));
+	new_il->Il.MfValid = 1;
+	new_il->IlCount = 0;
+	new_il->IlSize = sizeof (struct IdList);
+
+	/* Create new examlist.  Close and open to write for memory reasons */
+	el = initExamList(EXAMLIST_TMP);
+	if (el == NULL) {
+		Trace(TR_ERR, "Could not create new Examlist");
+		goto rollback;
+	}
+	el_lenoff = Ptrdiff(&el->El.MfLen, el);
+	el_offset = Ptrdiff(&el->ElEntry, el);
+	(void) ArMapFileDetach(el);
+	if ((el_fd = open(EXAMLIST_TMP, O_WRONLY, 0)) < 0) {
+		Trace(TR_ERR, "Could not open Examlist for writing.");
+		goto rollback;
+	}
+	if (lseek(el_fd, el_offset, SEEK_SET) != el_offset) {
+		Trace(TR_ERR, "Could not seek to append Examlist");
+		goto rollback;
 	}
 
 	Trace(TR_MISC, "Examlist prune count: %d free: %d",
-	    el->ElCount, el->ElFree);
+	    examList->ElCount, examList->ElFree);
 
-	/*
-	 * Add the non-free entries to the new list.
-	 */
-	for (i = 0; i < el->ElCount; i++) {
-		xe = &el->ElEntry[i];
+	/* Add the non-free entries to the new list. */
+	j = 0;
+	for (i = 0; i < examList->ElCount; i++) {
+		xe = &examList->ElEntry[i];
 		if (!(xe->XeFlags & XE_free)) {
-			addExamList(xe->XeId, xe->XeTime, xe->XeEvent,
-			    "pruneExamList");
+			memcpy(&buf[buf_i], xe, sizeof (struct ExamListEntry));
+
+			if (new_il->IlSize + sizeof (uint_t) >
+			    new_il->Il.MfLen) {
+				new_il = MapFileGrow(new_il, IDLIST_INCR *
+				    sizeof (uint_t));
+				if (new_il == NULL) {
+					LibFatal(MapFileGrow, IDLIST_TMP);
+				}
+			}
+			new_il->IlEntry[j] = el_offset;
+			new_il->IlCount++;
+			new_il->IlSize += sizeof (uint_t);
+
+			j++;
+			buf_i++;
+		} else if (i <= cur_idx) {
+			/*
+			 * Removed entry before current index, adjust.
+			 * Careful at boundary, if current index is removed
+			 * we still want to decrement since the index will
+			 * be incremented in the loop (hence the <=).
+			 */
+			new_idx--;
+		}
+
+		/* Write the buffer if full */
+		if (buf_i >= EXAMLIST_PRUNEBUF) {
+			int wr_size = buf_i * sizeof (struct ExamListEntry);
+			nwritten = write(el_fd, buf, wr_size);
+			if (nwritten != wr_size) {
+				Trace(TR_ERR, "Write error to new Examlist");
+				goto rollback;
+			}
+			el_offset += wr_size;
+			buf_i = 0;
 		}
 	}
-	(void) ArMapFileDetach(el);
+
+	/* Write the remainder of the buffer */
+	if (buf_i > 0) {
+		int wr_size = buf_i * sizeof (struct ExamListEntry);
+		nwritten = write(el_fd, buf, wr_size);
+		if (nwritten != wr_size) {
+			Trace(TR_ERR, "Write error to new Examlist");
+			goto rollback;
+		}
+		el_offset += wr_size;
+		buf_i = 0;
+	}
+	SamFree(buf);
+	buf = NULL;
+
+	/* Update the mapfile length */
+	if (lseek(el_fd, el_lenoff, SEEK_SET) != el_lenoff) {
+		Trace(TR_ERR, "Could not seek to update mmap length");
+		goto rollback;
+	}
+	if (write(el_fd, &el_offset, sizeof (uint_t)) != sizeof (uint_t)) {
+		Trace(TR_ERR, "Error writing updated mmap length");
+		goto rollback;
+	}
+	if (close(el_fd) < 0) {
+		Trace(TR_ERR, "Error closing new Examlist");
+		goto rollback;
+	}
+	el_fd = -1;
+
+	/* Make the new exam list active */
+	(void) ArMapFileDetach(examList);
+	rename(EXAMLIST, EXAMLIST"-old");
+	rename(EXAMLIST_TMP, EXAMLIST);
+	examList = ArMapFileAttach(EXAMLIST, EXAMLIST_MAGIC, O_RDWR);
+	if (examList == NULL) {
+		Trace(TR_ERR, "Could not attach new Examlist");
+		rename(EXAMLIST"-old", EXAMLIST);
+		examList = ArMapFileAttach(EXAMLIST, EXAMLIST_MAGIC, O_RDWR);
+		if (examList == NULL) {
+			Trace(TR_ERR, "Could not recover old Examlist");
+			LibFatal(ArMapFileAttach, EXAMLIST);
+		}
+		goto rollback;
+	}
+	unlink(EXAMLIST"-old");
+	examList->ElCount = new_il->IlCount;
+	examList->ElSize += (examList->ElCount - 1) *
+	    sizeof (struct ExamListEntry);
+
+	/* Sort and make the new id list active */
+	qsort(new_il->IlEntry, new_il->IlCount, sizeof (uint_t), cmpIdList);
+	(void) ArMapFileDetach(idList);
+	if (MapFileRename(new_il, IDLIST) == -1) {
+		LibFatal(MapFileRename, IDLIST);
+	}
+	idList = new_il;
+
 	PthreadMutexUnlock(&examListMutex);
+
+	return (new_idx);
+rollback:
+	Trace(TR_ERR, "Rolling back prune, using previous Examlist");
+	if (el_fd > 0) {
+		close(el_fd);
+		unlink(EXAMLIST_TMP);
+	}
+	if (new_il != NULL) {
+		(void) ArMapFileDetach(new_il);
+		unlink(IDLIST_TMP);
+	}
+	if (buf != NULL) {
+		SamFree(buf);
+	}
+	return (cur_idx);
+}
+
+/*
+ * Comparison function to sort idList based on inode (used in pruning).
+ */
+static int
+cmpIdList(const void *p1, const void *p2) {
+	struct ExamListEntry *e1 = (struct ExamListEntry *)ID_LOC((uint_t *)p1);
+	struct ExamListEntry *e2 = (struct ExamListEntry *)ID_LOC((uint_t *)p2);
+
+	return (e1->XeId.ino - e2->XeId.ino);
 }
 
 
