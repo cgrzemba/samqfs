@@ -34,7 +34,7 @@
 #ifndef SCHEDULE_H
 #define	SCHEDULE_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 /*
  * Schedule request.
@@ -76,6 +76,7 @@ void *Scheduler(void *arg);
 void AddWork(StreamInfo_t *stream);
 void CancelWork(int id);
 void ShutdownCopy(int stopSignal);
+void SendSig2Copy(int signum);
 void RemoveCopyProcMapFile();
 void CopyProcExit(int sig);
 void ClearScheduler(media_t media, char *volume);

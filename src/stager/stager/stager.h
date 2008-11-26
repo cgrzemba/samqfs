@@ -34,7 +34,7 @@
 #ifndef STAGER_H
 #define	STAGER_H
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 /*
  * Stager start mode.
@@ -46,10 +46,12 @@ enum StartMode {
 };
 
 /*
- * Define prototypes in control.c
+ * Define config mutex in stager.c
  */
 void ReconfigLock();
 void ReconfigUnlock();
+void CopyInstanceLock();
+void CopyInstanceUnlock();
 
 /*
  * Define prototypes in compose.c

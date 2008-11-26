@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -169,6 +169,7 @@ static pthread_t configCheckThreadId;
 static boolean_t initInProgress = B_TRUE;
 
 static pthread_mutex_t reconfigMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t copyInstanceMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * SAM-FS shared memory segment.
@@ -459,6 +460,18 @@ void
 ReconfigUnlock(void)
 {
 	PthreadMutexUnlock(&reconfigMutex);
+}
+
+void
+CopyInstanceLock(void)
+{
+	PthreadMutexLock(&copyInstanceMutex);
+}
+
+void
+CopyInstanceUnlock(void)
+{
+	PthreadMutexUnlock(&copyInstanceMutex);
 }
 
 /*
@@ -1098,6 +1111,18 @@ reconfig(void)
 
 	CreateRmFiles();
 
+	/*
+	 * Request reconfigure the copy instance table if exist.
+	 */
+
+	CopyInstanceLock();
+
+	if (CopyInstanceList != NULL) {
+		CopyInstanceList->cl_reconfig = B_TRUE;
+	}
+
+	CopyInstanceUnlock();
+
 	if (FoundThirdParty()) {
 		if (createMigrator()) {
 			SendCustMsg(HERE, 19009);
@@ -1131,6 +1156,7 @@ sigHup(
 	int signum)
 {
 	reconfig();
+	SendSig2Copy(SIGHUP);
 }
 
 static void

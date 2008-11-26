@@ -34,7 +34,7 @@
 #ifndef COPY_DEFS_H
 #define	COPY_DEFS_H
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 /* Structures. */
 
@@ -112,6 +112,7 @@ typedef struct CopyInstanceList {
 	time_t		cl_create;	/* stagereqfile's creation time */
 	size_t		cl_size;
 	int		cl_entries;	/* number of threads */
+	boolean_t	cl_reconfig;	/* reconfiguration */
 	CopyInstanceInfo_t	cl_data[1];
 } CopyInstanceList_t;
 

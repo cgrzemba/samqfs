@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.101 $"
+#pragma ident "$Revision: 1.102 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -986,6 +986,30 @@ ShutdownCopy(
 }
 
 /*
+ * Send a signal to copy.
+ */
+void
+SendSig2Copy(
+	int signum)
+{
+	int i;
+	pid_t pid;
+
+	if (CopyInstanceList == NULL) {
+		return;
+	}
+
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		pid = CopyInstanceList->cl_data[i].ci_pid;
+		if (pid != 0) {
+			(void) kill(pid, signum);
+			Trace(TR_PROC, "Sent signal %d to copy[%d]",
+			    signum, (int)pid);
+		}
+	}
+}
+
+/*
  * Remove copy proc file.
  */
 void
@@ -1925,9 +1949,35 @@ initCopyInstanceList(
 	pthread_mutexattr_t mattr;
 	pthread_condattr_t cattr;
 
+	CopyInstanceLock();
+
 	if (CopyInstanceList != NULL) {
-		return;
+		if (CopyInstanceList->cl_reconfig == B_FALSE) {
+			CopyInstanceUnlock();
+			return;
+		}
+
+		/*
+		 * Reconfigure copy instance list has requested.
+		 * If no copy procs are running, allow reconfig.
+		 */
+		for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+			CopyInstanceInfo_t *ci;
+
+			ci = &CopyInstanceList->cl_data[i];
+			if ((ci->ci_created == B_TRUE) && (ci->ci_pid != 0)) {
+				Trace(TR_DEBUG,
+				    "Copy proc pid: %d busy", ci->ci_pid);
+				CopyInstanceUnlock();
+				return;
+			}
+		}
+		Trace(TR_MISC, "Reconfigure CopyInstanceList");
+		RemoveCopyProcMapFile();
 	}
+
+	CopyInstanceUnlock();
+
 	numDrives = GetNumAllDrives();
 
 	if (numDrives == 0) {

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.108 $"
+#pragma ident "$Revision: 1.109 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -97,6 +97,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 /* Public data. */
 extern CopyInstanceInfo_t *Instance;
+extern CopyInstanceList_t *CopyInstanceList;
 extern int NumOpenFiles;
 
 /* Communication control for io threads. */
@@ -181,11 +182,18 @@ CopyFiles(void)
 		 * Wait for a request from daemon to stage files.
 		 */
 		while (Instance->ci_first == NULL && !IF_SHUTDOWN(Instance)) {
+			pid_t ppid;
 
-			/* Exit if parent, stager daemon, died. */
-			if (getppid() == 1) {
+			/*
+			 * Exit if parent stager daemon died
+			 * or reconfig requested.
+			 */
+			if (((ppid = getppid()) == 1) ||
+			    (CopyInstanceList->cl_reconfig == B_TRUE)) {
 				SetErrno = 0;	/* set for trace */
-				Trace(TR_ERR, "Detected stager daemon exit");
+				Trace(TR_ERR,
+				    "Detected stager daemon %s",
+				    ppid == 1 ? "exit" : "reconfig");
 				SET_FLAG(Instance->ci_flags, CI_shutdown);
 				break;
 			}

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -141,7 +141,7 @@ nl_catd catfd = NULL;
 /*
  * Instances for all procs.
  */
-CopyInstanceList_t *copyInstanceList;
+CopyInstanceList_t *CopyInstanceList;
 
 static upath_t	fullpath;
 
@@ -264,8 +264,8 @@ FindCopyInstanceInfo(
 	instance = NULL;
 
 	for (i = 0; i < CopyInstanceListCount; i++) {
-		if (copyInstanceList->cl_data[i].ci_lib == lib) {
-			instance = &copyInstanceList->cl_data[i];
+		if (CopyInstanceList->cl_data[i].ci_lib == lib) {
+			instance = &CopyInstanceList->cl_data[i];
 			break;
 		}
 	}
@@ -293,10 +293,10 @@ initCopy(void)
 	/*
 	 * Map in copy proc contexts.
 	 */
-	copyInstanceList = (CopyInstanceList_t *)MapInFile(
+	CopyInstanceList = (CopyInstanceList_t *)MapInFile(
 	    SharedInfo->si_copyInstancesFile, O_RDWR, NULL);
 
-	if (copyInstanceList == NULL) {
+	if (CopyInstanceList == NULL) {
 		FatalSyscallError(EXIT_NORESTART, HERE, "MapInFile",
 		    SharedInfo->si_copyInstancesFile);
 	}
@@ -319,8 +319,8 @@ getInstance(
 
 	instance = NULL;
 	for (i = 0; i < CopyInstanceListCount; i++) {
-		if (copyInstanceList->cl_data[i].ci_rmfn == rmfn) {
-			instance = &copyInstanceList->cl_data[i];
+		if (CopyInstanceList->cl_data[i].ci_rmfn == rmfn) {
+			instance = &CopyInstanceList->cl_data[i];
 			break;
 		}
 	}
@@ -345,6 +345,14 @@ sigHup(
 	int signum)
 {
 	TraceReconfig();
+	/*
+	 *  Tell copyfile thread that a reconfig has been
+	 *  requested.  This will shutdown a copy instance
+	 *  waiting for a request.
+	 */
+	PthreadMutexLock(&Instance->ci_requestMutex);
+	PthreadCondSignal(&Instance->ci_request);
+	PthreadMutexUnlock(&Instance->ci_requestMutex);
 }
 
 static void
@@ -355,7 +363,7 @@ sigTerm(
 	SET_FLAG(Instance->ci_flags, CI_shutdown);
 	/*
 	 *  Tell copyfile thread that a shutdown has been
-	 *  requests.  This will unblock the thread waiting on
+	 *  requested.  This will unblock the thread waiting on
 	 *  the condition variable.
 	 */
 	PthreadMutexLock(&Instance->ci_requestMutex);
