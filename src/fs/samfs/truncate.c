@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.149 $"
+#pragma ident "$Revision: 1.150 $"
 
 #include "sam/osversion.h"
 
@@ -172,6 +172,9 @@ sam_drop_ino(sam_node_t *ip, cred_t *credp)
 				(void) sam_quota_foffline(ip->mp, ip, NULL);
 			}
 			ip->di.status.b.offline = 1;
+			if (ip->di.status.b.bof_online == 0) {
+				ip->di.status.b.pextents = 0;
+			}
 			ip->stage_off = 0;
 			ip->stage_len = 0;
 			ip->real_stage_off = 0;
