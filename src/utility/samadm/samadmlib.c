@@ -1,4 +1,8 @@
 /*
+ * samadmlib - samadm utility routines.
+ */
+
+/*
  *    SAM-QFS_notice_begin
  *
  * CDDL HEADER START
@@ -27,35 +31,48 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident   "$Revision: 1.2 $"
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <string.h>
+#include <strings.h>
+#include <ctype.h>
+#include <unistd.h>
 
-#include "cmdparse.h"
+#include "samadm.h"
 
+#pragma ident   "$Revision: 1.1 $"
 
-/*
- * Subcommand function forward declarations.
- */
-int add_features_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
-int eq_add_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
-int eq_remove_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
-int eq_alloc_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
-int eq_noalloc_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
-int servicetag_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
 
 /*
- * Utility routine forward declarations.
+ * ----- ask - ask the user a y/n question
+ *
+ * Emit the message provided, and await a y/n response.
+ * Allow a default y/n value to be passed, specifying
+ * whether y or n is to be returned for a non-y/n answer.
  */
-boolean_t ask(char *msg, char def);
+boolean_t
+ask(char *msg, char def)
+{
+	int i, n;
+	int defret = (def == 'y' ? B_TRUE : B_FALSE);
+	char answ[120];
 
-extern char version_string[];
-
-/*
- * Command names that are supported by this command.
- */
-#define	SAMADM	0
-#define	CMD_MAX	1
-
-extern char *cmd_names[];
-extern int cmd_index;		/* Command index from above tables */
-extern char *cmd_name;		/* Command name pointer */
-extern char *subcmd_name;	/* Pointer to subcommand name */
+	printf("%s", msg);
+	fflush(stdout);
+	fflush(stderr);
+	n = read(0, answ, sizeof (answ));
+	for (i = 0; i < n; i++) {
+		if (answ[i] == ' ' || answ[i] == '\t') {
+			continue;
+		}
+		if (tolower(answ[i]) == 'n') {
+			return (B_FALSE);
+		}
+		if (tolower(answ[i]) == 'y') {
+			return (B_TRUE);
+		}
+		return (defret);
+	}
+	return (defret);
+}

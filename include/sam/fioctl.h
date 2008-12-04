@@ -38,7 +38,7 @@
 #define	_SAM_FIOCTL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 #endif
 
 #ifndef	linux
@@ -285,6 +285,7 @@ typedef struct fiolog {
 #define	FIOLOG_ECLEAN	5
 #define	FIOLOG_ENOULOCK	6
 #define	FIOLOG_ENOTSUP	7
+#define	FIOLOG_EPEND	99	/* Journaling state (on/off) is not yet known */
 
 
 /* End: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

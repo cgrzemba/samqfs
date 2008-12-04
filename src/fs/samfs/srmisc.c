@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.83 $"
+#pragma ident "$Revision: 1.84 $"
 
 #include "sam/osversion.h"
 
@@ -452,10 +452,21 @@ sam_sgethosts(
 		    (ip->di.rm.size < SAM_LARGE_HOSTS_TABLE_SIZE)) {
 			struct sam_sbinfo *sblk = &ip->mp->mi.m_sbp->info.sb;
 
-			if (sblk->magic != SAM_MAGIC_V2 &&
-			    sblk->magic != SAM_MAGIC_V2A) {
+			/*
+			 * File system must be V2A or higher for large
+			 * host table.
+			 */
+			if (!SAM_MAGIC_V2A_OR_HIGHER(sblk)) {
 				error = ENOSYS;
 				sam_rele_ino(ip);
+				cmn_err(CE_WARN, "SAM-QFS: %s: File system "
+				    "must be V2A to have large host table.",
+				    mp->mt.fi_name);
+				if (SAM_MAGIC_V2_OR_HIGHER(sblk)) {
+					cmn_err(CE_WARN, "\tUpgrade file "
+					    "system with samadm add-features "
+					    "first.");
+				}
 				goto out;
 			}
 
@@ -554,16 +565,12 @@ sam_sgethosts(
 				sam_mark_ino(ip, (SAM_UPDATED | SAM_CHANGED));
 				sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
 
-
-				mutex_enter(&mp->mi.m_sblk_mutex);
 				/*
-				 * No going back now.
+				 * Update options mask.
 				 */
+				mutex_enter(&mp->mi.m_sblk_mutex);
 				sblk->opt_mask |= SBLK_OPTV1_LG_HOSTS;
-				sblk->magic = SAM_MAGIC_V2A;
-
 				mutex_exit(&mp->mi.m_sblk_mutex);
-
 				error = sam_update_the_sblks(mp);
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -1194,6 +1201,10 @@ sam_onoff_client(
 	if ((mp = sam_find_filesystem(args.fs_name)) == NULL) {
 		return (ENOENT);
 	}
+	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+		error = EAGAIN;
+		goto out;
+	}
 	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
 		error = EACCES;
 		goto out;
@@ -1280,10 +1291,10 @@ out:
 
 
 /*
- * ----- sam_onoff_client
+ * ----- sam_onoff_client_delay
  *
- * Process the system call to set/read the client on/off flag in the
- * client table.
+ * Process sam_onoff_client requests - move clients from SAM_CLIENT_OFF_PENDING
+ * state to SAM_CLIENT_OFF state.
  */
 static void
 sam_onoff_client_delay(
@@ -1346,4 +1357,86 @@ sam_onoff_client_delay(
 	if (off_pending > 0) {
 		sam_taskq_add(sam_onoff_client_delay, mp, NULL, hz / 2);
 	}
+}
+
+
+/*
+ * ----- sam_change_features
+ *
+ * Change/add features to SAM-QFS file system.
+ */
+int				/* ERRNO if error, 0 if successful. */
+sam_change_features(
+	void *arg,		/* Pointer to arguments */
+	int size,		/* Size of argument struct */
+	cred_t *credp)		/* Credentials */
+{
+	sam_change_features_arg_t args;	/* Arguments into syscall */
+	sam_mount_t *mp;
+	sam_sbinfo_t *sblk;	/* Pointer to superblock */
+	int f;
+	int error = 0;
+
+	/*
+	 * Copy in user arguments
+	 */
+	if (size != sizeof (args) ||
+	    copyin(arg, (caddr_t)&args, sizeof (args))) {
+		return (EFAULT);
+	}
+
+	/*
+	 * Look up file system, check for permission, mounted, shared & server
+	 */
+	if ((mp = sam_find_filesystem(args.fs_name)) == NULL) {
+		return (ENOENT);
+	}
+	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+		error = EAGAIN;
+		goto out;
+	}
+	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
+		error = EACCES;
+		goto out;
+	}
+	if (!(mp->mt.fi_status & FS_MOUNTED)) {
+		error = EXDEV;
+		goto out;
+	}
+	if (SAM_IS_SHARED_FS(mp) && !SAM_IS_SHARED_SERVER(mp)) {
+		error = ENOTTY;
+		goto out;
+	}
+
+	sblk = &mp->mi.m_sbp->info.sb;
+	switch (args.command) {
+
+	case SAM_CHANGE_FEATURES_ADD_V2A:
+		if (!SAM_MAGIC_V2_OR_HIGHER(sblk)) {
+			/* Cannot upgrade from V1 */
+			error = ENXIO;
+			goto out;
+		}
+		if (SAM_MAGIC_V2A_OR_HIGHER(sblk)) {
+			error = EEXIST;
+			goto out;
+		}
+		cmn_err(CE_NOTE, "SAM-QFS: %s: sam_change_features: "
+		    "Upgrading from V2 to V2A file system.", mp->mt.fi_name);
+		mutex_enter(&mp->mi.m_sblk_mutex);
+		sblk->magic = SAM_MAGIC_V2A;
+		mutex_exit(&mp->mi.m_sblk_mutex);
+		error = sam_update_the_sblks(mp);
+		break;
+
+	default:
+		cmn_err(CE_WARN, "SAM-QFS: %s: Bad sam_change_features "
+		    "request %d", mp->mt.fi_name, args.command);
+		error = EINVAL;
+		goto out;
+	}
+
+out:
+	SAM_SYSCALL_DEC(mp, 0);
+	return (error);
 }

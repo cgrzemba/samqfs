@@ -28,7 +28,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.4 $"
+#pragma ident	"$Revision: 1.5 $"
 #endif
 
 #include <sys/systm.h>
@@ -91,7 +91,9 @@ qfs_fiologdisable(vnode_t *vp, fiolog_t *ufl, cred_t *cr, int flags)
 
 /*
  * qfs_fioislog
- *	Return true if log is present and active; otherwise false
+ *	Return FIOLOG_ENONE if log is present and active,
+ *	FIOLOG_ENOTSUP if journaling is not supported,
+ *	FIOLOG_EPEND if the state of journaling is not yet known (try again).
  */
 /* ARGSUSED */
 int
@@ -101,7 +103,21 @@ qfs_fioislog(vnode_t *vp, uint32_t *islog, cred_t *cr, int flags)
 	int		active;
 	uint32_t	il;
 
-	active = (qfsvfsp && LQFS_GET_LOGP(qfsvfsp));
+	if (!qfsvfsp) {
+		active = FIOLOG_EPEND;
+	} else if (!LQFS_CAPABLE(qfsvfsp)) {
+		active = FIOLOG_ENOTSUP;
+	} else if ((qfsvfsp->mt.fi_status & FS_LOGSTATE_KNOWN) == 0) {
+		active = FIOLOG_EPEND;
+	} else {
+		/*
+		 * The journaling state has been set to something (on/off).
+		 * Return code FIOLOG_ENONE indicates that journaling is
+		 * enabled.
+		 */
+		active = (LQFS_GET_LOGP(qfsvfsp) ?
+		    FIOLOG_ENONE : FIOLOG_ENOTSUP);
+	}
 	if (flags & FKIOCTL) {
 		*islog = active;
 	} else {

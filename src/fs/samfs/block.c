@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.116 $"
+#pragma ident "$Revision: 1.117 $"
 
 #include "sam/osversion.h"
 
@@ -1933,19 +1933,9 @@ sam_change_state(
 		/*
 		 * Add is not supported for sblk version 1.
 		 */
-		sblk = mp->mi.m_sbp;
-		if (sblk->info.sb.magic == SAM_MAGIC_V1) {
-			cmn_err(CE_WARN, "SAM-QFS: %s: Superblock version 1:"
-			    " Cannot add eq %d lun %s",
-			    mp->mt.fi_name, dp->part.pt_eq,
-			    dp->part.pt_name);
-			rtnerr = 5;
+		rtnerr = sam_grow_fs(mp, dp, ord);
+		if (rtnerr) {
 			break;
-		} else {
-			rtnerr = sam_grow_fs(mp, dp, ord);
-			if (rtnerr) {
-				break;
-			}
 		}
 
 		/*
@@ -2181,6 +2171,24 @@ sam_grow_fs(
 	int error;
 
 	sblk = mp->mi.m_sbp;
+	/*
+	 * Cannot add devices to a non V2A file system.  Must first
+	 * upgrade file system with samadm add-features.
+	 */
+	if (!SAM_MAGIC_V2A_OR_HIGHER(&sblk->info.sb)) {
+		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s,"
+		    " file system is not version 2A.",
+		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
+		if (SAM_MAGIC_V2_OR_HIGHER(&sblk->info.sb)) {
+			cmn_err(CE_WARN, "\tUpgrade file system with samadm "
+			    "add-features first.");
+		}
+		return (5);
+	}
+
+	/*
+	 * Check state of device to be added.
+	 */
 	if (dp->part.pt_state != DEV_OFF) {
 		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s,"
 		    " state %d is not OFF",
@@ -2296,7 +2304,6 @@ sam_grow_fs(
 	/*
 	 * Get the new sblk. Set the new size, but do not set the
 	 * new device count until the free map has been built and cleared.
-	 * Set magic to 2A. This file system is not backwards compatible.
 	 */
 	mutex_enter(&mp->mi.m_sblk_mutex);
 	old_sblk = sblk;
@@ -2307,7 +2314,6 @@ sam_grow_fs(
 	sblk = (sam_sblk_t *)kmem_zalloc(new_sblk_size, KM_SLEEP);
 	bcopy((char *)old_sblk, (char *)sblk, old_sblk_size);
 	sblk->info.sb.sblk_size = new_sblk_size;
-	sblk->info.sb.magic = SAM_MAGIC_V2A;
 
 	/*
 	 * Set state to OFF for all new ordinals.

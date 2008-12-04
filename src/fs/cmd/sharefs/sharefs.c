@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 
@@ -586,23 +586,14 @@ main(int ac, char *av[])
 			newhtsize = SAM_HOSTS_TABLE_SIZE;
 		} else {
 			newhtsize = SAM_LARGE_HOSTS_TABLE_SIZE;
-			if (!(sb.info.sb.opt_mask & SBLK_OPTV1_LG_HOSTS) &&
-			    !RawDisk) {
-
-				printf("Creating a large "
-				    "hosts table for %s.\n", FsName);
-				printf("This file system will not be "
-				    "mountable by any version\n");
-				printf("of SAM-QFS that does not "
-				    "support a large hosts table.\n");
-
-				if (isatty(0) &&
-				    !ask(catgets(catfd, SET, 13428,
-				    "Do you wish to continue? [y/N] "), 'n')) {
-					printf("Not creating new hosts table "
-					    "for '%s'.  Exiting.\n", FsName);
-					exit(1);
+			if (!SAM_MAGIC_V2A_OR_HIGHER(&sb.info.sb)) {
+				printf("File system %s not capable of having "
+				    "large host table.\n", FsName);
+				if (SAM_MAGIC_V2_OR_HIGHER(&sb.info.sb)) {
+					printf("\tUpgrade file system with "
+					    "samadm add-features first.\n");
 				}
+				exit(1);
 			}
 		}
 

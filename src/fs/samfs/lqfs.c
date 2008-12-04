@@ -28,7 +28,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.15 $"
+#pragma ident	"$Revision: 1.16 $"
 #endif
 
 #include <sys/systm.h>
@@ -1164,17 +1164,11 @@ lqfs_disable(vnode_t *vp, struct fiolog *flp)
 	/*
 	 * Logging is already disabled; done
 	 */
-	if (LQFS_GET_LOGBNO(fs) == 0 || LQFS_GET_LOGP(qfsvfsp) == NULL) {
+	if (LQFS_GET_LOGBNO(fs) == 0 || LQFS_GET_LOGP(qfsvfsp) == NULL ||
+	    !LQFS_CAPABLE(qfsvfsp)) {
 		vfs_setmntopt(qfsvfsp->vfs_vfs, MNTOPT_NOLOGGING, NULL, 0);
-		return (0);
-	}
-
-	/*
-	 * Readonly file system
-	 */
-	if (FS_RDONLY(fs)) {
-		flp->error = FIOLOG_EROFS;
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 #ifdef LUFS
@@ -1183,11 +1177,12 @@ lqfs_disable(vnode_t *vp, struct fiolog *flp)
 	 */
 	error = qfs_fiolfss(vp, &lf);
 	if (error) {
-		return (error);
+		goto out;
 	}
 	if (!LOCKFS_IS_ULOCK(&lf)) {
 		flp->error = FIOLOG_EULOCK;
-		return (0);
+		error = 0;
+		goto out;
 	}
 	lf.lf_lock = LOCKFS_WLOCK;
 	lf.lf_flags = 0;
@@ -1195,7 +1190,8 @@ lqfs_disable(vnode_t *vp, struct fiolog *flp)
 	error = qfs_fiolfs(vp, &lf, 1);
 	if (error) {
 		flp->error = FIOLOG_EWLOCK;
-		return (0);
+		error = 0;
+		goto out;
 	}
 #else
 	/* QFS doesn't really support LOCKFS. */
@@ -1305,7 +1301,8 @@ lqfs_disable(vnode_t *vp, struct fiolog *flp)
 	/* QFS doesn't really support LOCKFS. */
 #endif /* LQFS_LOCKFS */
 
-	return (0);
+	error = 0;
+	goto out;
 
 errout:
 #ifdef LQFS_LOCKFS
@@ -1315,6 +1312,11 @@ errout:
 #else
 	/* QFS doesn't really support LOCKFS. */
 #endif /* LQFS_LOCKFS */
+
+out:
+	mutex_enter(&ip->mp->ms.m_waitwr_mutex);
+	ip->mp->mt.fi_status |= FS_LOGSTATE_KNOWN;
+	mutex_exit(&ip->mp->ms.m_waitwr_mutex);
 	return (error);
 }
 
@@ -1339,13 +1341,24 @@ lqfs_enable(struct vnode *vp, struct fiolog *flp, cred_t *cr)
 	vfs_t		*vfsp = qfsvfsp->vfs_vfs;
 	uint64_t	tmp_nbytes_actual;
 	char fsclean;
+	sam_sblk_t	*sblk = qfsvfsp->mi.m_sbp;
 
 	/*
 	 * File system is not capable of logging.
 	 */
 	if (!LQFS_CAPABLE(qfsvfsp)) {
 		flp->error = FIOLOG_ENOTSUP;
-		return (0);
+		error = 0;
+		goto out;
+	}
+	if (!SAM_MAGIC_V2A_OR_HIGHER(&sblk->info.sb)) {
+		cmn_err(CE_WARN, "SAM-QFS: %s: Not enabling logging, "
+		    " file system is not version 2A.", qfsvfsp->mt.fi_name);
+		cmn_err(CE_WARN, "\tUpgrade file system with samadm "
+		    "add-features first.");
+		flp->error = FIOLOG_ENOTSUP;
+		error = 0;
+		goto out;
 	}
 
 	if (LQFS_GET_LOGBNO(fs)) {
@@ -1359,7 +1372,8 @@ lqfs_enable(struct vnode *vp, struct fiolog *flp, cred_t *cr)
 		flp->error = FIOLOG_ETRANS;
 		/* for root ensure logging option is set */
 		vfs_setmntopt(vfsp, MNTOPT_LOGGING, NULL, 0);
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -1390,7 +1404,8 @@ recheck:
 	if (ul && LQFS_GET_LOGBNO(fs) &&
 	    (flp->nbytes_actual == ul->un_requestsize)) {
 		vfs_setmntopt(vfsp, MNTOPT_LOGGING, NULL, 0);
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -1398,7 +1413,8 @@ recheck:
 	 */
 	if (FS_RDONLY(fs)) {
 		flp->error = FIOLOG_EROFS;
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 #ifdef LQFS_TODO_LOCKFS
@@ -1407,11 +1423,12 @@ recheck:
 	 */
 	error = qfs_fiolfss(vp, &lf);
 	if (error) {
-		return (error);
+		goto out;
 	}
 	if (!LOCKFS_IS_ULOCK(&lf)) {
 		flp->error = FIOLOG_EULOCK;
-		return (0);
+		error = 0;
+		goto out;
 	}
 	lf.lf_lock = LOCKFS_WLOCK;
 	lf.lf_flags = 0;
@@ -1419,7 +1436,8 @@ recheck:
 	error = qfs_fiolfs(vp, &lf, 1);
 	if (error) {
 		flp->error = FIOLOG_EWLOCK;
-		return (0);
+		error = 0;
+		goto out;
 	}
 #else
 	/* QFS doesn't really support lockfs. */
@@ -1487,14 +1505,16 @@ recheck:
 		error = qfs_fiolfs(vp, &lf, 1);
 		if (error) {
 			flp->error = FIOLOG_ENOULOCK;
-			return (0);
+			error = 0;
+			goto out;
 		}
 #else
 		/* QFS doesn't really support lockfs. */
 #endif /* LQFS_TODO_LOCKFS */
 		error = lqfs_disable(vp, flp);
 		if (error || (flp->error != FIOLOG_ENONE)) {
-			return (0);
+			error = 0;
+			goto out;
 		}
 		goto recheck;
 	}
@@ -1568,7 +1588,8 @@ recheck:
 	error = qfs_fiolfs(vp, &lf, 1);
 	if (error) {
 		flp->error = FIOLOG_ENOULOCK;
-		return (0);
+		error = 0;
+		goto out;
 	}
 #else
 	/* QFS doesn't really support LOCKFS. */
@@ -1590,7 +1611,8 @@ recheck:
 #endif /* LUFS */
 	VFS_LOCK_MUTEX_EXIT(qfsvfsp);
 
-	return (0);
+	error = 0;
+	goto out;
 
 errout:
 	/*
@@ -1621,6 +1643,10 @@ unlockout:
 	/* QFS doesn't really support LOCKFS. */
 #endif /* LQFS_TODO_LOCKFS */
 
+out:
+	mutex_enter(&ip->mp->ms.m_waitwr_mutex);
+	ip->mp->mt.fi_status |= FS_LOGSTATE_KNOWN;
+	mutex_exit(&ip->mp->ms.m_waitwr_mutex);
 	return (error);
 }
 

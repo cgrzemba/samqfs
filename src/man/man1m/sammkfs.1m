@@ -1,4 +1,4 @@
-." $Revision: 1.52 $
+." $Revision: 1.53 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -34,6 +34,7 @@ sammkfs, samfsinfo \- Constructs or displays information for a Sun StorEdge QFS,
 \fB/opt/SUNWsamfs/sbin/sammkfs\fR
 \%[\fB\-a\ \fIallocation_unit\fR]
 \%[\fB\-i\ \fIinodes\fR]
+\%[\fB\-P\fR]
 \%[\fB\-S\fR]
 \%[\fB\-V\fR]
 \fIfs_name\fR
@@ -158,6 +159,15 @@ the file system, but it cannot increase the number of allowable
 inodes.
 For more information on enlarging file systems, see the WARNINGS section
 of this man page and the \fBsamgrowfs\fR(1M) man page.
+.TP 10
+\fB\-P\fR
+Specifies that a previous version of the file system be created.
+This version creates a version 2 superblock and is compatible with
+Sun \%SAM-FS version 4.6.  This version cannot use the following features
+however:  large host table, extended attributes, online grow, and
+journaling/logging.  Without the \fB\-P\fR parameter, a version
+2A superblock is created, the above features are available, and the
+file system is not usable with Sun \%SAM-FS version 4.6 or previous.
 .TP 10
 \fB\-S\fR
 Indicates that this file system is shared.

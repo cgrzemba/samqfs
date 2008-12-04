@@ -1,4 +1,4 @@
-.\" $Revision: 1.5 $
+.\" $Revision: 1.6 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH samadm 1M "19 Aug 2008"
+.TH samadm 1M "16 Nov 2008"
 .SH NAME
 samadm \- Sun StorageTek SAM-QFS main administrative command
 .SH SYNOPSIS
@@ -49,6 +49,10 @@ samadm \- Sun StorageTek SAM-QFS main administrative command
 .LP
 .nf
 \fBsamadm eq-noalloc\fR \fIeq_ordinal#\fR
+.fi
+.LP
+.nf
+\fBsamadm add-features\fR -a \fIfile_systems...#\fR
 .fi
 .LP
 .nf
@@ -164,6 +168,42 @@ only legal for equipments which are currently in the \fInoalloc\fR state.
 This subcommand changes the state of an equipment ordinal to \fInoalloc\fR
 which prevents new data allocations to be placed on it.  This subcommand is
 only legal for equipments which are currently in the \fIalloc\fR state.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBadd-features\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand upgrades a file system by adding new features to it.
+The \fB-a\fR option specifies that below four features are to be added to the
+file system.  Adding these features requires the file system to be mounted.
+.TP 3
+1)
+Extended attributes.
+.nf
+.TP
+2)
+Large host table (> 16k bytes).
+.nf
+.TP
+3)
+Online grow (via samadm eq-add, or samu "add" command).
+.nf
+.TP
+4)
+Journaling/logging (logging mount option).
+.RE
+.TP
+Note that adding the \fB-a\fR feature set to a file system is a non-backward
+compatible action and causes the file system to be unusable on SAM-QFS
+versions less than v5.0.  It is also not reversible.  Also note that
+extended attributes and logging require the file system to be upgraded
+prior to mounting.  Thus, after the \fIadd-features\fR subcommand, the
+file system will need to be unmounted and remounted.
 .RE
 
 .sp

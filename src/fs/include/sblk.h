@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.74 $"
+#pragma ident "$Revision: 1.75 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -120,8 +120,8 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
  * Superblock magic number definitions.
  */
 #define	SAM_MAGIC_V1	0xfd187e20	/* Magic num for fs (3.5.0) */
-#define	SAM_MAGIC_V2	0x76657232	/* Magic num for fs (4.0&5.0) */
-#define	SAM_MAGIC_V2A	0x76653241	/* Magic num for fs (after add) */
+#define	SAM_MAGIC_V2	0x76657232	/* Magic num for fs (4.0,5.0 limited) */
+#define	SAM_MAGIC_V2A	0x76653241	/* Magic num for fs (5.0) */
 
 /*
  * Reverse-endian superblock magic number definitions.
@@ -294,6 +294,18 @@ typedef struct sam_sbinfo {
 			((ip)->mp->mt.fi_config & MT_WORM)) ||		\
 			(((sb)->opt_mask & SBLK_OPTV1_EMUL_LITE) &&	\
 			((ip)->mp->mt.fi_config & MT_WORM_EMUL)))
+
+/*
+ * Superblock version macros.
+ * Takes struct *sam_sbinfo for argument.
+ */
+#define	SAM_MAGIC_V2_OR_HIGHER(sbp) \
+	((sbp)->magic != SAM_MAGIC_V1)
+
+#define	SAM_MAGIC_V2A_OR_HIGHER(sbp) \
+	(((sbp)->magic != SAM_MAGIC_V1) && \
+	    ((sbp)->magic != SAM_MAGIC_V2))
+
 
 /*
  * Superblock device entry.

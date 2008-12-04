@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.166 $"
+#pragma ident "$Revision: 1.167 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -2513,12 +2513,12 @@ enable_journaling(char *mp, char *special)
 	isjournal = checkisjournal(mp);
 
 	/* report errors, if any */
-	if (ret == -1 || !isjournal) {
+	if (ret == -1 || (isjournal != FIOLOG_ENONE)) {
 		reportjournalerror(ret, mp, special, "enable", &fl);
 	}
 out:
 	Trace(TR_MISC, "Journaling state is %s for %s on %s",
-	    isjournal ? "enabled" : "disabled", special, mp);
+	    isjournal == FIOLOG_ENONE ? "enabled" : "disabled", special, mp);
 }
 
 
@@ -2549,16 +2549,16 @@ disable_journaling(char *mp, char *special)
 	isjournal = checkisjournal(mp);
 
 	/* report errors, if any */
-	if (ret == -1 || isjournal) {
+	if (ret == -1 || isjournal == FIOLOG_ENONE) {
 		reportjournalerror(ret, mp, special, "disable", &fl);
 	}
 out:
 	Trace(TR_MISC, "Journaling state is %s for %s on %s",
-	    isjournal ? "enabled" : "disabled", special, mp);
+	    isjournal == FIOLOG_ENONE ? "enabled" : "disabled", special, mp);
 }
 
 /*
- * Initialize journaling (or not) for a newly-mounted filesystem.
+ * Initialize journaling on/off for a newly-mounted filesystem.
  */
 static void
 initJournaling(char *fsname)

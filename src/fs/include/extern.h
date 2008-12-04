@@ -40,7 +40,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.240 $"
+#pragma ident "$Revision: 1.241 $"
 
 #include "sam/osversion.h"
 
@@ -623,6 +623,7 @@ int sam_shared_failover(sam_mount_t *mp, enum MOUNT_operation cmd, int ord);
 void sam_failover_old_server(sam_mount_t *mp, char *server, cred_t *credp);
 void sam_notify_staging_clients(sam_node_t *ip);
 int sam_onoff_client(void *arg, int size, cred_t *credp);
+int sam_change_features(void *arg, int size, cred_t *credp);
 
 
 /* syscall.c function prototypes. */

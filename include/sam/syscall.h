@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.100 $"
+#pragma ident "$Revision: 1.101 $"
 #endif
 
 #include "sam/types.h"
@@ -110,6 +110,7 @@ typedef enum {
 	SC_osd_attr = 126,	/* takes sam_osd_attr_arg */
 	SC_fseq_ord = 127,	/* takes sam_fseq_arg */
 	SC_onoff_client = 128,	/* takes sam_onoff_client_arg */
+	SC_change_features = 129, /* takes sam_change_features_arg */
 	SC_FS_MAX = 149,
 
 	SC_SAM_MIN = 150,
@@ -120,7 +121,7 @@ typedef enum {
 	SC_setARSstatus = 154,	/* takes sam_setARS_arg */
 	SC_fsmount = 155,	/* takes sam_fsmount_arg_t */
 	SC_fsunload = 156,	/* takes sam_fsunload_arg_t */
-	SC_position	= 157,	/* takes sam_position_arg_t */
+	SC_position = 157,	/* takes sam_position_arg_t */
 	SC_fsiocount = 158,	/* takes sam_fsiocount_arg_t */
 	SC_fsinval = 159,	/* takes sam_fsinval_arg_t */
 	SC_arfind = 160,	/* takes struct sam_arfind_arg (fs/arfind.h) */
@@ -461,6 +462,15 @@ typedef struct sam_onoff_client_arg {	/* On / off client command args */
 	int32_t command;	/* Command - off, on, or read only */
 	int32_t ret;		/* Old on/off value */
 } sam_onoff_client_arg_t;
+
+
+#define	SAM_CHANGE_FEATURES_ADD_V2A	1
+
+typedef struct sam_change_features_arg {	/* Change features args */
+	uname_t fs_name;	/* Family set name */
+	int32_t command;	/* Command */
+} sam_change_features_arg_t;
+
 
 enum sam_ib_cmd {SAM_FREE_BLOCK, SAM_FIND_ORD, SAM_MOVE_ORD};
 

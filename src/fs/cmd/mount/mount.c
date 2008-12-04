@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.80 $"
+#pragma ident "$Revision: 1.81 $"
 
 /* ANSI C headers. */
 #include <errno.h>
@@ -443,8 +443,8 @@ main(int argc, char **argv)
 
 #ifdef sun
 	/*
-	 * If journaling was requested, wait for it to be enabled
-	 * by sam-fsd before updating mnttab and exiting.
+	 * If journaling was requested, wait for sam-fsd to initialize
+	 * journaling before updating mnttab and exiting.
 	 */
 	if (mp->fi_config1 & MC_LOGGING) {
 		struct sam_fs_info fi;
@@ -454,8 +454,14 @@ main(int argc, char **argv)
 				int isjournal;
 
 				while ((isjournal = checkisjournal(mnt_point))
-				    == 0) {
+				    == FIOLOG_EPEND) {
 					sleep(1);
+				}
+
+				if (isjournal != FIOLOG_ENONE) {
+					fprintf(stderr,
+					    "Can't enable journaling.  See "
+					    "/var/adm/messages for details.\n");
 				}
 			}
 		}

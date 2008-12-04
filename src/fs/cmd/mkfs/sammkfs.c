@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 
 /* ----- Include Files ---- */
@@ -119,6 +119,7 @@ int old_count = 0;		/* Size of old filesystem */
 int old_mm_count = 0;		/* meta partitions in old filesystem */
 int lun_ge_1tb = 0;		/* Number of partitions >= 1TB */
 int lun_ge_16tb = 0;		/* Number of partitions >= 16TB */
+int prev_sblk_ver = FALSE;	/* Use previous version for this filesystem */
 
 char *usagestring;		/* usage string for error messages */
 
@@ -144,6 +145,8 @@ extern int getHostName(char *host, int len, char *fs);
 static struct sigaction sig_action;	/* Signal actions */
 static void catch_signals(int sig);
 static void clean_exit(int excode);
+static void print_version_warning();
+
 
 /*
  * Flag argument to print_sblk(); indicates source for ordinal ordering
@@ -238,6 +241,7 @@ main(int argc, char **argv)
 	} else if (cmd == SAM_FSINFO) {
 		err = show_fs();
 	} else {
+		print_version_warning();
 		err = new_fs();
 	}
 	if (err) {
@@ -390,6 +394,9 @@ process_args(
 				break;
 			case 'F':
 				force = 1;
+				break;
+			case 'P':
+				prev_sblk_ver = TRUE;
 				break;
 			default:
 				if (cmd == SAM_FSINFO) {
@@ -1118,7 +1125,7 @@ init_sblk()
 
 	(void *) memcpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblock.info.sb.name));
-	sblock.info.sb.magic = SAM_MAGIC_V2;
+	sblock.info.sb.magic = prev_sblk_ver ? SAM_MAGIC_V2 : SAM_MAGIC_V2A;
 	sblock.info.sb.fi_type = mnt_info.params.fi_type;
 	sblock.info.sb.min_usr_inum = SAM_MIN_USER_INO;
 	sblock.info.sb.ext_bshift = SAM_SHIFT;
@@ -1565,24 +1572,15 @@ iino(void)
 			if (hostbuf != NULL &&
 			    (hostbuf->length > SAM_HOSTS_TABLE_SIZE ||
 			    hostbuf->count > SAM_MAX_SMALL_SHARED_HOSTS)) {
-
 				dp->di.rm.size = SAM_LARGE_HOSTS_TABLE_SIZE;
-
-				printf("Building '%s' with a large "
-				    "hosts table.\n", fs_name);
-				printf("This file system will not be "
-				    "mountable by any version\n");
-				printf("of SAM-QFS that does not "
-				    "support a large hosts table.\n");
-
-				if (!verbose && isatty(0) &&
-				    !ask(catgets(catfd, SET, 13428,
-				    "Do you wish to continue? [y/N] "), 'n')) {
-					printf(catgets(catfd, SET, 13430,
-				    "Not building '%s'.  Exiting.\n"), fs_name);
+				if (prev_sblk_ver) {
+					error(0, 0, catgets(catfd, SET, 13486,
+					    "Large host table for '%s' not "
+					    "supported with previous (-P) "
+					    "version of file system."),
+					    fs_name);
 					clean_exit(2);
 				}
-
 			} else {
 				/*
 				 * Leave rm.size at the old 16k size
@@ -1745,10 +1743,7 @@ iino(void)
 					 */
 					sblock.info.sb.opt_mask |=
 					    SBLK_OPTV1_LG_HOSTS;
-					sblock.info.sb.magic = SAM_MAGIC_V2A;
-
-					length =
-					    SAM_LARGE_HOSTS_TABLE_SIZE/
+					length = SAM_LARGE_HOSTS_TABLE_SIZE /
 					    SAM_DEV_BSIZE;
 				}
 				sblock.info.sb.hosts =
@@ -2496,4 +2491,36 @@ check_lun_limits(char *fs_name)
 		    program_name);
 
 	}
+}
+
+
+/*
+ * ----- print_version_warning - Prints warning text about building
+ * current or previous file system version.
+ */
+
+static void
+print_version_warning()
+{
+	char *man_string;
+
+	if (prev_sblk_ver) {
+		man_string = catgets(catfd, SET, 13441,
+		    "Sun QFS, Sun SAM-FS, and Sun SAM-QFS Installation and "
+		    "Configuration Guide");
+		printf(catgets(catfd, SET, 13436,
+		    "Creating an old format file system disallows some file "
+		    " system features\n"));
+		printf(catgets(catfd, SET, 13437,
+		    "Please see the '%s'\n for a list of the affected "
+		    "features.\n"), man_string);
+	} else {
+		printf(catgets(catfd, SET, 13438,
+		    "Warning: Creating a new file system prevents use with "
+		    "4.6 or earlier releases.\n"));
+		printf(catgets(catfd, SET, 13439,
+		    "Use the -P option on sammkfs to create a 4.6 compatible "
+		    "file system.\n"));
+	}
+	printf("\n");
 }

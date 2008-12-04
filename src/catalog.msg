@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.618 $"
+$ pragma ident "$Revision: 1.619 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2556,9 +2556,9 @@ $ ===================================================================
 13434 -l option is only valid with sammkfs -r option.
 13435 ** NOT USED **
 13436 Creating an old format file system disallows some file system features\n
-13437 Please see '%s'\nfor a list of the affected features\n
-13438 Creating a new file system prevents use with 4.6 or earlier releases\n
-13439 Use the -P option on sammkfs to create a 4.6 compatible file system\n
+13437 Please see '%s'\nfor a list of the affected features.\n
+13438 Warning: Creating a new file system prevents use with 4.6 or earlier releases.\n
+13439 Use the -P option on sammkfs to create a 4.6 compatible file system.\n
 13440 Too many devices (%d total) added to filesystem %s.
 13441 Sun QFS and Sun SAM-QFS Installation and Configuration Guide
 13442 Root directory has no archive copy, %s -r fails
@@ -2605,6 +2605,7 @@ $ ===================================================================
 13483 WORM V2 files present\n
 13484 feature:  Aligned Maps\n
 13485 Extended attribute files present\n
+13486 Large host table for '%s' not supported with previous (-P) version of file system.
 
 $  utility/csd	(13500)
 $ ===================================================================

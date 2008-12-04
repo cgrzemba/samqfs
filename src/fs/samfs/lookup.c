@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.82 $"
+#pragma ident "$Revision: 1.83 $"
 
 #include "sam/osversion.h"
 
@@ -1123,7 +1123,8 @@ sam_xattr_mkdir(
 {
 	int error;
 	vattr_t va;
-	sam_mount_t *mp;
+	sam_mount_t *mp = pip->mp;
+	sam_sbinfo_t *sbp;
 
 	if (SAM_INODE_HAS_XATTR(pip)) {
 		return (EEXIST);
@@ -1134,6 +1135,15 @@ sam_xattr_mkdir(
 	if (vn_is_readonly(SAM_ITOV(pip))) {
 		return (EROFS);
 	}
+	/*
+	 * Extended attributes not allowed on file systems
+	 * that are less than V2A.
+	 */
+	sbp = &mp->mi.m_sbp->info.sb;
+	if (!SAM_MAGIC_V2A_OR_HIGHER(sbp)) {
+		return (ENOTTY);
+	}
+
 	va.va_type = VDIR;
 	va.va_uid = pip->di.uid;
 	va.va_gid = pip->di.gid;
@@ -1151,7 +1161,6 @@ sam_xattr_mkdir(
 		}
 	}
 	va.va_mask = AT_TYPE|AT_MODE;
-	mp = pip->mp;
 	error = sam_make_ino(pip, &va, ipp, credp);
 	if (!error) {
 		sam_node_t *ip;
@@ -1183,12 +1192,10 @@ sam_xattr_mkdir(
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 	}
 	if (error == 0) {
-		sam_sbinfo_t *sbp;
-
-		sbp = &mp->mi.m_sbp->info.sb;
 		if (SBLK_XATTR(sbp) == 0) {
+			mutex_enter(&mp->mi.m_sblk_mutex);
 			sbp->opt_mask |= SBLK_OPTV1_XATTR;
-			sbp->magic = SAM_MAGIC_V2A;
+			mutex_exit(&mp->mi.m_sblk_mutex);
 			if ((sam_update_the_sblks(mp)) != 0) {
 				cmn_err(CE_WARN, "SAM-QFS: %s: Error writing "
 				    "superblock to update extended "

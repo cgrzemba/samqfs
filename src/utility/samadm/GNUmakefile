@@ -1,4 +1,4 @@
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 
 #    SAM-QFS_notice_begin
 #
@@ -32,16 +32,18 @@ include $(DEPTH)/mk/common.mk
 
 PROG = samadm
 PROG_SRC = \
-	samadm.c \
-	cmdparse.c \
+	addfeatures_cmd.c \
 	addremove_cmd.c \
+	cmdparse.c \
+	samadm.c \
+	samadmlib.c \
 	servicetag_cmd.c
 
 DEPCFLAGS += -I.
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
 
-LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut
+LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf
 
 include $(DEPTH)/mk/targets.mk
 

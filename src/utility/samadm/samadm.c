@@ -42,7 +42,7 @@
 
 #include "samadm.h"
 
-#pragma ident   "$Revision: 1.1 $"
+#pragma ident   "$Revision: 1.2 $"
 
 
 char version_string[] = "1.0";
@@ -55,14 +55,11 @@ char *cmd_names[CMD_MAX] = {
 };
 
 /*
- * samadm option/subcommand tables.
+ * samadm subcommand table.
  */
-optionTbl_t samadm_opts[] = {
-	{ "releaseeq", no_arg, 'r', "use SAM to release files" },
-	{ NULL, 0, 0, NULL }
-};
-
 subCommandProps_t samadm_subcmds[] = {
+	/* { option_name, func_handler, options, reqd_options, excl_options, */
+	/*  operand_control_mask, long help description }, */
 	{ "servicetag", servicetag_cmd, NULL, NULL, NULL,
 	    OPERAND_MANDATORY_SINGLE, "Add/delete servicetags"},
 	{ "eq-add", eq_add_cmd, NULL, NULL, NULL,
@@ -73,7 +70,20 @@ subCommandProps_t samadm_subcmds[] = {
 	    OPERAND_MANDATORY_SINGLE, "Set equipment status to alloc"},
 	{ "eq-noalloc", eq_noalloc_cmd, NULL, NULL, NULL,
 	    OPERAND_MANDATORY_SINGLE, "Set equipment status to noalloc"},
+	{ "add-features", add_features_cmd, "a", "a", NULL,
+	    OPERAND_MANDATORY_MULTIPLE, "Add features to a QFS file system"},
 	{ NULL, 0, NULL, NULL, NULL, 0, NULL}
+};
+
+/*
+ * samadm option table.
+ *	XXX - cmdparse will have to be enhanced soon to allow different
+ *	command option help listings for different subcommands.
+ */
+optionTbl_t samadm_opts[] = {
+	{ "releaseeq", no_arg, 'r', "use SAM to release files" },
+	{ "adda", no_arg, 'a', "add feature set a" },
+	{ NULL, 0, 0, NULL }
 };
 
 /*

@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.138 $"
+#pragma ident "$Revision: 1.139 $"
 #endif
 
 #include <sam/types.h>
@@ -158,6 +158,7 @@ struct sam_fs_info {	/* File system information */
 #define	FS_THAWING	  0x04000000	/* Host is thawing */
 #define	FS_RESYNCING	  0x08000000	/* Server is resyncing */
 
+#define	FS_LOGSTATE_KNOWN 0x10000000	/* Journaling state (on/off) is known */
 #define	FS_RELEASING	  0x20000000	/* releasing is active on this fs */
 #define	FS_STAGING	  0x40000000	/* staging is active on this fs */
 #define	FS_ARCHIVING	  0x80000000	/* archiving is active on this fs */
