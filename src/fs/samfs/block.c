@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.117 $"
+#pragma ident "$Revision: 1.118 $"
 
 #include "sam/osversion.h"
 
@@ -115,6 +115,7 @@ extern int sam_cablk(sam_caller_t caller, struct sam_sblk *sblk, void *vp,
 	int ord, int bits, int mbits, uint_t dd_kblocks, uint_t mm_kblocks,
 	int *lenp);
 extern int sam_check_osd_daus(sam_mount_t *mp);
+extern int sam_check_stripe_group(sam_mount_t *mp, int istart);
 
 #pragma rarely_called(sam_block_thread_exit, sam_process_prealloc_req)
 #pragma does_not_return(sam_block_thread_exit)
@@ -601,8 +602,7 @@ sam_process_prealloc_req(
 		off = off & SAM_LOG_WMASK;
 		pap->set = 1;
 		pap->error = sam_get_prealloc_daus(mp, sblk, blk, off,
-		    &next_dau, pap,
-		    check_system);
+		    &next_dau, pap, check_system);
 		if (pap->error == 0) {
 			/* Don't change next_dau */
 			next_dau = sblk->eq[ord].fs.dau_next;
@@ -1931,10 +1931,9 @@ sam_change_state(
 
 	case DK_CMD_add:
 		/*
-		 * Add is not supported for sblk version 1.
+		 * Add is only supported for sblk version 2A.
 		 */
-		rtnerr = sam_grow_fs(mp, dp, ord);
-		if (rtnerr) {
+		if ((rtnerr = sam_grow_fs(mp, dp, ord))) {
 			break;
 		}
 
@@ -1944,9 +1943,7 @@ sam_change_state(
 		 * must type alloc command.
 		 */
 		if (SAM_IS_SHARED_FS(mp)) {
-			if (rtnerr == 0) {
-				sblk_modified = TRUE;
-			}
+			sblk_modified = TRUE;
 			break;
 		}
 
@@ -2183,7 +2180,7 @@ sam_grow_fs(
 			cmn_err(CE_WARN, "\tUpgrade file system with samadm "
 			    "add-features first.");
 		}
-		return (5);
+		return (20);
 	}
 
 	/*
@@ -2214,7 +2211,7 @@ sam_grow_fs(
 	 * object pool must have the same DAU.
 	 */
 	if (sam_check_osd_daus(mp)) {
-		return (27);
+		return (23);
 	}
 #endif
 
@@ -2231,7 +2228,7 @@ sam_grow_fs(
 			    "lun %s,"
 			    " eq is not first member of the stripe group",
 			    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-			return (23);
+			return (24);
 		}
 	}
 
@@ -2244,16 +2241,16 @@ sam_grow_fs(
 		    "SAM-QFS: %s: Cannot add meta eq %d lun %s to ms "
 		    "file system",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-		return (24);
+		return (25);
 	}
-	/* No. log blks (1024 bytes) */
-	blocks = dp->part.pt_size >> SAM2SUN_BSHIFT;
 
 	/*
 	 * If ma file system & if meta device, put maps on this device;
 	 * otherwise roundrobin the maps on all other meta devices.
 	 * If ms file system, put maps on this device.
+	 * Compute blocks = # of logical blocks (in units of 1024 bytes)
 	 */
+	blocks = dp->part.pt_size >> SAM2SUN_BSHIFT;
 	if (mp->mt.mm_count && (type != DT_META)) {
 		/*
 		 * Preallocate a sequential number of blocks for the maps on
@@ -2280,7 +2277,7 @@ sam_grow_fs(
 				    mp->mt.fi_name, dp->part.pt_eq,
 				    dp->part.pt_name,
 				    sblk->eq[mm_ord].fs.eq, pa.error);
-				return (25);
+				return (26);
 			}
 		}
 	} else {
@@ -2296,7 +2293,7 @@ sam_grow_fs(
 		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s, "
 		    "config in progress", mp->mt.fi_name,
 		    dp->part.pt_eq, dp->part.pt_name);
-		return (26);
+		return (27);
 	}
 	mp->mt.fi_status |= FS_RECONFIG;
 	mutex_exit(&mp->ms.m_waitwr_mutex);
@@ -2316,20 +2313,24 @@ sam_grow_fs(
 	sblk->info.sb.sblk_size = new_sblk_size;
 
 	/*
-	 * Set state to OFF for all new ordinals.
+	 * Set state to OFF for the selected ordinal. The new ordinal may be
+	 * within the superblock ordinals or after the last superblock ordinal.
+	 * Set num_group for possible new striped group.
 	 */
-	for (i = old_sblk->info.sb.fs_count; i < mp->mt.fs_count; i++) {
-		sop = &sblk->eq[i].fs;
-		sop->ord = (ushort_t)i;
-		sop->eq = mp->mi.m_fs[i].part.pt_eq;
-		sop->state = DEV_OFF;
-		sop->type = dp->part.pt_type;
+	sop = &sblk->eq[ord].fs;
+	sop->ord = (ushort_t)ord;
+	sop->eq = dp->part.pt_eq;
+	sop->state = DEV_OFF;
+	sop->type = dp->part.pt_type;
+	sop->num_group = 1;
+	dp->num_group = 1;
+	if (error = sam_check_stripe_group(mp, old_sblk->info.sb.fs_count)) {
+		return (28);
 	}
 
 	/*
 	 * Initialize the new device entry in the superblock.
 	 */
-	sop = &sblk->eq[ord].fs;
 	sop->dau_next = 0;
 	sop->num_group = dp->num_group;
 	sop->mm_ord = (ushort_t)mm_ord;
@@ -2441,7 +2442,7 @@ done:
 		mutex_enter(&mp->ms.m_waitwr_mutex);
 		mp->mt.fi_status &= ~FS_RECONFIG;
 		mutex_exit(&mp->ms.m_waitwr_mutex);
-		return (26);
+		return (29);
 	}
 	kmem_free(old_sblk, old_sblk_size);
 	mutex_enter(&mp->ms.m_waitwr_mutex);

@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.236 $"
+#pragma ident "$Revision: 1.237 $"
 #endif
 
 #include "sam/osversion.h"
@@ -292,7 +292,7 @@ sds_abr_capable()
 int				/* ERRNO if error, 0 if successful. */
 sam_getdev(
 	sam_mount_t *mp,	/* The pointer to the mount table */
-	int istart,		/* Starting dev position in the mount table */
+	int istart,		/* Nonzero if fs mounted = sblk fs_count */
 	int filemode,		/* Filemode for open */
 	int *npartp,		/* Number of valid devices found */
 	cred_t *credp)		/* Credentials pointer. */
@@ -305,8 +305,11 @@ sam_getdev(
 	int i;
 	int error = 0;
 
-	for (i = istart, dp = &mp->mi.m_fs[istart]; i < mp->mt.fs_count;
-	    i++, dp++) {
+	for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count; i++, dp++) {
+		if (istart && (i < istart) &&
+		    (dp->part.pt_state != DEV_OFF)) {
+			continue;
+		}
 		if (dp->opened) {
 			nparts++;
 			continue;
@@ -406,12 +409,13 @@ sam_getdev(
 	/*
 	 * Set device state. If no devices, return error
 	 */
-	for (i = istart, dp = &mp->mi.m_fs[istart]; i < mp->mt.fs_count;
-	    i++, dp++) {
+	for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count; i++, dp++) {
+		if (istart && (i < istart) &&
+		    (dp->part.pt_state != DEV_OFF)) {
+			continue;
+		}
 		if (dp->error == 0) {
-			if (istart == 0) {
-				dp->part.pt_state = DEV_ON;
-			} else {
+			if (istart) {
 				dp->part.pt_state = DEV_OFF;
 			}
 		} else if (dp->error == ENXIO) {
@@ -434,9 +438,12 @@ sam_getdev(
 	 */
 	if (SAM_IS_SHARED_FS(mp)) {
 		if (nometa) {
-			for (i = istart, dp = &mp->mi.m_fs[istart];
-			    i < mp->mt.fs_count;
-			    i++, dp++) {
+			for (i = istart, dp = &mp->mi.m_fs[0];
+			    i < mp->mt.fs_count; i++, dp++) {
+				if (istart && (i < istart) &&
+				    (dp->part.pt_state != DEV_OFF)) {
+					continue;
+				}
 				if (dp->part.pt_state != DEV_ON) {
 					continue;
 				}
@@ -486,11 +493,14 @@ sam_getdev(
 			 * status flags in the mount structure saying so.
 			 */
 			vc = kmem_alloc(sizeof (*vc), KM_SLEEP);
-			for (i = istart, dp = &mp->mi.m_fs[istart];
-			    i < mp->mt.fs_count;
+			for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count;
 			    i++, dp++) {
 				int xerror, xret;
 
+				if (istart && (i < istart) &&
+				    (dp->part.pt_state != DEV_OFF)) {
+					continue;
+				}
 				if (dp->part.pt_state != DEV_ON) {
 					continue;
 				}
@@ -2254,8 +2264,11 @@ sam_close_devices(
 	vnode_t	*svp;
 	struct samdent *dp;
 
-	for (i = istart, dp = &mp->mi.m_fs[istart]; i < mp->mt.fs_count;
-	    i++, dp++) {
+	for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count; i++, dp++) {
+		if (istart && (i < istart) &&
+		    (dp->part.pt_state != DEV_OFF)) {
+			continue;
+		}
 		if ((svp = dp->svp) == (vnode_t *)0) {
 			continue;
 		}

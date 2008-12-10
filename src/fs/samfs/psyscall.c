@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.198 $"
+#pragma ident "$Revision: 1.199 $"
 #endif
 
 #include "sam/osversion.h"
@@ -154,7 +154,8 @@ static int sam_get_fsinfo_def(void *arg, int size);
 static int sam_get_fsinfo_common(void *arg, int size, int live);
 static int sam_get_fspart(void *arg, int size);
 static int sam_get_sblk(void *arg, int size);
-static int sam_check_stripe_group(sam_mount_t *mp, int istart);
+
+int sam_check_stripe_group(sam_mount_t *mp, int istart);
 
 #if defined(SOL_511_ABOVE)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
@@ -840,14 +841,14 @@ sam_mount_info(
 			}
 			if (mp->mt.fi_status & FS_MOUNTED) {
 				struct sam_sblk *sblk;
+
 				if (mp->mt.fi_status & FS_RECONFIG) {
 					mutex_exit(&mp->ms.m_waitwr_mutex);
 					error = EBUSY;
 					goto done;
 				}
-
 				sblk = mp->mi.m_sbp;
-				if (sblk->info.sb.fs_count >= args.fs_count) {
+				if (sblk->info.sb.fs_count > args.fs_count) {
 					mutex_exit(&mp->ms.m_waitwr_mutex);
 					error = EINVAL;
 					goto done;
@@ -867,10 +868,22 @@ sam_mount_info(
 				mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
 		}
-		for (i = istart; i < args.fs_count; i++) {
-			bzero(&mp->mi.m_fs[i], sizeof (struct samdent));
-			if (copyin(&mntp->part[i], &mp->mi.m_fs[i],
-					sizeof (struct sam_fs_part))) {
+		for (i = 0; i < args.fs_count; i++) {
+			struct samdent *dp;
+
+			dp = &mp->mi.m_fs[i];
+			if (istart && (i < istart)) {
+				struct sam_sblk *sblk;
+
+				sblk = mp->mi.m_sbp;
+				if (sblk->eq[i].fs.state == DEV_ON ||
+				    sblk->eq[i].fs.state == DEV_NOALLOC) {
+					continue;
+				}
+			}
+			bzero(dp, sizeof (struct samdent));
+			if (copyin(&mntp->part[i], dp,
+			    sizeof (struct sam_fs_part))) {
 				kmem_free((void *)mp, mount_size);
 				mutex_enter(&mp->ms.m_waitwr_mutex);
 				mp->mt.fi_status &= ~FS_RECONFIG;
@@ -878,12 +891,9 @@ sam_mount_info(
 				error = EFAULT;
 				goto done;
 			}
-			sam_mutex_init(&mp->mi.m_fs[i].eq_mutex, NULL,
+			sam_mutex_init(&dp->eq_mutex, NULL,
 			    MUTEX_DEFAULT, NULL);
-			if (istart) {
-				struct samdent *dp;
-
-				dp = &mp->mi.m_fs[i];
+			if (istart || (i < istart)) {
 				dp->num_group = 1;
 				dp->skip_ord = 1;
 				dp->part.pt_state = DEV_OFF;
@@ -948,7 +958,7 @@ done:
  *	----	sam_check_stripe_group
  * Check for addition of a stripe group and verify size is the same.
  */
-static int
+int
 sam_check_stripe_group(
 	sam_mount_t *mp,
 	int istart)
@@ -959,13 +969,17 @@ sam_check_stripe_group(
 	int		i;
 	int		num_group;
 
-	for (i = istart; i < mp->mt.fs_count; i++) {
+	for (i = 0; i < mp->mt.fs_count; i++) {
 		dp = &mp->mi.m_fs[i];
-		if (dp->num_group == 0) {
+		if (istart && (i < istart) &&
+		    (dp->part.pt_state != DEV_OFF)) {
 			continue;
 		}
 		type = dp->part.pt_type;
 		if (!is_stripe_group(type)) {
+			continue;
+		}
+		if (dp->num_group == 0) {
 			continue;
 		}
 		for (ord = i+1; ord < mp->mt.fs_count; ord++) {
@@ -984,13 +998,17 @@ sam_check_stripe_group(
 	 * Check for validity of stripe group.
 	 * All members must be the same size and must be adajcent.
 	 */
-	for (i = istart; i < mp->mt.fs_count; i++) {
+	for (i = 0; i < mp->mt.fs_count; i++) {
 		dp = &mp->mi.m_fs[i];
-		if (dp->num_group == 0) {
+		if (istart && (i < istart) &&
+		    (dp->part.pt_state != DEV_OFF)) {
 			continue;
 		}
 		type = dp->part.pt_type;
 		if (!is_stripe_group(type)) {
+			continue;
+		}
+		if (dp->num_group == 0) {
 			continue;
 		}
 		num_group = 1;

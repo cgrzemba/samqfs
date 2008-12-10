@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.103 $"
+#pragma ident "$Revision: 1.104 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -304,13 +304,19 @@ FsConfig(char *fscfg_name)
 				if (strncmp(mi->part[i].pt_name,
 				    mi_prev->part[i].pt_name,
 				    sizeof (mi->part[i].pt_name)) != 0) {
-					diffs++;
 					snprintf(msg, sizeof (msg),
 					    "Ord %d name %s/%s", i,
 					    mi_prev->part[i].pt_name,
 					    mi->part[i].pt_name);
 					diffMsgFunc(msg);
 					diffs++;
+					if (mounted_fs &&
+					    (mi_prev->part[i].pt_state ==
+					    DEV_OFF) ||
+					    (mi_prev->part[i].pt_state ==
+					    DEV_DOWN)) {
+						lun_diffs++;
+					}
 					break;
 				} else if (mi->part[i].pt_eq !=
 				    mi_prev->part[i].pt_eq) {
@@ -320,6 +326,13 @@ FsConfig(char *fscfg_name)
 					    mi->part[i].pt_eq);
 					diffMsgFunc(msg);
 					diffs++;
+					if (mounted_fs &&
+					    (mi_prev->part[i].pt_state ==
+					    DEV_OFF) ||
+					    (mi_prev->part[i].pt_state ==
+					    DEV_DOWN)) {
+						lun_diffs++;
+					}
 					break;
 				} else if (mi->part[i].pt_type !=
 				    mi_prev->part[i].pt_type) {
@@ -329,6 +342,13 @@ FsConfig(char *fscfg_name)
 					    mi->part[i].pt_type);
 					diffMsgFunc(msg);
 					diffs++;
+					if (mounted_fs &&
+					    (mi_prev->part[i].pt_state ==
+					    DEV_OFF) ||
+					    (mi_prev->part[i].pt_state ==
+					    DEV_DOWN)) {
+						lun_diffs++;
+					}
 					break;
 				} else if (mi->part[i].pt_state !=
 				    mi_prev->part[i].pt_state) {
