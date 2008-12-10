@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 
 #include <sam/osversion.h>
 
@@ -726,7 +726,9 @@ sam_restore_inode(
 		inode->di.unit = ip->di.unit;
 		inode->di.stride = ip->di.stride;
 	} else {
-		sam_set_unit(ip->mp, &inode->di);
+		if ((error = sam_set_unit(ip->mp, &inode->di))) {
+			return (error);
+		}
 	}
 
 	/*

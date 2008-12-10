@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.300 $"
+#pragma ident "$Revision: 1.301 $"
 
 #include "sam/osversion.h"
 
@@ -3007,7 +3007,10 @@ sam_setup_stage(sam_node_t *ip, cred_t *credp)
 	lp->data.ltype = LTYPE_stage;
 	lp->data.resid = ip->di.rm.size;	/* Allocate file size */
 	if (ip->di.blocks == 0) {
-		sam_set_unit(ip->mp, &(ip->di));
+		if ((error = sam_set_unit(ip->mp, &(ip->di)))) {
+			kmem_free(msg, sizeof (*msg));
+			return (error);
+		}
 	}
 
 	if ((error = sam_process_lease_request(ip,

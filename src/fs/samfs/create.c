@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.169 $"
+#pragma ident "$Revision: 1.170 $"
 
 #include "sam/osversion.h"
 
@@ -716,7 +716,9 @@ sam_restore_new_ino(
 		permip->di.status.b.on_large =
 		    (permp->di.rm.size > SM_OFF(mp, DD)) ? 1 : 0;
 	}
-	sam_set_unit(mp, &(permip->di));
+	if ((error = sam_set_unit(mp, &(permip->di)))) {
+		return (error);
+	}
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(permip->di.mode)) {
 		if ((error = sam_create_object_id(mp, &permip->di)) != 0) {
 			*bpp = bp;
@@ -962,7 +964,9 @@ sam_make_ino(
 		ip->di2.p2flags &= ~P2FLAGS_XATTR;
 	}
 
-	sam_set_unit(mp, &ip->di);
+	if ((error = sam_set_unit(mp, &ip->di))) {
+		goto make_cleanup;
+	}
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(ip->di.mode)) {
 		ip->di.rm.info.obj.stripe_width =
 		    pip->di.rm.info.obj.stripe_width;
@@ -996,7 +1000,7 @@ make_cleanup:
  * ----- sam_set_unit - set the unit.
  */
 
-void
+int
 sam_set_unit(
 	sam_mount_t *mp,			/* Mount table pointer. */
 	struct sam_disk_inode *di)		/* Disk inode pointer. */
@@ -1043,10 +1047,15 @@ sam_set_unit(
 		if (ord == mp->mt.fs_count) {		/* Should not happen */
 			di->status.b.stripe_group = 0;
 			di->stripe_group = 0;
+			return (ENOSPC);
 		}
-	} else {
+	} else if (mp->mi.m_dk_max[i] > 0) {
 		first_unit = mp->mi.m_dk_start[i];
 		unit = mp->mi.m_fs[first_unit].dk_unit;
+	} else {
+		di->status.b.stripe_group = 0;
+		di->stripe_group = 0;
+		return (ENOSPC);
 	}
 	oldord = ord = unit;
 	while (mp->mi.m_sbp->eq[ord].fs.space == 0 ||
@@ -1078,6 +1087,7 @@ sam_set_unit(
 			di->status.b.on_large = 0;
 		}
 	}
+	return (0);
 }
 
 

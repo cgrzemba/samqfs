@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.76 $"
+#pragma ident "$Revision: 1.77 $"
 
 #include "sam/osversion.h"
 
@@ -748,7 +748,10 @@ sam_alloc_segment_ino(
 		ip->di.status.b.archdone = 0;
 		ip->di.arch_status = 0;
 		ip->di.rm.size = 0;
-		sam_set_unit(ip->mp, &(ip->di));
+		if ((error = sam_set_unit(ip->mp, &(ip->di)))) {
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+			return (error);
+		}
 	} else {
 		bip->di.status.b.seg_file = 1;
 		bip->di.status.b.on_large = 1;
@@ -762,7 +765,10 @@ sam_alloc_segment_ino(
 			/* Segment ino data on meta device */
 			bip->di.status.b.meta = 1;
 		}
-		sam_set_unit(bip->mp, &(bip->di));
+		if ((error = sam_set_unit(bip->mp, &(bip->di)))) {
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+			return (error);
+		}
 	}
 	/*
 	 * Extension inodes:

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 
 #include "sam/osversion.h"
 
@@ -1307,12 +1307,15 @@ syscall_stage_response(
 				 * staging, but users have to live with quotas.
 				 */
 				if (ip->di.blocks == 0) {
-					sam_set_unit(ip->mp, &(ip->di));
+					error =
+					    sam_set_unit(ip->mp, &(ip->di));
 				}
-				error = sam_map_block(ip, ip->stage_off,
-				    ip->stage_len,
-				    SAM_WRITE_BLOCK, NULL, credp);
-				ip->size = cur_size;
+				if (error == 0) {
+					error = sam_map_block(ip, ip->stage_off,
+					    ip->stage_len,
+					    SAM_WRITE_BLOCK, NULL, credp);
+					ip->size = cur_size;
+				}
 			}
 
 			if (error == 0) {

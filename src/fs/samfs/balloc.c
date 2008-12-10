@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.82 $"
+#pragma ident "$Revision: 1.83 $"
 
 #include "sam/osversion.h"
 
@@ -95,6 +95,7 @@ sam_alloc_block(
 	int out, block_count;
 	int first_unit, unit;
 	sam_mount_t *mp = ip->mp;
+	int error = 0;
 	int stripe;
 	int pass = 0;
 	boolean_t skipping_ord;
@@ -104,8 +105,9 @@ sam_alloc_block(
 	 * Remember the first unit - so we know when we've cycled.
 	 */
 	if (ip->di.unit >= mp->mt.fs_count) {
-		ip->di.unit = 0;
-		ip->di.stripe_group = 0;
+		if ((error = sam_set_unit(ip->mp, &ip->di))) {
+			return (error);
+		}
 	}
 	first_unit = unit = ip->di.unit;
 
@@ -180,7 +182,8 @@ sam_alloc_block(
 					if (mp->mi.m_fs[unit].next_ord) {
 						ip->di.unit =
 						    mp->mi.m_fs[unit].next_ord;
-					} else {
+					} else if (mp->mi.m_dk_max[
+					    ip->di.status.b.meta] > 0) {
 						ip->di.unit =
 						    mp->mi.m_dk_start[
 						    ip->di.status.b.meta];
@@ -220,7 +223,8 @@ skip_this_unit:
 				}
 				if (mp->mi.m_fs[unit].next_ord) {
 					unit = mp->mi.m_fs[unit].next_ord;
-				} else {
+				} else if (mp->mi.m_dk_max[
+				    ip->di.status.b.meta] > 0) {
 					unit = mp->mi.m_dk_start[
 					    ip->di.status.b.meta];
 				}

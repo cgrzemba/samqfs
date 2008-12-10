@@ -40,7 +40,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.241 $"
+#pragma ident "$Revision: 1.242 $"
 
 #include "sam/osversion.h"
 
@@ -226,7 +226,7 @@ int sam_make_ino(sam_node_t *pip, vattr_t *vap, sam_node_t **ipp,
 int sam_make_dir(sam_node_t *pip, sam_node_t *ip, cred_t *credp);
 int sam_restore_name(sam_node_t *pip, char *cp, struct sam_name *namep,
 	struct sam_perm_inode *perm_ino, sam_id_t *id, cred_t *credp);
-void sam_set_unit(sam_mount_t *mp, struct sam_disk_inode *di);
+int sam_set_unit(sam_mount_t *mp, struct sam_disk_inode *di);
 int	sam_set_symlink(sam_node_t *pip, sam_node_t *ip, char *sln,
 			int n_chars, cred_t *credp);
 int sam_set_old_symlink(sam_node_t *ip, char *sln, int n_chars, cred_t *credp);
