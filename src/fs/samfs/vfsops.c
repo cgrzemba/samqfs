@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.170 $"
+#pragma ident "$Revision: 1.171 $"
 
 #include "sam/osversion.h"
 
@@ -331,23 +331,6 @@ samfs_mount(
 		mp->mt.fi_config1 |= MC_NOXATTR;
 	}
 
-	/*
-	 * Disallow extended attributes if file system is not V2A
-	 * or higher.
-	 */
-	if (sam_xattr && ((mp->mt.fi_config1 & MC_NOXATTR) == 0) &&
-	    (!SAM_MAGIC_V2A_OR_HIGHER(&mp->mi.m_sbp->info.sb))) {
-		vfs_clearmntopt(vfsp, MNTOPT_XATTR);
-		vfs_setmntopt(vfsp, MNTOPT_NOXATTR, NULL, 0);
-		mp->mt.fi_config1 |= MC_NOXATTR;
-		cmn_err(CE_WARN, "SAM-QFS: %s: Extended attributes "
-		    "disabled, file system is not version 2A.", mp->mt.fi_name);
-		if (SAM_MAGIC_V2_OR_HIGHER(&mp->mi.m_sbp->info.sb)) {
-			cmn_err(CE_WARN, "\tUpgrade file system with "
-			    "samadm add-features first.");
-		}
-	}
-
 	mp->mi.m_fsact_buf = NULL;
 	mp->ms.m_fsev_buf = NULL;
 	if (!SAM_IS_STANDALONE(mp)) {
@@ -413,6 +396,23 @@ samfs_mount(
 	}
 
 	sam_tracing = mp->mt.fi_config & MT_TRACE;
+
+	/*
+	 * Disallow extended attributes if file system is not V2A
+	 * or higher.
+	 */
+	if (sam_xattr && ((mp->mt.fi_config1 & MC_NOXATTR) == 0) &&
+	    (!SAM_MAGIC_V2A_OR_HIGHER(&mp->mi.m_sbp->info.sb))) {
+		vfs_clearmntopt(vfsp, MNTOPT_XATTR);
+		vfs_setmntopt(vfsp, MNTOPT_NOXATTR, NULL, 0);
+		mp->mt.fi_config1 |= MC_NOXATTR;
+		cmn_err(CE_WARN, "SAM-QFS: %s: Extended attributes "
+		    "disabled, file system is not version 2A.", mp->mt.fi_name);
+		if (SAM_MAGIC_V2_OR_HIGHER(&mp->mi.m_sbp->info.sb)) {
+			cmn_err(CE_WARN, "\tUpgrade file system with "
+			    "samadm add-features first.");
+		}
+	}
 
 	/*
 	 * Configure the device IDs associated with the FS.  These are
