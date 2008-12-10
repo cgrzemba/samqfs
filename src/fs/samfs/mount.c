@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.237 $"
+#pragma ident "$Revision: 1.238 $"
 #endif
 
 #include "sam/osversion.h"
@@ -3159,3 +3159,35 @@ sam_check_chains(sam_mount_t *mp)
 }
 #endif
 #endif /* sun */
+
+
+/*
+ * ----- sam_lqfs_supported - Check if SAM-QFS metadata journaling is supported.
+ * Return B_TRUE or B_FALSE to indicate whether or not metadata journaling
+ * is supported for this file system.
+ */
+
+boolean_t
+sam_lqfs_supported(sam_mount_t *mp)
+{
+#ifdef sun
+#ifdef SAM_QFS_JOURNALING_SUPPORTED
+	/*
+	 * SAM-QFS supports metadata journaling.
+	 */
+	return (((mp)->mi.m_sblk_version >= SAMFS_SBLKV2) &&
+	    (((mp)->mt.fi_status & FS_CLIENT) == 0));
+#else
+	/*
+	 * SAM-QFS doesn't support metadata journaling.
+	 */
+	return (B_FALSE);
+#endif /* SAM_QFS_JOURNALING_SUPPORTED */
+#endif /* sun */
+#ifdef linux
+	/*
+	 * Linux clients don't support metadata journaling.
+	 */
+	return (B_FALSE);
+#endif /* linux */
+}

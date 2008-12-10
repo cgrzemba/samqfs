@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.158 $"
+#pragma ident "$Revision: 1.159 $"
 #endif
 
 #ifdef sun
@@ -428,15 +428,14 @@ int sam_update_filsys(sam_mount_t *mp, int flag);
 #endif /* _KERNEL */
 
 /*
- * MDS-mounted QFS file systems with superblock version V2 and above are
- * capable of journaling.
+ * Centralize the determination of whether or not a SAM-QFS file system
+ * is capable of supporting metadata journaling.  All checking for the
+ * superblock version V2A is performed where needed in SAM-QFS code
+ * after this macro is invoked and the superblock becomes available.
  */
-#ifdef sun
-#define	LQFS_CAPABLE(mp)	(((mp)->mi.m_sblk_version >= SAMFS_SBLKV2) && \
-				    (((mp)->mt.fi_status & FS_CLIENT) == 0))
-#else
-#define	LQFS_CAPABLE(mp)	(0)
-#endif /* sun */
+extern boolean_t sam_lqfs_supported(sam_mount_t *mp);
+
+#define	LQFS_CAPABLE(mp)	sam_lqfs_supported(mp)
 
 /*
  * Macros to restrict the reference of journaling fields only to file
