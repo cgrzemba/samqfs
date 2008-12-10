@@ -32,7 +32,7 @@
  */
 
 /*
- * $Revision: 1.26 $
+ * $Revision: 1.27 $
  */
 
 #ifndef _STK_H
@@ -45,6 +45,7 @@
 #include "../common/common.h"
 #include "acssys.h"
 #include "acsapi.h"
+#include "identifier.h"
 
 #define	STK_MAIN_THREADS	2	/* number of main thread */
 #define	STK_MSG_THREAD		0	/* index of the message thread */
