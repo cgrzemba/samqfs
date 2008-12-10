@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.299 $"
+#pragma ident "$Revision: 1.300 $"
 
 #include "sam/osversion.h"
 
@@ -1815,8 +1815,6 @@ sam_add_ino_lease(
 		if ((other_leases & (CL_TRUNCATE|CL_EXCLUSIVE)) ||
 		    (mmap_leases & CL_WRITE)) {
 			wait_lease = TRUE;
-		} else if (wt_leases & CL_EXCLUSIVE) {
-			wait_lease = TRUE;
 		} else if (other_leases & (CL_WRITE|CL_APPEND)) {
 			if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
 				wait_lease = TRUE;
@@ -1844,8 +1842,7 @@ sam_add_ino_lease(
 		 * Truncate and stage always block writes.
 		 */
 		if (other_leases &
-		    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
-		    wt_leases & CL_EXCLUSIVE) {
+		    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE)) {
 			wait_lease = TRUE;
 		} else if (other_leases & ~(CL_OPEN|CL_FRLOCK|CL_MMAP)) {
 			if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
@@ -1879,8 +1876,7 @@ sam_add_ino_lease(
 		 */
 		if (other_leases &
 		    (CL_APPEND|CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
-		    (mmap_leases & (CL_READ|CL_WRITE)) ||
-		    wt_leases & CL_EXCLUSIVE) {
+		    (mmap_leases & (CL_READ|CL_WRITE))) {
 			wait_lease = TRUE;
 			relinquish_lease_mask = other_leases & CL_APPEND;
 		} else if (other_leases & ~(CL_OPEN|CL_FRLOCK)) {
@@ -1923,11 +1919,6 @@ sam_add_ino_lease(
 		 * Note: The truncate on the caller host locks out all other
 		 * operations during the truncate.
 		 */
-
-		if (wt_leases & CL_EXCLUSIVE) {
-			wait_lease = TRUE;
-			break;
-		}
 		if (l2p->inp.data.lflag != SAM_RELEASE) {
 			if (other_leases & ~(CL_STAGE|CL_OPEN|CL_FRLOCK)) {
 				/*
@@ -1984,8 +1975,7 @@ sam_add_ino_lease(
 		 */
 		if (l2p->inp.data.filemode & FWRITE) {
 			if (other_leases &
-			    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE) ||
-			    wt_leases & CL_EXCLUSIVE) {
+			    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE)) {
 				wait_lease = TRUE;
 			} else if (other_leases &
 			    ~(CL_OPEN|CL_FRLOCK|CL_MMAP)) {
@@ -2009,8 +1999,6 @@ sam_add_ino_lease(
 		} else {
 			if (other_leases & (CL_TRUNCATE|CL_EXCLUSIVE)) {
 				wait_lease = TRUE;
-			} else if (wt_leases & CL_EXCLUSIVE) {
-				wait_lease = TRUE;
 			} else if (other_leases & (CL_WRITE|CL_APPEND)) {
 				wait_lease = TRUE;
 				if (!(ip->mp->mt.fi_config & MT_MH_WRITE)) {
@@ -2030,8 +2018,7 @@ sam_add_ino_lease(
 		 */
 		if (other_leases &
 		    (CL_WRITE|CL_APPEND|CL_TRUNCATE|CL_READ|
-		    CL_STAGE|CL_EXCLUSIVE) ||
-		    wt_leases & CL_EXCLUSIVE) {
+		    CL_STAGE|CL_EXCLUSIVE)) {
 			wait_lease = TRUE;
 			relinquish_lease_mask =
 			    other_leases & (CL_APPEND|CL_WRITE|CL_READ);
