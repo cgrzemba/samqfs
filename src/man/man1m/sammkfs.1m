@@ -1,4 +1,4 @@
-." $Revision: 1.53 $
+." $Revision: 1.54 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -58,11 +58,12 @@ or Sun \%SAM-QFS file system.
 The \fBsammkfs\fR command can also be used to recreate a file system after
 a disaster.
 .PP
-The \fBsammkfs\fR command creates a version 2 file system that is backwards
-compatible with previous releases.  After an on-line grow operation
-(\fBsamu\fR command \fBadd eq\fR), the file system version
-is changed to 2A and it is no longer backwards compatible with previous
-releases.
+The \fBsammkfs\fR command can create either a version 2 file system that
+is backwards compatible with previous releases, or a version 2A file system
+that has new features, but is not compatible with previous releases.
+By default, a version 2A file system is created.  See \fB\-P\fR parameter
+below for details on the new features, and how to create a version 2
+file system.
 
 The \fBsammkfs\fR command aligns the block allocation bit maps and
 round robins them on the metadata devices for improved performance.
