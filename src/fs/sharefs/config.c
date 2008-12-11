@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -181,6 +181,7 @@ putLabel(
 	lb->version = SAM_LABEL_VERSION;
 	lb->serverord = cfp->ht->info.ht.server;
 	lb->gen = cfp->ht->info.ht.gen;
+	cfp->lb.info.lb.gen = lb->gen;	/* keep config label gen up to date */
 	strncpy(lb->server, cfp->serverName, sizeof (lb->server));
 	strncpy(lb->serveraddr, cfp->serverAddr, sizeof (lb->serveraddr));
 
