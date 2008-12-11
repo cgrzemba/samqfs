@@ -1,4 +1,4 @@
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 
 #    SAM-QFS_notice_begin
 #
@@ -30,63 +30,39 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-DIRS = lib 
+COMMON_SRC = event_handler.c util.c
 
-MPROGS = \
-	samdb_catvsn \
-	samdb_check \
-	samdb_create \
-	samdb_dump \
-	samdb_listvsn \
-	samdb_listinode \
-	samdb_listpath \
-	samdb_load \
-	samdb_updated \
-	samdb_updatevsn
+PROG = samdb
+PROG_SRC = samdb.c \
+	check.c \
+	create.c \
+	drop.c \
+	dump.c \
+	load.c \
+	query.c \
+	$(COMMON_SRC)
+
+MPROGS = dbupd 
 
 LIBSO += -R/opt/SUNWsamfs/lib/gpl
-PROG_LIBS = $(STATIC_OPT) -L lib/$(OBJ_DIR) -lsamdbutil \
-	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamdb -lsamut \
+
+COMMON_OBJS = $($(COMMON_SRC):%.c=$(OBJ_DIR)/%.o)
+COMMON_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) $(DYNAMIC_OPT) -lsamdb -lsamut -lsam -ladm \
 	$(MYSQL_LIB) $(LIBSO)
 
-samdb_catvsn_SRC = catalog_vsn.c
-samdb_catvsn_LIBS = $(PROG_LIBS)
+PROG_LIBS = $(DEPTH)/src/fs/lib/$(OBJ_DIR)/libfscmd.a $(COMMON_LIBS)
 
-samdb_check_SRC = check.c
-samdb_check_LIBS = $(PROG_LIBS)
+dbupd_SRC = dbupd.c $(COMMON_SRC) 
+dbupd_LIBS = $(COMMON_LIBS)
 
-samdb_create_SRC = create.c
-samdb_create_LIBS = $(PROG_LIBS)
+DEPCFLAGS += $(MYSQL_INCLUDE)
 
-samdb_dump_SRC = dump.c
-samdb_dump_LIBS = $(PROG_LIBS)
-
-samdb_listvsn_SRC = list_vsn.c
-samdb_listvsn_LIBS = $(PROG_LIBS)
-
-samdb_load_SRC = load.c
-samdb_load_LIBS = $(PROG_LIBS)
-
-samdb_listinode_SRC = list_inode.c
-samdb_listinode_LIBS = $(PROG_LIBS)
-
-samdb_listpath_SRC = list_path.c
-samdb_listpath_LIBS = $(PROG_LIBS)
-
-samdb_updated_SRC = updated.c
-samdb_updated_LIBS = $(PROG_LIBS)
-
-samdb_updatevsn_SRC = update_vsn.c
-samdb_updatevsn_LIBS = $(PROG_LIBS)
-
-DEPCFLAGS += -Iinclude $(MYSQL_INCLUDE)
-
+LDFLAGS = $(COMMON_OBJS)
 LNOPTS = $(CMDS_LFLAGS32)
-LNLIBS = -L lib/$(OBJ_DIR) -lsamdbutil -L $(DEPTH)/lib/$(OBJ_DIR) $(MYSQL_LIB) 
+LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamdb -lsamut $(MYSQL_LIB)
 
 include $(DEPTH)/mk/targets.mk
 
-catalog_vsn.c check.c create.c dump.c list_vsn.c: lib
-load.c list_inode.c list_path.c updated.c update_vsn.c: lib 
+.INIT: $(COMMON_OBJS)
 
 include $(DEPTH)/mk/depend.mk

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.89 $"
+#pragma ident "$Revision: 1.90 $"
 
 #include "sam/osversion.h"
 
@@ -113,6 +113,7 @@ sam_remove_name(
 	timespec_t system_time;
 	dcret_t reply;
 	boolean_t write_lock = FALSE;
+	ushort_t d_namehash;
 
 	fbp = NULL;
 
@@ -262,6 +263,7 @@ sam_remove_name(
 	dp = (struct sam_dirent *)((sam_uintptr_t)fbp->fb_addr +
 	    (sam_uintptr_t)fbuf_params.fbp_reloff);
 	dp->d_fmt = 0;		/* Empty entry */
+	d_namehash = dp->d_namehash;
 
 	slot_size = dp->d_reclen - SAM_DIRSIZ(dp);
 	bzero((caddr_t)&dp->d_id, (dp->d_reclen - 4));
@@ -366,8 +368,16 @@ sam_remove_name(
 	 */
 	sam_send_to_arfind(ip, AE_remove, 0);
 	if (ip->mp->ms.m_fsev_buf) {
-		sam_send_event(ip->mp, &ip->di, ev_remove, 0,
-		    ip->di.change_time.tv_sec);
+		if (operation == SAM_RENAME_LINK) {
+			sam_disk_inode_t di;
+			di.id = ip->di.id;
+			di.parent_id = pip->di.id;
+			sam_send_event(ip->mp, &di, ev_rename, 1, d_namehash,
+			    ip->di.change_time.tv_sec);
+		} else {
+			sam_send_event(ip->mp, &ip->di, ev_remove, ip->di.nlink,
+			    d_namehash, ip->di.change_time.tv_sec);
+		}
 	}
 
 out:

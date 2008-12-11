@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.77 $"
+#pragma ident "$Revision: 1.78 $"
 
 #include "sam/osversion.h"
 
@@ -806,7 +806,7 @@ sam_alloc_segment_ino(
 		}
 		sam_send_to_arfind(bip, AE_modify, 0);
 		if (bip->mp->ms.m_fsev_buf) {
-			sam_send_event(bip->mp, &bip->di, ev_modify, 0,
+			sam_send_event(bip->mp, &bip->di, ev_modify, 0, 0,
 			    bip->di.modify_time.tv_sec);
 		}
 	}
@@ -816,7 +816,7 @@ sam_alloc_segment_ino(
 	 */
 	sam_send_to_arfind(ip, AE_modify, 0);
 	if (ip->mp->ms.m_fsev_buf) {
-		sam_send_event(ip->mp, &ip->di, ev_modify, 0,
+		sam_send_event(ip->mp, &ip->di, ev_modify, 0, 0,
 		    ip->di.modify_time.tv_sec);
 	}
 
@@ -1317,7 +1317,7 @@ sam_segment_issue_callback(
 			 */
 			sam_send_to_arfind(ip, AE_remove, 0);
 			if (ip->mp->ms.m_fsev_buf) {
-				sam_send_event(ip->mp, &ip->di, ev_remove, 0,
+				sam_send_event(ip->mp, &ip->di, ev_remove, 0, 0,
 				    ip->di.change_time.tv_sec);
 			}
 			sam_return_this_ino(ip, 1);

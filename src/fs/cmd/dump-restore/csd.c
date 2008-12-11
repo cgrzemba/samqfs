@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -752,11 +752,15 @@ main(int argc, char *argv[])
 		    "Open failed on (%s)"), logfile);
 	}
 
-	if ((load_file != NULL) &&
-	    (DB_FILE = fopen64(load_file, "w")) == NULL) {
-		error(0, errno, "%s", load_file);
-		error(1, 0, catgets(catfd, SET, 1856,
-		    "Open failed on (%s)"), load_file);
+	if ((load_file != NULL)) {
+		if (0 == strcmp(load_file, "-")) {
+			DB_FILE = fdopen(dup(STDOUT), "w");
+			close(STDOUT);
+		} else if ((DB_FILE = fopen64(load_file, "w")) == NULL) {
+			error(0, errno, "%s", load_file);
+			error(1, 0, catgets(catfd, SET, 1856,
+			    "Open failed on (%s)"), load_file);
+		}
 	}
 
 	switch (operation) {
@@ -827,12 +831,15 @@ main(int argc, char *argv[])
 				fprintf(stderr, "dumping path '%s' \n",
 				    filename);
 			}
-
-			if ((DL_FILE = fopen(filename, "r")) == NULL) {
+			if (strcmp(filename, "-") == 0) {
+				DL_FILE = fdopen(dup(STDIN), "r");
+				close(STDIN);
+			} else if ((DL_FILE = fopen(filename, "r")) == NULL) {
 				error(0, errno, "%s", load_file);
 				error(1, 0, catgets(catfd, SET, 1856,
 				    "Open failed on (%s)"), load_file);
 			}
+
 			if (SAM_fd != -1) {
 				close(SAM_fd);
 			}

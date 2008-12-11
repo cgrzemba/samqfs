@@ -1,3 +1,5 @@
+/*	util.h - General utility function definitions. */
+
 /*
  *    SAM-QFS_notice_begin
  *
@@ -26,55 +28,14 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.1 $"
 
-#include <ctype.h>
-#include <stdlib.h>
+#include <stdio.h>
+#include <sys/errno.h>
 
-/*
- * ----	atobytes - Convert string to number of bytes.
- *
- *	Description:
- *	    Atobytes converts the specified string to the number of
- *	    bytes.  The string is assumed to be a numeric string
- *	    suffixed by an optional 'k', 'm', or 'g' to designate
- *	    the units kilo, mega, or giga.  If none is specified,
- *	    the units are assumed to be bytes.  See atoi(3) for input
- *	    scan rules.
- *
- *	On entry:
- *	    s	= The string to convert.
- *
- *	Returns:
- *	    The number of bytes.
- */
-int atobytes(
-	char *s) /* Input string */
-{
-	unsigned int n;
-	char c;
+#include <sam/sam_db.h>
 
-	for (; isspace((int)*s); s++) {
-		;
-	}
+/* Callback function for processing inodes with read_inodes */
+typedef int (*readinode_cb_f)(sam_perm_inode_t *ip, void *arg);
 
-	for (n = 0; ; s++) {
-		c = tolower(*s);
-		if (!isdigit((int)c)) {
-			break;
-		}
-		n = n*10 + (c-'0');
-	}
-	switch (c) {
-	case 'k':
-		n *= 1024;
-		break;
-	case 'm':
-		n *= 1024*1024;
-		break;
-	case 'g':
-		n *= 1024*1024*1024;
-		break;
-	}
-	return (n);
-}
+void init_trace(int is_daemon, int trace_id);
+int read_inodes(char *mp, readinode_cb_f callback, void *arg);

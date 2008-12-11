@@ -37,7 +37,7 @@
 #define	_SAM_UIOCTL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 #endif
 
 #ifdef sun
@@ -259,6 +259,7 @@ struct sam_ioctl_idmva {
 	sam_id_t id;		/* Base inode number & generation number */
 	sam_id_t aid[MAX_ARCHIVE];	/* Multivolume inode ext ids. */
 	int size;			/* Size of vsn information buffer */
+	int copy;			/* Copy number (-1 for all) */
 	SAM_POINTER(void) buf;	/* Return multivolume archive vsn info */
 };
 
@@ -322,6 +323,10 @@ typedef struct {
 
 #define	C_IDGETDENTS 22
 #define	F_IDGETDENTS _IOWR('u', C_IDGETDENTS, sam_ioctl_idgetdents_t)
+
+/* Multi-VSN request for single archive copy */
+#define	C_IDCPMVA 23
+#define	F_IDCPMVA _IOW('u', C_IDCPMVA, struct sam_ioctl_idmva)
 
 
 /* End: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

@@ -34,6 +34,7 @@
 #ifndef	_SAM_FS_SAMEVENT_H
 #define	_SAM_FS_SAMEVENT_H
 
+#include "sam/types.h"
 
 /* File events. */
 enum sam_event_num {
@@ -89,7 +90,8 @@ typedef struct sam_event {
 	ushort_t    ev_param;	/* Parameter */
 	sam_time_t  ev_time;	/* File action event time in seconds */
 	uint32_t    ev_seqno;	/* Sequence number */
-	uint32_t    fill;
+	ushort_t    ev_param2;	/* Parameter 2 */
+	ushort_t    fill;
 } sam_event_t;
 
 struct sam_event_buffer {

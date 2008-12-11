@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1254,7 +1254,7 @@ sam_mark_ino(
 		ip->di.status.b.cs_val = 0;
 		ip->di.status.b.archdone = 0;
 		sam_send_to_arfind(ip, AE_modify, 0);
-		sam_send_event(ip->mp, &ip->di, ev_modify, 0,
+		sam_send_event(ip->mp, &ip->di, ev_modify, 0, 0,
 		    ip->di.modify_time.tv_sec);
 	}
 }

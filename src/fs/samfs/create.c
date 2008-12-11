@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.170 $"
+#pragma ident "$Revision: 1.171 $"
 
 #include "sam/osversion.h"
 
@@ -331,9 +331,17 @@ sam_create_name(
 	/*
 	 * Notify event daemon of file/directory creation.
 	 */
-	if (ip->mp->ms.m_fsev_buf && operation != SAM_RENAME_LINK) {
-		sam_send_event(ip->mp, &ip->di, ev_create, 0,
-		    ip->di.creation_time);
+	if (ip->mp->ms.m_fsev_buf) {
+		if (operation == SAM_RENAME_LINK) {
+			sam_disk_inode_t di;
+			di.id = ip->di.id;
+			di.parent_id = pip->di.id;
+			sam_send_event(ip->mp, &di, ev_rename, 0,
+			    dp->d_namehash, ip->di.modify_time.tv_sec);
+		} else {
+			sam_send_event(ip->mp, &ip->di, ev_create, ip->di.nlink,
+			    dp->d_namehash, ip->di.creation_time);
+		}
 	}
 
 	/*
@@ -526,12 +534,12 @@ sam_restore_name(
 	if (pip->mp->ms.m_fsev_buf && bp) {
 		struct sam_perm_inode *newpp;
 
-		sam_send_event(pip->mp, &permp->di, ev_restore, 1,
-		    permp->di.modify_time.tv_sec);
 		newpp = (struct sam_perm_inode *)
 		    (void *)SAM_ITOO(id.ino, bp->b_bcount, bp);
-		sam_send_event(pip->mp, &newpp->di, ev_restore, 2,
+		sam_send_event(pip->mp, &newpp->di, ev_restore, 0, 0,
 		    newpp->di.modify_time.tv_sec);
+		sam_send_event(pip->mp, &permp->di, ev_restore, 1, 0,
+		    permp->di.modify_time.tv_sec);
 	}
 
 	TRANS_DIR(pip, slot_offset);

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 #include "sam/osversion.h"
 
@@ -387,6 +387,7 @@ sam_send_event(
 	sam_disk_inode_t *dp,		/* Pointer to disk inode */
 	enum sam_event_num event,	/* The file event */
 	ushort_t param,			/* Optional parameter */
+	ushort_t param2,		/* Optional parameter */
 	sam_time_t time)		/* Event time */
 {
 	struct sam_event_em	*em;
@@ -458,6 +459,7 @@ sam_send_event(
 	ev->ev_id = dp->id;
 	ev->ev_pid = dp->parent_id;
 	ev->ev_param = param;
+	ev->ev_param2 = param2;
 	if (++em->em_seqno == 0) {
 		em->em_seqno = 1;
 	}
@@ -502,7 +504,7 @@ sam_event_umount(
 		mutex_exit(&em->em_mutex);
 		if ((em->em_mask & ev_umount)) {
 			sam_send_event(mp, &mp->mi.m_inodir->di, ev_umount,
-			    0, 0);
+			    0, 0, 0);
 		}
 	}
 	/*

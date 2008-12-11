@@ -24,7 +24,7 @@
 #
 #    SAM-QFS_notice_end
 
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 
 DEPTH = ../../..
 
@@ -34,9 +34,9 @@ BUILD_64BIT = yes
 
 SRCDIR = $(DEPTH)/src/fs/include
 
-INCS = acl.h amld.h arfind.h bswap.h debug.h dirent.h ino.h ino_ext.h inode.h \
+INCS = acl.h amld.h arfind.h block.h bswap.h debug.h dirent.h ino.h ino_ext.h inode.h \
 	ioblk.h macros.h quota.h rmedia.h samhost.h sblk.h sblk_mgmt.h scd.h \
-	share.h validation.h
+	share.h utility.h validation.h
 
 #
 # Add any generated .h's here.  These get placed in an OBJ_DIR as

@@ -38,13 +38,20 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <sys/vfs.h>
+
 #include <sam/custmsg.h>
+#include <sam/mount.h>
+#include <sam/lib.h>
 #include <sam/sam_trace.h>
+#include <sam/sam_malloc.h>
+#include <sam/fs/sblk.h>
 
-
-#define	MAX_MSGLEN 1024
+#include "util.h"
 
 extern char *program_name;
+
+#define	INODE_BUF_SIZE (INO_BLK_FACTOR * INO_BLK_SIZE)
 
 /*
  * init_trace - initializes sam_trace.h depending on whether
@@ -85,42 +92,45 @@ init_trace(int is_daemon, int trace_id)
 }
 
 /*
- * ----	error - Print error message.
+ * Utility for reading the .inodes file.  Reads the inodes
+ * using buffered input, using a callback function to process each
+ * inode read.
  *
- *	Description:
- *	    Error prints an error message to standard error.  Error
- *	    is designed to be compatable with the GNU error routine.
- *	    A message of the following format is written:
+ * mp - mount point of sam filesystem to read .inodes
+ * callback - callback function to call for each inode
+ * arg - passthrough argument for callback function
  *
- *		program name:prefix message:error message
- *
- *	On entry:
- *	    status = Exit status.  If non-zero exit(2) will be called.
- *	    errno  = Error number.  If non-zero the corresponding error
- *		     message will be printed.
- *	    message= Error message prefix text if not NULL.
- *	    args   = Arguments supplied to printf when printing the
- *		     prefix message.
+ * Returns 0 on success (all callbacks successful), -1 on failure
  */
-void error(
-	int status,		/* Exit status */
-	/* LINTED */
-	int errno,		/* Error number */
-	char *message,	/* Prefix message */
-	...)			/* Arguments for prefix message */
-{
-	va_list args;
-	char msg[MAX_MSGLEN];
+int
+read_inodes(char *mp, readinode_cb_f callback, void *arg) {
+	int inode_fd = -1;
+	int err = 0;
+	int nbytes;
+	sam_perm_inode_t *inode_buf = NULL;
 
-	if (message != NULL) {
-		va_start(args, message);
-		vsnprintf(msg, MAX_MSGLEN, message, args);
-		va_end(args);
-		Trace(TR_ERR, msg);
+	if ((inode_fd = OpenInodesFile(mp)) < 0) {
+		Trace(TR_ERR, "Could not open .inodes file for %s\n", mp);
+		return (-1);
 	}
 
+	SamMalloc(inode_buf, INODE_BUF_SIZE);
+	while ((nbytes = read(inode_fd, inode_buf, INODE_BUF_SIZE)) > 0) {
+		int ninodes = nbytes / sizeof (sam_perm_inode_t);
+		int i;
 
-	if (status) {
-		exit(status);
+		for (i = 0; i < ninodes; i++) {
+			if (inode_buf[i].di.id.ino == 0) {
+				continue;
+			}
+			if (callback(&inode_buf[i], arg) < 0) {
+				err = -1;
+				goto out;
+			}
+		}
 	}
+
+out:
+	SamFree(inode_buf);
+	return (err);
 }

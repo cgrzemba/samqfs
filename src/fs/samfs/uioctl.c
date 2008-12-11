@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 
 #include "sam/osversion.h"
 
@@ -883,7 +883,8 @@ stage_inode:
 		}
 		}
 		break;
-
+	case C_IDCPMVA:	/* Return multivolume info for single copy */
+		/* Fallthrough */
 	case C_IDMVA: {		/* Return multivolume archive inode info */
 		struct sam_ioctl_idmva *idmva;
 		sam_node_t *ip;
@@ -895,6 +896,11 @@ stage_inode:
 
 		idmva = (struct sam_ioctl_idmva *)(void *)arg;
 		if (idmva->id.ino == 0) {
+			error = EINVAL;
+			break;
+		}
+		if (cmd == C_IDCPMVA && (idmva->copy < 0 ||
+		    idmva->copy >= MAX_ARCHIVE)) {
 			error = EINVAL;
 			break;
 		}
@@ -919,16 +925,29 @@ stage_inode:
 					int t_size = idmva->size;
 
 					RW_LOCK_OS(&ip->inode_rwl, RW_READER);
-					/* Retrieve vsns in copy order. */
-					for (copy = 0; copy < MAX_ARCHIVE;
-					    copy++) {
+					if (cmd == C_IDCPMVA) {
 						if (ip->di.arch_status &
-						    (1<<copy)) {
+						    (1<<idmva->copy)) {
+							error =
+							    sam_get_multivolume(
+							    ip, &vsnp,
+							    idmva->copy,
+							    &t_size);
+						}
+					} else {
+						/* Get vsns in copy order. */
+						for (copy = 0;
+						    copy < MAX_ARCHIVE;
+						    copy++) {
+							if (ip->di.arch_status &
+							    (1<<copy)) {
+							/* Cstyle bad indent */
 							if (error =
 							    sam_get_multivolume(
 							    ip, &vsnp,
 							    copy, &t_size)) {
 								break;
+							}
 							}
 						}
 					}
@@ -1540,7 +1559,7 @@ sam_set_archive(
 
 		SAM_COUNT64(sam, archived);
 		if (ip->mp->ms.m_fsev_buf) {
-			sam_send_event(ip->mp, &ip->di, ev_archive, (copy + 1),
+			sam_send_event(ip->mp, &ip->di, ev_archive, copy, 0,
 			    permip->ar.image[copy].creation_time);
 		}
 

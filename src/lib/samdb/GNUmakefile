@@ -1,4 +1,4 @@
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 
 #    SAM-QFS_notice_begin
 #
@@ -33,16 +33,14 @@ include $(DEPTH)/mk/common.mk
 
 LIB = samdb
 LIB_SRC = \
-	access.c \
+	archive.c \
+	config.c \
+	connect.c \
+	file.c \
 	fsalog.c \
-	insert.c \
-	new.c \
-	query.c \
-	query_error.c \
-	rename.c \
-	restore.c \
-	util.c \
-	vsn_cache.c
+	inode.c \
+	path.c \
+	util.c
 	
 LIBSO += -R/opt/SUNWsamfs/lib/gpl
 LIB_LIBS = $(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut $(MYSQL_LIB) $(LIBSO)
@@ -50,6 +48,16 @@ DEPCFLAGS += -I$(INCLUDE)/sam/$(OBJ_DIR) $(MYSQL_INCLUDE)
 
 LNOPTS = $(LIBS_LFLAGS32)
 
+CATMSG = samdb_sql.msg
+CATALOG = $(OBJ_DIR)/samdb_sql.cat
+
 include $(DEPTH)/mk/targets.mk
+
+all: $(CATALOG)
+
+$(CATALOG): $(CATMSG)
+	rm -f $(CATALOG)
+	/usr/bin/gencat $(CATALOG) $(CATMSG)
+	/bin/chmod -w $(CATALOG)
 
 include $(DEPTH)/mk/depend.mk

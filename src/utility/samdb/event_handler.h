@@ -26,41 +26,19 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.1 $"
+#ifndef EVENT_HANDLER_H_
+#define	EVENT_HANDLER_H_
 
-static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
+#include <sam/samevent.h>
+#include <sam/sam_db.h>
 
-#include <stdlib.h>
-#include <string.h>
+/* Event handler function type, Return 0 on success, -1 on failure */
+typedef int (*event_handler_t)(sam_db_context_t *, sam_event_t *);
 
-#include <sam/sam_malloc.h>
+#define	IS_DB_INODE(ino) ((ino) >= SAM_MIN_USER_INO || (ino) == SAM_ROOT_INO)
 
-#include "util.h"
+event_handler_t get_event_handler(int ev_num);
+char *get_event_name(int ev_num);
+int check_consistency(sam_db_context_t *, sam_event_t *, boolean_t repair_dir);
 
-char *
-xstrdup(
-	char *string) /* String to duplicate */
-{
-	char *s;
-
-	SamMalloc(s, strlen(string)+1);
-	if (s == 0) {
-		return (s);
-	}
-
-	return (strcpy(s, string));
-}
-
-char *
-xstrdup2(
-	char *string, /* String to duplicate	*/
-	int len)
-{
-	char *s;
-
-	SamMalloc(s, len);
-	if (s == 0) {
-		return (s);
-	}
-	return (strcpy(s, string));
-}
+#endif /* EVENT_HANDLER_H_ */

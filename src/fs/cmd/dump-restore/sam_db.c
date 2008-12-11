@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 #include <errno.h>
 #include <limits.h>
@@ -43,12 +43,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/sysmacros.h>
+#include <sys/vfs.h>
 #include "sam/types.h"
 #include "sam/lib.h"
 #include "sam/nl_samfs.h"
 #include "sam/sam_malloc.h"
 #include "sam/fs/ino.h"
 #include "sam/fs/dirent.h"
+#include "sam/fs/sblk.h"
 #include "sam/resource.h"
 #include "csd_defs.h"
 
@@ -79,9 +81,13 @@ sam_db_list(
 	int		seq;		/* VSN sequence number		*/
 	int		n_vsns;		/* Number VSNs in archive set	*/
 	int		vn;		/* VSN index into vsnp		*/
-	char		*p, *pp, *q;
+	char		*p, *pp;
 
 	if (DB_FILE == NULL) {
+		return;
+	}
+
+	if (perm_inode->di.id.ino < SAM_MIN_USER_INO) {
 		return;
 	}
 
@@ -121,16 +127,32 @@ sam_db_list(
 		*pp = '\0';
 	}
 
-	fprintf(DB_FILE, "%u\t%u\t%d\t%s/\t%s\n",
+	/* Print inode line */
+	fprintf(DB_FILE, "%u\t%u\t%d\t%llu\t",
 	    perm_inode->di.id.ino,
 	    perm_inode->di.id.gen,
-	    ftype, p, obj);
-	fprintf(DB_FILE, "%llu\t%u\t%u\t%u\t%u\n",
-	    (unsigned long long) perm_inode->di.rm.size,
+	    ftype,
+	    (unsigned long long) perm_inode->di.rm.size);
+
+	if (perm_inode->di.status.b.cs_val) {
+		fprintf(DB_FILE, "%08x%08x%08x%08x\t",
+		    perm_inode->csum.csum_val[0],
+		    perm_inode->csum.csum_val[1],
+		    perm_inode->csum.csum_val[2],
+		    perm_inode->csum.csum_val[3]);
+	} else {
+		fprintf(DB_FILE, "0\t");
+	}
+
+	fprintf(DB_FILE, "%u\t%u\t%lu\t%lu\t%c\n",
+	    perm_inode->di.creation_time,
+	    perm_inode->di.modify_time.tv_sec,
 	    perm_inode->di.uid,
 	    perm_inode->di.gid,
-	    perm_inode->di.creation_time,
-	    perm_inode->di.modify_time.tv_sec);
+	    perm_inode->di.status.b.offline ? '0' : '1');
+
+	/* Print file line */
+	fprintf(DB_FILE, "%s\t%s\n", p, obj);
 
 	if (pp != NULL) {
 		*pp = '/';
@@ -140,7 +162,9 @@ sam_db_list(
 		fprintf(DB_FILE, "%s\n", link != NULL?link:"");
 	}
 
+	/* Print archive lines */
 	for (copy = vn = 0; copy < MAX_ARCHIVE; copy++) {
+		int64_t position;
 		if (!(perm_inode->di.arch_status & (1<<copy))) {
 			continue;
 		}
@@ -148,17 +172,27 @@ sam_db_list(
 		n_vsns = perm_inode->ar.image[copy].n_vsns;
 
 		for (seq = 0; seq < perm_inode->ar.image[copy].n_vsns; seq++) {
-			fprintf(DB_FILE, "%d\t%d\t%s\t%s\t%u\t%u\t%llu\n",
-			    copy+1, seq+1,
+			char stale = perm_inode->di.ar_flags[copy] &
+			    AR_stale ? '1' : '0';
+			position = n_vsns > 1 ? vsnp[vn].position :
+			    (((int64_t)
+			    perm_inode->ar.image[copy].position_u) << 32) |
+			    perm_inode->ar.image[copy].position;
+
+			fprintf(DB_FILE,
+			    "%d\t%d\t%s\t%s\t%llu\t%llu\t%llu\t%u\t%c\n",
+			    copy,
+			    seq,
 			    sam_mediatoa(perm_inode->di.media[copy]),
 			    n_vsns > 1 ? vsnp[vn].vsn :
 			    perm_inode->ar.image[copy].vsn,
-			    perm_inode->ar.image[copy].creation_time,
-			    perm_inode->di.ar_flags[copy] & AR_stale ?
-			    perm_inode->ar.image[copy].creation_time :
-			    perm_inode->di.modify_time.tv_sec,
+			    position,
+			    n_vsns > 1 ? vsnp[vn].offset :
+			    (uint64_t)perm_inode->ar.image[copy].file_offset,
 			    n_vsns > 1 ? (unsigned long long) vsnp[vn].length :
-			    (unsigned long long) perm_inode->di.rm.size);
+			    (unsigned long long) perm_inode->di.rm.size,
+			    perm_inode->ar.image[copy].creation_time,
+			    stale);
 			if (n_vsns > 1) {
 				vn++;
 			}

@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.619 $"
+$ pragma ident "$Revision: 1.620 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -104,6 +104,7 @@ $  rft/remote	(22000s)
 $  mount_samfs	(23000s)
 $  WORM         (24000s)
 $  shrink       (25000s)
+$  samdb        (26000s)
 $  libsammgmt   (30000s)
 
 
@@ -3670,6 +3671,18 @@ $ ==============================================================
 25006 %s: Error mlock buffers
 25007 llseek: offset %lld (%#llx): %s
 25008 Read failed: offset %lld (%#llx): %s
+
+$ samdb (26000s)
+$ ==============================================================
+26000 Could not load samdb configuration from %s for fsname %s
+26001 Could not create database context
+26002 Could not open file system event inventory %s
+26003 Error reading file system event for %s
+26004 Error connecting to %s side database
+26005 Retry limit %d reached, exiting
+26006 Unrecognized event num %d for %s
+26007 Error processing event %s, running consistency check for %d.%d on %s
+26008 Consistency check failed, retrying
 
 $ libsammgmt (30000s)
 $ ==============================================================

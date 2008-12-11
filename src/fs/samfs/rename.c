@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.69 $"
+#pragma ident "$Revision: 1.70 $"
 
 #include "sam/osversion.h"
 
@@ -457,22 +457,6 @@ sam_rename_inode(
 			goto out15;
 		}
 
-		/*
-		 * If parents are different and event logging on, send 1st of
-		 * 2 events for rename. 1 = old parent, 2 = new parent.
-		 */
-		if (parents_are_different) {
-			sam_disk_inode_t di;
-
-			di.id = oid;
-			di.parent_id = poid;
-			sam_send_event(mp, &di, ev_rename, 1, otime);
-			sam_send_event(mp, &oip->di, ev_rename, 2,
-			    npip->di.modify_time.tv_sec);
-		} else {
-			sam_send_event(mp, &oip->di, ev_rename, 0,
-			    npip->di.modify_time.tv_sec);
-		}
 		goto out15;
 	} else {
 		/*

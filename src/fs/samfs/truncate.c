@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.150 $"
+#pragma ident "$Revision: 1.151 $"
 
 #include "sam/osversion.h"
 
@@ -184,8 +184,8 @@ sam_drop_ino(sam_node_t *ip, cred_t *credp)
 				ip->di.status.b.on_large = 1;
 			}
 			if (ip->mp->ms.m_fsev_buf) {
-				sam_send_event(ip->mp, &ip->di, ev_offline, 0,
-				    ip->di.residence_time);
+				sam_send_event(ip->mp, &ip->di, ev_offline,
+				    0, 0, ip->di.residence_time);
 			}
 		} else if (error == ENOCSI) {	/* Corrupted file */
 			ip->di.status.b.damaged = 1;

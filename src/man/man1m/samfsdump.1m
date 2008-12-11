@@ -1,4 +1,4 @@
-." $Revision: 1.34 $
+." $Revision: 1.35 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -361,7 +361,8 @@ A directory that resolves to \&. or \fBNULL\fR generates an error message.
 \%\fB\-Y\fR
 (\fBsamfsdump\fP only) Specifies that the trailing list of files are lists
 of files to dump.  Using this option helps improve samfsdump performance
-by reducing the number of path lookups.
+by reducing the number of path lookups.  If - is specified as the trailing
+list, standard input is used.
 .sp
 Each list must have one line per file, with tab separated inode number,
 generation number, and file path.  The path must is relative to where 
@@ -370,6 +371,8 @@ generation number, and file path.  The path must is relative to where
 Example line: 1039 11 testdir2/rtest_f_61
 .sp
 Example usage: samfsdump -Y -f samfs1.dump /path/to/filelist
+.sp
+Example pipelined: samdb dump samfs1 | samfsdump -Y -f samfs1.dump -
 .sp
 If a sideband mysql database is being used by the target SAM filesystem, then
 the file list can be generated using the \fBsamdb(1M) dump\fP command.
@@ -380,7 +383,8 @@ as part of a samfsdump or samfsrestore.  This file is used to
 populate a sideband mysql database using the \fBsamdb(1M) load\fP command.
 .sp
 Use the \fB\-S\fR option to only produce the db_loadfile without performing
-the usual samfsdump or samfsrestore operations.
+the usual samfsdump or samfsrestore operations.  If - is specified for the
+load file standard output is used.
 .TP 10
 \%\fB\-2\fR
 (\fBsamfsrestore\fP only) Writes two lines per file, similar to

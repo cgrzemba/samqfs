@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.98 $"
+#pragma ident "$Revision: 1.99 $"
 
 #include <sam/osversion.h>
 
@@ -1022,9 +1022,9 @@ sam_restore_inode(
 
 		di.id = oid;
 		di.parent_id = poid;
-		sam_send_event(mp, &di, ev_restore, 1, otime);
-		sam_send_event(mp, &ip->di, ev_restore, 2,
+		sam_send_event(mp, &ip->di, ev_restore, 0, 0,
 		    ip->di.modify_time.tv_sec);
+		sam_send_event(mp, &di, ev_restore, 1, 0, otime);
 	}
 	if (TRANS_ISTRANS(ip->mp)) {
 		TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, permip->di.id);

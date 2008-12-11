@@ -26,8 +26,14 @@
  *
  *    SAM-QFS_notice_end
  */
+#if !defined(FSALOG_H)
+#define	FSALOG_H
 
-#define	SAM_FSA_LOG_PATH	"/var/opt/SUNWsamfs/fsalogd"
+#include "sam/types.h"
+
+#define	FSA_DEFAULT_LOG_PATH	"/var/opt/SUNWsamfs/fsalogd"
+#define	FSA_LOGNAME_MAX		60
+#define	FSA_EOF			0
 
 typedef	enum	{
 	fstat_none = 0,
@@ -35,33 +41,39 @@ typedef	enum	{
 	fstat_part,
 	fstat_error,
 	fstat_missing,
-	fstat_removed
-}	fstatus_t;
+	fstat_MAX,
+	fstat_MARK = 1<<15
+}	sam_fsa_status_t;
 
-typedef	struct	{			/* FSA log file table entry:	*/
-	char		file_name[60];	/* File name of log file	*/
+typedef	struct {			/* FSA ondisk inventory entry	*/
+	char		name[FSA_LOGNAME_MAX]; /* File name of log file	*/
 	sam_time_t	init_time;	/* Initial log time		*/
 	sam_time_t	last_time;	/* Last log time processed	*/
 	off_t		offset;		/* Next entry to process offset	*/
 	short		status;		/* File status			*/
-}	fsalog_file_t;
+}	sam_fsa_log_t;
 
-typedef	struct	{			/* FSA log file inventory table	*/
-	char		fs_name[40];	/* Family set name 		*/
+typedef	struct {			/* FSA inventory table		*/
+	uname_t		fs_name;	/* Family set name 		*/
 	int		l_fsn;		/* Family set name string length */
 	int		n_logs;		/* Number of log files		*/
 	int		n_alloc;	/* Number of entries allocated	*/
 	int		c_log;		/* Ordinal of current log file	*/
-	fsalog_file_t	logs[1];	/* Log file table		*/
-}	fsalog_inv_t;
+	int		fd_inv;		/* Inventory file descriptor	*/
+	int		fd_log;		/* Current log file descriptor	*/
+	char		*path_fsa;	/* FSA directory path		*/
+	char 		*path_inv;	/* Inventory file path/name	*/
+	char 		*path_log;	/* Log file path/name		*/
+	sam_time_t	last_time;	/* Time of last event read	*/
+	sam_fsa_log_t	logs[1];	/* Log file table		*/
+}	sam_fsa_inv_t;
 
-void FSA_log_path(char *);
-int FSA_load_inventory(fsalog_inv_t **, char *, char *);
-int FSA_update_inventory(fsalog_inv_t **);
-int FSA_save_inventory(fsalog_inv_t  *, int);
-int FSA_print_inventory(fsalog_inv_t  *, FILE *);
+/* FSA management functions */
+int sam_fsa_open_inv(sam_fsa_inv_t **inv, char *path,
+    char *fs_name, char *appname);
+int sam_fsa_read_event(sam_fsa_inv_t **inv, sam_event_t *event);
+int sam_fsa_rollback(sam_fsa_inv_t **inv);
+int sam_fsa_print_inv(sam_fsa_inv_t *inv, FILE *file);
+int sam_fsa_close_inv(sam_fsa_inv_t **inv);
 
-int FSA_next_log_file(fsalog_inv_t  *, int);
-int FSA_open_log_file(fsalog_inv_t  *, int, int);
-int FSA_close_log_file(fsalog_inv_t  *, int);
-int FSA_read_next_event(fsalog_inv_t  *, sam_event_t *);
+#endif /* FSALOG_H */

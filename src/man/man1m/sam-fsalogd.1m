@@ -1,4 +1,4 @@
-.\" $Revision: 1.3 $
+.\" $Revision: 1.4 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -49,22 +49,21 @@ associated with this file system and logs them. Events include:
 .nf
 .ft 4
 .ta 0n 26n 36n  48
-Event       Description        Parameter        Time\fR
+Event       Description        Parameter(s)        Time\fR
 ev_none     -                  -                -
-ev_create   file created       -                creation time
+ev_create   file created       nlinks,namehash  creation time
 ev_change   uid/gid changed    -                change time
 ev_close    modified & closed  filemode         modify time
-ev_rename   renamed            0=same parent    parent modify time
-ev_rename   renamed            1=old parent     old parent modify time
-ev_rename   renamed            2=new parent     new parent modify time
-ev_remove   removed            -                change time
+ev_rename   renamed            0=new,namehash   parent modify time
+ev_rename   renamed            1=old,namehash   old parent modify time
+ev_remove   removed            nlinks,namehash  change time
 ev_offline  marked offline     -                residence time
 ev_online   marked online      -                residence time
 ev_archive  copy archived      copy number      copy creation time
 ev_modify   copies stale       -                modify time
-ev_archange copies changed     -                modify time
-ev_restore  file restored      1=old file       old modify time
-ev_restore  file restored      2=new file       new modify time
+ev_archange copies changed     copy number      modify time
+ev_restore  file restored      0=old            old modify time
+ev_restore  file restored      1=new            new modify time
 ev_umount   umount fs          -                now
 .TE
 .PP
@@ -72,7 +71,7 @@ ev_umount   umount fs          -                now
 Detailed trace information is written to the \fBsam-fsalogd\fR trace file.
 .PP
 In the \fBfsalog.cmd\fR file,
-you can specify the directory pathbname where the logs are stored for
+you can specify the directory pathname where the logs are stored for
 each Sun \%SAM-QFS file system.
 .SH SEE ALSO
 \fBmount_samfs\fR(1M).
