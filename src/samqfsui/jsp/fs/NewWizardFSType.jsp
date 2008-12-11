@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardFSType.jsp,v 1.2 2008/10/22 20:57:03 kilemba Exp $
+// ident	$Id: NewWizardFSType.jsp,v 1.3 2008/12/11 14:56:34 kilemba Exp $
 --%>
 
 <%@ page language="java" %> 
@@ -72,10 +72,10 @@
 <cc:checkbox name="sharedCheckBox"
              bundleID="samBundle"
              dynamic="true"
-             onChange="return handleSharedCheckBox(this);"
              label="FSWizard.new.fstype.shared"/>
 </td></tr>
 
+<%-- OSD related
 <tr><td style="text-indent:40px">
 <cc:checkbox name="HPCCheckBox"
              dynamic="true"
@@ -92,6 +92,7 @@
              dynamic="true"
              label="FSWizard.new.fstype.matfs"/>
 </td></tr>
+--%>
 
 <tr><td>
 <cc:radiobutton name="UFSRadioButton" bundleID="samBundle"/>

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: fstype.js,v 1.2 2008/10/22 20:57:03 kilemba Exp $
+// ident	$Id: fstype.js,v 1.3 2008/12/11 14:56:34 kilemba Exp $
 
 var formName = "wizWinForm";
 var theForm = document.wizWinForm;
@@ -36,9 +36,12 @@ var prefix = "WizardWindow.Wizard.NewWizardFSTypeView.";
 /* handler for the HAFS check box */
 function handleHAFSCheckBox(checkbox) {
     var archiving = theForm.elements[prefix + "archivingCheckBox"];
-    var hpc = theForm.elements[prefix + "HPCCheckBox"];
     var shared = theForm.elements[prefix + "sharedCheckBox"];
+
+    /*--OSD related--
+    var hpc = theForm.elements[prefix + "HPCCheckBox"];
     var matfs = theForm.elements[prefix + "matfsCheckBox"];
+    */
 
     if (checkbox.checked) {
         // disable archiving. Its not supported with HAFS
@@ -47,6 +50,7 @@ function handleHAFSCheckBox(checkbox) {
         
         // if shared is selected, disable the HPC check box. HAFS is not
         // supported with HPC
+        /*--OSD related--
         if (shared.checked) {
             hpc.checked = false;
             ccSetCheckBoxDisabled(prefix + "HPCCheckBox", formName, 1);
@@ -55,25 +59,31 @@ function handleHAFSCheckBox(checkbox) {
             matfs.checked = false;
             ccSetCheckBoxDisabled(matfs.name, formName, 1);
         }
+        */
     } else {
         // enable archiving
         ccSetCheckBoxDisabled(prefix + "archivingCheckBox", formName, 0);
 
         // if shared is checked, enable hpc
+        /*--OS -related--
         if (shared.checked) {
             ccSetCheckBoxDisabled(prefix + "HPCCheckBox", formName, 0);
         }
         if (matfs != null && !shared.ckecked && !archiving.checked) {
             ccSetCheckBoxDisabled(matfs.name, formName, 0);
         }
+        */
     }
 }
 
-/* */
+/* handler for the archiving checkbox */
 function handleArchivingCheckBox(checkbox) {
     var hafs = checkbox.form.elements[prefix + "HAFSCheckBox"];
-    var matfs = checkbox.form.elements[prefix + "matfsCheckBox"];
     var shared = checkbox.form.elements[prefix + "sharedCheckBox"];
+
+    /*--OSD related--
+    var matfs = checkbox.form.elements[prefix + "matfsCheckBox"];
+    */
 
     if (checkbox.checked) {
         
@@ -81,10 +91,13 @@ function handleArchivingCheckBox(checkbox) {
         if (hafs != null) {
             ccSetCheckBoxDisabled(prefix + "HAFSCheckBox", formName, 1);
         }
+
+        /*--OSD related--
         if (matfs != null) {
             matfs.checked = false;
             ccSetCheckBoxDisabled(prefix + "matfsCheckBox", formName, 1);
         }
+        */
 
         // if the current server has no archive media, warn the user
         var hasArchiveMedia =
@@ -96,9 +109,12 @@ function handleArchivingCheckBox(checkbox) {
         if (hafs != null) {
             ccSetCheckBoxDisabled(prefix + "HAFSCheckBox", formName, 0);
         }
+
+        /*--OSD related--
         if (matfs != null && !shared.checked) {
             ccSetCheckBoxDisabled(prefix + "matfsCheckBox", formName, 0);
         }
+        */
     }
     
     return false;
@@ -107,9 +123,10 @@ function handleArchivingCheckBox(checkbox) {
 /* handler for the shared fs check box */
 function handleSharedCheckBox(checkbox) {
     var hafs = theForm.elements[prefix + "HAFSCheckBox"];    
+    var archiving = theForm.elements[prefix + "archivingCheckBox"];
+
     var hpcCheckBox = theForm.elements[prefix + "HPCCheckBox"];
     var matfs = theForm.elements[prefix + "matfsCheckBox"];
-    var archiving = theForm.elements[prefix + "archivingCheckBox"];
 
     if (hpcCheckBox != null)
         handleHPCCheckBox(hpcCheckBox);
