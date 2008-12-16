@@ -22,12 +22,12 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: SimplePopupPageTitle.xml,v 1.6 2008/05/16 19:39:24 am143972 Exp $ -->
+<!-- $Id: SimplePopupPageTitle.xml,v 1.7 2008/12/16 00:10:52 am143972 Exp $ -->
 
 <pagetitle>
     <pagebuttons>

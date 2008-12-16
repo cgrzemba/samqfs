@@ -21,7 +21,7 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
@@ -29,7 +29,7 @@
 # mcprobe - media changer probe for installed tape/optical drives and
 #           standalone tape/optical drive probe.
 #
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 
 
 # Location of mcf.

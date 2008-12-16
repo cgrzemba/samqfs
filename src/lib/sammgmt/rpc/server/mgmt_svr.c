@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-#pragma ident	"$Revision: 1.37 $"
+#pragma ident	"$Revision: 1.38 $"
 
 #include "mgmt/sammgmt.h"
 #include <stdlib.h>

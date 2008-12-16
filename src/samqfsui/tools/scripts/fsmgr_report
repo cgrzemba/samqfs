@@ -21,12 +21,12 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
 #
-#  ident        $Id: fsmgr_report,v 1.8 2008/11/05 18:57:30 ronaldso Exp $
+#  ident        $Id: fsmgr_report,v 1.9 2008/12/16 00:12:29 am143972 Exp $
 #
 #  This program generates a system report explicitly for SAM-QFS Manager.
 #  The report is designed to gather all the necessary information

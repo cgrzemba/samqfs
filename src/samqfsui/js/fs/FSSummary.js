@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSSummary.js,v 1.29 2008/09/17 23:33:22 kilemba Exp $
+// ident	$Id: FSSummary.js,v 1.30 2008/12/16 00:10:37 am143972 Exp $
 
 /**
  * This is the javascript file of File System Summary page

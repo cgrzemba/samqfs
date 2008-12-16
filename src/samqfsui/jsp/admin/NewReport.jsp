@@ -22,13 +22,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewReport.jsp,v 1.4 2008/05/16 19:39:15 am143972 Exp $
+// ident	$Id: NewReport.jsp,v 1.5 2008/12/16 00:10:40 am143972 Exp $
 --%>
 <%@ page language="java" %> 
 <%@ page import="com.iplanet.jato.view.ViewBean" %>

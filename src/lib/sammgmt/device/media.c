@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -31,7 +31,7 @@
  *	get a list of directly attached library and remaining drive list,
  *	get catalog, vsn list and capacity based on MCF parsing information.
  */
-#pragma	ident	"$Revision: 1.80 $"
+#pragma	ident	"$Revision: 1.81 $"
 
 #include <sys/types.h>
 #include <time.h>

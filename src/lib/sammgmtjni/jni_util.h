@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -29,7 +29,7 @@
 #ifndef	JNI_UTIL_H
 #define	JNI_UTIL_H
 
-#pragma ident	"$Id: jni_util.h,v 1.20 2008/05/16 18:35:26 am143972 Exp $"
+#pragma ident	"$Id: jni_util.h,v 1.21 2008/12/16 00:08:53 am143972 Exp $"
 
 #define	BASEPKG "com/sun/netstorage/samqfs/mgmt"
 

@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopup.js,v 1.6 2008/07/30 19:55:51 ronaldso Exp $
+// ident	$Id: FileDetailsPopup.js,v 1.7 2008/12/16 00:10:37 am143972 Exp $
 
     /**
      * Scroll to the bottom of the page if user is editing file attributes.

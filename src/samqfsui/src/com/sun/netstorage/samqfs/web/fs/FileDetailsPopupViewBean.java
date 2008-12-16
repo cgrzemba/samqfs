@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileDetailsPopupViewBean.java,v 1.26 2008/11/05 20:24:49 ronaldso Exp $
+// ident	$Id: FileDetailsPopupViewBean.java,v 1.27 2008/12/16 00:12:10 am143972 Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 

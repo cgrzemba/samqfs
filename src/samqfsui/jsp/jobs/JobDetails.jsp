@@ -19,13 +19,13 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: JobDetails.jsp,v 1.5 2008/09/03 19:46:03 ronaldso Exp $ -->
+<!-- $Id: JobDetails.jsp,v 1.6 2008/12/16 00:10:47 am143972 Exp $ -->
 
 <jsp:root version="1.2"
    xmlns:f="http://java.sun.com/jsf/core"

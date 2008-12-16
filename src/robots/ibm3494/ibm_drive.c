@@ -25,7 +25,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -64,7 +64,7 @@ static char *_SrcFile = __FILE__;
 #include "../common/drive.h"
 #include "driver/samst_def.h"
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 /*	some globals */
 extern shm_alloc_t master_shm, preview_shm;

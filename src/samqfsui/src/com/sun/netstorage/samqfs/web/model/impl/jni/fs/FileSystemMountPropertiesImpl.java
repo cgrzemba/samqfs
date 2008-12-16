@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemMountPropertiesImpl.java,v 1.21 2008/11/06 14:59:06 kilemba Exp $
+// ident	$Id: FileSystemMountPropertiesImpl.java,v 1.22 2008/12/16 00:12:20 am143972 Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 

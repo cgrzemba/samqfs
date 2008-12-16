@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident    $Id: RecoveryPoints.js,v 1.12 2008/10/01 22:43:30 ronaldso Exp $
+// ident    $Id: RecoveryPoints.js,v 1.13 2008/12/16 00:10:37 am143972 Exp $
 
 /** 
  * This is the javascript file for Recovery Points Page

@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: VSNPoolDetailsViewBean.java,v 1.36 2008/11/19 22:30:42 ronaldso Exp $
+// ident	$Id: VSNPoolDetailsViewBean.java,v 1.37 2008/12/16 00:10:56 am143972 Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 

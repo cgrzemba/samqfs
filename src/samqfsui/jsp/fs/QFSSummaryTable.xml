@@ -22,12 +22,12 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: QFSSummaryTable.xml,v 1.20 2008/09/17 23:33:23 kilemba Exp $ -->
+<!-- $Id: QFSSummaryTable.xml,v 1.21 2008/12/16 00:10:46 am143972 Exp $ -->
 
 <table>
 <actions>

@@ -22,13 +22,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSReorderPolicies.jsp,v 1.18 2008/11/05 20:26:47 ronaldso Exp $
+// ident	$Id: FSReorderPolicies.jsp,v 1.19 2008/12/16 00:10:45 am143972 Exp $
 --%>
 
 <%@ page info="Index" language="java" %>

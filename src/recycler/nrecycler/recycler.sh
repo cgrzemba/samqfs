@@ -21,7 +21,7 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
@@ -50,7 +50,7 @@
 #	   $7 - VSN modifier, used for optical and D2 media
 #
 #
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 #
 
 #   It is a good idea to log the calls to this script

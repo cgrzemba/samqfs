@@ -21,14 +21,14 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
 #
 # mcwwn - media changer world wide name added to samst.conf
 #
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 
 
 # Location of samst.conf

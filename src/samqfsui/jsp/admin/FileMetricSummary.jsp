@@ -23,13 +23,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileMetricSummary.jsp,v 1.17 2008/05/16 19:39:15 am143972 Exp $
+// ident	$Id: FileMetricSummary.jsp,v 1.18 2008/12/16 00:10:40 am143972 Exp $
 --%>
 
 <%@ page info="Index" language="java" %> 

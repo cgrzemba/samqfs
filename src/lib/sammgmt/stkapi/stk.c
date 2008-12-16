@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -30,7 +30,7 @@
 /*
  *	stk.c -  APIs to do ACSLS network attached library ACSAPI calls.
  */
-#pragma	ident	"$Revision: 1.44 $"
+#pragma	ident	"$Revision: 1.45 $"
 
 #include <stdlib.h>
 #include <string.h>

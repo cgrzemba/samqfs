@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -30,7 +30,7 @@
  * archiving related native methods
  */
 
-// ident	$Id: Archiver.java,v 1.19 2008/05/16 18:35:27 am143972 Exp $
+// ident	$Id: Archiver.java,v 1.20 2008/12/16 00:08:54 am143972 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc;
 

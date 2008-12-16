@@ -23,13 +23,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: LibrarySelector.jsp,v 1.6 2008/08/20 20:46:49 kilemba Exp $
+// ident	$Id: LibrarySelector.jsp,v 1.7 2008/12/16 00:10:51 am143972 Exp $
 --%>
 
 <%@page info="LibrarySelector" language="java" %>

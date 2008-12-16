@@ -22,13 +22,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: wizardErrorPage.jsp,v 1.9 2008/05/16 19:39:20 am143972 Exp $
+// ident	$Id: wizardErrorPage.jsp,v 1.10 2008/12/16 00:10:47 am143972 Exp $
 --%>
 
 <%@ page language="java" %> 

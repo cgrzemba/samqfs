@@ -21,12 +21,12 @@ $ * information: Portions Copyright [yyyy] [name of copyright owner]
 $ *
 $ * CDDL HEADER END
 $ *
-$ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+$ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.1 $"
+$ pragma ident "$Revision: 1.2 $"
 
 $ *  set assignment:		set 1			All SAMDB Prepared Statements
 $ *					set 2-256		Not-assigned

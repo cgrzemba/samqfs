@@ -19,13 +19,13 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: MultiHostStatusDisplay.jsp,v 1.2 2008/10/09 14:27:59 kilemba Exp $ -->
+<!-- $Id: MultiHostStatusDisplay.jsp,v 1.3 2008/12/16 00:10:45 am143972 Exp $ -->
 
 
 <jsp:root version="1.2"

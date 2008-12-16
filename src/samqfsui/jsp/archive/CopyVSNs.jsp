@@ -22,13 +22,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CopyVSNs.jsp,v 1.16 2008/05/16 19:39:16 am143972 Exp $
+// ident	$Id: CopyVSNs.jsp,v 1.17 2008/12/16 00:10:41 am143972 Exp $
 --%>
 
 <%@page info="CopyVSNs" language="java" %>

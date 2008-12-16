@@ -21,12 +21,12 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: dailyActivity.xsl,v 1.7 2008/05/22 13:42:34 kilemba Exp $ -->
+<!-- $Id: dailyActivity.xsl,v 1.8 2008/12/16 00:12:31 am143972 Exp $ -->
 
 <xsl:stylesheet 
   version="1.0"

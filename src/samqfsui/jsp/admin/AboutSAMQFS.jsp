@@ -19,13 +19,13 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AboutSAMQFS.jsp,v 1.4 2008/10/29 21:18:56 kilemba Exp $ -->
+<!-- $Id: AboutSAMQFS.jsp,v 1.5 2008/12/16 00:10:39 am143972 Exp $ -->
 
 
 <jsp:root version="1.2"

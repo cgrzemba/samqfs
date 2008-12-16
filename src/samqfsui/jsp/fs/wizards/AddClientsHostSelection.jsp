@@ -19,13 +19,13 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: AddClientsHostSelection.jsp,v 1.2 2008/08/27 22:17:27 kilemba Exp $ -->
+<!-- $Id: AddClientsHostSelection.jsp,v 1.3 2008/12/16 00:10:47 am143972 Exp $ -->
 
 
 <jsp:root version="1.2"

@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: ArFSDirective.java,v 1.14 2008/10/30 14:42:29 pg125177 Exp $
+// ident	$Id: ArFSDirective.java,v 1.15 2008/12/16 00:08:54 am143972 Exp $
 
 package com.sun.netstorage.samqfs.mgmt.arc;
 

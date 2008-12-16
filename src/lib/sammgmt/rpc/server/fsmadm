@@ -21,12 +21,12 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
 #
-# ident	$Id: fsmadm,v 1.14 2008/05/16 18:35:24 am143972 Exp $
+# ident	$Id: fsmadm,v 1.15 2008/12/16 00:08:50 am143972 Exp $
 #
 # fsmadm:
 # This script is used to start, stop, restart and get status of the

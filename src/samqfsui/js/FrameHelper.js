@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameHelper.js,v 1.12 2008/08/13 20:56:11 ronaldso Exp $
+// ident	$Id: FrameHelper.js,v 1.13 2008/12/16 00:10:35 am143972 Exp $
 
 /** 
  * This file is used to construct the frames format, and it also contains

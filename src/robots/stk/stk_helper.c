@@ -26,7 +26,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -60,7 +60,7 @@
 #include "sam/devnm.h"
 #include "stk.h"
 
-#pragma ident "$Revision: 1.30 $"
+#pragma ident "$Revision: 1.31 $"
 
 /*	Function prototypes */
 void process_signal(int);

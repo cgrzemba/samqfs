@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: BaseDevice.java,v 1.22 2008/09/04 19:26:34 ronaldso Exp $
+// ident	$Id: BaseDevice.java,v 1.23 2008/12/16 00:12:23 am143972 Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 

@@ -21,13 +21,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
 */
 
-// ident    $Id: FSDevices.js,v 1.3 2008/09/04 02:59:51 ronaldso Exp $
+// ident    $Id: FSDevices.js,v 1.4 2008/12/16 00:10:37 am143972 Exp $
 
 /**
 * This is the javascript file for the File System Devices View

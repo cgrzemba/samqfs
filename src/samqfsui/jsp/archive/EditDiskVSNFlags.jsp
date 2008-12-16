@@ -23,13 +23,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: EditDiskVSNFlags.jsp,v 1.9 2008/05/16 19:39:17 am143972 Exp $
+// ident	$Id: EditDiskVSNFlags.jsp,v 1.10 2008/12/16 00:10:42 am143972 Exp $
 --%>
 
 <%@page info="EditDiskVSNFlags" language="java" %>

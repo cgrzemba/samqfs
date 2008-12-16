@@ -21,12 +21,12 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_uninstall,v 1.18 2008/10/29 21:23:06 ronaldso Exp $
+#  ident	$Id: fsmgr_uninstall,v 1.19 2008/12/16 00:12:29 am143972 Exp $
 #
 #  This program uninstalls the SUNWfsmgrr & SUNWfsmgru packages
 #

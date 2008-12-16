@@ -22,13 +22,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddClusterNodePopup.jsp,v 1.9 2008/05/16 19:39:18 am143972 Exp $-->
+// ident	$Id: AddClusterNodePopup.jsp,v 1.10 2008/12/16 00:10:44 am143972 Exp $-->
 --%>
 <%@ page info="FSDAddClusterNode" language="java" %> 
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
