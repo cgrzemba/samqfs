@@ -30,7 +30,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -39,7 +39,7 @@
 #ifndef _AML_LABELS_H
 #define	_AML_LABELS_H
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 #define	LEN_TAPE_VSN   6    /* length of tape vsn */
 #define	LEN_OPTIC_VSN  31    /* length of optical vsn */

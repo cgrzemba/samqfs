@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -81,7 +81,7 @@
  *	Note that "-", "0", and blank are acceptable alternatives in
  *	the Hostonoff field and all denote "on" (for backwards compatibility).
  */
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 
 /* ANSI C headers. */

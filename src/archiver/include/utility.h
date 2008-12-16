@@ -25,7 +25,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -34,7 +34,7 @@
 #ifndef UTILITY_H
 #define	UTILITY_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 /* Macros. */
 #define	ISO_STR_FROM_TIME_BUF_SIZE 32

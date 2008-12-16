@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -30,7 +30,7 @@
 #ifndef	_FSM_FILE_METRICS_H_
 #define	_FSM_FILE_METRICS_H_
 
-#pragma ident   "$Revision: 1.12 $"
+#pragma ident   "$Revision: 1.13 $"
 
 #include <sys/types.h>
 #include "mgmt/fsmdb.h"

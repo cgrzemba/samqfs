@@ -25,7 +25,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -34,7 +34,7 @@
 #ifndef _AML_ARCHSET_H
 #define	_AML_ARCHSET_H
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 /* Macros. */
 #define	ARCHSETS_MAGIC 01222230524	/* Archive sets file magic number */

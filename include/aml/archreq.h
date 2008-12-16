@@ -27,7 +27,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -36,7 +36,7 @@
 #ifndef _AML_ARCHREQ_H
 #define	_AML_ARCHREQ_H
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 /* Macros. */
 #define	ARCHREQ_MAGIC 0122031022	/* ArchReq file magic number */

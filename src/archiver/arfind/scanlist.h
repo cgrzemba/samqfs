@@ -25,7 +25,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -34,7 +34,7 @@
 #ifndef SCANLIST_H
 #define	SCANLIST_H
 
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 
 /* Macros. */
 #define	SCANLIST_MAGIC 0122072714	/* Scanlist file magic number */

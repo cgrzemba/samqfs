@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -29,7 +29,7 @@
 #ifndef	_NOTIFY_SUMMARY_H
 #define	_NOTIFY_SUMMARY_H
 
-#pragma ident	"$Revision: 1.24 $"
+#pragma ident	"$Revision: 1.25 $"
 
 /*
  * notify_summary.h

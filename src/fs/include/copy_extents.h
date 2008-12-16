@@ -26,7 +26,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -37,7 +37,7 @@
 #define	_SAM_COPY_EXTENTS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 #endif
 
 extern int sam_allocate_and_copy_extent(sam_node_t *ip, int bt, int dt,

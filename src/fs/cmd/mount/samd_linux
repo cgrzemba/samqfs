@@ -21,7 +21,7 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
@@ -30,7 +30,7 @@
 # config - start or send a HUP to sam-fsd to cause (re)configuration of
 # file systems.
 #
-#	$Revision: 1.9 $
+#	$Revision: 1.10 $
 
 #
 # Return pid(s) of named process(es) in variable "pid"

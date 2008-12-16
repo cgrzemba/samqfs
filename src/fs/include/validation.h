@@ -29,7 +29,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -39,7 +39,7 @@
 #define	_SAM_FS_VALIDATION_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 #endif
 
 #define	SAM_VAL_VERSION	(2)			/* SAM-FS validation version */

@@ -22,12 +22,12 @@
 <!--                                                                      -->
 <!--CDDL HEADER END                                                       -->
 <!--                                                                      -->
-<!--Copyright 2008 Sun Microsystems, Inc.  All rights reserved.         -->
+<!--Copyright 2009 Sun Microsystems, Inc.  All rights reserved.         -->
 <!--Use is subject to license terms.                                      -->
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--
-        "$Id: qfs-shared-mount.xml,v 1.1 2008/06/12 15:29:51 rs146458 Exp $"
+        "$Id: qfs-shared-mount.xml,v 1.2 2008/12/16 00:05:44 am143972 Exp $"
 
         Service manifest for the QFS Shared File System Mount service.
 -->

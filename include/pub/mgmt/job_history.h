@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -29,7 +29,7 @@
 #ifndef _JOB_HISTORY_H
 #define	_JOB_HISTORY_H
 
-#pragma ident	"$Revision: 1.11 $"
+#pragma ident	"$Revision: 1.12 $"
 
 /*
  * job_history.h - SAM-FS API fault handling API and data structures.

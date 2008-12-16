@@ -21,13 +21,13 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
 
 # archiver.sh - template shell for processing archiver exceptional events.
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 #
 # args:
 #	1) calling program name

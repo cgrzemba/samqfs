@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -30,7 +30,7 @@
 #ifndef _FSM_PVT_FILE_UTIL_H
 #define	_FSM_PVT_FILE_UTIL_H
 
-#pragma ident	"$Revision: 1.9 $"
+#pragma ident	"$Revision: 1.10 $"
 
 /*
  * private_file_util.h - Utilities for manipulating files and directories

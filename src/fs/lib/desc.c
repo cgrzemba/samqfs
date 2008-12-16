@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -48,4 +48,4 @@
 #include "../src/fs/cmd/dump-restore/csd.h"
 #include "../src/fs/cmd/dump-restore/old_resource.h"
 
-/* $Revision: 1.14 $ */
+/* $Revision: 1.15 $ */

@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -29,7 +29,7 @@
 #ifndef	_ERROR_H_
 #define	_ERROR_H_
 
-#pragma	ident	"$Revision: 1.148 $"
+#pragma	ident	"$Revision: 1.149 $"
 
 
 #include "sam/custmsg.h"	/* for GetCustMsg */

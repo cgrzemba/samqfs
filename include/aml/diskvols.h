@@ -25,7 +25,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -34,7 +34,7 @@
 #ifndef _AML_DISKVOLS_H
 #define	_AML_DISKVOLS_H
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 #define	DISKVOLS_FILENAME "diskvols.db"	/* Disk volume database names */
 #define	DISKVOLS_VSN_DBNAME "vsn"

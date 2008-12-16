@@ -25,7 +25,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -33,7 +33,7 @@
 #ifndef _OSDFS_H
 #define	_OSDFS_H
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 extern osdfsops_t *osdfsopsp;
 extern int samfs_osdfs_alloc(osdfs_t **osdfspp, cred_t *credp);

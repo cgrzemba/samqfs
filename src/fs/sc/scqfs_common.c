@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 
 #include <stdio.h>
 #include <stdlib.h>

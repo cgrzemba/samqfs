@@ -28,7 +28,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.75 $"
+#pragma ident "$Revision: 1.76 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;

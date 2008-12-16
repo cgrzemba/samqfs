@@ -21,7 +21,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -31,7 +31,7 @@
 #ifndef _CFG_RELEASER_H
 #define	_CFG_RELEASER_H
 
-#pragma	ident	"$Revision: 1.12 $"
+#pragma	ident	"$Revision: 1.13 $"
 
 /*
  *	releaser.h

@@ -24,7 +24,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -33,7 +33,7 @@
 #ifndef _AML_SEF_H
 #define	_AML_SEF_H
 
-#pragma   ident  "@(#)$Revision: 1.13 $"
+#pragma   ident  "@(#)$Revision: 1.14 $"
 
 typedef enum {
 	SEF_UNLOAD,

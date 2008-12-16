@@ -21,7 +21,7 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
@@ -44,7 +44,7 @@
 # For start, stop and hastop, if /opt/SUNWsamfs/sbin/sam-amld is not present,
 # this must be a SUNWqfs package, so issue a usage message.
 #
-#	$Revision: 1.37 $
+#	$Revision: 1.38 $
 
 TREE=/tmp/sam-amld.tree.$$
 
