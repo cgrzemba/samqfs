@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.263 $"
+#pragma ident "$Revision: 1.264 $"
 #endif
 
 #include "sam/osversion.h"
@@ -415,7 +415,7 @@ refetch:
 	/*
 	 * Make a copy of the superblock, then release the buffer.
 	 */
-	if (sblk_size > old_sblk_size) {
+	if ((sblk_size > old_sblk_size) || (old_sblk == NULL)) {
 		sblk = kmem_alloc(sblk_size, KM_SLEEP);
 	} else {
 		sblk = old_sblk;
