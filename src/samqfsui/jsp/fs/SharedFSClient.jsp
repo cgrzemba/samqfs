@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: SharedFSClient.jsp,v 1.17 2008/12/16 00:10:46 am143972 Exp $ -->
+<!-- $Id: SharedFSClient.jsp,v 1.18 2008/12/17 20:18:55 kilemba Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -33,9 +33,7 @@
     xmlns:h="http://java.sun.com/jsf/html"
     xmlns:ui="http://www.sun.com/web/ui"
     xmlns:jsp="http://java.sun.com/JSP/Page">
-<jsp:directive.page
-    contentType="text/html;charset=ISO-8859-1"
-    pageEncoding="UTF-8"/>
+<jsp:directive.page contentType="text/html;charset=utf-8" pageEncoding="UTF-8"/>
 
 <f:view>
 <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources"

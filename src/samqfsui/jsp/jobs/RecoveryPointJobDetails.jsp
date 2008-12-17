@@ -25,14 +25,14 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: RecoveryPointJobDetails.jsp,v 1.3 2008/12/16 00:10:47 am143972 Exp $ -->
+<!-- $Id: RecoveryPointJobDetails.jsp,v 1.4 2008/12/17 20:18:56 kilemba Exp $ -->
                        
 <jsp:root version="1.2"
     xmlns:f="http://java.sun.com/jsf/core"
     xmlns:h="http://java.sun.com/jsf/html"
     xmlns:ui="http://www.sun.com/web/ui"
     xmlns:jsp="http://java.sun.com/JSP/Page">
-    <jsp:directive.page contentType="text/html;charset=ISO-8859-1" pageEncoding="UTF-8"/>
+    <jsp:directive.page contentType="text/html;charset=utf-8" pageEncoding="UTF-8"/>
 
 <f:view>
 <f:loadBundle basename="com.sun.netstorage.samqfs.web.resources.Resources" var="samBundle" />

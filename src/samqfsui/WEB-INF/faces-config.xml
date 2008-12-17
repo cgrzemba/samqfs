@@ -29,13 +29,16 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: faces-config.xml,v 1.16 2008/12/16 00:10:34 am143972 Exp $ -->
+<!-- $Id: faces-config.xml,v 1.17 2008/12/17 20:18:55 kilemba Exp $ -->
 
 <faces-config>
     <application>
         <locale-config>
             <default-locale>en</default-locale>
             <supported-locale>en_US</supported-locale>
+            <supported-locale>ja</supported-locale>
+            <supported-locale>zh_cn</supported-locale>
+            <supported-locale>fr</supported-locale>
         </locale-config>
     </application>
 
