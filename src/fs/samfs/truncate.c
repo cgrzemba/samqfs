@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.152 $"
+#pragma ident "$Revision: 1.153 $"
 
 #include "sam/osversion.h"
 
@@ -771,7 +771,9 @@ sam_proc_indirect_block(
 	if (error) {
 		return (error);
 	}
-	bp->b_flags &= ~B_DELWRI;
+	if (args.cmd == SAM_FREE_BLOCK) {
+		bp->b_flags &= ~B_DELWRI;
+	}
 	iep = (sam_indirect_extent_t *)(void *)bp->b_un.b_addr;
 	if ((error = sam_validate_indirect_block(ip, iep, level))) {
 		sam_req_ifsck(mp, -1, "sam_proc_indirect_block: validate",
@@ -904,7 +906,6 @@ sam_proc_indirect_block(
 		if (*extent_ord == args.ord) {
 			error = ECANCELED;
 		}
-		bp->b_flags |= B_STALE|B_AGE;
 		brelse(bp);
 	} else if (args.cmd == SAM_MOVE_ORD) {
 		if (*extent_ord == args.ord) {
@@ -929,6 +930,14 @@ sam_proc_indirect_block(
 				*extent_ord = nord;
 				sam_free_block(mp, LG, obn, oord);
 			}
+			/*
+			 * This indirect extent has been moved to
+			 * another device so this buffer is no longer
+			 * needed.
+			 */
+			bp->b_flags &= ~B_DELWRI;
+			bp->b_flags |= B_STALE|B_AGE;
+			bwrite_indirect = 0;
 		}
 		if (bwrite_indirect) {
 			bwrite(bp);
