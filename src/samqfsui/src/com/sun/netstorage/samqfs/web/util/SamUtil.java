@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamUtil.java,v 1.131 2008/12/16 00:12:26 am143972 Exp $
+// ident	$Id: SamUtil.java,v 1.132 2008/12/17 21:41:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -54,6 +54,7 @@ import com.sun.netstorage.samqfs.web.model.media.Library;
 import com.sun.netstorage.samqfs.web.server.ServerUtil;
 import com.sun.web.ui.common.CCI18N;
 import com.sun.web.ui.view.alert.CCAlertInline;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -1480,16 +1481,11 @@ public class SamUtil {
         }
     }
 
-
-    public static boolean isValidLetterOrDigitString(String s) {
-        char [] c = s.toCharArray();
-
-        for (int i = 0; i < c.length; i++) {
-            if (!Character.isLetterOrDigit(c[i]) && c[i] != '_') {
-                return false;
-            }
-        }
-        return true;
+    private static boolean isLetterOrDigit(char c) {
+        return
+            (c >= '0' && c <= '9') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z');
     }
 
     public static String concatErrMsg(String [] messages) {
@@ -1623,27 +1619,30 @@ public class SamUtil {
                     }
                 }
             } catch (Exception ex) {
-                              // not much can be done at this point
+                // not much can be done at this point
             }
         }
         return err_msg;
     }
 
-    public static boolean isValidFSNameString(String inputString) {
-        if (!isValidString(inputString)) {
-            // contain space(s)
+    public static boolean isValidNameString(String inputString) {
+        if (inputString == null || inputString.length() == 0) {
             return false;
         } else {
-            char [] c = inputString.toCharArray();
-            if (Character.isDigit(c[0])) {
+            inputString = inputString.trim();
+            if (!isValidString(inputString)) {
                 return false;
             }
-            for (int i = 0; i < c.length; i++) {
-                if (!Character.isLetterOrDigit(c[i])) {
-                    if (c[i] != '_' && c[i] != '.' && c[i] != '-') {
-                        return false;
-                    }
-                }
+        }
+        char [] charArray = inputString.toCharArray();
+        for (int i = 0; i < charArray.length; i++) {
+            if (isLetterOrDigit(charArray[i]) ||
+                charArray[i] == '.' ||
+                charArray[i] == '-' ||
+                charArray[i] == '_') {
+                continue;
+            } else {
+                return false;
             }
         }
         return true;
@@ -1667,7 +1666,7 @@ public class SamUtil {
         StringTokenizer st = new StringTokenizer(path, "/");
         while (st.hasMoreTokens()) {
             String subdir = st.nextToken();
-            if (!isValidFSNameString(subdir))
+            if (!isValidNameString(subdir))
                 return false;
         }
         // if we get this far, the path is well-formed
@@ -2160,9 +2159,28 @@ public class SamUtil {
      * Determine if the given string is well formed mount point
      */
     public static boolean isValidMountPoint(String mountPoint) {
-        return (mountPoint != null &&
-                mountPoint.trim().length() != 0 &&
-                SamUtil.isValidNonSpecialCharString(mountPoint) &&
-                mountPoint.startsWith("/"));
+        if (mountPoint == null || mountPoint.length() == 0) {
+            return false;
+        } else {
+            mountPoint = mountPoint.trim();
+            if (!isValidString(mountPoint)) {
+                return false;
+            } else if (!mountPoint.startsWith("/")) {
+                return false;
+            }
+            char [] charArray = mountPoint.toCharArray();
+            for (int i = 0; i < charArray.length; i++) {
+                if (isLetterOrDigit(charArray[i]) ||
+                    charArray[i] == '.' ||
+                    charArray[i] == '-' ||
+                    charArray[i] == '_' ||
+                    charArray[i] == File.separatorChar) {
+                    continue;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

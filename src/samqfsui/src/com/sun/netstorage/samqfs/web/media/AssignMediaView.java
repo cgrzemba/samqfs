@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AssignMediaView.java,v 1.5 2008/12/16 00:12:13 am143972 Exp $
+// ident	$Id: AssignMediaView.java,v 1.6 2008/12/17 21:41:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -579,7 +579,7 @@ public class AssignMediaView extends RequestHandlingViewBase
                     errorMessage = "AssignMedia.error.nopoolname";
                     error = true;
 
-                } else if (!SamUtil.isValidFSNameString(poolName)) {
+                } else if (!SamUtil.isValidNameString(poolName)) {
                     // Check for well-formness
                     errorMessage = "AssignMedia.error.poolname.nonwellform";
                     error = true;

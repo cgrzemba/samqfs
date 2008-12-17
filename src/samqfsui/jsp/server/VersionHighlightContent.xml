@@ -26,7 +26,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: VersionHighlightContent.xml,v 1.17 2008/12/16 00:10:51 am143972 Exp $ -->
+<!-- $Id: VersionHighlightContent.xml,v 1.18 2008/12/17 21:41:40 ronaldso Exp $ -->
 
 <!DOCTYPE content [
     <!ELEMENT content (feature+)>
@@ -342,23 +342,6 @@
 <feature type="detail">
     <feature-name>
         version.highlight.featurename.fs.provisioning.oneglance
-    </feature-name>
-    <server-version>
-        version.highlight.server.version.50
-    </server-version>
-    <version>
-        <version-number>
-            version.highlight.versionnumber.50
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
-</feature>
-
-<feature type="detail">
-    <feature-name>
-        version.highlight.featurename.fs.provisioning.mat
     </feature-name>
     <server-version>
         version.highlight.server.version.50
@@ -1564,23 +1547,6 @@
     <feature-name>
         version.highlight.featurename.other
     </feature-name>
-</feature>
-
-<feature type="detail">
-    <feature-name>
-        version.highlight.featurename.other.i18n
-    </feature-name>
-    <server-version>
-        version.highlight.server.version.50
-    </server-version>
-    <version>
-    	<version-number>
-            version.highlight.versionnumber.50
-        </version-number>
-        <version-status>
-            version.highlight.versionstatus.new
-        </version-status>
-    </version>
 </feature>
 
 <feature type="detail">

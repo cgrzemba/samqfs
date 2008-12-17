@@ -27,24 +27,18 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: firsttimeconfig.js,v 1.4 2008/12/16 00:10:36 am143972 Exp $
+// ident	$Id: firsttimeconfig.js,v 1.5 2008/12/17 21:41:39 ronaldso Exp $
 
 var formName = "FirstTimeConfigForm";
 var prefix = "FirstTimeConfig.";
 
-/* handler for the more information link on the instruction paragraph */
-function handleMoreInformation() {
-    alert("coming soon ...");
-    return false;
-}
-
-/* 
+/*
  * common wizard helper function. This allows developers to pass
  * client-side parameters to the wizard instance.
  */
 function getClientParams() {
     var params = "&serverNameParam=" + getServerName();
-    
+
     return params;
 }
 
@@ -61,7 +55,7 @@ function launchAddLibraryWizard() {
   var theForm = document.forms[formName];
   var buttonName = "FirstTimeConfig.FirstTimeConfigView.addLibraryWizard";
   var button = theForm.elements[buttonName];
-  
+
   if (button != null) {
       button.click();
   }

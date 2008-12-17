@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: CreateFSWizardImpl.java,v 1.111 2008/12/16 00:12:11 am143972 Exp $
+// ident	$Id: CreateFSWizardImpl.java,v 1.112 2008/12/17 21:41:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -1297,7 +1297,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 	// set OSD mount options
 	if (hpcEnabled) {
 	    // device depth
-	    
+
 	}
 
         return properties;
@@ -1606,7 +1606,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
 	    int x = 1;
 	    try {
 		x = Integer.parseInt(blocksPerDeviceStr);
-		
+
 		// if the value parses correctly, save it.
 		intStripe = x;
 	    } catch (NumberFormatException nfe) {
@@ -2530,7 +2530,7 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             setWizardAlert(wizardEvent, "FSWizard.new.error.mountpoint");
             return false;
         } else {
-            if (!SamUtil.isValidNonSpecialCharString(mountPoint)) {
+            if (!SamUtil.isValidMountPoint(mountPoint)) {
                 setWizardAlert(
                     wizardEvent, "FSWizard.new.error.invalidmountpoint");
                 return false;
@@ -2551,35 +2551,34 @@ public class CreateFSWizardImpl extends SamWizardImpl {
             NewWizardMountView.CHILD_MOUNT_FIELD)).trim();
 
         // fsName is not used for ufs file systems
-        boolean invalidFSName = false;
         String fsName = (String) wizardModel.getValue(
             NewWizardMountView.CHILD_FSNAME_FIELD);
         // Check if fsName is empty
-        if (fsName == null || fsName.trim().length() <= 0) {
+        if (fsName == null || fsName.trim().length() == 0) {
             setWizardAlert(wizardEvent, "FSWizard.new.error.fsname");
-            invalidFSName = true;
+            return false;
         } else {
             fsName = fsName.trim();
             // Check if fsName is valid
             if (fsName.indexOf("/") != -1 ||
-                !SamUtil.isValidFSNameString(fsName)) {
+                !SamUtil.isValidNameString(fsName)) {
                 setWizardAlert(
                     wizardEvent, "FSWizard.new.error.invalidfsname");
-                invalidFSName = true;
+                return false;
             }
         }
 
         // Check if the FileSystem already exists
-        if (!invalidFSName && fileSystemExists(fsName)) {
+        if (fileSystemExists(fsName)) {
             setWizardAlert(wizardEvent, "FSWizard.new.error.fsnameExists");
-            invalidFSName = true;
+            return false;
         }
 
         if (mountPoint == null || mountPoint.length() < 1) {
             setWizardAlert(wizardEvent, "FSWizard.new.error.mountpoint");
             return false;
         } else {
-            if (!SamUtil.isValidNonSpecialCharString(mountPoint)) {
+            if (!SamUtil.isValidMountPoint(mountPoint)) {
                 setWizardAlert(
                     wizardEvent, "FSWizard.new.error.invalidmountpoint");
                 return false;

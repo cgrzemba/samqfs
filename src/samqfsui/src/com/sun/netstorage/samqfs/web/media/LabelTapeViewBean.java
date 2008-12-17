@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: LabelTapeViewBean.java,v 1.30 2008/12/16 00:12:13 am143972 Exp $
+// ident	$Id: LabelTapeViewBean.java,v 1.31 2008/12/17 21:41:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -248,6 +248,12 @@ public class LabelTapeViewBean extends CommonSecondaryViewBeanBase {
             disableInputFields();
         }
         TraceUtil.trace3("Exiting");
+    }
+
+    public void handleCancelRequest(RequestInvocationEvent event)
+        throws ServletException, IOException {
+
+        getParentViewBean().forwardTo(getRequestContext());
     }
 
     public void handleSubmitRequest(RequestInvocationEvent event)

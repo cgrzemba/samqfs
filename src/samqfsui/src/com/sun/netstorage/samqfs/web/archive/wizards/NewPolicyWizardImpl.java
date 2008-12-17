@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewPolicyWizardImpl.java,v 1.36 2008/12/16 00:12:09 am143972 Exp $
+// ident	$Id: NewPolicyWizardImpl.java,v 1.37 2008/12/17 21:41:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive.wizards;
 
@@ -1316,7 +1316,7 @@ public class NewPolicyWizardImpl extends SamWizardImpl {
             }
             if (policyName.indexOf(" ") != -1 ||
                 !Character.isLetter(policyName.charAt(0)) ||
-                !SamUtil.isValidLetterOrDigitString(policyName)) {
+                !SamUtil.isValidNameString(policyName)) {
                 setJavascriptErrorMessage(
                     wizardEvent,
                     NewPolicyWizardFileMatchCriteriaView.CHILD_POL_NAME_TEXT,

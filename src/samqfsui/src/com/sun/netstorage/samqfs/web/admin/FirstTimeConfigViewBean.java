@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FirstTimeConfigViewBean.java,v 1.3 2008/12/16 00:10:52 am143972 Exp $
+// ident	$Id: FirstTimeConfigViewBean.java,v 1.4 2008/12/17 21:41:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.admin;
 
@@ -58,9 +58,7 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
     // child views
     public static final String VIEW_NAME = "FirstTimeConfigView";
     public static final String PAGE_TITLE = "PageTitle";
-    public static final String MORE_HREF = "moreHref";
     public static final String MORE_TEXT = "moreText";
-    public static final String MORE_IMG = "moreImg";
     public static final String INSTRUCTION_TEXT = "instruction";
     public static final String NEARLINE = "nearline";
     public static final String OSD = "osd";
@@ -103,7 +101,6 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
         super.registerChildren();
         registerChild(VIEW_NAME, FirstTimeConfigView.class);
         registerChild(PAGE_TITLE, CCPageTitle.class);
-        registerChild(MORE_HREF, CCHref.class);
         registerChild(ADD_LIBRARY_HREF, CCHref.class);
         registerChild(IMPORT_HREF, CCHref.class);
         registerChild(DISK_VOLUME_HREF, CCHref.class);
@@ -111,7 +108,6 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
         registerChild(RECOVERY_POINT_HREF, CCHref.class);
         registerChild(EMAIL_HREF, CCHref.class);
         registerChild(MORE_TEXT, CCStaticTextField.class);
-        registerChild(MORE_IMG, CCImageField.class);
         registerChild(INSTRUCTION_TEXT, CCStaticTextField.class);
         registerChild(SERVER_NAME, CCHiddenField.class);
         TraceUtil.trace3("Exiting");
@@ -168,12 +164,6 @@ public class FirstTimeConfigViewBean extends CommonViewBeanBase {
     }
 
     // command handlers to intercept any submissions caused by bad javascript
-
-    /** handle the more info href */
-    public void handleMoreHrefRequest(RequestInvocationEvent rie)
-        throws ServletException, IOException {
-        forwardTo(getRequestContext());
-    }
 
     public void handleAddLibraryHrefRequest(RequestInvocationEvent rie)
         throws ServletException, IOException {

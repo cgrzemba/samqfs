@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.9 2008/12/17 21:03:25 kilemba Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.10 2008/12/17 21:41:40 ronaldso Exp $
 --%>
 
 <%@page info="FirstTimeConfig" language="java" %>
@@ -59,12 +59,26 @@
               bundleID="samBundle"
               pageTitleText="node.firsttimeconfig"
               showPageTitleSeparator="true"
-              showPageButtonsTop="fase"
+              showPageButtonsTop="false"
               showPageButtonsBottom="false">
 
 <!-- page level instruction -->
 <div style="margin:10px;width:75%">
 <cc:text name="instruction" bundleID="samBundle" defaultValue="firsttime.instruction"/>
+<cc:helpwindow
+    helpType="help2"
+    bundleID="samBundle"
+    helpFileName="samqfs-firsttimeconfig.html"
+    helpTooltip="help.helpTooltip"
+    mastheadTitle="help.windowTitle"
+    mastheadAlt="help.helpTooltip"
+    helpLogoWidth="188"
+    helpLogoHeight="20"
+    showLinkIcon="true"
+    status=""
+    windowTitle="help.windowTitle">
+    <cc:text name="moreText" bundleID="samBundle" defaultValue="firsttime.moreinfo"/>
+</cc:helpwindow>
 
 <cc:legend name="Legend" align="right"/>
 </div>

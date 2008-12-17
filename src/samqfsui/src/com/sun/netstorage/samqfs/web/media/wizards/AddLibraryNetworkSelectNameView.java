@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddLibraryNetworkSelectNameView.java,v 1.17 2008/12/16 00:12:15 am143972 Exp $
+// ident	$Id: AddLibraryNetworkSelectNameView.java,v 1.18 2008/12/17 21:41:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media.wizards;
 
@@ -231,7 +231,7 @@ public class AddLibraryNetworkSelectNameView extends RequestHandlingViewBase
         // Check (2)
         // Check if nameValue is strictly a letter and digit string if defined
         if (isValid && nameValue.length() != 0 &&
-            !SamUtil.isValidNonSpecialCharString(nameValue)) {
+            !SamUtil.isValidNameString(nameValue)) {
             isValid = false;
             msgs    = "AddLibrary.error.invalidlibname";
         }

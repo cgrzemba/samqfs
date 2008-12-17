@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskVSNSummaryViewBean.java,v 1.15 2008/12/16 00:10:55 am143972 Exp $
+// ident	$Id: DiskVSNSummaryViewBean.java,v 1.16 2008/12/17 21:41:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.archive;
 
@@ -281,6 +281,7 @@ public class DiskVSNSummaryViewBean extends CommonViewBeanBase {
         "archiving.diskvsn.newvsn.error.alphanumeric",
         "archiving.diskvsn.newvsn.error.dataipnull",
         "archiving.diskvsn.newvsn.error.portnull",
-        "archiving.diskvsn.newvsn.error.portinvalid"
+        "archiving.diskvsn.newvsn.error.portinvalid",
+        "archiving.diskvsn.newvsn.error.pathwellformed"
     };
 }

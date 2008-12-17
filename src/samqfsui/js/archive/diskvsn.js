@@ -27,10 +27,10 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: diskvsn.js,v 1.18 2008/12/16 00:10:36 am143972 Exp $
+// ident	$Id: diskvsn.js,v 1.19 2008/12/17 21:41:40 ronaldso Exp $
 
 /*
- * The functions in this file are used to control the disk vsn summary page 
+ * The functions in this file are used to control the disk vsn summary page
  * and related popups.
  */
 var property = "scrollbars=no,resizable=yes,height=500,width=700";
@@ -54,12 +54,12 @@ function handleCreateDiskVSN(field) {
     var parentPrefix = "DiskVSNSummary.";
     var theForm = field.form;
     var prefix = "NewDiskVSN.";
-    
+
     var valid = true;
     var message = "";
 
-    // retrieve list of localized error messages 
-    var errorMessages = 
+    // retrieve list of localized error messages
+    var errorMessages =
         parentForm[parentPrefix + "messages"].value.split(";");
     var existingVSNs = parentForm[parentPrefix + "vsns"].value.split(";");
 
@@ -106,9 +106,14 @@ function handleCreateDiskVSN(field) {
         if (!(vsnPath.substring(0,1) == "/")) {
           message += errorMessages[3] + "\n";
         }
+
+        // make sure path contains no non-ASCII characters
+        if (!isValidDiskPath(vsnPath)) {
+          message += errorMessages[8] + "\n";
+        }
       }
     }
-      
+
       // only proceed if all the values validated fine
     if (message.length > 0) {
         alert(message);
@@ -130,11 +135,11 @@ function contains(value, array) {
 }
 
 // this should perhaps go into the samqfsui.js
-/* a utility function to retrieve the value associated the <A> element 
- * 
+/* a utility function to retrieve the value associated the <A> element
+ *
  * <a href="http://host:port/uri?hrefname=value" name="hrefname">text</a>
  *
- * return the 'value' part of hrefname=value 
+ * return the 'value' part of hrefname=value
  */
 function getHrefValue(a_element) {
     var href_array = a_element.href.split("?");
@@ -145,8 +150,8 @@ function getHrefValue(a_element) {
     return selected_vsn;
 }
 
-/* 
- *  handler for the Edit Disk VSN Media Flags url 
+/*
+ *  handler for the Edit Disk VSN Media Flags url
  */
 function handleMediaFlagsEditorHref(field) {
     var name = "edit_disk_flags_popup";
@@ -181,7 +186,7 @@ function handleEditDiskVSNFlagsSubmit(field) {
     // set the action and submit the form
     var parentForm = window.opener.document.DiskVSNSummaryForm;
 
-    parentForm["DiskVSNSummary.selected_vsn_name"].value = 
+    parentForm["DiskVSNSummary.selected_vsn_name"].value =
         theForm[prefix + "selected_vsn_name"].value;
     parentForm["DiskVSNSummary.flags"].value = flags;
 
@@ -191,8 +196,8 @@ function handleEditDiskVSNFlagsSubmit(field) {
 
     var actionArray = parentForm.action.split("?");
     var action = actionArray[0];
-    
-    parentForm.action = 
+
+    parentForm.action =
         action + "?" + handler + "=&jato.pageSession=" + pageSession;
     parentForm.submit();
 
@@ -204,7 +209,7 @@ var prefix = "DiskVSNSummary.DiskVSNSummaryView.";
 var deselectRadio = prefix + "DiskVSNSummaryTable.DeselectAllHref";
 var editButton = prefix + "EditMediaFlags";
 
-function handleDiskVSNSummaryTableSelection(field) { 
+function handleDiskVSNSummaryTableSelection(field) {
     var formName = "DiskVSNSummaryForm";
     var myForm   = document.forms[0];
     var disabled = true;
@@ -234,14 +239,14 @@ function handleDiskVSNSummaryTableSelection(field) {
 }
 
 /*
- * handler for the edit media attributes button 
+ * handler for the edit media attributes button
  */
 function handleEditMediaFlagsButton(field) {
-  // get selected vsn 
+  // get selected vsn
   var name = "edit_disk_flags_popup";
 
   var params = "&selected_vsn_name=" + selected_vsn;
-  
+
   var win = launchPopup(
             "/archive/EditDiskVSNFlags", name, getServerKey(), null, params);
 
@@ -253,8 +258,17 @@ function isValidDiskVSNName(name) {
     if (!isValidFileNameCharacter(name.charAt(i)))
       return false;
   }
-  
+
   return true;
+}
+
+function isValidDiskPath(path) {
+    for (var i = 0; i < path.length; i++) {
+      if (!("/" == path.charAt(i) || isValidFileNameCharacter(path.charAt(i))))
+        return false;
+    }
+
+    return true;
 }
 
 function getFileChooserParams() {
@@ -275,13 +289,13 @@ var fcPath = "NewDiskVSN.filechooser.browsetextfield";
 var fcBrowse = "NewDiskVSN.filechooser.browseServer";
 
 /*
- * handler for the media type change 
+ * handler for the media type change
  * this function is called when a user selects a disk vsn media type -
  * i.e. chooses between creating a regular disk vsn and a honey comb target
  */
 function handleMediaTypeChange(field) {
     var theForm = field.form;
-    
+
     var diskDiv = document.getElementById("diskDiv");
     var hcDiv = document.getElementById("honeyCombDiv");
 
@@ -328,7 +342,7 @@ function handleHostChange(field) {
 }
 
 /*
- * check if the selected host supports the remote file chooser 
+ * check if the selected host supports the remote file chooser
  */
 function hostSupportsRemoteFileChooser(host, theForm) {
   var supportedHosts =

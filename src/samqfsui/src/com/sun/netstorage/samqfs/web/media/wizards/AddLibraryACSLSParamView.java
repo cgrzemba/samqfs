@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: AddLibraryACSLSParamView.java,v 1.13 2008/12/16 00:12:15 am143972 Exp $
+// ident	$Id: AddLibraryACSLSParamView.java,v 1.14 2008/12/17 21:41:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media.wizards;
 
@@ -247,7 +247,7 @@ public class AddLibraryACSLSParamView extends RequestHandlingViewBase
         }
 
         // Check if nameValue is strictly a letter and digit string if defined
-        if (!SamUtil.isValidNonSpecialCharString(libraryName)) {
+        if (!SamUtil.isValidNameString(libraryName)) {
             return "AddLibrary.acsls.param.error.librarynamespecchar";
         }
 
