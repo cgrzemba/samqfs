@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.200 $"
+#pragma ident "$Revision: 1.201 $"
 #endif
 
 #include "sam/osversion.h"
@@ -930,7 +930,7 @@ sam_mount_info(
 				} else if (SAM_IS_SHARED_CLIENT(mp) &&
 				    (mp->mt.fi_status & FS_MOUNTED)) {
 					error = sam_update_shared_filsys(mp,
-					    SHARE_wait_one, 0);
+					    SHARE_wait_one, -1);
 				}
 
 			}
@@ -2061,9 +2061,18 @@ sam_setfspartcmd(
 			break;
 
 		case DK_CMD_alloc:
+			if (pt->pt_state == DEV_NOALLOC ||
+			    pt->pt_state == DEV_UNAVAIL) {
+				dp->command = DK_CMD_alloc;
+				dp->skip_ord = 0;
+			} else {
+				error = EINVAL;
+			}
+			break;
+
 		case DK_CMD_off:
 			if (pt->pt_state == DEV_NOALLOC) {
-				dp->command = (uchar_t)args.command;
+				dp->command = DK_CMD_off;
 				dp->skip_ord = 0;
 			} else {
 				error = EINVAL;

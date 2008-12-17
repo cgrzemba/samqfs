@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.302 $"
+#pragma ident "$Revision: 1.303 $"
 
 #include "sam/osversion.h"
 
@@ -243,7 +243,8 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 			goto done;
 		} else if ((msg->hdr.command != SAM_CMD_BLOCK) &&
 		    ((mp->mi.m_sblk_fsid != msg->hdr.fsid) ||
-		    (mp->mi.m_sblk_fsgen != msg->hdr.fsgen))) {
+		    !((mp->mi.m_sblk_fsgen == msg->hdr.fsgen) ||
+		    (mp->mi.m_sblk_fsgen == (msg->hdr.fsgen + 1))))) {
 			msg->hdr.error = EBADR;
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			goto done;
@@ -3509,6 +3510,7 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 			clp = sam_get_client_entry(mp, msg->hdr.client_ord, 0);
 			clp->fs_count = sp2->fs_count;
 			clp->mm_count = sp2->mm_count;
+			clp->fsgen = sp2->fsgen;
 			}
 
 			/* LINTED [fallthrough on case statement] */

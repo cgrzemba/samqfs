@@ -38,7 +38,7 @@
 #define	_SAM_FS_SBLK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.76 $"
+#pragma ident "$Revision: 1.77 $"
 #endif
 
 typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
@@ -184,7 +184,7 @@ typedef struct sam_sbinfo {
 					/* In 3.5.0 and below, SAM_DEV_BSHIFT */
 					/* In 4.0, SAM_SHIFT */
 	ushort_t	min_usr_inum;	/* Minimum user inode number */
-	int32_t		gen;		/* Gen num for this file system */
+	int32_t		fsgen;		/* Gen num for this file system */
 	sam_time_t	repaired;	/* Last time fsck completed */
 	ushort_t	opt_mask_ver;	/* Option mask version */
 	ushort_t	hosts_ord;	/* dev ordinal of the hosts file */

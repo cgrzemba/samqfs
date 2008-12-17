@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.176 $"
+#pragma ident "$Revision: 1.177 $"
 #endif
 
 #include "sam/osversion.h"
@@ -161,7 +161,8 @@ sam_client_cmd(sam_mount_t *mp, sam_san_message_t *msg)
 			}
 		} else if ((msg->hdr.command != SAM_CMD_BLOCK) &&
 		    ((mp->mi.m_sblk_fsid != msg->hdr.fsid) ||
-		    (mp->mi.m_sblk_fsgen != msg->hdr.fsgen))) {
+		    !((mp->mi.m_sblk_fsgen == msg->hdr.fsgen) ||
+		    (mp->mi.m_sblk_fsgen == (msg->hdr.fsgen - 1))))) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Stale file system"
 			    " init=%x fsid=%x, cmd=%x, seqno=%x",

@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.39 $"
+#pragma ident "$Revision: 1.40 $"
 
 
 /* ----- Include Files ---- */
@@ -956,7 +956,7 @@ grow_fs(void)
 	sblock.info.sb.fs_count = fs_count;
 	sblock.info.sb.da_count = fs_count - mm_count;
 	sblock.info.sb.mm_count = mm_count;
-	sblock.info.sb.gen = ++sblk->info.sb.gen;
+	sblock.info.sb.fsgen = ++sblk->info.sb.fsgen;
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
 		sblock.eq[ord].fs.ord = ord;

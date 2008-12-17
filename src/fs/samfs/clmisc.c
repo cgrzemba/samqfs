@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.262 $"
+#pragma ident "$Revision: 1.263 $"
 #endif
 
 #include "sam/osversion.h"
@@ -274,8 +274,14 @@ sam_update_shared_filsys(
 	struct sam_sblk *sblk;
 	int error = 0;
 
-	if (flag != 0) {	/* If umounting/failover, don't get sblk */
+	if (flag > 0) {	/* If umounting/failover, don't get sblk */
 		return (0);
+	}
+
+	if (flag < 0) {	/* If samd config, verify sblk */
+		if ((error = sam_build_geometry(mp, TRUE))) {
+			return (error);
+		}
 	}
 
 	/*
@@ -440,7 +446,7 @@ refetch:
 		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV2;
 	}
 	mp->mi.m_sblk_fsid = sblk->info.sb.init;
-	mp->mi.m_sblk_fsgen = sblk->info.sb.gen;
+	mp->mi.m_sblk_fsgen = sblk->info.sb.fsgen;
 	mp->mi.m_sblk_size = sblk_size;
 	mp->mi.m_sbp = sblk;
 	if (old_sblk) {

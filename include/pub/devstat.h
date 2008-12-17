@@ -38,7 +38,7 @@
 #define	SAM_DEVSTAT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 #endif
 
 #ifdef	linux
@@ -61,12 +61,12 @@ extern "C" {
 
 /*
  * Device states for disk and tape.
- * Disk only states: on, noalloc, off, down
+ * Disk only states: on, noalloc, noavail, off, down
  * Tape only states: on, idle, unavail, off, down, ro
  */
 typedef enum dstate {
 	DEV_ON,			/* Normal operations */
-	DEV_NOALLOC,		/* No allocation from this device */
+	DEV_NOALLOC,		/* No allocation on this device */
 	DEV_RO,			/* Read only operations */
 	DEV_IDLE,		/* No new opens allowed */
 	DEV_UNAVAIL,		/* Unavailable for file system */

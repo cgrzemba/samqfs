@@ -41,7 +41,7 @@
 #define	_SAM_FS_CLIENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.78 $"
+#pragma ident "$Revision: 1.79 $"
 #endif
 
 #ifdef	linux
@@ -198,8 +198,9 @@ typedef struct client_entry {
 	kmutex_t cl_msgmutex;	/* Mutex lock for this client's msg array */
 	short fs_count;		/* Number of family set members */
 	short mm_count;		/* Number of meta set members */
-	sam_queue_t queue;	/* message queue for this client */
+	int32_t fsgen;		/* Superblock generation number */
 	int cl_offtime;		/* Transition from pending to off state */
+	sam_queue_t queue;	/* message queue for this client */
 } client_entry_t;
 
 

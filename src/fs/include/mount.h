@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.160 $"
+#pragma ident "$Revision: 1.161 $"
 #endif
 
 #ifdef sun
@@ -301,6 +301,7 @@ typedef struct sam_mt_instance {
 	uint_t		m_sblk_size;	/* Size of incore superblock */
 	int		m_sblk_fsid;	/* Superblock time */
 	int		m_sblk_fsgen;	/* Superblock generation */
+	int		m_fsgen_config;	/* Superblock generation after config */
 	sam_bn_t	m_sblk_offset[2]; /* Superblock disk offsets */
 	int		m_sblk_version;	/* Superblock version (<=3.5.0 == 1) */
 	int		m_bn_shift;	/* Superblock extent shift to */
@@ -381,6 +382,7 @@ typedef struct sam_mount {
 
 int sam_mount_fs(sam_mount_t *mp);
 int sam_set_mount(sam_mount_t *mp);
+int sam_build_geometry(sam_mount_t *mp, boolean_t mounted);
 typedef enum {SAM_UNMOUNT_FS, SAM_FAILOVER_OLD_SRVR, SAM_FAILOVER_NEW_SRVR,
 	SAM_FAILOVER_POST_PROCESSING} sam_unmount_flag_t;
 

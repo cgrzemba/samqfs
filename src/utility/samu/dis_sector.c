@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 
 
 /* ANSI C headers. */
@@ -280,7 +280,7 @@ dis_sblk(
 	Mvprintw(ll++, 40, "%.4x     da_count", sp->da_count);
 	Mvprintw(ll++, 40, "    %.4x mm_count", sp->mm_count);
 	Mvprintw(ll++, 40, "%.8x mm_ord", sp->mm_ord);
-	Mvprintw(ll++, 40, "%.8x gen", sp->gen);
+	Mvprintw(ll++, 40, "%.8x fsgen", sp->fsgen);
 	ln++;
 	Mvprintw(ln++, 0, "                            ");
 	Printw("       allocmap");

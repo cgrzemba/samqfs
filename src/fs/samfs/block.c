@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.119 $"
+#pragma ident "$Revision: 1.120 $"
 
 #include "sam/osversion.h"
 
@@ -1700,7 +1700,8 @@ sam_init_block(sam_mount_t *mp)
 	int error = 0;
 
 	mutex_enter(&mp->mi.m_block.mutex);
-	if (mp->mt.fi_mflag & MS_RDONLY || mp->mt.fi_state == DEV_NOALLOC) {
+	if (mp->mt.fi_mflag & MS_RDONLY || mp->mt.fi_state == DEV_NOALLOC ||
+	    mp->mt.fi_state == DEV_UNAVAIL) {
 		goto out;
 	}
 	if (SAM_IS_SHARED_CLIENT(mp) ||
@@ -1724,6 +1725,7 @@ sam_init_block(sam_mount_t *mp)
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
 		dp = &mp->mi.m_fs[ord];
 		if (dp->skip_ord || dp->part.pt_state == DEV_NOALLOC ||
+		    dp->part.pt_state == DEV_UNAVAIL ||
 		    is_osd_group(dp->part.pt_type)) {
 			continue;
 		}
@@ -1956,16 +1958,15 @@ sam_change_state(
 			client_entry_t *clp;
 
 			for (i = 1; i <= mp->ms.m_max_clients; i++) {
-
 				clp = sam_get_client_entry(mp, i, 0);
-
 				if (clp == NULL ||
 				    clp->cl_sh.sh_fp == NULL ||
+				    ((clp->cl_status & FS_MOUNTED) == 0) ||
 				    (clp->cl_status & FS_SERVER)) {
 					continue;
 				}
-				if ((clp->cl_status & FS_MOUNTED) &&
-				    !sam_client_has_tag(clp,
+
+				if (!sam_client_has_tag(clp,
 				    QFS_TAG_VFSSTAT_V2)) {
 					cmn_err(CE_WARN,
 					    "SAM-QFS: %s: Client (%d) %s "
@@ -1976,15 +1977,19 @@ sam_change_state(
 					break;
 				}
 
-				if ((clp->cl_status & FS_MOUNTED) &&
-				    (clp->fs_count !=
-				    sblk->info.sb.fs_count)) {
+				if ((clp->fsgen != mp->mi.m_sblk_fsgen) ||
+				    (clp->fs_count != sblk->info.sb.fs_count) ||
+				    (clp->mm_count != sblk->info.sb.mm_count)) {
 					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: Client (%d) %s has"
-					    " not updated mcf (fs_count %d/%d)",
+					    "SAM-QFS: %s: Client (%d) %s has "
+					    "not updated mcf (fs_cnt %d/%d "
+					    "mm_cnt %d/%d fsgen %x/%x)",
 					    mp->mt.fi_name, ord, clp->hname,
 					    sblk->info.sb.fs_count,
-					    clp->fs_count);
+					    clp->fs_count,
+					    sblk->info.sb.mm_count,
+					    clp->mm_count, mp->mi.m_sblk_fsgen,
+					    clp->fsgen);
 					rtnerr = 7;
 					break;
 				}
@@ -2382,10 +2387,13 @@ sam_grow_fs(
 	}
 
 	/*
+	 * Increment the file system generation number.
 	 * Set the correct device count now. Update capacity and space count.
-	 * Set DEV_NOALLOC state in the mount table and the superblock.
+	 * Set DEV_UNAVAIL state in the mount table and the superblock.
 	 */
 	mutex_enter(&mp->mi.m_sblk_mutex);
+	sblk->info.sb.fsgen++;
+	mp->mi.m_sblk_fsgen = sblk->info.sb.fsgen;
 	sblk->info.sb.fs_count = mp->mt.fs_count;
 	if (dt == MM) {
 		sblk->info.sb.mm_count++;
@@ -2404,8 +2412,8 @@ sam_grow_fs(
 		ddp->command = DK_CMD_null;
 		dsop->mm_ord = sop->mm_ord;
 		dsop->system = sop->system;
-		dsop->state = DEV_NOALLOC;
-		ddp->part.pt_state = DEV_NOALLOC;
+		dsop->state = DEV_UNAVAIL;
+		ddp->part.pt_state = DEV_UNAVAIL;
 	}
 
 	/*

@@ -37,7 +37,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.19 $"
+#pragma ident "$Revision: 1.20 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -284,7 +284,7 @@ sam_sbinfo_format(
 	sprintf(vp, "0x%x", sbip->magic);
 	(void) sam_format_element_append(&bp, "magic", vp);
 
-	sprintf(vp, "%d", sbip->gen);
+	sprintf(vp, "%d", sbip->fsgen);
 	(void) sam_format_element_append(&bp, "gen", vp);
 
 	sprintf(vp, "0x%x%x", sbip->fs_id.val[0], sbip->fs_id.val[1]);

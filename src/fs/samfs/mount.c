@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.239 $"
+#pragma ident "$Revision: 1.240 $"
 #endif
 
 #include "sam/osversion.h"
@@ -129,9 +129,8 @@ extern struct proc_dir_entry *proc_fs_samqfs;
 extern struct file_system_type samqfs_fs_type;
 #endif /* linux */
 
-static int sam_build_geometry(sam_mount_t *mp);
-static int sam_validate_sblk(sam_mount_t *mp, struct samdent *devp,
-	int *sblk_meta_on, int *sblk_data_on);
+static int sam_validate_sblk(sam_mount_t *mp, boolean_t mounted,
+	struct samdent *devp, int *sblk_meta_on, int *sblk_data_on);
 
 #ifdef sun
 static int sam_read_sblk(sam_mount_t *mp);
@@ -713,7 +712,7 @@ sam_mount_fs(sam_mount_t *mp)
 	/*
 	 * Set up the geometry for the SAM disk family set.
 	 */
-	if ((error = sam_build_geometry(mp)) != 0) {
+	if ((error = sam_build_geometry(mp, FALSE)) != 0) {
 		return (error);
 	}
 	error = sam_set_mount(mp);
@@ -1137,8 +1136,8 @@ sam_set_mount(sam_mount_t *mp)
 	for (i = 0; i < sblk->info.sb.fs_count; i++) {
 		mp->mi.m_fs[i].next_ord = 0;
 		mp->mi.m_fs[i].alloc_link = 0;
-		if ((sblk->eq[i].fs.state != DEV_ON) &&
-		    (sblk->eq[i].fs.state != DEV_NOALLOC)) {
+		if ((sblk->eq[i].fs.state == DEV_OFF) ||
+		    (sblk->eq[i].fs.state == DEV_DOWN)) {
 			continue;
 		}
 		if (sblk->eq[i].fs.type == DT_META) {
@@ -1288,8 +1287,8 @@ sam_build_allocation_links(
 	dp->part.pt_state = sblk->eq[i].fs.state;
 	dp->num_group = sblk->eq[i].fs.num_group;
 	dp->skip_ord = 1;		/* skip it */
-	if (((dp->part.pt_state != DEV_ON) &&
-	    (dp->part.pt_state != DEV_NOALLOC)) ||
+	if (((dp->part.pt_state == DEV_OFF) ||
+	    (dp->part.pt_state == DEV_DOWN)) ||
 	    (dp->num_group == 0)) {
 		return (0);
 	}
@@ -1305,8 +1304,8 @@ sam_build_allocation_links(
 		 * must round robin.
 		 */
 		for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
-			if (((sblk->eq[ord].fs.state != DEV_ON) &&
-			    (sblk->eq[ord].fs.state != DEV_NOALLOC)) ||
+			if (((sblk->eq[ord].fs.state == DEV_OFF) ||
+			    (sblk->eq[ord].fs.state == DEV_DOWN)) ||
 			    (sblk->eq[ord].fs.num_group == 0)) {
 				continue;
 			}
@@ -1339,7 +1338,8 @@ sam_build_allocation_links(
 	}
 
 	/*
-	 * Build forward link chain for MM or DD disks with state = ON/NOALLOC.
+	 * Build forward link chain for MM or DD disks with
+	 * state = ON/NOALLOC/NOAVAIL.
 	 */
 	if (mp->mi.m_dk_max[disk_type] == 0) {	/* First entry */
 		mp->mi.m_dk_start[disk_type] = (short)i;
@@ -1356,8 +1356,8 @@ sam_build_allocation_links(
 			}
 			if ((ord == i) ||
 			    (mp->mi.m_fs[ord].num_group == 0) ||
-			    ((sblk->eq[ord].fs.state != DEV_ON) &&
-			    (sblk->eq[ord].fs.state != DEV_NOALLOC))) {
+			    ((sblk->eq[ord].fs.state == DEV_OFF) ||
+			    (sblk->eq[ord].fs.state == DEV_DOWN))) {
 				continue;
 			}
 			if (mp->mi.m_fs[ord].next_ord == 0) {
@@ -1500,7 +1500,7 @@ sam_read_sblk(sam_mount_t *mp)
 	mp->mi.m_sbp = (struct sam_sblk *)kmem_alloc(sblk_size, KM_SLEEP);
 	bcopy((void *)sbp->b_un.b_addr, mp->mi.m_sbp, sblk_size);
 	mp->mi.m_sblk_fsid = mp->mi.m_sbp->info.sb.init;
-	mp->mi.m_sblk_fsgen = mp->mi.m_sbp->info.sb.gen;
+	mp->mi.m_sblk_fsgen = mp->mi.m_sbp->info.sb.fsgen;
 	sbp->b_flags |= B_STALE | B_AGE;
 	brelse(sbp);
 
@@ -1580,6 +1580,7 @@ sam_report_initial_watermark(sam_mount_t *mp)
 static int			/* Superblock fs_count */
 sam_validate_sblk(
 	sam_mount_t *mp,	/* Pointer to mount table */
+	boolean_t mounted,	/* Set if mounted */
 	struct samdent *devp,	/* Pointer to array of device partitions */
 	int *sblk_meta_on,	/* Return superblock ON meta devices */
 	int *sblk_data_on)	/* Return superblock ON data devices */
@@ -1613,8 +1614,7 @@ sam_validate_sblk(
 			continue;
 		}
 		if (fs_count != 0) {	/* Processed first device, ord 0 */
-			if (mp->mi.m_fs[i].part.pt_state == DEV_OFF ||
-			    mp->mi.m_fs[i].part.pt_state == DEV_DOWN) {
+			if (mp->mi.m_fs[i].part.pt_state == DEV_DOWN) {
 				err_line = __LINE__;
 				error = ENOENT;
 				goto setpart2;
@@ -1689,17 +1689,19 @@ sam_validate_sblk(
 			for (j = 0; j < fs_count; j++) {
 				mp->mi.m_fs[j].part.pt_state =
 				    sblk->eq[j].fs.state;
-				if ((sblk->eq[j].fs.state == DEV_ON) ||
-				    (sblk->eq[j].fs.state == DEV_NOALLOC)) {
-					if (sblk->eq[j].fs.type == DT_META) {
-						meta_on++;
-					} else {
-						data_on++;
-					}
+				if ((sblk->eq[j].fs.state == DEV_OFF) ||
+				    (sblk->eq[j].fs.state == DEV_DOWN)) {
+					continue;
+				}
+				if (sblk->eq[j].fs.type == DT_META) {
+					meta_on++;
+				} else {
+					data_on++;
 				}
 			}
 			mp->mi.m_sblk_offset[0] = sblk->info.sb.offset[0];
 			mp->mi.m_sblk_offset[1] = sblk->info.sb.offset[1];
+			mp->mi.m_fsgen_config = sblk->info.sb.fsgen;
 			time = sblk->info.sb.init;
 		}
 
@@ -1722,10 +1724,11 @@ sam_validate_sblk(
 			    mp->mt.fi_name, dp->part.pt_eq);
 				err_line = __LINE__;
 				error = EINVAL;
-		} else if (time != sblk->info.sb.init) {
+		} else if ((time != sblk->info.sb.init) ||
+		    (mp->mi.m_fsgen_config != sblk->info.sb.fsgen)) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: mcf eq %d:"
-			    " superblock FsId does not match eq %d FsId",
+			    " superblock FsId does not match eq %d FsId/Fsgen",
 			    mp->mt.fi_name, dp->part.pt_eq, devp->part.pt_eq);
 			err_line = __LINE__;
 			error = EINVAL;
@@ -1747,7 +1750,7 @@ sam_validate_sblk(
 			    ord, fs_count);
 			err_line = __LINE__;
 			error = EINVAL;
-		} else if (mp->mi.m_fs[ord].dev != 0) {
+		} else if (!mounted && mp->mi.m_fs[ord].dev != 0) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: mcf eq %d: duplicate device in mcf",
 			    mp->mt.fi_name, dp->part.pt_eq);
@@ -1787,15 +1790,35 @@ sam_validate_sblk(
 		}
 
 		/*
-		 * Set capacity & space for OSDs in sblk. Set in sam_getdev.
+		 * Set state for devices with no error from the superblock
+		 * If mounting, set for all device. For client samd config,
+		 * set state only for devices that are off or unavail.
 		 */
-		if (is_osd_group(dp->part.pt_type)) {
-			sblk->eq[i].fs.capacity = dp->part.pt_capacity;
-			sblk->eq[i].fs.space = dp->part.pt_space;
+		if (error == 0) {
+			int state;
+
+			/*
+			 * Set capacity & space for OSDs in sblk.
+			 * Set in sam_getdev.
+			 */
+			if (is_osd_group(dp->part.pt_type)) {
+				sblk->eq[i].fs.capacity = dp->part.pt_capacity;
+				sblk->eq[i].fs.space = dp->part.pt_space;
+			}
+			state = mp->mi.m_fs[ord].part.pt_state;
+			if (!mounted || (mounted &&
+			    (state == DEV_UNAVAIL || state == DEV_OFF))) {
+				dp->error = 0;
+				bcopy((void *)dp, (void *)&mp->mi.m_fs[ord],
+				    sizeof (*dp));
+				dp->part.pt_state = state;
+				dp->part.pt_capacity =
+				    (fsize_t)sblk->eq[i].fs.capacity;
+				dp->part.pt_space =
+				    (fsize_t)sblk->eq[i].fs.space;
+			}
 		}
 
-		dp->part.pt_capacity = (fsize_t)sblk->eq[i].fs.capacity;
-		dp->part.pt_space = (fsize_t)sblk->eq[i].fs.space;
 setpart1:
 
 #ifdef sun
@@ -1812,22 +1835,13 @@ setpart1:
 
 setpart2:
 		/*
-		 * Set device state based on error. Set state for devices
-		 * with no error from the superblock (on, noalloc).
+		 * Set device state based on error.
 		 */
 		if (error) {
 			dp->part.pt_state = DEV_OFF;
 			dp->skip_ord = 1;
 			dp->error = error;
 			TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, ord);
-		} else {
-			int state;
-
-			dp->error = 0;
-			state = mp->mi.m_fs[ord].part.pt_state;
-			bcopy((void *)dp, (void *)&mp->mi.m_fs[ord],
-			    sizeof (*dp));
-			mp->mi.m_fs[ord].part.pt_state = state;
 		}
 	}
 	*sblk_meta_on = meta_on;
@@ -1842,9 +1856,10 @@ setpart2:
  * family set in the mount entry.
  */
 
-static int		/* ERRNO if error, 0 if successful. */
+int			/* ERRNO if error, 0 if successful. */
 sam_build_geometry(
-	sam_mount_t *mp)
+	sam_mount_t *mp,
+	boolean_t mounted)
 {
 	struct samdent *devp;
 	struct samdent *dp;
@@ -1868,15 +1883,17 @@ sam_build_geometry(
 	}
 	bcopy((void *)&mp->mi.m_fs, (void *)devp,
 	    (sizeof (struct samdent)*mp->mt.fs_count));
-	bzero((void *)&mp->mi.m_fs,
-	    (sizeof (struct samdent) * mp->mt.fs_count));
+	if (!mounted) {
+		bzero((void *)&mp->mi.m_fs,
+		    (sizeof (struct samdent) * mp->mt.fs_count));
+	}
 
 	/*
 	 * Set state and error for all entries in the mcf. Read superblock and
 	 * verify mcf matches superblock. Move ON devices into the device
 	 * array in correct ordinal order.
 	 */
-	sblk_fs_count = sam_validate_sblk(mp, devp, &sblk_meta_on,
+	sblk_fs_count = sam_validate_sblk(mp, mounted, devp, &sblk_meta_on,
 	    &sblk_data_on);
 
 	if (SAM_IS_SHARED_FS(mp) && !SAM_IS_SHARED_SERVER_ALT(mp)) {
@@ -1888,16 +1905,17 @@ sam_build_geometry(
 	 * Verify the dev is set.
 	 */
 	for (i = 0, dp = devp; i < sblk_fs_count; dp++, i++) {
-		if ((dp->part.pt_state == DEV_ON) ||
-		    (dp->part.pt_state == DEV_NOALLOC)) {
-			if (dp->dev == 0) {
-				continue;
-			}
-			if (dp->part.pt_type == DT_META) {
-				meta_on++;
-			} else {
-				data_on++;
-			}
+		if ((dp->part.pt_state == DEV_OFF) ||
+		    (dp->part.pt_state == DEV_DOWN)) {
+			continue;
+		}
+		if (dp->dev == 0) {
+			continue;
+		}
+		if (dp->part.pt_type == DT_META) {
+			meta_on++;
+		} else {
+			data_on++;
 		}
 	}
 	if (data_on != sblk_data_on) {
@@ -1972,7 +1990,7 @@ sam_build_geometry(
 	/*
 	 * If error, restore device array so devices can be closed.
 	 */
-	if (error) {
+	if (error && !mounted) {
 		bcopy((void *)devp, (void *)&mp->mi.m_fs,
 		    (sizeof (struct samdent)*mp->mt.fs_count));
 		TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);

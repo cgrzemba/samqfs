@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.262 $"
+#pragma ident "$Revision: 1.263 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2524,6 +2524,7 @@ sam_proc_block(
 		sblk = mp->mi.m_sbp;
 		bnp->arg.p.vfsstat_v2.fs_count = sblk->info.sb.fs_count;
 		bnp->arg.p.vfsstat_v2.mm_count = sblk->info.sb.mm_count;
+		bnp->arg.p.vfsstat_v2.fsgen = mp->mi.m_fsgen_config;
 		}
 
 		/* LINTED [fallthrough on case statement] */

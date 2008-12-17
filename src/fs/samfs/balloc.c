@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.84 $"
+#pragma ident "$Revision: 1.85 $"
 
 #include "sam/osversion.h"
 
@@ -113,6 +113,7 @@ sam_alloc_block(
 
 	for (;;) {
 		if (mp->mi.m_fs[unit].part.pt_state == DEV_NOALLOC ||
+		    mp->mi.m_fs[unit].part.pt_state == DEV_UNAVAIL ||
 		    ((block = mp->mi.m_fs[unit].block[bt]) == NULL)) {
 			skipping_ord = TRUE;
 			block = NULL;

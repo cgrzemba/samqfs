@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.170 $"
+#pragma ident "$Revision: 1.171 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -3181,7 +3181,8 @@ print_mount(
 	lock = (void **)&mount->ms.m_synclock;
 	printf("\t%012p synclock owner\n", MUTEX_OWNER_PTR(*lock));
 	printf("\t%08x sblk time\n", mount->mi.m_sblk_fsid);
-	printf("\t%08x sblk gen\n", mount->mi.m_sblk_fsgen);
+	printf("\t%08x sblk fsgen\n", mount->mi.m_sblk_fsgen);
+	printf("\t%08x fsgen config\n", mount->mi.m_fsgen_config);
 	printf("\t%08x sblk_offset[0]\n", mount->mi.m_sblk_offset[0]);
 	printf("\t%08x sblk_offset[1]\n", mount->mi.m_sblk_offset[1]);
 	printf("\t%08x sblk version\n", mount->mi.m_sblk_version);
@@ -3338,10 +3339,12 @@ print_mount(
 		for (ci = 0; ci < SAM_INCORE_HOSTS_TABLE_INC; ci++) {
 			struct client_entry *clp = &clnt[ci];
 			if (clp->hname[0] || clp->hostid || clp->cl_sh.sh_fp) {
-				printf("\t%d   %08x %p %-16d %-8d %03d %-8x\n",
+				printf("\t%d   %08x %p %-16d %-8d %03d "
+				"%03d %-3x %-8x\n",
 				    i+1, clp->hostid, clp->cl_sh.sh_fp,
 				    clp->cl_min_seqno, clp->cl_nomsg,
-				    clp->fs_count, clp->cl_tags);
+				    clp->fs_count, clp->mm_count,
+				    clp->fsgen, clp->cl_tags);
 				printf("\t    %s\n", clp->hname);
 
 				ptr = (sam_msg_array_t *)

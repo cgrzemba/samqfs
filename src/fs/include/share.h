@@ -37,7 +37,7 @@
 #define	_SAM_FS_SHARE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 #endif
 
 #ifdef sun
@@ -610,7 +610,7 @@ typedef struct sam_block_vfsstat_v2 {
 	int64_t mm_space;		/* Meta space */
 	short	fs_count;		/* Number of family set members */
 	short	mm_count;		/* Number of meta set members */
-	int32_t unused;
+	int32_t	fsgen;			/* File system generation number */
 	int64_t fill[7];
 } sam_block_vfsstat_v2_t;
 

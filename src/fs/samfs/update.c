@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.146 $"
+#pragma ident "$Revision: 1.147 $"
 
 #include "sam/osversion.h"
 
@@ -120,8 +120,8 @@ sam_update_filsys(
 			wait_flag = SHARE_wait_one;
 			flag = 0;
 		}
-		if ((error = sam_update_shared_filsys(mp,
-		    wait_flag, flag)) == 0) {
+		error = sam_update_shared_filsys(mp, wait_flag, flag);
+		if (error == 0) {
 			(void) sam_sync_inodes(mp, flag);
 		}
 		return (error);
