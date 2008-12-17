@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.84 $"
+#pragma ident "$Revision: 1.85 $"
 
 #include "sam/osversion.h"
 
@@ -1276,8 +1276,6 @@ sam_lookup_xattr(
 	int terr = 0;
 
 	pip = SAM_VTOI(pvp);
-	TRACE(T_SAM_LOOKUP_XATTR, pvp, pip->di.id.ino, SAM_INODE_IS_XATTR(pip),
-	    flags);
 	ASSERT(flags & LOOKUP_XATTR);
 	if (pip->mp->mt.fi_config1 & MC_NOXATTR) {
 		/*
@@ -1285,6 +1283,8 @@ sam_lookup_xattr(
 		 */
 		return (EINVAL);
 	}
+	TRACE(T_SAM_LOOKUP_XATTR, pvp, pip->di.id.ino, SAM_INODE_IS_XATTR(pip),
+	    flags);
 	trans_size = (int)TOP_MKDIR_SIZE(pip);
 	TRANS_BEGIN_CSYNC(pip->mp, issync, TOP_MKDIR, trans_size);
 

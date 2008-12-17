@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 
 #define	SAM_INIT
 
@@ -92,7 +92,6 @@ char *sam_zero_block = NULL;		/* a block of zeros */
 int sam_zero_block_size = 0;		/* size of a block of zeros */
 int panic_on_fs_error = 1;		/* a debug variable */
 int sam_vpm_enable = 1;			/* Use Solaris VPM if available */
-int sam_xattr = 0;			/* Enable extended attributes */
 
 /*
  * One means all signals except the critical ones are masked while waiting on

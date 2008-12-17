@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.172 $"
+#pragma ident "$Revision: 1.173 $"
 
 #include "sam/osversion.h"
 
@@ -85,7 +85,8 @@
 #include "qfs_log.h"
 #include "objctl.h"
 extern int ncsize;
-extern int sam_xattr;
+
+static int sam_xattr = 0;		/* Extended attributes */
 
 extern int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 static int sam_clients_mounted(sam_mount_t *mp);
