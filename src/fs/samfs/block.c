@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.120 $"
+#pragma ident "$Revision: 1.121 $"
 
 #include "sam/osversion.h"
 
@@ -2339,7 +2339,9 @@ sam_grow_fs(
 	sop->dau_next = 0;
 	sop->num_group = dp->num_group;
 	sop->mm_ord = (ushort_t)mm_ord;
-	sblk->eq[mm_ord].fs.dau_next = pa.first_bn;
+	if (ord != mm_ord) {
+		sblk->eq[mm_ord].fs.dau_next = pa.first_bn;
+	}
 	args.ord =  ord;
 	args.type = type;
 	args.blocks = blocks / LG_DEV_BLOCK(mp, dt);
