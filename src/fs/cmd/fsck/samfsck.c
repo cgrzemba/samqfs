@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.63 $"
+#pragma ident "$Revision: 1.64 $"
 
 
 /* ----- Includes */
@@ -9384,7 +9384,9 @@ lqfs_log_dispatch(int status)
 	switch (status)  {
 	/* Log not there, keep going. */
 	case LOG_NONE:
+#ifdef SAM_QFS_JOURNALING_SUPPORTED
 		printf(catgets(catfd, SET, 13982, "No log present\n"));
+#endif /* SAM_QFS_JOURNALING_SUPPORTED */
 		break;
 
 	/* Log empty, keep going. */
