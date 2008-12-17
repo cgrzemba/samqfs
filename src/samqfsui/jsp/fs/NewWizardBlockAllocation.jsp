@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardBlockAllocation.jsp,v 1.3 2008/12/16 00:10:46 am143972 Exp $
+// ident	$Id: NewWizardBlockAllocation.jsp,v 1.4 2008/12/17 21:03:26 kilemba Exp $
 --%>
 
 <%@ page language="java" %> 
@@ -61,7 +61,7 @@
                     onChange="return handleAllocationMethodChange(this);"
                     styleLevel="3"
                     bundleID="samBundle" />
-    <div id="strippedgroup" style="text-indent:20px">
+    <div id="strippedgroup" style="text-indent:20px;white-space:nowrap">
         <cc:label name="stripedGroupLabel"
                   bundleID="samBundle"
                   defaultValue="FSWizard.new.allocationmethod.stripes" />
@@ -73,7 +73,7 @@
               bundleID="samBundle"
               defaultValue="FSWizard.new.blockallocation.blocksize"/>
 </td><td nowrap>
-    <div id="blocksizedropdown">
+    <div id="blocksizedropdown" style="white-space:nowrap">
     <cc:dropdownmenu name="blockSizeDropDown" bundleID="samBundle"/>
     </div>
     <div id="blocksizetext">

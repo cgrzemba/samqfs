@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.53 2008/12/16 00:12:20 am143972 Exp $
+// ident	$Id: FileSystemImpl.java,v 1.54 2008/12/17 21:03:26 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -163,14 +163,6 @@ public class FileSystemImpl extends GenericFileSystemImpl
 
     public int getShareStatus() {
         return shareStatus;
-    }
-
-    /**
-     * introduced in 5.0 to determine if this file system is a hpc shared qfs
-     * proto file system - partially configured.
-     */
-    public boolean isProtoFS() {
-	return false;
     }
 
     /**

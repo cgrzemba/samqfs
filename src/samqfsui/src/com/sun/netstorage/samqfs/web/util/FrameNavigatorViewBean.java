@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FrameNavigatorViewBean.java,v 1.29 2008/12/16 00:12:26 am143972 Exp $
+// ident	$Id: FrameNavigatorViewBean.java,v 1.30 2008/12/17 21:03:27 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.util;
 
@@ -215,9 +215,15 @@ public class FrameNavigatorViewBean extends ViewBeanBase {
             node.addChild(
                 naviNodes.getNavigationNode(
                         NavigationNodes.NODE_ABOUT_SAMQFS));
+
+            // do not show the first time configuration page managing a qfs
+            // only server.
+            if (!isQFSStandAlone) {
             node.addChild(
                 naviNodes.getNavigationNode(
                         NavigationNodes.NODE_FIRST_TIME_CONFIG));
+            }
+
             node.addChild(
                 naviNodes.getNavigationNode(
                         NavigationNodes.NODE_REGISTRATION));

@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.8 2008/12/16 00:10:40 am143972 Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.9 2008/12/17 21:03:25 kilemba Exp $
 --%>
 
 <%@page info="FirstTimeConfig" language="java" %>
@@ -65,10 +65,6 @@
 <!-- page level instruction -->
 <div style="margin:10px;width:75%">
 <cc:text name="instruction" bundleID="samBundle" defaultValue="firsttime.instruction"/>
-<cc:href name="moreHref" bundleID="samBundle" onClick="return handleMoreInformation();">
-    <cc:image name="moreImg" bundleID="samBundle" border="0" defaultValue="/samqfsui/images/link_arrow.gif"/>
-    <cc:text name="moreText" bundleID="samBundle" defaultValue="firsttime.moreinfo"/>
-</cc:href>
 
 <cc:legend name="Legend" align="right"/>
 </div>

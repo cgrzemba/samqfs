@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: NewWizardFSTypeView.java,v 1.3 2008/12/16 00:12:12 am143972 Exp $
+// ident	$Id: NewWizardFSTypeView.java,v 1.4 2008/12/17 21:03:26 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -207,5 +207,15 @@ public class NewWizardFSTypeView extends RequestHandlingViewBase
 
         apiVersion = apiVersion == null ? "0.0" : apiVersion.substring(0, 3);
         return (apiVersion.compareTo("1.6") >= 0);
+    }
+
+    /**
+     * do not display the archiving check box if we are managing a QFS only
+     * server
+     */
+    public boolean beginArchivingCheckBoxDisplay(ChildDisplayEvent evt) 
+        throws ServletException, IOException {
+
+        return SamUtil.getSystemType(getServerName()) != SamQFSSystemModel.QFS;
     }
 }

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystem.java,v 1.25 2008/12/16 00:12:18 am143972 Exp $
+// ident	$Id: FileSystem.java,v 1.26 2008/12/17 21:03:26 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -70,12 +70,6 @@ public interface FileSystem extends GenericFileSystem {
     public int getEquipOrdinal();
 
     public int getShareStatus();
-
-    /**
-     * introduced in 5.0 to determine if this file system is a hpc shared qfs
-     * proto file system - partially configured.
-     */
-    public boolean isProtoFS();
 
     /**
      * Determine if file system is a mb type file system.  It is a
