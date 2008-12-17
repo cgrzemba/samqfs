@@ -44,7 +44,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -89,69 +89,28 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
 /* Private data. */
 
-/* Directory cache. */
-/* Memory mapped files. */
-struct DirCache {
-	MappedFile_t Dc;
-	size_t	DcSize;			/* Size of all entries */
-	int	DcCount;		/* Number of entries */
-	int	DcFree;			/* Number of freed entries */
-	struct CacheEntry {
-		sam_id_t CeId;		/* Inode number */
-		sam_id_t CeParId;	/* Parent inode number */
-		int	CeName_l;	/* Path component length */
-		char	CeName[1];	/* Path component */
-	} ClEntry[1];
-};
+/* Directory cache entry */
+typedef struct DirCacheEntry {
+	sam_id_t	id;		/* Id of directory */
+	sam_id_t	parent_id;	/* Parent id of directory */
+	int		lastUsed;	/* Time of last usage */
+	int		entCount;	/* Number of entries */
+	size_t		bufSize;	/* Current size of dirent buffer */
+	size_t		bufLen;		/* Length of dirent buffer */
+	size_t		ptrBufLen;	/* Length of dirent ptr buffer */
+	char		*buf;		/* Dirent buffer */
+	sam_dirent_t	**ptrBuf;	/* Dirent pointer array */
+} DirCacheEntry_t;
 
-#define	CACHE "dircache"
-#define	CACHE_MAGIC 0301032005	/* Directory cache file magic number */
+#define	CACHE_LEN_INCR (1000)		/* DirCache length increase */
+#define	CACHE_BUF_INCR (8<<10)		/* Entry buffer increase (8 KB) */
+#define	MAX_INT 0x7FFFFFFF
 
-#define	CACHE_INCR (128 * 1024)
-#define	CACHE_MAX (32 * CACHE_INCR)
-#define	CACHE_MAX_TABLE_COUNT 32
-
-#define	CE_SIZE(ce) (STRUCT_RND(sizeof (struct CacheEntry)) + \
-	STRUCT_RND((ce)->CeName_l))
-
-#define	DIR_CACHE_TABLE_INCR 10
-
-static struct DirCache **dirCacheTable;
-static int dirCacheTableCount = 0;
-
-static struct DirCache *dirCache = NULL;
-static int dirCacheIndex = 0;
-static char dirCacheName[] = CACHE"xxxxxxxx";
-
-/*
- * idList -  List of the location of all inode ids in directory caches.
- * Each file in a directory cache is referenced by an entry in the idList.
- * An idList entry "points" to a sam_id_t struct in the directory cache
- * using the index of the DirCache in the dirCacheTable.
- *
- * The idList section is sorted by inode number.  It is searched using
- * a binary search.
- */
-
-/* Inode reference. */
-struct IdRef {
-	uint_t  IrDcIndex;
-	uint_t  IrOffset;
-};
-
-static struct IdList {
-	MappedFile_t Il;
-	size_t	IlSize;			/* Size of all entries */
-	int	IlCount;		/* Number of entries */
-	struct IdRef IlEntry[1];
-} *idList;
-
-#define	IDLIST "idlist_dircache"
-#define	IDLIST_MAGIC 0110414112324
-#define	IDLIST_INCR 1000
-#define	ID_LOC(ir) ((void *) \
-	((char *)(void *)dirCacheTable[(ir)->IrDcIndex] + (ir)->IrOffset))
-
+static DirCacheEntry_t *dirCache;	/* Table of cache entries */
+static int dirCacheCount = 0;		/* Number of active cache entries */
+static int dirCacheLen = 0;		/* Alloc'd length of dirCache */
+static int dirCacheDel = 0;		/* Number of deleted cache entries */
+static int dirCacheTotSize = 0;		/* Total size of dirCache, incl. bufs */
 
 static pthread_mutex_t id2pathMutex = PTHREAD_MUTEX_INITIALIZER;
 static struct sam_disk_inode dinode;
@@ -159,15 +118,14 @@ static struct sam_ioctl_idstat idstatArgs = {
 		{ 0, 0 }, sizeof (dinode), &dinode };
 
 /* Private functions. */
-static void cacheAddEntry(sam_id_t id, sam_id_t parent_id, char *name,
-    int name_l);
-static struct CacheEntry *cacheLookup(sam_id_t id);
-static struct DirCache *createDirCache(void);
-static struct IdRef *idListAdd(sam_id_t id);
-static struct IdRef *idListLookup(sam_id_t id);
-static int readDir(sam_id_t parent_id, sam_id_t id);
-static void removeDirCache(int dci);
-
+static DirCacheEntry_t *cacheLookup(sam_id_t id);
+static int cacheSearch(sam_id_t id);
+static void cachePurge(void);
+static DirCacheEntry_t *cacheEntryNew(sam_id_t id);
+static int cacheEntryPopulate(DirCacheEntry_t *entry);
+static sam_dirent_t *cacheEntryLookup(DirCacheEntry_t *entry, sam_id_t id);
+static void cacheEntryRemove(DirCacheEntry_t *entry);
+static int cmpDirent(const void *v1, const void *v2);
 
 /*
  * Return relative path to file given the inode.
@@ -177,7 +135,8 @@ IdToPath(
 	struct sam_disk_inode *fileInode,	/* File's inode. */
 	struct PathBuffer *pb)
 {
-	struct CacheEntry *ce;
+	DirCacheEntry_t *ce;
+	sam_dirent_t *dirent;
 	sam_id_t id;
 	sam_id_t parent_id;
 	char *path;
@@ -202,43 +161,20 @@ IdToPath(
 	State->AfId2path++;
 
 	while (id.ino != SAM_ROOT_INO && id.ino != 0) {
-
-		ce = cacheLookup(id);
+		ce = cacheLookup(parent_id);
 		if (ce == NULL) {
-			if (parent_id.ino == 0) {
-				/*
-				 * Get the inode to find the parent.
-				 */
-				Trace(TR_DEBUG, "Id2path inode: %d.%d "
-				    "find parent", id.ino, id.gen);
-				idstatArgs.id = id;
-				State->AfId2pathIdstat++;
-				if (ioctl(FsFd, F_IDSTAT, &idstatArgs) < 0) {
-					if (errno != EBADF) {
-						Trace(TR_DEBUGERR,
-						    "id2path stat(%d.%d)",
-						    id.ino, id.gen);
-					}
-					path = pb->PbEnd - 1;
-					break;
-				}
-				parent_id = dinode.parent_id;
-			}
+			ce = cacheEntryNew(parent_id);
+		}
 
-			/*
-			 * Read parent directory which adds all inodes in
-			 * directory to the cache.  Guarantees that entry
-			 * for id is cached.
-			 */
-			if (readDir(parent_id, id) == -1) {
+		dirent = cacheEntryLookup(ce, id);
+		if (dirent == NULL) {
+			/* (re)populate cache entry */
+			if (cacheEntryPopulate(ce) < 0) {
 				break;
 			}
 
-			/*
-			 * Lookup inode in directory cache.  Added by readDir().
-			 */
-			ce = cacheLookup(id);
-			if (ce == NULL) {
+			dirent = cacheEntryLookup(ce, id);
+			if (dirent == NULL) {
 				path = pb->PbEnd - 1;
 				Trace(TR_MISC, "Id2path inode: %d.%d "
 				    "cache lookup failed", id.ino, id.gen);
@@ -251,23 +187,40 @@ IdToPath(
 		/*
 		 * Append path component.
 		 */
-		pathLen += ce->CeName_l + 1;
+		pathLen += dirent->d_namlen + 1;
 		if (pathLen > MAXPATHLEN) {
 			Trace(TR_DEBUGERR, "inode %d: pathname too long",
 			    fileInode->id.ino);
 			path = pb->PbEnd - 1;
 			break;
 		}
-		path -= ce->CeName_l;
-		memmove(path, ce->CeName,  ce->CeName_l);
+		path -= dirent->d_namlen;
+		memmove(path, (char *)dirent->d_name,  dirent->d_namlen);
 		path--;
 		*path = '/';
 
-		/*
-		 * Set up to get path component for parent.
-		 */
-		id = ce->CeParId;
-		parent_id.ino = 0;
+		/* Set up to get path component for parent. */
+		id = parent_id;
+		if (ce->parent_id.ino == 0) {
+			/*
+			 * Get the inode to find the parent.
+			 */
+			Trace(TR_DEBUG, "Id2path inode: %d.%d "
+			    "find parent", id.ino, id.gen);
+			idstatArgs.id = id;
+			State->AfId2pathIdstat++;
+			if (ioctl(FsFd, F_IDSTAT, &idstatArgs) < 0) {
+				if (errno != EBADF) {
+					Trace(TR_DEBUGERR,
+					    "id2path stat(%d.%d)",
+					    id.ino, id.gen);
+				}
+				path = pb->PbEnd - 1;
+				break;
+			}
+			ce->parent_id = dinode.parent_id;
+		}
+		parent_id = ce->parent_id;
 	}
 
 	*path = '\0';   /* Mark start of path */
@@ -319,27 +272,10 @@ IdToPathId(
 void
 IdToPathInit(void)
 {
-	static struct DirCache emptyCf;
-
-	/*
-	 * Make the dirCache table.
-	 */
-	dirCacheTableCount = DIR_CACHE_TABLE_INCR;
-	SamMalloc(dirCacheTable,
-	    dirCacheTableCount * sizeof (struct DirCache *));
-	memset(dirCacheTable, 0,
-	    dirCacheTableCount * sizeof (struct DirCache *));
-	dirCache = &emptyCf;
-	dirCache->DcSize = dirCache->Dc.MfLen = CACHE_MAX;
-
-	/*
-	 * Create the empty idList 'idlist_dircache'.
-	 */
-	idList = MapFileCreate(IDLIST, IDLIST_MAGIC,
-	    IDLIST_INCR * sizeof (struct IdRef));
-	idList->Il.MfValid = 1;
-	idList->IlCount = 0;
-	idList->IlSize = sizeof (struct IdList);
+	dirCacheLen = CACHE_LEN_INCR;
+	dirCacheTotSize = dirCacheLen * sizeof (DirCacheEntry_t);
+	SamMalloc(dirCache, dirCacheTotSize);
+	memset(dirCache, 0, dirCacheTotSize);
 }
 
 
@@ -350,28 +286,12 @@ void
 IdToPathRmInode(
 	sam_id_t id)
 {
-	struct IdRef *ir;
+	DirCacheEntry_t *entry;
 
 	PthreadMutexLock(&id2pathMutex);
-	ir = idListLookup(id);
-	if (ir != NULL && ir->IrDcIndex != 0) {
-		struct CacheEntry *ce;
-		struct DirCache *dc;
-
-		ce = (struct CacheEntry *)ID_LOC(ir);
-		if (ce->CeId.gen == id.gen) {
-			ce->CeParId.ino = 0;
-#if defined(I2P_TRACE)
-			Trace(TR_DEBUG,
-			    "[%d] Dircache remove inode: %d.%d parent: %d (%s)",
-			    ir->IrDcIndex, ce->CeId.ino, ce->CeId.gen,
-			    ce->CeParId.ino, ce->CeName);
-#endif /* defined(I2P_TRACE) */
-			dc = dirCacheTable[ir->IrDcIndex];
-			dc->DcFree++;
-			ir->IrDcIndex = 0;
-			ir->IrOffset = id.ino;
-		}
+	entry = cacheLookup(id);
+	if (entry != NULL) {
+		cacheEntryRemove(entry);
 	}
 	PthreadMutexUnlock(&id2pathMutex);
 }
@@ -384,44 +304,14 @@ void
 IdToPathTrace(void)
 {
 	FILE	*st;
-	int	dci;
 
 	if ((st = TraceOpen()) == NULL) {
 		return;
 	}
 
-	fprintf(st, "Dircache table count: %d\n", dirCacheTableCount);
+	fprintf(st, "Dircache dir count: %d\n", dirCacheCount);
+	fprintf(st, "Dircache size: %d\n", dirCacheTotSize);
 
-	for (dci = 0; dci < dirCacheTableCount; dci++) {
-		struct DirCache *dc;
-		char cacheName[] = CACHE"xxxxxxxx";
-
-		if (dirCacheTable[dci] == NULL) {
-			continue;
-		}
-		dc = dirCacheTable[dci];
-		snprintf(cacheName, sizeof (cacheName), CACHE"%d", dci);
-		fprintf(st,
-		    "[%d] Dircache trace (%s) count: %d free: %d size: %d\n",
-		    dci, cacheName, dc->DcCount, dc->DcFree, dc->DcSize);
-#if defined(I2P_TRACE)
-		if (dc->DcCount != 0) {
-			char	*cec;
-			int	i;
-
-			cec = (char *)&dc->ClEntry[0];
-			for (i = 0; i < dc->DcCount; i++) {
-				struct CacheEntry *ce;
-
-				ce = (struct CacheEntry *)(void *)cec;
-				fprintf(st, "%4d %d.%d %d %s\n",
-				    i, ce->CeId.ino, ce->CeId.gen,
-				    ce->CeParId.ino, ce->CeName);
-				cec += CE_SIZE(ce);
-			}
-		}
-#endif /* defined(I2P_TRACE) */
-	}
 	TraceClose(-1);
 }
 
@@ -453,369 +343,350 @@ PathToId(
 
 /* Private functions. */
 
-
-/*
- * Add a directory entry to the cache.
- */
-static void
-cacheAddEntry(
-	sam_id_t id,
-	sam_id_t parent_id,
-	char *name,
-	int name_l)
-{
-	struct CacheEntry *ce;
-	struct IdRef *ir;
-	int	ceSize;
-
-	ir = idListAdd(id);
-	if (ir->IrDcIndex != 0) {
-		ce = (struct CacheEntry *)ID_LOC(ir);
-		if (ce->CeId.gen == id.gen) {
-#if defined(I2P_TRACE)
-	Trace(TR_DEBUG, "[%d] Dircache add (exists) inode: %d.%d (%s)",
-	    dirCacheIndex, ce->CeId.ino, ce->CeId.gen, name);
-#endif /* defined(I2P_TRACE) */
-			return;
-		}
-	}
-
-	ceSize = STRUCT_RND(sizeof (struct CacheEntry)) + STRUCT_RND(name_l);
-	while (dirCache->DcSize + ceSize > dirCache->Dc.MfLen) {
-		if (dirCache->Dc.MfLen == 0 ||
-		    dirCache->Dc.MfLen >= CACHE_MAX) {
-			dirCache = createDirCache();
-		} else {
-			dirCache = MapFileGrow(dirCache, CACHE_INCR);
-			if (dirCache == NULL) {
-				LibFatal(MapFileGrow, dirCacheName);
-			}
-			dirCacheTable[dirCacheIndex] = dirCache;
-#if defined(I2P_TRACE)
-			Trace(TR_DEBUG, "[%d] Dircache realloc incr: %d",
-			    dirCacheIndex, CACHE_INCR);
-#endif /* defined(I2P_TRACE) */
-		}
-	}
-
-	ce = (struct CacheEntry *)(void *)((char *)dirCache + dirCache->DcSize);
-	dirCache->DcCount++;
-	dirCache->DcSize += ceSize;
-	ce->CeId = id;
-	ce->CeParId = parent_id;
-	ce->CeName_l = (short)name_l;
-	memmove(ce->CeName, name, name_l);
-#if defined(I2P_TRACE)
-	Trace(TR_DEBUG, "[%d] Dircache add (new) inode: %d.%d (%s)",
-	    dirCacheIndex, ce->CeId.ino, ce->CeId.gen, name);
-#endif /* defined(I2P_TRACE) */
-	ir->IrDcIndex = dirCacheIndex;
-	ir->IrOffset = Ptrdiff(ce, dirCache);
-}
-
-
-/*
- * Lookup file in cache.
- */
-static struct CacheEntry *
-cacheLookup(
-	sam_id_t id)
-{
-	struct IdRef *ir;
-	struct CacheEntry *ce;
-
-	ce = NULL;
-	ir = idListLookup(id);
-	if (ir != NULL && ir->IrDcIndex != 0) {
-		ce = (struct CacheEntry *)ID_LOC(ir);
-		if (ce->CeId.gen != id.gen) {
-#if defined(I2P_TRACE)
-			Trace(TR_DEBUG, "[%d] Dircache lookup failed "
-			    "inode: %d.%d exist: %d",
-			    ir->IrDcIndex, id.ino, id.gen, ce->CeId.gen);
-#endif /* defined(I2P_TRACE) */
-			ce = NULL;
-		}
-	}
-	return (ce);
-}
-
-
-/*
- * Create a directory cache.
- */
-static struct DirCache *
-createDirCache(void)
-{
-	struct DirCache *dc;
-	int dci = dirCacheIndex + 1;
-
-#if defined(I2P_TRACE)
-	Trace(TR_DEBUG, "Create dircache");
-#endif /* defined(I2P_TRACE) */
-
-	if (dirCacheTableCount >= CACHE_MAX_TABLE_COUNT) {
-		if (dci >= CACHE_MAX_TABLE_COUNT) {
-			dci = 0;
-		}
-		if (dirCacheTable[dci] != NULL) {
-			removeDirCache(dci);
-		}
-	} else if (dci >= dirCacheTableCount) {
-		dci = dirCacheTableCount;
-		dirCacheTableCount += DIR_CACHE_TABLE_INCR;
-		SamRealloc(dirCacheTable,
-		    dirCacheTableCount * sizeof (struct DirCache *));
-		memset(&dirCacheTable[dci], 0,
-		    (dirCacheTableCount - dci) * sizeof (struct DirCache *));
-	}
-
-	/*
-	 * Initialize an empty cache.
-	 */
-	snprintf(dirCacheName, sizeof (dirCacheName), CACHE"%d", dci);
-	dc = MapFileCreate(dirCacheName, CACHE_MAGIC, CACHE_INCR);
-	if (dc == NULL) {
-		LibFatal(create, dirCacheName);
-	}
-	dirCacheIndex = dci;
-	dirCacheTable[dirCacheIndex] = dc;
-	dc->Dc.MfValid = 1;
-	dc->DcCount = 0;
-	dc->DcSize = sizeof (struct DirCache);
-#if defined(I2P_TRACE)
-	Trace(TR_DEBUG, "[%d] Dircache alloc len: %u",
-	    dirCacheIndex, dc->Dc.MfLen);
-#endif /* defined(I2P_TRACE) */
-	return (dc);
-}
-
-
-/*
- * Add an entry to a idList.
- */
-static struct IdRef *
-idListAdd(
-	sam_id_t id)
-{
-	struct IdRef *ir, *irEnd;
+/* Create new cache entry for directory with specified id. */
+static DirCacheEntry_t *
+cacheEntryNew(sam_id_t id) {
 	int i;
-	int new;
-	int l, u;
+	DirCacheEntry_t *entry = NULL;
 
-	/*
-	 * Binary search list.
-	 */
-	l = 0;
-	u = idList->IlCount;
-	new = 0;
-	while (u > l) {
-		sam_ino_t ino;
-
-		i = (l + u) >> 1;	/* Find midpoint */
-		ir = &idList->IlEntry[i];
-		if (ir->IrDcIndex != 0) {
-			sam_id_t *ip;
-
-			ip = ID_LOC(ir);
-			ino = ip->ino;
-		} else {
-			ino = ir->IrOffset;
-		}
-		if (id.ino == ino) {
-			return (ir);
-		}
-		if (id.ino < ino) {
-			u = i;
-			new = u;
-		} else {
-			/* id.ino > ino */
-			l = i + 1;
-			new = l;
-		}
+	/* Make sure enough room for one more */
+	if (dirCacheCount >= dirCacheLen) {
+		dirCacheLen += CACHE_LEN_INCR;
+		SamRealloc(dirCache, dirCacheLen * sizeof (DirCacheEntry_t));
+		dirCacheTotSize += CACHE_LEN_INCR * sizeof (DirCacheEntry_t);
 	}
 
-	/*
-	 * Need a new entry.
-	 */
-	while (idList->IlSize + sizeof (struct IdRef) > idList->Il.MfLen) {
-		idList =
-		    MapFileGrow(idList, IDLIST_INCR * sizeof (struct IdRef));
-		if (idList == NULL) {
-			LibFatal(MapFileGrow, IDLIST);
-		}
-#if defined(I2P_TRACE)
-		Trace(TR_DEBUG, "Dircache grow idlist from: %d need: %d",
-		    idList->Il.MfLen, idList->IlSize + sizeof (struct IdRef));
-#endif /* defined(I2P_TRACE) */
+	/* Search for slot to use and set entry */
+	i = cacheSearch(id);
+	entry = &dirCache[i];
+
+	/* If not our slot, move everything to the right */
+	if (entry->id.ino != id.ino) {
+		memmove(entry + 1, entry,
+		    (dirCacheCount - i) * sizeof (DirCacheEntry_t));
+		dirCacheCount++;
 	}
 
-	/*
-	 * Set location where entry belongs in sorted order.
-	 * Move remainder of list up.
-	 */
-	ir = &idList->IlEntry[new];
-	irEnd = &idList->IlEntry[idList->IlCount];
-	if (Ptrdiff(irEnd, ir) > 0) {
-		memmove(ir+1, ir, Ptrdiff(irEnd, ir));
-	}
-	idList->IlCount++;
-	idList->IlSize += sizeof (struct IdRef);
-	ir->IrDcIndex = 0;
-	ir->IrOffset = id.ino;
-	return (ir);
+	/* Initialize entry */
+	memset(entry, 0, sizeof (DirCacheEntry_t));
+	entry->id = id;
+	entry->lastUsed = time(NULL);
+
+	return (entry);
 }
 
-
-/*
- * Lookup file in idList.
- */
-static struct IdRef *
-idListLookup(
-	sam_id_t id)
+/* Lookup existing cache entry for directory, NULL if not found */
+static DirCacheEntry_t *
+cacheLookup(sam_id_t id)
 {
-	struct IdRef *ir;
-	int	i;
-	int	l, u;
+	int i;
+	DirCacheEntry_t *entry = NULL;
 
-	/*
-	 * Binary search list.
-	 */
-	l = 0;
-	u = idList->IlCount;
-	while (u > l) {
-		sam_ino_t ino;
-
-		i = (l + u) >> 1;	/* Find midpoint */
-		ir = &idList->IlEntry[i];
-		if (ir->IrDcIndex != 0) {
-			sam_id_t *ip;
-
-			ip = ID_LOC(ir);
-			ino = ip->ino;
-		} else {
-			ino = ir->IrOffset;
-		}
-		if (id.ino == ino) {
-			return (ir);
-		}
-		if (id.ino < ino) {
-			u = i;
-		} else {
-			/* id.ino > ino */
-			l = i + 1;
-		}
+	i = cacheSearch(id);
+	if (dirCache[i].id.ino == id.ino &&
+	    dirCache[i].id.gen == id.gen) {
+		entry = &dirCache[i];
+		entry->lastUsed = time(NULL);
 	}
-	return (NULL);
+
+	return (entry);
 }
 
-
 /*
- * Read directory.
- * Guarantees that the entry with id is in the cache after return.
+ * Searches dirCache array for entry with given id.
+ * If found, returns index of entry matching id.
+ * If not found, returns index where entry should be inserted.
  */
 static int
-readDir(
-	sam_id_t parent_id,
-	sam_id_t id)
-{
-	static struct DirRead dr;
-	struct sam_dirent *dp;
-	char id_name[MAXNAMELEN];
-	int id_namelen = 0;
+cacheSearch(sam_id_t id) {
+	int i = dirCacheCount / 2;
+	int low = 0;
+	int high = dirCacheCount;
 
-	if (OpenDir(parent_id, NULL, &dr) < 0) {
-		return (-1);
+	/* Binary search dirCache array */
+	while (low < high) {
+		if (dirCache[i].id.ino < id.ino) {
+			low = i + 1;
+		} else if (dirCache[i].id.ino > id.ino) {
+			high = i;
+		} else { /* equal */
+			break;
+		}
+		i = ((uint_t)low + (uint_t)high) / 2;
 	}
 
-	/*
-	 * Read the directory to find the entry for the required inode.
-	 */
+	return (i);
+}
+
+/*
+ * Populates the given cache entry with the directory contents.
+ *
+ * On return the sam_dirent pointers in entry->ptrBuf will be
+ * sorted by inode.
+ */
+static int
+cacheEntryPopulate(DirCacheEntry_t *entry)
+{
+	sam_ioctl_idgetdents_t request;	/* Getdents request */
+	char *dirbuf;
+	char *endbuf;
+	sam_dirent_t *dirp;
+	int n;
+
 #if defined(I2P_TRACE)
 	Trace(TR_DEBUG, "Read dir start inode: %d.%d",
-	    parent_id.ino, parent_id.gen);
+	    entry->id.ino, entry->id.gen);
 #endif /* defined(I2P_TRACE) */
 
 	State->AfId2pathReaddir++;
 
-	while ((dp = GetDirent(&dr)) != NULL) {
-		char    *name;
+	entry->bufSize = 0;
+	entry->entCount = 0;
 
-		name = (char *)dp->d_name;
-		/* ignore dot and dot-dot */
-		if (*name == '.') {
-			if (*(name+1) == '\0' ||
-			    (*(name+1) == '.' && *(name+2) == '\0')) {
-				continue;
+	request.id = entry->id;
+	request.offset = 0;
+	request.eof = 0;
+
+	/* Read the directory to populate the cache entry */
+	while (!request.eof) {
+		if (entry->bufLen - entry->bufSize < MAXNAMELEN) {
+			entry->bufLen += CACHE_BUF_INCR;
+			SamRealloc(entry->buf, entry->bufLen);
+			dirCacheTotSize += CACHE_BUF_INCR;
+		}
+
+		dirbuf = entry->buf + entry->bufSize;
+		request.dir.ptr = (void *) dirbuf;
+		request.size = entry->bufLen - entry->bufSize;
+
+		if ((n = ioctl(FsFd, F_IDGETDENTS, &request)) < 0) {
+			return (-1);
+		}
+
+		endbuf = dirbuf + n;
+		dirp = (sam_dirent_t *)((void *)dirbuf);
+		while ((char *)dirp < endbuf) {
+			if ((entry->entCount + 1) * sizeof (sam_dirent_t *) >
+			    entry->ptrBufLen) {
+				entry->ptrBufLen += CACHE_LEN_INCR *
+				    sizeof (sam_dirent_t *);
+				SamRealloc(entry->ptrBuf, entry->ptrBufLen);
+				dirCacheTotSize += CACHE_LEN_INCR *
+				    sizeof (sam_dirent_t *);
 			}
-		}
 
-		if (dp->d_id.ino == id.ino) {
-			strncpy(id_name, name, dp->d_namlen);
-			id_namelen = dp->d_namlen;
-		} else {
-			cacheAddEntry(dp->d_id, parent_id, name, dp->d_namlen);
+			entry->ptrBuf[entry->entCount++] = dirp;
+			entry->bufSize += SAM_DIRSIZ(dirp);
+			dirp = (sam_dirent_t *)((void *)((char *)dirp +
+			    SAM_DIRSIZ(dirp)));
 		}
 	}
 
-	/* Guarantee that id's entry is cached */
-	if (id_namelen != 0) {
-		cacheAddEntry(id, parent_id, id_name, id_namelen);
-	}
+	/* Sort directory entry pointers */
+	qsort(entry->ptrBuf, entry->entCount,
+	    sizeof (sam_dirent_t *), cmpDirent);
+
+	/* Get rid of old entries */
+	cachePurge();
 
 	if (errno != 0) {
 		Trace(TR_ERR, "Read dir error inode: %d.%d errno: %d",
-		    parent_id.ino, parent_id.gen, errno);
-	}
-
-	if (close(dr.DrFd) < 0) {
-		Trace(TR_ERR, "Close dir error inode: %d.%d errno: %d",
-		    parent_id.ino, parent_id.gen, errno);
+		    entry->id.ino, entry->id.gen, errno);
 	}
 
 #if defined(I2P_TRACE)
 	Trace(TR_DEBUG, "Read dir done inode: %d.%d",
-	    parent_id.ino, parent_id.gen);
+	    entry->id.ino, entry->id.gen);
 #endif
 
 	return (0);
 }
 
-
 /*
- * Remove a cache by removing references to it from
- * the idlist.
+ * Purges the cache of old entries if the size of the cache is
+ * larger than the maximum allowed.  If the number of removed
+ * entries is large, then this function will remove inactive
+ * entries from dirCache.
  */
 static void
-removeDirCache(
-	int dci)
+cachePurge(void)
 {
-	static char dcName[] = CACHE"xxxxxxxx";
-	int i, j;
+	int i;
+	int min_i;
+	int min_age;
 
-	snprintf(dcName, sizeof (dcName), CACHE"%d", dci);
-
-	/*
-	 * Eliminate deleted entries and entries for this cache.
-	 */
-	j = 0;
-	for (i = 0; i < idList->IlCount; i++) {
-		if (idList->IlEntry[i].IrDcIndex != 0 &&
-		    idList->IlEntry[i].IrDcIndex != dci) {
-			if (i != j) {
-				idList->IlEntry[j] = idList->IlEntry[i];
+	/* Remove entries until below max size or only one left */
+	while (dirCacheTotSize > State->AfDirCacheSize &&
+	    (dirCacheCount - dirCacheDel) > 1) {
+		/* Find oldest unused entry and remove it */
+		min_i = MAX_INT;
+		min_age = MAX_INT;
+		for (i = 0; i < dirCacheCount; i++) {
+			DirCacheEntry_t *entry = &dirCache[i];
+			if (entry->id.gen == -1) {
+				continue;
 			}
-			j++;
+
+			if (entry->lastUsed < min_age) {
+				min_i = i;
+				min_age = entry->lastUsed;
+			}
 		}
+
+		cacheEntryRemove(&dirCache[min_i]);
 	}
 
-	Trace(TR_DEBUG, "[%d] Dircache remove cache (%s) from: %d to: %d",
-	    dci, dcName, idList->IlCount, j);
+	/*
+	 * Check to see if we need to shrink cache entry array.
+	 * This is true if the number of unused entries is greater
+	 * than two times the growth increase.
+	 */
+	if (dirCacheDel + (dirCacheLen - dirCacheCount) >
+	    2 * CACHE_LEN_INCR) {
+		int numRemoved = 0;
+		int hole_start = -1;	/* Where entries to delete begin */
+		int good_start = -1;	/* Where entries to keep begin */
+		for (i = 0; i < dirCacheCount; i++) {
+			if (dirCache[i].id.gen == -1) {
+				/*
+				 * Copy the current good entries over the
+				 * hole left by removed entries.
+				 */
+				if (hole_start >= 0 && good_start > 0) {
+					int hole_len = good_start - hole_start;
+					int good_len = i - good_start;
+					memmove(&dirCache[hole_start],
+					    &dirCache[good_start],
+					    good_len *
+					    sizeof (DirCacheEntry_t));
+					/*
+					 * numRemoved depends on whether we
+					 * copied more than the size of the
+					 * hole.
+					 */
+					numRemoved += good_len < hole_len ?
+					    good_len : hole_len;
+					hole_start += good_len;
+					good_start = -1;
+				} else if (hole_start < 0) {
+					hole_start = i;
+					good_start = -1;
+				}
+			} else {
+				if (good_start < 0) {
+					good_start = i;
+				}
+			}
+		}
+		/* Copy remainder of elements */
+		if (hole_start >= 0 && good_start > 0) {
+			int hole_len = good_start - hole_start;
+			int good_len = dirCacheCount - good_start;
+			memmove(&dirCache[hole_start], &dirCache[good_start],
+			    good_len * sizeof (DirCacheEntry_t));
+			/*
+			 * Here numRemoved is always the hole size because
+			 * we are at the end of the array.
+			 */
+			numRemoved += hole_len;
+		} else if (hole_start >= 0) {
+			/* dirCache ended with a hole */
+			numRemoved += dirCacheCount - hole_start;
+		}
 
-	idList->IlCount = j;
-	idList->IlSize = sizeof (struct IdList) + (j-1) * sizeof (struct IdRef);
+		/* Need to readjust total size for new dirCacheLen */
+		dirCacheTotSize -= dirCacheLen * sizeof (DirCacheEntry_t);
 
-	(void) unlink(dcName);
-	(void) ArMapFileDetach(dirCacheTable[dci]);
-	dirCacheTable[dci] = NULL;
+		dirCacheLen -= numRemoved;
+		/* Round up length to the nearest CACHE_LEN_INCR */
+		dirCacheLen += CACHE_LEN_INCR - (dirCacheLen % CACHE_LEN_INCR);
+
+		/* Resize dirCache */
+		SamRealloc(dirCache, dirCacheLen * sizeof (DirCacheEntry_t));
+		dirCacheTotSize += dirCacheLen * sizeof (DirCacheEntry_t);
+
+		dirCacheCount -= numRemoved;
+		dirCacheDel = 0;
+	}
+}
+
+/* Lookup a directory entry with given id in the provided cache entry. */
+static sam_dirent_t *
+cacheEntryLookup(DirCacheEntry_t *entry, sam_id_t id)
+{
+	int i = entry->entCount / 2;
+	int low = 0;
+	int high = entry->entCount;
+	sam_dirent_t *dirent = NULL;
+
+	/* Binary search dirent ptrBuf array */
+	while (low < high) {
+		if (entry->ptrBuf[i]->d_id.ino < id.ino) {
+			low = i + 1;
+		} else if (entry->ptrBuf[i]->d_id.ino > id.ino) {
+			high = i;
+		} else { /* equal */
+			if (entry->ptrBuf[i]->d_id.gen == id.gen) {
+				dirent = entry->ptrBuf[i];
+			}
+			break;
+		}
+		i = ((uint_t)low + (uint_t)high) / 2;
+	}
+
+	return (dirent);
+}
+
+/*
+ * Remove the given cache entry.
+ * Frees memory used by entry and marks entry removed
+ * by setting id.gen to -1.  The entry remains in dirCache
+ * with ino still set for binary search purposes.
+ */
+static void
+cacheEntryRemove(DirCacheEntry_t *entry)
+{
+	if (entry->buf != NULL) {
+		SamFree(entry->buf);
+		entry->buf = NULL;
+	}
+	if (entry->ptrBuf != NULL) {
+		SamFree(entry->ptrBuf);
+		entry->ptrBuf = NULL;
+	}
+
+	dirCacheTotSize -= entry->bufLen;
+	dirCacheTotSize -= entry->ptrBufLen;
+
+	/*
+	 * Leave ino number for binary search purposes,
+	 * Set gen to -1 to mark removed,
+	 * Set lastUsed to MAX_INT for LRU defense,
+	 * Set everything else to 0
+	 */
+	entry->id.gen = -1;
+	entry->lastUsed = MAX_INT;
+	entry->parent_id.ino = 0;
+	entry->parent_id.gen = 0;
+	entry->entCount = 0;
+	entry->bufLen = 0;
+	entry->bufSize = 0;
+	entry->ptrBufLen = 0;
+
+	dirCacheDel++;
+}
+
+/* Comparison function to sort directory entries using qsort */
+static int
+cmpDirent(const void *v1, const void *v2) {
+	sam_dirent_t *d1 = *((sam_dirent_t **)v1);
+	sam_dirent_t *d2 = *((sam_dirent_t **)v2);
+
+	if (d1->d_id.ino < d2->d_id.ino) {
+		return (-1);
+	} else if (d1->d_id.ino > d2->d_id.ino) {
+		return (1);
+	} else {
+		return (0);
+	}
 }

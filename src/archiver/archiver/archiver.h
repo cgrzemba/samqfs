@@ -34,7 +34,7 @@
 #ifndef ARCHIVER_H
 #define	ARCHIVER_H
 
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 
 /* Local headers. */
 #include "common.h"
@@ -63,6 +63,7 @@ DCL struct FileSys {
 		ushort_t FsFlags;	/* File system flags */
 		int	FsBackGndInterval;	/* Background scan interval */
 		int	FsBackGndTime;	/* Background scan time of day */
+		int	FsDirCacheSize;	/* Directory cache size */
 		int	FsInterval;	/* Scan interval */
 		upath_t	FsLogFile;	/* Archive log file */
 		int	FsMaxpartial;	/* Max Partial size in kilobytes */

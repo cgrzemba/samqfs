@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.72 $"
+#pragma ident "$Revision: 1.73 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -612,6 +612,8 @@ printConf(void)
 		    NULL, 0));
 		printf("  background_time: %02d:%02d\n",
 		    fs->FsBackGndTime >> 8, fs->FsBackGndTime & 0xff);
+		printf("  dircache_size: %s\n",
+		    StrFromFsize(fs->FsDirCacheSize, 2, NULL, 0));
 		/* Logfile */
 		printf("  %s: %s\n", GetCustMsg(4616), fs->FsLogFile);
 		fsfp = FilesysProps[i];

@@ -37,7 +37,7 @@
 #ifndef _AML_ARCHIVER_H
 #define	_AML_ARCHIVER_H
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 /* SAM-FS headers. */
 #include "sam/defaults.h"
@@ -85,6 +85,7 @@
 #define	BACKGROUND_SCAN_INTERVAL (24 * 60 * 60)	/* Background scan interval */
 #define	BACKGROUND_SCAN_TIME (0)	/* Background scan time (hhmm) */
 #define	CBARCHMAX (0)			/* Honeycomb archive file size */
+#define	DIR_CACHE_SIZE (64 * 1024 * 1024) /* Directory cache size 64M */
 #define	DKARCHMAX (1024 * 1024 * 1024)	/* Disk archive file size 1G */
 #define	ODARCHMAX (1024 * 1024 * 1024)	/* Optical archive file size 1G */
 #define	READ_TIMEOUT (1 * 60)	/* Timeout for reading file being archived */
@@ -158,7 +159,7 @@ struct ArchiverdState {
 /* Arfind daemon state file. */
 
 #define	AF_MAGIC 0106232405
-#define	AF_VERSION 70219	/* Arfind daemon state file version (YMMDD) */
+#define	AF_VERSION 81215	/* Arfind daemon state file version (YMMDD) */
 
 /* File system examination method. */
 typedef enum { EM_none,
@@ -202,6 +203,7 @@ struct ArfindState {
 	int 		AfBackGndInterval; /* Background scan interval */
 	int		AfBackGndTime;	/* Background time of day */
 	int		AfInterval;	/* Scan interval */
+	int		AfDirCacheSize;	/* Maximum size of directory cache */
 	upath_t		AfLogFile;	/* Archiver log file name */
 	boolean_t	AfNormalExit;	/* arfind had a normal exit */
 	char		AfOprMsg[OPRMSG_SIZE]; /* Operator message */

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.115 $"
+#pragma ident "$Revision: 1.116 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -78,6 +78,7 @@ static void dirArchmeta(void);
 static void dirBackGndInterval(void);
 static void dirBackGndTime(void);
 static void dirBufsize(void);
+static void dirDirCacheSize(void);
 static void dirDrives(void);
 static void dirEndparams(void);
 static void dirEndvsnpools(void);
@@ -130,6 +131,7 @@ static DirProc_t directives[] = {
 	{ "archivemeta",	dirArchmeta,	DP_value,	4542 },
 	{ "background_interval", dirBackGndInterval, DP_value,	4548 },
 	{ "background_time",	dirBackGndTime,	DP_value,	4549 },
+	{ "dircache_size",	dirDirCacheSize, DP_value,	4551 },
 	{ "endparams",		dirNoBegin,	DP_set   },
 	{ "endvsnpools",	dirNoBegin,	DP_set   },
 	{ "endvsns",		dirNoBegin,	DP_set   },
@@ -482,6 +484,30 @@ dirBufsize(void)
 			/* bufsize option must be 'lock' */
 			ReadCfgError(CustMsg(4521));
 		}
+	}
+}
+
+/*
+ * dircache_size = directory cache maximum size
+ */
+static void
+dirDirCacheSize(void)
+{
+	fsize_t val;
+
+	/* Get cache size */
+	asmSize(&val, dirName);
+
+	/* Between 8M and 512M */
+	checkRange(dirName, val, (8<<20), (512<<20));
+	if (fsn == -1) {
+		int	i;
+
+		for (i = 0; i < FileSysTable->count; i++) {
+			FileSysTable->entry[i].FsDirCacheSize = (int)val;
+		}
+	} else {
+		FileSysTable->entry[fsn].FsDirCacheSize = (int)val;
 	}
 }
 

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.109 $"
+#pragma ident "$Revision: 1.110 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -350,6 +350,7 @@ makeFileSys(void)
 
 		fs->FsBackGndInterval = BACKGROUND_SCAN_INTERVAL;
 		fs->FsBackGndTime = BACKGROUND_SCAN_TIME;
+		fs->FsDirCacheSize = DIR_CACHE_SIZE;
 		fs->FsInterval = SCAN_INTERVAL;
 		fs->FsExamine = EM_noscan;
 		fs->FsMaxpartial = fi.fi_maxpartial;
@@ -726,6 +727,10 @@ writeFileProps(void)
 		if (state->AfBackGndTime != fs->FsBackGndTime) {
 			changed = TRUE;
 			state->AfBackGndTime = fs->FsBackGndTime;
+		}
+		if (state->AfDirCacheSize != fs->FsDirCacheSize) {
+			changed = TRUE;
+			state->AfDirCacheSize = fs->FsDirCacheSize;
 		}
 		if (state->AfInterval != fs->FsInterval) {
 			changed = TRUE;

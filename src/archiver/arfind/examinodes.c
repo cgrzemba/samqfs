@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -333,9 +333,11 @@ ExamInodesRmInode(
 		struct ExamListEntry *xe;
 
 		xe = (struct ExamListEntry *)ID_LOC(ir);
-		xe->XeFlags |= XE_free;
-		xe->XeTime = TIME_MAX;
-		examList->ElFree++;
+		if (!(xe->XeFlags & XE_free)) {
+			xe->XeFlags |= XE_free;
+			xe->XeTime = TIME_MAX;
+			examList->ElFree++;
+		}
 #if defined(FILE_TRACE)
 		Trace(TR_DEBUG, "Examlist remove inode: %d.%d event: '%s'",
 		    xe->XeId.ino, xe->XeId.gen,
@@ -613,6 +615,9 @@ addExamList(
 		 * Set the earliest time.
 		 */
 		xe->XeEvent = (ushort_t)event;
+		if (xe->XeFlags & XE_free) {
+			examList->ElFree--;
+		}
 		xe->XeFlags &= ~XE_free;
 		if (xe->XeId.gen == id.gen) {
 			xe->XeTime = min(xe->XeTime, xeTime);

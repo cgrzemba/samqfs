@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.621 $"
+$ pragma ident "$Revision: 1.622 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -1291,6 +1291,7 @@ $ 4534 ** NOT USED ** Disk archiving not allowed for metadata
 4548 Background interval value missing
 4549 Background time value missing
 4550 Invalid background time
+4551 Invalid directory cache size
 
 $ Archiver lister output
 $ 4600 * NOT USED ** %s: too many arguments

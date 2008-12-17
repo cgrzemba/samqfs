@@ -1,4 +1,4 @@
-.\" $Revision: 1.91 $
+.\" $Revision: 1.92 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -180,6 +180,18 @@ local time.
 .RS
 .LP
 The default 0000 (midnight).
+.RE
+.TP 5
+.BI "dircache_size = " size
+Set the maximum size of the directory cache to
+.I size. 
+The directory cache for name lookups will not exceed
+this size.  If the filesystem contains very large directories,
+increasing this value may help performance.  The minimum
+value is 8M and the maximum is 512M.
+.RS
+.LP
+The default is 64M. 
 .RE
 .TP 5
 .BI "bufsize = " " media buffer_size " "[ " lock " ]"
