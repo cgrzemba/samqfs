@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.121 $"
+#pragma ident "$Revision: 1.122 $"
 
 #include "sam/osversion.h"
 
@@ -913,9 +913,8 @@ sam_get_sm_blklist(sam_mount_t *mp)
 	/* N.B. Bad indentation here to meet cstyle requirements */
 	for (j = 0; j < SM_BLKCNT(mp, block->dt); j++) {
 		if (smp->free & (1 << j)) {
-			if ((bnx < mp->mi.m_fs[smp->ord].system) ||
-			    (!mp->mi.m_fs[smp->ord].system) ||
-			    (bnx > mp->mi.m_fs[smp->ord].part.pt_capacity)) {
+			if ((bnx < mp->mi.m_sbp->eq[smp->ord].fs.system) ||
+			    (bnx > mp->mi.m_sbp->eq[smp->ord].fs.capacity)) {
 				cmn_err(CE_WARN,
 			"SAM-QFS: %s: sam_get_sm_blklist, bn=0x%llx, ord=%d",
 				    mp->mt.fi_name, bnx, smp->ord);
@@ -2406,6 +2405,9 @@ sam_grow_fs(
 		sblk->info.sb.capacity += sop->capacity;
 		sblk->info.sb.space += sop->space;
 	}
+	dp->part.pt_capacity = sop->capacity * 1024;
+	dp->part.pt_space = sop->space * 1024;
+
 	for (i = 0, ddp = dp, dsop = sop; i < dp->num_group;
 	    i++, ddp++, dsop++) {
 		ddp->skip_ord = 1;	/* Skip until block pool initialized */
