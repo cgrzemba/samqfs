@@ -30,7 +30,7 @@
 /*
  *	stk.c -  APIs to do ACSLS network attached library ACSAPI calls.
  */
-#pragma	ident	"$Revision: 1.45 $"
+#pragma	ident	"$Revision: 1.46 $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -108,6 +108,7 @@ static int parse_vol_resp(ALIGNED_BYTES buf, sqm_lst_t *fmt_lst,
     sqm_lst_t **lst);
 
 static int parse_f(char *f, char *s);
+static int parse_f_byte(char *f, char *s);
 static int parse_f_int(char *f, int *i);
 static int parse_fmt_resp(char *f, sqm_lst_t **l);
 static int fmt_kv_lst(sqm_lst_t *fmt_lst, sqm_lst_t **kv_lst);
@@ -2342,13 +2343,13 @@ parse_drive_resp(
 
 			/* extract string from <f ....>..</f> */
 			ptr2 += 3; /* skip past <r> */
-			l = parse_f(ptr2, &drive->id.panel_id.lsm_id.acs);
+			l = parse_f_byte(ptr2, &drive->id.panel_id.lsm_id.acs);
 			ptr2 += l;
-			l = parse_f(ptr2, &drive->id.panel_id.lsm_id.lsm);
+			l = parse_f_byte(ptr2, &drive->id.panel_id.lsm_id.lsm);
 			ptr2 += l;
-			l = parse_f(ptr2, &drive->id.panel_id.panel);
+			l = parse_f_byte(ptr2, &drive->id.panel_id.panel);
 			ptr2 += l;
-			l = parse_f(ptr2, &drive->id.drive);
+			l = parse_f_byte(ptr2, &drive->id.drive);
 			ptr2 += l;
 			l = parse_f(ptr2, drive->status);
 			ptr2 += l;
@@ -2426,9 +2427,9 @@ parse_lsm_resp(
 			memset(lsm, 0, sizeof (acs_lsm_t));
 
 			ptr2 += 3; /* skip past <r> */
-			l = parse_f(ptr2, &lsm->id.acs);
+			l = parse_f_byte(ptr2, &lsm->id.acs);
 			ptr2 += l;
-			l = parse_f(ptr2, &lsm->id.lsm);
+			l = parse_f_byte(ptr2, &lsm->id.lsm);
 			ptr2 += l;
 			l = parse_f(ptr2, lsm->serial_num);
 			ptr2 += l;
@@ -2864,6 +2865,47 @@ parse_f(char *f, char *s) {
 	++f;
 
 	strlcpy(s, f, 64);
+
+	return (n + 4);
+}
+
+static int /* return number of characters parsed */
+parse_f_byte(char *f, char *b) {
+
+	size_t n;
+	char *ptr;
+	long l;
+
+	if (f == NULL || strlen(f) == 0) {
+		return (0);
+	}
+
+	ptr = strstr(f, "</f>");
+	if (ptr != NULL) {
+		*ptr = '\0';
+	}
+	n = strlen(f);
+
+	/* walk past the opening <f> */
+	for (; f != NULL && *f != '>'; f++);
+	++f;
+
+	errno = 0;
+	l = (int)strtol(f, (char **)NULL, 10);
+	if (errno != 0) {
+		Trace(TR_ERR, "Unexpected byte value returned by ACSLS %s", f);
+		*b = -3;
+	}
+
+	/*
+	 * Check for range overflow and trace an error if it falls outside
+	 * the range.
+	 */
+	if (l < CHAR_MIN || l >= CHAR_MAX) {
+		Trace(TR_ERR, "Unexpected size returned by ACSLS %d", l);
+		*b = -3;
+	}
+	*b = (char)l;
 
 	return (n + 4);
 }

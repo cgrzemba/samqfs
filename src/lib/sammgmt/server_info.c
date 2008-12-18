@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 /*
  *	server_info.c -  generic system info functions
@@ -1387,6 +1387,12 @@ get_config_summary(ctx_t *c, char **res) {
 			library_t *lib = (library_t *)n->data;
 			int lib_entries = 0;
 			if (lib != NULL) {
+
+				/* Skip the historian */
+				if (strncmp(lib->base_info.equ_type, "hy",
+				    sizeof (devtype_t)) == 0) {
+					continue;
+				}
 				libs_printed = B_TRUE;
 
 				if (n == lst->head) {
@@ -1400,11 +1406,12 @@ get_config_summary(ctx_t *c, char **res) {
 					cat_entries += lib_entries;
 				}
 			}
-			if (libs_printed) {
-				STRLCATGROW(tmp_res, ",", sz);
-			}
 
 		}
+		if (libs_printed) {
+			STRLCATGROW(tmp_res, ",", sz);
+		}
+
 		if (cat_entries != 0) {
 			snprintf(detail_buf, sizeof (detail_buf),
 			    "tape_count=%d,", cat_entries);
