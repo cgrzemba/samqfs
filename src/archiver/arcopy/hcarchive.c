@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -790,15 +790,8 @@ querySeqnumMeta(
 		}
 		if (hcerr == HCERR_OK) {
 			/*
-			 * Found a seqnum metadata record.
-			 * Check that we found only one.
+			 * Found seqnum metadata record.
 			 */
-			if (seqnumMetadata.exists == B_TRUE) {
-				Trace(TR_MISC,
-				    "Multiple seqnum metadata records: '%s'",
-				    queryBuf);
-				exit(EXIT_FAILURE);
-			}
 			seqnumMetadata.exists = B_TRUE;
 		}
 	}
