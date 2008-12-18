@@ -50,7 +50,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.5 $"
+#pragma ident "$Revision: 1.6 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -819,9 +819,8 @@ sam_read_file(pblock_t *pp)
 				    "shutdown, off %lld, filesize %lld",
 				    byte_offset, pp->file_size);
 			} else {
-				Trace(TR_MISC, "sam_read_file: completion cnt"
-				    " >= blk count, completion cnt %lld >"
-				    " blk count %lld",
+				Trace(TR_MISC, "sam_read_file:"
+				    " completion cnt %lld >= blk count %lld",
 				    completion_count, pp->block_count);
 			}
 			break;		/* Exit read loop */
@@ -1060,7 +1059,13 @@ sam_check_inodes(work_t *wp)
 			continue;
 		}
 		if (sam_ord_found(ip)) {
-			if (sam_process_file(mp, ip)) {
+			/*
+			 * Files selected for releasing/removal may have been
+			 * deleted before we start processing the file. Ignore
+			 * ENOENT error for this case.
+			 */
+			if (sam_process_file(mp, ip) &&
+			    (errno != ENOENT)) {
 				pthread_mutex_lock(&log_lock);
 				control.total_errors++;
 				pthread_mutex_unlock(&log_lock);
@@ -1094,12 +1099,11 @@ sam_ord_found(sam_perm_inode_t *ip)
 				    ip->di.id.ino, ip->di.id.gen, control.ord);
 				return (TRUE);
 			} else {
-				if (errno > 0) {
+				if ((errno > 0) && (errno != ENOENT)) {
 					Trace(TR_ERR, "sam_ord_found:"
 					    "%d.%d ord=%d, ERROR: %s",
 					    ip->di.id.ino, ip->di.id.gen,
-					    control.ord,
-					    strerror(errno));
+					    control.ord, strerror(errno));
 				}
 				return (FALSE);
 			}
@@ -1211,7 +1215,7 @@ sam_process_file(
 	if (control.display_all_files) {
 		sam_write_log(ip, error);
 	}
-	return (1);
+	return (error);
 }
 
 
