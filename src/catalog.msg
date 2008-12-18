@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.622 $"
+$ pragma ident "$Revision: 1.623 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2608,6 +2608,9 @@ $ ===================================================================
 13484 feature:  Aligned Maps\n
 13485 Extended attribute files present\n
 13486 Large host table for '%s' not supported with previous (-P) version of file system.
+13487 ALERT:  Basic checks of allocation maps failed.\n\
+		File system may be critically damaged.\n\
+		Invalid allocation map eq %d disk offset %lldK minimum %lldK.\n
 
 $  utility/csd	(13500)
 $ ===================================================================

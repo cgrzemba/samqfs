@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 
 /* ----- Includes */
@@ -992,12 +992,12 @@ check_fs(void)
 		sblk_version = SAMFS_SBLKV1;
 		sprintf(ver_str, "%s", "1");
 		update_sblk_to_40(&sblock, fs_count, mm_count);
-	} else if (sblock.info.sb.magic == SAM_MAGIC_V2A) {
-		sblk_version = SAMFS_SBLKV2;
-		sprintf(ver_str, "%s", "2A");
-	} else {
+	} else if (sblock.info.sb.magic == SAM_MAGIC_V2) {
 		sblk_version = SAMFS_SBLKV2;
 		sprintf(ver_str, "%s", "2");
+	} else {
+		sblk_version = SAMFS_SBLKV2;
+		sprintf(ver_str, "%s", "2A");
 	}
 
 	if (cvt_to_shared || cvt_to_nonshared) {
@@ -3750,7 +3750,8 @@ extend_dup(void)
 void
 write_map(int ord)	/* Disk ordinal */
 {
-	int ii, dt;
+	int dt;
+	int ii;
 	uint_t *optr;
 	uint_t *iptr;
 	int daul;
@@ -3763,6 +3764,8 @@ write_map(int ord)	/* Disk ordinal */
 	int blocks;
 	sam_daddr_t	bn;
 	int mmord;
+	offset_t allocmap;
+	offset_t allocmap_min;
 
 	devlp = &devp->device[ord];
 	if (devlp->type == DT_META) {
@@ -3775,6 +3778,36 @@ write_map(int ord)	/* Disk ordinal */
 	blocks = sblock.eq[ord].fs.dau_size;	/* no. of bits */
 	bn = 0;
 	iptr = (uint_t *)devlp->mm;
+
+	/*
+	 * Verify allocation bitmap disk offset.
+	 */
+	allocmap = sblock.eq[ord].fs.allocmap;
+	if (sblock.info.sb.mm_count == 0) {
+		allocmap_min = SUPERBLK + LG_DEV_BLOCK(mp, DD);
+		if (SBLK_MAPS_ALIGNED(&sblock.info.sb)) {
+			allocmap_min = roundup(allocmap_min,
+			    LG_DEV_BLOCK(mp, DD));
+		}
+	} else {
+		allocmap_min = SUPERBLK + (sizeof (sam_sblk_t) /
+		    SAM_DEV_BSIZE);
+		if (SBLK_MAPS_ALIGNED(&sblock.info.sb)) {
+			allocmap_min = roundup(allocmap_min,
+			    LG_DEV_BLOCK(mp, MM));
+		}
+	}
+	if (allocmap < allocmap_min) {
+		error(0, 0,
+		    catgets(catfd, SET, 13487,
+		    "ALERT:  Basic checks of allocation maps failed.\n"
+		    "        File system may be critically damaged.\n"
+		    "        Invalid allocation map eq %d disk offset %lldK "
+		    "mimimum %lldK.\n"),
+		    sblock.eq[ord].fs.eq, allocmap, allocmap_min);
+		clean_exit(ES_error);
+	}
+
 	for (ii = 0; ii < daul; ii++) {
 		optr = (uint_t *)dcp;
 		for (ll = 0; ll < (SAM_DEV_BSIZE / NBPW); ll++) {

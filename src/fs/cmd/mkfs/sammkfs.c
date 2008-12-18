@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.40 $"
+#pragma ident "$Revision: 1.41 $"
 
 
 /* ----- Include Files ---- */
@@ -1125,14 +1125,18 @@ init_sblk()
 
 	(void *) memcpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblock.info.sb.name));
-	sblock.info.sb.magic = prev_sblk_ver ? SAM_MAGIC_V2 : SAM_MAGIC_V2A;
+	if (prev_sblk_ver) {
+		sblock.info.sb.magic = SAM_MAGIC_V2;
+	} else {
+		sblock.info.sb.magic = SAM_MAGIC_V2A;
+		sblock.info.sb.opt_features |= SBLK_FV1_MAPS_ALIGNED;
+	}
 	sblock.info.sb.fi_type = mnt_info.params.fi_type;
 	sblock.info.sb.min_usr_inum = SAM_MIN_USER_INO;
 	sblock.info.sb.ext_bshift = SAM_SHIFT;
 	sblock.info.sb.time = fstime;
 	sblock.info.sb.init = fstime;	/* File system initialize time */
 	sblock.info.sb.opt_mask_ver = SBLK_OPT_VER1;
-	sblock.info.sb.opt_features |= SBLK_FV1_MAPS_ALIGNED;
 	sblock.info.sb.opt_mask = 0;
 	sblock.info.sb.eq = mnt_info.params.fi_eq;
 
@@ -1164,18 +1168,39 @@ init_sblk()
 	sblock.info.sb.fs_id.val[1] = gethostid();
 
 	/*
-	 * Loop through the devices, initializing the superblocks
+	 * Loop through the metadata devices, initializing the superblocks.
+	 * We want the metadata bitmaps allocated before the data bitmaps
+	 * to handle unusual cases (mm, mr, mr, mm).
 	 */
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
 		sblk_args_t args;
 
-		args.ord = ord;
-		args.type = dp->type;
-		args.blocks = dp->blocks;
-		args.kblocks[DD] = LG_DEV_BLOCK(mp, DD);
-		args.kblocks[MM] = LG_DEV_BLOCK(mp, MM);
-		sam_init_sblk_dev(&sblock, &args);
+		if (dp->type == DT_META) {
+			args.ord = ord;
+			args.type = dp->type;
+			args.blocks = dp->blocks;
+			args.kblocks[DD] = LG_DEV_BLOCK(mp, DD);
+			args.kblocks[MM] = LG_DEV_BLOCK(mp, MM);
+			sam_init_sblk_dev(&sblock, &args);
+		}
+	}
+
+	/*
+	 * Loop through the data devices, initializing the superblocks.
+	 */
+	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
+	    ord++, dp++) {
+		sblk_args_t args;
+
+		if (dp->type != DT_META) {
+			args.ord = ord;
+			args.type = dp->type;
+			args.blocks = dp->blocks;
+			args.kblocks[DD] = LG_DEV_BLOCK(mp, DD);
+			args.kblocks[MM] = LG_DEV_BLOCK(mp, MM);
+			sam_init_sblk_dev(&sblock, &args);
+		}
 	}
 
 	/*
@@ -1191,8 +1216,8 @@ init_sblk()
 				sblk2 = sop->dau_next;
 				sop->dau_next += LG_DEV_BLOCK(mp, dt);
 			}
-			sop->dau_next = roundup(sop->dau_next,
-			    LG_DEV_BLOCK(mp, dt));
+				sop->dau_next = roundup(sop->dau_next,
+				    LG_DEV_BLOCK(mp, dt));
 		} else {
 			sop->dau_next = roundup(sop->dau_next,
 			    LG_DEV_BLOCK(mp, dt));
@@ -1205,6 +1230,7 @@ init_sblk()
 		}
 		sop->system = roundup(sop->dau_next, LG_DEV_BLOCK(mp, dt));
 	}
+
 	sblock.info.sb.offset[0] = super_blk;	/* Superblock offset */
 	sblock.info.sb.offset[1] = sblk2;	/* Backup superblock offset */
 	sblock.info.sb.sblk_size = L_SBINFO +

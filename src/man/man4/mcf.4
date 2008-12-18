@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.95 $
+.\" $Revision: 1.96 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -336,6 +336,8 @@ Units (DAUs) of 4 kilobytes and large DAUs of 16, 32, or 64 kilobytes.
 The default is 64 kilobytes.
 In an \fBms\fR family set, this device stores both metadata and file data.
 In an \fBma\fR or \fBmat\fR family set, this device stores only file data.
+At least one \fBmd\fR or \fBmr\fR device is required in an
+\fBma\fR or \fBmat\fR file system.
 .TP
 \fBmr\fR
 A magnetic disk that is part of an
@@ -343,7 +345,8 @@ A magnetic disk that is part of an
 This device stores file data allocated in large Disk Allocation
 Units (DAUs) that are a multiple of 8 kilobytes in a fully adjustable
 range from 8 to 65528 kilobytes.  The default is 64 kilobytes.
-At least one \fBmr\fR device is required in an
+File data is allocated on this device.
+At least one \fBmr\fR or \fBmd\fR device is required in an
 \fBma\fR or \fBmat\fR file system.
 .TP
 \fBg\fIXXX\fR

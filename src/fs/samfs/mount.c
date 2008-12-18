@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.240 $"
+#pragma ident "$Revision: 1.241 $"
 #endif
 
 #include "sam/osversion.h"
@@ -730,12 +730,14 @@ sam_mount_fs(sam_mount_t *mp)
 int					/* ERRNO if error, 0 if successful. */
 sam_set_mount(sam_mount_t *mp)
 {
-	int i, dau;
+	int i, dau, ord;
 	int err_line = 0;
 	short obj_pool = -1;
 	int error = 0;
 	offset_t capacity = 0;
 	offset_t mm_capacity = 0;
+	offset_t allocmap;
+	offset_t allocmap_min;
 	struct sam_sblk *sblk;
 	struct sam_sbinfo *sb;
 
@@ -1162,7 +1164,6 @@ sam_set_mount(sam_mount_t *mp)
 	if (SAM_IS_OBJECT_FS(mp)) {
 		mp->mt.fi_obj_pool = obj_pool;
 	}
-
 	if (mm_capacity != sblk->info.sb.mm_capacity) {
 		cmn_err(CE_WARN,
 		    "SAM-QFS: %s: metadata eq capacity %llx "
@@ -1231,6 +1232,52 @@ sam_set_mount(sam_mount_t *mp)
 			} else if (dau <= SAM_CONTIG_LUN) {
 				mp->mt.fi_stripe[DD] = SAM_CONTIG_LUN / dau;
 			}
+		}
+	}
+
+	/*
+	 * Verify allocation bitmap disk offset except for object devices.
+	 * Note that the maps for stripe groups exist only on the first
+	 * stripe group element.
+	 */
+	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
+		if ((sblk->eq[i].fs.state == DEV_OFF) ||
+		    (sblk->eq[i].fs.state == DEV_DOWN)) {
+			continue;
+		}
+		if (is_osd_group(sblk->eq[ord].fs.type)) {
+			continue;
+		}
+		if (is_stripe_group(sblk->eq[ord].fs.type)) {
+			if (sblk->eq[ord].fs.num_group == 0) {
+				continue;
+			}
+		}
+		allocmap = sblk->eq[ord].fs.allocmap;
+		if (sblk->info.sb.mm_count == 0) {
+			allocmap_min = SUPERBLK + LG_DEV_BLOCK(mp, DD);
+			if (SBLK_MAPS_ALIGNED(&sblk->info.sb)) {
+				allocmap_min = roundup(allocmap_min,
+				    LG_DEV_BLOCK(mp, DD));
+			}
+		} else {
+			allocmap_min = SUPERBLK + (sizeof (sam_sblk_t) /
+			    SAM_DEV_BSIZE);
+			if (SBLK_MAPS_ALIGNED(&sblk->info.sb)) {
+				allocmap_min = roundup(allocmap_min,
+				    LG_DEV_BLOCK(mp, MM));
+			}
+		}
+		if (allocmap < allocmap_min) {
+			cmn_err(CE_WARN,
+			    "SAM-QFS: %s: Invalid allocation map eq %d "
+			    "disk offset %lldK minimum %lldK\n",
+			    mp->mt.fi_name, sblk->eq[ord].fs.eq,
+			    allocmap, allocmap_min);
+			err_line = __LINE__;
+			error = EINVAL;
+			TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
+			return (error);
 		}
 	}
 

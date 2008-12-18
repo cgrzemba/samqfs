@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.50 $"
+#pragma ident "$Revision: 1.51 $"
 
 /* Feature test switches. */
 
@@ -758,54 +758,64 @@ SamPrintSB(struct sam_sblk *sbp, char *str)
 {
 	int i;
 
-	printf("%s:\n\tsblk.info.sb.name        = '%c%c%c%c'\n",
+	printf("%s:\n\tsblk.info.sb.name         = '%c%c%c%c'\n",
 	    str,
 	    sbp->info.sb.name[0],
 	    sbp->info.sb.name[1],
 	    sbp->info.sb.name[2],
 	    sbp->info.sb.name[3]);
-	printf("\tsblk.info.sb.magic       = %#x\n", (int)sbp->info.sb.magic);
-	printf("\tsblk.info.sb.init        = %#x\n", (int)sbp->info.sb.init);
-	printf("\tsblk.info.sb.ord         = %#x\n", (int)sbp->info.sb.ord);
-	printf("\tsblk.info.sb.fs_name     = '%s'\n",
+	printf("\tsblk.info.sb.magic        = %#x\n", (int)sbp->info.sb.magic);
+	printf("\tsblk.info.sb.init         = %#x\n", (int)sbp->info.sb.init);
+	printf("\tsblk.info.sb.ord          = %#x\n", (int)sbp->info.sb.ord);
+	printf("\tsblk.info.sb.fi_type      = %#x\n",
+	    (int)sbp->info.sb.fi_type);
+	printf("\tsblk.info.sb.fs_name      = '%s'\n",
 	    (char *)&sbp->info.sb.fs_name);
-	printf("\tsblk.info.sb.time        = %#x\n", (int)sbp->info.sb.time);
-	printf("\tsblk.info.sb.state       = %#x (unused)\n",
+	printf("\tsblk.info.sb.time         = %#x\n", (int)sbp->info.sb.time);
+	printf("\tsblk.info.sb.state        = %#x (unused)\n",
 	    (int)sbp->info.sb.state);
-	printf("\tsblk.info.sb.inodes      = %#llx\n",
+	printf("\tsblk.info.sb.inodes       = %#llx\n",
 	    (long long)sbp->info.sb.inodes);
-	printf("\tsblk.info.sb.offset[0]   = %#llx\n",
+	printf("\tsblk.info.sb.offset[0]    = %#llx\n",
 	    (long long)sbp->info.sb.offset[0]);
-	printf("\tsblk.info.sb.offset[1]   = %#llx\n",
+	printf("\tsblk.info.sb.offset[1]    = %#llx\n",
 	    (long long)sbp->info.sb.offset[1]);
-	printf("\tsblk.info.sb.capacity    = %#llx\n",
+	printf("\tsblk.info.sb.capacity     = %#llx\n",
 	    (long long)sbp->info.sb.capacity);
-	printf("\tsblk.info.sb.space       = %#llx\n",
+	printf("\tsblk.info.sb.space        = %#llx\n",
 	    (long long)sbp->info.sb.space);
-	printf("\tsblk.info.sb.dau_blks[0] = %#x\n",
+	printf("\tsblk.info.sb.dau_blks[0]  = %#x\n",
 	    (int)sbp->info.sb.dau_blks[0]);
-	printf("\tsblk.info.sb.dau_blks[1] = %#x\n",
+	printf("\tsblk.info.sb.dau_blks[1]  = %#x\n",
 	    (int)sbp->info.sb.dau_blks[1]);
-	printf("\tsblk.info.sb.sblk_size   = %#x\n",
+	printf("\tsblk.info.sb.sblk_size    = %#x\n",
 	    (int)sbp->info.sb.sblk_size);
-	printf("\tsblk.info.sb.fs_count    = %#x\n",
+	printf("\tsblk.info.sb.fs_count     = %#x\n",
 	    (int)sbp->info.sb.fs_count);
-	printf("\tsblk.info.sb.da_count    = %#x\n",
+	printf("\tsblk.info.sb.da_count     = %#x\n",
 	    (int)sbp->info.sb.da_count);
-	printf("\tsblk.info.sb.mm_count    = %#x\n",
+	printf("\tsblk.info.sb.mm_count     = %#x\n",
 	    (int)sbp->info.sb.mm_count);
-	printf("\tsblk.info.sb.mm_capacity = %#llx\n",
+	printf("\tsblk.info.sb.mm_capacity  = %#llx\n",
 	    (long long)sbp->info.sb.mm_capacity);
-	printf("\tsblk.info.sb.mm_space    = %#llx\n",
+	printf("\tsblk.info.sb.mm_space     = %#llx\n",
 	    (long long)sbp->info.sb.mm_space);
-	printf("\tsblk.info.sb.meta_blks   = %#x\n",
+	printf("\tsblk.info.sb.meta_blks    = %#x\n",
 	    (int)sbp->info.sb.meta_blks);
-	printf("\tsblk.info.sb.eq          = %#x\n\n",
+	printf("\tsblk.info.sb.eq           = %#x\n",
 	    (int)sbp->info.sb.eq);
-	printf("\tsblk.info.sb.mm_blks[0]  = %#x\n",
+	printf("\tsblk.info.sb.mm_blks[0]   = %#x\n",
 	    (int)sbp->info.sb.mm_blks[0]);
-	printf("\tsblk.info.sb.mm_blks[1]  = %#x\n",
+	printf("\tsblk.info.sb.mm_blks[1]   = %#x\n",
 	    (int)sbp->info.sb.mm_blks[1]);
+	printf("\tsblk.info.sb.mm_ord       = %#x\n",
+	    (int)sbp->info.sb.mm_ord);
+	printf("\tsblk.info.sb.opt_mask_ver = %#x\n",
+	    (int)sbp->info.sb.opt_mask_ver);
+	printf("\tsblk.info.sb.opt_mask     = %#x\n",
+	    (int)sbp->info.sb.opt_mask);
+	printf("\tsblk.info.sb.opt_features = %#x\n\n",
+	    (int)sbp->info.sb.opt_features);
 
 	for (i = 0; i < sbp->info.sb.fs_count; i++) {
 		printf("\tsblk.eq[%d]:\n", i);

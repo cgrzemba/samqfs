@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 /* ----- UNIX Includes */
 
@@ -133,6 +133,9 @@ sam_init_sblk_dev(
 	struct sam_sbord *sop = &sblk->eq[args->ord].fs;
 	struct sam_sbord *somp;
 
+	/*
+	 * Initialize bit map disk offset.
+	 */
 	dt = (args->type == DT_META) ? MM : DD;
 	if (sop->dau_next == 0) {
 		if (sbp->mm_count == 0) {
@@ -165,21 +168,50 @@ sam_init_sblk_dev(
 		if ((sbp->mm_count == 0) ||
 		    ((dt == MM) && SBLK_MAPS_ALIGNED(sbp))) {
 			/*
-			 * ms file system, no metadata devices. Maps on same
-			 * device.
-			 * ma file system, metadata devices have their own maps.
+			 * Put map on this device.  For example:
+			 * ms file system, no metadata devices -
+			 * maps on same device as data.
+			 * ma file system, metadata device, map aligned -
+			 * metadata maps on each metadata device.
 			 */
 			sop->mm_ord = args->ord;
 			somp = sop;
 			mdt = dt;
 		} else {
 			/*
-			 * ma file system, metadata devices. Maps roundrobin
-			 * on meta devices.
+			 * Put map on proper metadata device.  For example:
+			 * ma file system, data device, map aligned -
+			 * data maps roundrobin on metadata devices.
+			 * ma file system, not map aligned -
+			 * all metadata and data device maps on first metadata
+			 * device.
+			 * Note that ma requires ord 0 to be a metadata device.
 			 */
 			sop->mm_ord = sbp->mm_ord;
 			somp = &sblk->eq[sop->mm_ord].fs;
 			mdt = MM;
+
+			/*
+			 * Advance the metadata ordinal for ma file system
+			 * to roundrobin the data device map.
+			 */
+			if (SBLK_MAPS_ALIGNED(sbp)) {
+				int i = 0;
+				while (i != sbp->fs_count) {
+					struct sam_sbord *mop;
+
+					i++;
+					sbp->mm_ord++;
+					if (sbp->mm_ord >= sbp->fs_count) {
+						sbp->mm_ord = 0;
+					}
+					mop = &sblk->eq[sbp->mm_ord].fs;
+					if ((mop->type == DT_META) &&
+					    (mop->state == DEV_ON)) {
+						break;
+					}
+				}
+			}
 		}
 		sop->allocmap = somp->dau_next;
 		somp->dau_next = sop->allocmap + sop->l_allocmap;
@@ -188,25 +220,6 @@ sam_init_sblk_dev(
 			    args->kblocks[mdt]);
 		}
 
-		/*
-		 * Advance the metadata ordinal for ma file system.
-		 */
-		if (sbp->mm_count) {
-			for (;;) {
-				struct sam_sbord *mop;
-
-				sbp->mm_ord++;
-				if (sbp->mm_ord >= sbp->fs_count) {
-					sbp->mm_ord = 0;
-				}
-				mop = &sblk->eq[sbp->mm_ord].fs;
-				if ((mop->type != DT_META) ||
-				    (mop->state != DEV_ON)) {
-					continue;
-				}
-				break;
-			}
-		}
 	}
 }
 
@@ -342,7 +355,7 @@ sam_cablk(
 	sblk_size = sizeof (struct sam_sblk) >> SAM_DEV_BSHIFT;
 	if (sbp->mm_count == 0) {
 		int len2;	/* Length of allocated area for sblk 2 */
-		int len3;	/* Length of allocated area for sblk 3 */
+		int len3;	/* Length of allocated area for sblk 2A */
 
 		/*
 		 * "ms" file system - no meta devices; data & metadata
@@ -357,7 +370,6 @@ sam_cablk(
 			len3 += dd_kblocks;
 			len3 = roundup(len3, dd_kblocks);
 		}
-		len3 = roundup(len3, dd_kblocks);
 
 		len2 = SUPERBLK + dd_kblocks;
 		len2 += sblk->eq[ord].fs.l_allocmap;
