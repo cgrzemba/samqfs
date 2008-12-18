@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -87,6 +87,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 #define	DEVFSADM_CMD		"/usr/sbin/devfsadm -i samst"
 #define	MEDCHANGER_CFGADM_CMD "/usr/sbin/cfgadm -al | /usr/bin/grep med-changer"
+#define	BOOTADM_CMD		"/usr/sbin/bootadm update-archive"
+
 
 typedef struct devid {
 	int type;
@@ -2158,8 +2160,9 @@ process_fc(void)
 	FILE *fp = NULL;
 	char *str, *wwn, *p, *last, *end_comment;
 	char *delims = " ";
-	char buf[BUFSIZ], samst_line[BUFSIZ];
-	boolean_t run_devfsadm = B_FALSE, found = B_FALSE;
+	char buf[BUFSIZ], new_samst_line[BUFSIZ];
+	boolean_t added_samst_line = B_FALSE;
+	boolean_t found = B_FALSE;
 
 	Trace(TR_OPRMSG, "processing fabric attached library");
 
@@ -2201,9 +2204,12 @@ process_fc(void)
 		return (-1);
 	}
 
+	/* get wwns for any fc libs */
 	while (fgets(buf, BUFSIZ, fp) != NULL) {
 
 		str = &buf[0];
+
+		/* tokenize on " " */
 		p = strtok_r(str, delims, &last);
 		while (p != NULL) {
 			Trace(TR_OPRMSG, "token %s\n", p);
@@ -2242,18 +2248,30 @@ process_fc(void)
 		}
 	}
 	fclose(fp);
+	fp = NULL;
 
-	/* if WWN does not exist in /kernel/drv/samst.conf, add an entry */
-	fd = open(SAMST_CFG, O_WRONLY|O_APPEND|O_CREAT, 0640);
+	/* There is nothing to add so simply return */
+	if (wwn_lst->length == 0) {
+		lst_free_deep(wwn_lst);
+		Trace(TR_OPRMSG, "no fabric attached libraries");
+		return (0);
+	}
+
+	/*
+	 * If WWNs do not exist in /kernel/drv/samst.conf, add an entry.
+	 * The file should already exist.
+	 */
+	fd = open(SAMST_CFG, O_RDWR);
 	if (fd != -1) {
-		fp = fdopen(fd, "a");
+		fp = fdopen(fd, "r+");
 	}
 
 	if (fp == NULL) {
 
 		lst_free_deep(wwn_lst);
-		fclose(fp);
-
+		if (fd != -1) {
+			close(fd);
+		}
 		samerrno = SE_FILE_APPEND_OPEN_FAILED;
 		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
 		    SAMST_CFG);
@@ -2262,11 +2280,17 @@ process_fc(void)
 		return (-1);
 	}
 
+	/* For each wwn in the list look for it in samst.conf */
 	for (node = wwn_lst->head; node != NULL; node = node->next) {
 
+		found = B_FALSE;
+
 		wwn = (char *)node->data;
-		snprintf(samst_line, sizeof (samst_line),
-		    "name=\"samst\" parent=\"fp\""
+		if (NULL == wwn) {
+			continue;
+		}
+		snprintf(new_samst_line, sizeof (new_samst_line),
+		    "name=\"samst\" parent=\"fp\" "
 		    "lun=0 fc-port-wwn=\"%s\";\n",
 		    wwn);
 
@@ -2281,31 +2305,62 @@ process_fc(void)
 				*end_comment = '\0';
 			}
 
-			if (strncmp(buf, samst_line, strlen(buf)) == 0) {
+
+			/*
+			 * search for the whole line or if that fails
+			 * just for the wwn
+			 */
+			if (strncmp(buf, new_samst_line, strlen(buf)) == 0) {
+				found = B_TRUE;
+				break;
+			} else if (strstr(buf, wwn) != NULL) {
 				found = B_TRUE;
 				break;
 			}
-
-			found = B_FALSE;
 		}
 
 		if (!found) {
-			fputs(samst_line, fp);
+			boolean_t append_newline = B_FALSE;
+
+			/* Verify the file currently ends with a newline */
+			if (fseek(fp, -1, SEEK_END) != 0) {
+				Trace(TR_ERR, "unable to seek end of %s",
+				    SAMST_CFG);
+				break;
+			}
+
+			if (fgetc(fp) != '\n') {
+				append_newline = B_TRUE;
+			}
+
+			if (fseek(fp, 0, SEEK_END) != 0) {
+				break;
+			}
+
+			if (append_newline) {
+				fputc('\n', fp);
+			}
+
+			fputs(new_samst_line, fp);
+			fflush(fp);
 			Trace(TR_OPRMSG, "append %s to %s",
-			    samst_line, SAMST_CFG);
-			run_devfsadm = B_TRUE;
+			    new_samst_line, SAMST_CFG);
+
+			added_samst_line = B_TRUE;
 		}
+		/* Rewind for a possible second wwn */
+		rewind(fp);
 	}
 
 	lst_free_deep(wwn_lst);
 	fclose(fp);
 
-	if (run_devfsadm) {
+	if (added_samst_line) {
 		Trace(TR_OPRMSG, "process fc: run cmd:%s", DEVFSADM_CMD);
 		pid = exec_get_output(DEVFSADM_CMD, NULL, NULL);
 		if (pid == -1) {
 
-			Trace(TR_ERR, "process fs: run devfsadm error: %s",
+			Trace(TR_ERR, "process fc: run devfsadm error: %s",
 			    samerrmsg);
 			return (-1);
 		}
@@ -2316,11 +2371,37 @@ process_fc(void)
 			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
 			    DEVFSADM_CMD);
 
-			Trace(TR_ERR, "process fs: run devfsadm error: %s",
+			Trace(TR_ERR, "process fc: run devfsadm error: %s",
 			    samerrmsg);
 			return (-1);
 		}
+
+		/*
+		 * Call to update the boot archive. If it fails simply log
+		 * it because update-archive may not be supported on all
+		 * hardware and all releases of the OS.
+		 */
+		Trace(TR_OPRMSG, "process fc: run cmd:%s", BOOTADM_CMD);
+		pid = exec_get_output(BOOTADM_CMD, NULL, NULL);
+		if (pid == -1) {
+
+			Trace(TR_ERR, "process fc: run bootadm "
+			    "update-archive error: %s", samerrmsg);
+			return (0);
+		}
+
+		if ((pid = waitpid(pid, &status, 0)) < 0) {
+
+			samerrno = SE_FORK_EXEC_FAILED;
+			snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
+			    BOOTADM_CMD);
+
+			Trace(TR_ERR, "process fs: run bootadm update-archive "
+			    "error: %s", samerrmsg);
+			return (0);
+		}
 	}
+
 
 	Trace(TR_OPRMSG, "finished processing fabric attached library");
 	return (0);
