@@ -1,4 +1,4 @@
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -26,7 +26,7 @@
 #    SAM-QFS_notice_end
 
 DEPTH = ../../../..
-LIB_HOME = $(DEPTH)/src/lib/sammgmt/stkapi
+LIB_HOME = ../../../src/lib/sammgmt/stkapi
 
 include $(DEPTH)/mk/common.mk
 
