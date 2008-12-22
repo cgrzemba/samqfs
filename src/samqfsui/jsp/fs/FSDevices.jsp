@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevices.jsp,v 1.15 2008/12/16 00:10:44 am143972 Exp $
+// ident	$Id: FSDevices.jsp,v 1.16 2008/12/22 20:31:21 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -37,7 +37,8 @@
 <jato:useViewBean
     className="com.sun.netstorage.samqfs.web.fs.FSDevicesViewBean">
 
-<script language="javascript" src="/samqfsui/js/fs/FSDevices.js"/>
+<script language="javascript" src="/samqfsui/js/fs/FSDevices.js">
+</script>
 
 <!-- Define the resource bundle, html, head, meta, stylesheet and body tags -->
 <cc:header

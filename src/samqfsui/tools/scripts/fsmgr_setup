@@ -26,7 +26,7 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: fsmgr_setup,v 1.32 2008/12/16 00:12:29 am143972 Exp $
+#  ident	$Id: fsmgr_setup,v 1.33 2008/12/22 20:31:22 ronaldso Exp $
 #
 #  This program installs/uninstalls the SUNWfsmgrr & SUNWfsmgru package
 #  along with all other necessary applications such as JATO/Lockhart/J2SE.
@@ -478,15 +478,17 @@ unzip_files()
 	do_exit
     fi
 
-    /usr/sbin/tar xf ${L10N_TARBALL}
+    # L10N Tar Ball IS NOT NEEDED for 5.0
 
-    if [ $? -eq 0 ]; then
-	echo "Untar ${L10N_TARBALL} successfully performed!\n" >> ${MY_LOG}
-    else
+    # /usr/sbin/tar xf ${L10N_TARBALL}
+
+    # if [ $? -eq 0 ]; then
+    #     echo "Untar ${L10N_TARBALL} successfully performed!\n" >> ${MY_LOG}
+    # else
 	# Failed to untar ${L10N_TARBALL}
-	EXIT_STATUS=${EXIT_CODE_FAIL_TO_UNTAR}
-	do_exit
-    fi
+    #   EXIT_STATUS=${EXIT_CODE_FAIL_TO_UNTAR}
+    #   do_exit
+    # fi
 
 }
 
@@ -889,10 +891,10 @@ install()
         install_lockhart
     fi
 
-    check_install_lockhart_l10n
+    # No L10N support is needed for 5.0
 
-    # Kick in lockhart l10n setup
-    install_lockhart_l10n
+    # check_install_lockhart_l10n
+    # install_lockhart_l10n
 
     # always install new GUI packages
     # update flags if the GUI packages exist
