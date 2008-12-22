@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.241 $"
+#pragma ident "$Revision: 1.242 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1637,7 +1637,7 @@ sam_validate_sblk(
 	int meta_on = 0;
 	int data_on = 0;
 	struct sam_sblk *sblk;
-	struct samdent *dp;
+	struct samdent *dp, *first_dp;
 	int i;
 	int ord;
 	sam_time_t time = 0;
@@ -1750,6 +1750,7 @@ sam_validate_sblk(
 			mp->mi.m_sblk_offset[1] = sblk->info.sb.offset[1];
 			mp->mi.m_fsgen_config = sblk->info.sb.fsgen;
 			time = sblk->info.sb.init;
+			first_dp = dp;
 		}
 
 		/*
@@ -1775,8 +1776,11 @@ sam_validate_sblk(
 		    (mp->mi.m_fsgen_config != sblk->info.sb.fsgen)) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: mcf eq %d:"
-			    " superblock FsId does not match eq %d FsId/Fsgen",
-			    mp->mt.fi_name, dp->part.pt_eq, devp->part.pt_eq);
+			    " superblock Fs Id/Gen %x/%x does not match eq %d "
+			    "Fs Id/Gen %x/%x", mp->mt.fi_name,
+			    first_dp->part.pt_eq, time, mp->mi.m_fsgen_config,
+			    dp->part.pt_eq, sblk->info.sb.init,
+			    sblk->info.sb.fsgen);
 			err_line = __LINE__;
 			error = EINVAL;
 		} else if (strcmp(mp->mt.fi_name, sblk->info.sb.fs_name) != 0) {
@@ -2724,7 +2728,7 @@ sam_flush_ino(
 	/*
 	 * Push out all the quota records.
 	 */
-	sam_quota_halt(mp);
+	(void) sam_quota_halt(mp);
 
 	/*
 	 * There may still be inodes from this file system on the free list.
