@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.137 $"
+#pragma ident "$Revision: 1.138 $"
 #endif
 
 #include "sam/osversion.h"
@@ -587,6 +587,11 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 					    (void *)vp->v_pages);
 				}
 			}
+			/*
+			 * sam_flush_pages drops inode_rwl which can allow
+			 * additional inode updates.
+			 */
+			(void) sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
 		}
 		if (SAM_IS_SHARED_CLIENT(ip->mp) &&
 		    !(ip->mp->mt.fi_status & (FS_FREEZING | FS_FROZEN))) {
