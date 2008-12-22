@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.201 $"
+#pragma ident "$Revision: 1.202 $"
 #endif
 
 #include "sam/osversion.h"
@@ -907,6 +907,7 @@ sam_mount_info(
 			mp->mt.fs_count = args.fs_count;
 			mp->orig_mt.fs_count = args.fs_count;
 			mp->mt.mm_count = mm_count;
+			mp->orig_mt.mm_count = mm_count;
 			error = sam_check_stripe_group(mp, istart);
 		}
 #ifdef sun
