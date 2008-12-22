@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 
 
 /* ----- Includes */
@@ -1770,7 +1770,8 @@ build_devices(void)
 			time = sblk->info.sb.init;
 			for (j = 0; j < fs_count; j++) {
 				if (sblk->eq[j].fs.state == DEV_ON ||
-				    sblk->eq[j].fs.state == DEV_NOALLOC) {
+				    sblk->eq[j].fs.state == DEV_NOALLOC ||
+				    sblk->eq[j].fs.state == DEV_UNAVAIL) {
 					if (sblk->eq[j].fs.type == DT_META) {
 						sblk_meta_on++;
 					} else {
@@ -1842,7 +1843,8 @@ build_devices(void)
 			devlp->state = DEV_OFF;
 			sblk_ord = sblock.info.sb.ord;
 			if (sblk->eq[sblk_ord].fs.state == DEV_ON ||
-			    sblk->eq[sblk_ord].fs.state == DEV_NOALLOC) {
+			    sblk->eq[sblk_ord].fs.state == DEV_NOALLOC ||
+			    sblk->eq[sblk_ord].fs.state == DEV_UNAVAIL) {
 				/* Send sysevent to generate SNMP trap */
 				snprintf(msgbuf, sizeof (msgbuf),
 				    GetCustMsg(1661), devlp->eq, fsname);
