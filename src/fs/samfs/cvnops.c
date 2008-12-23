@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.154 $"
+#pragma ident "$Revision: 1.155 $"
 
 #include "sam/osversion.h"
 
@@ -2151,6 +2151,17 @@ sam_putpage_vn(
 		    ip->mp->mt.fi_name, (void *)ip, ip->di.id.ino,
 		    ip->di.id.gen);
 		return (ENODEV);
+	}
+
+	/*
+	 * Make sure offset is on a page boundary.
+	 */
+	if ((offset & (offset_t)(PAGESIZE - 1)) != 0) {
+		sam_size_t len_delta;
+
+		len_delta = offset & (offset_t)(PAGESIZE - 1);
+		offset &= ~((offset_t)(PAGESIZE - 1));
+		length += len_delta;
 	}
 
 	TRACE(T_SAM_PUTPAGE, vp, (sam_tr_t)offset, length, flags);
