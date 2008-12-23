@@ -44,7 +44,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.48 $"
+#pragma ident "$Revision: 1.49 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -450,9 +450,19 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
 	/* Read the directory to populate the cache entry */
 	while (!request.eof) {
 		if (entry->bufLen - entry->bufSize < MAXNAMELEN) {
+			char *oldbuf = entry->buf;
 			entry->bufLen += CACHE_BUF_INCR;
 			SamRealloc(entry->buf, entry->bufLen);
 			dirCacheTotSize += CACHE_BUF_INCR;
+			/* Adjust entry pointers */
+			if (entry->entCount > 0) {
+				int i;
+				int diff = entry->buf - oldbuf;
+				for (i = 0; i < entry->entCount; i++) {
+					entry->ptrBuf[i] = (sam_dirent_t *)
+					    ((char *)entry->ptrBuf[i] + diff);
+				}
+			}
 		}
 
 		dirbuf = entry->buf + entry->bufSize;
@@ -466,7 +476,7 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
 		endbuf = dirbuf + n;
 		dirp = (sam_dirent_t *)((void *)dirbuf);
 		while ((char *)dirp < endbuf) {
-			if ((entry->entCount + 1) * sizeof (sam_dirent_t *) >
+			if (entry->entCount * sizeof (sam_dirent_t *) >
 			    entry->ptrBufLen) {
 				entry->ptrBufLen += CACHE_LEN_INCR *
 				    sizeof (sam_dirent_t *);
