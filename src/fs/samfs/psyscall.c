@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.202 $"
+#pragma ident "$Revision: 1.203 $"
 #endif
 
 #include "sam/osversion.h"
@@ -154,8 +154,7 @@ static int sam_get_fsinfo_def(void *arg, int size);
 static int sam_get_fsinfo_common(void *arg, int size, int live);
 static int sam_get_fspart(void *arg, int size);
 static int sam_get_sblk(void *arg, int size);
-
-int sam_check_stripe_group(sam_mount_t *mp, int istart);
+static int sam_check_stripe_group(sam_mount_t *mp, int istart);
 
 #if defined(SOL_511_ABOVE)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
@@ -959,7 +958,7 @@ done:
  *	----	sam_check_stripe_group
  * Check for addition of a stripe group and verify size is the same.
  */
-int
+static int
 sam_check_stripe_group(
 	sam_mount_t *mp,
 	int istart)
@@ -1015,7 +1014,8 @@ sam_check_stripe_group(
 		num_group = 1;
 		for (ord = i+1; ord < mp->mt.fs_count; ord++) {
 			ddp = &mp->mi.m_fs[ord];
-			if (type == ddp->part.pt_type) {
+			if (is_stripe_group(ddp->part.pt_type) &&
+			    (type == ddp->part.pt_type)) {
 				num_group++;
 				if (dp->part.pt_size != ddp->part.pt_size) {
 					ddp->error = EFBIG;

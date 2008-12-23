@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.123 $"
+#pragma ident "$Revision: 1.124 $"
 
 #include "sam/osversion.h"
 
@@ -115,7 +115,6 @@ extern int sam_cablk(sam_caller_t caller, struct sam_sblk *sblk, void *vp,
 	int ord, int bits, int mbits, uint_t dd_kblocks, uint_t mm_kblocks,
 	int *lenp);
 extern int sam_check_osd_daus(sam_mount_t *mp);
-extern int sam_check_stripe_group(sam_mount_t *mp, int istart);
 
 #pragma rarely_called(sam_block_thread_exit, sam_process_prealloc_req)
 #pragma does_not_return(sam_block_thread_exit)
@@ -2319,11 +2318,7 @@ sam_grow_fs(
 	sop->eq = dp->part.pt_eq;
 	sop->state = DEV_OFF;
 	sop->type = dp->part.pt_type;
-	sop->num_group = 1;
-	dp->num_group = 1;
-	if (error = sam_check_stripe_group(mp, old_sblk->info.sb.fs_count)) {
-		return (28);
-	}
+	sop->num_group = dp->num_group;
 
 	/*
 	 * Initialize the new device entry in the superblock.
