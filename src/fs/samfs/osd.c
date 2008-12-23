@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.46 $"
+#pragma ident "$Revision: 1.47 $"
 
 #include "sam/osversion.h"
 
@@ -920,16 +920,20 @@ sam_pg_object_done(
 		uint64_t bytes_xfer;
 
 		bp->b_error = sam_osd_sense_data(resp, iorp, &bytes_xfer);
-		dcmn_err((CE_WARN,
-		    "SAM-QFS: %s: PG1 er=%d %d OID=%d.%d ip=%p ino=%d.%d SA=%x "
-		    "off=%llx len=%llx r=%lx ha=%llx obji=%d eoo=%llx sz=%llx",
-		    ip->mp->mt.fi_name, resp->err_code, bp->b_error,
-		    (uint32_t)(iorp->object_id & 0xffffffff),
-		    (uint32_t)((iorp->object_id >> 32) & 0xffffffff),
-		    (void *)ip, ip->di.id.ino, ip->di.id.gen,
-		    resp->service_action, offset, count, bp->b_resid,
-		    (offset+count), obji, olp ? olp->ol[obji].eoo : -1,
-		    ip->size));
+		if (bp->b_error != 0) {
+			bp->b_flags |= B_ERROR;
+			dcmn_err((CE_WARN,
+			    "SAM-QFS: %s: PG1 er=%d %d OID=%d.%d ip=%p "
+			    "ino=%d.%d SA=%x off=%llx len=%llx r=%lx ha=%llx "
+			    "obji=%d eoo=%llx sz=%llx",
+			    ip->mp->mt.fi_name, resp->err_code, bp->b_error,
+			    (uint32_t)(iorp->object_id & 0xffffffff),
+			    (uint32_t)((iorp->object_id >> 32) & 0xffffffff),
+			    (void *)ip, ip->di.id.ino, ip->di.id.gen,
+			    resp->service_action, offset, count, bp->b_resid,
+			    (offset+count), obji, olp ? olp->ol[obji].eoo : -1,
+			    ip->size));
+		}
 	}
 	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_SHADOW);
 	bp->b_iodone = NULL;
