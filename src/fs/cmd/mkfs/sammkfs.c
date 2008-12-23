@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.41 $"
+#pragma ident "$Revision: 1.42 $"
 
 
 /* ----- Include Files ---- */
@@ -1205,6 +1205,8 @@ init_sblk()
 
 	/*
 	 * Loop through the devices, setting system (last allocated block)
+	 * NOTE: dau_next is used as a temporary, in 1k blocks, and
+	 * must be reset after use.
 	 */
 	for (ord = 0, dp = (struct devlist *)devp; ord < fs_count;
 	    ord++, dp++) {
@@ -1229,6 +1231,7 @@ init_sblk()
 			}
 		}
 		sop->system = roundup(sop->dau_next, LG_DEV_BLOCK(mp, dt));
+		sop->dau_next = 0;	/* done with temp usage */
 	}
 
 	sblock.info.sb.offset[0] = super_blk;	/* Superblock offset */

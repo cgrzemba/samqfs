@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.125 $"
+#pragma ident "$Revision: 1.126 $"
 
 #include "sam/osversion.h"
 
@@ -2327,7 +2327,7 @@ sam_grow_fs(
 	/*
 	 * Initialize the new device entry in the superblock.
 	 */
-	sop->dau_next = 0;
+	sop->dau_next = 0;		/* used to set system; in blocks */
 	sop->num_group = dp->num_group;
 	sop->mm_ord = (ushort_t)mm_ord;
 	if (ord != mm_ord) {
@@ -2343,6 +2343,7 @@ sam_grow_fs(
 	sop->dau_next = ((sop->dau_next + LG_DEV_BLOCK(mp, dt) - 1) /
 	    LG_DEV_BLOCK(mp, dt)) * LG_DEV_BLOCK(mp, dt);
 	sop->system = sop->dau_next;
+	sop->dau_next = 0;		/* done with temp usage */
 
 	mp->mi.m_sbp = sblk;		/* Use this new superblock now */
 	mutex_exit(&mp->mi.m_sblk_mutex);
