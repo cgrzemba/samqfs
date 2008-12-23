@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_SOLARIS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 #endif
 
 #include <sys/types.h>
@@ -234,7 +234,7 @@
 }
 #endif	/* DEBUG */
 
-#define	THREAD_KILL_OS(t)	psignal(ttoproc(t), SIGTERM);
+#define	THREAD_KILL_OS(t)	psignal(ttoproc(t), SIGKILL);
 
 /*
  * ----- Macros to get address of indirect extent
