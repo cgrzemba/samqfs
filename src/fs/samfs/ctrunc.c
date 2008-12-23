@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.33 $"
+#pragma ident "$Revision: 1.34 $"
 #endif
 
 #include "sam/osversion.h"
@@ -359,6 +359,7 @@ sam_truncate_ino(
 	cred_t *credp)			/* credentials pointer. */
 {
 	int error = 0;
+	offset_t prev_file_size = ip->size;
 
 	/*
 	 * Shared files must be truncated on the server.  However, if
@@ -384,6 +385,12 @@ sam_truncate_ino(
 		error = sam_proc_truncate(ip, length, tflag, credp);
 #endif /* METADATA SERVER */
 	}
+
+	if (!error && (ip->mp->mt.fi_config & MT_ZERO_DIO_SPARSE) &&
+	    (length < prev_file_size)) {
+		ip->zero_end = ip->size;
+	}
+
 	return (error);
 }
 
