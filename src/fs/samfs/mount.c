@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.242 $"
+#pragma ident "$Revision: 1.243 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1637,7 +1637,8 @@ sam_validate_sblk(
 	int meta_on = 0;
 	int data_on = 0;
 	struct sam_sblk *sblk;
-	struct samdent *dp, *first_dp;
+	struct samdent *dp;
+	struct samdent *first_dp = NULL;
 	int i;
 	int ord;
 	sam_time_t time = 0;
