@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.124 $"
+#pragma ident "$Revision: 1.125 $"
 
 #include "sam/osversion.h"
 
@@ -640,10 +640,12 @@ sam_get_prealloc_daus(
 	struct buf *tbp, *buflist = NULL;
 	int num;
 	int am_setting;
+	int first_bn_set;
 	int blk0;	/* Starting bit map block for this ord */
 	offset_t ndau;
 
 	am_setting = pap->set;
+	first_bn_set = 0;
 	while (pap->count > 0) {
 		/*
 		 * Start searching a new block.
@@ -667,7 +669,6 @@ sam_get_prealloc_daus(
 		buflist = bp;
 
 		num = blk - blk0 + 1;
-
 		wptr = (uint_t *)(void *)(bp->b_un.b_addr + off);
 		/* 32 bit wds left in buf */
 		count = (SAM_DEV_BSIZE - off) >> NBPWSHIFT;
@@ -680,7 +681,7 @@ sam_get_prealloc_daus(
 			    bit--, mask >>= 1) {
 				if (*wptr & mask) {
 					/* a fresh start */
-					if (pap->first_bn == 0) {
+					if (first_bn_set == 0) {
 						*next_dau = (num <<
 						    SAM_BIT_SHIFT) -
 						    (count << NBWDSHIFT) +
@@ -718,6 +719,7 @@ sam_get_prealloc_daus(
 							continue;
 						}
 						pap->first_bn = bn;
+						first_bn_set = 1;
 						pap->first_dau = *next_dau;
 					}
 					if (bit == 32 && pap->count >= 32 &&
@@ -742,10 +744,12 @@ sam_get_prealloc_daus(
 						pap->count--;
 					}
 					/* if allocation complete */
-					if (pap->count <= 0)
+					if (pap->count <= 0) {
 						goto completed;
+					}
 				} else {
 					pap->first_bn = 0; /* Restart search */
+					first_bn_set = 0;
 					pap->count = pap->count0;
 					if (buflist) {
 						tbp = buflist;
@@ -763,7 +767,7 @@ sam_get_prealloc_daus(
 			}
 		}
 		/* end of buffer processing */
-		if (pap->first_bn == 0) { /* return it, if not a candidate */
+		if (first_bn_set == 0) { /* return it, if not a candidate */
 			ASSERT(buflist == bp);
 			buflist = bp->av_forw = bp->av_back = NULL;
 			brelse(bp);
