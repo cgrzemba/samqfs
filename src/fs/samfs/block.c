@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.122 $"
+#pragma ident "$Revision: 1.123 $"
 
 #include "sam/osversion.h"
 
@@ -2261,28 +2261,21 @@ sam_grow_fs(
 		 * mm_ord. If maps already exists, use the existing map.
 		 */
 		pa.length = blocks / LG_DEV_BLOCK(mp, dt);
-		pa.count = howmany(pa.length, (SAM_DEV_BSIZE * NBBY));
-		if (sblk->eq[ord].fs.allocmap != 0 &&
-		    sblk->eq[ord].fs.l_allocmap == pa.count) {
-			mm_ord = sblk->eq[ord].fs.mm_ord;
-			sblk->info.sb.mm_ord = (ushort_t)mm_ord;
-			pa.first_bn = sblk->eq[ord].fs.allocmap;
-		} else {
-			mm_ord = sblk->info.sb.mm_ord;	/* Next meta device */
-			pa.count = (pa.count + LG_DEV_BLOCK(mp, MM) - 1) /
-			    LG_DEV_BLOCK(mp, MM);
-			pa.dt = MM;
-			pa.ord = (ushort_t)mm_ord;
-			pa.error = 0;
-			sam_process_prealloc_req(mp, sblk, &pa, TRUE);
-			if (pa.error) {
-				cmn_err(CE_WARN, "SAM-QFS: %s: Error adding "
-				    "eq %d lun %s maps on eq %d, error = %d",
-				    mp->mt.fi_name, dp->part.pt_eq,
-				    dp->part.pt_name,
-				    sblk->eq[mm_ord].fs.eq, pa.error);
-				return (26);
-			}
+		mm_ord = sblk->info.sb.mm_ord;	/* Next meta device */
+		pa.count = (howmany(pa.length, (SAM_DEV_BSIZE * NBBY)) +
+		    LG_DEV_BLOCK(mp, MM) - 1) /
+		    LG_DEV_BLOCK(mp, MM);
+		pa.dt = MM;
+		pa.ord = (ushort_t)mm_ord;
+		pa.error = 0;
+		sam_process_prealloc_req(mp, sblk, &pa, TRUE);
+		if (pa.error) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: Error adding "
+			    "eq %d lun %s maps on eq %d, error = %d",
+			    mp->mt.fi_name, dp->part.pt_eq,
+			    dp->part.pt_name,
+			    sblk->eq[mm_ord].fs.eq, pa.error);
+			return (26);
 		}
 	} else {
 		mm_ord = ord;
