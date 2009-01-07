@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.100 2008/12/16 00:12:10 am143972 Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.101 2009/01/07 21:39:56 kilemba Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -577,17 +577,11 @@ public class FileSystemSummaryView extends CommonTableContainerView {
 
         switch (fs.getShareStatus()) {
             case FileSystem.UNSHARED:
-                switch (fsType) {
-                    case FileSystem.FS_SAMQFS:
-                        mountPageType = FSMountViewBean.TYPE_UNSHAREDSAMQFS;
-                        break;
-                    case FileSystem.FS_QFS:
-                        mountPageType = FSMountViewBean.TYPE_UNSHAREDQFS;
-                        break;
-                    default:
-                        mountPageType = FSMountViewBean.TYPE_UNSHAREDSAMFS;
-                        break;
-                }
+                mountPageType =
+                    (fs.getArchivingType() == FileSystem.ARCHIVING) ?
+                    FSMountViewBean.TYPE_UNSHAREDSAMQFS :
+                        FSMountViewBean.TYPE_UNSHAREDQFS;
+
                 getParentViewBean().setPageSessionAttribute(
                     Constants.SessionAttributes.SHARED_CLIENT_HOST,
                     Constants.PageSessionAttributes.SHARED_HOST_NONSHARED);

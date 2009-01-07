@@ -28,7 +28,7 @@
  *
  *    SAM-QFS_notice_end
  */
-// ident	$Id: FirstTimeConfig.jsp,v 1.10 2008/12/17 21:41:40 ronaldso Exp $
+// ident	$Id: FirstTimeConfig.jsp,v 1.11 2009/01/07 21:39:56 kilemba Exp $
 --%>
 
 <%@page info="FirstTimeConfig" language="java" %>
@@ -148,7 +148,7 @@
 <cc:spacer name="spacer4" newline="true" height="30"/>
 </div>
 
-<cc:label name="osd" bundleID="samBundle" defaultValue="firsttime.osd"/>
+<cc:label name="osd" bundleID="samBundle" defaultValue="firsttime.configfs"/>
 <br/>
 <div style="margin-left:20px">
 <cc:href name="createFSHref" bundleID="samBundle"
