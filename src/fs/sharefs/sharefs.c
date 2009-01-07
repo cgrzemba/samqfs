@@ -85,7 +85,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.69 $"
+#pragma ident "$Revision: 1.70 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -146,7 +146,7 @@ static void unBlockSignalHandling(char *);
 static int signalWaiter(char *);
 static void catchSig(int sig);
 static void catchSigEMT(int sig);
-static void ForceUmountDown(char *fs);
+static void UmountDown(char *fs);
 
 
 /*
@@ -630,7 +630,7 @@ signalWaiter(char *fs_name)
 			if (e == EIO) {
 				Trace(TR_MISC, "FS %s: forced unmount",
 				    Host.fs.fi_name);
-				ForceUmountDown(fs_name);
+				UmountDown(fs_name);
 				ShutdownDaemon = TRUE;
 				ret = EXIT_NORESTART;
 				break;	/* skip DoUpdate() */
@@ -715,31 +715,23 @@ catchSigEMT(int sig)
 
 
 /*
- * ForceUmountDown - unmount the file system because server told us to
+ * UmountDown - unmount the file system because server told us to
  * via a NOTIFY that we are going down.  Try to unmount cleanly first,
  * but ultimately we are going down.
  */
 #ifdef sun
-#define	UMOUNT "/usr/sbin/umount"
+#define	UMOUNT "/sbin/umount"
 #endif /* sun */
 #ifdef linux
 #define	UMOUNT "/bin/umount"
 #endif /* linux */
 
 static void
-ForceUmountDown(char *fs)
+UmountDown(char *fs)
 {
-	char p[sizeof (UMOUNT) + sizeof (" -f ") + sizeof (uname_t) + 2];
-	int r;
+	char p[sizeof (UMOUNT) + sizeof (uname_t) + 2];
 
 	Trace(TR_MISC, "FS %s: Down request received, unmounting.", fs);
 	sprintf(p, UMOUNT " %s", fs);
-	r = system(p);
-#ifdef sun
-	if (r) {
-		/* try umount -f if umount failed */
-		sprintf(p, UMOUNT " -f %s", fs);
-		system(p);
-	}
-#endif /* sun */
+	system(p);
 }
