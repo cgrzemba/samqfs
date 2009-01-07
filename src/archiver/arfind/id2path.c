@@ -44,7 +44,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.49 $"
+#pragma ident "$Revision: 1.50 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -476,7 +476,7 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
 		endbuf = dirbuf + n;
 		dirp = (sam_dirent_t *)((void *)dirbuf);
 		while ((char *)dirp < endbuf) {
-			if (entry->entCount * sizeof (sam_dirent_t *) >
+			if (entry->entCount * sizeof (sam_dirent_t *) >=
 			    entry->ptrBufLen) {
 				entry->ptrBufLen += CACHE_LEN_INCR *
 				    sizeof (sam_dirent_t *);
