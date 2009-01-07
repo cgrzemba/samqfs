@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.127 $"
+#pragma ident "$Revision: 1.128 $"
 
 #include "sam/osversion.h"
 
@@ -1886,33 +1886,12 @@ sam_change_state(
 		TRACE(T_SAM_CHG_STATE_ERR, mp, ord, dp->part.pt_state, 1);
 		return;		/* Ordinal is busy with I/O */
 	}
+	sblk = mp->mi.m_sbp;
 
 	switch (dp->command) {
 
 	case DK_CMD_remove:
 	case DK_CMD_release:
-		/*
-		 * Remove/release is not supported for sblk version 1.
-		 */
-		sblk = mp->mi.m_sbp;
-		if (sblk->info.sb.magic == SAM_MAGIC_V1) {
-			cmn_err(CE_WARN, "SAM-QFS: %s: Superblock version 1:"
-			    " Cannot remove/release eq %d lun %s",
-			    mp->mt.fi_name, dp->part.pt_eq,
-			    dp->part.pt_name);
-			rtnerr = 2;
-			break;
-		}
-		if ((dp->part.pt_type == DT_META) ||
-		    (mp->mt.mm_count == 0)) {
-			cmn_err(CE_WARN, "SAM-QFS: %s: shrink only "
-			    "supported for data devices in a ma file system",
-			    mp->mt.fi_name);
-			rtnerr = 3;
-			break;
-		}
-
-		/* LINTED [fallthrough on case statement] */
 	case DK_CMD_noalloc:
 		sam_drain_free_list(mp, dp);
 		dp->skip_ord = 1;
@@ -1957,7 +1936,6 @@ sam_change_state(
 	case DK_CMD_alloc: {
 		int i;
 
-		sblk = mp->mi.m_sbp;
 		if (SAM_IS_SHARED_FS(mp)) {
 			client_entry_t *clp;
 
@@ -2177,31 +2155,6 @@ sam_grow_fs(
 	int error;
 
 	sblk = mp->mi.m_sbp;
-	/*
-	 * Cannot add devices to a non V2A file system.  Must first
-	 * upgrade file system with samadm add-features.
-	 */
-	if (!SAM_MAGIC_V2A_OR_HIGHER(&sblk->info.sb)) {
-		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s,"
-		    " file system is not version 2A.",
-		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-		if (SAM_MAGIC_V2_OR_HIGHER(&sblk->info.sb)) {
-			cmn_err(CE_WARN, "\tUpgrade file system with samadm "
-			    "add-features first.");
-		}
-		return (20);
-	}
-
-	/*
-	 * Check state of device to be added.
-	 */
-	if (dp->part.pt_state != DEV_OFF) {
-		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s,"
-		    " state %d is not OFF",
-		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name,
-		    dp->part.pt_state);
-		return (21);
-	}
 
 	/*
 	 * Currently cannot add object device ("oXXX").
@@ -2239,6 +2192,21 @@ sam_grow_fs(
 			    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
 			return (24);
 		}
+	}
+
+	/*
+	 * Set num_group. It has been cleared on mount.
+	 */
+	dp->num_group = 1;
+	ddp = &mp->mi.m_fs[ord+1];
+	for (i = ord+1; i < mp->mt.fs_count; i++, ddp++) {
+		if (!is_stripe_group(ddp->part.pt_type)) {
+			break;
+		}
+		if (type != ddp->part.pt_type) {
+			break;
+		}
+		dp->num_group++;
 	}
 
 	/*
@@ -2427,6 +2395,19 @@ sam_grow_fs(
 		dsop->system = sop->system;
 		dsop->state = DEV_UNAVAIL;
 		ddp->part.pt_state = DEV_UNAVAIL;
+	}
+
+	/*
+	 * Set superblock for OFF devices.
+	 */
+	ddp = &mp->mi.m_fs[0];
+	for (i = 0; i < mp->mt.fs_count; i++, ddp++) {
+		if (ddp->part.pt_state == DEV_OFF) {
+			sblk->eq[i].fs.state = DEV_OFF;
+			sblk->eq[i].fs.eq = ddp->part.pt_eq;
+			sblk->eq[i].fs.type = ddp->part.pt_type;
+			sblk->eq[i].fs.num_group = ddp->num_group;
+		}
 	}
 
 	/*

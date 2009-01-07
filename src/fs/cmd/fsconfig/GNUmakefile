@@ -1,4 +1,4 @@
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 
 #    SAM-QFS_notice_begin
 #
@@ -34,14 +34,16 @@ PROG = fsconfig
 PROG_SRC = fsconfig.c
 
 ifeq ($(OS), Linux)
+LADM =
 INCFLAGS = $(OSFLAGS) -I$(LINUX_INCLUDE) -I$(INCLUDE) -I../../include -I../../include/$(OBJ_DIR)
 else
+LADM = -ladm
 INCFLAGS = -I$(INCLUDE) -I../../include -I../../include/$(OBJ_DIR)
 endif
 DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(THRCOMP)
 
 PROG_LIBS = -L ../../lib/$(OBJ_DIR) -L $(DEPTH)/lib/$(OBJ_DIR) \
-	$(STATIC_OPT) -lfscmd $(DYNAMIC_OPT) -lsamut -lsamconf $(LIBSO) -ldl
+	$(STATIC_OPT) -lfscmd $(DYNAMIC_OPT) -lsamut -lsamconf $(LIBSO) -ldl $(LADM)
 
 ifeq ($(OS), Linux)
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o

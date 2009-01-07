@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.203 $"
+#pragma ident "$Revision: 1.204 $"
 #endif
 
 #include "sam/osversion.h"
@@ -738,6 +738,10 @@ sam_mount_info(
 	 * umounting, or have outstanding system calls.  (We're holding
 	 * global_mutex, so mp->ms.m_syscall_cnt can't be incremented.)
 	 */
+	if (error == 0) {
+		TRACE(T_SAM_MNT_INFO, mp, mp->mt.fi_status, mp->mt.fs_count,
+		    mp->mi.m_fsgen_config);
+	}
 	if (!error && (mt == NULL)) {
 		if (mp->mt.fi_status &
 		    (FS_MOUNTED | FS_MOUNTING | FS_UMOUNT_IN_PROGRESS)) {
@@ -777,13 +781,14 @@ sam_mount_info(
 		}
 		*lastmp = mp->ms.m_mp_next;
 		sam_mount_destroy(mp);
+		mp = NULL;
 		samgt.num_fs_configured--;
 	}
 
 	/*
 	 * If adding filesystem, allocate & zero the mount table if it does
-	 * not already exist. If it exists, it is possible to add devices at
-	 * the end of the array.
+	 * not already exist. If it exists, it is possible to change existing
+	 * OFF devices and/or add new devices at the end of the array.
 	 */
 	if (mt != NULL) {
 		int istart;
@@ -793,7 +798,7 @@ sam_mount_info(
 
 		/*
 		 * If file system does not exist, create it. Otherwise, devices
-		 * are being added to file system.
+		 * are being added to an existing file system.
 		 */
 		mntp = (sam_mount_info_t *)mt;
 		if (error == ENOENT) {		/* File system does not exist */
@@ -825,7 +830,14 @@ sam_mount_info(
 			samgt.num_fs_configured++;
 			istart = 0; /* new filesystem, copy all entries */
 		} else {
-			/* File system exists, add devices */
+			/*
+			 * File system exists, add devices. istart zero means
+			 * file system is not mounted. istart nonzero means the
+			 * file system is mounted & istart is the size of the
+			 * sblk. If mounted, the devices must be in
+			 * ordinal order -- the equipments must match sblk.
+			 */
+			error = 0;
 			mutex_enter(&mp->ms.m_waitwr_mutex);
 			if (mp->mt.fi_status &
 			    (FS_MOUNTING|FS_UMOUNT_IN_PROGRESS)) {
@@ -840,6 +852,7 @@ sam_mount_info(
 			}
 			if (mp->mt.fi_status & FS_MOUNTED) {
 				struct sam_sblk *sblk;
+				struct sam_fs_part part;
 
 				if (mp->mt.fi_status & FS_RECONFIG) {
 					mutex_exit(&mp->ms.m_waitwr_mutex);
@@ -853,19 +866,40 @@ sam_mount_info(
 					goto done;
 				}
 				istart = sblk->info.sb.fs_count;
-				mm_count = sblk->info.sb.mm_count;
-				prev_mm_count = mm_count;
+				prev_mm_count = sblk->info.sb.mm_count;
+				for (i = 0; i < istart; i++) {
+					if (copyin(&mntp->part[i], &part,
+					    sizeof (struct sam_fs_part))) {
+						mutex_exit(
+						    &mp->ms.m_waitwr_mutex);
+						error = EFAULT;
+						goto done;
+					}
+					if (part.pt_eq != sblk->eq[i].fs.eq) {
+						error = EINVAL;
+						break;
+					}
+				}
+				if (error) {
+					mutex_exit(&mp->ms.m_waitwr_mutex);
+					cmn_err(CE_WARN, "SAM-QFS: %s: "
+					    "mcf devices are not in ordinal "
+					    "order: eq %d mismatch sblk eq %d "
+					    "See samu f display for order",
+					    mp->mt.fi_name, part.pt_eq,
+					    sblk->eq[i].fs.eq);
+					goto done;
+				}
 
 				mp->mt.fi_status |= FS_RECONFIG;
 				mp->mt.fs_count = sblk->info.sb.fs_count;
 				mp->orig_mt.fs_count = sblk->info.sb.fs_count;
 				mp->mt.mm_count = sblk->info.sb.mm_count;
 				mp->orig_mt.mm_count = sblk->info.sb.mm_count;
-				mutex_exit(&mp->ms.m_waitwr_mutex);
 			} else {
 				istart = 0; /* Unmounted, overwrite entries */
-				mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
+			mutex_exit(&mp->ms.m_waitwr_mutex);
 		}
 		for (i = 0; i < args.fs_count; i++) {
 			struct samdent *dp;
@@ -876,14 +910,22 @@ sam_mount_info(
 
 				sblk = mp->mi.m_sbp;
 				if (sblk->eq[i].fs.state == DEV_ON ||
-				    sblk->eq[i].fs.state == DEV_NOALLOC) {
+				    sblk->eq[i].fs.state == DEV_NOALLOC ||
+				    (SAM_IS_SHARED_SERVER(mp) &&
+				    sblk->eq[i].fs.state == DEV_UNAVAIL)) {
+					if (dp->part.pt_type == DT_META) {
+						mm_count++;
+					}
 					continue;
 				}
+			}
+			if (dp->opened) {
+				sam_close_device(mp, dp, (FREAD | FWRITE),
+				    credp);
 			}
 			bzero(dp, sizeof (struct samdent));
 			if (copyin(&mntp->part[i], dp,
 			    sizeof (struct sam_fs_part))) {
-				kmem_free((void *)mp, mount_size);
 				mutex_enter(&mp->ms.m_waitwr_mutex);
 				mp->mt.fi_status &= ~FS_RECONFIG;
 				mutex_exit(&mp->ms.m_waitwr_mutex);
@@ -892,23 +934,20 @@ sam_mount_info(
 			}
 			sam_mutex_init(&dp->eq_mutex, NULL,
 			    MUTEX_DEFAULT, NULL);
-			if (istart || (i < istart)) {
-				dp->num_group = 1;
-				dp->skip_ord = 1;
+			dp->num_group = 1;
+			dp->skip_ord = 1;
+			if (dp->part.pt_type == DT_META) {
+				mm_count++;
+			}
+			if (istart || i >= mp->mt.fs_count) {
 				dp->part.pt_state = DEV_OFF;
-				if (dp->part.pt_type == DT_META) {
-					mm_count++;
-				}
 			}
 		}
-		error = 0;
-		if (istart) {
-			mp->mt.fs_count = args.fs_count;
-			mp->orig_mt.fs_count = args.fs_count;
-			mp->mt.mm_count = mm_count;
-			mp->orig_mt.mm_count = mm_count;
-			error = sam_check_stripe_group(mp, istart);
-		}
+		mp->mt.fs_count = (short)args.fs_count;
+		mp->orig_mt.fs_count = (short)args.fs_count;
+		mp->mt.mm_count = mm_count;
+		mp->orig_mt.mm_count = mm_count;
+		error = sam_check_stripe_group(mp, istart);
 #ifdef sun
 		if (error == 0) {
 			int npart;
@@ -924,13 +963,18 @@ sam_mount_info(
 				sam_close_devices(mp, 0, (FREAD | FWRITE),
 				    credp);
 			} else {
-				if (error) {
-					sam_close_devices(mp, istart,
-					    (FREAD | FWRITE), credp);
-				} else if (SAM_IS_SHARED_CLIENT(mp) &&
+				/*
+				 * Verify all devices have superblock for
+				 * this file system.
+				 */
+				if ((error == 0) && SAM_IS_SHARED_CLIENT(mp) &&
 				    (mp->mt.fi_status & FS_MOUNTED)) {
 					error = sam_update_shared_filsys(mp,
 					    SHARE_wait_one, -1);
+				}
+				if (error) {
+					sam_close_devices(mp, istart,
+					    (FREAD | FWRITE), credp);
 				}
 
 			}
@@ -950,6 +994,10 @@ sam_mount_info(
 	}
 done:
 	mutex_exit(&samgt.global_mutex);
+	if (mp) {
+		TRACE(T_SAM_MNT_INFO_RET, mp, mp->mt.fi_status, mp->mt.fs_count,
+		    mp->mi.m_fsgen_config);
+	}
 	return (error);
 }
 
@@ -1970,6 +2018,7 @@ sam_setfspartcmd(
 	cred_t *credp)	/* Credentials */
 {
 	struct sam_setfspartcmd_arg args;
+	struct sam_sblk *sblk;		/* Ptr to the superblock */
 	struct samdent *dp;
 	struct sam_fs_part *pt;
 	sam_mount_t *mp;
@@ -2006,6 +2055,10 @@ sam_setfspartcmd(
 	locked = 1;
 	error = 0;
 	ord = -1;
+	if (!(mp->mt.fi_status & FS_MOUNTED)) {
+		error = EINVAL;
+		goto out;
+	}
 	if (mp->mt.fi_status & (FS_MOUNTING|FS_UMOUNT_IN_PROGRESS)) {
 		error = EBUSY;
 		goto out;
@@ -2014,73 +2067,103 @@ sam_setfspartcmd(
 		error = EAGAIN;
 		goto out;
 	}
+	sblk = mp->mi.m_sbp;
 	for (i = 0; i < mp->mt.fs_count; i++) {
 		dp = &mp->mi.m_fs[i];
 		pt = &dp->part;
-		if (pt->pt_eq != args.eq) {
-			continue;
+		if (pt->pt_eq == args.eq) {
+			ord = i;
+			break;
 		}
+	}
+	if (ord == -1) {
+		error = ENOENT;
+		goto out;
+	}
+
+	/*
+	 * If the supplied equipment is an element of a stripe
+	 * group, issue the change to the first equipment.
+	 */
+	if (is_stripe_group(pt->pt_type)) {
+		int j;
+
+		for (j = 0; j < i; j++) {
+			if (mp->mi.m_fs[j].part.pt_type ==
+			    pt->pt_type) {
+				dp = &mp->mi.m_fs[j];
+				pt = &dp->part;
+				ord = j;
+				break;
+			}
+		}
+	}
+
+	/*
+	 * If busy processing previous command for this eq
+	 */
+	if (dp->command != DK_CMD_null) {
+		SAM_KICK_BLOCK(mp);
+		error = EBUSY;
+		goto out;
+	}
+
+	switch (args.command) {
+
+	case DK_CMD_noalloc:
+		if ((pt->pt_type != DT_META) &&
+		    (pt->pt_state == DEV_ON)) {
+			dp->command = DK_CMD_noalloc;
+			dp->skip_ord = 0;
+		} else {
+			error = EINVAL;
+		}
+		break;
+
+	case DK_CMD_alloc:
+		if (pt->pt_state == DEV_NOALLOC ||
+		    pt->pt_state == DEV_UNAVAIL) {
+			dp->command = DK_CMD_alloc;
+			dp->skip_ord = 0;
+		} else {
+			error = EINVAL;
+		}
+		break;
+
+	case DK_CMD_off:
+		if (pt->pt_state == DEV_NOALLOC) {
+			dp->command = DK_CMD_off;
+			dp->skip_ord = 0;
+		} else {
+			error = EINVAL;
+		}
+		break;
+
+	case DK_CMD_add:
+	case DK_CMD_remove:
+	case DK_CMD_release: {
+		struct samdent *ddp;	/* Ptr to dev in mount table */
+		int count = 0;
+		int dt, ddt;
+		int i;
+		dtype_t	type;		/* Device type */
 
 		/*
-		 * If the supplied equipment is an element of a stripe
-		 * group, issue the change to the first equipment.
+		 * Cannot add/remove/release devices in a non V2A file system.
+		 * Must upgrade file system with samadm add-features.
 		 */
-		ord = i;
-		if (is_stripe_group(pt->pt_type)) {
-			int j;
-
-			for (j = 0; j < i; j++) {
-				if (mp->mi.m_fs[j].part.pt_type ==
-				    pt->pt_type) {
-					dp = &mp->mi.m_fs[j];
-					pt = &dp->part;
-					ord = j;
-					break;
-				}
+		if (!SAM_MAGIC_V2A_OR_HIGHER(&sblk->info.sb)) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: Can't add/remove/release"
+			    " eq %d lun %s, not file system vers 2A.",
+			    mp->mt.fi_name, pt->pt_eq, pt->pt_name);
+			if (SAM_MAGIC_V2_OR_HIGHER(&sblk->info.sb)) {
+				cmn_err(CE_WARN, "\tUpgrade file system"
+				    " with samadm add-features first.");
 			}
+			error = EINVAL;
+			break;
 		}
-
-		/*
-		 * If busy processing previous command for this eq
-		 */
-		if (dp->command != DK_CMD_null) {
-			SAM_KICK_BLOCK(mp);
-			error = EBUSY;
-			goto out;
-		}
-
-		switch (args.command) {
-
-		case DK_CMD_noalloc:
-			if ((pt->pt_type != DT_META) &&
-			    (pt->pt_state == DEV_ON)) {
-				dp->command = DK_CMD_noalloc;
-				dp->skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		case DK_CMD_alloc:
-			if (pt->pt_state == DEV_NOALLOC ||
-			    pt->pt_state == DEV_UNAVAIL) {
-				dp->command = DK_CMD_alloc;
-				dp->skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		case DK_CMD_off:
-			if (pt->pt_state == DEV_NOALLOC) {
-				dp->command = DK_CMD_off;
-				dp->skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		case DK_CMD_add:
+		if (args.command == DK_CMD_add) {
 			if (pt->pt_state == DEV_OFF) {
 				dp->command = DK_CMD_add;
 				dp->skip_ord = 0;
@@ -2088,44 +2171,63 @@ sam_setfspartcmd(
 				error = EINVAL;
 			}
 			break;
-
-		case DK_CMD_remove:
-			if (pt->pt_state == DEV_ON ||
-			    pt->pt_state == DEV_NOALLOC) {
-				dp->command = DK_CMD_remove;
-				dp->skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		case DK_CMD_release:
-			if ((pt->pt_type != DT_META) &&
-			    pt->pt_state == DEV_ON ||
-			    pt->pt_state == DEV_NOALLOC) {
-				dp->command = DK_CMD_release;
-				dp->skip_ord = 0;
-			} else {
-				error = EINVAL;
-			}
-			break;
-
-		default:
-			error = ENOTTY;
-			break;
-
-		}	/* end switch */
-	}
-
-	if (ord >= 0) {
-		if (error == 0) {
-			/*
-			 * Signal block thread to process LUN state change
-			 */
-			SAM_KICK_BLOCK(mp);
 		}
-	} else {
-		error = ENOENT;
+
+		if ((pt->pt_type == DT_META) ||
+		    (mp->mt.mm_count == 0)) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: remove/release only "
+			    "supported for data devices in a ma file system",
+			    mp->mt.fi_name);
+			error = EINVAL;
+			break;
+		}
+
+		/*
+		 * Cannot remove/release last meta or data ON device in the fs.
+		 */
+		type = dp->part.pt_type;
+		dt = (type == DT_META) ? MM : DD;
+		ddp = &mp->mi.m_fs[0];
+		for (i = 0; i < sblk->info.sb.fs_count; i++, ddp++) {
+			if (ddp->num_group == 0) {
+				continue;
+			}
+			ddt = (ddp->part.pt_type == DT_META) ? MM : DD;
+			if (dt != ddt) {
+				continue;
+			}
+			if (ddp->part.pt_state == DEV_ON) {
+				count++;
+			}
+		}
+		if (count <= 1) {
+			cmn_err(CE_WARN, "SAM-QFS: %s: cannot remove/release "
+			    "last ON %s device in the file system",
+			    mp->mt.fi_name, dt == MM ? "meta" : "data");
+			error = EINVAL;
+			break;
+		}
+		if (pt->pt_state == DEV_ON ||
+		    pt->pt_state == DEV_NOALLOC) {
+			dp->command = (uchar_t)args.command;
+			dp->skip_ord = 0;
+		} else {
+			error = EINVAL;
+		}
+		}
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+
+	}	/* end switch */
+
+	if (error == 0) {
+		/*
+		 * Signal block thread to process LUN state change
+		 */
+		SAM_KICK_BLOCK(mp);
 	}
 
 out:

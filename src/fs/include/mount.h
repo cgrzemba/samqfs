@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.161 $"
+#pragma ident "$Revision: 1.162 $"
 #endif
 
 #ifdef sun
@@ -400,6 +400,8 @@ int sam_unmount_fs(sam_mount_t *mp, int fflag, sam_unmount_flag_t flag);
 int sam_flush_ino(vfs_t *vfsp, sam_unmount_flag_t flag, int fflag);
 void sam_cleanup_mount(sam_mount_t *mp, pathname_t *pn, cred_t *credp);
 void sam_close_devices(sam_mount_t *mp, int istart, int filemode,
+	cred_t *credp);
+void sam_close_device(sam_mount_t *mp, struct samdent *dp, int filemode,
 	cred_t *credp);
 void sam_report_initial_watermark(sam_mount_t *mp);
 void sam_mount_setwm_blocks(sam_mount_t *mp);

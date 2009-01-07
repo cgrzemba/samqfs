@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.264 $"
+#pragma ident "$Revision: 1.265 $"
 #endif
 
 #include "sam/osversion.h"
@@ -288,7 +288,8 @@ sam_update_shared_filsys(
 	 * If we don't have a valid copy of the superblock, get one.
 	 */
 	sblk = mp->mi.m_sbp;
-	if ((sblk == NULL) || (sblk->info.sb.fs_count != mp->mt.fs_count)) {
+	if ((sblk == NULL) || (sblk->info.sb.fs_count != mp->mt.fs_count) ||
+	    (sblk->info.sb.fsgen != mp->mi.m_fsgen_config)) {
 		error = sam_update_shared_sblk(mp, wait_flag);
 		mp->ms.m_cl_vfs_time = 0;	/* Update sblk now */
 	}

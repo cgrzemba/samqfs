@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.51 $"
+#pragma ident "$Revision: 1.52 $"
 
 /* Feature test switches. */
 
@@ -105,7 +105,11 @@ static void SamPrintDKIOC(struct dk_cinfo *, char *);
 #ifdef sun
 static void SamPrintUUID(struct uuid *);
 static void SamPrintEFI(struct dk_gpt *, char *);
+extern char *getfullrawname();
 #endif /* sun */
+
+static int Dsk2Rdsk(char *dsk, char *rdsk);
+
 
 /*
  * Search through a list of files/devices provided on the command
@@ -192,8 +196,12 @@ CheckDev(char *dev)
 #endif /* sun */
 	static struct sam_host_table_blk *htp = NULL;
 	int hosts_table_size;
+	char devrname[MAXPATHLEN];
 
-	if ((fd = open(dev, O_RDONLY)) < 0) {
+	if (!Dsk2Rdsk(dev, devrname)) {
+		return;
+	}
+	if ((fd = open(devrname, O_RDONLY)) < 0) {
 		if (verbose) {
 			/* Couldn't open '%s' */
 			error(0, errno, GetCustMsg(13222), dev);
@@ -575,37 +583,50 @@ ListHosts(struct DevInfo *rdip, int nd)
 static void
 ListFSet(struct DevInfo *dip, int n)
 {
-	int j, dups, holes;
+	int j, holes;
 	long when;
 	int lfset[L_FSET];
 	char typbuf[12];
 	char fsbuf[sizeof (uname_t)+8];
 	int md, mm, mr, oXXX, gXXX, bad;
 	int missing_meta_message = 0;
+	int ord;
+	int fsgen = 0;
 	char *template;
 
 	if (blocks) {
-		template = "%s%s%s    %d    %s   %s  %lld\n";
+		template = "%s%s%s    %d    %s   %s  %s %lld\n";
 	} else {
-		template = "%s%s%s    %d    %s   %s  -\n";
+		template = "%s%s%s    %d    %s   %s  %s\n";
 	}
 	bzero(&lfset[0], sizeof (lfset));
 	FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
 	when = dip->di_sblk->info.sb.init;
+	fsgen = dip->di_sblk->info.sb.fsgen;
+	for (j = 0; j < n; j++) {
+		lfset[dip[j].di_sblk->info.sb.ord]++;
+	}
+	for (j = 0; j < dip->di_sblk->info.sb.fs_count; j++) {
+		if (lfset[j] == 1) {
+			if (dip[j].di_sblk->eq[j].fs.state == DEV_ON ||
+			    dip[j].di_sblk->eq[j].fs.state == DEV_NOALLOC ||
+			    dip[j].di_sblk->eq[j].fs.state == DEV_UNAVAIL) {
+				fsgen = dip[j].di_sblk->info.sb.fsgen;
+				break;
+			}
+		}
+	}
 	printf("#\n# ");
-	/* Family Set '%s' Created %s */
-	printf(GetCustMsg(13805), fsbuf, ctime(&when));
+	/* Family Set '%s' Created %s Gen %d*/
+	printf(GetCustMsg(13805), fsbuf, fsgen, ctime(&when));
 	if (dip->di_flags & DI_SBLK_BSWAPPED) {
 		printf("#\n# ");
 		/* Foreign byte order (super-blocks byte-reversed). */
 		printf(GetCustMsg(13806));
 	}
 	printf("#\n");
-	dups = holes = 0;
+	holes = 0;
 	md = mm = mr = oXXX = gXXX = bad = 0;
-	for (j = 0; j < n; j++) {
-		lfset[dip[j].di_sblk->info.sb.ord]++;
-	}
 	for (j = 0; j < dip->di_sblk->info.sb.fs_count; j++) {
 		if (lfset[j] == 0) {
 			/*
@@ -626,9 +647,6 @@ ListFSet(struct DevInfo *dip, int n)
 					missing_meta_message++;
 				}
 			}
-		}
-		if (lfset[j] > 1) {
-			dups++;
 		}
 		switch (dip->di_sblk->eq[j].fs.type) {
 		case DT_DATA:
@@ -699,8 +717,9 @@ ListFSet(struct DevInfo *dip, int n)
 				printf(template,
 				    (holes || bad) ? "# " : "", "",
 				    "nodev    ",
-				    dip->di_sblk->eq[j].fs.eq, typbuf, fsbuf,
+				    dip->di_sblk->eq[j].fs.eq, typbuf, fsbuf, "-",
 				    (long long)dip->di_sblk->eq[j].fs.capacity);
+
 			}
 		}
 	}
@@ -708,19 +727,31 @@ ListFSet(struct DevInfo *dip, int n)
 		struct sam_sblk *sblk;
 
 		sblk = dip[j].di_sblk;
+		ord = sblk->info.sb.ord;
 		if (holes || bad) {
 			printf("# ");
 			/* Ordinal %d */
-			printf(GetCustMsg(13809), sblk->info.sb.ord);
+			printf(GetCustMsg(13809), ord);
 		}
-		TypeStr(sblk->eq[sblk->info.sb.ord].fs.type, typbuf);
+		TypeStr(sblk->eq[ord].fs.type, typbuf);
 		FSStr(sblk->info.sb.fs_name, fsbuf);
-		printf(template,
-		    (holes || bad) ? "# " : "",
-		    (lfset[sblk->info.sb.ord] > 1) ? "> " : "",
-		    dip[j].di_devname, sblk->eq[sblk->info.sb.ord].fs.eq,
-		    typbuf, fsbuf, (long long)
-		    sblk->eq[sblk->info.sb.ord].fs.capacity);
+		if (sblk->info.sb.fsgen != fsgen) {
+			if (verbose) {
+				printf(template, "#", "", dip[j].di_devname,
+				    sblk->eq[ord].fs.eq, typbuf, fsbuf, "-",
+				    (long long) sblk->eq[ord].fs.capacity);
+			}
+			continue;
+		}
+		if (holes || bad) {
+			printf(template, "#", "", dip[j].di_devname,
+			    sblk->eq[ord].fs.eq, typbuf, fsbuf, "-",
+			    (long long) sblk->eq[ord].fs.capacity);
+			continue;
+		}
+		printf(template, "", "", dip[j].di_devname,
+		    sblk->eq[ord].fs.eq, typbuf, fsbuf, "-",
+		    (long long) sblk->eq[ord].fs.capacity);
 	}
 	printf("\n");
 }
@@ -766,6 +797,7 @@ SamPrintSB(struct sam_sblk *sbp, char *str)
 	    sbp->info.sb.name[3]);
 	printf("\tsblk.info.sb.magic        = %#x\n", (int)sbp->info.sb.magic);
 	printf("\tsblk.info.sb.init         = %#x\n", (int)sbp->info.sb.init);
+	printf("\tsblk.info.sb.fsgen        = %#x\n", (int)sbp->info.sb.fsgen);
 	printf("\tsblk.info.sb.ord          = %#x\n", (int)sbp->info.sb.ord);
 	printf("\tsblk.info.sb.fi_type      = %#x\n",
 	    (int)sbp->info.sb.fi_type);
@@ -950,3 +982,50 @@ SamPrintEFI(struct dk_gpt *efi, char *dev)
 }
 
 #endif /* sun */
+
+/*
+ * Convert a /dev/dsk/xyzzy pathname to /dev/rdsk/xyzzy
+ *
+ * Return 1 if /dsk/ was found and replaced (success); 0 otherwise.
+ */
+static int
+Dsk2Rdsk(
+	char *dsk,
+	char *rdsk)
+{
+#ifdef	linux
+	int k, j, n;
+	/*
+	 * Linux block devices generally
+	 * don't have associated raw devices, so just
+	 * return the block device.
+	 */
+
+	n = strlen(dsk);
+	strncpy(rdsk, dsk, n);
+	rdsk[n] = 0;
+
+	return (1);
+
+#else	/* linux */
+	char *rdevname;
+
+	if ((rdevname = getfullrawname(dsk)) == NULL) {
+		if (verbose) {
+			error(0, 0, GetCustMsg(1606), "getfullrawname");
+		}
+		return (0);
+	}
+	if (strcmp(rdevname, "\0") == 0) {
+		if (verbose) {
+			error(0, 0, GetCustMsg(13423), dsk, rdevname);
+		}
+		free(rdevname);
+		return (0);
+	}
+	strcpy(rdsk, rdevname);
+	free(rdevname);
+	return (1);
+
+#endif	/* linux */
+}

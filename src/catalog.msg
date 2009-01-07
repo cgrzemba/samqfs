@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.623 $"
+$ pragma ident "$Revision: 1.624 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2753,7 +2753,7 @@ $ ===================================================================
 13802 Host file information for family set '%s'\n
 13803 Version: %d    Generation: %d    Count: %d\n
 13804 Length: %d    Server: %d\n
-13805 Family Set '%s' Created %s
+13805 Family Set '%s' Gen %d Created %s
 13806 Foreign byte order (super-blocks byte-reversed).\n
 13807 zoned-off or missing metadata device\n
 13808 Missing slices\n

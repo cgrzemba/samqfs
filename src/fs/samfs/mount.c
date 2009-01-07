@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.243 $"
+#pragma ident "$Revision: 1.244 $"
 #endif
 
 #include "sam/osversion.h"
@@ -307,6 +307,7 @@ sam_getdev(
 	for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count; i++, dp++) {
 		if (istart && (i < istart) &&
 		    (dp->part.pt_state != DEV_OFF)) {
+			nparts++;
 			continue;
 		}
 		if (dp->opened) {
@@ -1241,8 +1242,8 @@ sam_set_mount(sam_mount_t *mp)
 	 * stripe group element.
 	 */
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
-		if ((sblk->eq[i].fs.state == DEV_OFF) ||
-		    (sblk->eq[i].fs.state == DEV_DOWN)) {
+		if ((sblk->eq[ord].fs.state == DEV_OFF) ||
+		    (sblk->eq[ord].fs.state == DEV_DOWN)) {
 			continue;
 		}
 		if (is_osd_group(sblk->eq[ord].fs.type)) {
@@ -1921,6 +1922,7 @@ sam_build_geometry(
 	int sblk_data_on = 0;
 	int meta_on = 0;
 	int data_on = 0;
+	int fsgen_config;
 	int error = 0;
 	int err_line = 0;
 	boolean_t ck_meta = TRUE;
@@ -1945,6 +1947,7 @@ sam_build_geometry(
 	 * verify mcf matches superblock. Move ON devices into the device
 	 * array in correct ordinal order.
 	 */
+	fsgen_config = mp->mi.m_fsgen_config;
 	sblk_fs_count = sam_validate_sblk(mp, mounted, devp, &sblk_meta_on,
 	    &sblk_data_on);
 
@@ -2040,11 +2043,15 @@ sam_build_geometry(
 	}
 
 	/*
-	 * If error, restore device array so devices can be closed.
+	 * If error, restore previous superblock generation number. if error
+	 * and not mounted, restore device array so devices can be closed.
 	 */
-	if (error && !mounted) {
-		bcopy((void *)devp, (void *)&mp->mi.m_fs,
-		    (sizeof (struct samdent)*mp->mt.fs_count));
+	if (error) {
+		mp->mi.m_fsgen_config = fsgen_config;
+		if (!mounted) {
+			bcopy((void *)devp, (void *)&mp->mi.m_fs,
+			    (sizeof (struct samdent)*mp->mt.fs_count));
+		}
 		TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
 	}
 	kmem_free((void *) devp, (sizeof (struct samdent) * mp->mt.fs_count));
@@ -2330,8 +2337,6 @@ sam_close_devices(
 	cred_t *credp)		/* Credentials pointer. */
 {
 	int i;
-	dev_t dev;
-	vnode_t	*svp;
 	struct samdent *dp;
 
 	for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count; i++, dp++) {
@@ -2339,45 +2344,65 @@ sam_close_devices(
 		    (dp->part.pt_state != DEV_OFF)) {
 			continue;
 		}
-		if ((svp = dp->svp) == (vnode_t *)0) {
-			continue;
-		}
-		(void) VOP_PUTPAGE_OS(svp, 0, 0, B_INVAL, credp, NULL);
-		TRACE(T_SAM_DEV_CLOSE, mp, dp->part.pt_eq, dp->part.pt_state,
-		    dp->error);
-		if (is_osd_group(dp->part.pt_type)) {
-			if (!dp->opened) {
-				continue;
-			}
-			sam_close_osd_device(dp->oh, filemode, credp);
-			if (!(mp->mt.fi_status & FS_FAILOVER)) {
-				dp->opened = 0;
-				continue;
-			}
-			dp->error = sam_open_osd_device(dp, filemode, credp);
-		} else {
-			if (dp->opened) {
-				VOP_CLOSE_OS(svp, filemode, 1, (offset_t)0,
-				    credp, NULL);
-			} else {
-				VN_RELE(svp);		/* "nodev" specvp */
-			}
-			dev = dp->dev;
-			bflush(dev);
-			bfinval(dev, 1);
-			if (!dp->opened) {
-				continue;
-			}
-			if (!(mp->mt.fi_status & FS_FAILOVER)) {
-				VN_RELE(svp);
-				dp->opened = 0;
-				continue;
-			}
-			(void) VOP_OPEN_OS(&dp->svp, filemode, credp, NULL);
-		}
-		TRACE(T_SAM_DEV_OPEN, mp, dp->part.pt_eq,
-		    dp->part.pt_state, dp->error);
+		sam_close_device(mp, dp, filemode, credp);
 	}
+}
+
+/*
+ * ----- sam_close_device -
+ *	If the device was opened, close block special files,
+ *	Flush buffers and invalidate cache for all devices.
+ *	Free memory for unmount or error on mount tables.
+ */
+
+void
+sam_close_device(
+	sam_mount_t *mp,	/* Pointer to the mount table. */
+	struct samdent *dp,	/* Pointer to the device entry */
+	int filemode,		/* Open mode */
+	cred_t *credp)		/* Credentials pointer. */
+{
+	dev_t dev;
+	vnode_t	*svp;
+
+	if ((svp = dp->svp) == (vnode_t *)0) {
+		return;
+	}
+	(void) VOP_PUTPAGE_OS(svp, 0, 0, B_INVAL, credp, NULL);
+	TRACE(T_SAM_DEV_CLOSE, mp, dp->part.pt_eq, dp->part.pt_state,
+	    dp->error);
+	if (is_osd_group(dp->part.pt_type)) {
+		if (!dp->opened) {
+			return;
+		}
+		sam_close_osd_device(dp->oh, filemode, credp);
+		if (!(mp->mt.fi_status & FS_FAILOVER)) {
+			dp->opened = 0;
+			return;
+		}
+		dp->error = sam_open_osd_device(dp, filemode, credp);
+	} else {
+		if (dp->opened) {
+			VOP_CLOSE_OS(svp, filemode, 1, (offset_t)0,
+			    credp, NULL);
+		} else {
+			VN_RELE(svp);		/* "nodev" specvp */
+		}
+		dev = dp->dev;
+		bflush(dev);
+		bfinval(dev, 1);
+		if (!dp->opened) {
+			return;
+		}
+		if (!(mp->mt.fi_status & FS_FAILOVER)) {
+			VN_RELE(svp);
+			dp->opened = 0;
+			return;
+		}
+		(void) VOP_OPEN_OS(&dp->svp, filemode, credp, NULL);
+	}
+	TRACE(T_SAM_DEV_OPEN, mp, dp->part.pt_eq,
+	    dp->part.pt_state, dp->error);
 }
 #endif /* sun */
 

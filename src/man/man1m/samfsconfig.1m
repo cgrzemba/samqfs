@@ -1,4 +1,4 @@
-.\" $Revision: 1.22 $
+.\" $Revision: 1.23 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .nh
 .na
-.TH samfsconfig 1M "27 Apr 2005"
+.TH samfsconfig 1M "7 Jan 2009"
 .SH NAME
 samfsconfig \- Recovers configuration information
 .SH SYNOPSIS
@@ -61,6 +61,10 @@ By default, the output is written to \fBstdout\fR, but the
 output can be redirected to a file and edited
 to regenerate the file system portions of the \fBmcf\fR file
 in the event of a system reconfiguration or disaster.
+
+\fBsamd buildmcf\fR executes samfsconfig to build the mcf file.
+\fBsamd config\fR must be executed to install the new configuration
+after the \fBsamd buildmcf\fR has built the mcf file.
 .SH OPTIONS
 This command accepts the following options:
 .TP 10
@@ -119,17 +123,67 @@ Example 1.
 ceres# samfsconfig /dev/dsk/*
 
 #
-# Family Set 'samfs2' Created Thu Jun 29 11:55:45 2000
+# Family Set 'samfs5' Gen 0 Created Fri Dec 19 20:17:48 2008
+#
+# zoned-off or missing metadata device
 #
 # Missing slices
+# nodev        501    mm   samfs5  -
+# Ordinal 9
+#/dev/dsk/c2t200400A0B82AC18Bd1s2    512    g7   samfs5  -
+
+#
+# Family Set 'samfs5' Gen 1 Created Tue Dec 23 16:41:07 2008
+#
+# Missing slices
+# Ordinal 0
+#/dev/dsk/c2t200400A0B82AC18Bd2s6    501    mm   samfs5  -
+# Ordinal 1
+#/dev/dsk/c2t200400A0B82AC18Bd1s6    502    mr   samfs5  -
+# Ordinal 2
+#/dev/dsk/c2t200400A0B82AC18Bd0s6    503    mr   samfs5  -
 # Ordinal 3
-# /dev/dsk/c3t0d0s5    44    md   samfs2  -
-# Ordinal 4
-# /dev/dsk/c3t0d0s6    45    md   samfs2  -
+#/dev/dsk/c2t200400A0B82AC18Bd3s6    504    mr   samfs5  -
+
+#
+# Family Set 'samfs4' Gen 0 Created Sat Dec 27 19:55:08 2008
+#
+# Foreign byte order (super-blocks byte-reversed).
+#
+# Missing slices
+# Ordinal 0
+#/dev/dsk/c2t200400A0B82AC18Bd3s2    25    mm   samfs4  -
+
+#
+# Family Set 'samfs1' Gen 0 Created Sat Dec 27 19:56:26 2008
+#
+# Foreign byte order (super-blocks byte-reversed).
+#
+# Missing slices
+# Ordinal 0
+#/dev/dsk/c2t200400A0B82AC18Bd2s0    101    mm   samfs1  -
+
+#
+# Family Set 'samfs5' Gen 2 Created Fri Jan  2 16:16:05 2009
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        501    mm   samfs5  -
 # Ordinal 6
-# /dev/dsk/c3t1d0s5    47    md   samfs2  -
+#/dev/dsk/c2t200400A0B82AC18Bd0s3    507    mr   samfs5  -
 # Ordinal 7
-# /dev/dsk/c3t1d0s6    48    md   samfs2  -
+#/dev/dsk/c2t200400A0B82AC18Bd2s2    508    mr   samfs5  -
+
+#
+# Family Set 'samfs5' Gen 2 Created Fri Jan  2 20:53:38 2009
+#
+samfs5 500 ma samfs5 - shared
+/dev/dsk/c2t200400A0B82AC18Bd1s5    501    mm   samfs5  -
+/dev/dsk/c2t200400A0B82AC18Bd0s5    502    mr   samfs5  -
+/dev/dsk/c2t200400A0B82AC18Bd3s3    503    mr   samfs5  -
+/dev/dsk/c2t200400A0B82AC18Bd1s4    504    mr   samfs5  -
+/dev/dsk/c2t200400A0B82AC18Bd0s4    505    mr   samfs5  -
 
 .fi
 .ft
@@ -156,28 +210,28 @@ Device '/dev/dsk/c3t0d0s3' has a QFS superblock.
 9 QFS devices found.
 
 #
-# Family Set 'samfs1' Created Tue Aug  1 16:57:24 2000
+# Family Set 'samfs1' Gen 0 Created Tue Aug  1 16:57:24 2008
 #
 # Missing slices
 # Ordinal 2
 # /dev/dsk/c1t4d0s1    23    mr   samfs1  -
 
 #
-# Family Set 'qfs1' Created Thu Aug 10 19:04:56 2000
+# Family Set 'qfs1' Gen 0 Created Thu Aug 10 19:04:56 2008
 #
 # Missing slices
 # Ordinal 0
 # /dev/dsk/c1t4d0s0    11    mm   qfs1  -
 
 #
-# Family Set 'samfs1' Created Wed Feb 21 20:21:04 2001
+# Family Set 'samfs1' Gen 0 Created Wed Feb 21 20:21:04 2008
 #
-samfs1 ma 10 samfs1
+samfs1 10 ma samfs1 -
 /dev/dsk/c2t7d0s0    11    mm   samfs1  -
 /dev/dsk/c2t7d0s6    12    mr   samfs1  -
 
 #
-# Family Set 'qfs1' Created Thu Feb 22 12:49:10 2001
+# Family Set 'qfs1' Gen 0 Created Thu Feb 22 12:49:10 2008
 #
 qfs1 ma 20 qfs1
 /dev/dsk/c3t0d0s3    21    mm   qfs1  -
@@ -185,9 +239,11 @@ qfs1 ma 20 qfs1
 /dev/dsk/c1t0d0s1    25    g0   qfs1  -
 /dev/dsk/c1t2d0s0    26    g2   qfs1  -
 /dev/dsk/c1t2d0s1    27    g2   qfs1  -
+
 .fi
 .ft
 .SH SEE ALSO
 \fBsammkfs\fR(1M)
+\fBsamd\fR(1M)
 .PP
 \fBmcf\fR(4)
