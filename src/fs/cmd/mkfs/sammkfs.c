@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 
 /* ----- Include Files ---- */
@@ -1299,6 +1299,10 @@ grow_sblk()
 		dt = (dp->type == DT_META) ? MM : DD;
 		if (ord == 0) {	/* Allocate at super block + LG block */
 			iblk = super_blk + mp->mi.m_dau[dt].kblocks[LG];
+			if (SBLK_MAPS_ALIGNED(&sblock.info.sb)) {
+				iblk = roundup(iblk,
+				    mp->mi.m_dau[dt].kblocks[LG]);
+			}
 		}
 		if (ord < old_count) {
 			t_size = (longlong_t)dp->blocks *
@@ -1330,9 +1334,13 @@ grow_sblk()
 				sblock.eq[ord].fs.allocmap = iblk;
 				if (mm_count == 0) {
 					sblock.eq[ord].fs.mm_ord = ord;
-					len = super_blk +
-					    LG_DEV_BLOCK(mp, dt) +
+					len = iblk +
 					    sblock.eq[ord].fs.l_allocmap;
+					if (SBLK_MAPS_ALIGNED
+					    (&sblock.info.sb)) {
+						len = roundup(len,
+						    LG_DEV_BLOCK(mp, dt));
+					}
 					/* Account for last superblock */
 					if (ord == 0) {
 						len += LG_DEV_BLOCK(mp, dt);
@@ -1344,6 +1352,11 @@ grow_sblk()
 					has_no_bitmaps = 1;
 					sblock.eq[ord].fs.mm_ord = mm_ord;
 					iblk += sblock.eq[ord].fs.l_allocmap;
+					if (SBLK_MAPS_ALIGNED
+					    (&sblock.info.sb)) {
+						iblk = roundup(iblk,
+						    LG_DEV_BLOCK(mp, MM));
+					}
 					if (sblock.eq[ord].fs.allocmap < 0) {
 						error(0, 0, catgets(catfd,
 						    SET, 13433,
