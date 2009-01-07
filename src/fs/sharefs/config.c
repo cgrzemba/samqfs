@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.77 $"
+#pragma ident "$Revision: 1.78 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -139,52 +139,19 @@ putLabelInfo(
 
 
 /*
- * Set Server in label block.
+ * Write the label block.
  */
 static int
-putLabel(
+writeLabel(
 	char *fs,
-	struct cfdata *cfp)
+	int dpart,
+	struct sam_label_blk *lb)
 {
-	int dpart, fd;
-	sam_label_blk_t lblk;
-	struct sam_label *lb = &lblk.info.lb;
+	int fd;
 	struct sam_fs_part *part;
 	char rawpath[MAXPATHLEN];
 
-	/*
-	 * Get the information for first data partition
-	 */
 	part = config.mnt.part;
-	if ((config.mnt.params.fi_type == DT_META_SET) ||
-	    (config.mnt.params.fi_type == DT_META_OBJECT_SET)) {
-		for (dpart = 0; dpart < config.mnt.params.fs_count; dpart++) {
-			if (part[dpart].pt_type != DT_META) {
-				break;
-			}
-		}
-		if (dpart == 0 || dpart == config.mnt.params.fs_count) {
-			SysError(HERE, "FS %s: Filesystem has no data "
-			    "partition", fs);
-			return (-1);
-		}
-	} else {
-		dpart = 0;
-	}
-
-
-	bzero((char *)&lblk, sizeof (lblk));
-	strncpy(lb->name, "LBLK", sizeof (lb->name));
-	lb->magic = SAM_LABEL_MAGIC;
-	lb->init = cfp->fsInit;
-	lb->update = time(NULL);
-	lb->version = SAM_LABEL_VERSION;
-	lb->serverord = cfp->ht->info.ht.server;
-	lb->gen = cfp->ht->info.ht.gen;
-	cfp->lb.info.lb.gen = lb->gen;	/* keep config label gen up to date */
-	strncpy(lb->server, cfp->serverName, sizeof (lb->server));
-	strncpy(lb->serveraddr, cfp->serverAddr, sizeof (lb->serveraddr));
-
 	if (is_osd_group(part[dpart].pt_type)) {
 		sam_osd_handle_t oh;
 
@@ -195,7 +162,7 @@ putLabel(
 			return (-1);
 		}
 		if ((write_object(fs, oh, dpart, SAM_OBJ_LBLK_INO,
-		    (char *)&lblk, 0, L_LABEL))) {
+		    (char *)lb, 0, L_LABEL))) {
 			SysError(HERE, "FS %s: couldn't write label on dev %s",
 			    fs, part[dpart].pt_name);
 			(void) close_obj_device(part[dpart].pt_name, O_RDWR,
@@ -207,6 +174,7 @@ putLabel(
 			    fs, part[dpart].pt_name);
 			return (-1);
 		}
+		strncpy(rawpath, part[dpart].pt_name, sizeof (rawpath));
 	} else {
 		/*
 		 * Generate raw device name
@@ -227,7 +195,7 @@ putLabel(
 			return (-1);
 		}
 
-		if (putLabelInfo(fd, &lblk) < 0) {
+		if (putLabelInfo(fd, lb) < 0) {
 			SysError(HERE, "FS %s: couldn't write label on dev %s",
 			    fs, rawpath);
 			(void) close(fd);
@@ -239,7 +207,62 @@ putLabel(
 			return (-1);
 		}
 	}
-	Trace(TR_MISC, "FS %s: Wrote label on %s", fs, rawpath);
+	Trace(TR_MISC, "FS %s: Wrote label on ord %d, %s", fs, dpart, rawpath);
+	return (0);
+}
+
+
+/*
+ * Set Server in label block on the data devices.
+ */
+static int
+putLabel(
+	char *fs,
+	struct cfdata *cfp)
+{
+	int dpart;
+	sam_label_blk_t lblk;
+	struct sam_label *lb = &lblk.info.lb;
+	struct sam_fs_part *part;
+	boolean_t wrote_label = FALSE;
+
+	/*
+	 * Build label block and write to all data devices with state
+	 * ON, NOALLOC, or UNAVAIL.
+	 */
+	bzero((char *)&lblk, sizeof (lblk));
+	strncpy(lb->name, "LBLK", sizeof (lb->name));
+	lb->magic = SAM_LABEL_MAGIC;
+	lb->init = cfp->fsInit;
+	lb->update = time(NULL);
+	lb->version = SAM_LABEL_VERSION;
+	lb->serverord = cfp->ht->info.ht.server;
+	lb->gen = cfp->ht->info.ht.gen;
+	cfp->lb.info.lb.gen = lb->gen;	/* keep config label gen up to date */
+	strncpy(lb->server, cfp->serverName, sizeof (lb->server));
+	strncpy(lb->serveraddr, cfp->serverAddr, sizeof (lb->serveraddr));
+
+	part = config.mnt.part;
+	for (dpart = 0; dpart < config.mnt.params.fs_count; dpart++) {
+		if (part[dpart].pt_type == DT_META) {
+			continue;
+		}
+		if (part[dpart].pt_state != DEV_ON &&
+		    part[dpart].pt_state != DEV_NOALLOC &&
+		    part[dpart].pt_state != DEV_UNAVAIL) {
+			continue;
+		}
+		if (writeLabel(fs, dpart, &lblk)) {
+			SysError(HERE, "FS %s: Can't write label on ord %d",
+			    fs, dpart);
+			return (-1);
+		}
+		wrote_label = TRUE;
+	}
+	if (wrote_label == FALSE) {
+		SysError(HERE, "FS %s: no ON data partition", fs);
+		return (-1);
+	}
 	return (0);
 }
 

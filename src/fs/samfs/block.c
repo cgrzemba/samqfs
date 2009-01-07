@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.126 $"
+#pragma ident "$Revision: 1.127 $"
 
 #include "sam/osversion.h"
 
@@ -106,8 +106,10 @@ static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t state);
 static int sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
 static void sam_init_blocklist(sam_mount_t *mp, uchar_t ord);
-int sam_update_the_sblks(sam_mount_t *mp);
+static int sam_write_label(sam_mount_t *mp, struct samdent *dp, int ord);
 static int sam_remove_from_allocation_links(sam_mount_t *mp, int ord);
+
+int sam_update_the_sblks(sam_mount_t *mp);
 
 extern int sam_bfmap(sam_caller_t caller, struct sam_sblk *sblk, int ord,
 	dev_t meta_dev, char *dcp, char *cptr, int bits);
@@ -2351,13 +2353,13 @@ sam_grow_fs(
 	/*
 	 * Build the free map.
 	 */
-	mutex_enter(&mp->mi.m_fs[ord].eq_mutex);
+	mutex_enter(&dp->eq_mutex);
 	dcp = (char *)kmem_zalloc(SAM_DEV_BSIZE, KM_SLEEP);
 	meta_dp = &mp->mi.m_fs[mm_ord];
 	error = sam_bfmap(SAMFS_CALLER, sblk, ord, meta_dp->dev, dcp, NULL, 1);
 	kmem_free(dcp, SAM_DEV_BSIZE);
 	if (error) {
-		mutex_exit(&mp->mi.m_fs[ord].eq_mutex);
+		mutex_exit(&dp->eq_mutex);
 		cmn_err(CE_WARN,
 		    "SAM-QFS: %s: I/O error writing map blocks "
 		    "for eq %d on %s",
@@ -2371,14 +2373,28 @@ sam_grow_fs(
 	 */
 	error = sam_cablk(SAMFS_CALLER, sblk, (void *)mp, ord, 1, 1,
 	    LG_DEV_BLOCK(mp, DD), LG_DEV_BLOCK(mp, MM), &len);
-	mutex_exit(&mp->mi.m_fs[ord].eq_mutex);
 	if (error) {
+		mutex_exit(&dp->eq_mutex);
 		cmn_err(CE_WARN,
 		    "SAM-QFS: %s: eq %d system length %x != %x on %s",
 		    mp->mt.fi_name, dp->part.pt_eq, sop->system, len,
 		    mp->mi.m_fs[mm_ord].part.pt_name);
 		goto done;
 	}
+
+	/*
+	 * Write label block if adding a data device.
+	 */
+	if ((type != DT_META) && SAM_IS_SHARED_FS(mp)) {
+		if ((error = sam_write_label(mp, dp, ord))) {
+			mutex_exit(&dp->eq_mutex);
+			cmn_err(CE_WARN, "SAM-QFS: %s: Error writing label on "
+			    "eq %d lun %s",
+			    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
+			goto done;
+		}
+	}
+	mutex_exit(&dp->eq_mutex);
 
 	/*
 	 * Increment the file system generation number.
@@ -2454,6 +2470,74 @@ done:
 	mp->mt.fi_status &= ~FS_RECONFIG;
 	mutex_exit(&mp->ms.m_waitwr_mutex);
 	return (0);
+}
+
+
+/*
+ * ----- sam_write_label - Write the shared label block to the new
+ * data device. Loop until the label can be read from the first data
+ * device that is ON/NOALLOC/UNAVAIL.
+ */
+static int
+sam_write_label(
+	sam_mount_t *mp,	/* Pointer to the mount table. */
+	struct samdent *dp,	/* Device entry of the new added ordinal */
+	int ord)		/* Ordinal where label is to be written */
+{
+	int i;
+	struct samdent *ddp;
+	int dt;
+	int error = 0;
+
+	for (i = 0; i < mp->mt.fs_count; i++) {
+		if (i == ord) {
+			continue;
+		}
+		ddp = &mp->mi.m_fs[i];
+		dt = (ddp->part.pt_type == DT_META) ? MM : DD;
+		if (dt != DD) {
+			continue;
+		}
+		if (ddp->part.pt_state != DEV_ON &&
+		    ddp->part.pt_state != DEV_NOALLOC &&
+		    ddp->part.pt_state != DEV_UNAVAIL) {
+			continue;
+		}
+		if (is_osd_group(ddp->part.pt_type)) {
+			char *buf = NULL;
+
+			buf = kmem_alloc(L_LABEL, KM_SLEEP);
+			error = sam_issue_object_io(mp, ddp->oh, FREAD,
+			    SAM_OBJ_LBLK_ID, UIO_SYSSPACE, buf, 0, L_LABEL);
+			if (error == 0) {
+				error = sam_issue_object_io(mp, dp->oh, FWRITE,
+				    SAM_OBJ_LBLK_ID, UIO_SYSSPACE, buf,
+				    0, L_LABEL);
+			}
+			kmem_free(buf, L_LABEL);
+		} else {
+			buf_t *bp, *obp;
+
+			error = sam_bread(mp, ddp->dev, LABELBLK, L_LABEL, &bp);
+			if (error == 0) {
+				obp = getblk(dp->dev,
+				    (LABELBLK << SAM2SUN_BSHIFT), L_LABEL);
+				bcopy((void *)bp->b_un.b_addr, obp->b_un.b_addr,
+				    L_LABEL);
+				bp->b_flags |= B_STALE | B_AGE;
+				brelse(bp);
+				error = sam_bwrite2(mp, obp);
+				obp->b_flags |= B_STALE | B_AGE;
+				brelse(obp);
+			}
+		}
+		if (error) {
+			continue;
+		}
+		break;
+
+	}
+	return (error);
 }
 
 

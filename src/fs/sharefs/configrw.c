@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.56 $"
+#pragma ident "$Revision: 1.57 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -95,11 +95,12 @@ static char *htp[2] = {NULL, NULL};
  */
 static int tryDevs(char *fs);
 
+static int getLabelDev(char *fs, struct sam_sblk *sb, struct cfdata *cfp,
+	int d);
 static int getRootInfo(int rfd, sam_osd_handle_t oh, char *fs, int ord,
 	struct sam_sblk *sb, struct cfdata *cfp);
 static int getLabelInfo(int rfd, sam_osd_handle_t oh, char *fs, int ord,
 	struct sam_label_blk *lb);
-static int checkPartOrdinal(struct sam_sblk *sb, int part);
 
 static int rootFd = -1;
 static int labelFd = -1;
@@ -204,22 +205,24 @@ tryDevs(char *fs)
 	}
 
 	/*
-	 * get the label block dev
+	 * get the label block dev -- first data device that is ON or NOALLOC.
 	 */
-	if ((mnt.params.fi_type == DT_META_SET) ||
-	    (mnt.params.fi_type == DT_META_OBJECT_SET)) {
-		for (d = 0; d < mnt.params.fs_count; d++) {
-			if (mnt.part[d].pt_type != DT_META) {
-				break;
-			}
+	for (d = 0; d < mnt.params.fs_count; d++) {
+		if (mnt.part[d].pt_type == DT_META) {
+			continue;
 		}
-		if (d == 0 || d == mnt.params.fs_count) {
-			errno = 0;
-			SysError(HERE, "FS %s: no data partition", fs);
-			goto errout;
+		if (mnt.part[d].pt_state != DEV_ON &&
+		    mnt.part[d].pt_state != DEV_NOALLOC &&
+		    mnt.part[d].pt_state != DEV_UNAVAIL) {
+			continue;
 		}
-	} else {
-		d = 0;
+		break;
+	}
+
+	if (d >= mnt.params.fs_count) {
+		errno = 0;
+		SysError(HERE, "FS %s: no data partition", fs);
+		goto errout;
 	}
 	strcpy(labelName, mnt.part[d].pt_name);
 	if (is_osd_group(mnt.part[d].pt_type)) {
@@ -286,6 +289,7 @@ CloseDevs(void)
 	labelOh = 0;
 }
 
+
 /*
  * Go out and look at all the configuration bits we care about.
  * Stash them into the free config structure.
@@ -294,14 +298,9 @@ CloseDevs(void)
 int
 GetConfig(char *fs, struct sam_sblk *sb)
 {
-	struct stat sbuf;
 	struct cfdata *cfp;
-	char name[MAXPATHLEN];
 	struct sam_mount_info mnt;
 	int d;
-	int rfd = -1;
-	sam_osd_handle_t oh = 0;
-	int err = 0;
 
 	cfp = &config.cp[config.freeTab];
 	bzero((char *)cfp, sizeof (*cfp));
@@ -311,7 +310,7 @@ GetConfig(char *fs, struct sam_sblk *sb)
 		    (char *)malloc(SAM_LARGE_HOSTS_TABLE_SIZE);
 	}
 	bzero(htp[config.freeTab], SAM_LARGE_HOSTS_TABLE_SIZE);
-	cfp->ht = (struct sam_host_table_blk *)htp[config.freeTab];
+	cfp->ht = (struct sam_host_table_blk *)(void *)htp[config.freeTab];
 
 	cfp->flags |= R_FSCFG;
 
@@ -355,40 +354,57 @@ GetConfig(char *fs, struct sam_sblk *sb)
 			return (0);
 		}
 #endif
+		config.mnt = mnt;		/* Use latest FS info */
 	}
 
 	/*
-	 * get the label block
+	 * get the label block from the first data disk with ON state.
 	 */
 	cfp->flags |= R_LBLK;
-	if ((mnt.params.fi_type == DT_META_SET) ||
-	    (mnt.params.fi_type == DT_META_OBJECT_SET)) {
-		for (d = 0; d < config.mnt.params.fs_count; d++) {
-			if (config.mnt.part[d].pt_state == DEV_ON) {
-				if (config.mnt.part[d].pt_type != DT_META) {
-					break;
-				}
-			}
+	for (d = 0; d < config.mnt.params.fs_count; d++) {
+		if (config.mnt.part[d].pt_type == DT_META) {
+			continue;
 		}
-		if (d == 0 || d == config.mnt.params.fs_count) {
-			errno = 0;
-			SysError(HERE, "FS %s: no data partition", fs);
-			cfp->flags |= R_LBLK_ERR;
+		if ((getLabelDev(fs, sb, cfp, d)) < 0) {
+			continue;
 		}
-	} else {
-		d = 0;
+		break;
 	}
+	if (d >= config.mnt.params.fs_count) {
+		errno = 0;
+		cfp->flags |= R_LBLK_ERR;
+		SysError(HERE, "FS %s: mcf doesn't match fs config, "
+		    "Label error flags=%x", fs, cfp->flags);
+		return (-1);
+	}
+	Trace(TR_MISC, "FS %s: Label on Ord=%d", fs, d);
+	return (0);
+}
+
+
+/*
+ * Go get label device and verify it is the first "on" data device.
+ */
+static int
+getLabelDev(char *fs, struct sam_sblk *sb, struct cfdata *cfp, int d)
+{
+	struct stat sbuf;
+	char name[MAXPATHLEN];
+	sam_osd_handle_t oh = 0;
+	int rfd = -1;
+	int err = 0;
+
 	oh = 0;
 	rfd = -1;
 	if (is_osd_group(config.mnt.part[d].pt_type)) {
-		if ((open_obj_device(config.mnt.part[d].pt_name,
-		    OPEN_READ_RAWFLAGS, &oh)) < 0) {
+		strncpy(name, config.mnt.part[d].pt_name, sizeof (name));
+		if ((open_obj_device(name, OPEN_READ_RAWFLAGS, &oh)) < 0) {
 			if (errno == EBUSY) {
 				cfp->flags |= R_LBLK_BUSY;
 			} else {
 				SysError(HERE,
 				    "FS %s: couldn't open labelblock dev '%s'",
-				    fs, config.mnt.part[d].pt_name);
+				    fs, name);
 				cfp->flags |= R_LBLK_ERR;
 			}
 			err = 1;
@@ -416,6 +432,10 @@ GetConfig(char *fs, struct sam_sblk *sb)
 
 	/*
 	 * Get label info and indirectly read in host table (in getRootInfo).
+	 * Verify the partition which has the lowest numbered ordinal of
+	 * the data partitions with a state = ON (again, according to the
+	 * superblock). This avoids problems with having mcf descriptions
+	 * not matching the filesystem.
 	 */
 	if (err == 0) {
 		cfp->flags |= getLabelInfo(rfd, oh, fs, d, &cfp->lb);
@@ -425,6 +445,11 @@ GetConfig(char *fs, struct sam_sblk *sb)
 			    OPEN_READ_RAWFLAGS, oh);
 		} else if (rfd != -1) {
 			(void) close(rfd);
+		}
+		if (sb->eq[d].fs.state != DEV_ON &&
+		    sb->eq[d].fs.state != DEV_NOALLOC &&
+		    sb->eq[d].fs.state != DEV_UNAVAIL) {
+			return (-1);
 		}
 		if ((cfp->flags & (R_SBLK_BITS|R_LBLK_BITS|R_LBLK_VERS)) ==
 		    R_LBLK) {
@@ -437,12 +462,6 @@ GetConfig(char *fs, struct sam_sblk *sb)
 			    sizeof (cfp->serverName));
 			strncpy(cfp->serverAddr, cfp->lb.info.lb.serveraddr,
 			    sizeof (cfp->serverAddr));
-		}
-		if (checkPartOrdinal(sb, d)) {
-			errno = 0;
-			cfp->flags |= R_LBLK_ERR;
-			SysError(HERE, "FS %s: mcf doesn't match fs config, "
-			    "Label error flags=%x", fs, cfp->flags);
 		}
 	}
 
@@ -471,7 +490,7 @@ GetConfig(char *fs, struct sam_sblk *sb)
 		} else {
 			cfp->flags |= getRootInfo(rfd, 0, fs, 0, sb, cfp);
 			(void) close(rfd);
-			if (checkPartOrdinal(sb, 0)) {
+			if (sb->info.sb.ord != 0) {
 				errno = 0;
 				cfp->flags |= R_SBLK_ERR;
 				SysError(HERE, "FS %s: mcf doesn't match "
@@ -844,53 +863,6 @@ getLabelInfo(
 		return (R_LBLK_VERS);
 	}
 	return (swap_bytes ? R_FOREIGN : 0);
-}
-
-
-/*
- * Verify that the partition is either the root partition for
- * the filesystem if part == 0 (according to the superblock),
- * or that it has the lowest numbered ordinal of the data
- * partitions if part != 0 (again, according to the superblock).
- * This avoids problems with having mcf descriptions not match
- * the filesystem.
- *
- * I.e., we need to locate the superblock/hosts table and the
- * label block reliably.  The hosts table is on ordinal 0 of
- * the filesystem, and the label block is on the data partition
- * with the lowest ordinal.  The information we have about the
- * filesystem prior to actually reading the partitions and/or
- * mounting the filesystem comes from the mcf.  The mcf's entries
- * may be in a scrambled order compared to the filesystem's
- * ordinals.  So:  we need to ensure that the first partition
- * listed in the mcf file is in fact the root slice of the FS.
- * If it's not, we throw up our hands, and eventually exit with
- * a message to this effect.  Similarly, if the first data partition
- * in the mcf does not have the lowest numbered ordinal of the
- * filesystem's data partitions, we throw up our hands.
- *
- * This avoids any potential problem where different hosts
- * could expect different partitions to hold the superblock,
- * hosts table, or label block.
- */
-static int
-checkPartOrdinal(
-	struct sam_sblk *sb,
-	int part)
-{
-	int i;
-
-	if (part == 0) {
-		return (sb->info.sb.ord != 0);
-	}
-	for (i = 0; i < sb->info.sb.fs_count; i++) {
-		if (sb->eq[i].fs.type != DT_META)
-			break;
-	}
-	if (i == 0 || i == sb->info.sb.fs_count) {
-		return (1);
-	}
-	return (i != sb->info.sb.ord);
 }
 
 
