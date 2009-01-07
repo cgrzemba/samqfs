@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointScheduleView.java,v 1.19 2008/12/16 00:12:11 am143972 Exp $
+// ident	$Id: RecoveryPointScheduleView.java,v 1.20 2009/01/07 21:27:25 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -66,6 +66,7 @@ import com.sun.web.ui.view.html.CCRadioButton;
 import com.sun.web.ui.view.html.CCSelectableList;
 import com.sun.web.ui.view.html.CCStaticTextField;
 import com.sun.web.ui.view.html.CCTextField;
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -376,10 +377,19 @@ public class RecoveryPointScheduleView extends RequestHandlingViewBase {
 
             // exclude directories
             String [] dirs = schedule.getExcludedDirs();
+            dirs = dirs == null ? new String[0] : dirs;
+
+            // Append mount point of the file system to the entries in the
+            // dirList.  RemoteFileChooser always adds the selected directory
+            // with its absolute path.  Thus we need to be consistent and
+            // populate the existing paths with absolute paths as well.
+            for (int i = 0; i < dirs.length; i++) {
+                dirs[i] = mountPoint.concat(File.separator).concat(dirs[i]);
+            }
+
             OptionList dirList = null;
-            if (dirs != null && dirs.length > 0) {
-                dirList = new OptionList(schedule.getExcludedDirs(),
-                    schedule.getExcludedDirs());
+            if (dirs.length > 0) {
+                dirList = new OptionList(dirs, dirs);
                 dirList.add(0,
                     "fs.recoverypointschedule.contents.exclude.dummy",
                     "");
@@ -388,6 +398,7 @@ public class RecoveryPointScheduleView extends RequestHandlingViewBase {
                 {"fs.recoverypointschedule.contents.exclude.dummy"},
                     new String [] { ""});
             }
+
             ((CCSelectableList)getChild(EXCLUDE_DIRS)).setOptions(dirList);
 
             // schedule calendar
@@ -629,9 +640,17 @@ public class RecoveryPointScheduleView extends RequestHandlingViewBase {
         }
 
         // excluded dirs
+        String mountPoint =
+            (String) ((CCHiddenField)getChild(MOUNT_POINT)).getValue();
         String rawDirs = getDisplayFieldStringValue(SELECTED_DIRS);
         if (rawDirs != null && rawDirs.length() > 0) {
-            schedule.setExcludeDirs(rawDirs.split(":"));
+            String [] dirs = rawDirs.split(":");
+            for (int i = 0; i < dirs.length; i++) {
+                if (dirs[i].startsWith(mountPoint)) {
+                    dirs[i] = dirs[i].substring(mountPoint.length() + 1);
+                }
+            }
+            schedule.setExcludeDirs(dirs);
         }
 
         // enable schedule

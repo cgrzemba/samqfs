@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RemoteFileChooserTag.java,v 1.15 2008/12/16 00:12:24 am143972 Exp $
+// ident	$Id: RemoteFileChooserTag.java,v 1.16 2009/01/07 21:27:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.remotefilechooser;
 
@@ -807,7 +807,6 @@ public class RemoteFileChooserTag extends CCTagBase {
             styleHtml = "style=\"width:386px\"";
         }
         if (model.multipleSelect()) {
-            labelKey = labelKey.concat("s");
             selectFileTextTag.setSize("40");
         } else {
             styleHtml = null;

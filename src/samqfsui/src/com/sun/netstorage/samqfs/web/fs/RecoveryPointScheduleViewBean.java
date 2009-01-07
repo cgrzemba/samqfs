@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointScheduleViewBean.java,v 1.14 2008/12/16 00:12:11 am143972 Exp $
+// ident	$Id: RecoveryPointScheduleViewBean.java,v 1.15 2009/01/07 21:27:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -76,7 +76,6 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
     // bread crumbing href
     public static final String FS_SUMMARY_HREF = "FileSystemSummaryHref";
     public static final String FS_DETAILS_HREF = "FileSystemDetailsHref";
-    public static final String SHARED_FS_DETAILS_HREF = "SharedFSDetailsHref";
     public static final String POLICY_SUMMARY_HREF    = "PolicySummaryHref";
     public static final String POLICY_DETAILS_HREF    = "PolicyDetailsHref";
     public static final String CRITERIA_DETAILS_HREF  = "CriteriaDetailsHref";
@@ -121,7 +120,6 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
             return new RecoveryPointScheduleView(this, name);
         } else if (name.equals(FS_SUMMARY_HREF) ||
                    name.equals(FS_DETAILS_HREF) ||
-                   name.equals(SHARED_FS_DETAILS_HREF) ||
                    name.equals(POLICY_SUMMARY_HREF) ||
                    name.equals(POLICY_DETAILS_HREF) ||
                    name.equals(CRITERIA_DETAILS_HREF) ||
@@ -266,9 +264,6 @@ public class RecoveryPointScheduleViewBean extends CommonViewBeanBase {
             target = (CommonViewBeanBase)getViewBean(FSSummaryViewBean.class);
         } else if (FS_DETAILS_HREF.equals(targetName)) {
             target = (CommonViewBeanBase)getViewBean(FSDetailsViewBean.class);
-        } else if (SHARED_FS_DETAILS_HREF.equals(targetName)) {
-            target = (CommonViewBeanBase)
-                getViewBean(SharedFSDetailsViewBean.class);
         } else if (SCHEDULED_TASKS_HREF.equals(targetName)) {
             target = (CommonViewBeanBase)
                 getViewBean(ScheduledTasksViewBean.class);

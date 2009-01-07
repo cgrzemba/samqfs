@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RecoveryPointsViewBean.java,v 1.15 2008/12/16 00:12:11 am143972 Exp $
+// ident	$Id: RecoveryPointsViewBean.java,v 1.16 2009/01/07 21:27:26 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -41,6 +41,7 @@ import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
+import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserControl;
 import com.sun.netstorage.samqfs.web.remotefilechooser.RemoteFileChooserModel;
 import com.sun.netstorage.samqfs.web.util.Authorization;
@@ -295,29 +296,32 @@ public class RecoveryPointsViewBean extends CommonViewBeanBase {
             // Check to see if this is a UFS file system, set fsName to null
             // if yes and ask user to select the file system instead
             if (fsName != null) {
-                if (fsName.charAt(0) == '/') {
-                    fsName = null;
-                } else {
-                    // Check to see if fsName is an archiving file system
-                    try {
-                        SamQFSSystemFSManager fsMgr =
-                            SamUtil.getModel(getServerName()).
-                                        getSamQFSSystemFSManager();
-                        FileSystem fs = fsMgr.getFileSystem(fsName);
+                // Check to see if fsName is an archiving file system
+                try {
+                    SamQFSSystemFSManager fsMgr =
+                        SamUtil.getModel(getServerName()).
+                                    getSamQFSSystemFSManager();
+                    GenericFileSystem fs =
+                        fsMgr.getGenericFileSystem(fsName);
 
-                        // reset fsName to null so user has to choose a file
-                        // system from the menu
-                        if (fs == null) {
-                            fsName = null;
-                        } else if (
-                            fs.getArchivingType() != FileSystem.ARCHIVING) {
-                            fsName = null;
-                        }
-                    } catch (SamFSException samEx) {
-                        TraceUtil.trace1(
-                            "Exception caught while checking fs type!", samEx);
+                    // reset fsName to null so user has to choose a file
+                    // system from the menu
+                    if (fs == null) {
+                        fsName = null;
+                    // Non-SAM file systems have no recovery points
+                    } else if (fs.getFSTypeByProduct() ==
+                        GenericFileSystem.FS_NONSAMQ) {
+                        fsName = null;
+                    // QFS has no recovery points neither
+                    } else if (
+                        ((FileSystem) fs).getArchivingType() !=
+                            FileSystem.ARCHIVING) {
                         fsName = null;
                     }
+                } catch (SamFSException samEx) {
+                    TraceUtil.trace1(
+                        "Exception caught while checking fs type!", samEx);
+                    fsName = null;
                 }
             }
         }
