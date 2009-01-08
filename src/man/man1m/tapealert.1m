@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.20 $
+.\" $Revision: 1.21 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -29,7 +29,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH tapealert 1M "18 Oct 2005"
+.TH tapealert 1M "07 Jan 2009"
 .SH NAME
 tapealert \- Decodes TapeAlert events
 .SH SYNOPSIS
@@ -103,8 +103,8 @@ following options:
 .TP 10
 \%\fB\-f /var/opt/SUNWsamfs/devlog/\fInn\fR
 Specifies the file to be read and interpreted.
-For \fInn\fR, enter the Equipment Ordinal of the device.
-The Equipment Ordinal is the second field in the Sun StorEdge QFS
+For \fInn\fR, enter the Equipment Number of the device.
+The Equipment Number is the second field in the Sun StorEdge QFS
 master configuration file (\fB/etc/opt/SUNWsamfs/mcf\fR).
 Each device has its own unique \fBdevlog/\fInn\fR file.
 The system writes each device's TapeAlert events
@@ -170,10 +170,10 @@ Time of day.  Data type is \fBint32\fR.
 \fBmcf\fR file Family Set.  Data type is \fBstring\fR.
 .TP
 \fBFSEQ\fR
-\fBmcf\fR file Family Set Equipment Ordinal.  Data type is \fBint16\fR.
+\fBmcf\fR file Family Set Equipment Number.  Data type is \fBint16\fR.
 .TP
 \fBEQ_ORD\fR
-\fBmcf\fR file Equipment Ordinal.  Data type is \fBint16\fR.
+\fBmcf\fR file Equipment Number.  Data type is \fBint16\fR.
 .TP
 \fBNAME\fR
 Device name.  Data type is \fBstring\fR.
@@ -229,7 +229,7 @@ int main(int argc, char **argv)
         char *vendor, *product, *revision, *name, *vsn;
         time_t tod;
         char *todstr;
-        short eq_ord;
+        short eq_num;
         uchar_t inq_type;
         int flags_len;
         uint64_t flags;
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
         tod = (time_t)strtol(argv[4], NULL, 10);
         todstr = asctime(localtime (&tod));
         *(strchr (todstr, '\en')) = '\e0';
-        eq_ord = atoi(argv[5]);
+        eq_num = atoi(argv[5]);
         name = argv[6];
         inq_type = (uchar_t)strtol(argv[7], NULL, 16);
         vsn = argv[8];
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
                 return 1;
         fprintf (fp, "%s %-8s %-16s %-4s VSN %s\en", todstr, vendor,
                  product, revision, vsn);
-        fprintf (fp, "Eq ord. %d Dev name %s\en", eq_ord, name);
+        fprintf (fp, "Eq num. %d Dev name %s\en", eq_num, name);
         fprintf (fp, "TapeAlert %d flags %016llx\en", flags_len, flags);
         fprintf (fp, "\en");
         fclose (fp);
@@ -288,11 +288,11 @@ active for drive 81 and 82:
 .nf
 # tail -f /var/tmp/tapealert
 Mon Jun 16 10:42:45 2003 "EXABYTE " "EXB-89008E030203" "V39e" VSN "000166"
-Eq ord. 81 Dev name "/dev/rmt/1cbn"
+Eq num. 81 Dev name "/dev/rmt/1cbn"
 TapeAlert 49 flags 0000000000080000
 
 Mon Jun 16 10:42:51 2003 "EXABYTE " "EXB-89008E030203" "V39e" VSN "000165"
-Eq ord. 82 Dev name "/dev/rmt/0cbn"
+Eq num. 82 Dev name "/dev/rmt/0cbn"
 TapeAlert 49 flags 0000000000080000
 .fi
 .ft

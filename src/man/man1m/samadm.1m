@@ -1,4 +1,4 @@
-.\" $Revision: 1.7 $
+.\" $Revision: 1.8 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH samadm 1M "16 Nov 2008"
+.TH samadm 1M "07 Jan 2009"
 .SH NAME
 samadm \- Sun StorageTek SAM-QFS main administrative command
 .SH SYNOPSIS
@@ -36,19 +36,19 @@ samadm \- Sun StorageTek SAM-QFS main administrative command
 .fi
 .LP
 .nf
-\fBsamadm eq-add\fR \fIeq_ordinal#\fR
+\fBsamadm eq-add\fR \fIeq_number#\fR
 .fi
 .LP
 .nf
-\fBsamadm eq-remove\fR [\fB-r\fR] \fIeq_ordinal#\fR
+\fBsamadm eq-remove\fR [\fB-r\fR] \fIeq_number#\fR
 .fi
 .LP
 .nf
-\fBsamadm eq-alloc\fR \fIeq_ordinal#\fR
+\fBsamadm eq-alloc\fR \fIeq_number#\fR
 .fi
 .LP
 .nf
-\fBsamadm eq-noalloc\fR \fIeq_ordinal#\fR
+\fBsamadm eq-noalloc\fR \fIeq_number#\fR
 .fi
 .LP
 .nf
@@ -104,15 +104,17 @@ QFS or SAM package is removed.
 .ad
 .sp .6
 .RS 4n
-This subcommand adds an equipment ordinal to an existing mounted
+This subcommand adds an equipment to an existing mounted
 QFS file system.  The equipment must be added to the \fBmcf(4)\fR
 file, and \fBsamd config\fR must be run prior to adding the equipment
-ordinal to a file system.
+number to a file system.
 .LP
-An equipment ordinal, once added to the file system, is
-initially placed into the \fInoalloc\fR state.  To place this
-equipment ordinal into full read/write status, change the state
-to \fIalloc\fR via \fBsamadm eq-alloc ord#\fR.
+In a shared file system, after the equipment number is added,
+it is initially placed into the \fIunavail\fR state. All the mcf files
+on the clients must be updated to include the new/changed equipment
+number. After this has been done, To place this
+equipment number into full read/write status, change the state
+to \fIalloc\fR via \fBsamadm eq-alloc eq_number#\fR.
 .RE
 
 .sp
@@ -123,16 +125,16 @@ to \fIalloc\fR via \fBsamadm eq-alloc ord#\fR.
 .ad
 .sp .6
 .RS 4n
-This subcommand removes an equipment ordinal from an existing mounted
+This subcommand removes an equipment number from an existing mounted
 QFS file system.  It is intended to be used to remove an equipment
 for reuse, or to remove an equipment that needs replacement because
 of hardware failure.
 .LP
 The data on the equipment to be removed is copied
-to other ordinals of the file system.  If the \fB-r\fR option is specified,
+to other equipments of the file system.  If the \fB-r\fR option is specified,
 files that have data on that equipment are first released from disk
-if they have a SAM tape copy.  Then, remaining files that are on that
-equipment which have no tape copy are copied off to other ordinals as
+if they have a SAM archive copy.  Then, remaining files that are on that
+equipment which have no archive copy are copied off to other equipments as
 described above.
 .LP
 The \fBeq-remove\fR subcommand starts a background process called
@@ -152,9 +154,10 @@ the equipment is placed into \fIoff\fR state.
 .ad
 .sp .6
 .RS 4n
-This subcommand changes the state of an equipment ordinal to \fIalloc\fR
+This subcommand changes the state of an equipment number to \fIalloc\fR
 which allows new data allocations to be placed on it.  This subcommand is
-only legal for equipments which are currently in the \fInoalloc\fR state.
+only legal for equipments which are currently in the \fInoalloc\fR or
+\fIunavail\fR state.
 .RE
 
 .sp
@@ -165,9 +168,9 @@ only legal for equipments which are currently in the \fInoalloc\fR state.
 .ad
 .sp .6
 .RS 4n
-This subcommand changes the state of an equipment ordinal to \fInoalloc\fR
+This subcommand changes the state of an equipment number to \fInoalloc\fR
 which prevents new data allocations to be placed on it.  This subcommand is
-only legal for equipments which are currently in the \fIalloc\fR state.
+only legal for equipments which are currently in the \fIon\fR state.
 .RE
 
 .sp

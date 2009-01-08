@@ -1,4 +1,4 @@
-.\" $Revision: 1.16 $
+.\" $Revision: 1.17 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam_audit 3 "05 Nov 2001"
+.TH sam_audit 3 "07 Jan 2009"
 .SH NAME
 sam_audit \- Audits media
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ sam_audit \- Audits media
 .ft
 .fi
 .LP
-.BI "int sam_audit(ushort_t " "eq_ord" ,
+.BI "int sam_audit(ushort_t " "eq_number" ,
 .BI "uint_t " "ea" ,
 .BI "int " "wait_response" );
 .SH DESCRIPTION
@@ -74,8 +74,8 @@ fails if one or more of the following are true:
 The path and filename for the FIFO pipe is too long.
 .TP
 .SB ER_NO_EQUIP_ORDINAL
-.I eq_ord
-is not a defined equiptment ordinal in this configuration.
+.I eq_number
+is not a defined equipment number in this configuration.
 .TP
 .SB ER_NO_MASTER_SHM
 No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
@@ -87,23 +87,23 @@ Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
 .TP
 .SB ER_NOT_VALID_SLOT_NUMBER
 .I ea
-is not a valid element address in the robot at equipment ordinal
-.I eq_ord
+is not a valid element address in the robot at equipment number
+.I eq_number
 .TP
 .SB ER_NO_RESPONSE_FIFO
 Unable to create the response FIFO pipe.
 .TP
 .SB ER_NO_STAT_ROBOT_CATALOG
-The robot media changer catalog for equipment ordinal
-.I eq_ord
+The robot media changer catalog for equipment number
+.I eq_number
 cannot be accessed for status.
 .TP
 .SB ER_OPERATOR_NOT_PRIV
 Operator does not have permission to perform a full audit
 .TP
 .SB ER_ROBOT_CATALOG_MISSING
-The robot media changer catalog for equipment ordinal
-.I eq_ord
+The robot media changer catalog for equipment number
+.I eq_number
 is missing and a full audit is required.
 .TP
 .SB ER_SLOT_NOT_OCCUPIED
@@ -112,8 +112,8 @@ No media exists at the element address number
 specified
 .TP
 .SB ER_UNABLE_TO_MAP_CATALOG
-The catalog for the removable media changer at equipment ordinal
-.I eq_ord
+The catalog for the removable media changer at equipment number
+.I eq_number
 is unable to be mapped into memory.
 .SH FILES
 .TP 20

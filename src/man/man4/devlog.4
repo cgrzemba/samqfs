@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.12 $
+.\" $Revision: 1.13 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -29,7 +29,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH devlog 4 "10 Dec 2003"
+.TH devlog 4 "07 Jan 2009"
 .SH NAME
 devlog \- Device log file
 .SH SYNOPSIS
@@ -47,7 +47,7 @@ are logged to file in the following directory:
 Within the preceding directory, events are logged to files
 that are named for the devices listed in the \fBmcf\fR file.
 For example, file \fBdevlog/47\fR logs all events for the
-device identified by Equipment Ordinal \fB47\fR in the \fBmcf\fR file.
+device identified by Equipment Number \fB47\fR in the \fBmcf\fR file.
 .PP
 After an event is logged, you can use the \fBtapealert\fR(1M)
 command to read the event logged in the \fBdevlog/\fInn\fR file,
@@ -111,7 +111,7 @@ TapeAlert messages start at 12000.
 .TP
 4
 The characters \fBeq=\fR followed by
-the mcf(4) equipment ordinal number. 
+the mcf(4) equipment number. 
 .TP
 5
 The characters \fBtype=\fR followed by

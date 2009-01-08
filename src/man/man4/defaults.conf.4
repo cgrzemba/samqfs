@@ -1,4 +1,4 @@
-.\" $Revision: 1.61 $
+.\" $Revision: 1.62 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH defaults.conf 4 "29 Jun 2005"
+.TH defaults.conf 4 "07 Jan 2009"
 .SH NAME
 defaults.conf \- Set default values for Sun StorEdge QFS and Sun StorEdge SAM software
 .SH SYNOPSIS
@@ -78,11 +78,11 @@ from the list of possible options described on the
 \fBsamset\fR(1M) man page.
 The default is \fBlogging\fR.
 .TP
-\fBdevlog = \fIeq_ord\fR \fR[ \fIevent \&.\&.\&.\fR ]
+\fBdevlog = \fIeq_number\fR \fR[ \fIevent \&.\&.\&.\fR ]
 Manipulates the device log event flags for the device specified
-by \fBEquipment Ordinal\fR \fIeq_ord\fR.  The \fIeq_ord\fR must be
+by \fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be
 either the keyword \fBall\fR (to specify all devices) or must match
-an \fBEquipment Ordinal\fR from the \fBmcf\fR file.  
+an \fBEquipment Number\fR from the \fBmcf\fR file.  
 .sp
 The device log event flags control the events that get written to
 the device log files.
@@ -356,11 +356,11 @@ When the Sun StorEdge SAM software
 is controlling the drive,
 the mode bits are \fB0660\fR.
 .TP
-\fBtapealert = \fIeq_ord\fR  \fIon | off\fR
+\fBtapealert = \fIeq_number\fR  \fIon | off\fR
 Enables or disables media changer or tape drive TapeAlert support 
-by \fBEquipment Ordinal\fR \fIeq_ord\fR.  The \fIeq_ord\fR must be
+by \fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be
 either the keyword \fBall\fR (to specify all devices) or must match
-a tape device \fBEquipment Ordinal\fR from the \fBmcf\fR file.
+a tape device \fBEquipment Number\fR from the \fBmcf\fR file.
 By default, \fBtapealert = all on\fR.
 .TP
 \fBsamstorade = \fIon | off\fR
@@ -368,12 +368,12 @@ Enables or disables the StorADE API.  The API provides Sun StorEdge SAM
 device attributes and health information for StorADE fault analysis.  By
 default, \fBsamstorade = on\fR.
 .TP
-\fBsef = \fIeq_ord\fR  \fI[on|off|default] interval\fR
+\fBsef = \fIeq_number\fR  \fI[on|off|default] interval\fR
 Enables or disables support for tape drive implemented
 Log Sense delivered via sysevents
-by \fBEquipment Ordinal\fR \fIeq_ord\fR.  The \fIeq_ord\fR must be
+by \fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be
 either the keyword \fBall\fR (to specify all devices) or must match
-an \fBEquipment Ordinal\fR from the \fBmcf\fR file.  The interval
+an \fBEquipment Number\fR from the \fBmcf\fR file.  The interval
 specfies the log sense polling rate.  A value of 300 is a polling
 interval once every five minutes.  A string value of "once"
 specifies one time just before media unload and is the default.  A value
@@ -387,15 +387,15 @@ if sef will run or not. When \fB/var/opt/SUNWsamfs/sef/sefdata\fR is present,
 sef will be initialized. You must create the sefdata file yourself. To turn
 off sef, the sefdata file must be removed or renamed.
 .TP
-\fBtapeclean = \fIeq_ord\fR  \fIautoclean\fR \fI[on|off]\fR \fIlogsense\fR \fI[on|off]\fR
+\fBtapeclean = \fIeq_number\fR  \fIautoclean\fR \fI[on|off]\fR \fIlogsense\fR \fI[on|off]\fR
 Enable or disable the robot initiated auto-cleaning feature.  Enable or
 disable additional auto-cleaning log sense cleaning indicators from the 
 TapeAlert log sense page(2E) flags clean now(20), clean periodic(21) and
 expired cleaning media(23) and the Sequential-Access Device log sense page(0C)
 cleaning required flag in parameter(256).  Support is by
-\fBEquipment Ordinal\fR \fIeq_ord\fR.  The \fIeq_ord\fR must be either
+\fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be either
 the keyword \fBall\fR (to specify all devices) or must match a tape device 
-\fBEquipment Ordinal\fR from the \fBmcf\fR file.
+\fBEquipment Number\fR from the \fBmcf\fR file.
 Note that the \fIlogsense\fR \fIon\fR setting has no effect unless \fIautoclean\fR
 is also \fIon\fR.
 By default, \fBtapeclean = all autoclean off logsense on\fR.

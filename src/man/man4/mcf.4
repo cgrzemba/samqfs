@@ -1,5 +1,5 @@
 '\" t
-.\" $Revision: 1.96 $
+.\" $Revision: 1.97 $
 .ds ]W Sun Microsystems
 '\" !tbl | mmdoc
 .\" SAM-QFS_notice_begin
@@ -29,7 +29,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH mcf 4 "07 May 2008"
+.TH mcf 4 "07 Jan 2009"
 .SH NAME
 mcf \- Master configuration file for Sun StorEdge QFS, Sun StorEdge \%SAM-FS, and Sun \%SAM-QFS software
 .SH SYNOPSIS
@@ -58,7 +58,7 @@ Example 1.  The following is an example of a Sun StorEdge \%SAM-FS \fBmcf\fR fil
 # Sun StorEdge \%SAM-FS file system configuration example
 #
 # Equipment       Eq Eq Family Dev Additional
-# Identifier      Or Tp Set    St  Parameters
+# Identifier      Nm Tp Set    St  Parameters
 # --------------- -- -- ------ --- ----------
 samfs1            10 ms samfs1
 /dev/dsk/c1t0d0s6 11 md samfs1 -
@@ -88,7 +88,7 @@ Example 2.  The following is an example of a QFS \fBmcf\fR file:
 # Sun StorEdge QFS file system configuration example
 #
 # Equipment        Eq Eq Family Dev Additional
-# Identifier       Or Tp Set    St  Parameters
+# Identifier       Nm Tp Set    St  Parameters
 # ---------------- -- -- ------ --- ----------
 #
 qfs1               10 ma qfs1
@@ -126,11 +126,11 @@ The format of the fields in the \fBmcf\fR file is as follows:
 .nf
 .ft CO
 Equipment  Equipment  Equipment  Family  Device  Additional
-Identifier Ordinal    Type       Set     State   Parameters
+Identifier Number     Type       Set     State   Parameters
 .ft
 .fi
 .PP
-The \fBEquipment Identifier\fR, \fBEquipment Ordinal\fR,
+The \fBEquipment Identifier\fR, \fBEquipment Number\fR,
 and \fBEquipment Type\fR fields are required for each entry.
 The \fBmcf\fR file can contain comments.  Each comment line must begin
 with a pound character (\fB#\fR).
@@ -180,7 +180,7 @@ For example:
 .nf
 .ft CO
 Equipment    Equipment  Equipment  Family  Device  Addl
-Identifier   Ordinal    Type       Set     State   Params
+Identifier   Number     Type       Set     State   Params
 ----------   -------    ---------  ------  ------  ------
 samqfs1      1          ms         samqfs1 -       -
 .fi
@@ -200,7 +200,7 @@ For example:
 .nf
 .ft CO
 Equipment     Equipment  Equipment  Family  Device  Addl
-Identifier    Ordinal    Type       Set     State   Params
+Identifier    Number     Type       Set     State   Params
 ----------    -------    ---------  ------  ------  ------
 /dev/rmt/0cbn 61         tp         9730    on      -
 .fi
@@ -209,11 +209,11 @@ Identifier    Ordinal    Type       Set     State   Params
 .RE
 .TP
 \(bu
-The \fBEquipment Ordinal\fR field contains a unique number
+The \fBEquipment number\fR field contains a unique number
 for each disk or removable media device configured.
 The number you specify must be in the following range:
 .sp
-1 \(<= \fIEquipment_Ordinal\fR \(<= 65534
+1 \(<= \fIEquipment_number\fR \(<= 65534
 .sp
 Sun Microsystems recommends that you use low numbers
 in order to keep the internal software tables small.

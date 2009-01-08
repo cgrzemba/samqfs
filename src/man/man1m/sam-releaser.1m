@@ -1,4 +1,4 @@
-.\" $Revision: 1.24 $
+.\" $Revision: 1.25 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam-releaser 1M "08 Nov 2004"
+.TH sam-releaser 1M "07 Jan 2009"
 .SH NAME
 sam-releaser \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS disk space releaser process
 .SH SYNOPSIS
@@ -152,7 +152,7 @@ appends the following to it for each run:
      list_size               10000
      weight_size             1
      weight_age              0.5
-     fs equipment ordinal    1
+     fs equipment number     1
      family-set name         samfs1
      started by sam-fsd?     no
      release files?          no
@@ -226,7 +226,7 @@ appends the following to it for each run:
 .PP
 The first block of lines shows the arguments with which the releaser
 was invoked, the name of the \fB.inodes\fR file, the low-water mark,
-the size and age weight parameters, the equipment ordinal of the
+the size and age weight parameters, the equipment number of the
 file system, the family set name of the file system, whether the releaser
 was started by \fBsam-fsd\fR or by the command line, whether files
 should be released, and whether each inode should be logged as

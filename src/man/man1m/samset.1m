@@ -1,4 +1,4 @@
-.\" $Revision: 1.26 $
+.\" $Revision: 1.27 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH samset 1M "02 Jun 2004
+.TH samset 1M "07 Jan 2009
 .SH NAME
 samset \- Change the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS environment
 .SH SYNOPSIS
@@ -233,7 +233,7 @@ processing.
 devlog manipulates the device log event flags for device
 .IR eq .
 .I eq
-is either an equipment ordinal or "all";  if "all", then the flags are
+is either an equipment number or "all";  if "all", then the flags are
 set or listed for all devices.
 These flags control which events get written to the device log files.
 .I [ event ...]
@@ -291,7 +291,7 @@ TapeAlert.
 .RS 10
 .TP 10
 .I eq
-is either an equipment ordinal or "all";  if "all", then the flags are
+is either an equipment number or "all";  if "all", then the flags are
 set or listed for all devices.
 .TP
 .B on 
@@ -310,7 +310,7 @@ Log Sense delivered via sysevents.
 .RS 10
 .TP 10
 .B eq
-is either an equipment ordinal or "all";  if "all", then the flags are
+is either an equipment number or "all";  if "all", then the flags are
 set or listed for all devices.
 .TP
 .B on 

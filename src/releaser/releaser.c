@@ -68,7 +68,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -327,7 +327,7 @@ main(
 	} else {
 		fprintf(log, "weight_age              %g\n", weight_age);
 	}
-	fprintf(log, "fs equipment ordinal    %d\n", mp->fi_eq);
+	fprintf(log, "fs equipment number     %d\n", mp->fi_eq);
 	fprintf(log, "family-set name         %s\n", fs_name);
 #define	yorn(x) ((x)?"yes":"no")
 	fprintf(log, "started by sam-fsd?     %s\n", yorn(Daemon));

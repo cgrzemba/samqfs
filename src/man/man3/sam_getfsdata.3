@@ -1,4 +1,4 @@
-.\" $Revision: 1.16 $
+.\" $Revision: 1.17 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam_getfsdata 3 "05 Nov 2001"
+.TH sam_getfsdata 3 "07 Jan 2009"
 .SH NAME
 sam_getfsdata \- Obtains size of family set and number of disks used
 .SH SYNOPSIS
@@ -61,12 +61,12 @@ fails if one or more of the following are true:
 .TP 20
 .SB ENODEV
 No disks or partitions found for family set equipment number
-.I eq_ord
+.I eq_number
 specified
 .TP
 .SB ER_DEVICE_NOT_CORRECT_TYPE
-Device referenced by equipment ordinal
-.I eq_ord
+Device referenced by equipment number
+.I eq_number
 is not of family set or disk set type. 
 .TP
 .SB ER_NO_MASTER_SHM

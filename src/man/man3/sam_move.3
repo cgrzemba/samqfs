@@ -1,4 +1,4 @@
-.\" $Revision: 1.16 $
+.\" $Revision: 1.17 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam_move 3 "05 Nov 2001"
+.TH sam_move 3 "07 Jan 2009"
 .SH NAME
 sam_move \- Move media in a robotic media changer
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ sam_move \- Move media in a robotic media changer
 .ft
 .fi
 .LP
-.BI "int sam_move(ushort_t " "eq_ord" ,
+.BI "int sam_move(ushort_t " "eq_number" ,
 .BI "uint_t " "src_ea" ,
 .BI "uint_t " "dest_ea" ,
 .BI "int " "wait_response" );
@@ -51,8 +51,8 @@ requests that the media in the source element address
 .I src_ea
 be moved to the destination element address
 .I dest_ea
-in the robotic media changer at equipment ordinal
-.I eq_ord.
+in the robotic media changer at equipment number
+.I eq_number.
 The source element address
 .I src_ea
 must be in use and occupied (that is, the media is not mounted).  The
@@ -79,20 +79,20 @@ fails if one or more of the following are true:
 .TP 20
 .SB ER_DEVICE_NOT_READY
 The specified
-.I eq_ord
+.I eq_number
 device is not ready.
 .TP
 .SB ER_DEVICE_USE_BY_ANOTHER
 The specified
-.I eq_ord
+.I eq_number
 device is busy and is being used by another process.
 .TP
 .SB ER_FIFO_PATH_LENGTH
 The path and filename for the FIFO pipe is too long.
 .TP
 .SB ER_NO_EQUIP_ORDINAL
-.I eq_ord
-is not a defined equipment ordinal in this configuration.
+.I eq_number
+is not a defined equipment number in this configuration.
 .TP
 .SB ER_NO_MASTER_SHM
 No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
@@ -106,40 +106,40 @@ Check that the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems are mounted.
 Unable to create the response FIFO pipe.
 .TP
 .SB ER_NO_STAT_ROBOT_CATALOG
-The robot media changer catalog for equipment ordinal
-.I eq_ord
+The robot media changer catalog for equipment number
+.I eq_number
 cannot be accessed for status.
 .TP
 .SB ER_NOT_VALID_DEST_SLOT_NO
 The specified destination element address
 .I dest_ea
 is not valid for
-.I eq_ord
+.I eq_number
 device.
 .TP
 .SB ER_NOT_VALID_SLOT_NUMBER
 The specified source element address
 .I src_ea
 is not valid for
-.I eq_ord
+.I eq_number
 device.
 .TP
 .SB ER_OPERATOR_NOT_PRIV
 Operator does not have permission to move removable media.
 .TP
 .SB ER_ROBOT_CATALOG_MISSING
-The robot media changer catalog for equipment ordinal
-.I eq_ord
+The robot media changer catalog for equipment number
+.I eq_number
 is missing and a full audit is required.
 .TP
 .SB ER_ROBOT_DEVICE_REQUIRED
-Equipment ordinal
-.I eq_ord
+Equipment number
+.I eq_number
 is not defined as a robotic device.
 .TP
 .SB ER_ROBOT_NO_MOVE_SUPPORT
-Robotic media changer at equipment ordinal
-.I eq_ord
+Robotic media changer at equipment number
+.I eq_number
 does not support movement of media between element addresses.
 .TP
 .SB ER_DST_SLOT_IS_OCCUPIED
@@ -159,8 +159,8 @@ is not available for the move.
 is not available for the move.
 .TP
 .SB ER_UNABLE_TO_MAP_CATALOG
-The catalog for the removable media changer at equipment ordinal
-.I eq_ord
+The catalog for the removable media changer at equipment number
+.I eq_number
 is unable to be mapped into memory.
 .SH FILES
 .TP 20

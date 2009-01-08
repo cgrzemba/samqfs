@@ -1,4 +1,4 @@
-.\" $Revision: 1.16 $
+.\" $Revision: 1.17 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam_set_fs_thresh 3 "05 Nov 2001"
+.TH sam_set_fs_thresh 3 "07 Jan 2009"
 .SH NAME
 sam_set_fs_thresh \- Sets file system thresholds for the releaser
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ sam_set_fs_thresh \- Sets file system thresholds for the releaser
 .ft
 .fi
 .LP
-.BI "int sam_set_fs_thresh(ushort_t " "eq_ord" ,
+.BI "int sam_set_fs_thresh(ushort_t " "eq_number" ,
 .BI "int " "min_threshold" ,
 .BI "int " "max_threshold" ,
 .BI "int " "wait_response" );
@@ -49,8 +49,8 @@ sam_set_fs_thresh \- Sets file system thresholds for the releaser
 .B sam_set_fs_thresh(\|)
 sets the minimum (low) and maximum (high) thresholds which control the
 execution of the releaser for archived files in the family set at equipment
-ordinal
-.I eq_ord.
+number
+.I eq_number.
 Reaching the maximum threshold in the family set initiates the releaser,
 which releases file space until the minimum threshold is reached or no
 release candidates exist.
@@ -73,15 +73,15 @@ fails if one or more of the following are true:
 .TP 20
 .SB ER_DEVICE_NOT_CORRECT_TYPE
 The specified
-.I eq_ord
+.I eq_number
 device is not a family set device.
 .TP
 .SB ER_FIFO_PATH_LENGTH
 The path and filename for the FIFO pipe is too long.
 .TP
 .SB ER_NO_EQUIP_ORDINAL
-.I eq_ord
-is not a defined equipment ordinal in this configuration.
+.I eq_number
+is not a defined equipment number in this configuration.
 .TP
 .SB ER_NO_MASTER_SHM
 No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.

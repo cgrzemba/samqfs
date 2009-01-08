@@ -1,4 +1,4 @@
-.\" $Revision: 1.16 $
+.\" $Revision: 1.17 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam_unload 3 "05 Nov 2001"
+.TH sam_unload 3 "07 Jan 2009"
 .SH NAME
 sam_unload \- Unloads media on the removable media device
 .SH SYNOPSIS
@@ -40,24 +40,24 @@ sam_unload \- Unloads media on the removable media device
 .ft
 .fi
 .LP
-.BI "int sam_unload(ushort_t " "eq_ord" ,
+.BI "int sam_unload(ushort_t " "eq_number" ,
 .BI "int " "wait_response" );
 .SH DESCRIPTION
 .PP
 .B sam_unload(\|)
 requests that the media be unloaded from
-the device with equipment ordinal
-.I eq_ord.
+the device with equipment number
+.I eq_number.
 The device must be a removable media device or a robotic media changer.  The
 device cannot be under the control of another process.
 .PP
-If the equipment ordinal
-.I eq_ord
+If the equipment number
+.I eq_number
 is a removable media device controlled by a robotic media changer, the medium
 will be moved into storage.
 .PP
-If the equipment ordinal
-.I eq_ord
+If the equipment number
+.I eq_number
 is a robotic media changer, the unload
 moves catalog entries from the robotic media changer's catalog to the
 Historian's catalog.
@@ -80,30 +80,30 @@ fails if one or more of the following are true:
 .TP 20
 .SB ER_DEVICE_NOT_READY
 The specified
-.I eq_ord
+.I eq_number
 device is not ready.
 .TP
 .SB ER_DEVICE_NOT_UNAVAILABLE
 The specified
-.I eq_ord
+.I eq_number
 device must be in the unavailable state (see \fBset_state\fR(1M)).
 .TP
 .SB ER_DEVICE_USE_BY_ANOTHER
 The specified
-.I eq_ord
+.I eq_number
 device is busy and is being used by another process.
 .TP
 .SB ER_FIFO_PATH_LENGTH
 The path and filename for the FIFO pipe is too long.
 .TP
 .SB ER_NO_DEVICE_FOUND
-The device with equipment ordinal
-.I eq_ord
+The device with equipment number
+.I eq_number
 is not available in this configuration.
 .TP
 .SB ER_NO_EQUIP_ORDINAL
-.I eq_ord
-is not a defined equipment ordinal in this configuration.
+.I eq_number
+is not a defined equipment number in this configuration.
 .TP
 .SB ER_NO_MASTER_SHM
 No Sun StorEdge \%SAM-FS or Sun \%SAM-QFS master shared memory segment defined.
@@ -118,7 +118,7 @@ Unable to create the response FIFO pipe.
 .TP
 .SB ER_NOT_REMOV_MEDIA_DEVICE
 The specified
-.I eq_ord
+.I eq_number
 device is not a removable media device.
 .TP
 .SB ER_OPERATOR_NOT_PRIV
