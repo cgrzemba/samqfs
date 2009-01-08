@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.147 $"
+#pragma ident "$Revision: 1.148 $"
 
 #include "sam/osversion.h"
 
@@ -341,9 +341,9 @@ sam_sync_inodes(
 				    CRED(), NULL);
 			}
 			(void) sam_update_inode(ip, SAM_SYNC_ALL, sync_attr);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			mutex_enter(&samgt.ihashlock[i]);
 			nip = ip->chain.hash.forw;
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			prev_ip = ip;
 		}
 		mutex_exit(&samgt.ihashlock[i]);
