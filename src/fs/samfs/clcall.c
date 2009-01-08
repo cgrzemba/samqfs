@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.263 $"
+#pragma ident "$Revision: 1.264 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1222,6 +1222,15 @@ sam_proc_rm_lease(
 
 	close = (lease_mask == CL_CLOSE);
 
+	if (close) {
+		/*
+		 * Grab the lease generation numbers.
+		 */
+		for (ltype = 0; ltype < SAM_MAX_LTYPE; ltype++) {
+			saved_leasegen[ltype] = ip->cl_leasegen[ltype];
+		}
+	}
+
 	/*
 	 * The inode_rwl must held as a writer
 	 * in order to prevent a race condition with open().
@@ -1230,10 +1239,6 @@ sam_proc_rm_lease(
 		if (!RW_TRYUPGRADE_OS(&ip->inode_rwl)) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-		}
-		if (close && ip->no_opens > 0) {
-			RW_DOWNGRADE_OS(&ip->inode_rwl);
-			return (0);
 		}
 	}
 
@@ -1255,25 +1260,7 @@ sam_proc_rm_lease(
 		if ((ip->cl_leases | ip->cl_saved_leases) & CL_APPEND) {
 			actions = SR_SET_SIZE;
 		}
-		/*
-		 * Grab the lease generation numbers.
-		 */
-		for (ltype = 0; ltype < SAM_MAX_LTYPE; ltype++) {
-			saved_leasegen[ltype] = ip->cl_leasegen[ltype];
-		}
 		sam_client_remove_all_leases(ip);
-
-		/*
-		 * sam_client_remove_all_leases() will drop the
-		 * inode_rwl, RW_WRITER lock before calling VN_RELE,
-		 * this can allow another open to complete.
-		 */
-		if (ip->no_opens > 0) {
-			if (rw_type == RW_READER) {
-				RW_DOWNGRADE_OS(&ip->inode_rwl);
-			}
-			return (0);
-		}
 
 	} else {
 		if (lease_mask & CL_APPEND) {
