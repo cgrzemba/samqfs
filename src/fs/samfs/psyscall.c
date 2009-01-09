@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.204 $"
+#pragma ident "$Revision: 1.205 $"
 #endif
 
 #include "sam/osversion.h"
@@ -919,10 +919,12 @@ sam_mount_info(
 					continue;
 				}
 			}
+#ifdef sun
 			if (dp->opened) {
 				sam_close_device(mp, dp, (FREAD | FWRITE),
 				    credp);
 			}
+#endif
 			bzero(dp, sizeof (struct samdent));
 			if (copyin(&mntp->part[i], dp,
 			    sizeof (struct sam_fs_part))) {
