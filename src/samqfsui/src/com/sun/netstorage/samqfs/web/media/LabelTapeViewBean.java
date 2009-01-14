@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: LabelTapeViewBean.java,v 1.31 2008/12/17 21:41:42 ronaldso Exp $
+// ident	$Id: LabelTapeViewBean.java,v 1.32 2009/01/14 19:18:07 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.media;
 
@@ -37,7 +37,7 @@ import com.iplanet.jato.util.NonSyncStringBuffer;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
-
+import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.media.Library;
@@ -49,7 +49,6 @@ import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.LogUtil;
-
 import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.model.CCPropertySheetModel;
 import com.sun.web.ui.view.html.CCButton;
@@ -84,6 +83,18 @@ public class LabelTapeViewBean extends CommonSecondaryViewBeanBase {
     private static final String NAME_VALUE = "nameValue";
     private static final String SIZE_VALUE = "sizeValue";
 
+    private static String [] blockSizes =
+        new String [] {
+            Long.toString(16),
+            Long.toString(32),
+            Long.toString(64),
+            Long.toString(128),
+            Long.toString(256),
+            Long.toString(512),
+            Long.toString(1024),
+            Long.toString(2048)
+        };
+
     /**
      * Constructor
      */
@@ -107,6 +118,7 @@ public class LabelTapeViewBean extends CommonSecondaryViewBeanBase {
         super.registerChildren();
         PageTitleUtil.registerChildren(this, pageTitleModel);
         PropertySheetUtil.registerChildren(this, propertySheetModel);
+        registerChild(SIZE_VALUE, CCDropDownMenu.class);
         registerChild(CHILD_HIDDEN_MESSAGES, CCHiddenField.class);
 
         TraceUtil.trace3("Exiting");
@@ -132,6 +144,8 @@ public class LabelTapeViewBean extends CommonSecondaryViewBeanBase {
                     SamUtil.getResourceString("LabelTape.errMsg2")).append(
                     "###").append(SamUtil.getResourceString(
                     "LabelTape.renderMsg")).toString());
+        } else if (name.equals(SIZE_VALUE)) {
+            child = new CCDropDownMenu(this, name, null);
         // PageTitle Child
         } else if (PageTitleUtil.isChildSupported(pageTitleModel, name)) {
             child = PageTitleUtil.createChild(this, pageTitleModel, name);
@@ -217,6 +231,10 @@ public class LabelTapeViewBean extends CommonSecondaryViewBeanBase {
 
         // pre-select to relabel
         propertySheetModel.setValue(TYPE_VALUE, "LabelTape.type2");
+
+        // populate block size menu
+        ((CCDropDownMenu) getChild(SIZE_VALUE)).
+            setOptions(new OptionList(blockSizes, blockSizes));
 
         try {
             VSN myVSN = getThisVSN();

@@ -27,7 +27,7 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: LabelTapePropertySheet.xml,v 1.13 2008/12/16 00:10:48 am143972 Exp $ -->
+<!-- $Id: LabelTapePropertySheet.xml,v 1.14 2009/01/14 19:18:07 ronaldso Exp $ -->
 
 <propertysheet>
     <section name="labeltape1" defaultValue="">
@@ -39,7 +39,7 @@
             <option label="LabelTape.type1" value="LabelTape.type1" />
             <option label="LabelTape.type2" value="LabelTape.type2" />
         </cc>
-	<fieldhelp name="labelinlinehelp" 
+	<fieldhelp name="labelinlinehelp"
 	    defaultValue="LabelTape.labelrelabel" />
     </property>
 
@@ -75,15 +75,7 @@
         <label name="sizeLabel" defaultValue="LabelTape.psheet3"
             Id="sizeId" labelFor="sizeValue" />
         <cc name="sizeValue"
-            tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" >
-            <option label="LabelTape.size1" value="16" />
-            <option label="LabelTape.size2" value="32" />
-            <option label="LabelTape.size3" value="64" />
-            <option label="LabelTape.size4" value="128" />
-            <option label="LabelTape.size5" value="256" />
-            <option label="LabelTape.size6" value="512" />
-            <option label="LabelTape.size7" value="1024" />
-        </cc>
+            tagclass="com.sun.web.ui.taglib.html.CCDropDownMenuTag" />
     </property>
     </section>
 </propertysheet>
