@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.106 $"
+#pragma ident "$Revision: 1.107 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -326,13 +326,6 @@ FsConfig(char *fscfg_name)
 					    mi->part[i].pt_eq);
 					diffMsgFunc(msg);
 					diffs++;
-					if (mounted_fs &&
-					    (mi_prev->part[i].pt_state ==
-					    DEV_OFF) ||
-					    (mi_prev->part[i].pt_state ==
-					    DEV_UNAVAIL)) {
-						lun_diffs++;
-					}
 					break;
 				} else if (mi->part[i].pt_type !=
 				    mi_prev->part[i].pt_type) {

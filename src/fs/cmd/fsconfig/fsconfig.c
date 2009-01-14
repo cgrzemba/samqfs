@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.52 $"
+#pragma ident "$Revision: 1.53 $"
 
 /* Feature test switches. */
 
@@ -590,19 +590,22 @@ ListFSet(struct DevInfo *dip, int n)
 	char fsbuf[sizeof (uname_t)+8];
 	int md, mm, mr, oXXX, gXXX, bad;
 	int missing_meta_message = 0;
-	int ord;
-	int fsgen = 0;
+	int fsgen;
+	int fscount;
+	int mmcount;
 	char *template;
 
 	if (blocks) {
-		template = "%s%s%s    %d    %s   %s  %s %lld\n";
+		template = "%s%s%s    %d    %s   %s  %lld\n";
 	} else {
-		template = "%s%s%s    %d    %s   %s  %s\n";
+		template = "%s%s%s    %d    %s   %s  -\n";
 	}
 	bzero(&lfset[0], sizeof (lfset));
 	FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
 	when = dip->di_sblk->info.sb.init;
 	fsgen = dip->di_sblk->info.sb.fsgen;
+	fscount = dip->di_sblk->info.sb.fs_count;
+	mmcount = dip->di_sblk->info.sb.mm_count;
 	for (j = 0; j < n; j++) {
 		lfset[dip[j].di_sblk->info.sb.ord]++;
 	}
@@ -612,13 +615,18 @@ ListFSet(struct DevInfo *dip, int n)
 			    dip[j].di_sblk->eq[j].fs.state == DEV_NOALLOC ||
 			    dip[j].di_sblk->eq[j].fs.state == DEV_UNAVAIL) {
 				fsgen = dip[j].di_sblk->info.sb.fsgen;
+				fscount = dip[j].di_sblk->info.sb.fs_count;
+				mmcount = dip[j].di_sblk->info.sb.mm_count;
 				break;
 			}
 		}
 	}
 	printf("#\n# ");
-	/* Family Set '%s' Created %s Gen %d*/
-	printf(GetCustMsg(13805), fsbuf, fsgen, ctime(&when));
+	/* Family Set '%s' Created %s */
+	printf(GetCustMsg(13805), fsbuf, ctime(&when));
+	printf("# ");
+	/* Generation %d Eq count %d Eq meta count %d\n */
+	printf(GetCustMsg(13810), fsgen, fscount, mmcount);
 	if (dip->di_flags & DI_SBLK_BSWAPPED) {
 		printf("#\n# ");
 		/* Foreign byte order (super-blocks byte-reversed). */
@@ -717,9 +725,8 @@ ListFSet(struct DevInfo *dip, int n)
 				printf(template,
 				    (holes || bad) ? "# " : "", "",
 				    "nodev    ",
-				    dip->di_sblk->eq[j].fs.eq, typbuf, fsbuf, "-",
+				    dip->di_sblk->eq[j].fs.eq, typbuf, fsbuf,
 				    (long long)dip->di_sblk->eq[j].fs.capacity);
-
 			}
 		}
 	}
@@ -727,31 +734,36 @@ ListFSet(struct DevInfo *dip, int n)
 		struct sam_sblk *sblk;
 
 		sblk = dip[j].di_sblk;
+		if (sblk->info.sb.fsgen != fsgen) {
+			lfset[sblk->info.sb.ord]--;
+		}
+	}
+	for (j = 0; j < n; j++) {
+		struct sam_sblk *sblk;
+		int ord;
+
+		sblk = dip[j].di_sblk;
 		ord = sblk->info.sb.ord;
 		if (holes || bad) {
 			printf("# ");
 			/* Ordinal %d */
-			printf(GetCustMsg(13809), ord);
+			printf(GetCustMsg(13809), sblk->info.sb.ord);
 		}
 		TypeStr(sblk->eq[ord].fs.type, typbuf);
 		FSStr(sblk->info.sb.fs_name, fsbuf);
 		if (sblk->info.sb.fsgen != fsgen) {
 			if (verbose) {
-				printf(template, "#", "", dip[j].di_devname,
-				    sblk->eq[ord].fs.eq, typbuf, fsbuf, "-",
+				printf(template, "< ", "", dip[j].di_devname,
+				    sblk->eq[ord].fs.eq, typbuf, fsbuf,
 				    (long long) sblk->eq[ord].fs.capacity);
 			}
 			continue;
 		}
-		if (holes || bad) {
-			printf(template, "#", "", dip[j].di_devname,
-			    sblk->eq[ord].fs.eq, typbuf, fsbuf, "-",
-			    (long long) sblk->eq[ord].fs.capacity);
-			continue;
-		}
-		printf(template, "", "", dip[j].di_devname,
-		    sblk->eq[ord].fs.eq, typbuf, fsbuf, "-",
-		    (long long) sblk->eq[ord].fs.capacity);
+		printf(template,
+		    (holes || bad) ? "# " : "",
+		    (lfset[ord] > 1) ? "> " : "",
+		    dip[j].di_devname, sblk->eq[ord].fs.eq,
+		    typbuf, fsbuf, (long long) sblk->eq[ord].fs.capacity);
 	}
 	printf("\n");
 }
@@ -1007,7 +1019,8 @@ Dsk2Rdsk(
 
 	return (1);
 
-#else	/* linux */
+#endif
+#ifdef sun
 	char *rdevname;
 
 	if ((rdevname = getfullrawname(dsk)) == NULL) {
@@ -1027,5 +1040,5 @@ Dsk2Rdsk(
 	free(rdevname);
 	return (1);
 
-#endif	/* linux */
+#endif
 }
