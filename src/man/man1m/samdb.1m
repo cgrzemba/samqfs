@@ -1,4 +1,4 @@
-.\" $Revision: 1.3 $
+.\" $Revision: 1.4 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -42,7 +42,7 @@ samdb \- Sun StorEdge SAM-QFS sideband database commands
 
 .LP
 .nf
-\fBsamdb dump\fR \fIfamily_set\fR [\fB-a\fR] [\fB-f file name\fR]
+\fBsamdb dump\fR \fIfamily_set\fR [\fB-a\fR] [\fB-s] [\fB-f file name\fR]
 .fi
 
 .LP
@@ -222,7 +222,7 @@ of CREATE TABLE commands.
 .ne 2
 .mk
 .na
-\fBsamdb dump\fR \fIfamily_set\fR [\fB-a\fR] [\fB-f file name\fR]
+\fBsamdb dump\fR \fIfamily_set\fR [\fB-a\fR] [\fB-s\fR] [\fB-f file name\fR]
 .ad
 .sp .6
 .RS 4n
@@ -240,6 +240,21 @@ Generates a list of files for samfsdump.
 Use absolute pathnames in file list.  This will allow samfsdump
 to be ran outside of the root of the filesystem.  The default is
 relative pathnames.
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-s\fR\fR
+.ad
+.sp .6
+.RS 4n
+Sort dump file by parent directory ids.  This option groups files together
+in the dump file based on their parent directories.  Subsequent samfsdump
+performance will not be improved when using this option. 
 .RE
 
 .RE

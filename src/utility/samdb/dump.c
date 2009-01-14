@@ -30,7 +30,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 #include <stdio.h>
 
@@ -44,6 +44,7 @@
 
 static char *dumpfile;
 static boolean_t is_abs_paths = FALSE;
+static boolean_t is_sorted = FALSE;
 
 static int dump_proc_opt(char opt, char *args);
 static int dump_files(sam_db_context_t *con, FILE *file);
@@ -75,10 +76,11 @@ samdb_dump_getopts(void) {
 	static opt_desc_t opt_desc[] = {
 		{"a", "Absolute paths in dump, default is relative."},
 		{"f file", "Output file for dump, default standard output."},
+		{"s", "Dump file sorted by directory."},
 		NULL
 	};
 	static samdb_opts_t opts = {
-		"af:",
+		"af:s",
 		dump_proc_opt,
 		opt_desc
 	};
@@ -90,6 +92,7 @@ dump_proc_opt(char opt, char *arg) {
 	switch (opt) {
 	case 'a': is_abs_paths = TRUE; break;
 	case 'f': dumpfile = arg; break;
+	case 's': is_sorted = TRUE; break;
 	}
 	return (0);
 }
@@ -98,10 +101,16 @@ static int
 dump_files(sam_db_context_t *con, FILE *file) {
 	MYSQL_RES *result;
 	MYSQL_ROW row;
-	int len = sprintf(con->qbuf, "select f.ino, f.gen, "
-	    "concat(path, name) from sam_file f, sam_path p where "
-	    "f.p_ino=p.ino and f.p_gen=p.gen and f.ino!=%d "
-	    "order by f.p_ino", SAM_ROOT_INO);
+
+	int len;
+	char *query = "select f.ino, f.gen, concat((select p.path from "
+	    "sam_path p where p.ino=f.p_ino and p.gen=f.p_gen), "
+	    "f.name) from sam_file f %s where f.ino!=%d %s";
+
+	len = sprintf(con->qbuf, query,
+	    is_sorted ? "force index (PRIMARY)" : "",
+	    SAM_ROOT_INO,
+	    is_sorted ? "order by f.p_ino" : "");
 
 	if (mysql_real_query(con->mysql, con->qbuf, len)) {
 		fprintf(stderr, "%s\n", mysql_error(con->mysql));
