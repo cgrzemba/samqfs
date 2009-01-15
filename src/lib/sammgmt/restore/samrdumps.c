@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.61 $"
+#pragma ident	"$Revision: 1.62 $"
 
 /*
  * samrdumps.c - Library for reading/searching samfsdumps
@@ -652,6 +652,11 @@ samr_restore(void* jobid)
 	arg = samr_get_args((char *)jobid);
 
 	if (arg == NULL) {
+
+		pthread_mutex_lock(&search_mutex);
+		search_active = 0;  /* Indicate search/restore is done */
+		pthread_mutex_unlock(&search_mutex);
+
 		end_this_activity((char *)jobid);
 		return (NULL);
 	}
@@ -677,8 +682,7 @@ samr_restore(void* jobid)
 		copyp = arg->r.copies->head;
 	} else {
 		Trace(TR_MISC, "Restore init failed %s", samerrmsg);
-		/* cleanup handler gets exec'd on return */
-		return (NULL);
+		goto done;
 	}
 
 	/* Open log file */
@@ -688,8 +692,7 @@ samr_restore(void* jobid)
 	if (dsp->logfil == NULL) {
 		/* must return or a crash will follow on rlog */
 		rval = samrerr(SE_NOTAFILE, RESTORELOG);
-		/* cleanup handler gets exec'd on return */
-		return (NULL);
+		goto done;
 	}
 
 	/* Log the fact that we are starting a restore */
@@ -721,8 +724,6 @@ samr_restore(void* jobid)
 		goto done;
 	}
 
-	/* Push a cleanup handler for the filelst */
-	pthread_cleanup_push(&free_file_details_lst, filelst);
 
 	/* get the details for the requested files */
 	rval = collect_file_details_restore(dsp->fsname, dsp->snapname,
@@ -738,10 +739,11 @@ samr_restore(void* jobid)
 		PostEvent(DUMP_CLASS, DUMP_INTERRUPTED_SUBCLASS,
 		    SE_RESTORE_FAILED, LOG_ERR, msgbuf, NOTIFY_AS_FAULT);
 		Trace(TR_MISC, "Restore init failed %s", samerrmsg);
-
-		/* cleanup handlers get exec'd on return */
-		return (NULL);
+		goto done;
 	}
+
+	/* Push a cleanup handler for the filelst */
+	pthread_cleanup_push(&free_file_details_lst, filelst);
 
 	for (pathp = filelst->head, oldpathp = arg->r.filepaths->head;
 	    (pathp != NULL) && (oldpathp != NULL);
@@ -790,14 +792,12 @@ samr_restore(void* jobid)
 		copyp = copyp->next;
 	}
 
-	/*
-	 * pop filelst handler before 'done:' because goto done only
-	 * called prior to pushing this handler.
-	 */
+	/* pop file list free handler */
 	pthread_cleanup_pop(1);
 
 done:
-	pthread_cleanup_pop(1); /* general cleanup function */
+	/* pop the cleanup handler */
+	pthread_cleanup_pop(1);
 
 	return (NULL);
 }

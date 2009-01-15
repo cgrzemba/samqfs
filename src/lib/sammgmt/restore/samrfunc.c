@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.50 $"
+#pragma ident	"$Revision: 1.51 $"
 
 #include <sys/time.h>
 #include <string.h>
@@ -820,7 +820,10 @@ restore_inodes(
 		goto err;
 	}
 
-	RVAL(set_dump(fsname, dumpname, dsp));
+	if (rval = set_dump(fsname, dumpname, dsp)) {
+		free(dsp);
+		goto err;
+	}
 
 	/*
 	 * Before trying to restore, sanity check lists.

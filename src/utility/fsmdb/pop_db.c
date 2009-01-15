@@ -174,6 +174,11 @@ db_process_samfsdump(fs_entry_t *fsent, char *snappath)
 	/* init with root (".") entry */
 
 	st = dbEnv->txn_begin(dbEnv, NULL, &txn, 0);
+	if (st != 0) {
+		LOGERR("txn_begin failed for '.' : %d", st);
+		st = -1;
+		goto done;
+	}
 
 	st = add_file_path(fsent, txn, ".", TRUE, &filno, &parentid);
 	if (st != 0) {
@@ -743,6 +748,7 @@ add_file_path(
 		return (st);
 	} else if (st != DB_NOTFOUND) {
 		/* can't continue, something's very wrong */
+		LOGERR("get_file_path_id failed: %d %s", st, path);
 		return (st);
 	}
 
@@ -893,6 +899,8 @@ get_file_path_id(
 		st = (fsdb->dirDB)->get(fsdb->dirDB, txn, &key, &data, 0);
 
 		if (st != 0) {
+			LOGERR("get_file_path_id failed for path %s: %d",
+			    path, st);
 			return (st);
 		}
 
@@ -919,6 +927,9 @@ get_file_path_id(
 	if (st == 0) {
 		/* already in database */
 		*fid = id;
+	} else if (st != DB_NOTFOUND) {
+		LOGERR("Primary get from pathDB for path %s returned %d",
+		    path, st);
 	}
 
 	return (st);

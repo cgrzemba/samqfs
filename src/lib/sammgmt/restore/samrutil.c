@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.47 $"
+#pragma ident	"$Revision: 1.48 $"
 
 #include <stdio.h>
 #include <sys/time.h>
@@ -311,8 +311,7 @@ samr_decomp(void* jobid)
 		if (rval) {
 			Trace(TR_DEBUG, "Cannot find snapshot dir for %s\n",
 			    arg->d.fsname);
-			/* cleanup handler invoked on return */
-			return (NULL);
+			goto done;
 		}
 		dirp = snapdir;
 	}
@@ -320,8 +319,7 @@ samr_decomp(void* jobid)
 	/* Look for dump file, possibly compressed */
 	rval = get_snap_name(dirp, namep, zname, &locked, &compressed, &sout);
 	if (rval != 0) {
-		/* cleanup handler invoked on return */
-		return (NULL);
+		goto done;
 	}
 
 	/* see if someone is cancelling this job */
@@ -353,8 +351,7 @@ samr_decomp(void* jobid)
 
 		if (pid == -1) {
 			Trace(TR_DEBUG, "Decompression fork failed\n");
-			/* cleanup handler invoked on return */
-			return (NULL);
+			goto done;
 		}
 
 		set_pid_or_tid(arg->d.xjobid, pid, 0);
@@ -387,8 +384,7 @@ samr_decomp(void* jobid)
 			    NOTIFY_AS_FAULT | NOTIFY_AS_EMAIL);
 
 			Trace(TR_DEBUG, "No dump for %s\n", arg->d.dumppath);
-			/* cleanup handler invoked on return */
-			return (NULL);
+			goto done;
 		}
 
 		pthread_testcancel();
@@ -427,6 +423,7 @@ samr_decomp(void* jobid)
 		Trace(TR_DEBUG, "No index for %s\n", arg->d.dumppath);
 	}
 
+done:
 	pthread_cleanup_pop(1);
 
 	return (NULL);
