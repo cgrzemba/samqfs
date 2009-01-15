@@ -721,6 +721,7 @@ add_file_path(
 	uint64_t	id;
 	uint64_t	pd = 0;
 	char		*bufp;
+	char   		*errpfx = "add_file_path";
 
 	if ((path == NULL) || (strlen(path) < 1)) {
 		return (-1);
@@ -866,6 +867,7 @@ get_file_path_id(
 	uint64_t	id = 0;
 	uint64_t	pd = 0;
 	fake_path_t	exist;
+	char   		*errpfx = "get_path_id";
 
 	if ((path == NULL) || (strlen(path) < 1)) {
 		return (-1);
@@ -899,7 +901,7 @@ get_file_path_id(
 		st = (fsdb->dirDB)->get(fsdb->dirDB, txn, &key, &data, 0);
 
 		if (st != 0) {
-			LOGERR("get_file_path_id failed for path %s: %d",
+			LOGERR("get failed for path %s: %d",
 			    path, st);
 			return (st);
 		}
