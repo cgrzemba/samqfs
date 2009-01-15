@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.265 $"
+#pragma ident "$Revision: 1.266 $"
 #endif
 
 #include "sam/osversion.h"
@@ -279,6 +279,9 @@ sam_update_shared_filsys(
 	}
 
 	if (flag < 0) {	/* If samd config, verify sblk */
+		/*
+		 * sam_build_geometry updates mount table, not superblock
+		 */
 		if ((error = sam_build_geometry(mp, TRUE))) {
 			return (error);
 		}
@@ -334,126 +337,109 @@ sam_update_shared_sblk(
 	enum SHARE_flag wait_flag)	/* Wait forever, or wait for a while */
 {
 #ifdef sun
-	buf_t *bp;
+	buf_t *bp = NULL;
 #endif /* sun */
 #ifdef linux
 	char *buf;
 #endif /* linux */
-	struct sam_sblk *sblk, *old_sblk;
-	int32_t sblk_size, old_sblk_size, s;
-	int ord;
-	int error = 0;
+
+	struct sam_sblk	*sblk, *new_sblk;
+	int32_t 	sblk_size;
+	int		ord;
+	int 		error = 0;
+	int32_t		new_sblk_fs_count;
 
 	/*
-	 * If the superblock has not yet been set or the partitions changed,
-	 * read the first sector to get the superblock size.
+	 * The in memory superblock is always the maximum size. If at this
+	 * point the mount struct has no superblock pointer, allocate it
+	 * and get the superblock from the server.
 	 */
+	sblk_size = sizeof (*sblk);
 	sblk = mp->mi.m_sbp;
-	old_sblk = sblk;
-	sblk_size = mp->mi.m_sblk_size;
-	old_sblk_size = sblk_size;
-
-	if ((old_sblk == NULL) ||
-	    (mp->mt.fs_count > old_sblk->info.sb.fs_count)) {
-		sblk_size = DEV_BSIZE;
+	if (sblk == NULL) {
+		sblk = (struct sam_sblk *)kmem_zalloc(sblk_size, KM_SLEEP);
 	}
 
-refetch:
-
+	/*
+	 * OS dependent get new superblock
+	 */
 #ifdef sun
 	if ((error = sam_get_client_sblk(mp, wait_flag, sblk_size, &bp))) {
-		return (error);
+		goto bail;
 	}
-	sblk = (struct sam_sblk *)(void *)bp->b_un.b_addr;
-	s = roundup(sblk->info.sb.sblk_size, DEV_BSIZE);
-	if (s != sblk_size) {
-		bp->b_flags |= B_STALE | B_AGE;
-		brelse(bp);
-		sblk_size = s;
-		goto refetch;
-	}
+	new_sblk = (struct sam_sblk *)(void *)bp->b_un.b_addr;
 #endif /* sun */
 
 #ifdef linux
 	buf = kmem_zalloc(sblk_size, KM_SLEEP);
 	if ((error = sam_get_client_sblk(mp, wait_flag, sblk_size, buf))) {
-		kmem_free(buf, sblk_size);
-		return (error);
+		goto bail;
 	}
-	sblk = (struct sam_sblk *)(void *)buf;
-	s = roundup(sblk->info.sb.sblk_size, DEV_BSIZE);
-	if (s != sblk_size) {
-		kmem_free(buf, sblk_size);
-		sblk_size = s;
-		goto refetch;
-	}
-
+	new_sblk = (struct sam_sblk *)(void *)buf;
 #endif /* linux */
 
 	/*
-	 * Don't update superblock if server superblock partition count
-	 * is != client partition count. The client must build the mcf
-	 * and execute a samd conf
+	 * No locking needed here. The MDS will not change the state of
+	 * any devices until all clients have reported the current fsgen.
+	 * Any new device is added at the end of the eq array in the
+	 * superblock and changed devices can only update OFF devices.
 	 */
-	if (sblk->info.sb.fs_count != mp->mt.fs_count) {
-		cmn_err(CE_WARN,
-		    "SAM-QFS: %s: Server %s has %d partitions, client has %d"
-		    " Execute samd buildmcf followed by"
-		    " samd conf to update mcf",
-		    mp->mt.fi_name, mp->mt.fi_server,
-		    sblk->info.sb.fs_count, mp->mt.fs_count);
-#ifdef sun
-		bp->b_flags |= B_STALE | B_AGE;
-		brelse(bp);
-#endif /* sun */
-#ifdef linux
-		kmem_free(buf, sblk_size);
-#endif /* linux */
-		return (EBUSY);
-	}
-
-#ifdef sun
-	/*
-	 * Make a copy of the superblock, then release the buffer.
-	 */
-	if ((sblk_size > old_sblk_size) || (old_sblk == NULL)) {
-		sblk = kmem_alloc(sblk_size, KM_SLEEP);
-	} else {
-		sblk = old_sblk;
-		old_sblk = NULL;
-	}
-
-	bcopy((void *)bp->b_un.b_addr, sblk, sblk_size);
-	bp->b_flags |= B_STALE | B_AGE;
-	brelse(bp);
-#endif /* sun */
 
 	/*
-	 * Update state of LUNs in superblock.
+	 * Defer updating the new fs_count until new superblock is copied
+	 * to the in memory superblock and the mount struct is updated.
+	 */
+	new_sblk_fs_count = new_sblk->info.sb.fs_count;
+	new_sblk->info.sb.fs_count = sblk->info.sb.fs_count;
+
+	/*
+	 * Update in memory copy of superblock
+	 */
+	bcopy(new_sblk, sblk, sblk_size);
+
+	/*
+	 * Link mount info to just created in memory superblock
+	 */
+	if (mp->mi.m_sbp == NULL) {
+		mp->mi.m_sbp = sblk;
+	}
+
+	/*
+	 * Update state of devices
 	 */
 	for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
 		mp->mi.m_fs[ord].part.pt_state = sblk->eq[ord].fs.state;
 	}
 
-	/*
-	 * Move the new buffer pointer into place. Relies on store atomicity;
-	 * it's OK for other threads to see either the old sblk or the new
-	 * sblk, but no intermediate states. Note that we set m_sbp only
-	 * after setting all related fields.
-	 */
 	ASSERT(sblk->info.sb.magic != SAM_MAGIC_V1);
 	if ((sblk->info.sb.magic == SAM_MAGIC_V2) ||
 	    (sblk->info.sb.magic == SAM_MAGIC_V2A)) {
 		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV2;
 	}
+
 	mp->mi.m_sblk_fsid = sblk->info.sb.init;
 	mp->mi.m_sblk_fsgen = sblk->info.sb.fsgen;
-	mp->mi.m_sblk_size = sblk_size;
-	mp->mi.m_sbp = sblk;
-	if (old_sblk) {
-		kmem_free(old_sblk, old_sblk_size);
+	mp->mi.m_sblk_size = sblk->info.sb.sblk_size;
+
+	sblk->info.sb.fs_count = new_sblk_fs_count;
+
+bail:
+	if (mp->mi.m_sbp == NULL) {
+		kmem_free(sblk, sblk_size);
 	}
-	return (0);
+
+#ifdef sun
+	if (bp != NULL) {
+		bp->b_flags |= B_STALE | B_AGE;
+		brelse(bp);
+	}
+#endif /* sun */
+
+#ifdef linux
+	kmem_free(buf, sblk_size);
+#endif /* linux */
+
+	return (error);
 }
 
 

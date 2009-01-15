@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.205 $"
+#pragma ident "$Revision: 1.206 $"
 #endif
 
 #include "sam/osversion.h"
@@ -680,6 +680,8 @@ sam_mount_info(
 #endif
 	size_t mount_size;
 	int i;
+	int istart = 0;
+	short prev_mm_count = 0;
 	int error;
 
 	/*
@@ -791,9 +793,7 @@ sam_mount_info(
 	 * OFF devices and/or add new devices at the end of the array.
 	 */
 	if (mt != NULL) {
-		int istart;
 		short mm_count = 0;
-		short prev_mm_count = 0;
 		sam_mount_info_t *mntp;
 
 		/*
@@ -859,21 +859,40 @@ sam_mount_info(
 					error = EBUSY;
 					goto done;
 				}
+				mp->mt.fi_status |= FS_RECONFIG;
+				mutex_exit(&mp->ms.m_waitwr_mutex);
+
 				sblk = mp->mi.m_sbp;
+				istart = sblk->info.sb.fs_count;
+				prev_mm_count = sblk->info.sb.mm_count;
+				if (SAM_IS_SHARED_CLIENT(mp)) {
+					if ((error = sam_update_shared_sblk(mp,
+					    SHARE_wait_one))) {
+						goto fini;
+					}
+				}
 				if (sblk->info.sb.fs_count > args.fs_count) {
-					mutex_exit(&mp->ms.m_waitwr_mutex);
 					error = EINVAL;
-					goto done;
+					goto fini;
+				}
+				if (SAM_IS_SHARED_CLIENT(mp) &&
+				    (sblk->info.sb.fs_count != args.fs_count)) {
+					cmn_err(CE_WARN,
+					    "SAM-QFS: %s: Mcf does not match "
+					    "mcf on server %s. Execute samd "
+					    "buildmcf followed by samd conf "
+					    "to update the mcf.",
+					    mp->mt.fi_name, mp->mt.fi_server);
+					error = EINVAL;
+					goto fini;
 				}
 				istart = sblk->info.sb.fs_count;
 				prev_mm_count = sblk->info.sb.mm_count;
 				for (i = 0; i < istart; i++) {
 					if (copyin(&mntp->part[i], &part,
 					    sizeof (struct sam_fs_part))) {
-						mutex_exit(
-						    &mp->ms.m_waitwr_mutex);
 						error = EFAULT;
-						goto done;
+						goto fini;
 					}
 					if (part.pt_eq != sblk->eq[i].fs.eq) {
 						error = EINVAL;
@@ -881,25 +900,22 @@ sam_mount_info(
 					}
 				}
 				if (error) {
-					mutex_exit(&mp->ms.m_waitwr_mutex);
 					cmn_err(CE_WARN, "SAM-QFS: %s: "
 					    "mcf devices are not in ordinal "
 					    "order: eq %d mismatch sblk eq %d "
 					    "See samu f display for order",
 					    mp->mt.fi_name, part.pt_eq,
 					    sblk->eq[i].fs.eq);
-					goto done;
+					goto fini;
 				}
-
-				mp->mt.fi_status |= FS_RECONFIG;
 				mp->mt.fs_count = sblk->info.sb.fs_count;
 				mp->orig_mt.fs_count = sblk->info.sb.fs_count;
 				mp->mt.mm_count = sblk->info.sb.mm_count;
 				mp->orig_mt.mm_count = sblk->info.sb.mm_count;
 			} else {
 				istart = 0; /* Unmounted, overwrite entries */
+				mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
-			mutex_exit(&mp->ms.m_waitwr_mutex);
 		}
 		for (i = 0; i < args.fs_count; i++) {
 			struct samdent *dp;
@@ -928,11 +944,8 @@ sam_mount_info(
 			bzero(dp, sizeof (struct samdent));
 			if (copyin(&mntp->part[i], dp,
 			    sizeof (struct sam_fs_part))) {
-				mutex_enter(&mp->ms.m_waitwr_mutex);
-				mp->mt.fi_status &= ~FS_RECONFIG;
-				mutex_exit(&mp->ms.m_waitwr_mutex);
 				error = EFAULT;
-				goto done;
+				goto fini;
 			}
 			sam_mutex_init(&dp->eq_mutex, NULL,
 			    MUTEX_DEFAULT, NULL);
@@ -982,16 +995,22 @@ sam_mount_info(
 			}
 		}
 #endif
-		if (istart) {
-			if (error) {
-				mp->mt.fs_count = (short)istart;
-				mp->orig_mt.fs_count = (short)istart;
-				mp->mt.mm_count = prev_mm_count;
-				mp->orig_mt.mm_count = prev_mm_count;
-			}
-			mutex_enter(&mp->ms.m_waitwr_mutex);
-			mp->mt.fi_status &= ~FS_RECONFIG;
-			mutex_exit(&mp->ms.m_waitwr_mutex);
+	}
+
+fini:
+	if (istart) {
+		if (error) {
+			mp->mt.fs_count = (short)istart;
+			mp->orig_mt.fs_count = (short)istart;
+			mp->mt.mm_count = prev_mm_count;
+			mp->orig_mt.mm_count = prev_mm_count;
+		}
+		mutex_enter(&mp->ms.m_waitwr_mutex);
+		mp->mt.fi_status &= ~FS_RECONFIG;
+		mutex_exit(&mp->ms.m_waitwr_mutex);
+		if (error == 0 && SAM_IS_SHARED_CLIENT(mp)) {
+			mp->ms.m_cl_vfs_time = 0;	/* Update sblk now */
+			(void) sam_proc_block_vfsstat(mp, SHARE_wait_one);
 		}
 	}
 done:

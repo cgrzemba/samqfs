@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.128 $"
+#pragma ident "$Revision: 1.129 $"
 
 #include "sam/osversion.h"
 
@@ -2139,8 +2139,9 @@ sam_grow_fs(
 {
 	struct sam_sblk *sblk;		/* Pointer to the superblock */
 	struct sam_sbord *sop, *dsop;	/* Sblk entry for this ordinal */
-	sam_sblk_t *old_sblk = NULL;	/* Pointer to old superblock */
-	int old_sblk_size, new_sblk_size;
+	sam_sblk_t *old_sblk;		/* Pointer to copy of original sblk */
+	int old_sblk_size;		/* Size of original sblk */
+	int new_sblk_size;		/* Size of new sblk */
 	char *dcp;
 	offset_t blocks;
 	sblk_args_t args;
@@ -2273,13 +2274,19 @@ sam_grow_fs(
 	 * new device count until the free map has been built and cleared.
 	 */
 	mutex_enter(&mp->mi.m_sblk_mutex);
-	old_sblk = sblk;
-	old_sblk_size = mp->mi.m_sblk_size;
 
+	/*
+	 * Note that mi.m_sblk_size is rounded up to DEV_BSIZE.
+	 */
+	old_sblk_size = mp->mi.m_sblk_size;
 	new_sblk_size = L_SBINFO + (mp->mt.fs_count * L_SBORD);
 	new_sblk_size = roundup(new_sblk_size, DEV_BSIZE);
-	sblk = (sam_sblk_t *)kmem_zalloc(new_sblk_size, KM_SLEEP);
-	bcopy((char *)old_sblk, (char *)sblk, old_sblk_size);
+
+	/*
+	 * Make a copy of the original superblock
+	 */
+	old_sblk = (sam_sblk_t *)kmem_zalloc(sizeof (*old_sblk), KM_SLEEP);
+	bcopy((char *)sblk, (char *)old_sblk, sizeof (*old_sblk));
 	sblk->info.sb.sblk_size = new_sblk_size;
 
 	/*
@@ -2315,7 +2322,6 @@ sam_grow_fs(
 	sop->system = sop->dau_next;
 	sop->dau_next = 0;		/* done with temp usage */
 
-	mp->mi.m_sbp = sblk;		/* Use this new superblock now */
 	mutex_exit(&mp->mi.m_sblk_mutex);
 
 	/*
@@ -2416,13 +2422,15 @@ sam_grow_fs(
 	 * map is not removed. This means this file system will need to do
 	 * a fsck. XXX Fix this.
 	 */
-	mp->mi.m_sbp = sblk;
 	mp->mi.m_sblk_size = new_sblk_size;
 	if ((error = sam_update_the_sblks(mp)) != 0) { 	/* If error */
 		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding eq %d lun %s,"
 		    " could not write sblk",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-		mp->mi.m_sbp = old_sblk;
+		/*
+		 * If error, restore original superblock image and block size
+		 */
+		bcopy((char *)old_sblk, (char *)sblk, sizeof (*sblk));
 		mp->mi.m_sblk_size = old_sblk_size;
 		if ((error = sam_update_the_sblks(mp)) != 0) { /* If error */
 			error = 0;
@@ -2438,15 +2446,17 @@ sam_grow_fs(
 
 done:
 	if (error) {
-		kmem_free(sblk, new_sblk_size);
-		mp->mi.m_sbp = old_sblk;
+		mutex_enter(&mp->mi.m_sblk_mutex);
+		bcopy((char *)old_sblk, (char *)sblk, sizeof (*sblk));
 		mp->mi.m_sblk_size = old_sblk_size;
+		mutex_exit(&mp->mi.m_sblk_mutex);
+		kmem_free(old_sblk, sizeof (*old_sblk));
 		mutex_enter(&mp->ms.m_waitwr_mutex);
 		mp->mt.fi_status &= ~FS_RECONFIG;
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 		return (29);
 	}
-	kmem_free(old_sblk, old_sblk_size);
+	kmem_free(old_sblk, sizeof (*old_sblk));
 	mutex_enter(&mp->ms.m_waitwr_mutex);
 	mp->mt.fi_status &= ~FS_RECONFIG;
 	mutex_exit(&mp->ms.m_waitwr_mutex);

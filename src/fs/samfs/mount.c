@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.244 $"
+#pragma ident "$Revision: 1.245 $"
 #endif
 
 #include "sam/osversion.h"
@@ -130,7 +130,8 @@ extern struct file_system_type samqfs_fs_type;
 #endif /* linux */
 
 static int sam_validate_sblk(sam_mount_t *mp, boolean_t mounted,
-	struct samdent *devp, int *sblk_meta_on, int *sblk_data_on);
+	struct samdent *devp, int *sblk_meta_on, int *sblk_data_on,
+	int *fsgen_config);
 
 #ifdef sun
 static int sam_read_sblk(sam_mount_t *mp);
@@ -1545,7 +1546,8 @@ sam_read_sblk(sam_mount_t *mp)
 		goto out;
 	}
 	mp->mi.m_sblk_size = sblk_size;
-	mp->mi.m_sbp = (struct sam_sblk *)kmem_alloc(sblk_size, KM_SLEEP);
+	mp->mi.m_sbp = (struct sam_sblk *)kmem_zalloc(sizeof (struct sam_sblk),
+	    KM_SLEEP);
 	bcopy((void *)sbp->b_un.b_addr, mp->mi.m_sbp, sblk_size);
 	mp->mi.m_sblk_fsid = mp->mi.m_sbp->info.sb.init;
 	mp->mi.m_sblk_fsgen = mp->mi.m_sbp->info.sb.fsgen;
@@ -1621,8 +1623,8 @@ sam_report_initial_watermark(sam_mount_t *mp)
 /*
  * ----- sam_validate_sblk - Read and validate all superblock labels.
  * Loop through all partitions and set the error and state.
- * Return number of partitions, number of ON partitions, and number of meta
- * ON partitions in the superblock.
+ * Return number of partitions, number of ON partitions, number of meta
+ * ON partitions, and file system generation number.
  */
 
 static int			/* Superblock fs_count */
@@ -1631,12 +1633,14 @@ sam_validate_sblk(
 	boolean_t mounted,	/* Set if mounted */
 	struct samdent *devp,	/* Pointer to array of device partitions */
 	int *sblk_meta_on,	/* Return superblock ON meta devices */
-	int *sblk_data_on)	/* Return superblock ON data devices */
+	int *sblk_data_on,	/* Return superblock ON data devices */
+	int *fsgen_config)	/* Return superblock generation number */
 {
 	int fs_count = 0;
 	int mm_count = 0;
 	int meta_on = 0;
 	int data_on = 0;
+	int fsgen = 0;
 	struct sam_sblk *sblk;
 	struct samdent *dp;
 	struct samdent *first_dp = NULL;
@@ -1750,7 +1754,7 @@ sam_validate_sblk(
 			}
 			mp->mi.m_sblk_offset[0] = sblk->info.sb.offset[0];
 			mp->mi.m_sblk_offset[1] = sblk->info.sb.offset[1];
-			mp->mi.m_fsgen_config = sblk->info.sb.fsgen;
+			fsgen = sblk->info.sb.fsgen;
 			time = sblk->info.sb.init;
 			first_dp = dp;
 		}
@@ -1775,12 +1779,12 @@ sam_validate_sblk(
 				err_line = __LINE__;
 				error = EINVAL;
 		} else if ((time != sblk->info.sb.init) ||
-		    (mp->mi.m_fsgen_config != sblk->info.sb.fsgen)) {
+		    (fsgen != sblk->info.sb.fsgen)) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: mcf eq %d:"
 			    " superblock Fs Id/Gen %x/%x does not match eq %d "
 			    "Fs Id/Gen %x/%x", mp->mt.fi_name,
-			    first_dp->part.pt_eq, time, mp->mi.m_fsgen_config,
+			    first_dp->part.pt_eq, time, fsgen,
 			    dp->part.pt_eq, sblk->info.sb.init,
 			    sblk->info.sb.fsgen);
 			err_line = __LINE__;
@@ -1899,6 +1903,7 @@ setpart2:
 	}
 	*sblk_meta_on = meta_on;
 	*sblk_data_on = data_on;
+	*fsgen_config = fsgen;
 	return (fs_count);
 }
 
@@ -1922,7 +1927,7 @@ sam_build_geometry(
 	int sblk_data_on = 0;
 	int meta_on = 0;
 	int data_on = 0;
-	int fsgen_config;
+	int fsgen_config = 0;
 	int error = 0;
 	int err_line = 0;
 	boolean_t ck_meta = TRUE;
@@ -1947,9 +1952,8 @@ sam_build_geometry(
 	 * verify mcf matches superblock. Move ON devices into the device
 	 * array in correct ordinal order.
 	 */
-	fsgen_config = mp->mi.m_fsgen_config;
 	sblk_fs_count = sam_validate_sblk(mp, mounted, devp, &sblk_meta_on,
-	    &sblk_data_on);
+	    &sblk_data_on, &fsgen_config);
 
 	if (SAM_IS_SHARED_FS(mp) && !SAM_IS_SHARED_SERVER_ALT(mp)) {
 		ck_meta = FALSE;
@@ -2043,16 +2047,17 @@ sam_build_geometry(
 	}
 
 	/*
-	 * If error, restore previous superblock generation number. if error
-	 * and not mounted, restore device array so devices can be closed.
+	 * If error and not mounted, restore device array so devices can
+	 * be closed. Set the file system generation number if no error.
 	 */
 	if (error) {
-		mp->mi.m_fsgen_config = fsgen_config;
 		if (!mounted) {
 			bcopy((void *)devp, (void *)&mp->mi.m_fs,
 			    (sizeof (struct samdent)*mp->mt.fs_count));
 		}
 		TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
+	} else {
+		mp->mi.m_fsgen_config = fsgen_config;
 	}
 	kmem_free((void *) devp, (sizeof (struct samdent) * mp->mt.fs_count));
 	return (error);
@@ -2307,7 +2312,7 @@ sam_cleanup_mount(
 
 	if (mp != NULL) {
 		if (mp->mi.m_sbp) {			/* Superblock buffer */
-			kmem_free(mp->mi.m_sbp, mp->mi.m_sblk_size);
+			kmem_free(mp->mi.m_sbp, sizeof (struct sam_sblk));
 			mp->mi.m_sbp = NULL;
 		}
 		filemode =
@@ -2424,7 +2429,7 @@ sam_cleanup_mount(
 	if (mp != NULL) {
 		vfsp = mp->mi.m_vfsp;
 		if (mp->mi.m_sbp) {			/* Superblock buffer */
-			kmem_free(mp->mi.m_sbp, mp->mi.m_sblk_size);
+			kmem_free(mp->mi.m_sbp, sizeof (struct sam_sblk));
 			mp->mi.m_sbp = NULL;
 		}
 		for (ord = 0; ord < mp->mt.fs_count; ord++) {
@@ -3261,7 +3266,7 @@ sam_check_chains(sam_mount_t *mp)
  * Return B_TRUE or B_FALSE to indicate whether or not metadata journaling
  * is supported for this file system.
  */
-
+/* ARGSUSED */
 boolean_t
 sam_lqfs_supported(sam_mount_t *mp)
 {

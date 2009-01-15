@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.162 $"
+#pragma ident "$Revision: 1.163 $"
 #endif
 
 #ifdef sun
@@ -298,7 +298,7 @@ typedef struct sam_mt_instance {
 	offset_t	m_inoblk_blocks; /* Num free blocks in .block file */
 	int32_t		m_prev_state;	/* Last fsck state (bit 0) */
 	int		m_fs_syncing;	/* Set if file system is syncing */
-	uint_t		m_sblk_size;	/* Size of incore superblock */
+	uint_t		m_sblk_size;	/* Size of used part of incore sblock */
 	int		m_sblk_fsid;	/* Superblock time */
 	int		m_sblk_fsgen;	/* Superblock generation */
 	int		m_fsgen_config;	/* Superblock generation after config */

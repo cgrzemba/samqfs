@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.304 $"
+#pragma ident "$Revision: 1.305 $"
 
 #include "sam/osversion.h"
 
@@ -3480,11 +3480,6 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 			if (blk) {
 				bp = NULL;
 				if (sz > mp->mi.m_sblk_size) {
-					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: oversized "
-					    "superblock request (%d/%d)",
-					    mp->mt.fi_name, sz,
-					    mp->mi.m_sblk_size);
 					sz = mp->mi.m_sblk_size;
 				}
 			} else {
