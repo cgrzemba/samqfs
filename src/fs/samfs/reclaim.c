@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.132 $"
+#pragma ident "$Revision: 1.133 $"
 
 #include "sam/osversion.h"
 
@@ -673,13 +673,13 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 					    notify_expire);
 					(void) sam_proc_notify(ip,
 					    NOTIFY_lease_expire,
-					    callouts[i].ord, &notify);
+					    callouts[i].ord, &notify, 0);
 				}
 				if (callouts[i].waiting) {
 					SAM_COUNT64(shared_server,
 					    notify_lease);
 					(void) sam_proc_notify(ip, NOTIFY_lease,
-					    callouts[i].ord, NULL);
+					    callouts[i].ord, NULL, 0);
 				}
 			}
 

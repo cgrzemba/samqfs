@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 
 #include "sam/osversion.h"
 
@@ -338,6 +338,7 @@ sam_rename_inode(
 		} else {
 			nname.operation = SAM_REMOVE;
 		}
+		nname.client_ord = 0;
 		/*
 		 * New entry exists, remove it.
 		 * This will decrement v_count but leave nip set.
@@ -421,6 +422,7 @@ sam_rename_inode(
 		 * changed
 		 */
 		oname.operation = SAM_REMOVE;
+		oname.client_ord = 0;
 		if ((error = sam_lookup_name(opip, onm, &oip, &oname, credp))) {
 			error_line = __LINE__;
 			/* Entry does not exist or error. */
@@ -435,15 +437,16 @@ sam_rename_inode(
 			SAM_COUNT64(shared_server, notify_dnlc);
 			notify = kmem_zalloc(sizeof (*notify), KM_SLEEP);
 			strcpy(notify->p.dnlc.component, onm);
-			sam_proc_notify(opip, NOTIFY_dnlc, 0, notify);
+			sam_proc_notify(opip, NOTIFY_dnlc, 0, notify, 0);
 			if (source_is_a_dir) {
 				strcpy(notify->p.dnlc.component, "..");
-				sam_proc_notify(oip, NOTIFY_dnlc, 0, notify);
+				sam_proc_notify(oip, NOTIFY_dnlc, 0, notify, 0);
 			}
 			kmem_free(notify, sizeof (*notify));
 		}
 		VN_RELE(SAM_ITOV(oip));		/* VN_RELE for second lookup */
 		oname.operation = SAM_RENAME_LINK;
+		oname.client_ord = 0;
 		error = sam_remove_name(opip, onm, oip, &oname, kcred);
 		if (error)
 			error_line = __LINE__;

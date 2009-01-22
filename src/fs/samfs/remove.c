@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.91 $"
+#pragma ident "$Revision: 1.92 $"
 
 #include "sam/osversion.h"
 
@@ -332,7 +332,8 @@ sam_remove_name(
 			SAM_COUNT64(shared_server, notify_dnlc);
 			notify = kmem_zalloc(sizeof (*notify), KM_SLEEP);
 			strcpy(notify->p.dnlc.component, cp);
-			sam_proc_notify(pip, NOTIFY_dnlc, 0, notify);
+			sam_proc_notify(pip, NOTIFY_dnlc, 0, notify,
+			    namep->client_ord);
 			kmem_free(notify, sizeof (*notify));
 		}
 	}

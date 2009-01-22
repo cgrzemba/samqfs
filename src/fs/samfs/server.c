@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.305 $"
+#pragma ident "$Revision: 1.306 $"
 
 #include "sam/osversion.h"
 
@@ -2311,7 +2311,7 @@ sam_remove_lease(
 				llp->lease[nl].actions &= ~SR_WAIT_LEASE;
 				(void) sam_proc_notify(ip,
 					NOTIFY_lease,
-					llp->lease[nl].client_ord, NULL);
+					llp->lease[nl].client_ord, NULL, 0);
 			}
 			if (llp->lease[nl].leases != 0) {
 				last_lease = FALSE;
@@ -2630,6 +2630,7 @@ sam_process_name_request(
 		TRANS_BEGIN_CSYNC(pip->mp, issync, TOP_REMOVE, trans_size);
 		RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 		v.name.operation = SAM_REMOVE;
+		v.name.client_ord = client_ord;
 		TRACES(T_SAM_REMOVE, pvp, np->component);
 		if ((error = sam_lookup_name(pip, np->component, &ip, &v.name,
 		    cred)) == 0) {
@@ -2742,6 +2743,7 @@ go_fish:
 				RW_LOCK_OS(&ip->data_rwl, RW_WRITER);
 			}
 
+			v.name.client_ord = client_ord;
 			error = sam_remove_name(pip, np->component,
 			    ip, &v.name, cred);
 			if (error == 0) {
@@ -3296,7 +3298,7 @@ sam_client_getino(sam_node_t *ip, int client_ord)
 			ip->waiting_getino = TRUE;
 			mutex_exit(&ip->ilease_mutex);
 			error = sam_proc_notify(ip, NOTIFY_getino,
-			    client_owner, NULL);
+			    client_owner, NULL, 0);
 			mutex_enter(&ip->ilease_mutex);
 		}
 		if (ip->waiting_getino) {
@@ -3604,7 +3606,7 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 						(void) sam_proc_notify(ip,
 						    NOTIFY_lease,
 						    llp->lease[nl].client_ord,
-						    NULL);
+						    NULL, 0);
 					}
 				}
 			}
@@ -3621,7 +3623,7 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 			prev_srvr = mp->ms.m_prev_srvr_ord;
 			if (prev_srvr != 0) {
 				(void) sam_proc_notify(ip, NOTIFY_panic,
-				    prev_srvr, NULL);
+				    prev_srvr, NULL, 0);
 			}
 			delay(hz);
 			cmn_err(CE_PANIC,
@@ -3732,11 +3734,13 @@ sam_proc_notify(
 	sam_node_t *ip,			/* pointer to inode. */
 	enum NOTIFY_operation op,	/* Lease operation */
 	int client_ord,			/* Client ordinal */
-	sam_notify_arg_t *arg)		/* Pointer to notify args */
+	sam_notify_arg_t *arg,		/* Pointer to notify args */
+	int skip_ord)			/* client ordinal to skip */
 {
 	sam_san_notify_msg_t *msg;
 	sam_san_notify_t *nop;
 	int error;
+	sam_mount_t *mp = ip->mp;
 
 	msg = kmem_zalloc(sizeof (*msg), KM_SLEEP);
 	nop = &msg->call.notify;
@@ -3763,9 +3767,28 @@ sam_proc_notify(
 	sam_build_header(ip->mp, &msg->hdr, SAM_CMD_NOTIFY, SHARE_nowait,
 	    op, sizeof (sam_san_notify_t), sizeof (sam_san_notify_t));
 	msg->hdr.originator = SAM_SHARED_SERVER;
-	/* Send to this client ord, 0 if all */
-	msg->hdr.client_ord = client_ord;
-	error = sam_write_to_client(ip->mp, (sam_san_message_t *)msg);
+
+	if (client_ord == 0 && skip_ord > 0) {
+		int ord;
+		/*
+		 * Send to all clients except skip_ord or this host.
+		 */
+		for (ord = 1; ord <= mp->ms.m_max_clients; ord++) {
+			if (ord == skip_ord || ord == mp->ms.m_client_ord) {
+				continue;
+			}
+			msg->hdr.client_ord = ord;
+			error = sam_write_to_client(mp,
+			    (sam_san_message_t *)msg);
+		}
+
+	} else {
+
+		/* Send to this client ord, 0 if all */
+		msg->hdr.client_ord = client_ord;
+		error = sam_write_to_client(mp, (sam_san_message_t *)msg);
+
+	}
 	kmem_free(msg, sizeof (*msg));
 	return (error);
 }

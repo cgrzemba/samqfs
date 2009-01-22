@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.161 $"
+#pragma ident "$Revision: 1.162 $"
 
 #include "sam/osversion.h"
 
@@ -622,6 +622,7 @@ sam_remove_vn(
 	}
 
 	name.operation = SAM_REMOVE;
+	name.client_ord = 0;
 	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == 0) {
 		ino = ip->di.id.ino;
 
@@ -1011,6 +1012,7 @@ sam_rmdir_vn(
 
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_RMDIR;
+	name.client_ord = 0;
 	ip = NULL;
 	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == 0) {
 		/*
@@ -1198,6 +1200,7 @@ lookup_name:
 				sam_node_t *xip;
 
 				name.operation = SAM_REMOVE;
+				name.client_ord = 0;
 				if (sam_lookup_name(pip, cp, &xip,
 				    &name, credp) == 0) {
 					ASSERT(ip == xip);

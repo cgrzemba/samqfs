@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.85 $"
+#pragma ident "$Revision: 1.86 $"
 
 #include "sam/osversion.h"
 
@@ -1271,7 +1271,7 @@ sam_onoff_client(
 		 * to lookup mount point.
 		 */
 		sam_proc_notify(mp->mi.m_inodir, NOTIFY_hostoff, args.clord,
-		    NULL);
+		    NULL, 0);
 	}
 
 	/*

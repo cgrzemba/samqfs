@@ -40,7 +40,7 @@
 #error This file not used by linux builds.
 #endif
 
-#pragma ident "$Revision: 1.244 $"
+#pragma ident "$Revision: 1.245 $"
 
 #include "sam/osversion.h"
 
@@ -611,7 +611,7 @@ int sam_client_getino(sam_node_t *ip, int client_ord);
 int sam_proc_callout(sam_node_t *ip, enum CALLOUT_operation op,
 	ushort_t actions, int client_ord, sam_callout_arg_t *arg);
 int sam_proc_notify(sam_node_t *ip, enum NOTIFY_operation op, int client_ord,
-	sam_notify_arg_t *arg);
+	sam_notify_arg_t *arg, int skip_ord);
 
 
 /* srmisc.c function prototypes. */

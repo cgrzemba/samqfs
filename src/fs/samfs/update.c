@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.148 $"
+#pragma ident "$Revision: 1.149 $"
 
 #include "sam/osversion.h"
 
@@ -1192,7 +1192,7 @@ sam_req_ifsck(sam_mount_t *mp, int slice, char *msg, sam_id_t *idp)
 		if (prev_srvr != 0) {
 			(void) sam_proc_notify(mp->mi.m_inodir,
 			    NOTIFY_panic, prev_srvr,
-			    NULL);
+			    NULL, 0);
 			delay(hz);
 		}
 		if (idp) {
