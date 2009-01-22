@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.206 $"
+#pragma ident "$Revision: 1.207 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1484,6 +1484,7 @@ sam_set_fsconfig(
 	}
 
 	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+		SAM_SYSCALL_DEC(mp, 0);
 		return (EAGAIN);
 	}
 
