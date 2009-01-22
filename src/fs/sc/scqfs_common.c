@@ -31,7 +31,7 @@
  * scqfs_common.c - Common routines for SUNW.qfs RT.
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1197,7 +1197,7 @@ DepForkProcs(int ac,
 		/*
 		 * Don't bother forking if there's only one filesystem
 		 */
-		scds_syslog_debug(DBG_LVL_HIGH, "DepForkprocs - End");
+		scds_syslog_debug(DBG_LVL_HIGH, "DepForkprocs (one FS) - End");
 		return (*fn)(ac, av, &fip[0]);
 	}
 

@@ -36,7 +36,7 @@
 #define	_SAM_DEFAULTS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 #endif
 
 #include "sam/types.h"
@@ -67,6 +67,7 @@ typedef struct sam_defaults {
 	boolean_t	samstorade;	/* StorADE API */
 	boolean_t	archive_copy_retention;	/* Archive copy retention */
 	uint32_t	flags;
+	int		rac_maxdevretry; /* max retrys for RAC devices */
 } sam_defaults_t;
 
 /* Flags definitions. */

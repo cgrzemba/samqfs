@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 
 #include "sam/osversion.h"
 
@@ -196,7 +196,7 @@ chk_devices(
 			}
 		} else {
 			dp->num_group = 1;
-			if ((dp->fd = get_blk_device(fsp, oflags)) < 0) {
+			if ((dp->fd = get_blk_device(fsp, oflags, 0)) < 0) {
 				return (1);
 			}
 		}

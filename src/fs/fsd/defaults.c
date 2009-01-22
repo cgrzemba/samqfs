@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -125,6 +125,7 @@ static DirProc_t dirProcTable[] = {
 	{ "trace",			dirTrace,		DP_set   },
 	{ "tar_format",			dirTarFormat,		DP_value },
 	{ "dio_min_file_size",		dirDeprecated,		DP_other },
+	{ "rac_maxdevretry",		dirValue,		DP_value },
 	{ NULL,				dirValue,		DP_setfield }
 };
 
@@ -215,6 +216,7 @@ ReadDefaults(char *defaults_name)
 			LibError(NULL, 0, 618, "trace");
 		}
 	}
+	RAC_maxdevretry = defaults.rac_maxdevretry;
 }
 
 

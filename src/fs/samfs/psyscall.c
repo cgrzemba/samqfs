@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.207 $"
+#pragma ident "$Revision: 1.208 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1770,9 +1770,9 @@ sam_get_fspart(
 				    sblk->info.sb.fs_count;
 			}
 			if (count ||
+			    (mp->mt.fi_status & FS_MOUNTED &&
 			    ((mp->ms.m_sblk_time +
-			    (hz * FSPART_INTERVAL)) < lbolt) ||
-			    (mp->ms.m_sblk_time == 0)) {
+			    (hz * FSPART_INTERVAL)) < lbolt))) {
 				error = sam_update_shared_sblk(mp,
 				    SHARE_wait_one);
 				error = 0;

@@ -35,7 +35,7 @@
 #define	SAM_UTILITY_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 #endif
 
 /* Declaration/initialization macros. */
@@ -137,7 +137,7 @@ void cmd_clear_maps(int caller, int ord, int len, sam_daddr_t blk, int bits);
 
 #endif /* defined(_SAM_FS_BLOCK_H) */
 
-int get_blk_device(struct sam_fs_part *fsp, int oflags);
+int get_blk_device(struct sam_fs_part *fsp, int oflags, int maxdevretry);
 int check_mnttab(char *fs_name);
 void ChkFs(void);
 char *MountCheckParams(struct sam_fs_info *mp);

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.58 $"
+#pragma ident "$Revision: 1.59 $"
 
 #include "sam/osversion.h"
 
@@ -345,9 +345,11 @@ ChkFs(void)
 int				/* fd if successful, -1 if error */
 get_blk_device(
 	struct sam_fs_part *fsp,
-	int oflags)
+	int oflags,
+	int maxdevretry)
 {
 	int fd;
+	int retrycnt = 0;
 	struct dk_cinfo dkcinfo;
 	struct vtoc vtoc;
 	char *devrname;
@@ -373,13 +375,30 @@ get_blk_device(
 		free(devrname);
 		return (-1);
 	}
-	if ((fd = open(devrname, oflags)) < 0) {
-		error(0, errno, "%s", devrname);
-		error(0, 0, catgets(catfd, SET, 1856,
-		    "Open failed on (%s)"), devrname);
-		free(devrname);
-		return (-1);
+	/*
+	 * Oracle RAC (oban) devices under SunCluster initialize at the
+	 * same time as QFS filesystems are mounted. We loop waiting
+	 * for the devices to become available (maximum of maxdevretry
+	 * tries).
+	 */
+	while ((fd = open(devrname, oflags)) < 0) {
+		if ((retrycnt >= maxdevretry) ||
+		    ((strncmp(devrname, "/dev/md/", 8) != 0))) {
+			error(0, errno, "%s", devrname);
+			error(0, 0, catgets(catfd, SET, 1856,
+			    "Open failed on (%s), retries=%d"),
+			    devrname, retrycnt);
+			free(devrname);
+			return (-1);
+		}
+		retrycnt++;
+		sleep(2);
 	}
+	if (retrycnt > 0) {
+		printf("%s: %d retries on %s (max=%d).\n",
+		    program_name, retrycnt, devrname, maxdevretry);
+	}
+
 	if (ioctl(fd, DKIOCINFO, &dkcinfo) < 0) {
 		error(0, errno, "%s", devrname);
 		error(0, 0,

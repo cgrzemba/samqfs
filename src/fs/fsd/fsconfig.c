@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.107 $"
+#pragma ident "$Revision: 1.108 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -1014,7 +1014,8 @@ gatherFsDevices(struct sam_mount_info *mi)
 				}
 				close_obj_device(dev->name, O_RDONLY, oh);
 			} else {
-				if ((fd = get_blk_device(fsp, O_RDONLY)) < 0) {
+				if ((fd = get_blk_device(fsp, O_RDONLY,
+				    RAC_maxdevretry)) < 0) {
 					/* %s must be char special file. */
 					LibError(NULL, 0, 17214, dev->name);
 					err++;
