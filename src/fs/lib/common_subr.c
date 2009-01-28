@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.23 $"
+#pragma ident "$Revision: 1.24 $"
 
 /* ----- UNIX Includes */
 
@@ -191,28 +191,29 @@ sam_init_sblk_dev(
 			somp = &sblk->eq[sop->mm_ord].fs;
 			mdt = MM;
 
-			/*
-			 * Advance the metadata ordinal for ma file system
-			 * to roundrobin the data device map.
-			 */
-			if (SBLK_MAPS_ALIGNED(sbp)) {
-				int i = 0;
-				while (i != sbp->fs_count) {
-					struct sam_sbord *mop;
+		}
+		/*
+		 * Advance the metadata ordinal for ma file system
+		 * to roundrobin the data device map.
+		 */
+		if (SBLK_MAPS_ALIGNED(sbp)) {
+			int i = 0;
+			while (i != sbp->fs_count) {
+				struct sam_sbord *mop;
 
-					i++;
-					sbp->mm_ord++;
-					if (sbp->mm_ord >= sbp->fs_count) {
-						sbp->mm_ord = 0;
-					}
-					mop = &sblk->eq[sbp->mm_ord].fs;
-					if ((mop->type == DT_META) &&
-					    (mop->state == DEV_ON)) {
-						break;
-					}
+				i++;
+				sbp->mm_ord++;
+				if (sbp->mm_ord >= sbp->fs_count) {
+					sbp->mm_ord = 0;
+				}
+				mop = &sblk->eq[sbp->mm_ord].fs;
+				if ((mop->type == DT_META) &&
+				    (mop->state == DEV_ON)) {
+					break;
 				}
 			}
 		}
+
 		sop->allocmap = somp->dau_next;
 		somp->dau_next = sop->allocmap + sop->l_allocmap;
 		if (SBLK_MAPS_ALIGNED(sbp)) {

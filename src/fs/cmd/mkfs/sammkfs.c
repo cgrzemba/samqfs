@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.43 $"
+#pragma ident "$Revision: 1.44 $"
 
 
 /* ----- Include Files ---- */
@@ -1185,6 +1185,13 @@ init_sblk()
 			sam_init_sblk_dev(&sblock, &args);
 		}
 	}
+
+	/*
+	 * sam_init_sblk_dev advances the global mm_ord (info.sb.mm_ord)
+	 * for mm and mr devices. reset the global mm_ord to 0 to start
+	 * allocation of the bitmaps for the data devices on the first mm.
+	 */
+	sblock.info.sb.mm_ord = 0;
 
 	/*
 	 * Loop through the data devices, initializing the superblocks.

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.129 $"
+#pragma ident "$Revision: 1.130 $"
 
 #include "sam/osversion.h"
 
@@ -2127,6 +2127,41 @@ sam_shrink_fs(
 }
 
 
+
+/*
+ * ----- sam_growfs_next_meta - get next available meta device
+ */
+static int
+sam_growfs_next_meta(
+	int cur_ord,		/* current ordinal */
+	struct sam_sblk *sblk) 	/* pointer to superblock	*/
+{
+	int			next_ord = cur_ord;
+	int			last_ord = sblk->info.sb.fs_count - 1;
+	struct sam_sbord	*mop;
+
+	next_ord = next_ord + 1 > last_ord ? 0 : next_ord + 1;
+
+	mop = &sblk->eq[next_ord].fs;
+
+	/*
+	 * Loop will terminate if cur_ord is the only valid device and
+	 * return cur_ord as the device
+	 */
+	while ((mop->type != DT_META) || (mop->state != DEV_ON)) {
+		/*
+		 * If looped back to starting ordinal, bail
+		 */
+		if (next_ord == sblk->info.sb.mm_ord) {
+			break;
+		}
+		next_ord = next_ord + 1 > last_ord ? 0 : next_ord + 1;
+		mop = &sblk->eq[next_ord].fs;
+	}
+
+	return (next_ord);
+}
+
 /*
  * ----- sam_grow_fs - Add this eq to the file system
  * Build the bit maps and add this partition to the file system
@@ -2230,19 +2265,32 @@ sam_grow_fs(
 	 */
 	blocks = dp->part.pt_size >> SAM2SUN_BSHIFT;
 	if (mp->mt.mm_count && (type != DT_META)) {
-		/*
-		 * Preallocate a sequential number of blocks for the maps on
-		 * mm_ord. If maps already exists, use the existing map.
-		 */
-		pa.length = blocks / LG_DEV_BLOCK(mp, dt);
 		mm_ord = sblk->info.sb.mm_ord;	/* Next meta device */
-		pa.count = (howmany(pa.length, (SAM_DEV_BSIZE * NBBY)) +
-		    LG_DEV_BLOCK(mp, MM) - 1) /
-		    LG_DEV_BLOCK(mp, MM);
-		pa.dt = MM;
-		pa.ord = (ushort_t)mm_ord;
-		pa.error = 0;
-		sam_process_prealloc_req(mp, sblk, &pa, TRUE);
+		do {
+			/*
+			 * Preallocate a sequential number of blocks for the
+			 * maps on mm_ord. If maps already exists, use the
+			 * existing map.
+			 */
+			pa.length = blocks / LG_DEV_BLOCK(mp, dt);
+			pa.count = (howmany(pa.length, (SAM_DEV_BSIZE * NBBY)) +
+			    LG_DEV_BLOCK(mp, MM) - 1) /
+			    LG_DEV_BLOCK(mp, MM);
+			pa.dt = MM;
+			pa.error = 0;
+
+			/*
+			 * If successful, mm_ord is the current mm device
+			 */
+			pa.ord = (ushort_t)mm_ord;
+			sam_process_prealloc_req(mp, sblk, &pa, TRUE);
+			if (!pa.error) {
+				break;
+			}
+			mm_ord = sam_growfs_next_meta(mm_ord, sblk);
+
+		} while (mm_ord != sblk->info.sb.mm_ord);
+
 		if (pa.error) {
 			cmn_err(CE_WARN, "SAM-QFS: %s: Error adding "
 			    "eq %d lun %s maps on eq %d, error = %d",
@@ -2290,6 +2338,12 @@ sam_grow_fs(
 	sblk->info.sb.sblk_size = new_sblk_size;
 
 	/*
+	 * set *global* mm_ord to the mm ordinal used for this new device
+	 * sam_init_sblk_dev will advance to next mm device
+	 */
+	sblk->info.sb.mm_ord = mm_ord;
+
+	/*
 	 * Set state to OFF for the selected ordinal. The new ordinal may be
 	 * within the superblock ordinals or after the last superblock ordinal.
 	 * Set num_group for possible new striped group.
@@ -2317,10 +2371,15 @@ sam_grow_fs(
 	args.kblocks[MM] = mp->mi.m_dau[MM].kblocks[LG];
 	sam_init_sblk_dev(sblk, &args);
 
-	sop->dau_next = ((sop->dau_next + LG_DEV_BLOCK(mp, dt) - 1) /
+	sop->system = ((sop->dau_next + LG_DEV_BLOCK(mp, dt) - 1) /
 	    LG_DEV_BLOCK(mp, dt)) * LG_DEV_BLOCK(mp, dt);
-	sop->system = sop->dau_next;
-	sop->dau_next = 0;		/* done with temp usage */
+
+	/*
+	 * reset dau_next to 0. Prealloc will have marked the system area
+	 * as already allocated causing dau_next to advance to the first
+	 * allocatable dau.
+	 */
+	sop->dau_next = 0;
 
 	mutex_exit(&mp->mi.m_sblk_mutex);
 
