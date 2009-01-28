@@ -40,7 +40,7 @@
 #include "samadm.h"
 #include <sam/names.h>
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 
 int
@@ -51,12 +51,12 @@ servicetag_cmd(
 	void		*callData)	/* Void data (unused) from main */
 {
 	if (strcmp(argv[0], "add") == 0) {
-		if (system(SAM_EXECUTE_PATH "/samservicetag add") < 0) {
+		if (system(SAM_UTILITY_PATH "/samservicetag add") < 0) {
 			perror("samadm: could not execute samservicetag");
 			return (1);
 		}
 	} else if (strcmp(argv[0], "delete") == 0) {
-		if (system(SAM_EXECUTE_PATH "/samservicetag delete") < 0) {
+		if (system(SAM_UTILITY_PATH "/samservicetag delete") < 0) {
 			perror("samadm: could not execute samservicetag");
 			return (1);
 		}

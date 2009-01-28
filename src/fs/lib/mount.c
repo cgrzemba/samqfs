@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 
 #include "sam/osversion.h"
 
@@ -321,7 +321,7 @@ ChkFs(void)
 		    program_name);
 	} else if (pid == 0) {
 		close(fd);
-		execl(SAM_EXECUTE_PATH"/"SAM_SERVICETAG, SAM_SERVICETAG, "add",
+		execl(SAM_UTILITY_PATH"/"SAM_SERVICETAG, SAM_SERVICETAG, "add",
 		    NULL);
 		printf("%s: Could not exec "SAM_SERVICETAG
 		    " to add service tags.\n", program_name);

@@ -36,7 +36,7 @@
 #define	_SAM_NAMES_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 #endif
 
 #define	SAM_CONFIG_PATH "/etc/opt/SUNWsamfs"		/* configuration data */
@@ -44,6 +44,7 @@
 #define	SAM_VARIABLE_PATH "/var/opt/SUNWsamfs"		/* variable data */
 #define	SAM_EXECUTE_PATH "/opt/SUNWsamfs/sbin"		/* executables */
 #define	SAM_LIBRARY_PATH "/opt/SUNWsamfs/lib"		/* libraries */
+#define	SAM_UTILITY_PATH "/opt/SUNWsamfs/util"		/* utilities */
 #define	SAM_SAMFS_PATH "/usr/lib/fs/samfs"		/* samfs programs */
 
 #ifdef linux

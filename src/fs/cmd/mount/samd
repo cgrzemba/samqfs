@@ -44,9 +44,13 @@
 # For start, stop and hastop, if /opt/SUNWsamfs/sbin/sam-amld is not present,
 # this must be a SUNWqfs package, so issue a usage message.
 #
-#	$Revision: 1.38 $
+#	$Revision: 1.39 $
 
+#
+# Misc. definitions
+#
 TREE=/tmp/sam-amld.tree.$$
+SAMSERVICETAG=/opt/SUNWsamfs/util/samservicetag
 
 #
 # Return pid(s) of named process(es) in variable "pid"
@@ -211,8 +215,7 @@ case "$1" in
 		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
 		sleep 2
 		/usr/sbin/svcadm enable -t svc:/system/sam-fsd
-		sleep 2
-		/opt/SUNWsamfs/sbin/samservicetag add
+		$SAMSERVICETAG add
 		pidproc sam-fsd
 	fi
 	if [ "${pid}" = "" ]; then
@@ -254,8 +257,7 @@ case "$1" in
 		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
 		sleep 2
 		/usr/sbin/svcadm enable -t svc:/system/sam-fsd
-		sleep 2
-		/opt/SUNWsamfs/sbin/samservicetag add
+		$SAMSERVICETAG add
 		pidproc sam-fsd
 	fi
 	echo "Starting SAM-FS sam-amld daemon"
