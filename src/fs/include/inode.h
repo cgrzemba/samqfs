@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.218 $"
+#pragma ident "$Revision: 1.219 $"
 #endif
 
 #ifdef linux
@@ -253,7 +253,7 @@ union ino_flags {
 	noreclaim	:1,	/* Inode is in use, don't reclaim resources */
 	directio	:1,	/* Direct I/O on/off */
 	stage_all	:1,	/* Associative stage enabled */
-	fill3		:1,
+	delmaplist	:1,	/* delmap callers tracking for as callback */
 
 	qwrite		:1,	/* Simultaneous writes - no data WRITER lock */
 	nowaitspc	:1,	/* For stage, don't wait for disk space */
@@ -297,7 +297,7 @@ union ino_flags {
 	nowaitspc	:1,	/* For stage, don't wait for disk space */
 	qwrite		:1,	/* Simultaneous writes, no data WRITER lock */
 
-	fill3		:1,
+	delmaplist	:1,	/* delmap callers tracking for as callback */
 	stage_all	:1,	/* Associative stage enabled */
 	directio	:1,	/* Direct I/O on/off */
 	noreclaim	:1,	/* inode in use, don't reclaim resources */
@@ -339,7 +339,7 @@ union ino_flags {
 #define	SAM_NORECLAIM	0x00080000	/* Inode in use, don't reclaim space */
 #define	SAM_DIRECTIO	0x00040000	/* Direct I/O on/off */
 #define	SAM_STAGE_ALL	0x00020000	/* Associative stage enabled */
-#define	SAM_FILL3	0x00010000
+#define	SAM_DELMAPLIST	0x00010000	/* delmap callers tracking cb */
 
 #define	SAM_QWRITE	0x00008000	/* Simultaneous writes */
 #define	SAM_NOWAITSPC	0x00004000	/* Don't wait for disk space */
@@ -636,6 +636,8 @@ typedef struct sam_node {
 	offset_t	zero_end;	/* last offset that was zeroed */
 	offset_t	doff;		/* LQFS: inode block offset */
 	uchar_t		dord;		/* LQFS: inode ordinal */
+	list_t		i_indelmap;	/* list of delmap callers */
+	kmutex_t	i_indelmap_mutex;
 } sam_node_t;
 #endif /* sun */
 

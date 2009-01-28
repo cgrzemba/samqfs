@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.196 $"
+#pragma ident "$Revision: 1.197 $"
 
 #include "sam/osversion.h"
 
@@ -95,6 +95,28 @@
 #include "ino_ext.h"
 #include "listio.h"
 #include "kstats.h"
+
+/*
+ * delmap callback identity and status.
+ */
+typedef struct sam_delmapcall {
+	kthread_t	*call_id;
+	int		error; /* error from delmap */
+	list_node_t	call_node;
+} sam_delmapcall_t;
+
+/*
+ * delmap address space callback args
+ */
+typedef struct sam_delmap_args {
+	vnode_t			*vp;
+	offset_t		off;
+	sam_size_t		len;
+	uint_t			prot;
+	uint_t			flags;
+	sam_delmapcall_t	*caller; /* to retrieve errors from the cb */
+} sam_delmap_args_t;
+
 
 #if defined(SOL_511_ABOVE)
 /*
@@ -159,8 +181,6 @@ static int sam_client_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp, caller_context_t *ct);
 static int sam_client_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp, caller_context_t *ct);
-static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages,
-	caller_context_t *ct);
 
 #else
 /*
@@ -217,10 +237,13 @@ static int sam_client_getsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp);
 static int sam_client_setsecattr_vn(vnode_t *vp, vsecattr_t *vsap, int flag,
 	cred_t *credp);
-static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages);
 
 #endif	/* SAM-QFS shared client vnode function prototypes */
 
+static void sam_mmap_rmlease(vnode_t *vp, boolean_t is_write, int pages);
+static int sam_find_and_delete_delmapcall(sam_node_t *ip, int *errp);
+static sam_delmapcall_t *sam_init_delmapcall(void);
+static void sam_delmap_callback(struct as *as, void *arg, uint_t event);
 
 /*
  * ----- Vnode operations supported on the SAM-QFS shared file system.
@@ -2954,11 +2977,7 @@ sam_client_map_vn(
 
 	if (error = as_map(asp, *addrpp, length, segvn_create, (caddr_t)
 	    & vn_seg)) {
-#if defined(SOL_511_ABOVE)
-		sam_mmap_rmlease(vp, is_write, 0, ct);
-#else
 		sam_mmap_rmlease(vp, is_write, 0);
-#endif
 	}
 
 	as_rangeunlock(asp);			/* Unlock address space */
@@ -3035,6 +3054,15 @@ sam_client_addmap_vn(
 
 /*
  * ----- sam_client_delmap_vn - Decrement count of memory mapped pages.
+ *
+ * Setup and add an address space callback to do the work of the delmap call.
+ * The callback will (and must be) deleted in the actual callback function.
+ *
+ * This is done in order to take care of the problem that we have with holding
+ * the address space's a_lock for a long period of time (e.g. if failover is
+ * happening).  Callbacks will be executed in the address space code while the
+ * a_lock is not held.  Holding the address space's a_lock causes things such
+ * as ps and fork to hang because they are trying to acquire this lock as well.
  */
 
 /* ARGSUSED */
@@ -3064,35 +3092,220 @@ sam_client_delmap_vn(
 #endif
 )
 {
-	int error = 0;
+	int error;
 	int pages;
 	sam_node_t *ip;
-	boolean_t is_write;
+	int caller_found;
+	sam_delmap_args_t *dmapp;
+	sam_delmapcall_t *delmap_call;
 
 	TRACE(T_SAM_CL_DELMAP, vp, (sam_tr_t)offset, length, prot);
 	ip = SAM_VTOI(vp);
 
 	pages = btopr(length);
 
-	if (vp->v_flag & VNOMAP) {	/* If file cannot be memory mapped */
+	if (vp->v_flag & VNOMAP) {
 		error = ENOSYS;
-
-	} else {
-		if ((error = sam_open_operation(ip))) {
-			SAM_NFS_JUKEBOX_ERROR(error);
-			return (error);
-		}
-		is_write = (prot & PROT_WRITE) &&
-		    ((flags & MAP_TYPE) == MAP_SHARED);
-#if defined(SOL_511_ABOVE)
-		sam_mmap_rmlease(vp, is_write, pages, ct);
-#else
-		sam_mmap_rmlease(vp, is_write, pages);
-#endif
-		SAM_CLOSE_OPERATION(ip->mp, error);
+		goto out;
 	}
+
+	/*
+	 * The way that the address space of this process deletes its mapping
+	 * of this file is via the following call chains:
+	 * - as_free()->SEGOP_UNMAP()/segvn_unmap()->VOP_DELMAP()/...
+	 * - as_unmap()->SEGOP_UNMAP()/segvn_unmap()->VOP_DELMAP()/...
+	 *
+	 * With the use of address space callbacks we are allowed to drop the
+	 * address space lock, a_lock, while executing fs operations that
+	 * need to go over the wire.  Returning EAGAIN to the caller of this
+	 * function is what drives the execution of the callback that we add
+	 * below.  The callback will be executed by the address space code
+	 * after dropping the a_lock.  When the callback is finished, since
+	 * we dropped the a_lock, it must be re-acquired and segvn_unmap()
+	 * is called again on the same segment to finish the rest of the work
+	 * that needs to happen during unmapping.
+	 *
+	 * This action of calling back into the segment driver causes
+	 * this delmap to get called again, but since the callback was
+	 * already executed at this point, it already did the work and there
+	 * is nothing left for us to do.
+	 *
+	 * To Summarize:
+	 * - The first time this delmap is called by the current thread is when
+	 * we add the caller associated with this delmap to the delmap caller
+	 * list, add the callback, and return EAGAIN.
+	 * - The second time in this call chain when this delmap is called we
+	 * will find this caller in the delmap caller list and realize there
+	 * is no more work to do thus removing this caller from the list and
+	 * returning the error that was set in the callback execution.
+	 */
+	caller_found = sam_find_and_delete_delmapcall(ip, &error);
+	if (caller_found) {
+		/*
+		 * 'error' is from the actual delmap operations.  To avoid
+		 * hangs, we need to handle the return of EAGAIN differently
+		 * since this is what drives the callback execution.
+		 * In this case, we don't want to return EAGAIN and do the
+		 * callback execution because there are none to execute.
+		 */
+		if (error == EAGAIN) {
+			error = 0;
+		}
+		return (error);
+	}
+
+	/* current caller was not in the list */
+	delmap_call = sam_init_delmapcall();
+
+	mutex_enter(&ip->i_indelmap_mutex);
+	list_insert_tail(&ip->i_indelmap, delmap_call);
+	mutex_exit(&ip->i_indelmap_mutex);
+
+	dmapp = kmem_alloc(sizeof (sam_delmap_args_t), KM_SLEEP);
+
+	dmapp->vp = vp;
+	dmapp->off = offset;
+	dmapp->len = length;
+	dmapp->prot = prot;
+	dmapp->flags = flags;
+	dmapp->caller = delmap_call;
+
+	error = as_add_callback(asp, sam_delmap_callback, dmapp,
+	    AS_UNMAP_EVENT, a, length, KM_SLEEP);
+	if (error == 0) {
+		error = EAGAIN;
+	}
+out:
 	TRACE(T_SAM_CL_DELMAP_RET, vp, pages, ip->mm_pages, error);
 	return (error);
+}
+
+
+/*
+ * ----- sam_delmap_callback -
+ *
+ * This callback is executed by the segmap code after sam_client_delmap_vn
+ * returns EAGAIN to segmap.  The callback is executed after the address
+ * space lock is released.
+ */
+
+static void
+sam_delmap_callback(struct as *as, void *arg, uint_t event)
+{
+	sam_delmap_args_t *dmapp = (sam_delmap_args_t *)arg;
+	sam_size_t length;
+	offset_t offset;
+	uint_t prot;
+	int pages;
+	int error;
+	sam_node_t *ip;
+	boolean_t is_write;
+	vnode_t *vp;
+	uint_t flags;
+
+	vp = dmapp->vp;
+	length = dmapp->len;
+	prot = dmapp->prot;
+	offset = dmapp->off;
+	flags = dmapp->flags;
+
+	ip = SAM_VTOI(vp);
+	pages = btopr(length);
+
+	TRACE(T_SAM_CL_DELMAPCB, vp, (sam_tr_t)offset, length, prot);
+
+	if ((error = sam_open_operation(ip))) {
+		SAM_NFS_JUKEBOX_ERROR(error);
+		goto out;
+	}
+
+	is_write = (prot & PROT_WRITE) &&
+	    ((flags & MAP_TYPE) == MAP_SHARED);
+	sam_mmap_rmlease(vp, is_write, pages);
+
+	SAM_CLOSE_OPERATION(ip->mp, error);
+
+out:
+	dmapp->caller->error = error;
+	(void) as_delete_callback(as, arg);
+	kmem_free(dmapp, sizeof (sam_delmap_args_t));
+	TRACE(T_SAM_CL_DELMAPCB_RET, vp, pages, ip->mm_pages, error);
+}
+
+
+/*
+ * ----- sam_init_delmapcall -
+ *
+ * Initialize a sam_delmapcall_t to hold the identity and status for
+ * a callback.
+ */
+static sam_delmapcall_t *
+sam_init_delmapcall()
+{
+	sam_delmapcall_t	*delmap_call;
+
+	delmap_call = kmem_alloc(sizeof (sam_delmapcall_t), KM_SLEEP);
+	delmap_call->call_id = curthread;
+	delmap_call->error = 0;
+
+	return (delmap_call);
+}
+
+
+/*
+ * ----- sam_free_delmapcall -
+ *
+ * Destroy a sam_delmapcall_t.
+ */
+static void
+sam_free_delmapcall(sam_delmapcall_t *delmap_call)
+{
+	kmem_free(delmap_call, sizeof (sam_delmapcall_t));
+}
+
+
+/*
+ * Searches for the current delmap caller (based on curthread) in the list of
+ * callers.  If it is found, we remove it and free the delmap caller.
+ * Returns:
+ *	0 if the caller wasn't found
+ *	1 if the caller was found, removed and freed.  *errp is set to what
+ * 	the result of the delmap was.
+ */
+static int
+sam_find_and_delete_delmapcall(sam_node_t *ip, int *errp)
+{
+	sam_delmapcall_t	*delmap_call;
+
+	/*
+	 * If the list doesn't exist yet, we create it and return
+	 * that the caller wasn't found.  No list = no callers.
+	 */
+	mutex_enter(&ip->i_indelmap_mutex);
+	if (!(ip->flags.bits & SAM_DELMAPLIST)) {
+		/* The list does not exist */
+		list_create(&ip->i_indelmap, sizeof (sam_delmapcall_t),
+		    offsetof(sam_delmapcall_t, call_node));
+		ip->flags.bits |= SAM_DELMAPLIST;
+		mutex_exit(&ip->i_indelmap_mutex);
+		return (0);
+	} else {
+		/* The list exists so search it */
+		for (delmap_call = list_head(&ip->i_indelmap);
+		    delmap_call != NULL;
+		    delmap_call = list_next(&ip->i_indelmap, delmap_call)) {
+			if (delmap_call->call_id == curthread) {
+				/* current caller is in the list */
+				*errp = delmap_call->error;
+				list_remove(&ip->i_indelmap, delmap_call);
+				mutex_exit(&ip->i_indelmap_mutex);
+				sam_free_delmapcall(delmap_call);
+				return (1);
+			}
+		}
+	}
+	mutex_exit(&ip->i_indelmap_mutex);
+	return (0);
 }
 
 
@@ -3100,20 +3313,11 @@ sam_client_delmap_vn(
  * ----- sam_mmap_rmlease - Remove mmap lease.
  */
 
-/* ARGSUSED3 */
 static void
 sam_mmap_rmlease(
-#if defined(SOL_511_ABOVE)
 	vnode_t *vp,		/* Pointer to vnode. */
 	boolean_t is_write,	/* Flag. */
-	int pages,		/* Page count. */
-	caller_context_t *ct	/* Caller context pointer. */
-#else
-	vnode_t *vp,		/* Pointer to vnode. */
-	boolean_t is_write,	/* Flag. */
-	int pages		/* Page count. */
-#endif
-)
+	int pages)		/* Page count. */
 {
 	int remaining_pages, remaining_writable;
 	krw_t rw_type = RW_READER;

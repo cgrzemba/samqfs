@@ -1,4 +1,4 @@
-# $Revision: 1.139 $
+# $Revision: 1.140 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -443,6 +443,8 @@ T_SAM_CL_ADDMAP		"ClAddmap: off=%x,len=%x,prot=%x^[$P]"
 T_SAM_CL_ADDMAP_RET	"ClAddmap- pages=%d,total=%d,err=%d^[$e]"
 T_SAM_CL_DELMAP		"ClDelmap: off=%x,len=%x,prot=%x^[$P]"
 T_SAM_CL_DELMAP_RET	"ClDelmap- pages=%d,total=%d,err=%d^[$e]"
+T_SAM_CL_DELMAPCB	"ClDelmapCB: off=%x,len=%x,prot=%x^[$P]"
+T_SAM_CL_DELMAPCB_RET	"ClDelmapCB- pages=%d,total=%d,err=%d^[$e]"
 T_SAM_FREEZE_INO	"Freeze:   ino=%d,gen=%d,flg=%x^[$f]"
 T_SAM_UNFREEZE_INO	"UnFreeze- ino=%d,gen=%d,flg=%x^[$f]"
 T_SAM_CL_BREAD_ERR	"ClBreader:err=%d^[$e],ord=%x,blk=%x"

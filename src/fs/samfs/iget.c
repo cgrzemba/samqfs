@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.220 $"
+#pragma ident "$Revision: 1.221 $"
 
 #include "sam/osversion.h"
 
@@ -1523,6 +1523,7 @@ sam_inode_constructor(
 	sam_mutex_init(&ip->iom.map_mutex, NULL, MUTEX_DEFAULT, NULL);
 	sam_mutex_init(&ip->ilease_mutex, NULL, MUTEX_DEFAULT, NULL);
 	dnlc_dir_init(&ip->i_danchor);
+	sam_mutex_init(&ip->i_indelmap_mutex, NULL, MUTEX_DEFAULT, NULL);
 
 	/*
 	 * Vnode fields. Solaris 10 introduced the concept of an opaque
@@ -1583,6 +1584,7 @@ sam_inode_destructor(void *buf, void *not_used)
 	mutex_destroy(&ip->write_mutex);
 	cv_destroy(&ip->write_cv);
 	mutex_destroy(&ip->fl_mutex);
+	mutex_destroy(&ip->i_indelmap_mutex);
 
 	dnlc_dir_fini(&ip->i_danchor);
 
