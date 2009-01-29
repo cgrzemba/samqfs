@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 
 /* ANSI C headers. */
@@ -120,15 +120,11 @@ csd_write(
 		fprintf(stderr, "%s\n", name);
 	}
 
-	if (csd_version == CSD_VERS_4) {
-		writecheck(&namelen, sizeof (int), 3091);
-	} else {
-		memset((char *)&hdr, '\0', sizeof (hdr));
-		hdr.magic = CSD_FMAGIC;
-		hdr.flags = flags;
-		hdr.namelen = namelen;
-		writecheck(&hdr, sizeof (hdr), 3091);
-	}
+	memset((char *)&hdr, '\0', sizeof (hdr));
+	hdr.magic = CSD_FMAGIC;
+	hdr.flags = flags;
+	hdr.namelen = namelen;
+	writecheck(&hdr, sizeof (hdr), 3091);
 	writecheck(name, strlen(name), 3092);
 	writecheck(perm_inode, sizeof (struct sam_perm_inode), 3093);
 	if (S_ISREQ(perm_inode->di.mode)) {
@@ -338,8 +334,7 @@ csd_write_csdheader(int fd, csd_hdrx_t *buf)
 {
 	int		io_sz;
 
-	io_sz = (csd_version < CSD_VERS_5) ? sizeof (csd_hdr_t) :
-	    sizeof (csd_hdrx_t);
+	io_sz = sizeof (csd_hdrx_t);
 	if (buffered_write(fd, (void *)buf, io_sz) != io_sz) {
 		return (-1);
 	} else {

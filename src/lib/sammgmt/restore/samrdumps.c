@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident	"$Revision: 1.62 $"
+#pragma ident	"$Revision: 1.63 $"
 
 /*
  * samrdumps.c - Library for reading/searching samfsdumps
@@ -162,7 +162,6 @@ set_dump(char *fsname, char *dumpname, dumpspec_t *dsp)
 	csd_hdrx_t	hdr;
 	char		*dirp;
 	char		*namep;
-	boolean_t	datapossible;
 	int		fd;
 	snapspec_t	*snapArray = NULL;
 	uint32_t	count;
@@ -212,8 +211,7 @@ set_dump(char *fsname, char *dumpname, dumpspec_t *dsp)
 	}
 
 	/* Read dump file header to verify and determine byte endiannness */
-	rval = common_get_csd_header(dsp->fildmp, &dsp->byteswapped,
-	    &datapossible, &hdr);
+	rval = common_get_csd_header(dsp->fildmp, &dsp->byteswapped, &hdr);
 	if (rval != 0) {
 		close_dump(dsp);
 		Trace(TR_MISC, "Corrupt dump file %s", dumppath);

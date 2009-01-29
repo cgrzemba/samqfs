@@ -35,7 +35,7 @@
  */
 
 
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 
 #include <sam/types.h>
@@ -99,6 +99,21 @@ csd_read(
 		    "%s: inode version incorrect - skipping"),
 		    name);
 		dont_process_this_entry = 1;
+	}
+
+	/*
+	 * If it is not a WORM file, zero the di2 area of the disk inode.
+	 * This is only needed for dumps taken in versions CSD_VERS_5 and
+	 * lower.
+	 */
+	if ((dont_process_this_entry) || (csd_version >= CSD_VERS_6)) {
+		return;
+	}
+	if (perm_inode->di.version >= SAM_INODE_VERS_2) {
+		if (perm_inode->di.status.b.worm_rdonly) {
+			return;
+		}
+		memset(&perm_inode->di2, 0, sizeof (sam_disk_inode_part2_t));
 	}
 }
 
@@ -241,7 +256,7 @@ csd_read_mve(
 	int n_vsns;
 	int copy;
 
-	if (csd_version < CSD_VERS) {
+	if (csd_version <= CSD_VERS_3) {
 		return;
 	}
 
@@ -333,7 +348,7 @@ csd_read_header(csd_fhdr_t *hdr)
 {
 	int corrupt_header = 0;
 
-	if (csd_version < CSD_VERS_5) {
+	if (csd_version <= CSD_VERS_4) {
 		int	namelen;
 
 		if (buffered_read(CSD_fd, &namelen, sizeof (int)) ==

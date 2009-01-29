@@ -28,7 +28,7 @@
  */
 
 
-#pragma ident "$Revision: 1.22 $"
+#pragma ident "$Revision: 1.23 $"
 
 
 #include <errno.h>
@@ -85,7 +85,6 @@ int
 common_get_csd_header(
 	gzFile		gzf,			/* IN  */
 	boolean_t	*swapped,		/* OUT */
-	boolean_t	*data_possible,		/* OUT */
 	csd_hdrx_t	*csd_header		/* OUT */
 )
 {
@@ -118,6 +117,7 @@ common_get_csd_header(
 
 	switch (csd_hdr->version) {
 
+		case CSD_VERS_6:
 		case CSD_VERS_5:
 			/* read remainder of extended header */
 			io_sz = sizeof (csd_hdrx_t) - sizeof (csd_hdr_t);
@@ -134,17 +134,11 @@ common_get_csd_header(
 			    csd_header->csd_header_magic != CSD_MAGIC) {
 				return (-1);
 			}
-			if (csd_header->csd_header_flags & CSD_H_FILEDATA) {
-				*data_possible = TRUE;
-			} else {
-				*data_possible = FALSE;
-			}
 			break;
 
-		case CSD_VERS:
+		case CSD_VERS_4:
 		case CSD_VERS_3:
 		case CSD_VERS_2:
-			*data_possible = FALSE;
 			break;
 
 		default:
@@ -368,7 +362,7 @@ common_csd_read_mve(
 	struct sam_vsn_section  **vsnpp,
 	boolean_t	swapped)
 {
-	if (csd_version >= CSD_VERS) {
+	if (csd_version >= CSD_VERS_4) {
 		int n_vsns;
 		int copy;
 
@@ -427,7 +421,7 @@ common_csd_read_header(
 {
 	int corrupt_header = 0;
 
-	if (csd_version < CSD_VERS_5) {
+	if (csd_version <= CSD_VERS_4) {
 		int	namelen;
 
 		if (gzread(gzf, &namelen, sizeof (int)) == sizeof (int)) {

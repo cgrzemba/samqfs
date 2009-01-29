@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.15 $"
+#pragma ident "$Revision: 1.16 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -44,7 +44,7 @@
  * limitation.
  *
  * dump format:
- * version 4 & 5		version 3		   version 2
+ * version 4,5 & 6		version 3		   version 2
  *
  * For directories, regular file, symlinks, & removable media file.
  * int namelen			int namelen		int namelen
@@ -103,6 +103,11 @@
  *	volume overflow handling.
  *	Version 5 is Solaris format with embedded data (csd info followed by
  *	a tar header, then file data).
+ *	Version 6 is Solaris format with embedded data (csd info followed by
+ *	a tar header, then file data). It always dump with Extended CSD
+ *	header. It has a fix to zero out the di2 area of the inode in all
+ *	dumps taken at Version 5 and lower if it is SAM_INODE_VERS_2 and not
+ *	a WORM file when restoring.  The dump file itself is not modified.
  */
 
 #define	MAIN
@@ -211,8 +216,6 @@ char *included[CSD_MAX_INCLUDED];
 
 static boolean noheaders;		/* No header option */
 static boolean statistics;		/* Statistics flag */
-static boolean newest_hdr;		/* Use newest dump header format */
-static boolean data_possible;		/* dump file may contain file data */
 static boolean strip_slashes;		/* Strip leading /'s on restore */
 static char *Initial_path;		/* Initial working directory */
 static major_function operation;
@@ -262,7 +265,6 @@ main(int argc, char *argv[])
 	scan_only = false;
 	unarchived_data = false;
 	use_file_list = false;
-	newest_hdr = false;
 	read_buffer_size = write_buffer_size = CSD_DEFAULT_BUFSZ;
 	block_size = 0;
 	memset(&csd_header, '\0', sizeof (csd_header));
@@ -410,8 +412,7 @@ main(int argc, char *argv[])
 			ls_options |= LS_LINE1;
 			break;
 
-		case 'n':		/* dump using newest header */
-			newest_hdr = true;
+		case 'n':		/* Deprecated. Do not break script. */
 			break;
 
 		case 'P':		/* dump partial online data */
@@ -495,11 +496,6 @@ main(int argc, char *argv[])
 		block_size = read_buffer_size;
 	}
 
-	if (operation == DUMP &&
-	    (qfs || unarchived_data || online_data || partial_data)) {
-		newest_hdr = true;
-	}
-
 	if (operation == DUMP && use_file_list) {
 		operation = LISTDUMP;
 	}
@@ -515,7 +511,6 @@ main(int argc, char *argv[])
 		fprintf(stderr, "logfile = %s\n",
 		    ((logfile != (char *)NULL) ? logfile : "UNDEFINED"));
 		fprintf(stderr, "noheaders = %d\n", noheaders);
-		fprintf(stderr, "newest_hdr = %d\n", newest_hdr);
 		fprintf(stderr, "verbose = %d\n", verbose);
 		fprintf(stderr, "quiet = %d\n", quiet);
 		fprintf(stderr, "qfs = %d\n", qfs);
@@ -636,13 +631,7 @@ main(int argc, char *argv[])
 		csd_header.csd_header.magic = csd_header.csd_header_magic =
 		    CSD_MAGIC;
 
-		if (!newest_hdr) {
-			csd_header.csd_header.version = CSD_VERS;
-		} else {
-			csd_header.csd_header.version = CSD_VERS_5;
-			csd_header.csd_header_flags |= CSD_H_FILEDATA;
-		}
-
+		csd_header.csd_header.version = CSD_VERS_6;
 		csd_version = csd_header.csd_header.version;
 		if (csd_write_csdheader(CSD_fd, &csd_header) < 0) {
 			error(1, errno,
@@ -696,6 +685,7 @@ main(int argc, char *argv[])
 		csd_version = csd_header.csd_header.version;
 		switch (csd_version) {
 
+		case CSD_VERS_6:
 		case CSD_VERS_5:
 			/* read remainder of extended header */
 			io_sz = sizeof (csd_hdrx_t) - sizeof (csd_hdr_t);
@@ -713,17 +703,11 @@ main(int argc, char *argv[])
 				    "%s: Header record read error"),
 				    dump_file);
 			}
-			if (csd_header.csd_header_flags & CSD_H_FILEDATA) {
-				data_possible = true;
-			} else {
-				data_possible = false;
-			}
 			break;
 
-		case CSD_VERS:
+		case CSD_VERS_4:
 		case CSD_VERS_3:
 		case CSD_VERS_2:
-			data_possible = false;
 			break;
 
 		default:
@@ -740,9 +724,6 @@ main(int argc, char *argv[])
 		if (debugging) {
 			fprintf(stderr, "Dump created:%s\n",
 			    ctime((const time_t *)&csd_header.csd_header.time));
-			fprintf(stderr, "File data embedded in dumpfile is"
-			    "%s possible\n",
-			    data_possible ? "" : " not");
 		}
 	}
 

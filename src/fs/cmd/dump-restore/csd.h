@@ -34,7 +34,7 @@
 #ifndef	SAM_CSD_H
 #define	SAM_CSD_H
 
-#pragma ident "$Revision: 1.9 $"
+#pragma ident "$Revision: 1.10 $"
 
 #include "aml/tar.h"
 
@@ -47,7 +47,7 @@
 #define	CSD_VERS_3	3		/* version number 3 */
 #define	CSD_VERS_4	4		/* version number 4 */
 #define	CSD_VERS_5	5		/* version number 5 */
-#define	CSD_VERS	CSD_VERS_4
+#define	CSD_VERS_6	6		/* version number 6 */
 
 /* ----	csd header record - Dump header record.			*/
 /* ---- Any valid version should begin with this header	*/
@@ -73,16 +73,6 @@ typedef struct csd_header_extended {
 } csd_header_extended_t;
 
 typedef	struct	csd_header_extended	csd_hdrx_t;
-
-/*
- *	csd header flags definitions.
- */
-#define	CSD_H_NOFILEDATA	0x00001	/* dump contains no */
-					/* embedded file data. */
-#define	CSD_H_FILEDATA		0x00002	/* dump may contain */
-					/* embedded file data. */
-#define	CSD_H_VALID		0x00002	/* Restore supports */
-					/* these flags. */
 
 typedef struct csd_filehdr {		/* csd version 5 and greater */
 	int32_t	magic;			/* "csdf" */

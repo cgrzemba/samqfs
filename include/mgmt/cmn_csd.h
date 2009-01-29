@@ -30,7 +30,7 @@
 #ifndef	CMN_CSD_H
 #define	CMN_CSD_H
 
-#pragma ident "$Revision: 1.13 $"
+#pragma ident "$Revision: 1.14 $"
 
 
 #include <sys/types.h>
@@ -52,9 +52,8 @@ csd_error(
 
 int
 common_get_csd_header(
-	gzFile			gzf,		/* IN  */
+	gzFile		gzf,			/* IN  */
 	boolean_t	*swapped,		/* OUT */
-	boolean_t	*data_possible,		/* OUT */
 	csd_hdrx_t	*csd_header		/* OUT */
 );
 

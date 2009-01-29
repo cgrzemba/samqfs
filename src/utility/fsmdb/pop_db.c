@@ -1963,7 +1963,6 @@ set_snapshot(char *snapname, dumpspec_t *dsp)
 	int		st;
 	int		fd = -1;
 	csd_hdrx_t	hdr;
-	boolean_t	datapossible;
 
 
 	if ((snapname == NULL) || (dsp == NULL)) {
@@ -1984,8 +1983,7 @@ set_snapshot(char *snapname, dumpspec_t *dsp)
 		return (-1);
 	}
 
-	st = common_get_csd_header(dsp->fildmp, &dsp->byteswapped,
-	    &datapossible, &hdr);
+	st = common_get_csd_header(dsp->fildmp, &dsp->byteswapped, &hdr);
 	if (st != 0) {
 		gzclose(dsp->fildmp);
 		return (-1);

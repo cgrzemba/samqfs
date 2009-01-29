@@ -1,4 +1,4 @@
-." $Revision: 1.36 $
+." $Revision: 1.37 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -191,12 +191,9 @@ For more listing options, see the \%\fB\-i\fR, \%\fB\-t\fR,
 and \%\fB\-2\fR options.
 .TP 10
 \%\fB\-n\fR
-(\fBsamfsdump\fP only) Forces the \fBsamfsdump\fR file to use the newest header format
-available.
+(Obsolete. \fBsamfsdump\fP only.) Always uses the new header format.
 The new header
 is incompatible with \fBsamfsrestore\fR prior to the 3.5.0 release level.
-Using the \%\fB\-u\fR or \%\fB\-U\fR arguments automatically enables
-the \%\fB\-n\fP argument.
 .TP 10
 \%\fB\-P\fR
 (\fBsamfsdump\fP only) Dumps the online data portions of files which are offline, but have

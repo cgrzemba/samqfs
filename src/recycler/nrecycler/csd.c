@@ -29,7 +29,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident "$Revision: 1.12 $"
+#pragma ident "$Revision: 1.13 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -401,6 +401,7 @@ CsdAccumulate(
 	version = dump_header.csd_header.version;
 	switch (version) {
 
+	case CSD_VERS_6:
 	case CSD_VERS_5:
 		/*
 		 * Read remainder of extended header.
@@ -632,7 +633,7 @@ readFileHeader(
 		return (-1);
 	}
 
-	if (version < CSD_VERS_5) {
+	if (version <= CSD_VERS_4) {
 		if (readFildes(fildes, &namelen,
 		    sizeof (int)) == sizeof (int)) {
 			header->magic = CSD_FMAGIC;
@@ -641,7 +642,7 @@ readFileHeader(
 		} else {
 			return (-1);
 		}
-	} else if (version == CSD_VERS_5) {
+	} else if (version >= CSD_VERS_5) {
 		if (readFildes(fildes, header,
 		    sizeof (csd_fhdr_t)) != sizeof (csd_fhdr_t)) {
 			return (-1);
