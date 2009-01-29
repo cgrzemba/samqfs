@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSUtil.java,v 1.28 2008/12/16 00:12:10 am143972 Exp $
+// ident	$Id: FSUtil.java,v 1.29 2009/01/29 15:50:19 ronaldso Exp $
 
 /**
  * This util class contains a few declaration of the file system
@@ -50,6 +50,8 @@ import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.servlet.http.HttpServletRequest;
 
 public class FSUtil {
@@ -512,5 +514,80 @@ public class FSUtil {
         }
 
         return -1;
+    }
+
+    /**
+     * Return the file system object of which the input directory resides
+     */
+    public static GenericFileSystem getFileSystemByDirectory(
+        String serverName, String directory) throws SamFSException {
+        SamQFSSystemModel sysModel = SamUtil.getModel(serverName);
+        SamQFSSystemFSManager fsManager =
+            sysModel.getSamQFSSystemFSManager();
+        GenericFileSystem[] genfs = fsManager.getNonSAMQFileSystems();
+        FileSystem [] fs = fsManager.getAllFileSystems();
+
+        // First build the arrayList with longest mount point path in
+        // the beginning of the list.  This is to ensure we get the correct
+        // file system name by comparing the current directory versus the
+        // mount point of all file systems.
+        ArrayList temp = new ArrayList();
+        for (int i = 0; i < fs.length; i++) {
+            // Skip all mountPoints that are null or zero in length
+            // the file system is a problematic one
+            String mp = fs[i].getMountPoint();
+
+            if (mp == null || mp.length() == 0) {
+                continue;
+            }
+            temp.add(new FSMountPoints(fs[i].getName(), mp));
+        }
+        FSMountPoints [] mps = new FSMountPoints[temp.size()];
+        mps = (FSMountPoints [])temp.toArray(mps);
+
+        // Sort the FSMountPoints
+        Arrays.sort(mps);
+
+        // Now look for fsName from end of the array that contains the longest
+        // mount point
+        String currentFSName = "";
+        GenericFileSystem selectedFS = null;
+
+        for (int i = mps.length - 1; i >= 0; i--) {
+            if (directory.startsWith(mps[i].getMountPoint())) {
+                 currentFSName = mps[i].getFSName();
+                 break;
+            }
+        }
+
+        // If currentFSName is assigned, this is a SAM/Q file system.
+        if (currentFSName.length() != 0) {
+            for (int i = 0; i < fs.length; i++) {
+                if (currentFSName.equals(fs[i].getName())) {
+                    selectedFS = fs[i];
+                    break;
+                }
+            }
+        } else {
+            // If code reaches here, the current directory is not a part of a
+            // sam/q file system.  Search for the fs name now.  fs name will be
+            // used in the view as a part of API call to retrieve dir entries.
+            for (int i = 0; i < genfs.length; i++) {
+                String mountPoint = genfs[i].getMountPoint();
+
+                // Skip all mountPoints that are null or zero in length
+                // the file system is a problematic one
+                if (mountPoint == null || mountPoint.length() == 0) {
+                    continue;
+                }
+
+                if (directory.startsWith(mountPoint)) {
+                    selectedFS = genfs[i];
+                    break;
+                }
+            }
+        }
+
+        return selectedFS;
     }
 }

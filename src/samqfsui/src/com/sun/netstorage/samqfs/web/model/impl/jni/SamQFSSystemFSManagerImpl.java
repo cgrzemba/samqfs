@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.84 2008/12/16 00:12:18 am143972 Exp $
+// ident	$Id: SamQFSSystemFSManagerImpl.java,v 1.85 2009/01/29 15:50:19 ronaldso Exp $
 
 
 
@@ -907,6 +907,17 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
                                      String.valueOf(replaceType));
         }
 
+        SamFSConnection connection = theModel.getJniConnection();
+        TraceUtil.trace2(
+            "Change Timeout to " +
+            SamQFSSystemModelImpl.DEFAULT_RPC_MAX_TIME_OUT);
+
+        if (connection != null) {
+            connection.setTimeout(SamQFSSystemModelImpl.
+                                  DEFAULT_RPC_MAX_TIME_OUT);
+        }
+
+        TraceUtil.trace2("Run Restore.restoreInodes()!");
         String taskID =
             Restore.restoreInodes(theModel.getJniContext(), fsName,
                                   dumpFilename,
@@ -914,6 +925,13 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
                                   new String[] { files[0].getRestorePath() },
                                   new int[] { files[0].getStageCopy() },
                                   replaceType);
+        TraceUtil.trace2(
+            "Change Timeout back to " +
+            SamQFSSystemModelImpl.DEFAULT_RPC_TIME_OUT);
+        if (connection != null) {
+            connection.setTimeout(SamQFSSystemModelImpl.
+                                  DEFAULT_RPC_TIME_OUT);
+        }
 
         return 100 * ConversionUtil.strToLongVal(taskID) + Job.TYPE_RESTORE;
     }

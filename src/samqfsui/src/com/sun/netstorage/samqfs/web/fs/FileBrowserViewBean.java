@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileBrowserViewBean.java,v 1.30 2008/12/16 00:12:10 am143972 Exp $
+// ident	$Id: FileBrowserViewBean.java,v 1.31 2009/01/29 15:50:19 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -66,7 +66,6 @@ import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Properties;
 import javax.servlet.ServletException;
@@ -1050,72 +1049,6 @@ public class FileBrowserViewBean extends CommonViewBeanBase {
             return fsInfoArray[0];
         }
         return "";
-    }
-
-    /**
-     * Helper class to sort the File system mount points in length to determine
-     * what file system user is currently browsing.
-     */
-
-    private class FSMountPoints implements Comparable, Comparator {
-
-        String fsName = null, mountPoint = null;
-
-        public FSMountPoints(String fsName, String mountPoint) {
-            this.fsName = fsName;
-            this.mountPoint = mountPoint;
-        }
-
-        public String getFSName() {
-            return this.fsName;
-        }
-
-        public String getMountPoint() {
-            return this.mountPoint;
-        }
-
-        // implement the Comparable interface
-        public int compareTo(Object o) {
-            return compareTo((FSMountPoints)o);
-        }
-
-        // implement the Comparator interface
-        /**
-         * Compares this capacity object to the passed in capacity object.
-         *
-         * @return If "this" mount point length is less than the passed in
-         * mount point, otherwise return -1.  If "this" mount point length is
-         * greater than the passed in mount point, then return 1.
-         * If they are the same, return 0;
-         */
-        public int compareTo(FSMountPoints p) {
-            int this_length = this.mountPoint.length();
-            int p_length    = p.getMountPoint().length();
-
-            if (this_length < p_length) {
-                return -1;
-            } else if (this_length > p_length) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        // implement the comparator interface so that action table sorting
-        // will work
-        /**
-         * Same as compare(FSMountPoints p1, FSMountPoints p2);
-         */
-        public int compare(Object o1, Object o2) {
-            return compare((FSMountPoints)o1, (FSMountPoints)o2);
-        }
-
-        /**
-         * Same as calling p1.compareTo(c2);
-         */
-        public int compare(FSMountPoints p1, FSMountPoints p2) {
-            return p1.compareTo(p2);
-        }
     }
 
     /**

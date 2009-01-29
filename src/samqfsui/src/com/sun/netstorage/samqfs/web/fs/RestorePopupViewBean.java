@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: RestorePopupViewBean.java,v 1.14 2008/12/16 00:12:11 am143972 Exp $
+// ident	$Id: RestorePopupViewBean.java,v 1.15 2009/01/29 15:50:19 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -38,13 +38,16 @@ import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
 import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.FileUtil;
+import com.sun.netstorage.samqfs.web.model.DirInfo;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.util.CommonSecondaryViewBeanBase;
+import com.sun.netstorage.samqfs.web.util.Filter;
 import com.sun.netstorage.samqfs.web.util.PageTitleUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.model.CCPageTitleModel;
 import com.sun.web.ui.model.CCPropertySheetModel;
+import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCDropDownMenu;
 import com.sun.web.ui.view.html.CCHiddenField;
 import java.io.IOException;
@@ -52,6 +55,7 @@ import javax.servlet.ServletException;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
 import com.sun.netstorage.samqfs.web.model.fs.FileCopyDetails;
+import com.sun.netstorage.samqfs.web.model.fs.GenericFileSystem;
 import com.sun.netstorage.samqfs.web.model.fs.RestoreFile;
 import com.sun.netstorage.samqfs.web.model.fs.StageFile;
 import com.sun.netstorage.samqfs.web.model.job.BaseJob;
@@ -84,6 +88,7 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
     public static final String MOUNT_POINT = "mountpoint";
     public static final String IS_DIR = "isdir";
     public static final String RECOVERY_POINT_PATH = "snappath";
+    public static final String SUBMIT_BUTTON = "Submit";
 
     // File Chooser
     public static final String RESTORE_PATH_CHOOSER = "restoreToPathnameValue";
@@ -189,14 +194,31 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
     private void populateRestoreOption(
         String serverName, boolean restoreEntire, boolean dir) {
         CCDropDownMenu restoreMenu = (CCDropDownMenu) getChild(RESTORE_OPTION);
+        String dumpFileName = null;
 
         try {
+            SamQFSSystemFSManager fsManager =
+            SamUtil.getModel(getServerName()).getSamQFSSystemFSManager();
+
+            // Check if the dump file is offline.  Show error message and
+            // stop user from proceeding further
+            StageFile snapshotFile =
+                getRecoveryPointFile(fsManager, getRecoveryPoint());
+
+            if (snapshotFile.getOnlineStatus() != StageFile.ONLINE) {
+                dumpFileName = snapshotFile.getPath();
+                throw new SamFSException("fs.restore.dumpfile.offline");
+            }
+
             FileCopyDetails [] copyDetails;
 
             if (dir || restoreEntire) {
                 copyDetails = new FileCopyDetails[0];
             } else {
-                copyDetails = getCopyDetails();
+                StageFile stageFile =
+                    getSelectedStageFile(
+                        fsManager, getFSName(), getFileToRestore());
+                copyDetails = stageFile.getFileCopyDetails();
             }
 
             String [] labels = new String[copyDetails.length + 3];
@@ -261,12 +283,30 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
                                      "beginDisplay",
                                      "Unable to load file copy information",
                                      serverName);
-            SamUtil.setErrorAlert(this,
-                                   ALERT,
-                                   "fs.restore.loadcopyinfo.failed",
-                                   sfe.getSAMerrno(),
-                                   sfe.getMessage(),
-                                   serverName);
+            if ("fs.restore.dumpfile.offline".equals(sfe.getMessage())) {
+                SamUtil.setErrorAlert(
+                    this,
+                    ALERT,
+                    SamUtil.getResourceString(
+                        sfe.getMessage(),
+                        new String [] {
+                            dumpFileName,
+                            getFSName()}),
+                    -1,
+                    "",
+                    serverName);
+            } else {
+                SamUtil.setErrorAlert(
+                    this,
+                    ALERT,
+                    "fs.restore.loadcopyinfo.failed",
+                    sfe.getSAMerrno(),
+                    sfe.getMessage(),
+                    serverName);
+            }
+
+            // Disable Submit Button
+            ((CCButton) getChild(SUBMIT_BUTTON)).setDisabled(true);
         }
     }
 
@@ -539,20 +579,6 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
         return recoveryPoint;
     }
 
-    /**
-     * Retrieve the copy information of the selected file.
-     * There are only three things available in each of the FileCopyDetails
-     * object.
-     */
-    private FileCopyDetails [] getCopyDetails() throws SamFSException {
-        SamQFSSystemFSManager fsManager =
-            SamUtil.getModel(getServerName()).getSamQFSSystemFSManager();
-        StageFile stageFile =
-            getSelectedStageFile(fsManager, getFSName(), getFileToRestore());
-
-        return stageFile.getFileCopyDetails();
-    }
-
     private StageFile getSelectedStageFile(
         SamQFSSystemFSManager fsManager, String fsName, String fileNameWithPath)
         throws SamFSException {
@@ -581,5 +607,89 @@ public class RestorePopupViewBean extends CommonSecondaryViewBeanBase {
                     getRecoveryPoint(), // snapPath
                     relativePathName,
                     theseDetails);
+    }
+
+    private StageFile getRecoveryPointFile(
+        SamQFSSystemFSManager fsManager, String snapShotName)
+        throws SamFSException {
+
+        GenericFileSystem fs =
+            FSUtil.getFileSystemByDirectory(getServerName(), snapShotName);
+        TraceUtil.trace3("SnapShotName: " + snapShotName);
+
+        int theseDetails = FileUtil.FNAME
+                         | FileUtil.FILE_TYPE
+                         | FileUtil.SIZE
+                         | FileUtil.CREATED
+                         | FileUtil.MODIFIED
+                         | FileUtil.ACCESSED
+                         | FileUtil.CHAR_MODE
+                         | FileUtil.SAM_STATE;
+
+        String mountPoint = fs.getMountPoint();
+        TraceUtil.trace3(
+            "Mount Point: " + mountPoint +
+            "  length: " + mountPoint.length());
+
+        // Extract snapShotName to three parts.
+        // 1. mountPoint = Mount Point of the file system
+        // 2. relativePath = Relative path of the snapShot in the file system,
+        // exclude the name of the snapshot itself
+        // 3. fileName = the snapshot file name itself
+        String relativePath, fileName;
+        int lastSlashPos = snapShotName.lastIndexOf(File.separator);
+
+        if (fs.getMountPoint().equals(File.separator)) {
+            relativePath =
+                mountPoint.length() == lastSlashPos ?
+                    "." :
+                    snapShotName.substring(
+                        mountPoint.length(),
+                        lastSlashPos);
+         } else {
+            // Check if relative path is "."
+            relativePath =
+                mountPoint.length() == lastSlashPos ?
+                    "." :
+                    snapShotName.substring(
+                        mountPoint.length() + 1,
+                        lastSlashPos);
+        }
+        fileName =
+            snapShotName.substring(lastSlashPos + 1);
+
+        TraceUtil.trace3(
+            "fs Name: " + fs.getName() +
+            ", relative: " + relativePath +
+            ", fileName: " + fileName);
+
+        // Extract the
+
+        // Build file filter, attempt to retrieve the handle for the dump file
+        Filter filter = new Filter();
+        filter.filterOnNamePattern(true, fileName + "*");
+
+        DirInfo dirInfo =
+            fsManager.getAllFilesInformation(
+                    fs.getName(),
+                    null,
+                    relativePath,
+                    null,
+                    5,
+                    theseDetails,
+                    filter);
+        if (dirInfo.getTotalCount() > 1) {
+            TraceUtil.trace1(
+                "TOTAL DUMP FILE MATCHES BIGGER THAN ONE! " +
+                dirInfo.getTotalCount());
+        }
+
+        StageFile [] files = dirInfo.getFileDetails();
+        if (files != null || files.length > 0) {
+            return files[0];
+        } else {
+            TraceUtil.trace1("NO DUMP FILES FOUND!");
+            return null;
+        }
     }
 }
