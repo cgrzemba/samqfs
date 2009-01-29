@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.155 $"
+#pragma ident "$Revision: 1.156 $"
 
 #include "sam/osversion.h"
 
@@ -1859,12 +1859,14 @@ sam_getpage_vn(
 	int appending;
 	int blocks, sparse, bt, dt;
 	boolean_t map_blocks = B_TRUE;
+	int non_shared;
 
 	TRACE(T_SAM_GETPAGE, vp, (sam_tr_t)offset, length, rw);
 	if (vp->v_flag & VNOMAP) {
 		return (ENOSYS);
 	}
 	ip = SAM_VTOI(vp);
+	non_shared = !SAM_IS_SHARED_FS(ip->mp);
 	if (protp != NULL) {
 		*protp = PROT_ALL;
 	}
@@ -1879,7 +1881,7 @@ retry:
 		lock_set = B_TRUE;
 	}
 
-	if ((error = sam_open_ino_operation(ip,
+	if (non_shared && (error = sam_open_ino_operation(ip,
 	    lock_set ? RW_READER : RW_WRITER))) {
 		if (lock_set) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
@@ -2019,7 +2021,9 @@ retry:
 		error = 0;
 		map_blocks = B_FALSE;
 		delay(1);
-		SAM_CLOSE_OPERATION(ip->mp, error);
+		if (non_shared) {
+			SAM_CLOSE_OPERATION(ip->mp, error);
+		}
 		goto retry;
 	}
 
@@ -2070,7 +2074,9 @@ out:
 	if (lock_set) {
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 	}
-	SAM_CLOSE_OPERATION(ip->mp, error);
+	if (non_shared) {
+		SAM_CLOSE_OPERATION(ip->mp, error);
+	}
 	TRACE(T_SAM_GETPAGE_RET, vp, error, (sam_tr_t)pglist, 0);
 	return (error);
 }

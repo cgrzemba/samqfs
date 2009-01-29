@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.139 $"
+#pragma ident "$Revision: 1.140 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1382,6 +1382,7 @@ sam_open_operation(sam_node_t *ip)
 	}
 	ep.val.depth = 1;
 	ep.val.module = mp->ms.m_tsd_key;
+	ep.val.flags = 0;
 	SAM_INC_OPERATION(mp);
 	tsd_set(mp->ms.m_tsd_key, ep.ptr);
 	return (0);
@@ -1433,6 +1434,7 @@ sam_open_ino_operation(sam_node_t *ip, krw_t lock_type)
 	}
 	ep.val.depth = 1;
 	ep.val.module = mp->ms.m_tsd_key;
+	ep.val.flags = 0;
 	SAM_INC_OPERATION(mp);
 	tsd_set(mp->ms.m_tsd_key, ep.ptr);
 	return (0);
@@ -1543,6 +1545,39 @@ sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type)
 		return (EIO);
 	}
 	return (0);
+}
+
+
+/*
+ * -----    sam_open_operation_nb_unless_idle -
+ *
+ * Calls sam_open_operation_nb(), and if this is the thread's
+ * initial entry into the filesystem it checks if the filesystem is
+ * supposed to be idle.  If the filesystem is intended to be idle
+ * then this returns EAGAIN.
+ * Note, this will never block.
+ */
+int
+sam_open_operation_nb_unless_idle(sam_node_t *ip)
+{
+	sam_operation_t ep;
+	sam_mount_t *mp = ip->mp;
+	int ret = 0;
+
+	sam_open_operation_nb(mp);
+
+	ep.ptr = tsd_get(mp->ms.m_tsd_key);
+	ASSERT(ep.ptr);
+
+	if (ep.val.depth == 1) {
+		ASSERT(ep.val.flags & SAM_FRZI_NOBLOCK);
+		if (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
+			ret = EAGAIN;
+			SAM_CLOSE_OPERATION(mp, ret);
+		}
+	}
+
+	return (ret);
 }
 #endif	/* sun */
 

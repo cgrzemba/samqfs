@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.219 $"
+#pragma ident "$Revision: 1.220 $"
 #endif
 
 #ifdef linux
@@ -1034,16 +1034,17 @@ int sam_check_cache(sam_id_t *fp, struct sam_mount *mp, sam_iget_t flag,
 void sam_mark_ino(sam_node_t *ip, uint_t flags);
 void sam_await_umount_complete(sam_node_t *ip);
 int sam_open_operation(sam_node_t *ip);
-int sam_open_ino_operation(sam_node_t *ip, krw_t lock_type);
 void sam_open_operation_nb(struct sam_mount *mp);
-void sam_open_operation_rwl(sam_node_t *ip);
 int sam_idle_operation(sam_node_t *ip);
-int sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type);
 
 #ifdef sun
+int sam_open_ino_operation(sam_node_t *ip, krw_t lock_type);
+void sam_open_operation_rwl(sam_node_t *ip);
+int sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type);
 void sam_open_mutex_operation(sam_node_t *ip, kmutex_t *mup);
 void sam_unset_operation_nb(struct sam_mount *mp);
-extern int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
+int sam_open_operation_nb_unless_idle(sam_node_t *ip);
+int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
 
 #if defined(SOL_511_ABOVE)
 int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,

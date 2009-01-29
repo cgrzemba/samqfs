@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.197 $"
+#pragma ident "$Revision: 1.198 $"
 
 #include "sam/osversion.h"
 
@@ -2577,6 +2577,7 @@ sam_client_getpage_vn(
 	int error = 0;
 	uint32_t ltype;
 	boolean_t using_lease = FALSE;
+	int unset_nb = 1;
 
 	TRACE(T_SAM_CL_GETPAGE, vp, (sam_tr_t)offset, length, rw);
 	if (vp->v_flag & VNOMAP) {
@@ -2600,6 +2601,26 @@ sam_client_getpage_vn(
 	if (vp->v_type == VDIR) {
 		goto start;
 	}
+
+	/*
+	 * If this thread is just now entering the filesystem (an mmap
+	 * page fault), then we need to mark it non-blocking.  If the
+	 * filesystem is idling (maybe for failover), then this will
+	 * return an error.
+	 */
+	if (sam_open_operation_nb_unless_idle(ip)) {
+		return (EDEADLK);
+	}
+
+	/*
+	 * Threads which came here via other parts
+	 * of the filesystem cannot be nonblocking.
+	 */
+	if (SAM_GET_LEASEFLG(ip->mp)) {
+		unset_nb = 0;
+		sam_unset_operation_nb(ip->mp);
+	}
+
 	using_lease = TRUE;
 	mutex_enter(&ip->ilease_mutex);
 	ip->cl_leaseused[ltype]++;
@@ -2623,7 +2644,7 @@ sam_client_getpage_vn(
 		data.shflags.b.abr = ip->flags.b.abr;
 
 		/*
-		 * If it takes more then SAM_QUICK_DELAY seconds to
+		 * If it takes more than SAM_QUICK_DELAY seconds to
 		 * complete we fail with EDEADLK back to the VM
 		 * layer.  VM will re-try the getpage after a small
 		 * delay.  This is so we don't block for a long time
@@ -2635,15 +2656,18 @@ sam_client_getpage_vn(
 			SAM_DECREMENT_LEASEUSED(ip, ltype);
 			if (error == ETIME) {
 				if (sam_check_sig()) {
-					return (EINTR);
+					error = EINTR;
 				} else {
 					SAM_COUNT64(shared_client,
 					    page_lease_retry);
-					return (EDEADLK);
+					error = EDEADLK;
 				}
-			} else {
-				return (error);
 			}
+			if (unset_nb) {
+				sam_unset_operation_nb(ip->mp);
+			}
+			SAM_CLOSE_OPERATION(ip->mp, error);
+			return (error);
 		}
 	} else {
 		mutex_exit(&ip->ilease_mutex);
@@ -2664,7 +2688,11 @@ start:
 			}
 		}
 		if (using_lease) {
+			if (unset_nb) {
+				sam_unset_operation_nb(ip->mp);
+			}
 			SAM_DECREMENT_LEASEUSED(ip, ltype);
+			SAM_CLOSE_OPERATION(ip->mp, error);
 		}
 		return (error);
 	}
@@ -2844,6 +2872,11 @@ sam_client_map_vn(
 		return (EINVAL);
 	}
 
+	if ((error = sam_open_operation(ip))) {
+		SAM_NFS_JUKEBOX_ERROR(error);
+		return (error);
+	}
+
 	/*
 	 * If mmap write and the file is offline, stage in the entire file.
 	 * (Only for shared mappings; treat private mappings as read-only.)
@@ -2857,7 +2890,7 @@ sam_client_map_vn(
 			    MAKE_ONLINE, credp);
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			if (error) {
-				return (error);
+				goto out;
 			}
 		} else {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -2869,8 +2902,8 @@ sam_client_map_vn(
 		map_addr(addrpp, length, off, 1, flags);
 		if (*addrpp == NULL) {
 			as_rangeunlock(asp);
-			TRACE(T_SAM_MAP_RET, vp, ENOMEM, 0, 0);
-			return (ENOMEM);
+			error = ENOMEM;
+			goto out_asunlock;
 		}
 	} else {
 		/* Unmap any previous mappings */
@@ -2958,7 +2991,7 @@ sam_client_map_vn(
 			}
 		} else {
 			SAM_DECREMENT_LEASEUSED(ip, ltype);
-			return (error);
+			goto out_asunlock;
 		}
 		break;
 	}
@@ -2980,8 +3013,11 @@ sam_client_map_vn(
 		sam_mmap_rmlease(vp, is_write, 0);
 	}
 
+out_asunlock:
 	as_rangeunlock(asp);			/* Unlock address space */
 
+out:
+	SAM_CLOSE_OPERATION(ip->mp, error);
 	TRACE(T_SAM_MAP_RET, vp, error, 0, 0);
 	return (error);
 }
@@ -3031,11 +3067,6 @@ sam_client_addmap_vn(
 		error = ENOSYS;
 
 	} else {
-		if ((error = sam_open_operation(ip))) {
-			SAM_NFS_JUKEBOX_ERROR(error);
-			return (error);
-		}
-
 		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 		mutex_enter(&ip->fl_mutex);
 		ip->mm_pages += pages;
@@ -3044,8 +3075,6 @@ sam_client_addmap_vn(
 		}
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-
-		SAM_CLOSE_OPERATION(ip->mp, error);
 	}
 	TRACE(T_SAM_CL_ADDMAP_RET, vp, pages, ip->mm_pages, error);
 	return (error);
