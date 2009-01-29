@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 /* ANSI C headers. */
 #include <stdlib.h>
@@ -355,8 +355,6 @@ clean_drive(
 		memset(&message->message, 0, sizeof (sam_message_t));
 		message->message.magic = MESSAGE_MAGIC;
 		message->message.command = MESS_CMD_CLEAN;
-		message->message.exit_id = command->exit_id;
-		message->message.param.clean_request.flags = command->flags;
 		message->message.param.clean_request.eq = command->eq;
 		message->mtype = MESS_MT_NORMAL;
 		cond_signal(&message->cond_r);

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.59 $"
+#pragma ident "$Revision: 1.60 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -360,10 +360,20 @@ drive_thread(
 
 			case MESS_CMD_CLEAN:
 				/*
-				 * clean will call disp_of_event or place
-				 * the event back on the library list.
+				 * If drive is busy for stage or etc.
+				 * delay the event and try later.
+				 * clean will call disp_of_event.
 				 */
-				clean(drive, event);
+				mutex_lock(&un->mutex);
+				if (un->active > 0) {
+					event->status.b.delayed = TRUE;
+					event->timeout = time(NULL) + 10;
+					add_to_end(drive->library, event);
+					mutex_unlock(&un->mutex);
+				} else {
+					mutex_unlock(&un->mutex);
+					clean(drive, event);
+				}
 				break;
 
 			case MESS_CMD_TODO:

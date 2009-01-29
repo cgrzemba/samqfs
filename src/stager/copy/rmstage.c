@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -326,7 +326,9 @@ RmSeekVolume(
 					 * errors.  This will result in the
 					 * copy marked as damaged.
 					 */
-					sleep(5);
+					if (attempts > 0) {
+						sleep(5);
+					}
 				}
 			}
 		}
