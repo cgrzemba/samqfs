@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.245 $"
+#pragma ident "$Revision: 1.246 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1353,6 +1353,9 @@ sam_build_allocation_links(
 		 * must round robin.
 		 */
 		for (ord = 0; ord < sblk->info.sb.fs_count; ord++) {
+			if (sblk->eq[ord].fs.type == DT_META) {
+				continue;
+			}
 			if (((sblk->eq[ord].fs.state == DEV_OFF) ||
 			    (sblk->eq[ord].fs.state == DEV_DOWN)) ||
 			    (sblk->eq[ord].fs.num_group == 0)) {
