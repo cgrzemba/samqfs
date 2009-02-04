@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.27 $"
+#pragma ident "$Revision: 1.28 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -1017,7 +1017,8 @@ static void
 cleanupCmdPort(
 	SamrftImpl_t *rftd)
 {
-	close(fileno(rftd->cin));
+	fclose(rftd->cout);
+	fclose(rftd->cin);
 	SamFree(rftd->cmdbuf);
 	SamFree(rftd->hostname);
 }
