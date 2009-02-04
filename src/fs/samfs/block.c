@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.130 $"
+#pragma ident "$Revision: 1.131 $"
 
 #include "sam/osversion.h"
 
@@ -588,6 +588,7 @@ sam_process_prealloc_req(
 		mutex_enter(&mp->mi.m_fs[ord].eq_mutex);
 		lock_set = TRUE;
 	}
+
 	blk = sblk->eq[ord].fs.allocmap;
 	off = 0;
 	next_dau = 0;
@@ -655,9 +656,6 @@ sam_get_prealloc_daus(
 		dt = pap->dt;
 		ord = pap->ord;
 		blk0 = sblk->eq[ord].fs.allocmap;
-		/* num = number of bytes from beginning of current block */
-		num = ((sblk->eq[ord].fs.dau_size + (NBBY - 1)) >> NBBYSHIFT) -
-		    ((blk - blk0) << SAM_DEV_BSHIFT);
 		if (SAM_BREAD(mp, mp->mi.m_fs[sblk->eq[ord].fs.mm_ord].dev,
 		    blk, SAM_DEV_BSIZE, &bp)) {
 			pap->error = EIO;
@@ -672,7 +670,7 @@ sam_get_prealloc_daus(
 
 		num = blk - blk0 + 1;
 		wptr = (uint_t *)(void *)(bp->b_un.b_addr + off);
-		/* 32 bit wds left in buf */
+		/* 32 bit words left in buf */
 		count = (SAM_DEV_BSIZE - off) >> NBPWSHIFT;
 		for (; count > 0; wptr++, count--) {
 			/* if no free blocks (this 32) */
@@ -811,7 +809,7 @@ completed:
 					    "SAM-QFS: %s: I/O error writing "
 					    "map blocks <%d>",
 					    mp->mt.fi_name, error);
-					pap->error = error;
+					pap->error = EIO;
 					break;
 				}
 				bp = tbp;
@@ -1237,7 +1235,7 @@ sam_set_block(
 				bn = (sam_daddr_t)ndau;
 				if (ndau > sblk->eq[ord].fs.capacity) {
 					cmn_err(CE_WARN, "SAM-QFS: %s: "
-					    "sam_get_blklist,"
+					    "sam_set_block,"
 					    " bn=0x%llx, ord=%d, "
 					    "capacity=0x%llxKB",
 					    mp->mt.fi_name, ndau, ord,
@@ -2269,8 +2267,7 @@ sam_grow_fs(
 		do {
 			/*
 			 * Preallocate a sequential number of blocks for the
-			 * maps on mm_ord. If maps already exists, use the
-			 * existing map.
+			 * maps on mm_ord.
 			 */
 			pa.length = blocks / LG_DEV_BLOCK(mp, dt);
 			pa.count = (howmany(pa.length, (SAM_DEV_BSIZE * NBBY)) +
@@ -2409,9 +2406,10 @@ sam_grow_fs(
 	if (error) {
 		mutex_exit(&dp->eq_mutex);
 		cmn_err(CE_WARN,
-		    "SAM-QFS: %s: eq %d system length %x != %x on %s",
-		    mp->mt.fi_name, dp->part.pt_eq, sop->system, len,
-		    mp->mi.m_fs[mm_ord].part.pt_name);
+		    "SAM-QFS: %s: Error %d clearing blocks in bitmap "
+		    "system len %x computed len %x eq %d lun %s",
+		    mp->mt.fi_name, error, sop->system, len,
+		    dp->part.pt_eq, dp->part.pt_name);
 		goto done;
 	}
 
@@ -2595,7 +2593,7 @@ sam_write_label(
  * ---- sam_fs_clear_maps - Clear free disk blocks in map.
  */
 
-void
+int
 sam_fs_clear_map(
 	void *vmp,		/* Pointer to mount table */
 	struct sam_sblk *sblk,	/* Pointer to the superblock */
@@ -2611,11 +2609,12 @@ sam_fs_clear_map(
 	pa.ord = (ushort_t)ord;
 	sam_process_prealloc_req(mp, sblk, &pa, FALSE);
 	if (pa.error) {
-		cmn_err(CE_WARN, "SAM-QFS: %s: Error clearing blks on "
+		cmn_err(CE_WARN, "SAM-QFS: %s: Error %d clearing blks on "
 		    "eq %d lun %s",
-		    mp->mt.fi_name, mp->mi.m_fs[ord].part.pt_eq,
+		    mp->mt.fi_name, pa.error, mp->mi.m_fs[ord].part.pt_eq,
 		    mp->mi.m_fs[ord].part.pt_name);
 	}
+	return (pa.error);
 }
 
 /*

@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.44 $"
+#pragma ident "$Revision: 1.45 $"
 
 
 /* ----- Include Files ---- */
@@ -778,8 +778,11 @@ new_fs(void)
 		err = sam_cablk(SAMMKFS_CALLER, &sblock, NULL, ord, 1, 1,
 		    LG_DEV_BLOCK(mp, DD), LG_DEV_BLOCK(mp, MM), &len);
 		if (err) {
-			printf("eq%d: system %x != computed len %x\n",
-			    dp->eq, sblock.eq[ord].fs.system, len);
+			error(0, 0,
+			    catgets(catfd, SET, 13488,
+			    "Error %d clearing blocks in bitmap. "
+			    "eq %d system len %x computed len %x\n"),
+			    err, dp->eq, sblock.eq[ord].fs.system, len);
 			clean_exit(1);
 		}
 	}
@@ -1047,8 +1050,11 @@ grow_fs(void)
 		err = sam_cablk(SAMMKFS_CALLER, &sblock, NULL, ord, 1, 1,
 		    LG_DEV_BLOCK(mp, DD), LG_DEV_BLOCK(mp, MM), &len);
 		if (err) {
-			printf("eq%d: system %x != computed len %x\n",
-			    dp->eq, sblock.eq[ord].fs.system, len);
+			error(0, 0,
+			    catgets(catfd, SET, 13488,
+			    "Error %d clearing blocks in bitmap. "
+			    "eq %d system len %x computed len %x\n"),
+			    err, dp->eq, sblock.eq[ord].fs.system, len);
 			clean_exit(1);
 		}
 	}

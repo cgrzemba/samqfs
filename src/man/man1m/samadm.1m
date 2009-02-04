@@ -1,4 +1,4 @@
-.\" $Revision: 1.9 $
+.\" $Revision: 1.10 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH samadm 1M "07 Jan 2009"
+.TH samadm 1M "30 Jan 2009"
 .SH NAME
 samadm \- Sun StorageTek SAM-QFS main administrative command
 .SH SYNOPSIS
@@ -107,12 +107,16 @@ QFS or SAM package is removed.
 This subcommand adds an equipment to an existing mounted
 QFS file system.  The equipment must be added to the \fBmcf(4)\fR
 file, and \fBsamd config\fR must be run prior to adding the equipment
-number to a file system.
+number to a file system.  The equipment will be placed into the
+\fIoff\fR state.
+.LP
+In a non-shared file system, after the equipment number is added,
+it is placed into the \fIon\fR state.
 .LP
 In a shared file system, after the equipment number is added,
 it is initially placed into the \fIunavail\fR state. All the mcf files
 on the clients must be updated to include the new/changed equipment
-number. After this has been done, To place this
+number, and \fBsamd config\fR run. After this has been done, To place this
 equipment number into full read/write status, change the state
 to \fIalloc\fR via \fBsamadm eq-alloc eq_number#\fR.
 .RE

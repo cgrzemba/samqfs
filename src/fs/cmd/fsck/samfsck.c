@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 
 
 /* ----- Includes */
@@ -1261,6 +1261,7 @@ check_fs(void)
 			    catgets(catfd, SET, 801,
 			    "Dau map write failed on eq %2d, (%s)"),
 			    devp->device[mord].eq, devp->device[mord].eq_name);
+			clean_exit(ES_error);
 		}
 	}
 
@@ -1295,9 +1296,12 @@ check_fs(void)
 		    LG_DEV_BLOCK(mp, MM),
 		    &len);
 		if (err) {
-			printf("eq%d: system %x != computed len %x\n",
-			    devlp->eq, sblock.eq[ord].fs.system, len);
-			exit(1);
+			error(0, 0,
+			    catgets(catfd, SET, 13488,
+			    "Error %d clearing blocks in bitmap. "
+			    "eq %d system len %x computed len %x\n"),
+			    err, devlp->eq, sblock.eq[ord].fs.system, len);
+			clean_exit(ES_error);
 		}
 	}
 

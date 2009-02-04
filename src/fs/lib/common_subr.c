@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 /* ----- UNIX Includes */
 
@@ -65,10 +65,10 @@ int d_write(struct devlist *dp, char *buffer, int len, sam_daddr_t sector);
 #endif /* _KERNEL */
 
 #ifdef _KERNEL
-extern void sam_fs_clear_map(void *mp, struct sam_sblk *sblk, int ord, int len);
+extern int sam_fs_clear_map(void *mp, struct sam_sblk *sblk, int ord, int len);
 #endif /* _KERNEL */
 
-static void sam_clear_maps(sam_caller_t caller, struct sam_sblk *sblk,
+static int sam_clear_maps(sam_caller_t caller, struct sam_sblk *sblk,
 	void *mp, int ord, int len, sam_daddr_t blk, int bits);
 
 /*
@@ -190,11 +190,12 @@ sam_init_sblk_dev(
 			sop->mm_ord = sbp->mm_ord;
 			somp = &sblk->eq[sop->mm_ord].fs;
 			mdt = MM;
-
 		}
+
 		/*
-		 * Advance the metadata ordinal for ma file system
-		 * to roundrobin the data device map.
+		 * Advance the metadata ordinal to roundrobin the map.
+		 * Note that this needs to be done for metadata devices
+		 * that are added with online grow.
 		 */
 		if (SBLK_MAPS_ALIGNED(sbp)) {
 			int i = 0;
@@ -350,7 +351,7 @@ sam_cablk(
 	int system;		/* Length of allocated area in super block */
 	int sblk_size;		/* size of super block  (in 1024 byte blocks) */
 	int mm_ord;
-
+	int error = 0;
 
 	system = sblk->eq[ord].fs.system;
 	sblk_size = sizeof (struct sam_sblk) >> SAM_DEV_BSHIFT;
@@ -409,7 +410,7 @@ sam_cablk(
 			}
 			system = len2 / dd_kblocks;
 		}
-		sam_clear_maps(caller, sblk, mp, ord, system, 0, bits);
+		error = sam_clear_maps(caller, sblk, mp, ord, system, 0, bits);
 
 	} else {
 		int len;		/* Length of allocated area */
@@ -439,11 +440,13 @@ sam_cablk(
 				}
 			}
 			len = len / mm_kblocks;
-			sam_clear_maps(caller, sblk, mp, ord, len, 0, bits);
+			error = sam_clear_maps(caller, sblk, mp, ord, len, 0,
+			    bits);
 
 		} else if ((sblk->eq[ord].fs.type == DT_META) && (ord != 0)) {
 			len = sblk->eq[ord].fs.system / mm_kblocks;
-			sam_clear_maps(caller, sblk, mp, ord, len, 0, bits);
+			error = sam_clear_maps(caller, sblk, mp, ord, len, 0,
+			    bits);
 
 		} else {
 			len = SUPERBLK + sblk_size;
@@ -472,26 +475,27 @@ sam_cablk(
 				}
 			}
 			len = len / dd_kblocks;
-			sam_clear_maps(caller, sblk, mp, ord, len, 0, bits);
+			error = sam_clear_maps(caller, sblk, mp, ord, len, 0,
+			    bits);
 
 			/*
 			 * The add or grow case where the maps are
 			 * allocated after system
 			 */
-			blk = sblk->eq[ord].fs.allocmap;
-			mm_ord = sblk->eq[ord].fs.mm_ord;
-			if (blk >= sblk->eq[mm_ord].fs.system) {
-				len = sblk->eq[ord].fs.l_allocmap;
-				len = howmany(len, mm_kblocks);
-				blk = blk / mm_kblocks;
-				if (caller != SAMFS_CALLER) {
-					sam_clear_maps(caller, sblk, mp,
-					    mm_ord, len, blk, mbits);
+			if ((error == 0) && (caller != SAMFS_CALLER)) {
+				blk = sblk->eq[ord].fs.allocmap;
+				mm_ord = sblk->eq[ord].fs.mm_ord;
+				if (blk >= sblk->eq[mm_ord].fs.system) {
+					len = sblk->eq[ord].fs.l_allocmap;
+					len = howmany(len, mm_kblocks);
+					blk = blk / mm_kblocks;
+					error = sam_clear_maps(caller, sblk,
+					    mp, mm_ord, len, blk, mbits);
 				}
 			}
 		}
 	}
-	return (0);
+	return (error);
 }
 
 
@@ -500,7 +504,7 @@ sam_cablk(
  */
 
 /* ARGSUSED */
-static void
+static int
 sam_clear_maps(
 	sam_caller_t caller,	/* Caller - SAMMKFS or SAMFSCK */
 	struct sam_sblk *sblk,	/* Pointer to the superblock */
@@ -519,7 +523,8 @@ sam_clear_maps(
 		cmd_caller = SAMFSCK;
 	}
 	cmd_clear_maps(cmd_caller, ord, len, blk, bits);
+	return (0);
 #else
-	sam_fs_clear_map(mp, sblk, ord, len);
+	return (sam_fs_clear_map(mp, sblk, ord, len));
 #endif /* _KERNEL */
 }

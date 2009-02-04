@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.625 $"
+$ pragma ident "$Revision: 1.626 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2611,6 +2611,8 @@ $ ===================================================================
 13487 ALERT:  Basic checks of allocation maps failed.\n\
 		File system may be critically damaged.\n\
 		Invalid allocation map eq %d disk offset %lldK minimum %lldK.\n
+13488 Error %d clearing blocks in bitmap.\n\
+	eq %d system len %x computed len %x\n
 
 $  utility/csd	(13500)
 $ ===================================================================
