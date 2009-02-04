@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.116 $"
+#pragma ident "$Revision: 1.117 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -1912,7 +1912,12 @@ asmSize(
 	char *name)
 {
 	uint64_t value;
+	int tok_len = strlen(token);
 
+	if (isdigit(token[tok_len - 1])) {
+		/* Warning: %s=%s has no fsize unit, defaulting to bytes */
+		SendCustMsg(HERE, 4552, name, token);
+	}
 	if (StrToFsize(token, &value) == -1) {
 		/* Invalid '%s' value ('%s') */
 		ReadCfgError(CustMsg(14101), name, token);
@@ -2523,6 +2528,17 @@ paramsSetfield(void)
 		 * Parameter requires a value.
 		 */
 		(void) ReadCfgGetToken();
+		/* Check for ovflmin field and warn if no size unit is used. */
+		if (strcmp(dirName+1, "ovflmin") == 0) {
+			int len = strlen(token);
+			if (isdigit(token[len-1])) {
+				/*
+				 * Warning: %s=%s has no fsize unit,
+				 * defaulting to bytes
+				 */
+				SendCustMsg(HERE, 4552, dirName+1, token);
+			}
+		}
 		if (SetFieldValue(as, ArchSet, dirName+1,
 		    token, msgFuncSetField) != 0) {
 			ReadCfgError(0, errMsg);

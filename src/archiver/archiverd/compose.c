@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.85 $"
+#pragma ident "$Revision: 1.86 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -550,23 +550,16 @@ ComposeMakeTarballs(
 			continue;
 		}
 		if (space + fi->FiSpace > volSpace) {
-			if (fi->FiSpace > volSpace) {
+			if (fi->FiSpace >= ovflmin) {
 				/*
-				 * Single file too big.
-				 * Skip it for now.
+				 * Assure that any file that is allowed to
+				 * overflow is the only file in a tarball.
 				 */
-				fi->FiCpi = CPI_later;
-				continue;
+				fi->FiFlags |= FI_first;
+				space = volSpace;
+				i++;
 			}
 			break;
-		}
-		if (fi->FiSpace >= ovflmin) {
-			/*
-			 * Assure that any file that is allowed to overflow
-			 * is the only file in a tarball.
-			 */
-			fi->FiFlags |= FI_first;
-			tarballSpace = archmax;
 		} else if (tarballSpace + fi->FiSpace >= archmax) {
 			fi->FiFlags |= FI_first;
 			tarballSpace = 0;

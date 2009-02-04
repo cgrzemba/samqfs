@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.137 $"
+#pragma ident "$Revision: 1.138 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -2079,8 +2079,6 @@ findRmVolume(
 			availSpace += vi->VfSpace;
 			if (availSpace >= spaceRequired) {
 				if (ar->ArState == ARS_volRequest) {
-					volsAvail->entry[0].VfSpace =
-					    availSpace;
 					return (FS_start);
 				}
 				break;
@@ -2088,7 +2086,6 @@ findRmVolume(
 		}
 		ComposeSelectFit(ar, cpi, availSpace, ovflmin);
 		if (ci->CiSpace > 0) {
-			volsAvail->entry[0].VfSpace = availSpace;
 			return (FS_start);
 		}
 
