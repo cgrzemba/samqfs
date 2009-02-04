@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCache.java,v 1.17 2008/12/16 00:12:23 am143972 Exp $
+// ident	$Id: DiskCache.java,v 1.18 2009/02/04 20:10:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.media;
 
@@ -90,6 +90,8 @@ public interface DiskCache extends BaseDevice {
     public String getDevicePath();
 
     public int getEquipOrdinal();
+
+    public boolean isDataOnlyDevice();
 
     // For display string with logic
     public String getDevicePathDisplayString();

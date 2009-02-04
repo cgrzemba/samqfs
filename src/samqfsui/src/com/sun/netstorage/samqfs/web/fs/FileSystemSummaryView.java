@@ -27,11 +27,10 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryView.java,v 1.101 2009/01/07 21:39:56 kilemba Exp $
+// ident	$Id: FileSystemSummaryView.java,v 1.102 2009/02/04 20:10:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
-import com.iplanet.jato.ModelManager;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.util.HtmlUtil;
 import com.iplanet.jato.view.BasicCommandField;
@@ -64,7 +63,6 @@ import com.sun.netstorage.samqfs.web.util.PageInfo;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
 import com.sun.netstorage.samqfs.web.util.SecurityManagerFactory;
 import com.sun.netstorage.samqfs.web.util.TraceUtil;
-import com.sun.netstorage.samqfs.web.wizard.WizardModel;
 import com.sun.web.ui.model.CCWizardWindowModel;
 import com.sun.web.ui.model.CCWizardWindowModelInterface;
 import com.sun.web.ui.view.html.CCButton;
@@ -88,7 +86,6 @@ public class FileSystemSummaryView extends CommonTableContainerView {
     public static final String CHILD_ACTIONMENU_HREF = "ActionMenuHref";
     public static final String CHILD_FILTERMENU_HREF = "FilterMenuHref";
 
-    private String selectedFS = null;
     private FileSystemSummaryModel model = null;
     private ArrayList updatedModelIndex = new ArrayList();
 
@@ -861,23 +858,6 @@ public class FileSystemSummaryView extends CommonTableContainerView {
         return value;
     }
 
-    private String getSelectedFSType(int index) {
-        TraceUtil.trace3("Entering");
-        String value = null;
-        String filter = (String) getParentViewBean().getPageSessionAttribute(
-            Constants.PageSessionAttributes.FS_FILTER_MENU);
-        if (filter == null) {
-            model.setRowIndex(index);
-            value = (String) model.getValue("HiddenType");
-        } else {
-            model.setRowIndex(
-                ((Integer) updatedModelIndex.get(index)).intValue());
-            value = (String) model.getValue("HiddenType");
-        }
-        TraceUtil.trace3("Exiting");
-        return value;
-    }
-
     private void handleFilter() {
         TraceUtil.trace3("Entering");
         String filter = (String) getParentViewBean().getPageSessionAttribute(
@@ -1144,17 +1124,6 @@ public class FileSystemSummaryView extends CommonTableContainerView {
             Constants.PageSessionAttributes.SAMFS_SERVER_NAME, serverName);
 
         TraceUtil.trace3("Exiting");
-    }
-
-    private WizardModel getWizardModel(String modelName) {
-        ModelManager mm = getRequestContext().getModelManager();
-        WizardModel model = (WizardModel)mm.getModel(
-            com.sun.netstorage.samqfs.web.wizard.WizardModel.class,
-            modelName,
-            true,
-            true);
-
-        return model;
     }
 
     private String getServerName() {

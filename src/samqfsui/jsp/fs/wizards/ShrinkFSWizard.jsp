@@ -25,7 +25,7 @@
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
 
-<!-- $Id: ShrinkFSWizard.jsp,v 1.9 2008/12/17 20:18:55 kilemba Exp $ -->
+<!-- $Id: ShrinkFSWizard.jsp,v 1.10 2009/02/04 20:10:09 ronaldso Exp $ -->
 
 <jsp:root
     version="1.2"
@@ -92,7 +92,8 @@
                                             <ui:radioButton id="selectExclude"
                                                             name="radioSelect"
                                                             selected="#{ShrinkFSBean.selectExclude.selected}"
-                                                            selectedValue="#{ShrinkFSBean.selectExclude.selectedValue}"/>
+                                                            selectedValue="#{ShrinkFSBean.selectExclude.selectedValue}"
+                                                            rendered="#{excludeTable.value.dataOnlyDevice}"/>
                                         </ui:tableColumn>
                                         <ui:tableColumn id="colDeviceName"
                                                         headerText="#{samBundle['common.columnheader.name']}"

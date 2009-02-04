@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemSummaryModel.java,v 1.73 2008/12/16 00:12:10 am143972 Exp $
+// ident	$Id: FileSystemSummaryModel.java,v 1.74 2009/02/04 20:10:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -352,9 +352,11 @@ public class FileSystemSummaryModel extends CCActionTableModel {
                     !fsList[i].isHA() &&
                     (fsShareStatus == FileSystem.UNSHARED ||
                      fsShareStatus == FileSystem.SHARED_TYPE_MDS);
+                // Shrink only supports shrinking data devices
                 shrinkEnabled =
                     !fsList[i].isHA() &&
                     fsState == FileSystem.MOUNTED &&
+                    fsList[i].getFSType() == FileSystem.SEPARATE_METADATA &&
                     (fsShareStatus == FileSystem.UNSHARED ||
                      fsShareStatus == FileSystem.SHARED_TYPE_MDS);
             // 4.6

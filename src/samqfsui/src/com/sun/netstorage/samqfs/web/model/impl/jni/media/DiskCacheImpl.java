@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.24 2008/12/16 00:12:21 am143972 Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.25 2009/02/04 20:10:10 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
@@ -85,7 +85,7 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
                 append(members[i].getDevicePathDisplayString());
         }
         devicePathDisplayString = buf.toString();
-System.out.println("DiskCacheImpl: displayStr: " + devicePathDisplayString);
+
         if (members.length > 0) {
             vendor = members[0].getVendor();
             productId = members[0].getProductId();
@@ -314,5 +314,9 @@ System.out.println("DiskCacheImpl: displayStr: " + devicePathDisplayString);
             devicePathDisplayString = pathString.substring(index + 5);
         }
         return devicePathDisplayString;
+    }
+
+    public boolean isDataOnlyDevice() {
+        return diskCacheType == DiskCache.MR || diskCacheType == DiskCache.MD;
     }
 }

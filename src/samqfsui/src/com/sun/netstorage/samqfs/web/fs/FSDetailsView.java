@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetailsView.java,v 1.54 2008/12/16 00:12:10 am143972 Exp $
+// ident	$Id: FSDetailsView.java,v 1.55 2009/02/04 20:10:09 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -424,6 +424,7 @@ public class FSDetailsView extends CommonTableContainerView {
                     is50orlater &&
                     !fs.isHA() &&
                     state == FileSystem.MOUNTED &&
+                    fs.getFSType() == FileSystem.SEPARATE_METADATA &&
                     (fsShared == FileSystem.UNSHARED ||
                      fsShared == FileSystem.SHARED_TYPE_MDS);
             if (shrinkEnabled) {
