@@ -44,7 +44,7 @@
 #include <sam/mount.h>
 #include "sam/lib.h"
 
-#pragma ident "$Revision: 1.2 $"
+#pragma ident "$Revision: 1.3 $"
 
 
 /*
@@ -103,13 +103,10 @@ cmd_eq(
 		perror("");
 		return (1);
 	}
-	if (*c == 'r') {	/* remove or release */
-		printf("%s: %s: eq %s %s started successfully.\n", cmd_name,
-		    subcmd_name, c, new_eq);
-	} else {
-		printf("%s: %s: eq %s %s successful.\n", cmd_name,
-		    subcmd_name, c, new_eq);
-	}
+	printf("%s: %s: eq %s %s started successfully.\n"
+	    "Monitor 'samcmd m' display for completion and "
+	    "'/var/adm/messages' for errors.\n", cmd_name,
+	    subcmd_name, c, new_eq);
 	return (0);
 }
 
