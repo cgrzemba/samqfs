@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.110 $"
+#pragma ident "$Revision: 1.111 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -585,7 +585,6 @@ copyStream()
 
 		} else {
 			/* Unable to open disk archive.  Error request. */
-			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "Unable to open disk archive "
 			    "copy: %d inode: %d.%d errno: %d",
 			    file->copy + 1, file->id.ino, file->id.gen, errno);
@@ -627,12 +626,14 @@ copyStream()
 
 		/* Device not available. */
 		if (file->error == ENODEV) {
-			CLEAR_FLAG(file->flags, FI_DCACHE);
 			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR, "No device available");
 
-			Stream->first = EOS;
-			SET_FLAG(Instance->ci_flags, CI_shutdown);
+			reject = B_TRUE;
+			if (NumOpenFiles <= 0 && Instance->ci_first == NULL) {
+				SET_FLAG(Instance->ci_flags, CI_shutdown);
+				Instance->ci_busy = B_TRUE;
+			}
 		}
 
 		/* Mark file staging as done. */

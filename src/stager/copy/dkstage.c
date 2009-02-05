@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.38 $"
+#pragma ident "$Revision: 1.39 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -94,6 +94,7 @@ extern StagerStateInfo_t *State;
 /* Private data */
 static upath_t fullpath;
 static upath_t lastdv;
+static upath_t volpath;
 static boolean_t lastdvavail = B_FALSE;
 
 static int initRemoteStage();
@@ -179,11 +180,12 @@ DkNextArchiveFile(void)
 
 		snprintf(fullpath, sizeof (fullpath), "%s/%s",
 		    diskVolume->DvPath, tarFileName);
+		snprintf(volpath, sizeof (volpath), "%s", diskVolume->DvPath);
 
 		Trace(TR_FILES, "Open file '%s' (0x%llx)", fullpath, seqnum);
 
 		if (lastdvavail == B_FALSE &&
-		    strncmp(fullpath, lastdv, sizeof (fullpath)) == 0) {
+		    strncmp(volpath, lastdv, sizeof (volpath)) == 0) {
 			retry = 1;		/* No retry */
 			oprmsg = B_FALSE;
 		} else {
@@ -199,11 +201,27 @@ DkNextArchiveFile(void)
 			if (rc == 0) {
 				error = 0;
 			} else {
-				SetErrno = 0;
 				Trace(TR_ERR, "Unable to open file: %s "
 				    "errno: %d", fullpath, errno);
 				if (retry > 0) {
 					sleep(5);
+				} else if ((oprmsg == B_FALSE) &&
+				    (errno == ENOENT)) {
+					/*
+					 * Failed to open a diskvol for the
+					 * second time in a row.
+					 * Set ENODEV if disk archive volume
+					 * is not available.
+					 */
+					if (DiskVolsIsAvail(NULL,
+					    diskVolume, B_FALSE,
+					    DVA_stager) != B_TRUE) {
+						SetErrno = ENODEV;
+						Trace(TR_ERR, "Diskvolume "
+						    "'dk.%s' not available."
+						    " errno: %d",
+						    Stream->vsn, errno);
+					}
 				}
 			}
 		}
@@ -229,7 +247,7 @@ DkNextArchiveFile(void)
 			}
 			lastdvavail = B_FALSE;
 		}
-		strncpy(lastdv, fullpath, sizeof (fullpath));
+		strncpy(lastdv, volpath, sizeof (volpath));
 	}
 
 	if (error != 0) {

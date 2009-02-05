@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -207,6 +207,7 @@ DiskCacheWrite(
 		 */
 		out = CircularIoAvail(writer, &nbytes, &readErrno);
 		if (readErrno != 0) {
+			SetErrno = readErrno;
 			Trace(TR_ERR,
 			    "Error in writer buffer, slot:%d readErrno:%d",
 			    CircularIoSlot(IoThread->io_writer, out),
