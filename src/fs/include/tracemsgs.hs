@@ -1,4 +1,4 @@
-# $Revision: 1.140 $
+# $Revision: 1.141 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -98,6 +98,8 @@ T_SAM_CHG_STATE_OK	"ChgState- ord=%d,st=%d,ng=%d"
 T_SAM_NO_CHG_STATE	"NoChgSt-  ord=%d,st=%d,ng=%d"
 T_SAM_MNT_INFO		"MntInfo:  st=%x^[$S],fscnt=%d,fsgen=%d"
 T_SAM_MNT_INFO_RET	"MntInfo-  st=%x^[$S],fscnt=%d,fsgen=%d"
+T_SAM_SYNC_INO		"SyncIno:  ord=%d,cmd=%d,st=%d"
+T_SAM_SYNC_INO_RET	"SyncIno-  ord=%d,cmd=%d,st=%d"
 T_SAM_MNT_AVAIL1	""
 T_SAM_MAX_MP		""
 T_SAM_MOUNT		"Mount:    vfsp=%x, mount point vp=%x"

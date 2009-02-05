@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.171 $"
+#pragma ident "$Revision: 1.172 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -1960,6 +1960,7 @@ decode_S(uint64_t value)
 		{ FS_FROZEN, "FROZEN" },
 		{ FS_THAWING, "THAWING" },
 		{ FS_RESYNCING, "RESYNCING" },
+		{ FS_SHRINKING, "SHRINKING" },
 		{ FS_RELEASING, "RELEASING" },
 		{ FS_STAGING, "STAGING" },
 		{ FS_ARCHIVING, "ARCHIVING" },

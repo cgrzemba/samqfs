@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 #
 
 #  INPUT OPTIONS
@@ -89,6 +89,7 @@ VARTMPDIR=/var/tmp
 ETCDIR=/etc/opt/SUNWsamfs
 CUSTDIR=/etc/opt/SUNWsamfs/scripts
 VARDIR=/var/opt/SUNWsamfs
+VARSVCLOGDIR=/var/svc/log
 CATDIR=/var/opt/SUNWsamfs/catalog
 USERDIR=/opt/SUNWsamfs/bin
 EXECDIR=/opt/SUNWsamfs/sbin
@@ -411,7 +412,6 @@ else
 	NRECYLOGS=""
 fi
 
-
 if [ -f $ETCDIR/releaser.cmd ]; then
 	if [ -r $ETCDIR/releaser.cmd ]; then
 		RELELOGS=`sed -e "/#/s/#.*//" < $ETCDIR/releaser.cmd|grep "logfile.*="| sed -e "/logfile/,/logfile/s/^.*= *//"`
@@ -421,6 +421,17 @@ if [ -f $ETCDIR/releaser.cmd ]; then
 	fi
 else
 	RELELOGS=$VARDIR/releaser.log
+fi
+
+if [ -f $ETCDIR/shrink.cmd ]; then
+	if [ -r $ETCDIR/shrink.cmd ]; then
+		SHRKLOGS=`sed -e "/#/s/#.*//" < $ETCDIR/shrink.cmd|grep "logfile.*=" | sed -e "/logfile/,/logfile/s/^.*= *//"`
+	else
+		rerun_as_root $ETCDIR/shrink.cmd
+		SHRKLOGS=""
+	fi
+else
+	SHRKLOGS=""
 fi
 
 if [ -f $ETCDIR/stager.cmd ]; then
@@ -436,6 +447,10 @@ fi
 
 #  These log files' locations are fixed
 DEVLOGS=$VARDIR/devlog/*
+
+#  SAM-QFS SMF Services Logs
+#SVCFSDLOG=$VARSVCLOGDIR/system-sam-fsd:default.log
+#SVCSHMNTLOG=$VARSVCLOGDIR/network-qfs-shared-mount:default.log
 
 #  These data directory locations are fixed
 ARCHDATA="$VARDIR/archiver"
@@ -459,11 +474,14 @@ STAGDATA="$VARDIR/stager"
 #settrace AML  sam-amld
 #settrace ARCH sam-archiverd
 #settrace CAT  sam-catserverd
+#settrace DBUP sam-dbupd
+#settrace FSA  sam-fsalogd
 settrace FSD  sam-fsd
 #settrace RCY  sam-recycler
 #settrace NRCY sam-nrecycler
 #settrace RFT  sam-rftd
 settrace SHFS sam-sharefsd
+#settrace SHRK sam-shrink
 #settrace STG  sam-stagerd
 #settrace SVR  sam-serverd
 #settrace CLI  sam-clientd
@@ -505,14 +523,20 @@ echo "SAM-QFS Log:                $SAMLOG"   >>$REPORT
 #echo "Archiver Data:              $ARCHDATA" >>$REPORT
 #echo "Catalog Trace:              $CATTRC"   >>$REPORT
 #echo "Device Logs:                $DEVLOGS"  >>$REPORT
+#echo "DBUPD Trace:                $DBUPTRC"  >>$REPORT
+#echo "FSALOGD Trace:              $FSATRC"   >>$REPORT
+#echo "FSD Service Log:            $SVCFSDLOG" >>$REPORT
 echo "FSD Trace:                  $FSDTRC"   >>$REPORT
+#echo "Shared Mount Service Log:   $SVCSHMNTLOG" >>$REPORT
 #echo "Recycler Logs:              $RECYLOGS" >>$REPORT
-#echo "New recycler Logs:          $NRECYLOGS" >>$REPORT
 #echo "Recycler Trace:             $RCYTRC"   >>$REPORT
+#echo "New recycler Logs:          $NRECYLOGS" >>$REPORT
 #echo "New recycler Trace:         $NRCYTRC"  >>$REPORT
 #echo "Releaser Logs:              $RELELOGS" >>$REPORT
 #echo "RFTD Trace:                 $RFTTRC"   >>$REPORT
 echo "Share FS Trace:             $SHFSTRC"  >>$REPORT
+#echo "Shrink Logs:                $SHRKLOGS" >>$REPORT
+#echo "Shrink Trace:               $SHRKTRC"  >>$REPORT
 #echo "Stager Logs:                $STAGLOGS" >>$REPORT
 #echo "Stager Trace:               $STGTRC"   >>$REPORT
 #echo "Stager Data:                $STAGDATA" >>$REPORT
@@ -642,6 +666,7 @@ showfiles $ETCDIR/defaults.conf
 #showfiles $ETCDIR/releaser.cmd
 #showfiles $ETCDIR/rft.cmd
 #showfiles $ETCDIR/samfs.cmd
+#showfiles $ETCDIR/shrink.cmd
 #showfiles $ETCDIR/stager.cmd
 #showfiles $ETCDIR/mount.sh
 #showfiles $CUSTDIR/archiver.sh

@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 #include "sam/osversion.h"
 
@@ -448,6 +448,22 @@ sam_setARSstatus(
 	case ARS_clr_s:
 		if (mp->mt.fi_status & FS_STAGING) {
 			mp->mt.fi_status &= ~FS_STAGING;
+		} else {
+			error = ENXIO;
+		}
+		break;
+
+	case ARS_set_sh:
+		if (mp->mt.fi_status & FS_SHRINKING) {
+			error = EBUSY;
+		} else {
+			mp->mt.fi_status |= FS_SHRINKING;
+		}
+		break;
+
+	case ARS_clr_sh:
+		if (mp->mt.fi_status & FS_SHRINKING) {
+			mp->mt.fi_status &= ~FS_SHRINKING;
 		} else {
 			error = ENXIO;
 		}
@@ -1022,6 +1038,9 @@ sam_drop_call(
 	    (ip->di.status.b.nodrop || ip->di.status.b.archnodrop ||
 	    ip->flags.b.accessed)) {
 		error = EINVAL;
+
+	} else if (args.shrink && ip->di.arch_status == 0) {
+		error = EBADE;
 
 	} else {
 		int bof_online;

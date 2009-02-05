@@ -1,4 +1,4 @@
-.\" $Revision: 1.3 $
+.\" $Revision: 1.4 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,9 +25,9 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH sam-shrink 1M "15 Apr 2008"
+.TH sam-shrink 1M "16 Jan 2009"
 .SH NAME
-sam-shrink \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS disk space shrink process
+sam-shrink \- Sun \%QFS and Sun \%SAM-QFS disk space shrink process
 .SH SYNOPSIS
 \fB/opt/SUNWsamfs/sbin/sam-shrink\fR
 \fIfile_system\fR | \fIfamily_set\fR
@@ -38,58 +38,75 @@ sam-shrink \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS disk space shrink process
 .PP
 \fBSUNWsamfs\fR
 .SH DESCRIPTION
-This \fIsam-shrink\fP process is executed when a shrink of a Sun StorEdge \%QFS
+This \fIsam-shrink\fP process is executed when a shrink of a Sun \%QFS
 or Sun \%SAM-QFS file system is required.
-The \fIsamu\fP command \fIremove\fP or \fIrelease\fP on device \fIeq\fP
-causes the \fIeq\fP state to be set to \fInoalloc\fP. Then, the file system
-requests the master daemon
-\fIsam-fsd\fP daemon to start the process \%\fBsam-shrink\fR.
-The device specified by \fIeq\fP must be a data device that
-resides within a \fIms\fP or \fIma\fP file system.
+The \fIsamadm\fP command eq-remove or the \fIsamu\fP command
+\fIremove\fP or \fIrelease\fP cause the state of the specified device
+to be set to \fInoalloc\fP. Then, the file system requests the
+master daemon \fIsam-fsd\fP to start the process \%\fBsam-shrink\fR.
+The specified device (\fIeq\fP) must be a data device that
+resides within a \fIma\fP file system.
 If the data device is a stripe group, the first
-\fIeq\fP of the stripe group is given.
-The \fIeq\fP state is changed to \fInoalloc\fP by the \fIsamu\fP command.
+\fIeq\fP of the stripe group must be specified.
+The \fIeq\fP state is changed to \fInoalloc\fP before \fIsam-shrink\fP is
+started. This means there will be no more allocation on this device.
 .PP
-The remove option copies all files and metadata that reside on \fIeq\fP
+The remove option copies all data that reside on \fIeq\fP
 to the other available data devices according to the mount parameters.
+Note, if \fIeq\fP is a stripe group, another stripe group must be
+available with the same number of devices.
 .PP
-The release eption is only available on the Sun StorEdge \%SAM-QFS
+The release option is only available on the Sun \%SAM-QFS
 file system. The release option marks all files that reside on
 \fIeq\fP offline. If any files have partial on-line, that data will be
-released, too. Files that have not been archived and metadata that
-resides on \fIeq\fP will be copied
-to the other available data devices according to the mount parameters.
+released, too.  The release will fail if there are any files that
+have not been archived. The release will also fail if there are any files that
+are staging or being archived. If the \fIrelease\fP command fails,
+you may execute the \fIrelease\fP command again to release any newly
+achived files. If there are files that cannot be archived, then
+you may execute the \fIremove\fP command to move the
+data that resides on \fIeq\fP to the other available data devices according
+to the mount parameters.
 .PP
 After successful completion of the remove or release operation, the
 \fIeq\fP state will be \fIoff\fP. It may take a long time to complete
-the shrink operation.
+the release operation and an even longer time to complete the  remove
+operation.  You can monitor the logfile and/or the
+\fB/var/opt/SUNWsamfs/trace/sam-shrink\fP file to check the status.
 .PP
 If the remove or release operation was not able to release or move all
-the files on the \fIeq\fP state will remain \fInoalloc\fP. The remove
+the files on the \fIeq\fP, the state will remain \fInoalloc\fP. The remove
 or release operation can be executed again on this \fIeq\fP. The
 \fBshrink.log\fR should be examined for reasons why the
-\fIeq\fP state could not be change to \fIoff\fP.
+\fIeq\fP state could not be changed to \fIoff\fP.
 .SH LOG
 Within the \fBshrink.cmd\fR file,
-you can specify a log file for each Sun StorEdge \%SAM-FS
+you can specify a log file for each Sun \%QFS
 or Sun \%SAM-QFS file system.
 If no \fBlogfile=\fIfilename\fR directive exists in the file,
 no logging occurs.
 For more information on the \fBlogfile=\fIfilename\fR directive,
 see the \fBshrink.cmd\fR(4) man page.
 .PP
-The sam-shrink creates the log file (if it does not exist) and
-appends the following to it for each run:
+The \fIsam-shrink\fP process creates the log file if it does not exist.
+The following example shows the log file entries for a \fIrelease\fP command
+followed by a \fIremove\fP command.
 .ft CO
 .nf
 
      Tue Sep 29 15:31:15 2008 Shrink process started: samfs5 release 15
      RE 6412.5  P S0 /sam1/250m
      RE 5131.5  P S0 /sam1/filecq
-     MV 5095.4 -- S0 /sam1/filecu
+     NA 5095.4 -- S0 /sam1/filecu
      ER 5039.5 16 S0 /sam1/filedi
+     NA 5039.2 -- S0 /sam1/lsc/filexx
+     Tue Sep 29 15:31:55 2008 shrink process unsuccessful for samfs5 eq 15:
+     busy files=1, unarchived files=2, total_errors=1
+     Tue Sep 29 15:32:15 2008 Shrink process started: samfs5 remove 15
+     MV 5095.4 -- S0 /sam1/filecu
+     MV 5039.5 -- S0 /sam1/filedi
      MV 5039.2 -- S0 /sam1/lsc/filexx
-     Tue Sep 29 15:31:55 2008 shrink process successful for samfs5 eq 15
+     Tue Sep 29 15:33:21 2008 shrink process successful for samfs5 eq 15
 .fi
 .ft
 .PP
@@ -104,17 +121,17 @@ The fields are as follows:
 .TP
 1
 This field contains the \fItag\fB:
-\fIRE\fR for released, \fIMV\fR for removed,
+\fIRE\fR for released, \fIMV\fR for removed, \fINA\fR for not archived,
 or \fIER\fR for error releasing or removing file.
 If the directive \fIdo_not_execute\fR is set in the \fBshrink.cmd\fR file,
-this field contains the this field contains the \fItag\fB: \fINO\fR.
+this field contains the \fItag\fB: \fINO\fR.
 .TP
 2
 This field contains the inode and generation number of the file.
 .TP
 3
 This field contains the stage or errno \fItag\fR.
-For the command release, \fItag\fR is either \fI S\fR for file staged back
+For the release command, \fItag\fR is either \fI S\fR for file staged back
 on-line, \fI P\fR for partial staged back on-line,
 or \fI--\fR for no stage action on this file.
 For a field with \fIER\fR in the first field, this tag is the error number.

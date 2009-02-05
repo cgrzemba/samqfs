@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.149 $"
+#pragma ident "$Revision: 1.150 $"
 
 #include "sam/osversion.h"
 
@@ -306,7 +306,21 @@ sam_sync_inodes(
 				continue;
 			}
 			if (!rw_tryenter(&ip->inode_rwl, RW_WRITER)) {
-				continue;
+				if (!(flag & SYNC_CLOSE)) {
+					continue;
+				}
+				/*
+				 * If SYNC_CLOSE, get inode writer lock. Lock
+				 * order is inode writer lock before hash mutex.
+				 * Keep inode busy to hold in hash.
+				 */
+				VN_HOLD(vp);
+				mutex_exit(&samgt.ihashlock[i]);
+				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+				mutex_enter(&samgt.ihashlock[i]);
+				mutex_enter(&vp->v_lock);
+				vp->v_count--;
+				mutex_exit(&vp->v_lock);
 			}
 			ino = ip->di.id.ino;
 			if (ip->flags.b.free || (ino == 0) ||
@@ -737,7 +751,11 @@ sam_merge_blocks(
 		mutex_exit(&mp->mi.m_sblk_mutex);
 	}
 
-	if (flag & SYNC_CLOSE) {
+	/*
+	 * Only free block reserved for .blocks on umount.
+	 */
+	if ((flag & SYNC_CLOSE) &&
+	    (mp->mt.fi_status & FS_UMOUNT_IN_PROGRESS)) {
 		if (mp->mi.m_blk_bn != 0) {
 			sam_free_lg_block(mp, mp->mi.m_blk_bn,
 			    mp->mi.m_blk_ord);
@@ -791,11 +809,13 @@ sam_free_lg_block(sam_mount_t *mp, sam_bn_t ext, int ord)
 	wptr = (uint_t *)(void *)(bp->b_un.b_addr + (offset & SAM_LOG_WMASK));
 	bit &= 0x1f;
 	if ((bn < sblk->eq[ord].fs.system) ||
-	    (sblk->eq[ord].fs.system == 0) ||
-	    (bn > sblk->eq[ord].fs.capacity)) {
+	    (bn > sblk->eq[ord].fs.capacity) ||
+	    (sblk->eq[ord].fs.system == 0)) {
 		cmn_err(CE_WARN,
-		    "SAM-QFS: %s: free_lg_block: bn=0x%llx, ord=%d",
-		    mp->mt.fi_name, (long long)bn, ord);
+		    "SAM-QFS: %s: free_lg_block: ord=%d, bn=0x%llx, "
+		    "system=0x%llx, capacity=0x%llx",
+		    mp->mt.fi_name, ord, (long long)bn,
+		    sblk->eq[ord].fs.system, sblk->eq[ord].fs.capacity);
 		brelse(bp);
 		mutex_exit(&mp->mi.m_fs[ord].eq_mutex);
 	} else {

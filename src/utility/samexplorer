@@ -34,7 +34,7 @@
 #
 #  NOTE: this script must be run as root.
 #
-# $Revision: 1.52 $
+# $Revision: 1.53 $
 #
 
 #  INPUT OPTIONS
@@ -412,7 +412,6 @@ else
 	NRECYLOGS=""
 fi
 
-
 if [ -f $ETCDIR/releaser.cmd ]; then
 	if [ -r $ETCDIR/releaser.cmd ]; then
 		RELELOGS=`sed -e "/#/s/#.*//" < $ETCDIR/releaser.cmd|grep "logfile.*="| sed -e "/logfile/,/logfile/s/^.*= *//"`
@@ -422,6 +421,17 @@ if [ -f $ETCDIR/releaser.cmd ]; then
 	fi
 else
 	RELELOGS=$VARDIR/releaser.log
+fi
+
+if [ -f $ETCDIR/shrink.cmd ]; then
+	if [ -r $ETCDIR/shrink.cmd ]; then
+		SHRKLOGS=`sed -e "/#/s/#.*//" < $ETCDIR/shrink.cmd|grep "logfile.*=" | sed -e "/logfile/,/logfile/s/^.*= *//"`
+	else
+		rerun_as_root $ETCDIR/shrink.cmd
+		SHRKLOGS=""
+	fi
+else
+	SHRKLOGS=""
 fi
 
 if [ -f $ETCDIR/stager.cmd ]; then
@@ -471,6 +481,7 @@ settrace RCY  sam-recycler
 settrace NRCY sam-nrecycler
 settrace RFT  sam-rftd
 settrace SHFS sam-sharefsd
+settrace SHRK sam-shrink
 settrace STG  sam-stagerd
 settrace SVR  sam-serverd
 settrace CLI  sam-clientd
@@ -512,18 +523,20 @@ echo "Archiver Trace:             $ARCHTRC"  >>$REPORT
 echo "Archiver Data:              $ARCHDATA" >>$REPORT
 echo "Catalog Trace:              $CATTRC"   >>$REPORT
 echo "Device Logs:                $DEVLOGS"  >>$REPORT
-echo "DBUPD Trace:		  $DBUPTRC"  >>$REPORT
+echo "DBUPD Trace:                $DBUPTRC"  >>$REPORT
 echo "FSALOGD Trace:              $FSATRC"   >>$REPORT
 echo "FSD Service Log:            $SVCFSDLOG" >>$REPORT
 echo "FSD Trace:                  $FSDTRC"   >>$REPORT
 echo "Shared Mount Service Log:   $SVCSHMNTLOG" >>$REPORT
 echo "Recycler Logs:              $RECYLOGS" >>$REPORT
-echo "New recycler Logs:          $NRECYLOGS" >>$REPORT
 echo "Recycler Trace:             $RCYTRC"   >>$REPORT
+echo "New recycler Logs:          $NRECYLOGS" >>$REPORT
 echo "New recycler Trace:         $NRCYTRC"  >>$REPORT
 echo "Releaser Logs:              $RELELOGS" >>$REPORT
 echo "RFTD Trace:                 $RFTTRC"   >>$REPORT
 echo "Share FS Trace:             $SHFSTRC"  >>$REPORT
+echo "Shrink Logs:                $SHRKLOGS" >>$REPORT
+echo "Shrink Trace:               $SHRKTRC"  >>$REPORT
 echo "Stager Logs:                $STAGLOGS" >>$REPORT
 echo "Stager Trace:               $STGTRC"   >>$REPORT
 echo "Stager Data:                $STAGDATA" >>$REPORT
@@ -744,6 +757,7 @@ showfiles $ETCDIR/nrecycler.cmd
 showfiles $ETCDIR/releaser.cmd
 showfiles $ETCDIR/rft.cmd
 showfiles $ETCDIR/samfs.cmd
+showfiles $ETCDIR/shrink.cmd
 showfiles $ETCDIR/stager.cmd
 showfiles $ETCDIR/mount.sh
 showfiles $CUSTDIR/archiver.sh
@@ -879,7 +893,7 @@ else
 	showenuf $SAMLOG\*
 fi
 
-for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $DBUPTRC $FSATRC $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $NRECYLOGS $RCYTRC $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
+for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $DBUPTRC $FSATRC $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $RCYTRC $NRECYLOGS $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $SHRKLOGS $SHRKTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
 do
 	showtails $FILES
 done

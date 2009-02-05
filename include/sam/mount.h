@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 #endif
 
 #include <sam/types.h>
@@ -147,6 +147,7 @@ struct sam_fs_info {	/* File system information */
 
 #define	FS_SRVR_DOWN	  0x00001000	/* Server is not responding */
 #define	FS_SRVR_BYTEREV	  0x00002000	/* Server has rev byte ordering */
+#define	FS_LOGSTATE_KNOWN 0x00004000	/* Journaling state (on/off) is known */
 
 #define	FS_OSDT_MOUNTED   0x00010000	/* FS is mounted by OSD Target */
 
@@ -158,7 +159,7 @@ struct sam_fs_info {	/* File system information */
 #define	FS_THAWING	  0x04000000	/* Host is thawing */
 #define	FS_RESYNCING	  0x08000000	/* Server is resyncing */
 
-#define	FS_LOGSTATE_KNOWN 0x10000000	/* Journaling state (on/off) is known */
+#define	FS_SHRINKING	  0x10000000	/* Shrinking is active on this fs */
 #define	FS_RELEASING	  0x20000000	/* releasing is active on this fs */
 #define	FS_STAGING	  0x40000000	/* staging is active on this fs */
 #define	FS_ARCHIVING	  0x80000000	/* archiving is active on this fs */

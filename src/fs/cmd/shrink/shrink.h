@@ -35,7 +35,7 @@
 #define	_SAM_FS_SHRINK_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.4 $"
+#pragma ident "$Revision: 1.5 $"
 #endif
 
 #ifndef MAXPATHLEN
@@ -66,6 +66,7 @@ typedef struct control {
 	pthread_cond_t queue_not_empty;	/* Req I/O work condition not empty */
 	pthread_cond_t queue_not_full;	/* Req I/O work condition not full */
 	pthread_cond_t queue_empty;	/* Request I/O work condition empty */
+	time_t log_time;		/* Last log time in seconds */
 	int block_size;			/* Size of buffer 1 <= nMB <= 16 */
 	int streams;			/* Number of threads */
 	int busy_files;			/* No. of busy files on this eq */

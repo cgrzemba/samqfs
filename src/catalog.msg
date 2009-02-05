@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.627 $"
+$ pragma ident "$Revision: 1.628 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -311,7 +311,7 @@ is <  supplied position (%#x)
 581 Cannot export volume from (%s).
 582 Cannot find master shared memory segment.
 583 Cannot find ordinal 0 for filesystem %s
-584 Cannot find pathname for filesystem %s inum/gen %lu/%ld\n
+584 Cannot find pathname for filesystem %s inum/gen %lu/%ld
 586 Cannot get .inodes block at offset 0x%llx
 587 Cannot get cwd
 590 cannot getcwd()

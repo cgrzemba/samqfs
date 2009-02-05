@@ -38,7 +38,7 @@
 #define	SAM_SYSCALL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.102 $"
+#pragma ident "$Revision: 1.103 $"
 #endif
 
 #include "sam/types.h"
@@ -243,12 +243,14 @@ typedef struct {			/* get superblock info */
 struct sam_setARSstatus_arg {	/* set ARS status */
 	uname_t as_name;	/* Filesystem name */
 	enum ARS {
-		ARS_set_a,
-		ARS_clr_a,
-		ARS_set_r,
-		ARS_clr_r,
-		ARS_set_s,
-		ARS_clr_s
+		ARS_set_a,		/* Set archiving */
+		ARS_clr_a,		/* Clear archiving */
+		ARS_set_r,		/* Set releasing */
+		ARS_clr_r,		/* Clear releasing */
+		ARS_set_s,		/* Set staging */
+		ARS_clr_s,		/* Clear staging */
+		ARS_set_sh,		/* Set shrinking */
+		ARS_clr_sh		/* Clear shrinking */
 	} as_status;
 };
 

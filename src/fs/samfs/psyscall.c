@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.208 $"
+#pragma ident "$Revision: 1.209 $"
 #endif
 
 #include "sam/osversion.h"
@@ -141,6 +141,14 @@ static void sam_mount_init(sam_mount_t *mp);
 static int sam_mount_info(void *arg, int size, cred_t *credp);
 #ifdef METADATA_SERVER
 static int sam_setfspartcmd(void *arg, cred_t *credp);
+
+typedef struct sam_schedule_sync_close_arg {
+	uint32_t			ord;
+	uint32_t			command;
+} sam_schedule_sync_close_arg_t;
+static void sam_sync_close_inodes(sam_schedule_entry_t *entry);
+static int sam_shrink_fs(sam_mount_t *mp, struct samdent *dp, int command);
+
 static int sam_license_info(int cmd, void *arg, int size, cred_t *credp);
 static int sam_get_fsclistat(void *arg, int size);
 static int sam_fseq_ord(void *arg, int size, cred_t *credp);
@@ -878,11 +886,13 @@ sam_mount_info(
 				if (SAM_IS_SHARED_CLIENT(mp) &&
 				    (sblk->info.sb.fs_count != args.fs_count)) {
 					cmn_err(CE_WARN,
-					    "SAM-QFS: %s: Mcf does not match "
-					    "mcf on server %s. Execute samd "
-					    "buildmcf followed by samd conf "
-					    "to update the mcf.",
-					    mp->mt.fi_name, mp->mt.fi_server);
+					    "SAM-QFS: %s: Server %s has %d "
+					    "partitions, client has %d "
+					    "Execute samd buildmcf followed by "
+					    "samd config to update mcf",
+					    mp->mt.fi_name, mp->mt.fi_server,
+					    sblk->info.sb.fs_count,
+					    args.fs_count);
 					error = EINVAL;
 					goto fini;
 				}
@@ -908,15 +918,18 @@ sam_mount_info(
 					    sblk->eq[i].fs.eq);
 					goto fini;
 				}
-				mp->mt.fs_count = sblk->info.sb.fs_count;
-				mp->orig_mt.fs_count = sblk->info.sb.fs_count;
-				mp->mt.mm_count = sblk->info.sb.mm_count;
-				mp->orig_mt.mm_count = sblk->info.sb.mm_count;
 			} else {
 				istart = 0; /* Unmounted, overwrite entries */
 				mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
 		}
+
+		/*
+		 * If not mounted, update all mount entries from the mcf.
+		 * If mounted, updated only OFF and DOWN devices from the
+		 * sblk. Close those devices if they were previously
+		 * opened.
+		 */
 		for (i = 0; i < args.fs_count; i++) {
 			struct samdent *dp;
 
@@ -2218,7 +2231,8 @@ sam_setfspartcmd(
 			if (dt != ddt) {
 				continue;
 			}
-			if (ddp->part.pt_state == DEV_ON) {
+			if ((ddp->part.pt_state == DEV_ON) ||
+			    (ddp->part.pt_state == DEV_NOALLOC)) {
 				count++;
 			}
 		}
@@ -2229,10 +2243,26 @@ sam_setfspartcmd(
 			error = EINVAL;
 			break;
 		}
-		if (pt->pt_state == DEV_ON ||
-		    pt->pt_state == DEV_NOALLOC) {
-			dp->command = (uchar_t)args.command;
-			dp->skip_ord = 0;
+		if (mp->mt.fi_status & FS_SHRINKING) {
+			error = EBUSY;
+			cmn_err(CE_WARN, "SAM-QFS: %s: remove/release "
+			    "command in progress. Check shink.log",
+			    mp->mt.fi_name);
+			break;
+		}
+		if (pt->pt_state == DEV_ON || pt->pt_state == DEV_NOALLOC) {
+			sam_schedule_sync_close_arg_t *scarg;
+
+			/*
+			 * Start a task to sync all inodes to disk.
+			 * This task will start running immediately.
+			 */
+			scarg = kmem_alloc(
+			    sizeof (sam_schedule_sync_close_arg_t), KM_SLEEP);
+			scarg->ord = ord;
+			scarg->command = args.command;
+			sam_taskq_add(sam_sync_close_inodes, mp,
+			    (void *)scarg, 0);
 		} else {
 			error = EINVAL;
 		}
@@ -2255,6 +2285,107 @@ sam_setfspartcmd(
 out:
 	SAM_SYSCALL_DEC(mp, locked);
 	return (error);
+}
+
+
+/*
+ * ----- sam_sync_close_inodes - sync all inodes to disk
+ * Call sam_update_filsys with SYNC_CLOSE to guarantee all inodes are
+ * written to disk and no more allocation will occur on the equipment.
+ */
+static void
+sam_sync_close_inodes(sam_schedule_entry_t *entry)
+{
+	sam_mount_t *mp;
+	sam_schedule_sync_close_arg_t *ap;
+	struct samdent *dp, *ddp;	/* Ptr to dev in mount table */
+	int i;
+	uchar_t command;
+	int state;
+	int ord;
+
+	mp = entry->mp;
+	mutex_enter(&mp->ms.m_waitwr_mutex);
+	mp->mt.fi_status |= FS_SHRINKING;
+	mutex_exit(&mp->ms.m_waitwr_mutex);
+
+	mutex_enter(&samgt.schedule_mutex);
+	mp->mi.m_schedule_flags |= SAM_SCHEDULE_TASK_SYNC_CLOSE_INODES;
+	mutex_exit(&samgt.schedule_mutex);
+
+	ap = (sam_schedule_sync_close_arg_t *)entry->arg;
+	command = (uchar_t)ap->command;
+	ord = ap->ord;
+	dp = &mp->mi.m_fs[ord];
+	kmem_free(ap, sizeof (sam_schedule_sync_close_arg_t));
+	TRACE(T_SAM_SYNC_INO, mp, ord, command, dp->part.pt_state);
+
+	/*
+	 * Set state so there is no more allocation.
+	 */
+	state = dp->part.pt_state;
+	for (i = 0, ddp = dp; i < dp->num_group; i++, ddp++) {
+		ddp->part.pt_state = DEV_NOALLOC;
+	}
+	dp->skip_ord = 0;
+
+	/*
+	 * Sync all inodes. Call w/SYNC_CLOSE so all
+	 * inodes are written to the .inodes file
+	 */
+	mutex_enter(&mp->ms.m_synclock);
+	sam_update_filsys(mp, SYNC_CLOSE);
+	mutex_exit(&mp->ms.m_synclock);
+
+	/*
+	 * Set command and request sam-fsd to start sam-shrink process.
+	 * Signal block thread to process LUN state change.
+	 */
+	dp->command = command;
+	if (sam_shrink_fs(mp, dp, dp->command) == 0) {
+		SAM_KICK_BLOCK(mp);
+	} else {
+		mutex_enter(&mp->ms.m_waitwr_mutex);
+		mp->mt.fi_status &= ~FS_SHRINKING;
+		mutex_exit(&mp->ms.m_waitwr_mutex);
+		dp->command = DK_CMD_null;
+		for (i = 0, ddp = dp; i < dp->num_group; i++, ddp++) {
+			ddp->part.pt_state = state;
+		}
+	}
+
+	mutex_enter(&samgt.schedule_mutex);
+	mp->mi.m_schedule_flags &= ~SAM_SCHEDULE_TASK_SYNC_CLOSE_INODES;
+	sam_taskq_remove(entry);
+	TRACE(T_SAM_SYNC_INO_RET, mp, ord, command, dp->part.pt_state);
+}
+
+
+/*
+ * ----- sam_shrink_fs - Remove/Release this eq from the file system
+ * Tell sam-fsd to start sam-shrink process.
+ */
+static int			/* 1 if error; 0 if successful */
+sam_shrink_fs(
+	sam_mount_t *mp,	/* Pointer to the mount table. */
+	struct samdent *dp,	/* Pointer to device entry in mount table */
+	int command)		/* Shrink command -- release or remove */
+{
+	struct sam_fsd_cmd cmd;
+
+	bzero((char *)&cmd, sizeof (cmd));
+	cmd.cmd = FSD_shrink;
+	bcopy(mp->mt.fi_name, cmd.args.shrink.fs_name,
+	    sizeof (cmd.args.shrink.fs_name));
+	cmd.args.shrink.command = command;
+	cmd.args.shrink.eq = dp->part.pt_eq;
+	if (sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd))) {
+		cmn_err(CE_WARN, "SAM-QFS: %s: Error removing eq %d lun %s,"
+		    " cannot send command to sam-fsd",
+		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
+		return (1);
+	}
+	return (0);
 }
 
 

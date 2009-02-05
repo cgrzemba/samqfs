@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.168 $"
+#pragma ident "$Revision: 1.169 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -180,6 +180,7 @@ static void checkChildren(void);
 static int checkRelease(int fatalflag);
 static void checkTraceFiles(void);
 static void clearReleaser(char *fsname);
+static void clearShrink(char *fsname);
 static void configure(char *defaults_name, char *diskvols_name,
 		char *fscfg_name);
 static void issueResellersMessage(void);
@@ -942,8 +943,15 @@ main(int argc, char *argv[])
 			argv[1] = args->fs_name;
 			if (args->command == DK_CMD_remove) {
 				argv[2] = "remove";
-			} else {
+			} else if (args->command == DK_CMD_release) {
 				argv[2] = "release";
+			} else {
+				Trace(TR_ERR, "Invalid shrink command %d",
+				    args->command);
+				sam_syslog(LOG_INFO,
+				    "Invalid shrink command %d.",
+				    args->command);
+				break;
 			}
 			sprintf(ceq, "%d", args->eq);
 			argv[3] = ceq;
@@ -1757,6 +1765,11 @@ checkChildren(void)
 			 * Notify the file system that the releaser exited.
 			 */
 			clearReleaser(cp->CpFsname);
+		} else if (strcmp(cp->CpName, SAM_SHRINK) == 0) {
+			/*
+			 * Notify the file system that sam-shrink exited.
+			 */
+			clearShrink(cp->CpFsname);
 		} else if (strcmp(cp->CpName, SAM_STAGER) == 0) {
 			if (!(cp->CpFlags & CP_respawn) &&
 			    (hsmsRunning == 0)) {
@@ -2204,6 +2217,24 @@ clearReleaser(char *fsname)
 
 	strncpy(args.as_name, fsname, sizeof (args.as_name));
 	args.as_status = ARS_clr_r;
+	if (sam_syscall(SC_setARSstatus, (void *)&args, sizeof (args)) < 0) {
+		Trace(TR_ERR, "SC_setARSstatus(%s) failed", fsname);
+	}
+}
+
+/*
+ * Clear sam-shrink running status for this file system.
+ */
+static void
+clearShrink(char *fsname)
+{
+	/*
+	 * Notify the file system that sam-shrink exited.
+	 */
+	struct sam_setARSstatus_arg args;
+
+	strncpy(args.as_name, fsname, sizeof (args.as_name));
+	args.as_status = ARS_clr_sh;
 	if (sam_syscall(SC_setARSstatus, (void *)&args, sizeof (args)) < 0) {
 		Trace(TR_ERR, "SC_setARSstatus(%s) failed", fsname);
 	}
@@ -2762,6 +2793,19 @@ countMountedFS(void)
 					if (!reconfig &&
 					    fi.fi_status & FS_RELEASING) {
 						clearReleaser(
+						    mi->params.fi_name);
+					}
+				}
+				if ((fi.fi_status & FS_CLIENT) == 0) {
+					/*
+					 * In case a previous fsd died with
+					 * a sam-shrink running,
+					 * clear the shrinking running bit
+					 * for this fs.
+					 */
+					if (!reconfig &&
+					    fi.fi_status & FS_SHRINKING) {
+						clearShrink(
 						    mi->params.fi_name);
 					}
 				}

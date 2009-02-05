@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.266 $"
+#pragma ident "$Revision: 1.267 $"
 #endif
 
 #include "sam/osversion.h"
@@ -325,11 +325,10 @@ sam_update_shared_filsys(
 
 /*
  * ---- sam_update_shared_sblk - Get superblock from the server.
- *	For shared client, get updated superblock for df and partition info.
- *	If the superblock has not been set or the number of partitions
- *	changed, allocate a buffer (pointed to by m_sbp) and fill
- *	with the full super block. This buffer is released during unmount
- *	by sam_cleanup_mount().
+ * For a shared client, get updated superblock for df and partition info.
+ * If the superblock has not been set, allocate a buffer (pointed to
+ * by m_sbp) and fill with the full super block. This buffer is released
+ * during unmount by sam_cleanup_mount().
  */
 int
 sam_update_shared_sblk(
@@ -361,7 +360,7 @@ sam_update_shared_sblk(
 	}
 
 	/*
-	 * OS dependent get new superblock
+	 * OS dependent get new superblock from the metadata server.
 	 */
 #ifdef sun
 	if ((error = sam_get_client_sblk(mp, wait_flag, sblk_size, &bp))) {
@@ -383,9 +382,7 @@ sam_update_shared_sblk(
 	 * any devices until all clients have reported the current fsgen.
 	 * Any new device is added at the end of the eq array in the
 	 * superblock and changed devices can only update OFF devices.
-	 */
-
-	/*
+	 *
 	 * Defer updating the new fs_count until new superblock is copied
 	 * to the in memory superblock and the mount struct is updated.
 	 */
@@ -393,13 +390,10 @@ sam_update_shared_sblk(
 	new_sblk->info.sb.fs_count = sblk->info.sb.fs_count;
 
 	/*
-	 * Update in memory copy of superblock
+	 * Update in memory copy of superblock and link mount
+	 * info to the just created in memory superblock if it is new.
 	 */
 	bcopy(new_sblk, sblk, sblk_size);
-
-	/*
-	 * Link mount info to just created in memory superblock
-	 */
 	if (mp->mi.m_sbp == NULL) {
 		mp->mi.m_sbp = sblk;
 	}
@@ -416,11 +410,9 @@ sam_update_shared_sblk(
 	    (sblk->info.sb.magic == SAM_MAGIC_V2A)) {
 		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV2;
 	}
-
 	mp->mi.m_sblk_fsid = sblk->info.sb.init;
 	mp->mi.m_sblk_fsgen = sblk->info.sb.fsgen;
 	mp->mi.m_sblk_size = sblk->info.sb.sblk_size;
-
 	sblk->info.sb.fs_count = new_sblk_fs_count;
 
 bail:

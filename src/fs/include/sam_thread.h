@@ -39,7 +39,7 @@
 #define	_SAM_FS_THREAD_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.36 $"
+#pragma ident "$Revision: 1.37 $"
 #endif
 
 
@@ -176,6 +176,7 @@ sam_schedule_entry_t *task_begin(void *);
 #define	SAM_SCHEDULE_TASK_SERVER_RECLAIM_RUNNING	0x00040000
 #define	SAM_SCHEDULE_TASK_THAWING			0x00100000
 #define	SAM_SCHEDULE_TASK_RESYNCING			0x00200000
+#define	SAM_SCHEDULE_TASK_SYNC_CLOSE_INODES		0x00400000
 
 void sam_taskq_init(void);
 void sam_taskq_destroy(void);

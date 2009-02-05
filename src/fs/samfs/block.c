@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.131 $"
+#pragma ident "$Revision: 1.132 $"
 
 #include "sam/osversion.h"
 
@@ -101,7 +101,7 @@ static void sam_reset_fs_space(sam_mount_t *mp);
 static void sam_reset_eq_space(sam_mount_t *mp, int ord);
 static void sam_drain_free_list(sam_mount_t *mp, struct samdent *dp);
 static void sam_change_state(sam_mount_t *mp, struct samdent *dp, int ord);
-static int sam_shrink_fs(sam_mount_t *mp, struct samdent *dp, int command);
+static void sam_wait_free_blocks(struct sam_mount *mp);
 static void sam_set_lun_state(struct sam_mount *mp, int ord, uchar_t state);
 static int sam_grow_fs(sam_mount_t *mp, struct samdent *dp, int ord);
 static void sam_delete_blocklist(struct sam_block **blockp);
@@ -1899,16 +1899,6 @@ sam_change_state(
 			}
 		}
 		dp->part.pt_state = DEV_NOALLOC;
-		mutex_enter(&mp->ms.m_synclock);
-		sam_update_filsys(mp, 0);
-		mutex_exit(&mp->ms.m_synclock);
-
-		if (dp->command != DK_CMD_noalloc) {
-			if (sam_shrink_fs(mp, dp, dp->command)) {
-				rtnerr = 4;
-				break;
-			}
-		}
 		sblk_modified = TRUE;
 		break;
 
@@ -2005,37 +1995,66 @@ sam_change_state(
 
 	case DK_CMD_off: {
 		offset_t space;
-
-		sam_wait_release_blk_list(mp);
-
-		mutex_enter(&mp->ms.m_synclock);
-		sam_update_filsys(mp, 0);
-		mutex_exit(&mp->ms.m_synclock);
+		struct sam_sbord *sop;
 
 		sblk = mp->mi.m_sbp;
-		space = sblk->eq[ord].fs.space +
-		    (sblk->eq[ord].fs.system * sblk->eq[ord].fs.num_group);
-		if (space != sblk->eq[ord].fs.capacity) {
+		sop = &sblk->eq[ord].fs;
+		sam_wait_free_blocks(mp);
+
+		space = sop->space + (sop->system * sop->num_group);
+		if (space != sop->capacity) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: cannot OFF ord=%d space 0x%llx KB"
 			    " is not equal to capacity 0x%llx KB",
-			    mp->mt.fi_name, ord, space,
-			    sblk->eq[ord].fs.capacity);
+			    mp->mt.fi_name, ord, space, sop->capacity);
 			rtnerr = 9;
 		} else {
+			/*
+			 * Release space for bit map if after system.  This
+			 * occurs when a data device is added with online grow.
+			 */
+			if (sop->allocmap >= sblk->eq[sop->mm_ord].fs.system) {
+				sam_rel_blks_t *rlp;
+
+				rlp = (sam_rel_blks_t *)kmem_zalloc(
+				    sizeof (sam_rel_blks_t), KM_SLEEP);
+				rlp->status.b.direct_map = 1;
+				if (sblk->eq[sop->mm_ord].fs.type == DT_META) {
+					rlp->status.b.meta = 1;
+				}
+				rlp->e.extent[0] = (sop->allocmap >>
+				    mp->mi.m_bn_shift);
+				rlp->e.extent_ord[0] = sop->mm_ord;
+				rlp->e.extent[1] = sop->l_allocmap;
+				mutex_enter(&mp->mi.m_inode.mutex);
+				rlp->next = mp->mi.m_next;
+				mp->mi.m_next = rlp;
+				mutex_exit(&mp->mi.m_inode.mutex);
+				mutex_enter(&mp->mi.m_inode.put_mutex);
+				if (mp->mi.m_inode.put_wait) {
+					cv_signal(&mp->mi.m_inode.put_cv);
+				}
+				mutex_exit(&mp->mi.m_inode.put_mutex);
+				sam_wait_free_blocks(mp);
+			}
 			sam_remove_from_allocation_links(mp, ord);
 			dp->part.pt_state = DEV_OFF;
 			mutex_enter(&mp->mi.m_sblk_mutex);
-			sblk->eq[ord].fs.state = DEV_OFF;
-			sblk->info.sb.capacity -= sblk->eq[ord].fs.capacity;
-			sblk->eq[ord].fs.capacity = 0;
-			sblk->info.sb.space -= sblk->eq[ord].fs.space;
-			sblk->eq[ord].fs.space = 0;
-			sblk->eq[ord].fs.system = 0;
-			sblk->eq[ord].fs.dau_next = 0;
+			sop->state = DEV_OFF;
+			sblk->info.sb.capacity -= sop->capacity;
+			sop->capacity = 0;
+			sblk->info.sb.space -= sop->space;
+			sop->space = 0;
+			sop->system = 0;
+			sop->dau_next = 0;
+			sop->allocmap = 0;
+			sop->l_allocmap = 0;
 			mutex_exit(&mp->mi.m_sblk_mutex);
 			sblk_modified = TRUE;
 		}
+		mutex_enter(&mp->ms.m_waitwr_mutex);
+		mp->mt.fi_status &= ~FS_SHRINKING;
+		mutex_exit(&mp->ms.m_waitwr_mutex);
 		break;
 		}
 
@@ -2074,6 +2093,23 @@ sam_change_state(
 
 
 /*
+ * ----- sam_wait_free_blocks - Wait until all blocks are in free map.
+ * Wait until free block list has been put in the free block
+ * pool (sam_fb_pool_t). Call sam_update_filsys to make sure
+ * the free block list has been merged into the free block maps.
+ */
+static void
+sam_wait_free_blocks(
+	struct sam_mount *mp)
+{
+	sam_wait_release_blk_list(mp);
+	mutex_enter(&mp->ms.m_synclock);
+	sam_update_filsys(mp, 0);
+	mutex_exit(&mp->ms.m_synclock);
+}
+
+
+/*
  * ----- sam_set_lun_state - Set state for lun or striped group
  */
 static void
@@ -2095,35 +2131,6 @@ sam_set_lun_state(
 		dp->part.pt_state = state;
 	}
 }
-
-
-/*
- * ----- sam_shrink_fs - Remove/Release this eq from the file system
- * Tell sam-fsd to start sam-shrink process.
- */
-static int			/* 1 if error; 0 if successful */
-sam_shrink_fs(
-	sam_mount_t *mp,	/* Pointer to the mount table. */
-	struct samdent *dp,	/* Pointer to device entry in mount table */
-	int command)		/* Shrink command -- release or remove */
-{
-	struct sam_fsd_cmd cmd;
-
-	bzero((char *)&cmd, sizeof (cmd));
-	cmd.cmd = FSD_shrink;
-	bcopy(mp->mt.fi_name, cmd.args.shrink.fs_name,
-	    sizeof (cmd.args.shrink.fs_name));
-	cmd.args.shrink.command = command;
-	cmd.args.shrink.eq = dp->part.pt_eq;
-	if (sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd))) {
-		cmn_err(CE_WARN, "SAM-QFS: %s: Error removing eq %d lun %s,"
-		    " cannot send command to sam-fsd",
-		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
-		return (1);
-	}
-	return (0);
-}
-
 
 
 /*

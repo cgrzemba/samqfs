@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 
 
 /* ANSI headers. */
@@ -166,6 +166,7 @@ FS_FREEZING,		"FREEZING",	/* Host is failing over */
 FS_FROZEN,		"FROZEN",	/* Host is frozen */
 FS_THAWING,		"THAWING",	/* Host is thawing */
 FS_RESYNCING,		"RESYNCING",	/* Server is resyncing */
+FS_SHRINKING,		"SHRINKING",	/* shrinking is active on this fs */
 FS_RELEASING,		"RELEASING",	/* releasing is active on this fs */
 FS_STAGING,		"STAGING",	/* staging is active on this fs */
 FS_ARCHIVING,		"ARCHIVING",	/* archiving is active on this fs */

@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 #include "sam/osversion.h"
 
@@ -704,7 +704,8 @@ StrFromFsStatus(
 
 	str[0]	= fi->fi_status & FS_MOUNTED			? 'm' : '-';
 	str[0]	= fi->fi_status & FS_MOUNTING			? 'M' : str[0];
-	str[1]	= fi->fi_status & FS_UMOUNT_IN_PROGRESS ? 'u' : '-';
+	str[0]	= fi->fi_status & FS_UMOUNT_IN_PROGRESS ? 'u' : str[0];
+	str[1]	= fi->fi_status & FS_SHRINKING			? 's' : '-';
 	str[2]	= fi->fi_status & FS_ARCHIVING			? 'A' : '-';
 	str[3]	= fi->fi_status & FS_RELEASING			? 'R' : '-';
 	str[4]	= fi->fi_status & FS_STAGING			? 'S' : '-';

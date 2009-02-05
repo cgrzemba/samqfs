@@ -50,7 +50,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.6 $"
+#pragma ident "$Revision: 1.7 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -142,7 +142,8 @@ static int sam_ord_on_indirects(struct sam_fs_info *mp, sam_perm_inode_t *ip,
 	ushort_t ord);
 static int sam_move_file(struct sam_fs_info *mp, sam_perm_inode_t *ip);
 static int sam_process_file(struct sam_fs_info *mp, sam_perm_inode_t *ip);
-static void sam_write_log(sam_perm_inode_t *ip, int error);
+static void sam_write_log(sam_perm_inode_t *ip, boolean_t released,
+	char *cmd, int error);
 
 static int getfullpathname(char *fsname, sam_id_t id, char **fullpath);
 extern int read_cmd_file(char *cfgFname);
@@ -187,7 +188,7 @@ main(int argc, char *argv[])
 	struct sam_fs_part *part, *pt;	/* Array of partitions */
 	int		command;
 	int		size_part;
-	int		eq;
+	equ_t		eq;
 	int		ord;
 	dtype_t	oldpt;
 	int		error = 0;
@@ -300,7 +301,7 @@ main(int argc, char *argv[])
 		SendCustMsg(HERE, 2350, argv[3]);
 		exit(EXIT_FAILURE);
 	}
-	control.eq = (equ_t)eq;		/* Equipment */
+	control.eq = eq;		/* Equipment */
 	control.ord = (ushort_t)ord;	/* Equipment ordinal */
 	control.ord2 = -1;
 	control.command = command;	/* Release or Remove command */
@@ -391,7 +392,6 @@ main(int argc, char *argv[])
 	if (control.block_size) {
 		pblock.block_size = (int64_t)control.block_size * 1048576;
 	}
-	Trace(TR_MISC, "sam-shrink bs=%llx", pblock.block_size);
 	pblock.read_threads = 8;	/* Read threads */
 	pblock.queue_size = 8;		/* Queue size */
 	if (control.streams) {
@@ -434,9 +434,10 @@ main(int argc, char *argv[])
 	}
 	if (error == 0) {
 		if (control.total_errors) {
-			Trace(TR_MISC, "sam-shrink unsuccessful: busy=%d "
-			    "unarchive=%d total errors=%d", control.busy_files,
-			    control.unarchived_files, control.total_errors);
+			Trace(TR_MISC, "sam-shrink unsuccessful: busy files=%d "
+			    "unarchived files=%d total errors=%d",
+			    control.busy_files, control.unarchived_files,
+			    control.total_errors);
 			sam_shrink_header(4, argv[2], argv[3]);
 		} else {
 			Trace(TR_MISC, "sam-shrink completed successfully:"
@@ -482,8 +483,9 @@ sam_shrink_header(
 	case 4:
 		sprintf(msgbuf,
 		    "Shrink process unsuccessful for %s eq %s: "
-		    "%d busy files, %d unarchived files",
-		    fs_name, eq, control.busy_files, control.unarchived_files);
+		    "busy files=%d, unarchived files=%d, total_errors=%d",
+		    fs_name, eq, control.busy_files, control.unarchived_files,
+		    control.total_errors);
 		break;
 	default:
 		break;
@@ -494,6 +496,8 @@ sam_shrink_header(
 	pthread_mutex_lock(&log_lock);
 	fprintf(control.log, "%s %s\n", ascii, msgbuf);
 	pthread_mutex_unlock(&log_lock);
+	fflush(control.log);
+	control.log_time = time(NULL);
 }
 
 
@@ -608,14 +612,16 @@ sam_shrink_fs(
 	signal(SIGHUP, SIG_IGN);
 
 	/*
-	 * Create the threads and allocate the buffers.
-	 */
-	sam_init_pblock(fs_name, pp);
-
-	/*
 	 * Open the .inodes file for all threads.
 	 */
 	sam_setup_file(pp);
+
+	/*
+	 * Create the threads and allocate the buffers.
+	 */
+	sam_init_pblock(fs_name, pp);
+	Trace(TR_MISC, "sam-shrink blk_sz=%llx, threads=%d",
+	    pp->block_size, pp->read_threads);
 
 	/*
 	 * Must set concurrency for all threads to be active
@@ -735,6 +741,16 @@ sam_setup_file(pblock_t *pp)
 	pp->file_size = statbuf.st_size;
 
 	/*
+	 * Compute number of blocks based on the file size & block size.
+	 */
+	pp->block_count = (pp->file_size + pp->block_size - 1) / pp->block_size;
+	n = (int)pp->block_count;
+	if (n < pp->read_threads) {
+		pp->read_threads = n;
+		pp->queue_size = n;
+	}
+
+	/*
 	 * Open the mountpoint and then open the .inodes file for each thread
 	 * by using an ioctl on the mount point.
 	 */
@@ -757,17 +773,6 @@ sam_setup_file(pblock_t *pp)
 		}
 	}
 	(void) close(mountpoint_fd);
-
-
-	/*
-	 * Compute number of blocks based on the file size & block size.
-	 */
-	pp->block_count = (pp->file_size + pp->block_size - 1) / pp->block_size;
-	n = (int)pp->block_count;
-	if (n < pp->read_threads) {
-		pp->read_threads = n;
-		pp->queue_size = n;
-	}
 }
 
 
@@ -957,18 +962,8 @@ sam_worker_thread(void *c)
 		pthread_cond_signal(&control.queue_not_full);
 		pthread_mutex_unlock(&control.queue_full_lock);
 
-		/*
-		 * Seek and then issue read call. Wait until done.
-		 */
-		if (lseek64(tp->fd, wp->byte_offset, SEEK_SET) == -1) {
-			/* llseek: offset %lld (%#llx): %s */
-			SendCustMsg(HERE, 25007, wp->byte_offset,
-			    wp->byte_offset, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-
-		while ((status = read(tp->fd, wp->buffer, wp->size)) !=
-		    wp->size) {
+		while ((status = pread64(tp->fd, wp->buffer, wp->size,
+		    wp->byte_offset)) != wp->size) {
 			if (errs < io_errors) {
 				Trace(TR_ERR, "Read error at %lld (%#llx): "
 				    "%s: returned %d: retry %d",
@@ -1041,7 +1036,7 @@ sam_check_inodes(work_t *wp)
 	char *buf = wp->buffer;
 	int64_t size = wp->size;
 	int64_t ino_size = sizeof (sam_perm_inode_t);
-	int i;
+	int64_t i;
 	sam_perm_inode_t *ip;
 	struct sam_fs_info *mp = control.mp;
 
@@ -1064,8 +1059,7 @@ sam_check_inodes(work_t *wp)
 			 * deleted before we start processing the file. Ignore
 			 * ENOENT error for this case.
 			 */
-			if (sam_process_file(mp, ip) &&
-			    (errno != ENOENT)) {
+			if (sam_process_file(mp, ip) && (errno != ENOENT)) {
 				pthread_mutex_lock(&log_lock);
 				control.total_errors++;
 				pthread_mutex_unlock(&log_lock);
@@ -1091,22 +1085,23 @@ sam_ord_found(sam_perm_inode_t *ip)
 		}
 	}
 	for (de = NDEXT; de < (NDEXT + NIEXT); de++) {
-		if (ip->di.extent[de]) {
-			errno = 0;
-			if ((sam_ord_on_indirects(mp, ip, control.ord))) {
-				Trace(TR_MISC, "sam_ord_found: found indirects:"
-				    "%d.%d ord=%d",
-				    ip->di.id.ino, ip->di.id.gen, control.ord);
-				return (TRUE);
-			} else {
-				if ((errno > 0) && (errno != ENOENT)) {
-					Trace(TR_ERR, "sam_ord_found:"
-					    "%d.%d ord=%d, ERROR: %s",
-					    ip->di.id.ino, ip->di.id.gen,
-					    control.ord, strerror(errno));
-				}
-				return (FALSE);
+		if (ip->di.extent[de] == 0) {
+			continue;
+		}
+		errno = 0;
+		if ((sam_ord_on_indirects(mp, ip, control.ord))) {
+			Trace(TR_MISC, "sam_ord_found: found indirects:"
+			    "%d.%d ord=%d",
+			    ip->di.id.ino, ip->di.id.gen, control.ord);
+			return (TRUE);
+		} else {
+			if ((errno > 0) && (errno != ENOENT)) {
+				Trace(TR_ERR, "sam_ord_found:"
+				    "%d.%d ord=%d, ERROR: %s",
+				    ip->di.id.ino, ip->di.id.gen,
+				    control.ord, strerror(errno));
 			}
+			return (FALSE);
 		}
 	}
 	return (FALSE);
@@ -1143,7 +1138,9 @@ sam_ord_on_indirects(
 
 /*
  * sam_process_file - release/remove the given file.
- * If release, remove partial blocks.
+ * The release only releases archive files. It is important to
+ * release files before moving the disk blocks because the eq
+ * may be totally down.
  */
 static int
 sam_process_file(
@@ -1156,14 +1153,19 @@ sam_process_file(
 	 * Check for do_not_execute parameter.
 	 */
 	if (control.do_not_execute) {
-		sam_write_log(ip, -1);
+		sam_write_log(ip, FALSE, "--", 0);
 		return (0);
 	}
 
-	/*
-	 * Release file if command == release and file is archived.
-	 */
-	if (control.command == DK_CMD_release && ip->di.arch_status) {
+	if (control.command == DK_CMD_release) {
+		/*
+		 * Release file if release command.
+		 * Release any partial blocks because we are draining the ord.
+		 * If file has no archive copy, EBADE is returned. The
+		 * release does not complete successfuly if there are file
+		 * with no archive copy. You must type the remove command
+		 * to move all the unarchived files to an alternate eq.
+		 */
 		sam_fsdropds_arg_t	dropds_arg;
 
 		dropds_arg.fseq = mp->fi_eq;
@@ -1173,47 +1175,59 @@ sam_process_file(
 		errno = 0;
 		if (sam_syscall(SC_fsdropds, &dropds_arg,
 		    sizeof (dropds_arg)) == 0) {
-
-			/*
-			 * Log if requested
-			 */
 			if (control.display_all_files) {
-				sam_write_log(ip, 0);
+				sam_write_log(ip, TRUE, "RE", 0);
 			}
-			return (0);
+			return (0);	/* Successfully released file */
 		}
 		error = errno;
-		Trace(TR_ERR, "Can't release inode %d.%d: %s",
-		    ip->di.id.ino, ip->di.id.gen, strerror(error));
 		if (error == EBUSY) {
+			Trace(TR_ERR,
+			    "Can't release inode %d.%d: staging or archiving",
+			    ip->di.id.ino, ip->di.id.gen);
 			pthread_mutex_lock(&log_lock);
 			control.busy_files++;
 			pthread_mutex_unlock(&log_lock);
+		} else if (error == EBADE) {
+			Trace(TR_ERR,
+			    "Can't release inode %d.%d: No archive copy",
+			    ip->di.id.ino, ip->di.id.gen);
+			pthread_mutex_lock(&log_lock);
+			control.unarchived_files++;
+			pthread_mutex_unlock(&log_lock);
+			if (control.display_all_files && (error != ENOENT)) {
+				sam_write_log(ip, FALSE, "NA", 0);
+			}
+			return (error);
+		} else if (error != ENOENT) {
+			Trace(TR_ERR, "Can't release inode %d.%d: %s",
+			    ip->di.id.ino, ip->di.id.gen, strerror(error));
 		}
 	} else if (control.command == DK_CMD_remove) {
-
+		/*
+		 * Move files if remove command. The remove will complete
+		 * successfully if there are no errors moving the files.
+		 */
 		error = sam_move_file(mp, ip);
-
-		if (error < 0) {
-			Trace(TR_ERR, "Remove failed for inode %d.%d, error %d",
-			    ip->di.id.ino, ip->di.id.gen, errno);
-			error = errno;
-
-		} else {
+		if (error == 0) {
 			if (control.display_all_files) {
-				sam_write_log(ip, 0);
+				sam_write_log(ip, FALSE, "MV", 0);
 			}
-			return (0);
+			return (0);	/* Successfully moved file */
+		} else if (error < 0) {
+			error = errno;
 		}
-
+		if (error != ENOENT) {
+			Trace(TR_ERR, "Can't move inode %d.%d: %s",
+			    ip->di.id.ino, ip->di.id.gen, strerror(error));
+		}
 	} else {
-		Trace(TR_ERR, "sam_process_file: invalid command %d",
+		error = ENOTTY;
+		Trace(TR_ERR, "sam_process_file: invalid command: %d",
 		    control.command);
-		error = EINVAL;
 	}
-
-	if (control.display_all_files) {
-		sam_write_log(ip, error);
+	if (control.display_all_files && (error != ENOENT)) {
+		sam_write_log(ip, FALSE, "ER", error);
 	}
 	return (error);
 }
@@ -1221,28 +1235,21 @@ sam_process_file(
 
 /*
  * sam_write_log - Write entries to log.
- * RE = release; RM = remove; ER = error
+ * cmd: RE = release; RM = remove; NA = Not archived; ER = error
  */
 static void
 sam_write_log(
-	sam_perm_inode_t *ip,
-	int error)
+	sam_perm_inode_t *ip,		/* Pointer to inode */
+	boolean_t released,		/* TRUE if file released */
+	char *cmd,			/* 2 char specifier */
+	int error)			/* Errno */
 {
 	char pathname[MAXPATHLEN + 4];
 	char *p = &pathname[0];
 	char seg_num[16] = "S0";
 	char rel_str[16] = "--";
-	boolean_t released = (control.command == DK_CMD_release) ? TRUE : FALSE;
-	char *cmd = "--";
+	time_t log_time;
 
-	if (error == 0) {
-		sprintf(cmd, "%s", (released ? "RE" : "MV"));
-	} else if (error < 0) {
-		sprintf(cmd, "%s", "NO");
-		error = 0;
-	} else {
-		sprintf(cmd, "%s", "ER");
-	}
 	if (S_ISSEGS(&ip->di)) {
 		sprintf(seg_num, "S%d", ip->di.rm.info.dk.seg.ord + 1);
 	}
@@ -1250,8 +1257,6 @@ sam_write_log(
 		if (error == 0) {
 			error = errno;
 		}
-		Trace(TR_ERR, "GERFULLPATHNAME Error %d %s %s %s", error,
-		    cmd, seg_num, p);
 	}
 	if (error) {
 		sprintf(rel_str, "%d", error);
@@ -1270,6 +1275,10 @@ sam_write_log(
 	    ip->di.id.gen, rel_str, seg_num, p);
 	Trace(TR_MISC, "%s %d.%d %s %s %s", cmd, ip->di.id.ino,
 	    ip->di.id.gen, rel_str, seg_num, p);
+	log_time = time(NULL);
+	if ((control.log_time + 60) < log_time) {
+		fflush(control.log);
+	}
 	pthread_mutex_unlock(&log_lock);
 }
 
@@ -1377,7 +1386,7 @@ getfullpathname(
 	}
 	sam_closedir(&dir_fd);
 	msg = catgets(catfd, SET, 584,
-	    "Cannot find pathname for filesystem %s inum/gen %lu.%ld\n");
+	    "Cannot find pathname for filesystem %s inum/gen %lu.%ld");
 	sprintf(*fullpath, msg, fsname, id.ino, id.gen);
 	free(dirbuf);
 	return (-1);
