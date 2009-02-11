@@ -42,11 +42,11 @@
  * contributors.
  */
 
-#pragma ident	"$Revision: 1.2 $"
+#pragma ident	"$Revision: 1.1 $"
 
 /*
- * chproj [-fhR] projectname|projectID file
- * chproj -R [-f] [-H|-L|-P] projectname|projectID file
+ * schproj [-fhR] projectname|projectID file
+ * schproj -R [-f] [-H|-L|-P] projectname|projectID file
  */
 
 /*
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 				 * If more than one of -H, -L, and -P
 				 * are specified, only the last option
 				 * specified determines the behavior of
-				 * chproj.  In addition, make [-H|-L]
+				 * schproj.  In addition, make [-H|-L]
 				 * mutually exclusive of -h.
 				 */
 				Lflag = Pflag = 0;
@@ -565,8 +565,8 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr, "usage:\n"
-	    "\tchproj [-fhR] projectname|projectID file\n"
-	    "\tchproj -R [-f] [-H|-L|-P] projectname|projectID file\n");
+	    "\tschproj [-fhR] projectname|projectID file\n"
+	    "\tschproj -R [-f] [-H|-L|-P] projectname|projectID file\n");
 	exit(2);
 }
 

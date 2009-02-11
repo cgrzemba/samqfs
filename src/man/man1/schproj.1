@@ -1,4 +1,4 @@
-.\" $Revision: 1.2 $
+.\" $Revision: 1.1 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,19 +25,19 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH chproj 1 "07 Jun 2008"
+.TH schproj 1 "07 Jun 2008"
 .SH NAME
-chproj \- change file project attribute
+schproj \- change file project attribute
 .na
 .SH SYNOPSIS
-.B chproj
+.B schproj
 [
 .B \-fhR
 ]
 .RB project
 .IR filename .\|.\|.\|
 
-.B chproj
+.B schproj
 .B \-R
 [
 .B \-H | -L  | -P
@@ -50,7 +50,7 @@ chproj \- change file project attribute
 .PP
 \fBSUNWqfs\fR
 .SH DESCRIPTION
-.B chproj
+.B schproj
 sets the project attribute of files and directories.
 The project can be specified as either the project name
 or the numeric value from the project database /etc/project.
@@ -103,11 +103,11 @@ file hierarchy.
 .LP
 Specifying more than one of the  mutually-exclusive  options
 -H,  -L,  or  -P is not considered an error. The last option
-specified determines the behavior of chproj.
+specified determines the behavior of schproj.
 .TP
 .B \-R
 Recursive.
-chproj descends through the directory and any subdirectories,
+schproj descends through the directory and any subdirectories,
 setting the specified project as it proceeds.
 When a symbolic link is encountered,
 the project of the target file is changed

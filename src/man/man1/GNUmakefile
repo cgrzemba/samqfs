@@ -1,4 +1,4 @@
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 MAN_SRCS = \
 	alterfile.1 \
 	archive.1 \
-	chproj.1 \
+	schproj.1 \
 	dvt.1 \
 	genfile.1 \
 	pdvt.1 \
@@ -50,7 +50,7 @@ MAN_SRCS = \
 
 MAN_RELEASED_SRCS = \
 	archive.1 \
-	chproj.1 \
+	schproj.1 \
 	release.1 \
 	request.1 \
 	sdu.1 \
@@ -63,7 +63,7 @@ MAN_RELEASED_SRCS = \
 	stage.1
 
 QFS_RELEASED_SRCS = \
-	chproj.1 \
+	schproj.1 \
 	setfa.1 \
 	sfind.1 \
 	sls.1

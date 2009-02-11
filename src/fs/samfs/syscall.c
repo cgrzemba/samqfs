@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.164 $"
+#pragma ident "$Revision: 1.165 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2285,7 +2285,7 @@ sam_set_projid(void *arg, int size)
 	 * type.
 	 *
 	 * Until then, we enforce at user-level via a set-user-ID-root
-	 * application (/opt/SUNWsamfs/bin/chproj) the requirement that the
+	 * application (/opt/SUNWsamfs/bin/schproj) the requirement that the
 	 * user must belong to the Solaris project that is being set on
 	 * the file/directory.  This interface is privileged-only to prevent
 	 * an unprivileged application from bypassing that policy.

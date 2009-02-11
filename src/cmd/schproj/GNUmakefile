@@ -1,4 +1,4 @@
-# $Revision: 1.2 $
+# $Revision: 1.1 $
 
 #    SAM-QFS_notice_begin
 #
@@ -30,9 +30,9 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-PROG = chproj
+PROG = schproj
 PROG_SRC = \
-	chproj.c
+	schproj.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lproject -lsam -lsamut -lsamconf $(LIBSO)
 
