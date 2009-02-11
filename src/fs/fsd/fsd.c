@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.169 $"
+#pragma ident "$Revision: 1.170 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -1883,31 +1883,15 @@ checkChildren(void)
 		}
 		if (*cp->CpName != '\0' && cp->CpPid == 0) {
 			if (time(NULL) >= cp->CpRestartTime) {
-				static boolean_t exePathFirst = TRUE;
 				struct stat sb;
-				static upath_t path;
+				upath_t path;
 				char	*argv[6];
-				int		i;
+				int	i;
 				int	ct_fd;
 
 				/*
 				 * Time to restart child.
-				 *
-				 * Assure that our executable directory is
-				 * accessible.
 				 */
-				if (stat(SAM_EXECUTE_PATH, &sb) != 0) {
-					if (exePathFirst) {
-						exePathFirst = FALSE;
-						Trace(TR_MISC,
-						    "Path "SAM_EXECUTE_PATH
-						    " not found: %s",
-						    StrFromErrno(errno, NULL,
-						    0));
-					}
-					break;
-				}
-				exePathFirst = TRUE;
 				cp->CpPid = FindProc(cp->CpName, cp->CpFsname);
 				if (cp->CpPid != 0) {
 					Trace(TR_MISC, "adopted %s %ld",
@@ -1939,8 +1923,28 @@ checkChildren(void)
 				for (i = STDERR_FILENO + 1; i < OPEN_MAX; i++) {
 					(void) fcntl(i, F_SETFD, FD_CLOEXEC);
 				}
+
+				/*
+				 * Set up executable path name and assure
+				 * that it exists.  Try the following
+				 * paths in order:
+				 *	SAM_EXECUTE_PATH
+				 *	SAM_UTILITY_PATH
+				 */
 				snprintf(path, sizeof (path), "%s/%s",
 				    SAM_EXECUTE_PATH, argv[0]);
+				if (stat(path, &sb) != 0) {
+					snprintf(path, sizeof (path), "%s/%s",
+					    SAM_UTILITY_PATH, argv[0]);
+					if (stat(path, &sb) != 0) {
+						Trace(TR_MISC,
+						    "Cannot find executable "
+						    "for %s - %s", argv[0],
+						    StrFromErrno(errno, NULL,
+						    0));
+						continue;
+					}
+				}
 
 				ct_fd = initChildContract();
 				if ((cp->CpPid = fork1()) < 0) {

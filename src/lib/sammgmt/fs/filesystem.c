@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.83 $"
+#pragma ident   "$Revision: 1.84 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -3915,7 +3915,7 @@ char *kv_options) {
 
 /*
  * This essentially boils down to an online grow of the
- * file system followed by a shink_remove
+ * file system followed by a shrink_remove
  */
 static int
 shrink_replace(

@@ -1,4 +1,4 @@
-.\" $Revision: 1.4 $
+.\" $Revision: 1.5 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -29,7 +29,7 @@
 .SH NAME
 sam-shrink \- Sun \%QFS and Sun \%SAM-QFS disk space shrink process
 .SH SYNOPSIS
-\fB/opt/SUNWsamfs/sbin/sam-shrink\fR
+\fB/opt/SUNWsamfs/util/sam-shrink\fR
 \fIfile_system\fR | \fIfamily_set\fR
 \fI\-remove\fR | \fI\-release\fR
 .I eq
@@ -40,16 +40,21 @@ sam-shrink \- Sun \%QFS and Sun \%SAM-QFS disk space shrink process
 .SH DESCRIPTION
 This \fIsam-shrink\fP process is executed when a shrink of a Sun \%QFS
 or Sun \%SAM-QFS file system is required.
-The \fIsamadm\fP command eq-remove or the \fIsamu\fP command
-\fIremove\fP or \fIrelease\fP cause the state of the specified device
-to be set to \fInoalloc\fP. Then, the file system requests the
-master daemon \fIsam-fsd\fP to start the process \%\fBsam-shrink\fR.
-The specified device (\fIeq\fP) must be a data device that
-resides within a \fIma\fP file system.
-If the data device is a stripe group, the first
-\fIeq\fP of the stripe group must be specified.
-The \fIeq\fP state is changed to \fInoalloc\fP before \fIsam-shrink\fP is
-started. This means there will be no more allocation on this device.
+The \fIsamadm\fP command \fIeq-remove\fP or \fIeq-release\fP or the
+\fIsamu\fP command \fIremove\fP or \fIrelease\fP cause the state of the
+specified device to be set to \fInoalloc\fP. Then, the file system
+requests the master daemon \fIsam-fsd\fP to start the process
+\%\fBsam-shrink\fR.  The specified device (\fIeq\fP) must be a data
+device that resides within a \fIma\fP file system.  If the data device
+is a stripe group, the first \fIeq\fP of the stripe group must be
+specified.  The \fIeq\fP state is changed to \fInoalloc\fP before
+\fIsam-shrink\fP is started. This means there will be no more
+allocation on this device.
+.PP
+The \fIsam-shrink\fP command should \fInot\fP be executed by the
+administrator separately.  Pre and post processing that the
+Sun \%SAM-QFS file system does automatically is necessary for a
+successful shrink.
 .PP
 The remove option copies all data that reside on \fIeq\fP
 to the other available data devices according to the mount parameters.

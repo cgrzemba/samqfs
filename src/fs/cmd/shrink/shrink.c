@@ -39,7 +39,7 @@
  *  filesystem tells sam-fsd that a remove or release command has
  *  been entered for a eq (ordinal).
  *
- *  sam-shink fs_name -release | -remove eq
+ *  sam-shrink fs_name -release | -remove eq
  *
  *  After processing command-line options, the shrink reads the
  *  entire .inodes file from the filesystem.  As it's reading the .inodes,
@@ -50,7 +50,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.209 $"
+#pragma ident "$Revision: 1.210 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2246,7 +2246,7 @@ sam_setfspartcmd(
 		if (mp->mt.fi_status & FS_SHRINKING) {
 			error = EBUSY;
 			cmn_err(CE_WARN, "SAM-QFS: %s: remove/release "
-			    "command in progress. Check shink.log",
+			    "command in progress. Check shrink.log",
 			    mp->mt.fi_name);
 			break;
 		}
