@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.132 $"
+#pragma ident "$Revision: 1.133 $"
 
 #include "sam/osversion.h"
 
@@ -2263,8 +2263,8 @@ sam_grow_fs(
 	}
 
 	/*
-	 * If ma file system & if meta device, put maps on this device;
-	 * otherwise roundrobin the maps on all other meta devices.
+	 * If ma file system and data device, put the map on next meta device.
+	 * If ma file system and meta device, put maps on this device.
 	 * If ms file system, put maps on this device.
 	 * Compute blocks = # of logical blocks (in units of 1024 bytes)
 	 */
@@ -2342,8 +2342,9 @@ sam_grow_fs(
 	sblk->info.sb.sblk_size = new_sblk_size;
 
 	/*
-	 * set *global* mm_ord to the mm ordinal used for this new device
-	 * sam_init_sblk_dev will advance to next mm device
+	 * set global mm_ord to the mm ordinal used for this new device.
+	 * sam_init_sblk_dev will advance the global mm_ord to the next
+	 * mm device if necessary.
 	 */
 	sblk->info.sb.mm_ord = mm_ord;
 

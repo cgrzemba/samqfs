@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.25 $"
+#pragma ident "$Revision: 1.26 $"
 
 /* ----- UNIX Includes */
 
@@ -165,13 +165,18 @@ sam_init_sblk_dev(
 		sop->l_allocmap = howmany(sop->dau_size,
 		    (SAM_DEV_BSIZE * NBBY));
 
+		/*
+		 * Do not roundrobin the bitmaps for version 2 (sammkfs -P),
+		 * but do roundrobin the bitmaps for version 2A (sammkfs and
+		 * promotion of version 2 to 2A for online grow).
+		 */
 		if ((sbp->mm_count == 0) ||
-		    ((dt == MM) && SBLK_MAPS_ALIGNED(sbp))) {
+		    ((dt == MM) && SAM_MAGIC_V2A_OR_HIGHER(sbp))) {
 			/*
 			 * Put map on this device.  For example:
 			 * ms file system, no metadata devices -
 			 * maps on same device as data.
-			 * ma file system, metadata device, map aligned -
+			 * ma file system, metadata device, version 2A -
 			 * metadata maps on each metadata device.
 			 */
 			sop->mm_ord = args->ord;
@@ -180,41 +185,39 @@ sam_init_sblk_dev(
 		} else {
 			/*
 			 * Put map on proper metadata device.  For example:
-			 * ma file system, data device, map aligned -
+			 * ma file system, data device, version 2A -
 			 * data maps roundrobin on metadata devices.
-			 * ma file system, not map aligned -
-			 * all metadata and data device maps on first metadata
-			 * device.
+			 * ma file system, version 2 -
+			 * all metadata and data device maps on first
+			 * metadata device.
 			 * Note that ma requires ord 0 to be a metadata device.
 			 */
 			sop->mm_ord = sbp->mm_ord;
 			somp = &sblk->eq[sop->mm_ord].fs;
 			mdt = MM;
-		}
 
-		/*
-		 * Advance the metadata ordinal to roundrobin the map.
-		 * Note that this needs to be done for metadata devices
-		 * that are added with online grow.
-		 */
-		if (SBLK_MAPS_ALIGNED(sbp)) {
-			int i = 0;
-			while (i != sbp->fs_count) {
-				struct sam_sbord *mop;
+			/*
+			 * Advance the metadata ordinal for ma file system
+			 * to roundrobin the data device map.
+			 */
+			if (SAM_MAGIC_V2A_OR_HIGHER(sbp)) {
+				int i = 0;
+				while (i != sbp->fs_count) {
+					struct sam_sbord *mop;
 
-				i++;
-				sbp->mm_ord++;
-				if (sbp->mm_ord >= sbp->fs_count) {
-					sbp->mm_ord = 0;
-				}
-				mop = &sblk->eq[sbp->mm_ord].fs;
-				if ((mop->type == DT_META) &&
-				    (mop->state == DEV_ON)) {
-					break;
+					i++;
+					sbp->mm_ord++;
+					if (sbp->mm_ord >= sbp->fs_count) {
+						sbp->mm_ord = 0;
+					}
+					mop = &sblk->eq[sbp->mm_ord].fs;
+					if ((mop->type == DT_META) &&
+					    (mop->state == DEV_ON)) {
+						break;
+					}
 				}
 			}
 		}
-
 		sop->allocmap = somp->dau_next;
 		somp->dau_next = sop->allocmap + sop->l_allocmap;
 		if (SBLK_MAPS_ALIGNED(sbp)) {
