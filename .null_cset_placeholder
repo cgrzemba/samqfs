@@ -1,3 +1,3 @@
-Mon Feb  2 13:43:32 CST 2009
-495afc46e06f
-pkg/samqfsuipostinstall pkg/samqfsuipreremove
+Mon Mar 23 12:21:54 CDT 2009
+a6b2377d0bc4
+misc/copyright/copyright.cf pkg-linux/QFS_License_EA pkg-linux/makeiso.sh pkg/QFS_License_EA pkg/qfsproto pkg/samproto
