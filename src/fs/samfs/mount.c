@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.246 $"
+#pragma ident "$Revision: 1.247 $"
 #endif
 
 #include "sam/osversion.h"
@@ -306,15 +306,6 @@ sam_getdev(
 	int error = 0;
 
 	for (i = 0, dp = &mp->mi.m_fs[0]; i < mp->mt.fs_count; i++, dp++) {
-		if (istart && (i < istart) &&
-		    (dp->part.pt_state != DEV_OFF)) {
-			nparts++;
-			continue;
-		}
-		if (dp->opened) {
-			nparts++;
-			continue;
-		}
 		if (SAM_IS_SHARED_FS(mp) && dp->part.pt_type == DT_META &&
 		    strcmp(dp->part.pt_name, "nodev") == 0) {
 			if (SAM_IS_SHARED_SERVER(mp)) {
@@ -322,6 +313,15 @@ sam_getdev(
 				continue;
 			}
 			nometa = TRUE;
+			continue;
+		}
+		if (istart && (i < istart) &&
+		    (dp->part.pt_state != DEV_OFF)) {
+			nparts++;
+			continue;
+		}
+		if (dp->opened) {
+			nparts++;
 			continue;
 		}
 		TRACES(T_SAM_OPEN_DEV, mp, dp->part.pt_name);
@@ -444,8 +444,8 @@ sam_getdev(
 				if (istart && (i < istart) &&
 				    (dp->part.pt_state != DEV_OFF)) {
 					continue;
-				}
-				if (dp->part.pt_state != DEV_ON) {
+				} else if ((dp->part.pt_state == DEV_OFF) ||
+				    (dp->part.pt_state == DEV_DOWN)) {
 					continue;
 				}
 				if (dp->part.pt_type == DT_META) {
@@ -501,8 +501,8 @@ sam_getdev(
 				if (istart && (i < istart) &&
 				    (dp->part.pt_state != DEV_OFF)) {
 					continue;
-				}
-				if (dp->part.pt_state != DEV_ON) {
+				} else if ((dp->part.pt_state == DEV_OFF) ||
+				    (dp->part.pt_state == DEV_DOWN)) {
 					continue;
 				}
 				if (is_osd_group(dp->part.pt_type)) {
@@ -2393,7 +2393,8 @@ sam_close_device(
 		if (dp->opened) {
 			VOP_CLOSE_OS(svp, filemode, 1, (offset_t)0,
 			    credp, NULL);
-		} else {
+		} else if ((dp->part.pt_type == DT_META) &&
+		    strcmp(dp->part.pt_name, "nodev") == 0) {
 			VN_RELE(svp);		/* "nodev" specvp */
 		}
 		dev = dp->dev;
