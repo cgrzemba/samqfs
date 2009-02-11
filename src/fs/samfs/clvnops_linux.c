@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.103 $"
+#pragma ident "$Revision: 1.104 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1229,7 +1229,7 @@ samqfs_client_putpages_vn(struct address_space *mapping,
 		need_unlock = 1;
 	}
 
-	res = mpage_writepages(mapping, wbc, samqfs_get_block_writer);
+	res = mpage_writepages(mapping, wbc, NULL);
 
 	if (need_unlock) {
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
