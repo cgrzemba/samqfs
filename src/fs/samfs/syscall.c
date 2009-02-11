@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.165 $"
+#pragma ident "$Revision: 1.166 $"
 #endif
 
 #include "sam/osversion.h"
@@ -820,15 +820,39 @@ sam_proc_stat(
 				sb.copy[copy].offset >>= 9;
 			}
 		}
-		if (ip->di.version == SAM_INODE_VERS_2) {
-			sb.rperiod_start_time = ip->di2.rperiod_start_time;
-			sb.rperiod_duration = ip->di2.rperiod_duration;
-			if (ip->di2.p2flags & P2FLAGS_PROJID_VALID) {
-				sb.projid = ip->di2.projid;
-			} else {
-				sb.projid = SAM_NOPROJECT;
+
+		/*
+		 * Handle Project Id.
+		 */
+		if (!SAM_MAGIC_V2A_OR_HIGHER(&ip->mp->mi.m_sbp->info.sb)) {
+			sb.projid = SAM_NOPROJECT;
+		} else if (ip->di2.p2flags & P2FLAGS_PROJID_VALID) {
+			sb.projid = ip->di2.projid;
+		} else {
+			sb.projid = SAM_NOPROJECT;
+		}
+
+		/*
+		 * Handle WORM files.
+		 */
+		if (ip->di.status.b.worm_rdonly) {
+			if (ip->di.version >= SAM_INODE_VERS_2) {
+				if (ip->di2.p2flags & P2FLAGS_WORM_V2) {
+					/* Version 2 WORM */
+					sb.rperiod_start_time =
+					    ip->di2.rperiod_start_time;
+					sb.rperiod_duration =
+					    ip->di2.rperiod_duration;
+				} else {
+					/* Unconverted WORM */
+					sb.rperiod_start_time =
+					    ip->di.modify_time.tv_sec;
+					sb.rperiod_duration =
+					    ip->di.attribute_time;
+				}
 			}
 		}
+
 #ifdef sun
 		brelse(bp);
 #endif /* sun */
@@ -2269,6 +2293,11 @@ sam_set_projid(void *arg, int size)
 
 	ip = SAM_VTOI(rvp);
 	mp = ip->mp;
+
+	if (!SAM_MAGIC_V2A_OR_HIGHER(&mp->mi.m_sbp->info.sb)) {
+		error = ENOTSUP;
+		goto out;
+	}
 
 	if (ip->di2.projid == args.projid) {		/* no-op */
 		goto out;

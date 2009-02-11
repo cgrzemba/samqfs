@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.172 $"
+#pragma ident "$Revision: 1.173 $"
 
 #include "sam/osversion.h"
 
@@ -786,7 +786,12 @@ sam_make_ino(
 	mp = pip->mp;
 	type = vap->va_type;
 	nuid = crgetuid(credp);
-	nprojid = crgetprojid(credp);
+	if (SAM_MAGIC_V2A_OR_HIGHER(&mp->mi.m_sbp->info.sb)) {
+		nprojid = crgetprojid(credp);
+	} else {
+		nprojid = 0; /* 0 is the expected value */
+	}
+
 	/*
 	 * To determine the group-id of a newly created file or directory:
 	 *  1) if the gid is set in the attributes, use it if
