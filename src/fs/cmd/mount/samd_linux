@@ -30,7 +30,7 @@
 # config - start or send a HUP to sam-fsd to cause (re)configuration of
 # file systems.
 #
-#	$Revision: 1.10 $
+#	$Revision: 1.11 $
 
 #
 # Return pid(s) of named process(es) in variable "pid"
@@ -52,7 +52,7 @@ case "$1" in
 
 	pidproc sam-fsd
 	echo "Configuring SAM-FS"
-	/opt/SUNWsamfs/tools/check_mcf.pl update
+	/opt/SUNWsamfs/util/check_mcf.pl update
 	if [ "${pid}" = "" ]; then
 		/opt/SUNWsamfs/sbin/sam-fsd -C
 		sleep 5

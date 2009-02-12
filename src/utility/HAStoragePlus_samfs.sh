@@ -26,9 +26,9 @@
 #
 #    SAM-QFS_notice_end
 #
-#ident  "$Revision: 1.9 $"
+#ident  "$Revision: 1.10 $"
 #
-# HAStoragePlus_qfs is a script to obtain the constituent components
+# HAStoragePlus_samfs is a script to obtain the constituent components
 # of a single QFS family set or mount point.  It assumes that
 # HAStoragePlus has already read /etc/vfstab and determined that
 # the family set ("mount special") or mount point is described as

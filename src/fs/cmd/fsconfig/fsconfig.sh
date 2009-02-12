@@ -23,4 +23,4 @@
 # Use is subject to license terms.
 #
 #    SAM-QFS_notice_end
-/opt/SUNWsamfs/tools/fsconfig -b $@ | /opt/SUNWsamfs/tools/fsfilter.pl
+/opt/SUNWsamfs/util/fsconfig -b $@ | /opt/SUNWsamfs/util/fsfilter.pl

@@ -44,7 +44,7 @@
 # For start, stop and hastop, if /opt/SUNWsamfs/sbin/sam-amld is not present,
 # this must be a SUNWqfs package, so issue a usage message.
 #
-#	$Revision: 1.39 $
+#	$Revision: 1.40 $
 
 #
 # Misc. definitions
@@ -230,7 +230,7 @@ case "$1" in
 'buildmcf')
 
         echo "Building mcf for SAM-QFS"
-        /opt/SUNWsamfs/sbin/check_mcf.pl update
+        /opt/SUNWsamfs/util/check_mcf.pl update
         ;;
 
 'start')

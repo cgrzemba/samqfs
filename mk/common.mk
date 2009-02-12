@@ -1,4 +1,4 @@
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 
 #    SAM-QFS_notice_begin
 #
@@ -93,6 +93,7 @@ MANDEST := $(BASEDIR)/opt/SUNWsamfs/man
 LIBDEST := $(BASEDIR)/opt/SUNWsamfs/lib
 RPCDEST := $(BASEDIR)opt/SUNWsamfs/client
 TOOLDEST := $(BASEDIR)/opt/SUNWsamfs/tools
+UTILDEST := $(BASEDIR)/opt/SUNWsamfs/util
 JREDEST := $(BASEDIR)/opt/SUNWsamfs/jre
 STKDEST := $(BASEDIR)/opt/SUNWsamfs/stk
 FSDEST  := $(BASEDIR)/kernel/fs/$(64DIR)
