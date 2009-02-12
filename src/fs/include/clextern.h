@@ -36,7 +36,7 @@
 #define	_SAM_FS_CLEXTERN_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.65 $"
+#pragma ident "$Revision: 1.66 $"
 #endif
 
 #ifdef sun
@@ -368,7 +368,7 @@ int sam_proc_name(sam_node_t *ip, enum NAME_operation op,
 	void *ptr, int argsize, struct qstr *cp, char *ncp, cred_t *credp,
 	sam_ino_record_t *nrec);
 int qfs_iattr_to_v32(struct iattr *iap, sam_vattr_t *va32p);
-void sam_send_shared_mount(sam_mount_t *mp);
+void sam_send_shared_mount(sam_mount_t *mp, int wait_time);
 void sam_send_shared_mount_blocking(sam_mount_t *mp);
 extern int samqfs_setup_inode(struct inode *li, sam_node_t *ip);
 extern int sam_unmount_fs(sam_mount_t *mp, int fflag, sam_unmount_flag_t flag);

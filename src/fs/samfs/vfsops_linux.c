@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.70 $"
+#pragma ident "$Revision: 1.71 $"
 #endif
 
 #include "sam/osversion.h"
@@ -694,7 +694,7 @@ done:
 		samgt.num_fs_mounted++;
 		mp->mt.fi_status &= ~FS_MOUNTING;
 		mutex_exit(&mp->ms.m_waitwr_mutex);
-		sam_send_shared_mount(mp);
+		sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
 		cmn_err(CE_NOTE,
 		    "SAM-QFS: Completed mount filesystem: %s", fsname);
 
@@ -745,7 +745,7 @@ done:
 			mp->mt.fi_status &= ~(FS_MOUNTED|FS_MOUNTING);
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			*mp->mt.fi_mnt_point = '\0';
-			sam_send_shared_mount(mp);
+			sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
 		}
 		TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))

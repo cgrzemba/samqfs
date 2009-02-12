@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.173 $"
+#pragma ident "$Revision: 1.174 $"
 
 #include "sam/osversion.h"
 
@@ -739,7 +739,7 @@ done:
 		samgt.num_fs_mounted++;
 		mp->mt.fi_status &= ~FS_MOUNTING;
 		mutex_exit(&mp->ms.m_waitwr_mutex);
-		sam_send_shared_mount(mp);
+		sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
 		/*
 		 * Initialize quota-related data structures.  Note that this
 		 * is required for all potential metadata servers for failover.
@@ -769,7 +769,7 @@ done:
 			mp->mt.fi_status &= ~(FS_MOUNTED|FS_MOUNTING);
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			*mp->mt.fi_mnt_point = '\0';
-			sam_send_shared_mount(mp);
+			sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
 		}
 		TRACE(T_SAM_MNT_ERRLN, NULL, err_line, error, 0);
 		cmn_err(CE_NOTE,
@@ -1062,7 +1062,7 @@ samfs_umount(
 		 * start a sam-sharefsd daemon for the FS.
 		 */
 		if (SAM_IS_SHARED_FS(mp) && !SAM_IS_SHARED_SERVER(mp)) {
-			sam_send_shared_mount(mp);
+			sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
 			delay(hz);
 		}
 		TRACE(T_SAM_UMNT_RET, vfsp, 104, (sam_tr_t)mp, error);
@@ -1101,7 +1101,11 @@ samfs_umount(
 
 		mutex_exit(&samgt.global_mutex);
 
-		sam_send_shared_mount(mp);
+		if (SAM_IS_SHARED_SERVER(mp)) {
+			sam_send_shared_mount(mp, 0);
+		} else {
+			sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
+		}
 		cmn_err(CE_NOTE,
 		    "SAM-QFS: %s: Completed unmount filesystem: vers %d",
 		    fsname, version);

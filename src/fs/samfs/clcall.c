@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.264 $"
+#pragma ident "$Revision: 1.265 $"
 #endif
 
 #include "sam/osversion.h"
@@ -438,7 +438,9 @@ sam_send_shared_mount_blocking(sam_mount_t *mp)
  * ----- sam_send_shared_mount - If shared file system, send mount status.
  */
 void
-sam_send_shared_mount(sam_mount_t *mp)
+sam_send_shared_mount(
+	sam_mount_t *mp,
+	int wait_time)
 {
 
 	if (SAM_IS_SHARED_FS(mp)) {
@@ -448,7 +450,7 @@ sam_send_shared_mount(sam_mount_t *mp)
 		msg = kmem_zalloc(sizeof (sam_san_mount_msg_t), KM_SLEEP);
 
 		if ((error = sam_send_mount_cmd(mp, msg, MOUNT_status,
-		    SAM_MOUNT_TIMEOUT))) {
+		    wait_time))) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: cannot send mount status to "
 			    "server %s, error=%d",
