@@ -30,14 +30,14 @@
 # Shared SAM-QFS implementation on SunCluster
 # To make the Meta Data Server HA.
 #
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 #
 
 RESOURCE_TYPE = "qfs";
 VENDOR_ID = SUNW;
 RT_DESCRIPTION = "SAM-QFS Agent on SunCluster";
 
-RT_VERSION ="4.6";
+RT_VERSION ="5";
 API_VERSION = 3;
 FAILOVER = TRUE;
 
@@ -61,6 +61,7 @@ UPDATE			= scqfs_update;
 #$upgrade_from "3.1" anytime
 #$upgrade_from "3.2" anytime
 #$upgrade_from "4.5-05" anytime
+#$upgrade_from "4.6" anytime
 
 # The paramtable is a list of bracketed resource property
 # declarations that come after the resource-type declarations.
@@ -80,7 +81,7 @@ UPDATE			= scqfs_update;
 {
 	PROPERTY = Prenet_start_timeout;
 	MIN = 60;
-	DEFAULT = 300;
+	DEFAULT = 360;
 }
 {
 	PROPERTY = Start_timeout;
