@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.172 $"
+#pragma ident "$Revision: 1.173 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -3345,7 +3345,7 @@ print_mount(
 				    i+1, clp->hostid, clp->cl_sh.sh_fp,
 				    clp->cl_min_seqno, clp->cl_nomsg,
 				    clp->fs_count, clp->mm_count,
-				    clp->fsgen, clp->cl_tags);
+				    clp->cl_fsgen, clp->cl_tags);
 				printf("\t    %s\n", clp->hname);
 
 				ptr = (sam_msg_array_t *)

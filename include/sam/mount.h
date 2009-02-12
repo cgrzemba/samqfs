@@ -36,7 +36,7 @@
 #define	_SAMFS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.141 $"
+#pragma ident "$Revision: 1.142 $"
 #endif
 
 #include <sam/types.h>
@@ -306,6 +306,8 @@ typedef struct sam_client_info {
 	uint32_t	cl_flags;	/* client status flags */
 	int32_t		cl_nomsg;	/* count of outstanding messages */
 	uint32_t	cl_min_seqno;	/* lowest seqno not completed  */
+	sam_time_t	cl_lastmsg_time; /* Time message last received (sec.) */
+	uint32_t	cl_unused;
 } sam_client_info_t;
 
 /* End: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

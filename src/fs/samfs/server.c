@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.306 $"
+#pragma ident "$Revision: 1.307 $"
 
 #include "sam/osversion.h"
 
@@ -241,13 +241,14 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 			msg->hdr.error = EXDEV;
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			goto done;
-		} else if ((msg->hdr.command != SAM_CMD_BLOCK) &&
+		} else if (!((msg->hdr.command == SAM_CMD_BLOCK) &&
+		    (msg->call.block.id.ino == 0)) &&
 		    (mp->mi.m_sblk_fsid != msg->hdr.fsid)) {
 			msg->hdr.error = EBADR;
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Stale file system"
-			    " SRV Id=%x CLI Id=%x, cmd=%x, seqno=%x",
+			    " SRV INIT=%x CLI INIT=%x, cmd=%x, seqno=%x",
 			    mp->mt.fi_name, mp->mi.m_sbp->info.sb.init,
 			    msg->hdr.fsid,
 			    (msg->hdr.command<<16)|msg->hdr.operation,
@@ -274,6 +275,8 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 
 	/*
 	 * Validate client and check to see if it is marked down.
+	 * Verify fs generation number is correct if client
+	 * was previously not responding.
 	 */
 	clp = sam_get_client_entry(mp, msg->hdr.client_ord, 0);
 	if (clp == NULL) {
@@ -288,6 +291,23 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 		    "client ord %d", mp->mt.fi_name, msg->hdr.client_ord);
 		/* Drop message */
 		goto fini;
+	}
+	if ((msg->hdr.command != SAM_CMD_MOUNT) &&
+	    !((msg->hdr.command == SAM_CMD_BLOCK) &&
+	    (msg->call.block.id.ino == 0))) {
+		if ((clp->cl_flags & SAM_CLIENT_NOT_RESP) &&
+		    (mp->mi.m_sblk_fsgen != msg->hdr.fsgen)) {
+			msg->hdr.error = EBADR;
+			cmn_err(CE_WARN,
+			    "SAM-QFS: %s: Stale file system"
+			    " SRV GEN=%x CLI GEN=%x, cmd=%x, seqno=%x",
+			    mp->mt.fi_name, mp->mi.m_sbp->info.sb.fsgen,
+			    msg->hdr.fsgen,
+			    (msg->hdr.command<<16)|msg->hdr.operation,
+			    msg->hdr.seqno);
+			goto done;
+		}
+		clp->cl_flags &= ~SAM_CLIENT_NOT_RESP;
 	}
 
 	/*
@@ -310,6 +330,7 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 	 */
 	mutex_enter(&clp->cl_msgmutex);
 	clp->cl_msg_time = lbolt;
+	clp->cl_lastmsg = SAM_SECOND();
 	if (clp->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {
 		cmn_err(CE_NOTE,
 		    "SAM-QFS: %s: Message received from blocked "
@@ -3512,7 +3533,7 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 			clp = sam_get_client_entry(mp, msg->hdr.client_ord, 0);
 			clp->fs_count = sp2->fs_count;
 			clp->mm_count = sp2->mm_count;
-			clp->fsgen = sp2->fsgen;
+			clp->cl_fsgen = sp2->fsgen;
 			}
 
 			/* LINTED [fallthrough on case statement] */

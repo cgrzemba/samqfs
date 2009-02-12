@@ -41,7 +41,7 @@
 #define	_SAM_FS_CLIENT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.79 $"
+#pragma ident "$Revision: 1.80 $"
 #endif
 
 #ifdef	linux
@@ -175,12 +175,13 @@ typedef struct sam_msg_array {
 #define	SAM_CLIENT_INOP	0x02	/* Don't hold up failover (client known dead) */
 #define	SAM_CLIENT_SOCK_BLOCKED	0x04	/* Writing to client returned EAGAIN */
 #define	SAM_CLIENT_OFF_PENDING	0x08	/* Client transitioning to OFF */
-#define	SAM_CLIENT_OFF	0x10	/* Client marked OFF in hosts file */
+#define	SAM_CLIENT_OFF		0x10	/* Client marked OFF in hosts file */
+#define	SAM_CLIENT_NOT_RESP	0x20	/* Client not responding */
 
 typedef struct client_entry {
 	upath_t hname;		/* Client host name */
 	int hostid;		/* Host identifier */
-	int64_t cl_msg_time;	/* Time message received */
+	uint64_t cl_msg_time;	/* Time message received (lbolt) */
 	int64_t cl_rcv_time;	/* Time last lease message received */
 	int64_t cl_resync_time;	/* Time resync message received */
 	uint32_t cl_sock_flags;	/* Client socket flags */
@@ -198,8 +199,9 @@ typedef struct client_entry {
 	kmutex_t cl_msgmutex;	/* Mutex lock for this client's msg array */
 	short fs_count;		/* Number of family set members */
 	short mm_count;		/* Number of meta set members */
-	int32_t fsgen;		/* Superblock generation number */
+	int32_t cl_fsgen;	/* Superblock generation number */
 	int cl_offtime;		/* Transition from pending to off state */
+	sam_time_t cl_lastmsg;	/* Last message time (sec.) */
 	sam_queue_t queue;	/* message queue for this client */
 } client_entry_t;
 

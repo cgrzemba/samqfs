@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.210 $"
+#pragma ident "$Revision: 1.211 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1881,37 +1881,43 @@ sam_get_fsclistat(
 			break;
 		}
 	}
-	if (mp != NULL) {
-		args.numcli = mp->ms.m_no_clients;
-		if (mp->ms.m_max_clients < args.maxcli) {
-			args.maxcli = mp->ms.m_max_clients;
-		}
-		if (args.numcli <= args.maxcli) {
-			struct client_entry *cli;
-			struct sam_client_info clx;
+	if (mp == NULL) {
+		goto out;
+	}
+	args.numcli = mp->ms.m_no_clients;
+	if (mp->ms.m_max_clients < args.maxcli) {
+		args.maxcli = mp->ms.m_max_clients;
+	}
+	if (args.numcli <= args.maxcli) {
+		struct client_entry *clp;
+		struct sam_client_info clx;
 
-			for (i = 1; i <= args.maxcli; i++, cl++) {
-				cli = sam_get_client_entry(mp, i, 0);
-				if (cli) {
-					bcopy(cli->hname, clx.hname,
-					    sizeof (upath_t));
-					clx.cl_status = cli->cl_status;
-					clx.cl_config = cli->cl_config;
-					clx.cl_config1 = cli->cl_config1;
-					clx.cl_flags = cli->cl_flags;
-					clx.cl_nomsg = cli->cl_nomsg;
-					clx.cl_min_seqno = cli->cl_min_seqno;
-				} else {
-					bzero((char *)&clx,
-					    sizeof (struct sam_client_info));
+		for (i = 1; i <= args.maxcli; i++, cl++) {
+			clp = sam_get_client_entry(mp, i, 0);
+			if (clp) {
+				if ((clp->cl_status & FS_MOUNTED) &&
+				    !(clp->cl_status & FS_SERVER) &&
+				    ((lbolt - clp->cl_msg_time)/hz >
+				    (4 * SAM_MIN_DELAY))) {
+					clp->cl_flags |= SAM_CLIENT_NOT_RESP;
 				}
-				if (copyout(&clx, cl,
-					    sizeof (struct sam_client_info))) {
-					error = EFAULT;
-				}
+				bcopy(clp->hname, clx.hname, sizeof (upath_t));
+				clx.cl_status = clp->cl_status;
+				clx.cl_config = clp->cl_config;
+				clx.cl_config1 = clp->cl_config1;
+				clx.cl_flags = clp->cl_flags;
+				clx.cl_nomsg = clp->cl_nomsg;
+				clx.cl_min_seqno = clp->cl_min_seqno;
+				clx.cl_lastmsg_time = clp->cl_lastmsg;
+			} else {
+				bzero((char *)&clx, sizeof (sam_client_info_t));
+			}
+			if (copyout(&clx, cl, sizeof (sam_client_info_t))) {
+				error = EFAULT;
 			}
 		}
 	}
+out:
 	if (copyout(&args, arg, sizeof (args))) {
 		error = EFAULT;
 	}

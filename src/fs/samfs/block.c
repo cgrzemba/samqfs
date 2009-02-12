@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.133 $"
+#pragma ident "$Revision: 1.134 $"
 
 #include "sam/osversion.h"
 
@@ -1935,6 +1935,11 @@ sam_change_state(
 				    (clp->cl_status & FS_SERVER)) {
 					continue;
 				}
+				if ((lbolt - clp->cl_msg_time)/hz >
+				    (4 * SAM_MIN_DELAY)) {
+					clp->cl_flags |= SAM_CLIENT_NOT_RESP;
+					continue;
+				}
 
 				if (!sam_client_has_tag(clp,
 				    QFS_TAG_VFSSTAT_V2)) {
@@ -1947,7 +1952,7 @@ sam_change_state(
 					break;
 				}
 
-				if ((clp->fsgen != mp->mi.m_sblk_fsgen) ||
+				if ((clp->cl_fsgen != mp->mi.m_sblk_fsgen) ||
 				    (clp->fs_count != sblk->info.sb.fs_count) ||
 				    (clp->mm_count != sblk->info.sb.mm_count)) {
 					cmn_err(CE_WARN,
@@ -1959,7 +1964,7 @@ sam_change_state(
 					    clp->fs_count,
 					    sblk->info.sb.mm_count,
 					    clp->mm_count, mp->mi.m_sblk_fsgen,
-					    clp->fsgen);
+					    clp->cl_fsgen);
 					rtnerr = 7;
 					break;
 				}
