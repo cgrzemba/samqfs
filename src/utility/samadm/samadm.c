@@ -42,7 +42,7 @@
 
 #include "samadm.h"
 
-#pragma ident   "$Revision: 1.3 $"
+#pragma ident   "$Revision: 1.4 $"
 
 
 char version_string[] = "1.0";
@@ -63,9 +63,11 @@ subCommandProps_t samadm_subcmds[] = {
 	{ "servicetag", servicetag_cmd, NULL, NULL, NULL,
 	    OPERAND_MANDATORY_SINGLE, "Add/delete servicetags"},
 	{ "eq-add", eq_add_cmd, NULL, NULL, NULL,
-	    OPERAND_MANDATORY_SINGLE, "Add equipment ordinal to QFS"},
-	{ "eq-remove", eq_remove_cmd, "r", NULL, NULL,
-	    OPERAND_MANDATORY_SINGLE, "Remove equipment ordinal from QFS"},
+	    OPERAND_MANDATORY_SINGLE, "Add equipment number to QFS"},
+	{ "eq-release", eq_release_cmd, NULL, NULL, NULL,
+	    OPERAND_MANDATORY_SINGLE, "Release space on equipment from QFS"},
+	{ "eq-remove", eq_remove_cmd, NULL, NULL, NULL,
+	    OPERAND_MANDATORY_SINGLE, "Remove equipment number from QFS"},
 	{ "eq-alloc", eq_alloc_cmd, NULL, NULL, NULL,
 	    OPERAND_MANDATORY_SINGLE, "Set equipment status to alloc"},
 	{ "eq-noalloc", eq_noalloc_cmd, NULL, NULL, NULL,
@@ -81,7 +83,6 @@ subCommandProps_t samadm_subcmds[] = {
  *	command option help listings for different subcommands.
  */
 optionTbl_t samadm_opts[] = {
-	{ "releaseeq", no_arg, 'r', "use SAM to release files" },
 	{ "adda", no_arg, 'a', "add feature set a" },
 	{ NULL, 0, 0, NULL }
 };

@@ -44,7 +44,7 @@
 #include <sam/mount.h>
 #include "sam/lib.h"
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 
 /*
@@ -133,24 +133,22 @@ eq_add_cmd(
 int
 eq_remove_cmd(int argc, char *argv[], cmdOptions_t *options, void *callData)
 {
-	int command = DK_CMD_remove;
-	char *c = "remove";
 	char *eqp = argv[0];
 
-	for (; options->optval; options++) {
-		switch (options->optval) {
-		case 'r':
-			command = DK_CMD_release;
-			c = "release";
-			break;
-		default:
-			fprintf(stderr, "%s: %s: invalid option(%s)\n",
-			    cmd_name, subcmd_name, options->optval);
-		}
-	}
-	return (cmd_eq(command, c, eqp));
+	return (cmd_eq(DK_CMD_remove, "remove", eqp));
 }
 
+
+/*
+ * eq_release command.
+ */
+int
+eq_release_cmd(int argc, char *argv[], cmdOptions_t *options, void *callData)
+{
+	char *eqp = argv[0];
+
+	return (cmd_eq(DK_CMD_release, "release", eqp));
+}
 
 
 /*

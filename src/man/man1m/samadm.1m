@@ -1,4 +1,4 @@
-.\" $Revision: 1.10 $
+.\" $Revision: 1.11 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .TH samadm 1M "30 Jan 2009"
 .SH NAME
-samadm \- Sun StorageTek SAM-QFS main administrative command
+samadm \- Sun SAM-QFS main administrative command
 .SH SYNOPSIS
 
 .LP
@@ -40,7 +40,11 @@ samadm \- Sun StorageTek SAM-QFS main administrative command
 .fi
 .LP
 .nf
-\fBsamadm eq-remove\fR [\fB-r\fR] \fIeq_number#\fR
+\fBsamadm eq-release\fR \fIeq_number#\fR
+.fi
+.LP
+.nf
+\fBsamadm eq-remove\fR \fIeq_number#\fR
 .fi
 .LP
 .nf
@@ -125,6 +129,29 @@ to \fIalloc\fR via \fBsamadm eq-alloc eq_number#\fR.
 .ne 2
 .mk
 .na
+\fBeq-release\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand releases the disk space associated with files that
+have valid archive copies from SAM.  It can be used prior to an
+\fBeq-remove\fR command to quickly release space on a device that
+is to be removed for hardware failure or other reasons.
+.LP
+The \fBeq-release\fR subcommand starts a background process called
+\fIsam-shrink\fR which releases space on the equipment number
+The releasing process may take some time to complete.  Progress can be
+monitored via \fBsamu(1M)\fR (m display).  When the release is started,
+the equipment is first put into \fInoalloc\fR state to prevent further
+data allocation on that equipment.  When the releasing process is
+complete, the equipment is placed into \fIoff\fR state if all space was
+successfully released.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
 \fBeq-remove\fR
 .ad
 .sp .6
@@ -134,20 +161,15 @@ QFS file system.  It is intended to be used to remove an equipment
 for reuse, or to remove an equipment that needs replacement because
 of hardware failure.
 .LP
-The data on the equipment to be removed is copied
-to other equipments of the file system.  If the \fB-r\fR option is specified,
-files that have data on that equipment are first released from disk
-if they have a SAM archive copy.  Then, remaining files that are on that
-equipment which have no archive copy are copied off to other equipments as
-described above.
-.LP
 The \fBeq-remove\fR subcommand starts a background process called
-\fIsam-shrink\fR which does the data copying.  The removal process
+\fIsam-shrink\fR which copies the data on the equipment number
+to be removed to other equipments in the file system.  The removal process
 may take some time to complete.  Progress can be monitored via
-\fBsamu(1M)\fR.  When the remove is started, the equipment to be
+\fBsamu(1M)\fR (m display).  When the remove is started, the equipment to be
 removed is first put into \fInoalloc\fR state to prevent further data
 allocation on that equipment.  When the removal process is complete,
-the equipment is placed into \fIoff\fR state.
+the equipment is placed into \fIoff\fR state if all space was successfully
+moved to other equipments.
 .RE
 
 .sp
