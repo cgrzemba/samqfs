@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.9 2008/12/16 00:10:30 am143972 Exp $
+# $Id: GNUmakefile,v 1.10 2009/02/12 14:33:55 bd222461 Exp $
 
 #    SAM-QFS_notice_begin
 #
@@ -30,7 +30,11 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-DIRS = grau ibm stk sony
+DIRS = stk
+
+ifeq ($(PLATFORM), sparc)
+	DIRS += grau ibm sony
+endif
 
 include $(DEPTH)/mk/targets.mk
 
