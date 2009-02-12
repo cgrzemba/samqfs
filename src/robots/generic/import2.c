@@ -30,7 +30,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 /* Using __FILE__ makes duplicate strings */
 static char    *_SrcFile = __FILE__;
@@ -711,6 +711,7 @@ process_multi_import(
 			    (((equ_type == DT_SONYDMS) ||
 			    (equ_type == DT_ATLP3000) ||
 			    (equ_type == DT_ADIC100) ||
+			    (equ_type == DT_ADIC1000) ||
 			    (equ_type == DT_ODI_NEO) ||
 			    (equ_type == DT_IBM3584) ||
 			    (equ_type == DT_EXBX80) ||
