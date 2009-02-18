@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.53 $"
+#pragma ident "$Revision: 1.54 $"
 
 /* Feature test switches. */
 
@@ -585,7 +585,7 @@ ListFSet(struct DevInfo *dip, int n)
 {
 	int j, holes;
 	long when;
-	int lfset[L_FSET];
+	int lfset[L_FSET], lfsetindx[L_FSET];
 	char typbuf[12];
 	char fsbuf[sizeof (uname_t)+8];
 	int md, mm, mr, oXXX, gXXX, bad;
@@ -593,7 +593,9 @@ ListFSet(struct DevInfo *dip, int n)
 	int fsgen;
 	int fscount;
 	int mmcount;
+	int igood = 0;		/* index of good device in lfset */
 	char *template;
+	struct DevInfo *dig = dip;
 
 	if (blocks) {
 		template = "%s%s%s    %d    %s   %s  %lld\n";
@@ -601,33 +603,56 @@ ListFSet(struct DevInfo *dip, int n)
 		template = "%s%s%s    %d    %s   %s  -\n";
 	}
 	bzero(&lfset[0], sizeof (lfset));
+	bzero(&lfsetindx[0], sizeof (lfset));
 	FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
-	when = dip->di_sblk->info.sb.init;
-	fsgen = dip->di_sblk->info.sb.fsgen;
-	fscount = dip->di_sblk->info.sb.fs_count;
-	mmcount = dip->di_sblk->info.sb.mm_count;
+	/*
+	 *  Count device ordinals to detect duplicates.
+	 *  Ifset[ord] == 1 if not a duplicate
+	 *  Ifsetindx[ord] is the index in the DevInfo struct.
+	 */
 	for (j = 0; j < n; j++) {
 		lfset[dip[j].di_sblk->info.sb.ord]++;
+		lfsetindx[dip[j].di_sblk->info.sb.ord] = j;
 	}
-	for (j = 0; j < dip->di_sblk->info.sb.fs_count; j++) {
-		if (lfset[j] == 1) {
-			if (dip[j].di_sblk->eq[j].fs.state == DEV_ON ||
-			    dip[j].di_sblk->eq[j].fs.state == DEV_NOALLOC ||
-			    dip[j].di_sblk->eq[j].fs.state == DEV_UNAVAIL) {
-				fsgen = dip[j].di_sblk->info.sb.fsgen;
-				fscount = dip[j].di_sblk->info.sb.fs_count;
-				mmcount = dip[j].di_sblk->info.sb.mm_count;
+	/*
+	 *  Find a device that's not off and not a duplicate.
+	 */
+	for (j = 0; j < L_FSET; j++) {
+		int k, ord, fsct;
+
+		if (lfset[j] != 1) {
+			/* skip if not there or more than one with this ord */
+			continue;
+		}
+
+		k = lfsetindx[j];
+		fsct = dip[k].di_sblk->info.sb.fs_count;
+		for (ord = 0; ord < fsct; ord++) {
+			if (dip[k].di_sblk->eq[ord].fs.state == DEV_ON ||
+			    dip[k].di_sblk->eq[ord].fs.state == DEV_NOALLOC ||
+			    dip[k].di_sblk->eq[ord].fs.state == DEV_UNAVAIL) {
+				igood = k;
 				break;
 			}
 		}
+		break;
 	}
+	/*
+	 *	Either we found a good one or we use dip[0].
+	 *	Save some values for later use.
+	 */
+	dig = &dip[igood];
+	when = dig->di_sblk->info.sb.init;
+	fsgen = dig->di_sblk->info.sb.fsgen;
+	fscount = dig->di_sblk->info.sb.fs_count;
+	mmcount = dig->di_sblk->info.sb.mm_count;
 	printf("#\n# ");
 	/* Family Set '%s' Created %s */
 	printf(GetCustMsg(13805), fsbuf, ctime(&when));
 	printf("# ");
 	/* Generation %d Eq count %d Eq meta count %d\n */
 	printf(GetCustMsg(13810), fsgen, fscount, mmcount);
-	if (dip->di_flags & DI_SBLK_BSWAPPED) {
+	if (dig->di_flags & DI_SBLK_BSWAPPED) {
 		printf("#\n# ");
 		/* Foreign byte order (super-blocks byte-reversed). */
 		printf(GetCustMsg(13806));
@@ -635,13 +660,13 @@ ListFSet(struct DevInfo *dip, int n)
 	printf("#\n");
 	holes = 0;
 	md = mm = mr = oXXX = gXXX = bad = 0;
-	for (j = 0; j < dip->di_sblk->info.sb.fs_count; j++) {
+	for (j = 0; j < fscount; j++) {
 		if (lfset[j] == 0) {
 			/*
 			 * check to see if hole is meta data device in which
 			 * case we probably are zoned off from it
 			 */
-			if (dip->di_sblk->eq[j].fs.type != DT_META) {
+			if (dig->di_sblk->eq[j].fs.type != DT_META) {
 				holes++;
 			} else {
 				if (!missing_meta_message) {
@@ -656,7 +681,7 @@ ListFSet(struct DevInfo *dip, int n)
 				}
 			}
 		}
-		switch (dip->di_sblk->eq[j].fs.type) {
+		switch (dig->di_sblk->eq[j].fs.type) {
 		case DT_DATA:
 			md++;
 			break;
@@ -667,17 +692,17 @@ ListFSet(struct DevInfo *dip, int n)
 			mr++;
 			break;
 		default:
-			if (is_osd_group(dip->di_sblk->eq[j].fs.type)) {
+			if (is_osd_group(dig->di_sblk->eq[j].fs.type)) {
 				oXXX++;
 				break;
 			}
-			if (is_stripe_group(dip->di_sblk->eq[j].fs.type)) {
+			if (is_stripe_group(dig->di_sblk->eq[j].fs.type)) {
 				gXXX++;
 				break;
 			}
 			/* Unrecognized device type:  %#x */
 			error(0, 0, GetCustMsg(13238),
-			    dip->di_sblk->eq[j].fs.type);
+			    dig->di_sblk->eq[j].fs.type);
 			bad++;
 		}
 	}
@@ -689,10 +714,10 @@ ListFSet(struct DevInfo *dip, int n)
 	if (!holes && !bad) {
 		char *sh, *typ;
 
-		sh = (dip->di_sblk->info.sb.hosts) ? " shared" : "";
-		FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
+		sh = (dig->di_sblk->info.sb.hosts) ? " shared" : "";
+		FSStr(dig->di_sblk->info.sb.fs_name, fsbuf);
 
-		switch (dip->di_sblk->info.sb.fi_type) {
+		switch (dig->di_sblk->info.sb.fi_type) {
 		case DT_DISK_SET:
 			typ = "ms";
 			break;
@@ -715,18 +740,18 @@ ListFSet(struct DevInfo *dip, int n)
 		}
 
 		printf("%s %d %s %s -%s\n",
-		    fsbuf, dip->di_sblk->info.sb.eq, typ, fsbuf, sh);
+		    fsbuf, dig->di_sblk->info.sb.eq, typ, fsbuf, sh);
 	}
-	for (j = 0; j < dip->di_sblk->info.sb.fs_count; j++) {
+	for (j = 0; j < fscount; j++) {
 		if (lfset[j] == 0) {
-			if (dip->di_sblk->eq[j].fs.type == DT_META) {
-				TypeStr(dip->di_sblk->eq[j].fs.type, typbuf);
-				FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
+			if (dig->di_sblk->eq[j].fs.type == DT_META) {
+				TypeStr(dig->di_sblk->eq[j].fs.type, typbuf);
+				FSStr(dig->di_sblk->info.sb.fs_name, fsbuf);
 				printf(template,
 				    (holes || bad) ? "# " : "", "",
 				    "nodev    ",
-				    dip->di_sblk->eq[j].fs.eq, typbuf, fsbuf,
-				    (long long)dip->di_sblk->eq[j].fs.capacity);
+				    dig->di_sblk->eq[j].fs.eq, typbuf, fsbuf,
+				    (long long)dig->di_sblk->eq[j].fs.capacity);
 			}
 		}
 	}

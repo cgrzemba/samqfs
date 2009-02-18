@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.11 $"
+#pragma ident "$Revision: 1.12 $"
 
 /* ANSI headers. */
 #include <stdlib.h>
@@ -223,7 +223,8 @@ DisClients()
 					    statusTableSize, "status");
 					Mvprintw(ln++, 6, "%-8s :  %s",
 					    "last_msg",
-					    ctime((time_t *)&fc->cl_lastmsg_time));
+					    ctime((time_t *)
+					    &fc->cl_lastmsg_time));
 					Mvprintw(ln++, 0, "");
 				}
 			}
