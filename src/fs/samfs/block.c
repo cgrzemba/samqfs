@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.134 $"
+#pragma ident "$Revision: 1.135 $"
 
 #include "sam/osversion.h"
 
@@ -1893,11 +1893,6 @@ sam_change_state(
 	case DK_CMD_noalloc:
 		sam_drain_free_list(mp, dp);
 		dp->skip_ord = 1;
-		for (bt = 0; bt < SAM_MAX_DAU; bt++) {
-			if (dp->block[bt] != NULL) {
-				sam_delete_blocklist(&dp->block[bt]);
-			}
-		}
 		dp->part.pt_state = DEV_NOALLOC;
 		sblk_modified = TRUE;
 		break;

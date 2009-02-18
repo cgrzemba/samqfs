@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.85 $"
+#pragma ident "$Revision: 1.86 $"
 
 #include "sam/osversion.h"
 
@@ -205,7 +205,12 @@ sam_alloc_block(
 		mp->mi.m_no_blocks++;
 
 skip_this_unit:
-		while ((skipping_ord ||
+		/*
+		 * skipping_ord protects against NULL block pointer.
+		 * device can go to noalloc state after skipping_ord
+		 * is set to false, so also check skip_ord.
+		 */
+		while ((skipping_ord || mp->mi.m_fs[unit].skip_ord ||
 		    (BLOCK_COUNT(block->in, block->out, block->limit) == 0)) &&
 		    (mp->mi.m_block.state == SAM_THR_EXIST)) {
 			clock_t t_out;
@@ -216,7 +221,8 @@ skip_this_unit:
 			 * head back to top of loop.  Cycle through all
 			 * units until all empty.
 			 */
-			if (skipping_ord || mp->mi.m_fs[unit].map_empty) {
+			if (skipping_ord || mp->mi.m_fs[unit].skip_ord ||
+			    mp->mi.m_fs[unit].map_empty) {
 				if (ip->di.blocks &&
 				    (mp->mt.fi_config1 &
 				    MC_MISMATCHED_GROUPS)) {
