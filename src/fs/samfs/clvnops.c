@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.198 $"
+#pragma ident "$Revision: 1.199 $"
 
 #include "sam/osversion.h"
 
@@ -1615,40 +1615,43 @@ sam_client_remove_vn(
 
 		rmvp = SAM_ITOV(ip);
 		if (rmvp->v_count > 1) {
-			dnlc_purge_vp(rmvp);
+			dnlc_remove(pvp, cp);
+			if (SAM_THREAD_IS_NFS()) {
+				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+				if (ip->cl_leases &&
+				    !(ip->cl_leases & CL_OPEN)) {
+					ushort_t leasemask = 0;
 
-			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-
-			if (SAM_THREAD_IS_NFS() &&
-			    ip->cl_leases && !(ip->cl_leases & CL_OPEN)) {
-				ushort_t leasemask = 0;
-
-				/*
-				 * Leases that are not in use, whether we hold
-				 * it or not.
-				 */
-				leasemask |= ip->cl_leaseused[LTYPE_read]
-				    ? 0 : CL_READ;
-				leasemask |= ip->cl_leaseused[LTYPE_write]
-				    ? 0 : CL_WRITE;
-				leasemask |= ip->cl_leaseused[LTYPE_append]
-				    ? 0 : CL_APPEND;
-
-				/*
-				 * Expirable leases that we hold.
-				 */
-				leasemask &= ip->cl_leases;
-
-				if (leasemask) {
 					/*
-					 * Remove all expirable leases
-					 * that are not in use.
+					 * Leases that are not in use, whether
+					 * we hold it or not.
 					 */
-					error = sam_proc_rm_lease(ip,
-					    leasemask, RW_WRITER);
+					leasemask |=
+					    ip->cl_leaseused[LTYPE_read]
+					    ? 0 : CL_READ;
+					leasemask |=
+					    ip->cl_leaseused[LTYPE_write]
+					    ? 0 : CL_WRITE;
+					leasemask |=
+					    ip->cl_leaseused[LTYPE_append]
+					    ? 0 : CL_APPEND;
+
+					/*
+					 * Expirable leases that we hold.
+					 */
+					leasemask &= ip->cl_leases;
+
+					if (leasemask) {
+						/*
+						 * Remove all expirable leases
+						 * that are not in use.
+						 */
+						error = sam_proc_rm_lease(ip,
+						    leasemask, RW_WRITER);
+					}
 				}
+				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
 
 		/*
