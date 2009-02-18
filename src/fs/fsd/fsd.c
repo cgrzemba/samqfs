@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.170 $"
+#pragma ident "$Revision: 1.171 $"
 
 static char *_SrcFile = __FILE__;
 /* Using __FILE__ makes duplicate strings */
@@ -902,7 +902,9 @@ main(int argc, char *argv[])
 			sam_syslog(LOG_INFO, "%s built %s.", args->fs_name,
 			    time_str);
 #ifdef sun
+#ifdef SAM_QFS_JOURNALING_SUPPORTED
 			initJournaling(args->fs_name);
+#endif /* SAM_QFS_JOURNALING_SUPPORTED */
 #endif /* sun */
 			signalProc(SIGHUP, NULL, args->fs_name);
 			if (!QfsOnly) {
