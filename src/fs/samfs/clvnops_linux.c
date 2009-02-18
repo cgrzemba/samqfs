@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.104 $"
+#pragma ident "$Revision: 1.105 $"
 #endif
 
 #include "sam/osversion.h"
@@ -124,6 +124,34 @@ int samqfs_get_blocks_writer(struct inode *li, sector_t iblk,
 #else
 #define	QFS_VM_WRITE	(VM_WRITE|VM_MAYWRITE)
 #endif
+
+/*
+ * Figure out how many args are used in the 'flush' operation
+ * of struct file_operations.
+ *
+ * FOP_FLUSHARGS == 1: Use one-arg form.
+ * FOP_FLUSHARGS == 2: Use two-arg form.
+ */
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
+/* SLES9 and RHEL4 */
+#define FOP_FLUSHARGS 1
+#endif
+
+#if SUSE_LINUX && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
+/* SLES10 */
+#if defined(SLES10FCS) || defined(SLES10SP1)
+#define FOP_FLUSHARGS 1
+#else
+/* SLES10/SP2 and later */
+#define FOP_FLUSHARGS 2
+#endif
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
+#define FOP_FLUSHARGS 2
+#endif
+
 #endif /* 2.6 */
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
@@ -965,7 +993,7 @@ __samqfs_client_flush(struct file *fp)
 	return (error);
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 18))
+#if (FOP_FLUSHARGS == 1)
 static int
 samqfs_client_flush(struct file *fp)
 {
@@ -973,13 +1001,13 @@ samqfs_client_flush(struct file *fp)
 }
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
+#if (FOP_FLUSHARGS == 2)
 static int
 samqfs_client_flush(struct file *fp, fl_owner_t id)
 {
 	return (__samqfs_client_flush(fp));
 }
-#endif /* >= 2.6.18 */
+#endif
 #endif /* >= 2.6.0 */
 
 

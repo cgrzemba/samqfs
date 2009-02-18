@@ -1,4 +1,4 @@
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 
 #    SAM-QFS_notice_begin
 #
@@ -44,14 +44,42 @@ ifneq (x86_64, ${PROC})
 ATHLON= _athlon
 endif
 endif
+
 OS_CHECK := $(shell grep -is suse /etc/issue)
+
 ifndef OS_CHECK
-OSFLAGS= -DRHE_LINUX
-export OS_TYPE=redhat${ATHLON}
-else
-OSFLAGS= -DSUSE_LINUX
-export OS_TYPE=suse${ATHLON}
+  # RHEL
+  OSFLAGS= -DRHE_LINUX
+  export OS_TYPE=redhat${ATHLON}
 endif
+
+ifdef OS_CHECK
+  # SUSE
+  OSFLAGS= -DSUSE_LINUX
+  export OS_TYPE=suse${ATHLON}
+
+  SLES10_CHECK := $(shell grep -s "Server 10" /etc/issue)
+  ifdef SLES10_CHECK
+    # SUSE changed some kernel API protypes between SP1 and SP2, so try
+    # to identify anything earlier than SP2.
+
+    SP_CHECK := $(shell grep -s "SP" /etc/issue)
+    ifndef SP_CHECK
+      # No service pack, so it's SLES10/FCS.
+      OSFLAGS += -DSLES10FCS
+    endif
+
+    ifdef SP_CHECK
+      # Is it service pack 1?
+      SP1_CHECK := $(shell grep -s "SP1" /etc/issue)
+      ifdef SP1_CHECK
+        OSFLAGS += -DSLES10SP1
+      endif
+    endif
+
+  endif
+endif
+
 OSFLAGS += -D${PROC}
 ifeq (x86_64, ${PROC})
 OSFLAGS += -D_ASM_X86_64_SIGCONTEXT_H -mno-red-zone

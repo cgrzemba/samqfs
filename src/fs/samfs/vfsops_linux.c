@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.71 $"
+#pragma ident "$Revision: 1.72 $"
 #endif
 
 #include "sam/osversion.h"
@@ -88,7 +88,36 @@
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
 typedef struct kstatfs qfs_kstatfs_t;
+
+/*
+ * Figure out which form of prototype we should use for the 'statfs'
+ * operation in struct super_operations.
+ *
+ * SOP_STATFS == 1: Use struct superblock as first arg.
+ * SOP_STATFS == 2: Use struct dentry as first arg.
+ */
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
+/* SLES9 and RHEL4 */
+#define SOP_STATFS 1
+#endif
+
+#if SUSE_LINUX && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
+/* SLES10 */
+#if defined(SLES10FCS) || defined(SLES10SP1)
+#define SOP_STATFS 1
 #else
+#define SOP_STATFS 2
+#endif
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
+#define SOP_STATFS 2
+#endif
+#endif /* >= 2.6 */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
+/* RHEL3 */
 typedef struct statfs qfs_kstatfs_t;
 #endif
 
@@ -1212,6 +1241,7 @@ __samqfs_statfs(struct super_block *lsb, qfs_kstatfs_t *sp, sam_mount_t *mp)
 
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
+/* RHEL3 */
 static int
 samqfs_statfs(struct super_block *lsb, qfs_kstatfs_t *sp)
 {
@@ -1220,10 +1250,11 @@ samqfs_statfs(struct super_block *lsb, qfs_kstatfs_t *sp)
 	mp = (sam_mount_t *)lsb->u.generic_sbp;
 	return (__samqfs_statfs(lsb, sp, mp));
 }
-#endif
+#endif /* RHEL3 */
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)) && \
-	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 18))
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+#if (SOP_STATFS == 1)
 static int
 samqfs_statfs(struct super_block *lsb, qfs_kstatfs_t *sp)
 {
@@ -1234,7 +1265,7 @@ samqfs_statfs(struct super_block *lsb, qfs_kstatfs_t *sp)
 }
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
+#if (SOP_STATFS == 2)
 static int
 samqfs_statfs(struct dentry *dentry, qfs_kstatfs_t *sp)
 {
@@ -1245,6 +1276,7 @@ samqfs_statfs(struct dentry *dentry, qfs_kstatfs_t *sp)
 	return (__samqfs_statfs(lsb, sp, mp));
 }
 #endif
+#endif /* >= 2.6 */
 
 
 /*
