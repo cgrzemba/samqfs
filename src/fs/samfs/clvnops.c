@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.201 $"
+#pragma ident "$Revision: 1.202 $"
 
 #include "sam/osversion.h"
 
@@ -2591,7 +2591,7 @@ sam_client_getpage_vn(
 #endif
 )
 {
-	sam_node_t *ip;
+	sam_node_t *ip, *l_ip;
 	boolean_t lock_set = B_FALSE;
 	sam_block_fgetbuf_t fgetbuf;
 	page_t **pppl;
@@ -2641,7 +2641,7 @@ sam_client_getpage_vn(
 	 * Threads which came here via other parts
 	 * of the filesystem cannot be nonblocking.
 	 */
-	if (SAM_GET_LEASEFLG(ip->mp)) {
+	if (SAM_GET_LEASEFLG(ip)) {
 		unset_nb = 0;
 		sam_unset_operation_nb(ip->mp);
 	}
@@ -2649,16 +2649,34 @@ sam_client_getpage_vn(
 	using_lease = TRUE;
 	mutex_enter(&ip->ilease_mutex);
 	ip->cl_leaseused[ltype]++;
+	l_ip = SAM_GET_LEASEFLG(ip);
 
+	/*
+	 * If l_ip is null then we're doing an mmap page fault
+	 * and this host may no longer have a lease for this file.
+	 *
+	 * If l_ip is non-null but doesn't match ip, then we've come
+	 * through VOP_WRITE and we're trying to read from ip because
+	 * the buffer pointed to by the uio struct is backed by this file.
+	 *
+	 * Either way, we've come through a code path that is not
+	 * necessarily actively holding a lease for this particular file.
+	 */
 #ifdef DEBUG
-	if (SAM_GET_LEASEFLG(ip->mp) == NULL) {
+	if (l_ip == NULL) {
+		ASSERT(ip->mm_pages > 0);
+		ASSERT(ip->last_unmap == 0);
+		ASSERT(ip->cl_leases & CL_MMAP);
+	}
+	if (l_ip && l_ip != ip) {
+		ASSERT(rw == S_READ);
 		ASSERT(ip->mm_pages > 0);
 		ASSERT(ip->last_unmap == 0);
 		ASSERT(ip->cl_leases & CL_MMAP);
 	}
 #endif
 
-	if ((SAM_GET_LEASEFLG(ip->mp) == NULL) &&
+	if ((l_ip != ip) &&
 	    (((rw == S_WRITE) && !(ip->cl_leases & CL_WRITE)) ||
 	    ((rw == S_READ) && !(ip->cl_leases & CL_READ)))) {
 		sam_lease_data_t data;

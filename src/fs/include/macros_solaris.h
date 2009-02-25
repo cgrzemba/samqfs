@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_SOLARIS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.35 $"
+#pragma ident "$Revision: 1.36 $"
 #endif
 
 #include <sys/types.h>
@@ -154,14 +154,14 @@
  * This is used to flag threads that get into the client getpage
  * path that do not need READ or WRITE lease.
  */
-#define	SAM_GET_LEASEFLG(mp)					\
-	tsd_get(mp->ms.m_tsd_leasekey)
+#define	SAM_GET_LEASEFLG(ip)					\
+	tsd_get(ip->mp->ms.m_tsd_leasekey)
 
-#define	SAM_SET_LEASEFLG(mp)					\
-	(void) tsd_set(mp->ms.m_tsd_leasekey, (void *)1)
+#define	SAM_SET_LEASEFLG(ip)					\
+	(void) tsd_set(ip->mp->ms.m_tsd_leasekey, ip)
 
-#define	SAM_CLEAR_LEASEFLG(mp)					\
-	(void) tsd_set(mp->ms.m_tsd_leasekey, (void *)0)
+#define	SAM_CLEAR_LEASEFLG(ip)					\
+	(void) tsd_set(ip->mp->ms.m_tsd_leasekey, NULL)
 
 /*
  * ----- Decrement operation activity count.

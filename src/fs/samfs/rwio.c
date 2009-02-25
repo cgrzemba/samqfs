@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.180 $"
+#pragma ident "$Revision: 1.181 $"
 #endif
 
 #include "sam/osversion.h"
@@ -257,13 +257,13 @@ start:
 		ASSERT(nbytes > 0);
 		if (sam_vpm_enable) {
 
-			SAM_SET_LEASEFLG(ip->mp);
+			SAM_SET_LEASEFLG(ip);
 			error = vpm_data_copy(vp, offset, nbytes, uiop, 1, NULL,
 			    0, S_READ);
-			SAM_CLEAR_LEASEFLG(ip->mp);
+			SAM_CLEAR_LEASEFLG(ip);
 
 		} else {
-			SAM_SET_LEASEFLG(ip->mp);
+			SAM_SET_LEASEFLG(ip);
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    1, S_READ);
 
@@ -273,7 +273,7 @@ start:
 			 */
 			error = UIOMOVE((base + reloff), nbytes, UIO_READ, uiop,
 			    is_lio);
-			SAM_CLEAR_LEASEFLG(ip->mp);
+			SAM_CLEAR_LEASEFLG(ip);
 		}
 		if (error == 0) {
 			if (((reloff + nbytes) == MAXBSIZE) && free_page &&
@@ -388,9 +388,9 @@ sam_read_stage_n_io(
 	 * Move the data from the stage_n memory pages into the user's buffer.
 	 */
 	ASSERT(nbytes > 0);
-	SAM_SET_LEASEFLG(ip->mp);
+	SAM_SET_LEASEFLG(ip);
 	error = uiomove((base + reloff), nbytes, UIO_READ, uiop);
-	SAM_CLEAR_LEASEFLG(ip->mp);
+	SAM_CLEAR_LEASEFLG(ip);
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 	if (ip->stage_err) {
@@ -661,18 +661,18 @@ start:
 		 * to the same file through mmap which we want to
 		 * write.
 		 */
-		if (!SAM_IS_SHARED_FS(ip->mp)) {
-			sam_uio_prefaultpages(nbytes, uiop);
-		}
+		SAM_SET_LEASEFLG(ip);
+		sam_uio_prefaultpages(nbytes, uiop);
+		SAM_CLEAR_LEASEFLG(ip);
 
 		if (sam_vpm_enable) {
 
-			SAM_SET_LEASEFLG(ip->mp);
+			SAM_SET_LEASEFLG(ip);
 			error = vpm_data_copy(vp, offset, nbytes, uiop,
 			    forcefault, NULL, 0, S_WRITE);
-			SAM_CLEAR_LEASEFLG(ip->mp);
+			SAM_CLEAR_LEASEFLG(ip);
 		} else {
-			SAM_SET_LEASEFLG(ip->mp);
+			SAM_SET_LEASEFLG(ip);
 			base = segmap_getmapflt(segkmap, vp, offset, nbytes,
 			    forcefault, S_WRITE);
 
@@ -687,7 +687,7 @@ start:
 			 */
 			error = UIOMOVE((base + reloff), nbytes, UIO_WRITE,
 			    uiop, is_lio);
-			SAM_CLEAR_LEASEFLG(ip->mp);
+			SAM_CLEAR_LEASEFLG(ip);
 		}
 
 		if (error) {
@@ -738,9 +738,9 @@ start:
 			    ip->size;
 
 			if (zlen > 0) {
-				SAM_SET_LEASEFLG(ip->mp);
+				SAM_SET_LEASEFLG(ip);
 				fbzero(SAM_ITOV(ip), ip->size, zlen, &fbp);
-				SAM_CLEAR_LEASEFLG(ip->mp);
+				SAM_CLEAR_LEASEFLG(ip);
 				fbrelse(fbp, S_WRITE);
 			}
 		}
@@ -1228,10 +1228,10 @@ unallocated_read:
 				ioblk.count = MIN(ioblk.count,
 				    sam_zero_block_size);
 				ASSERT(ioblk.count > 0);
-				SAM_SET_LEASEFLG(ip->mp);
+				SAM_SET_LEASEFLG(ip);
 				error = uiomove(sam_zero_block, ioblk.count,
 				    UIO_READ, uiop);
-				SAM_CLEAR_LEASEFLG(ip->mp);
+				SAM_CLEAR_LEASEFLG(ip);
 				if (error) {
 					goto done;
 				}
@@ -1270,10 +1270,10 @@ unallocated_read:
 				    (DEV_BSIZE - ioblk.pboff));
 				ASSERT(ioblk.count > 0);
 
-				SAM_SET_LEASEFLG(ip->mp);
+				SAM_SET_LEASEFLG(ip);
 				error = uiomove((bp->b_un.b_addr + ioblk.pboff),
 				    ioblk.count, rw, uiop);
-				SAM_CLEAR_LEASEFLG(ip->mp);
+				SAM_CLEAR_LEASEFLG(ip);
 				if (rw == UIO_WRITE && error == 0) {
 					error = SAM_BWRITE2(ip->mp, bp);
 				}

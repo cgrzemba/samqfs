@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.149 $"
+#pragma ident "$Revision: 1.150 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1536,11 +1536,11 @@ sam_map_fault(sam_node_t *ip, sam_u_offset_t boff, sam_offset_t total_len,
 					sam_flush_map(ip->mp, mapp);
 				}
 			}
-			SAM_SET_LEASEFLG(ip->mp);
+			SAM_SET_LEASEFLG(ip);
 			base = segmap_getmapflt(segkmap, vp, boff,
 			    this_len, 1, S_WRITE);
 			segmap_release(segkmap, base, 0);
-			SAM_CLEAR_LEASEFLG(ip->mp);
+			SAM_CLEAR_LEASEFLG(ip);
 			TRACE(T_SAM_MAPFLT, vp, (sam_tr_t)boff,
 			    (sam_tr_t)this_len,
 			    (sam_tr_t)vp->v_pages);
@@ -1777,9 +1777,9 @@ sam_zero_sparse_blocks(
 			if (is_small) {
 #ifdef sun
 				sam_map_fault(ip, start, dau_size, NULL);
-				SAM_SET_LEASEFLG(mp);
+				SAM_SET_LEASEFLG(ip);
 				fbzero(SAM_ITOV(ip), start, dau_size, &fbp);
-				SAM_CLEAR_LEASEFLG(mp);
+				SAM_CLEAR_LEASEFLG(ip);
 				fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -1800,11 +1800,11 @@ sam_zero_sparse_blocks(
 					 */
 					while (current_len < dau_size) {
 #ifdef sun
-						SAM_SET_LEASEFLG(mp);
+						SAM_SET_LEASEFLG(ip);
 						fbzero(SAM_ITOV(ip),
 						    start + current_len,
 						    zlen, &fbp);
-						SAM_CLEAR_LEASEFLG(mp);
+						SAM_CLEAR_LEASEFLG(ip);
 						fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -2007,9 +2007,9 @@ sam_zero_dau(
 		if (bt == SM) {
 			sam_map_fault(ip, boff, len, NULL);
 		}
-		SAM_SET_LEASEFLG(ip->mp);
+		SAM_SET_LEASEFLG(ip);
 		fbzero(SAM_ITOV(ip), boff, len, &fbp);
-		SAM_CLEAR_LEASEFLG(ip->mp);
+		SAM_CLEAR_LEASEFLG(ip);
 		fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -2116,9 +2116,9 @@ sam_clear_append_after_map(sam_node_t *ip, offset_t size, offset_t offset,
 					return (error);
 				}
 			}
-			SAM_SET_LEASEFLG(mp);
+			SAM_SET_LEASEFLG(ip);
 			fbzero(SAM_ITOV(ip), start, zlen, &fbp);
-			SAM_CLEAR_LEASEFLG(mp);
+			SAM_CLEAR_LEASEFLG(ip);
 			fbrelse(fbp, S_WRITE);
 #endif
 #ifdef linux
@@ -2568,9 +2568,9 @@ sam_fbzero(sam_node_t *ip, offset_t offset, int tlen, sam_ioblk_t *iop,
 		if (len > rlen) {
 			len = rlen;
 		}
-		SAM_SET_LEASEFLG(mp);
+		SAM_SET_LEASEFLG(ip);
 		fbzero(SAM_ITOV(ip), off, len, &fbp);
-		SAM_CLEAR_LEASEFLG(mp);
+		SAM_CLEAR_LEASEFLG(ip);
 
 		rlen -= len;
 		off += len;

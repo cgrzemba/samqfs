@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.47 $"
+#pragma ident "$Revision: 1.48 $"
 
 #include "sam/osversion.h"
 
@@ -1813,9 +1813,9 @@ sam_map_osd(
 		}
 		len = (offset & PAGEOFFSET) - (off & PAGEOFFSET);
 		if (len > 0) {
-			SAM_SET_LEASEFLG(ip->mp);
+			SAM_SET_LEASEFLG(ip);
 			fbzero(SAM_ITOV(ip), off, len, &fbp);
-			SAM_CLEAR_LEASEFLG(ip->mp);
+			SAM_CLEAR_LEASEFLG(ip);
 			fbrelse(fbp, S_WRITE);
 		}
 	}

@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.307 $"
+#pragma ident "$Revision: 1.308 $"
 
 #include "sam/osversion.h"
 
@@ -1026,7 +1026,7 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 
 					/*
 					 * If server, Allocate DAUs and return a
-					 * bit map of alllocated blocks.  The
+					 * bit map of allocated blocks.  The
 					 * client will clear the allocated
 					 * blocks.
 					 */
@@ -3427,11 +3427,10 @@ sam_get_block_request(sam_mount_t *mp, sam_san_message_t *msg)
 				ASSERT(len > 0);
 				bzero(&bnp->data[len], fblk->len - len);
 			}
-			SAM_SET_LEASEFLG(mp);
+			SAM_SET_LEASEFLG(ip);
 			base = segmap_getmapflt(segkmap, vp, fblk->offset,
-			    len, 0,
-			    S_READ);
-			SAM_CLEAR_LEASEFLG(mp);
+			    len, 0, S_READ);
+			SAM_CLEAR_LEASEFLG(ip);
 
 			/*
 			 * Solaris (AMD and SPARC) clients always request
