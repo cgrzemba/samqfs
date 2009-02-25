@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident	"$Revision: 1.9 $"
+#pragma ident	"$Revision: 1.10 $"
 #endif
 
 #include <sys/sysmacros.h>
@@ -76,6 +76,7 @@ extern kmutex_t qfsvfs_mutex;
 extern qfsvfs_t *qfs_instances;
 
 extern void (*bio_lqfs_strategy)(void *, buf_t *);
+extern void sam_uio_prefaultpages(ssize_t, struct uio *);
 
 /*
  * hlock any file systems w/errored logs
@@ -1253,73 +1254,6 @@ again:
 }
 
 /*
- * Fault in the pages of the first n bytes specified by the uio structure.
- * 1 byte in each page is touched and the uio struct is unmodified.
- * Any error will terminate the process as this is only a best
- * attempt to get the pages resident.
- */
-static void
-qfs_trans_touch(ssize_t n, struct uio *uio)
-{
-	struct iovec *iov;
-	ulong_t cnt, incr;
-	caddr_t p;
-	uint8_t tmp;
-
-	iov = uio->uio_iov;
-
-	while (n) {
-		cnt = MIN(iov->iov_len, n);
-		if (cnt == 0) {
-			/* empty iov entry */
-			iov++;
-			continue;
-		}
-		n -= cnt;
-		/*
-		 * touch each page in this segment.
-		 */
-		p = iov->iov_base;
-		while (cnt) {
-			switch (uio->uio_segflg) {
-			case UIO_USERSPACE:
-			case UIO_USERISPACE:
-				if (fuword8(p, &tmp)) {
-					return;
-				}
-				break;
-			case UIO_SYSSPACE:
-				if (kcopy(p, &tmp, 1)) {
-					return;
-				}
-				break;
-			}
-			incr = MIN(cnt, PAGESIZE);
-			p += incr;
-			cnt -= incr;
-		}
-		/*
-		 * touch the last byte in case it straddles a page.
-		 */
-		p--;
-		switch (uio->uio_segflg) {
-		case UIO_USERSPACE:
-		case UIO_USERISPACE:
-			if (fuword8(p, &tmp)) {
-				return;
-			}
-			break;
-		case UIO_SYSSPACE:
-			if (kcopy(p, &tmp, 1)) {
-				return;
-			}
-			break;
-		}
-		iov++;
-	}
-}
-
-/*
  * Calculate the amount of log space that needs to be reserved for this
  * write request.  If the amount of log space is too large, then
  * calculate the size that the requests needs to be split into.
@@ -1345,7 +1279,7 @@ qfs_trans_write_resv(
 	resid = MIN(uio->uio_resid, qfs_trans_max_resid);
 	resv = qfs_log_amt(ip, offset, resid, 0);
 	if (resv <= qfs_trans_max_resv) {
-		qfs_trans_touch(resid, uio);
+		sam_uio_prefaultpages(resid, uio);
 		if (resid != uio->uio_resid) {
 			*residp = resid;
 		}
@@ -1360,7 +1294,7 @@ qfs_trans_write_resv(
 		nchunks++;
 		resid = uio->uio_resid / nchunks;
 	}
-	qfs_trans_touch(resid, uio);
+	sam_uio_prefaultpages(resid, uio);
 	/*
 	 * If this request takes too much log space, it will be split
 	 */
@@ -1433,7 +1367,7 @@ again:
 	 * Make sure the input buffer is resident before starting
 	 * the next transaction.
 	 */
-	qfs_trans_touch(MIN(resid, realresid), uio);
+	sam_uio_prefaultpages(MIN(resid, realresid), uio);
 
 	/*
 	 * Generate BOT for next part of the request

@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.179 $"
+#pragma ident "$Revision: 1.180 $"
 #endif
 
 #include "sam/osversion.h"
@@ -403,6 +403,76 @@ sam_read_stage_n_io(
 
 
 /*
+ * Fault in the pages of the first n bytes specified by the uio structure.
+ * 1 byte in each page is touched and the uio struct is unmodified. Any
+ * error will terminate the process as this is only a best attempt to get
+ * the pages resident.
+ *
+ * This is copied from uio_prefaultpages().
+ */
+void
+sam_uio_prefaultpages(ssize_t n, struct uio *uio)
+{
+	struct iovec *iov;
+	ulong_t cnt, incr;
+	caddr_t p;
+	uint8_t tmp;
+	int iovcnt;
+
+	iov = uio->uio_iov;
+	iovcnt = uio->uio_iovcnt;
+
+	while ((n > 0) && (iovcnt > 0)) {
+		cnt = MIN(iov->iov_len, n);
+		if (cnt == 0) {
+			/* empty iov entry */
+			iov++;
+			iovcnt--;
+			continue;
+		}
+		n -= cnt;
+		/*
+		 * touch each page in this segment.
+		 */
+		p = iov->iov_base;
+		while (cnt) {
+			switch (uio->uio_segflg) {
+			case UIO_USERSPACE:
+			case UIO_USERISPACE:
+				if (fuword8(p, &tmp))
+					return;
+				break;
+			case UIO_SYSSPACE:
+				if (kcopy(p, &tmp, 1))
+					return;
+				break;
+			}
+			incr = MIN(cnt, PAGESIZE);
+			p += incr;
+			cnt -= incr;
+		}
+		/*
+		 * touch the last byte in case it straddles a page.
+		 */
+		p--;
+		switch (uio->uio_segflg) {
+		case UIO_USERSPACE:
+		case UIO_USERISPACE:
+			if (fuword8(p, &tmp))
+				return;
+			break;
+		case UIO_SYSSPACE:
+			if (kcopy(p, &tmp, 1))
+				return;
+			break;
+		}
+		iov++;
+		iovcnt--;
+	}
+}
+
+
+/*
  * ----- sam_write_io - Write a SAM-QFS file.
  *
  * Map the file offset to the correct page boundary.
@@ -574,6 +644,8 @@ start:
 			}
 		}
 
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+
 		/*
 		 * Map the file offset..nbytes and lock it. This may result in a
 		 * call to getpage.
@@ -581,6 +653,17 @@ start:
 		pglock = 0;
 		seg_flags = 0;
 		ASSERT(nbytes > 0);
+
+		/*
+		 * Touch the page and fault it in if it is not in core
+		 * before segmap_getmapflt or vpm_data_copy can lock it.
+		 * This is to avoid a deadlock if the buffer is mapped
+		 * to the same file through mmap which we want to
+		 * write.
+		 */
+		if (!SAM_IS_SHARED_FS(ip->mp)) {
+			sam_uio_prefaultpages(nbytes, uiop);
+		}
 
 		if (sam_vpm_enable) {
 
@@ -628,6 +711,7 @@ start:
 			(void) segmap_release(segkmap, base, seg_flags);
 		}
 
+		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		TRACE(T_SAM_WRITEIO2, vp, (sam_tr_t)base,
 		    (sam_tr_t)uiop->uio_resid,
 		    (sam_tr_t)reloff);
