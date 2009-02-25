@@ -50,7 +50,7 @@
  *
  */
 
-#pragma ident "$Revision: 1.8 $"
+#pragma ident "$Revision: 1.9 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -388,19 +388,15 @@ main(int argc, char *argv[])
 	 * Queue size must be at the maximum size of the read threads.
 	 */
 	bzero(&pblock, sizeof (pblock));
-	pblock.block_size = 1048576;
-	if (control.block_size) {
-		pblock.block_size = (int64_t)control.block_size * 1048576;
+	if (control.block_size == 0) {
+		control.block_size = 1;	/* Default value */
 	}
-	pblock.read_threads = 8;	/* Read threads */
-	pblock.queue_size = 8;		/* Queue size */
-	if (control.streams) {
-		pblock.read_threads = control.streams;
-		pblock.queue_size = control.streams;
+	pblock.block_size = (int64_t)control.block_size * 1048576;
+	if (control.streams == 0) {
+		control.streams = 8;	/* Default value */
 	}
-	if (pblock.queue_size < pblock.read_threads) {
-		pblock.queue_size = pblock.read_threads;
-	}
+	pblock.read_threads = control.streams;
+	pblock.queue_size = control.streams;
 
 	/*
 	 * Get the mount point.
@@ -410,6 +406,14 @@ main(int argc, char *argv[])
 		SendCustMsg(HERE, 2596, fs_name);
 		exit(EXIT_FAILURE);
 	}
+	Trace(TR_MISC, "sam-shrink command options: fs=%s mp=%s cmd=%d eq=%d "
+	    "ord=%d ord2=%d do_not_execute=%d display_all_files=%d "
+	    "stage_files=%d stage_partial=%d streams=%d block_size=%dMB log=%s",
+	    fs_name, control.mountpoint, control.command, control.eq,
+	    control.ord, control.ord2, control.do_not_execute,
+	    control.display_all_files, control.stage_files,
+	    control.stage_partial, control.streams, control.block_size,
+	    control.log_pathname);
 
 	/*
 	 * Shrink the specified ordinal.
@@ -620,8 +624,8 @@ sam_shrink_fs(
 	 * Create the threads and allocate the buffers.
 	 */
 	sam_init_pblock(fs_name, pp);
-	Trace(TR_MISC, "sam-shrink blk_sz=%llx, threads=%d",
-	    pp->block_size, pp->read_threads);
+	Trace(TR_MISC, "sam-shrink threads=%d, blk_sz=0x%llx",
+	    pp->read_threads, pp->block_size);
 
 	/*
 	 * Must set concurrency for all threads to be active
@@ -741,7 +745,7 @@ sam_setup_file(pblock_t *pp)
 	pp->file_size = statbuf.st_size;
 
 	/*
-	 * Compute number of blocks based on the file size & block size.
+	 * Compute number of blocks based on the .inodes file size & block size.
 	 */
 	pp->block_count = (pp->file_size + pp->block_size - 1) / pp->block_size;
 	n = (int)pp->block_count;

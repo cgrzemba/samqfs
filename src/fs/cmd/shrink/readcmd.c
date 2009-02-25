@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.3 $"
+#pragma ident "$Revision: 1.4 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -179,7 +179,6 @@ block_size(void)
 		ReadCfgError(8020, token, fs_name);
 		return;
 	}
-	block_size = 1;
 	if (block_size < 1) {
 		block_size = 1;
 	}

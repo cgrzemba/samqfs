@@ -1,4 +1,4 @@
-.\" $Revision: 1.3 $
+.\" $Revision: 1.4 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH shrink.cmd 4 "15 Apr 2008"
+.TH shrink.cmd 4 "19 Feb 2009"
 .SH NAME
 shrink.cmd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS shrink command file
 .SH SYNOPSIS
@@ -65,14 +65,16 @@ For \fIn\fR, specify an integer such that 1 \(<= \fIn\fR \(<= 16.
 The default \fIn\fR=1MB.
 .TP
 .B "display_all_files"
-Writes the name for each file, as it is encountered,
-to the log file. This directive allows you to see the effect of
-executing the remove or release command.
+Writes the name for each file, as it is encountered, to the log file.
+This directive allows you to see the result of executing the remove or
+release command.  By default, the file names are not displayed to the
+log file.
 .TP
 .B "do_not_execute"
-Writes the name for each file, as it is encountered,
-to the log file. This directive allows you to judge the effect of
-executing the remove or release command.
+Writes the name for each file, as it is encountered, to the log file.
+This directive allows you to judge the effects of executing the remove
+or release command, without actually executing the command.  By default,
+the command is executed.
 .TP
 .BI "fs = " file_system_family_set_name
 Specifies to the shrink that
@@ -109,13 +111,12 @@ the \fBsamfs1\fR file system. A shrink log is produced.
           logfile = /var/adm/shrink.log
 
 .fi
-.ft
 Example 2.  This example specifies stage parameters and log
 files for each file system.
 .ft CO
 .nf
 
-		  display_all_files
+          display_all_files
           logfile = /var/adm/default.shrink.log
 
           fs = samfs1
