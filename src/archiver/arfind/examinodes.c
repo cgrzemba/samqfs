@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.17 $"
+#pragma ident "$Revision: 1.18 $"
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
@@ -105,7 +105,7 @@ static struct IdList {
 #define	IDLIST_TMP "idlist_tmp"
 #define	IDLIST_MAGIC 0110414112324
 #define	IDLIST_INCR 1000
-#define	ID_LOC(ir) ((void *)((char *)examList + *ir))
+#define	ID_LOC(ir) ((void *)((char *)examList + *(ir)))
 
 static pthread_cond_t examWait = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t examWaitMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -122,8 +122,7 @@ static void initExaminodes();
 static struct ExamList *initExamList(char *name);
 static void addExamList(sam_id_t id, int event, sam_time_t xeTime,
     char *caller);
-static int pruneExamList(int prev_i);
-static int cmpIdList(const void *p1, const void *p2);
+static int pruneExamList(void);
 static void wakeup(void);
 
 
@@ -271,8 +270,10 @@ ExamInodes(
 			}
 			PthreadMutexLock(&examListMutex);
 			if (examList->ElFree >= EXAMLIST_FREEMAX) {
-				i = pruneExamList(i);
-				PthreadMutexLock(&examListMutex);
+				/* If good prune then start from beginning */
+				if (pruneExamList() == 0) {
+					i = -1;
+				}
 			}
 			noActiveMsg = FALSE;
 		}
@@ -551,6 +552,7 @@ initExaminodes(void)
 		}
 	}
 	if (examList == NULL) {
+		idListCreate();
 		examList = initExamList(EXAMLIST);
 	}
 }
@@ -565,7 +567,6 @@ initExamList(
 {
 	struct ExamList *el;
 
-	idListCreate();
 	el = MapFileCreate(name, EXAMLIST_MAGIC,
 	    EXAMLIST_START * sizeof (struct ExamListEntry));
 	if (el == NULL) {
@@ -674,31 +675,28 @@ addExamList(
 
 
 /*
- * Prune the examine list.
- * examListMutex locked on entry.  Unlocked on exit.
- * Returns index adjusted for removed entries.
+ * Prune the examine list, examListMutex must be held.
+ * Returns 0 on successful prune, -1 on error.
+ * If an error original list is rolled back.
  */
 static int
-pruneExamList(int cur_idx)
+pruneExamList(void)
 {
 	struct ExamListEntry *buf = NULL; /* Buffer for writing new Examlist */
 	struct ExamListEntry *xe;	/* Iterator over existing examlist */
 	struct IdList *new_il = NULL;	/* New exam id list */
 	struct ExamList *el;		/* Temp var to create new Examlist */
 	int	el_fd = -1;		/* File descriptor for new Examlist */
+	uint_t	el_len;			/* Length of mmap file */
 	uint_t	el_lenoff;		/* Offset to length in mmap file */
 	uint_t	el_offset;		/* Current pos in new Examlist file */
 	int	i;
 	int	j;
 	int	buf_i;			/* Current index into buffer */
 	int	nwritten;		/* Number of bytes written */
-	int	new_idx;		/* Updated index from removed items */
-
-	new_idx = cur_idx;
 
 	if (examList->ElCount == 0 || examList->ElFree == 0) {
-		PthreadMutexUnlock(&examListMutex);
-		return (new_idx);
+		return (-1);
 	}
 
 	SamMalloc(buf, EXAMLIST_PRUNEBUF * sizeof (struct ExamListEntry));
@@ -706,7 +704,7 @@ pruneExamList(int cur_idx)
 
 	/* Create new id list */
 	new_il = MapFileCreate(IDLIST_TMP, IDLIST_MAGIC,
-	    IDLIST_INCR * sizeof (uint_t));
+	    (examList->ElCount - examList->ElFree) * sizeof (uint_t));
 	new_il->Il.MfValid = 1;
 	new_il->IlCount = 0;
 	new_il->IlSize = sizeof (struct IdList);
@@ -717,6 +715,7 @@ pruneExamList(int cur_idx)
 		Trace(TR_ERR, "Could not create new Examlist");
 		goto rollback;
 	}
+	el_len = el->El.MfLen;
 	el_lenoff = Ptrdiff(&el->El.MfLen, el);
 	el_offset = Ptrdiff(&el->ElEntry, el);
 	(void) ArMapFileDetach(el);
@@ -732,10 +731,13 @@ pruneExamList(int cur_idx)
 	Trace(TR_MISC, "Examlist prune count: %d free: %d",
 	    examList->ElCount, examList->ElFree);
 
-	/* Add the non-free entries to the new list. */
+	/*
+	 * Add the non-free entries to the new list, iterating in
+	 * idList order to avoid sorting new_il later.
+	 */
 	j = 0;
-	for (i = 0; i < examList->ElCount; i++) {
-		xe = &examList->ElEntry[i];
+	for (i = 0; i < idList->IlCount; i++) {
+		xe = ID_LOC(&idList->IlEntry[i]);
 		if (!(xe->XeFlags & XE_free)) {
 			memcpy(&buf[buf_i], xe, sizeof (struct ExamListEntry));
 
@@ -753,14 +755,7 @@ pruneExamList(int cur_idx)
 
 			j++;
 			buf_i++;
-		} else if (i <= cur_idx) {
-			/*
-			 * Removed entry before current index, adjust.
-			 * Careful at boundary, if current index is removed
-			 * we still want to decrement since the index will
-			 * be incremented in the loop (hence the <=).
-			 */
-			new_idx--;
+			el_offset += sizeof (struct ExamListEntry);
 		}
 
 		/* Write the buffer if full */
@@ -771,7 +766,6 @@ pruneExamList(int cur_idx)
 				Trace(TR_ERR, "Write error to new Examlist");
 				goto rollback;
 			}
-			el_offset += wr_size;
 			buf_i = 0;
 		}
 	}
@@ -784,18 +778,20 @@ pruneExamList(int cur_idx)
 			Trace(TR_ERR, "Write error to new Examlist");
 			goto rollback;
 		}
-		el_offset += wr_size;
 		buf_i = 0;
 	}
 	SamFree(buf);
 	buf = NULL;
 
 	/* Update the mapfile length */
+	if (el_len < el_offset) {
+		el_len = el_offset;
+	}
 	if (lseek(el_fd, el_lenoff, SEEK_SET) != el_lenoff) {
 		Trace(TR_ERR, "Could not seek to update mmap length");
 		goto rollback;
 	}
-	if (write(el_fd, &el_offset, sizeof (uint_t)) != sizeof (uint_t)) {
+	if (write(el_fd, &el_len, sizeof (uint_t)) != sizeof (uint_t)) {
 		Trace(TR_ERR, "Error writing updated mmap length");
 		goto rollback;
 	}
@@ -822,20 +818,16 @@ pruneExamList(int cur_idx)
 	}
 	unlink(EXAMLIST"-old");
 	examList->ElCount = new_il->IlCount;
-	examList->ElSize += (examList->ElCount - 1) *
-	    sizeof (struct ExamListEntry);
+	examList->ElSize = examList->El.MfLen;
 
-	/* Sort and make the new id list active */
-	qsort(new_il->IlEntry, new_il->IlCount, sizeof (uint_t), cmpIdList);
+	/* Make the new id list active */
 	(void) ArMapFileDetach(idList);
 	if (MapFileRename(new_il, IDLIST) == -1) {
 		LibFatal(MapFileRename, IDLIST);
 	}
 	idList = new_il;
 
-	PthreadMutexUnlock(&examListMutex);
-
-	return (new_idx);
+	return (0);
 rollback:
 	Trace(TR_ERR, "Rolling back prune, using previous Examlist");
 	if (el_fd > 0) {
@@ -849,20 +841,8 @@ rollback:
 	if (buf != NULL) {
 		SamFree(buf);
 	}
-	return (cur_idx);
+	return (-1);
 }
-
-/*
- * Comparison function to sort idList based on inode (used in pruning).
- */
-static int
-cmpIdList(const void *p1, const void *p2) {
-	struct ExamListEntry *e1 = (struct ExamListEntry *)ID_LOC((uint_t *)p1);
-	struct ExamListEntry *e2 = (struct ExamListEntry *)ID_LOC((uint_t *)p2);
-
-	return (e1->XeId.ino - e2->XeId.ino);
-}
-
 
 /*
  * Wakeup the ExamInodes() thread.
