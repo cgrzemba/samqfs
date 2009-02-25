@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.266 $"
+#pragma ident "$Revision: 1.267 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1469,9 +1469,9 @@ sam_issue_lease_request(sam_node_t *ip, sam_san_lease_msg_t *msg,
 			}
 		}
 
+reissue:
 		on_server = SAM_IS_SHARED_SERVER(ip->mp);
 		if (on_server) {
-reissue:
 #ifdef METADATA_SERVER
 			error = sam_process_lease_request(ip,
 			    (sam_san_message_t *)msg);
@@ -1554,6 +1554,13 @@ reissue2:
 			error = sam_send_to_server(ip->mp, ip,
 			    (sam_san_message_t *)msg);
 			if (error) {
+				if (error == EAGAIN) {
+					if (!is_truncate) {
+						RW_LOCK_OS(&ip->inode_rwl,
+						    rw_type);
+					}
+					goto reissue;
+				}
 				break;	/* Error - did not get lease */
 			} else if (wait_flag >= SHARE_nothr) {
 				break;	/* No thread waiting, don't wait */
@@ -1676,7 +1683,7 @@ reissue2:
 			sam_finish_message(mp, ip,
 			    &wait_clp, (sam_san_message_t *)&wait_msg);
 		}
-		if (error != ETIME) {
+		if (error != ETIME && error != EAGAIN) {
 			if (on_server && is_truncate) {
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
@@ -2930,8 +2937,7 @@ sam_send_to_server(
 			 * happens during failover.
 			 */
 			if ((error = sam_send_mount_cmd(mp, &mount_msg,
-			    MOUNT_init,
-			    SAM_MOUNT_TIMEOUT)) == 0) {
+			    MOUNT_init, SAM_MOUNT_TIMEOUT)) == 0) {
 				msg->hdr.client_ord = mp->ms.m_client_ord;
 				if (mp->mt.fi_status & FS_SRVR_BYTEREV) {
 					sam_bswap4(

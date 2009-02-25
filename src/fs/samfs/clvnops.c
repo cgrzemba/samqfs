@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.200 $"
+#pragma ident "$Revision: 1.201 $"
 
 #include "sam/osversion.h"
 
@@ -2687,7 +2687,7 @@ sam_client_getpage_vn(
 		if (error = sam_proc_get_lease(ip, &data, NULL, NULL,
 		    SHARE_quickwait, credp)) {
 			SAM_DECREMENT_LEASEUSED(ip, ltype);
-			if (error == ETIME) {
+			if (error == ETIME || error == EAGAIN) {
 				if (sam_check_sig()) {
 					error = EINTR;
 				} else {
