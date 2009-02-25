@@ -39,7 +39,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.42 $"
+#pragma ident "$Revision: 1.43 $"
 
 static char    *_SrcFile = __FILE__;
 
@@ -1138,6 +1138,10 @@ add_preview_entry(
 	 * the equipment number to 0 and notify the operator that a VSN must
 	 * be loaded manually.
 	 */
+
+	if (CatalogSync() != 0) {
+		sam_syslog(LOG_DEBUG, "Catalog changed or invalid");
+	}
 
 	ce = CatalogGetCeByMedia(sam_mediatoa(resource->archive.rm_info.media),
 	    resource->archive.vsn, &ced);
