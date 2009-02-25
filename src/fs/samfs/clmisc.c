@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.267 $"
+#pragma ident "$Revision: 1.268 $"
 #endif
 
 #include "sam/osversion.h"
@@ -376,6 +376,26 @@ sam_update_shared_sblk(
 	}
 	new_sblk = (struct sam_sblk *)(void *)buf;
 #endif /* linux */
+
+	/*
+	 * If not mounted, don't update superblock if server superblock
+	 * partition count/Gen is != client partition count/Gen. The client
+	 * must build the mcf and execute a samd config
+	 */
+	if (!(mp->mt.fi_status & FS_MOUNTED) &&
+	    ((new_sblk->info.sb.fs_count != mp->mt.fs_count) ||
+	    (new_sblk->info.sb.fsgen != mp->mi.m_fsgen_config))) {
+		cmn_err(CE_WARN,
+		    "SAM-QFS: %s: Server %s has %d partitions/Gen=%x,"
+		    " client has %d partitions/Gen=%x"
+		    " Execute samd buildmcf followed by"
+		    " samd config to update mcf",
+		    mp->mt.fi_name, mp->mt.fi_server,
+		    new_sblk->info.sb.fs_count, new_sblk->info.sb.fsgen,
+		    mp->mt.fs_count, mp->mi.m_fsgen_config);
+		error = EINVAL;
+		goto bail;
+	}
 
 	/*
 	 * No locking needed here. The MDS will not change the state of
