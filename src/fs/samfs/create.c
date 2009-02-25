@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.173 $"
+#pragma ident "$Revision: 1.174 $"
 
 #include "sam/osversion.h"
 
@@ -619,6 +619,7 @@ sam_restore_hardlink(
 		ip->di.parent_id = pip->di.id;
 		*id = ip->di.id;
 		ip->di.nlink++;
+		ip->flags.bits |= SAM_CHANGED;
 		VN_RELE_OS(ip);
 	} else {
 		if (permp->di.version == SAM_INODE_VERSION) {
@@ -647,6 +648,7 @@ sam_restore_hardlink(
 			permip->di.parent_id = pip->di.id;
 			*id = permip->di.id;
 			permip->di.nlink++;
+			bdwrite(*bpp);
 		}
 	}
 	return (0);
