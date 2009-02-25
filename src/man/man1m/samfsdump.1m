@@ -1,4 +1,4 @@
-." $Revision: 1.37 $
+." $Revision: 1.38 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -351,9 +351,10 @@ see the \%\fB\-q\fR option, which suppresses warning messages.
 .TP 10
 \%\fB\-X\ \fIexcluded_dir\fR
 (\fBsamfsdump\fP only) Specifies directory paths to be excluded from the dump.
-Multiple (up to 10) directories can be excluded by using
-multiple \%\fB\-X\fR options.
-A directory that resolves to \&. or \fBNULL\fR generates an error message.
+Relative paths without leading characters must be used, for example dir1/dir2.
+The result is an empty directory dir1/dir2 in the dump file.  A directory that resolves
+to \&. or \fBNULL\fR generates an error message.  Multiple (up to 10) directories
+can be excluded by using multiple \%\fB\-X\fR options.
 .TP 10
 \%\fB\-Y\fR
 (\fBsamfsdump\fP only) Specifies that the trailing list of files are lists
