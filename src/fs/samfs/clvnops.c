@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.199 $"
+#pragma ident "$Revision: 1.200 $"
 
 #include "sam/osversion.h"
 
@@ -522,22 +522,30 @@ sam_client_open_vn(
 				ip->no_opens = 0;
 			}
 		}
-		if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
+		if ((ip->no_opens == 0) && (ip->pending_mmappers == 0) &&
+		    (ip->last_unmap == 0) && (ip->mm_pages == 0) &&
+		    S_ISREG(ip->di.mode)) {
 			/*
 			 * If error on open and no mmap pages, update
 			 * inode on the server and cancel lease.
 			 * LEASE_remove waits
 			 * for the response. This allows the allocated pages
 			 * to be released.
+			 * Set last_unmap to prevent lease race with new
+			 * mmappers.
 			 */
+			ip->last_unmap = 1;
 			mutex_exit(&ip->fl_mutex);
-			if (S_ISREG(ip->di.mode)) {
-				error =
-				    sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
-			}
-		} else {
-			mutex_exit(&ip->fl_mutex);
+
+			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
+
+			mutex_enter(&ip->fl_mutex);
+			ASSERT(ip->last_unmap == 1);
+			ASSERT(ip->pending_mmappers == 0);
+			ASSERT(ip->mm_pages == 0);
+			ip->last_unmap = 0;
 		}
+		mutex_exit(&ip->fl_mutex);
 	}
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 
@@ -702,6 +710,7 @@ sam_client_close_vn(
 	int error;
 	boolean_t write_lock = FALSE;
 	boolean_t last_close = FALSE;
+	boolean_t last_unmap = FALSE;
 	krw_t rw_type = RW_READER;
 
 	ip = SAM_VTOI(vp);
@@ -782,7 +791,8 @@ sam_client_close_vn(
 	 * last_close is done.
 	 */
 	mutex_enter(&ip->fl_mutex);
-	if ((count <= 1) && (ip->no_opens == 0) && (ip->cl_closing == 0)) {
+	if ((count <= 1) && (ip->no_opens == 0) && (ip->cl_closing == 0) &&
+	    (ip->pending_mmappers == 0) && (ip->mm_pages == 0)) {
 		last_close = TRUE;
 		ip->cl_closing = 1;
 	}
@@ -811,16 +821,24 @@ retry:
 		 * Now that we hold inode_rwl,RW_WRITER we
 		 * need to check for a new open.
 		 */
-		if (ip->no_opens > 0) {
+		if ((ip->no_opens > 0) || (ip->pending_mmappers > 0) ||
+		    (ip->mm_pages > 0)) {
 			/*
 			 * A new open has jumped in
 			 * so skip the last_close.
 			 */
 			ip->cl_closing = 0;
 			last_close = FALSE;
-		}
-		if (!last_close) {
 			goto done;
+		}
+
+		/*
+		 * Prevent a lease race with any new mmappers.
+		 */
+		if ((ip->pending_mmappers == 0) && (ip->last_unmap == 0) &&
+		    (ip->mm_pages == 0)) {
+			ip->last_unmap = 1;
+			last_unmap = TRUE;
 		}
 	}
 
@@ -828,14 +846,18 @@ retry:
 	 * On last close and no mmapped pages, update inode on
 	 * the server and cancel leases. LEASE_remove waits for the response.
 	 */
-	if (last_close && (ip->mm_pages == 0)) {
-		if (S_ISREG(ip->di.mode)) {
-			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
-		}
+	if (last_close && last_unmap && S_ISREG(ip->di.mode)) {
+		error = sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
 	}
 
 	if (last_close) {
 		ip->cl_closing = 0;
+	}
+	if (last_unmap) {
+		ASSERT(ip->last_unmap == 1);
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->mm_pages == 0);
+		ip->last_unmap = 0;
 	}
 
 done:
@@ -2628,6 +2650,14 @@ sam_client_getpage_vn(
 	mutex_enter(&ip->ilease_mutex);
 	ip->cl_leaseused[ltype]++;
 
+#ifdef DEBUG
+	if (SAM_GET_LEASEFLG(ip->mp) == NULL) {
+		ASSERT(ip->mm_pages > 0);
+		ASSERT(ip->last_unmap == 0);
+		ASSERT(ip->cl_leases & CL_MMAP);
+	}
+#endif
+
 	if ((SAM_GET_LEASEFLG(ip->mp) == NULL) &&
 	    (((rw == S_WRITE) && !(ip->cl_leases & CL_WRITE)) ||
 	    ((rw == S_READ) && !(ip->cl_leases & CL_READ)))) {
@@ -2840,6 +2870,7 @@ sam_client_map_vn(
 	offset_t orig_resid;
 	offset_t prev_size;
 	uint32_t ltype;
+	boolean_t clear_pending_mmapper = FALSE;
 
 	TRACE(T_SAM_MAP, vp, (sam_tr_t)offset, length, prot);
 	ip = SAM_VTOI(vp);
@@ -2886,19 +2917,49 @@ sam_client_map_vn(
 	 */
 	is_write = (prot & PROT_WRITE) && ((flags & MAP_TYPE) == MAP_SHARED);
 
+reenter:
 	if (is_write) {
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		if (ip->di.status.b.offline || ip->flags.b.stage_pages) {
 			error = sam_clear_ino(ip, ip->di.rm.size,
 			    MAKE_ONLINE, credp);
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			if (error) {
+				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 				goto out;
 			}
-		} else {
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
+		if (ip->last_unmap) {
+			ASSERT(ip->pending_mmappers == 0);
+			ASSERT(ip->mm_pages == 0);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+			delay(hz);
+			goto reenter;
+		}
+		ip->pending_mmappers++;
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+	} else {
+		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+		mutex_enter(&ip->fl_mutex);
+		if (ip->last_unmap) {
+			ASSERT(ip->pending_mmappers == 0);
+			ASSERT(ip->mm_pages == 0);
+			mutex_exit(&ip->fl_mutex);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+			delay(hz);
+			goto reenter;
+		}
+		ip->pending_mmappers++;
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 	}
+
+	/*
+	 * We set pending_mmappers as a bridge between the point where
+	 * we get the CL_MMAP lease and where we set mm_pages.  This stops
+	 * anyone from releasing our lease via CL_CLOSE before
+	 * we can set mm_pages.
+	 */
+	clear_pending_mmapper = TRUE;
 	as_rangelock(asp);				/* Lock address space */
 
 	if ((flags & MAP_FIXED) == 0) {
@@ -3013,11 +3074,32 @@ sam_client_map_vn(
 
 	if (error = as_map(asp, *addrpp, length, segvn_create, (caddr_t)
 	    & vn_seg)) {
+
+		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+		mutex_enter(&ip->fl_mutex);
+		ASSERT(ip->last_unmap == 0);
+		ASSERT(ip->pending_mmappers > 0);
+		ip->pending_mmappers--;
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+
+		clear_pending_mmapper = FALSE;
+
 		sam_mmap_rmlease(vp, is_write, 0);
 	}
 
 out_asunlock:
 	as_rangeunlock(asp);			/* Unlock address space */
+
+	if (clear_pending_mmapper) {
+		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+		mutex_enter(&ip->fl_mutex);
+		ASSERT(ip->last_unmap == 0);
+		ASSERT(ip->pending_mmappers > 0);
+		ip->pending_mmappers--;
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+	}
 
 out:
 	SAM_CLOSE_OPERATION(ip->mp, error);
@@ -3351,7 +3433,6 @@ sam_mmap_rmlease(
 	boolean_t is_write,	/* Flag. */
 	int pages)		/* Page count. */
 {
-	int remaining_pages, remaining_writable;
 	krw_t rw_type = RW_READER;
 	sam_node_t *ip = SAM_VTOI(vp);
 
@@ -3363,11 +3444,13 @@ sam_mmap_rmlease(
 			ip->wmm_pages -= pages;
 		}
 	}
-	remaining_pages = ip->mm_pages;
-	remaining_writable = ip->wmm_pages;
+	if ((ip->mm_pages == 0) && (ip->pending_mmappers == 0) &&
+	    (ip->last_unmap == 0)) {
+		ip->last_unmap = 1;
+	}
 	mutex_exit(&ip->fl_mutex);
 
-	if (remaining_pages == 0) {
+	if (ip->last_unmap) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */
@@ -3395,12 +3478,28 @@ sam_mmap_rmlease(
 				 */
 				ip->flags.b.staging = 0;
 			}
+			if (rw_type == RW_WRITER) {
+				ASSERT(ip->mm_pages == 0);
+				ASSERT(ip->pending_mmappers == 0);
+				ASSERT(ip->last_unmap == 1);
+				ip->last_unmap = 0;
+			}
 			RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 		} else {
 			RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 			sam_client_remove_leases(ip, CL_MMAP, 0);
 			(void) sam_proc_relinquish_lease(ip,
 			    CL_MMAP, FALSE, ip->cl_leasegen);
+		}
+		if (ip->last_unmap) {
+			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+			mutex_enter(&ip->fl_mutex);
+			ASSERT(ip->mm_pages == 0);
+			ASSERT(ip->pending_mmappers == 0);
+			ASSERT(ip->last_unmap == 1);
+			ip->last_unmap = 0;
+			mutex_exit(&ip->fl_mutex);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 		}
 	} else {
 		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);

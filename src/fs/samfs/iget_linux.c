@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.55 $"
+#pragma ident "$Revision: 1.56 $"
 #endif
 
 #include "sam/osversion.h"
@@ -510,6 +510,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->cl_locks = 0;
 	ip->no_opens = 0;
 	ip->cl_closing = 0;
+	ip->last_unmap = 0;
 	ip->cl_flock = NULL;
 	ip->cl_attr_seqno = 0;
 	ip->cl_ino_seqno = 0;
@@ -533,6 +534,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->rdev = 0;
 	ip->mm_pages = 0;
 	ip->wmm_pages = 0;
+	ip->pending_mmappers = 0;
 	ip->space = 0;
 	ip->real_stage_off = 0;
 	ip->real_stage_len = 0;

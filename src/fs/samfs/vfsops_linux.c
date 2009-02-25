@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.72 $"
+#pragma ident "$Revision: 1.73 $"
 #endif
 
 #include "sam/osversion.h"
@@ -99,20 +99,20 @@ typedef struct kstatfs qfs_kstatfs_t;
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
 /* SLES9 and RHEL4 */
-#define SOP_STATFS 1
+#define	SOP_STATFS 1
 #endif
 
 #if SUSE_LINUX && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
 /* SLES10 */
 #if defined(SLES10FCS) || defined(SLES10SP1)
-#define SOP_STATFS 1
+#define	SOP_STATFS 1
 #else
-#define SOP_STATFS 2
+#define	SOP_STATFS 2
 #endif
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
-#define SOP_STATFS 2
+#define	SOP_STATFS 2
 #endif
 #endif /* >= 2.6 */
 

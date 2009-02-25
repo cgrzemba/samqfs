@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.220 $"
+#pragma ident "$Revision: 1.221 $"
 #endif
 
 #ifdef linux
@@ -395,9 +395,11 @@ typedef struct sam_ichain	{
  *    rw_count
  *    mm_pages
  *    wmm_pages
- *	  cl_allocsz
- *	  size
+ *    pending_mmappers
+ *    cl_allocsz
+ *    size
  *    cl_closing
+ *    last_unmap
  *
  *  The following fields are protected by rm_mutex.
  *	rm_mutex also serializes shared-reader inode updates.
@@ -547,6 +549,7 @@ typedef struct sam_node {
 
 	int32_t		mm_pages;	/* Count of memory mapped pages */
 	int32_t		wmm_pages;	/* Cnt of mem mapped pages for write */
+	int32_t		pending_mmappers; /* Cnt of pending VOP_MAP callers */
 	sam_size_t	flush_len;	/* Flush write/stage length */
 
 	offset_t	space;		/* Space left, if write rdev optical */
@@ -633,6 +636,7 @@ typedef struct sam_node {
 	struct sam_disk_inode_part2 di2;
 
 	int		cl_closing;	/* Client last close in progress */
+	int		last_unmap;	/* Client last munmap in progress */
 	offset_t	zero_end;	/* last offset that was zeroed */
 	offset_t	doff;		/* LQFS: inode block offset */
 	uchar_t		dord;		/* LQFS: inode ordinal */
@@ -699,6 +703,7 @@ typedef struct sam_node {
 
 	int32_t		mm_pages;	/* Count of memory mapped pages */
 	int32_t		wmm_pages;	/* Cnt of mem mapped pages for write */
+	int32_t		pending_mmappers; /* Cnt of pending VOP_MAP callers */
 
 	offset_t	space;		/* Space left, if write rdev optical */
 					/* device. */
@@ -738,6 +743,7 @@ typedef struct sam_node {
 	struct sam_disk_inode di;
 	struct sam_disk_inode_part2 di2;
 	int		cl_closing;	/* Client last close in progress */
+	int		last_unmap;	/* Client last munmap in progress */
 	offset_t	zero_end;	/* last offset that was zeroed */
 } sam_node_t;
 #endif /* linux */

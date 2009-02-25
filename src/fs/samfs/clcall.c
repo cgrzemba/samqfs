@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.265 $"
+#pragma ident "$Revision: 1.266 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1009,6 +1009,14 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 		return;
 	}
 
+#ifdef DEBUG
+	if (lease_mask & CL_MMAP) {
+		ASSERT(ip->mm_pages == 0);
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->last_unmap == 1);
+	}
+#endif
+
 	ip->cl_leases &= ~lease_mask;
 	ip->cl_short_leases &= ~lease_mask;
 
@@ -1093,6 +1101,7 @@ sam_client_remove_all_leases(sam_node_t *ip)
 		mutex_enter(&ip->ilease_mutex);
 
 		if (ip->cl_leases != 0) {
+			ASSERT(ip->mm_pages == 0);
 			ip->cl_leases = 0;
 			sam_client_remove_lease_chain(ip);
 			release = TRUE;
@@ -1343,6 +1352,13 @@ sam_proc_relinquish_lease(
 	}
 	RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 
+#ifdef DEBUG
+	if (lease_mask & CL_MMAP) {
+		ASSERT(ip->mm_pages == 0);
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->last_unmap == 1);
+	}
+#endif
 	error = sam_issue_lease_request(ip, msg, wait_flag, actions, NULL);
 
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);

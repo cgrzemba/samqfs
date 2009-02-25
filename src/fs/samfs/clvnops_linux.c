@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.105 $"
+#pragma ident "$Revision: 1.106 $"
 #endif
 
 #include "sam/osversion.h"
@@ -135,21 +135,21 @@ int samqfs_get_blocks_writer(struct inode *li, sector_t iblk,
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
 /* SLES9 and RHEL4 */
-#define FOP_FLUSHARGS 1
+#define	FOP_FLUSHARGS 1
 #endif
 
 #if SUSE_LINUX && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
 /* SLES10 */
 #if defined(SLES10FCS) || defined(SLES10SP1)
-#define FOP_FLUSHARGS 1
+#define	FOP_FLUSHARGS 1
 #else
 /* SLES10/SP2 and later */
-#define FOP_FLUSHARGS 2
+#define	FOP_FLUSHARGS 2
 #endif
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
-#define FOP_FLUSHARGS 2
+#define	FOP_FLUSHARGS 2
 #endif
 
 #endif /* 2.6 */
@@ -260,21 +260,31 @@ samqfs_client_open_vn(
 		}
 	}
 
+	mutex_enter(&ip->fl_mutex);
 	if (error == 0) {
-		mutex_enter(&ip->fl_mutex);
 		ip->no_opens++;
-		mutex_exit(&ip->fl_mutex);
-	} else if ((ip->no_opens == 0) && (ip->mm_pages == 0)) {
+	} else if ((ip->no_opens == 0) && (ip->pending_mmappers == 0) &&
+	    (ip->last_unmap == 0) && (ip->mm_pages == 0) &&
+	    S_ISREG(ip->di.mode)) {
 		/*
 		 * If error on open and no mmap pages, update
 		 * inode on the server and cancel lease. LEASE_remove waits
 		 * for the response.
 		 * This allows the allocated pages to be released.
+		 * Set last_unmap to prevent a lease race with new mmappers.
 		 */
-		if (S_ISREG(ip->di.mode)) {
-			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
-		}
+		ip->last_unmap = 1;
+		mutex_exit(&ip->fl_mutex);
+
+		error = sam_proc_rm_lease(ip, CL_CLOSE, RW_READER);
+
+		mutex_enter(&ip->fl_mutex);
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->mm_pages == 0);
+		ASSERT(ip->last_unmap == 1);
+		ip->last_unmap = 0;
 	}
+	mutex_exit(&ip->fl_mutex);
 
 out_err_unlock:
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
@@ -301,6 +311,7 @@ samqfs_client_close_vn(
 	sam_cred_t sam_cred;
 	cred_t *credp;
 	boolean_t last_close = FALSE;
+	boolean_t last_unmap = FALSE;
 
 	TRACE(T_SAM_CL_CLOSE, li, ip->di.id.ino, ip->cl_leases, ip->flags.bits);
 
@@ -318,7 +329,8 @@ samqfs_client_close_vn(
 	if (--ip->no_opens < 0) {
 		ip->no_opens = 0;
 	}
-	if ((ip->no_opens == 0) && (ip->cl_closing == 0)) {
+	if ((ip->no_opens == 0) && (ip->cl_closing == 0) &&
+	    (ip->pending_mmappers == 0)) {
 		ip->cl_closing = 1;
 		last_close = TRUE;
 	}
@@ -340,19 +352,32 @@ samqfs_client_close_vn(
 	}
 
 	/*
+	 * Prevent a lease race with any new mmappers.
+	 */
+	if (last_close && (ip->pending_mmappers == 0) &&
+	    (ip->last_unmap == 0) && (ip->mm_pages == 0)) {
+		ip->last_unmap = 1;
+		last_unmap = TRUE;
+	}
+
+	/*
 	 * On last close and no mmap pages, update inode
 	 * on the server and cancel lease. LEASE_remove waits for the response.
 	 */
-	if (last_close && (ip->mm_pages == 0)) {
-		if (S_ISREG(ip->di.mode)) {
-			error = sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
-			if (error == 0) {
-				ip->flags.b.staging = 0;
-			}
+	if (last_close && last_unmap && S_ISREG(ip->di.mode)) {
+		error = sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
+		if (error == 0) {
+			ip->flags.b.staging = 0;
 		}
 	}
 	if (last_close) {
 		ip->cl_closing = 0;
+	}
+	if (last_unmap) {
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->mm_pages == 0);
+		ASSERT(ip->last_unmap == 1);
+		ip->last_unmap = 0;
 	}
 
 	TRACE(T_SAM_CL_CLOSE_RET, li, ip->cl_leases, ip->di.rm.size, error);
@@ -636,6 +661,8 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 	int64_t offset = 0;
 	int64_t length = 0;
 
+	ASSERT(ip->last_unmap == 0);
+
 	mutex_enter(&ip->ilease_mutex);
 	if ((area->vm_flags & (VM_MAYSHARE|VM_SHARED)) &&
 	    (area->vm_flags & QFS_VM_WRITE)) {
@@ -701,7 +728,6 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 	struct file *fp;
 	sam_node_t *ip;
 	boolean_t is_write;
-	int remaining_pages, remaining_writable;
 	krw_t rw_type = RW_READER;
 	unsigned long length;
 	int error = 0;
@@ -738,14 +764,19 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 	RW_LOCK_OS(&ip->inode_rwl, rw_type);
 	mutex_enter(&ip->fl_mutex);
 	ip->mm_pages -= pages;
+	if (ip->mm_pages < 0) {
+		ip->mm_pages = 0;
+	}
+	if ((ip->mm_pages == 0) && (ip->pending_mmappers == 0) &&
+	    (ip->last_unmap == 0)) {
+		ip->last_unmap = 1;
+	}
 	if (is_write) {
 		ip->wmm_pages -= pages;
 	}
-	remaining_pages = ip->mm_pages;
-	remaining_writable = ip->wmm_pages;
 	mutex_exit(&ip->fl_mutex);
 
-	if (remaining_pages == 0) {
+	if (ip->last_unmap) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */
@@ -772,11 +803,24 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 				/* XXX what is this for? */
 				ip->flags.b.staging = 0;
 			}
+			ASSERT(ip->mm_pages == 0);
+			ASSERT(ip->pending_mmappers == 0);
+			ASSERT(ip->last_unmap == 1);
+			ip->last_unmap = 0;
 		} else {
 			RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
 			sam_client_remove_leases(ip, CL_MMAP, 0);
 			(void) sam_proc_relinquish_lease(ip, CL_MMAP,
 			    FALSE, ip->cl_leasegen);
+
+			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+			mutex_enter(&ip->fl_mutex);
+			ASSERT(ip->mm_pages == 0);
+			ASSERT(ip->pending_mmappers == 0);
+			ASSERT(ip->last_unmap == 1);
+			ip->last_unmap = 0;
+			mutex_exit(&ip->fl_mutex);
+			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 			goto out;
 		}
 	}
@@ -835,10 +879,32 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 	}
 
 	data = kmem_zalloc(sizeof (sam_lease_data_t), KM_SLEEP);
-
 	if (data == NULL) {
-		return (-ENOMEM);
+		error = -ENOMEM;
+		goto outerr;
 	}
+
+reenter:
+	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+	mutex_enter(&ip->fl_mutex);
+	if (ip->last_unmap) {
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->mm_pages == 0);
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		delay(hz);
+		goto reenter;
+	}
+
+	/*
+	 * We set pending_mmappers as a bridge between the point where
+	 * we get the CL_MMAP lease and where we set mm_pages.  This stops
+	 * anyone from releasing our lease via CL_CLOSE before
+	 * we can set mm_pages.
+	 */
+	ip->pending_mmappers++;
+	mutex_exit(&ip->fl_mutex);
+	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 
 	sam_set_cred(NULL, &sam_cred);
 	credp = (cred_t *)&sam_cred;
@@ -928,6 +994,7 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 
 	if (error == 0) {
 		ip->mm_pages += pages;
+		ip->pending_mmappers--;
 		if (is_write) {
 			ip->wmm_pages += pages;
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -935,6 +1002,12 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 			mutex_exit(&ip->fl_mutex);
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 		}
+	} else {
+		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+		mutex_enter(&ip->fl_mutex);
+		ip->pending_mmappers--;
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 	}
 	kmem_free(data, sizeof (sam_lease_data_t));
 
@@ -952,6 +1025,7 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 		vma->vm_ops = &samqfs_vm_ops;
 	}
 
+outerr:
 	TRACE(T_SAM_CL_ADDMAP_RET, li, pages, ip->mm_pages, error);
 
 	SAM_CLOSE_OPERATION(ip->mp, error);
