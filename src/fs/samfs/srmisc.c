@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.86 $"
+#pragma ident "$Revision: 1.87 $"
 
 #include "sam/osversion.h"
 
@@ -1357,86 +1357,4 @@ sam_onoff_client_delay(
 	if (off_pending > 0) {
 		sam_taskq_add(sam_onoff_client_delay, mp, NULL, hz / 2);
 	}
-}
-
-
-/*
- * ----- sam_change_features
- *
- * Change/add features to SAM-QFS file system.
- */
-int				/* ERRNO if error, 0 if successful. */
-sam_change_features(
-	void *arg,		/* Pointer to arguments */
-	int size,		/* Size of argument struct */
-	cred_t *credp)		/* Credentials */
-{
-	sam_change_features_arg_t args;	/* Arguments into syscall */
-	sam_mount_t *mp;
-	sam_sbinfo_t *sblk;	/* Pointer to superblock */
-	int f;
-	int error = 0;
-
-	/*
-	 * Copy in user arguments
-	 */
-	if (size != sizeof (args) ||
-	    copyin(arg, (caddr_t)&args, sizeof (args))) {
-		return (EFAULT);
-	}
-
-	/*
-	 * Look up file system, check for permission, mounted, shared & server
-	 */
-	if ((mp = sam_find_filesystem(args.fs_name)) == NULL) {
-		return (ENOENT);
-	}
-	if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
-		error = EAGAIN;
-		goto out;
-	}
-	if (secpolicy_fs_config(credp, mp->mi.m_vfsp)) {
-		error = EACCES;
-		goto out;
-	}
-	if (!(mp->mt.fi_status & FS_MOUNTED)) {
-		error = EXDEV;
-		goto out;
-	}
-	if (SAM_IS_SHARED_FS(mp) && !SAM_IS_SHARED_SERVER(mp)) {
-		error = ENOTTY;
-		goto out;
-	}
-
-	sblk = &mp->mi.m_sbp->info.sb;
-	switch (args.command) {
-
-	case SAM_CHANGE_FEATURES_ADD_V2A:
-		if (!SAM_MAGIC_V2_OR_HIGHER(sblk)) {
-			/* Cannot upgrade from V1 */
-			error = ENXIO;
-			goto out;
-		}
-		if (SAM_MAGIC_V2A_OR_HIGHER(sblk)) {
-			error = EEXIST;
-			goto out;
-		}
-		cmn_err(CE_NOTE, "SAM-QFS: %s: sam_change_features: "
-		    "Upgrading from V2 to V2A file system.", mp->mt.fi_name);
-		mutex_enter(&mp->mi.m_sblk_mutex);
-		sblk->magic = SAM_MAGIC_V2A;
-		mutex_exit(&mp->mi.m_sblk_mutex);
-		error = sam_update_the_sblks(mp);
-		break;
-
-	default:
-		cmn_err(CE_WARN, "SAM-QFS: %s: Bad sam_change_features "
-		    "request %d", mp->mt.fi_name, args.command);
-		error = EINVAL;
-		goto out;
-	}
-
-out:
-	SAM_SYSCALL_DEC(mp, 0);
-	return (error);
 }

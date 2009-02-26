@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.67 $"
+#pragma ident "$Revision: 1.68 $"
 
 
 /* ----- Includes */
@@ -189,7 +189,9 @@ int rename_fs = 0;		/* -R Change fs name in the super block */
 int preen_fs = 0;		/* -p Return 0 if FS has not requested fsck */
 int cvt_to_shared = 0;		/* -S Convert FS to a shared FS */
 int cvt_to_nonshared = 0;	/* -U Convert FS to an unshared FS */
+int cvt_to_2A = 0;		/* -u Convert FS to 2A FS */
 char *scratch_dir = NULL;	/* -s Scratch directory name */
+char *fs_version = NULL;
 #ifdef OFFDIRS
 int clear_offlines = 0;		/* -O Clear offline directories */
 #endif /* OFFDIRS */
@@ -545,7 +547,8 @@ opt_init()
 {
 	strcpy(opt_usage,
 	    " [-s scratch_dir] [-D] [-F] [-V] [-G] [-R] [-p] [-S] [-U] ");
-	strcpy(opt_string, "s:FDVGRpSU");
+	strcat(opt_usage, "[-u fs_version] ");
+	strcpy(opt_string, "s:FDVGRpSUu:");
 #ifdef OFFDIRS
 	strcat(opt_usage, "[-O] ");
 	strcat(opt_string, "O");
@@ -660,6 +663,10 @@ process_args(int argc, char **argv)
 			break;
 		case 'U':		/* Convert shared to unshared v2 FS */
 			cvt_to_nonshared = TRUE;
+			break;
+		case 'u':		/* Convert to 2A file system */
+			cvt_to_2A = TRUE;
+			fs_version = optarg;
 			break;
 		case 'n':		/* Respond 'no' to all questions */
 		case 'N':
@@ -780,6 +787,24 @@ process_args(int argc, char **argv)
 		error(0, 0, catgets(catfd, SET, 13967,
 		    "The -S/-U options require the -F option."));
 		return (ES_args);
+	}
+
+	if (cvt_to_2A) {
+		if (!repair_files) {
+			error(0, 0, catgets(catfd, SET, 13923,
+			    "The -u option requires the -F option."));
+			return (ES_args);
+		}
+		if (fs_version == NULL) {
+			error(0, 0, catgets(catfd, SET, 13959,
+			    "-u option requires file system version."));
+			return (ES_args);
+		}
+		if (strcmp(fs_version, "2A") != 0) {
+			error(0, 0, catgets(catfd, SET, 13304,
+			    "\"%s\" invalid file system version."), fs_version);
+			return (ES_args);
+		}
 	}
 
 	/* If scratch directory not specified, use default */
@@ -998,6 +1023,15 @@ check_fs(void)
 	} else {
 		sblk_version = SAMFS_SBLKV2;
 		sprintf(ver_str, "%s", "2A");
+	}
+
+	/*
+	 * We are promoting a SAM_MAGIC_V2 to SAM_MAGIC_V2A.
+	 */
+	if ((cvt_to_2A) && (sblock.info.sb.magic != SAM_MAGIC_V2)) {
+		error(0, 0, catgets(catfd, SET, 13924,
+		"-u option for promoting filesystem from 2 to 2A only"));
+		clean_exit(ES_args);
 	}
 
 	if (cvt_to_shared || cvt_to_nonshared) {
@@ -1422,6 +1456,17 @@ check_fs(void)
 		if ((sblock.info.sb.opt_mask & SBLK_OPTV1_CONV_WORMV2) != 0) {
 			nblock.info.sb.opt_mask |= SBLK_OPTV1_CONV_WORMV2;
 		}
+
+		/*
+		 * Fixed di2 area of V2 FS for V2A conversion.
+		 */
+		if (cvt_to_2A) {
+			nblock.info.sb.magic = SAM_MAGIC_V2A;
+			printf(catgets(catfd, SET, 13960,
+			    "NOTICE: FS \"%s\" promoted to version 2A"),
+			    fsname);
+		}
+		printf("\n");
 
 		if (write_sblk(&nblock, devp)) {
 			clean_exit(ES_io);
@@ -2049,6 +2094,7 @@ process_inodes()
 				    ino);
 				clean_exit(ES_inodes);
 			}
+
 			if (inop->type == REG_FILE ||
 			    inop->type == INO_OBJECT) {
 				(void) check_reg_file(dp);
@@ -2113,6 +2159,20 @@ process_inodes()
 						worm_conv_once = 1;
 					}
 				}
+			}
+
+			/*
+			 * If we are promoting the file system from V2 to V2A
+			 * we will need to zero out the di2 area because a V2
+			 * file system can have garbage in this area.  5.0
+			 * references this area and garbage can cause it to
+			 * misinterpret the contents.
+			 */
+			if (cvt_to_2A && !dp->di.status.b.worm_rdonly &&
+			    (S_ISREG(dp->di.mode) || S_ISDIR(dp->di.mode))) {
+				memset(&dp->di2, 0,
+				    sizeof (sam_disk_inode_part2_t));
+				put_inode(dp->di.id.ino, dp);
 			}
 
 		} else if (pass == THIRD_PASS) {
@@ -5403,7 +5463,12 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 				}
 			}
 		}
+	}
 
+	/*
+	 * V2A file system supports Extended Attributes.
+	 */
+	if (SAM_MAGIC_V2A_OR_HIGHER(&sblock.info.sb)) {
 		/* Check for absence of extended attribute dir inode */
 		if (dp->di2.xattr_id.ino == 0) {
 			/* ino is 0 but gen is not */
@@ -5485,8 +5550,9 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 				}
 			}
 		}
+	}
 
-	} else if (dp->di.version == SAM_INODE_VERS_1) {
+	if (dp->di.version == SAM_INODE_VERS_1) {
 		/* Previous version */
 		sam_perm_inode_v1_t *dp_v1 = (sam_perm_inode_v1_t *)dp;
 
@@ -6636,7 +6702,12 @@ check_dir(struct sam_perm_inode *dp)		/* Inode entry */
 			}
 			err = 0;
 		}
+	}
 
+	/*
+	 * V2A file system supports Extended Attributes.
+	 */
+	if (SAM_MAGIC_V2A_OR_HIGHER(&sblock.info.sb)) {
 		/* Check for absence of inode extended attr dir inode */
 		if (dp->di2.xattr_id.ino == 0) {
 
@@ -6712,6 +6783,7 @@ check_dir(struct sam_perm_inode *dp)		/* Inode entry */
 				}
 			}
 		}
+
 		if (err) {  /* Clear our reference to the extended attribute */
 			if (repair_files) {
 				dp->di2.xattr_id.ino = dp->di2.xattr_id.gen = 0;

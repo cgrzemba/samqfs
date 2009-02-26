@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.211 $"
+#pragma ident "$Revision: 1.212 $"
 #endif
 
 #include "sam/osversion.h"
@@ -339,10 +339,6 @@ sam_priv_syscall(
 #ifdef METADATA_SERVER
 		case SC_onoff_client:
 			error = sam_onoff_client(arg, size, credp);
-			break;
-
-		case SC_change_features:
-			error = sam_change_features(arg, size, credp);
 			break;
 #endif	/* METADATA_SERVER */
 

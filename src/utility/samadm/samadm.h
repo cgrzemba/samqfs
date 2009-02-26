@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident   "$Revision: 1.4 $"
+#pragma ident   "$Revision: 1.5 $"
 
 #include "cmdparse.h"
 
@@ -35,7 +35,6 @@
 /*
  * Subcommand function forward declarations.
  */
-int add_features_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
 int eq_add_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
 int eq_release_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);
 int eq_remove_cmd(int argc, char *argv[], cmdOptions_t *, void *callData);

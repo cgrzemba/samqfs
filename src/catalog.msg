@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.628 $"
+$ pragma ident "$Revision: 1.629 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2416,7 +2416,7 @@ $ 13291-13298 are open to add more messages
 13301 NOTICE: Orphan ino:        -F will move ino %d to lost+found\n
 13302 NOTICE: Cannot process orphans. Please create ./lost+found directory\n
 13303 NOTICE: Orphan ino:        ino %d moved to lost+found\n
-13304 ** NOT USED **
+13304 \"%s\" invalid file system version.
 13305 ** NOT USED **
 13306 NOTICE: Orphan processing stopped due to full lost+found. \n\
 		Increase lost+found and rerun.\n
@@ -2789,6 +2789,8 @@ $ ===================================================================
 13920 You must be root to run %s\n
 13921 Usage: %s fs-name block-number...\n
 13922 %s: Configuration error.\n
+13923 The -u option requires the -F option.
+13924 -u option for promoting filesystem from 2 to 2A only
 13925 -S/-U options not supported for Version 1 FS
 13926 -S/-U options require -F option
 13927 shared_fs_convert: get_inode(HOST_INO) error
@@ -2823,7 +2825,8 @@ $ ===================================================================
 13956 NOTICE:  clearing HLP extension inode %d.%d.\n
 13957 ALERT:  inode %d.%d: %d parents unclaimed\n
 13958 ALERT:  ino %d.%d, Object flag %s, should be %s%s, meta_flag %d, size %lld\n
-13960 ** NOT USED ** -S/-U options require QFS or SAM-QFS (ma) file system
+13959 -u option requires file system version.
+13960 NOTICE: FS \"%s\" promoted to version 2A
 13961 Missing mount point or family set name argument.
 13962 illegal -o option flag -- %c
 13963 -o option flags must be separated by a comma.

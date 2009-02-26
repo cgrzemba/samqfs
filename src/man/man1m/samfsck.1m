@@ -1,4 +1,4 @@
-." $Revision: 1.27 $
+." $Revision: 1.28 $
 .ds ]W Sun Microsystems 
 .\" SAM-QFS_notice_begin
 .\"
@@ -48,6 +48,10 @@ samfsck \- Checks and repairs a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file syst
 ]
 [
 .B \-U
+]
+[
+.B \-u
+.I fs_version
 ]
 [
 .B \-V
@@ -157,6 +161,18 @@ Note that \fBsamfsck\fR does not update the \fB/etc/vfstab\fR entry
 (see \fBvfstab\fR(4)), or the \fBmcf\fR entry (see \fBmcf\fR(4)).
 These must be configured and updated after the filesystem is converted
 to mount the filesystem.
+.TP
+.B \-u " fs_version"
+Convert the filesystem to the given \fBfs_version\fR.  The only value
+that is valid for 5.0 is 2A.
+Only Filesystems version 2 can be converted to 2A.
+Filesystems version 2A
+can use 5.0 features like Online add/remove, Large Host Table and Project IDs.
+Note that 2A filesystems are only mountable on 5.0 and not backwards compatible.
+The \fB-F\fR option must also be specified to convert a filesystem.
+The on-disk structures of the filesystem are updated to
+make the filesystem version 2A.
+Note that version 2A filesystems are not backward compatible or reversible.
 .TP
 .B \-V
 Turns on a verbose display of DEBUG information. This information is useful

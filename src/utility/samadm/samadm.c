@@ -42,7 +42,7 @@
 
 #include "samadm.h"
 
-#pragma ident   "$Revision: 1.4 $"
+#pragma ident   "$Revision: 1.5 $"
 
 
 char version_string[] = "1.0";
@@ -72,8 +72,6 @@ subCommandProps_t samadm_subcmds[] = {
 	    OPERAND_MANDATORY_SINGLE, "Set equipment status to alloc"},
 	{ "eq-noalloc", eq_noalloc_cmd, NULL, NULL, NULL,
 	    OPERAND_MANDATORY_SINGLE, "Set equipment status to noalloc"},
-	{ "add-features", add_features_cmd, "a", "a", NULL,
-	    OPERAND_MANDATORY_MULTIPLE, "Add features to a QFS file system"},
 	{ NULL, 0, NULL, NULL, NULL, 0, NULL}
 };
 
@@ -83,7 +81,6 @@ subCommandProps_t samadm_subcmds[] = {
  *	command option help listings for different subcommands.
  */
 optionTbl_t samadm_opts[] = {
-	{ "adda", no_arg, 'a', "add feature set a" },
 	{ NULL, 0, 0, NULL }
 };
 

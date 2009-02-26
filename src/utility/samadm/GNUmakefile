@@ -1,4 +1,4 @@
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 
 #    SAM-QFS_notice_begin
 #
@@ -32,7 +32,6 @@ include $(DEPTH)/mk/common.mk
 
 PROG = samadm
 PROG_SRC = \
-	addfeatures_cmd.c \
 	addremove_cmd.c \
 	cmdparse.c \
 	samadm.c \
