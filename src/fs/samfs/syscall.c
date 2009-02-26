@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.166 $"
+#pragma ident "$Revision: 1.167 $"
 #endif
 
 #include "sam/osversion.h"
@@ -601,7 +601,7 @@ sam_proc_stat(
 	ip = SAM_LITOSI(li);
 #endif /* linux */
 
-	if ((error = sam_open_operation(ip))) {
+	if ((error = sam_open_ino_operation(ip, RW_READER))) {
 		return (error);
 	}
 	arp = (uint_t *)(void *)&ip->di.ar_flags[0];

@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_LINUX_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.63 $"
+#pragma ident "$Revision: 1.64 $"
 #endif
 
 #ifdef __KERNEL__
@@ -484,6 +484,7 @@ extern char *nfsd_thread_name;
 #define	sam_priv_sam_syscall(a, b, c, d)	(ENOTSUP)
 #define	sam_quota_foffline(a, b, c)		(0)
 #define	sam_req_fsck(a, b, c)			do { } while (0)
+#define	sam_open_ino_operation(a, b)		sam_open_operation(a)
 #define	sam_unset_operation_nb(a)		do { } while (0)
 #define	sam_map_osd(a, b, c, d, e)		(ENOTSUP)
 #define	sam_set_end_of_obj(a, b, c)		(0)
