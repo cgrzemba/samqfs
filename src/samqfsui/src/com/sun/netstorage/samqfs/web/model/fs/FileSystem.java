@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystem.java,v 1.26 2008/12/17 21:03:26 kilemba Exp $
+// ident	$Id: FileSystem.java,v 1.27 2009/03/04 21:54:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.fs;
 
@@ -112,9 +112,21 @@ public interface FileSystem extends GenericFileSystem {
     public DiskCache[] getDataDevices();
     public StripedGroup[] getStripedGroups();
 
-    // Strictly used only in Shrink File System Wizard
-    // get both metadata & data devices & wrap up striped groups
-    public DiskCache[] getAllDevices();
+    /**
+     * Strictly used only in the Shrink File System Wizard
+     * get both metadata & data devices & wrap up striped groups
+     * @param checkAllocatable - include devices that are allocatable (state on)
+     * @return an object array of disk devices
+     */
+    public DiskCache[] getAllDevices(boolean checkAllocatable);
+
+    /**
+     * Check to see if the EQ (device) is the last active device (in "on" state)
+     * This method is being used in the Shrink File System Wizard
+     * @param eqToShrink
+     * @return boolean if device is the last active device of the file system
+     */
+    public boolean isLastActiveDevice(int eqToShrink);
 
     // action methods
 

@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: ShrinkFSBean.java,v 1.10 2008/12/16 00:12:12 am143972 Exp $
+// ident        $Id: ShrinkFSBean.java,v 1.11 2009/03/04 21:54:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -92,7 +92,7 @@ public class ShrinkFSBean implements Serializable {
     protected Select selectExclude = new Select("excludeTable");
     private int eqToShrink = -1;
     protected String selectedStripedGroup = null;
-    /** Holds the number of members in the striped group to be shrinked. */
+    /** Holds the number of members in the striped group to be shrunk. */
     private int numberOfMembers = -1;
     /** Holds the disk cache information of the tables. */
     private DiskCache [] allocUnits = null;
@@ -159,16 +159,8 @@ public class ShrinkFSBean implements Serializable {
             throw new SamFSException(null, -1000);
         }
 
-        // Show file system devices only if they are allocation enabled
-        DiskCache [] allDevices = fs.getAllDevices();
-        HashMap modelMap = new HashMap();
-        int counter = 0;
-        for (int i = 0; i < allDevices.length; i++) {
-            if (allDevices[i].isAlloc()) {
-                modelMap.put(new Integer(counter++), allDevices[i]);
-            }
-        }
-        return (DiskCache[]) modelMap.values().toArray(new DiskCache[0]);
+        // Show file system devices only if they are allocatable
+        return fs.getAllDevices(true);
     }
 
     private DiskCache [] getAvailUnits() throws SamFSException {
@@ -328,22 +320,21 @@ public class ShrinkFSBean implements Serializable {
         // do not render the method step if striped group is selected
         if (DiskCache.STRIPED_GROUP == dcType) {
             renderSubStepMethod = false;
-            selectedMethodMove = true;
+            selectedMethodMove = false;
             selectedMethodRelease = false;
-            selectedMethodDistribute = false;
+            selectedMethodDistribute = true;
         } else {
-            renderSubStepMethod = true;
-
             // Release option in method step only shows up if the file system is
             // an archiving file system, and the selected device must not be a
-            // metadata device or a striped group
-            if (archive &&
-                DiskCache.METADATA != dcType) {
+            // a striped group.  No metadata device can be shrunk.
+            if (archive) {
+                renderSubStepMethod = true;
                 renderedMethodRelease = true;
                 selectedMethodRelease = true;
                 selectedMethodDistribute = false;
                 selectedMethodMove = false;
             } else {
+                renderSubStepMethod = false;
                 renderedMethodRelease = false;
                 selectedMethodRelease = false;
                 selectedMethodDistribute = true;
@@ -631,7 +622,7 @@ public class ShrinkFSBean implements Serializable {
 
     public String getSummaryMethod() {
         // Detect the selection in step 2, and set the correct summary
-        // If stripped group is being shrinked and step 2 does not exist in the
+        // If stripped group is being shrunk and step 2 does not exist in the
         // wizard flow, set to "move data to a new device".
         if (selectedMethodRelease) {
             summaryMethod =
@@ -745,13 +736,9 @@ public class ShrinkFSBean implements Serializable {
     }
 
     private FileSystem getFileSystem() throws SamFSException {
-        String fsName = getFSName();
-        SamQFSAppModel appModel = SamQFSFactory.getSamQFSAppModel();
-        if (appModel == null) {
-            throw new SamFSException("App model is null");
-        }
-        SamQFSSystemModel sysModel = SamUtil.getModel(JSFUtil.getServerName());
-        return sysModel.getSamQFSSystemFSManager().getFileSystem(fsName);
+        return
+            SamUtil.getModel(JSFUtil.getServerName()).
+                getSamQFSSystemFSManager().getFileSystem(getFSName());
     }
 
     private void initWizard() {
@@ -949,6 +936,8 @@ public class ShrinkFSBean implements Serializable {
                                     summarySelectStorage});
                     myFS.shrinkRemove(eqToShrink, -1, options);
 
+                // Should never come to this case because shrink replace
+                // has been scoped out in 5.0
                 // Shrink & Replace with newly discovered device
                 } else {
                     DiskCache [] replacement = getReplacementPathObj();
@@ -1010,9 +999,27 @@ public class ShrinkFSBean implements Serializable {
                     JSFUtil.getMessage("common.specifydevice.error"),
                     null);
                 return false;
-            } else {
-                clearAlertInfo();
             }
+            try {
+                if (isLastDevice(eqToShrink)) {
+                    setAlertInfo(
+                        Constants.Alert.ERROR,
+                        JSFUtil.getMessage("fs.shrink.lastdevice"),
+                        null);
+                    return false;
+                }
+            } catch (SamFSException samEx) {
+                TraceUtil.trace1(
+                    "Exception Caught in handleSelectStorage: ", samEx);
+                setAlertInfo(
+                    Constants.Alert.ERROR,
+                    JSFUtil.getMessage("fs.shrink.readerror", getFSName()),
+                    null);
+                return false;
+            }
+
+            // No error, clear alert
+            clearAlertInfo();
 
             return true;
         }
@@ -1096,7 +1103,7 @@ public class ShrinkFSBean implements Serializable {
             }
 
             // error if number of devices of replacement group doesn't match
-            // the number of members of striped group to be shrinked
+            // the number of members of striped group to be shrunk
             if (numberOfMembers != replacementPaths.length) {
                 setAlertInfo(
                     Constants.Alert.ERROR,
@@ -1128,6 +1135,11 @@ public class ShrinkFSBean implements Serializable {
                     "Developer bug found in getReplacementPathObj!");
             }
             return targetDc;
+        }
+
+        private boolean isLastDevice(int eqToShrink) throws SamFSException {
+            FileSystem thisFS = getFileSystem();
+            return thisFS.isLastActiveDevice(eqToShrink);
         }
     }
 }

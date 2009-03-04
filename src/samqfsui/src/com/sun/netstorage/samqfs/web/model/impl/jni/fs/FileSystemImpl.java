@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FileSystemImpl.java,v 1.54 2008/12/17 21:03:26 kilemba Exp $
+// ident	$Id: FileSystemImpl.java,v 1.55 2009/03/04 21:54:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.fs;
 
@@ -236,20 +236,93 @@ public class FileSystemImpl extends GenericFileSystemImpl
 
     /**
      * Strictly used only in Shrink File System Wizard
-     * @return data, metadata devices, and striped groups
+     * get both metadata & data devices & wrap up striped groups
+     * @param checkAllocatable - include devices that are allocatable (state on)
+     * @return an object array of disk devices
      */
-    public DiskCache[] getAllDevices() {
-        DiskCache [] allDevices = new DiskCache[
-            metaDevices.length + dataDevices.length + stripedGrps.length];
-        System.arraycopy(
-            dataDevices, 0, allDevices, 0, dataDevices.length);
-        System.arraycopy(
-            metaDevices, 0, allDevices, dataDevices.length, metaDevices.length);
+    public DiskCache[] getAllDevices(boolean checkAllocatable) {
+	ArrayList<DiskCache>dcList = new ArrayList<DiskCache>();
+        for (DiskCache metaDevice : metaDevices) {
+	    if (!checkAllocatable || metaDevice.getState() == DiskCache.ON) {
+                dcList.add(metaDevice);
+            }
+        }
+        for (DiskCache dataDevice : dataDevices) {
+            if (!checkAllocatable || dataDevice.getState() == DiskCache.ON) {
+                dcList.add(dataDevice);
+            }
+        }
         DiskCache [] stripedDevices = convertStripedGroups(stripedGrps);
-        System.arraycopy(
-            stripedDevices, 0, allDevices,
-            dataDevices.length + metaDevices.length, stripedDevices.length);
-        return allDevices;
+        for (DiskCache stripedDevice : stripedDevices) {
+            if (!checkAllocatable || stripedDevice.getState() == DiskCache.ON) {
+                dcList.add(stripedDevice);
+            }
+        }
+        return (DiskCache[]) dcList.toArray(new DiskCache[0]);
+    }
+
+    /**
+     * Check to see if the EQ (device) is the last active device (in "on" state)
+     * This method is being used in the Shrink File System Wizard
+     * @param eqToShrink
+     * @return boolean if device is the last active device of the file system
+     */
+    public boolean isLastActiveDevice(int eqToShrink) {
+        // Only need to check against data devices and striped group devices.
+        // Metadata devices are not shrink-able.
+
+        // true if the eq to shrink device is a data device
+        boolean boolDataDevice = false;
+
+        // true if the eq to shrink device is a striped group device
+        boolean boolStripedGrp = false;
+
+        // At least one active device is found.
+        boolean active = false;
+
+        TraceUtil.trace3("To Shrink: " + eqToShrink);
+        TraceUtil.trace3("Total # of devices: " + dataDevices.length);
+        for (DiskCache dataDevice : dataDevices) {
+            TraceUtil.trace3(
+                "   Checking against: " + dataDevice.getEquipOrdinal());
+            if (eqToShrink == dataDevice.getEquipOrdinal()) {
+                boolDataDevice = true;
+            } else if (!active) {
+                active = dataDevice.getState() == DiskCache.ON;
+            }
+        }
+        TraceUtil.trace3("boolDataDevice: " + boolDataDevice);
+        TraceUtil.trace3("active: " + active);
+
+        // If user is shrinking a data device and there is at least one other
+        // device that is on, the device that user wants to shrink is NOT
+        // the last active device.
+        if (boolDataDevice) {
+            return !active;
+        }
+
+        // Reset active bit.  If a striped group is selected, we have to make
+        // sure that there is at least one other striped group that is active
+        // so data can be distributed into that group.
+        active = false;
+
+        DiskCache [] stripedDevices = convertStripedGroups(stripedGrps);
+        for (DiskCache stripedDevice : stripedDevices) {
+            if (eqToShrink == stripedDevice.getEquipOrdinal()) {
+                boolStripedGrp = true;
+            } else if (!active) {
+                active = stripedDevice.getState() == DiskCache.ON;
+            }
+        }
+
+        TraceUtil.trace3("boolStripedGrp: " + boolStripedGrp);
+        TraceUtil.trace3("active: " + active);
+
+        if (boolStripedGrp) {
+            return !active;
+        }
+
+        return false;
     }
 
     private DiskCache [] convertStripedGroups(StripedGroup [] groups) {
@@ -452,11 +525,8 @@ public class FileSystemImpl extends GenericFileSystemImpl
 
         if ((data != null) && (data.length > 0)) {
             diskDevs = new DiskDev[data.length];
-System.out.println("data length: " + data.length);
             for (int i = 0; i < data.length; i++) {
-System.out.print("i: " + i + " getting jni disk!");
                 diskDevs[i] = ((DiskCacheImpl) data[i]).getJniDisk();
-System.out.println(" done");
             }
         }
 
@@ -919,9 +989,16 @@ System.out.println(" done");
     public int shrinkRelease(int eqToRelease, ShrinkOption options)
         throws SamFSException {
 
-        return FS.shrinkRelease(
-                    getJniContext(), fsInfo.getName(),
-                    eqToRelease, options.toString());
+        int result =
+            FS.shrinkRelease(
+                getJniContext(), fsInfo.getName(),
+                eqToRelease, options.toString());
+
+        // Update file system object
+        fsInfo = FS.get(getJniContext(), getName());
+        setup();
+
+        return result;
     }
 
     /*
@@ -946,9 +1023,16 @@ System.out.println(" done");
         int eqToRemove, int replacementEq, ShrinkOption options)
 	throws SamFSException {
 
-        return FS.shrinkRemove(
-                    getJniContext(), fsInfo.getName(),
-                    eqToRemove, replacementEq, options.toString());
+        int result =
+            FS.shrinkRemove(
+                getJniContext(), fsInfo.getName(),
+                eqToRemove, replacementEq, options.toString());
+
+        // Update file system object
+        fsInfo = FS.get(getJniContext(), getName());
+        setup();
+
+        return result;
     }
 
     /*
@@ -970,11 +1054,18 @@ System.out.println(" done");
         int eqToRemove, DiskCache replacement, ShrinkOption options)
 	throws SamFSException {
 
-        return FS.shrinkReplaceDev(
-                    getJniContext(), fsInfo.getName(),
-                    eqToRemove,
-                    ((DiskCacheImpl) replacement).getJniDisk(),
-                    options.toString());
+        int result =
+            FS.shrinkReplaceDev(
+                getJniContext(), fsInfo.getName(),
+                eqToRemove,
+                ((DiskCacheImpl) replacement).getJniDisk(),
+                options.toString());
+
+        // Update file system object
+        fsInfo = FS.get(getJniContext(), getName());
+        setup();
+
+        return result;
     }
 
     /*
@@ -996,10 +1087,17 @@ System.out.println(" done");
         int eqToRemove, StripedGroup replacement, ShrinkOption options)
 	throws SamFSException {
 
-        return FS.shrinkReplaceGroup(
-                    getJniContext(), fsInfo.getName(),
-                    eqToRemove,
-                    ((StripedGroupImpl) replacement).getJniStripedGroup(),
-                    options.toString());
+        int result =
+            FS.shrinkReplaceGroup(
+                getJniContext(), fsInfo.getName(),
+                eqToRemove,
+                ((StripedGroupImpl) replacement).getJniStripedGroup(),
+                options.toString());
+
+        // Update file system object
+        fsInfo = FS.get(getJniContext(), getName());
+        setup();
+
+        return result;
     }
 }

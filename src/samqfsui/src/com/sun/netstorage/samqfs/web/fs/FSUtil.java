@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSUtil.java,v 1.29 2009/01/29 15:50:19 ronaldso Exp $
+// ident	$Id: FSUtil.java,v 1.30 2009/03/04 21:54:41 ronaldso Exp $
 
 /**
  * This util class contains a few declaration of the file system
@@ -483,7 +483,6 @@ public class FSUtil {
                     Constants.PageSessionAttributes.FS_NAME);
             TraceUtil.trace3("Retrieivng fsName from session: " + fsName);
         }
-
         return fsName;
     }
 

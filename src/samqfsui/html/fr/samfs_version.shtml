@@ -3,7 +3,7 @@
 <html>
     <head>
         <title>SAM-QFS Manager</title>
-        <meta name="Copyright" content="Copyright &copy; 2008 by Sun Microsystems, Inc. All Rights Reserved." />
+        <meta name="Copyright" content="Copyright &copy; 2009 by Sun Microsystems, Inc. All Rights Reserved." />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <script type="text/javascript" src="/com_sun_web_ui/js/browserVersion.js"></script>
         <script type="text/javascript" src="/com_sun_web_ui/js/stylesheet.js"></script>
@@ -16,7 +16,7 @@
 
             <div class="VrsTxt">
                 <p>
-                    Copyright &copy; 2008 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, États-Unis. Tous droits réservés.
+                    Copyright &copy; 2009 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, États-Unis. Tous droits réservés.
                 </p>
                 <p>
                     Sun Microsystems, Inc. détient les droits de propriété intellectuelle relatifs à la technologie incorporée dans le produit qui est décrit dans ce document. En particulier, et ce sans limitation, ces droits de propriété intellectuelle peuvent inclure un ou plusieurs des brevets américains listés à l'adresse suivante:  http://www.sun.com/patents et un ou plusiers  brevets supplémentaires ou les applications de brevet en attente aux États - Unis et dans les autres pays.

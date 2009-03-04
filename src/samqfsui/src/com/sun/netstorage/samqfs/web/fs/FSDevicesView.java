@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDevicesView.java,v 1.16 2008/12/16 00:12:10 am143972 Exp $
+// ident	$Id: FSDevicesView.java,v 1.17 2009/03/04 21:54:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs;
 
@@ -56,6 +56,7 @@ import com.sun.web.ui.util.LogUtil;
 import com.sun.web.ui.view.html.CCButton;
 import com.sun.web.ui.view.html.CCCheckBox;
 import com.sun.web.ui.view.html.CCHiddenField;
+import com.sun.web.ui.view.html.CCStaticTextField;
 import com.sun.web.ui.view.table.CCActionTable;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -68,6 +69,7 @@ import javax.servlet.ServletException;
 public class FSDevicesView extends CommonTableContainerView {
 
     // Page children
+    private static final String INSTRUCTION = "Instruction";
     private static final String ALL_DEVICES = "AllDevices";
     private static final String SELECTED_DEVICES = "SelectedDevices";
     private static final String NO_SELECTION_MSG = "NoSelectionMsg";
@@ -101,6 +103,7 @@ public class FSDevicesView extends CommonTableContainerView {
      */
     public void registerChildren() {
         super.registerChildren(model);
+        registerChild(INSTRUCTION, CCStaticTextField.class);
         registerChild(ALL_DEVICES, CCHiddenField.class);
         registerChild(SELECTED_DEVICES, CCHiddenField.class);
         registerChild(NO_SELECTION_MSG, CCHiddenField.class);
@@ -115,7 +118,9 @@ public class FSDevicesView extends CommonTableContainerView {
      * @return View of the page child
      */
     public View createChild(String name) {
-        if (name.equals(ALL_DEVICES)
+        if (name.equals(INSTRUCTION)) {
+            return new CCStaticTextField(this, name, null);
+        } else if (name.equals(ALL_DEVICES)
             || name.equals(SELECTED_DEVICES)
             || name.equals(NO_SELECTION_MSG)
             || name.equals(DISABLE_MSG)
@@ -309,6 +314,10 @@ public class FSDevicesView extends CommonTableContainerView {
         StringBuffer buf = new StringBuffer();
 
         for (int i = 0; i < showDiskCache.length; i++, tableCounter++) {
+            // Skip all devices that are off
+            if (showDiskCache[i].getState() == DiskCache.OFF) {
+                continue;
+            }
             if (tableCounter > 0) {
                 model.appendRow();
             }
@@ -345,7 +354,7 @@ public class FSDevicesView extends CommonTableContainerView {
 
             model.setValue(
                 "ImageAlloc",
-                showDiskCache[i].isAlloc() ?
+                showDiskCache[i].getState() == DiskCache.ON ?
                     Constants.Image.ICON_AVAILABLE :
                     Constants.Image.ICON_BLANK_ONE_PIXEL);
 

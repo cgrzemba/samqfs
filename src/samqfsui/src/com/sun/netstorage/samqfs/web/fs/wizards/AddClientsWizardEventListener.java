@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsWizardEventListener.java,v 1.6 2008/12/16 00:12:11 am143972 Exp $
+// ident        $Id: AddClientsWizardEventListener.java,v 1.7 2009/03/04 21:54:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
@@ -40,6 +40,7 @@ import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.ConversionUtil;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
 import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.component.Wizard;
 import com.sun.web.ui.component.WizardStep;
 import com.sun.web.ui.event.WizardEvent;
@@ -72,7 +73,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
         Constants.PageSessionAttributes.FS_NAME;
 
     private AddClientsBean  wizardBean = null;
-    
+
     public AddClientsWizardEventListener() {
     }
 
@@ -88,7 +89,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
         throws AbortProcessingException {
         Wizard wizard = event.getWizard();
         WizardStep step = event.getStep();
-     
+
         // reset the wizard alert mesages
         this.wizardBean.getAlertBean().reset();
 
@@ -99,31 +100,31 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             return result;
         } else if (id == WizardEvent.NEXT) { // hanle the next button
             if (HOST_SELECTION_METHOD.equals(step.getId())) {
-                System.out.println("validating host selection method ...");
+                TraceUtil.trace3("validating host selection method ...");
                 return processHostSelectionMethod();
             }else if (SELECTION_BY_HOSTNAME.equals(step.getId())) {
-                System.out.println("validing host names ...");
+                TraceUtil.trace3("validating host names ...");
                 return processByHostName();
             } else if (SELECTION_BY_IPADDRESS.equals(step.getId())) {
-                System.out.println("validating ip addresses ...");
+                TraceUtil.trace3("validating ip addresses ...");
                 return processByIpAddress();
             } else if (SELECTION_FROM_FILE.equals(step.getId())) {
-                System.out.println("loading hosts from file ...");
+                TraceUtil.trace3("loading hosts from file ...");
                 return processLoadHostsFromFile();
             } else if (REVIEW_CLIENT_LIST.equals(step.getId())) {
-                System.out.println("validating client host list ...");
+                TraceUtil.trace3("validating client host list ...");
                 return processReviewClientList();
             } else if (MOUNT_OPTIONS.equals(step.getId())) {
-                System.out.println("validating mount otpions ...");
+                TraceUtil.trace3("validating mount options ...");
                 return processMountOptions();
             } // end process next
         } else if (id == WizardEvent.CANCEL) {
             this.wizardBean.clearWizardValues();
         }
-        
+
         return true;
     }
-    
+
     public boolean isTransient() {
         return false;
     }
@@ -187,7 +188,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 list.add(inetAddressToString(address));
             }
         }
-        
+
         if (list.size() == 0) {
             alertBean.setType(3);
             alertBean.setSummary(JSFUtil.getMessage("fs.addclients.error.summary"));
@@ -292,7 +293,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
             while ((aLine = reader.readLine()) != null) {
                 // any line can be: 1.) a single host or 2.) a list of comma
-                // separated hosts 
+                // separated hosts
                 if (aLine.indexOf(",") == -1) { // a single host found
                     InetAddress [] address = resolveHost(aLine.trim());
                     if (address != null) {
@@ -308,7 +309,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                     }
                 }
             } // end while readLine
-            
+
             // make sure atleast one valid host was found
             if (validHosts.size() == 0) {
                 alertBean.setType(3);
@@ -321,7 +322,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 result = true;
                 String [] temp = new String[validHosts.size()];
                 temp = (String [])validHosts.toArray(temp);
-                
+
                 // set the new list of hosts
                 this.wizardBean.setSelectedHosts(temp);
             }
@@ -342,7 +343,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 try {
                     reader.close();
                 } catch (IOException ioe) {
-                    System.out.println("Error: " + ioe.getMessage());
+                    TraceUtil.trace1("Error: " + ioe.getMessage());
                 }
             }
         } // end finally
@@ -392,7 +393,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
      */
     private String inetAddressToString(InetAddress [] address) {
         String result = null;
-        
+
         if (address != null && address.length > 0 && address[0] != null) {
             result = new StringBuffer(address[0].getHostName())
                 .append("(").append(address[0].getHostAddress())
@@ -404,7 +405,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
     }
 
     /**
-     * convert a string of the format hostname(ip1;ip2) to an array of an array 
+     * convert a string of the format hostname(ip1;ip2) to an array of an array
      * of hostnames to be used by the finishWizard function
      */
     private Host formattedStringToHostName(String s) {
@@ -439,13 +440,13 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 String [] suffixRange = suffix.split("-");
                 int start = Integer.parseInt(suffixRange[0]);
                 int end = Integer.parseInt(suffixRange[1]);
-            
+
                 for (int i = start; i <= end; i++) {
                     String ip = prefix + i;
                     ipAddress.add(ip);
                 }
             } catch (NumberFormatException nfe) {
-                System.out.println("Unable to translate range: "
+                TraceUtil.trace1("Unable to translate range: "
                                    + nfe.getMessage());
             }
         }
@@ -455,7 +456,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
 
     /**
      * verify that the host exists and reachable, then return its InetAddress
-     * 
+     *
      * @param - a string representation the name of the host or the string
      * representaion of the its ip address.
      */
@@ -489,7 +490,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
             for (int i = 0; i < displayHost.length; i++) {
                 hostList[i] = formattedStringToHostName(displayHost[i]);
             }
-            
+
             String options = createMountOptionsString();
 
             // add the client list
@@ -508,13 +509,13 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 throw new SamFSException("An error occured while submitting job");
 
             JSFUtil.setAttribute(AddClientsBean.JOB_ID_KEY, jobId);
-            
+
             // if we get this far, we were successful
             alertBean.setType(1);
             alertBean.setSummary(JSFUtil.getMessage("success.summary"));
             alertBean.setDetail(JSFUtil.getMessage("fs.addclients.success.detail"));
             alertBean.setRendered(true);
-            
+
 	    // since the job was submitted successfully, display the HMS link
 	    this.wizardBean.setDisplayMHSLink("true");
         } catch (SamFSException sfe) {
@@ -577,13 +578,13 @@ public class AddClientsWizardEventListener implements WizardEventListener {
                 // we must have a single ip, check if the last token is a valid
                 // number
                 Integer num = ConversionUtil.strToInteger(tokens[3]);
-                
+
                 // if we get this far, we must have a valid single ip address
                 return true;
             }
 
         } catch (SamFSException sfe) {
-            System.out.println("Error in 'isValidIPOrIPRange(...)' " +
+            TraceUtil.trace1("Error in 'isValidIPOrIPRange(...)' " +
                                sfe.getMessage());
             return false;
         }
@@ -606,7 +607,7 @@ public class AddClientsWizardEventListener implements WizardEventListener {
      */
     private String createMountOptionsString() {
         StringBuffer buf = new StringBuffer();
-        
+
         buf.append("mount_point=")
             .append(this.wizardBean.getMountPoint())
             .append(",mount_fs=")

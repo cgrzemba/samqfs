@@ -28,7 +28,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: FSDetails.jsp,v 1.36 2008/12/16 00:10:44 am143972 Exp $
+// ident	$Id: FSDetails.jsp,v 1.37 2009/03/04 21:54:41 ronaldso Exp $
 --%>
 <%@ page info="Index" language="java" %>
 <%@taglib uri="/WEB-INF/tld/com_iplanet_jato/jato.tld" prefix="jato"%>
@@ -95,8 +95,14 @@
 <!-- cluster node list table -->
 <cc:includepagelet name="FSDClusterView"/>
 
-<br>
+<br><br>
 <jato:containerView name="FSDevicesView">
+    <cc:spacer name="Spacer" width="10" />
+    <cc:text
+        name="Instruction"
+        bundleID="samBundle"
+        defaultValue="FSDevices.instruction" />
+    <br /><br />
     <!-- Action Table -->
     <cc:actiontable
         name="FSDevicesTable"

@@ -27,12 +27,17 @@
  *    SAM-QFS_notice_end
  */
 
-// ident        $Id: AddClientsBean.java,v 1.6 2008/12/16 00:12:11 am143972 Exp $
+// ident        $Id: AddClientsBean.java,v 1.7 2009/03/04 21:54:41 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.fs.wizards;
 
+import com.sun.netstorage.samqfs.mgmt.SamFSException;
+import com.sun.netstorage.samqfs.web.fs.FSUtil;
+import com.sun.netstorage.samqfs.web.model.fs.FileSystem;
 import com.sun.netstorage.samqfs.web.util.Constants;
 import com.sun.netstorage.samqfs.web.util.JSFUtil;
+import com.sun.netstorage.samqfs.web.util.SamUtil;
+import com.sun.netstorage.samqfs.web.util.TraceUtil;
 import com.sun.web.ui.event.WizardEventListener;
 import com.sun.web.ui.model.Option;
 import java.io.File;
@@ -61,7 +66,7 @@ public class AddClientsBean {
     // the actual values the wizard is interested in
     private String selectedMethod = null;
     private String [] selectedHosts = null;
-    private String mountPoint = null;
+    protected String mountPoint = null;
     private boolean mountAfterAdd = false;
     private boolean  mountReadOnly = false;
     private boolean  mountAtBootTime = false;
@@ -76,10 +81,6 @@ public class AddClientsBean {
 
     // alert messages
     private AlertBean alertBean = new AlertBean();
-
-    // the current file system
-    private String fsName = null;
-    private String serverName = null;
 
     // used by the results page to determine if the HMS link should be
     // display
@@ -279,6 +280,9 @@ public class AddClientsBean {
     }
 
     public String getMountPoint() {
+        if (this.mountPoint == null || this.mountPoint.length() == 0) {
+            this.mountPoint = getMountPointOnMDS();
+        }
         return this.mountPoint;
     }
 
@@ -337,23 +341,35 @@ public class AddClientsBean {
     // status window
 
     // determine if the link to the MultiHostStatus Display page
-    // should be displayed 
+    // should be displayed
     public String getDisplayMHSLink() {
         return this.displayMHSLink;
     }
-    
+
     public void setDisplayMHSLink(String b) {
         this.displayMHSLink = b;
     }
 
     public long getJobId() {
         Long jobId = (Long)JSFUtil.getAttribute(JOB_ID_KEY);
-        
+
         return jobId != null ? (long)jobId : -1L;
     }
-    
+
     public String getServerName() {
         return JSFUtil.getServerName();
+    }
+
+    private String getMountPointOnMDS() {
+        try {
+            return
+                SamUtil.getModel(JSFUtil.getServerName()).
+                    getSamQFSSystemFSManager().
+                    getFileSystem(FSUtil.getFSName()).getMountPoint();
+        } catch (SamFSException samEx) {
+            TraceUtil.trace1("Failed to retrieve mount point from MDS!", samEx);
+        }
+        return "";
     }
 }
 

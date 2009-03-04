@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: SharedFS.js,v 1.8 2008/12/16 00:10:37 am143972 Exp $
+// ident	$Id: SharedFS.js,v 1.9 2009/03/04 21:54:40 ronaldso Exp $
 
 
 // Used by drop down menu in summary page
@@ -135,7 +135,7 @@ function launchAddClientsWizard(button) {
     var name = "addclients_" + fsName;
     var uri = "/faces/jsp/fs/wizards/AddClientsWizard.jsp";
 
-    var win = launchPopup(uri, name, serverName, SIZE_WIZARD, null);
+    var win = launchPopup(uri, name, serverName, SIZE_WIZARD, params);
 
     win.focus();
 

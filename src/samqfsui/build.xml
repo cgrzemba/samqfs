@@ -24,10 +24,10 @@
 <!--                                                                      -->
 <!--  SAM-QFS_notice_end                                                  -->
 <!--                                                                      -->
-<!-- $Id: build.xml,v 1.16 2008/12/16 00:10:34 am143972 Exp $ -->
+<!-- $Id: build.xml,v 1.17 2009/03/04 21:54:39 ronaldso Exp $ -->
 
 <!--
-    This is the build file for the Sam/QFS Lockhart prototype GUI
+    This is the build file for the SAM-QFS Manager GUI
 -->
 
 <!--
@@ -40,7 +40,7 @@
 
 
 <!-- This is the root tag of the XML file, defining a project. -->
-<project name="File System Manager" default="dist" basedir=".">
+<project name="SAM-QFS Manager" default="dist" basedir=".">
 
 
 <!-- ===================== Property Definitions =========================== -->

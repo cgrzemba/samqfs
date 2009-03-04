@@ -27,7 +27,7 @@
  *    SAM-QFS_notice_end
  */
 
-// ident	$Id: DiskCacheImpl.java,v 1.25 2009/02/04 20:10:10 ronaldso Exp $
+// ident	$Id: DiskCacheImpl.java,v 1.26 2009/03/04 21:54:42 ronaldso Exp $
 
 package com.sun.netstorage.samqfs.web.model.impl.jni.media;
 
@@ -92,6 +92,10 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
 
             // Use first device's EQ when shrinking a striped group
             super.setEquipOrdinal(members[0].getEquipOrdinal());
+
+            // Use the state of the first device of a striped group as the
+            // state of the group itself
+	    super.setState(members[0].getState());
         }
     }
 
@@ -317,6 +321,9 @@ public class DiskCacheImpl extends BaseDeviceImpl implements DiskCache {
     }
 
     public boolean isDataOnlyDevice() {
-        return diskCacheType == DiskCache.MR || diskCacheType == DiskCache.MD;
+        return
+	    diskCacheType == DiskCache.MR ||
+	    diskCacheType == DiskCache.MD ||
+            diskCacheType == DiskCache.STRIPED_GROUP;
     }
 }
