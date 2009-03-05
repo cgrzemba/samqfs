@@ -26,7 +26,7 @@
  *
  *    SAM-QFS_notice_end
  */
-#pragma ident   "$Revision: 1.84 $"
+#pragma ident   "$Revision: 1.85 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -4172,36 +4172,6 @@ shrink(char *fs_name, int eq_to_exclude, int replacement_eq,
 			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
 			return (-1);
 		}
-	} else if (replacement_eq == -1) {
-		disk_t *dk = NULL;
-
-		/*
-		 * The user cannot remove a striped group without specifying
-		 * a replacement. So check that this is not a striped group.
-		 */
-		dk = find_disk_by_eq(fs, eq_to_exclude);
-		if (dk == NULL) {
-			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
-			free_fs(fs);
-			return (-1);
-		}
-
-		if (*(dk->base_info.equ_type) == 'g' ||
-		    *(dk->base_info.equ_type) == 'o') {
-
-			setsamerr(SE_SHRINK_REPLACEMENT_GROUP_REQUIRED);
-			free_fs(fs);
-			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
-			return (-1);
-		}
-
-		if (fs_dev_remove(fs->fi_name, eq_to_exclude) != 0) {
-			free_fs(fs);
-			Trace(TR_ERR, "shrinking fs failed: %s", samerrmsg);
-			return (-1);
-		}
-
-
 	} else {
 		/*
 		 * Core support for specifying the replacement device
