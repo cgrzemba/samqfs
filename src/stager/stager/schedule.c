@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.103 $"
+#pragma ident "$Revision: 1.104 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -61,6 +61,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "pub/rminfo.h"
 #include "sam/fioctl.h"
 #include "sam/nl_samfs.h"
+#include "sam/defaults.h"
 #include "sam/sam_malloc.h"
 #include "sam/sam_trace.h"
 #include "aml/fsd.h"
@@ -106,10 +107,11 @@ static int recoverCopyInstanceList(int numDrives);
 static enum StreamPriority findResources(StreamInfo_t *stream);
 
 static int startCopy(StreamInfo_t *stream);
-static CopyInstanceInfo_t *findCopy(int library, media_t media);
+static CopyInstanceInfo_t *findCopy(VsnInfo_t *vi);
 static CopyInstanceInfo_t *findCopyByPid(pid_t pid);
 static boolean_t isCopyIdle(VsnInfo_t *vi);
 static boolean_t isCopyBusy(VsnInfo_t *vi);
+static boolean_t isCopyAvail(VsnInfo_t *vi);
 static boolean_t isDriveAvailForCopy(int library);
 static void initCopyInstanceList(boolean_t recover);
 static void startCopyProcess(CopyInstanceInfo_t *instance);
@@ -137,6 +139,7 @@ static struct {
 
 CopyInstanceList_t *CopyInstanceList = NULL;
 extern StageReqs_t StageReqs;
+extern sam_defaults_t *Defaults;
 extern int Seqnum;
 extern int ShutdownStager;
 
@@ -407,6 +410,7 @@ startWork(
 		return;
 	}
 
+	/* Best candidate is stream targeting an already mounted VSN. */
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 
@@ -417,14 +421,28 @@ startWork(
 		}
 
 		if ((GET_FLAG(stream->flags, SR_ACTIVE) == 0) &&
-		    (stream->thirdparty == B_FALSE)) {
+		    (stream->thirdparty == B_FALSE) &&
+		    (stream->priority == SP_mounted)) {
+			(void) startCopy(stream);
+			return;
+		}
+		stream = stream->next;
+	}
 
-			switch (stream->priority)  {
-				case SP_start:
-					(void) startCopy(stream);
-					break;
-			}
+	stream = workQueue.first;
+	for (i = 0; i < workQueue.entries; i++) {
 
+		if (((copy_assigned == B_TRUE) && (stream->context == NULL)) ||
+		    ((copy_assigned == B_FALSE) && (stream->context != NULL))) {
+			stream = stream->next;
+			continue;
+		}
+
+		if ((GET_FLAG(stream->flags, SR_ACTIVE) == 0) &&
+		    (stream->thirdparty == B_FALSE) &&
+		    (stream->priority == SP_start)) {
+			(void) startCopy(stream);
+			break;
 		}
 
 		if ((GET_FLAG(stream->flags, SR_ERROR)) &&
@@ -844,6 +862,7 @@ updateStreamState(
 		case SP_busy:
 			PostOprMsg(update->streams[i].oprmsg, 19210);
 			break;
+		case SP_mounted:
 		case SP_start:
 			PostOprMsg(update->streams[i].oprmsg, 19211);
 			break;
@@ -1429,8 +1448,10 @@ findResources(
 		priority = SP_busy;
 
 	} else if (isCopyIdle(&stream->vi) == B_FALSE) {
-		priority = SP_noresources;
+		priority = SP_busy;
 
+	} else if (isCopyAvail(&stream->vi) == B_FALSE) {
+		priority = SP_busy;
 	}
 
 	/*
@@ -1440,7 +1461,7 @@ findResources(
 	if (priority != SP_busy) {
 
 		if (IS_VSN_LOADED(vi)) {
-			priority = SP_start;
+			priority = SP_mounted;
 
 		} else {
 
@@ -1525,7 +1546,7 @@ startCopy(
 		}
 
 	} else {
-		instance = findCopy(vi->lib, vi->media);
+		instance = findCopy(vi);
 	}
 
 	/*
@@ -1657,17 +1678,18 @@ startCopy(
  */
 static CopyInstanceInfo_t *
 findCopy(
-	int library,
-	media_t	media)
+	VsnInfo_t *vi
+)
 {
 	int i;
 	int num_drives;
 	int retry;
 	int trylock;
+	int library;
+	media_t media;
 
 	CopyInstanceInfo_t *instance = NULL;
 
-	num_drives = GetNumLibraryDrives(library);
 	/*
 	 * Attempt to find idle thread for this media type.
 	 */
@@ -1675,6 +1697,10 @@ findCopy(
 		return (NULL);
 	}
 
+	library =  vi->lib;
+	media = vi->media;
+
+	num_drives = GetNumLibraryDrives(library);
 	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
 		if (CopyInstanceList->cl_data[i].ci_lib == library) {
 			num_drives--;
@@ -1906,6 +1932,72 @@ isCopyBusy(
 }
 
 /*
+ * There are one or more idle copy processes, isCopyIdle().  Check if there is
+ * one idle process that reached the avail timeout.
+ *
+ * FIXME should avail timeout be ignored if there are no stage-never
+ * requests in the daemon?  Or set flag in context if stage-never in process,
+ * ignore avail timeout if no stage-never request in the process?
+ *
+ */
+static boolean_t
+isCopyAvail(
+	VsnInfo_t *vi
+)
+{
+	boolean_t avail;
+	int i;
+	int library;
+	time_t avail_timeout;
+	time_t time_now;
+
+	Trace(TR_MISC, "Is copy avail '%s'", vi->vsn);
+
+	library = vi->lib;
+	time_now = time(NULL);
+	avail = B_FALSE;
+
+	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+
+		if (CopyInstanceList->cl_data[i].ci_busy == B_FALSE &&
+		    CopyInstanceList->cl_data[i].ci_lib == library) {
+
+			Trace(TR_MISC,
+			    "Check avail timeout context: 0x%x '%s' %d",
+			    &CopyInstanceList->cl_data[i],
+			    CopyInstanceList->cl_data[i].ci_vsn,
+			    CopyInstanceList->cl_data[i].ci_idletime);
+
+			if (strcmp(CopyInstanceList->cl_data[i].ci_vsn,
+			    vi->vsn) == 0) {
+				avail = B_TRUE;
+
+			} else if (CopyInstanceList->cl_data[i].
+			    ci_idletime == 0) {
+				avail = B_TRUE;
+
+			} else {
+				avail_timeout =
+				    CopyInstanceList->cl_data[i].ci_idletime +
+				    Defaults->avail_timeout;
+				if (time_now >= avail_timeout) {
+					CopyInstanceList->cl_data[i].
+					    ci_idletime = 0;
+					avail = B_TRUE;
+				} else {
+					Trace(TR_MISC, "\twaiting");
+				}
+			}
+			if (avail == B_TRUE) {
+				break;
+			}
+		}
+	}
+
+	return (avail);
+}
+
+/*
  * Check if drive for specified library and media type is available
  * for copy proc. Copy proc may have a different type of media when
  * retrying from the next available copy.
@@ -2055,7 +2147,7 @@ initCopyInstanceList(
 
 			ci->ci_lib = i;
 			ci->ci_eq = entry->li_eq;
-			ci->ci_busy = B_TRUE;
+			ci->ci_busy = B_FALSE;
 
 			ci->ci_rmfn = j;
 			ci->ci_drive = GetEqOrdinal(j);
@@ -2463,7 +2555,7 @@ catchLdCancelSig(
 }
 
 /*
- * Check pending copy procs folked by previous sam-stagerd.
+ * Check pending copy procs forked by previous sam-stagerd.
  */
 static void
 checkCopies(void)
@@ -2513,7 +2605,7 @@ checkCopies(void)
 			}
 
 			cc->ci_created	= B_FALSE;
-			cc->ci_busy	= B_TRUE;
+			cc->ci_busy	= B_FALSE;
 			cc->ci_pid		= 0;
 			CLEAR_FLAG(cc->ci_flags, (CI_shutdown | CI_failover));
 			cc->ci_first = cc->ci_last = NULL;
@@ -2950,7 +3042,7 @@ KillCopyProc(
 	kill(pid, SIGKILL);
 
 	cc->ci_created = B_FALSE;
-	cc->ci_busy = B_TRUE;
+	cc->ci_busy = B_FALSE;
 	cc->ci_pid = 0;
 	cc->ci_first = 0;
 	cc->ci_last = 0;

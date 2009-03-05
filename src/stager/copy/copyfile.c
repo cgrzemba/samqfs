@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.111 $"
+#pragma ident "$Revision: 1.112 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -177,6 +177,7 @@ CopyFiles(void)
 
 		PthreadMutexLock(&Instance->ci_requestMutex);
 		Instance->ci_busy = B_FALSE;
+		Instance->ci_idletime = time(NULL);
 
 		/*
 		 * Wait for a request from daemon to stage files.

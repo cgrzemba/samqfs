@@ -1,4 +1,4 @@
-.\" $Revision: 1.62 $
+.\" $Revision: 1.63 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .na
 .nh
-.TH defaults.conf 4 "07 Jan 2009"
+.TH defaults.conf 4 "26 Feb 2009"
 .SH NAME
 defaults.conf \- Set default values for Sun StorEdge QFS and Sun StorEdge SAM software
 .SH SYNOPSIS
@@ -320,6 +320,15 @@ With this turned on, you can monitor a Sun StorEdge QFS or Sun
 StorEdge SAM system remotely from a management
 console such as Sun Remote Services (SRS)
 By default, \fBalerts=on\fR is in effect.
+.TP
+\fBavail_timeout = \fIseconds\fR
+Allows the stager to delay before unloading a volume being
+used to stage a file with the \fBstage -n\fR attribute set.
+This allows a subsequent stage request for this file to
+be processed in preference to a file requesting a different
+volume.
+Setting \fBavail_timeout = 0\fR disables this function.
+By default, \fBavail_timeout = 0\fR.
 .TP
 \fBstale_time = \fIminutes\fR
 Sends an error to any request for removable media that has

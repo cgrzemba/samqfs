@@ -34,7 +34,7 @@
 #ifndef COPY_DEFS_H
 #define	COPY_DEFS_H
 
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 
 /* Structures. */
 
@@ -96,6 +96,7 @@ typedef struct CopyInstanceInfo {
 	ushort_t	ci_flags;
 
 	struct in6_addr	ci_hostAddr;	/* remote host address */
+	time_t		ci_idletime;	/* time copyproc finished request */
 } CopyInstanceInfo_t;
 
 #define	COPY_INSTANCE_LIST_MAGIC	05501531

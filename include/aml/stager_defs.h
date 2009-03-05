@@ -34,7 +34,7 @@
 #ifndef _AML_STAGER_DEFS_H
 #define	_AML_STAGER_DEFS_H
 
-#pragma ident "$Revision: 1.29 $"
+#pragma ident "$Revision: 1.30 $"
 
 #include "sam/types.h"
 #include "aml/device.h"
@@ -146,6 +146,7 @@ enum StreamPriority {
 	SP_nofilesys,		/* filesystem not mounted */
 	SP_busy,		/* resources busy */
 	SP_start,		/* start a copy stream */
+	SP_mounted,		/* resource is mounted, start a copy stream */
 	SP_idle			/* staging idled by operator */
 };
 
