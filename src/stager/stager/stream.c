@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.57 $"
+#pragma ident "$Revision: 1.58 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -764,6 +764,10 @@ comparePosition(
 	ArcopyInfo_t *ar2;
 	FileInfo_t **f1 = (FileInfo_t **)p1;
 	FileInfo_t **f2 = (FileInfo_t **)p2;
+
+	if ((*f1) == (*f2)) {
+		return (0);
+	}
 
 	if ((*f1) == NULL || (*f2) == NULL) {
 		SetErrno = 0;	/* set for trace */
