@@ -34,7 +34,7 @@
 #ifndef FSD_H
 #define	FSD_H
 
-#pragma ident "$Revision: 1.60 $"
+#pragma ident "$Revision: 1.61 $"
 
 /* SAM-FS includes. */
 #include "sam/custmsg.h"
@@ -111,7 +111,6 @@ DCL int	ArchiveCount IVAL(0);
 DCL dev_ent_t *DeviceTable IVAL(NULL);
 DCL int DeviceNumof IVAL(0);
 DCL int DiskVolCount IVAL(0);		/* Number of disk volumes */
-DCL int RAC_maxdevretry IVAL(0);	/* RAC max retry for device */
 DCL int MaxDevEq IVAL(0);
 DCL int RmediaDeviceCount IVAL(0);	/* Number of removable media devices */
 DCL int DiskVolClientCount IVAL(0);	/* Num of trusted disk arch clients */

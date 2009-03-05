@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.212 $"
+#pragma ident "$Revision: 1.213 $"
 #endif
 
 #include "sam/osversion.h"
@@ -833,6 +833,7 @@ sam_mount_info(
 			*lastmp = mp;
 			samgt.num_fs_configured++;
 			istart = 0; /* new filesystem, copy all entries */
+			error = 0;  /* clear ENOENT now that init is done */
 		} else {
 			/*
 			 * File system exists, add devices. istart zero means
@@ -971,22 +972,22 @@ sam_mount_info(
 		mp->orig_mt.fs_count = (short)args.fs_count;
 		mp->mt.mm_count = mm_count;
 		mp->orig_mt.mm_count = mm_count;
-		error = sam_check_stripe_group(mp, istart);
+		ASSERT(error == 0);
+		if (istart) {
+			error = sam_check_stripe_group(mp, istart);
+		}
 #ifdef sun
 		if (error == 0) {
-			int npart;
+			if (istart) {
+				int npart;
 
-			error = sam_getdev(mp, istart, (FREAD | FWRITE),
-			    &npart, credp);
+				error = sam_getdev(mp, istart, (FREAD | FWRITE),
+				    &npart, credp);
 #if defined(SOL_511_ABOVE)
-			if (error == 0) {
-				error = sam_check_osd_daus(mp);
-			}
+				if (error == 0) {
+					error = sam_check_osd_daus(mp);
+				}
 #endif
-			if (istart == 0) {
-				sam_close_devices(mp, 0, (FREAD | FWRITE),
-				    credp);
-			} else {
 				/*
 				 * Verify all devices have superblock for
 				 * this file system.

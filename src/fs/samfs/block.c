@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 
 #include "sam/osversion.h"
 
@@ -2260,6 +2260,16 @@ sam_grow_fs(
 		    "file system",
 		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
 		return (25);
+	}
+
+	/*
+	 * Verify pt_size is set.
+	 */
+	if (dp->part.pt_size == 0) {
+		cmn_err(CE_WARN, "SAM-QFS: %s: Error adding "
+		    "eq %d lun %s no size configured, do 'samd config'",
+		    mp->mt.fi_name, dp->part.pt_eq, dp->part.pt_name);
+		return (21);
 	}
 
 	/*

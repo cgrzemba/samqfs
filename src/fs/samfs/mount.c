@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.247 $"
+#pragma ident "$Revision: 1.248 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1140,6 +1140,11 @@ sam_set_mount(sam_mount_t *mp)
 	for (i = 0; i < sblk->info.sb.fs_count; i++) {
 		mp->mi.m_fs[i].next_ord = 0;
 		mp->mi.m_fs[i].alloc_link = 0;
+		/* set pt_size if not already set */
+		if (mp->mi.m_fs[i].part.pt_size == 0) {
+			mp->mi.m_fs[i].part.pt_size =
+			    sblk->eq[i].fs.capacity << SAM2SUN_BSHIFT;
+		}
 		if ((sblk->eq[i].fs.state == DEV_OFF) ||
 		    (sblk->eq[i].fs.state == DEV_DOWN)) {
 			continue;
