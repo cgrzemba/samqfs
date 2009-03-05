@@ -1,4 +1,4 @@
-.\" $Revision: 1.33 $
+.\" $Revision: 1.34 $
 .ds ]W Sun Microsystems
 .\" SAM-QFS_notice_begin
 .\"
@@ -114,7 +114,7 @@ and the type of stage, 'V' for data verify and '-' for others.
 Sets the maximum number of stage requests that can
 be active at one time in the stager to an integer \fInumber\fR.
 The minimum \fInumber\fR is \fB1\fR.
-The default \fInumber\fR is based on memory size, 25000 per gigabyte.
+The default \fInumber\fR is based on memory size, 5000 per gigabyte.
 The maximum \fInumber\fR is \fB500000\fR.
 .sp
 The number of outstanding stage requests has a direct impact on incore inode

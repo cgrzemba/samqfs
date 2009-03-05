@@ -34,7 +34,7 @@
 #ifndef _AML_STAGER_H
 #define	_AML_STAGER_H
 
-#pragma ident "$Revision: 1.24 $"
+#pragma ident "$Revision: 1.25 $"
 
 #include "sam/param.h"
 #include "sam/types.h"
@@ -94,14 +94,14 @@ struct StagerControlRsp {
 /*
  * Default number of active stages per GB of memory.
  */
-#define	STAGER_MAX_ACTIVE_PER_GB	25000
+#define	STAGER_MAX_ACTIVE_PER_GB	5000
 
 /*
  * Currently only used by libfsmgmt to display default value.
  * TODO: Remove once libfsmgmt uses STAGER_MAX_ACTIVE_PER_GB
  * instead (CR6707401).
  */
-#define	STAGER_DEFAULT_MAX_ACTIVE 	25000
+#define	STAGER_DEFAULT_MAX_ACTIVE 	5000
 
 /*
  * Maximum number of active stage requests
