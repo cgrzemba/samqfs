@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.142 $"
+#pragma ident "$Revision: 1.143 $"
 
 #include "sam/osversion.h"
 
@@ -389,6 +389,7 @@ sam_ioctl_util_cmd(
 			brelse(bp);
 		}
 		idstat->time = SAM_SECOND();
+		idstat->magic = mp->mi.m_sbp->info.sb.magic;
 		}
 		break;
 

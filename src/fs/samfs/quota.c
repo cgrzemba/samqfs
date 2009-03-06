@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.79 $"
+#pragma ident "$Revision: 1.80 $"
 
 #include "sam/osversion.h"
 
@@ -1071,6 +1071,7 @@ sam_set_aid(sam_node_t *ip, struct sam_inode_samaid *sa)
 		 * Set project ID.
 		 */
 		ip->di2.projid = id;
+		ip->di2.p2flags |= P2FLAGS_PROJID_VALID;
 	} else {
 		return (EINVAL);
 	}

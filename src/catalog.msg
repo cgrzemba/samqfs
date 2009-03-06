@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.629 $"
+$ pragma ident "$Revision: 1.630 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -205,6 +205,7 @@ of cache is %d bytes
 268 %s: Pathname too long
 272 %s: SAM-FS is not running.\n
 273 %s: stat() id mismatch: expected: %d.%d, got %d.%d, entry not processed
+274 %s: idstat() fs version mismatch: expected: %s got %s, dump terminated
 281 %s: Unknown media type.
 282 %s: unknown option\n
 283 %s: Unrecognized mode (0x%x)

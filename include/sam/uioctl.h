@@ -37,7 +37,7 @@
 #define	_SAM_UIOCTL_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.34 $"
+#pragma ident "$Revision: 1.35 $"
 #endif
 
 #ifdef sun
@@ -120,6 +120,7 @@ struct sam_ioctl_idstat {
 	int size;		/* Size of inode image to be returned */
 	SAM_POINTER(void) dp;	/* Disk/archive inode */
 	sam_time_t time;	/* Time of day returned */
+	uint32_t magic;		/* FS magic */
 };
 
 #define	C_IDSTAT 5

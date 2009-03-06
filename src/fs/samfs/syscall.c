@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.167 $"
+#pragma ident "$Revision: 1.168 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2356,6 +2356,7 @@ sam_set_projid(void *arg, int size)
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 		ip->di2.projid = args.projid;
+		ip->di2.p2flags |= P2FLAGS_PROJID_VALID;
 
 		TRANS_INODE(ip->mp, ip);
 		sam_mark_ino(ip, SAM_CHANGED);

@@ -34,7 +34,7 @@
  */
 
 
-#pragma ident "$Revision: 1.16 $"
+#pragma ident "$Revision: 1.17 $"
 
 /*
  * Modified during 1997/01 to handle files with archive copies that
@@ -123,6 +123,7 @@
 #include <sys/stat.h>
 #include <pub/stat.h>
 #include <sys/dirent.h>
+#include <sys/vfs.h>
 #include <pub/rminfo.h>
 #include <sam/uioctl.h>
 #include <unistd.h>
@@ -130,6 +131,7 @@
 #include <sam/fs/dirent.h>
 #include <sam/fs/ino.h>
 #include <sam/fs/bswap.h>
+#include <sam/fs/sblk.h>
 #include <limits.h>
 #include <libgen.h>
 #include <stdlib.h>
@@ -144,7 +146,6 @@
 #include "aml/proto.h"
 #include "sam_ls.h"
 #include "csd_defs.h"
-
 
 /*	Local definitions */
 
@@ -189,6 +190,9 @@ boolean unarchived_data;	/* Dump unarchived data */
 boolean use_file_list;		/* Dump using file list */
 boolean list_by_inode;		/* list inode range only */
 int csd_version = 0;		/* solaris csd format */
+int csd_hdr_inited = 0;		/* Dumpfile csd header inited */
+uint32_t dump_fs_magic = 0;	/* FS magic of dump source FS */
+char *dump_file = (char *)NULL; /* Dump path/file name */
 int Directio = 0;		/* use direct io when reading */
 				/* or writing samfs data */
 int lower_inode;
@@ -232,13 +236,13 @@ void csd_dump_files(FILE *DL, char *filename);
 static void usage();
 static void print_stats();
 static char *get_path(int argc, char **argv);
+void init_csd_header(uint32_t fsmagic);
 
 /* Main entry point */
 
 int
 main(int argc, char *argv[])
 {
-	char *dump_file = (char *)NULL;	/* Dump path/file name */
 	char *load_file = (char *)NULL;	/* DB load path/file name */
 	char *optstring;		/* Command option string */
 	char *logfile = NULL;	/* Log file name for samfsrestore -g option */
@@ -616,29 +620,6 @@ main(int argc, char *argv[])
 			}
 		}
 
-		csd_header.csd_header.time = time(0l);
-
-		if (verbose) {
-			fprintf(stderr, catgets(catfd, SET, 972,
-			    "Dump created:%s"),
-			    ctime((const time_t *)&csd_header.csd_header.time));
-		}
-
-		if (noheaders || scan_only) {
-			break;
-		}
-
-		csd_header.csd_header.magic = csd_header.csd_header_magic =
-		    CSD_MAGIC;
-
-		csd_header.csd_header.version = CSD_VERS_6;
-		csd_version = csd_header.csd_header.version;
-		if (csd_write_csdheader(CSD_fd, &csd_header) < 0) {
-			error(1, errno,
-			    catgets(catfd, SET, 245,
-			    "%s: Header record write error"),
-			    dump_file);
-		}
 		break;
 
 	case RESTORE:
@@ -695,6 +676,7 @@ main(int argc, char *argv[])
 			if (swapped) {
 				sam_bswap4(&csd_header.csd_header_flags, 1);
 				sam_bswap4(&csd_header.csd_header_magic, 1);
+				sam_bswap8(&csd_header.csd_fs_magic, 1);
 			}
 			if ((read_size != io_sz) ||
 			    csd_header.csd_header_magic != CSD_MAGIC) {
@@ -979,6 +961,51 @@ print_stats()
 	    csd_statistics.errors_dir);
 	fprintf(stderr, "    File data bytes:\t%lld\n",
 	    csd_statistics.data_dumped);
+}
+
+/*
+ * Initialize the csd_header record for the dump file.  This header is
+ * initialized the very first time a valid path is to be dumped into the
+ * dump file.
+ */
+void
+init_csd_header(uint32_t fsmagic)
+{
+
+	csd_header.csd_header.time = time(0l);
+	if (verbose) {
+		fprintf(stderr, catgets(catfd, SET, 972, "Dump created:%s"),
+		    ctime((const time_t *)&csd_header.csd_header.time));
+	}
+
+
+	csd_header.csd_header.magic = csd_header.csd_header_magic = CSD_MAGIC;
+
+	if (fsmagic == SAM_MAGIC_V1) {
+		csd_header.csd_header.version = csd_version = CSD_VERS_5;
+		csd_header.csd_fs_magic = SAM_MAGIC_V1;
+	}
+	if (fsmagic == SAM_MAGIC_V2) {
+		csd_header.csd_header.version = csd_version = CSD_VERS_5;
+		csd_header.csd_fs_magic = SAM_MAGIC_V2;
+	}
+	if (fsmagic == SAM_MAGIC_V2A) {
+		csd_header.csd_header.version = csd_version = CSD_VERS_6;
+		csd_header.csd_fs_magic = SAM_MAGIC_V2A;
+	}
+
+	dump_fs_magic = fsmagic;
+	csd_hdr_inited = 1;
+
+	if (noheaders || scan_only) {
+		return; /* Do everything but write header out .. */
+	}
+
+	if (csd_write_csdheader(CSD_fd, &csd_header) < 0) {
+		error(1, errno, catgets(catfd, SET, 245,
+		    "%s: Header record write error"), dump_file);
+	}
+
 }
 
 /*

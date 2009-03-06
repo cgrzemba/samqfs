@@ -33,7 +33,7 @@
  */
 
 
-#pragma ident "$Revision: 1.14 $"
+#pragma ident "$Revision: 1.15 $"
 
 
 #include <stdio.h>
@@ -59,6 +59,10 @@
 #include "sam/nl_samfs.h"
 #include <sys/types.h>
 #include <sys/acl.h>
+
+extern int csd_hdr_inited;
+extern uint32_t dump_fs_magic;
+extern void init_csd_header(uint32_t fsmagic);
 
 extern	void WriteHeader(char *name, struct sam_stat *st, char type);
 
@@ -217,6 +221,28 @@ dump_directory_entry(
 		    name, id.ino, id.gen,
 		    perm_inode.di.id.ino, perm_inode.di.id.gen);
 		return;
+	}
+
+	/*
+	 * If the dump header has not been initialized, initialize it.  If
+	 * the dumper header has been initialized, ensure that we only allow
+	 * 1 FS Magic type in the same dump.
+	 */
+	if (csd_hdr_inited) {
+		if (idstat.magic != dump_fs_magic) {
+			BUMP_STAT(file_warnings);
+			error(1, 0,
+			    catgets(catfd, SET, 274,
+			    "%s: idstat() fs version mismatch: expected: %s "
+			    "got %s, "
+			    "dump terminated"), name,
+			    dump_fs_magic == SAM_MAGIC_V1 ? "1" :
+			    (dump_fs_magic == SAM_MAGIC_V2) ? "2" : "2A",
+			    idstat.magic == SAM_MAGIC_V1 ? "1" :
+			    (idstat.magic == SAM_MAGIC_V2) ? "2" : "2A");
+		}
+	} else {
+		init_csd_header(idstat.magic);
 	}
 
 	/* Process the file using the returned stat information.	*/

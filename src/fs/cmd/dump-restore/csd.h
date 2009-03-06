@@ -34,7 +34,7 @@
 #ifndef	SAM_CSD_H
 #define	SAM_CSD_H
 
-#pragma ident "$Revision: 1.10 $"
+#pragma ident "$Revision: 1.11 $"
 
 #include "aml/tar.h"
 
@@ -66,10 +66,11 @@ typedef struct csd_header csd_hdr_t;
 
 typedef struct csd_header_extended {
 	csd_header_t	csd_header;
-	int32_t			csd_header_flags;
-	longlong_t		csd_header_pad[10];
-	int				csd_header_magic;
-	char			pad[4];
+	int32_t		csd_header_flags;	/* Not used */
+	longlong_t	csd_fs_magic;		/* FS Magic */
+	longlong_t	csd_header_pad[9];
+	int		csd_header_magic;
+	char		pad[4];
 } csd_header_extended_t;
 
 typedef	struct	csd_header_extended	csd_hdrx_t;
