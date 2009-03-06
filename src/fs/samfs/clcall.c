@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.267 $"
+#pragma ident "$Revision: 1.268 $"
 #endif
 
 #include "sam/osversion.h"
@@ -3010,11 +3010,23 @@ sam_send_to_server(
 			ASSERT(command & 0xff);
 
 			/*
-			 * A message timed out. Determine if the server
-			 * is not responding, or the messages just takes a
-			 * long time.
+			 * A message timed out. If we're on server and lease
+			 * command was not processed, the failover occured,
+			 * return EAGAIN to reissue a lease command.
+			 * If client, determine if the server is not
+			 * responding, or the messages just takes a long time.
 			 */
-			if (!SAM_IS_SHARED_SERVER(mp)) {
+			if (SAM_IS_SHARED_SERVER(mp)) {
+				if ((error == ETIME) &&
+				    (command == SAM_CMD_LEASE)) {
+					if (clp) {
+						sam_finish_message(mp, ip,
+						    &clp,
+						    (sam_san_message_t *)msg);
+					}
+					return (EAGAIN);
+				}
+			} else {
 				int64_t down_time = lbolt - mp->ms.m_srvr_time;
 
 				if (down_time >
