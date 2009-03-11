@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.213 $"
+#pragma ident "$Revision: 1.214 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1767,10 +1767,12 @@ sam_get_fspart(
 		 */
 		error = 0;
 		/*
-		 * If shared client, update the partition table once every
-		 * UPDATE_INTERVAL, from the super block on the server.
+		 * If shared client and fs not FROZEN, update the
+		 * partition table once every FSPART_INTERVAL from the
+		 * super block on the server.
 		 */
-		if (SAM_IS_SHARED_CLIENT(mp)) {
+		if (SAM_IS_SHARED_CLIENT(mp) &&
+		    ((mp->mt.fi_status & FS_FROZEN) == 0)) {
 			struct sam_sblk *sblk;
 			int count = 0;
 
