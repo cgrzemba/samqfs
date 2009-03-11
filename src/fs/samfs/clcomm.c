@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.118 $"
+#pragma ident "$Revision: 1.119 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1007,11 +1007,6 @@ sam_write_to_server(sam_mount_t *mp, sam_san_message_t *msg)
 	return (error);
 }
 
-/*
- * The kstrputmsg socket function must be used because the VOP_WRITE()
- * function sends a SIGPIPE to the user when an EPIPE error occurs.
- */
-#define	SAM_KSTRPUTMSG		1
 
 #ifdef sun
 /*
@@ -1019,9 +1014,7 @@ sam_write_to_server(sam_mount_t *mp, sam_san_message_t *msg)
  *
  */
 
-#if SAM_KSTRPUTMSG
 /* ARGSUSED3 */
-#endif
 int					/* ERRNO if error, 0 if successful. */
 sam_put_sock_msg(
 	sam_mount_t *mp,
@@ -1029,13 +1022,7 @@ sam_put_sock_msg(
 	sam_san_message_t *msg,
 	kmutex_t *wrmutex)
 {
-#if SAM_KSTRPUTMSG
 	mblk_t *mbp;
-#else /* SAM_KSTRPUTMSG */
-	struct iovec iov;
-	struct uio uio;
-	int cnt;
-#endif /* SAM_KSTRPUTMSG */
 	struct sonode *so;
 	int size;
 	int error;
@@ -1096,7 +1083,6 @@ sam_put_sock_msg(
 	ASSERT(hlength <= sizeof (sam_san_max_message_t));
 	size = SAM_HDR_LENGTH + STRUCT_RND64(hlength);
 
-#if SAM_KSTRPUTMSG
 	while ((mbp = allocb(size, BPRI_LO)) == NULL) {
 		if (error = strwaitbuf((size_t)size, BPRI_LO)) {
 			goto out;
@@ -1123,41 +1109,12 @@ sam_put_sock_msg(
 	} else {
 		flags = FWRITE|FREAD;
 	}
-	error = kstrputmsg(vp, mbp, NULL, 0, 0, MSG_BAND | MSG_HOLDSIG, flags);
-
-#else /* SAM_KSTRPUTMSG */
-	iov.iov_len = size;
-	iov.iov_base = (caddr_t)msg;
-
-	uio.uio_iov = &iov;
-	uio.uio_loffset = 0;
-	uio.uio_iovcnt = 1;
-	uio.uio_resid = size;
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_fmode = FWRITE;
-	uio.uio_llimit = size;
 
 	/*
-	 * Send a packet over the socket. Hold the wrmutex to make
-	 * sure message is not interleaved with other socket data.
+	 * The kstrputmsg socket function must be used because the VOP_WRITE()
+	 * function sends a SIGPIPE to the user when an EPIPE error occurs.
 	 */
-	mutex_enter(wrmutex);
-	while (size > 0) {
-		if ((error = VOP_WRITE_OS(vp, &uio, 0, CRED(), NULL))) {
-			cmn_err(CE_WARN,
-			    "SAM-QFS: %s: sock_write error=%d, "
-			    "size=%d, resid=%lld",
-			    mp->mt.fi_name, error, size,
-			    (long long)uio.uio_resid);
-			mutex_exit(wrmutex);
-			goto out;
-		}
-		cnt = size - uio.uio_resid;
-		size -= cnt;
-	}
-	mutex_exit(wrmutex);
-
-#endif /* SAM_KSTRPUTMSG */
+	error = kstrputmsg(vp, mbp, NULL, 0, 0, MSG_BAND | MSG_HOLDSIG, flags);
 
 out:
 	{

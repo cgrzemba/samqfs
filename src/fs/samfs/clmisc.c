@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.269 $"
+#pragma ident "$Revision: 1.270 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1065,12 +1065,10 @@ sam_client_frlock_ino(
 	 * starting at $3FFF and working down, so we are unlikely to conflict.
 	 *
 	 * Remote locks are owned by processes on an NFS client of this machine.
-	 * For these locks, we must pass the system ID and PID through.
-	 * However,
+	 * For these locks, we must pass the system ID and PID through. However,
 	 * since the NFS server on this machine assigns system IDs without any
 	 * knowledge of NFS servers on other shared clients, it may assign
-	 * system
-	 * ID numbers which conflict with those servers.
+	 * system ID numbers which conflict with those servers.
 	 *
 	 * Ideally, we would solve this conflict by adding a third field or by
 	 * extending the system ID field.  Unfortunately we can't do this; it's
@@ -1082,16 +1080,14 @@ sam_client_frlock_ino(
 	 * by NFS in its assignments.
 	 *
 	 * The best solution would be for the server to keep a map from
-	 * <client-ordinal,client-sysid> pairs into <server-sysid> values.
-	 * We don't do this, for now at least, because of the complexity.
-	 * For now, we just take 7 of the bits and XOR our ordinal,
-	 * bit-reversed,
+	 * <client-ordinal,client-sysid> pairs into <server-sysid> values.  We
+	 * don't do this, for now at least, because of the complexity.  For now,
+	 * we just take 7 of the bits and XOR our ordinal, bit-reversed,
 	 * into them.  This does allow false matches, but only if there are more
 	 * than 128 NFS clients on a particular QFS client, and there are enough
 	 * QFS clients that their ordinal bits overlap with the NFS bits.
 	 *
-	 * Finally, if we're running in a SunCluster configuration, we don't
-	 * want
+	 * Finally, if running in a SunCluster configuration, we don't want
 	 * to use our client ordinal at all, because we want NFS locks to be
 	 * associated only with their owner (and we assume that the NFS system
 	 * IDs are either maintained coherently by scalable NFS or preserved via

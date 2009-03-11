@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.268 $"
+#pragma ident "$Revision: 1.269 $"
 #endif
 
 #include "sam/osversion.h"
@@ -1386,7 +1386,6 @@ sam_proc_relinquish_lease(
 }
 
 
-
 /*
  * ----- sam_issue_lease_request - issue the lease request.
  * For server, issue directly. Client issues over the wire.
@@ -1403,6 +1402,7 @@ sam_issue_lease_request(sam_node_t *ip, sam_san_lease_msg_t *msg,
 	ushort_t op;
 	enum LEASE_type ltype;
 	boolean_t is_truncate;	/* Is this a truncate lease-get request? */
+	boolean_t is_frlock_eagain;	/* Is this a frlock lease-get EAGAIN? */
 	int wait_time;
 	int error = 0;
 	int r;
@@ -1554,7 +1554,21 @@ reissue2:
 			error = sam_send_to_server(ip->mp, ip,
 			    (sam_san_message_t *)msg);
 			if (error) {
-				if (error == EAGAIN) {
+				/*
+				 * Determine whether EAGAIN came from
+				 * sam_process_frlock_request().
+				 */
+				is_frlock_eagain = ((op == LEASE_get) &&
+				    (ltype == LTYPE_frlock) &&
+				    (l2p->inp.data.cmd != 0) &&
+				    (l2p->inp.data.cmd != F_SETLKW) &&
+				    !(l2p->granted_mask & (1 << LTYPE_frlock)));
+				/*
+				 * Do not reissue EAGAIN for frlock since this
+				 * is used to notify the user that it cannot
+				 * acquire the frlock.
+				 */
+				if ((error == EAGAIN) && !is_frlock_eagain) {
 					if (!is_truncate) {
 						RW_LOCK_OS(&ip->inode_rwl,
 						    rw_type);
@@ -1683,12 +1697,27 @@ reissue2:
 			sam_finish_message(mp, ip,
 			    &wait_clp, (sam_san_message_t *)&wait_msg);
 		}
-		if (error != ETIME && error != EAGAIN) {
-			if (on_server && is_truncate) {
-				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
-			}
-			break;
+		/*
+		 * Determine whether EAGAIN came from
+		 * sam_process_frlock_request().
+		 */
+		is_frlock_eagain = ((op == LEASE_get) &&
+		    (ltype == LTYPE_frlock) &&
+		    (l2p->inp.data.cmd != 0) &&
+		    (l2p->inp.data.cmd != F_SETLKW) &&
+		    !(l2p->granted_mask & (1 << LTYPE_frlock)));
+		/*
+		 * Do not reissue EAGAIN for frlock since this is used to
+		 * notify the user that it cannot acquire the frlock.
+		 */
+		if (error == ETIME ||
+		    ((error == EAGAIN) && !is_frlock_eagain)) {
+			goto reissue3;
 		}
+		if (on_server && is_truncate) {
+			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+		}
+		break;
 		/*
 		 * Reissue lease messages.
 		 */
@@ -1700,7 +1729,7 @@ reissue3:
 		if (on_server || (!is_truncate)) {
 			RW_LOCK_OS(&ip->inode_rwl, rw_type);
 		}
-	}
+	} /* for loop end */
 
 	if (wait_clp) {
 		mutex_enter(&mp->ms.m_cl_mutex);
