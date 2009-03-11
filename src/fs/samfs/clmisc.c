@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.268 $"
+#pragma ident "$Revision: 1.269 $"
 #endif
 
 #include "sam/osversion.h"
@@ -524,7 +524,7 @@ sam_client_lookup_name(
 	vnode_t *vp;
 	sam_name_lookup_t args;
 
-	if ((flags & LOOKUP_XATTR|CREATE_XATTR_DIR) == 0) {
+	if ((flags & (LOOKUP_XATTR|CREATE_XATTR_DIR)) == 0) {
 		/* Parent must be a directory */
 		if (S_ISDIR(pip->di.mode) == 0) {
 			return (ENOTDIR);
