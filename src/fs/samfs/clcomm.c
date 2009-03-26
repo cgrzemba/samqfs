@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.119 $"
+#pragma ident "$Revision: 1.120 $"
 #endif
 
 #include "sam/osversion.h"
@@ -109,9 +109,11 @@
 #include "mount.h"
 #include "global.h"
 #ifdef sun
+#include "macros_solaris.h"
 #include "extern.h"
 #endif /* sun */
 #ifdef linux
+#include "macros_linux.h"
 #include "clextern.h"
 #endif /* linux */
 #include "debug.h"
@@ -1098,7 +1100,7 @@ sam_put_sock_msg(
 	/*
 	 * Send data honoring flow control and errors.
 	 */
-	if (SAM_IS_SHARED_SERVER(mp)) {
+	if (SAM_IS_SHARED_SERVER(mp) && IS_SHAREFS_THREAD_OS) {
 		/*
 		 * If this is the server sending to a client
 		 * make it non-blocking. Prevents a broken client
