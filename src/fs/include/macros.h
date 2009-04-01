@@ -39,7 +39,7 @@
 #define	_SAM_MACROS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 #endif
 
 #include "sam/osversion.h"
@@ -341,5 +341,18 @@
 	mutex_exit(&((mp)->mi.m_block.put_mutex));	\
 }
 
+/*
+ * Decrement the leaseused for mmap files.
+ */
+
+#define	SAM_DECREMENT_LEASEUSED(ip, t) {				\
+	mutex_enter(&ip->ilease_mutex);					\
+	ip->cl_leaseused[t]--;						\
+	if ((ip->cl_leaseused[t] == 0) &&				\
+	    (ip->cl_leasetime[t] <= lbolt)) {				\
+		sam_sched_expire_client_leases(ip->mp, 0, FALSE);	\
+	}								\
+	mutex_exit(&ip->ilease_mutex);					\
+}
 
 #endif /* _SAM_MACROS_H */

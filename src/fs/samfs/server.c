@@ -42,7 +42,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.308 $"
+#pragma ident "$Revision: 1.309 $"
 
 #include "sam/osversion.h"
 
@@ -731,11 +731,18 @@ sam_get_lease_request(sam_mount_t *mp, sam_san_message_t *msg)
 	sam_san_lease2_t *l2p = &msg->call.lease2;
 	sam_node_t *ip;
 	int error = 0;
+	uint32_t lease_mask;
 
 	if ((error = sam_get_ino(mp->mi.m_vfsp,
 	    IG_EXISTS, &lp->id, &ip)) == 0) {
+		if ((msg->hdr.operation == LEASE_remove) ||
+		    (msg->hdr.operation == LEASE_relinquish)) {
+			lease_mask = lp->data.ltype;
+		} else {
+			lease_mask = 1 << lp->data.ltype;
+		}
 		TRACE(T_SAM_SR_LEASE, SAM_ITOV(ip), msg->hdr.client_ord,
-		    lp->data.ltype, ip->di.rm.size);
+		    lease_mask, ip->di.rm.size);
 
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		sam_update_cl_attr(ip, msg->hdr.client_ord, &lp->cl_attr);

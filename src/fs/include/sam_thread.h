@@ -39,7 +39,7 @@
 #define	_SAM_FS_THREAD_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.37 $"
+#pragma ident "$Revision: 1.38 $"
 #endif
 
 
@@ -182,6 +182,8 @@ void sam_taskq_init(void);
 void sam_taskq_destroy(void);
 void sam_taskq_start_mp(struct sam_mount *mp);
 void sam_taskq_stop_mp(struct sam_mount *mp);
+int sam_taskq_add_ret(sam_task_func_t func, struct sam_mount *mp, void *arg,
+	clock_t ticks);
 void sam_taskq_add(sam_task_func_t func, struct sam_mount *mp, void *arg,
 	clock_t ticks);
 void sam_taskq_remove(sam_schedule_entry_t *entry);

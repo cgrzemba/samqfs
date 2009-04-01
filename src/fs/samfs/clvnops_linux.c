@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.106 $"
+#pragma ident "$Revision: 1.107 $"
 #endif
 
 #include "sam/osversion.h"
@@ -703,15 +703,7 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 	page = filemap_nopage(area, address, arg3);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 
-	mutex_enter(&ip->ilease_mutex);
-	ip->cl_leaseused[ltype]--;
-	if ((ip->cl_leaseused[ltype] == 0) &&
-	    (ip->cl_leasetime[ltype] <= lbolt)) {
-		sam_taskq_add(sam_expire_client_leases, ip->mp,
-		    NULL, 1);
-	}
-	mutex_exit(&ip->ilease_mutex);
-
+	SAM_DECREMENT_LEASEUSED(ip, ltype);
 	return (page);
 }
 
@@ -983,14 +975,7 @@ reenter:
 		}
 		break;
 	}
-	mutex_enter(&ip->ilease_mutex);
-	ip->cl_leaseused[ltype]--;
-	if ((ip->cl_leaseused[ltype] == 0) &&
-	    (ip->cl_leasetime[ltype] <= lbolt)) {
-		sam_taskq_add(sam_expire_client_leases, ip->mp,
-		    NULL, 1);
-	}
-	mutex_exit(&ip->ilease_mutex);
+	SAM_DECREMENT_LEASEUSED(ip, ltype);
 
 	if (error == 0) {
 		ip->mm_pages += pages;

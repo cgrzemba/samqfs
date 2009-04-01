@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.140 $"
+#pragma ident "$Revision: 1.141 $"
 #endif
 
 #include "sam/osversion.h"
@@ -569,17 +569,19 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 			/*
 			 * Flush and invalidate pages associated with this free
 			 * inode.  Truncate shared client file system directory
-			 * pages; may be stale.
+			 * pages & stale inode pages because they may be stale.
 			 */
 			flags = B_INVAL;
-			if (SAM_IS_SHARED_CLIENT(ip->mp) &&
-			    S_ISDIR(ip->di.mode)) {
+			if ((SAM_IS_SHARED_CLIENT(ip->mp) &&
+			    S_ISDIR(ip->di.mode)) ||
+			    (ip->flags.bits & SAM_STALE)) {
 				flags = B_INVAL|B_TRUNC;
 			}
 			if ((error = sam_flush_pages(ip, flags))) {
 				if ((error = sam_flush_pages(ip, flags))) {
 					cmn_err(CE_WARN,
-"SAM-QFS cannot flush pages err=%d: ip=%p, %d:%d.%d, count %d, pages=%p",
+"SAM-QFS: %s: cannot flush pages err=%d: ip=%p, %d:%d.%d, count %d, pages=%p",
+					    ip->mp->mt.fi_name,
 					    error, (void *)ip,
 					    ip->mp->mi.m_fs[0].part.pt_eq,
 					    ip->di.id.ino, ip->di.id.gen,
@@ -589,9 +591,13 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 			}
 			/*
 			 * sam_flush_pages drops inode_rwl which can allow
-			 * additional inode updates.
+			 * additional inode updates. Sync inode if not stale
+			 * and not client directory inode.
 			 */
-			(void) sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
+			if (flags == B_INVAL) {
+				(void) sam_update_inode(ip, SAM_SYNC_ONE,
+				    FALSE);
+			}
 		}
 		if (SAM_IS_SHARED_CLIENT(ip->mp) &&
 		    !(ip->mp->mt.fi_status & (FS_FREEZING | FS_FROZEN))) {

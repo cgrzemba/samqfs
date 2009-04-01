@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.73 $"
+#pragma ident "$Revision: 1.74 $"
 #endif
 
 #include "sam/osversion.h"
@@ -603,7 +603,7 @@ sam_taskq_stop_mp(sam_mount_t *mp)
 
 
 /*
- * ----- sam_taskq_add
+ * ----- sam_taskq_add_ret
  * Add a task to the schedule, if it isn't already there.  If it's
  * scheduled to run immediately, start it; otherwise, set a timer.
  *
@@ -623,8 +623,8 @@ sam_taskq_stop_mp(sam_mount_t *mp)
  * in time.)
  */
 
-void
-sam_taskq_add(
+int				/* Error adding task to taskq */
+sam_taskq_add_ret(
 	sam_task_func_t func,	/* Function to call */
 	sam_mount_t *mp,	/* Mount point to associate task with */
 	void *arg,		/* Argument for task */
@@ -654,7 +654,7 @@ sam_taskq_add(
 	if ((samgt.schedule_flags & SAM_SCHEDULE_EXIT) ||
 	    ((mp != NULL) && (mp->mi.m_schedule_flags & SAM_SCHEDULE_EXIT))) {
 		mutex_exit(&samgt.schedule_mutex);
-		return;
+		return (ECANCELED);
 	}
 
 	/*
@@ -673,7 +673,7 @@ sam_taskq_add(
 			if (entry->start <= start) {
 				mutex_exit(&samgt.schedule_mutex);
 				SAM_COUNT64(thread, taskq_add_dup);
-				return;
+				return (ECANCELED);
 			}
 		}
 		entry = entry->queue.forw;
@@ -726,8 +726,25 @@ sam_taskq_add(
 	if (mp != NULL) {
 		mp->mi.m_schedule_count++;
 	}
-
 	mutex_exit(&samgt.schedule_mutex);
+	return (0);
+}
+
+
+/*
+ * ----- sam_taskq_add
+ * Call sam_taskq_add_ret to Add a task to the schedule. Ignore error if
+ * task cannot be cancelled.
+ */
+
+void
+sam_taskq_add(
+	sam_task_func_t func,	/* Function to call */
+	sam_mount_t *mp,	/* Mount point to associate task with */
+	void *arg,		/* Argument for task */
+	clock_t ticks)		/* Num ticks to wait before initiating task */
+{
+	(void) sam_taskq_add_ret(func, mp, arg, ticks);
 }
 
 

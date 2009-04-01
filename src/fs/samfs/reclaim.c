@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.133 $"
+#pragma ident "$Revision: 1.134 $"
 
 #include "sam/osversion.h"
 
@@ -842,10 +842,10 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 
 	mutex_enter(&samgt.schedule_mutex);
 	mp->mi.m_schedule_flags &= ~SAM_SCHEDULE_TASK_SERVER_RECLAIM_RUNNING;
-	mp->mi.m_sr_leasecnt--;
-	if ((mp->mi.m_sr_leasecnt == 0) && (new_wait_time != LONG_MAX)) {
+	mp->mi.m_sr_leasesch = 0;
+	if (new_wait_time != LONG_MAX) {
 		rerun = TRUE;
-		mp->mi.m_sr_leasecnt++;
+		mp->mi.m_sr_leasesch = 1;
 		ticks = new_wait_time - lbolt;
 		if (ticks < SAM_EXPIRE_MIN_TICKS) {
 			ticks = SAM_EXPIRE_MIN_TICKS;
@@ -858,7 +858,12 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 	mutex_exit(&samgt.schedule_mutex);
 
 	if (rerun) {
-		sam_taskq_add(sam_expire_server_leases, mp, NULL, ticks);
+		if (sam_taskq_add_ret(sam_expire_server_leases, mp,
+		    NULL, ticks)) {
+			mutex_enter(&samgt.schedule_mutex);
+			mp->mi.m_sr_leasesch = 0;
+			mutex_exit(&samgt.schedule_mutex);
+		}
 	}
 
 	SAM_CLOSE_OPERATION(mp, 0);
@@ -895,15 +900,20 @@ sam_sched_expire_server_leases(
 		ticks = SAM_EXPIRE_MAX_TICKS;
 	}
 	next = ticks + lbolt;
-	if (force || (mp->mi.m_sr_leasecnt == 0) ||
+	if (force || (mp->mi.m_sr_leasesch == 0) ||
 	    (next < (mp->mi.m_sr_leasenext - SAM_EXPIRE_MIN_TICKS))) {
 		mp->mi.m_sr_leasenext = next;
-		mp->mi.m_sr_leasecnt++;
+		mp->mi.m_sr_leasesch = 1;
 		run = TRUE;
 	}
 	mutex_exit(&samgt.schedule_mutex);
 	if (run) {
-		sam_taskq_add(sam_expire_server_leases, mp, NULL, ticks);
+		if (sam_taskq_add_ret(sam_expire_server_leases, mp,
+		    NULL, ticks)) {
+			mutex_enter(&samgt.schedule_mutex);
+			mp->mi.m_sr_leasesch = 0;
+			mutex_exit(&samgt.schedule_mutex);
+		}
 	}
 }
 

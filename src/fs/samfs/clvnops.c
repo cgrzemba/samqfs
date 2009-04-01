@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.202 $"
+#pragma ident "$Revision: 1.203 $"
 
 #include "sam/osversion.h"
 
@@ -379,16 +379,6 @@ const fs_operation_def_t samfs_client_vnode_staleops_template[] = {
 extern struct vnodeops *samfs_vnodeopsp;
 #endif
 
-#define	SAM_DECREMENT_LEASEUSED(ip, t) {				\
-	mutex_enter(&ip->ilease_mutex);					\
-	ip->cl_leaseused[t]--;						\
-	if ((ip->cl_leaseused[t] == 0) &&				\
-	    (ip->cl_leasetime[t] <= lbolt)) {				\
-		sam_taskq_add(sam_expire_client_leases, ip->mp,		\
-		    NULL, 1);						\
-	}								\
-	mutex_exit(&ip->ilease_mutex);					\
-}
 
 /*
  * ----- sam_client_open_vn - Open a SAM-QFS shared file.

@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.173 $"
+#pragma ident "$Revision: 1.174 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -1860,6 +1860,7 @@ decode_f(uint64_t value)
 		{ SAM_NORECLAIM, "NORECLAIM" },
 		{ SAM_DIRECTIO, "DIRECTIO" },
 		{ SAM_STAGE_ALL, "STAGE_ALL" },
+		{ SAM_DELMAPLIST, "DELMAPLIST" },
 		{ SAM_QWRITE, "QWRITE" },
 		{ SAM_NOWAITSPC, "NOWAITSPC" },
 		{ SAM_STAGE_P, "STAGE_P" },
@@ -1944,6 +1945,7 @@ decode_S(uint64_t value)
 		{ FS_MOUNTED, "MOUNTED" },
 		{ FS_MOUNTING, "MOUNTING" },
 		{ FS_UMOUNT_IN_PROGRESS, "UMOUNTING" },
+		{ FS_RECONFIG, "RECONFIG" },
 		{ FS_SERVER, "SERVER" },
 		{ FS_CLIENT, "CLIENT" },
 		{ FS_NODEVS, "NODEVS" },
@@ -1954,6 +1956,8 @@ decode_S(uint64_t value)
 		{ FS_LOCK_HARD, "LOCK_HARD" },
 		{ FS_SRVR_DOWN, "SRVR_DOWN" },
 		{ FS_SRVR_BYTEREV, "SRVR_BYTEREV" },
+		{ FS_LOGSTATE_KNOWN, "LOGSTATE_KNOWN" },
+		{ FS_OSDT_MOUNTED, "OSDT_MOUNTED" },
 		{ FS_SRVR_DONE, "SRVR_DONE" },
 		{ FS_CLNT_DONE, "CLNT_DONE" },
 		{ FS_FREEZING, "FREEZING" },
@@ -1964,7 +1968,6 @@ decode_S(uint64_t value)
 		{ FS_RELEASING, "RELEASING" },
 		{ FS_STAGING, "STAGING" },
 		{ FS_ARCHIVING, "ARCHIVING" },
-		{ FS_OSDT_MOUNTED, "OSDT_MOUNTED" },
 		{ 0, "" }
 	};
 
@@ -1983,6 +1986,7 @@ decode_l(uint64_t value)
 	case LTYPE_stage: return (" STAGE");
 	case LTYPE_open: return (" OPEN");
 	case LTYPE_mmap: return (" MMAP");
+	case LTYPE_exclusive: return (" EXCLUSIVE");
 	default: return (" ???");
 	}
 }
@@ -1999,6 +2003,7 @@ decode_L(uint64_t value)
 		{ 1 << LTYPE_stage, "STAGE" },
 		{ 1 << LTYPE_open, "OPEN" },
 		{ 1 << LTYPE_mmap, "MMAP" },
+		{ 1 << LTYPE_exclusive, "EXCLUSIVE" },
 		{ 0, "" }
 	};
 
@@ -2065,7 +2070,8 @@ decode_c(uint64_t value)
 			" NOTIFY_lease_expire" },
 		{ SAM_CMD_NOTIFY, NOTIFY_dnlc, " NOTIFY_dnlc" },
 		{ SAM_CMD_NOTIFY, NOTIFY_getino, " NOTIFY_getino" },
-		{ SAM_CMD_NOTIFY, NOTIFY_panic, " NOTIFY_panic" }
+		{ SAM_CMD_NOTIFY, NOTIFY_panic, " NOTIFY_panic" },
+		{ SAM_CMD_NOTIFY, NOTIFY_hostoff, " NOTIFY_hostoff" }
 	};
 
 	int i, c, s;
@@ -2095,6 +2101,7 @@ decode_a(uint64_t value)
 		{ SR_SET_SIZE, "SET_SIZE" },
 		{ SR_NOTIFY_FRLOCK, "NOTIFY_FRLOCK" },
 		{ SR_FORCE_SIZE, "FORCE_SIZE" },
+		{ SR_ABR_ON, "ABR_ON" },
 		{ 0, "" }
 	};
 
@@ -2237,6 +2244,7 @@ decode_q(uint64_t value)
 	case SAM_WRITE_BLOCK: return (" WRITE_BLOCK");
 	case SAM_WRITE_SPARSE: return (" WRITE_SPARSE");
 	case SAM_ALLOC_BLOCK: return (" ALLOC_BLOCK");
+	case SAM_ALLOC_BITMAP: return (" ALLOC_BITMAP");
 	case SAM_ALLOC_ZERO: return (" ALLOC_ZERO");
 	default: return (" ???");
 	}
@@ -2284,7 +2292,8 @@ decode_fi_config(uint64_t value)
 		{ MT_WORM_LITE, "MT_WORM_LITE" },
 		{ MT_WORM_EMUL, "MT_WORM_EMUL" },
 		{ MT_EMUL_LITE, "MT_EMUL_LITE" },
-		{ MT_CDEVID, "CDEVID" },
+		{ MT_CDEVID, "MT_CDEVID" },
+		{ MT_NOATIME, "MT_NOATIME" },
 		{ 0, "" }
 	};
 
@@ -2308,6 +2317,7 @@ decode_fi_config1(uint64_t value)
 		{ MC_STRIPE_GROUPS, "MC_STRIPE_GROUPS" },
 		{ MC_CLUSTER_MGMT, "MC_CLUSTER_MGMT" },
 		{ MC_CLUSTER_FASTSW, "MC_CLUSTER_FASTSW" },
+		{ MC_LOGGING, "MC_LOGGING" },
 		{ MC_OBJECT_FS, "MC_OBJECT_FS" },
 		{ MC_SAM_DB, "MC_SAM_DB" },
 		{ MC_NOXATTR, "MC_NOXATTR" },
@@ -3202,6 +3212,8 @@ print_mount(
 	printf("\t%08x block.busy\n", mount->mi.m_block.busy);
 	printf("\t%08x block.flag\n", mount->mi.m_block.flag);
 	printf("\t%08x block.state\n", mount->mi.m_block.state);
+	printf("\t%08x cl_leasesch\n", mount->mi.m_cl_leasesch);
+	printf("\t%08x sr_leasesch\n", mount->mi.m_sr_leasesch);
 
 	printf("\t%08x hostid\n", mount->ms.m_hostid);
 	printf("\t%08llx sblk failed\n", mount->ms.m_sblk_failed);

@@ -1,4 +1,4 @@
-." $Revision: 1.28 $
+." $Revision: 1.29 $
 .ds ]W Sun Microsystems 
 .\" SAM-QFS_notice_begin
 .\"
@@ -25,7 +25,7 @@
 .\" Use is subject to license terms.
 .\"
 .\" SAM-QFS_notice_end
-.TH samfsck 1M  "05 May 2004"
+.TH samfsck 1M  "09 March 2009"
 .SH NAME
 samfsck \- Checks and repairs a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system
 .SH SYNOPSIS
@@ -139,7 +139,7 @@ value has no effect on versions of SAM-FS prior to 3.5.0.
 .B \-S
 Convert the filesystem from a non-shared filesystem to
 a shared filesystem.
-This option is only available to filesystems with a version 2 superblock.
+This option is not available to filesystems with a version 1 superblock.
 The \fB-F\fR option must also be specified to convert a filesystem.
 This will cause \fBsamfsck\fR to update the on-disk structures
 to make the filesystem shared.
@@ -148,8 +148,7 @@ Note that \fBsamfsck\fR does not update the \fB/etc/vfstab\fR entry
 or the shared hosts file (see \fBsamsharefs\fR(1M)) for the filesystem,
 nor does it configure the \fBservices\fR file (see \fBservices\fR(4)) for
 shared SAM operations.
-These must be configured and updated after the filesystem is converted
-to mount the filesystem.
+These must be configured and updated before the filesystem is converted.
 .TP
 .B \-U
 Convert the filesystem from a shared filesystem to
@@ -159,8 +158,7 @@ The on-disk structures of the filesystem are updated to
 make the filesystem non-shared.
 Note that \fBsamfsck\fR does not update the \fB/etc/vfstab\fR entry
 (see \fBvfstab\fR(4)), or the \fBmcf\fR entry (see \fBmcf\fR(4)).
-These must be configured and updated after the filesystem is converted
-to mount the filesystem.
+These must be configured and updated before the filesystem is converted.
 .TP
 .B \-u " fs_version"
 Convert the filesystem to the given \fBfs_version\fR.  The only value

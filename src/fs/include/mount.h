@@ -41,7 +41,7 @@
 #define	_SAM_FS_MOUNT_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.163 $"
+#pragma ident "$Revision: 1.164 $"
 #endif
 
 #ifdef sun
@@ -349,8 +349,8 @@ typedef struct sam_mt_instance {
 	clock_t		m_vfs_iotstamp;	/* LQFS: Last I/O timestamp */
 	clock_t		m_cl_leasenext;	/* Next scheduled expire lease run */
 	clock_t		m_sr_leasenext;	/* Next scheduled expire lease run */
-	uint_t		m_cl_leasecnt;	/* Count of scheduled expire threads */
-	uint_t		m_sr_leasecnt;	/* Count of scheduled expire threads */
+	ushort_t	m_cl_leasesch;	/* Expire clnt lease thread scheduled */
+	ushort_t	m_sr_leasesch;	/* Expire srvr lease thread scheduled */
 #ifdef sun
 	sam_fb_pool_t m_fb_pool[SAM_MAX_DAU]; /* SM/LG free blk table */
 #endif /* sun */

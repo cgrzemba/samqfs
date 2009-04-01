@@ -1,4 +1,4 @@
-# $Revision: 1.141 $
+# $Revision: 1.142 $
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -428,7 +428,7 @@ T_SAM_CL_NAME		"ClName:   l=%x^[$L],flg=%x^[$f],err=%d^[$e]"
 T_SAM_CL_INODE		"ClInode:  l=%x^[$L],flg=%x^[$f],err=%d^[$e]"
 T_SAM_CL_SEQNO		"ClSeqno:  seq=%x,gen=%x,ord=%d"
 T_SAM_SR_SEQNO		"SrSeqno:  seq=%x,gen=%x,ord=%d"
-T_SAM_SR_LEASE		"SrLease:  ord=%d,typ=%x^[$l],size=%lld"
+T_SAM_SR_LEASE		"SrLease:  ord=%d,mask=%x^[$L],size=%lld"
 T_SAM_SR_LEASE_RET	"SrLease-  sz=%lld,act=%x^[$a],err=%d^[$e]"
 T_SAM_SR_NAME		"SrName:   ord=%d,op=%x,pino=%d"
 T_SAM_SR_LOOK_RET	"SrLook-   ino=%d,gen=%d,size=%lld"

@@ -34,7 +34,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.174 $"
+#pragma ident "$Revision: 1.175 $"
 
 #include "sam/osversion.h"
 
@@ -311,8 +311,6 @@ samfs_mount(
 	mp->mi.m_cl_lease_chain.node = NULL;
 	mp->mi.m_vfsp = vfsp;		/* Mounted */
 	vfsp->vfs_data = (caddr_t)mp;
-	mp->mi.m_cl_leasenext = mp->mi.m_cl_leasecnt = 0;
-	mp->mi.m_sr_leasenext = mp->mi.m_sr_leasecnt = 0;
 
 	/*
 	 * Read-Only if so desired

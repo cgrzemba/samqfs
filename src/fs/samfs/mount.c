@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.248 $"
+#pragma ident "$Revision: 1.249 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2166,9 +2166,15 @@ sam_unmount_fs(
 
 	/*
 	 * Stop any scheduled tasks.  (If failover, or if the unmount fails,
-	 * we'll re-enable them before returning.)
+	 * we'll re-enable them before returning).
+	 * Reset server & client schedule flags because these tasks
+	 * are killed in sam_taskq_stop_mp.
 	 */
 	sam_taskq_stop_mp(mp);
+	mutex_enter(&samgt.schedule_mutex);
+	mp->mi.m_cl_leasesch = 0;
+	mp->mi.m_sr_leasesch = 0;
+	mutex_exit(&samgt.schedule_mutex);
 
 	if ((error = sam_flush_ino(vfsp, flag, fflag)) != 0) {
 		TRACE(T_SAM_UMNT_RET, vfsp, 3, (sam_tr_t)mp, error);

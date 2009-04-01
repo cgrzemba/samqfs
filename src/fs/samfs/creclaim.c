@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.96 $"
+#pragma ident "$Revision: 1.97 $"
 #endif
 
 #include "sam/osversion.h"
@@ -704,10 +704,10 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 
 	mutex_enter(&samgt.schedule_mutex);
 	mp->mi.m_schedule_flags &= ~SAM_SCHEDULE_TASK_CLIENT_RECLAIM_RUNNING;
-	mp->mi.m_cl_leasecnt--;
-	if ((mp->mi.m_cl_leasecnt == 0) && (new_wait_time != LONG_MAX)) {
+	mp->mi.m_cl_leasesch = 0;
+	if (new_wait_time != LONG_MAX) {
 		rerun = TRUE;
-		mp->mi.m_cl_leasecnt++;
+		mp->mi.m_cl_leasesch = 1;
 		ticks = new_wait_time - lbolt;
 		if (ticks < SAM_EXPIRE_MIN_TICKS) {
 			ticks = SAM_EXPIRE_MIN_TICKS;
@@ -720,7 +720,12 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 	mutex_exit(&samgt.schedule_mutex);
 
 	if (rerun) {
-		sam_taskq_add(sam_expire_client_leases, mp, NULL, ticks);
+		if (sam_taskq_add_ret(sam_expire_client_leases, mp,
+		    NULL, ticks)) {
+			mutex_enter(&samgt.schedule_mutex);
+			mp->mi.m_cl_leasesch = 0;
+			mutex_exit(&samgt.schedule_mutex);
+		}
 	}
 
 	sam_taskq_uncount(mp);
@@ -789,15 +794,20 @@ sam_sched_expire_client_leases(
 		ticks = SAM_EXPIRE_MAX_TICKS;
 	}
 	next = ticks + lbolt;
-	if (force || (mp->mi.m_cl_leasecnt == 0) ||
+	if (force || (mp->mi.m_cl_leasesch == 0) ||
 	    (next < (mp->mi.m_cl_leasenext - SAM_EXPIRE_MIN_TICKS))) {
 		mp->mi.m_cl_leasenext = next;
-		mp->mi.m_cl_leasecnt++;
+		mp->mi.m_cl_leasesch = 1;
 		run = TRUE;
 	}
 	mutex_exit(&samgt.schedule_mutex);
 	if (run) {
-		sam_taskq_add(sam_expire_client_leases, mp, NULL, ticks);
+		if (sam_taskq_add_ret(sam_expire_client_leases, mp,
+		    NULL, ticks)) {
+			mutex_enter(&samgt.schedule_mutex);
+			mp->mi.m_cl_leasesch = 0;
+			mutex_exit(&samgt.schedule_mutex);
+		}
 	}
 }
 

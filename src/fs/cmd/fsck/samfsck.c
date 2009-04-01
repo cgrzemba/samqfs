@@ -56,7 +56,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.68 $"
+#pragma ident "$Revision: 1.69 $"
 
 
 /* ----- Includes */
@@ -1104,7 +1104,7 @@ check_fs(void)
 			break;
 
 		default:
-			bits = "none";
+			bits = NULL;
 		}
 		if (bits) {
 			error(0, 0, catgets(catfd, SET, 13910,
