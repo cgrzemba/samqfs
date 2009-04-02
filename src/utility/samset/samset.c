@@ -32,7 +32,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.32 $"
+#pragma ident "$Revision: 1.33 $"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -78,6 +78,7 @@ static void	alerts(int, char **);
 static void	debug(int, char **);
 static void	devlog(int, char **);
 static void	export_med(int, char **);
+static void	align_scsi_cmdbuf(int, char **);
 static int	get_val(int, char **, char *);
 static void	labels(int, char **);
 static void	idle_unload(int, char **);
@@ -134,6 +135,7 @@ static setsam_func_t functions[] =
 	"tapealert", tapealert,
 	"sef", sef,
 	"alerts", alerts,
+	"align_scsi_cmdbuf", align_scsi_cmdbuf,
 	NULL, NULL, 0
 };
 
@@ -611,6 +613,10 @@ sho_defaults(char *what)
 	    (tmp_dflt.flags & DF_ALERTS) ?
 	    catgets(catfd, SET, 31004, "enabled") :
 	    catgets(catfd, SET, 31005, "disabled"));
+	if (tmp_dflt.flags & DF_ALIGN_SCSI_CMDBUF) {
+		printf(catgets(catfd, SET, 101, "scsi_cmd %s\n"),
+		    catgets(catfd, SET, 12022, "align_scsi_cmdbuf"));
+	}
 
 	show_export_media();
 	printf(catgets(catfd, SET, 1489, "labels are %s"),
@@ -1272,4 +1278,34 @@ issue_fifo_cmd(
 		fprintf(stderr,
 		    catgets(catfd, SET, 1114, "Command FIFO write failed"));
 	}
+}
+
+static void
+align_scsi_cmdbuf(int argc, char **argv)
+{
+	if (argc == 0) {
+		if (defaults->flags & DF_ALIGN_SCSI_CMDBUF) {
+			printf(catgets(catfd, SET, 2459,
+			    "system is running in %s mode.\n"),
+			    catgets(catfd, SET, 12022, "align_scsi_cmdbuf"));
+		}
+	} else {
+		if (argc != 1) {
+			fprintf(stderr, catgets(catfd, SET, 13001,
+			    "Usage: %s %s\n"), pgm_name,
+			    "align_scsi_cmdbuf [yes|no]");
+			exit(1);
+		}
+		if (strcmp(*argv, "no") == 0)
+			defaults->flags &= ~DF_ALIGN_SCSI_CMDBUF;
+		else if (strcmp(*argv, "yes") == 0)
+			defaults->flags |= DF_ALIGN_SCSI_CMDBUF;
+		else {
+			fprintf(stderr, catgets(catfd, SET, 13001,
+			    "Usage: %s %s\n"), pgm_name,
+			    "align_scsi_cmdbuf [yes|no]");
+			exit(1);
+		}
+	}
+	exit(0);
 }

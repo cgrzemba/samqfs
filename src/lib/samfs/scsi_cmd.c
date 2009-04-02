@@ -36,7 +36,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.54 $"
+#pragma ident "$Revision: 1.55 $"
 
 static char *_SrcFile = __FILE__;
 
@@ -60,6 +60,7 @@ static char *_SrcFile = __FILE__;
 #include "aml/shm.h"
 #include "aml/sefvals.h"
 #include "aml/proto.h"
+#include "sam/defaults.h"
 #include "sam/nl_samfs.h"
 #include "sam/lint.h"
 #include "sam/types.h"
@@ -85,6 +86,12 @@ int pfg_set = 0;
 int pfg_command = SCMD_TEST_UNIT_READY, pfg_fails = 0, pfg_sense = 0,
 			pfg_asc = 0, pfg_ascq = 0;
 #endif
+
+
+int us_ioctl(int fd, dev_ent_t *un, struct uscsi_cmd *us);
+void us_ioctl_fatal(dev_ent_t *un, char *fn, int ln);
+void us_ioctl_memcmp(dev_ent_t *un, char *fn, int ln, char *ptr, char ch,
+    int len);
 
 /*
  * scsi_cmd() - returns: For commands xfering data: number of bytes xfer'd or
@@ -1037,7 +1044,14 @@ redo:
 	}
 #endif
 
-	if (tmp5 = ioctl(fd, USCSICMD, &us)) {
+	if ((GetDefaults())->flags & DF_ALIGN_SCSI_CMDBUF) {
+		tmp5 = us_ioctl(fd, un, &us);
+	} else {
+		tmp5 = ioctl(fd, USCSICMD, &us);
+	}
+
+	if (tmp5) {
+
 		/* Command failed, return the proper error */
 
 		int    hold_errno = errno;
@@ -1186,7 +1200,13 @@ scsi_reset(const int fd, dev_ent_t *un)
 	us.uscsi_rqlen = sizeof (sam_extended_sense_t);
 	us.uscsi_timeout = SAM_SCSI_DEFAULT_TIMEOUT;
 	us.uscsi_flags = USCSI_SILENT | USCSI_RQENABLE | USCSI_RESET;
-	return (ioctl(fd, USCSICMD, &us));
+
+	if ((GetDefaults())->flags & DF_ALIGN_SCSI_CMDBUF) {
+		return (us_ioctl(fd, un, &us));
+	} else {
+		return (ioctl(fd, USCSICMD, &us));
+	}
+
 }
 
 /* These are the default mappings for SCSI check condition errors */
@@ -2343,4 +2363,204 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 		}
 	}
 	return (0);
+}
+
+/* us_ioctl() - align uscsi command and buffers before calling system ioctl. */
+
+int
+us_ioctl(int fd, dev_ent_t *un, struct uscsi_cmd *us)
+{
+	int ioctl_rtn = -1;
+	int save_errno = errno;
+	struct uscsi_cmd *aaus = NULL;
+#define	PAD_LEN 32
+#define	PAD_US_CH  'u'
+#define	PAD_CDB_CH 'c'
+#define	PAD_BUF_CH 'b'
+#define	PAD_SNS_CH 's'
+	int state = 0;
+#define	STATE_DID_US  0x1
+#define	STATE_DID_CDB 0x2
+#define	STATE_DID_BUF 0x4
+#define	STATE_DID_SNS 0x8
+	char *ptr;
+
+	if (us == NULL) {
+		errno = EFAULT;
+		goto done;
+	}
+
+	if (us->uscsi_cdb)
+		DevLog(DL_DEBUG(0), "us_ioctl cmd %02x", us->uscsi_cdb[0]);
+	else
+		DevLog(DL_DEBUG(0), "us_ioctl cmd null");
+
+	aaus = (struct uscsi_cmd *)malloc_wait(sizeof (struct uscsi_cmd)
+	    + PAD_LEN, 2, 10);
+	if (aaus == NULL) {
+		goto done;
+	}
+	state |= STATE_DID_US;
+	ptr = (char *)aaus;
+	memset(&ptr[sizeof (struct uscsi_cmd)], PAD_US_CH, PAD_LEN);
+	memset(aaus, 0, sizeof (struct uscsi_cmd));
+
+	aaus->uscsi_timeout = us->uscsi_timeout;
+	aaus->uscsi_buflen = us->uscsi_buflen;
+	aaus->uscsi_cdblen = us->uscsi_cdblen;
+	aaus->uscsi_rqlen = us->uscsi_rqlen;
+	aaus->uscsi_flags = us->uscsi_flags;
+
+	aaus->uscsi_cdb = NULL;
+	aaus->uscsi_bufaddr = NULL;
+	aaus->uscsi_rqbuf = NULL;
+
+	if (us->uscsi_cdblen) {
+		if (us->uscsi_cdb == NULL) {
+			errno = EFAULT;
+			goto done;
+		}
+		aaus->uscsi_cdb = (caddr_t)malloc_wait(us->uscsi_cdblen +
+		    PAD_LEN, 2, 10);
+		if (aaus->uscsi_cdb == NULL) {
+			goto done;
+		}
+		state |= STATE_DID_CDB;
+		memcpy(aaus->uscsi_cdb, us->uscsi_cdb, us->uscsi_cdblen);
+		ptr = (char *)aaus->uscsi_cdb;
+		memset(&ptr[us->uscsi_cdblen], PAD_CDB_CH, PAD_LEN);
+	} else if (us->uscsi_cdb != NULL) {
+		errno = EFAULT;
+		goto done;
+	}
+
+	if (us->uscsi_buflen) {
+		if (us->uscsi_bufaddr == NULL) {
+			errno = EFAULT;
+			goto done;
+		}
+		aaus->uscsi_bufaddr = (caddr_t)malloc_wait(us->uscsi_buflen +
+		    PAD_LEN, 2, 10);
+		if (aaus->uscsi_bufaddr == NULL) {
+			goto done;
+		}
+		state |= STATE_DID_BUF;
+		memcpy(aaus->uscsi_bufaddr, us->uscsi_bufaddr,
+		    us->uscsi_buflen);
+		ptr = (char *)aaus->uscsi_bufaddr;
+		memset(&ptr[us->uscsi_buflen], PAD_BUF_CH, PAD_LEN);
+	} else if (us->uscsi_bufaddr != NULL) {
+		errno = EFAULT;
+		goto done;
+	}
+
+	if (us->uscsi_rqlen) {
+		if (us->uscsi_rqbuf == NULL) {
+			errno = EFAULT;
+			goto done;
+		}
+		aaus->uscsi_rqbuf = (caddr_t)malloc_wait(us->uscsi_rqlen +
+		    PAD_LEN, 2, 10);
+		if (aaus->uscsi_rqbuf == NULL) {
+			goto done;
+		}
+		state |= STATE_DID_SNS;
+		ptr = (char *)aaus->uscsi_rqbuf;
+		memset(&ptr[us->uscsi_rqlen], PAD_SNS_CH, PAD_LEN);
+		memset(aaus->uscsi_rqbuf, 0, us->uscsi_rqlen);
+	} else if (us->uscsi_rqbuf != NULL) {
+		errno = EFAULT;
+		goto done;
+	}
+
+	ioctl_rtn = ioctl(fd, USCSICMD, aaus);
+
+done:
+	/* copy results while checking for ioctl overrun */
+
+	if (aaus == NULL && (state & STATE_DID_US) == 0) {
+		goto finish;
+	} else if (aaus == NULL && (state & STATE_DID_US) == STATE_DID_US) {
+		us_ioctl_fatal(un, _SrcFile, __LINE__);
+	} else if (aaus != NULL && (state & STATE_DID_US) == 0) {
+		us_ioctl_fatal(un, _SrcFile, __LINE__);
+	}
+
+	save_errno = errno;
+	us->uscsi_status = aaus->uscsi_status;
+	us->uscsi_resid = aaus->uscsi_resid;
+	us->uscsi_rqstatus = aaus->uscsi_rqstatus;
+	us->uscsi_rqresid = aaus->uscsi_rqresid;
+
+	ptr = (char *)aaus;
+	us_ioctl_memcmp(un, _SrcFile, __LINE__,
+	    &ptr[sizeof (struct uscsi_cmd)], PAD_US_CH, PAD_LEN);
+
+	if (aaus->uscsi_cdb) {
+		if ((state & STATE_DID_CDB) == 0) {
+			us_ioctl_fatal(un, _SrcFile, __LINE__);
+		}
+		ptr = (char *)aaus->uscsi_cdb;
+		us_ioctl_memcmp(un, _SrcFile, __LINE__,
+		    &ptr[us->uscsi_cdblen], PAD_CDB_CH, PAD_LEN);
+		free(aaus->uscsi_cdb);
+	} else if (state & STATE_DID_CDB) {
+		us_ioctl_fatal(un, _SrcFile, __LINE__);
+	}
+
+	if (aaus->uscsi_bufaddr) {
+		if ((state & STATE_DID_BUF) == 0) {
+			us_ioctl_fatal(un, _SrcFile, __LINE__);
+		}
+		ptr = (char *)aaus->uscsi_bufaddr;
+		us_ioctl_memcmp(un, _SrcFile, __LINE__,
+		    &ptr[us->uscsi_buflen], PAD_BUF_CH, PAD_LEN);
+		memcpy(us->uscsi_bufaddr, aaus->uscsi_bufaddr,
+		    us->uscsi_buflen);
+		free(aaus->uscsi_bufaddr);
+	} else if (state & STATE_DID_BUF) {
+		us_ioctl_fatal(un, _SrcFile, __LINE__);
+	}
+
+	if (aaus->uscsi_rqbuf) {
+		if ((state & STATE_DID_SNS) == 0) {
+			us_ioctl_fatal(un, _SrcFile, __LINE__);
+		}
+		ptr = (char *)aaus->uscsi_rqbuf;
+		us_ioctl_memcmp(un, _SrcFile, __LINE__,
+		    &ptr[us->uscsi_rqlen], PAD_SNS_CH, PAD_LEN);
+		memcpy(us->uscsi_rqbuf, aaus->uscsi_rqbuf, us->uscsi_rqlen);
+		free(aaus->uscsi_rqbuf);
+	} else if (state & STATE_DID_SNS) {
+		us_ioctl_fatal(un, _SrcFile, __LINE__);
+	}
+
+	free(aaus);
+	errno = save_errno;
+
+finish:
+	return (ioctl_rtn);
+}
+
+/* --- us_ioctl_fatal - bailout of sam-fs because ioctl overrun detected. */
+void
+us_ioctl_fatal(dev_ent_t *un, char *fn, int ln)
+{
+	DevLog(DL_ALL(0), "Aborting, us_ioctl overrun at %s:%d", fn, ln);
+	sleep(1);
+	abort();
+}
+
+/* --- us_ioctl_fatal_mem - bailout of sam-fs because ioctl overrun detected. */
+void us_ioctl_memcmp(dev_ent_t *un, char *fn, int ln, char *ptr, char ch,
+    int len)
+{
+	char str[4];
+
+	if (len >= 4) {
+		memset(str, ch, 4);
+		if (memcmp(&ptr[len-4], str, 4)) {
+			us_ioctl_fatal(un, fn, ln);
+		}
+	}
 }

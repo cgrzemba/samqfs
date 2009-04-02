@@ -26,7 +26,7 @@ $ * Use is subject to license terms.
 $ *
 $ *    SAM-QFS_notice_end
 $ *
-$ pragma ident "$Revision: 1.630 $"
+$ pragma ident "$Revision: 1.631 $"
 
 $ *************************************************************************
 $ *		Modification guidelines
@@ -2241,6 +2241,7 @@ $ ===================================================================
 12019 %s: %s in command file at line %d.
 12020 %s: Cannot get sam-fsd lock
 12021 Configuring file system
+12022 align_scsi_cmdbuf
 
 
 $  lib-fs    (12500s)

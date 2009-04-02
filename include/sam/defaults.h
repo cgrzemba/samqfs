@@ -36,7 +36,7 @@
 #define	_SAM_DEFAULTS_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.60 $"
+#pragma ident "$Revision: 1.61 $"
 #endif
 
 #include "sam/types.h"
@@ -82,6 +82,7 @@ typedef struct sam_defaults {
 #define	DF_NEW_RECYCLER		0x00080 /* New recycler enabled - yes or no */
 #define	DF_LEGACY_ARCH_FORMAT	0x00100 /* Use the legacy archive format */
 #define	DF_PAX_ARCH_FORMAT	0x00200 /* use the new pax arch format */
+#define	DF_ALIGN_SCSI_CMDBUF	0x00400 /* align scsi command buffer */
 
 /* Device parameters. */
 struct DeviceParams {
