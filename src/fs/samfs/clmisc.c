@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.270 $"
+#pragma ident "$Revision: 1.271 $"
 #endif
 
 #include "sam/osversion.h"
@@ -978,23 +978,6 @@ sam_client_frlock_ino(
 	sam_lease_data_t data;
 	sam_share_flock_t flock;
 
-	/*
-	 * Flush and invalidate pages if releasing the lock,
-	 * cmd == 0 means release all locks. Flush pages
-	 * if setting the lock.
-	 * Note: This code was modified in 4.4 to prevent a
-	 * deadlock issue between the inode lock and the page
-	 * lock (flushing could cause a write to occur). The
-	 * flush with inval forces these pages to be written
-	 * prior to lock release.
-	 */
-	if ((cmd == F_SETLK) || (cmd == F_SETLKW) || (cmd == 0)) {
-		if ((cmd == 0) || (flp->l_type == F_UNLCK)) {
-			sam_flush_pages(ip, B_INVAL);
-		} else {
-			sam_flush_pages(ip, 0);
-		}
-	}
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
 	bzero(&flock, sizeof (flock));

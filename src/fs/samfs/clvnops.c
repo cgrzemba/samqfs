@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.203 $"
+#pragma ident "$Revision: 1.204 $"
 
 #include "sam/osversion.h"
 
@@ -2936,30 +2936,33 @@ reenter:
 				goto out;
 			}
 		}
-		if (ip->last_unmap) {
-			ASSERT(ip->pending_mmappers == 0);
-			ASSERT(ip->mm_pages == 0);
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-			delay(hz);
-			goto reenter;
-		}
-		ip->pending_mmappers++;
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
-	} else {
-		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
-		mutex_enter(&ip->fl_mutex);
-		if (ip->last_unmap) {
-			ASSERT(ip->pending_mmappers == 0);
-			ASSERT(ip->mm_pages == 0);
-			mutex_exit(&ip->fl_mutex);
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-			delay(hz);
-			goto reenter;
-		}
-		ip->pending_mmappers++;
+	}
+
+	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+	mutex_enter(&ip->fl_mutex);
+	if (ip->last_unmap) {
+		ASSERT(ip->pending_mmappers == 0);
+		ASSERT(ip->mm_pages == 0);
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		delay(hz);
+		goto reenter;
 	}
+
+	/*
+	 * Serialize mmappers.
+	 */
+	if (ip->pending_mmappers || ip->cl_closing) {
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		delay(hz);
+		goto reenter;
+	}
+
+	ip->pending_mmappers = (uint64_t)curthread;
+	mutex_exit(&ip->fl_mutex);
+	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 
 	/*
 	 * We set pending_mmappers as a bridge between the point where
@@ -3087,7 +3090,7 @@ reenter:
 		mutex_enter(&ip->fl_mutex);
 		ASSERT(ip->last_unmap == 0);
 		ASSERT(ip->pending_mmappers > 0);
-		ip->pending_mmappers--;
+		ip->pending_mmappers = 0;
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 
@@ -3104,7 +3107,7 @@ out_asunlock:
 		mutex_enter(&ip->fl_mutex);
 		ASSERT(ip->last_unmap == 0);
 		ASSERT(ip->pending_mmappers > 0);
-		ip->pending_mmappers--;
+		ip->pending_mmappers = 0;
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 	}
@@ -3443,9 +3446,19 @@ sam_mmap_rmlease(
 {
 	krw_t rw_type = RW_READER;
 	sam_node_t *ip = SAM_VTOI(vp);
+	unsigned long last_unmapper = 0;
 
+reenter:
 	RW_LOCK_OS(&ip->inode_rwl, rw_type);
 	mutex_enter(&ip->fl_mutex);
+	if ((ip->pending_mmappers) &&
+	    (ip->pending_mmappers != (uint64_t)curthread)) {
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
+		delay(hz);
+		goto reenter;
+	}
+
 	if (pages) {
 		ip->mm_pages -= pages;
 		if (is_write) {
@@ -3455,10 +3468,11 @@ sam_mmap_rmlease(
 	if ((ip->mm_pages == 0) && (ip->pending_mmappers == 0) &&
 	    (ip->last_unmap == 0)) {
 		ip->last_unmap = 1;
+		last_unmapper = 1;
 	}
 	mutex_exit(&ip->fl_mutex);
 
-	if (ip->last_unmap) {
+	if (last_unmapper) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */

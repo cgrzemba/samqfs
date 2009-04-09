@@ -38,7 +38,7 @@
 #define	_SAM_FS_INODE_H
 
 #if !defined(linux)
-#pragma ident "$Revision: 1.221 $"
+#pragma ident "$Revision: 1.222 $"
 #endif
 
 #ifdef linux
@@ -549,7 +549,7 @@ typedef struct sam_node {
 
 	int32_t		mm_pages;	/* Count of memory mapped pages */
 	int32_t		wmm_pages;	/* Cnt of mem mapped pages for write */
-	int32_t		pending_mmappers; /* Cnt of pending VOP_MAP callers */
+	uint64_t	pending_mmappers; /* Thread of pending mmappers */
 	sam_size_t	flush_len;	/* Flush write/stage length */
 
 	offset_t	space;		/* Space left, if write rdev optical */

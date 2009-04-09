@@ -37,7 +37,7 @@
 #define	_SAM_FS_SHARE_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.135 $"
+#pragma ident "$Revision: 1.136 $"
 #endif
 
 #ifdef sun
@@ -250,17 +250,17 @@ enum LEASE_operation {
 };
 
 enum LEASE_type {
-	LTYPE_read	= 0,
-	LTYPE_write	= 1,
-	LTYPE_append	= 2,
-	LTYPE_truncate	= 3,
-	LTYPE_frlock	= 4,
-	LTYPE_stage	= 5,
-	LTYPE_open	= 6,
-	LTYPE_mmap	= 7,
-	LTYPE_unused    = 8,
-	LTYPE_exclusive	= 9,
-	LTYPE_max_op	= 10
+	LTYPE_read	= 0,	/* 0x001 */
+	LTYPE_write	= 1,	/* 0x002 */
+	LTYPE_append	= 2,	/* 0x004 */
+	LTYPE_truncate	= 3,	/* 0x008 */
+	LTYPE_frlock	= 4,	/* 0x010 */
+	LTYPE_stage	= 5,	/* 0x020 */
+	LTYPE_open	= 6,	/* 0x040 */
+	LTYPE_mmap	= 7,	/* 0x080 */
+	LTYPE_unused    = 8,	/* 0x100 */
+	LTYPE_exclusive	= 9,	/* 0x200 */
+	LTYPE_max_op	= 10	/* 0x400 */
 };
 
 #define	SAM_MAX_LTYPE	LTYPE_max_op

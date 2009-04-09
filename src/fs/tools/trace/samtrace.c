@@ -83,7 +83,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.174 $"
+#pragma ident "$Revision: 1.175 $"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -236,9 +236,7 @@ static char *decode_p(uint64_t value);
 #endif
 static char *decode_P(uint64_t value);
 static char *decode_r(uint64_t value);
-#ifdef sun
 static char *decode_R(uint64_t value);
-#endif
 static char *decode_q(uint64_t value);
 static char *decode_z(uint64_t value);
 
@@ -1524,11 +1522,9 @@ do_decode_one(
 		case 'r':
 			sub = decode_r(value);
 			break;
-#ifdef sun
 		case 'R':
 			sub = decode_R(value);
 			break;
-#endif
 		case 'z':
 			sub = decode_z(value);
 			break;
@@ -2229,6 +2225,19 @@ decode_R(uint64_t value)
 	}
 }
 #endif
+
+#ifdef linux
+static char *
+decode_R(uint64_t value)
+{
+	switch (value) {
+	case 1: return (" READ");
+	case 2: return (" WRITE");
+	default: return (" ???");
+	}
+}
+#endif
+
 
 static char *
 decode_q(uint64_t value)

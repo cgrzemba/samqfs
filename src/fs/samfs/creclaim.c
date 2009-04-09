@@ -37,7 +37,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.97 $"
+#pragma ident "$Revision: 1.98 $"
 #endif
 
 #include "sam/osversion.h"
@@ -583,6 +583,8 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 
 			if (initial_leases != remaining_leases) {
 				int flags = B_ASYNC;
+				int mmap_flush = 0;
+
 				if (remaining_leases != 0) {
 					/*
 					 * The inode still has leases so
@@ -600,20 +602,29 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 				mutex_exit(&mp->mi.m_lease_mutex);
 
 				/*
-				 * If we're expiring an append lease or write
-				 * lease, must write modified pages to disk.
-				 * If we still hold the mmap lease AND we're
-				 * expiring a write OR a read, we invalidate
-				 * pages so the mmap application doesn't use
+				 * If we are expiring any leases for mmap, we
+				 * will have to flush and perhaps invalidate
+				 * dirty pages.  Setting B_INVAL gets us into
+				 * the code area to flush dirty pages.  After
+				 * flushing, we determine if we need to
+				 * invalidate the pages.
+				 *
+				 * This prevents mmap applications from using
 				 * potentially old data.
 				 */
-				if ((remaining_leases & CL_MMAP) &&
-				    (removed_leases & (CL_READ|CL_WRITE))) {
-					flags |= B_INVAL;
+				if (remaining_leases & CL_MMAP) {
+					if (removed_leases & (CL_READ|
+					    CL_WRITE)) {
+						mmap_flush++;
+						if (!(remaining_leases &
+						    (CL_READ| CL_WRITE))) {
+							flags |= B_INVAL;
+						}
+					}
 				}
+
 				if ((removed_leases &
-				    SAM_DATA_MODIFYING_LEASES) ||
-				    (flags & B_INVAL)) {
+				    SAM_DATA_MODIFYING_LEASES) || mmap_flush) {
 #ifdef linux
 					struct inode *li = SAM_SITOLI(ip);
 #endif /* linux */

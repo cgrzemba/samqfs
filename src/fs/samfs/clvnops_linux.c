@@ -35,7 +35,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.107 $"
+#pragma ident "$Revision: 1.108 $"
 #endif
 
 #include "sam/osversion.h"
@@ -663,13 +663,16 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 
 	ASSERT(ip->last_unmap == 0);
 
-	mutex_enter(&ip->ilease_mutex);
 	if ((area->vm_flags & (VM_MAYSHARE|VM_SHARED)) &&
 	    (area->vm_flags & QFS_VM_WRITE)) {
 		ltype = LTYPE_write;
 	} else {
 		ltype = LTYPE_read;
 	}
+	TRACE(T_SAM_CL_GETPAGE, li, (sam_tr_t)offset, length,
+	    ltype == LTYPE_read ? 1 : 2);
+
+	mutex_enter(&ip->ilease_mutex);
 	ip->cl_leaseused[ltype]++;
 
 	if (!(ip->cl_leases & (1 << ltype))) {
@@ -694,6 +697,7 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 			mutex_enter(&ip->ilease_mutex);
 			ip->cl_leaseused[ltype]--;
 			mutex_exit(&ip->ilease_mutex);
+			TRACE(T_SAM_CL_GETPG_RET, li, error, 0, 0)
 			return (NULL);
 		}
 	}
@@ -704,6 +708,7 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 
 	SAM_DECREMENT_LEASEUSED(ip, ltype);
+	TRACE(T_SAM_CL_GETPG_RET, li, 0, 0, 0);
 	return (page);
 }
 
@@ -727,6 +732,7 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 	offset_t offset;
 	unsigned long prot;
 	unsigned long flags;
+	unsigned long last_unmapper = 0;
 
 	/*
 	 * Get the file pointer and inode
@@ -753,8 +759,16 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 	is_write = (prot & QFS_VM_WRITE) &&
 	    (flags & (VM_SHARED|VM_MAYSHARE));
 
+reenter:
 	RW_LOCK_OS(&ip->inode_rwl, rw_type);
 	mutex_enter(&ip->fl_mutex);
+	if (ip->pending_mmappers) {
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		delay(hz);
+		goto reenter;
+	}
+
 	ip->mm_pages -= pages;
 	if (ip->mm_pages < 0) {
 		ip->mm_pages = 0;
@@ -762,13 +776,14 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 	if ((ip->mm_pages == 0) && (ip->pending_mmappers == 0) &&
 	    (ip->last_unmap == 0)) {
 		ip->last_unmap = 1;
+		last_unmapper = 1;
 	}
 	if (is_write) {
 		ip->wmm_pages -= pages;
 	}
 	mutex_exit(&ip->fl_mutex);
 
-	if (ip->last_unmap) {
+	if (last_unmapper) {
 		/*
 		 * On last delete map, sync pages on the client.
 		 */
@@ -804,7 +819,6 @@ samqfs_client_delmap_vn(struct vm_area_struct *vma)
 			sam_client_remove_leases(ip, CL_MMAP, 0);
 			(void) sam_proc_relinquish_lease(ip, CL_MMAP,
 			    FALSE, ip->cl_leasegen);
-
 			RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 			mutex_enter(&ip->fl_mutex);
 			ASSERT(ip->mm_pages == 0);
@@ -882,6 +896,16 @@ reenter:
 	if (ip->last_unmap) {
 		ASSERT(ip->pending_mmappers == 0);
 		ASSERT(ip->mm_pages == 0);
+		mutex_exit(&ip->fl_mutex);
+		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		delay(hz);
+		goto reenter;
+	}
+
+	/*
+	 * Serialize mmappers.
+	 */
+	if (ip->pending_mmappers || ip->cl_closing) {
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 		delay(hz);
