@@ -31,7 +31,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.7 $"
+#pragma ident "$Revision: 1.8 $"
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
@@ -251,11 +251,11 @@ DiskCacheWrite(
 				    file->id.ino, file->id.gen);
 				SET_FLAG(IoThread->io_flags, IO_cancel);
 
-				readErrno = errno;
-				if (readErrno == ECANCELED) {
+				if (errno == ECANCELED) {
 					cancel = B_TRUE;
 					SET_FLAG(file->flags, FI_CANCEL);
 				} else {
+					readErrno = errno;
 					SET_FLAG(file->flags, FI_WRITE_ERROR);
 				}
 			}
