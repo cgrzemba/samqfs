@@ -33,7 +33,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.21 $"
+#pragma ident "$Revision: 1.22 $"
 #endif
 
 #include "sam/osversion.h"
@@ -244,7 +244,7 @@ sam_sbread(
 		getbuf.bsize = bsize;
 		getbuf.addr = 0;
 		memcpy((void *)&getbuf.addr, (void *)&bufp, sizeof (char *));
-		error = sam_get_client_block(mp, ip, BLOCK_getbuf,
+		error = sam_get_client_block(mp, NULL, BLOCK_getbuf,
 		    SHARE_wait, &getbuf, NULL);
 
 		/* If successful, update cache with this block */

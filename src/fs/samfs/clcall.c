@@ -36,7 +36,7 @@
  */
 
 #ifdef sun
-#pragma ident "$Revision: 1.269 $"
+#pragma ident "$Revision: 1.270 $"
 #endif
 
 #include "sam/osversion.h"
@@ -2626,7 +2626,7 @@ sam_proc_block(
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: sam_proc_block "
 			    "san_header byte swap error",
-			    ip->mp->mt.fi_name);
+			    mp->mt.fi_name);
 			error = EIO;
 			goto done;
 		}
@@ -2641,7 +2641,7 @@ sam_proc_block(
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: sam_proc_block "
 			    "san_block byte swap error",
-			    ip->mp->mt.fi_name);
+			    mp->mt.fi_name);
 			error = EIO;
 			goto done;
 		}
@@ -2659,7 +2659,7 @@ sam_proc_block(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_block "
 				    "block_getbuf byte swap error",
-				    ip->mp->mt.fi_name);
+				    mp->mt.fi_name);
 				error = EIO;
 				goto done;
 			}
@@ -2677,7 +2677,7 @@ sam_proc_block(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_block "
 				    "block_fgetbuf byte swap error",
-				    ip->mp->mt.fi_name);
+				    mp->mt.fi_name);
 				error = EIO;
 				goto done;
 			}
@@ -2695,7 +2695,7 @@ sam_proc_block(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_block "
 				    "block_sblk byte swap error",
-				    ip->mp->mt.fi_name);
+				    mp->mt.fi_name);
 				error = EIO;
 				goto done;
 			}
@@ -2713,7 +2713,7 @@ sam_proc_block(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_block "
 				    "block_getino byte swap error",
-				    ip->mp->mt.fi_name);
+				    mp->mt.fi_name);
 				error = EIO;
 				goto done;
 			}
@@ -2731,7 +2731,7 @@ sam_proc_block(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_block "
 				    "block_vfsstat_v2 byte swap error",
-				    ip->mp->mt.fi_name);
+				    mp->mt.fi_name);
 				error = EIO;
 				goto done;
 			}
@@ -2753,7 +2753,7 @@ sam_proc_block(
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: sam_proc_block "
 				    "block_quota byte swap error",
-				    ip->mp->mt.fi_name);
+				    mp->mt.fi_name);
 				error = EIO;
 				goto done;
 			}

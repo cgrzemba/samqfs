@@ -36,7 +36,7 @@
 #define	_SAM_FS_CLEXTERN_H
 
 #ifdef sun
-#pragma ident "$Revision: 1.66 $"
+#pragma ident "$Revision: 1.67 $"
 #endif
 
 #ifdef sun
@@ -281,8 +281,6 @@ int sam_bread(struct sam_mount *mp, dev_t dev, sam_daddr_t blkno, long bsize,
 	buf_t **bpp);
 int sam_bread_db(struct sam_mount *mp, dev_t dev, daddr_t blkno, long bsize,
 	buf_t **bpp);
-int sam_sbread(sam_node_t *ip, int ord, sam_daddr_t blkno, long size,
-	buf_t **bp);
 
 void sam_blkstale(dev_t dev, daddr_t blkno);
 int sam_get_client_sblk(sam_mount_t *mp, enum SHARE_flag wait_flag,

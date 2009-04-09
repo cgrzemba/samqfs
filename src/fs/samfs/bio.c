@@ -33,7 +33,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.64 $"
+#pragma ident "$Revision: 1.65 $"
 
 #include "sam/osversion.h"
 
@@ -387,7 +387,7 @@ sam_sbread(
 			getbuf.blkno = (int32_t)blkno;
 			getbuf.bsize = bsize;
 			getbuf.addr = (uint64_t)bp->b_un.b_addr;
-			error = sam_get_client_block(mp, ip, BLOCK_getbuf,
+			error = sam_get_client_block(mp, NULL, BLOCK_getbuf,
 			    SHARE_wait, &getbuf, bp);
 		}
 		if (error == 0) {
