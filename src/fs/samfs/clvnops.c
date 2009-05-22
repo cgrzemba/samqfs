@@ -35,7 +35,7 @@
  *    SAM-QFS_notice_end
  */
 
-#pragma ident "$Revision: 1.204 $"
+#pragma ident "$Revision$"
 
 #include "sam/osversion.h"
 
@@ -1626,6 +1626,12 @@ sam_client_remove_vn(
 		vnode_t *rmvp;
 
 		rmvp = SAM_ITOV(ip);
+		if ((rmvp->v_type == VDIR) &&
+		    secpolicy_fs_linkdir(credp, rmvp->v_vfsp)) {
+			VN_RELE(rmvp);
+			error = EPERM;
+			goto out;
+		}
 		if (rmvp->v_count > 1) {
 			dnlc_remove(pvp, cp);
 			if (SAM_THREAD_IS_NFS()) {
