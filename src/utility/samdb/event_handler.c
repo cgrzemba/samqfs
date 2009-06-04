@@ -688,7 +688,7 @@ archive_handler(sam_db_context_t *con, sam_event_t *event) {
 	}
 
 	sam_db_archive_free(&archive);
-	return (nvsn > 0 ? 0 : attr_handler(con, event));
+	return (nvsn > 0 ? attr_handler(con, event) : nvsn);
 }
 
 /*
