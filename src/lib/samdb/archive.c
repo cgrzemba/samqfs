@@ -317,7 +317,7 @@ sam_db_archive_delete(sam_db_context_t *con, sam_id_t id, int copy)
 
 	SAMDB_BIND(bind[0], id.ino, MYSQL_TYPE_LONG, TRUE);
 	SAMDB_BIND(bind[1], id.gen, MYSQL_TYPE_LONG, TRUE);
-	SAMDB_BIND(bind[2], copy, MYSQL_TYPE_TINY, TRUE);
+	SAMDB_BIND(bind[2], copy,  MYSQL_TYPE_LONG, FALSE);
 
 	if (sam_db_execute_sql(con, bind, NULL,
 	    copy < 0 ? ARCH_DELETE_ALL : ARCH_DELETE) == NULL) {
