@@ -47,6 +47,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sam/sam_db.h>
 #include <sam/sam_malloc.h>
 #include <sam/fs/sblk.h>
+#include <sam/fs/ino_ext.h>
 
 #include "samdb.h"
 #include "util.h"
@@ -302,8 +303,13 @@ inode_callback(sam_perm_inode_t *ip, void *arg) {
 retry:
 	retry_inode = FALSE;
 	if (ip->di.id.ino == cur_check.inode.ino) {
-		if (ip->di.id.gen % 2 ||
-		    ip->di.id.ino == SAM_ROOT_INO) {
+		if (ip->di.mode == 0 || S_ISEXT(ip->di.mode)) {
+			QUIET_PRINT(stderr, "Inactive inode %d "
+			    "found in database.\n",
+			    ip->di.id.ino);
+			add_repair_entry(ip->di.id,
+			    ip->di.parent_id, TRUE);
+		} else {
 			/*
 			 * Check the inode and directory.  Repair reason
 			 * is printed in the corresponding check method.
@@ -318,17 +324,10 @@ retry:
 					    ip->di.parent_id, TRUE);
 				}
 			}
-		} else {
-			QUIET_PRINT(stderr, "Inactive inode %d "
-			    "found in database.\n",
-			    ip->di.id.ino);
-			add_repair_entry(ip->di.id,
-			    ip->di.parent_id, TRUE);
 		}
 	} else if (ip->di.id.ino < cur_check.inode.ino) {
-		/* Odd gen is active, should be in database */
-		if (ip->di.id.gen % 2 ||
-		    ip->di.id.ino == SAM_ROOT_INO) {
+		/* In-use inodes should be in database */
+		if (!(ip->di.mode == 0 || S_ISEXT(ip->di.mode))) {
 			QUIET_PRINT(stderr, "Inode %d does "
 			    "not exist in database.\n",
 			    ip->di.id.ino);
