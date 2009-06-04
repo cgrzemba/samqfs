@@ -469,7 +469,7 @@ create_handler(sam_db_context_t *con, sam_event_t *event) {
 	}
 
 	/* Parent attributes may have been updated */
-	pid_event.ev_id = event->ev_id;
+	pid_event.ev_id = event->ev_pid;
 	return (attr_handler(con, &pid_event));
 }
 
