@@ -93,6 +93,7 @@ static void usage(void);
 static int isnumber(char *);
 static int Perror(char *);
 static void chprojidr(char *, projid_t, struct stat *);
+static int check_access(const char *, int);
 
 
 #ifdef XPG4
@@ -404,7 +405,7 @@ chprojidr(char *dir, projid_t projid, struct stat *stp)
 	char savedir[1024];
 
 	if (getcwd(savedir, 1024) == 0) {
-		(void) fprintf(stderr, "chproj: ");
+		(void) fprintf(stderr, "schproj: ");
 		(void) fprintf(stderr, gettext("%s\n"), savedir);
 		exit(255);
 	}
@@ -584,6 +585,9 @@ sam_chprojid(const char *path, int projid, struct stat *stp)
 		errno = EPERM;
 		return (-1);
 	}
+	if ((errno = check_access(path, 1)) != 0) {
+		return (-1);
+	}
 
 	arg.path.ptr = path;
 	arg.admin_id = projid;
@@ -605,6 +609,9 @@ sam_lchprojid(const char *path, int projid, struct stat *stp)
 		errno = EPERM;
 		return (-1);
 	}
+	if ((errno = check_access(path, 0)) != 0) {
+		return (-1);
+	}
 
 	arg.path.ptr = path;
 	arg.admin_id = projid;
@@ -622,4 +629,36 @@ int
 add_tnode(avl_tree_t **t, dev_t d, ino_t i)
 {
 	return (1);
+}
+
+
+/*
+ * Check access permission to the target path.  We are suid root
+ * and need to make sure the path is reachable by the real user.
+ */
+static int			/* Return 0 if access is allowed, else errno */
+check_access(
+	const char *path,	/* Path to check */
+	int lflag)		/* Follow symlink */
+{
+	struct stat stb;
+	int r = 0;
+	uid_t saved_euid;
+
+	saved_euid = geteuid();
+	if (seteuid(getuid()) < 0) {	/* become real user */
+		r = errno;
+		(void) fprintf(stderr, "schproj: seteuid failed\n");
+		return (r);
+	}
+	if (((lflag != 0) && (stat(path, &stb) < 0)) ||
+	    ((lflag == 0) && (lstat(path, &stb) < 0))) {
+		r = EACCES;
+	}
+	if (seteuid(saved_euid) < 0) {	/* revert back to suid */
+		r = errno;
+		(void) fprintf(stderr, "schproj: seteuid back failed\n");
+		return (r);
+	}
+	return (r);
 }
