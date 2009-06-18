@@ -156,6 +156,7 @@ samdb_check(samdb_args_t *args)
 	sam_db_context_t dir_con;
 	inode_cb_arg_t cb_arg;
 
+	memset(&cb_arg, 0, sizeof (inode_cb_arg_t));
 	cb_arg.check_con = args->con;
 	cb_arg.dir_con = &dir_con;
 
@@ -590,12 +591,15 @@ check_directory(
 		return (-1);
 	}
 
-	/* Build dir_list and sort */
+	/* Build dir_list (add_dirent updates dir_list_* variables) */
 	if (sam_db_id_allname(con, perm->di.id, all_ids,
 	    add_dirent, NULL) < 0) {
 		return (-1);
 	}
-	qsort(dir_list, dir_list_size, sizeof (dir_entry_t *), cmp_dirent);
+	if (dir_list_size > 1) {
+		qsort(dir_list, dir_list_size,
+		    sizeof (dir_entry_t *), cmp_dirent);
+	}
 
 	/* Set query parameters and execute */
 	cur_dir_check.p_ino = perm->di.id.ino;
@@ -608,18 +612,27 @@ check_directory(
 
 	/* Fetch database results, comparing against sorted dir_list */
 	while ((err = mysql_stmt_fetch(dir_stmt)) == 0) {
-		dir_entry_t *cur_dir = dir_list[dir_list_i++];
-		CHECK_EQ(cur_dir->id.ino, cur_dir_check.ino, "Inode");
-		CHECK_EQ(cur_dir->id.gen, cur_dir_check.gen, "Gen");
-		CHECK_EQ(cur_dir->name_len, cur_dir_check.name_len, "Name");
-		CHECK_EQ(0, strncmp(cur_dir->name, cur_dir_check.name,
-		    cur_dir->name_len), "Name");
+		if (dir_list_i < dir_list_size) {
+			dir_entry_t *cur_dir = dir_list[dir_list_i++];
+			CHECK_EQ(cur_dir->id.ino, cur_dir_check.ino, "Inode");
+			CHECK_EQ(cur_dir->id.gen, cur_dir_check.gen, "Gen");
+			CHECK_EQ(cur_dir->name_len,
+			    cur_dir_check.name_len, "Name");
+			CHECK_EQ(0, strncmp(cur_dir->name, cur_dir_check.name,
+			    cur_dir->name_len), "Name");
+		} else {
+			reason = "number of db entries";
+			goto error;
+		}
 	}
 
 	if (err != MYSQL_NO_DATA) {
 		fprintf(stderr, "Error fetching results: %d %s",
 		    err, mysql_stmt_error(dir_stmt));
 		reason = "fetch result";
+		goto error;
+	} else if (dir_list_i != dir_list_size) {
+		reason = "number of fs entries";
 		goto error;
 	}
 
