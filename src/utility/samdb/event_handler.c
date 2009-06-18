@@ -328,6 +328,9 @@ file_path_consistency(sam_id_t pid, sam_dirent_t *dirent, void *arg) {
 	con = ((struct file_path_arg *)arg)->con;
 	inode = ((struct file_path_arg *)arg)->inode;
 
+	/* Non-zero ino means update path table. */
+	path.ino = 0;
+
 	/*
 	 * Update file information.  We know that we can insert since the
 	 * previous step in consistency check deleted links to the file.
@@ -361,6 +364,10 @@ file_path_consistency(sam_id_t pid, sam_dirent_t *dirent, void *arg) {
 		    dirent->d_namehash, &path) < 0) {
 			return (-1);
 		}
+	}
+
+	/* If path entry, update path table */
+	if (path.ino != 0) {
 		ret = sam_db_path_update(con, &path);
 		if (ret < 0) {
 			return (-1);
