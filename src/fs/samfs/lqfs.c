@@ -1354,8 +1354,8 @@ lqfs_enable(struct vnode *vp, struct fiolog *flp, cred_t *cr)
 	if (!SAM_MAGIC_V2A_OR_HIGHER(&sblk->info.sb)) {
 		cmn_err(CE_WARN, "SAM-QFS: %s: Not enabling logging, "
 		    " file system is not version 2A.", qfsvfsp->mt.fi_name);
-		cmn_err(CE_WARN, "\tUpgrade file system with samadm "
-		    "add-features first.");
+		cmn_err(CE_WARN, "\tUpgrade file system with samfsck -u "
+		    "first.");
 		flp->error = FIOLOG_ENOTSUP;
 		error = 0;
 		goto out;

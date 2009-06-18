@@ -591,7 +591,7 @@ main(int ac, char *av[])
 				    "large host table.\n", FsName);
 				if (SAM_MAGIC_V2_OR_HIGHER(&sb.info.sb)) {
 					printf("\tUpgrade file system with "
-					    "samadm add-features first.\n");
+					    "samfsck -u first.\n");
 				}
 				exit(1);
 			}

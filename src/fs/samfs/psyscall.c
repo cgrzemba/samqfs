@@ -2191,7 +2191,7 @@ sam_setfspartcmd(
 
 		/*
 		 * Cannot add/remove/release devices in a non V2A file system.
-		 * Must upgrade file system with samadm add-features.
+		 * Must upgrade file system with samfsck -u.
 		 */
 		if (!SAM_MAGIC_V2A_OR_HIGHER(&sblk->info.sb)) {
 			cmn_err(CE_WARN, "SAM-QFS: %s: Can't add/remove/release"
@@ -2199,7 +2199,7 @@ sam_setfspartcmd(
 			    mp->mt.fi_name, pt->pt_eq, pt->pt_name);
 			if (SAM_MAGIC_V2_OR_HIGHER(&sblk->info.sb)) {
 				cmn_err(CE_WARN, "\tUpgrade file system"
-				    " with samadm add-features first.");
+				    " with samfsck -u first.");
 			}
 			error = EINVAL;
 			break;

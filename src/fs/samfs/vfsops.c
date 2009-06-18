@@ -409,7 +409,7 @@ samfs_mount(
 		    "disabled, file system is not version 2A.", mp->mt.fi_name);
 		if (SAM_MAGIC_V2_OR_HIGHER(&mp->mi.m_sbp->info.sb)) {
 			cmn_err(CE_WARN, "\tUpgrade file system with "
-			    "samadm add-features first.");
+			    "samfsck -u first.");
 		}
 	}
 

@@ -464,8 +464,7 @@ sam_sgethosts(
 				    mp->mt.fi_name);
 				if (SAM_MAGIC_V2_OR_HIGHER(sblk)) {
 					cmn_err(CE_WARN, "\tUpgrade file "
-					    "system with samadm add-features "
-					    "first.");
+					    "system with samfsck -u first.");
 				}
 				goto out;
 			}
