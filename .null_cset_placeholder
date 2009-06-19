@@ -1,3 +1,3 @@
-Fri Jun 26 16:51:17 CDT 2009
-675c1948f0a2
-misc/copyright/copyright.cf
+Fri Jun 26 16:53:47 CDT 2009
+b64d7a78cb05
+misc/copyright/copyright.cf pkg-linux/makeiso.sh src/os/linux/README_patches src/os/linux/linux_2.4_smi.patch
