@@ -53,7 +53,7 @@
 
    <!-- The name & version of this application. -->
    <property name="app.name" value="fsmgr"/>
-   <property name="app.version" value="5.0"/>
+   <property name="app.version" value=""/>
    <property name="package.name" value="com/sun/netstorage/samqfs/web"/>
 
    <!--

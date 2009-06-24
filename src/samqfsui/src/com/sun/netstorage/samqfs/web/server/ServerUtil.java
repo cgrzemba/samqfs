@@ -320,13 +320,16 @@ public class ServerUtil {
      * naming convention that is used by the marketing folks.
      */
     public static String getVersionString(String guiVersionString) {
+        guiVersionString = guiVersionString == null ? "" : guiVersionString;
+        String [] versionArray = guiVersionString.split("\\.");
 
-        if (guiVersionString.compareTo("5.0") >= 0) {
-            return SamUtil.getResourceString("ServerSelection.version.50");
-        } else if (guiVersionString.compareTo("4.6") >= 0) {
-            return SamUtil.getResourceString("ServerSelection.version.46");
+        // need the first two parts of the version string, purge the last
+        // array because we do not need the build number
+
+        if (versionArray.length < 2) {
+            return SamUtil.getResourceString("unknownVersion");
         } else {
-            return SamUtil.getResourceString("ServerSelection.version.unknown");
+            return versionArray[0] + "." + versionArray[1];
         }
     }
 }

@@ -46,7 +46,9 @@ ARCH=`/usr/bin/uname -p`
 APP_NAME="SAM-QFS Manager"
 MAJOR_REV="5"
 MINOR_REV="0"
-ZIP_FILE="fsmgr_${MAJOR_REV}.${MINOR_REV}.zip"
+MINOR_UPD_REV="1"
+QFS_REV="${MAJOR_REV}.${MINOR_REV}u${MINOR_UPD_REV}"
+ZIP_FILE="fsmgr_${QFS_REV}.zip"
 LOCKHART_EXTERNAL_NAME="Sun Java(TM) Web Console"
 LH_MAJOR_VERSION=3
 LH_MINOR_VERSION=1
@@ -152,7 +154,7 @@ show_syntax()
 {
     echo "Syntax: ${MY_SCRIPT_NAME} [-hu]"
     echo "\t -h ==> Show this help message"
-    echo "\t -u ==> Uninstall ${APP_NAME} ${MAJOR_REV}.${MINOR_REV} along with"
+    echo "\t -u ==> Uninstall ${APP_NAME} ${QFS_REV} along with"
     echo "\t        other supporting application"
 }
 
@@ -343,7 +345,7 @@ do_exit()
             ;;
 
         $EXIT_CODE_VERSION_SAME_DETECTED )
-            echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} is already installed." \
+            echo "${APP_NAME} ${QFS_REV} is already installed." \
                 | tee -a ${MY_LOG}
             exit 31
             ;;
@@ -543,7 +545,7 @@ check_java_sdk_jre()
     current_minor_rev=`echo ${sdk_version} | awk -F"." '{print $3}'`
 
     error_msg1="Java SDK and JRE does not meet the minimum requirement"
-    error_msg1="${error_msg1} of ${APP_NAME} ${MAJOR_REV}.${MINOR_REV}!"
+    error_msg1="${error_msg1} of ${APP_NAME} ${QFS_REV}!"
     error_msg2="Installation process will now terminate.  You can run"
     error_msg2="${error_msg2} the installation script again and answer 'y'"
     error_msg2="${error_msg2} when prompt to upgrade Java."
@@ -1257,7 +1259,7 @@ show_complete_uninstall_message() {
 
 show_complete_install_message() {
 
-    (echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} and its supporting application"
+    (echo "${APP_NAME} ${QFS_REV} and its supporting application"
     echo "is installed successfully.\n\n"
 
     echo "******************* PLEASE READ **********************************\n"
@@ -1280,7 +1282,7 @@ show_complete_install_message() {
     echo "Press ENTER to continue ..."
     /usr/bin/read
 
-    echo "${APP_NAME} ${MAJOR_REV}.${MINOR_REV} supports the following browsers:\n"
+    echo "${APP_NAME} ${QFS_REV} supports the following browsers:\n"
     echo "  Browser Type                          Operating System"
     echo "  ========================================================================"
     echo "  Netscape 7.1/Mozilla 1.7/Firefox 2.0  Solaris OS,"
@@ -1298,7 +1300,7 @@ show_complete_install_message() {
     echo "It is required to clear the browser cache before accessing the"
     echo "${APP_NAME} for the first time.  Failure to do so may cause"
     echo "unexpected behavior in various pages.\n"
-    echo "\n${APP_NAME} ${MAJOR_REV}.${MINOR_REV} has been tested with the"
+    echo "\n${APP_NAME} ${QFS_REV} has been tested with the"
     echo "${LOCKHART_EXTERNAL_NAME} version ${LOCKHART_VERSION}."
     echo "Installing this product with any older ${LOCKHART_EXTERNAL_NAME} version breaks both"
     echo "applications. This product may work on newer ${LOCKHART_EXTERNAL_NAME}"
@@ -1403,7 +1405,7 @@ package_cleanup()
 prompt_user_to_install()
 {
     M="An older version of ${APP_NAME} (Version ${CURRENT_R_MAJOR_VERSION}.${CURRENT_R_MINOR_VERSION}) is installed. The installer is"
-    M="$M about to upgrade ${APP_NAME} to version ${MAJOR_REV}.${MINOR_REV}."
+    M="$M about to upgrade ${APP_NAME} to version ${QFS_REV}."
     M="$M Do you want to continue [y]"
 
     m_ans=`/bin/ckyorn -Q -d "yes" -p "${M}?"`
@@ -1448,16 +1450,37 @@ check_software_version()
 
 
     CURRENT_R_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $1}'`
-    CURRENT_R_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}'`
-
+    CURRENT_R_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr | \
+	grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}' | \
+	awk -Fu '{print $1}'`
+    CURRENT_R_MINOR_UPD_VERSION=`/usr/bin/pkginfo -l SUNWfsmgrr | \
+	grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}' | \
+	awk -Fu '{print $2}'`
     CURRENT_U_MAJOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $1}'`
-    CURRENT_U_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru |grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}'`
+    CURRENT_U_MINOR_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru | \
+	grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}' | \
+	awk -Fu '{print $1}'`
+    CURRENT_U_MINOR_UPD_VERSION=`/usr/bin/pkginfo -l SUNWfsmgru | \
+	grep VERSION |awk -F"  " '{print $2}' |awk -F"." '{print $2}' | \
+	awk -Fu '{print $2}'`
+
+    # Assign 0 to current update version if nothing is found
+    if [ "a${CURRENT_R_MINOR_UPD_VERSION}" = "a" ]; then
+        CURRENT_R_MINOR_UPD_VERSION=0
+    fi
+    if [ "a${CURRENT_U_MINOR_UPD_VERSION}" = "a" ]; then
+        CURRENT_U_MINOR_UPD_VERSION=0
+    fi
 
     if [ ${CURRENT_R_MAJOR_VERSION} -ne ${CURRENT_U_MAJOR_VERSION} ]; then
         echo "${APP_NAME} packages version mismatch detected" | tee -a ${MY_LOG}
         package_cleanup
 
     elif [ ${CURRENT_R_MINOR_VERSION} -ne ${CURRENT_U_MINOR_VERSION} ]; then
+        echo "${APP_NAME} packages version mismatch detected" | tee -a ${MY_LOG}
+        package_cleanup
+
+    elif [ ${CURRENT_R_MINOR_UPD_VERSION} -ne ${CURRENT_U_MINOR_UPD_VERSION} ]; then
         echo "${APP_NAME} packages version mismatch detected" | tee -a ${MY_LOG}
         package_cleanup
 
@@ -1470,8 +1493,15 @@ check_software_version()
             EXIT_STATUS=${EXIT_CODE_VERSION_NEWER_DETECTED}
             do_exit
         elif [ ${CURRENT_R_MINOR_VERSION} -eq ${MINOR_REV} ]; then
-            EXIT_STATUS=${EXIT_CODE_VERSION_SAME_DETECTED}
-            do_exit
+	    if [ ${CURRENT_R_MINOR_UPD_VERSION} -gt ${MINOR_UPD_REV} ]; then
+	        EXIT_STATUS=${EXIT_CODE_VERSION_NEWER_DETECTED}
+	        do_exit
+	    elif [ ${CURRENT_R_MINOR_UPD_VERSION} -eq ${MINOR_UPD_REV} ]; then
+		EXIT_STATUS=${EXIT_CODE_VERSION_SAME_DETECTED}
+		do_exit
+            else
+                prompt_user_to_install
+	    fi
         else
             prompt_user_to_install
         fi

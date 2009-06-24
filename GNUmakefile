@@ -62,6 +62,11 @@ include $(DEPTH)/mk/targets.mk
 #   CVS checkout at a tag removes the lib directory.  Make a new one.
 .INIT:
 	@if [ ! -d lib ] ; then /bin/mkdir lib; fi
+	@/bin/date "+Version $(SAMQFS_VERSION) (%d/%m/20%y)" > \
+		src/samqfsui/html/fr/versionDate.txt
+	@/bin/date "+Version $(SAMQFS_VERSION) (%m/%d/20%y)" > \
+		src/samqfsui/html/en/versionDate.txt
+
 
 #   Set up the default configuration.
 #

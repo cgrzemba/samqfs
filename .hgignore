@@ -20,3 +20,5 @@ syntax: regexp
 ^src/gnucmd/fileutils-3.16/intl/libintl.h
 ^LOG\.
 ^BUILD\.
+^src/samqfsui/html/(en|fr)/versionDate.txt
+^src/samqfsui/nbproject

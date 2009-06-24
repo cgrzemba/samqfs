@@ -35,7 +35,7 @@
 <registrationInfo version="3.0">
     <!--Root element containing description of application elements-->
     <managementApp
-        version="5.0"
+        version="5.0u1"
         category="storage"
         package="com.sun.netstorage.samqfs.web"
         bundle="resources/Resources"
