@@ -1142,6 +1142,7 @@ sam_client_getattr_vn(
 	if (ip->di.id.ino != SAM_INO_INO) {
 		if (!SAM_IS_SHARED_SERVER(ip->mp)) {
 			int meta_timeo;
+			boolean_t write_lock = B_FALSE;
 
 			if ((ip->cl_flags & (SAM_UPDATED | SAM_CHANGED)) &&
 			    !(ip->cl_leases & SAM_DATA_MODIFYING_LEASES)) {
@@ -1158,7 +1159,20 @@ sam_client_getattr_vn(
 				meta_timeo = ip->mp->mt.fi_meta_timeo;
 			}
 
+			if (RW_OWNER_OS(&ip->inode_rwl) == curthread) {
+				/*
+				 * There are paths via sam_get_special_file
+				 * which get here with RW_WRITER lock held.
+				 * Release this lock as sam_proc_inode
+				 * acquires it.
+				 */
+				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+				write_lock = B_TRUE;
+			}
 			error = sam_refresh_client_ino(ip, meta_timeo, credp);
+			if (write_lock) {
+				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
+			}
 		} else {
 			if (ip->mp->mt.fi_config & MT_CONSISTENT_ATTR) {
 				if ((ip->updtime + ip->mp->mt.fi_meta_timeo) <=
