@@ -421,6 +421,7 @@ DiskVolsIsAvail(
 	sam_rft = (void *)SamrftConnect(dv->DvHost);
 	if (sam_rft != NULL) {
 
+		ret = 0;
 		changed = B_FALSE;	/* modified diskvol dictionary entry */
 		valid_seqnum = B_TRUE;
 		check_existence = B_FALSE;
@@ -480,10 +481,8 @@ DiskVolsIsAvail(
 		}
 
 	} else {
-		avail = B_FALSE;
-		changed = B_TRUE;
-
 		dv->DvSpace = dv->DvCapacity = 0;
+		return (B_FALSE);
 	}
 
 	if (changed == B_TRUE && vsnDict != NULL && caller == DVA_archiver) {
