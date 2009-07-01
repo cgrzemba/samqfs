@@ -595,6 +595,7 @@ $ *    SAM-QFS_notice_end
 4022 Scanning %d:%d:%d
 4023 Media Error : Medium with barcode %s not labeled
 4024 Media Error : Medium not labeled
+4025 Unable to mount, check state of drive %d
 
 5000 Generic
 5001 Cannot clear drive: Can not remove slot %d from drive: move failed

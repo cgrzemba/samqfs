@@ -450,8 +450,13 @@ mount(
 		return;
 	}
 
-	if (slot == ROBOT_NO_SLOT) {
-		DevLog(DL_ERR(4006), slot, (vsn[0] == '\0') ? "NONE" : vsn);
+	if (slot == ROBOT_NO_SLOT || un->state > DEV_IDLE) {
+		if (slot == ROBOT_NO_SLOT) {
+			DevLog(DL_ERR(4006), slot,
+			    (vsn[0] == '\0') ? "NONE" : vsn);
+		} else {
+			DevLog(DL_ERR(4025), un->eq);
+		}
 		/*
 		 * If this mount request came from the preview table,
 		 * then me must clear the busy flag.
