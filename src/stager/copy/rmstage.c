@@ -405,10 +405,10 @@ loadVol(
 				if (errno != ETIME) {
 					int saveErrno;
 					struct CatalogEntry ced;
+					boolean_t badmedia;
 
 					saveErrno = errno;
-					SetErrno = ENODEV;
-
+					badmedia = B_FALSE;
 					/*
 					 * If load fails check for bad media.
 					 */
@@ -418,12 +418,14 @@ loadVol(
 						    &ced) != NULL) {
 							if (ced.CeStatus &
 							    CES_bad_media) {
-								SetErrno =
-								    saveErrno;
+								badmedia =
+								    B_TRUE;
 							}
 						}
 						CatalogTerm();
 					}
+					SetErrno = badmedia ?
+					    saveErrno : ENODEV;
 					break;
 				}
 				sleep(5);
