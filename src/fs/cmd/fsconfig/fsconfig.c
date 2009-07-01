@@ -82,8 +82,15 @@ struct DevInfo {
 	struct dk_cinfo *di_dkip;
 	struct sam_host_table *di_hosts;
 	int di_hosts_table_size;
+	int di_did;
 } Devs[MAXDEV];
 int NDevs;
+
+typedef struct sblk_set {
+	int count;		/* Cnt of duplicate ords in this fs */
+	short did;		/* Did device exists */
+	int devindex;		/* Index back into Devs */
+} sblk_set_t;
 
 static void CheckDev(char *);
 static void DumpDevs(void);
@@ -336,6 +343,10 @@ CheckDev(char *dev)
 	} else {
 		Devs[NDevs].di_hosts = NULL;
 	}
+	Devs[NDevs].di_did = 0;
+	if (strncmp((char *)dev, "/dev/did/dsk", 12) == 0) {
+		Devs[NDevs].di_did = 1;
+	}
 
 #ifdef sun
 	if (debug && S_ISCHR(sbuf.st_mode)) {
@@ -581,11 +592,13 @@ ListHosts(struct DevInfo *rdip, int nd)
  * out the whole set.
  */
 static void
-ListFSet(struct DevInfo *dip, int n)
+ListFSet(
+	struct DevInfo *dip,	/* Pointer to first device entry for this FS */
+	int no_devs)			/* Number of devices in this FS */
 {
 	int j, holes;
 	long when;
-	int lfset[L_FSET], lfsetindx[L_FSET];
+	sblk_set_t sbset[L_FSET];
 	char typbuf[12];
 	char fsbuf[sizeof (uname_t)+8];
 	int md, mm, mr, oXXX, gXXX, bad;
@@ -593,7 +606,8 @@ ListFSet(struct DevInfo *dip, int n)
 	int fsgen;
 	int fscount;
 	int mmcount;
-	int igood = 0;		/* index of good device in lfset */
+	int dev_did_fs = 0;	/* FS has did devices */
+	int igood = 0;		/* Index of good device in sbset */
 	char *template;
 	struct DevInfo *dig = dip;
 
@@ -602,30 +616,60 @@ ListFSet(struct DevInfo *dip, int n)
 	} else {
 		template = "%s%s%s    %d    %s   %s  -\n";
 	}
-	bzero(&lfset[0], sizeof (lfset));
-	bzero(&lfsetindx[0], sizeof (lfset));
 	FSStr(dip->di_sblk->info.sb.fs_name, fsbuf);
+	bzero((char *)&sbset[0], sizeof (sbset));
+
 	/*
 	 *  Count device ordinals to detect duplicates.
-	 *  Ifset[ord] == 1 if not a duplicate
-	 *  Ifsetindx[ord] is the index in the DevInfo struct.
+	 *  sbset[ord].count == 1 if not a duplicate
+	 *  sbset[ord].count == 2 if did file system & not a duplicate
+	 *  sbset[ord].devindex is the index in the DevInfo struct.
 	 */
-	for (j = 0; j < n; j++) {
-		lfset[dip[j].di_sblk->info.sb.ord]++;
-		lfsetindx[dip[j].di_sblk->info.sb.ord] = j;
+	for (j = 0; j < no_devs; j++) {
+		int ord;
+
+		ord = dip[j].di_sblk->info.sb.ord;
+		if (dip[j].di_did) {
+			sbset[ord].devindex = j;
+			sbset[ord].did = 1;
+			sbset[ord].count++;
+			dev_did_fs = 1;
+		}
 	}
+	for (j = 0; j < no_devs; j++) {
+		int ord;
+
+		if (dip[j].di_did) {
+			continue;
+		}
+		ord = dip[j].di_sblk->info.sb.ord;
+		if (dev_did_fs == 0) {
+			sbset[ord].devindex = j;
+		}
+		sbset[ord].count++;
+	}
+
 	/*
 	 *  Find a device that's not off and not a duplicate.
+	 *  Skip if not there or more than one with this ord & not did.
+	 *  Otherwise, if did, there should be two devices with this ord.
 	 */
 	for (j = 0; j < L_FSET; j++) {
 		int k, ord, fsct;
 
-		if (lfset[j] != 1) {
-			/* skip if not there or more than one with this ord */
-			continue;
+		if (dev_did_fs) {
+			if (sbset[j].count != 2) {
+				continue;
+			}
+			if (!sbset[j].did) {
+				continue;
+			}
+		} else {
+			if (sbset[j].count != 1) {
+				continue;
+			}
 		}
-
-		k = lfsetindx[j];
+		k = sbset[j].devindex;
 		fsct = dip[k].di_sblk->info.sb.fs_count;
 		for (ord = 0; ord < fsct; ord++) {
 			if (dip[k].di_sblk->eq[ord].fs.state == DEV_ON ||
@@ -637,9 +681,10 @@ ListFSet(struct DevInfo *dip, int n)
 		}
 		break;
 	}
+
 	/*
-	 *	Either we found a good one or we use dip[0].
-	 *	Save some values for later use.
+	 * Either we found a good one or we use dip[0].
+	 * Save some values for later use. Print comment lines:
 	 */
 	dig = &dip[igood];
 	when = dig->di_sblk->info.sb.init;
@@ -658,10 +703,16 @@ ListFSet(struct DevInfo *dip, int n)
 		printf(GetCustMsg(13806));
 	}
 	printf("#\n");
+
+	/*
+	 * Check for correct devices types in the file system
+	 * Set holes if missing data devices
+	 */
 	holes = 0;
 	md = mm = mr = oXXX = gXXX = bad = 0;
 	for (j = 0; j < fscount; j++) {
-		if (lfset[j] == 0) {
+		if (sbset[j].count == 0) {
+
 			/*
 			 * check to see if hole is meta data device in which
 			 * case we probably are zoned off from it
@@ -711,6 +762,10 @@ ListFSet(struct DevInfo *dip, int n)
 		/* Missing slices */
 		printf(GetCustMsg(13808));
 	}
+
+	/*
+	 * If file system is good, print out MCF family set line
+	 */
 	if (!holes && !bad) {
 		char *sh, *typ;
 
@@ -738,12 +793,15 @@ ListFSet(struct DevInfo *dip, int n)
 				typ = (md && !mm && !mr && !gXXX) ? "ms" : "ma";
 			}
 		}
-
 		printf("%s %d %s %s -%s\n",
 		    fsbuf, dig->di_sblk->info.sb.eq, typ, fsbuf, sh);
 	}
+
+	/*
+	 * Print out missing meta devices as nodev if file system is good
+	 */
 	for (j = 0; j < fscount; j++) {
-		if (lfset[j] == 0) {
+		if (sbset[j].count == 0) {
 			if (dig->di_sblk->eq[j].fs.type == DT_META) {
 				TypeStr(dig->di_sblk->eq[j].fs.type, typbuf);
 				FSStr(dig->di_sblk->info.sb.fs_name, fsbuf);
@@ -755,17 +813,26 @@ ListFSet(struct DevInfo *dip, int n)
 			}
 		}
 	}
-	for (j = 0; j < n; j++) {
+
+	/*
+	 * Check that each device matches the file system generation number
+	 */
+	for (j = 0; j < no_devs; j++) {
 		struct sam_sblk *sblk;
 
 		sblk = dip[j].di_sblk;
 		if (sblk->info.sb.fsgen != fsgen) {
-			lfset[sblk->info.sb.ord]--;
+			sbset[sblk->info.sb.ord].count--;
 		}
 	}
-	for (j = 0; j < n; j++) {
+
+	/*
+	 * Print out devices in the mcf
+	 */
+	for (j = 0; j < no_devs; j++) {
 		struct sam_sblk *sblk;
 		int ord;
+		int valid_cnt;
 
 		sblk = dip[j].di_sblk;
 		ord = sblk->info.sb.ord;
@@ -784,9 +851,23 @@ ListFSet(struct DevInfo *dip, int n)
 			}
 			continue;
 		}
+		valid_cnt = 1;
+		if (dev_did_fs) {
+			valid_cnt = 2;
+			if (!dip[j].di_did) {
+				if (verbose) {
+					printf(template, "> ", "",
+					    dip[j].di_devname,
+					    sblk->eq[ord].fs.eq, typbuf, fsbuf,
+					    (long long)
+					    sblk->eq[ord].fs.capacity);
+				}
+				continue;
+			}
+		}
 		printf(template,
 		    (holes || bad) ? "# " : "",
-		    (lfset[ord] > 1) ? "> " : "",
+		    (sbset[ord].count > valid_cnt) ? "> " : "",
 		    dip[j].di_devname, sblk->eq[ord].fs.eq,
 		    typbuf, fsbuf, (long long) sblk->eq[ord].fs.capacity);
 	}

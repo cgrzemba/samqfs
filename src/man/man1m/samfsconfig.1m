@@ -27,7 +27,7 @@
 .\" SAM-QFS_notice_end
 .nh
 .na
-.TH samfsconfig 1M "10 Jan 2009"
+.TH samfsconfig 1M "24 Jun 2009"
 .SH NAME
 samfsconfig \- Recovers configuration information
 .SH SYNOPSIS
@@ -118,6 +118,13 @@ This is common if, for instance, multiple paths exist or whole disk
 partitions are specified on the command line.
 .TP
 \(bu
+For devices, one /dev/did/dsk and the other device /dev/dsk, which have the
+the same superblock information with the same file system generation number,
+it prefixes a \%greater-than sign (\fB>\fR) for the /dev/dsk devices.
+This occurs for did file systems.
+This line is only generated when the \fB\-v\fR option is specified.
+.TP
+\(bu
 For any duplicate devices that have the same superblock information
 but have different file system generation numbers, it prefixes a
 \%less-than sign (\fB<\fR).
@@ -125,7 +132,7 @@ This can occur if a device has been removed from the file system and a
 new device has been added to the same file system in the same ordinal
 position. Note, the file system generation
 number is incremented when a device is added to the file system.
-This line is only outputed when the \fB\-v\fR option is specified.
+This line is only generated when the \fB\-v\fR option is specified.
 .SH EXAMPLES
 Example 1.
 .PP

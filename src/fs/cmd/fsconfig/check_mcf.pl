@@ -34,7 +34,13 @@
 $os = `uname -s`;
 chomp($os);
 if ($os eq "SunOS") {
-	$disks = "/dev/dsk/*";
+	$num_didmodules = `/usr/sbin/modinfo | /bin/awk '\$6 \~ /^did\$/' |
+	    /bin/wc -l`;
+	if ( $num_didmodules > 0 ) {
+		$disks = "/dev/did/dsk/* /dev/dsk/*";
+	} else {
+		$disks = "/dev/dsk/*";
+	}
 } else {
 	$ENV{'PATH'} = "/usr/bin:" . $ENV{'PATH'};
 	$disks = "/dev/sd*";
