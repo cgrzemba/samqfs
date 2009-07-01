@@ -558,6 +558,13 @@ ComposeMakeTarballs(
 				fi->FiFlags |= FI_first;
 				space = volSpace;
 				i++;
+			} else if (fi->FiSpace > volSpace) {
+					/*
+					 * Single file too big.
+					 * Skip it for now.
+					 */
+					fi->FiCpi = CPI_later;
+					continue;
 			}
 			break;
 		} else if (tarballSpace + fi->FiSpace >= archmax) {
