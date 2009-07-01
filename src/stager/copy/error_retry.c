@@ -298,7 +298,6 @@ isRetryError(
 		case ECANCELED:
 		case EINTR:
 		case EREMCHG:
-		case ENOMEM:
 		case ENOSPC:
 		case EPERM:
 		case ENOTSUP:

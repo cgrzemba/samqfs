@@ -136,6 +136,7 @@ isDamageError(
 		case ECONNRESET:
 		case ENODEV:
 		case EINTR:
+		case ENOMEM:
 			damage = B_FALSE;
 			break;
 		default:
