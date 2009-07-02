@@ -169,9 +169,7 @@ CreateFile(
 	/*
 	 * Set directio directive
 	 */
-	if (GetCfgDirectio) {
-		fi.directio = 1;
-	}
+	fi.directio = GetCfgDirectio();
 
 	if (req->arcopy[req->copy].flags & STAGE_COPY_ARCHIVED) {
 		Trace(TR_MISC, "Request inode: %d.%d "
@@ -2153,7 +2151,7 @@ valRequest(
 	}
 	memset(&arg, 0, sizeof (arg));
 	arg.id = fi->id;
-	if (GetCfgDirectio) {
+	if (GetCfgDirectio()) {
 		arg.flags |= IDO_direct_io;
 	}
 	if ((fd = ioctl(mpfd, F_IDOPEN, &arg)) < 0) {
