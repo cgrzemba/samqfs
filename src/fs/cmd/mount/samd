@@ -193,6 +193,19 @@ usage() {
 	exit 1
 }
 
+#
+# check for license if Open Solaris.
+# This code can be deleted when IPS support of click thru license works
+#
+if [ -d /var/sadm/pkg/SUNWsamqassy ]; then
+        if [ ! -f /opt/SUNWsamfs/etc/lic-accept ]; then
+                echo You need to run /opt/SUNWsamfs/util/sam-qfs-post-install
+		echo Be sure to accept the license
+		exit 1
+        fi
+fi
+
+
 if [ $# != 1 ] ; then
 	usage
 fi

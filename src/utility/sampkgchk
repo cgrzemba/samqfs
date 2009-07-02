@@ -36,6 +36,18 @@
 # verify that the root and usr packages are the same version.
 #
 
+#
+# check for license if Open Solaris. 
+# This code can be deleted when IPS support of click thru license works
+#
+if [ -d /var/sadm/pkg/SUNWsamqassy ]; then
+	if [ ! -f /opt/SUNWsamfs/etc/lic-accept ]; then
+		echo You need to run  /opt/SUNWsamfs/util/sam-qfs-post-install
+		echo Be sure to accept the license
+		exit 1
+	fi
+fi
+
 if [ -d /var/sadm/pkg/SUNWsamfsr ]; then
 	VERSION=`pkgparam SUNWsamfsr VERSION  | sed -e s/VERSION=// | cut -f1 -d,`
 
