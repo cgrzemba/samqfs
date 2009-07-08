@@ -52,7 +52,15 @@ ifeq ($(PLATFORM), sparc)
 	ifeq ($(SPARCV9), yes)
 		64DIR := /sparcv9
 		ISA_TARGET := sparcv9
-		PLATFLAGS += -xarch=v9 -xchip=ultra2
+		ifeq ($(OS_REVISION), 5.10)
+			PLATFLAGS += -xarch=v9 -xchip=ultra2
+		else
+		ifeq ($(OS_REVISION), 5.11)
+			PLATFLAGS += -m64 -xchip=ultra2
+		else
+		$(error "Unknown Solaris version $(OS_REVISION)")
+		endif
+		endif
 	else
 		ISA_TARGET := sparc
 		PLATFLAGS += -xarch=v8 -xchip=ultra2
@@ -63,7 +71,15 @@ ifeq ($(PLATFORM), i386)
 	ifeq ($(AMD64), yes)
 		64DIR := /amd64
 		ISA_TARGET := amd64
-		PLATFLAGS += -xarch=amd64 -Ui386 -U__i386
+		ifeq ($(OS_REVISION), 5.10)
+			PLATFLAGS += -xarch=amd64 -Ui386 -U__i386
+		else
+		ifeq ($(OS_REVISION), 5.11)
+			PLATFLAGS += -m64 -Ui386 -U__i386
+		else
+		$(error "Unknown Solaris version $(OS_REVISION)")
+		endif
+		endif
 		KERNFLAGS := -xmodel=kernel -Wu,-save_args
 	else
 		ISA_TARGET := i386
@@ -110,9 +126,9 @@ ifeq ($(OS_REVISION), 5.10)
 else
 ifeq ($(OS_REVISION), 5.11)
 	OS_VERS := Solaris 11
-	CC = $(SAMFS_TOOLS)/SS11/bin/cc
-	LINT = $(SAMFS_TOOLS)/SS11/bin/lint
-	CSCOPE = $(SAMFS_TOOLS)/SS11/bin/cscope
+	CC = $(SAMFS_TOOLS)/SS12/bin/cc
+	LINT = $(SAMFS_TOOLS)/SS12/bin/lint
+	CSCOPE = $(SAMFS_TOOLS)/SS12/bin/cscope
 else
 $(error "Unknown Solaris version $(OS_REVISION)")
 endif
