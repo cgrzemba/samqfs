@@ -2310,7 +2310,7 @@ configure(
 		 */
 		WriteMcfbin(DeviceNumof, DeviceTable);
 #ifdef sun
-		if (mountedHsmFs > 0) {
+		if (mountedHsmFs > 0 || DiskVolClientCount > 0) {
 			WriteDiskVolumes(reconfig);
 		}
 #endif /* sun */
