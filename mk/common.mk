@@ -42,7 +42,6 @@ ifndef	DEPTH
 $(error "DEPTH variable is undefined")
 endif
 
--include $(DEPTH)/mk/include/CONFIG.mk
 ifneq ($(HAVE_internal_mk),yes)
 -include $(DEPTH)/mk/include/internal.mk
 endif
