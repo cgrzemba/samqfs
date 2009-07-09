@@ -49,7 +49,7 @@ function get_mc_wwn {
 
 	exec 4<$TMPFILE
 	count=0
-	while read -4u line; do
+	while read -u4 line; do
 		out=`echo $line | grep "fc-fabric"`
 		if [ -n "$out" ]; then
 			chn=`echo $line | cut -d":" -f1`

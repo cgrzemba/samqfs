@@ -170,7 +170,7 @@ function logical_magneto_optical {
 		$SAMFS_SBIN/scsiid -p $mo > $TMPFILE
 		exec 5<$TMPFILE
 		devtype=""
-		while read -5u line; do
+		while read -u5 line; do
 			out=`echo "$line" | grep "device-type: "`
 			if [ -n "$out" ]; then
 				devtype=${line##device-type: }
@@ -226,7 +226,7 @@ function probe_tp {
 	if [ $rval -ne 0 ]; then
 		logit "probe_tp scsiid $devpath returned $rval"
 		exec 4<$TMPFILE
-		while read -4u line; do
+		while read -u4 line; do
 			logit "probe_tp $line"
 		done
 		exec 4<&-
@@ -240,7 +240,7 @@ function probe_tp {
 
 	# process probe output.
 	exec 4<$TMPFILE
-	while read -4u line; do
+	while read -u4 line; do
 
 		out=`echo $line | grep "unit-serial-number: "`
 		if [ -n "$out" ]; then
@@ -420,7 +420,7 @@ function probe_mc_for_tps {
 			"returned $rval"
 		# log error to logfile.
 		exec 4<$TMPFILE
-		while read -4u line; do
+		while read -u4 line; do
 			logit "probe_mc_for_tps $line"
 		done
 		exec 4<&-
@@ -444,7 +444,7 @@ function probe_mc_for_tps {
 	mc_usn=
 
 	exec 5<$TMPFILE
-	while read -5u line; do
+	while read -u5 line; do
 		
 		out=`echo "$line" | grep "vendor: "`
 		if [ -n "$out" ]; then
@@ -803,7 +803,7 @@ function display_samfs_mcf_mc_tp {
 	# display mcf mc ordered list of tps.
 	logit "match_mc_with_tps findings..."
 	exec 4<$TMPFILE2
-	while read -4u line; do
+	while read -u4 line; do
 		elem=`echo $line | cut -d" " -f1`
 		logical=`echo $line | cut -d" " -f2`
 		echo "$logical"
