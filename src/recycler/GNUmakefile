@@ -42,22 +42,23 @@ PROG_SRC = \
 		findvsn.c \
 		readcmd.c
 
-#	Define build procedures for SAM's nrecycler.  The nrecycler makes
-#	media retention and deletion decisions based on time.  The nrecycler's
-#	retention decisions are based on files in mounted file systems and
-#	samfs dumps.
-DIRS = nrecycler
+#	Define build procedures for SAM's nrecycler and recycler library.  
+#	The nrecycler makes media retention and deletion decisions based on time.  
+#	The nrecycler's retention decisions are based on files in mounted file 
+#	systems and samfs dumps.
+
+DIRS = lib nrecycler
 
 DATAFILES = recycler.sh
 
-DEPCFLAGS += $(HC_INCLUDE) $(THRCOMP)
+DEPCFLAGS += $(HC_INCLUDE) $(THRCOMP) -I include
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) \
 	-lsam -lsamapi -lsamcat -lsamfs -lsamut -lsamconf -lsamrft \
-	$(HC_LIB) $(LIBSO) $(THRLIBS) -lgen -lintl
+	$(HC_LIB) $(LIBSO) $(THRLIBS) -lgen -lintl -L lib/$(OBJ_DIR) -lrecycler
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamapi -lsamcat -lsamfs \
-	-lsamut -lsamconf -lsamrft
+	-lsamut -lsamconf -lsamrft -L lib/$(OBJ_DIR) -lrecycler
 
 include $(DEPTH)/mk/targets.mk
 

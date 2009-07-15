@@ -493,6 +493,36 @@ MediaDebug(
 	Trace(TR_MISC, "[%s] End media table dump", table->mt_name);
 }
 
+
+/*
+ * Get the sequence numbers in use by currently running arcopies.
+ */
+SeqNumsInUse_t *
+MediaGetSeqnumsInUse(
+	struct sam_fs_info *firstFs,
+	int numFs,
+	MediaTable_t *table
+)
+{
+	int i, j;
+	MediaEntry_t *entry;
+	SeqNumsInUse_t *inuse = NULL;
+	struct sam_fs_info *fsp;
+
+	for (i = 0, fsp = firstFs; i < numFs; i++, fsp++) {
+		for (j = 0; j < table->mt_tableUsed; j++) {
+			entry = &table->mt_data[j];
+			if (entry->me_type == DT_DISK) {
+				inuse = GetSeqNumsInUse(entry->me_name,
+				    fsp->fi_name, inuse);
+			}
+		}
+	}
+
+	return (inuse);
+}
+
+
 /*
  * Resize hash table.
  */

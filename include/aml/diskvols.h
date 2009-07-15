@@ -34,7 +34,7 @@
 #ifndef _AML_DISKVOLS_H
 #define	_AML_DISKVOLS_H
 
-#pragma ident "$Revision: 1.30 $"
+#pragma	ident	"$Revision: 1.30 $"
 
 #define	DISKVOLS_FILENAME "diskvols.db"	/* Disk volume database names */
 #define	DISKVOLS_VSN_DBNAME "vsn"
@@ -129,7 +129,6 @@ enum {
 
 typedef struct DiskVolumeInfo DiskVolumeInfo_t;
 typedef struct DiskVolumeInfoR45 DiskVolumeInfoR45_t;
-typedef int64_t DiskVolumeSeqnum_t;
 typedef int DiskVolumeVersionVal_t;
 typedef char DiskVolumeVersionKey_t[8];
 

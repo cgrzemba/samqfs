@@ -91,8 +91,9 @@ static CsdTable_t csdList = { 0, NULL };
 
 static void initScan(int pass, DiskVolumeSeqnum_t min);
 
-static void selectCandidates(MediaTable_t *table);
-static void selectDkCandidate(MediaTable_t *table, MediaEntry_t *vsn);
+static void selectCandidates(MediaTable_t *table, SeqNumsInUse_t *inuse);
+static void selectDkCandidate(MediaTable_t *table, MediaEntry_t *vsn,
+			    SeqNumsInUse_t *inuse);
 static void selectRmCandidate(MediaEntry_t *vsn);
 
 static long long unlinkFile(char *host, char *name);
@@ -125,6 +126,7 @@ main(
 	time_t clock;
 	char *start;
 	char ctime_buf[512];
+	SeqNumsInUse_t *seqNumsInUse = NULL;
 
 	clock = time(NULL);
 
@@ -307,6 +309,8 @@ main(
 		}
 	}
 
+	seqNumsInUse = MediaGetSeqnumsInUse(firstFs, numFs, &ArchMedia);
+
 	numWorkers = numCsd > numFs ? numCsd : numFs;
 	rval = CrewCreate(&crew, numWorkers);
 	if (rval != 0) {
@@ -349,7 +353,7 @@ main(
 		}
 
 		MediaDebug(&ArchMedia);
-		selectCandidates(&ArchMedia);
+		selectCandidates(&ArchMedia, seqNumsInUse);
 
 		seqnum += ArchMedia.mt_mapchunk;
 		pass++;
@@ -359,6 +363,8 @@ main(
 	CrewCleanup(&crew);
 	FsCleanup(firstFs, numFs);
 	CsdCleanup(&csdList);
+
+	SamFree(seqNumsInUse);
 
 	(void) LogClose();
 
@@ -390,7 +396,8 @@ initScan(
 
 static void
 selectCandidates(
-	MediaTable_t *table)
+	MediaTable_t *table,
+	SeqNumsInUse_t *inuse)
 {
 	int i;
 	MediaEntry_t *vsn;
@@ -426,7 +433,7 @@ selectCandidates(
 		}
 
 		if (vsn->me_type == DT_DISK) {
-			selectDkCandidate(table, vsn);
+			selectDkCandidate(table, vsn, inuse);
 		} else {
 			selectRmCandidate(vsn);
 		}
@@ -438,7 +445,8 @@ selectCandidates(
 static void
 selectDkCandidate(
 	MediaTable_t *table,
-	MediaEntry_t *vsn)
+	MediaEntry_t *vsn,
+	SeqNumsInUse_t *inuse)
 {
 	int rval;
 	DiskVolumeSeqnum_t seqnum;
@@ -477,7 +485,8 @@ selectDkCandidate(
 	for (idx = 0; idx <= table->mt_mapchunk; idx++) {
 		if (BT_TEST(vsn->me_bitmap, idx) == 0) {
 			seqnum = table->mt_mapmin + idx;
-			if (seqnum <= vsn->me_maxseqnum) {
+			if (seqnum <= vsn->me_maxseqnum &&
+			    !IsSeqNumInUse(seqnum, inuse)) {
 				(void) DiskVolsGenFileName(seqnum, fullpath,
 				    sizeof (fullpath));
 				CsdAssembleName((char *)dv->DvPath, fullpath,

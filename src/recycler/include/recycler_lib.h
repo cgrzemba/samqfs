@@ -1,6 +1,9 @@
 /*
- * recycler_c.h - fundamental C definitions.  Included by every
- * nrecycler and librecycler .c file.
+ * recycler_lib.h
+ *
+ * Declaration of functions which serve for work with disk archive
+ * sequence numbers that are in use by currently running arcopy
+ * processes.
  */
 
 /*
@@ -32,21 +35,23 @@
  *    SAM-QFS_notice_end
  */
 
-#ifndef RECYCLER_C_H
-#define	RECYCLER_C_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdarg.h>
-#include <strings.h>
-#include <errno.h>
-#include <pthread.h>
-#include <zlib.h>
+#ifndef	_SEQNUMS_IN_USE_H
+#define	_SEQNUMS_IN_USE_H
 
-#include <sys/types.h>
+#pragma	ident	"$Revision$"
 
-#pragma ident "$Revision: 1.8 $"
+/*
+ * Representation of sequence numbers in use by currently running arcopies.
+ */
+typedef struct SeqNumsInUse {
+	int count; /* Sequence numbers array count */
+	DiskVolumeSeqnum_t *seqnums; /* Array of sequence numbers */
+} SeqNumsInUse_t;
 
-#endif /* RECYCLER_C_H */
+SeqNumsInUse_t *GetSeqNumsInUse(char *vsn, char *fsname, SeqNumsInUse_t *inuse);
+
+boolean_t IsSeqNumInUse(DiskVolumeSeqnum_t seqnum,
+					    SeqNumsInUse_t *seqNumsInUse);
+
+#endif /* _SEQNUMS_IN_USE_H */

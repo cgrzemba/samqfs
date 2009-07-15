@@ -1733,6 +1733,7 @@ findResources(
 				strncpy(ci->CiVsn, vi->VfVsn,
 				    sizeof (ci->CiVsn));
 				ci->CiVolSpace = ci->CiSpace;
+				ci->CiSeqNum = -1;
 				drivesUsed++;
 			}
 		}

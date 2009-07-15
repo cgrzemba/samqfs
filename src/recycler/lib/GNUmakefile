@@ -1,4 +1,4 @@
-# $Revision: 1.8 $
+#pragma ident "$Revision$"
 
 #    SAM-QFS_notice_begin
 #
@@ -26,39 +26,19 @@
 #
 #    SAM-QFS_notice_end
 
+
 DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-PROG = nrecycler
+LIB = recycler
+LIB_SRC = seqnums_in_use.c
 
-DATAFILES = nrecycler.sh
-
-PROG_SRC = 		\
-	cmd.c		\
-	crew.c		\
-	csd.c		\
-	dat.c		\
-	device.c	\
-	fs.c		\
-	log.c		\
-	media.c		\
-	recycler.c
-
-DEPCFLAGS += -I../include $(THRCOMP)
-
-DIRS = ../lib
-
-SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamapi -lsamcat -lsamfs \
-	-lsamut -lsamconf -lsamrft
-PROG_LIBS =  $(SAMLIBS) $(LIBSO) $(THRLIBS) -lz -lgen -lintl -L ../lib/$(OBJ_DIR) -lrecycler
-
-LNOPTS = $(CMDS_LFLAGS32)
-LNLIBS = $(SAMLIBS)
+DEPCFLAGS += -I../include
 
 include $(DEPTH)/mk/targets.mk
 
 install: all
-	$(INSTALL) $(SYSINST) $(OBJ_DIR)/$(PROG) $(ADMDEST)/sam-$(PROG)
+	$(INSTALL) $(USERINST) $(OBJ_DIR)/librecycler.so $(LIBDEST)
 
 include $(DEPTH)/mk/depend.mk

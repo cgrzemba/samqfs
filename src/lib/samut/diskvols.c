@@ -71,6 +71,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sam/fs/ino_ext.h>
 #include <sam/dbfile.h>
 
+#include "../src/fs/include/bswap.h"
+
 /* Private data. */
 static pthread_mutex_t diskvolsMutex = PTHREAD_MUTEX_INITIALIZER;
 /*
@@ -848,7 +850,7 @@ DiskVolsGetSpaceUsed(
 	int nbytes;
 	int size;
 	struct DiskVolumeSeqnumFile buf;
-	boolean_t localConnect;
+	boolean_t localConnect, swapped = B_FALSE;
 	char *filename;
 
 	*spaceUsed = 0;
@@ -878,18 +880,27 @@ DiskVolsGetSpaceUsed(
 
 	if (retval == 0) {
 		size = sizeof (struct DiskVolumeSeqnumFile);
+
 		nbytes = SamrftRead(rftd, &buf, size);
 
-		if (nbytes == size) {
-			*spaceUsed = buf.DsUsed;
-		} else {
-			Trace(TR_ERR, "Disk archive seqnum read failed '%s', "
-			    "errno= %d", seqnumPath, errno);
-			retval = DISKVOLS_PATH_ERROR;
-
+		if (nbytes != size) {
+			Trace(TR_ERR, "Disk volume seqnum file read failed");
+			return (-1);
 		}
 
+		if (buf.DsMagic == DISKVOLS_SEQNUM_MAGIC_RE) {
+			swapped = B_TRUE;
+			sam_bswap8(&buf.DsUsed, 1);
+		} else if (buf.DsMagic != DISKVOLS_SEQNUM_MAGIC) {
+			Trace(TR_ERR, "Disk volume seqnum file magic number"
+			    " invalid");
+			return (-1);
+		}
+
+		*spaceUsed = buf.DsUsed;
+
 		(void) SamrftClose(rftd);
+
 		if (localConnect == B_TRUE) {
 			SamrftDisconnect(rftd);
 		}
@@ -1422,7 +1433,7 @@ isValidSeqnumFile(
 	struct DiskVolumeInfo *dv,
 	void *sam_rft)
 {
-	boolean_t valid_seqnum;
+	boolean_t valid_seqnum, swapped = B_FALSE;
 	int rval;
 	struct DiskVolumeSeqnumFile buf;
 	size_t size;
@@ -1448,9 +1459,15 @@ isValidSeqnumFile(
 		size = sizeof (struct DiskVolumeSeqnumFile);
 		nbytes = SamrftRead(sam_rft, &buf, size);
 
-		if (nbytes == size &&
-		    (buf.DsMagic == DISKVOLS_SEQNUM_MAGIC ||
-		    buf.DsMagic == DISKVOLS_SEQNUM_MAGIC_RE)) {
+		if (nbytes == size) {
+			if (buf.DsMagic == DISKVOLS_SEQNUM_MAGIC_RE) {
+				swapped = B_TRUE;
+			} else if (buf.DsMagic != DISKVOLS_SEQNUM_MAGIC) {
+				Trace(TR_ERR, "Disk volume seqnum file magic"
+				    " number invalid");
+				return (-1);
+			}
+
 			/*
 			 * Valid seqnum file. Check if auditing.
 			 */
@@ -1479,6 +1496,10 @@ isValidSeqnumFile(
 					(void) SamrftClose(sam_rft);
 					errFunc = "seek";
 					goto err;
+				}
+
+				if (swapped) {
+					sam_bswap8(&buf.DsUsed, 1);
 				}
 
 				nbytes = SamrftWrite(sam_rft, &buf, size);

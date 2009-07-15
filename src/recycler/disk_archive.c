@@ -76,6 +76,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
 /* Local headers. */
 #include "recycler.h"
+#include "recycler_lib.h"
 
 
 typedef struct dirHandle {
@@ -134,14 +135,12 @@ static struct {
 
 static void setDiskArchiveStats(VSN_TABLE *vsn);
 static void insertDiskVol(ROBOT_TABLE *robot, vsn_t vsn);
-
 static void recycle(VSN_TABLE *vsn);
-
 static void recycleSeqNumbers(ROBOT_TABLE *robot, VSN_TABLE *vsn);
 static void accumulateSeqNumbers(VSN_TABLE *vsn, struct sam_fs_info *fsp,
 	seqEntry_t *buffer, DiskVolumeSeqnum_t seqnum);
-
-static long long removeSeqNumbers(DiskVolumeSeqnum_t seqnum, VSN_TABLE *vsn);
+static long long removeSeqNumbers(DiskVolumeSeqnum_t seqnum, VSN_TABLE *vsn,
+	SeqNumsInUse_t *seqNumsInUse);
 static long long selectDrainCandidates(DiskVolumeSeqnum_t seqnum,
 	long long dataquantity, boolean_t limitquantity,
 	int obs, char *volName);
@@ -150,7 +149,6 @@ static long long emptyTarFile(DiskVolumeSeqnum_t seqnum, char *volName);
 static long long statTarFile(DiskVolumeSeqnum_t seqnum);
 static long long deleteObject(DiskVolumeSeqnum_t seqnum, char *volName);
 static int deleteMetadataRecord(hc_oid *oid);
-
 static void unlinkFile(char *file_name);
 static char *genSeqNumberFileName(DiskVolumeSeqnum_t seqnum);
 static char *gobbleName(char *path, char d_name[1]);
@@ -569,6 +567,7 @@ recycleSeqNumbers(
 	boolean_t limitquantity = robot->limit_quantity;
 	int obs = robot->obs;
 	DiskVolumeSeqnum_t maxSeqnum;
+	SeqNumsInUse_t *seqNumsInUse = NULL;
 
 	maxSeqnum = vsn->maxSeqnum;
 	if (maxSeqnum == -1) {
@@ -592,6 +591,8 @@ recycleSeqNumbers(
 		memset(buffer, 0, seqNumbers.alloc);
 		for (i = 0, fsp = first_fs; i < num_fs; i++, fsp++) {
 			accumulateSeqNumbers(vsn, fsp, buffer, curSeqnum);
+			seqNumsInUse = GetSeqNumsInUse(vsn->vsn, fsp->fi_name,
+			    seqNumsInUse);
 		}
 
 		/*
@@ -605,7 +606,7 @@ recycleSeqNumbers(
 		 * active files, check if files should be rearchived.
 		 */
 
-		removed_space = removeSeqNumbers(curSeqnum, vsn);
+		removed_space = removeSeqNumbers(curSeqnum, vsn, seqNumsInUse);
 
 		if (ignoreRecycling == B_FALSE && removed_space > 0) {
 			int rval;
@@ -663,6 +664,7 @@ recycleSeqNumbers(
 	/*
 	 * Free workspace used.
 	 */
+	SamFree(seqNumsInUse);
 	SamFree(seqNumbers.data);
 }
 
@@ -821,7 +823,9 @@ accumulateSeqNumbers(
 static long long
 removeSeqNumbers(
 	DiskVolumeSeqnum_t seqnum,
-	VSN_TABLE *vsn)
+	VSN_TABLE *vsn,
+	SeqNumsInUse_t *seqNumsInUse
+)
 {
 	int i;
 	long long removed_space = 0;
@@ -833,7 +837,8 @@ removeSeqNumbers(
 	    volName, seqnum, seqnum + seqNumbers.entries - 1);
 
 	for (i = 0; i < seqNumbers.entries; i++) {
-		if (seqNumbers.data[i].has_active_files == B_FALSE) {
+		if (seqNumbers.data[i].has_active_files == B_FALSE &&
+		    !IsSeqNumInUse(i + seqnum, seqNumsInUse)) {
 			if (IS_DISK_HONEYCOMB(vsn->media)) {
 				removed_space +=
 				    deleteObject(i + seqnum, volName);
@@ -1217,6 +1222,7 @@ updateSpaceUsed(
 	char *filename;
 	DiskVolumeSeqnum_t seqnum = -1;
 	size_t size = sizeof (struct DiskVolumeSeqnumFile);
+	boolean_t swapped = B_FALSE;
 
 	filename = DISKVOLS_SEQNUM_FILENAME;
 	if (DISKVOLS_IS_HONEYCOMB(diskVolume)) {
@@ -1235,7 +1241,8 @@ updateSpaceUsed(
 		nbytes = SamrftRead(rft, &buf, size);
 		if (nbytes == size) {
 			if (buf.DsMagic == DISKVOLS_SEQNUM_MAGIC_RE) {
-				sam_bswap8(&seqnum, 1);
+				swapped = TRUE;
+				sam_bswap8(&buf.DsUsed, 1);
 			} else if (buf.DsMagic != DISKVOLS_SEQNUM_MAGIC) {
 				LibFatal(updateSpacedUsed, "magic");
 			}
@@ -1255,6 +1262,10 @@ updateSpaceUsed(
 
 		Trace(TR_MISC, "[%s] Update used to %lld bytes (%s)",
 		    volName, buf.DsUsed, StrFromFsize(buf.DsUsed, 3, NULL, 0));
+
+		if (swapped) {
+			sam_bswap8(&buf.DsUsed, 1);
+		}
 
 		/*
 		 * Prepare for write, rewind the file.

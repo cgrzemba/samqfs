@@ -239,11 +239,13 @@ DkGetVolumeSeqnum(
 		    " magic number invalid", ScrPath);
 		return (-1);
 	}
+
 	DsVal++;
 	if (DsVal > DISKVOLS_SEQNUM_MAX_VALUE) {
 		Trace(TR_ERR, "Disk volume seqnum file %s, overflow", ScrPath);
 		return (-1);
 	}
+
 	buf.DsVal = DsVal;
 	if (swapped) {
 		sam_bswap8(&buf.DsVal, 1);
@@ -272,6 +274,8 @@ DkGetVolumeSeqnum(
 		return (-1);
 	}
 	(void) SamrftClose(RemoteArchive.rft);
+
+	Instance->CiSeqNum = DsVal;
 
 	return (DsVal);
 }
@@ -383,6 +387,7 @@ DkUpdateVolumeSeqnum(
 	int	nbytes;
 	int	rc;
 	struct VolsEntry *ve;
+	boolean_t swapped = B_FALSE;
 
 	ve = &VolsTable->entry[VolCur];
 
@@ -408,17 +413,13 @@ DkUpdateVolumeSeqnum(
 		LibFatal(read, ScrPath);
 	}
 
-	/*
-	 * since we don't actually use any values here we can
-	 * save a byte swap.  If in the future we modify or
-	 * use any values from the file, we'll have to swap
-	 * and then reswap before updating.
-	 */
-	if ((buf.DsMagic != DISKVOLS_SEQNUM_MAGIC) &&
-	    (buf.DsMagic != DISKVOLS_SEQNUM_MAGIC_RE)) {
+	if (buf.DsMagic == DISKVOLS_SEQNUM_MAGIC_RE) {
+		swapped = B_TRUE;
+		sam_bswap8(&buf.DsUsed, 1);
+	} else if (buf.DsMagic != DISKVOLS_SEQNUM_MAGIC) {
 		Trace(TR_ERR, "Disk volume seqnum file %s,"
 		    " magic number invalid", ScrPath);
-		return;
+		LibFatal(DkUpdateVolumeSeqnum, ScrPath);
 	}
 
 	Trace(TR_DEBUG,
@@ -433,6 +434,10 @@ DkUpdateVolumeSeqnum(
 	    "Disk volume '%s' update used to %lld bytes (%s) recycle: %lld",
 	    ve->Vi.VfVsn, buf.DsUsed, StrFromFsize(buf.DsUsed, 3, NULL, 0),
 	    buf.DsRecycle);
+
+	if (swapped) {
+		sam_bswap8(&buf.DsUsed, 1);
+	}
 
 	/*
 	 * Prepare for write, rewind the file.
@@ -450,7 +455,10 @@ DkUpdateVolumeSeqnum(
 	if (SamrftFlock(RemoteArchive.rft, F_UNLCK) < 0) {
 		LibFatal(SamrftFlock, "unlock");
 	}
+
 	(void) SamrftClose(RemoteArchive.rft);
+
+	Instance->CiSeqNum = -1;
 }
 
 

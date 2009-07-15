@@ -34,6 +34,8 @@
 #ifndef RECYCLER_H
 #define	RECYCLER_H
 
+#include "recycler_lib.h"
+
 #define	RECYCLER_DIRNAME	"nrecycler"
 #define	RECYCLER_CMD_FILNAME	"nrecycler.cmd"
 #define	RECYCLER_SCRIPT_FILNAME "nrecycler.sh"
@@ -359,5 +361,7 @@ DiskVolumeSeqnum_t MediaGetSeqnum(MediaTable_t *table);
 void MediaSetSeqnum(MediaTable_t *table, DiskVolumeSeqnum_t min,
 	boolean_t diskArchive);
 void MediaDebug(MediaTable_t *table);
+SeqNumsInUse_t *MediaGetSeqnumsInUse(struct sam_fs_info *firstFs,
+    int numFs, MediaTable_t *table);
 
 #endif /* RECYCLER_H */

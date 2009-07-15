@@ -36,7 +36,7 @@
 #ifndef _AML_ARCHREQ_H
 #define	_AML_ARCHREQ_H
 
-#pragma ident "$Revision: 1.47 $"
+#pragma	ident	"$Revision: 1.47 $"
 
 /* Macros. */
 #define	ARCHREQ_MAGIC 0122031022	/* ArchReq file magic number */
@@ -123,7 +123,6 @@ struct ArchReq {
 		ushort_t CiFlags;
 		OwnerName_t CiOwner;	/* Reserve VSN owner name */
 		char	CiOprmsg[OPRMSG_SIZE];
-
 		int	CiAln;		/* Archive Library number */
 		int	CiLibDev;	/* Library device entry offset */
 		int	CiRmFn;		/* Removable media file number */
@@ -131,6 +130,7 @@ struct ArchReq {
 		mtype_t	CiMtype;	/* Media type of volume being written */
 		vsn_t	CiVsn;		/* VSN of volume being written */
 		fsize_t CiVolSpace;	/* Space available on volume */
+		DiskVolumeSeqnum_t CiSeqNum; /* Arcopy's sequence number */
 	} ArCpi[1];			/* Arcopy instance ([n] = ArDrives) */
 
 	/* Dynamic array of FileInfo entries */

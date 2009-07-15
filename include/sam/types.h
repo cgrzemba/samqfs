@@ -269,4 +269,6 @@ typedef enum sam_round {
 	SAM_ROUND_UP = 1
 } sam_round_t;
 
+typedef int64_t DiskVolumeSeqnum_t;
+
 #endif /* _SAM_TYPES_H */
