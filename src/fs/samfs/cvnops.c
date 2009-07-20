@@ -2124,12 +2124,22 @@ sam_putpage_vn(
 	}
 
 	/*
+	 * If file system is under Sun Cluster management, and we are
+	 * panicking, do not sync.  Sun Cluster will have fenced our
+	 * disks and (if a client) our socket to server will be closed,
+	 * and we may get stuck forever without a dump.
+	 */
+	ip = SAM_VTOI(vp);
+	if (panicstr && (ip->mp->mt.fi_config1 & MC_CLUSTER_MGMT)) {
+		return (0);
+	}
+
+	/*
 	 * If the vnode is stale, we would need to invalidate all
 	 * the pages of the vnode. Incoming request is changed to
 	 * address all the pages of the vnode. B_ASYNC flag is cleared
 	 * to prevent unnecessary extra processing as the vnode is stale.
 	 */
-	ip = SAM_VTOI(vp);
 	if (SAM_VP_IS_STALE(vp)) {
 		offset = 0;
 		length = 0;

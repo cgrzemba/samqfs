@@ -98,6 +98,18 @@ sam_update_filsys(
 	boolean_t force_update;
 
 	/*
+	 * If file system is under Sun Cluster management, and we are
+	 * panicking, do not sync.  Sun Cluster will have fenced our
+	 * disks and (if a client) our socket to server will be closed,
+	 * and we may get stuck forever without a dump.
+	 */
+	if (panicstr && (mp->mt.fi_config1 & MC_CLUSTER_MGMT)) {
+		cmn_err(CE_NOTE, "SAM-QFS: sam_update_filsys: %s skipped "
+		    "sync due to clustermgmt & panic", mp->mt.fi_name);
+		return (0);
+	}
+
+	/*
 	 * For shared client in a shared file system, update superblock
 	 * for df. For shared client, sync pages, but notify server of
 	 * inode changes. If umounting, wait forever for server response.
