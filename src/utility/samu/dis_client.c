@@ -85,7 +85,7 @@ static struct sam_client_info 	*fclient = NULL;
  *  bit definitions - see src/fs/include/client.h
  */
 #define	SAM_CLIENT_DEAD	0x01	/* Client assumed dead during failover */
-#define	SAM_CLIENT_INOP	0x02	/* Don't hold up failover (client known dead) */
+#define	SAM_CLIENT_SC_DOWN	0x02	/* Sun cluster reported node down */
 #define	SAM_CLIENT_SOCK_BLOCKED	0x04	/* Writing to client returned EAGAIN */
 #define	SAM_CLIENT_OFF_PENDING	0x08	/* Client transitioning to OFF */
 #define	SAM_CLIENT_OFF		0x10	/* Client marked OFF in hosts file */
@@ -93,7 +93,7 @@ static struct sam_client_info 	*fclient = NULL;
 
 static sam_flagtext_t cflagsTable[] = {
     SAM_CLIENT_DEAD, "DEAD",	/* Client assumed dead during failover */
-    SAM_CLIENT_INOP, "INOP",	/* Don't hold up failover (client known dead) */
+    SAM_CLIENT_SC_DOWN, "SC_DOWN",	/* Sun cluster reported down */
     SAM_CLIENT_SOCK_BLOCKED, "BLOCKED", /* Writing to client returned EAGAIN */
     SAM_CLIENT_OFF_PENDING, "OFF_PENDING", /* Client transitioning to OFF */
     SAM_CLIENT_OFF, "OFF",	/* Client marked off in hosts file */
@@ -198,7 +198,7 @@ DisClients()
 				}
 				if (fc->cl_flags & SAM_CLIENT_DEAD) {
 					strcpy(extra+16, "DEAD ");
-				} else if (fc->cl_flags & SAM_CLIENT_INOP) {
+				} else if (fc->cl_flags & SAM_CLIENT_SC_DOWN) {
 					strcpy(extra+16, "DOWN ");
 				}
 				Mvprintw(ln++, 0,

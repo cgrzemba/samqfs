@@ -76,7 +76,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
  *  Client status bit definitions - see src/fs/include/client.h
  */
 #define	SAM_CLIENT_DEAD 0x01    /* Client assumed dead during failover */
-#define	SAM_CLIENT_INOP 0x02    /* client known dead */
+#define	SAM_CLIENT_SC_DOWN 0x02    /* client known dead */
 #define	SAM_CLIENT_SOCK_BLOCKED 0x04    /* Writing to client returned EAGAIN */
 #define	SAM_CLIENT_OFF_PENDING  0x08	/* Client transitioning to OFF */
 #define	SAM_CLIENT_OFF  0x10		/* Client marked OFF in hosts file */
@@ -1667,7 +1667,7 @@ char **kv_string) {
 			goto err;
 		}
 
-		if (clnt->cl_flags & SAM_CLIENT_INOP) {
+		if (clnt->cl_flags & SAM_CLIENT_SC_DOWN) {
 			cur_sz = strlcat(buf, ",error=gone",
 			    buf_sz);
 		}

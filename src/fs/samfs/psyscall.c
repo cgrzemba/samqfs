@@ -1895,12 +1895,6 @@ sam_get_fsclistat(
 		for (i = 1; i <= args.maxcli; i++, cl++) {
 			clp = sam_get_client_entry(mp, i, 0);
 			if (clp) {
-				if ((clp->cl_status & FS_MOUNTED) &&
-				    !(clp->cl_status & FS_SERVER) &&
-				    ((lbolt - clp->cl_msg_time)/hz >
-				    (4 * SAM_MIN_DELAY))) {
-					clp->cl_flags |= SAM_CLIENT_NOT_RESP;
-				}
 				bcopy(clp->hname, clx.hname, sizeof (upath_t));
 				clx.cl_status = clp->cl_status;
 				clx.cl_config = clp->cl_config;

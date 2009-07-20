@@ -645,6 +645,7 @@ signalWaiter(char *fs_name)
 			ShutdownDaemon = TRUE;
 		}
 		DoUpdate(fs_name);
+		SetClusterInfo(fs_name);
 	}
 	return (ret);
 }

@@ -2371,7 +2371,7 @@ sam_sys_shareops(void *arg, int size, cred_t *credp, int *rvp)
 			break;
 
 #ifdef METADATA_SERVER
-		case SHARE_OP_HOST_INOP:
+		case SHARE_OP_HOST_SC_DOWN:
 			/*
 			 * The client host is DOWN.  Don't wait around for
 			 * it to connect.
@@ -2398,9 +2398,11 @@ sam_sys_shareops(void *arg, int size, cred_t *credp, int *rvp)
 				break;
 			}
 
-			clp->cl_flags |= SAM_CLIENT_INOP;
+			clp->cl_flags |= SAM_CLIENT_SC_DOWN;
 			mutex_exit(&mp->ms.m_cl_wrmutex);
 
+			TRACE(T_SAM_CLNT_SC_DOWN, NULL,
+			    args.host, 1, clp->cl_flags);
 			break;
 
 		case SHARE_OP_CL_MOUNTED:

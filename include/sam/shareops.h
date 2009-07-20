@@ -40,7 +40,7 @@
 #define	SHARE_OP_AWAIT_WAKEUP		3	/* await FS sharedaemon wake */
 #define	SHARE_OP_AWAIT_FAILDONE		4	/* block 'til failover */
 						/* complete */
-#define	SHARE_OP_HOST_INOP		5	/* not needed to finish */
+#define	SHARE_OP_HOST_SC_DOWN		5	/* cluster client down */
 						/* failover */
 #define	SHARE_OP_CL_MOUNTED		6	/* # of clients mounted */
 

@@ -582,6 +582,14 @@ samfs_mount(
 			    mp->mt.fi_name, result);
 		}
 	}
+
+	/*
+	 * Start up client monitoring task if shared server
+	 */
+	if (SAM_IS_SHARED_SERVER(mp)) {
+		sam_taskq_add(sam_update_client_status, mp,
+		    NULL, SAM_MIN_DELAY * hz);
+	}
 #endif /* METADATA_SERVER */
 
 	/*

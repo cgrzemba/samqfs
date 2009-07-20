@@ -176,6 +176,7 @@ int sam_init_inode(sam_mount_t *mp);
 void sam_resync_server(sam_schedule_entry_t *entry);
 void sam_expire_client_leases(sam_schedule_entry_t *entry);
 void sam_expire_server_leases(sam_schedule_entry_t *entry);
+void sam_clear_server_leases(sam_mount_t *mp, int cl_ord);
 void sam_sched_expire_server_leases(sam_mount_t *mp, clock_t ticks,
 	boolean_t force);
 void sam_wait_release_blk_list(struct sam_mount *mp);
@@ -624,6 +625,7 @@ int sam_shared_failover(sam_mount_t *mp, enum MOUNT_operation cmd, int ord);
 void sam_failover_old_server(sam_mount_t *mp, char *server, cred_t *credp);
 void sam_notify_staging_clients(sam_node_t *ip);
 int sam_onoff_client(void *arg, int size, cred_t *credp);
+void sam_update_client_status(sam_schedule_entry_t *entry);
 
 
 /* syscall.c function prototypes. */

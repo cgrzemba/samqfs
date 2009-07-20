@@ -840,10 +840,10 @@ SetClusterInfo(char *fs)
 		if (hstate[i] == 1) {
 			Trace(TR_MISC, "FS %s: host '%s': DOWN",
 			    fs, hosts[i][HOSTS_NAME]);
-			r = sam_shareops(fs, SHARE_OP_HOST_INOP, i+1);
+			r = sam_shareops(fs, SHARE_OP_HOST_SC_DOWN, i+1);
 			if (r < 0) {
 				SysError(HERE, "FS %s: "
-				    "sam_shareops('%s', HOST_INOP, '%s') "
+				    "sam_shareops('%s', HOST_SC_DOWN, '%s') "
 				    "failed",
 				    Host.fs.fi_name, Host.fs.fi_name,
 				    hosts[i][HOSTS_NAME]);

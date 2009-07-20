@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/t_lock.h>
+#include <sys/flock.h>
 #include <sys/sysmacros.h>
 #include <sys/errno.h>
 #include <sys/cmn_err.h>
@@ -106,6 +107,7 @@ void sam_release_vnodes(sam_schedule_entry_t *entry);
 static void sam_release_blocks(sam_mount_t *mp, sam_fb_pool_t *fbp, int bt,
 	int active);
 static void sam_drain_blocks(sam_mount_t *mp);
+static void sam_compact_lease_clients(struct sam_lease_ino *);
 
 #define	SAM_RECLAIM_DEFAULT_SECS 120
 
@@ -364,6 +366,7 @@ sam_release_vnodes(sam_schedule_entry_t *entry)
 	}
 }
 
+
 static void
 sam_process_lease_times(ushort_t *initial_leases, ushort_t *remaining_leases,
     int *expired, int *time_valid, clock_t *min_ltime, clock_t now,
@@ -393,6 +396,24 @@ sam_process_lease_times(ushort_t *initial_leases, ushort_t *remaining_leases,
 				    llp->lease[i].time[ltype]);
 				*time_valid = 1;
 			}
+		}
+	}
+
+	/* Non-expiring release (except truncate) for dead cluster clients */
+	lease_mask = SAM_NON_EXPIRING_LEASES & ~CL_TRUNCATE;
+	if (*remaining_leases & lease_mask) {
+		client_entry_t *clp;
+		sam_node_t *ip;
+		ip = llp->ip;
+		clp = sam_get_client_entry(ip->mp, llp->lease[i].client_ord, 0);
+		if (clp != NULL && (clp->cl_flags & SAM_CLIENT_SC_DOWN)) {
+			/* Clean up frlocks */
+			if (*remaining_leases & CL_FRLOCK) {
+				cleanlocks(SAM_ITOV(ip), IGN_PID,
+				    llp->lease[i].client_ord);
+			}
+			*remaining_leases &= ~lease_mask;
+			/* We don't want callbacks so don't set expired here */
 		}
 	}
 }
@@ -594,57 +615,12 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 		/*
 		 * Remove the expired client entries from this inode.  (If we're
 		 * forcing expiration, we already know that there won't be any
-		 * left, so we don't need to compact the array.)
-		 *
-		 * To minimize copying, we pull entries from the end (skipping
-		 * expired entries) to fill in any expired entries elsewhere.
+		 * left, so we don't need to compact the clients.)
 		 */
-
 		if (forced_expiration) {
 			llp->no_clients = 0;
 		} else {
-			for (i = 0; i <= (llp->no_clients - 1); i++) {
-				int j;
-
-				/*
-				 * Lease still active?  Go on to check the next.
-				 */
-
-				if ((llp->lease[i].leases != 0) ||
-				    (llp->lease[i].wt_leases != 0)) {
-					continue;
-				}
-
-				/*
-				 * Find a non-expired lease towards the end of
-				 * the array.
-				 */
-
-				for (j = (llp->no_clients - 1); j > i; j--) {
-					if ((llp->lease[j].leases == 0) &&
-					    (llp->lease[j].wt_leases == 0)) {
-						llp->no_clients--;
-					} else {
-						break;
-					}
-				}
-
-				/* Account for this expired lease. */
-
-				llp->no_clients--;
-
-				/* If we found no more leases, we're done. */
-
-				if (j == i) {
-					break;
-				}
-
-				/*
-				 * We found a lease, move it to this location.
-				 */
-
-				llp->lease[i] = llp->lease[j];
-			}
+			sam_compact_lease_clients(llp);
 		}
 
 		mutex_exit(&ip->ilease_mutex);
@@ -873,6 +849,64 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 	TRACE(T_SAM_SR_EXPIRE_RET, mp, 0, mp->mt.fi_status, 0);
 }
 
+/*
+ * ----- sam_clear_server_leases - clear leases for a particular client
+ *
+ * Removes all leases for the provided client.  It is assumed that the
+ * client is in a known clean state (e.g. mounting).
+ *
+ * No callouts are performed for either the provided client, or clients who
+ * may be waiting for the lease.  Clients waiting for a lease will retry.
+ * Any frlock lease will have the corresponding locks cleaned.
+ * Additional clean-up (e.g. vnode release) will occur in
+ * sam_expire_server_leases.
+ */
+void
+sam_clear_server_leases(sam_mount_t *mp, int cl_ord)
+{
+	sam_node_t *ip;
+	struct sam_lease_ino *llp;
+	int i;
+	int num_cleared = 0;
+
+	TRACE(T_SAM_LEASE_CLEAR, NULL, cl_ord, 0, 0);
+
+	mutex_enter(&mp->mi.m_lease_mutex);
+	llp = (sam_lease_ino_t *)mp->mi.m_sr_lease_chain.forw;
+	while (llp != NULL &&
+	    llp != (sam_lease_ino_t *)(void *)&mp->mi.m_sr_lease_chain) {
+		ip = llp->ip;
+
+		mutex_enter(&ip->ilease_mutex);
+		for (i = 0; i < llp->no_clients; i++) {
+			if (llp->lease[i].client_ord != cl_ord) {
+				continue;
+			}
+
+			if (llp->lease[i].leases != 0 ||
+			    llp->lease[i].wt_leases != 0) {
+				/* Clean-up locks for the client */
+				if (llp->lease[i].leases & CL_FRLOCK) {
+					cleanlocks(SAM_ITOV(ip), IGN_PID,
+					    llp->lease[i].client_ord);
+				}
+
+				llp->lease[cl_ord].leases = 0;
+				llp->lease[cl_ord].wt_leases = 0;
+				sam_compact_lease_clients(llp);
+				num_cleared++;
+			}
+			break;
+		}
+		mutex_exit(&ip->ilease_mutex);
+
+		llp = llp->lease_chain.forw;
+	}
+	mutex_exit(&mp->mi.m_lease_mutex);
+
+	TRACE(T_SAM_LEASE_CLEAR_RET, NULL, cl_ord, num_cleared, 0);
+}
+
 
 /*
  * Schedule a run of sam_expire_server_leases if there is not one running
@@ -986,8 +1020,8 @@ sam_resync_server(sam_schedule_entry_t *entry)
 	 * previous server have sent the MOUNT_resync message, then
 	 * a fast failover can occur.
 	 *
-	 * We may also have been informed (via Sun Cluster or other
-	 * agency) that some hosts are INOP; we shouldn't allow the
+	 * We may also have been informed via Sun Cluster
+	 * that some hosts are SC_DOWN; we shouldn't allow the
 	 * absence of any message(s) from such hosts to delay the
 	 * failover.
 	 *
@@ -1022,7 +1056,7 @@ sam_resync_server(sam_schedule_entry_t *entry)
 		}
 
 		if (!mp->ms.m_involuntary || ord != mp->ms.m_prev_srvr_ord) {
-			if ((clp->cl_flags & SAM_CLIENT_INOP) == 0) {
+			if ((clp->cl_flags & SAM_CLIENT_SC_DOWN) == 0) {
 				/*
 				 * Sun Cluster hasn't notified us that this host
 				 * is down, so we should try to wait for it.
@@ -1070,9 +1104,6 @@ sam_resync_server(sam_schedule_entry_t *entry)
 			    mp->mt.fi_name, clp->hname, delay);
 		}
 	}
-
-
-
 					}
 				}
 			} else {
@@ -1654,5 +1685,55 @@ sam_release_blocks(
 		TRANS_INODE(mp, ip);
 		ip->flags.b.updated = 1;
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
+	}
+}
+
+/*
+ * ----- sam_compact_lease_clients - remove expired clients from inode
+ * inode ilease_mutex must be held
+ *
+ * To minimize copying, we pull entries from the end (skipping
+ * expired entries) to fill in any expired entries elsewhere.
+ */
+static void
+sam_compact_lease_clients(struct sam_lease_ino *llp)
+{
+	int i, j;
+
+	ASSERT(MUTEX_HELD(&llp->ip->ilease_mutex));
+	for (i = 0; i <= (llp->no_clients - 1); i++) {
+		/*
+		 * Lease still active?  Go on to check the next.
+		 */
+		if ((llp->lease[i].leases != 0) ||
+		    (llp->lease[i].wt_leases != 0)) {
+			continue;
+		}
+
+		/*
+		 * Find a non-expired lease towards the end of
+		 * the array.
+		 */
+		for (j = (llp->no_clients - 1); j > i; j--) {
+			if ((llp->lease[j].leases == 0) &&
+			    (llp->lease[j].wt_leases == 0)) {
+				llp->no_clients--;
+			} else {
+				break;
+			}
+		}
+
+		/* Account for this expired lease. */
+		llp->no_clients--;
+
+		/* If we found no more leases, we're done. */
+		if (j == i) {
+			break;
+		}
+
+		/*
+		 * We found a lease, move it to this location.
+		 */
+		llp->lease[i] = llp->lease[j];
 	}
 }

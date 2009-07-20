@@ -191,6 +191,11 @@ sam_share_mount(
 		goto out;
 	}
 
+	if (mp->mt.fi_status & (FS_MOUNTED|FS_MOUNTING)) {
+		error = EBUSY;
+		goto out;
+	}
+
 	/*
 	 * For now, use secpolicy_fs_config() until the build server is
 	 * updated.	 The real routine to use is secpolicy_fs_owner().

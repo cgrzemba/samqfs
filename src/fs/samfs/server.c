@@ -693,14 +693,27 @@ sam_get_mount_request(sam_mount_t *mp, sam_san_message_t *msg)
 			clp->hostid = msg->hdr.hostid;
 			clp->cl_resync_time = 0;
 
-			/*
-			 * The client sends the MOUNT_resync to signal the end
-			 * of the client thawing phase.
-			 */
-			if ((msg->hdr.operation == MOUNT_resync) ||
-			    (msg->hdr.operation == MOUNT_status)) {
+			switch (msg->hdr.operation) {
+			case MOUNT_init:
+				/* Clear SC_DOWN (can't be if we're here) */
+				if (clp->cl_flags & SAM_CLIENT_SC_DOWN) {
+					clp->cl_flags &= ~SAM_CLIENT_SC_DOWN;
+					TRACE(T_SAM_CLNT_SC_DOWN, NULL,
+					    ord, 0, clp->cl_flags);
+				}
+				/* Clear any leases from a previous mount */
+				sam_clear_server_leases(mp, ord);
+				break;
+			case MOUNT_resync:
+			case MOUNT_status:
+				/*
+				 * The client sends the MOUNT_resync to signal
+				 * the end of the client thawing phase.
+				 */
 				clp->cl_resync_time = lbolt;
+				break;
 			}
+
 			error = 0;
 			break;
 		}

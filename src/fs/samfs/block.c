@@ -1926,13 +1926,9 @@ sam_change_state(
 				clp = sam_get_client_entry(mp, i, 0);
 				if (clp == NULL ||
 				    clp->cl_sh.sh_fp == NULL ||
-				    ((clp->cl_status & FS_MOUNTED) == 0) ||
-				    (clp->cl_status & FS_SERVER)) {
-					continue;
-				}
-				if ((lbolt - clp->cl_msg_time)/hz >
-				    (4 * SAM_MIN_DELAY)) {
-					clp->cl_flags |= SAM_CLIENT_NOT_RESP;
+				    !(clp->cl_status & FS_MOUNTED) ||
+				    (clp->cl_status & FS_SERVER) ||
+				    (clp->cl_flags & SAM_CLIENT_NOT_RESP)) {
 					continue;
 				}
 

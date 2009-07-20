@@ -270,9 +270,7 @@ sam_set_server(
 	TRACE(T_SAM_BEGSRVR, mp, mp->mt.fi_status, args.ord,
 	    mp->ms.m_server_ord);
 
-	/*
-	 * Reset lists of known dead/inop clients.
-	 */
+	/* Reset client status flags. */
 	mutex_enter(&mp->ms.m_cl_wrmutex);
 	if (mp->ms.m_clienti != NULL) {
 		for (ord = 1; ord <= mp->ms.m_maxord; ord++) {
@@ -281,8 +279,8 @@ sam_set_server(
 				continue;
 			}
 			clp->cl_flags &=
-			    ~(SAM_CLIENT_INOP | SAM_CLIENT_DEAD |
-			    SAM_CLIENT_SOCK_BLOCKED);
+			    ~(SAM_CLIENT_SC_DOWN | SAM_CLIENT_DEAD |
+			    SAM_CLIENT_SOCK_BLOCKED | SAM_CLIENT_NOT_RESP);
 		}
 	}
 	mutex_exit(&mp->ms.m_cl_wrmutex);
@@ -974,6 +972,8 @@ sam_failover_new_server(sam_mount_t *mp, cred_t *credp)
 		    mp->mt.fi_name);
 	}
 
+	sam_taskq_add(sam_update_client_status, mp, NULL, SAM_MIN_DELAY * hz);
+
 	(void) dnlc_purge_vfsp(vfsp, 0);
 
 	TRACE(T_SAM_FAIL_NEW4, mp, mp->mt.fi_status, mp->ms.m_sharefs.busy,
@@ -1355,5 +1355,67 @@ sam_onoff_client_delay(
 	}
 	if (off_pending > 0) {
 		sam_taskq_add(sam_onoff_client_delay, mp, NULL, hz / 2);
+	}
+}
+
+/*
+ * ----- sam_update_client_status - periodically updates client status flags
+ *
+ * Update client status flags (e.g. SAM_CLIENT_NOT_RESP) for the
+ * mount point specified in the schedule entry.  This function will reschedule
+ * itself if the mount point is still mounted and we are the active server.
+ */
+void
+sam_update_client_status(sam_schedule_entry_t *entry)
+{
+	sam_mount_t *mp = entry->mp;
+	client_entry_t *clp;
+	int ord;
+	boolean_t notify_sharefsd = B_FALSE;
+
+	if (mp->mt.fi_status & (FS_UMOUNT_IN_PROGRESS | FS_FAILOVER)) {
+		goto out;
+	}
+
+	mutex_enter(&mp->ms.m_cl_wrmutex);
+	if (mp->ms.m_clienti != NULL) {
+		for (ord = 1; ord <= mp->ms.m_max_clients; ord++) {
+			clp = sam_get_client_entry(mp, ord, 0);
+			if (clp == NULL ||
+			    !(clp->cl_status & FS_MOUNTED) ||
+			    clp->cl_status & FS_SERVER) {
+				continue;
+			}
+
+			if (((clp->cl_flags & SAM_CLIENT_NOT_RESP) == 0) &&
+			    (lbolt - clp->cl_msg_time)/hz >
+			    (4 * SAM_MIN_DELAY)) {
+				clp->cl_flags |= SAM_CLIENT_NOT_RESP;
+				notify_sharefsd = B_TRUE;
+			}
+		}
+	}
+	mutex_exit(&mp->ms.m_cl_wrmutex);
+
+	/*
+	 * We notify sharefsd daemon if we found clients not responding.
+	 * Sharefsd will check the client cluster status.
+	 */
+	if (notify_sharefsd) {
+		sam_wake_sharedaemon(mp, EINTR);
+	}
+
+out:
+	mutex_enter(&samgt.schedule_mutex);
+	sam_taskq_remove(entry); /* Releases schedule_mutex */
+
+	/*
+	 * Reschedule if we are still mounted and shared server.  If an
+	 * unmount or failover is in progress taskq_add will not schedule
+	 * the task because the schedule exit flag would be set.
+	 */
+	if ((mp->mt.fi_status & FS_MOUNTED) && SAM_IS_SHARED_SERVER(mp)) {
+		sam_taskq_add(sam_update_client_status, mp,
+		    NULL, SAM_MIN_DELAY * hz);
 	}
 }
