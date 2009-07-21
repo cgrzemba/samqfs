@@ -86,6 +86,19 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #define	DK_VOLUME_USABLE(dv) (!((dv)->DvFlags & DK_VOL_UNUSABLE_STATUS) && \
 		dkVolSpace(dv) != 0)
 
+/* Test whether the volume is blank. */
+#define	IS_BLANK(ce) (((ce)->CeLabelTime == 0) && (*(ce)->CeVsn != '\0'))
+
+/* Test whether the volume was currently recycled and/or labeled. */
+#define	IS_LABELED_AND_EMPTY(ce) (!IS_BLANK(ce) && \
+		    ((ce)->CeStatus & CES_labeled) && \
+		    ((ce)->CeStatus & CES_empty))
+
+/* Test whether the volume is labeled and not empty. */
+#define	IS_LABELED_NOT_EMPTY(ce) (!IS_BLANK(ce) && \
+			    ((ce)->CeStatus & CES_labeled) && \
+			    !((ce)->CeStatus & CES_empty))
+
 /* Private data. */
 
 /*
@@ -124,7 +137,10 @@ static void makeDiskVolRef(void);
 static void setVolumeInfo(struct CatalogEntry *ce, struct VolInfo *vi);
 static fsize_t rmVolSpace(char *mtype, fsize_t space, fsize_t capacity);
 static fsize_t dkVolSpace(struct DiskVolumeInfo *dv);
-
+static int checkVolume(int index, struct ArchSet *as, struct VolInfo *vi,
+		    struct VsnExp *ve, char *asname, char *owner, char *fsname);
+static void prepareVolRef(void);
+static void dumpVolRef(void);
 
 /*
  * Get removable media archive set volume.
@@ -151,27 +167,24 @@ GetRmArchiveVol(
 	struct VolInfo *vi)
 {
 	static vsndesc_t *vd;
+	static vsndesc_t *oldvd;
 	static struct VsnExp *ve;
 	static struct VsnPool *vp;
 	static char *asname;
 	static char *fsname;
 	static char *owner;
-
-	static int	adn;
-	static int	aln;
-
-	static int	phase;		/* Search phase */
-	static int	pxn;		/* Pool expression number */
-	static int	vdn;		/* volume descriptor number */
-	static int	vdnumof;
-	static int	vin;		/* volume info table number */
-
+	static int adn;
+	static int aln;
+	static int phase; /* Search phase */
+	static int vdnumof; /* Number of vol descriptors for archive set */
+	static int vin; /* Index into volRef table */
 	struct VolRefEntry *vr;
 	struct CatalogEntry *ce;
 
 	if (volRefTable->count == 0) {
 		return (-1);
 	}
+
 	if (volNum == 0) {
 		/*
 		 * Perform initialization.
@@ -203,7 +216,8 @@ GetRmArchiveVol(
 	if (phase == 1) {
 
 		/*
-		 * Examine volumes recently used.
+		 * Examine volumes recently used. Avoid usage of
+		 * media just recycled or labeled.
 		 */
 		while (aln < ArchLibTable->count) {
 			struct CatalogEntry ced;
@@ -223,6 +237,7 @@ GetRmArchiveVol(
 				ce = CatalogGetCeByMedia(ad->AdVi.VfMtype,
 				    ad->AdVi.VfVsn, &ced);
 				if (ce != NULL && RM_VOLUME_USABLE(ce) &&
+				    !IS_LABELED_AND_EMPTY(ce) &&
 				    archSetVol(as, ce, asname, owner, fsname) &&
 				    owner_a != NULL && fsname_a != NULL) {
 					vi->VfAln = aln;
@@ -267,13 +282,12 @@ GetRmArchiveVol(
 		 * loop initialize.
 		 */
 		phase = 3;
-		vin = volRefTable->count;
+
+		vin = -1;
 
 		/*
-		 * "Outer" loop initialization.
 		 * Set only descriptor or first descriptor in a list.
 		 */
-		vdn = 0;
 		if ((as->AsVsnDesc & VD_mask) != VD_list) {
 			vd = &as->AsVsnDesc;
 			vdnumof = 1;
@@ -285,113 +299,78 @@ GetRmArchiveVol(
 			vdnumof = vls->VlNumof;
 			vd = vls->VlDesc;
 		}
-		vp = NULL;
+
+		oldvd = vd;
 	}
 
 	/*
 	 * Phase 3:
 	 * Check all volumes against all VSN descriptors.
-	 * This is a reenterable doubly nested for loop.
-	 * "Inner" loop over all volumes.
-	 * "Outer" loop over all VSN descriptors for the Archive Set.
+	 * Outer loop over all VSNs in volRef table. Inner loop over all volume
+	 * descriptions related to the given archive set.
 	 */
-	for (;;) {
-		if (vin >= volRefTable->count) {
-			if (vdn >= vdnumof) {
-				return (-1);
-			}
+	while (vin < volRefTable->count - 1) {
+		vd = oldvd;
+		vin++;
 
-			/*
-			 * Reset the VSN list accession and advance to the next
-			 * VSN descriptor.  Set the regular expression from the
-			 * descriptor.
-			 */
-			vin = 0;
+		for (int vdn = 0; vdn  < vdnumof; vdn++, vd++) {
+
 			switch (*vd & VD_mask) {
+
 			case VD_none:
-				ve = VsnExpTable; /* ".*" entry is first */
-				vdn++;
-				vd++;
-				break;
+
+				if (checkVolume(vin, as, vi, VsnExpTable,
+				    asname, owner, fsname) == 0) {
+					return (0);
+				}
+
+			break;
+
 			case VD_exp:
+
 				ve = (struct VsnExp *)(void *)((char *)
 				    VsnExpTable + (*vd & ~VD_mask));
-				vdn++;
-				vd++;
-				break;
+
+				if (checkVolume(vin, as, vi, ve, asname,
+				    owner, fsname) == 0) {
+					return (0);
+				}
+
+			break;
+
 			case VD_pool:
-				if (vp == NULL) {
-					/* Start the pool list. */
-					vp = (struct VsnPool *)(void *)((char *)
-					    VsnPoolTable + (*vd & ~VD_mask));
-					pxn = 0;
+
+				vp = (struct VsnPool *)(void *)((char *)
+				    VsnPoolTable + (*vd & ~VD_mask));
+
+				for (int pxn = 0; pxn < vp->VpNumof; pxn++) {
+					ve = (struct VsnExp *)(void *)
+					    ((char *)VsnExpTable
+					    + vp->VpVsnExp[pxn]);
+
+					if (checkVolume(vin, as, vi, ve, asname,
+					    owner, fsname) == 0) {
+						return (0);
+					}
+
 				}
-				/* Next pool entry. */
-				ve = (struct VsnExp *)(void *)((char *)
-				    VsnExpTable + vp->VpVsnExp[pxn]);
-				pxn++;
-				if (pxn >= vp->VpNumof) {
-					vp = NULL;
-					vdn++;
-					vd++;
-				}
-				break;
+
+			break;
+
 			default:
 				ASSERT(*vd == VD_mask);
+
 				return (-1);
-			}
-		}
-
-		/*
-		 * Next volume.
-		 */
-		vr = &volRefTable->entry[vin++];
-		ce = vr->VrCe;
-
-		/*
-		 * Make sure that the volume can be archived to.
-		 */
-		if (!(RM_VOLUME_USABLE(ce))) {
-			/*
-			 * Terminate search - all remaining are unusable.
-			 */
-			vin = volRefTable->count;
-			continue;
-		}
-
-		if (ce->r.CerTime != 0) {
-			/*
-			 * Reserved volume.
-			 * If the volume is not reserved for this archive set,
-			 * skip it.
-			 */
-			if (strcmp(asname, ce->r.CerAsname) != 0 ||
-			    strcmp(owner, ce->r.CerOwner) != 0 ||
-			    strcmp(fsname, ce->r.CerFsname) != 0) {
-				continue;
-			}
-		}
-
-		/*
-		 * Try VSN against the regexp.
-		 */
-		if (strcmp(as->AsMtype, ce->CeMtype) != 0) {
-			continue;
-		}
-		if (ve == VsnExpTable) {
-			/* ".*" >> any VSN is acceptable */
+			/*LINTED statement not reached */
 			break;
+			}
+
 		}
-		if (regex(ve->VeExpbuf, ce->CeVsn, NULL) != NULL) {
-			break;
-		}
+
 	}
 
-	vi->VfAln = vr->VrAln;
-	setVolumeInfo(ce, vi);
-	return (0);
+	return (-1);
 }
-
 
 /*
  * Get disk or honeycomb media archive set volume.
@@ -752,6 +731,7 @@ VolumeCheck(void)
 	if (ArchLibTable->AlRmDrives == 0) {
 		return;
 	}
+
 	PthreadMutexLock(&volRefMutex);
 	if (catalogValid) {
 		if (CatalogSync() != 0) {
@@ -767,6 +747,7 @@ VolumeCheck(void)
 	}
 	qsort(&volRefTable->entry, volRefTable->count,
 	    sizeof (struct VolRefEntry), cmp_VolRef);
+	prepareVolRef();
 	PthreadMutexUnlock(&volRefMutex);
 }
 
@@ -793,6 +774,7 @@ VolumeConfig(void)
 	makeVolRef();
 	qsort(&volRefTable->entry, volRefTable->count,
 	    sizeof (struct VolRefEntry), cmp_VolRef);
+	prepareVolRef();
 	PthreadMutexUnlock(&volRefMutex);
 	makeDiskVolRef();
 }
@@ -1326,4 +1308,241 @@ dkVolSpace(
 		fspace = dv->DvSpace;
 	}
 	return (fspace);
+}
+
+
+/*
+ * Check the volume for archiving of files associated with
+ * given archive set. Returns 0 if the volume can be used for archiving,
+ * -1 otherwise.
+ */
+static int
+checkVolume(
+	int index,
+	struct ArchSet *as,
+	struct VolInfo *vi,
+	struct VsnExp *ve,
+	char *asname,
+	char *owner,
+	char *fsname)
+{
+
+	struct VolRefEntry *vr = &volRefTable->entry[index];
+	struct CatalogEntry *ce = vr->VrCe;
+
+	/*
+	 * Make sure that the volume can be archived to.
+	 */
+	if (!(RM_VOLUME_USABLE(ce))) {
+		return (-1);
+	}
+
+	if (ce->r.CerTime != 0) {
+		/*
+		 * Reserved volume.
+		 * If the volume is not reserved for this archive set,
+		 * skip it.
+		 */
+		if (strcmp(asname, ce->r.CerAsname) != 0 ||
+		    strcmp(owner, ce->r.CerOwner) != 0 ||
+		    strcmp(fsname, ce->r.CerFsname) != 0) {
+			return (-1);
+		}
+	}
+
+	/*
+	 * Check the media type.
+	 */
+	if (strcmp(as->AsMtype, ce->CeMtype) != 0) {
+		return (-1);
+	}
+
+	if (ve == VsnExpTable) {
+	/* ".*" >> any VSN is acceptable. */
+		goto end;
+	}
+
+	/*
+	 * Try VSN against the regexp.
+	 */
+	if (regex(ve->VeExpbuf, ce->CeVsn, NULL) == NULL) {
+		return (-1);
+	}
+
+end:
+	vi->VfAln = vr->VrAln;
+	setVolumeInfo(ce, vi);
+	return (0);
+}
+
+/*
+ * Repositions tape entries in volRefTable in such a way that
+ * labeled are first, labeled and empty (relabeled/recycled)
+ * are second and unlabeled are last. Labeled and labeled empty
+ * tape regions are sorted according to
+ * the label time, oldest first.
+ */
+static void
+prepareVolRef(
+	void)
+{
+	int ucount = 0, lcount = 0, lecount = 0, xcount = 0;
+	int tape_count = 0;
+	int i, size;
+	struct VolRef *tempVolRefTable;
+	struct VolRefEntry *vr;
+	struct CatalogEntry *ce;
+
+#ifdef DEBUG
+	dumpVolRef();
+#endif
+	/*
+	 * Collect the tape entries. Note that labeled and recycled tape
+	 * entries might be intermixed, since someone wrote to the specified
+	 * tape.
+	 */
+	for (i = 0; i < volRefTable->count; i++) {
+		vr = &volRefTable->entry[i];
+		ce = vr->VrCe;
+		if (IS_BLANK(vr->VrCe) && RM_VOLUME_USABLE(vr->VrCe)) {
+			ucount++;
+		} else  if (IS_LABELED_AND_EMPTY(vr->VrCe) &&
+		    RM_VOLUME_USABLE(vr->VrCe)) {
+			lecount++;
+		} else if (IS_LABELED_NOT_EMPTY(vr->VrCe) &&
+		    RM_VOLUME_USABLE(vr->VrCe)) {
+			lcount++;
+		} else {
+			/*
+			 * Entry is allocated, but does not reference any
+			 * tape or the tape is full
+			 */
+			xcount++;
+		}
+	}
+
+	tape_count =  ucount + lecount + lcount;
+	Trace(TR_DEBUG, "Counts: blank %d, relabeled %d, labeled %d,"
+	    " unusable/non-tapes %d, volRef size %d", ucount, lecount, lcount,
+	    xcount, volRefTable->count);
+	ASSERT(ucount + lecount + lcount + xcount == volRefTable->count);
+	/*
+	 * Unlabeled tapes found together with labeled or recycled tapes. Put
+	 * the unlabeled region behind the rest in the volRefTable.
+	 */
+	if (ucount != 0 && (lcount != 0 || lecount != 0)) {
+		int l = 0, u = 0, le = 0;
+
+		size = sizeof (struct VolRef) +
+		    (volRefTable->count - 1) *
+		    STRUCT_RND(sizeof (struct VolRefEntry));
+		SamMalloc(tempVolRefTable, size);
+		memcpy((char *)tempVolRefTable, (char *)volRefTable, size);
+		/*
+		 * Determine the boundaries where the particular regions will
+		 * begin in new volRefTable. Currently the volRef is sorted
+		 * by label time like this:
+		 * |---|
+		 * | R |
+		 * |---|
+		 * | L |
+		 * |---| <- l boundary = the region being moved down = count
+		 * | U |
+		 * |---|
+		 * and we want to get:
+		 * |---|
+		 * | U |
+		 * |---| <- u boundary =  region unlabeled tapes
+		 * | R |
+		 * |---| <- le boundary = region of recycled tapes
+		 * | L |
+		 * |---|
+		 */
+		u = lcount + lecount;
+		le = lcount;
+		Trace(TR_DEBUG, "Boundaries: l %d, le %d, u %d", l, le, u);
+
+		/*
+		 * The tape entries in volRefTable are not intermixed with
+		 * non-tape entries. Tape count does not contain unusable
+		 * volume entries or non-tape entries, only the tape entries
+		 * that can be used for archiving. tempVolRef is a copy of
+		 * volRef now. Let's copy from tempVolRef to volRef.
+		 */
+
+		for (i = 0; i < tape_count; i++) {
+			vr = &tempVolRefTable->entry[i];
+			if (IS_LABELED_NOT_EMPTY(vr->VrCe)) {
+				volRefTable->entry[l] =
+				    tempVolRefTable->entry[i];
+				l++;
+			} else if (IS_LABELED_AND_EMPTY(vr->VrCe)) {
+				volRefTable->entry[le] =
+				    tempVolRefTable->entry[i];
+				le++;
+			} else if (IS_BLANK(vr->VrCe)) {
+				volRefTable->entry[u] =
+				    tempVolRefTable->entry[i];
+				u++;
+			}
+		}
+
+		ASSERT(lcount == l);
+		ASSERT(ucount == (u - lecount - lcount));
+		ASSERT(lecount == (le - lcount));
+
+		SamFree(tempVolRefTable);
+
+		Trace(TR_DEBUG, "volRefTable reorganized.");
+	} else {
+		Trace(TR_DEBUG, "No labeled non-empty tapes found in"
+		    " volRefTable.");
+	}
+
+#ifdef DEBUG
+	dumpVolRef();
+#endif
+
+}
+
+
+/*
+ * Dump the whole volRefTable
+ */
+static void
+dumpVolRef(
+	void)
+{
+	struct VolRefEntry *vr;
+	struct CatalogEntry *ce;
+	char label_time[40];
+	int i;
+
+	for (i = 0; i < volRefTable->count; i++) {
+		vr = &volRefTable->entry[i];
+		ce = vr->VrCe;
+		TimeString(ce->CeLabelTime, label_time, sizeof (label_time));
+		if (ce->CeVsn[0] != '\0') {
+			Trace(TR_DEBUG, "%d  VSN %s, cap %lld, spc %lld,"
+			    " label time %s", i, ce->CeVsn, ce->CeCapacity,
+			    ce->CeSpace, label_time);
+			if (IS_BLANK(ce) && RM_VOLUME_USABLE(ce)) {
+				Trace(TR_MISC, "blank");
+			} else if (IS_BLANK(ce)) {
+				Trace(TR_MISC, "blank and unusable");
+			} else if (IS_LABELED_AND_EMPTY(ce) &&
+			    RM_VOLUME_USABLE(ce)) {
+				Trace(TR_DEBUG, "relabeled");
+			} else if (IS_LABELED_AND_EMPTY(ce)) {
+				Trace(TR_DEBUG, "relabeled but unusable");
+			} else if (IS_LABELED_NOT_EMPTY(ce) &&
+			    RM_VOLUME_USABLE(ce)) {
+				Trace(TR_DEBUG, "labeled");
+			} else if (IS_LABELED_NOT_EMPTY(ce)) {
+				Trace(TR_DEBUG, "labeled but unusable");
+			} else {
+				Trace(TR_DEBUG, "weird!");
+			}
+		}
+	}
 }

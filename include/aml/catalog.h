@@ -50,7 +50,7 @@
 #ifndef _AML_CATALOG_H
 #define	_AML_CATALOG_H
 
-#pragma ident "$Revision: 1.15 $"
+#pragma	ident	"$Revision: 1.15 $"
 
 #define	CF_MAGIC 03640030124
 #define	CF_VERSION 410		/* Increment whenever catalog format changes */
@@ -175,6 +175,10 @@ typedef struct CatalogEntry {
 
 #define	CES_archfull    0x00000800	/* Archiver found volume full */
 
+#define	CES_empty	0x00000400	/* Media was relabeled or new label */
+					/* was created on blank media. In */
+					/* both cases, tape is considered */
+					/* empty */
 
 /* Catalog file header. */
 /*

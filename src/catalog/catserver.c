@@ -585,7 +585,7 @@ LabelComplete(
 	 */
 	ce->CeStatus &= ~(CES_needs_audit | CES_bad_media | CES_recycle |
 	    CES_dupvsn | CES_archfull);
-	ce->CeStatus |= CES_labeled |
+	ce->CeStatus |= CES_labeled | CES_empty |
 	    (cea->CeStatus & (CES_bad_media | CES_recycle));
 
 	rsp.GrStatus = 0;

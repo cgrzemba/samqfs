@@ -116,6 +116,15 @@ RmEndArchiveFile(
 	int	volNum;
 
 	/*
+	 * Clear the empty flag. If the flag is set, the media was relabeled
+	 * and this is the first time it has been used since then.
+	 */
+	if (CatalogSetField(&vid, CEF_Status, 0, CES_empty) == -1) {
+		Trace(TR_ERR, "Catalog empty flag unset failed: %s.%s",
+		    vid.ViMtype, vid.ViVsn);
+	}
+
+	/*
 	 * Unload removable media file and get removable media information.
 	 */
 	unloadVolume();
