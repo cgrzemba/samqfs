@@ -683,11 +683,7 @@ sam_restore_inode(
 	sam_quota_inode_fini(ip);
 
 	old_size = ip->di.rm.size;
-	if (S_ISREG(inode->di.mode) &&
-	    ip->di.rm.size > 0 &&
-	    ip->di.rm.size <= inode->di.rm.size) {
-		old_on_large = ip->di.status.b.on_large;
-	}
+	old_on_large = ip->di.status.b.on_large;
 
 	/*
 	 * Replace fields in the argument inode from the incore inode
@@ -906,6 +902,7 @@ sam_restore_inode(
 
 	if ((S_ISREG(inode->di.mode) && !S_ISSEGI(&inode->di)) &&
 	    (permip->di.rm.size != 0)) {
+		permip->di.status.b.on_large = old_on_large;
 		if (permip->di.status.b.damaged) {
 			permip->di.status.b.offline = 1;
 		} else if (permip->di.rm.size != old_size) {
@@ -914,9 +911,7 @@ sam_restore_inode(
 			 * restored.
 			 */
 			permip->di.status.b.offline = 1;
-			if (old_size > 0 && old_size == (offset_t)
-			    (permip->di.psize.partial * SAM_DEV_BSIZE)) {
-				permip->di.status.b.on_large = old_on_large;
+			if (old_size > 0) {
 				permip->di.rm.media = DT_DISK;
 				permip->di.status.b.pextents = 1;
 			}
@@ -925,7 +920,6 @@ sam_restore_inode(
 			 *	all file data has been restored.
 			 */
 			permip->di.status.b.offline = 0;
-			permip->di.status.b.on_large = old_on_large;
 			permip->di.rm.media = DT_DISK;
 			permip->di.status.b.pextents = 1;
 		}
