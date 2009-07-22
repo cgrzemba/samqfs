@@ -291,15 +291,15 @@ dump_directory_entry(
 		    (perm_inode.di.status.b.offline == 0)) {
 			dumping_file_data++;
 			flags |= CSD_FH_DATA;
-		} else if (partial_data &&
-		    (perm_inode.di.rm.size > 0) &&
-		    (perm_inode.di.status.b.pextents == 1)) {
-			dumping_partial_data++;
-			flags |= CSD_FH_DATA;
 		} else if (unarchived_data &&
 		    (perm_inode.di.rm.size > 0) &&
 		    (copy_bits == 0)) {
 			dumping_file_data++;
+			flags |= CSD_FH_DATA;
+		} else if (partial_data &&
+		    (perm_inode.di.rm.size > 0) &&
+		    (perm_inode.di.status.b.pextents == 1)) {
+			dumping_partial_data++;
 			flags |= CSD_FH_DATA;
 		}
 	} else if (S_ISREG(mode)) {
@@ -316,15 +316,15 @@ dump_directory_entry(
 		    (perm_inode.di.status.b.offline == 0)) {
 			dumping_file_data++;
 			flags |= CSD_FH_DATA;
-		} else if (partial_data &&
-		    (perm_inode.di.rm.size > 0) &&
-		    (perm_inode.di.status.b.pextents == 1)) {
-			dumping_partial_data++;
-			flags |= CSD_FH_DATA;
 		} else if (unarchived_data &&
 		    (perm_inode.di.rm.size > 0) &&
 		    (copy_bits == 0)) {
 			dumping_file_data++;
+			flags |= CSD_FH_DATA;
+		} else if (partial_data &&
+		    (perm_inode.di.rm.size > 0) &&
+		    (perm_inode.di.status.b.pextents == 1)) {
+			dumping_partial_data++;
 			flags |= CSD_FH_DATA;
 		}
 	} else if (S_ISDIR(mode)) {
