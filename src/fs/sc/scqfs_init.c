@@ -56,10 +56,16 @@
 
 #include "scqfs.h"
 
+/*
+ * Interval (in seconds) between checks for device availability.
+ */
+#define	DEVICE_WAIT_INTERVAL	15
+
 /* Prototypes */
 extern void ChkFs(void);		/* src/fs/lib/mount.c */
 
 static int ProcFS(int ac, char **av, struct FsInfo *fp);
+static int GetBootTimeout(struct RgInfo *rgp, int *boot_timeout);
 
 
 int
@@ -144,6 +150,8 @@ ProcFS(
 	struct RgInfo rg;
 	int rc, leader;
 	int fenced = FALSE;
+	int waittime;
+	int boot_timeout;
 
 	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - Begin");
 
@@ -155,19 +163,45 @@ ProcFS(
 		return (1);
 	}
 
-	while (CheckFsDevs(fp->fi_fs) < 0) {
-		scds_syslog(LOG_NOTICE,
-		    "FS %s: devices not available; waiting.",
-		    fp->fi_fs);
-		scds_syslog_debug(DBG_LVL_MED,
-		    "ProcFS - Device unavailable/sleeping for 15 seconds");
-		(void) sleep(15);
-	}
-
 	if (GetRgInfo(argc, argv, &rg) < 0) {
 		scds_syslog_debug(DBG_LVL_HIGH,
 		    "ProcFS - End/Err");
 		return (1);		/* errors logged by GetRgInfo */
+	}
+
+	if (GetBootTimeout(&rg, &boot_timeout) < 0) {
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS - End/Err");
+		return (1);		/* errors logged by GetBootTimeout */
+	}
+
+	/*
+	 *  Loop checking devices but don't loop forever.  Return an
+	 *  error prior to hitting the boot timeout to avoid the RGM
+	 *  sending us a kill (and dumping core).  The kill is ugly
+	 *  and the devices may have been administratively disabled.
+	 */
+	waittime = boot_timeout - (DEVICE_WAIT_INTERVAL * 2);
+	scds_syslog_debug(DBG_LVL_HIGH,
+	    "ProcFS - Device check boot_timeout=%d, waittime=%d.",
+	    boot_timeout, waittime);
+	while (CheckFsDevs(fp->fi_fs) < 0) {
+		if (waittime <= 0) {
+			scds_syslog(LOG_ERR,
+			    "FS %s: devices not available; exiting.",
+			    fp->fi_fs);
+			scds_syslog_debug(DBG_LVL_HIGH,
+			    "ProcFS - Device unavailable; End/Err.");
+			return (1);
+		}
+		scds_syslog(LOG_NOTICE,
+		    "FS %s: devices not available; waiting.",
+		    fp->fi_fs);
+		scds_syslog_debug(DBG_LVL_MED,
+		    "ProcFS - Device unavailable/sleeping for %d seconds",
+		    DEVICE_WAIT_INTERVAL);
+		(void) sleep(DEVICE_WAIT_INTERVAL);
+		waittime -= DEVICE_WAIT_INTERVAL;
 	}
 
 	/*
@@ -278,4 +312,55 @@ restart:
 
 	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - End");
 	return (rc == 0 ? 0 : 1);
+}
+
+
+/*
+ * GetBootTimeout -- Get the SC configured boot method timeout
+ *	for this resource.
+ */
+static int
+GetBootTimeout(struct RgInfo *rgp, int *boot_timeout)
+{
+	char *resource_name;
+	scha_resource_t handle;
+	scha_err_t e;
+
+	/*  Open the resource */
+	resource_name = (char *)scds_get_resource_name(rgp->rg_scdsh);
+	if (resource_name == NULL) {
+		scds_syslog(LOG_ERR, "ProcFS: Failed to get resource name.");
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS Failed to get resource name - End/Err");
+		return (-1);
+	}
+	e = scha_resource_open(resource_name, rgp->rg_name, &handle);
+	if (e != SCHA_ERR_NOERR) {
+		scds_syslog(LOG_ERR, "ProcFS: Failed to open resource %s: %s.",
+		    resource_name, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS Failed to open resource %s - End/Err",
+		    resource_name);
+		return (-1);
+	}
+	e = scha_resource_get(handle, SCHA_BOOT_TIMEOUT, boot_timeout);
+	if (e != SCHA_ERR_NOERR) {
+		scds_syslog(LOG_ERR,
+		    "ProcFS: Failed to retrieve the property %s: %s.",
+		    SCHA_BOOT_TIMEOUT, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS Failed to get property %s - End/Err",
+		    SCHA_BOOT_TIMEOUT);
+		return (-1);
+	}
+	e = scha_resource_close(handle);
+	if (e != SCHA_ERR_NOERR) {
+		scds_syslog(LOG_ERR, "ProcFS: Failed to close resource %s: %s.",
+		    resource_name, scds_error_string(e));
+		scds_syslog_debug(DBG_LVL_HIGH,
+		    "ProcFS Failed resource close %s - End/Err",
+		    resource_name);
+		return (-1);
+	}
+	return (0);
 }
