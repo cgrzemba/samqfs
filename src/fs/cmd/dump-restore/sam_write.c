@@ -47,6 +47,7 @@
 #include <unistd.h>
 
 /* Solaris headers. */
+#include <utility.h>
 #include <sys/param.h>
 #include <sys/acl.h>
 
@@ -360,6 +361,7 @@ WriteHeader(
 	struct header *hdr;
 	int n, sum;
 	uchar_t *p;
+	uint64_t dsize;
 
 	SamMalloc(hdr, TAR_RECORDSIZE);
 	memset(hdr, 0, TAR_RECORDSIZE);
@@ -373,11 +375,11 @@ WriteHeader(
 	ll2oct((u_longlong_t)st->st_uid, hdr->uid, sizeof (hdr->uid));
 	ll2oct((u_longlong_t)st->st_gid, hdr->gid, sizeof (hdr->gid));
 	if (type == LF_PARTIAL) {
-		ll2str(st->partial_size*SAM_DEV_BSIZE, hdr->size,
-		    sizeof (hdr->size)+1);
+		dsize = MIN(st->st_size, st->partial_size*SAM_DEV_BSIZE);
 	} else {
-		ll2str(st->st_size, hdr->size, sizeof (hdr->size)+1);
+		dsize = st->st_size;
 	}
+	ll2str(dsize, hdr->size, sizeof (hdr->size)+1);
 	if (debugging) {
 		fprintf(stderr, "Header file size %s <%lld>\n", hdr->size,
 		    st->st_size);

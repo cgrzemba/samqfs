@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
+#include <utility.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/vfs.h>
@@ -1001,9 +1002,12 @@ dump_file_data(char *name, int partial, int file_fd)
 		copy_file_data_to_dump(file_fd, statb.st_size, name);
 		csd_statistics.data_dumped += statb.st_size;
 	} else {
-		copy_file_data_to_dump(file_fd,
-		    statb.partial_size*SAM_DEV_BSIZE, name);
-		csd_statistics.data_dumped += statb.partial_size*SAM_DEV_BSIZE;
+		uint64_t data_size;
+
+		data_size =
+		    MIN(statb.st_size, statb.partial_size*SAM_DEV_BSIZE);
+		copy_file_data_to_dump(file_fd, data_size, name);
+		csd_statistics.data_dumped += data_size;
 	}
 	(void) close(file_fd);
 }
