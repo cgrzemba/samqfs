@@ -560,8 +560,7 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 		mutex_exit(&vp->v_lock);
 		if (ip->flags.bits & SAM_PURGE_PEND) {
 			(void) pvn_vplist_dirty(vp, 0,
-			    sam_putapage, (B_INVAL | B_TRUNC),
-			    CRED());
+			    sam_putapage, (B_INVAL | B_TRUNC), CRED());
 		} else {
 			int flags;
 			int error;
@@ -570,6 +569,8 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 			 * Flush and invalidate pages associated with this free
 			 * inode.  Truncate shared client file system directory
 			 * pages & stale inode pages because they may be stale.
+			 * Call VOP_PUTPAGE directly so writer inode lock is
+			 * not dropped & inode updates cannot occur.
 			 */
 			flags = B_INVAL;
 			if ((SAM_IS_SHARED_CLIENT(ip->mp) &&
@@ -577,26 +578,15 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 			    (ip->flags.bits & SAM_STALE)) {
 				flags = B_INVAL|B_TRUNC;
 			}
-			if ((error = sam_flush_pages(ip, flags))) {
-				if ((error = sam_flush_pages(ip, flags))) {
-					cmn_err(CE_WARN,
+			ASSERT(rw_owner(&ip->inode_rwl) == curthread);
+			error = VOP_PUTPAGE_OS(vp, 0, 0, flags, CRED(), NULL);
+			if (error) {
+				cmn_err(CE_WARN,
 "SAM-QFS: %s: cannot flush pages err=%d: ip=%p, %d:%d.%d, count %d, pages=%p",
-					    ip->mp->mt.fi_name,
-					    error, (void *)ip,
-					    ip->mp->mi.m_fs[0].part.pt_eq,
-					    ip->di.id.ino, ip->di.id.gen,
-					    vp->v_count,
-					    (void *)vp->v_pages);
-				}
-			}
-			/*
-			 * sam_flush_pages drops inode_rwl which can allow
-			 * additional inode updates. Sync inode if not stale
-			 * and not client directory inode.
-			 */
-			if (flags == B_INVAL) {
-				(void) sam_update_inode(ip, SAM_SYNC_ONE,
-				    FALSE);
+				    ip->mp->mt.fi_name, error, (void *)ip,
+				    ip->mp->mi.m_fs[0].part.pt_eq,
+				    ip->di.id.ino, ip->di.id.gen, vp->v_count,
+				    (void *)vp->v_pages);
 			}
 		}
 		if (SAM_IS_SHARED_CLIENT(ip->mp) &&
