@@ -334,6 +334,9 @@ typedef struct sam_mt_instance {
 	kmutex_t	m_quota_hashlock;
 	struct sam_quot	**m_quota_hash;
 	kmutex_t	m_quota_availlock;
+#ifdef sun
+	ksema_t		m_sync_sema;	/* Sync - sema nonzero if active */
+#endif
 	struct sam_quot	*m_quota_avail;
 	uint32_t m_schedule_flags;	/* Flags for task scheduler */
 	uint32_t m_schedule_count;	/* Count of scheduled tasks */

@@ -91,6 +91,9 @@ static int sam_xattr = 0;		/* Extended attributes */
 extern int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 static int sam_clients_mounted(sam_mount_t *mp);
 static int sam_open_vfs_operation(sam_mount_t *mp, sam_fid_t *sam_fidp);
+static void sam_sync_fs(vfs_t *vfsp, short flag);
+
+void sam_start_sync_fs(sam_schedule_entry_t *entry);
 
 /*
  * ----- Module Loading/Unloading and Autoconfiguration declarations
@@ -743,6 +746,7 @@ done:
 		mutex_enter(&mp->ms.m_waitwr_mutex);
 		mp->mt.fi_status |= FS_MOUNTED;
 		samgt.num_fs_mounted++;
+		sema_init(&mp->mi.m_sync_sema, 0, NULL, SEMA_DEFAULT, NULL);
 		mp->mt.fi_status &= ~FS_MOUNTING;
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 		sam_send_shared_mount(mp, SAM_MOUNT_TIMEOUT);
@@ -1048,6 +1052,7 @@ samfs_umount(
 		nmp->mt = nmp->orig_mt;
 		nmp->mt.fi_status = sv_status & FS_FSSHARED;
 		samgt.num_fs_mounted--;
+		sema_destroy(&mp->mi.m_sync_sema);
 
 		/*
 		 * Append ':umnt-f' to FS name, so that any console messages
@@ -1104,6 +1109,7 @@ samfs_umount(
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 
 		samgt.num_fs_mounted--;
+		sema_destroy(&mp->mi.m_sync_sema);
 
 		mutex_exit(&samgt.global_mutex);
 
@@ -1351,8 +1357,10 @@ out:
 
 /*
  * ----- samfs_sync - Update the file system.
- * Sync the SAM file system prior to umount if vfsp != NULL;
- * otherwise sync all SAM-QFS filesystems.
+ * Sync the SAM-QFS file system prior to umount if vfsp != NULL;
+ * otherwise sync all SAM-QFS mounted filesystems. If there is more than
+ * one SAM-QFS filesystem mounted, start a task for each mounted filesystem
+ * so the sync is done in parallel.
  * flag  = 0             Commands -- SYNC, UMOUNT or MOUNT.
  *         1 SYNC_ATTR   Sync cached attributes only (periodic).
  *         2 SYNC_CLOSE  Sync due to shutdown.
@@ -1366,8 +1374,6 @@ samfs_sync(
 	cred_t *credp)		/* Credentials pointer */
 {
 	sam_mount_t *mp;
-	int	count_em;
-	int	error = 0;
 
 	/* check to ensure init process finished */
 	if (samgt.fstype == 0) {
@@ -1386,92 +1392,26 @@ samfs_sync(
 	mutex_exit(&samgt.global_mutex);
 
 	if (vfsp == NULL) {
-		vfs_t *last_sam_vfsp;
-
-		last_sam_vfsp = NULL;
-		count_em = 1;
 		for (mp = samgt.mp_list; mp != NULL; mp = mp->ms.m_mp_next) {
 			if (!(mp->mt.fi_status & FS_MOUNTED)) {
 				continue;
 			}
 			vfsp = (vfs_t *)mp->mi.m_vfsp;
-			if ((vfsp->vfs_fstype == samgt.fstype) &&
-			    (vfs_lock(vfsp) == 0)) {
-				TRACE(T_SAM_SYNC, vfsp, flag, count_em,
-				    mp->mt.fi_status);
-				sam_open_operation_nb(mp);
-				mutex_enter(&mp->ms.m_waitwr_mutex);
-				vfs_unlock(vfsp);
-				if (mp->mi.m_fs_syncing == 0) {
-					mp->mi.m_fs_syncing = 1;
-					mutex_exit(&mp->ms.m_waitwr_mutex);
-
-					mutex_enter(&mp->ms.m_synclock);
-					sam_update_filsys(mp, flag);
-					mutex_exit(&mp->ms.m_synclock);
-
-					mutex_enter(&mp->ms.m_waitwr_mutex);
-					mp->mi.m_fs_syncing = 0;
-				}
-				mutex_exit(&mp->ms.m_waitwr_mutex);
-				if (TRANS_ISTRANS(mp)) {
-					/*
-					 * LQFS: commit any outstanding async
-					 * transactions
-					 */
-					curthread->t_flag |= T_DONTBLOCK;
-					TRANS_BEGIN_SYNC(mp, TOP_COMMIT_UPDATE,
-					    TOP_COMMIT_SIZE, error);
-					if (!error) {
-						TRANS_END_SYNC(mp, error,
-						    TOP_COMMIT_UPDATE,
-						    TOP_COMMIT_SIZE);
-					}
-					curthread->t_flag &= ~T_DONTBLOCK;
-				}
-				SAM_CLOSE_OPERATION(mp, error);
-				TRACE(T_SAM_SYNC_RET, vfsp, flag,
-				    count_em, mp->mt.fi_status);
-				count_em++;
+			if ((samgt.num_fs_mounted == 1) ||
+			    sam_taskq_add_ret(sam_start_sync_fs, mp,
+			    &flag, 0)) {
+				sam_sync_fs(vfsp, flag);
+				sema_v(&mp->mi.m_sync_sema); /* Mark complete */
 			}
 		}
-		vfsp = last_sam_vfsp;
+		for (mp = samgt.mp_list; mp != NULL; mp = mp->ms.m_mp_next) {
+			if (!(mp->mt.fi_status & FS_MOUNTED)) {
+				continue;
+			}
+			sema_p(&mp->mi.m_sync_sema); /* Wait until complete */
+		}
 	} else {
-		if ((vfsp->vfs_fstype == samgt.fstype) &&
-		    (vfs_lock(vfsp) == 0)) {
-			mp = (sam_mount_t *)(void *)vfsp->vfs_data;
-			TRACE(T_SAM_SYNC, vfsp, flag, 0, mp->mt.fi_status);
-			sam_open_operation_nb(mp);
-			mutex_enter(&mp->ms.m_waitwr_mutex);
-			vfs_unlock(vfsp);
-			if (mp->mi.m_fs_syncing == 0) {
-				mp->mi.m_fs_syncing = 1;
-				mutex_enter(&mp->ms.m_synclock);
-				mutex_exit(&mp->ms.m_waitwr_mutex);
-				sam_update_filsys(mp, flag);
-				mutex_exit(&mp->ms.m_synclock);
-				mutex_enter(&mp->ms.m_waitwr_mutex);
-				mp->mi.m_fs_syncing = 0;
-			}
-			mutex_exit(&mp->ms.m_waitwr_mutex);
-			if (TRANS_ISTRANS(mp)) {
-				/*
-				 * LQFS: commit any outstanding async
-				 * transactions
-				 */
-				curthread->t_flag |= T_DONTBLOCK;
-				TRANS_BEGIN_SYNC(mp, TOP_COMMIT_UPDATE,
-				    TOP_COMMIT_SIZE, error);
-				if (!error) {
-					TRANS_END_SYNC(mp, error,
-					    TOP_COMMIT_UPDATE,
-					    TOP_COMMIT_SIZE);
-				}
-				curthread->t_flag &= ~T_DONTBLOCK;
-			}
-			SAM_CLOSE_OPERATION(mp, error);
-			TRACE(T_SAM_SYNC_RET, vfsp, flag, 0, mp->mt.fi_status);
-		}
+		sam_sync_fs(vfsp, flag);
 	}
 	mutex_enter(&samgt.global_mutex);
 	if (--samgt.num_fs_syncing < 0) {
@@ -1479,6 +1419,82 @@ samfs_sync(
 	}
 	mutex_exit(&samgt.global_mutex);
 	return (0);
+}
+
+
+/*
+ * ----- sam_sync_fs - Sync a file system
+ * Task calls sam_sync_fs to sync the mounted file system.
+ */
+
+void
+sam_start_sync_fs(
+	sam_schedule_entry_t *entry)
+{
+	vfs_t *vfsp;		/* Vfs pointer for SAMFS. */
+	short flag;		/* Sync flag */
+
+	sam_mount_t *mp = entry->mp;
+
+	vfsp = (vfs_t *)mp->mi.m_vfsp;
+	flag = *((short *)entry->arg);
+	sam_sync_fs(vfsp, flag);
+	sema_v(&mp->mi.m_sync_sema);		/* Mark complete */
+	mutex_enter(&samgt.schedule_mutex);
+	sam_taskq_remove(entry);		/* Remove the task */
+}
+
+
+/*
+ * ----- sam_sync_fs - Sync the SAM-QFS file system identified by vfsp
+ * flag  = 0             Commands -- SYNC, UMOUNT or MOUNT.
+ *         1 SYNC_ATTR   Sync cached attributes only (periodic).
+ *         2 SYNC_CLOSE  Sync due to shutdown.
+ */
+
+static void
+sam_sync_fs(
+	vfs_t *vfsp,		/* VFS pointer for SAMFS. */
+	short flag)		/* Sync flag, see description */
+{
+	sam_mount_t *mp;
+	int error = 0;
+
+	if ((vfsp->vfs_fstype == samgt.fstype) && (vfs_lock(vfsp) == 0)) {
+		mp = (sam_mount_t *)(void *)vfsp->vfs_data;
+		TRACE(T_SAM_SYNC, vfsp, flag, 0, mp->mt.fi_status);
+		sam_open_operation_nb(mp);
+		mutex_enter(&mp->ms.m_waitwr_mutex);
+		vfs_unlock(vfsp);
+		if (mp->mi.m_fs_syncing == 0) {
+			mp->mi.m_fs_syncing = 1;
+			mutex_exit(&mp->ms.m_waitwr_mutex);
+
+			mutex_enter(&mp->ms.m_synclock);
+			sam_update_filsys(mp, flag);
+			mutex_exit(&mp->ms.m_synclock);
+
+			mutex_enter(&mp->ms.m_waitwr_mutex);
+			mp->mi.m_fs_syncing = 0;
+		}
+		mutex_exit(&mp->ms.m_waitwr_mutex);
+		if (TRANS_ISTRANS(mp)) {
+
+			/*
+			 * LQFS: commit any outstanding async transactions
+			 */
+			curthread->t_flag |= T_DONTBLOCK;
+			TRANS_BEGIN_SYNC(mp, TOP_COMMIT_UPDATE,
+			    TOP_COMMIT_SIZE, error);
+			if (!error) {
+				TRANS_END_SYNC(mp, error, TOP_COMMIT_UPDATE,
+				    TOP_COMMIT_SIZE);
+			}
+			curthread->t_flag &= ~T_DONTBLOCK;
+		}
+		SAM_CLOSE_OPERATION(mp, error);
+		TRACE(T_SAM_SYNC_RET, vfsp, flag, 0, mp->mt.fi_status);
+	}
 }
 
 
