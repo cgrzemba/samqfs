@@ -920,6 +920,7 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 {
 	sam_nchain_t *chain;
 	int error;
+	int server_ord;
 	sam_mount_t *mp;
 	sam_node_t *ip;
 
@@ -965,6 +966,9 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 	mp->mi.m_schedule_flags |= SAM_SCHEDULE_TASK_THAWING;
 	mutex_exit(&samgt.schedule_mutex);
 
+restart:
+	server_ord = mp->ms.m_server_ord;
+
 	/*
 	 * Change failover state to thawing. Leases are
 	 * reestablished during the thawing state.
@@ -987,8 +991,8 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 		msg = kmem_zalloc(sizeof (sam_san_mount_msg_t), KM_SLEEP);
 
 		count = 0;
-		while ((error = sam_send_mount_cmd(mp, msg,
-		    MOUNT_failinit, 2))) {
+		while (server_ord == mp->ms.m_server_ord &&
+		    (error = sam_send_mount_cmd(mp, msg, MOUNT_failinit, 2))) {
 			if (++count == 5) {
 				cmn_err(CE_NOTE,
 				    "SAM-QFS: %s: Cannot send the start "
@@ -1000,6 +1004,10 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 			delay(hz * 2);
 		}
 		kmem_free(msg, sizeof (sam_san_mount_msg_t));
+	}
+
+	if (server_ord != mp->ms.m_server_ord) {
+		goto restart;
 	}
 
 	/*
@@ -1021,7 +1029,8 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 	 */
 
 	chain = mp->mi.m_cl_lease_chain.forw;
-	while (chain != &mp->mi.m_cl_lease_chain) {
+	while (server_ord == mp->ms.m_server_ord &&
+	    chain != &mp->mi.m_cl_lease_chain) {
 		ip = chain->node;
 		chain = chain->forw;
 
@@ -1077,6 +1086,10 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 
 	mutex_exit(&mp->mi.m_lease_mutex);
 
+	if (server_ord != mp->ms.m_server_ord) {
+		goto restart;
+	}
+
 #ifdef sun
 	/*
 	 * If we have a deferred inactivate (couldn't push inode pages),
@@ -1094,6 +1107,7 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 	}
 
 	for (ip = samgt.ifreehead.free.forw;
+	    server_ord == mp->ms.m_server_ord &&
 	    ip != (sam_node_t *)(void *)&samgt.ifreehead;
 	    ip = ip->chain.free.forw) {
 		if ((ip->mp == mp) &&
@@ -1113,6 +1127,10 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 	mutex_exit(&samgt.ifreelock);
 #endif /* sun */
 
+	if (server_ord != mp->ms.m_server_ord) {
+		goto restart;
+	}
+
 	/*
 	 * If client, send MOUNT_resync message to let the server know that
 	 * all the leases have been reset. If the server's returned status
@@ -1126,13 +1144,18 @@ __sam_reestablish_leases(sam_schedule_entry_t *entry)
 		int count;
 
 		count = 0;
-		while ((error = sam_send_mount_cmd(mp, &msg,
-		    MOUNT_resync, 2))) {
+		while (server_ord == mp->ms.m_server_ord &&
+		    (error = sam_send_mount_cmd(mp, &msg, MOUNT_resync, 2))) {
 			if (++count > 90) {
 				break;
 			}
 			delay(hz * 2);
 		}
+
+		if (server_ord != mp->ms.m_server_ord) {
+			goto restart;
+		}
+
 		mutex_enter(&mp->ms.m_waitwr_mutex);
 		mp->mt.fi_status |= FS_CLNT_DONE;
 		mutex_exit(&mp->ms.m_waitwr_mutex);
