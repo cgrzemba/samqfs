@@ -3657,6 +3657,7 @@ $ misc commands (SAM-QFS SunCluster agent)
 22696 FS %s: Couldn't get valid server info.
 22697 Unable to open resource group '%s': %s.
 22698 Retrying resource group get (%s): %s.
+22699 %s: Host %s is marked off - cannot be server.
 
 
 $ mount_samfs (23000s)

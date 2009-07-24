@@ -1610,8 +1610,8 @@ validate_qfsdevs(char *qfsdev)
  * Obtains the shared hosts file from the raw device, and
  * locates its own entry therein.  Verifies that the entry
  * is found, has a non-zero priority (i.e., can become the
- * MDS for the FS), and uses the local node's SC private
- * host interconnect for its IP connection.
+ * MDS for the FS), is not marked off, and uses the local
+ * node's SC private host interconnect for its IP connection.
  *
  * Returns B_TRUE if all these things are OK, B_FALSE otherwise.
  */
@@ -1624,6 +1624,7 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 	char	*ip;
 	char	*errmsg;
 	char	*priority;
+	char	*onoff;
 	char	*server;
 
 	char	***ATab;
@@ -1682,6 +1683,7 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 	ip = ATab[i][HOSTS_IP];
 	server = ATab[i][HOSTS_NAME];
 	priority = ATab[i][HOSTS_PRI];
+	onoff = ATab[i][HOSTS_HOSTONOFF];
 
 	/* Validate privlink */
 	if (incasestring(nodepriv, ip) == 0) {
@@ -1703,6 +1705,17 @@ validate_node(char *nodename, char *nodepriv, char *qfsdev)
 		    qfsdev, priority, server);
 		dprintf(stderr, "%s: Invalid priority (%s) for server %s",
 		    qfsdev, priority, server);
+		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
+		return (B_FALSE);
+	}
+
+	/* Validate host is not off */
+	if (onoff && (strcasecmp(onoff, "off") == 0)) {
+		/* 22699 */
+		scds_syslog(LOG_ERR, "%s: Host %s is marked off - cannot be "
+		    "server.", qfsdev, server);
+		dprintf(stderr, "%s: Host %s is marked off - cannot be "
+		    "server.", qfsdev, server);
 		scds_syslog_debug(DBG_LVL_HIGH, "validate_node - End/Err");
 		return (B_FALSE);
 	}
@@ -2318,12 +2331,19 @@ set_server(char *qfsdev, char *master, int mode)
 			return (rc);
 		}
 
-		/* Find the server index */
+		/*
+		 * Find the server index.  Host must have a non-zero HOSTS_PRI
+		 * field, and not be marked off in the HOSTS_HOSTONOFF field.
+		 */
 		for (i = 0; ATab[i] != NULL; i++) {
 			if (strcasecmp(master, ATab[i][HOSTS_NAME]) == 0) {
 				if (!ATab[i][HOSTS_PRI] ||
 				    atoi(ATab[i][HOSTS_PRI]) != 0) {
-					server_index = i;
+					if (!ATab[i][HOSTS_HOSTONOFF] ||
+					    strcasecmp("off",
+					    ATab[i][HOSTS_HOSTONOFF]) != 0) {
+						server_index = i;
+					}
 				}
 				break;
 			}
