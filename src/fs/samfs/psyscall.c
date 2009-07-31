@@ -129,6 +129,7 @@
 #ifdef sun
 extern struct vnodeops samfs_vnodeops;
 extern char hw_serial[];
+static int sam_set_fsconfig_defs(void *arg, int size, cred_t *credp);
 #endif /* sun */
 
 
@@ -217,6 +218,12 @@ sam_priv_syscall(
 		case SC_setfsconfig:
 			error = sam_set_fsconfig(arg, size, credp);
 			break;
+
+#ifdef sun
+		case SC_setfsconfig_defs:
+			error = sam_set_fsconfig_defs(arg, size, credp);
+			break;
+#endif /* sun */
 
 		/*
 		 *	Filesystem mount & status calls (fs information).
@@ -1532,6 +1539,61 @@ sam_set_fsconfig(
 #endif /* sun */
 	return (error);
 }
+
+
+#ifdef sun
+/*
+ * ----- sam_set_fsconfig_defs
+ * Process the set filesystem config defaults parameter call.
+ *
+ * Set filesystem default parameter values in fi_config, fi_config1
+ * or fi_mflag.
+ *
+ * This is invoked after config but before mount.
+ */
+
+static int			/* ERRNO if error, 0 if successful. */
+sam_set_fsconfig_defs(
+	void *arg,		/* Pointer to arguments. */
+	int size,
+	cred_t *credp)
+{
+	int error = ENOSYS;
+	struct sam_setfsconfig_arg args;
+	sam_mount_t  *mp;
+
+	if (size != sizeof (args) ||
+	    copyin(arg, (caddr_t)&args, sizeof (args))) {
+		return (EFAULT);
+	}
+
+	/*
+	 * Find mp but do not do the usual check for FS_FAILOVER or
+	 * FS_RESYNCING, since we're modifying orig_mt and not the
+	 * current mount mt.
+	 */
+	if ((mp = sam_find_filesystem(args.sp_fsname)) == NULL) {
+		return (ENOENT);
+	}
+
+	error = secpolicy_fs_config(credp, mp->mi.m_vfsp);
+	mutex_enter(&mp->ms.m_waitwr_mutex);
+	if (!error) {
+		switch (args.sp_offset) {
+		case offsetof(struct sam_fs_info, fi_config1):
+			mp->orig_mt.fi_config1 &= ~args.sp_mask;
+			mp->orig_mt.fi_config1 |= args.sp_value;
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
+	}
+
+	SAM_SYSCALL_DEC(mp, 1);
+	return (error);
+}
+#endif /* sun */
 
 
 /*

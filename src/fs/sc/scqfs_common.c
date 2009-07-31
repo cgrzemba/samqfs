@@ -2557,7 +2557,7 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 	if (rgp->rg_flags & RG_LEASEPOLICY_TIMEOUT) {
 		flag = "noclustermgmt";
 	}
-	msg = SetFsConfig(fs, flag);
+	msg = SetFsConfig(fs, flag, 1);
 	if (strcmp(msg, "") != 0) {
 		err = 1;
 		scds_syslog(LOG_NOTICE,
@@ -2579,7 +2579,7 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 	if (rgp->rg_flags & RG_LEASEPOLICY_CLUSTER) {
 		flag = "clusterfastsw";
 	}
-	msg = SetFsConfig(fs, flag);
+	msg = SetFsConfig(fs, flag, 1);
 	if (strcmp(msg, "") != 0) {
 		err = 1;
 		scds_syslog(LOG_NOTICE,

@@ -1037,6 +1037,6 @@ upath_t option_value	/* ARGSUSED */
 {
 	char    *msg;
 
-	msg = SetFsConfig(fsname, option_name);
+	msg = SetFsConfig(fsname, option_name, 0);
 	return (msg);
 }

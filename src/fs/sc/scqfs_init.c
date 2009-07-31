@@ -256,6 +256,12 @@ restart:
 	}
 
 	/*
+	 * Set appropriate lease recovery mount options.  These are
+	 * set in the defaults area so they persist when unmounted.
+	 */
+	(void) set_cluster_lease_mount_opts(&rg, fp->fi_fs);
+
+	/*
 	 * Issue mount request if the FS isn't mounted
 	 */
 	rc = 0;
@@ -304,12 +310,6 @@ restart:
 			    fp->fi_fs, fp->fi_mntpt);
 		}
 	}
-	/*
-	 * Set appropriate lease recovery mount options for the
-	 * hopefully-now-mounted FS.
-	 */
-	(void) set_cluster_lease_mount_opts(&rg, fp->fi_fs);
-
 	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - End");
 	return (rc == 0 ? 0 : 1);
 }

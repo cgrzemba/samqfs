@@ -775,7 +775,7 @@ SetClusterInfo(char *fs)
 	char ***hosts = NULL;
 	char *errmsg = "";
 	int errline = 0;
-	int i, nhosts, r, nonClusterNode;
+	int i, nhosts, r;
 
 	nhosts = cfp->ht->info.ht.count;
 	hosts = SamHostsCvt(&cfp->ht->info.ht, &errmsg, &errline);
@@ -794,7 +794,6 @@ SetClusterInfo(char *fs)
 		goto out;
 	}
 
-	nonClusterNode = 0;
 	/*
 	 * Background:  When there are non-SunCluster nodes that are
 	 * party to the shared filesystem, fencing generally cannot
@@ -824,16 +823,6 @@ SetClusterInfo(char *fs)
 	bzero(&hstate[0], nhosts * sizeof (signed char));
 	for (i = 0; i < nhosts && hosts[i] && hosts[i][HOSTS_NAME]; i++) {
 		hstate[i] = IsClusterNodeUp(hosts[i][HOSTS_NAME]);
-		if (hstate[i] < 0) {
-			nonClusterNode = 1;
-		}
-	}
-
-	if (nonClusterNode &&
-	    (mntp->params.fi_config1 & MC_CLUSTER_FASTSW) == 0) {
-		Trace(TR_MISC, "FS %s: Cluster managed; non-cluster nodes "
-		    "present", fs);
-		return;
 	}
 
 	for (i = 0; i < nhosts && hosts[i] && hosts[i][HOSTS_NAME]; i++) {

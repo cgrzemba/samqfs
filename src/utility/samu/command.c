@@ -1454,7 +1454,7 @@ CmdSetFsConfig(
 	if (Argc < 2)
 		Usage();
 	CheckFamilySetByEq(Argv[1], &fi);
-	msg = SetFsConfig(fi.fi_name, Argv[0]);
+	msg = SetFsConfig(fi.fi_name, Argv[0], 0);
 	if (*msg != '\0') {
 		Error(msg);
 	}
