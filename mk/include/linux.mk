@@ -89,6 +89,15 @@ OS_ARCH= $(OS)_$(OS_TYPE)_$(LINUX_KERNEL)_$(PROC)
 export OS_ARCH
 
 KERNEL_UNCLEAN=$(subst SMP,smp,$(LINUX_KERNEL))
+FOUND_SMP:=$(shell echo $(KERNEL_UNCLEAN) | grep -i smp)
+ifndef FOUND_SMP
+  HAS_SMP:=$(shell uname -a | grep -i smp)
+  ifdef HAS_SMP
+    KERNEL_UNCLEAN=$(subst SMP,smp,$(LINUX_KERNEL)).smp
+  else
+    KERNEL_UNCLEAN=$(subst SMP,smp,$(LINUX_KERNEL))
+  endif
+endif
 export KERNEL_UNCLEAN
 KERNEL_MAJOR= $(shell uname -r | cut -d- -f1 - | cut -d. -f2)
 OSFLAGS += -DKERNEL_MAJOR=$(KERNEL_MAJOR)
