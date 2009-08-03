@@ -102,7 +102,7 @@ typedef struct kstatfs qfs_kstatfs_t;
 #define	SOP_STATFS 1
 #endif
 
-#if SUSE_LINUX && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
+#if defined(SUSE_LINUX) && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
 /* SLES10 */
 #if defined(SLES10FCS) || defined(SLES10SP1)
 #define	SOP_STATFS 1

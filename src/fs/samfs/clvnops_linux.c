@@ -138,7 +138,7 @@ int samqfs_get_blocks_writer(struct inode *li, sector_t iblk,
 #define	FOP_FLUSHARGS 1
 #endif
 
-#if SUSE_LINUX && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
+#if defined(SUSE_LINUX) && (LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 16))
 /* SLES10 */
 #if defined(SLES10FCS) || defined(SLES10SP1)
 #define	FOP_FLUSHARGS 1
@@ -1266,8 +1266,7 @@ samqfs_client_sync_page(struct page *page)
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 18))
 static void
-samqfs_client_sync_page(
-struct page *page)
+samqfs_client_sync_page(struct page *page)
 {
 	block_sync_page(page);
 }

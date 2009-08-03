@@ -919,7 +919,7 @@ static void
 __sam_reestablish_leases(sam_schedule_entry_t *entry)
 {
 	sam_nchain_t *chain;
-	int error;
+	int error = 0;
 	int server_ord;
 	sam_mount_t *mp;
 	sam_node_t *ip;

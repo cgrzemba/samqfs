@@ -2379,6 +2379,9 @@ sam_flush_pages(
  * Linux 2.6 direct I/O will happily allow an I/O to straddle a device
  * boundary, stuffing a bio with blocks from both pages.
  * Chop up the I/O by device before sending it down.
+ *
+ * We also chop up the I/O when it covers multiple disk blocks and those
+ * blocks are not contiguous on disk.
  */
 
 static ssize_t
@@ -2395,15 +2398,16 @@ samqfs_directio_file_IO(struct file *file, char __user *buf, size_t count,
 	char __user *bufp;
 	struct buffer_head map_bh;
 	long block_in_file;
+	sam_daddr_t expect_blocknr = 0;
 
 	start = *ppos;
 	end = *ppos + count;
 	bufp = (char __user *)buf;
 	this_len = 0;
 
-	while (start < end) {
+	while (start + this_len < end) {
 
-		block_in_file = start >> li->i_blkbits;
+		block_in_file = (start + this_len) >> li->i_blkbits;
 		ret = samqfs_get_block(li, block_in_file, &map_bh, 1,
 		    RW_WRITER);
 
@@ -2421,11 +2425,16 @@ samqfs_directio_file_IO(struct file *file, char __user *buf, size_t count,
 		if (dev == NULL) {
 			dev = map_bh.b_bdev;
 		}
-		if (dev == map_bh.b_bdev) {
+		if (expect_blocknr == 0) {
+			expect_blocknr = map_bh.b_blocknr;
+		}
+		if ((dev == map_bh.b_bdev) &&
+		    (expect_blocknr == map_bh.b_blocknr)) {
 			this_len = MIN(this_len + blocksize, count);
 		}
 
-		if ((start + this_len == end) || (dev != map_bh.b_bdev)) {
+		if ((start + this_len == end) || (dev != map_bh.b_bdev) ||
+		    (map_bh.b_blocknr != expect_blocknr)) {
 
 			if (rw) {
 				local_iov.iov_base = (void __user *)bufp;
@@ -2439,10 +2448,9 @@ samqfs_directio_file_IO(struct file *file, char __user *buf, size_t count,
 			}
 
 			break;
-		} else {
-			start += this_len;
-			count -= this_len;
 		}
+
+		expect_blocknr++;
 	}
 
 	return (ret);
