@@ -999,20 +999,6 @@ samqfs_put_inode(struct inode *li)
 
 
 /*
- * ----- samqfs_delete_inode -
- * Called by Linux when a file or directory is removed
- */
-void
-samqfs_delete_inode(struct inode *li)
-{
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 14)
-	truncate_inode_pages(li->i_mapping, 0);
-#endif
-	clear_inode(li);
-}
-
-
-/*
  * ----- samqfs_put_sblk -
  * Called called by Linux when umounting a SAM-QFS filesystem.
  */
@@ -1310,7 +1296,6 @@ struct super_operations samqfs_super_ops = {
 #endif
 	write_inode:	samqfs_write_inode,
 	put_inode:		samqfs_put_inode,
-	delete_inode:	samqfs_delete_inode,
 	put_super:		samqfs_put_sblk,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
 	sync_fs:		samqfs_sync_fs,
