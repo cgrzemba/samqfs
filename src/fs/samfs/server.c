@@ -3004,25 +3004,30 @@ retry:
 void
 sam_callout_acl(sam_node_t *ip, int client_ord)
 {
-	struct sam_lease_ino *llp;
-	int nl;
+	int ord;
+	client_entry_t *client;
+	sam_mount_t *mp = ip->mp;
+
+	if (mp->ms.m_clienti == NULL) {
+		return;
+	}
 
 	/*
 	 * Refresh acl for this file on all clients who have leases.
 	 */
 	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
-	mutex_enter(&ip->ilease_mutex);
-	llp = ip->sr_leases;
-	if ((llp != NULL)) {
-		for (nl = 0; nl < llp->no_clients; nl++) {
-			if (llp->lease[nl].client_ord != client_ord) {
+	for (ord = 1; ord <= mp->ms.m_no_clients; ord++) {
+		client = sam_get_client_entry(mp, ord, 0);
+		if (client != NULL) {
+			if ((client->cl_status & FS_MOUNTED) &&
+			    !(client->cl_status & FS_SERVER) &&
+			    (ord != client_ord)) {
 				SAM_COUNT64(shared_server, callout_acl);
 				(void) sam_proc_callout(ip, CALLOUT_acl, 0,
-				    llp->lease[nl].client_ord, NULL);
+				    ord, NULL);
 			}
 		}
 	}
-	mutex_exit(&ip->ilease_mutex);
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 }
 
