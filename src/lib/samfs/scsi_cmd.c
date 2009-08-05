@@ -147,7 +147,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.scsi_cmd) {
-			va_start(args, timeout);
+			va_start(args, timeit);
 			tmp1 = IO_table[indx].jmp_table.scsi_cmd(fd,
 			    un, command, timeout, args);
 			va_end(args);
@@ -210,7 +210,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_MOVE_MEDIA:	/* 0x02 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		cdb->g0_addr2 = tmp1 << 1;
 		count = va_arg(args, int);
@@ -225,7 +225,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_REQUEST_SENSE:	/* 0x03 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		resid = va_arg(args, int *);
@@ -241,7 +241,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_READ_BLKLIM:	/* 0x05 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		resid = va_arg(args, int *);
@@ -270,7 +270,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 	case SCMD_INIT_SINGLE_ELEMENT_STATUS:	/* 0xC7 */
 
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);	/* element */
 		va_end(args);
 		un->cdb[2] = tmp1 >> 8;
@@ -283,7 +283,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_ROTATE_MAILSLOT:	/* 0x0c */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		va_end(args);
 		cdb->g0_count0 = tmp1 ? 1 : 0;
@@ -295,7 +295,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case 0xd:		/* 0xd */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		va_end(args);
 		cdb->g0_count0 = tmp1 ? 1 : 0;
@@ -306,7 +306,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_OPEN_CLOSE_MAILSLOT:
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		va_end(args);
 		cdb->g0_count0 = tmp1 ? 1 : 0;
@@ -318,7 +318,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_WRITE_FILE_MARK:	/* 0x10 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		count = va_arg(args, int);
 		va_end(args);
 		cdb->high_count = count >> 16;	/* set count */
@@ -333,7 +333,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_SPACE:	/* 0x11 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		count = va_arg(args, int);
 		cdb->t_code = va_arg(args, int);
 		resid = va_arg(args, int *);
@@ -352,7 +352,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_INQUIRY:	/* 0x12 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		tmp1 = va_arg(args, int);	/* vital */
@@ -375,7 +375,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_MODE_SELECT:	/* 0x15 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		tmp1 = va_arg(args, int);	/* save page flags */
@@ -404,7 +404,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_ERASE:	/* 0x19 */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);	/* long erase flag */
 		va_end(args);
 		un->cdb[1] |= (tmp1 ? 0x01 : 0);	/* long erase? */
@@ -418,7 +418,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_MODE_SENSE:	/* 0x1a */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		cdb->g0_count0 = req_xfer = us.uscsi_buflen = va_arg(args, int);
 		cdb->g0_addr1 = va_arg(args, int);
@@ -445,7 +445,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_START_STOP:	/* 0x1b */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		tmp2 = va_arg(args, int);
 		va_end(args);
@@ -467,7 +467,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_DOORLOCK:	/* 0x1e */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		va_end(args);
 		cdb->g0_count0 = tmp1 ? 1 : 0;
@@ -490,7 +490,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_READ_POSITION:	/* 0x34 */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		resid = va_arg(args, int *);
@@ -511,7 +511,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_READ_CAPACITY:	/* 0x25 */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		resid = va_arg(args, int *);
@@ -526,7 +526,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 	case SCMD_LOCATE:	/* 0x2b */
 		cdb->scc_cmd = SCMD_SEEK_G1;
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		va_end(args);
 		cdb->g1_addr2 = (tmp1 >> 24) & 0xFF;
@@ -558,7 +558,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_POSITION_TO_ELEMENT:	/* 0x2b (0x012b) */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		tmp2 = va_arg(args, int);
 		tmp3 = va_arg(args, int);
@@ -578,7 +578,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_VERIFY:	/* 0x2f */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		tmp2 = va_arg(args, int);
 		tmp3 = va_arg(args, int);
@@ -601,7 +601,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		/* FALLTHRU */
 	case SCMD_READ_BUFFER:	/* 0x3c */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		tmp1 = va_arg(args, int);	/* offset */
@@ -628,7 +628,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_DENSITY_SUPPORT:	/* 0x44 */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		tmp1 = va_arg(args, int);	/* media */
 		tmp2 = va_arg(args, int);	/* length */
@@ -648,7 +648,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_LOG_SELECT:	/* 0x4c */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		tmp4 = va_arg(args, int);	/* length */
 		tmp1 = va_arg(args, int);	/* pcr */
@@ -678,7 +678,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_LOG_SENSE:	/* 0x4d */
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		tmp1 = va_arg(args, int);	/* pc */
 		tmp2 = va_arg(args, int);	/* page_code */
@@ -703,7 +703,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_MOVE_MEDIUM:	/* 0xa5 */
 		us.uscsi_cdblen = 12;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);	/* tps_addr */
 		tmp2 = va_arg(args, int);	/* src_addr */
 		tmp3 = va_arg(args, int);	/* dest_addr */
@@ -751,7 +751,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 			int    tmp6;
 
 			us.uscsi_cdblen = 12;
-			va_start(args, timeout);
+			va_start(args, timeit);
 			tmp1 = va_arg(args, int);	/* tps_addr */
 			tmp2 = va_arg(args, int);	/* src_addr */
 			tmp3 = va_arg(args, int);	/* dest1_addr */
@@ -783,7 +783,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_EXTENDED_ERASE:	/* 0xac */
 		us.uscsi_cdblen = 12;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);	/* start */
 		tmp2 = va_arg(args, int);	/* length */
 		va_end(args);
@@ -804,7 +804,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 	case SCMD_READ_ELEMENT_STATUS:	/* 0xb8 */
 		us.uscsi_cdblen = 12;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);	/* address */
 		us.uscsi_buflen = va_arg(args, int);	/* length */
 		tmp1 = va_arg(args, int);	/* start */
@@ -833,7 +833,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	case SCMD_READY_INPORT:		/* 0xde vendor unique */
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);
 		va_end(args);
 		tmp1 &= 0xffff;
@@ -863,7 +863,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 #endif
 		}
 		us.uscsi_cdblen = 6;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		us.uscsi_bufaddr = va_arg(args, void *);
 		us.uscsi_buflen = va_arg(args, int);
 		tmp1 = va_arg(args, int);
@@ -909,7 +909,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 	case SCMD_INIT_ELE_RANGE_37:
 	case SCMD_INIT_ELE_RANGE:
 		us.uscsi_cdblen = 10;
-		va_start(args, timeout);
+		va_start(args, timeit);
 		tmp1 = va_arg(args, int);	/* element */
 		tmp2 = va_arg(args, int);	/* count */
 		resid = va_arg(args, int *);
@@ -940,7 +940,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		 */
 
 	case SCMD_ISSUE_CDB:
-		va_start(args, timeout);
+		va_start(args, timeit);
 		/* get the cdb */
 		us.uscsi_bufaddr = va_arg(args, void *);
 		us.uscsi_cdblen = va_arg(args, int);	/* its length */
