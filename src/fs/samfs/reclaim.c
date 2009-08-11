@@ -891,8 +891,8 @@ sam_clear_server_leases(sam_mount_t *mp, int cl_ord)
 					    llp->lease[i].client_ord);
 				}
 
-				llp->lease[cl_ord].leases = 0;
-				llp->lease[cl_ord].wt_leases = 0;
+				llp->lease[i].leases = 0;
+				llp->lease[i].wt_leases = 0;
 				sam_compact_lease_clients(llp);
 				num_cleared++;
 			}
