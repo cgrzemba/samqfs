@@ -917,6 +917,7 @@ sam_make_ino(
 			ip->di2.rperiod_duration = pip->di2.rperiod_duration;
 			ip->di2.rperiod_start_time =
 			    pip->di2.rperiod_start_time;
+			ip->di2.p2flags |= P2FLAGS_WORM_V2;
 		}
 		if (SAM_IS_OBJECT_FS(mp)) {
 			ip->di.rm.info.obj.stripe_width =
