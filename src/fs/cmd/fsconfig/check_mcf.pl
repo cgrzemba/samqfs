@@ -34,12 +34,20 @@
 $os = `uname -s`;
 chomp($os);
 if ($os eq "SunOS") {
+	$AK = "/bin/awk";
+	$MS = "/usr/sbin/metastat";
 	$num_didmodules = `/usr/sbin/modinfo | /bin/awk '\$6 \~ /^did\$/' |
 	    /bin/wc -l`;
+	$num_mdmodules = `/usr/sbin/modinfo | /bin/awk '\$6 \~ /^md_mirror\$/' |
+	    /bin/wc -l`;
+	$disks = "/dev/dsk/*";
 	if ( $num_didmodules > 0 ) {
-		$disks = "/dev/did/dsk/* /dev/dsk/*";
-	} else {
-		$disks = "/dev/dsk/*";
+		$disks = "$disks /dev/did/dsk/*";
+	}
+	if ( $num_mdmodules > 0 ) {
+		$mdsk =
+		`$MS | $AK -F: '\$2 \~ /Mirror/ {printf("/dev/md/%s ", \$1)}'`;
+		$disks = "$disks $mdsk"
 	}
 } else {
 	$ENV{'PATH'} = "/usr/bin:" . $ENV{'PATH'};
