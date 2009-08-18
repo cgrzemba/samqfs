@@ -133,7 +133,7 @@ static void initVsnTable();
 static int setDriveState(boolean_t check);
 static void getManualVsn(DriveInfo_t *drive, VsnInfo_t *vi);
 static void getLibraryVsn(struct CatalogEntry *ce, VsnInfo_t *vi);
-static void getDiskLibraryVsn(int idx, media_t media, VsnInfo_t *vi);
+static VsnInfo_t *getDiskLibraryVsn(media_t media, vsn_t vsn);
 static void getDriveVsn(DriveInfo_t *drive);
 static void setLibraryDrivesAllowed(char *name, int count);
 static int initCatalog();
@@ -321,6 +321,18 @@ FindVsn(
 		initVsnTable();
 	}
 
+	/*
+	 * Check for disk or honyecomb archive.
+	 */
+	if (IS_DISKARCHIVE_MEDIA(media)) {
+		vi = getDiskLibraryVsn(media, vsn);
+		ReconfigUnlock();
+		return (vi);
+	}
+
+	/*
+	 * File is on tape.
+	 */
 retrySearch:
 
 	for (i = 0; i < vsnTable.entries; i++) {
@@ -332,21 +344,6 @@ retrySearch:
 			 */
 			getManualVsn(&driveTable.data[lib->li_manual],
 			    &vsnTable.data[i]);
-
-		} else if (IS_LIB_DISK(lib)) {
-			/*
-			 * Get disk archiving VSN.
-			 */
-			getDiskLibraryVsn(vsnTable.data[i].disk_idx, DT_DISK,
-			    &vsnTable.data[i]);
-
-		} else if (IS_LIB_HONEYCOMB(lib)) {
-			/*
-			 * Get honeycomb archiving VSN.
-			 */
-			getDiskLibraryVsn(vsnTable.data[i].disk_idx,
-			    DT_STK5800, &vsnTable.data[i]);
-
 		} else {
 			/*
 			 * Get VSN managed in library.
@@ -1394,20 +1391,25 @@ getLibraryVsn(
 
 /*
  * Get VSN managed in disk archiving library.
+ * Return volume info in case the diskvol db record is found
+ * Return NULL, otherwise.
+ * The UNAVAIL flag is set in case the volume was found in the db,
+ * but it is designated as unavailable.
  */
-static void
+static VsnInfo_t *
 getDiskLibraryVsn(
-	int idx,
 	media_t media,
-	VsnInfo_t *vi)
+	vsn_t vsn)
 {
 	extern char *program_name;
 	int i;
 	DiskVolsDictionary_t *diskvols;
 	DiskVolumeInfo_t *dv;
 	boolean_t honeycomb;
+	VsnInfo_t *vi = NULL;
 
 	honeycomb = B_FALSE;
+
 	if (media == DT_STK5800) {
 		honeycomb = B_TRUE;
 	}
@@ -1415,62 +1417,44 @@ getDiskLibraryVsn(
 	diskvols = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT,
 	    DISKVOLS_RDONLY);
 	if (diskvols == NULL) {
-		return;
+		return (NULL);
 	}
 
-	if (vi->vsn == NULL || vi->vsn[0] == '\0') {
-		int vin;
-		char *volName;
+	(void) diskvols->Get(diskvols, vsn, &dv);
 
-		vin = 0;
-		(void) diskvols->BeginIterator(diskvols);
+	if (dv != NULL && ((honeycomb && DISKVOLS_IS_HONEYCOMB(dv)) ||
+	    (!honeycomb && !DISKVOLS_IS_HONEYCOMB(dv)))) {
 
-		while (diskvols->GetIterator(diskvols, &volName, &dv) == 0) {
+		SamMalloc(vi, sizeof (VsnInfo_t));
 
-			if ((honeycomb && DISKVOLS_IS_HONEYCOMB(dv)) ||
-			    (!honeycomb && !DISKVOLS_IS_HONEYCOMB(dv))) {
-				if (vin == idx) {
-					strncpy(vi->vsn, volName,
-					    sizeof (vi->vsn));
-					vi->flags = 0;
-					vi->media = media;
-					if (dv->DvFlags & DV_unavail) {
-						SET_VSN_UNAVAIL(vi);
-					}
-					break;
-				}
-				vin++;
+		/* Initialize the VsnInfo. Just need the library. */
+		(void) memset(vi, 0, sizeof (VsnInfo_t));
+
+		for (i = 0; i < libraryTable.entries; i++) {
+			LibraryInfo_t *lib = &libraryTable.data[i];
+
+			if ((!honeycomb && IS_LIB_DISK(lib)) ||
+			    (honeycomb && IS_LIB_HONEYCOMB(lib))) {
+				vi->lib = i;
 			}
 		}
-		(void) diskvols->EndIterator(diskvols);
 
-	} else {
-		/*
-		 * Refresh disk volume flags.
-		 */
-		(void) diskvols->Get(diskvols, vi->vsn, &dv);
-		vi->flags = 0;
-		if (dv == NULL || (dv != NULL && (dv->DvFlags & DV_unavail))) {
-			SET_VSN_UNAVAIL(vi);
+		strncpy(vi->vsn, vsn, sizeof (vi->vsn));
+
+		if (dv->DvMedia == media) {
+			vi->media = dv->DvMedia;
+			if (dv->DvFlags & DV_unavail) {
+				SET_VSN_UNAVAIL(vi);
+			}
+		} else {
+			SamFree(vi);
+			vi = NULL;
 		}
 	}
+
 	(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
 
-	/*
-	 *	If VSN is usable, see if its loaded.
-	 */
-	if (!IS_VSN_UNUSABLE(vi)) {
-		for (i = 0; i < driveTable.entries; i++) {
-			if (driveTable.data[i].dr_lib == vi->lib &&
-			    strcmp(driveTable.data[i].dr_vi.vsn,
-			    vi->vsn) == 0) {
-
-				SET_VSN_LOADED(vi);	/* mark loaded */
-				vi->drive = i;		/* set drive */
-				break;
-			}
-		}
-	}
+	return (vi);
 }
 
 /*

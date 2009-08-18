@@ -1369,12 +1369,26 @@ findResources(
 			SendCustMsg(HERE, 19022,
 			    sam_mediatoa(file->ar[copy].media),
 			    file->ar[copy].section.vsn);
+			/*
+			 * Disk archive descriptor VsnInfo is not part of
+			 * VsnTable. It needs to be freed explicitely.
+			 */
+			if (IS_DISKARCHIVE_MEDIA(vi->media)) {
+				SamFree(vi);
+			}
 		}
 		return (priority);
 
 	} else {
 		memcpy(&stream->vi, vi, sizeof (stream->vi));
 		stream->lib = vi->lib;
+		/*
+		 * Disk archive descriptor VsnInfo is not part of VsnTable
+		 * It needs to be freed explicitely.
+		 */
+		if (IS_DISKARCHIVE_MEDIA(vi->media)) {
+			SamFree(vi);
+		}
 	}
 
 	/*
@@ -1460,11 +1474,14 @@ findResources(
 	 */
 	if (priority != SP_busy) {
 
-		if (IS_VSN_LOADED(vi)) {
+		if (IS_DISKARCHIVE_MEDIA(stream->vi.media)) {
+			if (GetNumLibraryDrives(stream->vi.lib) > 0) {
+				priority = SP_start;
+			}
+		} else if (IS_VSN_LOADED(vi)) {
 			priority = SP_mounted;
 
 		} else {
-
 			/*
 			 * Check if drives are available in the library
 			 * holding the VSN.
@@ -1481,6 +1498,7 @@ findResources(
 			}
 		}
 	}
+
 	return (priority);
 }
 
