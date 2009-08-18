@@ -1142,7 +1142,7 @@ static void
 makeDiskVolRef(void)
 {
 	struct ArchLibEntry *al;
-	struct DiskVolsDictionary *diskVols;
+	struct DiskVolsDictionary *diskVols = NULL;
 	struct DiskVolumeInfo *dv;
 	size_t	size;
 	char	*volName;
