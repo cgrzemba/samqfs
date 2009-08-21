@@ -1210,6 +1210,7 @@ sam_make_dirslot(
 		return (error);
 	}
 	ip->di.rm.size = ip->size;
+	ip->flags.bits |= (SAM_UPDATED | SAM_CHANGED);
 	dp = (struct sam_dirent *)(void *)fbufp->fb_addr;
 	reclen = bsize - sizeof (struct sam_dirval);
 	dp->d_reclen = reclen;
