@@ -60,6 +60,15 @@ static DiskVolumeSeqnum_t getMaxseqnum(char *volname, DiskVolumeInfo_t *dv);
 static void createBitmap(MediaEntry_t *entry, size_t size);
 static void *hashResize(void *ptr, size_t size, char *err_name);
 static int getSpacePercent(uint64_t space, uint64_t capacity);
+static void hashTableAlloc(MediaTable_t *table);
+static unsigned int generateHashKey(char *vsn, int size);
+static MediaEntry_t *hashTableLookup(char *vsn, media_t media,
+    MediaTable_t *table);
+static void insertIntoHashTable(int index, MediaTable_t *table);
+static MediaEntry_t *insertIntoMediaTable(media_t media, char *vsn,
+    MediaTable_t *table);
+static void extendMediaTable(MediaTable_t *table);
+static void recreateHashTable(MediaTable_t *table);
 
 /*
  * Initialize media table.  All removable media and disk archive volumes
@@ -230,59 +239,17 @@ MediaFind(
 	media_t media,
 	char *vsn)
 {
-	int hash_l = strlen(vsn);	/* length of VSN to be hashed */
-	int hash_i;			/* index into VSN being hashed */
-	int hash_shift = 0; 		/* # of bits to shift the current */
-					/*   char by during hashing */
-	unsigned int hash_v = 0;	/* hashed value of VSN */
-	MediaEntry_t *newEntry;
+	MediaEntry_t *entry;
 
-#if 0
-	Trace(TR_MISC, "Find vsn %s.%s in table 0x%x",
+	Trace(TR_DEBUG, "Find vsn %s.%s in table 0x%x",
 	    sam_mediatoa(media), vsn, table);
-#endif
 
-	/*
-	 * Allocate and fill hash table with all "empty" flags.
-	 */
 	if (table->mt_hashTable == NULL) {
-		table->mt_hashSize = HASH_INITIAL_SIZE;
-		table->mt_hashTable = (int *)malloc(HASH_INITIAL_SIZE *
-		    sizeof (int));
-		for (hash_i = 0; hash_i < table->mt_hashSize; hash_i++) {
-			table->mt_hashTable[hash_i] = HASH_EMPTY;
-		}
+		hashTableAlloc(table);
 	}
 
-	/*
-	 * Generate a hash key by summing C[i]<<i, for all i in the VSN,
-	 * and taking that total modulo the hash table size.  Be careful
-	 * to make the final result positive by declaring hash_v unsigned.
-	 */
-	hash_v = 0;
-	for (hash_i = 0; hash_i < hash_l; hash_i++) {
-		hash_v += vsn[hash_i]<<hash_shift;
-		hash_shift = (hash_shift + 1) % 8;
-	}
-	hash_v %= table->mt_hashSize;
-
-	/*
-	 * Look through the hash table until we either get a HASH_EMPTY
-	 * (which means that the VSN is new) or we find a match.
-	 */
-	while (table->mt_hashTable[hash_v] != HASH_EMPTY) {
-		MediaEntry_t *trial;
-
-		trial = &table->mt_data[table->mt_hashTable[hash_v]];
-		if ((trial->me_type == media) &&
-		    (strcmp(trial->me_name, vsn) == 0)) {
-			return (trial);   /* Found a match */
-		}
-
-		hash_v++;
-		if (hash_v >= table->mt_hashSize) {
-			hash_v = 0;
-		}
+	if ((entry = hashTableLookup(vsn, media, table)) != NULL) {
+		return (entry);
 	}
 
 	/*
@@ -290,92 +257,22 @@ MediaFind(
 	 */
 	PthreadMutexLock(&table->mt_mutex);
 
+	/*
+	 * If media table is full, reallocate media table and
+	 * recreate the hash table.
+	 */
 	if (table->mt_tableUsed >= table->mt_tableAvail) {
-		int i, new_size, new_hashSize;
-
-		/*
-		 * Allocate new sizes.
-		 */
-		new_size = table->mt_tableAvail + TABLE_INCREMENT;
-		new_hashSize = table->mt_hashSize +
-		    (TABLE_INCREMENT * HASH_MULTIPLIER);
-
-		table->mt_data = (MediaEntry_t *)hashResize(
-		    (void *) table->mt_data,
-		    (size_t)(new_size * sizeof (MediaEntry_t)), "hash data");
-
-		table->mt_hashPermute =
-		    (int *)hashResize((void *) table->mt_hashPermute,
-		    (size_t)(new_size * sizeof (int)), "hash permute");
-
-		table->mt_hashTable =
-		    (int *)hashResize((void *) table->mt_hashTable,
-		    (size_t)(new_hashSize * sizeof (int)), "hash table");
-
-		/*
-		 * Re-init the newly allocated data.
-		 */
-		(void) memset(&table->mt_data[table->mt_tableAvail], 0,
-		    sizeof (MediaEntry_t) * TABLE_INCREMENT);
-
-		for (i = table->mt_tableAvail; i < new_size; i++) {
-			table->mt_hashPermute[i] = i;
-		}
-
-		for (i = 0; i < new_hashSize; i++) {
-			table->mt_hashTable[i] = HASH_EMPTY;
-		}
-
-		for (i = 0; i < new_size; i++) {
-			MediaEntry_t *entry = &table->mt_data[i];
-
-			int len = strlen(entry->me_name);
-			int j;
-			int shift = 0;
-			unsigned int ref = 0;
-
-			for (j = 0; j < len; j++) {
-				ref += entry->me_name[j] << shift;
-				shift = (shift + 1) % 8;
-			}
-			ref %= new_hashSize;
-			while (table->mt_hashTable[ref] != HASH_EMPTY) {
-				ref++;
-				if (ref >= new_hashSize)
-					ref = 0;
-			}
-			table->mt_hashTable[ref] = i;
-		}
-
-		/*
-		 * Reset the avail counter.
-		 */
-		table->mt_tableAvail += TABLE_INCREMENT;
-		table->mt_hashSize = new_hashSize;
+		extendMediaTable(table);
+		recreateHashTable(table);
 	}
 
-	/*
-	 * Point hash table to this new table entry.
-	 */
-	table->mt_hashTable[hash_v] = table->mt_tableUsed;
+	entry = insertIntoMediaTable(media, vsn, table);
 
-	/*
-	 * Insert new VSN table entry.
-	 */
-	newEntry = &table->mt_data[table->mt_tableUsed];
-
-	newEntry->me_type = media;
-	(void) strcpy(newEntry->me_name, vsn);
-	SET_FLAG(newEntry->me_flags, ME_noexist);
-
-	Trace(TR_SAMDEV, "Insert VSN entry '%s.%s' 0x%x",
-	    sam_mediatoa(media), vsn, (int)newEntry);
-
-	table->mt_tableUsed++;
 	PthreadMutexUnlock(&table->mt_mutex);
 
-	return (newEntry);
+	return (entry);
 }
+
 
 DiskVolumeSeqnum_t
 MediaGetSeqnum(
@@ -470,26 +367,9 @@ MediaDebug(
 		    noexist ? "(noexist)" : "",
 		    ignore  ? "(ignore)"  : "");
 
-		if ((entry->me_type == DT_DISK) &&
-		    (entry->me_bitmap != NULL) && (entry->me_files != 0)) {
 
-			for (idx = 0; idx <= table->mt_mapchunk; idx++) {
-				if (BT_TEST(entry->me_bitmap, idx) == 0) {
-					seqnum = table->mt_mapmin + idx;
-					if (seqnum <= entry->me_maxseqnum) {
-						(void) DiskVolsGenFileName(
-						    seqnum, fullpath,
-						    sizeof (fullpath));
-						Trace(TR_MISC,
-						    "[%s.%s] no active files: "
-						    "%s (%lld)",
-						    media, name, fullpath,
-						    seqnum);
-					}
-				}
-			}
-		}
 	}
+
 	Trace(TR_MISC, "[%s] End media table dump", table->mt_name);
 }
 
@@ -520,6 +400,192 @@ MediaGetSeqnumsInUse(
 	}
 
 	return (inuse);
+}
+
+
+/*
+ * Allocates hash table and marks it empty.
+ */
+static void
+hashTableAlloc(
+	MediaTable_t *table)
+{
+	int hash_i;
+
+	table->mt_hashSize = HASH_INITIAL_SIZE;
+	table->mt_hashTable = (int *)malloc(HASH_INITIAL_SIZE *
+	    sizeof (int));
+	for (hash_i = 0; hash_i < table->mt_hashSize; hash_i++) {
+		table->mt_hashTable[hash_i] = HASH_EMPTY;
+	}
+}
+
+
+/*
+ * Generates a hash key by summing C[i]<<i, for all i in the media entry
+ * VSN and taking that total modulo the hash table size.  Be careful
+ * to make the final result positive by declaring hash_v unsigned.
+ */
+static unsigned int
+generateHashKey(
+	char *vsn,
+	int size)
+{
+	int hash_i;
+	int hash_l = strlen(vsn);
+	int hash_shift = 0;
+	unsigned int key = 0;
+
+	for (hash_i = 0; hash_i < hash_l; hash_i++) {
+		key += vsn[hash_i]<<hash_shift;
+		hash_shift = (hash_shift + 1) % 8;
+	}
+
+	key %= size;
+
+	return (key);
+}
+
+
+/*
+ * Looks through the hash table until we either get a HASH_EMPTY
+ * (which means that the VSN is new) or we find a match.
+ */
+static MediaEntry_t *
+hashTableLookup(
+	char *vsn,
+	media_t media,
+	MediaTable_t *table)
+{
+	MediaEntry_t *entry = NULL;
+	int value;
+	unsigned int key = generateHashKey(vsn, table->mt_hashSize);
+
+	value = table->mt_hashTable[key];
+
+	while (value != HASH_EMPTY) {
+		entry = &table->mt_data[value];
+		if ((entry->me_type == media) &&
+		    (strcmp(entry->me_name, vsn) == 0)) {
+			return (entry);	  /* Found a match */
+		}
+
+		key++;
+		if (key >= table->mt_hashSize) {
+			key = 0;
+		}
+
+		value = table->mt_hashTable[key];
+	}
+
+	return (NULL);
+}
+
+/*
+ * Inserts the media entry array index into the hash table.
+ */
+static void
+insertIntoHashTable(
+	int index,
+	MediaTable_t *table)
+{
+	MediaEntry_t *entry = &table->mt_data[index];
+	unsigned int key;
+
+	if (*entry->me_name != '\0') {
+		key = generateHashKey(entry->me_name, table->mt_hashSize);
+
+		while (table->mt_hashTable[key] != HASH_EMPTY) {
+			key++;
+			if (key >= table->mt_hashSize)
+				key = 0;
+		}
+
+		table->mt_hashTable[key] = index;
+	}
+}
+
+
+/*
+ * Inserts the new media into the media table and returns
+ * the pointer to that media.
+ */
+static MediaEntry_t *
+insertIntoMediaTable(
+	media_t media,
+	char *vsn,
+	MediaTable_t *table)
+{
+	MediaEntry_t *entry = NULL;
+
+	/*
+	 * Insert new VSN table entry. table->mt_tableUsed is the index
+	 * of the next free entry in the media table.
+	 */
+	entry = &table->mt_data[table->mt_tableUsed];
+	entry->me_type = media;
+	(void) strcpy(entry->me_name, vsn);
+	SET_FLAG(entry->me_flags, ME_noexist);
+
+	Trace(TR_SAMDEV, "Insert VSN entry '%s.%s' 0x%x",
+	    sam_mediatoa(media), vsn, (int)entry);
+
+	insertIntoHashTable(table->mt_tableUsed, table);
+
+	table->mt_tableUsed++;
+
+	return (entry);
+}
+
+
+/*
+ * Extends the media table and initializes the newly allocated data.
+ */
+static void
+extendMediaTable(
+	MediaTable_t *table)
+{
+	int size = table->mt_tableAvail + TABLE_INCREMENT;
+
+	table->mt_data = (MediaEntry_t *)hashResize(
+	    (void *) table->mt_data,
+	    (size_t)(size * sizeof (MediaEntry_t)), "media table");
+	/*
+	 * Re-init the newly allocated data. table->mt_tableAvail points to
+	 * the beginning of this new allocation inside the media table.
+	 */
+	(void) memset(&table->mt_data[table->mt_tableAvail], 0,
+	    sizeof (MediaEntry_t) * TABLE_INCREMENT);
+
+	table->mt_tableAvail = size;
+}
+
+
+/*
+ * Reinitializes the hash table. The table is than populated
+ * with rehashed media table indexes.
+ */
+static void
+recreateHashTable(
+	MediaTable_t *table)
+{
+
+	int i;
+
+	table->mt_hashSize = table->mt_hashSize +
+	    (TABLE_INCREMENT * HASH_MULTIPLIER);
+
+	table->mt_hashTable =
+	    (int *)hashResize((void *) table->mt_hashTable,
+	    (size_t)(table->mt_hashSize * sizeof (int)), "hash table");
+
+	for (i = 0; i < table->mt_hashSize; i++) {
+		table->mt_hashTable[i] = HASH_EMPTY;
+	}
+
+	for (i = 0; i < table->mt_tableAvail; i++) {
+		insertIntoHashTable(i, table);
+	}
 }
 
 

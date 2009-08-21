@@ -138,15 +138,22 @@ enum {
 
 
 /*
- * Media table.
+ * Media table. Encapsulates media entry array and its
+ * hash table.
  */
 typedef struct MediaTable {
 	char		*mt_name;		/* table name for debugging */
+	/*
+	 * Media entry indexes are values of the following hash table.
+	 * The hash key is hashed media entry name.
+	 */
 	int		*mt_hashTable;
 	int		mt_hashSize;
+	/*
+	 * Index of the next free entry in the  media table array
+	 */
 	int		mt_tableUsed;
-	int		mt_tableAvail;
-	int		*mt_hashPermute;
+	int		mt_tableAvail;	/* Size of the media entry array */
 	ushort_t	mt_flags;
 	pthread_mutex_t	mt_mutex;
 	MediaEntry_t	*mt_data;		/* media entries */

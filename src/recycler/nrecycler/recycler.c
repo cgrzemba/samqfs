@@ -96,7 +96,7 @@ static void selectDkCandidate(MediaTable_t *table, MediaEntry_t *vsn,
 			    SeqNumsInUse_t *inuse);
 static void selectRmCandidate(MediaEntry_t *vsn);
 
-static long long unlinkFile(char *host, char *name);
+static long long unlinkFile(char *host, char *path, char *media, char *name);
 static void setRecycleFlag(MediaEntry_t *vsn);
 static void startRecyclerScript(MediaEntry_t *vsn);
 
@@ -492,14 +492,8 @@ selectDkCandidate(
 				CsdAssembleName((char *)dv->DvPath, fullpath,
 				    path, sizeof (path));
 				host = DiskVolsGetHostname(dv);
-				if (host != NULL) {
-					Trace(TR_MISC, "[%s.%s] unlink %s:%s",
-					    media, name, host, path);
-				} else {
-					Trace(TR_MISC, "[%s.%s] unlink %s",
-					    media, name, path);
-				}
-				recycledSpace += unlinkFile(host, path);
+				recycledSpace +=
+				    unlinkFile(host, path, media, name);
 			}
 		}
 	}
@@ -530,6 +524,8 @@ selectRmCandidate(
 static long long
 unlinkFile(
 	char *host,
+	char *path,
+	char *media,
 	char *name)
 {
 	SamrftImpl_t *rft;
@@ -547,18 +543,28 @@ unlinkFile(
 		return (0);
 	}
 
-	if (SamrftStat(rft, name, &buf) < 0) {
+	if (SamrftStat(rft, path, &buf) < 0) {
 		SamrftDisconnect(rft);
 		return (0);
 	}
 
 	if (ignoreRecycle == B_FALSE) {
-		rval = SamrftUnlink(rft, name);
+		rval = SamrftUnlink(rft, path);
 		if (rval != 0) {
 			Trace(TR_MISC, "Error: unlink failed %d", rval);
 		}
 	}
+
+	if (host != NULL) {
+		Trace(TR_MISC, "[%s.%s] unlink %s:%s",
+		    media, name, host, path);
+	} else {
+		Trace(TR_MISC, "[%s.%s] unlink %s",
+		    media, name, path);
+	}
+
 	SamrftDisconnect(rft);
+
 	return (buf.size);
 }
 
