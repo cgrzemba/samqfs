@@ -82,7 +82,7 @@ GetSeqNumsInUse(
 
 	if ((dirp = opendir(fullpath)) == NULL) {
 		Trace(TR_ERR, "Can not open %s directory", fullpath);
-		return (NULL);
+		return (inuse);
 	}
 
 	while ((dirent = readdir(dirp)) != NULL) {
@@ -94,7 +94,7 @@ GetSeqNumsInUse(
 		if (ar == NULL) {
 			Trace(TR_ERR, "Can't attach %s, errno %d",
 			    dirent->d_name, errno);
-			return (NULL);
+			goto out;
 		}
 
 		if (ar->ArState == ARS_archive && ar->ArFlags &
@@ -113,9 +113,9 @@ GetSeqNumsInUse(
 						SamMalloc(inuse->seqnums,
 						    ssize);
 					} else {
-						int cnt = inuse->count++;
+						inuse->count++;
 						SamRealloc(inuse->seqnums,
-						    cnt * ssize);
+						    inuse->count * ssize);
 					}
 
 					inuse->seqnums[inuse->count - 1] =
@@ -128,7 +128,8 @@ GetSeqNumsInUse(
 
 		(void) MapFileDetach(ar);
 	}
-
+out:
+	closedir(dirp);
 	return (inuse);
 }
 

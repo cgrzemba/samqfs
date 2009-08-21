@@ -616,6 +616,7 @@ recycleSeqNumbers(
 				Trace(TR_ERR,
 				    "Error: failed to update space "
 				    "used in disk volume seqnum.");
+				SamFree(seqNumsInUse);
 				return;
 			}
 
