@@ -165,6 +165,11 @@ ExamInodes(
 		timeNow = time(NULL);
 		deferTime = timeNow + State->AfBackGndInterval;
 
+		/*
+		 * Lock the list while finding entries to examine.
+		 */
+		PthreadMutexLock(&examListMutex);
+
 #if defined(EXAM_TRACE)
 		if (examList->ElCount != examList->ElFree) {
 			Trace(TR_MISC, "Examlist search start "
@@ -174,10 +179,6 @@ ExamInodes(
 		}
 #endif /* defined(EXAM_TRACE) */
 
-		/*
-		 * Lock the list while finding entries to examine.
-		 */
-		PthreadMutexLock(&examListMutex);
 		active = 0;
 		backgroundPaused = FALSE;
 
