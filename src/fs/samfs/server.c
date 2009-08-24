@@ -3013,14 +3013,13 @@ sam_callout_acl(sam_node_t *ip, int client_ord)
 	}
 
 	/*
-	 * Refresh acl for this file on all clients who have leases.
+	 * Refresh acl for this file on all mounted clients.
 	 */
 	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
-	for (ord = 1; ord <= mp->ms.m_no_clients; ord++) {
+	for (ord = 1; ord <= mp->ms.m_max_clients; ord++) {
 		client = sam_get_client_entry(mp, ord, 0);
 		if (client != NULL) {
 			if ((client->cl_status & FS_MOUNTED) &&
-			    !(client->cl_status & FS_SERVER) &&
 			    (ord != client_ord)) {
 				SAM_COUNT64(shared_server, callout_acl);
 				(void) sam_proc_callout(ip, CALLOUT_acl, 0,
