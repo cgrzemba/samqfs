@@ -142,6 +142,14 @@ extern int sam_max_shared_hosts;
 
 #include "../lib/bswap.c"
 
+typedef enum sam_frlock_cmp {
+	EQUAL,		/* Lock ranges are exactly equal */
+	DISJOINT,	/* Locks do not overlap */
+	SUBSET,		/* First is contained by second (no shared end-point) */
+	SUPERSET,	/* First totally contains (superset of) second */
+	OVLP_L,		/* First partially overlaps second on left */
+	OVLP_R		/* First partially overlaps second on right */
+} sam_frlock_cmp_t;
 
 /*
  * ----- sam_stale_indirect_blocks -
@@ -1214,6 +1222,173 @@ sam_stop_waiting_frlock(sam_node_t *ip, sam_share_flock_t *flockp)
 }
 #endif
 
+/*
+ * ----- sam_compare_frlock -
+ *	Compare two locks' ranges returning how they overlap each other.
+ *   A lock range is its start (offset) and length.  A length of zero is
+ *   taken to mean eof (infinity).
+ *
+ * Examples (start, len):
+ * lock2: (3, 4)
+ * lock1: (3, 5)	SUPSET (same start)
+ * lock1: (1, 7)	SUPSET
+ * lock1: (2, 0)	SUPSET
+ * lock1: (4, 2)	SUBSET
+ * lock1: (3, 4)	EQUAL
+ * lock1: (1, 4)	OVLP_L
+ * lock1: (3, 3)	OVLP_L (same start)
+ * lock1: (3, 0)	OVLP_L (same start)
+ * lock1: (4, 3)	OVLP_R (same end)
+ * lock1: (4, 5)	OVLP_R
+ */
+
+static sam_frlock_cmp_t
+sam_compare_frlock(sam_share_flock_t *lock1, sam_share_flock_t *lock2)
+{
+	sam_share_flock_t *left, *right;
+	int64_t start_diff;
+	int64_t len_remain;
+
+	if (lock1->l_start == lock2->l_start) {
+		if (lock1->l_len == lock2->l_len) {
+			return (EQUAL);
+		} else if ((lock1->l_len != 0 && lock1->l_len < lock2->l_len) ||
+		    lock2->l_len == 0) {
+			/* Equal start, lock1 is shorter */
+			return (OVLP_L);
+		} else if ((lock2->l_len != 0 && lock1->l_len > lock2->l_len) ||
+		    lock1->l_len == 0) {
+			/* Equal start, lock1 is longer */
+			return (SUPERSET);
+		}
+
+		/* Should not get here */
+		ASSERT(B_FALSE);
+		return (DISJOINT);
+	}
+
+	/* Starts aren't equal, calculate which lock comes first */
+	left = lock1->l_start < lock2->l_start ? lock1 : lock2;
+	right = (left == lock1) ? lock2 : lock1;
+
+	/* Handle left lock with zero len */
+	if (left->l_len == 0) {
+		if (left == lock1) {
+			return (SUPERSET);
+		} else {
+			return ((right->l_len == 0) ? OVLP_R : SUBSET);
+		}
+	}
+
+	/* Check if the locks overlap */
+	start_diff = right->l_start - left->l_start;
+	if (left->l_len > start_diff) {
+		len_remain = left->l_len - start_diff;
+		if (right->l_len == 0 || right->l_len > len_remain) {
+			return ((left == lock1) ? OVLP_L : OVLP_R);
+		} else if (right->l_len < len_remain) {
+			return ((left == lock1) ? SUPERSET : SUBSET);
+		} else {
+			/* right->l_len == len_remain */
+			return ((left == lock1) ? SUPERSET : OVLP_R);
+		}
+	} else {
+		return (DISJOINT);
+	}
+}
+
+/*
+ * ----- sam_remove_cl_frlock -
+ *	Removes flock entry from the inode cl_lock list.
+ *  If prev is NULL then the head of the inode's lock list is removed.
+ */
+
+static void
+sam_remove_cl_frlock(
+	sam_node_t *ip,
+	sam_cl_flock_t *prev,
+	sam_cl_flock_t *flock)
+{
+	ASSERT(flock != NULL);
+	if (prev == NULL) {
+		ASSERT(ip->cl_flock == flock);
+		ip->cl_flock = flock->cl_next;
+	} else {
+		ASSERT(prev->cl_next == flock);
+		prev->cl_next = flock->cl_next;
+	}
+
+	kmem_free(flock, sizeof (sam_cl_flock_t));
+
+	if ((--ip->cl_locks) < 0) {
+		ip->cl_locks = 0;
+	}
+}
+
+/*
+ * ----- sam_insert_cl_frlock -
+ *	Inserts new frlock entry into inode's cl_lock list at head of list.
+ */
+
+static sam_cl_flock_t *
+sam_insert_cl_frlock(
+	sam_node_t *ip,
+	sam_share_flock_t *lock,
+	int cmd,
+	int flag,
+	offset_t offset)
+{
+	sam_cl_flock_t *fptr = kmem_zalloc(sizeof (sam_cl_flock_t), KM_SLEEP);
+	fptr->offset = offset;
+	fptr->filemode = flag & 0xFFFF;
+	fptr->cmd = cmd;
+#ifdef sun
+	fptr->nfs_lock = (flag & F_REMOTELOCK) != 0;
+#endif /* sun */
+	fptr->flock = *lock;
+
+	/* Insert at head of list */
+	fptr->cl_next = ip->cl_flock;
+	ip->cl_flock = fptr;
+	ip->cl_locks++;
+
+	return (fptr);
+}
+
+/*
+ * ----- sam_split_cl_frlock -
+ *     Split the provided cl_flock (fptr) into two lock entries surrounding
+ * the lock flockp.
+ *
+ * After function completes, fptr will end before flockp, and the new lock
+ * with start after flockp.
+ *
+ * Precondition:
+ * sam_compare_frlock(flockp, &fptr->flock) == SUBSET
+ */
+
+static void
+sam_split_cl_frlock(
+	sam_node_t *ip,
+	sam_share_flock_t *flockp,
+	sam_cl_flock_t *fptr)
+{
+	ASSERT(flockp->l_len != 0);
+
+	/* Make a new copy of the existing lock */
+	sam_cl_flock_t *fnew = sam_insert_cl_frlock(ip, &fptr->flock,
+	    fptr->cmd, fptr->filemode, fptr->offset);
+
+	/* Modify fptr to end before flockp */
+	fptr->flock.l_len = flockp->l_start - fptr->flock.l_start;
+
+	/* Modify fnew to start after flockp */
+	fnew->flock.l_start = flockp->l_start + flockp->l_len;
+	if (fnew->flock.l_len != 0) {
+		fnew->flock.l_len -= fnew->flock.l_start - fptr->flock.l_start;
+	}
+}
+
 
 /*
  * ----- sam_update_frlock - File and record locking completion.
@@ -1228,83 +1403,75 @@ sam_update_frlock(
 	int flag,			/* flags, see file.h and flock.h */
 	offset_t offset)		/* offset. */
 {
-	/*
-	 * cmd == 0		remove all locks for this pid.
-	 * l_type = F_UNLCK	remove all locks for this pid and record.
-	 */
-	if ((cmd == 0) || (flockp->l_type == F_UNLCK)) {
-		sam_cl_flock_t *fptr, *fnext, *fprev;
-		boolean_t record_match;
+	sam_cl_flock_t *fptr, *fnext, *fprev;
+	sam_frlock_cmp_t cmp;
+	int64_t old_start;
 
-		fptr = ip->cl_flock;
-		fprev = NULL;
-		while (fptr) {
-			fnext = fptr->cl_next;
-			record_match = TRUE;
-			if (cmd != 0) {
-				if ((flockp->l_start != fptr->flock.l_start) ||
-				    (flockp->l_len != fptr->flock.l_len)) {
-					record_match = FALSE;
-				}
-			}
-			if (record_match &&
-			    (flockp->l_pid == fptr->flock.l_pid) &&
-			    (flockp->l_sysid == fptr->flock.l_sysid)) {
-				kmem_free(fptr, sizeof (sam_cl_flock_t));
-				if ((--ip->cl_locks) < 0) {
-					ip->cl_locks = 0;
-				}
-				if (fprev == NULL) {
-					ip->cl_flock = fnext;
-				} else {
-					fprev->cl_next = fnext;
-				}
-			} else {
-				fprev = fptr;
-			}
-			fptr = fnext;
-		}
-		if (ip->cl_flock == NULL) {
-			ip->cl_locks = 0;
-		}
+	ASSERT((RW_OWNER_OS(&ip->inode_rwl) == curthread));
+
+	fptr = ip->cl_flock;
+	fprev = NULL;
 
 	/*
-	 * Add this lock. Check to make sure it does not already exist.
+	 * Loop over lock list looking for entries to modify.  Our strategy is
+	 * to first treat all lock requests as an unlock, and then create a new
+	 * lock entry if needed.  In this way no overlap of locks is
+	 * introduced, and the newest entry is always up-to-date.
 	 */
-	} else {
-		sam_cl_flock_t *fptr, *fprev;
-		boolean_t set_lock;
+	while (fptr) {
+		fnext = fptr->cl_next;
 
-		fptr = ip->cl_flock;
-		fprev = NULL;
-		set_lock = TRUE;
-		while (fptr) {
-			if ((flockp->l_start == fptr->flock.l_start) &&
-			    (flockp->l_len == fptr->flock.l_len) &&
-			    (flockp->l_pid == fptr->flock.l_pid) &&
-			    (flockp->l_sysid == fptr->flock.l_sysid)) {
-				set_lock = FALSE;
+		if ((flockp->l_pid == fptr->flock.l_pid) &&
+		    (flockp->l_sysid == fptr->flock.l_sysid)) {
+			/* cmd == 0 remove all locks for this pid/sysid */
+			if (cmd == 0) {
+				sam_remove_cl_frlock(ip, fprev, fptr);
+				fptr = fnext;
+				continue;
+			}
+
+			cmp = sam_compare_frlock(flockp, &fptr->flock);
+			switch (cmp) {
+			case EQUAL:
+			case SUPERSET:
+				/* flockp covers fptr, remove fptr */
+				sam_remove_cl_frlock(ip, fprev, fptr);
+				fptr = NULL;
+				break;
+			case SUBSET:
+				/* flockp is inside fptr, make room in fptr */
+				sam_split_cl_frlock(ip, flockp, fptr);
+				break;
+			case OVLP_L:
+				/* Adjust fptr to start after flockp */
+				old_start = fptr->flock.l_start;
+				fptr->flock.l_start = flockp->l_start +
+				    flockp->l_len;
+				/* len==0 is infinite, no need to adjust */
+				if (fptr->flock.l_len != 0) {
+					fptr->flock.l_len -=
+					    fptr->flock.l_start - old_start;
+					ASSERT(fptr->flock.l_len > 0);
+				}
+				break;
+			case OVLP_R:
+				/* Adjust fptr to end before flockp */
+				fptr->flock.l_len = flockp->l_start -
+				    fptr->flock.l_start;
+				break;
+			case DISJOINT:
+			default:
 				break;
 			}
+		}
+		if (fptr != NULL) {
 			fprev = fptr;
-			fptr = fptr->cl_next;
 		}
-		if (set_lock) {
-			fptr = kmem_zalloc(sizeof (sam_cl_flock_t), KM_SLEEP);
-			fptr->offset = offset;
-			fptr->filemode = flag & 0xFFFF;
-			fptr->cmd = cmd;
-#ifdef sun
-			fptr->nfs_lock = (flag & F_REMOTELOCK) != 0;
-#endif /* sun */
-			fptr->flock = *flockp;
-			if (fprev == NULL) {
-				ip->cl_flock = fptr;
-			} else {
-				fprev->cl_next = fptr;
-			}
-			ip->cl_locks++;
-		}
+		fptr = fnext;
+	}
+
+	if (cmd != 0 && flockp->l_type != F_UNLCK) {
+		(void) sam_insert_cl_frlock(ip, flockp, cmd, flag, offset);
 	}
 }
 
