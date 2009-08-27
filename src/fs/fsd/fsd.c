@@ -772,6 +772,14 @@ main(int argc, char *argv[])
 		if (stopSignal) {
 			signalProc(stopSignal, NULL, NULL);
 			stopSignal = 0;
+			/*
+			 * Tell the filesystem that we are quitting.
+			 */
+			r = sam_syscall(SC_fsd, NULL, -1);
+			if (r < 0) {
+				Trace(TR_ERR, "Could not notify file system"
+				    " about quitting.");
+			}
 			Trace(TR_MISC, "Received stop signal - exiting");
 			break;			/* exit */
 		}

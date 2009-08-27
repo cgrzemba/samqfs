@@ -76,9 +76,9 @@ struct sam_stageall {
 
 
 enum SCD_daemons {
-	SCD_fsd			= 0,
+	SCD_fsd		= 0,
 	SCD_stageall	= 1,
-	SCD_stager		= 2,
+	SCD_stager	= 2,
 	SCD_MAX
 };
 
@@ -88,6 +88,8 @@ struct sam_syscall_daemon {
 	kcondvar_t put_cv;	/* CV - waiting to put data */
 	short put_wait;		/* Condition flag */
 	short package;		/* Package flag */
+	short active;		/* Daemon active flag */
+	short scd_pad;		/* Pad to 64-bit boundary */
 	int size;		/* Size of command */
 	int timeout;		/* Ret EAGAIN if no daemon in timeout seconds */
 	union {

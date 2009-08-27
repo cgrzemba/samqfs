@@ -87,7 +87,7 @@
 static int sam_send_cmd(sam_mount_t *mp, struct sam_syscall_daemon *scd,
 	void *cmd, int size, int scdi);
 static int sam_wait_cmd(struct sam_syscall_daemon *scd, enum uio_seg segflag,
-	void *cmd, int size);
+	void *cmd, int size, int scdi);
 static void sam_init_daemon(struct sam_syscall_daemon *scd);
 static void sam_finish_daemon(struct sam_syscall_daemon *scd);
 static boolean_t sam_is_failover_stage(int scdi, sam_mount_t *mp);
@@ -163,12 +163,22 @@ sam_send_cmd(
 		return (EREMCHG);	/* Kill this stage request */
 	}
 
+	if (!scd->active && (scdi == SCD_fsd)) {
+		TRACE(T_SAM_DAE_ACTIVE, mp, scd->active, scdi, 3);
+		return (EAGAIN);
+	}
+
 	mutex_enter(&scd->mutex);
 	scd->put_wait++;
 	while (scd->size) {
 		if ((ret = sam_cv_wait1sec_sig(&scd->put_cv,
 		    &scd->mutex)) <= 0) {
-			if (ret == 0) {
+			if (!scd->active && (scdi == SCD_fsd)) {
+				TRACE(T_SAM_DAE_ACTIVE, mp, scd->active,
+				    scdi, 4);
+				error = EAGAIN;
+				break;
+			} else if (ret == 0) {
 				if (sam_is_failover_stage(scdi, mp)) {
 					error = EREMCHG;
 				} else {
@@ -241,12 +251,12 @@ sam_wait_scd_cmd(
 {
 	struct sam_syscall_daemon *scd = &sam_scd_table[scdi];
 
-	return (sam_wait_cmd(scd, segflag, cmd, size));
+	return (sam_wait_cmd(scd, segflag, cmd, size, (int)scdi));
 }
 
 
 /*
- * ----- sam_wait_scd_cmd - system call daemon waits for filesystem command.
+ * ----- sam_wait_cmd - system call daemon waits for filesystem command.
  *
  * Set command flag and signal the filesystem. This notifies the
  * filesystem that this daemon is waiting until the filesystem signals
@@ -259,11 +269,28 @@ sam_wait_cmd(
 	struct sam_syscall_daemon *scd,	/* system call daemon record */
 	enum uio_seg segflag,		/* Location of buffer */
 	void *cmd,			/* Return info for daemon here */
-	int size)			/* Size of requested information */
+	int size,			/* Size of requested information */
+	int scdi)			/* System Call Daemon index */
 {
 	int error = 0;
 
 	mutex_enter(&scd->mutex);
+
+	if (size == -1) {
+		/*
+		 * If daemon is telling us it is quitting.
+		 */
+		scd->active = 0;
+		TRACE(T_SAM_DAE_ACTIVE, NULL, scd->active, scdi, 1);
+		mutex_exit(&scd->mutex);
+		return (0);
+	}
+	/*
+	 * Mark daemon as active
+	 */
+	scd->active = 1;
+	TRACE(T_SAM_DAE_ACTIVE, NULL, scd->active, scdi, 2);
+
 	while (scd->size == 0) {
 		if (cv_wait_sig(&scd->get_cv, &scd->mutex) == 0) {
 			error = EINTR;
@@ -470,6 +497,7 @@ sam_init_daemon(struct sam_syscall_daemon *scd)
 	scd->size = 0;
 	scd->put_wait = 0;
 	scd->package = -1;
+	scd->active = 0;
 	scd->timeout = 0;
 }
 
@@ -482,6 +510,7 @@ sam_finish_daemon(struct sam_syscall_daemon *scd)
 {
 	mutex_enter(&scd->mutex);
 	scd->package = -1;
+	scd->active = 0;
 	cv_signal(&scd->get_cv);
 	mutex_exit(&scd->mutex);
 }
