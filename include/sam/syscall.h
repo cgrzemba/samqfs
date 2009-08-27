@@ -110,7 +110,6 @@ typedef enum {
 	SC_osd_attr = 126,	/* takes sam_osd_attr_arg */
 	SC_fseq_ord = 127,	/* takes sam_fseq_arg */
 	SC_onoff_client = 128,	/* takes sam_onoff_client_arg */
-	SC_setfsconfig_defs = 129, /* takes sam_setfsconfig */
 	SC_FS_MAX = 149,
 
 	SC_SAM_MIN = 150,

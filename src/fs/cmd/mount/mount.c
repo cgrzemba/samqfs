@@ -294,6 +294,9 @@ main(int argc, char **argv)
 
 	/* Mount point is last argument. */
 	mnt_point = argv[optind + 1];
+
+	/* Check and set SunCluster requested mount parameters */
+	SetSCMountParams(mp);
 #endif /* sun */
 
 	if (fset_name[0] == '/') {

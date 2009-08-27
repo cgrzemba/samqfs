@@ -45,6 +45,7 @@
 #include <sys/vfstab.h>
 #include <sys/mnttab.h>
 #include <sys/sysmacros.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 
@@ -66,6 +67,8 @@ int doprint = 0;
  * declared in string.h.
  */
 extern char *strtok_r(char *, const char *, char **);
+
+void SetSCIndicatorFile(char *fsname, int setflag);
 
 static sam_host_table_blk_t *htb = NULL;
 static int htbufsize = 0;
@@ -2542,6 +2545,7 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 {
 	int err = 0;
 	char *flag, *msg;
+	int flagval = 1;
 
 	scds_syslog_debug(DBG_LVL_HIGH,
 	    "set_cluster_lease_mount_opts - Begin");
@@ -2556,8 +2560,9 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 	flag = "clustermgmt";
 	if (rgp->rg_flags & RG_LEASEPOLICY_TIMEOUT) {
 		flag = "noclustermgmt";
+		flagval = 0;
 	}
-	msg = SetFsConfig(fs, flag, 1);
+	msg = SetFsConfig(fs, flag);
 	if (strcmp(msg, "") != 0) {
 		err = 1;
 		scds_syslog(LOG_NOTICE,
@@ -2565,27 +2570,8 @@ set_cluster_lease_mount_opts(struct RgInfo *rgp, char *fs)
 		    fs, fs, flag, msg);
 	}
 
-	/*
-	 * Set the [no]clusterfastsw flag on the FS.  If set, this
-	 * flag forces sam-sharefsd to accelerate the failover rather
-	 * than waiting for all hosts to connect, even if there are
-	 * FS hosts outside the cluster.  Normally, sam-sharefsd would
-	 * have the kernel wait for all hosts whenever there are FS
-	 * hosts that are not part of the cluster, and accelerate it
-	 * otherwise (provided the cluster framework claims the
-	 * unconnected hosts are DOWN).
-	 */
-	flag = "noclusterfastsw";
-	if (rgp->rg_flags & RG_LEASEPOLICY_CLUSTER) {
-		flag = "clusterfastsw";
-	}
-	msg = SetFsConfig(fs, flag, 1);
-	if (strcmp(msg, "") != 0) {
-		err = 1;
-		scds_syslog(LOG_NOTICE,
-		    "FS %s: SetFsConfig(\"%s\", %s) failed: %s.",
-		    fs, fs, flag, msg);
-	}
+	/* set SC clustermgmt indicator file for future mounts */
+	SetSCIndicatorFile(fs, flagval);
 
 	scds_syslog_debug(DBG_LVL_HIGH,
 	    "set_cluster_lease_mount_opts - End err = %d", err);
@@ -2766,4 +2752,68 @@ closefds(void)
 	(void) dup2(fd, 1);
 	(void) dup2(fd, 2);
 	(void) close(fd);
+}
+
+
+/*
+ * Create or remove the SAM_SC_DIR/-fsname- file.
+ *
+ * This function is used by the QFS SunCluster agent to communicate
+ * wheather SC manages this file system.  It creates or removes the
+ * file SAM_SC_DIR/-fsname- to indicate SC managment preference.
+ * Existence of this file indicates that any mounting process should
+ * set the MC_CLUSTER_MGMT flag in the mount structure.
+ */
+void
+SetSCIndicatorFile(char *fsname, int setflag)
+{
+	char		scpath[MAXPATHLEN];
+	struct stat	sb;
+	int		retries, fd;
+
+	/*
+	 * Create the SC directory if needed.
+	 */
+	for (retries = 0; /* Terminated inside */; retries++) {
+		if (lstat(SAM_SC_DIR, &sb) != 0) {
+			/*
+			 * Directory doesn't exist.
+			 */
+			if (retries > 1) {
+				return;
+			}
+			if (mkdir(SAM_SC_DIR, 0700) != 0) {
+				if (errno != EEXIST) {
+					printf("%s: Could not create: "
+					    "%s: err %d\n",
+					    program_name,
+					    SAM_SC_DIR,
+					    errno);
+					return;
+				}
+			}
+			break;
+		} else if (!S_ISDIR(sb.st_mode)) {
+			/*
+			 * Path exists but not a directory
+			 */
+			(void) unlink(SAM_SC_DIR);
+		} else {
+			/*
+			 * Directory exists.
+			 */
+			break;
+		}
+	}
+	sprintf(scpath, SAM_SC_DIR"/%s", fsname);
+	if (lstat(scpath, &sb) != 0) {
+		if (setflag && (fd = open(scpath, O_CREAT, 0400) == -1)) {
+			printf("%s: Could not create: %s: %s\n",
+			    program_name, scpath, strerror(errno));
+			return;
+		}
+		(void) close(fd);
+	} else if (!setflag) {
+		(void) unlink(scpath);
+	}
 }

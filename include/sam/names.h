@@ -88,6 +88,9 @@
 #define	DEV_NOTIFY_DEFAULT "/dev_down.sh"
 #define	DISK_VOLUME_TAB "diskvolume.tab"	/* disk volume table */
 
+/* SC parameters home */
+#define	SAM_SC_DIR SAM_VARIABLE_PATH"/.sc"
+
 /* Script to save core files */
 #define	SAVE_CORE_SH SAM_SCRIPT_PATH"/save_core.sh"
 

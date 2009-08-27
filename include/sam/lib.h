@@ -156,7 +156,7 @@ int GetFsParts(char *name, int maxpts, struct sam_fs_part *pts);
 int GetFsStatus(struct sam_fs_status **fs);
 int OpenInodesFile(char *mountPoint);
 char *SetFsParam(char *fsname, char *param, char *value);
-char *SetFsConfig(char *fsname, char *param, int flag);
+char *SetFsConfig(char *fsname, char *param);
 int SetFsPartCmd(char *fsname, char *eqnum, int32_t command);
 int onoff_client(char *fsname, int cl, int cmd);
 

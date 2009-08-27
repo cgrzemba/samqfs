@@ -141,5 +141,6 @@ int get_blk_device(struct sam_fs_part *fsp, int oflags, int maxdevretry);
 int check_mnttab(char *fs_name);
 void ChkFs(void);
 char *MountCheckParams(struct sam_fs_info *mp);
+void SetSCMountParams(struct sam_fs_info *mp);
 
 #endif /* SAM_UTILITY_H */

@@ -399,8 +399,7 @@ OpenInodesFile(
 char *
 SetFsConfig(
 	char *fsname,		/* Filesystem name */
-	char *param,		/* Name of parameter to set */
-	int  flag)		/* 0=set in mt, 1=set default in orig_mt  */
+	char *param)		/* Name of parameter to set */
 {
 	struct sam_setfsconfig_arg args;
 	struct sam_fs_info fi;
@@ -431,15 +430,8 @@ SetFsConfig(
 	args.sp_mask = vals->mask;
 	args.sp_offset = table->FvLoc;
 	args.sp_value = (table->FvType == SETFLAG) ? vals->mask : 0;
-	if (flag) {
-		if (sam_syscall(SC_setfsconfig_defs, &args,
-		    sizeof (args)) < 0) {
-			return ("SC_setfsconfig_defs error");
-		}
-	} else {
-		if (sam_syscall(SC_setfsconfig, &args, sizeof (args)) < 0) {
-			return ("SC_setfsconfig error");
-		}
+	if (sam_syscall(SC_setfsconfig, &args, sizeof (args)) < 0) {
+		return ("SC_setfsconfig error");
 	}
 	return ("");
 }

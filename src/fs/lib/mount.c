@@ -48,6 +48,7 @@
 /* Solaris headers. */
 #include "sys/mount.h"
 #include "sys/wait.h"
+#include <sys/stat.h>
 #ifdef sun
 #include <sys/dkio.h>
 #include <sys/vtoc.h>
@@ -66,6 +67,29 @@
 #include "utility.h"
 
 extern char *getfullrawname();
+
+/*
+ * Set/clear clustermgmt mount option based on SC indicator file.
+ * The indicator file is set by SetSCIndicatorFile().
+ */
+void
+SetSCMountParams(struct sam_fs_info *mp)
+{
+	char	scpath[MAXPATHLEN];
+	struct	stat sb;
+
+	if (mp == NULL || mp->fi_name == NULL) {
+		return;
+	}
+	sprintf(scpath, SAM_SC_DIR"/%s", mp->fi_name);
+
+	if (lstat(scpath, &sb) == 0) {
+		mp->fi_config1 |= MC_CLUSTER_MGMT;
+	} else {
+		mp->fi_config1 &= ~MC_CLUSTER_MGMT;
+	}
+}
+
 
 /*
  * Check mount parameters.
@@ -274,8 +298,10 @@ ChkFs(void)
 
 	/*
 	 * Filesystem is not configured.
-	 * Execute sam-fsd to configure it.
+	 * Remove any SC config files and execute sam-fsd to configure.
 	 */
+	(void) system("/bin/rm -f " SAM_SC_DIR"/*");
+
 	/* "Configuring file system" */
 	printf("%s: %s\n", program_name, GetCustMsg(12021));
 	pid = fork();
