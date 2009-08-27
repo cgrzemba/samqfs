@@ -214,6 +214,7 @@ typedef struct DiskVolsDictionary {
 struct DiskVolsDictionary *DiskVolsNewHandle(char *progname, int dbtype,
     int flags);
 struct DiskVolsDictionary *DiskVolsGetHandle(int dbtype);
+void DiskVolsRelHandle(int dbtype);
 int DiskVolsDeleteHandle(int dbtype);
 
 int DiskVolsInit(struct DiskVolsDictionary **dict, int dbytype,

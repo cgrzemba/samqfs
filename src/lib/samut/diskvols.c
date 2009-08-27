@@ -216,13 +216,42 @@ DiskVolsGetHandle(
 {
 	DiskVolsDictionary_t *dict = NULL;
 
+	pthread_mutex_lock(&diskvolsMutex);
 	if (dbtype == DISKVOLS_VSN_DICT) {
 		dict = vsnDict;
 	} else if (dbtype == DISKVOLS_CLI_DICT) {
 		dict = cliDict;
 	}
+	if (dict != NULL) {
+		connections[(dbtype - 1)]++;
+	}
+	pthread_mutex_unlock(&diskvolsMutex);
+
 	return (dict);
 }
+
+/*
+ * Release the Dictionary Handle. Decrement the connection count,
+ * call DiskVolsDeleteHandle if this is the last connection.
+ */
+void
+DiskVolsRelHandle(int dbtype)
+{
+	pthread_mutex_lock(&diskvolsMutex);
+	if (connections[(dbtype - 1)] > 1) {
+		connections[(dbtype - 1)]--;
+	} else if (connections[(dbtype - 1)] == 1) {
+		/* Last reference. Delete the handle */
+		pthread_mutex_unlock(&diskvolsMutex);
+		(void) DiskVolsDeleteHandle(dbtype);
+		return;
+	} else {
+		/* Should not happen. Reset connection to zero */
+		connections[(dbtype - 1)] = 0;
+	}
+	pthread_mutex_unlock(&diskvolsMutex);
+}
+
 
 /*
  * Delete disk volume, VSN or client, dictionary handle.
@@ -232,6 +261,11 @@ DiskVolsDeleteHandle(
 	int dbtype)
 {
 	pthread_mutex_lock(&diskvolsMutex);
+	if (connections[(dbtype - 1)] <= 0) {
+		connections[(dbtype - 1)] = 0;
+		goto out;
+	}
+
 	if (--connections[(dbtype - 1)] == 0) {
 		if (dbtype == DISKVOLS_VSN_DICT && vsnDict != NULL) {
 			(void) vsnDict->Close(vsnDict);
@@ -249,6 +283,7 @@ DiskVolsDeleteHandle(
 			hdrDict = NULL;
 		}
 	}
+out:
 	pthread_mutex_unlock(&diskvolsMutex);
 
 	return (0);

@@ -2602,6 +2602,7 @@ process_dk_desc(
 	}
 
 	(void) diskvols->EndIterator(diskvols);
+	DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 }
 
 /*
@@ -2684,6 +2685,7 @@ process_dk_pool(
 
 		(void) diskvols->EndIterator(diskvols);
 	}
+	DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 }
 
 

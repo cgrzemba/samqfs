@@ -177,10 +177,14 @@ AssignDiskVol(
 
 	robot = &ROBOT_table[robot_index];
 
+	if (robot == NULL || vsn == NULL) {
+		return;
+	}
+
 	diskVolume = NULL;
 	diskvols = DiskVolsGetHandle(DISKVOLS_VSN_DICT);
 
-	if (robot == NULL || vsn == NULL || diskvols == NULL) {
+	if (diskvols == NULL) {
 		return;
 	}
 
@@ -189,6 +193,7 @@ AssignDiskVol(
 	 */
 	(void) diskvols->Get(diskvols, vsn->vsn, &diskVolume);
 	if (diskVolume == NULL) {
+		DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 		return;
 	}
 
@@ -218,6 +223,7 @@ AssignDiskVol(
 			}
 			Trace(TR_MISC, "Sam rft connection to '%s' failed",
 			    host);
+			DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 			return;
 		}
 
@@ -265,6 +271,7 @@ AssignDiskVol(
 		SamrftDisconnect(rft);
 		rft = NULL;
 	}
+	DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 }
 
 
@@ -456,7 +463,7 @@ recycle(
 	if (diskVolume == NULL) {
 		Trace(TR_ERR, "Could not find disk volume '%s'",
 		    (char *)&vsn->vsn[0]);
-		return;
+		goto out;
 	}
 
 	if (IS_DISK_HONEYCOMB(vsn->media)) {
@@ -465,14 +472,14 @@ recycle(
 		hcerr = hc_init(malloc, free, realloc);
 		if (hcerr != HCERR_OK) {
 			SendCustMsg(HERE, 4057, hcerr, hc_decode_hcerr(hcerr));
-			return;
+			goto out;
 		}
 
 		hcerr = hc_session_create_ez(diskVolume->DvAddr,
 		    diskVolume->DvPort, &session);
 		if (hcerr != HCERR_OK) {
 			SendCustMsg(HERE, 4057, hcerr, hc_decode_hcerr(hcerr));
-			return;
+			goto out;
 		}
 	}
 
@@ -483,7 +490,7 @@ recycle(
 			host = "";
 		}
 		Trace(TR_ERR, "Sam rft connection to '%s' failed", host);
-		return;
+		goto out;
 	}
 
 	numRecycledFiles = 0;
@@ -545,6 +552,8 @@ recycle(
 			Msend(&mailfile, mailaddr, subject);
 		}
 	}
+out:
+	DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 }
 
 /*
@@ -1516,6 +1525,7 @@ clearDiskVolsFlag(
 		Trace(TR_MISC, "Disk dictionary clear flag 0x%x failed: dk.%s",
 		    rval, volname);
 	}
+	DiskVolsRelHandle(DISKVOLS_VSN_DICT);
 }
 
 /*

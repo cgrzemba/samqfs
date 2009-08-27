@@ -306,9 +306,11 @@ DkInit(void)
 	ve = &VolsTable->entry[VolCur];
 	diskVolume = NULL;
 
+	ThreadsDiskVols(B_TRUE);
 	dict = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT,
 	    DISKVOLS_RDONLY);
 	if (dict == NULL) {
+		ThreadsDiskVols(B_FALSE);
 		LibFatal(DiskVolsNewHandle, "InitDkArchive");
 	}
 
@@ -321,6 +323,8 @@ DkInit(void)
 		memcpy(diskVolume, dv, size);
 	}
 	(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
+	ThreadsDiskVols(B_FALSE);
+
 	if (dv == NULL) {
 		LibFatal(dict->Get, "InitDkArchive");
 	}
@@ -356,8 +360,11 @@ DkSetDiskVolsFlag(
 
 	ve = &VolsTable->entry[VolCur];
 	dv->DvFlags |= flag;
+
+	ThreadsDiskVols(B_TRUE);
 	dict = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT, 0);
 	if (dict == NULL) {
+		ThreadsDiskVols(B_FALSE);
 		LibFatal(DiskVolsNewHandle, "DkSetDiskVolsFlag");
 	}
 	ret = dict->Put(dict, ve->Vi.VfVsn, dv);
@@ -368,6 +375,7 @@ DkSetDiskVolsFlag(
 		SendCustMsg(HERE, 4048, ve->Vi.VfMtype, ve->Vi.VfVsn);
 	}
 	(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
+	ThreadsDiskVols(B_FALSE);
 }
 
 

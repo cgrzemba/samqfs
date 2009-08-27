@@ -70,6 +70,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "device.h"
 #include "utility.h"
 #include "volume.h"
+#include "threads.h"
 
 #if defined(lint)
 #undef shmdt
@@ -263,6 +264,8 @@ makeArchLib(void)
 
 	diskVolumeNumof = 0;
 	honeycombNumof  = 0;
+
+	ThreadsDiskVols(B_TRUE);
 	diskVols = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT,
 	    DISKVOLS_RDONLY);
 	if (diskVols != NULL) {
@@ -272,6 +275,7 @@ makeArchLib(void)
 		    DV_numof_honeycomb);
 		(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
 	}
+	ThreadsDiskVols(B_FALSE);
 
 	/*
 	 * Create libraries for disk archive and honeycomb data silo.

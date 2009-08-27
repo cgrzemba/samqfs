@@ -309,8 +309,10 @@ HcInit(void)
 	ve = &VolsTable->entry[VolCur];
 	diskVolume = NULL;
 
+	ThreadsDiskVols(B_TRUE);
 	dict = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT, 0);
 	if (dict == NULL) {
+		ThreadsDiskVols(B_FALSE);
 		LibFatal(DiskVolsNewHandle, "InitHcArchive");
 	}
 
@@ -323,6 +325,7 @@ HcInit(void)
 		memcpy(diskVolume, dv, size);
 	}
 	(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
+	ThreadsDiskVols(B_FALSE);
 	if (dv == NULL) {
 		LibFatal(dict->Get, "InitHcArchive");
 	}

@@ -66,6 +66,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "device.h"
 #include "fileprops.h"
 #include "volume.h"
+#include "threads.h"
 
 /* Private data. */
 static struct ArchSet *as;
@@ -421,8 +422,10 @@ printDiskVolsDict(
 	struct DiskVolumeInfo *dv;
 	char *mtype;
 
+	ThreadsDiskVols(B_TRUE);
 	diskVols = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT, 0);
 	if (diskVols == NULL) {
+		ThreadsDiskVols(B_FALSE);
 		return;
 	}
 
@@ -465,6 +468,7 @@ printDiskVolsDict(
 	}
 	diskVols->EndIterator(diskVols);
 	(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
+	ThreadsDiskVols(B_FALSE);
 }
 
 
@@ -865,6 +869,7 @@ printDiskVols(
 	fsize_t	mediaSpace;
 	struct DiskVolumeInfo *dv;
 
+	ThreadsDiskVols(B_TRUE);
 	diskVols = DiskVolsNewHandle(program_name, DISKVOLS_VSN_DICT, 0);
 	if (diskVols == NULL) {
 		printf("  ** No destinations available. **\n");
@@ -952,6 +957,8 @@ printDiskVols(
 		    StrFromFsize(mediaSpace, 1, NULL, 0));
 	}
 	(void) DiskVolsDeleteHandle(DISKVOLS_VSN_DICT);
+	ThreadsDiskVols(B_FALSE);
+
 }
 
 
