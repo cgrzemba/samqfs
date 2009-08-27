@@ -382,34 +382,31 @@ sam_block_thread(sam_mount_t *mp)
 		/*
 		 * Wait if not umounting and if all buffers are at least
 		 * half_full/empty/busy.
-		 * If shared writer, double check i/o completion since we
-		 * checked earlier in this loop. Don't wait if i/o completed
-		 * to synchronize bitmaps and free blocks in the superblock.
+		 * Check i/o completion and don't wait if i/o is completed.
 		 * Prior to waiting, notify CPR that this thread is suspended.
 		 * After waking up, notify CPR that this thread has resumed.
 		 */
 		if ((mp->mi.m_block.flag != SAM_THR_UMOUNT) &&
 		    ((number_buffers == buf_busy) || io_outstanding)) {
-			if (SAM_IS_SHARED_WRITER(mp)) {
-				boolean_t nowait = FALSE;
+			boolean_t nowait = FALSE;
 
-				for (ord = 0; ord < mp->mt.fs_count; ord++) {
-					struct samdent *dp;
+			for (ord = 0; ord < mp->mt.fs_count; ord++) {
+				struct samdent *dp;
 
-					dp = &mp->mi.m_fs[ord];
-					if (dp->skip_ord || dp->busy ||
-					    is_osd_group(dp->part.pt_type)) {
-						continue;
-					}
-					if (dp->modified) { /* I/O completed */
-						nowait = TRUE;
-						break;
-					}
-				}
-				if (nowait) {
+				dp = &mp->mi.m_fs[ord];
+				if (dp->skip_ord || dp->busy ||
+				    is_osd_group(dp->part.pt_type)) {
 					continue;
 				}
+				if (dp->modified) {
+					nowait = TRUE;
+					break;
+				}
 			}
+			if (nowait) {
+				continue;
+			}
+
 			mutex_enter(&mp->mi.m_block.put_mutex);
 			mp->mi.m_block.put_wait = 1;
 			mutex_exit(&mp->mi.m_block.mutex);
@@ -461,7 +458,7 @@ sam_block_thread_exit(sam_mount_t *mp, callb_cpr_t *cprinfo)
 			mutex_exit(&mp->mi.m_block.put_mutex);
 			mutex_enter(&mp->mi.m_block.mutex);
 		}
-		if (dp->modified && SAM_IS_SHARED_WRITER(mp)) {
+		if (dp->modified) {
 			int modified = dp->modified;
 			sam_bn_t next_dau = dp->next_dau;
 			int bt;
