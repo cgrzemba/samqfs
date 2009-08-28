@@ -81,8 +81,8 @@
 #ifdef sun
 #include "extern.h"
 #include "debug.h"
-#include "trace.h"
 #endif /* sun */
+#include "trace.h"
 
 static int sam_send_cmd(sam_mount_t *mp, struct sam_syscall_daemon *scd,
 	void *cmd, int size, int scdi);
