@@ -58,7 +58,7 @@
 #define	FS_FIFO_UNLOAD		2	/* unload a vsn */
 #define	FS_FIFO_CANCEL		3	/* cancel a command */
 #define	FS_FIFO_RESYNC		4	/* resync fifo (sam-init restart) */
-#define	FS_FIFO_WMSTATE		5	/* filesystem water mark state */
+#define	FS_FIFO_UNUSED		5	/* not used, available */
 #define	FS_FIFO_POSITION	6	/* position removable media file */
 
 
@@ -123,10 +123,6 @@ typedef enum {
 
 #define	FS_WMSTATE_MIN_SECS 60
 
-typedef struct {
-	equ_t fseq;
-	fs_wmstate_e wmstate;
-} fs_wmstate_t;
 
 /*
  * FS_FIFO_POSITION
@@ -184,7 +180,6 @@ typedef struct sam_fs_fifo {
 		fs_unload_t fs_unload;		/* unload a vsn */
 		fs_cancel_t fs_cancel;		/* cancel a command */
 		fs_resync_t fs_resync;		/* resync the fifo */
-		fs_wmstate_t fs_wmstate;	/* fs water mark state */
 		/* pos'n removable media file */
 		fs_position_t fs_position;
 	} param;

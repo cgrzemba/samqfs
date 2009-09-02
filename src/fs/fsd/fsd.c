@@ -2362,6 +2362,12 @@ static void
 sendSyslogMsg(struct sam_fsd_syslog *args)
 {
 	char	msgbuf[MAX_MSGBUF_SIZE];
+	static char *wm_str[] = {
+		"below low",
+		"between (and rising)",
+		"between (and dropping)",
+		"above high"
+	};
 
 	switch (args->slerror) {
 
@@ -2385,6 +2391,13 @@ sendSyslogMsg(struct sam_fsd_syslog *args)
 		}
 		break;
 
+	case E_FSWM:
+		if (args->param < FS_WMSTATE_MAX) {
+				sam_syslog(LOG_DEBUG, "%s - %s watermark",
+				    args->mnt_point,
+				    wm_str[args->param]);
+		}
+		break;
 
 	default: {		/* Valid and out-of-range errors alike */
 		static char errno_msg[STR_FROM_ERRNO_BUF_SIZE];

@@ -76,7 +76,7 @@
 #include "kstats.h"
 #include "qfs_log.h"
 #include "behavior_tags.h"
-
+#include "syslogerr.h"
 
 static void sam_block_done(buf_t *bp);
 static boolean_t sam_get_sm_blklist(sam_mount_t *mp);
@@ -1639,8 +1639,8 @@ sam_check_wmstate(
 /*
  * ----- sam_report_fs_watermark - send fs_watermark_state.
  *
- * Unconditionally report the watermark state to sam-amld
- * via the command interface. Since xmsg_state and xmsg_time
+ * Unconditionally report the watermark state to sam-fsd
+ * via the sam-fsd command interface. Since xmsg_state and xmsg_time
  * fields are manipulated in the mount table, release_lock
  * should be set on entry and exit.
  */
@@ -1650,8 +1650,8 @@ sam_report_fs_watermark(
 	sam_mount_t *mp,	/* The mount table pointer. */
 	int state)
 {
-	sam_fs_fifo_t	*fifo_msg;
-	int				old_state;
+	struct sam_fsd_cmd	cmd;
+	int			old_state;
 
 	old_state = mp->mi.m_xmsg_state;
 	mp->mi.m_xmsg_state = state;
@@ -1659,20 +1659,20 @@ sam_report_fs_watermark(
 
 	/*
 	 * build a watermark message
+	 * Note, this code, added by CR 6869388,
+	 * removes a call to prv_fswm_priority which was
+	 * previously done in fifo_fs.c. See CR 6876577.
 	 */
-	fifo_msg = kmem_zalloc(sizeof (*fifo_msg), KM_SLEEP);
-	fifo_msg->cmd = FS_FIFO_WMSTATE;
-	fifo_msg->magic = FS_FIFO_MAGIC;
-	fifo_msg->param.fs_wmstate.fseq = mp->mt.fi_eq;
-	fifo_msg->param.fs_wmstate.wmstate = (fs_wmstate_e)state;
+	cmd.cmd = FSD_syslog;
+	cmd.args.syslog.slerror = E_FSWM;
+	cmd.args.syslog.eq = mp->mt.fi_eq;
+	cmd.args.syslog.param = state;
+	bcopy(mp->mt.fi_mnt_point, cmd.args.syslog.mnt_point,
+	    sizeof (cmd.args.syslog.mnt_point));
+	(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 
-	/*
-	 * and send that news.
-	 */
 	TRACE(T_SAM_FIFO_FSWM,
 	    mp->mi.m_vfsp, (sam_tr_t)mp->mt.fi_eq, state, old_state);
-	(void) sam_put_amld_cmd(fifo_msg, SAM_NOBLOCK);
-	kmem_free(fifo_msg, sizeof (*fifo_msg));
 
 	/*
 	 * Notify arfind if going up above high water mark.

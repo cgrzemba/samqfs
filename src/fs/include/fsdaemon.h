@@ -81,6 +81,7 @@ struct sam_fsd_releaser {
 struct sam_fsd_syslog {
 	upath_t		mnt_point;	/* Mount point */
 	sam_id_t	id;		/* Inode id - i-number and generation */
+	equ_t		eq;		/* equipment number */
 	int		slerror;	/* errmsg, include/sam/fs/syslogerr.h */
 	int		error;		/* errno */
 	int		param;		/* optional integer parameter */

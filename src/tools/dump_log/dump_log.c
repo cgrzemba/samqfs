@@ -286,8 +286,6 @@ main(int argc, char **argv)
 		DumpResource(&f_blk->fifo_cmd.param.fs_cancel.resource);
 		break;
 
-			case FS_FIFO_WMSTATE:
-				break;
 			}
 			printf("\n");
 		} else {

@@ -281,9 +281,6 @@ manage_fs_fifo(
 				*s_mess = '\0';
 				break;
 
-			case FS_FIFO_WMSTATE:
-				start_thread_fs(&command, wmstate_for_fs);
-
 			default:
 				break;
 			}

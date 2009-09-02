@@ -52,6 +52,7 @@ enum syslog_numbers {
 	E_BAD_STAGE,
 	E_PREALLOC_EXCEEDED,
 	E_NOSPACE,
+	E_FSWM,
 	E_SAM_MAX
 };
 
