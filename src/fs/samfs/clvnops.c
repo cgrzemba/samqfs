@@ -2619,7 +2619,7 @@ sam_client_getpage_vn(
 		return (ENOSYS);
 	}
 	ip = SAM_VTOI(vp);
-	if (rw == S_WRITE) {
+	if ((rw == S_WRITE) || (rw == S_CREATE)) {
 		ltype = LTYPE_write;
 	} else {
 		ltype = LTYPE_read;
@@ -2686,9 +2686,15 @@ sam_client_getpage_vn(
 	}
 #endif
 
+	/*
+	 * S_WRITE and S_CREATE require a write lease.
+	 * S_READ and S_EXEC require a read lease.
+	 */
 	if ((l_ip != ip) &&
-	    (((rw == S_WRITE) && !(ip->cl_leases & CL_WRITE)) ||
-	    ((rw == S_READ) && !(ip->cl_leases & CL_READ)))) {
+	    ((((rw == S_WRITE) || (rw == S_CREATE)) &&
+	    !(ip->cl_leases & CL_WRITE)) ||
+	    (((rw == S_READ) || (rw == S_EXEC)) &&
+	    !(ip->cl_leases & CL_READ)))) {
 		sam_lease_data_t data;
 
 		mutex_exit(&ip->ilease_mutex);
