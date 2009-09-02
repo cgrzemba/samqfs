@@ -748,11 +748,10 @@ sam_get_lease_request(sam_mount_t *mp, sam_san_message_t *msg)
 
 	if ((error = sam_get_ino(mp->mi.m_vfsp,
 	    IG_EXISTS, &lp->id, &ip)) == 0) {
-		if ((msg->hdr.operation == LEASE_remove) ||
-		    (msg->hdr.operation == LEASE_relinquish)) {
-			lease_mask = lp->data.ltype;
-		} else {
+		if (msg->hdr.operation == LEASE_get) {
 			lease_mask = 1 << lp->data.ltype;
+		} else {
+			lease_mask = lp->data.ltype;
 		}
 		TRACE(T_SAM_SR_LEASE, SAM_ITOV(ip), msg->hdr.client_ord,
 		    lease_mask, ip->di.rm.size);
@@ -1243,7 +1242,7 @@ sam_process_reset_lease(sam_node_t *ip, sam_san_message_t *msg)
 	sam_san_lease2_t *l2p = &msg->call.lease2;
 	int client_ord;
 	enum LEASE_type ltype;
-	int error;
+	int error = 0;
 
 	client_ord = msg->hdr.client_ord;
 
@@ -1257,23 +1256,23 @@ sam_process_reset_lease(sam_node_t *ip, sam_san_message_t *msg)
 	} else {
 		uint32_t lease_stage;
 		uint32_t lease_mask;
+		int err;
 
 		lease_stage = lp->data.ltype & CL_STAGE;
 		lease_mask = lp->data.ltype & ~CL_STAGE;
 		for (ltype = LTYPE_read; ltype < SAM_MAX_LTYPE; ltype++) {
 			if (lease_mask & (1 << ltype)) {
-				error = sam_record_lease(ip, client_ord,
-				    ltype, l2p, FALSE,
-				    FALSE);
-				if (error == 0) {
-					if (ltype == LTYPE_append) {
-						ip->size_owner = client_ord;
-					} else if (ltype == LTYPE_write) {
-						if ((ip->mp->mt.fi_config &
-						    MT_MH_WRITE) == 0) {
-							ip->write_owner =
-							    client_ord;
-						}
+				if ((err = sam_record_lease(ip, client_ord,
+				    ltype, l2p, FALSE, FALSE))) {
+					error = err;
+					continue;
+				}
+				if (ltype == LTYPE_append) {
+					ip->size_owner = client_ord;
+				} else if (ltype == LTYPE_write) {
+					if ((ip->mp->mt.fi_config &
+					    MT_MH_WRITE) == 0) {
+						ip->write_owner = client_ord;
 					}
 				}
 			}
@@ -1296,6 +1295,8 @@ sam_process_reset_lease(sam_node_t *ip, sam_san_message_t *msg)
 	 * on the client can cause a deadlock during failover.
 	 */
 	l2p->irec.sr_attr.actions = 0;
+	ip->flags.b.changed = 1;
+	ip->sr_sync = 1;
 	return (error);
 }
 
@@ -2403,7 +2404,10 @@ sam_remove_lease(
 	}
 
 	/*
-	 * Stale indirect blocks and invalidate pages after truncate.
+	 * Stale indirect blocks and invalidate pages after removing a
+	 * truncate, append, or exclusive lease. Also set sr_sync flag
+	 * to write inode to disk. The server may panic and we would lose
+	 * this inode update.
 	 */
 	if (removed_truncate_lease || removed_append_lease ||
 	    removed_exclusive_lease) {
@@ -2414,6 +2418,8 @@ sam_remove_lease(
 				(SR_STALE_INDIRECT|SR_INVAL_PAGES), llp);
 		}
 		mutex_exit(&ip->ilease_mutex);
+		ip->flags.b.changed = 1;
+		ip->sr_sync = 1;
 	}
 
 	/*
@@ -3360,7 +3366,9 @@ sam_client_getino(sam_node_t *ip, int client_ord)
 
 /*
  * ----- sam_update_inode_buffer_rw -
- *	Given inode, update buffer cache. inode rwlock set.
+ * For lease reset, leases removed, or size update, sync inode to disk
+ * because the server may panic and this inode update would be lost.
+ * Otherwise, update buffer cache. Inode WRITER rwlock set.
  */
 
 static int
@@ -3368,16 +3376,26 @@ sam_update_inode_buffer_rw(sam_node_t *ip)
 {
 	buf_t *bp;
 	struct sam_perm_inode *permip;
-	int error;
+	int error = 0;
 
-	error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip);
-	if (error == 0) {
-		permip->di = ip->di;
-		permip->di2 = ip->di2;
-		if (TRANS_ISTRANS(ip->mp)) {
-			TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
-		} else {
-			bdwrite(bp);
+	if (ip->sr_sync) {
+		if (ip->flags.b.changed) {
+			error = sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
+		}
+		if (error == 0) {
+			ip->sr_sync = 0;
+		}
+	} else {
+		error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip);
+		if (error == 0) {
+			permip->di = ip->di;
+			permip->di2 = ip->di2;
+			if (TRANS_ISTRANS(ip->mp)) {
+				TRANS_WRITE_DISK_INODE(ip->mp, bp, permip,
+				    ip->di.id);
+			} else {
+				bdwrite(bp);
+			}
 		}
 	}
 	return (error);
@@ -3973,6 +3991,7 @@ sam_update_cl_attr(
 			}
 			sam_set_size(ip);
 			ip->flags.b.changed = 1;
+			ip->sr_sync = 1;
 			ip->updtime = SAM_SECOND();
 		}
 	}

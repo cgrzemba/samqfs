@@ -528,6 +528,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->size_owner = 0;
 	ip->write_owner = 0;
 	ip->sr_write_seqno = 0;
+	ip->sr_sync = 0;
 	ip->sr_leases = NULL;
 	ip->rm_pid = 0;
 	ip->stage_pid = 0;

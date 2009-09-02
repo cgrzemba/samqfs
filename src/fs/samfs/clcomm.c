@@ -630,7 +630,7 @@ sam_read_sock(
 				    "SAM-QFS: %s: sam_byte_swap_message "
 				    "returned %d;"
 				    " cmd=%d, op=%d",
-				    mp->mt.fi_name, error, (int)hdr.command,
+				    mp->mt.fi_name, r, (int)hdr.command,
 				    (int)hdr.operation);
 				freemsg(mbp);
 				error = ENOTTY;
@@ -982,11 +982,14 @@ sam_write_to_server(sam_mount_t *mp, sam_san_message_t *msg)
 		SAM_SOCK_READER_UNLOCK(&mp->ms.m_cl_sh);
 		if (error) {
 			int32_t  client_ord = msg->hdr.client_ord;
+			uint32_t seqno = msg->hdr.seqno;
 
 			if (mp->mt.fi_status & FS_SRVR_BYTEREV) {
 				sam_bswap4((void *)&client_ord, 1);
+				sam_bswap4((void *)&seqno, 1);
 			}
-			TRACE(T_SAM_CL_WRSRVR_ER1, mp, error, client_ord, 0);
+			TRACE(T_SAM_CL_WRSRVR_ER1, mp, error, client_ord,
+			    seqno);
 			if (SOCKET_FATAL(error)) {
 				mutex_enter(&mp->ms.m_cl_wrmutex);
 				sam_clear_sock_fp(&mp->ms.m_cl_sh);
@@ -998,13 +1001,20 @@ sam_write_to_server(sam_mount_t *mp, sam_san_message_t *msg)
 #endif	/* sun */
 	} else {
 		int32_t  client_ord = msg->hdr.client_ord;
+		ushort_t operation = msg->hdr.operation;
+		ushort_t command = msg->hdr.command;
+		uint32_t seqno = msg->hdr.seqno;
 
 		mutex_exit(&mp->ms.m_cl_wrmutex);
 		error = ENOTCONN;
 		if (mp->mt.fi_status & FS_SRVR_BYTEREV) {
+			sam_bswap2((void *)&operation, 1);
+			sam_bswap2((void *)&command, 1);
 			sam_bswap4((void *)&client_ord, 1);
+			sam_bswap4((void *)&seqno, 1);
 		}
-		TRACE(T_SAM_CL_WRSRVR_ER2, mp, error, client_ord, 0);
+		TRACE(T_SAM_CL_WRSRVR_ER2,
+		    mp, client_ord, (command << 16)|operation, seqno);
 	}
 	return (error);
 }

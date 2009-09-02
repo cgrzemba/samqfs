@@ -520,6 +520,8 @@ typedef struct sam_node {
 	int32_t		size_owner;	/* Ord of clnt controlling size */
 	int32_t		write_owner; /* Ord of clnt controlling writes */
 	uint32_t	sr_write_seqno;	/* Sequence number for writes */
+	uchar_t		sr_sync;	/* Server needs to sync inode */
+	uchar_t		sr_fill[3];
 	struct sam_lease_ino *sr_leases; /* entry in linked lease list. */
 	kmutex_t	ilease_mutex;	/* Mutex for inode lease information */
 

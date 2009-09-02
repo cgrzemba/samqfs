@@ -696,13 +696,16 @@ sam_refresh_client_ino(
 	int meta_timeo,		/* Stale refresh interval */
 	cred_t *credp)		/* credentials. */
 {
+	uchar_t iflags;
 	int error = 0;
 
 	if ((ip->updtime + meta_timeo) > SAM_SECOND()) {
 		return (0);
 	}
+	iflags = ip->cl_flags;
 	for (;;) {
 		if ((error = sam_proc_inode(ip, INODE_getino, NULL, credp))) {
+			ip->cl_flags |= iflags;
 			if (error == ETIME) {
 				if (ip->mp->mt.fi_status &
 				    FS_UMOUNT_IN_PROGRESS) {

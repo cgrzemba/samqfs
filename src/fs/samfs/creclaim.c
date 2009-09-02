@@ -455,10 +455,10 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 
 	/*
 	 * If umounting or umounted, expire all the leases now.
-	 * Do not expire client leases during failover.
+	 * Do not expire client leases during failover or server down.
 	 */
 	new_wait_time = LONG_MAX;
-	if (!(mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) &&
+	if (!(mp->mt.fi_status & (FS_LOCK_HARD|FS_FAILOVER|FS_RESYNCING)) &&
 	    (mp->mi.m_inode.flag & (SAM_THR_UMOUNT|SAM_THR_UMOUNTING))) {
 		now = 0;
 		forced_expiration = 1;
@@ -491,10 +491,11 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 		sam_node_t *ip;
 
 		/*
-		 * Delay expiring client leases during failover.
+		 * Delay expiring client leases during failover or server down.
 		 */
-		if (mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
-			new_wait_time = now + (30 * hz);
+		if (mp->mt.fi_status & (FS_LOCK_HARD|FS_FAILOVER|
+		    FS_RESYNCING)) {
+			new_wait_time = now + (5 * hz);
 			break;
 		}
 
