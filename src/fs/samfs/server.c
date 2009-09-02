@@ -2424,16 +2424,27 @@ sam_remove_lease(
 
 	/*
 	 * Schedule a task to process leases if we might have removed the
-	 * last lease on this file.  (If we've removed the last lease for
+	 * last lease on this file. If the file was removed, schedule the
+	 * task now to clean up -- otherwise an orphan can result during
+	 * involuntary failover. (If we've removed the last lease for
 	 * this client, but other clients still have leases, don't bother
 	 * scheduling a task; we'll clean up eventually.)
 	 */
 	if (last_lease) {
+		boolean_t force;
+		clock_t delay;
+
 		TRACE(T_SAM_ABR_CLR, SAM_ITOV(ip), ip->di.id.ino,
 			no_clients, nl);
 		ip->flags.b.abr = 0;
-		sam_sched_expire_server_leases(mp,
-			(SAM_EXPIRE_DELAY_SECS * hz), FALSE);
+		if (ip->di.nlink > 0) {
+			force = FALSE;
+			delay = SAM_EXPIRE_DELAY_SECS * hz;
+		} else {
+			force = TRUE;
+			delay = 0;
+		}
+		sam_sched_expire_server_leases(mp, delay, force);
 	}
 	return (error);
 }

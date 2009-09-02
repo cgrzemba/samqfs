@@ -333,8 +333,8 @@ sam_inactive_ino(
 	 */
 	if ((ip->di.nlink > 0) && (ino != 0) &&
 	    !(ip->flags.bits & SAM_STALE) &&
-	    !(ip->mp->mt.fi_status & FS_UMOUNT_IN_PROGRESS) &&
-	    !(ip->mp->mt.fi_status & FS_FAILOVER) &&
+	    !(ip->mp->mt.fi_status & (FS_UMOUNT_IN_PROGRESS|FS_LOCK_HARD|
+	    FS_FAILOVER)) &&
 	    !(vp->v_vfsp->vfs_flag & VFS_UNMOUNTED) &&
 	    !S_ISSEGS(&ip->di)) {
 
@@ -602,13 +602,29 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 	}
 
 	/*
+	 * If purge_flag, changed or modified, client and not directory, not
+	 * frozen, and not stale or reclaimed, then remove leases if NFS or
+	 * nlink zero; otherwise sync inode. Release v_lock because page flushes
+	 * can cause the VM to acquire it.
+	 */
+	mutex_exit(&vp->v_lock);
+	if (purge_flag && (ip->flags.bits & SAM_UPDATE_FLAGS) &&
+	    SAM_IS_SHARED_CLIENT(ip->mp) && !S_ISDIR(ip->di.mode) &&
+	    !(ip->mp->mt.fi_status & FS_FROZEN) &&
+	    ((ip->flags.bits & (SAM_NORECLAIM|SAM_STALE)) == 0)) {
+		if (SAM_THREAD_IS_NFS() || (ip->di.nlink == 0)) {
+			(void) sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
+		} else {
+			(void) sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
+		}
+	}
+
+	/*
 	 * Acquire hash lock so that we can remove the inode from the hash list
 	 * if appropriate.  Note that proper lock ordering is to acquire the
 	 * inode lock first (we have it), then the hash lock, then the v_lock.
 	 */
-
 	ihp = &samgt.ihashlock[SAM_IHASH(ip->di.id.ino, ip->dev)];
-	mutex_exit(&vp->v_lock);
 	mutex_enter(ihp);
 	mutex_enter(&vp->v_lock);
 
