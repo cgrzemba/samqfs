@@ -49,6 +49,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <utmpx.h>
 
 /* Solaris headers. */
 #include <libgen.h>
@@ -74,6 +75,7 @@ static int sam_register(char *, char *, pid_t);
 static int sam_getlock(char *, char *, char *, pid_t);
 static int sam_rellock(char *, char *);
 static int sam_killprocs(char *, char *, char *, pid_t, int);
+static time_t get_boot_time(void);
 
 /*
  * sam_lockout(char *name, char *dir, char *prefix, int *siglist)
@@ -289,6 +291,7 @@ sam_killprocs(
 	DIR *dp;
 	struct dirent *dirp;
 	char path[128], procname[128];
+	time_t btime; /* boot_time */
 
 	name = basename(name);
 
@@ -296,13 +299,20 @@ sam_killprocs(
 	if ((dp = opendir(dir)) == NULL) {
 		return (-1);
 	}
+	btime = get_boot_time();
 	while ((dirp = readdir(dp)) != NULL) {
 		if (strncmp(dirp->d_name, prefix, prefixlen) == 0 &&
 		    strcmp(&dirp->d_name[prefixlen], "lock") != 0) {
+			struct stat sb;
 			int remove = 0;
 
+			(void) sprintf(path, "%s/%s", dir, dirp->d_name);
 			xpid = atoi(&dirp->d_name[prefixlen]);
 			if (xpid <= 1) {
+				remove = 1;
+			} else if (btime &&
+			    (lstat(path, &sb) == 0) &&
+			    (sb.st_mtim.tv_sec < btime)) {
 				remove = 1;
 			} else if (xpid != pid) {
 				bzero(procname, sizeof (procname));
@@ -322,8 +332,6 @@ sam_killprocs(
 				}
 			}
 			if (remove) {
-				(void) sprintf(path, "%s/%s", dir,
-				    (char *)&dirp->d_name);
 				(void) unlink(path);
 			}
 		}
@@ -332,4 +340,18 @@ sam_killprocs(
 		return (-1);
 	}
 	return (found);
+}
+
+
+static time_t
+get_boot_time(void)
+{
+	struct utmpx *utmpx, utmpx_id;
+
+	utmpx_id.ut_type = BOOT_TIME;
+
+	if ((utmpx = getutxid(&utmpx_id)) == NULL) {
+		return (0);
+	}
+	return (utmpx->ut_tv.tv_sec);
 }
