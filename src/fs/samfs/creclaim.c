@@ -983,7 +983,9 @@ restart:
 
 	/*
 	 * Tell Server that failover is beginning and the server should
-	 * reset its sequence number.
+	 * reset its sequence number. If cannot send message and the server
+	 * changed, wake up sam-sharefsd daemon to reestablish the socket to
+	 * the new server.
 	 */
 	{
 		sam_san_mount_msg_t *msg;
@@ -1002,6 +1004,11 @@ restart:
 				    mp->mt.fi_name, mp->mt.fi_server,
 				    mp->mt.fi_status);
 			}
+#ifdef sun
+			if (sam_server_changed(mp)) {
+				sam_wake_sharedaemon(mp, EINTR);
+			}
+#endif
 			delay(hz * 2);
 		}
 		kmem_free(msg, sizeof (sam_san_mount_msg_t));

@@ -328,7 +328,8 @@ sam_set_mount_response(sam_mount_t *mp, sam_san_message_t *msg)
 
 /*
  * ----- sam_failover_done - finish failover.
- * Clear failover mount flags. Wake up any threads which are frozen.
+ * Clear failover mount flags. Set m_sblk_failed so messages with the ETIME
+ * error don't set server down. Wake up any threads which are frozen.
  * Then startup to sam and signal daemons.
  */
 
@@ -342,6 +343,7 @@ sam_failover_done(sam_mount_t *mp)
 		mp->mt.fi_status &= ~(FS_RESYNCING | FS_THAWING | FS_LOCK_HARD |
 		    FS_SRVR_DONE | FS_CLNT_DONE);
 		mp->ms.m_involuntary = 0;
+		mp->ms.m_sblk_failed = lbolt;
 		if (mp->mi.m_wait_frozen) {
 			cv_broadcast(&mp->ms.m_waitwr_cv);
 		}

@@ -55,6 +55,7 @@
 /* ----- SAMFS Includes */
 
 #include "macros.h"
+#include "bswap.h"
 #include "inode.h"
 #include "mount.h"
 #include "ino_ext.h"
@@ -116,13 +117,18 @@ sam_update_filsys(
 	 * Otherwise, do not wait if server is not responding because
 	 * fsflush cannot block.
 	 *
-	 * If failing over, defer page flushing. May have to get map from
-	 * server and this can cause deadlock while server is failing over.
+	 * If failing over or server down, defer page flushing. May have to
+	 * get map from the server and this can cause a deadlock while server
+	 * is down or failing over. Also wake up the sam-sharefsd daemon if
+	 * the server changed. This speeds up involuntary failover.
 	 */
 	if (SAM_IS_SHARED_CLIENT(mp)) {
 		enum SHARE_flag wait_flag;
 
-		if (mp->mt.fi_status & FS_FAILOVER) {
+		if (mp->mt.fi_status & (FS_LOCK_HARD|FS_FAILOVER)) {
+			if (sam_server_changed(mp)) {
+				sam_wake_sharedaemon(mp, EINTR);
+			}
 			return (0);
 		}
 		if (flag & SYNC_CLOSE) {
@@ -456,12 +462,21 @@ sam_update_inode(
 			}
 		}
 
-		TRACE(T_SAM_UPDATEFS, SAM_ITOV(ip),
-		    (SAM_ITOV(ip))->v_count, ino,
-		    ip->flags.bits);
+		TRACE(T_SAM_UPDATEFS, SAM_ITOV(ip), (SAM_ITOV(ip))->v_count,
+		    ino, ip->flags.bits);
+
+		/*
+		 * If client, failing over or server down, and SYNC_ALL, defer
+		 * syncing the inode because this is a nowait message and we
+		 * will lose the update.
+		 */
 		if (SAM_IS_SHARED_CLIENT(mp)) {
-			if ((error = sam_update_shared_ino(ip,
-			    st, TRUE)) == 0) {
+			if ((st == SAM_SYNC_ALL) &&
+			    (mp->mt.fi_status & (FS_LOCK_HARD|FS_FAILOVER))) {
+				return (0);
+			}
+			error = sam_update_shared_ino(ip, st, TRUE);
+			if (error == 0) {
 				ip->flags.bits &=
 				    ~(SAM_UPDATE_FLAGS|SAM_VALID_MTIME);
 				ip->accstm_pnd = 0;
@@ -1407,4 +1422,73 @@ sam_update_all_sblks(struct sam_mount *mp)
 		}
 	}
 	return (ret);
+}
+
+/*
+ * ----- sam_server_changed - check to see if the server changed.
+ * Note, the label is written with the server ord beginning at 0.
+ */
+
+boolean_t
+sam_server_changed(
+	sam_mount_t *mp)
+{
+	int i;
+	struct samdent *ddp;
+	struct sam_label *lp;
+	int dt;
+	int server_ord = -1;
+	int error = 0;
+
+	for (i = 0; i < mp->mt.fs_count; i++) {
+		ddp = &mp->mi.m_fs[i];
+		dt = (ddp->part.pt_type == DT_META) ? MM : DD;
+		if (dt != DD) {
+			continue;
+		}
+		if (ddp->part.pt_state != DEV_ON &&
+		    ddp->part.pt_state != DEV_NOALLOC &&
+		    ddp->part.pt_state != DEV_UNAVAIL) {
+			continue;
+		}
+		if (is_osd_group(ddp->part.pt_type)) {
+			char *buf = NULL;
+
+			buf = kmem_alloc(L_LABEL, KM_SLEEP);
+			error = sam_issue_object_io(mp, ddp->oh, FREAD,
+			    SAM_OBJ_LBLK_ID, UIO_SYSSPACE, buf, 0, L_LABEL);
+			if (error) {
+				kmem_free(buf, L_LABEL);
+				return (FALSE);
+			}
+			lp = (sam_label_t *)(void *)buf;
+			if (bcmp(lp->name, "LBLK", 4) == 0) {
+				server_ord = lp->serverord;
+				if (mp->mt.fi_status & FS_SRVR_BYTEREV) {
+					sam_bswap4((void *)&server_ord, 1);
+				}
+				server_ord += 1;
+			}
+			kmem_free(buf, L_LABEL);
+		} else {
+			buf_t *bp;
+
+			error = sam_bread(mp, ddp->dev, LABELBLK, L_LABEL, &bp);
+			if (error) {
+				return (FALSE);
+			}
+			lp = (sam_label_t *)(void *)bp->b_un.b_addr;
+			if (bcmp(lp->name, "LBLK", 4) == 0) {
+				server_ord = lp->serverord;
+				if (mp->mt.fi_status & FS_SRVR_BYTEREV) {
+					sam_bswap4((void *)&server_ord, 1);
+				}
+				server_ord += 1;
+			}
+			bp->b_flags |= B_STALE | B_AGE;
+			brelse(bp);
+		}
+		break;
+	}
+	return ((mp->ms.m_server_ord != server_ord));
 }

@@ -433,6 +433,7 @@ boolean_t sam_update_all_sblks(sam_mount_t *mp);
 boolean_t sam_update_sblk(sam_mount_t *mp, uchar_t ord, int sblk_no,
 	boolean_t sbinfo_only);
 int sam_update_the_sblks(sam_mount_t *mp);
+boolean_t sam_server_changed(sam_mount_t *mp);
 
 #pragma rarely_called(sam_req_fsck)
 
