@@ -214,7 +214,10 @@ sam_share_mount(
 			    sizeof (cmd.args.mount.fs_name));
 			/* don't have init value yet */
 			cmd.args.mount.init = 0;
-			(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
+			error = sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
+			if (error) {
+				goto out;
+			}
 
 			/*
 			 * If shared mount, wait mount until client is ready.

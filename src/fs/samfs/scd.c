@@ -77,6 +77,7 @@
 #include "inode.h"
 #include "mount.h"
 #include "scd.h"
+#include "fsdaemon.h"
 #include "global.h"
 #ifdef sun
 #include "extern.h"
@@ -158,6 +159,7 @@ sam_send_cmd(
 	int ret;
 	int error = 0;
 	int timeout_cycles = 0;
+	uint64_t last_sequence = 0;
 
 	if (sam_is_failover_stage(scdi, mp)) {
 		return (EREMCHG);	/* Kill this stage request */
@@ -173,6 +175,15 @@ sam_send_cmd(
 	while (scd->size) {
 		if ((ret = sam_cv_wait1sec_sig(&scd->put_cv,
 		    &scd->mutex)) <= 0) {
+			if (scd->sequence == last_sequence) {
+				/*
+				 * We haven't made any progress since we
+				 * last woke. Increment the timeout.
+				 */
+				timeout_cycles++;
+			} else {
+				last_sequence = scd->sequence;
+			}
 			if (!scd->active && (scdi == SCD_fsd)) {
 				TRACE(T_SAM_DAE_ACTIVE, mp, scd->active,
 				    scdi, 4);
@@ -186,11 +197,19 @@ sam_send_cmd(
 				}
 				break;
 			} else if (scd->timeout &&
-			    (++timeout_cycles >= scd->timeout)) {
-				error = EAGAIN;	/* If timed out */
-				cmn_err(CE_WARN,
+			    (timeout_cycles >= scd->timeout)) {
+				if (scdi == SCD_fsd) {
+					cmn_err(CE_WARN,
+				    "SAM-QFS: %s: %s not responding, %d wait",
+					    scd->cmd.fsd.args.mount.fs_name,
+					    scd_name[scdi],
+					    scd->put_wait);
+				} else {
+					cmn_err(CE_WARN,
 				    "SAM-QFS: %s not responding",
-				    scd_name[scdi]);
+					    scd_name[scdi]);
+				}
+				error = EAGAIN;	/* If timed out */
 				break;
 			} else if (sam_is_failover_stage(scdi, mp)) {
 				error = EREMCHG; /* Kill this stage request */
@@ -208,6 +227,7 @@ sam_send_cmd(
 	scd->size = size;
 	bcopy(cmd, &scd->cmd, size);
 	scd->put_wait--;
+	scd->sequence++;
 	cv_signal(&scd->get_cv);
 	mutex_exit(&scd->mutex);
 	return (0);
@@ -499,6 +519,7 @@ sam_init_daemon(struct sam_syscall_daemon *scd)
 	scd->package = -1;
 	scd->active = 0;
 	scd->timeout = 0;
+	scd->sequence = 1;
 }
 
 

@@ -92,6 +92,7 @@ struct sam_syscall_daemon {
 	short scd_pad;		/* Pad to 64-bit boundary */
 	int size;		/* Size of command */
 	int timeout;		/* Ret EAGAIN if no daemon in timeout seconds */
+	uint64_t sequence;	/* Incremented when daemon takes a command */
 	union {
 		struct sam_fsd_cmd fsd;
 		struct sam_stageall stageall;
