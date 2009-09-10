@@ -213,7 +213,6 @@ AssignDiskVol(
 	if (already_inserted == B_FALSE) {
 		char *host;
 		DiskVolumeSeqnum_t maxSeqnum = -1;
-		int retry = 5;
 
 		host = DiskVolsGetHostname(diskVolume);
 		rft = SamrftConnect(host);
@@ -239,14 +238,12 @@ AssignDiskVol(
 		 * Get disk volume's sequence number.  Accumulate in use
 		 * sequence numbers for disk volume across all filesystems.
 		 */
-		while (maxSeqnum == -1 && retry-- > 0) {
-			maxSeqnum = getDiskVolumeSeqnum(vsn->vsn, diskVolume);
-			if (maxSeqnum == -1) {
-				Trace(TR_ERR,
-				    "Error: failed to get disk volume seqnum.");
-				sleep(5);
-			}
+		maxSeqnum = getDiskVolumeSeqnum(vsn->vsn, diskVolume);
+		if (maxSeqnum == -1) {
+			Trace(TR_MISC, "Failed to get disk "
+			    "volume seqnum for %s", vsn->vsn);
 		}
+
 		vsn->maxSeqnum = maxSeqnum;
 
 		/*
@@ -1208,7 +1205,10 @@ getDiskVolumeSeqnum(
 		if (SamrftFlock(rft, F_UNLCK) < 0) {
 			LibFatal(SamrftFlock, "unlock");
 		}
+
 		(void) SamrftClose(rft);
+	} else if (rc < 0) {
+		Trace(TR_ERR, "Can not open %s, errno %d", fullpath, errno);
 	}
 
 	Trace(TR_MISC, "[%s] Got recycling sequence number: %llx",
