@@ -34,8 +34,6 @@
 #ifndef _AML_STAGER_H
 #define	_AML_STAGER_H
 
-#pragma ident "$Revision: 1.25 $"
-
 #include "sam/param.h"
 #include "sam/types.h"
 
@@ -114,9 +112,14 @@ struct StagerControlRsp {
 #define	STAGER_DEFAULT_MAX_RETRIES	3
 
 /*
- * Default is for directio rather than paged io
+ * Default is directio rather than paged io
  */
 #define	STAGER_DEFAULT_DIRECTIO		1
+
+/*
+ * Default is 32MB for minimum directio stage size
+ */
+#define	STAGER_DEFAULT_DIRECTIO_MIN	32
 
 /*
  * Maximum path length.
@@ -195,6 +198,7 @@ typedef struct sam_stager_config {
 	int			num_drives;	/* number of drive configs */
 	sam_stager_drives_t	*drives;	/* drives config options */
 	int			directio;	/* directio = 1 pageio = 0 */
+	int			dio_min_size;	/* min directio stage size */
 	int			num_streams;	/* number of stream params */
 	sam_stager_streams_t	*streams;	/* stream parameters */
 } sam_stager_config_t;

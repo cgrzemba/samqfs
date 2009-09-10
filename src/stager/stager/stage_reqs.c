@@ -51,6 +51,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/param.h>
 
 /* Solaris headers. */
+#include <sys/sysmacros.h>
 
 /* SAM-FS headers. */
 #include "sam/types.h"
@@ -158,6 +159,7 @@ CreateFile(
 	sam_stage_request_t *req)
 {
 	int i;
+	u_longlong_t reqlen;
 	static FileInfo_t fi;
 	pthread_mutexattr_t mattr;
 
@@ -169,14 +171,17 @@ CreateFile(
 	/*
 	 * Set directio directive
 	 */
-	fi.directio = GetCfgDirectio();
+	reqlen = howmany(req->len, MEGA);
+	if (GetCfgDirectio() && (reqlen >= GetCfgDirectioMin())) {
+		fi.directio = 1;
+	}
 
 	if (req->arcopy[req->copy].flags & STAGE_COPY_ARCHIVED) {
 		Trace(TR_MISC, "Request inode: %d.%d "
-		    "len: %lld offset: %lld copy: %d vsn: '%s.%s'",
+		    "len: %lld offset: %lld copy: %d vsn: '%s.%s' dio: %d",
 		    req->id.ino, req->id.gen, req->len, req->offset,
 		    req->copy + 1, sam_mediatoa(req->arcopy[req->copy].media),
-		    req->arcopy[req->copy].section[0].vsn);
+		    req->arcopy[req->copy].section[0].vsn, fi.directio);
 	} else {
 		Trace(TR_MISC, "Request inode: %d.%d "
 		    "len: %lld offset: %lld copy: %d",
@@ -2149,11 +2154,9 @@ valRequest(
 		 */
 		return (B_FALSE);
 	}
+
 	memset(&arg, 0, sizeof (arg));
 	arg.id = fi->id;
-	if (GetCfgDirectio()) {
-		arg.flags |= IDO_direct_io;
-	}
 	if ((fd = ioctl(mpfd, F_IDOPEN, &arg)) < 0) {
 		/*
 		 * File not found.

@@ -106,6 +106,7 @@ static DirProc_t commands[] = {
 	{ "bufsize",		setBufsizeParams,		DP_value },
 	{ "drives",		setDrivesParams,		DP_value },
 	{ "directio",		setDirectioParam,		DP_value },
+	{ "dio_min_size",	setSimpleParam,			DP_value },
 	{ "streams",		dirStreams,			DP_set },
 	{ "endstreams",		dirNoBegin,			DP_set },
 	{ NULL, NULL }
@@ -177,6 +178,15 @@ int
 GetCfgDirectio(void)
 {
 	return (config.directio);
+}
+
+/*
+ * Get dio_min_size directive
+ */
+int
+GetCfgDirectioMin(void)
+{
+	return (config.dio_min_size);
 }
 
 /*

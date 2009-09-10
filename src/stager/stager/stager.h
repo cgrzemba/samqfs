@@ -34,8 +34,6 @@
 #ifndef STAGER_H
 #define	STAGER_H
 
-#pragma ident "$Revision: 1.15 $"
-
 /*
  * Stager start mode.
  */
@@ -111,6 +109,7 @@ char *GetCfgProbeDir();
 size_t GetCfgProbeBufsize();
 int GetCfgNumDrives();
 int GetCfgDirectio();
+int GetCfgDirectioMin();
 sam_stager_drives_t *GetCfgDrives();
 sam_stager_streams_t *GetCfgStreamParams(media_t media);
 

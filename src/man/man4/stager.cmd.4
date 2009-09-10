@@ -50,10 +50,19 @@ The \fBstager.cmd\fR file accepts the following directives:
 .TP 10
 \fBdirectio = \fIon|off\fR
 Set the file reading method for staging. The directive \fIon\fR
-will set direct I/O for all staging. \fIoff\fR will cause paged
+will set direct I/O for all staging if file size is equal to or
+greater than dio_min_size. \fIoff\fR will cause paged
 I/O to be used. The default is on.
 .sp 1
 NOTE: Staging on a shared QFS file system always uses direct I/O.
+.TP 10
+\fBdio_min_size = \fIn\fR
+If the file size is < \fIn\fR megabytes, the stager will use paged I/O for
+non-shared QFS file systems. The default is \fI32\fR megabytes.
+If directio = off all stage io is paged.
+.sp 1
+NOTE: \fBdio_min_size\fR is ignored for shared QFS file systems which
+always use direct I/O.
 .TP 10
 \fBdrives =\fR \fIlibrary\fR \fIcount\fR
 Sets the number of drives to use for staging
