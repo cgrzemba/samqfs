@@ -2972,6 +2972,10 @@ reenter:
 		ASSERT(ip->mm_pages == 0);
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		error = sam_idle_operation(ip);
+		if (error) {
+			goto out;
+		}
 		delay(hz);
 		goto reenter;
 	}
@@ -2982,6 +2986,10 @@ reenter:
 	if (ip->pending_mmappers || ip->cl_closing) {
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+		error = sam_idle_operation(ip);
+		if (error) {
+			goto out;
+		}
 		delay(hz);
 		goto reenter;
 	}
@@ -3481,6 +3489,9 @@ reenter:
 	    (ip->pending_mmappers != (uint64_t)curthread)) {
 		mutex_exit(&ip->fl_mutex);
 		RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
+		if (sam_idle_operation(ip)) {
+			return;
+		}
 		delay(hz);
 		goto reenter;
 	}

@@ -3561,8 +3561,6 @@ sam_stop_inode(sam_node_t *ip)
 		lock_held = FALSE;
 		if (RW_OWNER_OS(&ip->inode_rwl) == curthread) {
 			lock_held = TRUE;
-		}
-		if (lock_held) {
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
 		if (!IS_SHAREFS_THREAD_OS) {

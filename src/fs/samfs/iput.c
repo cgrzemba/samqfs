@@ -1563,10 +1563,10 @@ sam_idle_ino_operation(sam_node_t *ip, krw_t lock_type)
 /*
  * -----    sam_open_operation_nb_unless_idle -
  *
- * Calls sam_open_operation_nb(), and if this is the thread's
- * initial entry into the filesystem it checks if the filesystem is
- * supposed to be idle.  If the filesystem is intended to be idle
- * then this returns EAGAIN.
+ * If this is the thread's initial entry into the filesystem, it checks
+ * if the filesystem is supposed to be idle. If the filesystem is intended
+ * to be idle, then this returns EAGAIN.
+ * Otherwise, it calls sam_open_operation_nb() marking the start of operation.
  * Note, this will never block.
  */
 int
@@ -1574,22 +1574,19 @@ sam_open_operation_nb_unless_idle(sam_node_t *ip)
 {
 	sam_operation_t ep;
 	sam_mount_t *mp = ip->mp;
-	int ret = 0;
 
-	sam_open_operation_nb(mp);
 
 	ep.ptr = tsd_get(mp->ms.m_tsd_key);
-	ASSERT(ep.ptr);
 
-	if (ep.val.depth == 1) {
-		ASSERT(ep.val.flags & SAM_FRZI_NOBLOCK);
+	if (ep.ptr == NULL) {
 		if (mp->mt.fi_status & (FS_LOCK_HARD | FS_UMOUNT_IN_PROGRESS)) {
-			ret = EAGAIN;
-			SAM_CLOSE_OPERATION(mp, ret);
+			return (EAGAIN);
 		}
 	}
 
-	return (ret);
+	sam_open_operation_nb(mp);
+
+	return (0);
 }
 #endif	/* sun */
 
