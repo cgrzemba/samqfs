@@ -1455,9 +1455,11 @@ RevDepForkProcs(int ac,
  * Mounts the QFS filesystem given the family set name
  * specified via the QFSFileSystem Extension property.
  * Calls /usr/sbin/mount to do the actual mounting.
+ *
+ * If retry_nomds function will retry even if the MDS is not mounted.
  */
 int
-mount_qfs(char *qfsfs)
+mount_qfs(char *qfsfs, boolean_t retry_nomds)
 {
 	int	rc;
 	int	count = 0;
@@ -1469,7 +1471,8 @@ mount_qfs(char *qfsfs)
 	    "/usr/sbin/mount -F samfs %s", qfsfs);
 	while (TRUE) {
 		rc = run_system(LOG_ERR, cmd);
-		if (rc != EXIT_RETRY) {
+		if (rc != EXIT_RETRY &&
+		    !(retry_nomds && rc == EXIT_NOMDS)) {
 			break;
 		}
 		if (count % 2 == 0) {
@@ -1478,6 +1481,9 @@ mount_qfs(char *qfsfs)
 			    qfsfs, strerror(ENOTCONN));
 		}
 		count++;
+		if (rc == EXIT_NOMDS) {
+			sleep(SCQFS_MOUNT_NOMDS_SLEEP);
+		}
 	}
 	scds_syslog_debug(DBG_LVL_HIGH, "mount_qfs - End");
 	return (rc);

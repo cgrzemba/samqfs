@@ -2873,6 +2873,12 @@ sam_send_to_server(
 			    (mp->mt.fi_config & MT_SHARED_BG)) {
 				return (ETIME);
 			}
+
+			if (!(mp->mt.fi_status & FS_MOUNTED) &&
+			    (mp->mt.fi_config1 & MC_CLUSTER_MGMT)) {
+				return (EXDEV);
+			}
+
 			if (!mount_msg_sent &&
 			    (msg->hdr.wait_flag == SHARE_wait)) {
 				mount_msg_sent = TRUE;

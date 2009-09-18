@@ -41,6 +41,6 @@
 #define	EXIT_NOMEM	5	/* Out of memory, could fail again */
 #define	EXIT_RETRY	6	/* Caller should retry command */
 #define	EXIT_NOFS	7	/* Let caller to know no FS configured */
-
+#define	EXIT_NOMDS	8	/* Let caller know MDS is not mounted */
 
 #endif /* EXIT_H */

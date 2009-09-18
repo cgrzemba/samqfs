@@ -34,8 +34,6 @@
 #ifndef _SCQFS_H
 #define	_SCQFS_H
 
-#pragma ident "$Revision: 1.27 $"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,6 +74,7 @@ extern "C" {
 #define		FO_ERROR	-1
 
 #define	SCQFS_TMP_DIR	"/var/run"
+#define	SCQFS_MOUNT_NOMDS_SLEEP	5
 
 /*
  * Flag bits from mp->mt.fi_status that relate to failover and
@@ -189,9 +188,8 @@ boolean_t validate_mounted(char *, boolean_t);
 
 int set_cluster_lease_mount_opts(struct RgInfo *, char *fs);
 
-int mount_qfs(char *qfsfs);
+int mount_qfs(char *qfsfs, boolean_t retry_nomds);
 int umount_qfs(struct RgInfo *, struct FsInfo *);
-
 
 int CheckFsDevs(char *qfsfs);
 

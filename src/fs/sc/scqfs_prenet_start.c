@@ -49,6 +49,7 @@
 
 #include "sam/nl_samfs.h"
 #include "sam/custmsg.h"
+#include "sam/exit.h"
 
 #include "scqfs.h"
 
@@ -248,11 +249,17 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 				 * check and mount here is to cover this
 				 * situation.
 				 */
-				if ((fsi.fi_status & FS_MOUNTED) == 0) {
+				if (!(fsi.fi_status & FS_MOUNTED)) {
 					scds_syslog(LOG_NOTICE,
 					    "%s: Mounting file system ",
 					    fp->fi_fs);
-					if ((rc = mount_qfs(fp->fi_fs)) != 0) {
+					rc = mount_qfs(fp->fi_fs, FALSE);
+					if (rc == EXIT_NOMDS) {
+						/* Switch to involuntary */
+						scds_syslog(LOG_NOTICE,
+						    "%s: MDS not mounted",
+						    fp->fi_fs);
+					} else if (rc != 0) {
 						scds_syslog(LOG_ERR,
 						    "%s: Error mounting %s.",
 						    fp->fi_fs, fp->fi_mntpt);
@@ -268,28 +275,31 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 					}
 				}
 
-				/*
-				 * If this node is the metadata server,
-				 * verify we have access to the
-				 * filesystem and return.
-				 */
-				if (strcasecmp(rg.rg_nodename,
-				    curmaster) == 0) {
-					/* 22651 */
-					scds_syslog(LOG_NOTICE, "%s: "
-					    "This node is the metadata server.",
-					    fp->fi_fs);
-
-					if (checkInodesFile(fp) == 0) {
-						/* 22652 */
+				if (fsi.fi_status & FS_MOUNTED) {
+					/*
+					 * If this node is the metadata server,
+					 * verify we have access to the
+					 * filesystem and return.
+					 */
+					if (strcasecmp(rg.rg_nodename,
+					    curmaster) == 0) {
+						/* 22651 */
 						scds_syslog(LOG_NOTICE, "%s: "
-						    "The filesystem is online.",
-						    fp->fi_fs);
-						rc = 0;
-						break;
+						    "This node is the metadata"
+						    " server.", fp->fi_fs);
+
+						if (checkInodesFile(fp) == 0) {
+							/* 22652 */
+							scds_syslog(LOG_NOTICE,
+							    "%s: The filesystem"
+							    " is online.",
+							    fp->fi_fs);
+							rc = 0;
+							break;
+						}
 					}
+					mode = FX_VOLUNTARY;
 				}
-				mode = FX_VOLUNTARY;
 			}
 		}
 
@@ -314,7 +324,7 @@ switchOver(int argc, char **argv, struct FsInfo *fp)
 				scds_syslog(LOG_NOTICE,
 				    "%s: Mounting file system ",
 				    fp->fi_fs);
-				if ((rc = mount_qfs(fp->fi_fs)) != 0) {
+				if ((rc = mount_qfs(fp->fi_fs, TRUE)) != 0) {
 					scds_syslog(LOG_ERR,
 					    "%s: Error mounting %s.",
 					    fp->fi_fs, fp->fi_mntpt);

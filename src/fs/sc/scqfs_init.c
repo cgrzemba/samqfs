@@ -297,7 +297,7 @@ restart:
 			}
 			(void) sleep(2);
 		}
-		if ((rc = mount_qfs(fp->fi_fs)) != 0) {
+		if ((rc = mount_qfs(fp->fi_fs, TRUE)) != 0) {
 			/* 22685 */
 			scds_syslog(LOG_ERR,
 			    "%s: Error while attempting to mount %s.",

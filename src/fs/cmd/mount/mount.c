@@ -704,5 +704,8 @@ FatalError(
 	if (ErrNum == ENOTCONN) {
 		exit(EXIT_RETRY);
 	}
+	if (ErrNum == EXDEV) {
+		exit(EXIT_NOMDS);
+	}
 	exit(EXIT_FATAL);
 }
