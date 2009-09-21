@@ -80,6 +80,7 @@ struct sam_arfind_buf {
 	boolean_t ab_hwm_sent;	/* To send AE_hwm once per arfind call */
 	int ab_overflow;	/* Buffer overflowed */
 	int ab_umount;
+	int ab_busy;		/* buffer in use */
 	struct arfind_event ab_entry[ARFIND_EVENT_MAX];
 };
 
@@ -113,7 +114,7 @@ sam_arfind_call(
 	}
 	error = secpolicy_fs_config(credp, mp->mi.m_vfsp);
 	if (error) {
-		goto out;
+		goto out1;
 	}
 	/*
 	 * Wait for data in buffer.
@@ -121,8 +122,13 @@ sam_arfind_call(
 	ab = (struct sam_arfind_buf *)(mp->mi.m_fsact_buf);
 	if (ab == NULL) {
 		error = EINVAL;
-		goto out;
+		goto out1;
 	}
+
+	mutex_enter(&ab->ab_bufmutex);
+	ab->ab_busy = 1;
+	mutex_exit(&ab->ab_bufmutex);
+
 	error = 0;
 	while (error == 0) {
 		int		n;
@@ -221,6 +227,16 @@ sam_arfind_call(
 	}
 
 out:
+	mutex_enter(&ab->ab_bufmutex);
+	ab->ab_busy = 0;
+	if (ab->ab_umount == 1) {
+		ab->ab_umount = 0;
+		af.AfUmount = 1;
+		cv_broadcast(&ab->ab_waitcv);
+	}
+	mutex_exit(&ab->ab_bufmutex);
+
+out1:
 	SAM_SYSCALL_DEC(mp, 0);
 	return (error);
 }
@@ -237,6 +253,11 @@ sam_arfind_fini(sam_mount_t *mp)
 
 	ab = (struct sam_arfind_buf *)(mp->mi.m_fsact_buf);
 	if (ab != NULL) {
+		mutex_enter(&ab->ab_bufmutex);
+		while (ab->ab_busy == 1) {
+			cv_wait(&ab->ab_waitcv, &ab->ab_bufmutex);
+		}
+		mutex_exit(&ab->ab_bufmutex);
 		mutex_destroy(&ab->ab_bufmutex);
 		cv_destroy(&ab->ab_waitcv);
 		kmem_free(ab, sizeof (struct sam_arfind_buf));
@@ -287,6 +308,7 @@ sam_arfind_init(sam_mount_t *mp)
 	cv_init(&ab->ab_waitcv, NULL, CV_DEFAULT, NULL);
 	ab->ab_in = ab->ab_out = 0;
 	ab->ab_overflow = 0;
+	ab->ab_busy = 0;
 	ab->ab_hwm_sent = FALSE;
 }
 
