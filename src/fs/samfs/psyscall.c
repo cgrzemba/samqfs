@@ -779,6 +779,21 @@ sam_mount_info(
 				error = EBUSY;
 				goto done;
 			}
+			mutex_exit(&mp->ms.m_cl_wrmutex);
+			/*
+			 * A sam_sys_shareops call could be using the daemon
+			 * hold count (m_cl_nsocks) to hold the filesystem.
+			 * Make sure this is clear before destroying the mount.
+			 */
+			mutex_enter(&mp->ms.m_shared_lock);
+			if (mp->ms.m_cl_nsocks != 0) {
+				mutex_exit(&mp->ms.m_shared_lock);
+				error = EBUSY;
+				goto done;
+			}
+			mutex_exit(&mp->ms.m_shared_lock);
+
+			mutex_enter(&mp->ms.m_cl_wrmutex);
 			sam_clear_sock_fp(&mp->ms.m_cl_sh);
 #ifdef METADATA_SERVER
 			sam_free_incore_host_table(mp);
