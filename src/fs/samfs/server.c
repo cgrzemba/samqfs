@@ -93,6 +93,17 @@ static int sam_get_mount_request(sam_mount_t *mp, sam_san_message_t *msg);
 static int sam_get_lease_request(sam_mount_t *mp, sam_san_message_t *msg);
 static int sam_process_frlock_request(sam_node_t *ip, int client_ord,
 	sam_san_lease2_t *l2p, boolean_t is_get);
+static int sam_blkd_frlock_start(sam_node_t *ip, int client_ord,
+	int filemode, int64_t offset, flock64_t *flock);
+static void sam_blkd_frlock_task(void *arg);
+static callb_cpr_t *sam_blkd_frlock_callback(flk_cb_when_t when, void *arg);
+static void sam_blkd_frlock_cancel(void *arg);
+static sam_blkd_frlock_t *sam_blkd_frlock_new(sam_node_t *ip, int client_ord,
+	int filemode, int64_t offset, flock64_t *flock);
+static void sam_blkd_frlock_free(sam_blkd_frlock_t *blkd_frlock);
+static sam_blkd_frlock_t *sam_blkd_frlock_find(sam_blkd_frlock_t *blkd_frlock);
+static void sam_blkd_frlock_insert(sam_blkd_frlock_t *blkd_frlock);
+static void sam_blkd_frlock_remove(sam_blkd_frlock_t *blkd_frlock);
 static int sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_process_rm_lease(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_process_reset_lease(sam_node_t *ip, sam_san_message_t *msg);
@@ -1135,6 +1146,19 @@ sam_process_frlock_request(
 	l2p->granted_mask = 0; /* clear in case we return w/o recording lease */
 
 	if (cmd == 0) {
+		sam_blkd_frlock_t *cur;
+		/* Cancel any blocked frlock requests */
+		mutex_enter(&ip->blkd_frlock_mutex);
+		cur = ip->blkd_frlock;
+		while (cur) {
+			if (flp->l_sysid == cur->flock.l_sysid &&
+			    flp->l_pid == cur->flock.l_pid) {
+				sam_blkd_frlock_cancel(cur);
+			}
+			cur = cur->fl_next; /* Okay, we still have mutex */
+		}
+		mutex_exit(&ip->blkd_frlock_mutex);
+
 		cleanlocks(vp, flp->l_pid, flp->l_sysid);
 		error = 0;
 	} else if (cmd == F_HASREMOTELOCKS) {
@@ -1143,25 +1167,23 @@ sam_process_frlock_request(
 		/*LINTED [assignment causes implicit narrowing conversion] */
 		flp->l_remote = l_has_rmt(&flock);
 	} else {
-		int command;
+		error = reclock(vp, &flock, (cmd == F_GETLK) ? 0 : SETFLCK,
+		    l2p->inp.data.filemode, l2p->inp.data.offset, NULL);
 
-		if (cmd == F_GETLK) {
-			command = 0;
-		} else {
-			command = SETFLCK;	/* Never block on the server */
+		/* If  EAGAIN and a waiting lock, start blocking request */
+		if (error == EAGAIN && (cmd == F_SETLKW || cmd == F_SETLKW64)) {
+			error = sam_blkd_frlock_start(ip, client_ord,
+			    l2p->inp.data.filemode, l2p->inp.data.offset,
+			    &flock);
+			/*
+			 * EAGAIN is returned if the request blocked,
+			 * translate this into a wait request.
+			 */
+			if (error == EAGAIN) {
+				l2p->irec.sr_attr.actions |= (SR_WAIT_LEASE);
+				error = 0;
+			}
 		}
-
-		error = reclock(vp, &flock, command, l2p->inp.data.filemode,
-		    l2p->inp.data.offset, NULL);
-	}
-
-	/*
-	 * If caller cannot acquire the lock, EAGAIN is returned.
-	 * For blocking locks, translate this into a wait request.
-	 */
-	if ((error == EAGAIN) && (cmd == F_SETLKW)) {
-		l2p->irec.sr_attr.actions |= (SR_WAIT_LEASE);
-		error = 0;
 	}
 
 	if ((cmd == F_GETLK) || (cmd == F_HASREMOTELOCKS)) {
@@ -1185,6 +1207,337 @@ sam_process_frlock_request(
 	return (error);
 }
 
+/*
+ * ----- sam_blkd_frlock_start - dispatch a blocking frlock request
+ *
+ * Return value the result of reclock if task did not block.
+ * Returns EAGAIN if existing blocked task is found, if new task
+ * is blocked, or if we failed to create a new task.
+ */
+
+static int
+sam_blkd_frlock_start(
+	sam_node_t *ip,
+	int client_ord,
+	int filemode,
+	int64_t offset,
+	flock64_t *flock)
+{
+	sam_blkd_frlock_t *blkd_frlock;
+	taskqid_t tid;
+	int error;
+
+	blkd_frlock = sam_blkd_frlock_new(ip, client_ord,
+	    filemode, offset, flock);
+
+	/*
+	 * First try to find an existing blocked frlock that matches the one
+	 * we are trying to start.  If this is the case then we do not want to
+	 * start a new one.
+	 */
+	mutex_enter(&ip->blkd_frlock_mutex);
+	if (ip->mp->mt.fi_status & (FS_FAILOVER|FS_UMOUNT_IN_PROGRESS) ||
+	    sam_blkd_frlock_find(blkd_frlock)) {
+		/* Found pending request or failover/umount in progress */
+		error = EAGAIN;
+		sam_blkd_frlock_free(blkd_frlock);
+	} else {
+		/*
+		 * Since we didn't find an existing frlock, start it.  Dispatch
+		 * task with NOQUEUE to start immediately or fail
+		 */
+		sam_blkd_frlock_insert(blkd_frlock);
+		tid = taskq_dispatch(ip->mp->ms.m_frlock_taskq,
+		    sam_blkd_frlock_task, blkd_frlock, TQ_NOQUEUE);
+
+		if (tid == 0) {
+			/*
+			 * We failed to dispatch the task.  This is most likely
+			 * because m_frlock_taskq is full and we specified to
+			 * not queue tasks.  We will return EAGAIN and have
+			 * the client wait to try again.
+			 */
+			blkd_frlock->status |= SAM_FRLOCK_DONE;
+			blkd_frlock->rval = EAGAIN;
+		} else {
+			/* Wait for BLKD or DONE signal */
+			cv_wait_sig(&blkd_frlock->fl_cv,
+			    &ip->blkd_frlock_mutex);
+		}
+
+		/* Check if request already finished and return its status */
+		if (blkd_frlock->status & SAM_FRLOCK_DONE) {
+			error = blkd_frlock->rval;
+			/* We are responsible for freeing non-blocked tasks */
+			sam_blkd_frlock_remove(blkd_frlock);
+			sam_blkd_frlock_free(blkd_frlock);
+		} else {
+			/* Request is now blocked */
+			error = EAGAIN;
+		}
+	}
+
+	mutex_exit(&ip->blkd_frlock_mutex);
+
+	return (error);
+}
+
+/*
+ * ----- sam_blkd_frlock_task - task to run blocking frlock
+ *   arg: sam_blkd_frlock_t *blkd_frlock
+ *
+ * In the event the frlock request is blocked, SAM_FRLOCK_BLKD will
+ * be set and blkd_frlock->fl_cv signaled before blocking.  It is the
+ * responsibility of this task to remove blkd_frlock for blocked requests.
+ *
+ * If the request is not blocked SAM_FRLOCK_DONE will be set and
+ * blkd_frlock->fl_cv will be signaled.  It is the responsibility of the
+ * caller to remove the blkd_frlock after checking the return value of
+ * reclock stored in blkd_frlock->rval.
+ */
+
+static void
+sam_blkd_frlock_task(void *arg) {
+	sam_blkd_frlock_t *blkd_frlock = (sam_blkd_frlock_t *)arg;
+	flk_callback_t blkd_callback;
+	timeout_id_t timeout_id;
+
+	/*
+	 * Create frlock callback which will be called in the event
+	 * of the request blocking.  The callback is called twice, once
+	 * immediately before blocking and once after.
+	 */
+	flk_add_callback(&blkd_callback, sam_blkd_frlock_callback,
+	    blkd_frlock, NULL);
+
+	mutex_enter(&blkd_frlock->ip->blkd_frlock_mutex);
+	blkd_frlock->thread = curthread;
+
+	/* It is possible we are already being destroyed */
+	if (blkd_frlock->status & SAM_FRLOCK_DESTROY) {
+		blkd_frlock->status |= SAM_FRLOCK_DONE;
+		blkd_frlock->rval = EAGAIN;
+	} else {
+		/*
+		 * Set timeout of half lease timeout.  This value ensures that
+		 * proper deadlock detection will take place. If a deadlock
+		 * situation exists we are always guaranteed to have waiting
+		 * overlap with any other blocked locks.
+		 */
+		timeout_id = timeout(sam_blkd_frlock_cancel, blkd_frlock,
+		    MAX_LEASE_TIME / 2 * hz);
+
+		/* Attempt the lock request, if blocked callback will be used */
+		blkd_frlock->rval = reclock(SAM_ITOV(blkd_frlock->ip),
+		    &blkd_frlock->flock, (SETFLCK|SLPFLCK),
+		    blkd_frlock->filemode, blkd_frlock->offset, &blkd_callback);
+
+		/* Mark DONE and cancel timeout since we have returned */
+		blkd_frlock->status |= SAM_FRLOCK_DONE;
+		(void) untimeout(timeout_id);
+	}
+
+	/* Broadcast done (could have both caller and destroy waiting here) */
+	cv_broadcast(&blkd_frlock->fl_cv);
+
+	if (blkd_frlock->status & SAM_FRLOCK_BLKD) {
+		/* Responsible for cleaning up blocked frlocks */
+		sam_blkd_frlock_remove(blkd_frlock);
+		mutex_exit(&blkd_frlock->ip->blkd_frlock_mutex);
+		sam_blkd_frlock_free(blkd_frlock);
+	} else {
+		mutex_exit(&blkd_frlock->ip->blkd_frlock_mutex);
+	}
+}
+
+/*
+ * ----- sam_blkd_frlock_callback - Callback for handling blocked locks
+ *
+ * Callback used by reclock function just before and after blocking.  Parameter
+ * "when" will equal FLK_BEFORE_SLEEP on call before blocking, and
+ * FLK_AFTER_SLEEP after blocking.
+ *
+ * arg: sam_blkd_frlock_t *blkd_frlock
+ */
+
+static callb_cpr_t *
+sam_blkd_frlock_callback(flk_cb_when_t when, void *arg) {
+	sam_blkd_frlock_t *blkd_frlock = (sam_blkd_frlock_t *)arg;
+
+	if (when == FLK_BEFORE_SLEEP) {
+		blkd_frlock->status |= SAM_FRLOCK_BLKD;
+		cv_signal(&blkd_frlock->fl_cv);
+		/* Release mutex while sleeping */
+		mutex_exit(&blkd_frlock->ip->blkd_frlock_mutex);
+	} else {
+		/* Acquire the mutex again */
+		mutex_enter(&blkd_frlock->ip->blkd_frlock_mutex);
+	}
+
+	return (NULL);
+}
+
+/*
+ * ----- sam_blkd_frlock_cancel - Cancels a blocked lock request
+ * arg: sam_blkd_frlock_t *blkd_frlock
+ *
+ * A blocked reclock uses cv_wait_sig.  This function
+ * signals the blocked thread to wake up and return EINTR.
+ */
+
+static void
+sam_blkd_frlock_cancel(void *arg) {
+	sam_blkd_frlock_t *blkd_frlock = (sam_blkd_frlock_t *)arg;
+
+	/* Signal blocked task that is not done */
+	if (blkd_frlock->thread &&
+	    (blkd_frlock->status & SAM_FRLOCK_BLKD) &&
+	    !(blkd_frlock->status & SAM_FRLOCK_DONE)) {
+		sigtoproc(ttoproc(blkd_frlock->thread),
+		    blkd_frlock->thread, SIGCONT);
+	}
+}
+
+/*
+ * ----- sam_blkd_frlock_destroy - Cancels all blocked locks on inode
+ *
+ * Sets destroy flag on each blocked frlock, cancels and waits for done.
+ */
+
+void
+sam_blkd_frlock_destroy(sam_node_t *ip) {
+	mutex_enter(&ip->blkd_frlock_mutex);
+	while (ip->blkd_frlock) {
+		ip->blkd_frlock->status |= SAM_FRLOCK_DESTROY;
+		sam_blkd_frlock_cancel(ip->blkd_frlock);
+		/* Wait for done */
+		sam_cv_wait1sec_sig(&ip->blkd_frlock->fl_cv,
+		    &ip->blkd_frlock_mutex);
+	}
+	mutex_exit(&ip->blkd_frlock_mutex);
+}
+
+/*
+ * ----- sam_blkd_frlock_new - Allocate and initialize a new blocked frlock
+ */
+
+static sam_blkd_frlock_t *
+sam_blkd_frlock_new(
+	sam_node_t *ip,
+	int client_ord,
+	int filemode,
+	int64_t offset,
+	flock64_t *flock)
+{
+	sam_blkd_frlock_t *new_blkd;
+
+	new_blkd = kmem_zalloc(sizeof (sam_blkd_frlock_t), KM_SLEEP);
+	new_blkd->ip = ip;
+	new_blkd->cl_ord = client_ord;
+	new_blkd->filemode = filemode;
+	new_blkd->offset = offset;
+	new_blkd->flock = *flock;
+	cv_init(&new_blkd->fl_cv, NULL, CV_DEFAULT, NULL);
+
+	return (new_blkd);
+}
+
+/*
+ * ----- sam_blkd_frlock_free - Free blocked frlock resources and memory
+ */
+
+static void
+sam_blkd_frlock_free(sam_blkd_frlock_t *blkd_frlock)
+{
+	cv_destroy(&blkd_frlock->fl_cv);
+	kmem_free(blkd_frlock, sizeof (sam_blkd_frlock_t));
+}
+
+/*
+ * ----- sam_blkd_frlock_find - Find an existing frlock on inode
+ *
+ * Return an existing blkd_frlock that matches the provided data,
+ * or null if no such entry exists.
+ * ip->blkd_frlock_mutex must be held
+ */
+
+static sam_blkd_frlock_t *
+sam_blkd_frlock_find(sam_blkd_frlock_t *blkd_frlock)
+{
+	sam_node_t *ip = blkd_frlock->ip;
+	flock64_t *flock = &blkd_frlock->flock;
+	sam_blkd_frlock_t *cur;
+
+	ASSERT(ip);
+	ASSERT(MUTEX_HELD(&ip->blkd_frlock_mutex));
+
+	cur = ip->blkd_frlock;
+	while (cur) {
+		if (cur->cl_ord == blkd_frlock->cl_ord &&
+		    cur->filemode == blkd_frlock->filemode &&
+		    cur->offset == blkd_frlock->offset &&
+		    cur->flock.l_sysid == flock->l_sysid &&
+		    cur->flock.l_pid == flock->l_pid &&
+		    cur->flock.l_type == flock->l_type &&
+		    cur->flock.l_whence == flock->l_whence &&
+		    cur->flock.l_start == flock->l_start &&
+		    cur->flock.l_len == flock->l_len) {
+			break; /* Found it! */
+		}
+		cur = cur->fl_next;
+	}
+
+	return (cur);
+}
+
+/*
+ * ----- sam_blkd_frlock_insert - Insert new node at head of list
+ *
+ * Allocates a new sam_blkd_frlock structure and inserts it into
+ * the provided inodes blocked frlock list.
+ */
+
+static void
+sam_blkd_frlock_insert(sam_blkd_frlock_t *blkd_frlock)
+{
+	sam_node_t *ip = blkd_frlock->ip;
+	ASSERT(ip);
+	ASSERT(MUTEX_HELD(&ip->blkd_frlock_mutex));
+
+	/* Insert new entry into inode list */
+	if (ip->blkd_frlock) {
+		ip->blkd_frlock->fl_prev = blkd_frlock;
+	}
+	blkd_frlock->fl_next = ip->blkd_frlock;
+	ip->blkd_frlock = blkd_frlock;
+}
+
+/*
+ * ----- sam_blkd_frlock_remove - Remove blkd_frlock from list
+ *
+ * Remove the provided entry from its list.
+ */
+
+static void
+sam_blkd_frlock_remove(sam_blkd_frlock_t *blkd_frlock)
+{
+	sam_node_t *ip = blkd_frlock->ip;
+
+	ASSERT(ip);
+	ASSERT(MUTEX_HELD(&ip->blkd_frlock_mutex));
+
+	/* Update prev entry */
+	if (blkd_frlock->fl_prev == NULL) {
+		ip->blkd_frlock = blkd_frlock->fl_next;
+	} else {
+		blkd_frlock->fl_prev->fl_next = blkd_frlock->fl_next;
+	}
+
+	/* Update next entry */
+	if (blkd_frlock->fl_next) {
+		blkd_frlock->fl_next->fl_prev = blkd_frlock->fl_prev;
+	}
+}
 
 /*
  * ----- sam_process_rm_lease - process the lease remove operation.

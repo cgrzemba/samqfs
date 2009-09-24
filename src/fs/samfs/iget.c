@@ -530,6 +530,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->sr_write_seqno = 0;
 	ip->sr_sync = 0;
 	ip->sr_leases = NULL;
+	ip->blkd_frlock = NULL;
 	ip->rm_pid = 0;
 	ip->stage_pid = 0;
 	for (i = 0; i < MAX_ARCHIVE; i++) {
@@ -1525,6 +1526,7 @@ sam_inode_constructor(
 	cv_init(&ip->ilease_cv, NULL, CV_DEFAULT, NULL);
 	sam_mutex_init(&ip->iom.map_mutex, NULL, MUTEX_DEFAULT, NULL);
 	sam_mutex_init(&ip->ilease_mutex, NULL, MUTEX_DEFAULT, NULL);
+	sam_mutex_init(&ip->blkd_frlock_mutex, NULL, MUTEX_DEFAULT, NULL);
 	dnlc_dir_init(&ip->i_danchor);
 	sam_mutex_init(&ip->i_indelmap_mutex, NULL, MUTEX_DEFAULT, NULL);
 
@@ -1586,7 +1588,12 @@ sam_inode_destructor(void *buf, void *not_used)
 	cv_destroy(&ip->rm_cv);
 	mutex_destroy(&ip->write_mutex);
 	cv_destroy(&ip->write_cv);
+	mutex_destroy(&ip->listio_mutex);
 	mutex_destroy(&ip->fl_mutex);
+	cv_destroy(&ip->ilease_cv);
+	mutex_destroy(&ip->iom.map_mutex);
+	mutex_destroy(&ip->ilease_mutex);
+	mutex_destroy(&ip->blkd_frlock_mutex);
 	mutex_destroy(&ip->i_indelmap_mutex);
 
 	dnlc_dir_fini(&ip->i_danchor);

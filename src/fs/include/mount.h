@@ -47,6 +47,7 @@
 #ifdef sun
 #include	<sys/pathname.h>
 #include	<sys/thread.h>
+#include	<sys/taskq.h>
 #include	<sys/vfs.h>
 #endif /* sun */
 
@@ -239,6 +240,7 @@ typedef struct sam_mt_session {
 	kcondvar_t	m_fo_vnrele_cv;
 	int			m_fo_vnrele_count;
 	struct sam_event_em *m_fsev_buf; /* FS event buf for door callout */
+	taskq_t		*m_frlock_taskq; /* Taskq for blocked frlock calls */
 #endif /* sun */
 } sam_mt_session_t;
 

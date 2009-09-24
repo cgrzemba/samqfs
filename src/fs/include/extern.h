@@ -614,6 +614,7 @@ int sam_proc_callout(sam_node_t *ip, enum CALLOUT_operation op,
 	ushort_t actions, int client_ord, sam_callout_arg_t *arg);
 int sam_proc_notify(sam_node_t *ip, enum NOTIFY_operation op, int client_ord,
 	sam_notify_arg_t *arg, int skip_ord);
+void sam_blkd_frlock_destroy(sam_node_t *ip);
 
 
 /* srmisc.c function prototypes. */

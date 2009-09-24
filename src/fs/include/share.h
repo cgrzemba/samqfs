@@ -43,6 +43,7 @@
 #ifdef sun
 #include	<sys/vnode.h>
 #include	<sys/acl.h>
+#include	<sys/thread.h>
 #endif	/* sun */
 
 #include	<sam/sys_types.h>
@@ -138,6 +139,7 @@ typedef struct sam_share_flock {
 	int32_t	l_sysid;
 	pid_t	l_pid;
 } sam_share_flock_t;
+
 
 /*
  * Directed actions.

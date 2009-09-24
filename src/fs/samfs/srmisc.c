@@ -84,6 +84,7 @@ static void sam_failover_new_server(sam_mount_t *mp, cred_t *credp);
 extern void sam_clear_cmd(enum SCD_daemons scdi);
 static void sam_onoff_client_delay(sam_schedule_entry_t *entry);
 
+extern	int sam_max_blkd_frlock;
 extern	kmutex_t	qfs_scan_lock;
 extern	int		lqfs_free(sam_mount_t *mp);
 
@@ -973,6 +974,9 @@ sam_failover_new_server(sam_mount_t *mp, cred_t *credp)
 	}
 
 	sam_taskq_add(sam_update_client_status, mp, NULL, SAM_MIN_DELAY * hz);
+	mp->ms.m_frlock_taskq = taskq_create("sam_frlock_taskq",
+	    sam_max_blkd_frlock, minclsyspri, 1,
+	    sam_max_blkd_frlock, TASKQ_DYNAMIC);
 
 	(void) dnlc_purge_vfsp(vfsp, 0);
 

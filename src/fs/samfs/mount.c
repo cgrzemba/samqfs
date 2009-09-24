@@ -2226,6 +2226,11 @@ retry:
 	 */
 	sam_stop_threads(mp);
 
+	if (mp->ms.m_frlock_taskq) {
+		taskq_destroy(mp->ms.m_frlock_taskq);
+		mp->ms.m_frlock_taskq = NULL;
+	}
+
 	mutex_enter(&mp->ms.m_synclock);
 	e = sam_update_filsys(mp, SYNC_CLOSE);
 	mutex_exit(&mp->ms.m_synclock);
@@ -2695,6 +2700,7 @@ sam_flush_ino(
 					nip = hip->forw;
 				} else { /* flag == SAM_FAILOVER_OLD_SRVR */
 					mutex_exit(ihp);
+					sam_blkd_frlock_destroy(ip);
 					sam_flush_pages(ip, B_INVAL);
 					(void) sam_update_inode(ip,
 					    SAM_SYNC_ONE, FALSE);
@@ -2729,6 +2735,7 @@ sam_flush_ino(
 			} else {
 				boolean_t hash_dropped;
 
+				sam_blkd_frlock_destroy(ip);
 				if (S_ISDIR(ip->di.mode)) {
 					dnlc_dir_purge(&ip->i_danchor);
 					TRACE(T_SAM_EDNLC_PURGE, vp,

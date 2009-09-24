@@ -379,6 +379,34 @@ typedef struct sam_ichain	{
 	sam_ihead_t	free;
 } sam_ichain_t;
 
+
+#ifdef sun
+/*
+ * ----- sam_blkd_frlock - MDS keeps track of blocked frlocks
+ * Linked list of blocked frlock requests.
+ */
+
+#define	SAM_MAX_BLKD_FRLOCK	1024
+#define	SAM_FRLOCK_BLKD	0x1
+#define	SAM_FRLOCK_DONE	0x2
+#define	SAM_FRLOCK_DESTROY	0x4
+
+typedef struct sam_blkd_frlock sam_blkd_frlock_t;
+struct sam_blkd_frlock {
+	sam_blkd_frlock_t *fl_prev;
+	sam_blkd_frlock_t *fl_next;
+	struct sam_node *ip;
+	kcondvar_t fl_cv;		/* Signaled at BLKD and DONE */
+	kthread_t *thread;		/* Thread that is blocked */
+	uint32_t status;		/* BLKD, DONE flags */
+	int32_t rval;			/* Return value of request */
+	int32_t cl_ord;
+	int32_t filemode;
+	int64_t offset;
+	flock64_t flock;
+};
+#endif /* sun */
+
 /*
  * -----	Incore inode structure.
  *  Most fields are protected by inode_rwl reader/writer lock.
@@ -524,6 +552,8 @@ typedef struct sam_node {
 	uchar_t		sr_fill[3];
 	struct sam_lease_ino *sr_leases; /* entry in linked lease list. */
 	kmutex_t	ilease_mutex;	/* Mutex for inode lease information */
+	struct sam_blkd_frlock *blkd_frlock;	/* List of blocked frlocks */
+	kmutex_t	blkd_frlock_mutex;	/* Protects blkd_flock list */
 
 	kthread_id_t	stage_thr;	/* Thread sending stage request */
 	pid_t		rm_pid;		/* Pid for Removable media mount */

@@ -85,6 +85,7 @@
 #include "qfs_log.h"
 #include "objctl.h"
 extern int ncsize;
+extern int sam_max_blkd_frlock;
 
 static int sam_xattr = 0;		/* Extended attributes */
 
@@ -592,6 +593,9 @@ samfs_mount(
 	if (SAM_IS_SHARED_SERVER(mp)) {
 		sam_taskq_add(sam_update_client_status, mp,
 		    NULL, SAM_MIN_DELAY * hz);
+		mp->ms.m_frlock_taskq = taskq_create("sam_frlock_taskq",
+		    sam_max_blkd_frlock, minclsyspri, 1,
+		    sam_max_blkd_frlock, TASKQ_DYNAMIC);
 	}
 #endif /* METADATA_SERVER */
 

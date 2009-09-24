@@ -84,6 +84,7 @@ extern int ncsize;
 int ninodes = 0;			/* number of inodes to keep */
 int nhino = 0;				/* inode hash table size */
 int sam_max_shared_hosts = SAM_MAX_SHARED_HOSTS; /* max shared fs hosts */
+int sam_max_blkd_frlock = SAM_MAX_BLKD_FRLOCK; /* max blocked frlocks */
 
 sam_global_tbl_t samgt;			/* SAM-QFS global parameters */
 int sam_tracing = 1;			/* sam_tracing always enabled */

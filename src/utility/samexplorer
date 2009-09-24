@@ -1336,6 +1336,7 @@ verbose "/bin/mpstat"
 
 echo "------------------- kstat ---------------------------" >>$REPORT
 verbose "/bin/kstat -n cpu_info0"
+verbose "/bin/kstat -n sam_frlock_taskq"
 
 echo "------------------- prstat --------------------------" >>$REPORT
 verbose /bin/prstat 1 1
