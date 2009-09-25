@@ -1630,7 +1630,7 @@ sam_client_remove_vn(
 #else
 		error = sam_remove_vn(pvp, cp, credp);
 #endif
-		goto out;
+		goto out1;
 	}
 #endif
 
@@ -1644,10 +1644,42 @@ sam_client_remove_vn(
 		    secpolicy_fs_linkdir(credp, rmvp->v_vfsp)) {
 			VN_RELE(rmvp);
 			error = EPERM;
-			goto out;
+			goto out1;
 		}
 		if (rmvp->v_count > 1) {
 			dnlc_remove(pvp, cp);
+		}
+		/*
+		 * File exists, ask server to remove it.
+		 * Lift lock and resolve conflicts on the server.
+		 * Remove this reference from the name cache.
+		 */
+		remove.id = ip->di.id;
+		nrec = kmem_alloc(sizeof (*nrec), KM_SLEEP);
+		if ((error = sam_proc_name(pip, NAME_remove,
+		    &remove, sizeof (remove), cp,
+		    NULL, credp, nrec)) == 0) {
+			/*
+			 * Need to handle the case where the ino/gen changed
+			 * on the server due to a race with rename.
+			 */
+			if ((ip->di.id.ino != nrec->di.id.ino) ||
+			    (ip->di.id.gen != nrec->di.id.gen)) {
+				VN_RELE(rmvp);
+				remove.id = nrec->di.id;
+				error = sam_check_cache(&remove.id, ip->mp,
+				    IG_EXISTS, NULL, &ip);
+				if (error || (ip == NULL)) {
+					error = 0;
+					goto out;
+				}
+				rmvp = SAM_ITOV(ip);
+			}
+			/*
+			 * If NFS, remove unused leases to prevent open
+			 * unlinked files after failover since NFS does
+			 * not recover leases.
+			 */
 			if (SAM_THREAD_IS_NFS()) {
 				RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 				if (ip->cl_leases &&
@@ -1684,18 +1716,6 @@ sam_client_remove_vn(
 				}
 				RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 			}
-		}
-
-		/*
-		 * File exists, ask server to remove it.
-		 * Lift lock and resolve conflicts on the server.
-		 * Remove this reference from the name cache.
-		 */
-		remove.id = ip->di.id;
-		nrec = kmem_alloc(sizeof (*nrec), KM_SLEEP);
-		if ((error = sam_proc_name(pip, NAME_remove,
-		    &remove, sizeof (remove), cp,
-		    NULL, credp, nrec)) == 0) {
 
 			VNEVENT_REMOVE_OS(rmvp, pvp, cp, NULL);
 
@@ -1703,11 +1723,12 @@ sam_client_remove_vn(
 			error = sam_reset_client_ino(ip, 0, nrec);
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
+		VN_RELE(rmvp);
+out:
 		kmem_free(nrec, sizeof (*nrec));
-		VN_RELE(SAM_ITOV(ip));  /* Decrement vnode count */
 	}
 
-out:
+out1:
 	SAM_CLOSE_OPERATION(pip->mp, error);
 	TRACE(T_SAM_CL_REMOVE_RET, pvp, pip->di.id.ino, remove.id.ino, error);
 	return (error);
@@ -2075,7 +2096,7 @@ sam_client_rmdir_vn(
 #else
 		error = sam_rmdir_vn(pvp, cp, cdir, credp);
 #endif
-		goto out;
+		goto out1;
 	}
 #endif
 
@@ -2089,7 +2110,7 @@ sam_client_rmdir_vn(
 		if (rmvp == PTOU(curproc)->u_cdir) {
 			VN_RELE(rmvp);			/* release hold */
 			error = EINVAL;
-			goto out;
+			goto out1;
 		}
 		/*
 		 * Directory exists, ask server to remove it.
@@ -2101,6 +2122,22 @@ sam_client_rmdir_vn(
 		if ((error = sam_proc_name(pip, NAME_rmdir,
 		    &rmdir, sizeof (rmdir), cp,
 		    NULL, credp, nrec)) == 0) {
+			/*
+			 * Need to handle the case where the ino/gen changed
+			 * on the server due to a race with rename.
+			 */
+			if ((ip->di.id.ino != nrec->di.id.ino) ||
+			    (ip->di.id.gen != nrec->di.id.gen)) {
+				VN_RELE(rmvp);
+				rmdir.id = nrec->di.id;
+				error = sam_check_cache(&rmdir.id, ip->mp,
+				    IG_EXISTS, NULL, &ip);
+				if (error || (ip == NULL)) {
+					error = 0;
+					goto out;
+				}
+				rmvp = SAM_ITOV(ip);
+			}
 
 			VNEVENT_RMDIR_OS(rmvp, pvp, cp, NULL);
 
@@ -2111,11 +2148,12 @@ sam_client_rmdir_vn(
 				dnlc_purge_vp(rmvp);
 			}
 		}
-		VN_RELE(SAM_ITOV(ip));	/* Decrement vnode count */
+		VN_RELE(rmvp);
+out:
 		kmem_free(nrec, sizeof (*nrec));
 	}
 
-out:
+out1:
 	SAM_CLOSE_OPERATION(pip->mp, error);
 	TRACE(T_SAM_CL_RMDIR_RET, pvp, pip->di.id.ino, rmdir.id.ino, error);
 	return (error);

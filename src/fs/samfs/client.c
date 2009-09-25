@@ -759,6 +759,8 @@ sam_reset_client_ino(
 		was_rmchardev = 1;
 	}
 #endif
+	ASSERT(((ip->di.id.ino == irec->di.id.ino) &&
+	    (ip->di.id.gen == irec->di.id.gen)) || (ip->di.mode == 0));
 	ip->di = irec->di;	/* Move disk image to incore inode */
 	ip->di2	= irec->di2;
 	ip->updtime = SAM_SECOND();
