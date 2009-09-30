@@ -491,6 +491,7 @@ sam_write_io(
 	boolean_t appending;
 	int error, forcefault, seg_flags, error2;
 	int32_t no_blocks;
+	sam_u_offset_t orig_size;
 	sam_size_t nbytes;
 	sam_u_offset_t offset, reloff, allocsz, orig_offset, segsz;
 	sam_u_offset_t buff_off;
@@ -502,6 +503,8 @@ sam_write_io(
 
 
 	ip = SAM_VTOI(vp);
+	no_blocks = ip->di.blocks;
+	orig_size = ip->di.rm.size;
 
 start:
 
@@ -595,7 +598,6 @@ start:
 		 * Allocate blocks to cover the offset..nbytes.
 		 */
 		if (!S_ISREQ(ip->di.mode)) {
-			no_blocks = ip->di.blocks;
 
 			if ((error = sam_map_block(ip, uiop->uio_loffset,
 			    (offset_t)nbytes, type, NULL, credp))) {
@@ -705,11 +707,8 @@ start:
 			error2 = segmap_release(segkmap, base, seg_flags);
 		}
 		/*
-		 * We care about the error only in the case of SM_WRITE.
-		 * SM_WRITE means that we need to wait for the sync write
-		 * to be completed and will have to handle the error if
-		 * the write fails to reach the storage. If write is
-		 * commited to the storage, then we flush inode extents.
+		 * SM_WRITE means that write was synchronous thru to disk
+		 * so set the error.
 		 */
 		if (seg_flags == SM_WRITE) {
 			error = error2;
@@ -750,7 +749,7 @@ start:
 		}
 	}
 
-	if (error == 0 && is_lio && --callp->listio.file_list_count) {
+	if (is_lio && error == 0 && --callp->listio.file_list_count) {
 		callp->listio.file_off++;
 		callp->listio.file_len++;
 		goto start;
@@ -775,8 +774,22 @@ start:
 		    (ip->di.mode & S_ISUID) && (ip->di.uid == 0)))) {
 			ip->di.mode &= ~(S_ISUID | S_ISGID);
 		}
-		if ((seg_flags == SM_WRITE) && (ip->di.blocks != no_blocks))
-			error = sam_flush_extents(ip);
+		if ((ioflag & (FSYNC|FDSYNC)) && !SAM_FORCE_NFS_ASYNC(ip->mp)) {
+			/* Write inode through to disk if size/blocks changed */
+			if (orig_size < ip->di.rm.size) {
+				if (SAM_IS_SHARED_CLIENT(ip->mp) &&
+				    !(ip->mp->mt.fi_status &
+				    (FS_LOCK_HARD|FS_FAILOVER))) {
+					error = sam_update_shared_ino(ip,
+					    SAM_SYNC_ALL, TRUE);
+				} else {
+					error = sam_update_inode(ip,
+					    SAM_SYNC_ONE, FALSE);
+				}
+			} else if (no_blocks != ip->di.blocks) {
+				error = sam_flush_extents(ip);
+			}
+		}
 	} else {
 		if (is_lio) {
 			/*
