@@ -2622,6 +2622,14 @@ sam_flush_ino(
 						sam_ino_record_t irec;
 
 						/*
+						 * Set incore gen to match disk
+						 * gen to avoid ASSERT in
+						 * sam_reset_client_ino.
+						 */
+						ip->di.id.gen =
+						    permip->di.id.gen;
+
+						/*
 						 * Force the reset of the inode
 						 * information from the disk
 						 * copy. This also restarts the
