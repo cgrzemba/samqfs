@@ -340,6 +340,13 @@ sam_failover_done(sam_mount_t *mp)
 	if ((mp->mt.fi_status & (FS_SRVR_DONE | FS_CLNT_DONE)) ==
 	    (FS_SRVR_DONE | FS_CLNT_DONE)) {
 
+		/*
+		 * Do Post failover processing.
+		 */
+#ifdef sun
+		(void) sam_flush_ino(mp->mi.m_vfsp,
+		    SAM_FAILOVER_POST_PROCESSING, 0);
+#endif /* sun */
 		mp->mt.fi_status &= ~(FS_RESYNCING | FS_THAWING | FS_LOCK_HARD |
 		    FS_SRVR_DONE | FS_CLNT_DONE);
 		mp->ms.m_involuntary = 0;
@@ -348,16 +355,10 @@ sam_failover_done(sam_mount_t *mp)
 			cv_broadcast(&mp->ms.m_waitwr_cv);
 		}
 		mutex_exit(&mp->ms.m_waitwr_mutex);
-		/*
-		 * Do Post failover processing.
-		 */
-#ifdef sun
-		(void) sam_flush_ino(mp->mi.m_vfsp,
-		    SAM_FAILOVER_POST_PROCESSING, 0);
-#endif /* sun */
 		cmn_err(CE_NOTE,
 		    "SAM-QFS: %s: Failed over to new server %s: (%x)",
 		    mp->mt.fi_name, mp->mt.fi_server, mp->mt.fi_status);
+
 		sam_start_stop_rmedia(mp, SAM_START_DAEMON);
 		sam_sighup_daemons(mp);
 	} else {

@@ -1311,6 +1311,14 @@ sam_proc_rm_lease(
 
 	error = sam_issue_lease_request(ip, msg, SHARE_wait, actions, NULL);
 
+	/*
+	 * If no error, clear inode flags because server has written the inode
+	 * to disk.
+	 */
+	if (close && (error == 0)) {
+		ip->flags.bits &= ~SAM_UPDATE_FLAGS;
+	}
+
 	if (rw_type == RW_READER) {
 		RW_DOWNGRADE_OS(&ip->inode_rwl);
 	}

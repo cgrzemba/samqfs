@@ -542,7 +542,9 @@ sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp)
  */
 
 void
-sam_return_this_ino(sam_node_t *ip, int purge_flag)
+sam_return_this_ino(
+	sam_node_t *ip,		/* pointer to inode. */
+	int purge_flag)		/* Set if purging file or reader or client */
 {
 	kmutex_t *ihp;
 	vnode_t *vp = SAM_ITOV(ip);
@@ -602,21 +604,22 @@ sam_return_this_ino(sam_node_t *ip, int purge_flag)
 	}
 
 	/*
-	 * If purge_flag, changed or modified, client and not directory, not
-	 * frozen, and not stale or reclaimed, then remove leases if NFS or
-	 * nlink zero; otherwise sync inode. Release v_lock because page flushes
-	 * can cause the VM to acquire it.
+	 * Release v_lock because page flushes can cause the VM to acquire it.
 	 */
 	mutex_exit(&vp->v_lock);
-	if (purge_flag && (ip->flags.bits & SAM_UPDATE_FLAGS) &&
-	    SAM_IS_SHARED_CLIENT(ip->mp) && !S_ISDIR(ip->di.mode) &&
+
+	/*
+	 * If client, changed or modified, and not directory, not frozen,
+	 * and not stale or reclaimed, NFS or nlink zero, remove leases.
+	 * This will cause the inode to be inactivated on the server when
+	 * all the leases are removed.
+	 */
+	if (SAM_IS_SHARED_CLIENT(ip->mp) &&
+	    (ip->flags.bits & SAM_UPDATE_FLAGS) && !S_ISDIR(ip->di.mode) &&
 	    !(ip->mp->mt.fi_status & FS_FROZEN) &&
-	    ((ip->flags.bits & (SAM_NORECLAIM|SAM_STALE)) == 0)) {
-		if (SAM_THREAD_IS_NFS() || (ip->di.nlink == 0)) {
-			(void) sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
-		} else {
-			(void) sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
-		}
+	    ((ip->flags.bits & (SAM_NORECLAIM|SAM_STALE)) == 0) &&
+	    (SAM_THREAD_IS_NFS() || (ip->di.nlink == 0))) {
+		(void) sam_proc_rm_lease(ip, CL_CLOSE, RW_WRITER);
 	}
 
 	/*

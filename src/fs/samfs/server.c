@@ -2776,7 +2776,8 @@ sam_remove_lease(
 	}
 
 	/*
-	 * Schedule a task to process leases if we might have removed the
+	 * If last lease & inode modified/changed, set sr_sync to sync inode to
+	 * disk. Schedule a task to process leases if we might have removed the
 	 * last lease on this file. If the file was removed, schedule the
 	 * task now to clean up -- otherwise an orphan can result during
 	 * involuntary failover. (If we've removed the last lease for
@@ -2790,6 +2791,10 @@ sam_remove_lease(
 		TRACE(T_SAM_ABR_CLR, SAM_ITOV(ip), ip->di.id.ino,
 			no_clients, nl);
 		ip->flags.b.abr = 0;
+		if (ip->flags.bits & (SAM_UPDATED | SAM_CHANGED)) {
+			ip->flags.b.changed = 1;
+			ip->sr_sync = 1;
+		}
 		if (ip->di.nlink > 0) {
 			force = FALSE;
 			delay = SAM_EXPIRE_DELAY_SECS * hz;
