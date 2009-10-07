@@ -143,6 +143,9 @@ typedef struct {
 	/* license value, specifying features */
 	sam_license_t_33	license;
 #endif	/* METADATA_SERVER */
+#ifdef sun
+	uint_t	tsd_fsflush_key;	/* TSD key for fsflush check */
+#endif
 } sam_global_tbl_t;
 
 typedef struct {

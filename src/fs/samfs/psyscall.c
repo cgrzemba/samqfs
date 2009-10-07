@@ -522,7 +522,7 @@ sam_fsd_call(
  * a no-op.
  */
 /* ARGSUSED */
-static void
+void
 sam_tsd_destroy(void *tsdp)
 {
 }

@@ -1544,12 +1544,16 @@ sam_set_cl_attr(
 		    (ip->cl_flags & SAM_UPDATED))) {
 #ifdef sun
 			if (vn_has_cached_data(SAM_ITOV(ip)) != 0) {
+				int flags = sam_is_fsflush() ? 0 : B_ASYNC;
 				if (!write_lock) {
 					RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 				}
 				(void) VOP_PUTPAGE_OS(SAM_ITOV(ip), 0, 0,
-				    B_ASYNC, kcred, NULL);
-				(void) sam_wait_async_io(ip, write_lock);
+				    flags, kcred, NULL);
+				if (flags == B_ASYNC) {
+					(void) sam_wait_async_io(ip,
+					    write_lock);
+				}
 				if (!write_lock) {
 					RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 				}

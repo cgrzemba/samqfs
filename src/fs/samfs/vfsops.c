@@ -94,7 +94,12 @@ static int sam_clients_mounted(sam_mount_t *mp);
 static int sam_open_vfs_operation(sam_mount_t *mp, sam_fid_t *sam_fidp);
 static void sam_sync_fs(vfs_t *vfsp, short flag);
 
-void sam_start_sync_fs(sam_schedule_entry_t *entry);
+static void sam_start_sync_fs(sam_schedule_entry_t *entry);
+
+typedef struct sam_start_sync_arg {
+	boolean_t	is_fsflush;
+	short		flag;
+} sam_start_sync_arg_t;
 
 /*
  * ----- Module Loading/Unloading and Autoconfiguration declarations
@@ -1391,11 +1396,21 @@ samfs_sync(
 		sam_tracing = 0;
 	}
 
+	/* set tsd if coming in on fsflush */
+	if (curthread->t_cid == syscid &&
+	    strncmp(PTOU(curthread->t_procp)->u_comm, "fsflush", 7) == 0) {
+		tsd_set(samgt.tsd_fsflush_key, (void *)TRUE);
+	}
+
 	mutex_enter(&samgt.global_mutex);
 	samgt.num_fs_syncing++;
 	mutex_exit(&samgt.global_mutex);
 
 	if (vfsp == NULL) {
+		sam_start_sync_arg_t start_sync_arg;
+
+		start_sync_arg.is_fsflush = sam_is_fsflush();
+		start_sync_arg.flag = flag;
 		for (mp = samgt.mp_list; mp != NULL; mp = mp->ms.m_mp_next) {
 			if (!(mp->mt.fi_status & FS_MOUNTED)) {
 				continue;
@@ -1403,7 +1418,7 @@ samfs_sync(
 			vfsp = (vfs_t *)mp->mi.m_vfsp;
 			if ((samgt.num_fs_mounted == 1) ||
 			    sam_taskq_add_ret(sam_start_sync_fs, mp,
-			    &flag, 0)) {
+			    &start_sync_arg, 0)) {
 				sam_sync_fs(vfsp, flag);
 				sema_v(&mp->mi.m_sync_sema); /* Mark complete */
 			}
@@ -1422,6 +1437,7 @@ samfs_sync(
 		samgt.num_fs_syncing = 0;
 	}
 	mutex_exit(&samgt.global_mutex);
+	tsd_set(samgt.tsd_fsflush_key, NULL);
 	return (0);
 }
 
@@ -1431,18 +1447,20 @@ samfs_sync(
  * Task calls sam_sync_fs to sync the mounted file system.
  */
 
-void
+static void
 sam_start_sync_fs(
 	sam_schedule_entry_t *entry)
 {
 	vfs_t *vfsp;		/* Vfs pointer for SAMFS. */
-	short flag;		/* Sync flag */
-
+	sam_start_sync_arg_t *arg = (sam_start_sync_arg_t *)entry->arg;
 	sam_mount_t *mp = entry->mp;
 
 	vfsp = (vfs_t *)mp->mi.m_vfsp;
-	flag = *((short *)entry->arg);
-	sam_sync_fs(vfsp, flag);
+
+	tsd_set(samgt.tsd_fsflush_key, (void *)arg->is_fsflush);
+	sam_sync_fs(vfsp, arg->flag);
+	tsd_set(samgt.tsd_fsflush_key, NULL);
+
 	sema_v(&mp->mi.m_sync_sema);		/* Mark complete */
 	mutex_enter(&samgt.schedule_mutex);
 	sam_taskq_remove(entry);		/* Remove the task */

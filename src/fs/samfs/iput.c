@@ -1811,11 +1811,7 @@ boolean_t			/* TRUE if fsflush, FALSE if not fsflush */
 sam_is_fsflush()
 {
 #ifdef sun
-	char fsflush_comm[8];
-
-	strncpy(fsflush_comm, (PTOU(curthread->t_procp))->u_comm, 8);
-	fsflush_comm[7] = '\0';
-	if (strcmp(fsflush_comm, "fsflush") == 0) {
+	if (tsd_get(samgt.tsd_fsflush_key)) {
 		return (TRUE);
 	}
 #endif /* sun */

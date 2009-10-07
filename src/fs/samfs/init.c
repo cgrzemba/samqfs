@@ -448,6 +448,7 @@ _fini(void)
 	kmem_free((void *)sam_zero_block, sam_zero_block_size);
 	sam_zero_block = NULL;
 	sam_zero_block_size = 0;
+	tsd_destroy(&samgt.tsd_fsflush_key);
 
 	sam_fini_kstats();
 
@@ -620,6 +621,7 @@ samfs_init(
 	sam_mutex_init(&samgt.time_mutex, NULL, MUTEX_DEFAULT, NULL);
 
 	samgt.buf_freelist = NULL;
+	tsd_create(&samgt.tsd_fsflush_key, sam_tsd_destroy);
 
 	sam_zero_block_size = SAM_BLK * 2;
 	sam_zero_block = (char *)kmem_zalloc(sam_zero_block_size, KM_SLEEP);

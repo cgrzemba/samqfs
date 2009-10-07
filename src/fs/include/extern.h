@@ -642,6 +642,7 @@ sam_mount_t *find_mount_point(int fseq);
 sam_mount_t *sam_dup_mount_info(sam_mount_t *);
 void sam_stale_mount_info(sam_mount_t *);
 void sam_destroy_stale_mount(sam_mount_t *);
+void sam_tsd_destroy(void *tsdp);
 
 
 /* cacl.c function prototypes. */
