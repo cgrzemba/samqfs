@@ -2352,6 +2352,9 @@ sam_client_readlink_vn(
 		    ip->mp->mt.fi_meta_timeo, credp);
 		if (error) {
 			goto out;
+		} else if (ip->di.nlink == 0) {
+			error = ENOENT;
+			goto out;
 		}
 	}
 #if defined(SOL_511_ABOVE)

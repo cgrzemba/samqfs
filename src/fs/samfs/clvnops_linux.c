@@ -1508,8 +1508,12 @@ samqfs_client_readlink_vn(struct dentry *de, char *buf, int len)
 
 	sam_set_cred(NULL, &sam_cred);
 	if (!SAM_IS_SHARED_SERVER(ip->mp)) {
-		if ((error = sam_refresh_client_ino(ip,
-		    ip->mp->mt.fi_meta_timeo, credp)) != 0) {
+		error = sam_refresh_client_ino(ip,
+		    ip->mp->mt.fi_meta_timeo, credp);
+		if (error) {
+			goto out;
+		} else if (ip->di.nlink == 0) {
+			error = ENOENT;
 			goto out;
 		}
 	}
@@ -1583,9 +1587,13 @@ __samqfs_client_follow_link(struct dentry *de, struct nameidata *nd)
 
 	sam_set_cred(NULL, &sam_cred);
 	if (!SAM_IS_SHARED_SERVER(ip->mp)) {
-		if ((error = sam_refresh_client_ino(ip,
-		    ip->mp->mt.fi_meta_timeo, credp)) != 0) {
+		error = sam_refresh_client_ino(ip,
+		    ip->mp->mt.fi_meta_timeo, credp);
+		if (error) {
 			error = samqfs_nd_set_link_err(nd, -error);
+			goto out;
+		} else if (ip->di.nlink == 0) {
+			error = samqfs_nd_set_link_err(nd, -(ENOENT));
 			goto out;
 		}
 	}
@@ -2408,6 +2416,9 @@ __samqfs_lookup_revalidate(struct dentry *de)
 			error = sam_refresh_client_ino(ip,
 			    ip->mp->mt.fi_meta_timeo, credp);
 			if (error > 0) {
+				res = 0;
+			} else if (ip->di.nlink == 0) {
+				error = ENOENT;
 				res = 0;
 			}
 

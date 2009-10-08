@@ -574,6 +574,9 @@ sam_client_lookup_name(
 			if (!ip->flags.b.purge_pend) {
 				error = sam_refresh_client_ino(ip,
 				    meta_timeo, credp);
+				if (!error && (ip->di.nlink == 0)) {
+					error = ENOENT;
+				}
 			} else {
 				error = ENOENT;
 			}
@@ -715,9 +718,6 @@ sam_refresh_client_ino(
 			}
 		}
 		break;
-	}
-	if ((error == 0) && (ip->di.nlink == 0)) {
-		error = ENOENT;
 	}
 #ifdef linux
 	if (!error) {
