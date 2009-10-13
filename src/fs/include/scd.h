@@ -82,6 +82,17 @@ enum SCD_daemons {
 	SCD_MAX
 };
 
+/*
+ * SCD active flag values.
+ */
+
+
+enum SCD_actflag {
+	SCDAF_down	= 0,
+	SCDAF_starting	= 1,
+	SCDAF_active	= 2
+};
+
 struct sam_syscall_daemon {
 	kmutex_t mutex;		/* Mutex covering this struct */
 	kcondvar_t get_cv;	/* CV - waiting to get data */

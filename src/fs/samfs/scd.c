@@ -165,7 +165,7 @@ sam_send_cmd(
 		return (EREMCHG);	/* Kill this stage request */
 	}
 
-	if (!scd->active && (scdi == SCD_fsd)) {
+	if (scd->active == SCDAF_down && (scdi == SCD_fsd)) {
 		TRACE(T_SAM_DAE_ACTIVE, mp, scd->active, scdi, 3);
 		return (EAGAIN);
 	}
@@ -184,7 +184,7 @@ sam_send_cmd(
 			} else {
 				last_sequence = scd->sequence;
 			}
-			if (!scd->active && (scdi == SCD_fsd)) {
+			if (scd->active == SCDAF_down && (scdi == SCD_fsd)) {
 				TRACE(T_SAM_DAE_ACTIVE, mp, scd->active,
 				    scdi, 4);
 				error = EAGAIN;
@@ -300,7 +300,7 @@ sam_wait_cmd(
 		/*
 		 * If daemon is telling us it is quitting.
 		 */
-		scd->active = 0;
+		scd->active = SCDAF_down;
 		TRACE(T_SAM_DAE_ACTIVE, NULL, scd->active, scdi, 1);
 		mutex_exit(&scd->mutex);
 		return (0);
@@ -308,7 +308,7 @@ sam_wait_cmd(
 	/*
 	 * Mark daemon as active
 	 */
-	scd->active = 1;
+	scd->active = SCDAF_active;
 	TRACE(T_SAM_DAE_ACTIVE, NULL, scd->active, scdi, 2);
 
 	while (scd->size == 0) {
@@ -517,7 +517,7 @@ sam_init_daemon(struct sam_syscall_daemon *scd)
 	scd->size = 0;
 	scd->put_wait = 0;
 	scd->package = -1;
-	scd->active = 0;
+	scd->active = SCDAF_starting;
 	scd->timeout = 0;
 	scd->sequence = 1;
 }
@@ -531,7 +531,7 @@ sam_finish_daemon(struct sam_syscall_daemon *scd)
 {
 	mutex_enter(&scd->mutex);
 	scd->package = -1;
-	scd->active = 0;
+	scd->active = SCDAF_down;
 	cv_signal(&scd->get_cv);
 	mutex_exit(&scd->mutex);
 }
