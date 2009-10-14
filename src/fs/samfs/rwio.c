@@ -696,30 +696,6 @@ start:
 			/* Flush out full blocks asynchronously if not listio */
 			seg_flags = SM_WRITE | SM_ASYNC | SM_DONTNEED;
 		}
-
-		/*
-		 * For md devices on SPARC, (4k DAUs in a 8K page), zero the
-		 * uninitialized portion of the upper 4K block in the 8k page
-		 * of the last page in this write request. This may be done
-		 * more than once for different write requests. We need to
-		 * zero with the page locked to avoid a getpage deadlock
-		 * which can occur with the inode writer lock held.
-		 */
-		if ((uiop->uio_resid <= 0) && !error &&
-		    !ip->di.status.b.on_large &&
-		    (type == SAM_FORCEFAULT) && appending &&
-		    (ip->size < SM_OFF(ip->mp, ip->di.status.b.meta)) &&
-		    ((reloff + nbytes) >=
-		    ip->mp->mi.m_dau[ip->di.status.b.meta].seg[SM])) {
-			int zlen;
-
-			zlen = roundup(ip->size, ip->mp->mi.m_dau[
-			    ip->di.status.b.meta].seg[SM]) - ip->size;
-			if (zlen > 0) {
-				bzero(base + reloff + nbytes, zlen);
-			}
-		}
-
 		if (sam_vpm_enable) {
 			error2 = vpm_sync_pages(vp, buff_off, MAXBSIZE,
 			    seg_flags);
@@ -730,7 +706,6 @@ start:
 			}
 			error2 = segmap_release(segkmap, base, seg_flags);
 		}
-
 		/*
 		 * SM_WRITE means that write was synchronous thru to disk
 		 * so set the error.
@@ -746,6 +721,31 @@ start:
 
 		if (error || (uiop->uio_resid <= 0)) {
 			break;
+		}
+	}
+
+	/*
+	 * Zero from the new EOF to a .seg boundary.
+	 * This operation is normally done by sam_clear_append at
+	 * DKMAP5, but only if type == SAM_WRITE.
+	 */
+	if (type == SAM_FORCEFAULT && appending && error == 0) {
+		struct fbuf *fbp;
+		int zlen;
+
+		if (!ip->di.status.b.on_large &&
+		    ip->size < SM_OFF(ip->mp, ip->di.status.b.meta)) {
+
+			zlen = roundup(ip->size,
+			    ip->mp->mi.m_dau[ip->di.status.b.meta].seg[SM]) -
+			    ip->size;
+
+			if (zlen > 0) {
+				SAM_SET_LEASEFLG(ip);
+				fbzero(SAM_ITOV(ip), ip->size, zlen, &fbp);
+				SAM_CLEAR_LEASEFLG(ip);
+				fbrelse(fbp, S_WRITE);
+			}
 		}
 	}
 
