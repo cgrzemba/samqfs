@@ -1431,7 +1431,7 @@ findResources(
 	/*
 	 * Check bad media.
 	 */
-	if (IS_VSN_BADMEDIA(vi)) {
+	if (IS_VSN_BADMEDIA((&stream->vi))) {
 		priority = SP_noresources;
 
 		SetErrno = 0;	/* set for trace */
@@ -1478,7 +1478,7 @@ findResources(
 			if (GetNumLibraryDrives(stream->vi.lib) > 0) {
 				priority = SP_start;
 			}
-		} else if (IS_VSN_LOADED(vi)) {
+		} else if (IS_VSN_LOADED((&stream->vi))) {
 			priority = SP_mounted;
 
 		} else {
