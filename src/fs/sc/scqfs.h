@@ -74,7 +74,7 @@ extern "C" {
 #define		FO_ERROR	-1
 
 #define	SCQFS_TMP_DIR	"/var/run"
-#define	SCQFS_MOUNT_NOMDS_SLEEP	5
+#define	SCQFS_MOUNT_RETRY_SLEEP	5
 
 /*
  * Flag bits from mp->mt.fi_status that relate to failover and

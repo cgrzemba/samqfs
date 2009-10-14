@@ -690,8 +690,12 @@ FatalError(
 	if (ErrNum != 0) {
 		*msg++ = ':';
 		*msg++ = ' ';
-		(void) StrFromErrno(ErrNum, msg, sizeof (msg_buf) -
-		    (msg - msg_buf));
+		if (ErrNum == EXDEV) {
+			strcpy(msg, "MDS not mounted");
+		} else {
+			(void) StrFromErrno(ErrNum, msg, sizeof (msg_buf) -
+			    (msg - msg_buf));
+		}
 		msg += strlen(msg);
 	}
 	*msg = '\0';

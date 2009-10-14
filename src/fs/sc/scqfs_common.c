@@ -1475,15 +1475,18 @@ mount_qfs(char *qfsfs, boolean_t retry_nomds)
 		    !(retry_nomds && rc == EXIT_NOMDS)) {
 			break;
 		}
-		if (count % 2 == 0) {
+		if (count == 0) {
 			scds_syslog(LOG_ERR,
-			    "%s: Unable to mount qfs: %s. Retrying",
-			    qfsfs, strerror(ENOTCONN));
+			    "%s: Unable to mount qfs: %s. Retry every %d secs",
+			    qfsfs, (rc == EXIT_NOMDS ? "MDS not mounted" :
+			    strerror(ENOTCONN)), SCQFS_MOUNT_RETRY_SLEEP);
 		}
 		count++;
-		if (rc == EXIT_NOMDS) {
-			sleep(SCQFS_MOUNT_NOMDS_SLEEP);
-		}
+		sleep(SCQFS_MOUNT_RETRY_SLEEP);
+	}
+	if (count > 0) {
+		scds_syslog(LOG_ERR, "%s: Mount %s. Retried %d times",
+		    qfsfs, (rc == 0) ? "success" : "failure", count);
 	}
 	scds_syslog_debug(DBG_LVL_HIGH, "mount_qfs - End");
 	return (rc);
