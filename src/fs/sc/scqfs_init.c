@@ -65,7 +65,7 @@
 extern void ChkFs(void);		/* src/fs/lib/mount.c */
 
 static int ProcFS(int ac, char **av, struct FsInfo *fp);
-static int GetBootTimeout(struct RgInfo *rgp, int *boot_timeout);
+static int GetSCInfo(struct RgInfo *rgp, const char *tag, int *rval);
 
 
 int
@@ -151,7 +151,7 @@ ProcFS(
 	int rc, leader;
 	int fenced = FALSE;
 	int waittime;
-	int boot_timeout;
+	int mtimeout;
 
 	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - Begin");
 
@@ -169,22 +169,28 @@ ProcFS(
 		return (1);		/* errors logged by GetRgInfo */
 	}
 
-	if (GetBootTimeout(&rg, &boot_timeout) < 0) {
-		scds_syslog_debug(DBG_LVL_HIGH,
-		    "ProcFS - End/Err");
-		return (1);		/* errors logged by GetBootTimeout */
+	if (strcmp(basename(argv[0]), "scqfs_init") == 0) {
+		if (GetSCInfo(&rg, SCHA_INIT_TIMEOUT, &mtimeout) < 0) {
+			scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - End/Err");
+			return (1);	/* errors logged by GetSCInfo */
+		}
+	} else {
+		if (GetSCInfo(&rg, SCHA_BOOT_TIMEOUT, &mtimeout) < 0) {
+			scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - End/Err");
+			return (1);	/* errors logged by GetSCInfo */
+		}
 	}
 
 	/*
 	 *  Loop checking devices but don't loop forever.  Return an
-	 *  error prior to hitting the boot timeout to avoid the RGM
+	 *  error prior to hitting the method timeout to avoid the RGM
 	 *  sending us a kill (and dumping core).  The kill is ugly
 	 *  and the devices may have been administratively disabled.
 	 */
-	waittime = boot_timeout - (DEVICE_WAIT_INTERVAL * 2);
+	waittime = mtimeout - (DEVICE_WAIT_INTERVAL * 2);
 	scds_syslog_debug(DBG_LVL_HIGH,
-	    "ProcFS - Device check boot_timeout=%d, waittime=%d.",
-	    boot_timeout, waittime);
+	    "ProcFS - Device check mtimeout=%d, waittime=%d.",
+	    mtimeout, waittime);
 	while (CheckFsDevs(fp->fi_fs) < 0) {
 		if (waittime <= 0) {
 			scds_syslog(LOG_ERR,
@@ -316,11 +322,10 @@ restart:
 
 
 /*
- * GetBootTimeout -- Get the SC configured boot method timeout
- *	for this resource.
+ * GetSCInfo -- Get SC configuration info.
  */
 static int
-GetBootTimeout(struct RgInfo *rgp, int *boot_timeout)
+GetSCInfo(struct RgInfo *rgp, const char *tag, int *rval)
 {
 	char *resource_name;
 	scha_resource_t handle;
@@ -343,14 +348,14 @@ GetBootTimeout(struct RgInfo *rgp, int *boot_timeout)
 		    resource_name);
 		return (-1);
 	}
-	e = scha_resource_get(handle, SCHA_BOOT_TIMEOUT, boot_timeout);
+	e = scha_resource_get(handle, tag, rval);
 	if (e != SCHA_ERR_NOERR) {
 		scds_syslog(LOG_ERR,
 		    "ProcFS: Failed to retrieve the property %s: %s.",
-		    SCHA_BOOT_TIMEOUT, scds_error_string(e));
+		    tag, scds_error_string(e));
 		scds_syslog_debug(DBG_LVL_HIGH,
 		    "ProcFS Failed to get property %s - End/Err",
-		    SCHA_BOOT_TIMEOUT);
+		    tag);
 		return (-1);
 	}
 	e = scha_resource_close(handle);
