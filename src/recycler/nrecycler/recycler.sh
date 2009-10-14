@@ -114,7 +114,7 @@
 #  file.  You should comment out these lines (through and including the /eof
 #  below) after you've set up this file.
 #
-/usr/bin/mailx -s "Robot $6 at hostname `hostname` recycle." root <</eof
+/bin/ppriv -s I=basic -e /usr/bin/mailx -s "Robot $6 at hostname `hostname` recycle." root <</eof
 The /etc/opt/SUNWsamfs/scripts/nrecycler.sh script was called by the SAM-FS nrecycler
 with the following arguments:
 
