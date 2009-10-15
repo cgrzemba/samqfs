@@ -883,14 +883,15 @@ sam_clear_server_leases(sam_mount_t *mp, int cl_ord)
 				continue;
 			}
 
+			/* Clean-up locks for the client */
+			if (flk_sysid_has_locks(llp->lease[i].client_ord,
+			    FLK_QUERY_ACTIVE|FLK_QUERY_SLEEPING)) {
+				cleanlocks(SAM_ITOV(ip), IGN_PID,
+				    llp->lease[i].client_ord);
+			}
+
 			if (llp->lease[i].leases != 0 ||
 			    llp->lease[i].wt_leases != 0) {
-				/* Clean-up locks for the client */
-				if (llp->lease[i].leases & CL_FRLOCK) {
-					cleanlocks(SAM_ITOV(ip), IGN_PID,
-					    llp->lease[i].client_ord);
-				}
-
 				llp->lease[i].leases = 0;
 				llp->lease[i].wt_leases = 0;
 				sam_compact_lease_clients(llp);
