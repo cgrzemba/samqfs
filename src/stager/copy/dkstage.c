@@ -290,7 +290,7 @@ DkSeekVolume(
 	off64_t setPosition;
 	off64_t offset;
 
-	setPosition = to_pos * IoThread->io_blockSize;
+	setPosition = (off64_t)to_pos * (off64_t)IoThread->io_blockSize;
 	Trace(TR_DEBUG, "Seek to: %d (%lld)", to_pos, setPosition);
 
 	rval = SamrftSeek(IoThread->io_rftHandle, setPosition,
