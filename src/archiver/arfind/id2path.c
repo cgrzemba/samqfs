@@ -120,9 +120,9 @@ static struct sam_ioctl_idstat idstatArgs = {
 /* Private functions. */
 static DirCacheEntry_t *cacheLookup(sam_id_t id);
 static int cacheSearch(sam_id_t id);
-static void cachePurge(void);
+static boolean_t cachePurge(void);
 static DirCacheEntry_t *cacheEntryNew(sam_id_t id);
-static int cacheEntryPopulate(DirCacheEntry_t *entry);
+static int cacheEntryPopulate(DirCacheEntry_t **entry_p);
 static sam_dirent_t *cacheEntryLookup(DirCacheEntry_t *entry, sam_id_t id);
 static void cacheEntryRemove(DirCacheEntry_t *entry);
 static int cmpDirent(const void *v1, const void *v2);
@@ -169,7 +169,7 @@ IdToPath(
 		dirent = cacheEntryLookup(ce, id);
 		if (dirent == NULL) {
 			/* (re)populate cache entry */
-			if (cacheEntryPopulate(ce) < 0) {
+			if (cacheEntryPopulate(&ce) < 0) {
 				break;
 			}
 
@@ -365,11 +365,15 @@ cacheEntryNew(sam_id_t id) {
 		memmove(entry + 1, entry,
 		    (dirCacheCount - i) * sizeof (DirCacheEntry_t));
 		dirCacheCount++;
+		memset(entry, 0, sizeof (DirCacheEntry_t));
+	} else if (entry->id.gen == -1) {
+		dirCacheDel--;
 	}
 
 	/* Initialize entry */
-	memset(entry, 0, sizeof (DirCacheEntry_t));
 	entry->id = id;
+	entry->entCount = 0;
+	entry->bufSize = 0;
 	entry->lastUsed = time(NULL);
 
 	return (entry);
@@ -425,8 +429,9 @@ cacheSearch(sam_id_t id) {
  * sorted by inode.
  */
 static int
-cacheEntryPopulate(DirCacheEntry_t *entry)
+cacheEntryPopulate(DirCacheEntry_t **entry_p)
 {
+	DirCacheEntry_t *entry = *entry_p;
 	sam_ioctl_idgetdents_t request;	/* Getdents request */
 	char *dirbuf;
 	char *endbuf;
@@ -445,11 +450,12 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
 
 	request.id = entry->id;
 	request.offset = 0;
+	request.modify_time.tv_sec = 0;
 	request.eof = 0;
 
 	/* Read the directory to populate the cache entry */
 	while (!request.eof) {
-		if (entry->bufLen - entry->bufSize < MAXNAMELEN) {
+		if (entry->bufLen - entry->bufSize < CACHE_BUF_INCR) {
 			char *oldbuf = entry->buf;
 			entry->bufLen += CACHE_BUF_INCR;
 			SamRealloc(entry->buf, entry->bufLen);
@@ -470,6 +476,14 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
 		request.size = entry->bufLen - entry->bufSize;
 
 		if ((n = ioctl(FsFd, F_IDGETDENTS, &request)) < 0) {
+			if (errno == ESTALE) {
+				errno = 0;
+				request.offset = 0;
+				request.modify_time.tv_sec = 0;
+				entry->bufSize = 0;
+				entry->entCount = 0;
+				continue;
+			}
 			return (-1);
 		}
 
@@ -497,7 +511,10 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
 	    sizeof (sam_dirent_t *), cmpDirent);
 
 	/* Get rid of old entries */
-	cachePurge();
+	if (cachePurge()) {
+		entry = cacheLookup(request.id);
+		*entry_p = entry;
+	}
 
 	if (errno != 0) {
 		Trace(TR_ERR, "Read dir error inode: %d.%d errno: %d",
@@ -517,8 +534,10 @@ cacheEntryPopulate(DirCacheEntry_t *entry)
  * larger than the maximum allowed.  If the number of removed
  * entries is large, then this function will remove inactive
  * entries from dirCache.
+ *
+ * Returns TRUE if dirCache was rearranged.
  */
-static void
+static boolean_t
 cachePurge(void)
 {
 	int i;
@@ -569,13 +588,6 @@ cachePurge(void)
 					    &dirCache[good_start],
 					    good_len *
 					    sizeof (DirCacheEntry_t));
-					/*
-					 * numRemoved depends on whether we
-					 * copied more than the size of the
-					 * hole.
-					 */
-					numRemoved += good_len < hole_len ?
-					    good_len : hole_len;
 					hole_start += good_len;
 					good_start = -1;
 				} else if (hole_start < 0) {
@@ -598,26 +610,29 @@ cachePurge(void)
 			 * Here numRemoved is always the hole size because
 			 * we are at the end of the array.
 			 */
-			numRemoved += hole_len;
+			numRemoved = hole_len;
 		} else if (hole_start >= 0) {
 			/* dirCache ended with a hole */
-			numRemoved += dirCacheCount - hole_start;
+			numRemoved = dirCacheCount - hole_start;
 		}
 
 		/* Need to readjust total size for new dirCacheLen */
 		dirCacheTotSize -= dirCacheLen * sizeof (DirCacheEntry_t);
 
-		dirCacheLen -= numRemoved;
+		dirCacheCount -= numRemoved;
 		/* Round up length to the nearest CACHE_LEN_INCR */
+		dirCacheLen = dirCacheCount;
 		dirCacheLen += CACHE_LEN_INCR - (dirCacheLen % CACHE_LEN_INCR);
 
 		/* Resize dirCache */
 		SamRealloc(dirCache, dirCacheLen * sizeof (DirCacheEntry_t));
 		dirCacheTotSize += dirCacheLen * sizeof (DirCacheEntry_t);
 
-		dirCacheCount -= numRemoved;
 		dirCacheDel = 0;
+		return (TRUE);
 	}
+
+	return (FALSE);
 }
 
 /* Lookup a directory entry with given id in the provided cache entry. */

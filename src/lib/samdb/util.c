@@ -32,6 +32,7 @@
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 #include <sys/types.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -245,10 +246,17 @@ sam_db_id_name(
 	SamMalloc(dirbuf, request.size);
 	request.dir.ptr = (void *) dirbuf;
 	request.offset = 0;
+	request.modify_time.tv_sec = 0;
 	request.eof = 0;
 
 	while (!request.eof) {
 		if ((n = ioctl(con->sam_fd, F_IDGETDENTS, &request)) < 0) {
+			if (errno == ESTALE) {
+				errno = 0;
+				request.offset = 0;
+				request.modify_time.tv_sec = 0;
+				continue;
+			}
 			len = -1;
 			goto exit;
 		}
@@ -316,10 +324,17 @@ sam_db_id_allname(
 	SamMalloc(dirbuf, request.size);
 	request.dir.ptr = (void *) dirbuf;
 	request.offset = 0;
+	request.modify_time.tv_sec = 0;
 	request.eof = 0;
 
 	while (!request.eof) {
 		if ((n = ioctl(con->sam_fd, F_IDGETDENTS, &request)) < 0) {
+			if (errno == ESTALE) {
+				errno = 0;
+				request.offset = 0;
+				request.modify_time.tv_sec = 0;
+				continue;
+			}
 			ret = -1;
 			goto exit;
 		}
