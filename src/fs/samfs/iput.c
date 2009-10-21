@@ -1811,6 +1811,9 @@ boolean_t			/* TRUE if fsflush, FALSE if not fsflush */
 sam_is_fsflush()
 {
 #ifdef sun
+	if (curproc == proc_fsflush) {
+		return (TRUE);
+	}
 	if (tsd_get(samgt.tsd_fsflush_key)) {
 		return (TRUE);
 	}

@@ -1396,12 +1396,6 @@ samfs_sync(
 		sam_tracing = 0;
 	}
 
-	/* set tsd if coming in on fsflush */
-	if (curthread->t_cid == syscid &&
-	    strncmp(PTOU(curthread->t_procp)->u_comm, "fsflush", 7) == 0) {
-		tsd_set(samgt.tsd_fsflush_key, (void *)TRUE);
-	}
-
 	mutex_enter(&samgt.global_mutex);
 	samgt.num_fs_syncing++;
 	mutex_exit(&samgt.global_mutex);
@@ -1437,7 +1431,6 @@ samfs_sync(
 		samgt.num_fs_syncing = 0;
 	}
 	mutex_exit(&samgt.global_mutex);
-	tsd_set(samgt.tsd_fsflush_key, NULL);
 	return (0);
 }
 

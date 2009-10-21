@@ -2183,11 +2183,8 @@ sam_putpage_vn(
 	TRACE(T_SAM_PUTPAGE, vp, (sam_tr_t)offset, length, flags);
 
 	/*
-	 * If failing over, defer file page flushing. May have to get map from
-	 * server and this can cause deadlock while server is failing over.
-	 * If hard locking the filesystem without thawing, also defer file page
-	 * flushing.  This prevents a deadlock for the case where the server is
-	 * not responding due to load, but will eventually recover.
+	 * If failing over, defer file page flushing for NFS and fsflush as
+	 * both will retry the operation in the future.
 	 * Note, allow truncated pages and directory pages.
 	 */
 	if (SAM_IS_SHARED_CLIENT(ip->mp) &&
@@ -2201,7 +2198,9 @@ sam_putpage_vn(
 				SAM_NFS_JUKEBOX_ERROR(error);
 				return (error);
 			}
-			return (EIO);
+			if (sam_is_fsflush()) {
+				return (EIO);
+			}
 		}
 	}
 
