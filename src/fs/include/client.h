@@ -178,6 +178,12 @@ typedef struct sam_msg_array {
 #define	SAM_CLIENT_OFF		0x10	/* Client marked OFF in hosts file */
 #define	SAM_CLIENT_NOT_RESP	0x20	/* Client not responding */
 
+/*
+ * Number of times server will defer lease expiration.
+ * Only applicable when a single client has leases for an inode.
+ */
+#define	SAM_CLNT_DEFER_EXPIRE_CNT (5)
+
 typedef struct client_entry {
 	upath_t hname;		/* Client host name */
 	int hostid;		/* Host identifier */
@@ -227,6 +233,7 @@ typedef struct sam_client_lease {
 	uint32_t	attr_seqno;	/* Last client attr sequence number */
 	clock_t		time[SAM_MAX_LTYPE];	/* Exp time for leases */
 	uint32_t	gen[SAM_MAX_LTYPE];	/* Generation # for leases */
+	uint32_t	defer_exp_cnt[SAM_MAX_LTYPE]; /* Defer expire count */
 } sam_client_lease_t;
 
 typedef struct sam_lease_ino {

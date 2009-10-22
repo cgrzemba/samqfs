@@ -1104,6 +1104,14 @@ sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg)
 			default:
 				break;
 			}
+			if (error == EDQUOT) {
+				/*
+				 * Remove lease on the server since it will
+				 * never be granted to the client.
+				 */
+				sam_remove_lease(ip, client_ord,
+				    &l2p->irec.sr_attr, (1<<ltype), NULL);
+			}
 		}
 	}
 	crfree(credp);

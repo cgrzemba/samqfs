@@ -381,21 +381,30 @@ sam_process_lease_times(ushort_t *initial_leases, ushort_t *remaining_leases,
 			if ((lease_mask & SAM_NON_EXPIRING_LEASES) ||
 			    staging) {
 				llp->lease[i].time[ltype] = now + (30 * hz);
-			}
-			if (llp->lease[i].time[ltype] <= now) {
-				if (llp->no_clients == 1) {
+			} else if (llp->lease[i].time[ltype] <= now) {
+				/*
+				 * If there is only one client holding the
+				 * lease, we extend the lease. We keep a count
+				 * on the number of implicit lease extensions
+				 * and expire it after a specific threshold
+				 * defined by SAM_CLNT_DEFER_EXPIRE_CNT.
+				 */
+				if (llp->no_clients == 1 &&
+				    llp->lease[i].defer_exp_cnt[ltype] <
+				    SAM_CLNT_DEFER_EXPIRE_CNT) {
 					llp->lease[i].time[ltype] = now +
 					    (sam_calculate_lease_timeout(
 					    30) * hz);
+					llp->lease[i].defer_exp_cnt[ltype]++;
 				} else {
+					llp->lease[i].defer_exp_cnt[ltype] = 0;
 					*remaining_leases &= ~lease_mask;
 					*expired = 1;
+					continue;
 				}
-			} else {
-				*min_ltime = MIN(*min_ltime,
-				    llp->lease[i].time[ltype]);
-				*time_valid = 1;
 			}
+			*min_ltime = MIN(*min_ltime, llp->lease[i].time[ltype]);
+			*time_valid = 1;
 		}
 	}
 
