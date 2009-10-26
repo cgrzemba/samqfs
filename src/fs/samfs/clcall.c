@@ -1312,11 +1312,17 @@ sam_proc_rm_lease(
 	error = sam_issue_lease_request(ip, msg, SHARE_wait, actions, NULL);
 
 	/*
-	 * If no error, clear inode flags because server has written the inode
-	 * to disk.
+	 * If no error, clear inode flags for client because server has written
+	 * the inode to disk. If server, sync inode if inode flags set.
 	 */
 	if (close && (error == 0)) {
-		ip->flags.bits &= ~SAM_UPDATE_FLAGS;
+		if (SAM_IS_SHARED_CLIENT(ip->mp)) {
+			ip->flags.bits &= ~SAM_UPDATE_FLAGS;
+#ifdef	sun
+		} else if (ip->flags.bits & SAM_UPDATE_FLAGS) {
+			error = sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
+#endif
+		}
 	}
 
 	if (rw_type == RW_READER) {
