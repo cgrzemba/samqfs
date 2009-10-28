@@ -724,31 +724,6 @@ start:
 		}
 	}
 
-	/*
-	 * Zero from the new EOF to a .seg boundary.
-	 * This operation is normally done by sam_clear_append at
-	 * DKMAP5, but only if type == SAM_WRITE.
-	 */
-	if (type == SAM_FORCEFAULT && appending && error == 0) {
-		struct fbuf *fbp;
-		int zlen;
-
-		if (!ip->di.status.b.on_large &&
-		    ip->size < SM_OFF(ip->mp, ip->di.status.b.meta)) {
-
-			zlen = roundup(ip->size,
-			    ip->mp->mi.m_dau[ip->di.status.b.meta].seg[SM]) -
-			    ip->size;
-
-			if (zlen > 0) {
-				SAM_SET_LEASEFLG(ip);
-				fbzero(SAM_ITOV(ip), ip->size, zlen, &fbp);
-				SAM_CLEAR_LEASEFLG(ip);
-				fbrelse(fbp, S_WRITE);
-			}
-		}
-	}
-
 	if (is_lio && error == 0 && --callp->listio.file_list_count) {
 		callp->listio.file_off++;
 		callp->listio.file_len++;

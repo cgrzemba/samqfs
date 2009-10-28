@@ -1371,9 +1371,6 @@ sam_clear_append(
 	 * Make sure the segment that contains the new EOF is zeroed
 	 * from EOF to the end of the segment.
 	 * (DKMAP5)
-	 *
-	 * The code that zeroes the last segment of the file when
-	 * appending and flag == SAM_FORCEFAULT is handled in sam_write_io.
 	 */
 	if ((flag == SAM_WRITE) &&
 	    (iop->imap.bt == SM) &&
