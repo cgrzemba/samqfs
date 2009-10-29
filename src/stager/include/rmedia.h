@@ -34,7 +34,7 @@
 #ifndef RMEDIA_H
 #define	RMEDIA_H
 
-#pragma ident "$Revision: 1.34 $"
+#pragma	ident	"$Revision: 1.34 $"
 
 /* Enums. */
 
@@ -78,8 +78,7 @@ enum {
 	MC_DEFAULT =	1 << 0		/* default */
 };
 
-#define	IS_DISKARCHIVE_MEDIA(x)		(x == DT_DISK)
-#define	IS_5800ARCHIVE_MEDIA(x)		(x == DT_STK5800)
+#define	IS_DISKARCHIVE_MEDIA(x)		(x == DT_DISK || x == DT_STK5800)
 #define	IS_RMARCHIVE_MEDIA(x)		!(x == DT_DISK && x == DT_STK5800)
 
 #define	IS_VSN_LOADED(x)	(x->flags & VI_LOADED)
