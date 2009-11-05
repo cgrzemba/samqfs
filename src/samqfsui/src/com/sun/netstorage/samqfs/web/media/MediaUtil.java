@@ -220,6 +220,7 @@ public class MediaUtil {
             } else {
                 buffer.append(
                     SamUtil.getResourceString("EditVSN.needaudit"));
+                atLeastOneFlag = true;
             }
         }
         if (vsn.isUnavailable()) {
