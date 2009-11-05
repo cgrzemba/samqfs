@@ -2236,12 +2236,7 @@ sam_get_multivolume(
 		error = EOVERFLOW;
 	}
 
-#ifdef sun
-	TRACE(T_SAM_GET_MVA_EXT, SAM_ITOV(bip), copy, vsns, error);
-#endif /* sun */
-#ifdef linux
-	TRACE(T_SAM_GET_MVA_EXT, bip, copy, vsns, error);
-#endif /* linux */
+	TRACE(T_SAM_GET_MVA_EXT, SAM_ITOP(bip), copy, vsns, error);
 
 	return (error);
 }
