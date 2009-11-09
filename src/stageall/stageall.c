@@ -83,7 +83,7 @@ struct stageall_entry *stageall_ptr = NULL;
 static int child_in = 0;
 static int child_out = 0;
 
-#define	MAXPIDFINI	100
+#define	MAXPIDFINI	10000
 static struct {
 	int pid;	/* Finished child pid */
 	int stat;	/* Finished child exit_status */
@@ -145,7 +145,7 @@ char *argv[])
 
 	defaults = GetDefaults();
 	if (setgid(0) == -1) {
-		error(2, errno, "setgid(0)");
+		error(EXIT_NORESTART, errno, "setgid(0)");
 	}
 
 	for (;;) {
@@ -156,7 +156,7 @@ char *argv[])
 		 * Wait at root.
 		 */
 		if (chdir("/") == -1) {
-			error(2, errno, "chdir(/)");
+			error(EXIT_NORESTART, errno, "chdir(/)");
 			/*NOTREACHED*/
 			break;
 		}
@@ -169,7 +169,8 @@ char *argv[])
 				continue;
 			}
 			if (errno != ENOPKG) {
-				error(2, errno, "syscall(stageall)");
+				error(EXIT_NORESTART,
+				    errno, "syscall(stageall)");
 			}
 			sleep(15);
 		}
@@ -201,7 +202,7 @@ char *argv[])
 			while (sp != NULL) {
 				if (sp->pid == pid) {
 					if (wait_status) {
-						error(2, 0,
+						error(EXIT_FATAL, 0,
 						    "child %d died with "
 						    "exit status = %04x.",
 						    pid, wait_status);
@@ -221,7 +222,8 @@ char *argv[])
 				sp = sp->next;
 			}
 			if (found == 0) {
-				error(2, 0, "unknown child pid %d, "
+				error(EXIT_NORESTART, 0,
+				    "unknown child pid %d, "
 				    "exit status = %04x.", pid, wait_status);
 				/*NOTREACHED*/
 			}
@@ -252,7 +254,7 @@ char *argv[])
 		    (sizeof (struct stageall_entry) + strlen(cwd));
 		*prev_sp = sp;
 		if (sp == NULL) {
-			error(2, errno, "Unable to malloc()");
+			error(EXIT_NOMEM, errno, "Unable to malloc()");
 			/*NOTREACHED*/
 		}
 		sp->next = NULL;
@@ -274,7 +276,7 @@ char *argv[])
 			process_directory(sp);	/* The child */
 			_exit(0);
 		} else {
-			error(2, errno, "Unable to fork1()");
+			error(EXIT_NOMEM, errno, "Unable to fork1()");
 			/*NOTREACHED*/
 		}
 	}
@@ -381,7 +383,8 @@ int sig)
 		}
 		/* If child completion table overflows, terminate stageall. */
 		if (child_in == child_out) {
-			error(2, 0, "Child completion table overflowed");
+			error(EXIT_FATAL, 0,
+			    "Child completion table overflowed");
 		}
 	}
 }
