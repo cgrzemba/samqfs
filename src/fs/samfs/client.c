@@ -351,6 +351,8 @@ sam_failover_done(sam_mount_t *mp)
 		    FS_SRVR_DONE | FS_CLNT_DONE);
 		mp->ms.m_involuntary = 0;
 		mp->ms.m_sblk_failed = lbolt;
+		sam_start_stop_rmedia(mp, SAM_START_DAEMON);
+		sam_sighup_daemons(mp);
 		if (mp->mi.m_wait_frozen) {
 			cv_broadcast(&mp->ms.m_waitwr_cv);
 		}
@@ -359,8 +361,6 @@ sam_failover_done(sam_mount_t *mp)
 		    "SAM-QFS: %s: Failed over to new server %s: (%x)",
 		    mp->mt.fi_name, mp->mt.fi_server, mp->mt.fi_status);
 
-		sam_start_stop_rmedia(mp, SAM_START_DAEMON);
-		sam_sighup_daemons(mp);
 	} else {
 		mutex_exit(&mp->ms.m_waitwr_mutex);
 	}
