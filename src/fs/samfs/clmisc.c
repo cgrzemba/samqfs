@@ -1662,11 +1662,11 @@ sam_set_client(
 		mp->mt.fi_status &= ~FS_SERVER;
 		mp->mt.fi_status |= FS_CLIENT;
 		mp->ms.m_prev_srvr_ord = mp->ms.m_server_ord;
-		mp->ms.m_server_tags = args.server_tags;
 	}
 	TRACE(T_SAM_BEGCLNT, mp, mp->mt.fi_status, args.ord,
 	    mp->ms.m_prev_srvr_ord);
 	mp->ms.m_server_ord = args.ord;
+	mp->ms.m_server_tags = args.server_tags;
 	if (mp->mt.fi_status & FS_MOUNTING) {
 		cmn_err(CE_NOTE,
 		"SAM-QFS: %s: New server %s, client is not mounted (%x)",
