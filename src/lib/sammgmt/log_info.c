@@ -506,15 +506,15 @@ get_samlog_lst(
 			continue;
 		}
 		Trace(TR_MISC, "facility=%s, action=%s", facility, action);
-		free(log_keyword);
-		log_keyword = NULL;
+		char *keyword = NULL;
 		flags = NULL;
 		lasts = NULL;
-		/* tokenize facility to get log_keyword and flag */
-		if ((log_keyword = strtok_r(facility, COLON, &lasts)) != NULL) {
+		/* tokenize facility to get keyword and flag */
+		if ((keyword = strtok_r(facility, COLON, &lasts)) != NULL) {
 			flags = strtok_r(NULL, ":", &lasts);
 			flags = (flags != NULL) ? flags : "";
 		}
+		free(keyword);
 
 		struct stat statbuf;
 		off_t size = 0; long age = 0;
@@ -537,6 +537,7 @@ get_samlog_lst(
 		lst_append(*lst_log, strdup(buffer));
 		buffer[0] = '\0';
 	}
+	free(log_keyword);
 	fclose(fp);
 	Trace(TR_MISC, "SAM system log info obtained");
 	return (0);

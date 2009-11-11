@@ -1495,7 +1495,22 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
      */
     public String [] getIndexDirs(String fsName) throws SamFSException {
 
-        return Restore.getIndexDirs(theModel.getJniContext(), fsName);
+        String [] dirs = Restore.getIndexDirs(theModel.getJniContext(), fsName);
+	dirs = dirs == null ? new String[0] : dirs;
+	if (dirs.length == 0) {
+	    return dirs;
+	}
+
+	// Skip directories that no longer exists (user issues rm command)
+	ArrayList<String> verifiedDirs = new ArrayList<String>();
+	for (String dir : dirs) {
+	    if (FileUtil.fileExists(theModel.getJniContext(), dir)) {
+		verifiedDirs.add(dir);
+	    } else {
+		TraceUtil.trace3("FSMgrImpl::getIndexDirs: Skipping " + dir);
+	    }
+	}
+	return (String []) verifiedDirs.toArray(new String[0]);
     }
 
     /**
@@ -1508,8 +1523,8 @@ public class SamQFSSystemFSManagerImpl extends MultiHostUtil
     public String [] getIndexedSnaps(String fsName, String directory)
         throws SamFSException {
 
-         return Restore.getIndexedSnaps(theModel.getJniContext(),
-                                        fsName,
-                                        directory);
+        return Restore.getIndexedSnaps(theModel.getJniContext(),
+                                       fsName,
+                                       directory);
     }
 }

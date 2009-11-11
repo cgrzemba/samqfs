@@ -1,7 +1,5 @@
 #!/bin/sh
 
-
-#
 #    SAM-QFS_notice_begin
 #
 # CDDL HEADER START
@@ -28,27 +26,25 @@
 #
 #    SAM-QFS_notice_end
 #
-#  ident	$Id: renew,v 1.6 2008/12/16 00:12:29 am143972 Exp $
+#  ident	$Id$
 #
-#  This script updates the fsmgr.jar file, files in js/jsp/html/images/help
+#  This script updates the fsmgr.jar file, files in js/jsp/html/images
 #  directory.  This is a shortcut for developers to update their files in
 #  the develepment stage.  Please forward all the comments or report bugs to
 #  Ronald So (x28739) ronald.so@sun.com.
 #
-#  Note: This script is explicitly used by File System Manager only (English)
+#  Note: This script is explicitly used by SAM-QFS Manager only (English)
 #
 #
 
 BIN_DIR=/usr/sbin
-SMREG=${BIN_DIR}/smreg
 SMCWEBSERVER=${BIN_DIR}/smcwebserver
-PACKAGE_PATH=com.sun.netstorage.samqfs.web
-REMOVE_APP_NAME=fsmgrAdmin_2.2
+#WORKSPACE=/net/crouch/export/ws1/ronaldso/samqfs_51
+DOMAIN=`uname`
+OS=`uname -r`
+ARCH=`/usr/bin/uname -p`
+PLATFORM=${DOMAIN}_${OS}_${ARCH}_DEBUG
 JNI_JAR_NAME=fsmgmtjni.jar
-#WORKSPACE=/net/clarity/export/ws6/ronaldso/samqfs_46
-I386=SunOS_5.10_i386_DEBUG
-SPARC=SunOS_5.10_sparc_DEBUG
-
 DEPLOY=/opt/SUNWfsmgr/samqfsui
 
 FLAG_JAR=0
@@ -71,61 +67,47 @@ check_su()
 
 copy_jar() {
 
-    echo "Copy over new JAR file...\c"
-    /usr/bin/cp ${WORKSPACE}/sam-qfs/src/samqfsui/obj/${PLATFORM}/WEB-INF/lib/fsmgr.jar /opt/SUNWfsmgr/samqfsui/WEB-INF/lib
+    echo "Copy everything in WEB-INF...\c"
+     /usr/bin/cp ${WORKSPACE}/src/samqfsui/WEB-INF/*.xml  /opt/SUNWfsmgr/samqfsui/WEB-INF
+    /usr/bin/cp ${WORKSPACE}/src/samqfsui/obj/${PLATFORM}/WEB-INF/lib/fsmgr.jar /opt/SUNWfsmgr/samqfsui/WEB-INF/lib
+
+    echo "Copying JNI JAR file...\c"
+    /usr/bin/cp ${WORKSPACE}/src/lib/sammgmtjni/obj/${PLATFORM}/${JNI_JAR_NAME} /opt/SUNWfsmgr/samqfsui/WEB-INF/lib
     echo "done!"
 }
 
 copy_jsp() {
     echo "Copying JSP files to ${DEPLOY}/jsp ...\c"
-    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/jsp/* ${DEPLOY}/jsp
+    /usr/bin/cp -r ${WORKSPACE}/src/samqfsui/jsp/* ${DEPLOY}/jsp
     echo "done!"
 }
 
 copy_js() {
     echo "Copying JS files to ${DEPLOY}/js ...\c"
-    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/js/* ${DEPLOY}/js
+    /usr/bin/cp -r ${WORKSPACE}/src/samqfsui/js/* ${DEPLOY}/js
     echo "done!"
 }
 
 copy_others() {
-    echo "Copying HTML files, Online help files and images...\c"
-    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/html/* ${DEPLOY}/html
-    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/images/* ${DEPLOY}/images
-    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/help/4u4/html/en/help \
-        ${DEPLOY}/html/en
-    /usr/bin/cp -r ${WORKSPACE}/sam-qfs/src/samqfsui/app.xml ${DEPLOY}/app.xml
+    echo "Copying HTML files, images...\c"
+    /usr/bin/cp -r ${WORKSPACE}/src/samqfsui/html/* ${DEPLOY}/html
+    /usr/bin/cp -r ${WORKSPACE}/src/samqfsui/images/* ${DEPLOY}/images
+    /usr/bin/cp -r ${WORKSPACE}/src/samqfsui/app.xml ${DEPLOY}/app.xml
     echo "done!"
 }
 
 renew_app() {
 
-    # Remove pre-compiled JSP files
-    echo "Removing pre-compiled JSP files ...\c"
-    /usr/bin/rm -rf /var/opt/webconsole/work/com_sun_web_console/\
-	localhost/samqfsui
-    echo "done"
+    ${SMCWEBSERVER} stop
 
-    if [ $FLAG_JAR -eq 1 ]; then
-        ${SMCWEBSERVER} stop
+    # Unregister and re-register JNI
+    wcadmin remove  -l -a samqfsui /opt/SUNWfsmgr/samqfsui/WEB-INF/lib/${JNI_JAR_NAME}
+    wcadmin add -l -a samqfsui /opt/SUNWfsmgr/samqfsui/WEB-INF/lib/${JNI_JAR_NAME}
+    
+    wcadmin reload -x samqfsui
 
-        ## un-register JNI JAR file
-        ${SMREG} remove -l -s ${REMOVE_APP_NAME} ${JNI_JAR_NAME}
-        ${SMREG} remove -a ${REMOVE_APP_NAME}
-
-        INSTALL_DIR=/opt/SUNWfsmgr
-        APP_NAME=samqfsui
-        WEB_INF_DIR=${INSTALL_DIR}/${APP_NAME}/WEB-INF
-        LIB_DIR=${WEB_INF_DIR}/lib
-        REGISTER_DIR=/usr/share/webconsole/${APP_NAME}
-        TLD_DIR=${REGISTER_DIR}/WEB-INF/tld/com_sun_netstorage_samqfs_web_ui
-
-        ${SMREG} add -a ${INSTALL_DIR}/${APP_NAME}
-        ${SMREG} add -l -s ${REMOVE_APP_NAME} ${LIB_DIR}/${JNI_JAR_NAME}
-
-        cd /
-        ${SMCWEBSERVER} start
-    fi
+    cd /
+    ${SMCWEBSERVER} start
 }
 
 show_syntax() {
@@ -147,28 +129,27 @@ check_su
 
 if [ "x${WORKSPACE}" = "x" ]; then
     echo "Please set WORKSPACE variable to your tree location!"
-    echo "e.g. /net/clarity.east/export/ws6/ronaldso/samqfs_46 (without sam-qfs)\n"
+    echo "e.g. /net/crouch.east/export/ws1/ronaldso/samqfs_51\n"
     exit 1
 fi
 
-
-if [ $# -lt 1 ]; then
-    show_syntax
-    exit 1
+if [ $# -eq 1 ]; then
+    if [ $1 = "-h" ]; then
+        show_syntax
+	exit 1
+    fi
 fi
 
-if [ $1 = "sparc" ]; then
-    PLATFORM=$SPARC
-elif [ $1 = "i386" ]; then
-    PLATFORM=$I386
-else
+echo "PLATFORM is ${PLATFORM}\n"
+
+if [ $ARCH != "sparc" -a $ARCH != "i386" ]; then
     echo "Invalid system architecture specified! ($1) architecture unknown"
     echo "arch={sparc|i386}"
     echo ""
     exit 1
 fi
 
-if [ $# -eq 1 ]; then
+if [ $# -eq 0 ]; then
     FLAG_JAR=1
     FLAG_JSP=1
     FLAG_JS=1
@@ -177,7 +158,7 @@ else
     LOOP=1
     for param in $*
     do
-        if [ $LOOP -gt 1 ]; then
+        if [ $LOOP -gt 0 ]; then
             if [ $param = "jsp" ]; then
                 FLAG_JSP=1
             elif [ $param = "jar" ]; then
@@ -198,8 +179,6 @@ fi
 
 if [ $FLAG_JAR -eq 1 ]; then
     copy_jar
-else
-    DEPLOY=/var/opt/webconsole/webapps/samqfsui
 fi
 
 if [ $FLAG_JS -eq 1 ]; then

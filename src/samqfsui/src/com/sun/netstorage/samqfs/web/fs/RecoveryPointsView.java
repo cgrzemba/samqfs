@@ -36,6 +36,7 @@ import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.DisplayEvent;
 import com.iplanet.jato.view.event.RequestInvocationEvent;
+import com.iplanet.jato.view.html.OptionList;
 import com.sun.netstorage.samqfs.mgmt.SamFSException;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemFSManager;
 import com.sun.netstorage.samqfs.web.model.SamQFSSystemModel;
@@ -181,7 +182,6 @@ public class RecoveryPointsView extends CommonTableContainerView {
         }
 
         String serverName = parent.getServerName();
-        StringBuffer fileNames = new StringBuffer();
 
         CCButton createRPN = (CCButton) getChild(CREATE_RECOVERY_POINT_NOW);
 
@@ -198,7 +198,7 @@ public class RecoveryPointsView extends CommonTableContainerView {
             SamQFSSystemFSManager fsMgr =
                 sysModel.getSamQFSSystemFSManager();
 
-            String snapshotDirectory = (String) parent.getCurrentSnapShotPath();
+            String snapshotDirectory = getCurrentSnapshotPath();
 
             if (snapshotDirectory == null) {
                 // No current path.  Use path from schedule.
@@ -661,5 +661,46 @@ public class RecoveryPointsView extends CommonTableContainerView {
 
         parent.forwardTo(getRequestContext());
         TraceUtil.trace3("Exiting");
+    }
+
+    /**
+     * This helper method retrieves the current snapshot directory which the
+     * user is currently browsing on.  It has built in checks to see if the
+     * snapshot directory still exists in the snapShot drop down menu in the
+     * ViewBean.
+     * @return the selected snapshot directory that is shown on the page
+     */
+    private String getCurrentSnapshotPath() {
+	RecoveryPointsViewBean parent =
+            (RecoveryPointsViewBean) getParentViewBean();
+	String currentPath = (String) parent.getCurrentSnapShotPath();
+
+	// if currentPath is null (no snapShot path is set, simply return.
+	if (null == currentPath) {
+	    return null;
+	}
+
+	// Check to see if the currentPath value still exists in the Recovery
+	// Points drop down menu.  For directories that do not have an indexed
+	// recovery points, we no longer show the directories in the drop down
+	// menu.  In cases where user delete indexes in a particular directory
+	// that does not have at least one indexed recovery point, we need to
+	// reset the current snapshot path back to the default path to avoid
+	// discrepancies shown on the page.
+	CCDropDownMenu menu =
+	    (CCDropDownMenu) parent.getChild(parent.SNAPSHOT_PATH);
+	OptionList optionList = (OptionList) menu.getOptions();
+	String valueLabel = optionList.getValueLabel(currentPath);
+	if (null == valueLabel) {
+	    // the currentPath no longer exists, return null so the default
+	    // snapshot directory will be used.
+	    TraceUtil.trace3(
+		"getCurrentSnapshotPath: currentPath no longer exists! " +
+		currentPath);
+	    return null;
+	} else {
+	    // currentPath still exists, use this value in the menu
+	    return currentPath;
+	}
     }
 }
