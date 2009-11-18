@@ -66,7 +66,7 @@
 
 #define	FSPART_INTERVAL		(10)
 #ifdef linux
-#define	VFSSTAT_INTERVAL	(5)
+#define	VFSSTAT_INTERVAL	(30)
 #endif /* linux */
 
 /*
