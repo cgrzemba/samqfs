@@ -250,18 +250,7 @@ sam_ioctl_util_cmd(
 		uio.uio_resid = gdp->size;
 		uio.uio_fmode = 0;
 		RW_LOCK_OS(&ip->data_rwl, RW_READER);
-		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
-		if (gdp->modify_time.tv_sec == 0 ||
-		    (gdp->modify_time.tv_sec == ip->di.modify_time.tv_sec &&
-		    gdp->modify_time.tv_nsec == ip->di.modify_time.tv_nsec)) {
-			gdp->modify_time = ip->di.modify_time;
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-			error = sam_getdents(ip, &uio, credp,
-			    &gdp->eof, FMT_SAM);
-		} else {
-			RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
-			error = ESTALE;
-		}
+		error = sam_getdents(ip, &uio, credp, &gdp->eof, FMT_SAM);
 		RW_UNLOCK_OS(&ip->data_rwl, RW_READER);
 
 		if (error == 0) {

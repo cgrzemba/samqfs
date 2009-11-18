@@ -318,7 +318,6 @@ typedef struct {
 	sam_id_t id;		/* Directory inode number & generation number */
 	SAM_POINTER(struct sam_dirent) dir;	/* Directory buffer */
 	int32_t		size;		/* Length of directory buffer */
-	sam_timestruc_t	modify_time;	/* Modify time of directory */
 	offset_t	offset;		/* Directory file offset-in/out */
 	int		eof;		/* EOF found on previous read */
 } sam_ioctl_idgetdents_t;
