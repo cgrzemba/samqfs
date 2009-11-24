@@ -70,6 +70,7 @@ copy_jar() {
     echo "Copy everything in WEB-INF...\c"
      /usr/bin/cp ${WORKSPACE}/src/samqfsui/WEB-INF/*.xml  /opt/SUNWfsmgr/samqfsui/WEB-INF
     /usr/bin/cp ${WORKSPACE}/src/samqfsui/obj/${PLATFORM}/WEB-INF/lib/fsmgr.jar /opt/SUNWfsmgr/samqfsui/WEB-INF/lib
+    echo "done!"
 
     echo "Copying JNI JAR file...\c"
     /usr/bin/cp ${WORKSPACE}/src/lib/sammgmtjni/obj/${PLATFORM}/${JNI_JAR_NAME} /opt/SUNWfsmgr/samqfsui/WEB-INF/lib
