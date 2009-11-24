@@ -220,7 +220,7 @@ sam_getdent(
 	if (dirbuf == NULL) {
 		n_valid = 0;
 		offset = 0;
-		dirbuf = (char *)malloc(DIRBUF_SIZE);
+		SamMalloc(dirbuf, DIRBUF_SIZE);
 		if (dirbuf == NULL) {
 			return (-1);
 		}

@@ -88,6 +88,7 @@ char	*ctime_r(const time_t *clock, char *buf, int buflen);
 #define	MAIN
 #include "sam/nl_samfs.h"
 
+
 /* Local headers. */
 #include "recycler.h"
 
@@ -264,12 +265,13 @@ main(
 	/*
 	 * Allocate the initial VSN araries.
 	 */
-	vsn_table = (struct VSN_TABLE *)
-	    malloc(VSN_INCREMENT * sizeof (struct VSN_TABLE));
+
+	SamMalloc(vsn_table, TABLE_INCREMENT * sizeof (struct VSN_TABLE));
 	table_used = 0;
-	table_avail = VSN_INCREMENT;
-	memset(vsn_table, 0, VSN_INCREMENT * sizeof (struct VSN_TABLE));
-	vsn_permute = (int *)malloc(VSN_INCREMENT * sizeof (int));
+	table_avail = TABLE_INCREMENT;
+	memset(vsn_table, 0, TABLE_INCREMENT * sizeof (struct VSN_TABLE));
+
+	SamMalloc(vsn_permute, TABLE_INCREMENT * sizeof (int));
 	/*
 	 * Initialize the vsn_permute arrary to the identity permutation.
 	 * (Later, sort_vsns() will modify it so that referencing
@@ -471,7 +473,9 @@ main(
 	}
 
 	emit(TO_FILE, 0, 2053);
-	dump_hash_stats();
+#ifdef DEBUG
+	DumpHashStats();
+#endif
 	exit(0);
 }
 

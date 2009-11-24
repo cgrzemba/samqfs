@@ -161,7 +161,7 @@ Init_fs(void)
 	 * each filesystem.
 	 */
 	size = num_fs * sizeof (struct sam_fs_info);
-	first_fs = (struct sam_fs_info *)malloc(size);
+	SamMalloc(first_fs, size);
 	if (first_fs == NULL) {
 		/* malloc() failed. */
 		emit(TO_SYS|TO_TTY, LOG_ERR, 20322, size, errtext);
@@ -250,7 +250,8 @@ MapCatalogs(void)
 	 */
 	ROBOT_count = number_of_robots + afh->ArchSetNumof;
 	size = ROBOT_count * sizeof (ROBOT_TABLE);
-	if ((ROBOT_table = (ROBOT_TABLE *)malloc(size)) == NULL) {
+	SamMalloc(ROBOT_table, size);
+	if (ROBOT_table == NULL) {
 		emit(TO_ALL, LOG_ERR, 3068, size, errtext);
 		cannot_recycle = TRUE;
 		return;
@@ -818,7 +819,7 @@ create_robot(
 	} else {
 		/* Create empty "catalog" for this robot */
 		size = sizeof (struct CatalogEntry) * CATALOG_CHUNKSIZE;
-		catalog = malloc(size);
+		SamMalloc(catalog, size);
 		if (catalog == NULL) {
 			emit(TO_SYS|TO_TTY, LOG_ERR, 20282, size,
 			    archive_set->AsName, errtext);
@@ -948,7 +949,7 @@ assign_vsn(
 		robot->chtable_numof += CATALOG_CHUNKSIZE;
 		size = robot->chtable_numof * sizeof (struct CatalogEntry);
 
-		catalog = realloc(catalog, size);
+		SamRealloc(catalog, size);
 		ROBOT_table[robot_index].chtable = catalog;
 
 		if (catalog != NULL) {

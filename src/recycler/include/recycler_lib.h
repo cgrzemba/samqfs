@@ -36,13 +36,21 @@
  */
 
 
-#ifndef	_SEQNUMS_IN_USE_H
-#define	_SEQNUMS_IN_USE_H
+#ifndef	_RECYCLER_LIB_H
+#define	_RECYCLER_LIB_H
 
 #pragma	ident	"$Revision$"
 
 /*
- * Representation of sequence numbers in use by currently running arcopies.
+ * Common code used in recycler and nrecycler
+ */
+#define	TABLE_INCREMENT 1000
+
+void *Resize(void *ptr, size_t size, char *err_name);
+
+/*
+ * Representation of sequence numbers in use by currently running arcopies and
+ * related functions.
  */
 typedef struct SeqNumsInUse {
 	int count; /* Sequence numbers array count */
@@ -50,8 +58,62 @@ typedef struct SeqNumsInUse {
 } SeqNumsInUse_t;
 
 SeqNumsInUse_t *GetSeqNumsInUse(char *vsn, char *fsname, SeqNumsInUse_t *inuse);
-
 boolean_t IsSeqNumInUse(DiskVolumeSeqnum_t seqnum,
-					    SeqNumsInUse_t *seqNumsInUse);
+    SeqNumsInUse_t *seqNumsInUse);
 
-#endif /* _SEQNUMS_IN_USE_H */
+
+/*
+ * Hash table related data structure and related functions.
+ *
+ * Contains hashed indexes into recycler's vsn table or nrecycler's
+ * media table. Since both data structures are different, user needs to
+ * implement the custom lookup functionality for each table.
+ */
+typedef struct HashTable {
+	int size;
+	int *values;
+} HashTable_t;
+
+#define	HASH_MULTIPLIER 13
+#define	HASH_SLOP 13
+#define	HASH_INCREMENT (TABLE_INCREMENT * HASH_MULTIPLIER)
+#define	HASH_INITIAL_SIZE (HASH_INCREMENT + HASH_SLOP)
+#define	HASH_EMPTY -1
+
+#ifdef DEBUG
+/* Uncomment the lines below for hash table debugging */
+/*
+ * #define HASH_DEBUG
+ * #define HASH_DEBUG_INCREMENT 5
+ */
+
+/*
+ * Structure and function for hash table performance measurement
+ */
+typedef struct HashStatistics {
+	int lookups;
+	int probes;
+	int adds;
+	int founds;
+	int reallocs;
+} HashStatistics_t;
+
+#define	pct(x)	((((float)x)/((float)hashStatistics.lookups))*100.0)
+void DumpHashStats();
+void PrintHashStats();
+void IncLookupsHashStats();
+void IncProbesHashStats();
+void IncAddsHashStats();
+void IncFoundsHashStats();
+void IncReallocsHashStats();
+#endif
+
+HashTable_t *AllocateHashTable();
+unsigned int GenerateHashKey(char *vsn, HashTable_t *hashTable);
+void InsertIntoHashTable(int index, char *vsn, HashTable_t *hashTable);
+void ExtendHashTable(HashTable_t *hashTable);
+#ifdef HASH_DEBUG
+void DumpHashTable(HashTable_t *hashTable);
+#endif
+
+#endif /* _RECYCLER_LIB_H */

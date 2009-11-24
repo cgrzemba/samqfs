@@ -365,7 +365,9 @@ main(
 	CsdCleanup(&csdList);
 
 	SamFree(seqNumsInUse);
-
+#ifdef DEBUG
+	DumpHashStats();
+#endif
 	(void) LogClose();
 
 	exit(0);

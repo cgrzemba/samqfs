@@ -86,7 +86,8 @@ regcmp(
 	char	*expbuf, *p;
 
 	size = 1024;
-	if ((expbuf = malloc(size)) == NULL) {
+	SamMalloc(expbuf, size);
+	if (expbuf == NULL) {
 		emit(TO_TTY|TO_SYS, LOG_ERR, 20272, size, errtext);
 		exit(1);
 	}

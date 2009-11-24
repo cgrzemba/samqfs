@@ -76,8 +76,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
 /* Local headers. */
 #include "recycler.h"
-#include "recycler_lib.h"
-
 
 typedef struct dirHandle {
 	SamrftImpl_t	*rft;

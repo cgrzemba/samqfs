@@ -32,8 +32,8 @@
  *    SAM-QFS_notice_end
  */
 
-#ifndef RECYCLER_C_H
-#define	RECYCLER_C_H
+#ifndef _RECYCLER_C_H
+#define	_RECYCLER_C_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +46,8 @@
 #include <zlib.h>
 
 #include <sys/types.h>
+#include <sam/types.h>
 
 #pragma ident "$Revision: 1.8 $"
 
-#endif /* RECYCLER_C_H */
+#endif /* _RECYCLER_C_H */

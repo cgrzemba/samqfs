@@ -77,48 +77,14 @@ int errno;
 #include "recycler.h"
 
 /* local protos */
-static void *resize(void *ptr, size_t size, char *err_name);
 static int is_valid_vsn(char *vsn, media_t media);
 static int is_ansi_tp_label(char *s, size_t size);
 static int is_valid_label(char *s, size_t size);
-/*
- * Hash table
- *   The hash table is sized in the #define	below.  The idea is that the
- *   hash table should be bigger than the maximum size of the vsn_table.
- *   Experimentation with vsns of the form OPT01a, OPT01b, OPT02a, etc.,
- *   (similar to what many customers use) shows that the factor of 10 is
- *   necessary to reduce the number of hash colisions.  For example, 8
- *   performs much more poorly.  If you suspect that the hash table is
- *   causing problems, #define	DEBUG and the routine dump_hash_stats
- *   below will display the number of probes to the hash table.  If this
- *   number gets much more than 2 or 3 times the number of look ups, then
- *   you should think about expanding the size of the hash table and/or
- *   using a better (more randomizing) hash function.
- *
- *   Adding 13 gives a little extra slop.
- */
-
-#define	HASH_MULTIPLIER		10
-#define	HASH_SLOP		13
-#define	HASH_INCREMENT		(VSN_INCREMENT * HASH_MULTIPLIER)
-#define	INITIAL_HASH_SIZE	(HASH_INCREMENT + HASH_SLOP)
-/* #define	HASH_size MAXVSNS*10+13 */
-/* static int HASH_table[HASH_size]; */
-static int *hash_table = NULL;
-
-/* bool HASH_initialized = FALSE; */
-
-#define	HASH_EMPTY -1
+static VSN_TABLE *insertIntoVsnTable(char *vsn, media_t media);
+static VSN_TABLE *lookupVsnTable(char *vsn, media_t media);
+static void extendTables(void);
 
 extern int VSNs_in_robot;
-
-static struct {
-	int lookups;
-	int probes;
-	int adds;
-	int founds;
-	int reallocs;
-} hash_statistics = {0, 0, 0, 0, 0};
 
 /*
  * ----- Find_VSN
@@ -131,158 +97,147 @@ Find_VSN(
 	media_t media,		/* Media type of VSN */
 	char *vsn)		/* VSN to find */
 {
-	static int HASH_size = 0;
-	int hash_l = strlen(vsn),	/* length of VSN to be hashed */
-	    hash_i,			/* index into VSN being hashed */
-	    hash_shift = 0; 	/* # of bits to shift the current char */
-				/*    by during hashing */
-	unsigned int hash_v = 0;	/* hashed value of VSN */
+
+	VSN_TABLE *entry = NULL;
 
 	if (is_valid_vsn(vsn, media) == 0) {
 		return (NULL);
 	}
-	/* Allocate and fill hash table with all "empty" flags. */
-	if (NULL == hash_table) {
-		HASH_size = INITIAL_HASH_SIZE;
-		hash_table = (int *)malloc(INITIAL_HASH_SIZE * sizeof (int));
-		for (hash_i = 0; hash_i < HASH_size; hash_i++) {
-			hash_table[hash_i] = HASH_EMPTY;
-		}
+
+	if (hashTable == NULL) {
+		hashTable = AllocateHashTable();
 	}
 
-	hash_statistics.lookups++;
-
-	/*
-	 * Generate a hash key by summing C[i]<<i, for all i in the VSN,
-	 * and taking that total modulo the hash table size.  Be careful
-	 * to make the final result positive by declaring hash_v unsigned.
-	 */
-	hash_v = 0;
-	for (hash_i = 0; hash_i < hash_l; hash_i++) {
-		hash_v += vsn[hash_i]<<hash_shift;
-		hash_shift = (hash_shift + 1) % 8;
-	}
-	hash_v %= HASH_size;
-
-	/*
-	 * Look through the hash table until we either get a HASH_EMPTY
-	 * (which means that the VSN is new) or we find a match.
-	 */
-	while (hash_table[hash_v] != HASH_EMPTY) {
-		VSN_TABLE *trial = &vsn_table[hash_table[hash_v]];
-		hash_statistics.probes++;
-		if ((trial->media == media) &&
-		    (strcmp(trial->vsn, vsn) == 0)) {
-			hash_statistics.founds++;
-			return (trial);   /* Found a match */
-		}
-		hash_v++;
-		if (hash_v >= HASH_size) {
-			hash_v = 0;
-		}
+	if ((entry = lookupVsnTable(vsn, media)) != NULL) {
+		return (entry);
 	}
 
-	/* Need to add new entry */
-	hash_statistics.adds++;
 	if (table_used >= table_avail) {
-		int i, new_size, new_HASH_size;
+		extendTables();
+	}
 
-		/* allocate new sizes */
-		new_size = table_avail + VSN_INCREMENT;
-		new_HASH_size = HASH_size + (VSN_INCREMENT * HASH_MULTIPLIER);
-		/* wow, lots o' casts.  is this so good? */
-		vsn_table = (struct VSN_TABLE *)resize((void *) vsn_table,
-		    (size_t)(new_size * sizeof (struct VSN_TABLE)),
-		    "vsn_table");
-		vsn_permute = (int *)resize((void *) vsn_permute,
-		    (size_t)(new_size * sizeof (int)), "vsn_permute");
-		hash_table = (int *)resize((void *) hash_table,
-		    (size_t)(new_HASH_size * sizeof (int)), "hash_table");
+	entry = insertIntoVsnTable(vsn, media);
 
-		/* re-init the newly allocated data */
-		memset(&vsn_table[table_avail], 0,
-		    sizeof (struct VSN_TABLE) * VSN_INCREMENT);
-		for (i = table_avail; i < new_size; i++)
-			vsn_permute[i] = i;
-		for (i = 0; i < new_HASH_size; i++)
-			hash_table[i] = HASH_EMPTY;
-		for (i = 0; i < new_size; i++) {
-			VSN_TABLE *VSN = &vsn_table[i];
-			int len = strlen(VSN->vsn);
-			int j;
-			int shift = 0;
-			unsigned int ref = 0;
+	return (entry);
+}
 
-			for (j = 0; j < len; j++) {
-				ref += VSN->vsn[j] << shift;
-				shift = (shift + 1) % 8;
-			}
-			ref %= new_HASH_size;
-			while (hash_table[ref] != HASH_EMPTY) {
-				ref++;
-				if (ref >= new_HASH_size) {
-					ref = 0;
-				}
-			}
-			hash_table[ref] = i;
+
+/*
+ * Tries to find the entry in the vsn table. Hash table is used
+ * to speed up the operation.
+ */
+static VSN_TABLE *
+lookupVsnTable(
+	char *vsn,
+	media_t media)
+{
+	VSN_TABLE *entry;
+	int value;
+	unsigned int key = GenerateHashKey(vsn, hashTable);
+
+#ifdef DEBUG
+	IncLookupsHashStats();
+#endif
+
+	value = hashTable->values[key];
+
+	while (value != HASH_EMPTY) {
+#ifdef DEBUG
+		IncProbesHashStats();
+#endif
+		entry = &vsn_table[value];
+		if ((entry->media == media) &&
+		    (strcmp(entry->vsn, vsn) == 0)) {
+#ifdef DEBUG
+			IncFoundsHashStats();
+#endif
+			return (entry);	  /* Found a match */
 		}
 
-		/* reset the avail counter */
-		table_avail += VSN_INCREMENT;
-		HASH_size = new_HASH_size;
-	}
-
-	/* point hash table to this new vsn_table entry */
-	hash_table[hash_v] = table_used;
-
-	/* insert new VSN table entry */
-	{
-		VSN_TABLE *VSN = &vsn_table[table_used];
-
-		VSN->media    = media;
-		if (VSNs_in_robot) {
-			VSN->in_robot = 1;
-		} else {
-			VSN->in_robot = 0;
+		key++;
+		if (key >= hashTable->size) {
+			key = 0;
 		}
-		VSN->size = 0;
-		VSN->count = 0;
-		strcpy(VSN->vsn, vsn);
-		VSN->ce = NULL;
-		VSN->slot = ROBOT_NO_SLOT;
 
-		table_used++;
-		return (VSN);
+		value = hashTable->values[key];
+	}
+
+	return (NULL);
+}
+
+
+/*
+ * Inserts the new media into the media table and returns
+ * the pointer to that media.
+ */
+static VSN_TABLE *
+insertIntoVsnTable(
+	char *vsn,
+	media_t media)
+{
+
+	VSN_TABLE *entry = &vsn_table[table_used];
+
+#ifdef DEBUG
+	IncAddsHashStats();
+#endif
+
+	entry->media = media;
+	entry->size = 0;
+	entry->count = 0;
+
+	if (VSNs_in_robot) {
+		entry->in_robot = 1;
+	} else {
+		entry->in_robot = 0;
+	}
+
+	strcpy(entry->vsn, vsn);
+	entry->ce = NULL;
+	entry->slot = ROBOT_NO_SLOT;
+
+	InsertIntoHashTable(table_used, vsn, hashTable);
+
+	table_used++;
+
+	return (entry);
+}
+
+
+static void
+extendTables(
+	void)
+{
+
+	int new_size = table_avail + TABLE_INCREMENT;
+
+#ifdef DEBUG
+	IncReallocsHashStats();
+#endif
+
+	vsn_table = (struct VSN_TABLE *)Resize((void *) vsn_table,
+	    (size_t)(new_size * sizeof (struct VSN_TABLE)),
+	    "vsn_table");
+
+	memset(&vsn_table[table_avail], 0,
+	    sizeof (struct VSN_TABLE) * TABLE_INCREMENT);
+
+
+	vsn_permute = (int *)Resize((void *) vsn_permute,
+	    (size_t)(new_size * sizeof (int)), "vsn_permute");
+
+	for (int i = table_avail; i < new_size; i++)
+		vsn_permute[i] = i;
+
+	table_avail = new_size;
+
+	ExtendHashTable(hashTable);
+
+	for (int i = 0; i < table_used; i++) {
+		InsertIntoHashTable(i, vsn_table[i].vsn, hashTable);
 	}
 }
 
-
-#define	pct(x) ((((float)x)/((float)hash_statistics.lookups))*100.0)
-void
-dump_hash_stats(void)
-{
-	Trace(TR_DEBUG, "Lookups:  %d",  hash_statistics.lookups);
-	Trace(TR_DEBUG, "Reallocs: %d", hash_statistics.reallocs);
-	Trace(TR_DEBUG, "Probes: %d (%.2f%%)",
-	    hash_statistics.probes,  pct(hash_statistics.probes));
-	Trace(TR_DEBUG, "Founds: %d (%.2f%%)",
-	    hash_statistics.founds,  pct(hash_statistics.founds));
-	Trace(TR_DEBUG, "Adds: %d (%.2f%%)",
-	    hash_statistics.adds,  pct(hash_statistics.adds));
-}
-
-static void *
-resize(void *ptr, size_t size, char *err_name)
-{
-	void *new_ptr;
-
-	if ((new_ptr = realloc(ptr, size)) == NULL) {
-		emit(TO_ALL, LOG_ERR, 20294, size, err_name);
-		exit(EXIT_NOMEM);
-	}
-
-	return (new_ptr);
-}
 
 static int			/* 1 if string is valid, 0 if not */
 is_valid_vsn(char *vsn, media_t media)

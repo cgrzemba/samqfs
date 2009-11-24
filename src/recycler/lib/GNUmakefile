@@ -32,7 +32,7 @@ DEPTH = ../../..
 include $(DEPTH)/mk/common.mk
 
 LIB = recycler
-LIB_SRC = seqnums_in_use.c
+LIB_SRC = seqnums_in_use.c hash_table.c
 
 DEPCFLAGS += -I../include
 

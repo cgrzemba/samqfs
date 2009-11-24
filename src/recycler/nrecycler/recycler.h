@@ -49,16 +49,6 @@
 #define	DAT_FILE_MAGIC		0x2659250
 #define	DAT_FILE_VERSION	0x060701			/* YYMMDD */
 
-/* Parameters for media table. */
-#define	TABLE_INCREMENT 	1000
-
-/* Parameters for media hash table. */
-#define	HASH_MULTIPLIER		10
-#define	HASH_SLOP		13
-#define	HASH_INCREMENT		(TABLE_INCREMENT * HASH_MULTIPLIER)
-#define	HASH_INITIAL_SIZE	(HASH_INCREMENT + HASH_SLOP)
-#define	HASH_EMPTY		-1
-
 /* Rounding for disk volume seqnum bit map */
 #define	BITMAP_CHUNK		2048
 
@@ -147,8 +137,7 @@ typedef struct MediaTable {
 	 * Media entry indexes are values of the following hash table.
 	 * The hash key is hashed media entry name.
 	 */
-	int		*mt_hashTable;
-	int		mt_hashSize;
+	HashTable_t	*mt_hashTable;
 	/*
 	 * Index of the next free entry in the  media table array
 	 */

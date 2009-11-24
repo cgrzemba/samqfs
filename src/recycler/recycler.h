@@ -42,11 +42,11 @@
 #define	_RECYCLER_H
 
 
-/* Solaris headers. */
+/* Solaris headers */
 #include <sys/param.h>
 #include <string.h>
 
-/* SAM-FS headers. */
+/* SAM-FS headers */
 #include "sam/defaults.h"
 #include "sam/param.h"
 #include "aml/archiver.h"
@@ -58,14 +58,16 @@
 #include "sam/lint.h"
 #include "aml/diskvols.h"
 
-/* Types. */
+#include "include/recycler_lib.h"
+
+/* Types */
 
 #define	IS_DISK_MEDIA(media) (media == DT_DISK || media == DT_STK5800)
 #define	IS_DISK_HONEYCOMB(media) (media == DT_STK5800)
 #define	IS_DISK_FILESYS(media) (media == DT_DISK)
 
 
-/* Parameters. */
+/* Parameters */
 #define	RY_CMD "recycler.cmd"	/* Name of command file */
 #define	RECYCLER_LOCK_FILE SAM_VARIABLE_PATH"/recycler.pid"
 #define	IOCTL_NAME "/.ioctl"	/* SAM-FS file name for ioctl() access */
@@ -90,7 +92,7 @@ typedef struct {
 	int	cat_file_size;		/* the byte size of the catalog file */
 
 	/*
-	 * Disk volume dictionary elements.
+	 * Disk volume dictionary elements
 	 */
 	struct {
 		size_t	entries;	/* number of elements in use */
@@ -199,12 +201,9 @@ typedef struct VSN_TABLE {		/* VSN table: */
 					/*    removes */
 } VSN_TABLE;
 
-
-/*	VSN table:	*/
-#ifdef DEBUG_REALLOC
-#define	VSN_INCREMENT	2
-#else
-#define	VSN_INCREMENT	1000
+#ifdef HASH_DEBUG
+#undef TABLE_INCREMENT
+#define	TABLE_INCREMENT	4
 #endif
 
 int table_used;		/* Number of VSNs currently in table(s) */
@@ -212,7 +211,10 @@ int table_avail;	/* Number of table entries allocated */
 struct VSN_TABLE *vsn_table;	/* VSN table */
 int *vsn_permute;	/* VSN permutation list, see sort_vsns() */
 
-/* Macros. */
+/* Hash table used for quick vsn table lookup */
+HashTable_t *hashTable;
+
+/* Macros */
 #define	errtext strerror(errno) ? strerror(errno) : "(unknown error number)"
 
 /* no_recycle, a linked list of regular expressions found in recycler.cmd */
@@ -229,7 +231,7 @@ boolean_t display_draining_vsns;
 boolean_t suppress_catalog;
 boolean_t catalog_summary_only;
 
-/* Functions. */
+/* Functions */
 void assign_vsn(int robot_index, VSN_TABLE *VSN);
 void dump_hash_stats(void);
 void emit(int where, int priority, int msgno, ...);
@@ -263,9 +265,9 @@ int strerror_r(int errnum, char *strerrbuf, size_t buflen);
 #define	cemit if (display_selection_logic) emit
 #define	CATALOG_LIST_ON() (!suppress_catalog)
 
-/* Shared data. */
+/* Shared data */
 
-/* Declaration/initialization macros. */
+/* Declaration/initialization macros */
 #undef CON_DCL
 #undef DCL
 #undef IVAL
@@ -281,11 +283,11 @@ int strerror_r(int errnum, char *strerrbuf, size_t buflen);
 
 DCL sam_defaults_t *defaults;
 
-/* Flags and common data. */
+/* Flags and common data */
 DCL struct sam_fs_info *first_fs;
 DCL int num_fs;
 
-/* archiver headers. */
+/* archiver headers */
 #define	ARCHIVER_PRIVATE
 #include "aml/archset.h"
 #undef ARCHIVER_PRIVATE
