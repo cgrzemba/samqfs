@@ -123,13 +123,16 @@ void sam_reclaim_thread(sam_mount_t *mp);
 void sam_inactivate_inodes(sam_schedule_entry_t *entry);
 void sam_start_relinquish_task(sam_node_t *ip, ushort_t removed_leases,
 	uint32_t *leasegen);
+void sam_start_extend_task(sam_node_t *ip, ushort_t extend_leases);
 #ifdef sun
 void sam_reestablish_leases(sam_schedule_entry_t *entry);
 void sam_relinquish_leases(sam_schedule_entry_t *entry);
+void sam_extend_leases(sam_schedule_entry_t *entry);
 #endif /* sun */
 #ifdef linux
 int sam_reestablish_leases(void *entry);
 int sam_relinquish_leases(void *entry);
+int sam_extend_leases(void *entry);
 #endif /* linux */
 
 #ifdef sun
@@ -326,6 +329,7 @@ int sam_proc_get_lease(sam_node_t *ip, sam_lease_data_t *dp,
 	cred_t *credp);
 int sam_proc_relinquish_lease(sam_node_t *ip, ushort_t lease_mask,
 	boolean_t set_size, uint32_t *leasegen);
+int sam_proc_extend_lease(sam_node_t *ip, ushort_t lease_mask);
 boolean_t sam_client_record_lease(sam_node_t *ip, enum LEASE_type leasetype,
 	int duration);
 int sam_truncate_shared_ino(sam_node_t *ip, sam_lease_data_t *dp,

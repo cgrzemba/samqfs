@@ -240,7 +240,7 @@ typedef struct sam_lease_ino {
 	struct sam_lease_head lease_chain;
 	struct sam_node *ip;	/* Sam inode pointer */
 	int32_t no_clients;	/* No. of clients w/ leases/waiting leases */
-	int32_t next_ord;	/* Next client ord for CALLOUT_lease */
+	int32_t notify_ord;	/* Next client ord for remove NOTIFY_lease */
 	int32_t max_clients;	/* Array holds max_clients */
 	sam_client_lease_t lease[1];	/* Array of leases */
 } sam_lease_ino_t;

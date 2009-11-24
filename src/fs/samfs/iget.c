@@ -508,6 +508,7 @@ sam_clear_incore_inode(sam_node_t *ip)
 	ip->cl_leases = 0;
 	ip->cl_saved_leases = 0;
 	ip->cl_short_leases = 0;
+	ip->cl_extend_leases = 0;
 	ip->cl_hold_blocks = 0;
 	ip->cl_flags = 0;
 	ip->cl_locks = 0;

@@ -182,6 +182,7 @@ FillBehaviorTags(int32_t *tag_cnt, char *tag_list)
 	 */
 
 	__FillBehaviorTag(tag_list, tag_cnt, QFS_TAG_VFSSTAT_V2_STR);
+	__FillBehaviorTag(tag_list, tag_cnt, QFS_TAG_LEASE_EXTEND_STR);
 }
 
 
@@ -227,6 +228,11 @@ ProcessBehaviorTags(char *tag_list, uint64_t *tags_mask)
 
 		if (strcmp(tok, QFS_TAG_VFSSTAT_V2_STR) == 0) {
 			*tags_mask |= QFS_TAG_VFSSTAT_V2;
+			continue;
+		}
+
+		if (strcmp(tok, QFS_TAG_LEASE_EXTEND_STR) == 0) {
+			*tags_mask |= QFS_TAG_LEASE_EXTEND;
 			continue;
 		}
 

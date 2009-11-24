@@ -1751,7 +1751,6 @@ void
 sam_open_mutex_operation(sam_node_t *ip, kmutex_t *mup)
 {
 	sam_mount_t *mp = ip->mp;
-	int error;
 
 	if (SAM_IS_SHARED_CLIENT(mp)) {
 #ifdef DEBUG

@@ -460,11 +460,12 @@ struct sam_blkd_frlock {
  *
  *  The following fields are protected by the ilease_mutex.
  *  Note that both the m_lease_mutex and ilease_mutex are required to modify
- *  the sr_lease field itself if the inode is linked into the lease chain.
+ *  the sr_leases field itself if the inode is linked into the lease chain.
  *    sr_leases (and all fields in its structure except for lease_chain & ip)
  *    cl_leases
  *    cl_saved_leases
  *    cl_short_leases
+ *    cl_extend_leases
  *    cl_leasetime
  *    cl_leaseused
  *    cl_leasegen
@@ -524,8 +525,10 @@ typedef struct sam_node {
 	ushort_t	cl_leases;	/* Client leases */
 	ushort_t	cl_saved_leases; /* Client leases saved before relinq */
 	ushort_t	cl_short_leases; /* Leases marked for early expire */
+	ushort_t	cl_extend_leases; /* Leases marked for extending */
 	uchar_t		cl_hold_blocks;	/* blocks alloc'd & size not set */
 	uchar_t		cl_flags;	/* client has marked inode */
+	uchar_t		cl_fill[2];
 	int		cl_locks;	/* Cnt of frlock issued on this file */
 	int64_t		cl_leasetime[SAM_MAX_LTYPE];	/* Exp time for lease */
 	uint32_t	cl_leaseused[MAX_EXPIRING_LEASES]; /* Ops using lease */
@@ -696,7 +699,9 @@ typedef struct sam_node {
 	ushort_t	cl_leases;	/* Client leases */
 	ushort_t	cl_saved_leases; /* Clnt leases saved before relinq */
 	ushort_t	cl_short_leases; /* Leases marked for early expire */
+	ushort_t	cl_extend_leases; /* Leases marked for extending */
 	uchar_t		cl_flags;	/* Set when client has marked inode */
+	uchar_t		cl_fill[3];
 	int		cl_locks;	/* Cnt of frlock issued on this file */
 	int64_t		cl_leasetime[SAM_MAX_LTYPE]; /* Exp time for lease */
 	uint32_t	cl_leaseused[MAX_EXPIRING_LEASES]; /* Ops using lease */

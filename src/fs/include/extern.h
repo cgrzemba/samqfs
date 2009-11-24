@@ -163,11 +163,13 @@ void sam_detach_aiofile(vnode_t *vp);
 void sam_reclaim_thread(sam_mount_t *mp);
 void sam_inactivate_inodes(sam_schedule_entry_t *entry);
 void sam_reestablish_leases(sam_schedule_entry_t *entry);
+void sam_sched_expire_client_leases(sam_mount_t *mp, clock_t ticks,
+	boolean_t force);
 void sam_start_relinquish_task(sam_node_t *ip, ushort_t removed_leases,
 	uint32_t *leasegen);
 void sam_relinquish_leases(sam_schedule_entry_t *entry);
-void sam_sched_expire_client_leases(sam_mount_t *mp, clock_t ticks,
-	boolean_t force);
+void sam_start_extend_task(sam_node_t *ip, ushort_t extend_leases);
+void sam_extend_leases(sam_schedule_entry_t *entry);
 
 
 /* reclaim.c function prototypes. */
@@ -488,6 +490,7 @@ int sam_proc_get_lease(sam_node_t *ip, sam_lease_data_t *dp,
 	cred_t *credp);
 int sam_proc_relinquish_lease(sam_node_t *ip, ushort_t lease_mask,
 	boolean_t set_size, uint32_t *leasegen);
+int sam_proc_extend_lease(sam_node_t *ip, ushort_t lease_mask);
 boolean_t sam_client_record_lease(sam_node_t *ip, enum LEASE_type leasetype,
 	int duration);
 void sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask, int exp);

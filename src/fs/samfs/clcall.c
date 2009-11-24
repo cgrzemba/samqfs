@@ -787,16 +787,13 @@ sam_proc_get_lease(
 
 	/*
 	 * XXX - There is a window between when the server grants the lease
-	 *		 and when we record it.  This allows a race between
-	 *		 granting
-	 *		 a lease and expiring it, for instance (if the
-	 *		 server is very
-	 *		 slow to respond).
+	 * and when we record it.  This allows a race between granting a
+	 * lease and expiring it, for instance (if the server is very slow
+	 * to respond).
 	 *
 	 * XXX - The only case where "granted_mask" can be zero without error
-	 *		 is for certain frlock calls.  These aren't really
-	 *		 leases and
-	 *		 shouldn't be treated that way.
+	 * is for certain frlock calls.  These aren't really leases and
+	 * shouldn't be treated that way.
 	 */
 
 	if ((error == 0) && (msg->call.lease2.granted_mask == 0)) {
@@ -875,8 +872,8 @@ sam_proc_get_lease(
 		dp->zerodau[1] = msg->call.lease.data.zerodau[1];
 	}
 
-	TRACE(T_SAM_CL_LEASE, SAM_ITOP(ip), ip->cl_leases, ip->cl_allocsz,
-	    error);
+	TRACE(T_SAM_CL_LEASE, SAM_ITOP(ip), ip->di.id.ino, error,
+	    ip->cl_leases);
 
 out:
 	if (msg != NULL) {
@@ -927,6 +924,7 @@ sam_client_record_lease(
 
 	new_lease = ((ip->cl_leases & leasemask) == 0);
 	ip->cl_leases |= leasemask;
+	ip->cl_extend_leases &= ~leasemask;
 	if (ip->cl_leases & CL_APPEND) {
 		ip->cl_saved_leases = 0;
 	}
@@ -954,7 +952,6 @@ sam_client_record_lease(
 	/*
 	 * Schedule client lease reclamation thread if not already running.
 	 */
-
 	sam_sched_expire_client_leases(mp, (duration * hz), FALSE);
 
 	return (new_lease);
@@ -986,10 +983,15 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 	}
 	mutex_enter(&ip->ilease_mutex);
 
+	/*
+	 * We could have the situation where we are removing both an
+	 * expired lease and a non-expiring lease at the same time
+	 * (due to SAM_CLIENT_SC_DOWN).  See sam_process_lease_times().
+	 */
 	if (notify_expire) {
 		ushort_t leaseused = 0;
 
-		ASSERT((lease_mask & ~(CL_READ|CL_WRITE|CL_APPEND)) == 0);
+		ASSERT((lease_mask & CL_TRUNCATE) == 0);
 
 		leaseused |= ip->cl_leaseused[LTYPE_read] ? CL_READ : 0;
 		leaseused |= ip->cl_leaseused[LTYPE_write] ? CL_WRITE : 0;
@@ -1027,6 +1029,7 @@ sam_client_remove_leases(sam_node_t *ip, ushort_t lease_mask,
 
 	ip->cl_leases &= ~lease_mask;
 	ip->cl_short_leases &= ~lease_mask;
+	ip->cl_extend_leases &= ~lease_mask;
 
 	if (!(ip->cl_leases & SAM_DATA_MODIFYING_LEASES)) {
 		ip->flags.bits &= ~SAM_VALID_MTIME;
@@ -1116,6 +1119,7 @@ sam_client_remove_all_leases(sam_node_t *ip)
 		}
 
 		ip->cl_short_leases = 0;
+		ip->cl_extend_leases = 0;
 
 		ip->flags.bits &= ~SAM_VALID_MTIME;
 
@@ -1251,7 +1255,7 @@ sam_proc_rm_lease(
 	}
 
 	/*
-	 * The inode_rwl must held as a writer
+	 * The inode_rwl must be held as a writer
 	 * in order to prevent a race condition with open().
 	 */
 	if (rw_type == RW_READER) {
@@ -1321,7 +1325,7 @@ sam_proc_rm_lease(
 #ifdef	sun
 		} else if (ip->flags.bits & SAM_UPDATE_FLAGS) {
 			error = sam_update_inode(ip, SAM_SYNC_ONE, FALSE);
-#endif
+#endif	/* sun */
 		}
 	}
 
@@ -1344,7 +1348,7 @@ sam_proc_relinquish_lease(
 	sam_node_t *ip,		/* Pointer to inode */
 	ushort_t lease_mask,	/* Leases to give up */
 	boolean_t set_size,	/* Pass inode size to server? */
-	uint32_t *leasegen)	/* Points to ary of lease generation numbers */
+	uint32_t *leasegen)	/* Points to array of lease generation nums */
 {
 	sam_san_lease_msg_t *msg;
 	int error;
@@ -1409,9 +1413,94 @@ sam_proc_relinquish_lease(
 
 
 /*
+ * ----- sam_proc_extend_lease - extend a lease on the server.
+ */
+
+int				/* ERRNO if error, 0 if successful. */
+sam_proc_extend_lease(
+	sam_node_t *ip,		/* Pointer to inode */
+	ushort_t lease_mask)	/* Lease mask to be extended */
+{
+	sam_san_lease_msg_t *msg;
+	int duration;
+	int error;
+	int remaining_leases;
+	enum LEASE_type ltype;
+	krw_t rw_type;
+
+	/*
+	 * LEASE_extend rolling upgrade support.
+	 */
+	if (!sam_server_has_tag(ip->mp, QFS_TAG_LEASE_EXTEND)) {
+		return (EPROTO);
+	}
+
+	/*
+	 * Currently only support extending a single lease in the mask.
+	 */
+	for (ltype = LTYPE_read; ltype < SAM_MAX_LTYPE; ltype++) {
+		if (lease_mask & (1 << ltype)) {
+			remaining_leases = (lease_mask & ~(1 << ltype));
+			ASSERT(remaining_leases == 0);
+			break;
+		}
+	}
+
+	msg = kmem_zalloc(sizeof (*msg), KM_SLEEP);
+	sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE, SHARE_wait,
+	    LEASE_extend, sizeof (sam_san_lease_t),
+	    sizeof (sam_san_lease2_t));
+	msg->call.lease.data.ltype = lease_mask;
+
+	/*
+	 * Get the reader lock if we are extending the read lease only,
+	 * else get the writer lock.
+	 */
+	if (lease_mask == CL_READ) {
+		rw_type = RW_READER;
+	} else {
+		rw_type = RW_WRITER;
+	}
+
+	RW_LOCK_OS(&ip->inode_rwl, rw_type);
+
+	error = sam_issue_lease_request(ip, msg, SHARE_wait, 0, NULL);
+
+	RW_UNLOCK_OS(&ip->inode_rwl, rw_type);
+
+	/*
+	 * Extend the lease if no error, it still exists, and no relinquish
+	 * requests have come in for it via CALLOUT_relinquish_lease.
+	 */
+	mutex_enter(&ip->ilease_mutex);
+	if (!error && (ip->cl_leases & lease_mask) &&
+	    !(ip->cl_short_leases & lease_mask)) {
+		ip->cl_extend_leases &= ~lease_mask;
+		if (ltype < MAX_EXPIRING_LEASES) {
+			duration = ip->mp->mt.fi_lease[ltype];
+		} else {
+			duration = MAX_LEASE_TIME;
+		}
+		ip->cl_leasetime[ltype] = lbolt + (duration * hz);
+		mutex_exit(&ip->ilease_mutex);
+		/*
+		 * Schedule client lease reclamation if extending a lease.
+		 */
+		sam_sched_expire_client_leases(ip->mp, (duration * hz), FALSE);
+	} else {
+		mutex_exit(&ip->ilease_mutex);
+	}
+
+	kmem_free(msg, sizeof (*msg));
+	return (error);
+}
+
+
+/*
  * ----- sam_issue_lease_request - issue the lease request.
  * For server, issue directly. Client issues over the wire.
- * Inode READER lock held for a GET READ lease request.
+ * Inode READER lock held for GET READ lease, GET MMAP lease read mode,
+ * and EXTEND READ lease only.
  * Inode WRITER lock held for all other requests, including lease removal.
  */
 
@@ -1439,11 +1528,18 @@ sam_issue_lease_request(sam_node_t *ip, sam_san_lease_msg_t *msg,
 
 	msg->hdr.wait_flag = (uchar_t)wait_flag;
 	op = msg->hdr.operation;
+
+	/*
+	 * Note that ltype is a LEASE_type enumeration for LEASE_get operations
+	 * and a mask for all other operations.
+	 */
 	ltype = lp->data.ltype;
 	is_truncate = ((op == LEASE_get) && (ltype == LTYPE_truncate));
 
 	if ((op == LEASE_get) && ((ltype == LTYPE_read) ||
 	    (ltype == LTYPE_mmap && lp->data.filemode == FREAD))) {
+		rw_type = RW_READER;
+	} else if ((op == LEASE_extend) && (ltype == CL_READ)) {
 		rw_type = RW_READER;
 	} else {
 		rw_type = RW_WRITER;
@@ -1643,7 +1739,7 @@ reissue2:
 			 * Complete lease processing for LEASE_get and
 			 * LEASE_remove.
 			 */
-			if ((op != LEASE_relinquish) && (op != LEASE_reset)) {
+			if ((op == LEASE_get) || (op == LEASE_remove)) {
 				sam_complete_lease(ip,
 				    (sam_san_message_t *)msg);
 			}
@@ -2956,7 +3052,7 @@ sam_send_to_server(
 				 * If not failover and this host is the new
 				 * server, return for MOUNT and BLOCK_getbuf,
 				 * BLOCK_getino, and BLOCK_fgetbuf commands. All
-				 * other commands will be reissued thru the
+				 * other commands will be reissued through the
 				 * socket to this host, the new server.
 				 */
 				if (SAM_IS_SHARED_SERVER(mp)) {
@@ -3544,7 +3640,7 @@ sam_failover_freeze(
 
 	/*
 	 * If BLOCK or MOUNT command, return to prevent deadlock.
-	 * During failover, allow lease reset thru.
+	 * During failover, allow lease reset through.
 	 */
 	if ((command == SAM_CMD_BLOCK) ||
 	    (command == SAM_CMD_MOUNT) ||

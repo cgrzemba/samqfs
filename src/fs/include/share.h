@@ -248,7 +248,8 @@ enum LEASE_operation {
 	LEASE_remove	 = 2,
 	LEASE_reset	 = 3,
 	LEASE_relinquish = 4,
-	LEASE_max_op	 = 5
+	LEASE_extend	 = 5,
+	LEASE_max_op	 = 6
 };
 
 enum LEASE_type {

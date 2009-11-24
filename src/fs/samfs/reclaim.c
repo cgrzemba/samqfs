@@ -367,6 +367,11 @@ sam_release_vnodes(sam_schedule_entry_t *entry)
 }
 
 
+/*
+ * ----- sam_process_lease_times
+ * Process lease times for the expired leases that this server is tracking.
+ */
+
 static void
 sam_process_lease_times(ushort_t *initial_leases, ushort_t *remaining_leases,
     int *expired, int *time_valid, clock_t *min_ltime, clock_t now,
@@ -408,7 +413,13 @@ sam_process_lease_times(ushort_t *initial_leases, ushort_t *remaining_leases,
 		}
 	}
 
-	/* Non-expiring release (except truncate) for dead cluster clients */
+	/*
+	 * If Sun cluster reported the client down (SAM_CLIENT_SC_DOWN),
+	 * expire the non-expiring leases except for a TRUNCATE lease.
+	 * These may or may not be coupled with expired leases from above,
+	 * and do not require callout processing (expired flag).  Also clean
+	 * up frlocks if expiring an FRLOCK lease.
+	 */
 	lease_mask = SAM_NON_EXPIRING_LEASES & ~CL_TRUNCATE;
 	if (*remaining_leases & lease_mask) {
 		client_entry_t *clp;
@@ -416,13 +427,11 @@ sam_process_lease_times(ushort_t *initial_leases, ushort_t *remaining_leases,
 		ip = llp->ip;
 		clp = sam_get_client_entry(ip->mp, llp->lease[i].client_ord, 0);
 		if (clp != NULL && (clp->cl_flags & SAM_CLIENT_SC_DOWN)) {
-			/* Clean up frlocks */
 			if (*remaining_leases & CL_FRLOCK) {
 				cleanlocks(SAM_ITOV(ip), IGN_PID,
 				    llp->lease[i].client_ord);
 			}
 			*remaining_leases &= ~lease_mask;
-			/* We don't want callbacks so don't set expired here */
 		}
 	}
 }

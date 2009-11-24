@@ -1486,6 +1486,10 @@ sam_delmap_vn(
 		mutex_enter(&ip->fl_mutex);
 		pages = btopr(length);
 		ip->mm_pages -= pages;
+		ASSERT(ip->mm_pages >= 0);
+		if (ip->mm_pages < 0) {
+			ip->mm_pages = 0;
+		}
 		if (is_write) {
 			ip->wmm_pages -= pages;
 		}

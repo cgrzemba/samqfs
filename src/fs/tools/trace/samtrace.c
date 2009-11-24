@@ -2025,6 +2025,7 @@ decode_c(uint64_t value)
 		{ SAM_CMD_LEASE, LEASE_remove, " LEASE_remove" },
 		{ SAM_CMD_LEASE, LEASE_reset, " LEASE_reset" },
 		{ SAM_CMD_LEASE, LEASE_relinquish, " LEASE_relinquish" },
+		{ SAM_CMD_LEASE, LEASE_extend, " LEASE_extend" },
 		{ SAM_CMD_NAME, NAME_create, " NAME_create" },
 		{ SAM_CMD_NAME, NAME_remove, " NAME_remove" },
 		{ SAM_CMD_NAME, NAME_mkdir, " NAME_mkdir" },
@@ -3333,8 +3334,8 @@ print_mount(
 			} else {
 				sam_msg_array_t *ptr;
 				mep = malloc(sizeof (sam_msg_array_t));
-				printf("\tORD HOSTID   Mnt File  \t "
-				    "minseqno\t  nmsg     cnt tags\n");
+				printf("\tORD HOSTID   sockfile  \t "
+				    "minseqno\t  nmsg      fs  mm gen tags\n");
 
 
 	/* N.B. Bad indentation here to meet cstyle requirements */
@@ -3361,8 +3362,8 @@ print_mount(
 		for (ci = 0; ci < SAM_INCORE_HOSTS_TABLE_INC; ci++) {
 			struct client_entry *clp = &clnt[ci];
 			if (clp->hname[0] || clp->hostid || clp->cl_sh.sh_fp) {
-				printf("\t%d   %08x %p %-16d %-8d %03d "
-				"%03d %-3x %-8x\n",
+				printf("\t%d   %08x %p %-16d %-8d %3d "
+				"%3d %3d %-8x\n",
 				    i+1, clp->hostid, clp->cl_sh.sh_fp,
 				    clp->cl_min_seqno, clp->cl_nomsg,
 				    clp->fs_count, clp->mm_count,
@@ -3581,9 +3582,10 @@ skipclient:
 				    inode_addr, inode.di.id.ino,
 				    inode.di.id.gen);
 				printf(
-				    "\t lease %02x sv %02x usage %d "
+				    "\t lease %02x sv %02x ext %02x usage %d "
 				    "%d %d%s\n",
 				    inode.cl_leases, inode.cl_saved_leases,
+				    inode.cl_extend_leases,
 				    inode.cl_leaseused[0],
 				    inode.cl_leaseused[1],
 				    inode.cl_leaseused[2],

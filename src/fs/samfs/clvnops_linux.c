@@ -682,7 +682,7 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 		mutex_exit(&ip->ilease_mutex);
 		bzero(&data, sizeof (data));
 
-		data.ltype = ltype;
+		data.ltype = (uint16_t)ltype;
 		data.lflag = 0;
 		data.sparse = SPARSE_none;
 		data.offset = offset;
@@ -770,6 +770,7 @@ reenter:
 	}
 
 	ip->mm_pages -= pages;
+	ASSERT(ip->mm_pages >= 0);
 	if (ip->mm_pages < 0) {
 		ip->mm_pages = 0;
 	}
@@ -856,7 +857,7 @@ samqfs_client_addmap_vn(struct file *fp, struct vm_area_struct *vma)
 	sam_lease_data_t *data;
 	offset_t orig_resid;
 	offset_t prev_size;
-	uint32_t ltype;
+	enum LEASE_type ltype;
 
 
 	ip = SAM_LITOSI(li);
@@ -1002,6 +1003,7 @@ reenter:
 	SAM_DECREMENT_LEASEUSED(ip, ltype);
 
 	if (error == 0) {
+		ASSERT(ip->mm_pages >= 0);
 		ip->mm_pages += pages;
 		ip->pending_mmappers--;
 		if (is_write) {

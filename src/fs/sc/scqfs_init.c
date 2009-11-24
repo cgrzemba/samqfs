@@ -151,7 +151,7 @@ ProcFS(
 	int rc, leader;
 	int fenced = FALSE;
 	int waittime;
-	int mtimeout;
+	int mtimeout = 0;
 
 	scds_syslog_debug(DBG_LVL_HIGH, "ProcFS - Begin");
 

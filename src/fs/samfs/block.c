@@ -1869,7 +1869,6 @@ sam_change_state(
 {
 	struct sam_sblk *sblk;	/* Pointer to the superblock */
 	boolean_t sblk_modified = FALSE;
-	int bt;
 	int rtnerr = 0;
 
 	/*
@@ -2349,7 +2348,7 @@ sam_grow_fs(
 	 * sam_init_sblk_dev will advance the global mm_ord to the next
 	 * mm device if necessary.
 	 */
-	sblk->info.sb.mm_ord = mm_ord;
+	sblk->info.sb.mm_ord = (ushort_t)mm_ord;
 
 	/*
 	 * Set state to OFF for the selected ordinal. The new ordinal may be

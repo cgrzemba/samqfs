@@ -475,9 +475,9 @@ sam_complete_lease(sam_node_t *ip, sam_san_message_t *msg)
 
 	/*
 	 * Reset inode for all lease commands except
-	 * LEASE_reset & allocate ahead.
+	 * LEASE_reset and LEASE_extend.
 	 */
-	if (op != LEASE_reset) {
+	if ((op != LEASE_reset) && (op != LEASE_extend)) {
 		(void) sam_reset_client_ino(ip, SAM_CMD_LEASE, &l2p->irec);
 	}
 

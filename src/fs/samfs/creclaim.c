@@ -399,13 +399,6 @@ sam_inactivate_inodes(sam_schedule_entry_t *entry)
 #endif	/* sun */
 
 
-typedef struct sam_schedule_relinquish_entry {
-	struct sam_schedule_entry	schedule_entry;
-	uint32_t			lease_mask;
-	uint32_t			leasegen[SAM_MAX_LTYPE];
-} sam_schedule_relinquish_entry_t;
-
-
 /*
  * ----- sam_expire_client_leases
  * Process the expired leases of this client.
@@ -514,8 +507,7 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 		 * Expire each lease type based on its timeout.  Leases which
 		 * don't time out are always extended 30 seconds into the
 		 * future.  If we're staging, we automatically extend leases,
-		 * as it
-		 * may take a long time to mount and position the media.
+		 * as it may take a long time to mount and position the media.
 		 *
 		 * If we are forcing leases to expire, we don't need to look
 		 * at the individual leases.
@@ -525,6 +517,7 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 			mutex_enter(&ip->ilease_mutex);
 			ip->cl_leases = 0;
 			ip->cl_short_leases = 0;
+			ip->cl_extend_leases = 0;
 			sam_client_remove_lease_chain(ip);
 
 			/* Must not hold lease mutex while releasing vnode. */
@@ -535,10 +528,13 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 			mutex_enter(&mp->mi.m_lease_mutex);
 			chain = mp->mi.m_cl_lease_chain.forw;
 		} else {
-			ushort_t initial_leases, remaining_leases,
-			    removed_leases;
+			ushort_t initial_leases;
+			ushort_t remaining_leases;
+			ushort_t removed_leases;
+			ushort_t extend_leases = 0;
 			int ltype;
 			int lease_mask;
+			int duration;
 			clock_t min_ltime = LONG_MAX;
 			int time_valid = 0;
 			boolean_t staging;
@@ -552,12 +548,20 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 			for (ltype = 0; ltype < SAM_MAX_LTYPE; ltype++) {
 				lease_mask = (1 << ltype);
 				if (initial_leases & lease_mask) {
+					/*
+					 * Extend non-expiring leases 30 secs.
+					 */
 					if ((lease_mask &
 					    SAM_NON_EXPIRING_LEASES) ||
 					    staging) {
 						ip->cl_leasetime[ltype] =
 						    now + (30 * hz);
 					}
+					/*
+					 * If the lease expired and is not in
+					 * use, remove it.  If it is in use,
+					 * verify the expiration time.
+					 */
 					if ((ip->cl_leasetime[ltype] <= now) &&
 					    ((ltype >= MAX_EXPIRING_LEASES) ||
 					    (ip->cl_leaseused[ltype] == 0))) {
@@ -570,8 +574,56 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 				}
 				saved_leasegen[ltype] = ip->cl_leasegen[ltype];
 			}
-
 			removed_leases = (initial_leases & ~remaining_leases);
+
+			/*
+			 * If we are expiring the last mmap lease, try to
+			 * extend the read or write lease in order to avoid
+			 * invalidating the pages.  Otherwise, all the mappers
+			 * will have to fault in the pages from disk
+			 * (performance hit).
+			 */
+			if ((remaining_leases & CL_MMAP) &&
+			    (removed_leases & (CL_READ|CL_WRITE)) &&
+			    !(remaining_leases & (CL_READ|CL_WRITE))) {
+				/*
+				 * May have expired both, but only extend one.
+				 * WRITE has preference over READ since it will
+				 * avoid more page invalidations.
+				 */
+				if (removed_leases & CL_WRITE) {
+					ltype = LTYPE_write;
+					extend_leases = CL_WRITE;
+				} else {
+					ltype = LTYPE_read;
+					extend_leases = CL_READ;
+				}
+				/*
+				 * Do not extend the lease if one is pending
+				 * or there is a request to relinquish it.
+				 * Extend the lease by a half interval for now.
+				 * It will be extended by a full interval if
+				 * the request is successful.  We want to avoid
+				 * having the server forcibly expire the lease.
+				 */
+				if ((ip->cl_extend_leases & extend_leases) ||
+				    (ip->cl_short_leases & extend_leases)) {
+					extend_leases = 0;
+				} else {
+					ip->cl_extend_leases |= extend_leases;
+					remaining_leases |= extend_leases;
+					removed_leases = (initial_leases &
+					    ~remaining_leases);
+					duration =
+					    ip->mp->mt.fi_lease[ltype] / 2;
+					ip->cl_leasetime[ltype] =
+					    lbolt + (duration * hz);
+					min_ltime = MIN(min_ltime,
+					    ip->cl_leasetime[ltype]);
+					time_valid = 1;
+				}
+			}
+
 			if (removed_leases & CL_APPEND) {
 				ip->cl_saved_leases =
 				    (ip->cl_leases & CL_APPEND);
@@ -582,45 +634,42 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 				sam_client_remove_lease_chain(ip);
 			}
 
-			if (initial_leases != remaining_leases) {
+			if (removed_leases || extend_leases) {
 				int flags = B_ASYNC;
 				int mmap_flush = 0;
 
+				/*
+				 * If remaining_leases, increment the vnode
+				 * reference count so close doesn't remove
+				 * this inode out from under us.
+				 * If no remaining_leases, we don't need
+				 * to do this since we removed this inode
+				 * from the lease chain.
+				 * Note that extend_leases will always have
+				 * remaining_leases.
+				 * We may be both removing and extending
+				 * leases here.
+				 */
 				if (remaining_leases != 0) {
-					/*
-					 * The inode still has leases so
-					 * grab another reference count so close
-					 * doesn't shoot it out from under us.
-					 */
 					VN_HOLD_OS(ip);
 				}
-				/*
-				 * If (remaining_leases == 0) we don't need the
-				 * above VN_HOLD_OS since we removed this inode
-				 * from the lease chain.
-				 */
 				mutex_exit(&ip->ilease_mutex);
 				mutex_exit(&mp->mi.m_lease_mutex);
 
 				/*
-				 * If we are expiring any leases for mmap, we
-				 * will have to flush and perhaps invalidate
-				 * dirty pages.  Setting B_INVAL gets us into
-				 * the code area to flush dirty pages.  After
-				 * flushing, we determine if we need to
-				 * invalidate the pages.
-				 *
+				 * If we are expiring any leases for mmap,
+				 * we will have to flush dirty pages.
+				 * If we are expiring the last lease for mmap,
+				 * we will also have to invalidate dirty pages.
 				 * This prevents mmap applications from using
 				 * potentially old data.
 				 */
-				if (remaining_leases & CL_MMAP) {
-					if (removed_leases & (CL_READ|
-					    CL_WRITE)) {
-						mmap_flush++;
-						if (!(remaining_leases &
-						    (CL_READ| CL_WRITE))) {
-							flags |= B_INVAL;
-						}
+				if ((remaining_leases & CL_MMAP) &&
+				    (removed_leases & (CL_READ|CL_WRITE))) {
+					mmap_flush = 1;
+					if (!(remaining_leases &
+					    (CL_READ|CL_WRITE))) {
+						flags |= B_INVAL;
 					}
 				}
 
@@ -667,28 +716,48 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 				 * failover -- not staled during failover.
 				 */
 				if ((removed_leases & CL_APPEND) != 0) {
+					TRACE(T_SAM_CL_LEASE_RM, SAM_ITOP(ip),
+					    ip->di.id.ino,
+					    ip->mp->ms.m_client_ord,
+					    removed_leases);
 					SAM_COUNT64(shared_client, stale_indir);
 					(void) sam_stale_indirect_blocks(ip,
 					    ip->di.rm.size);
 					sam_start_relinquish_task(ip,
-					    removed_leases,
-					    saved_leasegen);
+					    removed_leases, saved_leasegen);
 				} else if (removed_leases) {
 					/*
 					 * For expiration of all leases without
 					 * the append lease, we do not wait for
 					 * a response.
 					 */
+					TRACE(T_SAM_CL_LEASE_RM, SAM_ITOP(ip),
+					    ip->di.id.ino,
+					    ip->mp->ms.m_client_ord,
+					    removed_leases);
 					(void) sam_proc_relinquish_lease(ip,
 					    removed_leases, FALSE,
 					    saved_leasegen);
 				}
 
 				/*
+				 * If we're extending a lease, we must wait for
+				 * the server's response in order to process
+				 * errors.
+				 */
+				if (extend_leases) {
+					TRACE(T_SAM_CL_LEASE_EXT, SAM_ITOP(ip),
+					    ip->di.id.ino,
+					    ip->mp->ms.m_client_ord,
+					    extend_leases);
+					sam_start_extend_task(ip,
+					    extend_leases);
+				}
+
+				/*
 				 * Do this unconditionally since either we
-				 * removed all the leases and need to remove the
-				 * lease hold on the inode in which case we
-				 * didn't do the VN_HOLD_OS above or we didn't
+				 * removed all the leases and need to remove
+				 * the lease hold on the inode, or we didn't
 				 * remove all the leases and did the VN_HOLD_OS
 				 * above.
 				 */
@@ -700,6 +769,10 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 				mutex_exit(&ip->ilease_mutex);
 			}
 
+			/*
+			 * Keep track of the lease that will expire next.
+			 * We will schedule the expire task accordingly.
+			 */
 			if (time_valid && (min_ltime < new_wait_time)) {
 				new_wait_time = min_ltime;
 			}
@@ -744,7 +817,6 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 
 	TRACE(T_SAM_CL_EXPIRE_RET, mp, 0, mp->mt.fi_status, 0);
 }
-
 
 #ifdef sun
 void
@@ -824,6 +896,13 @@ sam_sched_expire_client_leases(
 }
 
 
+typedef struct sam_schedule_relinquish_entry {
+	struct sam_schedule_entry	schedule_entry;
+	uint32_t			lease_mask;
+	uint32_t			leasegen[SAM_MAX_LTYPE];
+} sam_schedule_relinquish_entry_t;
+
+
 /*
  * ----- sam_start_relinquish_task - start a task to relinquish leases.
  * The task waits for the response and then terminates.
@@ -833,7 +912,7 @@ void
 sam_start_relinquish_task(
 	sam_node_t *ip,			/* Pointer to the inode */
 	ushort_t removed_leases,	/* Remove leases mask */
-	uint32_t *leasegen)		/* ary of lease generation numbers */
+	uint32_t *leasegen)		/* Array of lease generation numbers */
 {
 	sam_mount_t *mp = ip->mp;
 	sam_schedule_relinquish_entry_t *ep;
@@ -872,6 +951,7 @@ __sam_relinquish_leases(sam_schedule_entry_t *entry)
 	struct sam_schedule_relinquish_entry *ep;
 	sam_mount_t *mp;
 	sam_node_t *ip;
+	/* LINTED [set but not used] */
 	int error;
 
 	mp = entry->mp;
@@ -890,6 +970,14 @@ __sam_relinquish_leases(sam_schedule_entry_t *entry)
 	sam_taskq_uncount(mp);
 }
 
+#ifdef sun
+void
+sam_relinquish_leases(sam_schedule_entry_t *entry)
+{
+	__sam_relinquish_leases(entry);
+}
+#endif /* sun */
+
 #ifdef linux
 int
 sam_relinquish_leases(void *arg)
@@ -902,13 +990,93 @@ sam_relinquish_leases(void *arg)
 }
 #endif /* linux */
 
+
+typedef struct sam_schedule_extend_entry {
+	struct sam_schedule_entry	schedule_entry;
+	uint32_t			lease_mask;
+} sam_schedule_extend_entry_t;
+
+
+/*
+ * ----- sam_start_extend_task - start a task to extend leases.
+ * The task waits for the response and then terminates.
+ */
+
+void
+sam_start_extend_task(
+	sam_node_t *ip,			/* Pointer to the inode */
+	ushort_t extend_leases)		/* Extend leases mask */
+{
+	sam_mount_t *mp = ip->mp;
+	sam_schedule_extend_entry_t *ep;
+
+	ep = (sam_schedule_extend_entry_t *)kmem_alloc(
+	    sizeof (sam_schedule_extend_entry_t), KM_SLEEP);
+	sam_init_schedule_entry(&ep->schedule_entry, mp, sam_extend_leases,
+	    (void *)ip);
+	ep->lease_mask = extend_leases;
+	VN_HOLD_OS(ip);
+
+	if (sam_taskq_dispatch((sam_schedule_entry_t *)ep) == 0) {
+		VN_RELE_OS(ip);
+		kmem_free(ep, sizeof (sam_schedule_extend_entry_t));
+		cmn_err(CE_WARN,
+		    "SAM-QFS: %s: can't start task to extend lease:"
+		    " ino=%d.%d",
+		    mp->mt.fi_name, ip->di.id.ino, ip->di.id.gen);
+	}
+}
+
+
+/*
+ * ----- sam_extend_leases - extend lease.
+ * Extend specified leases and wait for the response.
+ */
+
+static void
+__sam_extend_leases(sam_schedule_entry_t *entry)
+{
+	struct sam_schedule_extend_entry *ep;
+	sam_mount_t *mp;
+	sam_node_t *ip;
+	/* LINTED [set but not used] */
+	int error;
+
+	mp = entry->mp;
+	ip = (sam_node_t *)entry->arg;
+	ep = (sam_schedule_extend_entry_t *)entry;
+
+	sam_open_operation_nb(mp);
+
+	error = sam_proc_extend_lease(ip, ep->lease_mask);
+
+	SAM_CLOSE_OPERATION(mp, error);
+
+	VN_RELE_OS(ip);
+	kmem_free(entry, sizeof (sam_schedule_extend_entry_t));
+	sam_taskq_uncount(mp);
+}
+
 #ifdef sun
 void
-sam_relinquish_leases(sam_schedule_entry_t *entry)
+sam_extend_leases(sam_schedule_entry_t *entry)
 {
-	__sam_relinquish_leases(entry);
+	__sam_extend_leases(entry);
 }
 #endif /* sun */
+
+#ifdef linux
+int
+sam_extend_leases(void *arg)
+{
+	sam_schedule_entry_t *entry;
+
+	entry = task_begin(arg);
+	__sam_extend_leases(entry);
+	return (0);
+}
+#endif /* linux */
+
 
 /*
  * ----- sam_reestablish_leases - reestablish the leases on the server.
@@ -1223,7 +1391,6 @@ restart:
 	TRACE(T_SAM_CL_REEST_RET, mp, 0, mp->mt.fi_status, mp->mi.m_inode.flag);
 }
 
-
 #ifdef sun
 void
 sam_reestablish_leases(sam_schedule_entry_t *entry)
@@ -1231,7 +1398,6 @@ sam_reestablish_leases(sam_schedule_entry_t *entry)
 	__sam_reestablish_leases(entry);
 }
 #endif /* sun */
-
 
 #ifdef linux
 int
@@ -1244,7 +1410,6 @@ sam_reestablish_leases(void *arg)
 	return (0);
 }
 #endif /* linux */
-
 
 
 /*
@@ -1281,8 +1446,7 @@ sam_reestablish_lease(sam_node_t *ip)
 
 			bzero((void *)msg, sizeof (*msg));
 			sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE,
-			    SHARE_wait,
-			    LEASE_reset, sizeof (sam_san_lease_t),
+			    SHARE_wait, LEASE_reset, sizeof (sam_san_lease_t),
 			    sizeof (sam_san_lease2_t));
 			msg->call.lease.data.alloc_unit = ip->cl_alloc_unit;
 			/* lease mask */
@@ -1304,8 +1468,7 @@ sam_reestablish_lease(sam_node_t *ip)
 				}
 			}
 			if ((error = sam_issue_lease_request(ip, msg,
-			    SHARE_wait,
-			    actions, NULL)) == 0) {
+			    SHARE_wait, actions, NULL)) == 0) {
 				for (ltype = LTYPE_read;
 				    ltype < SAM_MAX_LTYPE; ltype++) {
 					if (leases & (1 << ltype)) {
@@ -1337,8 +1500,7 @@ sam_reestablish_lease(sam_node_t *ip)
 
 			bzero((void *)msg, sizeof (*msg));
 			sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE,
-			    SHARE_wait,
-			    LEASE_reset, sizeof (sam_san_lease_t),
+			    SHARE_wait, LEASE_reset, sizeof (sam_san_lease_t),
 			    sizeof (sam_san_lease2_t));
 			msg->call.lease.data.alloc_unit = ip->cl_alloc_unit;
 			msg->call.lease.data.ltype = CL_FRLOCK;

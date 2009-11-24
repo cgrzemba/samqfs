@@ -108,6 +108,7 @@ static int sam_process_get_lease(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_process_rm_lease(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_process_reset_lease(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_process_relinquish_lease(sam_node_t *ip, sam_san_message_t *msg);
+static int sam_process_extend_lease(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_record_lease(sam_node_t *ip, int client_ord,
 	enum LEASE_type ltype, sam_san_lease2_t *l2p, boolean_t new_generation,
 	boolean_t is_get);
@@ -123,6 +124,8 @@ static boolean_t sam_callout_directio(sam_node_t *ip, int client_ord,
 	sam_lease_ino_t *llp);
 static int sam_remove_lease(sam_node_t *ip, int client_ord, sam_sr_attr_t *ap,
 	int lease_mask, uint32_t *gen_table);
+static int sam_extend_lease(sam_node_t *ip, int client_ord, int lease_mask,
+	sam_san_lease2_t *l2p);
 static int sam_client_allocate_append(sam_node_t *ip, sam_san_message_t *msg);
 static int sam_get_name_request(sam_mount_t *mp, sam_san_message_t *msg,
 	sam_id_t *id);
@@ -147,7 +150,7 @@ static void sam_free_msg_entry(sam_mount_t *mp, client_entry_t *clp,
 extern struct vnodeops samfs_vnodeops;
 
 /*
- * Tunable variables (for now).
+ * Tunable variables.
  *
  *   sam_lease_server_mul and sam_lease_server_add are used to adjust the
  *   time that the server will wait for a client to expire its lease.  The
@@ -161,6 +164,9 @@ extern struct vnodeops samfs_vnodeops;
  *   client time + sam_lease_server_min .. client time + sam_lease_server_max
  *
  *   All of the above (except mul) are currently given in seconds.
+ *
+ *   A client lease will expire in lease time plus 10 minutes on the server.
+ *   e.g. A 30 second client lease will expire in 630 seconds on the server.
  *
  *   sam_client_lease_increment controls how many extra lease entries will be
  *   allocated to a file when its lease table needs to be expanded.  We always
@@ -759,6 +765,10 @@ sam_get_lease_request(sam_mount_t *mp, sam_san_message_t *msg)
 
 	if ((error = sam_get_ino(mp->mi.m_vfsp,
 	    IG_EXISTS, &lp->id, &ip)) == 0) {
+
+		/*
+		 * ltype is actually a lease type for LEASE_get.
+		 */
 		if (msg->hdr.operation == LEASE_get) {
 			lease_mask = 1 << lp->data.ltype;
 		} else {
@@ -833,6 +843,14 @@ sam_process_lease_request(sam_node_t *ip, sam_san_message_t *msg)
 			error = EBUSY;
 		} else {
 			error = sam_process_relinquish_lease(ip, msg);
+		}
+		break;
+
+	case LEASE_extend:
+		if (ip->mp->mt.fi_status & (FS_FAILOVER|FS_RESYNCING)) {
+			error = EBUSY;
+		} else {
+			error = sam_process_extend_lease(ip, msg);
 		}
 		break;
 
@@ -1172,7 +1190,7 @@ sam_process_frlock_request(
 	} else if (cmd == F_HASREMOTELOCKS) {
 		error = FS_FRLOCK_OS(vp, F_HASREMOTELOCKS, &flock, 0,
 		    l2p->inp.data.filemode, NULL, kcred, NULL);
-		/*LINTED [assignment causes implicit narrowing conversion] */
+		/* LINTED [assignment causes implicit narrowing conversion] */
 		flp->l_remote = l_has_rmt(&flock);
 	} else {
 		error = reclock(vp, &flock, (cmd == F_GETLK) ? 0 : SETFLCK,
@@ -1709,6 +1727,34 @@ sam_process_relinquish_lease(sam_node_t *ip, sam_san_message_t *msg)
 
 
 /*
+ * ----- sam_process_extend_lease - process the lease extend operation.
+ *
+ *	Called when the shared server receives a LEASE_extend operation or
+ *  when the server host directly calls this function.
+ *
+ *  Note: inode_rwl lock set on entry and exit (as reader or writer).
+ *		Must be WRITER lock for all leases other than a read lease.
+ */
+
+static int				/* ERRNO, else 0 if successful. */
+sam_process_extend_lease(sam_node_t *ip, sam_san_message_t *msg)
+{
+	sam_san_lease_t *lp = &msg->call.lease;
+	sam_san_lease2_t *l2p = &msg->call.lease2;
+	int client_ord;
+	int error;
+	uint32_t lease_mask;
+
+	client_ord = msg->hdr.client_ord;
+	lease_mask = lp->data.ltype;
+
+	error = sam_extend_lease(ip, client_ord, lease_mask, l2p);
+
+	return (error);
+}
+
+
+/*
  * ----- sam_record_lease - record the lease in the linked list.
  *
  * Returns 1 if waiting on another lease, 0 if lease acquired.
@@ -1776,9 +1822,8 @@ sam_record_lease(
 	implicit_read = FALSE;
 	implicit_write = FALSE;
 
-	if ((ltype == LTYPE_open) &&
-	    ((l2p->inp.data.filemode & (FCREAT|FTRUNC|FWRITE)) == 0) &&
-	    is_get && lease_granted) {
+	if ((ltype == LTYPE_open) && is_get && lease_granted &&
+	    ((l2p->inp.data.filemode & (FCREAT|FTRUNC|FWRITE)) == 0)) {
 		if (ip->sr_leases->no_clients == 1) {
 			clp->leases |= CL_READ;
 			clp->time[LTYPE_read] = clp->time[LTYPE_open];
@@ -1833,6 +1878,9 @@ sam_record_lease(
 		sam_sched_expire_server_leases(mp,
 		    sam_calculate_lease_timeout(interval) * hz, FALSE);
 	}
+	TRACE(T_SAM_LEASE_ADD_RET, SAM_ITOV(ip), ip->di.id.ino, client_ord,
+	    granted_mask);
+
 	return (error);
 }
 
@@ -1911,7 +1959,7 @@ sam_new_ino_lease(
 
 	llp->max_clients = 1;
 	llp->no_clients = 1;
-	llp->next_ord = 0;
+	llp->notify_ord = 0;
 
 	lease_mask = 1 << ltype;
 	llp->lease[0].leases = lease_mask;
@@ -1941,6 +1989,11 @@ sam_new_ino_lease(
 }
 
 
+/*
+ * -----	sam_check_lease_timeo - relinquish the lease according to
+ * the lease_timeo mount option.
+ */
+
 static void
 sam_check_lease_timeo(sam_node_t *ip, uint16_t relinquish_lease_mask,
     struct sam_lease_ino *llp, int client_ord)
@@ -1964,20 +2017,12 @@ sam_check_lease_timeo(sam_node_t *ip, uint16_t relinquish_lease_mask,
 				    llp->lease[i].leases);
 				SAM_COUNT64(shared_server,
 				    callout_relinquish_lease);
-				dcmn_err((CE_NOTE,
-				    "SAM-QFS: %s: CALLOUT_relinquish "
-				    "%d.%d ord=%d, timeo=%d",
-				    ip->mp->mt.fi_name, ip->di.id.ino,
-				    ip->di.id.gen, llp->lease[i].client_ord,
-				    arg.p.relinquish_lease.timeo));
 				sam_proc_callout(ip, CALLOUT_relinquish_lease,
 				    0, llp->lease[i].client_ord, &arg);
 			}
 		}
 	}
 }
-
-
 
 
 /*
@@ -2012,7 +2057,8 @@ sam_add_ino_lease(
 
 	/*
 	 * Common case is that this client already holds a lease.  Check for
-	 * that first.
+	 * that first.  Note that other_leases, mmap_leases, and wt_leases
+	 * are only applicable to other clients.
 	 */
 
 	index = -1;
@@ -2216,10 +2262,12 @@ sam_add_ino_lease(
 
 	case LTYPE_read:
 		/*
-		 * Allow multiple readers, but if there are any writers,
-		 * MH_WRITE - direct this client to stale and enable directio.
-		 * No MH_WRITE - wait reader until writer's lease expires.
-		 * Writable mmaps always block reads.
+		 * Allow multiple readers, but if there are any writers:
+		 * Truncate and writable mmaps always block reads.
+		 * No MH_WRITE - Wait reader until writer's lease
+		 *		 expires or is relinquished.
+		 * MH_WRITE - Allow multiple readers/writers but direct this
+		 *		 client to stale and enable directio.
 		 */
 		if ((other_leases & (CL_TRUNCATE|CL_EXCLUSIVE)) ||
 		    (mmap_leases & CL_WRITE)) {
@@ -2245,10 +2293,14 @@ sam_add_ino_lease(
 
 	case LTYPE_write:
 		/*
-		 * Allow multiple readers/writers if MH_WRITE set on the server.
-		 * Otherwise only 1 writer at 1 time.
-		 * If readers and/or writers, put them in directio.
+		 * Allow only one writer at a time, but:
 		 * Truncate and stage always block writes.
+		 * No MH_WRITE - Wait writer until reader's/writer's lease
+		 *		 expires or is relinquished.
+		 * MH_WRITE - Readable/Writeable mmaps always block writes.
+		 *	    - Other writes always block mmap writes.
+		 *	    - Allow multiple readers/writers but direct this
+		 *		 client to stale and enable directio.
 		 */
 		if (other_leases &
 		    (CL_TRUNCATE|CL_STAGE|CL_EXCLUSIVE)) {
@@ -2375,12 +2427,10 @@ sam_add_ino_lease(
 		 * We grant a read or write lease with the mmap lease so
 		 * we do the same checks as LTYPE_read and LTYPE_write leases.
 		 *
-		 * NEED BETTER COMMENT HERE - CWF
-		 *
-		 * In addition, we can't mix mmap'ed paged I/O with DIO (forced
-		 * with MH_WRITE) so we use the mmap_leases bitmap
+		 * In addition, we can't mix mmap'ed paged I/O with direct I/O
+		 * (forced with MH_WRITE) so we use the mmap_leases bitmap
 		 * to flag if others hold both a mmap lease AND either a
-		 * read|write lease.
+		 * read or write lease.
 		 */
 		if (l2p->inp.data.filemode & FWRITE) {
 			if (other_leases &
@@ -2628,7 +2678,7 @@ sam_remove_lease(
 	sam_sr_attr_t *ap,	/* server file attribute returned params */
 	int lease_mask,		/* Lease masks(s) to be removed */
 	uint32_t *gen_table)	/* Gen numbers of leases being removed, */
-				/*   or NULL. */
+				/* or NULL. */
 {
 	sam_mount_t *mp = ip->mp;
 	sam_lease_ino_t *llp;
@@ -2644,25 +2694,26 @@ sam_remove_lease(
 	int error = 0;
 	const int SAM_EXPIRE_DELAY_SECS = 30;
 
-	TRACE(T_SAM_LEASE_REMOVE, SAM_ITOV(ip),
-				ip->di.id.ino, client_ord, lease_mask);
+	TRACE(T_SAM_LEASE_REMOVE, SAM_ITOV(ip), ip->di.id.ino,
+	    client_ord, lease_mask);
 
 	/*
 	 * Clear the lease for this client ordinal.
 	 * Notify clients who are waiting for a lease on this file.
-	 * XXX - Could optimize the generation-mismatch case to avoid notifying
-	 *		other clients.
+	 * Note that notify_ord is used to round-robin the NOTIFY_lease.
+	 * XXX - Could optimize the generation-mismatch case to avoid
+	 * notifying other clients.
 	 */
 	mutex_enter(&ip->ilease_mutex);
 	if (ip->sr_leases) {
 		llp = ip->sr_leases;
 		no_clients = llp->no_clients;
-		nl = llp->next_ord;
+		nl = llp->notify_ord;
 		if (nl >= no_clients) {
 			nl = 0;
 		}
-		if (++llp->next_ord >= no_clients) {
-			llp->next_ord = 0;
+		if (++llp->notify_ord >= no_clients) {
+			llp->notify_ord = 0;
 		}
 		while (no_clients) {
 			if (llp->lease[nl].client_ord == client_ord) {
@@ -2710,6 +2761,10 @@ sam_remove_lease(
 				llp->lease[nl].leases &= ~lease_mask;
 			}
 
+			/*
+			 * XXX - We may issue NOTIFY_lease before the lease has
+			 * been removed due to the client lease array order.
+			 */
 			if (llp->lease[nl].actions & SR_WAIT_LEASE) {
 				llp->lease[nl].actions &= ~SR_WAIT_LEASE;
 				(void) sam_proc_notify(ip,
@@ -2735,7 +2790,7 @@ sam_remove_lease(
 	mutex_exit(&ip->ilease_mutex);
 
 	/*
-	 * If we removed an write lease, clear write_owner.
+	 * If we removed a write lease, clear write_owner.
 	 */
 	if (!write_lease_remains) {
 		ip->write_owner = 0;
@@ -2812,6 +2867,97 @@ sam_remove_lease(
 		}
 		sam_sched_expire_server_leases(mp, delay, force);
 	}
+	return (error);
+}
+
+
+/*
+ * ----- sam_extend_lease - extend the lease in the linked list.
+ *
+ * Note: inode_rwl lock set on entry and exit.
+ */
+
+static int			/* ERRNO, else 0 if successful. */
+sam_extend_lease(
+	sam_node_t *ip,		/* Pointer to inode */
+	int client_ord,		/* Client ordinal */
+	int lease_mask,		/* Lease mask to be extended */
+	sam_san_lease2_t *l2p)	/* Lease returned parameters */
+{
+	sam_mount_t *mp = ip->mp;
+	sam_lease_ino_t *llp;
+	uint32_t interval;
+	int i, index;
+	int extended_leases;
+	int remaining_leases;
+	int wt_leases;
+	int error = 0;
+	enum LEASE_type ltype;
+
+	TRACE(T_SAM_LEASE_EXTEND, SAM_ITOV(ip), ip->di.id.ino, client_ord,
+	    lease_mask);
+
+	/*
+	 * Currently only support extending a single lease in the mask.
+	 */
+	for (ltype = LTYPE_read; ltype < SAM_MAX_LTYPE; ltype++) {
+		if (lease_mask & (1 << ltype)) {
+			remaining_leases = (lease_mask & ~(1 << ltype));
+			ASSERT(remaining_leases == 0);
+			break;
+		}
+	}
+
+	if (ltype < MAX_EXPIRING_LEASES) {
+		interval = l2p->inp.data.interval[ltype];
+	} else {
+		interval = MAX_LEASE_TIME;
+	}
+
+	/*
+	 * Extend the lease for this client ordinal if it still exists
+	 * and no other client is waiting for a lease.  Note  that we
+	 * do not perform lease relinquish for the case where a read
+	 * lease is requested and a different client has an mmap write
+	 * lease.
+	 */
+	index = -1;
+	wt_leases = 0;
+	extended_leases = 0;
+	mutex_enter(&ip->ilease_mutex);
+	if (ip->sr_leases) {
+		llp = ip->sr_leases;
+		for (i = 0; i < llp->no_clients; i++) {
+			if (llp->lease[i].client_ord == client_ord) {
+				index = i;
+			} else {
+				wt_leases |= llp->lease[i].wt_leases;
+			}
+		}
+		if (index >= 0) {
+			if (!wt_leases &&
+			    (llp->lease[index].leases & lease_mask)) {
+				llp->lease[index].time[ltype] = lbolt +
+				    (sam_calculate_lease_timeout(interval) *
+				    hz);
+				extended_leases = lease_mask;
+			}
+		}
+	}
+	mutex_exit(&ip->ilease_mutex);
+
+	/*
+	 * Schedule server lease reclamation if extending a lease.
+	 */
+	if (extended_leases) {
+		sam_sched_expire_server_leases(mp,
+		    sam_calculate_lease_timeout(interval) * hz, FALSE);
+	} else {
+		error = ECANCELED;
+	}
+	TRACE(T_SAM_LEASE_EXTEND_RET, SAM_ITOV(ip), ip->di.id.ino, client_ord,
+	    extended_leases);
+
 	return (error);
 }
 
@@ -3433,8 +3579,7 @@ sam_setup_stage(sam_node_t *ip, cred_t *credp)
 	l2p = &msg->call.lease2;
 
 	sam_build_header(ip->mp, &msg->hdr, SAM_CMD_LEASE, SHARE_wait,
-	    LEASE_get,
-	    sizeof (sam_san_lease_t), sizeof (sam_san_lease2_t));
+	    LEASE_get, sizeof (sam_san_lease_t), sizeof (sam_san_lease2_t));
 	lp->id = ip->di.id;
 
 	sam_set_cl_attr(ip, 0, &lp->cl_attr, TRUE, TRUE);

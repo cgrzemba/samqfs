@@ -898,17 +898,15 @@ sam_directed_actions(
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 	}
 
+	TRACE(T_SAM_DIRECT_ACT, SAM_ITOP(ip), offset, need_lock, actions);
+
 	if (actions & (SR_DIRECTIO_ON | SR_ABR_ON)) {
 		if (actions & SR_DIRECTIO_ON) {
 			SAM_COUNT64(shared_client, dio_switch);
-			TRACE(T_SAM_ABR_SDR, SAM_ITOP(ip), ip->di.id.ino,
-			    0, actions);
 			sam_set_directio(ip, DIRECTIO_ON);
 		}
 		if (actions & SR_ABR_ON) {
 			SAM_COUNT64(shared_client, abr_switch);
-			TRACE(T_SAM_ABR_DACT, SAM_ITOP(ip), ip->di.id.ino,
-			    0, actions);
 			SAM_SET_ABR(ip);
 		}
 	}

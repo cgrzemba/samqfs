@@ -46,6 +46,7 @@
  */
 
 #define	QFS_TAG_VFSSTAT_V2_STR		"vfsstat_v2"
+#define	QFS_TAG_LEASE_EXTEND_STR	"LEASE_extend"
 
 
 /*
@@ -56,6 +57,7 @@
  */
 
 #define	QFS_TAG_VFSSTAT_V2	0x0001
+#define	QFS_TAG_LEASE_EXTEND	0x0002
 
 
 #endif /* _SAM_FS_TAGS_H */

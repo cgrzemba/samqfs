@@ -2651,7 +2651,7 @@ sam_client_getpage_vn(
 	sam_size_t len = length;
 	sam_size_t plsz = plsize;
 	int error = 0;
-	uint32_t ltype;
+	enum LEASE_type ltype;
 	boolean_t using_lease = FALSE;
 	int unset_nb = 1;
 
@@ -2740,7 +2740,7 @@ sam_client_getpage_vn(
 
 		mutex_exit(&ip->ilease_mutex);
 		bzero(&data, sizeof (data));
-		data.ltype = ltype;
+		data.ltype = (uint16_t)ltype;
 		data.lflag = 0;
 		data.sparse = SPARSE_none;
 		data.offset = offset;
@@ -2944,7 +2944,7 @@ sam_client_map_vn(
 	sam_lease_data_t data;
 	offset_t orig_resid;
 	offset_t prev_size;
-	uint32_t ltype;
+	enum LEASE_type ltype;
 	boolean_t clear_pending_mmapper = FALSE;
 
 	TRACE(T_SAM_MAP, vp, (sam_tr_t)offset, length, prot);
@@ -3240,6 +3240,7 @@ sam_client_addmap_vn(
 	} else {
 		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 		mutex_enter(&ip->fl_mutex);
+		ASSERT(ip->mm_pages >= 0);
 		ip->mm_pages += pages;
 		if ((prot & PROT_WRITE) && ((flags & MAP_TYPE) == MAP_SHARED)) {
 			ip->wmm_pages += pages;
@@ -3389,6 +3390,7 @@ out:
  * space lock is released.
  */
 
+/* ARGSUSED2 */
 static void
 sam_delmap_callback(struct as *as, void *arg, uint_t event)
 {
@@ -3539,6 +3541,10 @@ reenter:
 
 	if (pages) {
 		ip->mm_pages -= pages;
+		ASSERT(ip->mm_pages >= 0);
+		if (ip->mm_pages < 0) {
+			ip->mm_pages = 0;
+		}
 		if (is_write) {
 			ip->wmm_pages -= pages;
 		}
