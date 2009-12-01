@@ -1155,9 +1155,9 @@ public class MountOptions {
             sb.append(",");
         }
 
-        if (this.min_pool != 64) {
-            sb.append("min_pool = ");
-            sb.append(this.min_pool);
+        if (this.nStreams != 256) {
+            sb.append("nstreams = ");
+            sb.append(this.nStreams);
             sb.append(",");
         }
 
