@@ -221,7 +221,7 @@ samdb_check(samdb_args_t *args)
 	/* Close check statement so we can use connection for repairs */
 	if (cb_arg.check_stmt != NULL) {
 		mysql_stmt_close(cb_arg.check_stmt);
-		cb_arg.check_stmt == NULL;
+		cb_arg.check_stmt = NULL;
 	}
 
 	printf("%d problems found\n", repair_list_size);
