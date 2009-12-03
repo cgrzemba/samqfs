@@ -117,10 +117,13 @@ sam_update_filsys(
 	 * Otherwise, do not wait if server is not responding because
 	 * fsflush cannot block.
 	 *
-	 * If failing over or server down, defer page flushing. May have to
-	 * get map from the server and this can cause a deadlock while server
-	 * is down or failing over. Also wake up the sam-sharefsd daemon if
-	 * the server changed. This speeds up involuntary failover.
+	 * If failing over or server down, wake up the sam-sharefsd daemon
+	 * if the server changed. This speeds up involuntary failover.
+	 * If failing over, defer page flushing. May have to get map from
+	 * server and this can cause deadlock while server is failing over.
+	 * When server is not responding FS_LOCK_HARD is set.  We must
+	 * allow BLOCK_vfsstat through to determine that the server is now
+	 * responding.
 	 */
 	if (SAM_IS_SHARED_CLIENT(mp)) {
 		enum SHARE_flag wait_flag;
@@ -129,7 +132,9 @@ sam_update_filsys(
 			if (sam_server_changed(mp)) {
 				sam_wake_sharedaemon(mp, EINTR);
 			}
-			return (0);
+			if (mp->mt.fi_status & FS_FAILOVER) {
+				return (0);
+			}
 		}
 		if (flag & SYNC_CLOSE) {
 			wait_flag = SHARE_nowait;
