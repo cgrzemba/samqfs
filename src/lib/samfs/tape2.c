@@ -2541,7 +2541,7 @@ tape_properties(dev_ent_t *un, int fd)
 
 	case DT_IBM3580:	/* ALL LTOs */
 
-		/* HP LTO-2 and LTO-3 WORM */
+		/* HP LTO-2, LTO-3 and LTO-4 WORM */
 		if (memcmp(un->vendor_id, "HP      ", 8) == 0 &&
 		    memcmp(un->product_id, "Ultrium 1-SCSI  ", 16) != 0) {
 
@@ -2608,7 +2608,7 @@ tape_properties(dev_ent_t *un, int fd)
 				SendCustMsg(HERE, 9358);
 				DownDevice(un, SAM_STATE_CHANGE);
 				memccpy(un->dis_mes[DIS_MES_CRIT],
-				    catgets(catfd, SET, 2982,
+				    catgets(catfd, SET, 2978,
 				    "Unable to determine if WORM or RW"
 				    " media loaded."), '\0', DIS_MES_LEN);
 				un->dt.tp.properties = properties;
@@ -2627,7 +2627,9 @@ tape_properties(dev_ent_t *un, int fd)
 		}
 		if (memcmp(un->vendor_id, "IBM     ", 8) == 0 &&
 		    (memcmp(un->product_id, "ULTRIUM-TD3     ", 16) == 0 ||
-		    memcmp(un->product_id, "ULT3580-TD3     ", 16) == 0)) {
+		    memcmp(un->product_id, "ULT3580-TD3     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULTRIUM-TD4     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULT3580-TD4     ", 16) == 0)) {
 
 			/* Checking if the drive supports WORM feature. */
 
@@ -2688,14 +2690,20 @@ tape_properties(dev_ent_t *un, int fd)
 				worm_media = FALSE;	/* Ultrium 3 data */
 				break;
 			case 0x3c:
-				worm_media = TRUE;	/* worm media */
+				worm_media = TRUE;	/* Ultrium 3 WORM */
+				break;
+			case 0x48:
+				worm_media = FALSE;	/* Ultrium 4 data */
+				break;
+			case 0x4c:
+				worm_media = TRUE;	/* Ultrium 4 WORM */
 				break;
 			default:
 				DevLog(DL_ERR(3257));
 				SendCustMsg(HERE, 9358);
 				DownDevice(un, SAM_STATE_CHANGE);
 				memccpy(un->dis_mes[DIS_MES_CRIT],
-				    catgets(catfd, SET, 2982,
+				    catgets(catfd, SET, 2978,
 				    "Unable to determine if WORM or RW"
 				    " media loaded."), '\0', DIS_MES_LEN);
 				un->dt.tp.properties = properties;
