@@ -37,6 +37,9 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
 /* Feature test switches. */
 /* FILE_TRACE	If defined, turn on DEBUG traces for files processed */
+#if defined(DEBUG)
+#define	FILE_TRACE
+#endif
 
 /* ANSI C headers. */
 #include <limits.h>
@@ -814,9 +817,10 @@ unarchiveFile(
 	struct sam_archive_copy_arg args;
 	char	*p;
 	char	*path;
+	FILE *logFile = NULL;
 
 #if defined(FILE_TRACE)
-	Trace(TR_DEBUG, "unarchive(%d.%d %s, %d)",
+	Trace(TR_DEBUG, "Unarchive (%d.%d %s, %d)",
 	    dinode->id.ino, dinode->id.gen, pb->PbPath, copy);
 #endif /* defined(FILE_TRACE) */
 	path = fixPath(pb);
@@ -851,13 +855,8 @@ unarchiveFile(
 	/*
 	 * Log the unarchive if required.
 	 */
-	if (*State->AfLogFile != '\0') {
-		if (LogStream == NULL &&
-		    (LogStream = fopen64(State->AfLogFile, "a")) == NULL) {
-			Trace(TR_ERR, "Logfile open(%s)", State->AfLogFile);
-		}
-	}
-	if (LogStream != NULL) {
+	if (*State->AfLogFile != '\0' &&
+	    (logFile = fopen64(State->AfLogFile, "a")) != NULL) {
 		struct tm tm;
 		time_t	timeNow;
 		uint32_t fileOffset;
@@ -866,6 +865,7 @@ unarchiveFile(
 		timeNow = TIME_NOW(dinode);
 		strftime(timestr, sizeof (timestr)-1, "%Y/%m/%d %H:%M:%S",
 		    localtime_r(&timeNow, &tm));
+
 		if (pinode->ar.image[copy].arch_flags & SAR_size_block) {
 			fileOffset = pinode->ar.image[copy].file_offset;
 		} else {
@@ -873,17 +873,27 @@ unarchiveFile(
 			    pinode->ar.image[copy].file_offset / TAR_RECORDSIZE;
 		}
 
-		LogLock(LogStream);
-		fprintf(LogStream, "U %s %s %s %s %x.%x %s %d.%d %lld %s\n",
+		LogLock(logFile);
+		fprintf(logFile, "U %s %s %s %s %x.%x %s %d.%d %lld %s\n",
 		    timestr, sam_mediatoa(pinode->di.media[copy]),
 		    pinode->ar.image[copy].vsn,
 		    ArchSetTable[asn].AsName,
 		    pinode->ar.image[copy].position, fileOffset,
 		    FsName, dinode->id.ino, dinode->id.gen, dinode->rm.size,
 		    pb->PbPath);
-		(void) fflush(LogStream);
-		LogUnlock(LogStream);
+		(void) fflush(logFile);
+		LogUnlock(logFile);
+
+		fclose(logFile);
+	} else if (*State->AfLogFile != '\0' && logFile == NULL) {
+		Trace(TR_ERR, "Can't open logfile %s", State->AfLogFile);
 	}
+
+#if defined(FILE_TRACE)
+	Trace(TR_DEBUG, "File unarchived (%d.%d %s, %d)",
+	    dinode->id.ino, dinode->id.gen, pb->PbPath, copy);
+#endif
+
 	if (p != NULL) {
 		*p = '/';
 	}

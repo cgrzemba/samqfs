@@ -373,10 +373,6 @@ arfindInit(
 static void
 atExit(void)
 {
-	if (LogStream != NULL) {
-		(void) fclose(LogStream);
-		LogStream = NULL;
-	}
 	if (State != NULL) {
 		State->AfPid = 0;
 		ClearOprMsg();

@@ -34,7 +34,7 @@
 #ifndef ARFIND_H
 #define	ARFIND_H
 
-#pragma ident "$Revision: 1.67 $"
+#pragma	ident	"$Revision: 1.67 $"
 
 /* Solaris headers. */
 #include <sys/param.h>
@@ -103,7 +103,6 @@ DCL struct FileProps *FileProps;
 DCL ExecState_t Exec;
 DCL boolean_t Recover;
 
-DCL FILE *LogStream IVAL(NULL);		/* Log file stream */
 DCL time_t StopScan;			/* Time at which to stop scan */
 
 DCL char *FsName;			/* Filesystem name */

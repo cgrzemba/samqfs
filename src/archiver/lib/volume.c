@@ -35,6 +35,9 @@
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
+/* Uncomment following line for vol table debug messages */
+/* #define VOL_DEBUG */
+
 /* ANSI C headers. */
 #include <errno.h>
 #include <limits.h>
@@ -1393,7 +1396,7 @@ prepareVolRef(
 	struct VolRefEntry *vr;
 	struct CatalogEntry *ce;
 
-#ifdef DEBUG
+#ifdef VOL_DEBUG
 	dumpVolRef();
 #endif
 	/*
@@ -1422,9 +1425,11 @@ prepareVolRef(
 	}
 
 	tape_count =  ucount + lecount + lcount;
+#ifdef VOL_DEBUG
 	Trace(TR_DEBUG, "Counts: blank %d, relabeled %d, labeled %d,"
 	    " unusable/non-tapes %d, volRef size %d", ucount, lecount, lcount,
 	    xcount, volRefTable->count);
+#endif
 	ASSERT(ucount + lecount + lcount + xcount == volRefTable->count);
 	/*
 	 * Unlabeled tapes found together with labeled or recycled tapes. Put
@@ -1460,8 +1465,9 @@ prepareVolRef(
 		 */
 		u = lcount + lecount;
 		le = lcount;
+#ifdef VOL_DEBUG
 		Trace(TR_DEBUG, "Boundaries: l %d, le %d, u %d", l, le, u);
-
+#endif
 		/*
 		 * The tape entries in volRefTable are not intermixed with
 		 * non-tape entries. Tape count does not contain unusable
@@ -1492,14 +1498,17 @@ prepareVolRef(
 		ASSERT(lecount == (le - lcount));
 
 		SamFree(tempVolRefTable);
-
+#ifdef VOL_DEBUG
 		Trace(TR_DEBUG, "volRefTable reorganized.");
+#endif
 	} else {
+#ifdef VOL_DEBUG
 		Trace(TR_DEBUG, "No labeled non-empty tapes found in"
 		    " volRefTable.");
+#endif
 	}
 
-#ifdef DEBUG
+#ifdef VOL_DEBUG
 	dumpVolRef();
 #endif
 
@@ -1527,9 +1536,9 @@ dumpVolRef(
 			    " label time %s", i, ce->CeVsn, ce->CeCapacity,
 			    ce->CeSpace, label_time);
 			if (IS_BLANK(ce) && RM_VOLUME_USABLE(ce)) {
-				Trace(TR_MISC, "blank");
+				Trace(TR_DEBUG, "blank");
 			} else if (IS_BLANK(ce)) {
-				Trace(TR_MISC, "blank and unusable");
+				Trace(TR_DEBUG, "blank and unusable");
 			} else if (IS_LABELED_AND_EMPTY(ce) &&
 			    RM_VOLUME_USABLE(ce)) {
 				Trace(TR_DEBUG, "relabeled");

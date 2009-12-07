@@ -223,10 +223,6 @@ Scanfs(
 			} else {
 				ScanDirs(&seScan);
 			}
-			if (LogStream != NULL) {
-				(void) fclose(LogStream);
-				LogStream = NULL;
-			}
 			if (seScan.SeFlags & SE_stats) {
 				FsstatsEnd();
 			}
