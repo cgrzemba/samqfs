@@ -117,9 +117,9 @@ struct StagerControlRsp {
 #define	STAGER_DEFAULT_DIRECTIO		1
 
 /*
- * Default is 32MB for minimum directio stage size
+ * Default is 8MB for minimum directio stage size
  */
-#define	STAGER_DEFAULT_DIRECTIO_MIN	32
+#define	STAGER_DEFAULT_DIRECTIO_MIN	8
 
 /*
  * Maximum path length.

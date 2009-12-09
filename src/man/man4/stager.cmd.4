@@ -58,7 +58,7 @@ NOTE: Staging on a shared QFS file system always uses direct I/O.
 .TP 10
 \fBdio_min_size = \fIn\fR
 If the file size is < \fIn\fR megabytes, the stager will use paged I/O for
-non-shared QFS file systems. The default is \fI32\fR megabytes.
+non-shared QFS file systems. The default is \fI8\fR megabytes.
 If directio = off all stage io is paged.
 .sp 1
 NOTE: \fBdio_min_size\fR is ignored for shared QFS file systems which
