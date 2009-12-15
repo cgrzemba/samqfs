@@ -1419,8 +1419,7 @@ sam_blkd_frlock_cancel(void *arg) {
 	if (blkd_frlock->thread &&
 	    (blkd_frlock->status & SAM_FRLOCK_BLKD) &&
 	    !(blkd_frlock->status & SAM_FRLOCK_DONE)) {
-		sigtoproc(ttoproc(blkd_frlock->thread),
-		    blkd_frlock->thread, SIGCONT);
+		tsignal(blkd_frlock->thread, SIGCONT);
 	}
 }
 

@@ -285,6 +285,7 @@ sam_client_rdsock(
 #endif /* linux */
 	}
 
+	sam_clear_sock_fp(&mp->ms.m_cl_sh);
 	mp->ms.m_cl_thread = NULL;
 	mutex_exit(&mp->ms.m_cl_wrmutex);
 
@@ -992,7 +993,15 @@ sam_write_to_server(sam_mount_t *mp, sam_san_message_t *msg)
 			    seqno);
 			if (SOCKET_FATAL(error)) {
 				mutex_enter(&mp->ms.m_cl_wrmutex);
-				sam_clear_sock_fp(&mp->ms.m_cl_sh);
+				if (mp->ms.m_cl_thread) {
+#ifdef	sun
+					tsignal(mp->ms.m_cl_thread, SIGPIPE);
+#endif
+#ifdef	linux
+					send_sig(SIGPIPE,
+					    mp->ms.m_cl_thread, 0);
+#endif
+				}
 				mutex_exit(&mp->ms.m_cl_wrmutex);
 			}
 		}
