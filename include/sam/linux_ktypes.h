@@ -285,15 +285,36 @@ typedef struct cred {
 
 
 /*
- * Redefine memory allocation functions
- * for Linux
+ * Redefine memory allocation functions for Linux.
+ * KM_SLEEP can return NULL in 2.4 kernels.
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+#define	KM_SLEEP	GFP_KERNEL | __GFP_NOFAIL
+#else
 #define	KM_SLEEP	GFP_KERNEL
+#endif
 #define	KM_NOSLEEP	GFP_ATOMIC
 
 extern void *QFS_kmalloc(size_t size, int flags);
-#define	kmem_alloc(s, f)	QFS_kmalloc(s, f)
 #define	kmem_free(p, s)		kfree(p)
+
+/*
+ * kmem_alloc() and kmem_zalloc() are called by both Linux and Solaris
+ * in common code paths.  In Linux, these two routines emulate the
+ * Solaris KM_SLEEP and KM_NOSLEEP behaviour.
+ */
+static inline void *kmem_alloc(size_t size, int flag)
+{
+	void *m;
+
+	m = QFS_kmalloc(size, flag);
+	if (m == NULL) {
+		if (flag == KM_SLEEP) {
+			BUG();
+		}
+	}
+	return ((void *)m);
+}
 
 static inline void *kmem_zalloc(size_t size, int flag)
 {
@@ -302,6 +323,11 @@ static inline void *kmem_zalloc(size_t size, int flag)
 	m = QFS_kmalloc(size, flag);
 	if (m) {
 		memset(m, 0, size);
+		return ((void *)m);
+	}
+
+	if (flag == KM_SLEEP) {
+		BUG();
 	}
 
 	return ((void *)m);

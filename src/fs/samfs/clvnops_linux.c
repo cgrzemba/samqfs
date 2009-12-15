@@ -2333,6 +2333,8 @@ samqfs_client_setattr_vn(struct dentry *dep, struct iattr *iap)
 
 		vmtruncate(li, iap->ia_size);
 
+		(void) sam_stale_indirect_blocks(ip, iap->ia_size);
+
 		data.ltype = LTYPE_truncate;
 		data.lflag = SAM_TRUNCATE;
 		data.sparse = SPARSE_none;
