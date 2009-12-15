@@ -712,6 +712,45 @@ samqfs_client_nopage(struct vm_area_struct *area, unsigned long address,
 	return (page);
 }
 
+/*
+ * ----- samqfs_client_vma_open -
+ * This routine is called by Linux if a Vitual Memory Area is already mmapped
+ * and it can be referenced by another process e.g. a fork.
+ */
+static void
+samqfs_client_vma_open(struct vm_area_struct *vma)
+{
+	struct dentry *de;
+	struct inode *li;
+	struct file *fp;
+	sam_node_t *ip;
+	offset_t offset;
+	unsigned long length;
+	unsigned long prot;
+	int pages;
+
+	fp = vma->vm_file;
+	de = fp->f_dentry;
+	li = de->d_inode;
+	ip = SAM_LITOSI(li);
+
+	length = vma->vm_end - vma->vm_start;
+	pages = length >> PAGE_SHIFT;
+	prot = vma->vm_page_prot.pgprot;
+	offset = vma->vm_pgoff << PAGE_SHIFT;
+
+	TRACE(T_SAM_CL_VMA_OPEN, li, (sam_tr_t)offset, length, prot);
+
+	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
+	mutex_enter(&ip->fl_mutex);
+	ASSERT(ip->mm_pages >= 0);
+	ip->mm_pages += pages;
+	mutex_exit(&ip->fl_mutex);
+	RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
+
+	TRACE(T_SAM_CL_VMA_OPEN_RET, li, pages, ip->mm_pages, 0);
+
+}
 
 /*
  * ----- samqfs_client_delmap_vn -
@@ -2606,6 +2645,7 @@ struct dentry_operations samqfs_root_dentry_ops = {
  * VM ops for mmap
  */
 struct vm_operations_struct samqfs_vm_ops = {
+	open:	samqfs_client_vma_open,
 	nopage:	samqfs_client_nopage,
 	close:	samqfs_client_delmap_vn
 };
