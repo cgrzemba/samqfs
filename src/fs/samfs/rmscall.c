@@ -50,16 +50,6 @@
 #include <sys/copyops.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/mode.h>
-#include <sys/uio.h>
-#include <sys/dirent.h>
-#include <sys/proc.h>
-#include <sys/disp.h>
-#include <sys/mount.h>
-#include <sys/policy.h>
-
-/* ----- SAMFS Includes */
-
 /* The following lines need to stay in this order. */
 #include "pub/stat.h"
 /* These are duplicated in sys/stat.h */
@@ -72,7 +62,16 @@
 #undef S_ISUID
 #undef S_ISLNK
 #undef S_ISSOCK
-#include <sys/stat.h>
+#include <sys/mode.h>
+#include <sys/uio.h>
+#include <sys/dirent.h>
+#include <sys/proc.h>
+#include <sys/disp.h>
+#include <sys/mount.h>
+#include <sys/policy.h>
+
+/* ----- SAMFS Includes */
+
 #undef st_atime
 #undef st_mtime
 #undef st_ctime

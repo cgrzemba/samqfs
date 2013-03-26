@@ -181,7 +181,7 @@ sam_inactivate_inodes(sam_schedule_entry_t *entry)
 	inv_prev = NULL;
 	deact_ptr = NULL;
 	deact_next = NULL;
-	now = lbolt;
+	now = ddi_get_lbolt();
 	wait_time = 0;
 	if (mp->mi.m_inode.flag == SAM_THR_MOUNT && mp->mi.m_inode.wait == 0) {
 		clock_t interval = SAM_INACTIVE_DEFER_SECS * hz;
@@ -456,7 +456,7 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 		now = 0;
 		forced_expiration = 1;
 	} else {
-		now = lbolt;
+		now = ddi_get_lbolt();
 		forced_expiration = 0;
 	}
 
@@ -617,7 +617,7 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 					duration =
 					    ip->mp->mt.fi_lease[ltype] / 2;
 					ip->cl_leasetime[ltype] =
-					    lbolt + (duration * hz);
+					    ddi_get_lbolt() + (duration * hz);
 					min_ltime = MIN(min_ltime,
 					    ip->cl_leasetime[ltype]);
 					time_valid = 1;
@@ -793,14 +793,14 @@ __sam_expire_client_leases(sam_schedule_entry_t *entry)
 	if (new_wait_time != LONG_MAX) {
 		rerun = TRUE;
 		mp->mi.m_cl_leasesch = 1;
-		ticks = new_wait_time - lbolt;
+		ticks = new_wait_time - ddi_get_lbolt();
 		if (ticks < SAM_EXPIRE_MIN_TICKS) {
 			ticks = SAM_EXPIRE_MIN_TICKS;
 		}
 		if (ticks > SAM_EXPIRE_MAX_TICKS) {
 			ticks = SAM_EXPIRE_MAX_TICKS;
 		}
-		mp->mi.m_cl_leasenext = ticks + lbolt;
+		mp->mi.m_cl_leasenext = ticks + ddi_get_lbolt();
 	}
 	mutex_exit(&samgt.schedule_mutex);
 
@@ -877,7 +877,7 @@ sam_sched_expire_client_leases(
 	if ((ticks > SAM_EXPIRE_MAX_TICKS) && !force) {
 		ticks = SAM_EXPIRE_MAX_TICKS;
 	}
-	next = ticks + lbolt;
+	next = ticks + ddi_get_lbolt();
 	if (force || (mp->mi.m_cl_leasesch == 0) ||
 	    (next < (mp->mi.m_cl_leasenext - SAM_EXPIRE_MIN_TICKS))) {
 		mp->mi.m_cl_leasenext = next;

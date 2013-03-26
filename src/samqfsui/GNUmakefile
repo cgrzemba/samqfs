@@ -35,6 +35,6 @@ include $(DEPTH)/mk/targets.mk
 all: samqfsui
 
 samqfsui:
-	if [ z$(MAKECMDGOALS) != zclean -a z$(MAKECMDGOALS) != zclobber -a z$(MAKECMDGOALS) != zclobberall ]; then ( JAVA_HOME=$(JBASE) ; export JAVA_HOME; $(ANT) -Dobj.dir=$(OBJ_DIR) dist ) fi
+	if [ z$(MAKECMDGOALS) != zclean -a z$(MAKECMDGOALS) != zclobber -a z$(MAKECMDGOALS) != zclobberall ]; then ( JAVA_HOME=$(JBASE) ; export JAVA_HOME; $(ANT) -Dobj.dir=$(OBJ_DIR) -Djni.lib.dir=$(DEPTH)/lib/$(OBJ_DIR) dist ) fi
 
 include $(DEPTH)/mk/depend.mk

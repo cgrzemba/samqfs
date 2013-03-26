@@ -5,15 +5,12 @@
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 
-DEPTH = ../../../../
-include ${DEPTH}makefile.master
-SAMINCLUDE = -I${DEPTH}include
 
 SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = ..
-prefix = ${SAMFS_TOOLS}
+prefix = /opt/SUNWsamfs
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
@@ -34,18 +31,18 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = ..
 
-INSTALL = .././install-sh -c
+INSTALL = /usr/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 YACC = bison -y
 GENCAT = 
-MV = /bin/mv
-GMSGFMT = /bin/msgfmt
-CC = ${GCC}
+MV = /usr/bin/mv
+GMSGFMT = /usr/bin/gmsgfmt
+CC = gcc
 RANLIB = ranlib
-LN = /bin/ln
-RM = /bin/rm
+LN = /usr/bin/ln
+RM = /usr/bin/rm
 
 AUTOMAKE_OPTIONS = ansi2knr
 
@@ -63,7 +60,7 @@ localedir = $(datadir)/locale
 noinst_HEADERS = system.h cp.h ls.h dircolors.h
 EXTRA_DIST = cp-aux.c cp-hash.c dcgen.pl dircolors.hin
 
-INCLUDES = -I.. -I$(srcdir) -I$(top_srcdir)/lib -I../intl ${SAMINCLUDE}
+INCLUDES = -I.. -I$(srcdir) -I$(top_srcdir)/lib -I../intl
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(datadir)\" -DHAVE_CONFIG_H
 LDADD = ../intl/libintl.a ../lib/libfu.a
 
@@ -80,7 +77,7 @@ vdir_SOURCES = ls.c ls-vdir.c
 ls_SOURCES = ls.c ls-ls.c
 
 BUILT_SOURCES = dircolors.h
-PERL = /usr/local/bin/perl
+PERL = /opt/csw/bin/perl
 editpl = sed -e 's,@''PERL''@,$(PERL),g'
 
 CLEANFILES = dcgen
@@ -138,9 +135,7 @@ dircolors_DEPENDENCIES =  ../lib/libfu.a
 dircolors_LDFLAGS = 
 du_SOURCES = du.c
 du_OBJECTS =  du.$o
-du_LDADD = $(LDADD) -L ${DEPTH}lib -lsam -R ${LIBSO}
-du_LNFLAGS = ${INCLUDES} ${DEFS}
-du_LNLIBS = -L ${DEPTH}lib -lsam
+du_LDADD = $(LDADD)
 du_DEPENDENCIES =  ../lib/libfu.a
 du_LDFLAGS = 
 ginstall_OBJECTS =  install.$o
@@ -204,7 +199,7 @@ touch_OBJECTS =  touch.$o
 touch_LDADD = $(LDADD)
 touch_DEPENDENCIES =  ../lib/libfu.a
 touch_LDFLAGS = 
-CFLAGS = -g -O2 ${VERS}
+CFLAGS = -g -O2
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 LINK = $(CC) $(LDFLAGS) -o $@
 HEADERS =  $(noinst_HEADERS)
@@ -229,7 +224,7 @@ default: all
 $(srcdir)/Makefile.in: #M# Makefile.am $(top_srcdir)/configure.in $(ACLOCAL) 
 	cd $(top_srcdir) && automake --gnits src/Makefile
 
-Makefile: #SUN# $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
@@ -609,17 +604,6 @@ dircolors.h: #M#dcgen dircolors.hin
 .pl:
 	rm -f $@ $@.tmp
 	$(editpl) $< > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
-
-# SUN targets:
-MODIFIED_SRCS = du.c system.h
-SRCS = df.c mvdir.c chgrp.c chown.c chmod.c $(cp_SOURCES) dd.c dircolors.c \
-	$(ginstall_SOURCES) ln.c $(dir_SOURCES) $(vdir_SOURCES) $(ls_SOURCES) \
-	mkdir.c mkfifo.c mknod.c mv.c rm.c rmdir.c sync.c touch.c \
-	ansi2knr.c Makefile.am Makefile.in
-INCS = arith.h common.h rmt.h tar.h cp.h ls.h dircolors.h
-
-lint:
-	${LINT} -u -x ${du_LNFLAGS} du.c ${du_LNLIBS}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

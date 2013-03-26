@@ -2151,7 +2151,7 @@ sam_unmount_fs(
 	 */
 	mutex_enter(&mp->ms.m_fo_vnrele_mutex);
 	while (mp->ms.m_fo_vnrele_count > 0) {
-		vn_wait_time = lbolt + (2*hz);
+		vn_wait_time = ddi_get_lbolt() + (2*hz);
 		cv_timedwait(&mp->ms.m_fo_vnrele_cv,
 		    &mp->ms.m_fo_vnrele_mutex, vn_wait_time);
 	}

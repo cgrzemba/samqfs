@@ -30,7 +30,7 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-BUILD_64BIT = yes
+# BUILD_64BIT = yes
 
 DIRS = $(DB_VERSION)
 

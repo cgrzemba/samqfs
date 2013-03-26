@@ -70,10 +70,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/sam_trace.h"
 #include <sam/fs/bswap.h>
 
-/* Honeycomb headers. */
-#include "hc.h"
-#include "hcclient.h"
-
 /* Local headers. */
 #include "recycler.h"
 
@@ -87,7 +83,6 @@ typedef struct dirHandle {
 
 static struct DiskVolumeInfo *diskVolume = NULL;
 static SamrftImpl_t *rft = NULL;
-static hc_session_t *session = NULL;
 static upath_t fullpath;
 static int numRecycledFiles = 0;
 static boolean_t ignoreRecycling;
@@ -145,8 +140,6 @@ static long long selectDrainCandidates(DiskVolumeSeqnum_t seqnum,
 static void drainSeqNumbers(DiskVolumeSeqnum_t seqnum, char *volName);
 static long long emptyTarFile(DiskVolumeSeqnum_t seqnum, char *volName);
 static long long statTarFile(DiskVolumeSeqnum_t seqnum);
-static long long deleteObject(DiskVolumeSeqnum_t seqnum, char *volName);
-static int deleteMetadataRecord(hc_oid *oid);
 static void unlinkFile(char *file_name);
 static char *genSeqNumberFileName(DiskVolumeSeqnum_t seqnum);
 static char *gobbleName(char *path, char d_name[1]);
@@ -461,23 +454,6 @@ recycle(
 		goto out;
 	}
 
-	if (IS_DISK_HONEYCOMB(vsn->media)) {
-		hcerr_t hcerr;
-
-		hcerr = hc_init(malloc, free, realloc);
-		if (hcerr != HCERR_OK) {
-			SendCustMsg(HERE, 4057, hcerr, hc_decode_hcerr(hcerr));
-			goto out;
-		}
-
-		hcerr = hc_session_create_ez(diskVolume->DvAddr,
-		    diskVolume->DvPort, &session);
-		if (hcerr != HCERR_OK) {
-			SendCustMsg(HERE, 4057, hcerr, hc_decode_hcerr(hcerr));
-			goto out;
-		}
-	}
-
 	host = DiskVolsGetHostname(diskVolume);
 	rft = SamrftConnect(host);
 	if (rft == NULL) {
@@ -500,15 +476,6 @@ recycle(
 	if (rft != NULL) {
 		SamrftDisconnect(rft);
 		rft = NULL;
-	}
-
-	/*
-	 * Terminate and free honeycomb's global session.
-	 */
-	if (session != NULL) {
-		hc_session_free(session);
-		hc_cleanup();
-		session = NULL;
 	}
 
 	if (diskVolume->DvFlags & DV_remote) {
@@ -844,13 +811,8 @@ removeSeqNumbers(
 	for (i = 0; i < seqNumbers.entries; i++) {
 		if (seqNumbers.data[i].has_active_files == B_FALSE &&
 		    !IsSeqNumInUse(i + seqnum, seqNumsInUse)) {
-			if (IS_DISK_HONEYCOMB(vsn->media)) {
-				removed_space +=
-				    deleteObject(i + seqnum, volName);
-			} else {
 				removed_space +=
 				    emptyTarFile(i + seqnum, volName);
-			}
 		}
 	}
 
@@ -1366,141 +1328,6 @@ rearchiveCopy(
 	(void) close(fd);
 }
 
-
-/*
- * There are no files to be retained in the honeycomb file associated with
- * the specified sequence number.  Delete the object.
- */
-static long long
-deleteObject(
-	DiskVolumeSeqnum_t seqnum,
-	char *volName)
-{
-	static char *queryBuf = NULL;
-	hc_oid oid;
-	hcerr_t hcerr;
-	hc_query_result_set_t *rset;
-	int numOids;
-	int finished;
-	hc_nvr_t *nvr;
-	char **names;
-	char **values;
-	int count;
-	int idx;
-	long long objectSize;
-	int rval;
-
-	queryBuf = DiskVolsGenMetadataQuery(volName, seqnum, queryBuf);
-
-	Trace(TR_MISC, "HC query buf: '%s'", queryBuf);
-
-	rset = NULL;
-	hcerr = hc_query_ez(session, queryBuf, NULL, 0, 1, &rset);
-	if (hcerr != HCERR_OK) {
-		Trace(TR_MISC, "HC client query failed, hcerr= %d - %s",
-		    hcerr, hc_decode_hcerr(hcerr));
-		return (0);
-	}
-
-	numOids = 0;
-	nvr = NULL;
-
-	for (;;) {
-
-		hcerr = hc_qrs_next_ez(rset, &oid, &nvr, &finished);
-		if (hcerr != HCERR_OK || finished == 1) {
-			Trace(TR_MISC, "HC query complete: hcerr= %d "
-			    "finished= %d", hcerr, finished);
-			break;
-		}
-		if (hcerr == HCERR_OK) {
-			numOids++;
-			Trace(TR_MISC, "HC query complete oid: '%s'", oid);
-		}
-	}
-
-	(void) hc_qrs_free(rset);
-
-	if (numOids > 1) {
-		Trace(TR_MISC, "Unexpected HC query result, "
-		    "more than 1 OID (%d) found", numOids);
-	}
-
-	if (hcerr != HCERR_OK || numOids == 0 || numOids > 1) {
-		return (0);
-	}
-
-	hcerr = hc_retrieve_metadata_ez(session, &oid, &nvr);
-	if (hcerr != HCERR_OK) {
-		Trace(TR_MISC, "HC client retrieve metadata failed, "
-		    "hcerr= %d - %s", hcerr, hc_decode_hcerr(hcerr));
-		return (0);
-	}
-
-	hcerr = hc_nvr_convert_to_string_arrays(nvr, &names, &values, &count);
-	if (hcerr != HCERR_OK) {
-		Trace(TR_MISC, "HC client convert to string failed, "
-		    "hcerr= %d - %s", hcerr, hc_decode_hcerr(hcerr));
-		return (0);
-	}
-
-	if (nvr != NULL) {
-		(void) hc_nvr_free(nvr);
-	}
-
-	if (count == 0 || names == NULL || values == NULL) {
-		Trace(TR_MISC, "HC client no metadata returned");
-		return (0);
-	}
-
-	objectSize = 0;
-	for (idx = 0; idx < count; idx++) {
-		Trace(TR_MISC, "[%d] %s = %s", idx, *names, *values);
-		if (strcmp(*names, HONEYCOMB_METADATA_OBJECT_SIZE) == 0) {
-			char *p = *values;
-			objectSize = strtoll(*values, &p, 0);
-			break;
-		}
-		names++;
-		values++;
-	}
-
-	Trace(TR_MISC, "[%s] Delete oid: '%s'", volName, oid);
-
-	rval = deleteMetadataRecord(&oid);
-	if (rval == -1) {
-		objectSize = 0;
-	}
-
-	return (objectSize);
-}
-
-/*
- * Delete metadata record for a honeycomb object.  When the last
- * metadata record associated with a data object is deleted, the
- * unerlying data object is also deleted.
- */
-static int
-deleteMetadataRecord(
-	hc_oid *oid)
-{
-	hcerr_t hcerr;
-
-	cemit(TO_FILE, 0, 20311, oid);
-
-	if (ignoreRecycling == B_FALSE) {
-		hcerr = hc_delete_ez(session, oid);
-		if (hcerr != HCERR_OK) {
-			Trace(TR_MISC, "HC client delete failed, "
-			    "hcerr= %d - %s", hcerr, hc_decode_hcerr(hcerr));
-			return (-1);
-		}
-	}
-
-	numRecycledFiles++;
-
-	return (0);
-}
 
 /*
  * Clear disk volume flag.

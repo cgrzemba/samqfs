@@ -136,7 +136,7 @@
 #define HAVE_MKNOD 1
 
 /* Define to 1 if stpcpy function is available.  */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define if `union wait' is the type of the first arg to wait functions.  */
 /* #undef HAVE_UNION_WAIT */

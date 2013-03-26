@@ -160,7 +160,7 @@ typedef int (*sam_db_dirent_cb)(sam_id_t pid, struct sam_dirent *, void *);
 
 /* From libmysqlclient (m_string.h) */
 extern char *strend(const char *);
-extern char *strmov(char *, char *);
+/* extern char *strmov(char *, char *); */
 
 /* config functions */
 sam_db_conf_t *sam_db_conf_get(char *cfgfile, char *fsname);

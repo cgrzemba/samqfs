@@ -641,7 +641,7 @@ sam_taskq_add_ret(
 		ticks = 0;
 	}
 
-	start = lbolt + ticks;		/* Start time for this task */
+	start = ddi_get_lbolt() + ticks;		/* Start time for this task */
 
 	SAM_COUNT64(thread, taskq_add);
 
@@ -792,7 +792,7 @@ sam_taskq_trampoline(void *arg)
 		timer_id = timeout(sam_taskq_trampoline, entry,
 		    SAM_TASKQ_RETRY_TICKS);
 		mutex_enter(&samgt.schedule_mutex);
-		entry->start = lbolt + SAM_TASKQ_RETRY_TICKS;
+		entry->start = ddi_get_lbolt() + SAM_TASKQ_RETRY_TICKS;
 		entry->id = timer_id;
 		mutex_exit(&samgt.schedule_mutex);
 		SAM_COUNT64(thread, taskq_dispatch_fail);

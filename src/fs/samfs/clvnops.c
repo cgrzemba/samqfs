@@ -927,7 +927,7 @@ sam_client_read_vn(
 		mutex_enter(&ip->ilease_mutex);
 		ip->cl_leaseused[LTYPE_read]--;
 		if ((ip->cl_leaseused[LTYPE_read] == 0) &&
-		    (ip->cl_leasetime[LTYPE_read] <= lbolt)) {
+		    (ip->cl_leasetime[LTYPE_read] <= ddi_get_lbolt())) {
 			sam_sched_expire_client_leases(ip->mp, 0, FALSE);
 		}
 		mutex_exit(&ip->ilease_mutex);
@@ -1061,10 +1061,10 @@ sam_client_write_vn(
 			ip->cl_leaseused[LTYPE_append]--;
 		}
 		if (((ip->cl_leaseused[LTYPE_write] == 0) &&
-		    (ip->cl_leasetime[LTYPE_write] <= lbolt)) ||
+		    (ip->cl_leasetime[LTYPE_write] <= ddi_get_lbolt())) ||
 		    (appending &&
 		    (ip->cl_leaseused[LTYPE_append] == 0) &&
-		    (ip->cl_leasetime[LTYPE_append] <= lbolt))) {
+		    (ip->cl_leasetime[LTYPE_append] <= ddi_get_lbolt()))) {
 			sam_sched_expire_client_leases(ip->mp, 0, FALSE);
 		}
 		mutex_exit(&ip->ilease_mutex);

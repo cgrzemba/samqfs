@@ -57,7 +57,7 @@ SHELL := /bin/sh
 OS := $(shell uname -s)
 HOSTNAME := $(shell hostname)
 
-SAMFS_TOOLS = /samfs-tools
+SAMFS_TOOLS = /opt
 
 #
 #     Unset LD_LIBRARY_PATH.

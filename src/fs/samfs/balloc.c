@@ -252,7 +252,7 @@ skip_this_unit:
 			 */
 			mutex_enter(&mp->mi.m_block.mutex);
 			SAM_KICK_BLOCK(mp);
-			t_out = lbolt + hz + hz;	/* 2 second timeout */
+			t_out = ddi_get_lbolt() + hz + hz;	/* 2 second timeout */
 			mp->mi.m_block.wait++;
 			(void) cv_timedwait(&mp->mi.m_block.get_cv,
 			    &mp->mi.m_block.mutex,

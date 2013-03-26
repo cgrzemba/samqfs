@@ -40,7 +40,7 @@ __dummy := $(shell [ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR) )
 #
 # Common library directory (must be built first)
 #
-ifeq ($(OS), SunOS)
+ifneq ($(SAM_OPEN_SOURCE), yes)
 LDIRS = robots/vendor_supplied lib
 else
 LDIRS = lib

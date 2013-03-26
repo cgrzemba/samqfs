@@ -15,19 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ 
+# For the avoidance of doubt, except that if any license choice other
+# than GPL or LGPL is available it will apply instead, Sun elects to
+# use only the General Public License version 2 (GPLv2) at this time
+# for any software where a choice of GPL license versions is made
+# available with the language indicating that GPLv2 or any later
+# version may be used, or where a choice of which version of the GPL
+# is applied is otherwise unspecified.
 
 PACKAGE = fileutils
 VERSION = 3.16
 
 SHELL = /bin/sh
 
-DEPTH = ../../../../
-include ${DEPTH}makefile.master
-
 srcdir = .
 top_srcdir = ..
 
-prefix = ${SAMFS_TOOLS}
+prefix = /opt/SUNWsamfs
 exec_prefix = ${prefix}
 transform = s,x,x,
 libdir = $(exec_prefix)/lib
@@ -35,16 +40,16 @@ includedir = $(prefix)/include
 datadir = $(prefix)/share
 localedir = $(datadir)/locale
 gnulocaledir = $(prefix)/share/locale
-gettextsrcdir = ${prefix}/share/gettext/intl
+gettextsrcdir = /opt/SUNWsamfs/gettext/intl
 aliaspath = $(localedir):.
 subdir = intl
 
-INSTALL = .././install-sh -c
+INSTALL = /usr/bin/ginstall -c
 INSTALL_DATA = ${INSTALL} -m 644
 MKINSTALLDIRS = ./mkinstalldirs
 
 AR = ar
-CC = ${GCC}
+CC = gcc
 RANLIB = ranlib
 
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DGNULOCALEDIR=\"$(gnulocaledir)\" \
@@ -158,7 +163,7 @@ ID: $(HEADERS) $(SOURCES)
 
 
 mostlyclean:
-	@rm -f *.a *.o core core.*
+	rm -f *.a *.o core core.*
 
 clean: mostlyclean
 
@@ -200,15 +205,6 @@ Makefile: Makefile.in ../config.status
 #YES#	  $(SHELL) ./config.status
 .PHONY: intlh.inst
 intlh.inst:
-
-# SUN targets:
-MODIFIED_SRCS =
-SRCS = bindtextdom.c cat-compat.c dcgettext.c dgettext.c explodename.c \
-	finddomain.c gettext.c intl-compat.c l10nflist.c linux-msg.sed     \
-	loadmsgcat.c localealias.c po2tbl.sed po2tbl.sed.in textdomain.c   \
-	VERSION xopen-msg.sed
-INCS = gettext.h gettextP.h hash-string.h libgettext.h loadinfo.h
-
 
 # Tell versions [3.59,3.63) of GNU make not to export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.4 2007/10/08 15:46:42 dr161460 Exp $
 # Generated automatically from Makefile.in by configure.
 # Makefile.in generated automatically by automake 1.1l from Makefile.am
 
@@ -10,20 +9,18 @@
 # find . -type f -name '*.m4' -printf '%f\n'|sort |fmt |tr '\012' @ \
 #   |sed 's/@$/%/;s/@/ \\@/g' |tr @% '\012\012'
 
-DEPTH = ../../../../
-include ${DEPTH}makefile.master
 
 SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = ..
-prefix = /usr/local
+prefix = /opt/SUNWsamfs
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
 sbindir = ${exec_prefix}/sbin
 libexecdir = ${exec_prefix}/libexec
-datadir = ${prefix}/share
+datadir = /opt/SUNWsamfs
 sysconfdir = ${prefix}/etc
 sharedstatedir = ${prefix}/com
 localstatedir = ${prefix}/var
@@ -39,20 +36,20 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = ..
 
-INSTALL = .././install-sh -c
+INSTALL = /usr/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 transform = s,x,x,
 YACC = bison -y
 GENCAT = 
-PERL = /usr/local/bin/perl
-MV = /bin/mv
-GMSGFMT = /bin/msgfmt
-CC = ${GCC}
+PERL = /opt/csw/bin/perl
+MV = /usr/bin/mv
+GMSGFMT = /usr/bin/gmsgfmt
+CC = gcc
 RANLIB = ranlib
-LN = /bin/ln
-RM = /bin/rm
+LN = /usr/bin/ln
+RM = /usr/bin/rm
 
 EXTRA_DIST = README \
 ccstdc.m4 dmalloc.m4 error.m4 getgroups.m4 getline.m4 getloadavg.m4 \
@@ -79,7 +76,7 @@ default: all
 $(srcdir)/Makefile.in: #M# Makefile.am $(top_srcdir)/configure.in $(ACLOCAL) 
 	cd $(top_srcdir) && automake --gnits m4/Makefile
 
-Makefile: #SUN# $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
@@ -150,16 +147,6 @@ install-data install uninstall all installdirs mostlyclean-generic \
 distclean-generic clean-generic maintainer-clean-generic clean \
 mostlyclean distclean maintainer-clean
 
-#   SUN targets:
-
-SRCS = Makefile.am  Makefile.in \
-ccstdc.m4 dmalloc.m4 error.m4 getgroups.m4 getline.m4 getloadavg.m4 \
-gettext.m4 header.m4 init.m4 install.m4 jm-mktime.m4 jm-winsz1.m4 \
-jm-winsz2.m4 lcmessage.m4 lispdir.m4 maintainer.m4 memcmp.m4 mktime.m4 \
-obstack.m4 progtest.m4 protos.m4 ptrdiff.m4 regex.m4 sanity.m4 strftime.m4 \
-strtod.m4 termios.m4 uptime.m4 winsz.m4
-
-INCS =
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

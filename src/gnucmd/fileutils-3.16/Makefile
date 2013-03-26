@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.5 2007/10/08 15:46:40 dr161460 Exp $
 # Generated automatically from Makefile.in by configure.
 # Makefile.in generated automatically by automake 1.1l from Makefile.am
 
@@ -9,19 +8,15 @@
 
 SHELL = /bin/sh
 
-# SUN defines
-DEPTH = ../../../
-include ${DEPTH}makefile.master
-
 srcdir = .
 top_srcdir = .
-prefix = /usr/local
+prefix = /opt/SUNWsamfs
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
 sbindir = ${exec_prefix}/sbin
 libexecdir = ${exec_prefix}/libexec
-datadir = ${prefix}/share
+datadir = /opt/SUNWsamfs
 sysconfdir = ${prefix}/etc
 sharedstatedir = ${prefix}/com
 localstatedir = ${prefix}/var
@@ -37,24 +32,24 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = .
 
-INSTALL = ./install-sh -c
+INSTALL = /usr/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 transform = s,x,x,
 YACC = bison -y
 GENCAT = 
-PERL = /usr/local/bin/perl
-MV = /bin/mv
-GMSGFMT = /bin/msgfmt
-CC = ${GCC}
+PERL = /opt/csw/bin/perl
+MV = /usr/bin/mv
+GMSGFMT = /usr/bin/gmsgfmt
+CC = gcc
 RANLIB = ranlib
-LN = /bin/ln
-RM = /bin/rm
+LN = /usr/bin/ln
+RM = /usr/bin/rm
 
 AUTOMAKE_OPTIONS = gnits 1.1k
 
-SUBDIRS = lib intl src man m4
+SUBDIRS = lib intl src doc man m4 po
 
 acdir = m4
 ACLOCAL = $(top_srcdir)/aclocal.m4
@@ -80,7 +75,7 @@ default: all
 $(srcdir)/Makefile.in: #M# Makefile.am $(top_srcdir)/configure.in $(ACLOCAL) 
 	cd $(top_srcdir) && automake --gnits Makefile
 
-Makefile: #SUN# $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
@@ -218,9 +213,7 @@ install: install-recursive
 
 uninstall: uninstall-recursive
 
-#SUN# all: all-recursive-am all-am
-all:
-	$(MAKE) all-recursive
+all: all-recursive-am all-am
 
 install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
@@ -305,18 +298,6 @@ cvs-dist: maintainer-check
 #M## Override default rule to use --acdir option
 #M#$(srcdir)/aclocal.m4: configure.in $(acfiles)
 #M#	cd $(srcdir) && aclocal --acdir=$(acdir)
-
-#   SUN targets:
-
-DIRS = doc lib intl m4 man src po 
-SRCS = configure configure.in config.status aclocal.m4 Makefile.am \
-	Makefile.in
-INCS = acconfig.h config.h config.h.in
-
-clean:
-	${GENTARGET}
-
-lint:
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

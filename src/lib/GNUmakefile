@@ -43,7 +43,6 @@ SAMRFT = samrft
 DIRS += \
 	bdb \
 	fsmdb \
-	honeycomb \
 	mysql \
 	samrft \
 	samcat \
@@ -55,9 +54,7 @@ DIRS += \
 	curl \
 	csn \
 	sammgmt \
-	sammgmt/stkapi \
 	sammgmtjni \
-	samsanergy \
 	pax_hdr
 endif
 

@@ -201,7 +201,7 @@ int sam_dk_direct_io(sam_node_t *ip, enum uio_rw rw, int ioflag,
 	uio_t *uiop, cred_t *credp);
 void sam_dk_aio_direct_done(sam_node_t *ip, buf_descriptor_t *bdp,
 	offset_t count);
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 int sam_issue_direct_object_io(sam_node_t *ip, enum uio_rw rw, struct buf *bp,
 	sam_ioblk_t *iop, offset_t contig);
 buf_t *sam_pageio_object(sam_node_t *ip, sam_ioblk_t *iop, page_t *pp,

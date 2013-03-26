@@ -599,6 +599,7 @@ arcopyInit(
 	memset(&RemoteArchive, 0, sizeof (RemoteArchive));
 	if (Instance->CiFlags & CI_disk) {
 		DkInit();
+#if !defined(_NoTIVOLI_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		HcInit();
 
@@ -607,7 +608,7 @@ arcopyInit(
 		(void) HcReadFromFile(NULL, NULL, 0);
 		(void) HcCreateSeqnumMeta(NULL, NULL, 0);
 #endif
-
+#endif
 	} else {
 		RmInit();
 	}

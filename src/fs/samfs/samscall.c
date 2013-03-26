@@ -70,8 +70,13 @@
 #include "sam/fioctl.h"
 #include "pub/sam_errno.h"
 #include "sam/mount.h"
+
+/* no tivoli SANergy */
+#if !defined(_NoTIVOLI_)
 #include "samsanergy/fsmdc.h"
 #include "samsanergy/fsmdcsam.h"
+#endif
+
 #include "sam/syscall.h"
 #include "sam/samevent.h"
 
@@ -1109,6 +1114,9 @@ sam_get_san_ids_call(
 	int size,
 	cred_t *credp)
 {
+#if defined(_NoTIVOLI_)
+	return(ENOTSUP);
+#else
 	struct sam_get_san_ids_arg args;
 	char *a_path;
 	FSVOLCOOKIE *a_volcookie;
@@ -1138,6 +1146,7 @@ sam_get_san_ids_call(
 		a_filecookie = (FSFILECOOKIE *)args.fc.p64;
 	}
 	return (sam_gen_file_cookies(a_path, a_volcookie, a_filecookie));
+#endif
 }
 
 
@@ -1159,6 +1168,9 @@ sam_san_ops_call(
 	int size,
 	cred_t *credp)
 {
+#if defined(_NoTIVOLI_)
+	return(ENOTSUP);
+#else
 	struct sam_san_ops_arg args;
 	FSVOLCOOKIE *a_volcookie;
 	FSFILECOOKIE *a_filecookie;
@@ -1196,6 +1208,7 @@ sam_san_ops_call(
 	}
 	return sam_san_ops(a_volcookie, a_filecookie, a_flags,
 	    a_flen, a_start, a_slen, a_mapbuf, a_mapbuflen);
+#endif
 }
 
 
@@ -1213,6 +1226,9 @@ sam_fd_storage_ops_call(
 	int size,
 	cred_t *credp)
 {
+#if defined(_NoTIVOLI_)
+	return(ENOTSUP);
+#else
 	struct sam_fd_storage_ops_arg args;
 	int a_fd;
 	FSMAPINFO *a_mapbuf;
@@ -1241,6 +1257,7 @@ sam_fd_storage_ops_call(
 	}
 	return sam_fd_storage_ops(a_fd, a_flags, a_flen, a_start, a_slen,
 	    a_mapbuf, a_mapbuflen);
+#endif
 }
 
 

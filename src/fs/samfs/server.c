@@ -346,7 +346,7 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 	 * XXX over.
 	 */
 	mutex_enter(&clp->cl_msgmutex);
-	clp->cl_msg_time = lbolt;
+	clp->cl_msg_time = ddi_get_lbolt();
 	clp->cl_lastmsg = SAM_SECOND();
 	if (clp->cl_flags & SAM_CLIENT_SOCK_BLOCKED) {
 		cmn_err(CE_NOTE,
@@ -356,7 +356,7 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 		clp->cl_flags &= ~SAM_CLIENT_SOCK_BLOCKED;
 	}
 	if (msg->hdr.command == SAM_CMD_LEASE) {
-		clp->cl_rcv_time = lbolt;
+		clp->cl_rcv_time = ddi_get_lbolt();
 	}
 	ack = msg->hdr.ack;
 
@@ -727,7 +727,7 @@ sam_get_mount_request(sam_mount_t *mp, sam_san_message_t *msg)
 				 * The client sends the MOUNT_resync to signal
 				 * the end of the client thawing phase.
 				 */
-				clp->cl_resync_time = lbolt;
+				clp->cl_resync_time = ddi_get_lbolt();
 				break;
 			}
 
@@ -1971,7 +1971,7 @@ sam_new_ino_lease(
 	llp->lease[0].shflags.b.abr = ip->flags.b.abr;
 	TRACE(T_SAM_ABR_LOPEN, SAM_ITOP(ip),
 	    ip->di.id.ino, ip->flags.b.abr, llp->lease[0].shflags.bits);
-	llp->lease[0].time[ltype] = lbolt +
+	llp->lease[0].time[ltype] = ddi_get_lbolt() +
 	    (sam_calculate_lease_timeout(interval) * hz);
 
 	/*
@@ -2506,7 +2506,7 @@ sam_add_ino_lease(
 		    client_ord);
 	} else {
 		llp->lease[index].leases |= lease_mask;
-		llp->lease[index].time[ltype] = lbolt +
+		llp->lease[index].time[ltype] = ddi_get_lbolt() +
 		    (sam_calculate_lease_timeout(interval) * hz);
 
 		/*
@@ -2936,7 +2936,7 @@ sam_extend_lease(
 		if (index >= 0) {
 			if (!wt_leases &&
 			    (llp->lease[index].leases & lease_mask)) {
-				llp->lease[index].time[ltype] = lbolt +
+				llp->lease[index].time[ltype] = ddi_get_lbolt() +
 				    (sam_calculate_lease_timeout(interval) *
 				    hz);
 				extended_leases = lease_mask;
@@ -3876,7 +3876,7 @@ sam_client_getino(sam_node_t *ip, int client_ord)
 		if (ip->waiting_getino) {
 			(void) cv_timedwait_sig(&ip->ilease_cv,
 			    &ip->ilease_mutex,
-			    (lbolt + (DEF_META_TIMEO * hz)));
+			    (ddi_get_lbolt() + (DEF_META_TIMEO * hz)));
 		}
 		ip->getino_waiters--;
 	}

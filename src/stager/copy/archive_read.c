@@ -628,10 +628,11 @@ retry:
 	if (IoThread->io_flags & IO_disk) {
 		ngot = SamrftRead(IoThread->io_rftHandle, buf, nbytes);
 
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		ngot = HcReadArchiveFile(IoThread->io_rftHandle, buf,
 		    nbytes);
-
+#endif
 	} else if (IoThread->io_flags & IO_samremote) {
 		ngot = SamrftRead(IoThread->io_rftHandle, buf, nbytes);
 

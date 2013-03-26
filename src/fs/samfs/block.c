@@ -355,7 +355,7 @@ sam_block_thread(sam_mount_t *mp)
 		 * blocks in the pools (new blocks can be added to the pools
 		 * between when we check for space and when we sleep).
 		 */
-		mp->mi.m_blkth_ran = lbolt;
+		mp->mi.m_blkth_ran = ddi_get_lbolt();
 		if (blocks_allocated) {
 			mp->mi.m_blkth_alloc = mp->mi.m_blkth_ran;
 			/* If threads waiting for blocks */
@@ -2200,7 +2200,7 @@ sam_grow_fs(
 		return (22);
 	}
 
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 	/*
 	 * Check for validity of object pool group.  All members of an
 	 * object pool must have the same DAU.

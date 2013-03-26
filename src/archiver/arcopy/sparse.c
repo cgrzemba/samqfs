@@ -60,7 +60,9 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "pub/stat.h"
 #include "sam/types.h"
 #include "sam/sam_malloc.h"
+#if !defined(_NoTIVOLI_)
 #include "samsanergy/fsmdc.h"
+#endif
 
 /* Local headers. */
 #include "arcopy.h"
@@ -72,15 +74,16 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 struct FileStoreInfo *Fsip = NULL;
 
 /* Private data. */
+static offset_t fileDataBytes = -1;
+
+#if !defined(_NoTIVOLI_)
+
 static FSMAPINFO *svmap;
 static FS64LONG svlen;
-
-static offset_t fileDataBytes = -1;
 
 /* Private functions. */
 static int sparseArchSetUp(int);
 static int sparseArchGetExtents(struct FileStoreInfo *);
-
 
 /*
  * Build an extent list for the file whose 'fd' we're given.
@@ -116,6 +119,7 @@ GetFileStoreInfo(
 	}
 	fileDataBytes = Fsip->f_nbytes;
 }
+#endif
 
 
 /*
@@ -254,7 +258,7 @@ ReadSparse(
 }
 
 
-
+#if !defined(_NoTIVOLI_)
 /*
  * Return the number of extents that the file
  * has.  This count is needed for the caller to
@@ -407,3 +411,4 @@ sparseArchGetExtents(
 	fp->f_nbytes = nbytes;
 	return (0);
 }
+#endif

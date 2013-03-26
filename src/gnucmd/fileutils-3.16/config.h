@@ -61,15 +61,11 @@
 /* Define as __inline if that's what the C compiler calls it.  */
 /* #undef inline */
 
-/* Define MAJOR_IN_MKDEV if major, minor, and makedev are declared in mkdev.h.  */
-/* Define MAJOR_IN_SYSMACROS if major, minor, and makedev are declared in sysmacros.h.  */
-#ifdef linux
-#undef MAJOR_IN_MKDEV
-#define MAJOR_IN_SYSMACROS 1
-#else
+/* Define if major, minor, and makedev are declared in <mkdev.h>.  */
 #define MAJOR_IN_MKDEV 1
-#undef MAJOR_IN_SYSMACROS
-#endif
+
+/* Define if major, minor, and makedev are declared in <sysmacros.h>.  */
+/* #undef MAJOR_IN_SYSMACROS */
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
@@ -152,7 +148,7 @@
 /* #undef HAVE_OBSTACK */
 
 /* Define to 1 if you have the stpcpy function.  */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define to `unsigned long' if <sys/types.h> doesn't define.  */
 /* #undef ino_t */
@@ -161,7 +157,7 @@
 #define HAVE_STRUCT_UTIMBUF 1
 
 /* Define to gnu_mktime if the replacement function should be used.  */
-/* #undef mktime */
+#define mktime rpl_mktime
 
 /* Define if there is no specific function for reading the list of
    mounted filesystems.  fread will be used to read /etc/mnttab.  [SVR2]  */
@@ -342,13 +338,13 @@
 /* #undef HAVE_RPMATCH */
 
 /* Define if you have the setenv function.  */
-/* #undef HAVE_SETENV */
+#define HAVE_SETENV 1
 
 /* Define if you have the setlocale function.  */
 #define HAVE_SETLOCALE 1
 
 /* Define if you have the stpcpy function.  */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define if you have the strcasecmp function.  */
 #define HAVE_STRCASECMP 1
@@ -363,7 +359,7 @@
 #define HAVE_STRERROR 1
 
 /* Define if you have the strndup function.  */
-/* #undef HAVE_STRNDUP */
+#define HAVE_STRNDUP 1
 
 /* Define if you have the strrchr function.  */
 #define HAVE_STRRCHR 1

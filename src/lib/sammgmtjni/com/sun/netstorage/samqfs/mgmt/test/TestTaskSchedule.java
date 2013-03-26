@@ -106,9 +106,8 @@ public class TestTaskSchedule {
             c.destroy();
             System.out.println("done");
         } catch (SamFSException e) {
-            tem.out.println("SAM ErrMsg = " + e.getMessage());
+       		System.out.println("SAM ErrMsg = " + e.getMessage());
+     		System.out.println(e);
         }
-    }System.out.println(e);
-            System.out.println("SAM errno = " + e.getSAMerrno());
-            Sys
+    }
 }

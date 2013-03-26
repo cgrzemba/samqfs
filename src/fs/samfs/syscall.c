@@ -55,6 +55,18 @@
 #include <sys/copyops.h>
 #include <sys/conf.h>
 #include <sys/file.h>
+
+#include "pub/stat.h"
+#undef S_ISBLK
+#undef S_ISCHR
+#undef S_ISDIR
+#undef S_ISFIFO
+#undef S_ISGID
+#undef S_ISREG
+#undef S_ISUID
+#undef S_ISLNK
+#undef S_ISSOCK
+
 #include <sys/mode.h>
 #include <sys/uio.h>
 #include <sys/dirent.h>
@@ -92,21 +104,6 @@
 #include "sam/linux_types.h"
 #endif /* linux */
 
-/* The following lines need to stay in this order. */
-#include "pub/stat.h"
-#ifdef sun
-/* These are duplicated in sys/stat.h */
-#undef S_ISBLK
-#undef S_ISCHR
-#undef S_ISDIR
-#undef S_ISFIFO
-#undef S_ISGID
-#undef S_ISREG
-#undef S_ISUID
-#undef S_ISLNK
-#undef S_ISSOCK
-#include <sys/stat.h>
-#endif /* sun */
 #ifdef linux
 #include <linux/stat.h>
 #endif /* linux */

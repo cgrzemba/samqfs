@@ -117,8 +117,8 @@ char *getgroup(gid_t);		/* get group name for gid */
 extern char *program_name;
 #endif
 
-#ifndef	SAM_LIB_GNU		/* Do not define these for GNU code */
 extern	void	error		(int, int, char *, ...);
+#ifdef	SAM_LIB_NOGNU		/* Do not define these for GNU code */
 extern	char *stpcpy		(char *, char *);
 #endif
 

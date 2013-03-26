@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.9 2007/10/08 15:46:41 dr161460 Exp $
 # Generated automatically from Makefile.in by configure.
 # Makefile.in generated automatically by automake 1.1l from Makefile.am
 
@@ -6,23 +5,18 @@
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 
-DEPTH = ../../../../
-include ${DEPTH}makefile.master
 
 SHELL = /bin/sh
 
-#  The interlock and ylwrap scripts failed occasionally due to permissions.
-.NO_PARALLEL:
-
 srcdir = .
 top_srcdir = ..
-prefix = /usr/local
+prefix = /opt/SUNWsamfs
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
 sbindir = ${exec_prefix}/sbin
 libexecdir = ${exec_prefix}/libexec
-datadir = ${prefix}/share
+datadir = /opt/SUNWsamfs
 sysconfdir = ${prefix}/etc
 sharedstatedir = ${prefix}/com
 localstatedir = ${prefix}/var
@@ -38,20 +32,20 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = ..
 
-INSTALL = .././install-sh -c
+INSTALL = /usr/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 transform = s,x,x,
-YACC = ${SAMFS_TOOLS}/bin/bisonkludge -y
+YACC = bison -y
 GENCAT = 
-PERL = /usr/local/bin/perl
-MV = /bin/mv
-GMSGFMT = /bin/msgfmt
-CC = ${GCC}
+PERL = /opt/csw/bin/perl
+MV = /usr/bin/mv
+GMSGFMT = /usr/bin/gmsgfmt
+CC = gcc
 RANLIB = ranlib
-LN = /bin/ln
-RM = /bin/rm
+LN = /usr/bin/ln
+RM = /usr/bin/rm
 
 noinst_LIBRARIES = libfu.a
 
@@ -66,7 +60,7 @@ isdir.c long-options.c makepath.c modechange.c path-concat.c \
 safe-read.c save-cwd.c savedir.c stripslash.c userspec.c xgetcwd.c \
 xmalloc.c xstrdup.c xstrtol.c xstrtoul.c yesno.c
 
-libfu_a_LIBADD =  regex.o euidaccess.o group-member.o rpmatch.o stpcpy.o strndup.o strftime.o getline.o error.o obstack.o fsusage.o mountlist.o 
+libfu_a_LIBADD =  regex.o euidaccess.o group-member.o rpmatch.o mktime.o strftime.o error.o obstack.o fsusage.o mountlist.o 
 libfu_a_DEPENDENCIES = $(libfu_a_LIBADD)
 
 noinst_HEADERS = argmatch.h backupfile.h error.h fnmatch.h fsusage.h \
@@ -117,10 +111,6 @@ TAR = tar
 SOURCES = $(libfu_a_SOURCES)
 OBJECTS = $(libfu_a_OBJECTS)
 
-.INIT:
-	chmod 755 interlock
-	chmod 755 ylwrap
-
 default: all
 
 .SUFFIXES:
@@ -128,7 +118,7 @@ default: all
 $(srcdir)/Makefile.in: #M# Makefile.am $(top_srcdir)/configure.in $(ACLOCAL) 
 	cd $(top_srcdir) && automake --gnits lib/Makefile
 
-Makefile: #SUN# $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
@@ -149,7 +139,6 @@ mostlyclean-compile:
 	rm -f *.o core
 
 clean-compile:
-	test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 
 distclean-compile:
 	rm -f *.tab.c
@@ -319,25 +308,6 @@ clean-tags maintainer-clean-tags distdir info dvi installcheck \
 install-exec install-data install uninstall all installdirs \
 mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
-
-# SUN targets:
-MODIFIED_SRCS =
-SRCS = alloca.c argmatch.c backupfile.c basename.c dirname.c error.c \
-	euidaccess.c fileblocks.c filemode.c fnmatch.c fsusage.c ftruncate.c \
-	full-write.c getdate.c getline.c getdate.y getopt.c \
-	getopt1.c getversion.c group-member.c idcache.c \
-	isdir.c long-options.c makepath.c memcmp.c memset.c mkdir.c modechange.c \
-	mountlist.c obstack.c path-concat.c posixtm.c \
-	regex.c rename.c rmdir.c rpmatch.c rx.c \
-	safe-read.c save-cwd.c savedir.c stpcpy.c strdup.c strftime.c \
-	stripslash.c strndup.c strstr.c strtol.c strtoul.c userspec.c xgetcwd.c \
-	xmalloc.c xstrdup.c xstrtol.c xstrtoul.c yesno.c \
-	Makefile.in posixtm.y 
-
-INCS = argmatch.h backupfile.h error.h fnmatch.h fsusage.h \
-getdate.h getline.h getopt.h group-member.h long-options.h \
-makepath.h modechange.h mountlist.h obstack.h path-concat.h pathmax.h \
-regex.h rx.h save-cwd.h xstrtol.h xstrtoul.h
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

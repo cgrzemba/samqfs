@@ -39,7 +39,7 @@ MPROGS = samtrace trace
 samtrace_SRC = samtrace.c
 trace_SRC	 = trace.c
 
-CFLAGS += -xO3 -mt -lpthread
+CFLAGS += -xO2 -mt -lpthread
 
 else
 # Linux

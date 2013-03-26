@@ -350,7 +350,7 @@ sam_failover_done(sam_mount_t *mp)
 		mp->mt.fi_status &= ~(FS_RESYNCING | FS_THAWING | FS_LOCK_HARD |
 		    FS_SRVR_DONE | FS_CLNT_DONE);
 		mp->ms.m_involuntary = 0;
-		mp->ms.m_sblk_failed = lbolt;
+		mp->ms.m_sblk_failed = ddi_get_lbolt();
 		sam_start_stop_rmedia(mp, SAM_START_DAEMON);
 		sam_sighup_daemons(mp);
 		if (mp->mi.m_wait_frozen) {
@@ -634,7 +634,7 @@ sam_set_block_response(sam_mount_t *mp, sam_san_message_t *msg)
 				memcpy(sblk_addr, mbp->data, rsize);
 #endif /* linux */
 				mp->ms.m_cl_vfs_time = mp->ms.m_sblk_time =
-				    lbolt;
+				    ddi_get_lbolt();
 			}
 			mutex_exit(&mp->ms.m_waitwr_mutex);
 			}
@@ -651,7 +651,7 @@ sam_set_block_response(sam_mount_t *mp, sam_san_message_t *msg)
 				sblk->info.sb.mm_capacity = sp->mm_capacity;
 				sblk->info.sb.mm_space = sp->mm_space;
 			}
-			mp->ms.m_cl_vfs_time = lbolt;
+			mp->ms.m_cl_vfs_time = ddi_get_lbolt();
 			}
 			break;
 
@@ -1275,7 +1275,7 @@ sam_process_callout_request(sam_mount_t *mp, sam_san_message_t *msg)
 					 * than the current expiration
 					 * set it in leasetime.
 					 */
-					new_leasetime = lbolt + (hz * timeo);
+					new_leasetime = ddi_get_lbolt() + (hz * timeo);
 					if (new_leasetime <
 					    ip->cl_leasetime[ltype]) {
 						ip->cl_leasetime[ltype] =

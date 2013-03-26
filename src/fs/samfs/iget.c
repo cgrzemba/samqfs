@@ -1663,9 +1663,9 @@ sam_wait_space(
 	error = ret_error;
 	TRACE(T_SAM_WAIT_FSPACE1, mp->mi.m_vfsp, (sam_tr_t)mp, error,
 	    mp->mi.m_fsfullmsg);
-	mp->mi.m_fsfull = lbolt;
+	mp->mi.m_fsfull = ddi_get_lbolt();
 	if (mp->mi.m_next == NULL) {
-		if ((lbolt - mp->mi.m_fsfullmsg) >
+		if ((ddi_get_lbolt() - mp->mi.m_fsfullmsg) >
 		    (5 * 60 * drv_usectohz(1000000))) {
 			mp->mi.m_fsfullmsg = mp->mi.m_fsfull;
 			cmn_err(CE_NOTE,

@@ -30,10 +30,12 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
+# DIRS = dvt pdvt trace samsnoop san icount
+
 ifeq ($(OS), Linux)
 DIRS = trace
 else
-DIRS = dvt pdvt trace samsnoop san icount
+DIRS = dvt trace icount
 endif
 
 include $(DEPTH)/mk/targets.mk

@@ -1680,7 +1680,7 @@ lqfs_read_strategy(ml_unit_t *ul, buf_t *bp)
 			bp->b_error = EIO;
 			biodone(bp);
 		} else {
-			LQFS_SET_IOTSTAMP(ul->un_qfsvfs, lbolt);
+			LQFS_SET_IOTSTAMP(ul->un_qfsvfs, ddi_get_lbolt());
 			logstats.ls_lreads.value.ui64++;
 			if ((bp->b_flags & B_READ) == 0) {
 				LQFS_MSG(CE_WARN, "lqfs_read_strategy(): "
@@ -1889,7 +1889,7 @@ lqfs_write_strategy(ml_unit_t *ul, buf_t *bp)
 	    !(matamap_overlap(ul->un_matamap, mof, ord, nb) &&
 	    ((bp->b_flags & B_PHYS) == 0)));
 
-	LQFS_SET_IOTSTAMP(ul->un_qfsvfs, lbolt);
+	LQFS_SET_IOTSTAMP(ul->un_qfsvfs, ddi_get_lbolt());
 	logstats.ls_lwrites.value.ui64++;
 
 #ifdef LQFS_TODO_SNAPSHOT

@@ -72,6 +72,12 @@ static char *build_list(sam_db_context_t *con, char *col,
     opt_list_t *list, char *build);
 static int execute_query(sam_db_context_t *con);
 
+char *strmov(register char *dst, register const char *src)
+{
+  while ((*dst++ = *src++)) ;
+  return dst-1;
+}
+
 int samdb_query(samdb_args_t *args) {
 	if (sam_db_connect(args->con) < 0) {
 		fprintf(stderr, "Can't connect to %s database\n", args->fsname);

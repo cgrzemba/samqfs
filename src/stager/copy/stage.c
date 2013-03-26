@@ -141,8 +141,10 @@ StageInit(
 
 	if (IoThread->io_flags & IO_disk) {
 		DkInit();
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		HcInit();
+#endif
 	} else {
 		RmInit();
 	}
@@ -176,8 +178,10 @@ LoadVolume(void)
 
 	if (IoThread->io_flags & IO_disk) {
 		rval = DkLoadVolume();
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		rval = HcLoadVolume();
+#endif
 	} else {
 		rval = RmLoadVolume();
 	}
@@ -196,8 +200,10 @@ NextArchiveFile(void)
 	rval = 0;
 	if (IoThread->io_flags & IO_disk) {
 		rval = DkNextArchiveFile();
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		rval = HcNextArchiveFile();
+#endif
 	}
 	return (rval);
 }
@@ -210,8 +216,10 @@ EndArchiveFile(void)
 {
 	if (IoThread->io_flags & IO_disk) {
 		DkEndArchiveFile();
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		HcEndArchiveFile();
+#endif
 	}
 }
 
@@ -263,8 +271,10 @@ GetPosition(void)
 
 	if (IoThread->io_flags & IO_disk) {
 		position = DkGetPosition();
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		position = HcGetPosition();
+#endif
 	} else {
 		position = RmGetPosition();
 	}
@@ -282,8 +292,10 @@ SeekVolume(
 
 	if (IoThread->io_flags & IO_disk) {
 		position = DkSeekVolume(to);
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		position = HcSeekVolume(to);
+#endif
 	} else {
 		position = RmSeekVolume(to);
 	}
@@ -315,8 +327,10 @@ UnloadVolume(void)
 {
 	if (IoThread->io_flags & IO_disk) {
 		DkUnloadVolume();
+#if !defined(_NoSTK_)
 	} else if (IoThread->io_flags & IO_stk5800) {
 		HcUnloadVolume();
+#endif
 	} else {
 		RmUnloadVolume();
 	}

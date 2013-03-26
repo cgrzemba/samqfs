@@ -30,17 +30,21 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
+ifndef NO_BUILD_STK
+PROG_SRC_STK = hcarchive.c
+endif
+
 PROG = arcopy
 PROG_SRC = \
 	arcopy.c \
 	checksum.c \
 	copyfile.c \
 	dkarchive.c \
-	hcarchive.c \
 	header.c \
 	rmarchive.c \
 	setarch.c \
-	sparse.c
+	sparse.c \
+	$(PROG_SRC_STK)
 
 include ../archiver.mk
 

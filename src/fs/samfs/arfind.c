@@ -153,7 +153,7 @@ sam_arfind_call(
 
 		mutex_enter(&ab->ab_bufmutex);
 		retval = cv_timedwait_sig(&ab->ab_waitcv, &ab->ab_bufmutex,
-		    lbolt + (af.AfWait * hz));
+		    ddi_get_lbolt() + (af.AfWait * hz));
 		mutex_exit(&ab->ab_bufmutex);
 		if (retval == 0) {
 			/*

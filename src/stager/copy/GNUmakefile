@@ -30,6 +30,8 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
+#		hcstage.c \
+
 PROG = copy
 PROG_SRC = \
 		archive_read.c \
@@ -42,7 +44,6 @@ PROG_SRC = \
 		double_buffer.c \
 		error_retry.c \
 		filesys.c \
-		hcstage.c \
 		log.c \
 		rmstage.c \
 		stage.c \

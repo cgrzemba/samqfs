@@ -104,7 +104,7 @@ trans_roll_wait(mt_map_t *logmap, callb_cpr_t *cprinfop)
 	logmap->mtm_flags &= ~(MTM_FORCE_ROLL | MTM_ROLLING);
 	CALLB_CPR_SAFE_BEGIN(cprinfop);
 	(void) cv_timedwait(&logmap->mtm_to_roll_cv, &logmap->mtm_mutex,
-	    lbolt + trans_roll_tics);
+	    ddi_get_lbolt() + trans_roll_tics);
 	CALLB_CPR_SAFE_END(cprinfop, &logmap->mtm_mutex);
 	logmap->mtm_flags |= MTM_ROLLING;
 	mutex_exit(&logmap->mtm_mutex);

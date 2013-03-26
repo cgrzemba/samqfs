@@ -211,7 +211,7 @@ sam_reclaim_thread(sam_mount_t *mp)
 		 * XXX - Is this still useful now that we only handle
 		 * blocks here?
 		 */
-		wait_time = lbolt + (SAM_RECLAIM_DEFAULT_SECS * hz);
+		wait_time = ddi_get_lbolt() + (SAM_RECLAIM_DEFAULT_SECS * hz);
 
 		(void) cv_timedwait(&mp->mi.m_inode.put_cv,
 		    &mp->mi.m_inode.put_mutex,
@@ -503,7 +503,7 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 		now = 0;
 		forced_expiration = 1;
 	} else {
-		now = lbolt;
+		now = ddi_get_lbolt();
 		forced_expiration = 0;
 	}
 
@@ -840,14 +840,14 @@ sam_expire_server_leases(sam_schedule_entry_t *entry)
 	if (new_wait_time != LONG_MAX) {
 		rerun = TRUE;
 		mp->mi.m_sr_leasesch = 1;
-		ticks = new_wait_time - lbolt;
+		ticks = new_wait_time - ddi_get_lbolt();
 		if (ticks < SAM_EXPIRE_MIN_TICKS) {
 			ticks = SAM_EXPIRE_MIN_TICKS;
 		}
 		if (ticks > SAM_EXPIRE_MAX_TICKS) {
 			ticks = SAM_EXPIRE_MAX_TICKS;
 		}
-		mp->mi.m_sr_leasenext = ticks + lbolt;
+		mp->mi.m_sr_leasenext = ticks + ddi_get_lbolt();
 	}
 	mutex_exit(&samgt.schedule_mutex);
 
@@ -952,7 +952,7 @@ sam_sched_expire_server_leases(
 	if ((ticks > SAM_EXPIRE_MAX_TICKS) && !force) {
 		ticks = SAM_EXPIRE_MAX_TICKS;
 	}
-	next = ticks + lbolt;
+	next = ticks + ddi_get_lbolt();
 	if (force || (mp->mi.m_sr_leasesch == 0) ||
 	    (next < (mp->mi.m_sr_leasenext - SAM_EXPIRE_MIN_TICKS))) {
 		mp->mi.m_sr_leasenext = next;
@@ -1096,7 +1096,7 @@ sam_resync_server(sam_schedule_entry_t *entry)
 					if (clp->cl_sh.sh_fp != NULL &&
 					    clp->cl_rcv_time >=
 					    mp->ms.m_resync_time) {
-						int delay = (lbolt -
+						int delay = (ddi_get_lbolt() -
 						    clp->cl_rcv_time) / hz;
 
 	/* N.B. Bad indentation here to meet cstyle requirements */
@@ -1184,7 +1184,7 @@ sam_resync_server(sam_schedule_entry_t *entry)
 	max_lease = MAX(mp->mt.fi_lease[0], mp->mt.fi_lease[1]);
 	max_lease = MAX(max_lease, mp->mt.fi_lease[2]);
 	max_lease = MAX(max_lease, DEF_LEASE_TIME);
-	diff_time = (lbolt - mp->ms.m_resync_time)/hz;
+	diff_time = (ddi_get_lbolt() - mp->ms.m_resync_time)/hz;
 	failover_done = FALSE;
 
 	if (/* sync_awaited && */ resyncing) {

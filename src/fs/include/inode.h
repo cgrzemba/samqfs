@@ -1089,7 +1089,7 @@ void sam_unset_operation_nb(struct sam_mount *mp);
 int sam_open_operation_nb_unless_idle(sam_node_t *ip);
 int sam_access_ino_ul(void *ip, int mode, cred_t *credp);
 
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 int sam_map_osd(sam_node_t *ip, offset_t offset, offset_t count,
 	sam_map_t flag, struct sam_ioblk *iop);
 int sam_issue_object_io(struct sam_mount *mp, sam_osd_handle_t oh,
@@ -1174,7 +1174,7 @@ int sam_ioctl_file_cmd(sam_node_t *ip, int, int *, int flag, int *rvp,
 int sam_proc_lockfs(sam_node_t *ip, int cmd, int *arg, int flag, int *rvp,
 	cred_t *credp);
 #ifdef sun
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 int sam_obj_ioctl_cmd(sam_node_t *ip, int, int *, int *rvp, cred_t *credp);
 #else
 #define	sam_obj_ioctl_cmd(ip, a, b, rvp, credp)	(ENOTSUP)

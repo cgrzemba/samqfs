@@ -52,6 +52,7 @@
 #		lint		$(DIRS)
 #
 #	targets.mk should be included after all definitions and includes
+JAVA_HOME = /usr
 
 .PRECIOUS:  .o %.o $(OBJ_DIR)/%.o
 
@@ -221,9 +222,9 @@ endif
 # setup general java compile rules here
 #
 .SUFFIXES: .mid .class .java
-.java.class $(OBJ_DIR)/%.class:	%.java
+.java.class: %.java
 	$(JC) $(JFLAGS) $(JDEBUG) $<
-
+ 
 .class.mid:
 	$(JP) $(JFLAGS) -s -p $(JDEPTH).$* > $*.mid
 
@@ -244,8 +245,8 @@ endif
 %.jar: $(JAVAOBJS)
 	@rm -f $@
 	@echo "creating jar file ($@)..."
-	@cd $(OBJ_DIR); \
-	$(JAVA_HOME)/bin/jar cf $@ $(patsubst $(OBJ_DIR)/%,%,$(JAVAOBJS))
+	cd $(DEPTH)/lib/$(OBJ_DIR); \
+	$(JAVA_HOME)/bin/jar cf $@ $(patsubst $(DEPTH)/lib/$(OBJ_DIR)/%,%,$(JAVAOBJS))
 	@echo done
 
 java_hdrs:	$(JAVAOBJS)

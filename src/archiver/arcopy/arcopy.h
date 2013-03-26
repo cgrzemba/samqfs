@@ -174,6 +174,7 @@ void DkUpdateVolumeSeqnum(char *path, char *fname);
 int DkWrite(void *rft, void *buf, size_t nbytes);
 int DkWriteError(void);
 
+#if !defined(_NoSTK_)
 /* hc.c */
 void HcArchiveDone(void);
 void HcBeginArchiveFile(void);
@@ -185,6 +186,7 @@ long HcReadFromFile(void *stream, char *buf, long nbytes);
 int HcWrite(void *rft, void *buf, size_t nbytes);
 int HcWriteError(void);
 int strerror_r(int errnum, char *strerrbuf, size_t buflen);
+#endif
 
 /* header.c */
 void BuildHeader(char *name, int name_l, struct sam_stat *st);

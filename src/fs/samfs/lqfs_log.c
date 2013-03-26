@@ -232,7 +232,7 @@ ldl_strategy(ml_unit_t *ul, buf_t *pb)
 		} else {
 			if (read) {
 				logstats.ls_ldlreads.value.ui64++;
-				LQFS_SET_IOTSTAMP(qfsvfsp, lbolt);
+				LQFS_SET_IOTSTAMP(qfsvfsp, ddi_get_lbolt());
 #ifdef LQFS_TODO_STATS
 				lwp_stat_update(LWP_STAT_INBLK, 1);
 #endif /* LQFS_TODO_STATS */

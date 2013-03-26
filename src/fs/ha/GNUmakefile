@@ -82,12 +82,12 @@ MESSAGE_DIR = /opt/SUNWsamfs/lib/locale
 # installed, typically on the build machine itself, in
 # /usr/cluster/
 #
-SC31TOP = /
+SC31TOP = ${HOME}/samfs/ohac/
 
 DEPCFLAGS = -D TEXT_DOMAIN=\"$(TEXT_DOMAIN)\"
 DEPCFLAGS += -D MESSAGE_DIR=\"$(MESSAGE_DIR)\"
 DEPCFLAGS += -I/usr/include
-DEPCFLAGS += -I$(SC31TOP)usr/cluster/include
+DEPCFLAGS += -I$(SC31TOP)usr/src/head -I$(SC31TOP)usr/src/sys
 DEPCFLAGS += -I$(DEPTH)/include
 DEPCFLAGS += -I$(DEPTH)/src/fs/include -I$(DEPTH)/src/fs/include/$(OBJ_DIR)
 

@@ -349,7 +349,7 @@
 	mutex_enter(&ip->ilease_mutex);					\
 	ip->cl_leaseused[t]--;						\
 	if ((ip->cl_leaseused[t] == 0) &&				\
-	    (ip->cl_leasetime[t] <= lbolt)) {				\
+	    (ip->cl_leasetime[t] <= ddi_get_lbolt())) {				\
 		sam_sched_expire_client_leases(ip->mp, 0, FALSE);	\
 	}								\
 	mutex_exit(&ip->ilease_mutex);					\

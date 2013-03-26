@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.4 2007/10/08 15:46:42 dr161460 Exp $
 # Generated automatically from Makefile.in by configure.
 # Makefile.in generated automatically by automake 1.1l from Makefile.am
 
@@ -6,20 +5,18 @@
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 
-DEPTH = ../../../../
-include ${DEPTH}makefile.master
 
 SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = ..
-prefix = /usr/local
+prefix = /opt/SUNWsamfs
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
 sbindir = ${exec_prefix}/sbin
 libexecdir = ${exec_prefix}/libexec
-datadir = ${prefix}/share
+datadir = /opt/SUNWsamfs
 sysconfdir = ${prefix}/etc
 sharedstatedir = ${prefix}/com
 localstatedir = ${prefix}/var
@@ -35,20 +32,20 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = ..
 
-INSTALL = .././install-sh -c
+INSTALL = /usr/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 transform = s,x,x,
 YACC = bison -y
 GENCAT = 
-PERL = /usr/local/bin/perl
-MV = /bin/mv
-GMSGFMT = /bin/msgfmt
-CC = ${GCC}
+PERL = /opt/csw/bin/perl
+MV = /usr/bin/mv
+GMSGFMT = /usr/bin/gmsgfmt
+CC = gcc
 RANLIB = ranlib
-LN = /bin/ln
-RM = /bin/rm
+LN = /usr/bin/ln
+RM = /usr/bin/rm
 
 man_MANS = chgrp.1 chmod.1 chown.1 cp.1 dd.1 df.1 dircolors.1 du.1 install.1 \
 ln.1 ls.1 mkdir.1 mkfifo.1 mknod.1 mv.1 rm.1 rmdir.1 touch.1
@@ -75,7 +72,7 @@ default: all
 $(srcdir)/Makefile.in: #M# Makefile.am $(top_srcdir)/configure.in $(ACLOCAL) 
 	cd $(top_srcdir) && automake --gnits man/Makefile
 
-Makefile: #SUN# $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
@@ -278,13 +275,6 @@ maintainer-clean:  maintainer-clean-generic distclean
 installcheck install-exec install-data install uninstall all \
 installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
-
-# SUN targets:
-MODIFIED_SRCS =
-SRCS = chgrp.1 chmod.1 chown.1 cp.1 dd.1 df.1 dircolors.1 du.1 \
-	install.1 ln.1 ls.1 mkdir.1 mkfifo.1 mknod.1 mv.1 rm.1 rmdir.1 touch.1 \
-    Makefile.am Makefile.in
-INCS =
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

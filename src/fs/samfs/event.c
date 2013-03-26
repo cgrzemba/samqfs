@@ -438,7 +438,7 @@ sam_send_event(
 		while (in == eb->eb_out && em->em_doorp != NULL) {
 			sam_start_notify(mp, em);
 			(void) cv_timedwait_sig(&em->em_waitcv,
-			    &em->em_mutex, lbolt + (1 * hz));
+			    &em->em_mutex, ddi_get_lbolt() + (1 * hz));
 		}
 		if (in == eb->eb_out && em->em_doorp == NULL) {
 			em->em_lost_events++;

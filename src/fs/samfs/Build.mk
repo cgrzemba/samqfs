@@ -34,19 +34,26 @@ ifeq ($(OS), SunOS)
 
 MODULE = samfs
 
+ifndef NO_BUILD_SANERGY
+  echo "value $(NO_BUILD_SANERGY)"
+  SAN_SRCS = san.c
+endif
+
 SRCS1 = bio.c cacl.c clcall.c client.c clmisc.c clcomm.c clvnops.c\
 	copy_extents.c cquota.c creclaim.c ctrunc.c cvnops.c getdents.c \
 	iget.c init.c iput.c lqfs.c lqfs_debug.c lqfs_log.c lqfs_map.c \
 	lqfs_thread.c lqfs_top.c map.c mount.c page.c psyscall.c \
 	qfs_log.c qfs_trans.c rwio.c scd.c stage.c syscall.c thread.c \
-	trace.c vfsops.c
+	trace.c  vfsops.c
 
 SRCS2 = acl.c amld.c arfind.c balloc.c block.c create.c event.c fioctl.c \
 	ialloc.c inode.c lookup.c quota.c reclaim.c remove.c rename.c \
-	rmedia.c rmscall.c samscall.c san.c segment.c server.c srcomm.c \
-	srmisc.c staged.c truncate.c uioctl.c update.c vnops.c
+	rmedia.c rmscall.c samscall.c segment.c server.c srcomm.c \
+	srmisc.c staged.c truncate.c uioctl.c update.c vnops.c \
+	$(SAN_SRCS)
 
-ifeq ($(OS_REVISION), 5.11)
+
+ifeq ($(OS_REVISION_XX), 5.11)
 OSD_SRCS = osdfs.c osdfsops.c objnode.c objnops.c objattrops.c \
 	objctl.c objnops_simops.c objnops_simmem.c \
 	objioctl.c osd.c osdmisc.c
@@ -62,7 +69,7 @@ INCFLAGS = -I../include -I../include/$(OBJ_DIR) -I$(DEPTH)/include/pub/$(OBJ_DIR
 
 DEPCFLAGS += $(INCFLAGS)
 
-CFLAGS  += $(KERNFLAGS) -xO3
+CFLAGS  += $(KERNFLAGS) -xO2
 
 LDFLAGS = -r
 else

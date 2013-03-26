@@ -412,7 +412,7 @@ void sam_report_initial_watermark(sam_mount_t *mp);
 void sam_mount_setwm_blocks(sam_mount_t *mp);
 #endif /* defined sun */
 
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 int sam_open_osd_device(struct samdent *dp, int filemode, cred_t *credp);
 void sam_close_osd_device(sam_osd_handle_t oh, int filemode, cred_t *credp);
 int sam_get_osd_fs_attr(sam_mount_t *mp, sam_osd_handle_t oh,

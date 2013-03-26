@@ -69,8 +69,10 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "mgmt/config/media.h"
 #include "pub/mgmt/error.h"
 #include "pub/mgmt/device.h"
+/* ACSLS stuff ?
 #include "acssys.h"
 #include "acsapi.h"
+*/
 
 /*
  * sam_wrap.c contains functions that closely interface with the SAM shared

@@ -328,7 +328,7 @@ sam_set_server(
 
 			sam_failover_new_server(mp, credp);
 
-			mp->ms.m_resync_time = lbolt;
+			mp->ms.m_resync_time = ddi_get_lbolt();
 			sam_taskq_add(sam_resync_server, mp, NULL, 2 * hz);
 			mutex_enter(&mp->ms.m_waitwr_mutex);
 			mp->mt.fi_status &= ~FS_FREEZING;
@@ -840,7 +840,7 @@ sam_failover_old_server(
 
 	mutex_enter(&mp->ms.m_waitwr_mutex);
 	mp->ms.m_sr_ino_seqno = 1;
-	mp->ms.m_sr_ino_gen = lbolt;
+	mp->ms.m_sr_ino_gen = ddi_get_lbolt();
 	mp->mt.fi_status &= ~FS_SERVER;
 	mp->mt.fi_status |= FS_CLIENT;
 
@@ -955,7 +955,7 @@ sam_failover_new_server(sam_mount_t *mp, cred_t *credp)
 	 * cannot be flushed before becoming the server.
 	 */
 	mp->ms.m_sr_ino_seqno = 1;
-	mp->ms.m_sr_ino_gen = lbolt;
+	mp->ms.m_sr_ino_gen = ddi_get_lbolt();
 	(void) sam_flush_ino(vfsp, SAM_FAILOVER_NEW_SRVR, 0);
 
 	TRACE(T_SAM_FAIL_NEW3, mp, mp->mt.fi_status, mp->ms.m_sharefs.busy,
@@ -1392,7 +1392,7 @@ sam_update_client_status(sam_schedule_entry_t *entry)
 			}
 
 			if (((clp->cl_flags & SAM_CLIENT_NOT_RESP) == 0) &&
-			    (lbolt - clp->cl_msg_time)/hz >
+			    (ddi_get_lbolt() - clp->cl_msg_time)/hz >
 			    (4 * SAM_MIN_DELAY)) {
 				clp->cl_flags |= SAM_CLIENT_NOT_RESP;
 				notify_sharefsd = B_TRUE;

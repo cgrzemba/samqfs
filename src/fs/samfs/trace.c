@@ -559,7 +559,7 @@ sam_await_trace_tbl_data(sam_trace_tbl_t *ubuf)
 
 	mutex_enter(&tp->t_lock);
 	if (!tp->t_wrap && tmp.t_baseticks >= 0 && tp->t_in < tp->t_limit/2) {
-		clock_t when = lbolt;
+		clock_t when = ddi_get_lbolt();
 
 		/*
 		 * If the buffer is less than half filled, wait up to

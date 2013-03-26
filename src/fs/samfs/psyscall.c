@@ -164,7 +164,7 @@ static int sam_get_fspart(void *arg, int size);
 static int sam_get_sblk(void *arg, int size);
 static int sam_check_stripe_group(sam_mount_t *mp, int istart);
 
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 static int sam_osd_device(void *arg, int size, cred_t *credp);
 static int sam_osd_command(void *arg, int size, cred_t *credp);
 extern int sam_check_osd_daus(sam_mount_t *mp);
@@ -326,7 +326,7 @@ sam_priv_syscall(
 			error = sam_sys_shareops(arg, size, credp, rvp);
 			break;
 
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 		case SC_osd_device:
 			error = sam_osd_device(arg, size, credp);
 			break;
@@ -334,7 +334,7 @@ sam_priv_syscall(
 		case SC_osd_command:
 			error = sam_osd_command(arg, size, credp);
 			break;
-#endif /* defined SOL_511_ABOVE */
+#endif /* defined NOOSD_SOL_511_ABOVE */
 
 #ifdef METADATA_SERVER
 		case SC_onoff_client:
@@ -353,7 +353,7 @@ sam_priv_syscall(
 }
 
 
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 /*
  * ----- sam_osd_device - Process the user open & close osd system call.
  */
@@ -488,7 +488,7 @@ out:
 	SAM_SYSCALL_DEC(mp, 0);
 	return (error);
 }
-#endif /* defined SOL_511_ABOVE */
+#endif /* defined NOOSD_SOL_511_ABOVE */
 
 
 /*
@@ -998,7 +998,7 @@ sam_mount_info(
 
 				error = sam_getdev(mp, istart, (FREAD | FWRITE),
 				    &npart, credp);
-#if defined(SOL_511_ABOVE)
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 				if (error == 0) {
 					error = sam_check_osd_daus(mp);
 				}
@@ -1800,7 +1800,7 @@ sam_get_fspart(
 			if (count ||
 			    (mp->mt.fi_status & FS_MOUNTED &&
 			    ((mp->ms.m_sblk_time +
-			    (hz * FSPART_INTERVAL)) < lbolt))) {
+			    (hz * FSPART_INTERVAL)) < ddi_get_lbolt()))) {
 				error = sam_update_shared_sblk(mp,
 				    SHARE_wait_one);
 				error = 0;
@@ -1815,16 +1815,13 @@ sam_get_fspart(
 			}
 			mutex_enter(&mp->ms.m_waitwr_mutex);
 			if ((mp->mt.fi_status & FS_MOUNTED) &&
-			    !(mp->mt.fi_status &
-			    (FS_MOUNTING | FS_UMOUNT_IN_PROGRESS)) &&
+			   !(mp->mt.fi_status & (FS_MOUNTING | FS_UMOUNT_IN_PROGRESS)) &&
 			    (sblk != NULL)) {
 				if (i < sblk->info.sb.fs_count) {
 					mp->mi.m_fs[i].part.pt_space =
-					    (fsize_t)sblk->eq[
-					    i].fs.space*1024;
-					mp->mi.m_fs[ i].part.pt_capacity =
-					    (fsize_t)sblk->eq[
-					    i].fs.capacity*1024;
+					    (fsize_t)sblk->eq[i].fs.space*1024;
+					mp->mi.m_fs[i].part.pt_capacity =
+					    (fsize_t)sblk->eq[i].fs.capacity*1024;
 				}
 			}
 			mutex_exit(&mp->ms.m_waitwr_mutex);

@@ -39,8 +39,11 @@
 
 #include <errno.h>
 
+/* IBM stuff
 #include "samsanergy/fsmdc.h"
 #include "samsanergy/fsmdcsam.h"
+*/
+
 #include "sam/syscall.h"
 #include "sam/lib.h"
 
@@ -71,6 +74,10 @@
 /*
  * SAM-FS system call.
  */
+#define FSLONG long
+#define FS64LONG long
+#define FSMAPINFO  struct _FSMAPINFO
+
 FSLONG
 sam_fd_storage_ops(
 	int fd,

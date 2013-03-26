@@ -1,0 +1,144 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:567: checking for a BSD compatible install
+configure:633: checking whether build environment is sane
+configure:667: checking whether make sets ${MAKE}
+configure:700: checking whether to enable maintainer-specific portions of Makefiles
+configure:725: checking for ln
+configure:757: checking for mv
+configure:789: checking for rm
+configure:821: checking for perl
+configure:852: checking for gcc
+configure:929: checking whether the C compiler (gcc  ) works
+configure:943: gcc -o conftest    conftest.c  1>&5
+configure:963: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:968: checking whether we are using GNU C
+configure:992: checking whether gcc accepts -g
+configure:1020: checking how to run the C preprocessor
+configure:1082: checking whether gcc needs -traditional
+configure:1130: checking for ranlib
+configure:1161: checking for bison
+configure:1191: checking for AIX
+configure:1216: checking for minix/config.h
+configure:1265: checking which of GNU rx or gawk's regex is wanted
+configure:1281: checking for GNU regex in libc
+configure:1365: checking for gcc option to accept ANSI C
+configure:1421: checking for function prototypes
+configure:1581: checking whether sys/types.h defines makedev
+configure:1611: checking for sys/mkdev.h
+configure:1691: checking for dirent.h that defines DIR
+configure:1729: checking for opendir in -ldir
+configure:1812: checking whether closedir returns void
+configure:1850: checking for uid_t in sys/types.h
+configure:1884: checking type of array argument to getgroups
+configure:1955: checking for mode_t
+configure:1988: checking for off_t
+configure:2021: checking return type of signal handlers
+configure:2062: checking for size_t
+configure:2095: checking for uid_t in sys/types.h
+configure:2129: checking for ino_t
+configure:2163: checking for working const
+configure:2238: checking for ANSI C header files
+configure:2342: checking whether struct tm is in sys/time.h or time.h
+configure:2376: checking for st_blocks in struct stat
+configure:2412: checking whether time.h and sys/time.h may both be included
+configure:2447: checking whether stat file-mode macros are broken
+configure:2504: checking for strerror in -lcposix
+configure:2552: checking for string.h
+configure:2552: checking for fcntl.h
+configure:2552: checking for limits.h
+configure:2552: checking for sys/time.h
+configure:2552: checking for sys/timeb.h
+configure:2552: checking for errno.h
+configure:2552: checking for unistd.h
+configure:2552: checking for sys/param.h
+configure:2552: checking for sys/statfs.h
+configure:2552: checking for sys/fstyp.h
+configure:2552: checking for mnttab.h
+configure:2552: checking for mntent.h
+configure:2552: checking for utime.h
+configure:2552: checking for sys/statvfs.h
+configure:2552: checking for sys/vfs.h
+configure:2552: checking for sys/mount.h
+configure:2552: checking for sys/filsys.h
+configure:2552: checking for sys/fs_types.h
+configure:2552: checking for sys/wait.h
+configure:2552: checking for sys/ioctl.h
+configure:2552: checking for sys/fs/s5param.h
+configure:2552: checking for values.h
+configure:2591: checking for basename
+configure:2591: checking for euidaccess
+configure:2591: checking for memcpy
+configure:2591: checking for memcmp
+configure:2591: checking for memset
+configure:2647: checking for group_member
+configure:2701: checking for mkdir
+configure:2701: checking for rmdir
+configure:2758: checking for rename
+configure:2758: checking for rpmatch
+configure:2758: checking for stpcpy
+configure:2758: checking for strcasecmp
+configure:2758: checking for strdup
+configure:2816: checking for strndup
+configure:2816: checking for strstr
+configure:2816: checking for strtol
+configure:2816: checking for strtoul
+configure:2875: checking for sys/time.h
+configure:2912: checking for working mktime
+configure:3009: checking for sys/time.h
+configure:3046: checking for working GNU strftime
+configure:3183: checking for getline
+configure:3233: checking for working getline function
+configure:3347: checking for bcopy
+configure:3347: checking for endgrent
+configure:3347: checking for endpwent
+configure:3347: checking for fchdir
+configure:3347: checking for ftime
+configure:3347: checking for ftruncate
+configure:3347: checking for getcwd
+configure:3347: checking for getmntinfo
+configure:3347: checking for gettimeofday
+configure:3347: checking for isascii
+configure:3347: checking for lchown
+configure:3347: checking for listmntent
+configure:3347: checking for memcpy
+configure:3347: checking for mkfifo
+configure:3347: checking for strchr
+configure:3347: checking for strerror
+configure:3347: checking for strrchr
+configure:3401: checking for error_at_line
+configure:3431: checking for obstacks
+configure:3466: checking POSIX termios
+configure:3497: checking whether use of TIOCGWINSZ requires sys/ioctl.h
+configure:3556: checking for vprintf
+configure:3663: checking for working alloca.h
+configure:3696: checking for alloca
+configure:3890: checking whether utime accepts a null argument
+configure:3936: checking for struct utimbuf
+configure:3981: checking for working fnmatch
+configure:4027: checking for d_ino member in directory struct
+configure:4082: checking for getmntent in -lsun
+configure:4120: checking for getmntent in -lseq
+configure:4158: checking for getmntent in -lgen
+configure:4202: checking for getmntent
+configure:4265: checking for listmntent of Cray/Unicos-9
+configure:4309: checking for one-argument getmntent function
+configure:4331: checking for two-argument getmntent function
+configure:4614: checking how to get filesystem space usage
+configure:4626: checking statvfs function (SVR4)
+configure:4947: checking for ftruncate
+configure:5049: checking for statfs that truncates block counts
+configure:5089: checking for getgroups
+configure:5193: checking for working getgroups
+configure:5241: checking for main in -lypsec
+configure:5286: checking for main in -lldgc
+configure:5330: checking for AFS
+configure:5337: checking for inline
+configure:5380: checking for unistd.h
+configure:5419: checking for getpagesize
+configure:5472: checking for working mmap
+configure:5648: checking for argz.h
+configure:5648: checking for limits.h
+configure:5648: checking for locale.h
+configure:5648: checking for nl_types.h

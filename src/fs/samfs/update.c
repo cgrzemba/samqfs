@@ -182,10 +182,10 @@ sam_update_filsys(
 		 * Get capacity and space for OSDs in this file
 		 * system if it hasn't been done for 2 seconds.
 		 */
-		if (((mp->ms.m_sr_vfs_time + (2*hz)) < lbolt) ||
+		if (((mp->ms.m_sr_vfs_time + (2*hz)) < ddi_get_lbolt()) ||
 		    (mp->ms.m_sr_vfs_time == 0)) {
 			sam_osd_update_sblk(mp);
-			mp->ms.m_sr_vfs_time = lbolt;
+			mp->ms.m_sr_vfs_time = ddi_get_lbolt();
 		}
 	}
 
@@ -669,6 +669,9 @@ sam_flush_extents(sam_node_t *ip)
 	    SAM_IS_OBJECT_FILE(ip)) {
 		return (0);
 	}
+    for (i = 0; i < (NIEXT+1); i++) {
+        kptr[i] = -1;
+    }
 
 	if (ip->di.extent[NDEXT] != 0) {
 		daddr_t blkno;
@@ -676,9 +679,6 @@ sam_flush_extents(sam_node_t *ip)
 		blkno = ip->di.extent[NDEXT];
 		blkno <<= (ip->mp->mi.m_bn_shift + SAM2SUN_BSHIFT);
 		blkflush(ip->mp->mi.m_fs[ip->di.extent_ord[NDEXT]].dev, blkno);
-	}
-	for (i = 0; i < (NIEXT+1); i++) {
-		kptr[i] = -1;
 	}
 	for (i = (NOEXT - 1); i > NDEXT; i--) {
 		int set;

@@ -61,12 +61,17 @@
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 #include <dlfcn.h>
+#if !defined(_NoSTK_)
 #include "acssys.h"
 #include "acsapi.h"
+#else
+#define POOL int
+#endif
 
 static void	Usage(void);
 static void    *map_sym(void *, char *);
 
+#if !defined(_NoSTK_)
 #define	ACS_STAT(t)	char *(*t)(STATUS)
 #define	ACS_QP(t)	STATUS (*t)(SEQ_NO, POOL[], ushort_t)
 #define	ACS_QS(t)	STATUS (*t)(SEQ_NO, POOL[], ushort_t)
@@ -77,6 +82,7 @@ static void    *map_sym(void *, char *);
 				VOLRANGE[], BOOLEAN, ushort_t)
 #define	ACS_PORTNUM	"ACSAPI_SSI_SOCKET"
 #define	ACS_DEF_PORTNUM 50004
+#endif
 
 #define	FIFO_PATH	"/FIFO_CMD"
 
@@ -101,12 +107,14 @@ main(int argc, char **argv)
 	void   *api_handle;
 	POOL    what_pool = -1;
 
+#if !defined(_NoSTK_)
 	ACS_STAT(dl_acs_status);
 	ACS_QP(dl_acs_query_pool);
 	ACS_QS(dl_acs_query_scratch);
 	ACS_RSP(dl_acs_response);
 	ACS_SA(dl_acs_set_access);
 	ACS_SS(dl_acs_set_scratch);
+#endif
 
 	CustmsgInit(0, NULL);
 
@@ -235,6 +243,7 @@ main(int argc, char **argv)
 		    program_name);
 		exit(1);
 	}
+#if !defined(_NoSTK_)
 	if (what_pool >= 0 || pool_count > 0) {
 		if ((api_handle =
 		    dlopen("libapi.so", RTLD_NOW | RTLD_GLOBAL)) == NULL) {
@@ -263,6 +272,7 @@ main(int argc, char **argv)
 		if (pool_count > 0 && what_pool < 0)
 			what_pool = 0;
 	}
+#endif
 	if (argc != 1) {
 		Usage();
 		/* NOTREACHED */
@@ -377,7 +387,9 @@ main(int argc, char **argv)
 
 		if (strange)
 			cmd_block.flags |= CMD_IMPORT_STRANGE;
-	} else if (what_pool >= 0) {
+	}
+#if !defined(_NoSTK_)
+           else if (what_pool >= 0) {
 		int		err;
 		void	   *buffer, *buffer2;
 		POOL	    pools[MAX_ID];
@@ -601,7 +613,9 @@ main(int argc, char **argv)
 			if (pool_count == 0)
 				exit(0);
 		}
-	} else {
+	}
+#endif
+        else {
 		strncpy(cmd_block.vsn, volser, sizeof (vsn_t));
 		if (audit_eod)
 			cmd_block.flags |= CMD_ADD_VSN_AUDIT;

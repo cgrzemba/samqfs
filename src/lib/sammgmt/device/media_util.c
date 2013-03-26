@@ -69,8 +69,10 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "mgmt/config/media.h"
 #include "pub/mgmt/error.h"
 #include "pub/mgmt/device.h"
+/* ACSLS stuff
 #include "acssys.h"
 #include "acsapi.h"
+*/
 
 /*
  * media_util.c should be renamed to indicate that the functions in this file

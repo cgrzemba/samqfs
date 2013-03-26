@@ -58,15 +58,15 @@ LIB_SRC = \
 	${NATIVEHOME}/jni_reg.c \
 	$(NATIVEHOME)/jni_task_sched.c
 
-DEPCFLAGS += -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/solaris -I$(JNIH) \
+DEPCFLAGS += -I/usr/jdk/instances/jdk1.6.0/include -I/usr/jdk/instances/jdk1.6.0/include/solaris -I$(JNIH) \
 	-I$(DEPTH)/include -I$(DEPTH)/include/pub -DAPI_DEBUG=syslog $(THRCOMP)
 LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -mt -lfsmgmtrpc
 
 BASEPKG = com/sun/netstorage/samqfs/mgmt
 
 JFLAGS =
-JC = $(JAVA_HOME)/bin/javac -deprecation -classpath . -d $(OBJ_DIR)
-JH = $(JAVA_HOME)/bin/javah -classpath $(OBJ_DIR) -d $(JNIH)
+JC = $(JAVA_HOME)/bin/javac -deprecation -classpath . -d $(DEPTH)/lib/$(OBJ_DIR)
+JH = $(JAVA_HOME)/bin/javah -classpath $(DEPTH)/lib/$(OBJ_DIR) -d $(JNIH)
 JSRCS = \
 	$(BASEPKG)/SamFSException.java \
 	$(BASEPKG)/SamFSCommException.java \
@@ -230,9 +230,9 @@ JAVASRCS = $(JSRCS) $(JNATIVESRCS)
 DOT_NAMES = $(shell echo $(JNATIVESRCS:%.java=%.class) | tr '/' '.')
 JAVAHDRS = $(DOT_NAMES:.class=)
 
-JAVAOBJS = $(JNATIVESRCS:%.java=$(OBJ_DIR)/%.class)
-JAVAOBJS += $(JAVASRCS:%.java=$(OBJ_DIR)/%.class)
-JTSTOBJS = $(JTESTSRCS:%.java=$(OBJ_DIR)/%.class)
+# JAVAOBJS += $(JAVASRCS:%.java=$(DEPTH)/lib/$(OBJ_DIR)/%.class)
+JAVAOBJS += $(JAVASRCS:%.java=%.class)
+JTSTOBJS = $(JTESTSRCS:%.java=$(DEPTH)/lib/$(OBJ_DIR)/%.class)
 
 JAVA_TARGETS = java_lib
 
@@ -245,6 +245,9 @@ include $(DEPTH)/mk/targets.mk
 
 $(JNIH):
 	mkdir -p $(JNIH)
+
+show:
+	echo $(JAVAOBJS)
 
 clean:	clean_java_local
 #

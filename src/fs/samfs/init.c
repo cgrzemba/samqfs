@@ -647,9 +647,8 @@ samfs_init(
 
 	lqfs_init();
 
+#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
 	sam_objctl_init();
-
-#if defined(SOL_511_ABOVE)
 	sam_sosd_bind();
 #endif
 

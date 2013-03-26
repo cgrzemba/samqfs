@@ -437,7 +437,7 @@ sam_read_sock(
 	}
 
 	/* initialize dynamic thread time limit */
-	thread_spawn_time = lbolt + hz;
+	thread_spawn_time = ddi_get_lbolt() + hz;
 
 	/*
 	 * Read the header first, then read the body.
@@ -648,7 +648,7 @@ sam_read_sock(
 			break;
 		}
 		item->mbp = mbp;
-		item->timestamp = lbolt;
+		item->timestamp = ddi_get_lbolt();
 
 		/*
 		 * For client originator, verify client_ord from the client is
@@ -710,7 +710,7 @@ sam_read_sock(
 		 * If they are, spawn more sharefs threads to help deal with the
 		 * workload.
 		 */
-		if (thread_spawn_time <= lbolt) {
+		if (thread_spawn_time <= ddi_get_lbolt()) {
 			head_item = (m_sharefs_item_t *)list_head(
 			    &mp->ms.m_sharefs.queue.list);
 			if (head_item && ((head_item->timestamp + (hz/4)) <=
@@ -732,7 +732,7 @@ sam_read_sock(
 					    "total threads: %d",
 					    mp->ms.m_sharefs.no_threads);
 #endif
-					thread_spawn_time = lbolt + hz;
+					thread_spawn_time = ddi_get_lbolt() + hz;
 				}
 			}
 		}
@@ -1273,11 +1273,11 @@ sam_sharefs_thread(sam_mount_t *mp)
 
 		item = list_dequeue(&mp->ms.m_sharefs.queue.list);
 		if (item == NULL) {
-			if ((reduction_time <= lbolt) &&
+			if ((reduction_time <= ddi_get_lbolt()) &&
 			    (mp->ms.m_sharefs.put_wait >=
 			    mp->mt.fi_min_pool)) {
 				/* don't reduce too quickly */
-				reduction_time = lbolt + (5*hz);
+				reduction_time = ddi_get_lbolt() + (5*hz);
 				mp->ms.m_sharefs.no_threads--;
 				mutex_exit(&mp->ms.m_sharefs.mutex);
 				mutex_enter(&mp->ms.m_sharefs.put_mutex);
@@ -1297,7 +1297,7 @@ sam_sharefs_thread(sam_mount_t *mp)
 			mutex_enter(&mp->ms.m_sharefs.mutex);
 			mp->ms.m_sharefs.put_wait--;
 			if (mp->ms.m_sharefs.put_wait < mp->mt.fi_min_pool) {
-				reduction_time = lbolt + (60*hz);
+				reduction_time = ddi_get_lbolt() + (60*hz);
 			}
 			continue;
 		}
@@ -1577,11 +1577,11 @@ sam_sharefs_thread(void *arg)
 
 		item = list_dequeue(&mp->ms.m_sharefs.queue.list);
 		if (item == NULL) {
-			if ((reduction_time <= lbolt) &&
+			if ((reduction_time <= ddi_get_lbolt()) &&
 			    (mp->ms.m_sharefs.put_wait >=
 			    mp->mt.fi_min_pool)) {
 				/* don't reduce too quickly */
-				reduction_time = lbolt + (5*hz);
+				reduction_time = ddi_get_lbolt() + (5*hz);
 				mp->ms.m_sharefs.no_threads--;
 				mutex_exit(&mp->ms.m_sharefs.mutex);
 				return (0);
@@ -1595,7 +1595,7 @@ sam_sharefs_thread(void *arg)
 			mutex_enter(&mp->ms.m_sharefs.mutex);
 			mp->ms.m_sharefs.put_wait--;
 			if (mp->ms.m_sharefs.put_wait < mp->mt.fi_min_pool) {
-				reduction_time = lbolt + (60*hz);
+				reduction_time = ddi_get_lbolt() + (60*hz);
 			}
 			continue;
 		}
@@ -1676,7 +1676,7 @@ sam_statfs_thread(void *arg)
 		 */
 		cv_timedwait_light(&mp->mi.m_statfs.put_cv,
 		    &mp->mi.m_statfs.put_mutex,
-		    lbolt + (VFSSTAT_INTERVAL*HZ));
+		    ddi_get_lbolt() + (VFSSTAT_INTERVAL*HZ));
 
 		mutex_exit(&mp->mi.m_statfs.put_mutex);
 

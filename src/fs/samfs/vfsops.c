@@ -299,7 +299,7 @@ samfs_mount(
 
 	mp->ms.m_involuntary = 0;
 	mp->ms.m_sr_ino_seqno = 1;
-	mp->ms.m_sr_ino_gen = lbolt;
+	mp->ms.m_sr_ino_gen = ddi_get_lbolt();
 
 	for (i = 0; i < SAM_MAX_DAU; i++) {
 		int j;
@@ -1231,10 +1231,10 @@ samfs_statvfs(
 			 * Get capacity and space for OSDs in this file
 			 * system if it hasn't been done for 2 seconds.
 			 */
-			if (((mp->ms.m_sr_vfs_time + (2*hz)) < lbolt) ||
+			if (((mp->ms.m_sr_vfs_time + (2*hz)) < ddi_get_lbolt()) ||
 			    (mp->ms.m_sr_vfs_time == 0)) {
 				sam_osd_update_sblk(mp);
-				mp->ms.m_sr_vfs_time = lbolt;
+				mp->ms.m_sr_vfs_time = ddi_get_lbolt();
 			}
 
 		}
@@ -1661,7 +1661,7 @@ sam_clients_mounted(sam_mount_t *mp)
 		if ((clp != NULL) &&
 		    (ord != mp->ms.m_client_ord) &&
 		    (clp->cl_status & FS_MOUNTED) &&
-		    ((lbolt - clp->cl_msg_time) / hz < 3 * SAM_MIN_DELAY)) {
+		    ((ddi_get_lbolt() - clp->cl_msg_time) / hz < 3 * SAM_MIN_DELAY)) {
 			/*
 			 * Host isn't server , is mounted, and sent a message
 			 * recently.

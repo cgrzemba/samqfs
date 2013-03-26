@@ -183,7 +183,7 @@ sam_sync_amld(sam_resync_arg_t *args)
 	mutex_enter(&hdr->cmd_lockout_mutex);
 	hdr->cmd_lock_flag = 1;
 	mutex_exit(&hdr->cmd_lockout_mutex);
-	si_cmd_table->samamld_cmd_queue_hdr.cmd_queue_timeout = lbolt;
+	si_cmd_table->samamld_cmd_queue_hdr.cmd_queue_timeout = ddi_get_lbolt();
 
 	clear_samamld_cmd_queue();
 
@@ -359,17 +359,17 @@ sam_get_amld_cmd(char *arg)
 	}
 
 	mutex_enter(&hdr->cmd_queue_mutex);
-	hdr->cmd_queue_timeout = lbolt;
+	hdr->cmd_queue_timeout = ddi_get_lbolt();
 
 	while ((qcmd = remove_from_queue(hdr->front)) == NULL) {
-		hdr->cmd_queue_timeout = lbolt;
+		hdr->cmd_queue_timeout = ddi_get_lbolt();
 		/*
 		 * Wait for a command to appear on the queue for 8 minutes,
 		 * then try again.  This is mostly to refresh the command queue
 		 * timeout value so the FS knows if sam-amld has been killed or
 		 * just plain died.
 		 */
-		timeout = lbolt + (hz << 9);
+		timeout = ddi_get_lbolt() + (hz << 9);
 		if ((cv_timedwait_sig(&hdr->cmd_queue_cv,
 		    &hdr->cmd_queue_mutex, timeout)) == 0) {
 				mutex_exit(&hdr->cmd_queue_mutex);
@@ -384,7 +384,7 @@ sam_get_amld_cmd(char *arg)
 	qcmd->qcmd_wait = 0;
 	cv_signal(&qcmd->cmd_cv);
 
-	hdr->cmd_queue_timeout = lbolt;
+	hdr->cmd_queue_timeout = ddi_get_lbolt();
 	/*
 	 * Only put the command back on the free list if it was a non-blocking
 	 * command.  Otherwise, the initiating thread will put it back.
@@ -637,7 +637,7 @@ put_cmd_on_queue(sam_fs_fifo_t *cmd, int blk_flag)
 static int
 samamld_timed_out()
 {
-	clock_t now = lbolt;
+	clock_t now = ddi_get_lbolt();
 	clock_t last = si_cmd_table->samamld_cmd_queue_hdr.cmd_queue_timeout;
 
 	if ((last + (hz << 10)) < now) {

@@ -666,7 +666,7 @@ sam_proc_get_lease(
 	RW_LOCK_OS(&ip->inode_rwl, rw_type);
 	if (check_lease_expiration) {
 		if ((ip->cl_leases & lease_mask) &&
-		    (ip->cl_leasetime[ltype] > lbolt)) {
+		    (ip->cl_leasetime[ltype] > ddi_get_lbolt())) {
 
 			/*
 			 * If not expired & not appending, server, or object
@@ -939,11 +939,11 @@ sam_client_record_lease(
 	 * expiration thread before the I/O which needed this lease completes.
 	 */
 	if (ip->cl_short_leases & leasemask) {
-		if (ip->cl_leasetime[leasetype] < lbolt + 2) {
-			ip->cl_leasetime[leasetype] = lbolt + 2;
+		if (ip->cl_leasetime[leasetype] < ddi_get_lbolt() + 2) {
+			ip->cl_leasetime[leasetype] = ddi_get_lbolt() + 2;
 		}
 	} else {
-		ip->cl_leasetime[leasetype] = lbolt + (duration * hz);
+		ip->cl_leasetime[leasetype] = ddi_get_lbolt() + (duration * hz);
 	}
 
 	mutex_exit(&ip->ilease_mutex);
@@ -1481,7 +1481,7 @@ sam_proc_extend_lease(
 		} else {
 			duration = MAX_LEASE_TIME;
 		}
-		ip->cl_leasetime[ltype] = lbolt + (duration * hz);
+		ip->cl_leasetime[ltype] = ddi_get_lbolt() + (duration * hz);
 		mutex_exit(&ip->ilease_mutex);
 		/*
 		 * Schedule client lease reclamation if extending a lease.
@@ -2691,7 +2691,7 @@ sam_proc_block(
 		/*
 		 * Don't update sblk if last update is within 1 second.
 		 */
-		if (((mp->ms.m_cl_vfs_time + hz) > lbolt) &&
+		if (((mp->ms.m_cl_vfs_time + hz) > ddi_get_lbolt()) &&
 		    (mp->ms.m_cl_vfs_time != 0)) {
 			error = 0;
 			goto done;
@@ -3180,7 +3180,7 @@ sam_send_to_server(
 					return (EAGAIN);
 				}
 			} else {
-				int64_t down_time = lbolt - mp->ms.m_srvr_time;
+				int64_t down_time = ddi_get_lbolt() - mp->ms.m_srvr_time;
 
 				if (down_time >
 				    (int64_t)(SAM_MIN_DELAY * hz)) {
@@ -3355,7 +3355,7 @@ sam_srvr_not_responding(sam_mount_t *mp, int errno)
 	 * check for a configuration change.
 	 */
 	mutex_enter(&mp->ms.m_waitwr_mutex);
-	mp->ms.m_sblk_failed = lbolt;
+	mp->ms.m_sblk_failed = ddi_get_lbolt();
 
 	/*
 	 * Set FS_SRVR_DOWN and FS_LOCK_HARD. Note, FS_LOCK_HARD is
@@ -3500,7 +3500,7 @@ sam_wait_server(
 		if (--mp->ms.m_cl_server_wait < 0) {
 			mp->ms.m_cl_server_wait = 0;
 		}
-		mp->ms.m_srvr_time = lbolt;
+		mp->ms.m_srvr_time = ddi_get_lbolt();
 		*clpp = NULL;
 	}
 	mutex_exit(&mp->ms.m_cl_mutex);

@@ -124,6 +124,7 @@
 #include "samfs_linux.h"
 #endif /* linux */
 
+#include "objnode.h"
 
 #ifdef sun
 static void sam_free_incore_inode(sam_node_t *ip);
@@ -352,7 +353,7 @@ sam_inactive_ino(
 			    sizeof (struct sam_inv_inos), KM_SLEEP);
 			rip->ip = ip;
 			rip->id = ip->di.id;
-			rip->entry_time = lbolt;
+			rip->entry_time = ddi_get_lbolt();
 			/*
 			 * Clear mat object I/O ops at delayed inactivate time.
 			 */
@@ -923,7 +924,7 @@ sam_cv_wait1sec_sig(kcondvar_t *cvp, kmutex_t *kmp)
 	}
 #endif /* sun */
 
-	ret = cv_timedwait_sig(cvp, kmp, lbolt + hz);
+	ret = cv_timedwait_sig(cvp, kmp, ddi_get_lbolt() + hz);
 
 #ifdef sun
 	if (mask_signals) {

@@ -2602,7 +2602,7 @@ sam_sys_shareops(void *arg, int size, cred_t *credp, int *rvp)
 				if ((clp != NULL) &&
 				    (ord != mp->ms.m_client_ord) &&
 				    (clp->cl_status & FS_MOUNTED) &&
-				    (lbolt - clp->cl_msg_time)/hz <
+				    (ddi_get_lbolt() - clp->cl_msg_time)/hz <
 				    3*SAM_MIN_DELAY) {
 					r++;
 				}
