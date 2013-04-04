@@ -41,7 +41,7 @@ config_script_fn = '{0}util/{1}'.format(prefix,config_smf_name)
 config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 srcpath_fn = 'srcpath.json.cache'
 
-pkgbase = 'root/'
+destdir = 'root/'
 publisher = 'private'
 repro = 'file:///repo/private'
 builddate = time.strftime('%Y%m%dT%H%M%SZ')
@@ -64,10 +64,9 @@ transform = '''<transform pkg -> emit set pkg.description="Storage and Archive M
 <transform dir path=var(/[a-z]+)?$ -> drop>
 <transform dir path=var/(snmp|svc)(/.+)* -> drop>
 <transform file path=(var|lib)/svc/manifest/.*\.xml$ -> add restart_fmri svc:/system/manifest-import:default>
-<transform pkg -> emit driver name=samioc perms="* 0600 root sys">
-<transform pkg -> emit driver name=samaio perms="* 0600 root sys">
-<transform pkg -> emit driver name=samst perms="* 0600 root sys">
-<transform pkg -> emit driver name=samfs>
+<transform pkg -> emit driver name=samioc perms="* 0666 root sys">
+<transform pkg -> emit driver name=samaio perms="* 0666 root sys">
+<transform pkg -> emit driver name=samst perms="* 0666 root sys">
 <transform pkg -> emit legacy arch=i386 category=system desc="Storage and Archive Manager File System" \
 name="Sun SAM and Sun SAM-QFS software OI (root)" pkg=SUNWsamfsr variant.arch=i386 vendor="Open Source" version={3},REV={0} hotline="Open Source">
 <transform pkg -> emit legacy arch=i386 category=system desc="Storage and Archive Manager File System" \
@@ -110,6 +109,11 @@ name='system/{1}'
         <exec_method
             type='method'
             name='stop'
+            exec=':true'
+            timeout_seconds='0'/>
+        <exec_method
+            type='method'
+            name='refresh'
             exec=':true'
             timeout_seconds='0'/>
         <property_group name='startd' type='framework'>
@@ -182,11 +186,14 @@ else
         rm /tmp/$$.in1 /tmp/$$.in2
 fi
 
-if [ ! -d $ETCDIR]; then
+if [ ! -d $ETCDIR ]; then
+    mkdir -p $ETCDIR
+    chmod 0755 $ETCDIR
+    chgrp sys  $ETCDIR
+    chown root $ETCDIR
+fi
+if [ ! -d $SCRIPTS ]; then
     mkdir -p $SCRIPTS
-    chmod -R 0755 $ETCDIR
-    chgrp -R sys  $ETCDIR
-    chown -R root $ETCDIR
 fi
 cp -rp $PKG_INSTALL_ROOT/{2}etc/csn $ETCDIR
 cp -rp $PKG_INSTALL_ROOT/{2}etc/startup $ETCDIR
@@ -393,10 +400,15 @@ def isScript(fn):
 
 def getPath(fn, dirname, filenames, arch):
     try:
+        # print "getPath search: "+fn
         sp,sfn = fn.split('/')
-        if sp == dirname.rpartition('/')[2] and sfn in filenames:
+        if sp == 'amd64':
+            sp = arch64
+        if sp == 'i386':
+            sp = arch32
+        if sp in dirname.rpartition('/')[2] and sfn in filenames:
             ffn = os.path.join(dirname,sfn)
-#            print "found "+ffn
+            print "found "+ffn
             return ffn
     except ValueError:
         if fn in filenames: 
@@ -416,7 +428,7 @@ def getPath(fn, dirname, filenames, arch):
 def mkDirs(dirlst):
     for dir,uid,gid in dirlst:
         try: 
-            os.makedirs(pkgbase+dir)
+            os.makedirs(destdir+dir)
         except OSError,e:
             if e.errno == 17: # dir exists 
                 pass
@@ -428,8 +440,8 @@ def mkDirs(dirlst):
 #             for l in subprocess.Popen(['ls','-ld','/'+dir],stdout = subprocess.PIPE).stdout.readlines():
 #                 uid = l.split()[2]
 #                 gid = l.split()[3]
-#             print "get {0} {1} {2}".format(pkgbase+dir, uid, gid)
-#         os.system('sudo chown {1}:{2} {0}'.format(pkgbase+dir, uid, gid))
+#             print "get {0} {1} {2}".format(destdir+dir, uid, gid)
+#         os.system('sudo chown {1}:{2} {0}'.format(destdir+dir, uid, gid))
     
 def installFiles(filelst):
     for f,m in filelst:
@@ -449,10 +461,10 @@ def installFiles(filelst):
                 fn = SUNW_names[fn]
             if afn in multiplefn:
                 fn = path.rpartition('/')[2]+'/'+fn
-                afn = path.rpartition('/')[2]+'/'+afn
+#                afn = path.rpartition('/')[2]+'/'+afn
                 path = path.rpartition('/')[0]
 
-            if afn not in srcpaths.keys():
+            if f not in srcpaths.keys():
                 if m & 0110 > 0 : # bin file
                     if path.rpartition('/')[2] == 'amd64':
                         print "isapath 64bit "+fn
@@ -460,11 +472,19 @@ def installFiles(filelst):
                         if fn in isa64_cmds.keys():
                             fn = isa64_cmds[fn]
                         arch = '64'
+                        fn = path.rpartition('/')[2]+'/'+fn
+#                        afn = path.rpartition('/')[2]+'/'+afn
+                        path = path.rpartition('/')[0]
+                        print "amd64 %s %s %s" % (path, afn ,fn)
                     elif path.rpartition('/')[2] == 'i386':
                         print "isapath 32bit "+fn
                         if fn in isa32_cmds.keys():
                             fn = isa32_cmds[fn]
                         arch = '32'
+                        fn = path.rpartition('/')[2]+'/'+fn
+#                        afn = path.rpartition('/')[2]+'/'+afn
+                        path = path.rpartition('/')[0]
+                        print "i386 %s %s %s" % (path, afn ,fn)
                     else:
                         print "32bit bin "+fn
                         arch = '32'
@@ -490,38 +510,39 @@ def installFiles(filelst):
                 if not found:
                     notfounds.append(fn)
                 else: 
-                    srcpaths[afn] = src0
+                    srcpaths[f] = src0
+                    print "cache [%s] %s" % (f,src0)
             else:
-                src0 = srcpaths[afn]
+                src0 = srcpaths[f]
             try:
-                print "copy "+src0+" nach "+ pkgbase+path+'/'+afn
+                print "copy "+src0+" nach "+ destdir+f
             # raise exception if not exist 
-                os.stat(pkgbase+path)
-                shutil.copy(src0,pkgbase+path+'/'+afn)
-                os.chmod(pkgbase+path+'/'+afn,m)
+                os.stat(destdir+path)
+                shutil.copy(src0,destdir+f)
+                os.chmod(destdir+f,m)
             except OSError, e:
                 if e.errno == 2:  # No such directory
-                    os.makedirs(pkgbase+path)
-                    shutil.copy(src0,pkgbase+path+'/'+afn)
-                    os.chmod(pkgbase+path+'/'+afn,m)
+                    os.makedirs(destdir+path)
+                    shutil.copy(src0,destdir+f)
+                    os.chmod(destdir+f,m)
             except IOError, e:
                 if not e.errno in (13,): 
                     print "Unable to copy file. %s %d:%s" % (src0,e.errno,os.strerror(e.errno))
             
 def mkLinks(linklst):
     for lname, fname in linklst:
-        print " lnk %s %s" % (pkgbase+lname,fname)
+        print " lnk %s %s" % (destdir+lname,destdir+fname)
         try:
-           os.link(fname, pkgbase+lname)
+           os.link(destdir+fname, destdir+lname)
         except OSError, e:
            if e.errno != 17:
                print "Error: {0} {1}".format(e.errno,os.strerror(e.errno))
 
 def mkSymLinks(linklst):
     for lname, fname in linklst:
-        print " lnk %s %s" % (pkgbase+lname,fname)
+        print " slnk %s %s" % (destdir+lname,fname)
         try:
-           os.symlink(fname, pkgbase+lname)
+           os.symlink(fname, destdir+lname)
         except OSError, e:
            if e.errno != 17:
                print "Error: {0} {1}".format(e.errno,os.strerror(e.errno))
@@ -562,14 +583,15 @@ def main():
 
     mkDirs(dirlst)
     installFiles(filelst)
-    mkSymLinks(slinklst)
     mkLinks(linklst)
+    mkSymLinks(slinklst)
     with open(srcpath_fn,'w') as f:
         json.dump(srcpaths,f)
 
     defmask = os.umask(0033)
-    with open(pkgbase+config_script_fn,'w') as csf:
+    with open(destdir+config_script_fn,'w') as csf:
         csf.write(config_script)
+    os.chmod(destdir+config_script_fn, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IXUSR)
 
     print "64 bit bins"
     print arch64bins
@@ -578,11 +600,11 @@ def main():
      
 #    os.umask(0233)
     try:
-        cxf = open(pkgbase+config_smf_fn,'w')
+        cxf = open(destdir+config_smf_fn,'w')
     except IOError, e:
         if e.errno == 2:
-            os.makedirs(pkgbase+config_smf_fn.rpartition('/')[0])
-            cxf = open(pkgbase+config_smf_fn,'w')
+            os.makedirs(destdir+config_smf_fn.rpartition('/')[0])
+            cxf = open(destdir+config_smf_fn,'w')
         else:
             raise
     cxf.write(config_smf)
@@ -592,8 +614,8 @@ def main():
     manifest_fn = 'samfs.p5m'
     with open(manifest_fn,'w') as mfn:
         mfn.write('set name=pkg.fmri value=pkg://{0}/system/samfs@{1},5.11-0.151.1.7:{2}\n'.format(publisher,version,builddate))
-    os.system('pkgsend generate {0} >> {1}'.format(pkgbase,manifest_fn))
-    os.system('pkgdepend generate -md {0} {1} > {2}'.format(pkgbase,manifest_fn,manifest_fn+'d'))
+    os.system('pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
+    os.system('pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
     os.system('pkgdepend resolve -m {0}'.format(manifest_fn+'d'))
     with open(transform_fn,'w') as tfn:
         tfn.write(transform)
