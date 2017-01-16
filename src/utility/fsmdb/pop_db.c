@@ -1184,7 +1184,8 @@ db_get_snapshot_status(
 		}
 
 		/* set the snap specific details */
-		details[i].fildmp = details[i].logfil = NULL;
+		details[i].fildmp = NULL;
+		details[i].logfil = NULL;
 		details[i].byteswapped = FALSE;	/* we don't know this here */
 		details[i].csdversion = 0;	/* also unknown */
 		details[i].snaptime = snap->snapdate;
