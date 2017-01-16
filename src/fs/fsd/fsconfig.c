@@ -140,11 +140,8 @@ FsConfig(char *fscfg_name)
 	syslic.license.lic_u.b.shared_san = 1;
 	syslic.license.lic_u.b.segment = 1;
 	syslic.license.lic_u.b.shared_fs = 1;
+	syslic.license.lic_u.b.WORM_fs = 1;
 
-	if ((lstat(SAM_EXECUTE_PATH"/samw", &sb) == 0) &&
-	    S_ISLNK(sb.st_mode)) {
-		syslic.license.lic_u.b.WORM_fs = 1;
-	}
 	if (Daemon || FsCfgOnly) {
 		setlic.value = syslic;
 		if (sam_syscall(SC_setlicense, (void *)&setlic,
@@ -182,33 +179,6 @@ FsConfig(char *fscfg_name)
 
 		mi = &FileSysTable[fn];
 		mi->params.fi_config &= ~MT_SHARED_MO;
-		if (mi->params.fi_type == DT_META_SET) {
-			if (!fast_fs_enabled(&syslic)) {
-				/*
-				 * "License: License does not support 'ma'
-				 * file system: %s aborts"
-				 */
-				FatalError(11050, "fsd");
-			}
-		}
-		if (mi->params.fi_config1 & MC_SHARED_FS) {
-			if (!sharedfs_enabled(&syslic)) {
-				/*
-				 * "License: License does not support
-				 * 'shared' file system: %s aborts"
-				 */
-				FatalError(11081, "fsd");
-			}
-		}
-		if (mi->params.fi_config & MT_ALLWORM_OPTS) {
-			if (!worm_fs_enabled(&syslic)) {
-				/*
-				 * "License: License does not support 'WORM'
-				 * file system: %s aborts"
-				 */
-				FatalError(11086, "fsd");
-			}
-		}
 		if ((mi->params.fi_config1 & MC_SHARED_FS) &&
 		    (mi->params.fi_type == DT_META_OBJ_TGT_SET)) {
 			/* "%s: 'mat' filesystem cannot be shared" */
