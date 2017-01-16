@@ -348,7 +348,7 @@ retrySearch:
 			/*
 			 * Get VSN managed in library.
 			 */
-			if ((strcmp(vsn, vsnTable.data[i].ce->CeVsn) == 0) &&
+			if ((strncmp(vsn, vsnTable.data[i].ce->CeVsn, sizeof(vsn_t)) == 0) &&
 			    (media ==
 			    sam_atomedia(vsnTable.data[i].ce->CeMtype))) {
 				getLibraryVsn(vsnTable.data[i].ce,
@@ -356,7 +356,7 @@ retrySearch:
 			}
 		}
 
-		if ((strcmp(vsn, vsnTable.data[i].vsn) == 0) &&
+		if ((strncmp(vsn, vsnTable.data[i].vsn, sizeof(vsn_t)) == 0) &&
 		    (media == vsnTable.data[i].media)) {
 			/*
 			 * Found VSN.
@@ -1326,8 +1326,8 @@ getManualVsn(
 		vi->media = dev->type;
 		for (i = 0; i < driveTable.entries; i++) {
 			if (driveTable.data[i].dr_lib == vi->lib &&
-			    strcmp(driveTable.data[i].dr_vi.vsn,
-			    vi->vsn) == 0) {
+			    strncmp(driveTable.data[i].dr_vi.vsn,
+			    vi->vsn, sizeof(vsn_t)) == 0) {
 
 				SET_VSN_LOADED(vi);	/* mark loaded */
 				vi->drive = i;		/* set drive */
@@ -1374,8 +1374,8 @@ getLibraryVsn(
 
 					if (dr->dr_lib == vi->lib &&
 					    dr->dr_vi.vsn[0] != '\0' &&
-					    strcmp(dr->dr_vi.vsn,
-					    vi->vsn) == 0) {
+					    strncmp(dr->dr_vi.vsn,
+					    vi->vsn, sizeof(vsn_t)) == 0) {
 
 						/* mark loaded */
 						SET_VSN_LOADED(vi);
@@ -1486,8 +1486,8 @@ getDriveVsn(
 		vi->lib = drive->dr_lib;
 		for (i = 0; i < driveTable.entries; i++) {
 			if (driveTable.data[i].dr_lib == vi->lib &&
-			    strcmp(driveTable.data[i].dr_vi.vsn,
-			    vi->vsn) == 0) {
+			    strncmp(driveTable.data[i].dr_vi.vsn,
+			    vi->vsn, sizeof(vsn_t)) == 0) {
 
 				SET_VSN_LOADED(vi);	/* mark loaded */
 				vi->drive = i;		/* set drive */

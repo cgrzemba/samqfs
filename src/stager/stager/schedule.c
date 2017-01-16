@@ -510,7 +510,7 @@ CancelWork(
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 		if (file->ar[copy].media == stream->media &&
-		    strcmp(file->ar[copy].section.vsn, stream->vsn) == 0) {
+		    strncmp(file->ar[copy].section.vsn, stream->vsn, sizeof(vsn_t)) == 0) {
 
 			found = CancelStream(stream, id);
 			if (found) {
@@ -909,8 +909,8 @@ insertWork(
 				if (added)	/* done checking if added */
 					break;	/*    to the stream */
 			}
-		} else if ((strcmp(file->ar[copy].section.vsn,
-		    stream->vsn) == 0) &&
+		} else if ((strncmp(file->ar[copy].section.vsn,
+		    stream->vsn, sizeof(vsn_t)) == 0) &&
 		    (file->ar[copy].media == stream->media)) {
 /*		    !(IF_COPY_DISKARCH(file, copy))) { */
 
@@ -1450,8 +1450,9 @@ findResources(
 		return (priority);
 	}
 
+    Trace(TR_ERR, "Volume '%40s , %40s' use", stream->vi.vsn, stream->vsn);
 	CLEAR_FLAG(stream->flags, SR_WAIT);
-	ASSERT(strcmp(stream->vi.vsn, stream->vsn) == 0);
+	ASSERT(strncmp(stream->vi.vsn, stream->vsn, sizeof(vsn_t)) == 0);
 
 	/*
 	 * Check availability of stager's copy resources.
@@ -1941,7 +1942,7 @@ isCopyBusy(
 		ci = &CopyInstanceList->cl_data[i];
 		if (ci->ci_busy == B_TRUE &&
 		    ci->ci_lib == library &&
-		    strcmp(ci->ci_vsn, vi->vsn) == 0) {
+		    strncmp(ci->ci_vsn, vi->vsn, sizeof(vsn_t)) == 0) {
 			busy = B_TRUE;
 			break;
 		}
@@ -1986,8 +1987,8 @@ isCopyAvail(
 			    CopyInstanceList->cl_data[i].ci_vsn,
 			    CopyInstanceList->cl_data[i].ci_idletime);
 
-			if (strcmp(CopyInstanceList->cl_data[i].ci_vsn,
-			    vi->vsn) == 0) {
+			if (strncmp(CopyInstanceList->cl_data[i].ci_vsn,
+			    vi->vsn, sizeof(vsn_t)) == 0) {
 				avail = B_TRUE;
 
 			} else if (CopyInstanceList->cl_data[i].
@@ -2456,7 +2457,7 @@ ClearScheduler(
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 		if (media == stream->media &&
-		    strcmp(volume, stream->vsn) == 0) {
+		    strncmp(volume, stream->vsn,sizeof(vsn_t)) == 0) {
 			found = B_TRUE;
 			break;
 		}

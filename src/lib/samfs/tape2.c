@@ -2629,7 +2629,9 @@ tape_properties(dev_ent_t *un, int fd)
 		    (memcmp(un->product_id, "ULTRIUM-TD3     ", 16) == 0 ||
 		    memcmp(un->product_id, "ULT3580-TD3     ", 16) == 0 ||
 		    memcmp(un->product_id, "ULTRIUM-TD4     ", 16) == 0 ||
-		    memcmp(un->product_id, "ULT3580-TD4     ", 16) == 0)) {
+		    memcmp(un->product_id, "ULT3580-TD4     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULTRIUM-TD5     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULT3580-TD5     ", 16) == 0)) {
 
 			/* Checking if the drive supports WORM feature. */
 
@@ -2697,6 +2699,12 @@ tape_properties(dev_ent_t *un, int fd)
 				break;
 			case 0x4c:
 				worm_media = TRUE;	/* Ultrium 4 WORM */
+				break;
+			case 0x58:
+				worm_media = FALSE;	/* Ultrium 5 data */
+				break;
+			case 0x5c:
+				worm_media = TRUE;	/* Ultrium 5 WORM */
 				break;
 			default:
 				DevLog(DL_ERR(3257));
