@@ -197,7 +197,7 @@ mount_thread(void *vparam)
 	free(actmnt_req);
 	thr_exit((void *) NULL);
 	/* NOTREACHED */
-	return ((void *) NULL);
+	/* return ((void *) NULL); */
 }
 
 /*

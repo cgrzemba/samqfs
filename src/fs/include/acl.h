@@ -96,7 +96,7 @@
 		(((ACL)->acl.group->a_perm & 07) << 3))
 
 /*
- * In core access control list entry
+ * In core access control list entry, the same like aclent_t form sys/acl.h for UFS ACL, ZFS ACL ace_t is 2Byte longer!
  */
 typedef struct sam_acl {
 	int			a_type;		/* the type of ACL entry */

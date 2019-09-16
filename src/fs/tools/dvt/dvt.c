@@ -1195,5 +1195,5 @@ void *c)
 		mutex_unlock(&wp->work_lock);
 	}
 	thr_exit(NULL);
-	return (0);
+	/* return (0); */
 }

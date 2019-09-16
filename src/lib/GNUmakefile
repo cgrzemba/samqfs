@@ -40,6 +40,8 @@ ifeq ($(OS), SunOS)
 BDB = bdb
 SAMCAT = samcat
 SAMRFT = samrft
+
+OLD_EXT_LIB = ssl curl
 DIRS += \
 	bdb \
 	fsmdb \
@@ -50,12 +52,10 @@ DIRS += \
 	samapi \
 	samdb \
 	sammig \
-	ssl \
-	curl \
 	csn \
-	sammgmt \
-	sammgmtjni \
 	pax_hdr
+
+# sammgmt
 endif
 
 include $(DEPTH)/mk/targets.mk
@@ -73,7 +73,7 @@ samut:		samconf $(SAMRFT) $(BDB)
 samcat samapi:	samut
 sammgmt/stkapi:	sammgmt
 sammgmtjni:	sammgmt
-csn:		samut curl ssl
+csn:		samut 
 pax_hdr:	samut
 samdb:		samut mysql
 

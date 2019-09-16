@@ -280,7 +280,7 @@ check_sam_daemon(char *sam_daemon_name)
  *
  * Return: success = B_TRUE [or] failure = B_FALSE
  */
-static boolean_t
+boolean_t
 find_string(
 	char *cmd,
 	char *string)

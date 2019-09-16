@@ -154,6 +154,11 @@
 #define	DDI_MODEL_NONE 0
 #endif
 
+#ifdef ORACLE_SOLARIS
+#define DDI_PM_RESUME DDI_PM_RESUME_OBSOLETE
+#define DDI_PM_SUSPEND DDI_PM_SUSPEND_OBSOLETE
+#endif
+
 /*
  * Local Function Prototypes
  */

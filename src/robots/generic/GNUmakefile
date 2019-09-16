@@ -70,6 +70,10 @@ PROG_SRC += \
 	common_scsi.c
 
 DEPCFLAGS += $(THRCOMP)
+# on 11.4 /usr/include/sys/signal.h sigaction.sa_handler definition is changed
+ifneq (,$(filter $(OS_RELEASE),11.4))
+CERRWARN += -erroff=E_ASSIGNMENT_TYPE_MISMATCH
+endif
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
 	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamcat -lsamut \
 	$(LIBSO) $(THRLIBS) -l gen -ldl

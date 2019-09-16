@@ -174,7 +174,9 @@ int timeout_factor(equ_t);
  * we cannot determine the lint program doesn't pick them up.
  */
 
+#ifndef __PRAGMA_REDEFINE_EXTNAME
 extern char *ctime_r(const time_t *, char *, int);
+#endif
 extern struct tm *localtime_r(const time_t *, struct tm *);
 
 #endif /* _AML_PROTO_H */

@@ -39,11 +39,7 @@
 
 /* POSIX headers. */
 
-#ifdef linux
-#include "/usr/include/dirent.h"
-#else
 #include "dirent.h"
-#endif
 
 #include <fcntl.h>
 #include <unistd.h>

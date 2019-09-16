@@ -36,6 +36,7 @@ is applied is otherwise unspecified. */
 #include <stdio.h>
 #include <sys/types.h>
 
+#ifndef ORACLE_SOLARIS
 #if defined __GNU_LIBRARY__ && HAVE_GETDELIM
 
 int
@@ -161,3 +162,4 @@ getdelim (lineptr, n, delimiter, stream)
   return getstr (lineptr, n, stream, delimiter, 0);
 }
 #endif
+#endif /* ORACLE_SOLARIS */

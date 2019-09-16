@@ -236,7 +236,7 @@ main(int ac, char *av[])
 			break;
 
 		case 'h':
-			printf("Usage:\n\t%s [-achps]\n", av[0]);
+			printf("Usage:\n\t%s [-achps]\nall, copy, help, print, swap, warn", av[0]);
 			exit(0);
 			/* NOTREACHED */
 

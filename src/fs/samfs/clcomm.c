@@ -1049,6 +1049,7 @@ sam_put_sock_msg(
 	int error;
 	ushort_t hlength;
 	int flags;
+	clock_t thread_spawn_time;
 
 	switch (vp->v_type) {
 	case VSOCK:
@@ -1135,8 +1136,12 @@ sam_put_sock_msg(
 	 * The kstrputmsg socket function must be used because the VOP_WRITE()
 	 * function sends a SIGPIPE to the user when an EPIPE error occurs.
 	 */
+#if (KERNEL_MINOR >= 4) /* >= Solaris 11.4 */
+	thread_spawn_time = ddi_get_lbolt() + hz;
+	error = kstrputmsg(vp, mbp, NULL, 0, 0, MSG_BAND | MSG_HOLDSIG, flags, thread_spawn_time);
+#else
 	error = kstrputmsg(vp, mbp, NULL, 0, 0, MSG_BAND | MSG_HOLDSIG, flags);
-
+#endif
 out:
 	{
 		int32_t  hdr_error = msg->hdr.error;
@@ -1268,7 +1273,7 @@ sam_sharefs_thread(sam_mount_t *mp)
 			mutex_enter(&mp->ms.m_sharefs.put_mutex);
 			CALLB_CPR_EXIT(&cprinfo);
 			thread_exit();
-			return;
+			/* return; */
 		}
 
 		item = list_dequeue(&mp->ms.m_sharefs.queue.list);
@@ -1283,7 +1288,7 @@ sam_sharefs_thread(sam_mount_t *mp)
 				mutex_enter(&mp->ms.m_sharefs.put_mutex);
 				CALLB_CPR_EXIT(&cprinfo);
 				thread_exit();
-				return;
+				/* return; */
 			}
 			mp->ms.m_sharefs.put_wait++;
 			mutex_exit(&mp->ms.m_sharefs.mutex);

@@ -58,7 +58,7 @@ LIB_SRC = \
 	${NATIVEHOME}/jni_reg.c \
 	$(NATIVEHOME)/jni_task_sched.c
 
-DEPCFLAGS += -I/usr/jdk/instances/jdk1.6.0/include -I/usr/jdk/instances/jdk1.6.0/include/solaris -I$(JNIH) \
+DEPCFLAGS += -I$(JBASE)/include -I$(JBASE)/include/solaris -I$(JNIH) \
 	-I$(DEPTH)/include -I$(DEPTH)/include/pub -DAPI_DEBUG=syslog $(THRCOMP)
 LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -mt -lfsmgmtrpc
 

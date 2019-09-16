@@ -173,7 +173,7 @@ int			sam_find_processes(struct daemons_list *);
 boolean_t	verify_essential_sam_daemons(void);
 boolean_t	is_sam_fsd(void);
 boolean_t	check_sam_daemon(char *);
-static boolean_t	find_string(char *, char *);
+boolean_t	find_string(char *, char *);
 boolean_t	ping_host(char *);
 int			run_cmd_4_hasam(char *);
 

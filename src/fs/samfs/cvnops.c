@@ -2385,7 +2385,11 @@ sam_map_vn(
 	as_rangelock(asp);			/* Lock address space */
 
 	if ((flags & MAP_FIXED) == 0) {
+#if (KERNEL_MINOR >= 4)
+		map_addr(addrpp, length, off, flags);
+#else
 		map_addr(addrpp, length, off, 1, flags);
+#endif
 		if (*addrpp == NULL) {
 			as_rangeunlock(asp);
 			TRACE(T_SAM_MAP_RET, vp, ENOMEM, 0, 0);

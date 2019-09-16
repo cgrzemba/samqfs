@@ -60,7 +60,7 @@ LIB_SRC = \
 		tape2.c \
 		tapealert.c
 
-DEPCFLAGS += -I$(OBJ_DIR) $(THRCOMP)
+DEPCFLAGS += -I$(OBJ_DIR) $(THRCOMP) $(OSDEPCFLAGS)
 LIB_LIBS +=  -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcat $(LIBSO) \
 	-lgen -ldl -lthread -lposix4 -lintl -lsysevent -lnvpair
 
@@ -75,8 +75,11 @@ include $(DEPTH)/mk/targets.mk
 
 .INIT:	$(OBJ_DIR)/dev_logmsgs
 
+EXTRA_CFLAGS_GCC = -O4
+EXTRA_CFLAGS_CSTD = xO4 -xunroll=8
+
 $(OBJ_DIR)/cssimple.o: cssimple.c
-	$(CC) -c $(CFLAGS) -xO4 -xunroll=8 -o $@ cssimple.c
+	$(CC) -c $(CFLAGS) $(EXTRA_CFLAGS_$(COMPILER)) -o $@ cssimple.c
 
 $(OBJ_DIR)/dev_log.o: $(OBJ_DIR)/dev_logmsgs dev_log.c
 

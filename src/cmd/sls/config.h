@@ -41,7 +41,7 @@
 #define HAVE_UTIME_NULL 1
 
 /* Define if you have the vprintf function.  */
-#define HAVE_VPRINTF 1
+#define HAVE_VPRINTF 0
 
 /* Define if int is 16 bits instead of 32.  */
 /* #undef INT_16_BITS */

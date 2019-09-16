@@ -10,135 +10,1304 @@ configure:757: checking for mv
 configure:789: checking for rm
 configure:821: checking for perl
 configure:852: checking for gcc
-configure:929: checking whether the C compiler (gcc  ) works
-configure:943: gcc -o conftest    conftest.c  1>&5
-configure:963: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:929: checking whether the C compiler (/opt/developerstudio12.5/bin/cc  ) works
+configure:943: /opt/developerstudio12.5/bin/cc -o conftest    conftest.c  1>&5
+"configure", line 940: warning: old-style declaration or incorrect type for: main
+configure:963: checking whether the C compiler (/opt/developerstudio12.5/bin/cc  ) is a cross-compiler
 configure:968: checking whether we are using GNU C
-configure:992: checking whether gcc accepts -g
+configure:977: /opt/developerstudio12.5/bin/cc -E conftest.c
 configure:1020: checking how to run the C preprocessor
-configure:1082: checking whether gcc needs -traditional
+configure:1041: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:1130: checking for ranlib
 configure:1161: checking for bison
 configure:1191: checking for AIX
 configure:1216: checking for minix/config.h
+configure:1226: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 1222: cannot find include file: <minix/config.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 1221 "configure"
+#include "confdefs.h"
+#include <minix/config.h>
 configure:1265: checking which of GNU rx or gawk's regex is wanted
 configure:1281: checking for GNU regex in libc
-configure:1365: checking for gcc option to accept ANSI C
+configure:1293: /opt/developerstudio12.5/bin/cc -o conftest -g   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+re_max_failures                     conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 1286 "configure"
+#include "confdefs.h"
+
+int main() {
+extern int re_max_failures; re_max_failures = 1
+; return 0; }
+configure:1365: checking for /opt/developerstudio12.5/bin/cc option to accept ANSI C
+configure:1399: /opt/developerstudio12.5/bin/cc  -c -g  conftest.c 1>&5
+"configure", line 1383: warning: old-style declaration or incorrect type for: choke
+"configure", line 1383: syntax error before or at: me
+"configure", line 1383: warning: old-style declaration or incorrect type for: me
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 1381 "configure"
+#include "confdefs.h"
+#if !defined(__STDC__) || __STDC__ != 1
+choke me
+#endif
+/* DYNIX/ptx V4.1.3 can't compile sys/stat.h with -Xc -D__EXTENSIONS__. */
+#ifdef _SEQUENT_
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
+int main() {
+
+int test (int i, double x);
+struct s1 {int (*f) (int a);};
+struct s2 {int (*f) (double a);};
+; return 0; }
+configure:1399: /opt/developerstudio12.5/bin/cc -qlanglvl=ansi -c -g  conftest.c 1>&5
+cc: Warning: Option -qlanglvl=ansi passed to ld, if ld is invoked, ignored otherwise
+"configure", line 1383: warning: old-style declaration or incorrect type for: choke
+"configure", line 1383: syntax error before or at: me
+"configure", line 1383: warning: old-style declaration or incorrect type for: me
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 1381 "configure"
+#include "confdefs.h"
+#if !defined(__STDC__) || __STDC__ != 1
+choke me
+#endif
+/* DYNIX/ptx V4.1.3 can't compile sys/stat.h with -Xc -D__EXTENSIONS__. */
+#ifdef _SEQUENT_
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
+int main() {
+
+int test (int i, double x);
+struct s1 {int (*f) (int a);};
+struct s2 {int (*f) (double a);};
+; return 0; }
+configure:1399: /opt/developerstudio12.5/bin/cc -std1 -c -g  conftest.c 1>&5
+cc: Warning: Option -d1 passed to ld, if ld is invoked, ignored otherwise
+"configure", line 1383: warning: old-style declaration or incorrect type for: choke
+"configure", line 1383: syntax error before or at: me
+"configure", line 1383: warning: old-style declaration or incorrect type for: me
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 1381 "configure"
+#include "confdefs.h"
+#if !defined(__STDC__) || __STDC__ != 1
+choke me
+#endif
+/* DYNIX/ptx V4.1.3 can't compile sys/stat.h with -Xc -D__EXTENSIONS__. */
+#ifdef _SEQUENT_
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
+int main() {
+
+int test (int i, double x);
+struct s1 {int (*f) (int a);};
+struct s2 {int (*f) (double a);};
+; return 0; }
+configure:1399: /opt/developerstudio12.5/bin/cc -Aa -D_HPUX_SOURCE -c -g  conftest.c 1>&5
+"configure", line 1383: warning: old-style declaration or incorrect type for: choke
+"configure", line 1383: syntax error before or at: me
+"configure", line 1383: warning: old-style declaration or incorrect type for: me
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 1381 "configure"
+#include "confdefs.h"
+#if !defined(__STDC__) || __STDC__ != 1
+choke me
+#endif
+/* DYNIX/ptx V4.1.3 can't compile sys/stat.h with -Xc -D__EXTENSIONS__. */
+#ifdef _SEQUENT_
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
+int main() {
+
+int test (int i, double x);
+struct s1 {int (*f) (int a);};
+struct s2 {int (*f) (double a);};
+; return 0; }
+configure:1399: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:1421: checking for function prototypes
 configure:1581: checking whether sys/types.h defines makedev
+configure:1593: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 1589: warning: implicit function declaration: makedev
+"configure", line 1590: warning: statement not reached
+Undefined			first referenced
+ symbol  			    in file
+makedev                             conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 1586 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+int main() {
+return makedev(0, 0);
+; return 0; }
 configure:1611: checking for sys/mkdev.h
+configure:1621: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:1691: checking for dirent.h that defines DIR
+configure:1704: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:1729: checking for opendir in -ldir
+configure:1748: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -ldir   1>&5
+ld: fatal: library -ldir: not found
+configure: failed program was:
+#line 1737 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char opendir();
+
+int main() {
+opendir()
+; return 0; }
 configure:1812: checking whether closedir returns void
+configure:1826: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 1823: warning: old-style declaration or incorrect type for: main
+"configure", line 1823: warning: implicit function declaration: exit
 configure:1850: checking for uid_t in sys/types.h
 configure:1884: checking type of array argument to getgroups
+configure:1917: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 1899: warning: old-style declaration or incorrect type for: main
+"configure", line 1908: warning: implicit function declaration: getgroups
+"configure", line 1912: warning: implicit function declaration: exit
 configure:1955: checking for mode_t
 configure:1988: checking for off_t
 configure:2021: checking return type of signal handlers
+configure:2043: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:2062: checking for size_t
 configure:2095: checking for uid_t in sys/types.h
 configure:2129: checking for ino_t
 configure:2163: checking for working const
+configure:2217: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
+"configure", line 2208: Warning: Likely uninitialized read (variable b): main 
 configure:2238: checking for ANSI C header files
+configure:2251: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+configure:2318: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 2313: warning: implicit function declaration: exit
 configure:2342: checking whether struct tm is in sys/time.h or time.h
+configure:2355: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:2376: checking for st_blocks in struct stat
+configure:2389: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:2412: checking whether time.h and sys/time.h may both be included
+configure:2426: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:2447: checking whether stat file-mode macros are broken
 configure:2504: checking for strerror in -lcposix
+configure:2523: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lcposix   1>&5
+ld: fatal: library -lcposix: not found
+configure: failed program was:
+#line 2512 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char strerror();
+
+int main() {
+strerror()
+; return 0; }
 configure:2552: checking for string.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for fcntl.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for limits.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/time.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/timeb.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for errno.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for unistd.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/param.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/statfs.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/fstyp.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for mnttab.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 2558: cannot find include file: <mnttab.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 2557 "configure"
+#include "confdefs.h"
+#include <mnttab.h>
 configure:2552: checking for mntent.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 2558: cannot find include file: <mntent.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 2557 "configure"
+#include "confdefs.h"
+#include <mntent.h>
 configure:2552: checking for utime.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/statvfs.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/vfs.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/mount.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/filsys.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 2558: cannot find include file: <sys/filsys.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 2557 "configure"
+#include "confdefs.h"
+#include <sys/filsys.h>
 configure:2552: checking for sys/fs_types.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 2558: cannot find include file: <sys/fs_types.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 2557 "configure"
+#include "confdefs.h"
+#include <sys/fs_types.h>
 configure:2552: checking for sys/wait.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/ioctl.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2552: checking for sys/fs/s5param.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 2558: cannot find include file: <sys/fs/s5param.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 2557 "configure"
+#include "confdefs.h"
+#include <sys/fs/s5param.h>
 configure:2552: checking for values.h
+configure:2562: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:2591: checking for basename
+configure:2619: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2591: checking for euidaccess
+configure:2619: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+euidaccess                          conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 2596 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char euidaccess(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char euidaccess();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_euidaccess) || defined (__stub___euidaccess)
+choke me
+#else
+euidaccess();
+#endif
+
+; return 0; }
 configure:2591: checking for memcpy
+configure:2619: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2591: checking for memcmp
+configure:2619: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2591: checking for memset
+configure:2619: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2647: checking for group_member
+configure:2675: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+group_member                        conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 2652 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char group_member(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char group_member();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_group_member) || defined (__stub___group_member)
+choke me
+#else
+group_member();
+#endif
+
+; return 0; }
 configure:2701: checking for mkdir
+configure:2729: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2701: checking for rmdir
+configure:2729: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2758: checking for rename
+configure:2786: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2758: checking for rpmatch
+configure:2786: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+rpmatch                             conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 2763 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char rpmatch(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char rpmatch();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_rpmatch) || defined (__stub___rpmatch)
+choke me
+#else
+rpmatch();
+#endif
+
+; return 0; }
 configure:2758: checking for stpcpy
+configure:2786: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2758: checking for strcasecmp
+configure:2786: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2758: checking for strdup
+configure:2786: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2816: checking for strndup
+configure:2844: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2816: checking for strstr
+configure:2844: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2816: checking for strtol
+configure:2844: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2816: checking for strtoul
+configure:2844: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:2875: checking for sys/time.h
 configure:2912: checking for working mktime
+configure:2978: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 2947: warning: implicit function declaration: exit
+"configure", line 2966: warning: implicit function declaration: putenv
+configure: failed program was:
+#line 2920 "configure"
+#include "confdefs.h"
+/* Test program from Paul Eggert (eggert@twinsun.com)
+   and Tony Leneis (tony@plaza.ds.adp.com).  */
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+static time_t time_t_max;
+
+/* Values we'll use to set the TZ environment variable.  */
+static const char *const tz_strings[] = {
+  NULL, "GMT0", "JST-9", "EST+3EDT+2,M10.1.0/00:00:00,M2.3.0/00:00:00"
+};
+#define N_STRINGS (sizeof (tz_strings) / sizeof (tz_strings[0]))
+
+static void
+mktime_test (now)
+     time_t now;
+{
+  if (mktime (localtime (&now)) != now)
+    exit (1);
+  now = time_t_max - now;
+  if (mktime (localtime (&now)) != now)
+    exit (1);
+}
+
+int
+main ()
+{
+  time_t t, delta;
+  int i;
+
+  for (time_t_max = 1; 0 < time_t_max; time_t_max *= 2)
+    continue;
+  time_t_max--;
+  delta = time_t_max / 997; /* a suitable prime number */
+  for (i = 0; i < N_STRINGS; i++)
+    {
+      if (tz_strings[i])
+	putenv (tz_strings[i]);
+
+      for (t = 0; t <= time_t_max - delta; t += delta)
+	mktime_test (t);
+      mktime_test ((time_t) 60 * 60);
+      mktime_test ((time_t) 60 * 60 * 24);
+    }
+  exit (0);
+}
+	      
 configure:3009: checking for sys/time.h
 configure:3046: checking for working GNU strftime
+configure:3155: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 3076: warning: implicit function declaration: strcmp
+configure: failed program was:
+#line 3054 "configure"
+#include "confdefs.h"
+ /* Ulrich Drepper provided parts of the test program.  */
+#if STDC_HEADERS
+# include <stdlib.h>
+#endif
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+static int
+compare (const char *fmt, const struct tm *tm, const char *expected)
+{
+  char buf[99];
+  strftime (buf, 99, fmt, tm);
+  if (strcmp (buf, expected))
+    {
+#ifdef SHOW_FAILURES
+      printf ("fmt: \"%s\", expected \"%s\", got \"%s\"\n",
+	      fmt, expected, buf);
+#endif
+      return 1;
+    }
+  return 0;
+}
+
+int
+main ()
+{
+  int n_fail = 0;
+  struct tm *tm;
+  time_t t = 738367; /* Fri Jan  9 13:06:07 1970 */
+  tm = gmtime (&t);
+
+  /* This is necessary to make strftime give consistent zone strings and
+     e.g., seconds since the epoch (%s).  */
+  putenv ("TZ=GMT0");
+
+#undef CMP
+#define CMP(Fmt, Expected) n_fail += compare ((Fmt), tm, (Expected))
+
+  CMP ("%-m", "1");		/* GNU */
+  CMP ("%A", "Friday");
+  CMP ("%^A", "FRIDAY");	/* The ^ is a GNU extension.  */
+  CMP ("%B", "January");
+  CMP ("%^B", "JANUARY");
+  CMP ("%C", "19");		/* POSIX.2 */
+  CMP ("%D", "01/09/70");	/* POSIX.2 */
+  CMP ("%G", "1970");		/* GNU */
+  CMP ("%H", "13");
+  CMP ("%I", "01");
+  CMP ("%M", "06");
+  CMP ("%M", "06");
+  CMP ("%R", "13:06");		/* POSIX.2 */
+  CMP ("%S", "07");
+  CMP ("%T", "13:06:07");	/* POSIX.2 */
+  CMP ("%U", "01");
+  CMP ("%V", "02");
+  CMP ("%W", "01");
+  CMP ("%X", "13:06:07");
+  CMP ("%Y", "1970");
+  CMP ("%Z", "GMT");
+  CMP ("%_m", " 1");		/* GNU */
+  CMP ("%a", "Fri");
+  CMP ("%^a", "FRI");
+  CMP ("%b", "Jan");
+  CMP ("%^b", "JAN");
+  CMP ("%c", "Fri Jan  9 13:06:07 1970");
+  CMP ("%^c", "FRI JAN  9 13:06:07 1970");
+  CMP ("%d", "09");
+  CMP ("%e", " 9");		/* POSIX.2 */
+  CMP ("%g", "70");		/* GNU */
+  CMP ("%h", "Jan");		/* POSIX.2 */
+  CMP ("%^h", "JAN");
+  CMP ("%j", "009");
+  CMP ("%k", "13");		/* GNU */
+  CMP ("%l", " 1");		/* GNU */
+  CMP ("%m", "01");
+  CMP ("%n", "\n");		/* POSIX.2 */
+  CMP ("%p", "PM");
+  CMP ("%r", "01:06:07 PM");	/* POSIX.2 */
+  CMP ("%s", "738367");		/* GNU */
+  CMP ("%t", "\t");		/* POSIX.2 */
+  CMP ("%u", "5");		/* POSIX.2 */
+  CMP ("%w", "5");
+  CMP ("%x", "01/09/70");
+  CMP ("%y", "70");
+  CMP ("%z", "+0000");		/* GNU */
+
+  exit (n_fail ? 1 : 0);
+}
+	      
 configure:3183: checking for getline
+configure:3211: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3233: checking for working getline function
 configure:3347: checking for bcopy
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for endgrent
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for endpwent
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for fchdir
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for ftime
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for ftruncate
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for getcwd
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for getmntinfo
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+getmntinfo                          conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 3352 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char getmntinfo(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char getmntinfo();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_getmntinfo) || defined (__stub___getmntinfo)
+choke me
+#else
+getmntinfo();
+#endif
+
+; return 0; }
 configure:3347: checking for gettimeofday
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for isascii
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for lchown
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for listmntent
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+listmntent                          conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 3352 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char listmntent(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char listmntent();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_listmntent) || defined (__stub___listmntent)
+choke me
+#else
+listmntent();
+#endif
+
+; return 0; }
 configure:3347: checking for memcpy
 configure:3347: checking for mkfifo
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for strchr
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for strerror
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3347: checking for strrchr
+configure:3375: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3401: checking for error_at_line
+configure:3413: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 3409: warning: implicit function declaration: error_at_line
+Undefined			first referenced
+ symbol  			    in file
+error_at_line                       conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 3406 "configure"
+#include "confdefs.h"
+
+int main() {
+error_at_line(0, 0, "", 0, "");
+; return 0; }
 configure:3431: checking for obstacks
+configure:3443: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 3437: cannot find include file: "obstack.h"
+"configure", line 3439: warning: implicit function declaration: obstack_free
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 3436 "configure"
+#include "confdefs.h"
+#include "obstack.h"
+int main() {
+struct obstack *mem;obstack_free(mem,(char *) 0)
+; return 0; }
 configure:3466: checking POSIX termios
+configure:3481: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3497: checking whether use of TIOCGWINSZ requires sys/ioctl.h
 configure:3556: checking for vprintf
+configure:3584: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3663: checking for working alloca.h
+configure:3675: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3696: checking for alloca
+configure:3724: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:3890: checking whether utime accepts a null argument
+configure:3911: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 3903: warning: old-style declaration or incorrect type for: main
+"configure", line 3905: warning: implicit function declaration: exit
+"configure", line 3905: warning: implicit function declaration: utime
 configure:3936: checking for struct utimbuf
+configure:3960: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
 configure:3981: checking for working fnmatch
+configure:3996: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
+"configure", line 3993: warning: old-style declaration or incorrect type for: main
+"configure", line 3993: warning: implicit function declaration: exit
+"configure", line 3993: warning: implicit function declaration: fnmatch
 configure:4027: checking for d_ino member in directory struct
+configure:4055: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c  1>&5
 configure:4082: checking for getmntent in -lsun
+configure:4101: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lsun   1>&5
+ld: fatal: library -lsun: not found
+configure: failed program was:
+#line 4090 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char getmntent();
+
+int main() {
+getmntent()
+; return 0; }
 configure:4120: checking for getmntent in -lseq
+configure:4139: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lseq   1>&5
+ld: fatal: library -lseq: not found
+configure: failed program was:
+#line 4128 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char getmntent();
+
+int main() {
+getmntent()
+; return 0; }
 configure:4158: checking for getmntent in -lgen
+configure:4177: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen   1>&5
 configure:4202: checking for getmntent
+configure:4230: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
 configure:4265: checking for listmntent of Cray/Unicos-9
 configure:4309: checking for one-argument getmntent function
 configure:4331: checking for two-argument getmntent function
 configure:4614: checking how to get filesystem space usage
 configure:4626: checking statvfs function (SVR4)
+configure:4639: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
 configure:4947: checking for ftruncate
 configure:5049: checking for statfs that truncates block counts
+configure:5066: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
+"/usr/include/sys/rctl.h", line 116: syntax error before or at: int64_t
+"/usr/include/sys/rctl.h", line 120: member cannot be function: setrctl
+"/usr/include/sys/rctl.h", line 121: syntax error before or at: extern
+"/usr/include/sys/rctl.h", line 121: member cannot be function: getrctl
+"/usr/include/sys/rctl.h", line 122: syntax error before or at: extern
+"/usr/include/sys/rctl.h", line 122: syntax error before or at: *
+"/usr/include/sys/rctl.h", line 122: member cannot be function: rctlscan
+"/usr/include/sys/rctl.h", line 126: incomplete struct/union/enum rctl_set: rctl_set_t
+"/usr/include/sys/ipc_rctl.h", line 14: syntax error before or at: typedef
+"/usr/include/sys/iso/signal_iso.h", line 77: syntax error before or at: extern
+"/usr/include/sys/iso/signal_iso.h", line 77: member cannot be function: _sysconf
+"/usr/include/sys/siginfo.h", line 218: syntax error before or at: typedef
+"/usr/include/sys/siginfo.h", line 364: syntax error before or at: typedef
+"/usr/include/sys/siginfo.h", line 427: syntax error before or at: typedef
+"/usr/include/sys/siginfo.h", line 429: syntax error before or at: k_siginfo_t
+"/usr/include/sys/signal.h", line 48: syntax error before or at: typedef
+"/usr/include/sys/signal.h", line 77: syntax error before or at: siginfo_t
+"/usr/include/sys/signal.h", line 154: syntax error before or at: typedef
+"/usr/include/sys/signal.h", line 183: syntax error before or at: typedef
+"/usr/include/sys/procset.h", line 33: syntax error before or at: typedef
+"/usr/include/sys/procset.h", line 61: syntax error before or at: typedef
+"/usr/include/sys/procset.h", line 80: syntax error before or at: typedef
+"/usr/include/sys/procset.h", line 81: syntax error before or at: idop_t
+"/usr/include/sys/procset.h", line 86: syntax error before or at: idtype_t
+"/usr/include/sys/processor.h", line 28: syntax error before or at: typedef
+"/usr/include/sys/processor.h", line 33: syntax error before or at: typedef
+"/usr/include/sys/processor.h", line 34: syntax error before or at: typedef
+"/usr/include/sys/processor.h", line 76: syntax error before or at: typedef
+"/usr/include/sys/processor.h", line 108: syntax error before or at: typedef
+"/usr/include/sys/processor.h", line 129: syntax error before or at: extern
+"/usr/include/sys/processor.h", line 129: syntax error before or at: processorid
+"/usr/include/sys/processor.h", line 129: member cannot be function: p_online
+"/usr/include/sys/processor.h", line 130: syntax error before or at: *
+"/usr/include/sys/processor.h", line 130: member cannot be function: processor_info
+"/usr/include/sys/processor.h", line 131: syntax error before or at: id_t
+"/usr/include/sys/processor.h", line 131: parameter redeclared: processorid_t
+"/usr/include/sys/processor.h", line 131: syntax error before or at: *
+"/usr/include/sys/processor.h", line 131: member cannot be function: processor_bind
+"/usr/include/sys/processor.h", line 132: syntax error before or at: *
+"/usr/include/sys/processor.h", line 132: member cannot be function: processor_affinity
+"/usr/include/sys/processor.h", line 134: syntax error before or at: *
+"/usr/include/sys/processor.h", line 134: member cannot be function: processor_list
+"/usr/include/sys/processor.h", line 135: member cannot be function: processor_group_list
+"/usr/include/sys/processor.h", line 136: syntax error before or at: extern
+"/usr/include/sys/processor.h", line 136: syntax error before or at: processorid_t
+"/usr/include/sys/processor.h", line 136: member cannot be function: processor_group_processor_list
+"/usr/include/sys/processor.h", line 137: syntax error before or at: id_t
+"/usr/include/sys/processor.h", line 137: member cannot be function: processor_get_core_chip
+"/usr/include/sys/rctl.h", line 113: zero-sized struct/union
+"/usr/include/sys/nvpair.h", line 70: syntax error before or at: uint64_t
+"/usr/include/sys/nvpair.h", line 253: syntax error before or at: int64_t
+"/usr/include/sys/nvpair.h", line 254: syntax error before or at: uint64_t
+"/usr/include/sys/nvpair.h", line 265: syntax error before or at: int64_t
+"/usr/include/sys/nvpair.h", line 266: syntax error before or at: uint64_t
+"/usr/include/sys/nvpair.h", line 288: syntax error before or at: int64_t
+"/usr/include/sys/nvpair.h", line 289: syntax error before or at: uint64_t
+"/usr/include/sys/nvpair.h", line 301: syntax error before or at: int64_t
+"/usr/include/sys/nvpair.h", line 302: syntax error before or at: uint64_t
+"/usr/include/sys/nvpair.h", line 332: syntax error before or at: int64_t
+"/usr/include/sys/nvpair.h", line 333: syntax error before or at: uint64_t
+"/usr/include/sys/nvpair.h", line 344: syntax error before or at: int64_t
+"/usr/include/sys/nvpair.h", line 345: syntax error before or at: uint64_t
+"/usr/include/sys/sysinfo.h", line 160: syntax error before or at: uint64_t
+"/usr/include/sys/sysinfo.h", line 175: syntax error before or at: typedef
+"/usr/include/sys/sysinfo.h", line 176: syntax error before or at: uint64_t
+"/usr/include/sys/sysinfo.h", line 229: syntax error before or at: uint64_t
+"/usr/include/sys/sysinfo.h", line 263: syntax error before or at: cpu_sys_stats_t
+"/usr/include/sys/zone.h", line 260: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 285: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 329: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 347: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 356: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 384: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 386: syntax error before or at: uint64_t
+"/usr/include/sys/zone.h", line 397: syntax error before or at: zone_cmd_promargs_t
+"/usr/include/sys/zone.h", line 434: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 448: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 450: syntax error before or at: zone_cmd_err_t
+"/usr/include/sys/zone.h", line 458: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 514: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 527: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 535: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 547: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 564: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 583: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 584: syntax error before or at: zone_addrtype_t
+"/usr/include/sys/zone.h", line 592: syntax error before or at: zone_net_addr_t
+"/usr/include/sys/zone.h", line 605: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 610: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 640: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 646: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 660: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 669: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 681: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 685: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 686: syntax error before or at: zonehrtoffset_t
+"/usr/include/sys/zone.h", line 706: syntax error before or at: typedef
+"/usr/include/sys/zone.h", line 763: syntax error before or at: typedef
+"/usr/include/sys/rwstlock.h", line 21: syntax error before or at: typedef
+"/usr/include/sys/rwstlock.h", line 56: syntax error before or at: extern
+"/usr/include/sys/rwstlock.h", line 56: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 56: member cannot be function: rwst_enter
+"/usr/include/sys/rwstlock.h", line 57: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 57: member cannot be function: rwst_enter_sig
+"/usr/include/sys/rwstlock.h", line 58: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 58: member cannot be function: rwst_exit
+"/usr/include/sys/rwstlock.h", line 59: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 59: member cannot be function: rwst_init
+"/usr/include/sys/rwstlock.h", line 60: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 60: member cannot be function: rwst_destroy
+"/usr/include/sys/rwstlock.h", line 61: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 61: member cannot be function: rwst_lock_held
+"/usr/include/sys/rwstlock.h", line 62: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 62: member cannot be function: rwst_tryenter
+"/usr/include/sys/rwstlock.h", line 63: syntax error before or at: *
+"/usr/include/sys/rwstlock.h", line 63: member cannot be function: rwst_owner
+"/usr/include/sys/uio.h", line 64: incomplete struct/union/enum mvec: <unnamed>
+"/usr/include/sys/uio.h", line 69: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 71: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 72: syntax error before or at: iovec_t
+"/usr/include/sys/uio.h", line 75: syntax error before or at: uio_seg_t
+"/usr/include/sys/uio.h", line 90: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 97: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 98: syntax error before or at: iovec_t
+"/usr/include/sys/uio.h", line 101: syntax error before or at: uio_seg_t
+"/usr/include/sys/uio.h", line 112: syntax error before or at: uioa_page_t
+"/usr/include/sys/uio.h", line 115: syntax error before or at: uioa_page_t
+"/usr/include/sys/uio.h", line 129: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 134: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 135: syntax error before or at: uio_t
+"/usr/include/sys/uio.h", line 145: syntax error before or at: uioa_page_t
+"/usr/include/sys/uio.h", line 150: syntax error before or at: uioa_page_t
+"/usr/include/sys/uio.h", line 164: syntax error before or at: uint64_t
+"/usr/include/sys/uio.h", line 217: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 241: syntax error before or at: typedef
+"/usr/include/sys/uio.h", line 267: syntax error before or at: extern
+"/usr/include/sys/uio.h", line 267: member cannot be function: readv
+"/usr/include/sys/uio.h", line 268: syntax error before or at: extern
+"/usr/include/sys/uio.h", line 268: member cannot be function: writev
+"/usr/include/vm/seg_enum.h", line 59: syntax error before or at: typedef
+"/usr/include/sys/list.h", line 14: syntax error before or at: typedef
+"/usr/include/sys/list.h", line 15: syntax error before or at: typedef
+"/usr/include/sys/list.h", line 17: syntax error before or at: *
+"/usr/include/sys/list.h", line 17: member cannot be function: list_create
+"/usr/include/sys/list.h", line 18: syntax error before or at: *
+"/usr/include/sys/list.h", line 18: member cannot be function: list_destroy
+"/usr/include/sys/list.h", line 20: syntax error before or at: *
+"/usr/include/sys/list.h", line 20: member cannot be function: list_insert_after
+"/usr/include/sys/list.h", line 21: syntax error before or at: *
+"/usr/include/sys/list.h", line 21: member cannot be function: list_insert_before
+"/usr/include/sys/list.h", line 22: syntax error before or at: *
+"/usr/include/sys/list.h", line 22: member cannot be function: list_insert_head
+"/usr/include/sys/list.h", line 23: syntax error before or at: *
+"/usr/include/sys/list.h", line 23: member cannot be function: list_insert_tail
+"/usr/include/sys/list.h", line 24: syntax error before or at: *
+"/usr/include/sys/list.h", line 24: member cannot be function: list_remove
+"/usr/include/sys/list.h", line 25: syntax error before or at: *
+"/usr/include/sys/list.h", line 25: member cannot be function: list_remove_head
+"/usr/include/sys/list.h", line 26: syntax error before or at: *
+"/usr/include/sys/list.h", line 26: member cannot be function: list_remove_tail
+"/usr/include/sys/list.h", line 27: syntax error before or at: *
+"/usr/include/sys/list.h", line 27: parameter redeclared: list_t
+"/usr/include/sys/list.h", line 27: member cannot be function: list_move_tail
+"/usr/include/sys/list.h", line 29: syntax error before or at: *
+"/usr/include/sys/list_impl.h", line 22: member cannot be function: list_head
+"/usr/include/sys/list.h", line 30: syntax error before or at: *
+"/usr/include/sys/list.h", line 30: member cannot be function: list_tail
+"/usr/include/sys/list.h", line 31: syntax error before or at: *
+"/usr/include/sys/list_impl.h", line 15: member cannot be function: list_next
+"/usr/include/sys/list.h", line 32: syntax error before or at: *
+"/usr/include/sys/list_impl.h", line 16: member cannot be function: list_prev
+"/usr/include/sys/list.h", line 33: syntax error before or at: *
+"/usr/include/sys/list.h", line 33: member cannot be function: list_is_empty
+"/usr/include/sys/list.h", line 35: syntax error before or at: *
+"/usr/include/sys/list.h", line 35: member cannot be function: list_link_init
+"/usr/include/sys/list.h", line 36: syntax error before or at: *
+"/usr/include/sys/list.h", line 36: parameter redeclared: list_node_t
+"/usr/include/sys/list.h", line 36: member cannot be function: list_link_replace
+"/usr/include/sys/list.h", line 38: syntax error before or at: *
+"/usr/include/sys/list.h", line 38: member cannot be function: list_link_active
+"/usr/include/sys/avl_impl.h", line 134: syntax error before or at: extern
+"/usr/include/sys/avl_impl.h", line 134: member cannot be function: avl_walk
+"/usr/include/sys/avl.h", line 88: syntax error before or at: typedef
+"/usr/include/sys/avl.h", line 93: syntax error before or at: typedef
+"/usr/include/sys/avl.h", line 99: syntax error before or at: typedef
+"/usr/include/sys/avl.h", line 132: syntax error before or at: extern
+"/usr/include/sys/avl.h", line 132: syntax error before or at: *
+"/usr/include/sys/avl.h", line 132: function cannot return function or array
+"/usr/include/sys/avl.h", line 132: member cannot be function: avl_create
+"/usr/include/sys/avl.h", line 133: cannot have void object: size_t
+"/usr/include/sys/avl.h", line 133: syntax error before or at: size
+"/usr/include/sys/avl.h", line 144: syntax error before or at: *
+"/usr/include/sys/avl.h", line 144: member cannot be function: avl_find
+"/usr/include/sys/avl.h", line 152: syntax error before or at: *
+"/usr/include/sys/avl.h", line 152: member cannot be function: avl_insert
+"/usr/include/sys/avl.h", line 165: syntax error before or at: *
+"/usr/include/sys/avl.h", line 165: member cannot be function: avl_insert_here
+"/usr/include/sys/avl.h", line 174: syntax error before or at: *
+"/usr/include/sys/avl.h", line 174: member cannot be function: avl_first
+"/usr/include/sys/avl.h", line 175: syntax error before or at: *
+"/usr/include/sys/avl.h", line 175: member cannot be function: avl_last
+"/usr/include/sys/avl.h", line 211: syntax error before or at: *
+"/usr/include/sys/avl.h", line 211: member cannot be function: avl_nearest
+"/usr/include/sys/avl.h", line 221: syntax error before or at: *
+"/usr/include/sys/avl.h", line 221: member cannot be function: avl_add
+"/usr/include/sys/avl.h", line 229: syntax error before or at: *
+"/usr/include/sys/avl.h", line 229: member cannot be function: avl_remove
+"/usr/include/sys/avl.h", line 238: syntax error before or at: *
+"/usr/include/sys/avl.h", line 238: member cannot be function: avl_update
+"/usr/include/sys/avl.h", line 239: syntax error before or at: *
+"/usr/include/sys/avl.h", line 239: member cannot be function: avl_update_lt
+"/usr/include/sys/avl.h", line 240: syntax error before or at: *
+"/usr/include/sys/avl.h", line 240: member cannot be function: avl_update_gt
+"/usr/include/sys/avl.h", line 245: syntax error before or at: *
+"/usr/include/sys/avl_impl.h", line 126: member cannot be function: avl_numnodes
+"/usr/include/sys/avl.h", line 250: syntax error before or at: *
+"/usr/include/sys/avl.h", line 250: member cannot be function: avl_is_empty
+"/usr/include/sys/avl.h", line 273: syntax error before or at: *
+"/usr/include/sys/avl.h", line 273: member cannot be function: avl_destroy_nodes
+"/usr/include/sys/avl.h", line 281: syntax error before or at: *
+"/usr/include/sys/avl.h", line 281: member cannot be function: avl_destroy
+"/usr/include/sys/tsol/label_macro.h", line 19: syntax error before or at: typedef
+"/usr/include/sys/tsol/label_macro.h", line 22: syntax error before or at: _Classification
+"/usr/include/sys/tsol/label_macro.h", line 37: syntax error before or at: typedef
+"/usr/include/sys/tsol/label_macro.h", line 48: syntax error before or at: typedef
+"/usr/include/sys/tsol/label_macro.h", line 51: syntax error before or at: Classification_t
+"/usr/include/sys/tsol/label_macro.h", line 60: syntax error before or at: _mac_label_impl_t
+"/usr/include/sys/tsol/label_macro.h", line 65: syntax error before or at: _bslabel_impl_t
+"/usr/include/sys/tsol/label_macro.h", line 70: syntax error before or at: _mac_label_impl_t
+"/usr/include/sys/types32.h", line 26: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 27: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 28: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 29: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 30: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 31: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 32: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 33: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 34: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 35: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 36: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 37: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 38: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 39: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 40: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 41: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 42: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 43: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 44: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 45: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 48: syntax error before or at: time32_t
+"/usr/include/sys/types32.h", line 52: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 53: syntax error before or at: time32_t
+"/usr/include/sys/types32.h", line 57: syntax error before or at: typedef
+"/usr/include/sys/types32.h", line 59: syntax error before or at: typedef
+"/usr/include/sys/buf.h", line 29: incomplete struct/union/enum miter: <unnamed>
+"/usr/include/sys/buf.h", line 62: syntax error before or at: typedef
+"/usr/include/sys/buf.h", line 78: syntax error before or at: daddr32_t
+"/usr/include/sys/buf.h", line 89: syntax error before or at: uint64_t
+"/usr/include/sys/buf.h", line 191: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 56: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 151: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 171: syntax error before or at: list_node_t
+"/usr/include/sys/vnode.h", line 219: incomplete struct/union/enum fem_head: <unnamed>
+"/usr/include/sys/vnode.h", line 220: incomplete struct/union/enum mo: <unnamed>
+"/usr/include/sys/vnode.h", line 222: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 250: syntax error before or at: uint64_t
+"/usr/include/sys/vnode.h", line 256: syntax error before or at: avl_tree_t
+"/usr/include/sys/vnode.h", line 285: syntax error before or at: rwstlock_t
+"/usr/include/sys/vnode.h", line 289: undefined symbol: rwstlock_t
+"/usr/include/sys/vnode.h", line 412: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 414: syntax error before or at: vtype_t
+"/usr/include/sys/vnode.h", line 436: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 451: syntax error before or at: uint64_t
+"/usr/include/sys/vnode.h", line 454: undefined symbol: Classification_t
+"/usr/include/sys/vnode.h", line 454: undefined symbol: Compartments_t
+"/usr/include/sys/vnode.h", line 523: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 524: syntax error before or at: vattr_t
+"/usr/include/sys/vnode.h", line 530: syntax error before or at: xoptattr_t
+"/usr/include/sys/vnode.h", line 791: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 792: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 793: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 796: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 816: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 825: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 855: syntax error before or at: typedef
+"/usr/include/sys/vnode.h", line 873: incomplete struct/union/enum pathname: <unnamed>
+"/usr/include/sys/vnode.h", line 874: incomplete struct/union/enum fid: <unnamed>
+"/usr/include/sys/vnode.h", line 875: incomplete struct/union/enum flock64: <unnamed>
+"/usr/include/sys/vnode.h", line 876: incomplete struct/union/enum flk_callback: <unnamed>
+"/usr/include/sys/vnode.h", line 877: incomplete struct/union/enum shrlock: <unnamed>
+"/usr/include/sys/vnode.h", line 878: incomplete struct/union/enum page: <unnamed>
+"/usr/include/sys/vnode.h", line 879: incomplete struct/union/enum seg: <unnamed>
+"/usr/include/sys/vnode.h", line 880: incomplete struct/union/enum as: <unnamed>
+"/usr/include/sys/vnode.h", line 881: incomplete struct/union/enum pollhead: <unnamed>
+"/usr/include/sys/vnode.h", line 882: incomplete struct/union/enum taskq: <unnamed>
+"/usr/include/sys/statvfs.h", line 30: syntax error before or at: typedef
+"/usr/include/sys/statvfs.h", line 76: syntax error before or at: typedef
+"/usr/include/sys/statvfs.h", line 168: syntax error before or at: statvfs_t
+"/usr/include/sys/statvfs.h", line 168: member cannot be function: statvfs
+"/usr/include/sys/statvfs.h", line 169: syntax error before or at: statvfs_t
+"/usr/include/sys/statvfs.h", line 169: member cannot be function: fstatvfs
+"/usr/include/sys/statvfs.h", line 174: syntax error before or at: statvfs64_t
+"/usr/include/sys/statvfs.h", line 174: member cannot be function: statvfs64
+"/usr/include/sys/statvfs.h", line 175: syntax error before or at: statvfs64_t
+"/usr/include/sys/statvfs.h", line 175: member cannot be function: fstatvfs64
+"/usr/include/sys/refstr.h", line 17: incomplete struct/union/enum refstr: refstr_t
+"/usr/include/sys/vfs.h", line 39: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 39: incomplete struct/union/enum vfsops: vfsops_t
+"/usr/include/sys/vfs.h", line 44: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 61: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 61: (struct) tag redeclared: fid
+"/usr/include/sys/vfs.h", line 87: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 125: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 127: syntax error before or at: mntopt_t
+"/usr/include/sys/vfs.h", line 140: syntax error before or at: avl_node_t
+"/usr/include/sys/vfs.h", line 169: incomplete struct/union/enum vfs_shadow: <unnamed>
+"/usr/include/sys/vfs.h", line 171: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 176: syntax error before or at: vfsops_t
+"/usr/include/sys/vfs.h", line 182: syntax error before or at: fsid_t
+"/usr/include/sys/vfs.h", line 190: syntax error before or at: mntopts_t
+"/usr/include/sys/vfs.h", line 251: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 291: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 302: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 322: (struct) tag redeclared: vfsops
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 323: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 326: syntax error before or at: extern
+"/usr/include/sys/vfs.h", line 326: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 326: member cannot be function: fsop_mount
+"/usr/include/sys/vfs.h", line 327: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 327: member cannot be function: fsop_unmount
+"/usr/include/sys/vfs.h", line 328: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 328: member cannot be function: fsop_root
+"/usr/include/sys/vfs.h", line 329: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 329: member cannot be function: fsop_statfs
+"/usr/include/sys/vfs.h", line 330: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 330: member cannot be function: fsop_sync
+"/usr/include/sys/vfs.h", line 331: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 331: member cannot be function: fsop_vget
+"/usr/include/sys/vfs.h", line 332: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 332: member cannot be function: fsop_mountroot
+"/usr/include/sys/vfs.h", line 333: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 333: member cannot be function: fsop_freefs
+"/usr/include/sys/vfs.h", line 334: member cannot be function: fsop_sync_by_kind
+"/usr/include/sys/vfs.h", line 335: syntax error before or at: extern
+"/usr/include/sys/vfs.h", line 335: syntax error before or at: *
+"/usr/include/sys/vfs.h", line 335: member cannot be function: fsop_vnstate
+"/usr/include/sys/vfs.h", line 360: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 365: syntax error before or at: mntopts_t
+"/usr/include/sys/vfs.h", line 368: syntax error before or at: vfsops_t
+"/usr/include/sys/vfs.h", line 379: syntax error before or at: typedef
+"/usr/include/sys/vfs.h", line 384: syntax error before or at: mntopts_t
+"/usr/include/sys/vfs.h", line 387: incomplete struct/union/enum vfsdef_v5: vfsdef_t
+"configure", line 5061: member cannot be function: main
+"configure", line 5061: warning: syntax requires ";" after last struct/union member
+"configure", line 5061: syntax error before or at: {
+"configure", line 5062: incomplete struct/union/enum statfs: t
+"configure", line 5062: warning: syntax requires ";" after last struct/union member
+"configure", line 5062: syntax error before or at: =
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 5054 "configure"
+#include "confdefs.h"
+
+#if !defined(sun) && !defined(__sun)
+choke -- this is a workaround for a Sun-specific problem
+#endif
+#include <sys/types.h>
+#include <sys/vfs.h>
+int main() {
+struct statfs t; long c = *(t.f_spare);
+; return 0; }
 configure:5089: checking for getgroups
+configure:5117: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
 configure:5193: checking for working getgroups
+configure:5212: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+"configure", line 5207: warning: implicit function declaration: exit
+"configure", line 5207: warning: implicit function declaration: getgroups
 configure:5241: checking for main in -lypsec
+configure:5256: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lypsec  -lgen  1>&5
+ld: fatal: library -lypsec: not found
+configure: failed program was:
+#line 5249 "configure"
+#include "confdefs.h"
+
+int main() {
+main()
+; return 0; }
 configure:5286: checking for main in -lldgc
+configure:5301: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lldgc  -lgen  1>&5
+ld: fatal: library -lldgc: not found
+configure: failed program was:
+#line 5294 "configure"
+#include "confdefs.h"
+
+int main() {
+main()
+; return 0; }
 configure:5330: checking for AFS
 configure:5337: checking for inline
+configure:5351: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -c -g  conftest.c 1>&5
+"configure", line 5347: warning: no explicit type given
+"configure", line 5347: warning: old-style declaration or incorrect type for: foo
 configure:5380: checking for unistd.h
 configure:5419: checking for getpagesize
+configure:5447: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
 configure:5472: checking for working mmap
+configure:5620: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+"configure", line 5561: warning: implicit function declaration: getpagesize
+"configure", line 5568: warning: implicit function declaration: exit
+"configure", line 5570: warning: implicit function declaration: rand
+"configure", line 5575: warning: implicit function declaration: write
+"configure", line 5577: warning: implicit function declaration: close
+"configure", line 5608: warning: implicit function declaration: read
+"configure", line 5614: warning: implicit function declaration: unlink
 configure:5648: checking for argz.h
+configure:5658: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+"configure", line 5654: cannot find include file: <argz.h>
+cc: acomp failed for conftest.c
+configure: failed program was:
+#line 5653 "configure"
+#include "confdefs.h"
+#include <argz.h>
 configure:5648: checking for limits.h
 configure:5648: checking for locale.h
+configure:5658: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
 configure:5648: checking for nl_types.h
+configure:5658: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+configure:5648: checking for malloc.h
+configure:5658: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+configure:5648: checking for string.h
+configure:5648: checking for unistd.h
+configure:5648: checking for values.h
+configure:5688: checking for getcwd
+configure:5688: checking for munmap
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+configure:5688: checking for putenv
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+configure:5688: checking for setenv
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+configure:5688: checking for setlocale
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+configure:5688: checking for strchr
+configure:5688: checking for strcasecmp
+configure:5688: checking for __argz_count
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+Undefined			first referenced
+ symbol  			    in file
+__argz_count                        conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 5693 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char __argz_count(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char __argz_count();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub___argz_count) || defined (__stub_____argz_count)
+choke me
+#else
+__argz_count();
+#endif
+
+; return 0; }
+configure:5688: checking for __argz_stringify
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+Undefined			first referenced
+ symbol  			    in file
+__argz_stringify                    conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 5693 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char __argz_stringify(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char __argz_stringify();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub___argz_stringify) || defined (__stub_____argz_stringify)
+choke me
+#else
+__argz_stringify();
+#endif
+
+; return 0; }
+configure:5688: checking for __argz_next
+configure:5716: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+Undefined			first referenced
+ symbol  			    in file
+__argz_next                         conftest.o
+ld: fatal: symbol referencing errors
+configure: failed program was:
+#line 5693 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char __argz_next(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char __argz_next();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub___argz_next) || defined (__stub_____argz_next)
+choke me
+#else
+__argz_next();
+#endif
+
+; return 0; }
+configure:5807: checking for LC_MESSAGES
+configure:5819: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+"configure", line 5816: warning: statement not reached
+configure:5840: checking whether NLS is requested
+configure:5860: checking whether included gettext is requested
+configure:5879: checking for libintl.h
+configure:5889: /opt/developerstudio12.5/bin/cc -E  conftest.c >/dev/null 2>conftest.out
+configure:5906: checking for gettext in libc
+configure:5918: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+"configure", line 5915: warning: statement not reached
+configure:6009: checking for msgfmt
+configure:6043: checking for dcgettext
+configure:6071: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+configure:6098: checking for gmsgfmt
+configure:6130: checking for xgettext
+configure:6170: /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__ -o conftest -g   conftest.c -lgen  1>&5
+"configure", line 6167: warning: statement not reached
+configure:6613: checking for catalogs to be installed

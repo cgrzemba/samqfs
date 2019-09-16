@@ -220,14 +220,14 @@ initDataConnection(
 	struct sockaddr_in6 mysock;
 	struct sockaddr_in *sa;
 	struct sockaddr_in6 *sa6;
-	int sa_len;
+	unsigned int sa_len;
 	char *port, *addr;
-	size_t size;
+	unsigned int size;
 	int data;
 	int on;
 	SamrftCrew_t *crew;
 	int value;
-	int length;
+	unsigned int length;
 	void *taddr;
 
 	sa = (struct sockaddr_in *)&mysock;
@@ -302,7 +302,7 @@ initDataConnection(
 	memset(sa6, 0, sa_len);
 
 	if (getsockname(sockfd, (struct sockaddr *)&mysock,
-	    (int *)&sa_len) < 0) {
+	    &sa_len) < 0) {
 		Trace(TR_ERR, "getsockname failed on socket %d, errno %d",
 		    sockfd, errno);
 	}
@@ -343,7 +343,7 @@ initDataConnection(
 	}
 
 	size = sizeof (struct sockaddr_in6);
-	data = accept(sockfd, (struct sockaddr *)&crew->addr, (int *)&size);
+	data = accept(sockfd, (struct sockaddr *)&crew->addr, &size);
 	if (data == -1) {
 		perror("accept");
 		ASSERT_NOT_REACHED();

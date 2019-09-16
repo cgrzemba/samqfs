@@ -323,7 +323,7 @@ thread_exit:
 
 	thr_exit(&exit_status);
 	/* NOTREACHED */
-	return ((void *) NULL);
+	/* return ((void *) NULL); */
 }
 
 /*

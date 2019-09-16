@@ -6,9 +6,9 @@ etc/sysevent ? ?
 etc/sysevent/config ? ?
 kernel ? ?
 kernel/drv ? ?
-kernel/drv/amd64 ? ?
+kernel/drv/64 ? ?
 kernel/fs ? ?
-kernel/fs/amd64 ? ?
+kernel/fs/64 ? ?
 lib/svc ? ?
 lib/svc/method ? ?
 opt ? ?
@@ -30,7 +30,7 @@ opt/SUNWsamfs/examples root other
 opt/SUNWsamfs/examples/dtrace root other
 opt/SUNWsamfs/include root other
 opt/SUNWsamfs/lib root other
-opt/SUNWsamfs/lib/amd64 root other
+opt/SUNWsamfs/lib/64 root other
 opt/SUNWsamfs/lib/gpl root other
 opt/SUNWsamfs/lib/stk root other
 opt/SUNWsamfs/man root other
@@ -42,8 +42,8 @@ opt/SUNWsamfs/man/man4 root other
 opt/SUNWsamfs/man/man5 root other
 opt/SUNWsamfs/man/man7 root other
 opt/SUNWsamfs/sbin root bin
-opt/SUNWsamfs/sbin/amd64 root bin
-opt/SUNWsamfs/sbin/i386 root bin
+opt/SUNWsamfs/sbin/64 root bin
+opt/SUNWsamfs/sbin/32 root bin
 opt/SUNWsamfs/unsupported root sys
 opt/SUNWsamfs/util root sys
 opt/SUNWsamfs/zone root other
@@ -82,8 +82,8 @@ usr/lib/devfsadm ? ?
 usr/lib/devfsadm/linkmod ? ?
 usr/lib/fs ? ?
 usr/lib/fs/samfs root sys
-usr/lib/fs/samfs/amd64 root bin
-usr/lib/fs/samfs/i386 root bin
+usr/lib/fs/samfs/64 root bin
+usr/lib/fs/samfs/32 root bin
 usr/lib/locale ? ?
 usr/lib/locale/C ? ?
 usr/lib/locale/C/LC_MESSAGES ? ?

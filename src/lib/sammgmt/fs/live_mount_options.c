@@ -70,7 +70,7 @@ static struct {
 	/* general option from 1 - 6 */
 	{ "", DEFBITS, offsetof(struct mount_options, change_flag),
 		offsetof(struct mount_options, change_flag),
-		QFS_STANDALONE, NULL, NULL, NULL},
+		QFS_STANDALONE, NULL, 0, 0},
 	{ "suid", SETFLAG, offsetof(struct mount_options, no_suid),
 		offsetof(struct mount_options, change_flag),
 		QFS_STANDALONE, CmdSetFsConfig,

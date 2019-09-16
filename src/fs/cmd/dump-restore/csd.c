@@ -664,8 +664,13 @@ main(int argc, char *argv[])
 			}
 		}
 		csd_version = csd_header.csd_header.version;
+		if (debugging) {
+			fprintf(stderr, "Dump file version = 0x%x\n", csd_version);
+		}
 		switch (csd_version) {
 
+		case CSD_VERS_8:
+		case CSD_VERS_7:
 		case CSD_VERS_6:
 		case CSD_VERS_5:
 			/* read remainder of extended header */

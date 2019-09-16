@@ -218,7 +218,7 @@ csd_read_next(
 
 		*aclpp = NULL;
 		if (perm_inode->di.status.b.acl) {
-			readcheck(n_aclp, sizeof (int), 5029);
+			readcheck(n_aclp, sizeof (int), 5029); /* getting acl array length */
 			if (swapped) {
 				sam_bswap4(n_aclp, 1);
 			}
@@ -226,7 +226,7 @@ csd_read_next(
 				SamMalloc(*aclpp, *n_aclp *
 				    sizeof (sam_acl_t));
 				readcheck(*aclpp, *n_aclp *
-				    sizeof (sam_acl_t), 5030);
+				    sizeof (sam_acl_t), 5030); /* getting acl array */
 				if (swapped) {
 					int i;
 

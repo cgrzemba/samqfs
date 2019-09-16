@@ -40,21 +40,21 @@ includedir = $(prefix)/include
 datadir = $(prefix)/share
 localedir = $(datadir)/locale
 gnulocaledir = $(prefix)/share/locale
-gettextsrcdir = /opt/SUNWsamfs/gettext/intl
+gettextsrcdir = ${prefix}/share/gettext/intl
 aliaspath = $(localedir):.
 subdir = intl
 
-INSTALL = /usr/bin/ginstall -c
+INSTALL = /usr/ccs/bin/ginstall -c
 INSTALL_DATA = ${INSTALL} -m 644
 MKINSTALLDIRS = ./mkinstalldirs
 
 AR = ar
-CC = gcc
+CC = /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__
 RANLIB = ranlib
 
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DGNULOCALEDIR=\"$(gnulocaledir)\" \
 -DLOCALE_ALIAS_PATH=\"$(aliaspath)\" -DHAVE_CONFIG_H
-CFLAGS = -g -O2
+CFLAGS = -g
 
 COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
 
@@ -64,7 +64,7 @@ SOURCES = $(COMSRCS) intl-compat.c cat-compat.c
 COMSRCS = bindtextdom.c dcgettext.c dgettext.c gettext.c \
 finddomain.c loadmsgcat.c localealias.c textdomain.c l10nflist.c \
 explodename.c
-OBJECTS = $(GETTOBJS) bindtextdom.o dcgettext.o dgettext.o gettext.o \
+OBJECTS =  bindtextdom.o dcgettext.o dgettext.o gettext.o \
 finddomain.o loadmsgcat.o localealias.o textdomain.o l10nflist.o \
 explodename.o
 CATOBJS = cat-compat.o ../po/cat-id-tbl.o
@@ -81,7 +81,7 @@ DISTFILES.gettext = libintl.glibc intlh.inst.in
 
 INCLUDES = -I.. -I. -I$(top_srcdir)/intl -I$(top_srcdir)/lib
 
-all: all-yes
+all: all-no
 
 all-yes: libintl.a intlh.inst
 all-no:
@@ -108,7 +108,7 @@ check: all
 install: install-exec install-data
 install-exec: all
 	if test "$(PACKAGE)" = "gettext" \
-	   && test '$(GETTOBJS)' = '$(GETTOBJS)'; then \
+	   && test '' = '$(GETTOBJS)'; then \
 	  if test -r $(MKINSTALLDIRS); then \
 	    $(MKINSTALLDIRS) $(libdir) $(includedir); \
 	  else \

@@ -39,8 +39,8 @@ vpath %.c $(SRC_VPATH)
 
 #BUILD_64BIT = yes
 
-CSD_INCLUDE = $(DEPTH)
-BSWAP_INCLUDE = $(DEPTH)/src/fs/include
+CSD_INCLUDE = -I$(DEPTH)
+BSWAP_INCLUDE = -I$(DEPTH)/src/fs/include
 
 ifneq ($(PLATFORM), sparc)
 ENDIAN=-DLITTLE
@@ -48,11 +48,14 @@ else
 ALIGN=-xmemalign=4i
 endif
 
+bswap_CPPFLAGS = $(BSWAP_INCLUDE)
+
 DEPCFLAGS = \
 	-DAPI_DEBUG=syslog \
 	-DDEBUG \
-	-I$(DB_INCLUDE) -I/usr/include -I$(INCLUDE) -I$(BSWAP_INCLUDE) -I$(CSD_INCLUDE) \
+	-I$(DB_INCLUDE) -I$(INCLUDE) $(CSD_INCLUDE) \
 	$(DEBUGCDEFS) -D_POSIX_PTHREAD_SEMANTICS $(THRCOMP) $(ENDIAN) $(ALIGN)
+
 
 PROG = fsmdb
 
@@ -62,13 +65,13 @@ PROG = fsmdb
 #  restriction can be considered for removal.
 
 FSMGR_SRC = \
-	bswap.c \
 	cmn_csd_funcs.c \
 	list.c \
 	media.c \
 	sam_syscall.c \
 	stat.c \
-	util.c
+	util.c \
+	bswap.c
 
 LIBFSMDB_SRC = \
 	xlate.c
@@ -79,11 +82,11 @@ PROG_SRC = \
 	browse.c \
 	file_metrics.c \
 	fsmdb_svr.c \
-	mkdb.c \
 	pop_db.c \
 	read_snap.c \
 	stubs.c \
-	vsn.c
+	vsn.c \
+	mkdb.c
 
 PROG_LIBS = $(ALIGN) -L$(DEPTH)/lib/$(OBJ_DIR) \
 		-ladm -ldoor $(DB_LIB) -lgen -lz -lnsl -lrt -lpthread $(LIBSO)

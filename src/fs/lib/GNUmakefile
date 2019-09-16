@@ -62,6 +62,7 @@ endif
 ifeq ($(AMD64), yes)
 DEPCFLAGS += -DAMD64_BUILD
 endif
+DEPCFLAGS += $(OSDEPCFLAGS)
 
 LNOPTS =  -munsx -Dlint
 LNLIBS =
@@ -146,11 +147,11 @@ $(OBJ_DIR)/decls.c: desc.c types.define types.swap gendesc.p \
 		../include/ino.h ../include/sblk.h ../include/share.h \
 		../include/samhost.h
 	rm -f $(OBJ_DIR)/decls.c
-	$(CC) $(INCFLAGS) -DBYTE_SWAP -E $(CERRWARN) desc.c | $(PERL) -w gendesc.p > $(OBJ_DIR)/decls.c
+	$(CC) $(INCFLAGS) -DBYTE_SWAP -E -P $(CERRWARN) desc.c | $(PERL) -w gendesc.p > $(OBJ_DIR)/decls.c
 	chmod 444 $(OBJ_DIR)/decls.c
 
 $(OBJ_DIR)/struct.o:	$(OBJ_DIR)/decls.c
-	$(CC) $(INCFLAGS) -I$(OBJ_DIR) -c -o $(OBJ_DIR)/struct.o struct.c
+	$(CC) $(OSDEPCFLAGS) $(INCFLAGS) -I$(OBJ_DIR) -c -o $(OBJ_DIR)/struct.o struct.c
 
 $(OBJ_DIR)/struct:		$(OBJ_DIR)/struct.o
 	$(CC) $(INCFLAGS) $(OBJ_DIR)/struct.o -o $(OBJ_DIR)/struct

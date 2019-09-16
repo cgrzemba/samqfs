@@ -161,8 +161,9 @@ main(
 		fprintf(stderr, "sam-arcopy may be started only from %s\n",
 		    SAM_ARCHIVER);
 		exit(EXIT_FAILURE);
-#endif /* defined(AR_DEBUG) */
+#else
 		Daemon = FALSE;
+#endif /* defined(AR_DEBUG) */
 	}
 	if (argc < 2) {
 		fprintf(stderr,

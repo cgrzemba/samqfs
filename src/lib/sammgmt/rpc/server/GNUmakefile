@@ -93,11 +93,11 @@ PROG_SRC += \
 
 
 PROG_LIBS = \
-	-L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamapi -lgen -lfsmgmt -lnsl -lintl -ldl -lcsn -lcurl -lssl -lcrypto -lsocket $(LIBSO)
+	-L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamapi -lgen -lfsmgmt -lnsl -lintl -ldl -lcsn -lcurl -lssl -lcrypto -lsocket -lmd5 $(LIBSO)
 
 MPROGS = clientmgmt
 clientmgmt_SRC = secure_cfg.c clientmgmt.c
-clientmgmt_LIBS = $(PROG_LIBS) -lsocket
+clientmgmt_LIBS = $(PROG_LIBS)
 
 LNOPTS = -a -u -m -x -o$(LIB)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

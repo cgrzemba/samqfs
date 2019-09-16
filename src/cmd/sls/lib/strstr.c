@@ -33,15 +33,13 @@
 /* Return the starting address of string S2 in S1;
    return 0 if it is not found. */
 
-char *
-strstr (s1, s2)
-     char *s1;
-     char *s2;
+const char *
+strstr (const char *s1, const char *s2)
 {
   int i;
-  char *p1;
-  char *p2;
-  char *s = s1;
+  const char *p1;
+  const char *p2;
+  const char *s = s1;
 
   for (p2 = s2, i = 0; *s; p2 = s2, i++, s++)
     {

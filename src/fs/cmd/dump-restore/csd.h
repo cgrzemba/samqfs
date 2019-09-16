@@ -48,6 +48,8 @@
 #define	CSD_VERS_4	4		/* version number 4 */
 #define	CSD_VERS_5	5		/* version number 5 */
 #define	CSD_VERS_6	6		/* version number 6 */
+#define	CSD_VERS_7	7		/* version number 7, supports extended system attributes */
+#define	CSD_VERS_8	8		/* version number 8, supports LTFS */
 
 /* ----	csd header record - Dump header record.			*/
 /* ---- Any valid version should begin with this header	*/

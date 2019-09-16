@@ -296,7 +296,7 @@ int	main(
 	check_log_expire();
 	Event_Processor(mnt_info.fi_name);
 	exit(abort_daemon ? EXIT_FAILURE : EXIT_SUCCESS);
-	return (0);
+	/* return (0); */
 }
 
 

@@ -38,19 +38,20 @@ LIB_SRC = \
 	scrkd_lib.c 
 
 
-CURL_INCLUDES = $(DEPTH)/src/lib/curl/V7/7.15.4/include
+# CURL_INCLUDES = -I$(DEPTH)/src/lib/curl/V7/7.15.4/include
 
-SSL_CONF_INCLUDES = $(DEPTH)/src/lib/ssl/V9/9.7/$(DB_ARCH)/include
-SSL_INCLUDES = $(DEPTH)/src/lib/ssl/V9/9.7/include
+# SSL_CONF_INCLUDES = -I$(DEPTH)/src/lib/ssl/V9/9.7/$(DB_ARCH)/include
+# SSL_INCLUDES = -I$(DEPTH)/src/lib/ssl/V9/9.7/include
 
 LIB_INCLUDES = $(DEPTH)/include/
 
 DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG \
-		-I. -I$(CURL_INCLUDES) -I$(SSL_CONF_INCLUDES) -I$(SSL_INCLUDES) -I$(LIB_INCLUDES) $(THRCOMP)
+		-I. $(CURL_INCLUDES) $(SSL_CONF_INCLUDES) $(SSL_INCLUDES) -I$(LIB_INCLUDES) $(THRCOMP)
 
 
-LIB_LIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lsamut $(STATIC_OPT) -lcrypto -lssl \
-	-lcurl $(DYNAMIC_OPT) -lsocket -ldl $(LIBSO)
+# LIB_LIBS = $(STATIC_OPT) -L$(DEPTH)/lib/$(OBJ_DIR) -lcrypto -lssl -lcurl \
+LIB_LIBS = -lcrypto -lssl -lcurl \
+	-lsam -lsocket -ldl $(LIBSO)
 
 
 LNOPTS = -a -u -m -x

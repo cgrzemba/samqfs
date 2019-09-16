@@ -68,8 +68,8 @@ endif
 INCFLAGS = -I../include -I../include/$(OBJ_DIR) -I$(DEPTH)/include/pub/$(OBJ_DIR) -D_KERNEL -D_SYSCALL32 $(PROD_BUILD) $(SPARC_INLINE)
 
 DEPCFLAGS += $(INCFLAGS)
-
-CFLAGS  += $(KERNFLAGS) -xO2
+CFLAGS_CSTD  += $(KERNFLAGS) -xO2
+CFLAGS  += $(KERNFLAGS)
 
 LDFLAGS = -r
 else

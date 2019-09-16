@@ -89,10 +89,10 @@ DEPCFLAGS += -D MESSAGE_DIR=\"$(MESSAGE_DIR)\"
 DEPCFLAGS += -I/usr/include
 DEPCFLAGS += -I$(SC31TOP)usr/src/head -I$(SC31TOP)usr/src/sys
 DEPCFLAGS += -I$(DEPTH)/include
-DEPCFLAGS += -I$(DEPTH)/src/fs/include -I$(DEPTH)/src/fs/include/$(OBJ_DIR)
+DEPCFLAGS += -I$(DEPTH)/src/fs/include/$(OBJ_DIR)
 
 CFLAGS += -g
-CFLAGS += -xildoff
+CFLAGS_CSTD += -xildoff
 
 LNFLAGS = -I/ws/sc31-tools/ref_proto/s9_58shwpl3/root_sparc/usr/include
 LNFLAGS += -I$(SC31TOP)usr/cluster/include
@@ -101,7 +101,8 @@ LNFLAGS += -I$(DEPTH)/include
 LNFLAGS += -I$(DEPTH)/src/fs/include
 LNFLAGS += -Nlevel=4 -m -u
 
-SCDEVDIRS = /usr/include /usr/cluster/include /usr/cluster/lib
+SCDEVDIRS_SUNWSCDEV = /usr/include /usr/cluster/include /usr/cluster/lib
+SCDEVDIRS = $(SC31TOP)/usr/src/head/
 SPEC_OBJ = ../lib/$(OBJ_DIR)/setsyscall.o
 
 hasam_init_LIBS = $(SPEC_OBJ) $(COMMON_LIBS)

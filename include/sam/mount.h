@@ -129,6 +129,9 @@ struct sam_fs_info {	/* File system information */
 #endif
 
 /* Flags in fi_status */
+#if defined(ORACLE_SOLARIS)
+#undef FS_FROZEN
+#endif
 
 #define	FS_MOUNTED	  0x00000001	/* Filesystem is mounted */
 #define	FS_MOUNTING	  0x00000002	/* Filesystem is currently mounting */

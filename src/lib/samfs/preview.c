@@ -283,8 +283,9 @@ remove_preview_ent(
 		    "remove_preview_ent() called with NULL preview");
 #ifdef DEBUG
 		abort();
-#endif
+#else
 		return;
+#endif
 	}
 	preview_tbl = &((shm_preview_tbl_t *)
 	    (preview_shm.shared_memory))->preview_table;
@@ -411,7 +412,7 @@ add_preview_cmd(
 	free(command);
 	thr_exit(&exit_status);
 	/* NOTREACHED */
-	return ((void *) NULL);
+	/* return ((void *) NULL); */
 }
 
 
@@ -969,7 +970,7 @@ delete_preview_cmd(
 		}
 		free(command);
 		thr_exit(&exit_status);
-		return ((void *) NULL);
+		/* return ((void *) NULL); */
 	} else {
 		if (preview_tbl->ptbl_count > 0) {	/* if any entries */
 			preview = preview_tbl->p;
@@ -1000,7 +1001,7 @@ delete_preview_cmd(
 						}
 						free(command);
 						thr_exit(&exit_status);
-						return ((void *) NULL);
+						/* return ((void *) NULL); */
 					}
 				}
 				mutex_unlock(&preview->p_mutex);
@@ -1061,7 +1062,7 @@ remove_stale_preview(
 	}
 	thr_exit(NULL);
 	/* NOTREACHED */
-	return ((void *) NULL);
+	/* return ((void *) NULL); */
 }
 
 

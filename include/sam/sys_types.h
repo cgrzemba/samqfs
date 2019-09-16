@@ -61,7 +61,7 @@
 #include <sys/dirent.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
-
+#include <sys/ksynch.h>
 #endif	/* linux */
 
 

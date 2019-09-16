@@ -92,6 +92,11 @@
 #endif
 #endif /* linux */
 
+#if defined(ORACLE_SOLARIS)
+/* it still exists but nt exported anymore */
+int secpolicy_vnode_access(const cred_t *, vnode_t *, uid_t, mode_t);
+#endif
+
 /* ----- SAMFS Includes */
 
 #include "sam/types.h"

@@ -1027,7 +1027,7 @@ fini:
 		pthread_mutex_unlock(&wp->work_lock);
 	}
 	pthread_exit(NULL);
-	return (0);
+	/* return (0); */
 }
 
 

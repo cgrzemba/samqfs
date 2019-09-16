@@ -558,16 +558,16 @@ validateClientAddr(
  * configuration files.  The list is available in a static private
  * variable, trustedClients.
  */
+static void dirMedia();
+static void dirEndmedia();
+static void dirIgnore();
+static void notDirective();
+static void msgFunc(char *msg, int lineno, char *line);
+
 static void
 getTrustedClients(void)
 {
-	static void dirMedia();
-	static void dirEndmedia();
-	static void dirIgnore();
-	static void notDirective();
-	static void msgFunc(char *msg, int lineno, char *line);
-
-	static DirProc_t directives[] = {
+	DirProc_t directives[] = {
 		{ "media",		dirMedia,	DP_set	},
 		{ "endmedia",		dirEndmedia,	DP_set	},
 		{ "cache_path",		dirIgnore,	DP_set	},

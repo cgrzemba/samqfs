@@ -63,8 +63,8 @@ PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lfscmd -L $(DEPTH)/lib/$(OBJ_DIR
 			-lsam -lsamut
 ifeq ($(OS), SunOS)
 INCFLAGS  += -I$(DB_INCLUDE)
-PROG_LIBS += -lsamspmd -lsamspm -lsamrft $(DB_LIB) $(DYNAMIC_OPT) \
--lsocket -lnsl -ladm
+PROG_LIBS += -lsamspmd -lsamspm -lsamrft $(DYNAMIC_OPT) \
+-lsocket -lnsl -ladm $(DB_LIB)
 else
 PROG_LIBS += -lsamconf
 endif

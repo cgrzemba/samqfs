@@ -377,6 +377,11 @@ typedef struct {
 /* flags when creating the db environment */
 #define	FSM_SHM_MASTER_KEY	60415
 
+#if DB_VERSION_MAJOR == 5
+#define DB_LOG_AUTOREMOVE 0
+#define env_log_config DB_LOG_AUTO_REMOVE
+#endif
+
 #define	env_fl	DB_TIME_NOTGRANTED|DB_LOG_AUTOREMOVE|DB_TXN_NOSYNC|\
 		DB_AUTO_COMMIT
 

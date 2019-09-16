@@ -215,13 +215,13 @@ mallocer(size_t size)
 pid_t
 exec_get_output(
 const char *cmdstr,
-FILE **stdout_stream, // if NULL then stdout ignored
-FILE **stderr_stream) // if NULL then stderr ignored
+FILE **stdout_stream, /* if NULL then stdout ignored */
+FILE **stderr_stream) /* if NULL then stderr ignored */
 {
 
-	pid_t pid;		// for the shell command
-	int fdo[2] = {-1, -1};	// pipe used for reading command's stdout
-	int fde[2] = {-1, -1};	// pipe used for reading command's stderr
+	pid_t pid;		/* for the shell command */
+	int fdo[2] = {-1, -1};	/* pipe used for reading command's stdout */
+	int fde[2] = {-1, -1};	/* pipe used for reading command's stderr */
 
 	Trace(TR_DEBUG, "will fork-exec new command");
 
@@ -315,7 +315,7 @@ FILE **stderr_stream) // if NULL then stderr ignored
 			close(fde[0]);
 		}
 
-		// exec & send the output to filedescriptor fd[1]
+		/* exec & send the output to filedescriptor fd[1] */
 
 		Trace(TR_DEBUG, "exec-ing sh -c \"%s\"", cmdstr);
 
@@ -884,7 +884,7 @@ sqm_lst_t **dnames)
 	if ((pid = waitpid(pid, &status, 0)) < 0) {
 		return (-1);
 	} else {
-		// check child's exit code
+		/* check child's exit code */
 		if (status > 1) {
 			return (-1);
 		}
@@ -892,7 +892,7 @@ sqm_lst_t **dnames)
 	while (NULL != fgets(line, 80, res_stream)) {
 		size_t len = strlen(line);
 		if (len) {
-			line[len - 1] = '\0'; // remove '\n'
+			line[len - 1] = '\0'; /* remove '\n' */
 		}
 		lst_append(daemons, (char *)strdup(line));
 	}

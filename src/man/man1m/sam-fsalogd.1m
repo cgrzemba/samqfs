@@ -67,6 +67,8 @@ ev_restore  file restored      1=new            new modify time
 ev_umount   umount fs          -                now
 .TE
 .PP
+These events are reading by sam-dbupd and can be stored in the sideband database
+.PP
 .SH FILES
 Detailed trace information is written to the \fBsam-fsalogd\fR trace file.
 .PP
@@ -76,6 +78,7 @@ each Sun \%SAM-QFS file system.
 .SH SEE ALSO
 \fBmount_samfs\fR(1M).
 \fBsam-fsd\fR(1M).
+\fBsam-dbupd\fR(1M).
 .PP
 \fBfsalogd.cmd\fR(4M).
 \fBdefaults.conf\fR(4M).

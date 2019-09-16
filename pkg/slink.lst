@@ -22,7 +22,7 @@ opt/SUNWsamfs/zone/bin/squota ../sbin/samquota
 opt/SUNWsamfs/zone/bin/ssum archive
 opt/SUNWsamfs/zone/bin/stage archive
 opt/SUNWsamfs/zone/lib/libdb.so ../../lib/libdb.so
-opt/SUNWsamfs/lib/amd64/libsamconf.so /usr/lib/fs/samfs/amd64/libsamconf.so
+opt/SUNWsamfs/lib/64/libsamconf.so /usr/lib/fs/samfs/64/libsamconf.so
 opt/SUNWsamfs/lib/libsamconf.so /usr/lib/fs/samfs/libsamconf.so
 opt/SUNWsamfs/sbin/sam-fsd /usr/lib/fs/samfs/sam-fsd
 opt/SUNWsamfs/sbin/sambcheck /usr/lib/fs/samfs/bcheck

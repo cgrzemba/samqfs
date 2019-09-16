@@ -902,8 +902,8 @@ connectToServer(
 		struct  sockaddr_in *mysock4;
 		struct  sockaddr_in6 peername;
 		struct  sockaddr *perp;
-		int peername_len;
-		int mysock_len;
+		unsigned int peername_len;
+		unsigned int mysock_len;
 		int level;
 
 		mysock6 = &mysock;
@@ -939,7 +939,7 @@ connectToServer(
 		memset(&mysock, 0, mysock_len);
 
 		(void) getsockname(cntl_fd, (struct  sockaddr *)&mysock,
-		    (int *)&mysock_len);
+		    &mysock_len);
 
 		/*
 		 * Save the interface address used to reach the server.

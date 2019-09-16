@@ -86,7 +86,13 @@ struct sam_node;			/* forward declaration, in this file */
 #include "sam/fs/share.h"
 #include "sam/syscall.h"
 
-
+#if defined(ORACLE_SOLARIS)
+/* it still exists but nt exported anymore */
+int secpolicy_vnode_owner(const cred_t *, uid_t);
+int secpolicy_vnode_access(const cred_t *, vnode_t *, uid_t, mode_t);
+int secpolicy_vnode_remove(const cred_t *);
+int secpolicy_vnode_setdac(const cred_t *, uid_t);
+#endif
 /*
  * The number of SAM-QFS inodes and the size of the SAM-QFS inode
  * hash table are generally obtained from elsewhere (/etc/system

@@ -62,7 +62,7 @@ LIB_SRC = spm.c
 LIB_LIBS = $(LIBSO) -lnsl
 endif
 
-DEPCFLAGS += $(THRCOMP)
+DEPCFLAGS += $(THRCOMP) $(OSDEPCFLAGS)
 ifeq ($(SPARCV9), yes)
 LNOPTS = $(LIBS_LFLAGS64)
 else

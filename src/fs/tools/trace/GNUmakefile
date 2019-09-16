@@ -39,7 +39,9 @@ MPROGS = samtrace trace
 samtrace_SRC = samtrace.c
 trace_SRC	 = trace.c
 
-CFLAGS += -xO2 -mt -lpthread
+CFLAGS_CSTD += -xO2 -mt -lpthread
+CFLAGS_GCC += -t -lpthread
+CFLAGS_$(COMPILER) = $(CFLAGS_$(COMPILER))
 
 else
 # Linux

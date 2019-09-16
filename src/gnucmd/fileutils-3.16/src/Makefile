@@ -31,18 +31,18 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = ..
 
-INSTALL = /usr/bin/ginstall -c
+INSTALL = /usr/ccs/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 YACC = bison -y
 GENCAT = 
-MV = /usr/bin/mv
-GMSGFMT = /usr/bin/gmsgfmt
-CC = gcc
+MV = /usr/ccs/bin/mv
+GMSGFMT = /usr/ccs/bin/gmsgfmt
+CC = /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__
 RANLIB = ranlib
-LN = /usr/bin/ln
-RM = /usr/bin/rm
+LN = /usr/ccs/bin/ln
+RM = /usr/ccs/bin/rm
 
 AUTOMAKE_OPTIONS = ansi2knr
 
@@ -62,7 +62,7 @@ EXTRA_DIST = cp-aux.c cp-hash.c dcgen.pl dircolors.hin
 
 INCLUDES = -I.. -I$(srcdir) -I$(top_srcdir)/lib -I../intl
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(datadir)\" -DHAVE_CONFIG_H
-LDADD = ../intl/libintl.a ../lib/libfu.a
+LDADD =  ../lib/libfu.a
 
 # Use `ginstall' in the definition of PROGRAMS and in dependencies to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -77,7 +77,7 @@ vdir_SOURCES = ls.c ls-vdir.c
 ls_SOURCES = ls.c ls-ls.c
 
 BUILT_SOURCES = dircolors.h
-PERL = /opt/csw/bin/perl
+PERL = /usr/ccs/bin/perl
 editpl = sed -e 's,@''PERL''@,$(PERL),g'
 
 CLEANFILES = dcgen
@@ -91,7 +91,7 @@ PROGRAMS =  $(bin_PROGRAMS) $(libexec_PROGRAMS)
 
 CPPFLAGS = 
 LDFLAGS = 
-LIBS = -lgen
+LIBS = -lgen 
 o = o
 ANSI2KNR = 
 df_SOURCES = df.c
@@ -199,7 +199,7 @@ touch_OBJECTS =  touch.$o
 touch_LDADD = $(LDADD)
 touch_DEPENDENCIES =  ../lib/libfu.a
 touch_LDFLAGS = 
-CFLAGS = -g -O2
+CFLAGS = -g
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 LINK = $(CC) $(LDFLAGS) -o $@
 HEADERS =  $(noinst_HEADERS)

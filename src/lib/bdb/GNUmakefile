@@ -30,7 +30,7 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-# BUILD_64BIT = yes
+BUILD_64BIT = yes
 
 DIRS = $(DB_VERSION)
 
@@ -43,6 +43,10 @@ include $(DEPTH)/mk/targets.mk
 
 .INIT:
 	[ -d $(DEPTH)/lib/$(OBJ_DIR) ] || mkdir -p $(DEPTH)/lib/$(OBJ_DIR)
+	[ -d ./$(DB_VERSION)/build_unix_$(notdir $(64DIR)) ] || mkdir -p ./$(DB_VERSION)/build_unix_$(notdir $(64DIR))
+
+install:
+	ginstall ./$(DB_VERSION)/build_unix_$(notdir $(64DIR))/.libs/libdb-4.5.so $(DEPTH)/lib/$(OBJ_DIR)
 
 clean: 		clean_more
 clean_more:

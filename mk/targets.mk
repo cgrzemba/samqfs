@@ -268,7 +268,7 @@ $(JAVA_TARGETS) $(STRIP_LIB) $(STRIP_PROG) $(STRIP_MODULE): .INIT
 
 
 clean:	$(STRIP_DIRS)
-	-rm -rf $(OBJ_DIR) *.ln
+	rm -rf $(OBJ_DIR) *.ln
 
 clobber:	clean
 
@@ -278,7 +278,7 @@ clobberall:	$(STRIP_DIRS)
 install:
 
 $(OBJ_DIR)/%.o:		%.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $($*_CPPFLAGS) $(CPPFLAGS) $< -o $@
 ifeq ($(BUILD_STABS), yes)
 	$(CTFCONVERT_CMD)
 endif
@@ -323,6 +323,7 @@ info:	$(DEPTH)/MARKER
 	@echo "        HOSTNAME: " $(HOSTNAME)
 	@echo "              OS: " $(OS)
 	@echo "     OS_REVISION: " $(OS_REVISION)
+	@echo "     OS_RELEASE: " $(OS_RELEASE)
 	@echo "        PLATFORM: " $(PLATFORM)
 	@echo "      ISA_KERNEL: " $(ISA_KERNEL)
 	@echo "         OBJ_DIR: " $(OBJ_DIR)

@@ -105,7 +105,7 @@ static int initialized = 0;
 
 int
 eaccess (path, mode)
-     char *path;
+     const char *path;
      int mode;
 {
   struct stat stats;

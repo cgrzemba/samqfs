@@ -41,19 +41,19 @@ gnulocaledir = $(prefix)/share/locale
 gettextsrcdir = $(prefix)/share/gettext/po
 subdir = po
 
-INSTALL = /usr/bin/ginstall -c
+INSTALL = /usr/ccs/bin/ginstall -c
 INSTALL_DATA = ${INSTALL} -m 644
 MKINSTALLDIRS = ./mkinstalldirs
 
-CC = gcc
+CC = /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__
 GENCAT = 
-GMSGFMT = PATH=../src:$$PATH /usr/bin/gmsgfmt
-MSGFMT = /usr/bin/msgfmt
+GMSGFMT = PATH=../src:$$PATH /usr/ccs/bin/gmsgfmt
+MSGFMT = /usr/ccs/bin/msgfmt
 XGETTEXT = PATH=../src:$$PATH :
 MSGMERGE = PATH=../src:$$PATH msgmerge
 
 DEFS = -DHAVE_CONFIG_H
-CFLAGS = -g -O2
+CFLAGS = -g
 CPPFLAGS = 
 
 INCLUDES = -I.. -I$(top_srcdir)/intl

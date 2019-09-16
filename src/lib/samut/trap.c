@@ -127,7 +127,8 @@ initialize_fatal_trap_processing(int thread_type, void (*cleanup)())
 
 	cleanup_function = cleanup;
 
-	fatal_sig_action.sa_handler = process_fatal_trap;
+	/* fatal_sig_action.sa_handler = process_fatal_trap; */
+	fatal_sig_action.sa_sigaction = process_fatal_trap;
 	sigemptyset(&fatal_sig_action.sa_mask);
 	fatal_sig_action.sa_flags = SA_SIGINFO;
 

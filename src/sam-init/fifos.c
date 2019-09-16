@@ -310,7 +310,7 @@ manage_fs_fifo(
 	sprintf(sc_mess, "manage_fs_fifo - fatal error %s", error_handler(err));
 	exit_status = 1;
 	thr_exit(&exit_status);
-	return (param);
+	/* return (param); */
 }
 
 

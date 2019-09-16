@@ -105,10 +105,15 @@ endif
 INCS += -I$(DEPTH)/include -I.. -I.
 DEPCFLAGS = $(OSFLAGS) $(DEFS) $(INCS)
 
+# valist deprecated 
+CERRWARN += -erroff=E_DEPRECATED_ATT
+
 ifeq ($(OS), Linux)
-CFLAGS += -g -O
+CFLAGS += $(DEBUGFLAGS) -O
 else
-CFLAGS += -g -O -xc99=none
+CFLAGS_CSTD = $(DEBUGFLAGS) -O -xc99=none
+CFLAGS_GCC = $(DEBUGFLAGS) -O
+CFLAGS += $(CFLAGS_$(COMPILER))
 endif
 
 LNOPTS = -u -x -Dlint

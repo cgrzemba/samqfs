@@ -89,6 +89,10 @@
 #define	RWXALLMASK (S_IRWXU | S_IRWXG | S_IRWXO)
 #define	GRP_SVTXMASK (S_ISGID | S_ISVTX)
 
+#if defined(ORACLE_SOLARIS)
+extern int    rstchown;       /* 1 ==> restrictive chown(2) semantics */
+#endif
+
 static inline int sam_inode_validate(ino_t ino, struct sam_perm_inode *pip);
 
 kmutex_t	qfs_scan_lock;	/* Prevent multiple qfs_scan_inodes() */

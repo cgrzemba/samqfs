@@ -139,7 +139,7 @@
 /* #undef HAVE_CATGETS */
 
 /* Define as 1 if you have gettext and don't want to use GNU gettext.  */
-/* #undef HAVE_GETTEXT */
+#define HAVE_GETTEXT 1
 
 /* Define if your locale.h file contains LC_MESSAGES.  */
 #define HAVE_LC_MESSAGES 1
@@ -260,7 +260,7 @@
 #define HAVE_BCOPY 1
 
 /* Define if you have the dcgettext function.  */
-/* #undef HAVE_DCGETTEXT */
+#define HAVE_DCGETTEXT 1
 
 /* Define if you have the endgrent function.  */
 #define HAVE_ENDGRENT 1

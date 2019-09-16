@@ -152,8 +152,8 @@ serve_client(
 	free(req);
 	thr_exit(NULL);
 
-	/* NOTREACHED */
-	return (NULL);
+	/* NOTREACHED
+	return (NULL); */
 }
 
 void

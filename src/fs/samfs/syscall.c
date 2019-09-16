@@ -96,6 +96,11 @@
 #endif
 #endif /* linux */
 
+#if defined(ORACLE_SOLARIS)
+/* it still exists but nt exported anymore */
+int secpolicy_vnode_owner(const cred_t *, uid_t);
+#endif
+
 /*
  * ----- SAMFS Includes
  */

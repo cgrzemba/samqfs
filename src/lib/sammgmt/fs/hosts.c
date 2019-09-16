@@ -64,7 +64,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/sam_trace.h"
 #include "sam/param.h"
 #include "sam/shareops.h"
-#include "samhost.h"
+#include "sam/fs/samhost.h"
 #include "sam/mount.h"
 
 /* client info headers */

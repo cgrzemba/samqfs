@@ -256,7 +256,7 @@ DBFileRecover(
 	 */
 
 	for (digit = 0; digit <= 9; digit++) {
-		snprintf(filename, sizeof (pathname), "%s%d",
+		snprintf(filename, sizeof (filename), "%s%d",
 		    backing_prefix, digit);
 		snprintf(pathname, sizeof (pathname), "%s/%s",
 		    datadir, filename);

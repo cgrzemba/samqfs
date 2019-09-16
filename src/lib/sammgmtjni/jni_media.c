@@ -939,7 +939,7 @@ Java_com_sun_netstorage_samqfs_mgmt_media_Media_discoverUnused(JNIEnv *env,
 	jclass cls;
 	jmethodID mid;
 	jobject newObj;
-	sqm_lst_t *liblst, *drvlst, *netattlibs;
+	sqm_lst_t *liblst, *drvlst = NULL, *netattlibs;
 	int res;
 	sqm_lst_t *lst = lst_create();
 

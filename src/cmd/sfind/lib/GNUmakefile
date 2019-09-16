@@ -68,6 +68,8 @@ else
 DEFS +=  -DMAJOR_IN_MKDEV=1
 endif
 
+CERRWARN += -erroff=E_DEPRECATED_ATT
+
 DEPCFLAGS = $(DEFS) -I. -I$(TARG_INC)$(DEPTH)/include
 
 LNOPTS = -u -x -Dlint

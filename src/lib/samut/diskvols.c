@@ -1170,7 +1170,7 @@ diskVolsPutVersion(
 
 	ASSERT(sizeof (DiskVolumeVersionKey_t) == strlen(DISKVOLS_VERSION_KEY));
 	memset(&versionKey, 0, sizeof (DiskVolumeVersionKey_t));
-	strcpy((char *)&versionKey, DISKVOLS_VERSION_KEY);
+	strncpy((char *)&versionKey, DISKVOLS_VERSION_KEY, sizeof (DiskVolumeVersionKey_t));
 
 	ret = dbfile->Put(dbfile, versionKey, sizeof (DiskVolumeVersionKey_t),
 	    val, data_size, 0);
@@ -1287,7 +1287,7 @@ diskVolsGetVersion(
 
 	ASSERT(sizeof (DiskVolumeVersionKey_t) == strlen(DISKVOLS_VERSION_KEY));
 	memset(&versionKey, 0, sizeof (DiskVolumeVersionKey_t));
-	strcpy((char *)&versionKey, DISKVOLS_VERSION_KEY);
+	strncpy((char *)&versionKey, DISKVOLS_VERSION_KEY, sizeof (DiskVolumeVersionKey_t));
 
 	ret = dbfile->Get(dbfile, versionKey, sizeof (DiskVolumeVersionKey_t),
 	    (void **)val);

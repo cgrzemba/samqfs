@@ -34,6 +34,7 @@ include $(DEPTH)/mk/common.mk
 DEPCFLAGS = \
 	-DAPI_DEBUG=syslog \
 	-DDEBUG \
+        $(OSDEPCFLAGS) \
 	-I$(INCLUDE) \
 	-I$(INCLUDE)/sam/$(OBJ_DIR) \
 	-DSAMRPC_CLIENT $(DEBUGCDEFS) $(METADATA_SERVER) $(THRCOMP)

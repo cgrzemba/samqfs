@@ -146,13 +146,18 @@ ARCHIVER_INCLUDES =	-I$(DEPTH)/src/archiver/include \
 			-I$(INCLUDE)/aml/$(OBJ_DIR)
 
 CATALOG_INCLUDES =     -I$(DEPTH)/src/catalog/include
+# GCC make trouble for using this include, because there is a dirent.h file also
 BSWAP_INCLUDES = -I$(DEPTH)/src/fs/include
 
 STK_INCLUDES =	-I$(DEPTH)/src/robots/stk/stk_includes
 
-DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG -DSAM_LIB_GNU $(METADATA_SERVER) \
+# hosts_CPPFLAGS = $(BSWAP_INCLUDES)
+# fs_CPPFLAGS = $(BSWAP_INCLUDES)
+bswap_CPPFLAGS = $(BSWAP_INCLUDES)
+
+DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG -DSAM_LIB_GNU $(METADATA_SERVER) $(OSDEPCFLAGS) \
 		-I. -I$(INCLUDE) -I$(INCLUDE)/pub/$(OBJ_DIR) -I$(DEPTH) \
-		$(ARCHIVER_INCLUDES) -I/usr/include $(BSWAP_INCLUDES) \
+		$(ARCHIVER_INCLUDES) \
 		$(CATALOG_INCLUDES) \
 		$(STK_INCLUDES) $(THRCOMP)
 

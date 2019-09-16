@@ -116,7 +116,11 @@ InitDataConnection(
 	int asize;
 	int sockfd;
 	int value;
+#ifdef ORACLE_SOLARIS
+	socklen_t length;
+#else
 	int length;
+#endif
 	struct	sockaddr_in *dc4 = (struct sockaddr_in *)dataconn;
 	struct	sockaddr_in6 *dc6 = (struct sockaddr_in6 *)dataconn;
 	Crew_t *crew = cli->crew;

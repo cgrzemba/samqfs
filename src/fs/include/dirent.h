@@ -52,7 +52,9 @@
 #else	/* linux */
 
 #include <sys/types.h>
+#include <sys/mutex.h>
 #include <sys/dnlc.h>
+#include "sam/types.h"
 
 #endif	/* linux */
 

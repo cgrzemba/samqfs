@@ -70,6 +70,10 @@ static int sam_get_acl_ext_data(sam_node_t *bip, int cnt, sam_acl_t *entp,
 
 extern void bcopy(const void *s1, void *s2, size_t n);
 
+#if defined(ORACLE_SOLARIS)
+/* it still exists but nt exported anymore */
+int secpolicy_vnode_access(const cred_t *, vnode_t *, uid_t, mode_t);
+#endif
 
 /*
  * ----- sam_acl_access - Access control list access.

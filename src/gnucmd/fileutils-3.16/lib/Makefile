@@ -16,7 +16,7 @@ exec_prefix = ${prefix}
 bindir = ${exec_prefix}/bin
 sbindir = ${exec_prefix}/sbin
 libexecdir = ${exec_prefix}/libexec
-datadir = /opt/SUNWsamfs
+datadir = ${prefix}/share
 sysconfdir = ${prefix}/etc
 sharedstatedir = ${prefix}/com
 localstatedir = ${prefix}/var
@@ -32,20 +32,20 @@ pkgincludedir = $(includedir)/fileutils
 
 top_builddir = ..
 
-INSTALL = /usr/bin/ginstall -c
+INSTALL = /usr/ccs/bin/ginstall -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_SCRIPT = ${INSTALL_PROGRAM}
 transform = s,x,x,
 YACC = bison -y
 GENCAT = 
-PERL = /opt/csw/bin/perl
-MV = /usr/bin/mv
-GMSGFMT = /usr/bin/gmsgfmt
-CC = gcc
+PERL = /usr/ccs/bin/perl
+MV = /usr/ccs/bin/mv
+GMSGFMT = /usr/ccs/bin/gmsgfmt
+CC = /opt/developerstudio12.5/bin/cc -Xc -D__EXTENSIONS__
 RANLIB = ranlib
-LN = /usr/bin/ln
-RM = /usr/bin/rm
+LN = /usr/ccs/bin/ln
+RM = /usr/ccs/bin/rm
 
 noinst_LIBRARIES = libfu.a
 
@@ -78,7 +78,7 @@ LIBRARIES =  $(noinst_LIBRARIES)
 DEFS = -DHAVE_CONFIG_H -I. -I$(srcdir) -I..
 CPPFLAGS = 
 LDFLAGS = 
-LIBS = -lgen
+LIBS = -lgen 
 libfu_a_OBJECTS =  getdate.o posixtm.o getopt.o getopt1.o argmatch.o \
 backupfile.o dirname.o filemode.o full-write.o getversion.o idcache.o \
 isdir.o long-options.o makepath.o modechange.o path-concat.o \
@@ -87,7 +87,7 @@ xmalloc.o xstrdup.o xstrtol.o xstrtoul.o yesno.o
 AR = ar
 INTERLOCK = ./interlock
 YLWRAP = ./ylwrap
-CFLAGS = -g -O2
+CFLAGS = -g
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 LINK = $(CC) $(LDFLAGS) -o $@
 HEADERS =  $(noinst_HEADERS)

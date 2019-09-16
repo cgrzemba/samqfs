@@ -355,7 +355,7 @@ Java_com_sun_netstorage_samqfs_mgmt_adm_SysInfo_runSamExplorer(JNIEnv *env,
 
 	jboolean isCopy;
 	char *cstr = NULL;
-	int ret;
+	int ret = 0;
 	char idbuf[11]; /* long enough for INT_MAX + '\0' */
 
 	cstr = GET_STR(location, isCopy);

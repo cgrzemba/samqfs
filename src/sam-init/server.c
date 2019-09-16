@@ -103,7 +103,7 @@ rmt_server_thr(
 		rmt_server();	/* should only return on shutdown */
 	}
 	thr_exit(NULL);
-	return (arg);
+	/* return (arg); */
 }
 
 

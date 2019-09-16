@@ -1571,7 +1571,11 @@ sam_dk_issue_direct_io(
 		SAM_BUF_ENQ(&bdp->dio_link, &sbp->link);
 		mutex_exit(&bdp->bdp_mutex);
 
+#ifdef ORACLE_SOLARIS
+		iov->iov_base = (caddr_t)iov->iov_base + contig;
+#else
 		iov->iov_base += contig;
+#endif
 		iov->iov_len -= int_contig;
 		bdp->length = iov->iov_len;
 		uiop->uio_loffset += contig;

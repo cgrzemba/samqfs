@@ -1,4 +1,4 @@
-#!/usr/bin/env python -t
+#!/usr/bin/env python -t -O
 #
 # CDDL HEADER START
 #
@@ -19,27 +19,31 @@
 #
 # CDDL HEADER END
 #
-import os
-import stat
+from os import stat, makedirs, path, strerror, errno
+# import stat
 import subprocess
 import sys
 import shutil
 from stat import *
+from random import randint
+from struct import pack
 import time
 import json
 
-basedir='/samst/'
+basedir='/samtest/r2/'
+fileno = 256
 
 def mkfile(file, size) :
     chunk = 1024
     loopto = size // chunk
     filler = size % chunk
 
-    bite = bytearray(chunk)
-
     try :
         f = open(file, "wb")
         for n in range(loopto) :
+            bite = bytearray()
+            for i in range (chunk):
+                bite.extend(pack("B",randint(0,255)))
             f.write(bite)
 
         if filler > 0 :
@@ -54,7 +58,7 @@ def installFiles(filelst):
         try:
             print "create %s" % f
             if f.rpartition('/')[0] != None:
-                os.stat(f.rpartition('/')[0])
+                stat(f.rpartition('/')[0])
             mkfile(f,s)
 #        except OSError, e:
 #            if e.errno == 2:  # No such directory
@@ -62,12 +66,17 @@ def installFiles(filelst):
 #                mkfile(f,s)
         except IOError, e:
             if not e.errno in (13,): 
-                print "Unable to create file. %s %d:%s" % (f,e.errno,os.strerror(e.errno))
+                print "Unable to create file. %s %d:%s" % (f,e.errno,strerror(e.errno))
             
 def main():
     filelst = []
-    for i in range(1024):
-        filelst.append(('lfile{0}'.format(i),i*1024*1024))
+    try:
+        makedirs(basedir)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and path.isdir(basedir):
+            pass
+    for i in range(fileno):
+        filelst.append(('lfile{0}'.format(i),i*1024*128))
     installFiles(filelst)
 
 main()

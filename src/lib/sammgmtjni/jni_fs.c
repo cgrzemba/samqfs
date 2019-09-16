@@ -870,7 +870,7 @@ Java_com_sun_netstorage_samqfs_mgmt_fs_FS_grow(JNIEnv *env,
     jclass cls /*ARGSUSED*/, jobject ctx, jobject fsObj,
     jobjectArray mdDsks, jobjectArray dDsks, jobjectArray Grps) {
 
-	int ret;
+	int ret = 0;
 	PTRACE(1, "jni:FS_grow() entry");
 	ret == grow_fs(CTX,
 	    FSInfo2fs(env, fsObj),

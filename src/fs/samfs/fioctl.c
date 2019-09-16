@@ -1318,7 +1318,12 @@ sam_stage_write(
 
 				iov.iov_len -= skip_count;
 				uio.uio_resid -= skip_count;
+/* Solaris 11.3 and later has changed struct iovec->iov_base type from caddr_t to void */  
+#ifdef ORACLE_SOLARIS
+				iov.iov_base = (caddr_t)iov.iov_base + skip_count;
+#else
 				iov.iov_base += skip_count;
+#endif
 				uio.uio_loffset += skip_count;
 			}
 		}

@@ -82,8 +82,7 @@ PDIRS += \
 		man \
 		rpc \
 		remote_sam \
-		notify \
-		samqfsui
+		notify 
 
 PROG = assert
 PROG_SRC = assert.c

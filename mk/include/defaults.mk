@@ -47,3 +47,4 @@
 
 DEBUG ?= yes
 COMPLETE ?= no
+BUILD_64bit = $(BUILD_64BIT)

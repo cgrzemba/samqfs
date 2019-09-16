@@ -53,7 +53,6 @@
 #endif /* LUFS */
 #include <sys/inttypes.h>
 #include <sys/callb.h>
-#include <sys/tnf_probe.h>
 
 /*
  * Kernel threads for logging
@@ -201,8 +200,6 @@ log_roll_read(ml_unit_t *ul, rollbuf_t *rbs, int nmblk, caddr_t roll_bufs,
 			    (offset_t)MAPBLOCKMASK) == mblkno) &&
 			    (rbp->rb_bh.b_edev == medev)) {
 #endif /* LUFS */
-				TNF_PROBE_0(trans_roll_new_delta, "lqfs",
-				    /* CSTYLED */);
 				trans_roll_new_delta++;
 				/* Flush out the current set of buffers */
 				goto flush_bufs;

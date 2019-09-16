@@ -76,6 +76,11 @@
 #include <vm/seg_map.h>
 #include <vm/pvn.h>
 
+#if defined(ORACLE_SOLARIS)
+/* it still exists but nt exported anymore */
+int secpolicy_vnode_setdac(const cred_t *, uid_t);
+#endif
+
 /* ----- SAMFS Includes */
 
 #include "sam/param.h"
@@ -3049,7 +3054,11 @@ reenter:
 	as_rangelock(asp);				/* Lock address space */
 
 	if ((flags & MAP_FIXED) == 0) {
+#if (KERNEL_MINOR >= 4)
+		map_addr(addrpp, length, off, flags);
+#else
 		map_addr(addrpp, length, off, 1, flags);
+#endif
 		if (*addrpp == NULL) {
 			as_rangeunlock(asp);
 			error = ENOMEM;

@@ -194,7 +194,11 @@ sam_event_open(
 	}
 	as = curproc->p_as;
 	as_rangelock(as);
+#if (KERNEL_MINOR >= 4)
+	map_addr(&uaddr, eb->eb_size, (offset_t)(uintptr_t)eb, 0);
+#else
 	map_addr(&uaddr, eb->eb_size, (offset_t)(uintptr_t)eb, 1, 0);
+#endif
 	if (uaddr == NULL) {
 		as_rangeunlock(as);
 		error = ENODATA;

@@ -51,9 +51,9 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/vfstab.h>
 #include <errno.h>
 #include <sys/efi_partition.h>
-#include "efilabel.h"
 
 /*  other header files */
+#include "sam/fs/efilabel.h"
 #include "pub/mgmt/device.h"
 #include "pub/mgmt/error.h"
 #include "pub/mgmt/sqm_list.h"

@@ -68,7 +68,7 @@ main(int argc, char **argv)
 	char host[128];
 	int error;
 	char error_buffer[SPM_ERRSTR_MAX];
-	int sa_len;
+	unsigned int sa_len;
 	struct sockaddr *sa;
 
 	if (argc != 2) {

@@ -77,7 +77,7 @@ static char *_SrcFile = __FILE__;  /* Using __FILE__ makes duplicate strings */
 #include "mgmt/config/cfg_fs.h"
 #include "mgmt/config/cfg_diskvols.h"
 #include "mgmt/config/vfstab.h"
-#include "bswap.h"
+#include "sam/fs/bswap.h"
 
 /* extern for byteswapping superblock */
 extern int byte_swap_sb(struct sam_sblk *sblk, size_t len);

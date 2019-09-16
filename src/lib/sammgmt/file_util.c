@@ -37,11 +37,11 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>
 #include <fcntl.h>
-#include <dirent.h>
 #include <unistd.h>
 #include <fnmatch.h>
 #include <stddef.h>

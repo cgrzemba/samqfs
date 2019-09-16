@@ -248,7 +248,7 @@ UdsRecvMsg(
 	struct sigaction sig_action;
 	struct sockaddr_un name;
 	char *argbuf = NULL;
-	int len;
+	unsigned int len;
 	int sock = -1;
 	int r = 0;
 

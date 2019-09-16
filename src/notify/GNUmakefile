@@ -33,7 +33,8 @@ include $(DEPTH)/mk/common.mk
 PROG = notify
 PROG_SRC = notify.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lfsmgmt -ldl -lcsn -lcurl -lssl -lcrypto -lsocket $(LIBSO)
+# PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lfsmgmt -ldl -lcsn -lcurl -lssl -lcrypto -lsocket -lmd5 $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -ldl -lcsn -lcurl -lssl -lcrypto -lsocket -lmd5 $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lfsmgmt

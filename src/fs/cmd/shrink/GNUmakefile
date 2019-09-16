@@ -34,7 +34,7 @@ PROG = shrink
 PROG_SRC = shrink.c readcmd.c
 
 INCFLAGS = -I $(INCLUDE) -I../../include -I../../include/$(OBJ_DIR)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) \
+DEPCFLAGS = $(OSDEPCFLAGS) $(INCFLAGS) $(VERS) $(METADATA_SERVER) \
 	$(DEBUGCDEFS) $(THRCOMP)
 
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \

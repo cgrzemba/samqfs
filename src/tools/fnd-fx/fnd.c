@@ -39,7 +39,7 @@ unsigned long long position, offset;
 int line;    /* current line number in archiver.cmd */
 
 /*  Fields read from the archiver.cmd file */
-char flag[X], date[X], time[X], mt[X], vsn[X];
+char flag[X], date[X], timefield[X], mt[X], vsn[X];
 char aset[X], op[X], fs[X], ino[X], size[X], name[X];
 int arcopy;
 
@@ -92,7 +92,7 @@ main(int argc, char **argv)
 		/* break it into the various fields */
 		if (sscanf(buf,
 		    "%s %s %s %s %s %s %s %s %s %s %s\n",
-		    flag, date, time, mt, vsn,
+		    flag, date, timefield, mt, vsn,
 		    aset, op, fs, ino, size, name) != 11) {
 			/*
 			 * Note that this error occurs for the root
@@ -233,7 +233,7 @@ void
 dumpline(void)
 {
 	printf("\nAt line %d:\n%s %s %s %s %s %s %s %s %s %s %s\n",
-	    line, flag, date, time, mt, vsn, aset, op, fs, ino, size,
+	    line, flag, date, timefield, mt, vsn, aset, op, fs, ino, size,
 	    name);
 }
 
@@ -249,7 +249,7 @@ repair(int index)
 
 	/* emit the corrected archiver log entry */
 	printf("%s %s %s %s %s %s %s %s %s %s %s\n",
-	    flag, date, time, mt, vsn, aset, NOP, fs, ino, size, name);
+	    flag, date, timefield, mt, vsn, aset, NOP, fs, ino, size, name);
 
 	/* emit the call to the correction program */
 	printf("echo \"%s %d 0 %#llx %#llx\" | fix\n",

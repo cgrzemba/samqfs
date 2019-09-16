@@ -747,5 +747,5 @@ do_csum(void *param)
 			    "sema_post failed at %d: %m", __LINE__);
 	}
 	thr_exit(NULL);
-	return (NULL);
+	/* return (NULL); */
 }

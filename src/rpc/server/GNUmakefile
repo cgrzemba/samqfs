@@ -45,7 +45,10 @@ PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut \
 	-lgen -lnsl -lintl $(LIBSO)
 
 DEPCFLAGS += -I$(INCLUDE)/pub
-CFLAGS += -Xa -g
+
+CFLAGS_CSTD = -Xa $(DEBUGFLAGS)
+CFLAGS_GCC = $(DEBUGFLAGS)
+CFLAGS += $(CFLAGS_$(COMPILER))
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut

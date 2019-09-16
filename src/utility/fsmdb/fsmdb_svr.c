@@ -1220,7 +1220,7 @@ do_log_err(char *errpfx, char *fmt, ...)
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof (buf), fmt, ap);
-	va_end();
+	va_end(ap);
 
 	fsmdb_log_err(dbEnv, errpfx, buf);
 }
