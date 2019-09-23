@@ -119,6 +119,7 @@
    they can distinguish the relative order of options and other arguments.  */
 
 #include "getopt.h"
+#include <string.h>
 
 /* For communication from `getopt' to the caller.
    When `getopt' finds an option that takes an argument,

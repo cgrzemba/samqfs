@@ -46,6 +46,7 @@ is applied is otherwise unspecified. */
 #define ELIDE_CODE
 #endif
 #endif
+#include <stdlib.h>
 
 
 #ifndef ELIDE_CODE

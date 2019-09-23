@@ -81,7 +81,7 @@ noinst_HEADERS = system.h cp.h ls.h dircolors.h
 EXTRA_DIST = cp-aux.c cp-hash.c dcgen.pl dircolors.hin
 
 INCLUDES += -I.. -I$(srcdir) -I$(top_srcdir)/lib -I../intl $(SAMINCLUDE)
-DEFS += -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(datadir)\" -DHAVE_CONFIG_H
+DEFS += -m32 -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(datadir)\" -DHAVE_CONFIG_H
 
 # Use `ginstall' in the definition of PROGRAMS and in dependencies to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -110,7 +110,7 @@ X_PROGRAMS =  $(bin_PROGRAMS) $(libexec_PROGRAMS)
 PROGRAMS =  $(addprefix $(OBJ_DIR)/, $(bin_PROGRAMS) $(libexec_PROGRAMS))
 
 CPPFLAGS = 
-LDFLAGS = 
+LDFLAGS =  -m32
 o = o
 ANSI2KNR = 
 df_SOURCES = df.c
