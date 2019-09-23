@@ -384,7 +384,7 @@ dbFileGet(
 	    tracePrefix, dbfile, dbkey, dbkey_size);
 
 	if (DBFILE_IS_INIT(dbfile) == B_FALSE) {
-		return (NULL);
+		return (0);
 	}
 
 	db = dbfile->db;
@@ -520,7 +520,7 @@ dbFileGetIterator(
 	memset(&key,  0, sizeof (DBT));
 	memset(&data, 0, sizeof (DBT));
 
-	ret = dbc->c_get(dbc, &key, &data, DB_NEXT);
+	ret = dbc->get(dbc, &key, &data, DB_NEXT);
 	if (ret != 0) {
 		/* Log error */
 		return (ret);
@@ -555,7 +555,7 @@ dbFileEndIterator(
 
 	dbc = dbfile->dbc;
 
-	ret = dbc->c_close(dbc);
+	ret = dbc->close(dbc);
 
 	Trace(TR_DBFILE, "%s [%x] enditerator complete %d",
 	    tracePrefix, dbfile, ret);

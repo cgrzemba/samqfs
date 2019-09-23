@@ -49,7 +49,7 @@ static char *_SrcFile = __FILE__;
 #include <unistd.h>
 
 /* Berkeley DB header. */
-#include <db.h>
+/* #include <db.h> */
 
 /* SAM-FS headers. */
 #include "sam/types.h"
@@ -124,11 +124,7 @@ void
 ReadDiskVolumes(
 		char *diskvols_name)	/* NULL if default conf file name */
 {
-	extern char *program_name;
-
 	int	errors;
-	int ret;
-	DiskVolumeInfo_t *dv;
 
 	fname = SAM_CONFIG_PATH"/diskvols.conf";
 	if (diskvols_name != NULL) {
@@ -455,7 +451,6 @@ cfgVolume(void)
 	int	pathlen;
 	int i;
 	size_t offset;
-	int dtype;
 	struct diskVolsConfig *config;
 
 	/*

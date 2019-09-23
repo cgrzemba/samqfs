@@ -241,9 +241,10 @@ ifeq ($(PLATFORM), i386)
 		DB_ARCH = i386
 	endif
 endif
-DB_VERSION = V4/4.5.20
-DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(OS_ARCH)/include
-DB_LIB = -ldb-4.5
+# DB_VERSION = V4/4.5.20
+# DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(OS_ARCH)/include
+DB_INCLUDE = /usr/include
+DB_LIB = -ldb-5.3
 
 #
 # MySQL DB definitions

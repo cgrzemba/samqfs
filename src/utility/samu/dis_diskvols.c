@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <strings.h>
-#include <db.h>
+// #include <db.h>
 
 /* POSIX headers. */
 #include <sys/types.h>
