@@ -44,7 +44,7 @@ PROG_LIBS = $(STATIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamspm $(DYNAMIC_OPT) \
 	-lsocket -lnsl -ldl -lgen \
 	$(THRLIBS) $(LIBSO)
 
-DEPCFLAGS += -I$(INCLUDE)/aml/$(OBJ_DIR) $(THRCOMP)
+DEPCFLAGS += -I$(INCLUDE)/aml/$(OBJ_DIR) $(THRCOMP) $(OSDEPCFLAGS)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamcat -lsamconf \
