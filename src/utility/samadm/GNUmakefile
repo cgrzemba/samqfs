@@ -38,7 +38,7 @@ PROG_SRC = \
 	samadmlib.c \
 	servicetag_cmd.c
 
-DEPCFLAGS += -I.
+DEPCFLAGS += -I. $(OSDEPCFLAGS)
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
 

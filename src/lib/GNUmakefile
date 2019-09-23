@@ -53,9 +53,9 @@ DIRS += \
 	samdb \
 	sammig \
 	csn \
+	sammgmt \
 	pax_hdr
 
-# sammgmt
 endif
 
 include $(DEPTH)/mk/targets.mk
