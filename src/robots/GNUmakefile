@@ -33,14 +33,14 @@ include $(DEPTH)/mk/common.mk
 PROG = robots
 PROG_SRC = main.c child.c build_pids.c
 
-DIRS = lib common generic
+DIRS = lib common generic stk
 PROG_LIBS = -lgen -R /opt/SUNWsamfs/lib -L $(DEPTH)/lib/$(OBJ_DIR)  -lsamfs -lsamut
 
 ifeq ($(MAKECMDGOALS), clobberall)
 	DIRS += ibm3494 sony thirdparty stk
 else
 ifneq ($(SAM_OPEN_SOURCE), yes)
-	DIRS += thirdparty stk
+	DIRS += thirdparty
 ifeq ($(PLATFORM), sparc)
 	DIRS += ibm3494 sony
 	PROG_LIBS += $(THRLIBS) -lsamcat

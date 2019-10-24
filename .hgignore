@@ -13,7 +13,7 @@ syntax: regexp
 ^webrev
 ^tags
 /obj/Linux_
-/obj/SunOS_5
+/obj/SunOS_
 ^pkg-linux/RPMS
 ^pkg-linux/iso_(open|qfs)\.iso
 ^src/robots/vendor_supplied/stk/etc/make.sun.SunOS_5
@@ -25,6 +25,7 @@ syntax: regexp
 ^src/lib/mysql/V5/5.0.51a/mysql-5.0.96
 ^src/lib/bdb/V4/db-4.5.20
 ^pkg
+^repo
 ^dtrace
 ^check_samfs
 .*0$
@@ -33,3 +34,4 @@ syntax: regexp
 ^src/lib/mysql/V5/5.0.51a/i386
 src/gnucmd/fileutils-3.16/lib/getdate.c
 run_hg_push_on_testcswx
+

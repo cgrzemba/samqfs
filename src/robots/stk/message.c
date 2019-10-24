@@ -191,8 +191,8 @@ monitor_msg(
 					    __FILE__, __LINE__);
 				threads[STK_MSG_THREAD] = (thread_t)-1;
 				thr_exit(&exit_status);
-				/* NOTREACHED */
-				return (NULL);
+				/* NOTREACHED 
+				return (NULL); */
 			}
 		}
 	}

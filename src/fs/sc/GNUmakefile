@@ -78,7 +78,8 @@ MESSAGE_DIR = /opt/SUNWsamfs/lib/locale
 # installed, typically on the build machine itself, in
 # /usr/cluster/
 #
-SC31TOP = /
+# SC31TOP = /
+SC31TOP = ${HOME}/samfs/OHAC/ohac+5.11+$(shell isainfo | cut -d" " -f2)
 
 DEPCFLAGS = -D TEXT_DOMAIN=\"$(TEXT_DOMAIN)\"
 DEPCFLAGS += -D MESSAGE_DIR=\"$(MESSAGE_DIR)\"

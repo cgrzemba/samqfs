@@ -1,0 +1,86 @@
+#
+# Copyright (C) 1993,2011, Oracle and/or its affiliates. All rights reserved.
+#
+# Name:
+#
+#       make.ini for Linux (64 bit)
+#
+# Description:
+#
+#       This file is included in each low-level Makefile in the CDK.
+#
+#       It has the name of the compiler, the ansi library, and loader flags
+#       specific for the host's compiler.
+#
+#       Some appropriate values for the following operating systems are 
+#       present here:
+#       AIX 4.3.3 / 5.1
+#       SunOS 4.1.x
+#       Solaris 2.8 / 2.9
+#       Red Hat Linux 8.0
+#
+#       This file is the one which changes when compiling on a new host,
+#       not the secondary makefiles.
+#
+# Special Notes:
+#
+#       Please refer to the Installation and Operations manual before
+#       modifying this file.
+#
+# Revision History:
+#
+#       24-Dec-1993     H. I. Grapek    Original
+#       09-Jan-1994     H. I. Grapek    Added DEBUG and NONDEBUG
+#       17-Jan-1995     K. J. Stickney  Added values for AIX and 
+#                                       Solaris.
+#       02-May-2002     S. L. Siao      Modified for Forte compiler and xlc
+#       27-Dec-2002     Hemendra        Modified for Linux compiler gcc
+#       25-Aug-2003     Mitch Black     Added a runtime library path for Solaris.
+#       17-Nov-2004     Mitch Black     Change default from Linux back to Solaris
+#                                       (for target OS) for CDK2.3
+#       08-Dec-2004     Mitch Black     Add in macro definitions or at least
+#                                       placeholders for each supported OS.
+#       23-Feb-2005     Mitch Black     For Linux added in -O2; removed -L/lib
+#       27-Apr-2010     Mike Williams   Updated the COMPILER path to use Sun
+#                                       Stuio 12.  Added COMMON_CC_FLAGS to 
+#                                       propagate 64-bit compile flags to all 
+#                                       Makefiles.
+#                                       Set the ANSI_INCLUDE flag to be blank.
+#                                       Added the 64-bit library path to the 
+#                                       UCBLIB_DIR, and LIB_DIR macros.
+#                                       Updated the copyright statement.
+#       15-June-2010    Mike Williams   This file has the make.ini settings for
+#                                       64 bit Linux builds.
+#       04-Nov-2010     Mike Williams   Removed settings for other platforms
+#       15-Jun-2011     Joseph Nofi     Added LIBPTRHREADS compiler option
+#
+#####################################################################
+####                    Oracle LINUX 5.5s
+####
+#   The following are the definitions needed for compilation of
+#   the CDK on a ix86 platforms running Red Hat Linux 8.0 with 
+#       GCC Compiler.
+#
+#   This is where the CDK developer will change the compiler and
+#   linker/loader flags.
+#
+#       These are for compiling Toolkit source.
+#
+COMPILER=/usr/bin/gcc
+#COMMON_CC_FLAGS=-m32
+COMMON_CC_FLAGS=-m64
+#LD_FLAGS=
+DEBUG       = -DDEBUG -g $(NONDEBUG)
+NONDEBUG    = -DLINUX -O2
+#ANSI_INCLUDE    =
+#
+#   These are for linking Toolkit executables
+#
+#LIBANSI=
+#LIB_DIR=
+#UCBLIB_DIR=
+#LIBRPCSOC=
+#LIBSOCKET=
+LIBNSL = -lnsl
+#LIBRUNPATH =
+#LIBPTHREADS= 
