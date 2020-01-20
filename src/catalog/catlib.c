@@ -1733,6 +1733,7 @@ CatalogMmapCatfile(
 	 * Check version.
 	 */
 	if (ch->ChVersion != CF_VERSION) {
+	    int cf_version = CF_VERSION;
 		LibError(MsgFunc, EXIT_FAILURE, 18202,
 		    ch->ChVersion, CF_VERSION);
 		return (ch->ChVersion);

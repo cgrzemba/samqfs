@@ -22,7 +22,7 @@ syntax: regexp
 ^BUILD\.
 ^src/samqfsui/html/(en|fr)/versionDate.txt
 ^src/samqfsui/nbproject
-^src/lib/mysql/V5/5.0.51a/mysql-5.0.96
+^src/lib/mysql
 ^src/lib/bdb/V4/db-4.5.20
 ^pkg
 ^dtrace
@@ -31,5 +31,10 @@ syntax: regexp
 .*~$
 .*\.o$
 ^src/lib/mysql/V5/5.0.51a/i386
+src/gnucmd/fileutils-3.16/lib/getdate.c
 run_hg_push_on_testcswx
 ^src/fs/lib/bswap_data.c@*
+^repo
+^test
+bswap_data.c@
+.*\.orig

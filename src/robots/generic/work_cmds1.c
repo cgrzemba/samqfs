@@ -541,6 +541,7 @@ add_to_cat_req(
 	robo_event_t *event)
 {
 #if !defined(SAM_OPEN_SOURCE)
+    /* function for ADIC libraries */
 	int		local_retry, d_errno, last_derrno = -1;
 	uint32_t	status;
 	char		*l_mess = library->un->dis_mes[DIS_MES_NORM];
@@ -779,6 +780,8 @@ add_to_cat_req(
 		(void) CatalogSetFieldByLoc(library->un->eq, vid.ViSlot,
 		    vid.ViPart, CEF_Status, status, 0);
 	}
+#else
+    sam_syslog(LOG_WARNING, "unimplemented ADIC code called");
 #endif
 }
 
@@ -1060,5 +1063,8 @@ api_export_media(
 
 err:
 	disp_of_event(library, event, err);
+
+#else
+    sam_syslog(LOG_WARNING, "unimplemented ADIC code called");
 #endif
 }

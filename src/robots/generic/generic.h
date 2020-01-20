@@ -47,6 +47,7 @@
 #include "../common/common.h"
 
 #if !SAM_OPEN_SOURCE
+/* header for ADIC library */
 #include "aci.h"
 #endif
 

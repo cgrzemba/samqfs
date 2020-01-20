@@ -30,8 +30,8 @@ BEGIN {
 	MsgGrp = 0;
 }
 {
-if ($1 == "")  continue;
-if ($1 ~ /^\$/) continue;
+# if ($1 == "")  continue;
+# if ($1 ~ /^\$/) continue;
 i = int($1 / 1000);
 if (i != MsgGrp) {
 	if (MsgGrp != 0)  print "};";

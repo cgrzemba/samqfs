@@ -43,19 +43,16 @@ SAMRFT = samrft
 
 OLD_EXT_LIB = ssl curl
 DIRS += \
-	bdb \
 	fsmdb \
-	mysql \
 	samrft \
 	samcat \
 	samfs \
 	samapi \
 	samdb \
 	sammig \
-	csn \
-	sammgmt \
 	pax_hdr
 
+# sammgmt
 endif
 
 include $(DEPTH)/mk/targets.mk
