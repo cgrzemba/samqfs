@@ -1,0 +1,17 @@
+statt
+13 Sep 2019 01:30:01 CEST  Snapshot samfs2-2019-09-13T01:30 started
+3 Sep 2019 01:30:03 CEST  Snapshot samfs2-2019-09-13T01:30 completed
+kommt 
+16 Sep 2019 14:13:31 CEST  Message 31237
+16 Sep 2019 14:13:33 CEST  Message 31238
+
+      SE_SNAPSHOT_STARTED                     = 31237,
+      SE_SNAPSHOT_COMPLETE                    = 31238,
+
+
+Option -L 
+
+translate_period: failing with  is not a valid time period
+
+sysevent ?
+action_flag is email + faultlog

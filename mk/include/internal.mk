@@ -1,0 +1,3 @@
+DB_LIB = -ldb-5.3
+DB_VERSION = V5/5.3.21
+DB_INCLUDE = 

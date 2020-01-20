@@ -44,8 +44,9 @@ OS_REVISION := $(shell uname -r)
 OS_VERSION := $(shell uname -v)
 PLATFORM := $(shell uname -p)
 ISA_KERNEL := $(shell isainfo -k)
-OS_RELEASE := $(shell  uname -v | cut -d. -f1,2)
-OS_RELEASE_MINOR := $(patsubst illumos-%,0,$(shell  uname -v | cut -d. -f2))
+OS_RELEASE := $(shell  uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]}')
+OS_RELEASE_MINOR := $(shell uname -v | gawk -F. '{if($$1==11) print $$2; else print "0";}' )
+OS_DIST := $(shell uname -v | gawk -F. '{if($$1==11) print "oracle"; else {split($$0,a,"-"); print a[1];};}')
 
 #
 # set sparc/i386 specific options
@@ -243,8 +244,7 @@ ifeq ($(PLATFORM), i386)
 endif
 # DB_VERSION = V4/4.5.20
 # DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(OS_ARCH)/include
-DB_INCLUDE = /usr/include
-DB_LIB = -ldb-5.3
+# DB_LIB = -ldb-4.5
 
 #
 # MySQL DB definitions
@@ -275,7 +275,8 @@ MYSQL_LIB_R = -lmysqlclient_r
 #
 # mcs definitions
 #
-MCSOPT = $(shell echo "-c -a '@(=)Copyright (c) `/bin/date +%Y`, Sun Microsystems, Inc.  All Rights Reserved' -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r`.'" | /bin/tr = '\043')
+# MCSOPT = $(shell echo "-c -a '@(=)Copyright (c) `/bin/date +%Y`, Sun Microsystems, Inc.  All Rights Reserved' -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r`.'" | /bin/tr = '\043')
+MCSOPT = $(shell echo "-c -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r`.'" | /bin/tr = '\043')
 MCS = $(CMDMCS) $(MCSOPT)
 
 #
@@ -289,7 +290,7 @@ METADATA_SERVER = -DMETADATA_SERVER
 NO_BUILD_SANERGY = -D_NoTIVOLI_
 # not build ST5800 and ACSLS
 NO_BUILD_STK = -D_NoSTK_
-# not build OSD
+# not build OSD STK 5800 honeycomb
 NO_BUILD_OSD = -D_NoOSD_
 
 #
@@ -309,10 +310,10 @@ SHARED_CFLAGS_GCC = -shared -fPIC
 # SHARED_CFLAGS = $(SHARED_CFLAGS_$(COMPILER))
 SHARED_CFLAGS = $(SHARED_CFLAGS_$(COMPILER))
 
-DEPCFLAGS = -I$(INCLUDE) $(VERS) $(METADATA_SERVER)
-DEPCFLAGS += $(NO_BUILD_SANERGY)
-# Sun STK 5800 honeycomb Object Storage
-DEPCFLAGS += $(NO_BUILD_STK)
-DEPCFLAGS += $(NO_BUILD_OSD)
+DEPCFLAGS = -I$(INCLUDE) $(VERS) $(METADATA_SERVER) $(NO_BUILD_SANERGY) $(NO_BUILD_STK) $(NO_BUILD_OSD)
 
-STK_INCLUDES = $(DEPTH)/../acsls/toolkit2.4.0/src/h
+DB_LIB = -ldb-5.3
+DB_VERSION = V5/5.3.21
+DB_INCLUDE = 
+
+-include $(DEPTH)/mk/include/$(OS_DIST).mk

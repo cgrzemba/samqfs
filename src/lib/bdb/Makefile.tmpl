@@ -1,0 +1,29 @@
+DEPTH = ../../../../..
+include $(DEPTH)/mk/common.mk
+
+#	gmake clean && \
+
+build_unix/Makefile:
+	cd build_unix && \
+        ../dist/configure --prefix=/opt/SUNWsamfs --libdir=/lib/$(OBJ_DIR)
+
+build_unix/.libs/libdb-4.5.so: build_unix/Makefile
+	cd build_unix && \
+	gmake
+
+$(DEPTH)/lib/$(OBJ_DIR)/libdb.so: build_unix/.libs/libdb-4.5.so
+	cd build_unix && \
+	gmake install_lib DESTDIR=$(abspath $(DEPTH)) 
+
+#	cd $(DEPTH)/lib/$(OBJ_DIR) && ln -s libdb-4.5.so libdb.so
+	
+
+install_libdb: $(DEPTH)/lib/$(OBJ_DIR)/libdb.so
+	
+all: install_libdb
+	@echo "alles fertig"
+
+clean: build_unix/Makefile
+	cd build_unix && \
+        gmake clean
+

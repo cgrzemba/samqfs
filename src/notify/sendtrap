@@ -1,0 +1,182 @@
+#!/usr/bin/sh
+
+#    SAM-QFS_notice_begin
+#
+#      StorageTek Storage & Archiving Management File System
+#
+#      Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+#
+#      Oracle America, Inc. has intellectual property rights relating
+#      to technology embodied in the product that is described in this
+#      document. In particular, and without limitation, these
+#      intellectual property rights may include one or more of the
+#      U.S. patents listed at http://www.sun.com/patents and one or
+#      more additional patents or pending patent applications in the
+#      U.S. and in other countries.
+#
+#      ORACLE PROPRIETARY/CONFIDENTIAL.
+#
+#      U.S. Government Rights - Commercial Software. Government users
+#      are subject to the Oracle America, Inc. standard license
+#      agreement and applicable provisions of the FAR and its supplements.
+#
+#      Use is subject to license terms.
+#
+#      This distribution may include materials developed by third
+#      parties. Oracle and Java are registered trademarks of Oracle and/or
+#      its affiliates. Other names may be trademarks of their respective
+#      owners.
+#
+#    SAM-QFS_notice_end
+
+#
+# sendtrap
+# 
+# This script gets invoked by the sysevent configuration file.
+# This is not expected to be run as a stand-alone program
+#
+#
+# CONFIGURATION PARAMETERS:
+# -------------------------
+# 1) To modify the trap destination host:
+# ------------------------------------
+# By default, traps are sent to port 161 of the localhost.
+# Inorder to change the port number or the hostname of the
+# trap destination, modify the variable TRAP_DESTINATION
+# TRAP_DESTINATION="hostname:port"
+# This trap destination hostname must be declared in NIS on /etc/hosts
+#
+# Also traps can be sent to multiple hosts. e.g.
+# TRAP_DESTINATION="localhost:161 doodle:163 mgmt_station:1162"
+# (delimiter is space)
+TRAP_DESTINATION=`hostname`
+#
+#
+# 2) To modify the SNMP community string:
+# ---------------------------------------
+# By default, the community string is set to 'public'. If you want to
+# change the community string, modify the value of the variable COMMUNITY
+COMMUNITY="public"
+#
+#
+# -----------------------------------------------------
+# -------- Do not change anything below this ----------
+# -----------------------------------------------------
+if [ `uname -r` = "5.10" ]
+then
+	TRAP_PROGRAM="/usr/sfw/bin/snmptrap"
+	MIB_DIR="/etc/sma/snmp/mibs"
+else
+	TRAP_PROGRAM="/usr/bin/snmptrap"
+	MIB_DIR="/etc/net-snmp/snmp/mibs"
+fi
+#
+# The mibs are installed in /var/snmp/mib
+SAM_MIB_DIR="/var/snmp/mib"
+#
+#
+SNMPLOG="/var/opt/SUNWsamfs/sendtrap.log"
+# TapeAlert traps are sent with more information such as library name, vsn etc.
+CAT_TAPEALERT="TapeAlert"
+#
+# This script must be invoked with atleast two arguments (describing the OID)
+# in order to attempt delivery of a trap
+#
+PROGRAM=$0
+#
+[ $# -lt 2 ] && { echo "`date`:USAGE:$PROGRAM must be invoked with atleast 2 arguments" >> $SNMPLOG; exit 1; }
+#
+# This script expects positional command line arguments
+# No validity is done to check if the contents of the arguments are valid
+# The arguments are used to create the OID. 
+#
+CATEGORY=$1
+SUBCATEGORY=$2
+MIBOID=sunSam$CATEGORY$SUBCATEGORY
+#
+#
+# Initialize integer values otherwise snmptrap
+# will fail (if no args received)
+#
+ERRORTYPE=0
+ERRORID=0
+#
+#
+[ $# -gt 2 ] && ERRORTYPE=$3
+[ $# -gt 3 ] && ERRORID=$4
+#
+#
+SYSTEMID=$5
+MSG=$6
+FAULTTIME=$7
+#
+# parse the list of trap destinations (they are separated by spaces)
+for dest in $TRAP_DESTINATION
+do
+#
+echo "`date`:$PROGRAM[$$]:Sending trap $MIBOID \n" >> $SNMPLOG 
+#
+#
+#	If a trap for a tapealert is to be thrown,
+#	then the data that is to be sent as a trap
+#	is specific to the tapealert
+#
+	if test "$CATEGORY" = "$CAT_TAPEALERT"
+	then
+		# To send a tapealert trap with complete
+		# information, vendorid, productid, revision,
+		# name, vsn and probable cause has to be
+		# provided
+
+		TAPEVENDORID=$8
+		TAPEPRODUCTID=$9
+		[ $# -gt 0 ] && shift
+		TAPEREV=$9
+		[ $# -gt 0 ] && shift
+		TAPENAME=$9
+		[ $# -gt 0 ] && shift
+		TAPEVSN=$9
+		[ $# -gt 0 ] && shift
+		PROBABLECAUSE=$9
+
+
+        	$TRAP_PROGRAM \
+		-M $MIB_DIR:$SAM_MIB_DIR \
+		-m $SAM_MIB_DIR/SUN-SAM-MIB.mib \
+	        -v 2c -c $COMMUNITY $dest 1 \
+		SUN-SAM-MIB::$MIBOID \
+		SUN-SAM-MIB::sunSamComponentID s "$CATEGORY" \
+		SUN-SAM-MIB::sunSamErrorType i "$ERRORTYPE" \
+		SUN-SAM-MIB::sunSamTapeAlertID s "$ERRORID" \
+		SUN-SAM-MIB::sunSamSystemID s "$SYSTEMID" \
+		SUN-SAM-MIB::sunSamMsg s "$MSG" \
+		SUN-SAM-MIB::sunSamFaultTime s "$FAULTTIME" \
+		SUN-SAM-MIB::sunSamTapeVendorID s "$TAPEVENDORID" \
+		SUN-SAM-MIB::sunSamTapeProductID s "$TAPEPRODUCTID" \
+		SUN-SAM-MIB::sunSamTapeRev s "$TAPEREV" \
+		SUN-SAM-MIB::sunSamTapeName s "$TAPENAME" \
+		SUN-SAM-MIB::sunSamTapeVsn s "$TAPEVSN" \
+		SUN-SAM-MIB::sunSamTapeAlertProbableCause s "$PROBABLECAUSE" \
+		>> $SNMPLOG 2>&1
+
+		[ $? != 0 ] && { echo "`date`:$PROGRAM[$$]:Failed to send trap $MIBOID" >> $SNMPLOG; exit 1; }
+
+	else
+		$TRAP_PROGRAM \
+		-M $MIB_DIR:$SAM_MIB_DIR \
+		-m $SAM_MIB_DIR/SUN-SAM-MIB.mib \
+                -v 2c -c $COMMUNITY $dest 1 \
+                SUN-SAM-MIB::$MIBOID \
+                SUN-SAM-MIB::sunSamComponentID s "$CATEGORY" \
+		SUN-SAM-MIB::sunSamErrorType i "$ERRORTYPE" \
+		SUN-SAM-MIB::sunSamErrorID i "$ERRORID" \
+		SUN-SAM-MIB::sunSamSystemID s "$SYSTEMID" \
+		SUN-SAM-MIB::sunSamMsg s "$MSG" \
+		SUN-SAM-MIB::sunSamFaultTime s "$FAULTTIME" \
+		>> $SNMPLOG 2>&1
+
+		[ $? != 0 ] && { echo "`date`:$PROGRAM[$$]:Failed to send trap $MIBOID" >> $SNMPLOG; exit 1; }
+	
+	fi
+done
+	exit 0;
