@@ -322,8 +322,13 @@
 	vnevent_rename_src(ovp, opvp, onm, ct)
 #define	VNEVENT_RENAME_DEST_OS(nvp, npvp, nnm, ct) \
 	vnevent_rename_dest(nvp, npvp, nnm, ct)
+#if defined(_INOTIFY)
+#define	VNEVENT_RENAME_DEST_DIR_OS(vp, ct) \
+	vnevent_rename_dest_dir(vp, vp, "", ct)
+#else
 #define	VNEVENT_RENAME_DEST_DIR_OS(vp, ct) \
 	vnevent_rename_dest_dir(vp, ct)
+#endif
 #define	VNEVENT_CREATE_OS(vp, ct) \
 	vnevent_create(vp, ct)
 #define	VNEVENT_LINK_OS(vp, ct) \
