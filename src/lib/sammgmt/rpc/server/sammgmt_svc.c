@@ -525,11 +525,12 @@ sammgmtprog_1(rqstp, transp)
 		file_details_arg_t samrpc_list_and_collect_file_details_6_arg;
 		file_details_arg_t samrpc_collect_file_details_6_arg;
 		strlst_arg_t samrpc_delete_files_6_arg;
-
+#ifndef _NoCNS_
 		/* registration */
 		string_arg_t samrpc_cns_get_registration_6_arg;
 		cns_reg_arg_t samrpc_cns_register_6_arg;
 		ctx_arg_t samrpc_cns_get_public_key_6_svr;
+#endif
 
 		/* reports */
 		report_requirement_arg_t samrpc_gen_report_6_arg;
@@ -2390,7 +2391,7 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_get_copy_details_5_svr;
 		break;
-
+#ifndef _NoCNS_
 	case samrpc_cns_get_registration:
 		_xdr_argument = xdr_string_arg_t;
 		_xdr_result = xdr_samrpc_result_t;
@@ -2408,7 +2409,7 @@ sammgmtprog_1(rqstp, transp)
 		_xdr_result = xdr_samrpc_result_t;
 		local = (char *(*)()) samrpc_cns_get_public_key_6_svr;
 		break;
-
+#endif
 	case samrpc_delete_files:
 		_xdr_argument = xdr_strlst_arg_t;
 		_xdr_result = xdr_samrpc_result_t;

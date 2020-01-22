@@ -258,7 +258,7 @@ dump_fs(char *taskid, snapsched_t *sched)
 			PostEvent(DUMP_CLASS, DUMP_INTERRUPTED_SUBCLASS,
 			    SE_DUMP_FAILED_NODIR, LOG_ERR,
 			    msgbuf, action_flag);
-			return (NULL);
+			return (0);
 		}
 	}
 
@@ -483,7 +483,7 @@ dump_fs(char *taskid, snapsched_t *sched)
 		    SE_DUMP_SIZE_0, LOG_ERR, msgbuf, action_flag);
 		log_event(dumplog, msgbuf);
 		finish_dump(snapname, dumplog, statfd);
-		return (NULL);
+		return (0);
 	}
 
 	/*
@@ -779,7 +779,7 @@ check_fs(snapsched_t	*sched)
 	}
 
 	/* append the requested starting point, if specified */
-	if (sched->id.startDir != '\0') {
+	if (*sched->id.startDir != '\0') {
 		(void) strlcat(mountpt, "/", sizeof (mountpt));
 		(void) strlcat(mountpt, sched->id.startDir, sizeof (mountpt));
 	}

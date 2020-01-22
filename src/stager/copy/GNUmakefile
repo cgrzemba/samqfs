@@ -30,7 +30,6 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-#		hcstage.c \
 
 PROG = copy
 PROG_SRC = \

@@ -27,10 +27,7 @@ opt/SUNWsamfs/client/src/client/samfs_clnt.c 0644
 opt/SUNWsamfs/client/src/client/samrpc.c 0644
 opt/SUNWsamfs/client/src/xdr/Makefile 0644
 opt/SUNWsamfs/client/src/xdr/sam_xdr.c 0644
-opt/SUNWsamfs/doc/curl.license 0444
-opt/SUNWsamfs/doc/openssl.license 0444
 opt/SUNWsamfs/doc/tapealert.text 0640
-opt/SUNWsamfs/etc/csn/cacert.pem 0444
 opt/SUNWsamfs/etc/samdb.schema 0640
 opt/SUNWsamfs/etc/samdb_sql.cat 0640
 opt/SUNWsamfs/etc/startup/sampkgchk 0550
@@ -57,11 +54,7 @@ opt/SUNWsamfs/include/sefvals.h 0644
 opt/SUNWsamfs/include/stat.h 0644
 opt/SUNWsamfs/include/version.h 0644
 opt/SUNWsamfs/lib/64/libsam.so 0755
-opt/SUNWsamfs/lib/gpl/libmysqlclient.so.15 0755
-opt/SUNWsamfs/lib/gpl/libmysqlclient_r.so.15 0755
 opt/SUNWsamfs/lib/libarch.so 0755
-opt/SUNWsamfs/lib/libcsn.so 0755
-opt/SUNWsamfs/lib/libdb-4.5.so 0755
 opt/SUNWsamfs/lib/libfsmdb.so 0755
 opt/SUNWsamfs/lib/libfsmgmt.so 0755
 opt/SUNWsamfs/lib/libpax_hdr.so 0755
@@ -105,7 +98,6 @@ opt/SUNWsamfs/man/man1m/export.1m 0644
 opt/SUNWsamfs/man/man1m/fsmadm.1m 0444
 opt/SUNWsamfs/man/man1m/fsmdb.1m 0644
 opt/SUNWsamfs/man/man1m/fsmgmtd.1m 0444
-opt/SUNWsamfs/man/man1m/fsmupd.1m 0644
 opt/SUNWsamfs/man/man1m/generic.1m 0644
 opt/SUNWsamfs/man/man1m/import.1m 0644
 opt/SUNWsamfs/man/man1m/itemize.1m 0644
@@ -301,7 +293,6 @@ opt/SUNWsamfs/sbin/dump_log 0550
 opt/SUNWsamfs/sbin/fsmadm 0540
 opt/SUNWsamfs/sbin/fsmdb 0550
 opt/SUNWsamfs/sbin/fsmgmtd 0550
-opt/SUNWsamfs/sbin/fsmupd 0550
 opt/SUNWsamfs/sbin/32/samtrace 0550
 opt/SUNWsamfs/sbin/itemize 0550
 opt/SUNWsamfs/sbin/move 0550

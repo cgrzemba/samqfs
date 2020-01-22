@@ -42,6 +42,7 @@ LIB_SRC = \
 
 # SSL_CONF_INCLUDES = -I$(DEPTH)/src/lib/ssl/V9/9.7/$(DB_ARCH)/include
 # SSL_INCLUDES = -I$(DEPTH)/src/lib/ssl/V9/9.7/include
+# SSL_LIBDIR =
 
 LIB_INCLUDES = $(DEPTH)/include/
 
@@ -50,8 +51,7 @@ DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG \
 
 
 # LIB_LIBS = $(STATIC_OPT) -L$(DEPTH)/lib/$(OBJ_DIR) -lcrypto -lssl -lcurl \
-LIB_LIBS = -lcrypto -lssl -lcurl \
-	-lsam -lsocket -ldl $(LIBSO)
+LIB_LIBS = -lcrypto -lcurl -lsocket -ldl -lssl -lsam $(LIBSO)
 
 
 LNOPTS = -a -u -m -x

@@ -39,12 +39,11 @@ DEPCFLAGS = \
 	-DAPI_DEBUG=syslog \
 	-DDEBUG \
 	-I$(INCLUDE) \
-	-DSAMRPC_SERVER $(DEBUGCDEFS) $(METADATA_SERVER) $(THRCOMP)
+	-DSAMRPC_SERVER $(DEBUGCDEFS) $(METADATA_SERVER) $(THRCOMP) $(NO_BUILD_CNS)
 
 PROG = fsmgmtd
 PROG_SRC = \
 	task_schedule_svr.c \
-	regis_svr.c \
 	release_svr.c \
 	archive_svr.c \
 	faults_svr.c \
@@ -91,9 +90,14 @@ PROG_SRC += \
 	restore_xdr.c \
 	report_xdr.c
 
-
+PROG_SRC_CNS = regis_svr.c
 PROG_LIBS = \
-	-L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamapi -lgen -lfsmgmt -lnsl -lintl -ldl -lcsn -lcurl -lssl -lcrypto -lsocket -lmd5 $(LIBSO)
+	-L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamapi -lgen -lfsmgmt -lnsl -lintl -ldl -lcrypto -lsocket -lmd5 $(SSL_LIBDIR) -lssl $(LIBSO)
+
+ifneq ($(No_CSD),)
+   PROG_SRC += $(PROG_SRC_CNS)
+   PROG_LIBS += -lcurl $(SSL_LIBDIR) -lssl 
+endif
 
 MPROGS = clientmgmt
 clientmgmt_SRC = secure_cfg.c clientmgmt.c

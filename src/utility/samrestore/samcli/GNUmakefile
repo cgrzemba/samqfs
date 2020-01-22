@@ -31,7 +31,7 @@ include $(DEPTH)/mk/common.mk
 
 PROG = samcli
 PROG_SRC = samcli.c samcliparse.c
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen -lfsmgmt -lcsn -lcurl -lssl -ldl -lcrypto -lsocket -lmd5 $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lfsmgmt $(LIBSO)
 
 include $(DEPTH)/mk/targets.mk
 
