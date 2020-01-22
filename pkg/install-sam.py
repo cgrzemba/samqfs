@@ -39,7 +39,7 @@ import time
 import json
 
 version = '5.0.1'
-release = '2019.0.0.1'
+release = '2020.0.0.1'
 repro = 'file:///home/grzemba/samfs/samqfs/repo/'
 
 prefix = 'opt/SUNWsamfs/'
@@ -52,7 +52,8 @@ config_smf_name = 'samqfs-postinstall'
 config_script_fn = '{0}util/{1}'.format(prefix,config_smf_name)
 config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 
-osrelease = '.'.join(subprocess.check_output(['uname','-v']).strip().split('.')[:2])
+# have to provide the same like: uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]}'
+osrelease = '-'.join(subprocess.check_output(['uname','-v']).strip().replace('.','-').split('-')[:2])
 srcpath_fn = 'srcpath_{}.json.cache'.format(osrelease)
 
 subpath64,subpath = subprocess.check_output('isainfo').split()
@@ -431,16 +432,16 @@ def getPath(fn, dirname, filenames, arch):
     if not arch == 'all' :
         if dirname.endswith(obj_dir[arch]):
             ffn = os.path.join(dirname,sfn)
-            print "found bin"+ffn
+            print "found bin   : "+ffn
             return ffn
         elif isScript(os.path.join(dirname,sfn)):
             ffn = os.path.join(dirname,sfn)
-            print "found script "+ffn
+            print "found script: "+ffn
             return ffn
 
     else:
         ffn = os.path.join(dirname,sfn)
-        print "found other"+ffn
+        print "found other : "+ffn
         return ffn
 
 
@@ -505,7 +506,7 @@ def installFiles(filelst):
                     path = path.rpartition('/')[0]
                     print "%s %s %s %s" % (subpath, path, afn ,fn)
                 else:
-                    print "32bit bin or script "+fn
+                    print "%s: 32bit bin or script" % f
                     arch = '32'
             # print "search {0} {1} {2}".format(fn, oct(m), arch)
             if not arch == 'all':
@@ -541,9 +542,9 @@ def installFiles(filelst):
             shutil.copy(src0,destdir+f)
             os.chmod(destdir+f,m)
         except TypeError as e:
-            # import pdb; pdb.set_trace()
             print "installFiles Exception: %s" % f
             print "Error: {0}".format(e)
+            import pdb; pdb.set_trace()
         except OSError, e:
             if e.errno == 2:  # No such directory
                 os.makedirs(destdir+path)

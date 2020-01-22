@@ -73,7 +73,7 @@ typedef struct arg {
 } arg_t;
 
 /* Main parser entry point */
-int aparse(int argc, char *argv[], arg_t *argt[]);
+void aparse(int argc, char *argv[], arg_t *argt[]);
 
 /* Results of parsing */
 extern arg_t *cli_args[];	/* Pointer to our parsing arg tree */

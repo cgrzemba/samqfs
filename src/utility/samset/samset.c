@@ -155,7 +155,7 @@ static setsam_deflt_t dflts[] =
 	"timeout", &tmp_dflt.timeout, 1.0, setsam_int, "seconds",
 	"remote_keepalive", &tmp_dflt.remote_keepalive, 1.0, setsam_int,
 	    "seconds",
-	NULL, NULL, 0, NULL,
+	NULL, NULL, 0, 0,
 };
 
 static char	pgm_name[MAXPATHLEN];

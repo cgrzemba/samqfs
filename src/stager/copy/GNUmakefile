@@ -31,7 +31,7 @@ DEPTH = ../../..
 include $(DEPTH)/mk/common.mk
 
 # SUN STK 5800 (object based disk storage system) honeycomb API
-		hcstage.c \
+#		hcstage.c \
 
 PROG = copy
 PROG_SRC = \

@@ -34,7 +34,11 @@ PROG = samcrondump
 PROG_SRC = samcrondump.c
 
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) $(THRCOMP)
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen -lfsmgmt -lfsmdb -lpthread -lcsn -lcurl -lssl -ldl -lcrypto -lsocket -lmd5 $(LIBSO) 
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen -lfsmgmt -lfsmdb -lpthread $(LIBSO) 
+
+ifneq ($(NO_BULID_CNS),)
+PROG_LIBS += -lcrypto -lcsn -lcurl -lssl -ldl -lsocket -lmd5
+endif
 
 LNOPTS = -a 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut

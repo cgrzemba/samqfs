@@ -347,7 +347,6 @@ print_help_text(arg_t ** argp)
 static int
 cli_help(char *ptr)
 {
-	arg_t	 **argp;
 	print_help_text(cli_args);
 	return (1);
 }
@@ -515,10 +514,8 @@ p_filestruct = {
 static int
 copyidx(char *ptr)
 {
-	node_t	 *idx;
-
 	if (ptr != NULL) {
-		idx = newint(&cpylist, atol(ptr));
+		newint(&cpylist, atol(ptr));
 			/* input, parsed into decimal */
 		return (2);
 	} else {
@@ -540,10 +537,8 @@ p_copyidx = {
 static int
 entries(char *ptr)
 {
-	node_t	 *idx;
-
 	if (ptr != NULL) {
-		idx = newint(&entrylist, atol(ptr));
+		newint(&entrylist, atol(ptr));
 			/* input, parsed into decimal */
 		return (2);
 	} else {
@@ -562,7 +557,7 @@ p_entries = {
  * aparse, main entry to parser
  */
 
-int
+void
 aparse(int argc, char *argv[], arg_t *argt[])
 {
 	char	*ptr;
@@ -572,7 +567,6 @@ aparse(int argc, char *argv[], arg_t *argt[])
 	char	*arg;
 	arg_t	**argp;
 	char	*namep;
-	int	namelen;
 
 	/* Parse command-line arguments */
 	argn = 1;		/* First argument we want is #1 */

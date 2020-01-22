@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = robots
 PROG_SRC = main.c child.c build_pids.c
 
-DIRS = lib common generic stk
+DIRS = lib common generic
 PROG_LIBS = -lgen -R /opt/SUNWsamfs/lib -L $(DEPTH)/lib/$(OBJ_DIR)  -lsamfs -lsamut
 
 ifeq ($(MAKECMDGOALS), clobberall)

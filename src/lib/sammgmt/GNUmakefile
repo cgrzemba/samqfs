@@ -30,13 +30,12 @@ LIB_HOME = $(DEPTH)/src/lib/sammgmt
 
 include $(DEPTH)/mk/common.mk
 
-SRC_VPATH = csn job archiver fs mcf device recycler releaser stager monitor reports \
+SRC_VPATH = job archiver fs mcf device recycler releaser stager monitor reports \
 	diskvols notification faults recyc_sh_wrap restore rpc/xdr $(DEPTH)/src/fs/lib
 vpath %c $(SRC_VPATH)
 
 LIB = fsmgmt
 LIB_SRC = \
-	csn.c \
 	sam_file_util.c \
 	explorer.c \
 	tail.c \
@@ -164,7 +163,7 @@ DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG -DSAM_LIB_GNU $(METADATA_SERVER) $(OSDEPC
 LIB_LIBS += 	-L$(DEPTH)/lib/$(OBJ_DIR) \
 		-lsam -lsamut -lsamcat -lsamfs -lsamapi \
 		-ladm -lgen -lelf -lz -lfsmdb \
-		-lpthread -lsocket -lnsl -ldl $(STATIC_OPT) -lcsn \
+		-lpthread -lsocket -lnsl -ldl \
 		$(DYNAMIC_OPT) $(LIBSO) 
 
 

@@ -39,7 +39,6 @@ DIRS = 	audit \
 		dmpshm \
 		export \
 		fsmdb \
-		fsmupd \
 		import \
 		itemize \
 		label \
@@ -57,6 +56,8 @@ DIRS = 	audit \
 		samdb \
 		samrestore \
 		samstorade
+
+# 		fsmupd \
 
 include $(DEPTH)/mk/targets.mk
 
