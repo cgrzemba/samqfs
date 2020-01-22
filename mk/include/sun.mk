@@ -99,7 +99,7 @@ endif
 # turn compiler warnings into errors
 #
 CERRWARN_CSTD = -errtags=yes -errwarn=%all
-CERRWARN_GCC = -Wall -Wno-unknown-pragmas -Wno-format
+CERRWARN_GCC = -Wall -Wno-unknown-pragmas -Wno-format -Wno-missing-braces
 CERRWARN = $(CERRWARN_$(COMPILER))
 
 KERNFLAGS_CSTD = -D_KERNEL -m64 -xmodel=kernel -xregs=no%float -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
@@ -243,8 +243,11 @@ ifeq ($(PLATFORM), i386)
 	endif
 endif
 # DB_VERSION = V4/4.5.20
+DB_VERSION = V5/5.3.21
 # DB_INCLUDE = $(DEPTH)/src/lib/bdb/$(DB_VERSION)/$(OS_ARCH)/include
+DB_INCLUDE = 
 # DB_LIB = -ldb-4.5
+DB_LIB = -ldb-5.3
 
 #
 # MySQL DB definitions
@@ -254,23 +257,27 @@ ifeq ($(PLATFORM), i386)
 else
 	MYSQL_ARCH = sparc
 endif
-MYSQL_VERSION = V5/5.0.51a
-MYSQL_INCLUDE = -I$(DEPTH)/src/lib/mysql/$(MYSQL_VERSION)/$(MYSQL_ARCH)/include
+# MYSQL_VERSION = V5/5.0.51a
+# MYSQL_INCLUDE = -I$(DEPTH)/src/lib/mysql/$(MYSQL_VERSION)/$(MYSQL_ARCH)/include
 MYSQL_LIB = -lmysqlclient
 MYSQL_LIB_R = -lmysqlclient_r
 
+# not build OSD STK 5800 honeycomb
+NO_BUILD_OSD = -D_NoOSD_
 #
-# StorageTek 5800 API definitions
+# StorageTek 5800 (honeycomb) API definitions
 #
-# ifeq ($(PLATFORM), sparc)
-# 	HC_ARCH = sol_10_sparc
-# endif
-# ifeq ($(PLATFORM), i386)
-# 	HC_ARCH = sol_10_x86
-# endif
-# HC_VERSION = StorageTek5800_SDK_1_1_74
-# HC_INCLUDE = -I$(DEPTH)/src/lib/honeycomb/$(HC_VERSION)/include -I$(DEPTH)/src/lib/honeycomb/$(HC_VERSION)/$(HC_ARCH)/include
-# HC_LIB = -lstk5800
+ifneq ($(NO_BULID_OSD),)
+  ifeq ($(PLATFORM), sparc)
+	HC_ARCH = sol_10_sparc
+  endif
+  ifeq ($(PLATFORM), i386)
+	HC_ARCH = sol_10_x86
+  endif
+  HC_VERSION = StorageTek5800_SDK_1_1_74
+  HC_INCLUDE = -I$(DEPTH)/src/lib/honeycomb/$(HC_VERSION)/include -I$(DEPTH)/src/lib/honeycomb/$(HC_VERSION)/$(HC_ARCH)/include
+  HC_LIB = -lstk5800
+endif
 
 #
 # mcs definitions
@@ -290,8 +297,8 @@ METADATA_SERVER = -DMETADATA_SERVER
 NO_BUILD_SANERGY = -D_NoTIVOLI_
 # not build ST5800 and ACSLS
 NO_BUILD_STK = -D_NoSTK_
-# not build OSD STK 5800 honeycomb
-NO_BUILD_OSD = -D_NoOSD_
+# no Sun Customer Services
+NO_BUILD_CNS = -D_NoCNS_
 
 #
 # Final default CFLAGS settings
