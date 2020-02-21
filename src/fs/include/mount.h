@@ -64,7 +64,7 @@ struct sam_mount;
 #include	"scd.h"
 #include	"client.h"
 
-#if !defined(_NoSTK_) && defined(sun)
+#if !defined(_NoOSD_) && defined(sun)
 #include	"pub/objnops.h"
 #endif
 

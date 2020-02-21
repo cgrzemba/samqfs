@@ -498,7 +498,11 @@ out15:
 			    nnm, NULL);
 		}
 		if (parents_are_different) {
+#ifdef _INOTIFY
+			VNEVENT_RENAME_DEST_DIR_OS(SAM_ITOV(npip), SAM_ITOV(opip), nnm, NULL);
+#else
 			VNEVENT_RENAME_DEST_DIR_OS(SAM_ITOV(npip), NULL);
+#endif
 		}
 		if (oip != NULL) {
 			VNEVENT_RENAME_SRC_OS(SAM_ITOV(oip), SAM_ITOV(opip),

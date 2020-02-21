@@ -37,7 +37,7 @@ samfsck_SRC =  samfsck.c
 fsck_SRC	=  fsck.c
 
 INCFLAGS = -I../../include -I../../include/$(OBJ_DIR) -I$(INCLUDE)
-DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)
+DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(NO_BUILD_OSD)
 
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 
