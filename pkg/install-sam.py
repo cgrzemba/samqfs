@@ -52,7 +52,7 @@ config_smf_name = 'samqfs-postinstall'
 config_script_fn = '{0}util/{1}'.format(prefix,config_smf_name)
 config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 
-# have to provide the same like: uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]}'
+# have to provide the same like: uname -v | gawk '{ split($0,a,"[.-]"); print a[1]"-"a[2]}'
 osrelease = '-'.join(subprocess.check_output(['uname','-v']).strip().replace('.','-').split('-')[:2])
 srcpath_fn = 'srcpath_{}.json.cache'.format(osrelease)
 
@@ -135,7 +135,7 @@ name='system/{1}'
             name='stop'
             exec=':true'
             timeout_seconds='0'/>
-        <exec_methodos/sun/obj/SunOS_illumos-5cffb2606e_amd64_DEBUG
+        <exec_method
             type='method'
             name='refresh'
             exec=':true'
@@ -170,7 +170,7 @@ config_script = '''#!/usr/bin/sh
 # If applicable, add the following below this CDDL HEADER, with the
 # fields enclosed by brackets "[]" replaced with your own identifying
 # information: Portions Copyright [yyyy] [name of copyright owner]
-#os/sun/obj/SunOS_illumos-5cffb2606e_amd64_DEBUG
+# 
 # CDDL HEADER END
 #
 
@@ -279,7 +279,6 @@ elif [ "$SPMSRV" = "sam-qfs" ]; then
         echo "are being made to the $SER file"
         echo ""
 else
-        chmod 644 $SERos/sun/obj/SunOS_illumos-5cffb2606e_amd64_DEBUG
         echo "# start samqfs 5.0" >> $SER
         echo "sam-qfs           7105/tcp                        # SAM-QFS" >> $SER
         echo "# end samqfs 5.0" >> $SER
@@ -321,7 +320,7 @@ done
 SH_LIST="dev_down.sh load_notify.sh log_rotate.sh"
 for fn in $SH_LIST; do
         if [ -f $SCRIPTS/$fn ]; then
-                /bin/egrep -v 'Id:|Ros/sun/obj/SunOS_illumos-5cffb2606e_amd64_DEBUGevision:' $SCRIPTS/$fn > /tmp/rev1.$$
+                /bin/egrep -v 'Id:|Revision:' $SCRIPTS/$fn > /tmp/rev1.$$
                 /bin/egrep -v 'Id:|Revision:' $EXAMPLE/$fn > /tmp/rev2.$$
                 /bin/diff /tmp/rev1.$$ /tmp/rev2.$$ > /dev/null
                 if [ $? -ne 0 ]; then
@@ -596,7 +595,7 @@ def main():
     with open('link.lst') as fl:
         linklst = [ (files.split()[0],files.split()[1]) for files in fl.readlines() ]
     with open('dir.lst') as fl:
-        dirlst = [ (files.split()[0],files.split()[1],files.split()[2]) for files in fl.readlines() ]
+        dirlst = [ (files.split()[0].replace('64',subpath64),files.split()[1],files.split()[2]) for files in fl.readlines() ]
 
 #    import pdb; pdb.set_trace()
 #    fnlst = {}

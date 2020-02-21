@@ -3,13 +3,9 @@ etc/fs/samfs/umount 0750
 kernel/drv/64/samaio 0755
 kernel/drv/64/samioc 0755
 kernel/drv/64/samst 0755
-kernel/drv/samaio 0755
 kernel/drv/samaio.conf 0644
-kernel/drv/samioc 0755
 kernel/drv/samioc.conf 0644
-kernel/drv/samst 0755
 kernel/fs/64/samfs 0755
-kernel/fs/samfs 0755
 lib/svc/method/svc-qfs-shared-mount 0555
 opt/SUNWsamfs/bin/archive 0755
 opt/SUNWsamfs/bin/request 0755
@@ -380,7 +376,6 @@ var/opt/SUNWsamfs/errcodes/speclog 0640
 var/opt/SUNWsamfs/errcodes/stk97xx 0640
 var/opt/SUNWsamfs/errcodes/stklxx 0640
 var/opt/SUNWsamfs/errcodes/stksl3000 0640
-var/svc/manifest/application/management/fsmgmt.xml 0444
 lib/svc/method/svc-sam-fsd 0755
 usr/lib/devfsadm/linkmod/SUNW_samaio_link.so 0750
 usr/lib/devfsadm/linkmod/SUNW_samst_link.so 0750
@@ -402,4 +397,6 @@ usr/sfw/bin/notify 0755
 usr/sfw/bin/tapealert_log 0755
 usr/sfw/bin/tapealert_trap 0755
 var/svc/manifest/system/sam-fsd.xml 0444
+var/svc/manifest/system/samqfs-postinstall.xml 0444
+var/svc/manifest/system/qfs-shared-mount.xml 444
 opt/SUNWsamfs/doc/OPENSOLARIS.LICENSE 0444

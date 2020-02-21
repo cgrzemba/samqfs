@@ -103,7 +103,8 @@ CERRWARN_GCC = -Wall -Wno-unknown-pragmas -Wno-format -Wno-missing-braces
 CERRWARN = $(CERRWARN_$(COMPILER))
 
 KERNFLAGS_CSTD = -D_KERNEL -m64 -xmodel=kernel -xregs=no%float -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
-KERNFLAGS_GCC = -D_KERNEL -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
+# KERNFLAGS_GCC = -D_KERNEL -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
+KERNFLAGS_GCC = -D_KERNEL -D_SYSCALL32 -D_SYSCALL32_IMPL -D_DDI_STRICT -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
 
 KERNFLAGS = $(KERNFLAGS_$(COMPILER))
 

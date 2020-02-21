@@ -68,6 +68,7 @@ struct catmapping {
 
 static int first = 1;	/* indicates first catalog open */
 
+/* calls CatalogInit and returns in buf the header of catalog, which is at opening buffered in cat_arr */
 int
 sam_opencat(const char *path, struct sam_cat_tbl *buf, size_t bufsize)
 {
@@ -139,9 +140,9 @@ copy:
 	return (i);
 }
 
+/* calls CatalogTerm and cleanup cat_arr entry addressed by cat_handle */
 int
-sam_closecat(
-	int cat_handle)	/* catalog file desc. returned by sam_opencat */
+sam_closecat(int cat_handle)	/* catalog file desc. returned by sam_opencat */
 {
 	int i;
 

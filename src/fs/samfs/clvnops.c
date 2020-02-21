@@ -1954,7 +1954,11 @@ sam_client_rename_vn(
 		 * if source and target directories are not same.
 		 */
 		if (opvp != npvp) {
+#ifdef _INOTIFY
+			VNEVENT_RENAME_DEST_DIR_OS(npvp, opvp, nnm, NULL);
+#else
 			VNEVENT_RENAME_DEST_DIR_OS(npvp, NULL);
+#endif
 		}
 
 		if (error == 0) {

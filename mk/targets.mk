@@ -327,6 +327,7 @@ info:	$(DEPTH)/MARKER
 	@echo "        PLATFORM: " $(PLATFORM)
 	@echo "      ISA_KERNEL: " $(ISA_KERNEL)
 	@echo "         OBJ_DIR: " $(OBJ_DIR)
+	@echo "          CFLAGS: " $(CFLAGS)
 
 $(DEPTH)/MARKER:
 	@if [ "$(shell /bin/basename $(shell cd $(DEPTH); /bin/pwd))" = "sam-qfs" ] ; then	\

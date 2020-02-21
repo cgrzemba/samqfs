@@ -323,8 +323,8 @@
 #define	VNEVENT_RENAME_DEST_OS(nvp, npvp, nnm, ct) \
 	vnevent_rename_dest(nvp, npvp, nnm, ct)
 #if defined(_INOTIFY)
-#define	VNEVENT_RENAME_DEST_DIR_OS(vp, ct) \
-	vnevent_rename_dest_dir(vp, vp, "", ct)
+#define	VNEVENT_RENAME_DEST_DIR_OS(nvp, ovp, nnm, ct) \
+	vnevent_rename_dest_dir(nvp, ovp, nnm, ct)
 #else
 #define	VNEVENT_RENAME_DEST_DIR_OS(vp, ct) \
 	vnevent_rename_dest_dir(vp, ct)
