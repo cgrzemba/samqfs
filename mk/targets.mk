@@ -207,6 +207,7 @@ MODULE_OBJS = $(X_MODULE_OBJS:%.S=$(OBJ_DIR)/%.o)
 X_MODULE_OBJS_BASE = $(MODULE_SRC:%.c=%.o)
 MODULE_OBJS_BASE = $(X_MODULE_OBJS_BASE:%.S=%.o)
 
+OBJ_DIR32 = $(subst _amd64_,_i386_,$(OBJ_DIR))
 $(OBJ_DIR)/$(MODULE):	$(MODULE_OBJS)
 	-rm -f $@
 	ld $(LDFLAGS) -o $@ $(MODULE_OBJS)
@@ -259,8 +260,8 @@ java_lib:    $(JAVAOBJS) java_hdrs $(LIB).jar
 
 .INIT:
 
-all:	.INIT $(STRIP_DIRS) $(JAVA_TARGETS) $(STRIP_LIB) $(STRIP_PROG) $(STRIP_MODULE)
-
+# we do not want build 32bit kernel modules so add MODULE only in 64 build
+all:	.INIT $(STRIP_DIRS) $(JAVA_TARGETS) $(STRIP_LIB) $(STRIP_PROG) $(if $(filter $(AMD64),yes ),$(STRIP_MODULE))
 #
 # Make sure .INIT gets called before anything else
 #
@@ -402,9 +403,12 @@ endif
 ifeq ($(PLATFORM), i386)
 ifeq ($(BUILD_64BIT), yes)
 ifneq ($(AMD64), yes)
+
 .INIT all clean clobber depend install:	amd64
+
 amd64:
 	$(MAKE) DIRS= AMD64=yes $(MAKECMDGOALS)
+
 endif
 endif
 endif
