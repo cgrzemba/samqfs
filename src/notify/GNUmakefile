@@ -34,6 +34,9 @@ PROG = notify
 PROG_SRC = notify.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lfsmgmt $(LIBSO)
+ifndef NO_BUILD_CNS
+PROG_LIBS += -lcrypto -lcsn -lcurl -lssl -ldl -lsocket -lmd5
+endif
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lfsmgmt

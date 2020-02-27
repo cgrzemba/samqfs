@@ -160,7 +160,7 @@ static void print_version_warning();
  *	Initialize a new filesystem or grow an existing filesystem.
  */
 
-void
+int
 main(int argc, char **argv)
 {
 	int err;

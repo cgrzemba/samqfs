@@ -48,6 +48,11 @@ PROG_SRC = \
 		stage.c \
 		stage_reqs.c
 
+# SUN STK 5800 (object based disk storage system) honeycomb API
+ifndef NO_BUILD_OSD
+PROG_SRC +=  hcstage.c
+endif
+
 DEPCFLAGS += -I../include $(HC_INCLUDE) $(THRCOMP)
 
 SYSLIBS = -ldl -lgen $(THRLIBS) -lsocket -lnsl

@@ -38,9 +38,11 @@ from stat import *
 import time
 import json
 
+subpath64,subpath = subprocess.check_output('isainfo').split()
+
 version = '5.0.1'
 release = '2020.0.0.1'
-repro = 'file:///home/grzemba/samfs/samqfs/repo/'
+repro = 'file:///home/grzemba/samfs/samqfs/repo/'+subpath
 
 prefix = 'opt/SUNWsamfs/'
 docdir = prefix+'doc/'
@@ -55,9 +57,6 @@ config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 # have to provide the same like: uname -v | gawk '{ split($0,a,"[.-]"); print a[1]"-"a[2]}'
 osrelease = '-'.join(subprocess.check_output(['uname','-v']).strip().replace('.','-').split('-')[:2])
 srcpath_fn = 'srcpath_{}.json.cache'.format(osrelease)
-
-subpath64,subpath = subprocess.check_output('isainfo').split()
-
 
 obj_dir = {'32':'obj/SunOS_{0}_{1}_DEBUG'.format(osrelease,subpath), 
            '64':'obj/SunOS_{0}_{1}_DEBUG'.format(osrelease,subpath64),
