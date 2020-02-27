@@ -407,7 +407,7 @@ get_blk_device(
 	 * for the devices to become available (maximum of maxdevretry
 	 * tries).
 	 */
-	while ((fd = open(devrname, oflags)) < 0) {
+	while ((fd = open(devrname, oflags | O_NDELAY)) < 0) {
 		if ((retrycnt >= maxdevretry) ||
 		    ((strncmp(devrname, "/dev/md/", 8) != 0))) {
 			error(0, errno, "%s", devrname);
@@ -466,12 +466,24 @@ get_blk_device(
 				return (-1);
 			}
 		} else {
-			error(0, saved_errno, "%s", devrname);
-			error(0, 0, catgets(catfd, SET, 13030,
-			    "Could not read VTOC or EFI label on %s: %d"),
-			    devrname, part);
-			free(devrname);
-			return (-1);
+            /* workaround because https://www.illumos.org/issues/12339 */
+            if (strcmp(dkcinfo.dki_cname,"zvol") == 0) {
+                fsp->pt_size = efi_read(fd);
+                if (fsp->pt_size == 0) {
+				    error(0, 0, catgets(catfd, SET, 1909,
+				        "Partition %d is undefined on (%s)"),
+				        part, devrname);
+				    free(devrname);
+				    return (-1);
+			    }
+            } else { 
+			    error(0, saved_errno, "%s", devrname);
+			    error(0, 0, catgets(catfd, SET, 13030,
+			        "Could not read VTOC or EFI label on %s: %d"),
+			        devrname, part);
+			    free(devrname);
+			    return (-1);
+            }
 		}
 	} else {
 		error(0, errno, "%s", devrname);

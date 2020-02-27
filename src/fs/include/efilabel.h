@@ -40,6 +40,7 @@ int is_efi_present(void);
 
 int call_efi_alloc_and_read(int, struct dk_gpt **);
 void call_efi_free(struct dk_gpt *);
+int efi_read(int fd);
 
 #endif /* sun */
 
