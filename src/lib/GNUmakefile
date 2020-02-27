@@ -50,9 +50,9 @@ DIRS += \
 	samapi \
 	samdb \
 	sammig \
+	sammgmt \
 	pax_hdr
 
-# sammgmt
 endif
 
 include $(DEPTH)/mk/targets.mk

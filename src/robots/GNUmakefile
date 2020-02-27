@@ -34,6 +34,10 @@ PROG = robots
 PROG_SRC = main.c child.c build_pids.c
 
 DIRS = lib common generic
+ifndef NO_BUILD_STK
+DIRS += stk
+endif
+
 PROG_LIBS = -lgen -R /opt/SUNWsamfs/lib -L $(DEPTH)/lib/$(OBJ_DIR)  -lsamfs -lsamut
 
 ifeq ($(MAKECMDGOALS), clobberall)

@@ -36,7 +36,7 @@ PROG_SRC = samcrondump.c
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) $(THRCOMP)
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen -lfsmgmt -lfsmdb -lpthread $(LIBSO) 
 
-ifneq ($(NO_BULID_CNS),)
+ifndef NO_BUILD_CNS
 PROG_LIBS += -lcrypto -lcsn -lcurl -lssl -ldl -lsocket -lmd5
 endif
 

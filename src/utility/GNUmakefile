@@ -57,7 +57,9 @@ DIRS = 	audit \
 		samrestore \
 		samstorade
 
-# 		fsmupd \
+ifndef NO_BUILD_CNS
+DIRS += fsmupd
+endif
 
 include $(DEPTH)/mk/targets.mk
 

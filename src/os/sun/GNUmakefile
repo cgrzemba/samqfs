@@ -55,23 +55,4 @@ LNLIBS =
 
 include $(DEPTH)/mk/targets.mk
 
-install: all .WAIT modunload
-	/usr/ucb/install -m 755 -g sam -o `/usr/ucb/whoami` $(OBJ_DIR)/samioc $(SYSDEST)
-	# Enable init to restart fsd & notify init to restart fsd.
-	chmod ugo+x /usr/lib/fs/samfs/sam-fsd
-	@-/bin/kill -HUP 1
-
-modunload:
-	sync
-	samd stop
-	# Unmount all mounted sam file systems
-	- mount -p | grep samfs | cut -f 1 -d ' ' | xargs -n1 umount
-	sleep 1
-	- mount -p | grep samfs | cut -f 1 -d ' ' | xargs -n1 umount
-	# Stop fsd and prevent init from restarting it
-	chmod ugo-x /usr/lib/fs/samfs/sam-fsd
-	@-/bin/ps -e | /usr/bin/grep sam | /usr/bin/grep -v grep | /usr/bin/cut -c1-6 | /usr/bin/xargs kill -TERM
-	sleep 2
-	- modunload -i `modinfo | grep samfs | cut -c0-4`
-
 include $(DEPTH)/mk/depend.mk

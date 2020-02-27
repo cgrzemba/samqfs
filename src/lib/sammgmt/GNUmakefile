@@ -31,7 +31,11 @@ LIB_HOME = $(DEPTH)/src/lib/sammgmt
 include $(DEPTH)/mk/common.mk
 
 SRC_VPATH = job archiver fs mcf device recycler releaser stager monitor reports \
-	diskvols notification faults recyc_sh_wrap restore rpc/xdr $(DEPTH)/src/fs/lib
+	diskvols notification faults recyc_sh_wrap restore rpc/xdr \
+	$(DEPTH)/src/fs/lib
+ifndef NO_BUILD_CNS
+SRC_VPATH += csn
+endif
 vpath %c $(SRC_VPATH)
 
 LIB = fsmgmt
@@ -138,7 +142,9 @@ LIB_SRC += \
 	report_xdr.c \
 	cmd_dispatch_xdr.c
 
-
+ifndef NO_BUILD_CNS
+LIB_SRC += csn.c
+endif
 
 # note that the -I for OBJ_DIR is required for version.h.
 ARCHIVER_INCLUDES =	-I$(DEPTH)/src/archiver/include \
@@ -160,10 +166,12 @@ DEPCFLAGS = -DAPI_DEBUG=syslog -DDEBUG -DSAM_LIB_GNU $(METADATA_SERVER) $(OSDEPC
 		$(CATALOG_INCLUDES) \
 		$(STK_INCLUDES) $(THRCOMP)
 
+LIB_CSN_LIBS += -lpthread -lsocket -lnsl -ldl -lcsn
+
 LIB_LIBS += 	-L$(DEPTH)/lib/$(OBJ_DIR) \
 		-lsam -lsamut -lsamcat -lsamfs -lsamapi \
 		-ladm -lgen -lelf -lz -lfsmdb \
-		-lpthread -lsocket -lnsl -ldl \
+		$(if $(filter $(NO_BUILD_CNS),),$(LIB_SCN_LIBS)) \
 		$(DYNAMIC_OPT) $(LIBSO) 
 
 

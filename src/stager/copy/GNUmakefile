@@ -30,8 +30,6 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-# SUN STK 5800 (object based disk storage system) honeycomb API
-#		hcstage.c \
 
 PROG = copy
 PROG_SRC = \
@@ -49,6 +47,11 @@ PROG_SRC = \
 		rmstage.c \
 		stage.c \
 		stage_reqs.c
+
+# SUN STK 5800 (object based disk storage system) honeycomb API
+ifndef NO_BUILD_OSD
+PROG_SRC +=  hcstage.c
+endif
 
 DEPCFLAGS += -I../include $(HC_INCLUDE) $(THRCOMP)
 

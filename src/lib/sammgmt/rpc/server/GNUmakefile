@@ -94,7 +94,7 @@ PROG_SRC_CNS = regis_svr.c
 PROG_LIBS = \
 	-L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamapi -lgen -lfsmgmt -lnsl -lintl -ldl -lcrypto -lsocket -lmd5 $(SSL_LIBDIR) -lssl $(LIBSO)
 
-ifneq ($(No_CSD),)
+ifndef NO_BUILD_CNS
    PROG_SRC += $(PROG_SRC_CNS)
    PROG_LIBS += -lcurl $(SSL_LIBDIR) -lssl 
 endif
