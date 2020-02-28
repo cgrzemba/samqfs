@@ -162,9 +162,10 @@ ident_dev(dev_ent_t *un, int fd)
 	/*
 	 * Need to get back at least the minimum inquiry data
 	 */
-	if ((inq_data_len = scsi_cmd(open_fd, un, SCMD_INQUIRY, 0, scratch,
-	    SCSI_INQUIRY_BUFFER_SIZE, 0, 0, (int *)NULL, &sp)) <
-	    (int)sizeof (struct scsi_inquiry)) {
+	inq_data_len = scsi_cmd(open_fd, un, SCMD_INQUIRY, 0, scratch, SCSI_INQUIRY_BUFFER_SIZE, 0, 0, (int *)NULL, &sp);
+    /* first is the sgen result, the second the samst */
+    if (inq_data_len != sizeof(struct uscsi_cmd) && inq_data_len < (int)sizeof (struct scsi_inquiry))
+    {
 		if ((un->flags & DVFG_SHARED) && (errno == EACCES)) {
 			if (retry_inquiry_shared_drives(
 			    open_fd, un, scratch, &sp, &local_open)) {
@@ -174,6 +175,7 @@ ident_dev(dev_ent_t *un, int fd)
 			}
 		} else {
 			DevLog(DL_SYSERR(1001));
+			DevLog(DL_ALL(1019), open_fd, un->name, inq_data_len);
 			DevLogCdb(un);
 			DevLogSense(un);
 			OffDevice(un, SAM_STATE_CHANGE);
