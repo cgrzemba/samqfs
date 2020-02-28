@@ -127,7 +127,9 @@ main(
 	if (strcmp(GetParentName(), SAM_FSD) != 0) {
 		/* sam-amld may be started only by sam-fsd */
 		fprintf(stderr, "%s\n", GetCustMsg(11007));
+#if !defined(DEBUG)
 		exit(EXIT_FAILURE);
+#endif
 	}
 	CustmsgInit(1, NULL);
 	TraceInit(program_name, TI_aml);
