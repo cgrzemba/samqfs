@@ -1035,7 +1035,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 redo:
 
 
-#if	0
+#if	defined(DEBUG)
 	/*
 	 * Print out the scsi cdb.
 	 */
