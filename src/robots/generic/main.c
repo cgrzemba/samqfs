@@ -105,7 +105,7 @@ fatal_cleanup()
 	}
 }
 
-
+/* argv[4]: master_shmid, preview_shmid, library_eq */
 int
 main(
 	int argc,
@@ -129,7 +129,7 @@ main(
 	if (argc != 4)
 		exit(1);
 
-	/* Crack arguments (such as they are) */
+	/* Crack arguments (such as they are) e.g.: 4 5 20 */
 	argv++;
 	master_shm.shmid = atoi(*argv);
 	argv++;
