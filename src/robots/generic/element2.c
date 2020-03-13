@@ -106,9 +106,9 @@ init_elements(
 	drive_state_t  *drive;
 	xport_state_t  *xport;
 	iport_state_t  *import;
-	robot_ms_page1d_t *pg1d = NULL;
-	robot_ms_page1e_t *pg1e = NULL;
-	robot_ms_page1f_t *pg1f = NULL;
+	robot_ms_page1d_t *pg1d = NULL; /* Element Address Assignment */
+	robot_ms_page1e_t *pg1e = NULL; /* Transport Geometry Parameters */
+	robot_ms_page1f_t *pg1f = NULL; /* Device Capabilities */
 	sam_extended_sense_t *sense;
 
 	SANITY_CHECK(library != (library_t *)0);

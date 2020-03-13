@@ -156,7 +156,7 @@ ident_dev(dev_ent_t *un, int fd)
 		open_fd = fd;
 	}
 
-#define	SCSI_INQUIRY_BUFFER_SIZE 255
+#define	SCSI_INQUIRY_BUFFER_SIZE 255 (max sysci cmd size)
 	scratch = (char *)malloc_wait(SCSI_INQUIRY_BUFFER_SIZE, 2, 0);
 	mutex_lock(&un->io_mutex);
 	/*
@@ -1099,7 +1099,7 @@ get_devid(dev_ent_t *un, int fd, uchar_t *inquiry_data)
 	sense = (sam_extended_sense_t *)SHM_REF_ADDR(un->sense);
 	memset(sense, 0, sizeof (sam_extended_sense_t));
 
-	/* Read inquiry page 0x83 */
+	/* Read inquiry page 0x83 'Device Identification: Vendor, Serial, Type, Model, Element Addr'*/
 	if (inquiry_data[2] < 3 ||
 	    (page_len = scsi_cmd(fd, un, SCMD_INQUIRY, 0, buf, 0xff, 1, 0x83,
 	    NULL, NULL)) < 8 || buf[1] != 0x83) {
