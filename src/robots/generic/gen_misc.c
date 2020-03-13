@@ -139,7 +139,7 @@ element_address(
 
 	SANITY_CHECK(library != (library_t *)0);
 	SANITY_CHECK(library->un != (dev_ent_t *)0)
-		if (IS_GENERIC_API(library->un->type))
+	if (IS_GENERIC_API(library->un->type))
 		return (slot);
 
 	ex_start_slot = library->range.storage_count;
