@@ -131,7 +131,9 @@ Message(
 	while (AdState->AdExec < ES_term) {
 		if (UdsRecvMsg(&srvr) == -1) {
 			if (errno != EINTR) {
-				LibFatal(UdsRecvMsg, NULL);
+				char msg[80];
+				snprintf(msg,80,"%s: %s", srvr.UsServerName,strerror(errno));
+				LibFatal(UdsRecvMsg, msg);
 				exit(EXIT_FAILURE);
 			}
 		}
