@@ -156,7 +156,7 @@ ident_dev(dev_ent_t *un, int fd)
 		open_fd = fd;
 	}
 
-#define	SCSI_INQUIRY_BUFFER_SIZE 255 (max sysci cmd size)
+#define	SCSI_INQUIRY_BUFFER_SIZE 255 /* (max sysci cmd size) */
 	scratch = (char *)malloc_wait(SCSI_INQUIRY_BUFFER_SIZE, 2, 0);
 	mutex_lock(&un->io_mutex);
 	/*
