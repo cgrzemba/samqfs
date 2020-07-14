@@ -1,0 +1,11 @@
+library/security/openssl
+library/zlib
+shell/ksh93
+system/library
+system/library/c++-runtime
+system/library/math
+system/library
+system/linker
+system/network
+system/core-os
+runtime/perl-512
