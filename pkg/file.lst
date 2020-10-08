@@ -2,7 +2,6 @@ etc/fs/samfs/mount 0750
 etc/fs/samfs/umount 0750
 kernel/drv/64/samaio 0755
 kernel/drv/64/samioc 0755
-kernel/drv/64/samst 0755
 kernel/drv/samaio.conf 0644
 kernel/drv/samioc.conf 0644
 kernel/fs/64/samfs 0755
@@ -34,7 +33,6 @@ opt/SUNWsamfs/examples/inquiry.conf 0644
 opt/SUNWsamfs/examples/log_rotate.sh 0754
 opt/SUNWsamfs/examples/recover.sh 0754
 opt/SUNWsamfs/examples/recycler.sh 0754
-opt/SUNWsamfs/examples/samst.conf 0644
 opt/SUNWsamfs/examples/save_core.sh 0754
 opt/SUNWsamfs/examples/ssi.sh 0754
 opt/SUNWsamfs/examples/tarback.sh 0754
@@ -271,7 +269,6 @@ opt/SUNWsamfs/man/man7/acl452.7 0644
 opt/SUNWsamfs/man/man7/historian.7 0644
 opt/SUNWsamfs/man/man7/sam-remote.7 0644
 opt/SUNWsamfs/man/man7/samaio.7 0644
-opt/SUNWsamfs/man/man7/samst.7 0644
 opt/SUNWsamfs/man/man7/ssi.sh.7 0644
 opt/SUNWsamfs/man/man7/ssi_so.7 0644
 opt/SUNWsamfs/man/man7/stk.7 0644
@@ -378,7 +375,6 @@ var/opt/SUNWsamfs/errcodes/stklxx 0640
 var/opt/SUNWsamfs/errcodes/stksl3000 0640
 lib/svc/method/svc-sam-fsd 0755
 usr/lib/devfsadm/linkmod/SUNW_samaio_link.so 0750
-usr/lib/devfsadm/linkmod/SUNW_samst_link.so 0750
 usr/lib/fs/samfs/64/fsck 0755
 usr/lib/fs/samfs/64/libsamconf.so 0755
 usr/lib/fs/samfs/64/mkfs 0755

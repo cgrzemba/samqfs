@@ -1,0 +1,11 @@
+library/security/openssl
+library/zlib
+SUNWcs
+system/library/gcc-runtime
+system/library/math
+system/library
+developer/linker
+system/network
+runtime/perl
+database/bdb
+ooce/database/mariadb-104

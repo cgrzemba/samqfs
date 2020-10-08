@@ -25,8 +25,8 @@
 # How to use:
 # * cd ../src && gmake
 # * cd ../pkg && rm -rf root/* && install-sam.py
-# * pkgrepo remove -s /repo/private samfs
-# * pkgsend publish -s /repo/private -d root samfs.p5md.trans
+# * pkgrepo remove -s repo samfs
+# * pkgsend publish -s repo -d root samfs.p5md.trans
 #
 
 import os
@@ -41,8 +41,7 @@ import json
 subpath64,subpath = subprocess.check_output('isainfo').split()
 
 version = '5.0.1'
-release = '2020.0.0.1'
-repro = 'file:///home/grzemba/samfs/samqfs/repo/'+subpath
+release = '2020.0.0.3'
 
 prefix = 'opt/SUNWsamfs/'
 docdir = prefix+'doc/'
@@ -66,10 +65,11 @@ destdir = 'root/'
 publisher = 'samqfs'
 builddate = time.strftime('%Y%m%dT%H%M%SZ')
 
+repro = 'file:///home/grzemba/samfs/samqfs/repo/'+subpath+'-'+osrelease
 
 transform_fn = 'samqfs.transform'
 transform = '''<transform pkg -> emit set pkg.description="Storage and Archive Manager File System">
-<transform pkg -> emit set pkg.summary="SAM-FS">
+<transform pkg -> emit set pkg.summary="SAM-FS {5}">
 <transform pkg -> emit set org.opensolaris.consolidation=sfe>
 <transform pkg -> emit set info.classification="org.opensolaris.category.2008:System/File System">
 <transform pkg -> emit set variant.opensolaris.zone=global>
@@ -87,7 +87,6 @@ transform = '''<transform pkg -> emit set pkg.description="Storage and Archive M
 <transform file path=(var|lib)/svc/manifest/.*\.xml$ -> add restart_fmri svc:/system/manifest-import:default>
 <transform pkg -> emit driver name=samioc perms="* 0666 root sys">
 <transform pkg -> emit driver name=samaio perms="* 0666 root sys">
-<transform pkg -> emit driver name=samst perms="* 0666 root sys">
 <transform pkg -> emit legacy category=system desc="Storage and Archive Manager File System" \
 name="Sun SAM and Sun SAM-QFS software OI (root)" pkg=SUNWsamfsr vendor="Open Source" version={3},REV={0} hotline="Open Source">
 <transform pkg -> emit legacy category=system desc="Storage and Archive Manager File System" \
@@ -100,7 +99,7 @@ name="Sun SAM and Sun SAM-QFS software OI (usr)" pkg=SUNWsamfsu vendor="Open Sou
 <transform file path=.*/{1}$ -> default mode 0744>
 <transform depend -> edit fmri "(@[0-9\.]*)-[^ \\t\\n\\r\\f\\v]*" "\\1">
 <transform depend fmri=pkg:/runtime/perl.* -> edit fmri "@[^ \\t\\n\\r\\f\\v]*" "">
-'''.format(builddate, config_smf_name, lic_fn, version, subpath)
+'''.format(builddate, config_smf_name, lic_fn, version, subpath, osrelease)
 
 config_smf = '''<?xml version="1.0"?>
 <!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
@@ -190,24 +189,6 @@ SCRIPTS=$ETCDIR/scripts
 EXAMPLE=$PKG_INSTALL_ROOT/{2}examples
 KERNDRV=$PKG_INSTALL_ROOT/kernel/drv
 LAST_DIR=$PKG_INSTALL_ROOT/{0}samfs.old.last
-
-if [ ! -f $KERNDRV/samst.conf ]; then
-        cp $EXAMPLE/samst.conf $KERNDRV/samst.conf
-else
-        egrep -v 'Id:|Revision:' $KERNDRV/samst.conf > /tmp/$$.in1
-        egrep -v 'Id:|Revision:' $EXAMPLE/samst.conf > /tmp/$$.in2
-        diff /tmp/$$.in1 /tmp/$$.in2 > /dev/null
-        if [ $? -ne 0 ]; then
-                echo "samst.conf may have been updated for this release."
-                echo "$EXAMPLE/samst.conf is the latest released version."
-                echo "Please update this file with any site specific changes"
-                echo "and copy it to $KERNDRV/samst.conf ."
-                echo "When you have done this you may need to run"
-                echo "\"/usr/sbin/devfsadm -i samst\" if any devices were added."
-                echo " "
-        fi
-        rm /tmp/$$.in1 /tmp/$$.in2
-fi
 
 if [ ! -d $ETCDIR ]; then
     mkdir -p $ETCDIR
@@ -640,6 +621,10 @@ def main():
     cxf.close()
     os.umask(defmask)
     
+    if os.system('pkg list $(cat depend-{}.lst) > /dev/null 2>&1'.format(osrelease.split('-')[0])) != 0:
+        print ('check content of depend-{}.lst'.format(osrelease.split('-')[0]))
+        os.system('pkg list $(cat depend-{}.lst)'.format(osrelease.split('-')[0]))
+        sys.exit(3)
     manifest_fn = 'samfs.p5m'
     with open(manifest_fn,'w') as mfn:
         mfn.write('set name=pkg.fmri value=pkg://{0}/system/samfs@{1}-{2}:{3}\n'.format(publisher,version,release,builddate))
@@ -647,8 +632,8 @@ def main():
     os.system('pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
     print ('run: pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
     os.system('pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
-    print ('run: pkgdepend resolve -m {0}'.format(manifest_fn+'d'))
-    os.system('pkgdepend resolve -m -e depend.lst {0}'.format(manifest_fn+'d'))
+    print ('run: pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
+    os.system('pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
     with open(transform_fn,'w') as tfn:
         tfn.write(transform)
     print ('run: pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
