@@ -231,7 +231,7 @@ simread:
 	}
 	if (Instance->CiFlags & CI_disk) {
 		DkBeginCopyFile();
-#if !defined(_NoSTK_)
+#if !defined(_NoOSD_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		HcBeginCopyFile();
 #endif
@@ -551,7 +551,7 @@ out:
 	 */
 	if (Instance->CiFlags & CI_disk) {
 		DkArchiveDone();
-#if !defined(_NoSTK_)
+#if !defined(_NoOSD_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		HcArchiveDone();
 #endif
@@ -622,7 +622,7 @@ EndArchiveFile(
 		/*
 		 * Nothing written.
 		 */
-#if !defined(_NoSTK_)
+#if !defined(_NoOSD_)
 		if (Instance->CiFlags & CI_honeycomb) {
 			HcEndArchiveFile();
 		}
@@ -650,7 +650,7 @@ EndArchiveFile(
 
 	if (Instance->CiFlags & CI_disk) {
 		DkEndArchiveFile();
-#if !defined(_NoSTK_)
+#if !defined(_NoOSD_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		HcEndArchiveFile();
 #endif
@@ -1110,7 +1110,7 @@ writeBlock(
 	SetTimeout(TO_write);
 	if (Instance->CiFlags & CI_disk) {
 		bytesWritten = DkWrite(RemoteArchive.rft, buf, nbytes);
-#if !defined(_NoSTK_)
+#if !defined(_NoOSD_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		bytesWritten = HcWrite(RemoteArchive.rft, buf, nbytes);
 #endif
@@ -1131,7 +1131,7 @@ writeBlock(
 		if (DkWriteError() == 0) {
 			return (FALSE);
 		}
-#if !defined(_NoSTK_)
+#if !defined(_NoOSD_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		HcArchiveDone();
 		if (HcWriteError() == 0) {

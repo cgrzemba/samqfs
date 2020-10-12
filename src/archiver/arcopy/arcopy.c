@@ -600,7 +600,7 @@ arcopyInit(
 	memset(&RemoteArchive, 0, sizeof (RemoteArchive));
 	if (Instance->CiFlags & CI_disk) {
 		DkInit();
-#if !defined(_NoTIVOLI_)
+#if !defined(_NoOSD_)
 	} else if (Instance->CiFlags & CI_honeycomb) {
 		HcInit();
 
