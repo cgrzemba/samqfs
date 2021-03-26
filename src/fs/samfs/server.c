@@ -4505,11 +4505,13 @@ sam_update_cl_attr(
 		if (set_size) {
 			attr->actions &= ~SR_SET_SIZE;
 			ip->di.rm.size = attr->real_size;
+#ifndef _NoOSD_
 			if (SAM_IS_OBJECT_FILE(ip) &&
 			    (client_ord != ip->mp->ms.m_client_ord)) {
 				(void) sam_set_end_of_obj(ip, ip->di.rm.size,
 				    0);
 			}
+#endif
 			sam_set_size(ip);
 			ip->flags.b.changed = 1;
 			ip->sr_sync = 1;

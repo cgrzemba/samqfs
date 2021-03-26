@@ -222,20 +222,20 @@ static char *noxattr_cancel[] = { MNTOPT_XATTR, NULL };
 static mntopt_t mntopts[] = {
 	/* Option name		Cancel Opt	Arg	Flags		Data */
 	{ MNTOPT_RW,		rw_cancel,	NULL,	MO_DEFAULT,	NULL},
-	{ MNTOPT_RO,		ro_cancel,	NULL,	NULL,		NULL},
+	{ MNTOPT_RO,		ro_cancel,	NULL,	0,		NULL},
 	{ MNTOPT_SUID,		suid_cancel,	NULL,	MO_DEFAULT,	NULL},
-	{ MNTOPT_NOSUID,	nosuid_cancel,	NULL,	NULL,		NULL},
+	{ MNTOPT_NOSUID,	nosuid_cancel,	NULL,	0,		NULL},
 	{ MNTOPT_INTR,		NULL,		NULL,	MO_DEFAULT,	NULL},
 	{ MNTOPT_QUOTA,		quota_cancel,	NULL,	MO_IGNORE,	NULL},
-	{ MNTOPT_NOQUOTA,	noquota_cancel,	NULL,	NULL,		NULL},
+	{ MNTOPT_NOQUOTA,	noquota_cancel,	NULL,	0,		NULL},
 	{ MNTOPT_LARGEFILES,	NULL,		NULL,	MO_DEFAULT,	NULL},
 	{ MNTOPT_ONERROR,	NULL,		SAMFSMNT_ONERROR_PANIC_STR,
 							MO_DEFAULT|MO_HASVALUE,
 									NULL},
 	{ MNTOPT_NOLOGGING,	nologging_cancel, NULL,	MO_DEFAULT,	NULL},
-	{ MNTOPT_LOGGING,	logging_cancel,	NULL,	NULL,		NULL},
+	{ MNTOPT_LOGGING,	logging_cancel,	NULL,	0,		NULL},
 	{ MNTOPT_XATTR,		xattr_cancel,	NULL,	MO_DEFAULT,	NULL},
-	{ MNTOPT_NOXATTR,	noxattr_cancel,	NULL,	NULL,		NULL}
+	{ MNTOPT_NOXATTR,	noxattr_cancel,	NULL,	0,		NULL}
 };
 
 
@@ -444,7 +444,9 @@ _fini(void)
 	sam_clean_cache();
 	sam_delete_sharefs_rpc_item_cache();
 	sam_delete_client_msg_cache();
+#ifndef _NoOSD_
 	sam_delete_object_cache();
+#endif
 	kmem_free((void *)sam_zero_block, sam_zero_block_size);
 	sam_zero_block = NULL;
 	sam_zero_block_size = 0;
@@ -455,7 +457,7 @@ _fini(void)
 	lqfs_fini();
 
 	sam_objctl_fini();
-#if defined(SOL_511_ABOVE)
+#ifndef _NoOSD_
 	sam_sosd_unbind();
 #endif
 
@@ -631,7 +633,9 @@ samfs_init(
 	sam_sc_daemon_init();	/* Initialize system call daemon processing. */
 	sam_init_sharefs_rpc_item_cache();
 	sam_init_client_msg_cache();
+#ifndef _NoOSD_
 	sam_init_object_cache();
+#endif
 #if	SAM_TRACE
 	sam_trace_init();	/* Initialize the trace table. */
 #endif
@@ -647,7 +651,7 @@ samfs_init(
 
 	lqfs_init();
 
-#if defined(SOL_511_ABOVE) && !defined(_NoOSD_)
+#ifndef _NoOSD_
 	sam_objctl_init();
 	sam_sosd_bind();
 #endif

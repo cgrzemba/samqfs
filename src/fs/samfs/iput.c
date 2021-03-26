@@ -527,7 +527,9 @@ sam_inactive_stale_ino(sam_node_t *ip, cred_t *credp)
 	} else {
 		mutex_exit(&vp->v_lock);
 		ASSERT(!rw_write_held(&ip->data_rwl));
+#ifndef _NoOSD_
 		sam_osd_destroy_obj_layout(ip, 0);
+#endif
 		sam_destroy_ino(ip, FALSE);	/* calls inode destructor */
 	}
 

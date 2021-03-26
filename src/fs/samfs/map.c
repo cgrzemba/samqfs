@@ -207,12 +207,12 @@ sam_map_block(
 
 	sam_nowait = flag & SAM_MAP_NOWAIT;
 	flag &= ~SAM_MAP_NOWAIT;
-
+#ifndef _NoOSD_
 	if (SAM_IS_OBJECT_FILE(ip)) {
 		error = sam_map_osd(ip, offset, count, flag, iop);
 		return (error);
 	}
-
+#endif
 start:
 	ioblk.count = 0;
 	ioblk.no_daus = 0;

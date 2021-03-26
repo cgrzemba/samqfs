@@ -908,12 +908,16 @@ sam_node_t *sam_vtoi(vnode_t *vp);
 /*
  * -----	sam_destroy_obj_layout	- Free object layout if no pages exist.
  */
+#ifndef _NoOSD_
 #define	SAM_DESTROY_OBJ_LAYOUT(ip) \
 { \
 	if (vn_has_cached_data(SAM_ITOV(ip)) == 0) { \
 		sam_osd_destroy_obj_layout(ip, 1); \
 	} \
 }
+#else
+#define SAM_DESTROY_OBJ_LAYOUT(ip)
+#endif
 
 
 /*
@@ -1123,11 +1127,11 @@ void sam_sosd_bind(void);
 #else /* defined SOL_511_ABOVE */
 #define	sam_map_osd(a, b, c, d, e)			(ENOTSUP)
 #define	sam_issue_object_io(a, b, c, d, e, f, g, h)	(ENOTSUP)
-#define	sam_create_priv_object_id(a, b)			(ENOTSUP)
+#define	sam_create_priv_object_id(a, b)
 #define	sam_create_object_id(a, b)			(ENOTSUP)
-#define	sam_remove_object_id(a, b, c)			(ENOTSUP)
+#define	sam_remove_object_id(a, b, c)
 #define	sam_truncate_object_file(a, b, c, d)		(ENOTSUP)
-#define	sam_set_end_of_obj(a, b, c)			(ENOTSUP)
+#define	sam_set_end_of_obj(a, b, c)
 #define	sam_osd_create_obj_layout(a)			(ENOTSUP)
 #define	sam_osd_destroy_obj_layout(a, b)
 #define	sam_init_object_cache()
