@@ -62,7 +62,7 @@ enum sam_scsi_action process_scsi_error(struct dev_ent *,
 	struct sam_scsi_err *, int);
 #endif
 int do_tur(dev_ent_t *un, int open_fd, int retry);
-int read_tape_space(dev_ent_t *un, int open_fd);
+uint64_t read_tape_space(dev_ent_t *un, int open_fd);
 void set_bad_media(dev_ent_t *);
 int dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req);
 int scsi_cmd(const int, struct dev_ent *, const int, const int, ...);
@@ -87,7 +87,7 @@ struct preview *scan_preview(int, struct CatalogEntry *, const int,
 
 int handles_match(sam_handle_t *, sam_handle_t *);
 void send_notify_email(dev_ent_t *device, char *script);
-int read_tape_capacity(struct dev_ent *, int);
+uint64_t read_tape_capacity(struct dev_ent *, int);
 
 char *samst_devname(struct dev_ent *);
 char *error_handler(int);
