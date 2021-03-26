@@ -112,7 +112,7 @@ LIB_LIBS = -lnsl $(LIBSO)
 
 endif
 
-DEPCFLAGS += -I$(INCLUDE)/sam/$(OBJ_DIR) -I$(DB_INCLUDE) $(THRCOMP)
+DEPCFLAGS += -I$(INCLUDE)/sam/$(OBJ_DIR) $(if $(DB_INCLUDE),-I$(DB_INCLUDE)) $(THRCOMP)
 
 ifeq ($(SPARCV9), yes)
 LNOPTS = $(LIBS_LFLAGS64)

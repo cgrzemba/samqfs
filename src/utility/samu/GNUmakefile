@@ -61,7 +61,7 @@ PROG_SRC = \
 		samu.c \
 		utility.c
 
-DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) -I$(DB_INCLUDE)
+DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) $(if $(DB_INCLUDE),-I$(DB_INCLUDE)) 
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsam -lsamcat -lsamfs -lsamut -lsamconf -lsamrft $(LIBSO) $(THRLIBS) -lsocket -lnsl -lcurses -lkvm -lkstat -ladm $(DB_LIB)
 
