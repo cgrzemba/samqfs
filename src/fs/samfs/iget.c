@@ -1488,7 +1488,9 @@ sam_delete_ino_cache(void)
 		if (--samgt.inofree < 0) {
 			samgt.inofree = 0;
 		}
+#ifndef _NoOSD_
 		sam_osd_destroy_obj_layout(ip, 0);
+#endif
 		sam_destroy_ino(ip, TRUE);
 		ip = nip;
 	}

@@ -781,6 +781,7 @@ sam_reset_client_ino(
 	if ((irec->sr_attr.size_owner != ip->mp->ms.m_client_ord) ||
 	    (irec->sr_attr.actions & SR_FORCE_SIZE)) {
 		ip->size = irec->sr_attr.current_size;
+#ifndef _NoOSD_
 		if (SAM_IS_OBJECT_FILE(ip)) {
 			/*
 			 * When we move the disk image into the incore inode,
@@ -799,6 +800,7 @@ sam_reset_client_ino(
 				    ip->di.rm.size, 1);
 			}
 		}
+#endif
 	} else {
 		ip->di.rm.size = real_size;
 	}

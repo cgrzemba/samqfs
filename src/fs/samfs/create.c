@@ -234,8 +234,8 @@ sam_create_name(
 			if ((ip->di.status.b.acl || ip->di.status.b.dfacl) &&
 			    !ip->aclp &&
 			    !(ip->di.ext_attrs & ext_acl)) {
-				if (error = sam_acl_inherit(ip, pip,
-				    &ip->aclp)) {
+				if ((error = sam_acl_inherit(ip, pip,
+				    &ip->aclp))) {
 					if (ip->di.version >=
 					    SAM_INODE_VERS_2 &&
 					    (operation != SAM_RENAME_LINK ||
@@ -728,17 +728,21 @@ sam_restore_new_ino(
 	if ((error = sam_set_unit(mp, &(permip->di)))) {
 		return (error);
 	}
+#ifndef _NoOSD_
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(permip->di.mode)) {
 		if ((error = sam_create_object_id(mp, &permip->di)) != 0) {
 			*bpp = bp;
 			return (error);
 		}
 	} else {
+#endif
 		for (i = (NOEXT - 1); i >= 0; i--) {
 			permip->di.extent[i] = 0;
 			permip->di.extent_ord[i] = 0;
 		}
+#ifndef _NoOSD_
 	}
+#endif
 	if (permip->di.rm.size != 0) {	/* if space in the original inode */
 		permip->di.status.b.offline = 1;
 		permip->di.status.b.pextents = 0;
@@ -982,6 +986,7 @@ sam_make_ino(
 	if ((error = sam_set_unit(mp, &ip->di))) {
 		goto make_cleanup;
 	}
+#ifndef _NoOSD_
 	if (SAM_IS_OBJECT_FS(mp) && S_ISREG(ip->di.mode)) {
 		ip->di.rm.info.obj.stripe_width =
 		    pip->di.rm.info.obj.stripe_width;
@@ -994,6 +999,7 @@ sam_make_ino(
 			goto make_cleanup;
 		}
 	}
+#endif
 	return (0);
 
 	/*
@@ -1290,8 +1296,8 @@ sam_set_symlink(
 		chars = n_chars;
 		do {
 			ino = eid.ino;
-			if (error = sam_read_ino(bip->mp, ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(bip->mp, ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 				break;
 			}
 			if (EXT_HDR_ERR(eip, eid, bip)) {
@@ -1463,8 +1469,8 @@ sam_set_hardlink_parent(
 		 */
 		eid = dp->ext_id;
 		while (eid.ino && !done && !error) {
-			if (error = sam_read_ino(mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 				done = 1;
 				break;
 			}

@@ -1226,6 +1226,7 @@ sam_map(
 	int i, dt;
 	int maxbp;
 
+#ifndef _NoOSD_
 	if (SAM_IS_OBJECT_FILE(ip)) {
 		error = sam_map_osd(ip, off, (offset_t)PAGESIZE, SAM_READ_PUT,
 		    &iop->ioblk[0]);
@@ -1233,7 +1234,7 @@ sam_map(
 		iop->contig = iop->ioblk[0].contig;
 		return (error);
 	}
-
+#endif
 	dt = ip->di.status.b.meta;
 	if ((maxbp = (PAGESIZE >> SM_SHIFT(ip->mp, dt))) == 0) {
 		maxbp = 1;
