@@ -1,11 +1,11 @@
 library/security/openssl
 library/zlib
-shell/ksh93
-system/library
-system/library/c++-runtime
+SUNWcs
+system/library/gcc-7-runtime
 system/library/math
 system/library
-system/linker
+developer/linker
 system/network
-system/core-os
-runtime/perl-512
+runtime/perl-522
+database/berkeleydb-5
+database/mariadb-103/library

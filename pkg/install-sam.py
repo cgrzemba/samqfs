@@ -57,8 +57,9 @@ config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 osrelease = '-'.join(subprocess.check_output(['uname','-v']).strip().replace('.','-').split('-')[:2])
 srcpath_fn = 'srcpath_{}.json.cache'.format(osrelease)
 
-obj_dir = {'32':'obj/SunOS_{0}_{1}_DEBUG'.format(osrelease,subpath), 
-           '64':'obj/SunOS_{0}_{1}_DEBUG'.format(osrelease,subpath64),
+FLAVOR = '_DEBUG'
+obj_dir = {'32':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath,FLAVOR),
+           '64':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath64,FLAVOR),
            'all': ''}
 
 destdir = 'root/'
@@ -379,6 +380,7 @@ SUNW_names = { 'SUNW_samst_link.so':'libsamst_link.so',
             'unarchive':'gencmd',
             'SUNWsamfs':'nl_messages.cat',
             'Makefile':'Makefile.inst',
+            'version.h':'{}/pub/version.h'.format(obj_dir['32']),
             }
 isa32_cmds = {'fsck':'samfsck',
             'mkfs':'sammkfs',
@@ -391,7 +393,7 @@ not_bins = []
 notfounds = []
 arch64bins = []
 srcpaths = {}
-multiplefn = ['Makefile']
+multiplefn = ['Makefile',]
 
 def isScript(fn):
     p = subprocess.Popen(['/usr/bin/file',os.path.join(fn)], stdout=subprocess.PIPE)
@@ -401,6 +403,8 @@ def isScript(fn):
 #    print "no script "+fn
     return False
 
+''' returns the full path where to copy from
+'''
 def getPath(fn, dirname, filenames, arch):
     # print "getPath search: "+fn
     sfn = fn.rpartition('/')[2]
@@ -417,11 +421,14 @@ def getPath(fn, dirname, filenames, arch):
             ffn = os.path.join(dirname,sfn)
             print "found script: "+ffn
             return ffn
-
+    elif dirname.endswith(fn.rpartition('/')[0]):
+        ffn = os.path.join(dirname,sfn)
+        print "found multiple : "+ffn
+        return ffn
     else:
         ffn = os.path.join(dirname,sfn)
         print "found other : "+ffn
-        return ffn
+        return None
 
 
 def mkDirs(dirlst):
@@ -515,23 +522,22 @@ def installFiles(filelst):
         else:
             src0 = srcpaths[f]
         try:
+            f = f.replace('64', subpath64).replace('32', subpath)
             print "copy "+src0+" nach "+ destdir+f
-        # raise exception if not exist 
-            os.stat(destdir+path)
+            if not os.path.isdir(destdir+path):
+                os.makedirs(destdir+path)
+            if os.path.isfile(destdir+f):
+                os.chmod(destdir+f,stat.S_IWUSR)
             shutil.copy(src0,destdir+f)
             os.chmod(destdir+f,m)
         except TypeError as e:
             print "installFiles Exception: %s" % f
             print "Error: {0}".format(e)
             import pdb; pdb.set_trace()
-        except OSError, e:
-            if e.errno == 2:  # No such directory
-                os.makedirs(destdir+path)
-                shutil.copy(src0,destdir+f)
-                os.chmod(destdir+f,m)
         except IOError, e:
             if not e.errno in (13,): 
                 print "Unable to copy file. %s %d:%s" % (src0,e.errno,os.strerror(e.errno))
+            import pdb; pdb.set_trace()
         
 def mkLinks(linklst):
     for lname, fname in linklst:
@@ -571,11 +577,11 @@ def main():
     with open('file.lst') as fl:
         filelst = [ (files.split()[0],int(files.split()[1],8)) for files in fl.readlines() ]
     with open('slink.lst') as fl:
-        slinklst = [ (files.split()[0],files.split()[1]) for files in fl.readlines() ]
+        slinklst = [ (files.split()[0].replace('64',subpath64),files.split()[1].replace('64',subpath64)) for files in fl.readlines() ]
     with open('link.lst') as fl:
         linklst = [ (files.split()[0],files.split()[1]) for files in fl.readlines() ]
     with open('dir.lst') as fl:
-        dirlst = [ (files.split()[0].replace('64',subpath64),files.split()[1],files.split()[2]) for files in fl.readlines() ]
+        dirlst = [ (files.split()[0].replace('64',subpath64).replace('32',subpath),files.split()[1],files.split()[2]) for files in fl.readlines() ]
 
 #    import pdb; pdb.set_trace()
 #    fnlst = {}
