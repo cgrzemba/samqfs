@@ -342,7 +342,7 @@ write_tape_labels(
 {
 	int		flags = 0, ii;
 	int		wt_cnt = 0;
-	uint_t		tmp_capacity;
+	uint64_t	tmp_capacity;
 	char		ansi_date[7], scratch[20];
 	char		*d_mess;
 	char		leading;
@@ -368,7 +368,7 @@ write_tape_labels(
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					(void) memccpy(un->
@@ -381,6 +381,7 @@ write_tape_labels(
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.write_tape_labels)
@@ -768,7 +769,7 @@ format_tape(int *open_fd, dev_ent_t *un, format_req_t *request)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					(void) memccpy(
@@ -781,6 +782,7 @@ format_tape(int *open_fd, dev_ent_t *un, format_req_t *request)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.format_tape)
@@ -799,7 +801,7 @@ get_n_partitions(dev_ent_t *un, int open_fd)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					(void) memccpy(un->
@@ -812,6 +814,7 @@ get_n_partitions(dev_ent_t *un, int open_fd)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.format_tape)

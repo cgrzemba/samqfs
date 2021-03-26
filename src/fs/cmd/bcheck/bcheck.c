@@ -187,7 +187,7 @@ void print_block_list(void);
  *
  * Find all uses of block(s) on requested mount point
  */
-void
+int
 main(int argc, char **argv)
 {
 	int i;
@@ -254,7 +254,7 @@ process_args(int argc, char **argv)
 
 	/* Initialize samfs syscalls */
 	LoadFS(NULL);
-	if (err = chk_devices(mnt_point, O_RDONLY, &mnt_info)) {
+	if ((err = chk_devices(mnt_point, O_RDONLY, &mnt_info))) {
 		return (err);
 	}
 	fs_count = mnt_info.params.fs_count;
