@@ -62,7 +62,9 @@ LDFLAGS += ../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lfscmd -L $(DEPTH)/lib/$(OBJ_DIR) \
 			-lsam -lsamut
 ifeq ($(OS), SunOS)
-INCFLAGS  += -I$(DB_INCLUDE)
+  ifneq (,$(DB_INCLUDE))
+    INCFLAGS  += -I$(DB_INCLUDE)
+endif
 PROG_LIBS += -lsamspmd -lsamspm -lsamrft $(DYNAMIC_OPT) \
 -lsocket -lnsl -ladm $(DB_LIB)
 else
