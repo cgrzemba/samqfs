@@ -4,7 +4,6 @@ opt/SUNWsamfs/zone/bin/request opt/SUNWsamfs/bin/request
 opt/SUNWsamfs/zone/bin/sdu opt/SUNWsamfs/bin/sdu
 opt/SUNWsamfs/zone/bin/sfind opt/SUNWsamfs/bin/sfind
 opt/SUNWsamfs/zone/bin/sls opt/SUNWsamfs/bin/sls
-opt/SUNWsamfs/zone/lib/libdb-4.5.so opt/SUNWsamfs/lib/libdb-4.5.so
 opt/SUNWsamfs/zone/lib/libsam.so opt/SUNWsamfs/lib/libsam.so
 opt/SUNWsamfs/zone/lib/libsamcat.so opt/SUNWsamfs/lib/libsamcat.so
 opt/SUNWsamfs/zone/lib/libsamrft.so opt/SUNWsamfs/lib/libsamrft.so
