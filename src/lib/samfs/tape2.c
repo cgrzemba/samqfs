@@ -97,7 +97,7 @@ position_tape(dev_ent_t *un, int open_fd, uint_t position)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)){
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -109,6 +109,7 @@ position_tape(dev_ent_t *un, int open_fd, uint_t position)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.position_tape)
@@ -168,7 +169,7 @@ position_tape(dev_ent_t *un, int open_fd, uint_t position)
 	}
 	*d_mess = '\0';
 	(void) time(&stop);
-	if (stop != start && stop - start > 2 ||
+	if ((stop != start && (stop - start > 2)) ||
 	    position == un->dt.tp.position) {
 		DevLog(DL_TIME(3066), stop - start);
 	}
@@ -245,7 +246,7 @@ position_tape_offset(
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -257,6 +258,7 @@ position_tape_offset(
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.position_tape_offset)
@@ -274,7 +276,7 @@ position_tape_offset(
 	}
 	if (((un->dt.tp.stage_pos != 0) ?
 	    position != un->dt.tp.stage_pos : position != current_pos)) {
-		if (err = position_tape(un, open_fd, position))
+		if ((err = position_tape(un, open_fd, position)))
 			return (err);
 		current_pos = position;
 		no_back = TRUE;
@@ -374,7 +376,7 @@ read_position(dev_ent_t *un, int open_fd, uint_t *position)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -386,6 +388,7 @@ read_position(dev_ent_t *un, int open_fd, uint_t *position)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.read_position)
@@ -426,13 +429,13 @@ read_position(dev_ent_t *un, int open_fd, uint_t *position)
  * amount that is really, really wrong.
  */
 
-int
+uint64_t
 read_tape_capacity(dev_ent_t *un, int open_fd)
 {
 	int		resid;
 	uint_t		return_val = 0;
-	long long	tmp_val = (long long) 0;
-	long long	tmp_val1;
+	uint64_t	tmp_val = (uint64_t) 0;
+	uint64_t	tmp_val1;
 
 	SANITY_CHECK(un != (dev_ent_t *)0);
 
@@ -440,7 +443,7 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -452,6 +455,7 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.read_tape_capacity)
@@ -1014,13 +1018,13 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
  * computing (capacity - blocksize*position)
  */
 
-int
+uint64_t
 read_tape_space(dev_ent_t *un, int open_fd)
 {
 	int		resid;
 	uint_t		return_val = 0;
-	long long	tmp_val = (long long) 0;
-	long long	tmp_val1;
+	uint64_t	tmp_val = (uint64_t) 0;
+	uint64_t	tmp_val1;
 
 	SANITY_CHECK(un != (dev_ent_t *)0);
 
@@ -1028,7 +1032,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -1040,6 +1044,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.read_tape_capacity)
@@ -1351,6 +1356,17 @@ read_tape_space(dev_ent_t *un, int open_fd)
 			 * Page 31, parameter 1: Main Partition Remaining
 			 * Capacity.  The value is in megabytes and assumes
 			 * no data compression.
+			 * Warning 2017: this page is deprecated in favour of page 17
+			 *
+                         * dmy[0] page code
+                         * dmy[1] subpage code
+                         * dmy[2,3] page code length
+                         * dmy[4,5] parameter code
+                         * dmy[6] parameter description
+                         * dmy[7] parameter length
+                         * dmy[8,9] paramter value
+                         * dmy[10,11] parameter value
+			 *
 			 */
 			uchar_t dmy[50];
 
@@ -1601,7 +1617,7 @@ process_tape_labels(int fd, dev_ent_t *un)
 	int	retrys = 2;
 	char	*d_mess, *dc_mess, *msg_buf, *msg1;
 	char    *more_message = " ";
-	uint_t	capacity;
+	uint64_t	capacity;
 	time_t	start;
 	struct mtget	mt_status;
 	mode_sense_t	mode_sense;
@@ -1627,7 +1643,7 @@ process_tape_labels(int fd, dev_ent_t *un)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -1639,6 +1655,7 @@ process_tape_labels(int fd, dev_ent_t *un)
 					return;
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.process_tape_labels) {
@@ -2240,7 +2257,7 @@ update_block_limits(dev_ent_t *un, int open_fd)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 
@@ -2253,6 +2270,7 @@ update_block_limits(dev_ent_t *un, int open_fd)
 					return;
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.update_block_limits) {
@@ -2288,7 +2306,7 @@ update_block_limits(dev_ent_t *un, int open_fd)
 			    un->dt.tp.max_blocksize)
 				un->dt.tp.default_blocksize =
 				    un->dt.tp.max_blocksize;
-				DevLog(DL_DETAIL(3125),
+			DevLog(DL_DETAIL(3125),
 				    un->dt.tp.max_blocksize, tmp1);
 		}
 	}
@@ -2631,7 +2649,13 @@ tape_properties(dev_ent_t *un, int fd)
 		    memcmp(un->product_id, "ULTRIUM-TD4     ", 16) == 0 ||
 		    memcmp(un->product_id, "ULT3580-TD4     ", 16) == 0 ||
 		    memcmp(un->product_id, "ULTRIUM-TD5     ", 16) == 0 ||
-		    memcmp(un->product_id, "ULT3580-TD5     ", 16) == 0)) {
+		    memcmp(un->product_id, "ULT3580-TD5     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULTRIUM-TD6     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULT3580-TD6     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULTRIUM-TD7     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULT3580-TD7     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULTRIUM-TD8     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULT3580-TD8     ", 16) == 0)) {
 
 			/* Checking if the drive supports WORM feature. */
 
