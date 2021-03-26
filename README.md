@@ -15,6 +15,13 @@ needed packages:
 -    bison
 -    git, bdb, mariadb, gnu-make, automake, swig
 
+## Customize for illumos and OmniOS
+
+check files in 
+
+    mk/include/omnios.mk
+    mk/include/illumos.mk
+
 ## Build
 
     $ gmake -f GNUmakefile
