@@ -38,7 +38,7 @@ from stat import *
 import time
 import json
 
-subpath64,subpath = subprocess.check_output('isainfo').split()
+subpath64,subpath = subprocess.check_output('isainfo').decode('latin1').split()
 
 version = '5.0.1'
 release = '2020.0.0.3'
@@ -54,7 +54,7 @@ config_script_fn = '{0}util/{1}'.format(prefix,config_smf_name)
 config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 
 # have to provide the same like: uname -v | gawk '{ split($0,a,"[.-]"); print a[1]"-"a[2]}'
-osrelease = '-'.join(subprocess.check_output(['uname','-v']).strip().replace('.','-').split('-')[:2])
+osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[:2])
 srcpath_fn = 'srcpath_{}.json.cache'.format(osrelease)
 
 FLAVOR = '_DEBUG'
@@ -398,7 +398,7 @@ multiplefn = ['Makefile',]
 def isScript(fn):
     p = subprocess.Popen(['/usr/bin/file',os.path.join(fn)], stdout=subprocess.PIPE)
     for l in p.stdout.readlines():
-        if 'script' in l:
+        if 'script' in l.decode('latin1'):
             return True
 #    print "no script "+fn
     return False
@@ -415,19 +415,19 @@ def getPath(fn, dirname, filenames, arch):
     if not arch == 'all' :
         if dirname.endswith(obj_dir[arch]):
             ffn = os.path.join(dirname,sfn)
-            print "found bin   : "+ffn
+            print ("found bin   : "+ffn)
             return ffn
         elif isScript(os.path.join(dirname,sfn)):
             ffn = os.path.join(dirname,sfn)
-            print "found script: "+ffn
+            print ("found script: "+ffn)
             return ffn
     elif dirname.endswith(fn.rpartition('/')[0]):
         ffn = os.path.join(dirname,sfn)
-        print "found multiple : "+ffn
+        print ("found multiple : "+ffn)
         return ffn
     else:
         ffn = os.path.join(dirname,sfn)
-        print "found other : "+ffn
+        print ("found other : "+ffn)
         return None
 
 
@@ -435,18 +435,18 @@ def mkDirs(dirlst):
     for dir,uid,gid in dirlst:
         try: 
             os.makedirs(destdir+dir)
-        except OSError,e:
+        except OSError as e:
             if e.errno == 17: # dir exists 
                 pass
             else:
-                print "Unable to make dir  %d:%s" % (e.errno,os.strerror(e.errno))
+                print ("Unable to make dir  %d:%s" % (e.errno,os.strerror(e.errno)))
                 raise OSError(e)
 #         if uid == '?' or gid == '?':
-#             print "weiss nicht"
+#             print ("weiss nicht")
 #             for l in subprocess.Popen(['ls','-ld','/'+dir],stdout = subprocess.PIPE).stdout.readlines():
 #                 uid = l.split()[2]
 #                 gid = l.split()[3]
-#             print "get {0} {1} {2}".format(destdir+dir, uid, gid)
+#             print ("get {0} {1} {2}".format(destdir+dir, uid, gid))
 #         os.system('sudo chown {1}:{2} {0}'.format(destdir+dir, uid, gid))
     
 def installFiles(filelst):
@@ -471,9 +471,9 @@ def installFiles(filelst):
             path = path.rpartition('/')[0]
 
         if f not in srcpaths.keys():
-            if m & 0110 > 0 : # executable file
+            if m & 0o110 > 0 : # executable file
                 if path.rpartition('/')[2] == '64':
-                    print "isapath 64bit "+fn
+                    print ("isapath 64bit "+fn)
                     arch64bins.append(fn)
                     if fn in isa64_cmds.keys():
                         fn = isa64_cmds[fn]
@@ -481,20 +481,20 @@ def installFiles(filelst):
                     fn = path.rpartition('/')[2]+'/'+fn
 #                        afn = path.rpartition('/')[2]+'/'+afn
                     path = path.rpartition('/')[0]
-                    print "%s %s %s %s" % (subpath64, path, afn ,fn)
+                    print ("%s %s %s %s" % (subpath64, path, afn ,fn))
                 elif path.rpartition('/')[2] == '32':
-                    print "isapath 32bit "+fn
+                    print ("isapath 32bit "+fn)
                     if fn in isa32_cmds.keys():
                         fn = isa32_cmds[fn]
                     arch = '32'
                     fn = path.rpartition('/')[2]+'/'+fn
 #                        afn = path.rpartition('/')[2]+'/'+afn
                     path = path.rpartition('/')[0]
-                    print "%s %s %s %s" % (subpath, path, afn ,fn)
+                    print ("%s %s %s %s" % (subpath, path, afn ,fn))
                 else:
-                    print "%s: 32bit bin or script" % f
+                    print ("%s: 32bit bin or script" % f)
                     arch = '32'
-            # print "search {0} {1} {2}".format(fn, oct(m), arch)
+            # print ("search {0} {1} {2}".format(fn, oct(m), arch))
             if not arch == 'all':
                 for dirname, dirnames, filenames in os.walk('../lib'):
                    src0 = getPath(fn, dirname, filenames, arch)
@@ -503,7 +503,7 @@ def installFiles(filelst):
                        break
             if not found:
                for dirname, dirnames, filenames in os.walk('../src'):
-#                      print "\nA. d: {0}, ds {1}, fn {2}".format(dirname, dirnames, filenames)
+#                      print ("\nA. d: {0}, ds {1}, fn {2}".format(dirname, dirnames, filenames))
                    src0 = getPath(fn, dirname, filenames, arch)
                    if src0 is not None:
                       found = True
@@ -518,12 +518,12 @@ def installFiles(filelst):
                 notfounds.append(fn)
             else: 
                 srcpaths[f] = src0
-                print "cache [%s] %s" % (f,src0)
+                print ("cache [%s] %s" % (f,src0))
         else:
             src0 = srcpaths[f]
         try:
             f = f.replace('64', subpath64).replace('32', subpath)
-            print "copy "+src0+" nach "+ destdir+f
+            print ("copy "+src0+" nach "+ destdir+f)
             if not os.path.isdir(destdir+path):
                 os.makedirs(destdir+path)
             if os.path.isfile(destdir+f):
@@ -531,31 +531,31 @@ def installFiles(filelst):
             shutil.copy(src0,destdir+f)
             os.chmod(destdir+f,m)
         except TypeError as e:
-            print "installFiles Exception: %s" % f
-            print "Error: {0}".format(e)
+            print ("installFiles Exception: %s" % f)
+            print ("Error: {0}".format(e))
             import pdb; pdb.set_trace()
-        except IOError, e:
+        except IOError as e:
             if not e.errno in (13,): 
-                print "Unable to copy file. %s %d:%s" % (src0,e.errno,os.strerror(e.errno))
+                print ("Unable to copy file. %s %d:%s" % (src0,e.errno,os.strerror(e.errno)))
             import pdb; pdb.set_trace()
         
 def mkLinks(linklst):
     for lname, fname in linklst:
-        print " lnk %s %s" % (destdir+lname,destdir+fname)
+        print (" lnk %s %s" % (destdir+lname,destdir+fname))
         try:
            os.link(destdir+fname, destdir+lname)
         except OSError as e:
            if e.errno != 17:
-               print "Error: {0} {1}".format(e.errno,os.strerror(e.errno))
+               print ("Error: {0} {1}".format(e.errno,os.strerror(e.errno)))
 
 def mkSymLinks(linklst):
     for lname, fname in linklst:
-        print " slnk %s %s" % (destdir+lname,fname)
+        print (" slnk %s %s" % (destdir+lname,fname))
         try:
            os.symlink(fname, destdir+lname)
         except OSError as e:
            if e.errno != 17:
-               print "Error: {0} {1}".format(e.errno,os.strerror(e.errno))
+               print ("Error: {0} {1}".format(e.errno,os.strerror(e.errno)))
 
 def main():
     global arch64
@@ -572,7 +572,7 @@ def main():
     arch64 = '_{0}'.format(subpath64)
     arch32 = '_{0}'.format(subpath)
 
-    print arch64, arch32
+    print (arch64, arch32)
 
     with open('file.lst') as fl:
         filelst = [ (files.split()[0],int(files.split()[1],8)) for files in fl.readlines() ]
@@ -589,7 +589,7 @@ def main():
 #        if f.rpartition('/')[2] not in fnlst.keys():
 #            fnlst[f.rpartition('/')[2]] = f
 #        else:
-#            print "WARNIG: same file names in different paths %s %s" % (f,fnlst[f.rpartition('/')[2]])
+#            print ("WARNIG: same file names in different paths %s %s" % (f,fnlst[f.rpartition('/')[2]]))
 
     mkDirs(dirlst)
     installFiles(filelst)
@@ -598,26 +598,26 @@ def main():
     with open(srcpath_fn,'w') as f:
         json.dump(srcpaths,f)
 
-    defmask = os.umask(0033)
+    defmask = os.umask(0o033)
     try:
-	os.unlink(destdir+config_script_fn)
+        os.unlink(destdir+config_script_fn)
     except:
         pass
     with open(destdir+config_script_fn,'w') as csf:
         csf.write(config_script)
     os.chmod(destdir+config_script_fn, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IXUSR)
 
-    print "64 bit bins"
-    print arch64bins
+    print ("64 bit bins")
+    print (arch64bins)
     if notfounds:
-        print "files not found"
-        print notfounds
+        print ("files not found")
+        print (notfounds)
         sys.exit(1)
      
 #    os.umask(0233)
     try:
         cxf = open(destdir+config_smf_fn,'w')
-    except IOError, e:
+    except IOError as e:
         if e.errno == 2:
             os.makedirs(destdir+config_smf_fn.rpartition('/')[0])
             cxf = open(destdir+config_smf_fn,'w')
