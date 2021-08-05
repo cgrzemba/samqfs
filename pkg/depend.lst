@@ -1,11 +1,11 @@
 library/security/openssl
 library/zlib
 SUNWcs
-system/library/gcc-7-runtime
+system/library/gcc-runtime
 system/library/math
 system/library
 developer/linker
 system/network
-runtime/perl-522
-database/berkeleydb-5
-database/mariadb-103/library
+runtime/perl
+database/bdb
+ooce/database/mariadb-104
