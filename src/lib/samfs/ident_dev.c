@@ -153,6 +153,7 @@ ident_dev(dev_ent_t *un, int fd)
 			local_open = TRUE;
 		}
 	} else {
+		DevLog(DL_DETAIL(1167), un->name, fd);
 		open_fd = fd;
 	}
 
@@ -163,19 +164,24 @@ ident_dev(dev_ent_t *un, int fd)
 	 * Need to get back at least the minimum inquiry data
 	 */
 	inq_data_len = scsi_cmd(open_fd, un, SCMD_INQUIRY, 0, scratch, SCSI_INQUIRY_BUFFER_SIZE, 0, 0, (int *)NULL, &sp);
-    /* first is the sgen result, the second the samst */
-    if (inq_data_len != sizeof(struct uscsi_cmd) && inq_data_len < (int)sizeof (struct scsi_inquiry))
-    {
+
+	/* successfull sgen result len was 36, all other > 132 */
+	DevLog(DL_DETAIL(1164), un->name, (int)sizeof (struct scsi_inquiry), sizeof(struct uscsi_cmd), inq_data_len);
+	DevLog(DL_DETAIL(1166), getpid(), un->name, open_fd, strerror(errno) );
+	if (inq_data_len < sizeof(struct uscsi_cmd))
+	{
 		if ((un->flags & DVFG_SHARED) && (errno == EACCES)) {
 			if (retry_inquiry_shared_drives(
 			    open_fd, un, scratch, &sp, &local_open)) {
 				goto success;
 			} else {
+			        free(scratch);
 				return;
 			}
 		} else {
 			DevLog(DL_SYSERR(1001));
-			DevLog(DL_ALL(1019), open_fd, un->name, inq_data_len);
+			DevLog(DL_ALL(1165), un->name, (un->flags & DVFG_SHARED) );
+			DevLog(DL_ALL(1166), getpid(), un->name, open_fd, strerror(errno) );
 			DevLogCdb(un);
 			DevLogSense(un);
 			OffDevice(un, SAM_STATE_CHANGE);
@@ -188,6 +194,7 @@ ident_dev(dev_ent_t *un, int fd)
 			return;
 		}
 	}
+
 
 success:
 	/* get block limits for this device */
