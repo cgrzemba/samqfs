@@ -214,7 +214,7 @@ typedef struct tape_IO {
 	int (*scsi_cmd)(int, dev_ent_t *, int, int, ...);
 	int (*spin_unit)(void *, char *, int *, int, int);
 	int (*tape_append)(int, dev_ent_t *, sam_resource_t *);
-	int (*read_tape_capacity)(dev_ent_t *, int);
+	uint64_t (*read_tape_capacity)(dev_ent_t *, int);
 	void (*process_tape_labels)(int, dev_ent_t *);
 	void (*update_block_limits)(dev_ent_t *, int);
 	int  (*write_tape_labels)(int *, dev_ent_t *, label_req_t *);
