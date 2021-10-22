@@ -186,6 +186,10 @@ $ *    SAM-QFS_notice_end
 1161 Port id %d
 1162 Lun protocol %x (%s)
 1163 Port protocol %x (%s)
+1164 Inquiry on %s: expect len > %d or len == %d, got %d
+1165 Inquiry failed on %s: shared %d
+1166 (%d) Inquiry result on open %s fd %d error %s
+1167 Inquiry reuse on open %s fd %d 
 
 2000 Optic
 2001 Erase started
