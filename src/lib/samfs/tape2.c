@@ -433,7 +433,7 @@ uint64_t
 read_tape_capacity(dev_ent_t *un, int open_fd)
 {
 	int		resid;
-	uint_t		return_val = 0;
+	uint64_t		return_val = 0;
 	uint64_t	tmp_val = (uint64_t) 0;
 	uint64_t	tmp_val1;
 
@@ -801,13 +801,13 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
 				SendCustMsg(HERE, 9342);
 				return (0);
 			}
-			tmp_val = (uint_t)((dmy[24] << 24) | (dmy[25] << 16) |
+			tmp_val = (uint64_t)((dmy[24] << 24) | (dmy[25] << 16) |
 			    (dmy[26] << 8) | dmy[27]);
 			tmp_val *= 1024;
 
 			DevLog(DL_DETAIL(3213), tmp_val, 3, dmy[24], dmy[25],
 			    dmy[26], dmy[27]);
-			if (tmp_val > UINT_MAX) {
+			if (tmp_val > UINT64_MAX) {
 				DevLog(DL_ERR(3106), tmp_val);
 			}
 			return_val = tmp_val;
@@ -1394,13 +1394,13 @@ read_tape_space(dev_ent_t *un, int open_fd)
 				SendCustMsg(HERE, 9342);
 				return (0);
 			}
-			tmp_val = (uint_t)((dmy[8] << 24) | (dmy[9] << 16) |
+			tmp_val = (uint64_t)((dmy[8] << 24) | (dmy[9] << 16) |
 			    (dmy[10] << 8) | dmy[11]);
 			tmp_val *= 1024;
 
 			DevLog(DL_DETAIL(3213), tmp_val, 3, dmy[8],
 			    dmy[9], dmy[10], dmy[11]);
-			if (tmp_val > UINT_MAX) {
+			if (tmp_val > UINT64_MAX) {
 				DevLog(DL_ERR(3106), tmp_val);
 			}
 			return_val = tmp_val;
@@ -2412,7 +2412,7 @@ load_tape_io_lib(tape_IO_entry_t *entries, tape_IO_t *table)
 			sam_syslog(LOG_DEBUG, "Mapping symbol %s.",
 			    *entry_name);
 		*entry_pt = (int)dlsym(api_handle, *entry_name);
-		if (*entry_pt == NULL) {
+		if (*entry_pt == 0) {
 			sam_syslog(LOG_ERR, catgets(catfd, SET, 1049,
 			    "Error mapping symbol -%s-:%s."),
 			    entry_name, dlerror());
@@ -2729,6 +2729,24 @@ tape_properties(dev_ent_t *un, int fd)
 				break;
 			case 0x5c:
 				worm_media = TRUE;	/* Ultrium 5 WORM */
+				break;
+			case 0x68:
+				worm_media = FALSE;	/* Ultrium 6 data */
+				break;
+			case 0x6c:
+				worm_media = TRUE;	/* Ultrium 6 WORM */
+				break;
+			case 0x78:
+				worm_media = FALSE;	/* Ultrium 7 data */
+				break;
+			case 0x7c:
+				worm_media = TRUE;	/* Ultrium 7 WORM */
+				break;
+			case 0x88:
+				worm_media = FALSE;	/* Ultrium 8 data */
+				break;
+			case 0x8c:
+				worm_media = TRUE;	/* Ultrium 8 WORM */
 				break;
 			default:
 				DevLog(DL_ERR(3257));

@@ -495,7 +495,7 @@ segment_file:
 		if (use_direct_io) {
 			if (!SAM_DIRECTIO_REQUIRED(ip) &&
 			    (!SAM_DIRECTIO_ALLOWED(ip) ||
-			    (((uint_t)uiop->uio_iov->iov_base & 1) != 0) ||
+			    (((uint64_t)uiop->uio_iov->iov_base & 1) != 0) ||
 			    (uiop->uio_resid < DEV_BSIZE))) {
 				SAM_COUNT64(dio, dio_2_mmap);
 				use_direct_io = FALSE;
@@ -503,7 +503,7 @@ segment_file:
 		} else {
 			if (SAM_DIRECTIO_ALLOWED(ip) &&
 			    !ip->flags.b.staging &&
-			    (((uint_t)uiop->uio_iov->iov_base & 1) == 0) &&
+			    (((uint64_t)uiop->uio_iov->iov_base & 1) == 0) &&
 			    (ip->mp->mt.fi_dio_rd_consec > 0)) {
 				boolean_t can_attempt_dio = TRUE;
 
@@ -799,14 +799,14 @@ segment_file:
 		if (use_direct_io) {
 			if (!SAM_DIRECTIO_REQUIRED(ip) &&
 			    (!SAM_DIRECTIO_ALLOWED(ip) ||
-			    (((uint_t)uiop->uio_iov->iov_base & 1) != 0) ||
+			    (((uint64_t)uiop->uio_iov->iov_base & 1) != 0) ||
 			    (uiop->uio_resid < DEV_BSIZE))) {
 				SAM_COUNT64(dio, dio_2_mmap);
 				use_direct_io = FALSE;
 			}
 		} else {
 			if (SAM_DIRECTIO_ALLOWED(ip) &&
-			    (((uint_t)uiop->uio_iov->iov_base & 1) == 0) &&
+			    (((uint64_t)uiop->uio_iov->iov_base & 1) == 0) &&
 			    (ip->mp->mt.fi_dio_wr_consec > 0)) {
 				boolean_t can_attempt_dio = TRUE;
 
