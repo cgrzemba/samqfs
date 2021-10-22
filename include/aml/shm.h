@@ -69,7 +69,7 @@ extern	void *sam_mastershm_attach(int shmget_priv, int shmat_priv);
 #define	SHM_ADDRESS(a, x) (((a) == NULL) ? NULL : ((char *)a + (int)(x)))
 
 /* find the address pointed to by x if shm_alloc_t structure in use */
-#define	SHM_REF_ADDR(x) (((x) == NULL) ? \
+#define	SHM_REF_ADDR(x) (((x) == 0) ? \
 	NULL : ((void *)((char *)master_shm.shared_memory + (int)(x))))
 
 /* get address as an offset from the segment */
