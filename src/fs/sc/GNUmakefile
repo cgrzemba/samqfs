@@ -79,6 +79,7 @@ MESSAGE_DIR = /opt/SUNWsamfs/lib/locale
 # /usr/cluster/
 #
 SC31TOP = /
+# SC31TOP = ${HOME}/samfs/OHAC/ohac+5.11+$(shell isainfo | cut -d" " -f2)
 
 DEPCFLAGS = -D TEXT_DOMAIN=\"$(TEXT_DOMAIN)\"
 DEPCFLAGS += -D MESSAGE_DIR=\"$(MESSAGE_DIR)\"
