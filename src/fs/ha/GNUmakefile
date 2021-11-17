@@ -67,7 +67,7 @@ COMMON_LIBS = $(LIBSO) -L$(SC31TOP)usr/cluster/lib \
 				-lsocket -lnsl -ldsdev -lscha -lsamut \
 				$(STATIC_OPT) -lfscmd \
 				$(DYNAMIC_OPT) -lsam  -lfsmgmt -lcsn \
-				${STATIC_OPT} -lcurl -lssl -lcrypto \
+				${DYNAMIC_OPT} -lcurl -lssl -lcrypto \
 				${DYNAMIC_OPT} -ldl
 
 

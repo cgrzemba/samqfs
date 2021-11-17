@@ -223,13 +223,13 @@ endif
 # setup general java compile rules here
 #
 .SUFFIXES: .mid .class .java
-.java.class: %.java
+%.class: %.java
 	$(JC) $(JFLAGS) $(JDEBUG) $<
  
-.class.mid:
+%.mid: %.class
 	$(JP) $(JFLAGS) -s -p $(JDEPTH).$* > $*.mid
 
-.class.h:
+%.h: %.class
 	$(JH) $(JFLAGS) $<
 
 #
