@@ -66,7 +66,7 @@ PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
 
 MPROGS = stk_helper
 stk_helper_SRC = stk_helper.c
-stk_helper_LIBS = $(LIBSO)/stk -L $(DEPTH)/lib/$(OBJ_DIR) -lapi -lutl -lcl -lipc $(PROG_LIBS)
+stk_helper_LIBS = $(LIBSO)/stk -Bdynamic -L $(DEPTH)/lib/$(OBJ_DIR) -lapi -lutl -lcl -lipc $(PROG_LIBS)
 
 SSISH   = ssi.sh
 
@@ -82,6 +82,12 @@ include $(DEPTH)/mk/targets.mk
 # put into pkg/vendor/srk/bin directory.  It is built and installed into
 # /etc/fs/samfs in this makefile.  Neither the stk libraries not the ssi_so
 # binary are built during normal build and install.
+
+PLATFORM_sparcv9 = sparc64
+PLATFORM_amd64 = x64
+# PLATFORM = $(PLATFORM_$(shell isainfo -k))
+# need 32bit libs
+PLATFORM = i386
 
 ACSLIB = libapi.so
 ACSCOM = libcl.so
@@ -100,7 +106,7 @@ stkssi: stklibs $(ACSSSI)
 $(ACSSSI):
 	-(cd stk_release/src/ssi; make INSTALL="$(INSTALL)"			\
 		SYSINST="$(SYSINST)" STKDEST="$(DESTDIR)"				\
-		LIBSO="$(LIBSO)/stk" top_nondebug )
+		LIBSO="$(LIBSO)/stk" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) top_nondebug )
 
 $(ACSLIB):
 	-(cd stk_release/src/acsapi; make INSTALL="$(INSTALL)"		\

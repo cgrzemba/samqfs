@@ -34,7 +34,7 @@ PROG = robots
 PROG_SRC = main.c child.c build_pids.c
 
 DIRS = lib common generic
-ifndef NO_BUILD_STK
+ifndef NO_BUILD_ACSLS
 DIRS += stk
 endif
 
