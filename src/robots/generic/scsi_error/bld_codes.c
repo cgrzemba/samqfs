@@ -718,8 +718,20 @@ sam_scsi_err_t   stklxx[] = {
 	0xff, 0xff, 0xff, 0xff, END_OF_LIST
 };
 
+/* SCSI Refrence Guide: Request Sense 03, Additional Sense Codes ans Qualifiers
+   0h = No Sense, indicating a successful command.
+   2h = Not Ready
+   3h = Medium Error
+   4h = Hardware Error
+   5h = Illegal Request
+   6h = Unit Attention
+   Bh = Aborted Command
+   FFh catch all
+   Sense Key, ASC, ASCQ, Description, SAM reaction 
+*/
 sam_scsi_err_t   stksl3000[] = {
 	0x00, 0x00, 0x00, 0x00, IGNORE,
+
 	0x02, 0x04, 0x01, 0x00, WAIT_READY,   /* becoming ready */
 	0x02, 0x04, 0x03, MAN_INTER, DOWN_EQU, /* Fatal error */
 	0x02, 0x04, 0x81, WRONG_MODE, DOWN_EQU, /* Operator put unit in */
@@ -727,20 +739,29 @@ sam_scsi_err_t   stksl3000[] = {
 	0x02, 0x3a, 0x02, DOOR_OPEN, WAIT_READY, /* CAP is open */
 	0x02, 0x74, 0x71, ACCESS_DENIED, DOWN_EQU, /* Partition Access Denied */
 	0x02, 0xff, 0xff, 0x00, WAIT_READY,   /* becoming ready */
-	0x04, 0xff, 0xff, HARDWARE, DOWN_EQU, /* all hardware errors */
+
+	0x04, 0x40, 0x01, HARDWARE, DOWN_EQU, /* General hardware errors */
+	0x04, 0x40, 0x02, HARDWARE, DOWN_EQU, /* Drive hardware errors */
+	0x04, 0x40, 0x03, HARDWARE, DOWN_EQU, /* CAP hardware errors */
+	0x04, 0x44, 0x00, HARDWARE, DOWN_EQU, /* Embedded SW errors */
+	0x04, 0x53, 0x00, HARDWARE, LOG_IGNORE, /* Load/Eject failed */
+
 	0x05, 0x30, 0x00, INCOMPATIBLE, INCOMPATIBLE_MEDIA,
 	0x05, 0x3a, 0x00, 0x00, NO_MEDIA, /* Medium not present */
 						/* drive not unloaded */
 	0x05, 0x3b, 0x0d, 0x00, D_ELE_FULL, /* Destination element full */
 	0x05, 0x3b, 0x0e, 0x00, S_ELE_EMPTY,  /* Source element empty */
 	0x05, 0xff, 0xff, 0x00, ILLREQ, /* Catch-all illegal request */
+
 	0x06, 0x28, 0xff, 0x00, IGNORE, /* Not ready-to-ready transition */
 					/* CAP element accessed */
 	0x06, 0x29, 0x01, POWER_ON, IGNORE,   /* power on  */
-	0x06, 0x3f, 0x01, 0x00, WAIT_READY,   /* microcode changed */
-	0x0b, 0x47, 0x00, 0x00, LONG_WAIT_LOG, /* SCSI parity error */
+	0x06, 0x3f, 0x01, 0x00, WAIT_READY,   /* not for SL4000: microcode changed */
+
+	0x0b, 0x47, 0x00, 0x00, LONG_WAIT_LOG, /* not for SL4000: SCSI parity error */
 	0x0b, 0x48, 0x00, 0x00, LONG_WAIT_LOG, /* Initiator detected error */
 	0x0b, 0x4e, 0x00, 0x00, LONG_WAIT_LOG, /* Command overlap error */
+
 	0xff, 0xff, 0xff, 0x00, DOWN_EQU,
 	0xff, 0xff, 0xff, 0xff, END_OF_LIST
 };
