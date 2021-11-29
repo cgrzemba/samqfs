@@ -93,9 +93,9 @@ dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req)
 	write1_msg = "%#x blocks transferred";
 #if defined(DEBUG)
 	if (((sam_resource_t *)control->media_info)->access == FWRITE)
-		write2_msg = "%dK per/second average write transfer rate";
+		write2_msg = "%uM per/second average write transfer rate";
 	else
-		write2_msg = "%dK per/second average read transfer rate";
+		write2_msg = "%uM per/second average read transfer rate";
 #endif
 
 	defaults = GetDefaults();
@@ -374,8 +374,8 @@ writeon:
 						    2, 0);
 						(void) sprintf(msg_buf,
 						    write2_msg,
-						    (block_size / 1024 *
-						    newio) / (time_now -
+						    (block_size/1024 *
+						    newio/1024) / (time_now -
 						    start_time));
 					} else
 #endif
