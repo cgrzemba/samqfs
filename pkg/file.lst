@@ -1,5 +1,6 @@
 etc/fs/samfs/mount 0750
 etc/fs/samfs/umount 0750
+etc/sysevent/config/SUNW,SUNWsamfs,sysevent.conf 0644
 kernel/drv/64/samaio 0755
 kernel/drv/64/samioc 0755
 kernel/drv/samaio.conf 0644
