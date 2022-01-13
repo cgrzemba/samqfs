@@ -140,8 +140,8 @@ main(int argc, char **argv)
 	    (void *) -1)
 		exit(3);
 
-    library = (library_t *)calloc(1, sizeof (library_t));
-	if (argc == 5){
+	library = (library_t *)calloc(1, sizeof (library_t));
+	if (argc == 4){
 		argv++;
 		library->eq = atoi(*argv);
 	}
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	device_entry = (dev_ent_t *)SHM_REF_ADDR(
 		    ((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
 	printf("%8s %49s %3s %9s %17s %5s %16s %8s %s\n","set", "device", "eq", "vendor", "product", "rev", "serial", "type", "state");
-    for (count = 0; device_entry != NULL; device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next)) {
+	for (count = 0; device_entry != NULL; device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next)) {
 		const char* type;
 		if (is_disk(device_entry->type)) 
 			type = disk_type[device_entry->type-DT_DISK];
@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	library->un = (dev_ent_t *)SHM_REF_ADDR(
             dev_ptr_tbl->d_ent[library->eq]);
 
-    library->ele_dest_len = ELEMENT_DESCRIPTOR_LENGTH;
+	library->ele_dest_len = ELEMENT_DESCRIPTOR_LENGTH;
 
 	rb = (robotic_device_t *)&library->un->dt;
 	printf ("\nlibrary set %s, device %s, catalog %s, bits %x, %s\n", 
