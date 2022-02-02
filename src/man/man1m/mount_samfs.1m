@@ -336,55 +336,6 @@ NOTE:  The system sets \fBstripe=0\fR if mismatched
 striped groups exist.
 .RE
 .PP
-.SH OBJECT FILE SYSTEM GENERIC OPTIONS
-The following options are available for Sun StorEdge QFS and SAM-QFS
-file systems.
-The following options are only valid on on object-based (\fBmb\fR) file systems.
-For more information on file system types, see the \fBmcf\fR(4)\fR man page.
-.RE
-.TP 10
-\fBobj_pool=\fIn\fR
-For an object-based (\fBmb\fR) file system, \fBobj_pool\fR
-sets the default object pool for the file system to \fIn\fP.
-The object pool selected means all new files are created on
-OSD unit(s) in the \fBobj_pool=\fIn\fR.
-If \fBobj_pool\fR is not specified or not a valid pool, then
-the first object pool in the file system is selected.
-.TP 10
-\fBobj_width=\fIn\fR
-For an object-based (\fBmb\fR) file system, \fBobj_width\fR
-sets the default stripe width for the file system to \fIn\fP OSD units.
-The stripe width means the file is horzontially striped across \fIn\fR
-OSD units in the selected object pool \fBo\fIXXX\fR.
-If \fIn\fR=0, then all the units in the object pool \fBo\fIXXX\fR are
-selected. The default \fIn\fR is 1.
-.TP 10
-\fBobj_depth=\fIn\fR
-For an object-based (\fBmb\fR) file system, \fBobj_depth\fR
-specifies the number of bytes to be allocated to an object storage device (OSD)
-before switching to the next unit in the object pool \fBo\fIXXX\fR.
-The \fIn\fR must be an integer in units of kilobytes. The default is
-256 kilobytes. The \fIn\fR is rounded down to the nearest power of 2 integer.
-.TP 10
-\fBobj_sync_data=\fIn\fR
-For an object-based (\fBmb\fR) file system, \fBobj_sync_data\fR
-specifies whether or not application direct I/O data is written through
-to the disks on the object storage node (OSN).
-.PP
-.RS 10
-.TP 3
-\(bu
-If \fBobj_sync_data=0\fR, data on the OSN resides in the page cache before
-being written to disk at a later time.  This delayed write may deliver
-higher performance, but has data consistency risk if the OSN fails.
-.TP
-\(bu
-If \fBobj_sync_data=1\fR, data on the OSN bypasses the page cache
-and is written through to disk for every I/O request written to the OSN.
-This may slow performance, but it ensures data consistency if the OSN fails.
-The default \fIn\fR is 1.
-.RE
-.PP
 .SH I/O OPTIONS
 The following options are available for Sun StorEdge QFS and SAM-QFS
 file systems.
@@ -482,10 +433,6 @@ This makes the sparse file behavior the same as that for paged I/O.
 By default, sparse files written by direct I/O do not have the
 uninitialized areas zeroed for performance reasons.
 The default is \fBnodio_szero\fR.
-.sp
-The \fBdio_szero\fR option is ignored on the \fBmb\fR file system. If you
-want this behavior, you will need to set this option on the object storage
-nodes (\fBmat\fR file systems).
 .TP
 \fBforce_nfs_async\fR
 Causes the file system to cache nfs data written to the server even if nfs

@@ -29,7 +29,7 @@
 .na
 .nh
 .SH NAME
-setfa \- Sets file attributes for block or object file systems
+setfa \- Sets file attributes 
 .SH SYNOPSIS
 \fBsetfa\fR for block-based file systems:
 .sp
@@ -50,21 +50,6 @@ setfa \- Sets file attributes for block or object file systems
 .RB [ \-V\fR]
 \fIfilename .\|.\|.\|
 .PP
-\fBsetfa\fR for object-based file systems:
-.sp
-\fBsetfa\fR
-.RB [ \-B ]
-.RB [ \-d ]
-.RB [ \-D ]
-.RB [ \-f ]
-.RB [ \-h " obj_width" ]
-.br
-.RB [ \-o " object_pool" ]
-.RB [ \-r " dirname" ]
-.br
-.RB [ \-v " obj_depth[k|m|g]" ]
-.RB [ \-V\fR]
-\fIfilename .\|.\|.\|
 .SH AVAILABILITY
 SUNWsamfs
 .SH DESCRIPTION
@@ -75,10 +60,25 @@ does not already exist.
 .PP
 When file attributes are set on a directory, files and directories
 subsequently created in that directory inherit those attributes.
-.SH GENERIC OPTIONS
-This command accepts the following options for block-based and object-based
-file systems:
+.SH OPTIONS
+This command accepts the following options:
 .TP 10
+.BI \-A " allocahead"
+Specifies the number of bytes to be allocated ahead of a write to the file.
+The \fIn\fR must be an integer
+and must be greater than or equal to one kilobyte and less than 4 terabytes.
+The \fIn\fR is rounded down to units of kilobytes.
+The integer specified may be followed by \fBk\fR (for
+kilobytes), \fBm\fR (for megabytes), or \fBg\fR (for gigabytes).
+For example:
+.sp
+\fB\-A 1m\fR
+.sp
+This option is only valid for a regular file. This option should be
+used when writing large files where more sequential allocation is
+desired. Note, when the file is closed the blocks are reset to the
+size of the file.
+.TP
 \fB\-B\fR
 Permanently clears the direct I/O attribute for this file.
 This means that data is transferred indirectly between the
@@ -109,42 +109,6 @@ remaining until the attribute is reset or the file is destroyed.
 .TP
 \fB\-f\fR
 Supresses errors.
-.TP
-\fB\-r\ \fIdirname\fR
-Recursively performs the operation (setting file attributes) for any files
-contained in the specified \fIdirname\fR or its subdirectories.
-If no \%\fIfilename\fR is specified,
-a \%\fB\-r\ \fIdirname\fR must be specified.
-.TP
-\fIfilename\fR
-Specifies the file for which attributes are being set.
-If no \%\fB\-r\ \fIdirname\fR is specified,
-a \fIfilename\fR must be specified.
-If \%\fB\-r\ \fIdirname\fR is specified, a \fIfilename\fR specification
-is optional.
-.TP
-\fB\-V\fR
-Enables the verbose display.
-A message is written for each file on
-which attributes are set.
-.SH BLOCK FILE SYSTEM OPTIONS
-This command accepts the following options for block-based file systems only:
-.TP 10
-.BI \-A " allocahead"
-Specifies the number of bytes to be allocated ahead of a write to the file.
-The \fIn\fR must be an integer
-and must be greater than or equal to one kilobyte and less than 4 terabytes.
-The \fIn\fR is rounded down to units of kilobytes.
-The integer specified may be followed by \fBk\fR (for
-kilobytes), \fBm\fR (for megabytes), or \fBg\fR (for gigabytes).
-For example:
-.sp
-\fB\-A 1m\fR
-.sp
-This option is only valid for a regular file. This option should be
-used when writing large files where more sequential allocation is
-desired. Note, when the file is closed the blocks are reset to the
-size of the file.
 .TP
 \fB\-g\ \fIstripe_group\fR
 Specifies the number of the striped group in which the file is to be
@@ -202,6 +166,12 @@ also sets Direct I/O and qwrite. Setting this option may result in greater
 performance.  This option is not valid when applied against
 certain system files and directories such as lost+found.
 .TP
+\fB\-r\ \fIdirname\fR
+Recursively performs the operation (setting file attributes) for any files
+contained in the specified \fIdirname\fR or its subdirectories.
+If no \%\fIfilename\fR is specified,
+a \%\fB\-r\ \fIdirname\fR must be specified.
+.TP
 \fB\-s\ \fIstripe\fR
 Specifies the number of allocation units to be allocated
 before changing to the next unit.  If \fIstripe\fR is 1,
@@ -217,70 +187,18 @@ mismatched stripe groups exist.
 A stripe group is said to be \fImismatched\fR if all striped
 groups do not have the same number of partitions.
 Striping across mismatched stripe groups is not allowed.
-.SH OBJECT FILE SYSTEM OPTIONS
-This command accepts the following options for object-based file systems only:
-.TP 10
-\fB\-h\ \fIobj_width\fR
-Specifies the number of object storage devices (OSD) in the stripe.
-The OSD units to be striped for this file are in the
-\fIobject_pool\fR specified by the \fBo\fR option.
-If \fIobj_width\fR is 0, the file is striped across all the
-units in the object pool. If \fIobj_width\fR is >= 1,
-the file is striped across \fIobj_width\fR units in the object pool.
-.sp
-The \fIobj_width\fR may only be set on directories. Files inherit the
-\fIobj_width\fR on creation.
-All files created in the directory are striped across the
-specified number of OSD units in the object pool.
-The default stripe width is specified by the \fIobj_width\fR
-mount option.  For more information, see \fBmount_samfs\fR(1M)\fR).
-.sp
-The length of allocation on one unit before
-changing to the next unit is specified by the \fIv\fR option.
-.sp
-In the following example, files created in \fBaudio\fR are
-created on one object storage device (OSD) in the object pool \fB0\fR,
-and files created in \fBvideo\fR are striped across 8 units with a
-512KB allocation on each unit before switching to the next unit in the
-object pool \fB1\fR:
-.sp
-.nf
-.ft CO
-setfa -o 0 -h 1 audio
-setfa -o 1 -h 8 -v 512k video
-.fi
-.ft
 .TP
-\fB\-o\ \fIobject_pool\fR
-Specifies the number of the object pool on which the file is to be
-created.
-For \fIobject_pool\fR, specify a number such
-that 0\ \(<=\ \fIobject_pool\fR\ \(<=\ 127
-and is a object pool defined in the object-based file system.
-The default object pool is the first pool defined in the file system.
-.sp
-Note that the \fIobject_pool\fP attribute is inherited.  It is
-possible to create a directory and set a object pool for that
-directory. Then, all files created in that directory are allocated on the
-specified object pool.
+\fB\-V\fR
+Enables the verbose display.
+A message is written for each file on
+which attributes are set.
 .TP
-\fB\-v\ \fIobj_depth\fR
-Specifies the number of bytes to be allocated to one OSD unit before
-switching to the next OSD unit in the stripe.
-The \fIobj_depth\fR may only be set on directories. Files inherit the
-\fIobj_depth\fR on creation.
-The default stripe depth is specified by the \fIobj_depth\fR
-mount option.  For more information, see \fBmount_samfs\fR(1M)\fR).
-.sp
-The \fIobj_depth\fR must be an integer.
-The integer specified may be followed by \fBk\fR (for
-kilobytes), \fBm\fR (for megabytes), or \fBg\fR (for gigabytes).
-For example:
-.sp
-\fB\-v 1m\fR
-.sp
-\fIobj_depth\fR is rounded down
-to the nearest power of 2 integer.
+\fIfilename\fR
+Specifies the file for which attributes are being set.
+If no \%\fB\-r\ \fIdirname\fR is specified,
+a \fIfilename\fR must be specified.
+If \%\fB\-r\ \fIdirname\fR is specified, a \fIfilename\fR specification
+is optional.
 .SH SEE ALSO
 \fBarchive\fR(1),
 \fBrelease\fR(1),
