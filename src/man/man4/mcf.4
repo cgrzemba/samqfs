@@ -111,11 +111,6 @@ qfs3                             30 ma qfs3 - shared
 /dev/dsk/c2t50020F2300000C98d0s3 33 mr qfs3 -
 /dev/dsk/c2t50020F2300004921d0s3 34 mr qfs3 -
 #
-qfs4                                              40 mb qfs4 - shared
-/dev/dsk/c2t50020F2300000C98d0s4                  41 mm qfs4 -
-/dev/osd/osd0100080020E1381F00002A00479F7D98,root 42 o1 qfs4 -
-/dev/osd/osd010000144F94A14C00002A00479F4EB4,root 43 o1 qfs4 -
-#
 .ft
 .fi
 .PP
@@ -281,19 +276,6 @@ A Sun StorEdge QFS or Sun \%SAM-QFS disk cache family set with one or more
 meta devices.
 Metadata resides on these meta devices.
 File data resides on the data device(s).
-.TP
-\fBmb\fR
-A Sun StorEdge QFS or Sun \%SAM-QFS disk cache family set with one or more
-meta devices.
-Metadata resides on these meta devices.
-File data resides on the object storage device(s) (OSDs).
-.TP
-\fBmat\fR
-A Sun StorEdge QFS disk cache family set with one or more
-meta devices.  Metadata resides on these meta devices.
-File data resides on the data device(s). This standalone file system
-has no namespace and is only used as the OSD target backing store of an
-object storage device (OSD) in an \fBmb\fP file system.
 .PP
 A maximum of 252 separate magnetic disk devices can be defined for each
 \fBms\fP, \fBma\fP, \fBmb\fP, or \fBmat\fP disk cache family set.
@@ -365,25 +347,6 @@ must be the same physical size.
 It is not possible to use the \fBsamgrowfs\fR(1M) command
 to increase the size of a striped group.
 However, it is possible to add additional striped groups.
-.TP
-\fBo\fIXXX\fR
-An object-based storage device that is part of an
-\fBmb\fR disk cache family set.
-These devices store file data.
-The \fIXXX\fR identifies a pool of "like" devices that are
-used for a stripe. Note, a file will be optionally striped
-across members in the \fBo\fIXXX\fR OSD pool. There is no striping
-across OSDs belonging to different pools.
-The \fIXXX\fR must be a decimal number in the
-range \fB0\fR \(<= \fIXXX\fR \(<= \fB127\fR.
-These devices are recommended to be the same type of block devices.
-For example, one pool could be FC and another pool could be SATA.
-It is required that all members of an \fBo\fIXXX\fR
-pool (all those with the same \fIXXX\fR number) have the same
-DAU size.  The DAU size is set when the \fBmat\fR file system
-is built on the OSD.
-At least one \fBo\fIXXX\fR device is required in an
-\fBmb\fR file system.
 .PP
 The \fBEquipment Identifier\fR is used during the \fBmount\fR(1M)
 process as the \fBDevice To Mount\fR.  The \fBDevice To Mount\fR
