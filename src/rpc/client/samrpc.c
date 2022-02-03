@@ -36,7 +36,9 @@
 
 #define	SAM_LIB 1
 
+#ifndef __linux__
 #include <rpc/rpcent.h>
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +49,25 @@
 #include "stat.h"
 #include "samrpc.h"
 
+
+/*
+ * Select the RPC client protocol based on the type of platform.
+ */
+
+#ifndef __linux__
+#define RPC_PROTOCOL "netpath"
+#else
+#define RPC_PROTOCOL "udp"
+#endif
+
+
+/*
+ * Default timeout value for RPC calls in seconds.
+ *
+ * The same value is in ../src/rpc/client/samfs_clnt.c.
+ */
+
+#define RPC_TIMEOUT 25
 
 /* Global data */
 CLIENT *clnt;
@@ -119,7 +140,7 @@ sam_initrpc(
 	}
 
 	clnt = clnt_create(hostname, (ulong_t)rpce->r_number, SAMVERS,
-	    "netpath");
+	   RPC_PROTOCOL); 
 	if (clnt == (CLIENT *)NULL) {
 		clnt_pcreateerror(hostname);
 		return (-1);
