@@ -74,6 +74,9 @@ include $(DEPTH)/mk/targets.mk
 #   common.mk to avoid picking up the existing definitions in
 #   CONFIG.mk.
 
+install:
+	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
+
 config: set_config
 
 set_config:

@@ -34,8 +34,8 @@ opt/SUNWsamfs/examples/inquiry.conf 0644
 opt/SUNWsamfs/examples/log_rotate.sh 0754
 opt/SUNWsamfs/examples/recover.sh 0754
 opt/SUNWsamfs/examples/recycler.sh 0754
-opt/SUNWsamfs/examples/dev_down.sh 0754
 opt/SUNWsamfs/examples/save_core.sh 0754
+opt/SUNWsamfs/examples/ssi.sh 0754
 opt/SUNWsamfs/examples/tarback.sh 0754
 opt/SUNWsamfs/include/catalog.h 0644
 opt/SUNWsamfs/include/devstat.h 0644

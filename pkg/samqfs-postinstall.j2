@@ -87,7 +87,11 @@ if [ X"$SERVSRC" = X ]; then
         echo ""
 fi
 
+<<<<<<< HEAD
+SPMSRV=`getent services 7105 | sed -e 's/\([^ ]*\)[ ]*.*$/\1/'`
+=======
 SPMSRV=`/bin/grep 7105 $SER | sed -e 's/\([^ ]*\)[ ]*.*$/\1/'`
+>>>>>>> 8ad3ca14 (improve install tool)
 if [ -n "$SPMSRV" -a "$SPMSRV" != "sam-qfs" ]; then
         echo ""
         echo "WARNING: An active entry for port 7105 is already in $SER."
@@ -114,7 +118,11 @@ fi
 VERSION="VERSION.{{version}}"
 /bin/touch $ETCDIR/$VERSION
 
+<<<<<<< HEAD
+SH_LIST="archiver.sh recycler.sh save_core.sh ssi.sh sendtrap nrecycler.sh"
+=======
 SH_LIST="archiver.sh recycler.sh save_core.sh sendtrap nrecycler.sh"
+>>>>>>> 8ad3ca14 (improve install tool)
 for fn in $SH_LIST; do
         if [ ! -f $SCRIPTS/$fn ]; then
                 if [ -f $EXAMPLE/$fn ]; then

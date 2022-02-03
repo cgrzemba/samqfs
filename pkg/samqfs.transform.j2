@@ -1,0 +1,31 @@
+<transform pkg -> emit set pkg.description="Storage and Archive Manager File System">
+<transform pkg -> emit set pkg.summary="SAM-FS {{ osrelease }}">
+<transform pkg -> emit set org.opensolaris.consolidation=sfe>
+<transform pkg -> emit set info.classification="org.opensolaris.category.2008:System/File System">
+<transform pkg -> emit set variant.opensolaris.zone=global>
+<transform pkg -> emit set variant.arch={{ subpath }}>
+<transform dir path=(var|etc|sys|kernel).* -> edit group bin sys >
+<transform dir path=usr\/lib\/(fs|devfsadm).* -> edit group bin sys >
+<transform dir path=^usr -> drop >
+<transform dir path=^opt$ -> drop >
+<transform dir path=lib -> drop>
+<transform dir path=kernel -> drop>
+<transform dir path=etc(/[a-z]+)?$ -> drop>
+<transform dir path=etc/sysevent(/.+)?$ -> drop>
+<transform dir path=var(/[a-z]+)?$ -> drop>
+<transform dir path=var/(snmp|svc)(/.+)* -> drop>
+<transform file path=(var|lib)/svc/manifest/.*\.xml$ -> add restart_fmri svc:/system/manifest-import:default>
+<transform pkg -> emit driver name=samioc perms="* 0666 root sys">
+<transform pkg -> emit driver name=samaio perms="* 0666 root sys">
+<transform pkg -> emit legacy category=system desc="Storage and Archive Manager File System" \
+name="Sun SAM and Sun SAM-QFS software OI (root)" pkg=SUNWsamfsr vendor="Open Source" version={{ version }},REV={{ builddate }} hotline="Open Source">
+<transform pkg -> emit legacy category=system desc="Storage and Archive Manager File System" \
+name="Sun SAM and Sun SAM-QFS software OI (usr)" pkg=SUNWsamfsu vendor="Open Source" version={{ version }},REV={{ builddate }} hotline="Open Source">
+<transform dir file link hardlink path=opt/.+/man(/.+)? -> default facet.doc.man true>
+<transform file path=opt/.+/man(/.+)? -> add restart_fmri svc:/application/man-index:default>
+<transform dir file link hardlink path=opt.*/include/.* -> default facet.devel true>
+<transform dir file link hardlink path=opt.*/client/.* -> default facet.devel true>
+<transform pkg -> emit license {{ lic_fn }} license=lic_CDDL>
+<transform file path=.*/{{ config_smf_name }}$ -> default mode 0744>
+<transform depend -> edit fmri "(@[0-9\.]*)-[^ \\t\\n\\r\\f\\v]*" "\\1">
+<transform depend fmri=pkg:/runtime/perl.* -> edit fmri "@[^ \\t\\n\\r\\f\\v]*" "">
