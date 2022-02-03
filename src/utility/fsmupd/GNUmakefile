@@ -36,7 +36,7 @@ PROG_SRC = \
 	update_restore.c
 
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) $(THRCOMP)
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lfsmgmt -lcsn -lcurl -ldl -lcrypto -lsocket -lpthread -lmd5 $(SSL_LIBDIR) -lssl $(LIBSO) 
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lfsmgmt -lcurl -ldl -lcrypto -lsocket -lpthread -lmd5 $(SSL_LIBDIR) -lssl $(LIBSO) 
 
 LNOPTS = -a 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) 

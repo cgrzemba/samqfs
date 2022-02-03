@@ -65,8 +65,6 @@ var/opt/SUNWsamfs/faults root sys
 var/opt/SUNWsamfs/fsd root sys
 var/opt/SUNWsamfs/sef root sys
 var/opt/SUNWsamfs/uds root sys
-var/snmp ? ?
-var/snmp/mib ? ?
 var/svc ? ?
 var/svc/manifest ? ?
 var/svc/manifest/application ? ?

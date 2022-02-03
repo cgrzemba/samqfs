@@ -5,8 +5,6 @@ opt/SUNWsamfs/bin/squota ../sbin/samquota
 opt/SUNWsamfs/bin/ssum archive
 opt/SUNWsamfs/bin/stage archive
 opt/SUNWsamfs/client/include/samrpc.h /opt/SUNWsamfs/include/samrpc.h
-opt/SUNWsamfs/lib/gpl/libmysqlclient.so /opt/SUNWsamfs/lib/libmysqlclient.so.15
-opt/SUNWsamfs/lib/gpl/libmysqlclient_r.so /opt/SUNWsamfs/lib/gpl/libmysqlclient_r.so.15
 opt/SUNWsamfs/lib/libsamrpc.so /opt/SUNWsamfs/client/lib/libsamrpc.so
 opt/SUNWsamfs/sbin/exarchive unarchive
 opt/SUNWsamfs/sbin/export samexport
@@ -21,7 +19,6 @@ opt/SUNWsamfs/zone/bin/setfa archive
 opt/SUNWsamfs/zone/bin/squota ../sbin/samquota
 opt/SUNWsamfs/zone/bin/ssum archive
 opt/SUNWsamfs/zone/bin/stage archive
-opt/SUNWsamfs/zone/lib/libdb.so ../../lib/libdb.so
 opt/SUNWsamfs/lib/64/libsamconf.so /usr/lib/fs/samfs/64/libsamconf.so
 opt/SUNWsamfs/lib/libsamconf.so /usr/lib/fs/samfs/libsamconf.so
 opt/SUNWsamfs/sbin/sam-fsd /usr/lib/fs/samfs/sam-fsd

@@ -26,7 +26,6 @@ opt/SUNWsamfs/client/src/xdr/sam_xdr.c 0644
 opt/SUNWsamfs/doc/tapealert.text 0640
 opt/SUNWsamfs/etc/samdb.schema 0640
 opt/SUNWsamfs/etc/samdb_sql.cat 0640
-opt/SUNWsamfs/etc/startup/sampkgchk 0550
 opt/SUNWsamfs/etc/startup/samsyschk 0550
 opt/SUNWsamfs/examples/archiver.sh 0754
 opt/SUNWsamfs/examples/defaults.conf 0644
@@ -286,6 +285,7 @@ opt/SUNWsamfs/sbin/dump_cat 0550
 opt/SUNWsamfs/sbin/dump_log 0550
 opt/SUNWsamfs/sbin/fsmadm 0540
 opt/SUNWsamfs/sbin/fsmdb 0550
+opt/SUNWsamfs/sbin/fsmupd 0550
 opt/SUNWsamfs/sbin/fsmgmtd 0550
 opt/SUNWsamfs/sbin/32/samtrace 0550
 opt/SUNWsamfs/sbin/itemize 0550
@@ -341,7 +341,6 @@ opt/SUNWsamfs/sbin/unarchive 0550
 opt/SUNWsamfs/sbin/unload 0550
 opt/SUNWsamfs/sbin/unreserve 0550
 opt/SUNWsamfs/util/check_mcf.pl 0550
-opt/SUNWsamfs/util/samservicetag 0550
 var/opt/SUNWsamfs/errcodes/acl2640 0640
 var/opt/SUNWsamfs/errcodes/acl452 0640
 var/opt/SUNWsamfs/errcodes/adic100 0640

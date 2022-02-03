@@ -50,8 +50,8 @@ SAM_OPEN_SOURCE=yes
 endif
 include $(DEPTH)/mk/include/defaults.mk
 
-SAMQFS_VERSION := 5.0u1
-GUI_VERSION := 5.0u1
+SAMQFS_VERSION ?= 5.0.1
+GUI_VERSION := 5.0.1
 
 SHELL := /bin/sh
 OS := $(shell uname -s)
