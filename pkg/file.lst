@@ -390,8 +390,8 @@ usr/lib/fs/samfs/ncheck 0750
 usr/lib/fs/samfs/sam-fsd 0500
 usr/lib/fs/samfs/samfsrestore 0750
 usr/lib/locale/C/LC_MESSAGES/SUNWsamfs 0444
-usr/sfw/bin/notify 0755
-usr/sfw/bin/tapealert_log 0755
-usr/sfw/bin/tapealert_trap 0755
+opt/SUNWsamfs/bin/notify 0755
+opt/SUNWsamfs/bin/tapealert_log 0755
+opt/SUNWsamfs/bin/tapealert_trap 0755
 var/svc/manifest/system/sam-fsd.xml 0444
 opt/SUNWsamfs/doc/OPENSOLARIS.LICENSE 0444
