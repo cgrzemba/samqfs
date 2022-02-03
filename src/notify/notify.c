@@ -134,18 +134,18 @@ email(char *class, char *subclass, int priority,
 	 * get a localized string for the class of Alert
 	 * This is used to generate the subject of the email
 	 */
-	if (strncmp(class, DUMP_CLASS, sizeof (class)) == 0) {
+	if (strncmp(class, DUMP_CLASS, strlen (class)) == 0) {
 		key = SE_DUMP_TITLE;
-	} else if (strncmp(class, ACSLS_CLASS, sizeof (class)) == 0) {
+	} else if (strncmp(class, ACSLS_CLASS, strlen (class)) == 0) {
 		key = SE_ACSLS_TITLE;
-	} else if (strncmp(class, FS_CLASS, sizeof (class)) == 0) {
+	} else if (strncmp(class, FS_CLASS, strlen (class)) == 0) {
 		key = SE_FS_TITLE;
 	}
 	snprintf(subject, sizeof (subject), "%s %s %s",
 	    from, GetCustMsg(key), GetCustMsg(priority + SE_LOG_EMERG));
 
 	/* get the recepients */
-	if (strncmp(class, FS_CLASS, sizeof (class)) == 0) {
+	if (strncmp(class, FS_CLASS, strlen (class)) == 0) {
 		/* only the subclass is stored along with the email addrs */
 		snprintf(eventtype, sizeof (eventtype), "%s", subclass);
 	} else {
