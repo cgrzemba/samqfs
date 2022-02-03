@@ -41,7 +41,9 @@ import json
 subpath64,subpath = subprocess.check_output('isainfo').decode('latin1').split()
 
 version = '5.0.1'
-release = '2020.0.0.3'
+release = '2022.0.0.0'
+# publisher = 'samqfs.omnios'
+publisher = 'openindiana.org'
 
 prefix = 'opt/SUNWsamfs/'
 docdir = prefix+'doc/'
@@ -63,10 +65,9 @@ obj_dir = {'32':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath,FLAVOR),
            'all': ''}
 
 destdir = 'root/'
-publisher = 'samqfs'
 builddate = time.strftime('%Y%m%dT%H%M%SZ')
 
-repro = 'file:///home/grzemba/samfs/samqfs/repo/'+subpath+'-'+osrelease
+repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
 
 transform_fn = 'samqfs.transform'
 transform = '''<transform pkg -> emit set pkg.description="Storage and Archive Manager File System">
