@@ -44,8 +44,6 @@ PROG_SRC = samdb.c \
 
 MPROGS = dbupd 
 
-LIBSO += -R/opt/SUNWsamfs/lib/gpl
-
 COMMON_OBJS = $($(COMMON_SRC):%.c=$(OBJ_DIR)/%.o)
 COMMON_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) $(DYNAMIC_OPT) -lsamdb -lsamut -lsam -ladm \
 	$(MYSQL_LIB) $(LIBSO)
