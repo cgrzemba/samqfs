@@ -70,7 +70,7 @@ struct ArchLib {
 	} entry[1];
 };
 
-extern struct ArchLib *ArchLibTable;
+DCL struct ArchLib *ArchLibTable IVAL(NULL);
 
 /* Archive library flags. */
 #define	AL_avail	0x01	/* Library is available for scheduling */
