@@ -8,6 +8,10 @@ opt/SUNWsamfs/zone/lib/libsam.so opt/SUNWsamfs/lib/libsam.so
 opt/SUNWsamfs/zone/lib/libsamcat.so opt/SUNWsamfs/lib/libsamcat.so
 opt/SUNWsamfs/zone/lib/libsamrft.so opt/SUNWsamfs/lib/libsamrft.so
 opt/SUNWsamfs/zone/lib/libsamut.so opt/SUNWsamfs/lib/libsamut.so
+opt/SUNWsamfs/zone/lib/64/libsam.so opt/SUNWsamfs/lib/64/libsam.so
+opt/SUNWsamfs/zone/lib/64/libsamcat.so opt/SUNWsamfs/lib/64/libsamcat.so
+opt/SUNWsamfs/zone/lib/64/libsamrft.so opt/SUNWsamfs/lib/64/libsamrft.so
+opt/SUNWsamfs/zone/lib/64/libsamut.so opt/SUNWsamfs/lib/64/libsamut.so
 opt/SUNWsamfs/zone/man/man1/archive.1 opt/SUNWsamfs/man/man1/archive.1
 opt/SUNWsamfs/zone/man/man1/release.1 opt/SUNWsamfs/man/man1/release.1
 opt/SUNWsamfs/zone/man/man1/request.1 opt/SUNWsamfs/man/man1/request.1

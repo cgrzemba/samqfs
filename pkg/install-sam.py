@@ -323,6 +323,7 @@ def publishPkg(version):
      os.system('pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
      logger.info ('run: pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
      os.system('pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
+
      with open(transform_fn,'w') as tfn:
          tfn.write(transform)
      logger.info ('run: pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d',transform_fn,manifest_fn+'d.trans'))
@@ -335,7 +336,6 @@ def publishPkg(version):
      os.system('pkglint {1}'.format(repro,manifest_fn+'d.trans.res'))
      # os.system('pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
      os.system('pkgsend publish -d {2} -s {0} {1}'.format(repro, manifest_fn+'d.trans.res', destdir))
-
 def main(version, debug_build, amd64):
     global arch64
     global arch32
