@@ -112,6 +112,7 @@ ident_dev(dev_ent_t *un, int fd)
 	int		inq_data_len;
 	sam_extended_sense_t	sp;
 
+	errno = 0;
 	if (inquiry_info == (inquiry_id_t *)NULL)
 		build_inquiry_info();
 	o_flags = O_RDONLY | O_NONBLOCK;
@@ -168,7 +169,8 @@ ident_dev(dev_ent_t *un, int fd)
 	/* successfull sgen result len was 36, all other > 132 */
 	DevLog(DL_DETAIL(1164), un->name, (int)sizeof (struct scsi_inquiry), sizeof(struct uscsi_cmd), inq_data_len);
 	DevLog(DL_DETAIL(1166), getpid(), un->name, open_fd, strerror(errno) );
-	if (inq_data_len < sizeof(struct uscsi_cmd))
+	/* if (inq_data_len < sizeof(struct uscsi_cmd)) */
+	if (inq_data_len < 56)
 	{
 		if ((un->flags & DVFG_SHARED) && (errno == EACCES)) {
 			if (retry_inquiry_shared_drives(
