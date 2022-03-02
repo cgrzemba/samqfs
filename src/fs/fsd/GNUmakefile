@@ -60,7 +60,7 @@ endif
 
 LDFLAGS += ../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lfscmd -L $(DEPTH)/lib/$(OBJ_DIR) \
-			-lsam -lsamut
+			-lsamut -lsam
 ifeq ($(OS), SunOS)
   ifneq (,$(DB_INCLUDE))
     INCFLAGS  += -I$(DB_INCLUDE)
