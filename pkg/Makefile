@@ -19,11 +19,15 @@
 
 DESTDIR ?= ./root 
 
-FLAVOR.DBG = --debug_built
+FLAVOR.DBG = --debug_build
 FLAVOR = $(FLAVOR.$(DEBUG:yes=DBG))
 
+INSTALL.64 = --64bit
+INSTALL_ISA = $(INSTALL.$(AMD64:yes=64))
+
+
 install:
-	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR)
+	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA)
 
 .PHONY: clean
 clean:
