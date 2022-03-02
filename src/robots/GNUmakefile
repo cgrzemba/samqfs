@@ -38,7 +38,7 @@ ifndef NO_BUILD_ACSLS
 DIRS += stk
 endif
 
-PROG_LIBS = -lgen -R /opt/SUNWsamfs/lib -L $(DEPTH)/lib/$(OBJ_DIR)  -lsamfs -lsamut
+PROG_LIBS = -lgen -R/opt/SUNWsamfs/lib$(ISA) -L $(DEPTH)/lib/$(OBJ_DIR)  -lsamfs -lsamut
 
 ifeq ($(MAKECMDGOALS), clobberall)
 	DIRS += ibm3494 sony thirdparty stk
