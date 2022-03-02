@@ -6,14 +6,13 @@ This is the source of Sun SamFS released to opensource 2009. The source it adapt
 
 needed packages:
 
--    perl-522 perl-526
+-    perl
 -    developer/gcc-7
 -    system/network/avahi
 -    developer/build/onbld
--    developer/java/openjdk8
 -    text/locale
 -    bison
--    git, bdb, mariadb, gnu-make, automake, swig
+-    git, bdb, mariadb, gnu-make, automake
 
 ## Customize for illumos and OmniOS
 
@@ -25,3 +24,8 @@ check files in
 ## Build
 
     $ gmake -f GNUmakefile
+
+for non debug builds add 'DEBUG=no'  
+## Install
+
+    $ gmake -f GNUmakefile install DESTDIR=$(PROTO_DIR)
