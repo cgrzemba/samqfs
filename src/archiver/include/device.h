@@ -68,7 +68,9 @@ struct ArchLib {
 			struct VolInfo AdVi;	/* Loaded VSN */
 		} *AlDriveTable;
 	} entry[1];
-} *ArchLibTable;
+};
+
+DCL struct ArchLib *ArchLibTable IVAL(NULL);
 
 /* Archive library flags. */
 #define	AL_avail	0x01	/* Library is available for scheduling */

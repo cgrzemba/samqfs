@@ -1266,6 +1266,9 @@ makeStateFile(void)
 	/*
 	 * Initialize data.
 	 */
+	if (ArchLibTable == NULL) {
+		LibFatal(create, ARCHIVER_STATE);
+        }
 	size = sizeof (struct ArchiverdState) +
 	    ((ArchLibTable->AlDriveCount - 1) * sizeof (AdState->AdArchReq));
 	AdState = MapFileCreate(ARCHIVER_STATE, AD_MAGIC, size);
