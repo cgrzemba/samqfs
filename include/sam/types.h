@@ -111,8 +111,7 @@ typedef unsigned long long uint64_t;
 #endif
 
 /* The following is for the lawyers */
-#define	COPYRIGHT "Copyright (c) 2001 Sun Microsystems, Inc. \
-All Rights Reserved. SUN PROPRIETARY/CONFIDENTIAL."
+#define	COPYRIGHT "(C) 2010-2022, Use is subject to license terms."
 
 #define	RESELL_LIB "libresel.so"
 
@@ -236,7 +235,7 @@ typedef struct csum {		/* Data verification value */
 	uint32_t csum_val[4];
 } csum_t;
 
-typedef int32_t sam_time_t;	/* 32-bit time */
+typedef int32_t sam_time_t;	/* 32-bit time, should it be time_t ??? */
 
 typedef struct sam_timestruc {
 	int32_t	tv_sec;
