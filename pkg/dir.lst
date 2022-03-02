@@ -31,7 +31,6 @@ opt/SUNWsamfs/examples/dtrace root other
 opt/SUNWsamfs/include root other
 opt/SUNWsamfs/lib root other
 opt/SUNWsamfs/lib/64 root other
-opt/SUNWsamfs/lib/gpl root other
 opt/SUNWsamfs/lib/stk root other
 opt/SUNWsamfs/man root other
 opt/SUNWsamfs/man/man1 root other
@@ -85,8 +84,6 @@ usr/lib/fs/samfs/32 root bin
 usr/lib/locale ? ?
 usr/lib/locale/C ? ?
 usr/lib/locale/C/LC_MESSAGES ? ?
-usr/sfw ? ?
-usr/sfw/bin ? ?
 var ? ?
 var/svc ? ?
 var/svc/manifest ? ?
