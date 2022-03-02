@@ -103,7 +103,8 @@ static struct IdList {
 
 #define	IDLIST "idlist_exam"
 #define	IDLIST_TMP "idlist_tmp"
-#define	IDLIST_MAGIC 0110414112324
+/* #define	IDLIST_MAGIC 0110414112324 */
+#define	IDLIST_MAGIC 0414112324
 #define	IDLIST_INCR 1000
 #define	ID_LOC(ir) ((void *)((char *)examList + *(ir)))
 
@@ -202,7 +203,7 @@ ExamInodes(
 			flags = xe->XeFlags;
 			xe->XeFlags |= XE_free;
 			examList->ElFree++;
-			xe->XeTime = TIME_MAX;
+			xe->XeTime = TIME32_MAX;
 			PthreadMutexUnlock(&examListMutex);
 
 			/*
@@ -337,7 +338,7 @@ ExamInodesRmInode(
 		xe = (struct ExamListEntry *)ID_LOC(ir);
 		if (!(xe->XeFlags & XE_free)) {
 			xe->XeFlags |= XE_free;
-			xe->XeTime = TIME_MAX;
+			xe->XeTime = TIME32_MAX;
 			examList->ElFree++;
 		}
 #if defined(FILE_TRACE)

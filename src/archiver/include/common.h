@@ -60,6 +60,7 @@
 #else /* defined(_LP64) */
 #define	TIME_MAX (2147483647)
 #endif /* defined(_LP64) */
+#define	TIME32_MAX (2147483647)
 
 /* Additional trace debug flags. */
 #define	TR_ARDEBUG TR_ardebug, _SrcFile, __LINE__

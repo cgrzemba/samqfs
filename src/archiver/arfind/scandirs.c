@@ -114,10 +114,10 @@ ScanDirs(
 		}
 		memset(&seAdd, 0, sizeof (seAdd));
 		seAdd.SeFlags = se->SeFlags & SE_request;
-		seAdd.SeTime = TIME_MAX;
+		seAdd.SeTime = TIME32_MAX;
 		EXAM_MODE(dinode) = EXAM_DIR;
 		(void) CheckFile(pb, &pinode, &seAdd);
-		if (seAdd.SeTime != TIME_MAX) {
+		if (seAdd.SeTime != TIME32_MAX) {
 			ScanfsAddEntry(&seAdd);
 		}
 	}
@@ -243,7 +243,7 @@ scanDir(
 	memset(&seAdd, 0, sizeof (seAdd));
 	seAdd.SeFlags = se->SeFlags & SE_request;
 	seAdd.SeId = dpScan->d_id;
-	seAdd.SeTime = TIME_MAX;
+	seAdd.SeTime = TIME32_MAX;
 	while ((dp = GetDirent(&dr)) != NULL) {
 		char	*name;
 
@@ -344,7 +344,7 @@ scanDir(
 			return (1);
 		}
 	}
-	if (seAdd.SeTime != TIME_MAX) {
+	if (seAdd.SeTime != TIME32_MAX) {
 		/*
 		 * Future work found.
 		 * Add directory to worklist.

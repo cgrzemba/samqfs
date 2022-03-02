@@ -185,7 +185,7 @@ FsAct(void)
 		}
 
 		Trace(TR_DEBUG, "Event buffer 0x%x act count: %d overflow: %d",
-		    (int)bf->BfEvents, args.AfCount, args.AfOverflow);
+		    (long)bf->BfEvents, args.AfCount, args.AfOverflow);
 
 		if (args.AfOverflow != 0) {
 			ScanfsFullScan();
@@ -277,7 +277,7 @@ FsExamine(
 		bf = fullHead.BfFwd;
 
 		Trace(TR_DEBUG, "Event buffer 0x%x exam count: %d",
-		    (int)bf->BfEvents, bf->BfCount);
+		    (long)bf->BfEvents, bf->BfCount);
 		removeBuffer(bf);
 
 		/*
@@ -362,7 +362,7 @@ freeBuffer(
 	Buffer_t *bf)
 {
 	Trace(TR_DEBUG, "Event buffer 0x%x free",
-	    (int)bf->BfEvents);
+	    (long)bf->BfEvents);
 
 	addBuffer(bf, &freeHead);
 }
@@ -393,7 +393,7 @@ getFreeBuffer(void)
 		bufferCount++;
 		State->AfFsactBufs++;
 		Trace(TR_DEBUG, "Event buffer 0x%x alloc count: %d",
-		    (int)bf->BfEvents, bufferCount);
+		    (long)bf->BfEvents, bufferCount);
 	}
 	return (bf);
 }

@@ -301,12 +301,12 @@ CheckInode(
 	}
 
 	se->SeCopies = 0;
-	se->SeTime = TIME_MAX;
+	se->SeTime = TIME32_MAX;
 	CheckFile(pb, pinode, se);
 	if (se->SeFlags & SE_stats) {
 		FsstatsCountFile(pinode, pb->PbPath);
 	}
-	if (se->SeTime != TIME_MAX) {
+	if (se->SeTime != TIME32_MAX) {
 		if (!S_ISSEGS(dinode)) {
 			se->SeId = dinode->parent_id;
 		} else {

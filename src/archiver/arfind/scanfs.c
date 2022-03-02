@@ -85,7 +85,7 @@ static struct IdList {
 } *idList;
 
 #define	IDLIST "idList_scan"
-#define	IDLIST_MAGIC 0110414112324
+#define	IDLIST_MAGIC 0414112324
 #define	IDLIST_INCR 1000
 #undef	ID_LOC
 #define	ID_LOC(ir) ((void *)((char *)scanList + *ir))
@@ -207,7 +207,7 @@ Scanfs(
 			 */
 			if (i > 0) {
 				se->SeFlags |= SE_free;
-				se->SeTime = TIME_MAX;
+				se->SeTime = TIME32_MAX;
 			}
 
 			PthreadMutexUnlock(&scanListMutex);

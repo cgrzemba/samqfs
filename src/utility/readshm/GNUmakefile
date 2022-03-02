@@ -1,4 +1,4 @@
-# $Revision: 1.16 $
+# $Revision: 1.10 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,44 +26,20 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../..
+DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-PROG = robots
-PROG_SRC = main.c child.c build_pids.c
+PROG = readshm
+PROG_SRC = readshm.c
 
-DIRS = lib common generic
-ifndef NO_BUILD_ACSLS
-DIRS += stk
-endif
+DEPCFLAGS += -I../../robots/
 
-PROG_LIBS = -lgen -R/opt/SUNWsamfs/lib$(ISA) -L $(DEPTH)/lib/$(OBJ_DIR)  -lsamfs -lsamut
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs -lgen $(LIBSO)
 
-ifeq ($(MAKECMDGOALS), clobberall)
-	DIRS += ibm3494 sony thirdparty stk
-else
-ifneq ($(SAM_OPEN_SOURCE), yes)
-	DIRS += thirdparty stk
-ifeq ($(PLATFORM), sparc)
-	DIRS += ibm3494 sony
-	PROG_LIBS += $(THRLIBS) -lsamcat
-else
-	PROG_LIBS += -lposix4 $(THRLIBS) -lsamcat
-endif
-endif
-endif
-
-LNOPTS += -a
-LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)
+LNOPTS = $(CMDS_LFLAGS$(AMD64:yes=64))
+LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs
 
 include $(DEPTH)/mk/targets.mk
-
-#
-# List any parallel build directory dependencies here
-# or .NOTPARALLEL: for sequential directory builds
-#
-common:	lib
-generic thirdparty ibm3494 sony stk: common
 
 include $(DEPTH)/mk/depend.mk

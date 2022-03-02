@@ -317,7 +317,6 @@ DYNAMIC_OPT = $(DYNAMIC_OPT_$(COMPILER))
 
 SHARED_CFLAGS_CSTD = -G -K PIC
 SHARED_CFLAGS_GCC = -shared -fPIC
-# SHARED_CFLAGS = $(SHARED_CFLAGS_$(COMPILER))
 SHARED_CFLAGS = $(SHARED_CFLAGS_$(COMPILER))
 
 DEPCFLAGS = -I$(INCLUDE) $(VERS) $(METADATA_SERVER)
@@ -327,4 +326,8 @@ DEPCFLAGS += $(NO_BUILD_STK)
 DEPCFLAGS += $(NO_BUILD_OSD)
 
 STK_INCLUDES = ${HOME}/samfs/acsls/toolkit2.4.0/src/h
+
+ISA=$(subst /i386,,/$(ISA_TARGET))
 -include $(DEPTH)/mk/include/$(OS_DIST).mk
+
+CERRWARN += -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-but-set-variable
