@@ -433,7 +433,7 @@ uint64_t
 read_tape_capacity(dev_ent_t *un, int open_fd)
 {
 	int		resid;
-	uint64_t		return_val = 0;
+	uint64_t	return_val = 0;
 	uint64_t	tmp_val = (uint64_t) 0;
 	uint64_t	tmp_val1;
 
@@ -1022,7 +1022,7 @@ uint64_t
 read_tape_space(dev_ent_t *un, int open_fd)
 {
 	int		resid;
-	uint_t		return_val = 0;
+	uint64_t	return_val = 0;
 	uint64_t	tmp_val = (uint64_t) 0;
 	uint64_t	tmp_val1;
 
@@ -1400,7 +1400,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 
 			DevLog(DL_DETAIL(3213), tmp_val, 3, dmy[8],
 			    dmy[9], dmy[10], dmy[11]);
-			if (tmp_val > UINT_MAX) {
+			if (tmp_val > UINT64_MAX) {
 				DevLog(DL_ERR(3106), tmp_val);
 			}
 			return_val = tmp_val;
@@ -2390,7 +2390,7 @@ load_tape_io_lib(tape_IO_entry_t *entries, tape_IO_t *table)
 	int	i, err = 0;
 	char	**lib_name = &entries->lib_name;
 	char	**entry_name = lib_name + 1;
-	int	*entry_pt = (int *)table;
+	size_t	*entry_pt = (size_t *)table;
 	void	*api_handle;
 
 	if (DBG_LVL(SAM_DBG_DEBUG))
@@ -2411,7 +2411,7 @@ load_tape_io_lib(tape_IO_entry_t *entries, tape_IO_t *table)
 		if (DBG_LVL(SAM_DBG_DEBUG))
 			sam_syslog(LOG_DEBUG, "Mapping symbol %s.",
 			    *entry_name);
-		*entry_pt = (int)dlsym(api_handle, *entry_name);
+		*entry_pt = (size_t)dlsym(api_handle, *entry_name);
 		if (*entry_pt == 0) {
 			sam_syslog(LOG_ERR, catgets(catfd, SET, 1049,
 			    "Error mapping symbol -%s-:%s."),
