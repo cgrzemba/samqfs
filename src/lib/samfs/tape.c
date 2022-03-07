@@ -133,7 +133,8 @@ create_tape_eof(
 	    writing_labels = FALSE;
 	int	tmp_err;
 	int	process_eox, process_wtm, wrote_tm;
-	uint_t	tmp_position, space;
+	uint_t	tmp_position;
+	uint64_t	space;
 	char	eoflb[80];
 	char	*d_mess;
 	char	*msg_buf, *msg1;
@@ -571,7 +572,8 @@ tape_append(
 	sam_resource_t *resource)
 {
 	int	err = 0, status, resid, cleaning;
-	uint_t	tmp_position, space;
+	uint_t	tmp_position;
+	uint64_t	space;
 	char	eoflb[160];
 	char	*d_mess;
 	char	*msg_buf, *msg1;

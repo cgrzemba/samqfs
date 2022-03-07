@@ -1400,7 +1400,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 
 			DevLog(DL_DETAIL(3213), tmp_val, 3, dmy[8],
 			    dmy[9], dmy[10], dmy[11]);
-			if (tmp_val > UINT_MAX) {
+			if (tmp_val > UINT64_MAX) {
 				DevLog(DL_ERR(3106), tmp_val);
 			}
 			return_val = tmp_val;
