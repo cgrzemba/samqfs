@@ -3240,7 +3240,7 @@ ar_set_copy_cfg_t **arch_copy)	/* array of MAX_COPY ar_set_copy_cfg_t  */
 			}
 
 			cp = ar_set_copy_cfg_to_str(arch_copy[i]);
-			if (cp == '\0') {
+			if (*cp == '\0') {
 				return (&err);
 			}
 

@@ -1658,7 +1658,7 @@ struct fieldVals *entry)	/* struct describing a particular entry */
 
 	int i;
 
-	for (i = 0; mandatory_fields[i] != '\0'; i++) {
+	for (i = 0; *mandatory_fields[i] != '\0'; i++) {
 		if (strcmp(entry->FvName, mandatory_fields[i]) == 0) {
 			return (B_TRUE);
 		}

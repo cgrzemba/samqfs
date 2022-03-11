@@ -156,7 +156,7 @@ sam_control_type_to_str(
 		return (EINVAL);
 	}
 
-	for (ctp = _dkc_type; ctp->nm != '\0'; ctp++) {
+	for (ctp = _dkc_type; *ctp->nm != '\0'; ctp++) {
 		if (ctp->val == ctype) {
 			if (len < (strlen(ctp->nm)+1)) {
 				return (EINVAL);
@@ -312,7 +312,7 @@ sam_vpart_id_to_str(
 		return (EINVAL);
 	}
 
-	for (vpp = _vpart_id; vpp->nm != '\0'; vpp++) {
+	for (vpp = _vpart_id; *vpp->nm != '\0'; vpp++) {
 		if (vpp->val == id) {
 			if (len < (strlen(vpp->nm)+1)) {
 				return (EINVAL);
@@ -345,7 +345,7 @@ sam_vpart_pflags_to_str(
 		return (EINVAL);
 	}
 
-	for (vfp = _vpart_pflags; vfp->nm != '\0'; vfp++) {
+	for (vfp = _vpart_pflags; *vfp->nm != '\0'; vfp++) {
 		if (vfp->val == pflags) {
 			if (len < (strlen(vfp->nm)+1)) {
 				return (EINVAL);

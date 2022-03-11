@@ -736,4 +736,5 @@ sam_format_buf_t *bufp,		/* Format buffer */
 	free(s);
 
 	/* LINTED function falls off bottom without returning value */
+        return 0;
 }
