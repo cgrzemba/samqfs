@@ -283,6 +283,11 @@ retry:
 				    "SAM-QFS: sam_send_amld_cmd: "
 				    "error: %d samgt.amld_pid > 0",
 				    error);
+			} else {
+				cmn_err(CE_NOTE,
+				    "SAM-QFS: sam_send_amld_cmd: "
+				    "info: return %d ",
+				    error);
 			}
 			return (error);
 		}

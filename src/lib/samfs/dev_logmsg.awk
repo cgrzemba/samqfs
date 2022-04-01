@@ -30,20 +30,20 @@ BEGIN {
 	MsgGrp = 0;
 }
 {
-# if ($1 == "")  continue;
-# if ($1 ~ /^\$/) continue;
+if ($1 == "")  continue;
+if ($1 ~ /^\$/) continue;
 i = int($1 / 1000);
 if (i != MsgGrp) {
 	if (MsgGrp != 0)  print "};";
 	MsgGrp = i;
 	print "static char *" $2 "Msgs[] = {";
-	print " { \"\" },";
+	print "  \"\" ,";
 	GN[MsgGrp] = $2;
 	Gnum[MsgGrp] = 1;
 	nextin = (i * 1000) + 1;
 } else {
-	while (nextin++ < $1) { print " { NULL },"; Gnum[MsgGrp]++; }
-	print " { \"" $2 "\" },"
+	while (nextin++ < $1) { print "  NULL ,"; Gnum[MsgGrp]++; }
+	print "  \"" $2 "\" ,"
 	nextin = $1 + 1;
 	Gnum[MsgGrp]++;
 }

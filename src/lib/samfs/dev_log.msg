@@ -91,7 +91,7 @@ $ *    SAM-QFS_notice_end
 1066 Wrote %lld bytes, time %d seconds
 1067 Io_count: diff %d, count %d
 1068 Io_count from %#x to %#x final %#x
-1069 Read %lld bytes, time %d seconds
+1069 Read %lld bytes, time %d seconds, errflg %d
 1070 update_catalog_space: entry not set
 1071 Remote sam not found
 1072 Unable to open for stage
@@ -190,6 +190,7 @@ $ *    SAM-QFS_notice_end
 1165 Inquiry failed on %s: shared %d
 1166 (%d) Inquiry result on open %s fd %d error %s
 1167 Inquiry reuse on open %s fd %d 
+1168 Errflag %x State %#x
 
 2000 Optic
 2001 Erase started
@@ -348,11 +349,11 @@ $ *    SAM-QFS_notice_end
 3056 EOD at position %#x
 3057 No space left on tape
 3058 Position error: wanted %#x, got %#x
-3059 append_tape: Found EOF1 at %#x
-3060 append_tape: Found EOV1 at %#x
+3059 tape_append: Found EOF1 at %#x
+3060 tape_append: Found EOV1 at %#x
 3061 Medium error: No space left
-3062 append_tape: EOF1 not found at %#x [%d, %d, %d, %#x, %#x, %#x, %#x, %#x]
-3063 append_tape: Unable to position to %#x
+3062 tape_append: EOF1 not found at %#x [%d, %d, %d, %#x, %#x, %#x, %#x, %#x]
+3063 tape_append: Unable to position to %#x
 3064 BSR failed
 3065 BSF failed
 3066 Positioning time: %d seconds
@@ -502,7 +503,7 @@ $ *    SAM-QFS_notice_end
 3212 Writing file mark
 3213 Read capacity %lld : %d 0x%x,0x%x,0x%x,0x%x
 3214 Read capacity type %d
-3215 Read capacity %d, %d
+3215 Read capacity %lld, %lld
 3216 File marks %d exceed %d
 3217 Tape position %x before read does not match expected %llx
 3218 Tape position %x after read does not match expected %llx

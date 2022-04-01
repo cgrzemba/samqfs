@@ -35,7 +35,8 @@
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
-#define	CATALOG_TABLE "CatalogTable"
+/* this defined is nowhere used beside the file CatalogTable exists */
+#define	xxx_CATALOG_TABLE "CatalogTable"
 
 /* ANSI C headers. */
 #include <ctype.h>
@@ -503,7 +504,7 @@ GetInfo(
 	static struct CsrGetInfoRsp rsp;
 
 	strcpy(rsp.CatTableName, CatalogTableName);
-	TraceRequest(hdr, NULL, "Client connection made.");
+	TraceRequest(hdr, NULL, "GetInfo: Client connection made.");
 	return (&rsp);
 }
 
@@ -783,7 +784,7 @@ MediaClosed(
 	rsp.GrStatus = 0;
 
 out:
-	TraceRequest(hdr, &rsp, "VolumeClosed(%s, %llu, %llu)",
+	TraceRequest(hdr, &rsp, "MediaClosed(%s, %llu, %llu)",
 	    VolStringFromCe(cea), cea->CeSpace, cea->m.CeLastPos);
 	return (&rsp);
 }
@@ -1088,7 +1089,7 @@ SetRemoteServer(
 
 	RemoteServer = TRUE;
 
-	TraceRequest(hdr, NULL, "RemoteServer set.");
+	TraceRequest(hdr, NULL, "SetRemoteServer");
 	return (&rsp);
 }
 

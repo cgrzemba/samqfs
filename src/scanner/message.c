@@ -425,6 +425,9 @@ todo_request(void *vmessage)
 
 	switch (request->sub_cmd) {
 	case TODO_ADD:
+#if defined(DEBUG)
+		sam_syslog(LOG_DEBUG, "todo_request add mount %#x", request->callback);
+#endif
 		{
 			if (request->callback == CB_POSITION_RMEDIA) {
 				mutex_lock(&un->io_mutex);

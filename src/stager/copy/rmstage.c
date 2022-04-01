@@ -280,6 +280,7 @@ RmSeekVolume(
 		pos_args.setpos = to;
 
 		while (position == -1 && attempts-- > 0) {
+			Trace(TR_DEBUG, "positioning: equ %d fd %d pos: %d", IoThread->io_drive, IoThread->io_rmFildes, to);
 			err = ioctl(IoThread->io_rmFildes, F_RMPOSITION,
 			    &pos_args);
 
@@ -399,8 +400,8 @@ loadVol(
 			fd = open(file_name, oflag);
 			if (fd == -1) {
 
-				Trace(TR_ERR, "Load vsn failed: '%s', "
-				    "errno %d", vsn, errno);
+				Trace(TR_ERR, "Load vsn failed: '%s', %s"
+				    "errno %d", vsn, file_name, errno);
 
 				if (errno != ETIME) {
 					int saveErrno;
