@@ -66,7 +66,7 @@
 /* Local headers. */
 #include "utility.h"
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 /*
  * Set/clear clustermgmt mount option based on SC indicator file.

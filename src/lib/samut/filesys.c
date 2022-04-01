@@ -739,7 +739,7 @@ msgFunc(
 
 #if defined(TEST)
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 int
 main(

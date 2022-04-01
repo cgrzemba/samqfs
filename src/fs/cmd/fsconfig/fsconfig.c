@@ -112,7 +112,7 @@ static void SamPrintDKIOC(struct dk_cinfo *, char *);
 #ifdef sun
 static void SamPrintUUID(struct uuid *);
 static void SamPrintEFI(struct dk_gpt *, char *);
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 #endif /* sun */
 
 static int Dsk2Rdsk(char *dsk, char *rdsk);

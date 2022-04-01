@@ -87,7 +87,7 @@ static char *_SrcFile = __FILE__;
 /* Local headers. */
 #include "fsd.h"
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 /* Private functions. */
 static void McfLine(void);
