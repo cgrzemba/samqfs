@@ -340,4 +340,4 @@ STK_INCLUDES = ${HOME}/samfs/acsls/toolkit2.4.0/src/h
 
 -include $(DEPTH)/mk/include/$(OS_DIST).mk
 
-CERRWARN += -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-but-set-variable
+CERRWARN += -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-but-set-variable -Wconversion
