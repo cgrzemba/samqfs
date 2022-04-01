@@ -60,6 +60,10 @@
 #define	VOLINFO_LEN 128
 
 
+/* Begin: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */
+#if _LONG_LONG_ALIGNMENT == 8 && _LONG_LONG_ALIGNMENT_32 == 4
+#pragma pack(4)
+#endif
 /* Volume identification. */
 
 struct VolId {
@@ -197,7 +201,7 @@ enum CH_type {
 struct CatalogHdr {
 	uint32_t	ChMagic;	/* Catalog magic number */
 	int		ChVersion;	/* Catalog version number */
-	time_t		ChAuditTime;	/* Audit time */
+	time32_t		ChAuditTime;	/* Audit time */
 	uint16_t	ChEq;		/* Equipment number to which catalog */
 					/* belongs */
 	upath_t		ChFname;	/* Name of the catalog file */
@@ -207,5 +211,9 @@ struct CatalogHdr {
 	enum CH_type	ChType;		/* Catalog type */
 	struct CatalogEntry ChTable[1];	/* Catalog table - Catalog entry(s) */
 };
+/* Begin: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */
+#if _LONG_LONG_ALIGNMENT == 8 && _LONG_LONG_ALIGNMENT_32 == 4
+#pragma pack()
+#endif
 
 #endif /* _AML_CATALOG_H */
