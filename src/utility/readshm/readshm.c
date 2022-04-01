@@ -52,6 +52,7 @@
 #include "sam/custmsg.h"
 #include "sam/param.h"
 #include "aml/shm.h"
+#include "aml/message.h"
 #include "generic/generic.h"
 #include "sam/devnm.h"
 #include "sam/lib.h"
@@ -70,6 +71,7 @@ void	sig_chld(int);
 int	number_robots, got_sigchld = FALSE;
 pid_t	mypid;
 char	*fifo_path;
+message_request_t *message;
 shm_alloc_t master_shm, preview_shm;
 
 #define is_family(a)              (((a) & DT_CLASS_MASK) == DT_FAMILY_SET)
@@ -147,10 +149,15 @@ main(int argc, char **argv)
 	}
 
 	shm_ptr_tbl = (shm_ptr_tbl_t *)master_shm.shared_memory;
+        printf("master_shm.shared_memory: %x\n", shm_ptr_tbl);
 	device_entry = (dev_ent_t *)SHM_REF_ADDR(
 		    ((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
-	printf("%8s %49s %3s %9s %17s %5s %16s %8s %s\n","set", "device", "eq", "vendor", "product", "rev", "serial", "type", "state");
-	for (count = 0; device_entry != NULL; device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next)) {
+        printf("first_dev: %x\n\n", device_entry);
+	printf("%8s %2s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
+	for (count = 0; 
+		device_entry != NULL; 
+		device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next)) 
+	{
 		const char* type;
 		if (is_disk(device_entry->type)) 
 			type = disk_type[device_entry->type-DT_DISK];
@@ -178,8 +185,10 @@ main(int argc, char **argv)
 				stk_found = TRUE;
 				count++;
 			}
-			printf("%8s %49s %3d %9s %17s %5s %16s %8s %s\n", 
+		}
+			printf("%8s %3x %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
 				device_entry->set,
+				device_entry->st_rdev,
 				device_entry->name, 
 				device_entry->eq, 
 				device_entry->vendor_id, 
@@ -187,13 +196,14 @@ main(int argc, char **argv)
 				device_entry->revision, 
 				device_entry->serial, 
 				type, 
+				device_entry->space,
 				states[device_entry->state]);
-		}
 	}
 	printf("\nfound %d devices\n", count);
 
 	dev_ptr_tbl = (dev_ptr_tbl_t *)SHM_REF_ADDR(
             ((shm_ptr_tbl_t *)master_shm.shared_memory)->dev_table);
+        printf("dev_table: %x\n", dev_ptr_tbl);
 
         /* LINTED pointer cast may result in improper alignment */
 	library->un = (dev_ent_t *)SHM_REF_ADDR(
@@ -211,8 +221,9 @@ main(int argc, char **argv)
 	/* common_init(library->un); */
 
 	fifo_path = strdup(SHM_REF_ADDR(shm_ptr_tbl->fifo_path));
-
-
+	printf("fifo_path: %s\n", fifo_path);
+        message = (message_request_t *)SHM_REF_ADDR(
+                    ((shm_ptr_tbl_t *)master_shm.shared_memory)->scan_mess);
 }
 
 
