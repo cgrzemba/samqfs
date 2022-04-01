@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"

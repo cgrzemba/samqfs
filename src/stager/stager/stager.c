@@ -171,10 +171,11 @@ static boolean_t initInProgress = B_TRUE;
 static pthread_mutex_t reconfigMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t copyInstanceMutex = PTHREAD_MUTEX_INITIALIZER;
 
+/* globals */
 /*
  * SAM-FS shared memory segment.
  */
-shm_alloc_t 	master_shm;
+shm_alloc_t 	master_shm, preview_shm;
 shm_ptr_tbl_t	*shm_ptr_tbl = NULL;
 
 /*
@@ -238,6 +239,7 @@ char *CopyExecPath = NULL;
  */
 sigset_t signalSet;
 
+struct CatalogMap *Catalogs = NULL;
 int
 main(
 	/* LINTED argument unused in function */

@@ -70,6 +70,8 @@
 #include <pwd.h>
 #include <project.h>
 
+/* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/lib.h>
 #include <sam/custmsg.h>
 #include <sam/quota.h>

@@ -47,7 +47,7 @@
 
 /* ----	csd header record - Dump header record. */
 
-struct csd_header {
+extern struct csd_header {
 	int magic;
 	int version;
 	time_t time;

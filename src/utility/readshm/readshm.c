@@ -44,6 +44,7 @@
 #define	MAIN
 #define	NEWALARM
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/param.h"
@@ -68,7 +69,6 @@ shm_alloc_t master_shm, preview_shm;
 #define is_family(a)              (((a) & DT_CLASS_MASK) == DT_FAMILY_SET)
 #define         ELEMENT_DESCRIPTOR_LENGTH   (48 + 4)
 
-const char *program_name = "readshm";
 
 const char *states[] = {"ON", "NOALLOC", "RO", "IDLE", "UNAVAIL", "OFF", "DOWN"};
 
@@ -108,6 +108,7 @@ main(int argc, char **argv)
 	dev_ptr_tbl_t *dev_ptr_tbl;
 	library_t *library;
 	robotic_device_t *rb;
+	program_name = "readshm";
 
 	if ( argc < 3) {
 		printf ("%s <master_id> <preview_id> <libeq>\n", *argv);

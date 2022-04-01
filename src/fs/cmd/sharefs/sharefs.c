@@ -44,6 +44,7 @@ static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 #include <sys/vfs.h>
 #include <ctype.h>
 
+#define DEC_INIT
 #include "sam/sam_malloc.h"
 #include "sam/custmsg.h"
 #include "pub/devstat.h"
@@ -56,8 +57,6 @@ static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 #include "sam/fs/sblk.h"
 #include "sblk_mgmt.h"
 
-
-char *program_name;				/* used by ChkFs() */
 
 extern int byte_swap_hb(struct sam_host_table_blk *);
 
@@ -83,12 +82,6 @@ static char  *GetHostDev(char *fs);
 static void   PrintHosts(char *fsname, struct sam_host_table *hosttab);
 
 static int ask(char *msg, char def);
-
-/*
- * From src/lib/samut/error.c
- */
-extern void error(int status, int errnum, char *msg, ...);
-
 
 /*
  * Rewrite an FS's host file.

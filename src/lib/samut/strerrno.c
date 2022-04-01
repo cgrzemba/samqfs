@@ -41,6 +41,7 @@
 #include <string.h>
 
 /* SAM-FS headers. */
+#include "sam/types.h"
 #include "sam/nl_samfs.h"
 #include "pub/sam_errno.h"
 #include "sam/custmsg.h"

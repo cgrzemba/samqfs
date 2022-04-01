@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/types.h>
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"

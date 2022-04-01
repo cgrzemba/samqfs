@@ -46,6 +46,7 @@
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 #include "sam/names.h"
+#include "aml/shm.h"
 
 /* sammgmt headers */
 #include "pub/mgmt/error.h"
@@ -54,6 +55,9 @@
 #include "pub/mgmt/mgmt.h"
 #include "mgmt/util.h"
 #include "mgmt/config/common.h"
+ 
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 /*
  * notify.c

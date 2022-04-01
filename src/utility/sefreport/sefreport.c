@@ -45,7 +45,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define DEC_INIT
 #include "sam/types.h"
+#include "sam/lib.h"
 #include "aml/sefstructs.h"
 #include "aml/sefvals.h"
 #include "aml/external_data.h"

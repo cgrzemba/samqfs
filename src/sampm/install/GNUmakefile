@@ -34,7 +34,7 @@ VERSION="0.2"
 PROG = edit
 PROG_SRC = edit.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lgen $(LIBSO)
 
 DEPCFLAGS += -DVERSION=${VERSION}
 LNOPTS +=

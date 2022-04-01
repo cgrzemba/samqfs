@@ -50,7 +50,7 @@
 
 /* some globals */
 
-shm_alloc_t master_shm, preview_shm;
+extern shm_alloc_t master_shm, preview_shm;
 
 int
 build_pids(shm_ptr_tbl_t *ptr_tbl)

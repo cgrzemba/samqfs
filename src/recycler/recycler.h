@@ -74,8 +74,22 @@
 #define	S2ABUFSIZE 128		/* Size of buffer s2a() needs */
 #define	RY_CLASS "Recycler"	/* Recycler Class name used by sysevent */
 
-int cannot_recycle;		/* can we continue? */
-FILE *log;
+/* Declaration/initialization macros */
+#undef CON_DCL
+#undef DCL
+#undef IVAL
+#if defined(DEC_INIT)
+#define	CON_DCL
+#define	DCL
+#define	IVAL(v) = v
+#else /* defined(DEC_INIT) */
+#define	CON_DCL extern const
+#define	DCL extern
+#define	IVAL(v) /* v */
+#endif /* defined(DEC_INIT) */
+
+DCL int cannot_recycle;		/* can we continue? */
+DCL FILE *log;
 
 #define	TO_TTY	1
 #define	TO_SYS	2
@@ -150,8 +164,8 @@ typedef struct {
 
 /* Robot table:	*/
 
-int ROBOT_count;		/* Number of robots on this system */
-ROBOT_TABLE *ROBOT_table;	/* Robot table */
+DCL int ROBOT_count;		/* Number of robots on this system */
+DCL ROBOT_TABLE *ROBOT_table;	/* Robot table */
 
 
 typedef struct VSN_TABLE {		/* VSN table: */
@@ -206,13 +220,13 @@ typedef struct VSN_TABLE {		/* VSN table: */
 #define	TABLE_INCREMENT	4
 #endif
 
-int table_used;		/* Number of VSNs currently in table(s) */
-int table_avail;	/* Number of table entries allocated */
-struct VSN_TABLE *vsn_table;	/* VSN table */
-int *vsn_permute;	/* VSN permutation list, see sort_vsns() */
+DCL int table_used;		/* Number of VSNs currently in table(s) */
+DCL int table_avail;	/* Number of table entries allocated */
+DCL struct VSN_TABLE *vsn_table;	/* VSN table */
+DCL int *vsn_permute;	/* VSN permutation list, see sort_vsns() */
 
 /* Hash table used for quick vsn table lookup */
-HashTable_t *hashTable;
+DCL HashTable_t *hashTable;
 
 /* Macros */
 #define	errtext strerror(errno) ? strerror(errno) : "(unknown error number)"
@@ -225,11 +239,11 @@ struct no_recycle {
 };
 extern struct no_recycle *no_recycle;  /* head of no_recycle list */
 
-boolean_t display_selection_logic;
-boolean_t check_expired;
-boolean_t display_draining_vsns;
-boolean_t suppress_catalog;
-boolean_t catalog_summary_only;
+DCL boolean_t display_selection_logic;
+DCL boolean_t check_expired;
+DCL boolean_t display_draining_vsns;
+DCL boolean_t suppress_catalog;
+DCL boolean_t catalog_summary_only;
 
 /* Functions */
 void assign_vsn(int robot_index, VSN_TABLE *VSN);
@@ -267,20 +281,6 @@ int strerror_r(int errnum, char *strerrbuf, size_t buflen);
 
 /* Shared data */
 
-/* Declaration/initialization macros */
-#undef CON_DCL
-#undef DCL
-#undef IVAL
-#if defined(DEC_INIT)
-#define	CON_DCL
-#define	DCL
-#define	IVAL(v) = v
-#else /* defined(DEC_INIT) */
-#define	CON_DCL extern const
-#define	DCL extern
-#define	IVAL(v) /* v */
-#endif /* defined(DEC_INIT) */
-
 DCL sam_defaults_t *defaults;
 
 /* Flags and common data */
@@ -292,6 +292,6 @@ DCL int num_fs;
 #include "aml/archset.h"
 #undef ARCHIVER_PRIVATE
 
-struct ArchSetFileHdr *afh;
+DCL struct ArchSetFileHdr *afh;
 
 #endif /* _RECYCLER_H */

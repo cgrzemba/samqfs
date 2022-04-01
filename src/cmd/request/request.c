@@ -61,6 +61,7 @@
 #include <zone.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/types.h>
 #include <sam/lib.h>
 #include <sam/custmsg.h>
@@ -74,7 +75,6 @@ struct sam_rminfo rb;		/* Removable media information */
 struct sam_rminfo *rp;		/* Removable media information */
 char *vsnp[MAX_VOLUMES];
 u_longlong_t position[MAX_VOLUMES];
-char *program_name;			/* Program name: used by error */
 
 int
 main(

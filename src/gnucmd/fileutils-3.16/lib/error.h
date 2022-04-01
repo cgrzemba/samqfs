@@ -45,9 +45,10 @@
    if ERRNUM is nonzero, follow it with ": " and strerror (ERRNUM).
    If STATUS is nonzero, terminate the program with `exit (STATUS)'.  */
 
+/*
 extern void error (int status, int errnum, const char *format, ...)
      __attribute__ ((__format__ (__printf__, 3, 4)));
-
+*/
 extern void error_at_line (int status, int errnum, const char *fname,
 			   unsigned int lineno, const char *format, ...)
      __attribute__ ((__format__ (__printf__, 5, 6)));

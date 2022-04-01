@@ -49,6 +49,7 @@
 #include <sys/param.h>
 
 /* Local headers. */
+#include "sam/types.h"
 #include "sam/nl_samfs.h"
 #include "sam/mount.h"
 #include "sam/lib.h"

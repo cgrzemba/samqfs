@@ -64,11 +64,12 @@ struct Vols {
 		uint64_t VlPosition;	/* Position of archive file for */
 					/* this section */
 	} entry[1];
-} *VolsTable;				/* Volumes to archive to */
+} ;				/* Volumes to archive to */
 
 DCL int VolCur;				/* Current volume */
 DCL upath_t ArVolName;			/* Name of current archive volume */
 DCL media_t ArchiveMedia;		/* Archive media type */
+DCL struct Vols *VolsTable;
 
 /* Archived file information. */
 struct ArchiveFile {
@@ -85,8 +86,9 @@ struct ArchiveFile {
 	csum_t		AfCsum;		/* Checksum value */
 	int		AfSegNum;	/* Segment number */
 	struct FileInfo *f;
-} *FilesTable;
+};
 
+DCL struct ArchiveFile *FilesTable;		/* File being archived */
 DCL struct ArchiveFile *File;		/* File being archived */
 
 /* Flags definitions. */
@@ -130,12 +132,13 @@ DCL int WriteCount;			/* Number bytes for write() to file */
 DCL int WriteTimeout;			/* Media dependent write timeout */
 
 /* Remote media archiving information. */
-struct {
+struct _RemoteArchive{
 	boolean_t enabled;	/* set TRUE if archiving to remote host */
 	char	  *host;	/* remote host on which archival media reside */
 	void	  *rft;		/* remote file transfer descriptor */
-} RemoteArchive;
+} ;
 
+DCL struct _RemoteArchive RemoteArchive;
 /* Public functions. */
 
 /* arcopy.c */

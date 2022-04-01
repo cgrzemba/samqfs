@@ -68,6 +68,7 @@ static char *_SrcFile = __FILE__;
 
 /* Local headers. */
 #include "fsd.h"
+extern char* program_name;
 
 /* Server functions. */
 static void *notify(void *arg, struct UdsMsgHeader *hdr);

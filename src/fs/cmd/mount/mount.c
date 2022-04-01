@@ -64,6 +64,7 @@
 #endif /* sun */
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/types.h>
 #include <sam/param.h>
 #include <sam/custmsg.h>
@@ -91,9 +92,6 @@ static void add_mnttab_entry(char *file, char *mnt_point, char *mnt_opts,
 #endif /* CMD_UPDATE_MNTTAB */
 
 #include <sam/mount.hc>
-
-extern char *program_name;
-
 
 int
 main(int argc, char **argv)

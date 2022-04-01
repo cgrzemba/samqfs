@@ -70,7 +70,7 @@ enum CeFields {
 	CEF_VolInfo,
 
 	CEF_MAX
-} CeFields;
+} ;
 
 /* Public functions. */
 /* Catalog file manipulation. */

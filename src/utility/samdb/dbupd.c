@@ -45,6 +45,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/param.h>
 #include <sys/vfs.h>
 
+#define DEC_INIT
 #include <sam/lib.h>
 #include <sam/custmsg.h>
 #include <sam/sam_trace.h>
@@ -61,7 +62,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	RETRY_SLEEP 10
 #define	EOF_SLEEP 5
 
-char *program_name = SAM_DBUPD;
 
 static boolean_t is_daemon = TRUE;
 static boolean_t is_shutdown = FALSE;
@@ -83,6 +83,7 @@ int main(
 	sam_event_t event;
 	event_handler_t ev_handler;
 
+	program_name = SAM_DBUPD;
 	if (dbupd_init(argc, argv) < 0) {
 		return (EXIT_FAILURE);
 	}

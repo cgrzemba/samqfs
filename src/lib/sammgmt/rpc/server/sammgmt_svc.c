@@ -51,8 +51,12 @@
 #include "mgmt/config/rpc_secure_cfg.h"
 #include "pub/mgmt/mgmt.h"
 #include "pub/mgmt/license.h"
+#include "aml/shm.h"
 
 #define	USAGE		"Usage: "SBIN_DIR"/fsmgmtd [-v]"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 

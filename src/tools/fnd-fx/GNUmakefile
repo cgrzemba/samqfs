@@ -35,7 +35,7 @@ fnd_SRC = fnd.c
 fx_SRC = fx.c sam_restore.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam -lgen $(LIBSO)
-fnd_LIBS = $(PROG_LIBS)
+fnd_LIBS = $(LIBSO)
 fx_LIBS  = $(PROG_LIBS)
 
 LNOPTS += -a

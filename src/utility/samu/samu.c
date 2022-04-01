@@ -37,7 +37,6 @@
 #pragma ident "$Revision: 1.68 $"
 
 
-#define	MAIN
 
 /* ANSI C headers. */
 #include <ctype.h>
@@ -67,6 +66,7 @@
 #include <sys/mman.h>
 
 /* SAM-FS headers. */
+#define	DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "aml/shm.h"
@@ -74,7 +74,7 @@
 #include "sam/devnm.h"
 #include "sam/names.h"
 #include "aml/preview.h"
-#include "sam/nl_samfs.h"
+#include "sam/lib.h"
 #include "pub/version.h"
 #include "aml/catlib.h"
 #include "sam/custmsg.h"

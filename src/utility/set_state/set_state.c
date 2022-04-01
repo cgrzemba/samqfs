@@ -51,6 +51,10 @@
 #include "sam/devnm.h"
 #include "aml/samapi.h"
 #include "pub/sam_errno.h"
+#include "aml/shm.h"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 static void Usage();
 

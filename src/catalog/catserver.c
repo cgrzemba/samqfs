@@ -58,6 +58,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/mman.h>
 
 /* SAM-FS headers. */
+#define      DEC_INIT
 #include "pub/sam_errno.h"
 #include "sam/types.h"
 #include "aml/archiver.h"
@@ -75,7 +76,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/udscom.h"
 #include "aml/catalog.h"
 #include "aml/catlib.h"
-#define	MAIN
 #include "sam/nl_samfs.h"
 
 /* Local headers. */
@@ -228,9 +228,8 @@ int CvrtCatalog(char *cf_name, int version, void **mp, size_t *size);
 
 /* Public data. */
 struct CatalogTableHdr *CatalogTable;
-struct CatalogMap *Catalogs;
+extern struct CatalogMap *Catalogs;
 char *program_name = "catserver";
-
 
 int
 main(

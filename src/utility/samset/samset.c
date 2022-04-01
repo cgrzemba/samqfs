@@ -52,7 +52,7 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "aml/shm.h"

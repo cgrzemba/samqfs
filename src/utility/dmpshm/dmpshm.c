@@ -42,7 +42,9 @@
 #include <sys/shm.h>
 #include <sys/wait.h>
 
+#define DEC_INIT
 #include "aml/shm.h"
+#include "sam/lib.h"
 
 #pragma ident "$Revision: 1.19 $"
 
