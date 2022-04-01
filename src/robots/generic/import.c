@@ -244,7 +244,7 @@ import_media(
 	}
 	slot = FindFreeSlot(library);
 
-	if (slot == (unsigned)ROBOT_NO_SLOT) {
+	if (slot == (unsigned)ROBOT_NO_SLOT_L) {
 		memccpy(l_mess,
 		    catgets(catfd, SET, 9040,
 		    "no empty storage slots for import"),
@@ -656,7 +656,7 @@ generic_export_media(
 			element = drive->element;
 			slot = SLOT_NUMBER(library, drive->element);
 		} else {
-			slot = (unsigned)ROBOT_NO_SLOT;
+			slot = (unsigned)ROBOT_NO_SLOT_L;
 		}
 
 		mutex_lock(&drive->mutex);
@@ -707,7 +707,7 @@ generic_export_media(
 	vid.ViEq = ce->CeEq;
 	vid.ViSlot = ce->CeSlot;
 
-	if (drive == NULL && slot != (unsigned)ROBOT_NO_SLOT) {
+	if (drive == NULL && slot != (unsigned)ROBOT_NO_SLOT_L) {
 		if (!(ce->CeStatus & CES_inuse)) {
 			err = ENOENT;
 			DevLog(DL_ERR(5170), slot);
@@ -778,7 +778,7 @@ generic_export_media(
 			    "export hopper full"),
 			    '\0', DIS_MES_LEN);
 			DevLog(DL_ERR(5160));
-			if (drive != NULL && slot != ROBOT_NO_SLOT) {
+			if (drive != NULL && slot != ROBOT_NO_SLOT_L) {
 				if (move_media(library, 0, element,
 				    drive->media_element, 0,
 				    move_flags)) {
@@ -815,7 +815,7 @@ generic_export_media(
 	}
 	/* If exporting from a drive, clear the drive state. */
 	if (drive != NULL) {
-		slot = ROBOT_NO_SLOT;
+		slot = ROBOT_NO_SLOT_L;
 		drive->status.b.full = FALSE;
 		if (drive->status.b.valid)
 			slot = SLOT_NUMBER(library, drive->media_element);
@@ -1254,9 +1254,9 @@ process_generic_import(
 			}
 		}
 
-		if (slot == ROBOT_NO_SLOT) {
+		if (slot == ROBOT_NO_SLOT_L) {
 			slot = FindFreeSlot(library);
-			if (slot == ROBOT_NO_SLOT) {
+			if (slot == ROBOT_NO_SLOT_L) {
 				DevLog(DL_ERR(5176));
 				SendCustMsg(HERE, 9334);
 				mutex_lock(&library->un->mutex);
@@ -1379,7 +1379,7 @@ process_generic_import(
 				    audit_eod);
 			}
 		}
-		slot = ROBOT_NO_SLOT;
+		slot = ROBOT_NO_SLOT_L;
 
 		if (library->un->type == DT_SONYCSM) {
 			if (wait_for_iport(iport, FULL, waittime)) {

@@ -121,7 +121,7 @@ slot_number(
 			if (iport->element == element)
 				return (return_slot);
 	}
-	return (ROBOT_NO_SLOT);
+	return (ROBOT_NO_SLOT_L);
 }
 
 
@@ -154,12 +154,12 @@ element_address(
 		if (ex_start_slot == slot)
 			return (iport->element);
 	}
-	return (ROBOT_NO_SLOT);
+	return (ROBOT_NO_SLOT_L);
 }
 
 
 /*
- *	sam2aci_type - given a sam media type, return a aci media
+ *	sam2aci_type - given a sam media type, return a GRAU aci media
  */
 int
 sam2aci_type(
@@ -210,6 +210,8 @@ sam2aci_type(
 		aci_media = 0;
 	}
 	return ((int)aci_media);
+#else
+	return 0;
 #endif
 }
 
@@ -238,7 +240,7 @@ FindFreeSlot(
 	memset(&vid, 0, sizeof (struct VolId));
 
 	mutex_lock(&library->un->mutex);
-	slot = ROBOT_NO_SLOT;
+	slot = ROBOT_NO_SLOT_L;
 	last_element = 0;
 	current_element = library->range.storage_lower;
 	vid.ViFlags = VI_cart;
@@ -269,7 +271,7 @@ FindFreeSlot(
 			DevLog(DL_ERR(5014));
 			mutex_unlock(&library->un->mutex);
 			free(buffer);
-			return (ROBOT_NO_SLOT);
+			return (ROBOT_NO_SLOT_L);
 		}
 
 		status_data = (element_status_data_t *)buffer;
@@ -311,7 +313,7 @@ FindFreeSlot(
 				    == NULL) {
 					break;
 				} else {
-					slot = ROBOT_NO_SLOT;
+					slot = ROBOT_NO_SLOT_L;
 				}
 			}
 			current_element++;
@@ -319,16 +321,16 @@ FindFreeSlot(
 			    ((char *)storage_descrip + ele_dest_len);
 		}
 		free(buffer);
-		if (slot != ROBOT_NO_SLOT)
+		if (slot != ROBOT_NO_SLOT_L)
 			break;
 	}
-	if (ce == NULL && slot != ROBOT_NO_SLOT) {
+	if (ce == NULL && slot != ROBOT_NO_SLOT_L) {
 		DevLog(DL_DETAIL(5338), slot);
 		mutex_unlock(&library->un->mutex);
 		return (slot);
 	} else {
 		DevLog(DL_ERR(5337));
 		mutex_unlock(&library->un->mutex);
-		return (ROBOT_NO_SLOT);
+		return (ROBOT_NO_SLOT_L);
 	}
 }
