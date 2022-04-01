@@ -171,7 +171,7 @@ main(
 	int argc,
 	char *argv[])
 {
-	int	i;
+	int	i = 0;
 
 	/*
 	 * Check initiator.
@@ -189,7 +189,8 @@ main(
 		}
 	}
 	while (Daemon) {
-		sleep(10000);
+		sleep(100);
+                if (i == 1) break;
 	}
 #endif /* !defined(TEST_W_DBX) */
 
@@ -505,7 +506,8 @@ StartProcess(
 	 */
 	memset(cpNew, 0, sizeof (struct ChildProcEntry));
 	strncpy(cpNew->CpName, argv[0], sizeof (cpNew->CpName));
-	strncpy(cpNew->CpArgv1, argv[1], sizeof (cpNew->CpArgv1));
+        if (argv[1])
+		strncpy(cpNew->CpArgv1, argv[1], sizeof (cpNew->CpArgv1));
 	cpNew->CpFunc = func;
 	cpNew->CpNoSIGCHLD = 0;
 
@@ -871,7 +873,7 @@ checkFs(void)
 		struct FileSysEntry *fs;
 
 		fs = &FileSysTable->entry[i];
-		if (fs->FsAfState->AfPid != 0) {
+		if (fs->FsAfState != NULL && fs->FsAfState->AfPid != 0) {
 			/*
 			 * Arfind running.
 			 */
@@ -1425,7 +1427,7 @@ readCmdFile(void)
 			/*
 			 * Tell archiver that it's not the first read.
 			 */
-			*argv[1] = '\0';
+			argv[1] = NULL;
 	}
 	(void) StartProcess(argv, readCmdFileComplete);
 }
