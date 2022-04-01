@@ -452,7 +452,7 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
 					    '\0', DIS_MES_LEN);
 					DevLog(DL_ERR(3149));
 					DownDevice(un, SAM_STATE_CHANGE);
-					return (-1);
+					return (UINT64_MAX);
 				} else
 					IO_table[indx].initialized = TRUE;
 			}
@@ -581,7 +581,7 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
 				 * EW at the end.
 				 */
 			} else {
-				int physblk;
+				uint_t physblk;
 
 				if (s_data.dmy[20] == 0x90 ||
 				    s_data.dmy[20] == 0x92) {
@@ -681,8 +681,8 @@ read_tape_capacity(dev_ent_t *un, int open_fd)
 			 * approx_use is the number of blocks written times
 			 * the block size in units of 1024.
 			 */
-			tmp_val = (long long)position *
-			    (long long)un->sector_size;
+			tmp_val = (uint64_t)position *
+			    (uint64_t)un->sector_size;
 			approx_use = tmp_val / 1024;
 			if (approx_use <= un->dt.tp.default_capacity)
 				return_val = un->dt.tp.default_capacity
@@ -1041,7 +1041,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 					    '\0', DIS_MES_LEN);
 					DevLog(DL_ERR(3149));
 					DownDevice(un, SAM_STATE_CHANGE);
-					return (-1);
+					return (UINT64_MAX);
 				} else
 					IO_table[indx].initialized = TRUE;
 			}
@@ -1167,7 +1167,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 				 */
 			/* Sony DTF */
 			} else {
-				int physblk;
+				uint_t physblk;
 
 				if (s_data.dmy[20] == 0x90 ||
 				    s_data.dmy[20] == 0x92) {
@@ -1177,7 +1177,7 @@ read_tape_space(dev_ent_t *un, int open_fd)
 					/* size of DTF-1 tape physical block */
 					physblk = 116868;
 				}
-				tmp_val = (uint_t)((s_data.dmy[34] << 24) |
+				tmp_val = ((s_data.dmy[34] << 24) |
 				    (s_data.dmy[35] << 16) |
 				    (s_data.dmy[36] << 8) | s_data.dmy[37]);
 
@@ -1722,7 +1722,7 @@ process_tape_labels(int fd, dev_ent_t *un)
 		TAPEALERT_SKEY(fd, un);
 		un->status.bits |= DVST_SCAN_ERR;
 	} else {
-		int    len;
+		unsigned int    len;
 		void    *dummy;
 
 		if (check_cleaning_error(un, fd, NULL))
@@ -2160,7 +2160,7 @@ process_tape_labels(int fd, dev_ent_t *un)
 		if (un->status.b.labeled) {	/* copy vsn to device entry */
 			char	*c_tmp;
 			char	blk_size[10], tim_scr[40];
-			int	block_size = 0, pdu_shift;
+			unsigned int	block_size = 0, pdu_shift;
 			struct tm	local_time;
 
 			/* remove  trailing spaces */

@@ -68,10 +68,10 @@ struct sam_cat_ent {
 	uint_t	status;			/* Catalog entry status */
 	char	media[4];		/* Media type */
 	char	vsn[32];		/* VSN */
-	int	access;			/* Count of accesses */
-	uint_t	capacity;		/* Capacity of volume */
-	uint_t	space;			/* Space left on volume */
-	int	ptoc_fwa;		/* First word address of PTOC */
+	int	access;			/* Count of accesses uin32_t! */
+	uint64_t	capacity;		/* Capacity of volume */
+	uint64_t	space;			/* Space left on volume */
+	int	ptoc_fwa;		/* First word address of PTOC  uin32_t!*/
 	int	reserved[3];		/* Reserved space */
 	time_t	modification_time;	/* Last modification time */
 	time_t	mount_time;		/* Last mount time */

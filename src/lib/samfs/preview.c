@@ -344,8 +344,7 @@ remove_preview_ent(
 
 			mutex_lock(&preview->p_mutex);
 			(void) memset(&preview->handle, 0,
-			    sizeof (preview_t) - (uint_t) &
-			    (((preview_t *)0)->handle));
+			    sizeof (preview_t) - (size_t) &(((preview_t *)0)->handle));
 			mutex_unlock(&preview->p_mutex);
 			mutex_lock(&preview_tbl->ptbl_mutex);
 			if (preview_tbl->ptbl_count > 0)
@@ -354,8 +353,7 @@ remove_preview_ent(
 
 		} else	/* clear dummy preview */
 			(void) memset(&preview->handle, 0,
-			    sizeof (preview_t) - (uint_t) &
-			    (((preview_t *)0)->handle));
+			    sizeof (preview_t) - (size_t) &(((preview_t *)0)->handle));
 
 		break;
 
@@ -1207,7 +1205,7 @@ add_preview_entry(
 #endif
 
 			(void) memset(&preview->handle, 0, sizeof (preview_t) -
-			    (uint_t)&(((preview_t *)0)->handle));
+			    (size_t)&(((preview_t *)0)->handle));
 			preview->in_use = preview->busy = TRUE;
 			if (handle)
 				preview->handle = *handle;
@@ -1245,13 +1243,13 @@ out:
 	signal_preview();	/* send preview event to robots */
 	if (shm_ptr_tbl->scanner > 0) {
 		/* Signal the scanner */
-		if (DBG_LVL(SAM_DBG_DEBUG))
-			if (kill(shm_ptr_tbl->scanner, SIGALRM)) {
+		if (DBG_LVL(SAM_DBG_DEBUG)) {
+			if (kill(shm_ptr_tbl->scanner, SIGALRM)) 
 				sam_syslog(LOG_DEBUG,
 				    "unable to signal scanner:%s:%d.\n",
 				    __FILE__, __LINE__);
-			} else
-				(void) kill(shm_ptr_tbl->scanner, SIGALRM);
+		} else
+			(void) kill(shm_ptr_tbl->scanner, SIGALRM);
 	}
 	return (exit_status);
 

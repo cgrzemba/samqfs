@@ -83,7 +83,8 @@ type = ATOMIC
 	uint64_t
 	ushort_t
 	u_longlong_t
-
+	size_t
+	ssize_t
 #
 # non-ATOMIC, composite types that SAM uses to compose
 # its structures, and that must be byte swapped according

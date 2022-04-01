@@ -97,8 +97,8 @@ struct sam_ndevstat {
 	char vsn[32];		/* VSN of mounted volume, 31 characters */
 	dstate_t state;		/* State - on/ro/idle/off/down */
 	uint_t status;		/* device status */
-	uint_t space;		/* Space left on device */
-	uint_t capacity;	/* Capacity in blocks (1024) */
+	uint64_t space;		/* Space left on device */
+	uint64_t capacity;	/* Capacity in blocks (1024) */
 };
 
 /* Device status. */

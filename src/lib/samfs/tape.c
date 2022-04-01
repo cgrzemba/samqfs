@@ -131,7 +131,7 @@ create_tape_eof(
 {
 	int	err = 0, return_error = 0, eot, cleaning = 0,
 	    writing_labels = FALSE;
-	int	tmp_err;
+	ssize_t	tmp_err;
 	int	process_eox, process_wtm, wrote_tm;
 	uint_t	tmp_position;
 	uint64_t	space;
@@ -580,7 +580,7 @@ tape_append(
 	time_t	start;
 	struct mtget	mt_status;
 	int	tmp_err;
-	int	lab_len;
+	ssize_t	lab_len;
 
 	if (IS_TAPE(un) && un->dt.tp.drive_index != SAM_TAPE_DVR_DEFAULT) {
 		register int    indx = un->dt.tp.drive_index;

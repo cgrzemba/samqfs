@@ -210,7 +210,7 @@ typedef union rmt_sam_ureq {
 typedef struct rmt_sam_request {
 	uint_t		version;	/* Version of remote sam */
 	uint_t		flags;		/* Flags at the command level */
-	uint_t		mess_addr;	/* Address of waiting process/thread */
+	size_t		mess_addr;	/* Address of waiting process/thread */
 					/* (can be null). */
 #ifndef BYTE_SWAP
 	rmt_sam_command_t command;	/* The command */
@@ -236,6 +236,7 @@ typedef enum rmt_mess_cmd {
 /*
  * The data portion of the message is one of the following structs.
  */
+/* never used */
 typedef struct rmt_mess_arch {
 	int	position;
 	int	err;

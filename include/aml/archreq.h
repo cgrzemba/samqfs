@@ -85,7 +85,7 @@ struct ArchReq {
 	int		ArCount;	/* Number of entries in ArchReq */
 	int		ArDrives;	/* Maximum number of drives to use */
 	int		ArDrivesUsed;	/* Actual number of drives used */
-	int		ArFileIndex;	/* Offset to the start of file */
+	long		ArFileIndex;	/* Offset to the start of file */
 					/* index array */
 	size_t		ArSize;		/* Size of ArchReq */
 	fsize_t		ArSpace;	/* Space required to archive */

@@ -159,7 +159,7 @@
 /* dev_status */
 
 typedef struct {
-	uint_t
+	uint32_t
 #if defined(_BIT_FIELDS_HTOL)
 		maint		:1,	/* Maint mode */
 		scan_err	:1,	/* Scanner found some bad stuff */
@@ -554,6 +554,9 @@ typedef struct dev_ent  {
 	MUTEX_T		io_mutex;	/* Mutex for I/O */
 	MUTEX_T		entry_mutex;	/* For the cat_ent*  */
 	struct dev_ent	*next;		/* Pointer (offset) to next entry */
+#if !defined(_LP64)
+ 	int		de_pad0;
+#endif
 	THREAD_T	scan_tid;	/* Thread id of scanner/drive thread */
 	THREAD_T	io_tid;		/* Thread id of stage/mount */
 	THREAD_T	helper_tid;	/* Thread id of helper */
@@ -568,13 +571,28 @@ typedef struct dev_ent  {
 	ushort_t	ord;		/* Ordinal within family set */
 	ushort_t	model;		/* Device model */
 	ushort_t	model_index;	/* Index into sam_model table */
+#if !defined(_LP64)
 	dev_t		st_rdev;	/* From stat function request */
+#else
+	dev32_t		st_rdev;	/* From stat function request */
+#endif
 	time_t		mtime;		/* Time to dismount */
+#if !defined(_LP64)
+	int		de_pad1;
+#endif
 	media_t		media;		/* Media type for this device */
 	struct mode_sense *mode_sense;	/* Pointer (offset) to mode_sense */
+#if !defined(_LP64)
+	int		de_pad4;
+#endif
 	struct sam_extended_sense *sense; /* Pointer (offset) to sense data */
+#if !defined(_LP64)
+	int		de_pad5;
+#endif
 	struct sam_act_io *active_io;	/* Pointer (offset) io structure */
-
+#if !defined(_LP64)
+	int		de_pad6;
+#endif
 	uint_t		flags;
 	uint_t		active;		/* Active count */
 	uint_t		open_count;	/* Number of opens (real or implied) */
@@ -585,6 +603,9 @@ typedef struct dev_ent  {
 	/* Catalog entry data. */
 	struct VolId	i;		/* Volume identification from catalog */
 	time_t		label_time;	/* Time media was labeled */
+#if !defined(_LP64)
+ 	int		de_pad2;
+#endif
 	uint_t		slot;		/* Slot in catalog table */
 	uint64_t	space;		/* Space remaining in blocks (1024) */
 	uint64_t	capacity;	/* Capacity in blocks (1024) */
@@ -613,11 +634,14 @@ typedef struct dev_ent  {
 		int		pid;	/* Process "owning" device log */
 		uint_t		flags;	/* Event listing controls */
 		time_t		last_opened; /* When devlog was last opened */
+#if !defined(_LP64)
+	 	int		de_pad3;
+#endif
 	} log;
 
 	union {
 		dev_status_t	b;	/* Device status */
-		uint_t		bits;	/* Nice way to clear all bits */
+		uint32_t	bits;	/* Nice way to clear all bits */
 	} status;
 
 	/*

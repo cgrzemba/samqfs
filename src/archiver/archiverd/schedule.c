@@ -289,7 +289,7 @@ ScheduleDequeue(
 	for (qe = schedQ.QuHead.QeFwd; qe != &schedQ.QuHead; qe = qe->QeFwd) {
 		if (strcmp(qe->QeArname, dequeueArname) == 0) {
 			Trace(TR_MISC, "schedQ Dequeue(%s 0x%x)",
-			    dequeueArname, (int)qe);
+			    dequeueArname, (long)qe);
 			QueueRemove(qe);
 			goto out;
 		}
@@ -2235,7 +2235,7 @@ moreCpiWork(
 	memset(&arReq->ArCpi[0], 0, sizeof (struct ArcopyInstance));
 	/* Save the real guy */
 	arReq->ArCount = cpi;
-	arReq->ArFileIndex = (int)ar;
+	arReq->ArFileIndex = (long)ar;
 
 	/*
 	 * Enter the ArchReq in the schedule queue.

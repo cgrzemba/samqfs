@@ -377,7 +377,7 @@ mapFileAlloc(
 static struct MappedFile *
 mapFileAttach(
 	char *fileName,
-	uint_t magic,
+	uint32_t magic,
 	int mode,
 	size_t *len)
 {

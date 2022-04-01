@@ -203,8 +203,8 @@ buildPaxHeader(
 	 * of the buffer.
 	 */
 	bufLast = GetBufLast();
-	if (((int)buffer + header_size) > (int)bufLast) {
-		int n;
+	if (((long)buffer + header_size) > (long)bufLast) {
+		long n;
 		char *bufFirst;
 
 		/* Allocate temp space to build tar header. */
@@ -225,7 +225,7 @@ buildPaxHeader(
 
 		/* Copy pax header to circular i/o buffer. */
 		if (PXSUCCESS(status)) {
-			n = (int)bufLast - (int)buffer;
+			n = (long)bufLast - (long)buffer;
 
 			memcpy(buffer, hdrBuffer, n);
 
@@ -371,7 +371,7 @@ writeHeader(
 		    sizeof (hdr->arch_linkname)-1);
 	}
 	/* Mark as Unix Standard. */
-	strncpy(hdr->magic, TMAGIC, sizeof (hdr->magic)-1);
+	strncpy(hdr->magic, TMAGIC, sizeof (hdr->magic));
 	strncpy(hdr->uname, getuname(st->st_uid), sizeof (hdr->uname)-1);
 	strncpy(hdr->gname, getgname(st->st_gid), sizeof (hdr->gname)-1);
 	if (type == LF_SPARSE) {

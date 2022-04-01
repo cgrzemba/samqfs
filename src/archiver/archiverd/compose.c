@@ -806,7 +806,7 @@ addJoinFile(
 		for (i = 0; i < ar->ArFiles; i++) {
 			fiList[i] =
 			    (struct FileInfo *)(void *)((char *)ar +
-			    (int)fiList[i]);
+			    (long)fiList[i]);
 		}
 	}
 	ar->ArSize += size;
