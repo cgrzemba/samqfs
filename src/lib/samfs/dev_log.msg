@@ -354,7 +354,11 @@ $ *    SAM-QFS_notice_end
 3059 tape_append: Found EOF1 at %#x
 3060 tape_append: Found EOV1 at %#x
 3061 Medium error: No space left
+<<<<<<< HEAD
 3062 tape_append: EOF1 not found at %#x [%d, %lld, %d, %#x, %#x, %#x, %#x, %#x]
+=======
+3062 tape_append: EOF1 not found at %#x [%d, %d, %d, %#x, %#x, %#x, %#x, %#x]
+>>>>>>> 7fedbdff (extend logging messages)
 3063 tape_append: Unable to position to %#x
 3064 BSR failed
 3065 BSF failed
