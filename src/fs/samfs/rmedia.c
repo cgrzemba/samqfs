@@ -650,6 +650,7 @@ sam_issue_rm(
 	} else {
 		error = fifo_ctl->ret_err;	/* ERRNO from daemon. */
 	}
+        TRACE(T_SAM_AMLD_CMD,SAM_ITOV(ip),fifo_ctl,req_type,error);
 	return (error);
 }
 

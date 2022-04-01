@@ -45,6 +45,7 @@ static char    *_SrcFile = __FILE__;
 #include <thread.h>
 #include <synch.h>
 #include <syslog.h>
+#include <assert.h>
 
 #include "aml/shm.h"
 #include "sam/defaults.h"
@@ -85,7 +86,7 @@ dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req)
 	sam_defaults_t *defaults;
 	sam_fsmount_arg_t mount_data;
 	sam_fsiocount_arg_t iocount_data;
-	int    block_size;
+	unsigned int    block_size;
 	u_longlong_t    start_position;
 	char    *write1_msg, *write2_msg;
 
@@ -157,11 +158,11 @@ dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req)
 		break;
 
 	case DT_OPTICAL:
-		if (errflag =
-		    find_file(control->open_fd, un, &actmnt_req->resource))
+		if ((errflag =
+		    find_file(control->open_fd, un, &actmnt_req->resource)))
 			mount_data.ret_err = errflag;
 		else {
-			int reserve_sectors = 12 *
+			uint64_t reserve_sectors = 12 *
 			    SECTORS_FOR_SIZE(un, sizeof (ls_bof1_label_t));
 
 			if (actmnt_req->resource.access == FWRITE) {
@@ -319,6 +320,7 @@ writeon:
 		errflag = cond_timedwait(&active_io->cond, &active_io->mutex,
 		    &wait_time);
 		(void) time(&time_now);
+		DevLog(DL_DETAIL(1168), errflag, un->state);
 		if (errflag != 0 || un->state >= DEV_IDLE) {
 			/* If we received the unload, get out of wait */
 			if (!active_io->wait_fs_unload) {
@@ -533,7 +535,8 @@ writeon:
 		long long    nbytes;
 
 		nbytes = (long long) block_size *active_io->final_io_count;
-		DevLog(DL_TIME(1069), nbytes, time(NULL) - start_time);
+		DevLog(DL_TIME(1069), nbytes, time(NULL) - start_time, errflag);
+		assert(errflag==0);
 	}
 
 	/* wait_fs_unload must be clear or we would not be here */

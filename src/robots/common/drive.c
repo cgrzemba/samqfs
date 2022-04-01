@@ -80,7 +80,6 @@ extern shm_alloc_t master_shm, preview_shm;
 #define	DEV_ENT(a) ((dev_ent_t *)SHM_REF_ADDR(((dev_ptr_tbl_t *)SHM_REF_ADDR( \
 	((shm_ptr_tbl_t *)master_shm.shared_memory)->dev_table))->d_ent[(a)]))
 
-
 void *
 drive_thread(
 	void *vdrive)
@@ -571,7 +570,7 @@ mount(
 
 	/*	If NO_MEDIA - close, etc and return */
 	/* spin_drive() prints error - downs drive or media */
-	if (rc = spin_drive(drive, SPINUP, NOEJECT)) {
+	if ((rc = spin_drive(drive, SPINUP, NOEJECT))) {
 		/* On media errors - we need to remove the preview entry */
 		if (rc == BAD_MEDIA) {
 			/* Let the caller know that it failed */
@@ -961,6 +960,9 @@ todo(
 	request = &event->request.message.param.todo_request;
 	switch (request->sub_cmd) {
 	case TODO_ADD:
+#if defined(DEBUG)
+		sam_syslog(LOG_DEBUG, "todo add mount %#x", request->callback);
+#endif
 		{
 			if (request->callback == CB_POSITION_RMEDIA) {
 				mutex_lock(&un->io_mutex);
