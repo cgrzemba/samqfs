@@ -41,7 +41,8 @@ PROG_SRC = \
 DEPCFLAGS += -Iinclude 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut $(LIBSO) -lgen -lintl
 
-LNOPTS = $(CMDS_LFLAGS32)
+# LNOPTS = $(CMDS_LFLAGS$(if $(filter yes,$(AMD64)),64,32))
+LNOPTS = 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut
 # FIXME -lsamcat
 
@@ -51,3 +52,6 @@ $(OBJ_DIR)/catlib.o:	catlib.c
 	$(CC) -DCAT_SERVER $(CFLAGS) -c -o $@ $<
 
 include $(DEPTH)/mk/depend.mk
+
+test_catlib: catlib.c test_catlib.c
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)/$@ $(LNOPTS) $(LNLIBS) -R/opt/SUNWsamfs/lib$(ISA) $?
