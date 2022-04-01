@@ -157,10 +157,10 @@ copyright.clean:
 
 DESTDIR ?= ./root_i386
 
-pkg: 
-	 $(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
-
 install:
 	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
+
+pkg: 
+	 $(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
 
 include $(DEPTH)/mk/depend.mk
