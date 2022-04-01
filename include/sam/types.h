@@ -171,7 +171,8 @@ extern int *___errno(void);
 
 #define	SAM_FSTYPE "samfs"	/* st_fstype string for SAM-FS */
 
-#define	ROBOT_NO_SLOT 0xffffffff	/* used to flag no slot. */
+#define	ROBOT_NO_SLOT_L (uint64_t)0xffffffff	/* used to flag no slot. */
+#define	ROBOT_NO_SLOT   (uint32_t)0xffff	/* used to flag no slot. */
 
 /*
  * Define osd_handle (/usr/include/sys/osd.h)

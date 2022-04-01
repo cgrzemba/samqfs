@@ -705,8 +705,8 @@ unload_all_drives(library_t *library)
 			 * information pertaining to the catalog.
 			 */
 			mutex_lock(&un->mutex);
-			un->mid = un->flip_mid = ROBOT_NO_SLOT;
-			un->slot = ROBOT_NO_SLOT;
+			un->mid = un->flip_mid = ROBOT_NO_SLOT_L;
+			un->slot = ROBOT_NO_SLOT_L;
 			mutex_unlock(&un->mutex);
 			if (thr_create(NULL,
 			    MD_THR_STK, &unload_a_drive_thread, (void *) un,
