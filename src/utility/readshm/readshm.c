@@ -143,8 +143,8 @@ main(int argc, char **argv)
         printf("first_dev: %llx\n\n", device_entry);
 	printf("%8s %2s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
 	for (count = 0;
-		device_entry != NULL;
-		device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next))
+	    device_entry != NULL;
+	    device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next))
 	{
 		const char* type;
 		if (is_disk(device_entry->type)) 
@@ -214,5 +214,3 @@ main(int argc, char **argv)
                     ((shm_ptr_tbl_t *)master_shm.shared_memory)->scan_mess);
 	free(library);
 }
-
-
