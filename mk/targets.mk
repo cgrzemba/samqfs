@@ -56,7 +56,7 @@ JAVA_HOME = /usr
 
 .PRECIOUS:  .o %.o $(OBJ_DIR)/%.o
 
-.PHONY:	all clean clobber clobberall install lint info depend .INIT
+.PHONY:	all clean clobber clobberall lint info depend .INIT
 
 ###############################################################################
 # Make sure OBJ_DIRs exists when required
@@ -276,8 +276,6 @@ clobber:	clean
 clobberall:	$(STRIP_DIRS)
 	-rm -rf $(OBJ_BASE) *.ln
 
-install:
-
 $(OBJ_DIR)/%.o:		%.c
 	$(CC) -c $(CFLAGS) $($*_CPPFLAGS) $(CPPFLAGS) $< -o $@
 ifeq ($(BUILD_STABS), yes)
@@ -388,7 +386,7 @@ endif
 ifeq ($(PLATFORM), sparc)
 ifeq ($(BUILD_64BIT), yes)
 ifneq ($(SPARCV9), yes)
-.INIT all clean clobber depend install:	sparcv9
+.INIT all clean clobber depend:	sparcv9
 sparcv9:
 	$(MAKE) DIRS= SPARCV9=yes $(MAKECMDGOALS)
 endif
@@ -404,7 +402,7 @@ ifeq ($(PLATFORM), i386)
 ifeq ($(BUILD_64BIT), yes)
 ifneq ($(AMD64), yes)
 
-.INIT all clean clobber depend install:	amd64
+.INIT all clean clobber depend:	amd64
 
 amd64:
 	$(MAKE) DIRS= AMD64=yes $(MAKECMDGOALS)
@@ -421,3 +419,4 @@ ifneq ($(OS), SunOS)
 linuxpkg:
 	$(MAKE) -C pkg-linux iso
 endif
+

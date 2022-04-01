@@ -230,8 +230,8 @@ sam_getcatalog(
 		strncpy(sce.vsn, cep->CeVsn, 32);
 		sce.vsn[31] = '\0';
 		sce.access = (int)cep->CeAccess;
-		sce.capacity = (uint_t)cep->CeCapacity;
-		sce.space = (uint_t)cep->CeSpace;
+		sce.capacity = cep->CeCapacity;
+		sce.space = cep->CeSpace;
 		sce.ptoc_fwa = (int)cep->m.CePtocFwa;
 		sce.modification_time = cep->CeModTime;
 		sce.mount_time = cep->CeMountTime;

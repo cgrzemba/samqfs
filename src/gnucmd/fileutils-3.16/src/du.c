@@ -502,7 +502,7 @@ du_files (char **files)
       else
 	{
 	  printf (_("%lld\ttotal\n"), output_size == size_bytes ? tot_size
-		  : convert_blocks (tot_size, output_size == size_kilobytes));
+		  : convert_blocks (tot_size, size_kilobytes));
 	}
       fflush (stdout);
     }

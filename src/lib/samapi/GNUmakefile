@@ -52,7 +52,7 @@ LIB_SRC = \
 	sam_utils.c
 
 DEPCFLAGS += $(THRCOMP)
-LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut $(LIBSO) -lgen -lintl
+LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamcat $(LIBSO) -lgen -lintl
 
 ifeq ($(SPARCV9), yes)
 LNOPTS = $(LIBS_LFLAGS64)

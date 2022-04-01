@@ -888,7 +888,7 @@ dt_to_nm(int dt)
 {
 	dev_nm_t *device;
 
-	for (device = dev_nm2dt; device->dt != NULL; device++) {
+	for (device = dev_nm2dt; device->dt != 0; device++) {
 		if (device->dt == dt) {
 			return (device->nm);
 		}

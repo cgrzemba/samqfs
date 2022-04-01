@@ -141,8 +141,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	dummy_fifo.time.tv_sec = 0x7fffffff;
-	dummy_ioctl.time.tv_sec = 0x7fffffff;
+	dummy_fifo.time.tv_sec = INT32_MAX;
+	dummy_ioctl.time.tv_sec = INT32_MAX;
 
 	if (stat(fifo_path, &fifo_stat) < 0) {
 		printf("Unable to stat fifo log - %s\n", strerror(errno));

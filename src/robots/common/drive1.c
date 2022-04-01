@@ -195,7 +195,7 @@ label_slot(
 	drive->un->status.bits &= ~DVST_WAIT_IDLE;
 	mutex_unlock(&drive->un->mutex);
 
-	if (err = get_media(library, drive, event, ce)) {
+	if ((err = get_media(library, drive, event, ce))) {
 		clear_driver_idle(drive, drive->open_fd);
 		mutex_lock(&drive->un->mutex);
 		close_unit(drive->un, &drive->open_fd);
@@ -873,7 +873,7 @@ load_unavail(
 
 	mutex_lock(&drive->mutex);
 
-	if (err = get_media(drive->library, drive, event, ce)) {
+	if ((err = get_media(drive->library, drive, event, ce))) {
 		if (DBG_LVL(SAM_DBG_LOAD))
 			sam_syslog(LOG_DEBUG, "%s(%d):%s:%d.",
 			    ent_pnt, drive->un->eq, __FILE__, __LINE__);

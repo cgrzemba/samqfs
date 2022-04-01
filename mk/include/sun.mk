@@ -301,7 +301,7 @@ NO_BUILD_STK = -D_NoSTK_
 # no Sun Customer Services
 NO_BUILD_CNS = -D_NoCNS_
 # no build ACSLS client tools
-NO_BUILD_ACSLS = 1
+NO_BUILD_ACSLS = -D_NoACSLS_
 
 #
 # Final default CFLAGS settings
@@ -330,4 +330,4 @@ STK_INCLUDES = ${HOME}/samfs/acsls/toolkit2.4.0/src/h
 ISA=$(subst /i386,,/$(ISA_TARGET))
 -include $(DEPTH)/mk/include/$(OS_DIST).mk
 
-CERRWARN += -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-but-set-variable
+CERRWARN += -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-but-set-variable -Wconversion

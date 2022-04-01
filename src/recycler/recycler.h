@@ -178,7 +178,7 @@ typedef struct VSN_TABLE {		/* VSN table: */
 	media_t		media;		/* media type */
 	long long	size;		/* total file size, bytes */
 	int		slot;		/* the catalog entry for this VSN */
-	long long	space;		/* apace from catalog */
+	long long	space;		/* space from catalog */
 	fsize_t		written;	/* amount of data written to disk VSN */
 	vsn_t		vsn;		/* volume serial name */
 	ushort_t			/* flags */
