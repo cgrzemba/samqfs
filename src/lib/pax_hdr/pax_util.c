@@ -55,7 +55,7 @@ strtosize_t(
 	*result = strtoull(str, &end, base);
 	max = ULONGLONG_MAX;
 #else
-#error couldn't figure out the sizeof (size_t)
+#error could not figure out the sizeof (size_t)
 #endif
 	if (*result == max) {
 		if (errno == ERANGE) {

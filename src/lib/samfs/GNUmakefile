@@ -85,7 +85,7 @@ $(OBJ_DIR)/dev_log.o: $(OBJ_DIR)/dev_logmsgs dev_log.c
 
 $(OBJ_DIR)/dev_logmsgs: dev_log.msg dev_logmsg.awk
 	rm -f $(OBJ_DIR)/dev_logmsgs
-	/usr/bin/sed -e'/^$$ */d' -e's/ /|/' -e'/^$$/d'  dev_log.msg | /usr/bin/nawk -f dev_logmsg.awk >$(OBJ_DIR)/dev_logmsgs
+	/usr/bin/sed -e'/^$$ */d' -e's/ /|/' -e'/^$$/d'  dev_log.msg | /usr/xpg4/bin/awk -f dev_logmsg.awk >$(OBJ_DIR)/dev_logmsgs
 	chmod -w $(OBJ_DIR)/dev_logmsgs
 
 include $(DEPTH)/mk/depend.mk

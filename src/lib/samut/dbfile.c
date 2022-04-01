@@ -630,13 +630,15 @@ setupEnv(
 	flags = DB_INIT_MPOOL | DB_INIT_CDB;
 	ret = dbenv->open(dbenv, homedir, flags, 0);
 	if (ret != 0) {
-		dbenv->err(dbenv, ret, "environment open, will try to create: %s", homedir);
+		 Trace(TR_MISC, "environment open, will try to create: %s", homedir);
 		flags |= DB_CREATE;
 		ret = dbenv->open(dbenv, homedir, flags, 0);
 		if (ret != 0) {
-			dbenv->err(dbenv, ret, "environment open for create: %s", homedir);
+			dbenv->err(dbenv, ret, "could not environment open for create: %s", homedir);
 			dbenv->close(dbenv, 0);
 			return (NULL);
+		} else {
+			Trace(TR_MISC, "succesfully environment opened: %s", homedir);
 		}
 	}
 	return (dbenv);

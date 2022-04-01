@@ -191,6 +191,7 @@ manage_list(
 			mutex_unlock(&library->list_mutex);
 
 			/* entry is off the list and ready to process */
+			ETRACE((LOG_NOTICE, "LbCurr %#x type %d", current, current->type ));
 			switch (current->type) {
 			case EVENT_TYPE_INTERNAL:
 				switch (current->request.internal.command) {
@@ -222,6 +223,7 @@ manage_list(
 				break;
 
 			case EVENT_TYPE_MESS:	/* came off the message queue */
+				ETRACE((LOG_NOTICE, "LbCurr %#x mess type %d", current, current->request.message.command));
 				if (current->request.message.magic !=
 				    MESSAGE_MAGIC) {
 					sam_syslog(LOG_INFO,
@@ -322,8 +324,8 @@ manage_list(
 					break;
 
 				case MESS_CMD_AUDIT:
-		if (start_audit(library, current,
-		    current->request.message.param.audit_request.slot)) {
+					if (start_audit(library, current,
+		    				current->request.message.param.audit_request.slot)) {
 						/*
 						 * unable to find resources,
 						 * delay request and try later.
@@ -451,10 +453,10 @@ manage_list(
 					 * This request runs as a thread.
 					 */
 					if (IS_GENERIC_API(library->un->type)) {
-				sam_syslog(LOG_ERR,
-				    "%s: Unknown robot command %d.", ent_pnt,
-				    current->request.message.command);
-				disp_of_event(library, current, EBADF);
+						sam_syslog(LOG_ERR,
+				    		"%s: Unknown robot command %d.", ent_pnt,
+				    		current->request.message.command);
+						disp_of_event(library, current, EBADF);
 					} else {
 						start_thread_cmd(library,
 						    current, move_request);
