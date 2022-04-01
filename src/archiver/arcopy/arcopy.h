@@ -147,7 +147,7 @@ void SetTimeout(enum Timeouts to);
 
 /* checksum.c */
 void ChecksumInit(uchar_t algo);
-void ChecksumData(char *data, int numBytes);
+void ChecksumData(char *data, ssize_t numBytes);
 void ChecksumWait(void);
 
 /* copyfile.c */
@@ -155,10 +155,10 @@ void AdvanceIn(int count);
 void CopyFile(void);
 void CopyFileReconfig(void);
 void EndArchiveFile(int firstFile);
-void RoundBuffer(int nbytes);
-char *WaitRoom(int count);
+void RoundBuffer(ssize_t nbytes);
+char *WaitRoom(ssize_t count);
 void *WriteBuffer(void *);
-void WriteData(void *buf, int count);
+void WriteData(void *buf, ssize_t count);
 void WriteInit(struct Threads *th);
 char *GetBufFirst(void);
 char *GetBufLast(void);
@@ -198,7 +198,7 @@ void BuildHeader(char *name, int name_l, struct sam_stat *st);
 void RmBeginArchiveFile(void);
 void RmEndArchiveFile(int firstFile);
 void RmInit(void);
-int RmWrite(int fd, void *buf, size_t nbytes);
+ssize_t RmWrite(int fd, void *buf, size_t nbytes);
 int RmWriteError(void);
 
 /* setarch.c */

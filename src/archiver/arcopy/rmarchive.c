@@ -255,7 +255,7 @@ retry:
 /*
  * Write to removable media.
  */
-int
+ssize_t
 RmWrite(
 	int fd,
 	void *buf,
@@ -342,6 +342,7 @@ RmWrite(
 #endif /* defined(DEBUG) */
 
 	bytesWritten = write(fd, buf, nbytes);
+	Trace(TR_DEBUG, "RmWrite: fd %d buf %#x size %d written %d", fd, buf, nbytes, bytesWritten);
 	if (bytesWritten == nbytes) {
 		if (maybeEOM) {
 			maybeEOM = FALSE;

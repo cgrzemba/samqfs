@@ -165,10 +165,12 @@ CopyFiles(void)
 	if (rval != 0) {
 		LibFatal(pthread_create, "ArchiveRead");
 	}
+	Trace(TR_DEBUG, "thread ArchiveRead: %lld", tid);
 	rval = pthread_create(&tid, NULL, DoubleBuffer, NULL);
 	if (rval != 0) {
 		LibFatal(pthread_create, "DoubleBuffer");
 	}
+	Trace(TR_DEBUG, "thread DoubleBuffer: %lld", tid);
 
 	for (;;) {
 
@@ -230,7 +232,7 @@ CopyFiles(void)
 		/* If shutdown requested exit loop. */
 		if (IF_SHUTDOWN(Instance)) {
 			Trace(TR_PROC, "Shutdown instance: 0x%x first: 0x%x",
-			    (int)Instance, (int)Instance->ci_first);
+			    (size_t)Instance, (size_t)Instance->ci_first);
 			PthreadMutexUnlock(&Instance->ci_requestMutex);
 			break;
 		}
@@ -262,7 +264,7 @@ CopyFiles(void)
 		}
 
 		Trace(TR_QUEUE, "Got request: '%s.%d' 0x%x",
-		    Request->cr_vsn, Request->cr_seqnum, (int)Request);
+		    Request->cr_vsn, Request->cr_seqnum, (size_t)Request);
 
 		/* Generate path name and map in the stream. */
 		(void) sprintf(fullpath, "%s/%s.%d",

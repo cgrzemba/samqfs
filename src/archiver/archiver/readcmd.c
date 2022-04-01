@@ -165,7 +165,7 @@ static int *vsnDescs;			/* Array of VSN descriptors */
 static int vsnDescsNumof;
 static int copy;			/* Current copy */
 static int errors;
-static int linenum;
+static long linenum;
 
 static struct FileProps *globalProps;	/* For the global values */
 static struct FileProps *fpt;		/* For the current file system */
@@ -1283,7 +1283,7 @@ defineArchset(
 		if (propsMatch(&fpt->FpEntry[i], fpDef)) {
 			/* File properties duplicate those in line %d */
 			ReadCfgError(CustMsg(4458),
-			    (int)fpt->FpEntry[i].FpLineno);
+			    (long)fpt->FpEntry[i].FpLineno);
 		}
 	}
 	addFileProps();

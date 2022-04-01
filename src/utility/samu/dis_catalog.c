@@ -782,8 +782,8 @@ KeyCatalog(
 static int
 samu_get_space_percent(struct CatalogEntry *cv)
 {
-	uint_t c = cv->CeCapacity;
-	uint_t s = cv->CeSpace;
+	uint64_t c = cv->CeCapacity;
+	uint64_t s = cv->CeSpace;
 	double p;
 
 #ifdef ajm

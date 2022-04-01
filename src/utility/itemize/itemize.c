@@ -502,8 +502,8 @@ int
 CatSpacePercent(struct CatalogEntry *ce)
 {
 	double p;
-	uint_t c = ce->CeCapacity;
-	uint_t s = ce->CeSpace;
+	uint64_t c = ce->CeCapacity;
+	uint64_t s = ce->CeSpace;
 
 	if (is_optical(sam_atomedia(ce->CeMtype))) {
 		c = 2*ce->m.CePtocFwa - ce->CeCapacity;

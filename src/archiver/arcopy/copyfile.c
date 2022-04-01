@@ -114,7 +114,7 @@ static void copyRmMedia(struct sam_disk_inode *dp);
 static void copyRegular(struct sam_disk_inode *dp);
 static void copySegment(struct sam_disk_inode *dp);
 static void wakeup(void);
-static boolean_t writeBlock(int nbytes);
+static boolean_t writeBlock(size_t nbytes);
 static void writeStop(void);
 
 
@@ -669,18 +669,18 @@ EndArchiveFile(
  */
 void
 RoundBuffer(
-	int nbytes)	/* Number of bytes to be rounded */
+	ssize_t nbytes)	/* Number of bytes to be rounded */
 {
-	int	excess;
+	size_t	excess;
 
 	excess = fileOffset % nbytes;
 	if (excess != 0) {
-		int	rem;
+		ssize_t	rem;
 
 		rem = nbytes - excess;
 		while (rem > 0) {
 			char	*p;
-			int	n;
+			size_t	n;
 
 			n = rem;
 			p = WaitRoom(n);
@@ -701,12 +701,12 @@ RoundBuffer(
  */
 char *
 WaitRoom(
-	int nbytes)	/* Room required in buffer */
+	ssize_t nbytes)	/* Room required in buffer */
 {
 	PthreadMutexLock(&bufLock);
 	PthreadMutexUnlock(&bufInuse);
 	for (;;) {
-		int	n;
+		ssize_t	n;
 
 		n = bufOut - bufIn;
 		if (n <= 0) {
@@ -734,7 +734,7 @@ WaitRoom(
 void
 WriteData(
 	void *buf_a,	/* Start of data */
-	int nbytes)	/* Number of bytes to write */
+	ssize_t nbytes)	/* Number of bytes to write */
 {
 	char	*buf;
 
@@ -742,7 +742,7 @@ WriteData(
 
 	while (nbytes > 0) {
 		char	*p;
-		int	n;
+		size_t	n;
 
 		/* ReadCount bytes will fit in the buffer. */
 		n = nbytes;
@@ -943,12 +943,12 @@ copyRegular(
 	while (size > 0) {
 		boolean_t dataRead;
 		char	*p;
-		int	l;
-		int	n;
+		ssize_t	l;
+		ssize_t	n;
 
 		l = ReadCount;
 		if (size < l) {
-			l = (int)size;
+			l = size;
 		}
 		p = WaitRoom(l);
 		if ((bufIn + l) > bufSize) {
@@ -1101,9 +1101,9 @@ copySegment(
  */
 static boolean_t	/* TRUE if a successful write */
 writeBlock(
-	int nbytes)
+	size_t nbytes)
 {
-	int	bytesWritten;
+	ssize_t	bytesWritten;
 	void	*buf;
 
 	buf = bufFirst + bufOut;

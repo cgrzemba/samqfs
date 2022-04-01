@@ -74,7 +74,7 @@ typedef struct checksumInfo {		/* checksum context */
 	csum_func	func;		/* function */
 
 	char		*data;		/* data in buffer to checksum */
-	int		numBytes;	/* number of bytes in buffer */
+	offset_t	numBytes;	/* number of bytes in buffer */
 } checksumInfo_t;
 
 /* Private data. */
@@ -138,7 +138,7 @@ ChecksumInit(
 void
 ChecksumData(
 	char *data,
-	int numBytes
+	ssize_t numBytes
 )
 {
 
@@ -192,7 +192,7 @@ checksumWorker(
 		}
 
 		Trace(TR_DEBUG, "[%s] Checksumming data: 0x%x bytes: %d",
-		    File->f->FiName, (int)checksum->data, checksum->numBytes);
+		    File->f->FiName, (long)checksum->data, checksum->numBytes);
 
 		PthreadMutexUnlock(&checksum->mutex);
 
