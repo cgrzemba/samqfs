@@ -77,7 +77,7 @@ static int samd_stop(ctx_t *);
 static int samd_config(ctx_t *);
 static int samd_start(ctx_t *);
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 
 /* forward declarations */

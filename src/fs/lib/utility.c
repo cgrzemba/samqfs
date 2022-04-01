@@ -87,7 +87,7 @@ static struct {
 	int moves;
 } d_cache_stats = {0, 0, 0, 0, 0};
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 static int write_obj_sblk(struct sam_sblk *sbp, struct devlist *dp, int ord);
 static int write_blk_sblk(struct sam_sblk *sbp, struct devlist *dp, int ord);

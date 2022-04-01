@@ -81,7 +81,7 @@ static char *_SrcFile = __FILE__;
 #include "server.h"
 #endif	/* METADATA_SERVER */
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 extern struct shfs_config config;
 extern int byte_swap_sb(struct sam_sblk *sblk, size_t len);
