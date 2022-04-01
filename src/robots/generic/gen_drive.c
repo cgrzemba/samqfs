@@ -332,6 +332,7 @@ audit(
 				}
 			}
 		}
+		DevLog(DL_DETAIL(3215), un->capacity,  un->space);
 		UpdateCatalog(un, 0, CatalogVolumeLoaded);
 
 		/*
@@ -818,7 +819,7 @@ clean(
 				} else {
 					if (api_valid_error(
 					    drive->library->un->type,
-					    d_errno, drive->library->un))
+					    d_errno, drive->library->un)) {
 						if (drive->library->un->slot !=
 						    ROBOT_NO_SLOT) {
 						DevLog(DL_ERR(6001),
@@ -834,6 +835,7 @@ clean(
 						    library->un->type,
 						    d_errno));
 						}
+					}
 				}
 				if (ret == API_ERR_DL)
 					down_library(library, SAM_STATE_CHANGE);

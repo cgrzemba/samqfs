@@ -163,7 +163,7 @@ init_elements(
 	avail_drives = count;
 	drv_tbl = malloc_wait(count, 2, 0);
 	(void) memset(drv_tbl, TRUE, count);
-	if (DT_IBM3584 == un->type)
+	if (DT_IBM3584 == un->type) {
 		if ((avail_drives =
 		    (uint16_t)populate_drives(library, drv_tbl)) == 0) {
 			/*
@@ -175,6 +175,7 @@ init_elements(
 		} else if (avail_drives > count) {
 			avail_drives = count;
 		}
+	}
 	DevLog(DL_DETAIL(5362), avail_drives);
 
 	/* one for the drive, one for stage and one for the stage helper */
@@ -835,21 +836,21 @@ update_element_status(
 					    extension != NULL) {
 						dtb(&(extension->PVolTag[0]),
 						    BARCODE_LEN);
-					if (is_barcode(extension->PVolTag)) {
-						status |= CES_bar_code;
+						if (is_barcode(extension->PVolTag)) {
+							status |= CES_bar_code;
+						}
+						if (status_page->AVol &&
+					    	(extension->AVolTag[0] != '\0')) {
+							dtb(&(extension->AVolTag[0]),
+							    BARCODE_LEN);
+						}
 					}
-					if (status_page->AVol &&
-					    (extension->AVolTag != '\0')) {
-						dtb(&(extension->AVolTag[0]),
-						    BARCODE_LEN);
-					}
-					}
-					}
-					}
+				}
+				}
 				if ((storage_descrip->full) &&
 				    (extension != NULL) &&
 				    (status_page->PVol) &&
-				    (extension->PVolTag != '\0')) {
+				    (extension->PVolTag[0] != '\0')) {
 					(void) CatalogSlotInit(&vid, status,
 					    (library->status.b.two_sided) ?
 					    2 : 0,
@@ -1194,11 +1195,11 @@ lib_mode_sense(
 			    library->scsi_err_tab, 0);
 			if (scsi_action == LONG_WAIT_LOG) {
 				sleep(WAIT_TIME_FOR_LONG_WAIT_LOG);
-			} else if (scsi_action = WAIT_READY_LONG) {
+			} else if (scsi_action == WAIT_READY_LONG) {
 				sleep(2 * WAIT_TIME_FOR_READY);
-			} else if (scsi_action = WAIT_READY) {
+			} else if (scsi_action == WAIT_READY) {
 				sleep(WAIT_TIME_FOR_READY);
-			} else if (scsi_action = DOWN_EQU) {
+			} else if (scsi_action == DOWN_EQU) {
 				down_library(library, SAM_STATE_CHANGE);
 				scsi_error = TRUE;
 				break;

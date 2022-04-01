@@ -403,7 +403,7 @@ clear_drive(drive)
 					slot = ce->CeSlot;
 				}
 			} else {
-				if (&held_vsn[0] != '\0') {
+				if (held_vsn[0] != '\0') {
 					ce = CatalogGetCeByMedia(
 							sam_mediatoa(un->type),
 							held_vsn, &ced);

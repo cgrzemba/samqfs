@@ -291,7 +291,7 @@ process_452_export(
 			 * drive
 			 */
 			ce = CatalogGetCeByLoc(library->un->eq, slot, 0, &ced);
-			if (ce = NULL)
+			if (ce == NULL)
 				continue;
 			if (ce->CeStatus & CES_inuse)
 				if (ce->CeStatus & CES_occupied) {
@@ -894,7 +894,7 @@ lock_and_status_adic(
 	sleep(3);
 	mutex_lock(&library->un->io_mutex);
 	while (retry--) {
-		memset(sense, 0, sizeof (sam_extended_sense_t *));
+		memset(sense, 0, sizeof (sam_extended_sense_t));
 		TAPEALERT(library->open_fd, library->un);
 		err = scsi_cmd(library->open_fd, library->un,
 		    SCMD_DOORLOCK, 0, LOCK);

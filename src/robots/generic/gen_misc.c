@@ -210,6 +210,8 @@ sam2aci_type(
 		aci_media = 0;
 	}
 	return ((int)aci_media);
+#else
+	return 0;
 #endif
 }
 

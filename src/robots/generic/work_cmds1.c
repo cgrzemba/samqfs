@@ -394,7 +394,7 @@ export_request(
 	library_t *library,
 	robo_event_t *event)
 {
-	robo_event_t 	*end;
+	robo_event_t 	*end = NULL;
 	iport_state_t 	*import = library->import;
 
 	set_media_default(&(event->request.message.param.export_request.media));
