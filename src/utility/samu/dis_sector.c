@@ -65,7 +65,7 @@
 /* Types. */
 enum Sdis { Sraw, Sinode, Sarchive, Slabel, Ssblk, Sauto, Smax };
 
-extern char *getfullrawname();
+extern char *getfullrawname(char *);
 
 /* Private functions. */
 static void dis_sblk(struct sam_sblk *sblock);
