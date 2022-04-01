@@ -293,7 +293,7 @@ struct sam_ioctl_dev {
  */
 
 /* Panic machine. */
-struct sam_ioctl_panic {
+typedef struct sam_ioctl_panic {
 	int64_t param1;		/* Information parameter 1 */
 	int64_t param2;		/* Information parameter 2 */
 } sam_ioctl_panic_t;

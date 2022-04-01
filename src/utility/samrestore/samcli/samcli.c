@@ -34,6 +34,10 @@
 #include "samcli.h"
 #include <pub/mgmt/error.h>
 #include <unistd.h>
+#include "aml/shm.h"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 /* Macro to refer to an integer on a list */
 #define	LISTINT(X) (*((int *)(X)))

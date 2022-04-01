@@ -51,6 +51,10 @@
 #include "pub/mgmt/task_schedule.h"
 #include "pub/mgmt/restore.h"
 #include "mgmt/util.h"
+#include "aml/shm.h"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 

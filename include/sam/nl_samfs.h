@@ -51,6 +51,6 @@
 
 #define	SET 1
 
-nl_catd catfd;
+DCL nl_catd catfd IVAL(NULL);
 
 #endif /* _SAM_NL_SAMFS_H */

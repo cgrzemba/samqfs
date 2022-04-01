@@ -51,6 +51,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "sam/types.h"
 #include "sam/nl_samfs.h"
 #include "sam/custmsg.h"
 

@@ -80,7 +80,7 @@ int virtual_shared_check(library_t *library);
 pid_t mypid;
 char *fifo_path;
 thread_t threads[IBM_MAIN_THREADS]; /* my main threads */
-shm_alloc_t master_shm, preview_shm;
+static shm_alloc_t master_shm, preview_shm;
 const char *program_name = "ibm3494";
 int initialized = 0;
 extern void common_init(dev_ent_t *un);

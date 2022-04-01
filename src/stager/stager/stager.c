@@ -174,7 +174,7 @@ static pthread_mutex_t copyInstanceMutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * SAM-FS shared memory segment.
  */
-shm_alloc_t 	master_shm;
+shm_alloc_t 	master_shm, preview_shm;
 shm_ptr_tbl_t	*shm_ptr_tbl = NULL;
 
 /*

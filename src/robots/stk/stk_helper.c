@@ -70,6 +70,7 @@ int parse_drives(int *, DRIVEID drive_ids[MAX_ID], dev_ent_t *);
 /* globals */
 char *program_name;
 shm_alloc_t master_shm;
+shm_alloc_t preview_shm;
 dev_ptr_tbl_t *dev_ptr_tbl;
 shm_ptr_tbl_t *shm_ptr_tbl;
 

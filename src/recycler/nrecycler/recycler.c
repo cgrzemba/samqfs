@@ -76,12 +76,12 @@ static char *_SrcFile = __FILE__;
 
 char *program_name = "sam-nrecycler";
 
-shm_alloc_t master_shm;
+shm_alloc_t master_shm, preview_shm;
 shm_ptr_tbl_t *shm_ptr_tbl = NULL;
 boolean_t CannotRecycle = B_FALSE;
 boolean_t RegenDatfiles = B_FALSE;
 boolean_t InfiniteLoop = B_TRUE;
-MediaTable_t ArchMedia = { NULL, 0, 0, 0, NULL, NULL, 0, 0, 0, 0 };
+MediaTable_t ArchMedia = { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static boolean_t ignoreRecycle = B_FALSE;
 /* LINTED static unused */
@@ -103,7 +103,7 @@ static void startRecyclerScript(MediaEntry_t *vsn);
 static void detectAnotherRecycler();
 static void usage();
 
-void
+int
 main(
 	int argc,
 	char **argv)

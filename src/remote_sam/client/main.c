@@ -72,7 +72,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #endif /* defined(lint) */
 
 /* Globals */
-shm_alloc_t master_shm;
+shm_alloc_t master_shm, preview_shm;
+
 char *program_name;
 
 /* Function prototypes */

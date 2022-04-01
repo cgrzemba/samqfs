@@ -290,8 +290,9 @@ struct ArchSetFileHdr {
 	int		VsnPoolTable;	/* Offset to VSN pool table */
 	int		VsnPoolSize;
 	int		AsMediaParams;	/* Offset to mmedia parameters */
-} *ArchSetFile;
+} ;
 
+DCL struct ArchSetFileHdr *ArchSetFile;
 
 /*
  * Vsn expression.

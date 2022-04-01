@@ -47,7 +47,7 @@
 #include "mgmt/util.h"
 #include "sam/types.h"
 #include "mgmt/config/rpc_secure_cfg.h"
-
+#include "aml/shm.h"
 /*
  * This program provides options to add remove and list clients that can
  * manage this SAM-FS/QFS server
@@ -67,6 +67,9 @@
 #define	LIST "list"
 
 #define	USAGE "%s ["ADD" <host1 ...> | remove <host1 ...> |"LIST"]"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 int add_clients(sqm_lst_t *lst_client);
 int remove_clients(sqm_lst_t *lst_client);

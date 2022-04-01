@@ -78,7 +78,10 @@
 /* SAM-FS headers.  */
 #include "aml/parsecmd.h"
 #include "aml/errorlog.h"
+#define DEC_INIT
+#include "sam/types.h"
 #include "sam/nl_samfs.h"
+#undef DEC_INIT
 #include "sam/lib.h"
 
 #define	BASE_10    10
@@ -113,7 +116,7 @@ static int parse_bool(cmd_ent_t *cmd, char *token);
 static int parse_string(cmd_ent_t *cmd, char *token);
 
 
-
+#define PMGC 0x504d4f43
 
 /*
  * parse_init - set program name and logging info to be used for all
@@ -127,7 +130,7 @@ parse_init(char *cmdname, char *program, int errlog, FILE *log)
 	if ((ph = malloc(sizeof (parse_handle_t))) == NULL)
 		return (NULL);
 
-	ph->ph_magic = 'PMGC';
+	ph->ph_magic = PMGC; 
 
 	/*
 	 * Open the command file.
@@ -177,7 +180,7 @@ parse_cmd_file(void *vph, cmd_ent_t *Commands)	/* commands table */
 	parse_handle_t	*ph = (parse_handle_t *)vph;
 	char		*token;
 
-	if (ph->ph_magic != 'PMGC') {
+	if (ph->ph_magic != PMGC) {
 		errno = EBADF;
 		return (-1);
 	}

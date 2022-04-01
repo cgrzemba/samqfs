@@ -49,6 +49,7 @@
 #include <kvm.h>
 
 /* SAM-FS headers. */
+#include "sam/types.h"
 #include "sam/nl_samfs.h"
 #include "sam/custmsg.h"
 

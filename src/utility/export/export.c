@@ -50,6 +50,10 @@
 #include "sam/lib.h"
 #include "sam/lint.h"
 #include "aml/samapi.h"
+#include "aml/shm.h"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 /* Private functions. */
 static void MsgFunc(int code, char *msg);
