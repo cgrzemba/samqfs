@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 BUILD_64BIT ?= yes
 
 #   all is defined here so it is the default.
-.PHONY: all config set_config
+.PHONY: all config set_config install
 ifneq ($(SPARCV9), yes)
 ifneq ($(AMD64), yes)
 all:    info
@@ -73,9 +73,6 @@ include $(DEPTH)/mk/targets.mk
 #   Note that this target needs to be defined prior to including
 #   common.mk to avoid picking up the existing definitions in
 #   CONFIG.mk.
-
-install:
-	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
 
 config: set_config
 
@@ -157,5 +154,8 @@ copyright.clean:
 # or .NOTPARALLEL: for sequential directory builds
 #
 .NOTPARALLEL:
+
+install:
+	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
 
 include $(DEPTH)/mk/depend.mk
