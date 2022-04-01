@@ -90,6 +90,7 @@ main(
 	int	last_slot;
 	int	n;
 	int	version;		/* Catalog file version number */
+	time_t	audit_time;
 
 	program_name = *argv;
 
@@ -150,8 +151,9 @@ main(
 	 */
 	ch = mp;
 
+        audit_time = ch->ChAuditTime;
 	/* ctime adds \n */
-	printf("# audit_time %s", ctime(&ch->ChAuditTime));
+	printf("# audit_time %s", ctime(&audit_time));
 	printf("# version %d  count %d mediatype %s\n",
 	    ch->ChVersion, ch->ChNumofEntries, ch->ChMediaType);
 
