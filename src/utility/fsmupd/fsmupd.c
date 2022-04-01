@@ -33,6 +33,10 @@
 #include <stdio.h>
 #include "pub/mgmt/task_schedule.h"
 #include "mgmt/config/common.h"
+#include "aml/shm.h"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 /*
  *  fsmupd

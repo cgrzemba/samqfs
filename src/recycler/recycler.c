@@ -84,6 +84,7 @@ char	*ctime_r(const time_t *clock, char *buf, int buflen);
 #undef  DEC_INIT	/* have the sam remote functions declared. */
 #include "sam/lint.h"
 #include "aml/diskvols.h"
+#include "aml/shm.h"
 
 #define	MAIN
 #include "sam/nl_samfs.h"
@@ -94,6 +95,7 @@ char	*ctime_r(const time_t *clock, char *buf, int buflen);
 
 /* global data */
 
+shm_alloc_t              master_shm, preview_shm;
 int VSNs_in_robot;	/* flag indicating if we are scanning a catalog(1), */
 			/* or a filesystem's .inodes file(0), so that we */
 			/* can flag the VSN_table entry */
@@ -167,7 +169,7 @@ static int  getMinGain(ROBOT_TABLE *robot, VSN_TABLE *vsn);
 static boolean_t found_dk_candidate(ROBOT_TABLE *robot,
 	VSN_TABLE *vsn, FILE *mail_file);
 
-void
+int
 main(
 	int argc,	/* Number of arguments */
 	char **argv)	/* Argument pointer list */

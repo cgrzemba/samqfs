@@ -73,6 +73,10 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/nl_samfs.h"
 #include "sam/custmsg.h"
 #include "sam/lint.h"
+#include "aml/shm.h"
+
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
 
 /* Private data. */
 static dtype_t  type;		/* Requested media type */

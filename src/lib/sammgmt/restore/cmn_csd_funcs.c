@@ -32,7 +32,10 @@
 
 
 #include <errno.h>
+#define DEC_INIT
 #include <sam/types.h>
+#include <sam/nl_samfs.h>
+#undef DEC_INIT
 #include <pub/rminfo.h>
 #include <sam/fs/ino.h>
 #include <stdio.h>
@@ -44,7 +47,6 @@
 #include <fcntl.h>
 #include <zlib.h>
 #include <sam/fs/dirent.h>
-#include <sam/nl_samfs.h>
 #include <sam/fs/bswap.h>
 #include <sys/acl.h>
 

@@ -72,6 +72,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "aml/catalog.h"
 #include "aml/catlib.h"
 #include "aml/diskvols.h"
+#include "aml/shm.h"
 
 /* Local headers. */
 #include "threads.h"
@@ -90,6 +91,9 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 /* Macros. */
 #define	STAGE_WAIT TRUE
 #define	STAGE_NOWAIT FALSE
+
+/* globals */
+shm_alloc_t              preview_shm;
 
 /* Private data. */
 

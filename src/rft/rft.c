@@ -77,7 +77,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/lint.h"
 #endif /* defined(lint) */
 
-
 /*
  * Message catalog descriptor.
  */
@@ -106,7 +105,7 @@ int Shutdown = 0;
 /*
  * SAM-FS shared memory segment.
  */
-shm_alloc_t		master_shm;
+shm_alloc_t		master_shm, preview_shm;
 shm_ptr_tbl_t	*shm_ptr_tbl;
 
 /* Private data. */

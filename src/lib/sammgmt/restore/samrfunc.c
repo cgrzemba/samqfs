@@ -82,6 +82,7 @@ set_snap_lock_state(char *snapname, boolean_t lock);
 uint64_t restore_max;		/* Total number of files to restore */
 uint64_t restore_cur;		/* Current number of files restored */
 
+pthread_attr_t           samr_pth_attr;
 pthread_mutex_t search_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */

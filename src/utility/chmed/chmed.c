@@ -71,7 +71,7 @@ static void usage_help(void);
 
 /* Public data. */
 char *program_name = "chmed";
-shm_alloc_t master_shm;
+shm_alloc_t master_shm, preview_shm;
 shm_ptr_tbl_t *master_shm_ptr;
 
 int
