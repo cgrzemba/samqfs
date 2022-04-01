@@ -94,7 +94,7 @@ clear_drive(drive)
 	vsn_t	   held_vsn;
 
 	good_addr = FALSE;
-	mid = ROBOT_NO_SLOT;
+	mid = ROBOT_NO_SLOT_L;
 
 	SANITY_CHECK(drive != (drive_state_t *)0);
 	un = drive->un;
@@ -212,7 +212,7 @@ clear_drive(drive)
 					if (api_valid_error(
 					    drive->library->un->type,
 						d_errno, drive->library->un)) {
-						if (un->slot != ROBOT_NO_SLOT) {
+						if (un->slot != ROBOT_NO_SLOT_L) {
 						DevLog(DL_DEBUG(6001),
 							un->slot, tag,
 							d_errno, d_errno,
@@ -248,7 +248,7 @@ clear_drive(drive)
 
 		if (d_errno != EOK) {
 
-			if (un->slot != ROBOT_NO_SLOT) {
+			if (un->slot != ROBOT_NO_SLOT_L) {
 				DevLog(DL_ERR(6003), un->slot);
 			} else {
 				DevLog(DL_ERR(6044));
@@ -268,7 +268,7 @@ clear_drive(drive)
 			}
 			if (api_valid_error(drive->library->un->type,
 			    d_errno, drive->library->un)) {
-				if (un->slot != ROBOT_NO_SLOT) {
+				if (un->slot != ROBOT_NO_SLOT_L) {
 				DevLog(DL_ERR(6001), un->slot, tag,
 				    d_errno, d_errno, api_return_message(
 				    drive->library->un->type, d_errno));
@@ -300,8 +300,8 @@ clear_drive(drive)
 
 		mutex_lock(&un->mutex);
 		memset(&un->vsn, 0, sizeof (vsn_t));
-		un->slot = ROBOT_NO_SLOT;
-		un->mid = ROBOT_NO_SLOT;
+		un->slot = ROBOT_NO_SLOT_L;
+		un->mid = ROBOT_NO_SLOT_L;
 		un->status.bits = ((un->status.bits & DVST_CLEANING) |
 							    DVST_PRESENT);
 		un->status.bits &= ~DVST_REQUESTED;
@@ -319,7 +319,7 @@ clear_drive(drive)
 		drive->aci_drive_entry->volser[0] = '\0';
 		clear_driver_idle(drive, drive->open_fd);
 
-		if (un->slot != ROBOT_NO_SLOT) {
+		if (un->slot != ROBOT_NO_SLOT_L) {
 			DevLog(DL_ALL(3236), held_vsn, un->slot);
 		} else {
 			DevLog(DL_ALL(3248), held_vsn);
@@ -330,10 +330,10 @@ clear_drive(drive)
 
 	} else {		/* Not a GRAU */
 
-		if (un->slot != (unsigned)ROBOT_NO_SLOT) {
+		if (un->slot != (unsigned)ROBOT_NO_SLOT_L) {
 			slot = un->slot;
 		} else {
-			slot = ROBOT_NO_SLOT;
+			slot = ROBOT_NO_SLOT_L;
 		}
 
 		if (!drive->status.b.valid) {
@@ -392,7 +392,7 @@ clear_drive(drive)
 
 			drive->status.b.d_st_invert = FALSE;
 
-			slot = ROBOT_NO_SLOT;
+			slot = ROBOT_NO_SLOT_L;
 
 			if (drive->status.b.bar_code) {
 				ce = CatalogGetCeByBarCode(
@@ -403,7 +403,7 @@ clear_drive(drive)
 					slot = ce->CeSlot;
 				}
 			} else {
-				if (&held_vsn[0] != '\0') {
+				if (held_vsn[0] != '\0') {
 					ce = CatalogGetCeByMedia(
 							sam_mediatoa(un->type),
 							held_vsn, &ced);
@@ -413,7 +413,7 @@ clear_drive(drive)
 				}
 			}
 
-			if (slot != ROBOT_NO_SLOT) {
+			if (slot != ROBOT_NO_SLOT_L) {
 
 				mutex_lock(&un->mutex);
 				un->slot = slot;
@@ -426,7 +426,7 @@ clear_drive(drive)
 			} else { /* slot == ROBOT_NO_SLOT */
 
 				if ((slot = FindFreeSlot(drive->library)) ==
-							ROBOT_NO_SLOT) {
+							ROBOT_NO_SLOT_L) {
 				char *dc_mess = un->dis_mes[DIS_MES_CRIT];
 
 					memccpy(dc_mess,
@@ -450,7 +450,7 @@ clear_drive(drive)
 
 				un->mid = mid;
 				un->slot = slot;
-				un->flip_mid = ROBOT_NO_SLOT;
+				un->flip_mid = ROBOT_NO_SLOT_L;
 
 				mutex_unlock(&un->mutex);
 
@@ -471,7 +471,7 @@ clear_drive(drive)
 					drive->media_element, 0, move_flags)) {
 				char	   *dc_mess = un->dis_mes[DIS_MES_CRIT];
 
-				if (un->slot != ROBOT_NO_SLOT) {
+				if (un->slot != ROBOT_NO_SLOT_L) {
 					/*
 					 * Log error message include slot
 					 * number for diagnostic purposes.
@@ -555,9 +555,9 @@ clear_drive(drive)
 				mutex_lock(&un->mutex);
 
 				un->status.bits &= ~DVST_REQUESTED;
-				un->flip_mid = ROBOT_NO_SLOT;
+				un->flip_mid = ROBOT_NO_SLOT_L;
 				un->mid = un->flip_mid;
-				un->slot = ROBOT_NO_SLOT;
+				un->slot = ROBOT_NO_SLOT_L;
 				un->status.bits = (DVST_PRESENT |
 					(un->status.bits & DVST_CLEANING));
 
@@ -609,7 +609,7 @@ clear_drive(drive)
 			 * known, and available, otherwise, omit slot number
 			 * from error message.
 			 */
-			if (slot != ROBOT_NO_SLOT) {
+			if (slot != ROBOT_NO_SLOT_L) {
 				DevLog(DL_ERR(5126), slot);
 			} else {
 				DevLog(DL_ERR(5358));
@@ -635,9 +635,9 @@ clear_drive(drive)
 		CatalogVolumeUnloaded(&un->i, (char *)drive->bar_code);
 
 		mutex_lock(&un->mutex);
-		un->flip_mid = ROBOT_NO_SLOT;
+		un->flip_mid = ROBOT_NO_SLOT_L;
 		un->mid = un->flip_mid;
-		un->slot = ROBOT_NO_SLOT;
+		un->slot = ROBOT_NO_SLOT_L;
 		un->status.bits &= ~DVST_REQUESTED;
 		un->label_time = 0;
 		memset(&un->vsn, 0, sizeof (vsn_t));
@@ -648,7 +648,7 @@ clear_drive(drive)
 		drive->status.b.bar_code = FALSE;
 		memset(drive->bar_code, 0, BARCODE_LEN);
 
-		if (slot != ROBOT_NO_SLOT) {
+		if (slot != ROBOT_NO_SLOT_L) {
 			DevLog(DL_ALL(3236), held_vsn, slot);
 		} else {
 			DevLog(DL_ALL(3248), held_vsn);
@@ -794,7 +794,7 @@ int
 		}
 	}
 	/* Put it in an empty slot and set the audit needed bit */
-	if ((slot = FindFreeSlot(library)) == ROBOT_NO_SLOT) {
+	if ((slot = FindFreeSlot(library)) == ROBOT_NO_SLOT_L) {
 		char	   *lc_mess = library->un->dis_mes[DIS_MES_CRIT];
 
 		memccpy(lc_mess, GetCustMsg(9012), '\0', DIS_MES_LEN);
@@ -908,13 +908,13 @@ clear_import(
 	ce = CatalogGetCeByLoc(library->un->eq, slot, 0, &ced);
 
 	if ((un->status.b.audit) || !good_addr ||
-	    (slot == (unsigned)ROBOT_NO_SLOT) ||
+	    (slot == (unsigned)ROBOT_NO_SLOT_L) ||
 	    (ce == NULL) ||
 	    !(ce->CeStatus & CES_inuse) ||
 	    (ce->CeStatus & CES_occupied)) {
 		DevLog(DL_DETAIL(5005));
 
-		if ((slot = FindFreeSlot(library)) == ROBOT_NO_SLOT) {
+		if ((slot = FindFreeSlot(library)) == ROBOT_NO_SLOT_L) {
 		char *lc_mess = library->un->dis_mes[DIS_MES_CRIT];
 
 			memccpy(lc_mess, GetCustMsg(9015), '\0', DIS_MES_LEN);

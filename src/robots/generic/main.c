@@ -440,7 +440,7 @@ start_library_audit(
 	new_event->request.message.command = MESS_CMD_AUDIT;
 	/* LINTED constant truncated by assignment */
 	new_event->request.message.magic = (uint_t)MESSAGE_MAGIC;
-	new_event->request.message.param.audit_request.slot = ROBOT_NO_SLOT;
+	new_event->request.message.param.audit_request.slot = ROBOT_NO_SLOT_L;
 
 	mutex_lock(&library->list_mutex);
 	if (library->active_count == 0)	/* any existing stuff */

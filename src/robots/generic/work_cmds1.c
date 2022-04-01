@@ -140,8 +140,8 @@ move_request(
 		disp_of_event(library, event, 0);
 		thr_exit(NULL);
 	}
-	if (source == (unsigned)ROBOT_NO_SLOT ||
-	    dest == (unsigned)ROBOT_NO_SLOT) {
+	if (source == ROBOT_NO_SLOT_L ||
+	    dest == ROBOT_NO_SLOT_L) {
 		DevLog(DL_ERR(5088), source, dest);
 		disp_of_event(library, event, 0);
 		thr_exit(NULL);
@@ -214,14 +214,14 @@ start_audit(
 
 	/* Audit of entire library or just single slot? */
 	if (IS_GENERIC_API(library->un->type) &&
-	    (slot == (unsigned)ROBOT_NO_SLOT)) {
+	    (slot == ROBOT_NO_SLOT_L)) {
 		sam_syslog(LOG_INFO,
 		    catgets(catfd, SET, 9199, "Audit not supported on GRAU."));
 		disp_of_event(library, event, 0);
 		return (0);
 	} else {
 		/* Auditing entire library */
-		if (slot == (unsigned)ROBOT_NO_SLOT) {
+		if (slot == ROBOT_NO_SLOT_L) {
 
 			if (library->un->status.b.audit) {
 				/* already auditing this library */
@@ -255,7 +255,7 @@ start_audit(
 				new_event->request.internal.command =
 				    ROBOT_INTRL_START_AUDIT;
 				new_event->request.internal.slot =
-				    ROBOT_NO_SLOT;
+				    ROBOT_NO_SLOT_L;
 				new_event->type = EVENT_TYPE_INTERNAL;
 				new_event->status.bits = REST_FREEMEM;
 				new_event->request.internal.flags.b.audit_eod =
@@ -394,7 +394,7 @@ export_request(
 	library_t *library,
 	robo_event_t *event)
 {
-	robo_event_t 	*end;
+	robo_event_t 	*end = NULL;
 	iport_state_t 	*import = library->import;
 
 	set_media_default(&(event->request.message.param.export_request.media));

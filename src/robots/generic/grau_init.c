@@ -369,8 +369,8 @@ api_initialize(
 #if defined(DEBUG)
 	memccpy(l_mess, "Initialization complete", '\0', DIS_MES_LEN);
 #endif
+#endif /* !defined(SAM_OPEN_SOURCE) */
 	return (0);
-#endif
 }
 
 
@@ -406,10 +406,10 @@ g__init_drives(
 				drive->un = un;
 				/* hold the lock until ready */
 				mutex_lock(&drive->mutex);
-				drive->un->slot = ROBOT_NO_SLOT;
+				drive->un->slot = ROBOT_NO_SLOT_L;
 				drive->new_slot = ROBOT_NO_SLOT;
-				drive->un->mid = ROBOT_NO_SLOT;
-				drive->un->flip_mid = ROBOT_NO_SLOT;
+				drive->un->mid = ROBOT_NO_SLOT_L;
+				drive->un->flip_mid = ROBOT_NO_SLOT_L;
 				drive->active_count = 1;
 				/*
 				 * Cannot take event from the library free
@@ -695,8 +695,8 @@ query_drive(
 	    drive_state_t *drive,
 	    int *d_errno)
 {
+	int		err = 0;
 #if !defined(SAM_OPEN_SOURCE)
-	int		err;
 	char	   *ent_pnt = "query_drive";
 	char	   *d_mess = drive->un->dis_mes[DIS_MES_NORM];
 	xport_state_t  *transport;
@@ -790,6 +790,6 @@ query_drive(
 	mutex_destroy(&query->mutex);
 	cond_destroy(&query->condit);
 	free(query);
+#endif /* !defined(SAM_OPEN_SOURCE) */
 	return (err);
-#endif
 }

@@ -245,7 +245,7 @@ process_d360_import(
 		}
 		slot = FindFreeSlot(library);
 
-		if (slot == ROBOT_NO_SLOT) {
+		if (slot == ROBOT_NO_SLOT_L) {
 			mutex_lock(&library->un->mutex);
 			library->un->status.b.stor_full = TRUE;
 			mutex_unlock(&library->un->mutex);
@@ -291,7 +291,7 @@ process_452_export(
 			 * drive
 			 */
 			ce = CatalogGetCeByLoc(library->un->eq, slot, 0, &ced);
-			if (ce = NULL)
+			if (ce == NULL)
 				continue;
 			if (ce->CeStatus & CES_inuse)
 				if (ce->CeStatus & CES_occupied) {
@@ -697,7 +697,7 @@ process_multi_import(
 		}
 
 		for (next_iport = iport; next_iport != NULL &&
-		    slot != ROBOT_NO_SLOT;
+		    slot != ROBOT_NO_SLOT_L;
 		    next_iport = next_iport->next) {
 
 			/*
@@ -825,7 +825,7 @@ process_multi_import(
 				}
 				slot = FindFreeSlot(library);
 
-				if (slot == ROBOT_NO_SLOT) {
+				if (slot == ROBOT_NO_SLOT_L) {
 					memccpy(l_mess,
 					    catgets(catfd, SET, 9059,
 					    "import halted, check log"),
@@ -894,7 +894,7 @@ lock_and_status_adic(
 	sleep(3);
 	mutex_lock(&library->un->io_mutex);
 	while (retry--) {
-		memset(sense, 0, sizeof (sam_extended_sense_t *));
+		memset(sense, 0, sizeof (sam_extended_sense_t));
 		TAPEALERT(library->open_fd, library->un);
 		err = scsi_cmd(library->open_fd, library->un,
 		    SCMD_DOORLOCK, 0, LOCK);

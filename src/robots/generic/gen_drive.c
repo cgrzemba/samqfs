@@ -115,7 +115,7 @@ audit(
 	SANITY_CHECK(drive->library->un != drive->un);
 	un = drive->un;
 
-	if ((slot == ROBOT_NO_SLOT) &&
+	if ((slot == ROBOT_NO_SLOT_L) &&
 	    IS_GENERIC_API(drive->library->un->type)) {
 		DevLog(DL_ERR(6004));
 		return;
@@ -148,7 +148,7 @@ audit(
 	un->status.b.ready = FALSE;
 	mutex_unlock(&un->mutex);
 
-	if (slot == ROBOT_NO_SLOT) {
+	if (slot == ROBOT_NO_SLOT_L) {
 		mutex_lock(&drive->library->mutex);
 		drive->library->countdown--;
 		drive->library->drives_auditing++;
@@ -163,7 +163,7 @@ audit(
 	for (;;) {
 
 		mutex_lock(&drive->mutex);
-		if (slot == ROBOT_NO_SLOT) {
+		if (slot == ROBOT_NO_SLOT_L) {
 			/* get the next slot number (s) */
 			mutex_lock(&drive->library->mutex);
 			myslot = drive->library->audit_index;
@@ -213,7 +213,7 @@ audit(
 		    (ce->CeStatus & CES_non_sam)) {
 
 			mutex_unlock(&drive->mutex);
-			if (slot != ROBOT_NO_SLOT) {	/* only one slot */
+			if (slot != ROBOT_NO_SLOT_L) {	/* only one slot */
 				mutex_lock(&un->mutex);
 				un->status.b.requested = FALSE;
 				mutex_unlock(&un->mutex);
@@ -332,6 +332,7 @@ audit(
 				}
 			}
 		}
+		DevLog(DL_DETAIL(3215), un->capacity,  un->space);
 		UpdateCatalog(un, 0, CatalogVolumeLoaded);
 
 		/*
@@ -364,7 +365,7 @@ audit(
 		un->status.b.requested = TRUE;
 		mutex_unlock(&un->mutex);
 
-		if (slot != ROBOT_NO_SLOT) {	/* only one slot */
+		if (slot != ROBOT_NO_SLOT_L) {	/* only one slot */
 			mutex_lock(&un->mutex);
 			un->status.b.requested = FALSE;
 			mutex_unlock(&un->mutex);
@@ -579,7 +580,7 @@ clean(
 					if (api_valid_error(library->un->type,
 					    d_errno, library->un)) {
 				/* Indentation for cstyle */
-				if (library->un->slot != ROBOT_NO_SLOT) {
+				if (library->un->slot != ROBOT_NO_SLOT_L) {
 					DevLog(DL_DEBUG(6001),
 					    library->un->slot, tag, d_errno,
 					    d_errno, api_return_message(
@@ -625,7 +626,7 @@ clean(
 				if (api_valid_error(drive->library->un->type,
 				    d_errno, drive->library->un)) {
 					if (drive->library->un->slot !=
-					    ROBOT_NO_SLOT) {
+					    ROBOT_NO_SLOT_L) {
 						DevLog(DL_ERR(6001),
 						    drive->library->un->slot,
 						    tag, d_errno, d_errno,
@@ -773,7 +774,7 @@ clean(
 						    drive->library->un)) {
 
 						if (drive->library->un->slot !=
-						    ROBOT_NO_SLOT) {
+						    ROBOT_NO_SLOT_L) {
 						DevLog(DL_DEBUG(6001),
 						    drive->library->un->slot,
 						    tag, d_errno, d_errno,
@@ -818,9 +819,9 @@ clean(
 				} else {
 					if (api_valid_error(
 					    drive->library->un->type,
-					    d_errno, drive->library->un))
+					    d_errno, drive->library->un)) {
 						if (drive->library->un->slot !=
-						    ROBOT_NO_SLOT) {
+						    ROBOT_NO_SLOT_L) {
 						DevLog(DL_ERR(6001),
 						    drive->library->un->slot,
 						    tag, d_errno, d_errno,
@@ -834,6 +835,7 @@ clean(
 						    library->un->type,
 						    d_errno));
 						}
+					}
 				}
 				if (ret == API_ERR_DL)
 					down_library(library, SAM_STATE_CHANGE);

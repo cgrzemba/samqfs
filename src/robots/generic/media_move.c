@@ -122,7 +122,7 @@ exchange_media(
 	(void) memset(exchange, 0, sizeof (robo_event_t));
 
 	params->command = ROBOT_INTRL_EXCH_MEDIA;
-	params->slot = ROBOT_NO_SLOT;
+	params->slot = ROBOT_NO_SLOT_L;
 	params->source = source;
 	params->destination1 = dest1;
 	params->destination2 = dest2;
@@ -198,7 +198,7 @@ move_media(
 	(void) memset(exchange, 0, sizeof (robo_event_t));
 
 	params->command = ROBOT_INTRL_MOVE_MEDIA;
-	params->slot = ROBOT_NO_SLOT;
+	params->slot = ROBOT_NO_SLOT_L;
 	params->transport = trans_ele;
 	params->source = source;
 	params->destination1 = dest;
@@ -625,7 +625,7 @@ generic_get_media(
 		if (library->status.b.two_sided) {
 			un->flip_mid = (ce->CePart == 1) ? 2 : 1;
 		} else {
-			un->flip_mid = ROBOT_NO_SLOT;
+			un->flip_mid = ROBOT_NO_SLOT_L;
 		}
 		un->status.b.labeled = FALSE;
 		un->status.b.ready = FALSE;
@@ -824,6 +824,10 @@ api_load_media(
 	mutex_unlock(&drive->un->mutex);
 
 	return (RET_GET_MEDIA_SUCCESS);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), ce->CeVsn);
+	return 0;
 #endif
 }
 
@@ -986,6 +990,10 @@ api_unload_media(
 	mutex_unlock(&un->mutex);
 
 	return (0);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), drive->un->vsn);
+	return 0;
 #endif
 }
 
@@ -1177,6 +1185,10 @@ api_get_media(
 	mutex_unlock(&un->mutex);
 
 	return (RET_GET_MEDIA_SUCCESS);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), drive->un->vsn);
+	return 0;
 #endif
 }
 
@@ -1293,6 +1305,10 @@ aci_force_media(
 	cond_destroy(&force->condit);
 	free(force);
 	return (err);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), drive->un->vsn);
+	return 0;
 #endif
 }
 
@@ -1405,6 +1421,10 @@ aci_drive_access(
 		free(aci_info);
 	free(drv_access);
 	return (err);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), drive->un->vsn);
+	return 0;
 #endif
 }
 
@@ -1521,6 +1541,10 @@ aci_dismount_media(
 	cond_destroy(&dismount->condit);
 	free(dismount);
 	return (err);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), drive->un->vsn);
+	return 0;
 #endif
 }
 
@@ -1629,6 +1653,10 @@ aci_load_media(
 	cond_destroy(&load->condit);
 	free(load);
 	return (err);
+#else
+	dev_ent_t	*un = drive->un;
+	DevLog(DL_ERR(6040), drive->un->vsn);
+	return 0;
 #endif
 }
 
@@ -1730,6 +1758,10 @@ aci_view_media(
 	free(view);
 	free(volume_info);
 	return (err);
+#else
+	dev_ent_t	*un = library->un;
+	DevLog(DL_ERR(6040), ce->CeBarCode);
+	return 0;
 #endif
 }
 
@@ -1824,6 +1856,10 @@ aci_getside(
 	free(getsideinfo);
 	free(volume_info);
 	return (err);
+#else
+	dev_ent_t	*un = library->un;
+	DevLog(DL_ERR(6040), vsn);
+	return 0;
 #endif
 }
 
