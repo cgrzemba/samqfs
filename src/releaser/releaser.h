@@ -49,8 +49,8 @@ struct data {
 	struct releaser_info info;
 };
 
-boolean_t Daemon;
-FILE	*log;	/* stream for logging */
+extern boolean_t Daemon;
+extern FILE	*log;	/* stream for logging */
 
 #define	KEEP_HOW_MANY	10000
 #define	LIST_MAX	1000000

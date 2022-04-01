@@ -98,14 +98,17 @@ typedef enum {
 #if defined(DEC_INIT)
 #define	DCL
 #define	IVAL(v) = v
+#define	IVALS(i,p) = {i, p}
 #else /* defined(DEC_INIT) */
 #define	DCL extern
 #define	IVAL(v) /* v */
+#define	IVALS(i,p)
 #endif /* defined(DEC_INIT) */
 
 /* Shared memory segment pointers. */
 #if defined(SHM_MASTER_KEY)
-DCL shm_alloc_t master_shm IVAL(/* MACRO for cstyle */ {NULL});
+/* DCL shm_alloc_t master_shm IVAL({NULL});*/
+DCL shm_alloc_t master_shm IVALS(0, NULL);
 DCL shm_ptr_tbl_t *shm_ptr_tbl IVAL(NULL);
 #endif /* defined(SHM_MASTER_KEY) */
 

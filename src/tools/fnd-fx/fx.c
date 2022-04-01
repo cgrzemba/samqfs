@@ -53,11 +53,13 @@
 
 #include <sys/param.h>
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/fs/ino.h"
 #include "sam/fs/dirent.h"
 #include "pub/stat.h"
 #include "sam/uioctl.h"
+#include "sam/lib.h"
 
 #include "csd.h"
 

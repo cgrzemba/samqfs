@@ -72,7 +72,9 @@
 #include <assert.h>
 
 #include "system.h"
+#define DEC_INIT
 #include <sam/types.h>
+#include <sam/lib.h>
 #include <pub/stat.h>
 #include <save-cwd.h>
 #include <error.h>
@@ -144,9 +146,6 @@ static void str_concatc __P ((string s1, char *cstr));
 static void str_copyc __P ((string s1, char *cstr));
 static void str_init __P ((string *s1, unsigned int size));
 static void str_trunc __P ((string s1, unsigned int length));
-
-/* Name under which this program was invoked.  */
-char *program_name;
 
 /* If nonzero, display only a total for each argument. */
 static int opt_summarize_only = 0;

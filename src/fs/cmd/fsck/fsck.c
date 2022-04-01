@@ -38,6 +38,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+char* program_name;
+
 int
 main(int argc, char *argv[], char *envp[])
 {

@@ -87,7 +87,7 @@ typedef struct {
 
 /* Private data. */
 static uchar_t *buf;
-static char *program_name;
+static char *program_name = NULL;
 static int nodvv = 0;
 static int prdvv = 0;
 

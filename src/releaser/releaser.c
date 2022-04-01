@@ -89,7 +89,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <grp.h>
 #include <strings.h>
 
-
+#define DEC_INIT
 #include "sam/fs/ino.h"
 #include "sam/fs/ino_ext.h"
 #include "sam/custmsg.h"
@@ -193,6 +193,9 @@ int release = TRUE;
 int rearch_release = TRUE;
 int use_one_age_weight = FALSE;
 int use_three_age_weights = FALSE;
+boolean_t Daemon;
+FILE *log;
+
 static char *mnt_point;
 static char inode_pathname[MAXPATHLEN];
 static int inode_fd;

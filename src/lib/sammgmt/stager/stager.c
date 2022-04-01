@@ -49,7 +49,6 @@
 #include "pub/mgmt/device.h"
 #include "sam/sam_trace.h"
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
-uint32_t *TraceFlags;
 
 #define	STAGER_DEFAULT_BUFFER_LOCK	B_FALSE
 #define	STAGER_DEFAULT_BUFFER_CHANGE_FLAG	0

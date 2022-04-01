@@ -63,6 +63,7 @@
 #include <sys/param.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "pub/stat.h"
 #include "pub/rminfo.h"
 #include "sam/custmsg.h"

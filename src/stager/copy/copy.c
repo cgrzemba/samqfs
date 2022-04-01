@@ -119,7 +119,7 @@ int NumOpenFiles = 0;
 /*
  * SAM-FS shared memory segment.
  */
-shm_alloc_t   master_shm;
+shm_alloc_t   master_shm, preview_shm;
 shm_ptr_tbl_t *shm_ptr_tbl;
 
 /*
@@ -132,6 +132,7 @@ sam_defaults_t  *Defaults;
  */
 nl_catd catfd = NULL;
 
+struct CatalogMap *Catalogs = NULL;
 /*
  * Private data.
  * Define static variables which are only visible in the

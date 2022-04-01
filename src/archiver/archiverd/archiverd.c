@@ -71,7 +71,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/syscall.h"
 
 /* Local headers. */
-#define	DEC_INIT
 #include "archiverd.h"
 #include "device.h"
 #include "volume.h"
@@ -163,7 +162,6 @@ static void reconfig(ReconfigControl_t ctrl);
 static void resetArfindState(struct FileSysEntry *fs);
 static void rmFsFiles(struct FileSysEntry *fs, boolean_t state);
 static void rmWorkInProgress(void);
-
 
 int
 /*ARGSUSED0*/

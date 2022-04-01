@@ -50,7 +50,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/stat.h>
 #include <libgen.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "sam/param.h"

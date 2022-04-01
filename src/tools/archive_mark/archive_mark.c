@@ -53,6 +53,7 @@
 #include <sys/fcntl.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "pub/lib.h"
 #include "pub/stat.h"
 #include "pub/rminfo.h"

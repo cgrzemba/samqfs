@@ -125,6 +125,7 @@
 #include <sys/dirent.h>
 #include <sys/vfs.h>
 #include <pub/rminfo.h>
+#define DEC_INIT
 #include <sam/uioctl.h>
 #include <unistd.h>
 #include <sam/fioctl.h>
@@ -136,9 +137,9 @@
 #include <libgen.h>
 #include <stdlib.h>
 
-#include "sam/types.h"
 #include "sam/defaults.h"
 #include "sam/nl_samfs.h"
+#undef DEC_INIT
 #include "sam/devnm.h"
 #include "sam/custmsg.h"
 #include "sam/lib.h"
@@ -215,6 +216,7 @@ int nincluded;
 char *excluded[CSD_MAX_EXCLUDED];
 char *included[CSD_MAX_INCLUDED];
 
+struct CatalogMap *Catalogs = NULL;
 
 /* Module-private declarations */
 

@@ -270,4 +270,15 @@ typedef enum sam_round {
 
 typedef int64_t DiskVolumeSeqnum_t;
 
+/* Public data declaration/initialization macros. */
+#ifndef DCL
+#if defined(DEC_INIT)
+#define DCL
+#define IVAL(v) = v
+#else /* defined(DEC_INIT) */
+#define DCL extern
+#define IVAL(v) /* v */
+#endif /* defined(DEC_INIT) */
+#endif
+
 #endif /* _SAM_TYPES_H */

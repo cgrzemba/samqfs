@@ -38,7 +38,7 @@ DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(THRCOMP)
 CFLAGS = $(DEPCFLAGS) $(PLATFLAGS) $(CERRWARN)
 
 PROG_LIBS = -L ../../lib/$(OBJ_DIR) -L $(DEPTH)/lib/$(OBJ_DIR) \
-	$(STATIC_OPT) -lfscmd -lsamut $(DYNAMIC_OPT) $(LIBSO) -ldl
+	$(STATIC_OPT) -lfscmd -lsamut $(DYNAMIC_OPT) $(LIBSO) -ldl -lnvpair -lsysevent
 
 DESTDIR = /usr/lib/fs/samfs
 

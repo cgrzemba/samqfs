@@ -49,7 +49,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "sam/param.h"
@@ -61,17 +61,20 @@
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 #include <dlfcn.h>
-#if !defined(_NoSTK_)
+#if !defined(_NoACSLS_)
 #include "acssys.h"
 #include "acsapi.h"
 #else
 #define POOL int
 #endif
 
+/* globals */
+shm_alloc_t              master_shm, preview_shm;
+
 static void	Usage(void);
 static void    *map_sym(void *, char *);
 
-#if !defined(_NoSTK_)
+#if !defined(_NoACSLS_)
 #define	ACS_STAT(t)	char *(*t)(STATUS)
 #define	ACS_QP(t)	STATUS (*t)(SEQ_NO, POOL[], ushort_t)
 #define	ACS_QS(t)	STATUS (*t)(SEQ_NO, POOL[], ushort_t)
@@ -86,7 +89,6 @@ static void    *map_sym(void *, char *);
 
 #define	FIFO_PATH	"/FIFO_CMD"
 
-static char    *program_name;
 static char	env_acs_portnum[80];
 
 int
@@ -107,7 +109,7 @@ main(int argc, char **argv)
 	void   *api_handle;
 	POOL    what_pool = -1;
 
-#if !defined(_NoSTK_)
+#if !defined(_NoACSLS_)
 	ACS_STAT(dl_acs_status);
 	ACS_QP(dl_acs_query_pool);
 	ACS_QS(dl_acs_query_scratch);
@@ -243,7 +245,7 @@ main(int argc, char **argv)
 		    program_name);
 		exit(1);
 	}
-#if !defined(_NoSTK_)
+#if !defined(_NoACSLS_)
 	if (what_pool >= 0 || pool_count > 0) {
 		if ((api_handle =
 		    dlopen("libapi.so", RTLD_NOW | RTLD_GLOBAL)) == NULL) {
@@ -388,7 +390,7 @@ main(int argc, char **argv)
 		if (strange)
 			cmd_block.flags |= CMD_IMPORT_STRANGE;
 	}
-#if !defined(_NoSTK_)
+#if !defined(_NoACSLS_)
            else if (what_pool >= 0) {
 		int		err;
 		void	   *buffer, *buffer2;

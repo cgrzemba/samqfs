@@ -92,6 +92,7 @@ char *program_name;
 thread_t threads[GENERIC_MAIN_THREADS];	/* my main threads */
 shm_alloc_t master_shm, preview_shm;
 mutex_t lock_time_mutex;			/* for mktime */
+struct CatalogMap *Catalogs = NULL;
 static library_t *library;
 extern void common_init(dev_ent_t *un);
 extern void set_operator_panel(library_t *library, const int lock);

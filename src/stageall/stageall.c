@@ -60,6 +60,7 @@
 /* SAM-FS headers. */
 #include "pub/lib.h"
 #include "pub/stat.h"
+#define DEC_INIT
 #include "sam/defaults.h"
 #include "sam/exit.h"
 #include "sam/lib.h"
@@ -76,6 +77,7 @@ struct stageall_entry {	/* Each entry is a stageall request */
 	char cwd[1];	/* Current working directory. */
 };
 
+/* globals */
 
 /* Private data. */
 static sam_defaults_t *defaults;

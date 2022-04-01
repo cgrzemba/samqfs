@@ -438,7 +438,7 @@ samr_get_args(
  * function will need to set the pthread attributes itself.
  */
 
-pthread_attr_t 		samr_pth_attr;
+extern pthread_attr_t 		samr_pth_attr;
 
 
 /*

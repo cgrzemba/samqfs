@@ -619,9 +619,10 @@ const uint_t req_count)
 
 				case DT_METD28:
 					if (extension->add_sense_code == 0x83 &&
-					    extension->add_sense_qual == 0x02)
+					    extension->add_sense_qual == 0x02) {
 						status |= CES_unavail;
-						break;
+					}
+					break;
 
 				case DT_METD360:
 					if (extension->add_sense_code != 0) {
@@ -630,18 +631,19 @@ const uint_t req_count)
 						    extension->add_sense_code,
 						    extension->add_sense_qual);
 						return (0);
-						}
-						break;
+					}
+					break;
 
 				case DT_3570C:
 					/* if the magazine is not available */
 					if (extension->add_sense_code == 0x3b &&
-					    extension->add_sense_qual == 0x11)
+					    extension->add_sense_qual == 0x11) {
 						status |= CES_unavail;
-						break;
+					}
+					break;
 
 				default:
-						break;
+					break;
 				}
 		}
 
@@ -660,7 +662,7 @@ const uint_t req_count)
 						}
 
 						if (status_page->AVol &&
-						    (extension->AVolTag !=
+						    (*extension->AVolTag !=
 						    '\0')) {
 							dtb(&(extension->
 							    AVolTag[0]),
@@ -671,7 +673,7 @@ const uint_t req_count)
 			}
 
 			if ((storage_descrip->full) && (extension != NULL) &&
-			    (extension->PVolTag != '\0')) {
+			    (*extension->PVolTag != '\0')) {
 				(void) CatalogSlotInit(&vid, status,
 				    (library->status.b.two_sided) ? 2 : 0,
 				    (char *)extension->PVolTag,
@@ -1030,7 +1032,7 @@ int *slot)
 		import->status.b.impexp = desc->impexp;
 		import->status.b.full = desc->full;
 
-		if (is_acl452 && lslot != (unsigned)ROBOT_NO_SLOT) {
+		if (is_acl452 && lslot != ROBOT_NO_SLOT) {
 			status = ((!desc->access) ? CES_unavail : 0);
 			(void) CatalogSetFieldByLoc(un->eq, lslot,
 			    0, CEF_Status,
@@ -1049,7 +1051,7 @@ int *slot)
 			/* Copy extension bits required for */
 			/* Plasmon DVD-RAM library. */
 			import->status.b.open = ext->PVolTag[4] & 0x1;
-			import->status.b.tray = ext->PVolTag[4] & 0x80;
+			import->status.b.tray = (ext->PVolTag[4] & 0x80) >> 7;
 
 			BE16toH(&ext->stor_addr, &stor_addr);
 			import->media_element = stor_addr;
@@ -1066,7 +1068,7 @@ int *slot)
 				 * is where the historian is checked
 				 */
 				if (is_acl452 && lslot !=
-				    (unsigned)ROBOT_NO_SLOT) {
+				    ROBOT_NO_SLOT) {
 
 					import->status.b.valid = FALSE;
 				if (import->status.b.bar_code) {
@@ -1117,7 +1119,7 @@ int *slot)
 				(void) CatalogSetStringByLoc(un->eq, lslot, 0,
 				    CEF_Vsn, (char *)lvsn);
 				if (is_acl452 && lslot !=
-				    (unsigned)ROBOT_NO_SLOT)
+				    ROBOT_NO_SLOT)
 					(void) CatalogSetFieldByLoc(un->eq,
 					    lslot, 0,
 					    CEF_Access, 20, 0);
@@ -1127,7 +1129,7 @@ int *slot)
 				import->status.b.bar_code = FALSE;
 				memset(import->bar_code, 0, BARCODE_LEN);
 				if (is_acl452 && lslot !=
-				    (unsigned)ROBOT_NO_SLOT) {
+				    ROBOT_NO_SLOT) {
 					uchar_t bc[BARCODE_LEN];
 
 					status = 0;

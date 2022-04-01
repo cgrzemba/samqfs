@@ -96,7 +96,6 @@ typedef struct sam_si_fs_fifo {
 	struct sam_si_fs_fifo  *next;
 }sam_si_fs_fifo_t;
 
-struct DeviceParams *DeviceParams;
 
 #if defined(DEC_INIT)
 
@@ -124,6 +123,7 @@ extern child_pids_t pids[];
 #define	IVAL(v) /* v */
 #endif /* defined(DEC_INIT) */
 
+DCL struct DeviceParams *DeviceParams;
 DCL shm_alloc_t master_shm;
 DCL shm_alloc_t preview_shm;
 

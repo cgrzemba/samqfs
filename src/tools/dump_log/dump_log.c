@@ -73,6 +73,7 @@
 #include "aml/logging.h"
 #include "sam/devnm.h"
 #include "sam/syscall.h"
+#include "sam/lib.h"
 
 char *ctime_r(const time_t *clock, char *buf, int buflen);
 static void DumpArchive(sam_archive_t *);

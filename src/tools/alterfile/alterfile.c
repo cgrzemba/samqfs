@@ -53,6 +53,7 @@
 #include <sys/mman.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/lib.h>
 
 /* Local headers. */
@@ -82,6 +83,7 @@
 /* Signal catching functions. */
 	/* None. */
 
+char* program_name = NULL;
 
 int
 main(int argc, char *argv[])

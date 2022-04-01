@@ -59,7 +59,7 @@
 #include "sam/types.h"
 #include "sam/lib.h"
 
-char *program_name;	/* Program name	*/
+extern char *program_name;	/* Program name	*/
 
 void
 error(

@@ -72,7 +72,9 @@
 #include <sam/shareops.h>
 #include <priv.h>
 
+#define DEC_INIT
 #include <sam/custmsg.h>
+#include <sam/lib.h>
 
 #define	RET_OK	0
 #define	RET_ERR	32
@@ -92,6 +94,8 @@ static void setdefaults(void);
 static char typename[64];
 
 static int await_clients = 0;	/* wait for mounted clients (seconds) */
+
+char* program_name = NULL;
 
 int
 main(int argc, char *argv[])
