@@ -785,6 +785,9 @@ todo_request(
 			break;
 
 	if (drive == NULL) {
+		ETRACE((LOG_ERR, "NfDr(%d) %d.",
+		    drive->un->eq, request->eq,
+		    __FILE__, __LINE__));
 		send_fs_error(&request->handle, EINVAL);
 		disp_of_event(library, event, ENOENT);
 		return (0);

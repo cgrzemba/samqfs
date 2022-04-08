@@ -174,8 +174,8 @@ $ *    SAM-QFS_notice_end
 1149 Tape not at expected position %llx, at %x. Position tape before first read.
 1150 Slot %d switched to write-protected since last mounted.
 1151 Failed to open the path %s
-1152 Opened in read-write mode: fd = %d, path = %s, open count = %d
-1153 Opened in read-only mode: fd = %d, path = %s, open count = %d
+1152 Opened in read-write mode: fd = %d, path = %s, open count = %d, rdev = %llx
+1153 Opened in read-only mode: fd = %d, path = %s, open count = %d, rdev = %llx
 1154 Perform Test Unit Ready (TUR): Slot %d: Starting TUR
 1155 Ready time %d seconds
 1156 Spin unit [%d] fails: error %d
@@ -191,6 +191,7 @@ $ *    SAM-QFS_notice_end
 1166 (%d) Inquiry result on open %s fd %d error %s
 1167 Inquiry reuse on open %s fd %d 
 1168 Errflag %x State %#x
+1169 cmpldev, could not compress rdev to dev32_t %llx
 
 2000 Optic
 2001 Erase started
@@ -352,7 +353,7 @@ $ *    SAM-QFS_notice_end
 3059 tape_append: Found EOF1 at %#x
 3060 tape_append: Found EOV1 at %#x
 3061 Medium error: No space left
-3062 tape_append: EOF1 not found at %#x [%d, %d, %d, %#x, %#x, %#x, %#x, %#x]
+3062 tape_append: EOF1 not found at %#x [%d, %lld, %d, %#x, %#x, %#x, %#x, %#x]
 3063 tape_append: Unable to position to %#x
 3064 BSR failed
 3065 BSF failed
@@ -450,7 +451,7 @@ $ *    SAM-QFS_notice_end
 3157 Position at EOF-TM-TM (%#x) is < supplied position (%#x)
 3158 Unable to find EOD
 3159 Found no eof at position %#x
-3160 Unable to find EOF at position %#x
+3160 Unable to find EOF at position %#x status %#x
 3161 Found Record-TM-EOD, skipping to EOD
 3162 Unable to skip to EOD
 3163 Position after TM (%#x) is < supplied position (%#x)
@@ -511,7 +512,7 @@ $ *    SAM-QFS_notice_end
 3220 Creating EOF/EOV label
 3221 attempt to %s media - retries exhausted
 3222 MTIOCGET returns %d dsreg %d erreg %d errno %d
-3223 Back Space %d records : erreg %d resid %d
+3223 Back Space %d records : erreg/status/sense %d resid %d
 3224 Unable to find VOL1 at load point
 3225 Repair EOF on tape
 3226 Rewind and skip to EOM succeeds
