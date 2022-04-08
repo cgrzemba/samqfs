@@ -186,6 +186,13 @@ unload_for_fs(void *vcmd)
 		send_fs_error(&fifo_cmd->handle, ENOTSUP);
 	} else {
 		command = &fifo_cmd->param.fs_unload;
+		if (command->rdev == 0) {
+			sam_syslog(LOG_ERR,
+			    "unload_for_fs: bad rdev (%#x)", command->rdev);
+			send_fs_error(&fifo_cmd->handle, EIO);
+			free(vcmd);			/* always free the command buffer */
+			thr_exit(NULL);
+		} 
 
 		/* find the device */
 
@@ -194,7 +201,7 @@ unload_for_fs(void *vcmd)
 		    device = (dev_ent_t *)SHM_REF_ADDR(device->next)) {
 			if (device->st_rdev == command->rdev) {
 				sam_syslog(LOG_DEBUG,
-			    "unload_for_fs: found rdev (%#x) %#x %x", command->rdev, device->st_rdev, device);
+			    "unload_for_fs: found rdev (%#llx) %#llx %x", command->rdev, device->st_rdev, device);
 				break;
 			}
 		}
