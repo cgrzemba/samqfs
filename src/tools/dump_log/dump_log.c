@@ -266,7 +266,7 @@ main(int argc, char **argv)
 
 			case FS_FIFO_UNLOAD:
 		/* N.B. Bad indentation here to meet cstyle requirements */
-		printf("\trdev %#lx, mt_handle %#x\n",
+		printf("\trdev %#llx, mt_handle %#x\n",
 		    f_blk->fifo_cmd.param.fs_unload.rdev,
 		    (int)(f_blk->fifo_cmd.param.fs_unload.mt_handle.p32));
 		DumpRminfo(
@@ -397,8 +397,8 @@ DumpIoctl(ioctl_log_t *i_blk)
 	{
 		lower = i_blk->ioctl_data.fsmount.space;
 		upper = i_blk->ioctl_data.fsmount.space >> 32;
-		printf("  mount - handle(%d.%d,%d,%u,%x), err %d, "
-		    "space %#x%8.8x, rdev %#x\n",
+		printf("  mount - handle(%d.%d,%d,%u,%llx), err %d, "
+		    "space %#x%8.8x, rdev %#llx\n",
 		    i_blk->ioctl_data.fsmount.handle.id.ino,
 		    i_blk->ioctl_data.fsmount.handle.id.gen,
 		    i_blk->ioctl_data.fsmount.handle.fseq,
@@ -486,7 +486,7 @@ DumpIoctl(ioctl_log_t *i_blk)
 		lower = i_blk->ioctl_data.fsmount.space;
 		upper = i_blk->ioctl_data.fsmount.space >> 32;
 		printf("  mount - handle(%ld.%ld,%d,%u,%llx), "
-		    "err %d, space %#x%8.8x, rdev %#lx\n",
+		    "err %d, space %#x%8.8x, rdev %#llx\n",
 		    i_blk->ioctl_data.fsmount.handle.id.ino,
 		    i_blk->ioctl_data.fsmount.handle.id.gen,
 		    i_blk->ioctl_data.fsmount.handle.fseq,
@@ -541,7 +541,7 @@ DumpIoctl(ioctl_log_t *i_blk)
 
 		case SC_fsinval:
 			printf("%s syscall SC_fsinval\n", &line[11]);
-			printf("  invalidate -  rdev %#lx\n",
+			printf("  invalidate -  rdev %#llx\n",
 			    i_blk->ioctl_data.sc_fsinval.rdev);
 			break;
 
