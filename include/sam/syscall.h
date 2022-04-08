@@ -227,8 +227,8 @@ struct sam_rel_file {
 };
 
 typedef struct {			/* Invalidate cache for an rdev */
-#if defined(__sparcv9) || defined(__amd64)
-	dev32_t rdev;			/* Raw device */
+#if defined(__sparcv9) || defined(__amd64) /* XXX cleanup */
+	dev_t rdev;			/* Raw device */ 
 #else /* __sparcv9 || __amd64 */
 	dev_t rdev;			/* Raw device */
 #endif /* __sparcv9 || __amd64 */
@@ -505,8 +505,8 @@ typedef struct {		/* Mount response */
 	sam_handle_t handle;	/* FS handle data */
 	SAM_POINTER(struct sam_resource) resource;	/* Resource record */
 	offset_t space;		/* Space (bytes) left on media */
-#if defined(__sparcv9) || defined(__amd64)
-	dev32_t rdev;		/* Raw device */
+#if defined(__sparcv9) || defined(__amd64)	/* XXX cleanup */
+	dev_t rdev;		/* Raw device */
 #else	/* __sparcv9 || __amd64 */
 	dev_t rdev;		/* Raw device */
 #endif	/* __sparcv9 || __amd64 */
