@@ -613,7 +613,7 @@ sam_position_call(
 		if ((ip = syscall_valid_ino(mp, fhandle))) {
 			TRACE(T_SAM_IOCTL_POS, SAM_ITOV(ip), ip->di.id.ino,
 			    args.ret_err,
-			    ip->rdev);
+			    (sam_tr_t)ip->rdev);
 			/* Is this inode still waiting for the command? */
 			mutex_enter(&ip->daemon_mutex);
 			if (ip->daemon_busy) {
@@ -707,7 +707,10 @@ sam_inval_dev_call(
 		return (EFAULT);
 	}
 
-	rdev = expldev(args.rdev);
+	if (curproc->p_model != DATAMODEL_ILP32)
+		rdev =  args.rdev;
+	else
+		rdev = expldev(args.rdev);
 	bflush(rdev);
 	binval(rdev);
 	return (0);
@@ -1492,7 +1495,10 @@ syscall_mount_response(
 	if (ip->daemon_busy && ip->seqno == fhandle->seqno) {
 		if (fifo_ctl && (fifo_ctl->fifo.magic == FS_FIFO_MAGIC)) {
 			fifo_ctl->ret_err = mount->ret_err;
-			rdev = expldev(mount->rdev);
+			if (curproc->p_model != DATAMODEL_ILP32)
+				rdev = mount->rdev;
+			else
+				rdev = expldev(mount->rdev);
 			if ((mount->ret_err == 0) && rdev) {
 				offset_t size;
 				sam_resource_t *resource;
@@ -1581,7 +1587,7 @@ syscall_mount_response(
 					ip->io_count = 0;
 					TRACE(T_SAM_IOCTL_MNT, vp,
 					    ip->di.id.ino, (sam_tr_t)size,
-					    ip->rdev);
+					    (sam_tr_t)ip->rdev);
 
 					if (!(ip->di.rm.ui.flags &
 					    RM_STRANGER) &&
@@ -1706,7 +1712,7 @@ syscall_error_response(
 	if ((ip = syscall_valid_ino(mp, fhandle))) {
 		TRACE(T_SAM_IOCTL_ERR, SAM_ITOV(ip), ip->di.id.ino,
 		    error->ret_err,
-		    ip->rdev);
+		    (sam_tr_t)ip->rdev);
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		mutex_enter(&ip->daemon_mutex);
 		if (ip->daemon_busy) {	/* ino waiting for mount? */
