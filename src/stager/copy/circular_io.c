@@ -161,7 +161,7 @@ CircularIoConstructor(
 	Trace(TR_DEBUG, "Circular buffer");
 	for (i = 0; i < numBuffers; i++) {
 		ptr = buffer->cb_first + (blockSize * i);
-		Trace(TR_DEBUG, "%d [0x%x]", i, (int)ptr);
+		/* Trace(TR_DEBUG, "%d [0x%x]", i, (int)ptr); */
 	}
 
 	return (buffer);
