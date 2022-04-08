@@ -569,10 +569,10 @@ typedef struct dev_ent  {
 	ushort_t	ord;		/* Ordinal within family set */
 	ushort_t	model;		/* Device model */
 	ushort_t	model_index;	/* Index into sam_model table */
-#if !defined(_LP64)
+#if !defined(_LP64)			/* XXX cleanup ! */
 	dev_t		st_rdev;	/* From stat function request */
 #else
-	dev32_t		st_rdev;	/* From stat function request */
+	dev_t		st_rdev;	/* From stat function request */
 #endif
 	time_t		mtime;		/* Time to dismount */
 #if !defined(_LP64)
