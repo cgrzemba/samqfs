@@ -164,7 +164,7 @@ sam_close_vn(
 #endif
 	}
 	ip = SAM_VTOI(vp);
-	TRACE(T_SAM_CLOSE, vp, ip->di.id.ino, ip->flags.bits, ip->rdev);
+	TRACE(T_SAM_CLOSE, vp, ip->di.id.ino, ip->flags.bits, (sam_tr_t)ip->rdev);
 
 	RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 	write_lock = FALSE;
@@ -328,7 +328,7 @@ sam_close_vn(
 	if (S_ISSEGS(&ip->di) && ip->seg_held) {
 		sam_rele_index(ip);
 	}
-	TRACE(T_SAM_CLOSE_RET, vp, ip->rdev, ip->flags.bits, error);
+	TRACE(T_SAM_CLOSE_RET, vp, (sam_tr_t)ip->rdev, ip->flags.bits, error);
 	return (error);
 }
 
@@ -1048,7 +1048,7 @@ sam_ioctl_vn(
 		return (error);
 	}
 
-	TRACE(T_SAM_IOCTL, vp, (sam_tr_t)cmd, (sam_tr_t)p, raddr[0]);
+	TRACE(T_SAM_IOCTL, (sam_tr_t)vp, (sam_tr_t)ip->rdev, cmd, (sam_tr_t)p);
 	switch (type) {
 
 	case 'u':		/* Miscellaneous archiver utility commands. */

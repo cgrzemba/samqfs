@@ -325,8 +325,9 @@ ArchiveRead(
 		fileOff -= TAR_RECORDSIZE;
 	}
 
+	Trace(TR_DEBUG, "block offset: %lld", blockOff);
 	Trace(TR_DEBUG, "File position: %d", filePos);
-	Trace(TR_DEBUG, "File offset: %d", fileOff);
+	Trace(TR_DEBUG, "File offset: %d(%#x)", fileOff, fileOff);
 
 	/* First read for file.  Used to notify double buffer thread. */
 	firstRead = B_TRUE;
@@ -619,8 +620,8 @@ readBlock(
 	id = file->id;
 
 	/* FIXME SetTimeout(TO_read); */
-	Trace(TR_DEBUG, "Read block: %d buf: %d [0x%x] len: %d",
-	    filePos, CircularIoSlot(reader, buf),
+	Trace(TR_DEBUG, "Read fd %d block: %d buf: %d [0x%x] len: %d",
+	    IoThread->io_rmFildes, filePos, CircularIoSlot(reader, buf),
 	    (int)buf, nbytes);
 
 retry:
@@ -663,8 +664,8 @@ retry:
 		}
 
 		SysError(HERE,
-		    "Stager read failed inode: %d.%d expected: %d got: %d",
-		    id.ino, id.gen, nbytes, ngot);
+		    "Stager read failed inode: %d.%d %d expected: %d got: %d, %d",
+		    id.ino, id.gen, IoThread->io_rmFildes, nbytes, ngot, errno);
 
 		/* Check if read error should be retried. */
 		if (IfRetry(file, errno) == B_TRUE) {
