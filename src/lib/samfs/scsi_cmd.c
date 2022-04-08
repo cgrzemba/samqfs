@@ -1904,14 +1904,14 @@ open_unit(dev_ent_t *un, char *path, int retry)
 		/*
 		 * Successfully opened path in read-only mode; log a message:
 		 */
-		DevLog(DL_DETAIL(1153), open_fd, path, un->open_count);
+		DevLog(DL_DETAIL(1153), open_fd, path, un->open_count, un->st_rdev);
 	} else {
 		/*
 		 * Successfully opened the path in read-write mode; log a
 		 * message:
 		 */
 
-		DevLog(DL_DETAIL(1152), open_fd, path, un->open_count);
+		DevLog(DL_DETAIL(1152), open_fd, path, un->open_count, un->st_rdev);
 	}
 
 	return (open_fd);

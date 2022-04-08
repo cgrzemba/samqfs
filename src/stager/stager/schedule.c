@@ -1450,7 +1450,7 @@ findResources(
 		return (priority);
 	}
 
-    Trace(TR_ERR, "Volume '%40s , %40s' use", stream->vi.vsn, stream->vsn);
+    Trace(TR_DEBUG, "Volume '%40s , %40s' use", stream->vi.vsn, stream->vsn);
 	CLEAR_FLAG(stream->flags, SR_WAIT);
 	ASSERT(strncmp(stream->vi.vsn, stream->vsn, sizeof(vsn_t)) == 0);
 
