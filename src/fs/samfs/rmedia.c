@@ -472,17 +472,23 @@ sam_unload_rm(
 	sam_req_t req_type;	/* delay or nodelay for daemon response */
 
 	bzero((caddr_t)& fifo_ctl, sizeof (fifo_ctl));
-	TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), ip->rdev, filemode, 0);
+	TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), (sam_tr_t)ip->rdev, filemode, (sam_tr_t)ip->di.psize.rmfile);
 
 	if (ip->rdev != 0) {
 		sam_resource_file_t *rfp;
 		sam_resource_t *rrp;
 
-		if ((cmpldev((dev32_t *)&fifo_ctl.fifo.param.fs_unload.rdev,
-		    ip->rdev)) == 0) {
-			return (EOVERFLOW);
+		TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), (sam_tr_t)ip->rdev, (sam_tr_t)curproc->p_model, (sam_tr_t)ip->di.psize.rmfile);
+		if (curproc->p_model != DATAMODEL_ILP32) {
+			fifo_ctl.fifo.param.fs_unload.rdev = ip->rdev;
+		} else {
+			if ((cmpldev((dev32_t *)&fifo_ctl.fifo.param.fs_unload.rdev,
+			    ip->rdev)) == 0) {
+				return (EOVERFLOW);
+			}
 		}
-	if (filemode & FWRITE) {
+		TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), (sam_tr_t)fifo_ctl.fifo.param.fs_unload.rdev, (sam_tr_t)curproc->p_model, (sam_tr_t)ip->di.psize.rmfile);
+		if (filemode & FWRITE) {
 			/*
 			 * Synchronously write pages out and invalidate the
 			 * pages.
@@ -1033,10 +1039,14 @@ sam_position_rm(
 			sam_resource_file_t *rp;
 			sam_resource_t *rrp;
 
-			if ((cmpldev((dev32_t *)
-			    &fifo_ctl.fifo.param.fs_position.rdev,
-			    ip->rdev)) == 0) {
-				return (EOVERFLOW);
+			if (curproc->p_model != DATAMODEL_ILP32) {
+				fifo_ctl.fifo.param.fs_position.rdev = ip->rdev;
+			} else {
+				if ((cmpldev((dev32_t *)
+						&fifo_ctl.fifo.param.fs_position.rdev,
+						ip->rdev)) == 0) {
+					return (EOVERFLOW);
+				}
 			}
 			fifo_ctl.fifo.param.fs_position.setpos = pos;
 
