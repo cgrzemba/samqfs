@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	device_entry = (dev_ent_t *)SHM_REF_ADDR(
 		    ((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
         printf("first_dev: %x\n\n", device_entry);
-	printf("%8s %2s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
+	printf("%8s %12s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
 	for (count = 0; 
 		device_entry != NULL; 
 		device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next)) 
@@ -186,7 +186,7 @@ main(int argc, char **argv)
 				count++;
 			}
 		}
-			printf("%8s %3x %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
+			printf("%8s %12llx %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
 				device_entry->set,
 				device_entry->st_rdev,
 				device_entry->name, 
