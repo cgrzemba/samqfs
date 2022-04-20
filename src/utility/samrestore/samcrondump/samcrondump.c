@@ -58,7 +58,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 extern void init_utility_funcs(void);
 
 #define	BUFFSIZ		MAXPATHLEN
-#define	DIFF_LIMIT	0.10	/* allowable difference (%) between filesize */
 #define	NUM_BENCHMARK	3	/* number of benchmark dumps */
 #define	HOUR		(60 * 60)
 #define	DAY		(HOUR * 24)
@@ -89,7 +88,8 @@ is_dump_inconsistent(
 	snapstat_t oldstats[],
 	snapstat_t newstat,
 	time_t *timediff,
-	uint64_t *sizediff);
+	uint64_t *sizediff,
+        unsigned int limitPercent);
 
 static void finish_dump(char *snapname, FILE *dumplog, int statfd);
 static int get_lock(char *lkfile, int *lockfd);
@@ -522,7 +522,7 @@ dump_fs(char *taskid, snapsched_t *sched)
 			}
 		}
 
-		rval = is_dump_inconsistent(snapstats, newstat, &tdiff, &sdiff);
+		rval = is_dump_inconsistent(snapstats, newstat, &tdiff, &sdiff, sched->diffLimit);
 		switch (rval) {
 			case 1:
 				diffhours = (float)tdiff/HOUR;
@@ -880,13 +880,15 @@ is_dump_inconsistent(
 	snapstat_t oldstats[],
 	snapstat_t newstat,
 	time_t *timediff,
-	uint64_t *sizediff)
+	uint64_t *sizediff,
+	unsigned int diffPercent)
 {
 	int	 i;
 	uint64_t timetotal = 0;
 	uint64_t sizetotal = 0;
 	uint64_t avg;
 	uint64_t maxdiff;
+        float diffLimit = (float)diffPercent/100;
 
 	/* if we don't have enough to compare with, assume ok */
 	if (oldstats[NUM_BENCHMARK-1].snapdate == 0) {
@@ -898,10 +900,11 @@ is_dump_inconsistent(
 		sizetotal += oldstats[i].snapsize;
 	}
 
+	Trace(TR_MISC, "Use diff limit %f\n", diffLimit);
 	if (timetotal > 0) {
 		avg = timetotal/NUM_BENCHMARK;
 /* LINTED */
-		maxdiff = avg * DIFF_LIMIT;
+		maxdiff = avg * diffLimit;
 
 		*timediff = abs(avg - newstat.snaptime);
 
@@ -919,7 +922,7 @@ is_dump_inconsistent(
 	if (sizetotal > 0) {
 		avg = sizetotal/NUM_BENCHMARK;
 /* LINTED */
-		maxdiff = avg * DIFF_LIMIT;
+		maxdiff = avg * diffLimit;
 
 		*sizediff = abs(avg - newstat.snapsize);
 

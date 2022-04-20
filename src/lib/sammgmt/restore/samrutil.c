@@ -57,6 +57,7 @@
 #define	BUFFSIZ		MAXPATHLEN
 #define	UNCOMPRESS	"/usr/bin/uncompress"
 #define	GUNZIP		"/usr/bin/gunzip"
+#define	DIFF_LIMIT	10	/* allowable difference (%) between filesize */
 
 /* Macro to propagate and return error value */
 #define	RVAL(X) {rval = X; if (rval) return (rval); }
@@ -715,6 +716,7 @@ static parsekv_t snaptokens[] = {
 	{"autoindex",	sn_off(autoindex),	parsekv_bool},
 	{"disabled",	sn_off(disabled),	parsekv_bool},
 	{"prescrfatal",	sn_off(prescriptFatal),	parsekv_bool},
+	{"difflimit",	sn_off(diffLimit),	parsekv_llu},
 	{"",		0,			NULL}
 };
 
@@ -756,6 +758,7 @@ parse_snapsched(char *str, snapsched_t *sched, int len)	/* ARGSUSED */
 
 	memset(sched, 0, sizeof (snapsched_t));
 	sched->prescriptFatal = TRUE;
+	sched->diffLimit = DIFF_LIMIT;
 
 	st = parse_kv(str, snaptokens, (void*)sched);
 	if (st != 0) {
