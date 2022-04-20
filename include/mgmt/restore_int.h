@@ -82,6 +82,7 @@ typedef struct {
 	boolean_t	autoindex;
 	boolean_t	disabled;
 	boolean_t	prescriptFatal;
+        unsigned int	diffLimit; 
 } snapsched_t;
 
 /* function to turn a snapsched_t into a string */
