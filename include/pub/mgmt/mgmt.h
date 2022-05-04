@@ -59,8 +59,9 @@
  * API_VERSION "1.5.5"	Fri Jun 28 11:38:15 EDT 2006
  * API_VERSION "1.5.6"	Thu Sep 21 3:28:15 EDT 2006
  * API_VERSION "1.5.9"	Mon Oct 2 2:28:15 EDT 2006
+ * API_VERSION "1.6.2"	Thu Oct 16 10:39:30 EDT 2008
  */
-#define	API_VERSION "1.6.2"	/* Thu Oct 16 10:39:30 EDT 2008 */
+#define	API_VERSION "1.6.3"
 
 
 #include "pub/mgmt/types.h"

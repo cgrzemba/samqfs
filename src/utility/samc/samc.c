@@ -59,13 +59,18 @@
 #include "mgmt/filesystem.h"
 #include "mgmt/stage.h"
 #include "mgmt/recycle.h"
-#include "mgmt/license.h"
+#include "mgmt/sammgmt_rpc.h"
+#include "mgmt/sammgmt.h"
+#include "mgmt/config/cfg_fs.h"
+/* #include "mgmt/license.h" */
 /* other header files */
 #include "sam/custmsg.h"
 #include "mgmt/log.h"
 #include "samc.h"
 #include "forms.h"
 #include "formdefs.h"
+#include "aml/shm.h"
+#include "pub/samrpc.h"
 
 #define	SAMC_TITLE "SAM-FS/QFS Config Tool"
 #define	MAX_FSYS 200
@@ -117,9 +122,13 @@
 #define	NOARPOL_MSG "No archive sets found for the specified filesystem"
 #define	NOCTX NULL
 
+shm_alloc_t master_shm;
+shm_alloc_t preview_shm;
+
 extern char samerrmsg[];
 extern sqm_lst_t *str2lst(char *str, const char *delims);
 extern char *lst2str(sqm_lst_t *lst, const char *delim);
+extern char *au2str(au_t au, char *au_str, boolean_t info);
 
 typedef enum opn {
 	OPN_SINGLE,		/* single step operation */
@@ -225,7 +234,7 @@ typedef struct s {
 	char *ntitle_msg;	/* default title text */
 	void (*dis)(void);	/* Display screen */
 	boolean_t (*init)();	/* Initialization */
-	struct s (*childp)[];	/* Child menu */
+	struct s **childp;	/* Child menu */
 } dis_t;
 
 dis_t toplev_dis[];
@@ -385,8 +394,8 @@ jmp_to_menu(dis_t (*menudis)[]) {
  */
 
 /* return B_FALSE if canceled by user */
-boolean_t
-getline(char *buf, int buflen, int (* filter)(int)) {
+static boolean_t
+cfg_getline(char *buf, int buflen, int (* filter)(int)) {
 	int i, c;
 	clrtoeol();
 	cbreak();
@@ -422,7 +431,7 @@ getline(char *buf, int buflen, int (* filter)(int)) {
 /* return NULL if operation canceled by user */
 char *
 getstring(char *buf, int buflen) {
-	if (getline(buf, buflen, isprint))
+	if (cfg_getline(buf, buflen, isprint))
 		return (buf);
 	else
 		return (NULL);
@@ -434,7 +443,7 @@ getint(int *initialval) {
 	char buf[10];
 	if (initialval)
 		sprintf(buf, "%d", *initialval);
-	if (getline(buf, 10, isdigit))
+	if (cfg_getline(buf, 10, isdigit))
 		return (atoi(buf));
 	else
 		return (-1);
@@ -445,7 +454,7 @@ getull(unsigned long long *initialval) {
 	char buf[20];
 	if (initialval)
 		sprintf(buf, "%llu", *initialval);
-	if (getline(buf, 20, isdigit))
+	if (cfg_getline(buf, 20, isdigit))
 		return (atoi(buf));
 	else
 		return (-1);
@@ -3110,6 +3119,7 @@ static boolean_t
 bufsize() {
 	int res;
 	buffer_directive_t *bufdir = NULL;
+	char fsizestr[FSIZE_STR_LEN];
 
 	if (!choosemedia())
 		return (B_FALSE);
@@ -3129,7 +3139,7 @@ bufsize() {
 		ln += 2;
 		mvprintw(ln++, 3, "Media type: %s", selectedmedia);
 		mvprintw(ln, 3, "Bufize: ");
-		strcpy(buf, fsize_to_str(bufdir->size));
+		strcpy(buf, fsize_to_str(bufdir->size, fsizestr, FSIZE_STR_LEN));
 		/* get input from user */
 		if (-1 == str_to_fsize(getstring(buf, maxbuf),
 		    &bufdir->size)) {
@@ -3769,7 +3779,7 @@ get_media_items(ITEM **items,
 	ln += 2;
 	mvprintw(ln++, 5, GATHERMEDIAINFO_MSG);
 	refresh();
-	if (-1 == discover_media(NOCTX, NULL, &liblst, &drvlst)) {
+	if (-1 == discover_media(NOCTX, &liblst)) {
 		showerr();
 		anykey(ln, 5);
 		return (B_FALSE);
@@ -3913,11 +3923,11 @@ addsdrv() {
 	} else {
 		convert_form_data(form, (char *)drv);
 		/* write changes */
-		if (-1 == add_standalone_drive(NOCTX, drv))
+/*		if (-1 == add_standalone_drive(NOCTX, drv)) */
 			showerr();
-		else
+/*		else
 			mvprintw(ln++, 3, CFGUPD_MSG);
-		anykey(ln++, 3);
+*/		anykey(ln++, 3);
 	}
 	free_list_of_drives(drvs);
 	TRACE("samc.c:addsdrv() exit");
@@ -3972,6 +3982,8 @@ viewdaemons() {
 int
 main(int argc, char ** argv) {
 	char c;
+	ctx_t ctx;
+        char *samrpc_host = "localhost"; /* SAMRPC_HOST */
 
 	if (NULL == (program_name = (char *)mallocer(20))) {
 		printf("%s\n", samerrmsg);
@@ -3990,7 +4002,11 @@ main(int argc, char ** argv) {
 
 	fflush(NULL);
 
-	if (-1 == init_sam_mgmt(NOCTX)) {
+	ctx.dump_path[0] = '\0';
+	ctx.read_location[0] = '\0';
+	ctx.user_id[0] = '\0';
+	ctx.handle = samrpc_create_clnt_timed(samrpc_host, DEF_TIMEOUT_SEC);
+	if (-1 == init_sam_mgmt(&ctx)) {
 		printf("\n"CANNOTINITLIB_MSG"\n", samerrmsg);
 		exit(-1);
 	}
