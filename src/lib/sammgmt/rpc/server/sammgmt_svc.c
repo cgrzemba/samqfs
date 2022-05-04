@@ -173,21 +173,29 @@ closedown(sig)
 }
 
 static void
-sammgmtprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	register SVCXPRT *transp;
+sammgmtprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
-	struct netbuf *nb; struct sockaddr_in *in;
+	struct netbuf *nb; 
+	struct in_addr in;
+	struct in6_addr in6;
+	sa_family_t af;
+	int ret;
+        uint32_t localhost6[4] = {0, 0, 0, 16777216}; /* ::1 */
+        char claddr6[INET6_ADDRSTRLEN];
 
 	nb = (struct netbuf *)malloc(sizeof (struct netbuf));
 	(void) memset(nb, 0, sizeof (struct netbuf));
 
-	nb = svc_getrpccaller(rqstp->rq_xprt);
+	nb = svc_getrpccaller(transp);
+	af = ((struct sockaddr_storage *)nb->buf)->ss_family;
+	if (af == AF_INET) {
+		in = ((struct sockaddr_in *)nb->buf)->sin_addr;
+	} else if (af == AF_INET6) {
+		in6 = ((struct sockaddr_in6 *)nb->buf)->sin6_addr;
+	} 
 
-	/* LINTED - alignment (32bit) OK */
-	in = (struct sockaddr_in *)nb->buf;
-
-	Trace(TR_DEBUG, "Request from client[%s]", inet_ntoa(in->sin_addr));
+	Trace(TR_DEBUG, "Request from inet6 client[%s]", inet_ntop(af, &in6, claddr6, INET6_ADDRSTRLEN));
+	Trace(TR_DEBUG, "Request from inet client[%s]", inet_ntoa(in));
 	union {
 
 		/* mgmt.h */
@@ -2475,18 +2483,23 @@ sammgmtprog_1(rqstp, transp)
 	 * Return an error message if the client is not in the list of
 	 * clients in the config file
 	 */
-	if (!is_secure_client(inet_ntoa(in->sin_addr))) {
-		_xdr_result = xdr_samrpc_result_t;
-		samerrno = SE_RPC_INSECURE_CLIENT;
-		(void) snprintf(samerrmsg, MAX_MSG_LEN,
-		    GetCustMsg(samerrno), inet_ntoa(in->sin_addr));
-		Trace(TR_ERR, "%d:[%s]", samerrno, samerrmsg);
+        if (in6._S6_un._S6_u32[0] != localhost6[0] &&
+		in6._S6_un._S6_u32[1] != localhost6[1] &&
+		in6._S6_un._S6_u32[2] != localhost6[2] &&
+		in6._S6_un._S6_u32[3] != localhost6[3]) {
+		if (!is_secure_client(inet_ntoa(in))) {
+			_xdr_result = xdr_samrpc_result_t;
+			samerrno = SE_RPC_INSECURE_CLIENT;
+			(void) snprintf(samerrmsg, MAX_MSG_LEN,
+			    GetCustMsg(samerrno), inet_ntoa(in));
+			Trace(TR_ERR, "%d:[%s]", samerrno, samerrmsg);
 
-		SAMRPC_SET_RESULT(-1, SAM_VOID, 0);
-		result = (caddr_t)&rpc_result;
+			SAMRPC_SET_RESULT(-1, SAM_VOID, 0);
+			result = (caddr_t)&rpc_result;
 
-		svc_sendreply(transp, _xdr_result, result);
-		return;
+			svc_sendreply(transp, _xdr_result, result);
+			return;
+		}
 	}
 	(void) memset((char *)&argument, 0, sizeof (argument));
 	if (!svc_getargs(transp, _xdr_argument, (caddr_t)&argument)) {

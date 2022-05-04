@@ -60,7 +60,7 @@
 #define	TMPFILE_DIR	VAR_DIR"/tmpfiles"
 #define	DEVLOG_DIR	VAR_DIR"/devlog"
 
-#define	SAMSTDIR	"/dev/samst"
+#define	SAMSTDIR	"/dev/scsi/changer"
 #define	TAPEDEVDIR	"/dev/rmt"
 #define	SAMST_CFG	"/kernel/drv/samst.conf"
 

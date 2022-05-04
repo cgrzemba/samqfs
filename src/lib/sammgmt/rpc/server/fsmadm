@@ -47,24 +47,24 @@
 #
 # Get Solaris major revision.
 #
-RELEASE=`grep Solaris /etc/release`
-SOLREV=`echo $RELEASE | sed -e "s/^.*Sol/Sol/" | cut -f2 -d' '`
-if [ "${SOLREV}" == "" ]; then
-	echo "Could not get Solaris version from /etc/release. Exiting"
-	exit 1
-fi
+# RELEASE=`grep Solaris /etc/release`
+# SOLREV=`echo $RELEASE | sed -e "s/^.*Sol/Sol/" | cut -f2 -d' '`
+# if [ "${SOLREV}" == "" ]; then
+# 	echo "Could not get Solaris version from /etc/release. Exiting"
+# 	exit 1
+# fi
 # Code to recognise Solaris Express or Nevada as Solaris v11
-if [ "${SOLREV}" == "Nevada" -o "${SOLREV}" == "Express" ]; then
+# if [ "${SOLREV}" == "Nevada" -o "${SOLREV}" == "Express" ]; then
       SOLREV=11
-fi
+# fi
 
-BOOT_ENTRY="sfad:3:once:/opt/SUNWsamfs/sbin/fsmgmtd"
+# BOOT_ENTRY="sfad:3:once:/opt/SUNWsamfs/sbin/fsmgmtd"
 ECHO="/usr/bin/echo"
-INITTAB="/etc/inittab"
-RESPAWN_ENTRY="sfad:3:respawn:/opt/SUNWsamfs/sbin/fsmgmtd"
+# INITTAB="/etc/inittab"
+# RESPAWN_ENTRY="sfad:3:respawn:/opt/SUNWsamfs/sbin/fsmgmtd"
 FSMGMTD="/opt/SUNWsamfs/sbin/fsmgmtd"
 FSMGMT_CLNT="/opt/SUNWsamfs/sbin/clientmgmt"
-PKGINFO="/usr/bin/pkginfo"
+# PKGINFO="/usr/bin/pkginfo"
 CLNTFILE=/opt/SUNWsamfs/.fsmgmtd_clients
 
 # for solaris 10
@@ -236,102 +236,7 @@ is_mgmtrpcd_running() {
 
 
 #
-# Checks if File System Manager entry exists in /etc/inittab
-# RETURN: 0 if respawn entry exists, 1 if boot entry and 2 if no entry
-#
-inittab_entry_exists() {
-
-	respawn_entry_exists
-	respawn=$?
-
-	boot_entry_exists
-	boot=$?
-
-	if [ $respawn == 0 ]; then
-
-		return 0
-	elif [ $boot == 0 ]; then
-
-		return 1
-	else
-
-		return 2
-	fi
-}
-
-
-boot_entry_exists() {
-
-	/bin/grep "${BOOT_ENTRY}" $INITTAB >/dev/null
-
-	return $?		# return 0 if entry exists, else 1
-}
-
-
-respawn_entry_exists() {
-
-	/bin/grep "${RESPAWN_ENTRY}" $INITTAB >/dev/null
-
-	return $?		# return 0 if entry exists, else 1
-}
-
-
-#
-# Remove the File System Manager entry from /etc/inittab
-#
-remove_from_inittab() {
-
-	inittab_entry_exists
-
-	if [ $? != 2 ]; then
-
-		# Delete entry from /etc/inittab
-
-		sed "/sfad:3:/d" $INITTAB > $INITTAB.tmp
-		mv $INITTAB.tmp $INITTAB
-		chmod 644 $INITTAB
-
-		kill -HUP 1
-	fi
-}
-
-
-#
-# Add given entry to $INITTAB
-# INPUT: entry with required action
-# RETURN: 0 on success, 1 on failure
-#
-add_to_inittab() {
-
-	inittab_entry_exists
-
-	if [ $? == 2 ]; then
-
-		# A previous entry does not exist
-		# Add entry to /etc/initttab
-
-		$ECHO $1 >> $INITTAB
-
-		if [ $? != 0 ]; then
-			$ECHO "Failed to add entry to $INITTAB"
-			$ECHO "Check logs and inittab"
-			$ECHO
-
-			return 1	# failure
-		else
-			# If a previous instance of fsmgmtd is
-			# already running, then init still respawns
-			# another process
-
-			kill -HUP 1
-		fi
-	fi
-
-	return 0	# if entry already exists in $INITTAB, return success
-}
-
-#
-# solaris 10: automated restart of daemon uses smf
+# solaris 10+: automated restart of daemon uses smf
 #
 service_cfg_exists() {
 
@@ -420,15 +325,15 @@ case "$1" in
 #####################################################
 'status')
 
-	pkg_exists SUNWsamfsr
-	samfs_exists=$?
+#	pkg_exists SUNWsamfsr
+#	samfs_exists=$?
 
-	pkg_exists SUNWqfsr
-	qfs_exists=$?
+#	pkg_exists SUNWqfsr
+#	qfs_exists=$?
 
-	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
-		usage
-	fi
+#	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
+#		usage
+#	fi
 
 	# correct usage
 
@@ -485,15 +390,15 @@ case "$1" in
 
 'start')
 
-	pkg_exists SUNWsamfsr
-	samfs_exists=$?
+#	pkg_exists SUNWsamfsr
+#	samfs_exists=$?
 
-	pkg_exists SUNWqfsr
-	qfs_exists=$?
+#	pkg_exists SUNWqfsr
+#	qfs_exists=$?
 
-	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
-		usage
-	fi
+#	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
+#		usage
+#	fi
 
 	# correct usage
 
@@ -515,15 +420,15 @@ case "$1" in
 
 'stop')
 
-	pkg_exists SUNWsamfsr
-	samfs_exists=$?
+#	pkg_exists SUNWsamfsr
+#	samfs_exists=$?
 
-	pkg_exists SUNWqfsr
-	qfs_exists=$?
+#	pkg_exists SUNWqfsr
+#	qfs_exists=$?
 
-	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
-		usage
-	fi
+#	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
+#		usage
+#	fi
 
 	killproc fsmgmtd
 
@@ -629,22 +534,6 @@ case "$1" in
 		# Start File System Manager and enable auto-restart (respawn)
 		#####################################################
 
-			respawn_entry_exists
-			if [ $? == 0 ]; then
-				exit 0
-			fi
-
-			boot_entry_exists
-			if [ $? == 0 ]; then
-				$ECHO "File System Manager daemon is configured to"
-				$ECHO "auto-restart only at system reboot"
-				$ECHO
-				$ECHO "Use 'fsmadm config -n' to first disable"
-				$ECHO "that feature and then use this option"
-				$ECHO
-				exit 1
-			fi
-
 			is_mgmtrpcd_running
 			if [ $? == 0 ]; then
 				$ECHO "Stop File System Manager daemon and then use this option"
@@ -683,15 +572,15 @@ case "$1" in
 #	Client management for secure rpc connection #
 #####################################################
 'add' | 'remove' | 'list')
-	pkg_exists SUNWsamfsr
-	samfs_exists=$?
+#	pkg_exists SUNWsamfsr
+#	samfs_exists=$?
 
-	pkg_exists SUNWqfsr
-	qfs_exists=$?
+#	pkg_exists SUNWqfsr
+#	qfs_exists=$?
 
-	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
-		usage
-	fi
+#	if [ $samfs_exists != 0 -a $qfs_exists != 0 ]; then
+#		usage
+#	fi
 	$FSMGMT_CLNT $@
 
 	# Preserve the list of hosts that can manage this SAM-FS/QFS server
