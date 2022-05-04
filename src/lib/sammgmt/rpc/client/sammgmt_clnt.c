@@ -95,6 +95,7 @@ time_t tv_sec		/* timeout in seconds */
 	XDR *xdrs = NULL;
 	ctx_t ctx;
 	char *version;
+        char hostname[MAXHOSTNAMELEN];
 
 	struct timeval tm;
 	tm.tv_sec = tv_sec;
@@ -110,6 +111,10 @@ time_t tv_sec		/* timeout in seconds */
 
 	memset(samrpc_client, 0, sizeof (samrpc_client_t));
 	samrpc_client->svr_name = strdup(rpc_server);
+        if (gethostname(hostname, MAXHOSTNAMELEN) != 0) {
+		PTRACE(2, "%s could not get hostname", func_name);
+		goto err;
+	}
 
 	if (!samrpc_client->svr_name) {
 		samerrno = SE_NO_MEM;
