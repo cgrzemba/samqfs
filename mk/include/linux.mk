@@ -31,7 +31,7 @@
 MSGDEST = $(BASEDIR)/usr/share/locale/C/LC_MESSAGES
 
 LINUX_KERNEL := $(shell uname -r)
-LINUX_INCLUDE = /lib/modules/$(LINUX_KERNEL)/build/include
+LINUX_KERNEL_INCLUDE = /lib/modules/$(LINUX_KERNEL)/build/include
 LINUX_CONFIG = /lib/modules/$(LINUX_KERNEL)/build/.config
 LINUX_KERNEL_SAMFS = /lib/modules/$(LINUX_KERNEL)/kernel/fs/samfs
 
@@ -129,4 +129,4 @@ INSTALL = /usr/bin/install
 MCSOPT = $(shell echo "-c -a '@(=)Copyright (c) `/bin/date +%Y`, Sun Microsystems, Inc.  All Rights Reserved' -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r`.'" | /usr/bin/tr = '\043')
 MCS = $(CMDMCS) $(MCSOPT)
 
-
+DEBUGCFLAGS += -g
