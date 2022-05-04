@@ -30,15 +30,17 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
+DEPCFLAGS += -I$(DEPTH)/include/pub -I$(DEPTH)/include/mgmt -Wno-unused-value
+
 PROG = samc
 PROG_SRC = \
 		forms.c \
 		samc.c
 
-PROG_LIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lsammgmt -lsamconf -lsamfs -lsam -lsamut -lgen $(LIBSO)
+PROG_LIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lfsmgmt -lfsmgmtrpc -lform -lmenu -lcurses -lsamconf -lsamfs -lsam -lsamut -lgen $(LIBSO)
 
 LNOPTS = -m -u -x -Dlint -DDEBUG 
-LNLIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lsammgmt -lsamut -lsamconf -lsamfs
+LNLIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lfsmgmt -lsamut -lsamconf -lsamfs
 
 include $(DEPTH)/mk/targets.mk
 

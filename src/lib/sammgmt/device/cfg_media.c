@@ -2166,6 +2166,7 @@ process_fc(void)
 
 	Trace(TR_OPRMSG, "processing fabric attached library");
 
+#if 0
 	/* If /kernel/drv/samst.conf does not exist, return error */
 	if (lstat64(SAMST_CFG, &statbuf) < 0) {
 
@@ -2175,7 +2176,7 @@ process_fc(void)
 		Trace(TR_ERR, "process fc-library failed: %s", samerrmsg);
 		return (-1);
 	}
-
+#endif
 	/* execute cfgadm and parse the command output to get WWN */
 	pid = exec_get_output(MEDCHANGER_CFGADM_CMD, &fp, NULL);
 	if (pid == -1) {
@@ -2261,6 +2262,7 @@ process_fc(void)
 	 * If WWNs do not exist in /kernel/drv/samst.conf, add an entry.
 	 * The file should already exist.
 	 */
+#if 0
 	fd = open(SAMST_CFG, O_RDWR);
 	if (fd != -1) {
 		fp = fdopen(fd, "r+");
@@ -2354,7 +2356,6 @@ process_fc(void)
 
 	lst_free_deep(wwn_lst);
 	fclose(fp);
-
 	if (added_samst_line) {
 		Trace(TR_OPRMSG, "process fc: run cmd:%s", DEVFSADM_CMD);
 		pid = exec_get_output(DEVFSADM_CMD, NULL, NULL);
@@ -2401,7 +2402,7 @@ process_fc(void)
 			return (0);
 		}
 	}
-
+#endif
 
 	Trace(TR_OPRMSG, "finished processing fabric attached library");
 	return (0);

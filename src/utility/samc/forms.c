@@ -34,7 +34,7 @@
 
 /* other header files */
 #include <form.h>
-#include "mgmt/types.h"		/* fsize_t & reset_values defined here */
+#include "sam/types.h"		/* fsize_t & reset_values defined here */
 #include "mgmt/release.h"	/* age_prio_type needed for conversion */
 #include "config/cparamsdefs.h"
 #include "samc.h"
@@ -983,6 +983,8 @@ init_field_recs(FIELD_RECORD recs[], void *baseaddr,
 	char *maskaddr;
 	char *dest;	/* where the data is stored */
 	convinfo *cinfo;
+	char fsizestr[FSIZE_STR_LEN];
+
 	TRACE("forms.c:init_field_recs(%x,%x,%d)", recs, baseaddr, recmember);
 
 	for (irec = 0; recs[irec].mkfield; irec++) {
@@ -1102,7 +1104,7 @@ init_field_recs(FIELD_RECORD recs[], void *baseaddr,
 			if (*(fsize_t *)addr == fsize_reset)
 				continue;
 			dest = (char *)
-			    strdup(fsize_to_str(*(fsize_t *)addr));
+			    strdup(fsize_to_str(*(fsize_t *)addr, fsizestr, FSIZE_STR_LEN));
 			break;
 		case T_TIME:
 			TRACE("formc.c: init time");
