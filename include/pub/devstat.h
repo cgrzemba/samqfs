@@ -115,7 +115,7 @@ struct sam_ndevstat {
 #define	DVST_LABELED	0x00800000
 #define	DVST_WR_LOCK	0x00400000
 #define	DVST_UNLOAD	0x00200000
-#define	DVST_REQUESTED	0x00100000
+#define	DVST_REQUESTED	(uint32_t) 0x00100000
 
 #define	DVST_OPENED	0x00080000
 #define	DVST_READY	0x00040000
@@ -129,7 +129,7 @@ struct sam_ndevstat {
 
 #define	DVST_POSITION	0x00000800
 #define	DVST_FORWARD	0x00000400
-#define	DVST_WAIT_IDLE	0x00000200
+#define	DVST_WAIT_IDLE	(uint32_t) 0x00000200
 #define	DVST_FS_ACTIVE	0x00000100
 
 /* Device types */

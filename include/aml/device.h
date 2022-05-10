@@ -248,7 +248,8 @@ typedef struct {
  * Defines for the above.
  * If you change the stuff above, change this.
  */
-
+/* the following already defined in pub/devstat.h */
+#if 0
 #define	 DVST_MAINT	0x80000000
 #define	 DVST_SCAN_ERR	0x40000000
 #define	 DVST_AUDIT	0x20000000
@@ -278,6 +279,7 @@ typedef struct {
 #define	 DVST_FORWARD	0x00000400
 #define	 DVST_WAIT_IDLE	0x00000200
 #define	 DVST_FS_ACTIVE	0x00000100
+#endif
 
 #define	 DVST_WRITE_PROTECT	0x00000080
 #define	 DVST_STRANGE	0x00000040
