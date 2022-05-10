@@ -1,4 +1,4 @@
-#!/bin/csh -f
+#!/bin/ksh
 
 #    SAM-QFS_notice_begin
 #
@@ -34,36 +34,32 @@
 # the signal sent by the daemon to stop the process.
 #
 #
-# Find the correct logger
-if ( -x /usr/bin/logger) then
-	set LOGGER = /usr/bin/logger
-else
-	if ( -x /usr/ucb/logger ) then
-		set LOGGER = /usr/ucb/logger
-	endif
-endif
+LOGGER=/usr/bin/logger
 #
 # find the syslog facility
-if ( -r /etc/opt/SUNWsamfs/defaults.conf ) then
-	set SAM_LOGGER_FACILITY = `grep -v "^#" /etc/opt/SUNWsamfs/defaults.conf | grep LOCAL | sed -e "s/^.*LOG_//"`
-	if ( x${SAM_LOGGER_FACILITY} == "x" ) then
-		set SAM_LOGGER_FACILITY = local7
-	endif
+if [ -r /etc/opt/SUNWsamfs/defaults.conf ] ; then
+	SAM_LOGGER_FACILITY=`grep -v "^#" /etc/opt/SUNWsamfs/defaults.conf | grep LOCAL | sed -e "s/^.*LOG_//"`
+	if [ x${SAM_LOGGER_FACILITY} == "x" ] ; then
+		SAM_LOGGER_FACILITY=local7
+	fi
 else
-	set SAM_LOGGER_FACILITY = local7
-endif
+	SAM_LOGGER_FACILITY=local7
+fi
 
-/usr/sbin/ping ${CSI_HOSTNAME} >&! /dev/null
-if ( $status != "0" ) then
-	${LOGGER} -i -t ssi.sh -p ${SAM_LOGGER_FACILITY}.warning ${CSI_HOSTNAME} is unpingable:  network problem\?
-endif
+/usr/sbin/ping ${CSI_HOSTNAME} 2>&1 /dev/null
+if [ $? -ne 0 ] ; then
+	${LOGGER} -i -t ssi.sh -p ${SAM_LOGGER_FACILITY}.warning "${CSI_HOSTNAME} is unpingable:  network problem\?"
+fi
 #
 #
-setenv CSI_TCP_RPCSERVICE TRUE
-setenv CSI_UDP_RPCSERVICE TRUE
-setenv CSI_CONNECT_AGETIME 172800
-setenv CSI_RETRY_TIMEOUT 4
-setenv CSI_RETRY_TRIES 5
-setenv ACSAPI_PACKET_VERSION 4
+export CSI_TCP_RPCSERVICE=TRUE
+export CSI_UDP_RPCSERVICE=TRUE
+export CSI_CONNECT_AGETIME=172800
+export CSI_RETRY_TIMEOUT=4
+export CSI_RETRY_TRIES=5
+export ACSAPI_PACKET_VERSION=4
+# arguments
+# argv[1] - parent PID
+# argv[2] - input socket name
+# argv[3] - request originator type: 23=ACSSA (cl_type.c)
 exec /opt/SUNWsamfs/sbin/ssi_so $3 ${ACSAPI_SSI_SOCKET} 23 
-
