@@ -156,7 +156,7 @@ typedef struct iport_state_s {
 
 typedef struct media_capacity_s {
 	int	count;		/* how many */
-	int	*capacity;	/* array of capacities, units of 1024 */
+	uint64_t	*capacity;	/* array of capacities, units of 1024 */
 }media_capacity_t;
 
 typedef struct library_s {
