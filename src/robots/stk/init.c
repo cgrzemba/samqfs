@@ -80,7 +80,7 @@ struct media_index {
  * Define media capacity in units of 1024
  */
 #define	STK_MEDIA_CAP_COUNT 58
-int default_cap[STK_MEDIA_CAP_COUNT] = {
+uint64_t default_cap[STK_MEDIA_CAP_COUNT] = {
 	(1024 * 210),			/* 3480	 (210 meg) */
 	(1024 * 800),			/* 3490E (800 meg) */
 	(1024 * 1024 * 10),		/* DD3A	 (10 gig) */
@@ -92,7 +92,7 @@ int default_cap[STK_MEDIA_CAP_COUNT] = {
 	(1024 * 1024 * 15),		/* DLTIIIXT(15 gig) */
 	(1024 * 1024 * 20),		/* STK1R (9840 20 gig) */
 	(1024 * 1024 * 0),		/* STK1U (9840 cleaning tape */
-	(1024 * 1024 * 1.6),		/* EECART (9490 EE, 1.6G) */
+	(uint64_t)(1024 * 1024 * 1.6),		/* EECART (9490 EE, 1.6G) */
 	(1024 * 1024 * 0),		/* JLABEL (foreign label) */
 	(1024 * 1024 * 60),		/* STK2P T9940A (60 gig) */
 	(1024 * 1024 * 0),		/* STK2W T9940A cleaning tape */
@@ -129,16 +129,16 @@ int default_cap[STK_MEDIA_CAP_COUNT] = {
         (1024 * 1024 * 1536),  		/* LTO-1.5T */
         (1024 * 1024 * 1536),  		/* LTO-1.5W */
         (1024 * 1024 * 0),   		/* T10000CL */
-        (1024 * 1024 * 2560),  		/* LTO-2.5T */
-        (1024 * 1024 * 2560),  		/* LTO-2.5W */
-        (1024 * 1024 * 1024 * 6),   	/* LTO-6.4T */
-        (1024 * 1024 * 1024 * 6),   	/* LTO-6.4W */
-        (1024 * 1024 * 1024 *12),   	/* LTO-12T */
-        (1024 * 1024 * 1024 *12),   	/* LTO-12W */
-        (1024 * 1024 * 5000),   	/* T10000TA */
-        (1024 * 1024 * 1024 * 9),   	/* LTO-9T */
-        (1024 * 1024 * 1024 * 18),   	/* LTO-18T */
-        (1024 * 1024 * 1024 * 18),   	/* LTO-18W */
+        ((uint64_t)1024 * 1024 * 2560),  		/* LTO-2.5T */
+        ((uint64_t)1024 * 1024 * 2560),  		/* LTO-2.5W */
+        ((uint64_t)1024 * 1024 * 1024 * 6),   	/* LTO-6.4T */
+        ((uint64_t)1024 * 1024 * 1024 * 6),   	/* LTO-6.4W */
+        ((uint64_t)1024 * 1024 * 1024 *12),   	/* LTO-12T */
+        ((uint64_t)1024 * 1024 * 1024 *12),   	/* LTO-12W */
+        ((uint64_t)1024 * 1024 * 5000),   	/* T10000TA */
+        ((uint64_t)1024 * 1024 * 1024 * 9),   	/* LTO-9T */
+        ((uint64_t)1024 * 1024 * 1024 * 18),   	/* LTO-18T */
+        ((uint64_t)1024 * 1024 * 1024 * 18),   	/* LTO-18W */
 };
 
 /*	function prototypes */
