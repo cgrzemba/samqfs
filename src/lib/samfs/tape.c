@@ -164,7 +164,7 @@ create_tape_eof(
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)){
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -177,6 +177,7 @@ create_tape_eof(
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.create_tape_eof)
@@ -583,7 +584,7 @@ tape_append(
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -596,6 +597,7 @@ tape_append(
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.tape_append)
@@ -1023,7 +1025,7 @@ find_tape_file(
 		register int	indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -1036,6 +1038,7 @@ find_tape_file(
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.find_tape_file)
