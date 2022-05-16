@@ -181,7 +181,7 @@ ifeq ($(SPARCV9), yes)
 LIBSO = $(LIBSO_OPT)/opt/SUNWsamfs/lib/sparcv9:/opt/SUNWsamfs/lib
 else
 ifeq ($(AMD64), yes)
-LIBSO = $(LIBSO_OPT)/opt/SUNWsamfs/lib/amd64:/opt/SUNWsamfs/lib
+LIBSO = $(LIBSO_OPT)/opt/SUNWsamfs/lib/amd64
 else
 LIBSO = $(LIBSO_OPT)/opt/SUNWsamfs/lib
 endif
