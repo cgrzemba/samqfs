@@ -149,10 +149,10 @@ main(int argc, char **argv)
 	}
 
 	shm_ptr_tbl = (shm_ptr_tbl_t *)master_shm.shared_memory;
-        printf("master_shm.shared_memory: %x\n", shm_ptr_tbl);
+        printf("master_shm.shared_memory: %llx\n", shm_ptr_tbl);
 	device_entry = (dev_ent_t *)SHM_REF_ADDR(
 		    ((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
-        printf("first_dev: %x\n\n", device_entry);
+        printf("first_dev: %llx\n\n", device_entry);
 	printf("%8s %12s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
 	for (count = 0; 
 		device_entry != NULL; 
@@ -186,6 +186,19 @@ main(int argc, char **argv)
 				count++;
 			}
 		}
+                int i;
+ 		printf("%8s ",device_entry->set);
+ 		printf("%12llx ",device_entry->st_rdev);
+ 		printf("%49s ",device_entry->name);
+ 		printf("%3d ",device_entry->eq);
+ 		printf("%9s ",device_entry->vendor_id);
+ 		printf("%17s ",device_entry->product_id);
+ 		printf("%5s ",device_entry->revision);
+ 		printf("%16s ",device_entry->serial);
+ 		printf("%8s ",type);
+ 		printf("%12lu ",device_entry->space);
+ 		printf("%s\n",states[device_entry->state]);
+/*
 			printf("%8s %12llx %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
 				device_entry->set,
 				device_entry->st_rdev,
@@ -198,16 +211,18 @@ main(int argc, char **argv)
 				type, 
 				device_entry->space,
 				states[device_entry->state]);
+*/
 	}
 	printf("\nfound %d devices\n", count);
 
 	dev_ptr_tbl = (dev_ptr_tbl_t *)SHM_REF_ADDR(
             ((shm_ptr_tbl_t *)master_shm.shared_memory)->dev_table);
-        printf("dev_table: %x\n", dev_ptr_tbl);
+        printf("dev_table: %llx\n", dev_ptr_tbl);
 
         /* LINTED pointer cast may result in improper alignment */
 	library->un = (dev_ent_t *)SHM_REF_ADDR(
             dev_ptr_tbl->d_ent[library->eq]);
+        printf("library dev: %llx\n", library->un);
 
 	library->ele_dest_len = ELEMENT_DESCRIPTOR_LENGTH;
 
