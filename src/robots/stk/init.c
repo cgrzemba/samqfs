@@ -72,7 +72,7 @@ static char *_SrcFile = __FILE__;
 /*	structs */
 struct media_index {
 	int index;
-	int capacity;
+	uint64_t capacity;
 	struct media_index *next;
 };
 
@@ -86,35 +86,35 @@ uint64_t default_cap[STK_MEDIA_CAP_COUNT] = {
 	(1024 * 1024 * 10),		/* DD3A	 (10 gig) */
 	(1024 * 1024 * 25),		/* DD3B	 (25 gig) */
 	(1024 * 1024 * 50),		/* DD3C	 (50 gig) */
-	(1024 * 1024 * 0),		/* DD3D Cleaning tape */
+	(0),		/* DD3D Cleaning tape */
 	(1024 * 1024 * 10),		/* DLTIII(10 gig) */
 	(1024 * 1024 * 20),		/* DLTIV (20 gig) */
 	(1024 * 1024 * 15),		/* DLTIIIXT(15 gig) */
 	(1024 * 1024 * 20),		/* STK1R (9840 20 gig) */
-	(1024 * 1024 * 0),		/* STK1U (9840 cleaning tape */
+	(0),		/* STK1U (9840 cleaning tape */
 	(uint64_t)(1024 * 1024 * 1.6),		/* EECART (9490 EE, 1.6G) */
-	(1024 * 1024 * 0),		/* JLABEL (foreign label) */
+	(0),		/* JLABEL (foreign label) */
 	(1024 * 1024 * 60),		/* STK2P T9940A (60 gig) */
-	(1024 * 1024 * 0),		/* STK2W T9940A cleaning tape */
-	(1024 * 1024 * 0),		/* KLABEL (unsupported type) */
+	(0),		/* STK2W T9940A cleaning tape */
+	(0),		/* KLABEL (unsupported type) */
 	(1024 * 1024 * 100),		/* LTO-100G (100 gig) */
 	(1024 * 1024 * 50),		/* LTO-50G (50 gig) */
 	(1024 * 1024 * 35),		/* LTO-35G (35 gig) */
 	(1024 * 1024 * 10),		/* LTO-10G (10 gig) */
-	(1024 * 1024 * 0),		/* LTO-CLN2 cleaning tape */
-	(1024 * 1024 * 0),		/* LTO-CLN3 cleaning tape */
-	(1024 * 1024 * 0),		/* LTO-CLN1 cleaning tape */
+	(0),		/* LTO-CLN2 cleaning tape */
+	(0),		/* LTO-CLN3 cleaning tape */
+	(0),		/* LTO-CLN1 cleaning tape */
 	(1024 * 1024 * 110),		/* SDLT super dlt (110 gig) */
-	(1024 * 1024 * 0),		/* Virtual */
-	(1024 * 1024 * 0),		/* LTO-CLNU cleaning tape */
+	(0),		/* Virtual */
+	(0),		/* LTO-CLNU cleaning tape */
 	(1024 * 1024 * 200),		/* LTO-200G (200 gig) */
 	(1024 * 1024 * 312),		/* SDLT-2 (312 gig uncompressed) */
 	(1024 * 1024 * 500),		/* T10000T1  (500 gig) */
 	(1024 * 1024 * 120),		/* T10000TS (120 gig) */
-	(1024 * 1024 * 0),		/* T10000CT Titanium cleaning tape */
+	(0),		/* T10000CT Titanium cleaning tape */
 	(1024 * 1024 * 400),		/* LTO-400G */
 	(1024 * 1024 * 400),		/* LTO-400W */
-	(1024 * 1024 * 0),		/* reserved */
+	(0),		/* reserved */
 	(1024 * 1024 * 800),		/* SDLT-S1 */
 	(1024 * 1024 * 800),		/* SDLT-S2 */
 	(1024 * 1024 * 800),		/* SDLT-S3 */
@@ -125,10 +125,10 @@ uint64_t default_cap[STK_MEDIA_CAP_COUNT] = {
 	(1024 * 1024 * 800),		/* LT0-800W */
 	(1024 * 1024 * 1000),		/* T10000T2 */
         (1024 * 1024 * 1000),   	/* T10000TT */
-        (1024 * 1024 * 0),   		/* T10000CC */
+        (0),   		/* T10000CC */
         (1024 * 1024 * 1536),  		/* LTO-1.5T */
         (1024 * 1024 * 1536),  		/* LTO-1.5W */
-        (1024 * 1024 * 0),   		/* T10000CL */
+        (0),   		/* T10000CL */
         ((uint64_t)1024 * 1024 * 2560),  		/* LTO-2.5T */
         ((uint64_t)1024 * 1024 * 2560),  		/* LTO-2.5W */
         ((uint64_t)1024 * 1024 * 1024 * 6),   	/* LTO-6.4T */
@@ -788,10 +788,10 @@ initialize(library_t *library, dev_ptr_tbl_t *dev_ptr_tbl)
 	start_ssi(library);
 
 	library->media_capacity.count = high_index + 1;
-	i = (high_index + 1) * sizeof (int);
+	size_t sz = (high_index + 1) * sizeof (uint64_t);
 	library->media_capacity.capacity =
-	    (int *)malloc_wait(i, 2, 0);
-	memset(library->media_capacity.capacity, 0, i);
+	    (uint64_t *)malloc_wait(sz, 2, 0);
+	memset(library->media_capacity.capacity, 0, sz);
 	media_p = media_indexs;
 
 	while (TRUE) {
@@ -818,7 +818,7 @@ initialize(library_t *library, dev_ptr_tbl_t *dev_ptr_tbl)
 
 		if (*(library->media_capacity.capacity + i))
 			sam_syslog(LOG_INFO, catgets(catfd, SET, 9143,
-			    "Capacity for media type index %d = %dK."),
+			    "Capacity for media type index %d = %lluK."),
 			    i, *(library->media_capacity.capacity + i));
 	}
 
