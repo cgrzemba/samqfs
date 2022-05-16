@@ -542,31 +542,33 @@ printConf(void)
 	 */
 	/* Archive libraries */
 	printf("\n%s:\n", GetCustMsg(4611));
-	for (i = 0; i < ArchLibTable->count; i++) {
-		struct ArchLibEntry *al;
+        if (ArchLibTable != NULL) {
+		for (i = 0; i < ArchLibTable->count; i++) {
+			struct ArchLibEntry *al;
 
-		al = &ArchLibTable->entry[i];
-		if (al->AlFlags & AL_historian) {
-#if !defined(USE_HISTORIAN)
-			continue;
-#endif /* !defined(USE_HISTORIAN) */
-		}
-		/* Device: */
-		printf("%s %s", GetCustMsg(4644), al->AlName);
-		if (!(al->AlFlags & (AL_disk | AL_honeycomb))) {
-			/* drives_available */
-			printf(" %s: %d", GetCustMsg(4612), al->AlDrivesAvail);
-		}
-		/* archive_drives */
-		printf(" %s: %d\n", GetCustMsg(4613), al->AlDrivesAllow);
-		if (ListOptions & LO_vsn) {
-			if (al->AlFlags & (AL_disk | AL_honeycomb)) {
-				printDiskVolsDict(al->AlFlags & AL_honeycomb);
-			} else {
-				printCatalog(i);
+			al = &ArchLibTable->entry[i];
+			if (al->AlFlags & AL_historian) {
+        #if !defined(USE_HISTORIAN)
+				continue;
+        #endif /* !defined(USE_HISTORIAN) */
 			}
+			/* Device: */
+			printf("%s %s", GetCustMsg(4644), al->AlName);
+			if (!(al->AlFlags & (AL_disk | AL_honeycomb))) {
+				/* drives_available */
+				printf(" %s: %d", GetCustMsg(4612), al->AlDrivesAvail);
+			}
+			/* archive_drives */
+			printf(" %s: %d\n", GetCustMsg(4613), al->AlDrivesAllow);
+			if (ListOptions & LO_vsn) {
+				if (al->AlFlags & (AL_disk | AL_honeycomb)) {
+					printDiskVolsDict(al->AlFlags & AL_honeycomb);
+				} else {
+					printCatalog(i);
+        			}
+			}
+			printf("\n");
 		}
-		printf("\n");
 	}
 
 	/*

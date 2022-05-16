@@ -294,7 +294,6 @@ makeArchLib(void)
 		SendCustMsg(HERE, 4002);
 		aln = 1;
 	}
-	oldArchLibTable = ArchLibTable;
 
 	/*
 	 * Allocate library and drive tables and enter the data. If the
@@ -302,7 +301,10 @@ makeArchLib(void)
 	 */
 	size = sizeof (struct ArchLib) +
 	    (aln - 1) * STRUCT_RND(sizeof (struct ArchLibEntry));
+	oldArchLibTable = ArchLibTable;
+
 	SamMalloc(ArchLibTable, size);
+
 	memset(ArchLibTable, 0, size);
 	ArchLibTable->count = aln;
 	ArchLibTable->AlDkDrives = diskVolumeNumof;
