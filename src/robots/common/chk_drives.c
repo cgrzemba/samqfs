@@ -203,7 +203,7 @@ find_idle_drive(
 	/* Do not update the index as it is just for empty drives */
 #if defined(DEBUG)
 	if (best_drive != NULL) {
-		sprintf(l_mess, "assign drive %d to next task",
+		sprintf(l_mess, "assign best drive %d to next task",
 		    best_drive->un->eq);
 	}
 #endif
