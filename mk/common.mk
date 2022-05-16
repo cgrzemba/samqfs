@@ -82,7 +82,6 @@ WHOAMI = $(shell $(CMDWHOAMI))
 
 # Installation directories.
 BASEDIR := /
-DESTDIR := $(BASEDIR)/etc/fs/samfs
 USRDEST := $(BASEDIR)/opt/SUNWsamfs/bin
 ADMDEST := $(BASEDIR)/opt/SUNWsamfs/sbin
 INCDEST := $(BASEDIR)/opt/SUNWsamfs/include

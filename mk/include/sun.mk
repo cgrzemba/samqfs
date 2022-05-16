@@ -119,7 +119,7 @@ INSTALL = /usr/bin/ginstall
 MAKEDEPEND = /usr/openwin/bin/makedepend
 
 CMDECHO = /usr/bin/echo
-CMDMCS = /usr/ccs/bin/mcs
+CMDMCS = /usr/bin/mcs
 CMDWHOAMI = /usr/bin/whoami
 
 MSGDEST = $(BASEDIR)/usr/lib/locale/C/LC_MESSAGES
@@ -326,5 +326,6 @@ DEPCFLAGS += $(NO_BUILD_SANERGY)
 DEPCFLAGS += $(NO_BUILD_STK)
 DEPCFLAGS += $(NO_BUILD_OSD)
 
-STK_INCLUDES = ${HOME}/samfs/acsls/toolkit2.4.0/src/h
+ISA=$(subst /i386,,/$(ISA_TARGET))
+
 -include $(DEPTH)/mk/include/$(OS_DIST).mk
