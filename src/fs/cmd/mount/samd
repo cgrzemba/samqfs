@@ -50,7 +50,6 @@
 # Misc. definitions
 #
 TREE=/tmp/sam-amld.tree.$$
-SAMSERVICETAG=/opt/SUNWsamfs/util/samservicetag
 
 #
 # Return pid(s) of named process(es) in variable "pid"
@@ -228,7 +227,6 @@ case "$1" in
 		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
 		sleep 2
 		/usr/sbin/svcadm enable -t svc:/system/sam-fsd
-		$SAMSERVICETAG add
 		pidproc sam-fsd
 	fi
 	if [ "${pid}" = "" ]; then
@@ -270,7 +268,6 @@ case "$1" in
 		/opt/SUNWsamfs/sbin/sam-fsd > /dev/null
 		sleep 2
 		/usr/sbin/svcadm enable -t svc:/system/sam-fsd
-		$SAMSERVICETAG add
 		pidproc sam-fsd
 	fi
 	echo "Starting SAM-FS sam-amld daemon"
