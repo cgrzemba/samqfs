@@ -90,8 +90,8 @@ load_for_fs(
 
 	if (LicenseExpired || SlotsUsedUp) {
 		send_fs_error(&fifo_cmd->handle, ENOTSUP);
-	} else if (err = add_preview_fs(&fifo_cmd->handle, &command->resource,
-	    PRV_FS_PRIO_DEFAULT, CB_NOTIFY_FS_LOAD)) {
+	} else if ((err = add_preview_fs(&fifo_cmd->handle, &command->resource,
+	    PRV_FS_PRIO_DEFAULT, CB_NOTIFY_FS_LOAD))) {
 		send_fs_error(&fifo_cmd->handle, err);
 	}
 	free(vcmd);			/* always free the command buffer */
@@ -189,18 +189,19 @@ unload_for_fs(void *vcmd)
 
 		/* find the device */
 
-		for (device = (dev_ent_t *)SHM_REF_ADDR(
-		    ((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
+		for (device = (dev_ent_t *)SHM_REF_ADDR(((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
 		    device != NULL;
 		    device = (dev_ent_t *)SHM_REF_ADDR(device->next)) {
-			if (device->st_rdev == command->rdev) {
+			if ((uint32_t)device->st_rdev == (uint32_t)command->rdev) {
+				sam_syslog(LOG_DEBUG,
+			    "unload_for_fs: found rdev (%#x) %#x %x", command->rdev, device->st_rdev, device);
 				break;
 			}
 		}
 
 		if (device == NULL) {
 			sam_syslog(LOG_ERR,
-			    "unload_for_fs: bad r_dev (%#x)", command->rdev);
+			    "unload_for_fs: bad rdev (%#x)", command->rdev);
 			send_fs_error(&fifo_cmd->handle, EIO);
 		} else {
 			/*

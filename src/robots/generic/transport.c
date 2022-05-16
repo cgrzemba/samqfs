@@ -391,7 +391,7 @@ move_drive_error(
 	    50];
 	storage_element_t *desc;
 
-	if (drive_to_down = find_element(library->drive, source)) {
+	if ((drive_to_down = find_element(library->drive, source)) != 0) {
 		/* The source is a drive */
 		down_drive(drive_to_down, SAM_STATE_CHANGE);
 		downed_one++;
@@ -414,7 +414,7 @@ move_drive_error(
 		mutex_lock(&library->un->io_mutex);
 	}
 
-	if (drive_to_down = find_element(library->drive, dest)) {
+	if ((drive_to_down = find_element(library->drive, dest)) != 0) {
 		down_drive(drive_to_down, SAM_STATE_CHANGE);
 		downed_one++;
 	}
@@ -622,13 +622,14 @@ move(
 	mutex_unlock(&library->un->io_mutex);
 	DevLog(DL_DETAIL(5179), cmd->source,
 	    cmd->flags.b.invert1 ? "invert" : "asis", cmd->destination1);
-	if (memcmp(l_mess, catgets(catfd, SET, 9079, "move from"), 9) == 0)
+	if (memcmp(l_mess, catgets(catfd, SET, 9079, "move from"), 9) == 0) {
 		if (!err)
 			memccpy(l_mess, catgets(catfd, SET, 9087,
 			    "move complete"), '\0', DIS_MES_LEN);
 		else
 			memccpy(l_mess, catgets(catfd, SET, 9307,
 			    "move failed"), '\0', DIS_MES_LEN);
+	}
 	return (err);
 }
 

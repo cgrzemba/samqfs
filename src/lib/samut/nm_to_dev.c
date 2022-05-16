@@ -77,4 +77,5 @@ nm_to_device(
 		}
 	}
 	/* NOTREACHED */
+        return (-1);
 }

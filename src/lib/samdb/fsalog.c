@@ -476,7 +476,7 @@ inv_update(sam_fsa_inv_t **invp)
 	}
 
 	/* Loop through files in event log directory. */
-	while (readdir_r(dirp, ent) != NULL) {
+	while ((ent=readdir(dirp)) != NULL) {
 		if (!is_event_logfile(inv, ent->d_name)) {
 			continue;
 		}

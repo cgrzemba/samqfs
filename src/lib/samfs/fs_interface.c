@@ -142,8 +142,7 @@ notify_fs_mount(
 				    NULL)) == 0)
 					break;
 
-				if ((err == EAGAIN) || (err == ENOMEM) &&
-				    (retry-- > 0)) {
+				if ((err == EAGAIN) || ((err == ENOMEM) && (retry-- > 0))) {
 					sam_syslog(LOG_INFO,
 					    "Retry mount_thread:%m.");
 					thr_yield();

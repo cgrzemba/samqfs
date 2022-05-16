@@ -111,7 +111,7 @@ sam_sbversion_to_str(
 	}
 
 	/* Search sb_version table for matching version. */
-	for (svp = _sb_version; svp->nm != '\0'; svp++) {
+	for (svp = _sb_version; *svp->nm != '\0'; svp++) {
 		if (svp->val == sbversion) {
 			if (len < (strlen(svp->nm)+1)) {
 				return (EINVAL);
@@ -142,7 +142,7 @@ sam_fsck_stat_to_str(
 	}
 
 	/* Search sb_version[] table for matching version. */
-	for (stp = _fsck_status; stp->nm != '\0'; stp++) {
+	for (stp = _fsck_status; *stp->nm != '\0'; stp++) {
 		if (stp->val == state) {
 			if (len < (strlen(stp->nm)+1)) {
 				return (EINVAL);

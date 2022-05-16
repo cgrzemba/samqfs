@@ -401,8 +401,9 @@ wait_library_ready(
 					}
 					continue;
 				}
-				if (err = (int)process_scsi_error(un, NULL,
-				    ERR_SCSI_NOLOG)) {
+ 				/* process_scsi_error cant return 0, if always true */
+				if ((err = (int)process_scsi_error(un, NULL,
+				    ERR_SCSI_NOLOG)) != 0) {
 					if ((err == NOT_READY) ||
 					    (err == WAIT_READY) ||
 					    (err == WAIT_READY_LONG))

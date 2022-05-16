@@ -850,8 +850,8 @@ MinToStr(
 			day++;
 			if ((day == 366) ||
 			    ((day == 365) &&
-			    (!leap_year(year - 1) &&
-			    (!leap_year(year) && (chgmonth >= 2)) ||
+			    ((!leap_year(year - 1) &&
+			    (!leap_year(year) && (chgmonth >= 2))) ||
 			    (leap_year(year - 1) && (chgmonth >= 2))))) {
 				day = 0;
 				year++;
@@ -863,8 +863,8 @@ MinToStr(
 			cday++;
 			if ((cday == 366) ||
 			    ((cday == 365) &&
-			    (!leap_year(year - 1) &&
-			    (!leap_year(year) && (chgmonth >= 2)) ||
+			    ((!leap_year(year - 1) &&
+			    (!leap_year(year) && (chgmonth >= 2))) ||
 			    (leap_year(year - 1) && (chgmonth >= 2))))) {
 				cday = 0;
 				cyear++;

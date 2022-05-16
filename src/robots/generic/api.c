@@ -98,6 +98,8 @@ api_valid_error(dtype_t type, int errorcode, dev_ent_t *un)
 		return (0);
 	}
 	return (-1);
+#else
+	return (0);
 #endif
 }
 

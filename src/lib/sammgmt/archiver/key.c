@@ -87,7 +87,7 @@ struct_key_t k2)
 
 	Trace(TR_DEBUG, "checking keys entry");
 
-	if (memcmp(k1, k2, sizeof (k1)) == 0) {
+	if (memcmp(k1, k2, sizeof (*k1)) == 0) {
 		Trace(TR_DEBUG, "keys match");
 		return (B_TRUE);
 	} else {

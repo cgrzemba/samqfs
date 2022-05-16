@@ -132,7 +132,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		register int    indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -144,6 +144,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.scsi_cmd) {
@@ -1350,7 +1351,7 @@ spin_unit(
 		register int	indx = un->dt.tp.drive_index;
 		if (!(IO_table[indx].initialized)) {
 			mutex_lock(&IO_table[indx].mutex);
-			if (!(IO_table[indx].initialized))
+			if (!(IO_table[indx].initialized)) {
 				if (load_tape_io_lib(&tape_IO_entries[indx],
 				    &(IO_table[indx].jmp_table))) {
 					memccpy(un->dis_mes[DIS_MES_CRIT],
@@ -1362,6 +1363,7 @@ spin_unit(
 					return (-1);
 				} else
 					IO_table[indx].initialized = TRUE;
+			}
 			mutex_unlock(&IO_table[indx].mutex);
 		}
 		if (IO_table[indx].jmp_table.spin_unit)

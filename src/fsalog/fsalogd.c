@@ -889,7 +889,7 @@ check_log_expire(void)
 	SamMalloc(ent, sizeof (dirent_t) +
 	    fpathconf(logdir_fd, _PC_NAME_MAX));
 
-	while (readdir_r(logdir, ent) != NULL) {
+	while ((ent = readdir(logdir)) != NULL) {
 		int ent_len = strlen(ent->d_name);
 		char *dot1 = strchr(ent->d_name, '.');
 		char *dot2 = strrchr(ent->d_name, '.');
