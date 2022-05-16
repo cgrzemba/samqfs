@@ -141,7 +141,7 @@ main(int argc, char **argv)
 	device_entry = (dev_ent_t *)SHM_REF_ADDR(
 		    ((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
         printf("first_dev: %llx\n\n", device_entry);
-	printf("%8s %2s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
+	printf("%8s %12s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
 	for (count = 0;
 	    device_entry != NULL;
 	    device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next))
@@ -174,6 +174,7 @@ main(int argc, char **argv)
 				count++;
 			}
 		}
+<<<<<<< HEAD
 		printf("%8s ",device_entry->set);
 		printf("%12llx ",device_entry->st_rdev);
 		printf("%49s ",device_entry->name);
@@ -185,6 +186,34 @@ main(int argc, char **argv)
 		printf("%8s ",type);
 		printf("%12lu ",device_entry->space);
 		printf("%s\n",states[device_entry->state]);
+=======
+                int i;
+ 		printf("%8s ",device_entry->set);
+ 		printf("%12llx ",device_entry->st_rdev);
+ 		printf("%49s ",device_entry->name);
+ 		printf("%3d ",device_entry->eq);
+ 		printf("%9s ",device_entry->vendor_id);
+ 		printf("%17s ",device_entry->product_id);
+ 		printf("%5s ",device_entry->revision);
+ 		printf("%16s ",device_entry->serial);
+ 		printf("%8s ",type);
+ 		printf("%12lu ",device_entry->space);
+ 		printf("%s\n",states[device_entry->state]);
+/*
+			printf("%8s %12llx %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
+				device_entry->set,
+				device_entry->st_rdev,
+				device_entry->name, 
+				device_entry->eq, 
+				device_entry->vendor_id, 
+				device_entry->product_id, 
+				device_entry->revision, 
+				device_entry->serial, 
+				type, 
+				device_entry->space,
+				states[device_entry->state]);
+*/
+>>>>>>> 6a4028a5 (print device values in sepearate printf's)
 	}
 	printf("\nfound %d devices\n", count);
 
