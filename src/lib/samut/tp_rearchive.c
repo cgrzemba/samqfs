@@ -91,7 +91,7 @@ sam_mig_rearchive(
 	}
 	if ((inode_buffer = (union sam_di_ino *)malloc(INO_BLK_FACTOR *
 	    INO_BLK_SIZE)) == NULL) {
-		(void *) close(fd);
+		close(fd);
 		return (-1);
 	}
 	while ((read_size = read(fd, inode_buffer,
@@ -158,7 +158,7 @@ sam_mig_rearchive(
 		}
 	}
 
-	(void *) close(fd);
+	close(fd);
 	free(inode_buffer);
 	return (count);
 }

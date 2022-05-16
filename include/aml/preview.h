@@ -65,7 +65,7 @@
 /*
  * find the address pointed to by x
  */
-#define	PRE_REF_ADDR(x)	(((x) == NULL) ? NULL : \
+#define	PRE_REF_ADDR(x)	(((x) == 0) ? NULL : \
 	((void *) ((char *)preview_shm.shared_memory + (int)(x))))
 
 /*

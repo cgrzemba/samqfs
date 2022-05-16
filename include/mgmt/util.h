@@ -43,7 +43,7 @@
 #include "sam/types.h"
 
 #ifndef Str
-#define	Str(s) (s ? (char *)s : "NULL")
+#define	Str(s) (s != NULL ? (char *)s : "NULL")
 #endif
 
 /* Macro to do pointer comparisons in a lint-compatible manner */

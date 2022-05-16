@@ -277,8 +277,8 @@ check_requests(
 			if (drive->un == NULL)
 				continue;
 			if (drive->un->status.b.labeled &&
-			    drive->un->state < DEV_IDLE)
-				if (!mutex_trylock(&drive->mutex))
+			    drive->un->state < DEV_IDLE) {
+				if (!mutex_trylock(&drive->mutex)) {
 					if (!mutex_trylock(&drive->un->mutex)) {
 						mutex_unlock(&drive->mutex);
 						/*
@@ -294,6 +294,8 @@ check_requests(
 						mutex_unlock(&drive->un->mutex);
 					} else
 						mutex_unlock(&drive->mutex);
+				}
+			}
 		}
 
 		/* Look for an idle device with the flip side requested. */

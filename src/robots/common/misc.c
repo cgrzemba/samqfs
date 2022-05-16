@@ -278,7 +278,7 @@ is_barcode(
 		for (; *tmp != '\0'; tmp++)
 			if (!isprint(*tmp))
 				return (FALSE);
-			return (TRUE);
+		return (TRUE);
 	}
 
 	return (FALSE);

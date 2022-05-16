@@ -193,8 +193,8 @@ DeviceConfig(
 	} else {
 		devhead = NULL;
 	}
-	if (master_shm.shared_memory == NULL || devhead == NULL &&
-	    caller == AP_archiver) {
+	if (master_shm.shared_memory == NULL || 
+	    (devhead == NULL && caller == AP_archiver)) {
 		/*
 		 * Use the mcf if sam-amld's shared memory segment
 		 * is not available.

@@ -174,7 +174,7 @@ GetSegmentInode(
 #define	segOrd id.gen	/* used after first call */
 #define	segInd id.ino
 
-	if (ss->size == NULL) {
+	if (ss->size == 0) {
 		struct sam_disk_inode *dinode = (struct sam_disk_inode *)pinode;
 
 		ss->size = dinode->rm.info.dk.seg.fsize;
