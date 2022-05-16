@@ -43,7 +43,7 @@ LIB_SRC = \
 
 include ../archiver.mk
 
-LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamrft $(LIBSO) -lpthread
+LIB_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamrft -lsamcat $(LIBSO) -lpthread
 
 LNOPTS = $(LIBS_LFLAGS32)
 LNLIBS =
