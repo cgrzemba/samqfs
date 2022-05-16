@@ -434,7 +434,7 @@ samaio_attach(
 		return (DDI_FAILURE);
 	}
 	error = ddi_create_minor_node(dip, SAMAIO_CTL_NODE, S_IFCHR, 0,
-	    DDI_PSEUDO, NULL);
+	    DDI_PSEUDO, 0);
 	if (error == DDI_FAILURE) {
 		ddi_soft_state_free(samaio_statep, 0);
 		cmn_err(CE_WARN, "%s: cannot create pseudo device minor node",
@@ -643,7 +643,7 @@ samaio_ioctl(
 		}
 		(void) snprintf(namebuf, sizeof (namebuf), "%d,raw", minor);
 		error = ddi_create_minor_node(samaio_dip, namebuf, S_IFCHR,
-		    minor, DDI_PSEUDO, NULL);
+		    minor, DDI_PSEUDO, 0);
 		if (error != DDI_SUCCESS) {
 			cmn_err(CE_WARN,
 			    "samaio: cannot create minor node %s, minor=%d",
@@ -697,7 +697,7 @@ out:
 	default: {
 		char type;
 
-		type = (cmd >> 8) & 0xff;
+		type = (char)(cmd >> 8) & 0xff;
 
 		switch (type) {
 		case ((DKIOC) >> 8):		/* 04 */
