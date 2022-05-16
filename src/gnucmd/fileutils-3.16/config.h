@@ -284,7 +284,7 @@
 #define HAVE_GETCWD 1
 
 /* Define if you have the getdelim function.  */
-/* #undef HAVE_GETDELIM */
+#define HAVE_GETDELIM 1
 
 /* Define if you have the getgroups function.  */
 #define HAVE_GETGROUPS 1
