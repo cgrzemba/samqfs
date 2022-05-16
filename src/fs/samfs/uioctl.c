@@ -302,7 +302,7 @@ sam_ioctl_util_cmd(
 			if (copyout((char *)&ip->di, (char *)upp,
 					sizeof (struct sam_disk_inode))) {
 				error = EFAULT;
-			} else if (vn_ismntpt(vp) != NULL) {
+			} else if (vn_ismntpt(vp) != 0) {
 				/*
 				 * Don't allow idstat to cross mount points.
 				 * Intentionally make this test after copying
