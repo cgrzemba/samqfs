@@ -54,6 +54,7 @@ DIRS = 	audit \
 		unload   \
 		mccfg \
 		tapealert \
+		readshm \
 		samdb \
 		samrestore \
 		samstorade
