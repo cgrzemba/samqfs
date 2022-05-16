@@ -1,3 +1,7 @@
+# $Revision: 1.10 $
+
+#    SAM-QFS_notice_begin
+#
 # CDDL HEADER START
 #
 # The contents of this file are subject to the terms of the
@@ -16,21 +20,26 @@
 # information: Portions Copyright [yyyy] [name of copyright owner]
 #
 # CDDL HEADER END
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#    SAM-QFS_notice_end
 
-DESTDIR ?= ./root 
+DEPTH = ../../..
 
-FLAVOR.DBG = --debug_build
-FLAVOR = $(FLAVOR.$(DEBUG:yes=DBG))
+include $(DEPTH)/mk/common.mk
 
-INSTALL.64 = --64bit
-INSTALL_ISA = $(INSTALL.$(AMD64:yes=64))
+PROG = readshm
+PROG_SRC = readshm.c
 
-OS_RELEASE := $(shell  uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]}')
-REPO ?= ../repo/i386-$(OS_RELEASE)
+DEPCFLAGS += -I../../robots/
 
-install:
-	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA) --publish --repo=$(REPO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs -lgen $(LIBSO)
 
-.PHONY: clean
-clean:
-	echo rm -rf $(DESTDIR)/*
+LNOPTS = $(CMDS_LFLAGS$(AMD64:yes=64))
+LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs
+
+include $(DEPTH)/mk/targets.mk
+
+include $(DEPTH)/mk/depend.mk

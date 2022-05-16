@@ -3,5 +3,6 @@ SUNWcs
 system/library/gcc-runtime
 system/library
 runtime/perl
-database/bdb
-ooce/database/mariadb-104
+ooce/database/bdb
+ooce/library/mariadb-104
+shell/ksh93
