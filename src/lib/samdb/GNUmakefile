@@ -42,7 +42,6 @@ LIB_SRC = \
 	path.c \
 	util.c
 	
-LIBSO += -R/opt/SUNWsamfs/lib/gpl
 LIB_LIBS = $(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut $(MYSQL_LIB) $(LIBSO)
 DEPCFLAGS += -I$(INCLUDE)/sam/$(OBJ_DIR) $(MYSQL_INCLUDE) $(OSDEPCFLAGS)
 
