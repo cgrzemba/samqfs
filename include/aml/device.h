@@ -554,8 +554,10 @@ typedef struct dev_ent  {
 	MUTEX_T		io_mutex;	/* Mutex for I/O */
 	MUTEX_T		entry_mutex;	/* For the cat_ent*  */
 	struct dev_ent	*next;		/* Pointer (offset) to next entry */
+#if 0
 #if !defined(_LP64)
  	int		de_pad0;
+#endif
 #endif
 	THREAD_T	scan_tid;	/* Thread id of scanner/drive thread */
 	THREAD_T	io_tid;		/* Thread id of stage/mount */
