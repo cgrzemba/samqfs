@@ -296,10 +296,12 @@ METADATA_SERVER = -DMETADATA_SERVER
 
 # not build IBM Tivoly support
 NO_BUILD_SANERGY = -D_NoTIVOLI_
-# not build ST5800 and ACSLS
+# not build ST5800
 NO_BUILD_STK = -D_NoSTK_
 # no Sun Customer Services
 NO_BUILD_CNS = -D_NoCNS_
+# no build ACSLS client tools
+NO_BUILD_ACSLS = 1
 
 #
 # Final default CFLAGS settings

@@ -1,4 +1,4 @@
-#!/usr/bin/env python -t
+#!/usr/bin/python3 -t
 #
 # CDDL HEADER START
 #
@@ -37,6 +37,8 @@ import shutil
 from stat import *
 import time
 import json
+import argparse
+import jinja2
 
 subpath64,subpath = subprocess.check_output('isainfo').decode('latin1').split()
 
@@ -58,283 +60,10 @@ config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[:2])
 srcpath_fn = 'srcpath_{}.json.cache'.format(osrelease)
 
-FLAVOR = '_DEBUG'
-obj_dir = {'32':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath,FLAVOR),
-           '64':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath64,FLAVOR),
-           'all': ''}
-
 destdir = 'root/'
 builddate = time.strftime('%Y%m%dT%H%M%SZ')
 
 repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
-
-transform_fn = 'samqfs.transform'
-transform = '''<transform pkg -> emit set pkg.description="Storage and Archive Manager File System">
-<transform pkg -> emit set pkg.summary="SAM-FS {5}">
-<transform pkg -> emit set org.opensolaris.consolidation=sfe>
-<transform pkg -> emit set info.classification="org.opensolaris.category.2008:System/File System">
-<transform pkg -> emit set variant.opensolaris.zone=global>
-<transform pkg -> emit set variant.arch={4}>
-<transform dir path=(var|etc|sys|kernel).* -> edit group bin sys >
-<transform dir path=usr\/lib\/(fs|devfsadm).* -> edit group bin sys >
-<transform dir path=^usr -> drop >
-<transform dir path=^opt$ -> drop >
-<transform dir path=lib -> drop>
-<transform dir path=kernel -> drop>
-<transform dir path=etc(/[a-z]+)?$ -> drop>
-<transform dir path=etc/sysevent(/.+)?$ -> drop>
-<transform dir path=var(/[a-z]+)?$ -> drop>
-<transform dir path=var/(snmp|svc)(/.+)* -> drop>
-<transform file path=(var|lib)/svc/manifest/.*\.xml$ -> add restart_fmri svc:/system/manifest-import:default>
-<transform pkg -> emit driver name=samioc perms="* 0666 root sys">
-<transform pkg -> emit driver name=samaio perms="* 0666 root sys">
-<transform pkg -> emit legacy category=system desc="Storage and Archive Manager File System" \
-name="Sun SAM and Sun SAM-QFS software OI (root)" pkg=SUNWsamfsr vendor="Open Source" version={3},REV={0} hotline="Open Source">
-<transform pkg -> emit legacy category=system desc="Storage and Archive Manager File System" \
-name="Sun SAM and Sun SAM-QFS software OI (usr)" pkg=SUNWsamfsu vendor="Open Source" version={3},REV={0} hotline="Open Source">
-<transform dir file link hardlink path=opt/.+/man(/.+)? -> default facet.doc.man true>
-<transform file path=opt/.+/man(/.+)? -> add restart_fmri svc:/application/man-index:default>
-<transform dir file link hardlink path=opt.*/include/.* -> default facet.devel true>
-<transform dir file link hardlink path=opt.*/client/.* -> default facet.devel true>
-<transform pkg -> emit license {2} license=lic_CDDL>
-<transform file path=.*/{1}$ -> default mode 0744>
-<transform depend -> edit fmri "(@[0-9\.]*)-[^ \\t\\n\\r\\f\\v]*" "\\1">
-<transform depend fmri=pkg:/runtime/perl.* -> edit fmri "@[^ \\t\\n\\r\\f\\v]*" "">
-'''.format(builddate, config_smf_name, lic_fn, version, subpath, osrelease)
-
-config_smf = '''<?xml version="1.0"?>
-<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
-<service_bundle type='manifest' name='samqfs:{1}'>
-<service
-name='system/{1}'
-    type='service'
-    version='1'>
-    <single_instance />
-    <dependency
-        name='fs-local'
-        grouping='require_all'
-        restart_on='none'
-        type='service'>
-            <service_fmri value='svc:/system/filesystem/local:default' />
-    </dependency>
-    <dependent
-        name='samqfs_self-assembly-complete'
-        grouping='optional_all'
-        restart_on='none'>
-        <service_fmri value='svc:/milestone/self-assembly-complete' />
-    </dependent>
-    <instance enabled='true' name='default'>
-        <exec_method
-            type='method'
-            name='start'
-            exec='/{0}'
-            timeout_seconds='0'/>
-        <exec_method
-            type='method'
-            name='stop'
-            exec=':true'
-            timeout_seconds='0'/>
-        <exec_method
-            type='method'
-            name='refresh'
-            exec=':true'
-            timeout_seconds='0'/>
-        <property_group name='startd' type='framework'>
-            <propval name='duration' type='astring' value='transient' />
-        </property_group>
-        <property_group name='config' type='application'>
-            <propval name='assembled' type='boolean' value='false' />
-        </property_group>
-    </instance>
-</service>
-</service_bundle>
-'''.format(config_script_fn,config_smf_name)
-
-
-config_script = '''#!/usr/bin/sh
-#
-# CDDL HEADER START
-#
-# The contents of this file are subject to the terms of the
-# Common Development and Distribution License (the "License").
-# You may not use this file except in compliance with the License.
-#
-# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
-# or http://www.opensolaris.org/os/licensing.
-# See the License for the specific language governing permissions
-# and limitations under the License.
-#
-# When distributing Covered Code, include this CDDL HEADER in each
-# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
-# If applicable, add the following below this CDDL HEADER, with the
-# fields enclosed by brackets "[]" replaced with your own identifying
-# information: Portions Copyright [yyyy] [name of copyright owner]
-# 
-# CDDL HEADER END
-#
-
-. /lib/svc/share/smf_include.sh
-
-if [ ! -z $SMF_FMRI ]; then
-  assembled=$(/usr/bin/svcprop -p config/assembled $SMF_FMRI)
-  if [ "$assembled" == "true" ] ; then
-    exit $SMF_EXIT_OK
-  fi
-fi
-
-PKG_INSTALL_ROOT='/'
-INSLOG=$PKG_INSTALL_ROOT/tmp/SAM_install.log
-ETCDIR=$PKG_INSTALL_ROOT/{0}
-VARDIR=$PKG_INSTALL_ROOT/{1}
-SCRIPTS=$ETCDIR/scripts
-EXAMPLE=$PKG_INSTALL_ROOT/{2}examples
-KERNDRV=$PKG_INSTALL_ROOT/kernel/drv
-LAST_DIR=$PKG_INSTALL_ROOT/{0}samfs.old.last
-
-if [ ! -d $ETCDIR ]; then
-    mkdir -p $ETCDIR
-    chmod 0755 $ETCDIR
-    chgrp sys  $ETCDIR
-    chown root $ETCDIR
-fi
-if [ ! -d $SCRIPTS ]; then
-    mkdir -p $SCRIPTS
-fi
-cp -rp $PKG_INSTALL_ROOT/{2}etc/csn $ETCDIR
-cp -rp $PKG_INSTALL_ROOT/{2}etc/startup $ETCDIR
-
-
-if [ ! -f $ETCDIR/inquiry.conf ]; then
-        cp $EXAMPLE/inquiry.conf $ETCDIR/inquiry.conf
-else
-        egrep -v 'Id:|Revision:' $ETCDIR/inquiry.conf > /tmp/$$.in1
-        egrep -v 'Id:|Revision:' $EXAMPLE/inquiry.conf > /tmp/$$.in2
-        diff /tmp/$$.in1 /tmp/$$.in2 > /dev/null
-        if [ $? -ne 0 ]; then
-                echo "inquiry.conf may have been updated for this release."
-                echo "$EXAMPLE/inquiry.conf is the latest released version."
-                echo "Please update this file with any site specific changes and"
-                echo "copy it to $ETCDIR/inquiry.conf ."
-                echo " "
-        fi
-        rm /tmp/$$.in1 /tmp/$$.in2
-fi
-
-# Add SPM port to $PKG_INSTALL_ROOT/etc/inet/services
-
-NSS=$PKG_INSTALL_ROOT/etc/nsswitch.conf
-SER=$PKG_INSTALL_ROOT/etc/inet/services
-
-# Alert user if /etc/services files is not used
-
-SERVSRC=`grep -v "^#" $NSS | grep -w services | cut -f1 -d '[' | grep files`
-if [ X"$SERVSRC" = X ]; then
-        echo ""
-        echo "WARNING: $PKG_INSTALL_ROOT/etc/nsswitch.conf does NOT"
-        echo "reference $PKG_INSTALL_ROOT/etc/services.  If you are"
-        echo "using nis, nis+, etc. for the services database you "
-        echo "must install an entry for the SAM-QFS single port monitor"
-        echo "there as follows:"
-        echo ""
-        echo "sam-qfs       7105/tcp            # SAM-QFS"
-        echo ""
-        echo "SAM-QFS will not run correctly until you correct this."
-        echo ""
-fi
-
-SPMSRV=`getent services 7105 | sed -e 's/\([^ ]*\)[ ]*.*$/\1/'`
-if [ -n "$SPMSRV" -a "$SPMSRV" != "sam-qfs" ]; then
-        echo ""
-        echo "WARNING: An active entry for port 7105 is already in $SER."
-        echo "A different port number will need to be selected after"
-        echo "installation for sam-qfs to run correctly."
-        echo "Edit the $SER file and update the sam-qfs"
-        echo "port number to a unique number and uncomment the line"
-        echo ""
-        echo "#sam-qfs          7105/tcp                        # SAM-QFS"
-        echo ""
-        chmod 444 $SER
-elif [ "$SPMSRV" = "sam-qfs" ]; then
-        echo ""
-        echo "A sam-qfs entry already exists with port 7105. No changes"
-        echo "are being made to the $SER file"
-        echo ""
-else
-        echo "# start samqfs 5.0" >> $SER
-        echo "sam-qfs           7105/tcp                        # SAM-QFS" >> $SER
-        echo "# end samqfs 5.0" >> $SER
-        chmod 444 $SER
-fi
-
-VERSION="VERSION.{3}"
-/bin/touch $ETCDIR/$VERSION
-
-SH_LIST="archiver.sh recycler.sh save_core.sh ssi.sh sendtrap nrecycler.sh"
-for fn in $SH_LIST; do
-        if [ ! -f $SCRIPTS/$fn ]; then
-                if [ -f $EXAMPLE/$fn ]; then
-                        cp $EXAMPLE/$fn $SCRIPTS/$fn
-                fi
-        else
-                egrep -v 'Id:|Revision:' $SCRIPTS/$fn > /tmp/rev1.$$
-                egrep -v 'Id:|Revision:' $EXAMPLE/$fn > /tmp/rev2.$$
-                diff /tmp/rev1.$$ /tmp/rev2.$$ > /dev/null
-                if [ $? -ne 0 ]; then
-                        echo "$fn has been updated for this release."
-                        echo "$EXAMPLE/$fn is the latest released version."
-                        echo "Please update this file with any site specific changes"
-                        echo "and copy it to $SCRIPTS/$fn ."
-                        echo " "
-                fi
-                rm /tmp/rev1.$$ /tmp/rev2.$$
-        fi
-        if [ -f $SCRIPTS/$fn ]; then
-                chmod 0750     $SCRIPTS/$fn
-                chown root:bin $SCRIPTS/$fn
-        fi
-done
-
-# Do NOT copy in default versions of the optional scripts if they don't exist.
-# It is up to the site to do the copy if they want the script to be invoked.
-# Notify the site if the customized versions have changed.
-#
-SH_LIST="dev_down.sh load_notify.sh log_rotate.sh"
-for fn in $SH_LIST; do
-        if [ -f $SCRIPTS/$fn ]; then
-                /bin/egrep -v 'Id:|Revision:' $SCRIPTS/$fn > /tmp/rev1.$$
-                /bin/egrep -v 'Id:|Revision:' $EXAMPLE/$fn > /tmp/rev2.$$
-                /bin/diff /tmp/rev1.$$ /tmp/rev2.$$ > /dev/null
-                if [ $? -ne 0 ]; then
-                        echo "$fn has been updated for this release."
-                        echo "$EXAMPLE/$fn is the latest released version."
-                        echo "Please update this file with any site specific changes"
-                        echo "and copy it to $SCRIPTS/$fn ."
-                        echo " "
-                fi
-                /bin/rm /tmp/rev1.$$ /tmp/rev2.$$
-        fi
-done
-
-# set up if necessary for the server to be managed by Sun Storedge SAM-QFS
-# Manager
-
-if [ ! -f $PKG_INSTALL_ROOT/{2}.fsmgmtd ]; then
-if [ -f $PKG_INSTALL_ROOT/{2}.sam-mgmtrpcd ]; then
-MGMMODE=`cat $PKG_INSTALL_ROOT/{2}.sam-mgmtrpcd`
-        fi
-        echo "$MGMMODE" > $PKG_INSTALL_ROOT/{2}.fsmgmtd
-fi
-
-# set up the clients that can manage this SAM-FS/QFS server via the SAM-QFS
-# Manager
-
-echo "$FSMADM_CLIENTS" > $PKG_INSTALL_ROOT/{2}.fsmgmtd_clients
-
-svccfg -s $SMF_FMRI setprop config/assembled = true
-svccfg -s $SMF_FMRI refresh
-'''.format(sysconfdir,localstatedir,prefix,version)
-
-
 
 scmds = ['sls',
             'sfind',
@@ -362,26 +91,6 @@ samcmds = ['samchaid',
             'samsharefs',
             'samunhold',
             ]
-SUNW_names = { 'SUNW_samst_link.so':'libsamst_link.so',
-            'SUNW_samaio_link.so':'libsamaio_link.so',
-            'samfsrestore':'csd',
-            'sam-catserverd':'catserver',
-            'sam-clientd':'rs_client',
-            'sam-genericd':'generic',
-            'sam-robotsd':'robots',
-            'sam-rpcd':'rpc.sam',
-            'sam-scannerd':'scanner',
-            'sam-serverd':'rs_server',
-            'sam-stagerd':'stager',
-            'sam-stagerd_copy':'copy',
-            'sam-stagealld':'stageall',
-            'sam-stkd':'stk',
-            'archive':'gencmd',
-            'unarchive':'gencmd',
-            'SUNWsamfs':'nl_messages.cat',
-            'Makefile':'Makefile.inst',
-            'version.h':'{}/pub/version.h'.format(obj_dir['32']),
-            }
 isa32_cmds = {'fsck':'samfsck',
             'mkfs':'sammkfs',
             'trace':'samtrace'}
@@ -395,6 +104,14 @@ arch64bins = []
 srcpaths = {}
 multiplefn = ['Makefile',]
 
+def customizeTemplates(fname, config_parameters):
+    template_file = fname+'.j2'
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath="."),
+                         trim_blocks=True,
+                         lstrip_blocks=True)
+    template = env.get_template(template_file)
+    return template.render(**config_parameters)
+
 def isScript(fn):
     p = subprocess.Popen(['/usr/bin/file',os.path.join(fn)], stdout=subprocess.PIPE)
     for l in p.stdout.readlines():
@@ -406,7 +123,8 @@ def isScript(fn):
 ''' returns the full path where to copy from
 '''
 def getPath(fn, dirname, filenames, arch):
-    # print "getPath search: "+fn
+    # print ("getPath search: "+fn)
+    # import pdb; pdb.set_trace()
     sfn = fn.rpartition('/')[2]
 
     if not sfn in filenames: return None
@@ -557,7 +275,7 @@ def mkSymLinks(linklst):
            if e.errno != 17:
                print ("Error: {0} {1}".format(e.errno,os.strerror(e.errno)))
 
-def main():
+def main(version, debug):
     global arch64
     global arch32
     global srcpaths
@@ -627,27 +345,87 @@ def main():
     cxf.close()
     os.umask(defmask)
     
-    if os.system('pkg list $(cat depend-{}.lst) > /dev/null 2>&1'.format(osrelease.split('-')[0])) != 0:
-        print ('check content of depend-{}.lst'.format(osrelease.split('-')[0]))
-        os.system('pkg list $(cat depend-{}.lst)'.format(osrelease.split('-')[0]))
-        sys.exit(3)
-    manifest_fn = 'samfs.p5m'
-    with open(manifest_fn,'w') as mfn:
-        mfn.write('set name=pkg.fmri value=pkg://{0}/system/samfs@{1}-{2}:{3}\n'.format(publisher,version,release,builddate))
-    print ('run: pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
-    os.system('pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
-    print ('run: pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
-    os.system('pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
-    print ('run: pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
-    os.system('pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
-    with open(transform_fn,'w') as tfn:
-        tfn.write(transform)
-    print ('run: pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
-    os.system('pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
-    print ('run: pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
-    os.system('pkglint {1}'.format(repro,manifest_fn+'d.trans'))
-    # os.system('pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
-    os.system('pkgsend publish -d {2} -s {0} {1}'.format(repro, manifest_fn+'d.trans', destdir))
+    if args.publish:
+        if os.system('pkg list $(cat depend-{}.lst) > /dev/null 2>&1'.format(osrelease.split('-')[0])) != 0:
+            print ('check content of depend-{}.lst'.format(osrelease.split('-')[0]))
+            os.system('pkg list $(cat depend-{}.lst)'.format(osrelease.split('-')[0]))
+            sys.exit(3)
+        manifest_fn = 'samfs.p5m'
+        with open(manifest_fn,'w') as mfn:
+            mfn.write('set name=pkg.fmri value=pkg://{0}/system/samfs@{1}-{2}:{3}\n'.format(publisher,version,release,builddate))
+        print ('run: pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
+        os.system('pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
+        print ('run: pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
+        os.system('pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
+        print ('run: pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
+        os.system('pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
+        with open(transform_fn,'w') as tfn:
+            tfn.write(transform)
+        print ('run: pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
+        os.system('pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
+        print ('run: pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
+        os.system('pkglint {1}'.format(repro,manifest_fn+'d.trans'))
+        # os.system('pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
+        os.system('pkgsend publish -d {2} -s {0} {1}'.format(repro, manifest_fn+'d.trans', destdir))
    
 
-main()
+transform_fn = 'samqfs.transform'
+config_parameters = {'builddate': builddate, 
+	'config_smf_name':config_smf_name , 
+	'lic_fn':lic_fn , 
+	'version':version , 
+	'subpath':subpath , 
+	'osrelease':osrelease }
+transform = customizeTemplates(transform_fn, config_parameters)
+
+config_parameters = {'config_script_fn':config_script_fn,
+	'config_smf_name':config_smf_name }
+config_smf = customizeTemplates(os.path.basename(config_smf_fn), config_parameters)
+
+config_parameters = {'sysconfdir':sysconfdir,
+	'localstatedir':localstatedir,
+	'prefix':prefix,
+	'version':version}
+config_script = customizeTemplates(os.path.basename(config_script_fn), config_parameters)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--destdir', dest='destdir', default='./root')
+    parser.add_argument('--version', dest='version', default=version, help='tag build with this version')
+    parser.add_argument('--debug_builts', dest='debug', action="store_true", help='install DEBUG builts')
+    parser.add_argument('--publish', dest='publish', action="store_true", help='publish IPS package')
+    parser.add_argument('--verbose', dest='verbose', action="store_true", help='verbose')
+    args = parser.parse_args()
+
+    destdir = args.destdir+'/' 
+    if args.debug:
+         FLAVOR = '_DEBUG'
+    else:
+         FLAVOR = ''
+    obj_dir = {'32':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath,FLAVOR),
+               '64':'obj/SunOS_{0}_{1}{2}'.format(osrelease,subpath64,FLAVOR),
+               'all': ''}
+    SUNW_names = { 'SUNW_samst_link.so':'libsamst_link.so',
+            'SUNW_samaio_link.so':'libsamaio_link.so',
+            'samfsrestore':'csd',
+            'sam-catserverd':'catserver',
+            'sam-clientd':'rs_client',
+            'sam-genericd':'generic',
+            'sam-robotsd':'robots',
+            'sam-rpcd':'rpc.sam',
+            'sam-scannerd':'scanner',
+            'sam-serverd':'rs_server',
+            'sam-stagerd':'stager',
+            'sam-stagerd_copy':'copy',
+            'sam-stagealld':'stageall',
+            'sam-stkd':'stk',
+            'archive':'gencmd',
+            'unarchive':'gencmd',
+            'SUNWsamfs':'nl_messages.cat',
+            'Makefile':'Makefile.inst',
+            'version.h':'{}/pub/version.h'.format(obj_dir['32']),
+            }
+
+           
+
+    main(args.version, args.debug)

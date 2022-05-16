@@ -44,7 +44,7 @@ ifeq ($(MAKECMDGOALS), clobberall)
 DIRS = include src pkg pkg-linux
 else
 ifeq ($(OS), SunOS)
-DIRS = include src pkg
+DIRS = include src
 else
 DIRS = include src pkg-linux
 endif
@@ -73,6 +73,9 @@ include $(DEPTH)/mk/targets.mk
 #   Note that this target needs to be defined prior to including
 #   common.mk to avoid picking up the existing definitions in
 #   CONFIG.mk.
+
+install:
+	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
 
 config: set_config
 
