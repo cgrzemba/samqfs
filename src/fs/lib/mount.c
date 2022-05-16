@@ -336,6 +336,7 @@ ChkFs(void)
 		waitpid(pid, &status, 0);
 		close(fd);
 	}
+#if 0
 	/*
 	 * Add appropriate service tags.
 	 */
@@ -355,7 +356,7 @@ ChkFs(void)
 	} else {
 		waitpid(pid, &status, 0);
 	}
-
+#endif
 	close(fd);
 
 #endif /* sun */
