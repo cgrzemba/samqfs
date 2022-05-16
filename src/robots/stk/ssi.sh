@@ -1,4 +1,4 @@
-#!/bin/csh -f
+#!/bin/ksh
 
 #    SAM-QFS_notice_begin
 #
@@ -34,36 +34,63 @@
 # the signal sent by the daemon to stop the process.
 #
 #
-# Find the correct logger
-if ( -x /usr/bin/logger) then
-	set LOGGER = /usr/bin/logger
-else
-	if ( -x /usr/ucb/logger ) then
-		set LOGGER = /usr/ucb/logger
-	endif
-endif
+LOGGER=/usr/bin/logger
 #
 # find the syslog facility
-if ( -r /etc/opt/SUNWsamfs/defaults.conf ) then
-	set SAM_LOGGER_FACILITY = `grep -v "^#" /etc/opt/SUNWsamfs/defaults.conf | grep LOCAL | sed -e "s/^.*LOG_//"`
-	if ( x${SAM_LOGGER_FACILITY} == "x" ) then
-		set SAM_LOGGER_FACILITY = local7
-	endif
+if [ -r /etc/opt/SUNWsamfs/defaults.conf ] ; then
+	SAM_LOGGER_FACILITY=`grep -v "^#" /etc/opt/SUNWsamfs/defaults.conf | grep LOCAL | sed -e "s/^.*LOG_//"`
+	if [ x${SAM_LOGGER_FACILITY} == "x" ] ; then
+		SAM_LOGGER_FACILITY=local7
+	fi
 else
-	set SAM_LOGGER_FACILITY = local7
-endif
+	SAM_LOGGER_FACILITY=local7
+fi
 
-/usr/sbin/ping ${CSI_HOSTNAME} >&! /dev/null
-if ( $status != "0" ) then
-	${LOGGER} -i -t ssi.sh -p ${SAM_LOGGER_FACILITY}.warning ${CSI_HOSTNAME} is unpingable:  network problem\?
-endif
+/usr/sbin/ping ${CSI_HOSTNAME} > /dev/null 2>&1 
+if [ $? -ne 0 ] ; then
+	${LOGGER} -i -t ssi.sh -p ${SAM_LOGGER_FACILITY}.warning "${CSI_HOSTNAME} is unpingable:  network problem\?"
+fi
 #
 #
-setenv CSI_TCP_RPCSERVICE TRUE
-setenv CSI_UDP_RPCSERVICE TRUE
-setenv CSI_CONNECT_AGETIME 172800
-setenv CSI_RETRY_TIMEOUT 4
-setenv CSI_RETRY_TRIES 5
-setenv ACSAPI_PACKET_VERSION 4
+export CSI_TCP_RPCSERVICE=TRUE
+export CSI_UDP_RPCSERVICE=TRUE
+export CSI_CONNECT_AGETIME=172800
+export CSI_RETRY_TIMEOUT=4
+export CSI_RETRY_TRIES=5
+export ACSAPI_PACKET_VERSION=4
+# /*********************************************************************/
+# /* The following are for defining names for CDKLOG index             */
+# /* positions to control log processing:                              */
+# /* CDKLOG=1             Log event messages to the log file.          */
+# /* CDKLOG=01            Log XAPI ACSAPI send packets to the log.file.*/
+# /* CDKLOG=001           Log XAPI ACSAPI recv packets to the log.file.*/
+# /* CDKLOG=0001          Log XAPI XML send packets to the log.file.   */
+# /* CDKLOG=00001         Log XAPI XML recv packets to the log.file.   */
+# /* CDKLOG=000001        Log CSI send packets to the log.file.        */
+# /* CDKLOG=0000001       Log CSI recv packets to the log.file.        */
+# /* CDKLOG=00000001      Log HTTP XML send packets to the log.file.   */
+# /* CDKLOG=000000001     Log HTTP XML recv packets to the log.file.   */
+# /* CDKLOG=0000000001    Log event error messages to stdout.          */
+# /*===================================================================*/
+export CDKLOG=15
+# /*********************************************************************/
+# /* The following are for defining names for CDKTRACE index           */
+# /* positions to control trace granuality.                            */
+# /* CDKTRACE=1           Trace errors.                                */
+# /* CDKTRACE=01          Trace ACSAPI.                                */
+# /* CDKTRACE=001         Trace SSI.                                   */
+# /* CDKTRACE=0001        Trace CSI.                                   */
+# /* CDKTRACE=00001       Trace common components.                     */
+# /* CDKTRACE=000001      Trace XAPI.                                  */
+# /* CDKTRACE=0000001     Trace XAPI (client) TCP/IP functions.        */
+# /* CDKTRACE=00000001    Trace t_acslm or t_http server executables.  */
+# /* CDKTRACE=000000001   Trace HTTP (server) TCP/IP functions.        */
+# /* CDKTRACE=0000000001  Trace malloc, free, and shared mem functions.*/
+# /* CDKTRACE=00000000001 Trace XML parser.                            */
+# /*===================================================================*/
+export CDKTRACE=511
+# arguments
+# argv[1] - parent PID
+# argv[2] - input socket name
+# argv[3] - request originator type: 23=ACSSA (cl_type.c)
 exec /opt/SUNWsamfs/sbin/ssi_so $3 ${ACSAPI_SSI_SOCKET} 23 
-
