@@ -31,7 +31,7 @@ LIB_HOME = $(DEPTH)/src/lib/samspm
 
 include $(DEPTH)/mk/common.mk
 
-BUILD_64BIT = yes
+# BUILD_64BIT = yes
 
 ifeq ($(OS), SunOS)
 MLIBS = samspm samspmd
@@ -49,7 +49,7 @@ spmTestServerP_SRC 	= spmTestServerP.c
 spmTestServerS_SRC 	= spmTestServerS.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) \
-	$(STATIC_OPT) -L $(OBJ_DIR) -lsamspmd -lsamspm -lsamconf $(DYNAMIC_OPT) $(LIBSO) \
+	$(STATIC_OPT) -L $(OBJ_DIR) -lsamspmd -lsamspm $(DYNAMIC_OPT) $(LIBSO) \
 	-lpthread -lsocket -lnsl 
 spmQuery_LIBS 		= $(PROG_LIBS)
 spmTestClient_LIBS 	= $(PROG_LIBS)

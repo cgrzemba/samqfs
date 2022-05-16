@@ -45,12 +45,13 @@ logging.basicConfig(format='%(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 
 subpath64,subpath = subprocess.check_output('isainfo').decode('latin1').split()
+# have to provide the same like: uname -v | gawk '{ split($0,a,"[.-]"); print a[1]"-"a[2]}'
+osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[:2])
 
 version = '5.0.1'
 release = '2022.0.0.0'
-# publisher = 'samqfs.omnios'
-publisher = 'openindiana.org'
 fmri = 'system/samqfs'
+repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
 
 prefix = 'opt/SUNWsamfs/'
 docdir = prefix+'doc/'
@@ -62,13 +63,14 @@ config_smf_name = 'samqfs-postinstall'
 config_script_fn = '{0}util/{1}'.format(prefix,config_smf_name)
 config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 
-# have to provide the same like: uname -v | gawk '{ split($0,a,"[.-]"); print a[1]"-"a[2]}'
-osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[:2])
-
 destdir = 'root/'
 builddate = time.strftime('%Y%m%dT%H%M%SZ')
 
-repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
+if 'omnios' in osrelease:
+  publisher = 'samqfs.omnios'
+  release = subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[1][1:]+'.0'
+else:
+  publisher = 'openindiana.org'
 
 scmds = ['sls',
             'sfind',
@@ -137,8 +139,8 @@ def getPath(fn, dirname, filenames, arch):
     sfn = fn.rpartition('/')[2]
 
     if not sfn in filenames: return None
-    # if fn == 'samcmd':
-    #      import pdb; pdb.set_trace()
+    # if fn == 'mount':
+    #       import pdb; pdb.set_trace()
     if not arch == 'all' :
         if dirname.endswith(obj_dir[arch]):
             ffn = os.path.join(dirname,sfn)
@@ -325,18 +327,18 @@ def publishPkg(version):
      os.system('pkgsend generate {0} >> {1}'.format(destdir,manifest_fn))
      logger.info ('run: pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
      os.system('pkgdepend generate -md {0} {1} > {2}'.format(destdir,manifest_fn,manifest_fn+'d'))
-     logger.info ('run: pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0]))
-     if (os.system('pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d', osrelease.split('-')[0])) != 0):
-        logger.error("pkgdepend resolve error: stop!")
-        sys.exit(1)
      with open(transform_fn,'w') as tfn:
          tfn.write(transform)
-     logger.info ('run: pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
-     os.system('pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d.res',transform_fn,manifest_fn+'d.trans'))
-     logger.info ('run: pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
-     os.system('pkglint {1}'.format(repro,manifest_fn+'d.trans'))
+     logger.info ('run: pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d',transform_fn,manifest_fn+'d.trans'))
+     os.system('pkgmogrify -D builddate={0} {1} {2} > {3}'.format(builddate,manifest_fn+'d',transform_fn,manifest_fn+'d.trans'))
+     logger.info ('run: pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d.trans', osrelease.split('-')[0]))
+     if (os.system('pkgdepend resolve -m -e depend-{1}.lst {0}'.format(manifest_fn+'d.trans', osrelease.split('-')[0])) != 0):
+        logger.error("pkgdepend resolve error: stop!")
+        sys.exit(1)
+     logger.info ('run: pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans.res'))
+     os.system('pkglint {1}'.format(repro,manifest_fn+'d.trans.res'))
      # os.system('pkglint -c check -l {0} {1}'.format(repro,manifest_fn+'d.trans'))
-     os.system('pkgsend publish -d {2} -s {0} {1}'.format(repro, manifest_fn+'d.trans', destdir))
+     os.system('pkgsend publish -d {2} -s {0} {1}'.format(repro, manifest_fn+'d.trans.res', destdir))
 
 def main(version, debug_build, amd64):
     global arch64
@@ -434,6 +436,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--destdir', dest='destdir', default='./root')
     parser.add_argument('--version', dest='version', default=version, help='tag build with this version')
+    parser.add_argument('--repo', dest='repo', help='path to ips package repository')
     parser.add_argument('--debug_build', dest='debug_build', action="store_true", help='install DEBUG builts')
     parser.add_argument('--publish', dest='publish', action="store_true", help='publish IPS package')
     parser.add_argument('--verbose', dest='verbose', action="store_true", help='verbose')
@@ -480,5 +483,12 @@ if __name__ == '__main__':
             'Makefile':'Makefile.inst',
             'version.h':'{}/pub/version.h'.format(obj_dir[isa]),
             }
+    if args.publish and args.repo:
+         try:
+             pkgrepoout = subprocess.check_output(["pkgrepo","-s",args.repo,"list"])
+             repo = args.repo
+             logger.info("publish package in %s", repo)
+         except subprocess.CalledProcessError as ret:
+             logger.error("wrong repo path %s", args.repo)
 
     main(args.version, args.debug_build, args.amd64)
