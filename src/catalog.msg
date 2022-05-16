@@ -1966,7 +1966,7 @@ $ ===================================================================
 9131 %s: Drive %d set down due to configuration error.
 9132 %s: Cannot find aci drive name line %d.
 9133 %s: CAP specification error line %d.
-9143 Capacity for media type index %d is %dK.
+9143 Capacity for media type index %d is %lluK.
 9144 %s: No entry for drive %d in configuration file.
 9145 not in configuration file
 9146 dismount %s
