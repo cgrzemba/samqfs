@@ -1,5 +1,5 @@
 
-set name=pkg.fmri value=system/samfs-stk-client@{{SAMQFS_VERSION}}
+set name=pkg.fmri value=system/samfs-stk-client@{{SAMQFS_VERSION}}-{{OSRELEASE}}
 set name=pkg.summary value="SamFS STK Client for ACSLS attached libraries"
 set name=info.classification \
     value="org.opensolaris.category.2008:System/File System"
@@ -10,7 +10,9 @@ dir  path=opt/SUNWsamfs/lib/stk/amd64 owner=root group=bin mode=0755
 file ../../man/man1m/sam-stk_helper.1m path=opt/SUNWsamfs/man/man1m/sam-stk_helper.1m owner=root group=bin mode=0644
 file ../../man/man1m/sam-stkd.1m path=opt/SUNWsamfs/man/man1m/sam-stkd.1m owner=root group=bin mode=0644
 file ../../man/man7/stk.7 path=opt/SUNWsamfs/man/man7/stk.7 owner=root group=bin mode=0644
-file ssi.sh path=opt/SUNWsamfs/sbin/ssi.sh owner=root group=bin mode=755
+file ../../man/man7/ssi.sh.7 path=opt/SUNWsamfs/man/man7/ssi.sh.7 owner=root group=bin mode=0644
+file ../../man/man7/ssi_so.7 path=opt/SUNWsamfs/man/man7/ssi_so.7 owner=root group=bin mode=0644
+file ssi.sh path=etc/opt/SUNWsamfs/scripts/ssi.sh owner=root group=bin mode=755
 file obj/SunOS_omnios-r151038_i386_DEBUG/stk_helper \
     path=opt/SUNWsamfs/sbin/i86/sam-stk_helper owner=root group=bin mode=0755
 file obj/SunOS_omnios-r151038_i386_DEBUG/stk path=opt/SUNWsamfs/sbin/i86/sam-stkd \

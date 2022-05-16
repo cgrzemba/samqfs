@@ -31,7 +31,6 @@ opt/SUNWsamfs/examples/dtrace root other
 opt/SUNWsamfs/include root other
 opt/SUNWsamfs/lib root other
 opt/SUNWsamfs/lib/64 root other
-opt/SUNWsamfs/lib/stk root other
 opt/SUNWsamfs/man root other
 opt/SUNWsamfs/man/man1 root other
 opt/SUNWsamfs/man/man8 root other
