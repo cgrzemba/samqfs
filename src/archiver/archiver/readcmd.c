@@ -2786,6 +2786,10 @@ setDiskArchives(void)
 	/*
 	 * Find disk archive library and set its count.
 	 */
+        if (ArchLibTable == NULL) {
+	        SendCustMsg(HERE, 4002);
+                return;
+        }
 	for (i = 0; i < ArchLibTable->count; i++) {
 		struct ArchLibEntry *al;
 
