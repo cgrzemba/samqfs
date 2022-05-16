@@ -111,8 +111,7 @@ typedef unsigned long long uint64_t;
 #endif
 
 /* The following is for the lawyers */
-#define	COPYRIGHT "Copyright (c) 2001 Sun Microsystems, Inc. \
-All Rights Reserved. SUN PROPRIETARY/CONFIDENTIAL."
+#define	COPYRIGHT "(C) 2010-2022, Use is subject to license terms."
 
 #define	RESELL_LIB "libresel.so"
 
