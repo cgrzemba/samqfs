@@ -33,8 +33,8 @@ opt/SUNWsamfs/examples/inquiry.conf 0644
 opt/SUNWsamfs/examples/log_rotate.sh 0754
 opt/SUNWsamfs/examples/recover.sh 0754
 opt/SUNWsamfs/examples/recycler.sh 0754
+opt/SUNWsamfs/examples/dev_down.sh 0754
 opt/SUNWsamfs/examples/save_core.sh 0754
-opt/SUNWsamfs/examples/ssi.sh 0754
 opt/SUNWsamfs/examples/tarback.sh 0754
 opt/SUNWsamfs/include/catalog.h 0644
 opt/SUNWsamfs/include/devstat.h 0644
@@ -135,8 +135,6 @@ opt/SUNWsamfs/man/man1m/sam-shrink.1m 0644
 opt/SUNWsamfs/man/man1m/sam-stagealld.1m 0644
 opt/SUNWsamfs/man/man1m/sam-stagerd.1m 0644
 opt/SUNWsamfs/man/man1m/sam-stagerd_copy.1m 0644
-opt/SUNWsamfs/man/man1m/sam-stk_helper.1m 0644
-opt/SUNWsamfs/man/man1m/sam-stkd.1m 0644
 opt/SUNWsamfs/man/man1m/samadm.1m 0644
 opt/SUNWsamfs/man/man1m/sambcheck.1m 0644
 opt/SUNWsamfs/man/man1m/samchaid.1m 0644
@@ -269,9 +267,6 @@ opt/SUNWsamfs/man/man7/acl452.7 0644
 opt/SUNWsamfs/man/man7/historian.7 0644
 opt/SUNWsamfs/man/man7/sam-remote.7 0644
 opt/SUNWsamfs/man/man7/samaio.7 0644
-opt/SUNWsamfs/man/man7/ssi.sh.7 0644
-opt/SUNWsamfs/man/man7/ssi_so.7 0644
-opt/SUNWsamfs/man/man7/stk.7 0644
 opt/SUNWsamfs/sbin/64/samtrace 0550
 opt/SUNWsamfs/sbin/archive_audit 0550
 opt/SUNWsamfs/sbin/archiver 0550

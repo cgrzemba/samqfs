@@ -64,9 +64,13 @@ PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
 	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) \
 	-lsamfs -lsamcat -lsamut $(LIBSO) $(THRLIBS) -lgen
 
+STK_INCLUDES = stk_release/src/h
+
+ACSLS_CSC_TK_LIBS = -lapi -lutl -lcl -lipc
+STKDEST = $(DEPTH)/lib/$(OBJ_DIR)
 MPROGS = stk_helper
 stk_helper_SRC = stk_helper.c
-stk_helper_LIBS = $(LIBSO)/stk -Bdynamic -L $(DEPTH)/lib/$(OBJ_DIR) -lapi -lutl -lcl -lipc $(PROG_LIBS)
+stk_helper_LIBS = $(subst lib,lib/stk,$(LIBSO)) -Bdynamic -L $(STKDEST) $(ACSLS_CSC_TK_LIBS) $(PROG_LIBS)
 
 SSISH   = ssi.sh
 
@@ -88,73 +92,56 @@ PLATFORM_amd64 = x64
 # PLATFORM = $(PLATFORM_$(shell isainfo -k))
 # need 32bit libs
 PLATFORM = i386
+ifeq ($(AMD64), yes)
+  PLATFORM = x64
+endif
 
-ACSLIB = libapi.so
-ACSCOM = libcl.so
-ACSUTL = libutl.so
-ACSIPC = libipc.so
-SSIXDR = libssixdr.so
-ACSLIBS = $(ACSLIB) $(ACSCOM) $(ACSUTL) $(ACSIPC)
+STKABSDEST = $(shell readlink -f $(STKDEST))
+ACSLIB = $(STKDEST)/libapi.so
+ACSCOM = $(STKDEST)/libcl.so
+ACSUTL = $(STKDEST)/libutl.so
+ACSIPC = $(STKDEST)/libipc.so
+SSIXDR = $(STKDEST)/libssixdr.so
 ACSSSI  = ssi
+
+CDK = $(shell readlink -f stk_release)
+STK_ABSDIR = $(shell readlink -f $(STKDEST))
 
 .NOTPARALLEL:
 
-stklibs: $(ACSIPC) $(ACSCOM) $(ACSUTL) $(ACSLIB) $(SSIXDR)
-
-stkssi: stklibs $(ACSSSI)
+# stklibs: $(ACSCOM) $(ACSUTL) $(ACSLIB) $(SSIXDR) $(ACSIPC)
 
 $(ACSSSI):
-	-(cd stk_release/src/ssi; make INSTALL="$(INSTALL)"			\
+	-(cd stk_release/src/ssi; $(MAKE_COMMAND) INSTALL="$(INSTALL)"			\
 		SYSINST="$(SYSINST)" STKDEST="$(DESTDIR)"				\
-		LIBSO="$(LIBSO)/stk" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) top_nondebug )
-
-$(ACSLIB):
-	-(cd stk_release/src/acsapi; make INSTALL="$(INSTALL)"		\
-		SYSINST="$(SYSINST)" LIBDEST="$(LIBDEST)/stk"  top_nondebug )
-	$(INSTALL) -d $(DEPTH)/lib/$(OBJ_DIR)/stk/
-	@if [ ! -h $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSLIB) ] ; then				\
-		ln -s $(LIBDEST)/stk/$(ACSLIB) $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSLIB) ; \
-	fi
+		LIBSO="$(subst lib,lib/stk,$(LIBSO))" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) top_nondebug )
 
 $(ACSCOM):
-	-(cd stk_release/src/common_lib; make INSTALL="$(INSTALL)"	\
-		SYSINST="$(SYSINST)" LIBDEST="$(LIBDEST)/stk"  top_nondebug )
-	$(INSTALL) -d $(DEPTH)/lib/$(OBJ_DIR)/stk/
-	@if [ ! -h $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSCOM) ] ; then				\
-		ln -s $(LIBDEST)/stk/$(ACSCOM) $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSCOM) ; \
-	fi
+	-(cd stk_release/src/common_lib; $(MAKE_COMMAND) clean top_nondebug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR) )
 
 $(SSIXDR):
-	-(cd stk_release/src/xdr; make INSTALL="$(INSTALL)"			\
-		SYSINST="$(SYSINST)" LIBDEST="$(LIBDEST)/stk"  top_nondebug )
-	$(INSTALL) -d $(DEPTH)/lib/$(OBJ_DIR)/stk/
-	@if [ ! -h $(DEPTH)/lib/$(OBJ_DIR)/stk/$(SSIXDR) ] ; then				\
-		ln -s $(LIBDEST)/stk/$(SSIXDR) $(DEPTH)/lib/$(OBJ_DIR)/stk/$(SSIXDR) ; \
-	fi
+	-(cd stk_release/src/ssixdr; $(MAKE_COMMAND) clean top_nondebug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR) )
 
 $(ACSUTL):
-	-(cd stk_release/src/acsutl; make INSTALL="$(INSTALL)"		\
-		SYSINST="$(SYSINST)" LIBDEST="$(LIBDEST)/stk"  top_nondebug )
-	$(INSTALL) -d $(DEPTH)/lib/$(OBJ_DIR)/stk/
-	@if [ ! -h $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSUTL) ] ; then				\
-		ln -s $(LIBDEST)/stk/$(ACSUTL) $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSUTL) ; \
-	fi
+	-(cd stk_release/src/acsutl; $(MAKE_COMMAND) clean top_nondebug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR) )
 
 $(ACSIPC):
-	-(cd stk_release/src/acsipc; make INSTALL="$(INSTALL)"		\
-		SYSINST="$(SYSINST)" LIBDEST="$(LIBDEST)/stk"  top_nondebug )
-	$(INSTALL) -d $(DEPTH)/lib/$(OBJ_DIR)/stk/
-	@if [ ! -h $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSIPC) ] ; then				\
-		ln -s $(LIBDEST)/stk/$(ACSIPC) $(DEPTH)/lib/$(OBJ_DIR)/stk/$(ACSIPC) ; \
-	fi
+	-(cd stk_release/src/acsipc; $(MAKE_COMMAND) clean top_nondebug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR) )
+
+$(ACSLIB):
+	-(cd stk_release/src/acsapi; $(MAKE_COMMAND) clean top_nondebug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR) )
+
+# stkssi: stklibs
+ACSLIBS = $(ACSCOM) $(ACSUTL) $(ACSIPC) $(ACSLIB)
+$(OBJ_DIR)/stk_helper: $(ACSLIBS)
 
 clean_stk:
-	@(cd stk_release/src/acsapi; make clean)
-	@(cd stk_release/src/common_lib; make clean)
-	@(cd stk_release/src/acsutl; make clean)
-	@(cd stk_release/src/acsipc; make clean)
-	@(cd stk_release/src/xdr; make clean)
-	@(cd stk_release/src/ssi; make clean)
+	@(cd stk_release/src/acsapi; $(MAKE_COMMAND) CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR) clean)
+	@(cd stk_release/src/common_lib; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	@(cd stk_release/src/acsutl; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	@(cd stk_release/src/acsipc; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	@(cd stk_release/src/xdr; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	@(cd stk_release/src/ssi; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
 
 install:	install_more
 install_more:
@@ -170,4 +157,14 @@ install_more:
 	$(INSTALL) $(SYSINST) $(HELPER) $(ADMDEST)
 	$(INSTALL) $(SYSINST) $(SSISH) $(ADMDEST)
 
+OS_RELEASE_VER = $(shell  echo $(OS_RELEASE) | tr -d -c 0-9).0
+pkg:    $(PROG) $(ACSLIBS) $(MPROGS)
+	cat stk.p5m.in | sed -e s/{{SAMQFS_VERSION}}/$(SAMQFS_VERSION)/ -e s/{{OSRELEASE}}/$(OS_RELEASE_VER)/> stk.p5m
+	pkglint stk.p5m
+	pkgsend publish -d. -s ../../../repo/i386-$(OS_RELEASE)/ stk.p5m
+
 include $(DEPTH)/mk/depend.mk
+
+show:
+	@echo $(OBJ_DIR)/stk_helper
+	@echo $(ACSLIBS)
