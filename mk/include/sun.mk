@@ -301,7 +301,7 @@ NO_BUILD_STK = -D_NoSTK_
 # no Sun Customer Services
 NO_BUILD_CNS = -D_NoCNS_
 # no build ACSLS client tools
-NO_BUILD_ACSLS = 1
+NO_BUILD_ACSLS = -D_NoACSLS_
 
 #
 # Final default CFLAGS settings
