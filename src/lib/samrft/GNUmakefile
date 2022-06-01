@@ -31,7 +31,7 @@ LIB_HOME = $(DEPTH)/src/lib/samrft
 
 include $(DEPTH)/mk/common.mk
 
-BUILD_64BIT = yes
+# BUILD_64BIT = yes
 
 LIB = samrft
 LIB_SRC = \
