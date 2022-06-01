@@ -53,16 +53,8 @@ opt/SUNWsamfs/zone/sbin root bin
 var ? ?
 var/opt ? ?
 var/opt/SUNWsamfs root sys
-var/opt/SUNWsamfs/archiver root sys
-var/opt/SUNWsamfs/catalog root sys
-var/opt/SUNWsamfs/cores root sys
-var/opt/SUNWsamfs/devlog root sys
-var/opt/SUNWsamfs/log root sys
 var/opt/SUNWsamfs/errcodes root sys
-var/opt/SUNWsamfs/faults root sys
-var/opt/SUNWsamfs/fsd root sys
-var/opt/SUNWsamfs/sef root sys
-var/opt/SUNWsamfs/uds root sys
+var/opt/SUNWsamfs/log root sys
 var/svc ? ?
 var/svc/manifest ? ?
 var/svc/manifest/application ? ?

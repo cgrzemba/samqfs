@@ -1,0 +1,179 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+# 
+# CDDL HEADER END
+#
+
+. /lib/svc/share/smf_include.sh
+
+if [ ! -z $SMF_FMRI ]; then
+  assembled=$(/usr/bin/svcprop -p config/assembled $SMF_FMRI)
+  if [ "$assembled" == "true" ] ; then
+    exit $SMF_EXIT_OK
+  fi
+fi
+
+PKG_INSTALL_ROOT='/'
+INSLOG=$PKG_INSTALL_ROOT/tmp/SAM_install.log
+ETCDIR=$PKG_INSTALL_ROOT/{{sysconfdir}}
+VARDIR=$PKG_INSTALL_ROOT/{{localstatedir}}
+SCRIPTS=$ETCDIR/scripts
+EXAMPLE=$PKG_INSTALL_ROOT/{{prefix}}examples
+KERNDRV=$PKG_INSTALL_ROOT/kernel/drv
+LAST_DIR=$PKG_INSTALL_ROOT/{{sysconfdir}}samfs.old.last
+
+if [ ! -d $ETCDIR ]; then
+    mkdir -p $ETCDIR
+    chmod 0755 $ETCDIR
+    chgrp sys  $ETCDIR
+    chown root $ETCDIR
+fi
+if [ ! -d $SCRIPTS ]; then
+    mkdir -p $SCRIPTS
+fi
+cp -rp $PKG_INSTALL_ROOT/{{prefix}}etc/startup $ETCDIR
+
+
+if [ ! -f $ETCDIR/inquiry.conf ]; then
+        cp $EXAMPLE/inquiry.conf $ETCDIR/inquiry.conf
+else
+        egrep -v 'Id:|Revision:' $ETCDIR/inquiry.conf > /tmp/$$.in1
+        egrep -v 'Id:|Revision:' $EXAMPLE/inquiry.conf > /tmp/$$.in2
+        diff /tmp/$$.in1 /tmp/$$.in2 > /dev/null
+        if [ $? -ne 0 ]; then
+                echo "inquiry.conf may have been updated for this release."
+                echo "$EXAMPLE/inquiry.conf is the latest released version."
+                echo "Please update this file with any site specific changes and"
+                echo "copy it to $ETCDIR/inquiry.conf ."
+                echo " "
+        fi
+        rm /tmp/$$.in1 /tmp/$$.in2
+fi
+
+# Add SPM port to $PKG_INSTALL_ROOT/etc/inet/services
+
+NSS=$PKG_INSTALL_ROOT/etc/nsswitch.conf
+SER=$PKG_INSTALL_ROOT/etc/inet/services
+
+# Alert user if /etc/services files is not used
+
+SERVSRC=`grep -v "^#" $NSS | grep -w services | cut -f1 -d '[' | grep files`
+if [ X"$SERVSRC" = X ]; then
+        echo ""
+        echo "WARNING: $PKG_INSTALL_ROOT/etc/nsswitch.conf does NOT"
+        echo "reference $PKG_INSTALL_ROOT/etc/services.  If you are"
+        echo "using nis, nis+, etc. for the services database you "
+        echo "must install an entry for the SAM-QFS single port monitor"
+        echo "there as follows:"
+        echo ""
+        echo "sam-qfs       7105/tcp            # SAM-QFS"
+        echo ""
+        echo "SAM-QFS will not run correctly until you correct this."
+        echo ""
+fi
+
+SPMSRV=`/bin/grep 7105 $SER | sed -e 's/\([^ ]*\)[ ]*.*$/\1/'`
+if [ -n "$SPMSRV" -a "$SPMSRV" != "sam-qfs" ]; then
+        echo ""
+        echo "WARNING: An active entry for port 7105 is already in $SER."
+        echo "A different port number will need to be selected after"
+        echo "installation for sam-qfs to run correctly."
+        echo "Edit the $SER file and update the sam-qfs"
+        echo "port number to a unique number and uncomment the line"
+        echo ""
+        echo "#sam-qfs          7105/tcp                        # SAM-QFS"
+        echo ""
+        chmod 444 $SER
+elif [ "$SPMSRV" = "sam-qfs" ]; then
+        echo ""
+        echo "A sam-qfs entry already exists with port 7105. No changes"
+        echo "are being made to the $SER file"
+        echo ""
+else
+        echo "# start samqfs 5.0" >> $SER
+        echo "sam-qfs           7105/tcp                        # SAM-QFS" >> $SER
+        echo "# end samqfs 5.0" >> $SER
+        chmod 444 $SER
+fi
+
+VERSION="VERSION.{{version}}"
+/bin/touch $ETCDIR/$VERSION
+
+SH_LIST="archiver.sh recycler.sh save_core.sh sendtrap nrecycler.sh"
+for fn in $SH_LIST; do
+        if [ ! -f $SCRIPTS/$fn ]; then
+                if [ -f $EXAMPLE/$fn ]; then
+                        cp $EXAMPLE/$fn $SCRIPTS/$fn
+                fi
+        else
+                egrep -v 'Id:|Revision:' $SCRIPTS/$fn > /tmp/rev1.$$
+                egrep -v 'Id:|Revision:' $EXAMPLE/$fn > /tmp/rev2.$$
+                diff /tmp/rev1.$$ /tmp/rev2.$$ > /dev/null
+                if [ $? -ne 0 ]; then
+                        echo "$fn has been updated for this release."
+                        echo "$EXAMPLE/$fn is the latest released version."
+                        echo "Please update this file with any site specific changes"
+                        echo "and copy it to $SCRIPTS/$fn ."
+                        echo " "
+                fi
+                rm /tmp/rev1.$$ /tmp/rev2.$$
+        fi
+        if [ -f $SCRIPTS/$fn ]; then
+                chmod 0750     $SCRIPTS/$fn
+                chown root:bin $SCRIPTS/$fn
+        fi
+done
+
+# Do NOT copy in default versions of the optional scripts if they don't exist.
+# It is up to the site to do the copy if they want the script to be invoked.
+# Notify the site if the customized versions have changed.
+#
+SH_LIST="dev_down.sh load_notify.sh log_rotate.sh"
+for fn in $SH_LIST; do
+        if [ -f $SCRIPTS/$fn ]; then
+                /bin/egrep -v 'Id:|Revision:' $SCRIPTS/$fn > /tmp/rev1.$$
+                /bin/egrep -v 'Id:|Revision:' $EXAMPLE/$fn > /tmp/rev2.$$
+                /bin/diff /tmp/rev1.$$ /tmp/rev2.$$ > /dev/null
+                if [ $? -ne 0 ]; then
+                        echo "$fn has been updated for this release."
+                        echo "$EXAMPLE/$fn is the latest released version."
+                        echo "Please update this file with any site specific changes"
+                        echo "and copy it to $SCRIPTS/$fn ."
+                        echo " "
+                fi
+                /bin/rm /tmp/rev1.$$ /tmp/rev2.$$
+        fi
+done
+
+# set up if necessary for the server to be managed by Sun Storedge SAM-QFS
+# Manager
+
+if [ ! -f $PKG_INSTALL_ROOT/{{prefix}}.fsmgmtd ]; then
+if [ -f $PKG_INSTALL_ROOT/{{prefix}}.sam-mgmtrpcd ]; then
+MGMMODE=`cat $PKG_INSTALL_ROOT/{{prefix}}.sam-mgmtrpcd`
+        fi
+        echo "$MGMMODE" > $PKG_INSTALL_ROOT/{{prefix}}.fsmgmtd
+fi
+
+# set up the clients that can manage this SAM-FS/QFS server via the SAM-QFS
+# Manager
+
+echo "$FSMADM_CLIENTS" > $PKG_INSTALL_ROOT/{{prefix}}.fsmgmtd_clients
+
+svccfg -s $SMF_FMRI setprop config/assembled = true
+svccfg -s $SMF_FMRI refresh
