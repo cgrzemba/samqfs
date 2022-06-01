@@ -31,7 +31,7 @@ LIB_HOME = $(DEPTH)/src/lib/sam
 
 include $(DEPTH)/mk/common.mk
 
-BUILD_64BIT = yes
+# BUILD_64BIT = yes
 
 SRC_VPATH = $(DEPTH)/src/lib/samut
 vpath %.c $(SRC_VPATH)
