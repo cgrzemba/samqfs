@@ -23,10 +23,7 @@
 # Use is subject to license terms.
 # 
 # How to use:
-# * cd ../src && gmake
-# * cd ../pkg && rm -rf root/* && install-sam.py
-# * pkgrepo remove -s repo samfs
-# * pkgsend publish -s repo -d root samfs.p5md.trans
+# * cd .. && gmake SAMQFS_VERSION=5.0.x && gmake SAMQFS_VERSION=5.0.x install
 #
 
 import os
@@ -417,7 +414,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--destdir', dest='destdir', default='./root')
     parser.add_argument('--version', dest='version', default=version, help='tag build with this version')
-    parser.add_argument('--repo', dest='repo', help='path to ips package repository')
+    parser.add_argument('--repro', dest='repro', help='path to ips package repository')
     parser.add_argument('--debug_build', dest='debug_build', action="store_true", help='install DEBUG builts')
     parser.add_argument('--publish', dest='publish', action="store_true", help='publish IPS package')
     parser.add_argument('--verbose', dest='verbose', action="store_true", help='verbose')
@@ -464,13 +461,13 @@ if __name__ == '__main__':
             'Makefile':'Makefile.inst',
             'version.h':'{}/pub/version.h'.format(obj_dir[isa]),
             }
-    if args.publish and args.repo:
+    if args.publish and args.repro:
          try:
-             pkgrepoout = subprocess.check_output(["pkgrepo","-s",args.repo,"list"])
-             repo = args.repo
-             logger.info("publish package in %s", repo)
+             pkgrepoout = subprocess.check_output(["pkgrepo","-s",args.repro,"list"])
+             repro = args.repro
+             logger.info("publish package in %s", repro)
          except subprocess.CalledProcessError as ret:
-             logger.error("wrong repo path %s", args.repo)
+             logger.error("wrong repro path %s", args.repro)
 
     transform_fn = 'samqfs.transform'
     config_parameters = {'builddate': builddate, 

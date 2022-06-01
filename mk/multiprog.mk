@@ -51,6 +51,7 @@ PROGS_SRC += $$($(1)_SRC)
 
 $(OBJ_DIR)/$(1):		$$($(1)_OBJS)
 	$(CC) $$(CFLAGS) -o $$@ $$(LDFLAGS) $$($(1)_OBJS) $$($(1)_LIBS)
+	$(MCS) $$@
 
 endif
 endef

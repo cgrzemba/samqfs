@@ -1,4 +1,4 @@
-GCC=/opt/gcc-8/bin/gcc
+GCC=/opt/gcc-10/bin/gcc
 
 DB_INCLUDE=/opt/ooce/include
 DB_LIB= -L/opt/ooce/lib$(ISA) -R/opt/ooce/lib$(ISA) -ldb-5.3 

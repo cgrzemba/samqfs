@@ -29,7 +29,7 @@ OS_RELEASE := $(shell  uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]
 REPO ?= ../repo/i386-$(OS_RELEASE)
 
 install:
-	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA) --publish --repo=$(REPO)
+	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA) --publish --repro=$(REPO)
 
 .PHONY: clean
 clean:
