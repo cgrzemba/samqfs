@@ -467,6 +467,7 @@ if __name__ == '__main__':
              logger.info("publish package in %s", repro)
          except subprocess.CalledProcessError as ret:
              logger.error("wrong repro path %s", args.repro)
+<<<<<<< HEAD
 
     transform_fn = 'samqfs.transform'
     config_parameters = {'builddate': builddate, 
@@ -486,6 +487,8 @@ if __name__ == '__main__':
 	'prefix':prefix,
 	'version':args.version}
     config_script = customizeTemplates(os.path.basename(config_script_fn), config_parameters)
+=======
+>>>>>>> 1e0d548e (improve makefiles for build and minor fixes on installtool)
 
     transform_fn = 'samqfs.transform'
     config_parameters = {'builddate': builddate, 

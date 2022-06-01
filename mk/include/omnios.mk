@@ -1,5 +1,4 @@
 GCC=/opt/gcc-10/bin/gcc
-ISA=$(subst /i386,,/$(ISA_TARGET))
 
 DB_INCLUDE=/opt/ooce/include
 DB_LIB= -L/opt/ooce/lib$(ISA) -R/opt/ooce/lib$(ISA) -ldb-5.3 
