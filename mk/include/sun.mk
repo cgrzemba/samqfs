@@ -199,10 +199,10 @@ endif
 # Set additional debug options (generate symbols for all architectures)
 #
 DEBUGCFLAGS += -g
-ifeq ($(PLATFORM), sparc)
+# ifeq ($(PLATFORM), sparc)
 	# The "-Wc,-Qiselect-T1" enables tail-call optimization when using "-g".
-	DEBUGCFLAGS += -Wc,-Qiselect-T1
-endif
+# 	DEBUGCFLAGS += -Wc,-Qiselect-T1
+# endif
 
 #
 # New java setup rules

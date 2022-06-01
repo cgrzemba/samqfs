@@ -413,25 +413,6 @@ def main(version, debug_build, amd64):
         publishPkg(version)
     
 
-transform_fn = 'samqfs.transform'
-config_parameters = {'builddate': builddate, 
-	'config_smf_name':config_smf_name , 
-	'lic_fn':lic_fn , 
-	'version':version , 
-	'subpath':subpath , 
-	'osrelease':osrelease }
-transform = customizeTemplates(transform_fn, config_parameters)
-
-config_parameters = {'config_script_fn':config_script_fn,
-	'config_smf_name':config_smf_name }
-config_smf = customizeTemplates(os.path.basename(config_smf_fn), config_parameters)
-
-config_parameters = {'sysconfdir':sysconfdir,
-	'localstatedir':localstatedir,
-	'prefix':prefix,
-	'version':version}
-config_script = customizeTemplates(os.path.basename(config_script_fn), config_parameters)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--destdir', dest='destdir', default='./root')
@@ -490,5 +471,24 @@ if __name__ == '__main__':
              logger.info("publish package in %s", repo)
          except subprocess.CalledProcessError as ret:
              logger.error("wrong repo path %s", args.repo)
+
+    transform_fn = 'samqfs.transform'
+    config_parameters = {'builddate': builddate, 
+	'config_smf_name':config_smf_name , 
+	'lic_fn':lic_fn , 
+	'version':args.version , 
+	'subpath':subpath , 
+	'osrelease':osrelease }
+    transform = customizeTemplates(transform_fn, config_parameters)
+
+    config_parameters = {'config_script_fn':config_script_fn,
+	'config_smf_name':config_smf_name }
+    config_smf = customizeTemplates(os.path.basename(config_smf_fn), config_parameters)
+
+    config_parameters = {'sysconfdir':sysconfdir,
+	'localstatedir':localstatedir,
+	'prefix':prefix,
+	'version':args.version}
+    config_script = customizeTemplates(os.path.basename(config_script_fn), config_parameters)
 
     main(args.version, args.debug_build, args.amd64)
