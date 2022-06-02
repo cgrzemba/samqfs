@@ -65,6 +65,7 @@
 
 int errno;
 char *error_string(int errno);
+char *program_name = NULL;
 
 int
 main(int argc, char **argv)

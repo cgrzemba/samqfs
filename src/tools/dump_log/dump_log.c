@@ -102,6 +102,7 @@ static char *ioctl_fstr[] = {
 };
 
 static char *progname = "dump_log";
+char* program_name = NULL;
 
 int
 main(int argc, char **argv)

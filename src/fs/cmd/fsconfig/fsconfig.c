@@ -105,6 +105,7 @@ int	debug = 0;
 int shared = 0;
 int verbose = 0;
 int blocks = 0;
+char* program_name = NULL;
 
 static void SamPrintSB(struct sam_sblk *, char *);
 static void SamPrintVTOC(struct vtoc *, char *);

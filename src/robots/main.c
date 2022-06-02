@@ -70,7 +70,6 @@ int	number_robots, got_sigchld = FALSE;
 pid_t	mypid;
 char	*fifo_path;
 shm_alloc_t master_shm, preview_shm;
-struct CatalogMap *Catalogs = NULL;
 
 int
 main(int argc, char **argv)

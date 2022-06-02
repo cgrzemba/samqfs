@@ -70,6 +70,9 @@ static int cmp_slot(const void *p1, const void *p2);
 /* Private data. */
 static boolean_t verbose = FALSE;
 
+char* program_name = NULL;
+struct CatalogMap *Catalogs = NULL;
+
 int
 main(
 	int argc,

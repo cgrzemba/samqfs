@@ -65,6 +65,8 @@
 
 static void usage(void);
 
+char* program_name = NULL;
+
 int
 main(int argc, char *argv[])
 {
