@@ -148,6 +148,7 @@ static void catchSig(int sig);
 static void catchSigEMT(int sig);
 static void UmountDown(char *fs);
 
+char* program_name = NULL;
 
 /*
  * ----- main

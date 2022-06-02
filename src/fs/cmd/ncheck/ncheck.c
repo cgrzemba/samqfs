@@ -57,6 +57,7 @@
 
 #include "ino.h"
 
+char* program_name = NULL;
 
 int
 main(int argc, char **argv)

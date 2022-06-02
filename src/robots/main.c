@@ -71,6 +71,7 @@ pid_t	mypid;
 char	*fifo_path;
 shm_alloc_t master_shm, preview_shm;
 const char *program_name = "robots";
+struct CatalogMap *Catalogs = NULL;
 
 int
 main(int argc, char **argv)

@@ -92,7 +92,7 @@ static void add_mnttab_entry(char *file, char *mnt_point, char *mnt_opts,
 
 #include <sam/mount.hc>
 
-extern char *program_name;
+char *program_name;
 
 
 int

@@ -63,7 +63,7 @@
 /* Local headers. */
 #include "inode.h"
 #include "mount.h"
-#define	MAIN
+#define MAIN
 #include "utility.h"
 #include "ino.h"
 

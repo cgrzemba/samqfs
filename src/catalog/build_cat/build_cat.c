@@ -69,6 +69,8 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #endif /* defined(lint) */
 
 /* globals */
+char* program_name = NULL;
+struct CatalogMap *Catalogs = NULL;
 
 /* Private functions. */
 static void LineError(int MsgNum, ...);
@@ -76,7 +78,6 @@ static void LineError(int MsgNum, ...);
 /* Private data. */
 static int errors = 0;			/* Number of errors encountered */
 static int lineno = 0;			/* Input file line number */
-
 
 int
 main(

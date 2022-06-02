@@ -99,7 +99,7 @@ static pthread_mutex_t LastCeMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* The tables are local to catlib when in the library. */
 static struct CatalogTableHdr nullCatalogTable = { { 0, 0, 0 }, 0 };
-struct CatalogMap *Catalogs;
+extern struct CatalogMap *Catalogs;
 #if !defined(CAT_SERVER)
 struct CatalogTableHdr *CatalogTable = &nullCatalogTable;
 #endif /* !defined(CAT_SERVER) */

@@ -230,7 +230,6 @@ int CvrtCatalog(char *cf_name, int version, void **mp, size_t *size);
 struct CatalogTableHdr *CatalogTable;
 char *program_name = "catserver";
 
-
 int
 main(
 	int argc,
