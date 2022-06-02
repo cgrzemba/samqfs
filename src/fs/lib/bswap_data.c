@@ -112,9 +112,11 @@ struct swap_descriptor rmt_sam_req_resp_swap_descriptor[] = {
 };
 
 struct swap_descriptor rmt_sam_request_swap_descriptor[] = {
-	{ 0, 4, 4 },
-	{ 16, 2, 1 },
-	{ 416, 0, 0 },
+	{ 0, 4, 2 },
+	{ 8, 8, 1 },
+	{ 16, 4, 1 },
+	{ 20, 2, 1 },
+	{ 424, 0, 0 },
 };
 
 struct swap_descriptor rmt_sam_update_vsn_swap_descriptor[] = {
