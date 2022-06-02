@@ -82,6 +82,7 @@ boolean_t CannotRecycle = B_FALSE;
 boolean_t RegenDatfiles = B_FALSE;
 boolean_t InfiniteLoop = B_TRUE;
 MediaTable_t ArchMedia = { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+struct CatalogMap *Catalogs = NULL;
 
 static boolean_t ignoreRecycle = B_FALSE;
 /* LINTED static unused */

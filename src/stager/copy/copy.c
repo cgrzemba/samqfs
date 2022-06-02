@@ -132,6 +132,7 @@ sam_defaults_t  *Defaults;
  */
 nl_catd catfd = NULL;
 
+struct CatalogMap *Catalogs = NULL;
 /*
  * Private data.
  * Define static variables which are only visible in the

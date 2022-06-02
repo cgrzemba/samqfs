@@ -75,7 +75,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/lint.h"
 
 /* Local headers. */
-#define	DEC_INIT
 #include "recycler.h"
 
 

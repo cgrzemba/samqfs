@@ -85,7 +85,7 @@ void usage(void);
 int Perror(char *s);
 int isnum(char *s);
 int chaidr(char *dir, gid_t gid);
-
+char* program_name = NULL;
 
 int
 main(int argc, char *argv[])

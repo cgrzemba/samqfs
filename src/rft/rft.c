@@ -81,6 +81,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
  * Message catalog descriptor.
  */
 nl_catd catfd = NULL;
+struct CatalogMap *Catalogs = NULL;
 
 /*
  * Program name.

@@ -91,6 +91,7 @@ pid_t mypid;
 char *program_name = "scanner";
 char *fifo_path;
 shm_alloc_t master_shm, preview_shm;
+struct CatalogMap *Catalogs = NULL;
 
 int
 main(

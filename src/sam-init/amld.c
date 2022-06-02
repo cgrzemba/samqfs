@@ -81,6 +81,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	TIMER_SECS 10
 
 /* some globals */
+struct CatalogMap *Catalogs = NULL;
 
 /* External function prototypes. */
 extern void *samfm_service(void *arg);

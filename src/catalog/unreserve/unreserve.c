@@ -51,6 +51,8 @@ shm_alloc_t              master_shm, preview_shm;
 /* Private functions. */
 static void MsgFunc(int code, char *msg);
 
+char* program_name = NULL;
+struct CatalogMap *Catalogs = NULL;
 
 int
 main(

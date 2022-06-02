@@ -189,6 +189,7 @@ static struct SignalsArg signalsArg = {
 			FSA_LOG_PATH	/* directory for dump/trace	*/
 };
 
+char* program_name = NULL;
 
 int	main(
 	int		argc,		/* Argument count		*/

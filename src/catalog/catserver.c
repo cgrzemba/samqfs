@@ -231,7 +231,6 @@ struct CatalogTableHdr *CatalogTable;
 struct CatalogMap *Catalogs;
 char *program_name = "catserver";
 
-
 int
 main(
 	int argc,
