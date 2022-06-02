@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = genfile
 PROG_SRC = genfile.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lgen $(LIBSO)
 
 LNOPTS += -a
 LNLIBS =
