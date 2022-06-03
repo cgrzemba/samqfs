@@ -62,6 +62,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <libgen.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/catalog.h"
 #include "aml/catlib.h"
@@ -70,7 +71,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/fifo.h"
 #include "sam/lib.h"
 #include "aml/exit_fifo.h"
-#include "sam/nl_samfs.h"
 #include "sam/custmsg.h"
 #include "sam/lint.h"
 #include "aml/shm.h"
@@ -86,8 +86,6 @@ static int	is_ansi_tp_label(char *s, size_t size);
 static void	pr_usage(void);
 
 /* Public data. */
-char   *program_name;	/* Program name: used by error */
-
 
 int
 main(int argc, char *argv[])

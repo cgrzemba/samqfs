@@ -57,7 +57,8 @@
 #include <sys/param.h>
 
 /* SAM-FS headers. */
-#include <sam/types.h>
+#define DEC_INIT
+#include <sam/lib.h>
 
 /* Macros. */
 #define	REC_SIZE 2113	/* Number of uint_t's in a record */
@@ -81,7 +82,6 @@ static uchar_t *buffer;
 static uchar_t *cp_buffer;
 static char fullpath[MAXPATHLEN + 4];	/* Current full path name */
 static char dir_name[sizeof (fullpath)];	/* Directory name */
-static char *program_name;
 static int buf_size;
 static int exit_status = 0;
 static offset_t file_size[2] =	/* Minimum, maximum file size */
@@ -110,7 +110,6 @@ static void prerror(int status, int prerrno, char *fmt, ...);
 
 /* Signal catching functions. */
 	/* None. */
-
 
 int
 main(int argc, char *argv[])

@@ -44,6 +44,7 @@ static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 #include <sys/vfs.h>
 #include <ctype.h>
 
+#define DEC_INIT
 #include "sam/sam_malloc.h"
 #include "sam/custmsg.h"
 #include "pub/devstat.h"
@@ -56,8 +57,6 @@ static char *_SrcFile = __FILE__;	/* SamMalloc needs this */
 #include "sam/fs/sblk.h"
 #include "sblk_mgmt.h"
 
-
-char *program_name;				/* used by ChkFs() */
 
 extern int byte_swap_hb(struct sam_host_table_blk *);
 

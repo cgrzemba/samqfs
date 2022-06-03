@@ -121,10 +121,12 @@
 #include <sys/mnttab.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "pub/stat.h"
 #include "sam/quota.h"
+#include "sam/lib.h"
 
 #define		MAX_QUOTA_CMDS		512
 #define		MAX_QUOTA_OPS		64
@@ -133,6 +135,7 @@
 #define		streq(x, y)		(strcmp((x), (y)) == 0)
 
 char *Program;		/* argv[0] in convenient place */
+
 long Now;			/* current time (in seconds) */
 int Err = 0;		/* Global error status */
 int Danger;			/* We were asked to change an in-use field */

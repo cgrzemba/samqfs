@@ -54,6 +54,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/param.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"

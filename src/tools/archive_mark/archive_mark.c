@@ -57,6 +57,7 @@
 #include "pub/stat.h"
 #include "pub/rminfo.h"
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/device.h"
 #include "sam/fioctl.h"
@@ -67,10 +68,6 @@
 #include "sam/fs/ino.h"
 #include "sam/fs/ino_ext.h"
 #include "sam/lib.h"
-
-
-char *program_name;			/* Program name: used by error() */
-
 
 void
 main(int argc, char *argv[])

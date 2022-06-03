@@ -43,13 +43,12 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <string.h>
 #include <errno.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "sam/param.h"
 #include "aml/types.h"
 #include "aml/proto.h"
-#include "sam/nl_samfs.h"
 #include "pub/sam_errno.h"
 #include "aml/samapi.h"
 #include "aml/catalog.h"
@@ -61,8 +60,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
 /* globals */
 shm_alloc_t              master_shm, preview_shm;
-
-static char *program_name;
 
 static void Usage(void);
 

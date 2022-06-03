@@ -48,6 +48,7 @@
 #define	MAIN
 #define	NEWALARM
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/param.h"
@@ -70,8 +71,6 @@ int	number_robots, got_sigchld = FALSE;
 pid_t	mypid;
 char	*fifo_path;
 shm_alloc_t master_shm, preview_shm;
-const char *program_name = "robots";
-struct CatalogMap *Catalogs = NULL;
 
 int
 main(int argc, char **argv)
@@ -80,6 +79,7 @@ main(int argc, char **argv)
 	sigset_t	signal_set, full_block_set;
 	struct sigaction	sig_action;
 	shm_ptr_tbl_t		*shm_ptr_tbl;
+	program_name = "robots";
 
 	CustmsgInit(1, NULL);
 	if (argc != 3)

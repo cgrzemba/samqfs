@@ -51,7 +51,7 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "sam/param.h"
@@ -60,8 +60,7 @@
 #include "aml/device.h"
 #include "aml/fifo.h"
 #include "aml/proto.h"
-#include "sam/nl_samfs.h"
-
+#include "sam/lib.h"
 
 int
 main(int argc, char **argv)

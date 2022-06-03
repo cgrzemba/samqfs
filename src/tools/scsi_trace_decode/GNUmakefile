@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = scsi_trace_decode
 PROG_SRC = scsi_trace_decode.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lgen $(LIBSO)
 
 LNOPTS += -a
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

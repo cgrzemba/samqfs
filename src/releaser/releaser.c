@@ -89,7 +89,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <grp.h>
 #include <strings.h>
 
-
+#define DEC_INIT
 #include "sam/fs/ino.h"
 #include "sam/fs/ino_ext.h"
 #include "sam/custmsg.h"

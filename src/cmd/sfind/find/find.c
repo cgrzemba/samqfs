@@ -38,6 +38,10 @@
 #endif /* sun */
 #include <pub/lib.h>
 #include <pub/stat.h>
+
+#define DEC_INIT
+#include <sam/lib.h>
+
 #include "defs.h"
 #include "savedir.h"
 
@@ -65,9 +69,6 @@ boolean parse_close ();
 
 static void scan_directory ();
 static int process_path ();
-
-/* Name this program was run with. */
-char *program_name;
 
 /* All predicates for each path to process. */
 struct predicate *predicates;

@@ -87,10 +87,11 @@
 #include "pub/lib.h"
 #include "pub/rminfo.h"
 #include "pub/stat.h"
+#include "pub/devstat.h"
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/diskvols.h"
 #include "sam/lib.h"
-#include "pub/devstat.h"
 #endif
 
 /* The HAS_RELEASE_STATS macro evaluates to 1 if the file is not a data
@@ -161,9 +162,6 @@ static void queue_directory ();
 static void sort_files ();
 static void usage ();
 
-
-/* The name the program was run with, stripped of any leading path. */
-char *program_name;
 
 enum filetype
 {

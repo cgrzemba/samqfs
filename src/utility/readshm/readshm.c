@@ -44,6 +44,7 @@
 #define	MAIN
 #define	NEWALARM
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/param.h"
@@ -77,7 +78,6 @@ shm_alloc_t master_shm, preview_shm;
         NULL : ((void *)((char *)master_shm.shared_memory + (int)(x))))
 */
 
-const char *program_name = "readshm";
 
 const char *states[] = {"ON", "NOALLOC", "RO", "IDLE", "UNAVAIL", "OFF", "DOWN"};
 
@@ -118,6 +118,7 @@ main(int argc, char **argv)
 	library_t *library;
 	robotic_device_t *rb;
 
+	program_name = "readshm";
 	if ( argc < 3) {
 		printf ("%s <master_id> <preview_id> <libeq>\n", *argv);
 		return 1;

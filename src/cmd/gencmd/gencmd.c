@@ -65,6 +65,7 @@
 #include <sys/param.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/types.h>
 #include <pub/lib.h>
 #include <pub/stat.h>
@@ -181,8 +182,6 @@ static int stripe_group;
 static int stripe_width;
 static offset_t length;
 static offset_t allocahead;
-
-char *program_name;
 
 int
 main(

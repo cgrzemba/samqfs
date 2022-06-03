@@ -70,6 +70,7 @@
 #include <pwd.h>
 #include <project.h>
 
+#define DEC_INIT
 #include <sam/lib.h>
 #include <sam/custmsg.h>
 #include <sam/quota.h>
@@ -146,8 +147,6 @@ int sam_lchprojid(const char *path, int projid, struct stat *stp);
 extern int		optind;
 
 int add_tnode(avl_tree_t **, dev_t, ino_t);
-
-char* program_name = NULL;
 
 int
 main(int argc, char *argv[])

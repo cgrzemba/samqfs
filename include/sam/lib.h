@@ -43,7 +43,7 @@
 #endif
 
 #include "sam/types.h"
-
+#include "sam/nl_samfs.h"
 
 /* Macros. */
 #define	STR_FROM_ERRNO_BUF_SIZE 80
@@ -113,9 +113,7 @@ extern int DateToMinutes(char *args, long *mins);
 char *getuser(uid_t);		/* get user name for uid */
 char *getgroup(gid_t);		/* get group name for gid */
 
-#ifndef	MAIN
-extern char *program_name;
-#endif
+DCL char *program_name;
 
 extern	void	error		(int, int, const char *, ...);
 #ifdef	SAM_LIB_NOGNU		/* Do not define these for GNU code */

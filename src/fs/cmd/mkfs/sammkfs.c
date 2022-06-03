@@ -60,6 +60,7 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 
+#define DEC_INIT
 #include <sam/types.h>
 #include <sam/param.h>
 #include <pub/devstat.h>

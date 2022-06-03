@@ -42,9 +42,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "sam/quota.h"
+#include "sam/lib.h"
 
 #define	streq(x, y)		(strcmp(x, y) == 0)
 #define	strsuffix(str, suf)	streq((str)+strlen(str)-strlen(suf), suf)

@@ -87,9 +87,9 @@ typedef struct {
 
 /* Private data. */
 static uchar_t *buf;
-static char *program_name;
 static int nodvv = 0;
 static int prdvv = 0;
+static char* program_name = NULL;
 
 /* Private functions. */
 #ifdef __STDC__
@@ -111,7 +111,6 @@ static char *strerror();
 
 /* Signal catching functions. */
 	/* None. */
-
 
 int
 #ifdef __STDC__

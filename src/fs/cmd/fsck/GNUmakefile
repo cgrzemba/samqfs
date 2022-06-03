@@ -39,13 +39,13 @@ fsck_SRC	=  fsck.c
 INCFLAGS = -I../../include -I../../include/$(OBJ_DIR) -I$(INCLUDE)
 DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(NO_BUILD_OSD)
 
-LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
-
-PROG_LIBS = -L ../../lib/$(OBJ_DIR) $(STATIC_OPT) -lfscmd \
-	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut $(DYNAMIC_OPT) \
+PROG_LIBS = $(STATIC_OPT) \
+	-L ../../lib/$(OBJ_DIR) -lfscmd \
+	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut \
+	$(DYNAMIC_OPT) \
 	-ladm -ldl -lsysevent -lnvpair
-samfsck_LIBS =  $(PROG_LIBS)
-fsck_LIBS	 =  $(PROG_LIBS)
+samfsck_LIBS =  ../../lib/$(OBJ_DIR)/setsyscall.o $(PROG_LIBS)
+fsck_LIBS =
 
 DESTDIR = /usr/lib/fs/samfs
 

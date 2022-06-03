@@ -51,8 +51,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define DEC_INIT
 #include "sam/types.h"
-#include "sam/nl_samfs.h"
+#include "sam/lib.h"
 #include "sam/custmsg.h"
 
 #define	DEVPATH	"/dev/samst"
@@ -61,7 +62,6 @@
 
 static int debug = 0;
 static int high_control = -1;
-static char *progname;
 
 typedef struct control {
 	int  	cont_num;
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	struct stat	stat_buf;
 	control_t	*first;
 
-	progname = strdup(basename(*argv));
+	const char *progname = strdup(basename(*argv));
 	CustmsgInit(0, NULL);
 	while ((c = getopt(argc, argv, "d")) != -1) {
 		switch (c) {

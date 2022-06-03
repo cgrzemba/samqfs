@@ -52,7 +52,7 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "aml/shm.h"
@@ -139,7 +139,6 @@ static setsam_func_t functions[] =
 	NULL, NULL, 0
 };
 
-/* Some globals */
 static int	is_root;
 static shm_alloc_t master_shm;
 static shm_ptr_tbl_t *shm_ptr_tbl;

@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = mtf
 PROG_SRC = mtf.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lgen $(LIBSO)
 
 LNOPTS +=
 LNLIBS =

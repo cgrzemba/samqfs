@@ -79,6 +79,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "aml/shm.h"
@@ -88,7 +89,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "aml/odlabels.h"
 #include "aml/external_data.h"
 #include "sam/devnm.h"
-#include "sam/nl_samfs.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 
@@ -101,7 +101,6 @@ dev_ptr_tbl_t	*Dev_Tbl;		/* Device pointer table		*/
 int		Max_Devices;		/* Maxinum no. of devices	*/
 shm_alloc_t	shm_master;		/* Master device table		*/
 
-char	*program_name	= "itemize";	/* Program name: used by error	*/
 time_t	Current_Time;			/* Current time			*/
 
 int	CatSpacePercent(struct CatalogEntry *ce);
@@ -123,6 +122,7 @@ main(int argc, char **argv)
 	dev_ent_t	*dev;		/* Device entry			*/
 	int		i;
 
+	program_name	= "itemize";	/* Program name: used by error	*/
 	Current_Time = time(0L);
 
 	CustmsgInit(0, NULL);

@@ -50,6 +50,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/stat.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/device.h"
 #include "sam/exit.h"
@@ -68,8 +69,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #endif /* defined(lint) */
 
 /* globals */
-char* program_name = NULL;
-struct CatalogMap *Catalogs = NULL;
 
 /* Private functions. */
 static void LineError(int MsgNum, ...);

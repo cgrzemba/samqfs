@@ -49,7 +49,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "sam/param.h"
@@ -57,7 +57,6 @@
 #include "aml/device.h"
 #include "aml/fifo.h"
 #include "aml/proto.h"
-#include "sam/nl_samfs.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 #include <dlfcn.h>
@@ -89,7 +88,6 @@ static void    *map_sym(void *, char *);
 
 #define	FIFO_PATH	"/FIFO_CMD"
 
-static char    *program_name;
 static char	env_acs_portnum[80];
 
 int

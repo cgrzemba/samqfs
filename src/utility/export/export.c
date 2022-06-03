@@ -44,6 +44,7 @@
 #include <libgen.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
@@ -59,7 +60,6 @@ shm_alloc_t              master_shm, preview_shm;
 static void MsgFunc(int code, char *msg);
 
 /* Public data. */
-char *program_name;		/* Program name: used by error */
 
 #define	USAGE_STRING "[-f] [eq:slot | media.vsn]"
 

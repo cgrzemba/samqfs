@@ -53,6 +53,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <dlfcn.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "pub/sam_errno.h"
 #include "sam/types.h"
 #include "sam/param.h"
@@ -70,7 +71,6 @@ static void usage(void);
 static void usage_help(void);
 
 /* Public data. */
-char *program_name = "chmed";
 shm_alloc_t master_shm, preview_shm;
 shm_ptr_tbl_t *master_shm_ptr;
 
@@ -87,6 +87,7 @@ main(int argc, char **argv)
 	int		field;
 	int		status;
 
+	program_name = "chmed";
 	if (CatalogInit(program_name) == -1) {
 		error(EXIT_FAILURE, errno, GetCustMsg(18211));
 				/* Catalog initialization failed */

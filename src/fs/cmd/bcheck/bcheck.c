@@ -51,6 +51,8 @@
 #include <fcntl.h>
 
 /* SAM-FS headers. */
+#define MAIN
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/nl_samfs.h"
 #include "sam/custmsg.h"
@@ -63,7 +65,6 @@
 /* Local headers. */
 #include "inode.h"
 #include "mount.h"
-#define MAIN
 #include "utility.h"
 #include "ino.h"
 

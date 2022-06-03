@@ -110,6 +110,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/vfs.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/syscall.h"
 #include "sam/shareops.h"
 #include "sam/mount.h"
@@ -147,8 +148,6 @@ static int signalWaiter(char *);
 static void catchSig(int sig);
 static void catchSigEMT(int sig);
 static void UmountDown(char *fs);
-
-char* program_name = NULL;
 
 /*
  * ----- main

@@ -216,6 +216,7 @@ int nincluded;
 char *excluded[CSD_MAX_EXCLUDED];
 char *included[CSD_MAX_INCLUDED];
 
+struct CatalogMap *Catalogs = NULL;
 
 /* Module-private declarations */
 
