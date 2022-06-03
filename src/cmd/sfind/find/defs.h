@@ -62,7 +62,7 @@ struct predicate *get_expr ();
 struct predicate *get_new_pred ();
 struct predicate *get_new_pred_chk_op ();
 struct predicate *insert_victim ();
-void error (int status, int errnum, char *message, ...);
+void error (int status, int errnum, const char *message, ...);
 void usage ();
 int seg_stat_file(const char *path, struct sam_stat *file_stat_buf);
 
