@@ -31,6 +31,8 @@ LIB_HOME = $(DEPTH)/src/lib/samapi
 
 include $(DEPTH)/mk/common.mk
 
+BUILD_64BIT = yes
+
 LIB = samapi
 LIB_SRC = \
 	sam_audit.c \

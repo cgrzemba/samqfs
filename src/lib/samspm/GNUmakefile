@@ -31,7 +31,8 @@ LIB_HOME = $(DEPTH)/src/lib/samspm
 
 include $(DEPTH)/mk/common.mk
 
-# BUILD_64BIT = yes
+# build 64bit in 32bit userland too.
+BUILD_64BIT = yes
 
 ifeq ($(OS), SunOS)
 MLIBS = samspm samspmd
