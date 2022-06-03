@@ -65,7 +65,7 @@ void
 error(
 	int status,
 	int errnum,		/* errno from calling routine */
-	char *fmt,
+	const char *fmt,
 	...)
 {
 	char	msg_buf[4096];

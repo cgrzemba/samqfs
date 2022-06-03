@@ -85,12 +85,6 @@ static void   PrintHosts(char *fsname, struct sam_host_table *hosttab);
 static int ask(char *msg, char def);
 
 /*
- * From src/lib/samut/error.c
- */
-extern void error(int status, int errnum, char *msg, ...);
-
-
-/*
  * Rewrite an FS's host file.
  *
  * Use the supplied device, if one, or get the device name

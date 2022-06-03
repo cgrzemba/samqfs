@@ -122,7 +122,6 @@ char *getuser ();
 char *xmalloc ();
 char *xrealloc ();
 int argmatch ();
-void error (int status, int errnum, char *message, ...);
 void invalid_arg ();
 
 static char *make_link_path ();
