@@ -95,7 +95,6 @@ int cmd_index;		/* Command index from above tables */
 char *cmd_name;		/* Command name pointer */
 char *subcmd_name;	/* Pointer to subcommand name */
 
-
 /*
  * Return basename of command name.
  */

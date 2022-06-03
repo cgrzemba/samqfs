@@ -69,6 +69,8 @@ typedef struct words {		/* devlog line of = and ' ' delimited words */
 #define	LEN 256			/* line length */
 #define	EMPTY_STR "\0"		/* empty string */
 
+// char* program_name = NULL;
+
 static void free_words(words_t **);
 
 

@@ -62,7 +62,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	RETRY_SLEEP 10
 #define	EOF_SLEEP 5
 
-
 static boolean_t is_daemon = TRUE;
 static boolean_t is_shutdown = FALSE;
 static char fsa_path[MAXPATHLEN];
@@ -84,6 +83,10 @@ int main(
 	event_handler_t ev_handler;
 
 	program_name = SAM_DBUPD;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 47dce836 (build with GCC10, avoid duplicate symbols)
 	if (dbupd_init(argc, argv) < 0) {
 		return (EXIT_FAILURE);
 	}

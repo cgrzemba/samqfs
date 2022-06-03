@@ -120,6 +120,7 @@ main(int argc, char **argv)
 	dev_ent_t	*dev;		/* Device entry			*/
 	int		i;
 
+	program_name	= "itemize";	/* Program name: used by error	*/
 	Current_Time = time(0L);
 
 	CustmsgInit(0, NULL);

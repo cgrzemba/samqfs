@@ -43,8 +43,7 @@ PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam $(DYNAMIC_OPT) \
 	-ladm -ldl -lsysevent -lnvpair
 sammkfs_LIBS = ../../lib/$(OBJ_DIR)/setsyscall.o $(PROG_LIBS)
-mkfs_LIBS = 
-
+mkfs_LIBS =
 
 DESTDIR = /usr/lib/fs/samfs
 

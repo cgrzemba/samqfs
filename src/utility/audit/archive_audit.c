@@ -192,7 +192,7 @@ static int seg_stat_path(int *num_segs);
 
 
 /* Public data. */
-	/* None. */
+       /* None. */
 
 /* External data. */
 extern char *program_name;	/* Program name: used by error */
@@ -202,7 +202,6 @@ extern char *program_name;	/* Program name: used by error */
 
 /* Signal catching functions. */
 	/* None. */
-
 
 int
 main(

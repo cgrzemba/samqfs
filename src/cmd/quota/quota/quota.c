@@ -137,6 +137,7 @@
 #define		streq(x, y)		(strcmp((x), (y)) == 0)
 
 char *Program;		/* argv[0] in convenient place */
+
 long Now;			/* current time (in seconds) */
 int Err = 0;		/* Global error status */
 int Danger;			/* We were asked to change an in-use field */

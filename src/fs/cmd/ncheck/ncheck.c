@@ -47,7 +47,7 @@
 
 /* SAM-FS headers. */
 #include "pub/stat.h"
-#define        DEC_INIT
+#define	DEC_INIT
 #include "sam/custmsg.h"
 #include "sam/lib.h"
 #include "sam/nl_samfs.h"

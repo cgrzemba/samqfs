@@ -53,7 +53,6 @@
 
 #define DEC_INIT
 #include "sam/types.h"
-#include "sam/nl_samfs.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 

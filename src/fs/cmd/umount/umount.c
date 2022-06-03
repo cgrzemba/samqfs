@@ -95,8 +95,6 @@ static char typename[64];
 
 static int await_clients = 0;	/* wait for mounted clients (seconds) */
 
-char* program_name = NULL;
-
 int
 main(int argc, char *argv[])
 {

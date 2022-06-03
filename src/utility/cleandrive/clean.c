@@ -60,7 +60,6 @@
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 
-
 int
 main(int argc, char **argv)
 {

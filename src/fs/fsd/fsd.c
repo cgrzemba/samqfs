@@ -105,7 +105,6 @@ static char *_SrcFile = __FILE__;
 #include "utility.h"
 
 /* Private data. */
-char* program_name = NULL;
 
 /*
  * Child status queue.

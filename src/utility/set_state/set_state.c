@@ -40,13 +40,13 @@
 #include <errno.h>
 #include <assert.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "sam/param.h"
 #include "pub/devstat.h"
 #include "aml/proto.h"
-#include "sam/nl_samfs.h"
+#include "sam/lib.h"
 #include "sam/custmsg.h"
 #include "sam/devnm.h"
 #include "aml/samapi.h"

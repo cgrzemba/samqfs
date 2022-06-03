@@ -80,7 +80,6 @@
 #include "sam/custmsg.h"
 
 /* Local headers. */
-#define	DEC_INIT
 #undef ERR
 #include "samu.h"
 #undef DEC_INIT

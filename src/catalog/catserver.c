@@ -58,7 +58,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/mman.h>
 
 /* SAM-FS headers. */
-#define      DEC_INIT
+#define	DEC_INIT
 #include "pub/sam_errno.h"
 #include "sam/types.h"
 #include "aml/archiver.h"

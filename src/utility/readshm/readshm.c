@@ -110,6 +110,7 @@ main(int argc, char **argv)
 	robotic_device_t *rb;
 	program_name = "readshm";
 
+	program_name = "readshm";
 	if ( argc < 3) {
 		printf ("%s <master_id> <preview_id> <libeq>\n", *argv);
 		return 1;

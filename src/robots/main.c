@@ -48,6 +48,7 @@
 #define	MAIN
 #define	NEWALARM
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/param.h"
@@ -78,6 +79,7 @@ main(int argc, char **argv)
 	sigset_t	signal_set, full_block_set;
 	struct sigaction	sig_action;
 	shm_ptr_tbl_t		*shm_ptr_tbl;
+	program_name = "robots";
 
 	CustmsgInit(1, NULL);
 	if (argc != 3)

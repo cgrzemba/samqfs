@@ -57,7 +57,6 @@
 #include "aml/device.h"
 #include "aml/fifo.h"
 #include "aml/proto.h"
-#include "sam/nl_samfs.h"
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 #include <dlfcn.h>

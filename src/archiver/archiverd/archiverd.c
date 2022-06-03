@@ -60,7 +60,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #define	TRACE_CONTROL
 #endif /* defined(AR_DEBUG) */
 
-#define        DEC_INIT
+#define	DEC_INIT
 #include "sam/types.h"
 #include "sam/defaults.h"
 #include "sam/exit.h"

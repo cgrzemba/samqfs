@@ -111,7 +111,6 @@ static void prerror(int status, int prerrno, char *fmt, ...);
 /* Signal catching functions. */
 	/* None. */
 
-
 int
 main(int argc, char *argv[])
 {
