@@ -31,6 +31,7 @@ LIB_HOME = $(DEPTH)/src/lib/samrft
 
 include $(DEPTH)/mk/common.mk
 
+# build 64bit in 32bit userland too.
 BUILD_64BIT = yes
 
 LIB = samrft

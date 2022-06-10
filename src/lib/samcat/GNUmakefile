@@ -31,6 +31,9 @@ LIB_HOME = $(DEPTH)/src/lib/samcat
 
 include $(DEPTH)/mk/common.mk
 
+# build 64bit lib also in 32bit userland
+BUILD_64BIT = yes
+
 SRC_VPATH = $(DEPTH)/src/catalog
 vpath %.c $(SRC_VPATH)
 
