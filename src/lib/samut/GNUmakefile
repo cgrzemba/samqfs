@@ -31,7 +31,8 @@ LIB_HOME = $(DEPTH)/src/lib/samut
 
 include $(DEPTH)/mk/common.mk
 
-BUILD_64BIT ?= yes
+# build 64bit also in 32bit userland
+BUILD_64BIT = yes
 
 LIB = samut
 
