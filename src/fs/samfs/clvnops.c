@@ -2198,7 +2198,7 @@ sam_client_readdir_vn(
 	int error;
 
 	TRACE(T_SAM_CL_READDIR, vp, (sam_tr_t)uiop->uio_offset,
-	    (uint_t)uiop->uio_iov->iov_len, (uint_t)credp);
+	    (sam_tr_t)uiop->uio_iov->iov_len, (sam_tr_t)credp);
 	ip = SAM_VTOI(vp);
 	if ((error = sam_open_operation(ip))) {
 		SAM_NFS_JUKEBOX_ERROR(error);
