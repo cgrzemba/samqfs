@@ -58,7 +58,7 @@ var/opt/SUNWsamfs/archiver root sys
 var/opt/SUNWsamfs/catalog root sys
 var/opt/SUNWsamfs/cores root sys
 var/opt/SUNWsamfs/devlog root sys
-var/opt/SUNWsamfs/doc root sys
+var/opt/SUNWsamfs/log root sys
 var/opt/SUNWsamfs/errcodes root sys
 var/opt/SUNWsamfs/faults root sys
 var/opt/SUNWsamfs/fsd root sys
