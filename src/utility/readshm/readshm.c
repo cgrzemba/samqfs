@@ -23,7 +23,7 @@
  * information: Portions Copyright [yyyy] [name of copyright owner]
  *
  * CDDL HEADER END
- */
+ *
  *    SAM-QFS_notice_end
  */
 
