@@ -157,6 +157,8 @@ copyright.clean:
 
 DESTDIR ?= ./root
 
+pkg: install
+
 install:
 	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
 
