@@ -123,7 +123,7 @@ sam_quota_stat(struct sam_quota_arg *argp)
 
 	OPTRACE(NULL, __LINE__, (int)argp, 0);
 	if (copyin(argp, &args, sizeof (args))) {
-		TRACE(T_SAM_QUOTA_OPERR, NULL, __LINE__, (int)argp, EFAULT);
+		TRACE(T_SAM_QUOTA_OPERR, NULL, __LINE__, (sam_tr_t)argp, EFAULT);
 		return (EFAULT);
 	}
 
