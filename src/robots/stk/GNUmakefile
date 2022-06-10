@@ -168,3 +168,4 @@ include $(DEPTH)/mk/depend.mk
 show:
 	@echo $(OBJ_DIR)/stk_helper
 	@echo $(ACSLIBS)
+	@echo $(SAMQFS_VERSION)
