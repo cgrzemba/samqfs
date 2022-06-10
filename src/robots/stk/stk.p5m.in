@@ -26,5 +26,5 @@ link path=opt/SUNWsamfs/sbin/sam-stkd target=./i86/sam-stkd mediator=isa mediato
 link path=opt/SUNWsamfs/sbin/sam-stk_helper target=./amd64/sam-stk_helper mediator=isa mediator-implementation=64
 link path=opt/SUNWsamfs/sbin/sam-stkd target=./amd64/sam-stkd mediator=isa mediator-implementation=64
 license OPENSOLARIS.LICENSE license=CDDL
-depend type=require fmri=pkg:/system/samfs
+depend type=require fmri=pkg:/system/samqfs
 depend type=require fmri=pkg:/system/acsls-client
