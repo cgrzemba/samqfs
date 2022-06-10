@@ -23,7 +23,7 @@
 # Use is subject to license terms.
 # 
 # How to use:
-# * cd .. && gmake SAMQFS_VERSION=5.0.x && gmake SAMQFS_VERSION=5.0.x install
+# * cd ../ && gmake SAMQFS_VERSION=5.0.x && gmake SAMQFS_VERSION=5.0.x install
 #
 
 import os
