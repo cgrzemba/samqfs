@@ -192,7 +192,7 @@ unload_for_fs(void *vcmd)
 		for (device = (dev_ent_t *)SHM_REF_ADDR(((shm_ptr_tbl_t *)master_shm.shared_memory)->first_dev);
 		    device != NULL;
 		    device = (dev_ent_t *)SHM_REF_ADDR(device->next)) {
-			if ((uint32_t)device->st_rdev == (uint32_t)command->rdev) {
+			if (device->st_rdev == command->rdev) {
 				sam_syslog(LOG_DEBUG,
 			    "unload_for_fs: found rdev (%#x) %#x %x", command->rdev, device->st_rdev, device);
 				break;
