@@ -39,6 +39,7 @@
 #include <time.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/custmsg.h"
 #include "sam/exit.h"
 #include "sam/lib.h"
@@ -51,7 +52,6 @@ shm_alloc_t              master_shm, preview_shm;
 
 /* Private functions. */
 static void MsgFunc(int code, char *msg);
-
 
 int
 main(
