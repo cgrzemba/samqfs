@@ -2684,7 +2684,7 @@ MakeCatalogTable(
 		enum CH_type ch_type;
 		upath_t	cf_name;
 		size_t size;	/* Size of memory mapped catalog file */
-		void *mp;
+		void *mp = NULL;
 		int ne;
 		int version;
 
