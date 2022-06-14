@@ -61,6 +61,8 @@
 #include "stk.h"
 
 #pragma ident "$Revision: 1.31 $"
+#define ACS_DEVQUERY_TIMEOUT (10 * 60)
+#define ACS_TIMEOUT (15 * 60)
 
 /*	Function prototypes */
 void process_signal(int);
@@ -518,7 +520,7 @@ doit(
 			    drive_ids[0], &driveid, sizeof (driveid));
 			if (DBG_LVL(SAM_DBG_DEBUG))
 				sam_syslog(LOG_DEBUG,
-				    "qury_drv: drive(%#x)", driveid);
+				    "query_drv: drive(%#x)", driveid);
 
 			if ((stk_resp.hdr.api_status =
 			    acs_query_drive(sequence, drive_ids, 1))) {
@@ -634,9 +636,9 @@ doit(
 			 * minutes for a response from ACSLS.
 			 */
 			if (stk_resp.hdr.acs_command == COMMAND_QUERY) {
-				alarm(2 * 60);
+				alarm(ACS_DEVQUERY_TIMEOUT);
 			} else {
-				alarm(15 * 60);
+				alarm(ACS_TIMEOUT);
 			}
 			if ((stk_resp.hdr.acs_status =
 			    acs_response(-1, &resp_seq, &resp_req, &type,
