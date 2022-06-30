@@ -29,6 +29,7 @@ opt/SUNWsamfs/etc/samdb_sql.cat 0640
 opt/SUNWsamfs/etc/startup/samsyschk 0550
 opt/SUNWsamfs/examples/archiver.sh 0754
 opt/SUNWsamfs/examples/defaults.conf 0644
+opt/SUNWsamfs/examples/dev_down.sh 0754
 opt/SUNWsamfs/examples/inquiry.conf 0644
 opt/SUNWsamfs/examples/log_rotate.sh 0754
 opt/SUNWsamfs/examples/recover.sh 0754
