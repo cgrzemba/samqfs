@@ -1316,8 +1316,8 @@ sam_vsn_stat_inode_operation(
 
 #ifdef sun
 /*
- * ----- sam_file_operations - archive, stage, release, csum,
- * setfa syscall calls.
+ * ----- sam_file_operations - archive, cancelstage, release, stage, ssum,
+ * setfa, segment syscall calls.
  */
 
 static int		/* ERRNO if error, 0 if successful. */
