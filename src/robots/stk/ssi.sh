@@ -72,7 +72,7 @@ export ACSAPI_PACKET_VERSION=4
 # /* CDKLOG=000000001     Log HTTP XML recv packets to the log.file.   */
 # /* CDKLOG=0000000001    Log event error messages to stdout.          */
 # /*===================================================================*/
-export CDKLOG=15
+export CDKLOG=1111111001
 # /*********************************************************************/
 # /* The following are for defining names for CDKTRACE index           */
 # /* positions to control trace granuality.                            */
@@ -88,7 +88,7 @@ export CDKLOG=15
 # /* CDKTRACE=0000000001  Trace malloc, free, and shared mem functions.*/
 # /* CDKTRACE=00000000001 Trace XML parser.                            */
 # /*===================================================================*/
-export CDKTRACE=511
+export CDKTRACE=11111111111
 # arguments
 # argv[1] - parent PID
 # argv[2] - input socket name
