@@ -723,7 +723,7 @@ fi
 # want to run it when the proper patch is installed.
 #
 #if [ -f /usr/sbin/cfgadm ]; then
-#    verbose /usr/sbin/cfgadm -al
+    verbose /usr/sbin/cfgadm -al -o show_SCSI_LUN
 #fi
 
 echo "------------------- ls -lR /opt/SUNWsamfs ------------" >>$REPORT
@@ -816,19 +816,23 @@ else
 fi
 
 echo "------------------- network info --------------------" >>$REPORT
+verbose /usr/sbin/dladm show-phys
+verbose /usr/sbin/dladm show-phys -m
+verbose /usr/sbin/dladm show-link
 verbose /usr/sbin/ifconfig -a
+verbose /usr/sbin/ipadm 
 verbose /bin/grep rpc      /etc/nsswitch.conf
 verbose /bin/grep services /etc/nsswitch.conf
 verbose /bin/grep sam      /etc/rpc
-verbose "/bin/ypcat rpc      | grep sam"
 verbose /bin/grep sam      /etc/services
 verbose /bin/grep sam      /etc/yp/src/services
-verbose "/bin/ypcat services | grep sam"
 showfiles /etc/hostname*
 showfiles /etc/inet/hosts
 showfiles /etc/inet/ipnodes
 showfiles /etc/inet/services
+showfiles /etc/inet/ntp.conf
 showfiles /etc/nsswitch.conf
+showfiles /etc/devlink.tab
 
 echo "------------------- ipcs info -----------------------" >>$REPORT
 verbose /bin/ipcs -a
@@ -873,15 +877,20 @@ echo "/bin/ls -Ll /dev/rdsk/*s2"             >>$REPORT 2>&1
 /bin/ls -Ll /dev/rdsk/*s2                    >>$REPORT 2>&1
 echo ""                                      >>$REPORT 2>&1
 
-echo "------------------- SANergy info --------------------" >>$REPORT
-verbose '/bin/ls -l /opt/SANergy/lib /opt/SANergy/lib/sparcv9 /opt/SANergy/lib/amd64'
-verbose '/bin/ls -Ll /opt/SANergy/lib /opt/SANergy/lib/sparcv9 /opt/SANergy/lib/amd64'
+
+echo "-------------------- fcinfo status ----------------" >>$REPORT
+verbose /usr/sbin/fcinfo hba-port
+
+echo "-------------------- mpathadm status ----------------" >>$REPORT
+verbose /usr/sbin/mpathadm list lu
+verbose /usr/sbin/mpathadm show lu `/usr/bin/ls /dev/rdsk/c0*s2`
+verbose /usr/sbin/mpathadm list initiator-port
+verbose /usr/sbin/mpathadm show initiator-port `/usr/sbin/mpathadm list initiator-port | cut -d: -f2`
 
 echo "------------------- group entry ---------------------" >>$REPORT
 verbose /bin/ls -l /etc/group
 verbose /bin/ls -Ll /etc/group
 verbose /bin/grep SAM_FS /etc/group
-verbose /bin/ypmatch SAM_FS group
 
 showfiles /var/spool/cron/crontabs/root
 
@@ -897,9 +906,6 @@ for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $DBUPTRC $FSATRC $SVCFS
 do
 	showtails $FILES
 done
-
-showtails $VARDIR/.grau/graulog*
-showtails $TMPDIR/.grau
 
 #
 # Foreach robot or tape drive device, decode and record the last 10 tapealert
@@ -1211,6 +1217,8 @@ echo ""     >>$REPORT 2>&1
 verbosei /etc/mount 
 
 showifiles /etc/mnttab /etc/vfstab /etc/dfs/dfstab /etc/inittab
+
+verbosei /usr/sbin/sharemgr show -v
 
 # accumulate samfs filesystem mount points
 SAMFSMP=`sed -e "/#/s/#.*//" < /etc/vfstab | /bin/awk '$4 == "samfs" { print $3 " "}'`
