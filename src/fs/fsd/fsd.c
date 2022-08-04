@@ -75,14 +75,14 @@ static char *_SrcFile = __FILE__;
 
 /* SAM-FS headers. */
 #include "pub/version.h"
-#include "sam/types.h"
+#include "pub/devstat.h"
+#define DEC_INIT
 #if !defined(QFS)
 #include "aml/archiver.h"
 #include "aml/device.h"
 #include "aml/stager.h"
 #endif /* !defined(QFS) */
 #include "sam/custmsg.h"
-#include "pub/devstat.h"
 #include "sam/exit.h"
 #include "sam/mount.h"
 #include "sam/lib.h"
@@ -105,7 +105,6 @@ static char *_SrcFile = __FILE__;
 #include "utility.h"
 
 /* Private data. */
-char* program_name = NULL;
 
 /*
  * Child status queue.

@@ -61,9 +61,7 @@
 #include <nl_types.h>
 
 /* SAM-FS headers. */
-#define DEC_INIT
 #include "sam/types.h"
-#undef DEC_INIT
 #include "sam/exit.h"
 #include "sam/lib.h"
 #include "sam/nl_samfs.h"

@@ -81,6 +81,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/sysmacros.h>
 #include <sys/mman.h>
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "sam/custmsg.h"

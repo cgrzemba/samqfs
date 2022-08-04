@@ -86,6 +86,7 @@
 /* Solaris headers. */
 #include <syslog.h>
 
+#define DEC_INIT
 #include <sam/types.h>
 #include "sam/defaults.h"
 #include <sam/custmsg.h>

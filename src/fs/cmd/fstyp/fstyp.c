@@ -48,11 +48,11 @@
 
 #include <sys/inttypes.h>
 
+#define DEC_INIT
 #include <sam/param.h>
 #include <sam/types.h>
-
-#include "sam/nl_samfs.h"
-#include "sam/custmsg.h"
+#include <sam/nl_samfs.h>
+#include <sam/custmsg.h>
 #include <sam/format.h>
 #include <sam/fs/ino.h>
 #include <sam/fs/samhost.h>
@@ -64,8 +64,6 @@
 #include <sam/format.h>
 
 static void usage(void);
-
-char* program_name = NULL;
 
 int
 main(int argc, char *argv[])

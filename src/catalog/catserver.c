@@ -228,6 +228,7 @@ int CvrtCatalog(char *cf_name, int version, void **mp, size_t *size);
 
 /* Public data. */
 struct CatalogTableHdr *CatalogTable;
+extern struct CatalogMap *Catalogs;
 char *program_name = "catserver";
 
 int

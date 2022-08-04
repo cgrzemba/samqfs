@@ -39,12 +39,11 @@ mkfs_SRC = mkfs.c
 INCFLAGS = -I../../include -I../../include/$(OBJ_DIR) -I$(INCLUDE) -I$(INCLUDE)/pub/$(OBJ_DIR)
 DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(NO_BUILD_OSD)
 
-LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam $(DYNAMIC_OPT) \
 	-ladm -ldl -lsysevent -lnvpair
-sammkfs_LIBS = $(PROG_LIBS)
-mkfs_LIBS = $(PROG_LIBS)
+sammkfs_LIBS = ../../lib/$(OBJ_DIR)/setsyscall.o $(PROG_LIBS)
+mkfs_LIBS = 
 
 
 DESTDIR = /usr/lib/fs/samfs

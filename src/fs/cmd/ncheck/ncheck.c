@@ -47,7 +47,7 @@
 
 /* SAM-FS headers. */
 #include "pub/stat.h"
-#define	MAIN
+#define        DEC_INIT
 #include "sam/custmsg.h"
 #include "sam/lib.h"
 #include "sam/nl_samfs.h"
@@ -56,8 +56,6 @@
 #include "sam/types.h"
 
 #include "ino.h"
-
-char* program_name = NULL;
 
 int
 main(int argc, char **argv)

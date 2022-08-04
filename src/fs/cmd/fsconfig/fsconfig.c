@@ -48,6 +48,7 @@
 #include <string.h>
 #endif /* sun */
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/lib.h"
@@ -55,7 +56,6 @@
 #include "pub/devstat.h"
 #include "sam/fs/sblk.h"
 #include "sam/fs/samhost.h"
-#define	DEC_INIT
 #include "sam/devnm.h"
 
 #ifdef sun
@@ -105,7 +105,6 @@ int	debug = 0;
 int shared = 0;
 int verbose = 0;
 int blocks = 0;
-char* program_name = NULL;
 
 static void SamPrintSB(struct sam_sblk *, char *);
 static void SamPrintVTOC(struct vtoc *, char *);

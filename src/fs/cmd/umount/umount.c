@@ -72,7 +72,9 @@
 #include <sam/shareops.h>
 #include <priv.h>
 
+#define DEC_INIT
 #include <sam/custmsg.h>
+#include <sam/lib.h>
 
 #define	RET_OK	0
 #define	RET_ERR	32
