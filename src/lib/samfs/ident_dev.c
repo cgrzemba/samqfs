@@ -202,6 +202,7 @@ success:
 	/* get block limits for this device */
 	if (IS_TAPE(un)) {
 		update_block_limits(un, open_fd);
+		DevLog(DL_DETAIL(1170), getpid(), un->name, open_fd, strerror(errno) );
 	} else if (IS_OPTICAL(un)) {
 		samst_range_t  ranges;
 

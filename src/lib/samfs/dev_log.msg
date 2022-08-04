@@ -192,6 +192,7 @@ $ *    SAM-QFS_notice_end
 1167 Inquiry reuse on open %s fd %d 
 1168 Errflag %x State %#x
 1169 cmpldev, could not compress rdev to dev32_t %llx
+1170 (%d) READ_BLKLIM result on %s fd %d error %s
 
 2000 Optic
 2001 Erase started
