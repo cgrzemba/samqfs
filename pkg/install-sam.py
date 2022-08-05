@@ -60,7 +60,7 @@ config_smf_name = 'samqfs-postinstall'
 config_script_fn = '{0}util/{1}'.format(prefix,config_smf_name)
 config_smf_fn='var/svc/manifest/system/{0}.xml'.format(config_smf_name)
 
-destdir = 'root/'
+destdir = 'root_i386/'
 builddate = time.strftime('%Y%m%dT%H%M%SZ')
 
 if 'omnios' in osrelease:
@@ -412,7 +412,7 @@ def main(version, debug_build, amd64):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--destdir', dest='destdir', default='./root')
+    parser.add_argument('--destdir', dest='destdir', default='./root_i386')
     parser.add_argument('--version', dest='version', default=version, help='tag build with this version')
     parser.add_argument('--repro', dest='repro', help='path to ips package repository')
     parser.add_argument('--debug_build', dest='debug_build', action="store_true", help='install DEBUG builts')
