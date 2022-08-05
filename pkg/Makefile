@@ -17,7 +17,7 @@
 #
 # CDDL HEADER END
 
-DESTDIR ?= ./root 
+DESTDIR := $(if $(DESTDIR),$(DESTDIR),./root_i386)
 
 FLAVOR.DBG = --debug_build
 FLAVOR = $(FLAVOR.$(DEBUG:yes=DBG))
@@ -33,4 +33,5 @@ install:
 
 .PHONY: clean
 clean:
-	echo rm -rf $(DESTDIR)/*
+	rm -rf $(DESTDIR)/*
+	rm *.cache
