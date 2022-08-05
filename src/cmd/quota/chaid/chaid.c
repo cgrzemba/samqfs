@@ -65,6 +65,8 @@
 #include <unistd.h>
 #include <libgen.h>
 
+/* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/lib.h>
 #include <sam/custmsg.h>
 #include <sam/quota.h>
@@ -85,7 +87,6 @@ void usage(void);
 int Perror(char *s);
 int isnum(char *s);
 int chaidr(char *dir, gid_t gid);
-char* program_name = NULL;
 
 int
 main(int argc, char *argv[])

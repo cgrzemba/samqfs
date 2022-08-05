@@ -68,6 +68,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <door.h>
 
 /* SAM-FS includes. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "sam/defaults.h"
@@ -188,8 +189,6 @@ static struct SignalsArg signalsArg = {
 			sigFatal,	/* Fatal signal processor	*/
 			FSA_LOG_PATH	/* directory for dump/trace	*/
 };
-
-char* program_name = NULL;
 
 int	main(
 	int		argc,		/* Argument count		*/

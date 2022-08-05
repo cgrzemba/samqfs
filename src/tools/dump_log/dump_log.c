@@ -73,6 +73,7 @@
 #include "aml/logging.h"
 #include "sam/devnm.h"
 #include "sam/syscall.h"
+#include "sam/lib.h"
 
 char *ctime_r(const time_t *clock, char *buf, int buflen);
 static void DumpArchive(sam_archive_t *);
@@ -101,7 +102,6 @@ static char *ioctl_fstr[] = {
 };
 
 static char *progname = "dump_log";
-char* program_name = NULL;
 
 int
 main(int argc, char **argv)

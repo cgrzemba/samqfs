@@ -53,6 +53,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/vfs.h>
 
 /* SAM-FS headers. */
+#define	DEC_INIT
 #include "sam/exit.h"
 #include "sam/mount.h"
 #include "sam/lib.h"
@@ -61,7 +62,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/fs/sblk.h"
 
 /* Local headers. */
-#define	DEC_INIT
 #include "arfind.h"
 #undef	DEC_INIT
 
@@ -107,6 +107,7 @@ static void atExit(void);
 static void attachFileProps(void);
 static void reconfig(ReconfigControl_t ctrl);
 
+shm_alloc_t preview_shm;
 
 int
 main(

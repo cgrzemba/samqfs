@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = scsiid
 PROG_SRC = scsiid.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen $(LIBSO)
+PROG_LIBS = 
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut

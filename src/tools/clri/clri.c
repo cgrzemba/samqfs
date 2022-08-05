@@ -38,11 +38,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#define DEC_INIT
 #include "sam/uioctl.h"
+#include "sam/lib.h"
 #include <errno.h>
 #include <string.h>
 
-char *program_name;
 int sam_fd;
 
 int issue_ioctl(int inum);

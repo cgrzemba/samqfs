@@ -39,6 +39,8 @@
 #include "pub/stat.h"
 #include "pub/samrpc.h"
 #include "pub/lib.h"
+#define DEC_INIT
+#include "sam/lib.h"
 
 sam_st *
 samstat_1(

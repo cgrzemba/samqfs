@@ -50,7 +50,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#define	MAIN
+#define	DEC_INIT
 
 #include "sam/types.h"
 #include "aml/shm.h"
@@ -73,8 +73,6 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 
 /* Globals */
 shm_alloc_t master_shm, preview_shm;
-
-char *program_name;
 
 /* Function prototypes */
 static int init_client(dev_ent_t *un, srvr_clnt_t *server);

@@ -59,6 +59,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #if defined(AR_DEBUG)
 #define	TRACE_CONTROL
 #endif /* defined(AR_DEBUG) */
+#define        DEC_INIT
 #include "sam/types.h"
 #include "sam/defaults.h"
 #include "sam/exit.h"
@@ -69,7 +70,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/syscall.h"
 
 /* Local headers. */
-#define	DEC_INIT
 #include "archiverd.h"
 #include "device.h"
 #include "volume.h"
@@ -161,7 +161,6 @@ static void reconfig(ReconfigControl_t ctrl);
 static void resetArfindState(struct FileSysEntry *fs);
 static void rmFsFiles(struct FileSysEntry *fs, boolean_t state);
 static void rmWorkInProgress(void);
-
 
 int
 /*ARGSUSED0*/

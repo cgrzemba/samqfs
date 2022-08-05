@@ -36,7 +36,7 @@ tapealert_trap_SRC = tapealert_trap.c tapealert_text.c
 tapealert_log_SRC = tapealert_log.c tapealert_text.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut $(LIBSO)
-tapealert_LIBS = $(PROG_LIBS)
+tapealert_LIBS = 
 tapealert_trap_LIBS = $(PROG_LIBS)
 tapealert_log_LIBS = $(PROG_LIBS)
 

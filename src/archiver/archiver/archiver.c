@@ -52,7 +52,9 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <synch.h>
 
 /* SAM-FS headers. */
+#define	DEC_INIT
 #include "sam/types.h"
+#include "pub/devstat.h"
 #include "sam/devnm.h"
 #include "sam/exit.h"
 #include "sam/mount.h"
@@ -60,7 +62,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/sam_trace.h"
 
 /* Local headers. */
-#define	DEC_INIT
 #include "archiver.h"
 #include "archset.h"
 #include "device.h"

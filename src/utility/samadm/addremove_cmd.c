@@ -40,6 +40,7 @@
 #include <strings.h>
 
 #include "samadm.h"
+#define DEC_INIT
 #include "sam/syscall.h"
 #include <sam/mount.h>
 #include "sam/lib.h"

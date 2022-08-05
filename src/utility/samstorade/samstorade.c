@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#define DEC_INIT
 #include <sam/lib.h>
 #include <sam/nl_samfs.h>
 #include <sam/custmsg.h>

@@ -121,10 +121,14 @@
 #include <sys/mnttab.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+
+/* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "pub/stat.h"
 #include "sam/quota.h"
+#include "sam/lib.h"
 
 #define		MAX_QUOTA_CMDS		512
 #define		MAX_QUOTA_OPS		64

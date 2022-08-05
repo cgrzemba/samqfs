@@ -69,8 +69,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #endif /* defined(lint) */
 
 /* globals */
-char* program_name = NULL;
-struct CatalogMap *Catalogs = NULL;
 
 /* Private functions. */
 static void LineError(int MsgNum, ...);

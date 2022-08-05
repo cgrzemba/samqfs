@@ -54,6 +54,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/param.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
@@ -64,7 +65,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #define	NEED_ARCHREQ_NAMES
 #define	NEED_ARFIND_EVENT_NAMES
 #define	NEED_EXAM_METHOD_NAMES
-#define	DEC_INIT
 #include "common.h"
 #include "archset.h"
 #include "archreq.h"

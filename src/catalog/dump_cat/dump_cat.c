@@ -47,6 +47,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <fcntl.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/catalog.h"
 #include "aml/catlib.h"
@@ -68,9 +69,6 @@ static int cmp_slot(const void *p1, const void *p2);
 
 /* Private data. */
 static boolean_t verbose = FALSE;
-
-char* program_name = NULL;
-struct CatalogMap *Catalogs = NULL;
 
 int
 main(

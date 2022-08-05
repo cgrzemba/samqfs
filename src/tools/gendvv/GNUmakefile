@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = gendvv
 PROG_SRC = gendvv.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lgen $(LIBSO)
 
 LNOPTS += -a
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

@@ -39,6 +39,10 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <strings.h>
 #include <unistd.h>
 
+#define DEC_INIT
+#include "sam/types.h"
+#include "sam/nl_samfs.h"
+
 #define	_DECL
 #include "samdb.h"
 #undef	_DECL

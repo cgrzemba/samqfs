@@ -53,6 +53,7 @@
 #include <sys/mman.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include <sam/lib.h>
 
 /* Local headers. */

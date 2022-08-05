@@ -53,6 +53,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <dlfcn.h>
 
 /* SAM-FS headers. */
+#define DEC_INIT
 #include "pub/sam_errno.h"
 #include "sam/types.h"
 #include "sam/param.h"
