@@ -2283,12 +2283,19 @@ update_block_limits(dev_ent_t *un, int open_fd)
 	if (IS_TAPE(un)) {
 		if (scsi_cmd(open_fd, un, SCMD_READ_BLKLIM, 0, blklimits,
 		    6, NULL) != 6) {
-
 			DevLogCdb(un);
 			DevLogSense(un);
 			un->dt.tp.max_blocksize = un->dt.tp.default_blocksize;
-			DevLog(DL_ERR(3124), un->dt.tp.max_blocksize);
-			TAPEALERT_SKEY(open_fd, un);
+			if ( errno == EACCES ){
+				DevLog(DL_DETAIL(1171), getpid(), SCMD_READ_BLKLIM,
+					un->name, open_fd) ;
+				OffDevice(un, SAM_STATE_CHANGE);
+				SendCustMsg(HERE, 9402);
+				/* set drive to state off instead of down */
+			} else {
+				DevLog(DL_ERR(3124), un->dt.tp.max_blocksize);
+				TAPEALERT_SKEY(open_fd, un);
+			}
 		} else {
 			int i = 0;
 			uint_t tmp, tmp1;
@@ -2667,17 +2674,24 @@ tape_properties(dev_ent_t *un, int fd)
 
 			if (scsi_cmd(fd, un, SCMD_INQUIRY, 1, buf, len, 1, 0xb0,
 			    NULL, NULL) < 2) {
-
-				DevLog(DL_ERR(3257));
+				if ( errno == EACCES ){
+					DevLog(DL_DETAIL(1171), getpid(), SCMD_INQUIRY,
+					un->name, fd) ;
+					OffDevice(un, SAM_STATE_CHANGE);
+					SendCustMsg(HERE, 9402);
+					/* set drive to state off */
+				} else {
+					DevLog(DL_ERR(3257));
+					SendCustMsg(HERE, 9358);
+					TAPEALERT(fd, un);
+					memccpy(un->dis_mes[DIS_MES_CRIT],
+						catgets(catfd, SET, 2978,
+						"Unable to determine if WORM or RW"
+						" media loaded."),
+						'\0', DIS_MES_LEN);
+				}
 				DevLogCdb(un);
 				DevLogSense(un);
-				SendCustMsg(HERE, 9358);
-				TAPEALERT(fd, un);
-				DownDevice(un, SAM_STATE_CHANGE);
-				memccpy(un->dis_mes[DIS_MES_CRIT],
-				    catgets(catfd, SET, 2978,
-				    "Unable to determine if WORM or RW"
-				    " media loaded."), '\0', DIS_MES_LEN);
 				un->dt.tp.properties = properties;
 				return (-1);	/* error */
 			}
@@ -2688,17 +2702,24 @@ tape_properties(dev_ent_t *un, int fd)
 
 			if (scsi_cmd(fd, un, SCMD_MODE_SENSE, 1, buf, len, 0x3f,
 			    &resid) < 83) {
-
-				DevLog(DL_ERR(3257));
+				if ( errno == EACCES ){
+					DevLog(DL_DETAIL(1171), getpid(), SCMD_INQUIRY,
+					un->name, fd) ;
+					OffDevice(un, SAM_STATE_CHANGE);
+					SendCustMsg(HERE, 9402);
+					/* set drive to state off */
+				} else {
+					DevLog(DL_ERR(3257));
+					SendCustMsg(HERE, 9358);
+					TAPEALERT(fd, un);
+					memccpy(un->dis_mes[DIS_MES_CRIT],
+						catgets(catfd, SET, 2978,
+						"Unable to determine if WORM or RW"
+						" media loaded."),
+						'\0', DIS_MES_LEN);
+				}
 				DevLogCdb(un);
 				DevLogSense(un);
-				SendCustMsg(HERE, 9358);
-				TAPEALERT(fd, un);
-				DownDevice(un, SAM_STATE_CHANGE);
-				memccpy(un->dis_mes[DIS_MES_CRIT],
-				    catgets(catfd, SET, 2978, "Unable to"
-				    " determine if WORM or RW media"
-				    " loaded."), '\0', DIS_MES_LEN);
 				un->dt.tp.properties = properties;
 				return (-1);	/* error */
 			}
