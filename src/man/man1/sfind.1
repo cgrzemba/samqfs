@@ -363,7 +363,7 @@ segments has an archive copy that is damaged.
 .TP
 \fB\-any_copy_r\fR
 File has an archive copy marked for rearchiving by
-the \fBrearch\fR(1M) command or by the recycler.
+the \fBrearch\fR(8) command or by the recycler.
 .sp
 For a segmented file, if the \fB\-test_segments\fR option is not in effect,
 this test evaluates to true if the segmented file's index inode has an
@@ -495,7 +495,7 @@ file's data segments has an archive copy number \fIn\fR that is damaged.
 .TP
 \fB\-copy_r \fIn\fR
 File has an archive copy number \fIn\fR marked for rearchiving
-by the \fBrearch\fR(1M) command or by the recycler.
+by the \fBrearch\fR(8) command or by the recycler.
 .sp
 For a segmented file, if the \fB\-test_segments\fR option is not in effect,
 this test evaluates to true if the segmented file's index inode has
@@ -1504,6 +1504,6 @@ It exits with a status greater than 0 if errors occur.
 \fBssum\fR(1),
 \fBstage\fR(1).
 .PP
-\fBrearch\fR(1M).
+\fBrearch\fR(8).
 .PP
 \fBprintf\fR(3C).

@@ -1,0 +1,425 @@
+.\" $Revision: 1.4 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samdb 8 "28 Jul 2008"
+.SH NAME
+samdb \- Sun StorEdge SAM-QFS sideband database commands
+.SH SYNOPSIS
+
+.LP
+.nf
+\fBsamdb check\fR \fIfamily_set\fR [\fB-f\fR] [\fB-s\fR] [\fB-q\fR]
+.fi
+
+.LP
+.nf
+\fBsamdb create\fR \fIfamily_set\fR [\fB-s schema_file\fR]
+.fi
+
+.LP
+.nf
+\fBsamdb dump\fR \fIfamily_set\fR [\fB-a\fR] [\fB-s] [\fB-f file name\fR]
+.fi
+
+.LP
+.nf
+\fBsamdb drop\fR \fIfamily_set\fR
+.fi
+
+.LP
+.nf
+\fBsamdb load\fR \fIfamily_set\fR [-i] [\fB-f file name\fR]
+.fi
+
+.LP
+.nf
+\fBsamdb query\fR \fIfamily_set\fR [\fB-t type] [\fB-c\fR] [\fB-s\fR] [\fB-i inum\fR]
+    [\fB-f file\fR] [\fB-v vsn\fR]
+.fi
+
+.SH DESCRIPTION
+.LP
+The \fBsamdb\fR commands are used to configure and query a SAM-QFS MySQL
+database. This database retains metadata information for each file in the file
+system. Use of the SAM-QFS MySQL database implies the SAM-QFS server has
+access to a MySQL server. The SAM-QFS server need not host the MySQL server if 
+as network access to the database host system is available.  The \fBsamdb.conf(5)\fR
+configuration file contains the access parameters for the database. 
+.LP
+Use of the SAM-QFS MySQL database is optional and is specified by the mount
+option \fBsam_db\fR. If set, the \fBfsalogd daemon\fR is started at mount time.
+The file system sends events to the fsalogd who writes the events to a
+log file. A second daemon, \fBsam-dbupd\fR, reads the events from the fsalogd
+log files and updates the SAM-QFS database.
+.LP
+The database is initially populated by the \fBsamdb load\fR command. Input
+to the \fBsamdb load\fR command is the load file created by samfsdump.
+
+.LP
+\fBExample 1:\fR Generate load file from an existing dumpfile.
+.LP
+.nf
+\fB# samfsrestore -S -Z /tmp/samfs1/dbload -f /path/to/dump/samfs1.dump\fR
+.fi
+
+.LP
+\fBExample 2:\fR Generate load file while performing a samfsrestore.
+.LP
+.nf
+\fB# samfsrestore -Z /tmp/samfs1dbload -f /path/to/dump/samfs1.dump\fR
+.fi
+
+.LP
+\fBExample 3:\fR Pipelining samfsdump to load database.
+.LP
+.nf
+\fB# samfsdump -S -Z - /samfs1 | samdb load samfs1\fR
+.fi
+
+.LP
+Once the SAM-QFS MySQL database is populated, the performance of
+\fBsamfsdump(8)\fR can be improved by using the database for path
+name creation.  This is either done with a file created by \fBsamdb dump\fR
+or pipelined together.
+
+.LP
+\fBExample:\fR Pipelining samdb dump to samfsdump
+.LP
+.nf
+\fB# samdb dump samfs1 | samfsdump -Y -f /path/samfs1.dump -\fR
+.fi
+
+.SH SAMDB COMMANDS
+.LP
+A series of commands are provided to configure and query the SAM-QFS MySQL
+database. The specific options to the individual commands are listed below.
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBfamily set\fR\fR
+.ad
+.sp .6
+.RS 4n
+Specifies the family set name of the file system. This family set name must
+be configured in the \fBsamdb.conf\fR file.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fBhelp\fR\fR
+.ad
+.sp .6
+.RS 4n
+Displays a command syntax summary.
+.RE
+
+.LP
+Here is a list of the samdb commands and an explanation of the options.
+
+.sp
+.ne 2
+.mk
+.na
+\fBsamdb check\fR \fIfamily_set\fR [\fB-f\fR] [\fB-s\fR] [\fB-q\fR]
+.ad
+.sp .6
+.RS 4n
+Checks the database against specified file system for consistency.  This
+scans the inodes of the filesystem making sure the entries in the database
+are correct.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-f\fR\fR
+.ad
+.sp .6
+.RS 4n
+Perform a fast consistency check.  This skips checking the directory
+namespace in the database, using only information found in the inode.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-s\fR\fR
+.ad
+.sp .6
+.RS 4n
+Perform a scan without repairing database errors.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-q\fR\fR
+.ad
+.sp .6
+.RS 4n
+Quiet output, only display the number of problems found.
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBsamdb create\fR \fIfamily_set\fR [\fB-s schema_file\fR]
+.ad
+.sp .6
+.RS 4n
+Creates the database for the specified filesystem.
+.RE
+
+.sp
+.ne 2
+.mk
+\fB\fB-s schema_file\fR\fR
+.ad
+.sp .6
+.RS 4n
+Specifies the schema file to use. The default file is
+/opt/SUNWsamfs/etc/samdb.schema. The schema file contains a series
+of CREATE TABLE commands.
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBsamdb dump\fR \fIfamily_set\fR [\fB-a\fR] [\fB-s\fR] [\fB-f file name\fR]
+.ad
+.sp .6
+.RS 4n
+Generates a list of files for samfsdump. 
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-a\fR\fR
+.ad
+.sp .6
+.RS 4n
+Use absolute pathnames in file list.  This will allow samfsdump
+to be ran outside of the root of the filesystem.  The default is
+relative pathnames.
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-s\fR\fR
+.ad
+.sp .6
+.RS 4n
+Sort dump file by parent directory ids.  This option groups files together
+in the dump file based on their parent directories.  Subsequent samfsdump
+performance will not be improved when using this option. 
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB\fB-f file name\fR\fR
+.ad
+.sp .6
+.RS 4n
+Specifies file to send output to. If a file is not supplied, output goes to
+standard out. 
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBsamdb drop\fR \fIfamily_set\fR
+.ad
+.sp .6
+.RS 4n
+Drops the database for the specified file system.  A confirmation prompt
+will appear.
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBsamdb load\fR \fIfamily_set\fR [\fB-f file name\fR]
+.ad
+.sp .6
+.RS 4n
+Loads a database from a samfsdump file.  After loading a database a
+samdb check should be performed for that filesystem.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-i\fR\fR
+.ad
+.sp .6
+.RS 4n
+Use an inode scan instead of a load file to load the database.  This can be
+used if no recent samfsdump file is available to generate the load file with.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-f filename\fR\fR
+.ad
+.sp .6
+.RS 4n
+The filename of the load file, default is standard input.  This file can 
+be generated by samfsdump(8)/samfsrestore(1M) -Z option.
+.RE
+
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBsamdb query\fR \fIfamily_set\fR [\fB-t type] [\fB-c\fR] [\fB-s\fR] [\fB-i inum\fR]
+    [\fB-f file\fR] [\fB-v vsn\fR]
+.ad
+.sp .6
+.RS 4n
+Queries a database for files or vsns based on provided file or vsn information.
+Multiple -ifv terms can be provided.  Like terms are OR'd together, and unlike
+terms are AND'd.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-t {vsn,file}\fR\fR
+.ad
+.sp .6
+.RS 4n
+The query type to produce, either vsn or file.  If vsn is chosen
+a list of vsns matching the -ifv terms will be output.  If file is chosen
+a list of files matching the -ifv terms will be output.  If both query types
+are chosen, e.g. -t vsn -t file, then a list of files broken down by vsn
+will be output.  The default is file.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-c\fR\fR
+.ad
+.sp .6
+.RS 4n
+Produce a count instead outputing a result list.  Depending on the query type,
+the output will be the number of either vsns or files that match the -ifv terms.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-s\fR\fR
+.ad
+.sp .6
+.RS 4n
+Sort the results.  Results are sorted alphabetically ascending. 
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-i inum\fR\fR
+.ad
+.sp .6
+.RS 4n
+Match the provided inode number.  This is provided to query the database for
+which files or vsns have the given inode number.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-f filename\fR\fR
+.ad
+.sp .6
+.RS 4n
+Match the provided filename.  This queries the database for files that match
+the given filename.  The % wildcard character can be used within a filename to
+match multiple files.  Paths must either being with a wildcard, or be absolute
+relative to the mount point.  
+
+For example /dir1/file1 or %dir1/file1 are valid.  The first would match the
+dir1 directory in the mount point.  The second would match any directory ending
+in dir1.
+.RE
+
+.sp 
+.ne 2
+.mk
+.na
+\fB\fB-v vsn\fR\fR
+.ad
+.sp .6
+.RS 4n
+Match the provided vsn. Depending on the query type this will output a list
+of files on the vsn, or restrict the results to the provided vsn.
+.RE
+
+.SH SEE ALSO
+\fBsamdb.conf(5)\fR
+\fBsamfsdump(8)\fR
+\fBsamfsrestore(8)\fR

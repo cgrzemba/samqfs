@@ -239,7 +239,7 @@ links to the file, the owner
 to which the owner belongs.
 .PP
 The second line indicates the file's length in bytes,
-the administrative ID number (see \fBsamchaid(1M)\fR), and
+the administrative ID number (see \fBsamchaid(8)\fR), and
 the inode number plus generation number.
 .PP
 The third line indicates the file's project name and project ID
@@ -414,12 +414,12 @@ The last two fields indicate the media type and the volume serial
 name on which the archive copy resides.
 .PP
 For media type \fBdk\fR (disk archiving) the volume serial name is the disk
-volume as defined in \fBdiskvols.conf\fR(4), and there is an additional field
+volume as defined in \fBdiskvols.conf\fR(5), and there is an additional field
 which is the path to the archived tar file.  This path is relative to
 the pathname for the disk volume as specified in the \fBdiskvols.conf\fR file.
 .PP
 For media type \fBcb\fR (Sun StorageTek 5800 Storage System disk archiving)
-the volume serial name is the disk volume as defined in \fBdiskvols.conf\fR(4),
+the volume serial name is the disk volume as defined in \fBdiskvols.conf\fR(5),
 and there is an additional field which is the metadata string for the archived
 tar file.
 .PP
@@ -795,7 +795,7 @@ HP-UX \fBls\fR(1) program.
 \fBarchive\fR(1),
 \fBls\fR(1),
 \fBrelease\fR(1),
-\fBsamchaid\fR(1M),
+\fBsamchaid\fR(8),
 \fBschproj\fR(1),
 \fBssum\fR(1),
 \fBstage\fR(1),

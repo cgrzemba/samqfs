@@ -1,0 +1,187 @@
+'\" t
+.\" $Revision: 1.12 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH sendtrap 8 "18 Nov 2003"
+.SH NAME
+sendtrap \- Sun StorEdge \%SAM-FS Simple Network Management Protocol (SNMP) trap notification script 
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/scripts/sendtrap\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.PP
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+The \fBsendtrap\fR script publishes Sun StorEdge \%SAM-FS SNMP trap events. 
+It is executed by the \fBsyseventd\fR(8) daemon
+when it encounters abnormal or
+exceptional events including \fBtapealert\fR(8) events.
+The SNMP version supported is SNMPv2c.
+.PP
+As released, \fBsendtrap\fR is a script that
+sends a trap to the local host.
+.PP
+The \fBsyseventd\fR(8) daemon executes \fBsendtrap\fR as follows:
+.TP 2
+\(bu
+It is invoked with 7 arguments if it is an archiver, stager, releaser,
+recycler, or file system alert.
+.TP
+\(bu
+It is invoked with 13 arguments if it is a \fBtapealert\fR(8) event.
+.PP
+The arguments used are as follows:
+.TP 10
+\fBArgument\fR
+\fBMeaning\fR
+.TP
+1
+A keyword identifying the category
+of the alert (archiver, stager, releaser, recycler,
+file system, \fBtapeAlert\fR(8), and so on).
+.TP     
+2
+The subcategory or specific type of alert.
+For example, keywords such as \fBCmdErr\fR to express
+errors in the command files, \fBReadWarning\fR to express
+tape drive read problems, and so on.)
+.TP
+3
+The error type.  This identifies the severity
+and syslog level of the event, as follows:
+.RS 10
+.TP 15
+\fBError Type\fR
+\fBValues\fR
+.TP
+\fB0\fR
+\fBEmergency\fR
+.TP
+\fB1\fR
+\fBAlert\fR
+.TP
+\fB2\fR
+\fBCritical\fR
+.TP
+\fB3\fR
+\fBError\fR
+.TP
+\fB4\fR
+\fBWarning\fR
+.RE
+.TP 10
+4
+The message number as found in the message catalog.
+For \fBtapealert\fR(8) events, this is a concatenation of
+the Manual type (SSC2/SMC2) and the parameter code as found in
+the ANSI SCSI-3 SSC2 and SMC2 Manuals at \fBwww.t10.org\fR.
+.TP
+5
+The system identifier.  That is, the host name of the machine
+upon which the event originated.
+.TP
+6
+The text  of  the  translated  message string.
+.TP
+7
+The date and time when the event occurred.
+.TP
+8
+The vendor name of the device.
+From SCSI INQUIRY.
+Used only for \fBtapealert\fR(8) events.
+.TP
+9
+The product identity of the device.
+From SCSI INQUIRY.
+Used only for \fBtapealert\fR(8) events.
+.TP
+10
+The revision number of the device.
+From SCSI INQUIRY.
+Used only for \fBtapealert\fR(8) events.
+.TP
+11
+The device name.  For example, \fB/dev/rmt/3cbn\fR.
+Used only for \fBtapealert\fR(8) events.
+.TP
+12
+The Volume Serial Name (VSN) of the tape.
+Used only for \fBtapealert\fR(8) events.
+.TP
+13
+The probable cause of the tape alert.
+Used only for \fBtapealert\fR(8) events.
+.PP     
+.SS Configuring SNMP
+To enable SNMP reporting, perform the following steps:
+.TP 3
+1.
+Use \fBvi\fR(1) or another editor to open
+file \fB/etc/opt/SUNWsamfs/defaults.conf\fR.
+.TP
+2.
+Edit the file so that the \fBalerts=on\fR directive appears.
+.TP
+3.
+Save and close the \fBdefaults.conf\fR file.
+.TP
+4.
+Issue the \fBsamd\fR(8) \fBconfig\fR command to reconfigure
+the \%\fBsam-fsd\fR(8) daemon.
+.PP
+.SS Modifying the Trap Destination Host
+By default, traps are sent to port 161 of the localhost.
+To change the port number or the hostname of the
+trap destination, modify the \fBTRAP_DESTINATION="hostname:port"\fR
+variable in this script.
+.PP
+This trap destination hostname must be declared in
+NIS on \fB/etc/hosts\fR.
+.PP
+You can specify that traps be sent to multiple hosts.
+Separate multiple hostname:port specifications with a space character.
+For example:
+.PP
+.nf
+.ft CO
+TRAP_DESTINATION="localhost:161 doodle:163 mgmt_station:1162"
+.ft
+.fi
+.SS Modifying the SNMP Community String
+To modify the SNMP community string, modify the value of the 
+\fBCOMMUNITY\fR variable in this script.  By default, the
+SNMP community string is set to \fBpublic\fR.
+.SH SEE ALSO
+\%\fBsam-fsd\fR(8),
+\fBsamd\fR(8),
+\fBsyseventd\fR(8),
+\fBtapealert\fR(8).
+

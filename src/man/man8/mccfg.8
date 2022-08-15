@@ -1,0 +1,90 @@
+.\" $Revision: 1.12 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH mccfg 8 "24 Feb 2003"
+.SH NAME
+mccfg \- Media Changer Configuration
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/tools/mccfg
+.PP
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+The \fBmccfg\fR command is a \%two-part Sun StorEdge \%SAM-FS media
+changer and tape drive installation configuration script.
+.PP
+The first part configures \fB/kernel/drv/sgen.conf\fR lun 0 fc-fabric media
+changers.
+.PP
+The second part configures \fB/etc/opt/SUNWsamfs/mcf\fR for both parallel and
+fc-fabric SCSI media changers, media changer installed tape drives, and 
+standalone tape drives.  Media changer installed tape drives are put in
+the required \fB/etc/opt/SUNWsamfs/mcf\fR ascending order for proper
+Sun StorEdge \%SAM-FS 
+operation. A historian is also be added to the \fB/etc/opt/SUNWsamfs/mcf\fR.
+Missing device information in either
+\fB/etc/opt/SUNWsamfs/inquiry.conf\fR or \fB/kernel/drv/st.conf\fR
+produces a warning.
+.PP
+Multipath devices are supported where the first path seen is used in the
+\fB/etc/opt/SUNWsamfs/mcf\fR configuration.
+.SH LIMITATIONS 
+\%Network-attached media changer installed tape drives are configured as
+standalone tape drives.  The user must create
+the \fB/etc/opt/SUNWsamfs/mcf\fR
+virtual library entry and change the standalone tape drive's family set
+to that of the virtual library's.
+.PP
+Parallel \%SCSI-2 media changer and installed tape drives need to be on the
+same SCSI bus for automatic configuration.  However, a single bus is not a
+requirement of Sun StorEdge \%SAM-FS, and better performance is
+achieved with multiple buses.
+.PP
+A media changer which is lun 1 fc-fabric WWN must be manually
+\fB/kernel/drv/sgen.conf\fR configured because of \fBcfgadm\fR
+and \fBluxadm\fR limitations.
+.PP
+For automatic configuration to work, all removable media equipment must be
+able to be opened and respond to a USCSI commands.
+.SH FILES
+.TP 10
+\fBmcf\fR
+The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+.SH NOTES
+Run \fBsamd config\fR for \fBmccfg\fR changes to take effect. 
+.SH SEE ALSO
+\fBinquiry.conf\fR(5),
+\fBmcf\fR(5).
+.PP
+\fBhistorian\fR(4),
+\fBsgen\fR(4D).
+.PP
+\fBst\fR(4D).
+.PP

@@ -1,0 +1,134 @@
+.\" $Revision: 1.7 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH umount_samfs 8 "13 Mar 2006"
+.SH NAME
+umount_samfs \- Unmounts a Sun StorEdge QFS or \%SAM-QFS file system
+.SH SYNOPSIS
+\fBumount\fR
+\fB\-F\ samfs\fR
+[-f]
+[\fIgeneric_options\fR]
+[\fB\-o\ \fIawait_clients=\fRn]
+\fIspecial\fR | \fImount_point\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBumount\fR command unmounts
+a currently mounted file system from
+the file system hierarchy.
+The file system may be specified by either its \fImount point\fR
+or its \fIspecial\fR (also known as its \fIfamily set name\fR).
+.PP
+For more information on the \fBmount\fR(8) command,
+see the \fBmount\fR(8) man page and the \fBmount_samfs\fR(1M) man page.
+.PP
+For more information on the \fBumount\fR command,
+see the \fBumount\fR(8) man page.
+.PP
+.SH OPTIONS
+.TP 10
+\fB\-F\ samfs\fR
+Specifies that the file system being unmounted is of type \fBsamfs\fR.
+Both Sun StorEdge QFS and \%SAM-QFS file systems are of type \fBsamfs\fR.
+.TP
+\fI-f\fR
+Forcibly unmount the file system,
+i.e., unmount the file system even if it is busy.
+This may fail or hang in some situations,
+particularly on clients if the metadata server does not have the
+FS mounted.
+.TP
+\fIgeneric_options\fR
+One or more generic Solaris file system options.
+For a list of possible \fIgeneric_options\fR,
+see the \fBumount\fR(8) man page.
+.TP
+\fB\-o\ \%await_clients=\fIn\fR
+If the mounted file system is a QFS or SAM-QFS shared file system
+and the current host is the metadata server for that file system,
+the umount command will wait for the specified period
+(\fIn\fR seconds) for any mounted clients to first unmount.
+The unmount command proceeds after either the last client host
+unmounts the file system, or the waiting period expires.
+.RE
+.PP
+.TP 10
+\fIspecial\fR
+The Family Set Name from the Sun StorEdge QFS
+or \%SAM-QFS master configuration file (\fBmcf\fR).
+For more information on this file, see the
+\fBmcf\fR(5) man page.
+.TP
+\fImount_point\fR
+The path name or directory at which the file system is mounted.
+If the \fImount_point\fR
+had any contents prior to the \fBmount\fR operation,
+these become accessible after the umount command successfully completes.
+.SH EXAMPLES
+.PP
+.nf
+# umount samfs1
+.fi
+.PP
+Unmount the file system whose family set name is \fBsamfs1\fR.
+If the file system is in use, the command will fail.
+.PP
+.nf
+# umount -f -o await_clients=30 /qfs1
+.fi
+.PP
+Forcibly unmount the file system mounted on \fB/qfs1\fR.
+If the file system is a shared file system,
+and the local host is the metadata server for that file system,
+then \fRumount\fR will wait up to 30 seconds for the clients to
+unmount before issuing the unmount.
+If the file system is not shared,
+or has no mounted clients,
+or the local host is not the metadata server,
+the \fIawait_clients\fR option has no effect.
+The file system is forcibly unmounted.
+.SH FILES
+.TP 20
+\fB/etc/mnttab\fR
+Table of mounted file systems.
+.SH SEE ALSO
+.BR release (1).
+.PP
+.BR mount (8),
+.BR mount_samfs (8),
+.BR mountall (8),
+.BR sam-releaser (8),
+.BR sammkfs (8).
+.PP
+.BR mount (2).
+.BR umount (2).
+.PP
+.BR mcf (5),
+.BR mnttab (5),

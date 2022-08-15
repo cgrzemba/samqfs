@@ -1,0 +1,45 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samcrondump 8 "29 Jan 2009"
+.SH NAME
+samcrondump \- Sun \%SAM-FS and Sun \%SAM-QFS 
+Used to create a dump file. 
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/samcrondump
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B samcrondump
+is a program used to create a dumpfile. It is invoked by cron and takes
+an id comprised of the file system name and an optional directory
+at which to start.
+.SH SEE ALSO
+\fBsamcronfix(8)\fR
+\fBfsmadm(8)\fR
+\fBfsmgmtd(8)\fR

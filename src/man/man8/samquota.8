@@ -1,0 +1,626 @@
+.\" $Revision: 1.25 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH samquota 8 "12 Jan 2004"
+.SH NAME
+samquota \- Reports, sets, or resets quota information
+.SH SYNOPSIS
+\fBsamquota\fR
+\%[\fB\-a | \-A\ \fIadminsetID\fR]
+\%[\fB\-e\fR]
+\%[\fB\-g | \-G\ \fIgroupID\fR]
+\%[\fB\-h\fR]
+\%[\fB\-k\fR]
+\%[\fB\-u | \-U\ \fIuserID\fR]
+\%[\fIfile\fR]
+.sp
+\fBsamquota\fR
+\%[\fB\-b\ \fIcount\fB:\fItype\fR[:\fIscope\fR]]
+\%[\fB\-f\ \fIcount\fB:\fItype\fR[:\fIscope\fR]]
+\%[\fB\-h\fR]
+\%[\fB\-i\fR]
+\%[\fB\-k\fR]
+\%[\fB\-p\fR]
+\%[\fB\-t\ \fIinterval\fR:\fIscope\fR]
+\%[\fB\-w\fR]
+\%[\fB\-x\ \fIaction\fR:\fIscope\fR]
+\%[\fB\-A\ \fIadminsetID\fR]
+\%[\fB\-G\ \fIgroupID\fR]
+\%[\fB\-O\fR]
+\%[\fB\-U\ \fIuserID\fR]
+\%[\fIfile\fR]
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.PP
+\fBSUNWqfs\fR
+.SH DESCRIPTION
+The \fBsamquota\fR command displays quota usage statistics and
+can be used to edit quotas, grace periods, and usages for users, groups,
+and admin sets.
+This command supports file counts and online block counts.
+Note that some options are mutually exclusive.
+.PP
+Only a superuser can use this command to change
+quotas.  End users can use a subset of this command's options to
+display quota usage and
+to display limit information.  For more information on the \%end-user version
+of this command, see the \fBsquota\fR(1) man page.
+.PP
+By default, \fBsamquota\fR(8)
+writes the user's applicable GID/UID quotas and usages on
+all mounted Sun StorEdge \%QFS, Sun StorEdge \%SAM-FS, and
+Sun \%SAM-QFS file systems
+to \fBstdout\fR.
+.SH ADMIN SETS AND DIRECTORY/PROJECT QUOTAS
+.PP
+An admin set quota applies to all files and directories on a file system
+that have their admin set attribute set to the given value.
+The main use of admin set quotas is to effect
+directory or project quotas.
+They can be used to effect directory quotas by setting a directory's
+admin set ID to a unique value and using \fBsamquota\fR(8) to set
+quotas for that value.
+All subdirectories and files subsequently created beneath the directory
+then inherit the value, and the admin set's quota limits apply to them.
+Conversely,
+a project quota can be effected by choosing a set of project directories,
+setting their admin set ID values to a single unique value,
+and using \fBsamquota\fR(8) to set quotas for that ID.
+Note in either case that newly created files inherit an admin set ID
+from the directory in which they are created;
+the admin set IDs do not change if the file is moved to
+a new directory with a different admin set ID.
+.PP
+You can use the \fBsamchaid\fR(8) command to set admin set IDs.
+The \fBsamchaid\fR(8) command allows system administrators to assign
+files and directories to individual admin sets.
+Admin set IDs are not tied to any set of permissions
+associated with the user.  That is, a user can have a set of
+directories and files on one Sun StorEdge \%QFS, Sun StorEdge \%SAM-FS,
+or Sun \%SAM-QFS
+file system with a particular
+admin set ID, and the same user can have another set of directories and files
+on another file system (or even the same one) with a completely
+different admin set ID.
+A writable file is therefore used as a surrogate to determine that a user
+has permission to view an admin set's quota values.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\%\fB\-a\fR
+Specifies admin set quota statistics for \fIfile\fR.
+This option is not allowed in combination with the \fB\-A\fR option or
+any of the setting options.
+.TP
+\%\fB\-b\ \fIcount\fB:\fItype\fB[:\fIscope\fR]
+Sets soft, hard, or \%in-use block allocation limits.
+This setting can pertain to either online files or to the total
+number of files.
+Note that a colon (\fB:\fR) is used to separate each component.
+.IP
+\fIcount\fR specifies the number of blocks for the limit
+and must be an integer number in the following range:
+.br
+0 \(<= \fIcount\fR \(<= (2**63) -1.
+.IP
+By default, the \fIcount\fR specification
+indicates a number of \%512-byte blocks.
+If the \%\fB-k\fR option is also specified, the \fIcount\fR
+specification is interpreted as a number of \%1024-byte blocks.
+.IP
+By default, the integer specified for \fIcount\fR is interpreted
+as it is written.  You can append a unit multiplier to the \fIcount\fR
+value, however, to force the system to interpret \fIcount\fR as a larger
+number.  These unit multipliers are as follows:
+.RS 10
+.TP 15
+\fBMultiplier\fR
+\fBInterpretation\fR
+.TP
+\fBk\fR or \fBK\fR
+Specifies 1000.  For example, specifying \fB2k\fR is interpreted as
+2000.
+.TP
+\fBm\fR or \fBM\fR
+Specifies 1,000,000.  For example, specifying \fB80M\fR is interpreted
+as 80,000,000.
+.TP
+\fBg\fR or \fBG\fR
+Specifies 1,000,000,000.
+.TP
+\fBt\fR or \fBT\fR
+Specifies 10**12.
+.TP
+\fBp\fR or \fBP\fR
+Specifies 10**15.
+.RE
+.IP
+\fItype\fR specifies the type of limit.
+Possible \fItype\fR specifications are as follows:
+.RS 10
+.TP 15
+\fItype\fR
+\fBInterpretation\fR
+.TP
+\fBs\fR or \fBsoft\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+a soft limit.
+.TP
+\fBh\fR or \fBhard\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+a hard limit.
+.TP
+\fBu\fR or \fBinuse\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+the \%in-use counter.
+Typically, this is set only by the \fBsamfsck\fR(8) command and
+other system administration tools.
+.RE
+.IP
+\fIscope\fR specifies the scope of the limit.
+Possible \fIscope\fR specifications are as follows:
+.RS 10
+.TP 15
+\fIscope\fR
+\fBInterpretation\fR
+.TP
+\fBo\fR or \fBonline\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+an online limit.  For Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems,
+files that are released (offline)
+are not counted in the online block usage.
+.TP
+\fBt\fR or \fBtotal\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+a total limit.  For Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems,
+both online and offline files are
+used to compute the total block usage.
+.IP
+If no \fIscope\fR is specified both the online and total limits are set.
+.RE
+.IP
+Example.  The following command line sets a soft limit of 120,000
+\%512-byte blocks to be occupied
+by user \fBgeorge\fR's files in file system \fBqfs22\fR:
+.IP
+\fBsamquota -b 120k:s -U george /qfs22\fR
+.TP
+\%\fB\-e\fR
+Writes the quota information from this command line in an
+executable format.
+You can use this option if you want the system to put
+the information from this command into a file for editing.
+.IP
+.ft CO
+.nf
+server# samquota -eG sam /qfs1
+# Type  ID
+#                  Limits
+#            soft            hard
+# Files
+# Blocks
+# Grace Periods
+#
+samquota -G 101 \\
+      -f     1000:s -f     1200:h \\
+      -b   100000:s -b   120000:h \\
+                 -t  1d   /qfs1
+.fi
+.ft
+.TP
+\%\fB\-f\ \fIcount\fB:\fItype\fB[:\fIscope\fR]
+Sets soft, hard, or \%in-use file limits for a file system.
+Note that a colon (\fB:\fR) is used to separate
+each component.
+.IP
+\fIcount\fR specifies the number of files for the limit
+and must be an integer number in the following range:
+.br
+0 \(<= \fIcount\fR \(<= (2**63) -1.
+.IP
+If the \%\fB-k\fR option is also specified, any \fIcount\fR
+specification referring to blocks is interpreted in 1024-byte blocks
+instead of 512-byte blocks (by multiplying by 2).
+.IP
+By default, the integer specified for \fIcount\fR is interpreted
+as it is written.  You can append a unit multiplier to the \fIcount\fR
+value, however, to force the system to interpret \fIcount\fR as a larger
+number.  These unit multipliers are as follows:
+.RS 10
+.TP 15
+\fBMultiplier\fR
+\fBInterpretation\fR
+.TP
+\fBk\fR or \fBK\fR
+Specifies 1000.  For example, specifying \fB2k\fR is interpreted as
+2000.
+.TP
+\fBm\fR or \fBM\fR
+Specifies 1,000,000.  For example, specifying \fB80M\fR is interpreted
+as 80,000,000.
+.TP
+\fBg\fR or \fBG\fR
+Specifies 1,000,000,000.
+.TP
+\fBt\fR or \fBT\fR
+Specifies 10**12.
+.TP
+\fBp\fR or \fBP\fR
+Specifies 10**15.
+.RE
+.IP
+\fItype\fR specifies the type of limit.
+Possible \fItype\fR specifications are as follows:
+.RS 10
+.TP 15
+\fItype\fR
+\fBInterpretation\fR
+.TP
+\fBs\fR or \fBsoft\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+a soft limit.
+.TP
+\fBh\fR or \fBhard\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+a hard limit,
+.TP
+\fBu\fR or \fBinuse\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+the \%in-use counter.
+Typically, this is set only by the \fBsamfsck\fR(8) command and
+other system administration tools.
+.RE
+.IP
+\fIscope\fR specifies the scope of the limit.
+Possible \fIscope\fR specifications are as follows:
+.RS 10
+.TP 15
+\fIscope\fR
+\fBInterpretation\fR
+.TP
+\fBo\fR or \fBonline\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+an online limit.  There is no difference between online and total file usage.
+.TP
+\fBt\fR or \fBtotal\fR
+Specifies that the \fBsamquota\fR command is being used to reset
+a total limit.  There is no difference between online and total file usage.
+.IP
+If no \fIscope\fR is specified both the online and total limits are set.
+.RE
+.IP
+Example.  The following command line sets a soft limit of 120
+files for user \fBmartha\fR in file system \fBqfs222\fR:
+.IP
+\fBsamquota -U martha -b 120:s /qfs222\fR
+.TP
+\%\fB\-g\fR
+Returns group quota statistics for \fIfile\fR.
+This option is not allowed in combination with the \fB\-G\fR option or
+any of the setting options.
+.TP
+\%\fB\-h\fR
+Provides a brief usage summary.
+.TP
+\%\fB\-i\fR
+Zeros all limits.
+This option reinitializes the quota specifications by clearing
+all fields in the quota records except the \%in-use fields.  It
+then resets the fields to conform to the new specifications on
+the command line.
+.TP
+\%\fB\-k\fR
+Specifies that the command interpret or display
+all storage units (block quantities) in units
+of \%1024-byte blocks.
+When specified, all information on the command line is assumed to
+be in units of 1024 bytes,
+and all information is returned in multiples of 1024 bytes.
+.IP
+Example 1.  The following command line specifies a hard quota limit of
+256,000 \%1024-byte blocks (or, equivalently, 512,000 \%512-byte blocks)
+for group \fBadm\fR, in file system \fBqfs4\fR:
+.IP
+\fBsamquota -G adm -k -b 256k:hard /qfs4\fR
+.IP
+Example 2.  The following command line sets a soft limit of
+120 \%1024-byte blocks (or, equivalently, 240 512-byte blocks) to be
+occupied by the files for user \fBfred\fR in file system \fBqfs2\fR:
+.IP
+\fBsamquota -U fred -k -b 120:soft /qfs2\fR
+.TP
+\%\fB\-p\fR
+Writes updated quota statistics to \fBstdout\fR if you are
+changing preestablished quota values or limits.
+.TP
+\%\fB\-t\ \fIinterval\fR:\fIscope\fR
+Specifies the time to be used for the soft limit grace periods.
+.IP
+\fIinterval\fR specifies the interval to use for the grace periods.
+By default, the integer specified for \fIinterval\fR is interpreted
+in units of seconds.  You can append a unit multiplier
+to the \fIinterval\fR
+value, however, to force the system to interpret \fIinterval\fR
+as a larger unit.  These unit multipliers are as follows:
+.RS 10
+.TP 15
+\fBMultiplier\fR
+\fBInterpretation\fR
+.TP
+\fBw\fR
+Specifies weeks.  For example, specifying \fB10w\fR is interpreted as
+ten weeks.
+.TP
+\fBd\fR
+Specifies days.
+.TP
+\fBh\fR
+Specifies hours.
+.TP
+\fBm\fR
+Specifies minutes.
+.TP
+\fBs\fR (default)
+Specifies seconds.
+.RE
+.IP
+The \fIinterval\fR must be an integer number in the following
+range:
+.br
+0 \(<= \fIinterval\fR \(<= (2**31) - 1.
+.IP
+Note that (2**31) - 1 = 2,147,483,647, which means that the maximum
+specification, in seconds, would be 2147483647, which is about 68
+years.
+.IP
+Example.  The following command line specifies an interval of 7
+days and 12 hours for the online and total grace periods of user \fBadele\fR
+in the \fBmyqfs\fR file system:
+.IP
+\fBsamquota -U adele -t 7d12h /myqfs\fR
+.TP
+\%\fB\-u\fR
+Returns user quota statistics for the owner of \fIfile\fR.
+This option is not allowed in combination with the \fB\-U\fR option or
+any of the setting options.
+.TP
+\%\fB\-w\fR
+Suppresses messages.  By default, \fBsamquota\fR generates
+warning messages and
+requests confirmation before changing any quota values maintained
+by the system.  When this option is specified on the command line
+in conjunction with the \%\fB-b\fR, \%\fB-f\fR, or \%\fB-x\fR
+options, it suppresses both the warning messages
+and the confirmation requests.
+.TP
+\%\fB\-x\ \fIaction\fR:\fIscope\fR
+Adjusts the soft limit grace period timers.  After a user reaches
+a soft limit, a certain amount of time can elapse before a user
+is not allowed to create any more files in the file system.  This
+option allows you to override the existing quota mechanism and
+temporarily respecify the consequences of having reached the soft limit.
+.IP
+\fIaction\fR specifies what to do with the grace period timer.
+Note that the soft limit grace period is set with the \%\fB-t\fR option.
+Possible \fIaction\fR specifications are as follows:
+.RS 10
+.TP 15
+\fIaction\fR
+\fBInterpretation\fR
+.TP
+\fBclear\fR
+Specifies that the current grace period be ended and the grace
+period counter be reset to zero.  The grace period counter is
+restarted the next time a file or block is allocated.
+.TP
+\fBreset\fR
+Specifies that the current grace period be ended and that the
+grace period counter be restarted immediately.
+.TP
+\fBexpire\fR
+Specifies that the current grace period be ended and that no new
+files or blocks be allocated until the user, group, or admin set
+frees blocks and/or files and is again under the soft limit.
+.TP
+\fIinterval\fR
+\fIinterval\fR specifies the interval to use for the grace period.
+Specifying an \fIinterval\fR sets the grace period to expire at a
+new time.
+The \fIinterval\fR must be an integer number in the following
+range:
+.br
+0 \(<= \fIinterval\fR \(<= (2**31) - 1.
+.IP
+Note that (2**31) - 1 = 2,147,483,647, which means that the
+maximum specification, in seconds, would be 2147483647,
+which is about 68 years.
+.IP
+The timer is set to the given value, and starts counting immediately.
+If the quota goes under the soft limit, it will be reset to zero at
+that time.
+.IP
+By default, the integer specified for \fIinterval\fR is interpreted
+in units of seconds.  You can append a unit multiplier
+to the \fIinterval\fR
+value, however, to force the system to interpret \fIinterval\fR
+as a larger unit, and can concatenate these units.
+These unit multipliers are as follows:
+.RS 15
+.TP 15
+\fBMultiplier\fR
+\fBInterpretation\fR
+.TP
+\fBw\fR
+Specifies weeks (times 7*24*60*60).
+For example, specifying \fB10w\fR is interpreted as ten weeks
+or 10*7*24*60*60 seconds.
+.TP
+\fBd\fR
+Specifies days (times 24*60*60).
+.TP
+\fBh\fR
+Specifies hours (times 60*60).
+.TP
+\fBm\fR
+Specifies minutes (times 60).
+.TP
+\fBs\fR (default)
+Specifies seconds.
+.RE
+.RE
+.IP
+Example.  Admin set \fBpubs\fR is over its soft limit on
+file system \fBqfs50\fR, and its grace period has expired.  You
+can reset the grace periods by using the following command:
+.IP
+\fBsamquota -x 1d2h -A pubs /qfs50\fR
+.IP
+If the preceding command is executed at 1100 on Thursday, the
+grace period for \fBpubs\fR is reset to expire at 1300 on Friday.
+.TP
+\%\fB\-A\ \fIadminsetID\fR
+Generates a quota report for an admin set, or, when specified in
+conjunction with options that reset values, resets the values for
+the admin set specified.  Specify an
+integer for the \fIadminsetID\fR.
+.TP
+\%\fB\-G\ \fIgroupID\fR
+Generates a quota report for a group, or when specified in
+conjunction with options that reset values, resets the values for
+the group specified.  Specify an
+integer identifier or a group name for the \fIgroupID\fR.
+.TP
+\%\fB\-O\fR
+Lists only online values in reports.  The default is to list both online and
+total values.
+.TP
+\%\fB\-U\ \fIuserID\fR
+Generates a quota report for a user, or, when specified in
+conjunction with options that reset values, resets the values for
+the user specified.  Specify an
+integer identifier or a user name for the \fIuserID\fR.
+.TP
+\%\fIfile\fR
+Specifies that the quota information pertain to a specific file.
+A user is allowed to examine the group, user,
+or admin set quotas of any file for which the user has write permissions.
+The information displayed differs depending on whether or not the
+command is issued by a user who has write permission to \fIfile\fR, as follows:
+.RS 10
+.TP 3
+\(bu
+If the user issuing this command has write permission to \fIfile\fR,
+the command generates information on
+the applicable admin set, group, and user quotas that apply to \fIfile\fR.
+.TP
+\(bu
+If the user issuing this command does not have write permission to \fIfile\fR,
+the command generates information for only the user's user ID and group ID quotas
+for the file system on which \fIfile\fR resides.
+.RE
+.SH EXAMPLES
+Example 1.  The following command initializes a quota for group \fBsam\fR
+on the file system mounted on \fB/qfs1\fR:
+.sp
+.ft CO
+.nf
+server# samquota -G sam -f 1000:s -f 1200:h -b 100k:s -b 120k:h -t 1d /qfs1
+.fi
+.ft
+.PP
+The group is given the following:
+.TP 3
+\(bu
+Soft limits of 1000 files and 100,000 512-byte blocks (about 50 megabytes)
+.TP
+\(bu
+Hard limits of 1200 files and 120,000 512-byte blocks
+.TP
+\(bu
+A grace period of 1 day (24 hours)
+.PP
+Example 2.  The following example initializes a quota for admin set 17
+on the file system that \fB/qfs1/sol\fR is part of:
+.sp
+.ft CO
+.nf
+server# samquota -A 17 -k -f 10k:s -f 20k:h -b 10m:s -b 15m:h -t 1w /qfs1/sol
+.ft
+.fi
+.PP
+The admin set is given the following:
+.TP 3
+\(bu
+Soft limits of 10,000 files and 10,000,000 1024-byte blocks (10.24 gigabytes)
+.TP
+\(bu
+Hard limits of 20,000 files and 15,000,000 1024-byte blocks (15.36 gigabytes)
+.TP
+\(bu
+A grace period of 1 week (168 hours)
+.SH EXIT STATUS
+This command returns the following:
+.TP 3
+\(bu
+0 on successful completion.
+.TP
+\(bu
+1 on a usage or argument error.
+.TP
+\(bu
+10 on an execution error.
+.SH FILES
+.TP 20
+\fIfilesytem\fB/\&.quota_a\fR
+Admin set quota information
+.TP
+\fIfilesystem\fB/\&.quota_g\fR
+Group quota information
+.TP
+\fIfilesystem\fB/\&.quota_u\fR
+User quota information
+.SH SEE ALSO
+\fBsquota\fR(1)
+.PP
+\fBsamfsck\fR(8)
+.PP
+\fBpasswd\fR(5) - User ID information
+.PP
+\fBgroup\fR(5) - Group ID information
+.PP
+.SH DIAGNOSTICS
+.TP
+\fBNo user quota entry.\fR
+User quotas are not active on the file system.
+.TP
+\fBNo group quota entry.\fR
+Group quotas are not active on the file system.
+.TP
+\fBNo admin quota entry.\fR
+Admin set quotas are not active on the file system.

@@ -1,0 +1,172 @@
+." $Revision: 1.25 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samgrowfs 8  "29 Apr 2004"
+.SH NAME
+samgrowfs \- Adds disk partitions to an existing Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system
+.SH SYNOPSIS
+\fBsamgrowfs\fR
+[\fB\-V\fR]
+\fIfsname\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The \fBsamgrowfs\fR command adds disk partitions to an Sun StorEdge \%SAM-FS
+and Sun \%SAM-QFS file system
+and allows the file system to grow.
+.PP
+The following procedure uses the \fBsamgrowfs\fR command to increase
+the size of a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system:
+.TP 3
+1.
+Unmount all the file systems you want to grow.
+.TP
+2.
+In a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS environment,
+idle all drives by entering
+a \fBsamcmd idle \fIeq\fR and a \fBsamd stop\fR command.
+For more information on these commands,
+see the \fBsamcmd\fR(8) and \fBsamd\fR(1M) man pages.
+.TP
+3.
+Edit the \fBmcf\fR file, save the changes, and quit the editor.
+Up to 252 disk partitions can be specified in the \fBmcf\fR
+file for a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system.
+The new partitions must be placed after the existing partitions for
+the specified family set \fIfsname\fR. It is important that
+\fBsam\-fsd\fR be notified after any change to /etc/opt/SUNWsamfs/mcf
+(see \fBsamd\fR(8)).
+.TP
+4.
+Run the \fBsamgrowfs\fR(8) command on the \fIfsname\fR file system.
+.TP
+5.
+Mount the \fIfsname\fR file system.
+.PP
+For more information on this procedure,
+see the \fISun StorEdge QFS and Sun StorEdge \%SAM-FS File System
+Administration Guide\fR.
+.SH OPTIONS
+This command accepts the following arguments:
+.TP 10
+\fB\-V\fR
+Lists configuration information but does not execute the command. 
+.TP
+\fIfsname\fR
+Specifies the existing family set name of the file system that is to
+grow.  This is the family set name as specified in the \fBmcf\fR
+file.
+.SH EXAMPLE
+The following example adds 2 partitions to an existing \%1-partition
+Sun StorEdge \%SAM-FS file system.
+The \fBmcf\fR file for the existing \%1-partition file system with
+a family set name of \fBsamfs1\fR is as follows:
+.sp
+.ft CO
+.nf
+samfs1  10  ms  samfs1
+/dev/dsk/c0t3d0s7  11  md  samfs1  -
+.fi
+.ft
+.PP
+The procedure is as follows:
+.TP 3
+\fR1.\fR
+Unmount the \fBsamfs1\fR file system.
+.sp
+.ft CO
+server# umount samfs1
+.ft
+.TP
+\fR2.\fR
+Kill the \fBsam-amld\fR process:
+.sp
+.ft CO
+server# samd stop
+.ft
+.TP
+\fR3.\fR
+Edit the \fBmcf\fR file
+and add the 2 new partitions for the file system with family set name
+of \fBsamfs1\fR:
+.sp
+.ft CO
+.nf
+samfs1  10  ms  samfs1
+/dev/dsk/c0t3d0s7  11  md  samfs1  -
+/dev/dsk/c2t3d0s2  12  md  samfs1  -
+/dev/dsk/c2t4d0s2  13  md  samfs1  -
+.fi
+.ft
+.TP 3
+\fR4.\fR
+Use the samd(8) config command to propagate the file changes and restart the
+system:
+.sp
+.ft CO
+server# samd config
+.ft
+.TP
+\fR5.\fR
+Grow and mount the file system by entering the following commands:
+.sp
+.ft CO
+.nf
+server# samgrowfs samfs1
+server# mount samfs1
+.fi
+.ft
+.SH FILES
+.TP 25
+\fB/etc/opt/SUNWsamfs/mcf\fR
+The configuration file for Sun StorEdge \%SAM-FS and
+Sun StorEdge QFS file systems.
+.SH SEE ALSO
+\fBsamcmd\fR(8),
+\fBsamd\fR(8),
+\fBsammkfs\fR(8).
+.PP
+\fBmcf\fR(5).
+.PP
+\fISun StorEdge QFS and Sun StorEdge \%SAM-FS File System
+Administration Guide\fR.
+.SH WARNINGS
+As with creating any type of file system,
+if you specify the wrong partition names, you risk 
+damaging user or system data.
+Be sure to specify partitions which are otherwise unused on your system.
+Do not use overlapping partitions.
+.PP
+To grow a Sun StorEdge QFS file system, you must add a metadata partition
+(\fBmm\fR) prior to issuing a \fBsamgrowfs\fR command.
+Data partitions can be added as well as metadata partitions.
+The added metadata partition contains block reservation information for
+all added partitions. When adding a small metadata partition with large
+data partitions, the small metadata partition may be too small to hold the
+block reservation as well as other information, depending on total storage
+added and DAU size. This condition may cause an error, or a very full metadata
+partition after samgrowfs.

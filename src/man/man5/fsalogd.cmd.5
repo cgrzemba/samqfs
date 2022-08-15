@@ -1,0 +1,121 @@
+.\" $Revision: 1.3 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH fsalogd.cmd 5 "04 June 2008"
+.SH NAME
+fsalogd.cmd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS fsalogd command file
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/fsalogd.cmd\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+Directives for controlling the file system activity log daemon (sam-fsalogd)
+can be read from the
+\fB/etc/opt/SUNWsamfs/fsalogd.cmd\fR file.
+The directives must appear one per line.
+.PP
+Comment lines are permitted.  Comment lines must begin with a
+pound character (\fB#\fR), and the comment can extend through the
+rest of the line.
+.PP
+Directives that appear prior to any \fBfs=\fR directive
+are applied to all file systems.
+Directives that appear after a \fBfs=\fR directive are applied
+to the specified file system only.
+Directives that are specific to a file system override general
+directives.
+.PP
+The following directives control the operation of the fsalogd daemon.
+.RE
+.SH DIRECTIVES
+The following miscellaneous directives can be specified in
+the \fBfsalogd.cmd\fR file:
+.TP
+.B "log_path = " \fIn\fR
+Specifies the path of the log file directory.  The default is
+/var/opt/SUNWsamfs/fsalogd/\fIfamily_set_name\fR.  Log files are created 
+with the name \fIfamilyset.YYYYMMDDhhmm.log\fR.
+.TP
+.B "fs = " \fIfile_system_family_set_name\fR
+Specifies that the subsequent directives apply to the
+indicated \fIfile_system_family_set_name\fR only.
+.TP
+.B "log_rollover_interval = " \fIn\fR
+Sets the log file rollover interval time to \fIn\fR seconds. When the
+interval time since the creation of the log file has elapsed a new log file
+will be created.  The default is 28800 seconds (8 hours).
+.TP
+.B "log_expire = " \fIn\fR
+Sets the log file expiration time to \fIn\fR seconds. When the
+time since the creation of the log file has exceeded log_expire,
+the log file is eligible for deletion.  The default is 172800
+seconds (48 hours).  Expired log files are checked every 
+log rollover interval.
+.TP
+.B "event_interval = " \fIn\fR
+Sets the event interval time used by SAM-FS to call out to sam-fsalogd with
+accumulated events.  The default time is 10 seconds.
+.TP
+.B "event_buffer_size = " \fIn\fR
+Sets the buffer size in events.  The default buffer size is 256K which is
+about 8,000 events.
+.TP
+.B "event_open_retry = " \fIn\fR
+Sets the number of allowable retries when sam-fsalogd is establishing its
+connection with the file system.  The default retry count is 5.
+.TP
+Example 1.  This
+example file sets the \fBevent_interval\fR and \fBlog_path\fR directive for
+the \fBsamfs1\fR file system.
+.ft CO
+.nf
+
+          fs = samfs1
+          event_interval = 10
+          log_path = /var/opt/SUNWsamfs/fsalogd/samfs1
+
+.fi
+.ft
+Example 2.  This example specifies the \fIlog_path\fR
+for each file system.
+.ft CO
+.nf
+
+          event_interval = 10
+
+          fs = samfs1
+          log_path = /var/adm/fsalog/samfs1
+
+          fs = samfs2
+          log_path = /var/adm/fsalog/samfs2
+
+.fi
+.ft
+.SH SEE ALSO
+\fBsam-fsalogd\fR(1),
