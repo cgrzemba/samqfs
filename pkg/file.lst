@@ -273,6 +273,7 @@ opt/SUNWsamfs/man/man4d/samioc.4d 0644
 opt/SUNWsamfs/man/man8/ssi.sh.8 0644
 opt/SUNWsamfs/man/man8/ssi_so.8 0644
 opt/SUNWsamfs/man/man5/stk.5 0644
+opt/SUNWsamfs/sbin/samtrace 0550
 opt/SUNWsamfs/sbin/archive_audit 0550
 opt/SUNWsamfs/sbin/archiver 0550
 opt/SUNWsamfs/sbin/auditslot 0550
