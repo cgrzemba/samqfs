@@ -1,0 +1,94 @@
+.\" $Revision: 1.22 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH load_notify.sh 8 "14 JAN 2004"
+.SH NAME
+load_notify.sh \- Sends email when a volume needs to be imported or loaded
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/examples/load_notify.sh\fR
+\fIprg_name\fR
+\fIpid\fR
+\fIlog_level\fR
+\fImsg_no\fR
+\fIvsn\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fB/etc/opt/SUNWsamfs/scripts/load_notify.sh\fR
+script is called by the appropriate \%media-changer daemon
+when a requested volume is not in a library, is
+not marked unavailable, and the \fBattended\fR state is set
+to \fByes\fR.
+Appropriate \%media-changer daemons
+include \%\fBsam-genericd\fR, \%\fBsam-stkd\fR,
+and so on.  For more information on the \%media-changer daemons,
+see the \%\fBsam-robotsd\fR(8) man page.
+.PP
+By default, this script sends email to \fBroot\fR
+with the following message:
+.PP
+.ft CO
+.nf
+Sun StorEdge \%SAM-FS or Sun \%SAM-QFS needs VSN vsnxxx manually
+loaded or imported.  
+Check preview display.
+.fi
+.ft
+.PP
+To enable this feature,
+copy \fB/opt/SUNWsamfs/examples/load_notify.sh\fR
+to \fB/etc/opt/SUNWsamfs/scripts/load_notify.sh\fR and 
+modify it to take the desired action for your installation.
+.SH OPTIONS
+This script accepts the following arguments:
+.TP 10
+\fIprg_name\fR
+The name of the program that is calling this script.
+.TP
+\fIpid\fR
+The process ID of the program that is calling this script.
+.TP
+\fIlog_level\fR
+Log priority level.
+An integer number such
+that \fB0\fR\ \(<=\ \fIlog_level\fR\ \(<=\ \fB7\fR.
+\fB0\fR is highest priority, and \fB7\fR is lowest priority.
+.TP
+\fImsg_no\fR
+The message number as found in the message catalog.
+.TP
+\fIvsn\fR
+The volume serial name (VSN) identifier of
+the volume that needs to be imported or loaded.
+.SH FILES
+\fB/opt/SUNWsamfs/examples/load_notify.sh\fR
+.SH SEE ALSO
+\fBsam-fsd\fR(8),
+\fBsam-robotsd\fR(8),
+\fBsamset\fR(8).

@@ -131,7 +131,7 @@ with 1 disk allocation unit (DAU) allocated per unit.
 If  \fIn\fP is 0, this means the file will be allocated on one
 unit until that unit has no space.
 The default stripe is specified at mount.
-(see \fBmount_samfs\fR(1M)).
+(see \fBmount_samfs\fR(8)).
 Note, \fBEINVAL\fR is returned if the user sets stripe > 0 and mismatched
 stripe groups exist.
 Mismatched stripe groups means all striped groups
@@ -195,7 +195,7 @@ A component of the path prefix is not a directory.
 .BR setfa (1),
 .BR ssum (1).
 .PP
-.BR mount_samfs (1M).
+.BR mount_samfs (8).
 .PP
 .BR sam_advise (3),
 .BR sam_ssum (3).

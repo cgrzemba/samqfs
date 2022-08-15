@@ -1,0 +1,262 @@
+.\" $Revision: 1.24 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH recycler.cmd 5 "12 Jan 2004"
+.SH NAME
+recycler.cmd \- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS \%sam-recycler commands file
+.SH SYNOPSIS
+.B /etc/opt/SUNWsamfs/recycler.cmd
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+Commands for controlling 
+.BR sam-recycler (8)
+are read from
+.BR /etc/opt/SUNWsamfs/recycler.cmd .
+These commands are given one per line.  
+.br
+.TP
+.BI "logfile = " filename
+Set the name of the
+log file to 
+.IR filename .
+This file shows
+the overall media utilization and a sorted list of VSNs in the order
+in which they will be recycled.  The default is no log file.  See 
+\fBsam-recycler\fP(1M) for more information.
+.TP
+.BI "no_recycle " "media-type VSN-regexp [VSN-regexp...]"
+Disallow
+.BR sam-recycler (8)
+from recycling the VSNs which match the
+\fImedia-type\fP and the regular expression(s),
+.IR VSN-regexp .
+.TP
+.I "robot-family-set" "parameters"
+.br
+This command sets recycling parameters for a particular library identified by
+.IR robot-family-set
+(this is the name given as the fourth field in the
+\fB/etc/opt/SUNWsamfs/mcf\fP
+file line defining the
+library for which you wish to set the parameters).
+.RS
+.TP
+.I parameter
+can be one more of the following:
+.RE
+.RS
+.TP
+.BI "-dataquantity " size
+This parameter sets a limit of
+.I size
+bytes on the amount of data
+the recycler will schedule for rearchiving in order to clear volumes of
+useful data.  Note that the actual number of volumes selected for
+recycling may also be dependent on the \fB-vsncount\fP parameter.
+The default is 1 gigabyte (1G).
+.RE
+.RS
+.TP
+.BI "-hwm " percent
+establishes the high-water mark for the media utilization
+in the indicated library,
+specified as an integer percentage of total capacity.
+When the utilization of those volumes exceeds
+.IR percent ,
+.BR sam-recycler (8)
+will begin to recycle the library.
+The default is 95.
+.RE
+.RS
+.TP
+.B -ignore 
+will keep 
+.BR sam-recycler (8)
+from selecting any candidates from the specified library.
+The intent of this parameter is to allow a convenient way of testing other
+parameters.
+.RE
+.RS
+.TP
+.BI "-mail " mailaddress
+will cause 
+.BR sam-recycler (8)
+to mail a message to the indicated 
+.I mailaddress
+when a library's media utilization exceeds the high-water mark.  
+Omission of 
+.I mailaddress
+prevents recycling.  If you specify \%\fB-mail\fR, you must specify
+a valid \fImailaddress\fR.
+.RE
+.RS
+.TP
+.BI "-mingain " percent
+This parameter limits selection of volumes for recycling to those which
+would increase their free space by
+.I percent
+or more.
+Volumes not meeting the \fB-mingain\fP parameter are not recycled.
+The default is based on the capacity of the volume (<200GB 60%, 
+>=200GB 90%).
+.RE
+.RS
+.TP
+.BI "-vsncount " count
+This parameter sets a limit of
+.I count
+on the number of volumes
+the recycler will schedule for rearchiving in order to clear volumes of
+useful data.  Note that the actual number of volumes selected for
+recycling may also be dependent on the \fB-dataquantity\fP parameter.
+The default is 1.
+.RE
+.LP
+To preserve compatibility with pre-existing
+.B /etc/opt/SUNWsamfs/recycler.cmd
+files, an alternative, less powerful, syntax is allowed for the library recycling
+parameters command.
+.TP
+.I "robot-family-set" "robot-high-water" "VSN-minimum-percent-gain"
+.I "options"
+.br
+This command sets recycling parameters for a particular library identified by
+.IR robot-family-set
+(this is the name given as the fourth field in the
+\fB/etc/opt/SUNWsamfs/mcf\fP
+file line defining the
+library for which you wish to set the parameters).
+.I robot-high-water
+establishes the high-water mark for the media utilization
+in the indicated library,
+specified as an integer percentage of total capacity.
+When the utilization of those volumes exceeds
+.IR percent ,
+.BR sam-recycler (8)
+will begin to recycle the library.
+The 
+.I VSN-minimum-percent-gain
+(aka min-gain) value specifies a threshold of space available to be
+reclaimed (as an integer percent of total capacity of the VSN) below
+which VSNs will not be selected for recycling.
+The 
+.IR options
+consist of zero or more of the following:  
+.B ignore 
+- which will keep 
+.BR sam-recycler (8)
+from selecting any candidates from the specified library.
+.B mail
+.I mailaddress
+- which will cause 
+.BR sam-recycler (8)
+to mail a message to the indicated 
+.I mailaddress
+when a library's media utilization exceeds the high-water mark.  
+Omission of 
+.I mailaddress
+prevents any mail from being sent.
+.TP
+.BI "script = " filename
+Supply the name of the
+file executed when a volume is to be relabeled.
+The default is
+.B /etc/opt/SUNWsamfs/scripts/recycler.sh
+.SH ARCHIVER'S COMMAND FILE
+The archiver's command file,
+\fB/etc/opt/SUNWsamfs/archiver.cmd\fP,
+can also
+specify recycling parameters for archive sets.    Each archive set
+which has recycling parameters applied in
+\fB/etc/opt/SUNWsamfs/archiver.cmd\fP
+will be
+considered as a pseudo library containing just the VSNs which the archiver
+assigns to the archive set.  See 
+.BR archiver.cmd (5)
+for more information.
+Archive set
+names may not be specified in the
+\fB/etc/opt/SUNWsamfs/recycler.cmd\fP
+file.
+
+.SH DEFAULT FILE
+
+If there is no \fB/etc/opt/SUNWsamfs/recycler.cmd\fP file, then, for each library,
+a line is constructed:
+ 
+.I library
+.B -dataquantity 1G
+.B -hwm 95
+.B -ignore
+.B -mail root
+.B -mingain 50
+.B -vsncount 1
+.br
+
+and logging is disabled.
+
+.SH EXAMPLE
+
+The following is an example \fB/etc/opt/SUNWsamfs/recycler.cmd\fP file:
+
+.ft CO
+.nf
+    logfile = /var/adm/recycler.log
+    lt20 -hwm 75 -mingain 60 -ignore
+    hp30 -hwm 90 -mingain 60 -mail root
+    gr47 -hwm 95 -mingain 60 -ignore mail root
+    no_recycle lt DLT.*
+.fi
+.ft
+
+The results of
+.BR sam-recycler (8)
+operation are
+found in
+.BR /var/adm/recycler.log .
+Three libraries are defined with various
+high-water marks.  The first library is not recycled, but the usage
+information for the VSNs it contains will appear in the log, and no mail
+will be generated.  The second
+library is recycled (that is, VSNs are emptied of valid archive
+images and relabeled) and root is sent e-mail when the library exceeds
+the 90% high-water mark.  The third library is not recycled, but
+root is notified if usage exceeds the high-water mark.
+
+For hp30, only VSNs whose recycling would free up at least
+60% of the capacity of the VSN are considered.  
+
+No medium which is of media type \fIlt\fP and whose VSN begins with DLT
+will be recycled.
+
+.SH SEE ALSO
+.BR sam-recycler (8).
+.PP
+.BR archiver.cmd (5),
+.BR mcf (5).

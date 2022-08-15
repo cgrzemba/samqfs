@@ -1,0 +1,272 @@
+.\" $Revision: 1.47 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH inquiry.conf 5 "03 Dec 2001"
+.SH NAME
+inquiry.conf \- SCSI inquiry strings for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS device types
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/inquiry.conf\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The inquiry configuration file, \fBinquiry.conf\fR,
+maps a SCSI device to a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS device type.
+The \fBinquiry.conf\fR
+file contains the vendor identification and product identification
+reported by a SCSI device in response to an inquiry command.
+.PP
+Entries in the file are made up of three quoted fields separated 
+by a comma and/or white space and optionally followed by a comment.
+These entries have the following format:
+.PP
+\fB"\fIvendor_id\fB", "\fIproduct_id\fB", "\fISAM-FS_name\fB"  #\fIcomment\fR
+.PP
+The \fIvendor_id\fR and \fIproduct_id\fR
+are the vendor identification (8\ characters) and 
+product identification (16\ characters) as reported in the inquiry data.
+The \fISAM-FS_name\fR is the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS device name as
+described subsequently on this man page.
+.PP
+Trailing spaces do not need to be supplied in
+the \fIvendor_id\fR or the \fIproduct_id\fR fields.
+Any occurrence of a quotation mark (\fB"\fR), a comma (\fB,\fR), or a
+back slash (\fB\\\fR) in any \fI_id\fR field 
+should be prefaced with the escape character, which is a back
+slash (\fB\\\fR).
+Blank lines and lines beginning with a pound character (\fB#\fR)
+are ignored.
+.PP
+The following device names are supported within the Sun StorEdge \%SAM-FS
+and Sun \%SAM-QFS environments:
+.PP
+.TP 15
+\fBDevice Name\fR
+\fBDevice Type\fR
+.TP
+.B acl2640
+ACL 2640 tape library
+.TP
+.B acl452
+ACL 4/52 tape library
+.TP
+.B adic448
+ADIC 448 tape library
+.TP
+.B adic100
+ADIC Scalar 100 tape library
+.TP
+.B adic1000
+ADIC Scalar 1000 and Scalar 10K tape library
+.TP
+.B archdat
+Archive Python 4mm DAT drive
+.TP
+.B atl1500
+Sun StorEdge L25 and L100 and ATL M1500 and M2500 libraries.
+.TP
+.B atlp3000
+ATL P3000, P4000 and P7000 tape library
+.TP
+.B cyg1803
+Cygnet Jukebox 1803 library
+.TP
+.B dlt2000
+Digital Linear Tape (2000, 4000, 7000, 8000 and SuperDLT series) drive
+.TP
+.B dlt2700
+Digital Linear Tape Media Changer/Stacker (2000, 4000, 7000, 8000 and SuperDLT series)
+.TP
+.B docstor
+DISC automated library
+.TP
+.B exb210
+Exabyte 210 tape library
+.TP
+.B exbx80
+Exabyte X80 tape library
+.TP
+.B exb8505
+Exabyte 8505 8mm cartidge tape drive
+.TP
+.B exbm2
+Exabyte Mammoth-2 8mm cartidge tape drive
+.TP
+.B fujitsu_128
+Fujitsu M8100 128 track tape drive
+.TP
+.B grauaci
+GRAU media library 
+.TP
+.B hpc7200
+HP L9/L20/L60 series libraries
+.TP
+.B hpslxx
+HP SL48 tape library
+.TP
+.B hpc1716
+HP erasable optical disk drive
+.TP
+.B hpoplib
+HP optical library
+.TP
+.B ibmatl
+IBM ATL library
+.TP
+.B ibm0632
+IBM multifunction optical disk drive
+.TP
+.B ibm3570
+IBM 3570 tape drive 
+.TP
+.B ibm3570c
+IBM 3570 media changer
+.TP
+.B ibm3580
+IBM 3580, Seagate Viper 200 and HP Ultrium (LTO) tape drives
+.TP
+.B ibm3584
+IBM 3584 media changer
+.TP
+.B ibm3590
+IBM 3590 tape drive 
+.TP
+.B lms4100
+Laser Magnetic Laserdrive 4100
+.TP
+.B lms4500
+Laser Magnetic Laserdrive 4500
+.TP
+.B metd28
+Metrum D-28 tape library
+.TP
+.B metd360
+Metrum D-360 tape library
+.TP
+.B qual82xx
+Qualstar 42xx, 62xx and 82xx series tape library
+.TP
+.B quantumc4
+Quantum PX500 and Sun StorEdge C4 tape library
+.TP
+.B rap4500
+Laser Magnetic RapidChanger 4500
+.TP
+.B rsp2150
+Metrum RSP-2150 VHS video tape drive
+.TP
+.B sonyait
+Sony AIT tape drive
+.TP
+.B sonysait
+Sony Super AIT tape drive
+.TP
+.B sonydms
+Sony Digital Mass Storage tape library
+.TP
+.B sonycsm
+Sony CSM-20S tape library
+.TP
+.B sonydtf
+Sony DTF tape drive
+.TP
+.B speclog
+Spectra Logic Libraries
+.TP
+.B stk4280
+StorageTek 4280 Tape drive
+.TP
+.B stk9490
+StorageTek 9490 Tape drive
+.TP
+.B stk9840
+StorageTek 9840 Tape drive
+.TP
+.B stktitan
+StorageTek Titanium Tape drive
+.TP
+.B stkapi
+StorageTek API library
+.TP
+.B stkd3
+StorageTek D3 Tape drive
+.TP
+.B stk97\fIxx\fR
+StorageTek 97\fIxx\fR Media Libraries
+.TP
+.B stkl\fIxx\fR
+StorageTek L20, L40, L80 and L500 Tape Libraries and Sun StorEdge L7 and L8 
+autoloaders.
+.TP
+.B odi_neo
+Overland Data Inc. Neo Series Tape Libraries
+.RE
+.PD
+.LP
+.SH EXAMPLES
+The following is an example configuration file:
+.PP
+.ft CO
+.nf
+"HP",       "Ultrium 1", "ibm3580"   # HP Ultrium Tape
+"HP",       "Ultrium 2", "ibm3580"   # HP Ultrium Tape
+"HP",       "Ultrium 3", "ibm3580"   # HP Ultrium Tape
+"Plasmon",  "G-Enterprise","plasmong"   # Plasmon G Enterprise
+"Plasmon",  "UDO",      "plasmonUDO"    # Plasmon UDO 30GB optical drive
+"STK",      "L700",     "stk97xx"   # STK L700 series SCSI
+"STK",      "L180",     "stk97xx"   # STK L180 series SCSI
+"STK",      "SL500",    "stklxx"    # STK SL500
+"STK",      "T10000A",  "stktitan"  # STK titanium drive T10000A
+.fi
+.ft
+.PP
+The existence of a device in the previous example file does not
+imply that the device is supported by Sun StorEdge \%SAM-FS or Sun \%SAM-QFS.
+.SH SEE ALSO
+\fBmcf\fR(4).
+.SH NOTES
+Whenever a new version of Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+is installed, the existing \fBinquiry.conf\fR
+file is copied to \fBinquiry.conf.\fIMMDDYY\fR for reference
+and \%back-up purposes.
+.PP
+During device identification,
+the \fIvendor_id\fR and \fIproduct_id\fR values
+are only compared through the length of the string supplied in
+the \fBinquiry.conf\fR file.
+To insure an exact match, the entries should be ordered with 
+longer names first.
+.SH WARNINGS
+This interface is supplied to circumvent problems that occur when
+hardware vendors change
+the \fIvendor_id\fR and \fIproduct_id\fR values returned.
+For example, some hardware vendors return a different
+value for a \fIproduct_id\fR if the hardware is supplied by an OEM.
+.PP
+Sun Microsystems, Inc. does not support mapping untested hardware to
+a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS name.

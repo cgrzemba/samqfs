@@ -1,0 +1,211 @@
+.\" $Revision: 1.26 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samtrace 8 "27 January 2009"
+.SH NAME
+samtrace \- Dumps the Sun QFS or Sun \%SAM-QFS trace buffer
+.SH SYNOPSIS
+.PP
+.B samtrace
+[
+.B \-d
+.I corefile
+.B \-n
+.I namelist
+]
+[
+.B \-s
+]
+[
+.B \-t
+]
+[
+.B \-v
+]
+[
+.B \-V
+]
+[
+.B \-f
+]
+.PP
+.B samtrace
+.B \-k
+.I suffix
+[
+.B \-s
+]
+[
+.B \-v
+]
+[
+.B \-V
+]
+[
+.B \-f
+]
+.PP
+.B samtrace
+.B \-O
+.I file
+.PP
+.B samtrace
+.B \-I
+.I file
+[
+.B \-f
+]
+.PP
+.B samtrace
+.B -c
+.I file
+[
+.B -b
+.I bufs
+]
+[
+.B -p
+.I secs
+]
+[
+.B -T
+.I ticks
+]
+.PP
+.B samtrace
+.B -i
+.I file
+[
+.B -f
+]
+.SH AVAILABILITY
+.LP
+SUNWqfs
+.PP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B samtrace
+dumps the contents of the trace buffer for the
+mounted file system.
+.SH OPTIONS
+.TP
+.B \-b \fIbufs\fP
+When used with the \fB-c\fR option, this sets the number of
+per-CPU trace read buffers allocated by \fBsamtrace\fR to \fIbufs\fR.
+The value of \fIbufs\fR must be at least 3, and must be no more
+than 64.  The default is 5.
+.TP
+.B \-c \fIfile\fP
+Trace entries are continuously copied from the live kernel into \fIfile\fR
+until the command is killed.
+Periodically, \fIfile\fR is written with the binary contents of
+the kernel trace buffer; the kernel trace buffer's contents are
+cleared after each copy is made.
+The entries in \fIfile\fR are written in time order, oldest first.
+.TP
+.B \-d \fIcorefile\fP
+The name of the corefile containing an image of
+the system memory.  If no \fIcorefile\fR is specified the
+default is to use the \fB/dev/mem\fR or \fB/dev/kmem\fR file
+from the running system.
+.TP
+.B \-n \fInamelist\fP
+The name of the namelist file corresponding to the
+corefile.  If none is specified the default is to
+use \fB/dev/ksyms\fR from the running system.
+.TP
+.B \-k \fIsuffix\fP
+Indicates that the corefile and namelist have the names
+\'vmcore.\fIsuffix\fR\' and \'unix.\fIsuffix\fR\', respectively.
+.TP
+.B \-i \fIfile\fP
+\fIfile\fR must be a file created with the \fB-c\fR continuous
+trace option.
+\fBsamtrace\fR reads \fIfile\fR and writes a readable copy of
+the binary records in \fIfile\fR to the standard output.
+.TP
+.B -I \fIfile\fP
+\fIfile\fP must be a file created with the \fB-O\fR trace option.
+\fBsamtrace\fR reads \fIfile\fR and writes a sorted, readable copy
+of the binary records in \fIfile\fR to the standard output.
+.TP
+.B -O \fIfile\fP
+The system trace buffers are copied to \fIfile\fR.
+This file can later be translated for human interpretation
+with the \fB-I\fR option.
+.TP
+.B \-p \fIsecs\fP
+When used with the \fB-c\fR option,
+sets an alarm signal for \fIsecs\fR seconds after \fBsamtrace\fR
+starts.
+This allows for automatic termination of continuous samtrace operation.
+.TP
+.B \-s
+Dumps the sam-amld command queue.  Includes -v output.
+.TP
+.B \-T \fIticks\fR
+When used with the \fB-c\fR option, sets the default interval
+between reads of the kernel trace buffer to \fIticks\fR scheduler ticks.
+The contents of the kernel trace buffers are by default copied
+to a \fBsamtrace\fR buffer whenever the trace buffer fills half-way,
+or 100 ticks (1 second) has passed, whichever occurs first.
+.TP
+.B \-t
+Suppress trace output.  When specified alone, displays only table
+address information.  Typically used in conjunction
+with -v or -V to see verbose information without traces.
+.TP
+.B \-v
+Verbose option, excluding inode free and hash chains.
+.TP
+.B \-V
+Verbose option, including inode free and hash chains.
+Includes -v output.
+.TP
+.B \-f
+Decodes flag bits in the trace output.
+.SH NOTE
+.B samtrace
+is a utility that is used to provide Sun Microsystems
+analysts with troubleshooting information.
+It is not
+intended for general use at your site.
+.SH FILES
+.PD 0
+.TP 20
+.B /dev/kmem
+Special file that is an image of the
+kernel virtual memory of the computer.
+.TP
+.B /dev/mem
+Special file that is an image of the
+physical memory of the computer.
+.TP
+.B /dev/ksyms
+Character special file of kernel symbols.
+.PD

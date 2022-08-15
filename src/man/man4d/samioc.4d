@@ -1,0 +1,71 @@
+.\" $Revision: 1.7 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samioc 4 "30 Jun 2022"
+.SH NAME
+samioc \- Pseudo Device Driver for communication of kernel and userland daemons
+.SH DESCRIPTION
+.LP
+The pseudo driver, \fBsamioc\fR, provides only the ioctl interface and allows the communtication beetween SamFS (kernel) and the userland deamons sam-fsd, sam-amld, and so on. It is the entry point for SAMFS system calls.
+.LP
+The syscalls can be monitored with sam_trace
+.SH ERRORS 
+.TP 15
+.SB EACCES
+Permission denied.
+.TP
+.SB EBUSY
+The device was opened exclusively by another thread.
+.TP
+.SB EFAULT
+The argument was a bad address.
+.TP
+.SB EINVAL
+Invalid argument.
+.TP
+.SB EIO\ \ 
+An I/O error occurred.
+.TP
+.SB ENOTTY
+This indicates that the device does not support the
+requested ioctl function.
+.TP
+.SB ENXIO
+During opening, the device did not exist.
+.SH FILES
+.PD 0
+.TP 20
+.BI /kernel/drv/64/samioc
+32-bit driver
+.TP
+.BI /kernel/drv/samioc.conf  
+Driver configuration file. (Should not be altered.)
+.TP
+.SH SEE ALSO
+.BR driver.conf(5),
+.BR devfsadm(8),
+.BR sam-amld(8),
+.BR samtrace(8)
