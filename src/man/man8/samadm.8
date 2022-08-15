@@ -1,0 +1,213 @@
+.\" $Revision: 1.12 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samadm 8 "30 Jan 2009"
+.SH NAME
+samadm \- Sun SAM-QFS main administrative command
+.SH SYNOPSIS
+
+.LP
+.nf
+\fBsamadm servicetag\fR \fIadd|delete\fR
+.fi
+.LP
+.nf
+\fBsamadm eq-add\fR \fIeq_number#\fR
+.fi
+.LP
+.nf
+\fBsamadm eq-release\fR \fIeq_number#\fR
+.fi
+.LP
+.nf
+\fBsamadm eq-remove\fR \fIeq_number#\fR
+.fi
+.LP
+.nf
+\fBsamadm eq-alloc\fR \fIeq_number#\fR
+.fi
+.LP
+.nf
+\fBsamadm eq-noalloc\fR \fIeq_number#\fR
+.fi
+.LP
+.nf
+\fBsamadm -?|--help\fR
+.fi
+
+.SH DESCRIPTION
+.LP
+The \fBsamadm\fR command is a single command line interface to many
+QFS commands.  Initially, it contains commands that are new to QFS 5.0,
+but will in the future contain subcommands for most QFS administrative
+functions.
+.LP
+The detailed description of each subcommand follows.
+
+.SH SUBCOMMANDS
+.LP
+.sp
+.ne 2
+.mk
+.na
+\fBservicetag\fR
+.ad
+.sp .6
+.RS 4n
+The \fIadd\fR operand to the \fBservicetag\fR subcommand
+adds service tags to the service tag
+repository depending upon which QFS or SAM
+package is installed.  If the SUNWqfs package
+is installed, a QFS service tag is added.  If
+the SUNWsamfs package is installed, both a QFS
+and SAM-FS service tag is added.  See \fBstclient\fR(8)
+for more information on service tags.
+.LP
+The \fIdelete\fR operand to the \fBservicetag\fR subcommand
+deletes both QFS and/or SAM service tags from the service tag repository.
+.LP
+The \fBservicetag\fR subcommand is not intended to be needed to
+be invoked by the administrator.  QFS automatically adds service tags
+when first configured or mounted, and deletes service tags when the
+QFS or SAM package is removed.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBeq-add\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand adds an equipment to an existing mounted
+QFS file system.  The equipment must be added to the \fBmcf(5)\fR
+file, and \fBsamd config\fR must be run prior to adding the equipment
+number to a file system.  The equipment will be placed into the
+\fIoff\fR state.
+.LP
+In a non-shared file system, after the equipment number is added,
+it is placed into the \fIon\fR state.
+.LP
+In a shared file system, after the equipment number is added,
+it is initially placed into the \fIunavail\fR state. All the mcf files
+on the clients must be updated to include the new/changed equipment
+number, and \fBsamd config\fR run. After this has been done, To place this
+equipment number into full read/write status, change the state
+to \fIalloc\fR via \fBsamadm eq-alloc eq_number#\fR.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBeq-release\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand releases the disk space associated with files that
+have valid archive copies from SAM.  It can be used prior to an
+\fBeq-remove\fR command to quickly release space on a device that
+is to be removed for hardware failure or other reasons.
+.LP
+The \fBeq-release\fR subcommand starts a background process called
+\fIsam-shrink\fR which releases space on the equipment number
+The releasing process may take some time to complete.  Progress can be
+monitored via \fBsamu(8)\fR (m display).  When the release is started,
+the equipment is first put into \fInoalloc\fR state to prevent further
+data allocation on that equipment.  When the releasing process is
+complete, the equipment is placed into \fIoff\fR state if all space was
+successfully released.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBeq-remove\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand removes an equipment number from an existing mounted
+QFS file system.  It is intended to be used to remove an equipment
+for reuse, or to remove an equipment that needs replacement because
+of hardware failure.
+.LP
+The \fBeq-remove\fR subcommand starts a background process called
+\fIsam-shrink\fR which copies the data on the equipment number
+to be removed to other equipments in the file system.  The removal process
+may take some time to complete.  Progress can be monitored via
+\fBsamu(8)\fR (m display).  When the remove is started, the equipment to be
+removed is first put into \fInoalloc\fR state to prevent further data
+allocation on that equipment.  When the removal process is complete,
+the equipment is placed into \fIoff\fR state if all space was successfully
+moved to other equipments.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBeq-alloc\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand changes the state of an equipment number to \fIalloc\fR
+which allows new data allocations to be placed on it.  This subcommand is
+only legal for equipments which are currently in the \fInoalloc\fR or
+\fIunavail\fR state.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fBeq-noalloc\fR
+.ad
+.sp .6
+.RS 4n
+This subcommand changes the state of an equipment number to \fInoalloc\fR
+which prevents new data allocations to be placed on it.  This subcommand is
+only legal for equipments which are currently in the \fIon\fR state.
+.RE
+
+.sp
+.ne 2
+.mk
+.na
+\fB-?|--help\fR
+.ad
+.sp .6
+.RS 4n
+Displays a command syntax summary.
+.RE
+
+.SH SEE ALSO
+\fBsamservicetag(8)\fR
+\fBsamu(8)\fR
+\fBsamd(8)\fR
+\fBmcf(5)\fR

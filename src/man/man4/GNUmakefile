@@ -1,4 +1,4 @@
-# $Revision: 1.12 $
+# $Revision: 1.10 $
 
 #    SAM-QFS_notice_begin
 #
@@ -30,25 +30,13 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-MAN_SRCS =  archiver.cmd.4 \
-	defaults.conf.4 diskvols.conf.4 ftp.cmd.4 \
-	fsalogd.cmd.4 hosts.fs.4 hosts.fs.local.4 \
-	inquiry.conf.4 mcf.4 preview.cmd.4 \
-	recycler.cmd.4 rft.cmd.4 \
-	releaser.cmd.4 samdb.conf.4 samfs.cmd.4 sefdata.4 \
-	sefsysevent.4 shrink.cmd.4
+# Keep the entries in the following lines in alphabetical order, please.
+MAN_SRCS =  acl2640.4 acl452.4 grauaci.4 \
+	historian.4 ibm3584.4 ibm3494.4 \
+	sony.4
 
-MAN_RELEASED_SRCS = archiver.cmd.4 \
-	defaults.conf.4 diskvols.conf.4 ftp.cmd.4 \
-	hosts.fs.4 hosts.fs.local.4 inquiry.conf.4 \
-	mcf.4 preview.cmd.4  \
-	recycler.cmd.4 rft.cmd.4 \
-	releaser.cmd.4 samfs.cmd.4 sefdata.4 sefsysevent.4 \
-	shrink.cmd.4
-
-REM_RELEASED_SRCS = mcf.4
-
-QFS_RELEASED_SRCS = mcf.4
+MAN_RELEASED_SRCS =  acl2640.4 acl452.4 grauaci.4 \
+	historian.4 ibm3584.4 ibm3494.4 sony.4 
 
 include $(DEPTH)/mk/targets_man.mk
 

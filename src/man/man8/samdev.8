@@ -1,0 +1,128 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samdev 8 "31 Dec 1997"
+.SH NAME
+samdev \- Adds
+.B /dev/samst
+entries for media changers and optical disks attached to the system
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/samdev [-d]
+.SH AVAILABILITY
+SUNWsamfs
+.SH OPTIONS
+.TP 10
+.B \-d 
+Print descriptive messages when creating each symbolic link.
+.SH DESCRIPTION
+.IX "samdev" "" "\fLsamdev\fP \(em adds /dev/samst entries for media changers and optical disks"
+.B samdev
+creates symbolic links in the 
+.B /dev/samst
+directory pointing to the actual device special files under the 
+.B /devices
+directory tree.
+It performs the following steps:
+.TP 4
+1.
+The 
+.B /dev/samst
+directory is checked for device entries \- that is,
+symbolic links with names of the form
+.BI c N\c
+.BI t X\c
+.BI u N\c
+,
+where
+.I N
+represents a decimal number, and
+.I X
+represents a hexadecimal number.
+
+.BI c N
+is the logical controller number, an
+arbitrary number assigned by this program to designate a particular
+controller. 
+The first controller found  on the first occasion this program is run
+on a system, is assigned number 0. This number may not be the same number
+as the number assigned by the 
+.BR disks (8)
+program.
+.BI t X
+is the SCSI 
+.B target
+for the device.
+.BI u N
+is the SCSI logical unit number of the device at this SCSI
+target.
+Each entry's symbolic link is read and placed in an internal pathname
+table.
+.TP 4
+2.
+Searches the 
+.B /devices 
+directory searching for devices that are supported by
+.BR samst (4).
+It adds the
+pathnames for the devices to the table built in step 1.
+.TP
+3.
+.B samdev 
+then traverses the pathname table and builds symbolic links in
+.B /dev/samst
+for each device in the table.
+.PP
+.B samdev
+should be executed each time the system is reconfiguration-booted.
+An entry can be added to the
+.B /etc/init.d/devlinks
+file after the entry for /usr/sbin/tapes to automate this process.
+.B samdev
+can only be run after
+.BR drvconfig (8)
+is run, since
+.BR drvconfig (8)
+builds the 
+.B /devices
+tree.
+.PP
+This utility does not apply to Fibre Channel devices.
+.SH FILES
+.PD 0
+.TP 20
+.B /dev/samst/\(**
+entries for general use
+.TP
+.B /devices/\(**
+device nodes
+.PD
+.SH SEE ALSO
+.BR disks (8),
+.BR devlinks (8),
+.BR drvconfig (8),
+.BR ports (8),
+.BR tapes (8)

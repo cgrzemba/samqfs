@@ -30,15 +30,9 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-# Keep the entries in the following lines in alphabetical order, please.
-MAN_SRCS =  acl2640.7 acl452.7 grauaci.7 \
-	historian.7 ibm3584.7 ibm3494.7 sam-remote.7 samst.7 stk.7 ssi.sh.7 \
-	ssi_so.7 sony.7
+MAN_SRCS = SUNW.qfs.7 sam-remote.7 sam_worm.7
 
-MAN_RELEASED_SRCS =  acl2640.7 acl452.7 grauaci.7 \
-	historian.7 ibm3584.7 ibm3494.7 samst.7 sony.7 stk.7 ssi.sh.7 ssi_so.7
-
-REM_RELEASED_SRCS =  sam-remote.7
+MAN_RELEASED_SRCS = SUNW.qfs.7 sam-remote.7 sam_worm.7
 
 include $(DEPTH)/mk/targets_man.mk
 

@@ -1,0 +1,281 @@
+'\" t
+." $Revision: 1.21 $ 
+.ds ]W Sun Microsystems 
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH archive_audit 8 "09 Sep 2003"
+.SH NAME
+archive_audit \- Generate an archive audit 
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/archive_audit
+[
+.BI \-f " audit_file"
+] [
+.B \-V
+] [
+.BI \-d
+] [
+.BI \-c " archive_copy_number"
+]... 
+.I root_path
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B archive_audit
+generates an audit of all archived files and removable media files (excluding
+archiver and stager removable media files, and removable media files created
+for disaster recovery which have not yet been referenced)
+in the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS directory
+.I root_path
+by media type and VSN.  
+The audit results are written to the VSN audit file.
+An optional summary of all archive VSNs is written to standard output. 
+.sp
+Note that archive_audit will not be able to distinguish removable media files
+used by the stager daemon in filesystems which have been created in systems
+prior to Sun StorEdge \%SAM-FS 4.0 and upgraded, so these sizes will be counted in the totals.
+Also, removable media files created by a user for disaster recovery purposes
+may duplicate space on a volume assigned to an archive copy, in which case
+the space will be accounted for twice.
+.SH OPTIONS
+.TP 10   
+.BI \-c " archive_copy_number"
+Only archive copies for the indicated \fIarchive_copy_number\fP will
+be examined.  Multiple \fB-c\fP\fI archive_copy_number\fP options may
+be given; then archive copies for \fIany\fP of the \fIarchive_copy_number\fPs
+will be examined.
+.TP 
+.BI \-d 
+Only damaged archive copies are listed in the VSN audit file.
+.TP 
+.BI \-f " audit_file"
+The name of the VSN audit file.  If -f is not specified, or if
+\fIaudit_file\fP is "-", then the output is written to standard out.
+.B Archive_audit
+appends to the \fIaudit_file\fP.
+.TP
+.B \-V
+Verbose.  Write the optional summary to standard output.  Each file is
+summarized in the following format:
+
+.in +.5i
+.ft CW
+.nf
+\fImedia VSN n \fPfiles, \fIs\fP bytes, \fId\fP damaged copies.
+.fi
+.ft R
+.in -.5i  
+.LP
+Where
+.I media
+is the media type,
+.I VSN
+is the VSN,
+.I n
+is the number of files on that VSN, and
+.I s
+is the number of bytes of data archived on that VSN.
+.I d
+is the number of damaged archive copies on that VSN.
+.SH VSN AUDIT FILE
+The VSN audit file contains a 1-line entry for each section
+on an archived file or removable media file. Each entry
+has this information:
+.br
+.PP
+.LP
+.nf
+.TS
+tab (/) ;
+l l l l l l l l l.
+.vs -2
+.ft 2
+media/vsn/status/copy/section/position/size/file/seg_num
+.vs +4
+.TE
+.fi
+.in -.5i
+.LP
+The format for the line is
+.br
+"%s %s %s %d %d %llx.%llx %lld %s %d\\n".
+
+.I media
+is the archive media.
+
+.I VSN
+is the archive VSN.
+
+.I status
+is the archive copy status.
+.I Status
+is 4 dashes with 3 possible flags: S = Stale, 
+r = rearchive, D = damaged.
+
+.I copy
+is the number (1..4) of the archive copy residing on that VSN.
+or zero if the file is a removable media file,
+
+.I section
+is the section number (0..n),
+
+.I position
+is position and file offset.
+
+.I size
+is the size of the file/section.
+
+.I file
+is the path name of the archived file or the removable media file.
+
+.I seg_num
+is the segment number of the archived segment of the file.  \fIseg_num\fR
+is 0 if it is a segmented file's index inode or if the entry is a directory or
+a non-segmented file.  Data segments of a segmented file are numbered
+sequentially beginning with 1.
+
+.LP
+The following is an example of the archive_audit line:
+.PP
+.ft CO
+.nf
+lt\0DLT000\0----\01\00\04ffd.9fa5e\0169643\0/sam5/QT/rainbow.sgi\06
+.fi
+.ft
+.PP
+.RE
+.LP
+The first two fields indicate the media type and the volume serial
+name on which the archive copy or removable media file resides.
+.ft 1
+.LP 
+The next field consists of four dashes as follows:
+.RS
+.LP
+.PD 0
+Dash 0 - Stale or active entry
+.RS
+.TP 4
+.B S
+the archive copy is stale. This means the file was modified and this
+archive copy is for a previous version of the file.
+.TP
+.B \-
+the archive copy is active and valid.
+.RE
+.LP
+Dash 1 - Archive status
+.RS
+.TP 4
+.B r
+The archiver will rearchive this copy.
+.TP 4
+.B \-
+This archive copy will not be rearchived.
+.RE
+.LP
+Dash 3 - Damaged or undamaged status
+.RS
+.TP 4
+.B D
+the archive copy is damaged.
+This archive copy will not be staged.
+.TP
+.B \-
+the archive copy is not damaged. It is a candidate for staging.
+.RE
+.RE
+.PD
+.LP
+The next field shows copy number, 1..4, for the archive copy or
+zero for the removable media file.
+.LP
+The next field shows section number, 0..n, for a multi-volume 
+archive file or removable media file.
+.LP
+The first hex number, 4ffd, is the position of the beginning of the 
+archive file on the media. The second hex number, 9fa5e, is the file byte
+offset divided by 512 
+of this copy on the archive file.
+For example, 1 means this is the first file on the archive file
+because it is offset by 512 bytes, which is the length of the tar header.
+.LP
+The next field shows section size (file size if only 1 section) for
+an archive file or the file size for a removable media file.
+.LP
+The eighth field is the name of the archive file or removable media file.
+.LP
+The last field shows the number of the archived file's segment.  This field
+is 0 if the archive copy is of the segmented file's index inode or if the
+archived file is not segmented.
+.ft 1
+.LP
+.SH "EXIT STATUS"
+The following exit values are returned:
+.TP 10
+.B 0
+Audit completed successfully.
+.TP
+.B 6
+Nonfatal: An issue encountered with rootpath's filename or the path.
+.TP
+.B 7
+Nonfatal: Closing of a subdirectory under the rootpath failed.
+.TP
+.B 10
+Nonfatal: sam_segment_vsn_stat for a file failed.
+.TP
+.B 11
+Nonfatal: sam_vsn_stat for a file failed.
+.TP
+.B 12
+Nonfatal: sam_readrminfo for a file failed.
+.TP
+.B 13
+Nonfatal: idstat for a file failed.
+.TP
+.B 14
+Nonfatal: getdent for a directory failed.
+.TP
+.B 15
+Nonfatal: Invalid segment size for a file encountered.
+.TP 10
+.B 30
+Fatal: Command line argument errors.
+.TP
+.B 31
+Fatal: Audit file issues were encountered.
+.TP
+.B 32
+Fatal: An issue with the root path or a subdirectory was encountered.
+.TP
+.B 35
+Fatal: Malloc errors terminated \fBarchive_audit\fR.
+.SH SEE ALSO
+.BR sam-archiverd (8),
+.BR mcf (5)

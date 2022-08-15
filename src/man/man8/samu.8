@@ -1,0 +1,388 @@
+'\" t
+.\" $Revision: 1.52 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samu 8 "30 Apr 2007"
+.SH NAME
+samu \- Sun StorEdge QFS and Sun StorEdge SAM
+operator utility
+.SH SYNOPSIS
+.PD 0
+.HP
+\f3samu\f1 [\f3\-d\f1 \f2c\f1] [\f3\-r\f1 \f2i\f1] [\f3\-c\f1
+\f2string\f1] [\f3\-f\f1 \f2cmd-file\f1]
+.PD
+.PP
+.br
+.SH AVAILABILITY
+.LP
+SUNWqfs
+.br
+SUNWsamfs
+.SH DESCRIPTION
+\f3samu\f1 is a full screen operator
+interface for Sun StorEdge QFS
+and Sun StorEdge SAM environments.
+It has a number of displays that show the
+status of file systems and devices and allows the operator to control
+file systems and removable media devices.
+.SH OPTIONS
+.TP 10
+\f3\-d\f1 \f2c\f1
+Specifies the initial display when \f3samu\f1 starts execution. See DISPLAYS
+below.
+.br
+.PP
+.TP 10
+\f3\-r\f1 \f2i\f1
+Specifies the time interval in seconds for refreshing the display window.
+.TP 10
+\f3\-c\f1 \f2string\f1
+Specifies an initial command string that should be executed when \f3samu\f1
+starts execution.
+.TP 10
+\f3\-f\f1 \f2cmd-file\f1
+Specifies a file from which to read samu commands.  Each line in the file is
+a command.
+.PP
+.SH CONTROL KEYS
+The following "hot" keys are available for all displays:
+.RS
+.PP
+.nf
+.TS
+tab (%) ;
+ l l .
+  q%Quit
+  :%Enter command
+  space%Refresh display
+  control-l%Refresh display (clear)
+  control-r%Enable/disable refresh (default is enabled)
+.TE
+.fi
+.RE
+The following keys perform the listed functions for each of the displays shown:
+.RS
+.PP
+.nf
+.TS
+tab (#) ;
+ l l l .
+  Key#Function#Display
+
+  control-f#Next file system #:a,a,g
+           #Page forward #c,h,o,p,s,t,u,v,w,A,J,K,M,P
+           #Next stage request #n
+           #Next inode #I
+           #Next sector #S
+           #Next equipment #T,U
+           #Next filesystem #N
+.sp
+  control-b#Previous file system #:a,a,g
+           #Page backward #c,h,o,p,s,t,u,v,w,A,J,K,M,P
+           #Previous stage request #n
+           #Previous inode #I
+           #Previous sector #S
+           #Previous equipment #T,U
+           #Previous filesystem #N
+.sp
+  control-d#Half-page forward #c,p,s,u,w,A,J,M
+           #Next robot catalog #v
+           #Page forward #g,h,S
+           #Page arcopies forward #a
+           #Page stage queue forward #n
+           #Page partitions forward #N
+.sp
+  control-u#Half-page backward #c,p,s,u,w,A,J,M
+           #Previous robot catalog #v
+           #Page backward #g,h,S
+           #Page arcopies backward #a
+           #Page stage queue backward #n
+           #Page partitions backward #N
+.sp
+  control-k#Advance display format#A,I,S
+           #Select (manual,robotic,both,priority)#p
+           #Advance sort key #v
+           #Toggle path display#n,u,w
+.sp
+  control-i#Detailed (2-line) display format#v,D
+           #Detailed status interpretations #g,n,N
+.sp
+  1-7#Select sort key#v
+.sp
+  /#Search for VSN#v
+.sp
+  %#Search for barcode#v
+.sp
+  $#Search for slot#v
+.TE
+.fi
+.RE
+.sp
+The sort selections for the v display are:
+1 slot, 2 count, 3 usage, 4 VSN, 5 access time, 6 barcode, 7 label time.
+.PP
+.SH DISPLAYS
+The following displays are available.  Those displays marked with '*'
+are the only ones available for Sun StorEdge QFS.
+Those displays marked with \fB@\fR
+are additionally available in
+Sun StorEdge SAM environments.  All others are
+available in Sun StorEdge SAM environments
+only if \fBsamd\ start\fR has been executed.
+.RS
+.LP
+.nf
+.TS
+tab (%) ;
+ l l l l .
+a@%Display archiver status      %%
+c%Display configuration         %C%Memory
+d*%Display tracing info.        %D%Display disk volume dictionary
+f*%Display filesystem info.     %F%Optical disk label
+g*%Display client information   %%
+h*%Display help information     %%
+l@%Display usage information    %I*%Inode
+m*%Display mass-storage status  %J%Preview shared memory
+n@%Display staging activity     %K%Kernel statistics
+o%Display optical disk status   %L%Shared memory tables
+p%Display mount request preview %M%Shared memory
+r%Display removable media       %N*%File system parameters
+s%Display device status summary %P%Active Services
+t%Display tape status           %R%SAM-Remote info
+u%Display stage queue           %S%Sector data
+v%Display robot VSN catalog     %T%SCSI sense data
+w%Display pending stage queue   %U%Device table
+.TE
+.fi
+.RE
+.PP
+.SH COMMANDS
+The following commands may be entered after a colon (:).
+.PP
+Archiver commands:
+.nf
+.TS
+tab (%) ;
+ l l .
+    aridle [ dk | rm | fs.fsname ]  %Idle archiving
+    arrerun%Soft restart archiver
+    arrestart%Restart archiver
+    arrmarchreq fsname.[* | archreq]%Remove ArchReq
+    arrun [ dk | rm | fs.fsname ]   %Start archiving
+    arscan fsname[.dir | ..inodes][int] %Scan filesystem
+    arstop [ dk | rm | fs.fsname ]   %Stop archiving
+    artrace [fs.fsname]            %Trace archiver
+
+.TE
+.fi
+.PP
+Display control commands:
+.nf
+.TS
+tab (%) ;
+ l l .
+    refresh i%Set refresh time
+    a filesystem%Select detailed "a" display
+    n media%Set n display media selection
+    p media%Set p display media selection
+    r media%Set r display media selection
+    u media%Set u display media selection
+    v eq%Set v display robot catalog
+    w media%Set w display media selection
+.TE
+.fi
+.PP
+Device commands:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    devlog%eq [option ...]%Set device logging options
+    idle%eq%Idle equipment
+    off%eq%Off equipment
+    on%eq%On equipment
+    readonly%eq%Mark equipment read-only
+    ro%eq%Mark equipment read-only
+    unavail%eq%Mark equipment unavailable
+    unload%eq%Unload mounted media/magazine
+.TE
+.fi
+.sp
+File System commands - miscellaneous:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    stripe%eq value%Set stripe width
+    suid%eq%Turn on setuid capability
+    nosuid%eq%Turn off setuid capability
+    sync_meta%eq value%Set sync_meta mode
+    atime%eq value%Set access time (atime) update mode
+    trace%eq%Turn on file system tracing
+    notrace%eq%Turn off file system tracing
+    add%eq%Add eq to mounted file system
+    remove%eq%Remove eq; copy files to eqs with ON state
+    release%eq%Release eq; mark files offline
+    alloc%eq%Enable allocation on partition
+    noalloc%eq%Disable allocation on partition
+    def_retention%eq interval%Set default WORM retention time
+.TE
+.fi
+.sp
+File System commands - Sun StorEdge SAM Commands:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    hwm_archive%eq%Turn on hwm archiver start
+    nohwm_archive%eq%Turn off hwm archiver start
+    maxpartial%eq value%Set maximum partial size in kilobytes
+    partial%eq value%Set size to remain online in kilobytes
+    partial_stage%eq value%Set where to start staging if partial
+    stage_flush_behind%eq value%Set stage flush behind size in kilobytes
+    stage_n_window%eq value%Set direct stage size in kilobytes
+    stage_retries%eq value%Set number of stage retries
+    thresh%eq high low%Set high and low release thresholds
+.TE
+.fi
+.sp
+File System commands - I/O:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    dio_rd_consec%eq value%Set number of consecutive dio reads
+    dio_rd_form_min%eq value%Set size of well-formed dio reads
+    dio_rd_ill_min%eq value%Set size of ill-formed dio reads
+    dio_wr_consec%eq value%Set number of consecutive dio writes
+    dio_wr_form_min%eq value%Set size of well-formed dio writes
+    dio_wr_ill_min%eq value%Set size of ill-formed dio writes
+    flush_behind%eq value%Set flush behind value in kilobytes
+    forcedirectio%eq%Turn on directio mode
+    noforcedirectio%eq%Turn off directio mode
+    force_nfs_async%eq%Turn on NFS async
+    noforce_nfs_async%eq%Turn off NFS async
+    readahead%eq value%Set maximum readahead in kilobytes
+    writebehind%eq value%Set maximum writebehind in kilobytes
+    sw_raid%eq%Turn on software RAID mode
+    nosw_raid%eq%Turn off software RAID mode
+    wr_throttle%eq value%Set outstanding write size in kilobytes
+    abr%eq%Enable Application Based Recovery
+    noabr%eq%Disable Application Based Recovery
+    dmr%eq%Enable Directed Mirror Reads
+    nodmr%eq%Disable Directed Mirror Reads
+    dio_szero%eq%Turn on dio sparse zeroing
+    nodio_szero%eq%Turn off dio sparse zeroing
+.TE
+.fi
+.sp
+File System commands - Sun StorEdge QFS:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    mm_stripe%eq value%Set meta stripe width
+    qwrite%eq%Turn on qwrite mode
+    noqwrite%eq%Turn off qwrite mode
+.TE
+.fi
+.sp
+File System commands - multireader:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    invalid%eq interval%Set multireader invalidate cache delay
+    refresh_at_eof%eq%Turn on refresh at eof mode
+    norefresh_at_eof%eq%Turn off refresh at eof mode
+.TE
+.fi
+.sp
+File System commands - shared fs:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    minallocsz%eq value%Set minimum allocation size
+    maxallocsz%eq value%Set maximum allocation size
+    meta_timeo%eq interval%Set shared fs meta cache timeout
+    mh_write%eq%Turn on multihost read/write
+    nomh_write%eq%Turn off multihost read/write
+    aplease%eq interval%Set append lease time
+    rdlease%eq interval%Set read lease time
+    wrlease%eq interval%Set write lease time
+.TE
+.fi
+.sp
+Robot commands:
+.nf
+.TS
+tab (%) ;
+ l l l l .
+    audit%[-e] eq[:slot[:side]]%%Audit slot or library.  See auditslot(8) for information on -e.
+    import%eq%%Import cartridge from mailbox
+    export%eq:slot%%Export cartridge to mailbox
+    export%mt.vsn%%Export cartridge to mailbox
+    load%eq:slot[:side]%%Load cartridge in drive
+    load%mt.vsn%%Load cartridge in drive
+    priority%pid%newpri%Set load priority for process 'pid'
+.TE
+.fi
+.sp
+Stager commands:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    stclear%mt.vsn%Clear stage request
+    stidle%%Idle staging
+    strun%%Start staging
+.TE
+.fi
+.sp
+Miscellaneous commands:
+.nf
+.TS
+tab (%) ;
+ l l l .
+    clear%vsn [index]%Clear load request
+    diskvols%volume [+flag | -flag]%Set or clear disk volume dictionary flags
+    dtrace%daemon[.variable] value%Set daemon trace controls
+    fs%fsname%Set filesystem (N display)
+    mount%mntpt%Select a mount point (I, N displays)
+    open%eq%Open device (F, S displays)
+    read%addr%Read device
+    snap%file%Snapshot screen to file
+    !shell-command%%Run shell command
+.TE
+.fi
+.SH SEE ALSO
+.BR curses (3).
+.PP
+.BR mcf (5).

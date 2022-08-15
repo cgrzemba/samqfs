@@ -1,0 +1,89 @@
+.\" $Revision: 1.23 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH samd 8 "02 Aug 2007"
+.SH NAME
+samd \- SAM daemon management and configuration command
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/samd \fIbuildmcf\fR
+.PP
+.B /opt/SUNWsamfs/sbin/samd \fIconfig\fR
+.PP
+.B /opt/SUNWsamfs/sbin/samd \fIstart\fR
+.PP
+.B /opt/SUNWsamfs/sbin/samd \fIstop\fR
+.PP
+.B /opt/SUNWsamfs/sbin/samd \fIhastop\fR
+.br
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsamd\fR utility starts up or shuts down the \%\fBsam-amld\fR daemon,
+or shuts down the \%\fBHSM daemons\fR for HA-SAM failover.
+This utility can also be used to reinitialize the Sun StorEdge QFS, Sun StorEdge \%SAM-FS,
+and Sun \%SAM-QFS configuration files and allow changes to take effect.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+.B  buildmcf
+Creates a new \fB/etc/opt/SUNWsamfs/mcf\fR file if one does not exist.
+This is useful when configuring shared clients for the first time, after
+the file systems have been created on the metadata server.  Only
+disk devices will be discovered and entered into the mcf.
+.TP 10
+.B  config
+Causes the \%\fBsam-fsd\fR daemon to (re)configure based
+on changes to the \fB/etc/opt/SUNWsamfs/mcf\fR, \fB/etc/opt/SUNWsamfs/archiver.cmd\fR,
+and \fB/etc/opt/SUNWsamfs/defaults.conf\fR files.
+.TP 10
+.B  start
+Starts up the \%\fBsam-amld\fR daemon if the \fB/etc/opt/SUNWsamfs/mcf\fR
+file exists and the \%\fBsam-amld\fR daemon is not already running.
+Implemented only in Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+Not a valid argument in a Sun StorEdge QFS environment.
+.TP 10
+.B  stop
+Kills the \%\fBsam-amld\fR daemon.
+Implemented only in Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+Not a valid argument in a Sun StorEdge QFS environment.
+.TP 10
+.B  hastop
+Kills the \%\fBsam-archiverd\fR, \%\fBsam-stagealld\fR, \%\fBsam-stagerd\fR
+and \%\fBsam-amld\fR daemon for HA-SAM failover.
+Daemons killed by 'hastop' will not be restarted by the \%\fBsam-fsd\fR.
+Implemented only in Sun StorEdge \%SAM-FS and Sun \%SAM-QFS environments.
+Not a valid argument in a Sun StorEdge QFS environment.
+.SH SEE ALSO
+.BR sam-fsd (8),
+.BR sam-amld (8).
+.PP
+.BR defaults.conf (5),
+.BR mcf (5).

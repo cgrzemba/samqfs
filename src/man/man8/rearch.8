@@ -1,0 +1,124 @@
+." $Revision: 1.21 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH rearch 8  "08 Jan 2003"
+.SH NAME
+rearch \- Marks archive entries to be rearchived
+.SH SYNOPSIS
+\fBrearch\fR
+\%[\fB\-f\fR]
+\%[\fB\-M\fR]
+\%[\fB\-o\fR]
+\%\fB\-m\fI media\fR
+\%\fB\-v\fI vsn\fR
+\fIfilename\fR .\|.\|.\|
+.PP
+\fBrearch\fR
+\%[\fB\-f\fR]
+\%[\fB\-M\fR]
+\%[\fB\-o\fR]
+\%\fB\-c\fI n\fR
+\fIfilename\fR .\|.\|.\|
+.PP
+\fBrearch\fR
+\%[\fB\-f\fR]
+\%[\fB\-M\fR]
+\%[\fB\-o\fR]
+\%\fB\-m\fI media\fR
+\%\fB\-v\fI vsn\fR
+\%\fB\-r\fI dirname\fR
+\%[\fIfilename\fR .\|.\|.\|]
+.PP
+\fBrearch\fR
+\%[\fB\-f\fR]
+\%[\fB\-M\fR]
+\%[\fB\-o\fR]
+\%\fB\-c\fI n\fR
+\%\fB\-r\fI dirname\fR
+\%[\fIfilename\fR .\|.\|.\|]
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBrearch\fR command
+marks archive entries for one or more files or directories
+to be rearchived.
+You must specify either a copy number or both a media type and a VSN number.
+In addition, you must specify either a file name or both a directory name and a file name.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB\-c\fI n\fR
+Specifies the archive copy number.
+If one or more \fB\-c\fI n\fR
+options are specified, only those archive copies
+(1 to 4) are marked.  The default
+is all copies.
+.TP
+\fB\-f\fR
+Suppresses errors.
+.TP
+\fB\-M\fR
+Rearchives metadata only. This includes directories, the segment index,
+and removable media files. Regular files and symbolic links are not rearchived.
+.TP
+\fB\-m\fI media\fR
+Specifies the media type.
+If specified, archive copies on the specified media are marked.
+This option must be specified in conjunction with
+the \fB\-v\fI vsn\fR option.
+For more information on media types, see the \fBmcf\fR(5) man page.
+.TP
+\fB\-o\fR
+Requires the file to be online before its archive entry is deleted.
+If the file is offline, the command
+stages the file onto disk before deleting any entries.
+.TP
+\fB\-v\fI vsn\fR
+Marks archive copies on VSN \fIvsn\fR for rearchiving.
+This option must be specified in conjunction with
+the \fB\-m\fI media\fR option.
+.TP
+\fB\-r\fI dirname\fR
+Recursively rearchives the archive entries of the
+specified \fIdirname\fR and its subdirectories.
+The \fBrearch\fR flag for archive entries of files in the directories and
+subdirectories is set.
+If no \fB\-r\fI dirname\fR option is specified,
+at least one \fIfilename\fR must be specified.
+.TP
+\fIfilename\fR .\|.\|.\|
+Specifies one or more files for rearchiving.
+If you are using the first form of the command,
+either a \fIfilename\fR or an asterisk (\fB*\fR) is required.
+If you are using the third or fourth forms of the command, and you
+do not specify a \fIfilename\fR, you must use the \fB\-r\fR option
+and specify a \fIdirname\fR.
+.SH SEE ALSO
+\fBmcf\fR(5).
+

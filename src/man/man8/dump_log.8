@@ -1,0 +1,85 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH dump_log 8 "23 Feb 2003"
+.SH NAME
+dump_log \- Dumps the contents of the fifo and ioctl log buffers
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/dump_log
+[ -f ]
+[ -p
+.I fifo_log
+]
+[ -i
+.I ioctl_log
+]
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.LP
+.B dump_log
+dumps the contents of the fifo and ioctl log buffers.
+.SH OPTIONS
+.TP 10
+.I -f
+This causes dump_log to run continuously;  the default is to dump
+the circular buffer once and then terminate.
+.TP
+.I fifo_log
+The log buffer of fifo commands sent by the Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS 
+file system to the \%\fBsam-amld\fR daemon.
+If none is specified the
+default is to use \fB/var/opt/SUNWsamfs/amld/fs_fifo_log\fR.
+.TP
+.I ioctl_log
+The log buffer of the ioctl daemon commands sent to
+the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system.
+If none is specified the default is to
+use \fB/var/opt/SUNWsamfs/amld/fs_ioctl_log\fR.
+.TP
+.SH NOTE
+You must have logging of the fifo and ioctl commands enabled by setting the 
+.nf
+.sp
+     debug   logging 
+.sp
+.fi
+option in the \fB/etc/opt/SUNWsamfs/defaults.conf\fR file.
+.B dump_log
+is not intended for general use, and is provided as
+a utility to supply Sun Microsystems
+analysts with troubleshooting information when necessary.
+.SH FILES
+.TP 20
+.B /var/opt/SUNWsamfs/amld/fs_fifo_log
+fifo buffer used by Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems
+.TP 20
+.B /var/opt/SUNWsamfs/amld/fs_ioctl_log
+ioctl buffer used by Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems
+

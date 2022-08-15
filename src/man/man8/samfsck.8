@@ -1,0 +1,258 @@
+." $Revision: 1.29 $
+.ds ]W Sun Microsystems 
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samfsck 8  "09 March 2009"
+.SH NAME
+samfsck \- Checks and repairs a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system
+.SH SYNOPSIS
+.B samfsck
+[
+.B \-s
+.I scratch_dir
+]
+[
+.B \-F 
+[
+.B \-R
+]
+]
+[
+.B \-G
+]
+[
+.B \-S
+]
+[
+.B \-U
+]
+[
+.B \-u
+.I fs_version
+]
+[
+.B \-V
+]
+[
+.B \-p
+]
+.I fs_name
+.PD
+.PP
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+The
+.B samfsck
+command checks and optionally repairs a Sun StorEdge QFS or Sun
+StorEdge \%SAM-FS file system from the disk partitions 
+that belong to
+.I fs_name.
+For \fIfs_name\fR, specify either a family set name from the
+.B mcf
+file or a mount point absolute path name from the
+.B /etc/vfstab
+file.
+One or more disk partitions are specified in the
+.B mcf
+file.  If no options are specified,
+.B samfsck
+checks and reports, but does not repair, all the blocks
+that belong to inodes and lists inodes which have duplicate blocks.
+.B samfsck
+also checks inodes which have blocks that are free blocks.
+If only one inode is listed in the duplicate list, that inode
+contains a block that is also free.
+To repair the file system, the file system must be 
+.I unmounted,
+and the \fB-F\fR option specified.
+.LP
+If there are files encountered that are not attached to a parent directory,
+they will be moved to the /\fImount_point\fP/lost+found directory.
+If this directory does not exist, you must create this directory 
+first and make it sufficently large
+to hold the expected number of disconnected files if you wish this
+to happen.  Here is how to do this in the Bourne shell for a SAM
+file system mounted on /sam:
+
+.ft CO
+.nf
+/bin/mkdir /sam/lost+found
+cd /sam/lost+found
+N=0
+while [ $N -lt 1024 ]; do
+    touch TMPFILE$N
+    N=`expr $N + 1`
+done
+rm TMPFILE*
+.fi
+.ft
+.SH OPTIONS
+.TP
+.BI \-s " scratch_dir"
+Specifies the scratch directory.  If specified, this directory is used for the
+scratch files that are used.  The default scratch directory is /tmp.
+.TP
+.B \-F 
+Check and repair the file system. 
+For all inodes that have duplicate blocks, mark those inodes offline
+if they have been archived.
+If the file system is not \fIunmounted\fR
+\fBsamfsck\fR will exit with an error.
+.TP
+.B \-G
+Generate directory entry hash.
+In SAM-FS 3.5.0 and above, a hash code was added to directory 
+entries to speed up directory searches. This is particularly useful
+for longer file names. The \fB-G\fP option, when used in conjunction
+with the \fB-F\fP option, will modify directory entries which do not
+have a proper hash value to have a hash. When the \fB-G\fP option is 
+used without the \fB-F\fP option, the number of directory entries which
+could be hashed is reported.
+The presence of a hash
+value has no effect on versions of SAM-FS prior to 3.5.0.
+.TP
+.B \-S
+Convert the filesystem from a non-shared filesystem to
+a shared filesystem.
+This option is not available to filesystems with a version 1 superblock.
+The \fB-F\fR option must also be specified to convert a filesystem.
+This will cause \fBsamfsck\fR to update the on-disk structures
+to make the filesystem shared.
+Note that \fBsamfsck\fR does not update the \fB/etc/vfstab\fR entry
+(see \fBvfstab\fR(5)), the \fBmcf\fR entry (see \fBmcf\fR(5)),
+or the shared hosts file (see \fBsamsharefs\fR(8)) for the filesystem,
+nor does it configure the \fBservices\fR file (see \fBservices\fR(5)) for
+shared SAM operations.
+These must be configured and updated before the filesystem is converted.
+.TP
+.B \-U
+Convert the filesystem from a shared filesystem to
+a non-shared filesystem.
+The \fB-F\fR option must also be specified to convert a filesystem.
+The on-disk structures of the filesystem are updated to
+make the filesystem non-shared.
+Note that \fBsamfsck\fR does not update the \fB/etc/vfstab\fR entry
+(see \fBvfstab\fR(5)), or the \fBmcf\fR entry (see \fBmcf\fR(5)).
+These must be configured and updated before the filesystem is converted.
+.TP
+.B \-u " fs_version"
+Convert the filesystem to the given \fBfs_version\fR.  The only value
+that is valid for 5.0 is 2A.
+Only Filesystems version 2 can be converted to 2A.
+Filesystems version 2A
+can use 5.0 features like Online add/remove, Large Host Table and Project IDs.
+Note that 2A filesystems are only mountable on 5.0 and not backwards compatible.
+The \fB-F\fR option must also be specified to convert a filesystem.
+The on-disk structures of the filesystem are updated to
+make the filesystem version 2A.
+Note that version 2A filesystems are not backward compatible or reversible.
+.TP
+.B \-V
+Turns on a verbose display of DEBUG information. This information is useful
+to Sun Microsystems analysts.
+.TP
+.B \-R
+Rename the file system.
+When specified along with the -F option, the -R option will rewrite the
+super block with the disk cache family set name found in /etc/opt/SUNWsamfs/mcf.
+No action will be taken if the -R option is used without the -F option. It is
+important that \fBsam\-fsd\fR be notified after any change to
+/etc/opt/SUNWsamfs/mcf (see \fBsamd\fR(8)).
+.TP
+.B -p
+Return an indication of the filesystem's health.
+Non-zero return indicates that the filesystem should not be mounted
+without first using \fBsamfsck\fR to check and repair the filesystem
+(see EXIT STATUS).
+A zero return value indicates that the filesystem can be mounted
+immediately.
+.SH "EXIT STATUS"
+The following exit values are returned:
+.TP 10
+.B 0
+The filesystem is consistent.
+.TP
+.B 4
+Nonfatal: Filesystem block counts need to be reconciled.
+.TP
+.B 5
+Nonfatal: Filesystem blocks can be reclaimed.
+.TP
+.B 10
+Nonfatal: Orphan inodes can be moved to lost+found.
+.TP 10
+.B 20
+Fatal: invalid directory blocks exist, overlapping blocks mapped to 
+2 inodes exist. Files/directories will be marked offline if an
+archive copy exists or damaged if no archive copy exists.
+.TP
+.B 30
+Fatal: I/O Errors occurred, but \fBsamfsck\fR kept processing. Filesystem is 
+not consistent.
+.TP
+.B 35
+Fatal: Argument errors terminated \fBsamfsck\fR.
+.TP
+.B 36
+Fatal: Malloc errors terminated \fBsamfsck\fR.
+.TP
+.B 37
+Fatal: Device errors terminated \fBsamfsck\fR.
+.TP
+.B 40
+Fatal: Filesystem superblock is invalid.
+.TP
+.B 41
+Fatal: Filesystem option mask has non-backwards compatible options.
+.TP
+.B 45
+Fatal: Filesystem .inodes file is invalid.
+.TP
+.B 50
+Fatal: I/O Errors terminated \fBsamfsck\fR.
+.TP
+.B 55
+Nonfatal:  The
+.B -p
+option was specified, and the filesystem should be
+checked and repaired prior to mounting.
+.SH FILES
+.TP 20
+.B /etc/opt/SUNWsamfs/mcf
+The configuration file for
+.B samfs
+.TP
+.B /etc/vfstab
+File system defaults table
+.SH "SEE ALSO"
+.BR samd (8).
+.BR samsharefs (8).
+.PP
+.BR mcf (5),
+.BR services (5),
+.BR vfstab (5).

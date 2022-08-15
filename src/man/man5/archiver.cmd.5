@@ -1,0 +1,1441 @@
+.\" $Revision: 1.92 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.TH archiver.cmd 5 "13 Aug 2007"
+.SH NAME
+archiver.cmd \- Sun StorEdge SAM-FS archiver commands file
+.SH SYNOPSIS
+.B /etc/opt/SUNWsamfs/archiver.cmd
+.SH AVAILABILITY
+.LP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+Commands for controlling the archiver are read from
+.BR /etc/opt/SUNWsamfs/archiver.cmd ,
+which is the archiver commands file.
+The
+.BR archiver.cmd
+file must be free from errors, or the
+archiver does not execute.
+.PP
+Use the 
+.B archiver -lv
+command to check the
+.B archiver.cmd
+file for syntax errors. When it is free from errors, use the 
+.HP
+.B samd config
+.PP
+command to reconfigure the daemons.
+.PP
+Archive Sets and associated media are defined in the archiver command file.
+Archive Sets are the mechanism that the archiver uses to direct files
+in a
+.B samfs
+file system to media during archiving.
+.LP
+All files in the file system are members of one and only one Archive Set.
+Characteristics of a file are used to determine Archive Set membership.
+All files in an Archive Set are copied to the media associated with the
+Archive Set.  The Archive Set name is simply a synonym for a collection of
+media volumes.
+.LP
+Files are written to the media in an Archive File, which is written in
+.B tar
+format.  The combination
+of the Archive Set and the
+.B tar
+format results in an operation that is just
+like using the command
+.B find
+to select files for the
+.B tar
+command.
+.LP
+In addition, the meta data (directories, the indices
+of segmented files, and the
+removable media information), are assigned to an Archive Set to be copied
+to media.  The Archive Set name is the name of the file system.  (See
+.BR mcf (5)).
+.LP
+For segmented files, the archivable unit is the segment, not the entire
+file, so the properties and priorities apply to the segments themselves
+rather than to the entire file.  The index of a segmented file contains
+no user data and so is assigned to the meta data archive set.
+.LP
+Symbolic links are considered data files for archival purposes.
+.LP
+Each Archive Set may have up to four archive copies defined.  The copies
+provide duplication of files on different media.  Copies are selected
+by the Archive Age of a file.
+.LP
+The archiver command file consists of directive lines.
+In this man page, the archiver directives are separated
+into the following sections and subsections:
+.RS
+.PP
+.nf
+General Directives section
+Archive Set Assignments section
+Archive Copy Definitions section
+Archive Set Copy Parameters section
+   Archive Set Copy Parameters - General
+   Archive Set Copy Parameters - Priority
+   Archive Set Copy Parameters - Scheduling
+   Archive Set Copy Parameters - Recycling
+VSN Pool Definitions section
+VSN Associations section
+.fi
+.RE
+.LP
+Each of these lines consists of one or more fields separated by white
+space.  Leading white space is ignored.  Everything
+after a '#' character is ignored.  Lines may be continued by using '\\'
+as the last character on the line.
+.LP
+All parameter settings and Archive Set definitions apply to all file systems
+(global) until a file system directive is encountered.  Thereafter, the settings
+and definitions apply only to the named file system (local).  The directives
+.BR archmax ,
+.BR bufsize ,
+.BR drives ,
+.BR notify ,
+and
+.BR ovflmin
+can only be global and hence are not allowed after the first 
+.BR fs =
+directive.
+.SH GENERAL DIRECTIVES SECTION
+General directives are identified by the '=' character in the second
+field or no additional fields.
+.TP 5
+.BI "archmax = " "media target_size"
+Set the Archive File maximum size for media
+.I media
+to
+.IR target_size .
+Files to be archived will be placed on the media in a single Archive File of
+length less than or equal to
+.IR target_size .
+If a single file is greater than
+.IR target_size ,
+then this restriction does not apply.
+.RS
+.LP
+Sizes appropriate to the media are used by default. The default size for STK 
+Titanium, all LTO, IBM TS1120 and IBM 3592 media is 22GB. The default size for
+SKT 9940 media is 11GB. The default size for STK 9840 media is 4GB.
+The default size for linear tape is 11GB. The default size for all other tape
+media is 8GB. The default size for disk is 1G. The default size for optical
+media is 1GB.
+.RE
+.TP 5
+.BI "archivemeta = " state
+Set the meta data archiving state on or off.
+.I state
+may be "\fBon\fR" or "\fBoff\fR".  Meta data archiving is off by default.
+.RE
+.TP 5
+.BI "background_interval = " time
+Set the interval between background scans to
+.IR time .
+.RS
+.LP
+The default is 24 hours.  If
+.I time
+is a multiple of days, the background scan will be performed at the
+.BR
+background_time .
+.RE
+.TP 5
+.BI "background_time = " hhmm
+Set the time of day for the background scan to
+.I hhmm
+local time.
+.RS
+.LP
+The default 0000 (midnight).
+.RE
+.TP 5
+.BI "dircache_size = " size
+Set the maximum size of the directory cache to
+.I size. 
+The directory cache for name lookups will not exceed
+this size.  If the filesystem contains very large directories,
+increasing this value may help performance.  The minimum
+value is 8M and the maximum is 512M.
+.RS
+.LP
+The default is 64M. 
+.RE
+.TP 5
+.BI "bufsize = " " media buffer_size " "[ " lock " ]"
+Set the archive buffer size for media
+.I media
+to
+.IR buffer_size " *"
+.BR dev_blksize ,
+and (optionally) lock the buffer.
+
+For \fImedia\fR, specify a valid media type from the list
+on the \fBmcf\fR(4) man page.
+
+For \fIbuffer_size\fR, specify a number from 2 through 8192.  The
+default is 16.  This value is multiplied by the \fBdev_blksize\fR
+value for the media type, and the resulting buffer size
+is used.  The \fBdev_blksize\fR can be specified in
+the \fBdefaults.conf\fR file.
+
+The \fBlock\fR argument indicates whether or not the archiver should
+use locked buffers when making archive copies.
+If \fBlock\fR
+is specified, the archiver sets file locks on the archive buffer
+in memory for the duration of the \%\fBsam-arcopy\fR(1M) operation.
+This avoids paging the buffer, and it can provide a performance
+improvement.  The \fBlock\fR argument should be specified only on
+large systems with large amounts of memory.  If insufficient memory
+is present, it can cause an out of memory condition.  
+The \fBlock\fR argument is effective only if direct I/O is enabled
+for the file being archived.
+By default, \fBlock\fR is not
+specified and the file system sets the locks on all direct I/O buffers,
+including those for archiving.
+
+This directive can also be specified on an archive set
+basis by placing
+the \%\fB-bufsize=\fIbuffer_size\fR and \%\fB-lock\fR directives
+between \fBparams\fR and \fBendparams\fR directives.
+For
+more information on this, see the \%\fB-bufsize=\fIbuffer_size\fR
+and \%\fB-lock\fR directives
+mentioned later on this man page.
+
+For more information on \fBdev_blksize\fR, see the \fBdefaults.conf\fR
+man page.  For more information on enabling direct I/O, see the \fBsetfa\fR(1)
+man page, the \fBsam_setfa\fR(3) library routine man page, or
+the \%\fB-o\ forcedirectio\fR option on the \fBmount_samfs\fR(1M) man page.
+.RE
+.TP 5
+.BI "drives = " "library count"
+Set the number of drives to use for archiving on
+.I library
+(the library family set name as defined in the mcf) to
+.IR count .
+The archiver will use only
+.I count
+number of drives in
+.I library
+to create archive copies.  This directive prevents the archiver from using all
+drives in a library and possibly interfering with staging.
+.RS
+.LP
+The default value is the actual number of drives in the library.
+.TP 
+Example:
+.ft CO
+drives = gr50 3
+.ft
+.RE
+.TP 5
+.BI "examine = " method
+Set the file system examination method to
+.IR method .
+Files in a file system are examined using the method defined by this directive.
+.I method
+may be one of:
+.RS
+.TP 12
+.B scan
+Scan the file system in the traditional manner.  The first scan is a directory
+scan, all successive scans are inode scans.
+.TP
+.B scandirs
+All scans are directory scans.
+.TP
+.B scaninodes
+All scans are inode scans.
+.TP
+.B noscan
+No periodic scans are performed.  Files are examined when they change.
+.RE
+.RS
+.LP
+The default examine method is
+.BR noscan .
+.RE
+.TP 5
+.BI "fs = " file_system
+Start local definitions for file system
+.IR file_system . 
+All parameter settings and Archive Set definitions will apply only to 
+this file system.  This directive may be followed by copy definitions to
+define multiple copies for the file system meta data.
+.RS
+.LP
+The defaults are no local definitions and one archive copy for the file
+system data.
+.RE
+.TP 5
+.BI "interval = " time
+Set the interval between archive operations to
+.IR time .
+.RS
+.LP
+The default time is 10 minutes.
+.RE
+.TP 5
+.BI "logfile = " filename
+Set the name of the archiver log file to
+.IR filename ,
+specified as an absolute pathname.
+The archiver log file contains a line for each file archived.  The line
+contains information about the file that includes the date, time,
+media, volume, Archive Set, and the name of the file.
+Note that it is possible to have a separate log file for each file system
+(by placing a "logfile =" definition after a "fs =" definition).
+.RS
+.LP
+The default is no log file.
+.RE
+.TP 5
+.BI "notify = " filename
+Set the name of the archiver event notification script file to
+.IR filename .
+This file is executed by the archiver to allow the system administrator
+to process various events in a site specific fashion.  The script is called
+with a keyword for the first argument.  The keywords are:
+.BR emerg ,
+.BR alert ,
+.BR crit ,
+.BR err ,
+.BR warning ,
+.BR notice ,
+.BR info ,
+and 
+.BR debug .
+Additional arguments are described in the default script.
+.RS
+.LP
+The name of the default script is:
+.IR "/etc/opt/SUNWsamfs/scripts/archiver.sh" .
+.RE
+.TP 5
+.BI "ovflmin = " "media minimum_size"
+Set the minimum size of a file which will require more than one volume for media
+.I media
+to
+.IR minimum_size .
+Files to be archived that are smaller than this size will be placed on only a
+single volume of the media.  Files that are larger than this size will be allowed
+to be written to multiple volumes.
+.RS
+.LP
+If not specified, volume overflow will not take place.
+.RE
+.TP 5
+.BI "scanlist_squash = " state
+Control the sam-arfind scanlist consolidation.
+.I state
+may be "\fBon\fR" or "\fBoff\fR".  If files in two or more subdirectories
+with the same parent directory need to be scanned by sam-arfind at a much
+later time, the scan entries can be consolidated if
+.I state
+is
+.BR on .
+The sam-arfind scanlist consolidation is
+.B off
+by default.
+.RE
+.TP 5
+.BI "setarchdone = " state
+Control the changing of the state of the 'archdone' flag for a file when
+the file is examined by sam-arfind.
+.I state
+may be
+.B on
+or
+.BR off .
+
+When all archive copies for a file have been made, the
+.I archdone
+flag is set for that file to indicate that no further archive action is
+required.  The
+.I archdone
+flag is used by the archiver only during an inodes scan to avoid looking
+up the path name for the inode.  Setting
+.I archdone
+for files that will never be archived can be a time consuming operation
+during directory scans impacting performance when large directories are
+scanned.  Therefore, this will no longer be done by default.  To get the
+previous behavior, set the 
+.I state
+to
+.BR on .
+
+The default value of
+.I state
+is
+.B off
+for
+.B examine = scandirs
+and
+.B examine = noscan.
+
+This option does not affect setting the state of
+.I archdone
+when archive copies are made.
+.RE
+.TP 5
+.B wait
+The archiver will not begin archiving until it receives a start command
+from
+.IR archiver ,
+.IR samu ,
+or
+.IR samcmd .
+This is a mechanism to allow other activities to be performed before
+archiving begins.  The wait may be applied globally or to one or more
+file systems.
+.RS
+.LP
+The default is no waiting.  However, if archiver.cmd does not exist then the 
+default is to wait.
+.RE
+.TP 5
+.BI "timeout = [ operation | media ] " time
+External events may cause the archiving I/O operations to stop for indefinite
+periods of time.  This will hamper timely archiving of other files that
+are not affected by the external delays.  Timeouts are provided for the
+operations that may get stopped.  The timeout values for the write operation
+may also be specified for individual media.
+
+.I operation
+may be one of:
+.RS
+.TP 12
+.B read
+Reading the file from the disk.  Default = 1 minute.
+.TP
+.B request
+Requesting the archive media.  Default = 15 minutes.
+.TP
+.B stage
+Staging the file to be archived.  Default = 0 (no timeout).
+.TP
+.B write
+Writing to the archive media.  Default = 15 minutes for removable archive
+media. Default = 0 (no timeout) for disk archive media.
+.RE
+.SH ARCHIVE SET ASSIGNMENTS SECTION
+Archive Set assignments are made by describing the characteristics of the
+files that should belong to the set.  The statements that do this are
+patterned after the
+.BR find (1)
+command.  The Archive Set name is the first field,
+followed by the path relative to the Sun StorEdge QFS
+file system mount point.
+The path may be enclosed in quotation mark
+characters, for instance,
+\fB"project/gifs"\fR.
+Within the quoted string, the usual character escapes are
+allowed, including octal character value.
+.LP
+The remaining fields are either the file characteristics for membership
+in the set, or controls for the set.
+.LP
+It is possible that the choice of file characteristics for several Archive
+Sets will result in ambiguous set membership.  These situations are resolved
+in the following manner:
+.TP
+1.
+The Archive Set with the earliest definition in the command file is chosen.
+.TP
+2.
+Local definitions for the file system are chosen before the global
+definitions.
+.LP
+These rules imply that more restrictive Archive Set definitions should
+be closer to the beginning of the command file.
+.LP
+It is also possible to use the same Archive Set name for several different
+file characteristics.  An example would assign files that are owned by
+several users into a single Archive Set.
+.LP
+Assigning files to a special archive set called \fBno_archive\fR prevents
+files from being archived.  This can be useful for temporary files.
+The \fBno_archive\fR archive set assignment definition must be a
+local definition to be effective.
+.LP
+The Archive Set assignments may be followed by Archive Copy definitions.
+.LP
+You can specify one or more of the following file characteristics:
+.TP
+.BI "-user " uname
+Include files belonging to user
+.IR uname .
+.TP
+.BI "-group " gname
+Include files belonging to group
+.IR gname .
+.TP
+.BI "-minsize " size
+Include files greater than or equal to
+.IR size .
+.I size
+may be specified with the suffices 'b', 'k', 'M', 'G', and 'T', for bytes,
+kilobytes, megabytes, gigabytes, and terabytes.
+.TP
+.BI "-maxsize " size
+Include files less than
+.IR size .
+.TP
+.BI "-name " regular_expression
+Include files with full paths that match
+.IR regular_expression .
+The regular expression is limited to 255 characters.
+.TP
+.BI "-access " age
+Include files whose access time is older than
+.IR age .
+The age may be specified with the suffixes 's', 'm', 'h', 'd', 'w' and 'y', for
+seconds, minutes, hours, days, weeks and years.
+.TP
+.B "-nftv"
+By default, the access and modification times of files are validated to
+assure that these times are greater than or equal to the file creation time,
+and less than or equal to the time at which the file is examined.  This is
+to provide proper archiving and unarchiving.
+
+For files that have been "migrated" into a directory, this may not be the
+desired behavior.  The
+.B "-nftv"
+(no file time validation) parameter may be used to prevent the validation
+of file access and modification times for files that are in the archive
+set defined by these definitions.
+.TP
+.BI "-after " date_time
+Include files that have been created or modified since
+.IR date_time .
+.I date_time
+is in the form "YYYY-MM-DD[Thh:mm:ss][Z]" (ISO 8601 format).
+
+If the time portion is not specified, 'Thh:mm:ss' missing, it is assumed
+to be 00:00:00.
+If the 'Z' is present,
+.I date_time
+is UTC, otherwise it is local.
+
+Examples:
+ 2005-10-08T12:15:47
+ 2005-10-08
+ 2005-10-08T17:15:47Z
+.TP
+.B Example:
+When controlling archiving for a specific file system (using the 
+.BR "fs " =
+.I fsname
+directive), directives local to the file system level are evaluated before the
+global directives.  Thus, files may be assigned to a local archive set
+(including the 
+.B no_archive 
+archive set) instead of being assigned to a
+global archive set.  This has implications when setting global archive
+set assignments such as 
+.BR no_archive .
+.RS
+.LP
+Assume, for example, the following 
+.B archiver.cmd
+segment:
+.PP
+.nf
+.ft CO
+no_archive . -name .*\\.o$
+fs = samfs1
+allfiles   .
+    1   10s
+fs = samfs2
+allfiles   .
+    1   10s
+.ft
+.fi
+.PP
+At first look it appears that the administrator
+intended not to archive any
+of the
+.B .o
+files in both file systems.  However, since the local archive
+set assignment
+.B allfiles
+is evaluated prior to the global archive set assignment
+.BR no_archive ,
+the
+.B .o
+files in in both file systems are archived.
+.LP
+To ensure that no
+.B .o
+files are archived, the following segment would be used:
+.PP
+.nf
+.ft CO
+fs = samfs1
+no_archive . -name .*\\.o$
+allfiles   .
+    1   10s
+fs = samfs2
+no_archive . -name .*\\.o$
+allfiles   .
+    1   10s
+.ft
+.fi
+.SH SETTING FILE ATTRIBUTES
+The following directives are available to set file attributes:
+.TP
+.BI "-release " attributes
+Set the release attributes (see
+.BR release (1))
+for all files matching the file characteristics
+on this Archive Set definition.
+.I attributes
+may be any of 'a' always, 'd' reset to default, 'n' never, 'p' partial
+or 'sxx' partial size 'xx'.  
+.TP
+.BI "-stage " attributes
+Set the stage attributes (see
+.BR stage (1))
+for all files matching the file characteristics
+on this Archive Set definition.
+.I attributes
+may be any of 'a' associative, 'd' reset to default, or 'n' never.  
+
+.LP
+.SH ARCHIVE COPY DEFINITIONS SECTION
+.sp
+The Archive Copy definitions determine when the archive copies are made for
+the files matching file characteristics.
+These definitions consist of lines beginning with a digit.  This digit 
+is the copy number.
+.LP
+The first fields after the copy number are the option flags as described below:
+.TP
+.B -release
+This causes the cache disk space for the files to be released immediately after
+the copy is made.
+.TP
+.B -norelease
+This flag may be used to prevent automatic release of cache disk space until
+all copies marked with this flag are made.  The 
+.B -norelease 
+option makes the 
+archiver set eligible to be released after all copies have been archived, but 
+the files will not be released until the releaser is invoked and selects them
+as release candidates. Using this flag on just one copy will have no effect on 
+automatic release.
+.LP
+The combination of
+.B -release
+and
+.B -norelease
+will cause the archiver to release the file when all the copies having
+this combination are made. With this usage, the archive set is released
+immediately, rather than waiting for the releaser to be invoked, as is the
+case with the
+.B -norelease
+option alone.
+
+If the 
+.B -release
+option is used on a copy that does not have the 
+.B -norelease
+option set, the file will get released when that copy is made, overriding the
+effect of any
+.B -norelease
+usage on other copies.
+.LP
+The next field is the Archive Age of the file when the archive copy is made.
+The age may be specified with the suffixes 's', 'm', 'h', 'd', 'w' and 'y', for
+seconds, minutes, hours, days, weeks and years.  The default Archive Age is
+4 minutes.
+.LP
+The next field is the Archive Age of the file when the copy is unarchived.
+The default is to never unarchive the copy.
+.sp
+.LP
+.SH ARCHIVE SET COPY PARAMETERS SECTION
+.sp
+Archive Set parameters may be set after all Archive Sets are defined.  The
+beginning of this section is noted by the directive
+.BR params .
+The section is ended by the end of the archiver command file or the directive
+.BR endparams .
+.LP
+Setting an archive set parameter requires at least three fields:  the
+Archive Set Copy, the parameter name and the parameter value.
+.LP
+The Archive Set Copy is the Archive Set name and copy number separated
+by '.'.
+.LP
+Parameters may be set for all archive sets by using the pseudo Archive Set Copy
+.B allsets
+for the directive.  If the 
+.B allsets
+is specified without a copy number, the parameters apply to all Archive Set
+Copies.  If specified with a copy number, the parameters apply to only those
+Archive Set Copies with the same copy number.  All
+.B allsets
+directives must occur before those for any actual Archive Set Copies.
+.LP
+Note:  All parameter default values are 0 or
+.B none
+unless otherwise specified.
+.TP
+Example:
+.ft CO
+allsets -sort path
+.br
+allsets.1 -drives 3
+.br
+allsets.2 -drives 2
+.br
+.ft
+.PP
+.RS
+All Archive Set Copies are assigned the \%\fB\-sort\ path\fR
+parameter.  All Archive Set Copy 1 will use 3 drives.
+All Archive Set Copy 2 will use 2 drives.
+.RE
+.PP
+If an archive copy of a file is being rearchived, an internal Archive Set
+Copy is used for scheduling the archive operation.  It is called a Rearchive
+Set Copy, and uses the archive parameters from the actual Archive Set Copy.
+If desired, the Archive Set parameters may be set using the Archive Set
+Copy name followed by the character 'R'.  The Rearchive Set Copy allows
+the users to differentiate 'new' and rearchive operations, and use different
+parameters for each operation.
+.TP
+Example:
+.ft CO
+archset.2 -drives 3
+.br
+archset.2R -drives 1 -priority -1000
+.br
+.ft
+.PP
+.RS
+All 'new' archive copies are written using up to 3 drives.  Rearchive 
+copies are limited to 1 drive, and have a lower priority than the 'new'
+copies.
+.RE
+.PP
+In addition, the
+.BI allsets. copy
+forms may be used.  (For example,
+.BI allsets. copy R)
+.LP
+.LP
+.SS Archive Set Copy Parameters - General
+The general archive set copy parameters are as follows:
+.TP
+.BI "-archmax " target_size"
+Set the Archive File maximum size for this Archive Set to
+.IR target_size .
+Files to be archived will be placed on the media in a single Archive File of
+length less than or equal to
+.IR target_size .
+If a single file is greater than
+.IR target_size ,
+then this restriction does not apply.
+.RS
+.LP
+If not specified, the
+.B archmax
+value for the media is used.
+.RE
+.TP
+.BI "-bufsize = " buffer_size
+Set the archive buffer size to
+.IR buffer_size " *"
+.BR dev_blksize .
+The default \fIbuffer_size\fR is 16.
+Valid values are 2 through 8192.
+.RS
+.LP
+If not specified, the default
+buffer size value for the media is used.
+This directive can also be specified as a global directive.
+For more information on specifying an archive buffer size, see
+the \fBbufsize = \fImedia buffer_size \fR[\fBlock\fR] directive
+described on this man page in the GENERAL DIRECTIVES section.
+.RE
+.TP
+.BI "-directio " state
+Set the file reading method for archival.
+.I state
+may be "\fBon\fR" or "\fBoff\fR".  
+The reading performance of files for archival can be changed by using
+this parameter.  If users are not reading files at the same time that
+they are being archived, then selecting
+.B on
+allows the archiver to read the file without using the system buffer
+cache and using pages that users might need.  In the event that users are
+reading files while they are being archived, then
+.B off
+may be a better choice because the system buffer cache will provide data
+to the user and the archiver.  The default is
+.BR on .
+.RE
+.TP
+.BI "-disk_archive " diskvol (Obsolete)
+Defines a disk archive set.  This parameter is obsolete.
+Disk archive sets should be defined in the VSN associations or VSN
+pool definitions section.
+For more information on disk archiving, see
+the \fISun StorEdge SAM Storage and Archive Management Guide\fR.
+.RS
+.LP
+All of the other Archive Set parameters work with disk archiving except:
+.BR -fillvsns ,
+.B -ovflmin
+.IR minimum_size ,
+.B -reserve
+.IR method ,
+.BR -tapenonstop .
+None of these cause an error if applied to an Archive Set that is assigned to disk archiving.
+.RE
+.TP
+.BI "-drivemax " max_size
+Set the multiple drives maximum size for this Archive Set to
+.IR max_size .
+When the
+.B "-drives"
+parameter is selected, the amount of data selected to be archived to each
+drive will be limited to
+.IR max_size .
+Using this parameter can result in better drive utilization, because
+drives can take different amounts of time to archive files.
+.RS
+.LP
+The default is to not have this parameter set.
+.RE
+.TP
+.BI "-drivemin " min_size
+Set the multiple drives minimum size for this Archive Set to
+.IR min_size .
+When the
+.B "-drives"
+parameter is selected, multiple drives will be used only if more than
+.I min_size
+data is to be archived at once.  The number of drives to be used in parallel
+will be the lesser of
+.I "total_size / min_size"
+and the number of drives specified by
+.BR "-drives" .
+.RS
+.LP
+The default value is
+.BR archmax .
+.RE
+.TP
+.BI "-drives " number
+Set the maximum
+.I number
+of drives to use when writing the archive images for this Archive Set Copy to
+removable media.
+.RS
+.LP
+Segments are striped across the specified
+.I number
+of drives. The segments
+are separated into 
+.I number
+archive files.
+.TP
+Example:
+.ft CO
+set_name.3 -drives 3
+.ft
+.LP
+Allows the archiver to use up to 3 drives for archiving files in the 
+archive set named
+.IR set_name.3 .
+.LP
+If not specified, one drive will be used.
+.RE
+.TP
+.B "-fillvsns" "[" minfill "]"
+The default action of the archiver is to utilize all volumes associated with
+an Archive Set for archiving.  When a group of files is to be archived
+at the same time, a volume with enough space for all the files will be selected
+for use.  This action may cause volumes to not be filled to capacity.
+.RS
+.LP
+Selecting this parameter causes the archiver to attempt to fill volumes by
+separating the group of files into smaller groups.  
+.LP
+The optional
+.I minfill
+parameter specifies the minimum free space that a volume must have in order to
+be included in the above calculation. 
+.I minfill
+is specified as a file size.
+.TP
+Example:
+.ft CO
+-fillvsns 1G
+.LP
+Volumes will be filled until they have less than 1G free space, after which 
+they are considered full.
+.ft
+.RE
+.TP
+.B "-lock"
+Lock the archive copy buffer for the duration of
+the \fBsam-arcopy\fR(1M) operation.
+The \%\fB-lock\fR directive is effective only if direct I/O is enabled for
+the file being archived.
+If not specified, the file system controls the locks on the archive
+copy buffer.  By default, this directive is disabled.
+.RS
+.LP
+This directive can also be specified as a global directive.
+For more information on controlling the archive buffer locks, see
+the \fBbufsize = \fImedia buffer_size \fR[\fBlock\fR] directive
+described on this man page in the GENERAL DIRECTIVES section.
+.RE
+.TP
+.BI "-offline_copy " method
+This parameter specifies the method to be used for archiving files that are
+offline at the time archival is to be made.
+.RS
+.LP
+For selecting the desired offline file archiving method,
+.I method
+may be:
+.TP 8
+.B none
+Files are staged as needed for each archive tar file before copying to the
+archive volume.
+.TP
+.B direct
+Direct copy.
+Copy files directly from the offline volume to the archive volume without using
+the cache.  Source volume and destination volume are different and two drives
+are available.  For best performance in this mode, you should increase
+the file system mount parameter "stage_n_window" from its default of
+256k.
+.TP
+.B stageahead
+Stage the next archive tar file while the current archive tar file is written to the
+destination. With this method, one archive tar file is created on one tape 
+drive (or disk archive) while the offline files needed to create the next 
+archive tar file are being staged from another tape drive (or disk archive). 
+Two drives are available and room is available on cache for
+all files in one archive tar file.
+.TP
+.B stageall
+Stage all files before archiving.  Use only one drive, and room is available
+on cache for all files.
+.RE
+.TP
+.BI "-ovflmin " minimum_size
+Set the minimum size of a file that will require more than one volume in this
+Archive Set to
+.IR minimum_size .
+Files to be archived that are smaller than this size will be placed on only a
+single volume of the media.  Files that are this size or larger will be allowed
+to overflow one volume to at least one additional volume.
+.RS
+.LP
+If not specified, the
+.B ovflmin
+value for the media will be used.
+.RE
+.LP
+.TP
+.BI "-rearch_stage_copy " copy_number
+Use
+.I copy_number
+for staging an offline copy when rearchiving the copy defined by the
+Archive Set.  By default, the file will be staged from the copy being
+rearchived.  This option can be used if the copy being rearchived is not
+available or
+.I copy_number
+is located on a faster media.
+.TP
+\fB-reserve [ \fBset\fP | \fBdir\fP | \fBuser\fP | \fBgroup\fP | \fBfs\fP ]
+.br
+This parameter specifies that the volumes used for archiving
+files in this Archive
+Set are "reserved".  If this option is not used, Archive Sets are mixed on the
+media specified.  This option specifies that each archive set
+has unique volumes.
+A so-called "ReserveName" is assigned to volumes as they are selected for use by
+the Archive Set.  The ReserveName has three components:  Archive Set, Owner,
+and file system.  The keyword
+.I set
+activates the Archive Set.  The keyword
+.I fs
+activates the file system component.
+.RS
+.LP
+The keywords
+.BR dir ,
+.BR user ", and "
+.B group 
+activate the Owner component.  These three are mutually exclusive.  The Owner
+component is defined by the file being archived.
+.LP
+The
+.I dir
+keyword uses the directory path component immediately following the path
+specification of the Archive Set description.
+.LP
+The
+.I user
+keyword selects the user name associated with the file.
+.LP
+The
+.I group
+keyword selects the group name associated with the file.
+.RE
+.TP
+.BI "-rsort " method
+.TP
+.BI "-sort " method
+Files in the Archive Set may be sorted according to
+.I method
+before being archived.  The effect of the sort is keep files together according
+to the property associated with the method.
+If no method is specified, path sorting is performed.  If
+.B -rsort
+is used, the sort is performed reversing the order specified by
+.IR method .
+.RS
+.LP
+For selecting the sort,
+.I method
+can be one of the following:
+.TP 8
+.B age
+Sort each Archive File by ascending modification time.
+The oldest files are archived first.
+.TP
+.B none
+No sorting of the Archive File is performed.  Files are archived in the
+order encountered on the file system.
+.TP
+.B path
+Sort each Archive File by the full pathname of the file.  This method will
+keep files in the same directories together on the archive media.
+.TP
+.B priority
+Sort each Archive File by descending archive priority.  The
+higher priority files are archived first.
+.TP
+.B size
+Sort each Archive File by ascending file size.
+The smallest files are archived first.  The largest files are
+archived last.
+.RE
+.TP
+.BI "-tapenonstop"
+When files are archived to tape, the default writing mechanism closes the
+removable media tape file in between each Archive File.  This action causes
+the tape subsystem to write a TapeMark followed by an EOF1 label and two
+TapeMarks.  Before another Archive File can be written, the tape must be
+positioned backwards over the EOF1 label.
+.RS
+.LP
+Using the
+.B tapenonstop
+parameter causes the archiver to not close the removable media tape file
+between each Archive File, and write a Tape Mark to separate the Archive Files.
+This speeds writing Archive Files to tape.  The tape cannot be unloaded in
+between Archive Files.
+.SS Archive Set Copy Parameters - Priority
+.PP
+The following parameters allow you to configure a priority system
+for archiving files.  In the following priority parameters, the
+.IR value s
+are \%floating-point numbers such that
+.br
+\%\fB-3.400000000E+38\fR \(<= \fIvalue\fR \(<= \fB3.402823466E+38\fR.
+.TP
+.BI "-priority age " value
+Set the "Archive Age" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority archive_immediate " value
+Set the "Archive immediate" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority archive_overflow " value
+Set the "Multiple archive volumes" property multiplier for files in this
+Archive Set to
+.IR value .
+.TP
+.BI "-priority archive_loaded " value
+Set the "Archive volume loaded" property multiplier for files in this
+Archive Set to
+.IR value .
+.TP
+.BI "-priority copy1 " value
+Set the "Copy 1" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority copy2 " value
+Set the "Copy 2" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority copy3 " value
+Set the "Copy 3" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority copy4 " value
+Set the "Copy 4" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority copies " value
+Set the "Copies made" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority offline " value
+Set the "File off line" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority queuewait " value
+Set the "Queue wait" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority rearchive " value
+Set the "Rearchive" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority reqrelease " value
+Set the "Required for release" property multiplier for files in this
+Archive Set to
+.IR value .
+.TP
+.BI "-priority size " value
+Set the "File size" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority stage_loaded " value
+Set the "Stage volume loaded" property multiplier for files in this Archive Set to
+.IR value .
+.TP
+.BI "-priority stage_overflow " value
+Set the "Multiple stage volumes" property multiplier for files in this Archive Set
+to
+.IR value .
+.LP
+.RE
+.SS Archive Set Copy Parameters - Scheduling
+As files are identified to be archived, they are placed in a list known
+as an \fIArchive Request\fR.  The Archive Request is scheduled for
+archival at the end of a file system scan.  The following archive set
+parameters control the archiving workload
+and assure timely archival of files:
+.TP
+.BI "-queue_time_limit " time
+Set the schedule queue time limit for the Archive Request to
+.IR time .
+At the end of the time limit, a notification message will be sent once to
+alert monitoring entities that the ArchReq has been in the schedule queue
+longer than the time limit.
+.TP
+.BI "-startage " time
+Set the interval between the first file to be archived in the Archive Request
+and the start of archiving to
+.IR time .
+This allows time to accumulate archival work after the first file has
+been scheduled for archival. The default is set to two hours.
+.TP
+.BI "-startcount " count
+Set the start archiving file count to
+.IR count .
+When
+.I count
+files have been identified for archival in the Archive Request, the 
+archival operation begins.
+The default is set to 500,000.
+.TP
+.BI "-startsize " size
+Set the minimum total size of all files to be archived after the first file
+to be archived in the Archive Request to
+.IR size
+(in bytes).  This allows the accumulation of archival work to be based on
+the total size of the files that have been scheduled for archival.
+The default is set to
+90% of the \fR-archmax\fR value.
+.PP
+If more than one of \fB-startage\fR, \fB-startcount\fR,
+or \fB-startsize\fR are specified, the first condition
+encountered starts the archival operation.
+.PP
+If neither \fB-startage\fR, \fB-startcount\fR, nor \fB-startsize\fR
+are specified, the archive request is scheduled based
+on the \fBexamine=\fImethod\fR directive, as follows:
+.TP 3
+\(bu
+If \fBexamine = scan | scaninodes | scandirs\fR, the archive request
+is scheduled for archiving after the file system scan.  Note
+that \fBexamine = noscan\fR is the default.
+.TP
+\(bu
+If \fBexamine = noscan\fR, the default values are as follows:
+ \fBstartage\fR 2 hours
+ \fBstartcount\fR 500,000
+ \fBstartsize\fR 90% of archmax
+.RE
+.PP
+The \fB-startage\fR, \fB-startcount\fR, and \fB-startsize\fR directives
+optimize archive timeliness versus archive work done.
+These values override the \fBexamine=\fImethod\fR specification, if any.
+.PP
+Example 1.  If it takes an hour to create files for an Archive Set
+that uses \fB-sort path\fR, then you can specify \fB-startage 1h\fR
+ensure that all files are created before scheduling the Archive Request.
+.PP
+Example 2.  You can specify \fB-startsize 150G\fR to direct the
+archiver to wait until 150 gigabytes of data
+are ready to be archived in an Archive Set.
+.PP
+Example 3.  If you know that 3000 files will be generated for
+archival, then specify \fB-startcount 3000\fR to ensure that
+the files get archived together.
+.LP
+.SS Archive Set Copy Parameters - Recycling
+The following archive set parameters control recycling by archive set.
+If none of the following parameters are set for an archive set
+and the name of the archive set is not specified on the recycler's
+command line,
+the archive set will not be recycled.
+Volumes which comprise
+that archive set (unless also assigned to other archive sets) could 
+be recycled as part of recycling the library which contains them.
+.TP
+.BI "-recycle_dataquantity " size
+This option sets a limit of
+.I size
+bytes on the amount of data
+the recycler will schedule for rearchiving so as to clear volumes of
+useful data.  Note that the actual number of volumes selected for 
+recycling may also be dependant on the
+.B -recycle_vsncount
+parameter.
+The default is 1 gigabyte (1G).
+.TP
+.BI "-recycle_hwm " percent
+This option sets the high water mark (hwm) for the archive set.
+The hwm is expressed as a percentage of the total capacity of the
+volumes associated with the archive set.  When the utilization of those
+volumes exceeds
+.IR percent ,
+the recycler will begin to recycle the
+archive set.  
+The default is 95%.
+This option is ignored for disk media recycling.
+.TP
+.BI "-recycle_ignore "
+This option inhibits the recycler from recycling this archive set.
+All recycling processing occurs as usual, except any media selected
+to recycle are not marked "recycle".  This allows the recycler's
+choice of media to recycle to be observed, without actually recycling
+any media.  
+.TP
+.BI "-recycle_mailaddr " mail-address
+This option specifies an email address to which informational
+messages should be sent when this archive set is recycled.  
+The default is not to send any mail.
+.TP
+.BI "-recycle_mingain " percent
+This option limits selection of volumes for recycling to those which
+would increase their free space by
+.I percent
+or more.  Volumes
+not meeting the mingain parameter are not recycled.  
+The default is 50%.
+.TP
+.BI "-recycle_vsncount " count
+This option sets a limit of
+.I count
+on the number of volumes
+the recycler will schedule for rearchiving so as to clear volumes of
+useful data.  Note that the actual number of volumes selected for 
+recycling may also be dependant on the -recycle_dataquantity parameter.
+The default is 1.
+This option is ignored for disk media recycling.
+.TP
+.BI "-recycle_minobs " percent
+This option is used to set a threshold for the recycler's rearchiving process.
+When the percentage of obsolete files within an archived tar file on the 
+disk reaches
+this threshold, the recycler begins moving the valid files from the archive
+into a new tar file. Once all of the valid files have been moved,
+the original tar file is marked as a
+candidate to be removed from the disk archive.
+This option is ignored for removable media recycling.
+The default is 50%.
+.TP
+.BI "-unarchage " time_ref"
+Set the Unarchive Age computation time reference for this archive set to
+.IR time_ref .
+The age of the files will be computed for unarchiving a copy from this time
+reference.
+For selecting the desired time reference,
+.I time_ref
+may be:
+.br
+.TP
+.B access
+The age of files for unarchiving a copy is computed from the access time of the
+file.
+.TP
+.B modify
+The age of files for unarchiving a copy is computed from the modification
+time of the file.
+
+The default
+.I time_ref
+is
+.BR access .
+.RE
+.RE
+.SS VSN POOL DEFINITIONS SECTION
+Collections of volumes may be defined in this section.  The beginning
+of the section is noted by the directive
+.BR vsnpools .
+The section is ended by the end of the archiver command file or the directive
+.BR endvsnpools .
+.LP 
+A VSN pool definition requires at least three fields:  the pool name,
+the media type, and at least one VSN.
+.LP 
+The media type is the two character mnemonic as described in the
+.BR mcf (5)
+man page.
+The dk or cb identifiers can be used to define a disk archive set.
+For more information on disk archiving, see
+the \fISun StorEdge SAM Storage and Archive Management Guide\fR.
+.LP 
+VSNs are regular expressions as defined in
+.BR regcmp (3C).
+.SS VSN ASSOCIATIONS SECTION
+VSN associations are defined after all archive sets are defined.  The beginning
+of the section is noted by the directive
+.BR vsns .
+The section is ended by the end of the archiver command file or the directive
+.BR endvsns .
+.LP
+A VSN association requires at least three fields:  the Archive Set Copy,
+the media type, and at least one VSN.
+.LP
+The Archive Set Copy is the Archive Set name and copy number separated
+by '.'.
+.LP
+VSN associations may be set for all archive sets by using the pseudo Archive
+Set Copy
+.B allsets
+for the directive.  If the 
+.B allsets
+is specified without a copy number, the VSNs apply to all Archive Set
+Copies.  If specified with a copy number, the VSNs apply to only those
+Archive Set Copies with the same copy number.  All
+.B allsets
+directives must occur before those for any actual Archive Set Copies.
+.LP
+If an archive copy of a file is being rearchived, the Rearchive Set Copy
+uses the VSN associations from the actual Archive Set Copy.
+If desired, the VSN associations may be set using the Archive Set
+Copy name followed by the character 'R'.  The Rearchive Set Copy allows
+the users to differentiate 'new' and rearchive operations, and use different
+VSNs for each operation.
+.LP
+.LP
+The media type is the two character mnemonic as described in the
+.BR mcf (5)
+man page.
+.LP
+VSNs are regular expressions as defined in
+.BR regcmp (3C).
+or VSN pool denoted by the option name
+.BI -pool " vsn_pool_name"
+.LP
+Each VSN on a vsns line is used without leading or trailing spaces as input
+to
+.BR regcmp (3C).
+The compiled form is saved with the Archive Set Copy
+definition.  When a volume is needed for an Archive Set Copy, each VSN of
+each library or manual drive that has sufficient space and is allowed to
+be used for archives, is used as the "subject" argument to
+.BR regex (3C).
+The archive set copy vsn expressions are used as the "re" argument to
+.BR regex (3C).
+If
+.BR regex (3C)
+returns with a successful match, the volume is used for the archive set copy.
+.TP
+Example:
+.ft CO
+set_name.3 mo optic.*
+.ft
+.LP
+Assigns all files in
+.I set_name.3
+to the
+.I mo
+media with VSNs beginning with
+.IR optic .
+.LP
+VSN associations may be defined for all archive sets by using the pseudo
+Archive Set Copy
+.B allsets
+for the directive.  If the 
+.B allsets
+is specified without a copy number, the VSN associations apply to all Archive
+Set Copies.  If specified with a copy number, the VSN associations apply to
+only those Archive Set Copies with the same copy number.  All
+.B allsets
+directives must occur before those for any actual Archive Set Copies.
+.SH SEE ALSO
+.BR release (1),
+.BR stage (1).
+.PP
+.BR archiver (8),
+.BR archiver.sh (8),
+.BR sam-archiverd (8),
+.BR sam-arcopy (8),
+.BR sam-arfind (8),
+.BR sam-recycler (8).
+.PP
+.BR regcmp (3C).
+.PP
+.BR diskvols.conf (5),
+.BR mcf (5).

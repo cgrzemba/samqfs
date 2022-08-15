@@ -1,0 +1,154 @@
+.\" $Revision: 1.8 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH fsmgmtd 8 "25 Mar 2004"
+.SH NAME
+fsmgmtd \- Sun StorEdge File System Manager RPC API server process
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/fsmgmtd 
+.SH AVAILABILITY
+\fBSUNWfsmgr\fR
+.SH DESCRIPTION
+\fBfsmgmtd\fR is the RPC API (Application Programmer Interface)
+server process.  After the \fBSUNWsamfs\fR or \fBSUNWqfs\fR package is
+installed, this daemon must be manually started by using the
+\fBfsmadm\fR(8) utility, as follows:
+.PP
+.ft CO
+.nf
+fsmadm config -a
+.fi
+.ft
+.PP
+The preceding command starts \%\fB/opt/SUNWsamfs/sbin/fsmgmtd\fR
+and adds the following entry to \fB/etc/inittab\fR:
+.PP
+.ft CO
+.nf
+sfad:3:respawn:/opt/SUNWsamfs/sbin/fsmgmtd
+.fi
+.ft
+.PP
+To stop the \%\fBfsmgmtd\fR daemon and remove the entry from 
+\fB/etc/inittab\fR, enter the following command:
+.PP
+.ft CO
+.nf
+fsmadm config -n
+.fi
+.ft
+.PP
+After the first manual start, \fBfsmgmtd\fR is
+started by \fBinit\fR(8) from
+the following entry in \fB/etc/inittab\fR:
+.PP
+.nf
+.ft CO
+sfad:3456:respawn:/opt/SUNWsamfs/sbin/fsmgmtd   
+.fi
+.ft
+.PP
+\fBfsmgmtd\fR(8) performs the following other actions:
+.TP 3
+\(bu
+Registers the server program with \fBrpcbind\fR(8).
+.TP
+\(bu
+Initializes the \%\fBsam-mgmt\fR API library to keep track
+of changes made to the various configuration files by other
+processes.
+.TP
+\(bu
+Maintains a timestamp, which allows multiple
+clients to \%co-exist.
+.TP
+\(bu
+Keeps a check to note that
+multiple clients are modifying the configuration files and sends
+messages to indicate the same.
+.TP
+\(bu
+Initializes tracing for the daemon.
+.PP
+Tracing can be enabled by including an entry
+in \fB/etc/opt/SUNWsamfs/defaults.conf\fR.
+The following example lines enable tracing:
+.PP
+.nf
+.ft CO
+trace
+all = on                       # trace all daemons
+sam-mgmt = on                  # enable tracing for sam-mgmt
+sam-mgmt.options = all oprmsg  # trace all and oprmsg events
+sam-mgmt.size = 10M            # limit the trace file size to 10M
+endtrace
+.ft
+.fi
+.PP
+The trace file is written to \%\fB/var/opt/SUNWsamfs/trace/sam-mgmt\fR.
+For more information on tracing, see the Trace File Controls
+section in the \fBdefaults.conf\fR(8) man page.
+.PP
+The messages in the trace file convey information about the state
+and progress of the work performed by this daemon.
+The messages are primarily used by Sun engineers and support
+personnel to improve performance and diagnose problems.
+As such, the message content and format are subject
+to change with bugfixes and feature releases.  
+.PP
+The tracing mechanism is similar to the mechanism used by other
+Sun StorEdge QFS and Sun StorEdge \%SAM-FS daemons.
+To prevent the trace files from growing indefinitely, you can
+implement trace file rotation.
+For information on this, see \fBtrace_rotate\fR(8).
+You can specify that rotation be
+performed when the trace files reach a certain age and size
+in the \fBdefaults.conf\fR file.  For more information, see
+the \fBdefaults.conf\fR(5) man page.
+.PP
+You can start the \fBfsmgmtd\fR daemon at package installation
+time or manually later after the \fBSUNWsamfs\fR
+or \fBSUNWqfs\fR package is installed, by entering the following
+at the system prompt:
+.PP
+.nf
+.ft CO
+fsmadm config -a
+.ft
+.fi
+.PP
+.SH SEE ALSO
+\fBinit\fR(8),
+\fBrpcbind\fR(8),
+\fBfsmadm\fR(8),
+\fBtrace_rotate\fR(8).
+.PP
+\fBdefaults.conf\fR(5).
+
+
