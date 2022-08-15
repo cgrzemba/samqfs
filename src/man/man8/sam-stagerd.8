@@ -1,0 +1,130 @@
+.\" $Revision: 1.19 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH sam-stagerd 8 "07 Jan 2009"
+.SH NAME
+sam-stagerd \- Invokes the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS stage daemon
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/sam-stagerd\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsam-stagerd\fR process
+stages files in a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system.
+\fIStaging\fR is the process of copying a nearline or
+offline file from its archive storage back to online
+storage.
+.PP
+The Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file system staging capability allows
+you to stage files immediately, to never stage files, and
+specify other staging actions.
+The \fBsam-stagerd\fR process is initiated
+by the \fBsam-fsd\fR daemon.
+.PP
+By default, the stager uses the default behaviors described
+on the \fBstager.cmd\fR(5) man page.
+
+.SH OUTPUT FORMAT
+.LP
+The stager can produce a log file containing information about files staged.
+ Here is an example:
+
+.ft CO
+.nf
+E 2004/02/02 15:23:43 lt ST0004 d2.1 11228.7 10485760 /sam9/testa 1 124 sam root 0
+F 2004/02/03 14:37:41 lt CFX598 5410.23 15339.5 15703 /sam9/rdump 1 hm129959 other root 42
+.ft
+.TP 10
+Field
+Description
+.TP
+1
+C for stage cancel.
+.br
+E for error.
+.br
+F for stage finish.
+.br
+S for stage start.
+.TP
+2
+Date of stage action.
+.TP
+3
+Time of stage action.
+.TP
+4
+Stage media.
+.TP
+5
+VSN.  For removable media cartridges, this is the volume serial name.
+For disk archives, this is the disk volume name and tar file path.
+.TP
+6
+Physical position of start of archive file on media and file offset
+on the archive file / 512.
+.TP
+7
+Inode number and generation number.  The generation number is an additional
+number used in addition to the inode number for uniqueness since inode
+numbers get re-used.
+.TP
+8
+Length of file if written on only 1 volume. Length of section if file
+is written on multiple volumes.
+.TP
+9
+Name of file.
+.TP
+10
+Copy number being staged.
+.TP
+11
+User name of the file's owner.
+.TP
+12
+Group of the file's owner.
+.TP
+13
+User name of the requestor of the stage.
+.TP
+14
+Equipment number from the mcf of the device on which the stage occurred.
+
+.SH FILES
+If the stager command file is present
+in \fB/etc/opt/SUNWsamfs/stager.cmd\fR,
+the \fBsam-stagerd\fR process reads that file.
+.SH SEE ALSO
+\fBstage\fR(1).
+.PP
+\fBsam-fsd\fR(8).
+.PP
+\fBstager.cmd\fR(5).
+

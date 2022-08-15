@@ -387,7 +387,7 @@ The \fBsam-rpcd\fR command accepts no arguments.
 The \fBsam-rpcd\fR daemon services the requests it receives by making the
 appropriate system call on the server machine and then returning the
 output or result to the client.  For more information on this daemon,
-see the \fBsam-rpcd\fR(1M) man page.
+see the \fBsam-rpcd\fR(8) man page.
 .SS Configuring the API
 The following steps describe setting up the API server and clients.
 These steps assume that your software is properly configured and running.
@@ -410,7 +410,7 @@ The RPC program name is \fBsamfs\fR.  The name and
 number pair must be the same on the server and all clients.
 The \fB/etc/nsswitch.conf\fR file determines where you should specify
 the RPC program name and number pair.  For more information on this, see
-the \fBnsswitch.conf\fR(4) man page.
+the \fBnsswitch.conf\fR(5) man page.
 .PP
 In \fB/etc/rpc\fR (or the NIS database), add the following line:
 .PP
@@ -442,7 +442,7 @@ samrpc = off
 .ft
 .PP
 For more information about the \fBdefaults.conf\fR file, see
-the \fBdefaults.conf\fR(4) man page.
+the \fBdefaults.conf\fR(5) man page.
 .PP
 \fIStep 2:  Configure the API Client Machines\fR
 .PP

@@ -1,0 +1,141 @@
+'\" t
+.\" $Revision: 1.20 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH sefdata 5 "03 Dec 2001"
+.SH NAME
+sefdata \- Collects System Error Facility (SEF) data for \%Sun StorEdge \%SAM-FS and \%Sun \%SAM-QFS file systems
+.SH SYNOPSIS
+.nf
+\fB/var/opt/SUNWsamfs/sef/sefdata\fR
+.PP
+\fB#include "/opt/SUNWsamfs/include/sefvals.h"\fR
+.PP
+\fB#include "/opt/SUNWsamfs/include/sefstructs.h"\fR
+.fi
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBsefdata\fR file contains the data gathered from the log sense
+pages of peripheral tape devices used by Sun StorEdge \%SAM-FS
+and Sun \%SAM-QFS file systems.
+Each time the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS software
+unloads a cartridge from
+a drive, pertinent log sense pages are obtained from the device, and 
+a record is written to the \fBsefdata\fR file.  Each record consists of
+a header followed by some number of log sense pages.
+.PP
+The record header has the format of a \fBsef_hdr\fR structure.  This
+structure is defined in \fB/opt/SUNWsamfs/include/sefstructs.h\fR,
+and it has the following components:
+.PP
+.ft CO
+.nf
+struct sef_hdr {
+    uint_t      sef_magic;          /* magic # for app to sync file posn */
+    uint_t      sef_version;        /* version number */
+    uint_t      sef_size;           /* size of this record, excl. header */
+    uint16_t    sef_eq;             /* equipment number of this device */
+    char        sef_devname[128];   /* pathname of device */
+    uchar_t     sef_vendor_id[9];   /* vendor id from inquiry */
+    uchar_t     sef_product_id[17]; /* product id from inquiry */
+    uchar_t     sef_revision[5];    /* revision level from inquiry */
+    uchar_t     sef_scsi_type;      /* device type from inquiry */
+    vsn_t       sef_vsn;            /* vsn of media that was mounted */
+    time_t      sef_timestamp;      /* timestamp of this record */
+}
+.fi
+.ft
+.PP
+The fields of the \fBsef_hdr\fR structure have the following meanings:
+.TP 15
+\fBField\fR
+\fBContent\fR
+.TP
+\fBsef_magic\fR
+Has the value \fBSEFMAGIC\fR, as defined
+in \fB/opt/SUNWsamfs/include/sefvals.h\fR.
+.TP
+\fBsef_version\fR
+Has the value \fBSEFVERSION\fR, as defined
+in \fB/opt/SUNWsamfs/include/sefvals.h\fR.
+.TP
+\fBsef_size\fR
+The size of this record, excluding the header.
+.TP
+\fBsef_eq\fR
+The equipment number of the device, as configured in the \fBmcf\fR file.
+For more information, see the \fBmcf\fR(4) man page.
+.TP
+\fBsef_devname\fR
+A character string containing the path name of the device.
+.TP
+\fBsef_vendor_id\fR
+The vendor identification of the device, as obtained from inquiry.
+.TP
+\fBsef_product_id\fR
+The product identification of the device, as obtained from inquiry.
+.TP
+\fBsef_revision\fR
+The revision level of the device, as obtained from inquiry.
+.TP
+\fBsef_scsi_type\fR
+The device type, as obtained from inquiry.
+.TP
+\fBsef_vsn\fR
+Volume Serial Name (VSN) of the volume mounted in the device when the
+data was generated.
+.TP
+\fBsef_timestamp\fR
+Time that this record as written to the data file.
+.LP
+Following the header in each record is some number of log sense pages.
+Each log sense page consists of a \%SCSI-standard header followed by
+triplets of parameter codes, control values, and parameter values.
+For the exact format of the log sense pages returned by the devices in
+use at your site, consult the documentation provided with those devices.
+.SH FILES
+.TP 20
+\fBFile\fR
+\fBPurpose\fR
+.TP
+\fB/var/opt/SUNWsamfs/sef/sefdata\fR
+Contains SEF information.
+.TP
+\fB/opt/SUNWsamfs/include/sefvals.h\fR
+Contains values, such as those for \fBSEFMAGIC\fR and \fBSEFVERSION\fR.
+.TP
+\fB/opt/SUNWsamfs/include/sefstructs.h\fR
+Contains include files for the SEF header, the \%SCSI-standard
+header, and other structures.
+.SH SEE ALSO
+\fISun StorEdge \%SAM-FS Storage and Archive Management Guide\fR.
+.PP
+\fBsefreport\fR(1M),
+\fBsefsysevent\fR(4).

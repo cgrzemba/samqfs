@@ -1,0 +1,197 @@
+.\" $Revision: 1.11 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH hosts.fs.local 5 "29 Apr 2002"
+.SH NAME
+\fBhosts.fs.local\fR \- Local host information for Sun StorEdge QFS shared file systems
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/hosts.\fIfs\fB.local\fR
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+A \fB/etc/opt/SUNWsamfs/hosts.\fIfs\fB.local\fR file
+can reside on each
+host system included in the Sun StorEdge QFS shared file system.
+This file is used in conjuntion with the shared hosts
+file, which resides in the shared file system and is
+initialized by \fBsammkfs\fR(1M) from \fBhosts.fs\fR(4),
+to initialize network connections between the hosts
+of a shared file system.
+For more information,
+see the \fBhosts.fs\fR(4) and \fBsamsharefs\fR(1M) man pages.
+.PP
+The Sun StorEdge QFS shared file system daemon uses
+the \fB/etc/opt/SUNWsamfs/\fBhosts.\fIfs\fB.local\fR file
+and the shared hosts file present in the file system
+during initialization and reconfiguration to determine
+the server interfaces to which it should attempt to connect.
+Its function is to restrict the server interfaces to which each
+client connects.
+The \fIfs\fR portion of the name must be the family set name
+of the Sun StorEdge QFS shared file
+system as specified in the \fBmcf\fR file.  For more information on
+the \fBmcf\fR file, see the \fBmcf\fR(4) man page.
+.LP
+Each line in the \fBhosts.\fIfs\fB.local\fR file
+corresponds to a possible metadata server.
+Each line contains the following fields:
+.TP 15
+\fBField Number\fR
+\fBContent\fR
+.TP
+1
+The name of the host.
+This field contains the name of a potential metadata
+server host to which the local host can connect.
+This field must match the first field of the host
+in the shared hosts file.
+You can use the \fBsamsharefs\fR(1M) command to verify the content
+of the fields of the shared hosts file.
+.TP
+2
+A \%comma-separated list of host IP names or addresses.
+This should be a subset of the second field from the same hosts entry
+in the shared hosts file.
+.PP
+The \fBhosts.\fIfs\fB.local\fR file is typically generated
+by copying the shared file system's shared hosts file to
+\fB/etc/opt/SUNWsamfs/hosts.\fIfs\fR.\fBlocal\fR on each host.
+Each line referring to a non-server host is then deleted,
+and the third through fifth fields in the remaining lines
+are deleted.
+The network topology of the hosts is then examined in
+conjunction with the file, and the server interfaces that
+the local host should not attempt to connect to are removed
+from the second field.  When all of these have been removed,
+the file is written out.
+The \fBsamd\fR(1M) command is then used to cause any
+configuration changes to take effect.
+.PP
+During startup and file system reconfiguration,
+the \fBsam-sharefsd\fR(1M)
+daemon attempts to connect to the server host.
+To do this, it searches the shared hosts file for the server's
+identity, and it extracts the list of IP names and addresses from
+the server's shared hosts file entry.
+The daemon then looks up the server's name in the file system's
+local hosts file, if any.
+If a local hosts file does not exist, the daemon uses the
+list from the shared hosts file.
+If the local hosts file does exist, then the corresponding
+list of host addresses is found in the local hosts file,
+the two lists of host addresses are searched (lexically) for
+common entries, and a common list is generated.
+The ordering of the list is determined by the local hosts file
+(left-most first).
+The names or addresses in the common list are looked up and used
+to attempt to connect to the server.
+If an attempt fails, the daemon attempts using any remaining
+addresses in order until all the addresses have been tried.
+.SH EXAMPLES
+The following shared hosts configuration file supports
+a configuration in which two potential servers share a
+private interconnection and communicate to the other hosts sharing
+the file system using a separate network.  The examples in this section
+show the \fBhosts.shsam1.local\fR files that can be found on the
+various hosts.
+.PP
+.ft CO
+.nf
+#
+# shsam1 config, titan/tethys servers, mimas/dione clients
+#
+# This file goes in titan:/etc/opt/SUNWsamfs/hosts.shsam1, and
+# is used by 'mkfs -S shsam1' to initialize the FS meta data.
+# Subsequent changes to the configuration are made using
+# samsharefs(1M).
+#
+titan   titan-ge,titan.xyzco.com 1 0 server
+tethys  tethys-ge,tethys.xyzco.com 2 0
+mimas   mimas.xyzco.com 0 0
+dione   dione.xyzco.com 0 0
+.fi
+.ft
+.PP
+To ensure that \fBtitan\fR and \fBtethys\fR always
+connect to each other through
+their private interfaces, \fB\%titan-ge\fR and \fB\%tethys-ge\fR,
+each requires a \fBhosts.\fIfs\fB.local\fR(4) file.
+To achieve this, files \fBtitan:/etc/opt/SUNWsamfs/hosts.shsam1.local\fR
+and \fBtethys:/etc/opt/SUNWsamfs/hosts.shsam1.local\fR
+would contain the following lines:
+.PP
+.ft CO
+.nf
+#
+# shsam1 server local config, titan/tethys servers, mimas/dione clients
+#
+titan   titan-ge
+tethys  tethys-ge
+.fi
+.ft
+.PP
+To avoid the delays and inefficiencies of having \fBmimas\fR and \fBdione\fR
+attempt to
+connect to \fBtitan\fR and \fBtethys\fR through the inaccessible,
+private \fB\%titan-ge\fR and \fB\%tethys-ge\fR
+interfaces, \fBmimas\fR and \fBdione\fR should also have
+their own \fBhosts.\fIfs\fB.local\fR(4)
+files.  Files \fBmimas:/etc/opt/SUNWsamfs/hosts.shsam1.local\fR
+and \fBdione:/etc/opt/SUNWsamfs/hosts.shsam1.local\fR contain
+the following lines:
+.PP
+.ft CO
+.nf
+#
+# shsam1 client local config, titan/tethys servers, mimas/dione clients
+#
+titan   titan.xyzco.com
+tethys  tethys.xyzco.com
+.fi
+.ft
+.SH FILES
+.TP 20
+\fB/opt/SUNWsamfs/examples/hosts.shsam1\fR
+Contains an example of a \fBhosts.\fIfs\fR file.
+.TP 20
+\fB/opt/SUNWsamfs/examples/hosts.shsam1.local.server\fR
+.TP 20
+\fB/opt/SUNWsamfs/examples/hosts.shsam1.local.client\fR
+Contain examples of \fBhosts.\fIfs\fB.local\fR files.
+.SH SEE ALSO
+\fBsamfsck\fR(1M),
+\fBsamfsconfig\fR(1M),
+\fBsammkfs\fR(1M),
+\fBsamsharefs\fR(1M),
+\fBsam-sharefsd\fR(1M).
+.PP
+\fBhosts.fs\fR(4),
+\fBmcf\fR(4).

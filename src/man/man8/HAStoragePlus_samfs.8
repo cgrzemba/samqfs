@@ -1,0 +1,58 @@
+.\" $Revision: 1.1 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH HAStoragePlus_samfs 8 "27 Jan 2009"
+.SH NAME
+HAStoragePlus_samfs - Obtains the constituent components of a family
+set or mount point.
+.SH SYNOPSIS
+.B HAStoragePlus_samfs family_set|mount_point
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The
+.B HAStoragePlus_samfs
+is a script to obtain the constituent components
+of a single SAM-QFS family set or mount point.  It outputs the
+constituent components as a comma separated list.
+.LP
+The
+.B HAStoragePlus_samfs
+command must be run as root.
+.SH OPTIONS
+None.
+.SH EXAMPLE
+.ft CO
+.nf
+# HAStoragePlus_samfs /samfs1
+.fi
+.ft
+

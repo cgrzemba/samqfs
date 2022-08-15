@@ -1,0 +1,168 @@
+." $Revision: 1.23 $ 
+.ds ]W Sun Microsystems 
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH showqueue 8  "18 Feb 2007"
+.SH NAME
+showqueue \- Display content of an archiver queue files
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/showqueue
+.RB [ \-a ]
+.RB [ \-d ]
+.RB [ \-s ]
+.RB [ \-v ]
+.RB [ \-f ]
+.RB [ \-c ]
+.RI [ filesystem [ " archreq ..." "]]"
+
+.B /opt/SUNWsamfs/sbin/showqueue
+.RB [ \-d ]
+.RB [ \-c ]
+.RB [ \-v ]
+.BI \-q " archreq"
+
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B showqueue
+reads the archreq files named in the argument list and prints the information.
+
+If there are no names in the argument list, the scanlist and all ArchReq
+files are printed for all mounted filesystems.
+
+If there is only one name in the argument list, the scanlist and all ArchReq
+files are printed for that filesystem.
+
+Otherwise, print only the listed ArchReq files.
+.SH OPTIONS
+.TP
+.B \-a
+ArchReqs.  Print only ArchReqs.
+.TP
+.B \-c
+Use the current working directory as the base for files to display.  Without
+this option,
+.B showqueue
+uses the standard location for all archiver data (/var/opt/SUNWsamfs/archiver/fs_name).
+.TP
+.B \-d
+Debug.  Print ArchReq structure fields with no interpretation.
+.TP
+.B \-f
+Follow. If not using
+.BR \-q \,
+.B showqueue
+will not terminate after printing the requested queue information,
+but will enter an endless loop, wherein it sleeps for five seconds and then
+repeats the command.
+.TP
+.B \-q
+Print the ArchReq file
+.IR archreq .
+.I archreq
+is the actual name of the ArchReq.  This option is provided to allow the
+user to examine an ArchReq that is not under control of the archiver.  For
+instance, when the ArchReq is imported from another system.
+.TP
+.B \-s
+Scanlist.  Print only the scanlist.
+.TP
+.B \-v
+Print information about each file to be archived in the ArchReq files.
+
+.LP
+Example output for:
+.I showqueue -v samfs3
+
+.ft CO
+.nf
+showqueue -v samfs3
+Filesystem samfs3:  
+Files waiting to start:         10
+Files being scheduled:           0
+Files archiving:                 0
+Events processed:              129
+    archive             0
+    change              3
+    close              60
+    create             66
+    hwm                 0
+    modify              0
+    rearchive           0
+    rename              0
+    remove              0
+    unarchive           0
+    internal            0
+Exam list: 11 entries
+ 2007-04-11 14:41:12 Archmax
+ 2007-04-11 14:41:09 Archmax/dir1
+ 2007-04-11 14:41:10 Archmax/dir2
+ 2007-04-11 14:39:10 Archmax/dir2/file0
+ 2007-04-11 14:39:10 Archmax/dir2/file1
+ 2007-04-11 14:39:10 Archmax/dir2/file2
+ 2007-04-11 14:39:10 Archmax/dir2/file3
+ 2007-04-11 14:39:10 Archmax/dir2/file4
+ 2007-04-11 14:39:12 Archmax/dir5/file7
+ 2007-04-11 14:39:12 Archmax/dir5/file8
+ 2007-04-11 14:39:12 Archmax/dir5/file9
+
+Scan list  Examine: noscan
+  0 2007-04-12 00:00:00 background       ---- inodes
+Archive requests
+samfs1.Archmax.1.0 create 2007-04-11 14:39:09
+    files:10 space:  10.005M flags:
+    Start archive at 2007-04-11 14:40:09 | 10000 files |   10.0G bytes
+    type:f ino:1037 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file0
+    type:f ino:1038 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file1
+    type:f ino:1039 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file2
+    type:f ino:1040 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file3
+    type:f ino:1041 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file4
+    type:f ino:1042 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file5
+    type:f ino:1043 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file6
+    type:f ino:1044 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file7
+    type:f ino:1045 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file8
+    type:f ino:1046 s:0/f:0 space:   1.000M time:1176320229 priority:4000
+        Archmax/dir1/file9
+.LP
+The scanlist shows the following:
+ column
+ 1    Scanlist entry number
+ 2-3  Time to scan directory
+ 4    Archive Set if known
+ 5    Archive copies expected during scan
+ 6    Scan depth
+ 7    Directory to scan
+ 8    If present, start scan at this subdirectory

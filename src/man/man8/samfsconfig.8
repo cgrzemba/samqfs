@@ -1,0 +1,303 @@
+.\" $Revision: 1.24 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH samfsconfig 8 "24 Jun 2009"
+.SH NAME
+samfsconfig \- Recovers configuration information
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/samfsconfig\fR
+\%[\fB\-b\fR]
+\%[\fB\-d\fR]
+\%[\fB\-h\fR]
+\%[\fB\-s\fR]
+\%[\fB\-v\fR]
+\fIdevice\fR
+\%[\fIdevice\fR]
+\&...
+.SH AVAILABILITY
+.nf
+\fBSUNWqfs\fR
+\fBSUNWsamfs\fR
+.fi
+.SH DESCRIPTION
+The \fBsamfsconfig\fR utility
+opens the \fIdevice\fR(s) listed on the command line,
+attempts to read the Sun StorEdge \%QFS file system
+superblock on each,
+and generates output in a format similar to an
+editable \fBmcf\fR(5) file.
+A \fISun StorEdge \%QFS file system superblock\fR is a record that
+the \fBsammkfs\fR(8) utility writes to the beginning of every
+device in a Sun StorEdge \%QFS file system.
+This record identifies the devices to the file system.
+.PP
+By default, the output is written to \fBstdout\fR, but the
+output can be redirected to a file and edited
+to regenerate the file system portions of the \fBmcf\fR file
+in the event of a system reconfiguration or disaster.
+
+\fBsamd buildmcf\fR executes samfsconfig to build the mcf file.
+\fBsamd config\fR must be executed to reconfigure the changes
+after the \fBsamd buildmcf\fR has built the mcf file.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB\-b\fR
+Lists the size of the associated partition,
+according to its superblock, in the last output column.
+This may be useful when multiple disk partitions of different
+sizes start at the same offset.
+.TP
+\fB\-d\fR
+Generates detailed information about all the
+Sun StorEdge \%QFS
+superblocks found,
+including the content of each superblock.
+.TP
+\fB\-h\fR
+Generates a usage message and exits.
+.TP
+\fB\-s\fR
+Print the host file contents of QFS shared filesystems.
+.TP
+\fB\-v\fR
+Generates messages regarding the disposition of each \fIdevice\fR.
+.TP
+\fIdevice\fR
+One or more \fIdevice\fR identifiers from which
+configuration information is to be
+recovered.
+Use a space character to separate multiple \fIdevice\fR
+identifiers on the command line.
+.sp
+It can be desireable to save a list of \fIdevice\fR identifiers to a file
+and use this file for command line input to the program.
+.PP
+The \fBsamfsconfig\fR utility generates information about all the
+Sun StorEdge \%QFS file systems and file system components it finds.
+The file system name, creation time, generation, devices count, and
+metadata devices count are listed.
+The \fBsamfsconfig\fR utility flags irregularities as follows:
+.TP 2
+\(bu
+For any incomplete devices that have superblocks, but are in
+an file system where all the devices are not present, it prefixes
+a pound sign (\fB#\fR) to indicate problems.
+.TP
+\(bu
+For any duplicate devices that have the same superblock information
+with the same file system generation number, it prefixes a
+\%greater-than sign (\fB>\fR).
+This is common if, for instance, multiple paths exist or whole disk
+partitions are specified on the command line.
+.TP
+\(bu
+For devices, one /dev/did/dsk and the other device /dev/dsk, which have the
+the same superblock information with the same file system generation number,
+it prefixes a \%greater-than sign (\fB>\fR) for the /dev/dsk devices.
+This occurs for did file systems.
+This line is only generated when the \fB\-v\fR option is specified.
+.TP
+\(bu
+For any duplicate devices that have the same superblock information
+but have different file system generation numbers, it prefixes a
+\%less-than sign (\fB<\fR).
+This can occur if a device has been removed from the file system and a
+new device has been added to the same file system in the same ordinal
+position. Note, the file system generation
+number is incremented when a device is added to the file system.
+This line is only generated when the \fB\-v\fR option is specified.
+.SH EXAMPLES
+Example 1.
+.PP
+.nf
+.ft CO
+ceres# samfsconfig /dev/dsk/*
+#
+# Family Set 'samfs5' Created Fri Aug 29 12:05:15 2008
+# Generation 0 Eq count 7 Eq meta count 3
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        11    mm   samfs5  -
+# Ordinal 1
+# /dev/dsk/c6t600A0B80002AC18A000006A048A1A0BEd0s1    12    mr   samfs5  -
+
+#
+# Family Set 'samfs5' Created Wed Sep 17 01:56:27 2008
+# Generation 0 Eq count 7 Eq meta count 3
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        12    mm   samfs5  -
+# nodev        13    mm   samfs5  -
+# Ordinal 0
+# /dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s2    11    mm   samfs5  -
+
+#
+# Family Set 'samfs5' Created Fri Dec 19 20:17:48 2008
+# Generation 0 Eq count 2 Eq meta count 1
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        501    mm   samfs5  -
+# Ordinal 9
+
+#
+# Family Set 'samfs5' Created Tue Dec 23 16:41:07 2008
+# Generation 1 Eq count 5 Eq meta count 1
+#
+# Missing slices
+# Ordinal 0
+# /dev/dsk/c6t600A0B80002AC18A000006A048A1A0BEd0s6    501    mm   samfs5  -
+# Ordinal 1
+# /dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s6    502    mr   samfs5  -
+# Ordinal 2
+# /dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s6    503    mr   samfs5  -
+# Ordinal 3
+# /dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s6    504    mr   samfs5  -
+
+#
+# Family Set 'samfs1' Created Sat Dec 27 19:56:26 2008
+# Generation 0 Eq count 4 Eq meta count 1
+#
+# Foreign byte order (super-blocks byte-reversed).
+#
+# Missing slices
+# Ordinal 0
+# /dev/dsk/c6t600A0B80002AC18A000006A048A1A0BEd0s0    101    mm   samfs1  -
+
+#
+# Family Set 'samfs5' Created Sun Jan  4 11:15:00 2009
+# Generation 2 Eq count 7 Eq meta count 2
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        501    mm   samfs5  -
+# Ordinal 5
+# /dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s4    506    mr   samfs5  -
+# Ordinal 7
+# /dev/dsk/c6t600A0B80002AC18A000006A048A1A0BEd0s2    508    mr   samfs5  -
+
+#
+# Family Set 'stand' Created Thu Jan  8 20:23:11 2009
+# Generation 0 Eq count 1 Eq meta count 0
+#
+stand 100 ms stand -
+/dev/dsk/c6t600A0B80002AC18A000006A048A1A0BEd0s3    101    md   stand  -
+
+#
+# Family Set 'samfs6' Created Fri Jan  9 21:27:48 2009
+# Generation 0 Eq count 1 Eq meta count 0
+#
+samfs6 600 ms samfs6 -
+> /dev/dsk/c0t1d0s2    601    md   samfs6  -
+> /dev/dsk/c0t1d0s5    601    md   samfs6  -
+
+#
+# Family Set 'samfs5' Created Fri Jan  9 21:32:28 2009
+# Generation 2 Eq count 7 Eq meta count 2
+#
+samfs5 500 ma samfs5 - shared
+/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s5    501    mm   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s5    502    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s5    503    mm   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s3    504    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s3    505    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s4    506    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s4    507    mr   samfs5  -
+
+.fi
+.ft
+.PP
+Example 2.
+Another example, this from a saved list of devices:
+.PP
+.ft CO
+.nf
+ceres# samfsconfig -v `cat /tmp/dev_files`
+Device '/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s5' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s5' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s5' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s3' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s3' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s3' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s4' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s4' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s2' has a QFS superblock.
+Device '/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s4' has a QFS superblock.
+10 QFS devices found.
+#
+# Family Set 'samfs5' Created Fri Dec 19 20:17:48 2008
+# Generation 2 Eq count 7 Eq meta count 2
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        501    mm   samfs5  -
+# Ordinal 9
+< /dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s2    512    g7   samfs5  -
+
+#
+# Family Set 'samfs5' Created Sun Jan  4 11:15:00 2009
+# Generation 2 Eq count 7 Eq meta count 2
+#
+# zoned-off or missing metadata device
+#
+# Missing slices
+# nodev        501    mm   samfs5  -
+# Ordinal 5
+# /dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s4    506    mr   samfs5  -
+
+#
+# Family Set 'samfs5' Created Fri Jan  9 21:32:28 2009
+# Generation 2 Eq count 7 Eq meta count 2
+#
+samfs5 500 ma samfs5 - shared
+/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s5    501    mm   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s5    502    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s5    503    mm   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s3    504    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A000006A648A1A0F6d0s3    505    mr   samfs5  -
+< /dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s3    506    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A000006A348A1A0DAd0s4    506    mr   samfs5  -
+/dev/dsk/c6t600A0B80002AC18A0000069D48A1A0A2d0s4    507    mr   samfs5  -
+
+
+.fi
+.ft
+.SH SEE ALSO
+\fBsammkfs\fR(8)
+\fBsamd\fR(8)
+.PP
+\fBmcf\fR(5)
