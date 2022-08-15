@@ -1,0 +1,154 @@
+.\" $Revision: 1.2 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samdb.conf 5 "04 June 2008"
+.SH NAME
+samdb.conf \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS mySQL database access file
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/samdb.conf\fR
+.SH AVAILABILITY
+SUNWsamfs
+.SH "DESCRIPTION"
+.PP
+The file \fB/etc/opt/SUNWsamfs/samdb.conf\fR contains access parameters to
+the mySQL database for each SAM-FS family set.
+.PP
+Each entry is a single line of the form:
+.PP
+.nf
+\fIfamil_set_name\fR\fB:\fR\fIhost\fR\fB:\fR\fIuser\fR\fB:\fR
+\fIpassword\fR\fB:\fR\fIdatabase name\fR\fB:\fR\fIport\fR\fB:\fR
+\fB:\fR\fIclient_flag\fR\fB:\fR\fImount_point\fR
+.fi
+.PP
+where
+.sp
+.ne 2
+.mk
+\fB\fIfamily_set_name\fR\fR
+.in +16n
+.rt
+is the SAM-QFS family set name.
+.sp
+The \fBfamily_set_name\fR field must contain at least one character 
+and must not contain a colon (\fB:\fR) or a newline (\fB\en\fR)\&.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fIhost\fR\fR
+.in +16n
+.rt
+is the hostname of the mySQL database server.  It may be either a
+hostname or an IP address. If host is NULL or the string
+"\fBlocalhost\fR", a connection to the local host is assumed.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fIuser\fR\fR
+.in +16n
+.rt
+is the MySQL login ID.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fIpassword\fR\fR
+.in +16n
+.rt
+is the MySQL password corresponding with the i\fIuser\fR name.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fIdatabase_name\fR\fR
+.in +16n
+.rt
+is the MySQL database name.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fIport\fR\fR
+.in +16n
+.rt
+is the TCP/IP port being used by the SAM-QFS database server.
+If value is blank or 0, the default of 3306 is used.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fIclient_flag\fR\fR
+.in +16n
+.rt
+is the value of the client flag. See mySQL function \fImysql-real-connect()\fR
+for details.
+.sp
+.sp 1
+.in -16n
+.sp
+.ne 2
+.mk
+\fB\fImount_point\fR\fR
+.in +16n
+.rt
+the file system  mount point for this family set.
+.sp
+.sp 1
+.in -16n
+.PP
+Blank lines are treated as malformed entries and will cause consumers of the
+file to fail. 
+.SH "EXAMPLES"
+.PP
+The following is a sample \fBsamdb.conf\fR file:
+.PP
+.nf
+samfs1:db.sun.com:3ksnn64:secret:samfs1:7009::/sam/sam1
+samfs2:localhost:laura:secret:samfs2test:::/sam/sam2
+.fi
+.PP
+In the this example, two family sets are represented.  The first line
+shows \fIsamfs1\fR which
+connects to the database on \fIdb.sun.com\fR via TCP port \fI7009\fR
+with database name \fIsamfs1\fR. 
+The second line shows \fIsamfs2\fR which connects tothe database on
+\fIlocalhost\fR with database name \fIsamfs2test\fR.
+.SH "SEE ALSO"

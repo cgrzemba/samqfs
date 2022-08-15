@@ -1,4 +1,4 @@
-# $Revision: 1.10 $
+# $Revision: 1.12 $
 
 #    SAM-QFS_notice_begin
 #
@@ -30,9 +30,25 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-MAN_SRCS = media.5
+MAN_SRCS =  archiver.cmd.5 \
+	defaults.conf.5 diskvols.conf.5 ftp.cmd.5 \
+	fsalogd.cmd.5 hosts.fs.5 hosts.fs.local.5 \
+	inquiry.conf.5 mcf.5 preview.cmd.5 \
+	recycler.cmd.5 rft.cmd.5 \
+	releaser.cmd.5 samdb.conf.5 samfs.cmd.5 sefdata.5 \
+	sefsysevent.5 shrink.cmd.5
 
-MAN_RELEASED_SRCS = media.5
+MAN_RELEASED_SRCS = archiver.cmd.5 \
+	defaults.conf.5 diskvols.conf.5 ftp.cmd.5 \
+	hosts.fs.5 hosts.fs.local.5 inquiry.conf.5 \
+	mcf.5 preview.cmd.5  \
+	recycler.cmd.5 rft.cmd.5 \
+	releaser.cmd.5 samfs.cmd.5 sefdata.5 sefsysevent.5 \
+	shrink.cmd.5
+
+REM_RELEASED_SRCS = mcf.5
+
+QFS_RELEASED_SRCS = mcf.5
 
 include $(DEPTH)/mk/targets_man.mk
 

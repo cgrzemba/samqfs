@@ -110,7 +110,7 @@ on the disk.
 .sp
 By default, the minimum size of the portion retained on disk is
 controlled by the \fB\-o\ partial=\fIn\fBk\fR option on the
-\fBmount_samfs\fR(1M) command.  This amount
+\fBmount_samfs\fR(8) command.  This amount
 can be adjusted by using the \fB\-s\fR option on the \fBrelease\fR command.
 .sp
 NOTE: Even through only a portion of the file is retained on disk,
@@ -150,9 +150,9 @@ kilobytes of that disk space are retained.
 By default, the minimum \fIpartial_size\fR is 8 kilobytes,
 and the maximum \fIpartial_size\fR is 16 kilobytes or whatever the
 \fB\-o\ maxpartial=\fImaxpartial\fR
-setting is for this file system as specified on the \fBmount\fR(1M)
-command.  For more information on the \fBmount\fR(1M) command,
-see the \fBmount_samfs\fR(1M) man page.
+setting is for this file system as specified on the \fBmount\fR(8)
+command.  For more information on the \fBmount\fR(8) command,
+see the \fBmount_samfs\fR(8) man page.
 .sp
 This option cannot be specified under the following circumstances:
 .RS 10
@@ -195,4 +195,4 @@ is also specified, \fIfilename\fR arguments must appear after all
 \fBssum\fR(1),
 \fBstage\fR(1).
 .PP
-\fBmount_samfs\fR(1M).
+\fBmount_samfs\fR(8).

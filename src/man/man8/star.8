@@ -1,0 +1,352 @@
+'\" t
+.\" $Revision: 1.19 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+'\" !tbl | mmdoc
+.TH star 8 "17 Dec 2001"
+.SH NAME
+star \- Creates tape archives and adds or extract files
+.SH SYNOPSIS
+\fBstar\fR [\fIoptions\fR] \&.\&.\&. [\fIfile\fR] \&.\&.\&. 
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+This \fBman\fR(1) page describes the GNU
+version of the \fBtar\fR(1) command as extended by Sun Microsystems.
+Sun Microsystems has enhanced the \fBtar\fR(1)
+command to support the \%Sun StorEdge \%SAM-FS and \%Sun \%SAM-QFS file systems.
+The \fBstar\fR command saves many files together into a single tape
+or disk archive, and it can be used to restore individual files
+from the archive.
+.SH OPTIONS
+This command accepts options in both \%single-character and
+multicharacter equivalent option formats.
+.PP
+.SH Main Operation Mode Options
+.PD 0
+.TP 30
+\fB\-t\fR, \fB\-\-list\fR
+Lists the content of an archive.
+.TP
+\fB\-x\fR, \fB\-extract\fR, \fB\-get\fR
+Extracts files from an archive.
+.TP
+\fB\-c\fR, \fB\-\-create\fR
+Creates a new archive.
+.TP
+\fB\-d\fR, \fB\-\-diff\fR, \fB\-\-compare\fR
+Finds differences between archive and file system.
+.TP
+\fB\-r\fR, \fB\-\-append\fR
+Appends files to the end of an archive.
+.TP
+\fB\-u\fR, \fB\-\-update\fR
+Only appends files newer than the copy in archive.
+.TP
+\fB\-A\fR, \fB\-\-catenate\fR, \fB\-\-concatenate\fR
+Appends \fBtar\fR(1) files to an archive.
+.TP
+\fB\-\-delete\fR
+Deletes from the archive (not on mag tapes!).
+.PD
+.SH Operation Modifier Options
+.PD 0
+.TP 30
+\fB\-W\fR, \fB\-\-verify\fR
+Attempts to verify the archive after writing it.
+.TP
+\fB\-\-remove\-files\fR
+Removes files after adding them to the archive.
+.TP
+\fB\-k\fR, \fB\-\-keep\-old\-files\fR
+Does not overwrite existing files when extracting.
+.TP
+\fB\-U\fR, \fB\-\-unlink\-first\fR
+Removes each file prior to extracting over it.
+.TP
+\fB\-\-recursive\-unlink\fR
+Empties hierarchies prior to extracting directory.
+.TP
+\fB\-S\fR, \fB\-\-sparse\fR
+Handles sparse files efficiently.
+.TP
+\fB\-O\fR, \fB\-\-to\-stdout\fR
+Extracts files to standard output.
+.TP
+\fB\-G\fR, \fB\-\-incremental\fR
+Handles old \%GNU-format incremental backup.
+.TP
+\fB\-g\fR, \fB\-\-listed\-incremental\fR
+Handles new \%GNU-format incremental backup.
+.TP
+\fB\-\-ignore\-failed\-read\fR
+Does not exit with nonzero on unreadable files.
+.PD
+.SH File Attribute Handling Options
+.TP 30
+.PD 0
+\fB\-\-owner=\fIname\fR
+Forces \fIname\fR as the owner for added files.
+.TP
+\fB\-\-group=\fIname\fR
+Forces \fIname\fR as the group for added files.
+.TP
+\fB\-\-mode=\fIchanges\fR
+Forces (symbolic) mode \fIchanges\fR for added files.
+.TP
+\fB\-\-atime\-preserve
+Does not change access times on dumped files.
+.TP
+\fB\-m\fR, \fB\-\-modification\-time\fR
+Does not extract file modified time.
+.TP
+\fB\-\-same\-owner
+Tries extracting files with the same ownership.
+.TP
+\fB\-\-numeric\-owner
+Specifies to always use numbers for user/group names.
+.TP
+\fB\-p\fR, \fB\-\-same\-permissions, \fB\-\-preserve\-permissions\fR
+Extracts all protection information.
+.TP
+\fB\-s\fR, \fB\-\-same\-order\fR, \fB\-\-preserve\-order\fR
+Sorts names to extract to match archive.
+.TP
+\fB\-\-preserve\fR
+Same as specifying both \fB\-p\fR and \fB\-s\fR.
+.PD
+.SH Device Selection and Switching Options
+.PD 0
+.TP 30
+\fB\-f=\fIarchive\fR, \fB\-\-file=\fIarchive\fR
+Uses archive file or device \fIarchive\fR.
+The \fIarchive\fR can be \fIfile\fR, \fIhost\fB:\fIfile\fR
+or \fIuser\fB@\fIhost\fB:\fIfile\fR.
+.TP
+\fB\-\-force\-local
+Specifies that archive file is local even if has a colon.
+.TP
+\fB\-\-rsh\-command=\fIcommand\fR
+Specifies to use remote \fIcommand\fR instead of \fBrsh\fR.
+.TP
+\fB\-\fR[\fB0-7\fR][\fBlmh\fR]
+Specifies drive and density.
+.TP
+\fB\-M\fR, \fB\-\-multi\-volume\fR
+Creates/lists/extracts multivolume archive.
+.TP
+\fB\-L=\fInum\fR, \fB\-\-tape\-length=\fInum\fR
+Changes tape after writing \fInum\fR x 1024 bytes.
+.TP
+\fB\-F=\fIfile\fR, \fB\-\-info\-script=\fIfile\fR, \fB\-\-new\-volume\-script=\fIfile\fR
+Runs script in \fIfile\fR at the end of each tape (implies \fB\-M\fR).
+.TP
+\fB\-\-volno\-file=\fIfile\fR
+Uses/updates the volume number in \fIfile\fR.
+.PD
+.SH Device Blocking Options
+.PD 0
+.TP 30
+\fB\-b=\fIblocks\fR, \fB\-\-blocking\-factor=\fIblocks\fR
+Specifies \fIblocks\fR x 512 bytes per record.
+.TP
+\fB\-\-record\-size=\fIsize\fR
+Specifies \fIsize\fR bytes per record, multiple of 512.
+.TP
+\fB\-i\fR, \fB\-\-ignore\-zeros\fR
+Ignores zeroed blocks in archive (means EOF).
+.TP
+\fB\-B\fR, \fB\-\-read\-full\-records\fR
+Specifies to reblock as the file is being read (for 4.2BSD pipes).
+.PD
+.SH Archive Format Selection Options
+.PD 0
+.TP 30
+\fB\-V=\fIname_or_pattern\fR, \fB\-\-label=\fIname_or_pattern\fR
+Creates archive with volume name \fIname\fR or globbing
+pattern \fIpattern\fR at list/extract time.
+.TP
+\fB\-o\fR, \fB\-\-old\-archive\fR, \fB\-\-portability\fR
+Writes a V7 format archive.
+.TP
+\fB\-\-posix\fR
+Writes a \%POSIX-conformant archive (GNU).
+Support for POSIX is only partially implemented.
+The \fBstar\fR command cannot read, nor can it
+produce, \fB\-\-posix\fR archives.  If the \fBPOSIXLY_CORRECT\fR
+environment variable is set, GNU extensions are disallowed
+with \fB\-\-posix\fR.
+.TP
+\fB\-z\fR, \fB\-\-gzip\fR, \fB\-\-ungzip\fR
+Filters the archive through \fBgzip\fR(1).
+.TP
+\fB\-Z\fR, \fB\-\-compress\fR, \fB\-\-uncompress\fR
+Filters the archive through \fBcompress\fR(1).
+.TP
+\fB\-\-use\-compress\-program=\fIprog\fR
+Filters through \fIprog\fR (must accept \fB\-d\fR).
+.PD
+.SH Local File Selection Options
+.PD 0
+.TP 30
+\fB\-C=\fIdir\fR, \fB\-\-directory=\fIdir\fR
+Changes to directory \fIdir\fR.
+.TP
+\fB\-T=\fIname\fR, \fB\-\-files\-from=\fIname\fR
+Gets names to extract or create from file \fIname\fR.
+.TP
+\fB\-\-null\fR
+Instructs \fBstar\fR to expect file names terminated with \fBNUL\fR
+characters so \fBstar\fR can work correctly with file names that
+contain newline characters.
+Must be specified in conjunction with the \fB\-t\fR or
+the \fB\-files\-from=\fIname\fR option.
+Disables the \fB\-C\fR option.
+.TP
+\fB\-\-exclude=\fIpattern\fR
+Excludes files, given as a globbing \fIpattern\fR.
+.TP
+\fB\-X=\fIfile\fR, \fB\-\-exclude\-from=\fIfile\fR
+Excludes globbing patterns listed in \fIfile\fR.
+.TP
+\fB\-P\fR, \fB\-\-absolute\-names
+Does not strip leading slash characters (\fB/\fR) from file names.
+.TP
+\fB\-h\fR, \fB\-\-dereference\fR
+Dumps instead the files to which symlinks point.
+.TP
+\fB\-\-no\-recursion\fR
+Avoids descending automatically in directories.
+.TP
+\fB\-l\fR, \fB\-\-one\-file\-system
+Stays in local file system when creating archive.
+.TP
+\fB\-K=\fIname\fR, \fB\-\-starting\-file=\fIname\fR
+Begins at file \fIname\fR in the archive.
+.TP
+\fB\-n\fR, \fB\-\-newer_than_existing\fR
+Only restores files newer than the existing copy.
+.TP
+\fB\-N=\fIdate\fR, \fB\-\-newer=\fIdate\fR, \fB\-\-after\-date=\fIdate\fR
+Only restores files newer than \fIdate\fR.
+.TP
+\fB\-\-newer\-mtime\fR
+Compares date and time when data changed only.
+.TP
+\fB\-\-backup\fR[\fB=\fIcontrol\fR]
+Backs up before removal, chooses version control.
+You can use the \fBVERSION_CONTROL\fR environment variable or
+the \fIcontrol\fR argument to specify version control.  The possible
+values for \fIcontrol\fR are as follows:
+.RS 30
+.TP 15
+\fIcontrol\fB Values\fR
+\fBVersion\fR
+.TP
+\fBt\fR, \fBnumbered\fR
+Makes numbered backups.
+.TP
+\fBnil\fR, \fBexisting\fR
+Makes numbered if numbered backups exist, simple otherwise.
+.TP
+\fBnever\fR, \fBsimple\fR
+Specifies to always make simple backups.
+.RE
+.PP
+.TP 30
+\fB\-\-suffix=\fIsuffix\fR
+Backs up before removal.  Overrides usual suffix.
+By default, the backup suffix is a tilde character (\fB~\fR).
+You can use this option or
+the \fBSIMPLE_BACKUP_SUFFIX\fR environment variable
+to specify an alternative \fIsuffix\fR.
+.PD
+.SH Informative Output Message Options
+.PD 0
+.TP 30
+\fB\-\-help\fR
+Writes help text (which is this \fBman\fR(1) page), then exits.
+.TP
+\fB\-\-version\fR
+Writes the \fBtar\fR(1) program version number, then exits.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Lists files processed verbosely.
+.TP
+\fB\-\-checkpoint\fR
+Writes directory names while reading the archive.
+.TP
+\fB\-\-totals\fR
+Writes total bytes written while creating archive.
+.TP
+\fB\-R\fR, \fB\-\-block\-number\fR
+Shows block number within archive with each message.
+.TP
+\fB\-w\fR, \fB\-\-interactive\fR, \fB\-\-confirmation\fR
+Prompts for confirmation for every action.
+.PD
+.SH Input File Option
+.PD 0
+.TP 30
+\fIfile\fR
+The \fIfile\fR can be a file or a device.
+.PD
+.SH NOTES
+The \fBstar\fR(1) command defaults to \fB\-f\-\fR and \fB\-b20\fR.
+.sp
+Be careful when combining options.  The \fBstar\fR(1) command supports
+\%old-style tar combined options without the leading "-", e.g.
+.PP
+.ft CO
+/opt/SUNWsamfs/sbin/star tvbf 128 file
+.ft R
+.sp
+sets the blocksize to 64K and uses "file" as the archive.  However,
+.PP
+.ft CO
+/opt/SUNWsamfs/sbin/star -tvbf 128 file
+.ft R
+.sp
+sets the blocksize to "f" and uses "128" as the archive.  If you want to
+use the leading "-" you should separate the options as follows:
+.PP
+.ft CO
+/opt/SUNWsamfs/sbin/star -tv -b 128 -f file
+.ft R
+.br
+.SH SEE ALSO
+For more information about the \fBstar\fR(1) command,
+enter the following command:
+.PP
+.ft CO
+/opt/SUNWsamfs/sbin/star --help
+.ft R
+.PP
+\fBtar\fR(1)
+

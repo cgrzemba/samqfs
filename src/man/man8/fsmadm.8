@@ -1,0 +1,115 @@
+." $Revision: 1.9 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.nh
+.na
+.TH fsmadm 8  "17 Apr 2008"
+.SH NAME
+fsmadm \- Starts or stops the \fBfsmgmtd\fR daemon
+.SH SYNOPSIS
+\%\fBfsmadm\fR
+\fIaction\fR
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.PP
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBfsmadm\fR command starts up or shuts down the \fBfsmgmtd\fR
+daemon.  You can also use this command to get the status of the daemon
+and to add clients that can securely access this Sun StorEdge QFS server.
+.SH OPTIONS
+.TP
+\fBadd\fR \fIhost1[.domain1] [host2[.domain2]] ...\fR
+Adds the hosts (host1, host2, ...) to a configuration file such
+that these hosts can remotely manage the local Sun StorEdge QFS server.
+If the host is on a different domain, specify the domain
+(host-name.domain-name).  Requests from other hosts will be
+refused by the File System Manager daemon.
+.TP
+\fBlist\fR
+This will list the hosts that can currently manage the local
+Sun StorEdge QFS server.  Hosts not listed will not be able to
+manage the local Sun StorEdge QFS server via the File System Manager.
+.TP
+\fBremove\fR \fIhost1 [host2] ...\fR
+Removes the hosts (host1, host2, ...) from a configuration file such
+that these hosts can no longer manage the local Sun StorEdge QFS server
+via the File System Manager.
+.TP
+\fBstart\fR
+Starts the \%File System Manager daemon.
+Does not configure the daemon to automatically restart.
+Does not modify the \fB/etc/inittab\fR file.
+.TP
+\fBstop\fR
+Stops the \%File System Manager daemon.
+Does not modify \fB/etc/inittab\fR file.
+.TP
+\fBrestart\fR
+Restarts the \%File System Manager daemon.
+Does not modify \fB/etc/inittab\fR file.
+.TP
+\fBconfig\fR \fIarg\fR
+Configures the automatic restart feature for the \%File System Manager daemon.
+.sp
+Specify one of the following for \fIarg\fR:
+.RS 10
+.TP 10
+\fIarg\fR
+\fBAction\fR
+.TP
+\%\fB-n\fR
+Stops the \%File System Manager daemon.
+The automatic restart feature is controlled using the
+service management facility (smf(5)). See smf(5) for more information.
+.TP
+\%\fB-a\fR
+Starts the \%File System Manager daemon.
+Configures \fBinit\fR to restart the daemon every time it dies.
+The automatic restart feature is controlled using the
+service management facility (smf(5)). See smf(5) for more information.
+.RE
+.TP
+\fBstatus\fR
+Displays version and configuration information for the \%File System
+Manager daemon if the \%File System Manager daemon is running and if
+automatic restart is enabled.
+.SH FILES
+This command resides in the following location:
+.TP 30
+\fBSoftware and Package\fR
+\fBLocation\fR
+.TP
+Sun StorEdge QFS (\fBSUNWqfs\fR)
+\fB/opt/SUNWqfs/sbin/fsmadm\fR
+.TP
+Sun StorEdge \%SAM (\fBSUNWsamfs\fR)
+\fB/opt/SUNWsamfs/sbin/fsmadm\fR
+.SH SEE ALSO
+\fBinit\fR(8),
+\%\fBfsmgmtd\fR(8).
+

@@ -1,0 +1,452 @@
+.\" $Revision: 1.32 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam-archiverd 8 "07 Jan 2009"
+.SH NAME
+sam-archiverd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file archive daemon
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/sam-archiverd
+.br
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+The archiver daemon automatically archives Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS files 
+when a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file
+system is mounted.  It is started by \%\fBsam-fsd\fR, and it
+cannot be executed from
+a command line.  Directives for controlling the archiver are read from
+the archiver commands file, which is
+.BR /etc/opt/SUNWsamfs/archiver.cmd .
+This file does not have to be present for the archiver daemon to execute.
+If the
+.B archiver.cmd
+file is present, however, it must be free of errors.
+Errors in the
+.B archiver.cmd
+file prevent the archiver daemon from executing.
+If the
+.B archiver.cmd
+file is not present, all files on the file system are
+archived to the available removable media according to archiver defaults.
+.LP
+.B sam-archiverd
+executes in the directory
+.BR /var/opt/SUNWsamfs/archiver .
+This is the archiver's working directory.  Each
+.B sam-arfind
+daemon executes in a subdirectory named for the file system being archived.
+Each
+.B sam-arcopy
+daemon executes in a subdirectory named for the archive file
+(rm0 - rmxx) being archived to.
+.PP
+.SH ARCHIVING INTERNALS
+Archive Sets are the mechanism that the archiver uses to direct files
+in a
+.B samfs
+file system to media during archiving.
+
+All files in the file system are members of one and only one Archive Set.
+Characteristics of a file are used to determine Archive Set membership.
+All files in an Archive Set are copied to the media associated with the
+Archive Set.  The Archive Set name is simply a synonym for a collection of
+media volumes.
+
+Files are written to the media in an Archive File which is written in
+.B tar
+format.  The combination of the Archive Set and the
+.B tar
+format results in an operation that is just like using the command
+.B find(1)
+to select files for the
+.B tar
+command.
+
+In addition, the file system meta data, (directories, the index
+of segmented files, and the
+removable media information), are assigned to an Archive Set to be copied
+to media.  The Archive Set name is the name of the file system.
+(See \fBmcf\fR(5)).  Symbolic links are considered data files for the
+purposes of archiving.
+
+Each Archive Set may have up to four archive copies defined.  The copies
+provide duplication of files on different media.  Copies are selected
+by the Archive Age of a file.
+
+Files in an Archive Set are candidates for archival action after a period
+of time, the Archive Age, has elapsed.  
+The Archive Age of a file is computed using a selectable time reference for
+each file.  The default time reference is the file's modification time. 
+
+For processing files in archive sets with an unarchive age specified, the
+unarchive age default time reference is the file's access
+time.  But, in this case, two other conditions are recognized: 
+If the modification time is later than the access time, the
+modification time is used.  And, if an archive copy was unarchived, the
+file will be rearchived only after the file is staged from another copy, i.e
+the file was offline at the time a read access was made to the file.
+
+Since users may change these time references to values far
+in the past or future, the time reference will be adjusted by the archiver
+to keep it in the range:  creation_time <= time_ref <= time_now.
+
+.SH "Scheduling archive copies."
+
+
+.B "Finding files to archive."
+.LP
+Each file system is examined by an individual sam-arfind.  The examination is
+accomplished by one of three methods.  The method is selected by the
+.BI "examine = " method
+directive.  (See
+.BR archiver.cmd (5)).
+The examination methods are:
+.LP
+1.  Continuous archiving.  Scanning directories is performed as files and
+directories are created and changed.
+.LP
+2. The 'traditional' examination mode.  The first time that sam-arfind
+executes, all directories are recursively scanned.  This assures that
+each file gets examined.  The file status "archdone" is set if the file
+does not need archiving.  All other scans are performed by reading the
+\&.inodes file.
+.LP
+3.  Scan only the directory tree.  Recursively descend through the
+directory tree.  If a directory has the "noarchive" attribute set, it
+will not be examined.
+This allows the system administrator to identify directories that
+contain only files and sub directories that have all archive copies
+and no changes will be made to the files or sub directories.  This
+can dramatically reduce the work required to examine a file system.
+.LP
+4.  Read the .inodes file.  If an inode does not have "archdone"
+set, determine the file name and examine the inode.  If a large percentage
+of the files have status "archdone" set, this method is faster than the
+.B scandirs
+method.
+.PP
+.B "Determining the Archive Set"
+.LP
+In this step, the archiver determines the archive set to which
+the file belongs using the file properties descriptions.
+If the Archive Age of the file has been met or
+exceeded, add the file to the archive request (ArchReq) for the Archive Set.
+The ArchReq contains a 'batch' of files that can be archived together.
+For segmented files, the segment, not the entire file, is the archivable
+unit, so the properties (e.g. minimum file size) and priorities apply to
+the segment.  The ArchReq-s are files in separate directories for each
+filesystem.  I.e:
+.BI /var/opt/SUNWsamfs/archiver/ file_system /ArchReq
+.  These are binary files,
+and you can display them by using the showqueue(8) command.  An ArchReq
+is removed once the files it specifies have been archived.
+.LP
+The characteristics used for determining which Archive Set a file belongs in
+are:
+.TP
+directory path portion of the file's name
+.TP
+complete file name using a regular expression
+.TP
+user name of the file's owner
+.TP
+group name of the file's owner
+.TP
+minimum file size
+.TP
+maximum file size
+
+.LP
+If a file is offline, select the volume to be used as the source for the
+archive copy.  If the file copy is being rearchived, select that volume.
+.LP
+Each file is given a file archive priority.  The archive priority is computed
+from properties of the file and property multipliers associated with the
+Archive Set.  The computation is effectively:
+
+.ft CO
+.nf
+    ArchivePriority = sum(Pn * Mn)
+    
+    where:  Pn = value of a file property
+            Mn = property multiplier
+.fi
+.ft
+
+Most property values are 1 or 0 as the property is TRUE or FALSE.  For
+instance, the value of the property 'Copy 1' is 1 if archive copy 1 is being
+made.  The values of 'Copy 2', 'Copy 3' and 'Copy 4' are therefore 0.
+
+Others, such as 'Archive Age' and 'File size' may have values other than 0 or 1.
+
+The archive priority and the Property multipliers are floating point numbers.
+The default value for all property multipliers is 0.
+.LP
+The file properties used in the priority calculation are:
+.TP 20
+Archive Age
+seconds since the file's Archive Age time reference  (time_now - time_ref)
+.TP
+Copy 1
+archive copy 1 is being made
+.TP
+Copy 2
+archive copy 2 is being made
+.TP
+Copy 3
+archive copy 3 is being made
+.TP
+Copy 4
+archive copy 4 is being made
+.TP
+Copies made
+number of archive copies previously made
+.TP
+File size
+size of the file in bytes
+.TP
+Archive immediate
+immediate archival requested for file
+.TP
+Rearchive
+archive copy is being rearchived
+.TP
+Required for release
+archive copy is required before file may be released
+.LP
+All the priorities that apply for a file are added together. 
+The priority of the ArchReq is set to the highest file priority in the
+ArchReq.
+.br
+.po -5
+.LP
+When the filesystem scan is finished, send each ArchReq to sam-archiverd.
+
+
+.B "Composing archive requests."
+.LP
+If the ArchReq requires automatic 'owner' Archive Sets, separate the
+ArchReq by owner.
+.LP
+Sort the files according to the 'sort' method.  Sorting the files will
+tend to keep the files together in the archive files.  The default is no
+sorting so the files will be archived in the order encountered during
+the file system scan.
+.LP
+Separate the ArchReq into online and offline files.  All the online files
+will be archived together, and the offline files will be together.
+.LP
+The priority of each ArchReq created during this process is set to the highest
+file priority in the ArchReq.  Enter the ArchReq into the scheduling queue
+in priority order.
+
+
+.B "Scheduling from the queue."
+.LP
+When an ArchReq is ready to be scheduled to an sam-arcopy, the volumes are
+assigned to the candidate ArchReq-s as follows:
+.br
+.po +5
+The volume that has most recently been used for the Archive Set is used
+if there is enough space for the ArchReq.
+.LP
+If an ArchReq is too big for one volume, files that will fit on the volume
+are selected for archival to that volume.  The remaining files will be
+archived later.
+.LP
+An ArchReq with a single file that is too large to fit on one volume,
+and is larger than 'ovflmin' will have additional volumes assigned as required.
+The additional volumes are selected in order of decreasing size.  This is
+to minimize the number of volumes required for the file.
+.br
+.po -5
+.LP
+For each candidate ArchReq, compute the a scheduling priority by adding
+the archive priority to the following properties and the associated
+multipliers:
+.TP 20
+Archive volume loaded
+the first volume to be archived to is loaded in a drive
+.TP
+Files offline
+the request contains offline files
+.TP
+Multiple archive volumes
+the file being archived requires more than one volume
+.TP
+Multiple stage volumes
+the file being archived is offline on more than one volume
+.TP
+Queue wait
+seconds that the ArchReq has been queued
+.TP
+Stage volume loaded
+the first volume that contains offline files is loaded in a drive
+.LP
+Enter each ArchReq into the archive queue in priority order.
+Schedule only as many sam-arcopy-s as drives allowed in a robot or allowed by
+the Archive Set.  When all sam-arcopy-s are busy, wait for an sam-arcopy to complete.
+Repeat the scheduling sequence until all ArchReq-s are processed.
+.LP
+If the Archive Set specifies multiple drives, divide the request for
+multiple drives.
+
+
+.B "Assigning an ArchReq to an sam-arcopy."
+.LP
+Step through each ArchReq-s to mark the archive file boundaries so
+that each archive file will be less than archmax in size.  If a file is larger
+than archmax, it will be the only file in an archive file.
+
+.SH "Using priorities to control order of archiving."
+
+.PP
+By default, all archiving priorities are set to zero.  You may change the
+priorities by specifying property multipliers.  This allows you to control
+the order in which files are archived.  Here are some examples (see
+.BR archiver.cmd (5)):
+
+.PP
+You may cause the files within an archive file to be archived in priority
+order by using
+.BR "-sort priority" .
+
+.PP
+You may reduce the media loads and unloads with:
+.B "-priority archive_loaded 1" 
+and
+.BR "-priority stage_loaded 1" .
+
+.PP
+You may cause online files to be archived before offline files with:
+.BR "-priority offline -500" .
+
+.PP
+You may cause the archive copies to be made in order by using:
+.BR "-priority copy1 4000" ,
+.BR "-priority copy2 3000" ,
+.BR "-priority copy3 2000" ,
+.BR "-priority copy4 1000" .
+
+
+.SH OUTPUT FORMAT
+.LP
+The archiver can produce a log file containing information about files archived
+and unarchived.  Here is an example:
+ 
+.ft CO
+.nf
+A 2000/06/02 15:23:41 mo OPT001 samfs1.1 143.1 samfs1 6.6 16384 lost+found d 0 51
+A 2000/06/02 15:23:41 mo OPT001 samfs1.1 143.22 samfs1 19.3 4096 seg d 0 51
+A 2000/06/02 15:23:41 mo OPT001 samfs1.1 143.2b samfs1 22.3 922337 rmfile R 0 51
+A 2000/06/02 15:23:41 mo OPT001 samfs1.1 143.34 samfs1 27.3 11 system l 0 51
+A 2000/06/02 15:23:41 mo OPT001 samfs1.1 143.35 samfs1 18.5 24 seg/aa I 0 51
+A 2000/06/02 15:23:43 ib E00000 all.1 110a.1 samfs1 20.5 14971 myfile f 0 23
+A 2000/06/02 15:23:44 ib E00000 all.1 110a.20 samfs1 26.3 10485760 seg/aa/1 S 0 23
+A 2000/06/02 15:23:45 ib E00000 all.1 110a.5021 samfs1 25.3 10485760 seg/aa/2 S 0 23
+A 2000/06/02 15:23:45 ib E00000 all.1 110a.a022 samfs1 24.3 184 seg/aa/3 S 0 23
+A 2003/10/23 13:30:24 dk DISK01/d8/d16/f216 arset4.1 810d8.1 qfs2 119571.301 1136048 t1/fileem f 0 0
+A 2003/10/23 13:30:25 dk DISK01/d8/d16/f216 arset4.1 810d8.8ad qfs2 119573.295 1849474 t1/fileud f 0 0
+A 2003/10/23 13:30:25 dk DISK01/d8/d16/f216 arset4.1 810d8.16cb qfs2 119576.301 644930 t1/fileen f 0 0
+A 2003/10/23 13:30:25 dk DISK01/d8/d16/f216 arset4.1 810d8.1bb8 qfs2 119577.301 1322899 t1/fileeo f 0 0
+.fi
+.ft
+.TP 10
+Field
+Description
+.TP
+1
+A for archived.
+.br
+R for re-archived;
+.br
+U for unarchived.
+.TP
+2
+Date of archive action.
+.TP
+3
+Time of archive action.
+.TP
+4
+Archive media.
+.TP
+5
+VSN.  For removable media cartridges, this is the volume serial name.
+For disk archives, this is the disk volume name and archive tar file path.
+.TP
+6
+Archive set and copy number.
+.TP
+7
+Physical position of start of archive file on media and file offset
+on the archive file / 512.
+.TP
+8
+File system name.
+.TP
+9
+Inode number and generation number.  The generation number is an additional
+number used in addition to the inode number for uniqueness since inode
+numbers get re-used.
+.TP
+10
+Length of file if written on only 1 volume. Length of section if file
+is written on multiple volumes.
+.TP
+11
+Name of file.
+.TP
+12
+Type of the file. File is of type \fIc\fR:
+.RS
+.IP d
+directory
+.IP f
+regular file
+.IP l
+symbolic link
+.IP R
+removable media file
+.IP I
+segment index
+.IP S
+data segment
+.RE
+.TP
+13
+Section of an overflowed file/segment.
+.TP
+14
+Equipment number from the mcf of the device on which the archive copy was made.
+.SH SEE ALSO
+.BR archiver (8),
+.BR archiver.cmd (5),
+.BR sam-arcopy (8),
+.BR sam-arfind (8)

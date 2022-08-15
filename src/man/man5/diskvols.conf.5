@@ -1,0 +1,180 @@
+.\" $Revision: 1.26 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH diskvols.conf 5 "07 Feb 2007"
+.SH NAME
+diskvols.conf \- Defines disk archive volumes for Sun StorEdge \%SAM-FS or Sun \%SAM-QFS environments
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/diskvols.conf\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+A Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file can have one or more of its archive
+copies written to a
+disk archive resource.
+A \fIdisk volume\fR that represents the resource
+is stored in the inode of the archived file.
+.PP
+The disk volume configuration file, \fBdiskvols.conf\fR,
+defines the mapping between a disk volume and
+the corresponding resource.
+The \fBsam-fsd\fR daemon reads the \fBdiskvols.conf\fR file
+when the \fBsam\-fsd\fR daemon is started.  The \fBdiskvols.conf\fR file
+can be changed at any time while the \fBsam\-fsd\fR daemon
+is running.  The changes take effect when the \fBsam\-fsd\fR daemon
+is restarted
+or sent the signal SIGHUP.
+.PP
+The mappings are specified one per line.  Each line consists of two
+fields separated by white space.  Leading white space is ignored.  Everything
+after a pound character (\fB#\fR) is ignored.
+Lines can be continued by using a backslash character (\fB\e\fR) as the
+last character on the line.
+The syntax for this line is as follows:
+.PP
+\fIdisk_volume resource\fR
+.PP
+where:
+.TP 10
+\fIdisk_volume\fR
+An alphanumeric string.
+The string can contain up to 31 characters.
+.TP
+\fIresource\fR
+A resource specification in one of the following formats:
+.RS 10
+.TP 15
+\fIpathname\fR
+This format contains the path name of the disk archive directory on the local host.
+.TP
+[\fIhost\fB:\fR]\fIpathname\fR
+This format specifies the \fIhost\fR as the name of the disk archive
+server and \fIpathname\fR as the path
+name of the disk archive directory on that host.
+.TP
+stk5800 \fIhost[\fB:\fR\fIport\fR]
+This format defines a disk volume as residing on a Sun StorageTek 5800
+Storage System.
+The \fIhost\fR field contains the name or IP address
+and \fIport\fR as the port number of the Sun StorageTek 5800 Storage System.
+By default, the port number is 8080.
+.RE
+.PP
+NOTE: Extreme care must be taken when configuring disk archiving in an environment with
+multiple SAM-QFS servers. The diskvols.conf file for each SAM-QFS server must point to a unique
+set of disk volume resource specifications (disk archiving target directories). If any 
+of these are shared between different SAM-QFS servers, then running the recycler from one
+SAM-QFS server will destroy the disk archive data that is being managed by the other
+SAM-QFS server.
+.SH CLIENT DEFINITIONS SECTION
+The \fBclients\fR and \fBendclients\fR directives delimit this
+section of the \fBdiskvols.conf\fR file.
+.PP
+The client definitions section defines the trusted client systems.
+After the disk archiving server accepts a client connection,
+it verifies that the socket address belongs to a host in the
+trusted client definitions section.  If not,
+the connection is refused.
+.SH EXAMPLES
+This example shows two \fBdiskvols.conf\fR files.
+.PP
+File 1 is a \fBdiskvols.conf\fR file on client system earth
+that defines the following:
+.TP 3
+\(bu
+There is one volume serial name (VSN) for a local disk archive.
+.TP
+\(bu
+There are two remote VSNs.  Remote
+VSN \fBremote1\fR resides in \fB/quidditch\fR on the remote
+server \fBgryffindor\fR, and remote VSN \fBremote2\fR resides
+in \fB/quidditch\fR on remote server \fBravenclaw\fR.
+.TP
+\(bu
+There is one volume serial name (VSN) for a Sun StorageTek 5800 Storage System.
+.PP
+.ft CO
+.nf
+#
+# This is file /etc/opt/SUNWsamfs/diskvols.conf on local system earth
+#
+local_archive       /DiskArchive
+remote1  gryffindor:/quidditch
+remote2   ravenclaw:/quidditch
+stk_archive  stk5800 mars
+.fi
+.ft
+.PP
+File 2 is the \fBdiskvols.conf\fR file that resides on
+the server system \fBgryffindor\fR and \fBravenclaw\fR.
+Only the \fBdiskvols.conf\fR file for
+server \fBgryffindor\fR is shown.
+.PP
+.ft CO
+.nf
+#
+# This is file /etc/opt/SUNWsamfs/diskvols.conf on server system gryffindor
+#
+clients
+earth
+endclients
+.fi
+.ft
+.PP
+.SH SEE ALSO
+\fBarchiver\fR(1M),
+\fBsam-fsd\fR(1M).
+.PP
+\fBarchiver.cmd\fR(4).
+.SH WARNINGS
+If more than one SAM-FS environment is sharing a Sun StorageTek 5800 Storage
+System you must take extra care when configuring the diskvols.conf file.
+If you are running multiple connections to a Sun StorageTek 5800 Storage
+System disk archive, then the
+\fIdisk_volume\fR
+name needs to be unique across all SAM-FS environments.
+For example, stk_archive_earth on one server, stk_archive_pluto on the next server, etc.
+.PP
+.ft CO
+.nf
+#
+# This is file /etc/opt/SUNWsamfs/diskvols.conf on server earth
+#
+stk_archive_earth  stk5800 mars
+.PP
+
+#
+# This is file /etc/opt/SUNWsamfs/diskvols.conf on server pluto
+#
+stk_archive_pluto  stk5800 mars
+.fi
+.ft
+.PP
+It is important to follow this recommendation, because there is no enforcement of
+this restriction in the SAM-FS software.

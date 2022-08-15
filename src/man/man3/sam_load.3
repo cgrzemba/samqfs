@@ -56,7 +56,7 @@ or
 into device
 .I eq_number.
 The device must be in the unavailable state
-(see \fBset_state\fR(1M)) and controlled by a media changer.  If device
+(see \fBset_state\fR(8)) and controlled by a media changer.  If device
 .I eq_number
 already has media loaded, it will be unloaded and the media put away before
 the new media is loaded.
@@ -95,14 +95,14 @@ device is not ready.
 The specified
 .I eq_number
 device must be in the "unavailable" state (see
-.B set_state(1M)
+.B set_state(8)
 )
 .TP
 .SB ER_DEVICE_OFF_OR_DOWN
 The specified
 .I eq_number
 device is "off" or "down" and must be in the "unavailable" state (see
-.B set_state(1M)
+.B set_state(8)
 )
 .TP
 .SB ER_DEVICE_USE_BY_ANOTHER
@@ -188,11 +188,11 @@ cannot be found in the robotic media changer at equipment number
 .SB mcf
 The configuration file for Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file systems.
 .SH SEE ALSO
-.BR load (1M),
-.BR set_state (1M),
-.BR sam-robotsd (1M),
-.BR unload (1M).
+.BR load (8),
+.BR set_state (8),
+.BR sam-robotsd (8),
+.BR unload (8).
 .PP
 .BR sam_unload (3).
 .PP
-.BR mcf (4).
+.BR mcf (5).

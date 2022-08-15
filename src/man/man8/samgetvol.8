@@ -1,0 +1,140 @@
+'\" t
+.\" $Revision: 1.16 $
+.ds ]W Sun Microsystems
+.na
+.nh
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samgetvol 8 "14 May 2002"
+.SH NAME
+samgetvol \- Obtains disk file system storage information
+.SH SYNOPSIS
+\fBsamgetvol\fR
+\%[\fB\-h\fR]
+\%[\fB\-r\fR]
+\%[\fB\-w\fR]
+\fImntpoint\fR
+.SH AVAILABILITY
+\fBSun Microsystems Internal\fR
+.SH DESCRIPTION
+The \fBsamgetvol\fR command
+provides a test interface to the SANergy Volume Map API routine.
+The \fBsamgetvol\fR command must be run as \fBroot\fR.
+.SH OPTIONS
+This command accepts the following options:
+.TP 10
+\fB\-h\fR
+Causes \fBsamgetvol\fR to print a short usage message and exit.
+.TP 10
+\fB\-r\fR
+Causes \fBsamgetvol\fR to query the FS_GetMaxLeases API for
+the read lease period.  The result is written to the output.
+.TP 10
+\fB\-w\fR
+Causes \fBsamgetvol\fR to query the FS_GetMaxLeases API for
+the write lease period.  The result is written to the output.
+.TP
+\fImntpoint\fR
+A file system mount point.  For example, \fB/qfs1\fR.
+The \fBsamgetvol\fR program operates by calling the
+routine \fBAFS_GetVol\fR to obtain information about the file system
+mounted on \fImntpoint\fR.  The result of this operation is written
+to \fBstdout\fR.
+.SH EXAMPLES
+The following example shows output from the \fBsamgetvol\fR command:
+.PP
+.nf
+.ft CO
+ceres# samgetvol -rw /qfs1
+msgLen       =      504 [0x1f8]
+vendorStatus =        0 [0]
+VolCookie =
+                  0  0  0 20 73 56 6d 43	0  b  0  0 3a 94 59 aa
+                  0  1  4  5  0  0  0  0	0  0  3  0  2 ed a0  0
+fsType       =        3 (SPARC SAM-FS)
+system       = endian= 1/cpu= 2///os= 3/fs= 2//
+glomType     =        3 (SAM_RAID0)
+glomInfo     =    16384 [0x4000]
+nDisks       =        5 [0x5]
+blockSize    =      512 [0x200]
+
+Disk[0]
+        idOffset    =    268699648 [0x10040800]
+        blockOffset =       524800 [0x80200]
+        idLength    =           16 [0x10]
+        nBlocks     =     10486400 [0xa00280]
+        flags       = 0x2               ( META )
+        diskID:
+                 53 42 4c 4b fd 18 7e 20
+                 3a 94 59 aa  0  0  0  0
+
+Disk[1]
+        idOffset    =    268699648 [0x10040800]
+        blockOffset =       524800 [0x80200]
+        idLength    =           16 [0x10]
+        nBlocks     =     10486400 [0xa00280]
+        flags       = 0
+        diskID:
+                 53 42 4c 4b fd 18 7e 20
+                 3a 94 59 aa  0  0  0  1
+
+Disk[2]
+        idOffset    =   5637736448 [0x150090800]
+        blockOffset =     11011200 [0xa80480]
+        idLength    =           16 [0x10]
+        nBlocks     =     10486400 [0xa00280]
+        flags       = 0x1               ( STRIPE_SUB )
+        diskID:
+                 53 42 4c 4b fd 18 7e 20
+                 3a 94 59 aa  0  0  0  2
+
+Disk[3]
+        idOffset    =         2048 [0x800]
+        blockOffset =            0 [0]
+        idLength    =           16 [0x10]
+        nBlocks     =       494109 [0x78a1d]
+        flags       = 0
+        diskID:
+                 53 42 4c 4b fd 18 7e 20
+                 3a 94 59 aa  0  0  0  3
+
+Disk[4]
+        idOffset    =    253340672 [0xf19ac00]
+        blockOffset =       494802 [0x78cd2]
+        idLength    =           16 [0x10]
+        nBlocks     =       494109 [0x78a1d]
+        flags       = 0x1               ( STRIPE_SUB )
+        diskID:
+                 53 42 4c 4b fd 18 7e 20
+                 3a 94 59 aa  0  0  0  4
+
+   read lease = 30s  write lease = 30s
+.fi
+.ft
+.SH SEE ALSO
+\fBsamgetmap\fR(8),
+\fBsamunhold\fR(8).

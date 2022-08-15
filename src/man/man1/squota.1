@@ -47,7 +47,7 @@ squota \- Reports quota information
 The \fBsquota\fR command displays file, block, and quota usage statistics.
 .PP
 Only a superuser can change
-quotas (see \fBsamquota\fR(1M)).
+quotas (see \fBsamquota\fR(8)).
 .PP
 By default, \fBsquota\fR(1)
 writes the user's applicable group ID and user ID quotas and usages on
@@ -57,8 +57,8 @@ all mounted Sun StorEdge QFS and Sun StorEdge \%SAM-FS file systems to
 An admin set quota applies to a set of files and directories.  
 Typically an admin set quota could be set for a large project that involves
 users from several groups and spans several files and directories.
-The admin set IDs must be assigned using the \fBsamchaid\fR(1M) command.
-The \fBsamchaid\fR(1M) command allows a system administrator
+The admin set IDs must be assigned using the \fBsamchaid\fR(8) command.
+The \fBsamchaid\fR(8) command allows a system administrator
 to assign files and directories to individual admin sets.
 Admin set IDs are not tied to any set of permissions
 associated with the user.  That is, a user can have a set of
@@ -186,13 +186,13 @@ Group quota information
 \fIfilesystem\fB/\&.quota_u\fR
 User quota information
 .SH SEE ALSO
-\fBsamquota\fR(1M)
+\fBsamquota\fR(8)
 .PP
-\fBsamfsck\fR(1M)
+\fBsamfsck\fR(8)
 .PP
-\fBpasswd\fR(4) - User ID information
+\fBpasswd\fR(1) - User ID information
 .PP
-\fBgroup\fR(4) - Group ID information
+\fBgroup\fR(5) - Group ID information
 .PP
 .SH DIAGNOSTICS
 .TP

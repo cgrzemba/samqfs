@@ -1,0 +1,257 @@
+.\" $Revision: 1.30 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH stk 5 "02 Jun 2004"
+.SH NAME
+stk \- The StorageTek interface through ACSAPI
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.LP
+.SH DESCRIPTION
+\fBstk\fP is the Sun StorEdge \%SAM-FS and Sun \%SAM-QFS interface to the
+StorageTek libraries.
+This interface utilizes the ACSAPI interface supplied by StorageTek.
+The Sun StorEdge \%SAM-FS software package installs the libraries and daemons
+for the client side of the API.
+For more information on ACSAPI and interfacing the StorageTek libraries, see
+the documentation supplied with the StorageTek hardware and server side daemons.
+.SH CONFIGURATION
+It is assumed that the site has the server daemons (CSI and ACSLM) 
+configured and operating with the StorageTek library.
+.LP
+The \fBEquipment Identifier\fP field in the \fBmcf\fP file, (see \fBmcf\fR(4)),
+is the full path name to a parameters file used by \fBstk\fP.  This file
+consists of \fIkeyword\fR = \fIvalue\fP and \fIpath_name\fR = \fIvalue\fP pairs.
+All \fIkeyword\fP, \fIpath_name\fP, and \fIvalue\fP entries are case-sensitive.
+.LP
+The \fIkeywords\fR are:
+.TP 8
+.B access
+This is the \fIuser_id\fR used by this client
+for access control.  If this parameter is not supplied, the access control
+string will be a null string (no \fIuser_id\fR).
+.TP
+.B hostname
+This is the \fIhostname\fR for the server that is running ACSLS.  If the
+hostname is not supplied, the default will be localhost.  All sites should
+set this value.
+.TP
+.B ssihost
+This is the name used for the Sun StorEdge \%SAM-FS server when a
+multihomed Sun StorEdge \%SAM-FS server is used.
+The \fIssihost\fR would be the name of the Sun StorEdge \%SAM-FS 
+server on the lan connecting to the ACSLS host.  Only sites where a
+multihomed Sun StorEdge \%SAM-FS server
+is used need to supply an ssihost value. The default will be 
+localhost.
+.TP
+.B portnum
+This is the \fIportnum\fR for SSI services on the server that is running ACSLS.
+If the port number is not supplied, the default is 50004.  Please note
+that if you are running co-hosted ACSLS 5.3 or higher, the default value does 
+not work (try a higher port number, like 50014).  If you are running multiple
+connections to ACSLS servers, then the port number for each \fBstk\fP configuration
+file needs to be unique (for example, 50014 in one, 50015 in the next, etc.).
+.TP
+.B ssi_inet_port
+This is the fixed port number for incoming responses and specifies the port the
+SSI will use for incoming ACSLS responses in a firewall environment.
+Valid values are 1024 - 65535, and 0. Setting this environmental variable
+to a non-zero value makes the SSI use this port for incoming ACSLS responses.
+This means that the firewall needs to allow incoming requests on that port 
+in order for the ACSLS responses to be received by the SSI. Setting this
+value to zero or leaving it unset indicates that the previous behavior of
+allowing the port to be dynamically allocated will remain in effect.
+.TP
+.B csi_hostport
+This firewall environmental variable specifies the port to which the SSI 
+will send its ACSLS requests on the ACSLS server. Setting this variable 
+eliminate queries to the portmapper on the ACSLS server and instead, 
+sends requests to this port on the ACSLS server. Valid values are
+1024 - 65535, and 0. Setting this variable to zero or leaving it unset
+indicates that the previous behavior of querying the portmapper on the
+ACSLS server will continue to be used.
+.TP
+.B capid
+This specifies the CAP (Cartridge Access Port) to be used for exporting 
+of volumes when the \fI-f\fR option is used with
+export command.
+Following the \fIcapid\fP is the description of this CAP in terms of
+the StorageTek library.  This description starts with an open parenthesis
+followed by 3 \fIkeyword\fR = \fIvalue\fR pairs followed by a close parenthesis.
+The \fIkeyword\fR = \fIvalue\fR pairs between the parentheses may be separated
+by a comma (,), a colon (:) or by white space.
+.LP
+.RS
+.TP
+.B acs
+is the ACS number for this CAP as configured in the StorageTek library.
+.TP
+.B lsm
+is the LSM number for this CAP as configured in the StorageTek library.
+.TP
+.B cap
+is the CAP number for this CAP as configured in the StorageTek library.
+.LP
+.RE
+.TP
+.B capacity
+This is used to set the capacity of the media supported by the StorageTek.
+The parameter to \fBcapacity\fP is a comma separated list of
+\fIindex\fR = \fIvalue\fR pairs enclosed in parentheses.  \fIindex\fR is the index into
+the media_type file (supplied by StorageTek and located on the ACS system)
+and \fIvalue\fR is the capacity of that media type in units of 1024 bytes.
+You should only need to supply this entry if the ACS is not returning the
+correct media type or new media types have been added.
+Sun StorEdge \%SAM-FS and Sun \%SAM-QFS have defaults
+for index values that were current at the time of release.
+Generally, it is necessary to supply an \fIindex\fR only for new
+cartridge types.  For the capacity of each cartridge type, see
+the \fISun StorEdge \%SAM-FS Storage and Archive Management Guide\fR.
+.TP
+.I device_path_name
+There is one \fIdevice_path_name\fP entry
+for every drive attached to this client.  The \fIdevice_path_name\fP is the
+path to the device on the client. 
+This name must match the Equipment Identifier of an
+entry in the \fBmcf\fR file.
+Following the \fIdevice_path_name\fP is the description of this drive
+in terms of the StorageTek library.  This description starts with an open parenthesis
+followed by 4 \fIkeyword\fR = \fIvalue\fR pairs followed by a close parenthesis.
+The \fIkeyword\fR = \fIvalue\fR pairs between the parentheses may be separated
+by a comma (,), a colon (:) or by white space. Following the close parenthesis
+is an optional keyword used by Sun StorEdge \%SAM-FS and
+Sun \%SAM-QFS software to designate
+when a drive is shared with other Sun StorEdge \%SAM-FS
+and Sun \%SAM-QFS servers.
+The keyword identifiers and their meanings are as follows:
+.LP
+.RS
+.TP
+.B acs
+is the ACS number for this drive as configured in the StorageTek library.
+.TP
+.B lsm
+is the LSM number for this drive as configured in the StorageTek library.
+.TP
+.B panel
+is the PANEL number for this drive as configured in the StorageTek library.
+.TP
+.B drive
+is the DRIVE number for this drive as configured in the StorageTek library.
+.TP
+.B shared
+The shared keyword follows the close parenthesis. This keyword is optional 
+and is used to indicate the drive is shared with other
+Sun StorEdge \%SAM-FS and Sun \%SAM-QFS servers.
+.LP
+.RE
+.SH EXAMPLE
+Here is a sample parameters file and \fBmcf\fP entries 
+for a StorageTek library:
+.LP
+.RS
+.ft CO
+.nf
+#
+# This is file: /etc/opt/SUNWsamfs/stk50
+#
+hostname = acsls_server_name
+portnum = 50004
+ssi_inet_port = 0
+csi_hostport = 0
+access = some_user  # No white space allowed in the user_id field
+capid = (acs=0, lsm=1, cap=0)
+/dev/rmt/0cbn = (acs=0, lsm=1, panel=0, drive=1)         #a comment
+/dev/rmt/1cbn = (acs=0, lsm=1, panel=0, drive=2) shared  #a comment
+capacity = (0=215040, 1=819200, 5=10485760)
+.fi
+.ft
+.RE
+.LP
+The \fBmcf\fP file entries that reference this configuration file are:
+.LP
+.RS 
+.ft CO
+.nf
+#
+# Sample mcf file entries for a StorageTek library
+#
+/etc/opt/SUNWsamfs/stk50  	50  sk  sk50   - /var/opt/SUNWsamfs/catalog/sk50
+/dev/rmt/0cbn        		51  st  sk50   -
+/dev/rmt/1cbn        		52  st  sk50   -
+.fi
+.ft
+.RE
+.LP
+.SH IMPORT/EXPORT
+Since the physical adding and removing 
+of cartridges in the StorageTek library is done with
+ACSLM utilities, the \fBimport/export\fP commands and GUI buttons will only
+affect the library catalog.  The \fBimport\fP command has optional
+parameters for supplying a single volume to be added or to add a number of
+volumes from a pool 
+(see \fBimport\fR(1M)).
+\fBexport\fP (see 
+\fBexport\fR(1M)) will remove an entry from the catalog.
+.SH CATALOG
+The Sun StorEdge \%SAM-FS and
+Sun \%SAM-QFS systems automatically build a library
+catalog for a StorageTek automated library.  However, you must populate
+the library catalog.  For information on populating the library
+catalog, see the \fISun StorEdge \%SAM-FS Storage
+and Archive Management Guide\fR.
+.SH FILES
+.TP 30
+.B mcf
+The configuration file for the Sun StorEdge \%SAM-FS and Sun \%SAM-QFS software.
+.TP
+.B /etc/opt/SUNWsamfs/scripts/ssi.sh
+A shell script used to start \fBssi_so\fP.
+.TP
+.B /opt/SUNWsamfs/sbin/ssi_so
+A shared object version of the SSI daemon supplied by StorageTek.
+.TP
+.B /opt/SUNWsamfs/lib/stk/*
+The libraries needed by the API interface supplied by StorageTek.
+.TP
+.B /opt/SUNWsamfs/sbin/stk_helper
+A program to issue commands for the StorageTek ACSAPI
+.SH SEE ALSO
+.BR build_cat (8),
+.BR dump_cat (8),
+.BR export (8),
+.BR import (8),
+.BR sam-robotsd (8).
+.PP
+.BR mcf (5).
+.PP
+.BR ssi_so (8).
+.PP
+\fISun StorEdge \%SAM-FS Storage and Archive Management Guide\fR.
+

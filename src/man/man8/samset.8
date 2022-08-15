@@ -1,0 +1,343 @@
+.\" $Revision: 1.27 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH samset 8 "07 Jan 2009
+.SH NAME
+samset \- Change the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS environment
+.SH SYNOPSIS
+.B samset 
+.I [keyword
+.I [parameter...]]
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B samset
+is used to change or display variables that control Sun StorEdge \%SAM-FS 
+or Sun \%SAM-QFS operation.
+Without any arguments, \fBsamset\fP displays current settings to
+stdout.  If \fBsamset\fP is executed with a \fIkeyword\fP but with no
+\fIparameter...\fP, then the current value for just that \fIkeyword\fP is
+displayed to stdout.
+.LP
+The \fIkeywords\fP all have values assigned to them at startup.
+These values come from the \fBdefaults.conf\fP file.  \fBsamset\fP allows
+you to change \fIkeywords\fP while \%\fBsam-fsd\fR is running. 
+Any changes made
+remain effective only during the current instance of \%\fBsam-fsd\fR; values 
+revert to the defaults in \fBdefaults.conf\fP at the next startup.
+.LP
+The following \fIkeywords\fP are supported:
+.TP 10
+.B attended yes
+.TP
+.B attended no
+\fBattended\fP tells the Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+library daemon if an operator is available to manually
+mount media.  Regardless of the \fBattended\fP setting, requests for
+media which are mounted in a drive, or present in a media changer, will
+be satisfied as soon as possible.  \fBattended\fP affects the behavior
+of Sun StorEdge \%SAM-FS or Sun \%SAM-QFS library daemon
+when a medium is requested which is not currently present in
+either a manually mounted drive, or in a library.  The usual action
+taken by the library daemon when such a request occurs is to place it into the
+preview display (see \fBsamu\fP (8)), and await manual
+intervention (but see \fBstale_time\fP, below).  However, if either
+\fBattended\fP is set to \fBno\fP, or the medium is marked
+"unavailable" in the historian catalog, then the request will not go
+into the preview display, and will fail with an ESRCH error.  If other
+archive copies are available, they will be tried.  If no further copies
+are available, ENXIO will be returned to the requester.
+.TP
+.B exported_media +u \fIeq...\fP
+.TP
+.B exported_media -u \fIeq...\fP
+This option controls the flagging of media exported (see
+.BR export (8))
+from the listed libraries as unavailable (\fB+u\fP)
+or available (\fB-u\fP) in the historian's catalog.  See
+\fBattended\fP, above, for the effect of this flag.  The setting of the
+flag for a given medium may be changed after export using \fBchmed\fP.
+.TP
+.B idle_unload
+This is the time (in seconds)
+that a media changer controlled device may be idle before the media
+in that device is unloaded.  A value of zero will disable this feature.
+.TP
+.B labels \fIlabel-option\fP
+This option applies only to barcode-reader equipped tape libraries.
+
+The media daemon can obtain the tape label from the upper-cased 
+characters of the
+tape's barcode.  \fIlabel-option\fP may be: \fBbarcodes\fP, to use the
+first six characters of the barcode as label; \fBbarcodes_low\fP, to
+use the trailing six characters; or \fBread\fP, to disable barcode
+processing and to read the magnetic label from the tape.
+
+When \fBlabels\fP is set to \fBbarcodes\fP or \fBbarcodes_low\fP, any tape
+robotically mounted for a write operation that is write enabled,
+unlabeled, has never been mounted before, and has a readable barcode
+will have a magnetic label written before the write is started.
+.TP
+.B stale_time \fIminutes\fP
+Sets the amount of time (in minutes) that a request for media will wait
+in the preview table before being canceled with an ETIME.  The file
+system will react to an ETIME error in the same way as an ESRCH error
+(see \fBattended\fP, above).
+.TP
+.B timeout \fIseconds\fP
+Sets the time (in seconds) that will be allowed to elapse between I/O
+requests for direct access to removable media (see
+.BR request (1)).
+If a process fails to issue the next I/O to the device within this
+time, the device will be closed and, on the next I/O, the process will
+receive an ETIME error.  A value of 0 implies no timeout will occur.
+.TP
+.B debug
+debug manipulates the debug/trace flags within Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS
+environments to produce
+expanded logging.  Unless otherwise specified, the debug messages are
+logged to the syslog facility at the LOG_DEBUG priority.
+\fIparameter...\fP is a space separated list of flags.  To set a flag,
+give its name.  To clear a flag, give its name prefixed with a '-'.
+The flags are:
+.RS 10
+.TP 10
+.B all
+Turn on all debug flags (except trace_scsi and robot_delay).
+.TP
+.B none
+Turn off all debug flags.
+.TP
+.B default
+Set all debug flags to the default as defined by \fBdefaults.conf\fR.
+.TP
+.B logging
+File system requests to the daemons and the daemons response to the
+requests are logged to files.  These files are used only by Sun
+Microsystems support.
+.TP
+.B debug
+This is catch-all for messages that might be of interest but generally
+do not show a problem. 
+.TP
+.B moves
+Log move-media commands issued to media changers.
+.TP
+.B events
+This should only be used by Sun Microsystems analysts to trace the flow of
+events used by the media changer daemons.  These messages are coded and of
+little use in the field.  These messages are logged to syslog at
+LOG_NOTICE priority.
+.TP
+.B timing
+This setting has been replaced by the
+device log timing event
+.B devlog \fIeq [ event ...]\fR.
+This is described in more detail under the
+.B devlog
+keyword.
+.TP
+.B od_range
+For optical disk media, log the range of sectors allowed for writing.
+.TP
+.B labeling
+Log the VSN, blocksize (for tape media only), and label date when a label
+is read from a medium following the media's being mounted.  These messages are 
+logged to syslog at LOG_INFO priority.
+.TP
+.B canceled
+Log when the stage process detects a canceled stage request.
+.TP
+.B disp_scsi
+Display the current SCSI cdb being executed by a device.  This
+information is appended to any existing message.  If the length of the
+existing message and the cdb would overflow the message area, the cdb
+is not displayed.  The message area for a device can be viewed with
+samu (see
+.BR samu (8))
+in the "s" or "r" displays.
+.TP
+.B messages
+This is used by Sun Microsystems analysts to trace the flow of messages used by
+the media changer daemons.  These messages are coded and of little use
+to customers.  These messages are logged to syslog at LOG_NOTICE
+priority.
+.TP
+.B migkit
+Log events connected with the Sun Sam Migration Toolkit.
+.TP
+.B mounts
+Log media mount requests.
+.TP
+.B opens
+Log open and close of removable media devices.
+.TP
+.B trace_scsi
+This option may only be set by the super user through the samset
+command.  It causes all scsi commands issued through the user_scsi
+interface to be written to a file named /tmp/sam_scsi_trace_\fIxx\fP
+(where \fIxx\fP is the equipment number of either the media changer to
+which this device belongs or the device itself if it does not belong to
+a media changer.)  The trace file is opened with O_APPEND and O_CREAT
+on the next I/O to each device after this flag is set.  It is closed
+when the option is cleared and the next I/O to that device occurs.  Sun
+Microsystems does not recommend running with this option for long periods.  The
+format of the trace information is:
+.nf
+
+  struct {
+    int    eq;      /* equipment number */
+    int    what;    /* 0 - issue, 1 - response */
+    time_t now;     /* unix time */
+    int    fd;      /* the fd the ioctl was issued on */
+    char   cdb[12]; /* the cdb */
+    char   sense[20]; /* returned sense(valid if what=1) */
+  }cdb_trace;
+
+.fi
+Sun Microsystems does not recommend setting this option indiscriminately, as
+large output files are quickly produced.
+.TP
+.B stageall
+This should be used only by Sun Microsystems analysts to trace stageall
+processing.
+.RE
+.TP
+.B devlog \fIeq [ event ...]\fP
+devlog manipulates the device log event flags for device
+.IR eq .
+.I eq
+is either an equipment number or "all";  if "all", then the flags are
+set or listed for all devices.
+These flags control which events get written to the device log files.
+.I [ event ...]
+is a space separated list of event names.  To set an event flag,
+give its name.  To clear a flag, give its name prefixed with a '-'.
+The events are:
+.RS 10
+.TP 10
+.B all
+Turn on all events.
+.TP
+.B none
+Turn off all events.
+.TP
+.B default
+Set the event flags to the default which are: err, retry, syserr, and date.
+.TP
+.B detail
+events which may be used to track the progress of operations.
+.TP
+.B err
+Error messages.
+.TP
+.B label
+Labeling operations.
+.TP
+.B mig
+Migration toolkit messages.
+.TP
+.B msg
+Thread/process communication.
+.TP
+.B retry
+Device operation retries.
+.TP
+.B syserr
+System library errors.
+.TP
+.B time
+Time device operations.
+.TP
+.B module
+Include module name and source line in messages.
+.TP
+.B event
+Include the event name in the message.
+.TP
+.B date
+Include the date in the message.
+.RE
+.TP
+.B tapealert \fIeq [on|off|default]\fP
+tapealert allows the user to enable or disable support for device implemented
+TapeAlert.
+.RS 10
+.TP 10
+.I eq
+is either an equipment number or "all";  if "all", then the flags are
+set or listed for all devices.
+.TP
+.B on 
+Enable TapeAlert if the device supports it.
+.TP
+.B off 
+Disable requesting TapeAlert information from the device.
+.TP
+.B default
+Return TapeAlert to the factory setting.
+.RE
+.TP
+.B sef \fIeq [on|off|default] interval\fP
+sef allows the user to enable or disable support for tape drive implemented
+Log Sense delivered via sysevents.
+.RS 10
+.TP 10
+.B eq
+is either an equipment number or "all";  if "all", then the flags are
+set or listed for all devices.
+.TP
+.B on 
+Enable requesting tape drive Log Sense sysevents if the drive supports it.
+.TP
+.B off 
+Disable requesting tape drive Log Sense sysevents.
+.TP
+.B default
+Return tape drive Log Sense sysevents to the factory setting.
+.TP
+.B interval
+Tape drive Log Sense polling interval in seconds.  A value of 300 is a
+polling interval once every five minutes.  A string value of "once"
+specifies one time just before media unload and is the default.  A value of 3600 is a
+polling interval once every hour.  The smallest polling interval is five minutes.
+.RE
+.LP
+.SH "SEE ALSO"
+.BR request (1),
+.BR chmed (8),
+.BR export (8),
+.BR samu (8),
+.BR defaults.conf (5),
+.BR mcf (5),
+.BR tapealert (8),
+.BR sefsysevent (5).
+.SH NOTES
+A complete description of SEF sysevents is in the \fISun StorEdge \%SAM-FS
+Storage and Archive Management Guide\fR.

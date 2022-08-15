@@ -1,0 +1,146 @@
+." $Revision: 1.18 $
+.ds ]W Sun Microsystems 
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH undamage 8  "08 Jan 2003"
+.SH NAME
+undamage \- Marks archive entries as undamaged and unstaled
+.SH SYNOPSIS
+\fB/opt/SUNWsamfs/sbin/undamage\fR
+\%\fB\-c\ \fIcopy_no\fR
+\%[\fB\-f\fR]
+\%[\fB\-m\ \fImedia_type\fR [\fB\-v\ \fIvsn\fR]]
+\%[\fB\-M\fR]
+\fIfilename\fR \&.\&.\&.
+.PP
+\fB/opt/SUNWsamfs/sbin/undamage\fR
+\%[\fB\-c\ \fIcopy_no\fR]
+\%[\fB\-f\fR]
+\%\fB\-m\ \fImedia_type\fR [\fB\-v\ \fIvsn\fR]
+\%[\fB\-M\fR]
+\fIfilename\fR \&.\&.\&.
+.PP
+\fB/opt/SUNWsamfs/sbin/undamage\fR
+\%\fB\-c\ \fIcopy_no\fR
+\%[\fB\-f\fR]
+\%[\fB\-m\ \fImedia_type\fR [\fB\-v\ \fIvsn\fR]]
+\%[\fB\-M\fR]
+\fB\-r\ \fIdirname\fR \&.\&.\&.
+\fIfilename\fR \&.\&.\&.
+.PP
+\fB/opt/SUNWsamfs/sbin/undamage\fR
+\%[\fB\-c\ \fIcopy_no\fR]
+\%[\fB\-f\fR]
+\%\fB\-m\ \fImedia_type\fR [\fB\-v\ \fIvsn\fR]
+\%[\fB\-M\fR]
+\fB\-r\ \fIdirname\fR \&.\&.\&.
+\fIfilename\fR \&.\&.\&.
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The \fBundamage\fR command marks archive entries for one or more
+files or directories as undamaged and not stale
+based on the
+archive copy number and/or the media type and VSN specified.
+The \fBundamage\fR command
+also marks the file(s) themselves as undamaged.
+.PP
+There are several ways to mark one or more archive entries as
+undamaged.  These ways are as follows:
+.TP 3
+\(bu
+By copy number
+.TP
+\(bu
+By copy number, media type, and VSN
+.TP
+\(bu
+By copy number and media type
+.TP
+\(bu
+By media type
+.TP
+\(bu
+By media type and VSN
+.SH OPTIONS
+This command accepts the following options:
+.TP
+\%\fB\-c\ \fIcopy_no\fR
+Marks the specified archive copy number as undamaged.
+If one or more \fB\-c\fR options are 
+are specified, only those archive copies (copies 1, 2, 3, or 4)
+are marked as undamaged.
+Specify \fB1\fR, \fB2\fR, \fB3\fR, or \fB4\fR for \fIcopy_no\fR.
+Either a \fB\-c\fR or a \fB\-m\fR option must be specified.
+.TP
+\%\fB\-f\fR
+Suppresses errors.
+.TP
+\%\fB\-m\ \fImedia_type\fR
+Marks all copies from the specified \fImedia_type\fR as undamaged.
+For the list of possible \fImedia_type\fR specifications, see the
+\fBmcf\fR(5) man page.
+Either a \fB\-c\fR or a \fB\-m\fR option must be specified.
+If you specify a \fB\-m\fR option, you can also specify
+a \fB\-v\fR option.
+.TP
+\%\fB\-M\fR
+Marks only metadata as undamaged.
+This includes directories, the segment index,
+and \%removable-media files.
+Regular files are not marked as undamaged.
+If you are marking a directory as undamaged, you must specify
+the \%\fB-M\fR option.
+.TP
+\%\fB\-r\ \fIdirname\fR \&.\&.\&.
+Recursively marks one or more
+specified \fIdirname\fRs and subdirectories as undamaged.
+The archive entries of files in the directories and subdirectories
+are marked as undamaged.
+.TP
+\%\fB\-v\ \fIvsn\fR
+Marks the archive copies on \fIvsn\fR as undamaged.
+For \fIvsn\fR, specify a volume serial name (VSN).
+If you specify a \fB\-v\fR option, you must also specify
+a \fB\-m\fR option.
+.TP
+\fIfilename\fR \&.\&.\&.
+Marks the archive entries for one or more specified \fIfilename\fR
+arguments as undamaged.
+.SH EXAMPLE
+The following command marks all archive copies of \fBmyfile\fR as
+undamaged:
+.PP
+.ft CO
+.nf
+# undamage -c1 -c2 -c3 -c4 myfile
+.fi
+.ft
+.SH SEE ALSO
+\fBmcf\fR(5).
+

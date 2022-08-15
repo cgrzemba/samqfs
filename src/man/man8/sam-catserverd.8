@@ -1,0 +1,135 @@
+.\" $Revision: 1.15 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH sam-catserverd 8 "12 Nov 2001"
+.SH NAME
+sam-catserverd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS media manager daemon
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/sam-catserverd
+.SH AVAILABILITY
+SUNWsamfs
+.SH DESCRIPTION
+The \fBsam-catserverd\fR daemon keeps track of media in Sun
+StorEdge \%SAM-FS and Sun \%SAM-QFS library catalogs.  A
+library catalog is the central 
+repository of all information needed by the Sun StorEdge \%SAM-FS and
+Sun \%SAM-QFS environments to find cartridges in an automated
+library.  The library catalog file is a binary, \%UFS-resident
+file that contains information about each slot in a library or
+manual drive.  The information in the catalog includes the
+Volume Serial Name (VSN), the capacity and space remaining, and the 
+flags indicating the status of the VSN. 
+.PP
+When the \%\fBsam-catserverd\fR daemon starts, it checks for
+the presence of a catalog file
+for each automated library defined in the \fBmcf\fR file.
+If a file is not found,
+the \%\fBsam-catserverd\fR daemon creates a library catalog file
+in the default
+location, \fB/var/opt/SUNWsamfs/catalog/\fIfamily_set_name\fR.
+The family set name is used for
+the catalog file name.
+Alternatively, a file can be specified by 
+the user in the Additional Parameters field on the library definition
+line in the \fBmcf\fR file. 
+.PP
+If the automated library is SCSI attached, the library catalog is
+a \%one-to-one mapping between the library catalog entries and 
+physical slots in the automated library.  However, if the 
+automated library is \%network-attached, the library catalog is not a 
+direct mapping to the slots, but it is a list of VSNs known to be
+present in the automated library. 
+.PP 
+The library catalog contains the following information about each
+VSN in the library:
+.TP 3
+\(bu
+Status bits
+.TP
+\(bu
+Media type
+.TP
+\(bu
+Volume serial number
+.TP
+\(bu
+Storage slot
+.TP
+\(bu
+Partition  
+.TP
+\(bu
+Count of access
+.TP
+\(bu
+Capacity of volume
+.TP
+\(bu
+Space left on volume
+.TP
+\(bu
+Block size or sector size for optical media
+.TP
+\(bu
+Label time
+.TP
+\(bu
+Last modification time
+.TP
+\(bu
+Last mount time
+.TP  
+\(bu
+Bar Code
+.TP
+\(bu
+First word address of PTOC (for optical media) or
+last position found (for tape media).
+.PP
+If reserved VSNs are used, the following fields are also present:
+.TP 3
+\(bu
+Time reservation made
+.TP
+\(bu
+Archive set
+.TP
+\(bu
+Owner 
+.TP
+\(bu
+File system
+.SH SEE ALSO
+\fBbuild_cat\fR(8),
+\fBdump_cat\fR(8),
+\fBexport\fR(8),
+\fBimport\fR(8).
+.PP
+\fBmcf\fR(5).
+

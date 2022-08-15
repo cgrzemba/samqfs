@@ -1,0 +1,83 @@
+.\" $Revision: 1.10 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH save_core.sh 8 "12 Jan 2004"
+.na
+.nh
+.SH NAME
+save_core.sh \- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS \fBsam-robotsd\fR(8) exception notification script
+.SH SYNOPSIS
+.B /etc/opt/SUNWsamfs/scripts/save_core.sh
+\fIprg_name\fR
+\fIpid\fR
+\fIseverity\fR
+\fImsg_no\fR
+\fImsg\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The
+.B /etc/opt/SUNWsamfs/scripts/save_core.sh
+script is executed by \fBsam-robotsd\fR(8) after it encounters abnormal
+or exceptional events.  A \%site-specific version of this script can be 
+substituted in the installed location.
+.PP
+This script labels core files and prevents existing core files from
+being overwritten as more are generated.
+As released, 
+.B /etc/opt/SUNWsamfs/scripts/save_core.sh
+renames the \fBsam-robotsd\fR(8) child core
+files to include the program name, process ID, and date.
+.SH OPTIONS
+The \fBsam-robotsd\fR(8) daemon executes
+.B /etc/opt/SUNWsamfs/scripts/save_core.sh
+with the following arguments:
+.TP 10
+\fIprg_name\fR
+The name of the program that is calling this script.
+.TP
+\fIpid\fR
+The process ID of the program that is calling this script.
+.TP
+\fIseverity\fR
+A keyword that identifies the severity and the
+.B syslog
+level of the event.  The keywords are as follows:
+\fBemerg\fR, \fBalert\fR, \fBcrit\fR, \fBerr\fR, \fBwarning\fR,
+\fBnotice\fR, \fBinfo\fR, and \fBdebug\fR.
+.TP
+\fImsg_no\fR
+The message number as found in the message catalog.
+.TP
+\fImsg\fR
+The text of the translated message string.
+This script expects this message to be in a \%2-field
+format.  The first field indicates the program that caused
+the core dump.  The second field is the process ID of the program
+that caused the core dump.
+.SH SEE ALSO
+.BR sam-robotsd (8).

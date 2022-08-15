@@ -1,0 +1,137 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH historian 4 "02 Jun 2004"
+.SH NAME
+historian \- The Sun StorEdge \%SAM-FS and Sun \%SAM-QFS historian
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.LP
+.SH DESCRIPTION
+\fBhistorian\fP is a catalog that keeps track of volumes that
+have been exported from an automated library or that have been unloaded
+from manually loaded devices.
+.SH CONFIGURATION
+The \fBhistorian\fP catalog is similar to the catalog for an automated
+library but since there
+are no devices associated with it, has no family set name.
+If there is no historian catalog configured in the mcf file (see
+.BR mcf (5))
+one will be created as:
+.LP
+.RE
+.ft CO
+.nf
+    historian    \fIn+1\fP   hy   -   -   /var/opt/SUNWsamfs/catalog/historian
+.fi
+.ft
+.RE
+.LP
+Where \fIn+1\fP is the highest equipment number defined  in the mcf file plus 1.
+.LP
+The historian catalog will be created with 32 entries when the 
+catalog server initializes and can grow during execution.  
+Each time the catalog fills,
+32 entries of approximately 200 bytes each will be added.
+Make sure the historian's catalog resides
+on a file system large enough to hold the expected size.  Since the
+catalog is needed before a sam file system can be mounted, DO NOT put the
+catalog on a Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file system.
+.LP
+Two configuration parameters in the \fBdefaults.conf\fR file 
+(see
+.BR defaults.conf (5))
+affect the way the system will react
+to requests for media or requests to add media to the historian catalog.
+If \fIexported_media\fP is set to unavailable, then any media exported 
+from a media changer will be set to unavailable in the historian.
+Any request for media flagged as unavailable will receive an ESRCH error.
+If \fIattended\fP is set to "no" (operator is NOT available), then any
+request for media in the historian catalog will be sent back to the
+file system with an error (ESRCH).  Any request for media currently
+loaded in
+a manually loaded drive will be accepted no matter what the state of the
+attended or unavailable flags are.
+.SH EFFECTS OF HISTORIAN
+Whenever the file system receives the error ESRCH for a stage request, it
+will automatically generate a stage request for the next archived copy
+(unless the last stage request was for the last copy).  For a 
+removable media request, the error ESRCH will be returned to the user.
+.SH IMPORT/EXPORT
+.LP
+\fBimport\fP (see
+.BR import (8))
+is used to insert entries to the
+historian catalog.
+.LP
+\fBexport\fP (see
+.BR export (8))
+is used to remove entries from the
+historian catalog.  You may export by slot or vsn.
+.SH CATALOG
+The catalog server will create a new, empty catalog in the default file
+location if none exists or no catalog is specified in the mcf file. 
+Alternately, the \fBbuild_cat\fP command (see
+.BR build_cat (8))
+may be used to build the
+initial catalog.  
+.LP
+To initialize a catalog with 32 slots run:
+.LP
+.RS
+build_cat \- /tmp/catalog_file < /dev/null
+.RE
+.LP
+then move /tmp/catalog_file to the path pointed to in the mcf file for
+the historian.
+Or, you can create a file with the list of volumes and supply 
+it as input to \fBbuild_cat\fP (see
+.BR build_cat (8))
+for the format
+of the input file.
+.SH FILES
+.PD 0
+.TP 30
+.B mcf
+The configuration file for the Sun StorEdge \%SAM-FS and
+Sun \%SAM-QFS software.
+.TP
+.B defaults.conf
+Default information.
+.TP
+.B /var/opt/SUNWsamfs/catalog/historian
+Default historian catalog file.
+.PD
+.SH SEE ALSO
+.BR build_cat (8),
+.BR dump_cat (8),
+.BR export (8),
+.BR sam-robotsd (8).
+.PP
+.BR defaults.conf (5),
+.BR mcf (5).

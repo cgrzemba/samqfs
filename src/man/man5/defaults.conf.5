@@ -1,0 +1,651 @@
+.\" $Revision: 1.63 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH defaults.conf 5 "26 Feb 2009"
+.SH NAME
+defaults.conf \- Set default values for Sun StorEdge QFS and Sun StorEdge SAM software
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/defaults.conf\fR
+.SH AVAILABILITY
+\fBSUNWqfs\fR
+.br
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The defaults configuration file allows the site to set certain
+default values within the Sun StorEdge QFS and Sun StorEdge SAM
+environments.
+The \fBdefaults.conf\fR file is read when \fBsam\-fsd\fR
+is started.  It may be changed at any time while \fBsam\-fsd\fR
+is running.  The changes will take place when \fBsam\-fsd\fR is restarted,
+or sent the signal SIGHUP.
+Temporary changes to the environment values can be made using 
+the \fBsamset\fR(1M) command.
+.LP
+The \fBdefaults.conf\fR file consists of directive lines that are separated
+into two sections, the environment variable section and the trace file control
+section.
+.SS Environment variables.
+The commands for the environment section of the
+file consists of a list of \fBkeyword = \fIvalue\fR pairs
+that set \%site-definable defaults.  All \fBkeyword\fR
+and \fIvalue\fR
+entries are \%case-sensitive and must be entered as shown.
+Values can be either
+unquoted strings (if string values are expected) or integers in
+decimal (123), octal, (0123) or hex (0x123) format.
+.LP
+The keywords and their expected arguments are as follows:
+.TP 10
+\fBattended = yes \fR|\fB no\fR
+If \fBattended = yes\fR, it is assumed that an operator
+is available to mount media that is not flagged as unavailable
+by the historian;
+the default is \fByes\fR.
+If \fBattended = no\fR, any request for media known to
+the historian is rejected unless it is already mounted. 
+.TP
+\fBdebug = \fIoptions\fR
+Sets the default for the debug flags used by the Sun StorEdge QFS and Sun
+StorEdge SAM daemons for logging messages.
+For \fIoptions\fR, specify a \%space-separated list of debug options
+from the list of possible options described on the
+\fBsamset\fR(1M) man page.
+The default is \fBlogging\fR.
+.TP
+\fBdevlog = \fIeq_number\fR \fR[ \fIevent \&.\&.\&.\fR ]
+Manipulates the device log event flags for the device specified
+by \fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be
+either the keyword \fBall\fR (to specify all devices) or must match
+an \fBEquipment Number\fR from the \fBmcf\fR file.  
+.sp
+The device log event flags control the events that get written to
+the device log files.
+For the list of possible \fIevent\fR arguments, see
+the \fBsamset\fR(1M) man page.
+To specify more than one \fIevent\fR, separate the \fIevent\fRs
+in the list with space characters.
+The default is \fBerr retry syserr date\fR.
+.TP
+\fIdev\fB_blksize = \fIsize\fR
+Specifies the default block size for tapes of type \fIdev\fR.
+For \fIsize\fR, specify
+\fB16\fR, \fB32\fR, \fB64\fR, \fB128\fR, \fB256\fR, \fB512\fR,
+\fB1024\fR, or \fB2048\fR.
+The \fIsize\fR value is multiplied by 1024 to arrive at the
+actual block size.  
+.sp
+For information on supported \fIdev\fR arguments and for
+information on the default released block sizes for various media,
+see the \fBmcf\fR(4) man page.
+.sp
+The default is used when no \fIsize\fR is specified
+or during automatic labeling when \fBlabels = barcodes\fR has been specified.
+For information on how the default can be overridden when manually
+labeling a tape, see the \fBtplabel\fR(1M) man page.
+.TP
+\fIdev\fB_delay = \fIseconds\fR
+Specifies the dismount time, in seconds, for device type \fIdev\fR.
+After a cartridge is loaded onto this device type,
+this time must elapse before the cartridge unloaded and another
+cartridge is loaded.
+By default, \fIdev\fB_delay = 30\fR.
+For information on supported \fIdev\fR arguments, see
+the \fBmcf\fR(4) man page.
+.TP
+\fIdev\fB_position_timeout = \fIseconds\fR
+Specifies the timeout value, in seconds, to be used during tape
+positioning for device type \fIdev\fR.
+During most tape positioning command processing (such as locate and space)
+this is the maximum amount of time to wait for the command to complete.
+For information on the default values, see the example file
+(\fB/opt/SUNWsamfs/examples/defaults.conf\fR)
+supplied with your software.
+Any device not in the example file defaults to \fB1800\fR seconds.
+For information on supported \fIdev\fR arguments, see
+the \fBmcf\fR(4) man page.
+.TP
+\fIdev\fB_unload = \fIseconds\fR
+Specifies the unload wait time, in seconds, for device type \fIdev\fR.
+This is the amount of time that the library daemons wait
+after the device driver returns from a SCSI unload command.
+This interval gives the library time to eject the media,
+open the door, and perform other actions before the daemon
+commands the library to remove the media.
+The \fIseconds\fR specified should
+the longest time needed for the \%worst-case library configured.  
+For information on the default values, see the example file
+(\fB/opt/SUNWsamfs/examples/defaults.conf\fR)
+supplied with your software.
+Any device not in the example file defaults to \fB0\fR seconds.
+For information on supported \fIdev\fR arguments, see
+the \fBmcf\fR(4) man page.
+.TP 10
+\fBexported_media = \fIvalue\fR
+Declares exported media to be available or unavailable to the
+historian, as follows:
+.RS 10
+.TP 2
+\(bu
+If \fBexported_media = available\fR,
+media exported from a library is considered to be available
+in the historian.
+The default is \fBavailable\fR.
+.TP 2
+\(bu
+If \fBexported_media = unavailable\fR,
+media exported from a library is considered to be unavailable
+in the historian.
+Cartridges with this characteristic are not used by the archiver,
+stager, or other Sun StorEdge \%SAM-FS tools.
+They are considered to reside outside of the Sun StorEdge \%SAM-FS
+environment.
+This might be used, for example, for cartridges to be transported
+to offsite storage.
+.RE
+.RS 10
+.sp
+For more information, see the \fBhistorian\fR(7) man page.
+.RE
+.TP
+\fBidle_unload = \fIseconds\fR
+Specifies the time, in \fIseconds\fR,
+that a \%library-controlled device can be idle before the media
+in that device is unloaded.
+Specifying \fBidle_unload = 0\fR disables this feature.
+By default, \fBidle_unload = 600\fR, which is 10 minutes. 
+.TP
+\fBshared_unload = \fIseconds\fR
+Specifies the time, in \fIseconds\fR,
+that a shared \%library-controlled device can be idle before the media
+in that device is unloaded. A device is shared if it is used by more 
+than one Sun StorEdge SAM server. For more information on
+shared devices see the \fBsony\fR(7), the \fBibm3494\fR(7), or the
+\fBstk\fR(7) man page.
+Specifying \fBshared_unload = 0\fR disables this feature.
+By default, \fBshared_unload = 60\fR, which is 60 seconds.
+.TP
+\fBinodes\fR
+This keyword is still accepted for backward compatibility, but
+it has no effect.  For more information, see the \fBsamfs.cmd\fR(4)
+man page.
+.TP
+\fBlabels = \fImode\fR
+For tape libraries with bar code label readers, this keyword
+sets the tape label equal to the first or the last characters of
+the bar code label (uppercased).
+For \fImode\fR, specify either \fBbarcodes\fR, \fBbarcodes_low\fR,
+or \fBread\fR, as follows:
+.RS 10
+.TP 2
+\(bu
+If \fBlabels = barcodes\fR, the
+first part of the bar code is used as the label.
+Default.
+.TP
+\(bu
+If \fBlabels = barcodes_low\fR, the
+last part of bar code is used as the label.
+.TP
+\(bu
+If \fBlabels = read\fR, the label is read from the tape.
+If you wish to have the labels different from the barcodes on a library
+with a bar code label reader, you must set \fBlabels = read\fR.
+.RE
+.RS 10
+.sp
+When \fBlabels\fP is set
+to \fBbarcodes\fP or \fBbarcodes_low\fP, a label is written to
+the tape before the write is enabled for any tape mounted
+for a write operation that is write enabled, unlabeled and has a readable
+bar code label.
+.RE
+.TP
+\fBlog = \fIfacility\fR
+Sets the facility code used for issuing log messages.
+For information on the accepted \fIfacility\fR types, see
+the \fBsyslog\fR(3)\fR man page.
+The default is \fBLOG_LOCAL7\fR.
+.TP
+\fBoper_privileges = \fIprivilege\fR
+Adds privileges to the operator group.
+By default, members of the operator group do not have the
+privileges to perform the following tasks:  media labeling,
+performing storage element movement
+actions, submitting full audit requests, changing a device state
+(except to \fBON\fR a device), and clearing mount requests.
+To grant the privileges needed to perform those actions,
+specify one or more of the following \fIprivilege\fR arguments.
+.RS 10
+.TP 12
+\fIprivilege\fR
+\fBResult\fR
+.TP
+\fBall\fR
+Grants all privileges in this list.
+.TP
+\fBclear\fR
+Grants the ability to clear cartridge load requests.
+.TP
+\fBfullaudit\fR
+Grants the ability to perform a full library audit.
+.TP
+\fBlabel\fR
+Allows cartridge labeling.
+.TP
+\fBslot\fR
+Allows mounting, unloading, and moving cartridges within a library.
+.TP
+\fBstate\fR
+Grants the ability to change the device state.
+Operator group members can \fBON\fR devices regardless of this setting.
+.RE
+.RS 10
+.sp
+Use a space character between \fIprivilege\fR arguments if specifying
+more than one.
+.RE
+.TP 10
+\fBoperator = \fIgroup\fR
+Specifies the name of the group that to be granted operational
+privileges within certain commands
+(\fBchmed(1M)\fR, \fBload(1M)\fR, \fBsamfsdump(1M)\fR,
+and \fBsamfsrestore(1M)\fR)
+and command queues.
+Only one \fIgroup\fR name can be specified.
+Users must have their effective group IDs set to \fIgroup\fR
+in order to gain operational privileges.
+.sp
+.TP
+\fBoptical = \fImedia_type\fR
+Sets the default media type to \fImedia_type\fR
+when a generic optical disk
+(\fBod\fR) is requested.
+A string value is expected.
+For information on the accepted media types, see the \fBmcf\fR(4)
+man page.
+The default is \fBmo\fR.
+.TP
+\fBpreviews = \fIrequests\fR
+Sets the number of outstanding mount requests.
+Care should be taken when changing this value.
+Each entry takes about 500 bytes of shared memory.
+By default, \fBpreviews = 100\fR.
+.TP
+\fBsamrpc = on \fR|\fB off\fR
+Invokes the RPC API server process.
+If \fBsamrpc = on\fR, the RPC API server process, \fBsam-rpcd\fR, is
+automatically started when Sun StorEdge \%SAM-FS or Sun StorEdge QFS
+is started.
+By default, \fBsamrpc = off\fR, so \fBsam-rpcd\fR is not started
+automatically.
+.TP
+\fBremote_keepalive = \fIseconds\fR 
+Specifies the time in seconds the SAMremote server can be idle
+before a SAMremote client sends a packet to check for the existence of
+the server. By default, \fBremote_keepalive = 300\fR, which is five minutes.
+Specifying \fBremote_keepalive = 0\fR disables the keepalive function.
+.TP
+\fBalerts = on \fR|\fB off\fR
+Specifies whether alert notification via
+Simple Network Management Protocol (SNMP) or
+fault history logging via the GUI
+is supported.
+With this turned on, you can monitor a Sun StorEdge QFS or Sun
+StorEdge SAM system remotely from a management
+console such as Sun Remote Services (SRS)
+By default, \fBalerts=on\fR is in effect.
+.TP
+\fBavail_timeout = \fIseconds\fR
+Allows the stager to delay before unloading a volume being
+used to stage a file with the \fBstage -n\fR attribute set.
+This allows a subsequent stage request for this file to
+be processed in preference to a file requesting a different
+volume.
+Setting \fBavail_timeout = 0\fR disables this function.
+By default, \fBavail_timeout = 0\fR.
+.TP
+\fBstale_time = \fIminutes\fR
+Sends an error to any request for removable media that has
+waited for \fIminutes\fR number of minutes.
+Setting \fBstale_time = 0\fR, disables this function.
+By default, \fBstale_time = 30\fR.
+.TP
+\fBtape = \fImedia_type\fR
+Sets the default media type to \fImedia_type\fR when
+a generic tape (\fBtp\fR)
+is requested.
+A string value is expected.
+For information on the accepted media types, see the \fBmcf\fR(4)
+man page.
+The default is \fBlt\fR.
+.TP
+\fBtimeout = \fIseconds\fR
+Sets the timeout interval, in seconds, for direct access
+removable media.  If a process fails to issue an
+I/O request to the device within this time, the device is
+removed from job assignment and the process receives
+an \fBETIME\fR when the next I/O to the device commences.
+Specifying \fBtimeout = 0\fR disables this timeout.
+The minimum value allowed is \fBtimeout = 600\fR.
+For backwards compatibility, values from 1 to 599
+are allowed, but are overridden by the minimum value.
+By default, \fBtimeout = 600\fR.
+.TP
+\fBtp_mode = \fImode\fR
+Specifies the mode set for tape drive device nodes when
+not under control of the Sun StorEdge SAM software.
+For information, see the \fBchmod\fR(2) man page.
+When the Sun StorEdge SAM software
+is controlling the drive,
+the mode bits are \fB0660\fR.
+.TP
+\fBtapealert = \fIeq_number\fR  \fIon | off\fR
+Enables or disables media changer or tape drive TapeAlert support 
+by \fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be
+either the keyword \fBall\fR (to specify all devices) or must match
+a tape device \fBEquipment Number\fR from the \fBmcf\fR file.
+By default, \fBtapealert = all on\fR.
+.TP
+\fBsamstorade = \fIon | off\fR
+Enables or disables the StorADE API.  The API provides Sun StorEdge SAM
+device attributes and health information for StorADE fault analysis.  By
+default, \fBsamstorade = on\fR.
+.TP
+\fBsef = \fIeq_number\fR  \fI[on|off|default] interval\fR
+Enables or disables support for tape drive implemented
+Log Sense delivered via sysevents
+by \fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be
+either the keyword \fBall\fR (to specify all devices) or must match
+an \fBEquipment Number\fR from the \fBmcf\fR file.  The interval
+specfies the log sense polling rate.  A value of 300 is a polling
+interval once every five minutes.  A string value of "once"
+specifies one time just before media unload and is the default.  A value
+of 3600 is a polling interval once every hour.  The smallest polling interval
+is five minutes.  By default, \fBsef = all on once\fR.
+
+\fBNote:\fR The defaults.conf sef entry only controls the equipment number and
+frequency interval for sef data. It is the  presence or absence of the file
+\fB/var/opt/SUNWsamfs/sef/sefdata\fR at SAM-QFS initialization that determines
+if sef will run or not. When \fB/var/opt/SUNWsamfs/sef/sefdata\fR is present,
+sef will be initialized. You must create the sefdata file yourself. To turn
+off sef, the sefdata file must be removed or renamed.
+.TP
+\fBtapeclean = \fIeq_number\fR  \fIautoclean\fR \fI[on|off]\fR \fIlogsense\fR \fI[on|off]\fR
+Enable or disable the robot initiated auto-cleaning feature.  Enable or
+disable additional auto-cleaning log sense cleaning indicators from the 
+TapeAlert log sense page(2E) flags clean now(20), clean periodic(21) and
+expired cleaning media(23) and the Sequential-Access Device log sense page(0C)
+cleaning required flag in parameter(256).  Support is by
+\fBEquipment Number\fR \fIeq_number\fR.  The \fIeq_number\fR must be either
+the keyword \fBall\fR (to specify all devices) or must match a tape device 
+\fBEquipment Number\fR from the \fBmcf\fR file.
+Note that the \fIlogsense\fR \fIon\fR setting has no effect unless \fIautoclean\fR
+is also \fIon\fR.
+By default, \fBtapeclean = all autoclean off logsense on\fR.
+Note: When using the auto-cleaning feature with a library that has more than two 
+drives, it is recommended that you have at least two cleaning cartridges per robot. If a
+cleaning cartridge is not available when a drive needs to be cleaned, the drive 
+will be put into a \fIdown\fR state.
+.SS Trace file controls.
+.LP
+The daemon trace files are controlled by directives in the trace file section.
+This section begins with the
+.B trace
+directive, and ends with the
+.B endtrace
+directive.
+The trace file control directives are of the form:
+
+.IB daemon_name . variable_name " = " value
+.br
+.IB daemon_name " = on"
+.br
+.IB daemon_name " = off"
+.LP
+.I daemon_name
+can be one of the following:
+.BR sam-archiverd ", " sam-catserverd ", " sam-fsd ", "
+.BR sam-rftd ", " sam-recycler ", " sam-sharefsd ", "
+.BR sam-stagerd ", " sam-serverd ", " sam-clientd ", "
+.BR fsmgmt ", or all .
+.PP
+Note that \fBfsmgmt\fR is used by \fBfsmgmtd\fR
+and \fBlibfsmgmt.so\fR.
+.LP
+If
+.I daemon_name
+is
+.BR all ,
+then the
+.I variable_name
+is set to
+.I value
+for all daemons.
+.LP
+For the form:
+.IB daemon_name " = on"
+the trace file controls will be set to the pre-defined values for
+.IR daemon_name .
+.LP
+In particular, using only the directive
+.br
+.B all = on
+.br
+enables tracing for all daemons.
+The trace files are written to files
+named for the daemons (e.g. \%\fBsam-rftd\fR) in the
+\fB/var/opt/SUNWsamfs/trace\fR subdirectory.
+.LP
+For the form:
+.IB daemon_name " = off"
+tracing will be turned off for
+.IR daemon_name .
+.LP
+The
+.I variable_name
+is one of:
+.BR file ", " options ", " age ", or "
+.BR size .
+.TP
+.IB daemon_name ".file " file_name
+set the name of the trace file to
+.IR file_name .
+The default is no trace file.
+
+If the
+.I daemon_name
+is
+.BR all ,
+then 
+.I file_name
+is the name of the  trace subdirectory that will contain the daemon tracefiles.
+.I file_name
+must be absolute in this case.  The default subdirectory is
+.BR /var/opt/SUNWsamfs/trace .
+
+If
+.IR file_name
+is relative (no leading '/'), the file name will be made relative to the trace
+base directory.
+If the file does not exist,
+.B sam-fsd
+will create it.
+.TP
+.IB daemon_name ".options = " option_list
+Set the trace file options to
+.IR option_list .
+.I option_list
+is a space separated list of trace options.  A trace option is an event to
+trace, or an element to include in the trace line.  To exclude an
+.IR option ,
+prefix the
+.I option
+with a '-'.
+.RS
+.LP
+For selecting events,
+.I option
+may be one or more of:
+.TP 8
+.B none
+Clear all event types.
+.TP
+.B all
+Set event types for tracing the most interesting events.  These are:
+.BR "cust err fatal ipc misc proc rft" .
+.TP
+.B alloc
+Memory allocations.
+.TP
+.B cust
+Customer notification syslog or notify file messages.
+.TP
+.B err
+Non-fatal program errors.
+.TP
+.B fatal
+Fatal syslog messages.
+.TP
+.B files
+File actions.
+.TP
+.B rft
+File transfer events.
+.TP
+.B ipc
+Inter process communication.
+.TP
+.B misc
+Miscellaneous.
+.TP
+.B oprmsg
+Operator messages.
+.TP
+.B proc
+Process initiation and completion.
+.TP
+.B queue
+Archiver queue contents when changed.
+.LP
+For selecting message elements,
+.I option
+may be one or more of:
+.TP 8
+.B date
+Include the date in message (the time is always included).
+.TP
+.B module
+Include source file name and line number in message.
+.TP
+.B type
+Include event type in message.
+.LP
+The pre-defined events are:
+.BR cust ,
+.BR err ,
+.BR fatal ,
+.BR misc ,
+.BR proc ,
+.BR rft .
+The message elements program[pid] and time are always included
+and can't be deselected.
+.RE
+.TP
+.IB daemon_name ".age = " age
+Set the time between trace file rotations to
+.IR age .
+.I age may be specified with the suffixes 's', 'm', 'h', 'd', 'w' and 'y', for
+seconds, minutes, hours, days, weeks and years.
+Note: Do not set this value to two minutes or less. If you do, the rotation
+will never take place.
+.B sam-fsd
+can perform trace file "rotations" using the script
+.BR /opt/SUNWsamfs/sbin/trace_rotate .
+Trace file rotations are useful to control the size of trace files.
+.TP
+.IB daemon_name ".size = " size
+Set the trace file
+.I size
+at which trace file rotations will be performed.
+.I size
+may be specified with the suffices 'b', 'k', 'M', 'G', and 'T', for bytes,
+kilobytes, megabytes, gigabytes, and terabytes.
+
+.SH EXAMPLES
+Here is a sample \fBdefaults.conf\fR configuration file.
+.PP
+.ft CO
+.nf
+optical = mo
+debug = logging debug timing
+tape = lt
+log = LOG_LOCAL7
+timeout = 30
+idle_unload = 600
+tp_mode = 0666
+rc_delay = 10
+cy_delay = 10
+ml_delay = 10
+hp_delay = 10
+ds_delay = 10
+lt_unload = 7
+st_unload = 15
+lt_blksize = 16
+operator = sam
+oper_privileges = label slot
+trace
+all = on		# Turn on tracing for all daemons
+sam-archiverd.size = 10M # Rotate archiver trace file after 10 megabytes
+sam-rftd.file = /tmp/sam-rftd.trace  # change file name for sam-rft daemon
+sam-recycler = off  # Turn off tracing for sam-recycler daemon
+endtrace
+.fi
+.ft
+.SH FILES
+.TP 20
+\fB/opt/SUNWsamfs/examples/defaults.conf\fR
+Contains an example of a \fBdefaults.conf\fR file.
+.SH SEE ALSO
+\fBrequest\fR(1).
+.PP
+\fBsamset\fR(1M),
+\fBsam-fsd\fR(1M),
+\fBtplabel\fR(1M),
+\fBtapealert\fR(1M).
+.PP
+\fBchmod\fR(2).
+.PP
+\fBsyslog\fR(3).
+.PP
+\fBmcf\fR(4),
+\fBsamfs.cmd\fR(4),
+\fBtrace_rotate\fR(4),
+\fBsefsysevent\fR(4).
+.PP
+\fBhistorian\fR(7).

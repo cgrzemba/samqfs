@@ -1,0 +1,224 @@
+.\" $Revision: 1.20 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH preview.cmd 5 "03 Dec 2001"
+.SH NAME
+preview.cmd \- Sun StorEdge \%SAM-FS or Sun \%SAM-QFS preview directives file
+.SH SYNOPSIS
+\fB/etc/opt/SUNWsamfs/preview.cmd\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+An archive or stage request for a volume that is not currently loaded
+goes to the preview area for future consideration.
+A user can control the scheduling of preview requests, thus overriding
+the default behavior, by entering directives in
+the \fBpreview.cmd\fR file.
+.PP
+The \fBpreview.cmd\fR file contains directives for
+modifying preview request priorities.
+The directives allow users to increase the priority for specific VSNs 
+and change archive request priorities based on the file system 
+states regarding High Water Mark (HWM) and Low Water Mark (LWM).
+These directives are read by \fBsam-amld\fR at start-up time,
+and all values specified are stored in shared memory.
+The priority specifications cannot
+be changed while the \fBsam-amld\fR daemon
+is running.
+.PP
+The \fBpreview.cmd\fR file can contain comments.
+A comment begins with a pound character (\fB#\fR) and extends
+through the end of the line.
+.SH DIRECTIVES
+The directives in the \fBpreview.cmd\fR file are specified one per line.
+With regard to their placement within the \fBpreview.cmd\fR file,
+there are two types of directives:
+.TP 2
+\(bu
+Global directives.
+These directives apply to all file systems.
+Directives are assumed to be global if they appear in
+the \fBpreview.cmd\fR file prior to any \fBfs =\fR directives.
+.TP
+\(bu
+Directives specific to a particular file system.
+File system specific directives must appear after the global directives
+in the \fBpreview.cmd\fR file.
+A directive line with the following form names a specific file system
+and indicates that all subsequent directives apply only to that
+file system:
+.sp
+.ft CO
+fs = \fIfile_system_family_set_name\fR
+.ft
+.PP
+.RS 2
+A subsequent \fBfs =\fR directive in the \fBpreview.cmd\fR file
+declares a set of directives that apply to another file system.
+File system specific directives override general directives.
+.RE
+.PP
+Some directives can be used as both global and file system
+specific directives.  This can be useful, for example, if you
+want to specify the \fBhwm_priority\fR directive globally to
+apply to most Sun StorEdge \%SAM-FS or Sun \%SAM-QFS file systems
+but you also want to use it as a file system specific directive
+to specify a different value for one particular file system.
+.PP
+The following sections describe the directives that can appear in
+a \fBpreview.cmd\fR file.  You can specify either an integer or a
+floating point value as an argument to the \fB_priority\fR
+directives, but the system stores the value as a
+floating point value internally.
+.SS GLOBAL DIRECTIVES
+Global directives must appear in the \fBpreview.cmd\fR file before
+any \fBfs =\fR directives.  They cannot appear after an \fBfs =\fR
+directive.  The global directives are as follows:
+.TP 10
+\fBvsn_priority = \fIvalue\fR
+This directive specifies
+the \fIvalue\fR by which the priority is to increase
+for VSNs marked as high-priority VSNs.
+For more information, see the \fBchmed\fR(1M) man page.
+The \fBvsn_priority = 1000.0\fR by default.
+.TP
+\fBage_priority = \fIfactor\fR
+This global directive specifies a \fIfactor\fR to
+to be applied to the time (in seconds) that a request is allowed to wait
+in the preview area to be satisfied.  The \fIfactor\fR is as follows:
+.RS 10
+.TP 2
+\(bu
+A \fIfactor\fR > 1.0, increases the weight of the time when
+calculating the total priority.
+.TP
+\(bu
+A \fIfactor\fR < 1.0, decreases the weight of the time when
+calculating the total priority.
+.TP 2
+\(bu
+A \fIfactor\fR = 1.0 has no effect on the default behavior.
+The \fBage_priority = 1.0\fR by default.
+.RE
+.sp
+For more information,
+see the PRIORITY CALCULATION section of
+this man page.
+.SS FILE SYSTEM SPECIFIC DIRECTIVE
+The \fBfs =\fR directive specifies a particular file system and applies
+only to that specified file system.
+This directive's syntax is as follows:
+.TP 10
+\fBfs = \fIfile_system_family_set_name\fR
+This directive indicates that the subsequent directives apply only
+to the indicated \fIfile_system_family_set_name\fR.
+.SS GLOBAL OR FILE SYSTEM SPECIFIC DIRECTIVES
+Several directives can be used either globally or as file system
+specific directives.  These directives are as follows:
+.TP 10
+\fBhwm_priority = \fIvalue\fR
+This directive indicates the \fIvalue\fP 
+by which the priority is to
+increase for archiving requests versus staging after the file
+system crosses the HWM level.
+This means that the releaser is running.
+The \fBhwm_priority = 0.0\fR by default.
+.TP
+\fBhlwm_priority = \fIvalue\fR
+This directive indicates the \fIvalue\fR
+by which the priority is to increase for archiving requests
+versus staging.  This directive is effective when the file system
+is emptying, and the amount of data is between the
+HWM and the LWM.
+Because the file system is emptying, you may want to give priority
+to loads for stage requests.
+The \fBhlwm_priority = 0.0\fR by default.
+.TP
+\fBlhwm_priority = \fIvalue\fR
+This directive indicates the \fIvalue\fR
+by which the priority is to
+increase for archiving requests versus staging.
+This directive is effective when the file system is
+filling up, and the amount of data is between the HWM and
+the LWM.
+Because the file system is filling up, you may want to give priority
+to loads for archive requests.
+The \fBlhwm_priority = 0.0\fR by default.
+.TP 10
+\fBlwm_priority = \fIvalue\fR
+This directive specifies the \fIvalue\fR 
+by which the priority is to increase for archiving requests versus
+staging when the file system is below the LWM level.
+The \fBlwm_priority = 0.0\fR by default.
+.SH PRIORITY CALCULATION
+The total preview request priority is the sum of all
+priorities and is calculated as follows:
+.PP
+Total priority = vsn_priority + wm_priority + age_priority * time_in_sec
+.PP
+The \fBwm_priority\fR in the previous equation refers to whichever
+condition is in effect at the time, either \fBhwm_priority\fR,
+\fBhlwm_priority\fR, \fBlhwm_priority\fR, or \fBlwm_priority\fR.
+All priorities are stored as floating point numbers.
+.SH EXAMPLES
+Example 1.  This example \fBpreview.cmd\fR file sets
+both the \fBvsn_priority\fR
+and \fBhwm_priority\fR for
+the \fBsamfs1\fR file system.  Other Sun StorEdge \%SAM-FS or
+Sun \%SAM-QFS file systems 
+not specified here use the default priority for the HWM.
+All file systems use the default priorities for the LWM and the state
+between LWM and HWM.
+.PP
+.ft CO
+.nf
+vsn_priority = 1000.0
+fs = samfs1
+hwm_priority = 100.0
+.fi
+.ft
+.PP
+Example 2.  The next example \fBpreview.cmd\fR file
+sets priority factors for all Sun StorEdge \%SAM-FS
+or Sun \%SAM-QFS file systems,
+but it sets an explicit and different HWM priority factor for
+the \fBsamfs3\fR file system.
+.PP
+.ft CO
+.nf
+hwm_priority = 1000.0
+hlwm_priority = -200.0
+lhwm_priority = 500.0
+fs = samfs3
+hwm_priority = 200.0
+.ft
+.fi
+.SH SEE ALSO 
+\fBchmed\fR(1M),
+\fBsam-amld\fR(1M).

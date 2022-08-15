@@ -1,0 +1,99 @@
+'\" t
+.\" $Revision: 1.7 $
+.ds ]W Sun Microsystems
+'\" !tbl | mmdoc
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.na
+.nh
+.TH samstorade 8 "23 Jun 2004"
+.SH NAME
+samstorade \- StorADE API
+.SH SYNOPSIS
+\fBsamstorade\fR
+\%\fB\[-r hostname]\fR
+\%\fB\[-t timeout]\fR
+\%\fB\[-s xml_message]\fR
+\%\fB\[-d]\fR
+.SH AVAILABILITY
+\fBSUNWsamfs\fR
+.SH DESCRIPTION
+The samstorade program is a XML interface for the Sun StorADE
+(Storage Automated Diagnostic Environment) program to access SAM-QFS
+attributes and health information.
+.PP
+The XML interface uses messages contained in the message DTD
+\fB/opt/SUNWsamfs/doc/\fImessage.dtd\fR.
+.SH OPTIONS
+The \fBsamstorade\fR command can be customized with the following options:
+.TP 10
+\%\fB\-r hostname\fR
+Specifies remote SAM-QFS host to query.  The default hostname is "localhost".
+.TP 10
+\%\fB\-t timeout\fR
+Specifies response timeout in milliseconds.  The default timeout value is
+5 seconds.
+.TP 10
+\%\fB\-s xml_message\fR
+Specifies a valid XML message defined by the message DTD
+\fB/opt/SUNWsamfs/doc/\fImessage.dtd\fR that is sent to the sam-amld
+daemon.  An example message that can be sent is <message id="devent" version="1.0"/>.
+.TP 10
+\%\fB\-d\fR
+This is the default behavior for the \fBsamstorade\fR command.  The 
+\fB/opt/SUNWsamfs/doc/\fImessage.dtd\fR message wrapper is removed
+returning the \fB/opt/SUNWsamfs/doc/\fIsamfm.dtd\fR message payload.
+.fi
+.ft
+.RE
+'\" .SH ATTRIBUTES
+'\" .LP
+'\" See 
+'\" .BR attributes (5) 
+'\" for descriptions of the following attributes:
+'\" .TS
+'\" box;
+'\" cbp-1 | cbp-1
+'\" l | l .
+'\" ATTRIBUTE TYPE	ATTRIBUTE VALUE
+'\" =
+'\" Availability	\f(CWSUNWsamfs\f1
+'\" .TE
+'\" .sp
+'\"
+.SH FILES
+\fB/opt/SUNWsamfs/sbin/samstorade\fR
+.PP
+\fB/opt/SUNWsamfs/doc/message.dtd\fR
+.PP
+\fB/opt/SUNWsamfs/doc/samfm.dtd\fR
+.PP
+\fB/opt/SUNWsamfs/doc/pkg.mod\fR
+.PP
+\fB/opt/SUNWsamfs/doc/devent.mod\fR
+.SH SEE ALSO
+\fBStorADE\fR,
+\fBrasagent\fR(8),

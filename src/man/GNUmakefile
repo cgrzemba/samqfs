@@ -31,12 +31,13 @@ DEPTH = ../..
 include $(DEPTH)/mk/common.mk
 
 DIRS = 	man1 \
-		man1m \
 		man3 \
 		man3x \
 		man4 \
+		man4d \
 		man5 \
-		man7
+		man7 \
+		man8
 
 include $(DEPTH)/mk/targets_man.mk
 

@@ -1,0 +1,395 @@
+.\" $Revision: 1.29 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH archiver 8 "01 Feb 2009"
+.SH NAME
+archiver \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS file archiver command file processor
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/archiver
+.I directive
+.BI [ value ]
+.br
+
+.B /opt/SUNWsamfs/sbin/archiver 
+.RB [ \-A ]
+.RB [ \-a ]
+[
+.BI \-c " archive_cmd"
+]
+.RB [ \-f ]
+.RB [ \-l ]
+[
+.BI \-n " filesystem"
+]
+.RB [ \-v ]
+.br
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+The
+.B archiver
+command has two functions.  It is used by the archiver daemon
+.RB ( sam-archiverd )
+to process the archiver command file.  The command file used by the archiver
+daemon is
+.BR /etc/opt/SUNWsamfs/archiver.cmd .
+This file does not have to be present for the
+archiver to execute.
+If the
+.B archiver.cmd
+file is present, however, it must be free of errors.
+Errors in the
+.B archiver.cmd
+file prevent the archiver from executing.
+If the
+.B archiver.cmd
+file is not present, all files on the file system are
+archived to the available removable media according to archiver defaults.
+.PP
+The second function allows you to use the command with the options to
+evaluate the archiver commands file, 
+.IR archive_cmd .
+No archiving is performed when the command is used in this manner.
+When options are used, information about archiving operations is
+written to standard output.
+It is recommended that you test your archiver commands file each time it is
+changed because any error found prevents the archiver from running.
+If an 
+.I archive_cmd
+file is not specified,
+.B /etc/opt/SUNWsamfs/archiver.cmd
+is assumed.
+.SH "Sample default output:"
+ 
+.ft CO
+.nf
+ Reading archiver command file "example1.cmd"
+  
+ Notify file: /etc/opt/SUNWsamfs/scripts/archiver.sh
+ 
+ Archive media:
+ media:sg bufsize: 4 archmax:  512.0M Volume overflow not selected
+ media:mo bufsize: 4 archmax:    4.8M Volume overflow not selected
+ 
+ Archive libraries:
+ Device:mo20 drives_available:0 archive_drives:1
+ 
+ Device:tp30 drives_available:0 archive_drives:3
+ 
+ 
+ Archive file selections:
+ Filesystem samfs1  interval: 300
+   Logfile: /var/opt/SUNWsamfs/archiver.log
+ samfs1  Metadata
+     copy:1  arch_age:240
+ big  path:. minsize: 500.0k
+     copy:1  arch_age:30
+     copy:2  arch_age:7200
+ all  path:.
+     copy:1  arch_age:30
+ 
+ 
+ Archive sets:
+ allsets
+     reserve: set//
+ 
+ allsets.1
+    .reserve: set//
+ 
+ allsets.2
+     archmax: 5G
+    .reserve: set//
+ 
+ allsets.3
+    .reserve: set//
+ 
+ allsets.4
+    .reserve: set//
+ 
+ all.1
+    .reserve: set//
+   media: mo
+  Total space available:    2.1G
+ 
+ big.1
+    .reserve: set//
+   media: sg
+  Total space available:   77.5G
+ 
+ big.2
+    .archmax: 5G
+    .reserve: set//
+   media: sg
+  Total space available:   77.5G
+ 
+ samfs1.1
+    .reserve: set//
+   media: mo
+  Total space available:    2.1G
+.fi 
+.ft
+.LP
+Archive Set parameters set by the archiver command file are listed for all
+Archive Sets.  Parameters defined by
+.B allsets
+and
+.BI allsets. n
+are preceeded by the '.' character.
+.SH OPTIONS
+.TP 10
+.B \-A
+Turn on all list options except
+.B \-a.
+.TP
+.B \-a
+List archive detail for files.
+
+The -a option produces a line of output for each file found in an inodes
+scan of a file system.  The line lists present and future archive activity
+for the file.  The line is in a fixed format consisting of space (' ')
+separated fields as follows:
+
+.ft CO
+.nf
+1  A single character that identifies the file type:
+    'l' Symbolic link
+    'R' Removable media file
+    'I' Segment index
+    'd' Directory
+    'f' Regular file
+    'b' Block special
+    '?' Other
+
+2  The name of the file quoted using '"'.
+   The '"' and '\\' characters in the file name are represented
+   by '\\"' and '\\\\'.
+
+3  inode.gen  Inode and generation number
+
+4  Archive Set name.  If the file is not to be archived, '-'.
+
+5 - 8  Archive information for the four possible copies.
+   If no archive copy required '-'
+   If archived, 'media.VSN'
+   If not archived, the time at which archiving will begin
+	  'yyyy-mm-ddThh:mm:ss' (ISO 8601)
+   If the copy is to be unarchived, the time for unarchiving
+	  '/yyyy-mm-ddThh:mm:ss'
+.fi
+.ft
+
+The '-a' option will clear any previously set option, except a file system name set by '-n'.  This allows a user to generate only the archive activity information to standard out.  This could be used as input to sort, a spreadsheet or database.
+
+.TP
+.BI \-c " archive_cmd"
+The name of the archiver command file to be evaluated.  Default is
+.B /etc/opt/SUNWsamfs/archiver.cmd.
+.TP
+.B \-f
+List file system content.  Sample output:
+
+.ft CO
+.nf
+ Filesystems:
+ qfs1 mount: /qfs1
+ Examine: noscan Interval: 2h
+ Logfile:/var/opt/SUNWsamfs/archiver/log
+ 
+ Producing statistics 
+ File type           Count  Percent   Bytes  Percent                Bytes
+ 
+ All               411,958  100.00%    8.3G  100.00%           8935481659 
+     offline            26     0.1%  264.1M    3.10%            276878242 
+     archdone       19,962    4.85%    1.9G   22.58%           2018002292 
+     copy1             658    0.16%    1.8G   21.74%           1942851010 
+     copy2               0
+     copy3               0
+     copy4               0
+ 
+ Regular           411,479   99.88%    8.3G   99.84%           8921596219
+     offline            26    0.01%  264.1M    3.10%            276878242 
+     archdone       19,492    4.73%    1.9G   22.50%           2010445172 
+     copy1             189    0.05%    1.8G   21.66%           1935297986 
+     copy2               0
+     copy3               0
+     copy4               0
+ 
+ Segmented               0    0.00%    0       0.00%                    0
+     offline             0
+     archdone            0
+     copy1               0
+     copy2               0
+     copy3               0
+     copy4               0
+ 
+ Directories           473    0.11%   13.2M    0.16%             13881344 
+     offline             0
+     archdone          469    0.11%    7.2M    0.08%              7553024 
+     copy1             469    0.11%    7.2M    0.08%              7553024
+     copy2               0
+     copy3               0
+     copy4               0
+ 
+ Symbolic links          5    0.00%    0       0.00%                    0
+     offline             0
+     archdone            0
+     copy1               0
+     copy2               0
+     copy3               0
+     copy4               0
+
+ Removable media         1    0.00%    4.0k    0.00%                 4096
+     offline             0
+     archdone            1    0.00%    4.0k    0.00%                 4096
+     copy1               0
+     copy2               0
+     copy3               0
+     copy4               0
+ 
+.fi
+.ft
+
+Column 2 is the number of files.  Column 3 is the percent of the total
+number of files.  Column 4 is the total size in bytes.  Column 5 is the
+percent of the total size.  Column 6 is the exact total size in bytes.
+.TP
+.B \-l
+List input lines.  Sample output:
+
+.ft CO
+.nf
+ 1: logfile = /var/opt/SUNWsamfs/archiver.log
+ 2: interval = 5m
+ 3: big . -minsize 500k
+ 4:      1 30s
+ 5: 	 2 2h
+ 6: all .
+ 7:      1 30s
+ 8: params
+ 9: allsets -reserve set
+ 10: allsets.2 -archmax 5G
+ 11: endparams
+ 12: vsns
+ 13: samfs1.1 mo .*
+ 14: all.1    mo .*
+ 15: big.1    sg .*
+ 16: big.2    sg .*
+.fi
+.ft
+.TP
+.BI \-n " filesystem"
+List file system content (same as \fB\-f\fR) for a single filesystem.
+
+.TP
+.B \-v
+List VSNs. Only lists VSNs with space available. Sample output:
+
+.ft CO
+.nf
+ Archive libraries:
+ Device:mo20 drives_available:0 archive_drives:1
+   Catalog:
+   mo.mo0001               capacity:    1.2G space:    1.1G  -il-o-------
+   mo.mo0002               capacity:    1.2G space:    1.0G  -il-o-------
+ 
+ Device:tp30 drives_available:0 archive_drives:3
+   Catalog:
+   sg.004977               capacity:   20.0G space:   18.0G  -il-o-b-----
+   sg.004978               capacity:   20.0G space:    0     -il-o-b-----
+   sg.004979               capacity:   20.0G space:   10.4G  -il-o-b-----
+   sg.004975               capacity:   20.0G space:   18.0G  -il-o-b-----
+   sg.004970               capacity:   20.0G space:   18.0G  -il-o-b-----
+   sg.004971               capacity:   20.0G space:   13.1G  -il-o-b-----
+ 
+ . 
+ . 
+ . 
+ 
+ 
+ Archive sets:
+ allsets
+     reserve: set//
+ 
+ allsets.1
+    .reserve: set//
+ 
+ allsets.2
+     archmax: 5G
+    .reserve: set//
+ 
+ allsets.3
+    .reserve: set//
+ 
+ allsets.4
+    .reserve: set//
+ 
+ all.1
+    .reserve: set//
+   media: mo
+  Volumes:
+    mo0001
+    mo0002
+  Total space available:    2.1G
+ 
+ big.1
+    .reserve: set//
+   media: sg
+  Volumes:
+    004977
+    004979
+    004975
+    004970
+    004971
+  Total space available:   77.5G
+ 
+ big.2
+    .archmax: 5G
+    .reserve: set//
+   media: sg
+  Volumes:
+    004977
+    004979
+    004975
+    004970
+    004971
+  Total space available:   77.5G
+ 
+ samfs1.1
+    .reserve: set//
+   media: mo
+  Volumes:
+    mo0001
+    mo0002
+  Total space available:    2.1G
+.fi
+.ft
+.SH SEE ALSO
+.BR archiver.cmd (5),
+.BR sam-archiverd (8),
+.BR sam-arcopy (8),
+.BR sam-arfind (8)

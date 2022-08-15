@@ -1,0 +1,67 @@
+.\" $Revision: 1.17 $
+.ds ]W Sun Microsystems
+.\" SAM-QFS_notice_begin
+.\"
+.\" CDDL HEADER START
+.\"
+.\" The contents of this file are subject to the terms of the
+.\" Common Development and Distribution License (the "License").
+.\" You may not use this file except in compliance with the License.
+.\"
+.\" You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
+.\" or http://www.opensolaris.org/os/licensing.
+.\" See the License for the specific language governing permissions
+.\" and limitations under the License.
+.\"
+.\" When distributing Covered Code, include this CDDL HEADER in each
+.\" file and include the License file at pkg/OPENSOLARIS.LICENSE.
+.\" If applicable, add the following below this CDDL HEADER, with the
+.\" fields enclosed by brackets "[]" replaced with your own identifying
+.\" information: Portions Copyright [yyyy] [name of copyright owner]
+.\"
+.\" CDDL HEADER END
+.\"
+.\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Use is subject to license terms.
+.\"
+.\" SAM-QFS_notice_end
+.TH sam-scannerd 8 "21 Feb 2003"
+.SH NAME
+sam-scannerd \- Sun StorEdge \%SAM-FS and Sun \%SAM-QFS daemon for manually-mounted devices
+.SH SYNOPSIS
+.B /opt/SUNWsamfs/sbin/sam-scannerd
+.I mshmid
+.I pshmid
+.SH AVAILABILITY
+.LP
+SUNWsamfs
+.SH DESCRIPTION
+.B sam-scannerd
+monitors the manually-mounted devices.  It will periodically check each
+device for newly inserted media.  If
+.B sam-scannerd
+finds media in the device, it will scan it for a label.  If a label is
+found, it will check the preview table to see if there are any requests
+for this media.  If requests are found, the
+Sun StorEdge \%SAM-FS or Sun \%SAM-QFS
+file system is notified and the device is assigned to the request.
+.PP
+.B sam-scannerd
+is started automatically by
+.B sam-amld
+if there are any manually-mounted devices defined in the configuration file.
+See 
+.BR mcf (5).
+.PP
+.I mshmid 
+is the id of the master shared memory segment created by
+.BR sam-amld .
+.I pshmid
+is the id of the preview shared memory segment created by
+.BR sam-amld .
+.SH SEE ALSO
+.BR sam-amld (8),
+.BR mcf (5)
+
+
+
