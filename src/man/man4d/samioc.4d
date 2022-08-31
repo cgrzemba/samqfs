@@ -31,6 +31,8 @@ samioc \- Pseudo Device Driver for communication of kernel and userland daemons
 .LP
 The pseudo driver, \fBsamioc\fR, provides only the ioctl interface and allows the communtication beetween SamFS (kernel) and the userland deamons sam-fsd, sam-amld, and so on. It is the entry point for SAMFS system calls.
 .LP
+The driver is loaded from samfs(4d) while sam_init.
+.LP
 The syscalls can be monitored with sam_trace
 .SH ERRORS 
 .TP 15
