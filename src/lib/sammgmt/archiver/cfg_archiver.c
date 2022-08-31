@@ -3276,7 +3276,7 @@ ar_set_copy_cfg_t *cp)	/* cp to get string for */
 
 	Trace(TR_DEBUG, "archset_copy_to_str");
 
-	*tmp = '\0';
+	tmp[0] = '\0';
 
 	if (cp == NULL)
 		return (&err);
