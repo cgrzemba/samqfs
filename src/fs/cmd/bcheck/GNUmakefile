@@ -39,7 +39,7 @@ DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)  $(NO_BUILD_OSD
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam $(DYNAMIC_OPT) \
-	-ladm -ldl -lsysevent -lnvpair
+	-ladm -ldl -lsysevent -lnvpair -lscf
 
 DESTDIR = /usr/lib/fs/samfs
 

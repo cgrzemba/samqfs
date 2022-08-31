@@ -41,7 +41,7 @@ DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(NO_BUILD_OSD)
 
 PROG_LIBS = -L ../../lib/$(OBJ_DIR) $(STATIC_OPT) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut $(DYNAMIC_OPT) \
-	-ladm -ldl -lsysevent -lnvpair
+	-ladm -ldl -lsysevent -lnvpair -lscf
 samfsck_LIBS =  ../../lib/$(OBJ_DIR)/setsyscall.o $(PROG_LIBS)
 fsck_LIBS	 =  
 

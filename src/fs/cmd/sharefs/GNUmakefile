@@ -39,7 +39,7 @@ DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS) $(THRCOMP)
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L../../lib/$(OBJ_DIR) -lfscmd \
 			-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut \
-			$(DYNAMIC_OPT) -lsysevent -lnvpair $(LIBSO) -ladm -ldl
+			$(DYNAMIC_OPT) -lsysevent -lnvpair $(LIBSO) -ladm -ldl -lscf
 
 LNOPTS = -anmusx -Dlint
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

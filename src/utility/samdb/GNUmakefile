@@ -46,7 +46,7 @@ MPROGS = dbupd
 
 COMMON_OBJS = $($(COMMON_SRC):%.c=$(OBJ_DIR)/%.o)
 COMMON_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) $(DYNAMIC_OPT) -lsamdb -lsamut -lsam -ladm \
-	$(MYSQL_LIB) $(LIBSO)
+	$(MYSQL_LIB) $(LIBSO) -lscf
 
 PROG_LIBS = $(DEPTH)/src/fs/lib/$(OBJ_DIR)/libfscmd.a $(COMMON_LIBS)
 
