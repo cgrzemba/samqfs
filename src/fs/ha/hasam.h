@@ -34,7 +34,9 @@
 #ifndef _HASAM_H
 #define	_HASAM_H
 
+#ifdef SOL_CLUSTER
 #include <rgm/libdsdev.h>
+#endif
 #include "sam/mount.h"
 #include "sam/lib.h"
 
