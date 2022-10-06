@@ -42,12 +42,13 @@ BUILD_64BIT = yes
 #
 BUILD_STABS = yes
 
-MODULE = samst
-MODULE_SRC = samst.c
+# MODULE = samst
+# MODULE_SRC = samst.c
 
-DATAFILES = samst.conf
+# DATAFILES = samst.conf
 
-DIRS =	samaio devfsadm
+DIRS =	samaio
+# DIRS +=	devfsadm
 
 DEPCFLAGS += -D_KERNEL -DNOSAMFS $(OSDEPCFLAGS)
 
