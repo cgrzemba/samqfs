@@ -50,8 +50,8 @@ SAM_OPEN_SOURCE=yes
 endif
 include $(DEPTH)/mk/include/defaults.mk
 
-SAMQFS_VERSION ?= 5.0.1
-GUI_VERSION := 5.0.1
+SAMQFS_VERSION ?= $(shell git describe --tags --abbrev=0)
+GUI_VERSION := 5.0
 
 SHELL := /bin/sh
 OS := $(shell uname -s)
@@ -138,7 +138,7 @@ endif
 #
 ifeq ($(DEBUG), yes)
 	ifneq ($(DEBUG_OFF), yes)
-		DEBUGCDEFS += -DDEBUG
+		DEBUGCDEFS += -DDEBUG -gdwarf-2
 	endif
 endif
 
