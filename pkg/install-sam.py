@@ -468,6 +468,7 @@ if __name__ == '__main__':
              logger.info("publish package in %s", repro)
          except subprocess.CalledProcessError as ret:
              logger.error("wrong repro path %s", args.repro)
+             sys.exit(4)
 
     transform_fn = 'samqfs.transform'
     config_parameters = {'builddate': builddate, 
