@@ -30,6 +30,7 @@ DEPTH = ../../../..
 
 # devfsadm is a 32bit command!
 override AMD64 = no
+override BUILD_64BIT = no
 include $(DEPTH)/mk/common.mk
 
 LIB = samaio_link
