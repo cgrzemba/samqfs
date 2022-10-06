@@ -185,8 +185,8 @@ sam_priv_syscall(
 	cred_t *credp;
 	int error = 0;
 
-	TRACE(T_SAM_PSYSCALL, NULL, cmd, 0, 0);
 	credp = CRED();
+	TRACE(T_SAM_PSYSCALL, NULL, cmd, credp, 0);
 	switch (cmd) {
 
 		/*
@@ -206,7 +206,6 @@ sam_priv_syscall(
 #ifdef METADATA_SERVER
 		case SC_setlicense:
 		case SC_getlicense:
-			error = sam_license_info(cmd, arg, size, credp);
 			break;
 #endif	/* METADATA_SERVER */
 
