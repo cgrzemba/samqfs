@@ -672,7 +672,7 @@ tape_append(
 			 * error.
 			 */
 			(void) read_position(un, open_fd, &tmp_position);
-			DevLog(DL_ERR(3160), tmp_position, status);
+			DevLog(DL_ERR(3160), tmp_position, status, err);
 			set_bad_media(un);
 			return (1);
 		}
@@ -889,7 +889,7 @@ hard_way:
 			 * Tape does not have a filemark at EOD
 			 */
 			(void) read_position(un, open_fd, &tmp_position);
-			DevLog(DL_ERR(3160), tmp_position, status);
+			DevLog(DL_ERR(3160), tmp_position, status, err);
 			err = 1;
 			break;
 		}
@@ -909,16 +909,19 @@ hard_way:
 				 * Back skip 2 blocks to be in front of the
 				 * filemarks and label.
 				 */
+				(void) read_position(un, open_fd,
+				    &tmp_position);
+				DevLog(DL_ERR(3160), tmp_position, status, err);
 				err = skip_block_backward(un, open_fd, 2,
 				    &status);
-				if (!(err == 0 && status == SUN_KEY_EOF)) {
+				if (!((err == 0 || err == 1) && status == SUN_KEY_EOF)) {
 					/*
 					 * Tape does not have the correct
 					 * number of label and filemark.
 					 */
 					(void) read_position(un, open_fd,
 					    &tmp_position);
-					DevLog(DL_ERR(3160), tmp_position, status);
+					DevLog(DL_ERR(3160), tmp_position, status, err);
 					err = 1;
 					break;
 				}
@@ -929,7 +932,7 @@ hard_way:
 			 * filemark.
 			 */
 			(void) read_position(un, open_fd, &tmp_position);
-			DevLog(DL_ERR(3160), tmp_position, status);
+			DevLog(DL_ERR(3160), tmp_position, status, err);
 			err = 1;
 			break;
 		}
@@ -941,7 +944,7 @@ hard_way:
 		(void) read_position(un, open_fd, &tmp_position);
 		err = skip_block_forward(un, open_fd, 1, &status);
 		if (err) {
-			DevLog(DL_ERR(3160), tmp_position, status);
+			DevLog(DL_ERR(3160), tmp_position, status, err);
 			err = 1;
 			break;
 		}

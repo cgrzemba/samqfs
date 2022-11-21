@@ -460,7 +460,7 @@ $ *    SAM-QFS_notice_end
 3157 Position at EOF-TM-TM (%#x) is < supplied position (%#x)
 3158 Unable to find EOD
 3159 Found no eof at position %#x
-3160 Unable to find EOF at position %#x status %#x
+3160 Unable to find EOF at position %#x status %#x err %d
 3161 Found Record-TM-EOD, skipping to EOD
 3162 Unable to skip to EOD
 3163 Position after TM (%#x) is < supplied position (%#x)
