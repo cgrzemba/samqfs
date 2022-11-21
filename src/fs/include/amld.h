@@ -76,11 +76,11 @@ typedef struct {
 	SAM_POINTER(void) mt_handle;	/* Generic pointer for daemon */
 #if defined(__sparcv9) || defined(__amd64) /* XXX Cleanup ! */
 	dev_t rdev;			/* Raw device */
+	int dummy;			/* sizeof fs_unload_t has to multiple 8 to make si_cmd_table->cmd_buffers 8bit aligned */
 #else /* __sparcv9 || __amd64 */
 	dev_t rdev;			/* Raw device */
 #endif /* __sparcv9 || __amd64 */
 	int io_count;			/* count of rm operations */
-	int dummy;			/* sizeof fs_unload_t has to multiple 8 to make si_cmd_table->cmd_buffers 8bit aligned */
 } fs_unload_t;
 
 
