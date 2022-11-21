@@ -329,6 +329,12 @@ DEPCFLAGS += $(NO_BUILD_SANERGY)
 DEPCFLAGS += $(NO_BUILD_STK)
 DEPCFLAGS += $(NO_BUILD_OSD)
 
+# for build with ACSLS the ACSLS-toolkit-2 have to be installed and 
+# linked in the stk directoy
+ifeq (,$(wildcard ./src/robots/stk/stk_release/src/h/acssys.h))
+	DEPCFLAGS += $(NO_BUILD_ACSLS)
+endif
+
 ISA=$(subst /i386,,/$(ISA_TARGET))
 
 -include $(DEPTH)/mk/include/$(OS_DIST).mk
