@@ -96,8 +96,7 @@ samcmds = ['samchaid',
             'samunhold',
             ]
 isa32_cmds = {'fsck':'samfsck',
-            'mkfs':'sammkfs',
-            'trace':'samtrace'}
+            'mkfs':'sammkfs'}
 isa64_cmds = {'fsck':'samfsck',
             'mkfs':'sammkfs',
             'trace':'samtrace'}
