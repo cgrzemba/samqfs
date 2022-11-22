@@ -50,7 +50,7 @@ SAM_OPEN_SOURCE=yes
 endif
 include $(DEPTH)/mk/include/defaults.mk
 
-SAMQFS_VERSION ?= 5.0.1
+SAMQFS_VERSION ?= $(shell git describe --tags --abbrev=0)
 GUI_VERSION := 5.0.1
 
 SHELL := /bin/sh
