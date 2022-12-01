@@ -29,3 +29,4 @@ name="Sun SAM and Sun SAM-QFS software OI (usr)" pkg=SUNWsamfsu vendor="Open Sou
 <transform file path=.*/{{ config_smf_name }}$ -> default mode 0744>
 <transform depend -> edit fmri "(@[0-9\.]*)-[^ \\t\\n\\r\\f\\v]*" "\\1">
 <transform depend fmri=pkg:/runtime/perl.* -> edit fmri "@[^ \\t\\n\\r\\f\\v]*" "">
+<transform file path=.*kernel/.+ -> default reboot-needed true>
