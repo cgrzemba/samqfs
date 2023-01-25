@@ -212,6 +212,7 @@ main(int argc, char **argv)
 	printf("fifo_path: %s\n", fifo_path);
         message = (message_request_t *)SHM_REF_ADDR(
                     ((shm_ptr_tbl_t *)master_shm.shared_memory)->scan_mess);
+	free(library);
 }
 
 
