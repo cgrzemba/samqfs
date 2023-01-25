@@ -155,7 +155,7 @@ copyright.clean:
 #
 .NOTPARALLEL:
 
-DESTDIR ?= ./root
+DESTDIR ?= ./root_i386
 
 pkg: install
 
