@@ -355,4 +355,10 @@
 	mutex_exit(&ip->ilease_mutex);					\
 }
 
+#define L_MAXMIN 0xfffffffful
+#undef getminor
+#undef getmajor
+#define getminor(x) (int)((x) & L_MAXMIN)
+#define getmajor(x) (int)((((dev_t)(x)) >> L_BITSMINOR) & L_MAXMAJ)
+
 #endif /* _SAM_MACROS_H */
