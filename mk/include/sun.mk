@@ -48,6 +48,9 @@ OS_RELEASE := $(shell  uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]
 OS_RELEASE_MINOR := $(shell uname -v | gawk -F. '{if($$1==11) print $$2; else print "0";}' )
 OS_DIST := $(shell uname -v | gawk -F. '{if($$1==11) print "oracle"; else {split($$0,a,"-"); print a[1];};}')
 
+# kernel module version
+MODULE_VERSION = 1.0
+
 #
 # set sparc/i386 specific options
 #
@@ -84,7 +87,7 @@ ifeq ($(PLATFORM), i386)
 endif
 
 # GCC = $(SAMFS_TOOLS)/gcc/4.4.4/bin/gcc
-GCC = /usr/gcc/7/bin/gcc
+GCC = /usr/gcc/10/bin/gcc
 
 ifneq (,$(filter $(OS_RELEASE),11.3 11.4))
   OSDEPCFLAGS  = -DORACLE_SOLARIS
@@ -106,7 +109,7 @@ KERNFLAGS_CSTD = -D_KERNEL -m64 -xmodel=kernel -xregs=no%float -DKERNEL_MINOR=$(
 # KERNFLAGS_GCC = -D_KERNEL -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
 KERNFLAGS_GCC = -D_KERNEL -D_SYSCALL32 -D_SYSCALL32_IMPL -D_DDI_STRICT -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
 
-KERNFLAGS = $(KERNFLAGS_$(COMPILER))
+KERNFLAGS = $(KERNFLAGS_$(COMPILER)) -DMOD_VERSION=\"$(MODULE_VERSION)\"
 
 #
 # Solaris common commands
