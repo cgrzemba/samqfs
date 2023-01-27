@@ -507,13 +507,14 @@ DumpIoctl(ioctl_log_t *i_blk)
 		case SC_fsunload:
 			printf("%s syscall SC_fsunload\n", &line[11]);
 			printf("  unload -   handle(%ld.%ld,%d,%u,%llx), "
-			    "err %d\n",
+			    "err %d, pos %#llx\n",
 			    i_blk->ioctl_data.sc_fsunload.handle.id.ino,
 			    i_blk->ioctl_data.sc_fsunload.handle.id.gen,
 			    i_blk->ioctl_data.sc_fsunload.handle.fseq,
 			    i_blk->ioctl_data.sc_fsunload.handle.seqno,
 			    (i_blk->ioctl_data.sc_fsunload.handle.fifo_cmd.p64),
-			    i_blk->ioctl_data.sc_fsunload.ret_err);
+			    i_blk->ioctl_data.sc_fsunload.ret_err,
+			    i_blk->ioctl_data.sc_fsunload.position);
 			break;
 
 		case SC_fserror:

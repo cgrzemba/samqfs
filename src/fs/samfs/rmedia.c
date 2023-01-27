@@ -487,7 +487,6 @@ sam_unload_rm(
 				return (EOVERFLOW);
 			}
 		}
-		TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), (sam_tr_t)fifo_ctl.fifo.param.fs_unload.rdev, (sam_tr_t)curproc->p_model, (sam_tr_t)ip->di.psize.rmfile);
 		if (filemode & FWRITE) {
 			/*
 			 * Synchronously write pages out and invalidate the
@@ -527,6 +526,7 @@ sam_unload_rm(
 		    rfp->section[rfp->cur_ord].length;
 		fifo_ctl.fifo.param.fs_unload.mt_handle.ptr = ip->mt_handle;
 		fifo_ctl.fifo.param.fs_unload.io_count = ip->io_count;
+		TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), (sam_tr_t)fifo_ctl.fifo.param.fs_unload.rdev, (sam_tr_t)fifo_ctl.fifo.param.fs_unload.io_count, (sam_tr_t)ip->di.psize.rmfile);
 
 		/* Update removable media info */
 		if (error = sam_set_rm_info(ip, rfp, credp)) {

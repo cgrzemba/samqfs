@@ -655,7 +655,7 @@ addExamList(
 				LibFatal(MapFileGrow, EXAMLIST);
 			}
 #if defined(EXAM_TRACE)
-			Trace(TR_MISC, "Examlist grow count: %d len: %d",
+			Trace(TR_MISC, "Examlist grow count: %d len: %u",
 			    examList->ElCount, examList->El.MfLen);
 #endif /* defined(EXAM_TRACE) */
 		}

@@ -155,6 +155,7 @@ dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req)
 				    = un->sector_size;
 		}
 		block_size = un->sector_size;
+		mount_data.space = un->space;
 		break;
 
 	case DT_OPTICAL:
@@ -241,6 +242,7 @@ dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req)
 		DevLog(DL_ERR(1054));
 		mount_data.ret_err = EIO;
 	}
+	DevLog(DL_DETAIL(3287), mount_data.space);
 	if (DBG_LVL(SAM_DBG_LOGGING))
 		logioctl(SC_fsmount, 's', &mount_data);
 

@@ -853,6 +853,7 @@ unloadVolume(void)
 		}
 	} else if (!(Instance->CiFlags & CI_sim)) {
 		if (ioctl(AfFd, F_UNLOAD, &rmunload) < 0) {
+			Trace(TR_ERR, "ioctl rmunload failed: fd=%d, err=%d", AfFd, errno);
 			LibFatal(ioctl:F_UNLOAD, ArVolName);
 		}
 		if (!(rmunload.flags & UNLOAD_WTM)) {
