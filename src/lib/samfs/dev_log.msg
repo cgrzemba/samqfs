@@ -481,6 +481,7 @@ $ *    SAM-QFS_notice_end
 3178 Found R-TM-TM-EOD, not EOF1
 3179 Position after R-TM-TM-EOD (%#x) is < supplied position (%#x)
 3180 Unable to find EOD
+3181 Positioning %#x status %#x err %d (skipped blocks)
 3183 Positioning to %#x
 3184 Invalid resource record
 3185 Unable to position tape to EOD
@@ -570,7 +571,7 @@ $ *    SAM-QFS_notice_end
 3269 Writing file mark flushing buffer for EOF/EOV
 3270 Back Space %d filemarks : erreg %d resid %d
 3271 Forward Space %d filemarks : erreg %d resid %d
-3272 EOF1 or EOV1 not found at %#x.
+3272 EOF1 or EOV1 not found at %#x, got %x bytes.
 3273 Found EOF1/EOV1 at %#x.
 3274 Append at position %#x.
 3275 Forward Space %d records : erreg %d resid %d
@@ -584,6 +585,7 @@ $ *    SAM-QFS_notice_end
 3284 Drive %d is encryption capable
 3285 Attempt to position while writing, position failed.
 3286 Unable to write TM at %#x
+3287 Space %#x
 
 4000 Common
 4001 Close %d, open_count = %d
