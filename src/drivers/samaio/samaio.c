@@ -85,7 +85,8 @@
 #define	SIZE_PROP_NAME		"Size"
 #define	NBLOCKS_PROP_NAME	"Nblocks"
 #define	SAMAIO_MAX_MINOR	65536
-static uint32_t samaio_max_minor = 0;
+#define SAMAIO_NAME_VERSION "SAM-QFS pseudo AIO driver v" MOD_VERSION
+static int samaio_max_minor = 0;
 
 static dev_info_t	*samaio_dip = NULL;
 static void		*samaio_statep;
@@ -131,7 +132,7 @@ static int
 samaio_busy(void)
 {
 	struct samaio_state *aiop;
-	minor_t	minor;
+	int	minor;
 
 	mutex_enter(&samaio_mutex);
 
@@ -160,7 +161,7 @@ samaio_open(
 	int otyp,
 	struct cred *credp)
 {
-	minor_t	minor;
+	int	minor;
 	struct samaio_state *aiop;
 	int error = 0;
 
@@ -222,7 +223,7 @@ samaio_close(
 	int otyp,
 	struct cred *credp)
 {
-	minor_t	minor;
+	int	minor;
 	struct samaio_state *aiop;
 
 	minor = getminor(dev);
@@ -486,10 +487,10 @@ samaio_prop_op(
 	int *lengthp)
 {
 	struct samaio_state *aiop;
-	int length;
+	unsigned int length;
 	caddr_t buffer;
 	vattr_t vattr;
-	minor_t	minor;
+	int	minor;
 	int error;
 
 	minor = getminor(dev);
@@ -506,7 +507,7 @@ samaio_prop_op(
 	vattr.va_mask = AT_SIZE;
 	if ((error = VOP_GETATTR_OS(aiop->aio_vp, &vattr, ATTR_REAL,
 	    CRED(), NULL)) == 0) {
-		length = *lengthp;			/* Caller's length */
+		length = (size_t) (*lengthp & 0x7fffffff);			/* Caller's length */
 		*lengthp = sizeof (vattr.va_size);   /* Set callers length */
 
 		switch (prop_op)  {
@@ -574,7 +575,7 @@ samaio_ioctl(
 	cred_t *credp,
 	int *rvalp)
 {
-	minor_t	minor;
+	int	minor;
 	struct samaio_ioctl *lip = (struct samaio_ioctl *)arg;
 	struct samaio_state *aiop;
 	int	error;
@@ -643,7 +644,7 @@ samaio_ioctl(
 		}
 		(void) snprintf(namebuf, sizeof (namebuf), "%d,raw", minor);
 		error = ddi_create_minor_node(samaio_dip, namebuf, S_IFCHR,
-		    minor, DDI_PSEUDO, 0);
+		    (minor_t) minor, DDI_PSEUDO, 0);
 		if (error != DDI_SUCCESS) {
 			cmn_err(CE_WARN,
 			    "samaio: cannot create minor node %s, minor=%d",
@@ -697,7 +698,7 @@ out:
 	default: {
 		char type;
 
-		type = (char)(cmd >> 8) & 0xff;
+		type = (char)((cmd >> 8) & 0xff);
 
 		switch (type) {
 		case ((DKIOC) >> 8):		/* 04 */
@@ -778,7 +779,7 @@ static struct dev_ops samaio_ops = {
 
 static struct modldrv samaio_modldrv = {
 	&mod_driverops,
-	"SAM-QFS pseudo AIO driver",
+	SAMAIO_NAME_VERSION,
 	&samaio_ops,
 };
 

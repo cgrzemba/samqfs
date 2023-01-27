@@ -259,7 +259,7 @@ static vfsdef_t samfs_vfsdef = {
 extern	struct	mod_ops	mod_fsops;
 static struct modlfs modlfs = {
 	&mod_fsops,		/* type of module.  This is a file system */
-	samfs_fsid,		/* "Storage & Archiving Mgmt FS" */
+	SAMFS_NAME_VERSION,	/* "SAM-QFS Storage Archiving Mgmt" */
 	&samfs_vfsdef,		/* vfs def table */
 };
 

@@ -38,10 +38,6 @@
 #ifndef	_SAMFS_H
 #define	_SAMFS_H
 
-#ifdef sun
-#pragma ident "$Revision: 1.31 $"
-#endif
-
 #ifdef	linux
 #ifdef	__KERNEL__
 #include "linux/types.h"
@@ -66,7 +62,8 @@ extern int samfs_fstype;
 
 /* ----- samfs fsid.  */
 
-#define	samfs_fsid	"SAM-QFS: Storage Archiving Mgmt"
+#define MODULE_VERSION MOD_VERSION
+#define	SAMFS_NAME_VERSION	"SAM-QFS Storage Archiving Mgmt v" MODULE_VERSION
 
 
 /* ----- SAM-FS vfs function prototypes.  */

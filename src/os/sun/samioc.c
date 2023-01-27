@@ -53,6 +53,7 @@
 
 #include "sam/fs/macros.h"
 
+#define SAMIOC_NAME_VERSION "SAM-QFS system call interface v" MOD_VERSION
 //
 // Device information
 //
@@ -145,7 +146,7 @@ samioc_ioctl(dev_t dev, int cmd, intptr_t arg, int mode,
 		return (ENXIO);			// invalid minor number
 	}
 
-	if (ddi_model_convert_from(mode) == DDI_MODEL_ILP32) {
+	if (ddi_model_convert_from((uint_t) mode) == DDI_MODEL_ILP32) {
 		// Get 32-bit arguments and convert to 64 bit
 
 		struct args32 {
@@ -242,7 +243,7 @@ samioc_getinfo(dev_info_t *dip, ddi_info_cmd_t infocmd, void *arg,
 
 
 static int
-samioc_detach(dev_info_t *dip, ddi_attach_cmd_t cmd)
+samioc_detach(dev_info_t *dip, ddi_detach_cmd_t cmd)
 {
 	if (cmd == DDI_DETACH) {
 		int					instance;
@@ -291,7 +292,7 @@ samioc_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 		 * Use our own detach routine to toss
 		 * away any stuff we allocated above.
 		 */
-		(void) samioc_detach(dip, (ddi_attach_cmd_t)DDI_DETACH);
+		(void) samioc_detach(dip, DDI_DETACH);
 	}
 
 	return (DDI_FAILURE);
@@ -339,7 +340,7 @@ extern struct mod_ops mod_driverops;
 
 static struct modldrv samioc_modldrv = {
 	&mod_driverops,				// drv_modops
-	"SAM-QFS system call interface",	// drv_linkinfo
+	SAMIOC_NAME_VERSION,			// drv_linkinfo
 	&samioc_dev_ops				// drv_dev_ops
 };
 
