@@ -909,21 +909,24 @@ hard_way:
 				 * Back skip 2 blocks to be in front of the
 				 * filemarks and label.
 				 */
-				(void) read_position(un, open_fd,
-				    &tmp_position);
-				DevLog(DL_ERR(3160), tmp_position, status, err);
-				err = skip_block_backward(un, open_fd, 2,
-				    &status);
-				if (!((err == 0 || err == 1) && status == SUN_KEY_EOF)) {
-					/*
-					 * Tape does not have the correct
-					 * number of label and filemark.
-					 */
-					(void) read_position(un, open_fd,
-					    &tmp_position);
-					DevLog(DL_ERR(3160), tmp_position, status, err);
-					err = 1;
-					break;
+				(void) read_position(un, open_fd, &tmp_position);
+				DevLog(DL_DETAIL(3181), tmp_position, status, err);
+				err = skip_block_backward(un, open_fd, 2, &status);
+				if (err == 1) {
+					(void) read_position(un, open_fd, &tmp_position);
+					DevLog(DL_DETAIL(3181), tmp_position, status, err);
+					err = skip_block_backward(un, open_fd, 2, &status);
+					if (!((err == 0) && status == SUN_KEY_EOF)) {
+						/*
+						 * Tape does not have the correct
+						 * number of label and filemark.
+						 */
+						(void) read_position(un, open_fd,
+						    &tmp_position);
+						DevLog(DL_DETAIL(3181), tmp_position, status, err);
+						err = 1;
+						break;
+					}
 				}
 			}
 		} else {
@@ -932,7 +935,7 @@ hard_way:
 			 * filemark.
 			 */
 			(void) read_position(un, open_fd, &tmp_position);
-			DevLog(DL_ERR(3160), tmp_position, status, err);
+			DevLog(DL_ERR(3181), tmp_position, status, err);
 			err = 1;
 			break;
 		}
@@ -942,9 +945,10 @@ hard_way:
 		 * label. Skip forward 1 block so we can read the label.
 		 */
 		(void) read_position(un, open_fd, &tmp_position);
+		DevLog(DL_DETAIL(3181), tmp_position, status, err);
 		err = skip_block_forward(un, open_fd, 1, &status);
 		if (err) {
-			DevLog(DL_ERR(3160), tmp_position, status, err);
+			DevLog(DL_DETAIL(3181), tmp_position, status, err);
 			err = 1;
 			break;
 		}
@@ -954,10 +958,11 @@ hard_way:
 		 */
 		tmp_position = (uint_t)-1;
 		(void) read_position(un, open_fd, &tmp_position);
+		DevLog(DL_DETAIL(3181), tmp_position, status, err);
 		if (!((lab_len = read(open_fd, eoflb, 160)) == 80 &&
 		    ((memcmp(eoflb, "EOF1", 4) == 0) ||
 		    (memcmp(eoflb, "EOV1", 4) == 0)))) {
-			DevLog(DL_ERR(3272), tmp_position);
+			DevLog(DL_ERR(3272), tmp_position, lab_len);
 			err = 1;
 			break;
 		}
@@ -1154,7 +1159,7 @@ forwardspace_record(
 		*sense = status.mt_erreg;
 		DevLog(DL_DETAIL(3275), count,
 		    status.mt_erreg, status.mt_resid);
-		return (abs(status.mt_resid));
+		return (abs((int)status.mt_resid));
 	}
 	return (0);
 }
@@ -1178,7 +1183,7 @@ backspace_record(
 		*sense = status.mt_erreg;
 		DevLog(DL_DETAIL(3223), count,
 		    status.mt_erreg, status.mt_resid);
-		return (abs(status.mt_resid));
+		return (abs((int)status.mt_resid));
 	}
 	return (0);
 }
@@ -1202,7 +1207,7 @@ backspace_file(
 		*sense = status.mt_erreg;
 		DevLog(DL_DETAIL(3270), count,
 		    status.mt_erreg, status.mt_resid);
-		return (abs(status.mt_resid));
+		return (abs((int)status.mt_resid));
 	}
 	return (0);
 }
@@ -1226,7 +1231,7 @@ forwardspace_file(
 		*sense = status.mt_erreg;
 		DevLog(DL_DETAIL(3271), count,
 		    status.mt_erreg, status.mt_resid);
-		return (abs(status.mt_resid));
+		return (abs((int)status.mt_resid));
 	}
 	return (0);
 }
