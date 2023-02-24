@@ -123,7 +123,8 @@ DeviceCheck(void)
 				 * not auditing.
 				 */
 				dev = al->AlDevent;
-				if (dev->state == DEV_ON &&
+				if (dev != NULL &&
+				    dev->state == DEV_ON &&
 				    dev->status.b.ready &&
 				    !dev->status.b.audit) {
 					al->AlFlags |= AL_avail;
