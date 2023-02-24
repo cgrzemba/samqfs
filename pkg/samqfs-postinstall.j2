@@ -37,6 +37,9 @@ EXAMPLE=$PKG_INSTALL_ROOT/{{prefix}}examples
 KERNDRV=$PKG_INSTALL_ROOT/kernel/drv
 LAST_DIR=$PKG_INSTALL_ROOT/{{sysconfdir}}samfs.old.last
 
+if [ ! -d $VARDIR/catalog ]; then
+    mkdir -p $VARDIR/catalog
+fi
 if [ ! -d $ETCDIR ]; then
     mkdir -p $ETCDIR
     chmod 0755 $ETCDIR
