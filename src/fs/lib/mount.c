@@ -266,16 +266,17 @@ ChkFs(void)
 	struct sam_fs_status *fsarray = NULL;
 	flock_t	fsd_lock;
 	char	*fsdLockName = SAM_SAMFS_PATH"/"SAM_FSD;
-	char	*pkgchk = PKGCHK;
 	int		fd;
 	int		pid;
 	int		status;
 
 #ifdef sun
+#ifndef 0_feature_not_needed_anymore
+	char	*pkgchk = PKGCHK;
 	if (system(pkgchk)) {
 		exit(EXIT_FAILURE);
 	}
-
+#endif
 	if ((fd = open(fsdLockName, O_RDWR)) < 0) {
 		error(EXIT_FAILURE, errno, GetCustMsg(613), fsdLockName);
 	}
@@ -336,7 +337,7 @@ ChkFs(void)
 		waitpid(pid, &status, 0);
 		close(fd);
 	}
-#if 0
+#ifndef 0_feature_not_needed_anymore
 	/*
 	 * Add appropriate service tags.
 	 */
