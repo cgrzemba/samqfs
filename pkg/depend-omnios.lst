@@ -4,5 +4,5 @@ system/library/gcc-runtime
 system/library
 runtime/perl
 ooce/database/bdb
-ooce/library/mariadb-104
+ooce/library/mariadb-108
 shell/ksh93
