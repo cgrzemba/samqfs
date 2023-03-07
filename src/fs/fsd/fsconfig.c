@@ -125,7 +125,7 @@ FsConfig(char *fscfg_name)
  *	fast_fs,                                0x---8
  *	db_features, foreign_tape,              0x----3
  *	shared_san, segment, shared_fs          0x-----E
- *	(WORM is off unless package installed)  0x-----1
+ *	(WORM is on)  				0x-----1
  *	unused                                  0x------00
  */
 	sam_license_t_33	syslic = {	0,	/* hostid */
