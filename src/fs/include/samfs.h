@@ -63,7 +63,7 @@ extern int samfs_fstype;
 /* ----- samfs fsid.  */
 
 #define MODULE_VERSION MOD_VERSION
-#define	SAMFS_NAME_VERSION	"SAM-QFS Storage Archiving Mgmt v" MODULE_VERSION
+#define	SAMFS_NAME_VERSION	"SAM-QFS filesystem v" MODULE_VERSION
 
 
 /* ----- SAM-FS vfs function prototypes.  */
