@@ -206,6 +206,9 @@ sam_priv_syscall(
 #ifdef METADATA_SERVER
 		case SC_setlicense:
 		case SC_getlicense:
+#ifdef feature_not_needed_anymore
+			error = sam_license_info(cmd, arg, size, credp);
+#endif
 			break;
 #endif	/* METADATA_SERVER */
 

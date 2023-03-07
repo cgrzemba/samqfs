@@ -655,7 +655,10 @@ samfs_init(
 	sam_objctl_init();
 	sam_sosd_bind();
 #endif
-
+#ifndef feature_not_needed_anymore
+	/* license all features */
+	samgt.license.license.lic_u.whole = (uint) -1;
+#endif
 	return (0);
 }
 
