@@ -55,6 +55,7 @@
 #include <sys/mnttab.h>
 #include <sys/efi_partition.h>
 #include "efilabel.h"
+#include <libscf.h>
 #endif /* sun */
 
 /* SAM-FS headers. */
@@ -65,6 +66,8 @@
 
 /* Local headers. */
 #include "utility.h"
+
+#define SAM_FSD_FMRI "svc:/system/"SAM_FSD":default"
 
 extern char *getfullrawname(char *);
 
@@ -293,6 +296,11 @@ ChkFs(void)
 
 	if (GetFsStatus(&fsarray) > 0) {
 		free(fsarray);
+		/* it could be possible that sam-fsd was stopped, so we reenable it again */
+		printf("%s: (RE)enabling the sam-fsd service.\n", program_name);
+		if(smf_enable_instance(SAM_FSD_FMRI, SMF_TEMPORARY) == -1) {
+			error(EXIT_FAILURE, scf_error(), "smf_enable_instance %s, scf_error: %s\n", SAM_FSD_FMRI, scf_strerror(scf_error()));
+		}
 		close(fd);
 		return;
 	}
@@ -325,17 +333,8 @@ ChkFs(void)
 	 * Enable sam-fsd
 	 */
 	printf("%s: Enabling the sam-fsd service.\n", program_name);
-	pid = fork();
-	if (pid == -1) {
-		error(EXIT_FAILURE, errno, "Cannot fork to enable sam-fsd");
-	} else if (pid == 0) {
-		close(fd);
-		execl("/usr/sbin/svcadm", "svcadm", "enable", "-t",
-		    SAM_FSD, NULL);
-		error(EXIT_FAILURE, errno, "Cannot exec to enable sam-fsd");
-	} else {
-		waitpid(pid, &status, 0);
-		close(fd);
+        if(smf_enable_instance(SAM_FSD_FMRI, SMF_TEMPORARY) == -1) {
+                error(EXIT_FAILURE, scf_error(), "smf_enable_instance %s, scf_error: %s\n", SAM_FSD_FMRI, scf_strerror(scf_error()));
 	}
 #ifdef feature_not_needed_anymore
 	/*

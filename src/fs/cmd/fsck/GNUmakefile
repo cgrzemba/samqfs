@@ -43,7 +43,7 @@ PROG_LIBS = $(STATIC_OPT) \
 	-L ../../lib/$(OBJ_DIR) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut \
 	$(DYNAMIC_OPT) \
-	-ladm -ldl -lsysevent -lnvpair
+	-ladm -ldl -lsysevent -lnvpair -lscf
 samfsck_LIBS =  ../../lib/$(OBJ_DIR)/setsyscall.o $(PROG_LIBS)
 fsck_LIBS =
 
