@@ -53,7 +53,7 @@
 
 #include "sam/fs/macros.h"
 
-#define SAMIOC_NAME_VERSION "SAM-QFS system call interface v" MOD_VERSION
+#define SAMIOC_NAME_VERSION "SAM-QFS syscall interface v" MOD_VERSION
 //
 // Device information
 //
