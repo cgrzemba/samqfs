@@ -33,18 +33,12 @@ name='system/{{ config_smf_name }}'
     version='1'>
     <single_instance />
     <dependency
-        name='fs-local'
-        grouping='require_all'
-        restart_on='none'
-        type='service'>
-            <service_fmri value='svc:/system/filesystem/local:default' />
+	name='name-services'
+	grouping='require_all'
+	restart_on='none'
+	type='service'>
+      <service_fmri value='svc:/milestone/name-services'/>
     </dependency>
-    <dependent
-        name='samqfs_self-assembly-complete'
-        grouping='optional_all'
-        restart_on='none'>
-        <service_fmri value='svc:/milestone/self-assembly-complete' />
-    </dependent>
     <instance enabled='true' name='default'>
         <exec_method
             type='method'

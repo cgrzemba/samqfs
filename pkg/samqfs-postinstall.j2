@@ -117,7 +117,7 @@ fi
 VERSION="VERSION.{{version}}"
 /bin/touch $ETCDIR/$VERSION
 
-SH_LIST="archiver.sh recycler.sh save_core.sh sendtrap nrecycler.sh"
+SH_LIST="archiver.sh recycler.sh save_core.sh sendtrap"
 for fn in $SH_LIST; do
         if [ ! -f $SCRIPTS/$fn ]; then
                 if [ -f $EXAMPLE/$fn ]; then
