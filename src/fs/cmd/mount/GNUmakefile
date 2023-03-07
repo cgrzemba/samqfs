@@ -47,7 +47,7 @@ DEPCFLAGS = $(INCFLAGS) $(VERS) $(METADATA_SERVER) $(DEBUGCDEFS)
 LDFLAGS += ../../lib/$(OBJ_DIR)/setsyscall.o
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
 	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamconf $(DYNAMIC_OPT) \
-	$(LADM) -ldl
+	$(LADM) -ldl -lscf
 
 ifeq ($(OS), SunOS)
 PROG_LIBS += -lsysevent -lnvpair

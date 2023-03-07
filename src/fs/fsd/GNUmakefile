@@ -66,7 +66,7 @@ ifeq ($(OS), SunOS)
     INCFLAGS  += -I$(DB_INCLUDE)
 endif
 PROG_LIBS += -lsamspmd -lsamspm -lsamrft $(DYNAMIC_OPT) \
--lsocket -lnsl -ladm $(DB_LIB)
+-lsocket -lnsl -ladm $(DB_LIB) -lscf
 else
 PROG_LIBS += -lsamconf
 endif
