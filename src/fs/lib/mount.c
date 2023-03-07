@@ -271,7 +271,7 @@ ChkFs(void)
 	int		status;
 
 #ifdef sun
-#ifndef 0_feature_not_needed_anymore
+#ifdef feature_not_needed_anymore
 	char	*pkgchk = PKGCHK;
 	if (system(pkgchk)) {
 		exit(EXIT_FAILURE);
@@ -337,7 +337,7 @@ ChkFs(void)
 		waitpid(pid, &status, 0);
 		close(fd);
 	}
-#ifndef 0_feature_not_needed_anymore
+#ifdef feature_not_needed_anymore
 	/*
 	 * Add appropriate service tags.
 	 */
