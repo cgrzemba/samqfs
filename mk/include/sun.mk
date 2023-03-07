@@ -164,15 +164,6 @@ endif
 # Kernel Stabs (Symbol TABle entrieS) support.  Each Solaris release
 # should use the corresponding Solaris ON tools.
 #
-ifeq ($(OS_REVISION), 5.10)
-	CTFCONVERT = $(SAMFS_TOOLS)/on10-tools/bin/$(PLATFORM)/ctfconvert
-	CTFCVTFLAGS = -l $(SAMQFS_VERSION)
-	CTFCONVERT_CMD = $(CTFCONVERT) $(CTFCVTFLAGS) $@
-
-	CTFMERGE = $(SAMFS_TOOLS)/on10-tools/bin/$(PLATFORM)/ctfmerge
-	CTFMRGFLAGS = -l $(SAMQFS_VERSION)
-	CTFMERGE_CMD = cd $(OBJ_DIR); $(CTFMERGE) $(CTFMRGFLAGS) -o $(MODULE) $(MODULE_OBJS_BASE)
-else
 ifeq ($(OS_REVISION), 5.11)
 	CTFCONVERT = /usr/bin/ctfconvert
 	CTFCVTFLAGS = -l $(SAMQFS_VERSION)
@@ -183,7 +174,6 @@ ifeq ($(OS_REVISION), 5.11)
 	CTFMERGE_CMD = cd $(OBJ_DIR); $(CTFMERGE) $(CTFMRGFLAGS) -o $(MODULE) $(MODULE_OBJS_BASE)
 else
 $(error "Unknown Solaris version $(OS_REVISION)")
-endif
 endif
 
 #
