@@ -1535,6 +1535,7 @@ sam_getsecattr_vn(
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_READER);
 	}
 
+	DTRACE_PROBE2(vsap, vnode_t *, vp , vsecattr_t *, vsap);
 	TRACE(T_SAM_GETSECATTR, vp, (sam_tr_t)vsap, flag, error);
 	return (error);
 }
