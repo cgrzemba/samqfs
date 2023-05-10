@@ -76,7 +76,6 @@ void kill_off_threads(library_t *);
 /*	some globals */
 pid_t 		mypid;
 char 		*fifo_path;
-const char 	*program_name = "stk";
 thread_t 	threads[STK_MAIN_THREADS];	/* my main threads */
 shm_alloc_t master_shm, preview_shm;
 extern void common_init(dev_ent_t *un);
@@ -110,6 +109,7 @@ main(int argc, char **argv)
 	if (argc != 4)
 		exit(1);
 
+	*program_name = "stk";
 	initialize_fatal_trap_processing(SOLARIS_THREADS, fatal_cleanup);
 
 	CustmsgInit(1, NULL);
