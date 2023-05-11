@@ -136,8 +136,6 @@ opt/SUNWsamfs/man/man8/sam-shrink.8 0644
 opt/SUNWsamfs/man/man8/sam-stagealld.8 0644
 opt/SUNWsamfs/man/man8/sam-stagerd.8 0644
 opt/SUNWsamfs/man/man8/sam-stagerd_copy.8 0644
-opt/SUNWsamfs/man/man8/sam-stk_helper.8 0644
-opt/SUNWsamfs/man/man8/sam-stkd.8 0644
 opt/SUNWsamfs/man/man8/samadm.8 0644
 opt/SUNWsamfs/man/man8/sambcheck.8 0644
 opt/SUNWsamfs/man/man8/samchaid.8 0644
@@ -270,9 +268,6 @@ opt/SUNWsamfs/man/man4/historian.4 0644
 opt/SUNWsamfs/man/man7/sam-remote.7 0644
 opt/SUNWsamfs/man/man4d/samaio.4d 0644
 opt/SUNWsamfs/man/man4d/samioc.4d 0644
-opt/SUNWsamfs/man/man8/ssi.sh.8 0644
-opt/SUNWsamfs/man/man8/ssi_so.8 0644
-opt/SUNWsamfs/man/man5/stk.5 0644
 opt/SUNWsamfs/sbin/samtrace 0550
 opt/SUNWsamfs/sbin/archive_audit 0550
 opt/SUNWsamfs/sbin/archiver 0550
