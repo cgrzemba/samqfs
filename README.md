@@ -1,13 +1,13 @@
 # samqfs
 
-This is the source of Sun SamFS released to opensource 2009. The source it adapted to build on Openindiana and OmniOS. Some Storage API's of third party vendors are disabled. samst driver is not needed anymore.
+This is the source of Sun SamFS released to opensource 2008. The source it adapted to build on Openindiana and OmniOS. Some Storage API's of third party vendors are disabled. samst driver is not needed anymore.
 
 ## Setup build environemnt
 
 needed packages:
 
 -    perl
--    developer/gcc-7
+-    developer/gcc-10
 -    system/network/avahi
 -    developer/build/onbld
 -    text/locale
