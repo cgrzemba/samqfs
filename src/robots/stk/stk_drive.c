@@ -576,7 +576,7 @@ query_mnt_status(
 	library = drive->library;
 	if (*library->un->i.ViVsn == '\0') {
 		sam_syslog(LOG_ERR,
-		    "No volume available for query_mnt_status.");
+		    "%s: No volume available.", ent_pnt);
 		return (NULL);
 	}
 
@@ -690,21 +690,21 @@ query_mnt_status(
 		} /* end of for loop */
 
 		} else {
-			sam_syslog(LOG_ERR, "query mount status:%s",
+			sam_syslog(LOG_ERR, "%s:%s", ent_pnt,
 			    sam_acs_status(err));
 		}
 
 		} else {
-			sam_syslog(LOG_ERR, "query mount response status:%s",
+			sam_syslog(LOG_ERR, "%s: query mount response status:%s", ent_pnt,
 			    sam_acs_status(err));
 		}
 	} else {
 		if (err > STATUS_LAST) {
 			sam_syslog(LOG_INFO,
-			    "helper-query_mount status(errno):%s.",
+			    "%s: helper-query_mount status(errno):%s.", ent_pnt,
 			    strerror(err - STATUS_LAST));
 		} else {
-			sam_syslog(LOG_INFO, "helper-query_mount status:%s",
+			sam_syslog(LOG_INFO, "%s: helper-query_mount status:%s", ent_pnt,
 			    sam_acs_status(err));
 		}
 	}
@@ -712,11 +712,11 @@ query_mnt_status(
 out:
 	if (tmp_drive != NULL) {
 		sam_syslog(LOG_DEBUG,
-		    "query_mount_status found empty drive(%d,%d,%d,%d)",
+		    "%s: found empty drive(%d,%d,%d,%d)", ent_pnt,
 		    DRIVE_LOC(tmp_drive->drive_id));
 	} else {
 		sam_syslog(LOG_DEBUG,
-		    "query_mnt_status found no empty drive");
+		    "%s: found no empty drive", ent_pnt);
 	}
 	mutex_destroy(&query_mnt->mutex);
 	cond_destroy(&query_mnt->condit);

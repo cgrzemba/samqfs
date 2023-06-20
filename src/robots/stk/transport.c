@@ -62,9 +62,9 @@
 #include "stk.h"
 #include "aml/proto.h"
 #include "sam/lib.h"
+#include "aml/dev_log.h"
 
-#pragma ident "$Revision: 1.27 $"
-
+static char *_SrcFile = __FILE__;
 
 /* function prototypes */
 void init_transport(xport_state_t *);
@@ -81,6 +81,19 @@ void start_request(library_t *, char *, int, robo_event_t *, int, ...);
 /*	some globals */
 extern shm_alloc_t master_shm, preview_shm;
 
+static equ_t getEq(library_t *library, stk_information_t *stk_info) {
+	drive_state_t *drive;
+
+	for (drive = library->drive; drive != NULL; drive = drive->next) {
+		if (drive->drive_id.drive == stk_info->drive_id.drive &&
+			drive->drive_id.panel_id.panel == stk_info->drive_id.panel_id.panel &&
+			drive->drive_id.panel_id.lsm_id.lsm == stk_info->drive_id.panel_id.lsm_id.lsm &&
+			drive->drive_id.panel_id.lsm_id.acs == stk_info->drive_id.panel_id.lsm_id.acs) {
+			return drive->un->eq;
+		}
+	}
+	return 0;
+}
 
 /*
  *	Main thread.  Sits on the message queue and waits for something to do.
@@ -284,6 +297,7 @@ load(
 	library_t 	*library = (library_t *)event->next;
 	char 		mess[DIS_MES_LEN * 2];
 	char 		chr_driveid[12];
+	dev_ent_t *un = library->un;
 
 	stk_information_t *stk_info =
 	    (stk_information_t *)event->request.internal.address;
@@ -293,11 +307,12 @@ load(
 	mutex_unlock(&library->transports->mutex);
 
 	sprintf(chr_driveid, "%#x", *(U_ID(stk_info->drive_id)));
-	sprintf(mess, "stk_mount(%d) %d,%d,%d,%d, volser %s", sequ_no,
-	    DRIVE_LOC(stk_info->drive_id), stk_info->vol_id.external_label);
+	sprintf(mess, "stk_mount(%d) %d,%d,%d,%d, %d volser %s", sequ_no,
+	    DRIVE_LOC(stk_info->drive_id), getEq(library, stk_info), stk_info->vol_id.external_label);
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
 	start_request(library, "mount", sequ_no, event, 2, chr_driveid,
 	    stk_info->vol_id.external_label);
 	thr_exit(NULL);
@@ -315,6 +330,7 @@ force(void *vevent)
 	library_t 	*library = (library_t *)event->next;
 	char 		mess[DIS_MES_LEN * 2];
 	char 		chr_driveid[12];
+	dev_ent_t *un = library->un;
 
 	stk_information_t *stk_info =
 	    (stk_information_t *)event->request.internal.address;
@@ -327,19 +343,19 @@ force(void *vevent)
 
 	if ((library->hasam_running) &&
 	    (strlen(stk_info->vol_id.external_label) != 0)) {
-		sprintf(mess, "stk_force(%d) %d,%d,%d,%d, volser %s",
-		    sequ_no, DRIVE_LOC(stk_info->drive_id),
+		sprintf(mess, "stk_force(%d) %d,%d,%d,%d, %d volser %s",
+		    sequ_no, DRIVE_LOC(stk_info->drive_id), getEq(library, stk_info),
 		    stk_info->vol_id.external_label);
 	} else {
-		sprintf(mess, "stk_force(%d) %d,%d,%d,%d",
-		    sequ_no, DRIVE_LOC(stk_info->drive_id));
+		sprintf(mess, "stk_force(%d) %d,%d,%d,%d %d",
+		    sequ_no, DRIVE_LOC(stk_info->drive_id), getEq(library, stk_info));
 	}
 
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
-
+	DevLog(DL_ALL(0), mess);
 	if ((library->hasam_running) &&
 	    (strlen(stk_info->vol_id.external_label) != 0)) {
 		start_request(library, "force", sequ_no, event, 2, chr_driveid,
@@ -363,6 +379,7 @@ dismount(
 	library_t 		*library = (library_t *)event->next;
 	char 	mess[DIS_MES_LEN * 2];
 	char 	chr_driveid[12];
+	dev_ent_t *un = library->un;
 
 	stk_information_t *stk_info =
 	    (stk_information_t *)event->request.internal.address;
@@ -372,13 +389,14 @@ dismount(
 	mutex_unlock(&library->transports->mutex);
 
 	sprintf(chr_driveid, "%#x", *(U_ID(stk_info->drive_id)));
-	sprintf(mess, "stk_dismount(%d) %d,%d,%d,%d, volser %s",
-	    sequ_no, DRIVE_LOC(stk_info->drive_id),
+	sprintf(mess, "stk_dismount(%d) %d,%d,%d,%d, %d volser %s",
+	    sequ_no, getEq(library, stk_info), DRIVE_LOC(stk_info->drive_id),
 	    stk_info->vol_id.external_label);
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
 	start_request(library, "dismount", sequ_no, event, 2, chr_driveid,
 	    stk_info->vol_id.external_label);
 	thr_exit(NULL);
@@ -396,6 +414,7 @@ view(
 	robo_event_t 	*event = vevent;
 	library_t 		*library = (library_t *)event->next;
 	char 	mess[DIS_MES_LEN * 2];
+	dev_ent_t *un = library->un;
 
 	VOLID *vol_id = (VOLID *)event->request.internal.address;
 
@@ -407,6 +426,7 @@ view(
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
 	start_request(library, "view", sequ_no, event, 1, vol_id);
 	thr_exit(NULL);
 }
@@ -424,6 +444,7 @@ query_drv(
 	library_t 		*library = (library_t *)event->next;
 	char 	mess[DIS_MES_LEN * 2];
 	char 	chr_driveid[12];
+	dev_ent_t *un = library->un;
 
 	stk_information_t *stk_info =
 	    (stk_information_t *)event->request.internal.address;
@@ -433,11 +454,13 @@ query_drv(
 	mutex_unlock(&library->transports->mutex);
 
 	sprintf(chr_driveid, "%#x", *(U_ID(stk_info->drive_id)));
-	sprintf(mess, "stk_query_drv(%d), drive(%d,%d,%d,%d).",
-	    sequ_no, DRIVE_LOC(stk_info->drive_id));
+	sprintf(mess, "stk_query_drv(%d), drive(%d,%d,%d,%d) %d",
+	    sequ_no, DRIVE_LOC(stk_info->drive_id), getEq(library, stk_info));
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
+	DevLog(DL_ALL(0), "%#x %#x", library->drive->drive_id, stk_info->drive_id);
 	start_request(library, "query_drv", sequ_no, event, 1, chr_driveid);
 	thr_exit(NULL);
 }
@@ -454,6 +477,7 @@ query_all_drvs(
 	robo_event_t	*event = vevent;
 	library_t		*library = (library_t *)event->next;
 	char			mess[DIS_MES_LEN * 2];
+	dev_ent_t *un = library->un;
 
 	stk_information_t *stk_info =
 	    (stk_information_t *)event->request.internal.address;
@@ -467,6 +491,7 @@ query_all_drvs(
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
 	start_request(library,
 	    "query_all_drvs", sequ_no, event, 1, "query_all");
 	thr_exit(NULL);
@@ -485,6 +510,7 @@ query_mnt_stat(
 	library_t	*library = (library_t *)event->next;
 	char		mess[DIS_MES_LEN * 2];
 	VOLID		*vol_id = (VOLID *)event->request.internal.address;
+	dev_ent_t *un = library->un;
 
 	mutex_lock(&library->transports->mutex);
 	sequ_no = ++(library->transports->sequence);
@@ -494,6 +520,7 @@ query_mnt_stat(
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
 	start_request(library, "query_mnt_stat", sequ_no, event, 1, vol_id);
 	thr_exit(NULL);
 }
@@ -512,6 +539,7 @@ eject_volume(
 	char 	mess[DIS_MES_LEN * 2];
 	char 	chr_capid[12];
 	VOLID 	*vol_id = (VOLID *)event->request.internal.address;
+	dev_ent_t *un = library->un;
 
 	mutex_lock(&library->transports->mutex);
 	sequ_no = ++(library->transports->sequence);
@@ -523,6 +551,7 @@ eject_volume(
 	if (DBG_LVL(SAM_DBG_DEBUG))
 		sam_syslog(LOG_DEBUG, "%s.", mess);
 	memccpy(library->un->dis_mes[DIS_MES_NORM], mess, '\0', DIS_MES_LEN);
+	DevLog(DL_ALL(0), mess);
 	start_request(library, "eject_volume", sequ_no, event, 2,
 	    vol_id, chr_capid);
 	thr_exit(NULL);
