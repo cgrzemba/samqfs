@@ -299,7 +299,7 @@ NO_BUILD_STK = -D_NoSTK_
 # no Sun Customer Services
 NO_BUILD_CNS = -D_NoCNS_
 # no build ACSLS client tools
-NO_BUILD_ACSLS = -D_NoACSLS_
+NO_BUILD_ACSLS = 
 
 #
 # Final default CFLAGS settings
@@ -322,6 +322,7 @@ DEPCFLAGS += $(NO_BUILD_SANERGY)
 # Sun STK 5800 honeycomb Object Storage
 DEPCFLAGS += $(NO_BUILD_STK)
 DEPCFLAGS += $(NO_BUILD_OSD)
+DEPCFLAGS += $(NO_BUILD_ACSLS)
 
 # for build with ACSLS the ACSLS-toolkit-2 have to be installed and 
 # linked in the stk directoy
