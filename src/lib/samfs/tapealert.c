@@ -167,6 +167,14 @@ get_supports_tapealert(dev_ent_t *un, int fd)
 				break;
 			}
 		}
+	} else {
+		if ( errno == EACCES ){
+			DevLog(DL_DETAIL(1171), getpid(), SCMD_LOG_SENSE,
+				un->name, open_fd,      strerror(errno) );
+			/* set drive to state off */
+			OffDevice(un, SAM_STATE_CHANGE);
+			SendCustMsg(HERE, 9402);
+		}
 	}
 
 	/* query, clear, and report active flags at setup */

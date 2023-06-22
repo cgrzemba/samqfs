@@ -193,6 +193,7 @@ $ *    SAM-QFS_notice_end
 1168 Errflag %x State %#x
 1169 cmpldev, could not compress rdev to dev32_t %llx
 1170 (%d) READ_BLKLIM result on %s fd %d error %s
+1171 (%d) scsi_cmd %#x result on %s fd %d EACCESS, is it shared drive?
 
 2000 Optic
 2001 Erase started
@@ -354,15 +355,7 @@ $ *    SAM-QFS_notice_end
 3059 tape_append: Found EOF1 at %#x
 3060 tape_append: Found EOV1 at %#x
 3061 Medium error: No space left
-<<<<<<< HEAD
-<<<<<<< HEAD
 3062 tape_append: EOF1 not found at %#x [%d, %lld, %d, %#x, %#x, %#x, %#x, %#x]
-=======
-3062 tape_append: EOF1 not found at %#x [%d, %d, %d, %#x, %#x, %#x, %#x, %#x]
->>>>>>> 7fedbdff (extend logging messages)
-=======
-3062 tape_append: EOF1 not found at %#x [%d, %lld, %d, %#x, %#x, %#x, %#x, %#x]
->>>>>>> d6f78b84 (extend logging messages)
 3063 tape_append: Unable to position to %#x
 3064 BSR failed
 3065 BSF failed
@@ -586,6 +579,12 @@ $ *    SAM-QFS_notice_end
 3285 Attempt to position while writing, position failed.
 3286 Unable to write TM at %#x
 3287 Space %#x
+<<<<<<< HEAD
+=======
+3288 Readed timeout oper=%x, value=%ld : 0x%x,0x%x,0x%x,0x%x
+3289 Report Supported Operation failed %s: ret=%x, resid=%x
+3290 Report Supported Operation not supported
+>>>>>>> 4fea95d7 (ACSLS: improve shared drive handling)
 
 4000 Common
 4001 Close %d, open_count = %d
