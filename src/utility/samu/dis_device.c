@@ -193,7 +193,7 @@ DisTape(
 	int headln;
 
 	Mvprintw(ln++, 0, catgets(catfd, SET, 7303,
-	    "ty   eq  status      act  use  state \tvsn"));
+	    "ty   eq  status       act  use  state \tvsn"));
 	headln = ln;
 	DisTapeh();
 	if (headln == ln) {
@@ -232,9 +232,9 @@ DisTapeh(
 		st = dev->state;
 		pct = dev_usage(dev);
 
-		Mvprintw(ln++, 0, "%2s%5d  %s %4d%4d%%  %-7s\t%-32s",
+		Mvprintw(ln++, 0, "%2s%5d  %s%c %4d%4d%%  %-7s\t%-32s",
 		    device_to_nm(dev->type), i,
-		    sam_devstr(dev->status.bits), dev->active, pct,
+		    sam_devstr(dev->status.bits), dev->flags & DVFG_SHARED ? 's' : ' ', dev->active, pct,
 		    (st == DEV_ON) ? ((rdy) ? "ready" : "notrdy") :
 		    dev_state[st],
 		    (rdy) ? ((lab) ? dev->vsn : "nolabel") : " ");
