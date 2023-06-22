@@ -1705,7 +1705,7 @@ $ ===================================================================
 7300 copy
 7301 "ty   eq state   device_name\t\t\t   fs family_set"
 7302 "ty     eq state   device_name\t\t\t     fs status"
-7303 "ty   eq  status      act  use  state \tvsn"
+7303 "ty   eq  status    s  act  use  state \tvsn"
 7304 format
 7305 incore
 7306 "No usage data"
@@ -2126,6 +2126,7 @@ $ These messages have been added to support SendCustMsg
 9459 %s: Setting device (%d) down due to PSC error.
 9400 -eV[Dev:LoadInterrupt] SAM-FS needs VSN %s to be manually loaded or imported
 9401 -eV[Dev:DriveDown] Drive set to down, drive is in CD-ROM emulation mode.
+9402 -eV[Dev:OffDown] shared Drive set to off, cannot determine if WORM or RW media loaded.
 $  rpc          (10000s)
 $ ===================================================================
 
