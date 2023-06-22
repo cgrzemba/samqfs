@@ -109,7 +109,7 @@ main(int argc, char **argv)
 	if (argc != 4)
 		exit(1);
 
-	*program_name = "stk";
+	program_name = "stk";
 	initialize_fatal_trap_processing(SOLARIS_THREADS, fatal_cleanup);
 
 	CustmsgInit(1, NULL);
