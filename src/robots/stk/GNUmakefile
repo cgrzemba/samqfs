@@ -158,14 +158,21 @@ install_more:
 	$(INSTALL) $(SYSINST) $(SSISH) $(ADMDEST)
 
 OS_RELEASE_VER = $(shell  echo $(OS_RELEASE) | tr -d -c 0-9).0
+DBG_SUFF.DBG = _DEBUG
+DBG_SUFF= $(DBG_SUFF.$(DEBUG:yes=DBG))
 pkg:    $(PROG) $(ACSLIBS) $(MPROGS)
-	cat stk.p5m.in | sed -e s/{{SAMQFS_VERSION}}/$(SAMQFS_VERSION)/ -e s/{{OSRELEASE}}/$(OS_RELEASE_VER)/> stk.p5m
+	cat stk.p5m.in | sed -e s/{{SAMQFS_VERSION}}/$(SAMQFS_VERSION)/ \
+		-e s/{{OSRELEASE}}/$(OS_RELEASE_VER)/ \
+		-e s/{{OS_RELEASE}}/$(OS_RELEASE)/ \
+		-e s/{{DBG}}/$(DBG_SUFF)/ \
+		> stk.p5m
 	pkglint stk.p5m
 	pkgsend publish -d. -s ../../../repo/i386-$(OS_RELEASE)/ stk.p5m
 
 include $(DEPTH)/mk/depend.mk
 
 show:
-	@echo $(OBJ_DIR)/stk_helper
-	@echo $(ACSLIBS)
-	@echo $(SAMQFS_VERSION)
+	@echo "obj_dir: $(OBJ_DIR)/stk_helper"
+	@echo "acls_libs: $(ACSLIBS)"
+	@echo "VERSION: $(SAMQFS_VERSION)"
+	@echo "DEBUG: $(DEBUG)"
