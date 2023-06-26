@@ -160,7 +160,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 
 	if (!mutex_trylock(&un->io_mutex)) {
 		/* don't care about door lock/unlock */
-		if ((command & 0xff) != 0x1e)
+		if ((command & 0xff) != SCMD_DOORLOCK)
 			DevLog(DL_DEBUG(1021), command);
 		mutex_unlock(&un->io_mutex);
 	}
@@ -1999,6 +1999,13 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 					    catgets(catfd, SET, 525,
 					    "becoming ready"),
 					    '\0', DIS_MES_LEN);
+					DevLog(DL_DETAIL(3254),
+					    sense->es_key,
+					    sense->es_add_code,
+					    sense->
+					    es_qual_code);
+					DevLogCdb(un);
+					DevLogSense(un);
 					if (un->equ_type == DT_LINEAR_TAPE) {
 						switch (sense->es_qual_code) {
 						case 0x01:
