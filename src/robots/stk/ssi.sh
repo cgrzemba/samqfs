@@ -88,7 +88,7 @@ export CDKLOG=1111111001
 # /* CDKTRACE=0000000001  Trace malloc, free, and shared mem functions.*/
 # /* CDKTRACE=00000000001 Trace XML parser.                            */
 # /*===================================================================*/
-export CDKTRACE=11111111111
+# export CDKTRACE=11111111111
 # arguments
 # argv[1] - parent PID
 # argv[2] - input socket name
