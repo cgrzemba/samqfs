@@ -61,7 +61,7 @@
 #include "stk.h"
 
 #pragma ident "$Revision: 1.31 $"
-#define ACS_DEVQUERY_TIMEOUT (10 * 60)
+#define ACS_DEVQUERY_TIMEOUT (20 * 60)
 #define ACS_TIMEOUT (15 * 60)
 
 /*	Function prototypes */
