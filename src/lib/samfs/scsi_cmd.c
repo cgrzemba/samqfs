@@ -1421,8 +1421,13 @@ spin_unit(
 	}
 	tapeclean(un, *open_fd);
 
-	timeout = ((un->equ_type == DT_LINEAR_TAPE) &&
-	    (updown == SPINUP)) ? SPINUP_DLT_TUR_TIMEOUT : INITIAL_TUR_TIMEOUT;
+	if (un->equ_type == DT_IBM3580) {
+		timeout = drive_timeout(un, *open_fd, B_TRUE);
+	}
+	else {
+		timeout = ((un->equ_type == DT_LINEAR_TAPE) &&
+		    (updown == SPINUP)) ? SPINUP_DLT_TUR_TIMEOUT : INITIAL_TUR_TIMEOUT;
+	}
 
 	mutex_lock(&un->io_mutex);
 
@@ -1955,6 +1960,7 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 		wait_time_in_secs = 20;
 		break;
 
+	case DT_IBM3580:
 	case DT_LINEAR_TAPE:
 		wait_time_in_secs = 30;
 		break;
@@ -2006,6 +2012,22 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 					    es_qual_code);
 					DevLogCdb(un);
 					DevLogSense(un);
+					if (un->equ_type == DT_IBM3580){
+						switch (sense->es_qual_code) {
+						case 0x01:
+						/*
+						 * Unit not ready, calibration
+						 * in progress
+						 */
+							memccpy(d_mess,
+							    catgets(catfd, SET,
+							    550,
+							    "calibrating"),
+							    '\0', DIS_MES_LEN);
+
+							}
+							break;
+					}
 					if (un->equ_type == DT_LINEAR_TAPE) {
 						switch (sense->es_qual_code) {
 						case 0x01:
@@ -2077,7 +2099,7 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 					sleep(wait_time_in_secs);
 					wait_time_in_secs = 5;
 				} else if (un->equ_type == DT_SONYDTF &&
-				    sense->es_key == 0x02 &&
+				    sense->es_key == KEY_NOT_READY &&
 				    sense->es_add_code == 0x4c) {
 					/*
 					 * Check for sony dtf and a no load
@@ -2109,7 +2131,7 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 					    SCMD_ISSUE_CDB, (3600 * 4),
 					    recov_cdb, 10, NULL, 0,
 					    USCSI_WRITE, NULL) ||
-					    sense->es_key != 0) {
+					    sense->es_key != KEY_NO_SENSE) {
 						sprintf(d_mess,
 						    "recovery failed. %s",
 						    tim_scr);
@@ -2184,7 +2206,7 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 				}
 			}
 			/*
-			 * Unit Attention
+			 * Unit Attention, Sense Key 6
 			 */
 
 			else if (sense->es_key == KEY_UNIT_ATTENTION) {

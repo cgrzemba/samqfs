@@ -1060,6 +1060,10 @@ get_capabilities(dev_ent_t *un, int fd, uchar_t *inquiry_data)
 				DevLog(DL_ALL(3281));
 			}
 		}
+		/* mutex_lock(&un->mutex); */
+		un->load_timeout = LTO_TUR_TIMEOUT;
+		/* mutex_unlock(&un->mutex); */
+		(void*) drive_timeout(un, open_fd, B_FALSE);
 	}
 
 	get_devid(un, open_fd, inquiry_data);

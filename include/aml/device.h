@@ -201,7 +201,7 @@ typedef struct {
 		unused		:3;
 
 #else	/* defined(_BIT_FIELDS_HTOL) */
-
+					/* LOWENDIAN */
 		unused		:3,
 		shared_reqd	:1,	/* shared drive has been requested */
 		labelling	:1,	/* label being written */
@@ -677,6 +677,7 @@ typedef struct dev_ent  {
 	dev_id_t	devid;		/* Device identification */
 
 	tapeclean_t	tapeclean;	/* Tapealert and seq access cleaning */
+	uint_t		load_timeout;	/* TUR timeout of LTO drive */
 } dev_ent_t;
 
 /* For the flags */

@@ -2662,7 +2662,9 @@ tape_properties(dev_ent_t *un, int fd)
 		    memcmp(un->product_id, "ULTRIUM-TD7     ", 16) == 0 ||
 		    memcmp(un->product_id, "ULT3580-TD7     ", 16) == 0 ||
 		    memcmp(un->product_id, "ULTRIUM-TD8     ", 16) == 0 ||
-		    memcmp(un->product_id, "ULT3580-TD8     ", 16) == 0)) {
+		    memcmp(un->product_id, "ULT3580-TD8     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULTRIUM-TD9     ", 16) == 0 ||
+		    memcmp(un->product_id, "ULT3580-TD9     ", 16) == 0)) {
 
 			/* Checking if the drive supports WORM feature. */
 
@@ -2769,6 +2771,12 @@ tape_properties(dev_ent_t *un, int fd)
 			case 0x8c:
 				worm_media = TRUE;	/* Ultrium 8 WORM */
 				break;
+			case 0x98:
+				worm_media = FALSE;	/* Ultrium 9 data */
+				break;
+			case 0x9c:
+				worm_media = TRUE;	/* Ultrium 9 WORM */
+				break;
 			default:
 				DevLog(DL_ERR(3257));
 				SendCustMsg(HERE, 9358);
@@ -2797,6 +2805,74 @@ tape_properties(dev_ent_t *un, int fd)
 	return (0);
 }
 
+/* sizeof = 20
+0 struct one_com_des {
+    0 uchar_t reserved0 
+    1 unsigned char:3 support :3 
+    1.3 unsigned char:4 reserved1 :4 
+    1.7 unsigned char:1 ctdp :1 
+    2 ushort_t cdb_size 
+    4 uchar_t [16] usage 
+}
+
+sizeof = 12
+struct com_timeout_des {
+    0 uchar_t descripter length msb
+    1 uchar_t descriptor length lsb
+    2 uchar_t reserved
+    3 uchar_t command specific
+    4 uint64_t nominal command processing timeout
+    8 uint64_t recommended command timeout
+}
+*/
+
+int
+drive_timeout(dev_ent_t *un, int fd, boolean_t do_lock)
+{
+#define ONE_COMMAND_NO_SERVICE_DATA_FORMAT 1
+#define CTDP_INCL 0x80
+#define RSOC_SUPPORTED 3
+	const size_t buflen = 22;
+	uchar_t cdb[CDB_GROUP5];
+	uchar_t buf[buflen];
+	int resid;
+	int ret;
+
+	if (un->load_timeout != LTO_TUR_TIMEOUT)
+		return un->load_timeout;
+	memset(cdb, 0, CDB_GROUP5);
+	memset(buf, 0, buflen);
+        cdb[0] = (uchar_t) SCMD_MAINTENANCE_IN;
+        cdb[1] = SSVC_ACTION_GET_SUPPORTED_OPERATIONS;
+        cdb[2] = (uchar_t) (ONE_COMMAND_NO_SERVICE_DATA_FORMAT | 0x80); /* RCTD */
+        cdb[3] = SCMD_LOAD;
+        cdb[9] = (uchar_t) buflen & 0xff; 
+
+	if ((ret=scsi_cmd(fd, un, SCMD_ISSUE_CDB, 60, cdb, CDB_GROUP5, buf, buflen,
+	    USCSI_READ, &resid)) != 0) {
+		DevLog(DL_ERR(3289), strerror(errno), ret, resid);
+		DevLogCdb(un);
+		DevLogSense(un);
+		return LTO_TUR_TIMEOUT*10;
+	}
+	if ((uchar_t)buf[1] != (CTDP_INCL|RSOC_SUPPORTED)){
+		DevLog(DL_DETAIL(3290));
+		return LTO_TUR_TIMEOUT;
+	}
+	/* cdb_len buf[2]<<8 + buf[3], descriptor_len = buf[4 + cdb_len]  */
+	int cdb_len = (buf[2]<<8) + buf[3] +4;
+	int timeout = (buf[cdb_len+10]<<8) + buf[cdb_len+11];
+	DevLog(DL_DETAIL(3288), buf[1] & 7, timeout,
+	    buf[cdb_len+8], buf[cdb_len+9], buf[cdb_len+10], buf[cdb_len+11]);
+
+	if(do_lock)
+		mutex_lock(&un->mutex);
+	un->load_timeout = timeout;
+	if(do_lock)
+		mutex_unlock(&un->mutex);
+
+	return timeout;
+}
 /*
  * tapeclean - determine if tape drive cleaning is needed.
  */

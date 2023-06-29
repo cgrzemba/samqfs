@@ -579,12 +579,9 @@ $ *    SAM-QFS_notice_end
 3285 Attempt to position while writing, position failed.
 3286 Unable to write TM at %#x
 3287 Space %#x
-<<<<<<< HEAD
-=======
 3288 Readed timeout oper=%x, value=%ld : 0x%x,0x%x,0x%x,0x%x
 3289 Report Supported Operation failed %s: ret=%x, resid=%x
 3290 Report Supported Operation not supported
->>>>>>> 4fea95d7 (ACSLS: improve shared drive handling)
 
 4000 Common
 4001 Close %d, open_count = %d

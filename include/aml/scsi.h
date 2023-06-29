@@ -224,6 +224,7 @@ extern    "C" {
 
 #define	SPINUP_DLT_TUR_TIMEOUT	600	/* In secs */
 #define	INITIAL_TUR_TIMEOUT	180	/* In secs */
+#define LTO_TUR_TIMEOUT		601 	/* In secs, choose value which would never provided by a LTO drive */
 
 #if defined(__cplusplus)
 }

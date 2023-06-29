@@ -113,8 +113,13 @@ scan_a_device(dev_ent_t *un, int fd)
 		ready = TRUE;
 	} else {
 		int err;
+		int tmo = INITIAL_TUR_TIMEOUT;
 
-		err = do_tur(un, fd, INITIAL_TUR_TIMEOUT);
+	        if (un->equ_type == DT_IBM3580) {
+			tmo = drive_timeout(un, fd, B_TRUE);
+		}
+
+		err = do_tur(un, fd, tmo);
 
 		if (err) {
 			if (err == NO_MEDIA) {
