@@ -194,7 +194,8 @@ main(int argc, char **argv)
  		printf("%16s ",device_entry->serial);
  		printf("%8s ",type);
  		printf("%12lu ",device_entry->space);
- 		printf("%s\n",states[device_entry->state]);
+ 		printf("%s ",states[device_entry->state]);
+ 		printf("%x\n",device_entry->equ_type);
 /*
 			printf("%8s %12llx %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
 				device_entry->set,

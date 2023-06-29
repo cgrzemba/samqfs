@@ -561,8 +561,13 @@ write_tape_labels(
 	}
 	for (ii = 2; ; ii--) {
 		int	local_ret;
+                int tmo = INITIAL_TUR_TIMEOUT;
 
-		local_ret = do_tur(un, *open_fd, INITIAL_TUR_TIMEOUT);
+                if (un->equ_type == DT_IBM3580) {
+                        tmo = drive_timeout(un, *open_fd, B_TRUE);
+                }
+
+		local_ret = do_tur(un, *open_fd, tmo);
 		if (local_ret == 0)
 			break;
 

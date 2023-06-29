@@ -178,5 +178,6 @@ int timeout_factor(equ_t);
 extern char *ctime_r(const time_t *, char *, int);
 #endif
 extern struct tm *localtime_r(const time_t *, struct tm *);
+int drive_timeout(dev_ent_t *un, int open_fd, boolean_t do_lock);
 
 #endif /* _AML_PROTO_H */
