@@ -84,7 +84,8 @@ sam_cmds = ['sam-arcopy',
             'sam-shared',
             'sam-sharefsd',
             'sam-stk_helper',
-            'sam-fsd']
+            'sam-fsd',
+            'sam-shrink']
 samcmds = ['samchaid',
             'samexport',
             'samfsconfig',
