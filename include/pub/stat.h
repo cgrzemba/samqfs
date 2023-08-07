@@ -103,6 +103,9 @@ extern "C" {
 #if _LONG_LONG_ALIGNMENT == 8 && _LONG_LONG_ALIGNMENT_32 == 4
 #pragma pack(4)
 #endif
+#if defined(linux)
+#pragma pack(4)
+#endif
 
 #if defined(__sparcv9) || defined(__amd64) || defined(linux)
 
@@ -111,7 +114,7 @@ extern "C" {
  */
 struct sam_copy_s {
 	/* Location of archive file */
-	u_longlong_t 	position;
+	uint64_t 	position;
 	/* Time archive copy created */
 	time_t		creation_time;
 	/* Location of copy in archive file - in units of 512 bytes */
@@ -137,12 +140,12 @@ struct sam_stat {
 #endif  /* sun */
 #ifdef  linux
 	/* ID of the device containing the file */
-	ushort_t	st_dev;
+	uint64_t	st_dev;
 #endif  /* linux */
 	uint_t		st_nlink;	/* Number of links */
 	uint_t		st_uid;		/* User ID of the file's owner */
 	uint_t		st_gid;		/* Group ID of the file's owner */
-	u_longlong_t 	st_size;	/* The file size in bytes */
+	uint64_t 	st_size;	/* The file size in bytes */
 	time_t 		st_atime;	/* Time of last access */
 	time_t 		st_mtime;	/* Time of last data modification */
 	time_t 		st_ctime;	/* Time of last file status change */
@@ -165,10 +168,10 @@ struct sam_stat {
 #endif 	/* sun */
 #ifdef linux
 	/* ID of device if S_IFBLK or S_IFCHR */
-	ushort_t	rdev;
+	uint64_t	rdev;
 #endif 	/* linux */
 	/* Block count in units of 512 byte blocks */
-	u_longlong_t 	st_blocks;
+	uint64_t 	st_blocks;
 	/* Segment size in megabytes (SS_SEGMENT_A) */
 	uint_t 		segment_size;
 	/* Number of this segment */
@@ -182,12 +185,12 @@ struct sam_stat {
 	uint_t 		allocahead;
 	uint_t		obj_depth;	/* Object stripe depth in kilobytes */
 	/* 128 bit checksum */
-	u_longlong_t 	cs_val[2];
+	uint64_t 	cs_val[2];
 	/* WORM retention period start and duration. */
 	time_t		rperiod_start_time;
 	uint_t		rperiod_duration;
 	projid_t	projid;
-	u_longlong_t	attr;		/* File attributes */
+	uint64_t	attr;		/* File attributes */
 };
 
 #else   /* __sparcv9 || __amd64 || linux */

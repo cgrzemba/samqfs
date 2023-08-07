@@ -61,7 +61,7 @@ struct filecmd {
 
 struct statcmd {
 	char *filename;
-	int size;
+	size_t size;
 };
 
 typedef struct filecmd filecmd;

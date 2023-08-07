@@ -139,13 +139,14 @@ sam_initrpc(
 		samlocal = 1;
 	}
 
-	clnt = clnt_create(hostname, (ulong_t)rpce->r_number, SAMVERS,
-	   RPC_PROTOCOL); 
+	clnt = clnt_create(hostname, (rpcprog_t) rpce->r_number, SAMVERS,
+			RPC_PROTOCOL); 
 	if (clnt == (CLIENT *)NULL) {
 		clnt_pcreateerror(hostname);
 		return (-1);
 	}
-	auth_destroy(clnt->cl_auth);
+	if(clnt->cl_auth->ah_ops != NULL)
+		auth_destroy(clnt->cl_auth);
 	clnt->cl_auth = authunix_create_default();
 	return (0);
 }
@@ -343,7 +344,7 @@ sam_stat(
 {
 	sam_st *result_1;
 	statcmd samstat_1_arg;
-	int size;
+	size_t size;
 
 	if (clnt == (CLIENT *)NULL) {
 		errno = EDESTADDRREQ;
@@ -388,7 +389,7 @@ sam_lstat(
 {
 	sam_st *result_1;
 	statcmd samlstat_1_arg;
-	int size;
+	size_t size;
 
 	if (clnt == (CLIENT *)NULL) {
 		errno = EDESTADDRREQ;

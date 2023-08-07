@@ -280,7 +280,7 @@ main(
 		/*
 		 * if (!svc_reg(transp, SamFS, SAMVERS, samfs_1, 0))
 		 */
-		if (!svc_reg(transp, rpce->r_number, SAMVERS, samfs_1, 0)) {
+		if (!svc_reg(transp, (rpcprog_t) rpce->r_number, SAMVERS, samfs_1, 0)) {
 			_msgout("unable to (SamFS, SAMVERS).");
 			exit(1);
 		}
@@ -313,7 +313,7 @@ main(
 	/*
 	 * if (!svc_create(samfs_1, SamFS, SAMVERS, "netpath"))
 	 */
-	if (!svc_create(samfs_1, rpce->r_number, SAMVERS, "netpath")) {
+	if (!svc_create(samfs_1, (rpcprog_t) rpce->r_number, SAMVERS, "netpath")) {
 		_msgout("unable to create (SamFS, SAMVERS) for netpath.");
 		exit(1);
 	}
