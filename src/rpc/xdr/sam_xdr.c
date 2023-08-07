@@ -50,6 +50,7 @@ xdr_filecmd(
 	return (TRUE);
 }
 
+#define xdr_size_t xdr_uint64_t
 bool_t
 xdr_statcmd(
 	register XDR *xdrs,
@@ -57,7 +58,7 @@ xdr_statcmd(
 {
 	if (!xdr_string(xdrs, &objp->filename, MAXPATHLEN))
 		return (FALSE);
-	if (!xdr_int(xdrs, &objp->size))
+	if (!xdr_size_t(xdrs, &objp->size))
 		return (FALSE);
 	return (TRUE);
 }
@@ -86,9 +87,9 @@ xdr_samcopy(
 		return (FALSE);
 	if (!xdr_u_long(xdrs, (ulong_t *)&objp->creation_time))
 		return (FALSE);
-	if (!xdr_u_longlong_t(xdrs, &objp->position))
+	if (!xdr_uint64_t(xdrs, &objp->position))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->offset))
+	if (!xdr_u_int(xdrs, &objp->offset))
 		return (FALSE);
 	if (!xdr_vector(xdrs, (char *)objp->media, 4,
 	    sizeof (char), (xdrproc_t)xdr_char))
@@ -105,38 +106,36 @@ xdr_samstat_t(
 	register XDR *xdrs,
 	samstat_t *objp)
 {
-	if (!xdr_u_long(xdrs, &objp->st_mode))
+	if (!xdr_u_int(xdrs, &objp->st_mode))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->st_ino))
+	if (!xdr_u_int(xdrs, &objp->st_ino))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->st_dev))
+	if (!xdr_uint64_t(xdrs, &objp->st_dev))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->st_nlink))
+	if (!xdr_u_int(xdrs, &objp->st_nlink))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->st_uid))
+	if (!xdr_u_int(xdrs, &objp->st_uid))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->st_gid))
+	if (!xdr_u_int(xdrs, &objp->st_gid))
 		return (FALSE);
-	if (!xdr_u_longlong_t(xdrs, &objp->st_size))
+	if (!xdr_uint64_t(xdrs, &objp->st_size))
 		return (FALSE);
-	if (!xdr_long(xdrs, (long *)&objp->st_atime))
+	if (!xdr_time_t(xdrs, (long *)&objp->st_atime))
 		return (FALSE);
-	if (!xdr_long(xdrs, (long *)&objp->st_mtime))
+	if (!xdr_time_t(xdrs, (long *)&objp->st_mtime))
 		return (FALSE);
-	if (!xdr_long(xdrs, (long *)&objp->st_ctime))
+	if (!xdr_time_t(xdrs, (long *)&objp->st_ctime))
 		return (FALSE);
-	if (!xdr_long(xdrs, (long *)&objp->attribute_time))
+	if (!xdr_time_t(xdrs, (long *)&objp->attribute_time))
 		return (FALSE);
-	if (!xdr_long(xdrs, (long *)&objp->creation_time))
+	if (!xdr_time_t(xdrs, (long *)&objp->creation_time))
 		return (FALSE);
-	if (!xdr_long(xdrs, (long *)&objp->residence_time))
+	if (!xdr_time_t(xdrs, (long *)&objp->residence_time))
 		return (FALSE);
 	if (!xdr_vector(xdrs, (char *)objp->copy, MAX_ARCHIVE,
 	    sizeof (samcopy), (xdrproc_t)xdr_samcopy))
 		return (FALSE);
 	if (!xdr_uint_t(xdrs, &objp->old_attr))
-		return (FALSE);
-	if (!xdr_u_longlong_t(xdrs, &objp->attr))
 		return (FALSE);
 	if (!xdr_u_char(xdrs, &objp->cs_algo))
 		return (FALSE);
@@ -146,19 +145,21 @@ xdr_samstat_t(
 		return (FALSE);
 	if (!xdr_u_char(xdrs, &objp->stripe_group))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->gen))
+	if (!xdr_u_int(xdrs, &objp->gen))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->partial_size))
+	if (!xdr_u_int(xdrs, &objp->partial_size))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->rdev))
+	if (!xdr_uint64_t(xdrs, &objp->rdev))
 		return (FALSE);
-	if (!xdr_u_longlong_t(xdrs, &objp->st_blocks))
+	if (!xdr_uint64_t(xdrs, &objp->st_blocks))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->segment_size))
+	if (!xdr_u_int(xdrs, &objp->segment_size))
 		return (FALSE);
-	if (!xdr_u_long(xdrs, &objp->segment_number))
+	if (!xdr_u_int(xdrs, &objp->segment_number))
 		return (FALSE);
 	if (!xdr_uint_t(xdrs, &objp->stage_ahead))
+		return (FALSE);
+	if (!xdr_uint64_t(xdrs, &objp->attr))
 		return (FALSE);
 	return (TRUE);
 }
