@@ -339,6 +339,7 @@ opt/SUNWsamfs/sbin/unreserve 0550
 opt/SUNWsamfs/util/check_mcf.pl 0550
 opt/SUNWsamfs/util/readshm 0550
 opt/SUNWsamfs/util/samtrace 0550
+opt/SUNWsamfs/util/sam-shrink 0550
 opt/SUNWsamfs/util/trace 0550
 var/opt/SUNWsamfs/errcodes/acl2640 0640
 var/opt/SUNWsamfs/errcodes/acl452 0640
