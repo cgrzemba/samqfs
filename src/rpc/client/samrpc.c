@@ -344,7 +344,7 @@ sam_stat(
 {
 	sam_st *result_1;
 	statcmd samstat_1_arg;
-	size_t size;
+	int size;
 
 	if (clnt == (CLIENT *)NULL) {
 		errno = EDESTADDRREQ;
