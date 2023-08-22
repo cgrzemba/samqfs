@@ -10,8 +10,5 @@ MYSQL_LIB=-L/opt/ooce/$(MYSQL_VERSION)/lib$(ISA) -R/opt/ooce/$(MYSQL_VERSION)/li
 # OS-3294 add inotify support
 OSDEPCFLAGS += -D_INOTIFY
 
-# SSL_INCLUDES = -I/usr/ssl-1.0/include
-# SSL_LIBDIR = -L/usr/ssl-1.0/lib -R/usr/ssl-1.0/lib
-
 CTFCONVERT = /opt/onbld/bin/i386/ctfconvert
 CTFMERGE = /opt/onbld/bin/i386/ctfmerge

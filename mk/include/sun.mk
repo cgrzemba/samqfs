@@ -86,8 +86,7 @@ ifeq ($(PLATFORM), i386)
 	endif
 endif
 
-# GCC = $(SAMFS_TOOLS)/gcc/4.4.4/bin/gcc
-GCC = /usr/gcc/10/bin/gcc
+GCC ?= /usr/gcc/10/bin/gcc
 
 ifneq (,$(filter $(OS_RELEASE),11.3 11.4))
   OSDEPCFLAGS  = -DORACLE_SOLARIS
@@ -150,12 +149,6 @@ else ifeq ($(OS_REVISION), 5.11)
 	LINT = /opt/sunstudio12.1/bin/lint
 	CSCOPE = /opt/sunstudio12.1/bin/cscope
 	LD = $(GCC) 
-#	CC = /opt/solarisstudio12.3/bin/cc
-#	LINT = /opt/solarisstudio12.3/bin/lint
-#	CSCOPE = /opt/solarisstudio12.3/bin/cscope
-#	CC = $(SAMFS_TOOLS)/SS12/bin/cc
-#	LINT = $(SAMFS_TOOLS)/SS12/bin/lint
-#	CSCOPE = $(SAMFS_TOOLS)/SS12/bin/cscope
 else
 $(error "Unknown Solaris version $(OS_REVISION)")
 endif
