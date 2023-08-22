@@ -56,11 +56,8 @@
 #include "sam/nl_samfs.h"
 #include "robots.h"
 
-/* function prototypes */
-
 /* some globals */
 
-int	number_robots, got_sigchld = FALSE;
 pid_t	mypid;
 char	*fifo_path;
 message_request_t *message;
@@ -68,6 +65,10 @@ shm_alloc_t master_shm, preview_shm;
 
 #define is_family(a)              (((a) & DT_CLASS_MASK) == DT_FAMILY_SET)
 #define         ELEMENT_DESCRIPTOR_LENGTH   (48 + 4)
+/*
+#define SHM_REF_ADDR(x) (((x) == NULL) ? \
+        NULL : ((void *)((char *)master_shm.shared_memory + (int)(x))))
+*/
 
 
 const char *states[] = {"ON", "NOALLOC", "RO", "IDLE", "UNAVAIL", "OFF", "DOWN"};
@@ -105,10 +106,9 @@ main(int argc, char **argv)
 	int		count, stk_found = 0;
 	shm_ptr_tbl_t		*shm_ptr_tbl;
 	dev_ent_t	*device_entry;
-	dev_ptr_tbl_t *dev_ptr_tbl;
+    dev_ptr_tbl_t *dev_ptr_tbl;
 	library_t *library;
 	robotic_device_t *rb;
-	program_name = "readshm";
 
 	program_name = "readshm";
 	if ( argc < 3) {
@@ -145,8 +145,7 @@ main(int argc, char **argv)
 	printf("%8s %12s %49s %3s %9s %17s %5s %16s %8s %12s %s\n","set", "rdn", "device", "eq", "vendor", "product", "rev", "serial", "type", "space", "state");
 	for (count = 0;
 	    device_entry != NULL;
-	    device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next))
-	{
+	    device_entry = (dev_ent_t *)SHM_REF_ADDR(device_entry->next)) {
 		const char* type;
 		if (is_disk(device_entry->type)) 
 			type = disk_type[device_entry->type-DT_DISK];
@@ -175,19 +174,6 @@ main(int argc, char **argv)
 				count++;
 			}
 		}
-<<<<<<< HEAD
-		printf("%8s ",device_entry->set);
-		printf("%12llx ",device_entry->st_rdev);
-		printf("%49s ",device_entry->name);
-		printf("%3d ",device_entry->eq);
-		printf("%9s ",device_entry->vendor_id);
-		printf("%17s ",device_entry->product_id);
-		printf("%5s ",device_entry->revision);
-		printf("%16s ",device_entry->serial);
-		printf("%8s ",type);
-		printf("%12lu ",device_entry->space);
-		printf("%s\n",states[device_entry->state]);
-=======
                 int i;
  		printf("%8s ",device_entry->set);
  		printf("%12llx ",device_entry->st_rdev);
@@ -201,21 +187,6 @@ main(int argc, char **argv)
  		printf("%12lu ",device_entry->space);
  		printf("%s ",states[device_entry->state]);
  		printf("%x\n",device_entry->equ_type);
-/*
-			printf("%8s %12llx %49s %3d %9s %17s %5s %16s %8s %12lu %s\n", 
-				device_entry->set,
-				device_entry->st_rdev,
-				device_entry->name, 
-				device_entry->eq, 
-				device_entry->vendor_id, 
-				device_entry->product_id, 
-				device_entry->revision, 
-				device_entry->serial, 
-				type, 
-				device_entry->space,
-				states[device_entry->state]);
-*/
->>>>>>> 6a4028a5 (print device values in sepearate printf's)
 	}
 	printf("\nfound %d devices\n", count);
 
@@ -241,7 +212,7 @@ main(int argc, char **argv)
 
 	fifo_path = strdup(SHM_REF_ADDR(shm_ptr_tbl->fifo_path));
 	printf("fifo_path: %s\n", fifo_path);
-        message = (message_request_t *)SHM_REF_ADDR(
-                    ((shm_ptr_tbl_t *)master_shm.shared_memory)->scan_mess);
+	message = (message_request_t *)SHM_REF_ADDR(
+            ((shm_ptr_tbl_t *)master_shm.shared_memory)->scan_mess);
 	free(library);
 }
