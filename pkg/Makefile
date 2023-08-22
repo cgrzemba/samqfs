@@ -34,9 +34,6 @@ install:
 pkg:
 	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA) --publish --repro=$(REPO)
 
-pkg:
-	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA) --publish --repro=$(REPO)
-
 .PHONY: clean
 clean:
 	rm -rf $(DESTDIR)/*

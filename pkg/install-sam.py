@@ -356,6 +356,25 @@ samfs           5012/tcp                        # Sun StorageTek SAM-FS API
             os.remove(service_stub_dir+'/system:samqfs')
 
 
+def genOmniosServices():
+    '''
+    OmniosCE uses a assemble service for creating /etc/services on every boot. Additions to /etc/services have to put in /etc/inet/services/
+    '''
+
+    service_stub_dir = destdir+'/etc/inet/services.d'
+    service_stub = '''sam-qfs           7105/tcp                        # SAM-QFS
+samfs           5012/tcp                        # Sun StorageTek SAM-FS API
+'''
+
+    if 'omnios' in osrelease:
+        os.makedirs(service_stub_dir, exist_ok=True)
+        with open(service_stub_dir+'/system:samqfs', 'w') as fh:
+            fh.write(service_stub )
+    else:
+        if os.path.isfile(service_stub_dir+'/system:samqfs'):
+            os.remove(service_stub_dir+'/system:samqfs')
+
+
 def main(version, debug_build, amd64):
     global arch64
     global arch32
