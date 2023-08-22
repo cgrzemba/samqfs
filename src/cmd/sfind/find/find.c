@@ -45,10 +45,6 @@
 #include "defs.h"
 #include "savedir.h"
 
-/* SAM-FS headers. */
-#define DEC_INIT
-#include <sam/lib.h>
-
 #if !defined(FALSE)
 #define FALSE (0)
 #endif

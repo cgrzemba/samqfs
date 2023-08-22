@@ -66,6 +66,7 @@
 /* SAM-FS headers. */
 #include <lib.h>
 #include "dvt.h"
+
 #define DEC_INIT
 #include <sam/lib.h>
 

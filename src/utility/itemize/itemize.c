@@ -60,6 +60,8 @@
 
 static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
+#define	MAIN
+
 /*	Include files:							*/
 
 #include <ctype.h>

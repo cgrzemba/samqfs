@@ -107,7 +107,6 @@ static void atExit(void);
 static void attachFileProps(void);
 static void reconfig(ReconfigControl_t ctrl);
 
-shm_alloc_t preview_shm;
 
 int
 main(

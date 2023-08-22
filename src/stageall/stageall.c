@@ -77,7 +77,7 @@ struct stageall_entry {	/* Each entry is a stageall request */
 	char cwd[1];	/* Current working directory. */
 };
 
-/* globals */
+/* Globals */
 
 /* Private data. */
 static sam_defaults_t *defaults;

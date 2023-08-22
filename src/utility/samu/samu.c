@@ -37,6 +37,7 @@
 #pragma ident "$Revision: 1.68 $"
 
 
+#define	MAIN
 
 /* ANSI C headers. */
 #include <ctype.h>

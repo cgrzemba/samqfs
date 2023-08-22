@@ -83,10 +83,6 @@ int main(
 	event_handler_t ev_handler;
 
 	program_name = SAM_DBUPD;
-<<<<<<< HEAD
-=======
-
->>>>>>> 47dce836 (build with GCC10, avoid duplicate symbols)
 	if (dbupd_init(argc, argv) < 0) {
 		return (EXIT_FAILURE);
 	}
