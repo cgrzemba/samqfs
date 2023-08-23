@@ -7,7 +7,7 @@ This is the source of Sun SamFS released to opensource 2008. The source it adapt
 needed packages:
 
 -    perl
--    developer/gcc-7
+-    developer/gcc-10
 -    system/network/avahi
 -    developer/build/onbld
 -    text/locale

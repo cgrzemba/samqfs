@@ -46,7 +46,7 @@ subpath64,subpath = subprocess.check_output('isainfo').decode('latin1').split()
 osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[:2])
 
 version = '5.0.1'
-release = '2022.0.0.0'
+release = '2023.0.0.0'
 fmri = 'system/samqfs'
 repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
 

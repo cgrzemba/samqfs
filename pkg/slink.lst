@@ -5,7 +5,7 @@ opt/SUNWsamfs/bin/squota ../sbin/samquota
 opt/SUNWsamfs/bin/ssum archive
 opt/SUNWsamfs/bin/stage archive
 opt/SUNWsamfs/client/include/samrpc.h /opt/SUNWsamfs/include/samrpc.h
-opt/SUNWsamfs/lib/libsamrpc.so /opt/SUNWsamfs/client/lib/libsamrpc.so
+opt/SUNWsamfs/client/lib/libsamrpc.so /opt/SUNWsamfs/lib/64/libsamrpc.so
 opt/SUNWsamfs/sbin/exarchive unarchive
 opt/SUNWsamfs/sbin/export samexport
 opt/SUNWsamfs/sbin/import samimport

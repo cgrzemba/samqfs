@@ -156,14 +156,18 @@ copyright.clean:
 .NOTPARALLEL:
 
 DESTDIR ?= ./root_i386
-
-pkg: 
-	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
+PKG_COOCKIE = pkg/.packaged
 
 install:
 	$(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
 
-pkg: 
-	 $(MAKE) -C pkg $@ SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR)
+$(PKG_COOCKIE):
+	$(MAKE) -C pkg pkg SAMQFS_VERSION=$(SAMQFS_VERSION) DEBUG=$(DEBUG) DESTDIR=$(DESTDIR) && \
+	touch $(PKG_COOCKIE)
+	
+pkg: 	$(PKG_COOCKIE)
+
+pkg.clean:
+	rm -f $(PKG_COOCKIE)
 
 include $(DEPTH)/mk/depend.mk

@@ -16,10 +16,11 @@ opt/SUNWsamfs/bin/sls 0755
 opt/SUNWsamfs/client/examples/Makefile 0644
 opt/SUNWsamfs/client/examples/archive.c 0644
 opt/SUNWsamfs/client/examples/samstat.c 0644
-opt/SUNWsamfs/client/lib/amd64/libsamrpc.so 0755
+opt/SUNWsamfs/lib/64/libsamrpc.so 0755
 opt/SUNWsamfs/client/src/client/Makefile 0644
 opt/SUNWsamfs/client/src/client/sam_attrtoa.c 0644
 opt/SUNWsamfs/client/src/client/samfs_clnt.c 0644
+opt/SUNWsamfs/client/src/client/samrpc.c 0644
 opt/SUNWsamfs/client/src/xdr/Makefile 0644
 opt/SUNWsamfs/client/src/xdr/sam_xdr.c 0644
 opt/SUNWsamfs/doc/tapealert.text 0640
