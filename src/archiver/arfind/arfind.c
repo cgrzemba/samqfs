@@ -63,6 +63,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 
 /* Local headers. */
 #include "arfind.h"
+#include "device.h"
 #undef	DEC_INIT
 
 /* Private data. */

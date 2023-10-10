@@ -78,6 +78,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "threads.h"
 #define	DEC_INIT
 #include "arcopy.h"
+#include "device.h"
 #undef	DEC_INIT
 
 #if defined(lint)

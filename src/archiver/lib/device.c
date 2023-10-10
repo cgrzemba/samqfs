@@ -77,8 +77,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #endif
 
 /* Public data. */
-struct ArchDrive *ArchDriveTable = NULL;
-struct ArchLib *ArchLibTable = NULL;
 
 /* Private data. */
 static dev_ent_t *devhead = NULL;
