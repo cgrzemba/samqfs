@@ -2205,7 +2205,7 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 	}
 	printf("\n");
 	init_time = sblkp->init;
-	cftime(&timebuf[0], "%C\n", &init_time);
+	samcftime(&timebuf[0], "%c\n", &init_time);
 	printf(catgets(catfd, SET, 2499, "time:     %s"), &timebuf[0]);
 	if (sblkp->opt_mask_ver == SBLK_OPT_VER1) {
 		if (sblkp->opt_mask & SBLK_OPTV1_WORM) {

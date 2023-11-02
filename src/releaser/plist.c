@@ -167,7 +167,7 @@ remake_lists(int size)
 		if (list[i] == NULL) {
 			printf("Can't allocate memory for list size %d.",
 			    size);
-			fprintf(log, "Can't allocate memory for list size %d.",
+			fprintf(logfd, "Can't allocate memory for list size %d.",
 			    size);
 			exit(3);
 		}

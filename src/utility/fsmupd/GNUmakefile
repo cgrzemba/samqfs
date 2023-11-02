@@ -30,10 +30,14 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
+SRC_VPATH = $(DEPTH)/src/lib/samut
+vpath %c $(SRC_VPATH)
+
 PROG = fsmupd
 PROG_SRC = \
 	fsmupd.c \
-	update_restore.c
+	update_restore.c \
+	cftime.c
 
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) $(THRCOMP)
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lfsmgmt -lcurl -ldl -lcrypto -lsocket -lpthread -lmd5 $(SSL_LIBDIR) -lssl $(LIBSO) 

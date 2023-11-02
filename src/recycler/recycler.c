@@ -46,8 +46,6 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-char	*ctime_r(const time_t *clock, char *buf, int buflen);
 
 /* POSIX headers. */
 #include <sys/types.h>
@@ -190,7 +188,7 @@ main(
 	 * Set command-line options to default values.
 	 */
 
-	log = NULL;
+	logfd = NULL;
 	display_selection_logic = FALSE;
 	check_expired = TRUE;
 	display_draining_vsns = FALSE;
@@ -205,7 +203,7 @@ main(
 	 * Set date and time string for postmortem files
 	 */
 
-	(void) cftime(datentime, "%m%d.%H%M", &clock);
+	(void) samcftime(datentime, "%m%d.%H%M", &clock);
 
 	/*
 	 * Open message catalog file.
@@ -322,7 +320,7 @@ main(
 
 	Readcmd();		/* read command file */
 
-	log_header();		/* print banner to log file */
+	log_header();		/* print banner to logfd file */
 	(void) atexit(&log_trailer);
 
 
@@ -1755,7 +1753,7 @@ recycle_copy(
  * -----check_relabel
  * Find any VSNs which are marked for recycling and have no active
  * files on them.  These may be post-processed.  This function
- * also prints out the "action log."
+ * also prints out the "action logfd."
  */
 static void
 check_relabel(void)
@@ -1957,8 +1955,9 @@ display_rm_vsns(void)
 
 			if (VSN->in_robot) {
 				if (VSN->was_reassigned) {
+		/* here is a abuse of the variable dev, it contains the (void*) index */
 					archive_set_name =
-					    ROBOT_table[(int)(VSN->dev)].name;
+					    ROBOT_table[(int)(uint64_t)VSN->dev].name;
 				} else {
 					archive_set_name =
 					    family_name(VSN->robot);
@@ -2105,7 +2104,7 @@ display_dk_vsns(void)
 
 
 /*
- *  Emit a header to the log indicating the time the recycler begins
+ *  Emit a header to the logfd indicating the time the recycler begins
  *  running.
  */
 static void
@@ -2116,17 +2115,17 @@ log_header(void)
 	char ctime_buf[512];
 
 	clock = time(NULL);
-	if (log == NULL)
+	if (logfd == NULL)
 		return;
 
 	ascii = ctime_r(&clock, ctime_buf, sizeof (ctime_buf));
 	*(ascii+strlen(ascii)-1) = '\0';
 
-	fprintf(log, "\n========== Recycler begins at %s ===========\n", ascii);
+	fprintf(logfd, "\n========== Recycler begins at %s ===========\n", ascii);
 }
 
 /*
- * Emit a trailer to the log indicating the time the recycler quits
+ * Emit a trailer to the logfd indicating the time the recycler quits
  * running.
  */
 static void
@@ -2137,13 +2136,13 @@ log_trailer(void)
 	char ctime_buf[512];
 
 	clock = time(NULL);
-	if (log == NULL)
+	if (logfd == NULL)
 		return;
 
 	ascii = ctime_r(&clock, ctime_buf, sizeof (ctime_buf));
 	*(ascii+strlen(ascii)-1) = '\0';
 
-	fprintf(log, "\n========== Recycler ends at %s ===========\n\n", ascii);
+	fprintf(logfd, "\n========== Recycler ends at %s ===========\n\n", ascii);
 }
 
 /*  issue an API call to set the indicated vsn's recycling bit to "flag" */
@@ -2978,7 +2977,7 @@ found_dk_candidate(
 		vsn->candidate = TRUE;
 
 		/*
-		 * Set flag so we log remove actions as if
+		 * Set flag so we logfd remove actions as if
 		 * recycling is occurring.
 		 */
 		vsn->log_action = TRUE;

@@ -30,8 +30,11 @@ DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
+SRC_VPATH = $(DEPTH)/src/lib/samut
+vpath %c $(SRC_VPATH)
+ 
 PROG = scsi_trace_decode
-PROG_SRC = scsi_trace_decode.c
+PROG_SRC = scsi_trace_decode.c cftime.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lgen $(LIBSO)
 

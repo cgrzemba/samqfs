@@ -37,6 +37,8 @@
 #include "mgmt/util.h"
 #include "pub/mgmt/task_schedule.h"
 
+extern int samcftime(char *s, const char *format, const time_t *clock);
+
 /*
  *  Utility function to update snapshot schedules from csd.cmd
  *  to the new task schedule format.
@@ -46,7 +48,7 @@ csd_to_task(void)
 {
 	int		st;
 	FILE		*fp = NULL;
-	int		len = sizeof (csdbuf_t) + MAXPATHLEN + 1;
+	unsigned int		len = sizeof (csdbuf_t) + MAXPATHLEN + 1;
 	char		buf[len];
 	char		*bufp;
 	char		*namep;
@@ -68,7 +70,7 @@ csd_to_task(void)
 		return (st);
 	}
 
-	while ((fgets(buf, len, fp)) != NULL) {
+	while ((fgets(buf, (int)len, fp)) != NULL) {
 		bufp = buf;
 
 		while (isspace(*bufp)) {
@@ -128,7 +130,7 @@ csd_to_task(void)
 			sched.compress = 2;
 		}
 
-		(void) cftime(sched.starttime, "%Y%m%d%H%M",
+		(void) samcftime(sched.starttime, "%Y%m%d%H%M",
 		    &(csd.frequency.start));
 
 		(void) snprintf(sched.periodicity, sizeof (sched.periodicity),

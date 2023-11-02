@@ -39,6 +39,7 @@ LIB = samut
 ifeq ($(OS), SunOS)
 LIB_SRC = \
 	archiver.c \
+	cftime.c \
 	custmsg.c \
 	data.c \
 	dbfile.c \

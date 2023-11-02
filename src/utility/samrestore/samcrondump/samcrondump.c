@@ -27,14 +27,11 @@
  *    SAM-QFS_notice_end
  */
 
-#include <sys/types.h>
 #include <stdio.h>
 #include <sys/syslog.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <libgen.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -53,7 +50,9 @@
 #include "mgmt/util.h"
 #include "aml/shm.h"
 
-/* globals */
+extern int samcftime(char *buf, const char *format, const time_t *t);
+
+/* globals needed by libsamfs.so */
 shm_alloc_t              master_shm, preview_shm;
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
@@ -63,14 +62,12 @@ extern void init_utility_funcs(void);
 
 #define	BUFFSIZ		MAXPATHLEN
 #define	NUM_BENCHMARK	3	/* number of benchmark dumps */
-#define	HOUR		(60 * 60)
-#define	DAY		(HOUR * 24)
 #define	WEEK		(DAY * 7)
 
 /* structure for holding snapshot statistics */
 typedef struct {
-	uint64_t snapdate;
-	uint64_t snaptime;
+	int64_t snapdate;
+	int64_t snaptime;
 	uint64_t snapsize;
 	uint64_t numfiles;
 	char	sep;
@@ -130,7 +127,8 @@ main(int argc, char *argv[])
 	/* Init library functions for Tracing, Error handling and Messages */
 	init_utility_funcs();
 
-	while ((c = getopt(argc, argv, "Lf:")) != -1) {
+	while ((rval = getopt(argc, argv, "Lf:")) != -1) {
+		c = (char) rval;
 		switch (c) {
 			case 'f':
 				taskid = optarg;
@@ -280,7 +278,7 @@ dump_fs(char *taskid, snapsched_t *sched)
 	    sched->id.fsname);
 
 	/* Create filename for dump */
-	(void) cftime(snapname, sched->namefmt, &now);
+	(void) samcftime(snapname, sched->namefmt, &now);
 
 	/*
 	 * This file is a semaphore to prevent multiple
@@ -499,7 +497,8 @@ dump_fs(char *taskid, snapsched_t *sched)
 
 	if (statfd > 0) {
 		int		j;
-		int		sz = sizeof (snapstat_t);
+		size_t		sz = sizeof (snapstat_t);
+		ssize_t		rsz;
 		snapstat_t	newstat;
 		time_t		tdiff;
 		uint64_t	sdiff;
@@ -509,7 +508,7 @@ dump_fs(char *taskid, snapsched_t *sched)
 
 		newstat.snapdate = now;
 		newstat.snaptime = snaptime;
-		newstat.snapsize = statbuf.st_size;
+		newstat.snapsize = (uint64_t) statbuf.st_size;
 		newstat.sep = '\n';
 		/* TODO:  get number of files in snapshot */
 		newstat.numfiles = 0;
@@ -518,8 +517,8 @@ dump_fs(char *taskid, snapsched_t *sched)
 
 		/* look for previous entries */
 		for (j = 0; j < NUM_BENCHMARK; j++) {
-			i = read(statfd, &snapstats[j], sz);
-			if (i < sz) {
+			rsz = read(statfd, &snapstats[j], sz);
+			if (rsz < sz) {
 				/* invalid entry */
 				(void) memset(&snapstats[j], 0, sz);
 				break;
@@ -888,9 +887,9 @@ is_dump_inconsistent(
 	unsigned int diffPercent)
 {
 	int	 i;
-	uint64_t timetotal = 0;
+	time_t timetotal = 0;
 	uint64_t sizetotal = 0;
-	uint64_t avg;
+	int64_t avg;
 	uint64_t maxdiff;
         float diffLimit = (float)diffPercent/100;
 
@@ -908,9 +907,9 @@ is_dump_inconsistent(
 	if (timetotal > 0) {
 		avg = timetotal/NUM_BENCHMARK;
 /* LINTED */
-		maxdiff = avg * diffLimit;
+		maxdiff = (uint64_t)((float)avg * diffLimit);
 
-		*timediff = abs(avg - newstat.snaptime);
+		*timediff = labs(avg - newstat.snaptime);
 
 		/*
 		 * don't return an alert if the difference is less
@@ -924,11 +923,11 @@ is_dump_inconsistent(
 	}
 
 	if (sizetotal > 0) {
-		avg = sizetotal/NUM_BENCHMARK;
+		avg = (int64_t)sizetotal/NUM_BENCHMARK;
 /* LINTED */
-		maxdiff = avg * diffLimit;
+		maxdiff = (uint64_t)((float)avg * diffLimit);
 
-		*sizediff = abs(avg - newstat.snapsize);
+		*sizediff = (uint64_t)labs(avg - (int64_t)newstat.snapsize);
 
 		if (*sizediff > maxdiff) {
 			return (2);
@@ -1041,7 +1040,7 @@ purge_snapshots(
 	time_t			snaptime;
 	char			msgbuf[MAX_MSGBUF_SIZE];
 	int			st;
-	uint32_t		keepVal = 0;
+	int			keepVal = 0;
 	char			unit;
 	char			*ptr;
 	sqm_lst_t			*snaplist;
@@ -1050,7 +1049,7 @@ purge_snapshots(
 	char			*snappath;
 
 	st = translate_period(sched->duration, EXTENDED_PERIOD_UNITS,
-	    &keepVal, &unit);
+	    (uint32_t*)&keepVal, &unit);
 
 	if ((sched->namefmt[0] == '\0') || (st != 0) || (keepVal == 0)) {
 		/* invalid format, duration or unset, do no harm */
@@ -1164,7 +1163,7 @@ log_event(FILE *dumplog, char *msg)
 	time_t		logtime;
 
 	logtime = time(NULL);
-	(void) cftime(timbuf, timefmt, &logtime);
+	(void) samcftime(timbuf, timefmt, &logtime);
 	(void) fprintf(dumplog, "%s  %s\n", timbuf, msg);
 	(void) fflush(dumplog);
 }

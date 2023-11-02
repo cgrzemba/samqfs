@@ -92,7 +92,7 @@ struct cdb_trace {
 
 extern char *scsiAdditionalSenseToString(int, int);
 extern char *scsiCommandToString(int);
-
+extern int samcftime(char *s, const char *format, const time_t *clock);
 
 int
 main(int argc, char **argv)
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 				break;
 			}
 			if (eq != 0 && traceEntry->eq != eq) continue;
-			cftime(tbuf, "%T", &traceEntry->now);
+			samcftime(tbuf, "%T", &traceEntry->now);
 
 			printf("\neq%d %s %s   F:%d   %s\n",
 			    traceEntry->eq,

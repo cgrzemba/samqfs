@@ -81,7 +81,7 @@ emit(
 		sam_syslog(priority, "%s", buf);
 	}
 
-	if (where & TO_FILE && log != NULL) {
+	if (where & TO_FILE && logfd != NULL) {
 		printf("%s\n", buf);
 	}
 }

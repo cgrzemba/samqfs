@@ -50,7 +50,7 @@ struct data {
 };
 
 extern boolean_t Daemon;
-extern FILE	*log;	/* stream for logging */
+extern FILE	*logfd;	/* stream for logging */
 
 #define	KEEP_HOW_MANY	10000
 #define	LIST_MAX	1000000

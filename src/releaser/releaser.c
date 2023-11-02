@@ -194,7 +194,7 @@ int rearch_release = TRUE;
 int use_one_age_weight = FALSE;
 int use_three_age_weights = FALSE;
 boolean_t Daemon;
-FILE *log;
+FILE *logfd;
 
 static char *mnt_point;
 static char inode_pathname[MAXPATHLEN];
@@ -227,7 +227,7 @@ main(
 	struct data data;
 	char msgbuf[MAX_MSGBUF_SIZE] = {0};
 
-	log = NULL;
+	logfd = NULL;
 	(void) clock();    /* initialize clock() interface */
 	stats.seconds = clock()/CLOCKS_PER_SEC;
 	stats.begin = time((time_t *)NULL);
@@ -275,7 +275,7 @@ main(
 			exit(EXIT_FAILURE);
 		}
 		process_cmd_line(argc, argv);
-		log = stdout;
+		logfd = stdout;
 	}
 
 	/*
@@ -317,41 +317,41 @@ main(
 	releaser_header();
 
 	/* Echo parameters.  Probably just for debugging */
-	fprintf(log, "inode pathname          %s\n", inode_pathname);
-	fprintf(log, "low-water mark          %d%%\n", low_water);
-	fprintf(log, "list_size               %d\n", list_size);
-	fprintf(log, "min_residence_age       %d sec.\n", min_residence_age);
-	fprintf(log, "weight_size             %g\n", weight_size);
+	fprintf(logfd, "inode pathname          %s\n", inode_pathname);
+	fprintf(logfd, "low-water mark          %d%%\n", low_water);
+	fprintf(logfd, "list_size               %d\n", list_size);
+	fprintf(logfd, "min_residence_age       %d sec.\n", min_residence_age);
+	fprintf(logfd, "weight_size             %g\n", weight_size);
 	if (use_three_age_weights) {
-		fprintf(log, "weight_age_access       %g\n", weight_age_access);
-		fprintf(log, "weight_age_modify       %g\n", weight_age_modify);
-		fprintf(log, "weight_age_residence    %g\n",
+		fprintf(logfd, "weight_age_access       %g\n", weight_age_access);
+		fprintf(logfd, "weight_age_modify       %g\n", weight_age_modify);
+		fprintf(logfd, "weight_age_residence    %g\n",
 				weight_age_residence);
 	} else {
-		fprintf(log, "weight_age              %g\n", weight_age);
+		fprintf(logfd, "weight_age              %g\n", weight_age);
 	}
-	fprintf(log, "fs equipment number     %d\n", mp->fi_eq);
-	fprintf(log, "family-set name         %s\n", fs_name);
+	fprintf(logfd, "fs equipment number     %d\n", mp->fi_eq);
+	fprintf(logfd, "family-set name         %s\n", fs_name);
 #define	yorn(x) ((x)?"yes":"no")
-	fprintf(log, "started by sam-fsd?     %s\n", yorn(Daemon));
-	fprintf(log, "release files?          %s\n", yorn(release));
-	fprintf(log, "release rearch files?   %s\n", yorn(rearch_release));
-	fprintf(log, "display_all_candidates? %s\n",
+	fprintf(logfd, "started by sam-fsd?     %s\n", yorn(Daemon));
+	fprintf(logfd, "release files?          %s\n", yorn(release));
+	fprintf(logfd, "release rearch files?   %s\n", yorn(rearch_release));
+	fprintf(logfd, "display_all_candidates? %s\n",
 	    yorn(display_all_candidates));
 
 	lwm_blocks = where_is_lwm(mnt_point, low_water);
 	blocks_now_free = where_is_fs(mnt_point);
 
-	fprintf(log, "---before scan---\n");
-	fprintf(log, "blocks_now_free:     %lld\n", blocks_now_free);
-	fprintf(log, "lwm_blocks:          %lld\n", lwm_blocks);
-	(void) fflush(log);
+	fprintf(logfd, "---before scan---\n");
+	fprintf(logfd, "blocks_now_free:     %lld\n", blocks_now_free);
+	fprintf(logfd, "lwm_blocks:          %lld\n", lwm_blocks);
+	(void) fflush(logfd);
 
 	/* Loop while we have work to do */
 	while (blocks_now_free < lwm_blocks) {
 		int number_of_entries_in_list;
 
-		fprintf(log, "---scanning---\n");
+		fprintf(logfd, "---scanning---\n");
 
 		/* initialize the priority list for this loop */
 		init();
@@ -368,9 +368,9 @@ main(
 		 * read the inodes file, build priority-ordered list
 		 * of candidates
 		 */
-		while ((ngot = read(inode_fd, &inodes,
+		while ((ngot = (int) read(inode_fd, &inodes,
 				INO_BLK_FACTOR * INO_BLK_SIZE)) > 0) {
-			ninodes = ngot / sizeof (union sam_di_ino);
+			ninodes = ngot / (int)sizeof (union sam_di_ino);
 
 			for (inode_i = 0; inode_i < ninodes; inode_i++) {
 				expected_ino ++;
@@ -431,7 +431,7 @@ main(
 					if (data.info.age_key != '3') {
 						formatted_time =
 						    format_time(data.info.time);
-						fprintf(log,
+						fprintf(logfd,
 						    "%g (%c: %s) %ld min, "
 						    "%lld blks %s %s\n",
 						    priority,
@@ -441,7 +441,7 @@ main(
 						    data.info.size,
 						    seg_num, pathname);
 					} else {
-						fprintf(log,
+						fprintf(logfd,
 						    "%g %lld blks %s %s\n",
 						    priority,
 						    data.info.size,
@@ -453,7 +453,7 @@ main(
 				if (data.info.age_key != '3') {
 					formatted_time =
 					    format_time(data.info.time);
-					fprintf(log,
+					fprintf(logfd,
 					    "%g (%c: %s) %d min, "
 					    "%lld blks %s %u\n",
 					    priority, data.info.age_key,
@@ -461,7 +461,7 @@ main(
 					    data.info.size, seg_num,
 					    data.id.ino);
 				} else {
-					fprintf(log,
+					fprintf(logfd,
 					    "%g %lld blks %s %u\n",
 					    priority, data.info.size,
 					    seg_num, data.id.ino);
@@ -469,7 +469,7 @@ main(
 #endif
 			}
 		} else {
-			fprintf(log, "No releaser candidates were found.");
+			fprintf(logfd, "No releaser candidates were found.");
 		}
 
 		/*
@@ -478,17 +478,17 @@ main(
 		 */
 		blocks_now_free = where_is_fs(mnt_point);
 
-		fprintf(log, "---after scan---\n");
-		fprintf(log, "blocks_now_free:       %lld\n", blocks_now_free);
+		fprintf(logfd, "---after scan---\n");
+		fprintf(logfd, "blocks_now_free:       %lld\n", blocks_now_free);
 		if (release) {
-			fprintf(log,
+			fprintf(logfd,
 			    "blocks_freed:          %lld\n", blocks_freed);
 		} else {
-			fprintf(log,
+			fprintf(logfd,
 			    "blocks to free (no release): %lld\n",
 			    blocks_freed);
 		}
-		fprintf(log, "lwm_blocks:            %lld\n", lwm_blocks);
+		fprintf(logfd, "lwm_blocks:            %lld\n", lwm_blocks);
 		show_stats_then_zero();
 
 		/*
@@ -497,7 +497,7 @@ main(
 
 		if (!release || number_of_entries_in_list == 0 ||
 		    blocks_freed == 0) {
-			(void) fflush(log);
+			(void) fflush(logfd);
 			break;
 		}
 
@@ -510,20 +510,20 @@ main(
 		 */
 		if (blocks_freed > 0) {
 			release_ratio =
-				(lwm_blocks - blocks_now_free)/blocks_freed;
+				(int)((lwm_blocks - blocks_now_free)/blocks_freed);
 		} else {
 			release_ratio = 1;
 		}
-		fprintf(log, "release_ratio:         %d\n", release_ratio);
+		fprintf(logfd, "release_ratio:         %d\n", release_ratio);
 		if ((release_ratio > 1) &&
 		    (number_of_entries_in_list == list_size)) {
 			int	new_size = list_size * release_ratio;
 
 			list_size =
 			    (new_size <= LIST_MAX) ? new_size : LIST_MAX;
-			fprintf(log, "list_size adjusted to: %d\n", list_size);
+			fprintf(logfd, "list_size adjusted to: %d\n", list_size);
 		}
-		(void) fflush(log);
+		(void) fflush(logfd);
 	}
 
 	return (EXIT_SUCCESS);
@@ -552,7 +552,7 @@ big_enough(struct sam_perm_inode *ino)
 		partial = ino->di.psize.partial * SAM_DEV_BSIZE;
 		pextents = ino->di.status.b.pextents;
 		if (debug_partial) {
-			fprintf(log,
+			fprintf(logfd,
 			    "inode %#x is new-format. "
 			    "partial %ld pextents %d\n",
 			    ino->di.id.ino, partial, pextents);
@@ -584,7 +584,7 @@ big_enough(struct sam_perm_inode *ino)
 		/* size in 4k blocks */
 		blocks = ((byte_count + SAM_BLK - 1) / SAM_BLK);
 		if (debug_partial) {
-			fprintf(log,
+			fprintf(logfd,
 			    "and has partial extents.  "
 			    "byte_count %ld blocks %ld ino.blocks %d\n",
 			    byte_count, blocks, ino->di.blocks);
@@ -600,7 +600,7 @@ big_enough(struct sam_perm_inode *ino)
 		 * on if it's a zero-length file or not
 		 */
 		if (debug_partial) {
-			fprintf(log,
+			fprintf(logfd,
 			    "and has no partial extents.  ino.blocks %d\n",
 			    ino->di.blocks);
 		}
@@ -720,7 +720,7 @@ static long long
 release_a_file(struct sam_fs_info *mp, sam_id_t id)
 {
 	sam_fsdropds_arg_t	dropds_arg;
-	long long freeblocks;
+	int64_t freeblocks;
 	int ret;
 
 	dropds_arg.fseq = mp->fi_eq;
@@ -735,9 +735,9 @@ release_a_file(struct sam_fs_info *mp, sam_id_t id)
 		if (ret == -1 && errno != EINTR) {
 			SysError(HERE, "Can't release fseq %d inode %d",
 			    dropds_arg.fseq, id.ino);
-			freeblocks = (long long)ret;
+			freeblocks = -1;
 		} else {
-			freeblocks = dropds_arg.freeblocks;
+			freeblocks = (int64_t)dropds_arg.freeblocks;
 		}
 	}
 	return (freeblocks);
@@ -963,7 +963,7 @@ acceptable_candidate(struct sam_perm_inode *inode, float *priority,
 	blocks = inode->di.blocks;
 	data->info.size = blocks;
 	if (S_ISSEGS(&inode->di)) {
-		data->info.seg_num = inode->di.rm.info.dk.seg.ord + 1;
+		data->info.seg_num = (int)inode->di.rm.info.dk.seg.ord + 1;
 	} else {
 		data->info.seg_num = 0;
 	}
@@ -985,18 +985,18 @@ acceptable_candidate(struct sam_perm_inode *inode, float *priority,
 		age_modify = max((now - inode->di.modify_time.tv_sec), 0) / 60;
 		age_residence = max((now - inode->di.residence_time), 0) / 60;
 
-		*priority = weight_age_access	* age_access	+
-		    weight_age_modify	* age_modify	+
-		    weight_age_residence * age_residence  +
-		    weight_size			* blocks;
+		*priority = weight_age_access	* (float)age_access	+
+		    weight_age_modify	* (float)age_modify	+
+		    weight_age_residence * (float)age_residence  +
+		    weight_size			* (float)blocks;
 
 		data->info.age_key = '3';
 		data->info.time = 0;
 
 	} else {
 
-		*priority = weight_age  * age +
-		    weight_size * blocks;
+		*priority = weight_age  * (float)age +
+		    weight_size * (float)blocks;
 		data->info.age = age;
 		data->info.time = time;
 
@@ -1004,7 +1004,7 @@ acceptable_candidate(struct sam_perm_inode *inode, float *priority,
 
 	data->id = inode->di.id;
 
-	/* log if requested */
+	/* logfd if requested */
 #ifdef VERBOSE
 	if (display_all_candidates) {
 		char *pathname = id_to_path(mnt_point, inode->di.id);
@@ -1016,11 +1016,11 @@ acceptable_candidate(struct sam_perm_inode *inode, float *priority,
 		}
 		if (data->info.age_key != '3') {
 			char *formatted_time = format_time(data->info.time);
-			fprintf(log, "%g (%c: %s) %ld min, %lld blks %s %s\n",
+			fprintf(logfd, "%g (%c: %s) %ld min, %lld blks %s %s\n",
 			    *priority, data->info.age_key, formatted_time, age,
 			    blocks, seg_num, pathname);
 		} else {
-			fprintf(log, "%g %lld blks %s %s\n",
+			fprintf(logfd, "%g %lld blks %s %s\n",
 			    *priority, blocks, seg_num, pathname);
 		}
 	}
@@ -1034,11 +1034,11 @@ acceptable_candidate(struct sam_perm_inode *inode, float *priority,
 		}
 		if (data->info.age_key != '3') {
 			char *formatted_time = format_time(data->info.time);
-			fprintf(log, "%g (%c: %s) %ld min %lld blks %s %d\n",
+			fprintf(logfd, "%g (%c: %s) %ld min %lld blks %s %d\n",
 			    *priority, data->info.age_key, formatted_time, age,
 			    blocks, seg_num, inode->di.id.ino);
 		} else {
-			fprintf(log, "%g %lld blks %s %d\n",
+			fprintf(logfd, "%g %lld blks %s %d\n",
 			    *priority, blocks, seg_num, inode->di.id.ino);
 		}
 	}
@@ -1053,7 +1053,7 @@ show_stats_then_zero()
 	time_t cpu;
 	clock_t elapsed;
 
-#define	display_and_zero(x) fprintf(log, #x ": %d\n", stats.x);\
+#define	display_and_zero(x) fprintf(logfd, #x ": %d\n", stats.x);\
 		stats.x = 0
 	display_and_zero(archnodrop);
 	display_and_zero(already_offline);
@@ -1077,8 +1077,8 @@ show_stats_then_zero()
 
 	cpu = clock()/CLOCKS_PER_SEC - stats.seconds;
 	elapsed = time((time_t *)NULL) - stats.begin;
-	fprintf(log, "CPU time: %ld seconds.\n", cpu);
-	fprintf(log, "Elapsed time: %ld seconds.\n\n", elapsed);
+	fprintf(logfd, "CPU time: %ld seconds.\n", cpu);
+	fprintf(logfd, "Elapsed time: %ld seconds.\n\n", elapsed);
 	stats.seconds = clock()/CLOCKS_PER_SEC;
 	stats.begin = time((time_t *)NULL);
 }
@@ -1093,7 +1093,7 @@ releaser_header()
 	ascii = ctime_r(&clock, ctime_buf, sizeof (ctime_buf));
 	*(ascii+strlen(ascii)-1) = '\0';
 
-	fprintf(log, "\n\nReleaser begins at %s\n", ascii);
+	fprintf(logfd, "\n\nReleaser begins at %s\n", ascii);
 }
 
 static void
@@ -1105,7 +1105,7 @@ releaser_trailer()
 
 	ascii = ctime_r(&clock, ctime_buf, sizeof (ctime_buf));
 
-	fprintf(log, "Releaser ends at %s\n", ascii);
+	fprintf(logfd, "Releaser ends at %s\n", ascii);
 }
 
 static void
@@ -1114,9 +1114,9 @@ open_log_file()
 	if (*log_pathname == '\0') {
 		strcpy(log_pathname, "/dev/null");
 	}
-	if ((log = fopen64(log_pathname, "a")) == NULL) {
+	if ((logfd = fopen64(log_pathname, "a")) == NULL) {
 		SysError(HERE, "Cannot open %s", log_pathname);
-		log = stdout;
+		logfd = stdout;
 	}
 }
 
@@ -1126,7 +1126,7 @@ format_time(clock_t clock)
 {
 	static char buf[512];
 
-	(void) cftime(buf, (char *)0, &clock);
+	(void) samcftime(buf, (char *)NULL, &clock);
 	return (buf);
 }
 
@@ -1140,9 +1140,9 @@ set_default_listsize(void)
 	struct stat64 buf;
 
 	if (fstat64(inode_fd, &buf) != 0) {
-		fprintf(log, "Error getting .inodes size: %s\n",
+		fprintf(logfd, "Error getting .inodes size: %s\n",
 		    strerror(errno));
-		fprintf(log, "Using list_size %d\n", SML_DEF_SIZE);
+		fprintf(logfd, "Using list_size %d\n", SML_DEF_SIZE);
 		list_size = SML_DEF_SIZE;
 		return;
 	}
@@ -1243,7 +1243,7 @@ struct testVectors tv[] = {
 #define	NTESTS ((sizeof (tv)/sizeof (struct testVectors))-1)
 
 /*
- *  Compute log base 2 of size.
+ *  Compute logfd base 2 of size.
  *  If size is less than SAM_DEV_BSIZE (1024 bytes) return 0.
  */
 int
@@ -1276,7 +1276,7 @@ main(int argc, char **argv)
 
 	printf("Running %d tests on releaser.\n", NTESTS);
 	debug_partial = TRUE;
-	log = stdout;
+	logfd = stdout;
 	memset(&ino, sizeof (struct sam_perm_inode), 0);
 	ino.di.mode = 0x8000;
 
@@ -1300,17 +1300,17 @@ main(int argc, char **argv)
 
 		/* run the test */
 
-		fprintf(log, "test %d\n", i);
+		fprintf(logfd, "test %d\n", i);
 
 		r = big_enough(&ino);
 		res = (r == tv[i].answer) ? "OK" : "***** ERROR *****";
-		fprintf(log, "test %d result should be %d was %d: %s\n",
+		fprintf(logfd, "test %d result should be %d was %d: %s\n",
 		    i, tv[i].answer, r, res);
-		fprintf(log,
+		fprintf(logfd,
 		    "test %d blocks  %d bof_online %d partial %d extents %d\n",
 		    i, ino.di.blocks, ino.di.status.b.bof_online,
 		    ino.di.psize.partial, ino.di.extent[0]);
-		fprintf(log,
+		fprintf(logfd,
 		    "     lg blksz  %d  shift %d sz %d "
 		    "sm blksz %d shift %d sz %d\n",
 		    kblock_size[LG], block_shift[LG], block_size[LG],

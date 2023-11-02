@@ -138,11 +138,11 @@ GetScript(void)
 static void
 dirLogfile(void)
 {
-	if (log != NULL) {
-		fclose(log);
+	if (logfd != NULL) {
+		fclose(logfd);
 	}
-	log = freopen(token, "a+", stdout);
-	if (log == NULL) {
+	logfd = freopen(token, "a+", stdout);
+	if (logfd == NULL) {
 		ReadCfgError(CustMsg(20202), token, errtext);
 	}
 }

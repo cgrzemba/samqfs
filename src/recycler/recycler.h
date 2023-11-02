@@ -89,7 +89,7 @@
 #endif /* defined(DEC_INIT) */
 
 DCL int cannot_recycle;		/* can we continue? */
-DCL FILE *log;
+DCL FILE *logfd;
 
 #define	TO_TTY	1
 #define	TO_SYS	2
@@ -221,7 +221,7 @@ typedef struct VSN_TABLE {		/* VSN table: */
 #endif
 
 DCL int table_used;		/* Number of VSNs currently in table(s) */
-DCL int table_avail;	/* Number of table entries allocated */
+DCL size_t table_avail;	/* Number of table entries allocated */
 DCL struct VSN_TABLE *vsn_table;	/* VSN table */
 DCL int *vsn_permute;	/* VSN permutation list, see sort_vsns() */
 

@@ -86,7 +86,8 @@ PROG_SRC = \
 	read_snap.c \
 	stubs.c \
 	vsn.c \
-	mkdb.c
+	mkdb.c \
+	cftime.c
 
 PROG_LIBS = $(ALIGN) -L$(DEPTH)/lib/$(OBJ_DIR) \
 		-ladm -ldoor $(DB_LIB) -lgen -lz -lnsl -lrt -lpthread $(LIBSO)

@@ -83,6 +83,7 @@ static void fsm_free_file_details(filedetails_t *details);
 /* thread to clean up any aborted deletes */
 static void *finish_partial_deletes(void *arg);
 static void *do_checkpoint(void *arg);
+extern int samcftime(char *s, const char *format, const time_t *clock);
 
 /*  Globals */
 boolean_t		do_daemon = TRUE;
@@ -1206,7 +1207,7 @@ fsmdb_log_err(
 	}
 
 	logtime = time(NULL);
-	(void) cftime(timbuf, timefmt, &logtime);
+	(void) samcftime(timbuf, timefmt, &logtime);
 	(void) fprintf(fsmdb_errFilep, "%s [%ld] %s: %s\n", timbuf, fsmdb_pid,
 	    pfxp, msg);
 	(void) fflush(fsmdb_errFilep);

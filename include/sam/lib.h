@@ -177,4 +177,7 @@ int read_object(char *fs_name, uint64_t obj_handle, int ord,
 int get_object_fs_attributes(char *fs_name, uint64_t obj_handle, int ord,
 	char *data, uint64_t size);
 
+#define cftime(a, b, c) samcftime(a, b, c)
+int samcftime(char *buf, const char *format, const time_t *t);
+
 #endif /* _SAM_LIB_H */
