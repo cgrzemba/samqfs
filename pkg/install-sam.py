@@ -458,7 +458,7 @@ if __name__ == '__main__':
     parser.add_argument('--publish', dest='publish', action="store_true", help='publish IPS package')
     parser.add_argument('--verbose', dest='verbose', action="store_true", help='verbose')
     parser.add_argument('--debug', dest='debug', action="store_true", help='verbose')
-    parser.add_argument('--64bit', dest='amd64', action="store_true", help='verbose')
+    parser.add_argument('--64bit', dest='amd64', action="store_true", help='package 64bit binaries')
     args = parser.parse_args()
 
     destdir = args.destdir+'/' 
