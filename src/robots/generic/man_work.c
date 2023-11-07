@@ -163,7 +163,7 @@ manage_list(
 				mutex_unlock(&library->list_mutex);
 				continue;
 			}
-			ETRACE((LOG_NOTICE, "LbEv c %#x n %#x f %#x (%d)",
+			ETRACE((LOG_NOTICE, "LbEv c %#x f %#x n %#x (%d)",
 			    current, library->first, current->next,
 			    library->active_count));
 			if (current == library->first) {
