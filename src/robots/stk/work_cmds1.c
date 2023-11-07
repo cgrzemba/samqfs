@@ -80,7 +80,7 @@ add_to_cat_req(
 	char 			*ent_pnt = "add_to_cat_req";
 	struct CatalogEntry	ced;
 	struct CatalogEntry	*ce = &ced;
-	struct VolId		vid;
+	struct VolId		vid = {0};
 	addcat_request_t *request =
 	    &event->request.message.param.addcat_request;
 
@@ -98,6 +98,7 @@ add_to_cat_req(
 
 	status = 0;
 	status |= (CES_inuse | CES_occupied | CES_bar_code);
+	vid.ViFlags = VI_eq | VI_slot | VI_part | VI_mtype;
 	vid.ViEq = library->un->eq;
 	vid.ViSlot = ROBOT_NO_SLOT;
 	memmove(vid.ViMtype, sam_mediatoa(request->media),
