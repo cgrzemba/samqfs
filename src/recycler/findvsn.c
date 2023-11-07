@@ -209,7 +209,7 @@ extendTables(
 	void)
 {
 
-	int new_size = table_avail + TABLE_INCREMENT;
+	size_t new_size = table_avail + TABLE_INCREMENT;
 
 #ifdef DEBUG
 	IncReallocsHashStats();
@@ -226,8 +226,8 @@ extendTables(
 	vsn_permute = (int *)Resize((void *) vsn_permute,
 	    (size_t)(new_size * sizeof (int)), "vsn_permute");
 
-	for (int i = table_avail; i < new_size; i++)
-		vsn_permute[i] = i;
+	for (size_t i = table_avail; i < new_size; i++)
+		vsn_permute[i] = (int)i;
 
 	table_avail = new_size;
 
@@ -242,7 +242,7 @@ extendTables(
 static int			/* 1 if string is valid, 0 if not */
 is_valid_vsn(char *vsn, media_t media)
 {
-	int slen;
+	size_t slen;
 
 	if (vsn[0] == '\0') {
 		return (0);

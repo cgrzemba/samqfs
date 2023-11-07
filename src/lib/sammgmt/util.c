@@ -1453,7 +1453,7 @@ translate_period(char *input, char *allowed_units,
 		return (-1);
 	}
 	errno = 0;
-	if ((*value = strtoul(input, &end, 10)) == 0) {
+	if ((*value = (uint32_t) strtoul(input, &end, 10)) == 0) {
 		if (errno != 0) {
 			samerrno = SE_INVALID_PERIOD;
 			snprintf(samerrmsg,  MAX_MSG_LEN, GetCustMsg(samerrno),
