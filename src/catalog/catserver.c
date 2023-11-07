@@ -1118,8 +1118,13 @@ SlotInit(
 		    a->SiVid.ViMtype, a->SiBarcode);
 		if (ce != NULL) {
 			MoveCartridge(ce, cat_num, a->SiVid.ViSlot);
+			if (a->SiVid.ViSlot == (unsigned)ROBOT_NO_SLOT) {
+				a->SiVid.ViSlot = GetFreeSlot(cat_num);
+			}
 			ce = CS_CatalogGetCeByBarCode(a->SiVid.ViEq,
 			    a->SiVid.ViMtype, a->SiBarcode);
+			if (ce != NULL)
+				ce->CeSlot = a->SiVid.ViSlot;
 			if ((ce != NULL) && (ce->CeStatus & CES_unavail)) {
 				ce->CeStatus &= ~CES_unavail;
 				if ((RemoteServer) &&
