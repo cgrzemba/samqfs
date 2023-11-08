@@ -13,18 +13,10 @@ file ../../man/man5/stk.5 path=opt/SUNWsamfs/man/man5/stk.5 owner=root group=bin
 file ../../man/man8/ssi.sh.8 path=opt/SUNWsamfs/man/man8/ssi.sh.8 owner=root group=bin mode=0644
 file ../../man/man8/ssi_so.8 path=opt/SUNWsamfs/man/man8/ssi_so.8 owner=root group=bin mode=0644
 file ssi.sh path=etc/opt/SUNWsamfs/scripts/ssi.sh owner=root group=bin mode=755
-file obj/SunOS_{{OS_RELEASE}}_i386{{DBG}}/stk_helper \
-    path=opt/SUNWsamfs/sbin/i386/sam-stk_helper owner=root group=bin mode=0755
-file obj/SunOS_{{OS_RELEASE}}_i386{{DBG}}/stk path=opt/SUNWsamfs/sbin/i386/sam-stkd \
-    owner=root group=bin mode=0755
 file obj/SunOS_{{OS_RELEASE}}_amd64{{DBG}}/stk_helper \
-    path=opt/SUNWsamfs/sbin/amd64/sam-stk_helper owner=root group=bin mode=0755
-file obj/SunOS_{{OS_RELEASE}}_amd64{{DBG}}/stk path=opt/SUNWsamfs/sbin/amd64/sam-stkd \
+    path=opt/SUNWsamfs/sbin/sam-stk_helper owner=root group=bin mode=0755
+file obj/SunOS_{{OS_RELEASE}}_amd64{{DBG}}/stk path=opt/SUNWsamfs/sbin/sam-stkd \
     owner=root group=bin mode=0755
-link path=opt/SUNWsamfs/sbin/sam-stk_helper target=./i386/sam-stk_helper mediator=isa mediator-implementation=32
-link path=opt/SUNWsamfs/sbin/sam-stkd target=./i386/sam-stkd mediator=isa mediator-implementation=32
-link path=opt/SUNWsamfs/sbin/sam-stk_helper target=./amd64/sam-stk_helper mediator=isa mediator-implementation=64
-link path=opt/SUNWsamfs/sbin/sam-stkd target=./amd64/sam-stkd mediator=isa mediator-implementation=64
-license OPENSOLARIS.LICENSE license=CDDL
+license LICENSE license=CDDL
 depend type=require fmri=pkg:/system/samqfs
 depend type=require fmri=pkg:/system/acsls-client
