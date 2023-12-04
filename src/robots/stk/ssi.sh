@@ -58,6 +58,7 @@ export CSI_CONNECT_AGETIME=172800
 export CSI_RETRY_TIMEOUT=4
 export CSI_RETRY_TRIES=5
 export ACSAPI_PACKET_VERSION=4
+export XAPI_CONVERSION=0
 # /*********************************************************************/
 # /* The following are for defining names for CDKLOG index             */
 # /* positions to control log processing:                              */
@@ -89,8 +90,11 @@ export CDKLOG=1111111001
 # /* CDKTRACE=00000000001 Trace XML parser.                            */
 # /*===================================================================*/
 # export CDKTRACE=11111111111
+# export SLOGPIPE=/tmp/log.pipe
+# export STRCPIPE=/tmp/trc.pipe
 # arguments
 # argv[1] - parent PID
 # argv[2] - input socket name
 # argv[3] - request originator type: 23=ACSSA (cl_type.c)
 exec /opt/SUNWsamfs/sbin/ssi_so $3 ${ACSAPI_SSI_SOCKET} 23 
+# /opt/SUNWsamfs/sbin/ssi_so $3 ${ACSAPI_SSI_SOCKET} 23 &
