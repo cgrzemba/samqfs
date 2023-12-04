@@ -304,6 +304,7 @@ opt/SUNWsamfs/sbin/sam-robotsd 0550
 opt/SUNWsamfs/sbin/sam-rpcd 0550
 opt/SUNWsamfs/sbin/sam-scannerd 0550
 opt/SUNWsamfs/sbin/sam-serverd 0550
+opt/SUNWsamfs/sbin/sam-sharefsd 0550
 opt/SUNWsamfs/sbin/sam-stagealld 0550
 opt/SUNWsamfs/sbin/sam-stagerd 0550
 opt/SUNWsamfs/sbin/sam-stagerd_copy 0550
