@@ -649,6 +649,7 @@ getPrevFilesystems(void)
 	if (prevFileSysNumof == -1) {
 		FatalError(0, "GetFsStatus failed.");
 	}
+	Trace(TR_MISC, "%d file system prev", prevFileSysNumof);
 	if (prevFileSysNumof == 0) {
 		return;
 	}

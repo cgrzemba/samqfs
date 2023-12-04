@@ -922,6 +922,7 @@ main(int argc, char *argv[])
 					startStopSamdb(args->fs_name, TRUE);
 				}
 
+				sam_syslog(LOG_INFO, "start Archiver,Stager daemons", args->fs_name);
 				startStopHsm(FSD_mount, args->fs_name);
 #endif /* sun */
 			}
@@ -2881,7 +2882,9 @@ startStopHsm(int cmd, char *fs)
 			}
 		}
 	}
-
+	Trace(TR_MISC,"startStopHSM(%d): %d hsms, %x hsmsRunning, "
+	    "%d ArchiveCount, %d RmediaDeviceCount, %d DiskVolCount", cmd,
+	    hsms, hsmsRunning, ArchiveCount, RmediaDeviceCount, DiskVolCount);
 	if (hsmsRunning && (hsms == 0 || cmd == FSD_stop_sam)) {
 		if (Daemon) {
 			Trace(TR_MISC,
