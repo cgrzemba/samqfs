@@ -112,7 +112,7 @@ STK_ABSDIR = $(shell readlink -f $(STKDEST))
 # stklibs: $(ACSCOM) $(ACSUTL) $(ACSLIB) $(SSIXDR) $(ACSIPC)
 
 $(ACSSSI):
-	-(cd stk_release/src/ssi; $(MAKE_COMMAND) INSTALL="$(INSTALL)"			\
+	-(cd stk_release/src/ssi; $(MAKE_COMMAND) INSTALL="../../bin"			\
 		SYSINST="$(SYSINST)" STKDEST="$(DESTDIR)"				\
 		LIBSO="$(subst lib,lib/stk,$(LIBSO))" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) top_nondebug )
 
@@ -176,3 +176,4 @@ show:
 	@echo "acls_libs: $(ACSLIBS)"
 	@echo "VERSION: $(SAMQFS_VERSION)"
 	@echo "DEBUG: $(DEBUG)"
+	@echo "INSTALL: $(INSTALL)"
