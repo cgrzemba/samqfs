@@ -3373,11 +3373,11 @@ $     3067 3068 4441 4499 4501 4498 4515 4800 4804
 20235    Archive copy %d of %s resides on VSN %s
 20236    Archive set is accepting recycling - VSN marked for recycling.
 20237 \nRemovable Media VSNs: %d entries
-20238                       ---Archives---   -----Percent-----   %s
-20239  ----Status-----    Count    Bytes   Use Obsolete Free   Library:Type:VSN
-20240 %16s %10s%7s%6d%6d%7d%8s:%s:%s
+20238                   --Archives--    -----Percent----- %12s
+20239  ----Status-----  Count  Bytes    Use Obsolete Free      Library:Type:VSN
+20240 %16s %6s %6s %6d %6d %6d %12s:%s:%s
 20241                  Alpha: %f
-20242 %16s %10s%7s                     <none>:%s:%s
+20242 %16s %6s %6s                            <none>:%s:%s
 20243 Failed to open %s: %s
 20244 Failed to write %s: %s
 20245 Cannot open %s for mailing to %s: %s
