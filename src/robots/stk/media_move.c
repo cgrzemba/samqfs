@@ -739,7 +739,7 @@ view_media(
 						}
 						if (DBG_LVL(SAM_DBG_DEBUG))
 			sam_syslog(LOG_DEBUG,
-			    "%s:setting capacity from table %#x", ent_pnt,
+			    "%s:setting capacity from table %#llx", ent_pnt,
 			    *(library->media_capacity.capacity + m));
 					} else {
 						(void) CatalogSetFieldByLoc(

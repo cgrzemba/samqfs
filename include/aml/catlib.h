@@ -184,7 +184,7 @@ int _CatalogSetField(const char *SrcFile, const int SrcLine,
 	__LINE__, (a), (b), (c), (d), (e), (f))
 int _CatalogSetFieldByLoc(const char *SrcFile, const int SrcLine,
 	int eq, int slot, int part, enum CeFields field,
-	uint32_t value, uint32_t mask);
+	uint64_t value, uint32_t mask);
 
 #define	CatalogSetString(a, b, c) _CatalogSetString( \
 	_SrcFile, __LINE__, (a), (b), (c))

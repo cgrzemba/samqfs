@@ -1064,7 +1064,7 @@ _CatalogSetFieldByLoc(
 	int slot,
 	int part,
 	enum CeFields field,
-	uint32_t val,
+	uint64_t val,
 	uint32_t mask)
 {
 	struct VolId vid;
