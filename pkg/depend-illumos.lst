@@ -1,8 +1,8 @@
 database/berkeleydb-5
-database/mariadb-103/library
+database/mariadb-106/library
 library/zlib
 SUNWcs
-runtime/perl-524
+runtime/perl-538
 shell/ksh93
-system/library/gcc-7-runtime
+system/library/gcc-10-runtime
 system/library
