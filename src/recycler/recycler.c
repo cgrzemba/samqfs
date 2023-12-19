@@ -139,7 +139,7 @@ static void accumulate_inode(char *, union sam_di_ino *, int,
 static void assign_vsns(void);
 static void check_inode(char *, union sam_di_ino *, int,
 	long long, VSN_TABLE *);
-static void check_relabel(void);
+static void check_relabel(boolean_t ignore);
 static void detect_another_recycler(void);
 static void display_rm_vsns(void);
 static void display_dk_vsns(void);
@@ -458,7 +458,7 @@ main(
 
 	/* find VSNs which are now 100% junk+free */
 
-	check_relabel();
+	check_relabel(ignore_all);
 
 	/*
 	 * Recycle disk archives.
@@ -1756,7 +1756,7 @@ recycle_copy(
  * also prints out the "action logfd."
  */
 static void
-check_relabel(void)
+check_relabel(boolean_t ignore_all)
 {
 	int vsn_i, stat;
 	char *recycler_script;
@@ -1790,7 +1790,7 @@ check_relabel(void)
 		/* check for any active files left */
 		if (VSN->has_active_files == FALSE) {
 			char medium[512];
-			char buf[512];
+			char buf[512] = "";
 			vsn_t vsn;
 			char *modifier;
 
@@ -1812,20 +1812,24 @@ check_relabel(void)
 			recycler_script = GetScript();
 			ASSERT(recycler_script != NULL);
 
-			sprintf(buf, "%s %s %s %d %d %s %s %s",
-			    recycler_script, medium, vsn,
-			    VSN->ce->CeSlot, VSN->real_dev->eq,
-			    device_to_nm(VSN->media),
-			    family_name(VSN->robot), modifier);
-
 			(void) fflush(NULL);    /* flush all writable FILES */
 
-			stat = -1;
-			if (((fptr = popen(buf, "w")) != NULL) &&
-			    ((stat = pclose(fptr)) == 0)) {
-				emit(TO_ALL, LOG_INFO, 1460, buf);
-			} else {
-				emit(TO_ALL, LOG_ERR, 20246, buf, errtext);
+			if (ignore_all)
+				stat = 0;
+			else {
+				stat = -1;
+				sprintf(buf, "%s %s %s %d %d %s %s %s",
+				    recycler_script, medium, vsn,
+				    VSN->ce->CeSlot, VSN->real_dev->eq,
+				    device_to_nm(VSN->media),
+				    family_name(VSN->robot), modifier);
+
+				if (((fptr = popen(buf, "w")) != NULL) &&
+				    ((stat = pclose(fptr)) == 0)) {
+					emit(TO_ALL, LOG_INFO, 1460, buf);
+				} else {
+					emit(TO_ALL, LOG_ERR, 20246, buf, errtext);
+				}
 			}
 
 			if (VSN->robot && VSN->robot->mail) {
