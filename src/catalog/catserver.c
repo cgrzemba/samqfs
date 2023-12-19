@@ -1400,7 +1400,7 @@ SetField(
 		switch (a->SfField) {
 		case CEF_Status:
 			ce->CeStatus = (ce->CeStatus & ~a->a.v.SfMask) |
-			    a->a.v.SfVal;
+			    (uint32_t) a->a.v.SfVal;
 			/*
 			 * If clearing inuse, free the entry.
 			 */
@@ -1442,21 +1442,21 @@ SetField(
 			memmove(ce->CeVolInfo, a->a.SfString,
 			    sizeof (ce->CeVolInfo));
 			break;
-		case CEF_Slot:	ce->CeSlot = a->a.v.SfVal; break;
-		case CEF_Partition: ce->CePart = a->a.v.SfVal; break;
-		case CEF_Access: ce->CeAccess = a->a.v.SfVal; break;
-		case CEF_Capacity: ce->CeCapacity = a->a.v.SfVal; break;
-		case CEF_Space:	ce->CeSpace = a->a.v.SfVal; break;
-		case CEF_BlockSize: ce->CeBlockSize = a->a.v.SfVal; break;
-		case CEF_LabelTime: ce->CeLabelTime = a->a.v.SfVal; break;
-		case CEF_ModTime: ce->CeModTime   = a->a.v.SfVal; break;
-		case CEF_MountTime: ce->CeMountTime = a->a.v.SfVal; break;
+		case CEF_Slot:	ce->CeSlot = (uint32_t) a->a.v.SfVal; break;
+		case CEF_Partition: ce->CePart = (uint16_t) a->a.v.SfVal; break;
+		case CEF_Access: ce->CeAccess = (uint32_t) a->a.v.SfVal; break;
+		case CEF_Capacity: ce->CeCapacity = (uint64_t) a->a.v.SfVal; break;
+		case CEF_Space:	ce->CeSpace = (uint64_t) a->a.v.SfVal; break;
+		case CEF_BlockSize: ce->CeBlockSize = (uint32_t) a->a.v.SfVal; break;
+		case CEF_LabelTime: ce->CeLabelTime = (uint32_t) a->a.v.SfVal; break;
+		case CEF_ModTime: ce->CeModTime   = (uint32_t) a->a.v.SfVal; break;
+		case CEF_MountTime: ce->CeMountTime = (uint32_t) a->a.v.SfVal; break;
 		case CEF_BarCode:
 			memmove(ce->CeBarCode, a->a.SfString,
 			    sizeof (ce->CeBarCode));
 			break;
-		case CEF_PtocFwa: ce->m.CePtocFwa = a->a.v.SfVal; break;
-		case CEF_LastPos: ce->m.CeLastPos = a->a.v.SfVal; break;
+		case CEF_PtocFwa: ce->m.CePtocFwa = (uint64_t) a->a.v.SfVal; break;
+		case CEF_LastPos: ce->m.CeLastPos = (uint64_t) a->a.v.SfVal; break;
 		default:
 			errno = EINVAL;
 			goto out;
