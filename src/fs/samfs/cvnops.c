@@ -1239,7 +1239,7 @@ sam_getattr_vn(
 	}
 	vap->va_blksize = LG_BLK(ip->mp, DD);	/* Block size in bytes */
 	/* # of DEV_BSIZE (512-byte) blocks allocated */
-	vap->va_nblocks = (u_longlong_t)ip->di.blocks *
+	vap->va_nblocks = (u_longlong_t)((uint32_t)ip->di.blocks) *
 	    (u_longlong_t)(SAM_BLK/DEV_BSIZE);
 
 #if defined(AT_SEQ)

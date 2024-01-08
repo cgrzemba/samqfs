@@ -922,7 +922,7 @@ main(int argc, char *argv[])
 					startStopSamdb(args->fs_name, TRUE);
 				}
 
-				sam_syslog(LOG_INFO, "start Archiver,Stager daemons", args->fs_name);
+				sam_syslog(LOG_INFO, "Start archive/stage daemons", args->fs_name);
 				startStopHsm(FSD_mount, args->fs_name);
 #endif /* sun */
 			}
