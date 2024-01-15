@@ -336,6 +336,7 @@ opt/SUNWsamfs/sbin/trace_rotate 0555
 opt/SUNWsamfs/sbin/unarchive 0550
 opt/SUNWsamfs/sbin/unload 0550
 opt/SUNWsamfs/sbin/unreserve 0550
+opt/SUNWsamfs/util/acmddump 0550
 opt/SUNWsamfs/util/check_mcf.pl 0550
 opt/SUNWsamfs/util/readshm 0550
 opt/SUNWsamfs/util/samtrace 0550

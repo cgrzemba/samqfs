@@ -221,6 +221,7 @@ sam_block_thread(sam_mount_t *mp)
 				/* Wake up anyone waiting for blocks */
 				/* If threads waiting for blocks */
 				if (mp->mi.m_block.wait) {
+					DTRACE_PROBE1(cv__broadcast__bl__wait, sam_mount_t, mp);
 					cv_broadcast(&mp->mi.m_block.get_cv);
 				}
 			}
@@ -305,6 +306,7 @@ sam_block_thread(sam_mount_t *mp)
 			 */
 			mutex_enter(&mp->mi.m_block.mutex);
 			next->wait = 0;
+			DTRACE_PROBE1(cv__broadcast__prealloc, sam_mount_t, mp);
 			cv_broadcast(&mp->mi.m_block.get_cv);
 			blocks_allocated = TRUE;
 		}
@@ -334,6 +336,8 @@ sam_block_thread(sam_mount_t *mp)
 				number_buffers++;
 				block_count = BLOCK_COUNT(block->fill,
 				    block->out, block->limit);
+				DTRACE_PROBE2(blocks, int, block_count,
+				    struct sam_block, block);
 				if ((block_count >= (block->limit >> 1)) ||
 				    dp->busy ||
 				    (block_count == 0)) {
@@ -360,6 +364,7 @@ sam_block_thread(sam_mount_t *mp)
 			mp->mi.m_blkth_alloc = mp->mi.m_blkth_ran;
 			/* If threads waiting for blocks */
 			if (mp->mi.m_block.wait) {
+				DTRACE_PROBE1(cv__broadcast__wait, sam_mount_t, mp);
 				cv_broadcast(&mp->mi.m_block.get_cv);
 			}
 			if (SAM_IS_SHARED_WRITER(mp)) {
@@ -374,6 +379,7 @@ sam_block_thread(sam_mount_t *mp)
 		if (mp->mi.m_wait_write) {
 			mutex_enter(&mp->ms.m_waitwr_mutex);
 			if (mp->mi.m_wait_write) {
+				DTRACE_PROBE1(cv__broadcast__wait__enospc, sam_mount_t, mp);
 				cv_broadcast(&mp->ms.m_waitwr_cv);
 			}
 			mutex_exit(&mp->ms.m_waitwr_mutex);

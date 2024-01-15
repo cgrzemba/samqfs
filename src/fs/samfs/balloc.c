@@ -162,11 +162,15 @@ sam_alloc_block(
 			 * and map is NOT empty, signal block thread, but
 			 * don't wait.
 			 */
+
 			block_count = BLOCK_COUNT(block->fill, block->out,
 			    block->limit);
+			DTRACE_PROBE2(blocks, int, block_count,
+			    struct sam_block, block);
 			mutex_exit(&block->md_mutex);
 			if ((block_count < (block->limit >> 1)) &&
 			    !mp->mi.m_fs[unit].map_empty) {
+				DTRACE_PROBE1(sam__kick__block, sam_mount_t, mp);
 				SAM_KICK_BLOCK(mp);
 			}
 
@@ -250,6 +254,7 @@ skip_this_unit:
 			 * to avoid block thread to complete his work
 			 * before we reach cv_timedwait.
 			 */
+			DTRACE_PROBE1(sam__kick__block__skip, sam_mount_t, mp);
 			mutex_enter(&mp->mi.m_block.mutex);
 			SAM_KICK_BLOCK(mp);
 			t_out = ddi_get_lbolt() + hz + hz;	/* 2 second timeout */
