@@ -49,7 +49,7 @@ done
 shift `expr $OPTIND - 1`
 
 #  REPORT LOCATION
-REPORT=${1:-/tmp/SAMreport.`/bin/uname -n`.`/bin/date '+%Y%m%d.%H%M%Z'`}
+REPORT=${1:-/var/tmp/SAMreport.`/bin/uname -n`.`/bin/date '+%Y%m%d.%H%M%Z'`/report.out}
 
 #  How many lines from log files, etc., to show in the output report.
 #  Default is 1,000, but your support provider may ask you to change
@@ -82,6 +82,7 @@ REPORTNAME=`basename $REPORT`
 
 #  SAMreport directory
 REPORTDIR=`dirname $REPORT`
+[ -d ${REPORTDIR} ] || mkdir -p ${REPORTDIR}
 
 #  Directories that SAM-QFS uses
 TMPDIR=/tmp
@@ -95,12 +96,12 @@ USERDIR=/opt/SUNWsamfs/bin
 EXECDIR=/opt/SUNWsamfs/sbin
 
 #  Output files
-OUTDMPSHM=${REPORTDIR}/${REPORTNAME}.dmpshm_data
-OUTFSMGRLOG=${REPORTDIR}/${REPORTNAME}.fsmgr_text
-OUTSAMTRACE=${REPORTDIR}/${REPORTNAME}.samtrace_text
-OUTSHOWQUEUE=${REPORTDIR}/${REPORTNAME}.showqueue_text
-OUTARCHIVERTAR=${REPORTDIR}/${REPORTNAME}.archiver_data.tar
-OUTSTAGERTAR=${REPORTDIR}/${REPORTNAME}.stager_data.tar
+OUTDMPSHM=${REPORTDIR}/dmpshm_data
+OUTFSMGRLOG=${REPORTDIR}/fsmgr_text
+OUTSAMTRACE=${REPORTDIR}/samtrace_text
+OUTSHOWQUEUE=${REPORTDIR}/showqueue_text
+OUTARCHIVERTAR=${REPORTDIR}/archiver_data.tar
+OUTSTAGERTAR=${REPORTDIR}/stager_data.tar
 
 #  Temporary work files
 TMPBGDF=$TMPDIR/$$.sam_bg_df
@@ -189,6 +190,15 @@ verbosehead(){
 	echo ""		>>$REPORT 2>&1
 }
 
+copyfiles(){
+for file in $*; do
+	if [ -r $file ]; then
+		cp -p ${file} ${REPORTDIR}
+	else
+		echo $file is not readable or not exist >>$REPORT 2>&1
+	fi
+done
+}
 #  Show a file, with title and verbose echoing of the cat command.
 showfiles(){
 for file in $*; do
@@ -572,15 +582,6 @@ verbose /bin/uname -a
 #  of SAM-QFS.  There may be others; this list is subject to change.
 #  Issue a warning if the patch isn't there; otherwise echo the full patch id.
 #
-SOL_VER=`/bin/uname -r | cut -c1-5`
-if [ $SOL_VER = "5.10" ]; then
-	NEEDED="NONE"
-elif [ $SOL_VER = "5.11" ]; then
-	NEEDED="NONE"
-else
-	NEEDED="UNKNOWN"
-	echo $TAG "Unknown Solaris release level $SOL_VER"       >>$REPORT
-fi
 
 showfiles /etc/release
 
@@ -589,11 +590,11 @@ echo "------------------- fsmgr diagnostic report ---------" >>$REPORT
 #  The output is saved to file $TMPFSMGR.  This is not configurable.
 echo "" >>$REPORT 2>&1
 if [ -x /opt/SUNWfsmgr/bin/fsmgr_report ]; then
-	echo Generating fsmgr diagnostic report file >>$REPORT 2>&1
-	echo $OUTFSMGRLOG >>$REPORT 2>&1
-	/opt/SUNWfsmgr/bin/fsmgr_report > /dev/null 2>&1 &
+echo Generating fsmgr diagnostic report file >>$REPORT 2>&1
+echo $OUTFSMGRLOG >>$REPORT 2>&1
+/opt/SUNWfsmgr/bin/fsmgr_report > /dev/null 2>&1 &
 else
-	echo fsmgr diagnostic report is not available >>$REPORT 2>&1
+echo fsmgr diagnostic report is not available >>$REPORT 2>&1
 fi
 echo "" >>$REPORT 2>&1
 
@@ -606,53 +607,16 @@ echo "------------------- kernel architecture info --------" >>$REPORT
 KERN_ARCH=`/bin/isainfo -kv`
 KERN_VER=` echo $KERN_ARCH | cut -c1-2`
 if [ X"$KERN_VER" = X64 ]; then
-	echo "\nSolaris is running in 64-bit kernel mode."  >>$REPORT
+echo "\nSolaris is running in 64-bit kernel mode."  >>$REPORT
 else
-	echo "\nSolaris is running in 32-bit kernel mode."  >>$REPORT
+echo "\nSolaris is running in 32-bit kernel mode."  >>$REPORT
 fi
 if [ X"$KERN_ARCH" != X ]; then
-	echo $KERN_ARCH >>$REPORT
+echo $KERN_ARCH >>$REPORT
 fi
 echo "" >>$REPORT 2>&1
 
 echo "------------------- check system patches ------------" >>$REPORT
-echo "\nPatches needed for Solaris ${SOL_VER}: $NEEDED\n" >>$REPORT
-if [ X"$NEEDED" = "XNONE" -o X"$NEEDED" = "XUNKNOWN" ]; then
-	NEEDED=""
-fi
-
-/bin/showrev -p 2>/dev/null | /bin/sed -e 's/Obso.*//' | /bin/sort > $TMPPATALL
-
-for patch in $NEEDED; do
-	PATCHFOUND=`/bin/grep -w $patch $TMPPATALL`
-	if [ "X$PATCHFOUND" = "X" ]; then
-		echo $TAG "Solaris patch " $patch " not installed.\n" >>$REPORT
-	else
-		echo "Solaris " $PATCHFOUND " installed.\n" >>$REPORT
-	fi
-done
-
-echo "\nPatches installed for SAM-QFS:\n" >>$REPORT
-
-/bin/showrev -p 2>/dev/null | egrep 'SUNWsamfs|SUNWqfs|SUNWfsmgr' | sed -e 's/Obso.*//' | sed -e 's/Patch: //' > $TMPPATSAM
-
-echo "/bin/showrev -p | egrep 'SUNWsamfs|SUNWqfs|SUNWfsmgr' | sed -e 's/Obso.*//' | sed -e 's/Patch: //' > $TMPPATSAM \n" >>$REPORT
-showifiles $TMPPATSAM
-for i in `cat $TMPPATSAM`; do
-	echo "/bin/ls -ld /var/sadm/patch/${i}" >>$REPORT 2>&1
-	/bin/ls -ld /var/sadm/patch/${i} >>$REPORT
-	echo ""   >>$REPORT 2>&1
-	echo "/bin/ls -l /var/sadm/patch/${i}/log" >>$REPORT 2>&1
-	/bin/ls -l /var/sadm/patch/${i}/log >>$REPORT
-	echo ""   >>$REPORT 2>&1
-done
-/bin/rm $TMPPATSAM
-
-echo "\nPatches installed for Solaris:\n" >>$REPORT
-
-echo "/bin/showrev -p | /bin/sed -e 's/Obso.*//' | /bin/sort > $TMPPATALL \n" >>$REPORT
-showifiles $TMPPATALL
-/bin/rm $TMPPATALL
 
 #
 # SUNWqfsr      - Sun QFS Solaris (root)
@@ -680,7 +644,7 @@ echo "------------------- package info --------------------" >>$REPORT
 
 verbose "/bin/pkginfo | grep LSC"
 
-for PACKAGE in SUNWqfsr SUNWqfsu SUNWsamfsr SUNWsamfsu SUNWfsmgrr SUNWfsmgru SUNWsamtp SUNWmd SUNWmdg SUNWfcp SUNWfcpx SUNWfctl SUNWfctlx SUNWqlc SUNWqlcx SUNWsmgr SANergy AMPXdst JNIC QLA2200-3
+for PACKAGE in SUNWsamfsu
 do
 	twiddle
 	echo "" >>$REPORT 2>&1
@@ -692,45 +656,36 @@ showfiles /opt/SUNWsamfs/include/version.h
 
 echo "------------------- kernel info ---------------------" >>$REPORT
 echo ""                                      >>$REPORT 2>&1
-echo "/bin/ls -l /kernel/drv/sam*"           >>$REPORT 2>&1
-/bin/ls -l /kernel/drv/sam*                  >>$REPORT 2>&1
-echo "/bin/ls -l /kernel/fs/sam*"            >>$REPORT 2>&1
-/bin/ls -l /kernel/fs/sam*                   >>$REPORT 2>&1
-
 echo "/bin/ls -l /kernel/drv/*/sam*"         >>$REPORT 2>&1
 /bin/ls -l /kernel/drv/*/sam*                >>$REPORT 2>&1
-echo "/bin/ls -l /kernel/fs/*/sam*"          >>$REPORT 2>&1
+			echo "/bin/ls -l /kernel/fs/*/sam*"          >>$REPORT 2>&1
 /bin/ls -l /kernel/fs/*/sam*                 >>$REPORT 2>&1
-echo ""   >>$REPORT 2>&1
+		       echo ""   >>$REPORT 2>&1
 
-echo "------------------- modinfo output ------------------" >>$REPORT
-verbose "/usr/sbin/modinfo | /bin/grep sam | /bin/grep -v sampling"
-verbose "/usr/sbin/modinfo | /bin/grep ' sd '"
-verbose "/usr/sbin/modinfo | /bin/grep ' st '"
-verbose "/usr/sbin/modinfo | /bin/egrep -i 'fcp|fctl|fp|qlc|ssd|disk|tape'"
+		       echo "------------------- modinfo output ------------------" >>$REPORT
+		       verbose "/usr/sbin/modinfo | /bin/grep sam | /bin/grep -v sampling"
+		       verbose "/usr/sbin/modinfo | /bin/grep ' sd '"
+		       verbose "/usr/sbin/modinfo | /bin/grep ' st '"
+		       verbose "/usr/sbin/modinfo | /bin/egrep -i 'fcp|fctl|fp|qlc|ssd|disk|tape|emlxs|lmrc'"
 
-echo "------------------- driver output -------------------" >>$REPORT
-echo ""   >>$REPORT 2>&1
-/bin/grep Driver /var/adm/messages* 2>&1 | head -10 >>$REPORT 2>&1
-echo ""   >>$REPORT 2>&1
+		       echo "------------------- driver output -------------------" >>$REPORT
+		       echo ""   >>$REPORT 2>&1
+		       /bin/grep Driver /var/adm/messages* 2>&1 | head -10 >>$REPORT 2>&1
+		       echo ""   >>$REPORT 2>&1
 
-echo "------------------- storage array info ------------------" >>$REPORT
-if [ -f /usr/sbin/luxadm ]; then
-	verbose /usr/sbin/luxadm qlgc
-fi
 #
 # Disable cfgadm until bugid 4736456 is resolved.  We only
 # want to run it when the proper patch is installed.
 #
 #if [ -f /usr/sbin/cfgadm ]; then
-    verbose /usr/sbin/cfgadm -al -o show_SCSI_LUN
+verbose /usr/sbin/cfgadm -al -o show_SCSI_LUN
 #fi
 
 echo "------------------- ls -lR /opt/SUNWsamfs ------------" >>$REPORT
 verbose /bin/ls -lR  /opt/SUNWsamfs
 verbose /bin/ls -lL  /opt/SUNWsamfs
 for FILE in `ls -1 /opt/SUNWsamfs 2>/dev/null | grep -v "^jre$"`; do
-	verbose /bin/ls -lRL /opt/SUNWsamfs/$FILE
+verbose /bin/ls -lRL /opt/SUNWsamfs/$FILE
 done
 
 echo "------------------- $ETCDIR directory ---------------" >>$REPORT
@@ -745,45 +700,40 @@ verbose /bin/ls -lLd  $VARDIR
 verbose /bin/ls -l  $VARDIR
 verbose /bin/ls -lL $VARDIR
 
-showfiles $ETCDIR/mcf
-showfiles $ETCDIR/hosts*
-showfiles $ETCDIR/defaults.conf
-showfiles $ETCDIR/diskvols.conf
-showfiles $ETCDIR/inquiry.conf
-showfiles $ETCDIR/archiver.cmd
-showfiles $ETCDIR/preview.cmd
-showfiles $ETCDIR/recycler.cmd
-showfiles $ETCDIR/nrecycler.cmd
-showfiles $ETCDIR/releaser.cmd
-showfiles $ETCDIR/rft.cmd
-showfiles $ETCDIR/samfs.cmd
-showfiles $ETCDIR/shrink.cmd
-showfiles $ETCDIR/stager.cmd
-showfiles $ETCDIR/mount.sh
-showfiles $CUSTDIR/archiver.sh
-showfiles $CUSTDIR/dev_down.sh
-showfiles $CUSTDIR/load_notify.sh
-showfiles $CUSTDIR/log_rotate.sh
-showfiles $CUSTDIR/recover.sh
-showfiles $CUSTDIR/recycler.sh
-showfiles $CUSTDIR/nrecycler.sh
-showfiles $CUSTDIR/restore.sh
-showfiles $CUSTDIR/save_core.sh
-showfiles $CUSTDIR/ssi.sh
-showfiles $CUSTDIR/stageback.sh
-showfiles $CUSTDIR/tarback.sh
-showfiles /etc/syslog.conf 
-showfiles /kernel/drv/samst.conf
-showfiles /kernel/drv/st.conf
-showfiles /kernel/drv/fp.conf
-showfiles /kernel/drv/fcp.conf
-showfiles /kernel/drv/jni.conf
-showfiles /kernel/drv/qla*.conf
-showfiles /kernel/drv/qlc.conf
-showfiles /usr/kernel/drv/dst.conf 
-showfiles /etc/driver_classes
-showfiles /etc/driver_aliases
-showfiles /etc/system
+copyfiles $ETCDIR/mcf
+copyfiles $ETCDIR/hosts*
+copyfiles $ETCDIR/defaults.conf
+copyfiles $ETCDIR/diskvols.conf
+copyfiles $ETCDIR/inquiry.conf
+copyfiles $ETCDIR/archiver.cmd
+copyfiles $ETCDIR/preview.cmd
+copyfiles $ETCDIR/recycler.cmd
+copyfiles $ETCDIR/nrecycler.cmd
+copyfiles $ETCDIR/releaser.cmd
+copyfiles $ETCDIR/rft.cmd
+copyfiles $ETCDIR/samfs.cmd
+copyfiles $ETCDIR/shrink.cmd
+copyfiles $ETCDIR/stager.cmd
+copyfiles $ETCDIR/mount.sh
+copyfiles $CUSTDIR/archiver.sh
+copyfiles $CUSTDIR/dev_down.sh
+copyfiles $CUSTDIR/load_notify.sh
+copyfiles $CUSTDIR/log_rotate.sh
+copyfiles $CUSTDIR/recover.sh
+copyfiles $CUSTDIR/recycler.sh
+copyfiles $CUSTDIR/nrecycler.sh
+copyfiles $CUSTDIR/restore.sh
+copyfiles $CUSTDIR/save_core.sh
+copyfiles $CUSTDIR/ssi.sh
+copyfiles $CUSTDIR/stageback.sh
+copyfiles $CUSTDIR/tarback.sh
+copyfiles /etc/syslog.conf 
+copyfiles /kernel/drv/st.conf
+copyfiles /kernel/drv/fp.conf
+copyfiles /kernel/drv/fcp.conf
+copyfiles /kernel/drv/qla*.conf
+copyfiles /kernel/drv/qlc.conf
+copyfiles /etc/system
 
 echo "------------------- /etc/system flags ---------------" >>$REPORT
 if grep sam_statvfs_bias /etc/system > /dev/null; then
@@ -799,21 +749,8 @@ verbose /opt/SUNWsamfs/sbin/samset debug
 echo ""   >>$REPORT 2>&1
 verbose /opt/SUNWsamfs/sbin/samset devlog all
 
-echo "------------------- hostid --------------------------" >>$REPORT
-echo ""   >>$REPORT 2>&1
-echo "hostid is `/usr/bin/hostid`" >>$REPORT 2>&1
-echo ""   >>$REPORT 2>&1
-
-echo "------------------- license info ---------------" >>$REPORT
+echo "------------------- capacity usage info ---------------" >>$REPORT
 verbose /opt/SUNWsamfs/sbin/samcmd l
-showfiles $ETCDIR/LICENSE.*
-
-echo "------------------- jre info ------------------------" >>$REPORT
-if [ -r /opt/SUNWsamfs/jre/bin/jre -a -x /opt/SUNWsamfs/jre/bin/jre ]; then
-	verbose "/opt/SUNWsamfs/jre/bin/jre -v 2>&1 | grep -i Version"
-else
-	echo ""   >>$REPORT 2>&1
-fi
 
 echo "------------------- network info --------------------" >>$REPORT
 verbose /usr/sbin/dladm show-phys
@@ -832,14 +769,10 @@ showfiles /etc/inet/ipnodes
 showfiles /etc/inet/services
 showfiles /etc/inet/ntp.conf
 showfiles /etc/nsswitch.conf
-showfiles /etc/devlink.tab
+copyfiles /etc/devlink.tab
 
 echo "------------------- ipcs info -----------------------" >>$REPORT
 verbose /bin/ipcs -a
-
-echo "------------------- /dev/samst ----------------------" >>$REPORT
-verbose /bin/ls -l /dev/samst
-verbose /bin/ls -Ll /dev/samst
 
 echo "------------------- /dev/rmt ------------------------" >>$REPORT
 echo ""                                      >>$REPORT 2>&1
@@ -848,15 +781,6 @@ echo "/bin/ls -l /dev/rmt/*[0-9]"            >>$REPORT 2>&1
 echo ""                                      >>$REPORT 2>&1
 echo "/bin/ls -Ll /dev/rmt/*[0-9]"           >>$REPORT 2>&1
 /bin/ls -Ll /dev/rmt/*[0-9]                  >>$REPORT 2>&1
-echo ""                                      >>$REPORT 2>&1
-
-echo "------------------- /dev/rdst -----------------------" >>$REPORT
-echo ""                                      >>$REPORT 2>&1
-echo "/bin/ls -l /dev/rdst*"                 >>$REPORT 2>&1
-/bin/ls -l /dev/rdst*                        >>$REPORT 2>&1
-echo ""                                      >>$REPORT 2>&1
-echo "/bin/ls -Ll /dev/rdst*"                >>$REPORT 2>&1
-/bin/ls -Ll /dev/rdst*                       >>$REPORT 2>&1
 echo ""                                      >>$REPORT 2>&1
 
 echo "------------------- /dev/dsk ------------------------" >>$REPORT
@@ -880,6 +804,11 @@ echo ""                                      >>$REPORT 2>&1
 
 echo "-------------------- fcinfo status ----------------" >>$REPORT
 verbose /usr/sbin/fcinfo hba-port
+FCHBADEV=$(fcinfo hba-port | grep "OS Device Name:" | cut -d: -f2 | tr '\n' ' ')
+for dev in ${FCHBADEV}; do
+	verbose luxadm -e dump_map $dev;
+	verbose luxadm -e rdls $dev;
+done
 
 echo "-------------------- mpathadm status ----------------" >>$REPORT
 verbose /usr/sbin/mpathadm list lu
@@ -894,17 +823,17 @@ verbose /bin/grep SAM_FS /etc/group
 
 showfiles /var/spool/cron/crontabs/root
 
-showenuf /var/adm/messages\*
+copyfiles /var/adm/messages\*
 
 if [ "x$SAMLOG" = x ]; then
 	echo $TAG " No sam log file defined."  >>$REPORT
 else
-	showenuf $SAMLOG\*
+	copyfiles $SAMLOG\*
 fi
 
 for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $DBUPTRC $FSATRC $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $RCYTRC $NRECYLOGS $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $SHRKLOGS $SHRKTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
 do
-	showtails $FILES
+	copyfiles $FILES
 done
 
 #
@@ -943,7 +872,6 @@ echo "------------------- threadlist of running system ----" >>$REPORT
 if [ $USERID -eq 0 ]; then
 	echo '=n"---- date/time ----"
 		time/y
-		lbolt/K
 		=n"---- utsname ----"
 		utsname::print
 		=n"---- sam_version/sam_build_uname ----"
@@ -953,7 +881,7 @@ if [ $USERID -eq 0 ]; then
 		::threadlist -v
 		=n"---- function call args ----"
 		::walk thread | ::findstack ".$c6"
-		=n"---- sam_ mdb end ----"' | /bin/mdb -k 2>&1 | head -$MDB_LINES >> $REPORT 2>&1
+		=n"---- sam_ mdb end ----"' | /bin/mdb -k 2>&1 | head -$MDB_LINES >> ${REPORTDIR}/mdb-threadlist.out 2>&1
 else
 	rerun_as_root threadlist
 fi
@@ -1190,6 +1118,7 @@ if [ x$hist_cat = x ]; then
 	echo "" >>$REPORT 2>&1
 fi
 
+verbose svcs
 echo "------------------- sam-fsd information -------------" >>$REPORT
 # Show state of sam-fsd service
 verbose /usr/bin/svcs sam-fsd
@@ -1218,7 +1147,11 @@ verbosei /etc/mount
 
 showifiles /etc/mnttab /etc/vfstab /etc/dfs/dfstab /etc/inittab
 
-verbosei /usr/sbin/sharemgr show -v
+echo "------------------- filesystem nfs share information ----------" >>$REPORT
+verbose /usr/sbin/sharemgr show -vx default
+
+echo "------------------- filesystem smb share information ----------" >>$REPORT
+verbose /usr/sbin/sharemgr show -vx smb
 
 # accumulate samfs filesystem mount points
 SAMFSMP=`sed -e "/#/s/#.*//" < /etc/vfstab | /bin/awk '$4 == "samfs" { print $3 " "}'`
@@ -1230,42 +1163,42 @@ echo "------------------- filesystem inodes ---------------" >>$REPORT
 # Background this command so it doesn't hang the script
 # on file system problems.
 for dir in $SAMFSMP; do
-	echo ""     >>$REPORT 2>&1
-	echo $PROMPT /bin/ls -al $dir/.inodes >>$REPORT 2>&1
-	/bin/ls -al $dir/.inodes > $TMPBGINO 2>&1 &
-	sleep 5
-	twiddle
-	if [ -s $TMPBGINO ]; then
-		cat $TMPBGINO >>$REPORT 2>&1
-	else
-		echo "$TAG /bin/ls -al $dir/.inodes timed out" >>$REPORT 2>&1
-	fi
-	echo ""     >>$REPORT 2>&1
-	/bin/rm -f $TMPBGINO
+echo ""     >>$REPORT 2>&1
+echo $PROMPT /bin/ls -al $dir/.inodes >>$REPORT 2>&1
+/bin/ls -al $dir/.inodes > $TMPBGINO 2>&1 &
+sleep 5
+twiddle
+if [ -s $TMPBGINO ]; then
+cat $TMPBGINO >>$REPORT 2>&1
+else
+echo "$TAG /bin/ls -al $dir/.inodes timed out" >>$REPORT 2>&1
+fi
+echo ""     >>$REPORT 2>&1
+/bin/rm -f $TMPBGINO
 done
 
 echo "------------------- filesystem info -----------------" >>$REPORT
 for fs in $SAMFSES; do
-	verbose /opt/SUNWsamfs/sbin/samfsinfo $fs
+verbose /opt/SUNWsamfs/sbin/samfsinfo $fs
 done
 
-echo "------------------- shared filesystem info ----------" >>$REPORT
+echo "------------------- qfs shared filesystem info ----------" >>$REPORT
 # Show state of qfs/shared-mount service
 verbose /usr/bin/svcs qfs/shared-mount
 verbose /usr/bin/svcs -x qfs/shared-mount
 verbose /usr/bin/svcs -l qfs/shared-mount
 echo ""					>>$REPORT 2>&1
 for fs in $SAMFSES; do
-	if [ `mount -v | grep "type samfs" | cut -d" " -f1 | egrep -c "^$fs$"` -eq 0 ]; then
-		verbose /opt/SUNWsamfs/sbin/samsharefs -R $fs
-	else
-		verbose /opt/SUNWsamfs/sbin/samsharefs $fs
-	fi
+if [ `mount -v | grep "type samfs" | cut -d" " -f1 | egrep -c "^$fs$"` -eq 0 ]; then
+verbose /opt/SUNWsamfs/sbin/samsharefs -R $fs
+else
+verbose /opt/SUNWsamfs/sbin/samsharefs $fs
+fi
 done
 
 echo "------------------- filesystem parameters -----------" >>$REPORT
 for SAMFS in $SAMFSMP; do
-	verbose /opt/SUNWsamfs/sbin/samcmd N $SAMFS
+verbose /opt/SUNWsamfs/sbin/samcmd N $SAMFS
 done
 
 echo "" >>$REPORT 2>&1
@@ -1304,7 +1237,7 @@ verbose /opt/SUNWsamfs/sbin/samcmd n
 
 echo "------------------- samu archiver info --------------" >>$REPORT
 for SAMFS in $SAMFSES; do
-	verbose /opt/SUNWsamfs/sbin/samcmd a $SAMFS
+verbose /opt/SUNWsamfs/sbin/samcmd a $SAMFS
 done
 
 echo "------------------- archiver -lv --------------------" >>$REPORT
@@ -1320,10 +1253,10 @@ echo "/opt/SUNWsamfs/sbin/showqueue -v > $OUTSHOWQUEUE" >>$REPORT 2>&1
 /opt/SUNWsamfs/sbin/showqueue -v > $TMPSHOWQUEUE 2>&1
 /bin/rm -f $OUTSHOWQUEUE
 if [ -r $TMPSHOWQUEUE ]; then
-	/bin/mv $TMPSHOWQUEUE $OUTSHOWQUEUE
-	verbose head -$SHOWQUEUE_LINES $OUTSHOWQUEUE
+/bin/mv $TMPSHOWQUEUE $OUTSHOWQUEUE
+verbose head -$SHOWQUEUE_LINES $OUTSHOWQUEUE
 else
-	echo $TAG Error generating showqueue output file >>$REPORT 2>&1
+echo $TAG Error generating showqueue output file >>$REPORT 2>&1
 fi
 /bin/rm -f $TMPSHOWQUEUE
 
@@ -1344,7 +1277,9 @@ verbose "/bin/mpstat"
 
 echo "------------------- kstat ---------------------------" >>$REPORT
 verbose "/bin/kstat -n cpu_info0"
-verbose "/bin/kstat -n sam_frlock_taskq"
+
+verbose "/bin/kstat -m sam-qfs"
+verbose "/bin/kstat -m nfs"
 
 echo "------------------- prstat --------------------------" >>$REPORT
 verbose /bin/prstat 1 1
@@ -1355,231 +1290,227 @@ verbose /usr/sbin/prtconf
 
 echo "------------------- shared memory -------------------" >>$REPORT
 echo "" >>$REPORT 2>&1
-echo Generating shared memory data file >>$REPORT 2>&1
-echo "/opt/SUNWsamfs/sbin/dmpshm > $OUTDMPSHM" >>$REPORT 2>&1
-echo "" >>$REPORT 2>&1
-/opt/SUNWsamfs/sbin/dmpshm > $TMPDMPSHM 2>&1
-/bin/rm -f $OUTDMPSHM
-if [ -r $TMPDMPSHM ]; then
-	/bin/mv $TMPDMPSHM $OUTDMPSHM
-else
-	echo $TAG Error generating shared memory data file >>$REPORT 2>&1
-fi
-/bin/rm -f $TMPDMPSHM
+echo Show shared memory data >>$REPORT 2>&1
 
-echo "------------------- archiver datadir ----------------" >>$REPORT
-verbose /bin/ls -ld $ARCHDATA
-verbose /bin/ls -lLd $ARCHDATA
-verbose /bin/ls -lLa $ARCHDATA
+ROBOTSDPID=$(pgrep sam-robotsd)
+	if [ ${ROBOTSDPID} -gt 0 ] ; then
+	READSHMARGS=$(pargs  ${ROBOTSDPID} | tail -2 | cut -d: -f2 | tr '\n' ' ')
+	READSHMLIBEQS=$(samcmd c | egrep  "^rb|^a.|^q8|^ov|^ac|^eb|^h.|^s. " | awk '{ print $2; }' | tr '\n' ' ')
+	for lib in ${READSHMLIBEQS}; do
+	/opt/SUNWsamfs/util/readshm ${READSHMARGS} ${lib} >>$REPORT 2>&1;
+	done
+	else
+	echo $TAG Error generating shared memory data >>$REPORT 2>&1
+	fi
+	/bin/rm -f $TMPDMPSHM
 
-if [ -d $ARCHDATA ]; then
+	echo "------------------- archiver datadir ----------------" >>$REPORT
+	verbose /bin/ls -ld $ARCHDATA
+	verbose /bin/ls -lLd $ARCHDATA
+	verbose /bin/ls -lLa $ARCHDATA
+
+	if [ -d $ARCHDATA ]; then
 	if [ -r $ARCHDATA -a -x $ARCHDATA ]; then
-		echo Generating archiver data file >>$REPORT 2>&1
-		echo $OUTARCHIVERTAR >>$REPORT 2>&1
-		echo "" >>$REPORT 2>&1
-		(
-			cd $VARDIR
-			/bin/find archiver \( -name "*core*" -o -name "*log*" -o -name "*trace*" \) -print 2>/dev/null > $TMPEXCLUDE
-			/bin/tar cfhX $TMPTARBALL $TMPEXCLUDE archiver
-		) >>$REPORT 2>&1
-		/bin/rm -f $OUTARCHIVERTAR
-		if [ -r $TMPTARBALL ]; then
-			/bin/mv $TMPTARBALL $OUTARCHIVERTAR
-		else
-			echo $TAG Error generating archiver data file >>$REPORT 2>&1
-		fi
-		/bin/rm -f $TMPEXCLUDE $TMPTARBALL
+	echo Generating archiver data file >>$REPORT 2>&1
+	echo $OUTARCHIVERTAR >>$REPORT 2>&1
+	echo "" >>$REPORT 2>&1
+	(
+	 cd $VARDIR
+	 /bin/find archiver \( -name "*core*" -o -name "*log*" -o -name "*trace*" \) -print 2>/dev/null > $TMPEXCLUDE
+	 /bin/tar cfhX $TMPTARBALL $TMPEXCLUDE archiver
+	) >>$REPORT 2>&1
+	/bin/rm -f $OUTARCHIVERTAR
+	if [ -r $TMPTARBALL ]; then
+	/bin/mv $TMPTARBALL $OUTARCHIVERTAR
 	else
-		rerun_as_root $ARCHDATA
+	echo $TAG Error generating archiver data file >>$REPORT 2>&1
 	fi
-fi
+	/bin/rm -f $TMPEXCLUDE $TMPTARBALL
+	else
+	rerun_as_root $ARCHDATA
+	fi
+	fi
 
-echo "------------------- stager datadir ----------------" >>$REPORT
-verbose /bin/ls -ld $STAGDATA
-verbose /bin/ls -lLd $STAGDATA
-verbose /bin/ls -lLa $STAGDATA
+	echo "------------------- stager datadir ----------------" >>$REPORT
+	verbose /bin/ls -ld $STAGDATA
+	verbose /bin/ls -lLd $STAGDATA
+	verbose /bin/ls -lLa $STAGDATA
 
-if [ -d $STAGDATA ]; then
+	if [ -d $STAGDATA ]; then
 	if [ -r $STAGDATA -a -x $STAGDATA ]; then
-		echo Generating stager data file >>$REPORT 2>&1
-		echo $OUTSTAGERTAR >>$REPORT 2>&1
-		echo "" >>$REPORT 2>&1
-		(
-			cd $VARDIR
-			/bin/find stager \( -name "*core*" -o -name "*log*" -o -name "*trace*" \) -print 2>/dev/null > $TMPEXCLUDE
-			/bin/tar cfhX $TMPTARBALL $TMPEXCLUDE stager
-		) >>$REPORT 2>&1
-		/bin/rm -f $OUTSTAGERTAR
-		if [ -r $TMPTARBALL ]; then
-			/bin/mv $TMPTARBALL $OUTSTAGERTAR
-		else
-			echo $TAG Error generating stager data file >>$REPORT 2>&1
-		fi
-		/bin/rm -f $TMPEXCLUDE $TMPTARBALL
+	echo Generating stager data file >>$REPORT 2>&1
+	echo $OUTSTAGERTAR >>$REPORT 2>&1
+	echo "" >>$REPORT 2>&1
+	(
+	 cd $VARDIR
+	 /bin/find stager \( -name "*core*" -o -name "*log*" -o -name "*trace*" \) -print 2>/dev/null > $TMPEXCLUDE
+	 /bin/tar cfhX $TMPTARBALL $TMPEXCLUDE stager
+	) >>$REPORT 2>&1
+	/bin/rm -f $OUTSTAGERTAR
+	if [ -r $TMPTARBALL ]; then
+	/bin/mv $TMPTARBALL $OUTSTAGERTAR
 	else
-		rerun_as_root $STAGDATA
+	echo $TAG Error generating stager data file >>$REPORT 2>&1
 	fi
-fi
+	/bin/rm -f $TMPEXCLUDE $TMPTARBALL
+	else
+	rerun_as_root $STAGDATA
+	fi
+	fi
 
-echo "------------------- dump_log ------------------------" >>$REPORT
-verbose /bin/ls -l $VARDIR/amld/fs*log
-echo /opt/SUNWsamfs/sbin/dump_log >>$REPORT 2>&1 
-/opt/SUNWsamfs/sbin/dump_log >>$REPORT 2>&1
+	echo "------------------- dump_log ------------------------" >>$REPORT
+	verbose /bin/ls -l $VARDIR/amld/fs*log
+	echo /opt/SUNWsamfs/sbin/dump_log >>$REPORT 2>&1 
+	verbose /opt/SUNWsamfs/util/acmddump
+	/opt/SUNWsamfs/sbin/dump_log >>$REPORT 2>&1
 
-echo "------------------- core files ----------------------" >>$REPORT
-echo "" >>$REPORT 2>&1
+	echo "------------------- core files ----------------------" >>$REPORT
+	echo "" >>$REPORT 2>&1
 
-ONLINE_CORE_FILES=""
-for DIR in $ETCDIR $VARDIR $USERDIR $EXECDIR; do
+	ONLINE_CORE_FILES=""
+	for DIR in $ETCDIR $VARDIR $USERDIR $EXECDIR; do
 
 	CORE_FILES=""
 	if [ -d $DIR ]; then
-		if [ -r $DIR -a -x $DIR ]; then
-			echo "CORE_FILES=/bin/find $DIR -follow -name \"core*\" -type f -print" >>$REPORT
-			CORE_FILES=`/bin/find $DIR -follow -name "core*" -type f -print` 
-			for file in $CORE_FILES; do
-				verbose "/bin/ls -tlLd $file; /bin/file $file"
-			done
-		else
-			rerun_as_root $DIR
-		fi
+	if [ -r $DIR -a -x $DIR ]; then
+	echo "CORE_FILES=/bin/find $DIR -follow -name \"core*\" -type f -print" >>$REPORT
+	CORE_FILES=`/bin/find $DIR -follow -name "core*" -type f -print` 
+	for file in $CORE_FILES; do
+	verbose "/bin/ls -tlLd $file; /bin/file $file"
+	done
 	else
-		echo $TAG missing $DIR >>$REPORT 2>&1
+	rerun_as_root $DIR
+	fi
+	else
+	echo $TAG missing $DIR >>$REPORT 2>&1
 	fi
 
 	if [ x"$CORE_FILES" != x ]; then
-		ONLINE_CORE_FILES="$ONLINE_CORE_FILES $CORE_FILES"
+	ONLINE_CORE_FILES="$ONLINE_CORE_FILES $CORE_FILES"
 	else
-		echo "" >>$REPORT 2>&1
+	echo "" >>$REPORT 2>&1
 	fi
 
-done
-
-if [ -f /core ]; then
-	verbose "/bin/ls -tlLd /core; /bin/file /core"
-	ONLINE_CORE_FILES="$ONLINE_CORE_FILES /core"
-fi
-
-echo "------------------- core file stack tracebacks ------" >>$REPORT
-if [ $USERID -eq 0 ]; then
-	for CORE in $ONLINE_CORE_FILES; do
-		verbose "/bin/pstack $CORE; /bin/pflags $CORE"
 	done
-else
-	rerun_as_root pstack
-fi
 
-echo "------------------- system panic dumps --------------" >>$REPORT
-if [ $USERID -eq 0 ]; then
+	echo "------------------- core file stack tracebacks ------" >>$REPORT
+	if [ $USERID -eq 0 ]; then
+	for CORE in $ONLINE_CORE_FILES; do
+	verbose "/bin/pargs $CORE; /bin/pstack $CORE; /bin/pflags $CORE"
+	done
+	else
+	rerun_as_root pstack
+	fi
+
+	echo "------------------- system panic dumps --------------" >>$REPORT
+	if [ $USERID -eq 0 ]; then
 	verbose /usr/sbin/dumpadm 
 	dumpdir=`/usr/sbin/dumpadm | grep "core dir" | sed -e "s/Savecore directory: //" | /bin/awk '{print $1}'`
 	enabled=`/usr/sbin/dumpadm | grep "core ena" | sed -e "s/Savecore enabled: //" | /bin/awk '{print $1}'`
 	if [ -n "$enabled" ]; then
-		if [ $enabled = "no" ]; then
-			echo $TAG Core dump program \'savecore\' disabled by /usr/sbin/dumpadm >>$REPORT
-		fi
+	if [ $enabled = "no" ]; then
+	echo $TAG Core dump program \'savecore\' disabled by /usr/sbin/dumpadm >>$REPORT
 	fi
-else
+	fi
+	else
 	rerun_as_root dumpadm
-fi
+	fi
 
-if [ -n "$dumpdir" ]; then
+	if [ -n "$dumpdir" ]; then
 	coredir=`eval echo $dumpdir`
 	verbose /bin/ls -ld $coredir
 	verbose /bin/ls -l $coredir
 	for unix in `ls $coredir/unix.[0-9]* 2>/dev/null`
 	do
-		twiddle
-		vmcore=`echo $unix | sed -e "s./unix./vmcore."`
-		verbose /bin/ls -l $unix $vmcore
-		verbose /bin/file $unix $vmcore
-		VM_SOL_VER=`/bin/file $vmcore | cut -d" " -f2`
-		# Only process vmcores that match the running Solaris release.
-		if [ $SOL_VER = $VM_SOL_VER ]; then
-			echo '=n"---- date/time ----"
-				time/y
-				lbolt/K
-				=n"---- utsname ----"
-				utsname::print
-				=n"---- sam_version/sam_build_uname ----"
-				sam_version/s
-				sam_build_uname/s
-				=n"---- panic string ----"
-				*panicstr/s
-				=n"----panic_regs/2K----"
-				panic_regs/2K
-				=n"---- stack traceback ----"
-				$c
-				=n"---- stack traceback verbose----"
-				$C
-				=n"---- message buffer ----"
-				$<msgbuf
-				=n"---- threadlist ----"
-				::threadlist -v
-				=n"---- function call args ----"
-				::walk thread | ::findstack ".$c6"
-				=n"---- sam_ mdb end ----"' | mdb -k $unix $vmcore 2>&1 | head -$MDB_LINES >>$REPORT 2>&1
-		fi
+	twiddle
+	vmcore=`echo $unix | sed -e "s./unix./vmcore."`
+	verbose /bin/ls -l $unix $vmcore
+	verbose /bin/file $unix $vmcore
+	VM_SOL_VER=`/bin/file $vmcore | cut -d" " -f2`
+# Only process vmcores that match the running Solaris release.
+	if [[ $(uname -r) = $VM_SOL_VER ]]; then
+	echo '=n"---- date/time ----"
+	time/y
+	=n"---- utsname ----"
+	utsname::print
+	=n"---- sam_version/sam_build_uname ----"
+	sam_version/s
+	sam_build_uname/s
+	=n"---- panic string ----"
+	*panicstr/s
+	=n"----panic_regs/2K----"
+	panic_regs/2K
+	=n"---- stack traceback ----"
+	$c
+	=n"---- stack traceback verbose----"
+	$C
+	=n"---- message buffer ----"
+	$<msgbuf
+	=n"---- threadlist ----"
+	::threadlist -v
+	=n"---- function call args ----"
+	::walk thread | ::findstack ".$c6"
+	=n"---- sam_ mdb end ----"' | mdb -k $unix $vmcore 2>&1 | head -$MDB_LINES >>$REPORT 2>&1
+	fi
 	done
-fi
+	fi
+	echo "------------------- prstat -------------------------" >>$REPORT
 
-echo "" >>$REPORT 2>&1
-echo "End at `/bin/date` on `/bin/uname -n` by `/bin/id`" >>$REPORT
-echo " " >>$REPORT
-echo "------------------- THE END -------------------------" >>$REPORT
-echo " "
-echo " "
+	prstat -mva 2 2 >>$REPORT 2>&1
 
-if [ -s $TMPFSMGR ]; then
+	echo "" >>$REPORT 2>&1
+	echo "End at `/bin/date` on `/bin/uname -n` by `/bin/id`" >>$REPORT
+	echo " " >>$REPORT
+	echo "------------------- THE END -------------------------" >>$REPORT
+	echo " "
+	echo " "
+
+	if [ -s $TMPFSMGR ]; then
 	cp $TMPFSMGR $OUTFSMGRLOG
-fi
-
-echo " "
-echo "The following files should now be ftp'ed to your support provider"
-echo "as ftp type binary."
-echo " "
+	fi
 
 #
 # Use the following syntax for the report name in order to echo
 # any unspecified dot slash for the path.
 #
-if [ $TGZ = "ON" ]; then
-	echo "${REPORTDIR}/${REPORTNAME}.tar.gz"
-else
-	echo "${REPORTDIR}/${REPORTNAME}"
-fi
-chmod 444 ${REPORTDIR}/${REPORTNAME}
-
-TARFILES=$REPORTNAME
-for file in $OUTFSMGRLOG $OUTDMPSHM $OUTSAMTRACE $OUTSHOWQUEUE $OUTARCHIVERTAR $OUTSTAGERTAR; do
-	if [ -s $file ]; then
-		if [ $TGZ = "ON" ]; then
-			TARFILES="$TARFILES `basename $file`"
-		else
-			echo "$file"
-		fi
-		chmod 444 $file
+	if [ $TGZ = "ON" ]; then
+	echo "${REPORTDIR}.tar.gz"
+	else
+	echo "${REPORTDIR}.tar"
 	fi
-done
-echo " "
+	chmod 444 ${REPORTDIR}/${REPORTNAME}
 
-if [ $TGZ = "ON" ]; then
+	OLDPWD=$(pwd)
+	cd "${REPORTDIR}" &&
+	    for file in $(ls); do
+	        if [ -s $file ]; then
+	            LTARFILES="$LTARFILES $file"
+                    chmod 444 $file
+	        fi
+	    done
+	cd $OLDPWD
+	TARFILES=$LTARFILES
+	
+	echo " "
+
 	(
-		cd $REPORTDIR
-		/bin/tar cf ${REPORTNAME}.tar $TARFILES 2>/dev/null
-		chmod 555 ${REPORTNAME}.tar
-		/bin/rm -f $TARFILES
-		/bin/gzip ${REPORTNAME}.tar
+	 cd $(dirname $REPORTDIR)
+	 /bin/tar cf ${REPORTDIR}.tar $(basename ${REPORTDIR}) 2>/dev/null
+	 chmod 555 ${REPORTDIR}.tar
+	 cd ${REPORTDIR} && pwd; rm -f $TARFILES
+         rmdir ${REPORTDIR}
+	 if [ $TGZ = "ON" ]; then
+	     /bin/gzip ${REPORTDIR}.tar
+	 fi
 	)
-fi
 
-if [ x"$ONLINE_CORE_FILES" != x ]; then
+	if [ x"$ONLINE_CORE_FILES" != x ]; then
 	echo "This script found the following core files.  Please ftp them as"
 	echo "binary files to your support provider only if they appear to be"
 	echo "from the SAM-QFS product."
 	echo " "
 	for file in $ONLINE_CORE_FILES; do
-		/bin/file $file | sed -e "s/:.*,/ :/" ; /bin/ls -tlLd $file
-		echo
+	/bin/file $file | sed -e "s/:.*,/ :/" ; /bin/ls -tlLd $file
+	echo
 	done
 fi
