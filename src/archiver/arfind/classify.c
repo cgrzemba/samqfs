@@ -166,6 +166,7 @@ ClassifyFile(
 		    regex(fp->FpRegexp, path, NULL) == NULL) {
 			continue;
 		}
+		Trace(TR_DEBUG, "Regexp match %s __loc1 %s", path, __loc1);
 		if ((fp->FpFlags & FP_uid) && dinode->uid != fp->FpUid) {
 			continue;
 		}
@@ -242,6 +243,7 @@ ClassifyFile(
 
 	if (fp->FpFlags & FP_noarch) {
 		/* A "no_archive" Archive Set */
+		Trace(TR_DEBUG, "Regexp no_archive match %s", path);
 		return (fp);
 	}
 
