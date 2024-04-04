@@ -126,7 +126,7 @@ int sam_syscall(int number, void *arg, int size);
 char *sam_mediatoa(int mt);
 extern int sam_atomedia(char *name);
 extern void sam_syslog(int priority, const char *fmt, ...);
-extern char *StrFromErrno(int errno_arg, char *buf, int buf_size);
+extern char *StrFromErrno(int errno_arg, char *buf, unsigned int buf_size);
 extern char *StrFromFsize(uint64_t size, int prec, char *buf, int buf_size);
 extern char *StrFromInterval(int interval, char *buf, int buf_size);
 extern int StrToFsize(char *string, uint64_t *size);

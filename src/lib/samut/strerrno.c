@@ -65,7 +65,7 @@ char *
 StrFromErrno(
 	int errno_arg,		/* Error number to convert */
 	char *buf,		/* Buffer for string */
-	int buf_size)		/* Size of buffer */
+	unsigned int buf_size)		/* Size of buffer */
 {
 	static char our_buf[STR_FROM_ERRNO_BUF_SIZE];
 	char *p;

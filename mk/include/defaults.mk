@@ -45,6 +45,7 @@
 
 #	Assign default values to variables that have not been defined.
 
-DEBUG ?= yes
-COMPLETE ?= no
-BUILD_64bit = $(BUILD_64BIT)
+DEBUG ?=	yes
+COMPLETE ?=	no
+BUILD_64bit =	$(BUILD_64BIT)
+AMD64 ?=	yes

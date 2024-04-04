@@ -50,12 +50,12 @@ int sam_syscall(int cmd, void *arg, int size);	/* lib/samconf/sam_syscall.c */
 #define	SCHEDQUANT	120	/* 2m default between scheduling wakeups */
 
 /* Defines. */
-#define	CP_respawn	0x01	/* Respawn process on exit */
-#define	CP_norestart	0x02	/* proc requested no restart */
-#define	CP_qstart	0x04	/* quick start, wait 10s from last start  */
-#define	CP_nosignal	0x08	/* proc requested no signal */
-#define	CP_adopted	0x10	/* Process found executing */
-#define	CP_stopping	0x20	/* Process requested stop */
+#define	CP_respawn	(unsigned int)0x01	/* Respawn process on exit */
+#define	CP_norestart	(unsigned int)0x02	/* proc requested no restart */
+#define	CP_qstart	(unsigned int)0x04	/* quick start, wait 10s from last start  */
+#define	CP_nosignal	(unsigned int)0x08	/* proc requested no signal */
+#define	CP_adopted	(unsigned int)0x10	/* Process found executing */
+#define	CP_stopping	(unsigned int)0x20	/* Process requested stop */
 
 #ifdef linux
 #define	GETFSIND			1
@@ -138,7 +138,7 @@ void ReadMcf(char *mcf_name);
 void WriteMcfbin(int DeviceNumof, dev_ent_t *DeviceTable);
 void SenseRestart(void);
 void ServerInit(void);
-void StartProcess(int argc, char *argv[], int flags, int tid);
+void StartProcess(int argc, char *argv[], unsigned int flags, int tid);
 void StopProcess(char *argv[], boolean_t erase, int sig);
 void WriteDefaults(void);
 void StartShareDaemon(char *fs);

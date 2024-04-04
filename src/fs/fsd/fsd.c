@@ -122,7 +122,7 @@ static ATOM_INT_T   csOut = 0;
 static ATOM_INT_T   csLimit = 0;
 
 static struct ChildProc {
-	int		count;
+	unsigned int		count;
 	struct ChildProcEntry {
 		uname_t CpName;			/* process name */
 		upath_t CpFsname;		/* Assoc file system name */
@@ -152,7 +152,7 @@ static boolean_t ready = FALSE;		/* ready to execute */
 static pid_t Pid = 0;
 static pid_t Ppid = 0;
 static int stopSignal = 0;		/* Signal to stop all processes */
-static int nextWakeup;			/* secs until next awakening */
+static time_t nextWakeup;			/* secs until next awakening */
 static int mountedFs;			/* number of fs mounted */
 static int mountedHsmFs;		/* number of archiving fs mounted */
 static int hsmsRunning = 0;		/* stager/archiver/... running? */
@@ -858,7 +858,7 @@ main(int argc, char *argv[])
 			r = -1;
 			saveErrno = EINTR;		/* presume SIGCHLD */
 		} else {
-			(void) alarm(nextWakeup);
+			(void) alarm((uint32_t) nextWakeup);
 
 			/*
 			 * Tell the filesystem that we are ready for work.
@@ -1130,7 +1130,7 @@ daemonize(void)
 
 	start_time = time(NULL);
 	do {
-		int wt;
+		time_t wt;
 		int err;
 
 		/*
@@ -1140,7 +1140,7 @@ daemonize(void)
 		wt = (start_time + INIT_TIMEOUT) - time(NULL);
 		wt = MIN(wt, WAIT_ALARMINT);
 		wt = MAX(wt, 1);
-		(void) alarm(wt);
+		(void) alarm((uint32_t) wt);
 		if (child) {	/* Always TRUE on first iteration */
 
 			r = waitpid(child, &status, 0);	/* await child */
@@ -1208,14 +1208,14 @@ FatalError(
 	p = msg_buf;
 	pe = p + sizeof (msg_buf) - 1;
 	if (fmt != NULL) {
-		vsnprintf(p, Ptrdiff(pe, p), fmt, args);
+		vsnprintf(p, (size_t)Ptrdiff(pe, p), fmt, args);
 		p += strlen(p);
 	}
 	va_end(args);
 
 	/* Error number */
 	if (SaveErrno != 0) {
-		snprintf(p, Ptrdiff(pe, p), ": ");
+		snprintf(p, (size_t)Ptrdiff(pe, p), ": ");
 		p += strlen(p);
 		(void) StrFromErrno(SaveErrno, p, Ptrdiff(pe, p));
 		p += strlen(p);
@@ -1385,7 +1385,7 @@ void
 StartProcess(
 	int	argc,				/* Number of args */
 	char *argv[],			/* Array of args */
-	int flags,
+	unsigned int flags,
 	int tid)
 {
 	struct ChildProcEntry *cpNew;
@@ -1415,7 +1415,7 @@ retry:
 		if (*cp->CpName == '\0') {
 			cpNew = cp;
 		} else if (strcmp(cp->CpName, argv[0]) == 0 &&
-		    strcmp(cp->CpFsname, arg[1]) == 0) {
+				strcmp(cp->CpFsname, arg[1]) == 0) {
 			/*
 			 * Already have one of these.
 			 */
@@ -2151,7 +2151,7 @@ checkTraceFiles(void)
 				rotate = TRUE;
 			}
 			if (tc->TrSize > 0 &&
-			    (buf.st_size - tc->TrRotSize) > tc->TrSize) {
+			    (buf.st_size - (sfsize_t)tc->TrRotSize) > tc->TrSize) {
 				rotate = TRUE;
 			}
 			if (rotate) {
@@ -2162,7 +2162,7 @@ checkTraceFiles(void)
 				 * every SCHEDQUANT seconds.
 				 */
 				tc->TrRotTime = now;
-				tc->TrRotSize = buf.st_size;
+				tc->TrRotSize = (fsize_t)buf.st_size;
 			}
 			if (rotate && stat(SAM_EXECUTE_PATH"/"TRACE_ROTATE,
 			    &buf) == 0) {
@@ -2287,8 +2287,7 @@ configure(
 	 */
 	if (childStatusQueue == NULL) {
 		csLimit = (2 * FileSysNumof) + (2 * 6) + 128; /* 128 extras */
-		SamMalloc(childStatusQueue, csLimit *
-		    sizeof (struct ChildStatus));
+		SamMalloc(childStatusQueue, (unsigned int)csLimit * sizeof (struct ChildStatus));
 	}
 
 	if (FsCfgOnly) {
@@ -2879,10 +2878,13 @@ startStopHsm(int cmd, char *fs)
 				    (fi.fi_config & MT_SAM_ENABLED)) {
 					hsms++;
 				}
+			} else {
+				Trace(TR_ERR, "GetFsInfo %s failed: %s",
+				    mi->params.fi_name, strerror(errno));
 			}
 		}
 	}
-	Trace(TR_MISC,"startStopHSM(%d): %d hsms, %x hsmsRunning, "
+	Trace(TR_MISC,"startStopHsm(%d): %d hsms, %x hsmsRunning, "
 	    "%d ArchiveCount, %d RmediaDeviceCount, %d DiskVolCount", cmd,
 	    hsms, hsmsRunning, ArchiveCount, RmediaDeviceCount, DiskVolCount);
 	if (hsmsRunning && (hsms == 0 || cmd == FSD_stop_sam)) {

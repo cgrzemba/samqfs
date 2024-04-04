@@ -402,7 +402,7 @@ make_working_copy(char *path, char *wc_path, int pathlen);
  * Extern utility declarations.  Eventually, all of these functions
  * should be replaced with local versions.
  */
-extern char *StrFromErrno(int errno_arg, char *buf, int buf_size);
+extern char *StrFromErrno(int errno_arg, char *buf, unsigned int buf_size);
 
 /*
  * Function to set samerrno and samerrmsg for operations on the stager and
