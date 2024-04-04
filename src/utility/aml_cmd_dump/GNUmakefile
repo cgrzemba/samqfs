@@ -1,4 +1,4 @@
-# $Revision: 1.18 $
+# $Revision: 1.10 $
 
 #    SAM-QFS_notice_begin
 #
@@ -26,39 +26,19 @@
 #
 #    SAM-QFS_notice_end
 
-DEPTH = ../..
+DEPTH = ../../..
 
 include $(DEPTH)/mk/common.mk
 
-DATAFILES = samexplorer set_admin
+PROG = acmddump
+PROG_SRC = acmddump.c
 
-DIRS = 	audit \
-		auditslot \
-		chmed \
-		cleandrive \
-		dmpshm \
-		export \
-		fsmdb \
-                fsmupd \
-		import \
-		itemize \
-		label \
-		load \
-		move \
-		samadm \
-		samdev \
-		samset \
-		samu \
-		sefreport \
-		set_state \
-		unload   \
-		mccfg \
-		tapealert \
-		readshm \
-		samdb \
-		samrestore \
-		samstorade \
-		aml_cmd_dump
+DEPCFLAGS += -I../../robots/
+
+PROG_LIBS = 
+
+LNOPTS = $(CMDS_LFLAGS$(AMD64:yes=64))
+LNLIBS = 
 
 include $(DEPTH)/mk/targets.mk
 
