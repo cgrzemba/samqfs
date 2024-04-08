@@ -9,7 +9,7 @@
  * You may not use this file except in compliance with the License.
  *
  * You can obtain a copy of the license at pkg/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
+ * or https://illumos.org/license/CDDL.
  * See the License for the specific language governing permissions
  * and limitations under the License.
  *
