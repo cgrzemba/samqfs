@@ -271,9 +271,13 @@ typedef struct {
 #if defined(_BIT_FIELDS_HTOL)
 			svalid:1,	/* 1 = valid data */
 			invert:1,	/* 1 if media was inverted */
-	:		6;
+	:		2,
+			ed:1,		/* 1 = enabled */
+			mt:3;		/* medium type */
 #else				/* defined(_BIT_FIELDS_HTOL) */
-	:		6,
+			mt:3,		/* medium type */
+			ed:1,		/* 1 = enabled */
+	:		2,
 			invert:1,	/* 1 if media was inverted */
 			svalid:1;	/* 1 = valid data */
 #endif				/* _BIT_FIELDS_HTOL */

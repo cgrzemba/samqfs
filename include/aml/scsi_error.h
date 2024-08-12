@@ -55,6 +55,7 @@ extern "C" {
 #define	MEDIA_RESER	11	/* Media reserved by another */
 #define	INCOMPATIBLE	12	/* Incompatible media */
 #define	ACCESS_DENIED	13	/* Access to library denied */
+#define	DRVSLOT_EMPTY	14	/* Access to library denied */
 
 #if defined(SCSI_ERRCODES)
 char *scsi_errcode[] = {
@@ -72,6 +73,7 @@ char *scsi_errcode[] = {
 	"Media is reserved by another initiator.",
 	"Incompatible media",
 	"Access to library denied.",
+	"Drive slot empty.",
 };
 #else
 extern char *scsi_errcode[];
@@ -109,6 +111,7 @@ enum sam_scsi_action {
 	BLANK_CHECK,
 	NEEDS_FORMATTING,	/* Media needs formatting */
 	RETRIES_EXCEEDED,
+	MARK_EMPTY,		/* Make drive element empty */
 	END_OF_LIST
 };
 

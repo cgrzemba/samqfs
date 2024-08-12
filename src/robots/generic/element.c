@@ -1167,12 +1167,15 @@ element_status_page_t *element_status)
 	un = drive->library->un;
 	BE16toH(&desc->ele_addr, &ele_addr);
 
+	DevLog(DL_DETAIL(5368), ele_addr, ext->add_sense_code, ext->add_sense_qual,
+	    desc->except, desc->full, desc->access, 
+	    ext->svalid, ext->invert, ext->ed, ext->mt);
 	if (drive->element == ele_addr) {
 		drive->status.b.except = desc->except;
 		drive->status.b.full = desc->full;
 		drive->status.b.access = desc->access;
 		if (ext != NULL && desc->except && ext->add_sense_code) {
-			DevLog(DL_DETAIL(5030), ext->add_sense_code,
+			DevLog(DL_DETAIL(5030), ele_addr, ext->add_sense_code,
 			    ext->add_sense_qual);
 
 			switch (process_res_codes(un, 0x09, ext->add_sense_code,
@@ -1180,15 +1183,36 @@ element_status_page_t *element_status)
 			    drive->library->scsi_err_tab)) {
 
 			case MARK_UNAVAIL:
-				DevLog(DL_ERR(5030), ext->add_sense_code,
+				DevLog(DL_ERR(5030), ele_addr, ext->add_sense_code,
 				    ext->add_sense_qual);
 				drive->status.b.offline = TRUE;
 				drive->status.b.access = FALSE;
 				DownDevice(un, SAM_STATE_CHANGE);
 				break;
-
+			case DOWN_EQU:
+				DevLog(DL_ERR(5030), ele_addr, ext->add_sense_code,
+				    ext->add_sense_qual);
+				drive->status.b.offline = TRUE;
+				drive->status.b.access = FALSE;
+				if(drive->un != NULL)
+					DownDevice(drive->un, SAM_STATE_CHANGE);
+				else
+					DevLog(DL_ERR(5370), ele_addr);
+				break;
+			case MARK_EMPTY:
+				DevLog(DL_ERR(5030), ele_addr, ext->add_sense_code,
+				    ext->add_sense_qual);
+				drive->status.b.offline = TRUE;
+				drive->status.b.access = TRUE;
+				DevLog(DL_DETAIL(5031), ele_addr);
+				drive->status.b.except = FALSE;
+				if(drive->un != NULL)
+					OffDevice(drive->un, SAM_STATE_CHANGE);
+				else
+					DevLog(DL_ERR(5370), ele_addr);
+				break;
 			default:
-				DevLog(DL_DETAIL(5031));
+				DevLog(DL_DETAIL(5031), ele_addr);
 				drive->status.b.except = FALSE;
 				break;
 			}

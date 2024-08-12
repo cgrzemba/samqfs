@@ -387,7 +387,7 @@ update_elements:
 				last_drive = NULL;
 			}
 		} else {
-			int		retries = 24;
+			int retries = 24;
 			/*
 			 * If no access to the drive, sleep a bit and try
 			 * again -- the drive may be in a temporary state of

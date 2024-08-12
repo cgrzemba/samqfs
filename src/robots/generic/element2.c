@@ -1109,7 +1109,16 @@ update_element_status(
 					    extension->add_sense_qual == 0)
 						nodrv = TRUE;
 					break;
-
+#if 0
+				case DT_SL3000:
+					/* Empty Drive Slot Element */
+					if (drive_descrip->except &&
+					    extension != NULL &&
+					    extension->add_sense_code == 0x3b &&
+					    extension->add_sense_qual == 0x1a)
+						nodrv = TRUE;
+					break;
+#endif
 				default:
 					break;
 				}
@@ -1129,9 +1138,11 @@ update_element_status(
 		}
 
 	default:
+		DevLog(DL_ERR(5369), 1);
 		return (1);
 	}
 
+	DevLog(DL_DETAIL(5369), 0);
 	return (0);
 }
 

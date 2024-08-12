@@ -640,8 +640,8 @@ $ *    SAM-QFS_notice_end
 5027 Mailbox exception bit set (%#x:%#x)
 5028 Mailbox exception cleared
 5029 Mailbox mismatch is %d, expected %d
-5030 Drive exception bit set (%#x:%#x)
-5031 Drive exception cleared
+5030 Drive %d exception bit set (%#x:%#x)
+5031 Drive %d exception cleared
 5032 Drive mismatch is %d, expected %d
 5033 No scsi error table loaded for %s
 5035 fstat(%s)
@@ -742,7 +742,7 @@ $ *    SAM-QFS_notice_end
 5130 Mechanical hindrance
 5131 Must be placed in random mode
 5132 Initialize element failed
-5133 Sense Key %d, ASC %d, ASCQ %d, SCSI error: %s
+5133 Sense Key %x, ASC %x, ASCQ %x, SCSI error: %s
 5134 Cannot clear drive: library full
 5135 Cannot clear robot %d: library full
 5136 Cannot clear mailbox %d: library full
@@ -882,6 +882,9 @@ $ *    SAM-QFS_notice_end
 5365 position_rmedia locking active_io setpos %llx, fd_stage %d
 5366 dodirio locking active_io setpos %llx, fd_stage %d
 5367 Process scsi error, action %d
+5368 Process transfer element ele:%d ASC:%x ASCQ:%x excpt:%d f:%d acc:%d sval:%d inv:%d ena:%d mt:%d 
+5369 return(%d)
+5370 drive %d has no no dev entry un
 
 6000 Grau
 6001 Slot %d: %s fails : d_errno %d (0x%x) %s
