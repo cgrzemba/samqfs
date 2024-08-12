@@ -42,6 +42,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <stdlib.h>
 #include <string.h>
 #include <sys/varargs.h>
+#include <limits.h>
 
 /* Berkeley DB headers. */
 #include <db.h>
@@ -192,7 +193,7 @@ DBFileTrace(
 			dbenv->set_msgfile(dbenv, st);
 			dbenv->lock_stat_print(dbenv, DB_STAT_ALL);
 			dbenv->set_msgfile(dbenv, NULL);
-			TraceClose(-1);
+			TraceClose(INT_MAX);
 			free(lock_stat);
 		}
 	}

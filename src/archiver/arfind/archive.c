@@ -1123,7 +1123,7 @@ archiveTrace(void)
 		}
 	}
 	fprintf(st, "\n");
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 

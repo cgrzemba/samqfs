@@ -184,17 +184,17 @@ _Assert(
  */
 void
 TraceClose(
-	int TrcLen)
+	unsigned int TrcLen)
 {
 	if (traceSt != NULL) {
 		(void) fflush(traceSt);
 	}
 	if (traceSt != NULL && traceFd > STDERR_FILENO) {
-		if (TrcLen < 0) {
+		if (TrcLen == INT_MAX) {
 			struct stat buf;
 
 			if (fstat(traceFd, &buf) == 0) {
-				traceCtl->TrCurSize = buf.st_size;
+				traceCtl->TrCurSize = (fsize_t)buf.st_size;
 			}
 		} else {
 			traceCtl->TrCurSize += (fsize_t)TrcLen;
@@ -459,14 +459,14 @@ _Trace(
 	if ((type == TR_err || type == TR_debugerr) && saveErrno != 0) {
 		snprintf(p, Ptrdiff(pe, p), ": ");
 		p += strlen(p);
-		(void) StrFromErrno(saveErrno, p, Ptrdiff(pe, p));
+		(void) StrFromErrno(saveErrno, p, (unsigned int) Ptrdiff(pe, p));
 		p += strlen(p);
 	}
 
 	*p++ = '\n';
 	*p = '\0';
 	fputs(traceBuf, traceSt);
-	TraceClose(Ptrdiff(p, traceBuf));
+	TraceClose((unsigned int)Ptrdiff(p, traceBuf));
 	errno = saveErrno;
 }
 
@@ -667,7 +667,7 @@ openTraceFile(void)
 			lockTraceFile(TRUE);
 		}
 		if (fstat(traceFd, &buf) == 0) {
-			traceCtl->TrCurSize = buf.st_size;
+			traceCtl->TrCurSize = (fsize_t) buf.st_size;
 		}
 		if (mpLock) {
 			lockTraceFile(FALSE);
@@ -749,7 +749,7 @@ setAge(
 		/* Invalid age */
 		err(14204);
 	}
-	tc->TrAge = (uint32_t)age;
+	tc->TrAge = age;
 }
 
 
@@ -797,12 +797,12 @@ setOptions(
 		if (n == TR_none) {
 			flags = 0;
 		} else if (n == TR_all) {
-			flags &= ~((1 << TR_date) - 1);
+			flags &= (uint32_t) ~((1 << TR_date) - 1);
 			flags |= TR_all_events;
 		} else if (*opt != '-') {
 			flags |= 1 << n;
 		} else {
-			flags &= ~(1 << n);
+			flags &= (uint32_t) ~(1 << n);
 		}
 		opt = strtok(NULL, " ");
 	}

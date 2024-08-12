@@ -314,7 +314,7 @@ IdToPathTrace(void)
 	fprintf(st, "Dircache dir count: %d\n", dirCacheCount);
 	fprintf(st, "Dircache size: %d\n", dirCacheTotSize);
 
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 

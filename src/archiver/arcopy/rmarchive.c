@@ -605,7 +605,7 @@ loadVolume(void)
 			space = ve->Vi.VfSpace;	/* PrintVolInfo adjusts space */
 			PrintVolInfo(st, &ve->Vi);
 			ve->Vi.VfSpace = space;
-			TraceClose(-1);
+			TraceClose(INT_MAX);
 		}
 	}
 

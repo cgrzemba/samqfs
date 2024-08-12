@@ -2443,7 +2443,7 @@ traceDriveStatus(void)
 			PrintVolInfo(st, &ad->AdVi);
 		}
 	}
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 

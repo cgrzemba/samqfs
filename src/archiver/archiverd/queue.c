@@ -240,6 +240,6 @@ QueueTrace(
 out:
 	PthreadMutexUnlock(&QueueMutex);
 	if (st != NULL) {
-		TraceClose(-1);
+		TraceClose(INT_MAX);
 	}
 }

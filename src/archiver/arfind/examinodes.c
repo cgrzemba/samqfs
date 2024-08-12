@@ -390,7 +390,7 @@ ExamInodesTrace(void)
 	}
 	PthreadMutexUnlock(&examListMutex);
 	fprintf(st, "\n");
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 

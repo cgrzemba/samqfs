@@ -49,6 +49,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <limits.h>
 
 /* Solaris headers. */
 #include <sys/mman.h>
@@ -325,7 +326,7 @@ MapFileTrace(void)
 		}
 	}
 	fprintf(st, "\n");
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 /* Private functions. */

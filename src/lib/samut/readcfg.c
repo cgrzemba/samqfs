@@ -274,7 +274,7 @@ ReadCfgError(
 			/*
 			 * Skip to end of continuation lines.
 			 */
-			int		n;
+			size_t n;
 
 			n = strlen(line);
 			if (n < 1 || line[n-1] != '\\') {
@@ -362,7 +362,7 @@ next:
 						if (!('0' <= cc && cc <= '7')) {
 							break;
 						}
-						c = 8 * c + cc - '0';
+						c = (char)(8 * c + cc - '0');
 						next_char++;
 					}
 				} else if ('\0' == c) {
@@ -622,6 +622,12 @@ getLine(void)
 #include "sam/lib.h"
 #include "sam/readcfg.h"
 #include "sam/lint.h"
+#include "pub/devstat.h"
+#define DEC_INIT
+#include "sam/devnm.h"
+
+char *program_name = "readcfg";
+nl_catd catfd = NULL;
 
 /* Private functions. */
 static void other(void);
@@ -651,7 +657,7 @@ main(
 	char *argv[])
 {
 	FILE	*st;
-	char	*FileName = "file.cfg";
+	char	*FileName = "test_file.cfg";
 
 	printf("** 1.  Fail with no config file.\n");
 	(void) ReadCfg("none", ourdirProcTable, ourdirname, ourtoken, NULL);

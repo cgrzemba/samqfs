@@ -238,7 +238,7 @@ struct TraceCtlBin {
 void AssertMessage(char *SrcFile, int SrcLine, char *msg);
 void _Assert(char *SrcFile, int SrcLine, int wait);
 #endif /* defined(DEBUG) */
-void TraceClose(int TrcLen);
+void TraceClose(unsigned int TrcLen);
 void TraceInit(char *programName, int idmp);
 FILE *TraceOpen(void);
 void TraceReconfig(void);

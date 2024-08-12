@@ -134,7 +134,7 @@ extern int *___errno(void);
  */
 #if !defined(lint)
 #define	Ptrdiff(a, b) ((((char *)(a) - (char *)(b)) > 0) ? \
-	((char *)(a) - (char *)(b)) : 0)
+	(size_t)((char *)(a) - (char *)(b)) : 0)
 #else /* !defined(lint) */
 #define	Ptrdiff(a, b) (memcmp((a), (b), 1))
 #endif /* !defined(lint) */

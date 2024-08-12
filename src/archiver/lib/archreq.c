@@ -415,7 +415,7 @@ ArchReqTrace(
 	if (st != NULL) {
 		ArchReqPrint(st, ar, files | (*TraceFlags & (1 << TR_files)));
 	}
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 

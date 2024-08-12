@@ -57,6 +57,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <inttypes.h>
+#include <limits.h>
 
 /* SAM-FS headers. */
 #include "sam/types.h"
@@ -430,7 +431,7 @@ TraceRefs(void)
 		size += ri->size;
 	}
 	fprintf(st, " Total size = %u\n", size);
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 	Alloc = size;
 	MaxAlloc = size;
 }

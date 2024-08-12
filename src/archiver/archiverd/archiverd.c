@@ -341,7 +341,7 @@ ChildTrace(void)
 		}
 	}
 	PthreadMutexUnlock(&childProcMutex);
-	TraceClose(-1);
+	TraceClose(INT_MAX);
 }
 
 
