@@ -60,6 +60,7 @@
 
 static char *libname = "libsammig";
 
+/* needed by macro DBG_LVL */
 extern shm_alloc_t master_shm;
 extern shm_ptr_tbl_t *shm_ptr_tbl;
 

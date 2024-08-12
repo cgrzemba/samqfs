@@ -68,7 +68,6 @@ static int tp_initialize(tp_dev_t *, dev_ptr_tbl_t *);
 
 /* some globals */
 
-const char   *program_name = "sam-migd";
 mutex_t  lock_time_mutex;                /* for mktime */
 tp_dev_t     *what_device;              /* needed by the api support */
 shm_alloc_t  master_shm, preview_shm;
@@ -88,6 +87,7 @@ char **argv)
   shm_ptr_tbl_t     *shm_ptr_tbl;
   sam_defaults_t    *defaults;
 
+  program_name = "sam-migd";
   tp_dev = (tp_dev_t *)malloc_wait (sizeof(tp_dev_t), 4, 0);
   (void)memset (tp_dev, 0, sizeof(tp_dev_t));
   (void)memset (&lock_time_mutex, 0, sizeof(mutex_t));

@@ -73,6 +73,7 @@ typedef struct {
 #if !defined(_AML_DEVICE_H)
 #define	DT_THIRD_PARTY  0x8000
 #define	IS_THIRD_PARTY (t) ((t & 0xFF00) == DT_THIRD_PARTY)
+#define DT_THIRD_MEDIA 'z'              /* Foreign/third party tape prefix */
 #endif /* !defined _AML_DEVICE_H */
 
 
