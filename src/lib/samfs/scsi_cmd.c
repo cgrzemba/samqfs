@@ -104,7 +104,8 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 {
 	int	tmp1, tmp2, tmp3, tmp4, tmp5;
 	int	count, req_xfer = 0;
-	int	start_sector = -1, timeout;
+	int	start_sector = -1;
+	uint16_t timeout;
 	int	*resid = (int *)NULL;
 	int	cur_mess = 0, retry;
 	char	*d_mess, *dc_mess;
@@ -126,7 +127,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 	if (timeit > SHRT_MAX)
 		timeout = SHRT_MAX;
 	else
-		timeout = timeit;
+		timeout = (uint16_t) timeit;
 
 	if (IS_TAPE(un) && un->dt.tp.drive_index != SAM_TAPE_DVR_DEFAULT) {
 		register int    indx = un->dt.tp.drive_index;
@@ -178,7 +179,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 		*dc_mess = '\0';
 
 	if (DBG_LVL(SAM_DBG_DISSCSI))
-		cur_mess = strlen(d_mess);
+		cur_mess = (int32_t) strlen(d_mess);
 	else
 		cur_mess = -1;
 
@@ -192,7 +193,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 	us.uscsi_rqlen = sizeof (sam_extended_sense_t);
 	us.uscsi_timeout = timeout ? timeout : SAM_SCSI_DEFAULT_TIMEOUT;
 	us.uscsi_flags = USCSI_SILENT | USCSI_RQENABLE | USCSI_READ;
-	cdb->scc_cmd = (command & 0xff);
+	cdb->scc_cmd = (uint8_t) (command & 0xff);
 
 	switch (command) {
 	case SCMD_TEST_UNIT_READY:	/* 0x00 */
@@ -705,7 +706,7 @@ scsi_cmd(const int fd, dev_ent_t *un, const int command, const int timeit, ...)
 	case SCMD_MOVE_MEDIUM:	/* 0xa5 */
 		us.uscsi_cdblen = 12;
 		va_start(args, timeit);
-		tmp1 = va_arg(args, int);	/* tps_addr */
+		tmp1 = va_arg(args, int);	/* tps_addr, 00h = The default robot hand */
 		tmp2 = va_arg(args, int);	/* src_addr */
 		tmp3 = va_arg(args, int);	/* dest_addr */
 		tmp4 = va_arg(args, int);	/* invert */
@@ -1982,7 +1983,7 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 	 */
 
 	if (un->slot != ROBOT_NO_SLOT) {
-		DevLog(DL_DETAIL(1154), un->slot);
+		DevLog(DL_DETAIL(1154), open_fd, un->slot);
 	} else {
 		DevLog(DL_DETAIL(1157));
 	}
@@ -2180,7 +2181,7 @@ do_tur(dev_ent_t *un, int open_fd, int timeout)
 					if (no_media_counter == 0) {
 						no_media_counter++;
 						sleep(wait_time_in_secs);
-						wait_time_in_secs = 5;
+						/* wait_time_in_secs = 5; */
 					} else {
 						/* Sony's can't be trusted */
 						if (un->equ_type ==

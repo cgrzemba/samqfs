@@ -102,35 +102,35 @@ struct sam_ndevstat {
 };
 
 /* Device status. */
-#define	DVST_MAINT	0x80000000
-#define	DVST_SCAN_ERR	0x40000000
-#define	DVST_AUDIT	0x20000000
-#define	DVST_ATTENTION	0x10000000
+#define	DVST_MAINT	(uint32_t) 0x80000000
+#define	DVST_SCAN_ERR	(uint32_t) 0x40000000
+#define	DVST_AUDIT	(uint32_t) 0x20000000
+#define	DVST_ATTENTION	(uint32_t) 0x10000000
 
-#define	DVST_SCANNING	0x08000000
-#define	DVST_MOUNTED	0x04000000
-#define	DVST_SCANNED	0x02000000
-#define	DVST_READ_ONLY	0x01000000
+#define	DVST_SCANNING	(uint32_t) 0x08000000
+#define	DVST_MOUNTED	(uint32_t) 0x04000000
+#define	DVST_SCANNED	(uint32_t) 0x02000000
+#define	DVST_READ_ONLY	(uint32_t) 0x01000000
 
-#define	DVST_LABELED	0x00800000
-#define	DVST_WR_LOCK	0x00400000
-#define	DVST_UNLOAD	0x00200000
+#define	DVST_LABELED	(uint32_t) 0x00800000
+#define	DVST_WR_LOCK	(uint32_t) 0x00400000
+#define	DVST_UNLOAD	(uint32_t) 0x00200000
 #define	DVST_REQUESTED	(uint32_t) 0x00100000
 
-#define	DVST_OPENED	0x00080000
-#define	DVST_READY	0x00040000
-#define	DVST_PRESENT	0x00020000
-#define	DVST_BAD_MEDIA	0x00010000
+#define	DVST_OPENED	(uint32_t) 0x00080000
+#define	DVST_READY	(uint32_t) 0x00040000
+#define	DVST_PRESENT	(uint32_t) 0x00020000
+#define	DVST_BAD_MEDIA	(uint32_t) 0x00010000
 
-#define	DVST_STOR_FULL	0x00008000
-#define	DVST_I_E_PORT	0x00004000
+#define	DVST_STOR_FULL	(uint32_t) 0x00008000
+#define	DVST_I_E_PORT	(uint32_t) 0x00004000
 /* Unused		0x00002000 */
 #define	DVST_CLEANING	(uint32_t) 0x00001000
 
 #define	DVST_POSITION	(uint32_t) 0x00000800
 #define	DVST_FORWARD	(uint32_t) 0x00000400
 #define	DVST_WAIT_IDLE	(uint32_t) 0x00000200
-#define	DVST_FS_ACTIVE	0x00000100
+#define	DVST_FS_ACTIVE	(uint32_t) 0x00000100
 
 /* Device types */
 #define	DT_CLASS_MASK		0xff00	/* Device class type mask */

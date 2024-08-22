@@ -156,7 +156,7 @@ extern    "C" {
 
 #define	SAM_SENSE_LENGTH sizeof (sam_extended_sense_t)
 #define	SAM_CDB_LENGTH 12		/* max cdb size */
-#define	SAM_SCSI_DEFAULT_TIMEOUT 300	/* default timeout in seconds */
+#define	SAM_SCSI_DEFAULT_TIMEOUT (int16_t) 300	/* default timeout in seconds */
 
 /* unique scsi commands issued through scsi_cmd */
 
