@@ -89,13 +89,13 @@ typedef enum robot_intrl {
 	ROBOT_INTRL_EJECT_MEDIA,	/* used by STK */
 
 	/* Requests for the drives */
-	ROBOT_INTRL_START_AUDIT,
+	ROBOT_INTRL_START_AUDIT,	/* 0x0f */
 	ROBOT_INTRL_AUDIT_SLOT,
 	ROBOT_INTRL_MOUNT,
 	ROBOT_INTRL_FLIPIT,
 
 	/* Requests for all */
-	ROBOT_INTRL_INIT,
+	ROBOT_INTRL_INIT,		/* 0x13 */
 	ROBOT_INTRL_SHUTDOWN = 0xff
 } robot_intrl_t;
 

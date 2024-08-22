@@ -426,6 +426,11 @@ update_elements:
 		DevLog(DL_ERR(5185), library->range.drives_count, i);
 
 	DevLog(DL_DETAIL(5039), library->range.drives_count);
+	DevLog(DL_DETAIL(5372), 
+	    library->range.transport_lower, library->range.transport_upper,
+	    library->range.drives_lower, library->range.drives_upper,
+	    library->range.storage_lower, library->range.storage_upper,
+	    library->range.ie_lower, library->range.ie_upper);
 	set_operator_panel(library, LOCK);
 
 	return (0);

@@ -183,7 +183,7 @@ typedef struct library_range_s {
 	ushort_t	 storage_lower;
 	ushort_t	 storage_upper;
 	ushort_t	 storage_count;
-}		library_range_t;
+} library_range_t;
 
 
 /* Structures */

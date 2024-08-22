@@ -1057,6 +1057,7 @@ int *slot)
 			import->media_element = stor_addr;
 
 			if (element_status->PVol && desc->full) {
+				DevLog(DL_DETAIL(5102), lslot, &(ext->PVolTag[0]));
 				dtb(&(ext->PVolTag[0]), BARCODE_LEN);
 				memcpy(import->bar_code, ext->PVolTag,
 				    BARCODE_LEN);

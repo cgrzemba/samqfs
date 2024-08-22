@@ -1111,6 +1111,9 @@ SlotInit(
 		goto out;
 	}
 	if (*a->SiBarcode != '\0') {
+		TraceRequest(hdr, &rsp, "SlotInit(%s, %08x, %d, %s, %s)",
+		    StringFromVolId(&a->SiVid), a->SiStatus, a->SiTwoSided,
+		    a->SiBarcode, a->SiAltBarcode);
 		/*
 		 * Check if entry is found in historian
 		 */

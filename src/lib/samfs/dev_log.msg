@@ -176,7 +176,7 @@ $ *    SAM-QFS_notice_end
 1151 Failed to open the path %s
 1152 Opened in read-write mode: fd = %d, path = %s, open count = %d, rdev = %llx
 1153 Opened in read-only mode: fd = %d, path = %s, open count = %d, rdev = %llx
-1154 Perform Test Unit Ready (TUR): Slot %d: Starting TUR
+1154 Perform Test Unit Ready (TUR): fd %d, Slot %d: Starting TUR
 1155 Ready time %d seconds
 1156 Spin unit [%d] fails: error %d
 1157 Perform Test Unit Ready (TUR): Starting TUR
@@ -885,6 +885,8 @@ $ *    SAM-QFS_notice_end
 5368 Process transfer element ele:%d ASC:%x ASCQ:%x excpt:%d f:%d acc:%d sval:%d inv:%d ena:%d mt:%d 
 5369 return(%d)
 5370 drive %d has no no dev entry un
+5371 Move SCSI cmd src=%d dst=%d returns with %d
+5372 Robot %d - %d, Drives %d - %d, Storage %d - %d, Imp/Exp %d - %d
 
 6000 Grau
 6001 Slot %d: %s fails : d_errno %d (0x%x) %s

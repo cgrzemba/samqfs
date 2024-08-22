@@ -2853,14 +2853,17 @@ drive_timeout(dev_ent_t *un, int fd, boolean_t do_lock)
 		DevLog(DL_ERR(3289), strerror(errno), ret, resid);
 		DevLogCdb(un);
 		DevLogSense(un);
+		DevLog(DL_DETAIL(3288), 0, LTO_TUR_TIMEOUT*10, 0, 0, 0, 0);
 		return LTO_TUR_TIMEOUT*10;
 	}
+	int cdb_len = (buf[2]<<8) + buf[3] +4;
 	if ((uchar_t)buf[1] != (CTDP_INCL|RSOC_SUPPORTED)){
 		DevLog(DL_DETAIL(3290));
+		DevLog(DL_DETAIL(3288), buf[1], LTO_TUR_TIMEOUT, 
+		    buf[cdb_len+8], buf[cdb_len+9], buf[cdb_len+10], buf[cdb_len+11]);
 		return LTO_TUR_TIMEOUT;
 	}
 	/* cdb_len buf[2]<<8 + buf[3], descriptor_len = buf[4 + cdb_len]  */
-	int cdb_len = (buf[2]<<8) + buf[3] +4;
 	int timeout = (buf[cdb_len+10]<<8) + buf[cdb_len+11];
 	DevLog(DL_DETAIL(3288), buf[1] & 7, timeout,
 	    buf[cdb_len+8], buf[cdb_len+9], buf[cdb_len+10], buf[cdb_len+11]);

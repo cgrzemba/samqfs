@@ -513,11 +513,14 @@ move(
 		TAPEALERT(library->open_fd, library->un);
 		memset(sense, 0, sizeof (sam_extended_sense_t));
 		start = time(NULL);
+
 		movmed_err = scsi_cmd(library->open_fd, library->un,
 		    SCMD_MOVE_MEDIUM, timeout,
 		    cmd->transport, cmd->source, cmd->destination1,
 		    (cmd->flags.b.invert1 ? 1 : 0));
+
 		TAPEALERT(library->open_fd, library->un);
+		DevLog(DL_DETAIL(5371), cmd->source, cmd->destination1, movmed_err);
 		if (movmed_err < 0) {
 			DevLog(DL_TIME(5177), cmd->source,
 			    cmd->flags.b.invert1 ? "invert" : "asis",
@@ -526,7 +529,8 @@ move(
 			GENERIC_SCSI_ERROR_PROCESSING(library->un,
 			    library->scsi_err_tab, 0,
 			    err, added_more_time, retry,
-			    /* code for DOWN_EQU */
+
+			    /* *** code for DOWN_EQU *** */
 			    if (!cmd->flags.b.noerror) {
 				err = DOWN_EQU;
 				if (sense->es_add_code == 0x40 &&
@@ -540,11 +544,14 @@ move(
 				/* MACRO for cstyle */}
 				break;
 				/* MACRO for cstyle */,
-				/* code for ILLREQ */
+
+			    /* *** code for ILLREQ *** */
 				    retry = 0;
 				break;
 			/* MACRO for cstyle */,
-			    case CLR_TRANS_RET:
+
+			    /* *** code for _more_code *** */ 
+		case CLR_TRANS_RET:
 			    mutex_unlock(&library->un->io_mutex);
 			if (update_element_status(library, TRANSPORT_ELEMENT)) {
 				err = DOWN_EQU;
@@ -599,6 +606,7 @@ move(
 			}
 			retry = 1;	/* force while exit */
 			break;
+			    /* *** end of terrible macro *** */	
 			/* MACRO for cstyle */);
 		} else {
 			DevLog(DL_TIME(5178), cmd->source,

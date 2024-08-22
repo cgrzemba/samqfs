@@ -95,6 +95,7 @@ library_t *library,
 dev_ptr_tbl_t *dev_ptr_tbl)
 {
 	if (IS_GENERIC_API(library->un->type))
+		/* Grau library */ 
 		return (api_initialize(library, dev_ptr_tbl));
 	else
 		return (generic_initialize(library));
