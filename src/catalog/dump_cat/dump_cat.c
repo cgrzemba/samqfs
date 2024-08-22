@@ -357,7 +357,7 @@ cmp_slot(
 		return (-1);
 	}
 	if (ce1->CeSlot > ce2->CeSlot) {
-		return (-1);
+		return (1);
 	}
 	if (ce1->CePart < ce2->CePart) {
 		return (-1);
