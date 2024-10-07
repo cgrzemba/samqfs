@@ -105,6 +105,7 @@ $(OBJ_DIR)/nl_messages.cat: catalog.msg
 ifeq ($(OS), SunOS)
 install: $(OBJ_DIR)/nl_messages.cat install_more
 install_more: nl_messages.cat
+	$(INSTALL) -d $(MSGDEST)
 	$(INSTALL) $(MSGINST) $(OBJ_DIR)/nl_messages.cat $(MSGDEST)/SUNWsamfs
 	@echo "Note: Only the message catalog was installed."
 	@echo "      Use pkgadd to install the rest of the files at this level."

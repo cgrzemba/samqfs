@@ -81,7 +81,7 @@ endif
 WHOAMI = $(shell $(CMDWHOAMI))
 
 # Installation directories.
-BASEDIR := /
+BASEDIR := $(or $(DESTDIR),$(DESTDIR),"/tmp")
 USRDEST := $(BASEDIR)/opt/SUNWsamfs/bin
 ADMDEST := $(BASEDIR)/opt/SUNWsamfs/sbin
 INCDEST := $(BASEDIR)/opt/SUNWsamfs/include

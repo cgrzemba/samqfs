@@ -117,7 +117,7 @@ PERL = /usr/bin/perl
 BISON_KLUDGE = /usr/bin/bison
 
 AWK = /usr/bin/nawk
-INSTALL = /usr/bin/ginstall
+INSTALL = /usr/gnu/bin/install
 MAKEDEPEND = /usr/openwin/bin/makedepend
 
 CMDECHO = /usr/bin/echo
