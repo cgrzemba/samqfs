@@ -62,7 +62,7 @@ LIB_SRC = \
 
 DEPCFLAGS += -I$(OBJ_DIR) $(THRCOMP) $(OSDEPCFLAGS)
 LIB_LIBS +=  -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcat $(LIBSO) \
-	-lgen -ldl -lthread -lposix4 -lintl -lsysevent -lnvpair
+	-ldl -lthread -lsysevent -lnvpair
 
 ifeq ($(SPARCV9), yes)
 LNOPTS = $(LIBS_LFLAGS64)
