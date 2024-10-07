@@ -170,4 +170,8 @@ pkg: 	$(PKG_COOCKIE)
 pkg.clean:
 	rm -f $(PKG_COOCKIE)
 
+# A simple rule to print only the value of any macro.
+print-value-%:
+	@echo '$(subst ','\'',$($*))'
+
 include $(DEPTH)/mk/depend.mk
