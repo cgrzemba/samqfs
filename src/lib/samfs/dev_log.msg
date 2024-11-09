@@ -47,7 +47,7 @@ $ *    SAM-QFS_notice_end
 1021 scsi_cmd(%#x) entered without io_mutex
 1022 scsi_cmd(%#x) entered with io_active
 1023 scsi_cmd: EAGAIN
-1024 scsi_cmd(%#x)
+1024 scsi_cmd(%#x) status %#x
 1025 Read log failed
 1026 Could not lock door
 1027 Unloaded and door unlocked
@@ -786,7 +786,7 @@ $ *    SAM-QFS_notice_end
 5174 Imported cartridge has a duplicate barcode (%s) with slot %d - exporting it
 5175 Remote sam not found
 5176 Library full
-5177 Move cartridge: from %d(%s) to %d: time %d seconds
+5177 Move cartridge: from %d(%s) to %d: time %d seconds, error
 5178 Move cartridge: from %d(%s) to %d: time %d seconds
 5179 Move cartridge complete: from %d(%s) to %d
 5180 Exchange media: from %d(%s) to %d to %d(%s): time %d seconds
