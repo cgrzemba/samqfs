@@ -35,7 +35,7 @@ PROG_SRC = $(PROG).c
 
 DEPCFLAGS += -I../../robots/generic
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -R/opt/SUNWsamfs/lib/amd64 -lsamfs
 
 LNOPTS = $(CMDS_LFLAGS$(AMD64:yes=64))
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs

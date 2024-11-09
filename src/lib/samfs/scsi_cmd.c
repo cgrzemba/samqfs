@@ -1052,6 +1052,7 @@ redo:
 		tmp5 = ioctl(fd, USCSICMD, &us);
 	}
 
+	DevLog(DL_DEBUG(1024), command, us.uscsi_status);
 	if (tmp5) {
 
 		/* Command failed, return the proper error */
