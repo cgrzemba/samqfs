@@ -138,8 +138,10 @@ endif
 #
 ifeq ($(DEBUG), yes)
 	ifneq ($(DEBUG_OFF), yes)
-		DEBUGCDEFS += -DDEBUG -gdwarf-2
+		DEBUGCDEFS += -g -DDEBUG -gdwarf-2
 	endif
+else
+	DEBUGCDEFS += -O2 -gdwarf-2
 endif
 
 DEPCFLAGS += $(DEBUGCDEFS)
