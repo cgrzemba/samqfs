@@ -36,7 +36,6 @@
 
 #pragma ident "$Revision: 1.16 $"
 
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -63,6 +62,7 @@
 #include "sam/nl_samfs.h"
 #include "sam/lib.h"
 
+extern boolean_t unworm;
 extern void conv_to_v2inode(sam_perm_inode_t *);
 static void check_samfs_fs();
 static void sam_restore_a_file(char *, struct sam_perm_inode *,
@@ -85,6 +85,24 @@ static csd_hardtbl_t *hardp = NULL;
 
 static char *_SrcFile = __FILE__;
 
+# define XA_CNT 3
+const char *fn_xattr[XA_CNT]  =
+	    {"user.DOSATTRIB", "user.SUNWattr_rw", "user.SUNWattr_ro"};
+const int sl[XA_CNT] = {14, 16, 16};
+boolean_t
+is_xattr(const char* path) {
+
+	if (csd_version < 7)
+		return false;
+	size_t len = strlen(path);
+	if (len < 18)
+		return false;
+	for (int i = 0; i < XA_CNT; i++) {
+		if (memcmp(fn_xattr[i], path + len - sl[i], sl[i]) == 0)
+			return true;
+	}
+	return false;
+}
 
 /*
  * ----- cs_restore -  CSD restore.
@@ -120,6 +138,8 @@ cs_restore(
 	/*
 	 *	Read the dump file
 	 */
+	if (debugging == 1)
+		quiet = false;
 	while (csd_read_header(&file_hdr) > 0) {
 		namelen = file_hdr.namelen;
 		csd_read(name, namelen, &perm_inode);
@@ -155,6 +175,10 @@ cs_restore(
 			}
 		}
 
+		if (unworm && perm_inode.di.status.b.worm_rdonly) {
+			perm_inode.di.status.b.worm_rdonly = 0;
+			perm_inode.di.mode &= ~(04000); /* reset S bit in mode */
+		}
 		/* select subset of file names to restore. */
 
 		name_compare = &name[0];
@@ -193,6 +217,8 @@ cs_restore(
 				goto skip_file;
 			}
 		}
+		if (is_xattr(name_compare))
+			goto skip_file;
 
 		/*
 		 * If stripping first slash to make relative path and
@@ -563,7 +589,6 @@ print_reslog(
  *	Restore a single file to the filesystem from a csd image.
  */
 
-
 static void
 sam_restore_a_file(
 	char	*path,		/* the path name of the file */
@@ -780,8 +805,11 @@ sam_restore_a_file(
 				if ((entity_fd = open(path, open_flg,
 				    mode & 07777)) < 0) {
 					BUMP_STAT(errors);
-					error(0, errno, catgets(catfd, SET, 215,
-					    "%s: Cannot creat()"), path);
+					if(!quiet || (errno != ENOTDIR)) {
+						error(0, errno,
+						    "%s: Cannot creat(l)",
+						    path);
+					}
 					return;
 				}
 				if (nlink != 1 && prelinks &&
@@ -818,9 +846,11 @@ sam_restore_a_file(
 		}
 		if (mkdir(path, mode & 07777) < 0) {
 			BUMP_STAT(errors);
-			error(0, errno,
-			    catgets(catfd, SET, 222, "%s: Cannot mkdir()"),
-			    path);
+			if(!quiet || errno != EEXIST) {
+				error(0, errno,
+				    catgets(catfd, SET, 222,
+				    "%s: Cannot mkdir()"), path);
+			}
 			return;
 		}
 		/*
@@ -851,9 +881,11 @@ sam_restore_a_file(
 		}
 		if ((entity_fd = open(path, open_flg, mode & 07777)) < 0) {
 			BUMP_STAT(errors);
-			error(0, errno,
-			    catgets(catfd, SET, 215, "%s: Cannot creat()"),
-			    path);
+			if(!quiet || errno != EEXIST) {
+				error(0, errno,
+				    "%s: Cannot creat(q)",
+				    path);
+			}
 			return;
 		}
 		idrestore.rp.ptr = (void *)data;
@@ -880,8 +912,10 @@ sam_restore_a_file(
 			samrestore.dp.ptr = perm_inode;
 			samrestore.vp.ptr = NULL;
 			if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
-				error(0, errno, "%s: ioctl(F_SAMRESTORE)",
-				    path);
+				if(!quiet || errno != EEXIST) {
+					error(0, errno,
+					    "%s: ioctl(F_SAMRESTORE)", path);
+				}
 				BUMP_STAT(errors);
 			}
 			BUMP_STAT(links);
@@ -892,9 +926,10 @@ sam_restore_a_file(
 			if ((entity_fd = open(path, open_flg,
 			    mode & 07777)) < 0) {
 				BUMP_STAT(errors);
-				error(0, errno,
-				    catgets(catfd, SET, 215,
-				    "%s: Cannot creat()"), path);
+				if(!quiet || errno != EEXIST) {
+					error(0, errno,
+					    "%s: Cannot creat()", path);
+				}
 				return;
 			}
 			idrestore.lp.ptr = (void *)slink;
@@ -919,7 +954,10 @@ sam_restore_a_file(
 		samrestore.dp.ptr = perm_inode;
 		samrestore.vp.ptr = NULL;
 		if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
-			error(0, errno, "%s: ioctl(F_SAMRESTORE)", path);
+			if(!quiet || errno != EEXIST) {
+				error(0, errno,
+				    "%s: ioctl(F_SAMRESTORE)", path);
+			}
 			BUMP_STAT(errors);
 		}
 		BUMP_STAT(specials);
@@ -1129,7 +1167,10 @@ sam_res_by_name(
 		}
 	}
 	if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
-		error(0, errno, "%s: ioctl(F_SAMRESTORE)", path);
+		if(!quiet || errno != EEXIST) {
+			error(0, errno,
+			    "%s: ioctl(F_SAMRESTORE)", path);
+		}
 		if (errno == ENOTTY) {
 			error(1, 0, catgets(catfd, SET, 259,
 			    "%s: Not a SAM-FS file."), basename);

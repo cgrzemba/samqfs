@@ -150,7 +150,7 @@
 
 /*	Local definitions */
 
-#define	RESTORE_OPT	"df:g:ilrRsStTv2B:b:Z:"
+#define	RESTORE_OPT	"axdf:g:ilqrRsStTv2B:b:Z:"
 #define	QFSRESTORE_OPT	"df:ilrRstTv2B:b:D"
 #define	DUMP_OPT	"df:HI:nPqSTuUvWB:b:X:YZ:"
 #define	QFSDUMP_OPT	"df:HI:qTvB:b:DX:"
@@ -190,6 +190,7 @@ boolean swapped;		/* Dump is different endian than this machine */
 boolean unarchived_data;	/* Dump unarchived data */
 boolean use_file_list;		/* Dump using file list */
 boolean list_by_inode;		/* list inode range only */
+boolean unworm = false;
 int csd_version = 0;		/* solaris csd format */
 int csd_hdr_inited = 0;		/* Dumpfile csd header inited */
 uint32_t dump_fs_magic = 0;	/* FS magic of dump source FS */
@@ -478,6 +479,16 @@ main(int argc, char *argv[])
 		case '2':		/* print 2 line ls */
 			verbose = true;
 			ls_options |= LS_LINE2;
+			break;
+
+		case 'a':		/* print ACLS */
+			verbose = true;
+			ls_options |= LS_LINE1;
+			ls_options |= LS_ACL;
+			break;
+
+		case 'x':		/* remove WORM flag */
+			unworm = true;
 			break;
 
 		case 'Y':		/* file list for dump */
@@ -1037,7 +1048,7 @@ usage()
 		break;
 	case RESTORE:
 		if (!qfs) {
-			fprintf(stderr, "[-dilrRsStTv2] ");
+			fprintf(stderr, "[-axdilqrRsStTv2] ");
 		} else {
 			fprintf(stderr, "[-dilrRstTv2D] ");
 		}

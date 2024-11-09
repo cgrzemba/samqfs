@@ -46,6 +46,7 @@
 #define	LS_INODES	0004		/* Print inode numbers */
 #define	LS_CYCLE	0010		/* Print cycle information */
 #define	LS_EXPTM	0020		/* Print expiration time */
+#define	LS_ACL		0040		/* Print ACL */
 
 extern	int	ls_options;		/* Options */
 extern	time_t	ls_base_time;		/* Current time	*/

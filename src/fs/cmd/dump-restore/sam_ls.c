@@ -77,6 +77,7 @@
 
 static char *_SrcFile = __FILE__;
 
+void sam_ls_acl(char *, aclent_t *, int);
 
 void
 cs_list(
@@ -157,6 +158,8 @@ cs_list(
 		}
 
 		sam_ls(name, &perm_inode, NULL);
+		if (aclp != NULL)
+			sam_ls_acl(name, aclp, n_acls);
 		sam_db_list(name, &perm_inode, linkname, vsnp);
 
 		/* If not already offline */
@@ -240,6 +243,66 @@ skip_file:
 	}
 }
 
+void
+sam_ls_acl(char *path, aclent_t *aclp, int n_acls)
+{
+	char perms[8][4] = {"---","--x","-w-","-wx","r--","r-x","rw-","rwx"};
+	int i;
+	if (!(ls_options & LS_ACL))
+		return;
+
+	printf("# file: %s\n", path);
+        for (i=0; i < n_acls; i++){
+		switch (aclp[i].a_type) {
+		case USER_OBJ:
+			printf("# owner: %s\n",getuser(aclp[i].a_id));
+			break;
+		case GROUP_OBJ:
+			printf("# group: %s\n",getgroup(aclp[i].a_id));
+			break;
+		}
+	}
+        for (i=0; i < n_acls; i++){
+		switch (aclp[i].a_type) {
+		case USER_OBJ:
+			printf("  user::%s\n", perms[aclp[i].a_perm]);
+			break;
+		case USER:
+			printf("  user:%s:%s\n",getuser(aclp[i].a_id), perms[aclp[i].a_perm]);
+			break;
+		case GROUP_OBJ:
+			printf("  group::%s\n", perms[aclp[i].a_perm]);
+			break;
+		case GROUP:
+			printf("  group:%s:%s\n",getgroup(aclp[i].a_id), perms[aclp[i].a_perm]);
+			break;
+		case CLASS_OBJ:
+			printf("  mask:%s\n",perms[aclp[i].a_perm]);
+			break;
+		case OTHER_OBJ:
+			printf("  other:%s\n",perms[aclp[i].a_perm]);
+			break;
+		case DEF_USER_OBJ:
+			printf("  default:user::%s\n", perms[aclp[i].a_perm]);
+			break;
+		case DEF_USER:
+			printf("  default:user:%s:%s\n",getuser(aclp[i].a_id), perms[aclp[i].a_perm]);
+			break;
+		case DEF_GROUP_OBJ:
+			printf("  default:group::%s\n", perms[aclp[i].a_perm]);
+			break;
+		case DEF_GROUP:
+			printf("  default:group:%s:%s\n",getgroup(aclp[i].a_id), perms[aclp[i].a_perm]);
+			break;
+		case DEF_CLASS_OBJ:
+			printf("  default:mask:%s\n",perms[aclp[i].a_perm]);
+			break;
+		case DEF_OTHER_OBJ:
+			printf("  default:other:%s\n",perms[aclp[i].a_perm]);
+			break;
+		}
+	}
+}
 
 void
 sam_ls(
