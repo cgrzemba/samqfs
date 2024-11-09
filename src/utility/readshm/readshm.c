@@ -134,7 +134,7 @@ main(int argc, char **argv)
 	library = (library_t *)calloc(1, sizeof (library_t));
 	if (argc == 4){
 		argv++;
-		library->eq = atoi(*argv);
+		library->eq = (equ_t) atoi(*argv);
 	}
 
 	shm_ptr_tbl = (shm_ptr_tbl_t *)master_shm.shared_memory;
@@ -202,9 +202,10 @@ main(int argc, char **argv)
 	library->ele_dest_len = ELEMENT_DESCRIPTOR_LENGTH;
 
 	rb = (robotic_device_t *)&library->un->dt;
-	printf ("\nlibrary set %s, device %s, catalog %s, bits %x, %s\n", 
+	printf ("\nlibrary set %s, device %s, tapealert %x, catalog %s, bits %x, %s\n",
 		library->un->set, 
 		library->un->name, 
+		library->un->tapealert,
 		library->un->dt.rb.name, 
 		library->un->dt.rb.status.bits,
 		library->un->dt.rb.status.b.barcodes == 1 ? "has barcode reader" : "");
