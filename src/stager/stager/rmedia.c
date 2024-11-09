@@ -348,7 +348,8 @@ retrySearch:
 			/*
 			 * Get VSN managed in library.
 			 */
-			if ((strncmp(vsn, vsnTable.data[i].ce->CeVsn, sizeof(vsn_t)) == 0) &&
+			if ((vsnTable.data[i].ce != NULL) &&
+			    (strncmp(vsn, vsnTable.data[i].ce->CeVsn, sizeof(vsn_t)) == 0) &&
 			    (media ==
 			    sam_atomedia(vsnTable.data[i].ce->CeMtype))) {
 				getLibraryVsn(vsnTable.data[i].ce,
