@@ -48,7 +48,7 @@ PROG_SRC = \
 
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR)
 PROG_LIBS = ../../../fs/lib/$(OBJ_DIR)/libfscmd.a \
-	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen $(LIBSO)
+	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen -lsec $(LIBSO)
 
 LNOPTS = -anmuxs -erroff=E_STATIC_UNUSED -Dlint
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut

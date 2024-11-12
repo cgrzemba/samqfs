@@ -73,6 +73,7 @@
 #include "sam/nl_samfs.h"
 #include "csd_defs.h"
 #include <sys/acl.h>
+#include <strings.h>
 
 
 static char *_SrcFile = __FILE__;
@@ -246,11 +247,30 @@ skip_file:
 void
 sam_ls_acl(char *path, aclent_t *aclp, int n_acls)
 {
+	/* struct aclinfo acl; */
+	acl_t acl;
 	char perms[8][4] = {"---","--x","-w-","-wx","r--","r-x","rw-","rwx"};
 	int i;
 	if (!(ls_options & LS_ACL))
 		return;
+	acl.acl_type = ACLENT_T;
+	acl.acl_cnt = n_acls;
+	acl.acl_entry_size = sizeof(ace_t);
+	acl.acl_flags = 0;
+	acl.acl_aclp = aclp;
 
+	if (csd_version > 6 && csd_header.csd_header_flags == 2) {
+		acl.acl_type = ACE_T;
+	}
+	char *acltext = acl_totext(&acl, ACL_COMPACT_FMT);
+	char *ap = strtok(acltext, ",");
+	while(ap != NULL) {
+		printf("%s\n", ap);
+		ap = strtok(NULL, ",");
+	}
+	free(acltext);
+	/*	return; */
+	/* output CLI style */
 	printf("# file: %s\n", path);
         for (i=0; i < n_acls; i++){
 		switch (aclp[i].a_type) {
