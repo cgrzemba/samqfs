@@ -1082,7 +1082,7 @@ show_fs(void)
 
 	print_sblk(&sblock, devp, ORDER_DISK);
 
-#ifdef	DEBUG
+#ifdef	XX_DEBUG
 	for (idx = 0; idx < fs_count; idx++) {
 		debug_print(idx);
 	}
