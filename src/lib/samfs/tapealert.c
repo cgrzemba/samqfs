@@ -63,6 +63,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "aml/tapealert.h"
 #include "aml/tapealert_vals.h"
 
+#include "sam/custmsg.h"
+
 #include <libsysevent.h>
 #include <libnvpair.h>
 

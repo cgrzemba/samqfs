@@ -38,7 +38,7 @@
 
 
 void
-cs_simple(u_longlong_t *cookie, uchar_t *buf, int len, csum_t *val)
+cs_simple(uint64_t *cookie, uchar_t *buf, int len, csum_t *val)
 {
 	int i;
 	char *p, *q;
@@ -95,7 +95,7 @@ cs_simple(u_longlong_t *cookie, uchar_t *buf, int len, csum_t *val)
 void
 cs_repair(
 	uchar_t *csum,
-	u_longlong_t *cookie)
+	uint64_t *cookie)
 {
 	int i;
 	char local[16];

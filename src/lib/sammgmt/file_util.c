@@ -164,7 +164,7 @@ create_file(
 			}
 
 			/* create the file */
-			if (mknod(full_path, mode, NULL) != 0) {
+			if (mknod(full_path, mode, 0) != 0) {
 				samerrno = SE_CREATE_FILE_FAILED;
 				snprintf(samerrmsg, MAX_MSG_LEN,
 				    GetCustMsg(SE_CREATE_FILE_FAILED),

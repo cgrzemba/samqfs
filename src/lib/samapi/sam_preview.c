@@ -112,7 +112,7 @@ SamSetPreviewPri(uint_t	pid, float newpri)
 	 */
 	preview_shm.shmid = shmget(SHM_PREVIEW_KEY, 0, 0);
 	preview_shm.shared_memory =
-	    shmat(preview_shm.shmid, NULL, NULL); /* r/w */
+	    shmat(preview_shm.shmid, NULL, 0); /* r/w */
 	if (preview_shm.shared_memory == (void *)-1) {
 		return (-1);
 	}

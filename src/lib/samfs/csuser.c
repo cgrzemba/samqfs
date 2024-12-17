@@ -39,6 +39,6 @@
 
 /*ARGSUSED0*/
 void
-cs_user(u_longlong_t *cookie, int algo, uchar_t *buf, int len, csum_t *val)
+cs_user(uint64_t *cookie, int algo, uchar_t *buf, int len, csum_t *val)
 {
 }

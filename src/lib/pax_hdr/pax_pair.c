@@ -444,7 +444,7 @@ pxp_get_line(
 	size_t adj_len = 0;
 
 	if (!pair) {
-		return (NULL);
+		return (0);
 	}
 
 	if (IS_PXP_PARSED_TYPE(pair->val_type) && pair->header_line) {

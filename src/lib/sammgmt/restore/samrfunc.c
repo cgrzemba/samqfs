@@ -66,7 +66,7 @@ do_cleanup_dump(char *fsname, char *dumppath, boolean_t delete_all);
 static int
 snapsched_to_CSDstring(snapsched_t *sched, char *buf, size_t buflen);
 static int qsort_descending(const void *in_a, const void *in_b);
-extern samcftime(char *, const char *, const time_t *);
+extern int samcftime(char *, const char *, const time_t *);
 
 /* Static datastructures */
 

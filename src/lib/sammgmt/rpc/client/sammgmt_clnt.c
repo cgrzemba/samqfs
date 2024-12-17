@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>			/* getenv, exit */
+#include <unistd.h>
 
 /*
  * this returns the mgmt API version used by client-side RPC.

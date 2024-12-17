@@ -2151,7 +2151,7 @@ get_set_dfstab(nfsshare_t *innfs, sqm_lst_t **list)
 				fclose(tmpdfstab);
 			}
 			fclose(dfstab);
-			return (NULL);
+			return (0);
 		}
 
 		memset(nfsent, 0, sizeof (nfsshare_t));

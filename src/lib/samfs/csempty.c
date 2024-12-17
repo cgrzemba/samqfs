@@ -38,7 +38,7 @@
 
 /*ARGSUSED1*/
 void
-cs_empty(u_longlong_t *cookie, uchar_t	*buf, int len, csum_t *val)
+cs_empty(uint64_t *cookie, uchar_t	*buf, int len, csum_t *val)
 {
 	int i;
 

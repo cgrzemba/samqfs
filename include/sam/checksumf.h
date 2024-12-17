@@ -44,17 +44,17 @@ typedef void (*csum_func)();
 /* A non-null cookie (pointer) indicates an initialization pass. */
 
 /* 0 */
-extern void cs_empty(u_longlong_t *cookie, uchar_t *buf, int len, csum_t *val);
+extern void cs_empty(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 
 /* 1 */
-extern void cs_simple(u_longlong_t *cookie, uchar_t *buf, int len, csum_t *val);
+extern void cs_simple(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 
 /* user */
-extern void cs_user(u_longlong_t *cookie, int algo, uchar_t *buf,
+extern void cs_user(uint64_t *cookie, int algo, uchar_t *buf,
 	int len, csum_t *val);
 
 /* repair function for cs_simple() */
-extern void cs_repair(uchar_t *csum, u_longlong_t *cookie);
+extern void cs_repair(uchar_t *csum, uint64_t *cookie);
 
 #if defined(DEC_INIT) && !defined(lint)
 csum_func csum[] = {

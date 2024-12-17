@@ -916,7 +916,7 @@ process_saved_dir_list(char *dirname)
 
 		/* process that directory name unless it's the initial one */
 		if (strcmp(path, dirname) != 0) {
-			csd_dump_path("recursive", path, NULL);
+			csd_dump_path("recursive", path, 0);
 		}
 		free(path);
 	}

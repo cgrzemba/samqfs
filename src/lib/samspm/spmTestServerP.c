@@ -131,7 +131,7 @@ main(
 		action = ACTION_NONE;
 
 		/* Go to sleep forever, or at leasst until an interrupt */
-		select(NULL, NULL, NULL, NULL, NULL);
+		select(0, NULL, NULL, NULL, NULL);
 	}
 }
 #endif
