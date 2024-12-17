@@ -339,7 +339,7 @@ proc_arg_t *objp)
 	if (!xdr_pointer(xdrs, (char **)&objp->ctx,
 	    sizeof (ctx_t), (xdrproc_t)xdr_ctx_t))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->pid))
+	if (!xdr_pid_t(xdrs, (long int*)&objp->pid))
 		return (FALSE);
 	if (!xdr_proctype_t(xdrs, &objp->ptype))
 		return (FALSE);

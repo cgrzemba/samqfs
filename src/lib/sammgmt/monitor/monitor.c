@@ -137,7 +137,7 @@ get_component_status_summary(
 	arcopy_t acopy;
 	pending_load_info_t *load	= NULL;
 	struct ArchReq *archreq		= NULL;
-	uint32_t total_stagefiles	= 0;
+	size_t total_stagefiles	= 0;
 	library_t *lib;
 	node_t *node_drive;
 	drive_t *drive;
