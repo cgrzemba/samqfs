@@ -453,7 +453,7 @@ sam_restore_a_file(
 	 */
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_RESTORE;
-	error = sam_lookup_name(pip, name_str, &ip, &name, credp);
+	error = sam_lookup_name(pip, name_str, 0, &ip, &name, credp);
 	if (error == ENOENT) {			/* file not found, make one. */
 		if ((error = sam_restore_name(pip, name_str, &name, perm_ino,
 		    &id, credp)) == 0) {

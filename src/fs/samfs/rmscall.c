@@ -450,6 +450,7 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 			uchar_t new_osd_group, new_unit;
 			sam_di_osd_t *oip;
 			int ord;
+			vnode_t *vpi = SAM_ITOV(ip);
 
 			switch (*op++) {
 			case 'A':

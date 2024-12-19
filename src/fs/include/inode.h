@@ -268,7 +268,7 @@ union ino_flags {
 
 	archive_w	:1,	/* File is waiting on archiving */
 	abr		:1,	/* SAMAIO ABR (direct i/o B_ABRWRITE) set */
-	fill5		:1,
+	ci		:1,	/* case insensitive filename match */
 	stage_directio	:1,	/* Stager turned on directio */
 
 	arch_direct	:1,	/* Archiver using offline_copy_method=direct */
@@ -294,7 +294,7 @@ union ino_flags {
 	arch_direct	:1,	/* Archiver using offline_copy_method=direct */
 
 	stage_directio	:1,	/* Stager turned on directio */
-	fill5		:1,
+	ci		:1,	/* case insensitive filename match */
 	abr		:1,	/* SAMAIO ABR (direct i/o B_ABRWRITE) set */
 	archive_w	:1,	/* File is waiting on archiving */
 

@@ -187,6 +187,14 @@ static struct {
 		"eq interval", 7186, "Set default WORM retention time"
 	},
 	{
+		"ci", QFS_STANDALONE, 1, CmdSetFsConfig, 0, 7110,
+		"eq", 7194, "Set filename casesensitivity off"
+	},
+	{
+		"noci", QFS_STANDALONE, 1, CmdSetFsConfig, 0, 7110,
+		"eq", 7195, "Set filename casesensitivity on (default)"
+	},
+	{
 		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
 		7051, "File System commands - SAM:"
 	},

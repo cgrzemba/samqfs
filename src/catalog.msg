@@ -1619,6 +1619,8 @@ $ 7147 ** NOT USED ** Set trace options
 7191 Add eq to mounted file system
 7192 Remove eq; copy files to ON eqs
 7193 Release eq and mark files offline
+7194 Set filename casesensitivity off
+7195 Set filename casesensitivity on (default)
 
 $  samu display help screen   (7200s)
 $ ===================================================================

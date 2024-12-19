@@ -79,7 +79,7 @@
 
 extern ushort_t sam_dir_gennamehash(int nl, char *np);
 
-static int sam_find_component(sam_node_t *pip, char *cp, sam_node_t **ipp,
+static int sam_find_component(sam_node_t *pip, char *cp, int flags, sam_node_t **ipp,
 		struct sam_name *namep);
 static void sam_rm_dir_entry(sam_node_t *pip, char *cp, sam_u_offset_t offset,
 	int in, int bsize, sam_id_t id);
@@ -131,6 +131,7 @@ int					/* ERRNO if error, 0 if successful. */
 sam_lookup_name(
 	sam_node_t *pip,		/* parent directory inode */
 	char *cp,			/* component name to lookup. */
+	int flag,
 	sam_node_t **ipp,		/* inode (returned). */
 	struct sam_name *namep,		/* entry info returned here if found */
 	cred_t *credp)			/* credentials. */
@@ -264,7 +265,7 @@ scan_for_slot:
 			RW_UNLOCK_OS(&pip->inode_rwl, RW_WRITER);
 		}
 	}
-	error = sam_find_component(pip, cp, ipp, namep);
+	error = sam_find_component(pip, cp, flag, ipp, namep);
 
 	/*
 	 * If not found && shared_reader access, refresh directory pages and
@@ -275,7 +276,7 @@ scan_for_slot:
 		if ((error = sam_refresh_shared_reader_ino(pip, FALSE,
 		    credp)) == 0) {
 			RW_UNLOCK_OS(&pip->inode_rwl, RW_READER);
-			error = sam_find_component(pip, cp, ipp, namep);
+			error = sam_find_component(pip, cp, flag, ipp, namep);
 		} else {
 			RW_UNLOCK_OS(&pip->inode_rwl, RW_READER);
 		}
@@ -297,6 +298,7 @@ static int				/* ERRNO if error, 0 if successful. */
 sam_find_component(
 	sam_node_t *pip,		/* parent directory inode */
 	char *cp,			/* component name to lookup. */
+	int flag,
 	sam_node_t **ipp,		/* inode (returned). */
 	struct sam_name *namep)		/* entry info returned here if found */
 {
@@ -328,6 +330,7 @@ sam_find_component(
 	uint64_t handle;
 	dcanchor_t *dcap;
 	dcret_t	reply;
+	int (*cmpfunc)(const char *s1, const char *s2, size_t n) = bcmp;
 
 	fbp = NULL;
 	pvp = SAM_ITOV(pip);
@@ -431,7 +434,7 @@ sam_find_component(
 		 * name. Otherwise, we need to go ahead and find an empty slot.
 		 */
 		error = ENOENT;
-		if (trust_enhanced_dnlc && want_neg_dnlc) {
+		if (((flag & FIGNORECASE)==0) && trust_enhanced_dnlc && want_neg_dnlc) {
 			if (sam_use_negative_dnlc) {
 				/*
 				 * add the name to negative cache.
@@ -531,6 +534,9 @@ sam_find_component(
 		}
 	}
 
+/*	if ((flag & FIGNORECASE != 0) && pip->flags.b.ci) */
+	if ((flag & FIGNORECASE) != 0)
+		cmpfunc =  strncasecmp;
 restart:
 	while (offset < search_offset_limit) {
 		int ednlc_in;
@@ -603,8 +609,8 @@ restart:
 				check_name = 0;
 				if (dp->d_namlen == namlen) {
 					if (dp->d_namehash) {
-						if (dp->d_namehash ==
-						    name_hash) {
+						if ((dp->d_namehash ==
+						    name_hash) || ((flag & FIGNORECASE) != 0)) {
 							check_name++;
 						}
 					} else if (*cp == (char)*dp->d_name) {
@@ -612,7 +618,7 @@ restart:
 					}
 				}
 				if (check_name &&
-				    (bcmp((cp), (dp->d_name),
+				    (cmpfunc((cp), (dp->d_name),
 				    (dp->d_namlen)+1) == 0)) {
 					if (id.ino == pip->di.id.ino) {
 						/* if '.' lookup */

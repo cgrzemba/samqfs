@@ -1318,6 +1318,11 @@ sam_set_mount(sam_mount_t *mp)
 		    (long long)((physmem * PAGESIZE) / 100));
 	}
 #endif /* sun */
+	if (mp->mt.fi_config1 & MC_CI) {
+		vfs_t *vfsp = mp->mi.m_vfsp;
+		if (vfsp != NULL)
+			vfs_set_feature(vfsp, VFSFT_CASEINSENSITIVE);
+	}
 	return (0);
 }
 
