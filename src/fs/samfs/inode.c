@@ -153,7 +153,7 @@ lookup_name:
 
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_CREATE;
-	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == ENOENT) {
+	if ((error = sam_lookup_name(pip, cp, 0, &ip, &name, credp)) == ENOENT) {
 		if (((error = sam_create_name(pip, cp, &ip, &name,
 		    vap, credp)) != 0) &&
 		    IS_SAM_ENOSPC(error)) {

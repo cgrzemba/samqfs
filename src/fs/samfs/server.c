@@ -3201,7 +3201,7 @@ sam_process_name_request(
 		v.name.operation = SAM_REMOVE;
 		v.name.client_ord = client_ord;
 		TRACES(T_SAM_REMOVE, pvp, np->component);
-		if ((error = sam_lookup_name(pip, np->component, &ip, &v.name,
+		if ((error = sam_lookup_name(pip, np->component, 0, &ip, &v.name,
 		    cred)) == 0) {
 			/*
 			 * Entry exists, remove it.
@@ -3275,7 +3275,7 @@ sam_process_name_request(
 		v.name.operation = SAM_RMDIR;
 		TRACES(T_SAM_RMDIR, pvp, np->component);
 		ip = NULL;
-		if ((error = sam_lookup_name(pip, np->component, &ip, &v.name,
+		if ((error = sam_lookup_name(pip, np->component, 0, &ip, &v.name,
 		    cred)) == 0) {
 			/*
 			 * Entry exists.  Check the locking order.
@@ -3288,7 +3288,7 @@ go_fish:
 				sam_dlock_two(pip, ip, RW_WRITER);
 				bzero(&v, sizeof (v));
 				v.name.operation = SAM_RMDIR;
-				if ((error = sam_lookup_name(pip, np->component,
+				if ((error = sam_lookup_name(pip, np->component, 0,
 				    &ip2, &v.name, cred))) {
 					/*
 					 * Entry was removed while the lock
@@ -3394,7 +3394,7 @@ retry:
 #endif
 			sam_node_t *ip;
 
-			error = sam_lookup_name(pip, np->component,
+			error = sam_lookup_name(pip, np->component, 0,
 			    &ip, NULL, cred);
 			if (error == 0) {
 				sam_set_sr_ino(ip, &n2p->new_id, &n2p->nrec);
@@ -3499,7 +3499,7 @@ retry:
 			}
 		} else  {
 			itrc = T_SAM_SR_LOOK_RET;
-			error = sam_lookup_name(pip, np->component,
+			error = sam_lookup_name(pip, np->component, 0,
 			    &ip, NULL, cred);
 		}
 		if (error == 0) {

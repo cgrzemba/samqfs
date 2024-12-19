@@ -431,7 +431,7 @@ sam_lookup_vn(
 		}
 	}
 
-	if ((error = sam_lookup_name(pip, cp, &ip, NULL, credp)) == 0) {
+	if ((error = sam_lookup_name(pip, cp, flags, &ip, NULL, credp)) == 0) {
 		*vpp = SAM_ITOV(ip);
 		if (((ip->di.rm.ui.flags & RM_CHAR_DEV_FILE) &&
 		    S_ISREG(ip->di.mode)) ||
@@ -463,6 +463,8 @@ sam_lookup_vn(
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
+		if ((flags & FIGNORECASE) && rpnp)
+			(void) strlcpy(rpnp->pn_buf, cp, rpnp->pn_bufsize);
 		TRACE(T_SAM_LOOKUP_RET, pvp, (sam_tr_t)*vpp, ip->di.id.ino,
 		    ip->di.nlink);
 	} else {
@@ -623,7 +625,7 @@ sam_remove_vn(
 
 	name.operation = SAM_REMOVE;
 	name.client_ord = 0;
-	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == 0) {
+	if ((error = sam_lookup_name(pip, cp, flag, &ip, &name, credp)) == 0) {
 		ino = ip->di.id.ino;
 
 		/* Entry exists, remove it. */
@@ -724,7 +726,7 @@ lookup_name:
 
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_LINK;
-	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == ENOENT) {
+	if ((error = sam_lookup_name(pip, cp, flag, &ip, &name, credp)) == ENOENT) {
 		/* Entry does not exist, link it. */
 		ip = SAM_VTOI(vp);
 		ino = ip->di.id.ino;
@@ -905,7 +907,7 @@ lookup_name:
 
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_MKDIR;
-	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == ENOENT) {
+	if ((error = sam_lookup_name(pip, cp, flag, &ip, &name, credp)) == ENOENT) {
 		if (((error = sam_create_name(pip, cp, &ip,
 		    &name, vap, credp)) != 0) &&
 		    IS_SAM_ENOSPC(error)) {
@@ -1014,7 +1016,7 @@ sam_rmdir_vn(
 	name.operation = SAM_RMDIR;
 	name.client_ord = 0;
 	ip = NULL;
-	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == 0) {
+	if ((error = sam_lookup_name(pip, cp, flag, &ip, &name, credp)) == 0) {
 		/*
 		 * Entry exists.  Check the locking order.
 		 */
@@ -1026,7 +1028,7 @@ go_fish:
 			sam_dlock_two(pip, ip, RW_WRITER);
 			bzero(&name, sizeof (name));
 			name.operation = SAM_RMDIR;
-			if ((error = sam_lookup_name(pip, cp,
+			if ((error = sam_lookup_name(pip, cp, flag,
 			    &ip2, &name, credp))) {
 				/*
 				 * Entry was removed while the lock
@@ -1145,7 +1147,7 @@ lookup_name:
 #endif /* LQFS_TODO_LOCKFS */
 	RW_LOCK_OS(&pip->data_rwl, RW_WRITER);
 	name.operation = SAM_CREATE;
-	if ((error = sam_lookup_name(pip, cp, &ip, &name, credp)) == ENOENT) {
+	if ((error = sam_lookup_name(pip, cp, flag, &ip, &name, credp)) == ENOENT) {
 		if (((error = sam_create_name(pip, cp, &ip, &name, vap, credp))
 		    != 0) && IS_SAM_ENOSPC(error)) {
 			RW_UNLOCK_OS(&pip->data_rwl, RW_WRITER);
@@ -1201,7 +1203,7 @@ lookup_name:
 
 				name.operation = SAM_REMOVE;
 				name.client_ord = 0;
-				if (sam_lookup_name(pip, cp, &xip,
+				if (sam_lookup_name(pip, cp, flag, &xip,
 				    &name, credp) == 0) {
 					ASSERT(ip == xip);
 					(void) sam_remove_name(pip, cp, ip,

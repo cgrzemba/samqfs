@@ -219,6 +219,8 @@ static struct fieldFlag mp_sam_db = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_nosam_db = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_xattr = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_noxattr = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_ci = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_noci = { (uint32_t)B_TRUE, "off", "on", "off" };
 static int mount_params_defbits;
 
 static struct fieldVals cfg_mount_params[] = {
@@ -557,6 +559,18 @@ static struct fieldVals cfg_mount_params[] = {
 { "xattr", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
 	offsetof(struct rel_5_0_options, xattr), &mp_noxattr,
 	MNT_NOXATTR},
+
+/* 5.64 opts defbits line */
+{ "", DEFBITS, offsetof(struct mount_options, rel_5_64_opts) +
+	offsetof(struct rel_5_64_options, change_flag),
+	&mount_params_defbits, },
+{ "ci", SETFLAG, offsetof(struct mount_options, rel_5_64_opts) +
+	offsetof(struct rel_5_64_options, casesense), &mp_ci,
+	MNT_CI},
+{ "noci", CLEARFLAG, offsetof(struct mount_options, rel_5_64_opts) +
+	offsetof(struct rel_5_64_options, casesense), &mp_noci,
+	MNT_NOCI},
+
 { NULL }
 };
 
@@ -610,7 +624,11 @@ static int32_t flag_pairs[110] = {
 	/* release 5.0 mount options */
 	0, 0, 0, 0, 0,
 	MNT_NOLOGGING, MNT_LOGGING, MNT_NOSAM_DB, MNT_SAM_DB, MNT_NOXATTR,
-	MNT_XATTR
+	MNT_XATTR,
+
+	/* release 5.64 mount options */
+	0,
+	MNT_CI, MNT_NOCI
 };
 
 
