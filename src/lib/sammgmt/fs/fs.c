@@ -1651,6 +1651,9 @@ fs_t *f)				/* IN/OUT - filled fs_t */
 	mnt_options->rel_5_0_opts.xattr =
 	    (fi->fi_config1 & MC_NOXATTR) ? B_FALSE : B_TRUE;
 
+	/* release 5.64 options */
+	mnt_options->rel_5_64_opts.casesense =
+	    (fi->fi_config1 & MC_CI) ? B_TRUE : B_FALSE;
 	f->mount_options = mnt_options;
 
 	Trace(TR_MISC, "fill mount options done");

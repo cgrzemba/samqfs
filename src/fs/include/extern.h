@@ -207,7 +207,7 @@ int sam_check_zerodirblk(sam_node_t *pip, char *cp, sam_u_offset_t offset);
 
 /* lookup.c function prototypes. */
 
-int sam_lookup_name(sam_node_t *pip, char *cp, sam_node_t **ipp,
+int sam_lookup_name(sam_node_t *pip, char *cp, int flags, sam_node_t **ipp,
 		struct sam_name *namep, cred_t *credp);
 void sam_invalidate_dnlc(vnode_t *vp);
 int sam_validate_dir_blk(sam_node_t *pip, offset_t offset, int bsize,

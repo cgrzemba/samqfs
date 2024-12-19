@@ -1106,7 +1106,7 @@ sam_quota_init(sam_mount_t *mp)
 			error = sam_client_lookup_name(dip, quota_files[i],
 			    0, 0, &ip, CRED());
 		} else {
-			error = sam_lookup_name(dip, quota_files[i], &ip, NULL,
+			error = sam_lookup_name(dip, quota_files[i], 0, &ip, NULL,
 			    CRED());
 		}
 		if (error) {

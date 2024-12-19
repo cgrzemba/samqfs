@@ -203,6 +203,14 @@ typedef struct rel_5_0_options {
 } rel_5_0_options_t;
 
 /*
+ * post 5.0 mount options structure.
+ */
+typedef struct rel_5_64_options {
+	uint32_t	change_flag;
+	boolean_t	casesense;	/* casesensitivity */
+} rel_5_64_options_t;
+
+/*
  * Mount options of a file system.
  */
 typedef struct mount_options {
@@ -248,6 +256,9 @@ typedef struct mount_options {
 
 	/* 5.0 mount options */
 	rel_5_0_options_t	rel_5_0_opts;
+
+	/* 5.64 mount options */
+	rel_5_64_options_t	rel_5_64_opts;
 
 } mount_options_t;
 
@@ -1197,5 +1208,8 @@ void free_list_of_samfsck_info(sqm_lst_t *info_list);
 #define	CLR_XATTR		0x03000300
 #define	CLR_NOXATTR		0x03000300
 
+/* rel_5_64_options_t change_flags */
+#define	MNT_CI			0x00000001	/* casesensitivity */
+#define	MNT_NOCI		0x00000002
 
 #endif	/* _FILESYSTEM_H */
