@@ -139,7 +139,7 @@ static struct {
 	{ "rearch",	"ac:fm:Morv:",	ChgArch,	rearch },
 	{ "undamage",	"c:fm:Mrv:",	ChgArch,	undamage },
 	{ "unrearch",	"c:fm:Mrv:",	ChgArch,	unrearch },
-	{ "setfa",	"A:BDdfg:h:l:L:o:qrs:v:V",	Setfa,	sam_setfa },
+	{ "setfa",	"A:BDdfg:h:iIl:L:o:qrs:v:V",	Setfa,	sam_setfa },
 	{ "segment",	"dfl:rs:V",		Segment,	sam_segment },
 };
 int n_cmd_table_entries = sizeof (cmd_table)/sizeof (cmd_table[0]);

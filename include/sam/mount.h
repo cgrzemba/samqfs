@@ -224,6 +224,8 @@ struct sam_fs_info {	/* File system information */
 
 #define	MC_SAM_DB	0x00001000	/* SAM DB enabled in this filesystem */
 #define	MC_NOXATTR	0x00002000	/* Extended attributes disabled */
+#define	MC_CI		0x00004000      /* file names case insensitive */
+#define	MC_CI_MIXED	0x00008000      /* file names case sensitive mixed */
 
 
 /* Collection of fi_status flags which are failover flags */

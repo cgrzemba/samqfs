@@ -591,6 +591,17 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 					}
 				}
 				break;
+			case 'i':
+				vnode_t *vpi = SAM_ITOV(ip);
+				/* feature will allways set for the whole filesystem */
+				vfs_set_feature(vpi->v_vfsp, VFSFT_CASEINSENSITIVE);
+				ip->flags.b.ci = 1;
+				break;
+			case 'I':
+				vnode_t *vpI = SAM_ITOV(ip);
+				vfs_set_feature(vpI->v_vfsp, ~VFSFT_CASEINSENSITIVE);
+				ip->flags.b.ci = 0;
+				break;
 			case 'l':
 				if (SAM_IS_OBJECT_FS(mp)) {
 					error = EINVAL;
