@@ -368,11 +368,11 @@ pblock_t *pp)
 	/*
 	 * Initialize the control structure.
 	 */
-	mutex_init(&control.queue_lock, NULL, NULL);
-	mutex_init(&control.queue_full_lock, NULL, NULL);
-	cond_init(&control.queue_not_empty, NULL, NULL);
-	cond_init(&control.queue_not_full, NULL, NULL);
-	cond_init(&control.queue_empty, NULL, NULL);
+	mutex_init(&control.queue_lock, 0, NULL);
+	mutex_init(&control.queue_full_lock, 0, NULL);
+	cond_init(&control.queue_not_empty, 0, NULL);
+	cond_init(&control.queue_not_full, 0, NULL);
+	cond_init(&control.queue_empty, 0, NULL);
 	control.queue_size = 0;
 	control.shutdown = 0;
 
@@ -381,7 +381,7 @@ pblock_t *pp)
 	 */
 	for (t = 0; t < pp->write_threads; t++) {
 		control.thr[t].num = t;
-		if (thr_create(NULL, NULL, worker_thread,
+		if (thr_create(NULL, 0, worker_thread,
 		    (void *)&control.thr[t],
 		    THR_BOUND, (void *)&control.thr[t].tid)) {
 			perror("main: thr_create:");
@@ -422,7 +422,7 @@ pblock_t *pp)
 		if (pp->write_threads < pp->read_threads) {
 			for (t = pp->write_threads; t < pp->read_threads; t++) {
 				control.thr[t].num = t;
-				if (thr_create(NULL, NULL, worker_thread,
+				if (thr_create(NULL, 0, worker_thread,
 				    (void *)&control.thr[t],
 				    THR_BOUND, (void *)&control.thr[t].tid)) {
 					perror("main: thr_create:");
@@ -486,7 +486,7 @@ int type)
 				return (1);
 			}
 		}
-		mutex_init(&work[i].work_lock, NULL, NULL);
+		mutex_init(&work[i].work_lock, 0, NULL);
 		work[i].num = i;	/* Work number */
 		work[i].busy = 0;	/* Request is busy doing I/O */
 		if (type == WRITE) {

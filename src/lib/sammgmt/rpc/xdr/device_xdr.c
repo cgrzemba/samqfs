@@ -110,7 +110,7 @@ au_t *objp)
 		return (FALSE);
 	if (!xdr_au_type_t(xdrs, &objp->type))
 		return (FALSE);
-	if (!xdr_dsize_t(xdrs, &objp->capacity))
+	if (!xdr_dsize_t(xdrs, (uint64_t *)&objp->capacity))
 		return (FALSE);
 	if (!xdr_uname_t(xdrs, objp->fsinfo))
 		return (FALSE);

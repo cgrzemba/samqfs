@@ -141,7 +141,7 @@ sam_lookup_name(
 		return (ENOTDIR);
 	}
 	/* Execute access required to search a directory */
-	if (error = sam_access_ino(pip, S_IEXEC, FALSE, credp)) {
+	if ((error = sam_access_ino(pip, S_IEXEC, FALSE, credp))) {
 		return (error);
 	}
 	/*
@@ -699,7 +699,7 @@ restart:
 						    offset + in;
 						namep->data.slot.reclen =
 						    dp->d_reclen;
-						namep->slot_handle = NULL;
+						namep->slot_handle = 0;
 						if (found_ednlc_entry &&
 						    ednlc_in == in) {
 							namep->slot_handle =

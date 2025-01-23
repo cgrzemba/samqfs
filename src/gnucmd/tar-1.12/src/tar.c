@@ -88,7 +88,7 @@ check_decimal (const char *string)
       default:
 	return -1;
       }
-    return value;
+  return value;
 }
 
 /*----------------------------------------------.
@@ -535,12 +535,13 @@ decode_options (int argc, char *const *argv)
 	  buffer[1] = *letter;
 	  *out++ = xstrdup (buffer);
 	  cursor = strchr (OPTION_STRING, *letter);
-	  if (cursor && cursor[1] == ':')
+	  if (cursor && (cursor[1] == ':')) {
 	    if (in < argv + argc)
 	      *out++ = *in++;
 	    else
 	      USAGE_ERROR ((0, 0, _("Old option `%c' requires an argument."),
 			    *letter));
+	  }
 	}
 
       /* Copy all remaining options.  */
@@ -852,11 +853,12 @@ decode_options (int argc, char *const *argv)
 	break;
 
       case GROUP_OPTION:
-	if (!gname_to_gid (optarg, &group_option))
-	  if (!check_decimal (optarg) >= 0)
+	if (!gname_to_gid (optarg, &group_option)) {
+	  if (check_decimal(optarg) < 0)
 	    ERROR ((TAREXIT_FAILURE, 0, _("Invalid group given on option")));
 	  else
 	    group_option = check_decimal (optarg);
+	}
 	break;
 
       case MODE_OPTION:
@@ -878,11 +880,12 @@ decode_options (int argc, char *const *argv)
 	break;
 
       case OWNER_OPTION:
-	if (!uname_to_uid (optarg, &owner_option))
-	  if (!check_decimal (optarg) >= 0)
+	if (!uname_to_uid (optarg, &owner_option)) {
+	  if (check_decimal (optarg) < 0)
 	    ERROR ((TAREXIT_FAILURE, 0, _("Invalid owner given on option")));
 	  else
 	    owner_option = check_decimal (optarg);
+	}
 	break;
 
       case POSIX_OPTION:

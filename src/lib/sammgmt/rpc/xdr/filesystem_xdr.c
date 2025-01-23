@@ -80,11 +80,11 @@ io_mount_options_t *objp)
 		return (FALSE);
 	if (!xdr_int(xdrs, &objp->flush_behind))
 		return (FALSE);
-	if (!xdr_int64_t(xdrs, &objp->readahead))
+	if (!xdr_int64_t(xdrs, (int64_t *)&objp->readahead))
 		return (FALSE);
-	if (!xdr_int64_t(xdrs, &objp->writebehind))
+	if (!xdr_int64_t(xdrs, (int64_t *)&objp->writebehind))
 		return (FALSE);
-	if (!xdr_int64_t(xdrs, &objp->wr_throttle))
+	if (!xdr_int64_t(xdrs, (int64_t *)&objp->wr_throttle))
 		return (FALSE);
 	if (!xdr_boolean_t(xdrs, &objp->forcenfsasync))
 		return (FALSE);
@@ -140,9 +140,9 @@ sharedfs_mount_options_t *objp)
 		return (FALSE);
 	if (!xdr_int16_t(xdrs, &objp->retry))
 		return (FALSE);
-	if (!xdr_int64_t(xdrs, &objp->minallocsz))
+	if (!xdr_int64_t(xdrs, (int64_t *)&objp->minallocsz))
 		return (FALSE);
-	if (!xdr_int64_t(xdrs, &objp->maxallocsz))
+	if (!xdr_int64_t(xdrs, (int64_t *)&objp->maxallocsz))
 		return (FALSE);
 	if (!xdr_int(xdrs, &objp->rdlease))
 		return (FALSE);
@@ -470,13 +470,13 @@ samfsck_info_t *objp)
 		return (FALSE);
 	if (!xdr_uname_t(xdrs, objp->user))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->pid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->pid))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->ppid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->ppid))
 		return (FALSE);
 	if (!xdr_int(xdrs, &objp->pri))
 		return (FALSE);
-	if (!xdr_size_t(xdrs, &objp->size))
+	if (!xdr_size_t(xdrs, (uint_t *)&objp->size))
 		return (FALSE);
 	if (!xdr_time_t(xdrs, &objp->stime))
 		return (FALSE);

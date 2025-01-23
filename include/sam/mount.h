@@ -65,8 +65,8 @@
  */
 struct sam_fs_info {	/* File system information */
 	uname_t	fi_name;	/* file system name */
-	short	fs_count;	/* number of family set members */
-	short	mm_count;	/* number of meta set members */
+	int16_t	fs_count;	/* number of family set members */
+	int16_t	mm_count;	/* number of meta set members */
 	uint32_t fi_config;	/* config flags (SETFLAG/CLEARFLAG/FLAG) */
 	uint32_t fi_config1;	/* more config flags (mostly derived) */
 	equ_t	fi_eq;		/* equipment number */

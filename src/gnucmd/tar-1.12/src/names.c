@@ -71,7 +71,8 @@ uid_to_uname (uid_t uid, char uname[UNAME_FIELD_SIZE])
       if (passwd)
 	{
 	  cached_uid = uid;
-	  strncpy (cached_uname, passwd->pw_name, UNAME_FIELD_SIZE);
+	  strncpy (cached_uname, passwd->pw_name, UNAME_FIELD_SIZE-1);
+	  cached_uname[UNAME_FIELD_SIZE-1] = '\0';
 	}
       else
 	*uname = '\0';
@@ -95,7 +96,8 @@ gid_to_gname (gid_t gid, char gname[GNAME_FIELD_SIZE])
       if (group)
 	{
 	  cached_gid = gid;
-	  strncpy (cached_gname, group->gr_name, GNAME_FIELD_SIZE);
+	  strncpy (cached_gname, group->gr_name, GNAME_FIELD_SIZE-1);
+	  cached_gname[GNAME_FIELD_SIZE-1] = '\0';
 	}
       else
 	*gname = '\0';
@@ -120,7 +122,8 @@ uname_to_uid (char uname[UNAME_FIELD_SIZE], uid_t *uidp)
       if (passwd)
 	{
 	  cached_uid = passwd->pw_uid;
-	  strncpy (cached_uname, uname, UNAME_FIELD_SIZE);
+	  strncpy (cached_uname, uname, UNAME_FIELD_SIZE-1);
+	  cached_uname[UNAME_FIELD_SIZE-1] = '\0';
 	}
       else
 	return 0;
@@ -146,7 +149,8 @@ gname_to_gid (char gname[GNAME_FIELD_SIZE], gid_t *gidp)
       if (group)
 	{
 	  cached_gid = group->gr_gid;
-	  strncpy (cached_gname, gname, GNAME_FIELD_SIZE);
+	  strncpy (cached_gname, gname, GNAME_FIELD_SIZE-1);
+	  cached_gname[GNAME_FIELD_SIZE-1] = '\0';
 	}
       else
 	return 0;
@@ -484,12 +488,12 @@ addname (const char *string)
   memset (name, 0, sizeof (struct name) + length);
   name->next = NULL;
 
-  if (string)
+  if (length>0)
     {
       name->fake = 0;
       name->length = length;
       /* FIXME: Possibly truncating a string, here?  Tss, tss, tss!  */
-      strncpy (name->name, string, (size_t) length);
+      strncpy (name->name, string, (size_t) length-1);
       name->name[length] = '\0';
     }
   else

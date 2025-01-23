@@ -2235,11 +2235,12 @@ regex_compile (pattern, size, syntax, bufp)
 	    case ')':
 	      if (syntax & RE_NO_BK_PARENS) goto normal_backslash;
 
-	      if (COMPILE_STACK_EMPTY)
+	      if (COMPILE_STACK_EMPTY) {
 		if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
 		  goto normal_backslash;
 		else
 		  FREE_STACK_RETURN (REG_ERPAREN);
+	    }
 
 	    handle_close:
 	      if (fixup_alt_jump)
@@ -2255,11 +2256,12 @@ regex_compile (pattern, size, syntax, bufp)
 		}
 
 	      /* See similar code for backslashed left paren above.  */
-	      if (COMPILE_STACK_EMPTY)
+	      if (COMPILE_STACK_EMPTY) {
 		if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
 		  goto normal_char;
 		else
 		  FREE_STACK_RETURN (REG_ERPAREN);
+	      }
 
 	      /* Since we just checked for an empty stack above, this
 		 ``can't happen''.  */
@@ -3531,7 +3533,7 @@ re_match (bufp, string, size, pos, regs)
 {
   int result = re_match_2_internal (bufp, NULL, 0, string, size,
 				    pos, regs, size);
-  alloca (0);
+  void *vp = alloca (0);
   return result;
 }
 #endif /* not emacs */
@@ -3561,7 +3563,7 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 {
   int result = re_match_2_internal (bufp, string1, size1, string2, size2,
 				    pos, regs, stop);
-  alloca (0);
+  void *vp = alloca (0);
   return result;
 }
 

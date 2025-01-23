@@ -222,7 +222,7 @@ int orphan_inumber = 0;
 int orphan_full = 0;				/* lost+found full flag */
 
 sam_mount_info_t mnt_info;	/* Mount info from mcf file */
-int fs_count = -1;		/* Number of partition in the filesystem */
+short fs_count = SHRT_MAX;	/* Number of partition in the filesystem */
 
 
 #define	SM_INOCOUNT	3
@@ -489,6 +489,7 @@ void
 main(int argc, char **argv)
 {
 	int err;
+	time_t currtime;
 
 	CustmsgInit(0, NULL);
 	program_name = basename(argv[0]);
@@ -500,7 +501,8 @@ main(int argc, char **argv)
 
 	/* Configure file system if neeeded. */
 	ChkFs();
-	time(&fstime);		/* File system init time */
+	time(&currtime);		/* File system init time */
+	fstime = currtime & INT_MAX;	/* fix until Y2028! */
 
 	/* Set-up signal handling. */
 	sig_action.sa_handler = catch_signals;
@@ -4080,9 +4082,9 @@ read_sys_inodes()
 	if ((sblk_version <= SAM_INODE_VERS_2 &&
 	    (inode_ino->di.version != sblk_version) &&
 	    (block_ino->di.version != sblk_version)) ||
-	    (sblk_version == SAM_INODE_VERSION &&
+	    ((sblk_version == SAM_INODE_VERSION &&
 	    (inode_ino->di.version != sblk_version &&
-	    inode_ino->di.version != (sblk_version-1)) ||
+	    inode_ino->di.version != (sblk_version-1))) ||
 	    (block_ino->di.version != sblk_version &&
 	    block_ino->di.version != (sblk_version-1)))) {
 		error(0, 0,
@@ -4501,7 +4503,7 @@ write_sys_inodes()
 	dp->di.free_ino = inode_ino->di.free_ino;
 
 	/* Update last repair time in .inodes residence time */
-	dp->di.residence_time = (uint32_t)fstime;
+	dp->di.residence_time = fstime;
 	put_inode(SAM_INO_INO, dp);
 
 	/* lost+found directory inode may have changed */
@@ -7623,7 +7625,7 @@ verify_hdr_validation(
 	}
 	if (dvp->v_time &&
 	    ((dvp->v_time < nblock.info.sb.init) ||
-	    (dvp->v_time > (uint32_t)fstime))) {
+	    (dvp->v_time > fstime))) {
 		/*
 		 * Just warn for now
 		 *
@@ -7640,7 +7642,7 @@ verify_hdr_validation(
 			printf("DEBUG:  \t . time=0x%x .lt. sblock=0x%x or\n",
 			    dvp->v_time, sblock.info.sb.init);
 			printf("DEBUG:  \t . time=0x%x .gt. now=0x%x\n",
-			    dvp->v_time, (uint32_t)fstime);
+			    dvp->v_time, fstime);
 		}
 		/*
 		 * Just warn for now

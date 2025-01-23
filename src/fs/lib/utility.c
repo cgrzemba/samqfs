@@ -313,7 +313,7 @@ close_devices(
 
 	fs_count = mp->params.fs_count;
 	for (i = 0; i < fs_count; i++, dp++) {
-		if (is_osd_group(dp->type) && (dp->oh != NULL)) {
+		if (is_osd_group(dp->type) && (dp->oh != 0)) {
 			r = close_obj_device(dp->eq_name, dp->filemode, dp->oh);
 		}
 		if (!is_osd_group(dp->type) && (dp->fd > 0)) {

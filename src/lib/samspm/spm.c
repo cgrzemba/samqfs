@@ -286,7 +286,7 @@ spm_query_services(char *host, struct spm_query_info **result,
 	} else {
 		*result = (struct spm_query_info *)NULL;
 		s = response_text + 1;
-		while (n = strchr(s, '\n')) {
+		while ((n = strchr(s, '\n'))) {
 			*n = '\0';
 			if ((sqi = (struct spm_query_info *)
 			    malloc(sizeof (struct spm_query_info))) == NULL) {

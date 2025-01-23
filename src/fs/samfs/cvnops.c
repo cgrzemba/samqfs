@@ -1048,7 +1048,7 @@ sam_ioctl_vn(
 		return (error);
 	}
 
-	TRACE(T_SAM_IOCTL, (sam_tr_t)vp, (sam_tr_t)ip->rdev, cmd, (sam_tr_t)p);
+	TRACE(T_SAM_IOCTL, vp, (sam_tr_t)ip->rdev, cmd, (sam_tr_t)p);
 	switch (type) {
 
 	case 'u':		/* Miscellaneous archiver utility commands. */
@@ -1239,7 +1239,7 @@ sam_getattr_vn(
 	}
 	vap->va_blksize = LG_BLK(ip->mp, DD);	/* Block size in bytes */
 	/* # of DEV_BSIZE (512-byte) blocks allocated */
-	vap->va_nblocks = (u_longlong_t)((uint32_t)ip->di.blocks) *
+	vap->va_nblocks = (u_longlong_t)ip->di.blocks *
 	    (u_longlong_t)(SAM_BLK/DEV_BSIZE);
 
 #if defined(AT_SEQ)
@@ -1317,7 +1317,7 @@ sam_readdir_vn(
 	offset_t offset = uiop->uio_offset;
 
 	TRACE(T_SAM_READDIR, vp, (sam_tr_t)uiop->uio_offset,
-	    (uint_t)uiop->uio_iov->iov_len, (uint_t)credp);
+	    (uint_t)uiop->uio_iov->iov_len, (sam_tr_t)credp);
 	ip = SAM_VTOI(vp);
 #ifdef METADATA_SERVER
 	if (SAM_IS_SHARED_READER(ip->mp)) {
@@ -2725,13 +2725,13 @@ sam_proc_listio(
 			return (EFAULT);
 		}
 
-		callp->listio.wait_handle = (void *)listio32.wait_handle;
+		callp->listio.wait_handle = (void *)(long)listio32.wait_handle;
 		callp->listio.mem_list_count = listio32.mem_list_count;
-		callp->listio.mem_addr = (void **)listio32.mem_addr;
-		callp->listio.mem_count = (size_t *)listio32.mem_count;
+		callp->listio.mem_addr = (void **)(long)listio32.mem_addr;
+		callp->listio.mem_count = (size_t *)(long)listio32.mem_count;
 		callp->listio.file_list_count = listio32.file_list_count;
-		callp->listio.file_off = (offset_t *)listio32.file_off;
-		callp->listio.file_len = (offset_t *)listio32.file_len;
+		callp->listio.file_off = (offset_t *)(long)listio32.file_off;
+		callp->listio.file_len = (offset_t *)(long)listio32.file_len;
 		callp->mem_cnt = callp->listio.mem_list_count;
 		callp->file_cnt = callp->listio.file_list_count;
 
@@ -2750,7 +2750,7 @@ sam_proc_listio(
 			mem_addr32 = (caddr32_t *)kmem_alloc(
 			    (sizeof (caddr32_t) * callp->listio.mem_list_count),
 			    KM_SLEEP);
-			if (copyin((caddr_t)listio32.mem_addr, mem_addr32,
+			if (copyin((caddr_t)(long)listio32.mem_addr, mem_addr32,
 			    (sizeof (caddr32_t) * listio32.mem_list_count))) {
 				err = EFAULT;
 				break;
@@ -2762,7 +2762,7 @@ sam_proc_listio(
 			mem_count32 = (uint32_t *)kmem_alloc(
 			    (sizeof (uint32_t) * callp->listio.mem_list_count),
 			    KM_SLEEP);
-			if (copyin((caddr_t)listio32.mem_count, mem_count32,
+			if (copyin((caddr_t)(long)listio32.mem_count, mem_count32,
 			    (sizeof (uint32_t) * listio32.mem_list_count))) {
 				err = EFAULT;
 				break;
@@ -2772,7 +2772,7 @@ sam_proc_listio(
 			    KM_SLEEP);
 
 			for (i = 0; i < callp->listio.mem_list_count; i++) {
-				callp->mem_addr[i] = (caddr_t)mem_addr32[i];
+				callp->mem_addr[i] = (caddr_t)(long)mem_addr32[i];
 				callp->mem_count[i] = mem_count32[i];
 			}
 		} while (0) /*CONSTCOND*/;

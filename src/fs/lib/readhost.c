@@ -342,7 +342,7 @@ hostLine(void)
 
 
 int
-SamStoreHosts(struct sam_host_table *ht, int size, char ***tabd, int gen)
+SamStoreHosts(struct sam_host_table *ht, size_t size, char ***tabd, int gen)
 {
 	char *buf = (char *)ht;
 	char *b;
@@ -973,7 +973,7 @@ GetRawDevName(char *fs, ushort_t ord)
 	for (j = k = 0; k < n; j++, k++) {
 		rdevname[j] = devname[k];
 		if (strncmp(&devname[k], "/dsk/", 5) == 0) {
-			strncpy(&rdevname[j], "/rdsk/", 6);
+			memcpy(&rdevname[j], "/rdsk/", 6);
 			k += 4;
 			j += 5;
 		}

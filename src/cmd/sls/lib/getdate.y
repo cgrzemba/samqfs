@@ -134,6 +134,7 @@ extern struct tm	*localtime();
 #define yylex getdate_yylex
 #define yyerror getdate_yyerror
 
+int yyparse ();
 static int yylex ();
 static int yyerror ();
 

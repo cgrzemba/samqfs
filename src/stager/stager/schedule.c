@@ -1279,7 +1279,7 @@ requeueWork(
 					    (int)stream);
 					stream->flags = 0;
 					stream->pid = 0;
-					stream->context = NULL;
+					stream->context = 0;
 					stream->priority = SP_start;
 				}
 			}

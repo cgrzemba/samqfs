@@ -229,7 +229,7 @@ process_req(
 
 			client->flags.bits |= CLIENT_VSN_LIST;
 
-			if (thr_create(NULL, NULL, send_vsn_list,
+			if (thr_create(NULL, 0, send_vsn_list,
 			    (void *) client,
 			    (THR_DETACHED | THR_BOUND | THR_NEW_LWP), NULL)) {
 

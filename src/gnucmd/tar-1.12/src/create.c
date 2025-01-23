@@ -368,7 +368,7 @@ Removing leading `/' from absolute path names in the archive")));
     case POSIX_FORMAT:
     case GNU_FORMAT:
       strncpy (header->header.magic, TMAGIC, TMAGLEN);
-      strncpy (header->header.version, TVERSION, TVERSLEN);
+      memcpy(header->header.version, TVERSION, TVERSLEN);
       break;
     }
 

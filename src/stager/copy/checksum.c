@@ -259,7 +259,7 @@ ChecksumCompare(
 			    id->ino, id->gen, (u_longlong_t)pi.di.rm.size,
 			    checksum->seed);
 			cs_repair((uchar_t *)&pi.csum.csum_val[0],
-			    &checksum->seed);
+			    (uint64_t *)&checksum->seed);
 			for (i = 0; i < 4; i++) {
 				if (pi.csum.csum_val[i] !=
 				    checksum->val.csum_val[i]) {
@@ -333,7 +333,7 @@ checksumWorker(
 		if (checksum->is_initialized == B_FALSE) {
 			if (checksum->algo & CS_USER_BIT) {
 				checksum->func = cs_user;
-				cs_user(&checksum->seed, checksum->algo, 0, 0,
+				cs_user((uint64_t *)&checksum->seed, checksum->algo, 0, 0,
 				    &checksum->val);
 			} else {
 				checksum->func = csum[checksum->algo];

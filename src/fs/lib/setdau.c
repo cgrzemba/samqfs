@@ -74,8 +74,8 @@
 void
 sam_set_dau(
 	sam_dau_t *dau,
-	int	sm_kblocks,
-	int	lg_kblocks)
+	uint_t sm_kblocks,
+	uint_t lg_kblocks)
 {
 	int bt, j, shift, value;
 

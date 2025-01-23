@@ -360,7 +360,7 @@ remove_any_file (const char *path, int recurse)
   if (L_LSTAT (path, &stat_buffer) < 0)
     return 0;
 
-  if (S_ISDIR (stat_buffer.st_mode))
+  if (S_ISDIR (stat_buffer.st_mode)) {
     if (recurse)
       {
 	DIR *dirp = opendir (path);
@@ -387,6 +387,7 @@ remove_any_file (const char *path, int recurse)
 	closedir (dirp);
 	return rmdir (path) >= 0;
       }
+    }
     else
       {
 	/* FIXME: Saving errno might not be needed anymore, now that

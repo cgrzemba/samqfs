@@ -89,9 +89,9 @@ GLOBAL int exit_status;
   (error Args, exit_status = TAREXIT_FAILURE)
 #define FATAL_ERROR(Args) \
   (error Args, error (TAREXIT_FAILURE, 0, \
-		      _("Error is not recoverable: exiting now")), 0)
+		      _("Error is not recoverable: exiting now")))
 #define USAGE_ERROR(Args) \
-  (error Args, usage (TAREXIT_FAILURE), 0)
+  (error Args, usage (TAREXIT_FAILURE))
 
 /* Information gleaned from the command line.  */
 

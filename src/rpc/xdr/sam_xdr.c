@@ -94,7 +94,7 @@ xdr_samcopy(
 		return (FALSE);
 	if (!xdr_short(xdrs, &objp->n_vsns))
 		return (FALSE);
-	if (!xdr_u_int(xdrs, &objp->creation_time))
+	if (!xdr_u_int(xdrs, (uint_t*)&objp->creation_time))
 		return (FALSE);
 	if (!xdr_uint64_t(xdrs, &objp->position))
 		return (FALSE);

@@ -217,7 +217,7 @@ get_file_time(int32_t which_cfg, time_t *t) {
 
 /* globals required for server init */
 
-extern char *program_name = NULL;
+/* char *program_name = NULL; */
 
 /*
  *  Initialize all variables and infrastructure pieces required

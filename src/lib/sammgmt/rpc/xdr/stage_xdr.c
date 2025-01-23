@@ -187,7 +187,7 @@ stager_stream_t *objp)
 		return (FALSE);
 	if (!xdr_vsn_t(xdrs, objp->vsn))
 		return (FALSE);
-	if (!xdr_size_t(xdrs, &objp->count))
+	if (!xdr_size_t(xdrs, (uint_t *)&objp->count))
 		return (FALSE);
 	if (!xdr_time_t(xdrs, &objp->create))
 		return (FALSE);
@@ -263,7 +263,7 @@ staging_file_info_t *objp)
 		return (FALSE);
 	if (!xdr_upath_t(xdrs, objp->filename))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->pid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->pid))
 		return (FALSE);
 	if (!xdr_uname_t(xdrs, objp->user))
 		return (FALSE);

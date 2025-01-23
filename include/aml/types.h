@@ -171,14 +171,14 @@ typedef enum todo_sub {
 #define	SAM_ROOT_LEVEL(x) (x.gid == SAM_ROOT)
 #define	SAM_OPER_LEVEL(x) (x.gid < SAM_USER)
 
-#define	SAM_OPER_LABEL(x) (x.gid == 0 || x.gid == SAM_OPER && x.priv.label)
-#define	SAM_OPER_SLOT(x) (x.gid == 0 || x.gid == SAM_OPER && x.priv.slot)
+#define	SAM_OPER_LABEL(x) (x.gid == 0 || (x.gid == SAM_OPER && x.priv.label))
+#define	SAM_OPER_SLOT(x) (x.gid == 0 || (x.gid == SAM_OPER && x.priv.slot))
 #define	SAM_OPER_FULLAUDIT(x) (x.gid == 0 || \
-	x.gid == SAM_OPER && x.priv.fullaudit)
-#define	SAM_OPER_STATE(x) (x.gid == 0 || x.gid == SAM_OPER && x.priv.state)
-#define	SAM_OPER_CLEAR(x) (x.gid == 0 || x.gid == SAM_OPER && x.priv.clear)
-#define	SAM_OPER_OPTIONS(x) (x.gid == 0 || x.gid == SAM_OPER && x.priv.options)
-#define	SAM_OPER_REFRESH(x) (x.gid == 0 || x.gid == SAM_OPER && x.priv.refresh)
+	(x.gid == SAM_OPER && x.priv.fullaudit))
+#define	SAM_OPER_STATE(x) (x.gid == 0 || (x.gid == SAM_OPER && x.priv.state))
+#define	SAM_OPER_CLEAR(x) (x.gid == 0 || (x.gid == SAM_OPER && x.priv.clear))
+#define	SAM_OPER_OPTIONS(x) (x.gid == 0 || (x.gid == SAM_OPER && x.priv.option))
+#define	SAM_OPER_REFRESH(x) (x.gid == 0 || (x.gid == SAM_OPER && x.priv.refresh))
 
 typedef struct {
 	gid_t gid;

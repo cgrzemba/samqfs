@@ -135,7 +135,7 @@ void Mvprintw(int y, int x, char *fmt, /* arg */ ...);
 void Printw(char *fmt, /* arg */ ...);
 
 /* Function Macros. */
-#define	SHM_ADDR(a, x) (void *)((char *)a.shared_memory + (int)(x))
+#define	SHM_ADDR(a, x) (void *)((char *)a.shared_memory + (long)(x))
 #define	numof(a) (sizeof (a)/sizeof (*(a))) /* Number of elements in array a */
 
 /* Shared data. */

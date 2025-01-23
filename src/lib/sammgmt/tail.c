@@ -182,7 +182,7 @@ char **data)
 	 * lines that were requested. Saved pointers point to the
 	 * end of each line.
 	 */
-	while (cur = read_previous_line(cur, cmap)) {
+	while ((cur = read_previous_line(cur, cmap))) {
 		/* save a pointer to the line */
 		lines[curline] = cur;
 		lncnt++;

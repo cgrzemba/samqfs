@@ -87,15 +87,15 @@ typedef struct sam_dau_tbl {
 
 DCL char *program_name;			/* Program name: used by error */
 DCL uname_t	fs_name;		/* Filesystem name */
-DCL time_t fstime;			/* File system initialize time */
+DCL sam_time_t fstime;			/* File system initialize time */
 DCL struct d_list *devp;		/* Points to device list */
 DCL struct sam_sblk sblock;		/* Superblock buffer */
 DCL sam_dau_tbl_t	dau_tbl;	/* Table for dau parameters */
 DCL sam_dau_tbl_t *mp IVAL(&dau_tbl);
 DCL char *dcp;				/* Large block (DD) temp space */
 DCL char *first_sm_blk;			/* First block of initial .inodes */
-DCL int mm_count;			/* Cnt of meta devices in filesystem */
-DCL int mm_ord;				/* Ordinal of meta device in fs */
+DCL short mm_count;			/* Cnt of meta devices in filesystem */
+DCL short mm_ord;				/* Ordinal of meta device in fs */
 DCL char *dir_blk;			/* Directory block */
 DCL char *ibufp;			/* Large block (dd) temp space */
 
@@ -110,7 +110,7 @@ DCL int *bio_buffer;
 
 DCL	int	verbose IVAL(0);
 
-extern void sam_set_dau(sam_dau_t *dau, int lg_kblocks, int sm_kblocks);
+extern void sam_set_dau(sam_dau_t *dau, uint_t lg_kblocks, uint_t sm_kblocks);
 
 int chk_devices(char *fs_name, int oflags, struct sam_mount_info *mp);
 void close_devices(struct sam_mount_info *mp);

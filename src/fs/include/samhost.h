@@ -42,7 +42,7 @@
 
 
 #define	SAM_HOSTS_TABLE_SIZE	(16*(SAM_DEV_BSIZE))
-#define	SAM_LARGE_HOSTS_TABLE_SIZE	(2*1024*(SAM_DEV_BSIZE))
+#define	SAM_LARGE_HOSTS_TABLE_SIZE	(size_t)(2*1024*(SAM_DEV_BSIZE))
 
 /*
  * Number of client host entries in each chunk
@@ -120,7 +120,7 @@ char ***SamHostsCvt(struct sam_host_table *, char **errmsg, int *errc);
 void SamHostsFree(char ***);
 
 /* Convert exploded hosts file to binary hosts structure */
-int SamStoreHosts(struct sam_host_table *, int, char ***, int);
+int SamStoreHosts(struct sam_host_table *, size_t, char ***, int);
 
 /*
  * Get/Put the hosts file from/to the given slice 0 raw device name

@@ -84,6 +84,7 @@ static struct tm t;
 time_t mktime ();
 
 #define yyparse posixtime_yyparse
+int yyparse();
 static int yylex ();
 static int yyerror ();
 %}

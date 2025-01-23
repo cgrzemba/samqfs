@@ -186,7 +186,7 @@ sam_priv_syscall(
 	int error = 0;
 
 	credp = CRED();
-	TRACE(T_SAM_PSYSCALL, NULL, cmd, credp, 0);
+	TRACE(T_SAM_PSYSCALL, NULL, cmd, (sam_tr_t)credp, 0);
 	switch (cmd) {
 
 		/*
@@ -705,7 +705,7 @@ sam_mount_info(
 #endif /* _LP64 */
 #endif /* linux */
 #ifdef sun
-	mt = (void *)args.mt.p32;
+	mt = (void *)(long)args.mt.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		mt = (void *)args.mt.p64;
 	}
@@ -1582,7 +1582,7 @@ sam_get_fsstatus(
 #endif /* _LP64 */
 #endif /* linux */
 #ifdef sun
-	fs = (struct sam_fs_status *)args.fs.p32;
+	fs = (struct sam_fs_status *)(long)args.fs.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		fs = (struct sam_fs_status *)args.fs.p64;
 	}
@@ -1667,7 +1667,7 @@ sam_get_fsinfo_common(
 #endif /* _LP64 */
 #endif /* linux */
 #ifdef sun
-	fi = (struct sam_fs_info *)args.fi.p32;
+	fi = (struct sam_fs_info *)(long)args.fi.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		fi = (struct sam_fs_info *)args.fi.p64;
 	}
@@ -1761,7 +1761,7 @@ sam_get_fspart(
 #endif /* _LP64 */
 #endif /* linux */
 #ifdef sun
-	pt = (struct sam_fs_part *)args.pt.p32;
+	pt = (struct sam_fs_part *)(long)args.pt.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		pt = (struct sam_fs_part *)args.pt.p64;
 	}
@@ -1874,7 +1874,7 @@ sam_get_fsclistat(
 #endif /* _LP64 */
 #endif /* linux */
 #ifdef sun
-	cl = (struct sam_client_info *)args.fc.p32;
+	cl = (struct sam_client_info *)(long)args.fc.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		cl = (struct sam_client_info *)args.fc.p64;
 	}
@@ -1966,7 +1966,7 @@ sam_get_sblk(
 		return (ECANCELED);
 	}
 
-	sbinfo = (void *)args.sbinfo.p32;
+	sbinfo = (void *)(long)args.sbinfo.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		sbinfo = (void *)args.sbinfo.p64;
 	}

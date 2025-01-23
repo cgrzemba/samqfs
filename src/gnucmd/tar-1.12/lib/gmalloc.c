@@ -1179,12 +1179,13 @@ realloc (ptr, size)
 	      /* Now we're really in trouble.  We have to unfree
 		 the thing we just freed.  Unfortunately it might
 		 have been coalesced with its neighbors.  */
-	      if (_heapindex == block)
-	        (void) malloc (blocks * BLOCKSIZE);
+	      if (_heapindex == block) {
+                __ptr_t unused = malloc (blocks * BLOCKSIZE);
+	      }
 	      else
 		{
 		  __ptr_t previous = malloc ((block - _heapindex) * BLOCKSIZE);
-		  (void) malloc (blocks * BLOCKSIZE);
+		  __ptr_t unused = malloc (blocks * BLOCKSIZE);
 		  _free_internal (previous);
 		}
 	      return NULL;

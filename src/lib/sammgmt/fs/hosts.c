@@ -1223,7 +1223,7 @@ int32_t		kv_options)	/* what to fetch and include */
 			 * Since we now know we have good data- setup
 			 * clnt_stat to pass the data to make_hosts_list
 			 */
-			if (stat_arg.fs_name != '\0') {
+			if (*stat_arg.fs_name != '\0') {
 				clnt_stat = &stat_arg;
 			}
 		}

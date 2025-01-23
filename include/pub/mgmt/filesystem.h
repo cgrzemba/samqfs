@@ -331,8 +331,8 @@ typedef enum failed_mount_option {
 typedef struct fs {
 
 	uname_t		fi_name;	/* file system name */
-	short		fs_count;	/* number of family set members */
-	short		mm_count;	/* number of meta set members */
+	int16_t		fs_count;	/* number of family set members */
+	int16_t		mm_count;	/* number of meta set members */
 	equ_t		fi_eq;		/* equipment number */
 	devtype_t	equ_type;	/* device type: ms/ma/ufs */
 	ushort_t	dau;		/* dau */

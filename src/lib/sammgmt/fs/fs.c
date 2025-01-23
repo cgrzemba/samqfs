@@ -554,13 +554,13 @@ err:
  * Helper function to remove <defunc> processes
  * created by samfsck_fs()
  */
-static void *
-wait_child(void *arg)
+static void * 
+wait_child(void* arg)
 {
 	int status;
 
 	pthread_detach(pthread_self());
-	waitpid((pid_t)arg, &status, 0);
+	waitpid((pid_t) ((long)arg & 0xffffffff), &status, 0);
 
 	return (NULL);
 }
@@ -680,7 +680,7 @@ boolean_t repair)	/* IN  - repair or not */
 
 		close(fd);
 	}
-	pthread_create(NULL, NULL, wait_child, (void *) pid);
+	pthread_create(NULL, NULL, wait_child, (void*) (long)pid);
 
 	Trace(TR_MISC, "samfsck fs done");
 	return (0);
@@ -2342,7 +2342,6 @@ get_set_dfstab(nfsshare_t *innfs, sqm_lst_t **list)
 			cp_file(tmptabnam, DFSTAB);
 			unlink(tmptabnam);
 		}
-		free(tmptabnam);
 	}
 
 	if (list) {

@@ -589,7 +589,7 @@ build_dev(library_t *lib, mcf_cfg_t *mcf)
 			return (-1);
 		}
 	}
-
+	return (0);
 }
 
 
@@ -1409,7 +1409,7 @@ library_t **lib)			/* OUTPUT */
 		return (-1);
 	}
 
-	switch (info->nw_lib_type) {
+	switch ((int)info->nw_lib_type) {
 		case DT_STKAPI:
 			strlcpy((*lib)->base_info.equ_type,
 			    dt_to_nm(info->nw_lib_type),
@@ -3424,7 +3424,7 @@ set_vol_filter(char *restrictions, vol_fl_t *filterp)
 	if (ISNULL(filterp)) {
 		return (-1);
 	}
-	memset(filterp, 0, sizeof (filterp));
+	memset(filterp, 0, sizeof (*filterp));
 	filterp->startslot	= -1;
 	filterp->endslot	= -1;
 	filterp->partition	= -1;

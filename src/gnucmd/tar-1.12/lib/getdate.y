@@ -186,7 +186,6 @@ static int	yyRelYear;
 %type	<Number>	tMONTH tMONTH_UNIT
 %type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tYEAR_UNIT tZONE
 %type	<Meridian>	tMERIDIAN o_merid
-
 %%
 
 spec	: /* NULL */

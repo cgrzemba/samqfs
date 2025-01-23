@@ -1601,7 +1601,7 @@ dsk2rdsk(
 		return (-1);
 	}
 
-	*rdskpath = getfullrawname(devpath);
+	*rdskpath = getfullrawname((char*)devpath);
 	if (*rdskpath == NULL) {
 		Trace(TR_ERR, "out of memory in getfullrawname");
 		return (-1);

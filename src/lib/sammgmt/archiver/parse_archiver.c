@@ -813,7 +813,7 @@ ar_set_copy_params_t *p)
 	 * have no default.
 	 */
 	p->archmax = fsize_reset;	/* defaults to media value */
-	p->bufsize = fsize_reset;	/* defaults to media value */
+	p->bufsize = -1;		/* defaults to media value */
 	p->drivemax = fsize_reset;	/* not set */
 	p->drivemin = fsize_reset;	/* defaults to archmax */
 	p->drives = 1;			/* could be handled by setfield */

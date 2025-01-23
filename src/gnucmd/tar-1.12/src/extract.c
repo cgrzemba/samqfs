@@ -322,7 +322,7 @@ maybe_recoverable (char *file_name)
 static void
 extract_sparse_file (int fd, long long *sizeleft, long long totalsize, char *name)
 {
-  union block *data_block;
+  union block *data_block = NULL;
   int sparse_ind = 0;
   int written, count;
 
@@ -380,7 +380,7 @@ extract_archive (void)
 {
   union block *data_block;
   int fd;
-  int keep_thisone;		/* flag for -n option */
+  int keep_thisone  = 0;		/* flag for -n option */
   int status;
   int name_length;
   int written;

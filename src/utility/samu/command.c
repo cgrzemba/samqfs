@@ -131,7 +131,7 @@ static struct {
 
 }cmd_t[] = {
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7105, "File System commands - miscellaneous:"
 	},
 	{
@@ -187,7 +187,7 @@ static struct {
 		"eq interval", 7186, "Set default WORM retention time"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7051, "File System commands - SAM:"
 	},
 	{
@@ -227,7 +227,7 @@ static struct {
 		7138, "Set high and low thresholds"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7052, "File System commands - I/O:"
 	},
 	{
@@ -319,7 +319,7 @@ static struct {
 		"eq", 7099, "Turn off dio sparse zeroing"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7091, "File System commands - QFS:"
 	},
 	{
@@ -335,7 +335,7 @@ static struct {
 		"eq", 7083, "Turn off qwrite mode"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7092, "File System commands - multireader:"
 	},
 	{
@@ -351,7 +351,7 @@ static struct {
 		"eq", 7090, "Turn off refresh at eof mode"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7093, "File System commands - shared fs:"
 	},
 	{
@@ -395,7 +395,7 @@ static struct {
 		"eq interval", 7085, "Set write lease time"
 	},
 	{
-		"", SAM_REMOVABLE, 0, NULL, 0, NULL, "", 7100,
+		"", SAM_REMOVABLE, 0, NULL, 0, 0, "", 7100,
 		"Device commands:"
 	},
 	{
@@ -431,7 +431,7 @@ static struct {
 		"eq", 7140, "Unload device"
 	},
 	{
-		"", SAM_REMOVABLE, 0, NULL, 0, NULL, "", 7101, "Robot commands:"
+		"", SAM_REMOVABLE, 0, NULL, 0, 0, "", 7101, "Robot commands:"
 	},
 	{
 		"audit", SAM_REMOVABLE, 1, CmdAudit, 0, 7108,
@@ -462,7 +462,7 @@ static struct {
 		"pid priority",	7180, "Set priority in preview queue"
 	},
 	{
-		"", SAM_DISK, 0, NULL, 0, NULL, "", 7102, "Archiver commands:"
+		"", SAM_DISK, 0, NULL, 0, 0, "", 7102, "Archiver commands:"
 	},
 	{
 		"aridle", SAM_DISK, 1, CmdAridle, 0, 7162,
@@ -497,7 +497,7 @@ static struct {
 		"[fs.fsname]", 7171, "Trace archiver"
 	},
 	{
-		"", SAM_DISK, 0, NULL, 0, NULL, "", 7106, "Stager commands:"
+		"", SAM_DISK, 0, NULL, 0, 0, "", 7106, "Stager commands:"
 	},
 	{
 		"stclear", SAM_DISK, 1, CmdStclear, 0, 7168,
@@ -512,7 +512,7 @@ static struct {
 		7176, "Start staging"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "", 7103,
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "", 7103,
 		"Miscellaneous commands:"
 	},
 	{

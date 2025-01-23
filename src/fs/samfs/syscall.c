@@ -721,7 +721,7 @@ sam_proc_stat(
 		}
 	}
 	sb.st_blocks  =
-	    (u_longlong_t)((uint32_t)ip->di.blocks) * (u_longlong_t)(SAM_BLK/DEV_BSIZE);
+	    (u_longlong_t)ip->di.blocks * (u_longlong_t)(SAM_BLK/DEV_BSIZE);
 	sb.admin_id   = bip->di.admin_id;
 
 	/*

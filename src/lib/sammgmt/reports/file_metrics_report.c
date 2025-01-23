@@ -73,7 +73,7 @@ get_file_metrics_report(
 		return (-1);
 	}
 
-	if (!(0 < rptType < NUM_FM_RPTS)) {
+	if ((0 >= rptType && rptType >= NUM_FM_RPTS)) {
 		samerrno = SE_INVALID_REPORT_REQUESTED;
 		snprintf(samerrmsg, MAX_MSG_LEN, GetCustMsg(samerrno),
 		    rptType);

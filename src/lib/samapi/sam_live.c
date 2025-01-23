@@ -73,7 +73,7 @@ static int open_dev_segment();
 /*	Open an entry in mount request segment list */
 static int open_mntreq_segment();
 
-#define	MEM_OFFSET(x) (((x) == NULL? NULL : ((char *)mem->address + (int)x)))
+#define	MEM_OFFSET(x) (((x) == 0 ? NULL : ((char *)mem->address + (long)x)))
 
 typedef struct {
 	int handle;

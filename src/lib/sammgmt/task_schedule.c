@@ -1392,13 +1392,13 @@ char **croncmd)
 				done = TRUE;
 				break;
 			case 'D':			/* day of month */
-				if (0 < interval <= 31) {
+				if (0 < interval && interval <= 31) {
 					st = -1;
 				}
 				done = TRUE;
 				break;
 			case 'W':			/* day of week */
-				if (7 > interval >= 0) {
+				if (7 > interval && interval >= 0) {
 					st = -1;
 				}
 				done = TRUE;

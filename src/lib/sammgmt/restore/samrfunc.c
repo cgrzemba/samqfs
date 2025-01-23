@@ -822,7 +822,7 @@ restore_inodes(
 		goto err;
 	}
 
-	if (rval = set_dump(fsname, dumpname, dsp)) {
+	if ((rval = set_dump(fsname, dumpname, dsp))) {
 		free(dsp);
 		goto err;
 	}

@@ -635,7 +635,7 @@ struct stats *objp)
 
 	if (!xdr_int(xdrs, &objp->numof))
 		return (FALSE);
-	if (!xdr_offset_t(xdrs, &objp->size))
+	if (!xdr_offset_t(xdrs, (int64_t *)&objp->size))
 		return (FALSE);
 	return (TRUE);
 }
@@ -685,7 +685,7 @@ struct ArfindState *objp)
 	if (!xdr_vector(xdrs, (char *)objp->AfOprMsg, OPRMSG_SIZE,
 	    sizeof (char), (xdrproc_t)xdr_char))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->AfPid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->AfPid))
 		return (FALSE);
 	if (!xdr_sam_time_t(xdrs, &objp->AfSbInit))
 		return (FALSE);
@@ -722,7 +722,7 @@ struct ArchiverdState *objp)
 	if (!xdr_vector(xdrs, (char *)objp->AdOprMsg2, OPRMSG_SIZE,
 	    sizeof (char), (xdrproc_t)xdr_char))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->AdPid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->AdPid))
 		return (FALSE);
 	if (!xdr_vector(xdrs, (char *)objp->AdArchReq, objp->AdCount,
 	    sizeof (upath_t), (xdrproc_t)xdr_upath_t))
@@ -812,11 +812,11 @@ struct ArchReq *objp)
 		return (FALSE);
 	if (!xdr_int(xdrs, &objp->ArDrivesUsed))
 		return (FALSE);
-	if (!xdr_int(xdrs, &objp->ArFileIndex))
+	if (!xdr_int(xdrs, (int *)&objp->ArFileIndex))
 		return (FALSE);
 	if (!xdr_uint_t(xdrs, &objp->ArSeqnum))
 		return (FALSE);
-	if (!xdr_size_t(xdrs, &objp->ArSize))
+	if (!xdr_size_t(xdrs, (uint_t *)&objp->ArSize))
 		return (FALSE);
 	if (!xdr_fsize_t(xdrs, &objp->ArSpace))
 		return (FALSE);
@@ -860,7 +860,7 @@ struct ArCopyInstance *objp)
 		return (FALSE);
 	if (!xdr_fsize_t(xdrs, &objp->CiSpace))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->CiPid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->CiPid))
 		return (FALSE);
 	if (!xdr_int(xdrs, &objp->CiArchives))
 		return (FALSE);

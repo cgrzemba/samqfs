@@ -1115,7 +1115,7 @@ flush_read (void)
       if (status != record_size)
 	write_error (status);
     }
-  if (multi_volume_option)
+  if (multi_volume_option) {
     if (save_name)
       {
 	char *cursor = save_name;
@@ -1137,6 +1137,7 @@ flush_read (void)
 	real_s_totsize = 0;
 	real_s_sizeleft = 0;
       }
+  }
 
 error_loop:
   status = rmtread (archive, record_start->buffer, (unsigned int) record_size);
@@ -1433,7 +1434,7 @@ close_archive (void)
 	     && child != -1)
 	continue;
 
-      if (child != -1)
+      if (child != -1) {
 	if (WIFSIGNALED (wait_status)
 #if 0
 	    && !WIFSTOPPED (wait_status)
@@ -1457,6 +1458,7 @@ close_archive (void)
 	      ERROR ((0, 0, _("Child returned status %d"),
 		      (int) WEXITSTATUS (wait_status)));
 	  }
+      }
     }
 #endif /* !MSDOS */
 

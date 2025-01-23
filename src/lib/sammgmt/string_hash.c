@@ -433,7 +433,7 @@ hash_n_bytes(const char *key, int n) {
 	for (i = 0; i < n; i++) {
 		h = (h << 4) + key[i];
 	/* LINTED:assignment operator "=" found where "==" was expected */
-		if (g = h & 0XF0000000) {
+		if ((g = h & 0XF0000000)) {
 			h ^= g >> 24;
 		}
 

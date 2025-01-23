@@ -72,7 +72,7 @@ pending_load_info_t *objp)
 		return (FALSE);
 	if (!xdr_float(xdrs, &objp->priority))
 		return (FALSE);
-	if (!xdr_pid_t(xdrs, &objp->pid))
+	if (!xdr_pid_t(xdrs, (int64_t *)&objp->pid))
 		return (FALSE);
 	if (!xdr_uname_t(xdrs, objp->user))
 		return (FALSE);

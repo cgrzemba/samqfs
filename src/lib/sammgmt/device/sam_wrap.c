@@ -144,7 +144,7 @@ sqm_lst_t **lib_lst)	/* OUTPUT - list of library_t */
 	}
 
 	shm_ptr_tbl = (shm_ptr_tbl_t *)shm.shared_memory;
-	if (shm_ptr_tbl == NULL || shm_ptr_tbl->first_dev == NULL) {
+	if (shm_ptr_tbl == NULL || shm_ptr_tbl->first_dev == 0) {
 
 		lst_free(*lib_lst);
 		shmdt(shm.shared_memory);
@@ -161,7 +161,7 @@ sqm_lst_t **lib_lst)	/* OUTPUT - list of library_t */
 	    p = (p->next == NULL) ?
 	    NULL :
 	    (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(p->next)))) {
+	    ((char *)shm.shared_memory + (long)(p->next)))) {
 
 		if (!IS_ROBOT(p) && !IS_RSC(p)) {
 			continue;
@@ -299,7 +299,7 @@ sqm_lst_t **lib_lst)	/* OUTPUT - list of library_t */
 	    p = (p->next == NULL) ?
 	    NULL :
 	    (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(p->next)))) {
+	    ((char *)shm.shared_memory + (long)(p->next)))) {
 
 		if (!IS_TAPE(p)) {
 			continue;
@@ -472,7 +472,7 @@ get_sdrives_from_shm(sqm_lst_t **drv_lst)
 	}
 
 	shm_ptr_tbl = (shm_ptr_tbl_t *)shm.shared_memory;
-	if (shm_ptr_tbl == NULL || shm_ptr_tbl->first_dev == NULL) {
+	if (shm_ptr_tbl == NULL || shm_ptr_tbl->first_dev == 0) {
 
 		lst_free(*drv_lst);
 		shmdt(shm.shared_memory);
@@ -492,7 +492,7 @@ get_sdrives_from_shm(sqm_lst_t **drv_lst)
 	    p = (p->next == NULL) ?
 	    NULL :
 	    (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(p->next)))) {
+	    ((char *)shm.shared_memory + (long)(p->next)))) {
 
 		if ((IS_OPTICAL(p) || IS_TAPE(p)) &&
 		    p->fseq == 0 && strcmp(p->set, "") == 0) {
@@ -606,7 +606,7 @@ get_available_mtype_from_shm(sqm_lst_t **mtype_lst)
 	}
 
 	shm_ptr_tbl = (shm_ptr_tbl_t *)shm.shared_memory;
-	if (shm_ptr_tbl == NULL || shm_ptr_tbl->first_dev == NULL) {
+	if (shm_ptr_tbl == NULL || shm_ptr_tbl->first_dev == 0) {
 
 		lst_free(*mtype_lst);
 		shmdt(shm.shared_memory);
@@ -616,14 +616,14 @@ get_available_mtype_from_shm(sqm_lst_t **mtype_lst)
 	}
 
 	dev_head = (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(shm_ptr_tbl->first_dev)));
+	    ((char *)shm.shared_memory + (shm_ptr_tbl->first_dev)));
 
 	/* process the device entries for robot entries */
 	for (p = dev_head; p;
 	    p = (p->next == NULL) ?
 	    NULL :
 	    (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(p->next)))) {
+	    ((char *)shm.shared_memory + (long)(p->next)))) {
 
 		if (!IS_OPTICAL(p) && !IS_TAPE(p) && !IS_RSC(p)) {
 			continue;
@@ -736,7 +736,7 @@ drive_t **drive)	/* OUTPUT - drive_t */
 	    p = (p->next == NULL) ?
 	    NULL :
 	    (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(p->next)))) {
+	    ((char *)shm.shared_memory + (long)(p->next)))) {
 
 		if ((IS_OPTICAL(p) || IS_TAPE(p)) && strcmp(p->vsn, vsn) == 0) {
 
@@ -829,7 +829,7 @@ sqm_lst_t **drv_lst)		/* OUTPUT - a list of drive_t */
 	    p = (p->next == NULL) ?
 	    NULL :
 	    (dev_ent_t *)((void *)
-	    ((char *)shm.shared_memory + (int)(p->next)))) {
+	    ((char *)shm.shared_memory + (long)(p->next)))) {
 
 		if (IS_TAPE(p) && (p->status.bits & DVST_LABELLING)) {
 
@@ -983,7 +983,7 @@ dev_ent_t **device)	/* OUT - device configuration table */
 
 	/* LINTED E_BAD_PTR_CAST_ALIGN */
 	*device = (dev_ent_t *)
-	    ((char *)(*memory) + (int)dev_ptr_tbl->d_ent[eq]);
+	    ((char *)(*memory) + (long)dev_ptr_tbl->d_ent[eq]);
 
 	if (*device == NULL) {
 
@@ -1374,7 +1374,7 @@ equ_t eq)	/* INPUT - equipment number of the cleaning drive */
 		    ((char *)(memory) + shm_ptr_tbl->dev_table);
 		/* LINTED E_BAD_PTR_CAST_ALIGN */
 		device = (dev_ent_t *)
-		    ((char *)(memory) + (int)dev_ptr_tbl->d_ent[device->fseq]);
+		    ((char *)(memory) + (long)dev_ptr_tbl->d_ent[device->fseq]);
 		if (device == NULL) {
 
 			shmdt(memory);

@@ -74,9 +74,9 @@ sam_db_get_sql(int sql_id)
 	char *sql;
 
 	/* Initialize catalog if needed */
-	if ((int)sql_catd == -1) {
+	if ((long)sql_catd == -1) {
 		sql_catd = catopen(SAMDB_SQL_CATALOG, NL_CAT_LOCALE);
-		if ((int)sql_catd == -1) {
+		if ((long)sql_catd == -1) {
 			Trace(TR_ERR, "Error opening sql catalog");
 			return (NULL);
 		}
@@ -342,9 +342,8 @@ sam_db_id_allname(
 		endbuf = dirbuf + n;
 		dirp = (struct sam_dirent *)((void *)dirbuf);
 		while ((char *)dirp < endbuf) {
-			if (dirp->d_fmt != 0 &&
-			    id.ino == 0 || (
-			    dirp->d_id.ino == id.ino &&
+			if ((dirp->d_fmt != 0 && id.ino == 0) ||
+			    ( dirp->d_id.ino == id.ino &&
 			    dirp->d_id.gen == id.gen)) {
 				if (dirent_callback(dir, dirp, cb_args) < 0) {
 					ret = -1;

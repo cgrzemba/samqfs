@@ -59,6 +59,7 @@
 #include <sys/mnttab.h>
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <assert.h>
 
 #define DEC_INIT
 #include <sam/types.h>
@@ -103,20 +104,20 @@ typedef enum {
 
 sam_daddr_t super_blk;		/* Super-block disk address */
 
-int allocation = 0;		/* DAU */
+uint_t allocation = 0;		/* DAU */
 int ninodes = 0;		/* Number of preallocated inodes */
 
 int shared = 0;			/* -S (shared FS) */
 int force = 0;			/* Force around particular errors */
 char ***HostTab = NULL;		/* host table for -S option */
 struct sam_host_table *hostbuf = NULL;
-int hostbuflen = 0;
+size_t hostbuflen = 0;
 boolean_t host_is_server = TRUE;
 int devices_open = 0;		/* Have the devices been opened yet */
 
 sam_mount_info_t mnt_info;	/* Mount info from mcf file */
-int fs_count;			/* Count of devices in filesystem */
-int old_count = 0;		/* Size of old filesystem */
+int16_t fs_count;			/* Count of devices in filesystem */
+int16_t old_count = 0;		/* Size of old filesystem */
 int old_mm_count = 0;		/* meta partitions in old filesystem */
 int lun_ge_1tb = 0;		/* Number of partitions >= 1TB */
 int lun_ge_16tb = 0;		/* Number of partitions >= 16TB */
@@ -167,6 +168,7 @@ main(int argc, char **argv)
 	int err;
 	int length;
 	mkfscmd_t cmd;
+	time_t currtime;
 
 	CustmsgInit(0, NULL);
 	program_name = basename(argv[0]);
@@ -210,7 +212,8 @@ main(int argc, char **argv)
 		    "or samfsinfo, not %s"), program_name);
 		clean_exit(1);
 	}
-	time(&fstime);			/* File system initialize time */
+	time(&currtime);	/* File system initialize time */
+	fstime = (sam_time_t) (currtime & INT_MAX);
 
 	super_blk = SUPERBLK;
 	if ((length = sizeof (struct sam_sbinfo)) > L_SBINFO) {
@@ -337,10 +340,10 @@ process_args(
 			return (EINVAL);
 	}
 
-	while ((c = getopt(argc, argv, optstring)) != EOF) {
+	while ((c = (char)getopt(argc, argv, optstring)) != EOF) {
 		switch (c) {
 			case 'a':
-				allocation = (int)strtol(optarg, &cp, 10);
+				allocation = (uint_t)strtol(optarg, &cp, 10);
 				if (optarg == cp) {
 					error(0, 0, catgets(catfd, SET, 13464,
 				"The -%c argument requires a positive "
@@ -481,7 +484,7 @@ process_args(
 
 				if ((getHostName(host, len,
 				    fs_name) != HOST_NAME_EOK) ||
-				    (strncmp(host, servername, len) != 0)) {
+				    (strncmp(host, servername, (size_t)len) != 0)) {
 					host_is_server = FALSE;
 				}
 			}
@@ -636,6 +639,8 @@ process_args(
 					clean_exit(1);
 				}
 			}
+		default:
+			break;
 		}
 	} else {
 		if (errno == EBUSY) {
@@ -664,7 +669,7 @@ int			/* 1 if error, 0 if successful */
 new_fs(void)
 {
 	int err = FALSE;	/* Error flag */
-	int ord;			/* Disk ordinal */
+	uint16_t ord;			/* Disk ordinal */
 	struct devlist *dp;
 
 	sam_set_dau(&mp->mi.m_dau[DD], mp->mi.m_dau[DD].kblocks[SM],
@@ -813,20 +818,20 @@ grow_fs(void)
 	struct sam_sblk *sblk;
 	char sb[SAM_DEV_BSIZE];
 	int i;
-	int	ord;
+	uint16_t ord;
 	time_t time;
 	struct devlist *dp;
 	struct d_list *ndevp;
 
 	sblk = (struct sam_sblk *)sb;
 	if ((ndevp = (struct d_list *)malloc(sizeof (struct devlist) *
-	    fs_count)) == NULL) {
+	    (uint16_t)fs_count)) == NULL) {
 		error(0, 0, catgets(catfd, SET, 604, "Cannot malloc ndevp."));
 		return (1);
 	}
 	(void *) memcpy((char *)ndevp, (char *)devp,
-	    sizeof (struct devlist) * fs_count);
-	(void *) memset((char *)devp, 0, sizeof (struct devlist) * fs_count);
+	    sizeof (struct devlist) * (uint16_t)fs_count);
+	(void *) memset((char *)devp, 0, sizeof (struct devlist) * (uint16_t)fs_count);
 	/*
 	 * Find ordinal 0 for existing filesystem fs_name
 	 */
@@ -926,7 +931,7 @@ grow_fs(void)
 		    "Growing '%s' will destroy the contents of devices:\n"),
 		    fs_name);
 	}
-	for (ord = old_count; ord < fs_count; ord++) {
+	for (ord = (uint16_t)old_count; ord < fs_count; ord++) {
 		printf("\t\t%s\n", devp->device[ord].eq_name);
 	}
 	if (!verbose && isatty(0) && !ask(catgets(catfd, SET, 13428,
@@ -999,7 +1004,7 @@ grow_fs(void)
 	 * For stripe groups, also check to ensure that stripe
 	 * groups have contiguous ordinals.
 	 */
-	for (ord = old_count; ord < fs_count; ord++) {
+	for (ord = (uint16_t)old_count; ord < fs_count; ord++) {
 		int mord;
 
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1040,7 +1045,7 @@ grow_fs(void)
 		/* don't write superblock if things have gone wrong */
 		clean_exit(1);
 	}
-	for (ord = old_count; ord < fs_count; ord++) {
+	for (ord = (uint16_t)old_count; ord < fs_count; ord++) {
 		int len;
 
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
@@ -1163,16 +1168,17 @@ init_sblk()
 	/*
 	 * FIXME: DAU not applicable for 'mb' filesystem.
 	 */
-	sblock.info.sb.dau_blks[SM] = SM_DEV_BLOCK(mp, DD);
-	sblock.info.sb.dau_blks[LG] = LG_DEV_BLOCK(mp, DD);
-	sblock.info.sb.mm_blks[SM]  = SM_DEV_BLOCK(mp, MM);
-	sblock.info.sb.mm_blks[LG]  = LG_DEV_BLOCK(mp, MM);
+	sblock.info.sb.dau_blks[SM] = (uint16_t)SM_DEV_BLOCK(mp, DD);
+	sblock.info.sb.dau_blks[LG] = (uint16_t)LG_DEV_BLOCK(mp, DD);
+	sblock.info.sb.mm_blks[SM]  = (uint16_t)SM_DEV_BLOCK(mp, MM);
+	sblock.info.sb.mm_blks[LG]  = (uint16_t)LG_DEV_BLOCK(mp, MM);
 	if (sblock.info.sb.mm_blks[SM] == sblock.info.sb.mm_blks[LG]) {
 		sblock.info.sb.meta_blks = sblock.info.sb.mm_blks[LG];
 	}
 
+	/* SamFS ident */
 	sblock.info.sb.fs_id.val[0] = fstime;
-	sblock.info.sb.fs_id.val[1] = gethostid();
+	sblock.info.sb.fs_id.val[1] = (int)gethostid();
 
 	/*
 	 * Loop through the metadata devices, initializing the superblocks.
@@ -1229,7 +1235,7 @@ init_sblk()
 		dt = (dp->type == DT_META) ? MM : DD;
 		if (sblock.info.sb.mm_count == 0) {
 			if (ord == 0) {
-				sblk2 = sop->dau_next;
+				sblk2 = (int)sop->dau_next;
 				sop->dau_next += LG_DEV_BLOCK(mp, dt);
 			}
 				sop->dau_next = roundup(sop->dau_next,
@@ -1238,17 +1244,17 @@ init_sblk()
 			sop->dau_next = roundup(sop->dau_next,
 			    LG_DEV_BLOCK(mp, dt));
 			if (ord == 0) {
-				sblk2 = sop->dau_next;
+				sblk2 = (int)sop->dau_next;
 				sop->dau_next += LG_DEV_BLOCK(mp, dt);
 				sop->dau_next = roundup(sop->dau_next,
 				    LG_DEV_BLOCK(mp, dt));
 			}
 		}
-		sop->system = roundup(sop->dau_next, LG_DEV_BLOCK(mp, dt));
+		sop->system = (int32_t) roundup(sop->dau_next, LG_DEV_BLOCK(mp, dt));
 		sop->dau_next = 0;	/* done with temp usage */
 	}
 
-	sblock.info.sb.offset[0] = super_blk;	/* Superblock offset */
+	sblock.info.sb.offset[0] = (offset_t) super_blk;	/* Superblock offset */
 	sblock.info.sb.offset[1] = sblk2;	/* Backup superblock offset */
 	sblock.info.sb.sblk_size = L_SBINFO +
 	    (sblock.info.sb.fs_count * L_SBORD);
@@ -1270,12 +1276,13 @@ void
 grow_sblk()
 {
 	int iblk;	/* Block number */
-	int ord, dt;
+	int dt;
+	int16_t ord;
 	struct devlist *dp;
 	longlong_t m_size, t_size;
 	int v_lbits;	/* No. of bits per logical blk */
 	int len;
-	int sblk_blks;
+	uint32_t sblk_blks;
 
 	m_size = 0;
 	t_size = 0;
@@ -1312,10 +1319,11 @@ grow_sblk()
 
 		dt = (dp->type == DT_META) ? MM : DD;
 		if (ord == 0) {	/* Allocate at super block + LG block */
-			iblk = super_blk + mp->mi.m_dau[dt].kblocks[LG];
+			assert(super_blk + mp->mi.m_dau[dt].kblocks[LG] < INT_MAX);
+			iblk = (int) (super_blk + mp->mi.m_dau[dt].kblocks[LG]);
 			if (SBLK_MAPS_ALIGNED(&sblock.info.sb)) {
 				iblk = roundup(iblk,
-				    mp->mi.m_dau[dt].kblocks[LG]);
+				    (int)mp->mi.m_dau[dt].kblocks[LG]);
 			}
 		}
 		if (ord < old_count) {
@@ -1342,34 +1350,35 @@ grow_sblk()
 				sblock.eq[ord].fs.space =
 				    sblock.eq[ord].fs.capacity;
 				sblock.eq[ord].fs.dau_size = dp->blocks;
+				assert(howmany(sblock.eq[ord].fs.dau_size, v_lbits) < INT_MAX);
 				sblock.eq[ord].fs.l_allocmap =
-				    howmany(sblock.eq[ord].fs.dau_size,
+				    (int)howmany(sblock.eq[ord].fs.dau_size,
 				    v_lbits);
 				sblock.eq[ord].fs.allocmap = iblk;
 				if (mm_count == 0) {
-					sblock.eq[ord].fs.mm_ord = ord;
+					sblock.eq[ord].fs.mm_ord = (uint16_t) ord;
 					len = iblk +
 					    sblock.eq[ord].fs.l_allocmap;
 					if (SBLK_MAPS_ALIGNED
 					    (&sblock.info.sb)) {
 						len = roundup(len,
-						    LG_DEV_BLOCK(mp, dt));
+						    (int)LG_DEV_BLOCK(mp, dt));
 					}
 					/* Account for last superblock */
 					if (ord == 0) {
-						len += LG_DEV_BLOCK(mp, dt);
+						len += (int)LG_DEV_BLOCK(mp, dt);
 					}
 					len = roundup(len,
-					    LG_DEV_BLOCK(mp, dt));
+					    (int)LG_DEV_BLOCK(mp, dt));
 					sblock.eq[ord].fs.system = len;
 				} else {
 					has_no_bitmaps = 1;
-					sblock.eq[ord].fs.mm_ord = mm_ord;
+					sblock.eq[ord].fs.mm_ord = (uint16_t) mm_ord;
 					iblk += sblock.eq[ord].fs.l_allocmap;
 					if (SBLK_MAPS_ALIGNED
 					    (&sblock.info.sb)) {
 						iblk = roundup(iblk,
-						    LG_DEV_BLOCK(mp, MM));
+						    (int)LG_DEV_BLOCK(mp, MM));
 					}
 					if (sblock.eq[ord].fs.allocmap < 0) {
 						error(0, 0, catgets(catfd,
@@ -1382,20 +1391,21 @@ grow_sblk()
 				}
 			} else {
 				has_no_bitmaps = 1;
-				sblock.eq[ord].fs.mm_ord = mm_ord;
+				sblock.eq[ord].fs.mm_ord = (uint16_t) mm_ord;
 			}
 			if (has_no_bitmaps) {
 				sblk_blks = sizeof (struct sam_sblk) /
 				    SAM_DEV_BSIZE;
-				len = super_blk + sblk_blks;
-				len = roundup(len, LG_DEV_BLOCK(mp, dt));
+				assert(super_blk + sblk_blks < INT_MAX);
+				len = (int) (super_blk + sblk_blks);
+				len = roundup(len, (int)LG_DEV_BLOCK(mp, dt));
 				sblock.eq[ord].fs.system = len;
 			}
 			sblock.eq[ord].fs.type = dp->type;
 		}
 	}
 	if (mm_count != 0) {
-		len = roundup(iblk, LG_DEV_BLOCK(mp, MM));
+		len = roundup(iblk, (int)LG_DEV_BLOCK(mp, MM));
 		sblock.eq[mm_ord].fs.system = len;
 		if ((offset_t)len > sblock.eq[mm_ord].fs.capacity) {
 			error(0, 0, catgets(catfd, SET, 13452,
@@ -1416,7 +1426,7 @@ grow_sblk()
 int					/* ERRNO if error, 0 if successful */
 iino(void)
 {
-	int ino;			/* Inode number */
+	unsigned int ino;			/* Inode number */
 	sam_offset_t fblk;
 	int fblk_to_extent;
 	caddr_t bufp;
@@ -1427,12 +1437,12 @@ iino(void)
 	struct sam_dirval *hp;
 	int length;
 	int err = FALSE;
-	int reclen;
-	int doff;
+	uint16_t reclen;
+	uint16_t doff;
 	uint_t *inp;
 	int dt;
 	int i;
-	int nhdau;
+	uint64_t nhdau;
 	int ino_version;
 
 	ino_version = SAM_INODE_VERS_2;
@@ -1554,7 +1564,7 @@ iino(void)
 		dp->di.change_time.tv_nsec = 0;
 		dp->di.creation_time = fstime;
 		dp->di.id.ino = ino;
-		dp->di.id.gen = ino;
+		dp->di.id.gen = (int) ino;
 		dp->di.parent_id.ino = SAM_ROOT_INO;
 		dp->di.parent_id.gen = SAM_ROOT_INO;
 
@@ -1572,8 +1582,9 @@ iino(void)
 				    mp->mi.m_dau[dt].size[LG];
 				dp->di.rm.size = mp->mi.m_dau[dt].size[LG] *
 				    ndau;
-				dp->di.blocks = mp->mi.m_dau[dt].blocks[LG] *
-				    ndau;
+				assert(mp->mi.m_dau[dt].blocks[LG] * ndau < UINT_MAX);
+				dp->di.blocks = (uint32_t) (mp->mi.m_dau[dt].blocks[LG] *
+				    ndau);
 				dp->di.status.b.direct_map = 1;
 			} else {
 				dp->di.rm.size = mp->mi.m_dau[dt].size[LG] *
@@ -1586,7 +1597,7 @@ iino(void)
 			dp->di.free_ino = SAM_MIN_USER_INO; /* Free inode */
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_ROOT_INO:
@@ -1599,7 +1610,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_BLK_INO:
@@ -1610,7 +1621,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_HOST_INO:			/* or SAM_IOCTL_INO */
@@ -1623,7 +1634,8 @@ iino(void)
 			nhdau = (SAM_LARGE_HOSTS_TABLE_SIZE +
 			    mp->mi.m_dau[dt].size[LG] - 1) /
 			    mp->mi.m_dau[dt].size[LG];
-			dp->di.blocks = mp->mi.m_dau[dt].blocks[LG] * nhdau;
+			assert(mp->mi.m_dau[dt].blocks[LG] * nhdau < UINT_MAX);
+			dp->di.blocks = (uint32_t) mp->mi.m_dau[dt].blocks[LG] * nhdau;
 			dp->di.status.b.direct_map = 1;
 			if (hostbuf != NULL &&
 			    (hostbuf->length > SAM_HOSTS_TABLE_SIZE ||
@@ -1648,7 +1660,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_ARCH_INO:
@@ -1660,7 +1672,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_LOSTFOUND_INO:
@@ -1671,7 +1683,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_SHFLOCK_INO:
@@ -1682,7 +1694,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 			break;
 		case SAM_OBJ_OBJCTL_INO:
@@ -1699,7 +1711,7 @@ iino(void)
 			dp->di.status.b.on_large = 1;
 			if (mm_count) {
 				dp->di.status.b.meta = 1;
-				dp->di.unit = mm_ord;
+				dp->di.unit = (uchar_t) mm_ord;
 			}
 		default:
 			break;

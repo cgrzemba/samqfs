@@ -66,7 +66,7 @@ extern	void *sam_mastershm_attach(int shmget_priv, int shmat_priv);
  */
 
 /* find the address pointed to by x in the shared memory segement a */
-#define	SHM_ADDRESS(a, x) (((a) == NULL) ? NULL : ((char *)a + (int)(x)))
+#define	SHM_ADDRESS(a, x) (((a) == NULL) ? NULL : ((char *)a + (long)(x)))
 
 /* find the address pointed to by x if shm_alloc_t structure in use */
 #define	SHM_REF_ADDR(x) (((x) == 0) ? \

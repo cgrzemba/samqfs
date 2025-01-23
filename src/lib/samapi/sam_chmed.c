@@ -319,12 +319,12 @@ sam_chmed_doit(struct CatalogEntry *ce, uint_t flags, int value)
 
 	if (flags & CMD_CATALOG_VSN) {
 		(void) CatalogSetStringByLoc(ce->CeEq, ce->CeSlot, ce->CePart,
-		    flags, (char *)value);
+		    flags, (char *)(long)value);
 	}
 
 	if (flags & CMD_CATALOG_INFO) {
 		(void) CatalogSetStringByLoc(ce->CeEq, ce->CeSlot, ce->CePart,
-		    flags, (char *)value);
+		    flags, (char *)(long)value);
 	}
 
 	shmdt((char *)master_shm.shared_memory);

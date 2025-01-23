@@ -580,9 +580,9 @@ strftime (s, maxsize, format, tp)
       switch (*f)
 	{
 #define DO_NUMBER(d, v) \
-	  digits = d; number_value = v; goto do_number
+	  { digits = d; number_value = v; goto do_number; }
 #define DO_NUMBER_SPACEPAD(d, v) \
-	  digits = d; number_value = v; goto do_number_spacepad
+	  { digits = d; number_value = v; goto do_number_spacepad; }
 
 	case '%':
 	  if (modifier != 0)
@@ -1008,15 +1008,15 @@ strftime (s, maxsize, format, tp)
 		/* mktime returns -1 for errors, but -1 is also a
 		   valid time_t value.  Check whether an error really
 		   occurred.  */
-		struct tm tm;
-		localtime_r (&lt, &tm);
+		struct tm tm, *res_tm;
+		res_tm = localtime_r (&lt, &tm);
 
-		if ((ltm.tm_sec ^ tm.tm_sec)
+		if (res_tm != NULL && ((ltm.tm_sec ^ tm.tm_sec)
 		    | (ltm.tm_min ^ tm.tm_min)
 		    | (ltm.tm_hour ^ tm.tm_hour)
 		    | (ltm.tm_mday ^ tm.tm_mday)
 		    | (ltm.tm_mon ^ tm.tm_mon)
-		    | (ltm.tm_year ^ tm.tm_year))
+		    | (ltm.tm_year ^ tm.tm_year)))
 		  break;
 	      }
 

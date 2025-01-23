@@ -381,7 +381,7 @@ typedef struct sam_disk_inode {
 	uchar_t		stripe_group;	/* Stripe group unit */
 	uchar_t		ext_attrs;	/* Inode extension types present */
 	sam_psize_t	psize;		/* dev or symlink/media/partial size */
-	int32_t		blocks;		/* Count of allocated blocks */
+	uint32_t	blocks;		/* Count of allocated blocks */
 	sam_time_t	residence_time;	/* Time file changed residence */
 	int32_t		free_ino;	/* Next free inode */
 	sam_bn_t	extent[NOEXT];	/* Extent inode array */

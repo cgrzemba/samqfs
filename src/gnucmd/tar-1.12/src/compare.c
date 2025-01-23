@@ -867,7 +867,7 @@ verify_volume (void)
 	{
 	  int counter = 0;
 
-	  while (status == HEADER_FAILURE);
+	  while (status == HEADER_FAILURE)
 	    {
 	      counter++;
 	      status = read_header ();

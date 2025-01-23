@@ -179,7 +179,7 @@
 
 /* ----- Sam fundamental directory block size and shift count */
 
-#define	DIR_BLK		(0x1000)	/* Size of directory block */
+#define	DIR_BLK		((uint16_t)0x1000)	/* Size of directory block */
 #define	DIR_LOG_BLOCK	(4)	/* Number of blocks in directory block */
 
 

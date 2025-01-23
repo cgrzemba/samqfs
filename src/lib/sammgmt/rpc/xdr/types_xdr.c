@@ -727,6 +727,8 @@ const uint_t maxsize) {
 
 		case XDR_FREE:
 			return (TRUE);
+		default:
+			break;
 		}
 	}
 

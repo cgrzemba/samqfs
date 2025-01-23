@@ -168,9 +168,10 @@ typedef struct sam_sbinfo {
 	offset_t	space;		/* Total free blocks in family set */
 	ushort_t	dau_blks[2];	/* Data blocks per SM/LG dau */
 	int32_t		sblk_size;	/* Sizeof superblk (incl partitions) */
-	int32_t		fs_count;	/* Size of family set */
-	short		da_count;	/* Size of data family set members */
-	short		mm_count;	/* Size of meta family set members */
+	int16_t		fs_count;	/* Size of family set */
+	int16_t		pad3;
+	int16_t		da_count;	/* Size of data family set members */
+	int16_t		mm_count;	/* Size of meta family set members */
 	offset_t	mm_capacity;	/* Ttl blks in meta data family set */
 	offset_t	mm_space;	/* Ttl free blks, meta data */
 					/*   family set. */

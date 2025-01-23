@@ -82,7 +82,7 @@ diskvols_cfg_t **cfg)	/* malloced return value */
 		return (-1);
 	}
 
-	if (ctx != NULL && *ctx->read_location != NULL) {
+	if (ctx != NULL && *ctx->read_location != 0) {
 		location = assemble_full_path(ctx->read_location,
 		    DISKVOLS_DUMP_FILE, B_FALSE, NULL);
 	} else {

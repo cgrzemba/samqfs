@@ -76,7 +76,7 @@ typedef struct service_table_entry {
 	struct service_table_entry *previous;
 } ste_t;
 
-static enum {UDS, IPV6, IPV4, SERVICES};
+enum {UDS, IPV6, IPV4, SERVICES};
 /*
  * External Globals
  */
@@ -508,7 +508,7 @@ process_inet_request(int server_fd)
 	}
 
 	/* Split the line */
-	if (request_arg = strchr(line_buffer, ' ')) {
+	if ((request_arg = strchr(line_buffer, ' '))) {
 		*request_arg = '\0';
 		request_arg++;
 	}
@@ -543,7 +543,7 @@ process_unix_request(int uds_fd)
 	(void) spm_readnvtline(client_fd, line_buffer, SPM_REQUEST_MAX);
 
 	/* Split the line */
-	if (request_arg = strchr(line_buffer, ' ')) {
+	if ((request_arg = strchr(line_buffer, ' '))) {
 		*request_arg = '\0';
 		request_arg++;
 	}
@@ -628,7 +628,7 @@ spm(void *arg)
 	pthread_cleanup_push(cleanup_on_pthread_termination, (void *)0);
 
 	/* Set the termination signal */
-	spm_signo = (int)arg;
+	spm_signo = (int) ((long)arg & 0xffffffff);
 
 	/* Set up the data structure for poll */
 	spm_poll = (struct pollfd *)
@@ -798,7 +798,7 @@ spm_initialize(int signo, int *error, char *errstr)
 	}
 
 	/* create spm thread */
-	if (pthread_create(&spm_tid, NULL, spm, (void *)signo) != 0) {
+	if (pthread_create(&spm_tid, NULL, spm, (void *)(long)signo) != 0) {
 		if (errstr) {
 			snprintf(errstr, SPM_ERRSTR_MAX, "pthread: %s",
 			    strerror(errno));

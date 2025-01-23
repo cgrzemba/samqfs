@@ -333,7 +333,7 @@ struct syminfo {
 	{ "samgt", 0,	(void *)&gt,	(void *)&samgt, sizeof (samgt)},
 	{ "si_cmd_table",	0, NULL,	(void *)&si, sizeof (si)},
 	{ "sam_scd_table",	OPT_VB, (void *)&scd,	NULL, 0},
-	{ NULL, 0, (ulong_t)NULL, NULL, 0}
+	{ NULL, 0, NULL, NULL, 0}
 };
 #endif
 

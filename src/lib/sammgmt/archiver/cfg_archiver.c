@@ -1408,7 +1408,7 @@ ar_global_directive_t *g)	/* globals to write */
 	}
 
 	if (g->change_flag & AR_GL_scan_method &&
-	    g->scan_method != EM_NOT_SET && g->scan_method != enum_reset) {
+	    (int)g->scan_method != EM_NOT_SET && g->scan_method != enum_reset) {
 
 		already_done = cond_print(f, global_dir_head, already_done);
 		fprintf(f, "\nexamine = %s", ExamMethodNames[g->scan_method]);
@@ -1680,7 +1680,7 @@ ar_fs_directive_t *fs)
 	}
 
 	if (fs->change_flag & AR_FS_scan_method &&
-	    fs->scan_method != EM_NOT_SET &&
+	    (int)fs->scan_method != EM_NOT_SET &&
 	    fs->scan_method != enum_reset) {
 
 		printed = cond_print(f, name_line, printed);
