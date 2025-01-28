@@ -128,7 +128,7 @@ main(int argc, char **argv)
 	}
 
 	device = (dev_ent_t *)
-	    ((char *)memory + (int)dev_ptr_tbl->d_ent[cmd_block.eq]);
+	    ((char *)memory + (long)dev_ptr_tbl->d_ent[cmd_block.eq]);
 
 	if (!IS_TAPE(device)) {
 		fprintf(stderr,
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	}
 	if (device->fseq != 0) {
 		device = (dev_ent_t *)
-		    ((char *)memory + (int)dev_ptr_tbl->d_ent[device->fseq]);
+		    ((char *)memory + (long)dev_ptr_tbl->d_ent[device->fseq]);
 		if (device->equ_type == DT_IBMATL) {
 			fprintf(stderr,
 			    catgets(catfd, SET, 2479,

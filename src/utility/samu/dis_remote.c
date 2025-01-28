@@ -75,7 +75,7 @@ DisRemote()
 		return;
 	}
 
-	Mvprintw(0, 24, "addr: %.8x", (int)Dev_Tbl->d_ent[eq]);
+	Mvprintw(0, 24, "addr: %.8x", (long)Dev_Tbl->d_ent[eq]);
 	if (dev->dis_mes[DIS_MES_CRIT][0] != '\0') {
 		Attron(A_BOLD);
 		Mvprintw(ln++, 0, "%s: %s",
@@ -102,8 +102,8 @@ DisRemote()
 
 	if (sp->control_addr6._S6_un._S6_u32[0] != 0 ||
 	    sp->control_addr6._S6_un._S6_u32[3] != 0) {
-		if (hpp = getipnodebyaddr((char *)&sp->control_addr6,
-		    sizeof (sp->control_addr6), af, &h_error)) {
+		if ((hpp = getipnodebyaddr((char *)&sp->control_addr6,
+		    sizeof (sp->control_addr6), af, &h_error))) {
 			Mvprintw(ln, 0, "%s%d: %s %s",
 			    catgets(catfd, SET, 7327, "Client IPv"),
 			    af == AF_INET6 ? 6 : 4,
@@ -147,8 +147,8 @@ DisRemote()
 
 		if (sp->control_addr6._S6_un._S6_u32[0] != 0 ||
 		    sp->control_addr6._S6_un._S6_u32[3] != 0) {
-			if (hpp = getipnodebyaddr((char *)&sp->control_addr6,
-			    sizeof (sp->control_addr6), af, &h_error)) {
+			if ((hpp = getipnodebyaddr((char *)&sp->control_addr6,
+			    sizeof (sp->control_addr6), af, &h_error))) {
 				Mvprintw(ln, 0, "%s%d: %s %s",
 				    catgets(catfd, SET, 7411, "Server IPv"),
 				    af == AF_INET6 ? 6 : 4,

@@ -84,7 +84,9 @@ LIB_SRC = \
 
 ifeq ($(OS), Linux)
 LIB_SRC += fnmatch.c
-else
+endif
+
+ifeq ($(OS), XX_SunOS)
 LIB_SRC += \
 	alloca.c \
 	fileblocks.c \

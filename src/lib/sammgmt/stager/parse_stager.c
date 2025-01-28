@@ -285,7 +285,7 @@ setBufsizeParams(void)
 	/*
 	 *  Copy media to stager's parameters.
 	 */
-	if (token != NULL && *token != '\0') {
+	if (*token != '\0') {
 
 		if (check_media_type(token) == -1) {
 			ReadCfgError(CustMsg(4431));
@@ -475,7 +475,7 @@ setLogfileParam(void)
 
 	Trace(TR_DEBUG, "setting logfile");
 
-	if (token != NULL && *token != '\0') {
+	if (*token != '\0') {
 		if (verify_file(token, B_TRUE) == B_FALSE) {
 			ReadCfgError(CustMsg(19018), "log", token);
 		}
@@ -496,7 +496,7 @@ setLogfileParam(void)
 		stage_cfg->options &= ~(ST_LOG_ALL | ST_LOG_START |
 		    ST_LOG_ERROR | ST_LOG_CANCEL | ST_LOG_FINISH);
 
-		while (token != NULL && *token != '\0') {
+		while (*token != '\0') {
 			if (strcmp(token, ST_START_STR) == 0) {
 				stage_cfg->options |= ST_LOG_START;
 
@@ -530,7 +530,7 @@ setLogfileParam(void)
 static void
 setDirectioParam(void)
 {
-	if (token != NULL && *token != '\0') {
+	if (*token != '\0') {
 		if (strcmp(token, "on") == 0) {
 			stage_cfg->options |= ST_DIRECTIO_ON;
 			stage_cfg->change_flag |= ST_directio;

@@ -1055,7 +1055,8 @@ set_name_t name)	/* the name of the set to delete */
 	 */
 	if (strcmp(ALL_SETS, name) == 0) {
 
-		if (reset_maps_and_params(params, maps, ALL_SETS) != 0) {
+		snprintf(cpy_nm, sizeof (set_name_t), "%s", ALL_SETS);
+		if (reset_maps_and_params(params, maps, cpy_nm) != 0) {
 			goto err;
 		}
 
@@ -1335,13 +1336,14 @@ arch_set_t *set)
 	 * and skip the criteria which do not apply to allsets
 	 */
 	if (strcmp(ALL_SETS, set->name) == 0) {
-		if (set_params(cfg, params, ALL_SETS,
+		snprintf(cpy_nm, sizeof (set_name_t), "%s", ALL_SETS);
+		if (set_params(cfg, params, cpy_nm,
 		    set->copy_params[i]) != 0) {
 
 			goto err;
 		}
 
-		if (set_maps(cfg, maps, ALL_SETS, set->vsn_maps[i]) != 0) {
+		if (set_maps(cfg, maps, cpy_nm, set->vsn_maps[i]) != 0) {
 			goto err;
 		}
 

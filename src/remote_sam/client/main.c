@@ -262,8 +262,8 @@ init_client(
 			continue;
 		}
 
-		if (h_ent = getipnodebyname(line, AF_INET6, AI_ADDRCONFIG,
-		    &error_num)) {
+		if ((h_ent = getipnodebyname(line, AF_INET6, AI_ADDRCONFIG,
+		    &error_num))) {
 			memcpy(&server->control_addr6, h_ent->h_addr,
 			    h_ent->h_length);
 			server->flags |= SRVR_CLNT_IPV6;
@@ -271,8 +271,8 @@ init_client(
 			    "addrlen %d.",
 			    TrNullString(line), TrNullString(un->set),
 			    un->eq, h_ent->h_length);
-		} else if (h_ent = getipnodebyname(line, AF_INET, AI_ADDRCONFIG,
-		    &error_num)) {
+		} else if ((h_ent = getipnodebyname(line, AF_INET, AI_ADDRCONFIG,
+		    &error_num))) {
 			memcpy(&server->control_addr, h_ent->h_addr,
 			    h_ent->h_length);
 			Trace(TR_MISC, "Server is IPv4 '%s' for %s(%d) "

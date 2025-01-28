@@ -28,9 +28,7 @@
    in other words, return DEST + strlen (SOURCE). */
 
 char *
-stpcpy (dest, source)
-     char *dest;
-     char *source;
+stpcpy ( char *dest, char *source)
 {
   while ((*dest++ = *source++) != '\0')
     /* Do nothing. */ ;

@@ -248,7 +248,7 @@ processLine(
 		msgnum = 4514;
 		return (-1);
 	}
-	(void) strncat(timestr, token, sizeof (timestr));
+	(void) strncat(timestr, token, sizeof (timestr)-1);
 	rtime = 0;
 	if (strptime(timestr, "%Y/%m/%d %H:%M:%S", &tm) != NULL) {
 		tm.tm_isdst = -1;	/* Let mktime() determine DST */

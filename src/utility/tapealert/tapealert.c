@@ -276,14 +276,14 @@ main(int argc, char **argv)
 
 	memset(&event, 0, sizeof (event_t));
 	while (fgets(line, LEN, fp)) {
-		if (p = strrchr(line, '\n')) {
+		if ((p = strrchr(line, '\n'))) {
 			*p = '\0';
 		}
 		if (strlen(line) < 26) { /* devlog line ch past 12xxx to ' ' */
 			continue;
 		}
 		strnum = strdup(&line [20]);
-		if (p = strchr(strnum, ' ')) {
+		if ((p = strchr(strnum, ' '))) {
 			*p = '\0';
 		}
 		num = atoi(strnum);

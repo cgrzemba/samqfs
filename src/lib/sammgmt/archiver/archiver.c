@@ -3328,7 +3328,7 @@ char	**job_id)
 		snprintf(samerrmsg, MAX_MSG_LEN,
 		    GetCustMsg(SE_ARCHIVE_FILES_FAILED));
 
-		free(job_id);
+		free(*job_id);
 		*job_id = NULL;
 		Trace(TR_ERR, "archive files failed, error:%d %s",
 		    samerrno, samerrmsg);
@@ -3340,7 +3340,7 @@ char	**job_id)
 		 * that the job finished. So clear the job id now
 		 * so that the caller knows the request has been submitted.
 		 */
-		free(job_id);
+		free(*job_id);
 		*job_id = NULL;
 		Trace(TR_MISC, "archive files completed");
 	}

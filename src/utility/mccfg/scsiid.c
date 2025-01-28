@@ -257,8 +257,8 @@ query_mc_dt(
 	if (issue_cmd(devdata, cdb, 12, data, &datalen, DATAIN, OPTIONAL)) {
 		/* Try again getting using plain SCSI-2. */
 		cdb [DEVID_BYTE] &= ~DEVID;
-		if (return_code = issue_cmd(devdata, cdb, 12, data, &datalen,
-		    DATAIN, REQUIRED))
+		if ((return_code = issue_cmd(devdata, cdb, 12, data, &datalen,
+		    DATAIN, REQUIRED)))
 			return (return_code);
 	}
 

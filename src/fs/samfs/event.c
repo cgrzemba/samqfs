@@ -220,7 +220,7 @@ sam_event_open(
 			if (curproc->p_model != DATAMODEL_ILP32) {
 				arg.eo_buffer.p64 = (uint64_t)uaddr;
 			} else {
-				arg.eo_buffer.p32 = (uint32_t)uaddr;
+				arg.eo_buffer.p32 = (uint32_t)((ulong_t)uaddr & UINT32_MAX);
 			}
 			if (copyout(&arg, argp, sizeof (arg)) != 0) {
 				error = EFAULT;

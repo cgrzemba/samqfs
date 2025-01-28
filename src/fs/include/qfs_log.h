@@ -69,11 +69,11 @@
 extern "C" {
 #endif
 
-#define	LQFS_MESSAGES_OFF
-#define	LQFS_MESSAGES_ON	cmn_err
-#define	LQFS_MESSAGES_DEFAULT	LQFS_MESSAGES_OFF
+#define	LQFS_MESSAGES_OFF(...)
+#define	LQFS_MESSAGES_ON(...)	cmn_err(__VA_ARGS__)
+#define	LQFS_MESSAGES_DEFAULT(...)	LQFS_MESSAGES_OFF(__VA_ARGS__)
 
-#define	LQFS_MSG	LQFS_MESSAGES_DEFAULT
+#define	LQFS_MSG(...)	LQFS_MESSAGES_DEFAULT(__VA_ARGS__)
 
 typedef struct lqfs_save {
 	buf_t		*sv_bp;

@@ -1379,9 +1379,11 @@ allocate_dirent_space()
 void
 sam_set_dirent(char *np)
 {
-	memset(namep, 0, sizeof (struct sam_dirent));
+	char *pdn = (char*)namep->d_name;
+
+	memset(namep, 0, sizeof (struct sam_dirent) + MAXNAMLEN);
 	namep->d_reclen = namep->d_namlen = strlen(np);
-	strncpy((char *)namep->d_name, np, MAXNAMLEN);
+	strncpy(pdn, np, MAXNAMLEN);
 }
 
 int

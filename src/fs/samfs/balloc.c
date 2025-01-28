@@ -399,8 +399,8 @@ sam_copy_to_large(sam_node_t *ip, int size)
 		goto back_it_out;
 	fbp = NULL;
 	while (expand_size > 0) {
-		if (error = fbread(SAM_ITOV(ip), cur_off, MAXBSIZE,
-		    S_OTHER, &fbp))
+		if ((error = fbread(SAM_ITOV(ip), cur_off, MAXBSIZE,
+		    S_OTHER, &fbp)))
 			break;
 		/*
 		 * Set up buffer for write.
@@ -564,8 +564,8 @@ sam_allocate_block(
 				ord = mp->mi.m_blk_ord;
 				ext_bn = mp->mi.m_blk_bn;
 				mp->mi.m_blk_bn = 0;
-			} else if (error = sam_alloc_block(ip, iop->imap.bt,
-			    &ext_bn, &ord)) {
+			} else if ((error = sam_alloc_block(ip, iop->imap.bt,
+			    &ext_bn, &ord))) {
 				sam_quota_bret(mp, ip, D2QBLKS(allocsz),
 				    D2QBLKS(tot_allocsz));
 				return (error);

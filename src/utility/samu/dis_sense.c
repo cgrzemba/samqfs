@@ -82,7 +82,7 @@ DisSense()
 		    "No sense data available"));
 		return;
 	}
-	Mvprintw(0, 24, "addr: %.8x", (int)dev->sense);
+	Mvprintw(0, 24, "addr: %.8x", (long)dev->sense);
 	Mvprintw(ln, 0, "Sense data:");
 	Mvprintw(ln++, 40, catgets(catfd, SET, 370, "Additional sense bytes:"));
 	sense = (sam_newext_sense_t *)SHM_ADDR(master_shm, dev->sense);

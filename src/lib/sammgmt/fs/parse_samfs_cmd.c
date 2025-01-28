@@ -783,7 +783,7 @@ fs_t *o)	/* file system to write mount options */
 
 	Trace(TR_OPRMSG, "wrote fs mount options for %s", o->fi_name);
 
-	if (o->fi_name != NULL && strcmp(o->fi_name, GLOBAL) != 0) {
+	if (*o->fi_name != '\0' && strcmp(o->fi_name, GLOBAL) != 0) {
 		snprintf(buf, sizeof (buf), "#\n#\n%s%s%s\n",
 		    "fs", EQUALS, o->fi_name);
 		fs_line = buf;

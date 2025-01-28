@@ -363,7 +363,6 @@ opendisk(
 		}
 		if ((d = open(devrname, O_RDONLY)) < 0) {
 			free(fp);
-			free(devrname);
 			Error("open(%s)", devrname);
 		}
 		if ((buffer = (uchar_t *)malloc(1024)) == NULL) {
@@ -397,9 +396,8 @@ opendisk(
 		Error(catgets(catfd, SET, 865, "Device cannot be opened (%s)"),
 		    dev->name);
 	}
-	strcpy(devrname, dev->name);
-	if ((d = open(devrname, O_RDONLY)) < 0) {
-		Error("open(%s)", devrname);
+	if ((d = open(dev->name, O_RDONLY)) < 0) {
+		Error("open(%s)", dev->name);
 	}
 	if IS_TAPE(dev) {
 		/* kludge - tape sector_size is not filled in if unavail */
@@ -413,7 +411,7 @@ opendisk(
 	}
 	disk = d;
 	eq = (equ_t)e;
-	DSname = devrname;
+	DSname = dev->name;
 	type = dev->type;
 	if ((type & DT_CLASS_MASK) == DT_OPTICAL) {
 		ptocfwa = dev->dt.od.ptoc_fwa;

@@ -1635,6 +1635,8 @@ sam_check_wmstate(
 				send_state++;
 			}
 			break;
+		default:	
+			break;
 		}
 		if (send_state)
 			sam_report_fs_watermark(mp, (int)new_state);

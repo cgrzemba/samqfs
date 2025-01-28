@@ -523,7 +523,7 @@ CmdLogfile(void)
 
 	Trace(TR_DEBUG, "setting log_file");
 
-	if (token != NULL && *token != '\0') {
+	if (*token != '\0') {
 
 		if (strlen(token) > sizeof (cur_rl->releaser_log)-1) {
 			ReadCfgError(CustMsg(19019),

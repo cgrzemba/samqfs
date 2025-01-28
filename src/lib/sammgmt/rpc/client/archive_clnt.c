@@ -2473,7 +2473,7 @@ boolean_t *is_valid	/* return - true if group is valid, else false */
  */
 int is_valid_user(
 ctx_t *ctx,
-uname_t user,	/* user name */
+char *user,	/* user name */
 boolean_t *is_valid	/* return - true if user is valid, else false */
 )
 {

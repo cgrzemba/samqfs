@@ -153,9 +153,9 @@ InitDataConnection(
 	}
 
 	if (af == AF_INET6) {
-		memcpy(&crew->addr, &dc6, sizeof (struct sockaddr_in6));
+		memcpy(&crew->addr, dc6, sizeof (struct sockaddr_in6));
 	} else {
-		memcpy(&crew->addr, &dc4, sizeof (struct sockaddr_in));
+		memcpy(&crew->addr, dc4, sizeof (struct sockaddr_in));
 	}
 	crew->in  = fdopen(sockfd, "r");
 	crew->out = fdopen(sockfd, "w");

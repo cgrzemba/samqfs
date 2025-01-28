@@ -988,7 +988,7 @@ sam_pageio(
 	bp->b_edev = mp->mi.m_fs[iop->ord].dev;
 	bp->b_dev = cmpdev(bp->b_edev);
 	bp->b_blkno = iop->blkno << SAM2SUN_BSHIFT;
-	bp->b_un.b_addr = (caddr_t)pg_off;
+	bp->b_un.b_addr = (caddr_t)(long)pg_off;
 	bp->b_file = SAM_ITOP(ip);
 	bp->b_offset = off;
 	TRACE(T_SAM_STARTBIO, SAM_ITOV(ip),

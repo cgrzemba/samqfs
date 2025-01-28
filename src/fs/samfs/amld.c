@@ -189,7 +189,7 @@ sam_sync_amld(sam_resync_arg_t *args)
 
 	fifo.cmd = FS_FIFO_RESYNC;
 	fifo.magic = FS_FIFO_MAGIC;
-	if (error = sam_put_amld_cmd(&fifo, SAM_NOBLOCK)) {
+	if ((error = sam_put_amld_cmd(&fifo, SAM_NOBLOCK))) {
 		cmn_err(CE_WARN,
 		    "SAM-QFS: failed to notify sam-amld of resync, "
 		    "error = %d", error);

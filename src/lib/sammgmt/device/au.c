@@ -412,7 +412,7 @@ boolean_t info)	/* if B_TRUE then include fsinfo in the result */
 	    au.path,
 	    strstr(&au.path[strlen(au.path) - 2], "s2") ? '!' : ' ',
 	    (float)au.capacity / MEGA,
-	    (au.fsinfo == NULL) ? " " : au.fsinfo,
+	    (*au.fsinfo == '\0') ? " " : au.fsinfo,
 	    (au.type == AU_SLICE) ? "n/a" : ((au.raid == NULL) ? "-" : au.raid),
 	    (scsi == NULL) ? "n/a" : scsi->vendor,
 	    (scsi == NULL) ? "n/a" : scsi->prod_id,
@@ -583,11 +583,11 @@ au_t *newau)	/* the clone is put here */
 {
 	if (NULL == au)
 		return (NULL);
-	if (au->path)
+	if (*au->path != '\0')
 		strcpy(newau->path, au->path);
 	newau->type = au->type;
 	newau->capacity = au->capacity;
-	if (au->fsinfo)
+	if (*au->fsinfo != '\0')
 		strcpy(newau->fsinfo, au->fsinfo);
 	newau->raid = (au->raid == NULL) ? NULL : strdup(au->raid);
 	if (NULL != au->scsiinfo) {

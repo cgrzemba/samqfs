@@ -66,7 +66,7 @@ struct sam_block {
 	short		block_count;	/* Num blocks in circular buffer */
 	short		requested;	/* Count of requested blocks */
 	char		unused;
-	char		dt;		/* Device type - data or meta */
+	unsigned char		dt;		/* Device type - data or meta */
 	struct sam_mount *mp;		/* Pointer back to mount table */
 	kmutex_t	md_mutex;
 	sam_bn_t	bn[1];

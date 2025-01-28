@@ -410,8 +410,8 @@ done:
 		int cst = 0;
 
 		memset(&cstats, 0, sizeof (DB_COMPACT));
-		memset(&start, 0, sizeof (DBT));
-		memset(&end, 0, sizeof (DBT));
+		memset(&start, 0, sizeof (sfid_t));
+		memset(&end, 0, sizeof (sfid_t));
 
 		cstats.compact_fillpercent = 90;
 		cstats.compact_timeout = 15;
@@ -597,7 +597,7 @@ db_add_snapshot(
 		return (st);
 	}
 
-	if (snapdata->snapname != NULL) {
+	if (*snapdata->snapname != '\0') {
 		memset(&key, 0, sizeof (DBT));
 		memset(&data, 0, sizeof (DBT));
 

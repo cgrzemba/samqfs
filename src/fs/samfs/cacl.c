@@ -326,7 +326,7 @@ sam_acl_get_vsecattr(
 		if ((aclp = ip->aclp) == NULL) {
 			ASSERT(!SAM_IS_SHARED_FS(ip->mp) ||
 			    SAM_IS_SHARED_SERVER(ip->mp));
-			if (error = sam_get_acl(ip, &aclp)) {
+			if ((error = sam_get_acl(ip, &aclp))) {
 				errline = __LINE__ - 1;
 				goto out;
 			}
@@ -373,9 +373,9 @@ sam_acl_get_vsecattr(
 			}
 			ACL_VSEC(OTHER_OBJ, 1, aclp->acl.other, entp);
 
-			if (error = sam_check_acl(vsap->vsa_aclcnt,
+			if ((error = sam_check_acl(vsap->vsa_aclcnt,
 			    vsap->vsa_aclentp,
-			    ACL_CHECK)) {
+			    ACL_CHECK))) {
 				errline = __LINE__ - 1;
 				goto out;
 			}
@@ -418,9 +418,9 @@ sam_acl_get_vsecattr(
 				ACL_VSEC(DEF_OTHER_OBJ, 1, aclp->dfacl.other,
 				    entp);
 
-				if (error = sam_check_acl(vsap->vsa_dfaclcnt,
+				if ((error = sam_check_acl(vsap->vsa_dfaclcnt,
 				    vsap->vsa_dfaclentp,
-				    DEF_ACL_CHECK)) {
+				    DEF_ACL_CHECK))) {
 					errline = __LINE__ - 3;
 					goto out;
 				}
@@ -500,7 +500,7 @@ sam_get_acl(
 			/*
 			 * Fetch ACLs from inode extension(s).
 			 */
-			if (error = sam_get_acl_ext(bip, &aclp)) {
+			if ((error = sam_get_acl_ext(bip, &aclp))) {
 				errline = __LINE__ - 1;
 			}
 			break;
@@ -553,7 +553,7 @@ sam_get_acl_ext(
 	/*
 	 * Retrieve ACL size(s) from inode ext(s).
 	 */
-	if (error = sam_get_acl_ext_cnts(bip, &cnt, &dfcnt)) {
+	if ((error = sam_get_acl_ext_cnts(bip, &cnt, &dfcnt))) {
 		errline = __LINE__ - 1;
 		goto out;
 	}
@@ -581,8 +581,8 @@ sam_get_acl_ext(
 		aclp->dfacl.cnt = dfcnt;
 		aclp->dfacl.entp = dfentp = &aclp->ent[cnt];
 	}
-	if (error = sam_get_acl_ext_data(bip, synth_acl ? 0 : cnt,
-	    entp, dfcnt, dfentp)) {
+	if ((error = sam_get_acl_ext_data(bip, synth_acl ? 0 : cnt,
+	    entp, dfcnt, dfentp))) {
 		errline = __LINE__ - 1;
 		goto out;
 	}
@@ -591,13 +591,13 @@ sam_get_acl_ext(
 	 * Validate ACLs, if present.
 	 */
 	if (cnt > 0) {
-		if (error = sam_check_acl(cnt, entp, ACL_CHECK)) {
+		if ((error = sam_check_acl(cnt, entp, ACL_CHECK))) {
 			errline = __LINE__ - 1;
 			goto out;
 		}
 	}
 	if (dfcnt > 0) {
-		if (error = sam_check_acl(dfcnt, dfentp, DEF_ACL_CHECK)) {
+		if ((error = sam_check_acl(dfcnt, dfentp, DEF_ACL_CHECK))) {
 			errline = __LINE__ - 1;
 			goto out;
 		}
@@ -606,7 +606,7 @@ sam_get_acl_ext(
 	/*
 	 * Build regular and default ACL sections of incore ACL.
 	 */
-	if (error = sam_build_acl(aclp)) {
+	if ((error = sam_build_acl(aclp))) {
 		errline = __LINE__ - 1;
 		goto out;
 	}
@@ -696,8 +696,8 @@ sam_get_acl_ext_cnts(
 		*cntp = *dfcntp = 0;
 		eid = bip->di.ext_id;
 		while (eid.ino) {
-			if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+			    (struct sam_perm_inode **)&eip))) {
 				errline = __LINE__ - 2;
 				break;
 			}
@@ -787,8 +787,8 @@ sam_get_acl_ext_data(
 	done = 0;
 	eid = bip->di.ext_id;
 	while (eid.ino && !done && !error) {
-		if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-				(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip))) {
 			errline = __LINE__ - 2;
 			break;
 		}

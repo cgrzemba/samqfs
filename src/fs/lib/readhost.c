@@ -817,8 +817,8 @@ SamGetSharedHostInfo(
 	int hostno,			/* Index to look up */
 	upath_t name,			/* Name to return */
 	upath_t addr,			/* Address to return */
-	upath_t serverpri,		/* Server priority field */
-	upath_t onoff)			/* Host on/off field */
+	char *serverpri,		/* Server priority field */
+	char *onoff)			/* Host on/off field */
 {
 	int slen, count;
 	char *s = &host->ent[0];

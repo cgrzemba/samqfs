@@ -162,7 +162,7 @@ samioc_ioctl(dev_t dev, int cmd, intptr_t arg, int mode,
 		}
 
 		args.cmd = (int)args32.cmd;
-		args.buf = (void *)args32.buf;
+		args.buf = (void *)(long)args32.buf;
 		args.size = (int)args32.size;
 
 	} else {
@@ -233,7 +233,7 @@ samioc_getinfo(dev_info_t *dip, ddi_info_cmd_t infocmd, void *arg,
 		break;
 
 	case DDI_INFO_DEVT2INSTANCE:
-		*result = (void *)getminor((dev_t)arg);
+		*result = (void *)(long)getminor((dev_t)arg);
 		rc = DDI_SUCCESS;
 		break;
 	}

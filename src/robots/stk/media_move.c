@@ -1179,7 +1179,7 @@ down_lsm(
 
 	for (drive = library->drive; drive != NULL; drive = drive->next) {
 
-		if (drive->drive_id.panel_id.lsm_id.lsm = lsm) {
+		if (drive->drive_id.panel_id.lsm_id.lsm == lsm) {
 			down_drive(drive, SAM_STATE_CHANGE);
 		}
 	}

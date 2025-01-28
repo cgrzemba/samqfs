@@ -211,7 +211,7 @@ fill_in_sparse_array (void)
   for (counter = 0; counter < SPARSES_IN_OLDGNU_HEADER; counter++)
     {
       /* Compare to 0, or use !(int)..., for Pyramid's dumb compiler.  */
-      if (current_header->oldgnu_header.sp[counter].numbytes == 0)
+      if (current_header->oldgnu_header.sp[counter].numbytes[0] == 0)
 	break;
 
       sparsearray[counter].offset =

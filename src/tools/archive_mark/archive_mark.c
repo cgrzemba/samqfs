@@ -69,7 +69,7 @@
 #include "sam/fs/ino_ext.h"
 #include "sam/lib.h"
 
-void
+int
 main(int argc, char *argv[])
 {
 	int copy;			/* Archive copy */

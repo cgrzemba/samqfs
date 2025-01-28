@@ -579,8 +579,8 @@ doit(
 				sam_syslog(LOG_DEBUG, "query_mount: vol(%s)",
 				    vol_ids[0].external_label);
 			}
-			if (stk_resp.hdr.api_status =
-			    acs_query_mount(sequence, vol_ids, 1)) {
+			if ((stk_resp.hdr.api_status =
+			    acs_query_mount(sequence, vol_ids, 1))) {
 
 				no_resp = TRUE;
 				if (DBG_LVL(SAM_DBG_DEBUG)) {
@@ -737,7 +737,7 @@ process_signal(int sig_no)
 int
 parse_drives(
 	int *num_drive,
-	DRIVEID *drive_ids,
+	DRIVEID drive_ids[MAX_ID],
 	dev_ent_t *un)
 {
 	int		parts, value;

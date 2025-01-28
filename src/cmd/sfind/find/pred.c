@@ -1546,7 +1546,7 @@ pred_regex (pathname, stat_buf, pred_ptr)
      struct sam_stat *stat_buf;
      struct predicate *pred_ptr;
 {
-  if (re_match (pred_ptr->args.regex, pathname, strlen (pathname), 0,
+  if (xre_match (pred_ptr->args.regex, pathname, strlen (pathname), 0,
 		(struct re_registers *) NULL) != -1)
     return (true);
   return (false);
@@ -1877,6 +1877,8 @@ boolean	compare_time	(kind, lhs, rhs, secs)
 	case	COMP_EQ:
 		return (lhs >= rhs && lhs < rhs+secs );
 	}
+	/* NOTREACHED */
+	return (false);
 }
 
 boolean	compare_value	(kind, lhs, rhs)
@@ -1895,6 +1897,8 @@ boolean	compare_value	(kind, lhs, rhs)
 	case	COMP_EQ:
 		return (lhs == rhs );
 	}
+	/* NOTREACHED */
+	return (false);
 }
 
 

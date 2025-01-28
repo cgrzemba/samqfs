@@ -312,7 +312,7 @@ dis_incore(sam_node_t *node)	/* Incore inode image */
 
 	ln = fl;
 	Mvprintw(ln++, 40, "%.8x flags", node->flags.bits);
-	Mvprintw(ln++, 40, "%.8x lbase", (uint_t)node->lbase);
+	Mvprintw(ln++, 40, "%.8x lbase", (ulong_t)node->lbase);
 	Mvprintw(ln++, 40, "%.8x page_off_u", node->page_off);
 	Mvprintw(ln++, 40, "%.8x page_off_l", (uint_t)node->page_off);
 	Mvprintw(ln++, 40, "%.8x ra_off_u", node->ra_off);

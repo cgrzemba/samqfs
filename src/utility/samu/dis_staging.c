@@ -324,7 +324,7 @@ disStager()
 		    state->reqAlloc, state->reqEntries);
 	}
 
-	if (state->logFile) {
+	if (*state->logFile != '\0') {
 		Mvprintw(ln++, 0, catgets(catfd, SET, 7371,
 		    "Log output to: %s"),
 		    state->logFile);

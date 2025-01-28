@@ -126,7 +126,7 @@ sam_server_rdsock(
 	    copyin(arg, (caddr_t)&rdsock, sizeof (rdsock))) {
 		return (EFAULT);
 	}
-	rdmsg = (char *)rdsock.msg.p32;
+	rdmsg = (char *)(long)rdsock.msg.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		rdmsg = (char *)rdsock.msg.p64;
 	}

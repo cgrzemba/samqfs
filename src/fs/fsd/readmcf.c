@@ -403,7 +403,6 @@ McfLine(void)
 					/* Raw dev name doesn't match dev */
 					ReadCfgError(17258, token, dev.name);
 				}
-				free(dev.name);
 			}
 #endif
 			break;

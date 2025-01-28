@@ -261,7 +261,7 @@ samaio_strategy(struct buf *bp)
 	struct samaio_uio *aiouiop;
 	int ioflag;
 
-	if (((uint_t)bp->b_un.b_addr & 1) != 0) { /* Must be short aligned */
+	if (((ulong_t)bp->b_un.b_addr & 1) != 0) { /* Must be short aligned */
 		bioerror(bp, EFAULT);
 		return (0);
 	}

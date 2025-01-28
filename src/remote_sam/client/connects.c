@@ -213,10 +213,8 @@ connect_server(
 		mark_catalog_unavail(un);
 	}
 
-#ifdef lint
 	/* NOTREACHED */
 	return (NULL);
-#endif
 }
 
 /*
@@ -454,7 +452,7 @@ check_rmt_request(
 			SysError(HERE, "Byteswap error on req response");
 		}
 #endif
-		if (req->mess_addr != NULL) {
+		if (req->mess_addr != 0) {
 
 			switch (req->request.req_response.type) {
 

@@ -30,9 +30,7 @@
 /* Copy SRC to DEST, returning the address of the terminating '\0' in DEST.  */
 
 char *
-stpcpy (dest, src)
-     char *dest;
-     const char *src;
+stpcpy ( char *dest, const char *src)
 {
   while ((*dest++ = *src++) != '\0')
     /* Do nothing. */ ;

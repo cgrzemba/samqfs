@@ -92,7 +92,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/lib.h"
 #include "sam/custmsg.h"
 
-#define		SHM_ADDR(a, x)  ((char *)a.shared_memory + (int)(x))
+#define		SHM_ADDR(a, x)  ((char *)a.shared_memory + (long)(x))
 
 
 /*	Global tables & pointers:					*/

@@ -248,6 +248,7 @@ findDev(
 	}
 	Error(catgets(catfd, SET, 856, "Device %s not defined."), eq);
 	/* NOTREACHED */
+	return (0);
 }
 
 /*
@@ -294,6 +295,7 @@ finddev(
 	}
 	Error(catgets(catfd, SET, 856, "Device %s not defined."), name);
 	/* NOTREACHED */
+	return (0);
 }
 
 /*

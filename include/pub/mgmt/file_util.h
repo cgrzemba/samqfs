@@ -298,13 +298,13 @@ sqm_lst_t **res);
  *   success -  0
  *   error   -  -1
  */
-int create_file(ctx_t *ctx, upath_t full_path);
+int create_file(ctx_t *ctx, char *full_path);
 
 
 /*
  * check if the file exist
  */
-int file_exists(ctx_t *ctx, upath_t file_path);
+int file_exists(ctx_t *ctx, char *file_path);
 
 
 /*

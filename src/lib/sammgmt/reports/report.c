@@ -164,7 +164,8 @@ report_requirement_t *report_req)
 		Trace(TR_ERR, "%s", samerrmsg);
 		return (-1);
 	}
-	if (create_dir(NULL, REPORT_DIR) != 0) {
+	sprintf(filename, "%s", REPORT_DIR);
+	if (create_dir(NULL, filename) != 0) {
 		Trace(TR_OPRMSG, "%s", samerrmsg);
 		return (-1);
 	}
@@ -308,7 +309,8 @@ report_requirement_t *report_req)
 		return (-1);
 	}
 
-	if (create_dir(NULL, REPORT_DIR) != 0) {
+	sprintf(filename, "%s", REPORT_DIR);
+	if (create_dir(NULL, filename) != 0) {
 		Trace(TR_OPRMSG, "%s", samerrmsg);
 		return (-1);
 	}
@@ -394,7 +396,8 @@ report_requirement_t *report_req)
 		Trace(TR_ERR, "%s", samerrmsg);
 		return (-1);
 	}
-	if (create_dir(NULL, REPORT_DIR) != 0) {
+	sprintf(filename, "%s", REPORT_DIR);
+	if (create_dir(NULL, filename) != 0) {
 		Trace(TR_OPRMSG, "%s", samerrmsg);
 		return (-1);
 	}

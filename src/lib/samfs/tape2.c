@@ -2170,7 +2170,7 @@ process_tape_labels(int fd, dev_ent_t *un)
 					*c_tmp = '\0';
 			}
 			memcpy(&un->vsn, &vol1.volume_serial_number, 6);
-			if (memcmp(&hdr2.lsc_uniq.reserved_for_os, "	", 8)
+			if (memcmp(&hdr2.lsc_uniq.reserved_for_os, "        ", 8)
 			    != 0) {
 				BE32toH(&hdr2.lsc_uniq.label_time,
 				    &un->label_time);

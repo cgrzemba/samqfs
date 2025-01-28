@@ -337,11 +337,7 @@ struct syminfo {
 };
 #endif
 
-#ifdef linux
 int
-#else
-void
-#endif
 main(int argc, char *argv[])
 {
 #ifdef sun
@@ -4021,7 +4017,7 @@ set_realtime_priority()
 	bzero(&pcparms, sizeof (pcparms));
 	pcparms.pc_cid = pcinfo.pc_cid;
 	rtparmsp->rt_pri = RT_NOCHANGE;
-	rtparmsp->rt_tqsecs = (ulong_t)RT_NOCHANGE;
+	rtparmsp->rt_tqsecs = RT_NOCHANGE;
 	rtparmsp->rt_tqnsecs = RT_NOCHANGE;
 	if (priocntl(P_PID, getpid(), PC_SETPARMS, (caddr_t)&pcparms) != 0) {
 		fprintf(stderr,
@@ -4180,7 +4176,7 @@ thrReadTrace(void *p)
 		tqbp->tqb_valid = 1;		/* good data */
 		cond_signal(tkp->tq_put_cv);	/* notify reader */
 		mutex_unlock(&tkp->tq_lock);
-		ibuf = ++ibuf % TrNbuf;		/* next buffer */
+		ibuf = (ibuf+1) % TrNbuf;		/* next buffer */
 	}
 	/* NOTREACHED */
 	return (NULL);
@@ -4430,7 +4426,7 @@ getbuf:
 				 */
 				mutex_lock(&tba[i].tq_lock);
 				tba[i].tq[buf].tqb_valid = 0;
-				tba[i].tq_bufx =  ++tba[i].tq_bufx % TrNbuf;
+				tba[i].tq_bufx = (tba[i].tq_bufx+1) % TrNbuf;
 				cond_signal(&tba[i].tq_get_cv);
 				mutex_unlock(&tba[i].tq_lock);
 				goto getbuf;

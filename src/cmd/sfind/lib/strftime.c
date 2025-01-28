@@ -112,7 +112,8 @@ static char const * const months[] =
 /* Add character C to STRING and increment LENGTH,
    unless LENGTH would exceed MAX. */
 
-#define add_char(c) (length + 1 <= max) && (string[length++] = (c))
+/* #define add_char(c) (length + 1 <= max) && (string[length++] = (c)) */
+#define add_char(c)  ({ if (length + 1 <= max) { string[length++] = c; } })
 
 /* Add a 2 digit number to STRING, padding if specified.
    Return the number of characters added, up to MAX. */
@@ -232,11 +233,11 @@ zone_name (tp)
    exceeded MAX. */
 
 size_t
-strftime (string, max, format, tm)
-     char *string;
-     size_t max;
-     const char *format;
-     const struct tm *tm;
+strftime (
+     char *string,
+     size_t max,
+     const char *format,
+     const struct tm *tm)
 {
   enum padding pad;		/* Type of padding to apply. */
   size_t length = 0;		/* Characters put in STRING so far. */

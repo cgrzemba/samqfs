@@ -175,7 +175,7 @@ sam_quota_op(struct sam_quota_arg *argp)
 		args.qindex = sam_quota_get_index(ip, args.qtype);
 	}
 
-	uqp = (void *)args.qp.p32;
+	uqp = (void *)(long)args.qp.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		uqp = (void *)args.qp.p64;
 	}
@@ -577,7 +577,7 @@ sam_quota_balloc(sam_mount_t *mp, sam_node_t *ip, long long nblks,
 	for (i = 0; i < SAM_QUOTA_DEFD; i++) {
 		qp = sam_quot_get(mp, ip, i, sam_quota_get_index(ip, i));
 		if (qp != NULL) {
-			if (err = sam_quota_bcheck(qp, nblks, nblks2, cr)) {
+			if ((err = sam_quota_bcheck(qp, nblks, nblks2, cr))) {
 				sam_quot_rel(mp, qp);
 				break;
 			}
@@ -591,7 +591,7 @@ sam_quota_balloc(sam_mount_t *mp, sam_node_t *ip, long long nblks,
 	for (j = i-1; j >= 0; j--) {
 		qp = sam_quot_get(mp, ip, j, sam_quota_get_index(ip, j));
 		if (qp != NULL) {
-			if (err = sam_quota_bcheck(qp, -nblks, -nblks2, NULL)) {
+			if ((err = sam_quota_bcheck(qp, -nblks, -nblks2, NULL))) {
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: Error returning "
 				    "blocks in %s quota"
@@ -641,7 +641,7 @@ sam_quota_balloc_perm(sam_mount_t *mp, struct sam_perm_inode *permip,
 		qp = sam_quot_get(mp, NULL, i,
 		    sam_quota_get_index_di(&permip->di, i));
 		if (qp != NULL) {
-			if (err = sam_quota_bcheck(qp, nblks, nblks2, cr)) {
+			if ((err = sam_quota_bcheck(qp, nblks, nblks2, cr))) {
 				sam_quot_rel(mp, qp);
 				break;
 			}
@@ -656,7 +656,7 @@ sam_quota_balloc_perm(sam_mount_t *mp, struct sam_perm_inode *permip,
 		qp = sam_quot_get(mp, NULL, j,
 		    sam_quota_get_index_di(&permip->di, j));
 		if (qp != NULL) {
-			if (err = sam_quota_bcheck(qp, -nblks, -nblks2, NULL)) {
+			if ((err = sam_quota_bcheck(qp, -nblks, -nblks2, NULL))) {
 				cmn_err(CE_WARN,
 				    "SAM-QFS: %s: Error returning "
 				    "blocks in %s quota"
@@ -956,7 +956,7 @@ sam_set_admid(void *arg, int size, cred_t *credp)
 		return (EFAULT);
 	}
 
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}

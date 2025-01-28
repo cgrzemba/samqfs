@@ -703,7 +703,7 @@ sam_alloc_segment_ino(
 		return (error);
 	}
 	id.gen = 0;
-	if (error = sam_get_ino(SAM_ITOV(bip)->v_vfsp, IG_NEW, &id, &ip)) {
+	if ((error = sam_get_ino(SAM_ITOV(bip)->v_vfsp, IG_NEW, &id, &ip))) {
 		return (error);
 	}
 	TRANS_INODE(bip->mp, bip);
@@ -1169,8 +1169,8 @@ sam_callback_segment(
 
 		while (fileoff < new_length) {
 			if (offset >= bip->di.rm.info.dk.seg.fsize) {
-				if (error = sam_get_segment_ino(bip,
-				    segment_ord, &ip)) {
+				if ((error = sam_get_segment_ino(bip,
+				    segment_ord, &ip))) {
 					return (error);
 				}
 				SAM_SEGRELE(SAM_ITOV(ip));

@@ -1998,7 +1998,7 @@ lqfs_init(void)
 
 	_init_top();
 
-	if (&bio_lqfs_strategy != NULL) {
+	if (bio_lqfs_strategy != NULL) {
 		bio_lqfs_strategy = (void (*) (void *, buf_t *)) lqfs_strategy;
 	}
 

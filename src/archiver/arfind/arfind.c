@@ -652,7 +652,7 @@ attachFileProps(void)
 			 * Find first copy required.
 			 */
 			for (copy = 0; copy < MAX_ARCHIVE; copy++) {
-				if (fp->FpAsn != 0) {
+				if (fp->FpAsn[copy] != 0) {
 					if (State->AfExamine >= EM_noscan) {
 						struct ScanListEntry se;
 
@@ -667,6 +667,8 @@ attachFileProps(void)
 							se.SeTime = time(NULL);
 							ScanfsAddEntry(&se);
 						}
+						Trace(TR_MISC, "%s add scan entry, copy %d",
+						    ArchSetTable[fp->FpBaseAsn].AsName, copy);
 					}
 					fp->FpFlags &= ~(FP_add | FP_change);
 				}

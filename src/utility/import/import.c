@@ -315,7 +315,7 @@ main(int argc, char **argv)
 	}
 	device =
 	    (dev_ent_t *)((char *)memory +
-	    (int)dev_ptr_tbl->d_ent[cmd_block.eq]);
+	    (long)dev_ptr_tbl->d_ent[cmd_block.eq]);
 
 	if (device->equ_type != DT_HISTORIAN && !device->status.b.ready) {
 		fprintf(stderr,

@@ -108,7 +108,7 @@ upath_t rc_log)	/* recycler log path */
 		    recycler_file, samerrmsg);
 		return (-1);
 	}
-	if (recycler->recycler_log != NULL) {
+	if (*recycler->recycler_log != '\0') {
 		strlcpy(rc_log, recycler->recycler_log,
 		    sizeof (upath_t));
 	}
@@ -208,7 +208,7 @@ upath_t rc_script)	/* notify script path */
 		    recycler_file, samerrmsg);
 		return (-1);
 	}
-	if (recycler->script != NULL) {
+	if (*recycler->script != '\0') {
 		strlcpy(rc_script, recycler->script,
 		    sizeof (upath_t));
 	}

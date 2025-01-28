@@ -103,10 +103,10 @@ vstrapp(
 		ptr[0] = '\0';
 		offset = 0;
 	} else {
+		offset = strlen(str);
 		if ((ptr = (char *)realloc(str, strlen(str)+count+1)) == NULL) {
 			return (NULL);
 		}
-		offset = strlen(str);
 	}
 
 	(void) vsprintf(ptr+offset, fmt, args);

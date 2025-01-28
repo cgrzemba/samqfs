@@ -2502,12 +2502,12 @@ sam_client_frlock_vn(
 
 			start = (flp->l_start + ip->di.rm.size);
 		} else {
-			if (error = flk_convert_lock_data(vp, flp,
-			    &start, &end, offset)) {
+			if ((error = flk_convert_lock_data(vp, flp,
+			    &start, &end, offset))) {
 				goto out;
 			}
 		}
-		if (error = flk_check_lock_data(start, end, MAXEND)) {
+		if ((error = flk_check_lock_data(start, end, MAXEND))) {
 			goto out;
 		}
 
@@ -2768,8 +2768,8 @@ sam_client_getpage_vn(
 		 * while holding the AS_LOCK that was acquired in
 		 * as_fault().
 		 */
-		if (error = sam_proc_get_lease(ip, &data, NULL, NULL,
-		    SHARE_quickwait, credp)) {
+		if ((error = sam_proc_get_lease(ip, &data, NULL, NULL,
+		    SHARE_quickwait, credp))) {
 			SAM_DECREMENT_LEASEUSED(ip, ltype);
 			if (error == ETIME || error == EAGAIN) {
 				if (sam_check_sig()) {
@@ -3171,8 +3171,8 @@ reenter:
 	vn_seg.flags = flags & ~MAP_TYPE;
 	vn_seg.amp = NULL;
 
-	if (error = as_map(asp, *addrpp, length, segvn_create, (caddr_t)
-	    & vn_seg)) {
+	if ((error = as_map(asp, *addrpp, length, segvn_create, (caddr_t)
+	    & vn_seg))) {
 
 		RW_LOCK_OS(&ip->inode_rwl, RW_READER);
 		mutex_enter(&ip->fl_mutex);

@@ -231,7 +231,7 @@ putLabel(
 	 * ON, NOALLOC, or UNAVAIL.
 	 */
 	bzero((char *)&lblk, sizeof (lblk));
-	strncpy(lb->name, "LBLK", sizeof (lb->name));
+	memcpy(lb->name, "LBLK", sizeof (lb->name));
 	lb->magic = SAM_LABEL_MAGIC;
 	lb->init = cfp->fsInit;
 	lb->update = time(NULL);

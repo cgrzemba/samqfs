@@ -746,9 +746,9 @@ add_catalog_cmd(
 		    device->type == DT_STKAPI ||
 		    device->type == DT_SONYPSC ||
 		    device->type == DT_IBMATL) ||
-		    device->type == DT_HISTORIAN &&
+		    (device->type == DT_HISTORIAN &&
 		    (device->state < DEV_IDLE) &&
-		    (device->status.b.ready && device->status.b.present)) {
+		    (device->status.b.ready && device->status.b.present))) {
 			message = (message_request_t *)
 			    SHM_REF_ADDR(device->dt.rb.message);
 			(void) mutex_lock(&message->mutex);

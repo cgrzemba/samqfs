@@ -301,7 +301,7 @@ boolean_t for_create)	/* if true and dump, fs need not exist in mcf */
 
 
 	Trace(TR_OPRMSG, "changing mount options %s",
-	    input->fi_name ? input->fi_name : "NULL");
+	    *input->fi_name != '\0' ? input->fi_name : "NULL");
 
 
 	if (read_mount_cfg(&mnt_cfg) == -1) {

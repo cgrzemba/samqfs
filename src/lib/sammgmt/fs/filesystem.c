@@ -99,7 +99,7 @@ static int grow_qfs_struct(mcf_cfg_t *mcf, fs_t *fs, boolean_t mounted,
 	const sqm_lst_t *new_metadata, const sqm_lst_t *new_data,
 	const sqm_lst_t *striped_groups, sqm_lst_t **l);
 
-static int find_striped_group(sqm_lst_t *l, uname_t name, striped_group_t **sg);
+static int find_striped_group(sqm_lst_t *l, char *name, striped_group_t **sg);
 
 static int build_metadata_dev(sqm_lst_t *l, fs_t *fs, disk_t *disk,
 	sqm_lst_t *eqs);
@@ -2491,7 +2491,7 @@ sqm_lst_t *eqs)		/* list of available eqs */
 static int
 find_striped_group(
 sqm_lst_t *l,		/* list to search for striped group in */
-uname_t name,		/* name of the striped_group to find */
+char *name,		/* name of the striped_group to find */
 striped_group_t **sg)	/* return value */
 {
 
@@ -3012,13 +3012,16 @@ fs_arch_cfg_t	*arc_info)
 		 * don't proceed to the mount until the sharedfsd daemon comes
 		 * up. But wait only a bounded period of time.
 		 */
+		upath_t fi_name; 
+
 		if (fs->fi_shared_fs) {
 			if (wait_for_sharefsd(fs->fi_name) != 0) {
 				return (5);
 			}
 		}
 
-		if (mount_fs(NULL, fs->fi_name) != 0) {
+		sprintf(fi_name, "%s", fs->fi_name);
+		if (mount_fs(NULL, fi_name) != 0) {
 			Trace(TR_ERR, "create and mount failed at mount: %s",
 			    samerrmsg);
 			return (5);

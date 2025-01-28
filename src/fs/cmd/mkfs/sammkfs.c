@@ -678,7 +678,7 @@ new_fs(void)
 	    mp->mi.m_dau[MM].kblocks[LG]);
 	get_mem(1);
 	memset((char *)&sblock, 0, sizeof (struct sam_sblk));
-	strncpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
+	memcpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblock.info.sb.name));
 	sblock.info.sb.fs_count = fs_count;
 	sblock.info.sb.da_count = fs_count - mm_count;

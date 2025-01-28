@@ -130,7 +130,7 @@ sam_ioctl_sam_cmd(
 			error = ENOTDIR;
 			break;
 		}
-		dir = (void *)gdp->dir.p32;
+		dir = (void *)(long)gdp->dir.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			dir = (void *)gdp->dir.p64;
 		}
@@ -187,7 +187,7 @@ sam_ioctl_sam_cmd(
 		void *dp;
 
 		pp = (struct sam_ioctl_idrestore *)(void *)arg;
-		dp = (void *)pp->dp.p32;
+		dp = (void *)(long)pp->dp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			dp = (void *)pp->dp.p64;
 		}
@@ -252,7 +252,7 @@ sam_ioctl_sam_cmd(
 		void *buf;
 
 		pp = (sam_ioctl_getrminfo_t *)(void *)arg;
-		buf = (void *)pp->buf.p32;
+		buf = (void *)(long)pp->buf.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			buf = (void *)pp->buf.p64;
 		}
@@ -370,7 +370,7 @@ sam_restore_a_file(
 	/*
 	 * Get pointer to name.
 	 */
-	ptr = (void *)resp->name.p32;
+	ptr = (void *)(long)resp->name.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		ptr = (void *)resp->name.p64;
 	}
@@ -385,9 +385,9 @@ sam_restore_a_file(
 	}
 	pvp = SAM_ITOV(pip);
 	if (dirp->d_namlen > 4) {
-		if (error = copyin((caddr_t)ptr, (caddr_t)dirent,
+		if ((error = copyin((caddr_t)ptr, (caddr_t)dirent,
 		    sizeof (struct sam_dirent) + MAXNAMLEN + 1 -
-		    sizeof (dirent->dirnt.d_name))) {
+		    sizeof (dirent->dirnt.d_name)))) {
 			error = EFAULT;
 			goto out;
 		}
@@ -409,7 +409,7 @@ sam_restore_a_file(
 	/*
 	 * Copy in perm. inode.
 	 */
-	ptr = (void *)resp->dp.p32;
+	ptr = (void *)(long)resp->dp.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		ptr = (void *)resp->dp.p64;
 	}
@@ -486,7 +486,7 @@ sam_restore_a_file(
 				dnlc_update(pvp, name_str, SAM_ITOV(ip));
 				link = kmem_alloc(MAXPATHLEN+1, KM_SLEEP);
 
-				ptr = (void *)resp->lp.p32;
+				ptr = (void *)(long)resp->lp.p32;
 				if (curproc->p_model != DATAMODEL_ILP32) {
 					ptr = (void *)resp->lp.p64;
 				}
@@ -553,12 +553,12 @@ sam_restore_a_file(
 		struct sam_perm_inode *permip;
 
 		/* Process the multivolume inode extension(s) */
-		ptr = (void *)resp->vp.p32;
+		ptr = (void *)(long)resp->vp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			ptr = (void *)resp->vp.p64;
 		}
 		vsnp = (struct sam_vsn_section *)(void *)ptr;
-		if (error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip)) {
+		if ((error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip))) {
 			VN_RELE(SAM_ITOV(ip));
 			goto out;
 		}
@@ -581,13 +581,13 @@ sam_restore_a_file(
 					bdwrite(bp);
 				}
 				id = ip->di.ext_id;
-				if (error = sam_set_multivolume(ip, &vsnp,
-				    copy, n_vsns, &id)) {
+				if ((error = sam_set_multivolume(ip, &vsnp,
+				    copy, n_vsns, &id))) {
 					VN_RELE(SAM_ITOV(ip));
 					goto out;
 				}
-				if (error = sam_read_ino(ip->mp,
-				    ip->di.id.ino, &bp, &permip)) {
+				if ((error = sam_read_ino(ip->mp,
+				    ip->di.id.ino, &bp, &permip))) {
 					VN_RELE(SAM_ITOV(ip));
 					goto out;
 				}
@@ -608,13 +608,13 @@ sam_restore_a_file(
 					bdwrite(bp);
 				}
 				id.ino = id.gen = 0;
-				if (error = sam_set_multivolume(ip, &vsnp,
-				    copy, n_vsns, &id)) {
+				if ((error = sam_set_multivolume(ip, &vsnp,
+				    copy, n_vsns, &id))) {
 					VN_RELE(SAM_ITOV(ip));
 					goto out;
 				}
-				if (error = sam_read_ino(ip->mp,
-				    ip->di.id.ino, &bp, &permip)) {
+				if ((error = sam_read_ino(ip->mp,
+				    ip->di.id.ino, &bp, &permip))) {
 					VN_RELE(SAM_ITOV(ip));
 					goto out;
 				}
@@ -737,7 +737,7 @@ sam_restore_inode(
 		link = kmem_alloc(MAXPATHLEN+1, KM_SLEEP);
 		error = 0;
 
-		ptr = (void *)pp->lp.p32;
+		ptr = (void *)(long)pp->lp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			ptr = (void *)pp->lp.p64;
 		}
@@ -785,7 +785,7 @@ sam_restore_inode(
 	 * Removable media (request) file.
 	 */
 	if (S_ISREQ(inode->di.mode)) {
-		ptr = (void *)pp->rp.p32;
+		ptr = (void *)(long)pp->rp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			ptr = (void *)pp->rp.p64;
 		}
@@ -801,7 +801,7 @@ sam_restore_inode(
 		if (ip->di.version >= SAM_INODE_VERS_2) { /* Vers 2 or 3 */
 
 			/* Removable media info stored as inode extensions */
-			if (error = sam_set_rm_info_file(ip, rfp, n_vsns)) {
+			if ((error = sam_set_rm_info_file(ip, rfp, n_vsns))) {
 				return (error);
 			}
 			inode->di.ext_id = ip->di.ext_id;
@@ -824,13 +824,13 @@ sam_restore_inode(
 		inode->di.extent_ord[i] = ip->di.extent_ord[i];
 	}
 
-	if (error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip)) {
+	if ((error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip))) {
 		return (error);
 	}
 
 	/* Replace the permanent inode from the argument inode */
 	if (S_ISDIR(inode->di.mode) || S_ISSEGI(&inode->di)) {
-		ptr = (void *)pp->dp.p32;
+		ptr = (void *)(long)pp->dp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			ptr = (void *)pp->dp.p64;
 		}
@@ -939,7 +939,7 @@ sam_restore_inode(
 	}
 
 	/* Process the multivolume inode extension(s) */
-	ptr = (void *)pp->vp.p32;
+	ptr = (void *)(long)pp->vp.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		ptr = (void *)pp->vp.p64;
 	}
@@ -967,14 +967,14 @@ sam_restore_inode(
 				bdwrite(bp);
 			}
 			id = ip->di.ext_id;
-			if (error = sam_set_multivolume(ip, &vsnp, copy,
-			    n_vsns, &id)) {
+			if ((error = sam_set_multivolume(ip, &vsnp, copy,
+			    n_vsns, &id))) {
 				return (error);
 			}
 			ip->di.ext_id = id;
 			ip->di.ext_attrs |= ext_mva;
-			if (error = sam_read_ino(ip->mp, ip->di.id.ino,
-			    &bp, &permip)) {
+			if ((error = sam_read_ino(ip->mp, ip->di.id.ino,
+			    &bp, &permip))) {
 				return (error);
 			}
 			permip->di.ext_id = id;
@@ -994,12 +994,12 @@ sam_restore_inode(
 				bdwrite(bp);
 			}
 			id.ino = id.gen = 0;
-			if (error = sam_set_multivolume(ip, &vsnp, copy,
-			    n_vsns, &id)) {
+			if ((error = sam_set_multivolume(ip, &vsnp, copy,
+			    n_vsns, &id))) {
 				return (error);
 			}
-			if (error = sam_read_ino(ip->mp, ip->di.id.ino,
-			    &bp, &permip)) {
+			if ((error = sam_read_ino(ip->mp, ip->di.id.ino,
+			    &bp, &permip))) {
 				return (error);
 			}
 			((sam_perm_inode_v1_t *)permip)->aid[copy] = id;
@@ -1096,8 +1096,8 @@ sam_set_rm_info_file(
 
 		eid = bip->di.ext_id;
 		while (eid.ino && (size < SAM_RESOURCE_SIZE(n_vsns))) {
-			if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 				break;
 			}
 			if (EXT_HDR_ERR(eip, eid, bip)) {
@@ -1256,7 +1256,7 @@ sam_stage_write(
 	int error = 0;
 	void *buf;
 
-	buf = (void *)swp->buf.p32;
+	buf = (void *)(long)swp->buf.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (void *)swp->buf.p64;
 	}

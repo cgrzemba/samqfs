@@ -138,7 +138,7 @@ notf_summary_t *notf_summ	/* notification to delete */
 int
 mod_notify_summary(
 ctx_t *ctx,		/* client connection */
-uname_t oldemail,	/* old email address */
+upath_t oldemail,	/* old email address */
 notf_summary_t *notf_summ	/* notification to modify */
 )
 {

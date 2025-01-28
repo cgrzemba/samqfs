@@ -29,9 +29,7 @@
    return 0 if it is not found. */
 
 char *
-strstr (s1, s2)
-     char *s1;
-     char *s2;
+strstr(char *s1, char *s2)
 {
   int i;
   char *p1;

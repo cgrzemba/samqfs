@@ -91,7 +91,7 @@ kill_children(rob_child_pids_t *pids)
 	sigignore(SIGCHLD);
 
 	for (i = 0, pid = pids; i < number_robots; pid++, i++) {
-		if ((pid->pid > 0) && (pid->who != NULL))
+		if ((pid->pid > 0) && (pid->who != NULL)) {
 			/* pseudo device has no equipment */
 			if (pid->eq == 0)
 				/* the stk ssi needs SIGTERM */
@@ -99,6 +99,7 @@ kill_children(rob_child_pids_t *pids)
 			else
 				/* no SAM child can ignore SIGINIT */
 				kill(pid->pid, SIGINT);
+		}
 	}
 }
 

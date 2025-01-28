@@ -183,7 +183,7 @@ GetProcName(
 	static uname_t our_buf;
 	uname_t	fname;
 	char	*p;
-	int		fd;
+	int	fd;
 
 	if (buf == NULL) {
 		buf = our_buf;
@@ -203,7 +203,7 @@ GetProcName(
 	 */
 	snprintf(fname, sizeof (fname), "/proc/%d/psinfo", (int)pid);
 	if ((fd = open(fname, O_RDONLY)) != -1) {
-		int		n;
+		int n;
 
 		n = read(fd, &psinfo, sizeof (psinfo));
 		(void) close(fd);
@@ -244,8 +244,8 @@ GetProcName(
 		}
 	}
 #endif /* !defined(linux) */
-	}
 	strncpy(buf, p, buf_size - 1);
+	}
 	return (buf);
 }
 

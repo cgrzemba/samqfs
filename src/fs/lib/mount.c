@@ -81,7 +81,7 @@ SetSCMountParams(struct sam_fs_info *mp)
 	char	scpath[MAXPATHLEN];
 	struct	stat sb;
 
-	if (mp == NULL || mp->fi_name == NULL) {
+	if (mp == NULL || *mp->fi_name == '\0') {
 		return;
 	}
 	sprintf(scpath, SAM_SC_DIR"/%s", mp->fi_name);

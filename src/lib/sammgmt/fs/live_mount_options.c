@@ -1030,9 +1030,9 @@ sqm_lst_t **failed_options)	/* a list of failed_mount_option_t */
 
 static char *
 CmdSetFsConfig(
-upath_t fsname,		/* file system name */
-upath_t option_name,	/* fs parameter name */
-upath_t option_value	/* ARGSUSED */
+char *fsname,		/* file system name */
+char *option_name,	/* fs parameter name */
+char *option_value	/* ARGSUSED */
 )
 {
 	char    *msg;

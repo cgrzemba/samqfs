@@ -1094,7 +1094,7 @@ DisHelper(int page)
 			    !IsSamRunning)
 				continue;
 			if ((dis_t[n].sam_lvl == SAM_DISK) && !IsSam) continue;
-			if (dis_t[n].marg == NULL)  continue;
+			if (dis_t[n].marg == 0)  continue;
 			Mvprintw(ln++, 0, "    %c %-19s %s", dis_t[n].sel,
 			    catgets(catfd, SET, dis_t[n].marg,
 			    dis_t[n].marg_msg),

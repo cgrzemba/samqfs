@@ -217,7 +217,7 @@ fatalSignalHandler(
 	}
 	Trace(TR_ERR, "Fatal signal %s received", sigName);
 
-	if (signalsArg->SaCoreDir != NULL) {
+	if (*signalsArg->SaCoreDir != '\0') {
 		char	buf[128];
 
 		(void) putenv("LD_PRELOAD=");

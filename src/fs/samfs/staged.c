@@ -117,13 +117,13 @@ sam_stagerd_file(
 	 * Start associative staging if stage_all enabled.
 	 */
 	if (ip->flags.b.stage_all) {
-		if (error = sam_send_stageall_cmd(ip)) {
+		if ((error = sam_send_stageall_cmd(ip))) {
 			goto out;
 		}
 	}
 
-	if (error = sam_build_stagerd_req(ip, -1, req, &req_ext_cnt, &req_ext,
-	    credp)) {
+	if ((error = sam_build_stagerd_req(ip, -1, req, &req_ext_cnt, &req_ext,
+	    credp))) {
 		goto out;
 	}
 
@@ -303,8 +303,8 @@ sam_build_stagerd_req(
 
 		truncate_file = TRUE;
 
-		ip->stage_len = MAX(((ip->stage_off & ~PAGEMASK) +
-		    (ip->stage_len + PAGESIZE - 1) & PAGEMASK),
+		ip->stage_len = MAX((((ip->stage_off & ~PAGEMASK) +
+		    (ip->stage_len + PAGESIZE - 1)) & PAGEMASK),
 		    ip->mp->mt.fi_stage_n_window);
 		ip->stage_off = ip->stage_off & PAGEMASK;
 		ip->stage_n_off = ip->stage_off;	/* Save this window */
@@ -316,7 +316,7 @@ sam_build_stagerd_req(
 		req->offset = ip->stage_off;
 	}
 
-	if (error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip)) {
+	if ((error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip))) {
 		return (error);
 	}
 	mask = 1;
@@ -432,8 +432,8 @@ sam_build_stagerd_req(
 
 			if (ip->di.version >= SAM_INODE_VERS_2) {
 				brelse(bp);
-				if (error = sam_get_multivolume_copy_id(ip,
-				    i, &id)) {
+				if ((error = sam_get_multivolume_copy_id(ip,
+				    i, &id))) {
 					return (error);
 				}
 			} else if (ip->di.version == SAM_INODE_VERS_1) {
@@ -526,8 +526,8 @@ sam_build_stager_multivolume_copy(
 			 * Read archive copy's extension inode containing VSN
 			 * section info.
 			 */
-			if (error = sam_read_ino(ip->mp, id.ino, &bp,
-					(struct sam_perm_inode **)&aip)) {
+			if ((error = sam_read_ino(ip->mp, id.ino, &bp,
+					(struct sam_perm_inode **)&aip))) {
 				return (error);
 			}
 
@@ -593,8 +593,8 @@ sam_build_stager_multivolume_copy(
 		 * Read archive copy's extension inode containing VSN section
 		 * info.
 		 */
-		if (error = sam_read_ino(ip->mp, id.ino, &bp,
-				(struct sam_perm_inode **)&aip)) {
+		if ((error = sam_read_ino(ip->mp, id.ino, &bp,
+				(struct sam_perm_inode **)&aip))) {
 			return (error);
 		}
 
@@ -650,8 +650,8 @@ sam_build_stager_multivolume_copy(
 				 * Read archive copy's extension inode
 				 * containing VSN section information.
 				 */
-				if (error = sam_read_ino(ip->mp, id.ino, &bp,
-					(struct sam_perm_inode **)&aip)) {
+				if ((error = sam_read_ino(ip->mp, id.ino, &bp,
+					(struct sam_perm_inode **)&aip))) {
 					return (error);
 				}
 
@@ -725,8 +725,8 @@ sam_get_multivolume_copy_id(
 	/* Find first inode containing copy info */
 	eid = bip->di.ext_id;
 	while (eid.ino) {
-		if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 			break;
 		}
 		if (EXT_HDR_ERR(eip, eid, bip)) {

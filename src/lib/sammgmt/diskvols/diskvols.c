@@ -65,7 +65,7 @@ extern char *program_name;
 int
 get_disk_vol(
 ctx_t *ctx		/* ARGSUSED */,
-const vsn_t vol_name,	/* name of diskvol to get */
+const char *vol_name,	/* name of diskvol to get */
 disk_vol_t **disk_vol)	/* malloced return value */
 {
 

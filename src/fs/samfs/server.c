@@ -2442,7 +2442,7 @@ sam_add_ino_lease(
 					relinquish_lease_mask =
 					    other_leases &
 					    (CL_APPEND|CL_WRITE|CL_READ);
-				} else if (mmap_leases & CL_READ|CL_WRITE) {
+				} else if (mmap_leases & (CL_READ|CL_WRITE)) {
 					wait_lease = TRUE;
 				} else if (other_leases & CL_READ) {
 					wait_lease = TRUE;
@@ -3432,8 +3432,8 @@ retry:
 			 * LQFS transaction block is in sam_setsecattr_vn()
 			 */
 #if defined(SOL_511_ABOVE)
-			if (error = sam_setsecattr_vn(SAM_ITOV(pip),
-			    &v.vsecattr, 0, cred, NULL)) {
+			if ((error = sam_setsecattr_vn(SAM_ITOV(pip),
+			    &v.vsecattr, 0, cred, NULL))) {
 #else
 			if (error = sam_setsecattr_vn(SAM_ITOV(pip),
 			    &v.vsecattr, 0, cred)) {

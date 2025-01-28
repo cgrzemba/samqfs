@@ -349,7 +349,7 @@ csd_read_header(csd_fhdr_t *hdr)
 	int corrupt_header = 0;
 
 	if (csd_version <= CSD_VERS_4) {
-		int	namelen;
+		int	namelen = 0;
 
 		if (buffered_read(CSD_fd, &namelen, sizeof (int)) ==
 		    sizeof (int)) {

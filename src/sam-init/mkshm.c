@@ -315,7 +315,7 @@ alloc_shm_seg(
 	 */
 	ALIGN(shm_block_def->next_p, long long, round);
 	shm_block_def->left -= round;
-	active_io = (sam_act_io_t *)shm_block_def->next_p;
+	active_io = (sam_act_io_t *)(long)shm_block_def->next_p;
 	shm_block_def->left -= actio_tab_len;
 
 	if (shm_block_def->left < 0) {
@@ -500,20 +500,20 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 	 */
 	last_shm_device = NULL;
 	message_location =
-	    (message_request_t *)(shm_block_def->next_p + length);
+	    (message_request_t *)(long)(shm_block_def->next_p + length);
 	length += ((robot_count + third_party_count + rs_count + 3) *
 	    sizeof (message_request_t));
 
 	/*
 	 * Initialize the scanners message request area.
 	 */
-	tmp_message = (message_request_t *)(void *)(base_address +
-	    (int)message_location);
+	tmp_message = (message_request_t *)(long)(base_address +
+	    (long)message_location);
 	(void) mutex_init(&tmp_message->mutex, USYNC_PROCESS, NULL);
 	cond_init(&tmp_message->cond_i, USYNC_PROCESS, NULL);
 	cond_init(&tmp_message->cond_r, USYNC_PROCESS, NULL);
 	tmp_message->mtype = MESS_MT_VOID;
-	shm_ptr_tbl->scan_mess = (int)message_location++;
+	shm_ptr_tbl->scan_mess = (long)message_location++;
 
 	/*
 	 * Set the size of sense and mode sense to multiples of 4 bytes.
@@ -522,11 +522,11 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 	sen_len = sizeof (sam_extended_sense_t) +
 	    (4 - (sizeof (sam_extended_sense_t) & 0x3));
 
-	sense_location = (sam_extended_sense_t *)(shm_block_def->next_p +
+	sense_location = (sam_extended_sense_t *)(long)(shm_block_def->next_p +
 	    length);
 	length += (sd_count * sen_len);
 
-	mode_sense_location = (mode_sense_t *)(shm_block_def->next_p + length);
+	mode_sense_location = (mode_sense_t *)(long)(shm_block_def->next_p + length);
 	length += (sd_count * ms_len);
 
 	shm_block_def->next_p += length; /* next unused area */
@@ -534,16 +534,16 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 
 	length = (rs_clients + (rs_servers * RMT_SAM_MAX_CLIENTS)) *
 	    sizeof (srvr_clnt_t);
-	srvr_clnts = (srvr_clnt_t *)shm_block_def->next_p;
+	srvr_clnts = (srvr_clnt_t *)(long)shm_block_def->next_p;
 	shm_block_def->next_p += length; /* next unused area */
 	shm_block_def->left -= length;
 
 	/* Set the location of the robot privare area to multiples of 8 bytes */
 	ALIGN(shm_block_def->next_p, long long, round);
 	shm_block_def->left -= round;
-	robot_private = (char *)shm_block_def->next_p;
+	robot_private = (char *)(long)shm_block_def->next_p;
 	shm_block_def->next_p += (robot_count * ROBOT_PRIVATE_AREA);
-	tp_messages = (char *)shm_block_def->next_p;
+	tp_messages = (char *)(long)shm_block_def->next_p;
 	shm_block_def->next_p += (third_party_count * TP_DISP_MSG_LEN);
 
 	memmove(shm_block_def->segment_name, SAM_SEGMENT_NAME,
@@ -640,11 +640,11 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 			/* does it need robot stuff */
 			if (IS_ROBOT(next_shm_device)) {
 				next_shm_device->dt.rb.message =
-				    (int)message_location;
+				    (long)message_location;
 				next_shm_device->dt.rb.private =
-				    (int)robot_private;
+				    (long)robot_private;
 				tmp_message = (message_request_t *)(void *)
-				    (base_address + (int)message_location);
+				    (base_address + (long)message_location);
 				(void) mutex_init(&tmp_message->mutex,
 				    USYNC_PROCESS, NULL);
 				cond_init(&tmp_message->cond_i, USYNC_PROCESS,
@@ -658,11 +658,11 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 			/* does it need third party stuff */
 			if (IS_THIRD_PARTY(next_shm_device)) {
 				next_shm_device->dt.tr.message =
-				    (int)message_location;
+				    (long)message_location;
 				tmp_message = (message_request_t *)(void *)
-				    (base_address + (int)message_location);
+				    (base_address + (long)message_location);
 				next_shm_device->dt.tr.disp_msg =
-				    (int)tp_messages;
+				    (long)tp_messages;
 				tp_messages += TP_DISP_MSG_LEN;
 				(void) mutex_init(&tmp_message->mutex,
 				    USYNC_PROCESS, NULL);
@@ -676,9 +676,9 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 			/* does it need remote server stuff */
 			if (IS_RSS(next_shm_device)) {
 				next_shm_device->dt.ss.message =
-				    (int)message_location;
+				    (long)message_location;
 				tmp_message = (message_request_t *)(void *)
-				    (base_address + (int)message_location);
+				    (base_address + (long)message_location);
 				(void) mutex_init(&tmp_message->mutex,
 				    USYNC_PROCESS, NULL);
 				cond_init(&tmp_message->cond_i, USYNC_PROCESS,
@@ -691,9 +691,9 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 			/* does it need remote client stuff */
 			if (IS_RSC(next_shm_device)) {
 				next_shm_device->dt.sc.message =
-				    (int)message_location;
+				    (long)message_location;
 				tmp_message = (message_request_t *)(void *)
-				    (base_address + (int)message_location);
+				    (base_address + (long)message_location);
 				(void) mutex_init(&tmp_message->mutex,
 				    USYNC_PROCESS, NULL);
 				cond_init(&tmp_message->cond_i, USYNC_PROCESS,
@@ -706,9 +706,9 @@ layout_device_table(int high_eq, int count, dev_ent_t *devices)
 			/* does it need remote device stuff */
 			if (IS_RSD(next_shm_device)) {
 				next_shm_device->dt.sc.message =
-				    (int)message_location;
+				    (long)message_location;
 				tmp_message = (message_request_t *)(void *)
-				    (base_address + (int)message_location);
+				    (base_address + (long)message_location);
 				(void) mutex_init(&tmp_message->mutex,
 				    USYNC_PROCESS, NULL);
 				cond_init(&tmp_message->cond_i, USYNC_PROCESS,

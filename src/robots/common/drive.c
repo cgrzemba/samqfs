@@ -474,7 +474,7 @@ mount(
 		DevLog(DL_DEBUG(4007));
 	}
 
-	if (vsn == NULL || vsn[0] == '\0') {
+	if (vsn[0] == '\0') {
 		DevLog(DL_DETAIL(4008), slot, partition, "NONE",
 		    event->request.internal.address);
 		ce = CatalogGetCeByLoc(

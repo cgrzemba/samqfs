@@ -117,7 +117,7 @@ ReadCmds(void)
 		(void) printf("blksize = %d\n", config.blksize);
 		(void) printf("tcpwindow = %d\n", config.tcpwindow);
 		(void) printf("cmd_bufsize = %d\n", config.cmd_bufsize);
-		if (config.logfile != NULL && *config.logfile != '\0') {
+		if (*config.logfile != '\0') {
 			(void) printf("logfile = %s\n", config.logfile);
 		}
 	} else {
@@ -172,7 +172,7 @@ setBlksizeParams(void)
 	/*
 	 * Copy strip size to daemon's parameters.
 	 */
-	if (cfgToken != NULL && *cfgToken != '\0') {
+	if (*cfgToken != '\0') {
 		if (strcmp(cfgToken, "-") == 0) {
 			ReadCfgError(CustMsg(22017), "blksize");
 			/* NOTREACHED */

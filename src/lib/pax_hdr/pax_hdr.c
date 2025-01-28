@@ -329,7 +329,7 @@ int ph_write_header(
 			ABORT_ST(PX_ERROR_REQUIRE_DEFAULTS);
 		}
 
-		if (def_has_xhdr = ph_has_ext_hdr(defaults)) {
+		if ((def_has_xhdr = ph_has_ext_hdr(defaults))) {
 			if (def_has_xhdr < 0) {
 				ABORT_ST(-def_has_xhdr);
 			}
@@ -1032,7 +1032,7 @@ _ph_get_string(
 	*result = NULL;
 
 	if (xhdr_key) {
-		if (pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL)) {
+		if ((pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL))) {
 			status = pxp_get_string(pair[0], &value);
 			SamFree(pair);
 			ABORT();
@@ -1074,7 +1074,7 @@ _ph_get_unsigned(
 	}
 
 	if (xhdr_key) {
-		if (pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL)) {
+		if ((pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL))) {
 			status = pxp_get_u64(pair[0], &value);
 			SamFree(pair);
 			ABORT();
@@ -1108,7 +1108,7 @@ _ph_get_signed(
 	}
 
 	if (xhdr_key) {
-		if (pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL)) {
+		if ((pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL))) {
 			status = pxp_get_i64(pair[0], &value);
 			SamFree(pair);
 			ABORT();
@@ -1142,7 +1142,7 @@ _ph_get_time(
 	}
 
 	if (xhdr_key) {
-		if (pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL)) {
+		if ((pair = pxh_get_pair(hdr->xhdr_list, xhdr_key, NULL))) {
 			status = pxp_get_time(pair[0], &value);
 			SamFree(pair);
 			ABORT();

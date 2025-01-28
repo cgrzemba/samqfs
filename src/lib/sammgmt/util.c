@@ -1184,7 +1184,7 @@ parse_kv(char *str, parsekv_t *tokens, void *buf)
 		} else {
 			free(buffer);
 
-			return (samrerr(SE_NOKEYVALUE, ptr1));
+			return (samrerr(SE_NOKEYVALUE, str));
 		}
 
 		ptr4 = strrspn(ptr1, WHITESPACE); /* Ending whitespace */
@@ -1937,7 +1937,13 @@ mk_wc_path(
 	}
 
 	/* make sure target directory exists */
-	ret = create_dir(NULL, default_tmpfile_dir);
+	/*
+	 * because of GCC14 warning stringop-overflow
+	 * 'create_dir' accessing 128 bytes in a region of size 36
+	 *  use template instead of default_tmpfile_dir directly
+	 */
+	sprintf(template, "%s", default_tmpfile_dir);
+	ret = create_dir(NULL, template);
 	if (ret != 0) {
 		return (ret);
 	}

@@ -242,7 +242,7 @@ sam_quota_stat(struct sam_quota_arg *argp)
 		args.qindex = sam_quota_get_index(ip, args.qtype);
 	}
 
-	uqp = (void *)args.qp.p32;
+	uqp = (void *)(long)args.qp.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		uqp = (void *)args.qp.p64;
 	}

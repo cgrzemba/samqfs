@@ -764,7 +764,7 @@ sam_stagerd_call(
 
 	switch (args.stager_cmd) {
 	case STAGER_getrequest:
-		request = (void *)args.p.request.p32;
+		request = (void *)(long)args.p.request.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			request = (void *)args.p.request.p64;
 		}
@@ -1515,7 +1515,7 @@ syscall_mount_response(
 				size = ip->di.rm.size;
 
 				resource =
-				    (sam_resource_t *)mount->resource.p32;
+				    (sam_resource_t *)(long)mount->resource.p32;
 				if (curproc->p_model != DATAMODEL_ILP32) {
 					resource =
 					    (sam_resource_t *)
@@ -1579,7 +1579,7 @@ syscall_mount_response(
 					}
 					ip->rdev = rdev;
 					ip->mt_handle =
-					    (void *)mount->mt_handle.p32;
+					    (void *)(long)mount->mt_handle.p32;
 					if (curproc->p_model !=
 					    DATAMODEL_ILP32) {
 				ip->mt_handle = (void *)mount->mt_handle.p64;

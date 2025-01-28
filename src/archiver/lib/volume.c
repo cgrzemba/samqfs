@@ -1073,17 +1073,20 @@ makeVolRef(void)
 	*firstMedia = '\0';
 	for (aln = 0; aln < ArchLibTable->count; aln++) {
 		int	i;
+		mtype_t media;
 
 		al = &ArchLibTable->entry[aln];
 		if (al->AlFlags & AL_disk) {
-			mp = MediaParamsGetEntry("dk");
+			strcpy(media, "dk");
+			mp = MediaParamsGetEntry(media);
 			if (mp != NULL) {
 				mp->MpFlags |= MP_avail;
 			}
 			continue;
 		}
 		if (al->AlFlags & AL_honeycomb) {
-			mp = MediaParamsGetEntry("cb");
+			strcpy(media, "cb");
+			mp = MediaParamsGetEntry(media);
 			if (mp != NULL) {
 				mp->MpFlags |= MP_avail;
 			}

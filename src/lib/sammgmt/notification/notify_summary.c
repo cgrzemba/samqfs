@@ -120,7 +120,7 @@ static int addrs2notifysumm(
 static int add_notify_summary_file(upath_t, char *);
 static int del_notify_summary_file(upath_t, char *);
 static int tokenize_line(char *, upath_t, line_info_t *);
-static int search_replace(char *, upath_t, notf_act_t, line_info_t);
+static int search_replace(char *, char *, notf_act_t, line_info_t);
 static int update_notf_lst(
 	notf_subj_t subj, char *addr, char *addr_value, sqm_lst_t *notf_lst);
 static int add_notf_if_not_exist(upath_t emailaddr, char *notfscript);
@@ -597,7 +597,7 @@ char *notfscript)	/* notification script */
 		return (-1);
 	}
 	snprintf(scriptname, sizeof (scriptname), separator + 1);
-	if (scriptname == NULL || scriptname[0] == '\0') {
+	if (scriptname[0] == '\0') {
 		Trace(TR_ERR, "could not get script name");
 		return (-1);
 	}
@@ -1102,10 +1102,10 @@ line_info_t *linfo)	/* line info pointer */
  * a given pattern and perform
  * replacements with sed.
  */
-int
+static int
 search_replace(
 char *notfscript,	/* the notification file */
-upath_t	emailaddr,	/* the email address */
+char *emailaddr,	/* the email address */
 notf_act_t action,	/* action: add, del, modify */
 line_info_t linfo)	/* the line info struct */
 {
@@ -1460,7 +1460,7 @@ char *notfscript)
 		return (-1);
 	}
 	snprintf(scriptname, sizeof (scriptname), separator + 1);
-	if (scriptname == NULL || scriptname[0] == '\0') {
+	if (scriptname[0] == '\0') {
 		Trace(TR_ERR, "could not get script name");
 		return (-1);
 	}

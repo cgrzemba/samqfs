@@ -280,11 +280,11 @@ FsConfig(char *fscfg_name)
 					    mi->part[i].pt_name);
 					diffMsgFunc(msg);
 					diffs++;
-					if (mounted_fs &&
+					if ((mounted_fs &&
 					    (mi_prev->part[i].pt_state ==
-					    DEV_OFF) ||
-					    (mi_prev->part[i].pt_state ==
-					    DEV_UNAVAIL)) {
+					    DEV_OFF)) ||
+					    ((mi_prev->part[i].pt_state ==
+					    DEV_UNAVAIL))) {
 						lun_diffs++;
 					}
 					break;
@@ -305,11 +305,11 @@ FsConfig(char *fscfg_name)
 					    mi->part[i].pt_type);
 					diffMsgFunc(msg);
 					diffs++;
-					if (mounted_fs &&
+					if ((mounted_fs &&
 					    (mi_prev->part[i].pt_state ==
-					    DEV_OFF) ||
-					    (mi_prev->part[i].pt_state ==
-					    DEV_UNAVAIL)) {
+					    DEV_OFF)) ||
+					    ((mi_prev->part[i].pt_state ==
+					    DEV_UNAVAIL))) {
 						lun_diffs++;
 					}
 					break;

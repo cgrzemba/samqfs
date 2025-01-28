@@ -418,8 +418,8 @@ sam_alloc_inode_ext_dp(
 			}
 			return (error);
 		}
-		if (error = sam_read_ino(mp, eid.ino, &bp,
-		    (struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip))) {
 			if (first_id.ino) {
 				sam_free_inode_ext_dp(mp, dp, mode,
 				    SAM_ALL_COPIES, &first_id);

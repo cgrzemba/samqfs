@@ -625,6 +625,7 @@ ToSeconds(Hours, Minutes, Seconds, Meridian)
 	return ((Hours + 12) * 60L + Minutes) * 60L + Seconds;
     }
     /* NOTREACHED */
+    return (0);
 }
 
 

@@ -86,7 +86,7 @@ ifeq ($(PLATFORM), i386)
 	endif
 endif
 
-GCC ?= /usr/gcc/10/bin/gcc
+GCC ?= /usr/gcc/14/bin/gcc
 
 ifneq (,$(filter $(OS_RELEASE),11.3 11.4))
   OSDEPCFLAGS  = -DORACLE_SOLARIS
@@ -96,13 +96,6 @@ ifneq (,$(filter $(OS_RELEASE),11.3 11.4))
 else
   COMPILER = GCC
 endif
-
-#
-# turn compiler warnings into errors
-#
-CERRWARN_CSTD = -errtags=yes -errwarn=%all
-CERRWARN_GCC = -Wall -Wno-unknown-pragmas -Wno-format -Wno-missing-braces
-CERRWARN = $(CERRWARN_$(COMPILER))
 
 KERNFLAGS_CSTD = -D_KERNEL -m64 -xmodel=kernel -xregs=no%float -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
 # KERNFLAGS_GCC = -D_KERNEL -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
@@ -329,4 +322,23 @@ STK_INCLUDES = ${HOME}/samfs/acsls/toolkit2.4.0/src/h
 
 -include $(DEPTH)/mk/include/$(OS_DIST).mk
 
-CERRWARN += -Wno-unused-variable -Wno-unused-function -Wno-unused-label -Wno-unused-but-set-variable -Wconversion
+#
+# turn compiler warnings into errors
+#
+CERRWARN_CSTD = -errtags=yes -errwarn=%all
+CERRWARN_GCC = -Wall -Wno-unknown-pragmas -Wno-format -Wno-missing-braces
+CERRWARN = $(CERRWARN_$(COMPILER))
+
+CERRWARN += -Wno-unused-variable
+CERRWARN += -Wno-unused-function
+CERRWARN += -Wno-unused-label
+CERRWARN += -Wno-unused-but-set-variable
+
+# settings like illumos-gate
+CERRWARN += -Wno-missing-braces
+CERRWARN += -Wno-sign-compare
+CERRWARN += -Wno-unknown-pragmas
+CERRWARN += -Wno-unused-parameter
+CERRWARN += -Wno-missing-field-initializers
+
+# CERRWARN += -Wconversion

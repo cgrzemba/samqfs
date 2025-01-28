@@ -84,7 +84,7 @@ getdate.h getline.h getopt.h group-member.h long-options.h \
 makepath.h modechange.h mountlist.h path-concat.h pathmax.h \
 save-cwd.h xstrtol.h xstrtoul.h
 
-BUILT_SOURCES = $(OBJ_DIR)/getdate.c $(OBJ_DIR)/posixtm.c
+# BUILT_SOURCES = $(OBJ_DIR)/getdate.c $(OBJ_DIR)/posixtm.c
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -100,7 +100,7 @@ endif
 CPPFLAGS = 
 LDFLAGS += 
 LIBS = -lgen
-X_libfu_a_OBJECTS =  getdate.o posixtm.o getopt.o getopt1.o argmatch.o \
+X_libfu_a_OBJECTS =  getopt.o getopt1.o argmatch.o \
 backupfile.o dirname.o filemode.o full-write.o getversion.o idcache.o \
 isdir.o long-options.o makepath.o modechange.o path-concat.o \
 safe-read.o save-cwd.o savedir.o stripslash.o userspec.o xgetcwd.o \
@@ -235,7 +235,7 @@ $(OBJ_DIR)/fnmatch.o fnmatch.lo: fnmatch.c ../config.h fnmatch.h
 $(OBJ_DIR)/fsusage.o fsusage.lo: fsusage.c ../config.h fsusage.h
 $(OBJ_DIR)/ftruncate.o ftruncate.lo: ftruncate.c ../config.h
 $(OBJ_DIR)/full-write.o full-write.lo: full-write.c ../config.h
-$(OBJ_DIR)/getdate.o $(OBJ_DIR)/getdate.lo: $(OBJ_DIR)/getdate.c ../config.h getdate.h
+# $(OBJ_DIR)/getdate.o $(OBJ_DIR)/getdate.lo: $(OBJ_DIR)/getdate.c ../config.h getdate.h
 $(OBJ_DIR)/getgroups.o getgroups.lo: getgroups.c ../config.h
 $(OBJ_DIR)/getline.o getline.lo: getline.c ../config.h
 $(OBJ_DIR)/getopt.o getopt.lo: getopt.c ../config.h getopt.h
@@ -257,8 +257,8 @@ $(OBJ_DIR)/modechange.o modechange.lo: modechange.c ../config.h modechange.h
 $(OBJ_DIR)/mountlist.o mountlist.lo: mountlist.c ../config.h mountlist.h
 $(OBJ_DIR)/obstack.o obstack.lo: obstack.c obstack.h ../config.h
 $(OBJ_DIR)/path-concat.o path-concat.lo: path-concat.c ../config.h
-$(OBJ_DIR)/posixtm.o posixtm.lo: $(OBJ_DIR)/posixtm.c ../config.h
-$(OBJ_DIR)/regex.o regex.lo: regex.c ../config.h
+# $(OBJ_DIR)/posixtm.o posixtm.lo: $(OBJ_DIR)/posixtm.c ../config.h
+# $(OBJ_DIR)/regex.o regex.lo: regex.c ../config.h
 $(OBJ_DIR)/rename.o rename.lo: rename.c ../config.h
 $(OBJ_DIR)/rmdir.o rmdir.lo: rmdir.c ../config.h
 $(OBJ_DIR)/rpmatch.o rpmatch.lo: rpmatch.c ../config.h

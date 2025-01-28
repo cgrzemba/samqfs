@@ -166,7 +166,7 @@ DisClients()
 "ord hostname              seqno nomsgs status   config  conf1  flags"));
 
 			for (j = clifirst; j < ncli; j++) {
-				char extra[21];
+				char extra[22];
 
 				if (ln > LINES - 3) {
 					break;

@@ -419,8 +419,10 @@ remove_entry(float *priority, struct data *data)
 }
 
 #ifdef TEST_WRAPPER
-If you compile with TEST_WRAPPER defined, you'll need to define
-something like:
+/*
+ * If you compile with TEST_WRAPPER defined, you'll need to define
+ * something like:
+*/
 
 struct data {
 	char string[32];

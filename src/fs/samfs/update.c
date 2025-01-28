@@ -627,8 +627,8 @@ sam_flush_inode_ext(sam_node_t *ip)
 
 	eid = ip->di.ext_id;
 	while (eid.ino) {
-		if (error = sam_read_ino(ip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(ip->mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip))) {
 			return (error);
 		}
 		if (EXT_HDR_ERR(eip, eid, ip)) {	/* Validate header */

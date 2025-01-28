@@ -176,7 +176,7 @@ sam_arfind_call(
 	/*
 	 * Copy circular buffer to arfind-s buffer.
 	 */
-	buf = (uchar_t *)af.AfBuffer.p32;
+	buf = (uchar_t *)(long)af.AfBuffer.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (uchar_t *)af.AfBuffer.p64;
 	}

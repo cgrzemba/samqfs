@@ -595,7 +595,7 @@ sqm_lst_t **fsck_info	/* return - list of fsck info */
 int
 mount_fs(
 ctx_t *ctx,		/* client connection */
-uname_t fsname		/* file system name */
+upath_t fsname		/* file system name */
 )
 {
 	int ret_val;
@@ -636,7 +636,7 @@ uname_t fsname		/* file system name */
 int
 umount_fs(
 ctx_t *ctx,	/* client connection */
-uname_t fsname, /* file system name */
+upath_t fsname, /* file system name */
 boolean_t force	/* forcefully umount. for future use. must be B_FALSE in 4.1 */
 )
 {
@@ -1487,7 +1487,7 @@ shrink_replace_group(ctx_t *ctx, char *fs_name, int eq_to_replace,
 int
 mount_clients(
 ctx_t *ctx,		/* client connection */
-uname_t fsname,		/* file system name */
+char *fsname,		/* file system name */
 char *clients[],
 int client_count)
 {
@@ -1531,7 +1531,7 @@ int client_count)
 int
 unmount_clients(
 ctx_t *ctx,		/* client connection */
-uname_t fsname,		/* file system name */
+char *fsname,		/* file system name */
 char *clients[],
 int client_count)
 {

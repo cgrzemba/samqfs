@@ -497,7 +497,7 @@ DumpIoctl(ioctl_log_t *i_blk)
 		    upper, lower,
 		    i_blk->ioctl_data.fsmount.rdev);
 		printf("\tmt_handle %#x.\n",
-		    (int)(i_blk->ioctl_data.fsmount.mt_handle));
+		    (i_blk->ioctl_data.fsmount.mt_handle));
 		DumpRminfo(&i_blk->ioctl_data.fsmount.resource.archive.rm_info);
 		DumpArchive(&i_blk->ioctl_data.fsmount.resource.archive);
 		DumpResource(&i_blk->ioctl_data.fsmount.resource);
@@ -599,7 +599,7 @@ DumpIoctl(ioctl_log_t *i_blk)
 			printf("  swrite - offset %#x%8.8x, buffer %#x, "
 			    "nbytes %d\n",
 			    *upper, *lower,
-			    (int)(i_blk->ioctl_data.swrite.buf.ptr),
+			    (i_blk->ioctl_data.swrite.buf.ptr),
 			    i_blk->ioctl_data.swrite.nbyte);
 			break;
 			}

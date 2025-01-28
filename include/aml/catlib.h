@@ -128,12 +128,12 @@ int _CatalogLabelComplete(const char *SrcFile, const int SrcLine,
 #define	CatalogLabelFailed(a, b) _CatalogLabelFailed(_SrcFile, __LINE__, \
 	(a), (b))
 int _CatalogLabelFailed(const char *SrcFile, const int SrcLine,
-	struct VolId *vi, vsn_t vsn);
+	struct VolId *vi, char *vsn);
 
 #define	CatalogLabelVolume(a, b) _CatalogLabelVolume(_SrcFile, __LINE__, \
 	(a), (b))
 int _CatalogLabelVolume(const char *SrcFile, const int SrcLine,
-	struct VolId *vi, vsn_t vsn);
+	struct VolId *vi, char *vsn);
 
 #define	CatalogLibraryExport(a) _CatalogLibraryExport(_SrcFile, __LINE__, \
 	(a))

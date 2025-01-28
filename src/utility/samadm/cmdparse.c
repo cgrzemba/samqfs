@@ -123,11 +123,7 @@ getSubcommandProps(char *subCommand, subCommandProps_t **subCommandProps)
  *  on success, long option name
  *  on failure, NULL
  */
-#ifdef ORACLE_SOLARIS
 static const char *
-#else
-static char *
-#endif
 getLongOption(int shortOption)
 {
 	struct option *op;
@@ -177,11 +173,7 @@ subUsage(uint_t usageType, subCommandProps_t *subcommand)
 {
 	int i;
 	char *optionArgDesc;
-#ifdef ORACLE_SOLARIS
 	const char *longOpt;
-#else
-	char *longOpt;
-#endif
 
 	if (usageType == GENERAL_USAGE) {
 		printf("%s:\t%s %s [", gettext("Usage"), commandName,

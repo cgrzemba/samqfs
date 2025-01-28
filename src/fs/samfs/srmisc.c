@@ -406,7 +406,7 @@ sam_sgethosts(
 		goto out;
 	}
 
-	ubuf = (caddr_t)args.hosts.p32;
+	ubuf = (caddr_t)(long)args.hosts.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		ubuf = (caddr_t)args.hosts.p64;
 	}

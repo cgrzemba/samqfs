@@ -211,7 +211,7 @@ sam_switch_volume(
 	rfp = (sam_resource_file_t *)kmem_zalloc(rf_size, KM_SLEEP);
 
 	/* Get current ord and n_vsns. */
-	if (error = sam_get_rm_info(ip, rfp, credp))  goto out;
+	if ((error = sam_get_rm_info(ip, rfp, credp)))  goto out;
 
 	n_vsns = rfp->n_vsns;
 	if ((n_vsns == 0) || (n_vsns > MAX_VOLUMES)) {
@@ -225,7 +225,7 @@ sam_switch_volume(
 		strcpy(rfp->resource.prev_vsn, " ");
 
 		/* Update removable media info. */
-		if (error = sam_set_rm_info(ip, rfp, credp)) goto out;
+		if ((error = sam_set_rm_info(ip, rfp, credp))) goto out;
 
 		TRACES(T_SAM_SWITCH_VOL, SAM_ITOV(ip),
 		    (char *)rfp->resource.next_vsn);
@@ -234,7 +234,7 @@ sam_switch_volume(
 	} else {
 		eox = 0;
 	}
-	if (error = sam_unload_rm(ip, filemode, eox, 0, credp)) goto out;
+	if ((error = sam_unload_rm(ip, filemode, eox, 0, credp))) goto out;
 	if (ord >= n_vsns) {
 		error = ENOSPC;		/* Return No Space if no more volumes */
 		goto out;
@@ -278,7 +278,7 @@ sam_load_next_rm(
 	sam_fs_fifo_t *fifo;
 
 	/* Refresh removable media info. */
-	if (error = sam_get_rm_info(ip, rfp, credp))  goto out;
+	if ((error = sam_get_rm_info(ip, rfp, credp)))  goto out;
 
 	brrp = &rfp->resource;
 	if (filemode & (FCREAT | FTRUNC | FWRITE)) {
@@ -359,7 +359,7 @@ sam_load_next_rm(
 	*frrp = *brrp;
 
 	/* Update removable media file */
-	if (error = sam_set_rm_info(ip, rfp, credp))  goto out;
+	if ((error = sam_set_rm_info(ip, rfp, credp)))  goto out;
 
 	RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 
@@ -503,7 +503,7 @@ sam_unload_rm(
 		}
 		rfp = (sam_resource_file_t *)kmem_zalloc(rf_size, KM_SLEEP);
 
-		if (error = sam_get_rm_info(ip, rfp, credp)) {
+		if ((error = sam_get_rm_info(ip, rfp, credp))) {
 			kmem_free((void *)rfp, rf_size);
 			return (error);
 		}
@@ -529,7 +529,7 @@ sam_unload_rm(
 		TRACE(T_SAM_FIFO_UL, SAM_ITOV(ip), (sam_tr_t)fifo_ctl.fifo.param.fs_unload.rdev, (sam_tr_t)fifo_ctl.fifo.param.fs_unload.io_count, (sam_tr_t)ip->di.psize.rmfile);
 
 		/* Update removable media info */
-		if (error = sam_set_rm_info(ip, rfp, credp)) {
+		if ((error = sam_set_rm_info(ip, rfp, credp))) {
 			kmem_free((void *)rfp, rf_size);
 			return (error);
 		}
@@ -769,8 +769,8 @@ sam_get_rm_info(
 
 		eid = bip->di.ext_id;
 		while (eid.ino && (size < bip->di.psize.rmfile)) {
-			if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+			    (struct sam_perm_inode **)&eip))) {
 				goto out;
 			}
 			if (EXT_HDR_ERR(eip, eid, bip)) {
@@ -910,8 +910,8 @@ sam_set_rm_info(
 
 		eid = bip->di.ext_id;
 		while (eid.ino && (size < bip->di.psize.rmfile)) {
-			if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 				goto out;
 			}
 			if (EXT_HDR_ERR(eip, eid, bip)) {

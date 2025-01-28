@@ -602,8 +602,8 @@ sam_setattr_ino(
 	/*
 	 * Generic setattr security policy check.
 	 */
-	if (error = secpolicy_vnode_setattr(credp, vp, vap,
-	    &oldva, flags, sam_access_ino_ul, ip)) {
+	if ((error = secpolicy_vnode_setattr(credp, vp, vap,
+	    &oldva, flags, sam_access_ino_ul, ip))) {
 		return (error);
 	}
 
@@ -727,9 +727,9 @@ sam_setattr_ino(
 
 		ouid = ip->di.uid;
 		ogid = ip->di.gid;
-		if (error = sam_quota_chown(ip->mp, ip,
+		if ((error = sam_quota_chown(ip->mp, ip,
 		    (mask&AT_UID) ? vap->va_uid : ouid,
-		    (mask&AT_GID) ? vap->va_gid : ogid, credp)) {
+		    (mask&AT_GID) ? vap->va_gid : ogid, credp))) {
 			goto out;
 		}
 		if (mask & AT_UID)  ip->di.uid = vap->va_uid;
@@ -892,7 +892,7 @@ sam_setattr_ino(
 			sam_callout_acl(ip, ip->mp->ms.m_client_ord);
 			RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
-		if (error = sam_acl_setattr(ip, vap)) {
+		if ((error = sam_acl_setattr(ip, vap))) {
 			goto out;
 		}
 	}
@@ -1386,7 +1386,7 @@ sam_proc_lockfs(
 		lockfs.lf_flags = (ulong_t)lockfs32.lf_flags;
 		lockfs.lf_key = (ulong_t)lockfs32.lf_key;
 		lockfs.lf_comlen = (ulong_t)lockfs32.lf_comlen;
-		lockfs.lf_comment = (caddr_t)lockfs32.lf_comment;
+		lockfs.lf_comment = (caddr_t)(long)lockfs32.lf_comment;
 	}
 	if (cmd == C_FIOLFSS) {
 		error = sam_lockfs_status(ip->mp, &lockfs, 0);
@@ -1403,7 +1403,7 @@ sam_proc_lockfs(
 			lockfs32.lf_flags = (uint32_t)lockfs.lf_flags;
 			lockfs32.lf_key = (uint32_t)lockfs.lf_key;
 			lockfs32.lf_comlen = (uint32_t)lockfs.lf_comlen;
-			lockfs32.lf_comment = (uint32_t)lockfs.lf_comment;
+			lockfs32.lf_comment = (uint32_t)((ulong_t)lockfs.lf_comment & UINT32_MAX);
 			(void) copyout(&lockfs32, (caddr_t)*lp,
 			    sizeof (struct lockfs32));
 		}

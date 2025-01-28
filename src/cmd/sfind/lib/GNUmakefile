@@ -26,6 +26,8 @@
 #
 #    SAM-QFS_notice_end
 
+# these contains GCC libiberty components
+
 DEPTH = ../../../..
 
 include $(DEPTH)/mk/common.mk
@@ -47,12 +49,12 @@ LIB_SRC = \
 	fileblocks.c \
 	strdup.c \
 	strftime.c \
+	regex.c \
 	strtol.c
 
-ifeq ($(OS), SunOS)
+ifeq ($(OS), XX_SunOS)
 LIB_SRC += \
 	getopt.c \
-	regex.c \
 	stpcpy.c \
 	strstr.c \
 	alloca.c
@@ -62,6 +64,7 @@ DEFS = \
 	-DDIRENT=1 -DFSTYPE_STATVFS=1 -DSTDC_HEADERS=1 \
 	-DHAVE_UNISTD_H=1 -DHAVE_STRING_H=1 -DHAVE_LIMITS_H=1 -DHAVE_STRERROR=1 \
 	-DHAVE_VPRINTF=1 -DHAVE_ALLOCA_H=1 -DHAVE_TZNAME=1
+
 ifeq ($(OS), Linux)
 DEFS +=  -DMAJOR_IN_SYSMACROS=1 -I$(LINUX_INCLUDE) $(OSFLAGS)
 else

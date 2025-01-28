@@ -1462,7 +1462,7 @@ insert_regex (argv, arg_ptr, ignore_case)
   else
     re->translate = NULL;
 
-  error_message = re_compile_pattern (argv[*arg_ptr], strlen (argv[*arg_ptr]),
+  error_message = xre_compile_pattern (argv[*arg_ptr], strlen (argv[*arg_ptr]),
 				      re);
   if (error_message)
     error (1, 0, "%s", error_message);

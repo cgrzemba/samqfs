@@ -132,7 +132,7 @@ int no_unlocks_printed	= 0;
 }
 
 
-void
+int
 main(argc, argv)
 	int		argc;
 	char		**argv;

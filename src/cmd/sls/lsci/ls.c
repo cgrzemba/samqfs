@@ -1055,16 +1055,16 @@ gobble_file (name, explicit_arg, dirname)
   register char *path;
 
   if (files_index == nfiles)
-	{
-	  nfiles *= 2;
-	  files = (struct file *) xrealloc (files, sizeof (struct file) * nfiles);
-	}
+  {
+	nfiles *= 2;
+	files = (struct file *) xrealloc (files, sizeof (struct file) * nfiles);
+  }
 
   files[files_index].linkname = 0;
   files[files_index].linkmode = 0;
 
   if (explicit_arg || format_needs_stat)
-	{
+  {
 	  /* `path' is the absolute pathname of this file. */
 
 	  if (name[0] == '/' || dirname[0] == 0)
@@ -1139,7 +1139,7 @@ gobble_file (name, explicit_arg, dirname)
 		}
 	  if (linkpath)
 		free (linkpath);
-	}
+        }
 #endif
 
 #ifdef S_ISLNK
@@ -1157,11 +1157,11 @@ gobble_file (name, explicit_arg, dirname)
 	else
 	  files[files_index].filetype = normal;
 
-	  blocks = files[files_index].stat.st_size / 512;
-	  if (blocks >= 10000 && block_size_size < 5)  block_size_size = 5;
-	  if (blocks >= 100000 && block_size_size < 6)  block_size_size = 6;
-	  if (blocks >= 1000000 && block_size_size < 7)  block_size_size = 7;
-	}
+	blocks = files[files_index].stat.st_size / 512;
+	if (blocks >= 10000 && block_size_size < 5)  block_size_size = 5;
+	if (blocks >= 100000 && block_size_size < 6)  block_size_size = 6;
+	if (blocks >= 1000000 && block_size_size < 7)  block_size_size = 7;
+  }
   else
 	blocks = 0;
 

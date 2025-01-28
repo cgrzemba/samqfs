@@ -2737,7 +2737,7 @@ discovery(void)
 	}
 
 	/* parent */
-	(void) pthread_create(NULL, NULL, wait_child, (void *) pid);
+	(void) pthread_create(NULL, NULL, wait_child, (void *)(long)pid);
 
 	return (pid); /* no point in return ret */
 }
@@ -2751,9 +2751,10 @@ wait_child(void *arg)
 {
 
 	int status;
+	pid_t pid = (int64_t) arg & INT_MAX;
 
 	(void) pthread_detach(pthread_self());
-	(void) waitpid((pid_t)arg, &status, 0);
+	(void) waitpid(pid, &status, 0);
 
 	return (NULL);
 }

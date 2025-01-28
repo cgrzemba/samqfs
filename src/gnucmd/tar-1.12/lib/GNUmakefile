@@ -105,7 +105,8 @@ AUTOMAKE_OPTIONS = gnits
 
 noinst_LIBRARIES = $(OBJ_DIR)/libtar.a
 
-EXTRA_DIST = \
+# not used on build on GCC
+EXTRA_DIST.SunOS = \
 alloca.c fileblocks.c fnmatch.c ftruncate.c execlp.c gmalloc.c \
 memset.c mkdir.c modechange.h rename.c rmdir.c stpcpy.c strstr.c
 

@@ -53,12 +53,14 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <ctype.h>
 
 /* regexp definitions. */
+static void regerr(int errcode);
+
 #define	INIT char *sp = instring;
 #define	GETC(void) (*sp++)
 #define	PEEKC(void) (*sp)
 #define	UNGETC(void) (--sp)
 #define	RETURN(ptr) return (ptr)
-#define	ERROR(val) (val)
+#define	ERROR(val) /* regerr(val) */
 
 #include <regexp.h>
 
@@ -359,8 +361,8 @@ init_server(
 			continue;
 		}
 
-		if (h_ent = getipnodebyname(line, AF_INET6, AI_ADDRCONFIG,
-		    &herr)) {
+		if ((h_ent = getipnodebyname(line, AF_INET6, AI_ADDRCONFIG,
+		    &herr))) {
 
 			Trace(TR_MISC, "Client is IPv6 '%s' for %s(%d).",
 			    TrNullString(line), TrNullString(un->set), un->eq);
@@ -373,8 +375,8 @@ init_server(
 			 */
 			SendCustMsg(HERE, 22306, line, un->set);
 
-		} else if (h_ent = getipnodebyname(line, AF_INET, AI_ADDRCONFIG,
-		    &herr)) {
+		} else if ((h_ent = getipnodebyname(line, AF_INET, AI_ADDRCONFIG,
+		    &herr))) {
 			Trace(TR_MISC, "Client is IPv4 '%s' for %s(%d).",
 			    TrNullString(line), TrNullString(un->set), un->eq);
 			memcpy(&srvr_clnt->control_addr, h_ent->h_addr,

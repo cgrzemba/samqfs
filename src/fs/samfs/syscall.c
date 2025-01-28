@@ -413,7 +413,7 @@ sam_stat_file(int cmd, void *arg)
 	}
 
 #ifdef sun
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -478,7 +478,7 @@ sam_stat_segment_file(int cmd, void *arg)
 	if (copyin(arg, (caddr_t)&args, sizeof (args))) {
 		return (EFAULT);
 	}
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -547,7 +547,7 @@ sam_proc_foreign_stat(vnode_t *vp, int cmd, void *args, cred_t *credp)
 	sb.st_ctime = vattr.va_ctime.tv_sec;
 	sb.rdev = vattr.va_rdev;
 	size = ap->bufsize > sizeof (sb) ? sizeof (sb) : ap->bufsize;
-	buf = (void *)ap->buf.p32;
+	buf = (void *)(long)ap->buf.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (void *)ap->buf.p64;
 	}
@@ -865,7 +865,7 @@ sam_proc_stat(
 
 	size = ap->bufsize > sizeof (sb) ? sizeof (sb) : ap->bufsize;
 #ifdef sun
-	buf = (void *)ap->buf.p32;
+	buf = (void *)(long)ap->buf.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (void *)ap->buf.p64;
 	}
@@ -882,7 +882,7 @@ sam_proc_stat(
 	}
 	buf = (void *)((long)buf + sizeof (struct sam_stat));
 #ifdef sun
-	ap->buf.p32 = (int32_t)buf;
+	ap->buf.p32 = (int32_t)(long)buf;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		ap->buf.p64 = (int64_t)buf;
 	}
@@ -925,14 +925,14 @@ sam_vsn_stat_file(void *arg)
 		return (EFAULT);
 	}
 
-	path = (void *) args.path.p32;
+	path = (void *)(long) args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *) args.path.p64;
 	}
 
 	copy	 = args.copy;
 	buf_size = args.bufsize;
-	buf		 = (void *) args.buf.p32;
+	buf		 = (void *)(long) args.buf.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (void *) args.buf.p64;
 	}
@@ -1051,14 +1051,14 @@ sam_vsn_stat_segment(void *arg)
 		return (EFAULT);
 	}
 
-	path = (void *) args.path.p32;
+	path = (void *)(long) args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *) args.path.p64;
 	}
 
 	copy	 = args.copy;
 	buf_size = args.bufsize;
-	buf		 = (void *) args.buf.p32;
+	buf	 = (void *)(long) args.buf.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (void *) args.buf.p64;
 	}
@@ -1333,7 +1333,7 @@ sam_file_operations(int cmd, void *arg)
 	if (copyin(arg, (caddr_t)&args, sizeof (args))) {
 		return (EFAULT);
 	}
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -1441,7 +1441,7 @@ sam_proc_file_operations(vnode_t *vp, int cmd, void *args, cred_t *credp)
 	void *ptr;
 
 	ip = SAM_VTOI(vp);
-	ptr = (void *)ap->ops.p32;
+	ptr = (void *)(long)ap->ops.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		ptr = (void *)ap->ops.p64;
 	}
@@ -1495,7 +1495,7 @@ sam_archive_copy(void *arg)
 	if (copyin(arg, (caddr_t)&args, sizeof (args))) {
 		return (EFAULT);
 	}
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -1593,7 +1593,7 @@ sam_read_rminfo(void *arg)
 	if (copyin(arg, (caddr_t)&args, sizeof (args))) {
 		return (EFAULT);
 	}
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -1606,7 +1606,7 @@ sam_read_rminfo(void *arg)
 		VN_RELE(vp);
 		return (ENOTTY);
 	}
-	buf = (void *)args.buf.p32;
+	buf = (void *)(long)args.buf.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		buf = (void *)args.buf.p64;
 	}
@@ -1671,7 +1671,7 @@ sam_read_rm(
 		ASSERT(ip->di.ext_attrs & ext_rfa);
 
 		/* Removable media info stored as inode extension(s) */
-		if (error = sam_access_ino(ip, S_IREAD, TRUE, CRED())) {
+		if ((error = sam_access_ino(ip, S_IREAD, TRUE, CRED()))) {
 			return (error);
 		}
 
@@ -1684,8 +1684,8 @@ sam_read_rm(
 		next_id.ino = 0;
 		eid = ip->di.ext_id;
 		while (eid.ino) {
-			if (error = sam_read_ino(ip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(ip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 				return (error);
 			}
 			if (EXT_HDR_ERR(eip, eid, ip)) {
@@ -1779,8 +1779,8 @@ sam_read_rm(
 
 			eid = next_id;
 			while (eid.ino && (size < bufsize)) {
-				if (error = sam_read_ino(ip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+				if ((error = sam_read_ino(ip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 					break;
 				}
 				if (EXT_HDR_ERR(eip, eid, ip) ||
@@ -1863,7 +1863,7 @@ sam_set_csum(void *arg)
 	if (copyin(arg, (caddr_t)&args, sizeof (args))) {
 		return (EFAULT);
 	}
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -1891,7 +1891,7 @@ sam_set_csum(void *arg)
 		error = EROFS;
 		goto out;
 	}
-	if (error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip)) {
+	if ((error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip))) {
 		goto out;
 	}
 	/*
@@ -2272,7 +2272,7 @@ sam_set_projid(void *arg, int size)
 		return (EFAULT);
 	}
 
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}

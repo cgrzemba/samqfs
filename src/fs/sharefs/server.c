@@ -774,7 +774,7 @@ samHostsValidateIpAddr(
 					char addrstr[128];
 
 					strncpy(hostname, cacheAddrs[i].host,
-					    sizeof (cacheAddrs[i].host));
+					    sizeof (upath_t));
 					switch (((struct sockaddr_in *)
 					    cliaddr)->sin_family) {
 					case AF_INET:

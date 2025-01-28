@@ -159,7 +159,7 @@ sam_ioctl_util_cmd(
 			struct sam_ioctl_setarch *sap;
 			int i;
 
-			sap = (struct sam_ioctl_setarch *)pp->lsa_list.p32;
+			sap = (struct sam_ioctl_setarch *)(long)pp->lsa_list.p32;
 			if (curproc->p_model != DATAMODEL_ILP32) {
 			sap = (struct sam_ioctl_setarch *)pp->lsa_list.p64;
 			}
@@ -223,8 +223,8 @@ sam_ioctl_util_cmd(
 			break;
 		}
 		gdp = (sam_ioctl_idgetdents_t *)(void *)arg;
-		if (error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS,
-		    &gdp->id, &ip)) {
+		if ((error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS,
+		    &gdp->id, &ip))) {
 			break;
 		}
 		if (gdp->size < sizeof (struct sam_dirent)) {
@@ -237,7 +237,7 @@ sam_ioctl_util_cmd(
 			sam_rele_ino(ip);
 			break;
 		}
-		dir = (void *)gdp->dir.p32;
+		dir = (void *)(long)gdp->dir.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			dir = (void *)gdp->dir.p64;
 		}
@@ -287,13 +287,13 @@ sam_ioctl_util_cmd(
 			error = EINVAL;
 			break;
 		}
-		dp = (void *)idstat->dp.p32;
+		dp = (void *)(long)idstat->dp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			dp = (void *)idstat->dp.p64;
 		}
 		upp = (struct sam_perm_inode *)dp;
-		if (error = sam_check_cache(&idstat->id, mp, IG_EXISTS,
-		    NULL, &ip)) {
+		if ((error = sam_check_cache(&idstat->id, mp, IG_EXISTS,
+		    NULL, &ip))) {
 			break;
 		}
 		if (ip != NULL) {
@@ -418,8 +418,8 @@ sam_ioctl_util_cmd(
 			break;
 		}
 		idopen = (struct sam_ioctl_idopen *)(void *)arg;
-		if (error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS,
-		    &idopen->id, &ip)) {
+		if ((error = sam_find_ino(mp->mi.m_vfsp, IG_EXISTS,
+		    &idopen->id, &ip))) {
 			break;
 		}
 		if (cmd == C_IDOPENARCH) {
@@ -460,7 +460,7 @@ sam_ioctl_util_cmd(
 		 * removed as unneeded.
 		 */
 
-		dp = (void *)idopen->dp.p32;
+		dp = (void *)(long)idopen->dp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			dp = (void *)idopen->dp.p64;
 		}
@@ -697,7 +697,7 @@ sam_ioctl_util_cmd(
 		buf_t *bp;
 
 		pp = (struct sam_ioctl_idresource *)(void *)arg;
-		rp = (void *)pp->rp.p32;
+		rp = (void *)(long)pp->rp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			rp = (void *)pp->rp.p64;
 		}
@@ -883,7 +883,7 @@ stage_inode:
 		void *bp;
 
 		pp = (struct sam_ioctl_idseginfo *)(void *)arg;
-		bp = (void *)pp->buf.p32;
+		bp = (void *)(long)pp->buf.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			bp = (void *)pp->buf.p64;
 		}
@@ -916,7 +916,7 @@ stage_inode:
 			error = EINVAL;
 			break;
 		}
-		vp = (void *)idmva->buf.p32;
+		vp = (void *)(long)idmva->buf.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			vp = (void *)idmva->buf.p64;
 		}
@@ -954,10 +954,10 @@ stage_inode:
 							if (ip->di.arch_status &
 							    (1<<copy)) {
 							/* Cstyle bad indent */
-							if (error =
+							if ((error =
 							    sam_get_multivolume(
 							    ip, &vsnp,
-							    copy, &t_size)) {
+							    copy, &t_size))) {
 								break;
 							}
 							}
@@ -981,10 +981,10 @@ stage_inode:
 
 					eid = idmva->aid[copy];
 					while (eid.ino) {
-						if (error = sam_read_ino(mp,
+						if ((error = sam_read_ino(mp,
 						    eid.ino, &bp,
 						    (struct sam_perm_inode **)
-						    &eip)) {
+						    &eip))) {
 							break;
 						}
 						if ((eip->hdr.version !=
@@ -1438,7 +1438,7 @@ sam_set_archive(
 	}
 
 	copy = pp->copy;
-	vsnp = (void *)pp->vp.p32;
+	vsnp = (void *)(long)pp->vp.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		vsnp = (void *)pp->vp.p64;
 	}
@@ -1500,8 +1500,8 @@ sam_set_archive(
 				    &ip->di.ext_id);
 			}
 			if (pp->ar.n_vsns > 1) {
-				if (error = sam_set_multivolume(ip, &vsnp, copy,
-				    pp->ar.n_vsns, &ip->di.ext_id)) {
+				if ((error = sam_set_multivolume(ip, &vsnp, copy,
+				    pp->ar.n_vsns, &ip->di.ext_id))) {
 					return (error);
 				}
 				ip->di.ext_attrs |= ext_mva;
@@ -1532,17 +1532,17 @@ sam_set_archive(
 					    copy, &id);
 				}
 				if (pp->ar.n_vsns > 1) {
-					if (error = sam_set_multivolume(ip,
+					if ((error = sam_set_multivolume(ip,
 					    &vsnp, copy,
-					    pp->ar.n_vsns, &id)) {
+					    pp->ar.n_vsns, &id))) {
 						return (error);
 					}
 				} else {
 					id.ino = 0;
 					id.gen = 0;
 				}
-				if (error = sam_read_ino(ip->mp,
-				    ip->di.id.ino, &bp, &permip)) {
+				if ((error = sam_read_ino(ip->mp,
+				    ip->di.id.ino, &bp, &permip))) {
 					return (error);
 				}
 				permip_v1->aid[copy] = id;
@@ -1756,8 +1756,8 @@ sam_set_multivolume(
 		    n_exts, fid)) == 0) {
 			eid = *fid;
 			while (eid.ino && (vsns > 0)) {
-				if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+				if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 					break;
 				}
 				if (EXT_HDR_ERR(eip, eid, bip) ||
@@ -1853,8 +1853,8 @@ sam_get_rm_info_file(
 
 	eid = bip->di.ext_id;
 	while (eid.ino && (size < bip->di.psize.rmfile)) {
-		if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-				(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+				(struct sam_perm_inode **)&eip))) {
 			break;
 		}
 		if (EXT_HDR_ERR(eip, eid, bip)) {
@@ -1972,7 +1972,7 @@ sam_ioctl_oper_cmd(
 		void *sbp;
 
 		sb = (struct sam_ioctl_sblk *)(void *)arg;
-		sbp = (void *)sb->sbp.p32;
+		sbp = (void *)(long)sb->sbp.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			sbp = (void *)sb->sbp.p64;
 		}
@@ -1988,7 +1988,7 @@ sam_ioctl_oper_cmd(
 		void *sbinfo;
 
 		sb = (struct sam_ioctl_sbinfo *)(void *)arg;
-		sbinfo = (void *)sb->sbinfo.p32;
+		sbinfo = (void *)(long)sb->sbinfo.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			sbinfo = (void *)sb->sbinfo.p64;
 		}
@@ -2004,7 +2004,7 @@ sam_ioctl_oper_cmd(
 		void *mount;
 
 		mmp = (struct sam_ioctl_mount *)(void *)arg;
-		mount = (void *)mmp->mount.p32;
+		mount = (void *)(long)mmp->mount.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			mount = (void *)mmp->mount.p64;
 		}
@@ -2038,7 +2038,7 @@ sam_ioctl_oper_cmd(
 		if ((error = sam_read_ino(mp, id.ino, &bp, &permip)) == 0) {
 			void *ptr;
 
-			ptr = (void *)iip->pip.p32;
+			ptr = (void *)(long)iip->pip.p32;
 			if (curproc->p_model != DATAMODEL_ILP32) {
 				ptr = (void *)iip->pip.p64;
 			}
@@ -2071,7 +2071,7 @@ sam_ioctl_oper_cmd(
 			 */
 			error = sam_check_cache(&id, mp, IG_EXISTS, NULL, &ip);
 			if (error == 0 && ip != NULL) {
-				ptr = (void *)iip->ip.p32;
+				ptr = (void *)(long)iip->ip.p32;
 				if (curproc->p_model != DATAMODEL_ILP32) {
 					ptr = (void *)iip->ip.p64;
 				}

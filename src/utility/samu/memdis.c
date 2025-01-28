@@ -74,7 +74,7 @@ DisCmem(void)
 	int kd;
 	int n;
 
-	if ((kd = open("/dev/kmem", O_RDONLY | SAM_O_LARGEFILE)) == NULL) {
+	if ((kd = open("/dev/kmem", O_RDONLY | SAM_O_LARGEFILE)) < 0) {
 		Error(catgets(catfd, SET, 619, "Cannot open kernel memory."));
 	}
 	n = PREAD(kd, (char *)Buffer, sizeof (Buffer), (offset_t)caddr);

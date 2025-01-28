@@ -201,7 +201,7 @@ sam_client_rdsock(
 		return (error);
 	}
 #ifdef sun
-	rdmsg = (char *)rdsock.msg.p32;
+	rdmsg = (char *)(long)rdsock.msg.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		rdmsg = (char *)rdsock.msg.p64;
 	}
@@ -551,7 +551,7 @@ sam_read_sock(
 
 #ifdef sun
 		while ((mbp = allocb(buf_size, BPRI_LO)) == NULL) {
-			if (error = strwaitbuf((size_t)buf_size, BPRI_LO)) {
+			if ((error = strwaitbuf((size_t)buf_size, BPRI_LO))) {
 				goto out;
 			}
 		}
@@ -1106,7 +1106,7 @@ sam_put_sock_msg(
 	size = SAM_HDR_LENGTH + STRUCT_RND64(hlength);
 
 	while ((mbp = allocb(size, BPRI_LO)) == NULL) {
-		if (error = strwaitbuf((size_t)size, BPRI_LO)) {
+		if ((error = strwaitbuf((size_t)size, BPRI_LO))) {
 			goto out;
 		}
 	}

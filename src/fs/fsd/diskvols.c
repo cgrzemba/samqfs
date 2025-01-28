@@ -665,7 +665,7 @@ assignHoneycombProps(char *volname)
 
 			if ((pathCfg = strchr(token, ':')) != NULL) {
 				samHostCfg = token;
-				*pathCfg++ - '\0';
+				*pathCfg++ = '\0';
 			} else {
 				samHostCfg = "";
 				pathCfg = token;

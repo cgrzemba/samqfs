@@ -743,7 +743,7 @@ index_snapname(
 	ptr = (fsmsnap_t *)(data->data);
 
 	/* don't index if name not set - snaps must have unique filenames */
-	if ((ptr == NULL) || (ptr->snapname == NULL)) {
+	if ((ptr == NULL) || (*ptr->snapname == '\0')) {
 		return (DB_DONOTINDEX);
 	}
 

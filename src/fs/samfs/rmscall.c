@@ -1327,8 +1327,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 				}
 				event = ev_archange;
 				permip->di.arch_status = ip->di.arch_status =
-				    ip->di.arch_status & ~(1 << copy) &
-				    ~(1 << dcopy) |
+				    (ip->di.arch_status & ~(1 << copy) & ~(1 << dcopy)) |
 				    (arch_status_m << dcopy) |
 				    (arch_status_n << copy);
 				media = ip->di.media[dcopy];
@@ -1518,7 +1517,7 @@ sam_request_file(void *arg)
 	if (args.bufsize < sizeof (struct sam_rminfo)) {
 		return (EINVAL);
 	}
-	path = (void *)args.path.p32;
+	path = (void *)(long)args.path.p32;
 	if (curproc->p_model != DATAMODEL_ILP32) {
 		path = (void *)args.path.p64;
 	}
@@ -1572,7 +1571,7 @@ sam_request_file(void *arg)
 		/* If read-only filesystem */
 		error = EROFS;
 	} else if ((error = sam_access_ino(ip, S_IWRITE, TRUE, CRED())) == 0) {
-		buf = (void *)args.buf.p32;
+		buf = (void *)(long)args.buf.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			buf = (void *)args.buf.p64;
 		}
@@ -1797,8 +1796,8 @@ sam_request_file(void *arg)
 
 	vsns = 1;
 	while (eid.ino && (vsns < rb.n_vsns)) {
-		if (error = sam_read_ino(ip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(ip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 			goto fail;
 		}
 		if (EXT_HDR_ERR(eip, eid, ip) ||
@@ -1906,7 +1905,7 @@ sam_old_request_file(sam_node_t *ip, vnode_t *vp,
 		/* If read-only filesystem */
 		error = EROFS;
 	} else if ((error = sam_access_ino(ip, S_IWRITE, TRUE, CRED())) == 0) {
-		buf = (void *)args.buf.p32;
+		buf = (void *)(long)args.buf.p32;
 		if (curproc->p_model != DATAMODEL_ILP32) {
 			buf = (void *)args.buf.p64;
 		}
@@ -2159,8 +2158,8 @@ sam_exch_multivolume_copy(
 	/* Examine all inode extensions for multivolume copy1 or copy2. */
 	eid = bip->di.ext_id;
 	while (eid.ino) {
-		if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 			break;
 		}
 
@@ -2212,7 +2211,7 @@ sam_read_old_rm(sam_node_t *ip, buf_t **rbp)
 		return (ENOENT);
 	}
 
-	if (error = sam_access_ino(ip, S_IREAD, TRUE, CRED())) {
+	if ((error = sam_access_ino(ip, S_IREAD, TRUE, CRED()))) {
 		return (error);
 	}
 

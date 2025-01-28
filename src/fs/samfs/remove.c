@@ -555,8 +555,8 @@ sam_get_hardlink_parent(
 		/*
 		 * Find hardlink parent inode extension.
 		 */
-		if (error = sam_read_ino(bip->mp, eid.ino, &ebp,
-					(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(bip->mp, eid.ino, &ebp,
+					(struct sam_perm_inode **)&eip))) {
 			break;
 		}
 		if (EXT_HDR_ERR(eip, eid, bip)) {

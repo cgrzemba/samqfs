@@ -485,7 +485,7 @@ static void opt_init();
  * Consistency check a samfs filesystem.
  */
 
-void
+int
 main(int argc, char **argv)
 {
 	int err;
@@ -522,6 +522,8 @@ main(int argc, char **argv)
 
 	/* Clean-up and exit. */
 	clean_exit(exit_status);
+
+	return (0);
 }
 
 

@@ -191,7 +191,7 @@ sam_mig_mount_media(
 	}
 
 	path = NULL;
-	if (mount != NULL && mount->name != NULL) {
+	if (mount != NULL && *mount->name != '\0') {
 
 		if (DBG_LVL(SAM_DBG_MIGKIT)) {
 			sam_syslog(LOG_DEBUG,
@@ -228,7 +228,7 @@ sam_mig_mount_media(
 			    "%s(%s) tempnam(%s, %s) failed errno: %d",
 			    libname, funcname, tmp_dir, tmp_prefix, errno);
 		}
-		if (path != NULL && mount->name != NULL) {
+		if (path != NULL && *mount->name != '\0') {
 			if (symlink(mount->name, path)) {
 				sam_syslog(LOG_ERR,
 				    "%s(%s) symlink(%s, %d) failed errno: %d",

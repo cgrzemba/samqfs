@@ -500,7 +500,7 @@ Removing leading `/' from absolute path names in the archive")));
 		    }
 		  /* Compare to 0, or use !(int)..., for Pyramid's dumb
 		     compiler.  */
-		  if (exhdr->sparse_header.sp[counter].numbytes == 0)
+		  if (exhdr->sparse_header.sp[counter].numbytes[0] == 0)
 		    break;
 		  sparsearray[counter + ind].offset =
 		    from_oct (1 + 12,

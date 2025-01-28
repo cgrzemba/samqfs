@@ -44,7 +44,7 @@ extern int errno;
 #include <stdlib.h>
 #endif
 #include <time.h>
-#include "regex.h"
+#include "xregex.h"
 
 typedef unsigned int boolean;
 #define		true    1

@@ -180,7 +180,7 @@ sam_acl_inherit(
 		}
 		if ((paclp = pip->aclp) == NULL) {
 			ASSERT(pip->di.ext_attrs & ext_acl);
-			if (error = sam_get_acl(pip, &paclp)) {
+			if ((error = sam_get_acl(pip, &paclp))) {
 				errline = __LINE__ - 1;
 				goto out;
 			}
@@ -242,7 +242,7 @@ sam_acl_inherit(
 		}
 
 		/* Validate regular ACL. */
-		if (error = sam_check_acl(cnt, entp, ACL_CHECK)) {
+		if ((error = sam_check_acl(cnt, entp, ACL_CHECK))) {
 			errline = __LINE__ - 1;
 			goto out;
 		}
@@ -258,8 +258,8 @@ sam_acl_inherit(
 			    (dfcnt * sizeof (sam_acl_t)));
 
 			/* Validate default ACL. */
-			if (error = sam_check_acl(dfcnt, dfentp,
-			    DEF_ACL_CHECK)) {
+			if ((error = sam_check_acl(dfcnt, dfentp,
+			    DEF_ACL_CHECK))) {
 				errline = __LINE__ - 1;
 				goto out;
 			}
@@ -269,7 +269,7 @@ sam_acl_inherit(
 	/*
 	 * Create regular and default sections of incore ACL structure.
 	 */
-	if (error = sam_build_acl(aclp)) {
+	if ((error = sam_build_acl(aclp))) {
 		errline = __LINE__ - 1;
 		goto out;
 	}
@@ -445,7 +445,7 @@ sam_acl_flush(sam_node_t *ip)
 	ASSERT(RW_WRITE_HELD(&ip->inode_rwl));
 
 	if (ip->aclp && (ip->aclp->flags & ACL_MODIFIED)) {
-		if (error = sam_set_acl(ip, &ip->aclp)) {
+		if ((error = sam_set_acl(ip, &ip->aclp))) {
 			TRACE(T_SAM_ACL_ERR, SAM_ITOV(ip),
 			    ip->di.id.ino, __LINE__, error);
 		}
@@ -523,7 +523,7 @@ sam_acl_set_vsecattr(
 		/* Copy and validate regular ACL. */
 		bcopy((void *)vsap->vsa_aclentp, (void *)entp,
 		    (cnt * sizeof (sam_acl_t)));
-		if (error = sam_check_acl(cnt, entp, ACL_CHECK)) {
+		if ((error = sam_check_acl(cnt, entp, ACL_CHECK))) {
 			errline = __LINE__ - 1;
 			goto out;
 		}
@@ -539,7 +539,7 @@ sam_acl_set_vsecattr(
 		/* Copy and validate default ACL. */
 		bcopy((void *)vsap->vsa_dfaclentp, (void *)dfentp,
 		    (dfcnt * sizeof (sam_acl_t)));
-		if (error = sam_check_acl(dfcnt, dfentp, DEF_ACL_CHECK)) {
+		if ((error = sam_check_acl(dfcnt, dfentp, DEF_ACL_CHECK))) {
 			errline = __LINE__ - 1;
 			goto out;
 		}
@@ -548,7 +548,7 @@ sam_acl_set_vsecattr(
 	/*
 	 * Create regular and default sections of new incore ACL structure.
 	 */
-	if (error = sam_build_acl(aclp)) {
+	if ((error = sam_build_acl(aclp))) {
 		errline = __LINE__ - 1;
 		goto out;
 	}
@@ -566,7 +566,7 @@ sam_acl_set_vsecattr(
 	/*
 	 * Save new incore ACL to inode extension(s).
 	 */
-	if (error = sam_set_acl(ip, &aclp)) {
+	if ((error = sam_set_acl(ip, &aclp))) {
 		errline = __LINE__ - 1;
 		goto out;
 	}
@@ -666,10 +666,10 @@ sam_set_acl(
 		} else {
 
 			/* Save incore ACL structure to inode ext(s). */
-			if (error = sam_set_acl_ext(bip, aclp->acl.cnt,
+			if ((error = sam_set_acl_ext(bip, aclp->acl.cnt,
 			    aclp->acl.entp,
 			    aclp->dfacl.cnt,
-			    aclp->dfacl.entp)) {
+			    aclp->dfacl.entp))) {
 				errline = __LINE__ - 4;
 				goto out;
 			}
@@ -785,8 +785,8 @@ sam_set_acl_ext(
 		done = 0;
 		eid = bip->di.ext_id;
 		while ((ino = eid.ino) != 0 && !done) {
-			if (error = sam_read_ino(bip->mp, ino, &bp,
-					(struct sam_perm_inode **)&eip)) {
+			if ((error = sam_read_ino(bip->mp, ino, &bp,
+					(struct sam_perm_inode **)&eip))) {
 				errline = __LINE__ - 2;
 				break;
 			}
@@ -844,8 +844,8 @@ sam_set_acl_ext(
 					TRANS_WRITE_DISK_INODE(bip->mp, bp, eip,
 					    eip->hdr.id);
 				} else if (SAM_SYNC_META(bip->mp)) {
-					if (error = sam_write_ino_sector(
-					    bip->mp, bp, ino)) {
+					if ((error = sam_write_ino_sector(
+					    bip->mp, bp, ino))) {
 						errline = __LINE__ - 1;
 						break;
 					}

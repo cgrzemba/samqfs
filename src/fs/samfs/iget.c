@@ -863,7 +863,7 @@ sam_check_cache(
 			}
 
 			vp = SAM_ITOV(ip);
-			if (error = sam_hold_vnode(ip, flag)) {
+			if ((error = sam_hold_vnode(ip, flag))) {
 				if (vip != NULL) {
 					/* Release newly acquired ino */
 					sam_release_ino(vip);
@@ -1038,7 +1038,7 @@ sam_release_ino(sam_node_t *ip)
 		cmn_err(SAMFS_DEBUG_PANIC,
 		    "SAM-QFS: %s: sam_release_ino: releasing a free inode"
 		    " ip=%x, ino=%d, bits=%x",
-		    ip->mp->mt.fi_name, (uint_t)ip,
+		    ip->mp->mt.fi_name, (ulong_t)ip,
 		    ip->di.id.ino, ip->flags.bits);
 	}
 	if (vn_has_cached_data(vp) == 0) {
@@ -1188,7 +1188,7 @@ start:
 			cmn_err(SAMFS_DEBUG_PANIC,
 			    "SAM-QFS: %s: sam_freeino: inode is not free"
 			    " ip=%x, ino=%d.%d, bits=%x",
-			    ip->mp->mt.fi_name, (uint_t)ip,
+			    ip->mp->mt.fi_name, (ulong_t)ip,
 			    ip->di.id.ino, ip->di.id.gen,
 			    ip->flags.bits);
 		}
@@ -1777,8 +1777,8 @@ sam_get_symlink(
 	n_chars = 0;
 	eid = bip->di.ext_id;
 	while (eid.ino) {
-		if (error = sam_read_ino(bip->mp, eid.ino, &bp,
-				(struct sam_perm_inode **)&eip)) {
+		if ((error = sam_read_ino(bip->mp, eid.ino, &bp,
+		    (struct sam_perm_inode **)&eip))) {
 			break;
 		}
 		if (EXT_HDR_ERR(eip, eid, bip)) {
@@ -1799,8 +1799,8 @@ sam_get_symlink(
 				brelse(bp);
 				break;
 			}
-			if (error = uiomove((caddr_t)&eip->ext.sln.chars[0],
-			    ino_chars, UIO_READ, uiop)) {
+			if ((error = uiomove((caddr_t)&eip->ext.sln.chars[0],
+			    ino_chars, UIO_READ, uiop))) {
 				brelse(bp);
 				break;
 			}

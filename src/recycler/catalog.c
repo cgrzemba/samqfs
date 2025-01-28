@@ -831,7 +831,7 @@ create_robot(
 		ROBOT->chtable = catalog;
 	}
 
-	ROBOT->dev = (dev_ent_t *)number_of_robots;
+	ROBOT->dev = (dev_ent_t *)(long)number_of_robots;
 	strcpy(ROBOT->name, archive_set->AsName);
 
 	/* Apply archive command file values, or else defaults */
@@ -974,10 +974,10 @@ assign_vsn(
 	 * check to see this VSN is not already assigned to some other
 	 * archive set.  Being assigned to a real robot is ok.
 	 */
-	if ((vsn->dev != vsn->real_dev) && (vsn->dev != (void *)robot_index)) {
+	if ((vsn->dev != vsn->real_dev) && (vsn->dev != (void *)(long)robot_index)) {
 		vsn->multiple_arsets = TRUE;
 	}
-	vsn->dev = (void *)robot_index;
+	vsn->dev = (void *)(long)robot_index;
 }
 
 static boolean_t

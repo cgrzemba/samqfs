@@ -676,10 +676,10 @@ GetHostDev(char *fs)
 	bzero((char *)devname, sizeof (devname));
 	strncpy(devname, (char *)&slice0.pt_name[0], sizeof (slice0.pt_name));
 	n = strlen(devname);
-	for (j = k = 0; k < n; j++, k++) {
+	for (j = k = 0; k < n-1; j++, k++) {
 		rdevname[j] = devname[k];
 		if (strncmp(&devname[k], "/dsk/", 5) == 0) {
-			strncpy(&rdevname[j], "/rdsk/", 6);
+			memcpy(&rdevname[j], "/rdsk/", 6);
 			k += 4;
 			j += 5;
 		}

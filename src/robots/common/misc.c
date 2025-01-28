@@ -186,8 +186,8 @@ disp_of_event(
 	if (event->status.b.free_mem) {
 		mutex_destroy(&event->mutex);
 		cond_destroy(&event->condit);
-		free(event);
 		ETRACE((LOG_NOTICE, "DsEv %#x Free", event));
+		free(event);
 	}
 }
 
