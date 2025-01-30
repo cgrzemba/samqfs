@@ -166,8 +166,13 @@ pkg:    $(PROG) $(ACSLIBS) $(MPROGS)
 		-e s/{{OS_RELEASE}}/$(OS_RELEASE)/ \
 		-e s/{{DBG}}/$(DBG_SUFF)/ \
 		> stk.p5m
+	cat acsls-client-toolkit.p5m.in | sed \
+		-e s/{{OSRELEASE}}/$(OS_RELEASE_VER)/ \
+		> acsls-client-toolkit.p5m
 	pkglint stk.p5m
 	pkgsend publish -d. -s ../../../repo/i386-$(OS_RELEASE)/ stk.p5m
+	pkglint acsls-client-toolkit.p5m
+	pkgsend publish -d ./stk_release -s ../../../repo/i386-$(OS_RELEASE)/ acsls-client-toolkit.p5m
 
 include $(DEPTH)/mk/depend.mk
 
