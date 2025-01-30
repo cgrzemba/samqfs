@@ -193,7 +193,7 @@ Compose(void)
 			SetErrno = 0;	/* set for trace */
 			Trace(TR_ERR,
 			    "Compose add stream '%s.%d' 0x%x failed",
-			    stream->vsn, stream->seqnum, (int)stream);
+			    stream->vsn, stream->seqnum, (long)stream);
 			SET_FLAG(stream->flags, SR_full);
 		}
 

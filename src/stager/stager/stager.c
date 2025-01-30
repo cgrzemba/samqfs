@@ -852,7 +852,7 @@ setStagerPid(
 	arg.stager_cmd = STAGER_setpid;
 	arg.p.pid = pid;
 
-	(void *)sam_syscall(SC_stager, &arg, sizeof (arg));
+	(void)sam_syscall(SC_stager, &arg, sizeof (arg));
 }
 
 /*

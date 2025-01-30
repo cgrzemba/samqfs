@@ -176,7 +176,7 @@ CreateRmFiles(void)
 
 			if (IS_FILESYSTEM_MOUNTED(fs->fs_status)) {
 				mount_name = fs->fs_mnt_point;
-				if (*mount_name == NULL) {
+				if (*mount_name == '\0') {
 					continue;
 				}
 				count++;
@@ -295,7 +295,7 @@ MountFileSystem(
 	for (i = 0; i < fileSystemTable.entries; i++) {
 		fs = &fileSystemTable.data[i];
 
-		if (fs->fs_name == NULL) {
+		if (*fs->fs_name == '\0') {
 			continue;
 		}
 		if (strcmp(fs->fs_name, name) == 0) {

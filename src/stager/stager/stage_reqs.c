@@ -602,7 +602,7 @@ CheckRequests(
 				 * retry from another copy since extent has
 				 * removed or type of media may different.
 				 */
-				if (damaged == B_FALSE && copy == file->copy ||
+				if ((damaged == B_FALSE && copy == file->copy) ||
 				    GET_FLAG(file->flags, FI_NO_RETRY) ||
 				    file->ar[file->copy].ext_ord != 0 ||
 				    file->se_ord != 0) {
@@ -909,7 +909,7 @@ TraceStageReqs(
 
 	_Trace(flag, srcFile, srcLine,
 	    "Stage requests entries: %d alloc: %d data: 0x%x",
-	    StageReqs.entries, StageReqs.alloc, (int)StageReqs.data);
+	    StageReqs.entries, StageReqs.alloc, (long)StageReqs.data);
 
 	if (StageReqs.entries > 0) {
 		for (i = 0; i < StageReqs.alloc; i++) {
@@ -917,7 +917,7 @@ TraceStageReqs(
 				file = &StageReqs.data[i];
 				_Trace(flag, srcFile, srcLine,
 				    "[%d] file: 0x%x inode: %d.%d",
-				    i, (int)file, file->id.ino,
+				    i, (long)file, file->id.ino,
 				    file->id.gen);
 			}
 		}
@@ -1117,7 +1117,7 @@ InitRequestList()
 			StageReqs.val->create = time(NULL);
 			Trace(TR_DEBUG,
 			    "Malloc StageReqs.data: %0x size: %d val: %0x",
-			    (int)StageReqs.data, (int)size, (int)StageReqs.val);
+			    (long)StageReqs.data, (int)size, (long)StageReqs.val);
 		} else {
 			recovered = B_TRUE;
 		}
@@ -1192,7 +1192,7 @@ InitRequestList()
 			    ((StageReqs.data + size) -
 			    sizeof (StageReqFileVal_t));
 			StageReqs.val->size = size;
-			ASSERT((int)StageReqs.val > (int)oval);
+			ASSERT((long)StageReqs.val > (long)oval);
 			memmove(StageReqs.val, oval,
 			    sizeof (StageReqFileVal_t));
 			size = (size_t)(StageReqs.val - oval);
@@ -1700,7 +1700,7 @@ traceFileExtents(
 	_Trace(flag, srcFile, srcLine,
 	    "File extents entries: %d alloc: %d data: 0x%x",
 	    stageExtents.hdr->fh_entries, stageExtents.hdr->fh_alloc,
-	    (int)stageExtents.data);
+	    (long)stageExtents.data);
 
 	if (stageExtents.hdr->fh_entries > 0) {
 		FileExtentInfo_t *entry;
@@ -1709,7 +1709,7 @@ traceFileExtents(
 			if (entry->fe_id.ino != 0) {
 				_Trace(flag, srcFile, srcLine,
 				    "[%d] extent: 0x%x inode: %d.%d "
-				    "ext_ord: %d", i, (int)entry,
+				    "ext_ord: %d", i, (long)entry,
 				    entry->fe_id.ino, entry->fe_id.gen,
 				    entry->fe_extOrd);
 			}

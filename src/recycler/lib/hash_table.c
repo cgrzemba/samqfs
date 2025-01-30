@@ -114,7 +114,7 @@ InsertIntoHashTable(
 {
 	unsigned int key;
 
-	if (vsn != '\0') {
+	if (*vsn != '\0') {
 		key = GenerateHashKey(vsn, hashTable);
 
 		while (hashTable->values[key] != HASH_EMPTY) {

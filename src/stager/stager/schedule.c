@@ -414,8 +414,8 @@ startWork(
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 
-		if (((copy_assigned == B_TRUE) && (stream->context == NULL)) ||
-		    ((copy_assigned == B_FALSE) && (stream->context != NULL))) {
+		if (((copy_assigned == B_TRUE) && (stream->context == 0)) ||
+		    ((copy_assigned == B_FALSE) && (stream->context != 0))) {
 			stream = stream->next;
 			continue;
 		}
@@ -432,8 +432,8 @@ startWork(
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 
-		if (((copy_assigned == B_TRUE) && (stream->context == NULL)) ||
-		    ((copy_assigned == B_FALSE) && (stream->context != NULL))) {
+		if (((copy_assigned == B_TRUE) && (stream->context == 0)) ||
+		    ((copy_assigned == B_FALSE) && (stream->context != 0))) {
 			stream = stream->next;
 			continue;
 		}
@@ -581,7 +581,7 @@ TraceWorkQueue(
 	stream = workQueue.first;
 	for (i = 0; i < workQueue.entries; i++) {
 		_Trace(flag, srcFile, srcLine, "%s.%s: stream: 0x%x",
-		    sam_mediatoa(stream->media), stream->vsn, (int)stream);
+		    sam_mediatoa(stream->media), stream->vsn, (long)stream);
 		stream = stream->next;
 	}
 }
@@ -1276,7 +1276,7 @@ requeueWork(
 					Trace(TR_MISC, "Requeue stream: "
 					    "'%s.%d' 0x%x",
 					    stream->vsn, stream->seqnum,
-					    (int)stream);
+					    (long)stream);
 					stream->flags = 0;
 					stream->pid = 0;
 					stream->context = 0;
@@ -1579,7 +1579,7 @@ startCopy(
 	}
 
 	Trace(TR_DEBUG, "Found copy-rm%d instance: 0x%x media: '%s'",
-	    instance->ci_rmfn, (int)instance, sam_mediatoa(instance->ci_media));
+	    instance->ci_rmfn, (long)instance, sam_mediatoa(instance->ci_media));
 
 	PthreadMutexLock(&instance->ci_requestMutex);
 
@@ -1636,7 +1636,7 @@ startCopy(
 	}
 
 	Trace(TR_DEBUG, "Schedule copy-rm%d: '%s.%d' 0x%x",
-	    instance->ci_rmfn, stream->vsn, stream->seqnum, (int)request);
+	    instance->ci_rmfn, stream->vsn, stream->seqnum, (long)request);
 
 	if (instance->ci_first == NULL) {
 		instance->ci_first = request;
@@ -1775,7 +1775,7 @@ findCopy(
 		if (trylock != 0) {
 			Trace(TR_ERR, "Request mutex locked %d "
 			    "instance: 0x%x, errno: %d",
-			    trylock, (int)instance, errno);
+			    trylock, (long)instance, errno);
 			if (--retry > 0) {
 				sleep(5);
 			} else {
@@ -1790,7 +1790,7 @@ findCopy(
 				 */
 
 				Trace(TR_MISC, "Reinitialize mutex lock "
-				    "instance: 0x%x", (int)instance);
+				    "instance: 0x%x", (long)instance);
 
 				/*
 				 * Reinitialize mutex.
@@ -1863,7 +1863,7 @@ findCopyByPid(
 			break;
 		}
 	}
-	Trace(TR_DEBUG, "Find copy: 0x%x by pid: %d", (int)instance, (int)pid);
+	Trace(TR_DEBUG, "Find copy: 0x%x by pid: %d", (long)instance, (int)pid);
 	return (instance);
 }
 
@@ -2466,7 +2466,7 @@ ClearScheduler(
 
 	if (found) {
 		Trace(TR_MISC, "Clear requests: '%s.%s 0x%x",
-		    sam_mediatoa(stream->media), stream->vsn, (int)stream);
+		    sam_mediatoa(stream->media), stream->vsn, (long)stream);
 
 		PthreadMutexLock(&stream->mutex);
 		SET_FLAG(stream->flags, SR_CLEAR);

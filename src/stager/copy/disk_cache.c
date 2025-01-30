@@ -223,7 +223,7 @@ DiskCacheWrite(
 		Trace(TR_DEBUG,
 		    "Write block: %d buf: %d [0x%x] offset: %lld len: %d",
 		    position, CircularIoSlot(IoThread->io_writer, out),
-		    (int)out, swrite.offset, nbytes);
+		    (long)out, swrite.offset, nbytes);
 
 		swrite.buf.ptr = out;
 		swrite.nbyte = nbytes;

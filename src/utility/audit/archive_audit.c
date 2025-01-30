@@ -430,7 +430,7 @@ CheckArchiveStatus(void)
 				    "malloc: %s\n"), "sam_vsn_stat");
 			}
 
-			if ((fullpath == NULL) || (*fullpath == '\0')) {
+			if (*fullpath == '\0') {
 				if (errno == 0) {
 					errno = EINVAL;
 				}

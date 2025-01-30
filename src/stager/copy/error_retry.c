@@ -227,7 +227,7 @@ RetryOptical(
 		count = mau_in_buffer * IoThread->io_blockSize;
 
 		Trace(TR_MISC, "Start empty sector read buf: 0x%x count: %d",
-		    (int)buf, count);
+		    (long)buf, count);
 
 		if (Instance->ci_flags & CI_samremote) {
 			numbytes_read = SamrftRead(IoThread->io_rftHandle,
@@ -264,7 +264,7 @@ RetryOptical(
 		count = count >> 1;
 
 		Trace(TR_MISC, "Start optical read error retry "
-		    "buf: 0x%x count: %d", (int)buf, count);
+		    "buf: 0x%x count: %d", (long)buf, count);
 
 		if (Instance->ci_flags & CI_samremote) {
 			numbytes_read = SamrftRead(IoThread->io_rftHandle,

@@ -250,7 +250,7 @@ setBufsizeParams(void)
 	/*
 	 *  Copy media to stager's parameters.
 	 */
-	if (cfgToken != NULL && *cfgToken != '\0') {
+	if (*cfgToken != '\0') {
 		(void) strncpy(media, cfgToken, sizeof (media));
 		config.bufsize.media = sam_atomedia(cfgToken);
 
@@ -317,7 +317,7 @@ setDrivesParams(void)
 	size_t size;
 	int idx;
 
-	if (cfgToken != NULL && *cfgToken != '\0') {
+	if (*cfgToken != '\0') {
 		(void) strncpy(robot, cfgToken, sizeof (uname_t));
 
 		/*
@@ -346,7 +346,7 @@ setDrivesParams(void)
 static void
 setLogfileParam(void)
 {
-	if (cfgToken != NULL && *cfgToken != '\0') {
+	if (*cfgToken != '\0') {
 		if (verifyFile(cfgToken) == B_FALSE) {
 			ReadCfgError(CustMsg(19018), "log", cfgToken);
 		}
@@ -407,7 +407,7 @@ static void
 setDirectioParam(void)
 {
 
-	if (cfgToken != NULL && *cfgToken != '\0') {
+	if (*cfgToken != '\0') {
 		if (strcmp(cfgToken, "on") == 0) {
 			config.directio = 1;
 		} else if (strcmp(cfgToken, "off") == 0) {

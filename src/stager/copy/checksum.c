@@ -185,7 +185,7 @@ Checksum(
 	ASSERT(checksum != NULL);
 
 	Trace(TR_DEBUG, "Checksumming data: 0x%x bytes: %d",
-	    (int)data, num_bytes);
+	    (long)data, num_bytes);
 
 	PthreadMutexLock(&checksum->mutex);
 

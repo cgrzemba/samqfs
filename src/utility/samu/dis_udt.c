@@ -62,7 +62,7 @@ DisUdt()
 	eq = DisEq;
 	dev = (dev_ent_t *)SHM_ADDR(master_shm, Dev_Tbl->d_ent[eq]);
 	Mvprintw(0, 0, catgets(catfd, SET, 887, "Device table: eq: %d"), eq);
-	Mvprintw(0, 24, "addr: %.8x", (int)Dev_Tbl->d_ent[eq]);
+	Mvprintw(0, 24, "addr: %.8x", (long)Dev_Tbl->d_ent[eq]);
 	if (dev->dis_mes[DIS_MES_CRIT][0] != '\0') {
 		Attron(A_BOLD);
 		Mvprintw(ln++, 0, "message: %s", dev->dis_mes[DIS_MES_CRIT]);

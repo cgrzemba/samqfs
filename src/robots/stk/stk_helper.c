@@ -604,7 +604,7 @@ doit(
 			    *argv, EXTERNAL_LABEL_SIZE);
 			argv++;
 			capid = strtoul(*argv, NULL, 16);
-			memcpy((void *)&cap_id, &capid, sizeof (capid));
+			memcpy((void *)&cap_id, &capid, sizeof (cap_id));
 			lockid = NO_LOCK_ID;
 			if (DBG_LVL(SAM_DBG_DEBUG)) {
 				sam_syslog(LOG_DEBUG, "eject_volume: vol(%s)",

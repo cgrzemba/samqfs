@@ -2295,7 +2295,7 @@ family_name(
 		return (robot->name);
 	}
 	if (robot->dev) {
-		if ((robot->dev->set != 0) && *(robot->dev->set) != 0) {
+		if (*(robot->dev->set) != 0) {
 			return (robot->dev->set);
 		}
 		if (robot->dev->equ_type == DT_HISTORIAN) {
@@ -2330,7 +2330,7 @@ vendor_id(
 	if (robot->archset) {
 		return ("SAM-FS");
 	}
-	if ((robot->dev->vendor_id != 0) && *(robot->dev->vendor_id) != 0) {
+	if (*(robot->dev->vendor_id) != 0) {
 		/* vendor_id is unsigned! */
 		return ((char *)robot->dev->vendor_id);
 	}
@@ -2350,7 +2350,7 @@ product_id(
 	if (robot->archset) {
 		return ("SAM-FS");
 	}
-	if ((robot->dev->product_id != 0) && *(robot->dev->product_id) != 0) {
+	if (*(robot->dev->product_id) != 0) {
 		/* product_id is unsigned! */
 		return ((char *)robot->dev->product_id);
 	}
@@ -2368,7 +2368,7 @@ catalog_name(
 		return ("(No catalog)");
 	}
 
-	if ((dev->dt.rb.name != 0) && *dev->dt.rb.name != 0)
+	if (*dev->dt.rb.name != 0)
 		return ((char *)dev->dt.rb.name);
 
 	return ("(NULL)");

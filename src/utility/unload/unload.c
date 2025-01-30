@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	}
 
 	device = (dev_ent_t *)
-	    ((char *)memory + (int)dev_ptr_tbl->d_ent[cmd_block.eq]);
+	    ((char *)memory + (long)dev_ptr_tbl->d_ent[cmd_block.eq]);
 
 	if (!(IS_OPTICAL(device) || IS_TAPE(device) || IS_ROBOT(device))) {
 		fprintf(stderr,

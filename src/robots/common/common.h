@@ -103,7 +103,7 @@
 	thread_t	thread; \
 	int	    open_fd; \
 	uchar_t	 bar_code[BARCODE_LEN + 1]; \
-	ushort_t	new_slot; \
+	uint_t	new_slot; \
 	dev_ent_t		*un; \
 	preview_t		*preview; \
 	struct library_s	*library; \

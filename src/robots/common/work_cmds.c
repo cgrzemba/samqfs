@@ -399,8 +399,9 @@ check_requests(
 			memmove(library->un->i.ViVsn, ced.CeVsn,
 			    sizeof (library->un->i.ViVsn));
 		} else {
-			memmove(library->un->i.ViVsn, " ",
+			memset(library->un->i.ViVsn, 0,
 			    sizeof (library->un->i.ViVsn));
+			sprintf(library->un->i.ViVsn," ");
 		}
 
 		if (drive || (drive = find_idle_drive(library)) != NULL) {

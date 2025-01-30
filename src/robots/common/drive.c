@@ -753,7 +753,7 @@ mount(
 
 			memmove(un->i.ViMtype, sam_mediatoa(drive->un->type),
 			    sizeof (un->i.ViMtype));
-			memmove(un->i.ViVsn, &lb_vsn, sizeof (un->i.ViVsn));
+			memmove(un->i.ViVsn, &lb_vsn, sizeof (lb_vsn));
 			if (CatalogLabelVolume(&un->i, (char *)lb_vsn) == -1)
 				goto LabelFail;
 			DevLog(DL_DETAIL(4016), slot, lb_vsn, ce->CeBarCode);

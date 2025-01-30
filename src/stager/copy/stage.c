@@ -352,7 +352,7 @@ switchInstance(
 
 		Trace(TR_MISC, "Switch instance (0x%x) "
 		    "curr: '%s' 0x%x to: '%s' 0x%x",
-		    (int)Instance,
+		    (long)Instance,
 		    sam_mediatoa(Instance->ci_media), Instance->ci_flags,
 		    sam_mediatoa(from->ci_media), from->ci_flags);
 
@@ -368,7 +368,7 @@ switchInstance(
 
 		Trace(TR_MISC, "Restore instance (0x%x) "
 		    "curr: '%s' 0x%x to: '%s' 0x%x",
-		    (int)Instance,
+		    (long)Instance,
 		    sam_mediatoa(Instance->ci_media), Instance->ci_flags,
 		    sam_mediatoa(saveInstance.ci_media), saveInstance.ci_flags);
 

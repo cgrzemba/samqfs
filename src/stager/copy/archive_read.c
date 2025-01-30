@@ -520,7 +520,7 @@ findFirstBlock()
 		Trace(TR_DEBUG, "Reuse block: %d buf: %d [0x%x] len: %d "
 		    "error: %d",
 		    filePos, CircularIoSlot(reader, ptr),
-		    (int)ptr, nbytes, readError);
+		    (long)ptr, nbytes, readError);
 
 		readError = validateTarHeader(ptr, nbytes, &residual);
 
@@ -622,7 +622,7 @@ readBlock(
 	/* FIXME SetTimeout(TO_read); */
 	Trace(TR_DEBUG, "Read fd %d block: %d buf: %d [0x%x] len: %d",
 	    IoThread->io_rmFildes, filePos, CircularIoSlot(reader, buf),
-	    (int)buf, nbytes);
+	    (long)buf, nbytes);
 
 retry:
 
@@ -720,7 +720,7 @@ validateTarHeader(
 	buffer = in + fileOff;
 	bufLen -= fileOff;
 
-	Trace(TR_DEBUG, "Validate tar from: [0x%x] %d", (int)buffer, bufLen);
+	Trace(TR_DEBUG, "Validate tar from: [0x%x] %d", (long)buffer, bufLen);
 
 	retval = 0;
 	tarHeaderSize = getTarHeaderSize(buffer);

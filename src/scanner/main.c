@@ -184,9 +184,9 @@ main(
 	thr_sigsetmask(SIG_SETMASK, &full_block_set, (sigset_t *)NULL);
 	thr_setconcurrency(10);
 	ld_devices(0);		/* load device interfaces */
-	if (thr_create(NULL, DF_THR_STK, monitor_msg, (void *) me,
+	if (thr_create(NULL, DF_THR_STK, monitor_msg, (void *)(long) me,
 	    (THR_DETACHED | THR_BOUND | THR_NEW_LWP), &msg_thread) &&
-	    thr_create(NULL, DF_THR_STK, monitor_msg, (void *) me,
+	    thr_create(NULL, DF_THR_STK, monitor_msg, (void *)(long) me,
 	    THR_DETACHED, &msg_thread)) {
 		sam_syslog(LOG_INFO, "Unable to create thread monitor_msg:%m.");
 		exit(1);
@@ -598,7 +598,7 @@ alarm_thread()
 			thr_sigsetmask(SIG_SETMASK, &full_block_set,
 			    (sigset_t *)NULL);
 			if (now > last_stale && preview_tbl->ptbl_count &&
-			    defaults->stale_time)
+			    defaults->stale_time) {
 				if (thr_create(NULL, DF_THR_STK,
 				    remove_stale_preview, NULL,
 				    (THR_DETACHED | THR_BOUND), NULL) &&
@@ -610,7 +610,7 @@ alarm_thread()
 					    "remove_stale_preview:%m.");
 				} else
 					last_stale = now + 60;
-
+			}
 			scan_devices(shm_ptr_tbl);	/* look um over */
 			break;
 

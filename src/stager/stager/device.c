@@ -167,7 +167,7 @@ checkDevices(void)
 			(void) ShmatSamfs(O_RDONLY);
 			if (shm_ptr_tbl != NULL) {
 				if (shm_ptr_tbl->valid &&
-				    shm_ptr_tbl->first_dev != NULL) {
+				    shm_ptr_tbl->first_dev != 0) {
 					changed = B_TRUE;
 				} else {
 					int rv;

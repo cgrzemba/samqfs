@@ -97,7 +97,7 @@ MediaInit(
 	int retval;
 	int pct;
 
-	Trace(TR_MISC, "[%s] Init media table: 0x%x", name, (int)table);
+	Trace(TR_MISC, "[%s] Init media table: 0x%x", name, (long)table);
 
 	retval = 0;
 
@@ -487,7 +487,7 @@ insertIntoMediaTable(
 	SET_FLAG(entry->me_flags, ME_noexist);
 
 	Trace(TR_SAMDEV, "Insert VSN entry '%s.%s' 0x%x",
-	    sam_mediatoa(media), vsn, (int)entry);
+	    sam_mediatoa(media), vsn, (long)entry);
 
 	InsertIntoHashTable(table->mt_tableUsed, vsn, table->mt_hashTable);
 

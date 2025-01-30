@@ -238,8 +238,7 @@ DkNextArchiveFile(void)
 		} else {
 			char errbuf[132];
 
-			if (diskVolume->DvHost != NULL &&
-			    diskVolume->DvHost[0] != '\0') {
+			if (diskVolume->DvHost[0] != '\0') {
 				snprintf(errbuf, sizeof (errbuf), "%s:%s",
 				    diskVolume->DvHost, fullpath);
 			} else {
@@ -259,8 +258,7 @@ DkNextArchiveFile(void)
 			ClearOprMsg(State->errmsg);
 		}
 
-		if (diskVolume->DvHost != NULL &&
-		    diskVolume->DvHost[0] != '\0') {
+		if (diskVolume->DvHost[0] != '\0') {
 			snprintf(errbuf, sizeof (errbuf), "%s:%s",
 			    diskVolume->DvHost, fullpath);
 		} else {

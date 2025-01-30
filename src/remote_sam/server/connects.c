@@ -309,6 +309,7 @@ watch_connects(
 		}
 	}
 	/* LINTED Function has no return statement */
+	return (0);
 }
 
 static boolean_t

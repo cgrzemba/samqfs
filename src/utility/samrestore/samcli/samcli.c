@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 		}
 		rtnval = list_dir(
 		    NULL,
-		    (int)(entrylist->head->data),
+		    *(int*)(entrylist->head->data),
 		    pathlist->head->data,
 		    restlist->head->data, &lptr);
 		break;

@@ -273,7 +273,7 @@ DoubleBuffer(
 		}
 
 		Trace(TR_DEBUG, "Move from: [0x%x] %d to: [0x%x] %d nbytes: %d",
-		    (int)from, fromResidual, (int)to, toResidual, nbytes);
+		    (long)from, fromResidual, (long)to, toResidual, nbytes);
 
 		memcpy(to, from, nbytes);
 

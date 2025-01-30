@@ -1096,7 +1096,7 @@ walkDirectory(
 			if (strstr(name, DAT_FILE_SUFFIX) == NULL) {
 
 				Trace(TR_DEBUG, "%d: 0x%x '%s'",
-				    idx, (int)&csdDir->cd_entry[idx], name);
+				    idx, (long)&csdDir->cd_entry[idx], name);
 
 				/* Add dump file to table. */
 				csdDir->cd_entry[idx].ce_path = strdup(name);
@@ -1156,7 +1156,7 @@ initCsdTable()
 		    (CSD_TABLE_INCREMENT * sizeof (CsdEntry_t));
 		SamMalloc(csdDir, size);
 		Trace(TR_DEBUG, "Alloc csd table: 0x%x %d",
-		    (int)csdDir, size);
+		    (long)csdDir, size);
 		(void) memset(csdDir, 0, size);
 		csdDir->cd_alloc = CSD_TABLE_INCREMENT;
 	} else {
@@ -1168,7 +1168,7 @@ initCsdTable()
 		    (csdDir->cd_alloc * sizeof (CsdEntry_t));
 		SamRealloc(csdDir, size);
 		Trace(TR_DEBUG, "Realloc csd table: 0x%x %d",
-		    (int)csdDir, size);
+		    (long)csdDir, size);
 		(void) memset(&csdDir->cd_entry[i], 0,
 		    CSD_TABLE_INCREMENT * sizeof (CsdEntry_t));
 	}
@@ -1190,7 +1190,7 @@ openFildes(
 	fildes->flags = CSD_inflate;
 
 	fd = open64(path, O_RDONLY);
-	if (fd == NULL) {
+	if (fd == 0) {
 		Trace(TR_MISC, "Cannot open samfs dump '%s': %s",
 		    path, strerror(errno));
 		return (NULL);
@@ -1202,7 +1202,7 @@ openFildes(
 		return (NULL);
 	}
 
-	Trace(TR_DEBUG, "Csd open %x %d", (int)fildes->inf, fd);
+	Trace(TR_DEBUG, "Csd open %x %d", (long)fildes->inf, fd);
 
 	return (fildes);
 }
@@ -1237,7 +1237,7 @@ closeFildes(
 		}
 		SamFree(fildes);
 	}
-	Trace(TR_DEBUG, "Csd close %x", (int)fildes->inf);
+	Trace(TR_DEBUG, "Csd close %x", (long)fildes->inf);
 }
 
 /*

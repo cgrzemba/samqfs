@@ -61,7 +61,7 @@ static int archive_handler(sam_db_context_t *, sam_event_t *);
 static int modify_handler(sam_db_context_t *, sam_event_t *);
 
 /* Passthrough argument for file_path_consistency */
-static struct file_path_arg {
+struct file_path_arg {
 	sam_db_context_t *con;
 	sam_db_inode_t *inode;
 };

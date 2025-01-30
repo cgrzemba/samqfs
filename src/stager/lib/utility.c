@@ -240,7 +240,7 @@ TraceRawData(
 	int addr = 0;
 
 	_Trace(flag, srcFile, srcLine, "Raw data 0x%x for %d bytes",
-	    (int)fwa, numBytes);
+	    (long)fwa, numBytes);
 
 	while (addr < numBytes) {
 		int f, n;

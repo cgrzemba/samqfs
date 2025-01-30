@@ -144,7 +144,7 @@ CmdGetScriptPath(void)
 static void
 setLogfileParam(void)
 {
-	if (cfgToken != NULL && *cfgToken != '\0') {
+	if (*cfgToken != '\0') {
 		if (verifyFile(cfgToken) == B_FALSE) {
 			ReadCfgError(CustMsg(20407), "log", cfgToken);
 		}

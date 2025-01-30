@@ -84,7 +84,9 @@ getdate.h getline.h getopt.h group-member.h long-options.h \
 makepath.h modechange.h mountlist.h path-concat.h pathmax.h \
 save-cwd.h xstrtol.h xstrtoul.h
 
-# BUILT_SOURCES = $(OBJ_DIR)/getdate.c $(OBJ_DIR)/posixtm.c
+BUILT_SOURCES = $(OBJ_DIR)/getdate.c
+BUILT_SOURCES += $(OBJ_DIR)/posixtm.c
+
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 

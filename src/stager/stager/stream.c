@@ -116,7 +116,7 @@ CreateStream(
 
 	stream->create = time(NULL);
 	if (GET_FLAG(file->flags, FI_DCACHE_CLOSE)) {
-		(void) strncat(stream->vsn, "CLEAN", sizeof ("CLEAN"));
+		(void) strncpy(stream->vsn, "CLEAN", sizeof (vsn_t));
 		stream->flags = SR_DCACHE_CLOSE;
 	} else {
 		(void) strncpy(stream->vsn, file->ar[copy].section.vsn,
@@ -170,7 +170,7 @@ CreateStream(
 	if (stream != NULL) {
 		Trace(TR_QUEUE, "Create stream: '%s.%d' 0x%x "
 		    "media: '%s' context: %d",
-		    stream->vsn, Seqnum, (int)stream,
+		    stream->vsn, Seqnum, (long)stream,
 		    sam_mediatoa(stream->media), (int)stream->context);
 	} else {
 		WarnSyscallError(HERE, "MapInFile", fullpath);
@@ -196,7 +196,7 @@ ErrorStream(
 
 
 	Trace(TR_MISC, "Error stream: '%s' 0x%x error: %d",
-	    TrNullString(stream->vsn), (int)stream, error);
+	    TrNullString(stream->vsn), (long)stream, error);
 
 	PthreadMutexLock(&stream->mutex);
 	SET_FLAG(stream->flags, SR_ERROR);
@@ -296,7 +296,7 @@ DeleteStream(
 	StreamInfo_t *stream)
 {
 	Trace(TR_QUEUE, "Delete stream: '%s.%d' 0x%x",
-	    stream->vsn, stream->seqnum, (int)stream);
+	    stream->vsn, stream->seqnum, (long)stream);
 
 	(void) sprintf(fullpath, "%s/%s.%d", SharedInfo->si_streamsDir,
 	    stream->vsn, stream->seqnum);
@@ -341,7 +341,7 @@ AddStream(
 		 */
 		file = GetFile(id);
 		if (GET_FLAG(file->flags, FI_DCACHE) &&
-		    (stream->context != NULL &&
+		    (stream->context != 0 &&
 		    stream->context != file->context)) {
 			return (B_FALSE);
 		}
@@ -772,7 +772,7 @@ comparePosition(
 	if ((*f1) == NULL || (*f2) == NULL) {
 		SetErrno = 0;	/* set for trace */
 		Trace(TR_ERR, "Compare position error: 0x%x 0x%x",
-		    (int)(*f1), (int)(*f2));
+		    (long)(*f1), (long)(*f2));
 		return (1);
 	}
 

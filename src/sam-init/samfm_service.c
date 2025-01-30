@@ -612,7 +612,7 @@ read_msg(
 	fds[0].revents = 0;
 
 	cnt = poll(fds, 1, FIFTHTEEN_SEC_TIMEOUT);
-	if (cnt != 1 && fds[0].revents != POLLIN < 0) {
+	if ((cnt != 1) || !(fds[0].revents & POLLIN)) {
 		sam_syslog(LOG_DEBUG,
 		    "%s:%d poll cnt %d error #%d fd %d revents %x failure.",
 		    HERE, cnt, errno, fd, fds[0].revents);

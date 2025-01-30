@@ -141,7 +141,7 @@ DeviceGetFamilyName(
 		return (rval);
 	}
 
-	if (dev->set != NULL && *(dev->set) != '\0') {
+	if (*(dev->set) != '\0') {
 		rval = dev->set;
 	} else if (dev->equ_type == DT_HISTORIAN) {
 		rval = "hy";
