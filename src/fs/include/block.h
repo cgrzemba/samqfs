@@ -55,7 +55,7 @@
 #define	L_SAM_BLK	(256)	/* Max number of blocks in circular queue */
 
 #define	BLOCK_COUNT(in, out, limit)		\
-	(int)((in - out) < 0 ? (limit - out) + in : in - out)
+	(int16_t)((in - out) < 0 ? (limit - out) + in : in - out)
 
 struct sam_block {
 	volatile int in;		/* In pointer */
@@ -124,8 +124,8 @@ typedef struct sam_prealloc {
 	struct sam_prealloc *next;	/* Next prealocation request */
 	int wait;			/* Set if waiting for preallocation */
 	int error;			/* Returned error */
-	int first_bn;			/* Starting block number */
-	int first_dau;			/* Starting dau number */
+	sam_bn_t first_bn;			/* Starting block number */
+	sam_bn_t first_dau;			/* Starting dau number */
 	short set;			/* Clear if searching, set if setting */
 	short dt;			/* Device type - data or meta */
 	short ord;			/* Requested ordinal */

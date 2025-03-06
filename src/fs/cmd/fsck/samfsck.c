@@ -82,6 +82,7 @@
 #include <sys/buf.h>
 #include <sys/mman.h>
 #include <sys/sysmacros.h>
+#include <assert.h>
 
 /* Solaris headers. */
 #include <syslog.h>
@@ -235,7 +236,7 @@ struct dup_inoblk {
 	uchar_t	count;		/* Count of duplicates */
 	ushort_t  fill2;	/* reserved */
 	ushort_t  free;		/* Bit mask for free blocks */
-	ino_t	  ino[SM_INOCOUNT];
+	sam_ino_t	  ino[SM_INOCOUNT];
 };
 char dup_name[sizeof (uname_t) + 24]; /* Temp duplicate inodes file name */
 int dup_fd = -1;		/* File descriptor for small block file */
@@ -329,8 +330,8 @@ off_t smb_offset = 0;		/* Free small blocks file offset */
 char *smbbuf;
 struct sam_inoblk *smbptr;
 
-ino_t freeino = 0;		/* Last free inode */
-ino_t min_usr_inum;		/* Minimum user inode number */
+sam_ino_t freeino = 0;		/* Last free inode */
+sam_ino_t min_usr_inum;		/* Minimum user inode number */
 int sord = -1;			/* Last ordinal for get_bn */
 sam_daddr_t sbn = 0;		/* Last block for get_bn */
 
@@ -350,7 +351,7 @@ int offline_dirs = 0;		/* Num offline dirs.  Can't fix nlinks if >0. */
 /*
  * Quota data structures
  */
-ino_t	quota_file_ino[SAM_QUOTA_DEFD];		/* .quota_[agu] file inodes */
+sam_ino_t	quota_file_ino[SAM_QUOTA_DEFD];		/* .quota_[agu] file inodes */
 
 #define		Q_HASHSIZE		1000
 #define		Q_HASH(x)		(((~0UL >> 1) & (int)(x))%(Q_HASHSIZE))
@@ -378,16 +379,16 @@ void check_fs(void);
 void fix_system(void);
 void build_devices(void);
 int process_inodes();
-int check_inode(ino_t ino, struct sam_perm_inode *dp);
+int check_inode(sam_ino_t ino, struct sam_perm_inode *dp);
 void count_inode_blocks(struct sam_perm_inode *dp);
 int count_indirect_blocks(struct sam_perm_inode *dp, sam_daddr_t bn,
 	int ord, int level, sam_daddr_t lastbn, int lastord, int *lastflag,
 	int *excess_msg);
-int count_block(ino_t ino, int dt, int bt, sam_daddr_t bn, int ord);
-int check_bn(ino_t ino, sam_daddr_t bn, int ord);
+int count_block(sam_ino_t ino, int dt, int bt, sam_daddr_t bn, int ord);
+int check_bn(sam_ino_t ino, sam_daddr_t bn, int ord);
 int get_bn(struct sam_perm_inode *dp, offset_t offset, sam_daddr_t *bn,
 	int *ord, int correct);
-int check_duplicate(ino_t ino, int dt, int bt, sam_daddr_t bn, int ord);
+int check_duplicate(sam_ino_t ino, int dt, int bt, sam_daddr_t bn, int ord);
 void init_dup(void);
 void extend_dup(void);
 void write_map(int ord);
@@ -401,7 +402,7 @@ int check_sys_indirect_blocks(struct sam_perm_inode *dp, sam_daddr_t bn,
 	uint_t *block_cnt);
 int verify_indirect_validation(struct sam_perm_inode *dp, sam_daddr_t bn,
 	int ord, int level, sam_indirect_extent_t *iep);
-int verify_inode_block(sam_daddr_t bn, int ord, ino_t ino);
+int verify_inode_block(sam_daddr_t bn, int ord, sam_ino_t ino);
 void note_block(int ord, daddr32_t blk);
 void lqfs_log_validate(int32_t logbno, int logord, void (*cb)(int, daddr32_t));
 void lqfs_log_dispatch(int status);
@@ -412,15 +413,15 @@ void check_free_blocks(int ord);
 void check_sm_free_blocks();
 void print_duplicates(void);
 void print_inode_prob(struct ino_list *inop);
-void make_orphan(ino_t ino, struct sam_perm_inode *dp);
+void make_orphan(sam_ino_t ino, struct sam_perm_inode *dp);
 int add_orphan(struct sam_perm_inode *dp);
 int	change_dotdot(struct sam_perm_inode *dp);
 int verify_dir_validation(struct sam_perm_inode *dp, struct sam_dirval *dvp,
 	offset_t offset);
 int verify_dot_dotdot(struct sam_perm_inode *dp, struct sam_empty_dir *dirp);
-void mark_inode(ino_t ino, int prob);
-void offline_inode(ino_t ino, struct sam_perm_inode *dp);
-void free_inode(ino_t ino, struct sam_perm_inode *dp);
+void mark_inode(sam_ino_t ino, int prob);
+void offline_inode(sam_ino_t ino, struct sam_perm_inode *dp);
+void free_inode(sam_ino_t ino, struct sam_perm_inode *dp);
 int check_reg_file(struct sam_perm_inode *dp);
 int check_inode_exts(struct sam_perm_inode *dp);
 int verify_inode_ext(struct sam_perm_inode *dp, struct sam_inode_ext *ep,
@@ -433,10 +434,10 @@ int verify_hdr_validation(struct sam_perm_inode *dp, sam_val_t *dvp,
 	offset_t offset);
 int get_dir_blk(int type, struct sam_perm_inode *dp, offset_t offset);
 int put_dir_blk(int type, struct sam_perm_inode *dp);
-int get_inode(ino_t ino, struct sam_perm_inode *dp);
+int get_inode(sam_ino_t ino, struct sam_perm_inode *dp);
 void save_hard_link_parent(struct sam_perm_inode *dp, struct ino_list *inop);
 void update_hard_link_parent(struct sam_perm_inode *dp, struct hlp_list *hlp);
-void put_inode(ino_t ino, struct sam_perm_inode *dp);
+void put_inode(sam_ino_t ino, struct sam_perm_inode *dp);
 void sync_inodes(void);
 void debug_print_blocks(int ord);
 void debug_print_sm_blocks();
@@ -444,6 +445,8 @@ int debug_count_free_blocks(int ord);
 int find_sm_free_block(int input_ord, sam_daddr_t input_bn);
 int isrootfile(char *name, uint_t len);
 void shared_fs_convert(struct sam_sblk *);
+int print_duplicate_list(sam_ino_t ino);
+
 #ifdef DAMFSCK
 int damage_fs(void);
 #endif /* DAMFSCK */
@@ -1378,6 +1381,7 @@ check_fs(void)
 	    (((ino_count+INO_IN_BLK)*sizeof (struct ino_list))));
 
 	pass = FIRST_PASS;
+
 	process_inodes();
 
 	printf(catgets(catfd, SET, 2265, "Second pass\n"));
@@ -1819,6 +1823,15 @@ build_devices(void)
 			int j;
 
 			old_count = sblk->info.sb.fs_count;
+			if (old_count > fs_count) { /* filesystem was shrinked? */
+				if ((ndevp = (struct d_list *)realloc(ndevp,
+				    sizeof (struct devlist) * old_count)) == NULL) {
+					error(0, 0,
+					    catgets(catfd, SET, 604,
+					    "Cannot realloc ndevp"));
+					clean_exit(ES_malloc);
+				}
+			}
 			fs_count = sblk->info.sb.fs_count;
 			mm_count = sblk->info.sb.mm_count;
 			time = sblk->info.sb.init;
@@ -2006,7 +2019,7 @@ process_inodes()
 	struct ino_list *inop, *dinop;
 	struct sam_perm_inode *dp;
 	struct sam_inode_ext *ep;
-	ino_t ino;
+	sam_ino_t ino;
 
 	if ((ip = (char *)malloc(sizeof (struct sam_perm_inode))) == NULL) {
 		error(0, 0, catgets(catfd, SET, 13338,
@@ -2512,7 +2525,7 @@ process_inodes()
 
 int			/* -1 if error, 0 success, 1 if inode free/invalid */
 check_inode(
-	ino_t ino,			/* Inode number */
+	sam_ino_t ino,			/* Inode number */
 	struct sam_perm_inode *dp)	/* Inode entry */
 {
 	int err = 0;
@@ -2768,7 +2781,7 @@ out:
 void
 count_inode_blocks(struct sam_perm_inode *dp)	/* Inode entry */
 {
-	ino_t ino = dp->di.id.ino;
+	sam_ino_t ino = dp->di.id.ino;
 	sam_daddr_t bn;
 	int ord;
 	int ii;
@@ -3093,15 +3106,13 @@ count_indirect_blocks(
 	int *excess_msg)		/* ind first excess msg displayed */
 {
 	char *ibuf = NULL;
-	sam_indirect_extent_t *iep;
-	int dt;
-	int ii;
-	sam_daddr_t ibn;
-	int iord;
 	int err = 0;
 	int excess_blks = 0;
 	int inval_blks = 0;
 	int ioerr_blks = 0;
+	sam_indirect_extent_t *iep;
+	int dt;
+	int ii;
 
 	if (check_bn(dp->di.id.ino, bn, ord)) {
 		return (1);
@@ -3169,8 +3180,10 @@ count_indirect_blocks(
 		inop = &ino_mm[dp->di.id.ino - 1];
 
 		for (ii = 0; ii < DEXT; ii++) {
-			ibn   = iep->extent[ii];
-			ibn <<= ext_bshift;
+			sam_daddr_t ibn;
+			int iord;
+
+			ibn   = (sam_daddr_t)iep->extent[ii] << ext_bshift;
 			if (ibn == 0) {
 				continue;
 			}
@@ -3228,8 +3241,7 @@ count_indirect_blocks(
 		excess_blks++;
 	} else {
 		dt = dp->di.status.b.meta;
-		if (count_block(dp->di.id.ino, dt,
-		    LG, ibn, iord) == 0) {
+		if (count_block(dp->di.id.ino, dt, LG, ibn, iord) == 0) {
 			inop->block_cnt += (mp->mi.m_dau[dt].blocks[LG] *
 			    devp->device[iord].num_group);
 		} else {
@@ -3254,6 +3266,9 @@ count_indirect_blocks(
 		}
 
 		for (ii = 0; ii < DEXT; ii++) {
+			sam_daddr_t ibn;
+			int iord;
+
 			ibn   = iep->extent[ii];
 			ibn <<= ext_bshift;
 			if (ibn == 0) {
@@ -3285,6 +3300,9 @@ count_indirect_blocks(
 		(void) count_block(dp->di.id.ino, dt, LG, bn, ord);
 
 		for (ii = 0; ii < DEXT; ii++) {
+			sam_daddr_t ibn;
+			int iord;
+
 			ibn   = iep->extent[ii];
 			ibn <<= ext_bshift;
 			if (ibn == 0) {
@@ -3334,7 +3352,7 @@ count_indirect_blocks(
 
 int			/* -1 if error, 0 if okay, 1 if invalid block */
 count_block(
-	ino_t ino,		/* I-number */
+	sam_ino_t ino,		/* I-number */
 	int dt,			/* Data or meta device */
 	int bt,			/* Small or large block */
 	sam_daddr_t bn,		/* Block number */
@@ -3386,7 +3404,7 @@ count_block(
 	if (SM_BLKCNT(mp, dt) > 1) {	/* If this device has small daus */
 		bit = bn >> DIF_SM_SHIFT(mp, dt);
 		sbit = bit;
-		bit = bit & ~(SM_DEV_BLOCK(mp, dt) - 1); /* large dau start */
+		bit = bit & ~((sam_u_offset_t)SM_DEV_BLOCK(mp, dt) - 1); /* large dau start */
 	} else {
 		if (mp->mi.m_dau[dt].dif_shift[bt]) {
 			bit >>= mp->mi.m_dau[dt].dif_shift[bt];
@@ -3400,8 +3418,9 @@ count_block(
 	wptr = (uint_t *)(cptr + offset);
 	bit = sbit & 0x1f;
 	if (bt == SM) {
-		mask = 1 << (31 - bit);
+		mask = 1 << (uint_t)(31 - bit);
 	} else {
+		assert(0 <= (31 - bit - (SM_BLKCNT(mp, dt) - 1)));
 		mask = SM_BITS(mp, dt) << (31 - bit - (SM_BLKCNT(mp, dt) - 1));
 	}
 	if (pass == FIRST_PASS || pass == SECOND_PASS) {
@@ -3410,7 +3429,7 @@ count_block(
 			(void) check_duplicate(ino, dt, bt, bn, ord);
 			return (0);
 		}
-		*wptr &= ~mask;
+		*wptr &= ~mask; /* clear bit in map */
 
 	} else if (pass == THIRD_PASS) {
 
@@ -3434,7 +3453,7 @@ count_block(
 
 int					/* -1 if error, 0 if successful. */
 check_bn(
-	ino_t ino,			/* inode */
+	sam_ino_t ino,			/* inode */
 	sam_daddr_t bn,			/* block number */
 	int ord)			/* ordinal */
 {
@@ -3597,6 +3616,34 @@ get_bn(
 }
 
 
+int
+print_duplicate_list(sam_ino_t ino)
+{
+	struct dup_inoblk *smp;
+	char inode_str[256];
+	int llen;
+	int prnt = 1;
+
+	for (smp = (struct dup_inoblk *)dup_mm, llen = 0; smp <= dup_last; smp++, llen++) {
+		int i;
+
+		if (smp->bn == DUP_END) 	/* End of list */
+			break;
+		if (ino > 0)
+			prnt = 0;
+		for (i = 0; i < smp->count; i++) {
+			sprintf(inode_str, "%#x ",smp->ino[i]);
+			if (ino == smp->ino[i])
+				prnt = 1;
+		}
+		if (prnt)
+			printf("%p %#x %d %s\n", smp, smp->bn, smp->count, inode_str); 
+	}
+	printf("%d entries in dup list\n", llen);
+	return (llen);
+}
+
+
 /*
  * ----- check_duplicate - check duplicate
  * Scan the existing duplicates and if a match on first or second pass,
@@ -3606,7 +3653,7 @@ get_bn(
 
 int				/* -1 if error, 0 if okay, 1 if invalid blk */
 check_duplicate(
-	ino_t ino,		/* I-number */
+	sam_ino_t ino,		/* I-number */
 	int dt,			/* Data or meta device */
 	int bt,			/* Small or large block */
 	sam_daddr_t bn,		/* Block number */
@@ -3617,6 +3664,7 @@ check_duplicate(
 	int i;
 	int count;
 
+	/* check bn and ord in valid limit */
 	if (check_bn(ino, bn, ord)) {
 		return (1);
 	}
@@ -3636,11 +3684,11 @@ check_duplicate(
 				}
 				return (0);
 			} else if ((smp->bn ==
-			    (bn & ~(SM_DEV_BLOCK(mp, dt) - 1))) &&
+			    (bn & ~((sam_daddr_t)SM_DEV_BLOCK(mp, dt) - 1))) &&
 			    (smp->ord == ord)) {
 				if (bt == SM) {
 					if (!(smp->free & (1 << ((bn  &
-					    (SM_DEV_BLOCK(mp, dt) - 1)) >>
+					    ((sam_daddr_t)SM_DEV_BLOCK(mp, dt) - 1)) >>
 					    DIF_SM_SHIFT(mp, dt))))) {
 						return (0);
 					}
@@ -4120,7 +4168,7 @@ check_sys_inode_blocks(struct sam_perm_inode *dp)	/* Inode entry */
 	sam_daddr_t bn;
 	int ord;
 	int dt;
-	ino_t first_ino;
+	sam_ino_t first_ino;
 	offset_t size;
 
 	/* Count blocks contained in the extents */
@@ -4269,7 +4317,7 @@ check_sys_indirect_blocks(
 	int ii;
 	sam_daddr_t ibn;
 	int iord;
-	ino_t first_ino;
+	sam_ino_t first_ino;
 
 	if (check_bn(dp->di.id.ino, bn, ord)) {
 		return (-1);
@@ -4424,7 +4472,7 @@ int				/* -1 if error, 0 if okay */
 verify_inode_block(
 	sam_daddr_t bn,		/* mass storage extent block number */
 	int ord,		/* mass storage extent ordinal */
-	ino_t ino)		/* expected number of first inode in block */
+	sam_ino_t ino)		/* expected number of first inode in block */
 {
 	int err = 0;
 	int dt;
@@ -4551,8 +4599,8 @@ check_free_blocks(int ord)	/* Disk ordinal */
 		dt = DD;
 	}
 	mmord = sblock.eq[ord].fs.mm_ord;
-	daul = sblock.eq[ord].fs.l_allocmap;	/* number of blocks */
-	blocks = sblock.eq[ord].fs.dau_size;	/* no. of bits */
+	daul = sblock.eq[ord].fs.l_allocmap;	/* number of logical blocks, SAM_DEV_BSIZE */
+	blocks = sblock.eq[ord].fs.dau_size;	/* daus per eq, no. of bits */
 	cptr = devlp->mm;
 	for (ii = 0; ii < daul;
 	    ii++, cptr += (SAM_DEV_BSIZE * SM_BLKCNT(mp, dt))) {
@@ -4664,7 +4712,7 @@ check_sm_free_blocks()
 			} else if (smp->bn != 0) {	/* Full entry */
 				devlp = &devp->device[smp->ord];
 				cptr = devlp->mm;
-				bn = smp->bn << ext_bshift;
+				bn = (sam_daddr_t)smp->bn << ext_bshift;
 				ord = smp->ord;
 				if (check_bn(block_ino->di.id.ino, bn, ord)) {
 					continue;
@@ -4869,7 +4917,7 @@ print_inode_prob(struct ino_list *inop)
 
 void
 make_orphan(
-	ino_t ino,				/* Inode number */
+	sam_ino_t ino,				/* Inode number */
 	struct sam_perm_inode *dp)		/* Inode entry */
 {
 	int zero_size = 0;
@@ -5006,7 +5054,7 @@ make_orphan(
 int					/* -1 if error, 0 if successful */
 add_orphan(struct sam_perm_inode *dp)	/* Pointer to directory inode */
 {
-	ino_t ino;	/* I-number */
+	sam_ino_t ino;	/* I-number */
 	struct sam_dirval *dvp;
 	offset_t offset;
 	int in;
@@ -5111,7 +5159,7 @@ add_orphan(struct sam_perm_inode *dp)	/* Pointer to directory inode */
 int					/* -1 if error, 0 if successful */
 change_dotdot(struct sam_perm_inode *dp)	/* directory inode */
 {
-	ino_t ino;	/* I-number */
+	sam_ino_t ino;	/* I-number */
 	offset_t offset;
 	sam_daddr_t bn;
 	int ord;
@@ -5255,7 +5303,7 @@ verify_dot_dotdot(
 
 void
 mark_inode(
-	ino_t ino,					/* Inode number */
+	sam_ino_t ino,					/* Inode number */
 	int prob)					/* Problem type */
 {
 	struct ino_list *inop, *dinop;
@@ -5302,7 +5350,7 @@ mark_inode(
 
 void
 offline_inode(
-	ino_t ino,			/* Inode number */
+	sam_ino_t ino,			/* Inode number */
 	struct sam_perm_inode *dp)	/* Inode entry */
 {
 	int i;
@@ -5352,7 +5400,7 @@ offline_inode(
 
 void
 free_inode(
-	ino_t ino,			/* Inode number */
+	sam_ino_t ino,			/* Inode number */
 	struct sam_perm_inode *dp)	/* Inode entry */
 {
 	int gen;
@@ -6867,7 +6915,7 @@ check_dir(struct sam_perm_inode *dp)		/* Inode entry */
 		write_dir_blk = 0;
 		while (in < DIR_BLK) {
 			struct sam_dirent *dirp;
-			ino_t ino;
+			sam_ino_t ino;
 			int gen;
 			struct ino_list *inop;
 
@@ -7935,7 +7983,7 @@ update_hard_link_parent(
 
 int		/* Fatal if .inodes block read/write error, 1 EOF, else 0 */
 get_inode(
-	ino_t ino,			/* Inode number of requested inode */
+	sam_ino_t ino,			/* Inode number of requested inode */
 	struct sam_perm_inode *dp)	/* Ptr to permanent inode (returned) */
 {
 	int dt;
@@ -8012,7 +8060,7 @@ get_inode(
 
 void				/* Fatal if error reading .inodes block */
 put_inode(
-	ino_t ino,			/* Inode number of requested inode */
+	sam_ino_t ino,			/* Inode number of requested inode */
 	struct sam_perm_inode *dp)	/* Ptr to permanent inode */
 {
 	int dt;
@@ -8101,7 +8149,7 @@ sync_inodes(void)
 
 /*
  * ----- debug_print_blocks
- * Print calculated bit maps.
+ * Print calculated alloc bit maps dp->mm, /tmp/$$.samfsck .
  */
 
 void
@@ -8115,7 +8163,7 @@ debug_print_blocks(int ord)
 	sam_bn_t bn = 0;
 	int dt;
 
-	printf("\nordinal = %d "
+	printf("\ndebug_print_blocks calculated allocmap ordinal = %d\n"
 	    "----------------------------------------------\n",
 	    ord);
 	devlp = &devp->device[ord];
@@ -8124,17 +8172,21 @@ debug_print_blocks(int ord)
 	} else {
 		dt = DD;
 	}
+	printf("%#x small dau blocks in large Dau\n", SM_BLKCNT(mp, dt));
+	printf("%#x Dau size in kb\n", LG_DEV_BLOCK(mp, dt));
 	/* no. of bits */
 	blocks = sblock.eq[ord].fs.dau_size * SM_BLKCNT(mp, dt);
 	blocks = (blocks + 127) / 128;
 	wptr = (uint_t *)devlp->mm;
 	for (i = 0; i < blocks; i++) {
+		uint_t off = (char*)wptr - devlp->mm;
 		ptr1 = wptr++;
 		ptr2 = wptr++;
 		ptr3 = wptr++;
 		ptr4 = wptr++;
-		printf("bn=%.8x   %.8x, %.8x, %.8x, %.8x\n",
-		    bn, *ptr1, *ptr2, *ptr3, *ptr4);
+		printf("bn=%.8x off=%.8x  %.8x, %.8x, %.8x, %.8x\n",
+		    bn, off, *ptr1, *ptr2, *ptr3, *ptr4);
+		/* 4 32bit words per line */
 		bn += ((32*4) / SM_BLKCNT(mp, dt)) * LG_DEV_BLOCK(mp, dt);
 	}
 }
@@ -8155,7 +8207,7 @@ debug_print_sm_blocks()
 	struct devlist *devlp;
 	int i;
 
-	printf("\nsmall blocks "
+	printf("\ndebug_print_sm_blocks\n"
 	    "----------------------------------------------\n");
 	offset = 0;
 	while (offset < block_ino->di.rm.size) {
@@ -8184,7 +8236,7 @@ debug_print_sm_blocks()
 				bn = smp->bn;
 				bn <<= ext_bshift;
 				ord = smp->ord;
-				printf("eq %d bn=%.8llx, %x\n",
+				printf("eq %d bn=%.8llx %x04x\n",
 				    devlp->eq, (sam_offset_t)bn, smp->free);
 			}
 			smp++;
@@ -8222,7 +8274,7 @@ debug_count_free_blocks(int ord)	/* Disk ordinal */
 
 	/* compare large dau maps */
 
-	printf("\nordinal = %d "
+	printf("\ndebug_count_free_blocks ordinal = %d \n"
 	    "----------------------------------------------\n",
 	    ord);
 	devlp = &devp->device[ord];
@@ -8231,13 +8283,16 @@ debug_count_free_blocks(int ord)	/* Disk ordinal */
 	} else {
 		dt = DD;
 	}
+	printf("%#x small dau blocks in large Dau\n", SM_BLKCNT(mp, dt));
+	printf("%#x Dau size in kb\n", LG_DEV_BLOCK(mp, dt));
 	mmord = sblock.eq[ord].fs.mm_ord;
-	daul = sblock.eq[ord].fs.l_allocmap;	/* number of blocks */
-	blocks = sblock.eq[ord].fs.dau_size;	/* no. of bits */
+	daul = sblock.eq[ord].fs.l_allocmap;	/* number of SAM_DEV_BSIZE blocks */
+	blocks = sblock.eq[ord].fs.dau_size;	/* number of dau per eq, no. of bits */
 	cptr = devlp->mm;
 	iptr = (uint_t *)devlp->mm;
 	for (ii = 0; ii < daul;
 	    ii++, cptr += (SAM_DEV_BSIZE * SM_BLKCNT(mp, dt))) {
+		/* read 1kB from allocmap to dcp */
 		if (d_read(&devp->device[mmord], (char *)dcp, 1,
 		    (int)(sblock.eq[ord].fs.allocmap + ii))) {
 			error(0, 0,
@@ -8377,7 +8432,7 @@ find_sm_free_block(int input_ord, sam_daddr_t input_bn)
 }
 
 
-#ifdef DAMFSCK
+#ifdef XXX_DAMFSCK
 /*
  * ----- damage_fs - Write .blocks file.
  * Get block and write out .blocks data.
@@ -8393,7 +8448,7 @@ damage_fs()
 	uint_t ooo;
 	int bit;
 	int offset;
-	ino_t ino;
+	sam_ino_t ino;
 	struct sam_perm_inode *dp;
 
 /* Damage small blocks (.blocks) file */
@@ -8933,7 +8988,7 @@ verify_quota_file(
 	if (qip->di.status.b.direct_map) {
 		sam_daddr_t bn;
 
-		bn = qip->di.extent[0] << ext_bshift;
+		bn = (sam_daddr_t)qip->di.extent[0] << ext_bshift;
 		if (bn != 0) {
 			int ord = qip->di.extent_ord[0];
 			int dt = qip->di.status.b.meta;
@@ -8952,7 +9007,7 @@ verify_quota_file(
 
 		for (i = 0; i < NOEXT; i++) {
 			int ord = qip->di.extent_ord[i];
-			sam_daddr_t bn = qip->di.extent[i] << ext_bshift;
+			sam_daddr_t bn = (sam_daddr_t)qip->di.extent[i] << ext_bshift;
 			int dt, bt;
 
 			if (i < NDEXT) {
@@ -9033,7 +9088,7 @@ verify_quota_indirect_block(
 
 	dt = qip->di.status.b.meta;
 	for (i = 0; i < DEXT; i++) {
-		sam_daddr_t ibn = iep->extent[i] << ext_bshift;
+		sam_daddr_t ibn = (sam_daddr_t)iep->extent[i] << ext_bshift;
 		int iord = iep->extent_ord[i];
 
 		if (level) {
@@ -9298,7 +9353,7 @@ quota_compare_entry(struct sam_dquot *ondisk, struct sam_dquot *computed,
 void
 shared_fs_convert(struct sam_sblk *sbp)
 {
-	ino_t ino;
+	sam_ino_t ino;
 	struct sam_perm_inode hostino;
 
 	ino = SAM_HOST_INO;
@@ -9335,7 +9390,7 @@ shared_fs_convert(struct sam_sblk *sbp)
 			    hostino.di.extent[0]);
 			clean_exit(ES_error);
 		}
-		sbp->info.sb.hosts = hostino.di.extent[0] << ext_bshift;
+		sbp->info.sb.hosts = (sam_daddr_t)hostino.di.extent[0] << ext_bshift;
 		sbp->info.sb.hosts_ord = hostino.di.extent_ord[0];
 	} else if (cvt_to_nonshared) {	/* Shared (V2) FS -> unshared V2 FS */
 		sbp->info.sb.hosts = 0;
