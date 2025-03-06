@@ -2401,7 +2401,7 @@ $ ===================================================================
 13276 block %s (%lld.%d) is a file system label block
 13277 block %s (%lld.%d) is a file system primary super block
 13278 block %s (%lld.%d) is a file system alternate super block
-13279 block %s (%lld.%d) is a file system allocation map block
+13279 block %s (%lld.%d) is a file system allocation map block for %d
 13280 block %s (%lld.%d) is a file system block
 13281 block %s (%lld.%d) is a free data block
 13282 block %s (%lld.%d) is a data block for .inodes containing %d - %d

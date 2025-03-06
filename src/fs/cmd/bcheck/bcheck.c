@@ -649,6 +649,8 @@ build_free_block_map(void)
 	}
 
 	for (ord = 0; ord < fs_count; ord++) {
+		if (devp->device[ord].state == DEV_OFF)
+			continue;
 		if (is_stripe_group(sblock.eq[ord].fs.type)) {
 			/* ! 1st group member */
 			if (sblock.eq[ord].fs.num_group == 0) {
@@ -664,7 +666,7 @@ build_free_block_map(void)
 			error(ES_device, errno,
 			    catgets(catfd, SET, 610,
 			    "Cannot mmap %s: length %d"),
-			    tmp_name, length);
+			    tmp_name, devp->device[ord].length);
 		}
 		if (devp->device[ord].type == DT_META) {
 			dt = MM;
@@ -809,6 +811,8 @@ check_fs_blocks(void)
 
 	/* Identify usage of each block on selected ordinal (or default all) */
 	for (ord = 0; ord < fs_count; ord++) {
+		if (devp->device[ord].state == DEV_OFF)
+			continue;
 		for (i = 0; i < nblks; i++) {
 			if ((blp[i].ord < 0) || (blp[i].ord == ord)) {
 
@@ -835,8 +839,8 @@ check_fs_blocks(void)
 				    sblock.eq[ord].fs.allocmap) &&
 				    (blp[i].bn < (sblock.eq[ord].fs.allocmap +
 				    sblock.eq[ord].fs.l_allocmap))) {
-					mark_block_use(i, ord, bu_fsmap,
-					    noid, 0);
+					mark_block_use(i, sblock.eq[ord].fs.mm_ord, bu_fsmap,
+					    noid, ord);
 
 				/* System block ?? */
 				} else if (blp[i].bn <
@@ -870,6 +874,8 @@ check_free_blocks(void)
 	int i;
 
 	for (ord = 0; ord < fs_count; ord++) {
+		if (devp->device[ord].state == DEV_OFF)
+			continue;
 
 		/*
 		 * Check to see if each block is free on this ordinal,
@@ -1550,6 +1556,8 @@ print_block_list(void)
 		nords = fs_count;			/* report all ords */
 		if (blp[i].ord >= 0)  nords = 1;	/* report one ord */
 		for (j = 0; j < nords; j++) {
+			if (devp->device[j].state == DEV_OFF)
+				continue;
 
 			if (is_stripe_group(sblock.eq[j].fs.type)) {
 				if (sblock.eq[j].fs.num_group == 0) {
@@ -1601,8 +1609,8 @@ print_block_list(void)
 					 */
 					printf(GetCustMsg(13279), blp[i].arg,
 					    (sam_offset_t)blp[i].bn,
-					    (blp[i].ord >= 0 ?  blp[i].ord :
-					    j));
+					    (blp[i].ord >= 0 ? blp[i].ord : j),
+					    blp[i].bep->bo[j].bu[k].ino);
 					break;
 				case bu_fssys:
 					/*
