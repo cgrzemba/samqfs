@@ -2382,8 +2382,8 @@ sam_grow_fs(
 	args.ord =  ord;
 	args.type = type;
 	args.blocks = blocks / LG_DEV_BLOCK(mp, dt);
-	args.kblocks[DD] = mp->mi.m_dau[DD].kblocks[LG];
-	args.kblocks[MM] = mp->mi.m_dau[MM].kblocks[LG];
+	args.kblocks[DD] = mp->mi.m_dau[DD].kblocks[LG]; /* LG_DEV_BLOCK(mp, DD) */
+	args.kblocks[MM] = mp->mi.m_dau[MM].kblocks[LG]; /* LG_DEV_BLOCK(mp, MM) */
 	sam_init_sblk_dev(sblk, &args);
 
 	sop->system = ((sop->dau_next + LG_DEV_BLOCK(mp, dt) - 1) /

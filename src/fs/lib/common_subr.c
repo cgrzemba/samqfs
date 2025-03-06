@@ -285,6 +285,7 @@ sam_bfmap(
 		}
 #endif /* _KERNEL */
 
+		/* handle the end of bitmap the temp file */
 		if (ii == (daul - 1)) {
 			jj = blocks / 32;
 			if (caller == SAMFSCK_CALLER) {
@@ -292,8 +293,7 @@ sam_bfmap(
 			} else if (caller == SAMFS_CALLER) {
 				wptr = (uint_t *)(void *)(cptr + (jj * NBPW));
 			} else {
-				wptr = (uint_t *)(void *)
-				    (dcp + (jj * NBPW));
+				wptr = (uint_t *)(void *)(dcp + (jj * NBPW));
 			}
 			kk = blocks & 0x1f;
 			if (kk) {
@@ -443,6 +443,7 @@ sam_cablk(
 				}
 			}
 			len = len / mm_kblocks;
+			/* mark used map allocated by super block (system) */
 			error = sam_clear_maps(caller, sblk, mp, ord, len, 0,
 			    bits);
 
@@ -478,6 +479,7 @@ sam_cablk(
 				}
 			}
 			len = len / dd_kblocks;
+			/* mark used map allocated by super block (system) */
 			error = sam_clear_maps(caller, sblk, mp, ord, len, 0,
 			    bits);
 

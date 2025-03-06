@@ -1087,7 +1087,7 @@ show_fs(void)
 
 	print_sblk(&sblock, devp, ORDER_DISK);
 
-#ifdef	XX_DEBUG
+#ifdef	DEBUG
 	for (idx = 0; idx < fs_count; idx++) {
 		debug_print(idx);
 	}
@@ -1995,7 +1995,7 @@ debug_print(int idx)
 		return;
 	}
 	ord = slsblk.info.sb.ord;
-	printf("\nord = %3d ------------------------------------------\n",
+	printf("\nallocmap ord = %3d ------------------------------------------\n",
 	    ord);
 	if (dp->type == DT_META) {
 		dt = MM;

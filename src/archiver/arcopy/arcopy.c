@@ -921,7 +921,8 @@ stageFiles(
 			oi = LOC_OFFLINE_INFO(File->f);
 			if (strcmp(firstVsn, oi->OiVsn) != 0) {
 				firstVsn = oi->OiVsn;
-				Trace(TR_MISC, "Staging from %s.%s",
+				Trace(TR_MISC, "Staging %s from %s.%s",
+				    File->f->FiName,
 				    sam_mediatoa(oi->OiMedia), oi->OiVsn);
 			}
 			/* Staging - file %d (%d) from %s.%s  %s/%s */
@@ -958,7 +959,7 @@ stageOneFile(
 	} else {
 		sii.flags = IS_none;
 	}
-	SetTimeout(TO_stage);
+	SetTimeout(TO_stage); /* no timeout */
 	ret = ioctl(FsFd, F_IDSTAGE, &sii);
 	ClearTimeout(TO_stage);
 	if (!wait) {
@@ -998,7 +999,7 @@ waitForOnline(
 			 * which we're staging.
 			 */
 			oi = LOC_OFFLINE_INFO(File->f);
-			/* Staging - file %d of %d from %s.%s  %s/%s */
+			/* Staging - file %d (%d) from %s.%s  %s/%s */
 			PostOprMsg(4348, fn, FilesNumof,
 			    sam_mediatoa(oi->OiMedia), oi->OiVsn,
 			    MntPoint, File->f->FiName);
