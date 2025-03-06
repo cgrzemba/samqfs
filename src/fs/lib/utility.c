@@ -438,7 +438,9 @@ cmd_clear_maps(
 		}
 	} else {
 		off = (blk * bits) >> NBBYSHIFT;
+#if 0 /* BUG 29455600 ? */
 		off = off & SAM_LOG_WMASK;
+#endif
 		wptr = (uint_t *)(void *)(dp->mm + off);
 		nbits = (blk * bits) & (32 - 1);
 		len *= bits;
