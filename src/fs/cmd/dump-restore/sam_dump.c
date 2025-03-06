@@ -560,7 +560,7 @@ csd_dump_path(
 	int			next_inode, num_inodes, max_inodes = 10000;
 	boolean			directory_complete = FALSE;
 	struct inode_list	*inode_list = NULL;
-	struct names		*cur_namesp, *names_space = NULL;
+	struct names		*cur_namesp = NULL, *names_space = NULL;
 
 	if (debugging) {
 		fprintf(stderr, "csd_dump_path(%s, %s, %lx)\n", tag, path,

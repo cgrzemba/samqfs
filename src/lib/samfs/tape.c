@@ -134,7 +134,7 @@ create_tape_eof(
 	ssize_t	tmp_err;
 	int	process_eox, process_wtm, wrote_tm;
 	uint_t	tmp_position;
-	uint64_t	space;
+	uint64_t	space = 0;
 	char	eoflb[80];
 	char	*d_mess;
 	char	*msg_buf, *msg1;
@@ -229,7 +229,7 @@ create_tape_eof(
 
 	if (mt_status.mt_erreg == KEY_UNIT_ATTENTION || tmp_position == 0) {
 		int	retry = 10;
-		int	ret;
+		int	ret = -1;
 
 		memccpy(d_mess, catgets(catfd, SET, 1946,
 		    "Possible bus reset"), '\0', DIS_MES_LEN);

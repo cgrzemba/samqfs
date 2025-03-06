@@ -427,7 +427,7 @@ readClientMessage(
 {
 	struct UdsMsgHeader hdr;
 	struct UmNak nak;
-	void	*rsp;
+	void	*rsp = NULL;
 	int		msgtype;
 	int		n;
 

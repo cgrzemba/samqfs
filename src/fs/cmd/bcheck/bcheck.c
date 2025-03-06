@@ -331,7 +331,7 @@ build_devices(void)
 	struct d_list *ndevp;
 	int old_count;
 	int ord;
-	time_t time;
+	time_t time = (time_t)-1;
 
 	if ((ndevp = (struct d_list *)malloc(sizeof (struct devlist) *
 	    fs_count)) ==

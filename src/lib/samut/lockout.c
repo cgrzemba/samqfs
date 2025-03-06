@@ -103,7 +103,7 @@ sam_lockout(
 	char *prefix,	/* lock/pid file prefix */
 	int *siglist)	/* 0 terminated list of signals (implies precedence) */
 {
-	int r;
+	int r = -1;
 	pid_t pid = getpid();
 
 	if (siglist == NULL) {

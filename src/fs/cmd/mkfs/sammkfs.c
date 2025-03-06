@@ -1104,7 +1104,7 @@ show_fs(void)
 void
 init_sblk()
 {
-	int sblk2;	/* Block number */
+	int sblk2 = SUPERBLK;	/* Block number */
 	int ord, dt;
 	struct devlist *dp;
 	longlong_t m_size, t_size;
@@ -1238,8 +1238,8 @@ init_sblk()
 				sblk2 = (int)sop->dau_next;
 				sop->dau_next += LG_DEV_BLOCK(mp, dt);
 			}
-				sop->dau_next = roundup(sop->dau_next,
-				    LG_DEV_BLOCK(mp, dt));
+			sop->dau_next = roundup(sop->dau_next,
+			    LG_DEV_BLOCK(mp, dt));
 		} else {
 			sop->dau_next = roundup(sop->dau_next,
 			    LG_DEV_BLOCK(mp, dt));

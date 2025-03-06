@@ -116,7 +116,7 @@ SamrftOpen(
 	int oflag,
 	SamrftCreateAttr_t *creat)
 {
-	int rc;
+	int rc = -1;
 	int error;
 
 	Trace(TR_RFT, "Samrft [%d] open file %s %d %x",
@@ -189,7 +189,7 @@ SamrftWrite(
 {
 	int rc;
 	int error;
-	size_t bytes_written;
+	size_t bytes_written = -1;
 
 #if 0
 	Trace(TR_RFT, "Samrft [%d] write %d", fileno(rftd->cin), nbytes);
@@ -263,7 +263,7 @@ SamrftRead(
 {
 	int rc;
 	int error;
-	size_t bytes_read;
+	size_t bytes_read = -1;
 
 #if 0
 	Trace(TR_RFT, "Samrft [%d] read %d", traceRftd(rftd), nbytes);

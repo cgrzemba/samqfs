@@ -198,7 +198,7 @@ _StagerControl(
 	char *msg,
 	int msgsize)
 {
-	struct StagerControlRsp rsp;
+	static struct StagerControlRsp rsp;
 	struct StagerControl arg;
 	int status;
 

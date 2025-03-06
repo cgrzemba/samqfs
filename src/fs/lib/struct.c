@@ -632,7 +632,8 @@ explode_descriptor(
 	struct element_descriptor *r)
 {
 	int n = 0;
-	struct element_descriptor result[5000], *rp;
+	struct element_descriptor result[5000];
+	static struct element_descriptor *rp;
 
 	if (r == NULL) {
 		bzero((char *)result, sizeof (result));

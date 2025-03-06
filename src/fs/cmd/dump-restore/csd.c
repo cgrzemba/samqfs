@@ -247,7 +247,7 @@ int
 main(int argc, char *argv[])
 {
 	char *load_file = (char *)NULL;	/* DB load path/file name */
-	char *optstring;		/* Command option string */
+	char *optstring = NULL;		/* Command option string */
 	char *logfile = NULL;	/* Log file name for samfsrestore -g option */
 	struct sam_stat sb;
 	int option;		/* Current getopt option being processed */

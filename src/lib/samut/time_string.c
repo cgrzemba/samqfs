@@ -380,7 +380,7 @@ summer_time(
 	int wday = 0, month = 0, tyear = 0;
 	int day = 1, hour = 0, year = 1970;
 	int num_sundays = 0;
-	int *pmonth, lmins = 0;
+	int *pmonth = NULL, lmins = 0;
 	int cur_day = 0, res_day = 0;
 	int adjust = 0, i = 0;
 

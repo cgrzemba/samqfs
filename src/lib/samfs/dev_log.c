@@ -111,11 +111,11 @@ DevLog(
 	char	*msg = msg_buf;
 	char	*tdformat;
 	int	SaveErrno;
-	int	fd;
+	int	fd = -1;
 	int	event;
 	int	category;
 	int	msgnum;
-	pid_t	pid;
+	pid_t	pid = (pid_t)-1;
 	struct tm ltime;
 	uint64_t len;
 

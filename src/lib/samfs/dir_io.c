@@ -86,7 +86,7 @@ dodirio(sam_io_reader_t *control, sam_actmnt_t *actmnt_req)
 	sam_defaults_t *defaults;
 	sam_fsmount_arg_t mount_data;
 	sam_fsiocount_arg_t iocount_data;
-	unsigned int    block_size;
+	unsigned int    block_size = 0;
 	u_longlong_t    start_position;
 	char    *write1_msg, *write2_msg;
 
