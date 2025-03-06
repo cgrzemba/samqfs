@@ -1,4 +1,5 @@
-set name=pkg.fmri value=system/samfs-stk-client@5.64.6-151046.0
+
+set name=pkg.fmri value=system/samfs-stk-client@5.64.8-151052.0
 set name=pkg.summary value="SamFS STK Client for ACSLS attached libraries"
 set name=info.classification \
     value="org.opensolaris.category.2008:System/File System"
@@ -12,9 +13,9 @@ file ../../man/man5/stk.5 path=opt/SUNWsamfs/man/man5/stk.5 owner=root group=bin
 file ../../man/man8/ssi.sh.8 path=opt/SUNWsamfs/man/man8/ssi.sh.8 owner=root group=bin mode=0644
 file ../../man/man8/ssi_so.8 path=opt/SUNWsamfs/man/man8/ssi_so.8 owner=root group=bin mode=0644
 file ssi.sh path=etc/opt/SUNWsamfs/scripts/ssi.sh owner=root group=bin mode=755
-file obj/SunOS_omnios-r151046_amd64_DEBUG/stk_helper \
+file obj/SunOS_omnios-r151052_amd64_DEBUG/stk_helper \
     path=opt/SUNWsamfs/sbin/sam-stk_helper owner=root group=bin mode=0755
-file obj/SunOS_omnios-r151046_amd64_DEBUG/stk path=opt/SUNWsamfs/sbin/sam-stkd \
+file obj/SunOS_omnios-r151052_amd64_DEBUG/stk path=opt/SUNWsamfs/sbin/sam-stkd \
     owner=root group=bin mode=0755
 license LICENSE license=CDDL
 depend type=require fmri=pkg:/system/samqfs
