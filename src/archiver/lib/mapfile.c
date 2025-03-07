@@ -206,7 +206,7 @@ MapFileGrow(
 	size_t incr)
 {
 	struct MappedFile *mf = (struct MappedFile *)mf_a;
-	struct MfEntry *me;
+	struct MfEntry *me = NULL;
 	size_t	newLen;
 	uint_t magic;
 	int	fd;

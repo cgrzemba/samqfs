@@ -195,7 +195,7 @@ static struct {
 		"eq", 7195, "Set filename casesensitivity on (default)"
 	},
 	{
-		"", QFS_STANDALONE, 0, NULL, 0, NULL, "",
+		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7051, "File System commands - SAM:"
 	},
 	{
@@ -798,7 +798,7 @@ CmdAudit(
 	void)
 {
 	/* Equipment ordinal */
-	int eq;
+	int eq = 0;
 	/* slot to audit, -1 means whole library */
 	uint_t  slot = ROBOT_NO_SLOT;
 	/* if -e option */

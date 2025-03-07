@@ -356,7 +356,7 @@ dis_inode_ext(struct sam_inode_ext *node)	/* Inode extension image */
 	int fl, ll;
 	char *m_str;		/* Inode mode string */
 	uint_t *w;
-	int i, x;
+	int i, x = 0;
 	lloff_t *lp;
 	vsn_t vsn;
 	char *atype;

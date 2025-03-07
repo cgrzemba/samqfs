@@ -757,7 +757,7 @@ arfindComplete(
 static void
 attachStateFile(void)
 {
-	ExecState_t prevExec;
+	ExecState_t prevExec = ES_max;
 	struct stat buf;
 	char	*msg;
 

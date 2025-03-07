@@ -75,7 +75,7 @@ DisFs()
 {
 	struct sam_fs_status *fsarray;
 	int		i;
-	int ismore;
+	int ismore = 0;
 
 	Mvprintw(ln++, 0, GetCustMsg(7412));
 
