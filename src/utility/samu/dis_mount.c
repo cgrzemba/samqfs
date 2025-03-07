@@ -106,6 +106,7 @@ sam_flagtext_t confTable[] = {
 int	confTableSize = sizeof (confTable)/sizeof (sam_flagtext_t);
 
 sam_flagtext_t conf1Table[] = {
+	MC_CI, "CASE_INSENS",
 	MC_NOXATTR, "NOXATTR",
 	MC_SAM_DB, "SAM_DB",
 	MC_OBJECT_FS, "OBJECT_FS",

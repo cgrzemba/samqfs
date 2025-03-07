@@ -49,7 +49,7 @@ OS_RELEASE_MINOR := $(shell uname -v | gawk -F. '{if($$1==11) print $$2; else pr
 OS_DIST := $(shell uname -v | gawk -F. '{if($$1==11) print "oracle"; else {split($$0,a,"-"); print a[1];};}')
 
 # kernel module version
-MODULE_VERSION = 1.1
+MODULE_VERSION = 1.2
 
 #
 # set sparc/i386 specific options

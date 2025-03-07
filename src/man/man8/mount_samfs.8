@@ -296,6 +296,11 @@ For \fIn\fR, specify an integer such that
 512 \(<= \fIn\fR \(<= \fBrd_ino_buf_size\fR.
 \fIn\fR is in units of bytes and rounded down to the nearest power of 2.
 The default is 512 bytes.
+.TP
+\fBnoci\fR |\0 \fBci\fR
+For filesystem shared with SMB server this option can select the
+casesensitivity of file names. \fBci\fR sets the casesensitivity to
+\fIinsensitive\fR. The default is \fBnoci\fR (sensitive).
 .RE
 .PP
 .SH BLOCK FILE SYSTEM GENERIC OPTIONS

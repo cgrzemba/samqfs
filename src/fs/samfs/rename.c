@@ -164,7 +164,7 @@ sam_rename_inode(
 	 * has to be there.
 	 */
 	oname.operation = SAM_CREATE;
-	if ((error = sam_lookup_name(opip, onm, &oip, &oname, credp))) {
+	if ((error = sam_lookup_name(opip, onm, 0, &oip, &oname, credp))) {
 		error_line = __LINE__;
 		/* Entry does not exist or error. */
 		goto out15;
@@ -224,7 +224,7 @@ sam_rename_inode(
 	 * slot where this component name could fit and ENOENT, else an error.
 	 */
 	nname.operation = SAM_RENAME_LOOKUPNEW;
-	if ((new_error = sam_lookup_name(npip, nnm, &nip,
+	if ((new_error = sam_lookup_name(npip, nnm, 0, &nip,
 	    &nname, credp)) == 0) {
 		/*
 		 * Cannot rename hard link for the same inode.  Do not return an
@@ -362,7 +362,7 @@ sam_rename_inode(
 		 * the directory.
 		 */
 		nname.operation = SAM_FORCE_LOOKUP;
-		if ((error = sam_lookup_name(npip, nnm, &nip, &nname, credp)) !=
+		if ((error = sam_lookup_name(npip, nnm, 0, &nip, &nname, credp)) !=
 		    ENOENT) {
 			error_line = __LINE__;
 			goto out1;
@@ -423,7 +423,7 @@ sam_rename_inode(
 		 */
 		oname.operation = SAM_REMOVE;
 		oname.client_ord = 0;
-		if ((error = sam_lookup_name(opip, onm, &oip, &oname, credp))) {
+		if ((error = sam_lookup_name(opip, onm, 0, &oip, &oname, credp))) {
 			error_line = __LINE__;
 			/* Entry does not exist or error. */
 			goto out15;
