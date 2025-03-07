@@ -427,7 +427,7 @@ ComposeForCpi(
 		break;
 
 	case DM_ownerUidGid: {
-		int	id;
+		int	id = 0;
 
 		/*
 		 * Select files for the same uid/gid.

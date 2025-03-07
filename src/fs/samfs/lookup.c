@@ -330,7 +330,8 @@ sam_find_component(
 	uint64_t handle;
 	dcanchor_t *dcap;
 	dcret_t	reply;
-	int (*cmpfunc)(const char *s1, const char *s2, size_t n) = bcmp;
+	int (*cmpfunc)(const char *s1, const char *s2, size_t n) = 
+	    (int (*)(const char *, const char *, size_t))bcmp;
 
 	fbp = NULL;
 	pvp = SAM_ITOV(pip);

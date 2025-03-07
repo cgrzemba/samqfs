@@ -75,7 +75,7 @@ DisMs()
 {
 	struct sam_fs_status *fsarray;
 	int i;
-	int ismore;
+	int ismore = 0;
 
 	/* "ty      eq  status      use state ord" */
 	Mvprintw(ln++, 0, GetCustMsg(7413));

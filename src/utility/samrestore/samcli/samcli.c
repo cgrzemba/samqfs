@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	char	*strptr = NULL;
 	char	*jobid;
 	node_t	*ptr;
-	int	rtnval;
+	int	rtnval = 0;
 	int	rval;
 
 	aparse(argc, argv, cli_args);	/* Do the heavy lifting parse */
