@@ -219,7 +219,7 @@ import_media(
 	char	   *l_mess;
 	uint_t	  slot, element;
 	library_t	*library;
-	media_t	 media;
+	media_t	 media = 0;
 
 	if (iport == NULL) {
 		sam_syslog(LOG_WARNING, "No import mailbox defined");
@@ -257,7 +257,7 @@ import_media(
 		err = ENOSPC;
 	} else {
 		uint_t	  not_sam = FALSE, audit_eod = FALSE;
-		uint_t	  flags;
+		uint_t	  flags = 0;
 
 		/* If it came from the outside world, pick up the flags */
 		if (event->type == EVENT_TYPE_MESS) {

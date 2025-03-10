@@ -81,9 +81,9 @@ main(int argc, char **argv)
 	struct CatalogEntry *ce = &ced;
 	struct VolId vid;
 	char	buf[256];
-	char	*string;
+	char	*string = NULL;
 	uint64_t value;
-	uint32_t mask;
+	uint32_t mask = 0;
 	int		field;
 	int		status;
 

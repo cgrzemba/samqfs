@@ -2688,7 +2688,7 @@ sam_remove_lease(
 	boolean_t removed_exclusive_lease = FALSE;
 	boolean_t last_lease = TRUE;
 	int no_clients;
-	int nl;
+	int nl = 0;
 	int append_client;
 	int error = 0;
 	const int SAM_EXPIRE_DELAY_SECS = 30;
@@ -4322,7 +4322,7 @@ sam_proc_notify(
 {
 	sam_san_notify_msg_t *msg;
 	sam_san_notify_t *nop;
-	int error;
+	int error = 0;
 	sam_mount_t *mp = ip->mp;
 
 	msg = kmem_zalloc(sizeof (*msg), KM_SLEEP);

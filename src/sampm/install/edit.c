@@ -188,7 +188,7 @@ main(int argc, char **argv)
 	unsigned char found = 0;
 	int i, j, k, count;
 	char **page, *p1, *p2;
-	int rval;
+	int rval = 0;
 	char *fn = NULL, perf_fn [] = "/etc/init.d/perf";
 	char defaults_fn [] = "/etc/opt/SUNWsamfs/defaults.conf";
 	int c;

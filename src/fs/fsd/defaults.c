@@ -354,7 +354,7 @@ WriteDefaults(void)
 void
 WriteTraceCtl(void)
 {
-	struct TraceCtlBin *tb;
+	struct TraceCtlBin *tb = NULL;
 	int		tid;
 	pid_t	dpid = getpid();
 
@@ -509,7 +509,7 @@ dirDebug(void)
 static void
 dirDevlog(void)
 {
-	dev_ent_t *dev;
+	dev_ent_t *dev = NULL;
 	uint_t	flags;
 	int		i;
 
@@ -601,7 +601,7 @@ dirDevlog(void)
 static void
 dirTapeAlert(void)
 {
-	dev_ent_t	*dev;
+	dev_ent_t	*dev = NULL;
 	uchar_t		flags = 0;
 	int		i;
 
@@ -684,7 +684,7 @@ dirSAMStorade(void)
 static void
 dirSef(void)
 {
-	dev_ent_t	*dev;
+	dev_ent_t	*dev = NULL;
 	uchar_t		flags = 0;
 	int		i;
 	long		interval = SEF_INTERVAL_ONCE;
@@ -776,7 +776,7 @@ dirSef(void)
 static void
 dirTapeclean(void)
 {
-	dev_ent_t	*dev;
+	dev_ent_t	*dev = NULL;
 	uchar_t		flags = 0;
 	int		i;
 	char		*endptr = NULL;
@@ -880,7 +880,7 @@ dirTapeclean(void)
 static void
 dirDevParams(void)
 {
-	struct DpEntry *dp;
+	struct DpEntry *dp = NULL;
 	char	*p;
 	int		n;
 
@@ -1166,7 +1166,7 @@ makedeviceParams(void)
 	 * Set individual device parameters from DeviceParamsVals table.
 	 */
 	for (i = 0; *DeviceParamsVals[i].device != '\0'; i++) {
-		struct DpEntry *dp;
+		struct DpEntry *dp = NULL;
 		char	*params, *tok_params;
 		char	*field;
 		int		j;

@@ -848,7 +848,7 @@ ReconcileCatalog(
 	struct CsrReconcileCatalog *a = (struct CsrReconcileCatalog *)arg;
 	struct CatalogHdr *ch;
 	int cat_num, ne;
-	int num_dups;
+	int num_dups = 0;
 
 	rsp.GrStatus = -1;
 	if ((cat_num = FindCatalog(a->RcEq)) == -1)  goto out;
@@ -880,7 +880,7 @@ RemoteSamUpdate(
 {
 	static struct CsrGeneralRsp rsp;
 	struct CsrRemoteSamUpdate *a = (struct CsrRemoteSamUpdate *)arg;
-	struct CatalogEntry *ce, *cea;
+	struct CatalogEntry *ce = NULL, *cea;
 	int en, cat_num;
 
 	rsp.GrStatus = -1;
@@ -1103,7 +1103,7 @@ SlotInit(
 {
 	static struct CsrGeneralRsp rsp;
 	struct CsrSlotInit *a = (struct CsrSlotInit *)arg;
-	struct CatalogEntry *ce, *cea;
+	struct CatalogEntry *ce = NULL, *cea;
 	int cat_num;
 
 	rsp.GrStatus = -1;
@@ -1770,7 +1770,7 @@ VolumeUnloaded(
 {
 	static struct CsrGeneralRsp rsp;
 	struct CsrVolumeUnloaded *a = (struct CsrVolumeUnloaded *)arg;
-	struct CatalogEntry *ce;
+	struct CatalogEntry *ce = NULL;
 	int		en;
 
 	rsp.GrStatus = -1;

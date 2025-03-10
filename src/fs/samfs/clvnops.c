@@ -2655,7 +2655,7 @@ sam_client_getpage_vn(
 	boolean_t lock_set = B_FALSE;
 	sam_block_fgetbuf_t fgetbuf;
 	page_t **pppl;
-	page_t *pp;
+	page_t *pp = NULL;
 	offset_t off;
 	sam_size_t len = length;
 	sam_size_t plsz = plsize;

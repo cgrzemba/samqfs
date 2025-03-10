@@ -190,7 +190,7 @@ ThreadsReconfigSync(
 	ReconfigControl_t ctrl)
 {
 	static boolean_t reconfig = FALSE;
-	ReconfigControl_t saveCtrl;
+	ReconfigControl_t saveCtrl = RC_none;
 
 	PthreadMutexLock(&reconfigMutex);
 	switch (ctrl) {

@@ -975,7 +975,7 @@ paramsPriorityTostr(
 	int bufsize)
 {
 	struct fieldVals *table;
-	uint32_t *fldDef;
+	uint32_t *fldDef = NULL;
 	uint32_t flags;
 	uint32_t flagsd;
 

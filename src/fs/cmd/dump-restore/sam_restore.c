@@ -603,7 +603,7 @@ sam_restore_a_file(
 {
 	struct sam_ioctl_idrestore idrestore = { NULL, NULL, NULL, NULL };
 	char *basename = strrchr(path, '/');
-	int entity_fd;
+	int entity_fd = -1;
 	int copy;
 	int force_writable = 0;
 	u_longlong_t file_write_size;

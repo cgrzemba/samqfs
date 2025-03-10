@@ -1745,7 +1745,7 @@ sam_set_multivolume(
 	buf_t *bp;
 	sam_id_t eid;
 	struct sam_inode_ext *eip;
-	int ino_vsns;
+	int ino_vsns = 0;
 
 	vsns = t_vsns;
 	if (vsns == 0) {

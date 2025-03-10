@@ -1698,7 +1698,7 @@ void
 logmap_sethead(mt_map_t *mtm, ml_unit_t *ul)
 {
 	off_t		lof;
-	uint32_t	tid;
+	uint32_t	tid = 0;
 	mapentry_t	*me;
 
 	/*
@@ -1732,7 +1732,7 @@ void
 logmap_settail(mt_map_t *mtm, ml_unit_t *ul)
 {
 	off_t		lof;
-	size_t		nb;
+	size_t		nb = 0;
 
 	/*
 	 * set the tail after the logmap_abort

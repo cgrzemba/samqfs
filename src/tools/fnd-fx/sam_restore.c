@@ -74,7 +74,7 @@ sam_restore_a_file(
 {
 	struct sam_ioctl_idrestore idrestore = { NULL, NULL, NULL, NULL };
 	char *basename = strrchr(path, '/');
-	int entity_fd;
+	int entity_fd = 0;
 	int copy;
 
 	/*	don't do much for "..".  */

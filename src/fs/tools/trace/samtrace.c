@@ -3239,7 +3239,7 @@ print_mount(
 	if (SAM_IS_SHARED_FS(mount)) {
 		struct client_entry *clnt = NULL;
 		struct client_entry **clnti = NULL;
-		struct sam_msg_array *mep;
+		struct sam_msg_array *mep = NULL;
 		struct sam_client_msg *msgp;
 
 		printf("\t****SHARED FILE SYSTEM\n");
@@ -4305,7 +4305,7 @@ sam_continuous_trace(
 	 * process.
 	 */
 	for (;;) {
-		int anyempty, n;
+		int anyempty, n = 0;
 
 getbuf:
 		anyempty = 0;

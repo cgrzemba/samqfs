@@ -1752,7 +1752,7 @@ sam_inode_freelist_build(
 	int error = 0;
 	int32_t freed_count = 0;
 	int build_time;
-	int32_t min_ino;
+	int32_t min_ino = 0;
 
 	if (mp == NULL) {
 		return (EINVAL);

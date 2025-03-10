@@ -1863,7 +1863,7 @@ SeparateMultiVolReq(void)
 		recoverFileExtent();
 	}
 	while (mid[i] >= 0) {
-		FileInfo_t *mfi;
+		FileInfo_t *mfi = NULL;
 		int min_ext;
 		boolean_t remove = B_FALSE;
 

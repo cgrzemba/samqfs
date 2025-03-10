@@ -865,7 +865,7 @@ clear_import(
 	dev_ent_t	*un;
 	int		good_addr;
 	char		*l_mess;
-	uint_t		element, slot;
+	uint_t		element, slot = 0;
 	move_flags_t    move_flags;
 	uint32_t	status;
 	uchar_t		*buffer = NULL;

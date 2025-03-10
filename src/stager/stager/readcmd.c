@@ -367,7 +367,7 @@ setLogfileParam(void)
 
 		} else {
 
-			while (cfgToken != NULL && *cfgToken != '\0') {
+			while (*cfgToken != '\0') {
 				if (strcmp(cfgToken, "start") == 0) {
 					config.logfile.events |=
 					    STAGER_LOGFILE_START;

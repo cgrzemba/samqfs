@@ -245,7 +245,7 @@ top_begin_sync(qfsvfs_t *qfsvfsp, top_t topid, ulong_t size, int *error)
 {
 	ml_unit_t	*ul	= LQFS_GET_LOGP(qfsvfsp);
 	mt_map_t	*mtm = ul->un_logmap;
-	threadtrans_t	*tp;
+	threadtrans_t	*tp = NULL;
 	ushort_t	seq;
 
 #ifdef LUFS

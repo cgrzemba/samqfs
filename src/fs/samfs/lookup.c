@@ -306,7 +306,7 @@ sam_find_component(
 	sam_ino_t ino;
 	sam_node_t *ip;
 	sam_u_offset_t start_offset, search_offset_limit;
-	sam_u_offset_t offset, hndl_off;
+	sam_u_offset_t offset, hndl_off = 0;
 	struct fbuf *fbp;
 	vnode_t *pvp;
 	int bsize;
@@ -619,7 +619,7 @@ restart:
 					}
 				}
 				if (check_name &&
-				    (cmpfunc((cp), (dp->d_name),
+				    (cmpfunc((cp), (const char *)(dp->d_name),
 				    (dp->d_namlen)+1) == 0)) {
 					if (id.ino == pip->di.id.ino) {
 						/* if '.' lookup */

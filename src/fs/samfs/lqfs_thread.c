@@ -432,7 +432,7 @@ log_roll_write(ml_unit_t *ul, rollbuf_t *rbs, int nbuf)
 	qfsvfs_t	*qfsvfsp = ul->un_qfsvfs;
 	rollbuf_t	*rbp;
 	buf_t		*bp, *bp2;
-	rollbuf_t	*head, *prev, *rbp2;
+	rollbuf_t	*head, *prev = NULL, *rbp2;
 
 	/*
 	 * Order the buffers by blkno

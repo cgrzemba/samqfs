@@ -664,7 +664,7 @@ if_flooding_mbox(
 	int window)	/* window during which email should be suppressed */
 {
 
-	time_t last_attempt_at;
+	time_t last_attempt_at = 0;
 	struct stat statbuf;
 	int fd = -1;
 	FILE *infile = NULL, *tempfile = NULL;

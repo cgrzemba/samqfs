@@ -1407,7 +1407,7 @@ sam_addmap_vn(
 )
 {
 	int error = 0;
-	int pages;
+	int pages = 0;
 	sam_node_t *ip;
 
 	TRACE(T_SAM_ADDMAP, vp, (sam_tr_t)offset, length, prot);
@@ -1470,7 +1470,7 @@ sam_delmap_vn(
 )
 {
 	int error = 0;
-	int pages;
+	int pages = 0;
 	sam_node_t *ip;
 
 	TRACE(T_SAM_DELMAP, vp, (sam_tr_t)offset, length, prot);
@@ -1678,7 +1678,7 @@ sam_delmap_stale_vn(
 )
 {
 	int error = 0;
-	int pages;
+	int pages = 0;
 	sam_node_t *ip;
 
 	TRACE(T_SAM_DELMAP, vp, (sam_tr_t)offset, length, prot);
