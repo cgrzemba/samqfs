@@ -952,7 +952,7 @@ sam_stage_write_io(
 	int error;
 	sam_ssize_t nbytes, start_nbytes;
 	sam_u_offset_t offset, reloff, start_off;
-	caddr_t base, lbase;		/* Kernel address of mapped in block */
+	caddr_t base = 0, lbase = 0;		/* Kernel address of mapped in block */
 	sam_node_t *ip;
 	offset_t size;
 

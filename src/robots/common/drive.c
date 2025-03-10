@@ -88,7 +88,7 @@ drive_thread(
 	char 		*d_mess;
 	char 		*idle_mess, *empty_mess;
 	uchar_t 	timeout = FALSE, chk_req;
-	time_t 		last_active, now;
+	time_t 		last_active = 0, now;
 	dev_ent_t 	*un;
 	timestruc_t 	wait_time;
 	robo_event_t 	*event;
@@ -414,10 +414,10 @@ mount(
 	char 		*d_mess = drive->un->dis_mes[DIS_MES_NORM];
 	vsn_t 		vsn;
 	uint_t 		slot;
-	media_t 	media;
+	media_t 	media = 0;
 	dev_ent_t 	*un = drive->un;
 	sam_defaults_t 	*defaults;
-	mount_request_t *request;
+	mount_request_t *request = NULL;
 	struct CatalogEntry ced;
 	struct CatalogEntry *ce = &ced;
 

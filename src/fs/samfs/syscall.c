@@ -1206,6 +1206,7 @@ sam_vsn_stat_inode_operation(
 
 		vsnp = (struct sam_vsn_section *)buf;
 
+		eid.ino = 0;
 		if (vsnp == NULL) {
 			error = EINVAL;
 		} else {
@@ -1667,6 +1668,7 @@ sam_read_rm(
 	char *p;
 	int media, n;
 
+	next_id.ino = 0;
 	if (ip->di.version >= SAM_INODE_VERS_2) {
 		ASSERT(ip->di.ext_attrs & ext_rfa);
 

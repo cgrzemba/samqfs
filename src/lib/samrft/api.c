@@ -790,7 +790,7 @@ SamrftGetHostByAddr(
 	char *host_name = NULL;
 	char buffer[32];
 	int h_err = TRUE;
-	int size;
+	int size = 0;
 
 	switch (af) {
 	case AF_INET:

@@ -671,7 +671,7 @@ sam_sync_inode(
 	offset_t length,		/* new length for file. */
 	sam_truncate_t tflag)		/* Truncate file or Release file */
 {
-	enum sam_sync_type sync_type;
+	enum sam_sync_type sync_type = SAM_SYNC_ALL;
 
 	if (length == 0) {
 		ip->di.stride = 0;	/* Reset stride for BOF */

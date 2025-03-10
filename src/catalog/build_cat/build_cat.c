@@ -88,7 +88,7 @@ main(
 	boolean_t no_media = TRUE;
 	boolean_t no_slot = TRUE;
 	time_t	now;
-	size_t	CeTableSize;	/* Size of table of catalog entries */
+	size_t	CeTableSize = 0;	/* Size of table of catalog entries */
 	size_t	cat_size;	/* Size of catalog file */
 	void	*mp;
 	char	*fname;		/* Name of catalog file */

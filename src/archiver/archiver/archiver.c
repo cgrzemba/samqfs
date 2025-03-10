@@ -83,7 +83,7 @@ main(
 	int argc,
 	char *argv[])
 {
-	struct ArchiverdState *adState;
+	struct ArchiverdState *adState = NULL;
 	extern int optind;
 	char	*cmd_fname;
 	char	*fsname;

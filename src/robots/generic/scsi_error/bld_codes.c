@@ -939,7 +939,7 @@ int
 main()
 {
 	int	exit_status = 0;
-	int	fd;
+	int	fd = 0;
 	char	path_name[MAXPATHLEN];
 	struct codes   *newcode = codes;
 	sam_model_t    *model;

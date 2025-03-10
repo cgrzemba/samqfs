@@ -1078,8 +1078,8 @@ sam_set_rm_info_file(
 					/*   media structure. */
 {
 	int error = 0;
-	int vsns;
-	int size;
+	int vsns = 0;
+	int size = 0;
 	int n_exts;
 	buf_t *bp;
 	sam_id_t eid;

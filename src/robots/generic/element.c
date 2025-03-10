@@ -992,7 +992,7 @@ int *slot)
 	dev_ent_t 	*un;
 	uint16_t 	ele_addr;
 	uchar_t 	is_acl452 = (import->library->un->type == DT_ACL452);
-	int 		lslot;
+	int 		lslot = 0;
 	int 		status = 0;
 	sam_defaults_t *defaults;
 

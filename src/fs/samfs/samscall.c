@@ -1051,7 +1051,7 @@ sam_drop_call(
 		error = EBADE;
 
 	} else {
-		int bof_online;
+		int bof_online = 0;
 
 		RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		RW_LOCK_OS(&ip->data_rwl, RW_WRITER);

@@ -416,7 +416,7 @@ ArchiveAddFile(
 	int	copyBit;
 	int	i;
 	int	name_l;
-	int	offlineCopy;
+	int	offlineCopy = 0;
 	int	retval;
 
 	retval = 0;
@@ -836,7 +836,7 @@ ArchiveRmArchReq(
 	set_name_t asname;
 	int	ari;
 	int	msgnum;
-	int	seqnum;
+	int	seqnum = 0;
 
 	Trace(TR_MISC, "Archreq remove (%s)", arname);
 

@@ -100,7 +100,7 @@ watch_connects(
 	void *vun)
 {
 	int one = 1;
-	int server_sock;
+	int server_sock = 0;
 	int retval;
 	int port;
 	boolean_t connected = B_FALSE;
@@ -108,7 +108,7 @@ watch_connects(
 	char *buffer;
 	struct addrinfo hints;
 	struct addrinfo *srvr;
-	struct addrinfo *srvr_save;
+	struct addrinfo *srvr_save = NULL;
 	dev_ent_t *un;
 	srvr_clnt_t *srvr_clnt;
 	rmt_sam_client_t *clnt;
@@ -319,7 +319,7 @@ validate_host(
 {
 	boolean_t found = B_FALSE;
 	char **p;
-	int adr_temp;
+	int adr_temp = 0;
 	int i;
 
 	/* Validate this host  */

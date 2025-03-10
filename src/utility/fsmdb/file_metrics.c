@@ -618,7 +618,7 @@ static int
 do_top10(filinfo_t *filinfo, filvar_t *filvar, boolean_t done,	/* ARGSUSED */
 	fm_rptno_t which, fmFuncRes_t *results)
 {
-	int		st;
+	int		st = 0;
 	DB		*dbp;
 	DBC		*curs;
 	DBT		key;

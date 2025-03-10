@@ -611,8 +611,8 @@ assignHoneycombProps(char *volname)
 	char *portCfg;
 	int port;
 	struct diskVolsConfig *config;
-	char *pathCfg;
-	char *samHostCfg;
+	char *pathCfg = NULL;
+	char *samHostCfg = NULL;
 	int pathlen;
 	upath_t metaDir;
 

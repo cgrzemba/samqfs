@@ -518,7 +518,7 @@ dirDirCacheSize(void)
 static void
 dirDrives(void)
 {
-	struct ArchLibEntry *al;
+	struct ArchLibEntry *al = NULL;
 	char	*p;
 	int	drives;
 	int	i;
@@ -2819,7 +2819,7 @@ static void
 setFsFlag(
 	uint_t flag)
 {
-	int	flags;
+	int	flags = 0;
 
 	if (strcmp(token, "on") == 0) {
 		flags = flag;

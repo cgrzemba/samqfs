@@ -211,7 +211,7 @@ sam_write_to_client(sam_mount_t *mp, sam_san_message_t *msg)
 	vnode_t *vp;
 	client_entry_t *clp;
 	int ord;
-	int error;
+	int error = 0;
 	clock_t delay_hz = hz;
 	int send_tries = 0;
 	int max_send_tries = SAM_MAX_SEND_TRIES;

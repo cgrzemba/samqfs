@@ -195,7 +195,7 @@ RetryOptical(
 	longlong_t total_read,
 	int file_position)
 {
-	int numbytes_read;
+	int numbytes_read = 0;
 	int mau_in_buffer;
 	int count;
 	boolean_t error;

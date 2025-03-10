@@ -998,7 +998,7 @@ initVsnTable(void)
 	size_t size;
 	LibraryInfo_t *lib;
 
-	struct CatalogEntry *cetable;
+	struct CatalogEntry *cetable = NULL;
 	int numCatalogEntries;
 	dev_ent_t *dev;
 	int num_mids;

@@ -97,7 +97,7 @@ read_snapfile_entry(
 	int			namelen;
 	struct sam_perm_inode	perm_inode;
 	struct sam_vsn_section	*vsnp;
-	void			*data;
+	void			*data = NULL;
 	int			n_acls;
 	aclent_t		*aclp;
 	int			st;

@@ -950,7 +950,7 @@ drainSeqNumbers(
 	sam_id_t id;
 	int copy;
 	u_longlong_t offset;
-	char *pathname;
+	char *pathname = NULL;
 	int numFiles;
 	File_t *file;
 	long long space;

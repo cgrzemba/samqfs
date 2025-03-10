@@ -1029,7 +1029,7 @@ sam_set_unit(
 	int i, ord, oldord;
 	dtype_t pool;
 	mode_t	mode = di->mode;
-	int unit, first_unit;
+	int unit = 0, first_unit = 0;
 
 	/*
 	 * Set the slice based on round robin and then set the next ordinal.

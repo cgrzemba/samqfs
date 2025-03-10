@@ -122,7 +122,7 @@ sam_set_file_operations(sam_node_t *ip, int cmd, char *ops, cred_t *credp)
 	int stage_i = 0;
 	int stage_p = 0;
 	int wait = 0;
-	int assoc_stage;
+	int assoc_stage = 0;
 	int change_partial = FALSE, partial = 0;
 	int change_algo = 0, algo = 0;
 	int error = 0;

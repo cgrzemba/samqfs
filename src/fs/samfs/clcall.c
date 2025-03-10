@@ -1188,7 +1188,7 @@ sam_truncate_shared_ino(
 		 * Flush all pages prior to truncate. Errors are ignored.
 		 */
 		if (vn_has_cached_data(vp)) {
-			offset_t addr;
+			offset_t addr = 0;
 
 			if (dp->resid < ip->size) {
 				addr = (dp->resid + PAGESIZE - 1) & PAGEMASK;
@@ -1942,6 +1942,7 @@ __sam_proc_name(
 		ASSERT(offsetof(sam_san_name_t, component) + MAXNAMELEN +
 		    strlen(ncp) + 1 <= SAM_MAX_NAME_LEN);
 		strncpy((char *)&np->component, cp, cplen);
+		/* XXX fix needed? copy behind arry */
 		strcpy((char *)&np->component[MAXNAMELEN], ncp);
 		param_len = offsetof(sam_san_name_t, component) +
 		    MAXNAMELEN + strlen(ncp) + 1;

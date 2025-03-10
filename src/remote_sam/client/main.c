@@ -236,7 +236,7 @@ init_client(
 {
 	char line[100];
 	FILE *fd;
-	struct hostent *h_ent;
+	struct hostent *h_ent = NULL;
 
 	if ((fd = fopen(un->name, "r")) == NULL) {
 		sam_syslog(LOG_INFO, "Unable to open %s for %d.", un->name,

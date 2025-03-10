@@ -755,8 +755,8 @@ sam_get_rm_info(
 {
 	int error = 0;
 	int n_vsns;
-	int vsns;
-	int size;
+	int vsns = 0;
+	int size = 0;
 	sam_id_t eid;
 	buf_t *bp;
 	struct sam_inode_ext *eip;
@@ -895,8 +895,8 @@ sam_set_rm_info(
 {
 	int error = 0;
 	int n_vsns;
-	int vsns;
-	int size;
+	int vsns = 0;
+	int size = 0;
 	sam_id_t eid;
 	buf_t *bp;
 	struct sam_inode_ext *eip;

@@ -67,7 +67,7 @@ extern int csd_to_task(void);
 int
 main(int argc, char *argv[])
 {
-	int		st;
+	int		st = 0;
 	char		c;
 
 	while ((c = getopt(argc, argv, "iru")) != -1) {

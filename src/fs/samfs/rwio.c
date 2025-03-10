@@ -169,11 +169,11 @@ sam_read_io(
 	uio_t *uiop,		/* Pointer to user I/O vector array. */
 	int ioflag)		/* Open flags */
 {
-	struct sam_listio_call *callp;
+	struct sam_listio_call *callp = NULL;
 	int seg_flags, free_page;
 	sam_u_offset_t offset, reloff;
 	sam_ssize_t nbytes;	/* Num bytes to move from this block */
-	caddr_t base;		/* Kernel address of mapped in block */
+	caddr_t base = 0;		/* Kernel address of mapped in block */
 	int error;
 	sam_node_t *ip;
 	sam_u_offset_t buff_off;
@@ -486,7 +486,7 @@ sam_write_io(
 	int ioflag,		/* Open flags */
 	cred_t *credp)		/* credentials pointer */
 {
-	struct sam_listio_call *callp;
+	struct sam_listio_call *callp = NULL;
 	int pglock;
 	boolean_t appending;
 	int error, forcefault, seg_flags, error2;
@@ -495,7 +495,7 @@ sam_write_io(
 	sam_size_t nbytes;
 	sam_u_offset_t offset, reloff, allocsz, orig_offset, segsz;
 	sam_u_offset_t buff_off;
-	caddr_t base;			/* Kernel address of mapped in block */
+	caddr_t base = 0;			/* Kernel address of mapped in block */
 	sam_map_t type;
 	sam_node_t *ip;
 	int is_lio = (ioflag == FASYNC &&
@@ -836,8 +836,8 @@ sam_dk_direct_io(
 	sam_map_t map_flag;
 	enum seg_rw lock_type;
 	vnode_t *vp;
-	size_t len, len_delta;
-	krw_t rw_type;	/* type of hold on ip->inode_rwl on entry */
+	size_t len, len_delta = 0;
+	krw_t rw_type = RW_WRITER;	/* type of hold on ip->inode_rwl on entry */
 	boolean_t ilock_held;
 	offset_t undelegated_bytes;
 	int i;

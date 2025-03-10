@@ -1839,9 +1839,9 @@ findRmVolume(
 	struct ArchReq *arb;
 	struct ArcopyInstance *ci;
 	struct FileInfo *fi;
-	boolean_t fillvsns;
+	boolean_t fillvsns = FALSE;
 	boolean_t noDrives;
-	fsize_t ovflmin;
+	fsize_t ovflmin = 0;
 	char	arname[ARCHREQ_NAME_SIZE];
 	int	drivesInuse;
 	int	*fii;

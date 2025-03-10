@@ -150,7 +150,7 @@ main(
 	(void) sef_status();
 
 	if (DBG_LVL(SAM_DBG_RBDELAY)) {
-		char *sc_mess;
+		char *sc_mess = NULL;
 		int ldk = 60;
 		sam_syslog(LOG_DEBUG, "Waiting for 60 seconds.");
 		while (ldk > 0 && DBG_LVL(SAM_DBG_RBDELAY)) {

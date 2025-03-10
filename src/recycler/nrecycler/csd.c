@@ -943,7 +943,7 @@ CsdFildes_t *fildes,
 csd_tar_t *hdr_info)
 {
 	union header_blk tarhdrblk;
-	char		tar_name[MAXPATHLEN+1];
+	static char		tar_name[MAXPATHLEN+1];
 	struct header	*tarhdr = (struct header *)&tarhdrblk;
 	longlong_t	field_value;
 	int		linktype;

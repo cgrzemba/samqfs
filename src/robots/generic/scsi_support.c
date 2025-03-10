@@ -78,7 +78,7 @@ rotate_mailbox(
 	const int direction) 	/* ROTATE_IN or ROTATE_OUT */
 {
 	dev_ent_t 	*un;
-	int 		err, retry;
+	int 		err = 0, retry;
 	iport_state_t 	*in, *out, *tmp;
 	int 		added_more_time = FALSE;
 	sam_extended_sense_t *sense = (sam_extended_sense_t *)

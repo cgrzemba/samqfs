@@ -187,7 +187,7 @@ ldl_strategy(ml_unit_t *ul, buf_t *pb)
 	lqfs_buf_t	*lbp;
 	buf_t		*cb;
 	qfsvfs_t	*qfsvfsp;
-	daddr_t		lblkno, pblkno;
+	daddr_t		lblkno, pblkno = 0;
 	size_t		nb_left, pbcount;
 	off_t		offset;
 	dev_t		dev;
