@@ -79,7 +79,7 @@ ifeq ($(PLATFORM), i386)
 		$(error "Unknown Solaris version $(OS_REVISION)")
 		endif
 		endif
-		KERNFLAGS := -xmodel=kernel -Wu,-save_args
+		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding
 	else
 		ISA_TARGET := i386
 		PLATFLAGS += -m32
@@ -99,9 +99,9 @@ endif
 
 KERNFLAGS_CSTD = -D_KERNEL -m64 -xmodel=kernel -xregs=no%float -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
 # KERNFLAGS_GCC = -D_KERNEL -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
-KERNFLAGS_GCC = -D_KERNEL -D_SYSCALL32 -D_SYSCALL32_IMPL -D_DDI_STRICT -D_ELF64 -m64 -mcmodel=kernel -mno-red-zone -ffreestanding -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR)
+KERNFLAGS_GCC = -D_KERNEL -D_SYSCALL32 -D_SYSCALL32_IMPL -D_DDI_STRICT -D_ELF64 -m64 -nodefaultlibs -DKERNEL_MINOR=$(OS_RELEASE_MINOR) 
 
-KERNFLAGS = $(KERNFLAGS_$(COMPILER)) -DMOD_VERSION=\"$(MODULE_VERSION)\"
+KERNFLAGS += $(KERNFLAGS_$(COMPILER)) -DMOD_VERSION=\"$(MODULE_VERSION)\"
 
 #
 # Solaris common commands
