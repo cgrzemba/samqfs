@@ -56,6 +56,7 @@ samfsdump, samfsrestore \- Dumps or restores SAM-QFS file control structure data
 [\fIfile \&.\&.\&.\fR]
 .PP
 \fBsamfsrestore\fR
+\%[\fB\-a\fR]
 \%[\fB\-b\ \fIbl_factor\fR]
 \%[\fB\-d\fR]
 \%\fB\-f\ \fIdump_file\fR
@@ -66,6 +67,7 @@ samfsdump, samfsrestore \- Dumps or restores SAM-QFS file control structure data
 \%[\fB\-s\fR]
 \%[\fB\-t\fR]
 \%[\fB\-v\fR]
+\%[\fB\-x\fR]
 \%[\fB\-B\ \fIsize\fR]
 \%[\fB\-H\fR]
 \%[\fB\-R\fR]
@@ -138,6 +140,9 @@ Sun Microsystems recommends that a site create \fBsamfsdump\fR dumps on a
 periodic basis as part of a disaster recovery plan.
 .SH OPTIONS
 This command accepts the following options:
+.TP 10
+\%\fB\-a\fR
+Lists ACL settings from dumps. This is also possible for NFSv4 ACL's of OHSM dumps.
 .TP 10
 \%\fB\-b\ \fIbl_factor\fR
 Specifies a blocking factor in units of 512 bytes.
@@ -483,6 +488,12 @@ To create a new \fBsamdb(8)\fP load file from an existing dump file:
 .ft CO
 .nf
 example# samfsrestore -SZ /destination/samfsdbload.today -f /source/samfsdump.yesterday
+.PP
+To list ACL settings from an existing dump file:
+.PP
+.ft CO
+.nf
+example# samfsrestore -ta -f /source/samfsdump.yesterday
 .fi
 .ft
 .SH SEE ALSO
