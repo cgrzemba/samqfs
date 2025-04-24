@@ -58,7 +58,8 @@ DIRS = 	audit \
 		samdb \
 		samrestore \
 		samstorade \
-		aml_cmd_dump
+		aml_cmd_dump \
+		build_rb_mcf
 
 include $(DEPTH)/mk/targets.mk
 
