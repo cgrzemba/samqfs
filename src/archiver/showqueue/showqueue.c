@@ -236,10 +236,10 @@ repeat:
 			/* Archive requests */
 			printf(GetCustMsg(4803));
 			printf("\n");
-			snprintf(arfindDir, sizeof (arfindDir),
-			    ARCHIVER_DIR"/%s/", fsname);
 			while (optind < argc) {
-				printArchReq(argv[optind++]);
+				snprintf(arfindDir, sizeof (arfindDir),
+				    ARCHIVER_DIR"/%s/ArchReq/%s", fsname, argv[optind++]);
+				printArchReq(arfindDir);
 			}
 		}
 	}
