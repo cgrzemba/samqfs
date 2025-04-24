@@ -267,8 +267,13 @@ endif
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
 
+ifeq   ($(DEBUG), yes)
+	MCS_FLAV = DBG
+else
+	MCS_FLAV = REL
+endif
 # MCSOPT = $(shell echo "-c -a '@(=)Copyright (c) `/bin/date +%Y`, Sun Microsystems, Inc.  All Rights Reserved' -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r`.'" | /bin/tr = '\043')
-MCSOPT = $(shell echo "-c -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r` Branch:$(GIT_BRANCH) Commit:$(GIT_COMMIT).'" | /bin/tr = '\043')
+MCSOPT = $(shell echo "-c -a '@(=)Built $(MCS_FLAV) `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r` Branch:$(GIT_BRANCH) Commit:$(GIT_COMMIT).'" | /bin/tr = '\043')
 MCS = $(CMDMCS) $(MCSOPT)
 
 #
