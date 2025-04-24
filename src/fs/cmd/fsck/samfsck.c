@@ -6301,6 +6301,18 @@ check_inode_exts(struct sam_perm_inode *dp)		/* Base inode entry */
 			    (int)dp->di.nlink, n_parents+1);
 			mark_inode(dp->di.ext_id.ino, INVALID_EXT);
 		}
+		else {
+			printf("NOTICE:  inode %d.%d shows %d links, "
+			    "%d parents but no HLP extent\n",
+			    dp->di.id.ino, dp->di.id.gen,
+			    (int)dp->di.nlink, n_parents+1);
+#if 0
+			if (repair_files) {
+				dp->di.nlink = 1;
+				put_inode(dp->di.id.ino, dp);
+			}
+#endif
+		}
 	}
 
 	if (f_ext & ext_acl) {
