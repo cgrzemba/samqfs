@@ -53,7 +53,9 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "pub/stat.h"
 #include "sam/types.h"
 #include "sam/checksum.h"
+#define DEC_INIT
 #include "sam/checksumf.h"
+#undef DEC_INIT
 
 /* Local headers. */
 #include "arcopy.h"
@@ -108,6 +110,11 @@ ChecksumInit(
 		startworker = B_FALSE;
 	}
 
+	checksum->done = B_FALSE;
+	checksum->isComplete = B_TRUE;
+	checksum->isAvail = B_FALSE;
+	checksum->algo = algo;
+
 	if (algo & CS_USER_BIT) {
 		u_longlong_t cookie;
 
@@ -115,14 +122,14 @@ ChecksumInit(
 		checksum->func = cs_user;
 		checksum->func(&cookie, algo, 0, 0, &File->AfCsum);
 	} else {
-		checksum->func = csum[algo];
+		if (algo > CS_FUNCS ) {
+			Trace(TR_ERR, "[%s] Checksum invalid algo: %d",
+			    File->f->FiName, algo);
+			return;
+		}
+		checksum->func = csum_fns[algo];
 		checksum->func(&File->f->FiSpace, 0, 0, &File->AfCsum);
 	}
-
-	checksum->done = B_FALSE;
-	checksum->isComplete = B_TRUE;
-	checksum->isAvail = B_FALSE;
-	checksum->algo = algo;
 
 	if (startworker == B_TRUE) {
 		if (pthread_create(&checksum->id, NULL, checksumWorker,

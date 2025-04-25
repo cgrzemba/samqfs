@@ -61,6 +61,7 @@
 #include <sam/fs/sblk.h>
 #include "sam/nl_samfs.h"
 #include "sam/lib.h"
+#include "sam/checksum.h"
 
 extern boolean_t unworm;
 extern void conv_to_v2inode(sam_perm_inode_t *);
@@ -173,6 +174,15 @@ cs_restore(
 			if (perm_inode.di.id.ino != SAM_ROOT_INO) {
 				goto skip_file;
 			}
+		}
+
+		if (perm_inode.di.cs_algo >= CS_FUNCS) {
+			error(0,0, catgets(catfd, SET, 13541,
+			    "%s: unsupported checksum algo %d, resetting"),
+			    name, perm_inode.di.cs_algo);
+			perm_inode.di.cs_algo = 0;
+			perm_inode.di.status.b.cs_gen = 0;
+			perm_inode.di.status.b.cs_val = 0;
 		}
 
 		if (unworm && perm_inode.di.status.b.worm_rdonly) {

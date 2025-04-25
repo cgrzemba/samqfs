@@ -82,7 +82,7 @@ static void    *do_csum(void *);
 typedef struct sam_csum_t {
 	csum_t		*csum_val;
 	int		csum_algo;
-	csum_func	csum;
+	csum_func	csum_fn;
 	char		*buffer;
 	int		nbytes;
 	int		done;
@@ -736,10 +736,10 @@ do_csum(void *param)
 		if (sam_csum->done)
 			break;
 		if (sam_csum->csum_algo & CS_USER_BIT) {
-			sam_csum->csum(0, sam_csum->csum_algo, sam_csum->buffer,
+			sam_csum->csum_fn(0, sam_csum->csum_algo, sam_csum->buffer,
 			    sam_csum->nbytes, sam_csum->csum_val);
 		} else {
-			sam_csum->csum(0, sam_csum->buffer, sam_csum->nbytes,
+			sam_csum->csum_fn(0, sam_csum->buffer, sam_csum->nbytes,
 			    sam_csum->csum_val);
 		}
 		if (sema_post(sam_csum->csum_sema_done) != 0)

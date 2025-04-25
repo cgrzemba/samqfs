@@ -57,12 +57,12 @@ extern void cs_user(uint64_t *cookie, int algo, uchar_t *buf,
 extern void cs_repair(uchar_t *csum, uint64_t *cookie);
 
 #if defined(DEC_INIT) && !defined(lint)
-csum_func csum[] = {
+csum_func csum_fns[CS_FUNCS] = {
 	cs_empty,
 	cs_simple
 };
 #else	/* defined(DEC_INIT) */
-extern csum_func csum[];
+extern csum_func csum_fns[CS_FUNCS];
 #endif	/* defined(DEC_INIT) */
 
 #endif /* _SAM_CHECKSUMF_H */
