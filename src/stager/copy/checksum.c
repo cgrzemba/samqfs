@@ -155,6 +155,12 @@ ChecksumInit(
 		}
 	}
 
+	if (file->csum_algo & ~CS_USER_BIT > CS_FUNCS) {
+		Trace(TR_ERR, "Checksumming data: invalid algo %d",
+		    file->csum_algo);
+		return;
+	}
+
 	Trace(TR_FILES, "Checksum init inode: %d.%d algo: %d seed: %lld",
 	    file->id.ino, file->id.gen, file->csum_algo & ~CS_USER_BIT,
 	    checksum->seed);
@@ -336,8 +342,8 @@ checksumWorker(
 				cs_user((uint64_t *)&checksum->seed, checksum->algo, 0, 0,
 				    &checksum->val);
 			} else {
-				checksum->func = csum[checksum->algo];
-				csum[checksum->algo](&checksum->seed, 0, 0,
+				checksum->func = csum_fns[checksum->algo];
+				csum_fns[checksum->algo](&checksum->seed, 0, 0,
 				    &checksum->val);
 			}
 			checksum->is_initialized = B_TRUE;

@@ -2663,6 +2663,7 @@ $ ===================================================================
 13538 -I (include file) entry <%s> invalid
 13539 %s: Cannot malloc space for hard link table.
 13540 Missing / in path: %s
+13541 %s: Unsupported checksum algorithm %x, unset checksum gen
 
 $  utility/robot and catalog commands
 $ ===================================================================

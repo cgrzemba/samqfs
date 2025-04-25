@@ -919,7 +919,7 @@ static void
 copyRegular(
 	struct sam_disk_inode *dp)
 {
-	boolean_t doCsum;
+	boolean_t doCsum = FALSE;
 	offset_t size;
 
 	if (S_ISSEGS(dp)) {
@@ -931,11 +931,14 @@ copyRegular(
 		 * and license allows checksum feature.  Call routine for
 		 * initialization.
 		 */
-		File->AfFlags |= AF_csummed;
-		doCsum = TRUE;
-		ChecksumInit(dp->cs_algo);
-	} else {
-		doCsum = FALSE;
+		if (dp->cs_algo > sizeof(csum_fns)/sizeof(void*)) {
+			Trace(TR_ERR, "invalid checksum algo: %#x, skip checksumming",
+			    dp->cs_algo);
+		} else {
+			File->AfFlags |= AF_csummed;
+			doCsum = TRUE;
+			ChecksumInit(dp->cs_algo);
+		}
 	}
 
 	size = File->AfFileSize;
