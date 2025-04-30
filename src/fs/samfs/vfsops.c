@@ -333,6 +333,7 @@ samfs_mount(
 		vfs_setmntopt(vfsp, MNTOPT_NOSUID, NULL, 0);
 	}
 
+	/* disallow XATTR */
 	if ((sam_xattr == 0) || (mp->mt.fi_config1 & MC_NOXATTR)) {
 		vfs_clearmntopt(vfsp, MNTOPT_XATTR);
 		vfs_setmntopt(vfsp, MNTOPT_NOXATTR, NULL, 0);
