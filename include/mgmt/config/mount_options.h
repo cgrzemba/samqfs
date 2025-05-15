@@ -553,11 +553,11 @@ static struct fieldVals cfg_mount_params[] = {
 { "nosam_db", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
 	offsetof(struct rel_5_0_options, sam_db), &mp_nosam_db,
 	MNT_NOSAM_DB},
-{ "xattr", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
-	offsetof(struct rel_5_0_options, xattr), &mp_xattr,
+{ "noxattr", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, xattr), &mp_noxattr,
 	MNT_XATTR},
 { "xattr", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
-	offsetof(struct rel_5_0_options, xattr), &mp_noxattr,
+	offsetof(struct rel_5_0_options, xattr), &mp_xattr,
 	MNT_NOXATTR},
 
 /* 5.64 opts defbits line */
