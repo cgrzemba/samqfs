@@ -167,6 +167,7 @@ struct sam_fs_info {	/* File system information */
 #define	FS_STAGING	  0x40000000	/* staging is active on this fs */
 #define	FS_ARCHIVING	  0x80000000	/* archiving is active on this fs */
 
+
 /* Flags in fi_config */
 
 #define	MT_SHARED_MO	  0x00000001	/* Shared file system - mntopts */
@@ -205,6 +206,7 @@ struct sam_fs_info {	/* File system information */
 #define	MT_CDEVID	  0x08000000	/* Use "made up" global dev for FS */
 
 #define	MT_NOATIME	  0x10000000	/* Noatime option set */
+#define	MT_NBMAND	  0x20000000	/* NBMAND option set */
 
 /* Flags in fi_config1 */
 

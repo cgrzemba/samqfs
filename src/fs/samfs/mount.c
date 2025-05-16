@@ -65,6 +65,7 @@
 #include <sys/dkio.h>
 #include <sys/errno.h>
 #include <sys/vtoc.h>
+#include <sys/mntent.h>
 #endif /* sun */
 
 #ifdef  linux
@@ -1318,10 +1319,14 @@ sam_set_mount(sam_mount_t *mp)
 		    (long long)((physmem * PAGESIZE) / 100));
 	}
 #endif /* sun */
-	if (mp->mt.fi_config1 & MC_CI) {
+	if (mp->mi.m_vfsp != NULL) {
 		vfs_t *vfsp = mp->mi.m_vfsp;
-		if (vfsp != NULL)
+		if (mp->mt.fi_config1 & MC_CI) {
 			vfs_set_feature(vfsp, VFSFT_CASEINSENSITIVE);
+		}
+		if(mp->mt.fi_config & MT_NBMAND) {
+			vfs_setmntopt(vfsp, MNTOPT_NBMAND, NULL, 0);
+		}
 	}
 	return (0);
 }

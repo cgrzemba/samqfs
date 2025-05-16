@@ -221,6 +221,8 @@ static struct fieldFlag mp_xattr = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_noxattr = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_ci = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_noci = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_nbmand = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_nonbmand = { (uint32_t)B_TRUE, "off", "on", "off" };
 static int mount_params_defbits;
 
 static struct fieldVals cfg_mount_params[] = {

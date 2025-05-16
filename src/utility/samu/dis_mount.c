@@ -73,6 +73,7 @@ static int part_line;
  *	bit definitions - see include/sam/mount.h
  */
 sam_flagtext_t confTable[] = {
+	MT_NBMAND, "NBMAND",
 	MT_NOATIME, "NOATIME",
 	MT_CDEVID, "CDEVID",
 	MT_EMUL_LITE, "EMUL_LITE",
