@@ -216,6 +216,8 @@ static char *nologging_cancel[] = { MNTOPT_LOGGING, NULL };
 static char *logging_cancel[] = { MNTOPT_NOLOGGING, NULL };
 static char *xattr_cancel[] = { MNTOPT_NOXATTR, NULL };
 static char *noxattr_cancel[] = { MNTOPT_XATTR, NULL };
+static char *nbmand_cancel[] = { MNTOPT_NONBMAND, NULL };
+static char *nonbmand_cancel[] = { MNTOPT_NBMAND, NULL };
 
 #define	SAMFSMNT_ONERROR_PANIC_STR		"panic"
 
@@ -234,6 +236,8 @@ static mntopt_t mntopts[] = {
 									NULL},
 	{ MNTOPT_NOLOGGING,	nologging_cancel, NULL,	MO_DEFAULT,	NULL},
 	{ MNTOPT_LOGGING,	logging_cancel,	NULL,	0,		NULL},
+	{ MNTOPT_NONBMAND,	nonbmand_cancel, NULL,	MO_DEFAULT,	NULL},
+	{ MNTOPT_NBMAND,	nbmand_cancel,	NULL,	0,		NULL},
 	{ MNTOPT_XATTR,		xattr_cancel,	NULL,	MO_DEFAULT,	NULL},
 	{ MNTOPT_NOXATTR,	noxattr_cancel,	NULL,	0,		NULL}
 };

@@ -1654,6 +1654,8 @@ fs_t *f)				/* IN/OUT - filled fs_t */
 	/* release 5.64 options */
 	mnt_options->rel_5_64_opts.casesense =
 	    (fi->fi_config1 & MC_CI) ? B_TRUE : B_FALSE;
+	mnt_options->rel_5_64_opts.nbmand =
+	    (fi->fi_config & MT_NBMAND) ? B_TRUE : B_FALSE;
 	f->mount_options = mnt_options;
 
 	Trace(TR_MISC, "fill mount options done");
