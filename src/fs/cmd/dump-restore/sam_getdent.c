@@ -95,6 +95,21 @@ static char *dirbuf = NULL;
 static char *saved_dir_name;
 
 int
+samattropen(char *dir_name)
+{
+	if (dir_fd >= 0) {
+		(void) close(dir_fd);
+	}
+
+	dir_fd = attropen(dir_name, ".", O_RDONLY);
+	offset = 0;		/* flag sam_getdents to start at beginning */
+	n_valid = 0;		/* flag sam_getdent to read up buffer */
+
+	saved_dir_name = dir_name;
+	return (dir_fd);
+}
+
+int
 samopendir(char *dir_name)
 {
 	if (dir_fd >= 0) {

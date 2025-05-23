@@ -64,6 +64,7 @@
 #include "sam/checksum.h"
 
 extern boolean_t unworm;
+extern boolean_t skip_xattr;
 extern void conv_to_v2inode(sam_perm_inode_t *);
 static void check_samfs_fs();
 static void sam_restore_a_file(char *, struct sam_perm_inode *,
@@ -86,10 +87,10 @@ static csd_hardtbl_t *hardp = NULL;
 
 static char *_SrcFile = __FILE__;
 
-# define XA_CNT 3
+# define XA_CNT 4
 const char *fn_xattr[XA_CNT]  =
-	    {"user.DOSATTRIB", "user.SUNWattr_rw", "user.SUNWattr_ro"};
-const int sl[XA_CNT] = {14, 16, 16};
+	    {"user.DOSATTRIB", "user.SUNWattr_rw", "user.SUNWattr_ro", "user.SUNWcksum"};
+const int sl[XA_CNT] = {14, 16, 16, 14};
 boolean_t
 is_xattr(const char* path) {
 
@@ -189,6 +190,7 @@ cs_restore(
 			perm_inode.di.status.b.worm_rdonly = 0;
 			perm_inode.di.mode &= ~(04000); /* reset S bit in mode */
 		}
+
 		/* select subset of file names to restore. */
 
 		name_compare = &name[0];
@@ -227,7 +229,8 @@ cs_restore(
 				goto skip_file;
 			}
 		}
-		if (is_xattr(name_compare))
+		/* early jump out if wellknown filename */
+		if (skip_xattr && is_xattr(name_compare))
 			goto skip_file;
 
 		/*
@@ -753,6 +756,28 @@ sam_restore_a_file(
 		copy_bits = perm_inode->di.arch_status & 0xF;
 		csd_statistics.file_archives += copy_array[copy_bits];
 
+	} else if (SAM_INODE_IS_XATTR(perm_inode)) {
+		int  open_flg = (O_CREAT | O_EXCL| SAM_O_LARGEFILE|O_WRONLY);
+		int  copy_bits;
+		char *xfn_pos = strrchr(path, '/');
+		if (skip_xattr)
+			return;
+		if (xfn_pos == NULL) {
+			error(0, errno, "%s: Cannot create xattr", path);
+			return;
+		}
+		/* seperate xattrdir and xattr filename */
+		*xfn_pos = '\0';
+		xfn_pos++;
+		entity_fd = attropen(path, xfn_pos, O_CREAT | O_RDWR, 0755);
+		if (entity_fd == -1) {
+			error(0, errno, "Cannot open xattr dir of \"%s/%s\"", path, xfn_pos);
+			return;
+		}
+		BUMP_STAT(xattr_files);
+		copy_bits = perm_inode->di.arch_status & 0xF;
+		csd_statistics.file_archives += copy_array[copy_bits];
+
 	} else if (S_ISREG(mode) || S_ISSEGI(&perm_inode->di)) {
 		int copy_bits, restored = 0;
 		int	open_flg = (O_CREAT | O_EXCL| SAM_O_LARGEFILE);
@@ -1037,6 +1062,9 @@ sam_restore_a_file(
 	 * Pass the old inode to the filesystem; let it copy into the new
 	 * inode that part of it which makes sense.
 	 */
+	/* do not restore reference to xattr dir inode, this will be an other */
+	perm_inode->di2.xattr_id.ino = 0;
+	perm_inode->di2.xattr_id.gen = 0;
 	idrestore.dp.ptr = (void *)perm_inode;
 	if (perm_inode->di.version >= SAM_INODE_VERS_2) {
 		if (perm_inode->di.ext_attrs & ext_mva) {

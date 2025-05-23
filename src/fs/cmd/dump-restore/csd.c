@@ -150,9 +150,9 @@
 
 /*	Local definitions */
 
-#define	RESTORE_OPT	"axdf:g:ilqrRsStTv2B:b:Z:"
+#define	RESTORE_OPT	"adf:g:ilqrRsStTvwx2B:b:Z:"
 #define	QFSRESTORE_OPT	"df:ilrRstTv2B:b:D"
-#define	DUMP_OPT	"df:HI:nPqSTuUvWB:b:X:YZ:"
+#define	DUMP_OPT	"df:HI:nPqSTuUvxWB:b:X:YZ:"
 #define	QFSDUMP_OPT	"df:HI:qTvB:b:DX:"
 
 #define	STDIN	0	/* Ordinal of stdin */
@@ -191,6 +191,7 @@ boolean unarchived_data;	/* Dump unarchived data */
 boolean use_file_list;		/* Dump using file list */
 boolean list_by_inode;		/* list inode range only */
 boolean unworm = false;
+boolean skip_xattr = false;	/* do not dump or restore xattr files */
 int csd_version = 0;		/* solaris csd format */
 int csd_hdr_inited = 0;		/* Dumpfile csd header inited */
 uint32_t dump_fs_magic = 0;	/* FS magic of dump source FS */
@@ -487,8 +488,12 @@ main(int argc, char *argv[])
 			ls_options |= LS_ACL;
 			break;
 
-		case 'x':		/* remove WORM flag */
+		case 'w':		/* remove WORM flag */
 			unworm = true;
+			break;
+
+		case 'x':		/* remove WORM flag */
+			skip_xattr = true;
 			break;
 
 		case 'Y':		/* file list for dump */
@@ -972,6 +977,8 @@ print_stats()
 	    csd_statistics.file_damaged);
 	fprintf(stderr, "    Files with data:\t%d\n",
 	    csd_statistics.data_files);
+	fprintf(stderr, "    XATTR Files:\t%d\n",
+	    csd_statistics.xattr_files);
 	fprintf(stderr, "    File  warnings:\t%d\n",
 	    csd_statistics.file_warnings);
 	fprintf(stderr, "    Errors:\t\t%d\n", csd_statistics.errors);
@@ -1008,7 +1015,7 @@ init_csd_header(uint32_t fsmagic)
 		csd_header.csd_fs_magic = SAM_MAGIC_V2;
 	}
 	if (fsmagic == SAM_MAGIC_V2A) {
-		csd_header.csd_header.version = csd_version = CSD_VERS_6;
+		csd_header.csd_header.version = csd_version = CSD_VERS_7;
 		csd_header.csd_fs_magic = SAM_MAGIC_V2A;
 	}
 

@@ -49,6 +49,7 @@ samfsdump, samfsrestore \- Dumps or restores SAM-QFS file control structure data
 \%[\fB\-T\fR]
 .if n .br
 \%[\fB\-W\fR]
+\%[\fB\-x\fR]
 \%[\fB\-X\ \fIexcluded_dir\fR]
 \%[\fB\-Y\fR]
 \%[\fB\-Z\ \fIdb_loadfile\fR]
@@ -67,6 +68,7 @@ samfsdump, samfsrestore \- Dumps or restores SAM-QFS file control structure data
 \%[\fB\-s\fR]
 \%[\fB\-t\fR]
 \%[\fB\-v\fR]
+\%[\fB\-w\fR]
 \%[\fB\-x\fR]
 \%[\fB\-B\ \fIsize\fR]
 \%[\fB\-H\fR]
@@ -353,6 +355,9 @@ This option is retained for compatibility.
 By default, these warning messages are now issued automatically.
 For more information on controlling this behavior,
 see the \%\fB\-q\fR option, which suppresses warning messages.
+.TP 10
+\%\fB\-x\fP
+Do not dump or restore xattr files if found. (csd_version 7)
 .TP 10
 \%\fB\-X\ \fIexcluded_dir\fR
 (\fBsamfsdump\fP only) Specifies directory paths to be excluded from the dump.
