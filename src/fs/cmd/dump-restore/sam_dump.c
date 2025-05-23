@@ -59,10 +59,16 @@
 #include <sam/fs/sblk.h>
 #include "sam/nl_samfs.h"
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/acl.h>
+#include <strings.h>
+
+#define XATTR_MODE	0xc000
+#define S_ISXATTR(mode) (((mode)&0xf000) == XATTR_MODE)
 
 extern int csd_hdr_inited;
 extern uint32_t dump_fs_magic;
+extern boolean_t skip_xattr;
 extern void init_csd_header(uint32_t fsmagic);
 
 extern	void WriteHeader(char *name, struct sam_stat *st, char type);
@@ -71,7 +77,7 @@ extern	int	parsetabs(char *string, char **argv, int *argc, int argmax);
 extern	int	readin(FILE *, char *, int);
 extern	int	readin_ln;
 
-static void dump_file_data(char *, int partial, int file_fd);
+static void dump_file_data(char *, int partial, int file_fd, int dir_fd);
 static void BuildHeader(char *, int, struct sam_stat *, int partial);
 static int check_directory_excluded(char *);
 static int cmp_id(const void *id1, const void *id2);
@@ -79,6 +85,10 @@ static int cmp_id(const void *id1, const void *id2);
 static char *work_dir = NULL;		/* working list of directory names */
 static int work_dir_size = 0;		/* cur allocated size of work_dir */
 static int work_dir_used = 0;		/* currently used size of work_dir */
+
+static char *work_xadir = NULL;		/* working list of directory names */
+static int work_xadir_size = 0;		/* cur allocated size of work_dir */
+static int work_xadir_used = 0;		/* currently used size of work_dir */
 #define	WORK_DIR_SIZE_INCREMENT 10240	/* expand work_dir by this many bytes */
 
 static char name[MAXPATHLEN + MAXPATHLEN + 2];
@@ -167,12 +177,52 @@ save_dir_name(
 	work_dir_used += name_len + 1;
 }
 
+/*
+ * remember that path/name is a directory which needs to be processed
+ */
+static void
+save_xadir_name(
+	char *path,
+	char *name)
+{
+	int path_len = strlen(path);
+	int name_len = strlen(name);
+
+	if (debugging) {
+		fprintf(stderr, "save_xadir_name( %s / %s )\n", path, name);
+	}
+
+	/* allocate more memory if needed */
+	while (work_xadir_used + path_len + name_len + 2 > work_xadir_size) {
+		work_xadir = (char *)realloc(work_xadir,
+		    work_xadir_size + WORK_DIR_SIZE_INCREMENT);
+		if (work_xadir == NULL) {
+			error(1, errno,
+			    catgets(catfd, SET, 192,
+			    "%s/%s: Out of memory for xattr name cache,"
+			    " current size of cache is %d bytes"),
+			    path, name, work_xadir_size);
+		}
+		work_xadir_size += WORK_DIR_SIZE_INCREMENT;
+	}
+
+	if (*path != '\0') {
+		/* add directory prefix */
+		strcpy(&work_xadir[work_xadir_used], path);
+		work_xadir_used += path_len;
+		work_xadir[work_xadir_used] = '/';		/* add slash */
+		work_xadir_used += 1;
+	}
+	strcpy(&work_xadir[work_xadir_used], name);	/* add filename */
+	work_xadir_used += name_len + 1;
+}
+
 static void
 dump_directory_entry(
 	sam_id_t id,
 	char *component_name,
 	char *name_append_point,
-	char *path)
+	char *path, int dir_fd)
 {
 	struct sam_ioctl_idstat idstat;
 	struct sam_perm_inode perm_inode;
@@ -223,6 +273,8 @@ dump_directory_entry(
 		    perm_inode.di.id.ino, perm_inode.di.id.gen);
 		return;
 	}
+	if (skip_xattr && SAM_INODE_IS_XATTR(&perm_inode))
+		return;
 
 	/*
 	 * If the dump header has not been initialized, initialize it.  If
@@ -328,6 +380,10 @@ dump_directory_entry(
 			dumping_partial_data++;
 			flags |= CSD_FH_DATA;
 		}
+		if (!skip_xattr && perm_inode.di2.xattr_id.ino > SAM_MIN_USER_INO) {
+			save_xadir_name(path, (char *)component_name);
+			BUMP_STAT(xattr_files);
+		}
 	} else if (S_ISDIR(mode)) {
 		/*
 		 * path is null for initial directory.  We still have
@@ -380,11 +436,20 @@ dump_directory_entry(
 	}
 
 	if (dumping_file_data || dumping_partial_data) {
-		if ((file_fd = open(name, O_RDONLY|SAM_O_LARGEFILE)) < 0) {
-			error(0, errno, catgets(catfd, SET, 13530,
-			    "Unable to open file <%s> to dump data, "
-			    "skipping"), name);
-			goto clean_up;
+		if (SAM_INODE_IS_XATTR(&perm_inode)) {
+			if ((file_fd = openat(dir_fd, component_name, O_RDONLY|SAM_O_LARGEFILE)) < 0) {
+				error(0, errno, catgets(catfd, SET, 13530,
+				    "Unable to open xattr file <%s> to dump data, "
+				    "skipping"), name);
+				goto clean_up;
+			}
+		} else {
+			if ((file_fd = open(name, O_RDONLY|SAM_O_LARGEFILE)) < 0) {
+				error(0, errno, catgets(catfd, SET, 13530,
+				    "Unable to open file <%s> to dump data, "
+				    "skipping"), name);
+				goto clean_up;
+			}
 		}
 	}
 
@@ -476,9 +541,9 @@ dump_directory_entry(
 		goto clean_up;
 	}
 	if (dumping_file_data) {
-		dump_file_data(name, 0, file_fd);
+		dump_file_data(name, 0, file_fd, dir_fd);
 	} else if (dumping_partial_data) {
-		dump_file_data(name, 1, file_fd);
+		dump_file_data(name, 1, file_fd, -1);
 	}
 
 clean_up:
@@ -548,13 +613,13 @@ csd_dump_path(
 	char *path,	/* the directory's pathname */
 	mode_t mode)	/* the mode of the file in path, if "initial" */
 {
-	int					dir_fd;
-	int					initial = 0;
-	char				*name_append_point;
-	char				*dirname;
-	char				*filename = NULL;
-	char				*last_slash;
-	char				*start_ptr;
+	int			dir_fd;
+	int			initial = 0;
+	char			*name_append_point;
+	char			*dirname;
+	char			*filename = NULL;
+	char			*last_slash;
+	char			*start_ptr;
 	struct sam_stat		statb;
 	struct sam_dirent	*dirent;
 	int			next_inode, num_inodes, max_inodes = 10000;
@@ -611,7 +676,11 @@ csd_dump_path(
 	/*
 	 * open the directory
 	 */
-	dir_fd = samopendir(dirname);
+	if (S_ISXATTR(mode)) {
+		dir_fd = samattropen(dirname);
+	} else {
+		dir_fd = samopendir(dirname);
+	}
 	if (dir_fd < 0) {
 		BUMP_STAT(errors);
 		BUMP_STAT(errors_dir);
@@ -643,7 +712,7 @@ csd_dump_path(
 			id.ino = statb.st_ino;
 			id.gen = statb.gen;
 			dump_directory_entry(id, dirname, name_append_point,
-			    "");
+			    "", dir_fd);
 		}
 	} else if (statb.st_dev != initial_dev) {
 		return;
@@ -687,7 +756,7 @@ csd_dump_path(
 				 */
 				dump_directory_entry(dirent->d_id,
 				    (char *)dirent->d_name,
-				    name_append_point, path);
+				    name_append_point, path, dir_fd);
 				goto free_names;
 			}
 			/*
@@ -740,7 +809,7 @@ csd_dump_path(
 		for (next_inode = 0; next_inode < num_inodes; next_inode++) {
 			dump_directory_entry(inode_list[next_inode].id,
 			    inode_list[next_inode].name,
-			    name_append_point, path);
+			    name_append_point, path, dir_fd);
 		}
 		if (num_inodes >= max_inodes) {
 			/*
@@ -815,7 +884,7 @@ void	csd_dump_files(
 		}
 		strcpy(name, path);
 		append_point = name + strlen(path);
-		dump_directory_entry(id, p+1, append_point, name);
+		dump_directory_entry(id, p+1, append_point, name, -1);
 	}
 }
 
@@ -921,6 +990,43 @@ process_saved_dir_list(char *dirname)
 		free(path);
 	}
 	if (debugging) {
+		fprintf(stderr, "\nProcess_saved_xadir_list()\n");
+	}
+	while (work_xadir_used > 0) {
+		/* find the beginning of the last name in the saved list */
+		terminal_character = work_xadir + work_xadir_used;
+		for (this_character = terminal_character - 2;
+		    this_character >= work_xadir && *this_character;
+		    this_character--) {
+			/*LINTED empty loop body */
+		}
+		this_character++;
+
+		/* make copy of the name at the end of the worklist */
+		path = (char *)strdup(this_character);
+		if (path == NULL) {
+			error(1, errno,
+			    catgets(catfd, SET, 1892,
+			    "Out of memory for a directory named %s"),
+			    this_character);
+		}
+
+		/* remove that entry from the saved list */
+		work_xadir_used -= Ptrdiff(terminal_character, this_character);
+
+		if (debugging) {
+			fprintf(stderr, "(%d) work_dir_used %d ",
+			    Ptrdiff(terminal_character, work_xadir),
+			    work_xadir_used);
+		}
+
+		/* process that directory name unless it's the initial one */
+		if (strcmp(path, dirname) != 0) {
+			csd_dump_path("recursive", path, XATTR_MODE);
+		}
+		free(path);
+	}
+	if (debugging) {
 		fprintf(stderr, "Process_saved_dir_list()\n");
 	}
 }
@@ -976,9 +1082,12 @@ search_saved_dir_list(char *dir)
 	return (0);
 }
 
+#undef st_atime
+#undef st_mtime
+#undef st_ctime
 
 static void
-dump_file_data(char *name, int partial, int file_fd)
+dump_file_data(char *name, int partial, int file_fd, int dir_fd)
 {
 	struct sam_stat statb;
 	int				name_l;
@@ -987,8 +1096,30 @@ dump_file_data(char *name, int partial, int file_fd)
 		fprintf(stderr, "dump_file_data(%s)\n", name);
 	}
 	if (sam_stat(name, &statb, sizeof (statb)) < 0) {
-		error(1, errno, catgets(catfd, SET, 13506,
-		    "Unable to sam_stat() file %s"), name);
+		if (errno == ENOTDIR) { /* xattr file ? */
+			struct stat sstatb;
+			char *fn_pos = strrchr(name, '/');
+			bzero(&statb, sizeof(struct sam_stat));
+			if ((fn_pos != NULL) && (fstatat(dir_fd, fn_pos+1, &sstatb, AT_SYMLINK_NOFOLLOW) == 0)) {
+				statb.st_mode = sstatb.st_mode;
+				statb.st_ino = sstatb.st_ino;
+				statb.st_dev = sstatb.st_dev;
+				statb.rdev = sstatb.st_rdev;
+				statb.st_nlink = sstatb.st_nlink;
+				statb.st_uid = sstatb.st_uid;
+				statb.st_gid = sstatb.st_gid;
+				statb.st_size = sstatb.st_size;
+				statb.attribute_time = 0;
+				statb.st_atime = 0;
+				statb.st_atime = sstatb.st_atim.tv_sec;
+				statb.st_mtime = sstatb.st_mtim.tv_sec;
+				statb.st_ctime = sstatb.st_ctim.tv_sec;
+				statb.st_blocks = sstatb.st_blocks;
+			} else {
+				error(1, errno, catgets(catfd, SET, 13506,
+				    "Unable to sam_stat() file %s"), name);
+			}
+		}
 	}
 	if (partial != 0) {
 		if (!SS_ISRELEASE_P(statb.attr) || !SS_ISPARTIAL(statb.attr)) {

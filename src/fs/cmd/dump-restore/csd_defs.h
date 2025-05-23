@@ -65,6 +65,7 @@ struct csd_stats	{
 	int	links;		/* No. of symbolic links */
 	int	specials;	/* No. of special files */
 	int	data_files;	/* No. of files with data */
+	int	xattr_files;	/* No. of files with xattr */
 	longlong_t data_dumped;	/* No. of data bytes dumped */
 };
 
@@ -73,6 +74,10 @@ extern struct csd_stats	csd_statistics;
 #define	BUMP_STAT(field) { csd_statistics.field++; }
 
 #define	CSDTMAGIC "ustar"
+
+/* borrowed from sam/fs/inodes.h */
+#define SAM_INO_IS_XATTR(dip2)  ((dip2)->p2flags & P2FLAGS_XATTR)
+#define SAM_INODE_IS_XATTR(ip)  SAM_INO_IS_XATTR(&((ip)->di2))
 
 struct csd_tar {
 	longlong_t	csdt_bytes;		/* file bytes to follow */
@@ -173,7 +178,8 @@ int		get_id(char *path, sam_id_t *id);
 int		is_demo_license(void);
 char	*mode_string(mode_t mode, char str[]);
 int		open_samfs(char *filename);
-int		samopendir(char *dir_name);
+int	samopendir(char *dir_name);
+int	samattropen(char *dir_name);
 void	process_saved_dir_list(char *dirname);
 void	readcheck(void *buffer, size_t size, int msgNum);
 void	read_old_resource_record(struct sam_resource_file *resource,
