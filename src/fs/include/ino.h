@@ -392,6 +392,7 @@ typedef struct sam_disk_inode {
 #define	P2FLAGS_XATTR	0x01
 #define	P2FLAGS_WORM_V2	0x02
 #define	P2FLAGS_PROJID_VALID	0x04
+#define	P2FLAGS_SYSATTR	0x08
 
 typedef struct sam_disk_inode_part2 {
 	sam_id_t		xattr_id;
