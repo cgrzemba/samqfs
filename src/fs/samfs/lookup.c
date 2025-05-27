@@ -1179,7 +1179,7 @@ sam_xattr_mkdir(
 			ASSERT(RW_OWNER_OS(&pip->inode_rwl) == curthread);
 			pip->di2.xattr_id = ip->di.id;
 			TRANS_INODE(mp, pip);
-			sam_mark_ino(pip, (SAM_UPDATED | SAM_CHANGED));
+			sam_mark_ino(pip, SAM_CHANGED);
 			ip->di2.p2flags |= P2FLAGS_XATTR;
 			SAM_ITOV(ip)->v_flag |= V_XATTRDIR;
 			TRANS_INODE(mp, ip);
