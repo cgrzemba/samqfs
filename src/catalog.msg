@@ -1621,6 +1621,8 @@ $ 7147 ** NOT USED ** Set trace options
 7193 Release eq and mark files offline
 7194 Set filename casesensitivity off
 7195 Set filename casesensitivity on (default)
+7196 Enable xattr (default)
+7197 Disable xattr
 
 $  samu display help screen   (7200s)
 $ ===================================================================
