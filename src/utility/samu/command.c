@@ -195,6 +195,14 @@ static struct {
 		"eq", 7195, "Set filename casesensitivity on (default)"
 	},
 	{
+		"xattr", QFS_STANDALONE, 1, CmdSetFsConfig, 0, 7110,
+		"eq", 7196, "Enable xattr (default)"
+	},
+	{
+		"noxattr", QFS_STANDALONE, 1, CmdSetFsConfig, 0, 7110,
+		"eq", 7197, "disable xattr"
+	},
+	{
 		"", QFS_STANDALONE, 0, NULL, 0, 0, "",
 		7051, "File System commands - SAM:"
 	},

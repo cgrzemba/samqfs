@@ -1531,15 +1531,21 @@ sam_set_fsconfig(
 			case offsetof(struct sam_fs_info, fi_config1):
 				mp->mt.fi_config1 &= ~args.sp_mask;
 				mp->mt.fi_config1 |= args.sp_value;
+				if (mp->mi.m_vfsp == NULL) break;
+				vfs_t *vfsp = mp->mi.m_vfsp;
 				if (args.sp_mask & MC_CI) {
-					vfs_t *vfsp = mp->mi.m_vfsp;
-					if (vfsp == NULL) break;
 				        if (mp->mt.fi_config1 & MC_CI) {
 						vfs_set_feature(vfsp, VFSFT_CASEINSENSITIVE);
 					} else {
 						vfs_clear_feature(vfsp, VFSFT_CASEINSENSITIVE);
 					}
-
+				}
+				if (args.sp_mask & MC_NOXATTR) {
+				        if (mp->mt.fi_config1 & MC_NOXATTR) {
+						vfs_clear_feature(vfsp, VFSFT_XVATTR);
+					} else {
+						vfs_set_feature(vfsp, VFSFT_XVATTR);
+					}
 				}
 				break;
 			case offsetof(struct sam_fs_info, fi_mflag):
