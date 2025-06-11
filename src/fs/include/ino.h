@@ -394,11 +394,27 @@ typedef struct sam_disk_inode {
 #define	P2FLAGS_PROJID_VALID	0x04
 #define	P2FLAGS_SYSATTR	0x08
 
+#define SA_READONLY		0x0001
+#define SA_HIDDEN		0x0002
+#define SA_SYSTEM		0x0004
+#define SA_ARCHIVE		0x0008	/* not used, use sam flags */
+#define SA_IMMUTABLE		0x0010	/* not used, use sam flags */
+#define SA_NOUNLINK		0x0020
+#define SA_APPENDONLY		0x0040
+#define SA_NODUMP		0x0080
+#define SA_OPAQUE		0x0100
+#define SA_AV_QUARANTINED	0x0200
+#define SA_AV_MODIFIED		0x0400
+#define SA_REPARSE		0x0800
+#define SA_OFFLINE		0x1000	/* not used, use sam flags */
+#define SA_SPARSE		0x2000
+#define SA_PROJINHERIT		0x4000
+
 typedef struct sam_disk_inode_part2 {
 	sam_id_t		xattr_id;
 	uchar_t			pad1[8];
 	projid_t		projid;			/* project ID */
-	uchar_t			pad2[2];
+	uint16_t		s_pflags;
 	uchar_t			objtype;		/* object type */
 	uchar_t			p2flags;
 	sam_time_t		rperiod_start_time;		/* WORM */

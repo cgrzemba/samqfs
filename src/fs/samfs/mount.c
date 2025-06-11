@@ -1327,6 +1327,7 @@ sam_set_mount(sam_mount_t *mp)
 		if(mp->mt.fi_config & MT_NBMAND) {
 			vfs_setmntopt(vfsp, MNTOPT_NBMAND, NULL, 0);
 		}
+		vfs_set_feature(vfsp, VFSFT_SYSATTR_VIEWS);
 		if (mp->mt.fi_config1 & MC_NOXATTR) {
 			vfs_clear_feature(vfsp, VFSFT_XVATTR);
 		} else {

@@ -1160,6 +1160,8 @@ sam_getattr_vn(
 {
 	sam_node_t *ip;
 	int have_write_lock = 0;
+	xvattr_t *xvap = (xvattr_t *)vap;	/* vap may be an xvattr_t * */
+	xoptattr_t *xoap = NULL;
 
 	ip = SAM_VTOI(vp);
 	if (RW_OWNER_OS(&ip->inode_rwl) == curthread) {
@@ -1218,6 +1220,126 @@ sam_getattr_vn(
 	vap->va_fsid = ip->mp->mi.m_vfsp->vfs_dev;
 	vap->va_nodeid = ip->di.id.ino;		/* Node id */
 	vap->va_nlink = ip->di.nlink;		/* num references to file */
+	/*
+	 * Add in any requested optional attributes and the create time.
+	 * Also set the corresponding bits in the returned attribute bitmap.
+	 */
+       if ((xoap = xva_getxoptattr(xvap)) != NULL) {
+		if (XVA_ISSET_REQ(xvap, XAT_ARCHIVE)) {
+			xoap->xoa_archive =
+			    (ip->di.arch_status == 0);
+			XVA_SET_RTN(xvap, XAT_ARCHIVE);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_READONLY)) {
+			xoap->xoa_readonly =
+			    ((ip->di2.s_pflags & SA_READONLY) != 0);
+			XVA_SET_RTN(xvap, XAT_READONLY);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_SYSTEM)) {
+			xoap->xoa_system =
+			    ((ip->di2.s_pflags & SA_SYSTEM) != 0);
+			XVA_SET_RTN(xvap, XAT_SYSTEM);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_HIDDEN)) {
+			xoap->xoa_hidden =
+			    ((ip->di2.s_pflags & SA_HIDDEN) != 0);
+			XVA_SET_RTN(xvap, XAT_HIDDEN);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_NOUNLINK)) {
+			xoap->xoa_nounlink =
+			    ((ip->di2.s_pflags & SA_NOUNLINK) != 0);
+			XVA_SET_RTN(xvap, XAT_NOUNLINK);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_IMMUTABLE)) {
+			xoap->xoa_immutable =
+			    ip->di.status.b.worm_rdonly;
+			XVA_SET_RTN(xvap, XAT_IMMUTABLE);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_APPENDONLY)) {
+			xoap->xoa_appendonly =
+			    ((ip->di2.s_pflags & SA_APPENDONLY) != 0);
+			XVA_SET_RTN(xvap, XAT_APPENDONLY);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_NODUMP)) {
+			xoap->xoa_nodump =
+			    ((ip->di2.s_pflags & SA_NODUMP) != 0);
+			XVA_SET_RTN(xvap, XAT_NODUMP);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_OPAQUE)) {
+			xoap->xoa_opaque =
+			    ((ip->di2.s_pflags & SA_OPAQUE) != 0);
+			XVA_SET_RTN(xvap, XAT_OPAQUE);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_AV_QUARANTINED)) {
+			xoap->xoa_av_quarantined =
+			    ((ip->di2.s_pflags & SA_AV_QUARANTINED) != 0);
+			XVA_SET_RTN(xvap, XAT_AV_QUARANTINED);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_AV_MODIFIED)) {
+			xoap->xoa_av_modified =
+			    ((ip->di2.s_pflags & SA_AV_MODIFIED) != 0);
+			XVA_SET_RTN(xvap, XAT_AV_MODIFIED);
+		}
+
+#if 0
+		if (XVA_ISSET_REQ(xvap, XAT_AV_SCANSTAMP) &&
+		    vp->v_type == VREG) {
+			zfs_sa_get_scanstamp(zp, xvap);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_CREATETIME)) {
+			uint64_t times[2];
+
+			(void) sa_lookup(zp->z_sa_hdl, SA_ZPL_CRTIME(zfsvfs),
+			    times, sizeof (times));
+			SA_TIME_DECODE(&xoap->xoa_createtime, times);
+			XVA_SET_RTN(xvap, XAT_CREATETIME);
+		}
+#endif
+
+		if (XVA_ISSET_REQ(xvap, XAT_REPARSE)) {
+			xoap->xoa_reparse = ((ip->di2.s_pflags & SA_REPARSE) != 0);
+			XVA_SET_RTN(xvap, XAT_REPARSE);
+		}
+		if (XVA_ISSET_REQ(xvap, XAT_GEN)) {
+			xoap->xoa_generation = ip->di.id.gen;
+			XVA_SET_RTN(xvap, XAT_GEN);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_OFFLINE)) {
+			xoap->xoa_offline =
+			    ip->di.status.b.offline;
+			XVA_SET_RTN(xvap, XAT_OFFLINE);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_SPARSE)) {
+			xoap->xoa_sparse =
+			    ((ip->di2.s_pflags & SA_SPARSE) != 0);
+			XVA_SET_RTN(xvap, XAT_SPARSE);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_PROJINHERIT)) {
+			xoap->xoa_projinherit =
+			    ((ip->di2.s_pflags & SA_PROJINHERIT) != 0);
+			XVA_SET_RTN(xvap, XAT_PROJINHERIT);
+		}
+
+		if (XVA_ISSET_REQ(xvap, XAT_PROJID)) {
+			xoap->xoa_projid = ip->di2.projid;
+			XVA_SET_RTN(xvap, XAT_PROJID);
+		}
+	}
+
 	/*
 	 * Return inode times: last access, last modification, & inode changed.
 	 * If the WORM bit is set on a file then this is a request to translate
@@ -2519,6 +2641,11 @@ sam_pathconf_vn(
 			*valp = 0;
 			return (0);
 		}
+	case _PC_SATTR_ENABLED:
+	case _PC_SATTR_EXISTS:
+	        *valp = vfs_has_feature(vp->v_vfsp, VFSFT_SYSATTR_VIEWS) &&
+	            (vp->v_type == VREG || vp->v_type == VDIR);
+	        return (0);
 		/* NOTREACHED */
 		break;
 	}
