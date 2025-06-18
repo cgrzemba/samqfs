@@ -190,6 +190,7 @@ of cache is %d bytes
 228 %s: Cannot read resource file.
 229 %s: cannot sam_stat
 230 %s: cannot sam_stat()
+231 %s: Cannot xattr read directory
 237 %s: ejected_media: equipment %s: not present.\n
 238 %s: ejected_media: equipment %s: out of range.\n
 240 %s: ** NOT USED **  File is now damaged

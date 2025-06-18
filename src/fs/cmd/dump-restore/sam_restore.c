@@ -87,20 +87,39 @@ static csd_hardtbl_t *hardp = NULL;
 
 static char *_SrcFile = __FILE__;
 
-# define XA_CNT 4
-const char *fn_xattr[XA_CNT]  =
-	    {"user.DOSATTRIB", "user.SUNWattr_rw", "user.SUNWattr_ro", "user.SUNWcksum"};
-const int sl[XA_CNT] = {14, 16, 16, 14};
-boolean_t
-is_xattr(const char* path) {
+# define XA_CNT 2
+/* these files should never be dumped because these have the inode numers 1,2 */
+const char *fn_sattr[XA_CNT]  =
+	    {"user.SUNWattr_rw", "user.SUNWattr_ro"};
+const int sattr_sl[XA_CNT] = {16, 16};
 
+const char *fn_xattr[XA_CNT]  =
+	    {"user.DOSATTRIB", "user.SUNWcksum"};
+const int xattr_sl[XA_CNT] = {14, 14};
+
+boolean_t
+is_sattr(const char* path) {
 	if (csd_version < 7)
 		return false;
 	size_t len = strlen(path);
 	if (len < 18)
 		return false;
 	for (int i = 0; i < XA_CNT; i++) {
-		if (memcmp(fn_xattr[i], path + len - sl[i], sl[i]) == 0)
+		if (memcmp(fn_sattr[i], path + len - sattr_sl[i], sattr_sl[i]) == 0)
+			return true;
+	}
+	return false;
+}
+
+boolean_t
+is_xattr(const char* path) {
+	if (csd_version < 7)
+		return false;
+	size_t len = strlen(path);
+	if (len < 18)
+		return false;
+	for (int i = 0; i < XA_CNT; i++) {
+		if (memcmp(fn_xattr[i], path + len - xattr_sl[i], xattr_sl[i]) == 0)
 			return true;
 	}
 	return false;
@@ -230,6 +249,9 @@ cs_restore(
 			}
 		}
 		/* early jump out if wellknown filename */
+		/* never restore syntetic files SUNWattr_ro, _rw */
+		if (is_sattr(name_compare))
+			goto skip_file;
 		if (skip_xattr && is_xattr(name_compare))
 			goto skip_file;
 
