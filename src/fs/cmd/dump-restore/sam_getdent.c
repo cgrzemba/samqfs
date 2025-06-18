@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/dirent.h>
+#include <strings.h>
 #include <pub/stat.h>
 #include <sam/uioctl.h>
 #include <unistd.h>
@@ -56,6 +57,10 @@
 #include "csd_defs.h"
 
 extern boolean debugging;
+
+#ifndef SAM_MIN_USER_INO
+#define SAM_MIN_USER_INO 1025
+#endif
 
 static void dump_dirent(int i, struct sam_dirent dirent);
 
@@ -89,6 +94,7 @@ sam_getdents(
 static int n_valid = 0;		/* dirbuf[0..n_valid] are valid info */
 static int offset = 0;		/* current offset in directory */
 static int dir_fd = -1;		/* the fd on which the directory is open */
+static int is_xattr = 0;
 
 #define	DIRBUF_SIZE 10240
 static char *dirbuf = NULL;
@@ -99,11 +105,13 @@ samattropen(char *dir_name)
 {
 	if (dir_fd >= 0) {
 		(void) close(dir_fd);
+		is_xattr = 0;
 	}
 
 	dir_fd = attropen(dir_name, ".", O_RDONLY);
 	offset = 0;		/* flag sam_getdents to start at beginning */
 	n_valid = 0;		/* flag sam_getdent to read up buffer */
+	is_xattr = 1;
 
 	saved_dir_name = dir_name;
 	return (dir_fd);
@@ -114,6 +122,7 @@ samopendir(char *dir_name)
 {
 	if (dir_fd >= 0) {
 		(void) close(dir_fd);
+		is_xattr = 0;
 	}
 
 	/* no need for SAM_O_LARGEFILE here, directories always < 2GB */
@@ -132,15 +141,70 @@ static struct sam_dirent *current;
  *
  * Using buffers, get the next entry from the currently open directory
  */
+
+/* for xattr directory use generic getdents, there is no ioctl for getdents */
+static int
+sam_getdents_gen(struct sam_dirent *dirent) {
+	int size;
+	struct dirent *direntbuf;
+
+	direntbuf = (struct dirent *)malloc(DIRBUF_SIZE);
+	if (direntbuf == NULL) {
+		BUMP_STAT(errors);
+		BUMP_STAT(errors_dir);
+		error(0, errno,
+		    catgets(catfd, SET, 605,
+		    "Cannot malloc space for reading directory %s"),
+		    saved_dir_name);
+	}
+	bzero((void*)dirent, DIRBUF_SIZE);
+	size = getdents(dir_fd, direntbuf, DIRBUF_SIZE);
+	if (size > 0) {
+		struct dirent *dp = direntbuf;
+		struct sam_dirent *sdp = dirent;
+		uint16_t namlen;
+		int n_valid = 0;
+
+		while(dp->d_reclen > 0 && dp < direntbuf+size) {
+			if (dp->d_ino >= SAM_MIN_USER_INO) { /* skip system inodes */
+				sdp->d_fmt = 0x4000;
+				namlen = strlen(dp->d_name);
+				sdp->d_namlen = namlen;
+				sdp->d_reclen = SAM_DIRSIZ(sdp);
+				n_valid += sdp->d_reclen;
+				sdp->d_id.ino = dp->d_ino;
+				bcopy(dp->d_name, sdp->d_name, namlen+1);
+			}
+			sdp = (struct sam_dirent *)(((char*) sdp) + sdp->d_reclen);
+			dp = (struct dirent *)(((char*) dp) + dp->d_reclen);
+		}
+		free(direntbuf);
+		return (n_valid);
+	} else if (size == 0) {
+		free(direntbuf);
+		return (0);
+	}
+	free(direntbuf);
+	BUMP_STAT(errors);
+	BUMP_STAT(errors_dir);
+	error(0, errno,
+	    catgets(catfd, SET, 226,
+	    "%s: Cannot read xattr directory"),
+	    saved_dir_name);
+	return (-1);	/* Error */
+}
+
 int
 sam_getdent(struct sam_dirent **dirent)
 {
 	int size;
 
+
 	if (dirbuf == NULL) {
 		n_valid = 0;
 		offset = 0;
 		dirbuf = (char *)malloc(DIRBUF_SIZE);
+		bzero(dirbuf, DIRBUF_SIZE);
 		if (dirbuf == NULL) {
 			BUMP_STAT(errors);
 			BUMP_STAT(errors_dir);
@@ -152,8 +216,12 @@ sam_getdent(struct sam_dirent **dirent)
 	}
 	do {
 		if (n_valid == 0) {
-			n_valid = sam_getdents(dir_fd, dirbuf, &offset,
-			    DIRBUF_SIZE);
+			if (is_xattr)
+				n_valid = sam_getdents_gen((struct sam_dirent *)(void *)
+				    &dirbuf[0]);
+			else
+				n_valid = sam_getdents(dir_fd, dirbuf, &offset,
+				    DIRBUF_SIZE);
 			if (n_valid < 0) {
 				BUMP_STAT(errors);
 				BUMP_STAT(errors_dir);

@@ -246,6 +246,20 @@ dump_directory_entry(
 	}
 
 	/* Stat the file.  We know the "id" from the directory entry. */
+	if (id.gen == 0) {
+		struct sam_ioctl_inode idino;
+
+		idino.ino = id.ino;
+		idino.mode = 0;
+		idino.ip.ptr = NULL;
+		idino.pip.ptr = &perm_inode;
+		if (ioctl(SAM_fd, F_RDINO, &idino) < 0) {
+			error(0, errno, catgets(catfd, SET, 13245,
+			    "%s: cannot F_RDINO, %d"), name, idino.ino);
+			return;
+                }
+		id.gen = perm_inode.di.id.gen;
+	}
 	idstat.id	  = id;
 	idstat.size   = sizeof (perm_inode);
 	idstat.dp.ptr = (void *)&perm_inode;
@@ -437,7 +451,8 @@ dump_directory_entry(
 
 	if (dumping_file_data || dumping_partial_data) {
 		if (SAM_INODE_IS_XATTR(&perm_inode)) {
-			if ((file_fd = openat(dir_fd, component_name, O_RDONLY|SAM_O_LARGEFILE)) < 0) {
+			if ((file_fd = openat(dir_fd, component_name,
+			    O_RDONLY|SAM_O_LARGEFILE)) < 0) {
 				error(0, errno, catgets(catfd, SET, 13530,
 				    "Unable to open xattr file <%s> to dump data, "
 				    "skipping"), name);
@@ -689,6 +704,7 @@ csd_dump_path(
 		return;
 	}
 	if (sam_stat(dirname, &statb, sizeof (statb)) < 0) {
+		BUMP_STAT(errors);
 		error(1, errno, catgets(catfd, SET, 13506,
 		    "Unable to sam_stat() file %s"), dirname);
 	}
@@ -737,6 +753,8 @@ csd_dump_path(
 			if (dirent->d_id.ino == SAM_INO_INO ||
 			    dirent->d_id.ino == SAM_HOST_INO ||
 			    dirent->d_id.ino == SAM_ARCH_INO ||
+			    (dirent->d_id.ino == SAM_ROOT_INO &&
+			    dirent->d_id.gen != SAM_ROOT_INO ) ||
 			    (dirent->d_id.ino == SAM_STAGE_INO &&
 			    dirent->d_id.gen == SAM_STAGE_INO &&
 			    strcmp((char *)dirent->d_name, ".stage") == 0)) {
@@ -744,7 +762,8 @@ csd_dump_path(
 			}
 
 			if (strcmp((const char *)dirent->d_name, "..") == 0 ||
-			    strcmp((const char *)dirent->d_name, ".") == 0) {
+			    strcmp((const char *)dirent->d_name, ".") == 0 ||
+			    strcmp((const char *)dirent->d_name, "SUNWattr_rw") == 0) {
 				continue;
 			}
 			if (filename != NULL &&
@@ -952,7 +971,7 @@ process_saved_dir_list(char *dirname)
 	}
 
 	if (debugging) {
-		fprintf(stderr, "Process_saved_dir_list()\n");
+		fprintf(stderr, "process_saved_dir_list()\n");
 	}
 
 	while (work_dir_used > 0) {
@@ -990,7 +1009,7 @@ process_saved_dir_list(char *dirname)
 		free(path);
 	}
 	if (debugging) {
-		fprintf(stderr, "\nProcess_saved_xadir_list()\n");
+		fprintf(stderr, "\nprocess_saved_xadir_list()\n");
 	}
 	while (work_xadir_used > 0) {
 		/* find the beginning of the last name in the saved list */
@@ -1027,7 +1046,7 @@ process_saved_dir_list(char *dirname)
 		free(path);
 	}
 	if (debugging) {
-		fprintf(stderr, "Process_saved_dir_list()\n");
+		fprintf(stderr, "process_saved_dir_list()\n");
 	}
 }
 
@@ -1100,7 +1119,8 @@ dump_file_data(char *name, int partial, int file_fd, int dir_fd)
 			struct stat sstatb;
 			char *fn_pos = strrchr(name, '/');
 			bzero(&statb, sizeof(struct sam_stat));
-			if ((fn_pos != NULL) && (fstatat(dir_fd, fn_pos+1, &sstatb, AT_SYMLINK_NOFOLLOW) == 0)) {
+			if ((fn_pos != NULL) &&
+			    (fstatat(dir_fd, fn_pos+1, &sstatb, AT_SYMLINK_NOFOLLOW) == 0)) {
 				statb.st_mode = sstatb.st_mode;
 				statb.st_ino = sstatb.st_ino;
 				statb.st_dev = sstatb.st_dev;
@@ -1116,6 +1136,7 @@ dump_file_data(char *name, int partial, int file_fd, int dir_fd)
 				statb.st_ctime = sstatb.st_ctim.tv_sec;
 				statb.st_blocks = sstatb.st_blocks;
 			} else {
+				BUMP_STAT(errors);
 				error(1, errno, catgets(catfd, SET, 13506,
 				    "Unable to sam_stat() file %s"), name);
 			}
