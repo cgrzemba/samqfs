@@ -287,7 +287,7 @@ typedef struct sam_sbinfo {
 #define	SBLK_OPTV1_LITE_WORM	(SBLK_OPTV1_WORM_LITE|			\
 					SBLK_OPTV1_EMUL_LITE)
 #define	SBLK_ALL_OPTV1	(SBLK_OPTV1_ALL_WORM|SBLK_OPTV1_CONV_WORMV2|	\
-	SBLK_OPTV1_LG_HOSTS)
+	SBLK_OPTV1_LG_HOSTS|SBLK_OPTV1_XATTR)
 
 #define	SBLK_UPDATE(sb, ip)						\
 		((((sb)->opt_mask & SBLK_OPTV1_ALL_WORM) == 0) ||	\

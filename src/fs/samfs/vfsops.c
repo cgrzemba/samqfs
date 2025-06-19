@@ -87,7 +87,7 @@
 extern int ncsize;
 extern int sam_max_blkd_frlock;
 
-static int sam_xattr = 0;		/* Extended attributes */
+int sam_xattr = 1;		/* Extended attributes */
 
 extern int sam_freeze_ino(sam_mount_t *mp, sam_node_t *ip, int force_freeze);
 static int sam_clients_mounted(sam_mount_t *mp);

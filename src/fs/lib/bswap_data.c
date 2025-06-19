@@ -362,6 +362,7 @@ struct swap_descriptor sam_disk_inode_swap_descriptor[] = {
 struct swap_descriptor sam_disk_inode_part2_swap_descriptor[] = {
 	{ 0, 4, 2 },
 	{ 16, 4, 1 },
+	{ 20, 2, 1 },
 	{ 24, 4, 2 },
 	{ 32, 0, 0 },
 };
@@ -417,6 +418,7 @@ struct swap_descriptor sam_ino_record_swap_descriptor[] = {
 	{ 184, 4, 23 },
 	{ 296, 4, 2 },
 	{ 312, 4, 1 },
+	{ 316, 2, 1 },
 	{ 320, 4, 2 },
 	{ 328, 0, 0 },
 };
@@ -634,6 +636,7 @@ struct swap_descriptor sam_perm_inode_swap_descriptor[] = {
 	{ 428, 4, 5 },
 	{ 480, 4, 2 },
 	{ 496, 4, 1 },
+	{ 500, 2, 1 },
 	{ 504, 4, 2 },
 	{ 512, 0, 0 },
 };
@@ -733,6 +736,7 @@ struct swap_descriptor sam_san_callout_swap_descriptor[] = {
 	{ 208, 4, 23 },
 	{ 320, 4, 2 },
 	{ 336, 4, 1 },
+	{ 340, 2, 1 },
 	{ 344, 4, 2 },
 	{ 352, 0, 0 },
 };
@@ -773,6 +777,7 @@ struct swap_descriptor sam_san_inode2_swap_descriptor[] = {
 	{ 464, 4, 23 },
 	{ 576, 4, 2 },
 	{ 592, 4, 1 },
+	{ 596, 2, 1 },
 	{ 600, 4, 2 },
 	{ 608, 0, 0 },
 };
@@ -824,6 +829,7 @@ struct swap_descriptor sam_san_lease2_swap_descriptor[] = {
 	{ 472, 4, 23 },
 	{ 584, 4, 2 },
 	{ 600, 4, 1 },
+	{ 604, 2, 1 },
 	{ 608, 4, 2 },
 	{ 616, 0, 0 },
 };
@@ -855,6 +861,7 @@ struct swap_descriptor sam_san_name2_swap_descriptor[] = {
 	{ 200, 4, 23 },
 	{ 312, 4, 2 },
 	{ 328, 4, 1 },
+	{ 332, 2, 1 },
 	{ 336, 4, 2 },
 	{ 344, 8, 1 },
 	{ 352, 4, 2 },
@@ -869,6 +876,7 @@ struct swap_descriptor sam_san_name2_swap_descriptor[] = {
 	{ 528, 4, 23 },
 	{ 640, 4, 2 },
 	{ 656, 4, 1 },
+	{ 660, 2, 1 },
 	{ 664, 4, 2 },
 	{ 792, 0, 0 },
 };

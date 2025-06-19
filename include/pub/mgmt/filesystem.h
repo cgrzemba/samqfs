@@ -208,6 +208,7 @@ typedef struct rel_5_0_options {
 typedef struct rel_5_64_options {
 	uint32_t	change_flag;
 	boolean_t	casesense;	/* casesensitivity */
+	boolean_t	nbmand;	/* nbmand locking */
 } rel_5_64_options_t;
 
 /*

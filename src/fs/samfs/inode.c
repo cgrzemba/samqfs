@@ -558,6 +558,12 @@ sam_set_rperiod(
 	return (error);
 }
 
+#define SA_ATTR_SET(ip, sa_bit, xoa_bit) \
+	if (xoa_bit) \
+		ip->di2.s_pflags |= sa_bit;\
+	else \
+		ip->di2.s_pflags &= ~sa_bit;
+
 
 /*
  * ----- sam_setattr_ino - Set attributes call.
@@ -583,6 +589,7 @@ sam_setattr_ino(
 	oldva.va_gid = ip->di.gid;
 
 	vp = SAM_ITOV(ip);
+	/* check unsetable attributes */
 	if (vap->va_mask & AT_NOSET) {
 		return (EINVAL);
 	}
@@ -880,6 +887,38 @@ sam_setattr_ino(
 				ip->flags.b.dirty = 1;
 			}
 			TRANS_INODE(ip->mp, ip);
+		}
+	}
+	if (mask & AT_XVATTR) {
+		xvattr_t *xvap = (xvattr_t *) vap;
+		xoptattr_t *xoap;
+
+		/*
+		 * Currently is implemented only the setting of a subset of SA
+		 * others may follow later
+		 */
+		xoap = xva_getxoptattr(xvap);
+		if (xoap != NULL) {
+			if (XVA_ISSET_REQ(xvap, XAT_NODUMP)) {
+				SA_ATTR_SET(ip, SA_NODUMP, xoap->xoa_nodump);
+				XVA_SET_RTN(xvap, XAT_NODUMP);
+			}
+			if (XVA_ISSET_REQ(xvap, XAT_SYSTEM)) {
+				SA_ATTR_SET(ip, SA_SYSTEM, xoap->xoa_nodump);
+				XVA_SET_RTN(xvap, XAT_SYSTEM);
+			}
+			if (XVA_ISSET_REQ(xvap, XAT_AV_QUARANTINED)) {
+				SA_ATTR_SET(ip, SA_AV_QUARANTINED, xoap->xoa_av_quarantined);
+				XVA_SET_RTN(xvap, XAT_AV_QUARANTINED);
+			}
+			if (XVA_ISSET_REQ(xvap, XAT_AV_MODIFIED)) {
+				SA_ATTR_SET(ip, SA_AV_MODIFIED, xoap->xoa_av_modified);
+				XVA_SET_RTN(xvap, XAT_AV_MODIFIED);
+			}
+			if (XVA_ISSET_REQ(xvap, XAT_PROJINHERIT)) {
+				SA_ATTR_SET(ip, SA_PROJINHERIT, xoap->xoa_projinherit);
+				XVA_SET_RTN(xvap, XAT_PROJINHERIT);
+			}
 		}
 	}
 

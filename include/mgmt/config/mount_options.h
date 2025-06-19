@@ -221,6 +221,8 @@ static struct fieldFlag mp_xattr = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_noxattr = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_ci = { (uint32_t)B_TRUE, "off", "on", "off" };
 static struct fieldFlag mp_noci = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_nbmand = { (uint32_t)B_TRUE, "off", "on", "off" };
+static struct fieldFlag mp_nonbmand = { (uint32_t)B_TRUE, "off", "on", "off" };
 static int mount_params_defbits;
 
 static struct fieldVals cfg_mount_params[] = {
@@ -553,11 +555,11 @@ static struct fieldVals cfg_mount_params[] = {
 { "nosam_db", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
 	offsetof(struct rel_5_0_options, sam_db), &mp_nosam_db,
 	MNT_NOSAM_DB},
-{ "xattr", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
-	offsetof(struct rel_5_0_options, xattr), &mp_xattr,
+{ "noxattr", SETFLAG, offsetof(struct mount_options, rel_5_0_opts) +
+	offsetof(struct rel_5_0_options, xattr), &mp_noxattr,
 	MNT_XATTR},
 { "xattr", CLEARFLAG, offsetof(struct mount_options, rel_5_0_opts) +
-	offsetof(struct rel_5_0_options, xattr), &mp_noxattr,
+	offsetof(struct rel_5_0_options, xattr), &mp_xattr,
 	MNT_NOXATTR},
 
 /* 5.64 opts defbits line */
@@ -582,7 +584,7 @@ static struct fieldVals cfg_mount_params[] = {
  * is important for the implementation of vfstab mount options and is used
  * to determine if either the flag or its pair has been set in the vfstab.
  */
-static int32_t flag_pairs[110] = {
+static int32_t flag_pairs[112] = {
 	/* general paired flags */
 	0, 0, MNT_SUID, MNT_NOSUID, MNT_NOTRACE,
 	MNT_TRACE, 0, 0, MNT_NOQUOTA, MNT_QUOTA,

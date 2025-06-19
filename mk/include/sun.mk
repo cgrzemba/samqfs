@@ -49,7 +49,7 @@ OS_RELEASE_MINOR := $(shell uname -v | gawk -F. '{if($$1==11) print $$2; else pr
 OS_DIST := $(shell uname -v | gawk -F. '{if($$1==11) print "oracle"; else {split($$0,a,"-"); print a[1];};}')
 
 # kernel module version
-MODULE_VERSION = 1.2
+MODULE_VERSION = 1.4
 
 #
 # set sparc/i386 specific options
@@ -79,7 +79,8 @@ ifeq ($(PLATFORM), i386)
 		$(error "Unknown Solaris version $(OS_REVISION)")
 		endif
 		endif
-		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding
+		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding -fno-inline-small-functions -fno-inline-functions-called-once
+
 	else
 		ISA_TARGET := i386
 		PLATFLAGS += -m32
