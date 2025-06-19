@@ -79,7 +79,8 @@ ifeq ($(PLATFORM), i386)
 		$(error "Unknown Solaris version $(OS_REVISION)")
 		endif
 		endif
-		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding
+		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding -fno-inline-small-functions -fno-inline-functions-called-once
+
 	else
 		ISA_TARGET := i386
 		PLATFLAGS += -m32
