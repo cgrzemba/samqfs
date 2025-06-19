@@ -422,6 +422,12 @@ sam_stat_file(int cmd, void *arg)
 		return (error);
 	}
 
+	/* systemattr file SUNWattr_ro,SUNWattr_rw */
+	if (vp->v_flag & V_SYSATTR) {
+		error = EINVAL;
+		return(error);
+	}
+
 	if (sam_set_realvp(vp, &rvp)) {		/* true if realvp not SAM-QFS */
 		error = sam_proc_foreign_stat(vp, cmd, &args, CRED());
 	} else {
@@ -596,6 +602,11 @@ sam_proc_stat(
 
 	bzero((caddr_t)&sb, sizeof (sb));
 
+	/* systemattr file SUNWattr_ro,SUNWattr_rw */
+	if (vp->v_flag & V_SYSATTR) {
+		error = EINVAL;
+		return(error);
+	}
 #ifdef sun
 	ip = SAM_VTOI(vp);
 #endif /* sun */
