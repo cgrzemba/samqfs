@@ -463,6 +463,8 @@ sam_lookup_vn(
 			}
 			RW_UNLOCK_OS(&ip->inode_rwl, RW_WRITER);
 		}
+		if ((flags & FIGNORECASE) && rpnp)
+			(void) strlcpy(rpnp->pn_buf, cp, rpnp->pn_bufsize);
 		TRACE(T_SAM_LOOKUP_RET, pvp, (sam_tr_t)*vpp, ip->di.id.ino,
 		    ip->di.nlink);
 	} else {
