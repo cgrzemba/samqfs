@@ -66,6 +66,20 @@ ifeq ($(PLATFORM), sparc)
 	endif
 	KERNFLAGS := -xregs=no%float
 endif
+
+CCNOAUTOINLINE= \
+        -fno-inline-small-functions \
+        -fno-inline-functions-called-once \
+        -fno-ipa-cp \
+        -fno-ipa-icf \
+        -fno-clone-functions
+
+CCNOREORDER= \
+	-fno-reorder-functions \
+	-fno-reorder-blocks-and-partition
+
+CCNOAGGRESSIVELOOPS= -fno-aggressive-loop-optimizations
+
 ifeq ($(PLATFORM), i386)
 	ifeq ($(AMD64), yes)
 		64DIR := /amd64
@@ -79,7 +93,7 @@ ifeq ($(PLATFORM), i386)
 		$(error "Unknown Solaris version $(OS_REVISION)")
 		endif
 		endif
-		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding -fno-inline-small-functions -fno-inline-functions-called-once
+		KERNFLAGS := -mtune=opteron -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msave-args -ffreestanding $(CCNOAUTOINLINE) $(CCNOREORDER) $(CCNOAGGRESSIVELOOPS)
 
 	else
 		ISA_TARGET := i386
