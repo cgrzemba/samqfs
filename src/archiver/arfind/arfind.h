@@ -76,7 +76,7 @@
 /*
  * Where to put the segmented file size in a data segment inode.
  */
-#define	SEGFILE_SIZE(d) (offset_t *)(void *)&((d)->extent[0])
+#define	SEGFILE_SIZE(d) &((d)->extent[0])
 
 /*
  * Which examination method or file system upcall is being used to examine
