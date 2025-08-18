@@ -389,7 +389,7 @@ dismount(
 	mutex_unlock(&library->transports->mutex);
 
 	sprintf(chr_driveid, "%#x", *(U_ID(stk_info->drive_id)));
-	sprintf(mess, "stk_dismount(%d) %d,%d,%d,%d, %d volser %s",
+	sprintf(mess, "stk_dismount(%d) %d %d,%d,%d,%d volser %s",
 	    sequ_no, getEq(library, stk_info), DRIVE_LOC(stk_info->drive_id),
 	    stk_info->vol_id.external_label);
 	if (DBG_LVL(SAM_DBG_DEBUG))
