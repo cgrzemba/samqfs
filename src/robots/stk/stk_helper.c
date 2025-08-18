@@ -693,6 +693,10 @@ doit(
 		cond_signal(&message->cond_r);
 		mutex_unlock(&message->mutex);
 	}
+
+	if (DBG_LVL(SAM_DBG_TIME))
+		sam_syslog(LOG_INFO, "ETIME: %s(%d): %d seconds.", cmd, sequence,
+		    (int)(time(NULL) - start));
 }
 
 
