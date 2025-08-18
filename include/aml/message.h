@@ -241,7 +241,7 @@ typedef struct sef_request {
  * src/robots/stk/stk_includes/api/structs_api.h
  */
 typedef struct {
-	char		drive_id[4];
+	char		drive_id[4]; 	/* (acs, lsm, panel, drive) */
 	char		vol_id[7];
 	char		drive_type;
 	int		state;
