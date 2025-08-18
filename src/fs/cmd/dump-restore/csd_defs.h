@@ -75,10 +75,6 @@ extern struct csd_stats	csd_statistics;
 
 #define	CSDTMAGIC "ustar"
 
-/* borrowed from sam/fs/inodes.h */
-#define SAM_INO_IS_XATTR(dip2)  ((dip2)->p2flags & (P2FLAGS_XATTR|P2FLAGS_SYSATTR))
-#define SAM_INODE_IS_XATTR(ip)  SAM_INO_IS_XATTR(&((ip)->di2))
-
 struct csd_tar {
 	longlong_t	csdt_bytes;		/* file bytes to follow */
 	char		*csdt_name;		/* name */

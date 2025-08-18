@@ -131,6 +131,9 @@ ClassifyFile(
 		return (NULL);
 	}
 
+	/* do not archive XATTR files and directories, will be dumped */
+	if (SAM_INODE_IS_XATTR(pinode))
+		return (NULL);
 	/*
 	 * Regular files and symbolic links.
 	 * Search for matching file properties.
