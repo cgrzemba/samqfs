@@ -748,10 +748,10 @@ parse_drives(
 	char 	*line, *tmp;
 	char	*ent_ptr = "parse_drives";
 	FILE	*open_str;
-	DRIVE	acs_drive;
-	PANEL	acs_panel;
-	LSM		acs_lsm;
-	ACS		acs_acs;
+	DRIVE	acs_drive = 0xff;
+	PANEL	acs_panel = 0xff;
+	LSM		acs_lsm = 0xff;
+	ACS		acs_acs = 0xff;
 
 	if ((open_str = fopen(un->name, "r")) == NULL) {
 		sam_syslog(LOG_CRIT, catgets(catfd, SET, 9117,
