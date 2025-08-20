@@ -6,9 +6,7 @@ This is the source of Sun SamFS released to opensource 2008. The source it adapt
 
 needed packages:
 
--    perl
--    developer/gcc-10
--    system/network/avahi
+-    developer/gcc-14
 -    developer/build/onbld
 -    text/locale
 -    bison
@@ -16,7 +14,7 @@ needed packages:
 
 ## Customize for illumos and OmniOS
 
-check files in 
+check files for used versions
 
     mk/include/omnios.mk
     mk/include/illumos.mk
@@ -25,7 +23,12 @@ check files in
 
     $ gmake -f GNUmakefile
 
-for non debug builds add 'DEBUG=no'  
+for debug builds add 'DEBUG=yes'  
 ## Install
 
     $ gmake -f GNUmakefile install DESTDIR=$(PROTO_DIR)
+
+for build IPS package
+
+    $ gmake -f GNUmakefile pkg
+
