@@ -1,0 +1,1274 @@
+From 20f3bf8260258208c086134d4ac4a09622edd799 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Mon, 13 Nov 2023 14:23:01 +0100
+Subject: [PATCH 3/8] modify build environment
+
+---
+ Makefile              | 20 +++++++++----
+ acsapi/Makefile       | 40 +++++++++++++++-----------
+ acsipc/Makefile       | 41 ++++++++++++++++-----------
+ acsutl/Makefile       | 32 ++++++++++++---------
+ client/Makefile       | 34 +++++++++++-----------
+ common_lib/Makefile   | 30 ++++++++++++--------
+ csi/Makefile          | 34 +++++++++++-----------
+ daemon/Makefile       | 32 +++++++++++----------
+ http/Makefile         | 11 ++++----
+ mini_el/Makefile      | 25 ++++++++--------
+ server/Makefile       | 32 +++++++++++----------
+ srvlogs/Makefile      | 25 ++++++++--------
+ srvtrcs/Makefile      | 25 ++++++++--------
+ ssi/Makefile          | 39 ++++++++++++++-----------
+ trace_decode/Makefile | 24 ++++++++--------
+ xapi/Makefile         | 11 ++++----
+ xdr/Makefile          | 66 ++++++++++++++++++++++++++-----------------
+ 17 files changed, 298 insertions(+), 223 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 32b2dd3..3855f5f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -44,13 +44,16 @@
+ #   PLATFORM - Linux, i386, or sparc
+ #   CDK_BUILD_OPTION - BASE or XAPI
+ #
++CDK = /home/grzemba/samfs/acsls/toolkit2.4.0
++PLATFORM ?= x64
++CDK_BUILD_OPTION = BASE
+ 
+ # All of the directories in the correct order for CDK base
+-DIR_LIST_BASE = acsapi acsipc acsutl common_lib xdr mini_el csi ssi client \
++DIR_LIST_BASE = acsipc acsutl common_lib xdr mini_el csi ssi acsapi client \
+ 	server trace_decode daemon srvlogs srvtrcs
+ 
+ # All of the directories in the correct order for CDK with XPI support
+-DIR_LIST_XAPI = acsapi acsipc acsutl common_lib xapi xdr mini_el csi ssi client \
++DIR_LIST_XAPI = acsipc acsutl common_lib xapi xdr mini_el csi ssi acsapi client \
+ 	server trace_decode daemon srvlogs srvtrcs http
+ 
+ #
+@@ -59,15 +62,22 @@ DIR_LIST_XAPI = acsapi acsipc acsutl common_lib xapi xdr mini_el csi ssi client
+ 	
+ nondebug:
+ 	for d in $(DIR_LIST_$(CDK_BUILD_OPTION)); do \
+-	( cd $$d; make top_nondebug ) \
++	( cd $$d; $(MAKE) top_nondebug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=$(CDK_BUILD_OPTION)) \
+ 	done \
+ 	
+ debug:
+ 	for d in $(DIR_LIST_$(CDK_BUILD_OPTION)); do \
+-	( cd $$d; make top_debug ) \
++	( cd $$d; $(MAKE) top_debug PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=$(CDK_BUILD_OPTION)) \
+ 	done \
+ 	
++clean:
++	for d in $(DIR_LIST_$(CDK_BUILD_OPTION)); do \
++	( $(MAKE) -C $$d clean PLATFORM=$(PLATFORM) CDK=$(CDK) ) \
++	done 
++
+ sterile:
+ 	for d in $(DIR_LIST_$(CDK_BUILD_OPTION)); do \
+-	( cd $$d; make top_sterile ) \
++	( $(MAKE) -C $$d top_sterile PLATFORM=$(PLATFORM) CDK=$(CDK) ) \
+ 	done 
++
++all: sterile nondebug
+diff --git a/acsapi/Makefile b/acsapi/Makefile
+index 09e6b77..e999bcf 100644
+--- a/acsapi/Makefile
++++ b/acsapi/Makefile
+@@ -63,7 +63,7 @@
+ include ../../etc/make.ini
+ 
+ H 		=../h
+-INSTALL         =../../lib
++# INSTALL         =../../lib
+ 
+ #   Flags/Options
+ CC              = $(COMPILER)
+@@ -71,7 +71,7 @@ CFLAGS          = $(COMMON_CC_FLAGS) -I$(H)
+  
+ #    Libraries
+  
+-APILIB 		=libapi.a
++APILIB 		=$(OBJ_DIR)/libapi.so $(OBJ_DIR)/libapi.a
+  
+ #   Target Variables
+ 
+@@ -142,40 +142,48 @@ SRC = \
+ 	acs_mount_pinfo.c \
+ 	acs_query_ms_pinfo.c 
+ 
+-OBJ  = $(SRC:.c=.o)
++OBJ  = $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+          
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-libapi.a:  $(OBJ)
+-	if [ `uname` = "Linux" ]; \
+-	then 	ar cru $(APILIB) $(OBJ); \
+-	else 	ar cru $(APILIB) `lorder $(OBJ) | tsort`; \
+-	fi
+-	ranlib $(APILIB)
++LDFLAGS = '-Wl,-rpath,$$ORIGIN'
++$(OBJ_DIR)/libapi.so:	$(OBJ)
++	$(LD) -G $(LDFLAGS) $(OUTPUT_OPTION) $? -L$(LIB_DIR) -lipc -lutl -lcl
++
++$(OBJ_DIR)/libapi.a:  $(OBJ)
++	# if [ `uname` = "Linux" ]; \
++	# then 	ar cru $(APILIB) $(OBJ); \
++	# else 	ar cru $(APILIB) `lorder $(OBJ) | tsort`; \
++	# fi
++	ar cru $@ $(OBJ); \
++	ranlib $@
+  
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(APILIB) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(APILIB) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(APILIB) CFLAGS="$(CFLAGS) $(NONDEBUG) \
++	$(MAKE) -f Makefile $(APILIB) CFLAGS="$(CFLAGS) $(NONDEBUG) \
+ 	$(ANSI_INCLUDE)"
+ 
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++
+ install:	$(APILIB)
+-	cp -p $(APILIB) $(INSTALL)
++	cp -p $(APILIB) $(LIB_DIR)
+ 
+ clean:
+ 	rm -f $(APILIB) $(OBJ) 
+ 
+ sterile:
+-	rm -f $(APILIB) $(OBJ) $(INSTALL)/$(APILIB)
++	rm -f $(APILIB) $(OBJ) $(LIB_DIR)/$(notdir $(APILIB))
+ 
+ #
+ #  Dependencies
+diff --git a/acsipc/Makefile b/acsipc/Makefile
+index a2108bb..affb063 100644
+--- a/acsipc/Makefile
++++ b/acsipc/Makefile
+@@ -43,7 +43,6 @@
+ include ../../etc/make.ini
+ 
+ H 		=../h
+-INSTALL         =../../lib
+ 
+ #   Flags/Options
+  
+@@ -52,7 +51,7 @@ CFLAGS          = $(COMMON_CC_FLAGS) -I$(H)
+  
+ #    Libraries
+  
+-IPCLIB 		=libipc.a
++IPCLIB 		=$(OBJ_DIR)/libipc.so $(OBJ_DIR)/libipc.a
+  
+ #   Target Variables
+ 
+@@ -66,41 +65,51 @@ SRC = \
+ 	acs_sel_input.c \
+ 	acs_verify_ssi.c
+ 
+-OBJ  = $(SRC:.c=.o)
++OBJ  = $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+          
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-libipc.a:  $(OBJ)
+-	if [ `uname` = "Linux" ]; \
+-	then	ar cru $(IPCLIB) $(OBJ); \
+-	else	ar cru $(IPCLIB) `lorder $(OBJ) | tsort`; \
+-	fi
+-	ranlib $(IPCLIB)
++$(OBJ_DIR)/libipc.so:      $(OBJ)
++	$(LD) -G $(LDFLAGS) $(OUTPUT_OPTION) $?
++
++$(OBJ_DIR)/libipc.a:  $(OBJ)
++	# if [ `uname` = "Linux" ]; \
++	# then	ar cru $(IPCLIB) $(OBJ); \
++	# else	ar cru $(IPCLIB) `lorder $(OBJ) | tsort`; \
++	# fi
++	ar cru $@ $(OBJ); \
++	ranlib $@
+  
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(IPCLIB) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++	gmake -f Makefile $(IPCLIB) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(IPCLIB) CFLAGS="$(CFLAGS) $(NONDEBUG) \
++	gmake -f Makefile $(IPCLIB) CFLAGS="$(CFLAGS) $(NONDEBUG) \
+ 	$(ANSI_INCLUDE)"
+ 
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++
+ install:	$(IPCLIB)
+-	cp -p $(IPCLIB) $(INSTALL)
++	cp -p $(IPCLIB) $(LIB_DIR)
+ 
+ clean:
+ 	rm -f $(IPCLIB) $(OBJ)
+ 
+ sterile:
+-	rm -f $(IPCLIB) $(OBJ) $(INSTALL)/$(IPCLIB)
++	rm -f $(IPCLIB) $(OBJ) $(LIB_DIR)/$(notdir $(IPCLIB))
+ 
++show:
++	@echo $(OBJ)
+ #
+ #  Dependencies
+ #
+diff --git a/acsutl/Makefile b/acsutl/Makefile
+index 77c03fd..5334dab 100644
+--- a/acsutl/Makefile
++++ b/acsutl/Makefile
+@@ -59,7 +59,6 @@ include ../../etc/make.ini
+ #       Definitions
+  
+ H               =../h
+-INSTALL         =../../lib
+  
+ #   Flags/Options
+  
+@@ -68,7 +67,7 @@ CFLAGS          = $(COMMON_CC_FLAGS) -I$(H)
+  
+ #    Libraries
+  
+-UTLLIB          =libutl.a
++UTLLIB          =$(OBJ_DIR)/libutl.so $(OBJ_DIR)/libutl.a
+  
+ #   Target Variables
+  
+@@ -88,40 +87,47 @@ SRC = \
+ 	acs_send_req.c \
+ 	acs_vary_res.c
+  
+-OBJ  = $(SRC:.c=.o)
+  
++OBJ  = $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
++
+ #
+ # Targets
+ #
+  
+-all:            nondebug install
++all:            create_obj_dir nondebug install
+  
+-libutl.a:  $(OBJ)
++$(OBJ_DIR)/libutl.so:      $(OBJ)
++	$(LD) -G $(LDFLAGS) $(OUTPUT_OPTION) $?
++
++$(OBJ_DIR)/libutl.a:  $(OBJ)
+ 	if [ `uname` = "Linux" ]; \
+-	then	ar cru $(UTLLIB) $(OBJ); \
+-	else	ar cru $(UTLLIB) `lorder $(OBJ) | tsort`; \
++	then	ar cru $@ $(OBJ); \
++	else	ar cru $@ `lorder $(OBJ) | tsort`; \
+ 	fi
+-	ranlib $(UTLLIB)
++	ranlib $@
+  
+-top_debug:      debug install
++top_debug:      create_obj_dir debug install
+ top_nondebug:   nondebug install
+ top_sterile:    sterile
+  
+  
+ debug:
+-	make -f Makefile $(UTLLIB) CFLAGS="$(CFLAGS) $(DEBUG)"
++	gmake -f Makefile $(UTLLIB) CFLAGS="$(CFLAGS) $(DEBUG)"
+  
+ nondebug:
+-	make -f Makefile $(UTLLIB) CFLAGS="$(CFLAGS) $(NONDEBUG)"
++	gmake -f Makefile $(UTLLIB) CFLAGS="$(CFLAGS) $(NONDEBUG)"
+  
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++
+ install:        $(UTLLIB)
+-	cp -p $(UTLLIB) $(INSTALL)
++	cp -p $(UTLLIB) $(LIB_DIR)
+  
+ clean:
+ 	rm -f $(UTLLIB) $(OBJ)
+  
+ sterile:
+-	rm -f $(UTLLIB) $(OBJ) $(INSTALL)/$(UTLLIB)
++	rm -f $(UTLLIB) $(OBJ) $(LIB_DIR)/$(UTLLIB)
+  
+ #
+ #  Dependencies
+diff --git a/client/Makefile b/client/Makefile
+index c69bcd4..eb33070 100644
+--- a/client/Makefile
++++ b/client/Makefile
+@@ -60,7 +60,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h
+-INSTALL         =../../bin
+ 
+ #	Flags/Options
+ 
+@@ -69,34 +68,37 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H)
+ 
+ #	Libraries
+ 
+-APILIB		=../../lib/libapi.a
+-IPCLIB          =../../lib/libipc.a
+-UTLLIB		=../../lib/libutl.a
+-CLLIB		=../../lib/libcl.a 
++APILIB		= $(LIB_DIR)/libapi.a
++IPCLIB          = $(LIB_DIR)/libipc.a
++UTLLIB		= $(LIB_DIR)/libutl.a
++CLLIB		= $(LIB_DIR)/libcl.a 
+ #	Target Variables 
+ SRC   		= t_cdriver.c
+-OBJ  		= $(SRC:.c=.o)
+-EXEC    	= t_cdriver
++OBJ  		= $(OBJ_DIR)/$(SRC:.c=.o)
++EXEC    	= $(OBJ_DIR)/t_cdriver
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-t_cdriver: t_cdriver.o $(APILIB) $(IPCLIB) $(UTLLIB) $(IPCLIB) $(CLLIB) 
+-	$(CC) -o $@ t_cdriver.o $(CFLAGS) $(APILIB) $(UTLLIB) $(IPCLIB) \
+-        $(CLLIB) $(LIB_DIR) $(LIBSOCKET) $(LIBNSL)
++$(EXEC): $(OBJ_DIR)/t_cdriver.o 
++	$(CC) $(OUTPUT_OPTION) $(OBJ_DIR)/t_cdriver.o $(CFLAGS) $(APILIB) $(UTLLIB) $(IPCLIB) \
++        $(CLLIB) $(LIBSOCKET) $(LIBNSL)
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)" 
++
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install: $(EXEC) 
+ 	cp $(EXEC) $(INSTALL)
+@@ -105,7 +107,7 @@ clean:
+ 	-rm -f $(OBJ) $(EXEC)
+ 
+ sterile:
+-	-rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	-rm -f $(OBJ) $(EXEC) $(INSTALL)/$(notdir $(EXEC))
+ 
+ #
+ #	Dependencies
+diff --git a/common_lib/Makefile b/common_lib/Makefile
+index b121619..36116e1 100644
+--- a/common_lib/Makefile
++++ b/common_lib/Makefile
+@@ -57,7 +57,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h 
+-INSTALL		=../../lib
+ 
+ #	Flags/Options
+ 
+@@ -66,7 +65,7 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H) -I../h/api
+ 
+ #	Libraries
+ 
+-CLLIBS		=../../lib/libcl.a
++CLLIBS		=$(OBJ_DIR)/libcl.a
+ 
+ #	Target Variables
+ 
+@@ -126,26 +125,30 @@ SRC   =	\
+ 	srvtrcc.c \
+ 	srvvars.c 
+ 
+-OBJ  = $(SRC:.c=.o)			# generate C object list
++OBJ  = $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))	# generate C object list
+ 
+-EXEC  = libcl.a
++EXEC  = $(OBJ_DIR)/libcl.so $(OBJ_DIR)/libcl.a
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-libcl.a:	$(OBJ)
++$(OBJ_DIR)/libcl.so:      $(OBJ)
++	$(LD) -G $(LDFLAGS) $(OUTPUT_OPTION) $?
++
++
++$(OBJ_DIR)/libcl.a:	$(OBJ)
+ #	if [ `uname` = "Linux" ]; \
+ #	then	ar cru libcl.a $(OBJ); \
+ #	else	ar cru libcl.a `lorder $(OBJ) | tsort`; \
+ #	fi
+-	ar cru libcl.a $(OBJ)
+-	ranlib libcl.a
++	ar cru $@ $(OBJ)
++	ranlib $@
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+@@ -155,14 +158,17 @@ nondebug:
+ 	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) \
+ 	$(ANSI_INCLUDE)"
+ 
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++
+ install:	$(EXEC)
+-	cp -p $(EXEC) $(INSTALL)
++	cp -p $(EXEC) $(LIB_DIR)
+ 
+ clean:
+ 	rm -f $(OBJ) $(EXEC)
+ 
+ sterile:
+-	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	rm -f $(OBJ) $(EXEC) $(LIB_DIR)/$(EXEC)
+ 
+ #
+ #  Dependencies
+diff --git a/csi/Makefile b/csi/Makefile
+index 5156596..0402479 100644
+--- a/csi/Makefile
++++ b/csi/Makefile
+@@ -60,7 +60,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h
+-INSTALL		=../../bin
+ 
+ #	Flags/Options
+ 
+@@ -70,9 +69,9 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H) $(ADIFLAGS)
+ 
+ #	Libraries
+ 
+-CLLIBS		=../../lib/libcl.a
+-XDRLIBS		=../../lib/CSIXDR.a
+-ADILIBS  	= $(ADI_LIBS)
++CLLIBS		=$(LIB_DIR)/libcl.a
++XDRLIBS		=$(LIB_DIR)/CSIXDR.a
++# ADILIBS  	= $(OBJ_DIR)/$(ADI_LIBS)
+ 
+ SRC   = csi_main.c \
+ 	csi_chk_inpu.c \
+@@ -106,36 +105,39 @@ SRC   = csi_main.c \
+ 	csi_rpctinit.c \
+ 	csi_rpcuinit.c 
+ 
+-OBJ  	= $(SRC:.c=.o)
++OBJ  	= $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+ 
+ ADISRC = $(ADI_FILE_LIST)
+ 
+-ADIOBJ = $(ADISRC:.c=.o)
++ADIOBJ = $(foreach CSRC,$(ADISRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+ 
+-EXEC	= csi      
++EXEC	= $(OBJ_DIR)/csi      
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-$(EXEC): $(OBJ) $(ADIOBJ) $(XDRLIBS) $(CLLIBS)
+-	$(CC) -o $@ $(OBJ) $(ADIOBJ) $(CFLAGS) $(LIBRUNPATH) $(XDRLIBS) \
+-	$(CLLIBS) $(ADILIBS) $(LIB_DIR) $(UCBLIB_DIR) $(LIBRPCSOC) \
++$(EXEC): $(OBJ) $(ADIOBJ)
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(ADIOBJ) $(CFLAGS) $(LIBRUNPATH) $(XDRLIBS) \
++	$(CLLIBS) $(ADILIBS) $(UCBLIB_DIR) $(LIBRPCSOC) \
+ 	$(LIBSOCKET) $(LIBNSL)
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) \
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) \
+ 	$(ANSI_INCLUDE)"
+ 
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++
+ install: $(EXEC)
+ 	cp $(EXEC) $(INSTALL)
+ 
+@@ -143,7 +145,7 @@ clean:
+ 	-rm -fr $(EXEC) $(OBJ)
+ 
+ sterile:
+-	-rm -fr $(EXEC) $(OBJ) $(INSTALL)/$(EXEC)
++	-rm -fr $(EXEC) $(OBJ) $(OBJ_DIR)/$(notdir $(EXEC))
+ 
+ #
+ #	Dependencies
+diff --git a/daemon/Makefile b/daemon/Makefile
+index 1da3578..3cd2100 100644
+--- a/daemon/Makefile
++++ b/daemon/Makefile
+@@ -56,7 +56,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h
+-INSTALL		=../../bin
+ 
+ #	Flags/Options
+ 
+@@ -65,38 +64,41 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H)
+ 
+ #	Libraries
+ 
+-APILIB		=../../lib/libapi.a
+-IPCLIB          =../../lib/libipc.a
+-UTLLIB          =../../lib/libutl.a
+-CLLIBS		=../../lib/libcl.a
++APILIB		=$(LIB_DIR)/libapi.a
++IPCLIB          =$(LIB_DIR)/libipc.a
++UTLLIB          =$(LIB_DIR)/libutl.a
++CLLIBS		=$(LIB_DIR)/libcl.a
+ 
+ #	Target Variables
+ 
+ SRC   = t_parent.c 
+ 
+-OBJ  		= $(SRC:.c=.o)
+-EXEC    	= t_parent
++OBJ  		= $(OBJ_DIR)/$(SRC:.c=.o)
++EXEC    	= $(OBJ_DIR)/t_parent
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-t_parent: t_parent.o
+-	$(CC) -o $@ $? $(CFLAGS)
++$(EXEC): $(OBJ)
++	$(CC) $(OUTPUT_OPTION) $? $(CFLAGS)
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) \
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) \
+ 	$(ANSI_INCLUDE)" 
+ 
++create_obj_dir:	
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++
+ install: $(EXEC)
+ 	cp $(EXEC) $(INSTALL)
+ 
+@@ -104,7 +106,7 @@ clean:
+ 	-rm -f $(OBJ) $(EXEC)
+ 
+ sterile:	
+-	-rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	-rm -f $(OBJ) $(EXEC) $(LIB_DIR)/$(notdir $(EXEC))
+ 
+ #
+ #	Dependencies
+diff --git a/http/Makefile b/http/Makefile
+index 46307a7..f306204 100644
+--- a/http/Makefile
++++ b/http/Makefile
+@@ -24,7 +24,6 @@ include ../../etc/make.ini
+ #	Defines
+ 
+ H		=../h
+-INSTALL		=../../bin
+ 
+ #	Flags/Options
+ 
+@@ -35,9 +34,9 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H) $(DEFINE)
+ 
+ #	Libraries
+ 
+-APILIB		=../../lib/libapi.a
+-CLLIBS		=../../lib/libcl.a
+-XAPILIB		=../../lib/libxapi.a
++APILIB		=$(OBJ_DIR)/libapi.a
++CLLIBS		=$(OBJ_DIR)/libcl.a
++XAPILIB		=$(OBJ_DIR)/libxapi.a
+ OTHER_LIBS      = $(LIBANSI)
+ 
+ SRC=    http_main.c    \
+@@ -94,13 +93,13 @@ nondebug:
+ 	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
+ 
+ install: 
+-	cp $(EXEC) $(INSTALL)
++	cp $(EXEC) $(OBJ_DIR)
+ 
+ clean:
+ 	rm -f  
+ 
+ sterile:
+-	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	rm -f $(OBJ) $(EXEC) $(OBJ_DIR)/$(EXEC)
+ 
+ #
+ #  Dependencies
+diff --git a/mini_el/Makefile b/mini_el/Makefile
+index a0a8e13..28c2987 100644
+--- a/mini_el/Makefile
++++ b/mini_el/Makefile
+@@ -36,7 +36,6 @@ include ../../etc/make.ini
+ #    Definitions
+ 
+ H		=../h
+-INSTALL		=../../bin
+  
+ #   Flags/Options
+  
+@@ -47,28 +46,32 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H)
+  
+ #   Target Variables
+ 
+-EXEC = mini_el
++EXEC = $(OBJ_DIR)/mini_el
+ SRC  = mini_el.c
+-OBJ  = $(SRC:.c=.o)
++OBJ  = $(OBJ_DIR)/$(SRC:.c=.o)
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-mini_el:	$(OBJ)
+-	$(CC) -o $(EXEC) $(OBJ) $(CFLAGS) $(LIB_DIR) $(LIBSOCKET) $(LIBNSL)
++$(EXEC):	$(OBJ)
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(CFLAGS) $(LIBSOCKET) $(LIBNSL)
++	$(MCS) $@
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)" 
+  
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install:	$(EXEC)
+ 	cp $(EXEC) $(INSTALL)
+@@ -77,7 +80,7 @@ clean:
+ 	rm -f $(EXEC) $(OBJ)
+  
+ sterile:
+-	rm -f $(EXEC) $(OBJ) $(INSTALL)/$(EXEC)
++	rm -f $(EXEC) $(OBJ) $(INSTALL)/$(notdir $(EXEC))
+  
+ #
+ #  Dependencies
+diff --git a/server/Makefile b/server/Makefile
+index 8038d9b..fe4836c 100644
+--- a/server/Makefile
++++ b/server/Makefile
+@@ -53,7 +53,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h
+-INSTALL	        =../../bin
+ 
+ #	Flags/Options
+ 
+@@ -62,10 +61,10 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H)
+ 
+ #	Libraries
+ 
+-APILIB		=../../lib/libapi.a
+-IPCLIB          =../../lib/libipc.a
+-UTLLIB          =../../lib/libutl.a
+-CLLIB           =../../lib/libcl.a
++APILIB		=$(LIB_DIR)/libapi.a
++IPCLIB          =$(LIB_DIR)/libipc.a
++UTLLIB          =$(LIB_DIR)/libutl.a
++CLLIB           =$(LIB_DIR)/libcl.a
+ 
+ #	Target Variables
+ 
+@@ -81,27 +80,30 @@ SRC   = t_acslm.c \
+ 	cvt_v3_v4.c \
+ 	cvt_v4_v3.c
+ 
+-OBJ  		= $(SRC:.c=.o)
+-EXEC    	= t_acslm
++OBJ  		= $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
++EXEC    	= $(OBJ_DIR)/t_acslm
+ 
+ #
+ # Component Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-t_acslm: $(OBJ) $(CLLIB)
+-	$(CC) -o $@ $(OBJ) $(CFLAGS) $(CLLIB) $(LIB_DIR) $(LIBSOCKET) $(LIBNSL)
++$(EXEC): $(OBJ) $(CLLIB)
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(CFLAGS) $(CLLIB) $(LIBSOCKET) $(LIBNSL)
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)"
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install: $(EXEC) 
+ 	cp $(EXEC) $(INSTALL)
+@@ -110,7 +112,7 @@ clean:
+ 	-rm -f $(OBJ) $(EXEC)
+ 
+ sterile:
+-	-rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	-rm -f $(OBJ) $(EXEC) $(LIB_DIR)/$(notdir $(EXEC))
+ 
+ #
+ #	Dependencies
+diff --git a/srvlogs/Makefile b/srvlogs/Makefile
+index 0aa71e4..99db0d2 100644
+--- a/srvlogs/Makefile
++++ b/srvlogs/Makefile
+@@ -26,7 +26,6 @@ include ../../etc/make.ini
+ # Definitions
+ #
+ H       =../h
+-INSTALL =../../bin
+  
+ #
+ # Flags/Options
+@@ -37,27 +36,31 @@ CFLAGS = $(COMMON_CC_FLAGS) -I$(H)
+ #
+ # Libraries
+ # 
+-EXEC  = srvlogs
++EXEC  = $(OBJ_DIR)/srvlogs
+ SRC   = srvlogs.c
+-OBJ   = $(SRC:.c=.o)
++OBJ   = $(OBJ_DIR)/$(SRC:.c=.o)
+ 
+ #
+ # Targets
+ #
+-all:	nondebug install 
++all:	create_obj_dir nondebug install 
+ 
+-srvlogs:	$(OBJ)
+-	$(CC) -o $(EXEC) $(OBJ) $(CFLAGS) $(LIB_DIR) $(LIBSOCKET) $(LIBNSL)
++$(EXEC):	$(OBJ)
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(CFLAGS) $(LIBSOCKET) $(LIBNSL)
++	$(MCS) $@
+ 
+-top_debug:	debug install 
+-top_nondebug:	nondebug install 
++top_debug:	create_obj_dir debug install 
++top_nondebug:	create_obj_dir nondebug install 
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)" 
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install:	$(EXEC)
+ 	cp $(EXEC) $(INSTALL)
+@@ -66,7 +69,7 @@ clean:
+ 	rm -f $(EXEC) $(OBJ)
+ 
+ sterile:
+-	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(notdir $(EXEC))
+ 
+ #
+ # Dependencies
+diff --git a/srvtrcs/Makefile b/srvtrcs/Makefile
+index 0872a33..873e7a6 100644
+--- a/srvtrcs/Makefile
++++ b/srvtrcs/Makefile
+@@ -26,7 +26,6 @@ include ../../etc/make.ini
+ # Definitions
+ #
+ H       =../h
+-INSTALL =../../bin
+  
+ #
+ # Flags/Options
+@@ -37,27 +36,31 @@ CFLAGS = $(COMMON_CC_FLAGS) -I$(H)
+ #
+ # Libraries
+ # 
+-EXEC  = srvtrcs
++EXEC  = $(OBJ_DIR)/srvtrcs
+ SRC   = srvtrcs.c
+-OBJ   = $(SRC:.c=.o)
++OBJ   = $(OBJ_DIR)/$(SRC:.c=.o)
+ 
+ #
+ # Targets
+ #
+-all:	nondebug install 
++all:	create_obj_dir nondebug install 
+ 
+-srvtrcs:	$(OBJ)
+-	$(CC) -o $(EXEC) $(OBJ) $(CFLAGS) $(LIB_DIR) $(LIBSOCKET) $(LIBNSL)
++$(EXEC):	$(OBJ)
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(CFLAGS) $(LIBSOCKET) $(LIBNSL)
++	$(MCS) $@
+ 
+-top_debug:	debug install 
+-top_nondebug:	nondebug install 
++top_debug:	create_obj_dir debug install 
++top_nondebug:	create_obj_dir nondebug install 
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG)" 
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG)" 
++
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install:	$(EXEC)
+ 	cp $(EXEC) $(INSTALL)
+@@ -66,7 +69,7 @@ clean:
+ 	rm -f $(EXEC) $(OBJ)
+ 
+ sterile:
+-	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(notdir $(EXEC))
+ 
+ #
+ # Dependencies
+diff --git a/ssi/Makefile b/ssi/Makefile
+index 4a7f951..14cddac 100644
+--- a/ssi/Makefile
++++ b/ssi/Makefile
+@@ -70,10 +70,10 @@ include ../../etc/make.ini
+ #	Defines
+ 
+ H		=../h
+-INSTALL		=../../bin
+ 
+ #	Flags/Options
+ 
++CDK_BUILD_OPTION ?= BASE
+ CC              = $(COMPILER)
+ ADIFLAGS        = $(ADI_FLAGS)
+ 
+@@ -82,11 +82,11 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H) $(DEFINE) -D$(CDK_BUILD_OPTION) $(ADIFLAGS)
+ 
+ #	Libraries
+ 
+-LIB_LIST_BASE		=../../lib/libcl.a
+-LIB_LIST_XAPI		=../../lib/libxapi.a ../../lib/libcl.a
++LIB_LIST_BASE		=$(LIB_DIR)/libcl.a
++LIB_LIST_XAPI		=$(LIB_DIR)/libxapi.a $(LIB_DIR)/libcl.a
+ 
+-XDRLIB 		=../../lib/SSIXDR.a
+-APILIB		=../../lib/libapi.a
++XDRLIB 		=$(LIB_DIR)/SSIXDR.a
++APILIB		=$(LIB_DIR)/libapi.a
+ OTHER_LIBS      = $(LIBANSI)
+ ADILIBS  	= $(ADI_LIBS)
+ 
+@@ -135,32 +135,37 @@ SRC=    csi_main.c     \
+ 	csi_v2_response.c \
+ 	csi_v4_response.c
+ 
+-OBJ  		= $(SRC:.c=.o)
++OBJ  		= $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+ 
+ ADISRC = $(ADI_FILE_LIST)
+ 
+-ADIOBJ = $(ADISRC:.c=.o)
++ADIOBJ = $(foreach CSRC,$(ADISRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+ 
+-EXEC	= ssi
++EXEC	= $(OBJ_DIR)/ssi
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+-$(EXEC):	$(OBJ) $(ADIOBJ) $(XDRLIB) $(LIB_LIST_$(CDK_BUILD_OPTION)) $(APILIB)
+-	$(CC) -o $@ $(OBJ) $(ADIOBJ) $(CFLAGS) $(LIBRUNPATH) $(XDRLIB) $(LIB_LIST_$(CDK_BUILD_OPTION)) \
+-        $(APILIB) $(UCBLIB_DIR) $(LIBRPCSOC) $(LIB_DIR) $(LIBSOCKET) $(LIBNSL) $(LIBPTHREADS)
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++$(EXEC):	$(OBJ) $(ADIOBJ) $(LIB_LIST_$(CDK_BUILD_OPTION)) $(APILIB)
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(ADIOBJ) $(CFLAGS) $(LIBRUNPATH) $(XDRLIB) $(LIB_LIST_$(CDK_BUILD_OPTION)) \
++        $(APILIB) $(UCBLIB_DIR) $(LIBRPCSOC) $(LIBSOCKET) $(LIBNSL) $(LIBPTHREADS)
++	$(MCS) $@
++
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
++
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install: 
+ 	cp $(EXEC) $(INSTALL)
+@@ -169,7 +174,7 @@ clean:
+ 	rm -f $(OBJ) $(EXEC) 
+ 
+ sterile:
+-	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	rm -f $(OBJ) $(EXEC) $(LIB_DIR)/$(notdir $(EXEC))
+ 
+ #
+ #  Dependencies
+diff --git a/trace_decode/Makefile b/trace_decode/Makefile
+index d8974ad..67e08cf 100644
+--- a/trace_decode/Makefile
++++ b/trace_decode/Makefile
+@@ -56,7 +56,6 @@ include ../../etc/make.ini
+ # Defines
+ 
+ H	=../h
+-INSTALL	=../../bin
+ 
+ #	Flags/Options
+ 
+@@ -65,7 +64,7 @@ CFLAGS	= $(COMMON_CC_FLAGS) -I$(H)
+ 
+ #	Libraries
+ 
+-CLLIB	=../../lib/libcl.a
++CLLIB	=$(LIB_DIR)/libcl.a
+ 
+ #	Target Variables
+  
+@@ -126,31 +125,34 @@ SRC =	td_main.c \
+ 	td_mount_pinfo_p.c \
+ 	td_mount_pinfo_q.c
+ 
+-OBJ	= $(SRC:.c=.o)
++OBJ	= $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+ 
+-EXEC	= trace_decode
++EXEC	= $(OBJ_DIR)/trace_decode
+ 
+ #
+ # Targets
+ #
+ 
+-all:    	nondebug install 
++all:    	create_obj_dir nondebug install 
+ 
+ $(EXEC):	$(OBJ) $(CLLIB)
+-	$(CC) -o $(EXEC) $(OBJ) $(CFLAGS) $(CLLIB) $(LIBANSI) \
++	$(CC) $(OUTPUT_OPTION) $(OBJ) $(CFLAGS) $(CLLIB) $(LIBANSI) \
+ 	$(UCBLIB_DIR) $(LIBRPCSOC) $(LIBSOCKET) $(LIBNSL) \
+ 	$(LIBRUNPATH)
++	$(MCS) $@
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(DEBUG) $(ANSI_INCLUDE)"
+ 
+ nondebug:
+-	make -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
+ 
++create_obj_dir:	
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ install:	$(EXEC)
+ 	cp  $(EXEC) $(INSTALL)
+ 
+@@ -158,7 +160,7 @@ clean:
+ 	-rm -f $(EXEC) $(OBJ) 
+ 
+ sterile:
+-	-rm -f $(EXEC) $(OBJ) $(INSTALL)/$(EXEC)
++	-rm -f $(EXEC) $(OBJ) $(LIB_DIR)/$(notdir $(EXEC))
+ 
+ #
+ #	Dependencies
+diff --git a/xapi/Makefile b/xapi/Makefile
+index b620ac7..375de0e 100644
+--- a/xapi/Makefile
++++ b/xapi/Makefile
+@@ -25,7 +25,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h 
+-INSTALL		=../../lib
+ 
+ #	Flags/Options
+ DEFINE		=-DXAPI
+@@ -34,9 +33,9 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H) -I../h/api -I../h/xapi $(DEFINE)
+ 
+ #	Libraries
+ 
+-CLLIBS		=../../lib/libcl.a
+-APILIB		=../../lib/libapi.a
+-XAPILIB		=../../lib/libxapi.a
++CLLIBS		=$(OBJ_DIR)/libcl.a
++APILIB		=$(OBJ_DIR)/libapi.a
++XAPILIB		=$(OBJ_DIR)/libxapi.a
+ 
+ #	Target Variables
+ 
+@@ -166,13 +165,13 @@ nondebug:
+ 	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
+ 
+ install:	$(EXEC)
+-	cp -p $(EXEC) $(INSTALL)
++	cp -p $(EXEC) $(OBJ_DIR)
+ 
+ clean:
+ 	rm -f $(TEMPI) $(TEMPS) 
+ 
+ sterile:
+-	rm -f $(OBJ) $(EXEC) $(INSTALL)/$(EXEC)
++	rm -f $(OBJ) $(EXEC) $(OBJ_DIR)/$(EXEC)
+ 
+ #
+ #  Dependencies
+diff --git a/xdr/Makefile b/xdr/Makefile
+index 8a64173..c8b2b2b 100644
+--- a/xdr/Makefile
++++ b/xdr/Makefile
+@@ -82,7 +82,6 @@ include ../../etc/make.ini
+ #	Definitions
+ 
+ H		=../h
+-INSTALL		=../../lib
+ 
+ #	Flags/Options
+ 
+@@ -94,10 +93,11 @@ CFLAGS		= $(COMMON_CC_FLAGS) -I$(H) $(ADIFLAGS)
+ 
+ #	Libraries
+ 
+-CLLIBS		=../../lib/libcl.a
+-XDRLIBS		= CSIXDR.a SSIXDR.a
+-CSIXDR          = CSIXDR.a
+-SSIXDR          = SSIXDR.a
++CLLIBS		= $(OBJ_DIR)/libcl.a
++XDRSLIBS	= $(OBJ_DIR)/CSIXDR.a $(OBJ_DIR)/SSIXDR.a
++XDRLIBS		= $(CSIXDR) $(SSIXDR)
++CSIXDR          = $(OBJ_DIR)/CSIXDR.so
++SSIXDR          = $(OBJ_DIR)/libssixdr.so
+ 
+ #	Target Variables
+ 
+@@ -181,8 +181,8 @@ SRC = \
+ SSISRC= csi_xlm_requ.c \
+ 	csi_xlm_resp.c
+ 
+-OBJ  	= $(SRC:.c=.o) 	
+-SSIOBJ  = $(SSISRC:.c=.o) 
++OBJ  = $(foreach CSRC,$(SRC),$(OBJ_DIR)/$(CSRC:.c=.o))
++SSIOBJ  = $(foreach CSRC,$(SSISRC),$(OBJ_DIR)/$(CSRC:.c=.o))
+ 
+ #
+ # Targets
+@@ -190,50 +190,64 @@ SSIOBJ  = $(SSISRC:.c=.o)
+ 
+ all:    	nondebug install 
+ 
+-CSIXDR.a:	$(OBJ)
++$(OBJ_DIR)/CSIXDR.so: 	$(OBJ)
++	$(LD) -G $(OUTPUT_OPTION) $?
++
++$(OBJ_DIR)/CSIXDR.a:	$(OBJ)
+ 	if [ `uname` = "Linux" ]; \
+ 	then	ar cru CSIXDR.a $(OBJ); \
+-	else	ar cru CSIXDR.a `lorder $(OBJ) | tsort`; \
++	else	ar cru $@ `lorder $(OBJ) | tsort`; \
+ 	fi
+-	ranlib CSIXDR.a
++	ranlib $@
++
++$(OBJ_DIR)/libssixdr.so: 	$(SSIOBJ)
++	$(LD)  $(COMMON_CC_FLAGS) -G $(OUTPUT_OPTION) $?
+ 
+-SSIXDR.a:	$(SSIOBJ)
++$(OBJ_DIR)/SSIXDR.a:	$(SSIOBJ)
+ 	if [ `uname` = "Linux" ]; \
+ 	then	ar cru SSIXDR.a $(OBJ); \
+-	else	ar cru SSIXDR.a `lorder $(OBJ) | tsort`; \
++	else	ar cru $@ `lorder $(OBJ) | tsort`; \
+ 	fi
+-	ranlib SSIXDR.a
++	ranlib $@
+ 
+-top_debug:	debug install
+-top_nondebug:	nondebug install
++top_debug:	create_obj_dir debug install
++top_nondebug:	create_obj_dir nondebug install
+ top_sterile:	sterile
+ 
+ debug:
+-	make -f Makefile CSIXDR.a CFLAGS="$(CFLAGS) $(DEBUG) \
++	$(MAKE) -f Makefile $(XDRLIBS) CFLAGS="$(CFLAGS) $(DEBUG) \
+ 	$(ANSI_INCLUDE)"
+-	rm -f $(SSIOBJ)
+-	make -f Makefile SSIXDR.a CFLAGS="$(CFLAGS) $(SSIFLAGS) $(DEBUG) \
++	$(MAKE) -f Makefile $(XDRSLIBS) CFLAGS="$(CFLAGS) $(DEBUG) \
+ 	$(ANSI_INCLUDE)"
+-	rm -f $(SSIOBJ)
+ 
+ nondebug:
+-	make -f Makefile $(CSIXDR) CFLAGS="$(CFLAGS) $(NONDEBUG) \
+-	$(ANSI_INCLUDE)"
++	$(MAKE) -f Makefile $(XDRLIBS) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
+ 	rm -f $(SSIOBJ)
+-	make -f Makefile $(SSIXDR) CFLAGS="$(CFLAGS) $(SSIFLAGS) $(NONDEBUG) \
++	$(MAKE) -f Makefile $(XDRSLIBS) CFLAGS="$(CFLAGS) $(SSIFLAGS) $(NONDEBUG) \
+ 	$(ANSI_INCLUDE)"
+ 	rm -f $(SSIOBJ)
+ 
++create_obj_dir:
++	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install: 
+-	cp -p  $(XDRLIBS) $(INSTALL)
++	cp -p  $(XDRLIBS) $(XDRSLIBS) $(LIB_DIR)
+ 
+ clean:
+-	rm -f $(OBJ) $(XDRLIBS) 
++	rm -f $(OBJ) $(XDRLIBS) $(XDRSLIBS)
+ 
+ sterile:
+-	rm -f $(OBJ) $(XDRLIBS) $(INSTALL)/$(CSIXDR) $(INSTALL)/$(SSIXDR)
+-
++	rm -f $(OBJ) $(XDRLIBS) $(XDRSLIBS) $(LIB_DIR)/$(CSIXDR) $(LIB_DIR)/$(SSIXDR)
++
++show:
++	@echo $(OBJ)
++	@echo `lorder $(OBJ) | tsort`
++	@echo $(OBJ_DIR)
++	@echo $(SSIOBJ)
++	@echo $(LIB_DIR)
++	@echo $(XDRSLIBS)
++	@echo $(NONDEBUG)
++	@echo $(ANSI_INCLUDE)
+ #
+ #	Dependencies
+ #
+-- 
+2.49.0
+

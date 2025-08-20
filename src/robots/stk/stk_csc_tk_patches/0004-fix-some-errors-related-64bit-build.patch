@@ -1,0 +1,80 @@
+From 63c9bcbae0bf821d324316b89d28a9bd5751c95a Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Mon, 13 Nov 2023 14:26:27 +0100
+Subject: [PATCH 4/8] fix some errors related 64bit build
+
+---
+ ssi/csi_fmtlmq_l.c    | 2 +-
+ ssi/csi_fmtniq_l.c    | 2 +-
+ ssi/csi_main.c        | 1 +
+ ssi/csi_net_send.c    | 2 +-
+ ssi/csi_v1_response.c | 2 +-
+ 5 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/ssi/csi_fmtlmq_l.c b/ssi/csi_fmtlmq_l.c
+index 0501854..98b7ac0 100644
+--- a/ssi/csi_fmtlmq_l.c
++++ b/ssi/csi_fmtlmq_l.c
+@@ -91,7 +91,7 @@ csi_fmtlmq_log (
+ 
+     memcpy((char *) &netaddr.s_addr,
+ 			(const char *) &cs_hdrp->csi_handle.raddr.sin_addr,
+-							sizeof(unsigned long));
++							sizeof(unsigned int));
+ 
+     /* convert ulong inet addr to dotted-decimal notation for log msg */
+     sprintf(stringp, "Dropping from Queue: Remote Internet address: %s,"
+diff --git a/ssi/csi_fmtniq_l.c b/ssi/csi_fmtniq_l.c
+index e07f9e7..2f14c94 100644
+--- a/ssi/csi_fmtniq_l.c
++++ b/ssi/csi_fmtniq_l.c
+@@ -93,7 +93,7 @@ csi_fmtniq_log (
+ 
+     memcpy((char *) &netaddr.s_addr,
+ 			(const char *) &cs_hdrp->csi_handle.raddr.sin_addr,
+-							sizeof(unsigned long));
++							sizeof(unsigned int));
+ 
+     /* convert ulong inet addr to dotted-decimal notation for log msg */
+     sprintf(stringp, "Dropping from Queue: Remote Internet address: %s,"
+diff --git a/ssi/csi_main.c b/ssi/csi_main.c
+index bce349b..3dfa91e 100644
+--- a/ssi/csi_main.c
++++ b/ssi/csi_main.c
+@@ -53,6 +53,7 @@ static char SccsId[] = "@(#)csi_main.c      5.6 11/12/93 ";
+ /*      Header Files: */
+ #include <stdlib.h>
+ #include <stdio.h>
++#include <string.h>
+ 
+ #include "cl_pub.h"
+ #include "ml_pub.h"
+diff --git a/ssi/csi_net_send.c b/ssi/csi_net_send.c
+index c26e2a7..f0ff472 100644
+--- a/ssi/csi_net_send.c
++++ b/ssi/csi_net_send.c
+@@ -383,7 +383,7 @@ csi_net_send (
+ #ifndef ADI /* RPC code */
+                 memcpy((char *)&netaddr.s_addr,
+ 		       (char*)&cs_hdrp->csi_handle.raddr.sin_addr,
+-		       sizeof(unsigned long));
++		       sizeof(unsigned int));
+ 
+                 /* convert ulong inet address to dotted-decimal notation for
+ 		 * log msg */
+diff --git a/ssi/csi_v1_response.c b/ssi/csi_v1_response.c
+index 0473026..bc2a419 100644
+--- a/ssi/csi_v1_response.c
++++ b/ssi/csi_v1_response.c
+@@ -251,7 +251,7 @@ static STATUS st_build_audit_resp(CSI_V1_AUDIT_REQUEST *reqp,
+     arp->type = reqp->type;
+     arp->count = 0;
+ 
+-    memcpy((char *)reqp, (char *)arp, sizeof(CSI_V1_RESPONSE));
++    memcpy((char *)reqp, (char *)arp, sizeof(CSI_V1_AUDIT_RESPONSE));
+     free(arp);
+ 
+     return STATUS_SUCCESS;
+-- 
+2.49.0
+

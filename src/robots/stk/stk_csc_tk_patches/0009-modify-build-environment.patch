@@ -1,0 +1,25 @@
+From 94959a16204842283379afb3880f64a8fec108cf Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Wed, 20 Aug 2025 17:59:41 +0200
+Subject: [PATCH 9/9] modify build environment
+
+---
+ acsutl/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/acsutl/Makefile b/acsutl/Makefile
+index 5334dab..f32ed0a 100644
+--- a/acsutl/Makefile
++++ b/acsutl/Makefile
+@@ -107,7 +107,7 @@ $(OBJ_DIR)/libutl.a:  $(OBJ)
+ 	ranlib $@
+  
+ top_debug:      create_obj_dir debug install
+-top_nondebug:   nondebug install
++top_nondebug:   create_obj_dir nondebug install
+ top_sterile:    sterile
+  
+  
+-- 
+2.49.0
+

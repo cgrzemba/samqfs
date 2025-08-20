@@ -1,0 +1,26 @@
+From c044147aae44dd105b7b48225c09400bfbe38536 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Wed, 20 Aug 2025 15:34:16 +0200
+Subject: [PATCH 8/8] fixes 64bit: long response times, invalid sequence
+ numbers
+
+---
+ xdr/csi_xipc_hdr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xdr/csi_xipc_hdr.c b/xdr/csi_xipc_hdr.c
+index e23bcc7..94043ef 100644
+--- a/xdr/csi_xipc_hdr.c
++++ b/xdr/csi_xipc_hdr.c
+@@ -111,7 +111,7 @@ csi_xipc_hdr (
+     }
+ 
+     /* translate the ipc_identifier */
+-    if (!xdr_u_long(xdrsp, &ipchp->ipc_identifier)) {
++    if (!xdr_u_long(xdrsp, (ulong_t*)&ipchp->ipc_identifier)) {
+         MLOGCSI((STATUS_TRANSLATION_FAILURE, "csi_xipc_header","xdr_u_long()", 
+ 	  MMSG(928, "XDR message translation failure")));
+         return(0);
+-- 
+2.49.0
+

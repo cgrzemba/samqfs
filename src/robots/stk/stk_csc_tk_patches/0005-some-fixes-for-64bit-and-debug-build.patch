@@ -1,0 +1,1122 @@
+From a7e425480965b4e91ace1196b2b95217614993f1 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Tue, 14 Nov 2023 14:52:35 +0100
+Subject: [PATCH 5/8] some fixes for 64bit and debug build
+
+---
+ common_lib/cl_inform.c      | 10 +++++-----
+ common_lib/cl_qm_init.c     |  9 ++-------
+ common_lib/srvlogc.c        |  1 +
+ common_lib/srvtrcc.c        |  1 +
+ csi/csi_fmtlmq_l.c          |  2 +-
+ csi/csi_fmtniq_l.c          |  2 +-
+ csi/csi_main.c              |  1 +
+ csi/csi_net_send.c          |  4 ++--
+ server/t_acslm.c            |  2 +-
+ ssi/csi_net_send.c          |  2 +-
+ toolkitEnvironment.sh       |  5 ++++-
+ trace_decode/td_get_packe.c |  2 ++
+ xdr/csi_xdrive.c            |  5 ++++-
+ xdr/csi_xdrive_data.c       |  4 ++++
+ xdr/csi_xdrive_i.c          |  6 ++++--
+ xdr/csi_xev_drive_st.c      |  4 ++++
+ xdr/csi_xev_reg_st.c        |  4 ++++
+ xdr/csi_xev_rsrc_st.c       |  4 ++++
+ xdr/csi_xev_vol_st.c        |  4 ++++
+ xdr/csi_xfreecel.c          |  6 ++++--
+ xdr/csi_xhand_id.c          |  4 ++++
+ xdr/csi_xidcmp.c            |  4 ++++
+ xdr/csi_xipc_hdr.c          |  6 ++++--
+ xdr/csi_xlm_requ.c          |  2 +-
+ xdr/csi_xlm_resp.c          |  2 +-
+ xdr/csi_xlocatio.c          |  6 ++++--
+ xdr/csi_xlockid.c           |  4 ++++
+ xdr/csi_xlsm.c              |  6 ++++--
+ xdr/csi_xlsm_id.c           |  6 ++++--
+ xdr/csi_xmsg_hdr.c          |  4 ++++
+ xdr/csi_xmsg_id.c           |  6 ++++--
+ xdr/csi_xpnl.c              |  6 ++++--
+ xdr/csi_xpnl_id.c           |  6 ++++--
+ xdr/csi_xpool.c             |  4 ++++
+ xdr/csi_xpool_id.c          |  4 ++++
+ xdr/csi_xport.c             |  6 ++++--
+ xdr/csi_xport_id.c          |  6 ++++--
+ xdr/csi_xptp_id.c           |  6 ++++--
+ xdr/csi_xregister_st.c      |  4 ++++
+ xdr/csi_xreq_hdr.c          |  6 ++++--
+ xdr/csi_xreqsumm.c          |  6 ++++--
+ xdr/csi_xres_sta.c          |  6 ++++--
+ xdr/csi_xrgstrn_id.c        |  4 ++++
+ xdr/csi_xrow.c              |  6 ++++--
+ xdr/csi_xsense_fsc.c        |  4 ++++
+ xdr/csi_xsense_hli.c        |  4 ++++
+ xdr/csi_xsense_scsi.c       |  4 ++++
+ xdr/csi_xserial_num.c       |  4 ++++
+ xdr/csi_xsocknam.c          |  6 ++++--
+ xdr/csi_xspnl_id.c          |  6 ++++--
+ xdr/csi_xstate.c            |  6 ++++--
+ xdr/csi_xtype.c             |  4 +++-
+ xdr/csi_xv0_cap_.c          |  6 ++++--
+ xdr/csi_xv0_req.c           |  4 ++++
+ xdr/csi_xv0_res.c           |  4 ++++
+ xdr/csi_xv1_cap_.c          |  6 ++++--
+ xdr/csi_xv1_res.c           |  4 ++++
+ xdr/csi_xv2_res.c           |  4 ++++
+ xdr/csi_xv2qures.c          |  4 ++++
+ xdr/csi_xv4_res.c           |  4 ++++
+ xdr/csi_xversion.c          |  4 ++++
+ xdr/csi_xvol_id.c           |  6 ++++--
+ xdr/csi_xvol_sta.c          |  6 ++++--
+ xdr/csi_xvolrang.c          |  4 ++++
+ xdr/csi_xxml_data.c         |  4 ++++
+ 65 files changed, 227 insertions(+), 69 deletions(-)
+
+diff --git a/common_lib/cl_inform.c b/common_lib/cl_inform.c
+index 49f562f..5723dab 100644
+--- a/common_lib/cl_inform.c
++++ b/common_lib/cl_inform.c
+@@ -104,10 +104,10 @@ cl_inform (
+ #ifdef DEBUG
+     if TRACE(0)
+         cl_trace(self, 4,               /* routine name and parameter count */
+-                 (unsigned long)message_status,
+-                 (unsigned long)type,
+-                 (unsigned long)identifier,
+-                 (unsigned long)error);
++                 (unsigned int)message_status,
++                 (unsigned int)type,
++                 (size_t)identifier,
++                 (unsigned int)error);
+ #endif /* DEBUG */
+ 
+ 
+@@ -132,7 +132,7 @@ cl_inform (
+ 	    /* NOTE: sizeof construct is a preprocessor directive and the
+ 		     following indirection off of NULL is a legal construct */
+             memcpy((char *)&msg_buf.message_status.identifier,
+-	           (char *)identifier, sizeof(((LH_ADDR *)NULL)->address));
++	           (char *)identifier, sizeof(IDENTIFIER));
+             break;
+ 
+          case STATUS_DISK_FULL:
+diff --git a/common_lib/cl_qm_init.c b/common_lib/cl_qm_init.c
+index 3df4a73..68fc8cc 100644
+--- a/common_lib/cl_qm_init.c
++++ b/common_lib/cl_qm_init.c
+@@ -201,11 +201,6 @@ cl_qm_init (
+ 
+ #ifdef TEST
+ 
+-
+-#ifdef NULL
+-#undef NULL
+-#endif
+-
+ #include <stdio.h>
+ 
+ 
+@@ -214,8 +209,8 @@ BOOLEAN  test_1            ();
+ BOOLEAN  test_2            ();
+ BOOLEAN  test_3            ();
+ BOOLEAN  test_rem          ();
+-BOOLEAN  validate_mcb      ();
+-BOOLEAN  validate_remarks  ();
++BOOLEAN  validate_mcb      (short unsigned int,  char *);
++BOOLEAN  validate_remarks  (short unsigned int,  char *);
+ 
+ 
+ void 
+diff --git a/common_lib/srvlogc.c b/common_lib/srvlogc.c
+index 574f81b..8fb62f6 100644
+--- a/common_lib/srvlogc.c
++++ b/common_lib/srvlogc.c
+@@ -94,6 +94,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <ctype.h>
+ 
+ #include "api/defs_api.h"
+ #include "cl_pub.h"
+diff --git a/common_lib/srvtrcc.c b/common_lib/srvtrcc.c
+index 9b987b8..1b0622b 100644
+--- a/common_lib/srvtrcc.c
++++ b/common_lib/srvtrcc.c
+@@ -89,6 +89,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <ctype.h>
+ 
+ #include "api/defs_api.h"
+ #include "srvcommon.h"
+diff --git a/csi/csi_fmtlmq_l.c b/csi/csi_fmtlmq_l.c
+index 0501854..98b7ac0 100644
+--- a/csi/csi_fmtlmq_l.c
++++ b/csi/csi_fmtlmq_l.c
+@@ -91,7 +91,7 @@ csi_fmtlmq_log (
+ 
+     memcpy((char *) &netaddr.s_addr,
+ 			(const char *) &cs_hdrp->csi_handle.raddr.sin_addr,
+-							sizeof(unsigned long));
++							sizeof(unsigned int));
+ 
+     /* convert ulong inet addr to dotted-decimal notation for log msg */
+     sprintf(stringp, "Dropping from Queue: Remote Internet address: %s,"
+diff --git a/csi/csi_fmtniq_l.c b/csi/csi_fmtniq_l.c
+index e07f9e7..2f14c94 100644
+--- a/csi/csi_fmtniq_l.c
++++ b/csi/csi_fmtniq_l.c
+@@ -93,7 +93,7 @@ csi_fmtniq_log (
+ 
+     memcpy((char *) &netaddr.s_addr,
+ 			(const char *) &cs_hdrp->csi_handle.raddr.sin_addr,
+-							sizeof(unsigned long));
++							sizeof(unsigned int));
+ 
+     /* convert ulong inet addr to dotted-decimal notation for log msg */
+     sprintf(stringp, "Dropping from Queue: Remote Internet address: %s,"
+diff --git a/csi/csi_main.c b/csi/csi_main.c
+index bce349b..3dfa91e 100644
+--- a/csi/csi_main.c
++++ b/csi/csi_main.c
+@@ -53,6 +53,7 @@ static char SccsId[] = "@(#)csi_main.c      5.6 11/12/93 ";
+ /*      Header Files: */
+ #include <stdlib.h>
+ #include <stdio.h>
++#include <string.h>
+ 
+ #include "cl_pub.h"
+ #include "ml_pub.h"
+diff --git a/csi/csi_net_send.c b/csi/csi_net_send.c
+index c26e2a7..9766b39 100644
+--- a/csi/csi_net_send.c
++++ b/csi/csi_net_send.c
+@@ -383,7 +383,7 @@ csi_net_send (
+ #ifndef ADI /* RPC code */
+                 memcpy((char *)&netaddr.s_addr,
+ 		       (char*)&cs_hdrp->csi_handle.raddr.sin_addr,
+-		       sizeof(unsigned long));
++		       sizeof(unsigned int));
+ 
+                 /* convert ulong inet address to dotted-decimal notation for
+ 		 * log msg */
+@@ -440,7 +440,7 @@ csi_net_send (
+ #ifndef ADI /* debug RPC code */
+                 memcpy((char *)&netaddr.s_addr,
+ 		      (char*)&cs_hdrp->csi_handle.raddr.sin_addr,
+-		      sizeof(unsigned long));
++		      sizeof(unsigned int));
+ 
+                 /* convert ulong inet addr to dotted-decimal notation for
+ 		 * log msg */
+diff --git a/server/t_acslm.c b/server/t_acslm.c
+index 7dc53d1..192986b 100644
+--- a/server/t_acslm.c
++++ b/server/t_acslm.c
+@@ -244,7 +244,7 @@ static void	st_query_drive_group_res(REQUEST_TYPE *req_pkp,
+ 			       QU_DRG_RESPONSE *query_drive_group_resp, 
+ 			       int *sizep);
+ 
+-# ifdef DEBUG
++# ifdef XXXDEBUG
+ unsigned long trace_module;			/* module trace define value */
+ unsigned long	trace_value;
+ 
+diff --git a/ssi/csi_net_send.c b/ssi/csi_net_send.c
+index f0ff472..9766b39 100644
+--- a/ssi/csi_net_send.c
++++ b/ssi/csi_net_send.c
+@@ -440,7 +440,7 @@ csi_net_send (
+ #ifndef ADI /* debug RPC code */
+                 memcpy((char *)&netaddr.s_addr,
+ 		      (char*)&cs_hdrp->csi_handle.raddr.sin_addr,
+-		      sizeof(unsigned long));
++		      sizeof(unsigned int));
+ 
+                 /* convert ulong inet addr to dotted-decimal notation for
+ 		 * log msg */
+diff --git a/toolkitEnvironment.sh b/toolkitEnvironment.sh
+index df58ee6..69d3477 100644
+--- a/toolkitEnvironment.sh
++++ b/toolkitEnvironment.sh
+@@ -14,7 +14,7 @@
+ #
+ 
+ # set the path to the CDK
+-CDK=/home/jn189587/toolkit7.2/CDK-7.2
++CDK=/home/grzemba/samfs/acsls/toolkit2.4.0
+ #CDK=/home/severn/mw188955/dotsero/subversion/cdk/toolkit
+ export CDK
+ 
+@@ -75,6 +75,9 @@ export ACSAPI_PACKET_VERSION ACSAPI_USER_ID ACSAPI_SSI_SOCKET
+ MEDIA_TYPES_DIR=/tmp
+ export MEDIA_TYPES_DIR
+ 
++BITS=64 
++
++echo BITS=$BITS
+ echo CDK=$CDK
+ echo CDK_BUILD_OPTION=$CDK_BUILD_OPTION
+ echo PLATFORM=$PLATFORM
+diff --git a/trace_decode/td_get_packe.c b/trace_decode/td_get_packe.c
+index 71183d2..c8778d4 100644
+--- a/trace_decode/td_get_packe.c
++++ b/trace_decode/td_get_packe.c
+@@ -50,6 +50,8 @@
+  */
+ #include <stdio.h>
+ #include <string.h>
++#include <ctype.h>
++#include <stdlib.h>
+ 
+ #include "td.h"
+ #include "srvcommon.h"
+diff --git a/xdr/csi_xdrive.c b/xdr/csi_xdrive.c
+index 84ac934..05e3fa0 100644
+--- a/xdr/csi_xdrive.c
++++ b/xdr/csi_xdrive.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xdrive.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+  
+  
+ /*
+@@ -61,7 +65,6 @@ static char     *st_module = "csi_xdrive()";
+  */
+ 
+ 
+-
+ bool_t 
+ csi_xdrive (
+     XDR *xdrsp,                         /* xdr handle structure */
+diff --git a/xdr/csi_xdrive_data.c b/xdr/csi_xdrive_data.c
+index cb2face..bb22d1a 100644
+--- a/xdr/csi_xdrive_data.c
++++ b/xdr/csi_xdrive_data.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xdrive_data.c   7.1 06/03/04 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xdrive_i.c b/xdr/csi_xdrive_i.c
+index 303def4..96b3744 100644
+--- a/xdr/csi_xdrive_i.c
++++ b/xdr/csi_xdrive_i.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xdrive_i.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xev_drive_st.c b/xdr/csi_xev_drive_st.c
+index 7580171..e2cde1c 100644
+--- a/xdr/csi_xev_drive_st.c
++++ b/xdr/csi_xev_drive_st.c
+@@ -37,6 +37,10 @@ static char SccsId[] = "@(#)csi_xev_drive_st.c   7.1 06/03/04 ";
+ # include "ml_pub.h"
+ # include "csi_xdr_xlate.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xev_reg_st.c b/xdr/csi_xev_reg_st.c
+index 5f640f1..be2cd8f 100644
+--- a/xdr/csi_xev_reg_st.c
++++ b/xdr/csi_xev_reg_st.c
+@@ -38,6 +38,10 @@ static char SccsId[] = "@(#)csi_xev_reg_st.c	6.1 10/16/01 ";
+ # include "ml_pub.h"
+ # include "csi_xdr_xlate.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xev_rsrc_st.c b/xdr/csi_xev_rsrc_st.c
+index cf066b8..937bf28 100644
+--- a/xdr/csi_xev_rsrc_st.c
++++ b/xdr/csi_xev_rsrc_st.c
+@@ -37,6 +37,10 @@ static char SccsId[] = "@(#)csi_xev_rsrc_st.c	6.1 10/16/01 ";
+ # include "ml_pub.h"
+ # include "csi_xdr_xlate.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xev_vol_st.c b/xdr/csi_xev_vol_st.c
+index f83f8d0..4fa5e8a 100644
+--- a/xdr/csi_xev_vol_st.c
++++ b/xdr/csi_xev_vol_st.c
+@@ -37,6 +37,10 @@ static char SccsId[] = "@(#)csi_xev_vol_st.c	6.1 10/16/01 ";
+ # include "ml_pub.h"
+ # include "csi_xdr_xlate.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xfreecel.c b/xdr/csi_xfreecel.c
+index 8551bfb..b418166 100644
+--- a/xdr/csi_xfreecel.c
++++ b/xdr/csi_xfreecel.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xfreecel.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xhand_id.c b/xdr/csi_xhand_id.c
+index 01cd1dd..c59ce70 100644
+--- a/xdr/csi_xhand_id.c
++++ b/xdr/csi_xhand_id.c
+@@ -45,6 +45,10 @@ static char SccsId[] = "@(#)csi_xhand_id.c	6.1 10/18/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xidcmp.c b/xdr/csi_xidcmp.c
+index 929de68..883f1f6 100644
+--- a/xdr/csi_xidcmp.c
++++ b/xdr/csi_xidcmp.c
+@@ -36,6 +36,10 @@ static char SccsId[] = "@(#)csi_xidcmp.c	5.3 11/9/93 ";
+ /*      Header Files: */
+ #include "csi.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xipc_hdr.c b/xdr/csi_xipc_hdr.c
+index 420243c..e23bcc7 100644
+--- a/xdr/csi_xipc_hdr.c
++++ b/xdr/csi_xipc_hdr.c
+@@ -50,8 +50,10 @@ static char SccsId[] = "@(#)csi_xipc_hdr.c	2.2 03/6/02 (c) 2002 StorageTek";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xlm_requ.c b/xdr/csi_xlm_requ.c
+index dfe69f6..5aea289 100644
+--- a/xdr/csi_xlm_requ.c
++++ b/xdr/csi_xlm_requ.c
+@@ -392,7 +392,7 @@ csi_xlm_request (
+ #ifdef DEBUG
+ #ifndef ADI /* the debug csi RPC code: */
+             memcpy((char*) &netaddr.s_addr, (char *) csi_hdr->xid.addr,
+-                                                        sizeof(unsigned long));
++                                                        sizeof(unsigned int));
+ 
+             /* convert ulong inet addr to dotted-decimal notation for log msg */
+             MLOGCSI((STATUS_INVALID_MESSAGE, st_module,  CSI_NO_CALLEE, 
+diff --git a/xdr/csi_xlm_resp.c b/xdr/csi_xlm_resp.c
+index 9e08d19..12c626b 100644
+--- a/xdr/csi_xlm_resp.c
++++ b/xdr/csi_xlm_resp.c
+@@ -400,7 +400,7 @@ csi_xlm_response (
+ #ifdef DEBUG
+ #ifndef ADI /* the debug csi RPC code: */
+             memcpy((char *) &netaddr.s_addr, (char *) csi_hdr->xid.addr,
+-                                                          sizeof(unsigned long));
++                                                          sizeof(unsigned int));
+ 
+             /* convert ulong inet addr to dotted-decimal notation for log msg */
+             MLOGCSI((STATUS_INVALID_MESSAGE, st_module, CSI_NO_CALLEE, 
+diff --git a/xdr/csi_xlocatio.c b/xdr/csi_xlocatio.c
+index 5fcdd3c..559af00 100644
+--- a/xdr/csi_xlocatio.c
++++ b/xdr/csi_xlocatio.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xlocatio.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xlockid.c b/xdr/csi_xlockid.c
+index 7d6dccb..3f3b4fb 100644
+--- a/xdr/csi_xlockid.c
++++ b/xdr/csi_xlockid.c
+@@ -31,6 +31,10 @@ static char SccsId[] = "@(#)csi_xlockid.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xlsm.c b/xdr/csi_xlsm.c
+index c874914..97e9f84 100644
+--- a/xdr/csi_xlsm.c
++++ b/xdr/csi_xlsm.c
+@@ -48,8 +48,10 @@ static char SccsId[] = "@(#)csi_xlsm.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xlsm_id.c b/xdr/csi_xlsm_id.c
+index 50dbcdb..6c91e72 100644
+--- a/xdr/csi_xlsm_id.c
++++ b/xdr/csi_xlsm_id.c
+@@ -42,8 +42,10 @@ static char SccsId[] = "@(#)csi_xlsm_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xmsg_hdr.c b/xdr/csi_xmsg_hdr.c
+index 558a61e..51f4e32 100644
+--- a/xdr/csi_xmsg_hdr.c
++++ b/xdr/csi_xmsg_hdr.c
+@@ -30,6 +30,10 @@ static char SccsId[] = "@(#)csi_xmsg_hdr.c	5.5 10/12/94 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xmsg_id.c b/xdr/csi_xmsg_id.c
+index e0f6bc5..498b334 100644
+--- a/xdr/csi_xmsg_id.c
++++ b/xdr/csi_xmsg_id.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xmsg_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xpnl.c b/xdr/csi_xpnl.c
+index 5aca435..c59dee2 100644
+--- a/xdr/csi_xpnl.c
++++ b/xdr/csi_xpnl.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xpnl.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xpnl_id.c b/xdr/csi_xpnl_id.c
+index 192f364..097ef76 100644
+--- a/xdr/csi_xpnl_id.c
++++ b/xdr/csi_xpnl_id.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xpnl_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xpool.c b/xdr/csi_xpool.c
+index f2109b6..f2544c2 100644
+--- a/xdr/csi_xpool.c
++++ b/xdr/csi_xpool.c
+@@ -31,6 +31,10 @@ static char SccsId[] = "@(#)csi_xpool.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xpool_id.c b/xdr/csi_xpool_id.c
+index 3816137..1853bf8 100644
+--- a/xdr/csi_xpool_id.c
++++ b/xdr/csi_xpool_id.c
+@@ -31,6 +31,10 @@ static char SccsId[] = "@(#)csi_xpool_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xport.c b/xdr/csi_xport.c
+index 48b7c0f..65a6818 100644
+--- a/xdr/csi_xport.c
++++ b/xdr/csi_xport.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xport.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xport_id.c b/xdr/csi_xport_id.c
+index 23c8622..3b827ca 100644
+--- a/xdr/csi_xport_id.c
++++ b/xdr/csi_xport_id.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xport_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xptp_id.c b/xdr/csi_xptp_id.c
+index f169e9a..daa87fa 100644
+--- a/xdr/csi_xptp_id.c
++++ b/xdr/csi_xptp_id.c
+@@ -35,8 +35,10 @@ static char SccsId[] = "@(#)csi_xptp_id.c 1.0 11/29/04 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xregister_st.c b/xdr/csi_xregister_st.c
+index 9b2f219..fe19bd7 100644
+--- a/xdr/csi_xregister_st.c
++++ b/xdr/csi_xregister_st.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xregister_st.c	6.1 10/16/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xreq_hdr.c b/xdr/csi_xreq_hdr.c
+index 119fc40..3829f2b 100644
+--- a/xdr/csi_xreq_hdr.c
++++ b/xdr/csi_xreq_hdr.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xreq_hdr.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xreqsumm.c b/xdr/csi_xreqsumm.c
+index b6da26e..0686150 100644
+--- a/xdr/csi_xreqsumm.c
++++ b/xdr/csi_xreqsumm.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xreqsumm.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xres_sta.c b/xdr/csi_xres_sta.c
+index 6bd2fc9..ebc4143 100644
+--- a/xdr/csi_xres_sta.c
++++ b/xdr/csi_xres_sta.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xres_sta.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xrgstrn_id.c b/xdr/csi_xrgstrn_id.c
+index 9eb8e74..5f8fb61 100644
+--- a/xdr/csi_xrgstrn_id.c
++++ b/xdr/csi_xrgstrn_id.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xrgstrn_id.c	6.1 10/15/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xrow.c b/xdr/csi_xrow.c
+index 33f611f..fbf26c4 100644
+--- a/xdr/csi_xrow.c
++++ b/xdr/csi_xrow.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xrow.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xsense_fsc.c b/xdr/csi_xsense_fsc.c
+index 4ab40b9..6d53f40 100644
+--- a/xdr/csi_xsense_fsc.c
++++ b/xdr/csi_xsense_fsc.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xsense_fsc.c	6.1 10/15/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xsense_hli.c b/xdr/csi_xsense_hli.c
+index 37708b0..9ac9369 100644
+--- a/xdr/csi_xsense_hli.c
++++ b/xdr/csi_xsense_hli.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xsense_hli.c	6.1 10/16/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xsense_scsi.c b/xdr/csi_xsense_scsi.c
+index d465a0b..ce0768f 100644
+--- a/xdr/csi_xsense_scsi.c
++++ b/xdr/csi_xsense_scsi.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xsense_scsi.c	6.1 10/16/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xserial_num.c b/xdr/csi_xserial_num.c
+index 3f39d20..47a3c41 100644
+--- a/xdr/csi_xserial_num.c
++++ b/xdr/csi_xserial_num.c
+@@ -43,6 +43,10 @@ static char SccsId[] = "@(#)csi_xserial_num.c	6.1 10/15/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xsocknam.c b/xdr/csi_xsocknam.c
+index 0e805c9..92baba2 100644
+--- a/xdr/csi_xsocknam.c
++++ b/xdr/csi_xsocknam.c
+@@ -48,8 +48,10 @@ static char SccsId[] = "@(#)csi_xsocknam.c	5.3 11/9/93 (c) 1989 StorageTek";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xspnl_id.c b/xdr/csi_xspnl_id.c
+index f2f4e6f..f02cbc3 100644
+--- a/xdr/csi_xspnl_id.c
++++ b/xdr/csi_xspnl_id.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xspnl_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xstate.c b/xdr/csi_xstate.c
+index 0dda791..419df82 100644
+--- a/xdr/csi_xstate.c
++++ b/xdr/csi_xstate.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xstate.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xtype.c b/xdr/csi_xtype.c
+index d4d7c6c..edf0997 100644
+--- a/xdr/csi_xtype.c
++++ b/xdr/csi_xtype.c
+@@ -43,7 +43,9 @@ static char SccsId[] = "@(#)csi_xtype.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif 
+  
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+diff --git a/xdr/csi_xv0_cap_.c b/xdr/csi_xv0_cap_.c
+index 42c4f1d..caa5587 100644
+--- a/xdr/csi_xv0_cap_.c
++++ b/xdr/csi_xv0_cap_.c
+@@ -45,8 +45,10 @@ static char SccsId[] = "@(#)csi_xv0_cap_.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xv0_req.c b/xdr/csi_xv0_req.c
+index b64c450..1a306e8 100644
+--- a/xdr/csi_xv0_req.c
++++ b/xdr/csi_xv0_req.c
+@@ -70,6 +70,10 @@ static char SccsId[] = "@(#)csi_xv0_req.c	5.5 11/11/93 ";
+ #include <csi_xdr_xlate.h> 
+ #include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xv0_res.c b/xdr/csi_xv0_res.c
+index 299e30e..3faed1d 100644
+--- a/xdr/csi_xv0_res.c
++++ b/xdr/csi_xv0_res.c
+@@ -66,6 +66,10 @@ static char SccsId[] = "@(#)csi_xv0_res.c	5.4 11/11/93 ";
+ #include <csi_xdr_xlate.h>
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xv1_cap_.c b/xdr/csi_xv1_cap_.c
+index 92f54e5..f530177 100644
+--- a/xdr/csi_xv1_cap_.c
++++ b/xdr/csi_xv1_cap_.c
+@@ -45,8 +45,10 @@ static char SccsId[] = "@(#)csi_xv1_cap_.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xv1_res.c b/xdr/csi_xv1_res.c
+index 0e43ca1..4243775 100644
+--- a/xdr/csi_xv1_res.c
++++ b/xdr/csi_xv1_res.c
+@@ -67,6 +67,10 @@ static char SccsId[] = "@(#)csi_xv1_res.c	5.4 11/11/93 ";
+ #include <csi_xdr_xlate.h>
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xv2_res.c b/xdr/csi_xv2_res.c
+index b88412f..aeac30e 100644
+--- a/xdr/csi_xv2_res.c
++++ b/xdr/csi_xv2_res.c
+@@ -74,6 +74,10 @@ static char SccsId[] = "@(#)csi_xv2_res.c	5.5 11/11/93 ";
+ #include <csi_xdr_xlate.h>
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  * Defines, Typedefs and Structure Definitions: 
+  */
+diff --git a/xdr/csi_xv2qures.c b/xdr/csi_xv2qures.c
+index a668411..b9fc5df 100644
+--- a/xdr/csi_xv2qures.c
++++ b/xdr/csi_xv2qures.c
+@@ -56,6 +56,10 @@ static char SccsId[] = "@(#)csi_xv2qures.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ #define CHECKSIZE(cursize, objsize, totsize) \
+     (cursize + objsize > totsize) ?  TRUE : FALSE
+diff --git a/xdr/csi_xv4_res.c b/xdr/csi_xv4_res.c
+index b29f7ba..0389ea6 100644
+--- a/xdr/csi_xv4_res.c
++++ b/xdr/csi_xv4_res.c
+@@ -81,6 +81,10 @@ static char SccsId[] = "@(#)csi_xv4_res.c	5.3 11/11/01 ";
+ #include <csi_xdr_xlate.h>
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  * Defines, Typedefs and Structure Definitions: 
+  */
+diff --git a/xdr/csi_xversion.c b/xdr/csi_xversion.c
+index 4477e1e..2efbca1 100644
+--- a/xdr/csi_xversion.c
++++ b/xdr/csi_xversion.c
+@@ -31,6 +31,10 @@ static char SccsId[] = "@(#)csi_xversion.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xvol_id.c b/xdr/csi_xvol_id.c
+index 84b20b3..ec7302f 100644
+--- a/xdr/csi_xvol_id.c
++++ b/xdr/csi_xvol_id.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xvol_id.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xvol_sta.c b/xdr/csi_xvol_sta.c
+index a1ce582..61c51ca 100644
+--- a/xdr/csi_xvol_sta.c
++++ b/xdr/csi_xvol_sta.c
+@@ -43,8 +43,10 @@ static char SccsId[] = "@(#)csi_xvol_sta.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
+- 
+- 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*
+  *      Defines, Typedefs and Structure Definitions:
+  */
+diff --git a/xdr/csi_xvolrang.c b/xdr/csi_xvolrang.c
+index 780e4ca..b8364c7 100644
+--- a/xdr/csi_xvolrang.c
++++ b/xdr/csi_xvolrang.c
+@@ -32,6 +32,10 @@ static char SccsId[] = "@(#)csi_xvolrang.c	5.4 11/11/93 ";
+ #include "csi.h"
+ #include "ml_pub.h"
+  
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+diff --git a/xdr/csi_xxml_data.c b/xdr/csi_xxml_data.c
+index 67adcf1..323b80c 100644
+--- a/xdr/csi_xxml_data.c
++++ b/xdr/csi_xxml_data.c
+@@ -37,6 +37,10 @@ static char SccsId[] = "@(#)csi_xxml_data.c	2.2 11/12/01 ";
+ # include "csi.h"
+ # include "ml_pub.h"
+ 
++#ifdef DEBUG
++#include "cl_pub.h"
++#endif
++
+ /*      Defines, Typedefs and Structure Definitions: */
+ 
+ /*      Global and Static Variable Declarations: */
+-- 
+2.49.0
+

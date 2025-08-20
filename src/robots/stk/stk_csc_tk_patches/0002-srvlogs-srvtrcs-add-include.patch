@@ -1,0 +1,39 @@
+From 13e04f4c957bb4a4e0363d61d631fb8dd4647c4b Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Tue, 26 Oct 2021 14:24:15 +0200
+Subject: [PATCH 2/8] srvlogs,srvtrcs: add include
+
+---
+ srvlogs/srvlogs.c | 2 ++
+ srvtrcs/srvtrcs.c | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/srvlogs/srvlogs.c b/srvlogs/srvlogs.c
+index add6504..b5b068e 100644
+--- a/srvlogs/srvlogs.c
++++ b/srvlogs/srvlogs.c
+@@ -52,6 +52,8 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
+ 
+ #include "api/defs_api.h"
+ #include "srvcommon.h"
+diff --git a/srvtrcs/srvtrcs.c b/srvtrcs/srvtrcs.c
+index b11c577..5e5beef 100644
+--- a/srvtrcs/srvtrcs.c
++++ b/srvtrcs/srvtrcs.c
+@@ -52,6 +52,8 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
+ 
+ #include "api/defs_api.h"
+ #include "srvcommon.h"
+-- 
+2.49.0
+

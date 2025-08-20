@@ -96,10 +96,10 @@ ifeq ($(AMD64), yes)
   PLATFORM = x64
 endif
 ifeq ($(DEBUG), yes)
-DBG_TARGET = debug
+DBG_TARGET = top_debug
 DBG_OPT=-g
 else
-DBG_TARGET = nodebug
+DBG_TARGET = top_nondebug
 DBG_OPT=
 endif
 
@@ -109,8 +109,10 @@ ACSLIB = $(STKDEST)/libapi.so
 ACSCOM = $(STKDEST)/libcl.so
 ACSUTL = $(STKDEST)/libutl.so
 ACSIPC = $(STKDEST)/libipc.so
-SSIXDR = $(STKDEST)/libssixdr.so
-ACSSSI  = ssi
+# SSIXDR = $(STKDEST)/libssixdr.so $(STKDEST)/SSIXDR.a
+SSIXDR = ../../lib/amd64/SSIXDR.a
+ACSSSI = ssi
+MINIEL = mini_el
 
 CDK = $(shell readlink -f stk_release)
 STK_ABSDIR = $(shell readlink -f $(STKDEST))
@@ -119,19 +121,24 @@ STK_ABSDIR = $(shell readlink -f $(STKDEST))
 
 # stklibs: $(ACSCOM) $(ACSUTL) $(ACSLIB) $(SSIXDR) $(ACSIPC)
 
-$(ACSSSI):
-	-(cd stk_release/src/ssi; $(MAKE_COMMAND) INSTALL="../../bin"			\
+$(SSIXDR):
+	-(cd stk_release/src/xdr; $(MAKE_COMMAND) DEBUG="$(DBG_OPT)" $(DBG_TARGET) PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR))
+
+$(ACSSSI): $(SSIXDR)
+	-(cd stk_release/src/ssi; env; $(MAKE_COMMAND) INSTALL="../../bin/amd64"			\
 		SYSINST="$(SYSINST)" STKDEST="$(DESTDIR)"				\
-		LIBSO="$(subst lib,lib/stk,$(LIBSO))" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) DEBUG="$(DBG_OPT)" $(DBG_TARGET) )
+		LIBSO="$(subst lib,lib/stk,$(LIBSO))" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) DEBUG="$(DBG_OPT)" $(DBG_TARGET))
+
+$(MINIEL):
+	-(cd stk_release/src/mini_el; $(MAKE_COMMAND) INSTALL="../../bin/amd64"			\
+		SYSINST="$(SYSINST)" STKDEST="$(DESTDIR)"				\
+		LIBSO="$(subst lib,lib/stk,$(LIBSO))" CDK=$(shell pwd)/stk_release CDK_BUILD_OPTION=BASE PLATFORM=$(PLATFORM) DEBUG="$(DBG_OPT)" $(DBG_TARGET))
 
 $(ACSCOM):
 	-(cd stk_release/src/common_lib; env; $(MAKE_COMMAND) DEBUG="$(DBG_OPT)" $(DBG_TARGET) PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR))
 
-$(SSIXDR):
-	-(cd stk_release/src/ssixdr; $(MAKE_COMMAND) DEBUG="$(DBG_OPT)" $(DBG_TARGET) PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR))
-
 $(ACSUTL):
-	-(cd stk_release/src/acsutl;  $(MAKE_COMMAND) DEBUG="$(DBG_OPT)" $(DBG_TARGET) PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/acsutl;  $(MAKE_COMMAND) DEBUG="$(DBG_OPT)" $(DBG_TARGET) PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR))
 
 $(ACSIPC):
 	-(cd stk_release/src/acsipc; $(MAKE_COMMAND) DEBUG="$(DBG_OPT)" $(DBG_TARGET) PLATFORM=$(PLATFORM) CDK=$(CDK) CDK_BUILD_OPTION=BASE LIB_DIR=$(STK_ABSDIR))
@@ -144,12 +151,13 @@ ACSLIBS = $(ACSCOM) $(ACSUTL) $(ACSIPC) $(ACSLIB)
 $(OBJ_DIR)/stk_helper: $(ACSLIBS)
 
 clean_stk:
-	@(cd stk_release/src/acsapi; $(MAKE_COMMAND) clean $(DBG_TARGET) CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
-	@(cd stk_release/src/common_lib; $(MAKE_COMMAND) clean $(DBG_TARGET) CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
-	@(cd stk_release/src/acsutl; $(MAKE_COMMAND) clean $(DBG_TARGET) CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
-	@(cd stk_release/src/acsipc; $(MAKE_COMMAND) clean $(DBG_TARGET) CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
-	@(cd stk_release/src/xdr; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR) $(DBG_TARGET))
-	@(cd stk_release/src/ssi; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR) $(DBG_TARGET))
+	rm -f $(ACSLIBS)
+	(cd stk_release/src/acsapi; env; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/common_lib; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/acsutl; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/acsipc; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/xdr; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/ssi; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
 
 install:	install_more
 install_more:
@@ -168,19 +176,13 @@ install_more:
 OS_RELEASE_VER = $(shell  echo $(OS_RELEASE) | tr -d -c 0-9).1
 DBG_SUFF.DBG = _DEBUG
 DBG_SUFF= $(DBG_SUFF.$(DEBUG:yes=DBG))
-pkg:    $(PROG) $(ACSLIBS) $(MPROGS)
-	cat stk.p5m.in | sed -e s/{{SAMQFS_VERSION}}/$(SAMQFS_VERSION)/ \
-		-e s/{{OSRELEASE}}/$(OS_RELEASE_VER)/ \
-		-e s/{{OS_RELEASE}}/$(OS_RELEASE)/ \
-		-e s/{{DBG}}/$(DBG_SUFF)/ \
-		> stk.p5m
-	cat acsls-client-toolkit.p5m.in | sed \
-		-e s/{{OSRELEASE}}/$(OS_RELEASE_VER)/ \
-		> acsls-client-toolkit.p5m
-	pkglint stk.p5m
-	pkgsend publish -d. -s ../../../repo/i386-$(OS_RELEASE)/ stk.p5m
-	pkglint acsls-client-toolkit.p5m
-	pkgsend publish -d ./stk_release -s ../../../repo/i386-$(OS_RELEASE)/ acsls-client-toolkit.p5m
+pkg:    $(PROG) $(ACSLIBS) $(ACSSSI) $(MPROGS) $(MINIEL)
+	pkgmogrify -D OSRELEASE=$(OS_RELEASE_VER) -D SAMQFS_VERSION=$(SAMQFS_VERSION) stk.p5m > stk.p5m.mog
+	pkglint stk.p5m.mog
+	pkgsend publish -d $(OBJ_DIR) -d. -s ../../../repo/i386-$(OS_RELEASE)/ stk.p5m.mog && rm stk.p5m.mog
+	pkgmogrify -D OSRELEASE=$(OS_RELEASE_VER) acsls-client-toolkit.p5m > acsls-client-toolkit.p5m.mog
+	pkglint acsls-client-toolkit.p5m.mog
+	pkgsend publish -d ./stk_release -d $(STKDEST) -d . -s ../../../repo/i386-$(OS_RELEASE)/ acsls-client-toolkit.p5m.mog && rm acsls-client-toolkit.p5m.mog
 
 include $(DEPTH)/mk/depend.mk
 
@@ -190,3 +192,5 @@ show:
 	@echo "VERSION: $(SAMQFS_VERSION)"
 	@echo "DEBUG: $(DEBUG)"
 	@echo "INSTALL: $(INSTALL)"
+	@echo "STKDEST: $(STKDEST)"
+	@echo "CDK: $(CDK)"

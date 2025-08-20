@@ -1,0 +1,102 @@
+From d79e89384063a724bbeb3c0704601678fce89b68 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Wed, 20 Aug 2025 17:56:58 +0200
+Subject: [PATCH 2/2] adapt build environment
+
+---
+ make.ini     |  6 ++++++
+ make.ini.x64 | 45 +++++++++++++++++++++++++++++++++++++--------
+ 2 files changed, 43 insertions(+), 8 deletions(-)
+
+diff --git a/make.ini b/make.ini
+index f154f9c..36b62c8 100644
+--- a/make.ini
++++ b/make.ini
+@@ -53,3 +53,9 @@
+ #                                       64 bit Linux builds.
+ #
+ include $(CDK)/etc/make.ini.$(PLATFORM)
++
++CMDMCS = /usr/bin/mcs
++CMDWHOAMI = /usr/bin/whoami
++MCSOPT = $(shell echo "-c -a '@(=)Built `/bin/date +%D` by `$(CMDWHOAMI)` on `/bin/uname -n` `/bin/uname -s` `/bin/uname -r`.'" | /bin/tr = '\043')
++MCS = $(CMDMCS) $(MCSOPT)
++
+diff --git a/make.ini.x64 b/make.ini.x64
+index 010667a..53e148d 100644
+--- a/make.ini.x64
++++ b/make.ini.x64
+@@ -69,15 +69,24 @@
+ #       These are for compiling Toolkit source.
+ #
+ # Path for Sun Studio 12
+-COMPILER=/opt/SUNWspro/bin/cc
++# COMPILER=/opt/SUNWspro/bin/cc
++COMPILER=/usr/bin/gcc
++
++# ifeq ($(origin BITS), undefined)
++# BITS = 64
++# endif
+ 
+ # Compiling for 64 bit or 32 bit platforms
+ # -m32 implies a 32 bit long and pointer type
+ # -m64 implies a 64 bit long and pointer type
+-COMMON_CC_FLAGS=-m64
+-#COMMON_CC_FLAGS=-m32
++COMMON_CC_FLAGS.64=-m64 -fPIC
++COMMON_CC_FLAGS.32=-m32 -fPIC
++COMMON_CC_FLAGS=$(COMMON_CC_FLAGS.$(BITS))
++
++LD_FLAGS.64= -m64
++LD_FLAGS.32= -m32
++LD = $(COMPILER) $(LD_FLAGS.$(BITS))
+ 
+-#LD_FLAGS=
+ DEBUG		=-DDEBUG -g -DSOLARIS -DPORTMAP
+ NONDEBUG 	= -DSOLARIS  -DPORTMAP
+ #ANSI_INCLUDE    =
+@@ -89,13 +98,20 @@ NONDEBUG 	= -DSOLARIS  -DPORTMAP
+ #LIBANSI=
+ #LIB_DIR=
+ 
++BITS.x64 = 64
++BITS.i386 = 32
++BITS = $(BITS.$(PLATFORM))
++
+ # For all 32-bit X86 and SPARC Solaris compiles
+-#UCBLIB_DIR= -L/usr/ucblib
+-#LIBRUNPATH = -R/usr/ucblib
++UCBLIB_DIR.32= -L/usr/ucblib
++LIBRUNPATH.32 = -R/usr/ucblib
+ 
+ # For 64-bit X64 Solaris compiles
+-UCBLIB_DIR= -L/usr/ucblib/amd64
+-LIBRUNPATH = -R/usr/ucblib/amd64
++UCBLIB_DIR.64= -L/usr/ucblib/amd64
++LIBRUNPATH.64 = -R/usr/ucblib/amd64:/opt/SUNWsamfs/lib/stk/amd64
++
++UCBLIB_DIR = $(UCBLIB_DIR.$(BITS))
++LIBRUNPATH = $(LIBRUNPATH.$(BITS))
+ 
+ # For all Solaris compiles
+ LIBRPCSOC= -lrpcsoc
+@@ -103,3 +119,16 @@ LIBSOCKET=  -lsocket
+ LIBNSL = -lnsl
+ LIBPTHREADS= -lposix4 
+ 
++OBJ_DIR.32 = .lib
++OBJ_DIR.64 = .lib64
++OBJ_DIR = $(OBJ_DIR.$(BITS))
++LIB_DIR.32 = ../../lib
++LIB_DIR.64 = ../../lib/amd64
++LIB_DIR = $(LIB_DIR.$(BITS))
++INSTALL.32 =../../bin
++INSTALL.64 =../../bin/amd64
++INSTALL = $(INSTALL.$(BITS))
++
++OUTPUT_OPTION = -o $@
++$(OBJ_DIR)/%.o: %.c
++	$(COMPILE.c) $(OUTPUT_OPTION) $<
+-- 
+2.49.0
+

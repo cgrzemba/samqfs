@@ -1,0 +1,25 @@
+From e8c4c39f44430a427cbf46193f5d11e7759b2d64 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Wed, 20 Aug 2025 15:33:13 +0200
+Subject: [PATCH 7/8] some fixes for 64bit and debug build
+
+---
+ common_lib/cl_inform.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common_lib/cl_inform.c b/common_lib/cl_inform.c
+index 5723dab..cdb891c 100644
+--- a/common_lib/cl_inform.c
++++ b/common_lib/cl_inform.c
+@@ -132,7 +132,7 @@ cl_inform (
+ 	    /* NOTE: sizeof construct is a preprocessor directive and the
+ 		     following indirection off of NULL is a legal construct */
+             memcpy((char *)&msg_buf.message_status.identifier,
+-	           (char *)identifier, sizeof(IDENTIFIER));
++	           (char *)identifier, sizeof(((LH_ADDR *)NULL)->address));
+             break;
+ 
+          case STATUS_DISK_FULL:
+-- 
+2.49.0
+

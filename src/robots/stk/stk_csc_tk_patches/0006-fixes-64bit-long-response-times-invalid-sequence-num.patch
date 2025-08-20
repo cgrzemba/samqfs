@@ -1,0 +1,44 @@
+From 3680254044e675f64bcc282d6cfe01b192ee14e6 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Mon, 18 Aug 2025 10:53:33 +0200
+Subject: [PATCH 6/8] fixes 64bit: long response times, invalid sequence
+ numbers
+
+---
+ h/api/ipc_hdr_api.h | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/h/api/ipc_hdr_api.h b/h/api/ipc_hdr_api.h
+index dda036d..4aa49db 100644
+--- a/h/api/ipc_hdr_api.h
++++ b/h/api/ipc_hdr_api.h
+@@ -17,6 +17,8 @@
+  *
+  */
+ 
++#include <stdint.h>
++
+ #define HOSTID_SIZE  12       /* We use a size of 12 to ensure that the
+ 				 ipc_header is smaller than the csi_header.
+ 				 There is a bug in the code that handles
+@@ -27,14 +29,14 @@ typedef struct {
+ } HOSTID;
+ 
+ typedef struct {                        /* IPC header */
+-    unsigned long   byte_count;         /*   message length, including header */
++    uint32_t	byte_count;         /*   message length, including header */
+     TYPE            module_type;        /*   sending module type */
+     unsigned char   options;            /*   see defs.h */
+-    unsigned long   seq_num;            /*   message sequence number */
++    uint32_t	seq_num;            /*   message sequence number */
+     char            return_socket[SOCKET_NAME_SIZE];
+                                         /*   sender's input socket name */
+     unsigned int    return_pid;         /*   sender's PID */
+-    unsigned long   ipc_identifier;     /*   used for message sync */
++    uint32_t	ipc_identifier;     /*   used for message sync */
+     TYPE            requestor_type;     /*   used by persistent processes */
+     HOSTID          host_id;            /*   id of the originating host */
+ } IPC_HEADER;
+-- 
+2.49.0
+

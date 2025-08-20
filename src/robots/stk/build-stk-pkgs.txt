@@ -1,0 +1,24 @@
+build and package samqfs first
+
+download and extract CSC-Toolkit from
+https://www.oracle.com/tools/downloads/acsls-csc-toolkit-downloads.html
+
+extract to your <csc-tk-path>
+$ mkdir -p <csc-tk-path>
+$ unzip -d <csc-tk-path>/ CSC_ToolKit_2.4_02-14-13.zip
+
+create link to the csc-path from samqfs source
+
+$ cd <samqfs-path>/src/robots/stk
+$ ln -s <csc-tk-path>/toolkit2.4.0 ./stk-release  
+$ ln -s <csc-tk-path>/toolkit2.4.0/src/h ./stk-includes
+
+apply patches for 64bit build
+
+$ cd <csc-tk-path>/toolkit2.4.0/src
+$ for p in `find <samqfs-path>/src/robots/stk/stk_csc_tk_patches/`; { gpatch -p1 -i $p; }
+
+build and package
+$ gmake -f GNUmakefile pkg
+
+

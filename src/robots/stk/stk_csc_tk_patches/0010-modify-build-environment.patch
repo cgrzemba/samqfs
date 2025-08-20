@@ -1,0 +1,96 @@
+From 76a27a1934ff0748c577f3c8edbaaa10057e150d Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Thu, 21 Aug 2025 11:44:23 +0200
+Subject: [PATCH] modify build environment
+
+---
+ acsapi/Makefile     | 2 ++
+ common_lib/Makefile | 4 +++-
+ mini_el/Makefile    | 1 +
+ ssi/Makefile        | 5 +++--
+ xdr/Makefile        | 2 ++
+ 5 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/acsapi/Makefile b/acsapi/Makefile
+index e999bcf..8ebb0d2 100644
+--- a/acsapi/Makefile
++++ b/acsapi/Makefile
+@@ -175,9 +175,11 @@ nondebug:
+ 
+ create_obj_dir:
+ 	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++	[ -d ../../lib/amd64 ] || mkdir -p ../../lib/amd64
+ 
+ install:	$(APILIB)
+ 	cp -p $(APILIB) $(LIB_DIR)
++	cp -p $(APILIB) ../../lib/amd64
+ 
+ clean:
+ 	rm -f $(APILIB) $(OBJ) 
+diff --git a/common_lib/Makefile b/common_lib/Makefile
+index 36116e1..46a83c9 100644
+--- a/common_lib/Makefile
++++ b/common_lib/Makefile
+@@ -159,10 +159,12 @@ nondebug:
+ 	$(ANSI_INCLUDE)"
+ 
+ create_obj_dir:
+-	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++	[ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
++	[ -d ../../lib/amd64 ] || mkdir -p ../../lib/amd64
+ 
+ install:	$(EXEC)
+ 	cp -p $(EXEC) $(LIB_DIR)
++	cp -p $(EXEC) ../../lib/amd64/
+ 
+ clean:
+ 	rm -f $(OBJ) $(EXEC)
+diff --git a/mini_el/Makefile b/mini_el/Makefile
+index 28c2987..03548c4 100644
+--- a/mini_el/Makefile
++++ b/mini_el/Makefile
+@@ -74,6 +74,7 @@ create_obj_dir:
+ 	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+ 
+ install:	$(EXEC)
++	[ -d $(INSTALL) ] || mkdir $(INSTALL)
+ 	cp $(EXEC) $(INSTALL)
+ 
+ clean:
+diff --git a/ssi/Makefile b/ssi/Makefile
+index 14cddac..78dc4fc 100644
+--- a/ssi/Makefile
++++ b/ssi/Makefile
+@@ -165,10 +165,11 @@ nondebug:
+ 	$(MAKE) -f Makefile $(EXEC) CFLAGS="$(CFLAGS) $(NONDEBUG) $(ANSI_INCLUDE)"
+ 
+ create_obj_dir:
+-	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++	[ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
+ 
+ install: 
+-	cp $(EXEC) $(INSTALL)
++	[ -d $(INSTALL) ] || mkdir -p $(INSTALL)
++	cp -p $(EXEC) $(INSTALL)
+ 
+ clean:
+ 	rm -f $(OBJ) $(EXEC) 
+diff --git a/xdr/Makefile b/xdr/Makefile
+index c8b2b2b..46429f2 100644
+--- a/xdr/Makefile
++++ b/xdr/Makefile
+@@ -229,9 +229,11 @@ nondebug:
+ 
+ create_obj_dir:
+ 	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
++	[ -d ../../lib/amd64 ] || mkdir -p ../../lib/amd64
+ 
+ install: 
+ 	cp -p  $(XDRLIBS) $(XDRSLIBS) $(LIB_DIR)
++	cp -p  $(XDRLIBS) $(XDRSLIBS) ../../lib/amd64
+ 
+ clean:
+ 	rm -f $(OBJ) $(XDRLIBS) $(XDRSLIBS)
+-- 
+2.49.0
+
