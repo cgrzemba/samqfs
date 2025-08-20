@@ -49,6 +49,7 @@ version = '5.0.1'
 release = '2023.0.0.0'
 fmri = 'system/samqfs'
 repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
+revision = 0
 
 prefix = 'opt/SUNWsamfs/'
 docdir = prefix+'doc/'
@@ -65,7 +66,7 @@ builddate = time.strftime('%Y%m%dT%H%M%SZ')
 
 if 'omnios' in osrelease:
   publisher = 'samqfs.omnios'
-  release = subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[1][1:]+'.0'
+  release = subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[1][1:]+'.'+str(revision)
 else:
   publisher = 'openindiana.org'
 
@@ -453,6 +454,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--destdir', dest='destdir', default='./root_i386')
     parser.add_argument('--version', dest='version', default=version, help='tag build with this version')
+    parser.add_argument('--revision', dest='revision', default=revision, help='tag build with this revision')
     parser.add_argument('--repro', dest='repro', help='path to ips package repository')
     parser.add_argument('--debug_build', dest='debug_build', action="store_true", help='install DEBUG builts')
     parser.add_argument('--publish', dest='publish', action="store_true", help='publish IPS package')

@@ -27,6 +27,7 @@ INSTALL_ISA = $(INSTALL.$(AMD64:yes=64))
 
 OS_RELEASE := $(shell  uname -v | gawk '{ split($$0,a,"[.-]"); print a[1]"-"a[2]}')
 REPRO ?= ../repo/i386-$(OS_RELEASE)
+SAMQFS_VERSION ?= $(shell git describe --tags --abbrev=0)
 
 install:
 	./install-sam.py --destdir=$(DESTDIR) --version=$(SAMQFS_VERSION) $(FLAVOR) $(INSTALL_ISA)
