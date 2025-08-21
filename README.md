@@ -28,7 +28,12 @@ for debug builds add 'DEBUG=yes'
 
     $ gmake -f GNUmakefile install DESTDIR=$(PROTO_DIR)
 
-for build IPS package
+## Build IPS package
+if not already exist, create IPS repository, eg:
+    $ mkdir -p ../repo/${os_release}
+    $ pkgrepo -s ../repo/${os_release} create
+    $ pkgrepo -s ../repo/${os_release} add-publisher ${samqfs.publisher}
 
-    $ gmake -f GNUmakefile pkg
+then create package
+    $ gmake -f GNUmakefile pkg [REPO=../repo/${os_release}]
 
