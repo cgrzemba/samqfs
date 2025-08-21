@@ -48,7 +48,7 @@ osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').st
 version = '5.0.1'
 release = '2023.0.0.0'
 fmri = 'system/samqfs'
-repro = 'file:///home/grzemba/samfs/github/samqfs/repo/'+subpath+'-'+osrelease
+repro = '../repo/'+subpath+'-'+osrelease
 revision = 0
 
 prefix = 'opt/SUNWsamfs/'
@@ -508,7 +508,7 @@ if __name__ == '__main__':
              repro = args.repro
              logger.info("publish package in %s", repro)
          except subprocess.CalledProcessError as ret:
-             logger.error("wrong repro path %s", args.repro)
+             logger.error("repro path %s do not exist", args.repro)
              sys.exit(4)
 
     transform_fn = 'samqfs.transform'
