@@ -809,7 +809,7 @@ const uint_t req_count)
 			if (ele_dest_len > sizeof (import_export_element_t)) {
 				extension = (import_export_element_ext_t *)
 				    ((char *)import_descrip +
-				    sizeof (import_export_element_t *));
+				    sizeof (import_export_element_t));
 				BE16toH(&extension->stor_addr, &stor_addr);
 			} else {
 				extension = NULL;
