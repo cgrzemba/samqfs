@@ -677,7 +677,7 @@ sam_build_amld_cmd(
 {
 	sam_mount_t *mp;
 	int error;
-	enum sam_block_flag flg;
+	enum sam_block_flag flg = SAM_NOBLOCK;
 
 	mp = ip->mp;
 	cp->magic = FS_FIFO_MAGIC;
