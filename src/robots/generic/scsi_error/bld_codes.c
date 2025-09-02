@@ -695,6 +695,7 @@ sam_scsi_err_t   plasmong[] = {
 	0xff, 0xff, 0xff, 0xff, END_OF_LIST
 };
 
+/* sense_key add_sense add_sense_qual message_code action */
 sam_scsi_err_t   stklxx[] = {
 	0x00, 0x00, 0x00, 0x00, IGNORE,
 	0x02, 0x04, 0x01, 0x00, WAIT_READY,   /* becoming ready */

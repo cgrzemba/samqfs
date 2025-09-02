@@ -407,7 +407,7 @@ export_request(
 		    import->active_count, __FILE__, __LINE__));
 		(void) append_list(end, event);
 	} else {
-		ETRACE((LOG_NOTICE, "ApIm %#x-%#x(%d) %s:%d.", end, event,
+		ETRACE((LOG_NOTICE, "FrIm %#x(%d) %s:%d.", event,
 		    import->active_count, __FILE__, __LINE__));
 		import->first = event;
 	}

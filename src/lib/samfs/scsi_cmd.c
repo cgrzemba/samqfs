@@ -74,6 +74,9 @@ static char *_SrcFile = __FILE__;
 #define	DEV_ENT(a) ((dev_ent_t *)SHM_REF_ADDR(((dev_ptr_tbl_t *)SHM_REF_ADDR( \
 ((shm_ptr_tbl_t *)master_shm.shared_memory)->dev_table))->d_ent[(a)]))
 
+#define SENSE_KEY(rqbuf)        (rqbuf[2] & 0xf)      /* scsi error category */
+#define ASC(rqbuf)              (rqbuf[12])     /* additional sense code */
+#define ASCQ(rqbuf)             (rqbuf[13])     /* ASC qualifier */
 
 static int cdb_fd = -1;
 static mutex_t cdb_fd_mutex = {0};
@@ -1046,13 +1049,21 @@ redo:
 	}
 #endif
 
+	errno = 0;
 	if ((GetDefaults())->flags & DF_ALIGN_SCSI_CMDBUF) {
 		tmp5 = us_ioctl(fd, un, &us);
 	} else {
 		tmp5 = ioctl(fd, USCSICMD, &us);
 	}
 
-	DevLog(DL_DEBUG(1024), command, us.uscsi_status);
+	/* maintain consistency in case of sgen */
+	if ((tmp5 == 0) && (us.uscsi_status == STATUS_CHECK)) {
+		DevLog(DL_ERR(5133), SENSE_KEY(us.uscsi_rqbuf), ASCQ(us.uscsi_rqbuf),
+		    ASCQ(us.uscsi_rqbuf), "");
+		tmp5 = -1;
+		errno = EIO;
+	}
+	DevLog(DL_DEBUG(1024), command, us.uscsi_status, tmp5, errno);
 	if (tmp5) {
 
 		/* Command failed, return the proper error */

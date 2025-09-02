@@ -47,7 +47,7 @@ $ *    SAM-QFS_notice_end
 1021 scsi_cmd(%#x) entered without io_mutex
 1022 scsi_cmd(%#x) entered with io_active
 1023 scsi_cmd: EAGAIN
-1024 scsi_cmd(%#x) status %#x
+1024 scsi_cmd(%#x) status=%#x, ret=%#x, errno=%d
 1025 Read log failed
 1026 Could not lock door
 1027 Unloaded and door unlocked
@@ -637,7 +637,7 @@ $ *    SAM-QFS_notice_end
 5024 Robot exception bit set (%#x:%#x)
 5025 Robot exception cleared
 5026 Robot mismatch is %d, expected %d
-5027 Mailbox exception bit set (%#x:%#x)
+5027 Mailbox exception bit set (%#x:%#x:%#x)
 5028 Mailbox exception cleared
 5029 Mailbox mismatch is %d, expected %d
 5030 Drive %d exception bit set (%#x:%#x)

@@ -995,9 +995,10 @@ int *slot)
 	int 		lslot = 0;
 	int 		status = 0;
 	sam_defaults_t *defaults;
-
+	sam_extended_sense_t	*sense;
 
 	un = import->library->un;
+	sense = (sam_extended_sense_t *)SHM_REF_ADDR(un->sense);
 	defaults = GetDefaults();
 
 	if (is_acl452)
@@ -1010,7 +1011,7 @@ int *slot)
 		import->status.b.access = desc->access;
 		import->status.b.except = desc->except;
 		if (ext != NULL && desc->except && ext->add_sense_code) {
-			DevLog(DL_DETAIL(5027), ext->add_sense_code,
+			DevLog(DL_DETAIL(5027), sense->es_key, ext->add_sense_code,
 			    ext->add_sense_qual);
 			switch (process_res_codes(un, 0x09, ext->add_sense_code,
 			    ext->add_sense_qual,

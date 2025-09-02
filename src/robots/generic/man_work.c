@@ -223,7 +223,7 @@ manage_list(
 				break;
 
 			case EVENT_TYPE_MESS:	/* came off the message queue */
-				ETRACE((LOG_NOTICE, "LbCurr %#x mess type %d", current, current->request.message.command));
+				ETRACE((LOG_NOTICE, "LbCurr %#x mess command %d", current, current->request.message.command));
 				if (current->request.message.magic !=
 				    MESSAGE_MAGIC) {
 					sam_syslog(LOG_INFO,
