@@ -243,7 +243,7 @@ struct ArfindState {
 #define	ASF_archivemeta	0x0001	/* Archive meta data */
 #define	ASF_scanlist	0x0002	/* Perform scanlist consolidation */
 #define	ASF_setarchdone	0x0004	/* Set archdone state while scanning files */
-
+#define	ASF_archivexattr	0x0008	/* Archive xattr data */
 
 /* Public functions. */
 /* The return is an error message.  An empty messsage means no error. */

@@ -101,8 +101,9 @@ typedef struct sam_inode_ext_hdr {
 #define	MAX_VSNS_IN_INO	(8)
 
 /* borrowed from sam/fs/inodes.h */
-#define SAM_INO_IS_XATTR(dip2)  ((dip2)->p2flags & (P2FLAGS_XATTR|P2FLAGS_SYSATTR))
-#define SAM_INODE_IS_XATTR(ip)  SAM_INO_IS_XATTR(&((ip)->di2))
+#define SAM_INO_IS_XATTR(dip2)  (dip2.p2flags & (P2FLAGS_XATTR|P2FLAGS_SYSATTR))
+#define SAM_INODE_IS_XATTR(ip)  SAM_INO_IS_XATTR((ip)->di2)
+
 
 typedef struct sam_vsn_array {
 	struct sam_vsn_section section[MAX_VSNS_IN_INO];

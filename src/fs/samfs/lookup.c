@@ -77,6 +77,8 @@
 #include "qfs_log.h"
 #include "arfind.h"
 
+#include "ino_ext.h"
+
 extern ushort_t sam_dir_gennamehash(int nl, char *np);
 
 static int sam_find_component(sam_node_t *pip, char *cp, int flags, sam_node_t **ipp,

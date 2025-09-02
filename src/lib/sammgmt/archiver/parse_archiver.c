@@ -119,6 +119,7 @@ static void dirWait(void);
 static void dirSetarchdone(void);
 static void dirBackGndInterval(void);
 static void dirBackGndTime(void);
+static void dirArchxattr(void);
 static void copyNorelease(void);
 static void copyRelease(void);
 static void notDirective(void);

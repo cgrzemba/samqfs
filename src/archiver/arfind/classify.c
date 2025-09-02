@@ -131,9 +131,6 @@ ClassifyFile(
 		return (NULL);
 	}
 
-	/* do not archive XATTR files and directories, will be dumped */
-	if (SAM_INODE_IS_XATTR(pinode))
-		return (NULL);
 	/*
 	 * Regular files and symbolic links.
 	 * Search for matching file properties.
@@ -243,6 +240,11 @@ ClassifyFile(
 		/* No rules found */
 		return (NULL);
 	}
+
+	/* do not archive XATTR files and directories, will be dumped */
+	if (fp->FpFlags & FP_noxattrarch && SAM_INODE_IS_XATTR(pinode))
+		return (NULL);
+	/* else archive XATTR files like normal files */
 
 	if (fp->FpFlags & FP_noarch) {
 		/* A "no_archive" Archive Set */

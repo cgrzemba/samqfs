@@ -393,6 +393,10 @@ dump_directory_entry(
 		    (perm_inode.di.status.b.pextents == 1)) {
 			dumping_partial_data++;
 			flags |= CSD_FH_DATA;
+		} else if (SAM_INODE_IS_XATTR(&perm_inode)) {
+			/* always dump data of xattr files */
+			dumping_file_data++;
+			flags |= CSD_FH_DATA;
 		}
 		if (!skip_xattr && perm_inode.di2.xattr_id.ino > SAM_MIN_USER_INO) {
 			save_xadir_name(path, (char *)component_name);

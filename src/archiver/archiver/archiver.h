@@ -79,6 +79,7 @@ DCL struct FileSys {
 #define	FS_share_client	0x0020	/* shared client */
 #define	FS_share_reader	0x0040	/* shared reader */
 #define	FS_wait		0x0080	/* Filesystem set to wait */
+#define	FS_archivexattr	0x0100	/* Archive meta data */
 
 DCL int ListOptions IVAL(LO_none);
 

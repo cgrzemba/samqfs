@@ -88,6 +88,7 @@ struct FileProps {
 #define	FP_default	0x00000001	/* Default data archiving */
 #define	FP_metadata	0x00000002	/* Filesystem metadata */
 #define	FP_noarch	0x00000004	/* Don't archive these files */
+#define	FP_noxattrarch	0x00000008	/* Don't archive xattr files */
 #define	FP_nftv		0x00100000	/* No file time validation */
 
 #define	FP_props	0x000fff00

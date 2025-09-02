@@ -613,6 +613,8 @@ printConf(void)
 		    (fs->FsFlags & FS_scanlist) ? "on" : "off");
 		printf("  setarchdone: %s\n",
 		    (fs->FsFlags & FS_setarchdone) ? "on" : "off");
+		printf("  archivexattr: %s",
+		    (fs->FsFlags & FS_archivexattr) ? "on" : "off");
 		printf("  background_interval: %s",
 		    StrFromInterval(fs->FsBackGndInterval,
 		    NULL, 0));

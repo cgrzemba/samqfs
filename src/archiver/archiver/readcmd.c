@@ -97,6 +97,7 @@ static void dirTimeout(void);
 static void dirVsnpools(void);
 static void dirVsns(void);
 static void dirWait(void);
+static void dirArchxattr(void);
 static void copyNorelease(void);
 static void copyRelease(void);
 static void notDirective(void);
@@ -145,6 +146,7 @@ static DirProc_t directives[] = {
 	{ "vsnpools",		dirVsnpools,	DP_set   },
 	{ "vsns",		dirVsns,	DP_set   },
 	{ "wait",		dirWait,	DP_set   },
+	{ "archivexattr",	dirArchxattr,	DP_value,	4542 },
 	{ NULL,	notDirective, DP_other }
 };
 
@@ -266,6 +268,7 @@ ReadCmds(
 		}
 		addFileProps();
 		fpDef->FpFlags |= FP_metadata;
+		fpDef->FpFlags |= FP_noxattrarch;
 		snprintf(name, sizeof (name), "%s.1", fs->FsName);
 		(void) findset(name);
 	}
@@ -387,6 +390,16 @@ static void
 dirArchmeta(void)
 {
 	setFsFlag(FS_archivemeta);
+}
+
+
+/*
+ * archivexattr = [on | off ]
+ */
+static void
+dirArchxattr(void)
+{
+	setFsFlag(FS_archivexattr);
 }
 
 
@@ -1743,6 +1756,9 @@ assignFileProps(void)
 		    STRUCT_RND(sizeof (struct FilePropsEntry)));
 		fp->FpFlags &= ~FP_metadata;
 		fp->FpFlags |= FP_default;
+		if ((FileSysTable->entry[fsn].FsFlags & FS_archivexattr)) {
+			fp->FpFlags &= ~FP_noxattrarch;
+		}
 		addGlobalProps();
 
 		/*
@@ -1752,6 +1768,9 @@ assignFileProps(void)
 		fp = &fpt->FpEntry[0];
 		if (!(FileSysTable->entry[fsn].FsFlags & FS_archivemeta)) {
 			fp->FpFlags |= FP_noarch;
+		}
+		if ((FileSysTable->entry[fsn].FsFlags & FS_archivexattr)) {
+			fp->FpFlags &= ~FP_noxattrarch;
 		}
 		for (i = 0; i < fpt->FpCount; i++, fp++) {
 			char	*asname;

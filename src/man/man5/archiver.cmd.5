@@ -161,6 +161,12 @@ Set the meta data archiving state on or off.
 may be "\fBon\fR" or "\fBoff\fR".  Meta data archiving is off by default.
 .RE
 .TP 5
+.BI "archivexattr = " state
+Set the state of archiving xattr files on or off.
+.I state
+may be "\fBon\fR" or "\fBoff\fR".  xattr files archiving is off by default. xattr files will be dumped by samfsdump.
+.RE
+.TP 5
 .BI "background_interval = " time
 Set the interval between background scans to
 .IR time .

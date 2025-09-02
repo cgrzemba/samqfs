@@ -760,6 +760,9 @@ writeFileProps(void)
 		    state->AfExamine != EM_noscan) {
 			flags |= ASF_setarchdone;
 		}
+		if (!(fs->FsFlags & FS_archivexattr)) {
+			flags &= ~ASF_archivexattr;
+		}
 		if (state->AfFlags != flags) {
 			changed = TRUE;
 			state->AfFlags = flags;

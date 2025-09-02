@@ -995,8 +995,11 @@ extern long long load_double(long long *);
 enum sam_sync_type {SAM_SYNC_ALL, SAM_SYNC_ONE, SAM_SYNC_PURGE};
 typedef enum {IG_NEW, IG_EXISTS, IG_STALE, IG_SET, IG_DNLCDIR} sam_iget_t;
 
-#define	SAM_INO_IS_XATTR(dip2)	((dip2)->p2flags & P2FLAGS_XATTR)
-#define	SAM_INODE_IS_XATTR(ip)	SAM_INO_IS_XATTR(&((ip)->di2))
+#if 0
+// #define	SAM_INO_IS_XATTR(dip2)	((dip2)->p2flags & P2FLAGS_XATTR)
+#define SAM_INO_IS_XATTR(dip2)  (dip2.p2flags & (P2FLAGS_XATTR|P2FLAGS_SYSATTR))
+#define	SAM_INODE_IS_XATTR(ip)	SAM_INO_IS_XATTR(ip->di2)
+#endif
 #define	SAM_INODE_HAS_XATTR(ip)	((ip)->di2.xattr_id.ino != 0)
 
 /*
