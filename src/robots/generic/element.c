@@ -311,7 +311,7 @@ const uint_t req_count)
 					}
 				}
 				break;
-			} else if (library->un->equ_type == DT_HPSLXX) {
+			} else if (library->un->equ_type == DT_HPSLXX || library->un->equ_type == DT_STKLXX) {
 				if ((err = scsi_cmd(library->open_fd,
 				    library->un,
 				    SCMD_INIT_ELE_RANGE_37,
