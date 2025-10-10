@@ -494,7 +494,7 @@ mount_request(
 	library_t *library,
 	robo_event_t *event)
 {
-	char 	*l_mess = library->un->dis_mes[DIS_MES_LEN];
+	char 	*l_mess = library->un->dis_mes[DIS_MES_NORM];
 	char 	*ent_pnt = "mount_request";
 	mount_request_t *request;
 	drive_state_t *drive;
