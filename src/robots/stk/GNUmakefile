@@ -97,7 +97,8 @@ ifeq ($(AMD64), yes)
 endif
 ifeq ($(DEBUG), yes)
 DBG_TARGET = top_debug
-DBG_OPT=-g
+# from etc/make.ini.x64
+DBG_OPT=-DDEBUG -g -DSOLARIS -DPORTMAP
 else
 DBG_TARGET = top_nondebug
 DBG_OPT=
@@ -158,8 +159,9 @@ clean_stk:
 	(cd stk_release/src/acsipc; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
 	(cd stk_release/src/xdr; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
 	(cd stk_release/src/ssi; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
+	(cd stk_release/src/mini_el; $(MAKE_COMMAND) clean CDK=$(CDK) PLATFORM=$(PLATFORM) LIB_DIR=$(STK_ABSDIR))
 
-install:	install_more
+install:	$(ACSSSI) $(MPROGS) $(MINIEL)	install_more
 install_more:
 	$(INSTALL) -d $(LIBDEST)/stk
 	rm -f $(LIBDEST)/stk/* $(ADMDEST)/ssi_so
@@ -168,10 +170,9 @@ install_more:
 	cp $(DEPTH)/lib/$(OBJ_DIR)/libipc.so $(LIBDEST)/stk
 	cp $(DEPTH)/lib/$(OBJ_DIR)/libutl.so $(LIBDEST)/stk
 #	cp $(DEPTH)/lib/$(OBJ_DIR)/libssixdr.so $(LIBDEST)/stk
-	cp $(DEPTH)/lib/$(OBJ_DIR)/ssi_so $(ADMDEST)
-	$(INSTALL) $(SYSINST) $(WHOAMI) $(ADMDEST)/sam-$(WHOAMI)d
-	$(INSTALL) $(SYSINST) $(HELPER) $(ADMDEST)
-	$(INSTALL) $(SYSINST) $(SSISH) $(ADMDEST)
+#	cp $(DEPTH)/lib/$(OBJ_DIR)/ssi_so $(ADMDEST)
+#	$(INSTALL) $(SYSINST) $(HELPER) $(ADMDEST)
+#	$(INSTALL) $(SYSINST) $(SSISH) $(ADMDEST)
 
 OS_RELEASE_VER = $(shell  echo $(OS_RELEASE) | tr -d -c 0-9).1
 DBG_SUFF.DBG = _DEBUG
@@ -194,3 +195,4 @@ show:
 	@echo "INSTALL: $(INSTALL)"
 	@echo "STKDEST: $(STKDEST)"
 	@echo "CDK: $(CDK)"
+	
