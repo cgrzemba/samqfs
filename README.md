@@ -30,10 +30,12 @@ for debug builds add 'DEBUG=yes'
 
 ## Build IPS package
 if not already exist, create IPS repository, eg:
+
     $ mkdir -p ../repo/${os_release}
     $ pkgrepo -s ../repo/${os_release} create
     $ pkgrepo -s ../repo/${os_release} add-publisher ${samqfs.publisher}
 
 then create package
+
     $ gmake -f GNUmakefile pkg [REPO=../repo/${os_release}]
 
