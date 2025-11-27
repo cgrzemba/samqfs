@@ -592,7 +592,7 @@ query_mnt_status(
 	query_mnt->request.internal.address = (void *)vol_id;
 
 	if (DBG_LVL(SAM_DBG_TMOVE)) {
-		sam_syslog(LOG_DEBUG, "%s: %s.", ent_pnt, vol_id);
+		sam_syslog(LOG_DEBUG, "%s: %x %s.", ent_pnt, query_mnt, vol_id);
 	}
 
 	query_mnt->type = EVENT_TYPE_INTERNAL;
@@ -690,21 +690,21 @@ query_mnt_status(
 		} /* end of for loop */
 
 		} else {
-			sam_syslog(LOG_ERR, "%s:%s", ent_pnt,
+			sam_syslog(LOG_ERR, "%s: %s %s", ent_pnt, vol_id,
 			    sam_acs_status(err));
 		}
 
 		} else {
-			sam_syslog(LOG_ERR, "%s: query mount response status:%s", ent_pnt,
+			sam_syslog(LOG_ERR, "%s: %s query mount response status:%s", ent_pnt, vol_id,
 			    sam_acs_status(err));
 		}
 	} else {
 		if (err > STATUS_LAST) {
 			sam_syslog(LOG_INFO,
-			    "%s: helper-query_mount status(errno):%s.", ent_pnt,
+			    "%s: %s helper-query_mount status(errno):%s.", ent_pnt, vol_id,
 			    strerror(err - STATUS_LAST));
 		} else {
-			sam_syslog(LOG_INFO, "%s: helper-query_mount status:%s", ent_pnt,
+			sam_syslog(LOG_INFO, "%s: %s helper-query_mount status:%s", ent_pnt, vol_id,
 			    sam_acs_status(err));
 		}
 	}
@@ -712,11 +712,11 @@ query_mnt_status(
 out:
 	if (tmp_drive != NULL) {
 		sam_syslog(LOG_DEBUG,
-		    "%s: found empty drive(%d,%d,%d,%d)", ent_pnt,
-		    DRIVE_LOC(tmp_drive->drive_id));
+		    "%s: %s found empty drive(%d,%d,%d,%d)", ent_pnt,
+		    vol_id, DRIVE_LOC(tmp_drive->drive_id));
 	} else {
 		sam_syslog(LOG_DEBUG,
-		    "%s: found no empty drive", ent_pnt);
+		    "%s: %s found no empty drive", ent_pnt, vol_id);
 	}
 	mutex_destroy(&query_mnt->mutex);
 	cond_destroy(&query_mnt->condit);

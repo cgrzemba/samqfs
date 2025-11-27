@@ -465,7 +465,8 @@ DumpIoctl(ioctl_log_t *i_blk)
 			break;
 
 		default:
-			printf("  unknown -  handle(%d.%d,%d,%u,%x)\n",
+			printf("  unknown %#x -  handle(%d.%d,%d,%u,%x)\n",
+			    i_blk->ioctl_type,
 			    i_blk->ioctl_data.fsmount.handle.id.ino,
 			    i_blk->ioctl_data.fsmount.handle.id.gen,
 			    i_blk->ioctl_data.fsmount.handle.fseq,
@@ -572,7 +573,8 @@ DumpIoctl(ioctl_log_t *i_blk)
 
 		default:
 			printf("%s syscall SC_unknown\n", &line[11]);
-			printf("  unknown -  handle(%ld.%ld,%d,%u,%llx)\n",
+			printf("  unknown %#x -  handle(%ld.%ld,%d,%u,%llx)\n",
+			    i_blk->ioctl_type,
 			    i_blk->ioctl_data.sc_fsbeof.handle.id.ino,
 			    i_blk->ioctl_data.sc_fsbeof.handle.id.gen,
 			    i_blk->ioctl_data.sc_fsbeof.handle.fseq,

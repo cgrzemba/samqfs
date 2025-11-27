@@ -72,10 +72,10 @@ manage_list(void *vlibrary)
 {
 	int 		exit_status = 0, old_count;
 	char 		*ent_pnt = "manage_list";
-	ushort_t 	delayed;
 	time_t 		now, short_delay, auto_check;
-	robo_event_t 	*current, *next;
+	ushort_t 	delayed;
 	library_t 		*library = (library_t *)vlibrary;
+	robo_event_t 	*current, *next;
 
 	mutex_lock(&library->mutex);	/* wait for initialization */
 	mutex_unlock(&library->mutex);
@@ -138,6 +138,13 @@ manage_list(void *vlibrary)
 		short_delay = 0;
 		delayed = FALSE;
 		current = library->first;
+		if (current == NULL) {
+			sam_syslog(LOG_ERR,"event lost");
+			/* DevLog(DL_ERR(5082)); */
+			library->un->active = library->active_count = 0;
+			mutex_unlock(&library->list_mutex);
+			continue;
+		}
 		mutex_unlock(&library->list_mutex);
 		do {
 			mutex_lock(&library->list_mutex);
@@ -161,9 +168,15 @@ manage_list(void *vlibrary)
 				mutex_unlock(&library->list_mutex);
 				continue;
 			}
-			if (current == library->first)
+			ETRACE((LOG_NOTICE, "LbEv c %#x f %#x n %#x (%d)",
+			    current, library->first, current->next,
+			    library->active_count));
+
+			if (current == library->first) {
+				ETRACE((LOG_NOTICE, "LbEv c=f %#x (%d)",
+				    current, library->active_count));
 				library->first = unlink_list(current);
-			else
+			} else
 				(void) unlink_list(current);
 
 			current->next = NULL;
@@ -233,6 +246,8 @@ manage_list(void *vlibrary)
 					continue;
 				}
 
+				ETRACE((LOG_NOTICE, "LbEv c %#x cmd(%d)\n", current,
+				    current->request.message.command));
 				switch (current->request.message.command) {
 
 				case MESS_CMD_SHUTDOWN:

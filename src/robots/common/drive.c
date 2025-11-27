@@ -961,7 +961,7 @@ todo(
 	switch (request->sub_cmd) {
 	case TODO_ADD:
 #if defined(DEBUG)
-		sam_syslog(LOG_DEBUG, "todo add mount %#x", request->callback);
+		sam_syslog(LOG_DEBUG, "todo add mount (%d) %#x", un->eq, request->callback);
 #endif
 		{
 			if (request->callback == CB_POSITION_RMEDIA) {
