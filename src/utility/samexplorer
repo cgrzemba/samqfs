@@ -357,15 +357,23 @@ fi
 #  Get the samfs log file.
 #  Skip non-sam entries with patterns like "local1,...,local7.none".
 
-if [ -f /etc/syslog.conf ]; then
-	if [ -r /etc/syslog.conf ]; then
+SYSLOGD=`svcs system-log | grep online | cut -d: -f2`
+if [ $SYSLOGD == "default" ]; then
+	SYSLOGCONF = /etc/syslog.conf
+fi
+if [ $SYSLOGD == "rsyslog" ]; then
+	SYSLOGCONF = `grep local7 /etc/rsyslog.d/* | cut -d: -f1 | tail -1`
+fi
+
+if [ XX$SYSLOGCONF != "XX" ]; then
+	if [ -r $SYSLOGCONF ]; then
 		# We decided to use the first possible entry, versus the last.
-		SAMLL=`grep -i $LOGIS /etc/syslog.conf | grep -v "#" | grep -iv $LOGIS'[^;]*.none' | head -1`
+		SAMLL=`grep -i $LOGIS $SYSLOGCONF | grep -v "#" | grep -iv $LOGIS'[^;]*.none'| grep "/var/" | head -1`
 		# Verify that there's a tab character in the line.
 		# Watch out for invisible tab character in following line!
 		SAMLM=`echo "$SAMLL" | grep "	"`
 		if [ "X" = "X$SAMLM" ]; then
-			echo $TAG /etc/syslog.conf entry for SAM-QFS missing tab >> $REPORT 2>&1
+			echo $TAG $SYSLOGCONF entry for SAM-QFS missing tab >> $REPORT 2>&1
 			echo " " >> $REPORT 2>&1
 			# Sometimes there will be a second entry defined properly,
 			# so try the first entry with spaces versus tabs.
@@ -379,7 +387,7 @@ if [ -f /etc/syslog.conf ]; then
 			SAMLOG=`echo "$SAMLL" | sed -e "s/^.*	//" -e "s/, *@.*//" -e "s/.*, *//" -e "1q"`
 		fi
 	else
-		rerun_as_root /etc/syslog.conf
+		rerun_as_root $SYSLOGCONF
 		SAMLOG=""
 	fi
 else
@@ -583,7 +591,9 @@ verbose /bin/uname -a
 #  Issue a warning if the patch isn't there; otherwise echo the full patch id.
 #
 
-showfiles /etc/release
+showfiles /etc/*release
+
+verbose /usr/bin/pkg list
 
 echo "------------------- fsmgr diagnostic report ---------" >>$REPORT
 #  Start the SAM-QFS Manager diagnostic report in the background.
