@@ -1,0 +1,48 @@
+From c1cb1fe3e633d3d716e1cc1d96e6989b69256ff7 Mon Sep 17 00:00:00 2001
+From: Carsten Grzemba <cgrzemba@opencsw.org>
+Date: Tue, 18 Nov 2025 10:50:43 +0100
+Subject: [PATCH] remove backspace from message text
+
+---
+ h/csi_rpc_header.h | 2 ++
+ mini_el/mini_el.c  | 4 ++++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/h/csi_rpc_header.h b/h/csi_rpc_header.h
+index 1fb4c39..30e240c 100644
+--- a/h/csi_rpc_header.h
++++ b/h/csi_rpc_header.h
+@@ -41,6 +41,7 @@ typedef struct {
+     struct sockaddr_in	raddr;  	/* return internet address */
+ } CSI_HANDLE_RPC;
+ 
++#pragma pack(4)
+ typedef struct {
+     unsigned char addr[CSI_NETADDR_SIZE];         /* sender network address */
+     unsigned int  pid;		/* sender process id */
+@@ -59,6 +60,7 @@ typedef struct {
+     CSI_CONNECT     	csi_ctype;	/* type connection management used */
+     CSI_HANDLE_RPC	csi_handle;	/* return handle of client */
+ } CSI_HEADER_RPC;
++#pragma pack()
+ 
+ #endif /* _CSI_RPC_HEADER_ */
+ 
+diff --git a/mini_el/mini_el.c b/mini_el/mini_el.c
+index ed4a409..60d40d6 100644
+--- a/mini_el/mini_el.c
++++ b/mini_el/mini_el.c
+@@ -612,6 +612,10 @@ ELInOut()
+ 		      break;
+ 		}
+ 
++		for (int i=0; i< el_bfr.ipc_header.byte_count-sizeof(IPC_HEADER)-sizeof(LOG_OPTION); i++)
++			if (el_bfr.event_message[i] == '\b')
++				el_bfr.event_message[i] = '\n';
++
+ 		printf("el_bfr.event_message             = %s\n", 
+ 		        el_bfr.event_message);
+ 	    }
+-- 
+2.40.4
+
