@@ -392,7 +392,11 @@ typedef struct sam_disk_inode {
 #define	P2FLAGS_XATTR	0x01
 #define	P2FLAGS_WORM_V2	0x02
 #define	P2FLAGS_PROJID_VALID	0x04
+#if 0
 #define	P2FLAGS_SYSATTR	0x08
+#else
+#define	P2FLAGS_SYSATTR	0x0
+#endif
 
 #define SA_READONLY		0x0001
 #define SA_HIDDEN		0x0002
