@@ -74,9 +74,9 @@ AND name_hash=? AND ino=? AND gen=?
 
 $  sam_archive SQL (4000-4999)
 $  ===================================================================
-4000 REPLACE INTO sam_archive (ino, gen, copy, seq, media_type, vsn, position, offset, size, create_time, stale) \
+4000 REPLACE INTO sam_archive (ino, gen, copy, seq, media_type, vsn, position, off_set, size, create_time, stale) \
 VALUES (?,?,?,?,?,?,?,?,?,?,?)
-4100 SELECT ino, gen, copy, seq, media_type, vsn, position, offset, size, create_time, stale \
+4100 SELECT ino, gen, copy, seq, media_type, vsn, position, off_set, size, create_time, stale \
 FROM sam_archive WHERE ino=? AND gen=? AND copy=?
 4200 UPDATE sam_archive SET stale=? WHERE ino=? AND gen=?
 4300 DELETE FROM sam_archive WHERE ino=? AND gen=? AND copy=?
