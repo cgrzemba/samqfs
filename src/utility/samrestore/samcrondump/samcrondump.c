@@ -78,6 +78,11 @@ typedef struct {
 #define	SamFSDump	"/opt/SUNWsamfs/sbin/samfsdump"
 #define	Compress	"/usr/bin/compress"
 #define	Gzip		"/usr/bin/gzip"
+#if 0
+#define SamFSDumpOpt	"%s -xTf %s "
+#else
+#define SamFSDumpOpt	"%s -Tf %s "
+#endif
 
 /* Forward references */
 static int check_fs(snapsched_t *sched);
@@ -425,7 +430,7 @@ dump_fs(char *taskid, snapsched_t *sched)
 	}
 
 	/* Maximum of 10 excluded directories allowed for samfsdump */
-	(void) snprintf(forkcmd, sizeof (forkcmd), "%s -Tf %s ", SamFSDump,
+	(void) snprintf(forkcmd, sizeof (forkcmd), SamFSDumpOpt, SamFSDump,
 	    filnam);
 	for (i = 0; i < 10; i++) {
 		if (sched->excludeDirs[i][0] == '\0') {
