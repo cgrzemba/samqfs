@@ -15,8 +15,11 @@ $ ln -s <csc-tk-path>/toolkit2.4.0/src/h ./stk-includes
 
 apply patches for 64bit build
 
+$ cd <csc-tk-path>/toolkit2.4.0/etc
+$ gpatch -p1 -i <samqfs-path>/src/robots/stk/stk_csc_tk_patches/1002-adapt-build-environment.patch
+
 $ cd <csc-tk-path>/toolkit2.4.0/src
-$ for p in `find <samqfs-path>/src/robots/stk/stk_csc_tk_patches/`; { gpatch -p1 -i $p; }
+$ for p in `find <samqfs-path>/src/robots/stk/stk_csc_tk_patches/ -name "0*.patch"`; { gpatch -p1 -i $p; }
 
 build and package
 $ gmake -f GNUmakefile pkg
