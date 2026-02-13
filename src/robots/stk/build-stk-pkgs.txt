@@ -10,8 +10,8 @@ $ unzip -d <csc-tk-path>/ CSC_ToolKit_2.4_02-14-13.zip
 create link to the csc-path from samqfs source
 
 $ cd <samqfs-path>/src/robots/stk
-$ ln -s <csc-tk-path>/toolkit2.4.0 ./stk-release  
-$ ln -s <csc-tk-path>/toolkit2.4.0/src/h ./stk-includes
+$ ln -s <csc-tk-path>/toolkit2.4.0 ./stk_release
+$ ln -s <csc-tk-path>/toolkit2.4.0/src/h ./stk_includes
 
 apply patches for 64bit build
 
