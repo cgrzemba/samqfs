@@ -49,6 +49,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/fs/sblk.h"
 #include "sam/fs/sblk_mgmt.h"
 #include "mgmt/config/master_config.h"
+#include "sam/fs/utility.h"
+#include "sam/fs/sblk_utility.h"
 
 static int reorder_mcf_devs(struct sam_sblk sblk, node_t *fam_set);
 
@@ -530,7 +532,7 @@ char *b_name) {
 
 		return (-1);
 	}
-	if (a->info.sb.init != b->info.sb.init) {
+	if (get_sblk_init_time(a->info.sb) != get_sblk_init_time(b->info.sb)) {
 		samerrno = SE_INIT_MISMATCH;
 		snprintf(samerrmsg, MAX_MSG_LEN,
 			GetCustMsg(SE_INIT_MISMATCH), a_name,

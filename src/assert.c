@@ -96,16 +96,29 @@ static int errors = 0;
 int
 main(int argc, char *argv[])
 {
+	struct sam_disk_inode sdi;
+	struct sam_perm_inode spi;
+	struct sam_perm_inode_v2 spiv2;
+	struct sam_archive_info sai;
+	struct sam_disk_inode_part2 sdip2;
+	struct sam_disk_inode_part2_v2 sdip2v2;
+	struct sam_inode_ext sie;
+
 	assert(MAX_ARCHIVE == pubMAX_ARCHIVE);
 	assert(MAX_ARCHIVE == 4);
 	assert(SAM_ISIZE >= (sizeof (struct sam_inode_ext)));
+	assert(L_SBINFO == (sizeof (struct sam_sbinfo)));
 	assert((AR_arch_i >> 2) == 1);
 	assert(sizeof (vsn_t) == 32);
 	assert((sizeof (struct sam_sblk) % SAM_DEV_BSIZE) == 0);
 	assert(sizeof (struct sam_sblk) == (16 * SAM_DEV_BSIZE));
 	assert(sizeof (sam_operation_t) == sizeof (void *));
 	assert(sizeof (struct sam_perm_inode) ==
+	    sizeof (struct sam_perm_inode_v2));
+#ifdef TIME32
+	assert(sizeof (struct sam_perm_inode) ==
 	    sizeof (struct sam_perm_inode_v1));
+#endif
 	/*
 	 * Make sure sam_stat attributes don't overlap inode status.
 	 * See include/sam/fs/ino.h and include/pub/stat.h
@@ -114,6 +127,13 @@ main(int argc, char *argv[])
 	    (SS_SAMFS | SS_ARCHIVE_R | SS_ARCHIVED | SS_ARCHIVE_A)) == 0);
 
 
+	printf("sizeof sam_perm_inode=%d/512\n", sizeof(struct sam_perm_inode));
+	printf("sizeof sam_disk_inode=%d/240\n", sizeof(struct sam_disk_inode));
+	printf("sizeof sam_archive_info=%d/56,224\n", sizeof(struct sam_archive_info));
+	printf("sizeof sam_disk_inode_part2=%d/32\n", sizeof(struct sam_disk_inode_part2));
+	printf("sizeof sam_perm_inode_v2=%d/512\n", sizeof(struct sam_perm_inode_v2));
+	printf("sizeof sam_disk_inode_part2_v2=%d/32\n", sizeof(struct sam_disk_inode_part2_v2));
+	printf("sizeof sam_indirect_extent=%d/10265\n", sizeof(struct sam_indirect_extent));
 #if defined(_BIT_FIELDS_HTOL)
 	printf("bitfields assigned high to low\n");
 #elif defined(_BIT_FIELDS_LTOH)

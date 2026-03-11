@@ -46,6 +46,7 @@
 #define	FSNAME_SAM_QFS_SBV1	"sam-qfs-sbv1"
 #define	FSNAME_SAM_QFS_SBV2	"sam-qfs-sbv2"
 #define	FSNAME_SAM_QFS_SBV2A	"sam-qfs-sbv2A"
+#define	FSNAME_SAM_QFS_SBV3	"sam-qfs-sbv3"
 
 /* Unrecognized superblock name */
 #define	SAMFS_SB_NAME_UNKNOWN_STR	""

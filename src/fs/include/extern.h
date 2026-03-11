@@ -246,6 +246,7 @@ int sam_quota_fonline(sam_mount_t *mp, sam_node_t *ip, cred_t *cr);
 int sam_quota_foffline(sam_mount_t *mp, sam_node_t *ip, cred_t *cr);
 void sam_quota_inode_fini(struct sam_node *ip);
 int sam_quota_get_index(sam_node_t *ip, int type);
+int sam_quota_get_index_perm(sam_perm_inode_t *ip, int type);
 int sam_quota_get_index_di(sam_disk_inode_t *di, int type);
 int testquota(struct sam_dquot *pr, int checktotal);
 int sam_quota_fcheck(sam_mount_t *mp, int type, int index, int ol, int tot,

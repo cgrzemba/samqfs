@@ -99,6 +99,8 @@
 
 #include "ino.h"
 #include "inode.h"
+#include "sblk.h"
+#include "sblk_utility.h"
 #ifdef sun
 #include "extern.h"
 #endif /* sun */
@@ -164,7 +166,7 @@ sam_client_cmd(sam_mount_t *mp, sam_san_message_t *msg)
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Stale file system"
 			    " CLI Id=%x SRV Id=%x, cmd=%x, seqno=%x",
-			    mp->mt.fi_name, mp->mi.m_sbp->info.sb.init,
+			    mp->mt.fi_name, get_sblk_init_time(mp->mi.m_sbp->info.sb),
 			    msg->hdr.fsid,
 			    (msg->hdr.command<<16)|msg->hdr.operation,
 			    msg->hdr.seqno);

@@ -84,6 +84,9 @@
 #include "trace.h"
 #include "qfs_log.h"
 #include "objctl.h"
+#include "sblk.h"
+#include "sblk_utility.h"
+
 extern int ncsize;
 extern int sam_max_blkd_frlock;
 
@@ -730,7 +733,7 @@ samfs_mount(
 		cmd.cmd = FSD_mount;
 		bcopy(mp->mt.fi_name, cmd.args.mount.fs_name,
 		    sizeof (cmd.args.mount.fs_name));
-		cmd.args.mount.init = mp->mi.m_sbp->info.sb.init;
+		cmd.args.mount.init = get_sblk_init_time(mp->mi.m_sbp->info.sb);
 		cmd.args.mount.start_samdb = FALSE;
 		if (mp->mt.fi_config1 & MC_SAM_DB) {
 			cmd.args.mount.start_samdb = TRUE;
@@ -1215,7 +1218,8 @@ samfs_statvfs(
 
 		if (sblk->info.sb.magic != SAM_MAGIC_V1 &&
 		    sblk->info.sb.magic != SAM_MAGIC_V2 &&
-		    sblk->info.sb.magic != SAM_MAGIC_V2A) {
+		    sblk->info.sb.magic != SAM_MAGIC_V2A &&
+		    sblk->info.sb.magic != SAM_MAGIC_V3) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Superblock magic invalid <%x>",
 			    mp->mt.fi_name, sblk->info.sb.magic);

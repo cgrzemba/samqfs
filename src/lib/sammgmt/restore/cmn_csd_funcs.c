@@ -376,6 +376,7 @@ common_csd_read_mve(
 					n_vsns +=
 					    perm_inode->ar.image[copy].n_vsns;
 				}
+#ifdef TIME32
 			} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
 				sam_perm_inode_v1_t *perm_inode_v1 =
 				    (sam_perm_inode_v1_t *)perm_inode;
@@ -388,6 +389,7 @@ common_csd_read_mve(
 						    ar.image[copy].n_vsns;
 					}
 				}
+#endif
 			}
 		}
 		if (n_vsns) {

@@ -196,7 +196,9 @@ main(int argc, char *argv[])
 	setarch.access_time.tv_sec = fstat.st_atime;
 	setarch.modify_time.tv_sec = fstat.st_mtime;
 	setarch.ar.n_vsns = rmp->n_vsns;
+#ifdef TIME32
 	setarch.ar.version = rmp->version;
+#endif
 	setarch.ar.position = rmp->section[0].position;
 	setarch.ar.file_offset = 0;	/* At the beginning of the file */
 	memcpy(&setarch.ar.vsn, rmp->section[0].vsn,

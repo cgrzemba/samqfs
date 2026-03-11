@@ -301,7 +301,7 @@ typedef struct sam_mt_instance {
 	int32_t		m_prev_state;	/* Last fsck state (bit 0) */
 	int		m_fs_syncing;	/* Set if file system is syncing */
 	uint_t		m_sblk_size;	/* Size of used part of incore sblock */
-	int		m_sblk_fsid;	/* Superblock time */
+	sam_time_t	m_sblk_fsid;	/* Superblock time */
 	int		m_sblk_fsgen;	/* Superblock generation */
 	int		m_fsgen_config;	/* Superblock generation after config */
 	sam_bn_t	m_sblk_offset[2]; /* Superblock disk offsets */

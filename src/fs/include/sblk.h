@@ -122,6 +122,7 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
 #define	SAM_MAGIC_V1	0xfd187e20	/* Magic num for fs (3.5.0) */
 #define	SAM_MAGIC_V2	0x76657232	/* Magic num for fs (4.0,5.0 limited) */
 #define	SAM_MAGIC_V2A	0x76653241	/* Magic num for fs (5.0) */
+#define	SAM_MAGIC_V3	0x76657233	/* Magic num for fs (7.0) */
 
 /*
  * Reverse-endian superblock magic number definitions.
@@ -129,6 +130,7 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
 #define	SAM_MAGIC_V1_RE	0x207e18fd	/* reverse endian V1 */
 #define	SAM_MAGIC_V2_RE	0x32726576	/* reverse endian V2 */
 #define	SAM_MAGIC_V2A_RE 0x41326576	/* reverse endian V2A */
+#define	SAM_MAGIC_V3_RE 0x33726576/* reverse endian V3 */
 
 #define	SAM_MAGIC	SAM_MAGIC_V2
 
@@ -137,6 +139,7 @@ typedef enum {SAMFS_CALLER, SAMMKFS_CALLER, SAMFSCK_CALLER} sam_caller_t;
  */
 #define	SAMFS_SBLKV1		1		/* Superblock version 1 */
 #define	SAMFS_SBLKV2		2		/* Superblock version 2 */
+#define	SAMFS_SBLKV3		3		/* Superblock version 3 */
 #define	SAMFS_SBLK		SAMFS_SBLKV2
 #define	SAMFS_SBLK_UNKNOWN	0		/* Unknown sblk version */
 
@@ -157,10 +160,10 @@ typedef	fsid_t	sam_fsid_t;
 typedef struct sam_sbinfo {
 	char		name[4];	/* 0: Identifier name: "SBLK" */
 	uint32_t	magic;		/* 4: Magic number for file system */
-	sam_time_t	init;		/* Time super block initialized */
+	time32_t	init;		/* Time super block initialized */
 	int32_t		ord;		/* Family set ord for this partition */
 	uname_t		fs_name;	/* Family set name */
-	sam_time_t	time;		/* Last super block update */
+	time32_t	time;		/* Last super block update */
 	int32_t		state;		/* fsck me (bit 0) */
 	offset_t	inodes;		/* Start of inode file */
 	offset_t	offset[2];	/* Superblock disk block offset */
@@ -186,20 +189,23 @@ typedef struct sam_sbinfo {
 					/* In 4.0, SAM_SHIFT */
 	ushort_t	min_usr_inum;	/* Minimum user inode number */
 	int32_t		fsgen;		/* Gen num for this file system */
-	sam_time_t	repaired;	/* Last time fsck completed */
+	time32_t	repaired;	/* Last time fsck completed */
 	ushort_t	opt_mask_ver;	/* Option mask version */
 	ushort_t	hosts_ord;	/* dev ordinal of the hosts file */
 	int32_t		opt_mask;	/* Option mask */
 	dtype_t		fi_type;	/* Family set type, 5.0 and above */
 	ushort_t	mm_ord;		/* Last mm ord for data device */
-	u_longlong_t	logbno;		/* LQFS: log blkno */
 	uint32_t	qfs_rolled;	/* LQFS: log fully rolled */
+	u_longlong_t	logbno;		/* LQFS: log blkno */
 	ushort_t	logord;		/* LQFS: log ordinal */
 	char		qfs_clean;	/* LQFS: detailed FS state flags */
 	char		pad1;		/* Unused: Pad to 8-byte boundary */
 	uint32_t	opt_features;	/* Opt features - backward compatible */
 	uchar_t		pad2[4];	/* Unused: Pad to 8-byte boundary */
-	uchar_t		fill2[56];	/* Unused: MAX size of sam_sbinfo_t */
+	sam_time_t		init64;
+	sam_time_t		time64;
+	sam_time_t		repaired64;
+	uchar_t		fill2[24];	/* Unused: MAX size of sam_sbinfo_t */
 } sam_sbinfo_t;
 
 /*

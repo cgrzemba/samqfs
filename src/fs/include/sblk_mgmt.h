@@ -48,6 +48,7 @@
 #define	FSTYPE_SAM_QFS_SBV1	1	/* SAM-QFS w/ Superblock v1 */
 #define	FSTYPE_SAM_QFS_SBV2	2	/* SAM-QFS w/ Superblock v2 */
 #define	FSTYPE_SAM_QFS_SBV2A	3	/* SAM-QFS w/ Superblock v2A */
+#define	FSTYPE_SAM_QFS_SBV3	4	/* SAM-QFS w/ Superblock v3 */
 
 /* Declarations for superblock management library functions. */
 

@@ -487,14 +487,16 @@ SamGetRawHosts(
 	}
 	if (sblk.info.sb.magic == SAM_MAGIC_V1_RE ||
 	    sblk.info.sb.magic == SAM_MAGIC_V2_RE ||
-	    sblk.info.sb.magic == SAM_MAGIC_V2A_RE) {
+	    sblk.info.sb.magic == SAM_MAGIC_V2A_RE ||
+	    sblk.info.sb.magic == SAM_MAGIC_V3_RE) {
 		close(devfd);
 		SETERR("Foreign (byte-swapped) superblock");
 		return (-1);
 	}
 	if (sblk.info.sb.magic != SAM_MAGIC_V1 &&
 	    sblk.info.sb.magic != SAM_MAGIC_V2 &&
-	    sblk.info.sb.magic != SAM_MAGIC_V2A) {
+	    sblk.info.sb.magic != SAM_MAGIC_V2A &&
+	    sblk.info.sb.magic != SAM_MAGIC_V3) {
 		close(devfd);
 		SETERR("Unrecognized superblock magic number");
 		return (-1);
@@ -605,14 +607,16 @@ SamPutRawHosts(
 	}
 	if (sblk.info.sb.magic == SAM_MAGIC_V1_RE ||
 	    sblk.info.sb.magic == SAM_MAGIC_V2_RE ||
-	    sblk.info.sb.magic == SAM_MAGIC_V2A_RE) {
+	    sblk.info.sb.magic == SAM_MAGIC_V2A_RE ||
+	    sblk.info.sb.magic == SAM_MAGIC_V3_RE) {
 		close(devfd);
 		SETERR("Foreign (byte-swapped) superblock");
 		return (-1);
 	}
 	if (sblk.info.sb.magic != SAM_MAGIC_V1 &&
 	    sblk.info.sb.magic != SAM_MAGIC_V2 &&
-	    sblk.info.sb.magic != SAM_MAGIC_V2A) {
+	    sblk.info.sb.magic != SAM_MAGIC_V2A &&
+	    sblk.info.sb.magic != SAM_MAGIC_V3) {
 		close(devfd);
 		SETERR("Unrecognized superblock magic number");
 		return (-1);

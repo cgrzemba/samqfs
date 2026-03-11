@@ -216,7 +216,7 @@ typedef struct {
 typedef struct samamld_cmd_queue {
 #ifdef sun
 	kcondvar_t	cmd_cv;
-	char		pad[4];	/* for amd64 64bit alignment of cmd_mutex */
+	char		pad[6];	/* for amd64 64bit alignment of cmd_mutex */
 	kmutex_t	cmd_mutex;
 #endif	/* sun */
 	struct samamld_cmd_queue *forward;

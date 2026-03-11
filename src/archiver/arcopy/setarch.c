@@ -233,7 +233,9 @@ enterArchiveStatus(
 		 * (currently limited to 'pax') should set this bit.
 		 */
 		sa->ar.arch_flags = ((ZeroOffset) ? SAR_pax_hdr : 0);
+#ifdef TIME32
 		sa->ar.version = 0;
+#endif
 		sa->ar.creation_time	= af->AfCreateTime;
 
 		sa->ar.position_u = 0;

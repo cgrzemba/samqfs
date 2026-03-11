@@ -112,6 +112,8 @@
 #include "mount.h"
 #include "scd.h"
 #include "global.h"
+#include "sblk.h"
+#include "sblk_utility.h"
 
 #ifdef sun
 #include "extern.h"
@@ -437,8 +439,10 @@ sam_update_shared_sblk(
 	if ((sblk->info.sb.magic == SAM_MAGIC_V2) ||
 	    (sblk->info.sb.magic == SAM_MAGIC_V2A)) {
 		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV2;
+	} else if (sblk->info.sb.magic == SAM_MAGIC_V3) {
+		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV3;
 	}
-	mp->mi.m_sblk_fsid = sblk->info.sb.init;
+	mp->mi.m_sblk_fsid = get_sblk_init_time(sblk->info.sb);
 	mp->mi.m_sblk_fsgen = sblk->info.sb.fsgen;
 	mp->mi.m_sblk_size = sblk->info.sb.sblk_size;
 	sblk->info.sb.fs_count = new_sblk_fs_count;

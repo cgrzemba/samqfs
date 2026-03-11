@@ -288,6 +288,9 @@ sam_sb_version_get(
 	case SAM_MAGIC_V2A:
 		*version = SAMFS_SBLKV2;
 		break;
+	case SAM_MAGIC_V3:
+		*version = SAMFS_SBLKV3;
+		break;
 	default:
 		*version = SAMFS_SBLK_UNKNOWN;
 		return (ENODEV);
@@ -349,6 +352,9 @@ sam_sb_fstype_get(
 		break;
 	case SAMFS_SBLKV2:
 		*ftp = FSTYPE_SAM_QFS_SBV2;
+		break;
+	case SAMFS_SBLKV3:
+		*ftp = FSTYPE_SAM_QFS_SBV3;
 		break;
 	default:
 		*ftp = FSTYPE_UNKNOWN;

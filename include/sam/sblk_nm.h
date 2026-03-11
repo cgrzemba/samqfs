@@ -41,6 +41,7 @@
 /* Superblock version definitions for display */
 #define	SAMFS_SBLKV1_STR		"sbv1"
 #define	SAMFS_SBLKV2_STR		"sbv2"
+#define	SAMFS_SBLKV3_STR		"sbv3"
 
 /* FSCK status for display */
 #define	SB_FSCK_ALL_STR			"fsck-all"
@@ -59,6 +60,7 @@ typedef struct {
 sb_str_num_t	_sb_version[] = {
 	{SAMFS_SBLKV1_STR, SAMFS_SBLKV1},
 	{SAMFS_SBLKV2_STR, SAMFS_SBLKV2},
+	{SAMFS_SBLKV3_STR, SAMFS_SBLKV3},
 	{"", 0}
 };
 

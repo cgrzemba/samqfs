@@ -749,8 +749,13 @@ sam_restore_new_ino(
 	}
 	(void) sam_quota_balloc_perm(mp, permip,
 	    0, S2QBLKS(permip->di.rm.size), CRED());
+#ifdef TIME32
 	(void) sam_quota_falloc(mp, permip->di.uid,
 	    permip->di.gid, permip->di.admin_id, CRED());
+#else
+	(void) sam_quota_falloc(mp, permip->di.uid,
+	    permip->di.gid, permip->di2.admin_id, CRED());
+#endif
 	permip->di2.xattr_id.ino = 0;
 	permip->di2.xattr_id.gen = 0;
 	permip->di2.p2flags &= ~P2FLAGS_XATTR;
@@ -818,7 +823,11 @@ sam_make_ino(
 	} else if ((pip->di.mode & S_ISGID)) {	/* If set gid on execution */
 		ngid = pip->di.gid;
 	}
+#ifdef TIME32
 	naid = pip->di.admin_id;
+#else
+	naid = pip->di2.admin_id;
+#endif
 	if ((error = sam_quota_falloc(mp, nuid, ngid, naid, credp))) {
 		return (error);
 	}
@@ -857,8 +866,9 @@ sam_make_ino(
 	}
 	ip->di.uid = nuid;
 	ip->di.gid = ngid;
-	ip->di.admin_id = naid;
 	ip->di.mode = mode;
+#ifdef TIME32
+	ip->di.admin_id = naid;
 	ip->di2.projid = nprojid;
 	/*
 	 * Files that existed before project ID support
@@ -867,7 +877,9 @@ sam_make_ino(
 	 * should be reported as SAM_NOPROJECT.
 	 */
 	ip->di2.p2flags |= P2FLAGS_PROJID_VALID;
-
+#else
+	ip->di2.admin_id = naid;
+#endif
 	/*
 	 * Propagate the set-GID bit if creating a directory.  Otherwise,
 	 * clear the set-GID bit unless the process is superuser or member of

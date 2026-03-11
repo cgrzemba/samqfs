@@ -45,8 +45,8 @@ subpath64,subpath = subprocess.check_output('isainfo').decode('latin1').split()
 # have to provide the same like: uname -v | gawk '{ split($0,a,"[.-]"); print a[1]"-"a[2]}'
 osrelease = '-'.join(subprocess.check_output(['uname','-v']).decode('latin1').strip().replace('.','-').split('-')[:2])
 
-version = '5.0.1'
-release = '2023.0.0.0'
+version = '7.0.0'
+release = '2026.0.0.0'
 fmri = 'system/samqfs'
 repro = '../repo/'+subpath+'-'+osrelease
 revision = 0

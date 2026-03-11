@@ -148,32 +148,39 @@ u_longlong_t copy_file_data_fr_dump(int fildes, u_longlong_t nbyte,
 				    char *name);
 void	cs_list(int fcount, char **flist);
 void	cs_restore(boolean strip_slashes, int fcount, char **flist);
+void	cs_restore_v2(boolean strip_slashes, int fcount, char **flist);
 void	csd_dump_path(char *tag, char *path, mode_t fmode);
 void	csd_read(char *name, int namelen,
-			struct sam_perm_inode *perm_inode);
+			void *perm_inode_buf);
 void	csd_read_mve(struct sam_perm_inode   *perm_inode,
+			struct sam_vsn_section  **vsnpp);
+void	csd_read_mve_v2(struct sam_perm_inode_v2   *perm_inode,
 			struct sam_vsn_section  **vsnpp);
 void	csd_read_next(struct sam_perm_inode *perm_inode,
 			struct sam_vsn_section **vsn_information,
 			char *linkname, void *data,
 			int *n_aclp, aclent_t **aclpp);
-int		csd_read_header(csd_fhdr_t *hdr);
-int		csd_write(char *name,
+void	csd_read_next_v2(struct sam_perm_inode_v2 *perm_inode,
+			struct sam_vsn_section **vsn_information,
+			char *linkname, void *data,
+			int *n_aclp, aclent_t **aclpp);
+int	csd_read_header(csd_fhdr_t *hdr);
+int	csd_write(char *name,
 			struct sam_perm_inode *perm_inode,
 			int n_vsns,
 			struct sam_vsn_section *vsn_information,
 			char *link, void *data,
 			int n_acls, aclent_t *aclp,
 			long flags);
-int		csd_write_csdheader(int fildes, csd_hdrx_t *buf);
-int		fake_ioctl(int SAM_fd, int function,
+int	csd_write_csdheader(int fildes, csd_hdrx_t *buf);
+int	fake_ioctl(int SAM_fd, int function,
 			struct sam_perm_inode *perm_inode,
 			struct sam_vsn_section *vsn_information[]);
-int		filecmp(char *a, char *b);
-int		get_id(char *path, sam_id_t *id);
-int		is_demo_license(void);
+int	filecmp(char *a, char *b);
+int	get_id(char *path, sam_id_t *id);
+int	is_demo_license(void);
 char	*mode_string(mode_t mode, char str[]);
-int		open_samfs(char *filename);
+int	open_samfs(char *filename);
 int	samopendir(char *dir_name);
 int	samattropen(char *dir_name);
 void	process_saved_dir_list(char *dirname);
@@ -182,10 +189,13 @@ void	read_old_resource_record(struct sam_resource_file *resource,
 			int rmf_size);
 void	print_reslog(FILE *log_st, char *pathname,
 			struct sam_perm_inode *pid, char *status);
+void	print_reslog_v2(FILE *log_st, char *pathname,
+			struct sam_perm_inode_v2 *pid, char *status);
 int		sam_getdent(struct sam_dirent ** dirent);
 void	sam_db_list(char *path, struct sam_perm_inode *perm_inode,
 			char *link, sam_vsn_section_t *vsnp);
 void	sam_ls(char *path, struct sam_perm_inode *perm_inode, char *link);
+void	sam_ls_v2(char *path, struct sam_perm_inode_v2 *perm_inode, char *link);
 void	set_fa(char *path, struct sam_disk_inode *inode);
 void	set_lat(char *path, struct sam_perm_inode *inode);
 void	skip_embedded_file_data();

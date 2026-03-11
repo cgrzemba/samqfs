@@ -432,6 +432,7 @@ sam_restore_a_file(
 		if (perm_ino->di.ext_attrs & ext_mva) {
 			multi_vol++;
 		}
+#ifdef TIME32
 	} else if (perm_ino->di.version == SAM_INODE_VERS_1) {
 		/* Prev version */
 		sam_perm_inode_v1_t *perm_ino_v1 =
@@ -442,6 +443,7 @@ sam_restore_a_file(
 				multi_vol++;
 			}
 		}
+#endif
 	} else {
 		error = ENOTSUP;
 		goto out;
@@ -595,6 +597,7 @@ sam_restore_a_file(
 				permip->di.ext_attrs = ip->di.ext_attrs |=
 				    ext_mva;
 
+#ifdef TIME32
 			} else if (permip->di.version == SAM_INODE_VERS_1) {
 				sam_perm_inode_v1_t *permip_v1 =
 				    (sam_perm_inode_v1_t *)permip;
@@ -619,6 +622,7 @@ sam_restore_a_file(
 					goto out;
 				}
 				permip_v1->aid[copy] = id;
+#endif
 			}
 		}
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
@@ -980,6 +984,7 @@ sam_restore_inode(
 			permip->di.ext_id = id;
 			permip->di.ext_attrs |= ext_mva;
 
+#ifdef TIME32
 		} else if (ip->di.version == SAM_INODE_VERS_1) {
 			/* Prev version */
 
@@ -1003,6 +1008,7 @@ sam_restore_inode(
 				return (error);
 			}
 			((sam_perm_inode_v1_t *)permip)->aid[copy] = id;
+#endif
 		}
 	}
 	TRANS_INODE(ip->mp, ip);
@@ -1031,8 +1037,13 @@ sam_restore_inode(
 	 */
 	(void) sam_quota_balloc(mp, ip, D2QBLKS(ip->di.blocks),
 	    TOTBLKS(ip), credp);
+#ifdef TIME32
 	(void) sam_quota_falloc(mp, ip->di.uid, ip->di.gid,
 	    ip->di.admin_id, credp);
+#else
+	(void) sam_quota_falloc(mp, ip->di.uid, ip->di.gid,
+	    ip->di2.admin_id, credp);
+#endif
 
 	/*
 	 *  Update superblocks if WORM file restored.

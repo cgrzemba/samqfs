@@ -1334,10 +1334,12 @@ sam_getattr_vn(
 			XVA_SET_RTN(xvap, XAT_PROJINHERIT);
 		}
 
+#ifdef TIME32
 		if (XVA_ISSET_REQ(xvap, XAT_PROJID)) {
 			xoap->xoa_projid = ip->di2.projid;
 			XVA_SET_RTN(xvap, XAT_PROJID);
 		}
+#endif
 	}
 
 	/*

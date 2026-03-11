@@ -65,7 +65,8 @@
 #define	SAM_INODE_VERS_1	1	/* Prev vers of inode, 3.5 & lower. */
 #endif
 #define	SAM_INODE_VERS_2	2	/* Prev vers of inode, 4.0-4.6. */
-#define	SAM_INODE_VERSION	2	/* Current version of inode layout. */
+#define	SAM_INODE_VERS_3	3	/* Prev vers of inode, 4.0-4.6. */
+#define	SAM_INODE_VERSION	3	/* Current version of inode layout. */
 #define	SAM_MAX_INODE_VERSION	SAM_INODE_VERSION	/* Maximum version. */
 
 #define	SAM_CHECK_INODE_VERSION(x) \
@@ -135,10 +136,6 @@ enum SAR_flags {
 };
 
 typedef struct sam_archive_info {
-	uchar_t		arch_flags;	/* archiver specific flags */
-	char		mau_shift;	/* mau as power of 2 */
-	short		n_vsns;		/* Number of sections */
-	int32_t		version;	/* Optical disk version number */
 	sam_time_t	creation_time;	/* Time archive record was created */
 	int32_t		position_u;	/* Pos'n of archive file on media - */
 	int32_t		position;	/*   media dependent */
@@ -146,16 +143,36 @@ typedef struct sam_archive_info {
 					/*   file - units determined by */
 					/*   SAR_size_block */
 	vsn_t		vsn;		/* Current vsn */
+	uchar_t		arch_flags;	/* archiver specific flags */
+	char		mau_shift;	/* mau as power of 2 */
+	short		n_vsns;		/* Number of sections */
 } sam_archive_info_t;
 
+typedef struct sam_archive_info_v2 {
+	uchar_t         arch_flags;     /* archiver specific flags */
+        char            mau_shift;      /* mau as power of 2 */
+        short           n_vsns;         /* Number of sections */
+        int32_t         version;        /* Optical disk version number */
+        time32_t	creation_time;  /* Time archive record was created */
+        int32_t         position_u;     /* Pos'n of archive file on media - */
+        int32_t         position;       /*   media dependent */
+        uint32_t        file_offset;    /* Offset of start of file in archive */
+                                        /*   file - units determined by */
+                                        /*   SAR_size_block */
+        vsn_t           vsn;            /* Current vsn */
+} sam_archive_info_v2_t;
 
 /* ----- Definitions for direct extents and indirect extents. */
 
 #define	NSDEXT		(8)		/* Small inode direct extents */
-#define	NLDEXT		(8)		/* Large inode direct extents */
+#define	NLDEXT		(6)		/* Large inode direct extents */
+#define	NSDEXT_v2	(8)		/* Small inode direct extents */
+#define	NLDEXT_v2	(8)		/* Large inode direct extents */
 #define	NDEXT		(NSDEXT+NLDEXT)	/* Number of inode direct extents */
+#define	NDEXT_v2	(NSDEXT_v2+NLDEXT_v2)	/* Number of inode direct extents */
 #define	NIEXT		(3)		/* Large indirect extents */
 #define	NOEXT		(NDEXT+NIEXT)	/* Number of inode extents */
+#define	NOEXT_v2	(NDEXT_v2+NIEXT)/* Number of inode extents */
 
 #define	DEXT		(2048)		/* Direct extents in indirect extent */
 #define	DEXTSHIFT	(11)
@@ -353,6 +370,44 @@ typedef union sam_di_ia {
 
 /* ----- Inode structure as it appears on a disk block. */
 
+#pragma   pack(4)
+typedef struct sam_disk_inode_v2 {
+        sam_mode_t      mode;           /* Mode and type of file */
+        int32_t         version;        /* Inode layout version */
+        sam_id_t        id;             /* Unique id: i-number/gen */
+        sam_id_t        parent_id;      /* Unique parent id: i-num/gen */
+        sam_rm_t        rm;             /* Removable file info */
+        sam_id_t        ext_id;         /* Inode extension id: i-num/gen */
+        uid_t           uid;            /* Owner's user id      */
+        gid_t           gid;            /* Owner's group id */
+        int32_t         admin_id;       /* admin ID */
+        uint32_t        nlink;          /* Number of links to file */
+        ino_st_t        status;         /* Inode status */
+        sam_timestruc32_t access_time;    /* Time file last accessed */
+        sam_timestruc32_t modify_time;    /* Time file last accessed */
+        sam_timestruc32_t change_time;    /* Time file last changed */
+        time32_t      creation_time;  /* Time inode created */
+        time32_t      attribute_time; /* Time attributes last changed */
+        uchar_t         unit;           /* Next stripe unit */
+        uchar_t         cs_algo;
+        uchar_t         arch_status;    /* Archive status */
+        uchar_t         lextent;        /* Length of extent array */
+        uchar_t         ar_flags[MAX_ARCHIVE];  /* SAM Archive flags */
+        char            stripe;         /* Stripe stride width */
+        char            stride;         /* Current number of stripes */
+        media_t         media[MAX_ARCHIVE]; /* Archive media residency */
+        uchar_t         stripe_group;   /* Stripe group unit */
+        uchar_t         ext_attrs;      /* Inode extension types present */
+        sam_psize_t     psize;          /* dev or symlink/media/partial size */
+        int32_t         blocks;         /* Count of allocated blocks */
+        time32_t      residence_time; /* Time file changed residence */
+        int32_t         free_ino;       /* Next free inode */
+        sam_bn_t        extent[NOEXT_v2];  /* Extent inode array */
+        uchar_t         extent_ord[NOEXT_v2]; /* Extent info byte array */
+        uchar_t         stage_ahead;    /* Stage readahead */
+} sam_disk_inode_v2_t;
+
+/* SAM_INODE_VERS_3 */
 typedef struct sam_disk_inode {
 	sam_mode_t	mode;		/* Mode and type of file */
 	int32_t		version;	/* Inode layout version */
@@ -362,7 +417,6 @@ typedef struct sam_disk_inode {
 	sam_id_t	ext_id;		/* Inode extension id: i-num/gen */
 	uid_t		uid;		/* Owner's user id	*/
 	gid_t		gid;		/* Owner's group id */
-	int32_t		admin_id;	/* admin ID */
 	uint32_t	nlink;		/* Number of links to file */
 	ino_st_t	status;		/* Inode status */
 	sam_timestruc_t	access_time;	/* Time file last accessed */
@@ -381,13 +435,14 @@ typedef struct sam_disk_inode {
 	uchar_t		stripe_group;	/* Stripe group unit */
 	uchar_t		ext_attrs;	/* Inode extension types present */
 	sam_psize_t	psize;		/* dev or symlink/media/partial size */
-	uint32_t	blocks;		/* Count of allocated blocks */
-	sam_time_t	residence_time;	/* Time file changed residence */
+	uint64_t	blocks;		/* Count of allocated blocks */
+	time32_t	residence_time;	/* Time file changed residence */
 	int32_t		free_ino;	/* Next free inode */
 	sam_bn_t	extent[NOEXT];	/* Extent inode array */
 	uchar_t		extent_ord[NOEXT]; /* Extent info byte array */
 	uchar_t		stage_ahead;	/* Stage readahead */
 } sam_disk_inode_t;
+#pragma pack()
 
 #define	P2FLAGS_XATTR	0x01
 #define	P2FLAGS_WORM_V2	0x02
@@ -414,44 +469,74 @@ typedef struct sam_disk_inode {
 #define SA_SPARSE		0x2000
 #define SA_PROJINHERIT		0x4000
 
-typedef struct sam_disk_inode_part2 {
+/* SAM_INODE_VERS_2 */
+typedef struct sam_disk_inode_part2_v2 {
 	sam_id_t		xattr_id;
 	uchar_t			pad1[8];
 	projid_t		projid;			/* project ID */
 	uint16_t		s_pflags;
 	uchar_t			objtype;		/* object type */
 	uchar_t			p2flags;
+	time32_t		rperiod_start_time;		/* WORM */
+	uint32_t		rperiod_duration;		/* WORM */
+} sam_disk_inode_part2_v2_t;
+
+/* SAM_INODE_VERS_3 */
+typedef struct sam_disk_inode_part2 {
+	sam_id_t		xattr_id;
 	sam_time_t		rperiod_start_time;		/* WORM */
 	uint32_t		rperiod_duration;		/* WORM */
+	int32_t		admin_id;	/* admin ID */
+	uint16_t		s_pflags;
+	uchar_t			p2flags;
 } sam_disk_inode_part2_t;
+
+typedef struct sam_arch_inode_v2 {
+	sam_archive_info_v2_t image[MAX_ARCHIVE];	/* Up to 4 archive images */
+} sam_arch_inode_v2_t;
 
 typedef struct sam_arch_inode {
 	sam_archive_info_t image[MAX_ARCHIVE];	/* Up to 4 archive images */
 } sam_arch_inode_t;
 
+/* SAM_INODE_VERS_2 */
+typedef struct sam_perm_inode_v2 {
+	sam_disk_inode_v2_t	di;
+	csum_t			csum;
+	sam_arch_inode_v2_t	ar;
+	sam_disk_inode_part2_v2_t	di2;
+} sam_perm_inode_v2_t;
+
+/* SAM_INODE_VERS_3 */
+#pragma pack(4)
 typedef struct sam_perm_inode {
 	sam_disk_inode_t	di;
-	csum_t			csum;
 	sam_arch_inode_t	ar;
 	sam_disk_inode_part2_t	di2;
+	uchar_t			pad[4];		/* fillup 512 byte */
 } sam_perm_inode_t;
-
+#pragma pack()
 
 /*
  * Deprecated SAM_INODE_VERS_1.
  */
+#ifdef TIME32
 typedef struct sam_perm_inode_v1 {
 	sam_disk_inode_t	di;
 	csum_t					csum;
 	sam_arch_inode_t	ar;
 	sam_id_t				aid[MAX_ARCHIVE];
 } sam_perm_inode_v1_t;
+#endif
 
 union sam_di_ino {
 	char					i[SAM_ISIZE];
 	struct sam_perm_inode	inode;
+	struct sam_perm_inode_v2	inode_v2;
 #ifdef sun
-	struct sam_perm_inode_v1	inode_v1;
+#ifdef TIME32
+struct sam_perm_inode_v1	inode_v1;
+#endif
 #endif
 };
 

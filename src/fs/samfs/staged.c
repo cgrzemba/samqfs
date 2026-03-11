@@ -436,6 +436,7 @@ sam_build_stagerd_req(
 				    i, &id))) {
 					return (error);
 				}
+#ifdef TIME32
 			} else if (ip->di.version == SAM_INODE_VERS_1) {
 				/* Previous vers */
 				sam_perm_inode_v1_t *permip_v1 =
@@ -443,6 +444,7 @@ sam_build_stagerd_req(
 
 				id = permip_v1->aid[i];
 				brelse(bp);
+#endif
 			}
 
 			error = sam_build_stager_multivolume_copy(ip, id, i,

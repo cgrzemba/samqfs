@@ -1014,6 +1014,7 @@ sam_delete_archive(sam_node_t *ip)
 	sam_id_t id[MAX_ARCHIVE];
 
 	if (sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip) == 0) {
+#ifdef TIME32
 		if (ip->di.version == SAM_INODE_VERS_1) { /* Previous version */
 			sam_perm_inode_v1_t *permip_v1 =
 			    (sam_perm_inode_v1_t *)permip;
@@ -1024,6 +1025,7 @@ sam_delete_archive(sam_node_t *ip)
 				permip_v1->aid[copy].gen = 0;
 			}
 		}
+#endif
 		bzero((char *)&permip->ar, sizeof (struct sam_arch_inode));
 		for (copy = 0; copy < MAX_ARCHIVE; copy++) {
 			permip->di.media[copy] = ip->di.media[copy] = 0;

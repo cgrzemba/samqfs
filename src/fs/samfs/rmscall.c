@@ -1280,6 +1280,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 							return (error);
 						}
 					}
+#ifdef TIME32
 				} else if (ip->di.version == SAM_INODE_VERS_1) {
 					sam_perm_inode_v1_t *permip_v1 =
 					    (sam_perm_inode_v1_t *)permip;
@@ -1287,6 +1288,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 					id[copy] = permip_v1->aid[copy];
 					permip_v1->aid[copy].ino = 0;
 					permip_v1->aid[copy].gen = 0;
+#endif
 				}
 				bzero((char *)&permip->ar.image[copy],
 				    sizeof (sam_archive_info_t));
@@ -1362,6 +1364,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 							return (error);
 						}
 					}
+#ifdef TIME32
 				} else if (ip->di.version == SAM_INODE_VERS_1) {
 					sam_perm_inode_v1_t *permip_v1 =
 					    (sam_perm_inode_v1_t *)permip;
@@ -1370,6 +1373,7 @@ sam_proc_archive_copy(vnode_t *vp, int cmd, void *args, cred_t *credp)
 					permip_v1->aid[dcopy] =
 					    permip_v1->aid[copy];
 					permip_v1->aid[copy] = aid;
+#endif
 				}
 				}
 				break;

@@ -407,7 +407,7 @@ sam_get_ino(
 	ip->flags.b.abr = 0;
 	if (S_ISREQ(ip->di.mode)) {
 		ip->flags.bits |= SAM_DIRECTIO;
-		if (ip->mp->mt.fi_version == SAMFS_SBLKV2) {
+		if (ip->mp->mt.fi_version >= SAMFS_SBLKV2) {
 			ip->di.status.b.remedia = 0;
 		}
 	}

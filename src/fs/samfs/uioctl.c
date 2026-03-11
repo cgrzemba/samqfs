@@ -364,6 +364,7 @@ sam_ioctl_util_cmd(
 			 */
 			if (permip->di.version >= SAM_INODE_VERS_2) {
 				/* Current version */
+#ifdef TIME32
 				if (copyout((char *)&permip->csum,
 				    (char *)&upp->csum,
 				    sizeof (csum_t) +
@@ -372,6 +373,15 @@ sam_ioctl_util_cmd(
 					brelse(bp);
 					break;
 				}
+#else
+				if (copyout((char *)&permip->ar,
+				    (char *)&upp->ar,
+				    sizeof (struct sam_arch_inode))) {
+					error = EFAULT;
+					brelse(bp);
+					break;
+				}
+#endif
 				if (copyout((char *)&permip->di2,
 				    (char *)&upp->di2,
 				    sizeof (struct sam_disk_inode_part2))) {
@@ -383,6 +393,7 @@ sam_ioctl_util_cmd(
 				 * Return csum, ar and aid sections of the
 				 * perm_inode.
 				 */
+#ifdef TIME32
 			} else if (permip->di.version == SAM_INODE_VERS_1) {
 				/*
 				 * Prev inode version (1)
@@ -396,6 +407,7 @@ sam_ioctl_util_cmd(
 					brelse(bp);
 					break;
 				}
+#endif
 			}
 			brelse(bp);
 		}
@@ -927,7 +939,7 @@ stage_inode:
 		}
 
 		/* Return vsn sections, if they exist. */
-		if (mp->mi.m_sblk_version == SAMFS_SBLKV2) {
+		if (mp->mi.m_sblk_version >= SAMFS_SBLKV2) {
 			/* Current version */
 			if ((error = sam_get_ino(mp->mi.m_vfsp, IG_EXISTS,
 			    &idmva->id, &ip)) == 0) {
@@ -1509,6 +1521,7 @@ sam_set_archive(
 		}
 	}
 	if ((error = sam_read_ino(ip->mp, ip->di.id.ino, &bp, &permip)) == 0) {
+#ifdef TIME32
 		if (ip->di.version == SAM_INODE_VERS_1) {
 			sam_id_t id;
 			sam_perm_inode_v1_t *permip_v1 =
@@ -1548,6 +1561,7 @@ sam_set_archive(
 				permip_v1->aid[copy] = id;
 			}
 		}
+#endif
 		ip->di.media[copy] = permip->di.media[copy] = pp->media;
 		if (!inconsistent) {
 			ip->di.arch_status = permip->di.arch_status |=
@@ -1555,11 +1569,13 @@ sam_set_archive(
 		}
 		ip->di.ar_flags[copy] = permip->di.ar_flags[copy] &=
 		    AR_required;
+#ifdef TIME32   /* csum code */
 		if (ip->di.status.b.cs_gen && (pp->flags & SA_csummed)) {
 			permip->csum = pp->csum;
 			ip->di.status.b.cs_val = 1;
 			permip->di.status.b.cs_val = 1;
 		}
+#endif
 		permip->ar.image[copy] = pp->ar;
 		if (permip->ar.image[copy].creation_time == 0) {
 			permip->ar.image[copy].creation_time = SAM_SECOND();

@@ -110,6 +110,7 @@
 #include "samhost.h"
 #define	MAIN
 #include "utility.h"
+#include "sblk_utility.h"
 #include "pub/rminfo.h"
 #include "qfs_log.h"
 
@@ -426,7 +427,9 @@ int check_reg_file(struct sam_perm_inode *dp);
 int check_inode_exts(struct sam_perm_inode *dp);
 int verify_inode_ext(struct sam_perm_inode *dp, struct sam_inode_ext *ep,
 	sam_id_t eid);
+#ifdef TIME32
 int check_multivolume_inode_exts(sam_perm_inode_v1_t *dp, int copy);
+#endif
 int check_dir(struct sam_perm_inode *dp);
 int check_seg_inode(struct sam_perm_inode *sp);
 int check_seg_index(struct sam_perm_inode *dp);
@@ -935,7 +938,8 @@ check_fs(void)
 	}
 	if (((sblock.info.sb.magic != SAM_MAGIC_V1) &&
 	    (sblock.info.sb.magic != SAM_MAGIC_V2) &&
-	    (sblock.info.sb.magic != SAM_MAGIC_V2A)) ||
+	    (sblock.info.sb.magic != SAM_MAGIC_V2A) &&
+	    (sblock.info.sb.magic != SAM_MAGIC_V3)) ||
 	    (strncmp(sblock.info.sb.name, "SBLK", 4) != 0)) {
 		error(0, 0,
 		    catgets(catfd, SET, 13316,
@@ -948,7 +952,8 @@ check_fs(void)
 	if (d_read(devlp, (char *)&nblock, i, sblock.info.sb.offset[1]) == 0) {
 		if (((nblock.info.sb.magic != SAM_MAGIC_V1) &&
 		    (nblock.info.sb.magic != SAM_MAGIC_V2) &&
-		    (nblock.info.sb.magic != SAM_MAGIC_V2A)) ||
+		    (nblock.info.sb.magic != SAM_MAGIC_V2A) &&
+		    (nblock.info.sb.magic != SAM_MAGIC_V3)) ||
 		    (strncmp(nblock.info.sb.name, "SBLK", 4) != 0)) {
 				error(0, 0,
 				    catgets(catfd, SET, 13316,
@@ -1028,9 +1033,12 @@ check_fs(void)
 	} else if (sblock.info.sb.magic == SAM_MAGIC_V2) {
 		sblk_version = SAMFS_SBLKV2;
 		sprintf(ver_str, "%s", "2");
-	} else {
+	} else if (sblock.info.sb.magic == SAM_MAGIC_V2A) {
 		sblk_version = SAMFS_SBLKV2;
 		sprintf(ver_str, "%s", "2A");
+	} else {
+		sblk_version = SAMFS_SBLKV3;
+		sprintf(ver_str, "%s", "3");
 	}
 
 	/*
@@ -1167,8 +1175,8 @@ check_fs(void)
 	nblock.info.sb.mm_space = sblock.info.sb.mm_capacity;
 
 	time(&start_time);
-	if ((verbose_print || debug_print) && nblock.info.sb.repaired) {
-		time_t last_time = nblock.info.sb.repaired;
+	if ((verbose_print || debug_print) && nblock.info.sb.repaired64) {
+		time_t last_time = nblock.info.sb.repaired64;
 		strftime(timebuf, sizeof (timebuf)-1, "%c\n",
 		    localtime(&last_time));
 		printf(catgets(catfd, SET, 13942,
@@ -1460,7 +1468,7 @@ check_fs(void)
 		}
 
 		time(&finish_time);
-		nblock.info.sb.repaired = (uint32_t)finish_time;
+		set_sblk_repaired_time(nblock.info.sb, finish_time);
 
 		if ((sblock.info.sb.opt_mask & SBLK_OPTV1_CONV_WORMV2) != 0) {
 			nblock.info.sb.opt_mask |= SBLK_OPTV1_CONV_WORMV2;
@@ -1834,7 +1842,7 @@ build_devices(void)
 			}
 			fs_count = sblk->info.sb.fs_count;
 			mm_count = sblk->info.sb.mm_count;
-			time = sblk->info.sb.init;
+			time = get_sblk_init_time(sblk->info.sb);
 			for (j = 0; j < fs_count; j++) {
 				if (sblk->eq[j].fs.state == DEV_ON ||
 				    sblk->eq[j].fs.state == DEV_NOALLOC ||
@@ -1886,7 +1894,8 @@ build_devices(void)
 
 		if (sblock.info.sb.magic == SAM_MAGIC_V1_RE ||
 		    sblock.info.sb.magic == SAM_MAGIC_V2_RE ||
-		    sblock.info.sb.magic == SAM_MAGIC_V2A_RE) {
+		    sblock.info.sb.magic == SAM_MAGIC_V2A_RE ||
+		    sblock.info.sb.magic == SAM_MAGIC_V3_RE) {
 			/*
 			 * FS built on host with reversed byte order.
 			 */
@@ -1898,13 +1907,14 @@ build_devices(void)
 		/* Validate label is same for all members & not duplicated. */
 		if (((sblock.info.sb.magic != SAM_MAGIC_V1) &&
 		    (sblock.info.sb.magic != SAM_MAGIC_V2) &&
-		    (sblock.info.sb.magic != SAM_MAGIC_V2A)) ||
+		    (sblock.info.sb.magic != SAM_MAGIC_V2A) &&
+		    (sblock.info.sb.magic != SAM_MAGIC_V3)) ||
 		    (strncmp(sblock.info.sb.name, "SBLK", 4) != 0) ||
 		    (old_count != sblock.info.sb.fs_count) ||
 		    ((strncmp(sblock.info.sb.fs_name, fsname,
 		    sizeof (uname_t)) != 0) &&
 		    !(rename_fs && repair_files)) ||
-		    (time != sblock.info.sb.init)) {
+		    (time != get_sblk_init_time(sblock.info.sb))) {
 			/* Extra partitions for filesystem fsname */
 
 			devlp->state = DEV_OFF;
@@ -2608,7 +2618,7 @@ check_inode(
 	}
 
 	if (dp->di.version != sblk_version) {
-		if (sblk_version == SAMFS_SBLKV2 &&
+		if (sblk_version >= SAMFS_SBLKV2 &&
 		    (dp->di.version != sblk_version &&
 		    dp->di.version != (sblk_version-1))) {
 			if (repair_files) {
@@ -2794,7 +2804,7 @@ count_inode_blocks(struct sam_perm_inode *dp)	/* Inode entry */
 
 	/* Don't check inodes that don't have blocks */
 	if ((nblock.info.sb.magic == SAM_MAGIC_V2) ||
-	    (nblock.info.sb.magic == SAM_MAGIC_V2A)) {
+	    (nblock.info.sb.magic == SAM_MAGIC_V2A || nblock.info.sb.magic == SAM_MAGIC_V3)) {
 		if (S_ISLNK(dp->di.mode)) {
 			return;
 		}
@@ -5605,6 +5615,7 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 		}
 	}
 
+#ifdef TIME32
 	if (dp->di.version == SAM_INODE_VERS_1) {
 		/* Previous version */
 		sam_perm_inode_v1_t *dp_v1 = (sam_perm_inode_v1_t *)dp;
@@ -5723,6 +5734,7 @@ check_reg_file(struct sam_perm_inode *dp)		/* Inode entry */
 			}
 		}
 	}
+#endif
 
 	if (err) {
 		mark_inode(dp->di.id.ino, INVALID_INO);
@@ -6479,7 +6491,7 @@ verify_inode_ext(
  * Check multivolume archive inode extensions for specified copy.
  * This routine is used only for inode version 1 inode extensions.
  */
-
+#ifdef TIME32
 int					/* -1 if inode error, 0 otherwise */
 check_multivolume_inode_exts(
 	sam_perm_inode_v1_t *dp,	/* Base inode entry */
@@ -6670,7 +6682,7 @@ fail:
 	free((void *)ip);
 	return (-1);
 }
-
+#endif
 
 /*
  * ----- check_dir - check directory structure
@@ -7686,8 +7698,8 @@ verify_hdr_validation(
 		return (-1);
 	}
 	if (dvp->v_time &&
-	    ((dvp->v_time < nblock.info.sb.init) ||
-	    (dvp->v_time > fstime))) {
+	    ((dvp->v_time < get_sblk_init_time(nblock.info.sb) ||
+	    (dvp->v_time > fstime)))) {
 		/*
 		 * Just warn for now
 		 *
@@ -8641,7 +8653,11 @@ quota_getent(struct sam_perm_inode *dp, int type)
 
 	switch (type) {
 	case SAM_QUOTA_ADMIN:
+#ifdef TIME32
 		index = dp->di.admin_id;
+#else
+		index = dp->di2.admin_id;
+#endif
 		break;
 	case SAM_QUOTA_GROUP:
 		index = dp->di.gid;

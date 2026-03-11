@@ -56,6 +56,7 @@ static char *_SrcFile = __FILE__;
 #include "sam/lib.h"
 
 #include "sblk.h"
+#include "sblk_utility.h"
 #include "samhost.h"
 
 /* Local headers. */
@@ -223,19 +224,20 @@ cmpSBlk(
 {
 	int change = 0;
 
-	if (sb->magic != SAM_MAGIC_V2 &&
-	    sb->magic != SAM_MAGIC_V2A) {
+	if ((sb->magic != SAM_MAGIC_V2) &&
+	    (sb->magic != SAM_MAGIC_V2A) &&
+	    (sb->magic != SAM_MAGIC_V3)) {
 		Trace(TR_MISC,
-		    "FS %s: Superblock magic # changed (%x/%x or %x) - "
+		    "FS %s: Superblock magic # changed (%x/%x,%x,%x) - "
 		    "fs destroyed?",
-		    fs, sb->magic, SAM_MAGIC_V2, SAM_MAGIC_V2A);
+		    fs, sb->magic, SAM_MAGIC_V2, SAM_MAGIC_V2A, SAM_MAGIC_V3);
 		change |= CH_SB_SBLK | CH_SB_NOFS;
 	} else {
-		if (sb->init != config.fsId) {
+		if (get_sblk_init_time(*sb) != config.fsId) {
 			Trace(TR_MISC,
 			    "FS %s: Superblock init changed (%x/%x) - "
 			    "fs mkfsed?",
-			    fs, sb->init, config.fsId);
+			    fs, get_sblk_init_time(*sb), config.fsId);
 			change |= CH_SB_SBLK | CH_SB_NEWFS;
 		}
 		if (strncmp(sb->fs_name, fs, sizeof (sb->fs_name)) != 0) {

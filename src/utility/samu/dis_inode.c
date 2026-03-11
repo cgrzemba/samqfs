@@ -743,9 +743,11 @@ dis_inode_arch(
 	char *dtnm;			/* Device type mnemonic */
 	int fl, i, x;
 
+#ifdef TIME32
 	Mvprintw(2, 0, "checksum %.8x %.8x %.8x %.8x",
 	    ino->csum.csum_val[0], ino->csum.csum_val[1],
 	    ino->csum.csum_val[2], ino->csum.csum_val[3]);
+#endif
 	fl = ln;
 	for (i = 0; i < MAX_ARCHIVE; i++) {
 		if (i < 2)  ln = fl;
@@ -754,6 +756,7 @@ dis_inode_arch(
 		if ((ino->di.arch_status & (1 << i)) == 0)  continue;
 		arch = &ino->ar.image[i];
 		dtnm = device_to_nm(ino->di.media[i]);
+#ifdef TIME32
 		if (ino->di.version == SAM_INODE_VERS_1) {
 			sam_perm_inode_v1_t *ino_v1 =
 			    (sam_perm_inode_v1_t *)ino;
@@ -765,13 +768,16 @@ dis_inode_arch(
 			    ino_v1->aid[i].gen,
 			    ino_v1->aid[i].gen);
 		}
+#endif
 		Mvprintw(ln++, x, "%.8x copy          ", i);
 		Mvprintw(ln++, x, "%.8x media      (%s)",
 		    ino->di.media[i], dtnm);
 		w = (void *)&arch->arch_flags;
 		Mvprintw(ln++, x, "%.8x flags/n_vsns", *w);
+#ifdef TIME32
 		Mvprintw(ln++, x, "%.8x version    (%d)", arch->version,
 		    arch->version);
+#endif
 		Mvprintw(ln++, x, "%.8x %s", arch->creation_time,
 		    ctime((time_t *)&arch->creation_time));
 		w = (void *)&arch->vsn;
@@ -849,9 +855,14 @@ dis_inode_file(
 	    ino->nlink, ino->nlink);
 	Mvprintw(ln++, 0, "%.8x status %s",
 	    ino->status.bits, a_str);
+#ifdef TIME32
 	Mvprintw(ln++, 0, "%.2x%.2x%.2x%.2x obty/-/-/p2flg",
 	    permp->di2.objtype, 0, 0, permp->di2.p2flags);
 	Mvprintw(ln++, 0, "%.8x projid", permp->di2.projid);
+#else
+	Mvprintw(ln++, 0, "%.2x%.2x%.2x%.2x obty/-/-/p2flg",
+	    0, 0, 0, permp->di2.p2flags);
+#endif
 	if (ino->status.b.segment) {
 		Mvprintw(ln++, 0, "%.8x seg size   (%d)",
 		    ino->rm.info.dk.seg_size, ino->rm.info.dk.seg_size);

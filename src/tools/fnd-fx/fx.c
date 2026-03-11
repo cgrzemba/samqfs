@@ -142,6 +142,7 @@ main(int argc, char **argv)
 			if (perm_inode.ar.image[copy].n_vsns > 1) {
 				n_vsns += perm_inode.ar.image[copy].n_vsns;
 			}
+#ifdef TIME32
 		} else if (perm_inode.di.version == SAM_INODE_VERS_1) {
 			/* Prev version */
 			perm_inode_v1 =
@@ -155,6 +156,7 @@ main(int argc, char **argv)
 					perm_inode_v1->aid[copy].gen = 0;
 				}
 			}
+#endif
 		}
 	}
 
@@ -171,12 +173,14 @@ main(int argc, char **argv)
 			    SAM_INODE_VERS_2) {
 				idmva.aid[copy].ino =
 				    idmva.aid[copy].gen = 0;
+#ifdef TIME32
 			} else if (perm_inode.di.version ==
 			    SAM_INODE_VERS_1) {
 				perm_inode_v1 =
 				    (struct sam_perm_inode_v1 *)&perm_inode;
 				idmva.aid[copy] =
 				    perm_inode_v1->aid[copy];
+#endif
 			}
 		}
 		idmva.size =

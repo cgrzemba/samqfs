@@ -155,7 +155,7 @@ ChecksumInit(
 		}
 	}
 
-	if (file->csum_algo & ~CS_USER_BIT > CS_FUNCS) {
+	if ((file->csum_algo & ~CS_USER_BIT) > CS_FUNCS) {
 		Trace(TR_ERR, "Checksumming data: invalid algo %d",
 		    file->csum_algo);
 		return;
@@ -247,6 +247,7 @@ ChecksumCompare(
 		retval = errno;
 	}
 
+#ifdef TIME32
 	if (retval == 0 && checksum != NULL) {
 		for (i = 0; i < 4; i++) {
 			if (pi.csum.csum_val[i] != checksum->val.csum_val[i]) {
@@ -289,7 +290,7 @@ ChecksumCompare(
 			    checksum->val.csum_val[3]);
 		}
 	}
-
+#endif
 	return (retval);
 }
 
