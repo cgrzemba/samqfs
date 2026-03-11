@@ -65,7 +65,11 @@
 
 extern boolean_t unworm;
 extern boolean_t skip_xattr;
+#ifdef TIME32
 extern void conv_to_v2inode(sam_perm_inode_t *);
+#else
+extern void conv_to_v2inode(sam_perm_inode_v2_t *);
+#endif
 static void check_samfs_fs();
 static void sam_restore_a_file(char *, struct sam_perm_inode *,
 			struct sam_vsn_section *, char *, void *,
@@ -123,6 +127,65 @@ is_xattr(const char* path) {
 			return true;
 	}
 	return false;
+}
+
+void
+copy_inode_to_v3(sam_perm_inode_t *ni, sam_perm_inode_v2_t *oi) {
+	int i;
+
+	ni->di.mode = oi->di.mode;
+	ni->di.version = oi->di.version;
+	bcopy(&oi->di.id, &ni->di.id, sizeof(sam_id_t));
+	bcopy(&oi->di.parent_id, &ni->di.parent_id, sizeof(sam_id_t));
+	bcopy(&oi->di.rm, &ni->di.rm, sizeof(sam_rm_t));
+	bcopy(&oi->di.ext_id, &ni->di.ext_id, sizeof(sam_id_t));
+	ni->di.uid = oi->di.uid;
+	ni->di.gid = oi->di.gid;
+	ni->di.nlink = oi->di.nlink;
+	bcopy(&oi->di.status, &ni->di.status, sizeof(ino_st_t));
+	ni->di.access_time.tv_sec = oi->di.access_time.tv_sec;
+	ni->di.access_time.tv_nsec = oi->di.access_time.tv_nsec;
+	ni->di.modify_time.tv_sec = oi->di.modify_time.tv_sec;
+	ni->di.modify_time.tv_nsec = oi->di.modify_time.tv_nsec;
+	ni->di.change_time.tv_sec = oi->di.change_time.tv_sec;
+	ni->di.change_time.tv_nsec = oi->di.change_time.tv_nsec;
+	ni->di.creation_time = oi->di.creation_time;
+	ni->di.attribute_time = oi->di.attribute_time;
+	ni->di.unit = oi->di.unit;
+	ni->di.cs_algo = oi->di.cs_algo;
+	ni->di.arch_status = oi->di.arch_status;
+	ni->di.lextent = oi->di.lextent;
+	ni->di.stripe = oi->di.stripe;
+	ni->di.stride = oi->di.stride;
+	ni->di.stripe_group = oi->di.stripe_group;
+	ni->di.ext_attrs = oi->di.ext_attrs;
+	bcopy(&oi->di.psize, &ni->di.psize, sizeof(sam_psize_t));
+	ni->di.blocks = oi->di.blocks;
+	ni->di.residence_time = oi->di.residence_time;
+	ni->di.free_ino = oi->di.free_ino;
+	ni->di.stage_ahead = oi->di.stage_ahead;
+	for (i = 0; i < NOEXT; i++) {
+		ni->di.extent[i] = 0;
+		ni->di.extent_ord[i] = 0;
+	}
+	for (i = 0; i < MAX_ARCHIVE; i++) {
+		ni->ar.image[i].creation_time = oi->ar.image[i].creation_time;
+		ni->ar.image[i].position_u = oi->ar.image[i].position_u;
+		ni->ar.image[i].position = oi->ar.image[i].position;
+		ni->ar.image[i].file_offset = oi->ar.image[i].file_offset;
+		bcopy(&oi->ar.image[i].vsn, &ni->ar.image[i].vsn, sizeof(vsn_t));
+		ni->ar.image[i].arch_flags = oi->ar.image[i].arch_flags;
+		ni->ar.image[i].mau_shift = oi->ar.image[i].mau_shift;
+		ni->ar.image[i].n_vsns = oi->ar.image[i].n_vsns;
+		ni->di.ar_flags[i] = oi->di.ar_flags[i];
+		ni->di.media[i] = oi->di.media[i];
+	}
+	bcopy(&oi->di2.xattr_id, &ni->di2.xattr_id, sizeof(sam_id_t));
+	ni->di2.rperiod_start_time = oi->di2.rperiod_start_time;
+	ni->di2.rperiod_duration = oi->di2.rperiod_duration;
+	ni->di2.admin_id = oi->di.admin_id;
+	ni->di2.s_pflags = oi->di2.s_pflags;
+	ni->di2.p2flags = oi->di2.p2flags;
 }
 
 /*
@@ -552,6 +615,440 @@ skip_file:
 	pop_times_stack();
 }
 
+void
+cs_restore_v2(
+	boolean strip_slashes,	/* should leading slash be stripped? */
+	int fcount,		/* number of filename patterns in flist */
+	char **flist)		/* filename patterns to select for restore  */
+{
+	int		file_data = 0;
+	int		file_data_read;
+	csd_fhdr_t file_hdr;
+	char	name[MAXPATHLEN + 1];
+	/* name to compare for selective rstr */
+	char	*name_compare = &name[0];
+	char	slink[MAXPATHLEN + 1];
+	char	*save_path = (char *)NULL; /* Prev path opened for SAM_fd */
+	char	*last_path = NULL;	/* Last compared path */
+	char	*slash_loc;		/* Last loc of a '/' in filename */
+	char	unused;			/* A safe value for slash_loc */
+	int		namelen;
+	int		skipping;
+	struct sam_perm_inode_v2 perm_inode;
+	struct sam_stat sb;
+	struct sam_vsn_section *vsnp;
+	void	*data;
+	int		n_acls;
+	aclent_t *aclp;
+
+	/*
+	 *	Read the dump file
+	 */
+	if (debugging == 1)
+		quiet = false;
+	while (csd_read_header(&file_hdr) > 0) {
+		namelen = file_hdr.namelen;
+		csd_read(name, namelen, &perm_inode);
+		data = NULL;
+		vsnp = NULL;
+		aclp = NULL;
+		n_acls = 0;
+		if (file_hdr.flags & CSD_FH_DATA) {
+			BUMP_STAT(data_files);
+			file_data_read = 0;
+			file_data++;
+		} else {
+			file_data_read = file_data = 0;
+		}
+
+		if (S_ISREQ(perm_inode.di.mode)) {
+			SamMalloc(data, perm_inode.di.psize.rmfile);
+		}
+
+		csd_read_next_v2(&perm_inode, &vsnp, slink, data, &n_acls, &aclp);
+
+		if (dont_process_this_entry) {   /* if problem reading inode */
+			BUMP_STAT(errors);
+			goto skip_file;
+		}
+
+		/* Skip privileged files except root */
+
+		if (SAM_PRIVILEGE_INO(perm_inode.di.version,
+		    perm_inode.di.id.ino)) {
+			if (perm_inode.di.id.ino != SAM_ROOT_INO) {
+				goto skip_file;
+			}
+		}
+
+		if (perm_inode.di.cs_algo >= CS_FUNCS) {
+			error(0,0, catgets(catfd, SET, 13541,
+			    "%s: unsupported checksum algo %d, resetting"),
+			    name, perm_inode.di.cs_algo);
+			perm_inode.di.cs_algo = 0;
+			perm_inode.di.status.b.cs_gen = 0;
+			perm_inode.di.status.b.cs_val = 0;
+		}
+
+		if (unworm && perm_inode.di.status.b.worm_rdonly) {
+			perm_inode.di.status.b.worm_rdonly = 0;
+			perm_inode.di.mode &= ~(04000); /* reset S bit in mode */
+		}
+
+		/* select subset of file names to restore. */
+
+		name_compare = &name[0];
+		if (fcount != 0) {	/* Search the file name list */
+			int i;
+
+			for (i = 0; i < fcount; i++) {
+				/*
+				 * If stripping first slash to make relative
+				 * path and dump file name begins with '/' and
+				 * select file name does not being with '/',
+				 * then move name compare ahead past first '/'
+				 */
+				if (strip_slashes && ('/' == *name) &&
+				    ('/' != *flist[i])) {
+					name_compare = &name[1];
+				}
+
+				/*
+				 * filecmp returns:
+				 *	0 for no match
+				 *	1 exact match,
+				 *	2 name prefix of flist[i],
+				 *	3 flist[i] prefix of name.
+				 */
+				if (filecmp(name_compare, flist[i]) != 0) {
+					break;
+				}
+			}
+
+			if (i >= fcount) {
+				if (S_ISSEGI(&perm_inode.di)) {
+					skipping = 1;
+					goto skip_seg_file;
+				}
+				goto skip_file;
+			}
+		}
+		/* early jump out if wellknown filename */
+		/* never restore syntetic files SUNWattr_ro, _rw */
+		if (is_sattr(name_compare))
+			goto skip_file;
+		if (skip_xattr && is_xattr(name_compare))
+			goto skip_file;
+
+		/*
+		 * If stripping first slash to make relative path and
+		 *	dump file name begins with '/'
+		 * then move location ahead past first '/'
+		 */
+		if (strip_slashes && ('/' == *name)) {
+			name_compare = &name[1];
+		}
+
+		/*
+		 * Make sure that we don't restore into a non-SAM-FS
+		 * filesystem.
+		 * If relative path to be restored, check current directory for
+		 * being in a SAM-FS filesystem.  If absolute path to be
+		 * restored, search backwards through path for a viable
+		 * SAM-FS path by calling sam_stat() and checking the
+		 * directory attributes.
+		 */
+		if ((strip_slashes && ('/' == *name)) || ('/' != *name)) {
+			char *check_name = ".";
+			char *next_name;
+
+			if ((save_path != (char *)NULL) &&
+			    (strcmp(check_name, save_path) != 0)) {
+				check_samfs_fs();
+				free(save_path);
+				(void) close(SAM_fd);
+				save_path = strdup(check_name);
+				SAM_fd = open_samfs(save_path);
+			} else if (save_path == (char *)NULL) {
+				check_samfs_fs();
+				save_path = strdup(check_name);
+				SAM_fd = open_samfs(save_path);
+			}
+
+			/*
+			 * Check if last path matches this path. Otherwise,
+			 * If subpath does not yet exist, make directories
+			 * as needed.
+			 */
+			if (last_path != NULL) {
+				char *name_cmp;
+				int path_len;
+
+				path_len = strlen(last_path);
+				/* Copy filename */
+				name_cmp = strdup(name_compare);
+				if ((slash_loc = strrchr(name_cmp, '/')) !=
+				    NULL) {
+					*slash_loc = '\0';
+					if ((path_len == strlen(name_cmp)) &&
+					    (last_path[path_len-1] ==
+					    name_cmp[path_len-1]) &&
+					    (bcmp(last_path, name_cmp,
+					    path_len) == 0)) {
+
+						free(name_cmp);
+						goto restore_file;
+					}
+				}
+				free(name_cmp);
+			}
+			if (last_path != NULL) {
+				free(last_path);
+				last_path = NULL;
+			}
+			/* Save path for check above */
+			last_path = strdup(name_compare);
+			if ((slash_loc = strrchr(last_path, '/')) != NULL) {
+				*slash_loc = '\0';
+			} else {
+				free(last_path);
+				last_path = NULL;
+			}
+			/* Copy filename */
+			next_name = check_name = strdup(name_compare);
+			while ((slash_loc = strchr(next_name, '/')) !=
+			    (char *)NULL) {
+				*slash_loc = '\0';
+
+				if (mkdir(check_name,
+				    S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
+					if (EEXIST == errno) {
+						*slash_loc = '/';
+						next_name = slash_loc + 1;
+						continue;
+					}
+
+					BUMP_STAT(errors);
+					error(1, errno,
+					    catgets(catfd, SET, 222,
+					    "%s: Cannot mkdir()"),
+					    check_name);
+					break;
+				}
+
+				*slash_loc = '/';
+				next_name = slash_loc + 1;
+			}
+
+			free(check_name);
+		} else {
+			/*
+			 * Search through absolute path from end for
+			 * SAM-FS file system
+			 */
+			/* Copy filename */
+			char *check_name = strdup(name_compare);
+
+			slash_loc = &unused;
+
+			do {
+				*slash_loc = '\0';
+				/*
+				 * Make sure we don't restore into a
+				 * non-SAM-FS filesystem
+				 * by calling sam_stat() and checking the
+				 * directory attributes.
+				 */
+				if (sam_stat(check_name, &sb,
+				    sizeof (sb)) == 0 &&
+				    SS_ISSAMFS(sb.attr)) {
+					if ((save_path != (char *)NULL) &&
+					    (strcmp(check_name,
+					    save_path) != 0)) {
+						free(save_path);
+						(void) close(SAM_fd);
+						save_path = strdup(check_name);
+						SAM_fd = open_samfs(save_path);
+					} else if (save_path == (char *)NULL) {
+						save_path = strdup(check_name);
+						SAM_fd = open_samfs(save_path);
+					}
+
+					break;
+				}
+				slash_loc = strrchr(check_name, '/');
+			} while (slash_loc != (char *)NULL);
+
+
+			/*
+			 * If no SAM-FS file system found in path, issue error
+			 */
+			if ((char *)NULL == slash_loc) {
+				BUMP_STAT(errors);
+				BUMP_STAT(errors_dir);
+				error(1, 0,
+				    catgets(catfd, SET, 259,
+				    "%s: Not a SAM-FS file."),
+				    name_compare);
+			}
+
+			free(check_name);
+		}
+
+restore_file:
+		sam_perm_inode_t perm_inode_v3;
+
+		copy_inode_to_v3(&perm_inode_v3, &perm_inode);
+
+		if (verbose) {
+			sam_ls(name_compare, &perm_inode_v3, NULL);
+		}
+		/* If not already offline */
+		if (!perm_inode.di.status.b.offline) {
+			/* If archived */
+			if (perm_inode.di.arch_status) {
+				print_reslog_v2(log_st, name_compare,
+				    &perm_inode, "online");
+			}
+		} else if (perm_inode.di.status.b.pextents) {
+			print_reslog(log_st, name_compare, &perm_inode_v3,
+			    "partial");
+		}
+
+		/*
+		 * if segment index, we have to skip the data segment inodes
+		 * before we can get to the dumped data.
+		 */
+		if (!(S_ISSEGI(&perm_inode.di) && file_data)) {
+			sam_restore_a_file(name_compare, &perm_inode_v3,
+			    vsnp, slink, data,
+			    n_acls, aclp, file_data, &file_data_read);
+		}
+		skipping = 0;
+
+skip_seg_file:
+		if (S_ISSEGI(&perm_inode.di)) {
+			int i;
+			offset_t seg_size;
+			int no_seg;
+			sam_id_t seg_parent_id = perm_inode.di.id;
+
+			/*
+			 * If we are restoring the data, don't restore the
+			 * data segment inodes.  This means we will lose the
+			 * archive copies, if any.
+			 */
+			if (file_data) skipping++;
+
+			/*
+			 * Read each segment inode. If archive copies
+			 * overflowed,
+			 * read vsn sections directly after each segment inode.
+			 */
+
+			seg_size =
+			    (offset_t)perm_inode.di.rm.info.dk.seg_size *
+			    SAM_MIN_SEGMENT_SIZE;
+			no_seg = (perm_inode.di.rm.size + seg_size - 1) /
+			    seg_size;
+			for (i = 0; i < no_seg; i++) {
+				struct sam_vsn_section *seg_vsnp;
+				struct sam_perm_inode_v2 seg_inode;
+				struct sam_perm_inode seg_inode_v3;
+
+				readcheck(&seg_inode, sizeof (seg_inode),
+				    5002);
+				if (swapped) {
+					if (sam_byte_swap(
+					    sam_perm_inode_swap_descriptor,
+					    &seg_inode, sizeof (seg_inode))) {
+						error(0, 0,
+						    catgets(catfd, SET, 13531,
+						"%s: segment inode byte "
+						"swap error - skipping."),
+						    name);
+						dont_process_this_entry = 1;
+					}
+				}
+				if (!(SAM_CHECK_INODE_VERSION(
+				    seg_inode.di.version))) {
+					if (debugging) {
+						fprintf(stderr,
+						    "cs_restore: seg %d "
+						    "inode version %d\n",
+						    i, seg_inode.di.version);
+					}
+					error(0, 0, catgets(catfd, SET, 739,
+					    "%s: inode version incorrect - "
+					    "skipping"),
+					    name);
+					dont_process_this_entry = 1;
+				}
+				if (skipping || dont_process_this_entry) {
+					continue;
+				}
+				seg_inode.di.parent_id = seg_parent_id;
+				seg_vsnp = NULL;
+				csd_read_mve_v2(&seg_inode, &seg_vsnp);
+
+				copy_inode_to_v3(&seg_inode_v3, &seg_inode);
+
+				if (verbose) {
+					sam_ls(name_compare, &seg_inode_v3, NULL);
+				}
+				sam_restore_a_file(name_compare, &seg_inode_v3,
+				    seg_vsnp,
+				    NULL, NULL, 0, NULL, file_data, NULL);
+				if (seg_vsnp) {
+					SamFree(seg_vsnp);
+				}
+			}
+			/*
+			 * Now that we have skipped the data segment inodes
+			 * we can restore the dumped data if any.
+			 */
+			if (file_data) {
+				sam_perm_inode_t perm_inode_v3;
+
+				copy_inode_to_v3(&perm_inode_v3, &perm_inode);
+
+				sam_restore_a_file(name_compare, &perm_inode_v3,
+				    vsnp, slink, data,
+				    n_acls, aclp, file_data, &file_data_read);
+			}
+		}
+
+skip_file:
+		if (data) {
+			SamFree(data);
+			data = NULL;
+		}
+		if (vsnp) {
+			SamFree(vsnp);
+			vsnp = NULL;
+		}
+		if (aclp) {
+			SamFree(aclp);
+			aclp = NULL;
+		}
+		if (file_data && file_data_read == 0) {
+			skip_embedded_file_data();
+		}
+	}
+
+	if (last_path != NULL) {
+		free(last_path);
+	}
+	if (save_path != (char *)NULL) {
+		free(save_path);
+	}
+	if (open_dir_fd > 0) {
+		(void) close(open_dir_fd);
+	}
+	pop_permissions_stack();
+	pop_times_stack();
+}
+
 
 /*
  * ----- check_samfs_fs - verify path is in samfs file system.
@@ -588,35 +1085,81 @@ print_reslog(
 	if (log_st == NULL) {
 		return;
 	}
-	if (S_ISDIR(pid->di.mode))		type = 'd';
-	else if (S_ISSEGI(&pid->di))	type = 'I';
-	else if (S_ISSEGS(&pid->di))	type = 'S';
-	else if (S_ISREQ(pid->di.mode)) type = 'R';
-	else if (S_ISLNK(pid->di.mode)) type = 'l';
-	else if (S_ISREG(pid->di.mode)) type = 'f';
-	else if (S_ISBLK(pid->di.mode)) type = 'b';
-	else type = '?';
 
-	for (copy = 0; copy < MAX_ARCHIVE; copy++) {
-		uint_t offset;
+        if (S_ISDIR(pid->di.mode))              type = 'd';
+        else if (S_ISSEGI(&pid->di))    type = 'I';
+        else if (S_ISSEGS(&pid->di))    type = 'S';
+        else if (S_ISREQ(pid->di.mode)) type = 'R';
+        else if (S_ISLNK(pid->di.mode)) type = 'l';
+        else if (S_ISREG(pid->di.mode)) type = 'f';
+        else if (S_ISBLK(pid->di.mode)) type = 'b';
+        else type = '?';
 
-		if (pid->ar.image[copy].vsn[0] != '\0') {
-			offset = pid->ar.image[copy].file_offset;
-			if ((pid->ar.image[copy].arch_flags &
-			    SAR_size_block) == 0) {
-				offset >>= 9;
-			}
-			fprintf(log_st, "%c %s.%s %x.%x %s %s\n",
-			    type,
-			    sam_mediatoa(pid->di.media[copy]),
-			    pid->ar.image[copy].vsn,
-			    pid->ar.image[copy].position,
-			    offset,
-			    status,
-			    pathname);
-			break;
-		}
+        for (copy = 0; copy < MAX_ARCHIVE; copy++) {
+                uint_t offset;
+
+                if (pid->ar.image[copy].vsn[0] != '\0') {
+                        offset = pid->ar.image[copy].file_offset;
+                        if ((pid->ar.image[copy].arch_flags &
+                            SAR_size_block) == 0) {
+                                offset >>= 9;
+                        }
+                        fprintf(log_st, "%c %s.%s %x.%x %s %s\n",
+                            type,
+                            sam_mediatoa(pid->di.media[copy]),
+                            pid->ar.image[copy].vsn,
+                            pid->ar.image[copy].position,
+                            offset,
+                            status,
+                            pathname);
+                        break;
+                }
+        }
+}
+
+void
+print_reslog_v2(
+	FILE *log_st,
+	char *pathname,
+	struct sam_perm_inode_v2 *pid,
+	char *status)
+{
+	int copy;
+	char type;
+
+	if (log_st == NULL) {
+		return;
 	}
+
+        if (S_ISDIR(pid->di.mode))              type = 'd';
+        else if (S_ISSEGI(&pid->di))    type = 'I';
+        else if (S_ISSEGS(&pid->di))    type = 'S';
+        else if (S_ISREQ(pid->di.mode)) type = 'R';
+        else if (S_ISLNK(pid->di.mode)) type = 'l';
+        else if (S_ISREG(pid->di.mode)) type = 'f';
+        else if (S_ISBLK(pid->di.mode)) type = 'b';
+        else type = '?';
+
+        for (copy = 0; copy < MAX_ARCHIVE; copy++) {
+                uint_t offset;
+
+                if (pid->ar.image[copy].vsn[0] != '\0') {
+                        offset = pid->ar.image[copy].file_offset;
+                        if ((pid->ar.image[copy].arch_flags &
+                            SAR_size_block) == 0) {
+                                offset >>= 9;
+                        }
+                        fprintf(log_st, "%c %s.%s %x.%x %s %s\n",
+                            type,
+                            sam_mediatoa(pid->di.media[copy]),
+                            pid->ar.image[copy].vsn,
+                            pid->ar.image[copy].position,
+                            offset,
+                            status,
+                            pathname);
+                        break;
+                }
+        }
 }
 
 /*
@@ -663,21 +1206,6 @@ sam_restore_a_file(
 			(void) rmdir(path);
 		} else if (!S_ISSEGS(&perm_inode->di)) {
 			unlink(path);
-		}
-	}
-
-	/*
-	 * Hook for inode conversion for a WORM'd inode.
-	 * Perform the conversion only once so as not to
-	 * destroy existing retention information in a
-	 * version 2 WORM inode. Set a flag to guarantee
-	 * we convert only once.
-	 */
-	if ((perm_inode->di.version == SAM_INODE_VERS_2) &&
-	    perm_inode->di.status.b.worm_rdonly) {
-		if (((perm_inode->di2.p2flags & P2FLAGS_WORM_V2) == 0) &&
-		    (S_ISREG(mode) || S_ISDIR(mode))) {
-			conv_to_v2inode(perm_inode);
 		}
 	}
 
@@ -1088,20 +1616,8 @@ sam_restore_a_file(
 	perm_inode->di2.xattr_id.ino = 0;
 	perm_inode->di2.xattr_id.gen = 0;
 	idrestore.dp.ptr = (void *)perm_inode;
-	if (perm_inode->di.version >= SAM_INODE_VERS_2) {
-		if (perm_inode->di.ext_attrs & ext_mva) {
-			idrestore.vp.ptr = (void *)vsnp;
-		}
-	} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
-		sam_perm_inode_v1_t *perm_inode_v1 =
-		    (sam_perm_inode_v1_t *)perm_inode;
-
-		for (copy = 0; copy < MAX_ARCHIVE; copy++) {
-			if (perm_inode_v1->aid[copy].ino) {
-				idrestore.vp.ptr = (void *)vsnp;
-				break;
-			}
-		}
+	if (perm_inode->di.ext_attrs & ext_mva) {
+		idrestore.vp.ptr = (void *)vsnp;
 	}
 	if (ioctl(entity_fd, F_IDRESTORE, &idrestore) < 0) {
 		error(0, errno, "%s: ioctl(F_IDRESTORE)", path);
@@ -1215,6 +1731,7 @@ sam_res_by_name(
 		if (perm_inode->di.ext_attrs & ext_mva) {
 			samrestore.vp.ptr = (void *)vsnp;
 		}
+#ifdef TIME32
 	} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
 		sam_perm_inode_v1_t *perm_inode_v1 =
 		    (sam_perm_inode_v1_t *)perm_inode;
@@ -1225,6 +1742,7 @@ sam_res_by_name(
 				break;
 			}
 		}
+#endif
 	}
 	if (ioctl(dir_fd, F_SAMRESTORE, &samrestore) < 0) {
 		if(!quiet || errno != EEXIST) {

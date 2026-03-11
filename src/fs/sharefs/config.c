@@ -339,8 +339,9 @@ putHosts(
 		return (-1);
 	}
 
-	if (sb.info.sb.magic != SAM_MAGIC_V2 &&
-	    sb.info.sb.magic != SAM_MAGIC_V2A) {
+	if ((sb.info.sb.magic != SAM_MAGIC_V2) &&
+	    (sb.info.sb.magic != SAM_MAGIC_V2A) &&
+	    (sb.info.sb.magic != SAM_MAGIC_V3)) {
 		errno = 0;
 		SysError(HERE, "FS %s: superblock read returned bad "
 		    "superblock type",

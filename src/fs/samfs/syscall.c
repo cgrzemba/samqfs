@@ -733,8 +733,11 @@ sam_proc_stat(
 	}
 	sb.st_blocks  =
 	    (u_longlong_t)ip->di.blocks * (u_longlong_t)(SAM_BLK/DEV_BSIZE);
+#ifdef TIME32
 	sb.admin_id   = bip->di.admin_id;
-
+#else
+	sb.admin_id   = bip->di2.admin_id;
+#endif
 	/*
 	 * Read permanent inode.  Enter archive copy info.
 	 * Skip .inodes because readers' lock is re-acquired in sam_read_ino.
@@ -762,10 +765,15 @@ sam_proc_stat(
 #ifdef linux
 		permip = (struct sam_perm_inode *)bp;
 #endif /* linux */
+#ifdef TIME32
 		sb.cs_val[0] = ((u_longlong_t)permip->csum.csum_val[0] << 32) |
 		    (u_longlong_t)permip->csum.csum_val[1];
 		sb.cs_val[1] = ((u_longlong_t)permip->csum.csum_val[2] << 32) |
 		    (u_longlong_t)permip->csum.csum_val[3];
+#else
+		sb.cs_val[0] = 0;
+		sb.cs_val[1] = 0;
+#endif
 		for (copy = 0, mask = 1; copy < MAX_ARCHIVE;
 		    copy++, mask += mask) {
 			char *p;
@@ -837,6 +845,7 @@ sam_proc_stat(
 		/*
 		 * Handle Project Id.
 		 */
+#ifdef TIME32
 		if (!SAM_MAGIC_V2A_OR_HIGHER(&ip->mp->mi.m_sbp->info.sb)) {
 			sb.projid = SAM_NOPROJECT;
 		} else if (ip->di2.p2flags & P2FLAGS_PROJID_VALID) {
@@ -844,6 +853,9 @@ sam_proc_stat(
 		} else {
 			sb.projid = SAM_NOPROJECT;
 		}
+#else
+		sb.projid = SAM_NOPROJECT;
+#endif
 
 		/*
 		 * Handle WORM files.
@@ -1195,7 +1207,7 @@ sam_vsn_stat_inode_operation(
 #ifdef linux
 		ASSERT(ip->di.version >= SAM_INODE_VERS_2);
 #endif
-#ifdef sun
+#if defined sun && defined TIME32
 		if (ip->di.version == SAM_INODE_VERS_1) { /* Previous version */
 			sam_perm_inode_v1_t *permip_v1 =
 			    (sam_perm_inode_v1_t *)permip;
@@ -1913,7 +1925,9 @@ sam_set_csum(void *arg)
 	ip->di.status.b.cs_gen = 1;
 	ip->di.status.b.cs_val = 1;
 	ip->di.cs_algo = CS_SIMPLE;
+#ifdef TIME32
 	permip->csum = args.csum;
+#endif
 	if (TRANS_ISTRANS(ip->mp)) {
 		TRANS_WRITE_DISK_INODE(ip->mp, bp, permip, ip->di.id);
 	} else {
@@ -2309,9 +2323,11 @@ sam_set_projid(void *arg, int size)
 		goto out;
 	}
 
+#ifdef TIME32
 	if (ip->di2.projid == args.projid) {		/* no-op */
 		goto out;
 	}
+#endif
 
 	/*
 	 * Solaris user credentials do not include a user's set of authorized
@@ -2353,10 +2369,12 @@ sam_set_projid(void *arg, int size)
 	if (SAM_IS_SHARED_CLIENT(mp)) {
 
 		bzero((char *)&sa, sizeof (sa));
+#ifdef TIME32
 		sa.operation = SAM_INODE_PROJID;
 		sa.aid = args.projid;
 
 		error = sam_proc_inode(ip, INODE_samaid, &sa, credp);
+#endif
 
 	} else {
 
@@ -2365,8 +2383,10 @@ sam_set_projid(void *arg, int size)
 
 		RW_LOCK_OS(&ip->inode_rwl, RW_WRITER);
 
+#ifdef TIME32
 		ip->di2.projid = args.projid;
 		ip->di2.p2flags |= P2FLAGS_PROJID_VALID;
+#endif
 
 		TRANS_INODE(ip->mp, ip);
 		sam_mark_ino(ip, SAM_CHANGED);

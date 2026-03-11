@@ -305,8 +305,10 @@ dump_directory_entry(
 			    "dump terminated"), name,
 			    dump_fs_magic == SAM_MAGIC_V1 ? "1" :
 			    (dump_fs_magic == SAM_MAGIC_V2) ? "2" : "2A",
+			    (dump_fs_magic == SAM_MAGIC_V2A) ? "2A" : "3",
 			    idstat.magic == SAM_MAGIC_V1 ? "1" :
-			    (idstat.magic == SAM_MAGIC_V2) ? "2" : "2A");
+			    (idstat.magic == SAM_MAGIC_V2) ? "2" : "2A",
+			    (idstat.magic == SAM_MAGIC_V2A) ? "2A" : "3");
 		}
 	} else {
 		init_csd_header(idstat.magic);
@@ -480,6 +482,7 @@ dump_directory_entry(
 			if (perm_inode.ar.image[copy].n_vsns > 1) {
 				n_vsns += perm_inode.ar.image[copy].n_vsns;
 			}
+#ifdef TIME32
 		} else if (perm_inode.di.version == SAM_INODE_VERS_1) {
 			/* Prev vers */
 			perm_inode_v1 =
@@ -493,6 +496,7 @@ dump_directory_entry(
 					perm_inode_v1->aid[copy].gen = 0;
 				}
 			}
+#endif
 		}
 	}
 
@@ -506,11 +510,13 @@ dump_directory_entry(
 			if (perm_inode.di.version >= SAM_INODE_VERS_2) {
 				/* Current version */
 				idmva.aid[copy].ino = idmva.aid[copy].gen = 0;
+#ifdef TIME32
 			} else if (perm_inode.di.version == SAM_INODE_VERS_1) {
 				/* Previous vers */
 				perm_inode_v1 =
 				    (struct sam_perm_inode_v1 *)&perm_inode;
 				idmva.aid[copy] = perm_inode_v1->aid[copy];
+#endif
 			}
 		}
 		idmva.size = sizeof (struct sam_vsn_section) * n_vsns;

@@ -157,7 +157,7 @@ typedef struct sam_archive {
 	sam_time_t	creation_time;	/* Creation time */
 	short		n_vsns;		/* Number of VSNs for entry */
 	vsn_t		vsn;		/* Volume serial number */
-	char		pad1[2];
+	char		pad1[6];
 #ifndef BYTE_SWAP
 	union {				/* Media class */
 		struct {		/* Optical archive entry: */
@@ -186,6 +186,7 @@ typedef struct sam_archive {
 
 /* ----- Removable media resource record. */
 
+#ifdef TIME32
 typedef struct sam_resource {
 	short		revision;	/* Revision control number */
 	char		access;		/* Open access control */
@@ -214,7 +215,34 @@ typedef struct sam_resource {
 	char		info[160];	/* User information */
 #endif	/* BYTE_SWAP */
 } sam_resource_t;
-
+#else /* TIME32 */
+typedef struct sam_resource {
+	int32_t		required_size;	/* Required size in 1024b blocks */
+	sam_archive_t	archive;	/* Archive record */
+	vsn_t		next_vsn;	/* Next VSN */
+	vsn_t		prev_vsn;	/* Previous VSN */
+#ifndef BYTE_SWAP
+	struct {				/* Media class */
+		struct {		/* Optical resource entry: */
+		char	group_id[32];	/* Group identifier */
+		char	owner_id[32];	/* Owner identifier, blank=def */
+		char	info[152];	/* User information */
+		} od;
+	} mc;
+#else	/* BYTE_SWAP */
+	/*
+	 * fields below are 'unioned' in the actual
+	 * structure.  They don't need byte-swapping.
+	 */
+	char		group_id[32];	/* Group identifier */
+	char		owner_id[32];	/* Owner identifier, blank=def */
+	char		info[152];	/* User information */
+#endif	/* BYTE_SWAP */
+	short		revision;	/* Revision control number */
+	char		access;		/* Open access control */
+	char		protect;	/* Write protect flag */
+} sam_resource_t;
+#endif /* TIME32 */
 
 /* ----- Removable media resource file structure. */
 

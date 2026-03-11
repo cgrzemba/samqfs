@@ -642,6 +642,8 @@ main(int argc, char *argv[])
 
 	case RESTORE:
 	case LIST:
+		time_t dc_time;
+
 		if (0 == strcmp(dump_file, "-")) {
 			CSD_fd = dup(STDIN);
 		} else {
@@ -687,6 +689,8 @@ main(int argc, char *argv[])
 		}
 		switch (csd_version) {
 
+		case CSD_VERS_9:
+			dc_time = csd_header.csd_header.time + (csd_header.csd_time_u << 32);
 		case CSD_VERS_8:
 		case CSD_VERS_7:
 		case CSD_VERS_6:
@@ -708,11 +712,13 @@ main(int argc, char *argv[])
 				    "%s: Header record read error"),
 				    dump_file);
 			}
+			dc_time = csd_header.csd_header.time;
 			break;
 
 		case CSD_VERS_4:
 		case CSD_VERS_3:
 		case CSD_VERS_2:
+			dc_time = csd_header.csd_header.time;
 			break;
 
 		default:
@@ -724,11 +730,11 @@ main(int argc, char *argv[])
 
 		if (verbose) {
 			printf(catgets(catfd, SET, 972, "Dump created:%s"),
-			    ctime((const time_t *)&csd_header.csd_header.time));
+			    ctime(&dc_time));
 		}
 		if (debugging) {
 			fprintf(stderr, "Dump created:%s\n",
-			    ctime((const time_t *)&csd_header.csd_header.time));
+			    ctime(&dc_time));
 		}
 	}
 
@@ -839,7 +845,10 @@ main(int argc, char *argv[])
 
 	case RESTORE:
 		umask(0);
-		cs_restore(strip_slashes, (argc - optind), &argv[optind]);
+		if (csd_version < 9)
+			cs_restore_v2(strip_slashes, (argc - optind), &argv[optind]);
+		else
+			cs_restore(strip_slashes, (argc - optind), &argv[optind]);
 		break;
 
 	case LIST:
@@ -997,10 +1006,11 @@ void
 init_csd_header(uint32_t fsmagic)
 {
 
-	csd_header.csd_header.time = time(0l);
+	time_t dc_time = time(0l);
+	csd_header.csd_header.time = dc_time & 0xffffffff;
 	if (verbose) {
 		fprintf(stderr, catgets(catfd, SET, 972, "Dump created:%s"),
-		    ctime((const time_t *)&csd_header.csd_header.time));
+		    ctime(&dc_time));
 	}
 
 
@@ -1017,6 +1027,11 @@ init_csd_header(uint32_t fsmagic)
 	if (fsmagic == SAM_MAGIC_V2A) {
 		csd_header.csd_header.version = csd_version = CSD_VERS_7;
 		csd_header.csd_fs_magic = SAM_MAGIC_V2A;
+	}
+	if (fsmagic == SAM_MAGIC_V3) {
+		csd_header.csd_header.version = csd_version = CSD_VERS_9;
+		csd_header.csd_fs_magic = SAM_MAGIC_V3;
+		csd_header.csd_time_u = dc_time >> 32;
 	}
 
 	dump_fs_magic = fsmagic;

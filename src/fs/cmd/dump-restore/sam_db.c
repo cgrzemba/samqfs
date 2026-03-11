@@ -134,6 +134,7 @@ sam_db_list(
 	    ftype,
 	    (unsigned long long) perm_inode->di.rm.size);
 
+#ifdef TIME32
 	if (perm_inode->di.status.b.cs_val) {
 		fprintf(DB_FILE, "%08x%08x%08x%08x\t",
 		    perm_inode->csum.csum_val[0],
@@ -143,6 +144,9 @@ sam_db_list(
 	} else {
 		fprintf(DB_FILE, "0\t");
 	}
+#else
+	fprintf(DB_FILE, "0\t");
+#endif
 
 	fprintf(DB_FILE, "%u\t%u\t%lu\t%lu\t%c\n",
 	    perm_inode->di.creation_time,

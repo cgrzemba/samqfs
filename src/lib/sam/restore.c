@@ -275,7 +275,9 @@ sam_restore_copy(const char *path, int copy, struct sam_stat *s_buf,
 	sa.access_time.tv_sec = statbuf.st_atime;
 	sa.modify_time.tv_sec = statbuf.st_mtime;
 	sa.ar.n_vsns  = n_vsns;
+#ifdef TIME32
 	sa.ar.version = 0;
+#endif
 	sa.ar.creation_time = ar->creation_time;
 	sa.ar.position_u = ar->position >> 32;
 	sa.ar.position = ar->position & 0xffffffff;

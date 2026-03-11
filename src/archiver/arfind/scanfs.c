@@ -207,7 +207,7 @@ Scanfs(
 			 */
 			if (i > 0) {
 				se->SeFlags |= SE_free;
-				se->SeTime = TIME32_MAX;
+				se->SeTime = TIME_MAX;
 			}
 
 			PthreadMutexUnlock(&scanListMutex);

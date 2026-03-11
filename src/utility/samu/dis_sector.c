@@ -57,6 +57,7 @@
 #include "sam/mount.h"
 #include "sam/fs/ino.h"
 #include "sam/fs/sblk.h"
+#include "sam/fs/sblk_utility.h"
 #include "sam/nl_samfs.h"
 
 /* Local headers. */
@@ -248,12 +249,12 @@ dis_sblk(
 	Mvprintw(ln++, 0, "%.8x fs_name: %s", *w, string(sp->fs_name));
 	Mvprintw(ln++, 0, "%.8x fi_type", sp->fi_type);
 	Mvprintw(ln++, 0, "%.8x magic", sp->magic);
-	Mvprintw(ln++, 0, "%.8x init: %s", sp->init,
-	    ctime((time_t *)&sp->init));
-	Mvprintw(ln++, 0, "%.8x time: %s", sp->time,
-	    ctime((time_t *)&sp->time));
-	Mvprintw(ln++, 0, "%.8x fsck: %s", sp->repaired,
-	    ctime((time_t *)&sp->repaired));
+	Mvprintw(ln++, 0, "%.8x init: %s", get_sblk_init_time(*sp),
+	    ctime((time_t *)&sp->init64));
+	Mvprintw(ln++, 0, "%.8x time: %s", get_sblk_time_time(*sp),
+	    ctime((time_t *)&sp->time64));
+	Mvprintw(ln++, 0, "%.8x fsck: %s", get_sblk_repaired_time(*sp),
+	    ctime((time_t *)&sp->repaired64));
 	Mvprintw(ln++, 0, "%.8x ord", sp->ord);
 	ll = ln;
 	Mvprintw(ln++, 0, "%.8x inodes", (int)sp->inodes);

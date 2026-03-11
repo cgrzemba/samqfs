@@ -57,6 +57,8 @@
 #include "sam/fs/sblk.h"
 #include "sam/fs/samhost.h"
 #include "sam/devnm.h"
+#include "sam/fs/utility.h"
+#include "sblk_utility.h"
 
 #ifdef sun
 #include <sys/uuid.h>
@@ -268,11 +270,13 @@ CheckDev(char *dev)
 	case SAM_MAGIC_V1:
 	case SAM_MAGIC_V2:
 	case SAM_MAGIC_V2A:
+	case SAM_MAGIC_V3:
 		break;
 
 	case SAM_MAGIC_V1_RE:
 	case SAM_MAGIC_V2_RE:
 	case SAM_MAGIC_V2A_RE:
+	case SAM_MAGIC_V3_RE:
 		if (byte_swap_sb(&sblk, sizeof (sblk))) {
 			if (verbose) {
 				/*
@@ -458,7 +462,7 @@ timecompare(const void *p1, const void *p2)
 {
 	struct DevInfo *d1 = (struct DevInfo *)p1, *d2 = (struct DevInfo *)p2;
 
-	return (d1->di_sblk->info.sb.init - d2->di_sblk->info.sb.init);
+	return (get_sblk_init_time(d1->di_sblk->info.sb) - get_sblk_init_time(d2->di_sblk->info.sb));
 }
 
 static int
@@ -488,8 +492,8 @@ SortDevs(void)
 
 	for (i = 0; i < NDevs; i += n) {
 		for (n = 1; i+n < NDevs; n++) {
-			if (Devs[i+n].di_sblk->info.sb.init !=
-			    Devs[i].di_sblk->info.sb.init) {
+			if (get_sblk_init_time(Devs[i+n].di_sblk->info.sb) !=
+			    get_sblk_init_time(Devs[i].di_sblk->info.sb)) {
 				break;
 			}
 		}
@@ -511,8 +515,8 @@ ListDevs(void)
 	}
 	for (i = 0; i < NDevs; i += n) {
 		for (n = 1; i+n < NDevs; n++) {
-			if (Devs[i+n].di_sblk->info.sb.init !=
-			    Devs[i].di_sblk->info.sb.init) {
+			if (get_sblk_init_time(Devs[i+n].di_sblk->info.sb) !=
+			    get_sblk_init_time(Devs[i].di_sblk->info.sb)) {
 				break;
 			}
 		}
@@ -687,7 +691,7 @@ ListFSet(
 	 * Save some values for later use. Print comment lines:
 	 */
 	dig = &dip[igood];
-	when = dig->di_sblk->info.sb.init;
+	when = get_sblk_init_time(dig->di_sblk->info.sb);
 	fsgen = dig->di_sblk->info.sb.fsgen;
 	fscount = dig->di_sblk->info.sb.fs_count;
 	mmcount = dig->di_sblk->info.sb.mm_count;
@@ -914,14 +918,14 @@ SamPrintSB(struct sam_sblk *sbp, char *str)
 	    sbp->info.sb.name[2],
 	    sbp->info.sb.name[3]);
 	printf("\tsblk.info.sb.magic        = %#x\n", (int)sbp->info.sb.magic);
-	printf("\tsblk.info.sb.init         = %#x\n", (int)sbp->info.sb.init);
+	printf("\tsblk.info.sb.init         = %#x\n", (int)get_sblk_init_time(sbp->info.sb));
 	printf("\tsblk.info.sb.fsgen        = %#x\n", (int)sbp->info.sb.fsgen);
 	printf("\tsblk.info.sb.ord          = %#x\n", (int)sbp->info.sb.ord);
 	printf("\tsblk.info.sb.fi_type      = %#x\n",
 	    (int)sbp->info.sb.fi_type);
 	printf("\tsblk.info.sb.fs_name      = '%s'\n",
 	    (char *)&sbp->info.sb.fs_name);
-	printf("\tsblk.info.sb.time         = %#x\n", (int)sbp->info.sb.time);
+	printf("\tsblk.info.sb.time         = %#x\n", (int)get_sblk_time_time(sbp->info.sb));
 	printf("\tsblk.info.sb.state        = %#x (unused)\n",
 	    (int)sbp->info.sb.state);
 	printf("\tsblk.info.sb.inodes       = %#llx\n",

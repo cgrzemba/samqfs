@@ -310,6 +310,7 @@ common_sam_restore_a_file(
 				if (perm_inode->di.ext_attrs & ext_mva) {
 					samrestore.vp.ptr = (void *)vsnp;
 				}
+#ifdef TIME32
 			} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
 				sam_perm_inode_v1_t *perm_inode_v1 =
 				    (sam_perm_inode_v1_t *)perm_inode;
@@ -321,6 +322,7 @@ common_sam_restore_a_file(
 						break;
 					}
 				}
+#endif
 			}
 			if (ioctl(*in_dir_fd, F_SAMRESTORE, &samrestore) < 0) {
 				csd_error(0, errno, "%s: ioctl(F_SAMRESTORE)",
@@ -514,6 +516,7 @@ common_sam_restore_a_file(
 		if (perm_inode->di.ext_attrs & ext_mva) {
 			idrestore.vp.ptr = (void *)vsnp;
 		}
+#ifdef TIME32
 	} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
 		sam_perm_inode_v1_t *perm_inode_v1 =
 		    (sam_perm_inode_v1_t *)perm_inode;
@@ -524,6 +527,7 @@ common_sam_restore_a_file(
 				break;
 			}
 		}
+#endif
 	}
 	if (ioctl(entity_fd, F_IDRESTORE, &idrestore) < 0) {
 		csd_error(0, errno, "%s: ioctl(F_IDRESTORE)", path);

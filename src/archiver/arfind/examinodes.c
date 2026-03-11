@@ -203,7 +203,7 @@ ExamInodes(
 			flags = xe->XeFlags;
 			xe->XeFlags |= XE_free;
 			examList->ElFree++;
-			xe->XeTime = TIME32_MAX;
+			xe->XeTime = TIME_MAX;
 			PthreadMutexUnlock(&examListMutex);
 
 			/*
@@ -338,7 +338,7 @@ ExamInodesRmInode(
 		xe = (struct ExamListEntry *)ID_LOC(ir);
 		if (!(xe->XeFlags & XE_free)) {
 			xe->XeFlags |= XE_free;
-			xe->XeTime = TIME32_MAX;
+			xe->XeTime = TIME_MAX;
 			examList->ElFree++;
 		}
 #if defined(FILE_TRACE)

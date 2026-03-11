@@ -80,6 +80,7 @@
 
 #define	MAIN
 #include "utility.h"
+#include "sblk_utility.h"
 
 
 /* ----- Global tables & pointers ----- */
@@ -213,7 +214,7 @@ main(int argc, char **argv)
 		clean_exit(1);
 	}
 	time(&currtime);	/* File system initialize time */
-	fstime = (sam_time_t) (currtime & INT_MAX);
+	fstime = currtime;
 
 	super_blk = SUPERBLK;
 	if ((length = sizeof (struct sam_sbinfo)) > L_SBINFO) {
@@ -838,7 +839,7 @@ grow_fs(void)
 	read_existing_sblk(ndevp, sblk, 1);
 	old_count = sblk->info.sb.fs_count;
 	old_mm_count = sblk->info.sb.mm_count;
-	time = sblk->info.sb.init;
+	time = get_sblk_init_time(sblk->info.sb);
 	i = old_count;
 
 	if (old_count == 0) {
@@ -896,7 +897,7 @@ grow_fs(void)
 		    (old_count != sblk->info.sb.fs_count) ||
 		    strncmp(sblk->info.sb.fs_name, fs_name,
 		    sizeof (uname_t)) ||
-		    (time != sblk->info.sb.init)) {
+		    (time != get_sblk_init_time(sblk->info.sb))) {
 			/* New partitions for filesystem fs_name */
 			(void *) memcpy((char *)&devp->device[i], (char *)dp,
 			    sizeof (struct devlist));
@@ -1138,16 +1139,16 @@ init_sblk()
 	(void *) memcpy(sblock.info.sb.name, SAMFS_SB_NAME_STR,
 	    sizeof (sblock.info.sb.name));
 	if (prev_sblk_ver) {
-		sblock.info.sb.magic = SAM_MAGIC_V2;
-	} else {
 		sblock.info.sb.magic = SAM_MAGIC_V2A;
-		sblock.info.sb.opt_features |= SBLK_FV1_MAPS_ALIGNED;
+	} else {
+		sblock.info.sb.magic = SAM_MAGIC_V3;
 	}
+	sblock.info.sb.opt_features |= SBLK_FV1_MAPS_ALIGNED;
 	sblock.info.sb.fi_type = mnt_info.params.fi_type;
 	sblock.info.sb.min_usr_inum = SAM_MIN_USER_INO;
 	sblock.info.sb.ext_bshift = SAM_SHIFT;
-	sblock.info.sb.time = fstime;
-	sblock.info.sb.init = fstime;	/* File system initialize time */
+	set_sblk_time_time(sblock.info.sb, fstime);
+	set_sblk_init_time(sblock.info.sb, fstime);	/* File system initialize time */
 	sblock.info.sb.opt_mask_ver = SBLK_OPT_VER1;
 	sblock.info.sb.opt_mask = 0;
 	sblock.info.sb.eq = mnt_info.params.fi_eq;
@@ -1987,8 +1988,9 @@ debug_print(int idx)
 	    sizeof (slsblk.info.sb.name)) ||
 	    (slsblk.info.sb.magic != SAM_MAGIC_V1 &&
 	    slsblk.info.sb.magic != SAM_MAGIC_V2 &&
-	    slsblk.info.sb.magic != SAM_MAGIC_V2A) ||
-	    slsblk.info.sb.init != sblock.info.sb.init ||
+	    slsblk.info.sb.magic != SAM_MAGIC_V2A &&
+	    slsblk.info.sb.magic != SAM_MAGIC_V3) ||
+	    get_sblk_init_time(slsblk.info.sb) != get_sblk_init_time(sblock.info.sb) ||
 	    strncmp(slsblk.info.sb.fs_name, sblock.info.sb.fs_name,
 	    sizeof (sblock.info.sb.fs_name))) {
 		printf("no FS superblock on index %d\n", idx);
@@ -2027,8 +2029,9 @@ debug_print(int idx)
 		    sizeof (slsblk.info.sb.name)) ||
 		    (slsblk.info.sb.magic != SAM_MAGIC_V1 &&
 		    slsblk.info.sb.magic != SAM_MAGIC_V2 &&
-		    slsblk.info.sb.magic != SAM_MAGIC_V2A) ||
-		    slsblk.info.sb.init != sblock.info.sb.init ||
+		    slsblk.info.sb.magic != SAM_MAGIC_V2A &&
+		    slsblk.info.sb.magic != SAM_MAGIC_V3) ||
+	            get_sblk_init_time(slsblk.info.sb) != get_sblk_init_time(sblock.info.sb) ||
 		    strncmp(slsblk.info.sb.fs_name, sblock.info.sb.fs_name,
 		    sizeof (sblock.info.sb.fs_name))) {
 			continue;
@@ -2206,6 +2209,8 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 		sprintf(&ver_str[0], "%s", "2");
 	} else if (sblkp->magic == SAM_MAGIC_V2A) {
 		sprintf(&ver_str[0], "%s", "2A");
+	} else if (sblkp->magic == SAM_MAGIC_V3) {
+		sprintf(&ver_str[0], "%s", "3");
 	}
 	printf(catgets(catfd, SET, 13466,
 	    "name:     %s       version:     %s%10s"),
@@ -2309,8 +2314,9 @@ print_sblk(struct sam_sblk *sp, struct d_list *devp, int ordering)
 			    sizeof (slsblk.info.sb.name)) ||
 			    (slsblk.info.sb.magic != SAM_MAGIC_V1 &&
 			    slsblk.info.sb.magic != SAM_MAGIC_V2 &&
-			    slsblk.info.sb.magic != SAM_MAGIC_V2A) ||
-			    slsblk.info.sb.init != sp->info.sb.init ||
+			    slsblk.info.sb.magic != SAM_MAGIC_V2A &&
+			    slsblk.info.sb.magic != SAM_MAGIC_V3) ||
+			    get_sblk_init_time(slsblk.info.sb) != get_sblk_init_time(sp->info.sb) ||
 			    strncmp(slsblk.info.sb.fs_name, sblkp->fs_name,
 			    sizeof (sblkp->fs_name))) {
 				goto nullentry;
@@ -2393,14 +2399,14 @@ read_existing_sblk(struct d_list *devp, struct sam_sblk *sblk, int sblk_size)
 		break;
 
 	case SAM_MAGIC_V2:
-		break;
-
 	case SAM_MAGIC_V2A:
+	case SAM_MAGIC_V3:
 		break;
 
 	case SAM_MAGIC_V1_RE:
 	case SAM_MAGIC_V2_RE:
 	case SAM_MAGIC_V2A_RE:
+	case SAM_MAGIC_V3_RE:
 		error(0, 0,
 		    catgets(catfd, SET, 13472,
 		    "FS %s built with non-native byte order\n"), fs_name);

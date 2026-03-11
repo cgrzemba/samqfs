@@ -223,6 +223,7 @@ csd_write(
 			if (seg_inode.ar.image[copy].n_vsns > 1) {
 				n_vsns += seg_inode.ar.image[copy].n_vsns;
 			}
+#ifdef TIME32
 		} else if (seg_inode.di.version == SAM_INODE_VERS_1) {
 			seg_inode_v1 =
 			    (struct sam_perm_inode_v1 *)&seg_inode;
@@ -235,6 +236,7 @@ csd_write(
 					seg_inode_v1->aid[copy].gen = 0;
 				}
 			}
+#endif
 		}
 	}
 	/*
@@ -250,10 +252,12 @@ csd_write(
 		for (copy = 0; copy < MAX_ARCHIVE; copy++) {
 			if (seg_inode.di.version >= SAM_INODE_VERS_2) {
 				idmva.aid[copy].ino = idmva.aid[copy].gen = 0;
+#ifdef TIME32
 			} else if (seg_inode.di.version == SAM_INODE_VERS_1) {
 				seg_inode_v1 =
 				    (struct sam_perm_inode_v1 *)&seg_inode;
 				idmva.aid[copy] = seg_inode_v1->aid[copy];
+#endif
 			}
 		}
 		idmva.size = sizeof (struct sam_vsn_section) * n_vsns;

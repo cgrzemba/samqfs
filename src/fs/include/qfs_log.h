@@ -71,7 +71,11 @@ extern "C" {
 
 #define	LQFS_MESSAGES_OFF(...)
 #define	LQFS_MESSAGES_ON(...)	cmn_err(__VA_ARGS__)
+#if DEBUG
+#define	LQFS_MESSAGES_DEFAULT(...)	LQFS_MESSAGES_ON(__VA_ARGS__)
+#else
 #define	LQFS_MESSAGES_DEFAULT(...)	LQFS_MESSAGES_OFF(__VA_ARGS__)
+#endif
 
 #define	LQFS_MSG(...)	LQFS_MESSAGES_DEFAULT(__VA_ARGS__)
 

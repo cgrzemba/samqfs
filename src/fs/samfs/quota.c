@@ -268,7 +268,6 @@ sam_quota_set_info(sam_node_t *ip, struct sam_dquot *nqdp, int op, int type,
 			sam_usemask.dq_ol_enforce = ~0;
 			sam_usemask.dq_tot_enforce = ~0;
 			sam_usemask.unused2 = ~0LL;
-			sam_usemask.unused3 = ~0LL;
 			mqp = &sam_usemask;
 		}
 		/*
@@ -639,7 +638,7 @@ sam_quota_balloc_perm(sam_mount_t *mp, struct sam_perm_inode *permip,
 
 	for (i = 0; i < SAM_QUOTA_DEFD; i++) {
 		qp = sam_quot_get(mp, NULL, i,
-		    sam_quota_get_index_di(&permip->di, i));
+		    sam_quota_get_index_perm(permip, i));
 		if (qp != NULL) {
 			if ((err = sam_quota_bcheck(qp, nblks, nblks2, cr))) {
 				sam_quot_rel(mp, qp);
@@ -654,7 +653,7 @@ sam_quota_balloc_perm(sam_mount_t *mp, struct sam_perm_inode *permip,
 
 	for (j = i-1; j >= 0; j--) {
 		qp = sam_quot_get(mp, NULL, j,
-		    sam_quota_get_index_di(&permip->di, j));
+		    sam_quota_get_index_perm(permip, j));
 		if (qp != NULL) {
 			if ((err = sam_quota_bcheck(qp, -nblks, -nblks2, NULL))) {
 				cmn_err(CE_WARN,
@@ -979,7 +978,11 @@ sam_set_admid(void *arg, int size, cred_t *credp)
 		goto out;
 	}
 
+#ifdef TIME32
 	if (ip->di.admin_id == args.admin_id) {		/* no-op */
+#else
+	if (ip->di2.admin_id == args.admin_id) {		/* no-op */
+#endif
 		goto out;
 	}
 
@@ -1048,8 +1051,13 @@ sam_set_aid(sam_node_t *ip, struct sam_inode_samaid *sa)
 		 * Decrement blocks and file count from source archive set.
 		 * Don't attach old quota entry to inode.
 		 */
+#ifdef TIME32
 		aquot = sam_quot_get(ip->mp, NULL, SAM_QUOTA_ADMIN,
 		    ip->di.admin_id);
+#else
+		aquot = sam_quot_get(ip->mp, NULL, SAM_QUOTA_ADMIN,
+		    ip->di2.admin_id);
+#endif
 		if (aquot != NULL) {
 			aq = &aquot->qt_dent;
 			aq->dq_folused--;
@@ -1065,13 +1073,21 @@ sam_set_aid(sam_node_t *ip, struct sam_inode_samaid *sa)
 		/*
 		 * Set admin_id.
 		 */
+#ifdef TIME32
 		ip->di.admin_id = id;
+#else
+		ip->di2.admin_id = id;
+#endif
 	} else if (sa->operation == SAM_INODE_PROJID) {
 		/*
 		 * Set project ID.
 		 */
+#ifdef TIME32
 		ip->di2.projid = id;
 		ip->di2.p2flags |= P2FLAGS_PROJID_VALID;
+#else
+		;;
+#endif
 	} else {
 		return (EINVAL);
 	}

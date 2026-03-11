@@ -182,7 +182,11 @@ sam_quota_stat(struct sam_quota_arg *argp)
 			    CRED())) == 0) {
 				switch (args.qtype) {
 				case SAM_QUOTA_ADMIN:
+#ifdef TIME32
 					if (args.qindex == ip->di.admin_id)
+#else
+					if (args.qindex == ip->di2.admin_id)
+#endif
 						ok = 1;
 					break;
 				case SAM_QUOTA_GROUP:
@@ -415,9 +419,6 @@ int
 sam_quota_get_index_di(sam_disk_inode_t *di, int type)
 {
 	switch (type) {
-	case SAM_QUOTA_ADMIN:
-		return (MAX(-1, di->admin_id));
-
 	case SAM_QUOTA_GROUP:
 		return (GTE_ZERO(di->gid));
 
@@ -430,6 +431,18 @@ sam_quota_get_index_di(sam_disk_inode_t *di, int type)
 	}
 }
 
+int
+sam_quota_get_index_perm(sam_perm_inode_t *perm, int type)
+{
+	if (type == SAM_QUOTA_ADMIN) {
+#ifdef TIME32
+		return (MAX(-1, perm->di.admin_id));
+#else
+		return (MAX(-1, perm->di2.admin_id));
+#endif
+	}
+	return (sam_quota_get_index_di(&perm->di, type));
+}
 
 /*
  * ----- sam_quota_get_index - return quota index from inode according to

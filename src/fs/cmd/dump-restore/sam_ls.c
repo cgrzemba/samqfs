@@ -401,3 +401,81 @@ sam_ls(
 
 	printf("\n");
 }
+
+void
+sam_ls_v2(
+	char *path,				/* Pathname for file */
+	struct sam_perm_inode_v2 *perm_inode,	/* Sam inode */
+	char *link)				/* Symbolic link */
+{
+	char	tempbuf[40];
+	int		copy;
+	offset_t	ii;
+	time_t	ls_base_time;	/* Current time */
+
+	if (scan_only) {
+		return;
+	}
+
+	ls_base_time = time(NULL);	/* Current time */
+	if (!(ls_options & (LS_LINE1 | LS_LINE2))) {	/* 0 */
+		if (ls_options & LS_INODES) {
+			printf("%6u ", perm_inode->di.id.ino);
+		}
+		printf("%s\n", path);
+		return;
+	}
+	if (ls_options & LS_INODES) {					/* 1 */
+		printf("%6u ", perm_inode->di.id.ino);
+	}
+	printf("%s %3u ", mode_string(perm_inode->di.mode, tempbuf),
+	    perm_inode->di.nlink);
+	printf("%-8.8s ", getuser(perm_inode->di.uid));
+	printf("%-8.8s ", getgroup(perm_inode->di.gid));
+
+	if (S_ISCHR(perm_inode->di.mode) || S_ISBLK(perm_inode->di.mode)) {
+		printf("%3u, %3u ", 0, 0);	/* unsupported in sam */
+	} else {
+		ii = perm_inode->di.rm.size;
+		printf("%9llu ", ii);
+	}
+
+	printf("%s ", time_string(perm_inode->di.access_time.tv_sec,
+	    ls_base_time,
+	    tempbuf));
+
+	if (S_ISSEGS(&perm_inode->di)) {
+		printf("%s/%d", path, perm_inode->di.rm.info.dk.seg.ord + 1);
+	} else {
+		printf("%s", path);
+	}
+
+	if (S_ISLNK(perm_inode->di.mode) && link != NULL) {
+		printf(" -> ");
+		if (!(ls_options & LS_LINE2)) {
+			printf("%s", link);
+		}
+	}
+	printf("\n");
+
+	if (!(ls_options & LS_LINE2)) {
+		return;
+	}
+
+
+	if (ls_options & LS_INODES) {					/* 2 */
+		printf("       ");
+	}
+
+	printf("%s ", sam_attrtoa(perm_inode->di.status.bits, NULL));
+	for (copy = 0; copy < MAX_ARCHIVE; copy++) {
+		if (!(perm_inode->di.arch_status & (1<<copy)))  {
+			printf("   ");
+		} else {
+			printf("%2s ",
+			    sam_mediatoa(perm_inode->di.media[copy]));
+		}
+	}
+
+	printf("\n");
+}

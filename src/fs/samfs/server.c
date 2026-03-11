@@ -86,6 +86,7 @@
 #include "sam_list.h"
 #include "qfs_log.h"
 #include "behavior_tags.h"
+#include "sblk_utility.h"
 
 static void sam_process_message(sam_mount_t *mp, sam_san_message_t *msg,
 	sam_id_t *id);
@@ -266,7 +267,7 @@ sam_server_cmd(sam_mount_t *mp, mblk_t *mbp)
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Stale file system"
 			    " SRV INIT=%x CLI INIT=%x, cmd=%x, seqno=%x",
-			    mp->mt.fi_name, mp->mi.m_sbp->info.sb.init,
+			    mp->mt.fi_name, get_sblk_init_time(mp->mi.m_sbp->info.sb),
 			    msg->hdr.fsid,
 			    (msg->hdr.command<<16)|msg->hdr.operation,
 			    msg->hdr.seqno);

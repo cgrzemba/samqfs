@@ -248,6 +248,12 @@ sam_fstype_to_str(
 		}
 		strcpy(strp, FSNAME_SAM_QFS_SBV2A);
 		break;
+	case FSTYPE_SAM_QFS_SBV3:
+		if (len < sizeof (FSNAME_SAM_QFS_SBV3)) {
+			return (EINVAL);
+		}
+		strcpy(strp, FSNAME_SAM_QFS_SBV3);
+		break;
 	default:
 		if (len < sizeof (FSNAME_UNKNOWN)) {
 			return (EINVAL);

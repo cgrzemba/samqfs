@@ -126,7 +126,6 @@ typedef struct sam_dquot {
 	int		dq_tot_grace;	/* totals grace period (seconds) */
 	sam_time_t	dq_tot_enforce;	/* when to enforce soft limit as hard */
 	int64_t		unused2;
-	int64_t		unused3;
 } sam_dquot_t;
 
 /* End: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

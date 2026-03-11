@@ -210,6 +210,7 @@ sam_restore_a_file(
 	 */
 	idrestore.dp.ptr = perm_inode;
 	/* Previous version */
+#ifdef TIME32
 	if (perm_inode->di.version == SAM_INODE_VERS_1) {
 		sam_perm_inode_v1_t *perm_inode_v1 =
 		    (sam_perm_inode_v1_t *)perm_inode;
@@ -221,6 +222,7 @@ sam_restore_a_file(
 			}
 		}
 	}
+#endif
 	if (ioctl(entity_fd, F_IDRESTORE, &idrestore) < 0) {
 		error(0, errno, "%s: ioctl(F_IDRESTORE)", path);
 		BUMP_STAT(errors);

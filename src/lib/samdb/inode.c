@@ -101,6 +101,7 @@ sam_db_inode_new_perm(sam_perm_inode_t *ip, sam_db_inode_t *inode) {
 	inode->gen = ip->di.id.gen;
 	inode->type = sam_db_inode_ftype(ip);
 	inode->size = ip->di.rm.size;
+#ifdef TIME32
 	if (ip->di.status.b.cs_val) {
 		snprintf(inode->csum, sizeof (inode->csum), "%08x%08x%08x%08x",
 		    ip->csum.csum_val[0],
@@ -110,6 +111,9 @@ sam_db_inode_new_perm(sam_perm_inode_t *ip, sam_db_inode_t *inode) {
 	} else {
 		*inode->csum = '\0';
 	}
+#else
+	*inode->csum = '\0';
+#endif
 	inode->create_time = ip->di.creation_time;
 	inode->modify_time = ip->di.modify_time.tv_sec;
 	inode->uid = ip->di.uid;

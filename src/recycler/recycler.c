@@ -2858,6 +2858,7 @@ getMultiVsnInfo(
 			if (inode->inode.ar.image[copy].n_vsns > 1) {
 				n_vsns += inode->inode.ar.image[copy].n_vsns;
 			}
+#ifdef TIME32
 		} else if (inode->inode.di.version == SAM_INODE_VERS_1) {
 			/* Prev version */
 			if (inode->inode_v1.aid[copy].ino != 0) {
@@ -2869,6 +2870,7 @@ getMultiVsnInfo(
 					inode->inode_v1.aid[copy].gen = 0;
 				}
 			}
+#endif
 		}
 	}
 
@@ -2883,8 +2885,10 @@ getMultiVsnInfo(
 	for (copy = 0; copy < MAX_ARCHIVE; copy++) {
 		if (inode->inode.di.version >= SAM_INODE_VERS_2) {
 			idmva.aid[copy].ino = idmva.aid[copy].gen = 0;
+#ifdef TIME32
 		} else if (inode->inode.di.version == SAM_INODE_VERS_1) {
 			idmva.aid[copy] = inode->inode_v1.aid[copy];
+#endif
 		}
 	}
 	idmva.size = size;

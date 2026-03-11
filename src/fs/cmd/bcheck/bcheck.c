@@ -66,6 +66,7 @@
 #include "inode.h"
 #include "mount.h"
 #include "utility.h"
+#include "sblk_utility.h"
 #include "ino.h"
 
 
@@ -360,7 +361,7 @@ build_devices(void)
 		    sizeof (uname_t)) == 0) {
 			if (sblock.info.sb.ord == 0) {
 				old_count = sblock.info.sb.fs_count;
-				time = sblock.info.sb.init;
+				time = get_sblk_init_time(sblock.info.sb);
 				break;
 			}
 		}
@@ -384,7 +385,8 @@ build_devices(void)
 		if (strncmp(sblock.info.sb.name, "SBLK", 4) != 0 ||
 		    (sblock.info.sb.magic != SAM_MAGIC_V1 &&
 		    sblock.info.sb.magic != SAM_MAGIC_V2 &&
-		    sblock.info.sb.magic != SAM_MAGIC_V2A)) {
+		    sblock.info.sb.magic != SAM_MAGIC_V2A &&
+		    sblock.info.sb.magic != SAM_MAGIC_V3)) {
 			/* Send sysevent to generate SNMP trap */
 			snprintf(msgbuf, sizeof (msgbuf), GetCustMsg(1660),
 			    devp->device[mm_ord].eq, SUPERBLK);
@@ -395,7 +397,7 @@ build_devices(void)
 
 		} else if (strncmp(sblock.info.sb.fs_name, fs_name,
 		    sizeof (uname_t)) ||
-		    time != sblock.info.sb.init) {
+		    time != get_sblk_init_time(sblock.info.sb)) {
 			/* Send sysevent to generate SNMP trap */
 			snprintf(msgbuf, sizeof (msgbuf), GetCustMsg(1661),
 			    ndevp->device[ord].eq, fs_name);
@@ -457,7 +459,8 @@ build_super_block(void)
 	if (strncmp(sblock.info.sb.name, "SBLK", 4) != 0 ||
 	    (sblock.info.sb.magic != SAM_MAGIC_V1 &&
 	    sblock.info.sb.magic != SAM_MAGIC_V2 &&
-	    sblock.info.sb.magic != SAM_MAGIC_V2A)) {
+	    sblock.info.sb.magic != SAM_MAGIC_V2A &&
+	    sblock.info.sb.magic != SAM_MAGIC_V3)) {
 		/* Send sysevent to generate SNMP trap */
 		snprintf(msgbuf, sizeof (msgbuf), GetCustMsg(1660),
 		    devp->device[mm_ord].eq, SUPERBLK);
@@ -527,6 +530,9 @@ build_super_block(void)
 		case SAM_MAGIC_V2:
 		case SAM_MAGIC_V2A:
 			sblk_version = SAMFS_SBLKV2;
+			break;
+		case SAM_MAGIC_V3:
+			sblk_version = SAMFS_SBLKV3;
 			break;
 	}
 

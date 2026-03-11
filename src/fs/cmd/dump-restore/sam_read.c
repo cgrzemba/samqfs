@@ -53,6 +53,7 @@
 #include "old_resource.h"
 #include <sys/acl.h>
 #include <aml/tar_hdr.h>
+#include <assert.h>
 
 static char	tar_name[MAXPATHLEN+1];	/* name from tar header (if any) */
 
@@ -71,8 +72,12 @@ void
 csd_read(
 	char	*name,
 	int	namelen,
-	struct sam_perm_inode *perm_inode)
+	void	*buf)
 {
+	struct sam_perm_inode *perm_inode = buf;
+
+	assert(sizeof (struct sam_perm_inode) == sizeof (struct sam_perm_inode_v2));
+
 	dont_process_this_entry = 0;
 	if (namelen <= 0 || namelen > MAXPATHLEN) {
 		error(1, 0, catgets(catfd, SET, 737,
@@ -128,6 +133,84 @@ csd_read(
 void
 csd_read_next(
 	struct sam_perm_inode	*perm_inode,
+	struct sam_vsn_section	**vsnpp,
+	char			*link,
+	void			*data,
+	int			*n_aclp,
+	aclent_t		**aclpp)
+{
+	int linklen;
+
+	if (S_ISREQ(perm_inode->di.mode)) {
+		struct sam_resource_file *resource =
+		    (struct sam_resource_file *)data;
+
+		readcheck(resource, perm_inode->di.psize.rmfile, 5003);
+		if (swapped) {
+			if (sam_byte_swap(
+			    sam_resource_file_swap_descriptor,
+			    resource, perm_inode->di.psize.rmfile)) {
+				error(0, 0, catgets(catfd, SET, 13533,
+				    "Resource file v%d byte swap "
+				    "error."), 4);
+			}
+		}
+	}
+
+	if (S_ISLNK(perm_inode->di.mode)) {
+		readcheck(&linklen, sizeof (int), 5004);
+		if (swapped) {
+			sam_bswap4(&linklen, 1);
+		}
+		if (linklen < 0 || linklen > MAXPATHLEN) {
+			error(1, 0,
+			    catgets(catfd, SET, 740,
+			    "Corrupt samfsdump file.  symlink name length %d"),
+			    linklen);
+		}
+		readcheck(link, linklen, 5005);
+		link[linklen] = '\0';
+	}
+
+	if (!S_ISLNK(perm_inode->di.mode)) {
+		*vsnpp = NULL;
+		csd_read_mve(perm_inode, vsnpp);
+
+		*aclpp = NULL;
+		if (perm_inode->di.status.b.acl) {
+			readcheck(n_aclp, sizeof (int), 5029); /* getting acl array length */
+			if (swapped) {
+				sam_bswap4(n_aclp, 1);
+			}
+			if (*n_aclp) {
+				SamMalloc(*aclpp, *n_aclp *
+				    sizeof (sam_acl_t));
+				readcheck(*aclpp, *n_aclp *
+				    sizeof (sam_acl_t), 5030); /* getting acl array */
+				if (swapped) {
+					int i;
+
+					for (i = 0; i < *n_aclp; i++) {
+						if (sam_byte_swap(
+						    sam_acl_swap_descriptor,
+						    &((*aclpp)[i]),
+						    sizeof (sam_acl_t))) {
+							error(0, 0,
+							    catgets(catfd,
+							    SET, 13534,
+							    "ACL byte swap "
+							    "error."));
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void
+csd_read_next_v2(
+	struct sam_perm_inode_v2	*perm_inode,
 	struct sam_vsn_section	**vsnpp,
 	char			*link,
 	void			*data,
@@ -214,7 +297,7 @@ csd_read_next(
 
 	if (!S_ISLNK(perm_inode->di.mode)) {
 		*vsnpp = NULL;
-		csd_read_mve(perm_inode, vsnpp);
+		csd_read_mve_v2(perm_inode, vsnpp);
 
 		*aclpp = NULL;
 		if (perm_inode->di.status.b.acl) {
@@ -256,6 +339,64 @@ csd_read_mve(
 	int n_vsns;
 	int copy;
 
+	n_vsns = 0;
+	for (copy = 0; copy < MAX_ARCHIVE; copy++) {
+		if (perm_inode->di.ext_attrs & ext_mva) {
+			if (perm_inode->ar.image[copy].n_vsns > 1) {
+				n_vsns +=
+				    perm_inode->ar.image[copy].n_vsns;
+				if (debugging) {
+					printf(
+					    "Read multi-volume "
+					    "extension copy %d for "
+					    "%d.%d\n",
+					    (copy+1),
+					    perm_inode->di.id.ino,
+					    perm_inode->di.id.gen);
+				}
+			} else {
+				if (debugging) {
+					printf(
+					    "Ignore multi-volume "
+					    "extension copy %d for "
+					    "inode %d.%d\n",
+					    (copy+1),
+					    perm_inode->di.id.ino,
+					    perm_inode->di.id.gen);
+				}
+			}
+		}
+	}
+	if (n_vsns) {
+		SamMalloc(*vsnpp, n_vsns * sizeof (struct sam_vsn_section));
+		readcheck(*vsnpp, n_vsns * sizeof (struct sam_vsn_section),
+		    5006);
+		if (swapped) {
+			int i;
+
+			for (i = 0; i < n_vsns; i++) {
+				if (sam_byte_swap(
+				    sam_vsn_section_swap_descriptor,
+				    &((*vsnpp)[i]),
+				    sizeof (struct sam_vsn_section))) {
+					error(0, 0, catgets(catfd,
+					    SET, 13535,
+					    "VSN byte swap "
+					    "error."));
+				}
+			}
+		}
+	}
+}
+
+void
+csd_read_mve_v2(
+	struct sam_perm_inode_v2	*perm_inode,
+	struct sam_vsn_section  **vsnpp)
+{
+	int n_vsns;
+	int copy;
+
 	if (csd_version <= CSD_VERS_3) {
 		return;
 	}
@@ -288,6 +429,7 @@ csd_read_mve(
 					}
 				}
 			}
+#ifdef TIME32
 		} else if (perm_inode->di.version == SAM_INODE_VERS_1) {
 			sam_perm_inode_v1_t *perm_inode_v1 =
 			    (sam_perm_inode_v1_t *)perm_inode;
@@ -318,6 +460,7 @@ csd_read_mve(
 				}
 				}
 			}
+#endif
 		}
 	}
 	if (n_vsns) {

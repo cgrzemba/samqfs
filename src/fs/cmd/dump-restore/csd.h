@@ -50,6 +50,7 @@
 #define	CSD_VERS_6	6		/* version number 6 */
 #define	CSD_VERS_7	7		/* version number 7, supports extended system attributes */
 #define	CSD_VERS_8	8		/* version number 8, supports LTFS */
+#define	CSD_VERS_9	9		/* version number 9, 64bit time*/
 
 /* ----	csd header record - Dump header record.			*/
 /* ---- Any valid version should begin with this header	*/
@@ -57,7 +58,7 @@
 typedef struct csd_header {
 	int magic;
 	int version;
-	sam_time_t time;
+	time32_t time;
 } csd_header_t;
 
 typedef struct csd_header csd_hdr_t;
@@ -72,7 +73,7 @@ typedef struct csd_header_extended {
 	longlong_t	csd_fs_magic;		/* FS Magic */
 	longlong_t	csd_header_pad[9];
 	int		csd_header_magic;
-	char		pad[4];
+	time32_t	csd_time_u;		/* version 9 high part of 64bit time */
 } csd_header_extended_t;
 
 typedef	struct	csd_header_extended	csd_hdrx_t;

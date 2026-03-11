@@ -113,9 +113,11 @@ type = OBJECT
 	sam_acl
 	sam_acl_inode
 	sam_arch_inode
+	sam_arch_inode_v2
 	sam_arch_rminfo
 	sam_archive
 	sam_archive_info
+	sam_archive_info_v2
 #	sam_block_arg
 	sam_block_getbuf
 	sam_block_fgetbuf
@@ -131,6 +133,8 @@ type = OBJECT
 	sam_cl_attr
 	sam_dirent
 	sam_disk_inode
+	sam_disk_inode_v2
+	sam_disk_inode_part2_v2
 	sam_disk_inode_part2
 	sam_di_osd
 	sam_dquot
@@ -172,8 +176,10 @@ type = OBJECT
 	sam_old_rminfo
 	sam_old_section
 	sam_osd_ext_inode
+#	sam_perm_inode_v1
 	sam_perm_inode
-	sam_perm_inode_v1
+	sam_perm_inode_v2
+#	sam_perm_inode_v3
 	sam_quota_group
 	sam_quota_group_pair
 	sam_resource
@@ -197,6 +203,7 @@ type = OBJECT
 	sam_sln_inode
 	sam_sr_attr
 	sam_timestruc
+	sam_timestruc32
 	sam_vattr
 	sam_vsn_array
 	sam_vsn_section

@@ -2392,7 +2392,7 @@ extern	samrpc_result_t *samrpc_handle_request_5_0_svr();
 #define	xdr_media_t		xdr_uint16_t
 #define	xdr_dtype_t		xdr_uint16_t
 #define	xdr_equ_t		xdr_uint16_t
-#define	xdr_sam_time_t	xdr_int32_t
+#define	xdr_sam_time_t	xdr_int64_t
 #define	xdr_sam_ino_t	xdr_uint32_t
 #define	xdr_dsize_t		xdr_uint64_t
 #define	xdr_offset_t	xdr_int64_t

@@ -110,6 +110,7 @@ extern unsigned long *QFS_num_physpages;
 #include "inode.h"
 #include "mount.h"
 #include "sblk.h"
+#include "sblk_utility.h"
 #include "debug.h"
 #ifdef sun
 #include "extern.h"
@@ -971,8 +972,8 @@ sam_set_mount(sam_mount_t *mp)
 	if (sblk->info.sb.fs_id.val[0] == 0 &&
 	    sblk->info.sb.fs_id.val[1] == 0) {
 		cmn_err(CE_NOTE, "SAM-QFS: Initializing sblk.fs_id to %x/%x",
-		    mp->ms.m_hostid, sblk->info.sb.init);
-		sblk->info.sb.fs_id.val[0] = sblk->info.sb.init;
+		    mp->ms.m_hostid, get_sblk_init_time(sblk->info.sb));
+		sblk->info.sb.fs_id.val[0] = get_sblk_init_time(sblk->info.sb) & 0xffffffff;
 		sblk->info.sb.fs_id.val[1] = mp->ms.m_hostid;
 	}
 
@@ -1461,6 +1462,7 @@ sam_read_sblk(sam_mount_t *mp)
 	int found_v1_sblk = 0;
 	int found_v2_sblk = 0;
 	int found_v2A_sblk = 0;
+	int found_v3_sblk = 0;
 	int isblk;
 	struct sam_sblk *sblk[2];
 	buf_t *sbp;
@@ -1491,6 +1493,10 @@ sam_read_sblk(sam_mount_t *mp)
 			found_v2A_sblk++;
 			break;
 
+		case SAM_MAGIC_V3:
+			found_v3_sblk++;
+			break;
+
 		case SAM_MAGIC_V1_RE:
 		case SAM_MAGIC_V2_RE:
 		case SAM_MAGIC_V2A_RE:
@@ -1514,7 +1520,8 @@ sam_read_sblk(sam_mount_t *mp)
 		if (i == 0)  continue;
 
 		if ((found_v2_sblk && found_v1_sblk) ||
-		    (found_v2A_sblk && found_v2_sblk)) {
+		    (found_v2A_sblk && found_v2_sblk) ||
+		    (found_v3_sblk && found_v2A_sblk)) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: superblock magic on "
 			    "eq %d is invalid\n",
@@ -1555,7 +1562,9 @@ sam_read_sblk(sam_mount_t *mp)
 		goto out;
 	}
 
-	if (found_v2A_sblk || found_v2_sblk) {
+	if (found_v3_sblk) {
+		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV3;
+	} else if (found_v2A_sblk || found_v2_sblk) {
 		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV2;
 	} else {
 		mp->mi.m_sblk_version = mp->mt.fi_version = SAMFS_SBLKV1;
@@ -1573,7 +1582,7 @@ sam_read_sblk(sam_mount_t *mp)
 	mp->mi.m_sbp = (struct sam_sblk *)kmem_zalloc(sizeof (struct sam_sblk),
 	    KM_SLEEP);
 	bcopy((void *)sbp->b_un.b_addr, mp->mi.m_sbp, sblk_size);
-	mp->mi.m_sblk_fsid = mp->mi.m_sbp->info.sb.init;
+	mp->mi.m_sblk_fsid = get_sblk_init_time(mp->mi.m_sbp->info.sb);
 	mp->mi.m_sblk_fsgen = mp->mi.m_sbp->info.sb.fsgen;
 	sbp->b_flags |= B_STALE | B_AGE;
 	brelse(sbp);
@@ -1779,7 +1788,7 @@ sam_validate_sblk(
 			mp->mi.m_sblk_offset[0] = sblk->info.sb.offset[0];
 			mp->mi.m_sblk_offset[1] = sblk->info.sb.offset[1];
 			fsgen = sblk->info.sb.fsgen;
-			time = sblk->info.sb.init;
+			time = get_sblk_init_time(sblk->info.sb);
 			first_dp = dp;
 		}
 
@@ -1789,7 +1798,8 @@ sam_validate_sblk(
 		ord = sblk->info.sb.ord;
 		if (sblk->info.sb.magic == SAM_MAGIC_V1_RE ||
 		    sblk->info.sb.magic == SAM_MAGIC_V2_RE ||
-		    sblk->info.sb.magic == SAM_MAGIC_V2A_RE) {
+		    sblk->info.sb.magic == SAM_MAGIC_V2A_RE ||
+		    sblk->info.sb.magic == SAM_MAGIC_V3_RE) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: Eq %d superblock "
 			    "byte-reversed; host not client",
@@ -1802,14 +1812,14 @@ sam_validate_sblk(
 			    mp->mt.fi_name, dp->part.pt_eq);
 				err_line = __LINE__;
 				error = EINVAL;
-		} else if ((time != sblk->info.sb.init) ||
+		} else if ((time != get_sblk_init_time(sblk->info.sb)) ||
 		    (fsgen != sblk->info.sb.fsgen)) {
 			cmn_err(CE_WARN,
 			    "SAM-QFS: %s: mcf eq %d:"
 			    " superblock Fs Id/Gen %x/%x does not match eq %d "
 			    "Fs Id/Gen %x/%x", mp->mt.fi_name,
 			    first_dp->part.pt_eq, time, fsgen,
-			    dp->part.pt_eq, sblk->info.sb.init,
+			    dp->part.pt_eq, get_sblk_init_time(sblk->info.sb),
 			    sblk->info.sb.fsgen);
 			err_line = __LINE__;
 			error = EINVAL;

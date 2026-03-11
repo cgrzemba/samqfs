@@ -706,7 +706,7 @@ __samqfs_read_sblk(struct super_block *lsb, int flags, void *rdata)
 		cmd.cmd = FSD_mount;
 		memcpy(cmd.args.mount.fs_name, mp->mt.fi_name,
 		    sizeof (cmd.args.mount.fs_name));
-		cmd.args.mount.init = mp->mi.m_sbp->info.sb.init;
+		cmd.args.mount.init = get_sblk_init_time(mp->mi.m_sbp->info.sb);
 		(void) sam_send_scd_cmd(SCD_fsd, &cmd, sizeof (cmd));
 	}
 	error = 0;

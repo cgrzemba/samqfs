@@ -121,7 +121,6 @@ struct sam_mv1_inode {
 typedef struct sam_mva_inode {
 	sam_time_t	creation_time;	/* Time inode extension created */
 	sam_time_t	change_time;	/* Time extension info last changed */
-	int32_t		fill[2];	/* Reserved */
 	int32_t		copy;		/* Copy number */
 	int32_t		t_vsns;		/* Archive vsns for this copy */
 	int32_t		n_vsns;		/* Count of sections in ext */
@@ -154,12 +153,11 @@ void sam_fix_mva_inode_ext(sam_node_t *ip, int copy, sam_id_t *eidp);
  */
 #define	S_ISSLN(mode)  (((mode)&0xff00) == S_IFSLN)
 
-#define	MAX_SLN_CHARS_IN_INO (464)
+#define	MAX_SLN_CHARS_IN_INO (456)
 
 typedef struct sam_sln_inode {
 	sam_time_t	creation_time;	/* Time inode extension created */
 	sam_time_t	change_time;	/* Time extension info last changed */
-	int32_t		fill;		/* Reserved */
 	int32_t		n_chars;	/* Number of symlink chars in inode */
 	uchar_t		chars[MAX_SLN_CHARS_IN_INO];	/* Symlk name chars */
 } sam_sln_inode_t;
@@ -188,12 +186,11 @@ typedef struct sam_rfv_inode {
  */
 #define	S_ISHLP(mode)  (((mode)&0xff00) == S_IFHLP)
 
-#define	MAX_HLP_IDS_IN_INO	(58)
+#define	MAX_HLP_IDS_IN_INO	(57)
 
 typedef struct sam_hlp_inode {
 	sam_time_t	creation_time;	/* Time inode extension created */
 	sam_time_t	change_time;	/* Time extension last changed */
-	int32_t		fill;		/* Reserved */
 	int32_t		n_ids;		/* Num parent ids in inode */
 	sam_id_t	ids[MAX_HLP_IDS_IN_INO]; /* Hard link parent id list */
 } sam_hlp_inode_t;
@@ -208,7 +205,6 @@ typedef struct sam_hlp_inode {
 
 typedef struct sam_acl_inode {
 	sam_time_t	creation_time;	/* Time inode extension created */
-	int32_t		fill;		/* Reserved */
 	int32_t		t_acls;		/* Total of regular acl entries */
 	int32_t		t_dfacls;	/* Total of default acl entries */
 	int32_t		n_acls;		/* Regular acl entries this ext. */

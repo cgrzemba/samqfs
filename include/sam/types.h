@@ -235,12 +235,18 @@ typedef struct csum {		/* Data verification value */
 	uint32_t csum_val[4];
 } csum_t;
 
-typedef int32_t sam_time_t;	/* 32-bit time, should it be time_t ??? */
+typedef int64_t sam_time_t;
 
+#pragma pack(4)
 typedef struct sam_timestruc {
-	int32_t	tv_sec;
-	int32_t	tv_nsec;
+	sam_time_t	tv_sec;
+	time32_t	tv_nsec;
 } sam_timestruc_t;
+#pragma pack()
+typedef struct sam_timestruc32 {
+	time32_t	tv_sec;
+	time32_t	tv_nsec;
+} sam_timestruc32_t;
 
 typedef struct sam_flagtext {
 	uint64_t	flagmask;

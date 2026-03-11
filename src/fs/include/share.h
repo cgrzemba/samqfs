@@ -773,11 +773,11 @@ typedef struct sam_san_header {
 	int32_t error;		/* Error - returned */
 	int32_t client_ord;	/* Ordinal for shared client */
 	int32_t server_ord;	/* Ordinal for shared server */
-	int32_t hostid;		/* Client host unique id */
-	int32_t fsid;		/* File system unique id (fsid + fs_gen) */
+	int64_t fsid;		/* File system unique id (fsid + fs_gen) */
 	int32_t fsgen;		/* Generation number for this file system */
+	int32_t hostid;		/* Client host unique id */
 	char reset_seqno;	/* Flag set by clnt for srvr to reset seqno */
-	char pad[3];		/* pad to an 8 byte boundary */
+	char pad[7];		/* pad to an 8 byte boundary */
 } sam_san_header_t;
 
 /* End: 32-bit align copyin() structs for amd64 only due to 32-bit x86 ABI */

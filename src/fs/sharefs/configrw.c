@@ -72,6 +72,7 @@ static char *_SrcFile = __FILE__;
 #include "sam/lib.h"
 #include "sam/exit.h"
 #include "sblk.h"
+#include "sblk_utility.h"
 #include "samhost.h"
 
 /* Local headers. */
@@ -498,7 +499,7 @@ getLabelDev(char *fs, struct sam_sblk *sb, struct cfdata *cfp, int d)
 			}
 		}
 		if ((cfp->flags & R_SBLK_BITS) == R_SBLK) {
-			cfp->fsInit = sb->info.sb.init;
+			cfp->fsInit = get_sblk_init_time(sb->info.sb);
 			cfp->hostsOffset = sb->info.sb.hosts;
 			if (GetSharedHostInfo(&cfp->ht->info.ht,
 			    cfp->ht->info.ht.server,
