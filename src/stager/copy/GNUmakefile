@@ -53,7 +53,7 @@ ifndef NO_BUILD_OSD
 PROG_SRC +=  hcstage.c
 endif
 
-DEPCFLAGS += -I../include $(HC_INCLUDE) $(THRCOMP)
+DEPCFLAGS += -I../include $(HC_INCLUDE) $(THRCOMP) $(TEST)
 
 SYSLIBS = -ldl -lgen $(THRLIBS) -lsocket -lnsl
 SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut -lsam -lsamconf \

@@ -113,6 +113,7 @@ sam_db_inode_new_perm(sam_perm_inode_t *ip, sam_db_inode_t *inode) {
 	}
 #else
 	*inode->csum = '\0';
+	/* readScumFile(fn, inode->csum); */
 #endif
 	inode->create_time = ip->di.creation_time;
 	inode->modify_time = ip->di.modify_time.tv_sec;

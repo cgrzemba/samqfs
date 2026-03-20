@@ -59,6 +59,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/lib.h"
 #include "sam/uioctl.h"
 #include "sam/fs/ino.h"
+#include "sam/checksum.h"
 #include "aml/diskvols.h"
 #include "aml/tar.h"
 
@@ -78,7 +79,6 @@ static void logArchives(int firstFile, int end);
 static void releaseFile(struct FileInfo *fi);
 static void wakeup(void);
 static int cmp_inode(const void *p1, const void *p2);
-
 
 /*
  * Thread - Set archive status for files.
@@ -219,7 +219,7 @@ enterArchiveStatus(
 		sa->sa_copies_req =  fi->FiCopiesReq;
 		if (af->AfFlags & AF_csummed) {
 			sa->flags = SA_csummed;
-			sa->csum = af->AfCsum;
+			writeCsumFile(fi->FiName, &af->AfCsum);
 		}
 		sa->access_time = af->AfAccessTime;
 		sa->modify_time = af->AfModifyTime;

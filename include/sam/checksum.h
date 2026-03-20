@@ -58,4 +58,6 @@
 
 #define	CS_FUNCS	2	/* number of SAM-defined checksum functions */
 
+int writeCsumFile(char* fn, csum_t* csum);
+
 #endif /* _SAM_CHECKSUM_H */

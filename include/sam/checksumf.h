@@ -61,8 +61,16 @@ csum_func csum_fns[CS_FUNCS] = {
 	cs_empty,
 	cs_simple
 };
+
+char csum_algo[CS_FUNCS+1][8] = {
+        "NONE",
+        "LEGACY",
+        '\0'
+};
+
 #else	/* defined(DEC_INIT) */
 extern csum_func csum_fns[CS_FUNCS];
+extern char csum_algo[CS_FUNCS+1][8];
 #endif	/* defined(DEC_INIT) */
 
 #endif /* _SAM_CHECKSUMF_H */
