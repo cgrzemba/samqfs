@@ -45,9 +45,12 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 /* POSIX headers. */
 #include <pthread.h>
 #include <unistd.h>
+#include <limits.h>
 
 /* Solaris headers. */
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /* SAM-FS headers. */
 #include "pub/stat.h"
@@ -223,4 +226,72 @@ checksumWorker(
 		PthreadMutexUnlock(&checksum->mutex);
 	}
 	return (NULL);
+}
+
+int
+writeCsumFile(char* fn, csum_t* csum)
+{
+	int dfd;
+	int dirfd;
+	int afd;
+	char abspath[PATH_MAX];
+	char compname[PATH_MAX];
+	char csumbuf[256] = {'\0'};
+	char *csp = csumbuf;
+	char *fnpos;
+
+	fnpos = strrchr(fn, '/');
+	if (fnpos == NULL)
+		sprintf(abspath, "%s", MntPoint);
+	else {
+		sprintf(compname, "%s", fnpos+1);
+		sprintf(abspath, "%s/%s", MntPoint, fn);
+	}
+	dfd = open(abspath, O_RDONLY);
+	if (dfd < 0) {
+	        Trace(TR_ERR, "failed open: %s, %s", abspath, strerror(errno));
+	        return (errno);
+	}
+	dirfd = openat(dfd, ".", O_RDONLY|O_XATTR);
+	close(dfd);
+	if (dirfd < 0) {
+	        Trace(TR_ERR, "failed open attr dir: %s, %s",
+		    abspath, strerror(errno));
+	        return (errno);
+	}
+	if (fchdir(dirfd) == -1) {
+		close(dirfd);
+	        Trace(TR_ERR, "failed fchdir to attribute: %s, %s",
+		    abspath, strerror(errno));
+	        return (errno);
+	}
+
+	afd = open(FN_CSUM, O_WRONLY | O_CREAT, 0444);
+	if (afd < 0) {
+	        Trace(TR_ERR, "failed open for writing: %s/%s, %s",
+		    abspath, FN_CSUM, strerror(errno));
+	        return (errno);
+	}
+	switch (checksum->algo) {
+	        case CS_SIMPLE:
+	                int i;
+	                for(i=0; i<4; i++) {
+	                        sprintf(csp,"%08x", csum->csum_val[i]);
+	                        csp += 8;
+	                }
+	                break;
+	        default:
+			Trace(TR_ERR, "unknown csum algo: %d", checksum->algo);
+			return (errno);
+	                ;;
+	}
+	if(dprintf(afd, "%s:%s", csum_algo[checksum->algo], csumbuf) < 0) {
+	        Trace(TR_ERR, "failed write: %s/%s, %s",
+		    abspath, FN_CSUM, strerror(errno));
+	        return (errno);
+	}
+
+	close(afd);
+	close(dirfd);
+	return (0);
 }

@@ -231,6 +231,7 @@ typedef struct sam_id {		/* Inode identification */
 	int32_t gen;		/* Generation number */
 } sam_id_t;
 
+#define FN_CSUM	"SUNWsamfs_digest" /* csum_val will be replaced by attr file */
 typedef struct csum {		/* Data verification value */
 	uint32_t csum_val[4];
 } csum_t;

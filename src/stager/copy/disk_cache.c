@@ -105,7 +105,11 @@ static boolean_t ifMultiVolume(FileInfo_t *file);
 static boolean_t ifVerify(FileInfo_t *file);
 static int openStage(FileInfo_t *file);
 static int openVerify(FileInfo_t *file);
+#ifdef TIME32
 static void setVerify(FileInfo_t *file);
+#else
+static void setVerify(FileInfo_t *file, char* pathBuffer, int segment_ord);
+#endif
 
 
 /*
@@ -345,8 +349,16 @@ DiskCacheWrite(
 		 * cancelled or an I/O error occurred.
 		 */
 		if (cancel == B_FALSE && readErrno == 0) {
+			char pathBuffer[PATHBUF_SIZE];
+			int segment_ord;
 
+			GetFileName(file, &pathBuffer[0], PATHBUF_SIZE, &segment_ord);
+
+#ifdef TIME32
 			readErrno = ChecksumCompare(fd, &file->id);
+#else
+			readErrno = ChecksumCompare(pathBuffer, &file->id);
+#endif
 
 			if (readErrno != 0) {
 				closeDiskcache = B_FALSE;
@@ -363,7 +375,11 @@ DiskCacheWrite(
 				}
 			} else {
 				if (verify == B_TRUE) {
+#ifdef TIME32
 					setVerify(file);
+#else
+					setVerify(file, pathBuffer, segment_ord);
+#endif
 				}
 			}
 
@@ -603,15 +619,22 @@ openVerify(
  */
 static void
 setVerify(
-	FileInfo_t *file)
+#ifdef TIME32
+	FileInfo_t *file
+#else
+	FileInfo_t *file, char *pathBuffer, int segment_ord
+#endif
+	)
 {
 	struct sam_archive_copy_arg arg;
-	char pathBuffer[PATHBUF_SIZE];
-	int segment_ord;
 	int syserr;
 	int copy;
+#ifdef TIME32
+	int segment_ord;
+	char pathBuffer[PATHBUF_SIZE];
 
 	GetFileName(file, &pathBuffer[0], PATHBUF_SIZE, &segment_ord);
+#endif
 
 	/* If segmented file remove ordinal from file name. */
 	if (segment_ord > 0) {

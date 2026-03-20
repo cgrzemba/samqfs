@@ -49,6 +49,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <unistd.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <limits.h>
 
 /* Solaris headers. */
 #include <sys/sysmacros.h>
@@ -110,6 +111,11 @@ static checksumInfo_t *checksum = NULL;
 
 /* Private functions. */
 static void* checksumWorker(void *arg);
+#ifdef TEST
+int readCsumFile(char* fn, csum_t* csum);
+#else
+static int readCsumFile(char* fn, csum_t* csum);
+#endif
 
 /*
  * Initialize checksumming.
@@ -228,7 +234,11 @@ ChecksumWait(void)
  */
 int
 ChecksumCompare(
+#ifdef TIME32
 	int fd,
+#else
+	char* fn,
+#endif
 	sam_id_t *id)
 {
 	struct sam_perm_inode pi;
@@ -240,6 +250,7 @@ ChecksumCompare(
 
 	retval = 0;
 
+#ifdef TIME32
 	idstat.id = *id;
 	idstat.size = sizeof (pi);
 	idstat.dp.ptr = &pi;
@@ -247,7 +258,6 @@ ChecksumCompare(
 		retval = errno;
 	}
 
-#ifdef TIME32
 	if (retval == 0 && checksum != NULL) {
 		for (i = 0; i < 4; i++) {
 			if (pi.csum.csum_val[i] != checksum->val.csum_val[i]) {
@@ -288,6 +298,18 @@ ChecksumCompare(
 			    checksum->val.csum_val[1],
 			    checksum->val.csum_val[2],
 			    checksum->val.csum_val[3]);
+		}
+	}
+#else
+	csum_t csum;
+
+	readCsumFile(fn, &csum);
+	if (checksum != NULL) {
+		for (i = 0; i < 4; i++) {
+			if (csum.csum_val[i] != checksum->val.csum_val[i]) {
+				retval = EDVVCMP;
+				break;
+			}
 		}
 	}
 #endif
@@ -366,4 +388,77 @@ checksumWorker(
 	}
 
 	return (NULL);
+}
+
+#ifdef TEST
+int
+#else
+static int
+#endif
+readCsumFile(char* fn, csum_t* csum)
+{
+	int dfd;
+	int dirfd;
+	int afd;
+	char csumbuf[256] = {'\0'};
+	char *csp = csumbuf;
+	char *fnpos;
+
+	dfd = open(fn, O_RDONLY);
+	if (dfd < 0) {
+	        Trace(TR_ERR, "failed open: %s, %s", fn, strerror(errno));
+	        return (errno);
+	}
+	dirfd = openat(dfd, ".", O_RDONLY|O_XATTR);
+	close(dfd);
+	if (dirfd < 0) {
+	        Trace(TR_ERR, "failed open attr dir: %s, %s",
+	            fn, strerror(errno));
+	        return (errno);
+	}
+	if (fchdir(dirfd) == -1) {
+	        close(dirfd);
+	        Trace(TR_ERR, "failed fchdir to attribute: %s, %s",
+	            fn, strerror(errno));
+	        return (errno);
+	}
+
+	afd = open(FN_CSUM, O_RDONLY);
+	if (afd < 0) {
+	        Trace(TR_ERR, "failed open for writing: %s/%s, %s",
+	            fn, FN_CSUM, strerror(errno));
+	        return (errno);
+	}
+	if(read(afd, csumbuf, 256) <= 0) {
+	        Trace(TR_ERR, "failed read: %s/%s, %s",
+	            fn, FN_CSUM, strerror(errno));
+	        return (errno);
+	}
+	switch (checksum->algo) {
+		case CS_SIMPLE:
+			char csalgo[8];
+
+			strncpy(csalgo, csp, strlen(csum_algo[checksum->algo]));
+			if (strncmp(csalgo, csum_algo[checksum->algo],
+			    strlen(csum_algo[checksum->algo])) != 0) {
+				Trace(TR_ERR, "csum algo missmatch: %s/%s, %s", fn,
+				    csum_algo[checksum->algo], csalgo);
+				return (EINVAL);
+			}
+			csp = strchr(csumbuf, ':');
+			csp++;
+	                for(int i=0; i<4; i++) {
+	                        sscanf(csp,"%08x", &csum->csum_val[i]);
+	                        csp += 8;
+	                }
+	                break;
+	        default:
+	                Trace(TR_ERR, "unknown csum algo: %d", checksum->algo);
+	                return (errno);
+	                ;;
+	}
+
+	close(afd);
+	close(dirfd);
+	return (0);
 }

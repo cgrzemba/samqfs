@@ -1569,13 +1569,14 @@ sam_set_archive(
 		}
 		ip->di.ar_flags[copy] = permip->di.ar_flags[copy] &=
 		    AR_required;
-#ifdef TIME32   /* csum code */
+		/* csum code */
 		if (ip->di.status.b.cs_gen && (pp->flags & SA_csummed)) {
+#ifdef TIME32
 			permip->csum = pp->csum;
+#endif
 			ip->di.status.b.cs_val = 1;
 			permip->di.status.b.cs_val = 1;
 		}
-#endif
 		permip->ar.image[copy] = pp->ar;
 		if (permip->ar.image[copy].creation_time == 0) {
 			permip->ar.image[copy].creation_time = SAM_SECOND();
