@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = load
 PROG_SRC = load.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs -lsamcs -lgen $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs

@@ -47,6 +47,7 @@
 
 #define	MAIN
 
+#define DEC_INIT
 #include "driver/samst_def.h"
 #include "sam/types.h"
 #include "sam/param.h"

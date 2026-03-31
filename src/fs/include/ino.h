@@ -65,7 +65,7 @@
 #define	SAM_INODE_VERS_1	1	/* Prev vers of inode, 3.5 & lower. */
 #endif
 #define	SAM_INODE_VERS_2	2	/* Prev vers of inode, 4.0-4.6. */
-#define	SAM_INODE_VERS_3	3	/* Prev vers of inode, 4.0-4.6. */
+#define	SAM_INODE_VERS_3	3	/* Prev vers of inode, 6 */
 #define	SAM_INODE_VERSION	3	/* Current version of inode layout. */
 #define	SAM_MAX_INODE_VERSION	SAM_INODE_VERSION	/* Maximum version. */
 

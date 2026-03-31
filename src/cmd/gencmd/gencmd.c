@@ -77,6 +77,7 @@
 #include <sam/checksum.h>
 #include <sam/nl_samfs.h>
 #include <sam/custmsg.h>
+#include <sam/checksumf.h>
 
 /* Private functions. */
 static void Archive(void);
@@ -128,7 +129,7 @@ static struct {
 	{ "archive",	"Cc:dfInrwW",	Archive,	sam_archive },
 	{ "damage",	"ac:fm:Morv:",	ChgArch,	damage },
 	{ "release",	"adfnprs:V",	Release,	sam_release },
-	{ "ssum",	"defgGru",	Ssum,		sam_ssum },
+	{ "ssum",	"a:defgGru",	Ssum,		sam_ssum },
 	{ "stage",	"ac:dfnprVwx",	Stage,		sam_stage },
 #if !defined(DEBUG)
 	{ "unarchive",	"c:fm:Morv:",	ChgArch,	unarchive },
@@ -176,7 +177,7 @@ static int x_opt = FALSE;
 
 
 /* Static data. */
-static int algo;
+static int algo = CS_SIMPLE;
 static int partial;
 static int stripe_group;
 static int stripe_width;
@@ -230,6 +231,15 @@ main(
 		switch (c) {
 		case 'a':
 			a_opt = TRUE;
+			if (dofile == sam_ssum) {
+				algo = 0;
+				for (int i=1; i < CS_FUNCS; i++) {
+					if(strcmp(csum_algo[i], optarg) == 0) {
+						algo = i;
+						break;
+					}
+				}
+			}
 			break;
 
 		case 'A':
@@ -704,7 +714,7 @@ static void
 Ssum(void)
 {
 	/* Check algorithm specified */
-	if ((algo >= CS_FUNCS) && (algo < CS_USER)) {
+	if (algo < CS_SIMPLE || ((algo >= CS_FUNCS) && (algo < CS_USER))) {
 		prerror(2, 0, catgets(catfd, SET, 1395,
 		    "Invalid algorithm specified."));
 	}
@@ -725,7 +735,7 @@ Ssum(void)
 		*opn++ = 'e';
 	}
 	if ((g_opt || u_opt || e_opt) && !a_opt) {
-		algo = CS_SIMPLE;
+		*opn++ = '0' + algo;
 	}
 	if (g_opt || u_opt || a_opt || e_opt) {
 		sprintf(opn, "%d", algo);

@@ -1,5 +1,5 @@
 /*
- * checksum.c - Checksum processing for archived files.
+ * writecsum.c - write SUNWsamfs_digest attr file
  *
  */
 
@@ -26,7 +26,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2026 Carsten Grzemba
  * Use is subject to license terms.
  *
  *    SAM-QFS_notice_end
@@ -57,9 +57,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "pub/stat.h"
 #include "sam/types.h"
 #include "sam/checksum.h"
-#define DEC_INIT
 #include "sam/checksumf.h"
-#undef DEC_INIT
 
 #define Trace(l, f, ...)
 
@@ -67,7 +65,8 @@ int
 writeCsumFile(const char* mntpt, const char* fn, csum_t* csum, int algo)
 {
 	int dfd;
-	int dirfd;
+	int attrfd;
+	int cwdfd;
 	int afd;
 	char abspath[PATH_MAX];
 	char compname[PATH_MAX];
@@ -83,21 +82,26 @@ writeCsumFile(const char* mntpt, const char* fn, csum_t* csum, int algo)
 			sprintf(compname, "%s", fnpos+1);
 			sprintf(abspath, "%s/%s", mntpt, fn);
 		}
+	} else {
+		sprintf(abspath, "%s", fn);
+	}
+	if ((cwdfd = open(".", O_RDONLY)) < 0) {
+		return (errno);
 	}
 	dfd = open(abspath, O_RDONLY);
 	if (dfd < 0) {
 	        Trace(TR_ERR, "failed open: %s, %s", abspath, strerror(errno));
 	        return (errno);
 	}
-	dirfd = openat(dfd, ".", O_RDONLY|O_XATTR);
+	attrfd = openat(dfd, ".", O_RDONLY|O_XATTR);
 	close(dfd);
-	if (dirfd < 0) {
+	if (attrfd < 0) {
 	        Trace(TR_ERR, "failed open attr dir: %s, %s",
 		    abspath, strerror(errno));
 	        return (errno);
 	}
-	if (fchdir(dirfd) == -1) {
-		close(dirfd);
+	if (fchdir(attrfd) == -1) {
+		close(attrfd);
 	        Trace(TR_ERR, "failed fchdir to attribute: %s, %s",
 		    abspath, strerror(errno));
 	        return (errno);
@@ -135,6 +139,8 @@ writeCsumFile(const char* mntpt, const char* fn, csum_t* csum, int algo)
 	}
 
 	close(afd);
-	close(dirfd);
+	fchdir(cwdfd);
+	close(attrfd);
+	close(cwdfd);
 	return (0);
 }

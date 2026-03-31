@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = stageall
 PROG_SRC = stageall.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcs -lsamut -lsamconf $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf

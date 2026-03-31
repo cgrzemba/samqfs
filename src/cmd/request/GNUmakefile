@@ -34,7 +34,7 @@ PROG = request
 PROG_SRC = \
 		request.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut $(LIBSO) -lgen -lintl
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcs $(LIBSO) -lgen -lintl
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNOPTS += -Dlint

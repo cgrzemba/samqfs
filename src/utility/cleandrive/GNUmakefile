@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = cleandrive
 PROG_SRC = clean.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcs -lsamut -lgen $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut

@@ -31,6 +31,7 @@ DEPTH = ../..
 include $(DEPTH)/mk/common.mk
 
 DIRS = \
+	samcs \
 	sam \
 	samconf \
 	samspm \

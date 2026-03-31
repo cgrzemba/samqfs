@@ -50,6 +50,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 /* Solaris headers. */
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sha1.h>
 #include <fcntl.h>
 
 /* SAM-FS headers. */
@@ -177,8 +178,10 @@ ChecksumWait(void)
 		PthreadCondWait(&checksum->complete, &checksum->mutex);
 	}
 
-	Trace(TR_DEBUG, "[%s] Checksum complete: -a %d 0x%.8x%.8x 0x%.8x%.8x",
-	    File->f->FiName,
+	if (checksum->algo > CS_SIMPLE)
+		checksum->func(NULL, 0, 0, &File->AfCsum);
+	Trace(TR_DEBUG, "[%d][%s] Checksum complete: -a %d 0x%.8x%.8x 0x%.8x%.8x",
+	    checksum->id, File->f->FiName,
 	    checksum->algo,
 	    File->AfCsum.csum_val[0], File->AfCsum.csum_val[1],
 	    File->AfCsum.csum_val[2], File->AfCsum.csum_val[3]);
@@ -219,79 +222,20 @@ checksumWorker(
 			    checksum->numBytes, &File->AfCsum);
 		}
 
+		Trace(TR_DEBUG, "[%s] Checksumming interm result: %lx", File->f->FiName, File->AfCsum.csum_val[0]);
+
 		PthreadMutexLock(&checksum->mutex);
 		checksum->isComplete = B_TRUE;
 		checksum->isAvail = B_FALSE;
 		PthreadCondSignal(&checksum->complete);
 		PthreadMutexUnlock(&checksum->mutex);
 	}
+	Trace(TR_DEBUG, "[%s] worker finishs; Checksumming final result: %lx", File->f->FiName, File->AfCsum.csum_val[0]);
 	return (NULL);
 }
 
 int
-writeCsumFile(char* fn, csum_t* csum)
+getChecksumAlgo() 
 {
-	int dfd;
-	int dirfd;
-	int afd;
-	char abspath[PATH_MAX];
-	char compname[PATH_MAX];
-	char csumbuf[256] = {'\0'};
-	char *csp = csumbuf;
-	char *fnpos;
-
-	fnpos = strrchr(fn, '/');
-	if (fnpos == NULL)
-		sprintf(abspath, "%s", MntPoint);
-	else {
-		sprintf(compname, "%s", fnpos+1);
-		sprintf(abspath, "%s/%s", MntPoint, fn);
-	}
-	dfd = open(abspath, O_RDONLY);
-	if (dfd < 0) {
-	        Trace(TR_ERR, "failed open: %s, %s", abspath, strerror(errno));
-	        return (errno);
-	}
-	dirfd = openat(dfd, ".", O_RDONLY|O_XATTR);
-	close(dfd);
-	if (dirfd < 0) {
-	        Trace(TR_ERR, "failed open attr dir: %s, %s",
-		    abspath, strerror(errno));
-	        return (errno);
-	}
-	if (fchdir(dirfd) == -1) {
-		close(dirfd);
-	        Trace(TR_ERR, "failed fchdir to attribute: %s, %s",
-		    abspath, strerror(errno));
-	        return (errno);
-	}
-
-	afd = open(FN_CSUM, O_WRONLY | O_CREAT, 0444);
-	if (afd < 0) {
-	        Trace(TR_ERR, "failed open for writing: %s/%s, %s",
-		    abspath, FN_CSUM, strerror(errno));
-	        return (errno);
-	}
-	switch (checksum->algo) {
-	        case CS_SIMPLE:
-	                int i;
-	                for(i=0; i<4; i++) {
-	                        sprintf(csp,"%08x", csum->csum_val[i]);
-	                        csp += 8;
-	                }
-	                break;
-	        default:
-			Trace(TR_ERR, "unknown csum algo: %d", checksum->algo);
-			return (errno);
-	                ;;
-	}
-	if(dprintf(afd, "%s:%s", csum_algo[checksum->algo], csumbuf) < 0) {
-	        Trace(TR_ERR, "failed write: %s/%s, %s",
-		    abspath, FN_CSUM, strerror(errno));
-	        return (errno);
-	}
-
-	close(afd);
-	close(dirfd);
-	return (0);
+	return (checksum->algo);
 }

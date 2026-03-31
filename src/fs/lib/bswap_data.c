@@ -92,8 +92,8 @@ struct swap_descriptor csd_header_extended_swap_descriptor[] = {
 };
 
 struct swap_descriptor csum_swap_descriptor[] = {
-	{ 0, 4, 4 },
-	{ 16, 0, 0 },
+	{ 0, 4, 16 },
+	{ 64, 0, 0 },
 };
 
 struct swap_descriptor rmt_sam_cnt_resp_swap_descriptor[] = {
@@ -757,20 +757,20 @@ struct swap_descriptor sam_perm_inode_v2_swap_descriptor[] = {
 	{ 36, 4, 18 },
 	{ 118, 2, 4 },
 	{ 128, 4, 23 },
-	{ 240, 4, 4 },
-	{ 258, 2, 1 },
-	{ 260, 4, 5 },
-	{ 314, 2, 1 },
-	{ 316, 4, 5 },
-	{ 370, 2, 1 },
-	{ 372, 4, 5 },
-	{ 426, 2, 1 },
-	{ 428, 4, 5 },
-	{ 480, 4, 2 },
-	{ 496, 4, 1 },
-	{ 500, 2, 1 },
-	{ 504, 4, 2 },
-	{ 512, 0, 0 },
+	{ 240, 4, 16 },
+	{ 306, 2, 1 },
+	{ 308, 4, 5 },
+	{ 362, 2, 1 },
+	{ 364, 4, 5 },
+	{ 418, 2, 1 },
+	{ 420, 4, 5 },
+	{ 474, 2, 1 },
+	{ 476, 4, 5 },
+	{ 528, 4, 2 },
+	{ 544, 4, 1 },
+	{ 548, 2, 1 },
+	{ 552, 4, 2 },
+	{ 560, 0, 0 },
 };
 
 struct swap_descriptor sam_quota_group_swap_descriptor[] = {

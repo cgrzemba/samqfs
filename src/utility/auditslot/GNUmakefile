@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = auditslot
 PROG_SRC = auditslot.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) $(LIBSO) -lsam -lsamcat -lsamut -lgen -lintl
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) $(LIBSO) -lsam -lsamcs -lsamcat -lsamut -lgen -lintl
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcat -lsamut

@@ -232,8 +232,15 @@ typedef struct sam_id {		/* Inode identification */
 } sam_id_t;
 
 #define FN_CSUM	"SUNWsamfs_digest" /* csum_val will be replaced by attr file */
+
+#ifdef TIME32
+#define CS_LEN	4
+#else
+#define CS_LEN	16
+#endif
+
 typedef struct csum {		/* Data verification value */
-	uint32_t csum_val[4];
+	uint32_t csum_val[CS_LEN];
 } csum_t;
 
 typedef int64_t sam_time_t;

@@ -30,7 +30,7 @@ DEPTH = ../..
 
 include $(DEPTH)/mk/common.mk
 
-DATAFILES = stager.master
+# DATAFILES = stager.master
 
 DIRS = lib stager copy
 

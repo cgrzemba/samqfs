@@ -57,7 +57,7 @@ DEPCFLAGS += -I../include $(HC_INCLUDE) $(THRCOMP) $(TEST)
 
 SYSLIBS = -ldl -lgen $(THRLIBS) -lsocket -lnsl
 SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut -lsam -lsamconf \
-	-lsamfs -lsamapi -lsamrft -lpax_hdr
+	-lsamfs -lsamcs -lsamapi -lsamrft -lpax_hdr
 PROG_LIBS = -L ../lib/$(OBJ_DIR) -lstager $(SAMLIBS) $(HC_LIB) \
 	$(SYSLIBS) $(LIBSO)
 

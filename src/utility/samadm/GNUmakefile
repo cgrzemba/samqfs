@@ -40,7 +40,7 @@ PROG_SRC = \
 
 DEPCFLAGS += -I. $(OSDEPCFLAGS)
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcs -lsamut -lsamconf $(LIBSO)
 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf
 

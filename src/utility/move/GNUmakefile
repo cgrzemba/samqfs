@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = move
 PROG_SRC = move.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamcat -lsamfs -lsamut $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamcat -lsamfs -lsamcs -lsamut $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamcat -lsamfs

@@ -37,6 +37,8 @@
 
 /* globals */
 shm_alloc_t              master_shm, preview_shm;
+char *program_name;
+
 
 /*
  *  fsmupd

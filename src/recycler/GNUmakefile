@@ -53,7 +53,7 @@ DATAFILES = recycler.sh
 
 DEPCFLAGS += $(HC_INCLUDE) $(THRCOMP) -I include
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) \
-	-lsam -lsamapi -lsamcat -lsamfs -lsamut -lsamconf -lsamrft \
+	-lsam -lsamapi -lsamcat -lsamfs -lsamcs -lsamut -lsamconf -lsamrft \
 	$(HC_LIB) $(LIBSO) $(THRLIBS) -lgen -lintl -L lib/$(OBJ_DIR) -lrecycler
 
 LNOPTS = $(CMDS_LFLAGS32)

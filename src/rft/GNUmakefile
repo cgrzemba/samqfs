@@ -40,7 +40,7 @@ PROG_SRC = \
 		worker.c
 
 PROG_LIBS = $(STATIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamspm $(DYNAMIC_OPT) \
-	-lsamut -lsam -lsamcat -lsamconf -lsamfs -lsamapi \
+	-lsamut -lsam -lsamcat -lsamconf -lsamcs -lsamapi \
 	-lsocket -lnsl -ldl -lgen \
 	$(THRLIBS) $(LIBSO)
 

@@ -54,6 +54,7 @@ extern int samcftime(char *buf, const char *format, const time_t *t);
 
 /* globals needed by libsamfs.so */
 shm_alloc_t              master_shm, preview_shm;
+char	*program_name;
 
 static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 

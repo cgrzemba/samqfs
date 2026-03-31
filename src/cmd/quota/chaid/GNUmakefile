@@ -34,7 +34,7 @@ PROG = chaid
 PROG_SRC = \
 	chaid.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcs $(LIBSO)
 
 LNOPTS = -u -x -Dlint 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

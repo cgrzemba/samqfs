@@ -46,7 +46,7 @@ PROG_SRC = \
 DEPCFLAGS += $(THRCOMP) -I$(DEPTH)/include/pub/$(OBJ_DIR) -I/usr/include/libxml2
 PROG_LIBS = ../fs/lib/$(OBJ_DIR)/libfscmd.a \
 	-L $(DEPTH)/lib/$(OBJ_DIR) $(STATIC_OPT) -lsamspm $(LIBSO) \
-	$(DYNAMIC_OPT) -lsamcat -lsamfs -lsamut -lsamconf \
+	$(DYNAMIC_OPT) -lsamcat -lsamfs -lsamcs -lsamut -lsamconf \
 	-lsocket -lnsl -lgen -ldl $(THRLIBS) -lposix4 -ladm
 
 LNOPTS = $(CMDS_LFLAGS32)

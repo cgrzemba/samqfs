@@ -38,8 +38,8 @@ DEPCFLAGS = $(OSDEPCFLAGS) $(INCFLAGS) $(VERS) $(METADATA_SERVER) \
 	$(DEBUGCDEFS) $(THRCOMP)
 
 PROG_LIBS = $(STATIC_OPT) -L ../../lib/$(OBJ_DIR) -lfscmd \
-	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam -lsamconf $(DYNAMIC_OPT) \
-	$(LIBSO) -ladm -ldl -lsysevent -lnvpair
+	-L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamconf -lsamcs -lsamut $(DYNAMIC_OPT) \
+	$(LIBSO) -lmd -ladm -ldl -lsysevent -lnvpair
 
 LNOPTS = -nmuxs -Dlint
 LNLIBS = -L ../../lib/$(OBJ_DIR) -L $(DEPTH)/lib/$(OBJ_DIR)

@@ -185,7 +185,7 @@ struct sam_stat {
 	uint_t 		allocahead;
 	uint_t		obj_depth;	/* Object stripe depth in kilobytes */
 	/* 128 bit checksum */
-	uint64_t 	cs_val[2];
+	uint64_t 	cs_val[8];
 	/* WORM retention period start and duration. */
 	time_t		rperiod_start_time;
 	uint_t		rperiod_duration;

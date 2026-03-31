@@ -30,7 +30,7 @@
 DEPCFLAGS += $(AR_DEBUG) -I../include -I../include/$(OBJ_DIR) -I$(INCLUDE)/aml/$(OBJ_DIR) $(THRCOMP)
 
 PROG_LIBS = $(ADDOBJ) -L ../lib/$(OBJ_DIR) -larch \
-	-L $(DEPTH)/lib/$(OBJ_DIR) $(ADDLIB) -lsam -lsamcat -lsamut -lsamconf $(LIBSO) -lpthread
+	-L $(DEPTH)/lib/$(OBJ_DIR) $(ADDLIB) -lsamcat -lsamut -lsamconf $(LIBSO) -lpthread
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L ../lib/$(OBJ_DIR) -larch -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcat -lsamut -lsamconf

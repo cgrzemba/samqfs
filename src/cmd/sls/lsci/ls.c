@@ -79,6 +79,7 @@
 
 #ifdef SUNW
 #include <sys/types.h>
+#include <sys/sha1.h>
 #undef st_atime
 #undef st_mtime
 #undef st_ctime
@@ -93,6 +94,7 @@
 #include "sam/types.h"
 #include "aml/diskvols.h"
 #include "sam/lib.h"
+#include "sam/checksum.h"
 #endif
 
 /* The HAS_RELEASE_STATS macro evaluates to 1 if the file is not a data
@@ -500,7 +502,6 @@ static enum time_type const time_types[] =
 {
   time_atime, time_atime, time_atime, time_ctime, time_ctime
 };
-
 
 int
 main (argc, argv)
@@ -2510,11 +2511,29 @@ struct file *f)		/* File entry */
 	if (SS_ISCSGEN(f->stat.attr) || SS_ISCSUSE(f->stat.attr) ||
 				SS_ISCSVAL(f->stat.attr)) {
 		if (SS_ISCSVAL(f->stat.attr)) {
-			printf("  checksum: %s %s -a %d 0x%.16llx 0x%.16llx",
+			csum_t csum;
+
+			printf("  checksum: %s %s -a %d ",
 				SS_ISCSGEN(f->stat.attr) ? "-g" : "  ",
 				SS_ISCSUSE(f->stat.attr) ? "-u" : "  ",
-				f->stat.cs_algo,
-				f->stat.cs_val[0], f->stat.cs_val[1]);
+				f->stat.cs_algo);
+			if(readCsumFile(f->name, &csum, f->stat.cs_algo) == 0) {
+				switch (f->stat.cs_algo) {
+				case CS_SIMPLE:
+				case CS_MD5:
+					for (int i=0; i<4; i++) {
+						printf("%08x", csum.csum_val[i]);
+					}
+					break;
+				case CS_SHA1:
+					for(int i=0; i<(SHA1_DIGEST_LENGTH>>2); i++) {
+						printf("%08x", csum.csum_val[i]);
+					}
+					break;
+				default:
+					;;
+				}
+			}
 		} else {
 			printf("  checksum: %s %s algo: %d",
 				SS_ISCSGEN(f->stat.attr) ? "-g" : "  ",

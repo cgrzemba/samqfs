@@ -52,6 +52,7 @@ static char *_SrcFile = __FILE__;
 
 #define	MAIN
 
+#define DEC_INIT
 #include "driver/samst_def.h"
 #include "sam/types.h"
 #include "sam/custmsg.h"

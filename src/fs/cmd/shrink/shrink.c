@@ -63,6 +63,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <errno.h>
 #include <unistd.h>
 
+#define DEC_INIT
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -81,8 +82,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include <sys/sysmacros.h>
 #include <sys/mman.h>
 
-#define DEC_INIT
-#include "sam/types.h"
+#include "pub/stat.h"
 #include "sam/param.h"
 #include "sam/custmsg.h"
 #include "sam/nl_samfs.h"
@@ -94,8 +94,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/uioctl.h"
 #include "sam/syscall.h"
 #include "sam/fioctl.h"
+#include "aml/shm.h"
 
-#include "pub/stat.h"
 #include "pub/devstat.h"
 #include "pub/lib.h"
 
@@ -104,6 +104,8 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #include "sam/fs/dirent.h"
 #include "sam/fs/ino_ext.h"
 #include "sam/fs/sblk.h"
+#define DEC_INIT
+#include "sam/types.h"
 
 #include "shrink.h"
 
@@ -119,6 +121,8 @@ int io_errors = 2;		/* I/O error threshold */
 pthread_mutex_t log_lock;	/* Printing log lock */
 control_t control;		/* Work queue ptrs & thread params */
 work_t work[MAX_QUEUE];		/* Work queue */
+
+shm_alloc_t master_shm, preview_shm;
 
 /*
  * Prototypes

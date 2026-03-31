@@ -34,7 +34,7 @@ PROG = schproj
 PROG_SRC = \
 	schproj.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lproject -lsam -lsamut -lsamconf $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lproject -lsam -lsamut -lsamconf -lsamcs $(LIBSO)
 
 LNOPTS = -u -x -Dlint 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

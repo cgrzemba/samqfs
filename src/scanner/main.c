@@ -54,6 +54,7 @@ static char *_SrcFile = __FILE__; /* Using __FILE__ makes duplicate strings */
 #define	SCANNER_MAIN
 #define	MAIN
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "sam/exit.h"

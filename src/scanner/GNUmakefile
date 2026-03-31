@@ -36,7 +36,7 @@ PROG_SRC = \
 		message.c
 
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) \
-	-lsam -lsamut -lsamcat -lsamfs -ldl -lgen \
+	-lsam -lsamut -lsamcat -lsamfs -lsamcs -ldl -lgen \
 	$(THRLIBS) $(LIBSO)
 
 DEPCFLAGS += $(THRCOMP)

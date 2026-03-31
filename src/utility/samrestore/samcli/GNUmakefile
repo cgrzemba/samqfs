@@ -31,7 +31,7 @@ include $(DEPTH)/mk/common.mk
 
 PROG = samcli
 PROG_SRC = samcli.c samcliparse.c
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lfsmgmt $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcs -lsamut -lfsmgmt $(LIBSO)
 ifndef NO_BUILD_CNS
 PROG_LIBS += -lcrypto -lcsn -lcurl -lssl -ldl -lsocket -lmd5
 endif

@@ -37,7 +37,7 @@ USRLINKS = release stage ssum setfa
 ADMLINKS = unarchive damage undamage rearch unrearch
 
 DEPCFLAGS += $(CHECKSUM)
-PROG_LIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
+PROG_LIBS = -L$(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf -lsamcs $(LIBSO)
 
 ifeq ($(OS), SunOS)
 PROG_LIBS += -lgen -lintl

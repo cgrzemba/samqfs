@@ -48,6 +48,7 @@ static char *_SrcFile = __FILE__;
 #include <pthread.h>
 #include <dirent.h>
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/shm.h"
 #include "sam/mount.h"
@@ -65,6 +66,7 @@ static char *_SrcFile = __FILE__;
 #include "aml/id_to_path.h"
 #include "sam/custmsg.h"
 #include "sam/exit.h"
+#include "sam/nl_samfs.h"
 #include "aml/archiver.h"
 #include "aml/samapi.h"
 #include "aml/remote.h"	/* Recycler uses sam_chmed_value api function */
@@ -74,6 +76,7 @@ static char *_SrcFile = __FILE__;
 
 #include "recycler.h"
 
+nl_catd catfd = NULL;
 char *program_name = "sam-nrecycler";
 
 shm_alloc_t master_shm, preview_shm;

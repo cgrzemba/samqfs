@@ -34,7 +34,7 @@ PROG = quota
 PROG_SRC = \
 		quota.c 
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcs $(LIBSO)
 
 LNOPTS = -u -x -Dlint 
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

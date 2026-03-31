@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = chmed
 PROG_SRC = chmed.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamfs -lsamcat $(LIBSO) -lgen -ldl
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcs -lsamut -lsamfs -lsamcat $(LIBSO) -lgen -ldl
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamfs -lsamcat

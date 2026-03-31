@@ -75,7 +75,7 @@ ifneq (,$(filter $(OS_RELEASE),11.4))
 CERRWARN += -erroff=E_ASSIGNMENT_TYPE_MISMATCH
 endif
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
-	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamcat -lsamut \
+	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamcs -lsamcat -lsamut \
 	$(LIBSO) $(THRLIBS) -l gen -ldl
 
 LNOPTS = -a -Dlint

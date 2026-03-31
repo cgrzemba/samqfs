@@ -42,7 +42,7 @@ DEPCFLAGS += $(THRCOMP)
 
 SYSLIBS = -ldl -lgen $(THRLIBS) -lsocket -lnsl
 SAMLIBS = ../../fs/lib/$(OBJ_DIR)/libfscmd.a \
-	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamcat -lsamut -lsamconf
+	-L $(DEPTH)/lib/$(OBJ_DIR) -lsamfs -lsamcs -lsamcat -lsamut -lsamconf
 PROG_LIBS = $(SYSLIBS) $(SAMLIBS) $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)

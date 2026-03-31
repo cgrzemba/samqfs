@@ -55,8 +55,8 @@ static char    *_SrcFile = __FILE__;
 #include "aml/shm.h"
 #include "aml/archiver.h"
 #include "sam/checksum.h"
-#define	DEC_INIT
 #include "sam/checksumf.h"
+#define	DEC_INIT
 #include "aml/remote.h"
 #undef DEC_INIT
 #include "aml/historian.h"
@@ -711,7 +711,7 @@ set_bad_media(dev_ent_t *un)
 	    un->eq, un->vsn);
 }
 
-
+#if 0
 int
 start_csum_thread(sam_csum_t *sam_csum)
 {
@@ -749,3 +749,4 @@ do_csum(void *param)
 	thr_exit(NULL);
 	/* return (NULL); */
 }
+#endif
