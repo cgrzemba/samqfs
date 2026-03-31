@@ -50,7 +50,7 @@ PROG_SRC = \
 DEPCFLAGS += -I../include -I$(INCLUDE)/aml/$(OBJ_DIR) $(THRCOMP)
 
 SYSLIBS = -ldl -lgen $(THRLIBS) -lsocket -lnsl
-SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut -lsam -lsamconf -lsamfs -lsamapi -lsammig
+SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut -lsam -lsamconf -lsamfs -lsamcs -lsamapi -lsammig
 PROG_LIBS =  -L ../lib/$(OBJ_DIR) -lstager $(SAMLIBS) $(SYSLIBS) $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)

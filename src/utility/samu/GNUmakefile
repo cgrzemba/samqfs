@@ -63,7 +63,7 @@ PROG_SRC = \
 
 DEPCFLAGS += -I$(INCLUDE)/pub/$(OBJ_DIR) $(if $(DB_INCLUDE),-I$(DB_INCLUDE)) 
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsam -lsamcat -lsamfs -lsamut -lsamconf -lsamrft $(LIBSO) $(THRLIBS) -lsocket -lnsl -lcurses -lkvm -lkstat -ladm $(DB_LIB)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsam -lsamcat -lsamfs -lsamcs -lsamut -lsamconf -lsamrft $(LIBSO) $(THRLIBS) -lsocket -lnsl -lcurses -lkvm -lkstat -ladm $(DB_LIB)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsam -lsamcat -lsamfs -lsamut -lsamconf -lsamrft

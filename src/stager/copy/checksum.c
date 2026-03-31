@@ -111,11 +111,6 @@ static checksumInfo_t *checksum = NULL;
 
 /* Private functions. */
 static void* checksumWorker(void *arg);
-#ifdef TEST
-int readCsumFile(char* fn, csum_t* csum);
-#else
-static int readCsumFile(char* fn, csum_t* csum);
-#endif
 
 /*
  * Initialize checksumming.
@@ -303,11 +298,21 @@ ChecksumCompare(
 #else
 	csum_t csum;
 
-	readCsumFile(fn, &csum);
+	readCsumFile(fn, &csum, checksum->algo);
 	if (checksum != NULL) {
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < (CS_LEN>>2); i++) {
 			if (csum.csum_val[i] != checksum->val.csum_val[i]) {
 				retval = EDVVCMP;
+				Trace(TR_ERR, "Checksum error inode: %d.%d",
+				    id->ino, id->gen);
+				Trace(TR_ERR, "Checksum value: %.8x %.8x %.8x %.8x",
+				    csum.csum_val[0], csum.csum_val[1],
+				    csum.csum_val[2], csum.csum_val[3]);
+				Trace(TR_ERR, "Checksum calc: %.8x %.8x %.8x %.8x",
+				    checksum->val.csum_val[0],
+				    checksum->val.csum_val[1],
+				    checksum->val.csum_val[2],
+				    checksum->val.csum_val[3]);
 				break;
 			}
 		}
@@ -386,79 +391,8 @@ checksumWorker(
 		PthreadCondSignal(&checksum->complete);
 		PthreadMutexUnlock(&checksum->mutex);
 	}
+	if (checksum->algo > CS_SIMPLE)
+		checksum->func(NULL, 0, 0, &checksum->val);
 
 	return (NULL);
-}
-
-#ifdef TEST
-int
-#else
-static int
-#endif
-readCsumFile(char* fn, csum_t* csum)
-{
-	int dfd;
-	int dirfd;
-	int afd;
-	char csumbuf[256] = {'\0'};
-	char *csp = csumbuf;
-	char *fnpos;
-
-	dfd = open(fn, O_RDONLY);
-	if (dfd < 0) {
-	        Trace(TR_ERR, "failed open: %s, %s", fn, strerror(errno));
-	        return (errno);
-	}
-	dirfd = openat(dfd, ".", O_RDONLY|O_XATTR);
-	close(dfd);
-	if (dirfd < 0) {
-	        Trace(TR_ERR, "failed open attr dir: %s, %s",
-	            fn, strerror(errno));
-	        return (errno);
-	}
-	if (fchdir(dirfd) == -1) {
-	        close(dirfd);
-	        Trace(TR_ERR, "failed fchdir to attribute: %s, %s",
-	            fn, strerror(errno));
-	        return (errno);
-	}
-
-	afd = open(FN_CSUM, O_RDONLY);
-	if (afd < 0) {
-	        Trace(TR_ERR, "failed open for writing: %s/%s, %s",
-	            fn, FN_CSUM, strerror(errno));
-	        return (errno);
-	}
-	if(read(afd, csumbuf, 256) <= 0) {
-	        Trace(TR_ERR, "failed read: %s/%s, %s",
-	            fn, FN_CSUM, strerror(errno));
-	        return (errno);
-	}
-	switch (checksum->algo) {
-		case CS_SIMPLE:
-			char csalgo[8];
-
-			strncpy(csalgo, csp, strlen(csum_algo[checksum->algo]));
-			if (strncmp(csalgo, csum_algo[checksum->algo],
-			    strlen(csum_algo[checksum->algo])) != 0) {
-				Trace(TR_ERR, "csum algo missmatch: %s/%s, %s", fn,
-				    csum_algo[checksum->algo], csalgo);
-				return (EINVAL);
-			}
-			csp = strchr(csumbuf, ':');
-			csp++;
-	                for(int i=0; i<4; i++) {
-	                        sscanf(csp,"%08x", &csum->csum_val[i]);
-	                        csp += 8;
-	                }
-	                break;
-	        default:
-	                Trace(TR_ERR, "unknown csum algo: %d", checksum->algo);
-	                return (errno);
-	                ;;
-	}
-
-	close(afd);
-	close(dirfd);
-	return (0);
 }

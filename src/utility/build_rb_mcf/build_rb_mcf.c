@@ -46,6 +46,7 @@ static char    *_SrcFile = __FILE__;
 #include <ctype.h>
 
 #include "driver/samst_def.h"
+#define DEC_INIT
 #include "sam/types.h"
 #include "aml/external_data.h"
 #include "sam/param.h"

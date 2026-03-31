@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = odlabel
 PROG_SRC = label.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamcat -lsamfs -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamcat -lsamfs -lsamcs -lgen $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamcat -lsamfs

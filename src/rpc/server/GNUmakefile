@@ -41,7 +41,7 @@ PROG_SRC = \
 
 CHECKSRC = $(PROG_SRC)
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut \
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcs \
 	-lgen -lnsl -lintl $(LIBSO)
 
 DEPCFLAGS += -I$(INCLUDE)/pub

@@ -67,7 +67,7 @@ INCS += -I.. -I../lib -I. -I$(DEPTH)/include
 DEPCFLAGS = $(OSFLAGS) $(DEFS) $(INCS) 
 CFLAGS += -g
 
-PROG_LIBS = $(STATIC_OPT) -L../lib/$(OBJ_DIR) -lfu $(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
+PROG_LIBS = $(STATIC_OPT) -L../lib/$(OBJ_DIR) -lfu $(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf -lsamcs $(LIBSO)
 ifeq ($(OS), SunOS)
 PROG_LIBS += -lgen -lintl -lproject
 endif

@@ -34,9 +34,6 @@ include $(DEPTH)/mk/common.mk
 LIB = samfs
 LIB_SRC = \
 		catalog.c \
-		csempty.c \
-		cssimple.c \
-		csuser.c \
 		dev_log.c \
 		dir_io.c \
 		exit_fifo.c \

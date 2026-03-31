@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = reserve
 PROG_SRC = reserve.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamfs -lsamcat -lsamut $(LIBSO) -lintl
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamcs -lsamcat -lsamut $(LIBSO) -lintl
 
 DEPCFLAGS += -I../include 
 

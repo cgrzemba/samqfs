@@ -45,7 +45,9 @@
 #include "pub/mgmt/error.h"
 #include "pub/mgmt/sqm_list.h"
 #include "mgmt/util.h"
+#define DEC_INIT
 #include "sam/types.h"
+#include "sam/lib.h"
 #include "mgmt/config/rpc_secure_cfg.h"
 #include "aml/shm.h"
 /*
@@ -70,6 +72,7 @@
 
 /* globals */
 shm_alloc_t              master_shm, preview_shm;
+char* program_name = NULL;
 
 int add_clients(sqm_lst_t *lst_client);
 int remove_clients(sqm_lst_t *lst_client);

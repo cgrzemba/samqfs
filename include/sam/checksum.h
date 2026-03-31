@@ -55,9 +55,12 @@
  */
 #define	CS_NONE		0
 #define	CS_SIMPLE	1
+#define	CS_MD5		2
+#define	CS_SHA1		3
 
-#define	CS_FUNCS	2	/* number of SAM-defined checksum functions */
+#define	CS_FUNCS	4	/* number of SAM-defined checksum functions */
 
-int writeCsumFile(char* fn, csum_t* csum);
+int writeCsumFile(const char* mntpoint, const char* fn, csum_t* csum, int algo);
+int readCsumFile(const char* fn, csum_t* csum, int algo);
 
 #endif /* _SAM_CHECKSUM_H */

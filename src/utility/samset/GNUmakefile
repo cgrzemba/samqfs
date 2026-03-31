@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = samset
 PROG_SRC = samset.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamcs -lsamut -lgen $(LIBSO)
 
 DEPCFLAGS += $(THRCOMP)
 LNOPTS = $(CMDS_LFLAGS32)

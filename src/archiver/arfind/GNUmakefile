@@ -28,6 +28,8 @@
 
 DEPTH = ../../..
 
+# AR_DEBUG = -DFILE_TRACE
+
 include $(DEPTH)/mk/common.mk
 
 PROG = arfind
@@ -47,6 +49,8 @@ PROG_SRC = \
 	scaninodes.c
 
 include ../archiver.mk
+
+ADDLIB = -lsam -lsamcs
 
 include $(DEPTH)/mk/targets.mk
 

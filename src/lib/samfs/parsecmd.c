@@ -78,7 +78,6 @@
 /* SAM-FS headers.  */
 #include "aml/parsecmd.h"
 #include "aml/errorlog.h"
-#define DEC_INIT
 #include "sam/types.h"
 #include "sam/nl_samfs.h"
 #undef DEC_INIT

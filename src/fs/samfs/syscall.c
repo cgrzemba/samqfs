@@ -1924,8 +1924,8 @@ sam_set_csum(void *arg)
 	 */
 	ip->di.status.b.cs_gen = 1;
 	ip->di.status.b.cs_val = 1;
-	ip->di.cs_algo = CS_SIMPLE;
 #ifdef TIME32
+	ip->di.cs_algo = CS_SIMPLE;
 	permip->csum = args.csum;
 #endif
 	if (TRANS_ISTRANS(ip->mp)) {

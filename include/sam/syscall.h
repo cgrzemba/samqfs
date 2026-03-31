@@ -205,6 +205,7 @@ struct sam_archive_copy_arg {
 
 struct sam_set_csum_arg {
 	SAM_POINTER(const char) path;	/* Path name of file */
+	int algo;			/* checksum algorithm */
 	csum_t csum;
 };
 

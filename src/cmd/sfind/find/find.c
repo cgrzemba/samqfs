@@ -57,8 +57,7 @@
 
 static int integer_length (int value);
 static int setup_pathname_for_seg_number(char *file_pathname, int n_segs,
-											char **dest, int *len_pathname_ptr,
-											int *dest_size_ptr);
+	char **dest, int *len_pathname_ptr, int *dest_size_ptr);
 void free_memory_used_for_testing_segments();
 void apply_predicate(char *pathname, struct sam_stat *stat_buf_ptr,
 					struct predicate *eval_tree_ptr);

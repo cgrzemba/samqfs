@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = unload
 PROG_SRC = unload.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam $(LIBSO) -lgen -lintl
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam -lsamcs $(LIBSO) -lgen -lintl
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsam

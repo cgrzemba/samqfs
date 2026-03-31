@@ -66,6 +66,7 @@ static void regerr(int errcode);
 
 #define	MAIN
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/param.h"
 #include "aml/device.h"

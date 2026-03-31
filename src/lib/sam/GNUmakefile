@@ -71,7 +71,7 @@ ifeq ($(AMD64), yes)
 LIB_SRC += nm_to_dev.c
 LIB_LIBS +=  -L $(DEPTH)/lib/$(OBJ_DIR) -lsamconf $(LIBSO) -lintl
 LIBDEST += /amd64
-DEPCFLAGS += -DLIBS_64
+# DEPCFLAGS += -DLIBS_64
 else
 LIB_SRC += catalog.c
 LIB_LIBS += -L $(DEPTH)/lib/$(OBJ_DIR) -lsamcat -lsamut -lsamconf $(LIBSO) -lintl
@@ -89,19 +89,24 @@ ifeq ($(OS), SunOS)
 
 TESTPROG1 = $(OBJ_DIR)/segment_vsn_stat
 TESTPROG2 = $(OBJ_DIR)/vsn_stat
+TESTPROG3 = $(OBJ_DIR)/test_compute_checksum
 TESTSRC1 = segment_vsn_stat.c
 TESTSRC2 = vsn_stat.c
+TESTSRC3 = test_compute_checksum.c
 
 TESTINCFLAGS = -I ../../../include/
-TESTLIBFLAGS = -L /opt/SUNWsamfs/lib
+# TESTLIBFLAGS = -L /opt/SUNWsamfs/lib/amd64
+TESTLIBFLAGS = -L ../../../lib/$(OBJ_DIR)
 
-test: $(TESTPROG1) $(TESTPROG2)
+test: $(TESTPROG1) $(TESTPROG2) $(TESTPROG3)
 
 $(TESTPROG1): $(TESTSRC1) 
 	$(CC) $< -DMAIN $(TESTINCFLAGS) $(TESTLIBFLAGS) -lsamconf -lsam -o $@
 
 $(TESTPROG2): $(TESTSRC2) 
 	$(CC) $< -DMAIN $(TESTINCFLAGS) $(TESTLIBFLAGS) -lsamconf -lsam -o $@
+$(TESTPROG3): $(TESTSRC3)
+	$(CC) $< -DMAIN -DTEST $(TESTINCFLAGS) $(TESTLIBFLAGS)  fileops.c ../samfs/csmd5.c -lsamconf -lsam -lsamcs -lmd -o $@
 endif
 
 

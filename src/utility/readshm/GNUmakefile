@@ -35,7 +35,7 @@ PROG_SRC = readshm.c
 
 DEPCFLAGS += -I../../robots/
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs -lgen $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs -lsamcs -lgen $(LIBSO)
 
 LNOPTS = $(CMDS_LFLAGS$(AMD64:yes=64))
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamut -lsamcat -lsamfs

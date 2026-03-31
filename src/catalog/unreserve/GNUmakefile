@@ -33,7 +33,7 @@ include $(DEPTH)/mk/common.mk
 PROG = unreserve
 PROG_SRC = unreserve.c
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamfs -lsamcat -lsamut $(LIBSO) -lintl
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamapi -lsamcs -lsamcat -lsamut $(LIBSO) -lintl
 
 DEPCFLAGS += -I../include 
 

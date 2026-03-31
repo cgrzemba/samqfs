@@ -28,6 +28,9 @@
 
 DEPTH = ../../..
 
+# AR_DEBUG += -DTEST_W_DBX
+# AR_DEBUG += -DAR_DEBUG
+
 include $(DEPTH)/mk/common.mk
 
 PROG = sam-archiverd

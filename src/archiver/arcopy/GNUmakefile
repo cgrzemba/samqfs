@@ -28,6 +28,8 @@
 
 DEPTH = ../../..
 
+# AR_DEBUG = -DAR_DEBUG
+
 include $(DEPTH)/mk/common.mk
 
 ifndef NO_BUILD_STK
@@ -49,7 +51,7 @@ PROG_SRC = \
 include ../archiver.mk
 
 DEPCFLAGS += $(HC_INCLUDE)
-ADDLIB = -lsamfs -lsamrft -lpax_hdr $(HC_LIB)
+ADDLIB = -lsam -lsamcs -lsamrft -lpax_hdr $(HC_LIB)
 
 include $(DEPTH)/mk/targets.mk
 

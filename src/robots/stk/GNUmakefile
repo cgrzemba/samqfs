@@ -62,7 +62,7 @@ DEPCFLAGS += -Istk_includes $(THRCOMP)
 
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
 	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) \
-	-lsamfs -lsamcat -lsamut $(LIBSO) $(THRLIBS) -lgen
+	-lsamfs -lsamcs -lsamcat -lsamut $(LIBSO) $(THRLIBS) -lgen
 
 STK_INCLUDES = stk_release/src/h
 

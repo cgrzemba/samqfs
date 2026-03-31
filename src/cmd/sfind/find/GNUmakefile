@@ -73,7 +73,7 @@ DEFS +=  -DMAJOR_IN_MKDEV=1
 endif
 
 DEPCFLAGS = $(DEFS) -I../lib -I$(TARG_INC)$(DEPTH)/include
-PROG_LIBS = ../lib/$(OBJ_DIR)/libfind.a -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf $(LIBSO)
+PROG_LIBS = ../lib/$(OBJ_DIR)/libfind.a -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf -lsamcs $(LIBSO)
 ifeq ($(OS), SunOS)
 PROG_LIBS += -lgen -lintl -lproject
 endif

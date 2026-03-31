@@ -57,6 +57,7 @@ opt/SUNWsamfs/lib/librecycler.so 0755
 opt/SUNWsamfs/lib/libsam.so 0755
 opt/SUNWsamfs/lib/libsamapi.so 0755
 opt/SUNWsamfs/lib/libsamcat.so 0755
+opt/SUNWsamfs/lib/libsamcs.so 0755
 opt/SUNWsamfs/lib/libsamdb.so 0755
 opt/SUNWsamfs/lib/libsamfs.so 0755
 opt/SUNWsamfs/lib/libsammig.so 0755

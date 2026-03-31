@@ -48,6 +48,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#define DEC_INIT
 #include "sam/types.h"
 #include "sam/lib.h"
 #include "sam/param.h"

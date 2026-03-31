@@ -35,7 +35,7 @@ PROG_SRC = import.c
 
 DEPCFLAGS += -DSTK -I$(DEPTH)/src/robots/stk/stk_includes
 PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -ldl $(LIBSO)/stk -L /usr/ucblib -lsocket -lnsl -lintl \
-	$(LIBSO) -lsamut -lsamfs -lgen
+	$(LIBSO) -lsamut -lsamfs -lsamcs -lgen
 
 LNOPTS = $(CMDS_LFLAGS32)
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsamut -lsamfs

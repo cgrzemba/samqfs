@@ -33,8 +33,17 @@ include $(DEPTH)/mk/common.mk
 ifeq ($(OS), Linux)
 DIRS = fsconfig mount
 else
-DIRS = bcheck dump-restore fsck fsconfig fstyp mkfs mount ncheck lockfs \
-		sharefs shrink umount
+DIRS = bcheck \
+	dump-restore \
+	fsck fsconfig \
+	fstyp \
+	mkfs \
+	mount \
+	ncheck \
+	lockfs \
+	sharefs \
+	shrink \
+	umount
 endif
 
 include $(DEPTH)/mk/targets.mk

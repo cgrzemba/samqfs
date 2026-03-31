@@ -60,6 +60,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <assert.h>
 
 /* SAM-FS headers. */
+#define	DEC_INIT
 #include "sam/types.h"
 #include "aml/device.h"
 #include "sam/devnm.h"
@@ -77,7 +78,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "aml/odlabels.h"
 #include "aml/tapes.h"
 #include "aml/samapi.h"
-#define	DEC_INIT	/* Recycler uses sam_chmed_value api function */
+			/* Recycler uses sam_chmed_value api function */
 #include "aml/remote.h"	/* which checks for sam remote, so recycler must */
 #undef  DEC_INIT	/* have the sam remote functions declared. */
 #include "sam/lint.h"

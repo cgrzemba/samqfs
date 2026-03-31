@@ -49,7 +49,7 @@ DEPCFLAGS += -I../include $(THRCOMP)
 
 DIRS = ../lib
 
-SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamapi -lsamcat -lsamfs \
+SAMLIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamapi -lsamcat -lsamcs \
 	-lsamut -lsamconf -lsamrft
 PROG_LIBS =  $(SAMLIBS) $(LIBSO) $(THRLIBS) -lz -lgen -lintl -L ../lib/$(OBJ_DIR) -lrecycler
 

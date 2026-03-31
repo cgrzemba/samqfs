@@ -38,6 +38,7 @@ LIB_SRC = \
 		cssha1.c \
 		cssimple.c \
 		csuser.c \
+		readcsum.c \
 		writecsum.c
 
 DEPCFLAGS += -I$(OBJ_DIR) $(THRCOMP) $(OSDEPCFLAGS)

@@ -65,8 +65,8 @@
 #include "pub/stat.h"
 #include "pub/listio.h"
 #include "sam/checksum.h"
-#include "sam/checksumf.h"
 #include "sam/samioc.h"
+#include "sam/checksumf.h"
 
 /* Local headers. */
 	/* None. */
@@ -84,14 +84,21 @@
 	/* None. */
 
 /* Private functions. */
-static int compute_checksum(const char *path, csum_t *csum);
+#ifndef TEST
+static
+#endif
+int compute_checksum(const char *path, csum_t *csum, int *algo);
 static int check_args_consistency(struct sam_archive_copy_arg *arg);
 static int parse_args(struct sam_archive_copy_arg *arg,
 			int num_opts, va_list opts_list);
 static int check_permissions();
 
 /* Public data. */
+#pragma weak cs_empty
 #pragma weak cs_simple
+#pragma weak cs_md5
+#pragma weak cs_sha1
+#pragma weak csum_fns
 
 /* Function macros. */
 	/* None. */
@@ -369,6 +376,7 @@ sam_stage(
  *	g - generate [checksum]
  *	n - specify [checksum algorithm (where n is a digit)]
  *	u - use [checksum for staging]
+ *	a - algo choosen
  */
 int
 sam_ssum(
@@ -377,18 +385,24 @@ sam_ssum(
 {
 	struct sam_fileops_arg arg;
 	int error;
+	int algo;
 
 	arg.path.ptr = path;
 	arg.ops.ptr = ops;
 	if (strchr(ops, 'G')) {
 		csum_t csum;
+		int algo;
 
-		if ((error = compute_checksum(path, &csum)) == 0) {
+		if ((error = compute_checksum(path, &csum, &algo)) == 0) {
 			struct sam_set_csum_arg arg;
 			int error;
 
+			if ((error=writeCsumFile(NULL, path, &csum, algo)) != 0) {
+				errno = error;
+				return error;
+			}
 			arg.path.ptr = path;
-			arg.csum = csum;
+			arg.csum = csum; /* XXX ??? XXX */
 			if ((error = sam_syscall(SC_setcsum, &arg,
 			    sizeof (arg))) == 0) {
 				return (error);
@@ -519,8 +533,11 @@ qfs_lio_init(qfs_lio_handle_t *hdl)
 
 static unsigned char buf[64*1024];
 
-static int
-compute_checksum(const char *path, csum_t *csum)
+#ifndef TEST
+static
+#endif
+int
+compute_checksum(const char *path, csum_t *csum, int *algo)
 {
 	time_t mtime;
 	struct sam_stat sbuf;
@@ -531,11 +548,12 @@ compute_checksum(const char *path, csum_t *csum)
 	if (sam_stat(path, &sbuf, sizeof (sbuf)) < 0) {
 		return (errno);
 	}
+	*algo = sbuf.cs_algo;
 	if (SS_ISOFFLINE(sbuf.attr)) {
 		return (ER_FILE_IS_OFFLINE);
 	}
 	mtime = sbuf.st_mtime;
-	cs_simple(&sbuf.st_size, 0, 0, csum);
+	csum_fns[sbuf.cs_algo](&sbuf.st_size, 0, 0, csum);
 	fsize = (int)sbuf.st_size;
 	if ((fd = open(path, O_RDONLY)) < 0) {
 		return (errno);
@@ -544,10 +562,13 @@ compute_checksum(const char *path, csum_t *csum)
 		if ((read_size = read(fd, buf, 64*1024)) < 0) {
 			return (errno);
 		}
-		cs_simple(NULL, buf, read_size, csum);
+		csum_fns[sbuf.cs_algo](NULL, buf, read_size, csum);
 		fsize -= read_size;
 	}
 	close(fd);
+	if (sbuf.cs_algo > CS_SIMPLE) {
+		csum_fns[sbuf.cs_algo](NULL, 0, 0, csum);
+	}
 	if (sam_stat(path, &sbuf, sizeof (sbuf)) < 0) {
 		return (errno);
 	}

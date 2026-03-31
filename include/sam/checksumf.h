@@ -40,6 +40,7 @@
 
 typedef void (*csum_func)();
 
+#if defined(DEC_INIT) && !defined(lint)
 /* The checksum processing functions */
 /* A non-null cookie (pointer) indicates an initialization pass. */
 
@@ -49,6 +50,12 @@ extern void cs_empty(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 /* 1 */
 extern void cs_simple(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 
+/* 2 */
+extern void cs_md5(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
+
+/* 3 */
+extern void cs_sha1(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
+
 /* user */
 extern void cs_user(uint64_t *cookie, int algo, uchar_t *buf,
 	int len, csum_t *val);
@@ -56,16 +63,19 @@ extern void cs_user(uint64_t *cookie, int algo, uchar_t *buf,
 /* repair function for cs_simple() */
 extern void cs_repair(uchar_t *csum, uint64_t *cookie);
 
-#if defined(DEC_INIT) && !defined(lint)
 csum_func csum_fns[CS_FUNCS] = {
 	cs_empty,
-	cs_simple
+	cs_simple,
+	cs_md5,
+	cs_sha1
 };
 
 char csum_algo[CS_FUNCS+1][8] = {
-        "NONE",
-        "LEGACY",
-        '\0'
+	{ "NONE" },
+	{ "LEGACY" },
+	{ "MD5" },
+	{ "SHA1" },
+	{ '\0' }
 };
 
 #else	/* defined(DEC_INIT) */

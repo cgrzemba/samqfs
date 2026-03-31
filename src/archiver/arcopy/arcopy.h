@@ -149,6 +149,7 @@ void SetTimeout(enum Timeouts to);
 void ChecksumInit(uchar_t algo);
 void ChecksumData(char *data, ssize_t numBytes);
 void ChecksumWait(void);
+int getChecksumAlgo();
 
 /* copyfile.c */
 void AdvanceIn(int count);

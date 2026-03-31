@@ -35,7 +35,7 @@ PROG_SRC = ncheck.c
 
 DEPCFLAGS += -I../../include -I../../include/$(OBJ_DIR)
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lintl $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamconf -lsamcs -lintl $(LIBSO)
 
 LNOPTS = -mnuxs -Dlint
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)
