@@ -248,6 +248,7 @@ struct FileInfo {
 /* Set by sam-arcopy */
 #define	FI_archived	0x10		/* File was archived */
 #define	FI_error	0x20		/* An error occurred */
+#define	FI_csumming	0x40		/* calculate csum */
 
 #define	FI_IGNORE (fi->FiFlags & (FI_archived | FI_error))
 

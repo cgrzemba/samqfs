@@ -399,7 +399,8 @@ ArchiveAddFile(
 	int copy,
 	int age,
 	int copiesReq,
-	boolean_t unarch)
+	boolean_t unarch,
+	boolean_t setCsumming)
 {
 	static char arname[ARCHREQ_NAME_SIZE];
 	static char ts[ISO_STR_FROM_TIME_BUF_SIZE];
@@ -654,6 +655,9 @@ ArchiveAddFile(
 		oi->OiMedia = dinode->media[offlineCopy];
 		memmove(oi->OiVsn, pinode->ar.image[offlineCopy].vsn,
 		    sizeof (oi->OiVsn));
+	}
+	if (dinode->status.b.cs_gen && setCsumming) {
+		fi->FiFlags |= FI_csumming;
 	}
 
 	/*

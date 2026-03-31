@@ -925,7 +925,7 @@ copyRegular(
 	if (S_ISSEGS(dp)) {
 		File->AfSegNum = dp->rm.info.dk.seg.ord + 1;
 	}
-	if (dp->status.b.cs_gen) {
+	if ((dp->status.b.cs_gen) && (File->f->FiFlags & FI_csumming)) {
 		/*
 		 * Attribute is set indicating checksum should be generated,
 		 * and license allows checksum feature.  Call routine for

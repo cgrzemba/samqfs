@@ -138,6 +138,7 @@ void HcUnloadVolume();
 void ChecksumInit(FileInfo_t *file, boolean_t init);
 void Checksum(char *data, int num_bytes);
 void ChecksumWait();
+void ChecksumFini();
 #ifdef TIME32
 int ChecksumCompare(int fd, sam_id_t *id);
 #else

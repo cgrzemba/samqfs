@@ -222,6 +222,19 @@ ChecksumWait(void)
 	PthreadMutexUnlock(&checksum->mutex);
 }
 
+void ChecksumFini(void)
+{
+	ASSERT(checksum != NULL);
+
+	if (checksum->algo > CS_SIMPLE)
+		checksum->func(NULL, 0, 0, &checksum->val);
+	Trace(TR_DEBUG, "[%d][] Checksum complete: -a %d 0x%.8x%.8x 0x%.8x%.8x",
+	    checksum->id,
+	    checksum->algo,
+	    checksum->val.csum_val[0], checksum->val.csum_val[1],
+	    checksum->val.csum_val[2], checksum->val.csum_val[3]);
+}
+
 /*
  * Done staging file.  Compare accumulated checksum value on stage
  * against value generated during archive.  Upon successful completion
@@ -298,11 +311,15 @@ ChecksumCompare(
 #else
 	csum_t csum;
 
-	readCsumFile(fn, &csum, checksum->algo);
+	if(readCsumFile(fn, &csum, checksum->algo) != 0) {
+		Trace(TR_ERR, "read error of SUNWsamfs_digest for %s", fn);
+		return (EDVVCMP);
+	}
 	if (checksum != NULL) {
 		for (i = 0; i < (CS_LEN>>2); i++) {
 			if (csum.csum_val[i] != checksum->val.csum_val[i]) {
 				retval = EDVVCMP;
+				SetErrno = 0;
 				Trace(TR_ERR, "Checksum error inode: %d.%d",
 				    id->ino, id->gen);
 				Trace(TR_ERR, "Checksum value: %.8x %.8x %.8x %.8x",
@@ -317,6 +334,10 @@ ChecksumCompare(
 			}
 		}
 	}
+	if (retval == 0)
+		Trace(TR_DEBUG, "ChecksumCompare returns ok");
+	else
+		Trace(TR_DEBUG, "ChecksumCompare returns with err=", retval);
 #endif
 	return (retval);
 }
@@ -391,8 +412,6 @@ checksumWorker(
 		PthreadCondSignal(&checksum->complete);
 		PthreadMutexUnlock(&checksum->mutex);
 	}
-	if (checksum->algo > CS_SIMPLE)
-		checksum->func(NULL, 0, 0, &checksum->val);
 
 	return (NULL);
 }

@@ -35,7 +35,7 @@ PROG_SRC = dvt.c
 
 DEPCFLAGS += -I $(DEPTH)/include/pub $(THRCOMP)
 
-PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lgen $(THRLIBS) $(LIBSO)
+PROG_LIBS = -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcs -lgen $(THRLIBS) $(LIBSO)
 
 LNOPTS = -anuxms -Dlint
 LNLIBS = -L $(DEPTH)/lib/$(OBJ_DIR)

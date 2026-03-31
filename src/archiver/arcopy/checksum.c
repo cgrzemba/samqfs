@@ -186,6 +186,8 @@ ChecksumWait(void)
 	    File->AfCsum.csum_val[0], File->AfCsum.csum_val[1],
 	    File->AfCsum.csum_val[2], File->AfCsum.csum_val[3]);
 
+	checksum->done = B_TRUE;
+	PthreadCondSignal(&checksum->avail);
 	PthreadMutexUnlock(&checksum->mutex);
 }
 
@@ -204,14 +206,14 @@ checksumWorker(
 			PthreadCondWait(&checksum->avail, &checksum->mutex);
 		}
 
-		Trace(TR_DEBUG, "[%s] Checksumming data: 0x%x bytes: %d",
-		    File->f->FiName, (long)checksum->data, checksum->numBytes);
-
 		PthreadMutexUnlock(&checksum->mutex);
 
 		if (checksum->done == B_TRUE) {
 			break;
 		}
+
+		Trace(TR_DEBUG, "[%s] Checksumming data: 0x%x bytes: %d",
+		    File->f->FiName, (long)checksum->data, checksum->numBytes);
 
 		if (checksum->algo & CS_USER_BIT) {
 			checksum->func(0, checksum->algo,
@@ -221,8 +223,6 @@ checksumWorker(
 			checksum->func(0, (uchar_t *)checksum->data,
 			    checksum->numBytes, &File->AfCsum);
 		}
-
-		Trace(TR_DEBUG, "[%s] Checksumming interm result: %lx", File->f->FiName, File->AfCsum.csum_val[0]);
 
 		PthreadMutexLock(&checksum->mutex);
 		checksum->isComplete = B_TRUE;

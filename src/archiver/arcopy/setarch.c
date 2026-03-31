@@ -219,7 +219,9 @@ enterArchiveStatus(
 		sa->sa_copies_req =  fi->FiCopiesReq;
 		if (af->AfFlags & AF_csummed) {
 			sa->flags = SA_csummed;
-			writeCsumFile(fi->FiName, &af->AfCsum);
+			writeCsumFile(MntPoint, fi->FiName, &af->AfCsum, getChecksumAlgo());
+		} else if (!(fi->FiFlags & FI_csumming)) {
+			sa->flags = SA_csummed;
 		}
 		sa->access_time = af->AfAccessTime;
 		sa->modify_time = af->AfModifyTime;
