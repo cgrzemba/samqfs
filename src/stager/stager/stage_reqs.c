@@ -282,6 +282,8 @@ CreateFile(
 	/*
 	 * Set file's checksum attributes.
 	 */
+		Trace(TR_DEBUG, "Request csum: flag=%x algo=%d\n",
+		    req->flags, req->cs_algo, pathBuffer);
 	if (req->flags & STAGE_CSUSE) {
 		char *mountname;
 		SET_FLAG(fi.flags, FI_USE_CSUM);
@@ -289,6 +291,9 @@ CreateFile(
 		GetFileName(&fi, pathBuffer, PATHBUF_SIZE, NULL);
 		mountname = GetMountPointName(fi.fseq);
 		fi.namelen = strlen(pathBuffer) - strlen(mountname);
+		Trace(TR_DEBUG, "File csum: flag=%x algo=%d name=%s\n",
+		    fi.flags, fi.csum_algo, pathBuffer);
+
 	}
 
 	/*

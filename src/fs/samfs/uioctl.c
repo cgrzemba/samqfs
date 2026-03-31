@@ -1490,6 +1490,7 @@ sam_set_archive(
 	 */
 	if (S_ISREG(ip->di.mode) && ip->di.status.b.cs_gen &&
 	    (!(pp->flags & SA_csummed))) {
+		TRACE(T_SAM_SA_CS, SAM_ITOP(ip), ip->di.id.ino, ip->di.status.b.cs_gen, pp->flags);
 		return (EINVAL);
 	}
 

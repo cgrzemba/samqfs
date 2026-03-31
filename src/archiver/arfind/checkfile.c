@@ -498,13 +498,13 @@ checkArchiveStatus(
 			}
 			copiesTomake &= ~copyBit;
 #if defined(FILE_TRACE)
-			Trace(TR_DEBUG, "Addfile %d.%d %s %d %x %x",
+			Trace(TR_DEBUG, "ArchiveAddFile %d.%d %s %d %x %x %x",
 			    dinode->id.ino, dinode->id.gen, pb->PbPath,
-			    copy, copiesTomake, copiesReq);
+			    copy, copiesTomake, copiesReq, copiesTomake == 0);
 #endif /* defined(FILE_TRACE) */
 			if (ArchiveAddFile(pb, pinode, fp, copy,
 			    TIME_NOW(dinode) - archRef, copiesReq,
-			    unarch) > 0) {
+			    unarch, copiesTomake == 0) > 0) {
 				/*
 				 * Rescan file later.
 				 */
@@ -567,7 +567,7 @@ checkRearchive(
 			 * allsets ArchReq.
 			 */
 			(void) ArchiveAddFile(pb, pinode, &emptyFp, copy,
-			    0, 0, 0);
+			    0, 0, 0, 0);
 		}
 	}
 	SetArchdone(pb->PbPath, dinode);

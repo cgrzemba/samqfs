@@ -118,7 +118,7 @@ void TraceTimes();
 void *Archive(void *arg);
 int ArchiveAddFile(struct PathBuffer *pb, struct sam_perm_inode *pinode,
 	struct FilePropsEntry *fp, int copy, int age, int copiesReq,
-	boolean_t unarch);
+	boolean_t unarch, boolean_t setCsumming);
 void ArchiveInit(struct Threads *th);
 void ArchiveReconfig(void);
 int ArchiveRmArchReq(char *arname);

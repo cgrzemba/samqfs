@@ -292,6 +292,7 @@ DiskCacheWrite(
 		    nbytes, dataToWrite, readErrno, cancel);
 	}
 
+	ChecksumFini();
 	Trace(TR_FILES, "Write disk complete inode: %d.%d",
 	    file->id.ino, file->id.gen);
 
