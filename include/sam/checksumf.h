@@ -56,6 +56,9 @@ extern void cs_md5(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 /* 3 */
 extern void cs_sha1(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 
+/* 4 */
+extern void cs_sha256(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
+
 /* user */
 extern void cs_user(uint64_t *cookie, int algo, uchar_t *buf,
 	int len, csum_t *val);
@@ -67,7 +70,8 @@ csum_func csum_fns[CS_FUNCS] = {
 	cs_empty,
 	cs_simple,
 	cs_md5,
-	cs_sha1
+	cs_sha1,
+	cs_sha256
 };
 
 char csum_algo[CS_FUNCS+1][8] = {
@@ -75,6 +79,7 @@ char csum_algo[CS_FUNCS+1][8] = {
 	{ "LEGACY" },
 	{ "MD5" },
 	{ "SHA1" },
+	{ "SHA256" },
 	{ '\0' }
 };
 

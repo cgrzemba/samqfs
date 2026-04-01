@@ -80,6 +80,7 @@
 #ifdef SUNW
 #include <sys/types.h>
 #include <sys/sha1.h>
+#include <sys/sha2.h>
 #undef st_atime
 #undef st_mtime
 #undef st_ctime
@@ -2527,6 +2528,11 @@ struct file *f)		/* File entry */
 					break;
 				case CS_SHA1:
 					for(int i=0; i<(SHA1_DIGEST_LENGTH>>2); i++) {
+						printf("%08x", csum.csum_val[i]);
+					}
+					break;
+				case CS_SHA256:
+					for(int i=0; i<(SHA256_DIGEST_LENGTH>>2); i++) {
 						printf("%08x", csum.csum_val[i]);
 					}
 					break;

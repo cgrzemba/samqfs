@@ -127,6 +127,12 @@ writeCsumFile(const char* mntpt, const char* fn, csum_t* csum, int algo)
 	                        csp += 8;
 	                }
 	                break;
+	        case CS_SHA256:
+	                for(int i=0; i<(SHA256_DIGEST_LENGTH>>2); i++) {
+	                        sprintf(csp,"%08x", csum->csum_val[i]);
+	                        csp += 8;
+	                }
+	                break;
 	        default:
 			Trace(TR_ERR, "unknown csum algo: %d", checksum->algo);
 			return (errno);
