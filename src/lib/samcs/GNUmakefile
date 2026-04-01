@@ -36,6 +36,7 @@ LIB_SRC = \
 		csempty.c \
 		csmd5.c \
 		cssha1.c \
+		cssha256.c \
 		cssimple.c \
 		csuser.c \
 		readcsum.c \

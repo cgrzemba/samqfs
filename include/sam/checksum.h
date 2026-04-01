@@ -53,12 +53,14 @@
  * The below constant declarations must correspond with the ordering of the
  * functions in the csum array, declared in checksumf.h.
  */
-#define	CS_NONE		0
-#define	CS_SIMPLE	1
-#define	CS_MD5		2
-#define	CS_SHA1		3
-
-#define	CS_FUNCS	4	/* number of SAM-defined checksum functions */
+enum CS_ALGO {
+	CS_NONE	= 0,
+	CS_SIMPLE,
+	CS_MD5,
+	CS_SHA1,
+	CS_SHA256,
+	CS_FUNCS	/* have to be the last item */
+};
 
 int writeCsumFile(const char* mntpoint, const char* fn, csum_t* csum, int algo);
 int readCsumFile(const char* fn, csum_t* csum, int algo);
