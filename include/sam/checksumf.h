@@ -59,6 +59,12 @@ extern void cs_sha1(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 /* 4 */
 extern void cs_sha256(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
 
+/* 5 */
+extern void cs_sha384(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
+
+/* 6 */
+extern void cs_sha512(uint64_t *cookie, uchar_t *buf, int len, csum_t *val);
+
 /* user */
 extern void cs_user(uint64_t *cookie, int algo, uchar_t *buf,
 	int len, csum_t *val);
@@ -71,7 +77,9 @@ csum_func csum_fns[CS_FUNCS] = {
 	cs_simple,
 	cs_md5,
 	cs_sha1,
-	cs_sha256
+	cs_sha256,
+	cs_sha384,
+	cs_sha512
 };
 
 char csum_algo[CS_FUNCS+1][8] = {
@@ -80,6 +88,8 @@ char csum_algo[CS_FUNCS+1][8] = {
 	{ "MD5" },
 	{ "SHA1" },
 	{ "SHA256" },
+	{ "SHA384" },
+	{ "SHA512" },
 	{ '\0' }
 };
 

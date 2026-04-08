@@ -51,6 +51,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sha1.h>
+#include <sys/sha2.h>
 #include <fcntl.h>
 
 /* SAM-FS headers. */
@@ -60,6 +61,15 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include "sam/checksumf.h"
 
 #define Trace(l, f, ...)
+
+void
+csumqw2str(char *csp, int csum_size, csum_t *csum)
+{
+	for(int i=0; i<csum_size; i++) {
+		sprintf(csp,"%08x", csum->csum_val[i]);
+		csp += 8;
+	}
+}
 
 int
 writeCsumFile(const char* mntpt, const char* fn, csum_t* csum, int algo)
@@ -116,22 +126,19 @@ writeCsumFile(const char* mntpt, const char* fn, csum_t* csum, int algo)
 	switch (algo) {
 	        case CS_SIMPLE:
 	        case CS_MD5:
-	                for(int i=0; i<4; i++) {
-	                        sprintf(csp,"%08x", csum->csum_val[i]);
-	                        csp += 8;
-	                }
+			csumqw2str(csp, 4, csum);
 	                break;
 	        case CS_SHA1:
-	                for(int i=0; i<(SHA1_DIGEST_LENGTH>>2); i++) {
-	                        sprintf(csp,"%08x", csum->csum_val[i]);
-	                        csp += 8;
-	                }
+			csumqw2str(csp, SHA1_DIGEST_LENGTH>>2, csum);
 	                break;
 	        case CS_SHA256:
-	                for(int i=0; i<(SHA256_DIGEST_LENGTH>>2); i++) {
-	                        sprintf(csp,"%08x", csum->csum_val[i]);
-	                        csp += 8;
-	                }
+			csumqw2str(csp, SHA256_DIGEST_LENGTH>>2, csum);
+	                break;
+	        case CS_SHA384:
+			csumqw2str(csp, SHA384_DIGEST_LENGTH>>2, csum);
+	                break;
+	        case CS_SHA512:
+			csumqw2str(csp, SHA512_DIGEST_LENGTH>>2, csum);
 	                break;
 	        default:
 			Trace(TR_ERR, "unknown csum algo: %d", checksum->algo);

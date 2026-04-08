@@ -51,6 +51,7 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sha1.h>
+#include <sys/sha2.h>
 #include <fcntl.h>
 
 /* SAM-FS headers. */
@@ -68,6 +69,28 @@ static char *_SrcFile = __FILE__;   /* Using __FILE__ makes duplicate strings */
 #endif
 
 int
+csumstr2qw(char *csumbuf, int csum_size, csum_t *csum, int algo)
+{
+	char csalgo[8];
+	char *csp = csumbuf;
+
+	strncpy(csalgo, csp, strlen(csum_algo[algo]));
+	if (strncmp(csalgo, csum_algo[algo],
+	    strlen(csum_algo[algo])) != 0) {
+		Trace(TR_ERR, "csum algo missmatch: %s/%s, %s", fn,
+		    csum_algo[algo], csalgo);
+		return (EINVAL);
+	}
+	csp = strchr(csumbuf, ':');
+	csp++;
+        for(int i=0; i<csum_size; i++) {
+		sscanf(csp,"%08x", &csum->csum_val[i]);
+		csp += 8;
+	}
+	return (0);
+}
+
+int
 readCsumFile(const char* fn, csum_t* csum, int algo)
 {
 	int dfd;
@@ -75,9 +98,7 @@ readCsumFile(const char* fn, csum_t* csum, int algo)
 	int attrfd;
 	int afd;
 	char csumbuf[256] = {'\0'};
-	char *csp = csumbuf;
 	char *fnpos;
-	char csalgo[8];
 
 	if ((cwdfd = open(".", O_RDONLY)) < 0) {
 	        Trace(TR_ERR, "failed get current directory: %s", strerror(errno));
@@ -117,49 +138,19 @@ readCsumFile(const char* fn, csum_t* csum, int algo)
 	switch (algo) {
 		case CS_SIMPLE:
 		case CS_MD5:
-			strncpy(csalgo, csp, strlen(csum_algo[algo]));
-			if (strncmp(csalgo, csum_algo[algo],
-			    strlen(csum_algo[algo])) != 0) {
-				Trace(TR_ERR, "csum algo missmatch: %s/%s, %s", fn,
-				    csum_algo[algo], csalgo);
-				goto out;
-			}
-			csp = strchr(csumbuf, ':');
-			csp++;
-	                for(int i=0; i<4; i++) {
-	                        sscanf(csp,"%08x", &csum->csum_val[i]);
-	                        csp += 8;
-	                }
-	                break;
+			(void) csumstr2qw(csumbuf, 4, csum, algo);
+			break;
 		case CS_SHA1:
-			strncpy(csalgo, csp, strlen(csum_algo[algo]));
-			if (strncmp(csalgo, csum_algo[algo],
-			    strlen(csum_algo[algo])) != 0) {
-				Trace(TR_ERR, "csum algo missmatch: %s/%s, %s", fn,
-				    csum_algo[algo], csalgo);
-				goto out;
-			}
-			csp = strchr(csumbuf, ':');
-			csp++;
-	                for(int i=0; i<(SHA1_DIGEST_LENGTH>>2); i++) {
-	                        sscanf(csp,"%08x", &csum->csum_val[i]);
-	                        csp += 8;
-	                }
+			(void) csumstr2qw(csumbuf, SHA1_DIGEST_LENGTH>>2, csum, algo);
 	                break;
 		case CS_SHA256:
-			strncpy(csalgo, csp, strlen(csum_algo[algo]));
-			if (strncmp(csalgo, csum_algo[algo],
-			    strlen(csum_algo[algo])) != 0) {
-				Trace(TR_ERR, "csum algo missmatch: %s/%s, %s", fn,
-				    csum_algo[algo], csalgo);
-				goto out;
-			}
-			csp = strchr(csumbuf, ':');
-			csp++;
-	                for(int i=0; i<(SHA256_DIGEST_LENGTH>>2); i++) {
-	                        sscanf(csp,"%08x", &csum->csum_val[i]);
-	                        csp += 8;
-	                }
+			(void) csumstr2qw(csumbuf, SHA256_DIGEST_LENGTH>>2, csum, algo);
+	                break;
+		case CS_SHA384:
+			(void) csumstr2qw(csumbuf, SHA384_DIGEST_LENGTH>>2, csum, algo);
+	                break;
+		case CS_SHA512:
+			(void) csumstr2qw(csumbuf, SHA512_DIGEST_LENGTH>>2, csum, algo);
 	                break;
 	        default:
 	                Trace(TR_ERR, "unknown csum algo: %d", algo);

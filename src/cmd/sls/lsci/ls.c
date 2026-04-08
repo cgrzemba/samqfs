@@ -2536,6 +2536,16 @@ struct file *f)		/* File entry */
 						printf("%08x", csum.csum_val[i]);
 					}
 					break;
+				case CS_SHA384:
+					for(int i=0; i<(SHA384_DIGEST_LENGTH>>2); i++) {
+						printf("%08x", csum.csum_val[i]);
+					}
+					break;
+				case CS_SHA512:
+					for(int i=0; i<(SHA512_DIGEST_LENGTH>>2); i++) {
+						printf("%08x", csum.csum_val[i]);
+					}
+					break;
 				default:
 					;;
 				}
