@@ -165,7 +165,7 @@ sam_getdents_gen(struct sam_dirent *dirent) {
 		uint16_t namlen;
 		int n_valid = 0;
 
-		while(dp->d_reclen > 0 && dp < direntbuf+size) {
+		while(dp->d_reclen > 0 && (char*)dp < ((char*)direntbuf)+size) {
 			if (dp->d_ino >= SAM_MIN_USER_INO) { /* skip system inodes */
 				sdp->d_fmt = 0x4000;
 				namlen = strlen(dp->d_name);

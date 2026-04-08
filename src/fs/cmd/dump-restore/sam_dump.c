@@ -255,7 +255,7 @@ dump_directory_entry(
 		idino.pip.ptr = &perm_inode;
 		if (ioctl(SAM_fd, F_RDINO, &idino) < 0) {
 			error(0, errno, catgets(catfd, SET, 13245,
-			    "%s: cannot F_RDINO, %d"), name, idino.ino);
+			    "%s: cannot F_RDINO, %d"), path, idino.ino);
 			return;
                 }
 		id.gen = perm_inode.di.id.gen;
@@ -821,8 +821,10 @@ csd_dump_path(
 			inode_list[num_inodes].id = dirent->d_id;
 			cur_namesp->unused += name_length;
 			cur_namesp->chars_remaining -= name_length;
-			if (++num_inodes >= max_inodes) {
+			if (num_inodes == max_inodes) {
 				break;
+			} else {
+				num_inodes++;
 			}
 		}
 		/*
