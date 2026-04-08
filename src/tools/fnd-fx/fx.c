@@ -109,7 +109,9 @@ main(int argc, char **argv)
 		if (sam_lstat(name, &sbuf, sizeof (sbuf)) == 0) {
 			struct sam_ioctl_idstat idstat;
 			struct sam_perm_inode perm_inode;
+#ifdef TIME32
 			struct sam_perm_inode_v1 *perm_inode_v1;
+#endif
 			struct sam_vsn_section *vsnp = NULL;
 			int copy, n_vsns;
 
