@@ -239,6 +239,10 @@ typedef struct sam_id {		/* Inode identification */
 #define CS_LEN	16
 #endif
 
+typedef struct csum_v2 {		/* Data verification value */
+	uint32_t csum_val[4];
+} csum_v2_t;
+
 typedef struct csum {		/* Data verification value */
 	uint32_t csum_val[CS_LEN];
 } csum_t;

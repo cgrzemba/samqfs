@@ -130,10 +130,14 @@ main(int argc, char *argv[])
 	printf("sizeof sam_perm_inode=%d/512\n", sizeof(struct sam_perm_inode));
 	printf("sizeof sam_disk_inode=%d/240\n", sizeof(struct sam_disk_inode));
 	printf("sizeof sam_archive_info=%d/56,224\n", sizeof(struct sam_archive_info));
+	printf("sizeof sam_arch_iode=%d/224\n", sizeof(struct sam_arch_inode));
 	printf("sizeof sam_disk_inode_part2=%d/32\n", sizeof(struct sam_disk_inode_part2));
-	printf("sizeof sam_perm_inode_v2=%d/512\n", sizeof(struct sam_perm_inode_v2));
+	printf("\nsizeof sam_perm_inode_v2=%d/512\n", sizeof(struct sam_perm_inode_v2));
+	printf("sizeof sam_disk_inode_v2=%d/240\n", sizeof(struct sam_disk_inode_v2));
+	printf("sizeof csum_t=%d/\n", sizeof(uint32_t)*4);
+	printf("sizeof sam_archive_info_v2=%d/56,224\n", sizeof(struct sam_archive_info_v2));
 	printf("sizeof sam_disk_inode_part2_v2=%d/32\n", sizeof(struct sam_disk_inode_part2_v2));
-	printf("sizeof sam_indirect_extent=%d/10265\n", sizeof(struct sam_indirect_extent));
+	printf("\nsizeof sam_indirect_extent=%d/10265\n", sizeof(struct sam_indirect_extent));
 #if defined(_BIT_FIELDS_HTOL)
 	printf("bitfields assigned high to low\n");
 #elif defined(_BIT_FIELDS_LTOH)

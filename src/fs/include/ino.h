@@ -436,7 +436,7 @@ typedef struct sam_disk_inode {
 	uchar_t		ext_attrs;	/* Inode extension types present */
 	sam_psize_t	psize;		/* dev or symlink/media/partial size */
 	uint64_t	blocks;		/* Count of allocated blocks */
-	time32_t	residence_time;	/* Time file changed residence */
+	sam_time_t		residence_time;	/* Time file changed residence */
 	int32_t		free_ino;	/* Next free inode */
 	sam_bn_t	extent[NOEXT];	/* Extent inode array */
 	uchar_t		extent_ord[NOEXT]; /* Extent info byte array */
@@ -502,7 +502,7 @@ typedef struct sam_arch_inode {
 /* SAM_INODE_VERS_2 */
 typedef struct sam_perm_inode_v2 {
 	sam_disk_inode_v2_t	di;
-	csum_t			csum;
+	csum_v2_t			csum;
 	sam_arch_inode_v2_t	ar;
 	sam_disk_inode_part2_v2_t	di2;
 } sam_perm_inode_v2_t;
@@ -513,7 +513,6 @@ typedef struct sam_perm_inode {
 	sam_disk_inode_t	di;
 	sam_arch_inode_t	ar;
 	sam_disk_inode_part2_t	di2;
-	uchar_t			pad[4];		/* fillup 512 byte */
 } sam_perm_inode_t;
 #pragma pack()
 
