@@ -59,6 +59,8 @@ enum CS_ALGO {
 	CS_MD5,
 	CS_SHA1,
 	CS_SHA256,
+	CS_SHA384,
+	CS_SHA512,
 	CS_FUNCS	/* have to be the last item */
 };
 

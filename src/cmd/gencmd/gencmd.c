@@ -501,9 +501,11 @@ main(
 			continue;
 		}
 
-		algo = sb.cs_algo;
 		if (dofile == sam_ssum) {
-			if ((g_opt || u_opt || e_opt) && !a_opt) {
+			if (!a_opt) {
+				algo = sb.cs_algo;
+			}
+			if (g_opt || u_opt || e_opt) {
 				*opn++ = '0' + algo;
 			}
 		}
