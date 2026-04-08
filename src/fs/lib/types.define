@@ -49,6 +49,7 @@ type = DEFINE
 	csd_header_extended
 	csd_filehdr
 	csum
+	csum_v2
 	rmt_sam_cnt_resp
 	rmt_sam_connect
 	rmt_sam_req_resp
