@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <strings.h>
 #include <time.h>
+#include <limits.h>
 #include "sam/types.h"
 #include "copy_defs.h"
 #include "sam/names.h"
@@ -20,6 +21,7 @@
 
 int debug = 0;
 StreamInfo_t *StreamInfo;
+char stdatapath[PATH_MAX] = { STDIR };
 
 void*
 MapInFile(
@@ -100,9 +102,9 @@ getVsns(char **vsnlist)
 	memset(vp, 0, 32 * LEN_TAPE_VSN+1);
 	*vsnlist = vp;
 
-	dirp = opendir(STDIR);
+	dirp = opendir(stdatapath);
 	if (dirp == NULL) {
-		fprintf(stderr, "could not open %s\n", STDIR);
+		fprintf(stderr, "could not open %s\n", stdatapath);
 		return (0);
 	}
 	while ((dp = readdir(dirp)) != NULL) {
@@ -129,9 +131,9 @@ setSeqnums(const char *vsn, int seqnums[])
 	struct dirent *dp;
 	int i=0;
 
-	dirp = opendir(STDIR);
+	dirp = opendir(stdatapath);
 	if (dirp == NULL) {
-		fprintf(stderr, "could not open %s\n", STDIR);
+		fprintf(stderr, "could not open %s\n", stdatapath);
 		return (0);
 	}
 	while ((dp = readdir(dirp)) != NULL) {
@@ -152,20 +154,23 @@ main(int argc, char *argv[])
 	int vcnt, opt, all = 0, quite=0;
 	static upath_t fullpath;
 	char *vsn = NULL;
+	char *datapath = NULL;
 	char *vsnlist;
 
-	while((opt = getopt(argc, argv, "adqv:")) != -1)
+	while((opt = getopt(argc, argv, "adp:qv:")) != -1)
 	{
 		switch(opt)
 		{
 		    case 'a':
 			all = 1;
 			break;
-		    case 'q':
-			quite = 1;
-			break;
 		    case 'd':
 			debug = 1;
+			break;
+		    case 'p':
+			datapath = optarg;
+		    case 'q':
+			quite = 1;
 			break;
 		    case 'v':
 			vsn = optarg;
@@ -173,10 +178,21 @@ main(int argc, char *argv[])
 		}
 	}
 	if (!all && vsn == NULL) {
-		printf("%s: [-adq] [-v <vsn>]\n", argv[0]);
+		printf("%s: [-adq] [-p <stagerdir>][-v <vsn>]\n", argv[0]);
 		exit(-1);
 	}
 
+	if (datapath != NULL) {
+		DIR *dirp;
+
+		sprintf(stdatapath, "%s/streams", datapath);
+		dirp = opendir(stdatapath);
+		if (dirp == NULL) {
+			fprintf(stderr, "could not open %s, invalid path\n", stdatapath);
+			exit (2);
+		}
+		(void)closedir(dirp);
+	}
 	if (all)
 		vcnt = getVsns(&vsnlist);
 	else {
@@ -201,9 +217,9 @@ main(int argc, char *argv[])
 			size_t len;
 			char flg[32] = {'\0'};
 
-			(void) sprintf(fullpath, "%s/%s.%d", STDIR, vsn, seqnums[i]);
+			(void) sprintf(fullpath, "%s/%s.%d", stdatapath, vsn, seqnums[i]);
 			if (debug) printf("%d path=%s\n", i, fullpath);
-			StreamInfo = (StreamInfo_t *)MapInFile(fullpath , O_RDWR, &len);
+			StreamInfo = (StreamInfo_t *)MapInFile(fullpath , O_RDONLY, &len);
 
 			if (StreamInfo == NULL) {
 				fprintf(stderr, "Cannot map in file '%s' errno: %d\n",

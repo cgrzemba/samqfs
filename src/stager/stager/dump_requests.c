@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include "sam/types.h"
 #include "copy_defs.h"
 #include "sam/names.h"
@@ -14,6 +15,7 @@
 #include "stager_lib.h"
 
 #define CPFN SAM_VARIABLE_PATH"/stager/"STAGE_REQS_FILENAME
+char stdatapath[PATH_MAX] = { CPFN };
 
 FileInfo_t *stageReqs;
 
@@ -89,56 +91,98 @@ main(int argc, char *argv[])
 	int numlibs = 0;
 	int xnumlibs = 0;
 	int numDrives = 8;
+	int id = 0;
+	int cnt = 0;
 	size_t size;
 	int j,i, entries;
-	int phe = 1, act = 0, cpn = 0, opt;
+	int phe = 1, act = 0, cpn = 0, debug = 0, opt;
+	char *datapath = NULL;
 
-	while((opt = getopt(argc, argv, "Hpc")) != -1)
+	while((opt = getopt(argc, argv, "HPp:cdf:")) != -1)
 	{
 		switch(opt)
 		{
 		    case 'H':  /* print no header */
 			phe = 0;
 			break;
-		    case 'p':  /* print only Copy with pax tar hdr */
+		    case 'P':  /* print only Copy with pax tar hdr */
 			act = 1;
+			break;
+		    case 'p':
+			datapath = optarg;
 			break;
 		    case 'c':  /* print also copy number in 0 */
 			cpn = 1;
 			break;
+		    case 'd':  /* debug */
+			debug = 1;
+			break;
+		    case 'f':  /* first */
+			id = atoi(optarg);
+			break;
 		}
 	}
-	stageReqs = (FileInfo_t *)MapInFile(CPFN , O_RDWR, &size);
+	if (datapath != NULL) {
+                struct stat buf;
+
+                sprintf(stdatapath, "%s/"STAGE_REQS_FILENAME, datapath);
+                if (stat(stdatapath, &buf) != 0) {
+                        fprintf(stderr, "could not open %s, invalid path\n", datapath);
+                        exit (2);
+                }
+        }
+
+	stageReqs = (FileInfo_t *)MapInFile(stdatapath , O_RDONLY, &size);
 
 	if (stageReqs == NULL) {
 		fprintf(stderr, "Cannot map in file '%s' errno: %d\n",
-		    CPFN , errno);
+		    stdatapath , errno);
 		return (-1);
 	}
 
 	entries = size / sizeof (FileInfo_t);
+	if (debug) {
+		printf("size=%d entries=%d\n", size, entries);
+	}
 
 	if (phe)
 		printf("ino       feq cp dio    pid flg err  teq  sort   next\n");
 	for (i = 0; i < entries; i++) {
-		if(stageReqs[i].fseq != 0) {
-			int pcp = cpn ? 1 : (stageReqs[i].copy !=0);
-			int pac = act ? stageReqs[i].flags & STAGE_COPY_PAXHDR : pcp;
-			if (pac)
-				printf("%8d %4d  %1d %#2x %6d %#2x %2d  %2d %6d %6d\n",
-			stageReqs[i].id,
-			stageReqs[i].fseq,
-			stageReqs[i].copy,
-			stageReqs[i].directio,
-			stageReqs[i].context,
-			stageReqs[i].flags,
-			stageReqs[i].error,
-			stageReqs[i].eq,
-			stageReqs[i].sort,
-			stageReqs[i].next);
+		FileInfo_t *entry;
+
+		entry = &stageReqs[id];
+		if (entry->next == 0 || entry->magic != 0x53746752) {
+			id = i+1;
+			continue;
 		}
+		printf("%d %4d  %1d %s %x %s %x %s %x %s %x %#2x %6d %#2x %2d  %2d %2d %6d\n",
+		    entry->id.ino,
+		    entry->fseq,
+		    entry->copy,
+		    entry->ar[0].section.vsn,
+		    entry->ar[0].section.position,
+		    entry->ar[1].section.vsn,
+		    entry->ar[1].section.position,
+		    entry->ar[2].section.vsn,
+		    entry->ar[2].section.position,
+		    entry->ar[3].section.vsn,
+		    entry->ar[3].section.position,
+		    entry->directio,
+		    entry->context,
+		    entry->flags,
+		    entry->error,
+		    entry->retry,
+		    entry->eq,
+		    entry->sort);
+		cnt++;
+		id = entry->next;
+		if (id == -1)
+			break;
+		if (stageReqs[id].magic != 0x53746752)
+			break;
 	}
 
 	munmap(stageReqs, size);
+	printf("num entries=%d\n", cnt);
 	return (0);
 }

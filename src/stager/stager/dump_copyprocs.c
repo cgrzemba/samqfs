@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
+#include <string.h>
 #include "sam/types.h"
 #include "copy_defs.h"
 #include "sam/names.h"
@@ -14,6 +16,7 @@
 #include "stager_lib.h"
 
 #define CPFN SAM_VARIABLE_PATH"/stager/"COPY_PROCS_FILENAME
+char stdatapath[PATH_MAX] = { CPFN };
 
 CopyInstanceList_t *CopyInstanceList;
 
@@ -37,8 +40,8 @@ MapInFile(
 	while (fd == -1 && retry-- > 0) {
 		fd = open(file_name, mode);
 		if (fd == -1) {
-			fprintf(stderr, "MapInFile open failed: '%s', errno %d\n",
-			    file_name, errno);
+			fprintf(stderr, "MapInFile open failed: '%s', error %s\n",
+			    file_name, strerror(errno));
 			if (errno == EACCES)
 				exit(errno);
 			sleep(5);
@@ -84,19 +87,46 @@ MapInFile(
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
+	int opt;
 	int numlibs = 0;
 	int xnumlibs = 0;
 	int numDrives = 8;
 	size_t size, len;
 	int j,i;
+	char *datapath = NULL;
 
-	CopyInstanceList = (CopyInstanceList_t *)MapInFile(CPFN , O_RDWR, &len);
+        while((opt = getopt(argc, argv, "?hp:")) != -1)
+        {
+                switch(opt)
+                {
+			case 'h':
+			case '?':
+				printf("%s: [-p <stagerdir>]\n", argv[0]);
+				exit(1);
+				break;
+                    case 'p':
+                        datapath = optarg;
+                        break;
+                }
+        }
+
+        if (datapath != NULL) {
+		struct stat buf;
+
+                sprintf(stdatapath, "%s/"COPY_PROCS_FILENAME, datapath);
+                if (stat(stdatapath, &buf) != 0) {
+                        fprintf(stderr, "could not open %s, invalid path\n", datapath);
+                        exit (2);
+                }
+        }
+
+	CopyInstanceList = (CopyInstanceList_t *)MapInFile(stdatapath, O_RDONLY, &len);
 
 	if (CopyInstanceList == NULL) {
 		fprintf(stderr, "Cannot map in file '%s' errno: %d\n",
-		    CPFN , errno);
+		    stdatapath , errno);
 		return (-1);
 	}
 
@@ -107,7 +137,7 @@ main()
 	    CopyInstanceList->cl_version != COPY_INSTANCE_LIST_VERSION) {
 
 		fprintf(stderr, "Invalid %s found.\n",
-		    CPFN);
+		    stdatapath);
 		CopyInstanceList = NULL;
 		return (-1);
 	}
@@ -119,12 +149,19 @@ main()
 	 */
 
 	j = -1;
-	printf("lib  leq  teq    pid vsn first last shut flags busy idlet\n");
+	printf("lib   leq   teq    pid    vsn first last shut flags busy idletime\n");
 	for (i = 0; i < CopyInstanceList->cl_entries; i++) {
+		char *idltime = { "" };
+
 		if (CopyInstanceList->cl_data[i].ci_eq == 0)
 			continue;
 
-		printf("%3d %4d %4d %6d %s %p %p %#x %#x %#x %d\n",
+		if (CopyInstanceList->cl_data[i].ci_idletime != 0) {
+			idltime = asctime(localtime(&CopyInstanceList->cl_data[i].ci_idletime));
+			idltime[strlen(idltime)-1] = '\0';
+		}
+
+		printf("%3d %5d %5d %6d %6s %p %p 0x%x 0x%x 0x%x %s\n",
 		    CopyInstanceList->cl_data[i].ci_lib,
 		    CopyInstanceList->cl_data[i].ci_eq,
 		    CopyInstanceList->cl_data[i].ci_drive,
@@ -135,7 +172,7 @@ main()
 		    CopyInstanceList->cl_data[i].ci_shutdown,
 		    CopyInstanceList->cl_data[i].ci_flags,
 		    CopyInstanceList->cl_data[i].ci_busy,
-		    CopyInstanceList->cl_data[i].ci_idletime);
+		    idltime);
 	}
 	munmap(CopyInstanceList, len);
 
