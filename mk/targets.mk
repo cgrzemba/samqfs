@@ -103,8 +103,8 @@ ifneq ($(STRIP_DIRS),)
 .PHONY:	$(STRIP_DIRS)
 
 .WAIT:
-	echo "Waiting for background processes to finish..."; \
-	wait `jobs -p`
+#	echo "Waiting for background processes to finish..."; \
+#	wait `jobs -p`
 
 $(STRIP_DIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
