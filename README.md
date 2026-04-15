@@ -37,7 +37,7 @@ Build the whole commponent
 
     $ gmake -f GNUmakefile
 
-for debug builds add 'DEBUG=yes'  
+for debug builds add paramter 'DEBUG=yes'  
 ## Install
 
     $ gmake -f GNUmakefile install DESTDIR=$(PROTO_DIR)
@@ -52,9 +52,9 @@ if not already exist, create IPS repository, eg:
 
 then create package
 
-    $ gmake -f GNUmakefile pkg [REPO=../repo/${os_release}]
+    $ gmake -f GNUmakefile pkg
 
-you can use an repository on different location with setting variable REPO:
+you can use an repository on different location with setting parameter REPO:
 
     $ gmake -f GNUmakefile pkg REPO=/<other-repo-path>
 
