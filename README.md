@@ -59,3 +59,7 @@ you can use an repository on different location with setting parameter REPO:
     $ gmake -f GNUmakefile pkg REPO=/<other-repo-path>
 
 for rebuild the package, remove the cookie file pkg/.packaged
+
+## Build ACSLS components 
+
+proceed like described here [ACSLS README](src/robots/stk/README.md)
