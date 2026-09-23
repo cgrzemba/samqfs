@@ -102,6 +102,7 @@ OUTSAMTRACE=${REPORTDIR}/samtrace_text
 OUTSHOWQUEUE=${REPORTDIR}/showqueue_text
 OUTARCHIVERTAR=${REPORTDIR}/archiver_data.tar
 OUTSTAGERTAR=${REPORTDIR}/stager_data.tar
+OUTLOGTAT=${REPORTDIR}/samlogs.tar
 
 #  Temporary work files
 TMPBGDF=$TMPDIR/$$.sam_bg_df
@@ -357,12 +358,12 @@ fi
 #  Get the samfs log file.
 #  Skip non-sam entries with patterns like "local1,...,local7.none".
 
-SYSLOGD=`svcs system-log | grep online | cut -d: -f2`
+SYSLOGD=`svcs system-log | grep online | cut -d: -f3`
 if [ $SYSLOGD == "default" ]; then
-	SYSLOGCONF = /etc/syslog.conf
+	SYSLOGCONF=/etc/syslog.conf
 fi
 if [ $SYSLOGD == "rsyslog" ]; then
-	SYSLOGCONF = `grep local7 /etc/rsyslog.d/* | cut -d: -f1 | tail -1`
+	SYSLOGCONF=`grep local7 /etc/rsyslog.d/* | cut -d: -f1 | tail -1`
 fi
 
 if [ XX$SYSLOGCONF != "XX" ]; then
@@ -379,12 +380,12 @@ if [ XX$SYSLOGCONF != "XX" ]; then
 			# so try the first entry with spaces versus tabs.
 			# Strip out leading/trailing comma sections.
 			# Test: "local7.debug  ifdef(`LOGHOST', /var/adm/sam-log, @loghost)"
-			SAMLOG=`echo "$SAMLL" | sed -e "s/^.* //" -e "s/, *@.*//" -e "s/.*, *//" -e "1q"`
+			SAMLOG=`echo "$SAMLL" | sed -e "s/^.* //" -e "s/, *@.*//" -e "s/.*, *//" -e "s/^$LOGIS\.[a-z]\{4,7\}//" -e "s/[[:space:]]*//"`
 		else
 			# Watch out for invisible tab character in following line!
 			# Strip out leading/trailing comma sections.
 			# Test: "local7.debug  ifdef(`LOGHOST', /var/adm/sam-log, @loghost)"
-			SAMLOG=`echo "$SAMLL" | sed -e "s/^.*	//" -e "s/, *@.*//" -e "s/.*, *//" -e "1q"`
+			SAMLOG=`echo "$SAMLL" | sed -e "s/^.*	//" -e "s/, *@.*//" -e "s/.*, *//" -e "s/^$LOGIS\.[a-z]\{4,7\}//" -e "s/[[:space:]]*//"`
 		fi
 	else
 		rerun_as_root $SYSLOGCONF
@@ -843,7 +844,13 @@ fi
 
 for FILES in $AMLTRC $ARCHLOGS $ARCHTRC $CATTRC $DEVLOGS $DBUPTRC $FSATRC $SVCFSDLOG $FSDTRC $SVCSHMNTLOG $RECYLOGS $RCYTRC $NRECYLOGS $NRCYTRC $RELELOGS $RFTTRC $SHFSTRC $SHRKLOGS $SHRKTRC $STAGLOGS $STGTRC $SVRTRC $CLITRC $MGMTTRC
 do
-	copyfiles $FILES
+	copyfiles ${FILES}
+	copyfiles ${FILES}.[0-7]
+done
+
+for FILES in $(find /etc/opt/SUNWsamfs -name "*.cmd" | xargs grep logfile | cut -d= -f2)
+do
+	copyfiles ${FILES}
 done
 
 #
