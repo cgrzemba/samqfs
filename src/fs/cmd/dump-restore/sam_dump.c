@@ -393,7 +393,7 @@ dump_directory_entry(
 		    (perm_inode.di.status.b.pextents == 1)) {
 			dumping_partial_data++;
 			flags |= CSD_FH_DATA;
-		} else if (SAM_INODE_IS_XATTR(&perm_inode)) {
+		} else if (SAM_INODE_IS_XATTR(&perm_inode) && (perm_inode.di.rm.size > 0)) {
 			/* always dump data of xattr files */
 			dumping_file_data++;
 			flags |= CSD_FH_DATA;
