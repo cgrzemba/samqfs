@@ -161,7 +161,7 @@ Archive(
 {
 	time_t archiveTime;	/* Time at which to start archival */
 
-	initArchive();
+	initArchive();		/* Locks archReqMutex */
 	ThreadsInitWait(ArchiveRun, ArchiveRun);
 
 	while (Exec == ES_init) {
@@ -483,8 +483,8 @@ ArchiveAddFile(
 		if (fi->FiId.gen >= dinode->id.gen) {
 #if defined(FILE_TRACE)
 			Trace(TR_DEBUG,
-			    "ArchReq '%s' file exists inode: %d.%d (%s)",
-			    archReqName(ar, arname),
+			    "ArchReq '%s' file already exists with new gen %d inode: %d.%d (%s)",
+			    archReqName(ar, arname), fi->FiId.gen,
 			    dinode->id.ino, dinode->id.gen, pb->PbPath);
 #endif
 			goto out;
@@ -863,7 +863,7 @@ ArchiveRmArchReq(
 			/* Invalid ArchReq - %s */
 			return (4905);
 		}
-		strncpy(asname, arname, sizeof (asname));
+		strncpy(asname, arname, sizeof (asname) -1);
 		*(asname + l) = '\0';
 
 		if (strcmp(p+1, "*") == 0) {
@@ -1421,7 +1421,7 @@ idListAdd(
 
 		i = (l + u) >> 1;	/* Find midpoint */
 		ir = &il->IlEntry[i];
-		if (ir->IrAtIndex != 0) {
+		if (ir->IrAtIndex != 0  && archReqTable[ir->IrAtIndex] != NULL) {
 			sam_id_t *ip;
 
 			ip = ID_LOC(ir);
@@ -1498,6 +1498,7 @@ idListCompress(
 		}
 	}
 	il->IlCount = j;
+	/* XXX: j=0 ? */
 	il->IlSize = sizeof (struct IdList) + (j-1) * sizeof (struct IdRef);
 }
 
@@ -1547,7 +1548,8 @@ idListLookup(
 
 		i = (l + u) >> 1;	/* Find midpoint */
 		ir = &il->IlEntry[i];
-		if (ir->IrAtIndex != 0) {
+		if (ir->IrAtIndex != 0  && archReqTable[ir->IrAtIndex] != NULL) {
+			/* if ir->IrAtIndex != 0  than ir->IrOffset is a table offset */
 			sam_id_t *ip;
 
 			ip = ID_LOC(ir);
@@ -1556,14 +1558,18 @@ idListLookup(
 				if (ip->gen == id.gen) {
 					return (ir);
 				}
+				Trace(TR_ERR, "idListLookup(%d.%d, %d) found other gen %d",
+				    id.ino, id.gen, copy, ip->gen);
 				return (NULL);
 			}
 		} else {
+			/* if ir->IrAtIndex == 0  than ir->IrOffset is an inode*/
 			ino = ir->IrOffset;
 			if (id.ino == ino) {
 				return (NULL);
 			}
 		}
+		/* not found, continue search */
 		if (id.ino < ino) {
 			u = i;
 		} else {
@@ -1722,7 +1728,7 @@ pruneArchReq(
 				 */
 				fi->FiStatus |= reexamine;
 #if defined(FILE_TRACE)
-				Trace(TR_DEBUG, "Archreq file error "
+				Trace(TR_QUEUE, "Archreq file error "
 				    "inode: %d.%d (%s) : '%s'",
 				    fi->FiId.ino, fi->FiId.gen, fi->FiName,
 				    StrFromErrno(fi->FiErrno, errnoStr,
@@ -1902,6 +1908,7 @@ queueArchReq(
 
 /*
  * Recover an ArchReq.
+ * Called with archReqMutex held
  * RETURN: TRUE if recovered.
  */
 static boolean_t
@@ -1997,6 +2004,10 @@ recoverAnArchReq(
 				if (ip->ino != ip2->ino) {
 					ir++;
 					*ir = *ir2;
+				} else if (ip2->gen > ip->gen) {
+					Trace(TR_QUEUE, "Duplicate ino %d in archReqTable[%d] %d: %d",
+					    ip->ino, ir->IrAtIndex, ip->gen, ip2->gen);
+					*ir = *ir2;
 				}
 			}
 			il->IlCount = ir - &il->IlEntry[0] + 1;
@@ -2063,6 +2074,7 @@ recoverAnArchReq(
 
 /*
  * Recover ArchReqs.
+ * Held no ArchReqLock ?
  */
 static void
 recoverArchReqs(void)
