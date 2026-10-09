@@ -495,15 +495,14 @@ printExamlist(void)
 				if (!(xe->XeFlags & XE_free)) {
 					printf(" %s",
 					    TimeToIsoStr(xe->XeTime, ts));
+					printf(" %d.%d",
+					    xe->XeId.ino, xe->XeId.gen);
 					if (FsFd != -1) {
 						char	*path;
 
 						path = IdToPathId(xe->XeId);
 						printf(" %s",
 						    ScanPathToMsg(path));
-					} else {
-						printf(" %d.%d",
-						    xe->XeId.ino, xe->XeId.gen);
 					}
 					printf("\n");
 				} else if (debug) {
