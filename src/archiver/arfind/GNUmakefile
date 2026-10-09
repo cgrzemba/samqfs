@@ -46,6 +46,17 @@ PROG_SRC = \
 	scanfs.c \
 	scaninodes.c
 
+ifeq ($(DEBUG), yes)
+	AR_DEBUG += -DDEBUG
+	AR_DEBUG += -DAR_DEBUG
+# AR_DEBUG += -DFILE_TRACE
+# AR_DEBUG += -DARCH_TRACE
+# AR_DEBUG += -DI2P_TRACE
+# AR_DEBUG += -DEXAM_TRACE
+# AR_DEBUG += -DTRACEREFS
+# AR_DEBUG += -DSCAN_TRACE
+endif
+
 include ../archiver.mk
 
 include $(DEPTH)/mk/targets.mk

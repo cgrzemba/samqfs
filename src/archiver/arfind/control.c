@@ -93,7 +93,7 @@ Control(
 	/*
 	 * Isolate first identifier and look it up.
 	 */
-	strncpy(ident, identArg, sizeof (ident));
+	strncpy(ident, identArg, sizeof (ident) -1);
 	value = valueArg;
 	dirName = strtok(ident, ".");
 	for (table = controls; table->CtIdent != NULL; table++) {

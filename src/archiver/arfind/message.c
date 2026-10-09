@@ -181,7 +181,7 @@ control(
 
 	ThreadsReconfigSync(RC_wait);
 	strncpy(controlRsp.CtMsg, Control(a->CtIdent, a->CtValue),
-	    sizeof (controlRsp.CtMsg));
+	    sizeof (controlRsp.CtMsg) -1);
 	ThreadsReconfigSync(RC_allow);
 	traceRequest(hdr, NULL, "control(%s, %s) %s", a->CtIdent, a->CtValue,
 	    controlRsp.CtMsg);

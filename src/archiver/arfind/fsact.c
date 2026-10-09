@@ -111,7 +111,7 @@ FsAct(void)
 	ThreadsInitWait(wakeupFsAct, wakeupFsAct);
 
 	fsActThread = pthread_self();
-	strncpy(args.AfFsname, FsName, sizeof (args.AfFsname));
+	strncpy(args.AfFsname, FsName, sizeof (args.AfFsname) -1);
 	args.AfWait			= 5;
 	args.AfMaxCount		= ARFIND_EVENT_MAX;
 
@@ -184,7 +184,7 @@ FsAct(void)
 			continue;
 		}
 
-		Trace(TR_DEBUG, "Event buffer 0x%x act count: %d overflow: %d",
+		Trace(TR_QUEUE, "Event buffer 0x%x act count: %d overflow: %d",
 		    (long)bf->BfEvents, args.AfCount, args.AfOverflow);
 
 		if (args.AfOverflow != 0) {

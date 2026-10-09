@@ -249,7 +249,7 @@ checkAnInode(
 	checkArchiveStatus(pb, pinode, fp, se);
 
 	if ((State->AfFlags & ASF_setarchdone) ||
-	    EXAM_MODE(dinode) == AE_archive) {
+	    (EXAM_MODE(dinode) == AE_archive)) {
 		/*
 		 * If the "archdone" or "archnodrop" have changed in our copy
 		 * of the inode, or the copies required is not correct, change
@@ -265,6 +265,10 @@ checkAnInode(
 		if (dinode->status.b.archdone != saveArchdone ||
 		    dinode->status.b.archnodrop != saveArchnodrop ||
 		    copiesReq != fp->FpCopiesReq) {
+			setArchflags(pb->PbPath, dinode, fp->FpCopiesReq);
+		}
+	} else {
+		if (dinode->status.b.archnodrop != saveArchnodrop) {
 			setArchflags(pb->PbPath, dinode, fp->FpCopiesReq);
 		}
 	}
@@ -441,6 +445,9 @@ checkArchiveStatus(
 			copiesLater |= copyBit;
 		}
 	}
+	if (copiesTomake == 0)
+		Trace(TR_QUEUE, "no copies to make %d.%d %s %#x",
+		    dinode->id.ino, dinode->id.gen, pb->PbPath, copiesLater);
 
 	/*
 	 * Check if all required copies before allowing the release
@@ -480,10 +487,10 @@ checkArchiveStatus(
 	/*
 	 * Check all copies to be archived.
 	 */
-	dinode->status.b.archdone = TRUE;
+	int archdone = TRUE;
 	for (copy = 0, copyBit = 1; copy < MAX_ARCHIVE; copy++, copyBit <<= 1) {
 		if (copiesTomake & copyBit) {
-			dinode->status.b.archdone = FALSE;
+			archdone = FALSE;
 
 			/*
 			 * Copy needs to be made now.
@@ -504,11 +511,11 @@ checkArchiveStatus(
 #endif /* defined(FILE_TRACE) */
 			if (ArchiveAddFile(pb, pinode, fp, copy,
 			    TIME_NOW(dinode) - archRef, copiesReq,
-			    unarch) > 0) {
+			    unarch) != 0) {
 				/*
 				 * Rescan file later.
 				 */
-				Trace(TR_ARDEBUG, "AddFile failed %s %d",
+				Trace(TR_QUEUE, "AddFile failed %s %d",
 				    pb->PbPath, copy + 1);
 				later = min(later,
 				    TIME_NOW(dinode) + State->AfInterval);
@@ -516,15 +523,17 @@ checkArchiveStatus(
 			}
 		}
 	}
+	dinode->status.b.archdone = archdone;
+
 	if (later != TIME_MAX) {
 		/*
 		 * Archive action later.
 		 */
 		dinode->status.b.archdone = FALSE;
 #if defined(FILE_TRACE)
-		Trace(TR_DEBUG, "Later %d.%d %s %d",
+		Trace(TR_DEBUG, "Later %d.%d %s %d %#x",
 		    dinode->id.ino, dinode->id.gen, pb->PbPath,
-		    (int)(later - TIME_NOW(dinode)));
+		    (int)(later - TIME_NOW(dinode)), copiesLater);
 #endif /* defined(FILE_TRACE) */
 		if (State->AfExamine >= EM_noscan && later < se->SeTime) {
 #if !defined(SCANMODE)
@@ -566,8 +575,11 @@ checkRearchive(
 			 * Copy exists and rearchive set - add to
 			 * allsets ArchReq.
 			 */
-			(void) ArchiveAddFile(pb, pinode, &emptyFp, copy,
-			    0, 0, 0);
+			if (ArchiveAddFile(pb, pinode, &emptyFp, copy,
+			    0, 0, 0) != 0)
+				Trace(TR_QUEUE, "AddFile failed %s %d (should try again?)",
+				    pb->PbPath, copy + 1);
+
 		}
 	}
 	SetArchdone(pb->PbPath, dinode);

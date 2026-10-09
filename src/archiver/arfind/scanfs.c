@@ -341,6 +341,10 @@ ScanfsAddEntry(
 	}
 
 	if (se->SeTime < seScan.SeTime) {
+#if defined(SCAN_TRACE)
+		Trace(TR_DEBUG, "ScanfsAddEntry %#x %#x start scan",
+		    State->AfExamine, se->SeFlags);
+#endif /* defined(SCAN_TRACE) */
 		wakeup();
 	}
 	PthreadMutexUnlock(&scanListMutex);
@@ -488,6 +492,10 @@ out:
 		scanList->SlEntry[0].SeTime = backGndScanTime();
 	}
 	PthreadMutexUnlock(&scanListMutex);
+#if defined(SCAN_TRACE)
+	Trace(TR_DEBUG, "ScanfsReconfig %#x start scan",
+	    State->AfExamine);
+#endif /* defined(SCAN_TRACE) */
 	wakeup();
 }
 
@@ -536,6 +544,10 @@ ScanfsStartScan(void)
 		scanList->SlEntry[0].SeTime = time(NULL);
 		PthreadMutexUnlock(&scanListMutex);
 	}
+#if defined(SCAN_TRACE)
+	Trace(TR_DEBUG, "ScanfsStartScan %#x start scan",
+	    State->AfExamine);
+#endif /* defined(SCAN_TRACE) */
 	wakeup();
 }
 
@@ -666,7 +678,7 @@ idListAdd(
 
 		i = (l + u) >> 1;	/* Find midpoint */
 		ir = &idList->IlEntry[i];
-		ip = ID_LOC(ir);
+		ip = ID_LOC(ir); /* first element of struct ScanListEntry is sam_id_t */
 		ino = ip->ino;
 		if (id.ino == ino) {
 			return (ir);
@@ -746,7 +758,7 @@ idListLookup(
 
 		i = (l + u) >> 1;	/* Find midpoint */
 		ir = &idList->IlEntry[i];
-		ip = ID_LOC(ir);
+		ip = ID_LOC(ir);	/* first element of struct ScanListEntry is sam_id_t */
 		ino = ip->ino;
 		if (id.ino == ino) {
 			return (ir);

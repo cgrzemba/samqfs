@@ -293,8 +293,8 @@ scanDir(
 					break;
 				}
 			} else if (!dinode->status.b.archdone) {
-				Trace(TR_DEBUGERR,
-				    "inode %d: pathname too long",
+				Trace(TR_ERR,
+				    "inode %d: pathname too long, set archdone",
 				    dp->d_id.ino);
 				SetArchdone(pb->PbPath, dinode);
 			}
