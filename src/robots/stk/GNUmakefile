@@ -58,6 +58,8 @@ PROG_SRC += \
 	chk_drives.c \
 	common_scsi.c
 
+# be sure that the links stk_includes and stk_release exists and point
+# to the STK csc_toolkit source
 DEPCFLAGS += -Istk_includes $(THRCOMP)
 
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
