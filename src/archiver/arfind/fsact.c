@@ -309,7 +309,7 @@ FsExamine(
 					    event == AE_rename) {
 						ExamInodesRmInode(ev->AeId);
 						ArchiveRmInode(ev->AeId);
-						IdToPathRmInode(ev->AeId);
+						IdToPathRmInodePar(ev->AeId);
 						ScanfsRmInode(ev->AeId);
 						if (event == AE_remove) {
 							continue;

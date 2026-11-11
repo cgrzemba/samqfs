@@ -164,6 +164,7 @@ void IdToPath(struct sam_disk_inode *inode, struct PathBuffer *pb);
 void IdToPathId(sam_id_t id, struct PathBuffer *pb);
 void IdToPathInit(void);
 void IdToPathRmInode(sam_id_t id);
+void IdToPathRmInodePar(sam_id_t id);
 void IdToPathTrace(void);
 int PathToId(char *path, sam_id_t *id);
 

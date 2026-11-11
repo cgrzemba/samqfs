@@ -280,7 +280,40 @@ IdToPathInit(void)
 	memset(dirCache, 0, dirCacheTotSize);
 }
 
+/*
+ * remove for file the parent inode entry from cache or the given inode for
+ * anything else
+ */
+void
+IdToPathRmInodePar(
+	sam_id_t id)
+{
+	DirCacheEntry_t *entry;
+	static struct sam_perm_inode pinode;
+	static struct sam_disk_inode *dinode = (struct sam_disk_inode *)&pinode;
 
+	if (GetPinode(id, &pinode) == 0) {
+		/* is iregular file ? */
+		if (S_ISREG(pinode.di.mode)) {
+			DirCacheEntry_t *ce;
+
+			PthreadMutexLock(&id2pathMutex);
+			ce = cacheLookup(dinode->parent_id);
+			if (ce != NULL) {
+				cacheEntryRemove(ce);
+#if defined(I2P_TRACE)
+				Trace(TR_DEBUG, "Id2pathRmInodePar: parent %d.%d of"
+				    " %d.%d",
+				    dinode->parent_id.ino, dinode->parent_id.gen,
+				    id.ino, id.gen);
+#endif /* defined(I2P_TRACE) */
+			}
+			PthreadMutexUnlock(&id2pathMutex);
+		}
+	} else {
+		IdToPathRmInode(id);
+	}
+}
 /*
  * Remove inode entry from cache.
  */
@@ -293,6 +326,9 @@ IdToPathRmInode(
 	PthreadMutexLock(&id2pathMutex);
 	entry = cacheLookup(id);
 	if (entry != NULL) {
+#if defined(I2P_TRACE)
+		Trace(TR_DEBUG, "Id2pathRmInode: %d.%d", id.ino, id.gen);
+#endif /* defined(I2P_TRACE) */
 		cacheEntryRemove(entry);
 	}
 	PthreadMutexUnlock(&id2pathMutex);
