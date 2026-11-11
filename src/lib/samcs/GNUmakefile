@@ -43,6 +43,8 @@ LIB_SRC = \
 		writecsum.c
 
 DEPCFLAGS += -I$(OBJ_DIR) $(THRCOMP) $(OSDEPCFLAGS)
+# for dprintf
+DEPCFLAGS += -D_XPG7
 # LIB_LIBS +=  -L $(DEPTH)/lib/$(OBJ_DIR) -lsam -lsamut -lsamcat $(LIBSO) \
 # 	-ldl -lthread -lsysevent -lnvpair
 
