@@ -58,13 +58,17 @@ PROG_SRC += \
 	chk_drives.c \
 	common_scsi.c
 
-DEPCFLAGS += -Istk_includes $(THRCOMP)
+CDK_TST := $(shell stat stk_release >/dev/null 2>&1; echo $$?)
+ifneq ($(CDK_TST),0)
+    $(error link stk_release not set)
+endif
+CDK = $(shell readlink -f stk_release)
+STK_INCLUDES = stk_release/src/h
+DEPCFLAGS += -I$(STK_INCLUDES) $(THRCOMP)
 
 PROG_LIBS = $(STATIC_OPT) -L ../lib/$(OBJ_DIR) -lrobots \
 	$(DYNAMIC_OPT) -L $(DEPTH)/lib/$(OBJ_DIR) \
 	-lsamfs -lsamcat -lsamut $(LIBSO) $(THRLIBS) -lgen
-
-STK_INCLUDES = stk_release/src/h
 
 ACSLS_CSC_TK_LIBS = -lapi -lutl -lcl -lipc
 STKDEST = $(DEPTH)/lib/$(OBJ_DIR)
@@ -105,18 +109,17 @@ DBG_OPT=
 endif
 
 
-STKABSDEST = $(shell readlink -f $(STKDEST))
-ACSLIB = $(STKDEST)/libapi.so
-ACSCOM = $(STKDEST)/libcl.so
-ACSUTL = $(STKDEST)/libutl.so
-ACSIPC = $(STKDEST)/libipc.so
-# SSIXDR = $(STKDEST)/libssixdr.so $(STKDEST)/SSIXDR.a
+STK_ABSDIR = $(shell readlink -f $(STKDEST))
+
+ACSLIB = $(STK_ABSDIR)/libapi.so
+ACSCOM = $(STK_ABSDIR)/libcl.so
+ACSUTL = $(STK_ABSDIR)/libutl.so
+ACSIPC = $(STK_ABSDIR)/libipc.so
+# SSIXDR = $(STK_ABSDIR)/libssixdr.so $(STKDEST)/SSIXDR.a
 SSIXDR = ../../lib/amd64/SSIXDR.a
 ACSSSI = ssi
 MINIEL = mini_el
 
-CDK = $(shell readlink -f stk_release)
-STK_ABSDIR = $(shell readlink -f $(STKDEST))
 
 .NOTPARALLEL:
 

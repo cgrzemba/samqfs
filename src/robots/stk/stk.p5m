@@ -17,6 +17,6 @@ file stk_helper \
     path=opt/SUNWsamfs/sbin/sam-stk_helper owner=root group=bin mode=0755
 file stk path=opt/SUNWsamfs/sbin/sam-stkd \
     owner=root group=bin mode=0755
-license LICENSE license=CDDL
+license ../../../LICENSE license=CDDL
 depend type=require fmri=pkg:/system/samqfs
 depend type=require fmri=pkg:/system/acsls-client
