@@ -446,7 +446,7 @@ checkArchiveStatus(
 		}
 	}
 	if (copiesTomake == 0)
-		Trace(TR_QUEUE, "no copies to make %d.%d %s %#x",
+		Trace(TR_QUEUE, "checkArchiveStatus: no copies to make %d.%d %s %#x",
 		    dinode->id.ino, dinode->id.gen, pb->PbPath, copiesLater);
 
 	/*
@@ -503,12 +503,12 @@ checkArchiveStatus(
 				se->SeTime = TIME_NOW(dinode);
 				continue;
 			}
-			copiesTomake &= ~copyBit;
 #if defined(FILE_TRACE)
-			Trace(TR_DEBUG, "Addfile %d.%d %s %d %x %x",
+			Trace(TR_DEBUG, "checkArchiveStatus: Addfile %d.%d %s %d %x %x",
 			    dinode->id.ino, dinode->id.gen, pb->PbPath,
 			    copy, copiesTomake, copiesReq);
 #endif /* defined(FILE_TRACE) */
+			copiesTomake &= ~copyBit;
 			if (ArchiveAddFile(pb, pinode, fp, copy,
 			    TIME_NOW(dinode) - archRef, copiesReq,
 			    unarch) != 0) {
@@ -530,17 +530,14 @@ checkArchiveStatus(
 		 * Archive action later.
 		 */
 		dinode->status.b.archdone = FALSE;
-#if defined(FILE_TRACE)
-		Trace(TR_DEBUG, "Later %d.%d %s %d %#x",
-		    dinode->id.ino, dinode->id.gen, pb->PbPath,
-		    (int)(later - TIME_NOW(dinode)), copiesLater);
-#endif /* defined(FILE_TRACE) */
 		if (State->AfExamine >= EM_noscan && later < se->SeTime) {
 #if !defined(SCANMODE)
-			Trace(TR_DEBUG, "Exam later inode: %d.%d "
-			    "copies: 0x%x (%s) time: %s",
+#if defined(FILE_TRACE)
+			Trace(TR_DEBUG, "checkArchiveStatus: Exam later inode: %d.%d "
+			    "copies: %#x (%s) time: %d %s, delta %d",
 			    dinode->id.ino, dinode->id.gen, copiesLater,
-			    pb->PbPath, TimeToIsoStr(later, NULL));
+			    pb->PbPath, later, TimeToIsoStr(later, NULL), se->SeTime-later);
+#endif /* defined(FILE_TRACE) */
 
 			ExamInodesAddEntry(dinode->id, EXAM_INODE, later,
 			    "later");

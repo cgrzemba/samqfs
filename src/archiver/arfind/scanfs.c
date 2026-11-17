@@ -630,7 +630,7 @@ findScan(void)
 	int	i;
 
 #if defined(SCAN_TRACE)
-	Trace(TR_DEBUG, "Find scan count: %d", scanList->SlCount);
+	Trace(TR_DEBUG, "findScan: count: %d", scanList->SlCount);
 #endif /* defined(SCAN_TRACE) */
 	nextScan = &scanList->SlEntry[0];
 	free = 0;

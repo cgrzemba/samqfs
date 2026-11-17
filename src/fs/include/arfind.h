@@ -47,7 +47,7 @@ enum sam_arfind_event {
 	AE_rename,			/* File renamed */
 	AE_remove,			/* File removed */
 	AE_unarchive,		/* Unarchived */
-	AE_MAX
+	AE_MAX			/* internal */
 };
 
 #if defined(NEED_ARFIND_EVENT_NAMES)

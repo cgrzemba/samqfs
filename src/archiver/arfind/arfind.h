@@ -84,7 +84,7 @@
  */
 #define	EXAM_MODE(d) ((d)->unit)
 #define	EXAM_DIR AE_none
-#define	EXAM_INODE AE_MAX
+#define	EXAM_INODE AE_MAX	/* event 'internal' */
 
 /*
  * Buffer for contructiong a path name.
